@@ -8158,6 +8158,7 @@ int ExecutiveAlign(PyMOLGlobals * G, const char *s1, const char *s2, const char 
           " ExecutiveAlign: invalid selections for alignment.\n" ENDFB(G);
       }
     }
+    ExecutiveUpdateCoordDepends(G, mobile_obj); //Updates dynamic_measures - see PYMOL-3090
   }
 
   VLAFreeP(vla1);
