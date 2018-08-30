@@ -121,6 +121,34 @@ static int AlignmentFindTag(PyMOLGlobals * G, AtomInfoType * ai, int sele,
   return result;
 }
 
+/*
+ * Get single letter abbreviation for CLUSTAL output.
+ *
+ * See also:
+ * pymol.exporting._resn_to_aa
+ * AtomInfoKnownNucleicResName
+ * AtomInfoKnownProteinResName
+ * SeekerGetAbbr
+ */
+static char get_abbr(PyMOLGlobals * G, const AtomInfoType * ai) {
+  const char * resn = LexStr(G, ai->resn);
+  const char unknown = ((ai->flags & cAtomFlag_polymer)) ? '?' : 0;
+
+  if ((ai->flags & cAtomFlag_nucleic)) {
+    if (resn[0] == 'D') {
+      ++resn;
+    }
+
+    if (strlen(resn) != 1) {
+      return unknown;
+    }
+
+    return resn[0];
+  }
+
+  return SeekerGetAbbr(G, resn, 0, unknown);
+}
+
 int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, int format,
                             char **str_vla)
 {
@@ -207,7 +235,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
                     done = false;
                     if(AtomInfoSameResidueP(G, row->last_ai, ai)) {
                       row->cCol++;
-                    } else if(!SeekerGetAbbr(G, LexStr(G, ai->resn), 0, 0)) {      /* not a known residue type */
+                    } else if(!get_abbr(G, ai)) {      /* not a polymer residue */
                       row->cCol++;
                     } else {
                       int tag =
@@ -291,7 +319,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
                     done = false;
                     if(AtomInfoSameResidueP(G, row->last_ai, ai)) {
                       row->cCol++;
-                    } else if(!SeekerGetAbbr(G, LexStr(G, ai->resn), 0, 0)) {      /* not a known residue type */
+                    } else if(!get_abbr(G, ai)) {      /* not a polymer residue */
                       row->cCol++;
                     } else {
                       int tag =
@@ -320,7 +348,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
                       if(!tag) {
                         if(!AtomInfoSameResidueP(G, row->last_ai, ai)) {
                           row->last_ai = ai;
-                          row->txt[row->len] = SeekerGetAbbr(G, LexStr(G, ai->resn), ' ', 'X');
+                          row->txt[row->len] = get_abbr(G, ai);
                         } else {
                           row->txt[row->len] = '-';
                         }
@@ -351,7 +379,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
                         char abbr;
                         if(!AtomInfoSameResidueP(G, row->last_ai, ai)) {
                           row->last_ai = ai;
-                          abbr = SeekerGetAbbr(G, LexStr(G, ai->resn), ' ', 'X');
+                          abbr = get_abbr(G, ai);
                           if(cons_abbr == ' ')
                             cons_abbr = abbr;
                           else if(cons_abbr != abbr)
