@@ -344,3 +344,33 @@ class TestExporting(testing.PyMOLTestCase):
 
         self.assertEqual(cmd.count_atoms(), 0)
         self.assertEqual(cmd.get_names(), ['m1'])
+
+    def testSaveAln(self):
+        cmd.fab('ACDEFGH', 'm1')
+        cmd.fab('ACDFGH', 'm2')
+        cmd.align('m1', 'm2', cycles=0, object='aln')
+        with testing.mktemp('.aln') as filename:
+            cmd.save(filename)
+            with open(filename) as handle:
+                lines = list(handle)
+        self.assertEqual(lines[0].split(), ['CLUSTAL'])
+        self.assertEqual(lines[1].split(), [])
+        self.assertEqual(lines[2].split(), ['m1', 'ACDEFGH'])
+        self.assertEqual(lines[3].split(), ['m2', 'ACD-FGH'])
+
+    @testing.requires_version('2.3')
+    def testSaveAlnNucleic(self):
+        cmd.load(self.datafile('1rna.cif'))
+        cmd.create('m1', 'chain A and not resi 6-7')
+        cmd.create('m2', 'chain B')
+        cmd.alter('m1 and resi 1', 'resn = "DT"') # mimic DNA
+        cmd.alter('m2 and resi 20', 'resn = "UNK"') # mimic nonstd residue
+        cmd.align('m1', 'm2', cycles=0, object='aln')
+        with testing.mktemp('.aln') as filename:
+            cmd.save(filename)
+            with open(filename) as handle:
+                lines = list(handle)
+        self.assertEqual(lines[0].split(), ['CLUSTAL'])
+        self.assertEqual(lines[1].split(), [])
+        self.assertEqual(lines[2].split(), ['m1', 'TUAUA--UAUAUAA'])
+        self.assertEqual(lines[3].split(), ['m2', 'UUAUA?AUAUAUAA'])
