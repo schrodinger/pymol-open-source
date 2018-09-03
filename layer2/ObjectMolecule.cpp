@@ -22,12 +22,6 @@ Z* -------------------------------------------------------------------
 #include <algorithm>
 #include <set>
 
-#ifdef _PYMOL_NO_CXX11
-#define STD_MOVE(x) (x)
-#else
-#define STD_MOVE(x) std::move(x)
-#endif
-
 #include"Base.h"
 #include"Debug.h"
 #include"Parse.h"
@@ -7280,7 +7274,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
           if(PConvPyListToFloatArrayInPlace(tmp, u, 6)) {
             // only allocate if not all zero
             if(u[0] || u[1] || u[2] || u[3] || u[4] || u[5])
-	      memcpy(ai->get_anisou(), u, 6 * sizeof(float));
+              std::copy_n(u, 6, ai->get_anisou());
           }
           Py_DECREF(tmp);
         }
@@ -9165,7 +9159,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
   CHECKOK(ok, ai2);
   if (ok){
     for(a = 0; a < cs->NIndex; a++)
-      ai2[a] = STD_MOVE(ai[index[a]]);      /* creates a sorted list of atom info records */
+      ai2[a] = std::move(ai[index[a]]);      /* creates a sorted list of atom info records */
   }
   VLAFreeP(ai);
   ai = ai2;
@@ -9287,7 +9281,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
       if(a2 < oldNAtom)
 	AtomInfoCombine(G, I->AtomInfo + a2, ai + a1, aic_mask);
       else
-	*(I->AtomInfo + a2) = STD_MOVE(*(ai + a1));
+	*(I->AtomInfo + a2) = std::move(*(ai + a1));
     }
   }
 
@@ -9427,7 +9421,7 @@ void ObjectMoleculeAppendAtoms(ObjectMolecule * I, AtomInfoType * atInfo, CoordS
     dest = I->AtomInfo + I->NAtom;
     src = atInfo;
     for(a = 0; a < cs->NIndex; a++)
-      *(dest++) = STD_MOVE(*(src++));
+      *(dest++) = std::move(*(src++));
     I->NAtom = nAtom;
     VLAFreeP(atInfo);
   } else {
@@ -11911,7 +11905,6 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
     I->UndoState[a] = -1;
   }
   I->UndoIter = 0;
-  /* ListInit(I->UndoData); */
   return (I);
 }
 
@@ -11935,7 +11928,6 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
   I->Obj.ViewElem = NULL;
   I->Obj.gridSlotSelIndicatorsCGO = NULL;
 
-  /* ListInit(I->UndoData); */
   for(a = 0; a <= cUndoMask; a++)
     I->UndoCoord[a] = NULL;
   I->CSet = VLACalloc(CoordSet *, I->NCSet);   /* auto-zero */
@@ -12012,16 +12004,13 @@ void ObjectMoleculeFree(ObjectMolecule * I)
       I->CSet[a] = NULL;
     }
   }
-  /* RemoveAllUndosForObjectMolecule(I); */
   if(I->Symmetry)
     SymmetryFree(I->Symmetry);
   VLAFreeP(I->Neighbor);
   VLAFreeP(I->DiscreteAtmToIdx);
   VLAFreeP(I->DiscreteCSet);
   VLAFreeP(I->CSet);
-#ifndef _PYMOL_NO_CXX11
   I->m_ciffile.reset(); // free data
-#endif
 
   {
     int nAtom = I->NAtom;

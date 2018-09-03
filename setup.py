@@ -26,12 +26,6 @@ class options:
     no_glut = False
     use_msgpackc = 'guess'
     help_distutils = False
-    no_cxx11 = False
-
-# OS X <= 10.8
-if sys.platform == 'darwin' and tuple(
-        map(int, platform.mac_ver()[0].split('.'))) < (10, 9):
-    options.no_cxx11 = True
 
 try:
     import argparse
@@ -49,9 +43,6 @@ try:
     parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'guess', 'no'),
             help="c++11: use msgpack-c header-only library; c: link against "
             "shared library; no: disable fast MMTF load support")
-    parser.add_argument('--no-cxx11', action="store_true", help="Disable "
-            "C++11 std library features. Will still require C++11 'auto' "
-            "keyword support.")
     parser.add_argument('--help-distutils', action="store_true",
             help="show help for distutils options and exit")
     options, sys.argv[1:] = parser.parse_known_args(namespace=options)
@@ -131,10 +122,8 @@ def guess_msgpackc():
 
         if m is not None:
             major = int(m.group(1))
-            if major > 1 and not options.no_cxx11:
+            if major > 1:
                 return 'c++11'
-            if major > 0:
-                return 'c'
 
     return 'no'
 
@@ -284,13 +273,6 @@ ext_link_args = []
 ext_objects = []
 data_files = []
 ext_modules = []
-
-if options.no_cxx11:
-    def_macros += [
-        ('_PYMOL_NO_CXX11', None),
-    ]
-    if options.use_msgpackc == 'c++11':
-        options.use_msgpackc = 'no'
 
 if True:
     # VMD plugin support

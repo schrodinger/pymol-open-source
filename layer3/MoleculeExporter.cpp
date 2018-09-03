@@ -34,12 +34,8 @@
 #include "CifDataValueFormatter.h"
 #include "MaeExportHelpers.h"
 
-#ifdef _PYMOL_IP_EXTRAS
+#ifdef _PYMOL_IP_PROPERTIES
 #include "Property.h"
-#endif
-
-#ifdef _PYMOL_NO_CXX11
-#define emplace_back push_back
 #endif
 
 /*
@@ -664,7 +660,7 @@ struct MoleculeExporterCIF : public MoleculeExporter {
     const AtomInfoType * ai = m_iter.getAtomInfo();
     const char * entity_id = NULL;
 
-#ifdef _PYMOL_IP_EXTRAS
+#ifdef _PYMOL_IP_PROPERTIES
     char entity_id_buf[16];
     if (ai->prop_id) {
       entity_id = PropertyGetAsString(G, ai->prop_id, "entity_id", entity_id_buf);
@@ -907,7 +903,7 @@ struct MoleculeExporterSDF : public MoleculeExporterMOL {
   }
 
   void writeProperties() {
-#ifdef _PYMOL_IP_EXTRAS
+#ifdef _PYMOL_IP_PROPERTIES
 #endif
   }
 
@@ -1631,7 +1627,7 @@ protected:
     }
 
     // properties
-#ifdef _PYMOL_IP_EXTRAS
+#ifdef _PYMOL_IP_PROPERTIES
 #endif
   }
 

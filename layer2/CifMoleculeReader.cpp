@@ -215,7 +215,7 @@ inline bool find2(Map& dict,
 static void AtomInfoSetEntityId(PyMOLGlobals * G, AtomInfoType * ai, const char * entity_id) {
   ai->custom = LexIdx(G, entity_id);
 
-#ifdef _PYMOL_IP_EXTRAS
+#ifdef _PYMOL_IP_PROPERTIES
   PropertySet(G, ai, "entity_id", entity_id);
 #endif
 }
@@ -249,7 +249,7 @@ static void ObjectMoleculeConnectDiscrete(ObjectMolecule * I) {
       I->Bond = bond;
     } else {
       VLASize(I->Bond, BondType, I->NBond + nbond);
-      memcpy(I->Bond + I->NBond, bond, nbond * sizeof(*bond));
+      std::copy(bond, bond + nbond, I->Bond + I->NBond);
       VLAFreeP(bond);
     }
 
@@ -628,8 +628,8 @@ static bool get_assembly_chains(PyMOLGlobals * G,
 
     const char * asym_id_list = arr_asym_id_list->as_s(i);
     std::vector<std::string> chains = strsplit(asym_id_list, ',');
-    for (auto it = chains.begin(); it != chains.end(); ++it) {
-      assembly_chains.insert(LexIdx(G, it->c_str()));
+    for (auto& chain : chains) {
+      assembly_chains.insert(LexIdx(G, chain.c_str()));
     }
   }
 
@@ -704,8 +704,8 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
     oper_collection_t collection = parse_oper_expression(oper_expr);
     std::vector<std::string> chains = strsplit(asym_id_list, ',');
     std::set<lexidx_t> chains_set;
-    for (auto it = chains.begin(); it != chains.end(); ++it) {
-      auto result = OVLexicon_BorrowFromCString(G->Lexicon, it->c_str());
+    for (auto& chain : chains) {
+      auto result = OVLexicon_BorrowFromCString(G->Lexicon, chain.c_str());
       if (OVreturn_IS_OK(result)) {
         chains_set.insert(result.word);
       }
@@ -2267,12 +2267,7 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
   }
 
   const char * filename = NULL;
-#ifndef _PYMOL_NO_CXX11
   auto cif = std::make_shared<cif_file>(filename, st);
-#else
-  cif_file _cif_stack(filename, st);
-  auto cif = &_cif_stack;
-#endif
 
   for (auto it = cif->datablocks.begin(); it != cif->datablocks.end(); ++it) {
     ObjectMolecule * obj = ObjectMoleculeReadCifData(G, it->second, discrete, quiet);
@@ -2283,7 +2278,7 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
       continue;
     }
 
-#if !defined(_PYMOL_NOPY) && !defined(_PYMOL_NO_CXX11)
+#ifndef _PYMOL_NOPY
     // we only provide access from the Python API so far
     if (SettingGetGlobal_b(G, cSetting_cif_keepinmemory)) {
       obj->m_cifdata = it->second;
@@ -2333,8 +2328,8 @@ const bond_dict_t::mapped_type * bond_dict_t::get(PyMOLGlobals * G, const char *
       // update
       if ((downloaded = (filename && filename[0]))) {
         cif_file cif(filename);
-        for (auto it = cif.datablocks.begin(); it != cif.datablocks.end(); ++it)
-          read_chem_comp_bond_dict(it->second, *this);
+        for (auto &item : cif.datablocks)
+          read_chem_comp_bond_dict(item.second, *this);
       }
 
       Py_DECREF(pyfilename);

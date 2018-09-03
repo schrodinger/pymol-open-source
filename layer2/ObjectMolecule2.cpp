@@ -47,12 +47,6 @@
 #include <iostream>
 #include <map>
 
-#ifdef _PYMOL_NO_CXX11
-#define STD_MOVE(x) (x)
-#else
-#define STD_MOVE(x) std::move(x)
-#endif
-
 #define ntrim ParseNTrim
 #define nextline ParseNextLine
 #define ncopy ParseNCopy
@@ -3719,8 +3713,8 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
       if (ai->name) lexIDs.insert(ai->name);
       ++ai;
     }
-    for (auto it = lexIDs.begin(); it != lexIDs.end(); ++it){ // need to calculate totalstlen so we can allocate
-      const char *lexstr = LexStr(G, *it);
+    for (auto lexID : lexIDs){ // need to calculate totalstlen so we can allocate
+      const char *lexstr = LexStr(G, lexID);
       int lexlen = strlen(lexstr);
       totalstlen += lexlen + 1;
     }
@@ -3921,10 +3915,8 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     (*result) = I;
   else {
     /* cleanup */
-#ifdef _PYMOL_IP_EXTRAS // incomplete objects can cause crash - prefer the memory leak
     if (I)
         ObjectMoleculeFree(I);
-#endif
     (*result) = NULL;
   }
   return (ok);
@@ -4485,7 +4477,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
       if (ok){
 	/* autozero here is important */
 	for(a = 0; a < i_NAtom; a++)
-	  atInfo[a] = STD_MOVE(I->AtomInfo[index[a]]);
+	  atInfo[a] = std::move(I->AtomInfo[index[a]]);
       }
       VLAFreeP(I->AtomInfo);
       I->AtomInfo = atInfo;
