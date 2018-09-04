@@ -1062,6 +1062,15 @@ class _BuilderPanel(QtWidgets.QWidget):
                 btn.clicked.connect(slot)
                 self.protein_layout.addWidget(btn, row, col)
 
+        lab = QtWidgets.QLabel('Secondary Structure:')
+        lab_cols = 3
+        self.ss_cbox = QtWidgets.QComboBox()
+        self.ss_cbox.addItem("Alpha Helix")
+        self.ss_cbox.addItem("Beta Sheet (Anti-Parallel)")
+        self.ss_cbox.addItem("Beta Sheet (Parallel)")
+        self.protein_layout.addWidget(lab, 2, 0, 1, lab_cols)
+        self.protein_layout.addWidget(self.ss_cbox, 2, lab_cols, 1, 4)
+
         buttons = [
             [
               ( "@Atoms:", None, None),
@@ -1174,7 +1183,8 @@ class _BuilderPanel(QtWidgets.QWidget):
         if len(picked)==1:
             try:
                 with undocontext(self.cmd, "bymol %s" % picked[0]):
-                    editor.attach_amino_acid(picked[0], aa, _self=self.cmd)
+                    editor.attach_amino_acid(picked[0], aa,
+                            ss=self.ss_cbox.currentIndex() + 1, _self=self.cmd)
             except:
                 fin = -1
             self.doZoom()
