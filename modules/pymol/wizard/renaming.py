@@ -23,7 +23,6 @@ class Renaming(Wizard):
             self.new_name = self.new_name[:-1]
         elif k==27:
             cmd.set_wizard()
-            cmd.refresh()
         elif k==32:
             self.new_name = self.new_name + "_"
         elif k>32:
@@ -37,8 +36,6 @@ class Renaming(Wizard):
                 cmd.do("scene %s,rename,new_key=%s"%
                        (self.old_name,self.new_name),log=0)                
             cmd.set_wizard()
-            cmd.refresh()
-            return 1
         cmd.refresh_wizard()
         return 1
         

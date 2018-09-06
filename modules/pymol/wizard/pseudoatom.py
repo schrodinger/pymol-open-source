@@ -23,7 +23,6 @@ class Pseudoatom(Wizard):
             self.text = self.text[:-1]
         elif k==27:
             self.cmd.set_wizard()
-            self.cmd.refresh()
         elif k==32:
             self.text = self.text + " "
         elif k>32:
@@ -34,8 +33,6 @@ class Pseudoatom(Wizard):
                 obj_name = self.cmd.get_unused_name(string.lower(self.text[0:14]),0)
                 self.cmd.pseudoatom(obj_name,pos=self.pos,label=self.text)
             self.cmd.set_wizard()
-            self.cmd.refresh()
-            return 1
         self.cmd.refresh_wizard()
         return 1
         
