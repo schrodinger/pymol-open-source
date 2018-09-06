@@ -347,99 +347,47 @@ static int ScrollBarClick(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
   CScrollBar *I = (CScrollBar *) block->reference;
+  int grab = 0;
 
-  if(I->HorV) {
-    if(x > I->BarMax) {
-      switch (button) {
-      case P_GLUT_MIDDLE_BUTTON:
-        {
-          I->Value = (I->ListSize * (x - block->rect.left)) /
-            (block->rect.right - block->rect.left) - I->DisplaySize * 0.5F;
-          if(I->Value > I->ValueMax)
-            I->Value = I->ValueMax;
-          OrthoGrab(G, I->Block);
-          I->StartPos = x;
-          I->StartValue = I->Value;
-        }
-        break;
-      default:
-        I->Value += I->DisplaySize;
-        if(I->Value > I->ValueMax)
-          I->Value = I->ValueMax;
-      }
-
-      OrthoDirty(G);
-    } else if(x < I->BarMin) {
-      switch (button) {
-      case P_GLUT_MIDDLE_BUTTON:
-        {
-          I->Value = (I->ListSize * (x - block->rect.left)) /
-            (block->rect.right - block->rect.left) - I->DisplaySize * 0.5F;
-          if(I->Value < 0.0)
-            I->Value = 0.0F;
-          OrthoGrab(G, I->Block);
-          I->StartPos = x;
-          I->StartValue = I->Value;
-        }
-        break;
-      default:
-        I->Value -= I->DisplaySize;
-        if(I->Value < 0.0)
-          I->Value = 0.0F;
-      }
-      OrthoDirty(G);
+  if(button == P_GLUT_MIDDLE_BUTTON) {
+    if(I->HorV) {
+      if(x < I->BarMin || x > I->BarMax)
+        ScrollBarSetValue(I, (I->ListSize * (x - block->rect.left)) /
+            (block->rect.right - block->rect.left) - I->DisplaySize * 0.5F);
+      grab = x;
     } else {
-      OrthoGrab(G, I->Block);
-      I->StartPos = x;
-      I->StartValue = I->Value;
-      OrthoDirty(G);
+      if(y > I->BarMin || y < I->BarMax)
+        ScrollBarSetValue(I, (I->ListSize * (y - block->rect.top)) /
+            (block->rect.bottom - block->rect.top) - I->DisplaySize * 0.5F);
+      grab = y;
     }
   } else {
-    if(y > I->BarMin) {
-      switch (button) {
-      case P_GLUT_MIDDLE_BUTTON:
-        {
-          I->Value = (I->ListSize * (y - block->rect.top)) /
-            (block->rect.bottom - block->rect.top) - I->DisplaySize * 0.5F;
-          if(I->Value < 0.0)
-            I->Value = 0.0F;
-          OrthoGrab(G, I->Block);
-          I->StartPos = y;
-          I->StartValue = I->Value;
-        }
-        break;
-      default:
-        I->Value -= I->DisplaySize;
-        if(I->Value < 0.0)
-          I->Value = 0.0F;
-      }
-      OrthoDirty(G);
-    } else if(y < I->BarMax) {
-      switch (button) {
-      case P_GLUT_MIDDLE_BUTTON:
-        {
-          I->Value = (I->ListSize * (y - block->rect.top)) /
-            (block->rect.bottom - block->rect.top) - I->DisplaySize * 0.5F;
-          if(I->Value > I->ValueMax)
-            I->Value = I->ValueMax;
-          OrthoGrab(G, I->Block);
-          I->StartPos = y;
-          I->StartValue = I->Value;
-        }
-        break;
-      default:
+    if(I->HorV) {
+      if(x > I->BarMax) {
         I->Value += I->DisplaySize;
-        if(I->Value > I->ValueMax)
-          I->Value = I->ValueMax;
+      } else if(x < I->BarMin) {
+        I->Value -= I->DisplaySize;
+      } else {
+        grab = x;
       }
-      OrthoDirty(G);
     } else {
-      OrthoGrab(G, I->Block);
-      I->StartPos = y;
-      I->StartValue = I->Value;
-      OrthoDirty(G);
+      if(y > I->BarMin) {
+        I->Value -= I->DisplaySize;
+      } else if(y < I->BarMax) {
+        I->Value += I->DisplaySize;
+      } else {
+        grab = y;
+      }
     }
   }
+
+  if(grab) {
+    OrthoGrab(G, I->Block);
+    I->StartPos = grab;
+    I->StartValue = I->Value;
+  }
+
+  OrthoDirty(G);
   return 0;
 }
 

@@ -460,13 +460,6 @@ static void MainButton(int button, int state, int x, int y)
         ((glMod & P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
         ((glMod & P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
 
-      switch (button) {
-      case P_GLUT_BUTTON_SCROLL_FORWARD:
-      case P_GLUT_BUTTON_SCROLL_BACKWARD:
-        x = G->Option->winX / 2;
-        y = G->Option->winY / 2;        /* force into scene */
-        break;
-      }
       PyMOL_Button(PyMOLInstance, button, state, x, y, I->Modifiers);
     }
 

@@ -248,6 +248,16 @@ static int SeqClick(Block * block, int button, int x, int y, int mod)
   int pass = 0;
   int row_num;
   int col_num;
+
+  switch(button) {
+    case P_GLUT_BUTTON_SCROLL_FORWARD:
+      ScrollBarMoveBy(I->ScrollBar, -1);
+      return 1;
+    case P_GLUT_BUTTON_SCROLL_BACKWARD:
+      ScrollBarMoveBy(I->ScrollBar, 1);
+      return 1;
+  }
+
   if(I->ScrollBarActive) {
     if((y - I->Block->rect.bottom) < DIP2PIXEL(I->ScrollBarWidth)) {
       pass = 1;
