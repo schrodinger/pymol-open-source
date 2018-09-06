@@ -45,6 +45,7 @@ class PyMOLGLWidget(BaseGLWidget):
 
     def __init__(self, parent):
         self.gui = parent
+        self.fb_scale = 1.0
 
         # OpenGL context setup
         if USE_QOPENGLWIDGET:
@@ -227,7 +228,7 @@ class PyMOLGLWidget(BaseGLWidget):
             window.screenChanged.connect(self.updateFbScale)
         except AttributeError:
             # Fallback for Qt4
-            self.fb_scale = 1.0
+            pass
 
     def _pymolProcess(self):
         idle = self.pymol.idle()
