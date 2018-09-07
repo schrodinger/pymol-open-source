@@ -266,7 +266,7 @@ ext_comp_args = [
     # optimizations
     "-ffast-math",
     "-funroll-loops",
-    "-O3",
+    "-O0" if os.getenv('DEBUG', '') else "-O3",
     "-fcommon",
 ]
 ext_link_args = []
