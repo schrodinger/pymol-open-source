@@ -70,7 +70,7 @@ def create_shadertext(shaderdir, shaderdir2, outputheader, outputfile):
     for sdir in [shaderdir, shaderdir2]:
         for ext in ['gs', 'vs', 'fs', 'shared']:
             shaderfiles.update(map(os.path.basename,
-                glob.glob(os.path.join(sdir, '*.' + ext))))
+                sorted(glob.glob(os.path.join(sdir, '*.' + ext)))))
 
     varname = '_shader_cache_raw'
     outputheader.write('extern const char * %s[];\n' % varname)
