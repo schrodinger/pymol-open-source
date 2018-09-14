@@ -226,6 +226,9 @@ class PyMOLGLWidget(BaseGLWidget):
 
             self.updateFbScale(window)
             window.screenChanged.connect(self.updateFbScale)
+            window.screen().physicalDotsPerInchChanged.connect(
+                    lambda dpi: self.updateFbScale(window))
+
         except AttributeError:
             # Fallback for Qt4
             pass
