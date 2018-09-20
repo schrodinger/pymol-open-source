@@ -79,6 +79,35 @@
      <item row="0" column="1">
       <widget class="QLineEdit" name="input_object_name"/>
      </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string notr="true">Multiple entries</string>
+       </property>
+       <property name="buddy">
+        <cstring>input_multiplex</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="input_multiplex">
+       <item>
+        <property name="text">
+         <string notr="true">automatic handling</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">as one multi-state object</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">as separate objects</string>
+        </property>
+       </item>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>

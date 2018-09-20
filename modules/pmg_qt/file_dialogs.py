@@ -201,6 +201,9 @@ def load_mae_dialog(parent, filename):
                 ', \\\n    atom_props=%s' % (
                     form.input_object_props.text(),
                     form.input_atom_props.text()))
+        multiplex = [-2, 0, 1][form.input_multiplex.currentIndex()]
+        if multiplex != -2:
+            command += ', \\\n    multiplex={}'.format(multiplex)
         return command
 
     def update_output_command(*args):
@@ -211,6 +214,7 @@ def load_mae_dialog(parent, filename):
         form._dialog.close()
 
     # hook up events
+    form.input_multiplex.currentIndexChanged.connect(update_output_command)
     form.input_mimic.stateChanged.connect(update_output_command)
     form.input_object_name.textChanged.connect(update_output_command)
     form.input_object_props.textChanged.connect(update_output_command)
