@@ -552,3 +552,28 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(cif_get_array("m2", "_atom_site.label_asym_id"),       ['.'] * N)
         self.assertEqual(cif_get_array("m2", "_atom_site.pdbx_pdb_ins_code"),   [None] * N)
         self.assertEqual(cif_get_array("m2", "_atom_site.label_alt_id"),        [None] * N)
+
+    @testing.foreach.product((0, 1), (0, 1))
+    @testing.requires_version('2.3')
+    def testLoadMae(self, multiplex, discrete):
+        cmd.load(self.datafile('multimae.maegz'), 'm',
+                multiplex=multiplex, discrete=discrete)
+
+        nstate = 4
+        natoms = 79
+        nmodel = 1
+        ndiscrete = discrete
+
+        if multiplex:
+            natoms *= nstate
+            ndiscrete *= nstate
+            nmodel = nstate
+            nstate = 1
+        elif discrete:
+            self.assertEqual(cmd.count_atoms(state=1), natoms)
+            natoms *= nstate
+
+        self.assertEqual(cmd.count_states(), nstate)
+        self.assertEqual(cmd.count_discrete('*'), ndiscrete)
+        self.assertEqual(cmd.count_atoms(), natoms)
+        self.assertEqual(len(cmd.get_object_list()), nmodel)
