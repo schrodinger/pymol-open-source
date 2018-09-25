@@ -10,6 +10,7 @@
 #include <set>
 #include <vector>
 #include <memory>
+#include <array>
 
 #include "os_predef.h"
 #include "os_std.h"
@@ -539,16 +540,8 @@ public:
 };
 typedef std::map<sshashkey, sshashvalue> sshashmap;
 
-// std::array for pre-C++11
-template <typename T, size_t N>
-class myarray {
-  T m_data[N];
-  public:
-  T * data() { return m_data; }
-};
-
 // PDBX_STRUCT_OPER_LIST type
-typedef std::map<std::string, myarray<float, 16> > oper_list_t;
+typedef std::map<std::string, std::array<float, 16> > oper_list_t;
 
 // type for parsed PDBX_STRUCT_OPER_LIST
 typedef std::vector<std::vector<std::string> > oper_collection_t;
