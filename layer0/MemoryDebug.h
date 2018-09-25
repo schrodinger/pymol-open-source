@@ -60,13 +60,13 @@ typedef struct VLARec {
 
 
 /* NOTE: in VLACheck, rec is a zero based array index, not a record count */
-#define VLACheck(ptr,type,rec) (ptr=(type*)(((((ov_size)rec)>=((VLARec*)(ptr))[-1].size) ? VLAExpand(ptr,((ov_size)rec)) : (ptr))))
+#define VLACheck(ptr,type,rec) VLACheck2<type>(ptr, rec)
 
 #define VLAlloc(type,init_size) (type*)VLAMalloc(init_size,sizeof(type),5,0)
 #define VLACalloc(type,init_size) (type*)VLAMalloc(init_size,sizeof(type),5,1)
-#define VLASize(ptr,type,size) {ptr=(type*)VLASetSize(ptr,size);}
-#define VLASizeForSure(ptr,type,size) {ptr=(type*)VLASetSizeForSure(ptr,size);}
-#define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
+#define VLASize(ptr,type,size) VLASize2<type>(ptr,size)
+#define VLASizeForSure(ptr,type,size) VLASizeForSure2<type>(ptr,size)
+
 #define VLACopy(ptr,type) (type*)VLANewCopy(ptr);
 #define VLAInsert(ptr,type,index,count) {ptr=(type*)VLAInsertRaw(ptr,index,count);}
 #define VLADelete(ptr,type,index,count) {ptr=(type*)VLADeleteRaw(ptr,index,count);}
@@ -192,4 +192,32 @@ T * VLACopy2(const T * vla) {
   return VLACopy((void*)vla, T);
 }
 
+template <typename T>
+T* VLACheck2(T*& ptr, size_t pos) {
+  if (pos >= ((VLARec*) ptr)[-1].size) {
+    ptr = static_cast<T*>(VLAExpand(ptr, pos));
+  }
+  return ptr;
+}
+
+template <typename T>
+void VLASize2(T*& ptr, size_t size) {
+  ptr = static_cast<T*>(VLASetSize(ptr, size));
+}
+
+template <typename T>
+void VLASizeForSure2(T*& ptr, size_t size) {
+  ptr = static_cast<T*>(VLASetSizeForSure(ptr, size));
+}
+
+template <typename T>
+void VLAFreeP(T*& ptr) {
+  if (ptr) {
+    VLAFree(ptr);
+    ptr = nullptr;
+  }
+}
+
 #endif
+
+// vi:sw=2:expandtab
