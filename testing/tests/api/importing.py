@@ -555,6 +555,7 @@ class TestImporting(testing.PyMOLTestCase):
 
     @testing.foreach.product((0, 1), (0, 1))
     @testing.requires_version('2.3')
+    @testing.requires('incentive')
     def testLoadMae(self, multiplex, discrete):
         cmd.load(self.datafile('multimae.maegz'), 'm',
                 multiplex=multiplex, discrete=discrete)
