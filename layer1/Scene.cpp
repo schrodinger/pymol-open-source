@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"os_numpy.h"
 
 #include"Util.h"
+#include"LangUtil.h"
 
 #include"Word.h"
 #include"main.h"
@@ -61,11 +62,6 @@ Z* -------------------------------------------------------------------
 #include <string>
 #include <vector>
 #include <algorithm>
-
-#include <algorithm>
-#include <iostream>
-
-using namespace std;
 
 static void glReadBufferError(PyMOLGlobals *G, GLenum b, GLenum e){
   PRINTFB(G, FB_OpenGL, FB_Warnings)
@@ -1906,7 +1902,7 @@ static void deinterlace(unsigned int *dst, unsigned int *src,
   }
 }
 
-int ScenePNG(PyMOLGlobals * G, char *png, float dpi, int quiet,
+int ScenePNG(PyMOLGlobals * G, const char *png, float dpi, int quiet,
              int prior_only, int format)
 {
   CScene *I = G->Scene;
@@ -5708,9 +5704,8 @@ static int SceneDeferredImage(DeferredImage * di)
 {
   PyMOLGlobals *G = di->G;
   SceneMakeSizedImage(G, di->width, di->height, di->antialias);
-  if(di->filename) {
-    ScenePNG(G, di->filename, di->dpi, di->quiet, false, di->format);
-    FreeP(di->filename);
+  if(!di->filename.empty()) {
+    ScenePNG(G, di->filename.c_str(), di->dpi, di->quiet, false, di->format);
   } else if(call_raw_image_callback(G)) {
   } else if(G->HaveGUI && SettingGetGlobal_b(G, cSetting_auto_copy_images)) {
 #ifdef _PYMOL_IP_EXTRAS
@@ -5729,24 +5724,20 @@ static int SceneDeferredImage(DeferredImage * di)
 int SceneDeferImage(PyMOLGlobals * G, int width, int height,
                     const char *filename, int antialias, float dpi, int format, int quiet)
 {
-  DeferredImage *di = Calloc(DeferredImage, 1);
+  auto di = pymol::make_unique<DeferredImage>(G);
   if(di) {
-    DeferredInit(G, &di->deferred);
-    di->G = G;
     di->width = width;
     di->height = height;
     di->antialias = antialias;
-    di->deferred.fn = (DeferredFn *) SceneDeferredImage;
+    di->fn = (DeferredFn *) SceneDeferredImage;
     di->dpi = dpi;
     di->format = format;
     di->quiet = quiet;
-    if(filename) {
-      int stlen = strlen(filename);
-      di->filename = Alloc(char, stlen + 1);
-      strcpy(di->filename, filename);
+    if(filename){
+      di->filename = filename;
     }
   }
-  OrthoDefer(G, &di->deferred);
+  OrthoDefer(G, std::move(di));
   return 1;
 }
 
@@ -5759,18 +5750,17 @@ static int SceneDeferClickWhen(Block * block, int button, int x, int y, double w
                                int mod)
 {
   PyMOLGlobals *G = block->G;
-  DeferredMouse *dm = Calloc(DeferredMouse, 1);
+  auto dm = pymol::make_unique<DeferredMouse>(G);
   if(dm) {
-    DeferredInit(G, &dm->deferred);
     dm->block = block;
     dm->button = button;
     dm->x = x;
     dm->y = y;
     dm->when = when;
     dm->mod = mod;
-    dm->deferred.fn = (DeferredFn *) SceneDeferredClick;
+    dm->fn = (DeferredFn *) SceneDeferredClick;
   }
-  OrthoDefer(G, &dm->deferred);
+  OrthoDefer(G, std::move(dm));
   return 1;
 }
 
@@ -5783,17 +5773,16 @@ static int SceneDeferredDrag(DeferredMouse * dm)
 int SceneDeferDrag(Block * block, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  DeferredMouse *dm = Calloc(DeferredMouse, 1);
+  auto dm = pymol::make_unique<DeferredMouse>(G);
   if(dm) {
-    DeferredInit(G, &dm->deferred);
     dm->block = block;
     dm->x = x;
     dm->y = y;
     dm->mod = mod;
     dm->when = UtilGetSeconds(G);
-    dm->deferred.fn = (DeferredFn *) SceneDeferredDrag;
+    dm->fn = (DeferredFn *) SceneDeferredDrag;
   }
-  OrthoDefer(G, &dm->deferred);
+  OrthoDefer(G, std::move(dm));
   return 1;
 }
 
@@ -5806,18 +5795,17 @@ static int SceneDeferredRelease(DeferredMouse * dm)
 int SceneDeferRelease(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  DeferredMouse *dm = Calloc(DeferredMouse, 1);
+  auto dm = pymol::make_unique<DeferredMouse>(G);
   if(dm) {
-    DeferredInit(G, &dm->deferred);
     dm->block = block;
     dm->button = button;
     dm->x = x;
     dm->y = y;
     dm->mod = mod;
     dm->when = UtilGetSeconds(G);
-    dm->deferred.fn = (DeferredFn *) SceneDeferredRelease;
+    dm->fn = (DeferredFn *) SceneDeferredRelease;
   }
-  OrthoDefer(G, &dm->deferred);
+  OrthoDefer(G, std::move(dm));
   return 1;
 }
 

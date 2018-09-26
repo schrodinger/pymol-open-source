@@ -20,18 +20,14 @@ Z* -------------------------------------------------------------------
 
 #include "PyMOLGlobals.h"
 
-typedef struct _CDeferred CDeferred;
+struct CDeferred {
+  PyMOLGlobals *G { nullptr };
+  int (*fn)(CDeferred *) = nullptr;
+  CDeferred *next { nullptr };
+  void exec();
+  CDeferred(PyMOLGlobals * _G) : G(_G){};
+};
 
 typedef int DeferredFn(CDeferred * D);
-
-void DeferredInit(PyMOLGlobals * G, CDeferred * I);
-void DeferredFree(CDeferred * I);
-CDeferred *DeferredExec(CDeferred * I);
-
-struct _CDeferred {
-  PyMOLGlobals *G;
-  DeferredFn *fn;
-  CDeferred *next;
-};
 
 #endif

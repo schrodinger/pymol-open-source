@@ -101,7 +101,7 @@ struct _COrtho {
   int cmdActiveBusy;
   CQueue *feedback;
   int Pushed;
-  CDeferred *deferred;
+  std::vector<std::unique_ptr<CDeferred>> deferred; //Ortho manages DeferredObjs
   int RenderMode;
   GLint ViewPort[4];
   int WrapXFlag;
@@ -238,32 +238,24 @@ void OrthoSetLoopRect(PyMOLGlobals * G, int flag, BlockRect * rect)
 int OrthoDeferredWaiting(PyMOLGlobals * G)
 {
   COrtho *I = G->Ortho;
-  return (I->deferred != NULL);
+  return (!I->deferred.empty());
 }
 
 void OrthoExecDeferred(PyMOLGlobals * G)
 {
   COrtho *I = G->Ortho;
-  CDeferred *deferred = I->deferred;
-
-  I->deferred = NULL;
   /* execute all deferred actions that happened to require a
    * valid OpenGL context (such as atom picks, etc.) */
-
-  DeferredExec(deferred);
+  for(const auto& d : I->deferred){
+    d->exec();
+  }
+  I->deferred.clear();
 }
 
-void OrthoDefer(PyMOLGlobals * G, CDeferred * D)
+void OrthoDefer(PyMOLGlobals * G, std::unique_ptr<CDeferred> && D)
 {
   COrtho *I = G->Ortho;
-  CDeferred *d = I->deferred;
-  if(d) {
-    while(d->next)
-      d = d->next;
-    d->next = D;
-  } else {
-    I->deferred = D;
-  }
+  I->deferred.emplace_back(std::move(D));
   OrthoDirty(G);
 }
 
@@ -2579,7 +2571,6 @@ int OrthoInit(PyMOLGlobals * G, int showSplash)
       I->cmdNestLevel = 0;
     }
     I->feedback = QueueNew(G, 0x3FFFF); /* ~256K for output */
-    I->deferred = NULL;
     I->RenderMode = 0;
     I->WrapXFlag = false;
 
@@ -2674,9 +2665,8 @@ void OrthoFree(PyMOLGlobals * G)
   }
   QueueFree(I->feedback);
   I->feedback = NULL;
-  if(I->deferred) {
-    DeferredFree(I->deferred);
-    I->deferred = NULL;
+  if(!I->deferred.empty()) { // TODO: when Ortho gets refactored, not needed
+    I->deferred.clear();
   }
   if (I->bgData){
     FreeP(I->bgData);

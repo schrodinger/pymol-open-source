@@ -41,42 +41,40 @@ Z* -------------------------------------------------------------------
 #define TRN_BKG 0x30
 #define MAX_ANI_ELEM 300
 
-typedef struct {
-  CDeferred deferred;
-  Block *block;
-  int button;
-  int x;
-  int y;
-  int mod;
-  double when;
-  int mode_override;
-} DeferredMouse;
+struct DeferredMouse : public CDeferred {
+  Block *block { nullptr };
+  int button { 0 };
+  int x { 0 };
+  int y { 0 };
+  int mod { 0 };
+  double when { 0.0 };
+  int mode_override { 0 };
+  DeferredMouse(PyMOLGlobals * G) : CDeferred(G){}
+};
 
-typedef struct {
-  CDeferred deferred;
-  PyMOLGlobals *G;
-  int width;
-  int height;
-  char *filename;               /* NOTE: on heap! must free when done */
-  int quiet;
-  int antialias;
-  float dpi;
-  int entire_window;
-  int format;
-} DeferredImage;
+struct DeferredImage : public CDeferred {
+  int width { 0 };
+  int height { 0 };
+  std::string filename;
+  int quiet { 0 };
+  int antialias { 0 };
+  float dpi { 0.0f };
+  int entire_window { 0 };
+  int format { 0 };
+  DeferredImage(PyMOLGlobals * G) : CDeferred(G){}
+};
 
-typedef struct {
-  CDeferred deferred;
-  PyMOLGlobals *G;
-  int ray_width;
-  int ray_height;
-  int mode;
-  float angle;
-  float shift;
-  int quiet;
-  int show_timing;
-  int antialias;
-} DeferredRay;
+struct DeferredRay : public CDeferred {
+  int ray_width { 0 };
+  int ray_height { 0 };
+  int mode { 0 };
+  float angle { 0.0f };
+  float shift { 0.0f };
+  int quiet { 0 };
+  int show_timing { 0 };
+  int antialias { 0 };
+  DeferredRay(PyMOLGlobals * G) : CDeferred(G){}
+};
 
 typedef struct {
   int len;

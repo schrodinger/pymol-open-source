@@ -9,6 +9,7 @@
 #include"ListMacros.h"
 #include"Color.h"
 #include"P.h"
+#include"LangUtil.h"
 
 static double accumTiming = 0.0;
 
@@ -764,10 +765,8 @@ int SceneDeferRay(PyMOLGlobals * G,
                   int mode,
                   float angle, float shift, int quiet, int show_timing, int antialias)
 {
-  DeferredRay *dr = Calloc(DeferredRay, 1);
+  auto dr = pymol::make_unique<DeferredRay>(G);
   if(dr) {
-    DeferredInit(G, &dr->deferred);
-    dr->G = G;
     dr->ray_width = ray_width;
     dr->ray_height = ray_height;
     dr->mode = mode;
@@ -776,9 +775,9 @@ int SceneDeferRay(PyMOLGlobals * G,
     dr->quiet = quiet;
     dr->show_timing = show_timing;
     dr->antialias = antialias;
-    dr->deferred.fn = (DeferredFn *) SceneDeferredRay;
+    dr->fn = (DeferredFn *) SceneDeferredRay;
   }
-  OrthoDefer(G, &dr->deferred);
+  OrthoDefer(G, std::move(dr));
   return 1;
 }
 
