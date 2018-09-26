@@ -16313,8 +16313,8 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
 	CGOColorv(orthoCGO, I->Block->BackColor);
       else
 	glColor3fv(I->Block->BackColor);
-      BlockFill(I->Block ORTHOCGOARGVAR);
-      BlockDrawLeftEdge(I->Block ORTHOCGOARGVAR);
+      I->Block->fill(orthoCGO);
+      I->Block->drawLeftEdge(orthoCGO);
     }
 
     /* draw the scroll bar */
@@ -16647,7 +16647,7 @@ static void ExecutiveReshape(Block * block, int width, int height)
   PyMOLGlobals *G = block->G;
   CExecutive *I = G->Executive;
 
-  BlockReshape(block, width, height);
+  block->reshape(width, height);
 
   I->Width = block->rect.right - block->rect.left + 1;
   I->Height = block->rect.top - block->rect.bottom + 1;

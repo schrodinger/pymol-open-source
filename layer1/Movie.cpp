@@ -1952,7 +1952,7 @@ static void MovieReshape(Block * block, int width, int height)
 {
   PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
-  BlockReshape(block, width, height);
+  block->reshape(width, height);
   I->Width = block->rect.right - block->rect.left + 1;
   I->Height = block->rect.top - block->rect.bottom + 1;
   if(SettingGetGlobal_b(G, cSetting_presentation)) { 

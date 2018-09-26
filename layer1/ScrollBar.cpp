@@ -89,7 +89,7 @@ void ScrollBarFill(struct CScrollBar *I ORTHOCGOARG)
     CGOColorv(orthoCGO, I->BackColor);
   else
     glColor3fv(I->BackColor);
-  BlockFill(I->Block ORTHOCGOARGVAR);
+  I->Block->fill(orthoCGO);
 }
 
 static void ScrollBarDraw(Block * block ORTHOCGOARG)

@@ -863,15 +863,15 @@ static void WizardDraw(Block * block ORTHOCGOARG)
       CGOColorv(orthoCGO, I->Block->BackColor);
     else
       glColor3fv(I->Block->BackColor);
-      BlockFill(I->Block ORTHOCGOARGVAR);
-      BlockDrawLeftEdge(I->Block ORTHOCGOARGVAR);
+      I->Block->fill(orthoCGO);
+      I->Block->drawLeftEdge(orthoCGO);
     } else {
-      BlockDrawLeftEdge(I->Block ORTHOCGOARGVAR);
+      I->Block->drawLeftEdge(orthoCGO);
     if (orthoCGO)
       CGOColor(orthoCGO, .5f, .5f, .5f);
     else
       glColor3f(0.5, 0.5, 0.5);
-      BlockDrawTopEdge(I->Block);
+      I->Block->drawTopEdge();
       text_color2 = OrthoGetOverlayColor(G);
     }
 

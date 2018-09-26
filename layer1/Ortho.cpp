@@ -1248,19 +1248,17 @@ void OrthoUngrab(PyMOLGlobals * G)
 /*========================================================================*/
 Block *OrthoNewBlock(PyMOLGlobals * G, Block * block)
 {
-  if(!block)
-    ListElemAlloc(G, block, Block);
-  UtilZeroMem(block, sizeof(Block));
-  BlockInit(G, block);
-  return (block);
+  // TODO: Make all PyMOL concepts hold std::unique_ptr<Block>
+  return new Block(G);
 }
 
 
 /*========================================================================*/
 void OrthoFreeBlock(PyMOLGlobals * G, Block * block)
 {
+  // TODO: Delete this when PyMOL concepts hold std::unique_ptr<Block>
   if(block)
-    ListElemFree(block);
+    delete block;
 }
 
 
@@ -1680,7 +1678,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 	   SettingGetGlobal_b(G, cSetting_use_shaders)){
 	  CGO *orthoFastCGO = CGONew(G);
 	    CGOFree(I->orthoFastCGO);
-	  if (BlockRecursiveFastDraw(I->Blocks ORTHOFASTCGOARGVAR)){
+	  if (I->Blocks->recursiveFastDraw(orthoFastCGO)){
 	    int ok = true;
 	    CGO *expandedCGO;
 	    CGOStop(orthoFastCGO);
@@ -1849,10 +1847,10 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         block = SeqGetBlock(G);
         active_tmp = block->active;
         block->active = false;
-        BlockRecursiveDraw(I->Blocks ORTHOCGOARGVAR);
+        I->Blocks->recursiveDraw(orthoCGO);
         block->active = active_tmp;
       } else {
-        BlockRecursiveDraw(I->Blocks ORTHOCGOARGVAR);
+        I->Blocks->recursiveDraw(orthoCGO);
       }
 
       PRINTFD(G, FB_Ortho)
@@ -2169,50 +2167,50 @@ static void OrthoLayoutPanel(PyMOLGlobals * G,
        if the wizard doesn't exist, then this region extends all the way down to the 
        top of the ButMode block */
     block = ExecutiveGetBlock(G);
-    BlockSetMargin(block, m_top, m_left, executiveBottom, m_right);
+    block->setMargin(m_top, m_left, executiveBottom, m_right);
     block->active = true;
 
     /* The Wizard Block is shown when a wizard is loaded, it is the area between the
        Executive Block and the ButMode Block, and is used for Wizard-related info/buttons */
     block = WizardGetBlock(G);
-    BlockSetMargin(block, height - executiveBottom + 1, m_left, wizardBottom, m_right);
+    block->setMargin(height - executiveBottom + 1, m_left, wizardBottom, m_right);
     block->active = false;
 
     /* The ButMode block shows info about which Mouse Mode, Selecting Mode, State info,
        and other info like frame rate. It is located under the Wizard Block, and above
        the Control Block */
     block = ButModeGetBlock(G);
-    BlockSetMargin(block, height - wizardBottom + 1, m_left, butModeBottom, m_right);
+    block->setMargin(height - wizardBottom + 1, m_left, butModeBottom, m_right);
     block->active = true;
 
     /* Controls are the Movie/Scene arrow buttons at the very bottom */
     block = ControlGetBlock(G);
-    BlockSetMargin(block, height - butModeBottom + 1, m_left, controlBottom, m_right);
+    block->setMargin(height - butModeBottom + 1, m_left, controlBottom, m_right);
     block->active = true;
   } else {
     /* The Executive Block consists of the area in which object entries are rendered,
        if the wizard doesn't exist, then this region extends all the way down to the 
        top of the ButMode block */
     block = ExecutiveGetBlock(G);
-    BlockSetMargin(block, m_right, m_bottom, m_right, m_bottom);
+    block->setMargin(m_right, m_bottom, m_right, m_bottom);
     block->active = false;
 
     /* The Wizard Block is shown when a wizard is loaded, it is the area between the
        Executive Block and the ButMode Block, and is used for Wizard-related info/buttons */
     block = WizardGetBlock(G);
-    BlockSetMargin(block, m_right, m_bottom, m_right, m_bottom);
+    block->setMargin(m_right, m_bottom, m_right, m_bottom);
     block->active = false;
 
     /* The ButMode block shows info about which Mouse Mode, Selecting Mode, State info,
        and other info like frame rate. It is located under the Wizard Block, and above
        the Control Block */
     block = ButModeGetBlock(G);
-    BlockSetMargin(block, m_right, m_bottom, m_right, m_bottom);
+    block->setMargin(m_right, m_bottom, m_right, m_bottom);
     block->active = false;
 
     /* Controls are the Movie/Scene arrow buttons at the very bottom */
     block = ControlGetBlock(G);
-    BlockSetMargin(block, m_right, m_bottom, m_right, m_bottom);
+    block->setMargin(m_right, m_bottom, m_right, m_bottom);
     block->active = false;
   }
 }
@@ -2296,11 +2294,11 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
 
       if(SettingGetGlobal_b(G, cSetting_seq_view_location)) {
 
-        BlockSetMargin(block, height - sceneBottom - 10, 0, sceneBottom, sceneRight);
+        block->setMargin(height - sceneBottom - 10, 0, sceneBottom, sceneRight);
         if(block->fReshape)
           block->fReshape(block, width, height);
         seqHeight = SeqGetHeight(G);
-        BlockSetMargin(block, height - sceneBottom - seqHeight, 0, sceneBottom,
+        block->setMargin(height - sceneBottom - seqHeight, 0, sceneBottom,
                        sceneRight);
         if(!SettingGetGlobal_b(G, cSetting_seq_view_overlay)) {
           sceneBottom += seqHeight;
@@ -2308,11 +2306,11 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
 
       } else {
 
-        BlockSetMargin(block, 0, 0, height - 10, sceneRight);
+        block->setMargin(0, 0, height - 10, sceneRight);
         if(block->fReshape)
           block->fReshape(block, width, height);
         seqHeight = SeqGetHeight(G);
-        BlockSetMargin(block, 0, 0, height - seqHeight, sceneRight);
+        block->setMargin(0, 0, height - seqHeight, sceneRight);
         if(!SettingGetGlobal_b(G, cSetting_seq_view_overlay)) {
           sceneTop = seqHeight;
         }
@@ -2322,11 +2320,11 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
     OrthoLayoutPanel(G, 0, width - internal_gui_width, textBottom, 0);
 
     block = MovieGetBlock(G);
-    BlockSetMargin(block, height - textBottom, 0, 0, 0);
+    block->setMargin(height - textBottom, 0, 0, 0);
     block->active = textBottom ? true : false;
 
     block = SceneGetBlock(G);
-    BlockSetMargin(block, sceneTop, 0, sceneBottom, sceneRight);
+    block->setMargin(sceneTop, 0, sceneBottom, sceneRight);
 
     block = NULL;
     while(ListIterate(I->Blocks, block, next))
@@ -2369,7 +2367,7 @@ Block *OrthoFindBlock(PyMOLGlobals * G, int x, int y)
 {
   COrtho *I = G->Ortho;
 
-  return (BlockRecursiveFind(I->Blocks, x, y));
+  return (I->Blocks->recursiveFind(x, y));
 }
 
 
@@ -2423,7 +2421,7 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
     I->ActiveButton = button;
     if(I->GrabbedBy) {
       if(I->GrabbedBy->inside)
-        block = BlockRecursiveFind(I->GrabbedBy->inside, x, y);
+        block = I->GrabbedBy->inside->recursiveFind(x, y);
       else
         block = I->GrabbedBy;
     } else if(!block)

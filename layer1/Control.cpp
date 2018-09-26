@@ -219,7 +219,7 @@ static void ControlReshape(Block * block, int width, int height)
 {
   PyMOLGlobals *G = block->G;
   CControl *I = G->Control;
-  BlockReshape(block, width, height);
+  block->reshape(width, height);
   /* this is a pragmatic workaround for mac X11 where the nub gets
      hidden by the window expansion tab */
 
@@ -556,8 +556,7 @@ static void ControlDraw(Block * block ORTHOCGOARG)
       CGOColorv(orthoCGO, I->Block->BackColor);
     else
       glColor3fv(I->Block->BackColor);
-    BlockFill(I->Block ORTHOCGOARGVAR);
-
+    I->Block->fill(orthoCGO);
     if (orthoCGO)
       CGOColorv(orthoCGO, I->Block->TextColor);
     else

@@ -128,7 +128,7 @@ static void SeqReshape(Block * block, int width, int height)
 {
   PyMOLGlobals *G = block->G;
   CSeq *I = G->Seq;
-  BlockReshape(block, width, height);
+  block->reshape(width, height);
 
   {                             /* get current sequence sizes */
     int a;
@@ -322,7 +322,7 @@ static void SeqDraw(Block * block ORTHOCGOARG)
       } else {
 	glColor3fv(bg_color);
       }
-      BlockFill(I->Block ORTHOCGOARGVAR);
+      I->Block->fill(orthoCGO);
     }
     if(I->ScrollBarActive) {
       ScrollBarSetBox(I->ScrollBar, I->Block->rect.bottom + DIP2PIXEL(I->ScrollBarWidth),

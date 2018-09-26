@@ -2665,8 +2665,7 @@ void PyMOL_NeedReshape(CPyMOL * I, int mode, int x, int y, int width, int height
     if (!G->HaveGUI)
       return;
 
-    int h;
-    BlockGetSize(SceneGetBlock(G), &width, &h);
+    width = SceneGetBlock(G)->getWidth();
     if(SettingGetGlobal_b(G, cSetting_internal_gui))
       width += DIP2PIXEL(SettingGetGlobal_i( G, cSetting_internal_gui_width));
   }
@@ -2674,9 +2673,8 @@ void PyMOL_NeedReshape(CPyMOL * I, int mode, int x, int y, int width, int height
   /* if height is negative, force a reshape based on the current height */
 
   if(height < 0) {
-    int w;
     int internal_feedback;
-    BlockGetSize(SceneGetBlock(G), &w, &height);
+    height = SceneGetBlock(G)->getHeight();
     internal_feedback = SettingGetGlobal_i(G, cSetting_internal_feedback);
     if(internal_feedback)
       height += (internal_feedback - 1) * cOrthoLineHeight + cOrthoBottomSceneMargin;

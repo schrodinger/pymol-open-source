@@ -960,7 +960,6 @@ void MainReshape(int width, int height)
 /*========================================================================*/
 void MainDoReshape(int width, int height)
 {                               /* called internally */
-  int h, w;
   int internal_feedback;
   int force = false;
   PyMOLGlobals *G = SingletonPyMOLGlobals;
@@ -972,7 +971,7 @@ void MainDoReshape(int width, int height)
     /* if width is negative, force a reshape based on the current width */
 
     if(width < 0) {
-      BlockGetSize(SceneGetBlock(G), &width, &h);
+      width = SceneGetBlock(G)->getWidth();
       if(SettingGetGlobal_b(G, cSetting_internal_gui))
         width += SettingGetGlobal_i(G, cSetting_internal_gui_width);
       force = true;
@@ -981,7 +980,7 @@ void MainDoReshape(int width, int height)
     /* if height is negative, force a reshape based on the current height */
 
     if(height < 0) {
-      BlockGetSize(SceneGetBlock(G), &w, &height);
+      height = SceneGetBlock(G)->getHeight();
       internal_feedback = SettingGetGlobal_i(G, cSetting_internal_feedback);
       if(internal_feedback)
         height += (internal_feedback - 1) * cOrthoLineHeight + cOrthoBottomSceneMargin;
@@ -1722,7 +1721,8 @@ PyObject *MainAsPyList(void)
   PyObject *result = NULL;
   int width, height;
   result = PyList_New(2);
-  BlockGetSize(SceneGetBlock(G), &width, &height);
+  width = SceneGetBlock(G)->getWidth();
+  height = SceneGetBlock(G)->getHeight();
   if(SettingGetGlobal_b(G, cSetting_seq_view)
      && !SettingGetGlobal_b(G, cSetting_seq_view_overlay))
     height += SeqGetHeight(G);

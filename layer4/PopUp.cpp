@@ -113,7 +113,7 @@ static Block *PopUpRecursiveFind(Block * block, int x, int y)
     if(PopUpRecursiveFind(I->Child, x, y) == I->Child)
       return block;
   }
-  if(BlockRecursiveFind(block, x, y) == block) {
+  if(block->recursiveFind(x, y) == block) {
     OrthoGrab(G, block);
     return block;
   }
@@ -428,7 +428,7 @@ int PopUpRelease(Block * block, int button, int x, int y, int mod)
     case PYMOL_BUTTON_SCROLL_FORWARD:
       scroll_dy *= -1;
     case PYMOL_BUTTON_SCROLL_REVERSE:
-      BlockTranslate(block, 0, scroll_dy);
+      block->translate(0, scroll_dy);
       return 1;
   }
 
@@ -764,7 +764,7 @@ void PopUpDraw(Block * block ORTHOCGOARG)
     else
       glColor3fv(block->BackColor);
 
-    BlockFill(block ORTHOCGOARGVAR);
+    block->fill(orthoCGO);
 
     if (orthoCGO)
       CGOColorv(orthoCGO, block->TextColor);

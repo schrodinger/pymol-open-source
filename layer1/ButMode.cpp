@@ -206,17 +206,17 @@ static void ButModeDraw(Block * block ORTHOCGOARG)
       else
 	glColor3fv(I->Block->BackColor);
 #endif
-      BlockFill(I->Block ORTHOCGOARGVAR);
-      BlockDrawLeftEdge(I->Block ORTHOCGOARGVAR);
+      I->Block->fill(orthoCGO);
+      I->Block->drawLeftEdge(orthoCGO);
     } else {
-      BlockDrawLeftEdge(I->Block ORTHOCGOARGVAR);
+      I->Block->drawLeftEdge(orthoCGO);
       if (orthoCGO)
 	CGOColor(orthoCGO, .5f, .5f, .5f);
 #ifndef PURE_OPENGL_ES_2
       else
 	glColor3f(0.5, 0.5, 0.5);
 #endif
-      BlockDrawTopEdge(I->Block);
+      I->Block->drawTopEdge();
       textColor2 = OrthoGetOverlayColor(G);
       textColor = textColor2;
     }

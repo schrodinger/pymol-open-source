@@ -20,41 +20,53 @@ Z* -------------------------------------------------------------------
 
 #include "PyMOLGlobals.h"
 
-typedef struct {
-  int top, left, bottom, right;
-} BlockRect;
+struct BlockRect{
+  int top = 0;
+  int left = 0;
+  int bottom = 0;
+  int right = 0;
+};
 
-typedef struct Block {
-  PyMOLGlobals *G;
-  struct Block *next, *inside, *parent;
-  void *reference;
+struct Block {
+  PyMOLGlobals * G;
+  Block *next = nullptr, *inside = nullptr, *parent = nullptr;
+  void *reference = nullptr;
   BlockRect rect, margin;
-  int active;
-  float BackColor[3];
-  float TextColor[3];
-  void (*fDraw) (struct Block * block ORTHOCGOARG);
-  short (*fFastDraw) (struct Block * block ORTHOCGOARG);
-  void (*fReshape) (struct Block * block, int width, int height);
-  int (*fClick) (struct Block * block, int button, int x, int y, int mod);
-  int (*fCursor) (struct Block * block, int x, int y, int mod);
-  int (*fDrag) (struct Block * block, int x, int y, int mod);
-  int (*fRelease) (struct Block * block, int button, int x, int y, int mod);
-  int (*fTranslate) (struct Block * block, int dx, int dy);
-} Block;
+  bool active = false;
+  float BackColor[3] = {0.2F, 0.2F, 0.2F };
+  float TextColor[3] = {1.0F, 1.0F, 1.0F };
+
+  void (*fDraw) (Block * block, CGO *orthoCGO) = nullptr;
+  short (*fFastDraw) (Block * block, CGO *orthoCGO) = nullptr;
+  void (*fReshape) (Block * block, int width, int height) = nullptr;
+  int (*fClick) (Block * block, int button, int x, int y, int mod) = nullptr;
+  int (*fCursor) (Block * block, int x, int y, int mod) = nullptr;
+  int (*fDrag) (Block * block, int x, int y, int mod) = nullptr;
+  int (*fRelease) (Block * block, int button, int x, int y, int mod) = nullptr;
+  int (*fTranslate) (Block * block, int dx, int dy) = nullptr;
+
+  Block(PyMOLGlobals* _G) : G(_G){};
+  Block(const Block&) = default;
+  Block& operator=(const Block&) = default;
+  Block(Block&&) = default;
+  Block& operator=(Block&&) = default;
+
+  void globalToLocal(int x, int y, int *lx, int *ly);
+  void recursiveDraw(CGO *orthoCGO);
+  bool recursiveFastDraw(CGO *orthoCGO);
+  Block *recursiveFind(int x, int y);
+  void setMargin(int t, int l, int b, int r);
+  void reshape(int width, int height);
+  void fill(CGO *orthoCGO);
+  int getWidth() const;
+  int getHeight() const;
+  void translate(int dx, int dy);
+  void drawLeftEdge(CGO *orthoCGO);
+  void drawTopEdge();
+  bool rectXYInside(int x, int y) const;
+};
 
 typedef Block **CBlock;
 
-void BlockGlobalToLocal(Block * block, int x, int y, int *lx, int *ly);
-void BlockRecursiveDraw(Block * block ORTHOCGOARG);
-short BlockRecursiveFastDraw(Block * block ORTHOCGOARG);
-Block *BlockRecursiveFind(Block * block, int x, int y);
-void BlockSetMargin(Block * block, int t, int l, int b, int r);
 void BlockReshape(Block * block, int width, int height);
-void BlockFill(Block * I ORTHOCGOARG);
-void BlockDrawLeftEdge(Block * I ORTHOCGOARG);
-void BlockGetSize(Block * I, int *width, int *height);
-void BlockInit(PyMOLGlobals * G, Block * I);
-void BlockTranslate(Block * I, int dx, int dy);
-void BlockDrawTopEdge(Block * I);
-int BlockRectXYInside(BlockRect *rect, int x, int y);
 #endif
