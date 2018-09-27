@@ -10,13 +10,13 @@ class TestNucBuilder(testing.PyMOLTestCase):
 
     def testSingleDNAFASTA(self):
         dna = "ATGC"
-        cmd.fnab(input=dna, type="DNA", form="B", dbl_helix=-1)
+        cmd.fnab(input=dna, mode="DNA", form="B", dbl_helix=-1)
         fasta_str = cmd.get_fastastr().splitlines()
         self.assertEqual(dna, fasta_str[1])
 
     def testSingleRNAFASTA(self):
         rna = "AUGC"
-        cmd.fnab(input=rna, type="RNA")
+        cmd.fnab(input=rna, mode="RNA")
         fasta_str = cmd.get_fastastr().splitlines()
         self.assertEqual(rna, fasta_str[1])
 
@@ -41,7 +41,7 @@ class TestNucBuilder(testing.PyMOLTestCase):
 
     def testDoubleRNAFASTA(self):
         rna = "AUUUUUUUCG"
-        cmd.fnab(input=rna, type="RNA", form="B", dbl_helix=1)
+        cmd.fnab(input=rna, mode="RNA", form="B", dbl_helix=1)
 
         fasta_str = cmd.get_fastastr().splitlines()
         self.assertEqual(len(fasta_str), 2)        
