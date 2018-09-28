@@ -58,6 +58,17 @@ def monkeypatch(parent, name):
 
 @monkeypatch(distutils.sysconfig, 'customize_compiler')
 def customize_compiler(compiler):
+    # remove problematic flags
+    if sys.platform == 'linux' and (
+            'clang' in os.getenv('CC', '') or
+            'clang' in os.getenv('LD', '')):
+        import re
+        re_flto = re.compile(r'-flto\S*')
+        config_vars = distutils.sysconfig.get_config_vars()
+        for (key, value) in config_vars.items():
+            if re_flto.search(str(value)) is not None:
+                config_vars[key] = re_flto.sub('', value)
+
     customize_compiler._super(compiler)
 
     if compiler.compiler_type != "unix":
