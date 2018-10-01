@@ -415,7 +415,7 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
     return r
 
 def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,
-        dir=1,hydro=-1,ss=0,async_=-1,quiet=1,_self=cmd, **kwargs):
+        dir=1,hydro=-1,ss=0,async_=0,quiet=1,_self=cmd, **kwargs):
     '''
 DESCRIPTION
 

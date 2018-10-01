@@ -1323,7 +1323,7 @@ PYMOL API
         return r
     
     def fetch(code, name='', state=0, finish=1, discrete=-1,
-              multiplex=-2, zoom=-1, type='', async_=-1, path='',
+              multiplex=-2, zoom=-1, type='', async_=0, path='',
               file=None, quiet=1, _self=cmd, **kwargs):
         
         '''
