@@ -9668,15 +9668,17 @@ void ExecutiveAddHydrogens(PyMOLGlobals * G, const char *s1, int quiet, int stat
 {
   ObjectMoleculeOpRec op;
 
-  /* Needs 4 passes */
-  int passes = legacy ? 4 : 1;
-  for (int cnt = 0; cnt < passes; ++cnt) {
+  if (legacy) {
+    PRINTFB(G, FB_Executive, FB_Warnings)
+      " %s-Warning: legacy mode was removed\n", __FUNCTION__ ENDFB(G);
+  }
+
+  {
     SelectorTmp tmpsele1(G, s1);
     int sele1 = tmpsele1.getIndex();
     ObjectMoleculeOpRecInit(&op);
-    op.code = OMOP_AddHydrogens;        /* 4 passes completes the job */
+    op.code = OMOP_AddHydrogens;
     op.i1 = state;
-    op.i2 = legacy;
     ExecutiveObjMolSeleOp(G, sele1, &op);
   }
 }

@@ -88,8 +88,6 @@ int ObjectMoleculeGetAtomGeometry(ObjectMolecule * I, int state, int at);
 void ObjectMoleculeBracketResidue(ObjectMolecule * I, AtomInfoType * ai, int *st,
                                   int *nd);
 
-int ObjectMoleculeAddSeleHydrogens(ObjectMolecule * I, int sele, int state);
-
 void ObjectMoleculeInferAmineGeomFromBonds(ObjectMolecule * I, int state);
 
 void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I);
@@ -3269,151 +3267,6 @@ int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force)
 
 
 /*========================================================================*/
-int ObjectMoleculeAddSeleHydrogens(ObjectMolecule * I, int sele, int state)
-{
-  int a, b;
-  int n, nn;
-  CoordSet *cs;
-  CoordSet *tcs;
-  int seleFlag = false;
-  AtomInfoType *ai, *nai, fakeH;
-  int repeatFlag = false;
-  int nH;
-  int *index;
-  float v[3], v0[3];
-  float d;
-  int ok = true;
-
-  UtilZeroMem(&fakeH, sizeof(AtomInfoType));
-  fakeH.protons = 1;
-  ai = I->AtomInfo;
-  for(a = 0; a < I->NAtom; a++) {
-    if(SelectorIsMember(I->Obj.G, ai->selEntry, sele)) {
-      seleFlag = true;
-      break;
-    }
-    ai++;
-  }
-  if(seleFlag) {
-    if(!ObjectMoleculeVerifyChemistry(I, state)) {
-      ErrMessage(I->Obj.G, " AddHydrogens", "missing chemical geometry information.");
-    } else if(I->DiscreteFlag) {
-      ErrMessage(I->Obj.G, " AddHydrogens", "can't modify a discrete object.");
-    } else {
-
-      repeatFlag = true;
-      while(ok && repeatFlag) {
-        repeatFlag = false;
-        nH = 0;
-        if (ok)
-	  ok &= ObjectMoleculeUpdateNeighbors(I);
-        nai = (AtomInfoType *) VLAMalloc(1000, sizeof(AtomInfoType), 1, true);
-	CHECKOK(ok, nai);
-        ai = I->AtomInfo;
-        for(a = 0; ok && a < I->NAtom; a++) {
-          if(SelectorIsMember(I->Obj.G, ai->selEntry, sele)) {
-            n = I->Neighbor[a];
-            nn = I->Neighbor[n++];
-            if(nn < ai->valence) {
-              VLACheck(nai, AtomInfoType, nH);
-	      CHECKOK(ok, nai);
-              UtilNCopy((nai + nH)->elem, "H", 2);
-              (nai + nH)->geom = cAtomInfoSingle;
-              (nai + nH)->valence = 1;
-              (nai + nH)->temp1 = a;    /* borrowing this field temporarily */
-              if (ok)
-		ok &= ObjectMoleculePrepareAtom(I, a, nai + nH);
-              nH++;
-            }
-          }
-          ai++;
-        }
-
-        if(nH) {
-          repeatFlag = true;
-	  if (ok)
-	    cs = CoordSetNew(I->Obj.G);
-	  CHECKOK(ok, cs);
-	  if (ok)
-	    cs->Coord = VLAlloc(float, nH * 3);
-	  CHECKOK(ok, cs->Coord);
-	  if (ok){
-	    cs->NIndex = nH;
-	    index = Alloc(int, nH);
-	    CHECKOK(ok, index);
-	    if (ok){
-	      for(a = 0; a < nH; a++) {
-		index[a] = (nai + a)->temp1;
-	      }
-	    }
-	  }
-          if(ok)
-            cs->enumIndices();
-
-	  if (ok){
-	    cs->TmpLinkBond = VLACalloc(BondType, nH);
-	    CHECKOK(ok, cs->TmpLinkBond);
-	    if (ok){
-	      for(a = 0; a < nH; a++) {
-		cs->TmpLinkBond[a].index[0] = (nai + a)->temp1;
-		cs->TmpLinkBond[a].index[1] = a;
-		cs->TmpLinkBond[a].order = 1;
-		cs->TmpLinkBond[a].stereo = 0;
-		cs->TmpLinkBond[a].id = -1;
-#ifdef _PYMOL_IP_EXTRAS
-		cs->TmpLinkBond[a].oldid = -1;
-#endif
-	      }
-	      cs->NTmpLinkBond = nH;
-	    }
-	  }
-
-          AtomInfoUniquefyNames(I->Obj.G, I->AtomInfo, I->NAtom, nai, NULL, nH);
-
-          if (ok)
-	    ok &= ObjectMoleculeMerge(I, nai, cs, false, cAIC_AllMask, true);   /* will free nai and cs->TmpLinkBond  */
-          if (ok)
-	    ok &= ObjectMoleculeExtendIndices(I, state);
-          if (ok)
-	    ok &= ObjectMoleculeUpdateNeighbors(I);
-
-          // copy of the idx -> atm mapping
-          std::vector<int> mergedIdxToAtm(cs->IdxToAtm, cs->IdxToAtm + cs->NIndex);
-
-          for(b = 0; ok && b < I->NCSet; b++) {       /* add coordinate into the coordinate set */
-            tcs = I->CSet[b];
-            if(tcs) {
-              int idx = 0;
-              for(a = 0; ok && a < nH; a++) {
-                if(!ObjectMoleculeGetAtomVertex(I, b, index[a], v0)) {
-                  continue;
-                }
-                ObjectMoleculeFindOpenValenceVector(I, b, index[a], v, NULL, -1);
-                d = AtomInfoGetBondLength(I->Obj.G, I->AtomInfo + index[a], &fakeH);
-                scale3f(v, d, v);
-                add3f(v0, v, cs->Coord + 3 * idx);
-                cs->IdxToAtm[idx] = mergedIdxToAtm[a];
-                ++idx;
-              }
-              cs->NIndex = idx;
-              if (ok)
-		ok &= CoordSetMerge(I, tcs, cs);
-            }
-          }
-          FreeP(index);
-          cs->fFree();
-          if (ok)
-	    ok &= ObjectMoleculeSort(I);
-          ObjectMoleculeUpdateIDNumbers(I);
-        } else {
-          VLAFreeP(nai);
-	}
-      }
-    }
-  }
-  return ok;
-}
-
 static int AddCoordinateIntoCoordSet(ObjectMolecule * I, int a, CoordSet *tcs,
     int *AtmToIdx, CoordSet *cs, float *backup, int mode, int at0,
 			       int index0, int move_flag, float *va1, float *vh1, 
@@ -9602,10 +9455,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       break;
     case OMOP_AddHydrogens:
       if (ok) {
-        if (!op->i2)
           ok &= ObjectMoleculeAddSeleHydrogensRefactored(I, sele, op->i1);
-        else
-          ok &= ObjectMoleculeAddSeleHydrogens(I, sele, -1);      /* state? */
       }
       break;
     case OMOP_FixHydrogens:
