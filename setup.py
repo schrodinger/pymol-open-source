@@ -19,19 +19,21 @@ import platform
 
 # handle extra arguments
 class options:
-    osx_frameworks = False
+    osx_frameworks = True
     jobs = int(os.getenv('JOBS', 0))
     no_libxml = False
-    pyqt = 'PyQt5,PyQt4,PySide'
-    no_glut = False
+    no_glut = True
     use_msgpackc = 'guess'
     help_distutils = False
 
 try:
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pyqt')
     parser.add_argument('--no-glut', action="store_true")
+    parser.add_argument('--glut', dest='no_glut', action="store_false",
+            help="link with GLUT (legacy GUI)")
+    parser.add_argument('--no-osx-frameworks', dest='osx_frameworks',
+            action="store_false")
     parser.add_argument('--osx-frameworks', action="store_true",
             help="on MacOS use OpenGL and GLUT frameworks instead of shared "
             "libraries from XQuartz. Note that the GLUT framework has no "
