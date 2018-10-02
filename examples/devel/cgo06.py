@@ -104,7 +104,7 @@ cmd.load_cgo(obj,'cgo06')
 # position haemolysin through pore
 if 1:
     
-    cmd.fetch("7ahl",async=0)
+    cmd.fetch("7ahl")
 
     cmd.transform_selection("7ahl",
                             (0.70349078502033213, 0.19033556773811347, -0.68474258132841503, -11.993190038310882,
