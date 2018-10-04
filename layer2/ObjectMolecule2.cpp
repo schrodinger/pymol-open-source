@@ -372,7 +372,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
 
         if(!ai_merged) {
 	  if (ok)
-	    ok &= ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_AllMask, true);      /* NOTE: will release atInfo */
+	    ok &= ObjectMoleculeMerge(I, std::move(atInfo), cset, false, cAIC_AllMask, true);      /* NOTE: will release atInfo */
           if (ok)
 	    ok &= ObjectMoleculeExtendIndices(I, -1);
           if (ok)

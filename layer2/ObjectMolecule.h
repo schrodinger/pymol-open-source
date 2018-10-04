@@ -388,7 +388,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 
 struct CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule * I, int setIndex);
 void ObjectMoleculeBlindSymMovie(ObjectMolecule * I);
-int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
+int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType *&& ai,
 			struct CoordSet *cs, int bondSearchFlag,
 			int aic_mask, int invalidate);
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I);
@@ -433,7 +433,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index);
 int ObjectMoleculeGetTotalAtomValence(ObjectMolecule * I, int atom);
 int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode,
                               int order);
-int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType * nai);
+int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType *&& nai);
 int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src, int index1,
                         int mode, int move_flag);
 int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force);

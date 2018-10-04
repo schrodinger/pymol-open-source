@@ -6754,7 +6754,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
   bond = NULL;
 
   /*  printf("Selector-DEBUG nAtom %d\n",nAtom); */
-  ObjectMoleculeMerge(targ, atInfo, cs, false, cAIC_AllMask, true);     /* will free atInfo */
+  ObjectMoleculeMerge(targ, std::move(atInfo), cs, false, cAIC_AllMask, true);     /* will free atInfo */
   /* cs->IdxToAtm will now have the reverse mapping from the new subset
      to the new merged molecule */
 

@@ -935,8 +935,7 @@ void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence,
               if(name[0])
                 LexAssign(G, ai->name, name);
               if (ok)
-		ok &= ObjectMoleculeAttach(obj0, i0, ai);       /* will free ai */
-              ai = NULL;
+		ok &= ObjectMoleculeAttach(obj0, i0, std::move(ai));       /* will free ai */
             }
           }
         }

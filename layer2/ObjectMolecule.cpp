@@ -2462,7 +2462,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
     if(isNew) {
       std::swap(I->AtomInfo, atInfo);
     } else if (ok){
-      ok &= ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_AllMask, true);  /* NOTE: will release atInfo */
+      ok &= ObjectMoleculeMerge(I, std::move(atInfo), cset, false, cAIC_AllMask, true);
     }
     if(isNew)
       I->NAtom = nAtom;
@@ -3510,7 +3510,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
       I->AtomInfo[at0].temp1 = 1;
     }
     if (ok)
-      ok &= ObjectMoleculeMerge(I, nai, cs, false, cAIC_AllMask, true);
+      ok &= ObjectMoleculeMerge(I, std::move(nai), cs, false, cAIC_AllMask, true);
     /* will free nai, cs->TmpBond and cs->TmpLinkBond  */
     if (ok){
       if (I->DiscreteFlag){
@@ -3628,7 +3628,7 @@ int ObjectMoleculeVerifyChemistry(ObjectMolecule * I, int state)
 
 
 /*========================================================================*/
-int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType * nai)
+int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType *&& nai)
 {
   int a;
   AtomInfoType *ai;
@@ -3659,7 +3659,8 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType * nai)
   ok_assert(1, ObjectMoleculePrepareAtom(I, index, nai));
   d = AtomInfoGetBondLength(I->Obj.G, ai, nai);
 
-  ok_assert(1, ObjectMoleculeMerge(I, nai, cs, false, cAIC_AllMask, true)); // will free nai and cs->TmpLinkBond
+  ok_assert(1, ObjectMoleculeMerge(I, std::move(nai),
+        cs, false, cAIC_AllMask, true)); // will free nai and cs->TmpLinkBond
   ok_assert(1, ObjectMoleculeExtendIndices(I, -1));
   ok_assert(1, ObjectMoleculeUpdateNeighbors(I));
 
@@ -3742,7 +3743,8 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 	ok &= ObjectMoleculePrepareAtom(I, index, nai);
 	d = AtomInfoGetBondLength(I->Obj.G, ai, nai);
 	if (ok)
-	  ok &= ObjectMoleculeMerge(I, nai, cs, false, cAIC_AllMask, true);       /* will free nai and cs->TmpLinkBond  */
+          ok &= ObjectMoleculeMerge(I, std::move(nai),
+              cs, false, cAIC_AllMask, true);       /* will free nai and cs->TmpLinkBond  */
       }
       if (ok)
 	ok &= ObjectMoleculeExtendIndices(I, -1);
@@ -7591,7 +7593,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
     if(isNew) {
       std::swap(I->AtomInfo, atInfo);
     } else {
-      ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_AllMask, true);  /* NOTE: will release atInfo */
+      ObjectMoleculeMerge(I, std::move(atInfo), cset, false, cAIC_AllMask, true);
     }
     if(isNew)
       I->NAtom = nAtom;
@@ -8906,7 +8908,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(isNew) {
         std::swap(I->AtomInfo, atInfo);
       } else {
-        ObjectMoleculeMerge(I, atInfo, cset, false, aic_mask, false);
+        ObjectMoleculeMerge(I, std::move(atInfo), cset, false, aic_mask, false);
         /* NOTE: will release atInfo */
       }
 
@@ -8970,7 +8972,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
 
 /*========================================================================*/
 typedef int CompareFn(PyMOLGlobals *, const AtomInfoType *, const AtomInfoType *);
-int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
+int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType *&& ai,
 			CoordSet * cs, int bondSearchFlag, int aic_mask, int invalidate)
 {
   PyMOLGlobals *G = I->Obj.G;
@@ -11610,7 +11612,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
   cset->Obj = I;
   cset->enumIndices();
 
-  ok &= ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_IDMask, true);       /* NOTE: will release atInfo */
+  ok &= ObjectMoleculeMerge(I, std::move(atInfo), cset, false, cAIC_IDMask, true);
   if (ok){
     if(frame < 0)
       frame = I->NCSet;
@@ -11929,7 +11931,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(isNew) {
         std::swap(I->AtomInfo, atInfo);
       } else {
-        ok &= ObjectMoleculeMerge(I, atInfo, cset, true, aic_mask, true);
+        ok &= ObjectMoleculeMerge(I, std::move(atInfo), cset, true, aic_mask, true);
         /* NOTE: will release atInfo */
       }
       if(isNew)
