@@ -4480,7 +4480,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
 	  atInfo[a] = std::move(I->AtomInfo[index[a]]);
       }
       VLAFreeP(I->AtomInfo);
-      I->AtomInfo = atInfo;
+      std::swap(I->AtomInfo, atInfo);
 
       if(ok && I->DiscreteFlag) {
         dcs = VLAlloc(CoordSet *, i_NAtom);

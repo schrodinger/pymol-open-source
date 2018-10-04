@@ -2419,7 +2419,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
                                          char *TOPStr, int frame, int discrete)
 {
   CoordSet *cset = NULL;
-  AtomInfoType *atInfo;
+  AtomInfoType *atInfo = nullptr;
   int ok = true;
   int isNew = true;
   unsigned int nAtom = 0;
@@ -2434,7 +2434,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
       I = (ObjectMolecule *) ObjectMoleculeNew(G, discrete);
       CHECKOK(ok, I);
       if (ok)
-	atInfo = I->AtomInfo;
+        std::swap(atInfo, I->AtomInfo);
       isNew = true;
     } else {                    /* never */
       atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
@@ -2467,7 +2467,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
     cset->enumIndices();
     cset->invalidateRep(cRepAll, cRepInvRep);
     if(isNew) {
-      I->AtomInfo = atInfo;     /* IMPORTANT to reassign: this VLA may have moved! */
+      std::swap(I->AtomInfo, atInfo);
     } else if (ok){
       ok &= ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_AllMask, true);  /* NOTE: will release atInfo */
     }
@@ -7467,7 +7467,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
   return NULL;
 #else
   CoordSet *cset = NULL;
-  AtomInfoType *atInfo;
+  AtomInfoType *atInfo = nullptr;
   int ok = true;
   int isNew = true;
   unsigned int nAtom = 0;
@@ -7485,7 +7485,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
 
     if(isNew) {
       I = (ObjectMolecule *) ObjectMoleculeNew(G, discrete);
-      atInfo = I->AtomInfo;
+      std::swap(atInfo, I->AtomInfo);
       isNew = true;
     } else {
       atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
@@ -7596,7 +7596,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
     cset->enumIndices();
     cset->invalidateRep(cRepAll, cRepInvRep);
     if(isNew) {
-      I->AtomInfo = atInfo;     /* IMPORTANT to reassign: this VLA may have moved! */
+      std::swap(I->AtomInfo, atInfo);
     } else {
       ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_AllMask, true);  /* NOTE: will release atInfo */
     }
@@ -8796,7 +8796,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
 {
   int ok = true;
   CoordSet *cset = NULL;
-  AtomInfoType *atInfo;
+  AtomInfoType *atInfo = nullptr;
   int isNew;
   int nAtom;
   const char *restart = NULL, *start = *next_entry;
@@ -8821,7 +8821,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
 
     if(isNew) {
       I = (ObjectMolecule *) ObjectMoleculeNew(G, (discrete > 0));
-      atInfo = I->AtomInfo;
+      std::swap(atInfo, I->AtomInfo);
     } else {
       atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
     }
@@ -8867,7 +8867,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
         VLAFreeP(atInfo);
       if(!successCnt) {
 	if (isNew)
-	  I->AtomInfo = atInfo;
+          std::swap(I->AtomInfo, atInfo);
         ObjectMoleculeFree(I);
         I = NULL;
         ok = false;
@@ -8911,7 +8911,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       cset->enumIndices();
       cset->invalidateRep(cRepAll, cRepInvRep);
       if(isNew) {
-        I->AtomInfo = atInfo;   /* IMPORTANT to reassign: this VLA may have moved! */
+        std::swap(I->AtomInfo, atInfo);
       } else {
         ObjectMoleculeMerge(I, atInfo, cset, false, aic_mask, false);
         /* NOTE: will release atInfo */
@@ -11902,7 +11902,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
                                          int quiet, int *model_number)
 {
   CoordSet *cset = NULL;
-  AtomInfoType *atInfo;
+  AtomInfoType *atInfo = nullptr;
   int ok = true;
   int isNew = true;
   unsigned int nAtom = 0;
@@ -11927,7 +11927,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
         I = (ObjectMolecule *) ObjectMoleculeNew(G, discrete);
 	CHECKOK(ok, I);
 	if (ok)
-	  atInfo = I->AtomInfo;
+          std::swap(atInfo, I->AtomInfo);
         isNew = true;
       } else {
         atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);  /* autozero here is important */
@@ -11948,9 +11948,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
 	cset = ObjectMoleculePDBStr2CoordSet(G, start, &atInfo, &restart,
 					     segi_override, m4x, pdb_name,
 					     next_pdb, pdb_info, quiet, model_number);
-      if (isNew && atInfo != I->AtomInfo){
-	I->AtomInfo = atInfo;
-      }
       CHECKOK(ok, cset);
       if (ok){
 	if(m4x){                  /* preserve original atom IDs for annotated Metaphorics files */
@@ -11980,7 +11977,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       cset->enumIndices();
       cset->invalidateRep(cRepAll, cRepInvRep);
       if(isNew) {
-        I->AtomInfo = atInfo;   /* IMPORTANT to reassign: this VLA may have moved! */
+        std::swap(I->AtomInfo, atInfo);
       } else {
         ok &= ObjectMoleculeMerge(I, atInfo, cset, true, aic_mask, true);
         /* NOTE: will release atInfo */
