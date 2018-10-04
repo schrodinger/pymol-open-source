@@ -69,16 +69,9 @@ Z* -------------------------------------------------------------------
 #include "mmpymolx.h"
 #endif
 
-void ObjectMoleculeCylinders(ObjectMolecule * I);
-
 static
 CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
                                         AtomInfoType ** atInfoPtr, const char **restart);
-
-int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule * I, int index, int sele);
-
-void ObjectMoleculeAppendAtoms(ObjectMolecule * I, AtomInfoType * atInfo,
-                               CoordSet * cset);
 
 void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op);
 
@@ -9256,49 +9249,6 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
     }
   }
   return ok;
-}
-
-
-/*========================================================================*/
-void ObjectMoleculeAppendAtoms(ObjectMolecule * I, AtomInfoType * atInfo, CoordSet * cs)
-{
-  int a;
-  BondType *ii;
-  BondType *si;
-  AtomInfoType *src, *dest;
-  int nAtom, nBond;
-
-  if(I->NAtom) {
-    nAtom = I->NAtom + cs->NIndex;
-    VLACheck(I->AtomInfo, AtomInfoType, nAtom);
-    dest = I->AtomInfo + I->NAtom;
-    src = atInfo;
-    for(a = 0; a < cs->NIndex; a++)
-      *(dest++) = std::move(*(src++));
-    I->NAtom = nAtom;
-    VLAFreeP(atInfo);
-  } else {
-    if(I->AtomInfo)
-      VLAFreeP(I->AtomInfo);
-    I->AtomInfo = atInfo;
-    I->NAtom = cs->NIndex;
-  }
-  nBond = I->NBond + cs->NTmpBond;
-  if(!I->Bond)
-    I->Bond = VLACalloc(BondType, nBond);
-  VLACheck(I->Bond, BondType, nBond);
-  ii = I->Bond + I->NBond;
-  si = cs->TmpBond;
-  for(a = 0; a < cs->NTmpBond; a++) {
-    ii->index[0] = cs->IdxToAtm[si->index[0]];
-    ii->index[1] = cs->IdxToAtm[si->index[1]];
-    ii->order = si->order;
-    ii->stereo = si->stereo;
-    ii->id = -1;
-    ii++;
-    si++;
-  }
-  I->NBond = nBond;
 }
 
 
