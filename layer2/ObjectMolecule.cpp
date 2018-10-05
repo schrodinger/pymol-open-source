@@ -9865,7 +9865,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         s = ai->selEntry;
         if(SelectorIsMember(G, s, sele)) {
           // pointer hack
-          ((std::set<ov_word> *) (void*) op->ii1)->insert(ai->chain);
+          ((std::set<lexidx_t> *) (void*) op->ii1)->insert(ai->chain);
           op->i1++;
         }
         ai++;
@@ -10265,8 +10265,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   if(!op->s1[0]) {
                     if(ai->label) {
 			op->i1--; /* negative if unlabelling */
-                      OVLexicon_DecRef(I->Obj.G->Lexicon, ai->label);
-                      ai->label = 0;
+                      LexAssign(G, ai->label, 0);
                     }
                     ai->visRep &= ~cRepLabelBit;
                     hit_flag = true;

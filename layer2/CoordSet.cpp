@@ -912,7 +912,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
   char *aType;
   AtomName name;
   ResName resn;
-  ov_word chain;
+  lexidx_t chain;
 
   char formalCharge[4];
   int ignore_pdb_segi = SettingGetGlobal_b(G, cSetting_ignore_pdb_segi);

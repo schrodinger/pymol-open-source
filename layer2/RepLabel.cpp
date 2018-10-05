@@ -73,7 +73,7 @@ typedef struct RepLabel {
   Rep R;
   // VItemType *V;
   float *V;
-  int *L;
+  lexidx_t *L;
   int N;
   int OutlineColor;
   CGO *shaderCGO;
@@ -1113,13 +1113,13 @@ void RepLabelRenderRay(RepLabel * I, RenderInfo * info){
   CRay *ray = info->ray;
   int c = I->N;
   float *v = I->V;
-  int *l = I->L;
+  lexidx_t *l = I->L;
   int font_id = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting,
                              cSetting_label_font_id);
   float font_size = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting,
                                  cSetting_label_size);
   if(c) {
-    char *st;
+    const char *st;
     TextSetOutlineColor(G, I->OutlineColor);
     while(c--) {
       if(*l) {
@@ -1131,7 +1131,7 @@ void RepLabelRenderRay(RepLabel * I, RenderInfo * info){
         SceneGetCenter(G, offpt);
         RayGetScaledAxes(ray, xn, yn);
 
-        st = OVLexicon_FetchCString(G->Lexicon, *l);
+        st = LexStr(G, *l);
         TextSetLabelBkgrdInfo(G, *(v + 16), *(v + 17), (v + 18));
         if (relativeMode & 8){  // label_z_target, adjust z to target
           TextGetLabelPos(G)[0] = (SceneGetDepth(G, v+3) - .5) * 2.f;
@@ -1176,7 +1176,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
   PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   int c = I->N;
-  int *l = I->L;
+  lexidx_t *l = I->L;
   int font_id = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting,
                              cSetting_label_font_id);
   float font_size = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting,
@@ -1218,7 +1218,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
         TextSetIsPicking(G, true);
         SceneSetupGLPicking(G);
         if(c) {
-          char *st;
+          const char *st;
           int screenwidth, screenheight;
           if(float_text)
             glDisable(GL_DEPTH_TEST);
@@ -1265,7 +1265,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
 
               TextSetColorFromUColor(G);
 
-              st = OVLexicon_FetchCString(G->Lexicon, *l);
+              st = LexStr(G, *l);
               if (!TextRenderOpenGL(G, info, font_id, st, font_size, v + 12, false, (short)*(v + 15), 1, SHADERCGO)){
                 TextSetIsPicking(G, false);
                 return ;
@@ -1282,7 +1282,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
       }
     } else {  // not pick or ray, render
       if(c) {
-        char *st;
+        const char *st;
 	short use_shader, has_connector = 0;
 	CGO *connectorCGO = NULL;
 	float *PmvMatrix = NULL;
@@ -1368,7 +1368,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
 
             TextSetPosNColor(G, tCenterPt, v);
 	    TextSetTargetPos(G, v + 3);
-            st = OVLexicon_FetchCString(G->Lexicon, *l);
+            st = LexStr(G, *l);
 	    TextSetLabelBkgrdInfo(G, *(v + 16), *(v + 17), (v + 18));
 	    if (relativeMode & 8){  // label_z_target, adjust z to target
 	      TextGetLabelPos(G)[0] = (SceneGetDepth(G, v+3) - .5) * 2.f;
@@ -1509,7 +1509,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   int a, a1, c1;
   float *v, *v0;
   const float *vc;
-  int *l;
+  lexidx_t *l;
   int label_color;
   Pickable *rp = NULL;
   AtomInfoType *ai;
@@ -1535,7 +1535,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
 
   /* raytracing primitives */
 
-  I->L = Alloc(int, cs->NIndex);
+  I->L = Calloc(lexidx_t, cs->NIndex);
   ErrChkPtr(G, I->L);
   I->V = Calloc(float, cs->NIndex * 28);
   ErrChkPtr(G, I->V);
@@ -1680,14 +1680,14 @@ Rep *RepLabelNew(CoordSet * cs, int state)
 
   if(I->N) {
     I->V = ReallocForSure(I->V, float, (v - I->V));
-    I->L = ReallocForSure(I->L, int, (l - I->L));
+    I->L = ReallocForSure(I->L, lexidx_t, (l - I->L));
     if(rp) {
       I->R.P = ReallocForSure(I->R.P, Pickable, (rp - I->R.P));
       I->R.P[0].index = I->N;   /* unnec? */
     }
   } else {
     I->V = ReallocForSure(I->V, float, 1);
-    I->L = ReallocForSure(I->L, int, 1);
+    I->L = ReallocForSure(I->L, lexidx_t, 1);
     if(rp) {
       FreeP(I->R.P);
     }

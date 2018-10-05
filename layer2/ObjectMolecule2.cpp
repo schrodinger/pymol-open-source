@@ -3700,7 +3700,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
     /* For the pse_binary_dump, record all strings in lex and
        write them into separate binary string
      */
-    std::set<int> lexIDs;
+    std::set<lexidx_t> lexIDs;
     int totalstlen = 0;
     AtomInfoType *ai = I->AtomInfo;
     for(a = 0; a < I->NAtom; a++) {
@@ -3811,7 +3811,7 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     int stlen;
     // populate oldIDtoLexID with nstrings from binary string data (3rd entry in list)
     while (strcnt){
-      int idx = LexIdx(G, strpl); // increments ref count, need to take into account
+      lexidx_t idx = LexIdx(G, strpl); // increments ref count, need to take into account
       int oldidx = *(strval++);
       oldIDtoLexID[oldidx] = idx;
       stlen = strlen(strpl);

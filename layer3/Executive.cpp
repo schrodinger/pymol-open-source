@@ -4976,7 +4976,7 @@ static int fStrOrderFn(const char ** array, int l, int r) {
 const char **ExecutiveGetChains(PyMOLGlobals * G, const char *sele, int state)
 {
   const char **result = NULL;
-  std::set<ov_word> chains;
+  std::set<lexidx_t> chains;
   int c = 0;
   ObjectMoleculeOpRec op;
 
@@ -4991,7 +4991,7 @@ const char **ExecutiveGetChains(PyMOLGlobals * G, const char *sele, int state)
     op.i1 = 0;
     ExecutiveObjMolSeleOp(G, sele1, &op);
     result = VLAlloc(const char*, chains.size());
-    for (std::set<ov_word>::iterator it = chains.begin(),
+    for (auto it = chains.begin(),
         it_end = chains.end(); it != it_end; ++it) {
       result[c++] = LexStr(G, *it);
     }
