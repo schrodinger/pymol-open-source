@@ -114,9 +114,9 @@ struct CifContentInfo {
     if (chains_filter.empty())
       return false;
 
-    auto result = OVLexicon_BorrowFromCString(G->Lexicon, chain);
-    if (OVreturn_IS_OK(result))
-      return is_excluded_chain(result.word);
+    auto borrowed = LexBorrow(G, chain);
+    if (borrowed != LEX_BORROW_NOTFOUND)
+      return is_excluded_chain(borrowed);
 
     return false;
   }
@@ -698,9 +698,9 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
     std::vector<std::string> chains = strsplit(asym_id_list, ',');
     std::set<lexidx_t> chains_set;
     for (auto& chain : chains) {
-      auto result = OVLexicon_BorrowFromCString(G->Lexicon, chain.c_str());
-      if (OVreturn_IS_OK(result)) {
-        chains_set.insert(result.word);
+      auto borrowed = LexBorrow(G, chain.c_str());
+      if (borrowed != LEX_BORROW_NOTFOUND) {
+        chains_set.insert(borrowed);
       }
     }
 

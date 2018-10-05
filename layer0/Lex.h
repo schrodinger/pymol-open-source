@@ -44,11 +44,13 @@ inline void LexAssign(PyMOLGlobals * G, lexidx_t& i, const char * s) {
   i = LexIdx(G, s);
 }
 
+#define LEX_BORROW_NOTFOUND -1
+
 /*
  * Lookup string `s` without inserting or incrementing the ref count. If
  * `s` is not in the lexicon, return -1.
  */
 inline lexidx_t LexBorrow(PyMOLGlobals * G, const char * s) {
   auto result = OVLexicon_BorrowFromCString(G->Lexicon, s);
-  return (result.status == OVstatus_SUCCESS) ? result.word : -1;
+  return (result.status == OVstatus_SUCCESS) ? result.word : LEX_BORROW_NOTFOUND;
 }

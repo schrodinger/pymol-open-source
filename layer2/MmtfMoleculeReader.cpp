@@ -85,9 +85,9 @@ CoordSet ** get_assembly_csets(PyMOLGlobals * G,
         ci_it_end = ci_it + trans->chainIndexListCount;
         ci_it != ci_it_end; ++ci_it) {
       const char * chain = container->chainIdList[*ci_it];
-      auto result = OVLexicon_BorrowFromCString(G->Lexicon, chain);
-      if (OVreturn_IS_OK(result)) {
-        chains_set.insert(result.word);
+      auto borrowed = LexBorrow(G, chain);
+      if (borrowed != LEX_BORROW_NOTFOUND) {
+        chains_set.insert(borrowed);
       }
     }
 
