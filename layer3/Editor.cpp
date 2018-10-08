@@ -1104,7 +1104,7 @@ void EditorReplace(PyMOLGlobals * G, const char *elem, int geom, int valence, co
 	    ok &= ObjectMoleculePrepareAtom(obj0, i0, &ai);
           if (ok)
 	    ok &= ObjectMoleculePreposReplAtom(obj0, i0, &ai);
-          ObjectMoleculeReplaceAtom(obj0, i0, &ai);     /* invalidates */
+          ObjectMoleculeReplaceAtom(obj0, i0, std::move(ai));
           ObjectMoleculeVerifyChemistry(obj0, -1);
           ObjectMoleculeFillOpenValences(obj0, i0);
           if (ok)

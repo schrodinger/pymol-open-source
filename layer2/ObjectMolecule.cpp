@@ -4271,10 +4271,10 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
 
 
 /*========================================================================*/
-void ObjectMoleculeReplaceAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
+void ObjectMoleculeReplaceAtom(ObjectMolecule * I, int index, AtomInfoType&& ai)
 {
   if((index >= 0) && (index <= I->NAtom)) {
-    memcpy(I->AtomInfo + index, ai, sizeof(AtomInfoType));
+    I->AtomInfo[index] = std::move(ai);
     ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, -1);
     /* could we put in a refinement step here? */
   }

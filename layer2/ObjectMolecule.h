@@ -421,7 +421,7 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I);
 void ObjectMoleculeSaveUndo(ObjectMolecule * I, int state, int log);
 void ObjectMoleculeUndo(ObjectMolecule * I, int dir);
 int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai, bool uniquefy=true);
-void ObjectMoleculeReplaceAtom(ObjectMolecule * I, int index, AtomInfoType * ai);
+void ObjectMoleculeReplaceAtom(ObjectMolecule * I, int index, AtomInfoType&& ai);
 int ObjectMoleculePreposReplAtom(ObjectMolecule * I, int index, AtomInfoType * ai);
 void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average);
 int ObjectMoleculeSetAtomVertex(ObjectMolecule * I, int state, int index, float *v);
