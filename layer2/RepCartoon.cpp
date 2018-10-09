@@ -211,12 +211,16 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
         CGO *tmpCGO = NULL;
         tmpCGO = CGOConvertTrianglesToAlpha(I->preshader);
         I->std = tmpCGO;
-        I->std->render_alpha = 1; // CGORenderGL should call CGOSetZVector/CGORenderGLAlpha only
+        if(I->std){
+          I->std->render_alpha = 1; // CGORenderGL should call CGOSetZVector/CGORenderGLAlpha only
+        }
       } else {
         I->std = CGOSimplify(I->preshader, 0);
         CHECKOK(ok, I->std);
       }
-      I->std = CGOAddTwoSidedBackfaceSpecialOps(G, I->std);
+      if(I->std) {
+        I->std = CGOAddTwoSidedBackfaceSpecialOps(G, I->std);
+      }
     }
   }
   if(I->preshader && (I->ray!=I->preshader)){
