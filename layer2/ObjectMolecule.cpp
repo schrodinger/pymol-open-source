@@ -8147,7 +8147,7 @@ static void ObjectMoleculeMOL2SetFormalCharges(PyMOLGlobals *G, ObjectMolecule *
   auto valences = get_bond_order_sums(obj);
 
   // (period currently incompatible with G->lex_const)
-  lexidx_t lex_N_4   = LexBorrow(G, "N.4");
+  auto lex_N_4 = LexBorrow(G, "N.4");
 
   for (int at = 0; at < obj->NAtom; ++at) {
     int fcharge = 0;

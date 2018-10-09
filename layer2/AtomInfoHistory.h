@@ -184,17 +184,18 @@ typedef struct AtomInfoType_1_7_7 {
  * which are not relevant or unsupported with pse_binary_dump (anisou,
  * selEntry, temp1, oldid, prop_id, deleteFlag)
  */
+typedef int lexidx_int_t;
 struct AtomInfoType_1_8_1 {
   // contiguous memory instead of pointer ("short" matches PDB precision)
   short anisou[6];
 
-  lexidx_t segi;
-  lexidx_t chain;
-  lexidx_t resn;
-  lexidx_t name;
-  lexidx_t textType;
-  lexidx_t custom;
-  lexidx_t label;
+  lexidx_int_t segi;
+  lexidx_int_t chain;
+  lexidx_int_t resn;
+  lexidx_int_t name;
+  lexidx_int_t textType;
+  lexidx_int_t custom;
+  lexidx_int_t label;
 
   int resv;
   int customType;
@@ -263,7 +264,11 @@ class AtomInfoTypeConverter {
 public:
   AtomInfoTypeConverter(PyMOLGlobals * G_, int natom) : G(G_), NAtom(natom) {}
 
-  std::map<int, int> lexidxmap;
+  std::map<lexidx_int_t, lexidx_t> lexidxmap;
+
+  lexidx_int_t to_lexidx_int(const lexidx_t& idx) {
+    return idx;
+  }
 
   void copy(AtomInfoType * dest, const void *src, int srcversion);
   void * allocCopy(int destversion, const AtomInfoType * src);

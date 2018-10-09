@@ -3700,6 +3700,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
     /* For the pse_binary_dump, record all strings in lex and
        write them into separate binary string
      */
+    AtomInfoTypeConverter converter(G, I->NAtom);
     std::set<lexidx_t> lexIDs;
     int totalstlen = 0;
     AtomInfoType *ai = I->AtomInfo;
@@ -3726,7 +3727,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
     /* write map of lex ids and strings into binary data string as an array of ids
        and null-terminated strings */
     for (auto it = lexIDs.begin(); it != lexIDs.end(); ++it){
-      *(strval++) = *it;
+      *(strval++) = converter.to_lexidx_int(*it);
       const char *strptr = LexStr(G, *it);
       strcpy(strpl, strptr);
       strpl += strlen(strptr) + 1;
@@ -3741,7 +3742,6 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
       }
     }
 
-    AtomInfoTypeConverter converter(G, I->NAtom);
     auto blob = converter.allocCopy(version, I->AtomInfo);
     auto blobsize = VLAGetByteSize(blob);
 
@@ -3763,12 +3763,6 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
   }
   return (PConvAutoNone(result));
 }
-
-#define CONVERT_TO_NEW_LEX(lexval)  \
-  if (lexval){                      \
-    lexval = oldIDtoLexID[lexval];  \
-    LexInc(G, lexval);              \
-  }
 
 static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
 {
