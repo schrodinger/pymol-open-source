@@ -162,32 +162,32 @@ int CButMode::click(int button, int x, int y, int mod)
   if(mod == cOrthoSHIFT)
     forward = !forward;
   if(dy < 2) {
-    if(ButModeTranslate(G, P_GLUT_SINGLE_LEFT, 0) != cButModePickAtom) {
+    if(ButModeTranslate(m_G, P_GLUT_SINGLE_LEFT, 0) != cButModePickAtom) {
       if(!forward) {
-        PLog(G, "cmd.mouse('select_backward')", cPLog_pym);
-        OrthoCommandIn(G, "mouse select_backward,quiet=1");
+        PLog(m_G, "cmd.mouse('select_backward')", cPLog_pym);
+        OrthoCommandIn(m_G, "mouse select_backward,quiet=1");
       } else {
-        PLog(G, "cmd.mouse('select_forward')", cPLog_pym);
-        OrthoCommandIn(G, "mouse select_forward,quiet=1");
+        PLog(m_G, "cmd.mouse('select_forward')", cPLog_pym);
+        OrthoCommandIn(m_G, "mouse select_forward,quiet=1");
       }
     }
   } else {
     if(button == P_GLUT_RIGHT_BUTTON) {
-      MenuActivate0Arg(G,x,y,x,y,false,"mouse_config");
+      MenuActivate0Arg(m_G,x,y,x,y,false,"mouse_config");
     } else {
       if(!forward) {
-        PLog(G, "cmd.mouse('backward')", cPLog_pym);
-        OrthoCommandIn(G, "mouse backward,quiet=1");
+        PLog(m_G, "cmd.mouse('backward')", cPLog_pym);
+        OrthoCommandIn(m_G, "mouse backward,quiet=1");
       } else {
-        PLog(G, "cmd.mouse('forward')", cPLog_pym);
-        OrthoCommandIn(G, "mouse forward,quiet=1");
+        PLog(m_G, "cmd.mouse('forward')", cPLog_pym);
+        OrthoCommandIn(m_G, "mouse forward,quiet=1");
       }
     }
   }
   return (1);
 }
 
-bool ButModeDrawFastImpl(Block * block, short definitely ORTHOCGOARG);
+static bool ButModeDrawFastImpl(Block * block, short definitely ORTHOCGOARG);
 /*========================================================================*/
 void CButMode::draw(CGO* orthoCGO)
 {
@@ -198,8 +198,8 @@ void CButMode::draw(CGO* orthoCGO)
   CButMode *I = this; // TODO: Remove during ButMode refactor
 #define BLANK_STR "     "
 
-  if(G->HaveGUI && G->ValidContext && ((rect.right - rect.left) > 6)) {
-    if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 0) {
+  if(m_G->HaveGUI && m_G->ValidContext && ((rect.right - rect.left) > 6)) {
+    if(SettingGetGlobal_b(m_G, cSetting_internal_gui_mode) == 0) {
       if (orthoCGO)
 	CGOColorv(orthoCGO, BackColor);
 #ifndef PURE_OPENGL_ES_2
@@ -217,183 +217,183 @@ void CButMode::draw(CGO* orthoCGO)
 	glColor3f(0.5, 0.5, 0.5);
 #endif
       drawTopEdge();
-      textColor2 = OrthoGetOverlayColor(G);
+      textColor2 = OrthoGetOverlayColor(m_G);
       textColor = textColor2;
     }
 
     x = rect.left + cButModeLeftMargin;
     y = (rect.top - cButModeLineHeight) - cButModeTopMargin;
 
-    TextSetColor(G, textColor);
-    TextDrawStrAt(G, "Mouse Mode ", x + 1, y ORTHOCGOARGVAR);
-    TextSetColor(G, TextColor3);
-    TextDrawStrAt(G, SettingGetGlobal_s(G, cSetting_button_mode_name), x + DIP2PIXEL(88), y ORTHOCGOARGVAR);
-    /*    TextDrawStrAt(G,"2-Bttn Selecting",x+88,y); */
+    TextSetColor(m_G, textColor);
+    TextDrawStrAt(m_G, "Mouse Mode ", x + 1, y ORTHOCGOARGVAR);
+    TextSetColor(m_G, TextColor3);
+    TextDrawStrAt(m_G, SettingGetGlobal_s(m_G, cSetting_button_mode_name), x + DIP2PIXEL(88), y ORTHOCGOARGVAR);
+    /*    TextDrawStrAt(m_G,"2-Bttn Selecting",x+88,y); */
     y -= cButModeLineHeight;
 
-    if(SettingGetGlobal_b(G, cSetting_mouse_grid)) {
+    if(SettingGetGlobal_b(m_G, cSetting_mouse_grid)) {
 
-      TextSetColor(G, TextColor3);
-      TextDrawStrAt(G, "Buttons", x + DIP2PIXEL(6), y ORTHOCGOARGVAR);
-      TextSetColor(G, TextColor1);
-      /*    TextDrawStrAt(G,"  Left Mddl Rght Scrl",x+48,y); */
-      TextDrawStrAt(G, "    L    M    R  Wheel", x + DIP2PIXEL(43), y ORTHOCGOARGVAR);
+      TextSetColor(m_G, TextColor3);
+      TextDrawStrAt(m_G, "Buttons", x + DIP2PIXEL(6), y ORTHOCGOARGVAR);
+      TextSetColor(m_G, TextColor1);
+      /*    TextDrawStrAt(m_G,"  Left Mddl Rght Scrl",x+48,y); */
+      TextDrawStrAt(m_G, "    L    M    R  Wheel", x + DIP2PIXEL(43), y ORTHOCGOARGVAR);
 
       y -= cButModeLineHeight;
       /*    glColor3fv(I->Block->TextColor);
-         TextDrawStrAt(G,"K",x,y-4); */
-      TextSetColor(G, TextColor3);
-      TextDrawStrAt(G, "&", x + DIP2PIXEL(12), y ORTHOCGOARGVAR);
-      TextDrawStrAt(G, "Keys", x + DIP2PIXEL(24), y ORTHOCGOARGVAR);
-      TextSetColor(G, textColor2);
+         TextDrawStrAt(m_G,"K",x,y-4); */
+      TextSetColor(m_G, TextColor3);
+      TextDrawStrAt(m_G, "&", x + DIP2PIXEL(12), y ORTHOCGOARGVAR);
+      TextDrawStrAt(m_G, "Keys", x + DIP2PIXEL(24), y ORTHOCGOARGVAR);
+      TextSetColor(m_G, textColor2);
 
-      TextSetPos2i(G, x + DIP2PIXEL(64), y);
+      TextSetPos2i(m_G, x + DIP2PIXEL(64), y);
       for(a = 0; a < 3; a++) {
         mode = Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
+          TextDrawStr(m_G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, Code[mode] ORTHOCGOARGVAR);
+          TextDrawStr(m_G, Code[mode] ORTHOCGOARGVAR);
       }
       mode = Mode[12];
       if(mode < 0)
-        TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
+        TextDrawStr(m_G, BLANK_STR ORTHOCGOARGVAR);
       else
-        TextDrawStr(G, Code[mode] ORTHOCGOARGVAR);
+        TextDrawStr(m_G, Code[mode] ORTHOCGOARGVAR);
 
       y -= cButModeLineHeight;
-      /*    TextSetColor(G,I->Block->TextColor);
-         TextDrawStrAt(G,"e",x+5,y-1); */
-      TextSetColor(G, TextColor1);
+      /*    TextSetColor(m_G,I->Block->TextColor);
+         TextDrawStrAt(m_G,"e",x+5,y-1); */
+      TextSetColor(m_G, TextColor1);
 
-      TextSetColor(G, TextColor1);
-      TextDrawStrAt(G, "Shft ", x + DIP2PIXEL(24), y ORTHOCGOARGVAR);
-      TextSetColor(G, textColor2);
-      TextSetPos2i(G, x + DIP2PIXEL(64), y);
+      TextSetColor(m_G, TextColor1);
+      TextDrawStrAt(m_G, "Shft ", x + DIP2PIXEL(24), y ORTHOCGOARGVAR);
+      TextSetColor(m_G, textColor2);
+      TextSetPos2i(m_G, x + DIP2PIXEL(64), y);
       for(a = 3; a < 6; a++) {
         mode = I->Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
+          TextDrawStr(m_G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, Code[mode] ORTHOCGOARGVAR);
+          TextDrawStr(m_G, Code[mode] ORTHOCGOARGVAR);
       }
       mode = Mode[13];
       if(mode < 0)
-        TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
+        TextDrawStr(m_G, BLANK_STR ORTHOCGOARGVAR);
       else
-        TextDrawStr(G, Code[mode] ORTHOCGOARGVAR);
+        TextDrawStr(m_G, Code[mode] ORTHOCGOARGVAR);
 
       y -= cButModeLineHeight;
       /*    glColor3fv(I->Block->TextColor);
-         TextDrawStrAt(G,"y",x+10,y+2); */
-      TextSetColor(G, TextColor1);
-      TextDrawStrAt(G, "Ctrl ", x + DIP2PIXEL(24), y ORTHOCGOARGVAR);
-      TextSetColor(G, textColor2);
-      TextSetPos2i(G, x + DIP2PIXEL(64), y);
+         TextDrawStrAt(m_G,"y",x+10,y+2); */
+      TextSetColor(m_G, TextColor1);
+      TextDrawStrAt(m_G, "Ctrl ", x + DIP2PIXEL(24), y ORTHOCGOARGVAR);
+      TextSetColor(m_G, textColor2);
+      TextSetPos2i(m_G, x + DIP2PIXEL(64), y);
       for(a = 6; a < 9; a++) {
         mode = I->Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
+          TextDrawStr(m_G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, Code[mode] ORTHOCGOARGVAR);
+          TextDrawStr(m_G, Code[mode] ORTHOCGOARGVAR);
       }
       mode = I->Mode[14];
       if(mode < 0)
-        TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
+        TextDrawStr(m_G, BLANK_STR ORTHOCGOARGVAR);
       else
-        TextDrawStr(G, Code[mode] ORTHOCGOARGVAR);
+        TextDrawStr(m_G, Code[mode] ORTHOCGOARGVAR);
       y -= cButModeLineHeight;
 
       /*    glColor3fv(I->Block->TextColor);
-         TextDrawStrAt(G,"s",x+15,y+3); */
-      TextSetColor(G, TextColor1);
-      TextSetColor(G, TextColor1);
-      TextDrawStrAt(G, "CtSh ", x + DIP2PIXEL(24), y ORTHOCGOARGVAR);
-      TextSetColor(G, textColor2);
-      TextSetPos2i(G, x + DIP2PIXEL(64), y);
+         TextDrawStrAt(m_G,"s",x+15,y+3); */
+      TextSetColor(m_G, TextColor1);
+      TextSetColor(m_G, TextColor1);
+      TextDrawStrAt(m_G, "CtSh ", x + DIP2PIXEL(24), y ORTHOCGOARGVAR);
+      TextSetColor(m_G, textColor2);
+      TextSetPos2i(m_G, x + DIP2PIXEL(64), y);
       for(a = 9; a < 12; a++) {
         mode = Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
+          TextDrawStr(m_G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, Code[mode] ORTHOCGOARGVAR);
+          TextDrawStr(m_G, Code[mode] ORTHOCGOARGVAR);
       }
       mode = Mode[15];
       if(mode < 0)
-        TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
+        TextDrawStr(m_G, BLANK_STR ORTHOCGOARGVAR);
       else
-        TextDrawStr(G, Code[mode] ORTHOCGOARGVAR);
+        TextDrawStr(m_G, Code[mode] ORTHOCGOARGVAR);
 
       y -= cButModeLineHeight;
 
-      TextSetColor(G, TextColor);
-      TextSetColor(G, TextColor1);
-      TextDrawStrAt(G, " SnglClk", x - DIP2PIXEL(8), y ORTHOCGOARGVAR);
-      TextSetColor(G, textColor2);
-      TextSetPos2i(G, x + DIP2PIXEL(64), y);
+      TextSetColor(m_G, TextColor);
+      TextSetColor(m_G, TextColor1);
+      TextDrawStrAt(m_G, " SnglClk", x - DIP2PIXEL(8), y ORTHOCGOARGVAR);
+      TextSetColor(m_G, textColor2);
+      TextSetPos2i(m_G, x + DIP2PIXEL(64), y);
       for(a = 19; a < 22; a++) {
         mode = Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
+          TextDrawStr(m_G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, Code[mode] ORTHOCGOARGVAR);
+          TextDrawStr(m_G, Code[mode] ORTHOCGOARGVAR);
       }
-      TextSetColor(G, TextColor);
+      TextSetColor(m_G, TextColor);
       y -= cButModeLineHeight;
 
-      TextSetColor(G, TextColor);
-      TextSetColor(G, TextColor1);
-      TextDrawStrAt(G, " DblClk", x, y ORTHOCGOARGVAR);
-      TextSetColor(G, textColor2);
-      TextSetPos2i(G, x + DIP2PIXEL(64), y);
+      TextSetColor(m_G, TextColor);
+      TextSetColor(m_G, TextColor1);
+      TextDrawStrAt(m_G, " DblClk", x, y ORTHOCGOARGVAR);
+      TextSetColor(m_G, textColor2);
+      TextSetPos2i(m_G, x + DIP2PIXEL(64), y);
       for(a = 16; a < 19; a++) {
         mode = I->Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
+          TextDrawStr(m_G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, Code[mode] ORTHOCGOARGVAR);
+          TextDrawStr(m_G, Code[mode] ORTHOCGOARGVAR);
       }
-      TextSetColor(G, TextColor);
+      TextSetColor(m_G, TextColor);
       y -= cButModeLineHeight;
 
     }
 
     {
-      TextSetColor(G, textColor);
-      if(ButModeTranslate(G, P_GLUT_SINGLE_LEFT, 0) == cButModePickAtom) {
-        TextDrawStrAt(G, "Picking ", x, y ORTHOCGOARGVAR);
-        TextSetColor(G, TextColor3);
-        TextDrawStrAt(G, "Atoms (and Joints)", x + DIP2PIXEL(64), y ORTHOCGOARGVAR);
+      TextSetColor(m_G, textColor);
+      if(ButModeTranslate(m_G, P_GLUT_SINGLE_LEFT, 0) == cButModePickAtom) {
+        TextDrawStrAt(m_G, "Picking ", x, y ORTHOCGOARGVAR);
+        TextSetColor(m_G, TextColor3);
+        TextDrawStrAt(m_G, "Atoms (and Joints)", x + DIP2PIXEL(64), y ORTHOCGOARGVAR);
       } else {
-        TextDrawStrAt(G, "Selecting ", x, y ORTHOCGOARGVAR);
-        TextSetColor(G, TextColor3);
-        switch (SettingGetGlobal_i(G, cSetting_mouse_selection_mode)) {
+        TextDrawStrAt(m_G, "Selecting ", x, y ORTHOCGOARGVAR);
+        TextSetColor(m_G, TextColor3);
+        switch (SettingGetGlobal_i(m_G, cSetting_mouse_selection_mode)) {
         case 0:
-          TextDrawStrAt(G, "Atoms", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
+          TextDrawStrAt(m_G, "Atoms", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
           break;
         case 1:
-          TextDrawStrAt(G, "Residues", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
+          TextDrawStrAt(m_G, "Residues", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
           break;
         case 2:
-          TextDrawStrAt(G, "Chains", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
+          TextDrawStrAt(m_G, "Chains", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
           break;
         case 3:
-          TextDrawStrAt(G, "Segments", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
+          TextDrawStrAt(m_G, "Segments", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
           break;
         case 4:
-          TextDrawStrAt(G, "Objects", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
+          TextDrawStrAt(m_G, "Objects", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
           break;
         case 5:
-          TextDrawStrAt(G, "Molecules", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
+          TextDrawStrAt(m_G, "Molecules", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
           break;
         case 6:
-          TextDrawStrAt(G, "C-alphas", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
+          TextDrawStrAt(m_G, "C-alphas", x + DIP2PIXEL(80), y ORTHOCGOARGVAR);
           break;
         }
       }
     }
   }
-  if (!ORTHOCGOARGB || !(SettingGetGlobal_b(G, cSetting_show_frame_rate) || MoviePlaying(G))) {
+  if (!ORTHOCGOARGB || !(SettingGetGlobal_b(m_G, cSetting_show_frame_rate) || MoviePlaying(m_G))) {
     ButModeDrawFastImpl(this, true ORTHOCGOARGVAR);
   }
 }
@@ -402,10 +402,10 @@ bool CButMode::fastDraw(CGO* orthoCGO){
   return ButModeDrawFastImpl(this, false, orthoCGO);
 }
 
-bool ButModeDrawFastImpl(Block * block, short definitely ORTHOCGOARG)
+static bool ButModeDrawFastImpl(Block * block, short definitely ORTHOCGOARG)
 {
-  PyMOLGlobals *G = block->G;
-  CButMode *I = G->ButMode;
+  PyMOLGlobals *G = block->m_G;
+  CButMode *I = block->m_G->ButMode;
   int x, y;
   float *textColor = I->TextColor;
   float *textColor2 = I->TextColor2;

@@ -133,6 +133,7 @@ void SeqUpdate(PyMOLGlobals * G)
 
 void CSeq::reshape(int width, int height)
 {
+  PyMOLGlobals *G = m_G;
   CSeq *I = G->Seq;
   Block::reshape(width, height);
 
@@ -178,6 +179,7 @@ void SeqChanged(PyMOLGlobals * G)
 
 int CSeq::drag(int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CSeq *I = G->Seq;
   int pass = 0;
   int row_num;
@@ -195,6 +197,7 @@ int CSeq::drag(int x, int y, int mod)
 
 int CSeq::release(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CSeq *I = G->Seq;
   int pass = 0;
   if(!pass) {
@@ -238,6 +241,7 @@ void SeqSetHandler(PyMOLGlobals * G, CSeqHandler * handler)
 
 int CSeq::click(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CSeq *I = G->Seq;
   int pass = 0;
   int row_num;
@@ -289,6 +293,7 @@ int CSeq::click(int button, int x, int y, int mod)
 
 void CSeq::draw(CGO* orthoCGO)
 {
+  PyMOLGlobals *G = m_G;
   CSeq *I = G->Seq;
 
   if(G->HaveGUI && G->ValidContext) {

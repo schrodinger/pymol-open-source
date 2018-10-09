@@ -225,6 +225,7 @@ int ControlRocking(PyMOLGlobals * G)
 
 void CControl::reshape(int width, int height)
 {
+  PyMOLGlobals *G = m_G;
   CControl *I = G->Control;
   Block::reshape(width, height);
   /* this is a pragmatic workaround for mac X11 where the nub gets
@@ -257,6 +258,7 @@ int CControl::drag(int x, int y, int mod)
 {
   int delta;
   int gui_width;
+  PyMOLGlobals *G = m_G;
   CControl *I = G->Control;
   if(!I->SkipRelease) {
     delta = x - I->LastPos;
@@ -285,6 +287,7 @@ int CControl::drag(int x, int y, int mod)
 
 int CControl::release(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CControl *I = G->Control;
 
   int sel = 0;
@@ -450,12 +453,13 @@ int ControlRock(PyMOLGlobals * G, int mode)
 /*========================================================================*/
 int CControl::click(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CControl *I = G->Control;
   I->SkipRelease = false;
   if(x < (I->rect.left + cControlLeftMargin)) {
     y -= I->rect.top - cControlTopMargin;
     if((y <= 0) && (y > (-cControlBoxSize))) {
-      double now = UtilGetSeconds(G);
+      double now = UtilGetSeconds(m_G);
       if((now - I->LastClickTime) < 0.35) {
         if(I->SaveWidth) {
           SettingSetGlobal_i(G, cSetting_internal_gui_width, I->SaveWidth);
@@ -542,6 +546,7 @@ static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
 /*========================================================================*/
 void CControl::draw(CGO* orthoCGO)
 {
+  PyMOLGlobals *G = m_G;
   CControl *I = this; // TODO: Remove I during Control refactor
   int x, y;
   int nButton = I->NButton;

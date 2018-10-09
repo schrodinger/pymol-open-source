@@ -35,7 +35,7 @@ int Block::getHeight() const {
 /*========================================================================*/
 void Block::fill(CGO *orthoCGO)
 {
-  if(G->HaveGUI && G->ValidContext) {
+  if(m_G->HaveGUI && m_G->ValidContext) {
     if (orthoCGO){
       CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
       CGOVertex(orthoCGO, rect.right, rect.top, 0.f);
@@ -58,7 +58,7 @@ void Block::fill(CGO *orthoCGO)
 /*========================================================================*/
 void Block::drawLeftEdge(CGO *orthoCGO)
 {
-  if(G->HaveGUI && G->ValidContext) {
+  if(m_G->HaveGUI && m_G->ValidContext) {
     if (orthoCGO){
       CGOColor(orthoCGO, .3f, .3f, .3f);
       CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
@@ -68,7 +68,7 @@ void Block::drawLeftEdge(CGO *orthoCGO)
       CGOVertex(orthoCGO, rect.left + 1.f, rect.top, 0.f);
       CGOEnd(orthoCGO);
     } else {
-      if(G->HaveGUI && G->ValidContext) {
+      if(m_G->HaveGUI && m_G->ValidContext) {
 	glColor3f(0.3, 0.3, 0.3);
 	glBegin(GL_LINES);
 	glVertex2i(rect.left, rect.bottom);
@@ -83,7 +83,7 @@ void Block::drawLeftEdge(CGO *orthoCGO)
 void Block::drawTopEdge()
 {
 #ifndef PURE_OPENGL_ES_2
-  if(G->HaveGUI && G->ValidContext) {
+  if(m_G->HaveGUI && m_G->ValidContext) {
     glColor3f(0.3, 0.3, 0.3);
     glBegin(GL_LINES);
     glVertex2i(rect.right, rect.top);

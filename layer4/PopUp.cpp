@@ -112,7 +112,7 @@ ok_except1:
 /*========================================================================*/
 static Block *PopUpRecursiveFind(Block * block, int x, int y)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   CPopUp *I = (CPopUp *) block->reference;
   if(I->Child) {                /* favor the child */
     if(PopUpRecursiveFind(I->Child, x, y) == I->Child)
@@ -334,7 +334,7 @@ int PopUpConvertY(CPopUp * I, int value, int mode)
 
 static void PopUpDetachRecursiveChild(Block * block)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   CPopUp *I = (CPopUp *) block->reference;
 
   OrthoDetach(G, block);
@@ -354,7 +354,7 @@ static void PopUpForgetChild(Block * block)
 
 static void PopUpRecursiveDetach(Block * block)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   CPopUp *I = (CPopUp *) block->reference;
   OrthoDetach(G, block);
   if(I->Child)
@@ -367,7 +367,7 @@ static void PopUpRecursiveDetach(Block * block)
 
 static void PopUpFree(Block * block)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   CPopUp *I = (CPopUp *) block->reference;
 
 #ifndef _PYMOL_NOPY
@@ -419,6 +419,7 @@ static void PopUpFreeRecursiveChild(Block * block)
 /*========================================================================*/
 int CPopUp::release(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CPopUp *I = (CPopUp *) reference;
   int gone_passive = false;
 
@@ -470,6 +471,7 @@ int CPopUp::release(int button, int x, int y, int mod)
 /*========================================================================*/
 int CPopUp::drag(int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CPopUp *I = (CPopUp *) reference;
 
   int a;
@@ -599,6 +601,7 @@ int CPopUp::drag(int x, int y, int mod)
 void CPopUp::draw(CGO* orthoCGO)
 {
   CPopUp *I = this; // TODO: Remove I during PopUp refactor
+  PyMOLGlobals *G = m_G;
   int x, y, a, xx;
   char *c;
 

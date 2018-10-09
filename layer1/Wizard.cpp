@@ -620,6 +620,7 @@ int CWizard::click(int button, int x, int y, int mod)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
+  PyMOLGlobals *G = m_G;
   CWizard *I = G->Wizard;
   int a;
   PyObject *menuList = NULL;
@@ -669,6 +670,7 @@ int CWizard::drag(int x, int y, int mod)
   return 0;
 #else
 
+  PyMOLGlobals *G = m_G;
 
   CWizard *I = G->Wizard;
   int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
@@ -702,6 +704,7 @@ int CWizard::drag(int x, int y, int mod)
 /*========================================================================*/
 int CWizard::release(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
 
   CWizard *I = this; // TODO: Remove during Wizard Refactor
   int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
@@ -833,6 +836,7 @@ static void draw_text(PyMOLGlobals * G, char *c, int xx, int yy, float *color OR
 /*========================================================================*/
 void CWizard::draw(CGO* orthoCGO)
 {
+  PyMOLGlobals *G = m_G;
 
   CWizard *I = G->Wizard;
   int x, y;

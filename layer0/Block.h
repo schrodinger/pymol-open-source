@@ -28,7 +28,7 @@ struct BlockRect{
 };
 
 struct Block {
-  PyMOLGlobals * G;
+  PyMOLGlobals * m_G;
   Block *next = nullptr, *inside = nullptr, *parent = nullptr;
   void *reference = nullptr;
   BlockRect rect {}, margin {};
@@ -43,7 +43,7 @@ struct Block {
   virtual int cursor (int x, int y, int mod) { return 0; }
   virtual int drag (int x, int y, int mod) { return 0; }
   virtual int release (int button, int x, int y, int mod) { return 0; }
-  Block(PyMOLGlobals * _G) : G(_G){}
+  Block(PyMOLGlobals * _G) : m_G(_G){}
 
   void globalToLocal(int x, int y, int *lx, int *ly);
   void recursiveDraw(CGO *orthoCGO);

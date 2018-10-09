@@ -1580,6 +1580,7 @@ void MoviePrepareDrag(PyMOLGlobals *G, BlockRect * rect,
 
 int CMovie::click(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CMovie *I = G->Movie;
   int count = ExecutiveCountMotions(G);
   short scrolldir = 1;
@@ -1666,6 +1667,7 @@ int CMovie::click(int button, int x, int y, int mod)
 
 int CMovie::drag(int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
 
   CMovie *I = this; // TODO: Remove all I's in Movie refactor
   if(I->DragMode) {
@@ -1700,6 +1702,7 @@ int CMovie::drag(int x, int y, int mod)
 
 int CMovie::release(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CMovie *I = G->Movie;
   ScrollBarDoRelease(I->ScrollBar, button, x, y, mod);
   if(I->DragMode) {
@@ -1826,6 +1829,7 @@ void MovieDrawViewElem(PyMOLGlobals *G, BlockRect *rect,int frames ORTHOCGOARG)
 
 bool CMovie::fastDraw(CGO* orthoCGO)
 {
+  PyMOLGlobals *G = m_G;
   CMovie *I = G->Movie;
   //  ScrollBarDrawHandle(I->ScrollBar, 0.35F ORTHOCGOARGVAR);
   ScrollBarDoDrawNoFill(I->ScrollBar ORTHOCGOARGVAR);
@@ -1835,6 +1839,7 @@ bool CMovie::fastDraw(CGO* orthoCGO)
 
 void CMovie::draw(CGO* orthoCGO)
 {
+  PyMOLGlobals *G = m_G;
   CMovie *I = G->Movie;
   if(I->PanelActive) {
     int n_frame = MovieGetLength(G);
@@ -1951,6 +1956,7 @@ void MovieSetScrollBarFrame(PyMOLGlobals * G, int frame)
 
 void CMovie::reshape(int width, int height)
 {
+  PyMOLGlobals *G = m_G;
   CMovie *I = G->Movie;
   Block::reshape(width, height);
   I->Width = rect.right - rect.left + 1;

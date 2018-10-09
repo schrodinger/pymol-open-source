@@ -81,7 +81,7 @@ int PopInit(PyMOLGlobals * G)
 /*========================================================================*/
 void PopFitBlock(Block * block)
 {
-  CPop *I = block->G->Pop; // TODO: Three indirections for a 'this' lol
+  CPop *I = block->m_G->Pop; // TODO: Three indirections for a 'this' lol
   int delta;
 
   if((block->rect.bottom - cPopMargin) < (I->rect.bottom)) {

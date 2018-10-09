@@ -105,7 +105,7 @@ void CScrollBar::draw(CGO* orthoCGO)
 
 void ScrollBarDrawImpl(Block * block, short fill  ORTHOCGOARG)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   float value;
   int top, left, bottom, right;
 
@@ -216,7 +216,7 @@ void ScrollBarDrawHandle(struct CScrollBar *I, float alpha ORTHOCGOARG)
   float value;
   int top, left, bottom, right;
   Block *block = I; // TODO: Remove during ScrollBar refactor
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
 
   value = I->Value;
   if(value > I->ValueMax)
@@ -346,11 +346,12 @@ void CScrollBar::reshape(int width, int height)
 
 int ScrollBarGrabbed(struct CScrollBar *I)
 {
-  return OrthoGrabbedBy(I->G, I);
+  return OrthoGrabbedBy(I->m_G, I);
 }
 
 int CScrollBar::click(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CScrollBar *I = (CScrollBar *) reference;
   int grab = 0;
 
@@ -398,6 +399,7 @@ int CScrollBar::click(int button, int x, int y, int mod)
 
 int CScrollBar::drag(int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CScrollBar *I = (CScrollBar *) reference;
   int displ;
   if(I->HorV)
@@ -411,6 +413,7 @@ int CScrollBar::drag(int x, int y, int mod)
 
 int CScrollBar::release(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   OrthoUngrab(G);
   OrthoDirty(G);
   return 0;

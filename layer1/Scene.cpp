@@ -481,7 +481,7 @@ void SceneLoadAnimation(PyMOLGlobals * G, double duration, int hand)
 
 int SceneLoopClick(Block * block, int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   CScene *I = G->Scene;
   I->LoopRect.left = x;
   I->LoopRect.top = y;
@@ -496,7 +496,7 @@ int SceneLoopClick(Block * block, int button, int x, int y, int mod)
 
 int SceneLoopDrag(Block * block, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   CScene *I = G->Scene;
   I->LoopRect.right = x;
   I->LoopRect.bottom = y;
@@ -506,7 +506,7 @@ int SceneLoopDrag(Block * block, int x, int y, int mod)
 
 int SceneLoopRelease(Block * block, int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   CScene *I = G->Scene;
   int tmp;
   int mode;
@@ -2724,7 +2724,7 @@ void SceneSetNames(PyMOLGlobals * G, const std::vector<std::string> &list)
 static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
 {
 #ifndef _PYMOL_NOPY
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   CScene *I = G->Scene;
   int x, y, xx, x2;
   const char *c = NULL;
@@ -3233,6 +3233,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
 
 void CScene::draw(CGO* orthoCGO) /* returns true if scene was drawn (using a cached image) */
 {
+  PyMOLGlobals *G = m_G;
   CScene *I = G->Scene;
   int drawn = false; 
 
@@ -3263,7 +3264,7 @@ int SceneGetButtonMargin(PyMOLGlobals * G)
 /*========================================================================*/
 static int SceneRelease(Block * block, int button, int x, int y, int mod, double when)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   CScene *I = G->Scene;
   int release_handled = false;
   if(I->ButtonsShown && I->PressMode) {
@@ -3503,7 +3504,7 @@ static void SceneNoteMouseInteraction(PyMOLGlobals * G)
 /*========================================================================*/
 static int SceneClick(Block * block, int button, int x, int y, int mod, double when)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   CScene *I = G->Scene;
   CObject *obj;
   ObjectMolecule *objMol;
@@ -4830,7 +4831,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
 /*========================================================================*/
 static int SceneDrag(Block * block, int x, int y, int mod, double when)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   CScene *I = G->Scene;
   float scale, vScale;
   float v1[3], v2[3], n1[3], n2[3], r1, r2, cp[3], v3[3];
@@ -5749,13 +5750,13 @@ int SceneDeferImage(PyMOLGlobals * G, int width, int height,
 
 int CScene::click(int button, int x, int y, int mod) // Originally SceneDeferClick!!
 {
-  return SceneDeferClickWhen(this, button, x, y, UtilGetSeconds(G), mod);
+  return SceneDeferClickWhen(this, button, x, y, UtilGetSeconds(m_G), mod);
 }
 
 static int SceneDeferClickWhen(Block * block, int button, int x, int y, double when,
                                int mod)
 {
-  PyMOLGlobals *G = block->G;
+  PyMOLGlobals *G = block->m_G;
   auto dm = pymol::make_unique<DeferredMouse>(G);
   if(dm) {
     dm->block = block;
@@ -5778,6 +5779,7 @@ static int SceneDeferredDrag(DeferredMouse * dm)
 
 int CScene::drag(int x, int y, int mod) //Originally SceneDeferDrag
 {
+  PyMOLGlobals *G = m_G;
   auto dm = pymol::make_unique<DeferredMouse>(G);
   if(dm) {
     dm->block = this;
@@ -5799,6 +5801,7 @@ static int SceneDeferredRelease(DeferredMouse * dm)
 
 int CScene::release(int button, int x, int y, int mod) // Originally SceneDeferRelease
 {
+  PyMOLGlobals *G = m_G;
   auto dm = pymol::make_unique<DeferredMouse>(G);
   if(dm) {
     dm->block = this;
@@ -5950,6 +5953,7 @@ int SceneInit(PyMOLGlobals * G)
 /*========================================================================*/
 void CScene::reshape(int width, int height)
 {
+  PyMOLGlobals *G = m_G;
   CScene *I = G->Scene;
 
   if(I->margin.right) {

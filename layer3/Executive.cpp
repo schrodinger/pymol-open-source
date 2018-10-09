@@ -15193,6 +15193,7 @@ void ExecutiveManageSelection(PyMOLGlobals * G, const char *name)
 /*========================================================================*/
 int CExecutive::click(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CExecutive *I = G->Executive;
   int n, a;
   SpecRec *rec = NULL;
@@ -15713,6 +15714,7 @@ int ExecutiveAssignAtomTypes(PyMOLGlobals * G, const char *s1, int format, int s
 
 int CExecutive::release(int button, int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   PanelRec *panel = NULL;
@@ -15807,6 +15809,7 @@ int CExecutive::release(int button, int x, int y, int mod)
 /*========================================================================*/
 int CExecutive::drag(int x, int y, int mod)
 {
+  PyMOLGlobals *G = m_G;
   CExecutive *I = G->Executive;
   int xx, t;
   int ExecLineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
@@ -16228,6 +16231,7 @@ static void draw_button_char(PyMOLGlobals * G, int x2, int y2, char ch ORTHOCGOA
 /*========================================================================*/
 void CExecutive::draw(CGO* orthoCGO)
 {
+  PyMOLGlobals *G = m_G;
   int x, y, xx, x2, y2;
   WordType ch;
   char *c = NULL;
@@ -16652,6 +16656,7 @@ int ExecutiveIterateObjectMolecule(PyMOLGlobals * G, ObjectMolecule ** obj, void
 /*========================================================================*/
 void CExecutive::reshape(int width, int height)
 {
+  PyMOLGlobals *G = m_G;
   CExecutive *I = G->Executive;
 
   Block::reshape(width, height);
