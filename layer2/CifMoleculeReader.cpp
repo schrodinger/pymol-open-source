@@ -121,7 +121,7 @@ struct CifContentInfo {
     return false;
   }
 
-  bool is_excluded_chain(lexidx_t chain) {
+  bool is_excluded_chain(const lexidx_t& chain) {
     return (!chains_filter.empty() &&
         chains_filter.count(chain) == 0);
   }

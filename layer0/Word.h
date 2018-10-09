@@ -138,25 +138,25 @@ int WordCompare(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
 
 #endif
 
-inline int WordCompare(PyMOLGlobals * G, lexidx_t s1, lexidx_t s2, int ignCase) {
+inline int WordCompare(PyMOLGlobals * G, const lexidx_t& s1, const lexidx_t& s2, int ignCase) {
   if (s1 == s2)
     return 0;
   return WordCompare(G, LexStr(G, s1), LexStr(G, s2), ignCase);
 }
 
-inline int WordMatch(PyMOLGlobals * G, lexidx_t s1, lexidx_t s2, int ignCase) {
+inline int WordMatch(PyMOLGlobals * G, const lexidx_t& s1, const lexidx_t& s2, int ignCase) {
   if (s1 == s2)
     return -1; // negative = perfect match
   return WordMatch(G, LexStr(G, s1), LexStr(G, s2), ignCase);
 }
 
-inline int WordMatchNoWild(PyMOLGlobals * G, lexidx_t s1, lexidx_t s2, int ignCase) {
+inline int WordMatchNoWild(PyMOLGlobals * G, const lexidx_t& s1, const lexidx_t& s2, int ignCase) {
   if (s1 == s2)
     return -1; // negative = perfect match
   return WordMatchNoWild(G, LexStr(G, s1), LexStr(G, s2), ignCase);
 }
 
-inline int WordMatchExact(PyMOLGlobals * G, lexidx_t s1, lexidx_t s2, int ignCase) {
+inline int WordMatchExact(PyMOLGlobals * G, const lexidx_t& s1, const lexidx_t& s2, int ignCase) {
   if (s1 == s2)
     return 1; // non-zero = perfect match
   if (!ignCase)

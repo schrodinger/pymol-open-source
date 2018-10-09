@@ -1951,7 +1951,7 @@ static int AtomInfoNameCompare(PyMOLGlobals * G, const char *name1, const char *
 
 }
 
-static int AtomInfoNameCompare(PyMOLGlobals * G, lexidx_t name1, lexidx_t name2)
+static int AtomInfoNameCompare(PyMOLGlobals * G, const lexidx_t& name1, const lexidx_t& name2)
 {
   if (name1 == name2)
     return 0;

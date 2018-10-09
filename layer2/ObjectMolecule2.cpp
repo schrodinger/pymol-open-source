@@ -3713,7 +3713,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
       if (ai->name) lexIDs.insert(ai->name);
       ++ai;
     }
-    for (auto lexID : lexIDs){ // need to calculate totalstlen so we can allocate
+    for (const auto& lexID : lexIDs) { // need to calculate totalstlen so we can allocate
       const char *lexstr = LexStr(G, lexID);
       int lexlen = strlen(lexstr);
       totalstlen += lexlen + 1;
