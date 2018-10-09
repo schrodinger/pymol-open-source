@@ -159,7 +159,6 @@ int SceneReinitialize(PyMOLGlobals * G);
 void SceneUpdateStereoMode(PyMOLGlobals * G);
 void SceneSuppressMovieFrame(PyMOLGlobals * G);
 int SceneDeferClick(Block * block, int button, int x, int y, int mod);
-int SceneDeferRelease(Block * block, int button, int x, int y, int mod);
 int SceneDeferDrag(Block * block, int x, int y, int mod);
 int SceneDeferImage(PyMOLGlobals * G, int width, int height, const char *filename,
                     int antialias, float dpi, int format, int quiet);

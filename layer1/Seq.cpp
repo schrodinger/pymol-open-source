@@ -34,25 +34,32 @@ Z* -------------------------------------------------------------------
 #include "Ortho.h"
 #include "CGO.h"
 
-struct _CSeq {
-  ::Block *Block;
-  int DragFlag;
-  int ScrollBarActive;
-  int NSkip;
-  struct CScrollBar *ScrollBar;
-  CSeqRow *Row;
-  int NRow;
-  int Size;
-  int VisSize;
-  int Changed;
-  int Dirty;
-  int LineHeight;
-  int CharWidth;
-  int ScrollBarWidth;
-  int ScrollBarMargin;
-  int CharMargin;
-  int LastRow;
-  CSeqHandler *Handler;         /* borrowed pointer */
+struct CSeq : public Block {
+  bool DragFlag { false };
+  bool ScrollBarActive { true };
+  int NSkip {};
+  CScrollBar *ScrollBar {};
+  CSeqRow *Row { nullptr };
+  int NRow { 0 };
+  int Size {};
+  int VisSize {};
+  int Changed {};
+  bool Dirty { true };
+  int LineHeight { 13 };
+  int CharWidth { 8 };
+  int ScrollBarWidth { 16 };
+  int ScrollBarMargin { 2 };
+  int CharMargin { 2 };
+  int LastRow { -1 };
+  CSeqHandler *Handler {};         /* borrowed pointer */
+
+  CSeq(PyMOLGlobals * G) : Block(G) {}
+
+  virtual int click(int button, int x, int y, int mod) override;
+  virtual void draw(CGO* orthoCGO) override;
+  virtual int drag(int x, int y, int mod) override;
+  virtual int release(int button, int x, int y, int mod) override;
+  virtual void reshape(int width, int height) override;
 };
 
 static int SeqFindRowCol(PyMOLGlobals * G, int x, int y, int *row_num_ptr,
@@ -69,14 +76,14 @@ static int SeqFindRowCol(PyMOLGlobals * G, int x, int y, int *row_num_ptr,
   if(fixed_row >= 0) {
     row_num = fixed_row;
   } else {
-    row_num = (y - I->Block->rect.bottom) / DIP2PIXEL(I->LineHeight);
+    row_num = (y - I->rect.bottom) / DIP2PIXEL(I->LineHeight);
     row_num = (I->NRow - 1) - row_num;
   }
   if((row_num >= 0) && (row_num < I->NRow)) {
     int char_num;
     CSeqRow *row;
     row = I->Row + row_num;
-    char_num = (x - I->Block->rect.left - DIP2PIXEL(I->CharMargin)) / DIP2PIXEL(I->CharWidth);
+    char_num = (x - I->rect.left - DIP2PIXEL(I->CharMargin)) / DIP2PIXEL(I->CharWidth);
     if(row->nCol && !row->label_flag)
       if(char_num < I->VisSize) {
         char_num += I->NSkip;
@@ -124,11 +131,10 @@ void SeqUpdate(PyMOLGlobals * G)
   }
 }
 
-static void SeqReshape(Block * block, int width, int height)
+void CSeq::reshape(int width, int height)
 {
-  PyMOLGlobals *G = block->G;
   CSeq *I = G->Seq;
-  block->reshape(width, height);
+  Block::reshape(width, height);
 
   {                             /* get current sequence sizes */
     int a;
@@ -141,8 +147,8 @@ static void SeqReshape(Block * block, int width, int height)
 
   {
     int extra;
-    I->VisSize = (I->Block->rect.right - I->Block->rect.left - 1) / DIP2PIXEL(I->CharWidth);
-    /*    printf("%d %d %d %d %d\n",cw,I->Block->rect.right,I->Block->rect.left,I->VisSize,I->Size); */
+    I->VisSize = (I->rect.right - I->rect.left - 1) / DIP2PIXEL(I->CharWidth);
+    /*    printf("%d %d %d %d %d\n",cw,I->rect.right,I->rect.left,I->VisSize,I->Size); */
 
     if(I->VisSize < 1)
       I->VisSize = 1;
@@ -170,9 +176,8 @@ void SeqChanged(PyMOLGlobals * G)
   SceneInvalidate(G);
 }
 
-static int SeqDrag(Block * block, int x, int y, int mod)
+int CSeq::drag(int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
   CSeq *I = G->Seq;
   int pass = 0;
   int row_num;
@@ -188,20 +193,10 @@ static int SeqDrag(Block * block, int x, int y, int mod)
   return (1);
 }
 
-static int SeqRelease(Block * block, int button, int x, int y, int mod)
+int CSeq::release(int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
   CSeq *I = G->Seq;
   int pass = 0;
-  /*
-     if(I->ScrollBarActive) {
-     if((y-I->Block->rect.bottom)<I->ScrollBarWidth) {
-     pass = 1;
-     ScrollBarDoRelease(I->ScrollBar,button,x,y,mod);
-     OrthoUngrab(G);
-     }
-     } 
-   */
   if(!pass) {
     int row_num;
     int col_num;
@@ -241,9 +236,8 @@ void SeqSetHandler(PyMOLGlobals * G, CSeqHandler * handler)
   I->Handler = handler;
 }
 
-static int SeqClick(Block * block, int button, int x, int y, int mod)
+int CSeq::click(int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
   CSeq *I = G->Seq;
   int pass = 0;
   int row_num;
@@ -259,7 +253,7 @@ static int SeqClick(Block * block, int button, int x, int y, int mod)
   }
 
   if(I->ScrollBarActive) {
-    if((y - I->Block->rect.bottom) < DIP2PIXEL(I->ScrollBarWidth)) {
+    if((y - rect.bottom) < DIP2PIXEL(I->ScrollBarWidth)) {
       pass = 1;
       ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
     }
@@ -293,15 +287,14 @@ static int SeqClick(Block * block, int button, int x, int y, int mod)
   return (1);
 }
 
-static void SeqDraw(Block * block ORTHOCGOARG)
+void CSeq::draw(CGO* orthoCGO)
 {
-  PyMOLGlobals *G = block->G;
   CSeq *I = G->Seq;
 
   if(G->HaveGUI && G->ValidContext) {
 
-    int x = I->Block->rect.left;
-    int y = I->Block->rect.bottom + DIP2PIXEL(I->ScrollBarMargin) + 1;
+    int x = rect.left;
+    int y = rect.bottom + DIP2PIXEL(I->ScrollBarMargin) + 1;
     float bg_color[3] = { 0.f, 0.f, 0.f }, overlay_color[3] = { 1.0F, 1.0F, 1.0F };
     int label_color_index = SettingGetGlobal_color(G, cSetting_seq_view_label_color);
     const float *label_color = ColorGet(G, label_color_index);
@@ -322,13 +315,13 @@ static void SeqDraw(Block * block ORTHOCGOARG)
       } else {
 	glColor3fv(bg_color);
       }
-      I->Block->fill(orthoCGO);
+      fill(orthoCGO);
     }
     if(I->ScrollBarActive) {
-      ScrollBarSetBox(I->ScrollBar, I->Block->rect.bottom + DIP2PIXEL(I->ScrollBarWidth),
-                      I->Block->rect.left + DIP2PIXEL(I->ScrollBarMargin),
-                      I->Block->rect.bottom + DIP2PIXEL(2),
-                      I->Block->rect.right - DIP2PIXEL(I->ScrollBarMargin));
+      ScrollBarSetBox(I->ScrollBar, rect.bottom + DIP2PIXEL(I->ScrollBarWidth),
+                      rect.left + DIP2PIXEL(I->ScrollBarMargin),
+                      rect.bottom + DIP2PIXEL(2),
+                      rect.right - DIP2PIXEL(I->ScrollBarMargin));
       ScrollBarDoDraw(I->ScrollBar ORTHOCGOARGVAR);
       y += DIP2PIXEL(I->ScrollBarWidth);
       I->NSkip = (int) ScrollBarGetValue(I->ScrollBar);
@@ -601,7 +594,7 @@ static void SeqDraw(Block * block ORTHOCGOARG)
       if(I->ScrollBarActive) {
         int real_count = n_real;
         int mode = 0;
-        float width = (float) (I->Block->rect.right - I->Block->rect.left);
+        float width = (float) (rect.right - rect.left);
         float start = 0, stop;
         int right = 0;
         float bot, top, cent;
@@ -612,10 +605,10 @@ static void SeqDraw(Block * block ORTHOCGOARG)
           row = I->Row + a;
           if(!row->label_flag) {
             top =
-              I->Block->rect.bottom + DIP2PIXEL(I->ScrollBarMargin) + (height * real_count) / n_real;
+              rect.bottom + DIP2PIXEL(I->ScrollBarMargin) + (height * real_count) / n_real;
             real_count--;
             bot =
-              I->Block->rect.bottom + DIP2PIXEL(I->ScrollBarMargin) + (height * real_count) / n_real;
+              rect.bottom + DIP2PIXEL(I->ScrollBarMargin) + (height * real_count) / n_real;
             mode = 0;
             for(b = 0; b < row->nCol; b++) {
               col = row->col + b;
@@ -738,32 +731,15 @@ static void SeqDraw(Block * block ORTHOCGOARG)
 int SeqInit(PyMOLGlobals * G)
 {
   CSeq *I = NULL;
-  if((I = (G->Seq = Calloc(CSeq, 1)))) {
+  if((I = (G->Seq = new CSeq(G)))) {
 
-    I->Block = OrthoNewBlock(G, NULL);
-    I->Block->fClick = SeqClick;
-    I->Block->fDraw = SeqDraw;
-    I->Block->fDrag = SeqDrag;
-    I->Block->fRelease = SeqRelease;
-    I->Block->fReshape = SeqReshape;
-    I->Block->active = true;
-    I->Block->TextColor[0] = 1.0;
-    I->Block->TextColor[1] = 0.75;
-    I->Block->TextColor[2] = 0.75;
-    OrthoAttach(G, I->Block, cOrthoTool);
-    I->DragFlag = false;
-    I->ScrollBarActive = true;
+    I->active = true;
+    I->TextColor[0] = 1.0;
+    I->TextColor[1] = 0.75;
+    I->TextColor[2] = 0.75;
+    OrthoAttach(G, I, cOrthoTool);
     I->ScrollBar = ScrollBarNew(G, true);
     ScrollBarSetValue(I->ScrollBar, 0);
-    I->Row = NULL;
-    I->NRow = 0;
-    I->Dirty = true;
-    I->ScrollBarWidth = 16;
-    I->ScrollBarMargin = 2;
-    I->LineHeight = 13;
-    I->CharMargin = 2;
-    I->LastRow = -1;
-    I->CharWidth = 8;
     return 1;
   } else
     return 0;
@@ -802,14 +778,13 @@ void SeqFree(PyMOLGlobals * G)
   SeqPurgeRowVLA(G);
   if(I->ScrollBar)
     ScrollBarFree(I->ScrollBar);
-  OrthoFreeBlock(G, I->Block);
-  FreeP(G->Seq);
+  DeleteP(I);
 }
 
 Block *SeqGetBlock(PyMOLGlobals * G)
 {
   CSeq *I = G->Seq;
   {
-    return (I->Block);
+    return (I);
   }
 }

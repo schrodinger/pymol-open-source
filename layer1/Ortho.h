@@ -44,9 +44,6 @@ void OrthoDetach(PyMOLGlobals * G, Block * block);
 
 void OrthoSetMargins(Block * block, int t, int l, int b, int r);
 
-Block *OrthoNewBlock(PyMOLGlobals * G, Block * block);
-void OrthoFreeBlock(PyMOLGlobals * G, Block * block);
-
 void OrthoReshape(PyMOLGlobals * G, int width, int height, int force);
 int OrthoGetWidth(PyMOLGlobals * G);
 int OrthoGetHeight(PyMOLGlobals * G);

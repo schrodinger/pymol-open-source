@@ -58,19 +58,25 @@ typedef struct {
   OrthoLineType code;
 } WizardLine;
 
-struct _CWizard {
-  ::Block *Block;
-  PyObject **Wiz;
-  WizardLine *Line;
-  ov_size NLine;
-  ov_diff Stack;
-  int Pressed;
-  int EventMask;
-  int Dirty;
-  int LastUpdatedState;
-  int LastUpdatedFrame;
-  float LastUpdatedPosition[3];
-  SceneViewType LastUpdatedView;
+struct CWizard : public Block {
+  PyObject **Wiz {};
+  WizardLine *Line {};
+  ov_size NLine { 0 };
+  ov_diff Stack { -1 };
+  int Pressed { -1 };
+  int EventMask { 0 };
+  int Dirty {};
+  int LastUpdatedState { -1 };
+  int LastUpdatedFrame { -1 };
+  float LastUpdatedPosition[3] {};
+  SceneViewType LastUpdatedView {};
+
+  CWizard(PyMOLGlobals * G) : Block(G) {};
+
+  virtual int click(int button, int x, int y, int mod) override;
+  virtual int drag(int x, int y, int mod) override;
+  virtual void draw(CGO* orthoCGO) override;
+  virtual int release(int button, int x, int y, int mod) override;
 };
 
 #define cWizardLeftMargin DIP2PIXEL(3)
@@ -320,7 +326,7 @@ Block *WizardGetBlock(PyMOLGlobals * G)
 {
   CWizard *I = G->Wizard;
   {
-    return (I->Block);
+    return (I);
   }
 }
 
@@ -609,22 +615,21 @@ int WizardDoSpecial(PyMOLGlobals * G, int k, int x, int y, int mod)
 
 
 /*========================================================================*/
-static int WizardClick(Block * block, int button, int x, int y, int mod)
+int CWizard::click(int button, int x, int y, int mod)
 {
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  PyMOLGlobals *G = block->G;
   CWizard *I = G->Wizard;
   int a;
   PyObject *menuList = NULL;
   int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
 
-  a = ((I->Block->rect.top - (y + cWizardClickOffset)) - cWizardTopMargin) / LineHeight;
+  a = ((rect.top - (y + cWizardClickOffset)) - cWizardTopMargin) / LineHeight;
   if((a >= 0) && ((ov_size) a < I->NLine)) {
     switch (I->Line[a].type) {
     case cWizTypeButton:
-      OrthoGrab(G, I->Block);
+      OrthoGrab(G, this);
       I->Pressed = (int) a;
       OrthoDirty(G);
       break;
@@ -643,7 +648,7 @@ static int WizardClick(Block * block, int button, int x, int y, int mod)
       if(PyErr_Occurred())
         PyErr_Print();
       if(menuList && (menuList != Py_None)) {
-        int my = I->Block->rect.top - (cWizardTopMargin + a * LineHeight) - 2;
+        int my = rect.top - (cWizardTopMargin + a * LineHeight) - 2;
 
         PopUpNew(G, x, my, x, y, false, menuList, NULL);
       }
@@ -658,21 +663,20 @@ static int WizardClick(Block * block, int button, int x, int y, int mod)
 
 
 /*========================================================================*/
-static int WizardDrag(Block * block, int x, int y, int mod)
+int CWizard::drag(int x, int y, int mod)
 {
 #ifdef _PYMOL_NOPY
   return 0;
 #else
 
-  PyMOLGlobals *G = block->G;
 
   CWizard *I = G->Wizard;
   int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
 
   int a;
-  a = ((I->Block->rect.top - (y + cWizardClickOffset)) - cWizardTopMargin) / LineHeight;
+  a = ((rect.top - (y + cWizardClickOffset)) - cWizardTopMargin) / LineHeight;
 
-  if((x < I->Block->rect.left) || (x > I->Block->rect.right))
+  if((x < rect.left) || (x > rect.right))
     a = -1;
 
   if(I->Pressed != a) {
@@ -696,15 +700,14 @@ static int WizardDrag(Block * block, int x, int y, int mod)
 
 
 /*========================================================================*/
-static int WizardRelease(Block * block, int button, int x, int y, int mod)
+int CWizard::release(int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
 
-  CWizard *I = G->Wizard;
+  CWizard *I = this; // TODO: Remove during Wizard Refactor
   int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
 
   int a;
-  a = ((I->Block->rect.top - (y + cWizardClickOffset)) - cWizardTopMargin) / LineHeight;
+  a = ((rect.top - (y + cWizardClickOffset)) - cWizardTopMargin) / LineHeight;
 
   if(I->Pressed)
     I->Pressed = -1;
@@ -828,9 +831,8 @@ static void draw_text(PyMOLGlobals * G, char *c, int xx, int yy, float *color OR
 
 
 /*========================================================================*/
-static void WizardDraw(Block * block ORTHOCGOARG)
+void CWizard::draw(CGO* orthoCGO)
 {
-  PyMOLGlobals *G = block->G;
 
   CWizard *I = G->Wizard;
   int x, y;
@@ -852,40 +854,44 @@ static void WizardDraw(Block * block ORTHOCGOARG)
   float menuColor[3] = { 0.0, 0.0, 0.0 };
   int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
   int text_lift = (LineHeight / 2) - DIP2PIXEL(5);
-  float *text_color, *text_color2 = I->Block->TextColor;
+  float *text_color, *text_color2 = TextColor;
 
   text_color = menuColor;
 
-  if(G->HaveGUI && G->ValidContext && ((block->rect.right - block->rect.left) > 6)) {
+  if(G->HaveGUI && G->ValidContext && ((rect.right - rect.left) > 6)) {
 
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 0) {
     if (orthoCGO)
-      CGOColorv(orthoCGO, I->Block->BackColor);
+      CGOColorv(orthoCGO, BackColor);
+#ifndef PURE_OPENGL_ES_2
     else
-      glColor3fv(I->Block->BackColor);
-      I->Block->fill(orthoCGO);
-      I->Block->drawLeftEdge(orthoCGO);
+      glColor3fv(BackColor);
+#endif
+      fill(orthoCGO);
+      drawLeftEdge(orthoCGO);
     } else {
-      I->Block->drawLeftEdge(orthoCGO);
+      drawLeftEdge(orthoCGO);
     if (orthoCGO)
       CGOColor(orthoCGO, .5f, .5f, .5f);
     else
       glColor3f(0.5, 0.5, 0.5);
-      I->Block->drawTopEdge();
+      drawTopEdge();
       text_color2 = OrthoGetOverlayColor(G);
     }
 
     if (orthoCGO)
-      CGOColorv(orthoCGO, I->Block->TextColor);
+      CGOColorv(orthoCGO, TextColor);
+#ifndef PURE_OPENGL_ES_2
     else
-      glColor3fv(I->Block->TextColor);
-    x = I->Block->rect.left + cWizardLeftMargin;
-    y = (I->Block->rect.top - LineHeight) - cWizardTopMargin;
+      glColor3fv(TextColor);
+#endif
+    x = rect.left + cWizardLeftMargin;
+    y = (rect.top - LineHeight) - cWizardTopMargin;
 
     for(a = 0; (ov_size) a < I->NLine; a++) {
       if(I->Pressed == a) {
-        draw_button(I->Block->rect.left + 1, y,
-                    (I->Block->rect.right - I->Block->rect.left) - 1,
+        draw_button(rect.left + 1, y,
+                    (rect.right - rect.left) - 1,
                     LineHeight - 1, dimLightEdge, dimDarkEdge, buttonActiveColor ORTHOCGOARGVAR);
         /*        glColor3f(0.0,0.0,0.0); */
         text_color = black_color;
@@ -896,16 +902,16 @@ static void WizardDraw(Block * block ORTHOCGOARG)
           glColor3fv(text_color2);
           break;
         case cWizTypeButton:
-          draw_button(I->Block->rect.left + 1, y,
-                      (I->Block->rect.right - I->Block->rect.left) - 1,
+          draw_button(rect.left + 1, y,
+                      (rect.right - rect.left) - 1,
                       LineHeight - 1, dimLightEdge, dimDarkEdge, dimColor ORTHOCGOARGVAR);
 
           /*          glColor3fv(buttonTextColor); */
           text_color = buttonTextColor;
           break;
         case cWizTypePopUp:
-          draw_button(I->Block->rect.left + 1, y,
-                      (I->Block->rect.right - I->Block->rect.left) - 1,
+          draw_button(rect.left + 1, y,
+                      (rect.right - rect.left) - 1,
                       LineHeight - 1, menuLightEdge, menuDarkEdge, menuBGColor ORTHOCGOARGVAR);
           /* glColor3fv(menuColor); */
           text_color = menuColor;
@@ -997,30 +1003,16 @@ int WizardSetStack(PyMOLGlobals * G, PyObject * list)
 int WizardInit(PyMOLGlobals * G)
 {
   CWizard *I = NULL;
-  if((I = (G->Wizard = Calloc(CWizard, 1)))) {
+  if((I = (G->Wizard = new CWizard(G)))) {
 
-    I->Block = OrthoNewBlock(G, NULL);
-    I->Block->fClick = WizardClick;
-    I->Block->fDrag = WizardDrag;
-    I->Block->fDraw = WizardDraw;
-    I->Block->fReshape = BlockReshape;
-    I->Block->fRelease = WizardRelease;
-    I->Block->active = true;
+    I->active = true;
+    I->TextColor[0] = 0.2F;
+    I->TextColor[1] = 1.0F;
+    I->TextColor[2] = 0.2F;
 
-    I->Block->TextColor[0] = 0.2F;
-    I->Block->TextColor[1] = 1.0F;
-    I->Block->TextColor[2] = 0.2F;
-
-    I->LastUpdatedState = -1;
-    I->LastUpdatedFrame = -1;
-
-    OrthoAttach(G, I->Block, cOrthoTool);
+    OrthoAttach(G, I, cOrthoTool);
 
     I->Line = VLAlloc(WizardLine, 1);
-    I->NLine = 0;
-    I->Pressed = -1;
-    I->EventMask = 0;
-    I->Stack = -1;
     I->Wiz = VLAlloc(PyObject *, 10);
     return 1;
   } else
@@ -1033,8 +1025,7 @@ void WizardFree(PyMOLGlobals * G)
 {
   CWizard *I = G->Wizard;
   WizardPurgeStack(G);
-  OrthoFreeBlock(G, I->Block);
   VLAFreeP(I->Line);
   VLAFreeP(I->Wiz);
-  FreeP(G->Wizard);
+  DeleteP(I);
 }

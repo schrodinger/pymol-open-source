@@ -14,6 +14,7 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+
 #include"os_std.h"
 #include"os_gl.h"
 #include"os_python.h"
@@ -605,8 +606,6 @@ char *SceneGetSeleModeKeyword(PyMOLGlobals * G)
     return (char *) SelModeKW[sel_mode];
   return (char *) SelModeKW[0];
 }
-
-void SceneDraw(Block * block ORTHOCGOARG);
 
 void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
 {
@@ -1713,11 +1712,11 @@ unsigned char *SceneImagePrepareImpl(PyMOLGlobals * G, int prior_only, int noinv
       } else {
         glReadBuffer(GL_BACK);
       }
-      PyMOLReadPixels(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height,
+      PyMOLReadPixels(I->rect.left, I->rect.bottom, I->Width, I->Height,
                       GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image));
       if(save_stereo) {
         glReadBuffer(GL_BACK_RIGHT);
-        PyMOLReadPixels(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height,
+        PyMOLReadPixels(I->rect.left, I->rect.bottom, I->Width, I->Height,
                         GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image + buffer_size));
       }
       ScenePurgeImageImpl(G, noinvalid);
@@ -2155,7 +2154,7 @@ void SceneChanged(PyMOLGlobals * G)
 Block *SceneGetBlock(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-  return (I->Block);
+  return (I);
 }
 
 
@@ -2320,7 +2319,7 @@ void SceneIdle(PyMOLGlobals * G)
     double diff = now - I->LastReleaseTime;
     if(diff > single_click_delay) {
       /* post a single click processing event */
-      SceneDeferClickWhen(I->Block, I->LastButton + P_GLUT_SINGLE_LEFT, I->LastWinX, I->LastWinY, I->LastClickTime, I->LastMod);        /* push a click onto the queue */
+      SceneDeferClickWhen(I, I->LastButton + P_GLUT_SINGLE_LEFT, I->LastWinX, I->LastWinY, I->LastClickTime, I->LastMod);        /* push a click onto the queue */
 
       I->PossibleSingleClick = 0;
       OrthoDirty(G);            /* force an update */
@@ -2753,7 +2752,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
     n_ent = I->NScene;
 
     n_disp =
-      (((I->Block->rect.top - I->Block->rect.bottom) - (SceneTopMargin)) / lineHeight) -
+      (((I->rect.top - I->rect.bottom) - (SceneTopMargin)) / lineHeight) -
       1;
     if(n_disp < 1)
       n_disp = 1;
@@ -2787,7 +2786,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
       I->NSkip = 0;
     }
 
-    max_char = (((I->Block->rect.right - I->Block->rect.left) -
+    max_char = (((I->rect.right - I->rect.left) -
                  (SceneTextLeftMargin + SceneRightMargin + 4)) -
                 (op_cnt * SceneToggleWidth));
     if(I->ScrollBarActive) {
@@ -2796,28 +2795,28 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
     max_char /= charWidth;
 
     if(I->ScrollBarActive) {
-      ScrollBarSetBox(I->ScrollBar, I->Block->rect.top - SceneScrollBarMargin,
-                      I->Block->rect.left + SceneScrollBarMargin,
-                      I->Block->rect.bottom + 2,
-                      I->Block->rect.left + SceneScrollBarMargin + SceneScrollBarWidth);
+      ScrollBarSetBox(I->ScrollBar, I->rect.top - SceneScrollBarMargin,
+                      I->rect.left + SceneScrollBarMargin,
+                      I->rect.bottom + 2,
+                      I->rect.left + SceneScrollBarMargin + SceneScrollBarWidth);
       if(draw_for_real)
         ScrollBarDoDraw(I->ScrollBar ORTHOCGOARGVAR);
     }
 
     skip = I->NSkip;
-    x = I->Block->rect.left + SceneTextLeftMargin;
+    x = I->rect.left + SceneTextLeftMargin;
 
-    /*    y = ((I->Block->rect.top-lineHeight)-SceneTopMargin)-lineHeight; */
+    /*    y = ((I->rect.top-lineHeight)-SceneTopMargin)-lineHeight; */
 
     {
       int n_vis = n_disp;
       if(n_ent < n_vis)
         n_vis = n_ent;
-      y = (I->Block->rect.bottom + SceneBottomMargin) + (n_vis - 1) * lineHeight;
+      y = (I->rect.bottom + SceneBottomMargin) + (n_vis - 1) * lineHeight;
     }
 
-    /*    xx = I->Block->rect.right-SceneRightMargin-SceneToggleWidth*(cRepCnt+op_cnt); */
-    xx = I->Block->rect.right - SceneRightMargin - SceneToggleWidth * (op_cnt);
+    /*    xx = I->rect.right-SceneRightMargin-SceneToggleWidth*(cRepCnt+op_cnt); */
+    xx = I->rect.right - SceneRightMargin - SceneToggleWidth * (op_cnt);
 
     if(I->ScrollBarActive) {
       x += SceneScrollBarWidth + SceneScrollBarMargin;
@@ -2842,7 +2841,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
             if(draw_for_real) {
               glColor3fv(toggleColor);
 
-              TextSetColor(G, I->Block->TextColor);
+              TextSetColor(G, I->TextColor);
               TextSetPos2i(G, x + DIP2PIXEL(2), y + text_lift);
             }
             {
@@ -2883,7 +2882,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
                               darkEdge, disabledColor ORTHOCGOARGVAR);
                 }
 
-                TextSetColor(G, I->Block->TextColor);
+                TextSetColor(G, I->TextColor);
 
                 if(c) {
                   while(*c) {
@@ -2897,7 +2896,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
             }
           }
           y -= lineHeight;
-          if(y < (I->Block->rect.bottom))
+          if(y < (I->rect.bottom))
             break;
         }
       }
@@ -3042,9 +3041,11 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
 	    }
 
 	    
-	    glRasterPos3i((int) ((I->Width - tmp_width) / 2 + I->Block->rect.left),
-			  (int) ((I->Height - tmp_height) / 2 + I->Block->rect.bottom),
+#ifndef PURE_OPENGL_ES_2
+        glRasterPos3i((int) ((I->Width - tmp_width) / 2 + I->rect.left),
+              (int) ((I->Height - tmp_height) / 2 + I->rect.bottom),
 			  -10);
+#endif
 	    PyMOLDrawPixels(tmp_width, tmp_height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	    drawn = true;
 	  }
@@ -3067,7 +3068,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
 	  
 	  TextSetColor3f(G, rgba[0], rgba[1], rgba[2]);
 	  TextDrawStrAt(G, buffer,
-			x_pos + I->Block->rect.left, y_pos + I->Block->rect.bottom ORTHOCGOARGVAR);
+            x_pos + I->rect.left, y_pos + I->rect.bottom ORTHOCGOARGVAR);
 	}
       }
     } else if(((width < I->Width) || (height < I->Height)) && ((I->Width - width) > 2) && ((I->Height - height) > 2)) {
@@ -3159,9 +3160,11 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
 	    *(q++) = color_word;
 	}
 
-	glRasterPos3i((int) ((I->Width - tmp_width) / 2 + I->Block->rect.left),
-		      (int) ((I->Height - tmp_height) / 2 + I->Block->rect.bottom),
+#ifndef PURE_OPENGL_ES_2
+    glRasterPos3i((int) ((I->Width - tmp_width) / 2 + I->rect.left),
+              (int) ((I->Height - tmp_height) / 2 + I->rect.bottom),
 		      -10);
+#endif
 	PyMOLDrawPixels(tmp_width, tmp_height, GL_RGBA, GL_UNSIGNED_BYTE, tmp_buffer);
 	drawn = true;
       }
@@ -3207,14 +3210,18 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
 	  }
 	}
       }
-      glRasterPos3i((int) ((I->Width - width) / 2 + I->Block->rect.left),
-		    (int) ((I->Height - height) / 2 + I->Block->rect.bottom), -10);
+#ifndef PURE_OPENGL_ES_2
+      glRasterPos3i((int) ((I->Width - width) / 2 + I->rect.left),
+            (int) ((I->Height - height) / 2 + I->rect.bottom), -10);
+#endif
       PyMOLDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, tmp_buffer);
       drawn = true;
       FreeP(tmp_buffer);
     } else {                  /* not a forced copy, so don't show/blend alpha */
-      glRasterPos3i((int) ((I->Width - width) / 2 + I->Block->rect.left),
-		    (int) ((I->Height - height) / 2 + I->Block->rect.bottom), -10);
+#ifndef PURE_OPENGL_ES_2
+      glRasterPos3i((int) ((I->Width - width) / 2 + I->rect.left),
+            (int) ((I->Height - height) / 2 + I->rect.bottom), -10);
+#endif
       PyMOLDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
       drawn = true;
     }
@@ -3224,9 +3231,8 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
   return drawn;
 }
 
-void SceneDraw(Block * block ORTHOCGOARG) /* returns true if scene was drawn (using a cached image) */
+void CScene::draw(CGO* orthoCGO) /* returns true if scene was drawn (using a cached image) */
 {
-  PyMOLGlobals *G = block->G;
   CScene *I = G->Scene;
   int drawn = false; 
 
@@ -3237,7 +3243,7 @@ void SceneDraw(Block * block ORTHOCGOARG) /* returns true if scene was drawn (us
     drawn = SceneDrawImageOverlay(G, 0 ORTHOCGOARGVAR);
 
     if(SettingGetGlobal_b(G, cSetting_scene_buttons)) {
-      SceneDrawButtons(block, true ORTHOCGOARGVAR);
+      SceneDrawButtons(this, true ORTHOCGOARGVAR);
     } else {
       I->ButtonMargin = 0;
     }
@@ -3262,7 +3268,7 @@ static int SceneRelease(Block * block, int button, int x, int y, int mod, double
   int release_handled = false;
   if(I->ButtonsShown && I->PressMode) {
     if(I->ScrollBarActive) {
-      if((x - I->Block->rect.left) < (SceneScrollBarWidth + SceneScrollBarMargin)) {
+      if((x - I->rect.left) < (SceneScrollBarWidth + SceneScrollBarMargin)) {
         ScrollBarDoRelease(I->ScrollBar, button, x, y, mod);
         release_handled = true;
       }
@@ -3310,7 +3316,7 @@ static int SceneRelease(Block * block, int button, int x, int y, int mod, double
               Block *block = MenuActivate1Arg(G, I->LastWinX, I->LastWinY + 20,        /* scene menu */
 					      I->LastWinX, I->LastWinY, true, "scene_menu", elem->name);
 	      if (block)
-		PopUpDrag(block, x, y, mod);
+            block->drag(x, y, mod);
               ungrab = false;
             }
             break;
@@ -3522,7 +3528,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
 
       /* check & handle a click on the scrollbar */
       if(I->ScrollBarActive) {
-        if((x - I->Block->rect.left) < (SceneScrollBarWidth + SceneScrollBarMargin)) {
+        if((x - I->rect.left) < (SceneScrollBarWidth + SceneScrollBarMargin)) {
           click_handled = true;
           ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
         }
@@ -3585,8 +3591,8 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
   {
     float vScale = SceneGetExactScreenVertexScale(G, I->LastClickVertex);
     float v[3];
-    v[0] = -(I->Width / 2 - (x - I->Block->rect.left)) * vScale;
-    v[1] = -(I->Height / 2 - (y - I->Block->rect.bottom)) * vScale;
+    v[0] = -(I->Width / 2 - (x - I->rect.left)) * vScale;
+    v[1] = -(I->Height / 2 - (y - I->rect.bottom)) * vScale;
     v[2] = 0;
     MatrixInvTransformC44fAs33f3f(I->RotMatrix, v, v);
     add3f(v, I->LastClickVertex, I->LastClickVertex);
@@ -3597,7 +3603,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     SceneElem *elem = I->SceneVLA;
 
     if(I->ScrollBarActive) {
-      if((x - I->Block->rect.left) < (SceneScrollBarWidth + SceneScrollBarMargin)) {
+      if((x - I->rect.left) < (SceneScrollBarWidth + SceneScrollBarMargin)) {
         click_handled = true;
         ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
       }
@@ -3748,8 +3754,8 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
       SceneNoteMouseInteraction(G);
       SceneDontCopyNext(G);
 
-      y = y - I->Block->margin.bottom;
-      x = x - I->Block->margin.left;
+      y = y - I->margin.bottom;
+      x = x - I->margin.left;
 
       if(stereo_via_adjacent_array(I->StereoMode))
         x = get_stereo_x(x, NULL, I->Width, NULL);
@@ -3789,8 +3795,8 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
       SceneNoteMouseInteraction(G);
       SceneDontCopyNext(G);
 
-      y = y - I->Block->margin.bottom;
-      x = x - I->Block->margin.left;
+      y = y - I->margin.bottom;
+      x = x - I->margin.left;
 
       if(stereo_via_adjacent_array(I->StereoMode))
         x = get_stereo_x(x, NULL, I->Width, NULL);
@@ -3806,8 +3812,8 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
 
       if(SceneDoXYPick(G, x, y, click_side)) {
         obj = (CObject *) I->LastPicked.context.object;
-        y = y - I->Block->margin.bottom;
-        x = x - I->Block->margin.left;
+        y = y - I->margin.bottom;
+        x = x - I->margin.left;
         I->LastX = x;
         I->LastY = y;
         switch (obj->type) {
@@ -3940,8 +3946,8 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
 
       if(SceneDoXYPick(G, x, y, click_side)) {
         obj = (CObject *) I->LastPicked.context.object;
-        y = y - I->Block->margin.bottom;
-        x = x - I->Block->margin.left;
+        y = y - I->margin.bottom;
+        x = x - I->margin.left;
         I->LastX = x;
         I->LastY = y;
 
@@ -4040,8 +4046,8 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
 
       if(SceneDoXYPick(G, x, y, click_side)) {
         obj = (CObject *) I->LastPicked.context.object;
-        y = y - I->Block->margin.bottom;
-        x = x - I->Block->margin.left;
+        y = y - I->margin.bottom;
+        x = x - I->margin.left;
         I->LastX = x;
         I->LastY = y;
         switch (obj->type) {
@@ -4924,7 +4930,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
 
     mode = ButModeTranslate(G, I->Button, mod);
 
-    y = y - I->Block->margin.bottom;
+    y = y - I->margin.bottom;
 
     scale = (float) I->Height;
     if(scale > I->Width)
@@ -5741,9 +5747,9 @@ int SceneDeferImage(PyMOLGlobals * G, int width, int height,
   return 1;
 }
 
-int SceneDeferClick(Block * block, int button, int x, int y, int mod)
+int CScene::click(int button, int x, int y, int mod) // Originally SceneDeferClick!!
 {
-  return SceneDeferClickWhen(block, button, x, y, UtilGetSeconds(block->G), mod);
+  return SceneDeferClickWhen(this, button, x, y, UtilGetSeconds(G), mod);
 }
 
 static int SceneDeferClickWhen(Block * block, int button, int x, int y, double when,
@@ -5770,12 +5776,11 @@ static int SceneDeferredDrag(DeferredMouse * dm)
   return 1;
 }
 
-int SceneDeferDrag(Block * block, int x, int y, int mod)
+int CScene::drag(int x, int y, int mod) //Originally SceneDeferDrag
 {
-  PyMOLGlobals *G = block->G;
   auto dm = pymol::make_unique<DeferredMouse>(G);
   if(dm) {
-    dm->block = block;
+    dm->block = this;
     dm->x = x;
     dm->y = y;
     dm->mod = mod;
@@ -5792,12 +5797,11 @@ static int SceneDeferredRelease(DeferredMouse * dm)
   return 1;
 }
 
-int SceneDeferRelease(Block * block, int button, int x, int y, int mod)
+int CScene::release(int button, int x, int y, int mod) // Originally SceneDeferRelease
 {
-  PyMOLGlobals *G = block->G;
   auto dm = pymol::make_unique<DeferredMouse>(G);
   if(dm) {
-    dm->block = block;
+    dm->block = this;
     dm->button = button;
     dm->x = x;
     dm->y = y;
@@ -5827,7 +5831,6 @@ void SceneFree(PyMOLGlobals * G)
   VLAFreeP(I->SceneNameVLA);
   VLAFreeP(I->SlotVLA);
   VLAFreeP(I->pickVLA);
-  OrthoFreeBlock(G, I->Block);
   I->Obj.clear();
   I->GadgetObjs.clear();
   I->NonGadgetObjs.clear();
@@ -5891,7 +5894,7 @@ int SceneReinitialize(PyMOLGlobals * G)
 int SceneInit(PyMOLGlobals * G)
 {
   CScene *I = NULL;
-  I = (G->Scene = new CScene());
+  I = (G->Scene = new CScene(G));
   if(I) {
 
     /* all defaults to zero, so only initialize non-zero elements */
@@ -5906,15 +5909,9 @@ int SceneInit(PyMOLGlobals * G)
     SceneSetDefaultView(G);
 
     I->Scale = 1.0;
-    I->Block = OrthoNewBlock(G, NULL);
-    I->Block->fClick = SceneDeferClick;
-    I->Block->fRelease = SceneDeferRelease;
-    I->Block->fDrag = SceneDeferDrag;
-    I->Block->fDraw = SceneDraw;
-    I->Block->fReshape = SceneReshape;
-    I->Block->active = true;
+    I->active = true;
 
-    OrthoAttach(G, I->Block, cOrthoScene);
+    OrthoAttach(G, I, cOrthoScene);
 
     I->DirtyFlag = true;
 
@@ -5951,36 +5948,35 @@ int SceneInit(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-void SceneReshape(Block * block, int width, int height)
+void CScene::reshape(int width, int height)
 {
-  PyMOLGlobals *G = block->G;
   CScene *I = G->Scene;
 
-  if(I->Block->margin.right) {
-    width -= I->Block->margin.right;
+  if(I->margin.right) {
+    width -= I->margin.right;
     if(width < 1)
       width = 1;
   }
 
-  if(I->Block->margin.top) {
-    height -= I->Block->margin.top;
+  if(I->margin.top) {
+    height -= I->margin.top;
   }
 
   I->Width = width;
 
   I->Height = height;
 
-  I->Block->rect.top = I->Height;
-  I->Block->rect.left = 0;
-  I->Block->rect.bottom = 0;
-  I->Block->rect.right = I->Width;
+  I->rect.top = I->Height;
+  I->rect.left = 0;
+  I->rect.bottom = 0;
+  I->rect.right = I->Width;
 
-  if(I->Block->margin.bottom) {
-    height -= I->Block->margin.bottom;
+  if(I->margin.bottom) {
+    height -= I->margin.bottom;
     if(height < 1)
       height = 1;
     I->Height = height;
-    I->Block->rect.bottom = I->Block->rect.top - I->Height;
+    I->rect.bottom = I->rect.top - I->Height;
   }
   SceneDirty(G);
 
@@ -5997,8 +5993,6 @@ void SceneReshape(Block * block, int width, int height)
 void SceneDone(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-  if(I->Block)
-    OrthoFreeBlock(G, I->Block);
 }
 
 
@@ -6286,8 +6280,8 @@ void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window)
         h = OrthoGetHeight(G);
         w = OrthoGetWidth(G);
       } else {
-        x = I->Block->rect.left;
-        y = I->Block->rect.bottom;
+        x = I->rect.left;
+        y = I->rect.bottom;
         w = I->Width;
         h = I->Height;
       }

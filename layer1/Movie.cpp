@@ -72,33 +72,41 @@ typedef struct {
 
 } CMovieModal;
 
-struct _CMovie {
-  ::Block *Block;
-  ImageType **Image;
-  int *Sequence;
-  MovieCmdType *Cmd;
-  int NImage, NFrame;
-  int MatrixFlag;
-  SceneViewType Matrix;
-  int Playing;
-  int Locked;
-  int CacheSave;
-  int OverlaySave;
-  CViewElem *ViewElem;
-  int RecursionFlag;
-  int RealtimeFlag;
-  CMovieModal Modal;
-  int Width, Height;
-  struct CScrollBar *ScrollBar;
-  int DragMode;
-  int Dragging;
-  CObject *DragObj; /* if not dragging all */
-  BlockRect DragRect;
-  int DragX, DragY, DragMenu;
-  int DragStartFrame, DragCurFrame, DragNearest, DragDraw;
-  int DragColumn;
-  int LabelIndent;
-  int PanelActive;
+struct CMovie : public Block {
+  ImageType **Image {};
+  int *Sequence { nullptr };
+  MovieCmdType *Cmd { nullptr };
+  int NImage { 0 }, NFrame { 0 };
+  int MatrixFlag { false };
+  SceneViewType Matrix {};
+  int Playing { false };
+  int Locked {};
+  int CacheSave {};
+  int OverlaySave {};
+  CViewElem *ViewElem { nullptr };
+  bool RecursionFlag { false };
+  bool RealtimeFlag { true };
+  CMovieModal Modal {};
+  int Width {}, Height {};
+  CScrollBar *ScrollBar {};
+  int DragMode {};
+  int Dragging {};
+  CObject *DragObj {}; /* if not dragging all */
+  BlockRect DragRect {};
+  int DragX {}, DragY {}, DragMenu {};
+  int DragStartFrame {}, DragCurFrame {}, DragNearest {}, DragDraw {};
+  int DragColumn {};
+  int LabelIndent {};
+  int PanelActive {};
+
+  CMovie(PyMOLGlobals * G) : Block(G){}
+
+  virtual int release(int button, int x, int y, int mod) override;
+  virtual int click(int button, int x, int y, int mod) override;
+  virtual int drag(int x, int y, int mod) override;
+  virtual void draw(CGO* orthoCGO) override;
+  virtual bool fastDraw(CGO* orthoCGO) override;
+  virtual void reshape(int width, int height) override;
 };
 
 void MovieViewReinterpolate(PyMOLGlobals *G)
@@ -1541,14 +1549,12 @@ void MovieFree(PyMOLGlobals * G)
   VLAFreeP(I->Cmd);
   VLAFreeP(I->Sequence);
   ScrollBarFree(I->ScrollBar);
-  OrthoFreeBlock(G, I->Block);
-  FreeP(G->Movie);
+  DeleteP(G->Movie);
 }
 
 Block *MovieGetBlock(PyMOLGlobals * G)
 {
-  CMovie *I = G->Movie;
-  return (I->Block);
+  return G->Movie;
 }
 
 
@@ -1562,8 +1568,8 @@ void MoviePrepareDrag(PyMOLGlobals *G, BlockRect * rect,
   I->DragY = y;
   I->DragRect = *rect;
   if(I->DragColumn) {
-    I->DragRect.top = I->Block->rect.top - 1;
-    I->DragRect.bottom = I->Block->rect.bottom + 1;
+    I->DragRect.top = I->rect.top - 1;
+    I->DragRect.bottom = I->rect.bottom + 1;
   }
   I->DragStartFrame = ViewElemXtoFrame(rect,MovieGetLength(G),x,nearest);
   if(I->DragStartFrame > MovieGetLength(G))
@@ -1572,14 +1578,13 @@ void MoviePrepareDrag(PyMOLGlobals *G, BlockRect * rect,
   I->DragNearest = nearest;
 }
 
-static int MovieClick(Block * block, int button, int x, int y, int mod)
+int CMovie::click(int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
   int count = ExecutiveCountMotions(G);
   short scrolldir = 1;
-  BlockRect rect = block->rect;
-  rect.right -= I->LabelIndent;
+  BlockRect tmpRect = rect;
+  tmpRect.right -= I->LabelIndent;
 
   switch(button) {
   case P_GLUT_RIGHT_BUTTON:
@@ -1588,15 +1593,15 @@ static int MovieClick(Block * block, int button, int x, int y, int mod)
       if(mod == (cOrthoCTRL | cOrthoSHIFT))
         I->DragColumn = true;
       if(mod == (cOrthoSHIFT)) 
-        ExecutiveMotionClick(G,&rect,cMovieDragModeCopyKey,count,x,y,false);
+        ExecutiveMotionClick(G,&tmpRect,cMovieDragModeCopyKey,count,x,y,false);
       else
-        ExecutiveMotionClick(G,&rect,cMovieDragModeMoveKey,count,x,y,false);
+        ExecutiveMotionClick(G,&tmpRect,cMovieDragModeMoveKey,count,x,y,false);
       if(I->DragStartFrame<n_frame) {
         I->DragDraw = true;
         I->DragMenu = true;
         OrthoDirty(G);
       } else {
-        ExecutiveMotionMenuActivate(G,&rect,count,false,x,y,I->DragColumn);
+        ExecutiveMotionMenuActivate(G,&tmpRect,count,false,x,y,I->DragColumn);
       }
     }
     break;
@@ -1607,12 +1612,12 @@ static int MovieClick(Block * block, int button, int x, int y, int mod)
         break;
       case (cOrthoSHIFT | cOrthoCTRL): 
         I->DragColumn = true;
-        ExecutiveMotionClick(G,&rect,cMovieDragModeInsDel,count,x,y, true);
+        ExecutiveMotionClick(G,&tmpRect,cMovieDragModeInsDel,count,x,y, true);
         I->DragDraw = true;
         OrthoDirty(G);
         break;
       case cOrthoCTRL:
-        ExecutiveMotionClick(G,&rect,cMovieDragModeInsDel,count,x,y, true);
+        ExecutiveMotionClick(G,&tmpRect,cMovieDragModeInsDel,count,x,y, true);
         I->DragDraw = true;
         OrthoDirty(G);
         break;
@@ -1634,7 +1639,7 @@ static int MovieClick(Block * block, int button, int x, int y, int mod)
         /* intentional fall-through */
       case cOrthoCTRL: 
         I->DragDraw = true;
-        ExecutiveMotionClick(G,&rect,cMovieDragModeOblate,count,x,y,false);
+        ExecutiveMotionClick(G,&tmpRect,cMovieDragModeOblate,count,x,y,false);
         break;
       default:
         ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
@@ -1659,13 +1664,12 @@ static int MovieClick(Block * block, int button, int x, int y, int mod)
   return 1;
 }
 
-static int MovieDrag(Block * block, int x, int y, int mod)
+int CMovie::drag(int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
 
-  CMovie *I = G->Movie;
+  CMovie *I = this; // TODO: Remove all I's in Movie refactor
   if(I->DragMode) {
-    I->DragDraw = ((y < (block->rect.top + 50)) && (y > (block->rect.bottom - 50)));
+    I->DragDraw = ((y < (rect.top + 50)) && (y > (rect.bottom - 50)));
     switch(I->DragMode) {
     case cMovieDragModeMoveKey:
     case cMovieDragModeCopyKey:
@@ -1694,9 +1698,8 @@ static int MovieDrag(Block * block, int x, int y, int mod)
   return 1;
 }
 
-static int MovieRelease(Block * block, int button, int x, int y, int mod)
+int CMovie::release(int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
   ScrollBarDoRelease(I->ScrollBar, button, x, y, mod);
   if(I->DragMode) {
@@ -1716,9 +1719,9 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
     case cMovieDragModeMoveKey:
       if((I->DragCurFrame == I->DragStartFrame) && (I->DragMenu)) {
         int count = ExecutiveCountMotions(G);
-        BlockRect rect = block->rect;
-        rect.right -= I->LabelIndent;
-        ExecutiveMotionMenuActivate(G,&rect,count,true,x,y,I->DragColumn);
+        BlockRect tmpRect = rect;
+        tmpRect.right -= I->LabelIndent;
+        ExecutiveMotionMenuActivate(G,&tmpRect,count,true,x,y,I->DragColumn);
         I->DragMenu = false;
       } else if(I->DragDraw &&
                 (I->DragCurFrame!=I->DragStartFrame) && 
@@ -1730,9 +1733,9 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
     case cMovieDragModeCopyKey:
       if((I->DragCurFrame == I->DragStartFrame) && (I->DragMenu)) {
         int count = ExecutiveCountMotions(G);
-        BlockRect rect = block->rect;
-        rect.right -= I->LabelIndent;
-        ExecutiveMotionMenuActivate(G,&rect,count,true,x,y,I->DragColumn);
+        BlockRect tmpRect = rect;
+        tmpRect.right -= I->LabelIndent;
+        ExecutiveMotionMenuActivate(G,&tmpRect,count,true,x,y,I->DragColumn);
         I->DragMenu = false;
       } else if(I->DragDraw &&
                 (I->DragCurFrame!=I->DragStartFrame) && 
@@ -1821,9 +1824,8 @@ void MovieDrawViewElem(PyMOLGlobals *G, BlockRect *rect,int frames ORTHOCGOARG)
   }
 }
 
-static short MovieFastDraw(Block * block ORTHOCGOARG)
+bool CMovie::fastDraw(CGO* orthoCGO)
 {
-  PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
   //  ScrollBarDrawHandle(I->ScrollBar, 0.35F ORTHOCGOARGVAR);
   ScrollBarDoDrawNoFill(I->ScrollBar ORTHOCGOARGVAR);
@@ -1831,35 +1833,34 @@ static short MovieFastDraw(Block * block ORTHOCGOARG)
   return true;
 }
 
-static void MovieDraw(Block * block ORTHOCGOARG)
+void CMovie::draw(CGO* orthoCGO)
 {
-  PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
   if(I->PanelActive) {
     int n_frame = MovieGetLength(G);
     int frame = SceneGetFrame(G);
     int count = ExecutiveCountMotions(G);
-    BlockRect rect = block->rect;
+    BlockRect tmpRect = rect;
     if(count) {
-      rect.right -= I->LabelIndent;
+      tmpRect.right -= I->LabelIndent;
 
       if(G->HaveGUI && G->ValidContext) {
         float black[3] = {0.0F,0.0F,0.0F};
 	if (orthoCGO){
 	  CGOColorv(orthoCGO, black);
 	  CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
-	  CGOVertex(orthoCGO, rect.right, rect.bottom, 0.f);
-	  CGOVertex(orthoCGO, rect.right, rect.top, 0.f);
-	  CGOVertex(orthoCGO, block->rect.right, rect.bottom, 0.f);
-	  CGOVertex(orthoCGO, block->rect.right, rect.top, 0.f);
+	  CGOVertex(orthoCGO, tmpRect.right, tmpRect.bottom, 0.f);
+	  CGOVertex(orthoCGO, tmpRect.right, tmpRect.top, 0.f);
+	  CGOVertex(orthoCGO, rect.right, tmpRect.bottom, 0.f);
+	  CGOVertex(orthoCGO, rect.right, tmpRect.top, 0.f);
 	  CGOEnd(orthoCGO);
 	} else {
 	  glColor3fv(black);
 	  glBegin(GL_POLYGON);
-	  glVertex2f(rect.right, rect.bottom);
-	  glVertex2f(rect.right, rect.top);
-	  glVertex2f(block->rect.right, rect.top);
-	  glVertex2f(block->rect.right, rect.bottom);
+	  glVertex2f(tmpRect.right, tmpRect.bottom);
+	  glVertex2f(tmpRect.right, tmpRect.top);
+	  glVertex2f(rect.right, tmpRect.top);
+	  glVertex2f(rect.right, tmpRect.bottom);
 	  glEnd();
 	}
       }
@@ -1880,14 +1881,14 @@ static void MovieDraw(Block * block ORTHOCGOARG)
         }
         ScrollBarSetLimits(I->ScrollBar, n_frame, 1);
       }
-      ScrollBarSetBox(I->ScrollBar, rect.top,
-                      rect.left, rect.bottom, rect.right);
+      ScrollBarSetBox(I->ScrollBar, tmpRect.top,
+                      tmpRect.left, tmpRect.bottom, tmpRect.right);
       if (orthoCGO){
 	ScrollBarFill(I->ScrollBar ORTHOCGOARGVAR);
-	ExecutiveMotionDraw(G,&rect,count ORTHOCGOARGVAR);
+	ExecutiveMotionDraw(G,&tmpRect,count ORTHOCGOARGVAR);
       } else {
 	ScrollBarDoDraw(I->ScrollBar ORTHOCGOARGVAR);
-	ExecutiveMotionDraw(G,&rect,count ORTHOCGOARGVAR);
+	ExecutiveMotionDraw(G,&tmpRect,count ORTHOCGOARGVAR);
 	ScrollBarDrawHandle(I->ScrollBar, 0.35F ORTHOCGOARGVAR);
       }
 
@@ -1948,13 +1949,12 @@ void MovieSetScrollBarFrame(PyMOLGlobals * G, int frame)
   }
 }
 
-static void MovieReshape(Block * block, int width, int height)
+void CMovie::reshape(int width, int height)
 {
-  PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
-  block->reshape(width, height);
-  I->Width = block->rect.right - block->rect.left + 1;
-  I->Height = block->rect.top - block->rect.bottom + 1;
+  Block::reshape(width, height);
+  I->Width = rect.right - rect.left + 1;
+  I->Height = rect.top - rect.bottom + 1;
   if(SettingGetGlobal_b(G, cSetting_presentation)) { 
     I->LabelIndent = 0;
   } else {
@@ -1968,31 +1968,15 @@ int MovieInit(PyMOLGlobals * G)
 {
   CMovie *I = NULL;
 
-  if((I = (G->Movie = Calloc(CMovie, 1)))) {
+  if((I = (G->Movie = new CMovie(G)))) {
     int a;
-    I->Block = OrthoNewBlock(G, NULL);
-    I->Block->fRelease = MovieRelease;
-    I->Block->fClick = MovieClick;
-    I->Block->fDrag = MovieDrag;
-    I->Block->fDraw = MovieDraw;
-    I->Block->fFastDraw = MovieFastDraw;
-    I->Block->fReshape = MovieReshape;
-    I->Block->active = true;
+    I->active = true;
     I->ScrollBar = ScrollBarNew(G, true);
-    OrthoAttach(G, I->Block, cOrthoTool);
+    OrthoAttach(G, I, cOrthoTool);
 
-    I->Playing = false;
     I->Image = VLACalloc(ImageType *, 10);       /* auto-zero */
-    I->Sequence = NULL;
-    I->Cmd = NULL;
-    I->ViewElem = NULL;
-    I->NImage = 0;
-    I->NFrame = 0;
-    I->RecursionFlag = false;
-    I->RealtimeFlag = true;
     for(a = 0; a < 16; a++)
       I->Matrix[a] = 0.0F;
-    I->MatrixFlag = false;
     return 1;
   } else {
     return 0;

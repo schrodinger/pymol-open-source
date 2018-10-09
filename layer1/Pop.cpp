@@ -23,18 +23,20 @@ Z* -------------------------------------------------------------------
 
 #define cPopMargin 3
 
-struct _CPop {
-  ::Block *Block;
+struct CPop : public Block {
+  CPop(PyMOLGlobals * G) : Block(G){}
+
+  virtual void reshape(int width, int height) override;
 };
 
 void PopReshape(Block * I, int width, int height);
 
 
 /*========================================================================*/
-void PopReshape(Block * I, int width, int height)
+void CPop::reshape(int width, int height)
 {
-  I->rect.top = height;
-  I->rect.right = width;
+  rect.top = height;
+  rect.right = width;
 }
 
 
@@ -43,7 +45,7 @@ Block *PopGetBlock(PyMOLGlobals * G)
 {
   CPop *I = G->Pop;
   {
-    return (I->Block);
+    return (I);
   }
 }
 
@@ -52,8 +54,7 @@ Block *PopGetBlock(PyMOLGlobals * G)
 void PopFree(PyMOLGlobals * G)
 {
   CPop *I = G->Pop;
-  OrthoFreeBlock(G, I->Block);
-  FreeP(G->Pop);
+  DeleteP(G->Pop);
 }
 
 
@@ -61,18 +62,16 @@ void PopFree(PyMOLGlobals * G)
 int PopInit(PyMOLGlobals * G)
 {
   CPop *I = NULL;
-  if((I = (G->Pop = Calloc(CPop, 1)))) {
+  if((I = (G->Pop = new CPop(G)))) {
 
-    I->Block = OrthoNewBlock(G, NULL);
-    I->Block->fReshape = PopReshape;
-    I->Block->active = false;
+    I->active = false;
 
-    I->Block->rect.top = 10;
-    I->Block->rect.bottom = 14;
-    I->Block->rect.left = 0;
-    I->Block->rect.right = 10;
+    I->rect.top = 10;
+    I->rect.bottom = 14;
+    I->rect.left = 0;
+    I->rect.right = 10;
 
-    OrthoAttach(G, I->Block, cOrthoHidden);
+    OrthoAttach(G, I, cOrthoHidden);
     return 1;
   } else
     return 0;
@@ -82,29 +81,29 @@ int PopInit(PyMOLGlobals * G)
 /*========================================================================*/
 void PopFitBlock(Block * block)
 {
-  CPop *I = block->G->Pop;
+  CPop *I = block->G->Pop; // TODO: Three indirections for a 'this' lol
   int delta;
 
-  if((block->rect.bottom - cPopMargin) < (I->Block->rect.bottom)) {
-    delta = (I->Block->rect.bottom - block->rect.bottom) + cPopMargin;
+  if((block->rect.bottom - cPopMargin) < (I->rect.bottom)) {
+    delta = (I->rect.bottom - block->rect.bottom) + cPopMargin;
     block->rect.top += delta;
     block->rect.bottom += delta;
   }
 
-  if((block->rect.right + cPopMargin) > (I->Block->rect.right)) {
-    delta = (block->rect.right - (I->Block->rect.right)) + cPopMargin;
+  if((block->rect.right + cPopMargin) > (I->rect.right)) {
+    delta = (block->rect.right - (I->rect.right)) + cPopMargin;
     block->rect.left -= delta;
     block->rect.right -= delta;
   }
 
-  if((block->rect.left - cPopMargin) < (I->Block->rect.left)) {
-    delta = (I->Block->rect.left - block->rect.left) + cPopMargin;
+  if((block->rect.left - cPopMargin) < (I->rect.left)) {
+    delta = (I->rect.left - block->rect.left) + cPopMargin;
     block->rect.right += delta;
     block->rect.left += delta;
   }
 
-  if((block->rect.top + cPopMargin) > (I->Block->rect.top)) {
-    delta = (block->rect.top - (I->Block->rect.top)) + cPopMargin;
+  if((block->rect.top + cPopMargin) > (I->rect.top)) {
+    delta = (block->rect.top - (I->rect.top)) + cPopMargin;
     block->rect.top -= delta;
     block->rect.bottom -= delta;
   }

@@ -657,7 +657,7 @@ bool SceneRay(PyMOLGlobals * G,
 
           if(I->StereoMode == cStereo_stencil_by_row) {
             parity = I->StencilParity;
-            if(I->Block->rect.bottom & 0x1)
+            if(I->rect.bottom & 0x1)
               parity = 1 - parity;
           }
 

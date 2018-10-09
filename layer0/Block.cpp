@@ -104,18 +104,12 @@ void Block::setMargin(int t, int l, int b, int r)
 }
 
 /*========================================================================*/
-void BlockReshape(Block * I, int width, int height)
-{
-  I->rect.top = (height - I->margin.top);
-  I->rect.left = I->margin.left;
-  I->rect.bottom = I->margin.bottom;
-  I->rect.right = (width - I->margin.right);
-}
-
-/*========================================================================*/
 void Block::reshape(int width, int height)
 {
-  BlockReshape(this, width, height);
+  rect.top = (height - margin.top);
+  rect.left = margin.left;
+  rect.bottom = margin.bottom;
+  rect.right = (width - margin.right);
 }
 
 /*========================================================================*/
@@ -134,8 +128,7 @@ void Block::recursiveDraw(CGO *orthoCGO)
   if (this->next)
     next->recursiveDraw(orthoCGO);
   if (active) {
-    if (fDraw)
-      fDraw(this, orthoCGO);
+      draw(orthoCGO);
     if (inside)
       inside->recursiveDraw(orthoCGO);
   }
@@ -148,8 +141,7 @@ bool Block::recursiveFastDraw(CGO *orthoCGO)
   if (next)
     ret |= next->recursiveFastDraw(orthoCGO);
   if (active) {
-    if (fFastDraw)
-      ret |= this->fFastDraw(this, orthoCGO);
+      ret |= this->fastDraw(orthoCGO);
     if (inside)
       ret |= inside->recursiveFastDraw(orthoCGO);
   }

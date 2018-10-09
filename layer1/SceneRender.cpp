@@ -1191,8 +1191,8 @@ void InitializeViewPortToScreenBlock(PyMOLGlobals * G, CScene *I, int x, int y, 
   if(oversize_width && oversize_height) {
     int want_view[4];
     int got_view[4];
-    want_view[0] = I->Block->rect.left + x;
-    want_view[1] = I->Block->rect.bottom + y;
+    want_view[0] = I->rect.left + x;
+    want_view[1] = I->rect.bottom + y;
     want_view[2] = oversize_width;
     want_view[3] = oversize_height;
     glViewport(want_view[0], want_view[1], want_view[2], want_view[3]);
@@ -1222,7 +1222,7 @@ void InitializeViewPortToScreenBlock(PyMOLGlobals * G, CScene *I, int x, int y, 
     }
     *width_scale = ((float) (oversize_width)) / I->Width;
   } else {
-    glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height);
+    glViewport(I->rect.left, I->rect.bottom, I->Width, I->Height);
   }
 }
 
@@ -1244,18 +1244,18 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, 
   switch (stereo_mode) {
   case cStereo_quadbuffer:   /* hardware */
     OrthoDrawBuffer(G, draw_mode);
-    glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height);
+    glViewport(I->rect.left, I->rect.bottom, I->Width, I->Height);
     break;
   case cStereo_crosseye:     /* side by side, crosseye */
     if (offscreen){
       glViewport(position_inv * I->Width / 2, 0, I->Width / 2,
 		 I->Height);
     } else if(oversize_width && oversize_height) {
-      glViewport(I->Block->rect.left + (position_inv * oversize_width / 2) + x,
-		 I->Block->rect.bottom + y,
+      glViewport(I->rect.left + (position_inv * oversize_width / 2) + x,
+		 I->rect.bottom + y,
 		 oversize_width / 2, oversize_height);
     } else {
-      glViewport(I->Block->rect.left + (position_inv * I->Width / 2), I->Block->rect.bottom,
+      glViewport(I->rect.left + (position_inv * I->Width / 2), I->rect.bottom,
 		 I->Width / 2, I->Height);
     }
     break;
@@ -1265,11 +1265,11 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, 
       glViewport(position * I->Width / 2, 0, I->Width / 2,
 		 I->Height);
     } else if(oversize_width && oversize_height) {
-      glViewport(I->Block->rect.left + (position * oversize_width / 2) + x,
-		 I->Block->rect.bottom + y,
+      glViewport(I->rect.left + (position * oversize_width / 2) + x,
+		 I->rect.bottom + y,
 		 oversize_width / 2, oversize_height);
     } else {
-      glViewport(I->Block->rect.left + (position * I->Width / 2), I->Block->rect.bottom, I->Width / 2,
+      glViewport(I->rect.left + (position * I->Width / 2), I->rect.bottom, I->Width / 2,
 		 I->Height);
     }
     break;
@@ -1278,7 +1278,7 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, 
       glViewport(position * I->Width / 2, 0, I->Width / 2,
 		 I->Height);
     } else {
-      glViewport(I->Block->rect.left + (position * G->Option->winX / 2), I->Block->rect.bottom, 
+      glViewport(I->rect.left + (position * G->Option->winX / 2), I->rect.bottom, 
 		 I->Width, I->Height);
     }
     break;
@@ -1369,13 +1369,13 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, 
 	glClear(GL_ACCUM_BUFFER_BIT);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
 	glDisable(GL_FOG);
-	glViewport(I->Block->rect.left + G->Option->winX / 2,
-		   I->Block->rect.bottom, I->Width, I->Height);
+	glViewport(I->rect.left + G->Option->winX / 2,
+		   I->rect.bottom, I->Width, I->Height);
       } else {
 	glClearAccum(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_ACCUM_BUFFER_BIT);
-	glViewport(I->Block->rect.left,
-		   I->Block->rect.bottom, I->Width, I->Height);
+	glViewport(I->rect.left,
+		   I->rect.bottom, I->Width, I->Height);
       }
     } else {
       GLenum err;
@@ -1471,10 +1471,10 @@ void SetDrawBufferForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, int ti
     glAccum(GL_RETURN, 1.0);
 #endif
     if(times) {
-      glViewport(I->Block->rect.left,
-		 I->Block->rect.bottom, I->Width + 2, I->Height + 2);
-      glScissor(I->Block->rect.left - 1,
-		I->Block->rect.bottom - 1, I->Width + 2, I->Height + 2);
+      glViewport(I->rect.left,
+		 I->rect.bottom, I->Width + 2, I->Height + 2);
+      glScissor(I->rect.left - 1,
+		I->rect.bottom - 1, I->Width + 2, I->Height + 2);
       glEnable(GL_SCISSOR_TEST);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glDisable(GL_SCISSOR_TEST);

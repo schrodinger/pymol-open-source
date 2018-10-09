@@ -1238,23 +1238,6 @@ void OrthoUngrab(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-Block *OrthoNewBlock(PyMOLGlobals * G, Block * block)
-{
-  // TODO: Make all PyMOL concepts hold std::unique_ptr<Block>
-  return new Block(G);
-}
-
-
-/*========================================================================*/
-void OrthoFreeBlock(PyMOLGlobals * G, Block * block)
-{
-  // TODO: Delete this when PyMOL concepts hold std::unique_ptr<Block>
-  if(block)
-    delete block;
-}
-
-
-/*========================================================================*/
 void OrthoAttach(PyMOLGlobals * G, Block * block, int type)
 {
   COrtho *I = G->Ortho;
@@ -2287,8 +2270,7 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
       if(SettingGetGlobal_b(G, cSetting_seq_view_location)) {
 
         block->setMargin(height - sceneBottom - 10, 0, sceneBottom, sceneRight);
-        if(block->fReshape)
-          block->fReshape(block, width, height);
+          block->reshape(width, height);
         seqHeight = SeqGetHeight(G);
         block->setMargin(height - sceneBottom - seqHeight, 0, sceneBottom,
                        sceneRight);
@@ -2299,8 +2281,7 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
       } else {
 
         block->setMargin(0, 0, height - 10, sceneRight);
-        if(block->fReshape)
-          block->fReshape(block, width, height);
+          block->reshape(width, height);
         seqHeight = SeqGetHeight(G);
         block->setMargin(0, 0, height - seqHeight, sceneRight);
         if(!SettingGetGlobal_b(G, cSetting_seq_view_overlay)) {
@@ -2319,10 +2300,9 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
     block->setMargin(sceneTop, 0, sceneBottom, sceneRight);
 
     block = NULL;
-    while(ListIterate(I->Blocks, block, next))
-      if(block->fReshape) {
-        block->fReshape(block, width, height);
-      }
+    while(ListIterate(I->Blocks, block, next)){
+        block->reshape(width, height);
+    }
 
     WizardRefresh(G);           /* safe to call even if no wizard exists */
   }
@@ -2346,9 +2326,9 @@ void OrthoReshapeWizard(PyMOLGlobals * G, ov_size wizHeight)
     OrthoLayoutPanel(G, 0, I->Width - internal_gui_width, I->TextBottom, 0);
 
     block = ExecutiveGetBlock(G);
-    block->fReshape(block, I->Width, I->Height);
+    block->reshape(I->Width, I->Height);
     block = WizardGetBlock(G);
-    block->fReshape(block, I->Width, I->Height);
+    block->reshape(I->Width, I->Height);
     block->active = wizHeight ? true : false;
   }
 }
@@ -2420,9 +2400,7 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
       block = OrthoFindBlock(G, x, y);
     if(block) {
       I->ClickedIn = block;
-      if(block->fClick) {
-        handled = block->fClick(block, button, x, y, mod);
-      }
+      handled = block->click(button, x, y, mod);
     }
   } else if(state == P_GLUT_UP) {
     if(I->IssueViewportWhenReleased) {
@@ -2432,14 +2410,12 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
     
     if(I->GrabbedBy) {
       block = I->GrabbedBy;
-      if(block->fRelease)
-        handled = block->fRelease(block, button, x, y, mod);
+      handled = block->release(button, x, y, mod);
       I->ClickedIn = NULL;
     }
     if(I->ClickedIn) {
       block = I->ClickedIn;
-      if(block->fRelease)
-        handled = block->fRelease(block, button, x, y, mod);
+      handled = block->release(button, x, y, mod);
       I->ClickedIn = NULL;
     }
     I->ActiveButton = -1;
@@ -2470,12 +2446,10 @@ int OrthoDrag(PyMOLGlobals * G, int x, int y, int mod)
   I->Y = y;
   if(I->GrabbedBy) {
     block = I->GrabbedBy;
-    if(block->fDrag)
-      handled = block->fDrag(block, x, y, mod);
+      handled = block->drag(x, y, mod);
   } else if(I->ClickedIn) {
     block = I->ClickedIn;
-    if(block->fDrag)
-      handled = block->fDrag(block, x, y, mod);
+    handled = block->drag(x, y, mod);
   }
   if (handled && block!=SceneGetBlock(G))  // if user is not draging inside scene, then update OrthoCGO
     OrthoInvalidateDoDraw(G);

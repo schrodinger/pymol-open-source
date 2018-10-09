@@ -48,28 +48,36 @@ Z* -------------------------------------------------------------------
 #define SDOF_QUEUE_MASK 0x1F
 
 
-struct _CControl {
-  ::Block *Block;
-  int DragFlag;
-  int LastPos;
-  int ExtraSpace;
-  float ButtonColor[3];
-  float ActiveColor[3];
-  int Pressed, Active;
-  int SaveWidth;
-  double LastClickTime;
-  int SkipRelease;
-  int NButton;
+struct CControl : public Block {
+  bool DragFlag {};
+  int LastPos {};
+  int ExtraSpace {};
+  float ButtonColor[3] { 0.5f, 0.5f, 0.5f };
+  float ActiveColor[3] { 0.65f, 0.65f, 0.65f };
+  int Pressed { -1 };
+  int Active { -1 };
+  int SaveWidth { 0 };
+  double LastClickTime {};
+  int SkipRelease {};
+  int NButton { 9 };
 
   /* not saved */
 
-  int sdofActive;
-  double sdofLastIterTime;
-  int sdofMode;
-  float sdofTrans[3];
-  float sdofRot[3];
-  unsigned int sdofWroteTo, sdofReadFrom;       /* queue synchronization fields */
-  float sdofBuffer[(SDOF_QUEUE_MASK + 1) * 6];
+  int sdofActive {};
+  double sdofLastIterTime {};
+  int sdofMode {};
+  float sdofTrans[3] {};
+  float sdofRot[3] {};
+  unsigned int sdofWroteTo {}, sdofReadFrom {};       /* queue synchronization fields */
+  float sdofBuffer[(SDOF_QUEUE_MASK + 1) * 6] {};
+
+  CControl(PyMOLGlobals * G) : Block(G) {};
+
+  virtual int click(int button, int x, int y, int mod) override;
+  virtual void draw(CGO* ortho) override;
+  virtual int drag(int x, int y, int mod) override;
+  virtual int release(int button, int x, int y, int mod) override;
+  virtual void reshape(int width, int height) override;
 };
 
 int ControlSdofButton(PyMOLGlobals * G, int button)
@@ -215,19 +223,18 @@ int ControlRocking(PyMOLGlobals * G)
   return SettingGetGlobal_b(G, cSetting_rock);
 }
 
-static void ControlReshape(Block * block, int width, int height)
+void CControl::reshape(int width, int height)
 {
-  PyMOLGlobals *G = block->G;
   CControl *I = G->Control;
-  block->reshape(width, height);
+  Block::reshape(width, height);
   /* this is a pragmatic workaround for mac X11 where the nub gets
      hidden by the window expansion tab */
 
-  if((block->rect.right - block->rect.left) < 20) {
-    block->rect.top = block->rect.top + 10;
+  if((rect.right - rect.left) < 20) {
+    rect.top = rect.top + 10;
   }
 
-  I->ExtraSpace = ((block->rect.right - block->rect.left) - cControlSize);
+  I->ExtraSpace = ((rect.right - rect.left) - cControlSize);
   if(I->ExtraSpace < 0)
     I->ExtraSpace = 0;
 }
@@ -235,22 +242,21 @@ static void ControlReshape(Block * block, int width, int height)
 static int which_button(CControl * I, int x, int y)
 {
   int result = -1;
-  x -= I->Block->rect.left + cControlLeftMargin;
-  y -= I->Block->rect.top - cControlTopMargin;
+  x -= I->rect.left + cControlLeftMargin;
+  y -= I->rect.top - cControlTopMargin;
   if(x >= 0)
     if((y <= 0) && (y > (-cControlBoxSize))) {
       int control_width =
-        I->Block->rect.right - (I->Block->rect.left + cControlLeftMargin);
+        I->rect.right - (I->rect.left + cControlLeftMargin);
       result = (I->NButton * x) / control_width;
     }
   return result;
 }
 
-static int ControlDrag(Block * block, int x, int y, int mod)
+int CControl::drag(int x, int y, int mod)
 {
   int delta;
   int gui_width;
-  PyMOLGlobals *G = block->G;
   CControl *I = G->Control;
   if(!I->SkipRelease) {
     delta = x - I->LastPos;
@@ -277,9 +283,8 @@ static int ControlDrag(Block * block, int x, int y, int mod)
   return (1);
 }
 
-static int ControlRelease(Block * block, int button, int x, int y, int mod)
+int CControl::release(int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
   CControl *I = G->Control;
 
   int sel = 0;
@@ -382,7 +387,7 @@ Block *ControlGetBlock(PyMOLGlobals * G)
 {
   CControl *I = G->Control;
   {
-    return (I->Block);
+    return (I);
   }
 }
 
@@ -409,9 +414,8 @@ void ControlInterrupt(PyMOLGlobals * G)
 /*========================================================================*/
 void ControlFree(PyMOLGlobals * G)
 {
-  CControl *I = G->Control;
-  OrthoFreeBlock(G, I->Block);
-  FreeP(G->Control);
+
+  DeleteP(G->Control);
 }
 
 
@@ -444,15 +448,14 @@ int ControlRock(PyMOLGlobals * G, int mode)
 
 
 /*========================================================================*/
-static int ControlClick(Block * block, int button, int x, int y, int mod)
+int CControl::click(int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
   CControl *I = G->Control;
   I->SkipRelease = false;
-  if(x < (I->Block->rect.left + cControlLeftMargin)) {
-    y -= I->Block->rect.top - cControlTopMargin;
+  if(x < (I->rect.left + cControlLeftMargin)) {
+    y -= I->rect.top - cControlTopMargin;
     if((y <= 0) && (y > (-cControlBoxSize))) {
-      double now = UtilGetSeconds(block->G);
+      double now = UtilGetSeconds(G);
       if((now - I->LastClickTime) < 0.35) {
         if(I->SaveWidth) {
           SettingSetGlobal_i(G, cSetting_internal_gui_width, I->SaveWidth);
@@ -466,7 +469,7 @@ static int ControlClick(Block * block, int button, int x, int y, int mod)
         I->SkipRelease = true;
       } else {
         I->LastPos = x;
-        OrthoGrab(G, block);
+        OrthoGrab(G, this);
         I->DragFlag = true;
         I->LastClickTime = UtilGetSeconds(G);
       }
@@ -475,7 +478,7 @@ static int ControlClick(Block * block, int button, int x, int y, int mod)
     I->Pressed = which_button(I, x, y);
     I->Active = I->Pressed;
     if(I->Pressed)
-      OrthoGrab(G, block);
+      OrthoGrab(G, this);
     OrthoDirty(G);
   }
   return (1);
@@ -537,10 +540,9 @@ static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
 
 
 /*========================================================================*/
-static void ControlDraw(Block * block ORTHOCGOARG)
+void CControl::draw(CGO* orthoCGO)
 {
-  PyMOLGlobals *G = block->G;
-  CControl *I = G->Control;
+  CControl *I = this; // TODO: Remove I during Control refactor
   int x, y;
   int nButton = I->NButton;
   int but_num;
@@ -550,23 +552,27 @@ static void ControlDraw(Block * block ORTHOCGOARG)
 
   if(G->HaveGUI && G->ValidContext) {
 
-    int control_width = I->Block->rect.right - (I->Block->rect.left + cControlLeftMargin);
+    int control_width = rect.right - (rect.left + cControlLeftMargin);
 
     if (orthoCGO)
-      CGOColorv(orthoCGO, I->Block->BackColor);
+      CGOColorv(orthoCGO, BackColor);
+#ifndef PURE_OPENGL_ES_2
     else
-      glColor3fv(I->Block->BackColor);
-    I->Block->fill(orthoCGO);
+      glColor3fv(BackColor);
+#endif
+    fill(orthoCGO);
     if (orthoCGO)
-      CGOColorv(orthoCGO, I->Block->TextColor);
+      CGOColorv(orthoCGO, TextColor);
+#ifndef PURE_OPENGL_ES_2
     else
-      glColor3fv(I->Block->TextColor);
+      glColor3fv(TextColor);
+#endif
     {
       int top, left, bottom, right;
 
-      left = I->Block->rect.left + 1;
-      bottom = I->Block->rect.bottom + 1;
-      top = I->Block->rect.top - (cControlTopMargin - 1);
+      left = rect.left + 1;
+      bottom = rect.bottom + 1;
+      top = rect.top - (cControlTopMargin - 1);
       right = left + DIP2PIXEL(5);
 
       /* This draws the separator on the left side of the movie control buttons */
@@ -622,7 +628,7 @@ static void ControlDraw(Block * block ORTHOCGOARG)
 	glEnd();
       }
 
-    y = I->Block->rect.top - cControlTopMargin;
+    y = rect.top - cControlTopMargin;
 
     for(but_num = 0; but_num < nButton; but_num++) {
       int but_width;
@@ -631,7 +637,7 @@ static void ControlDraw(Block * block ORTHOCGOARG)
       int but_height;
 
       but_left =
-        I->Block->rect.left + cControlLeftMargin + (but_num * control_width) / nButton;
+        rect.left + cControlLeftMargin + (but_num * control_width) / nButton;
       but_width =
         (((but_num + 1) * control_width / nButton) -
          ((but_num) * control_width / nButton)) - 1;
@@ -656,9 +662,11 @@ static void ControlDraw(Block * block ORTHOCGOARG)
         x = but_left + (but_width - cControlBoxSize) / 2;
 
 	if (orthoCGO)
-	  CGOColorv(orthoCGO, I->Block->TextColor);
+	  CGOColorv(orthoCGO, TextColor);
+#ifndef PURE_OPENGL_ES_2
 	else
-	  glColor3fv(I->Block->TextColor);
+	  glColor3fv(TextColor);
+#endif
         switch (but_num) {
         case 0:
 	  if (orthoCGO){
@@ -814,6 +822,7 @@ static void ControlDraw(Block * block ORTHOCGOARG)
 	  }
           break;
         case 6:
+	  TextSetColor(G, TextColor);
           TextDrawStrAt(G, "S", x + cControlInnerMargin,
                         y - cControlBoxSize + cControlInnerMargin + 1 ORTHOCGOARGVAR);
           break;
@@ -835,7 +844,7 @@ static void ControlDraw(Block * block ORTHOCGOARG)
 	  }
           break;
         case 8:
-	  TextSetColor(G, I->Block->TextColor);
+	  TextSetColor(G, TextColor);
           TextDrawStrAt(G, "F", x + cControlInnerMargin,
                         y - cControlBoxSize + cControlInnerMargin + 1 ORTHOCGOARGVAR);
           break;
@@ -851,31 +860,13 @@ static void ControlDraw(Block * block ORTHOCGOARG)
 int ControlInit(PyMOLGlobals * G)
 {
   CControl *I = NULL;
-
-  if((I = (G->Control = Calloc(CControl, 1)))) {
-
-    I->Block = OrthoNewBlock(G, NULL);
-    I->Block->fClick = ControlClick;
-    I->Block->fDraw = ControlDraw;
-    I->Block->fDrag = ControlDrag;
-    I->Block->fRelease = ControlRelease;
-    I->Block->fReshape = ControlReshape;
-    I->Block->active = true;
-    I->Block->TextColor[0] = 1.0;
-    I->Block->TextColor[1] = 0.75;
-    I->Block->TextColor[2] = 0.75;
-    I->ButtonColor[0] = 0.5F;
-    I->ButtonColor[1] = 0.5F;
-    I->ButtonColor[2] = 0.5F;
-    I->ActiveColor[0] = 0.65F;
-    I->ActiveColor[1] = 0.65F;
-    I->ActiveColor[2] = 0.65F;
-    I->Pressed = -1;
-    I->Active = -1;
-    OrthoAttach(G, I->Block, cOrthoTool);
-    I->SaveWidth = 0;
+  if((I = (G->Control = new CControl(G)))) {
+    I->active = true;
+    I->TextColor[0] = 1.0;
+    I->TextColor[1] = 0.75;
+    I->TextColor[2] = 0.75;
+    OrthoAttach(G, I, cOrthoTool);
     I->LastClickTime = UtilGetSeconds(G);
-    I->NButton = 9;
     return 1;
   } else
     return 0;

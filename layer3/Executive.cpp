@@ -117,41 +117,50 @@ typedef struct {
   int next;
 } ListMember;
 
-struct _CExecutive {
-  ::Block *Block;
-  SpecRec *Spec;
-  CTracker *Tracker;
-  int Width, Height, HowFarDown;
-  int ScrollBarActive;
-  int NSkip;
-  struct CScrollBar *ScrollBar;
-  CObject *LastEdited;
-  int DragMode;
-  int Pressed, Over, LastOver, OldVisibility, ToggleMode, PressedWhat, OverWhat;
-  SpecRec *LastChanged, *LastZoomed, *RecoverPressed;
-  int ReorderFlag;
-  OrthoLineType ReorderLog;
+struct CExecutive : public Block {
+  SpecRec *Spec {};
+  CTracker *Tracker {};
+  int Width {}, Height {}, HowFarDown { 0 };
+  int ScrollBarActive { 0 };
+  int NSkip { 0 };
+  CScrollBar *ScrollBar {};
+  CObject *LastEdited { nullptr };
+  int DragMode { 0 };
+  int Pressed { -1 }, Over { -1 }, LastOver {}, OldVisibility {}, ToggleMode {}, PressedWhat {}, OverWhat {};
+  SpecRec *LastChanged { nullptr }, *LastZoomed { nullptr }, *RecoverPressed { nullptr };
+  int ReorderFlag { false };
+  OrthoLineType ReorderLog {};
 #ifndef GLUT_FULL_SCREEN
   // freeglut has glutLeaveFullScreen, no need to remember window dimensions
-  int oldPX, oldPY, oldWidth, oldHeight;
+  int oldPX {}, oldPY {}, oldWidth {}, oldHeight {};
 #endif
-  int all_names_list_id, all_obj_list_id, all_sel_list_id;
-  OVLexicon *Lex;
-  OVOneToOne *Key;
-  int ValidGroups;
-  int ValidSceneMembers;
-  int ValidGridSlots;
-  PanelRec *Panel;
-  int ValidPanel;
-  int CaptureFlag;
-  int LastMotionCount;
-  CGO *selIndicatorsCGO;
-  int selectorTexturePosX, selectorTexturePosY, selectorTextureAllocatedSize, selectorTextureSize;
-  short selectorIsRound;
+  int all_names_list_id {}, all_obj_list_id {}, all_sel_list_id {};
+  OVLexicon *Lex {};
+  OVOneToOne *Key {};
+  bool ValidGroups { false };
+  bool ValidSceneMembers { false };
+  int ValidGridSlots {};
+  PanelRec *Panel {};
+  bool ValidPanel { false };
+#ifdef _WEBGL
+#endif
+  int CaptureFlag {};
+  int LastMotionCount {};
+  CGO *selIndicatorsCGO { nullptr };
+  int selectorTexturePosX { 0 }, selectorTexturePosY { 0 }, selectorTextureAllocatedSize { 0 }, selectorTextureSize { 0 };
+  short selectorIsRound { 0 };
 
   // AtomInfoType::unique_id -> (object, atom-index)
-  ExecutiveObjectOffset *m_eoo; // VLA of (object, atom-index)
-  OVOneToOne *m_id2eoo; // unique_id -> m_eoo-index
+  ExecutiveObjectOffset *m_eoo {}; // VLA of (object, atom-index)
+  OVOneToOne *m_id2eoo {}; // unique_id -> m_eoo-index
+
+  CExecutive(PyMOLGlobals * G) : Block(G) {};
+
+  virtual int release(int button, int x, int y, int mod) override;
+  virtual int click(int button, int x, int y, int mod) override;
+  virtual int drag(int x, int y, int mod) override;
+  virtual void draw(CGO* orthoCGO) override;
+  virtual void reshape(int width, int height) override;
 };
 
 #ifndef NO_MMLIBS
@@ -176,7 +185,6 @@ static int ExecutiveGetNamesListFromPattern(PyMOLGlobals * G, const char *name,
 static void ExecutiveSpecEnable(PyMOLGlobals * G, SpecRec * rec, int parents, int log);
 static void ExecutiveSetAllRepVisMask(PyMOLGlobals * G, int repmask, int state);
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals * G, const char *name);
-static int ExecutiveDrag(Block * block, int x, int y, int mod);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
                                        int new_vis, int mod, int parents);
 static int ExecutiveSetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
@@ -14541,7 +14549,7 @@ ObjectMolecule *ExecutiveFindObjectMoleculeByName(PyMOLGlobals * G, const char *
 Block *ExecutiveGetBlock(PyMOLGlobals * G)
 {
   CExecutive *I = G->Executive;
-  return (I->Block);
+  return (I);
 }
 
 
@@ -15183,9 +15191,8 @@ void ExecutiveManageSelection(PyMOLGlobals * G, const char *name)
 
 
 /*========================================================================*/
-static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
+int CExecutive::click(int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
   CExecutive *I = G->Executive;
   int n, a;
   SpecRec *rec = NULL;
@@ -15199,7 +15206,7 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
 
   if(y < I->HowFarDown) {
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 1)
-      return SceneDeferClick(SceneGetBlock(G), button, x, y, mod);
+      return SceneGetBlock(G)->click(button, x, y, mod);
   }
 
   switch(button) {
@@ -15211,11 +15218,11 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
       return 1;
   }
 
-  n = ((I->Block->rect.top - y) - (ExecTopMargin + ExecClickMargin)) / ExecLineHeight;
+  n = ((I->rect.top - y) - (ExecTopMargin + ExecClickMargin)) / ExecLineHeight;
   a = n;
-  xx = (x - I->Block->rect.left);
+  xx = (x - rect.left);
   if(I->ScrollBarActive) {
-    if((x - I->Block->rect.left) <
+    if((x - rect.left) <
        (ExecScrollBarWidth + ExecScrollBarMargin + ExecToggleMargin)) {
       pass = 1;
       ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
@@ -15234,10 +15241,10 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
           skip--;
         } else {
           if(!a) {
-            t = ((I->Block->rect.right - ExecRightMargin) - x - 1) / ExecToggleWidth;
+            t = ((rect.right - ExecRightMargin) - x - 1) / ExecToggleWidth;
             if(t < op_cnt) {
-              int my = I->Block->rect.top - (ExecTopMargin + n * ExecLineHeight) - 3;
-              int mx = I->Block->rect.right - (ExecRightMargin + t * ExecToggleWidth);
+              int my = rect.top - (ExecTopMargin + n * ExecLineHeight) - 3;
+              int mx = rect.right - (ExecRightMargin + t * ExecToggleWidth);
 
 #if 0
               // prefix name with % as guarantee to not match a selection keyword
@@ -15543,7 +15550,7 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                   I->OverWhat = 1;
                   break;
                 }
-                OrthoGrab(G, I->Block);
+                OrthoGrab(G, this);
                 OrthoDirty(G);
               } else if(panel->is_group) {
                 /* clicked on group control */
@@ -15555,7 +15562,7 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                 I->PressedWhat = 2;
                 I->OverWhat = 2;
 
-                OrthoGrab(G, I->Block);
+                OrthoGrab(G, this);
                 OrthoDirty(G);
               }
             }
@@ -15704,9 +15711,8 @@ int ExecutiveAssignAtomTypes(PyMOLGlobals * G, const char *s1, int format, int s
   return (result);
 }
 
-static int ExecutiveRelease(Block * block, int button, int x, int y, int mod)
+int CExecutive::release(int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   PanelRec *panel = NULL;
@@ -15716,12 +15722,12 @@ static int ExecutiveRelease(Block * block, int button, int x, int y, int mod)
   int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
   if(y < I->HowFarDown) {
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 1)
-      return SceneDeferRelease(SceneGetBlock(G), button, x, y, mod);
+      return SceneGetBlock(G)->release(button, x, y, mod);
   }
 
-  xx = (x - I->Block->rect.left);
+  xx = (x - rect.left);
   if(I->ScrollBarActive) {
-    if((x - I->Block->rect.left) <
+    if((x - rect.left) <
        (ExecScrollBarWidth + ExecScrollBarMargin + ExecToggleMargin)) {
       pass = 1;
       ScrollBarDoRelease(I->ScrollBar, button, x, y, mod);
@@ -15733,7 +15739,7 @@ static int ExecutiveRelease(Block * block, int button, int x, int y, int mod)
   skip = I->NSkip;
 
   if(!pass) {
-    ExecutiveDrag(block, x, y, mod);    /* incorporate final changes in cursor position */
+    I->drag(x, y, mod);    /* incorporate final changes in cursor position */
     switch (I->DragMode) {
     case 1:
 
@@ -15799,9 +15805,8 @@ static int ExecutiveRelease(Block * block, int button, int x, int y, int mod)
 
 
 /*========================================================================*/
-static int ExecutiveDrag(Block * block, int x, int y, int mod)
+int CExecutive::drag(int x, int y, int mod)
 {
-  PyMOLGlobals *G = block->G;
   CExecutive *I = G->Executive;
   int xx, t;
   int ExecLineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
@@ -15812,12 +15817,12 @@ static int ExecutiveDrag(Block * block, int x, int y, int mod)
   ExecutiveUpdatePanelList(G);
   if(y < I->HowFarDown) {
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 1)
-      return SceneDeferDrag(SceneGetBlock(G), x, y, mod);
+      return SceneGetBlock(G)->drag(x, y, mod);
   }
 
   if(I->DragMode) {
-    xx = (x - I->Block->rect.left);
-    t = ((I->Block->rect.right - ExecRightMargin) - x) / ExecToggleWidth;
+    xx = (x - rect.left);
+    t = ((rect.right - ExecRightMargin) - x) / ExecToggleWidth;
     if(I->ScrollBarActive) {
       xx -= (ExecScrollBarWidth + ExecScrollBarMargin);
     }
@@ -15825,7 +15830,7 @@ static int ExecutiveDrag(Block * block, int x, int y, int mod)
     {
       int row_offset;
       if((xx >= 0) && (t >= op_cnt)) {
-        row_offset = ((I->Block->rect.top - y) -
+        row_offset = ((rect.top - y) -
                       (ExecTopMargin + ExecClickMargin)) / ExecLineHeight;
         I->Over = row_offset;
       } else {
@@ -16221,9 +16226,8 @@ static void draw_button_char(PyMOLGlobals * G, int x2, int y2, char ch ORTHOCGOA
 
 
 /*========================================================================*/
-static void ExecutiveDraw(Block * block ORTHOCGOARG)
+void CExecutive::draw(CGO* orthoCGO)
 {
-  PyMOLGlobals *G = block->G;
   int x, y, xx, x2, y2;
   WordType ch;
   char *c = NULL;
@@ -16257,7 +16261,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
   ExecutiveUpdatePanelList(G);
   
   /* if we're running with a GUI and have a valid panel */
-  if(G->HaveGUI && G->ValidContext && ((block->rect.right - block->rect.left) > 6)
+  if(G->HaveGUI && G->ValidContext && ((rect.right - rect.left) > 6)
      && I->ValidPanel) {
     int max_char;
     int nChar;
@@ -16272,7 +16276,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
     }
 
     n_disp =
-      ((I->Block->rect.top - I->Block->rect.bottom) - (ExecTopMargin)) / ExecLineHeight;
+      ((rect.top - rect.bottom) - (ExecTopMargin)) / ExecLineHeight;
     if(n_disp < 1)
       n_disp = 1;
 
@@ -16302,7 +16306,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
 
     /* determination of longest string based on internal_gui_size, etc... */
     max_char =
-      (((I->Block->rect.right - I->Block->rect.left) -
+      (((rect.right - rect.left) -
         (ExecLeftMargin + ExecRightMargin + 4)) - (op_cnt * ExecToggleWidth));
     if(I->ScrollBarActive) {
       max_char -= (ExecScrollBarMargin + ExecScrollBarWidth);
@@ -16312,29 +16316,31 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
     /* fill and outline the entire block */
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 0) {
       if (orthoCGO)
-	CGOColorv(orthoCGO, I->Block->BackColor);
+	CGOColorv(orthoCGO, BackColor);
+#ifndef PURE_OPENGL_ES_2
       else
-	glColor3fv(I->Block->BackColor);
-      I->Block->fill(orthoCGO);
-      I->Block->drawLeftEdge(orthoCGO);
+	glColor3fv(BackColor);
+#endif
+      fill(orthoCGO);
+      drawLeftEdge(orthoCGO);
     }
 
     /* draw the scroll bar */
     if(I->ScrollBarActive) {
-      ScrollBarSetBox(I->ScrollBar, I->Block->rect.top - ExecScrollBarMargin,
-                      I->Block->rect.left + ExecScrollBarMargin,
-                      I->Block->rect.bottom + 2,
-                      I->Block->rect.left + ExecScrollBarMargin + ExecScrollBarWidth);
+      ScrollBarSetBox(I->ScrollBar, rect.top - ExecScrollBarMargin,
+                      rect.left + ExecScrollBarMargin,
+                      rect.bottom + 2,
+                      rect.left + ExecScrollBarMargin + ExecScrollBarWidth);
       ScrollBarDoDraw(I->ScrollBar ORTHOCGOARGVAR);
     }
 
-    x = I->Block->rect.left + ExecLeftMargin;
-    y = (I->Block->rect.top - ExecLineHeight) - ExecTopMargin;
-    /*    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+op_cnt); */
+    x = rect.left + ExecLeftMargin;
+    y = (rect.top - ExecLineHeight) - ExecTopMargin;
+    /*    xx = rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+op_cnt); */
 #ifndef _PYMOL_NOPY
-    xx = I->Block->rect.right - ExecRightMargin - ExecToggleWidth * (op_cnt);
+    xx = rect.right - ExecRightMargin - ExecToggleWidth * (op_cnt);
 #else
-    xx = I->Block->rect.right - ExecRightMargin;
+    xx = rect.right - ExecRightMargin;
 #endif
 
     if(I->ScrollBarActive) {
@@ -16448,7 +16454,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
             int x3 = x;
             int hidden_prefix = false;
 
-            TextSetColor(G, I->Block->TextColor);
+            TextSetColor(G, TextColor);
             TextSetPos2i(G, x3 + DIP2PIXEL(2), y2 + text_lift);
 
             if((rec->type == cExecObject) ||
@@ -16519,7 +16525,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
                 }
               }
 
-              TextSetColor(G, I->Block->TextColor);
+              TextSetColor(G, TextColor);
 
 	      /* object name */
               c = rec->name;
@@ -16601,7 +16607,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
           }
 
           y -= ExecLineHeight;
-          if(y < (I->Block->rect.bottom))
+          if(y < (rect.bottom))
             break;
         }
       }
@@ -16644,15 +16650,14 @@ int ExecutiveIterateObjectMolecule(PyMOLGlobals * G, ObjectMolecule ** obj, void
 
 
 /*========================================================================*/
-static void ExecutiveReshape(Block * block, int width, int height)
+void CExecutive::reshape(int width, int height)
 {
-  PyMOLGlobals *G = block->G;
   CExecutive *I = G->Executive;
 
-  block->reshape(width, height);
+  Block::reshape(width, height);
 
-  I->Width = block->rect.right - block->rect.left + 1;
-  I->Height = block->rect.top - block->rect.bottom + 1;
+  I->Width = rect.right - rect.left + 1;
+  I->Height = rect.top - rect.bottom + 1;
 
 }
 
@@ -16762,7 +16767,7 @@ int ExecutiveReinitialize(PyMOLGlobals * G, int what, const char *pattern)
 int ExecutiveInit(PyMOLGlobals * G)
 {
   CExecutive *I = NULL;
-  if((I = (G->Executive = Calloc(CExecutive, 1)))) {
+  if((I = (G->Executive = new CExecutive(G)))) {
 
     SpecRec *rec = NULL;
 
@@ -16771,35 +16776,13 @@ int ExecutiveInit(PyMOLGlobals * G)
     I->all_names_list_id = TrackerNewList(I->Tracker, NULL);
     I->all_obj_list_id = TrackerNewList(I->Tracker, NULL);
     I->all_sel_list_id = TrackerNewList(I->Tracker, NULL);
-    I->Block = OrthoNewBlock(G, NULL);
-    I->Block->fRelease = ExecutiveRelease;
-    I->Block->fClick = ExecutiveClick;
-    I->Block->fDrag = ExecutiveDrag;
-    I->Block->fDraw = ExecutiveDraw;
-    I->Block->fReshape = ExecutiveReshape;
-    I->Block->active = true;
-    I->ScrollBarActive = 0;
+    I->active = true;
     I->ScrollBar = ScrollBarNew(G, false);
-    OrthoAttach(G, I->Block, cOrthoTool);
-    I->RecoverPressed = NULL;
-    I->Pressed = -1;
-    I->Over = -1;
-    I->LastEdited = NULL;
-    I->ReorderFlag = false;
-    I->NSkip = 0;
-    I->HowFarDown = 0;
-    I->DragMode = 0;
+    OrthoAttach(G, I, cOrthoTool);
 #ifndef GLUT_FULL_SCREEN
     I->oldWidth = 640;
     I->oldHeight = 480;
 #endif
-    I->LastZoomed = NULL;
-    I->LastChanged = NULL;
-    I->ValidGroups = false;
-    I->ValidSceneMembers = false;
-    I->selIndicatorsCGO = NULL;
-    I->selectorTexturePosX = I->selectorTexturePosY = I->selectorTextureSize = I->selectorTextureAllocatedSize = 0;
-    I->selectorIsRound = 0;
 
     ListInit(I->Panel);
     I->ValidPanel = false;
@@ -16843,14 +16826,12 @@ void ExecutiveFree(PyMOLGlobals * G)
     TrackerFree(I->Tracker);
   if(I->ScrollBar)
     ScrollBarFree(I->ScrollBar);
-  OrthoFreeBlock(G, I->Block);
-  I->Block = NULL;
   OVLexicon_DEL_AUTO_NULL(I->Lex);
   OVOneToOne_DEL_AUTO_NULL(I->Key);
 
   ExecutiveUniqueIDAtomDictInvalidate(G);
 
-  FreeP(G->Executive);
+  DeleteP(I);
 }
 
 #ifdef _undefined

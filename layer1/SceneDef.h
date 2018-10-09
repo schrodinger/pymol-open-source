@@ -109,9 +109,8 @@ typedef struct {
   SceneUnitContext context;     /* for whole-window display */
 } GridInfo;
 
-class CScene {
+class CScene : public Block {
  public:
-  ::Block *Block { nullptr };
   std::list<CObject*> Obj, GadgetObjs, NonGadgetObjs;
   float RotMatrix[16];          /* WARNING: column major, as per OpenGL spec */
   float InvMatrix[16];          /* WARNING: column major, as per OpenGL spec */
@@ -215,6 +214,14 @@ class CScene {
   float vp_width_scale;
   Picking *pickVLA { nullptr };
   bool invPick; // if set, picking should be re-built
+
+  CScene(PyMOLGlobals * G) : Block(G) {}
+
+  virtual int click(int button, int x, int y, int mod) override;
+  virtual int release(int button, int x, int y, int mod) override;
+  virtual int drag(int x, int y, int mod) override;
+  virtual void draw(CGO* orthoCGO) override;
+  virtual void reshape(int width, int height) override;
 
   // PYMOL-2561, PYMOL-2711 : This structure used to be calloc-ed, this replicates that
   void *operator new(size_t size) {

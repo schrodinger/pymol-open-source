@@ -511,7 +511,7 @@ void SceneRenderPicking(PyMOLGlobals * G, int stereo_mode, int *click_side, int 
     case cStereo_crosseye:
     case cStereo_walleye:
     case cStereo_sidebyside:
-      glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width / 2, I->Height);
+      glViewport(I->rect.left, I->rect.bottom, I->Width / 2, I->Height);
       break;
     case cStereo_geowall:
       *click_side = OrthoGetWrapClickSide(G);
