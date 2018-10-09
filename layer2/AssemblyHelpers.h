@@ -16,7 +16,7 @@
 CoordSet * CoordSetCopyFilterChains(
     const CoordSet * other,
     const AtomInfoType * atInfo,
-    const std::set<lexidx_t> & chains_set);
+    const std::set<lexborrow_t> & chains_set);
 
 void ObjectMoleculeSetAssemblyCSets(
     ObjectMolecule * I,

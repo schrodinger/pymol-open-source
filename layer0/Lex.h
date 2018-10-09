@@ -12,6 +12,7 @@
 
 #define LexDec(G, i) OVLexicon_DecRef(G->Lexicon, i)
 #define LexInc(G, i) OVLexicon_IncRef(G->Lexicon, i)
+#define LexNumeric(i) (i)
 
 /*
  * Get the pointer to the internal string storage for reference `i`.

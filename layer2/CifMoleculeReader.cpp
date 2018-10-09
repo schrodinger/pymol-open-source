@@ -121,9 +121,9 @@ struct CifContentInfo {
     return false;
   }
 
-  bool is_excluded_chain(const lexidx_t& chain) {
+  bool is_excluded_chain(const lexborrow_t& chain) {
     return (!chains_filter.empty() &&
-        chains_filter.count(chain) == 0);
+        chains_filter.count(reinterpret_cast<const lexidx_t&>(chain)) == 0);
   }
 
   bool is_polypeptide(const char * entity_id) {
@@ -510,11 +510,11 @@ static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
  */
 class sshashkey {
 public:
-  lexidx_t chain; // borrowed ref
+  lexborrow_t chain; // borrowed ref
   int resv;
   char inscode;
 
-  void assign(int asym_id_, int resv_, char ins_code_ = '\0') {
+  void assign(const lexborrow_t& asym_id_, int resv_, char ins_code_ = '\0') {
     chain = asym_id_;
     resv = resv_;
     inscode = ins_code_;
@@ -696,7 +696,7 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
 
     oper_collection_t collection = parse_oper_expression(oper_expr);
     std::vector<std::string> chains = strsplit(asym_id_list, ',');
-    std::set<lexidx_t> chains_set;
+    std::set<lexborrow_t> chains_set;
     for (auto& chain : chains) {
       auto borrowed = LexBorrow(G, chain.c_str());
       if (borrowed != LEX_BORROW_NOTFOUND) {
@@ -1139,7 +1139,7 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
     ai->chain = LexIdx(G, arr_chain->as_s(i));
     ai->name = LexIdx(G, arr_name->as_s(i));
     ai->resn = LexIdx(G, arr_resn->as_s(i));
-    ai->segi = segi; // steal reference
+    ai->segi = std::move(segi); // steal reference
 
     if ('H' == arr_group_pdb->as_s(i)[0]) {
       ai->hetatm = 1;

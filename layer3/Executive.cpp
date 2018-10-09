@@ -4898,7 +4898,7 @@ int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float 
             // enumerated values
             switch (ap->Ptype) {
               case cPType_int_as_string:
-                value_e = *reinterpret_cast<const lexidx_t*>(raw_ptr);
+                value_e = LexNumeric(*reinterpret_cast<const lexidx_t*>(raw_ptr));
                 break;
               case cPType_string:
                 // works for small strings

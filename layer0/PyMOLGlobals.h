@@ -30,6 +30,7 @@ inline float DIP2PIXEL(float v) { return v * _gScaleFactor; }
    short and sweet */
 
 typedef int lexidx_t;
+typedef int lexborrow_t;
 
 typedef struct _CMemoryCache CMemoryCache;
 typedef struct _CIsosurf CIsosurf;

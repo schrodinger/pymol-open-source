@@ -80,7 +80,7 @@ CoordSet ** get_assembly_csets(PyMOLGlobals * G,
     auto trans = assembly->transformList + state;
 
     // get set of chains for this transformation
-    std::set<lexidx_t> chains_set;
+    std::set<lexborrow_t> chains_set;
     for (auto ci_it = trans->chainIndexList,
         ci_it_end = ci_it + trans->chainIndexListCount;
         ci_it != ci_it_end; ++ci_it) {
