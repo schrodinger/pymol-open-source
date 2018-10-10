@@ -815,8 +815,8 @@ enum {
   REC_i( 713, bg_image_mode                           , global    , 0, 0, 3 ),
   REC_3( 714, bg_image_tilesize                       , global    , 100.F, 100.F, 0.f ),     /* XY in pixels, Z unused */
   REC_b( 715, bg_image_linear                         , global    , 1 ),
-  REC_s( 716, load_object_props_default               , global    , "" ),
-  REC_s( 717, load_atom_props_default                 , global    , "" ),
+  REC_s( 716, load_object_props_default               , global    , "*" ),
+  REC_s( 717, load_atom_props_default                 , global    , "*" ),
   REC_3( 718, label_placement_offset                  , astate    , 0.f, 0.f, 0.f ),
   REC_b( 719, pdb_conect_nodup                        , global    , 1 ),
   REC_b( 720, label_connector                         , astate    , 0 ),
