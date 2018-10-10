@@ -127,6 +127,7 @@ class TestProperties(testing.PyMOLTestCase):
         # get molecule with SDF annotations
         cid = 6830
 
+        cmd.set('load_object_props_default', '')
         cmd.load('CID_%d.sdf' % cid, 'm1')
         self.assertEqual(None, cmd.get_property('PUBCHEM_COMPOUND_CID', 'm1'),
                 'property loaded, but should not')

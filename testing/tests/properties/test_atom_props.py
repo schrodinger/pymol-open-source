@@ -18,6 +18,7 @@ class TestAtomProperties(testing.PyMOLTestCase):
 
     @testing.foreach('1molecule.mae')
     def testLoadNoProperties(self, molfilename):
+        cmd.set('load_object_props_default', '')
         cmd.load(self.datafile(molfilename), 'test')
         objs = cmd.get_object_list()
         for obj in objs:
@@ -26,6 +27,7 @@ class TestAtomProperties(testing.PyMOLTestCase):
 
     @testing.foreach('1molecule.mae')
     def testLoadNoAtomProperties(self, molfilename):
+        cmd.set('load_atom_props_default', '')
         cmd.load(self.datafile(molfilename), 'test', object_props='*')
         objs = cmd.get_object_list()
         for obj in objs:
