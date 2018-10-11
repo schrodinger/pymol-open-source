@@ -1031,5 +1031,5 @@ void WizardFree(PyMOLGlobals * G)
   WizardPurgeStack(G);
   VLAFreeP(I->Line);
   VLAFreeP(I->Wiz);
-  DeleteP(I);
+  DeleteP(G->Wizard);
 }

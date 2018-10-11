@@ -783,7 +783,7 @@ void SeqFree(PyMOLGlobals * G)
   SeqPurgeRowVLA(G);
   if(I->ScrollBar)
     ScrollBarFree(I->ScrollBar);
-  DeleteP(I);
+  DeleteP(G->Seq);
 }
 
 Block *SeqGetBlock(PyMOLGlobals * G)

@@ -16836,7 +16836,7 @@ void ExecutiveFree(PyMOLGlobals * G)
 
   ExecutiveUniqueIDAtomDictInvalidate(G);
 
-  DeleteP(I);
+  DeleteP(G->Executive);
 }
 
 #ifdef _undefined
