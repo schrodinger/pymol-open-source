@@ -49,6 +49,7 @@ Z* -------------------------------------------------------------------
 #include "MyPNG.h"
 #include "MacPyMOL.h"
 #include "File.h"
+#include "LangUtil.h"
 
 #ifndef true
 #define true 1
@@ -2533,6 +2534,8 @@ int OrthoInit(PyMOLGlobals * G, int showSplash)
 
   if((I = (G->Ortho = Calloc(COrtho, 1)))) {
 
+    new (&I->deferred)(decltype(I->deferred));
+
     ListInit(I->Blocks);
 
     I->ActiveButton = -1;
@@ -2639,9 +2642,9 @@ void OrthoFree(PyMOLGlobals * G)
   }
   QueueFree(I->feedback);
   I->feedback = NULL;
-  if(!I->deferred.empty()) { // TODO: when Ortho gets refactored, not needed
-    I->deferred.clear();
-  }
+
+  pymol::destroy_at(&I->deferred);
+
   if (I->bgData){
     FreeP(I->bgData);
     I->bgData = NULL;

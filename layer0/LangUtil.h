@@ -21,6 +21,11 @@ std::unique_ptr<T> make_unique(std::size_t size){
   return std::unique_ptr<T>(new typename std::remove_extent<T>::type[size]());
 }
 
+/*
+ * @brief C++17's std::destroy_at
+ */
+template <typename T> void destroy_at(T* p) { p->~T(); }
+
 }// namespace schrodinger
 
 
