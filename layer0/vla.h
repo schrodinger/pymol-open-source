@@ -5,6 +5,7 @@
 #pragma once
 
 #include "MemoryDebug.h"
+#include "LangUtil.h"
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
@@ -125,9 +126,7 @@ public:
   void freeP()
   {
     if (m_vla != nullptr) {
-      for (auto& ele : *this) {
-        ele.~T();
-      }
+      pymol::destroy(begin(), end());
       VLAFreeP(m_vla);
     }
   }

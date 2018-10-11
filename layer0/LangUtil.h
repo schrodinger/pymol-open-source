@@ -26,6 +26,17 @@ std::unique_ptr<T> make_unique(std::size_t size){
  */
 template <typename T> void destroy_at(T* p) { p->~T(); }
 
+/*
+ * @brief C++17's std::destroy
+ */
+
+template <typename T> void destroy(T* iter, T* end)
+{
+  for(; iter != end; ++iter) {
+    destroy_at(std::addressof(*iter));
+  }
+}
+
 }// namespace schrodinger
 
 
