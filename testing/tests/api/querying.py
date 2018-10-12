@@ -271,8 +271,44 @@ class TestQuerying(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def testGetRawAlignment(self):
-        cmd.get_raw_alignment
-        self.skipTest("TODO")
+        from collections import defaultdict
+        cmd.fab('ACDEGGKLMN', 'm1')
+        cmd.fab('CDEFFGGK', 'm2')
+        cmd.fab('ASDEKLMNFY', 'm3')
+        cmd.align('m2 & guide', 'm1 & guide', cycles=0, object='aln')
+        cmd.align('m3 & guide', 'm1 & guide', cycles=0, object='aln')
+        cmd.disable('m2')
+        # expecting alignment:
+        # m1 ACDE--GGKLMN--
+        # m2 -CDEFFGGK-----
+        # m3 ASDE----KLMQFY
+        guideids = defaultdict(list)
+        cmd.iterate('guide', 'guideids[model].append(index)', space=locals())
+        idx = lambda m, i: (m, guideids[m][i])
+        aln_expect = [
+            [idx('m1', 0),               idx('m3', 0)],
+            [idx('m1', 1), idx('m2', 0), idx('m3', 1)],
+            [idx('m1', 2), idx('m2', 1), idx('m3', 2)],
+            [idx('m1', 3), idx('m2', 2), idx('m3', 3)],
+            [idx('m1', 4), idx('m2', 5),             ],
+            [idx('m1', 5), idx('m2', 6),             ],
+            [idx('m1', 6), idx('m2', 7), idx('m3', 4)],
+            [idx('m1', 7),               idx('m3', 5)],
+            [idx('m1', 8),               idx('m3', 6)],
+            [idx('m1', 9),               idx('m3', 7)],
+        ]
+        dictify = lambda aln: [dict(col) for col in aln]
+        aln_expect = dictify(aln_expect)
+
+        aln = cmd.get_raw_alignment('aln', 0)
+        self.assertEqual(dictify(aln), aln_expect)
+
+        # remove m2 from alignment
+        for d in aln_expect:
+            d.pop('m2', None)
+
+        aln = cmd.get_raw_alignment('aln', 1)
+        self.assertEqual(dictify(aln), aln_expect)
 
     def testGetRenderer(self):
         cmd.get_renderer
