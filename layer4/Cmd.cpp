@@ -4829,7 +4829,7 @@ static PyObject *CmdGetStr(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  unique_vla_ptr<char> vla;
+  pymol::vla<char> vla;
   char *format;
   char *sele;
   int state;

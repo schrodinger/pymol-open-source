@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cstdarg>
 #include <clocale>
+#include <memory>
 
 #ifndef _PYMOL_NO_MSGPACKC
 #include <mmtf.hpp>
@@ -62,8 +63,8 @@ public:
  * Returns the number of characters written (excluding the null byte).
  */
 static
-int VLAprintf(char *&vla, int offset, const char * format, ...) {
-  int n, size = VLAGetSize(vla) - offset;
+int VLAprintf(pymol::vla<char>& vla, int offset, const char * format, ...) {
+  int n, size = vla.size() - offset;
   va_list ap;
 
   va_start(ap, format);
@@ -83,7 +84,7 @@ int VLAprintf(char *&vla, int offset, const char * format, ...) {
   // C99 standard: a return value of size or more means that the output was
   // truncated (glibc since 2.1; not on Windows)
   if (n >= size) {
-    VLACheck(vla, char, offset + n);
+    vla.check(offset + n);
     va_start(ap, format);
     vsprintf(vla + offset, format, ap);
     va_end(ap);
@@ -116,10 +117,10 @@ struct AtomRef {
  * Abstract base class for exporting molecular selections
  */
 struct MoleculeExporter {
-  char* m_buffer; // out
-  int m_offset;
+  pymol::vla<char> m_buffer; // out
 
 protected:
+  int m_offset;
   CoordSet        * m_last_cs;
   ObjectMolecule  * m_last_obj;
   int m_last_state;
@@ -154,7 +155,7 @@ public:
   virtual void init(PyMOLGlobals * G_) {
     G = G_;
 
-    m_buffer = VLAlloc(char, 1280);
+    m_buffer.resize(1280);
     m_buffer[0] = '\0';
 
     m_mat_ref.ptr = NULL;
@@ -170,7 +171,6 @@ public:
 
   // destructor
   virtual ~MoleculeExporter() {
-    VLAFreeP(m_buffer);
   }
 
   /*
@@ -358,6 +358,8 @@ void MoleculeExporter::execute(int sele, int state) {
   if (m_multi == cMolExportGlobal) {
     writeBonds();
   }
+
+  m_buffer.resize(m_offset);
 }
 
 void MoleculeExporter::setRefObject(const char * ref_object, int ref_state) {
@@ -1367,7 +1369,7 @@ public:
     msgpack::pack(stream, data_map);
     auto buffer = stream.str();
     auto bufferSize = buffer.size();
-    VLACheck(m_buffer, char, bufferSize);
+    m_buffer.resize(bufferSize);
     std::memcpy(m_buffer, buffer.data(), bufferSize);
     m_offset = bufferSize;
   }
@@ -1394,7 +1396,7 @@ public:
  *               1: molecules per objects
  *               2: molecules per states (default for sdf, mol2)
  */
-unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
+pymol::vla<char> MoleculeExporterGetStr(PyMOLGlobals * G,
     const char *format,
     const char *selection,
     int state,
@@ -1407,9 +1409,9 @@ unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
   int sele = tmpsele1.getIndex();
 
   if (sele < 0)
-    return NULL;
+    return nullptr;
 
-  MoleculeExporter * exporter = NULL;
+  std::unique_ptr<MoleculeExporter> exporter;
 
   if (ref_state < -1)
    ref_state = state;
@@ -1419,35 +1421,35 @@ unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
     state = -3;
 
   if (strcmp(format, "pdb") == 0) {
-    exporter = new MoleculeExporterPDB;
+    exporter.reset(new MoleculeExporterPDB);
   } else if (strcmp(format, "pmcif") == 0) {
-    exporter = new MoleculeExporterPMCIF;
+    exporter.reset(new MoleculeExporterPMCIF);
   } else if (strcmp(format, "cif") == 0) {
-    exporter = new MoleculeExporterCIF;
+    exporter.reset(new MoleculeExporterCIF);
   } else if (strcmp(format, "sdf") == 0) {
-    exporter = new MoleculeExporterSDF;
+    exporter.reset(new MoleculeExporterSDF);
   } else if (strcmp(format, "pqr") == 0) {
-    exporter = new MoleculeExporterPQR;
+    exporter.reset(new MoleculeExporterPQR);
   } else if (strcmp(format, "mol2") == 0) {
-    exporter = new MoleculeExporterMOL2;
+    exporter.reset(new MoleculeExporterMOL2);
   } else if (strcmp(format, "mol") == 0) {
-    exporter = new MoleculeExporterMOL;
+    exporter.reset(new MoleculeExporterMOL);
   } else if (strcmp(format, "xyz") == 0) {
-    exporter = new MoleculeExporterXYZ;
+    exporter.reset(new MoleculeExporterXYZ);
   } else if (strcmp(format, "mae") == 0) {
-    exporter = new MoleculeExporterMAE;
+    exporter.reset(new MoleculeExporterMAE);
   } else if (strcmp(format, "mmtf") == 0) {
 #ifndef _PYMOL_NO_MSGPACKC
-    exporter = new MoleculeExporterMMTF;
+    exporter.reset(new MoleculeExporterMMTF);
 #else
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " Error: This build has no fast MMTF support.\n" ENDFB(G);
-    return NULL;
+    return nullptr;
 #endif
   } else {
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " Error: unknown format: '%s'\n", format ENDFB(G);
-    return NULL;
+    return nullptr;
   }
 
   // Ensure "." decimal point in printf. It's possible to change this from
@@ -1459,13 +1461,7 @@ unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
   exporter->setRefObject(ref_object, ref_state);
   exporter->execute(sele, state);
 
-  char * charVLA = NULL;
-  std::swap(charVLA, exporter->m_buffer);
-  VLASize(charVLA, char, exporter->m_offset);
-
-  delete exporter;
-
-  return charVLA;
+  return std::move(exporter->m_buffer);
 }
 
 /*========================================================================*/

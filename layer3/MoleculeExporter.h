@@ -6,11 +6,11 @@
 
 #include "os_python.h"
 #include "os_std.h"
-#include "unique_vla_ptr.h"
+#include "vla.h"
 
 #include "PyMOLGlobals.h"
 
-unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
+pymol::vla<char> MoleculeExporterGetStr(PyMOLGlobals * G,
     const char *format,
     const char *sele="all",
     int state=-2, // current (-1 in Python API)

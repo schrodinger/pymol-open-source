@@ -32,6 +32,9 @@ template <typename T> class vla
   void swap(vla<T>& other) noexcept { std::swap(m_vla, other.m_vla); }
 
 public:
+  // implicit NULL constructor
+  vla(std::nullptr_t) {}
+
   // constructor -- takes ownership of pointer
   explicit vla(T* vla = nullptr) : m_vla(vla) {}
 
