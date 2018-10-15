@@ -134,15 +134,5 @@ class PyMOL(SingletonPyMOL):
         with pymol2_lock:
             _cmd._start(self._COb, self.cmd)
         
-    def startWithTclTk(self, gui = None, skin=None):
-        self.start()
-        if gui == None:
-            gui = self.invocation.options.gui
-        if skin == None:
-            skin = self.invocation.options.skin
-        poll = 0
-        __import__(gui)
-        sys.modules[gui].__init__(self,poll,skin)
-        
     def stop(self):
         _cmd._stop(self._COb)
