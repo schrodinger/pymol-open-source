@@ -30,54 +30,55 @@ Z* -------------------------------------------------------------------
 #include "Executive_pre.h"
 #include "Scene.h"
 
-#define cLoadTypeUnknown -1
-#define cLoadTypePDB 0
-#define cLoadTypeMOL 1
-#define cLoadTypeSDF1 2         /* SDF1 - python-based loader */
-#define cLoadTypeMOLStr 3
-#define cLoadTypeMMD 4
-#define cLoadTypeMMDSeparate 5
-#define cLoadTypeMMDStr 6
-#define cLoadTypeXPLORMap 7
-#define cLoadTypeChemPyModel 8
-#define cLoadTypePDBStr 9
-#define cLoadTypeChemPyBrick 10
-#define cLoadTypeChemPyMap 11
-#define cLoadTypeCallback 12
-#define cLoadTypeCGO 13
-#define cLoadTypeR3D 14
-#define cLoadTypeXYZ 15
-#define cLoadTypeCCP4Map 18
-#define cLoadTypePMO  19
-#define cLoadTypeTOP  21
-#define cLoadTypeTRJ  22
-#define cLoadTypeCRD  23
-#define cLoadTypeRST  24
-#define cLoadTypePSE  25
-#define cLoadTypeXPLORStr 26
-#define cLoadTypePHIMap 27
-#define cLoadTypeFLDMap 28
-#define cLoadTypeBRIXMap 29
-#define cLoadTypeGRDMap 30
-#define cLoadTypePQR 31
-#define cLoadTypeDXMap 32
-#define cLoadTypeMOL2 33
-#define cLoadTypeMOL2Str 34
-#define cLoadTypeP1M 35
-#define cLoadTypeCCP4Str 36
-#define cLoadTypeSDF2 37
-#define cLoadTypeSDF2Str 38
-#define cLoadTypeXTC 42
-#define cLoadTypeTRR 43
-#define cLoadTypeGRO 44
-#define cLoadTypeTRJ2 45
-#define cLoadTypeG96 46
-#define cLoadTypeDCD 47
-#define cLoadTypeCUBEMap 48
-#define cLoadTypeXYZStr 49
+enum cLoadType_t : int {
+  cLoadTypeUnknown = -1,
+  cLoadTypePDB = 0,
+  cLoadTypeMOL = 1,
+  cLoadTypeSDF1 = 2, /* SDF1 - python-based loader */
+  cLoadTypeMOLStr = 3,
+  cLoadTypeMMD = 4,
+  cLoadTypeMMDSeparate = 5,
+  cLoadTypeMMDStr = 6,
+  cLoadTypeXPLORMap = 7,
+  cLoadTypeChemPyModel = 8,
+  cLoadTypePDBStr = 9,
+  cLoadTypeChemPyBrick = 10,
+  cLoadTypeChemPyMap = 11,
+  cLoadTypeCallback = 12,
+  cLoadTypeCGO = 13,
+  cLoadTypeR3D = 14,
+  cLoadTypeXYZ = 15,
+  cLoadTypeCCP4Map = 18,
+  cLoadTypePMO = 19,
+  cLoadTypeTOP = 21,
+  cLoadTypeTRJ = 22,
+  cLoadTypeCRD = 23,
+  cLoadTypeRST = 24,
+  cLoadTypePSE = 25,
+  cLoadTypeXPLORStr = 26,
+  cLoadTypePHIMap = 27,
+  cLoadTypeFLDMap = 28,
+  cLoadTypeBRIXMap = 29,
+  cLoadTypeGRDMap = 30,
+  cLoadTypePQR = 31,
+  cLoadTypeDXMap = 32,
+  cLoadTypeMOL2 = 33,
+  cLoadTypeMOL2Str = 34,
+  cLoadTypeP1M = 35,
+  cLoadTypeCCP4Str = 36,
+  cLoadTypeSDF2 = 37,
+  cLoadTypeSDF2Str = 38,
+  cLoadTypeXTC = 42,
+  cLoadTypeTRR = 43,
+  cLoadTypeGRO = 44,
+  cLoadTypeTRJ2 = 45,
+  cLoadTypeG96 = 46,
+  cLoadTypeDCD = 47,
+  cLoadTypeCUBEMap = 48,
+  cLoadTypeXYZStr = 49,
 
 /* 50 is Python-based CIF (cif1) */
-#define cLoadTypePHIStr 51
+  cLoadTypePHIStr = 51,
 
 /* 52 is PIM */
 
@@ -86,25 +87,26 @@ Z* -------------------------------------------------------------------
 /* 54 is ALN */
 
 /* 55 is FASTA */
-#define cLoadTypeACNTMap 56
+  cLoadTypeACNTMap = 56,
 
-#define cLoadTypeDTR 57
+  cLoadTypeDTR = 57,
 /* 58/59 are pze, pzw */
-#define cLoadTypeCIF 60
-#define cLoadTypeCIFStr 61
+  cLoadTypeCIF = 60,
+  cLoadTypeCIFStr = 61,
 
-#define cLoadTypeSpider 62
-#define cLoadTypeCMS 63
-#define cLoadTypePlugin 64
+  cLoadTypeSpider = 62,
+  cLoadTypeCMS = 63,
+  cLoadTypePlugin = 64,
 
-#define cLoadTypeMAE 65
-#define cLoadTypeMAEStr 66
-#define cLoadTypePDBQT 67
+  cLoadTypeMAE = 65,
+  cLoadTypeMAEStr = 66,
+  cLoadTypePDBQT = 67,
 /* 68 is Python-based MAE  */
-#define cLoadTypeVDBStr 69
+  cLoadTypeVDBStr = 69,
 
-#define cLoadTypeMMTF 71
-#define cLoadTypeMMTFStr 72
+  cLoadTypeMMTF = 71,
+  cLoadTypeMMTFStr = 72,
+};
 
 /* NOTE: if you add new content/object type above, then be sure to add
    corresponding code in:
@@ -182,7 +184,7 @@ void ExecutiveUniqueIDAtomDictInvalidate(PyMOLGlobals * G);
 
 int ExecutiveLoad(PyMOLGlobals * G,
                   const char *content, int content_length,
-                  int content_format,
+                  cLoadType_t content_format,
                   const char *object_name,
                   int state, int zoom,
                   int discrete, int finish, int multiplex, int quiet, const char *plugin,
@@ -497,7 +499,7 @@ int ExecutiveSetDrag(PyMOLGlobals * G, const char *name, int quiet,int mode);
 int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int log);
 int ExecutiveGetActiveSele(PyMOLGlobals * G);
 int ExecutiveGetActiveAlignmentSele(PyMOLGlobals * G);
-CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char *oname, int type);
+CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char *oname, cLoadType_t type);
 int ExecutiveAngle(PyMOLGlobals * G, float *result,
                    const char *nam, const char *s1, const char *s2, const char *s3, int mode,
                    int labels, int reset, int zoom, int quiet, int state,

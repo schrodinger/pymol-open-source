@@ -8784,7 +8784,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
  */
 ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
                                       const char **next_entry,
-                                      int content_format, int frame,
+                                      cLoadType_t content_format, int frame,
                                       int discrete, int quiet, int multiplex,
                                       char *new_name,
 				      short loadpropertiesall, OVLexicon *loadproplex)

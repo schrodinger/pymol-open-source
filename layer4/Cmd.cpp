@@ -7195,7 +7195,8 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
   char *object_props = NULL;
   char *atom_props = NULL;
   char *plugin = NULL;
-  int frame, type;
+  int frame;
+  cLoadType_t type;
   int finish, discrete;
   int quiet;
   int ok = false;

@@ -3658,7 +3658,7 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
  */
 int ExecutiveLoad(PyMOLGlobals * G,
                   const char *content, int content_length,
-                  int content_format,
+                  cLoadType_t content_format,
                   const char *object_name_proposed,
                   int state, int zoom,
                   int discrete, int finish, int multiplex, int quiet,
@@ -4017,7 +4017,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
  *  If an object with the same name but different type already exists,
  *  then it is deleted.
  */
-CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char *oname, int type)
+CObject* ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char* oname, cLoadType_t type)
 {
   CObject *origObj = NULL;
   origObj = ExecutiveFindObjectByName(G, oname);

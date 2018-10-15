@@ -30,21 +30,21 @@ Z* -------------------------------------------------------------------
 
 typedef char ObjectNameType[WordLength];
 
-#define cObjectMolecule     1
-#define cObjectMap          2
-#define cObjectMesh         3
-
-/* cObjectDist now cObjectMeasurement */
-#define cObjectMeasurement  4
-#define cObjectCallback     5
-#define cObjectCGO          6
-#define cObjectSurface      7
-#define cObjectGadget       8
-#define cObjectCalculator   9
-#define cObjectSlice        10
-#define cObjectAlignment    11
-#define cObjectGroup        12
-#define cObjectVolume       13
+enum cObject_t : int {
+  cObjectMolecule = 1,
+  cObjectMap = 2,
+  cObjectMesh = 3,
+  cObjectMeasurement = 4,
+  cObjectCallback = 5,
+  cObjectCGO = 6,
+  cObjectSurface = 7,
+  cObjectGadget = 8,
+  cObjectCalculator = 9,
+  cObjectSlice = 10,
+  cObjectAlignment = 11,
+  cObjectGroup = 12,
+  cObjectVolume = 13,
+};
 
 /* 
    the object base class is in the process of being converted to support
@@ -74,7 +74,7 @@ struct _CObject {
   CSetting **(*fGetSettingHandle) (CObject * I, int state);
   char *(*fGetCaption) (CObject * I, char * ch, int len);
   CObjectState *(*fGetObjectState) (CObject * I, int state);
-  int type;
+  cObject_t type;
   ObjectNameType Name;
   int Color;
   int visRep;

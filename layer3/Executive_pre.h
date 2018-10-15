@@ -22,4 +22,7 @@ Z* -------------------------------------------------------------------
 #define SELINDICATORARGVAR , I->selIndicatorsCGO
 #define SELINDICATORVAR selIndicatorsCGO
 
+// forward declaration
+enum cLoadType_t : int;
+
 #endif

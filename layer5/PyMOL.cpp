@@ -1530,12 +1530,12 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL * I, const char *name, const char *ma
  */
 struct {
   const char * name;
-  int code_buffer;
-  int code_filename;
+  cLoadType_t code_buffer;
+  cLoadType_t code_filename;
 } const ContentTypeTable[] = {
   // molecules
   {"pdb",           cLoadTypePDBStr,    cLoadTypePDB},
-  {"vdb",           cLoadTypeVDBStr,    -1},
+  {"vdb",           cLoadTypeVDBStr,    cLoadTypeUnknown},
   {"cif",           cLoadTypeCIFStr,    cLoadTypeCIF},
   {"mmtf",          cLoadTypeMMTFStr,   cLoadTypeMMTF},
   {"mae",           cLoadTypeMAEStr,    cLoadTypeMAE},
@@ -1543,16 +1543,16 @@ struct {
   {"mol",           cLoadTypeMOLStr,    cLoadTypeMOL},
   {"mol2",          cLoadTypeMOL2Str,   cLoadTypeMOL2},
   {"xyz",           cLoadTypeXYZStr,    cLoadTypeXYZ},
-  {"pqr",           -1,                 cLoadTypePQR},
+  {"pqr",           cLoadTypeUnknown,   cLoadTypePQR},
   {"macromodel",    cLoadTypeMMDStr,    cLoadTypeMMD},
   // maps
-  {"ccp4",          cLoadTypeCCP4Str,   -1},
+  {"ccp4",          cLoadTypeCCP4Str,   cLoadTypeUnknown},
   {"xplor",         cLoadTypeXPLORStr,  cLoadTypeXPLORMap},
   {"phi",           cLoadTypePHIStr,    cLoadTypePHIMap},
-  {"dx",            -1,                 cLoadTypeDXMap},
+  {"dx",            cLoadTypeUnknown,   cLoadTypeDXMap},
   // special
-  {"cgo",           cLoadTypeCGO,       -1},
-  {NULL,            -1,                 -1}
+  {"cgo",           cLoadTypeCGO,       cLoadTypeUnknown},
+  {NULL,            cLoadTypeUnknown,   cLoadTypeUnknown}
 };
 
 /*
@@ -1625,7 +1625,7 @@ static PyMOLreturn_status Loader(CPyMOL * I, const char *content, const char *co
       }
     }
     {
-      int pymol_content_type = cLoadTypeUnknown;
+      cLoadType_t pymol_content_type = cLoadTypeUnknown;
 
       for (auto it = ContentTypeTable; it->name; ++it) {
         if (strcmp(it->name, content_format) == 0) {

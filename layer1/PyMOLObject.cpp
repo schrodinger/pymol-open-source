@@ -744,7 +744,7 @@ int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, CObject * I)
   if(ok)
     ll = PyList_Size(list);
   if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 0), &I->type);
+    ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 0, reinterpret_cast<int*>(&I->type));
   if(ok)
     ok = PConvPyStrToStr(PyList_GetItem(list, 1), I->Name, WordLength);
   if(ok)
