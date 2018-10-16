@@ -44,6 +44,7 @@ from .creating import \
       map_generate,        \
       map_new,            \
       pseudoatom,         \
+      set_raw_alignment,  \
       slice_new,          \
       symexp,             \
       ramp_new,           \

@@ -662,6 +662,37 @@ SEE ALSO
         return r
 
 
+    def set_raw_alignment(name, raw, guide='', state=1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    API only. Create an alignment object from lists of indices.
+
+ARGUMENTS
+
+    name = str: alignment object name
+
+    raw = list: list (columns) of lists with (model, index) tuples
+
+    guide = str: name of guide object
+
+    state = int: object state
+
+EXAMPLE
+
+    cmd.align('1t46', '1oky', object='aln')
+    raw = cmd.get_raw_alignment('aln')
+    cmd.delete('aln')
+    cmd.set_raw_alignment('alnnew', raw)
+
+SEE ALSO
+
+    cmd.get_raw_alignment
+        '''
+        with _self.lockcm:
+            return _cmd.set_raw_alignment(name, raw, guide,
+                    int(state) - 1, int(quiet), _self._COb)
+
 
     def slice_new(name, map, state=1, source_state=0, _self=cmd):
         '''

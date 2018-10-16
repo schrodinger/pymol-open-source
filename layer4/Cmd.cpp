@@ -86,6 +86,7 @@ Z* -------------------------------------------------------------------
 #include"Seeker.h"
 #include"ListMacros.h"
 #include"MacPyMOL.h"
+#include"ObjectAlignment.h"
 
 #include "MovieScene.h"
 #include "CifFile.h"
@@ -626,6 +627,109 @@ static PyObject *CmdGetColorection(PyObject * self, PyObject * args)
     APIExitBlocked(G);
   }
   return (APIAutoNone(result));
+}
+
+static PyObject *CmdSetRawAlignment(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = nullptr;
+  const char *alnname;
+  const char *guidename;
+  PyObject *raw;
+  int state = 0, quiet = 1;
+  ObjectMolecule *guide = nullptr;
+
+  if(!PyArg_ParseTuple(args, "sOsii" "O",
+        &alnname, &raw, &guidename, &state, &quiet,
+        &self)) {
+    return nullptr;
+  }
+
+  API_SETUP_PYMOL_GLOBALS;
+  if(G == nullptr) {
+    PyErr_BadInternalCall();
+    return nullptr;
+  }
+
+  if (guidename[0]) {
+    guide = ExecutiveFindObjectMoleculeByName(G, guidename);
+  }
+
+  if(!PyList_Check(raw)) {
+    PyErr_SetString(PyExc_TypeError, "alignment must be list");
+    return nullptr;
+  }
+
+  auto n_cols = PyList_Size(raw);
+
+  pymol::vla<int> align_vla(n_cols * 3);
+  size_t vla_offset = 0;
+
+  for(size_t c = 0; c < n_cols; ++c) {
+    PyObject * col = PyList_GetItem(raw, c);
+
+    if(!PyList_Check(col)) {
+      PyErr_SetString(PyExc_TypeError, "columns must be list");
+      return nullptr;
+    }
+
+    auto n_idx = PyList_Size(col);
+
+    for(size_t i = 0; i < n_idx; ++i) {
+      const char * model;
+      int index;
+
+      PyObject * idx = PyList_GetItem(col, i);
+
+      if(!PyArg_ParseTuple(idx, "si", &model, &index)) {
+        PyErr_SetString(PyExc_TypeError, "indices must be (str, int)");
+        return nullptr;
+      }
+
+      ObjectMolecule * mol = ExecutiveFindObjectMoleculeByName(G, model);
+
+      if(!mol) {
+        PyErr_Format(PyExc_KeyError, "object '%s' not found", model);
+        return nullptr;
+      }
+
+      if (!guide) {
+        guide = mol;
+      }
+
+      if (index < 1 || mol->NAtom < index) {
+        PyErr_Format(PyExc_IndexError, "index ('%s', %d) out of range", model, index);
+        return nullptr;
+      }
+
+      auto uid = AtomInfoCheckUniqueID(G, mol->AtomInfo + index - 1);
+      *(align_vla.check(vla_offset++)) = uid;
+    }
+
+    *(align_vla.check(vla_offset++)) = 0;
+  }
+
+  align_vla.resize(vla_offset);
+
+  // does alignment object already exist?
+  auto cobj = ExecutiveFindObjectByName(G, alnname);
+  if (cobj && cobj->type != cObjectAlignment) {
+    ExecutiveDelete(G, cobj->Name);
+    cobj = nullptr;
+  }
+
+  // create alignment object
+  cobj = (CObject*) ObjectAlignmentDefine(G, (ObjectAlignment*) cobj,
+      align_vla.data(), state, true, guide, nullptr);
+
+  // manage alignment object
+  ObjectSetName(cobj, alnname);
+  ExecutiveManageObject(G, cobj, 0, quiet);
+  SceneInvalidate(G);
+
+  // make available as selection FIXME find better solution
+  cobj->update();
+
+  return APISuccess();
 }
 
 static PyObject *CmdGetRawAlignment(PyObject * self, PyObject * args)
@@ -8549,6 +8653,7 @@ static PyMethodDef Cmd_methods[] = {
   {"sculpt_activate", CmdSculptActivate, METH_VARARGS},
   {"sculpt_iterate", CmdSculptIterate, METH_VARARGS},
   {"sculpt_purge", CmdSculptPurge, METH_VARARGS},
+  {"set_raw_alignment", CmdSetRawAlignment, METH_VARARGS},
   {"set_busy", CmdSetBusy, METH_VARARGS},
   {"set_colorection", CmdSetColorection, METH_VARARGS},
   {"set_colorection_name", CmdSetColorectionName, METH_VARARGS},

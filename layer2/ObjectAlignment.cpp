@@ -14,6 +14,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
+#include <set>
+
 #include"os_python.h"
 
 #include"os_predef.h"
@@ -486,7 +489,21 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
       int n_cur = VLAGetSize(curVLA);
       int n_new = VLAGetSize(newVLA);
 
-      /* now we can take unique IDs to specific atoms */
+      // get the set of non-guide objects in the new alignment, they need
+      // to be flushed (removed) from the current alignment
+      std::set<const ObjectMolecule*> flushobjects;
+      if (flush) {
+        flushobjects.insert(flush);
+      } else {
+        for (const int *it = newVLA, *it_end = it + n_new; it != it_end; ++it) {
+          if (*it) {
+            auto eoo = ExecutiveUniqueIDAtomDictGet(G, *it);
+            if (eoo && eoo->obj != guide) {
+              flushobjects.insert(eoo->obj);
+            }
+          }
+        }
+      }
 
       /* first, go through and eliminate old matching atoms between guide and flush (if any) */
       {
@@ -509,7 +526,7 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
                 auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
                 if (eoo) {
                   obj = eoo->obj;
-                  if(obj == flush) {
+                  if(flushobjects.count(obj)) {
                     flush_seen = true;
                   } else {
                     other_seen++;
@@ -526,7 +543,7 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
                 auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
                 if (eoo) {
                   obj = eoo->obj;
-                  if(obj == flush) {
+                  if(flushobjects.count(obj)) {
                     int tmp = cur;
                     while(curVLA[tmp]) {
                       curVLA[tmp] = curVLA[tmp + 1];
