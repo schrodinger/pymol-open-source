@@ -260,3 +260,14 @@ class TestCreating(testing.PyMOLTestCase):
         self.assertEqual(2, cmd.count_atoms())
         self.assertEqual(1, cmd.count_atoms('name PS1'))
         self.assertEqual(1, cmd.count_atoms('name PS2'))
+
+    @testing.requires_version('2.3')
+    def test_set_raw_alignment(self):
+        cmd.fab('ACDEF', 'm1')
+        cmd.fab('CDE', 'm2')
+        index_m1 = [('m1', 12), ('m1', 23), ('m1', 35)]
+        index_m2 = [('m2',  2), ('m2', 13), ('m2', 25)]
+        raw = [list(t) for t in zip(index_m1, index_m2)]
+        cmd.set_raw_alignment('aln', raw)
+        self.assertEqual(cmd.index('m1 & aln'), index_m1)
+        self.assertEqual(cmd.index('m2 & aln'), index_m2)
