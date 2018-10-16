@@ -27,14 +27,6 @@ Z* ------------------------------------------------------------------- */
 #include"MemoryCache.h"
 #include"Base.h"
 
-#ifndef true
-#define true 1
-#endif
-
-#ifndef false
-#define false 0
-#endif
-
 static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
                         float *extent, int *flag, int group_id, int block_id);
 

@@ -21,10 +21,6 @@ Z* -------------------------------------------------------------------
 #include"os_limits.h"
 #include"os_types.h"
 
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif

@@ -29,10 +29,6 @@
 #include <assert.h>
 #endif
 
-#ifndef NULL
-#define NULL 0
-#endif
-
 namespace TNT
 {
 /*

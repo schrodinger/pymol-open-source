@@ -456,18 +456,6 @@ void *VLASetSizeForSure(void *ptr, unsigned int new_size)
 
 #ifdef _MemoryDebug_ON
 
-#ifndef NULL
-#define NULL (void *)
-#endif
-
-#ifndef false
-#define false 0
-#endif
-
-#ifndef true
-#define true 1
-#endif
-
 #define _NO_GDB_ENTRY
 
 #ifdef __cplusplus

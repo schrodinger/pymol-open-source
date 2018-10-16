@@ -1,14 +1,6 @@
 #ifndef _H_const
 #define _H_const
 
-#ifndef true 
-#define true 1
-#endif
-
-#ifndef false
-#define false 0
-#endif
-
 /* numeric tools */
 
 #define c_small4   (1e-4)

@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 
 */
 #include<stdlib.h>
+#include<stdbool.h>
 
 /* ==================== Master Switch ============================= 
  * Define _os_memory_debug_on to enable the debugging system...

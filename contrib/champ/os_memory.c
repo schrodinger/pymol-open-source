@@ -23,18 +23,6 @@ Z* -------------------------------------------------------------------
 
 #define GDB_ENTRY
 
-#ifndef NULL
-#define NULL (void *)0
-#endif
-
-#ifndef false
-#define false 0
-#endif
-
-#ifndef true
-#define true 1
-#endif
-
 typedef struct DebugRec {
   struct DebugRec *next;
   char file[64], note[64];

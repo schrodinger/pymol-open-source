@@ -126,10 +126,6 @@ void plutBitmapCharacter(int c);
 
 #include<GL/glut.h>
 
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-
 static void (*idleFunc) (void) = NULL;
 static int WinX = 640, WinY = 480;
 
@@ -289,18 +285,6 @@ void p_glutPositionWindow(int x, int y)
 
 
 /* wxWindow-based GLUT emulation layer */
-
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-
-#ifndef false
-#define false 0
-#endif
-
-#ifndef true
-#define true 1
-#endif
 
 static void (*idleFunc) (void) = NULL;
 static void (*displayFunc) (void) = NULL;
