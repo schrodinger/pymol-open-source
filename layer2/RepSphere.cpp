@@ -175,7 +175,7 @@ static int RepGetSphereMode(PyMOLGlobals *G, RepSphere * I, bool use_shader){
 static void RepSphereRender(RepSphere * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
   int ok = true;
   bool use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) &&

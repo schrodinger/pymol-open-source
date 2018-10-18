@@ -408,7 +408,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 {
   PyMOLGlobals *G = I->R.G;
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   int ok = true;
 
   if(ray) {

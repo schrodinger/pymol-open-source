@@ -67,7 +67,7 @@ void RepRibbonFree(RepRibbon * I)
 static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
   int ok = true;
   short use_shader = SettingGetGlobal_b(G, cSetting_ribbon_use_shader) &&

@@ -117,7 +117,7 @@ static void RepDistDashCGOGenerate(RepDistDash * I)
 static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   int c = I->N;

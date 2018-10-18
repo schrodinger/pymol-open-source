@@ -178,7 +178,7 @@ static int RepCylBondCGOGenerate(RepCylBond * I, RenderInfo * info)
 static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   float alpha;
   PyMOLGlobals *G = I->R.G;
   int width, height;

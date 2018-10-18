@@ -255,7 +255,10 @@ static int ObjectCGOGetNState(ObjectCGO * I)
   return (I->NState);
 }
 
-static void ObjectCGORenderState(PyMOLGlobals * G, int pass, CRay *ray, Picking **pick, ObjectCGO * I, RenderInfo * info, ObjectCGOState *sobj, const float *color, ObjectGadgetRamp *ramp, int use_shader, bool cgo_lighting){
+static void ObjectCGORenderState(PyMOLGlobals* G, int pass, CRay* ray,
+    ObjectCGO* I, RenderInfo* info, ObjectCGOState* sobj, const float* color,
+    ObjectGadgetRamp* ramp, int use_shader, bool cgo_lighting)
+{
   if(ray) {
     if(sobj) {
       if(sobj->origCGO){
@@ -268,7 +271,7 @@ static void ObjectCGORenderState(PyMOLGlobals * G, int pass, CRay *ray, Picking 
       }
     }
   } else if(G->HaveGUI && G->ValidContext && pass) {
-    if(pick) { // no picking yet
+    if(info->pick) { // no picking yet
     } else {
       bool pass_is_opaque = (pass > 0);
       if(sobj && ((sobj->hasTransparency ^ pass_is_opaque) || (sobj->hasOpaque == pass_is_opaque))){
@@ -491,7 +494,6 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
   PyMOLGlobals *G = I->Obj.G;
   int state = info->state;
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
   int pass = info->pass;
   ObjectCGOState *sobj = NULL;
   const float *color = NULL;
@@ -516,8 +518,8 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
         if (!sobj->origCGO)
           continue;
         if (!ray)
-          ObjectCGOGenerateCGO(G, I, sobj, use_shader, cgo_lighting, color, ramp, iter.state);	
-	ObjectCGORenderState(G, pass, ray, pick, I, info, sobj, color, ramp, use_shader, cgo_lighting);
+          ObjectCGOGenerateCGO(G, I, sobj, use_shader, cgo_lighting, color, ramp, iter.state);
+          ObjectCGORenderState(G, pass, ray, I, info, sobj, color, ramp, use_shader, cgo_lighting);
       }
     }
   }

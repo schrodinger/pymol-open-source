@@ -444,7 +444,7 @@ static void ObjectDistRender(ObjectDist * I, RenderInfo * info)
   int state = info->state;
   int pass = info->pass;
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   bool shouldRender = false;
 
   if(ray || pick) {

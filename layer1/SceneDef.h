@@ -213,7 +213,7 @@ class CScene : public Block {
   void (*vp_prepareViewPortForStereo)(PyMOLGlobals *, CScene *, int, short, int, int, int, int, int);
   int vp_times, vp_x, vp_y, vp_owidth, vp_oheight, vp_stereo_mode;
   float vp_width_scale;
-  Picking *pickVLA { nullptr };
+  std::vector<Picking> pickVLA {};
   bool invPick; // if set, picking should be re-built
 
   CScene(PyMOLGlobals * G) : Block(G), m_ScrollBar(G, false) {}

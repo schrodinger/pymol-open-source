@@ -429,7 +429,7 @@ void DistSet::render(RenderInfo * info)
 {
   DistSet * I = this;
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   int a;
   ::Rep *r;
   for(a = 0; a < I->NRep; a++)

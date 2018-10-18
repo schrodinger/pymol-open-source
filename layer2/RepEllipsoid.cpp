@@ -50,7 +50,7 @@ void RepEllipsoidFree(RepEllipsoid * I)
 static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   int ok = true;
 
   PyMOLGlobals *G = I->R.G;

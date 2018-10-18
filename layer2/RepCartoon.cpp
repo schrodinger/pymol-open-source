@@ -235,7 +235,7 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
 static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
   int ok = true;
 

@@ -158,7 +158,7 @@ static int RepDotCGOGenerate(RepDot * I, RenderInfo * info)
 static void RepDotRender(RepDot * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   int c = I->N;

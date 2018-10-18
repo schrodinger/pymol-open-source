@@ -165,7 +165,7 @@ static int RepDihedralCGOGenerate(RepDihedral * I, RenderInfo * info)
 static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   int c = I->N;

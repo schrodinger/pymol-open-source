@@ -948,7 +948,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
   PyMOLGlobals *G = I->Obj.G;
   int state = info->state;
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   int pass = info->pass;
   int cur_state = 0;
   float alpha;
@@ -1113,7 +1113,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
               CGORenderGLPicking(oss->shaderCGO, info, &I->context, I->Obj.Setting, NULL);
             } else {
 #ifndef PURE_OPENGL_ES_2
-            unsigned int i = (*pick)->src.index;
+            unsigned int i = pick->begin()->src.index;
             Picking p;
 	    SceneSetupGLPicking(G);
             p.context.object = (void *) I;

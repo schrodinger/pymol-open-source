@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 #include"Rep.h"
 #include"ObjectGadgetRamp.h"
+#include <vector>
 #include <unordered_map>
 #include <typeinfo>
 #include <type_traits>
@@ -1064,6 +1065,6 @@ CGO *CGOConvertCrossesToLinesShader(const CGO *I, CGO *addTo, float cross_size);
 CGO *CGOConvertCrossesToTrilinesShader(const CGO *I, CGO *addTo, float cross_size);
 CGO *CGOConvertShaderCylindersToCylinderShader(const CGO *I, CGO *addTo);
 
-bool AssignNewPickColor(CGO *cgo, unsigned int &i, Picking ** pick, PickContext * context, unsigned char *color, unsigned int index, int bond);
+bool AssignNewPickColor(CGO *cgo, unsigned int &i, std::vector<Picking>* pick, PickContext * context, unsigned char *color, unsigned int index, int bond);
 
 #endif

@@ -191,7 +191,7 @@ static int RepNonbondedCGOGenerate(RepNonbonded * I, RenderInfo * info)
 static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
   int ok = true;
   float alpha =

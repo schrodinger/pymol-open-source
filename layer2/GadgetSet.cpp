@@ -281,7 +281,7 @@ void GadgetSet::render(RenderInfo * info)
   GadgetSet * I = this;
   int pass = info->pass;
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   const float *color;
   PickContext context;
 

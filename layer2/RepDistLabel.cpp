@@ -70,7 +70,7 @@ void RepDistLabelFree(RepDistLabel * I)
 static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   int c = I->N;
@@ -124,10 +124,10 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
         TextSetIsPicking(G, true);
 	SceneSetupGLPicking(G);
 	if(c) {
-      if(float_text)
-        glDisable(GL_DEPTH_TEST);
-
-	  i = (*pick)->src.index;
+	  if(float_text)
+	    glDisable(GL_DEPTH_TEST);
+	  
+	  i = pick->begin()->src.index;
 	  while(c--) {
 	    if(*l) {
 	      TextSetPos(G, v);

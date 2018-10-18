@@ -208,8 +208,8 @@ void SceneRenderPickingSinglePick(PyMOLGlobals * G, SceneUnitContext *context, P
   debug_pick = SettingGetGlobal_i(G, cSetting_debug_pick);
   SceneGLClearColor(0.0, 0.0, 0.0, 0.);
 
-  if (!I->pickVLA){
-    I->pickVLA = VLACalloc(Picking, 5000);
+  if (I->pickVLA.empty()){
+    I->pickVLA.resize(5000);
   }
 
   if(I->grid.active)
@@ -220,10 +220,10 @@ void SceneRenderPickingSinglePick(PyMOLGlobals * G, SceneUnitContext *context, P
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (I->invPick || !SettingGetGlobal_b(G, cSetting_use_shaders)){
-      I->pickVLA[0].src.index = 0;
-      I->pickVLA[0].src.bond = 2 + pass;
+      I->pickVLA.begin()->src.index = 0;
+      I->pickVLA.begin()->src.bond = 2 + pass;
     } else {
-      I->pickVLA[0].src.bond = 0 + pass;
+      I->pickVLA.begin()->src.bond = 0 + pass;
     }
     {
       int slot;
@@ -231,7 +231,7 @@ void SceneRenderPickingSinglePick(PyMOLGlobals * G, SceneUnitContext *context, P
         if(I->grid.active) {
           GridSetGLViewport(&I->grid, slot);
         }
-        SceneRenderAll(G, context, NULL, &I->pickVLA, 0, true, 0.0F, &I->grid, 0, 0, bits32);
+        SceneRenderAll(G, context, NULL, std::addressof(I->pickVLA), 0, true, 0.0F, &I->grid, 0, 0, bits32);
       }
     }
 
@@ -261,14 +261,14 @@ void SceneRenderPickingSinglePick(PyMOLGlobals * G, SceneUnitContext *context, P
   if(debug_pick) {
     if (bits32){
       PRINTFB(G, FB_Scene, FB_Details)
-	" SceneClick-Detail: lowBits=%u index %u < %u?\n", lowBits, index, I->pickVLA[0].src.index ENDFB(G);
+	" SceneClick-Detail: lowBits=%u index %u < %u?\n", lowBits, index, I->pickVLA.begin()->src.index ENDFB(G);
     } else {
       PRINTFB(G, FB_Scene, FB_Details)
-	" SceneClick-Detail: lowBits=%u highBits=%u index %u < %u?\n", lowBits, highBits, index, I->pickVLA[0].src.index ENDFB(G);
+	" SceneClick-Detail: lowBits=%u highBits=%u index %u < %u?\n", lowBits, highBits, index, I->pickVLA.begin()->src.index ENDFB(G);
     }
   }
 
-  if(index && (index <= I->pickVLA[0].src.index)) {
+  if(index && (index <= I->pickVLA.begin()->src.index)) {
     *pick = I->pickVLA[index];       /* return object info */
     if(debug_pick) {
       PRINTFB(G, FB_Scene, FB_Details)
@@ -402,8 +402,8 @@ void SceneRenderPickingMultiPick(PyMOLGlobals * G, SceneUnitContext *context, Mu
 
   SceneGLClearColor(0.0, 0.0, 0.0, 0.0);
 
-  if (!I->pickVLA){
-    I->pickVLA = VLACalloc(Picking, 5000);
+  if (I->pickVLA.empty()){
+    I->pickVLA.resize(5000);
   }
 
   if(I->grid.active)
@@ -414,10 +414,10 @@ void SceneRenderPickingMultiPick(PyMOLGlobals * G, SceneUnitContext *context, Mu
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (I->invPick || !SettingGetGlobal_b(G, cSetting_use_shaders)){
-      I->pickVLA[0].src.index = 0;
-      I->pickVLA[0].src.bond = 2 + pass;
+      I->pickVLA.begin()->src.index = 0;
+      I->pickVLA.begin()->src.bond = 2 + pass;
     } else {
-      I->pickVLA[0].src.bond = 0 + pass;
+      I->pickVLA.begin()->src.bond = 0 + pass;
     }
 
     {
@@ -426,7 +426,7 @@ void SceneRenderPickingMultiPick(PyMOLGlobals * G, SceneUnitContext *context, Mu
         if(I->grid.active) {
           GridSetGLViewport(&I->grid, slot);
         }
-        SceneRenderAll(G, context, NULL, &I->pickVLA, 0, true, 0.0F, &I->grid, 0, 0, bits32);
+        SceneRenderAll(G, context, NULL, std::addressof(I->pickVLA), 0, true, 0.0F, &I->grid, 0, 0, bits32);
       }
     }
 
@@ -439,7 +439,7 @@ void SceneRenderPickingMultiPick(PyMOLGlobals * G, SceneUnitContext *context, Mu
     lowBitVLA = SceneReadTriplets(G, smp->x, smp->y, smp->w, smp->h, render_buffer, bits32);
     nLowBits = VLAGetSize(lowBitVLA);
 
-    if (bits32 || I->pickVLA[0].src.index < (1 << 12)) {
+    if (bits32 || I->pickVLA.begin()->src.index < (1 << 12)) {
       // no need for a second pass
       bits32 = true; // continue like with 32bit picking
       break;
@@ -462,8 +462,8 @@ void SceneRenderPickingMultiPick(PyMOLGlobals * G, SceneUnitContext *context, Mu
         } else {
           index = lowBitVLA[low] + (highBitVLA[high] << 12);
         }
-        if(index && (index <= I->pickVLA[0].src.index)) {
-          pik = I->pickVLA + index;  /* just using as a tmp */
+        if(index && (index <= I->pickVLA.begin()->src.index)) {
+          pik = I->pickVLA.data() + index;  /* just using as a tmp */
           if((pik->src.index != lastIndex) || (pik->context.object != lastPtr)) {
             if(((CObject *) pik->context.object)->type == cObjectMolecule) {
               nPick++;    /* start from 1 */

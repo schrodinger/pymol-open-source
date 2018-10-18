@@ -1090,7 +1090,7 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
   PyMOLGlobals *G = I->Obj.G;
   int state = info->state;
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   int pass = info->pass;
   ObjectAlignmentState *sobj = NULL;
   const float *color;

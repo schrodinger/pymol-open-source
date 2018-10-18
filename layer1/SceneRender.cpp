@@ -717,7 +717,7 @@ void SceneRenderAllObject(PyMOLGlobals * G,
  *        3 - gadgets last
  */
 void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
-                    float *normal, Picking ** pickVLA,
+                    float *normal, std::vector<Picking>* pickVLA,
                     int pass, int fat, float width_scale,
                     GridInfo * grid, int dynamic_pass, short which_objects, bool picking32bit)
 {

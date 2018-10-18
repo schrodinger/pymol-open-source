@@ -1328,7 +1328,7 @@ void CoordSet::render(RenderInfo * info)
   } else {
     int pass = info->pass;
     CRay *ray = info->ray;
-    Picking **pick = info->pick;
+    auto pick = info->pick;
     int a, aa, abit, aastart = 0, aaend = cRepCnt;
     ::Rep *r;
     int sculpt_vdw_vis_mode = SettingGet_i(G, I->Setting,

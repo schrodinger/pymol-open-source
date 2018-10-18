@@ -1172,7 +1172,7 @@ void RepLabelRenderRay(RepLabel * I, RenderInfo * info){
 static void RepLabelRender(RepLabel * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   int c = I->N;
@@ -1226,7 +1226,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
           if (!I->shaderCGO){
             SceneGetWidthHeight(G, &screenwidth, &screenheight);
           }
-          i = (*pick)->src.index;
+          i = pick->begin()->src.index;
 
           while(c--) {
             if(*l) {

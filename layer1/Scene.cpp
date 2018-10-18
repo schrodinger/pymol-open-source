@@ -5831,7 +5831,6 @@ void SceneFree(PyMOLGlobals * G)
   VLAFreeP(I->SceneVLA);
   VLAFreeP(I->SceneNameVLA);
   VLAFreeP(I->SlotVLA);
-  VLAFreeP(I->pickVLA);
   I->Obj.clear();
   I->GadgetObjs.clear();
   I->NonGadgetObjs.clear();

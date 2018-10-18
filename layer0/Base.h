@@ -18,8 +18,9 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Base
 #define _H_Base
 
-#include"os_limits.h"
-#include"os_types.h"
+#include "os_limits.h"
+#include "os_types.h"
+#include <vector>
 
 #ifndef PI
 #define PI 3.14159265358979323846
@@ -118,11 +119,11 @@ class CGO;
 #define CGO_DEFINED
 #endif
 
-typedef struct {
+struct RenderInfo {
   int state;
   CRay *ray;
   CGO *alpha_cgo;
-  Picking **pick;
+  std::vector<Picking>* pick = nullptr;
   int pass;
   int width_scale_flag;
   float front, back, stereo_front;
@@ -140,7 +141,7 @@ typedef struct {
   bool picking_32bit;
   void (*setUCColorFromIndex)(uchar *color, unsigned int idx);
   void (*setUCColorToZero)(uchar *color);
-} RenderInfo;
+};
 
 #define MAXLINELEN 1024
 

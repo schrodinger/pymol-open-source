@@ -306,7 +306,7 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 static void RepMeshRender(RepMesh * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
-  Picking **pick = info->pick;
+  auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   float *vc = I->VC;
