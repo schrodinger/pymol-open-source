@@ -38,7 +38,7 @@ struct CSeq : public Block {
   bool DragFlag { false };
   bool ScrollBarActive { true };
   int NSkip {};
-  CScrollBar *ScrollBar {};
+  ScrollBar m_ScrollBar;
   CSeqRow *Row { nullptr };
   int NRow { 0 };
   int Size {};
@@ -53,7 +53,7 @@ struct CSeq : public Block {
   int LastRow { -1 };
   CSeqHandler *Handler {};         /* borrowed pointer */
 
-  CSeq(PyMOLGlobals * G) : Block(G) {}
+  CSeq(PyMOLGlobals * G) : Block(G), m_ScrollBar(G, true) {}
 
   virtual int click(int button, int x, int y, int mod) override;
   virtual void draw(CGO* orthoCGO) override;
@@ -158,7 +158,7 @@ void CSeq::reshape(int width, int height)
       I->ScrollBarActive = false;
     } else {
       I->ScrollBarActive = true;
-      ScrollBarSetLimits(I->ScrollBar, I->Size, I->VisSize);
+      m_ScrollBar.setLimits(I->Size, I->VisSize);
     }
   }
 }
@@ -249,17 +249,17 @@ int CSeq::click(int button, int x, int y, int mod)
 
   switch(button) {
     case P_GLUT_BUTTON_SCROLL_FORWARD:
-      ScrollBarMoveBy(I->ScrollBar, -1);
+      I->m_ScrollBar.moveBy(-1);
       return 1;
     case P_GLUT_BUTTON_SCROLL_BACKWARD:
-      ScrollBarMoveBy(I->ScrollBar, 1);
+      I->m_ScrollBar.moveBy(1);
       return 1;
   }
 
   if(I->ScrollBarActive) {
     if((y - rect.bottom) < DIP2PIXEL(I->ScrollBarWidth)) {
       pass = 1;
-      ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+      I->m_ScrollBar.click(button, x, y, mod);
     }
   }
   if(!pass) {
@@ -323,13 +323,13 @@ void CSeq::draw(CGO* orthoCGO)
       fill(orthoCGO);
     }
     if(I->ScrollBarActive) {
-      ScrollBarSetBox(I->ScrollBar, rect.bottom + DIP2PIXEL(I->ScrollBarWidth),
-                      rect.left + DIP2PIXEL(I->ScrollBarMargin),
-                      rect.bottom + DIP2PIXEL(2),
-                      rect.right - DIP2PIXEL(I->ScrollBarMargin));
-      ScrollBarDoDraw(I->ScrollBar ORTHOCGOARGVAR);
+      I->m_ScrollBar.setBox(rect.bottom + DIP2PIXEL(I->ScrollBarWidth),
+                            rect.left + DIP2PIXEL(I->ScrollBarMargin),
+                            rect.bottom + DIP2PIXEL(2),
+                            rect.right - DIP2PIXEL(I->ScrollBarMargin));
+      I->m_ScrollBar.draw(orthoCGO);
       y += DIP2PIXEL(I->ScrollBarWidth);
-      I->NSkip = (int) ScrollBarGetValue(I->ScrollBar);
+      I->NSkip = static_cast<int>(I->m_ScrollBar.getValue());
     } else {
       I->NSkip = 0;
     }
@@ -727,7 +727,7 @@ void CSeq::draw(CGO* orthoCGO)
           }
         }
 
-        ScrollBarDrawHandle(I->ScrollBar, 0.35F ORTHOCGOARGVAR);
+        I->m_ScrollBar.drawHandle(0.35F, orthoCGO);
       }
     }
   }
@@ -743,8 +743,7 @@ int SeqInit(PyMOLGlobals * G)
     I->TextColor[1] = 0.75;
     I->TextColor[2] = 0.75;
     OrthoAttach(G, I, cOrthoTool);
-    I->ScrollBar = ScrollBarNew(G, true);
-    ScrollBarSetValue(I->ScrollBar, 0);
+    I->m_ScrollBar.setValue(0);
     return 1;
   } else
     return 0;
@@ -781,8 +780,6 @@ void SeqFree(PyMOLGlobals * G)
   CSeq *I = G->Seq;
 
   SeqPurgeRowVLA(G);
-  if(I->ScrollBar)
-    ScrollBarFree(I->ScrollBar);
   DeleteP(G->Seq);
 }
 

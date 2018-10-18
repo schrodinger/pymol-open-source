@@ -88,7 +88,7 @@ struct CMovie : public Block {
   bool RealtimeFlag { true };
   CMovieModal Modal {};
   int Width {}, Height {};
-  CScrollBar *ScrollBar {};
+  ScrollBar m_ScrollBar;
   int DragMode {};
   int Dragging {};
   CObject *DragObj {}; /* if not dragging all */
@@ -99,7 +99,7 @@ struct CMovie : public Block {
   int LabelIndent {};
   int PanelActive {};
 
-  CMovie(PyMOLGlobals * G) : Block(G){}
+  CMovie(PyMOLGlobals* G) : Block(G), m_ScrollBar(G, true) {}
 
   virtual int release(int button, int x, int y, int mod) override;
   virtual int click(int button, int x, int y, int mod) override;
@@ -1548,7 +1548,6 @@ void MovieFree(PyMOLGlobals * G)
   VLAFreeP(I->ViewElem);
   VLAFreeP(I->Cmd);
   VLAFreeP(I->Sequence);
-  ScrollBarFree(I->ScrollBar);
   DeleteP(G->Movie);
 }
 
@@ -1623,10 +1622,9 @@ int CMovie::click(int button, int x, int y, int mod)
         OrthoDirty(G);
         break;
       default:
-        ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+        I->m_ScrollBar.click(button, x, y, mod);
         {
-	  float scroll_value = ScrollBarGetValue(I->ScrollBar);
-	  SceneSetFrame(G, 7, scroll_value);
+	  SceneSetFrame(G, 7, I->m_ScrollBar.getValue());
 	}
         break;
       }
@@ -1643,7 +1641,7 @@ int CMovie::click(int button, int x, int y, int mod)
         ExecutiveMotionClick(G,&tmpRect,cMovieDragModeOblate,count,x,y,false);
         break;
       default:
-        ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+        I->m_ScrollBar.click(button, x, y, mod);
         break;
       }
     }
@@ -1704,7 +1702,7 @@ int CMovie::release(int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = m_G;
   CMovie *I = G->Movie;
-  ScrollBarDoRelease(I->ScrollBar, button, x, y, mod);
+  I->m_ScrollBar.release(button, x, y, mod);
   if(I->DragMode) {
     OrthoLineType buffer = "";
     OrthoLineType extra  = "";
@@ -1831,9 +1829,8 @@ bool CMovie::fastDraw(CGO* orthoCGO)
 {
   PyMOLGlobals *G = m_G;
   CMovie *I = G->Movie;
-  //  ScrollBarDrawHandle(I->ScrollBar, 0.35F ORTHOCGOARGVAR);
-  ScrollBarDoDrawNoFill(I->ScrollBar ORTHOCGOARGVAR);
-  ScrollBarDrawHandle(I->ScrollBar, 0.35F ORTHOCGOARGVAR);
+  I->m_ScrollBar.drawNoFill(orthoCGO);
+  I->m_ScrollBar.drawHandle(0.35F, orthoCGO);
   return true;
 }
 
@@ -1871,30 +1868,28 @@ void CMovie::draw(CGO* orthoCGO)
       }
 
       if(!n_frame) {
-        ScrollBarSetLimits(I->ScrollBar, 1, 1);
-        ScrollBarSetValue(I->ScrollBar, 0);
+        I->m_ScrollBar.setLimits(1, 1);
+        I->m_ScrollBar.setValue(0);
       } else {
-        float scroll_value = ScrollBarGetValue(I->ScrollBar);
+        float scroll_value = I->m_ScrollBar.getValue();
         int new_frame = (int) (scroll_value + 0.5F);
-        if(ScrollBarGrabbed(I->ScrollBar)) {
+        if(I->m_ScrollBar.grabbed()) {
 	  if(new_frame != frame) {
 	    frame = new_frame;
 	    SceneSetFrame(G, 7, frame);
 	  }
-	} else {
-          ScrollBarSetValue(I->ScrollBar, frame);
         }
-        ScrollBarSetLimits(I->ScrollBar, n_frame, 1);
+        I->m_ScrollBar.setLimits(n_frame, 1);
       }
-      ScrollBarSetBox(I->ScrollBar, tmpRect.top,
-                      tmpRect.left, tmpRect.bottom, tmpRect.right);
+      I->m_ScrollBar.setBox(tmpRect.top, tmpRect.left,
+                             tmpRect.bottom, tmpRect.right);
       if (orthoCGO){
-	ScrollBarFill(I->ScrollBar ORTHOCGOARGVAR);
+	I->m_ScrollBar.fill(orthoCGO);
 	ExecutiveMotionDraw(G,&tmpRect,count ORTHOCGOARGVAR);
       } else {
-	ScrollBarDoDraw(I->ScrollBar ORTHOCGOARGVAR);
+	I->m_ScrollBar.draw(orthoCGO);
 	ExecutiveMotionDraw(G,&tmpRect,count ORTHOCGOARGVAR);
-	ScrollBarDrawHandle(I->ScrollBar, 0.35F ORTHOCGOARGVAR);
+	I->m_ScrollBar.drawHandle(0.35F, orthoCGO);
       }
 
       /* drag selection box */
@@ -1949,8 +1944,8 @@ void CMovie::draw(CGO* orthoCGO)
 void MovieSetScrollBarFrame(PyMOLGlobals * G, int frame)
 {
   CMovie *I = G->Movie;
-  if(!ScrollBarGrabbed(I->ScrollBar)) {
-    ScrollBarSetValue(I->ScrollBar, frame);
+  if(!I->m_ScrollBar.grabbed()) {
+    I->m_ScrollBar.setValue(frame);
   }
 }
 
@@ -1977,7 +1972,6 @@ int MovieInit(PyMOLGlobals * G)
   if((I = (G->Movie = new CMovie(G)))) {
     int a;
     I->active = true;
-    I->ScrollBar = ScrollBarNew(G, true);
     OrthoAttach(G, I, cOrthoTool);
 
     I->Image = VLACalloc(ImageType *, 10);       /* auto-zero */

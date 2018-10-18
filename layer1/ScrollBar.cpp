@@ -22,121 +22,76 @@ Z* -------------------------------------------------------------------
 #include"ScrollBar.h"
 #include"CGO.h"
 
-struct CScrollBar : public Block {
-  int HorV {};
-  float BackColor[3] = { 0.1f, 0.1f, 0.1f };
-  float BarColor[3] = { 0.5f, 0.5f, 0.5f };
-  int ListSize { 10 };
-  int DisplaySize { 7 };
-  int BarSize {};
-  int StartPos {};
-  float ExactBarSize {};
-  float Value { 0.0f };
-  float StartValue {};
-  float ValueMax { 0.0f };
-  int BarRange {};
-  int BarMin {};
-  int BarMax {};
-  int Grabbed {};
-
-  CScrollBar(PyMOLGlobals * G) : Block(G){}
-
-  virtual int release(int button, int x, int y, int mod) override;
-  virtual int click(int button, int x, int y, int mod) override;
-  virtual int drag(int x, int y, int mod) override;
-  virtual void draw(CGO *orthoCGO) override;
-  virtual void reshape(int width, int height) override;
-};
-
-void ScrollBarMaxOut(struct CScrollBar *I)
+bool ScrollBar::isMaxed() const
 {
-  I->Value = I->ValueMax;
-}
-
-int ScrollBarIsMaxed(struct CScrollBar *I)
-{
-  if(I->ValueMax > 0.0F) {
-    if(I->Value == I->ValueMax)
-      return true;
-    else
-      return false;
+  if(m_ValueMax > 0.0F) {
+    return m_Value == m_ValueMax;
   } else
     return false;
 }
 
-static void ScrollBarUpdate(struct CScrollBar *I)
+void ScrollBar::update()
 {
   int range;
 
-  if(I->HorV) {
-    range = (I->rect.right - I->rect.left);
+  if(m_HorV) {
+    range = (rect.right - rect.left);
   } else {
-    range = (I->rect.top - I->rect.bottom);
+    range = (rect.top - rect.bottom);
   }
-  I->ExactBarSize = (range * I->DisplaySize) / (float) I->ListSize;
-  I->BarSize = (int) (0.499F + I->ExactBarSize);
-  if(I->BarSize < 4)
-    I->BarSize = DIP2PIXEL(4);
-  I->BarRange = range - I->BarSize;
-  if(I->BarRange < 2)
-    I->BarRange = 2;
-  I->ValueMax = (float) I->ListSize - I->DisplaySize;
-  if(I->ValueMax < 1)
-    I->ValueMax = 1;
-  if(I->Value > I->ValueMax)
-    I->Value = (float) I->ValueMax;
-  else if(I->Value < 0.0)
-    I->Value = 0.0F;
+  m_ExactBarSize = (range * m_DisplaySize) / static_cast<float>(m_ListSize);
+  m_BarSize = static_cast<int> (0.499F + m_ExactBarSize);
+  if(m_BarSize < 4)
+    m_BarSize = DIP2PIXEL(4);
+  m_BarRange = range - m_BarSize;
+  if(m_BarRange < 2)
+    m_BarRange = 2;
+  m_ValueMax = static_cast<float>(m_ListSize - m_DisplaySize);
+  if(m_ValueMax < 1)
+    m_ValueMax = 1;
+  m_Value = pymol::clamp(m_Value, 0.0f, m_ValueMax);
 }
 
-void ScrollBarFill(struct CScrollBar *I ORTHOCGOARG)
+void ScrollBar::fill(CGO* orthoCGO)
 {
   if (orthoCGO)
-    CGOColorv(orthoCGO, I->BackColor);
+    CGOColorv(orthoCGO, BackColor);
+#ifndef PURE_OPENGL_ES_2
   else
-    glColor3fv(I->BackColor);
-  I->fill(orthoCGO);
+    glColor3fv(BackColor);
+#endif
+  Block::fill(orthoCGO);
 }
 
-void CScrollBar::draw(CGO* orthoCGO)
+void ScrollBar::drawImpl(bool bFill, CGO* orthoCGO)
 {
-  ScrollBarDrawImpl(this, true, orthoCGO);
-}
-
-void ScrollBarDrawImpl(Block * block, short fill  ORTHOCGOARG)
-{
-  PyMOLGlobals *G = block->m_G;
-  float value;
   int top, left, bottom, right;
 
-  CScrollBar *I = (CScrollBar *) block->reference;
+  if (bFill)
+    fill(orthoCGO);
 
-  if (fill)
-    ScrollBarFill(I ORTHOCGOARGVAR);
+  update();
 
-  ScrollBarUpdate(I);
+  float value = std::min(m_Value, m_ValueMax);
 
-  value = I->Value;
-  if(value > I->ValueMax)
-    value = I->ValueMax;
-
-  if(I->HorV) {
-    top = block->rect.top - 1;
-    bottom = block->rect.bottom + 1;
-    left = (int) (0.499F + block->rect.left + (I->BarRange * value) / I->ValueMax);
-    right = left + I->BarSize;
-    I->BarMin = left;
-    I->BarMax = right;
+  if(m_HorV) {
+    top = rect.top - 1;
+    bottom = rect.bottom + 1;
+    left = (int) (0.499F + rect.left + (m_BarRange * value) / m_ValueMax);
+    right = left + m_BarSize;
+    m_BarMin = left;
+    m_BarMax = right;
   } else {
-    top = (int) (0.499F + block->rect.top - (I->BarRange * value) / I->ValueMax);
-    bottom = top - I->BarSize;
-    left = block->rect.left + 1;
-    right = block->rect.right - 1;
-    I->BarMin = top;
-    I->BarMax = bottom;
+    top = (int) (0.499F + rect.top - (m_BarRange * value) / m_ValueMax);
+    bottom = top - m_BarSize;
+    left = rect.left + 1;
+    right = rect.right - 1;
+    m_BarMin = top;
+    m_BarMax = bottom;
   }
 
-  if(G->HaveGUI && G->ValidContext) {
+  if(m_G->HaveGUI && m_G->ValidContext) {
+
     if (orthoCGO){
       CGOColor(orthoCGO, 0.8F, 0.8F, 0.8F);
       CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
@@ -192,7 +147,7 @@ void ScrollBarDrawImpl(Block * block, short fill  ORTHOCGOARG)
     }
 
     if (orthoCGO){
-      CGOColorv(orthoCGO, I->BarColor);
+      CGOColorv(orthoCGO, m_BarColor);
       CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
       CGOVertex(orthoCGO, right - 1, top - 1, 0.f);
       CGOVertex(orthoCGO, right - 1, bottom + 1, 0.f);
@@ -200,7 +155,7 @@ void ScrollBarDrawImpl(Block * block, short fill  ORTHOCGOARG)
       CGOVertex(orthoCGO, left + 1, bottom + 1, 0.f);
       CGOEnd(orthoCGO);
     } else {
-      glColor3fv(I->BarColor);
+      glColor3fv(m_BarColor);
       glBegin(GL_POLYGON);
       glVertex2i(right - 1, top - 1);
       glVertex2i(right - 1, bottom + 1);
@@ -211,30 +166,26 @@ void ScrollBarDrawImpl(Block * block, short fill  ORTHOCGOARG)
   }
 }
 
-void ScrollBarDrawHandle(struct CScrollBar *I, float alpha ORTHOCGOARG)
+void ScrollBar::drawHandle(float alpha, CGO* orthoCGO)
 {
   float value;
   int top, left, bottom, right;
-  Block *block = I; // TODO: Remove during ScrollBar refactor
-  PyMOLGlobals *G = block->m_G;
 
-  value = I->Value;
-  if(value > I->ValueMax)
-    value = I->ValueMax;
+  value = std::min(m_Value, m_ValueMax);
 
-  if(I->HorV) {
-    top = block->rect.top - 1;
-    bottom = block->rect.bottom + 1;
-    left = (int) (0.499F + block->rect.left + (I->BarRange * value) / I->ValueMax);
-    right = left + I->BarSize;
+  if(m_HorV) {
+    top = rect.top - 1;
+    bottom = rect.bottom + 1;
+    left = (int) (0.499F + rect.left + (m_BarRange * value) / m_ValueMax);
+    right = left + m_BarSize;
   } else {
-    top = (int) (0.499F + block->rect.top - (I->BarRange * value) / I->ValueMax);
-    bottom = top - I->BarSize;
-    left = block->rect.left + 1;
-    right = block->rect.right - 1;
+    top = (int) (0.499F + rect.top - (m_BarRange * value) / m_ValueMax);
+    bottom = top - m_BarSize;
+    left = rect.left + 1;
+    right = rect.right - 1;
   }
 
-  if(G->HaveGUI && G->ValidContext) {
+  if(m_G->HaveGUI && m_G->ValidContext) {
 
     glEnable(GL_BLEND);
     if (orthoCGO){
@@ -299,7 +250,7 @@ void ScrollBarDrawHandle(struct CScrollBar *I, float alpha ORTHOCGOARG)
 
     if (orthoCGO){
       CGOAlpha(orthoCGO, alpha);
-      CGOColor(orthoCGO, I->BarColor[0], I->BarColor[1], I->BarColor[2]);
+      CGOColor(orthoCGO, m_BarColor[0], m_BarColor[1], m_BarColor[2]);
       CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
       CGOVertex(orthoCGO, right - 1, top - 1, 0.f);
       CGOVertex(orthoCGO, right - 1, bottom + 1, 0.f);
@@ -308,7 +259,7 @@ void ScrollBarDrawHandle(struct CScrollBar *I, float alpha ORTHOCGOARG)
       CGOEnd(orthoCGO);
       CGOAlpha(orthoCGO, 1.f);
     } else {
-      glColor4f(I->BarColor[0], I->BarColor[1], I->BarColor[2], alpha);
+      glColor4f(m_BarColor[0], m_BarColor[1], m_BarColor[2], alpha);
       glBegin(GL_POLYGON);
       glVertex2i(right - 1, top - 1);
       glVertex2i(right - 1, bottom + 1);
@@ -320,67 +271,36 @@ void ScrollBarDrawHandle(struct CScrollBar *I, float alpha ORTHOCGOARG)
   }
 }
 
-void ScrollBarSetValueNoCheck(struct CScrollBar *I, float value)
+int ScrollBar::click(int button, int x, int y, int mod)
 {
-  I->Value = value;
-}
-
-void ScrollBarSetValue(struct CScrollBar *I, float value)
-{
-  I->Value = value > I->ValueMax ? I->ValueMax :
-             value < 0.0 ? 0.0 : value;
-}
-
-void ScrollBarMoveBy(struct CScrollBar *I, float value) {
-  ScrollBarSetValue(I, I->Value + value);
-}
-
-float ScrollBarGetValue(struct CScrollBar *I)
-{
-  return (I->Value);
-}
-
-void CScrollBar::reshape(int width, int height)
-{
-}
-
-int ScrollBarGrabbed(struct CScrollBar *I)
-{
-  return OrthoGrabbedBy(I->m_G, I);
-}
-
-int CScrollBar::click(int button, int x, int y, int mod)
-{
-  PyMOLGlobals *G = m_G;
-  CScrollBar *I = (CScrollBar *) reference;
   int grab = 0;
 
   if(button == P_GLUT_MIDDLE_BUTTON) {
-    if(I->HorV) {
-      if(x < I->BarMin || x > I->BarMax)
-        ScrollBarSetValue(I, (I->ListSize * (x - rect.left)) /
-            (rect.right - rect.left) - I->DisplaySize * 0.5F);
+    if(m_HorV) {
+      if(x < m_BarMin || x > m_BarMax)
+        setValue((m_ListSize * (x - rect.left)) /
+            (rect.right - rect.left) - m_DisplaySize * 0.5F);
       grab = x;
     } else {
-      if(y > I->BarMin || y < I->BarMax)
-        ScrollBarSetValue(I, (I->ListSize * (y - rect.top)) /
-            (rect.bottom - rect.top) - I->DisplaySize * 0.5F);
+      if(y > m_BarMin || y < m_BarMax)
+        setValue((m_ListSize * (y - rect.top)) /
+            (rect.bottom - rect.top) - m_DisplaySize * 0.5F);
       grab = y;
     }
   } else {
-    if(I->HorV) {
-      if(x > I->BarMax) {
-        I->Value += I->DisplaySize;
-      } else if(x < I->BarMin) {
-        I->Value -= I->DisplaySize;
+    if(m_HorV) {
+      if(x > m_BarMax) {
+        m_Value += m_DisplaySize;
+      } else if(x < m_BarMin) {
+        m_Value -= m_DisplaySize;
       } else {
         grab = x;
       }
     } else {
-      if(y > I->BarMin) {
-        I->Value -= I->DisplaySize;
-      } else if(y < I->BarMax) {
-        I->Value += I->DisplaySize;
+      if(y > m_BarMin) {
+        m_Value -= m_DisplaySize;
+      } else if(y < m_BarMax) {
+        m_Value += m_DisplaySize;
       } else {
         grab = y;
       }
@@ -388,93 +308,46 @@ int CScrollBar::click(int button, int x, int y, int mod)
   }
 
   if(grab) {
-    OrthoGrab(G, this);
-    I->StartPos = grab;
-    I->StartValue = I->Value;
+    OrthoGrab(m_G, this);
+    m_StartPos = grab;
+    m_StartValue = m_Value;
   }
 
-  OrthoDirty(G);
+  OrthoDirty(m_G);
   return 0;
 }
 
-int CScrollBar::drag(int x, int y, int mod)
+int ScrollBar::drag(int x, int y, int mod)
 {
-  PyMOLGlobals *G = m_G;
-  CScrollBar *I = (CScrollBar *) reference;
   int displ;
-  if(I->HorV)
-    displ = I->StartPos - x;
+  if(m_HorV)
+    displ = m_StartPos - x;
   else
-    displ = y - I->StartPos;
-  ScrollBarSetValue(I, I->StartValue - (I->ValueMax * displ) / I->BarRange);
-  OrthoDirty(G);
+    displ = y - m_StartPos;
+  setValue(m_StartValue - (m_ValueMax * displ) / m_BarRange);
+  OrthoDirty(m_G);
   return true;
 }
 
-int CScrollBar::release(int button, int x, int y, int mod)
+int ScrollBar::release(int button, int x, int y, int mod)
 {
-  PyMOLGlobals *G = m_G;
-  OrthoUngrab(G);
-  OrthoDirty(G);
+  OrthoUngrab(m_G);
+  OrthoDirty(m_G);
   return 0;
 }
 
-Block *ScrollBarGetBlock(struct CScrollBar * I)
+void ScrollBar::setLimits(int list_size, int display_size)
 {
-  return (I);
+  m_ListSize = list_size;
+  m_DisplaySize = display_size;
+  update();
 }
 
-void ScrollBarSetLimits(struct CScrollBar *I, int list_size, int display_size)
+void ScrollBar::setBox(int top, int left, int bottom, int right)
 {
-  I->ListSize = list_size;
-  I->DisplaySize = display_size;
-  ScrollBarUpdate(I);
+  rect.top = top;
+  rect.left = left;
+  rect.bottom = bottom;
+  rect.right = right;
 }
 
-void ScrollBarSetBox(struct CScrollBar *I, int top, int left, int bottom, int right)
-{
-  I->rect.top = top;
-  I->rect.left = left;
-  I->rect.bottom = bottom;
-  I->rect.right = right;
-}
-
-void ScrollBarDoDraw(struct CScrollBar *I ORTHOCGOARG)
-{
-    I->draw(orthoCGO);
-}
-
-void ScrollBarDoDrawNoFill(struct CScrollBar *I ORTHOCGOARG)
-{
-  ScrollBarDrawImpl(I, false, orthoCGO);
-}
-
-void ScrollBarDoRelease(struct CScrollBar *I, int button, int x, int y, int mod)
-{
-    I->release(button, x, y, mod);
-}
-
-void ScrollBarDoDrag(struct CScrollBar *I, int x, int y, int mod)
-{
-    I->drag(x, y, mod);
-}
-
-void ScrollBarDoClick(struct CScrollBar *I, int button, int x, int y, int mod)
-{
-    I->click(button, x, y, mod);
-}
-
-struct CScrollBar *ScrollBarNew(PyMOLGlobals * G, int horizontal)
-{
-  CScrollBar *I = new CScrollBar(G);
-
-  I->active = false;
-  I->reference = (void *) I;
-  I->HorV = horizontal;
-  return (I);
-}
-
-void ScrollBarFree(struct CScrollBar *I)
-{
-  DeleteP(I);
-}

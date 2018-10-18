@@ -37,6 +37,14 @@ template <typename T> void destroy(T* iter, T* end)
   }
 }
 
+/*
+ * @brief C++17's version of std::clamp
+ */
+template<typename T>
+const T& clamp(const T& value, const T& low, const T& high){
+  return std::max(low, std::min(value, high));
+}
+
 }// namespace schrodinger
 
 

@@ -2763,21 +2763,21 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
         I->SceneVLA[i].drawn = false;
     }
     if(n_ent > n_disp) {
-      int bar_maxed = ScrollBarIsMaxed(I->ScrollBar);
+      int bar_maxed = I->m_ScrollBar.isMaxed();
       if(!I->ScrollBarActive) {
-        ScrollBarSetLimits(I->ScrollBar, n_ent, n_disp);
+        I->m_ScrollBar.setLimits(n_ent, n_disp);
         if(bar_maxed) {
-          ScrollBarMaxOut(I->ScrollBar);
-          I->NSkip = (int) ScrollBarGetValue(I->ScrollBar);
+          I->m_ScrollBar.maxOut();
+          I->NSkip = static_cast<int>(I->m_ScrollBar.getValue());
         } else {
-          ScrollBarSetValue(I->ScrollBar, 0);
+          I->m_ScrollBar.setValue(0);
           I->NSkip = 0;
         }
       } else {
-        ScrollBarSetLimits(I->ScrollBar, n_ent, n_disp);
+        I->m_ScrollBar.setLimits(n_ent, n_disp);
         if(bar_maxed)
-          ScrollBarMaxOut(I->ScrollBar);
-        I->NSkip = (int) ScrollBarGetValue(I->ScrollBar);
+          I->m_ScrollBar.maxOut();
+        I->NSkip = static_cast<int>(I->m_ScrollBar.getValue());
       }
       I->ScrollBarActive = 1;
 
@@ -2795,12 +2795,12 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
     max_char /= charWidth;
 
     if(I->ScrollBarActive) {
-      ScrollBarSetBox(I->ScrollBar, I->rect.top - SceneScrollBarMargin,
-                      I->rect.left + SceneScrollBarMargin,
-                      I->rect.bottom + 2,
-                      I->rect.left + SceneScrollBarMargin + SceneScrollBarWidth);
+      I->m_ScrollBar.setBox(I->rect.top - SceneScrollBarMargin,
+                            I->rect.left + SceneScrollBarMargin,
+                            I->rect.bottom + 2,
+                            I->rect.left + SceneScrollBarMargin + SceneScrollBarWidth);
       if(draw_for_real)
-        ScrollBarDoDraw(I->ScrollBar ORTHOCGOARGVAR);
+        I->m_ScrollBar.draw(orthoCGO);
     }
 
     skip = I->NSkip;
@@ -3270,7 +3270,7 @@ static int SceneRelease(Block * block, int button, int x, int y, int mod, double
   if(I->ButtonsShown && I->PressMode) {
     if(I->ScrollBarActive) {
       if((x - I->rect.left) < (SceneScrollBarWidth + SceneScrollBarMargin)) {
-        ScrollBarDoRelease(I->ScrollBar, button, x, y, mod);
+        I->m_ScrollBar.release(button, x, y, mod);
         release_handled = true;
       }
     }
@@ -3531,7 +3531,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
       if(I->ScrollBarActive) {
         if((x - I->rect.left) < (SceneScrollBarWidth + SceneScrollBarMargin)) {
           click_handled = true;
-          ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+          I->m_ScrollBar.click(button, x, y, mod);
         }
       }
       if(!click_handled) {
@@ -3606,7 +3606,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     if(I->ScrollBarActive) {
       if((x - I->rect.left) < (SceneScrollBarWidth + SceneScrollBarMargin)) {
         click_handled = true;
-        ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+        I->m_ScrollBar.click(button, x, y, mod);
       }
     }
     if(!click_handled) {
@@ -5824,8 +5824,6 @@ void SceneFree(PyMOLGlobals * G)
   CGOFree(I->offscreenCGO);
 #endif
 
-  if(I->ScrollBar)
-    ScrollBarFree(I->ScrollBar);
   CGOFree(I->AlphaCGO);
   CGOFree(I->offscreenCGO);
   CGOFree(I->offscreenOIT_CGO);
@@ -5937,7 +5935,6 @@ int SceneInit(PyMOLGlobals * G)
 
     /* scene list */
 
-    I->ScrollBar = ScrollBarNew(G, false);
     I->Pressed = -1;
     I->Over = -1;
 

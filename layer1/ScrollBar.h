@@ -18,27 +18,54 @@ Z* -------------------------------------------------------------------
 #define _H_ScrollBar
 
 #include "PyMOLGlobals.h"
+#include "LangUtil.h"
 
-struct CScrollBar;
+class ScrollBar : public Block {
+private:
+  bool m_HorV {};
+  float m_BarColor[3] = { 0.5f, 0.5f, 0.5f };
+  int m_ListSize { 10 };
+  int m_DisplaySize { 7 };
+  int m_BarSize {};
+  int m_StartPos {};
+  float m_ExactBarSize {};
+  float m_StartValue {};
+  int m_BarRange {};
+  int m_BarMin {};
+  int m_BarMax {};
+  int Grabbed {};
+  float m_Value { 0.0f };
+  float m_ValueMax { 0.0f };
 
-struct CScrollBar *ScrollBarNew(PyMOLGlobals * G, int horizontal);
-void ScrollBarFree(struct CScrollBar *I);
-void ScrollBarSetBox(struct CScrollBar *I, int top, int left, int bottom, int right);
-void ScrollBarDoDraw(struct CScrollBar *I ORTHOCGOARG);
-void ScrollBarDoDrawNoFill(struct CScrollBar *I ORTHOCGOARG);
-void ScrollBarFill(struct CScrollBar *I ORTHOCGOARG);
-void ScrollBarSetLimits(struct CScrollBar *I, int list_size, int display_size);
-void ScrollBarSetValue(struct CScrollBar *I, float value);
-void ScrollBarSetValueNoCheck(struct CScrollBar *I, float value);
-void ScrollBarMoveBy(struct CScrollBar *I, float value);
-void ScrollBarDoRelease(struct CScrollBar *I, int button, int x, int y, int mod);
-void ScrollBarDoClick(struct CScrollBar *I, int button, int x, int y, int mod);
-void ScrollBarDoDrag(struct CScrollBar *I, int x, int y, int mod);
-Block *ScrollBarGetBlock(struct CScrollBar *);
-float ScrollBarGetValue(struct CScrollBar *I);
-void ScrollBarMaxOut(struct CScrollBar *I);
-int ScrollBarIsMaxed(struct CScrollBar *I);
-void ScrollBarDrawHandle(struct CScrollBar *I, float alpha ORTHOCGOARG);
-int ScrollBarGrabbed(struct CScrollBar *I);
-void ScrollBarDrawImpl(Block * block, short fill ORTHOCGOARG);
+  void drawImpl(bool fill, CGO *orthoCGO);
+  void update();
+
+public:
+  ScrollBar(PyMOLGlobals * G, int horizontal)
+  : Block(G)
+  , m_HorV(horizontal){
+    BackColor[0] = 0.1f;
+    BackColor[1] = 0.1f;
+    BackColor[2] = 0.1f;
+  }
+
+  virtual int release(int button, int x, int y, int mod) override;
+  virtual int click(int button, int x, int y, int mod) override;
+  virtual int drag(int x, int y, int mod) override;
+  virtual void draw(CGO *orthoCGO) override { drawImpl(true, orthoCGO); }
+  virtual void reshape(int width, int height) override {};
+
+  void maxOut() { m_Value = m_ValueMax; };
+  bool isMaxed() const;
+  void fill(CGO *orthoCGO);
+  void setValueNoCheck(float _value) { m_Value = _value; }
+  void setValue(float _value){ m_Value = pymol::clamp(_value, 0.0f, m_ValueMax); }
+  void drawNoFill(CGO *orthoCGO) { drawImpl(false, orthoCGO); }
+  int grabbed() { return OrthoGrabbedBy(m_G, this); }
+  float getValue() const { return m_Value; }
+  void setLimits(int list_size, int display_size);
+  void moveBy(float value) { setValue(m_Value + value); }
+  void drawHandle(float alpha, CGO *orthoCGO);
+  void setBox(int top, int left, int bottom, int right);
+};
 #endif

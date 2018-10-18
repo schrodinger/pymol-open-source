@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 #include"Ortho.h"
 #include"View.h"
+#include"ScrollBar.h"
 #include<list>
 #include<vector>
 
@@ -176,7 +177,7 @@ class CScene : public Block {
   int ScrollBarActive;
   int ReorderFlag;
   OrthoLineType ReorderLog;
-  struct CScrollBar *ScrollBar { nullptr };
+  ScrollBar m_ScrollBar;
   char *SceneNameVLA { nullptr };
   SceneElem *SceneVLA { nullptr };
   int NScene;
@@ -215,7 +216,7 @@ class CScene : public Block {
   Picking *pickVLA { nullptr };
   bool invPick; // if set, picking should be re-built
 
-  CScene(PyMOLGlobals * G) : Block(G) {}
+  CScene(PyMOLGlobals * G) : Block(G), m_ScrollBar(G, false) {}
 
   virtual int click(int button, int x, int y, int mod) override;
   virtual int release(int button, int x, int y, int mod) override;

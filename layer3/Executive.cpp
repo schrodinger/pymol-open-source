@@ -123,7 +123,7 @@ struct CExecutive : public Block {
   int Width {}, Height {}, HowFarDown { 0 };
   int ScrollBarActive { 0 };
   int NSkip { 0 };
-  CScrollBar *ScrollBar {};
+  ScrollBar m_ScrollBar;
   CObject *LastEdited { nullptr };
   int DragMode { 0 };
   int Pressed { -1 }, Over { -1 }, LastOver {}, OldVisibility {}, ToggleMode {}, PressedWhat {}, OverWhat {};
@@ -154,7 +154,7 @@ struct CExecutive : public Block {
   ExecutiveObjectOffset *m_eoo {}; // VLA of (object, atom-index)
   OVOneToOne *m_id2eoo {}; // unique_id -> m_eoo-index
 
-  CExecutive(PyMOLGlobals * G) : Block(G) {};
+  CExecutive(PyMOLGlobals * G) : Block(G), m_ScrollBar(G, false) {};
 
   virtual int release(int button, int x, int y, int mod) override;
   virtual int click(int button, int x, int y, int mod) override;
@@ -1919,7 +1919,7 @@ int ExecutiveScrollTo(PyMOLGlobals * G, const char * name, int i) {
   // scroll that record to the top
   while(ListIterate(I->Panel, panel, next)) {
     if(panel->spec == spec) {
-      ScrollBarSetValueNoCheck(I->ScrollBar, pos);
+      I->m_ScrollBar.setValueNoCheck(pos);
       return numhits;
     }
     pos++;
@@ -15212,10 +15212,10 @@ int CExecutive::click(int button, int x, int y, int mod)
 
   switch(button) {
     case P_GLUT_BUTTON_SCROLL_FORWARD:
-      ScrollBarMoveBy(I->ScrollBar, -1);
+      I->m_ScrollBar.moveBy(-1);
       return 1;
     case P_GLUT_BUTTON_SCROLL_BACKWARD:
-      ScrollBarMoveBy(I->ScrollBar, 1);
+      I->m_ScrollBar.moveBy(1);
       return 1;
   }
 
@@ -15226,7 +15226,7 @@ int CExecutive::click(int button, int x, int y, int mod)
     if((x - rect.left) <
        (ExecScrollBarWidth + ExecScrollBarMargin + ExecToggleMargin)) {
       pass = 1;
-      ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+      I->m_ScrollBar.click(button, x, y, mod);
     }
     xx -= (ExecScrollBarWidth + ExecScrollBarMargin);
   }
@@ -15732,7 +15732,7 @@ int CExecutive::release(int button, int x, int y, int mod)
     if((x - rect.left) <
        (ExecScrollBarWidth + ExecScrollBarMargin + ExecToggleMargin)) {
       pass = 1;
-      ScrollBarDoRelease(I->ScrollBar, button, x, y, mod);
+      I->m_ScrollBar.release(button, x, y, mod);
       OrthoUngrab(G);
     }
     xx -= (ExecScrollBarWidth + ExecScrollBarMargin);
@@ -16286,21 +16286,21 @@ void CExecutive::draw(CGO* orthoCGO)
 
     /* we need a scrollbar */
     if(n_ent > n_disp) {
-      int bar_maxed = ScrollBarIsMaxed(I->ScrollBar);
+      int bar_maxed = I->m_ScrollBar.isMaxed();
       if(!I->ScrollBarActive) {
-        ScrollBarSetLimits(I->ScrollBar, n_ent, n_disp);
+        I->m_ScrollBar.setLimits(n_ent, n_disp);
         if(bar_maxed) {
-          ScrollBarMaxOut(I->ScrollBar);
-          I->NSkip = (int) ScrollBarGetValue(I->ScrollBar);
+          I->m_ScrollBar.maxOut();
+          I->NSkip = static_cast<int>(I->m_ScrollBar.getValue());
         } else {
-          ScrollBarSetValue(I->ScrollBar, 0);
+          I->m_ScrollBar.setValue(0);
           I->NSkip = 0;
         }
       } else {
-        ScrollBarSetLimits(I->ScrollBar, n_ent, n_disp);
+        I->m_ScrollBar.setLimits(n_ent, n_disp);
         if(bar_maxed)
-          ScrollBarMaxOut(I->ScrollBar);
-        I->NSkip = (int) ScrollBarGetValue(I->ScrollBar);
+          I->m_ScrollBar.maxOut();
+        I->NSkip = static_cast<int>(I->m_ScrollBar.getValue());
       }
       I->ScrollBarActive = 1;
     } else {
@@ -16331,11 +16331,11 @@ void CExecutive::draw(CGO* orthoCGO)
 
     /* draw the scroll bar */
     if(I->ScrollBarActive) {
-      ScrollBarSetBox(I->ScrollBar, rect.top - ExecScrollBarMargin,
+      I->m_ScrollBar.setBox(rect.top - ExecScrollBarMargin,
                       rect.left + ExecScrollBarMargin,
                       rect.bottom + 2,
                       rect.left + ExecScrollBarMargin + ExecScrollBarWidth);
-      ScrollBarDoDraw(I->ScrollBar ORTHOCGOARGVAR);
+      I->m_ScrollBar.draw(orthoCGO);
     }
 
     x = rect.left + ExecLeftMargin;
@@ -16782,7 +16782,6 @@ int ExecutiveInit(PyMOLGlobals * G)
     I->all_obj_list_id = TrackerNewList(I->Tracker, NULL);
     I->all_sel_list_id = TrackerNewList(I->Tracker, NULL);
     I->active = true;
-    I->ScrollBar = ScrollBarNew(G, false);
     OrthoAttach(G, I, cOrthoTool);
 #ifndef GLUT_FULL_SCREEN
     I->oldWidth = 640;
@@ -16829,8 +16828,6 @@ void ExecutiveFree(PyMOLGlobals * G)
   ListFree(I->Panel, next, PanelRec);
   if(I->Tracker)
     TrackerFree(I->Tracker);
-  if(I->ScrollBar)
-    ScrollBarFree(I->ScrollBar);
   OVLexicon_DEL_AUTO_NULL(I->Lex);
   OVOneToOne_DEL_AUTO_NULL(I->Key);
 
