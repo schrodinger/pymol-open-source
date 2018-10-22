@@ -673,6 +673,12 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         """
         self.vmin = histogram[0]
         self.vmax = histogram[1]
+
+        # check for flat data (useless, but avoid errors in GUI)
+        if self.vmin == self.vmax:
+            self.vmin -= 1.0
+            self.vmax += 1.0
+
         self.original_vmin = self.vmin
         self.original_vmax = self.vmax
         self.path = []
