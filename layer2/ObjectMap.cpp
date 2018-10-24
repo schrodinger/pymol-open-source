@@ -2524,6 +2524,14 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   ispg = *(i++);
   sym_skip = *(i++);
 
+  // CCP4 Format:
+  // 25-37 skew transformation
+  // 38-52 future use "Storage space sometimes used by specific programs (default = 0)"
+
+  // MRC 2000 Format:
+  // 25-49 "Extra, user defined storage space (default = 0)"
+  // 50-52 ORIGIN
+
   {
     int skew = *(i++);
 
@@ -2553,9 +2561,17 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   // TODO See "Origin Conventions" in http://situs.biomachina.org/fmap.pdf
   float * mrc2000origin = (float *)(i + 49 - 25);
   if (lengthsq3f(mrc2000origin) > R_SMALL4) {
+    double matrix[] = {
+      1., 0., 0., mrc2000origin[0],
+      0., 1., 0., mrc2000origin[1],
+      0., 0., 1., mrc2000origin[2],
+      0., 0., 0., 1.};
+
+    ObjectStateSetMatrix(&ms->State, matrix);
+
     if (!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Warnings)
-        " ObjectMapCCP4: MRC 2000 ORIGIN %.2f %.2f %.2f (unused)\n",
+      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+        " ObjectMapCCP4: Applied MRC 2000 ORIGIN %.2f %.2f %.2f\n",
         mrc2000origin[0], mrc2000origin[1], mrc2000origin[2]
           ENDFB(I->Obj.G);
     }
