@@ -18,8 +18,6 @@ Z* -------------------------------------------------------------------
 #ifndef _H_MemoryCache
 #define _H_MemoryCache
 
-#define _MemoryCache_OFF
-
 
 /* NOTE: at the present time, MemoryCaching is not compatible with a
    running PyMOL free of global state -- it's basically just a
@@ -69,62 +67,6 @@ Z* -------------------------------------------------------------------
 
 #define cCache_ray_edging_buffer                         50
 
-
-/* other constants */
-
-#define cMemoryCache_max_block 100
-#define cMemoryCache_max_group 16
-
-#ifdef _MemoryCache_ON
-
-#include "PyMOLGlobals.h"
-#include "MemoryDebug.h"
-
-void MemoryCacheInit(PyMOLGlobals * G);
-void MemoryCacheDone(PyMOLGlobals * G);
-void MemoryCacheReplaceBlock(PyMOLGlobals * G, int group_id, int old_block_id,
-                             int new_block_id);
-
-void *_MemoryCacheMalloc(PyMOLGlobals * G, unsigned int size, int group_id,
-                         int block_id MD_FILE_LINE_Decl);
-void *_MemoryCacheCalloc(PyMOLGlobals * G, unsigned int number, unsigned int size,
-                         int group_id, int block_id MD_FILE_LINE_Decl);
-void *_MemoryCacheRealloc(PyMOLGlobals * G, void *ptr, unsigned int size, int group_id,
-                          int block_id MD_FILE_LINE_Decl);
-void *_MemoryCacheShrinkForSure(PyMOLGlobals * G, void *ptr, unsigned int size,
-                                int group_id, int block_id MD_FILE_LINE_Decl);
-void _MemoryCacheFree(PyMOLGlobals * G, void *ptr, int group_id, int block_id,
-                      int force MD_FILE_LINE_Decl);
-
-#define CacheAlloc(G,type,size,thread,id) (type*)_MemoryCacheMalloc(G,sizeof(type)*(size),thread,id MD_FILE_LINE_Call)
-#define CacheCalloc(G,type,size,thread,id) (type*)_MemoryCacheCalloc(G,sizeof(type),size,thread,id MD_FILE_LINE_Call)
-#define CacheRealloc(G,ptr,type,size,thread,id) (type*)_MemoryCacheRealloc(G,ptr,sizeof(type)*(size),thread,id MD_FILE_LINE_Call)
-#define CacheFreeP(G,ptr,thread,id,force) {if(ptr) {_MemoryCacheFree(G,ptr,thread,id,force MD_FILE_LINE_Call);ptr=NULL;}}
-
-#define VLACacheCheck(G,ptr,type,rec,t,i) (ptr=(type*)(((((unsigned)rec)>=((VLARec*)(ptr))[-1].nAlloc) ? VLACacheExpand(G,ptr,(rec),t,i) : (ptr))))
-#define VLACacheAlloc(G,type,initSize,t,i) (type*)VLACacheMalloc(G,initSize,sizeof(type),3,0,t,i)
-#define VLACacheFreeP(G,ptr,t,i,f) {if(ptr) {VLACacheFree(G,ptr,t,i,f);ptr=NULL;}}
-#define VLACacheSize(G,ptr,type,size,t,i) {ptr=(type*)VLACacheSetSize(G,ptr,size,t,i);}
-#define VLACacheSizeForSure(G,ptr,type,size,t,i) {ptr=(type*)VLACacheSetSizeForSure(G,ptr,size,t,i);}
-
-#ifndef _MemoryDebug_ON
-void *VLACacheMalloc(PyMOLGlobals * G, unsigned int initSize, unsigned int recSize, unsigned int growFactor, int autoZero, int thread, int index);      /*growfactor 1-10 */
-#else
-#define VLACacheMalloc(G,a,b,c,d,t,i) _VLACacheMalloc(G,__FILE__,__LINE__,a,b,c,d,t,i)
-void *_VLACacheMalloc(PyMOLGlobals * G, const char *file, int line, unsigned int initSize, unsigned int recSize, unsigned int growFactor, int autoZero, int thread, int index); /*growfactor 1-10 */
-#endif
-
-void VLACacheFree(PyMOLGlobals * G, void *ptr, int thread, int id, int force);
-void *VLACacheSetSize(PyMOLGlobals * G, void *ptr, unsigned int newSize, int group_id,
-                      int block_id);
-void *VLACacheSetSizeForSure(PyMOLGlobals * G, void *ptr, unsigned int newSize,
-                             int group_id, int block_id);
-void *VLACacheExpand(PyMOLGlobals * G, void *ptr, unsigned int rec, int thread_index,
-                     int block_id);
-
-#else
-
-
 /* memory cache off */
 
 #define VLACacheCheck(G,ptr,type,rec,t,i) VLACheck(ptr,type,rec)
@@ -134,8 +76,6 @@ void *VLACacheExpand(PyMOLGlobals * G, void *ptr, unsigned int rec, int thread_i
 #define VLACacheSizeForSure(G,ptr,type,size,t,i) VLASizeForSure(ptr,type,size)
 #define VLACacheExpand(G,ptr,rec,thread_index,i) VLAExpand(ptr,rec)
 
-#define MemoryCacheInit(x)
-#define MemoryCacheDone(x)
 #define MemoryCacheReplaceBlock(G,g,o,n)
 
 #define VLACacheMalloc(G,a,b,c,d,t,i) VLAMalloc(a,b,c,d)
@@ -145,7 +85,5 @@ void *VLACacheExpand(PyMOLGlobals * G, void *ptr, unsigned int rec, int thread_i
 #define CacheCalloc(G,type,size,thread,id) (type*)mcalloc(sizeof(type),size)
 #define CacheRealloc(G,ptr,type,size,thread,id) (type*)mrealloc(sizeof(type)*(size))
 #define CacheFreeP(G,ptr,thread,id,force) {if(ptr) {mfree(ptr);ptr=NULL;}}
-
-#endif
 
 #endif

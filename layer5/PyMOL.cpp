@@ -27,7 +27,6 @@
 #include "OVContext.h"
 
 #include "MemoryDebug.h"
-#include "MemoryCache.h"
 #include "Err.h"
 #include "Util.h"
 #include "Selector.h"
@@ -2047,7 +2046,6 @@ void PyMOL_Start(CPyMOL * I)
 #define LEX_CONSTANTS_IMPL
 #include "lex_constants.h"
 
-  MemoryCacheInit(G);
   FeedbackInit(G, G->Option->quiet);
   WordInit(G);
   UtilInit(G);
@@ -2182,7 +2180,6 @@ void PyMOL_Stop(CPyMOL * I)
   UtilFree(G);
   WordFree(G);
   FeedbackFree(G);
-  MemoryCacheDone(G);
 
   PyMOL_PurgeAPI(I);
   /*    printf("%d \n", OVLexicon_GetNActive(G->Lexicon)); */

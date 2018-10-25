@@ -4289,7 +4289,6 @@ static PyObject *CmdMem(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok) {
-    MemoryDebugDump();
     OVHeap_Dump(G->Context->heap, 0);
     SelectorMemoryDump(G);
     ExecutiveMemoryDump(G);

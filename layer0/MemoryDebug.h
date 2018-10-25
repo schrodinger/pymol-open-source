@@ -21,31 +21,6 @@ Z* -------------------------------------------------------------------
 #include "os_std.h"
 #include "PyMOLGlobals.h"
 
-/* This file can be included by C and C++ programs for
-   debugging of malloc, realloc, free in C and in addition,
-   of new and delete in C++ 
-
-  it also includes a two functions for variable length arrays
-
-  In order to use the debugging system, you must do the following...
-
-  * use mmalloc for malloc
-  * use mcalloc for calloc
-  * use mrealloc for mrealloc
-  * use mfree for free
-
-*/
-
-
-/* ==================== Master Switch ============================= 
- * Define _MemoryDebug_ON to enable the debugging system...*/
-
-
-/* WARNING!!! MemoryDebug is not thread safe...it must be disabled
-   for stable multi-threaded operation within the PyMOL core */
-
-#define _MemoryDebug_OFF
-
 
 /* ================================================================ 
  * Don't touch below unless you know what you are doing */
@@ -86,14 +61,7 @@ void *MemoryReallocForSureSafe(void *ptr, unsigned int newSize, unsigned int old
 void *VLADeleteRaw(void *ptr, int index, unsigned int count);
 void *VLAInsertRaw(void *ptr, int index, unsigned int count);
 
-#ifndef _MemoryDebug_ON
 void *VLAMalloc(ov_size init_size, ov_size unit_size, unsigned int grow_factor, int auto_zero); /*growfactor 1-10 */
-
-#else
-#define VLAMalloc(a,b,c,d) _VLAMalloc(__FILE__,__LINE__,a,b,c,d)
-
-void *_VLAMalloc(const char *file, int line, ov_size init_size, ov_size unit_size, unsigned int grow_factor, int auto_zero);    /*growfactor 1-10 */
-#endif
 
 void VLAFree(void *ptr);
 void *VLASetSize(void *ptr, unsigned int newSize);
@@ -103,10 +71,6 @@ unsigned int VLAGetSize(const void *ptr);
 void *VLANewCopy(const void *ptr);
 void MemoryZero(char *p, char *q);
 
-#ifndef _MemoryDebug_ON
-
-
-/* _MemoryDebug_ON not defined */
 
 #define mcalloc calloc
 #define mmalloc malloc
@@ -115,8 +79,6 @@ void MemoryZero(char *p, char *q);
 #define mstrdup strdup
 #define ReallocForSure(ptr,type,size) (type*)MemoryReallocForSure(ptr,sizeof(type)*(size))
 #define ReallocForSureSafe(ptr,type,size,old_size) (type*)MemoryReallocForSure(ptr,sizeof(type)*(size),sizeof(type)*(old_size))
-
-#define MemoryDebugDump()
 
 #ifdef __cplusplus
 #define mnew new
@@ -127,57 +89,6 @@ void MemoryZero(char *p, char *q);
 #define MD_FILE_LINE_Nest
 #define MD_FILE_LINE_PTR_Call
 
-#else
-
-
-/* _MemoryDebug_ON is defined */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define _MDPointer 1
-
-#define MD_FILE_LINE_Call ,__FILE__,__LINE__
-#define MD_FILE_LINE_Decl ,const char *file,int line
-#define MD_FILE_LINE_Nest ,file,line
-#define MD_FILE_LINE_PTR_Call ,__FILE__,__LINE__,_MDPointer
-
-#define mmalloc(x) MemoryDebugMalloc(x,__FILE__,__LINE__,_MDPointer)
-#define mcalloc(x,y) MemoryDebugCalloc(x,y,__FILE__,__LINE__,_MDPointer)
-#define mrealloc(x,y) MemoryDebugRealloc(x,y,__FILE__,__LINE__,_MDPointer)
-#define mfree(x) MemoryDebugFree(x,__FILE__,__LINE__,_MDPointer)
-#define mstrdup(x) MemoryDebugStrDup(x,__FILE__,__LINE__,_MDPointer)
-
-#define ReallocForSure(ptr,type,size) (type*)MemoryDebugReallocForSure(ptr,sizeof(type)*(size),__FILE__,__LINE__,_MDPointer)
-#define ReallocForSureSafe(ptr,type,size,old_size) (type*)MemoryDebugReallocForSureSafe(ptr,sizeof(type)*(size),\
-                    sizeof(type)*(old_size),__FILE__,__LINE__,_MDPointer)
-
-  void *MemoryDebugMalloc(size_t size, const char *file, int line, int type);
-  void *MemoryDebugCalloc(size_t nmemb, size_t size, const char *file, int line,
-                          int type);
-  void *MemoryDebugRealloc(void *ptr, size_t size, const char *file, int line, int type);
-  void *MemoryDebugReallocForSure(void *ptr, size_t size, const char *file,
-                                  int line, int type);
-  void *MemoryDebugReallocForSureSafe(void *ptr, size_t size, size_t old_size,
-                                      const char *file, int line, int type);
-
-  void MemoryDebugFree(void *ptr, const char *file, int line, int type);
-  void MemoryDebugQuietFree(void *ptr, int type);
-
-  char *MemoryDebugStrDup(const char *s, const char *file, int line, int type);
-
-  void MemoryDebugDump(void);
-  int MemoryDebugUsage(void);
-
-#ifdef __cplusplus
-} void *operator   new(size_t size, const char *file, int line);
-
-#define mnew new(__FILE__,__LINE__)
-
-#endif
-
-#endif
 
 inline unsigned int VLAGetByteSize(const void *ptr) {
   const VLARec *vla = ((const VLARec *) ptr) - 1;
