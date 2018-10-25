@@ -484,7 +484,7 @@ SEE ALSO
             raw_seq = seq_dict[key].replace('-','')
             _self.fab(raw_seq, key, quiet=quiet)
 
-    def _processFASTA(fname,quiet=1,_self=cmd):
+    def _processFASTA(fname, oname, quiet=1, _self=cmd):
         legal_dict = {}
         seq_dict = {}
         seq_order = []
@@ -500,6 +500,13 @@ SEE ALSO
                     key = legal_key
                 elif key:
                     seq = line
+
+                    if '-' in seq:
+                        # sequence alignment
+                        from pymol.seqalign import load_aln_multi
+                        return load_aln_multi(fname, oname, quiet=quiet,
+                                _self=_self)
+
                     seq_dict[key] = seq_dict.get(key,'') + seq
         for key in seq_order:
             raw_seq = seq_dict[key].replace('-','')
@@ -1617,7 +1624,7 @@ DESCRIPTION
         'py': lambda filename, _self: _self.do("_ run %s" % filename),
         'pml': lambda filename, _self: _self.do("_ @%s" % filename),
         'pwg': _processPWG,
-        'aln': _processALN,
+        'aln': 'pymol.seqalign:load_aln_multi',
         'fasta': _processFASTA,
         'png': 'pymol.viewing:load_png',
         'idx': load_idx,

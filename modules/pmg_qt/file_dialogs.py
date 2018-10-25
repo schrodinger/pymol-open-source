@@ -29,6 +29,8 @@ def load_dialog(parent, fname, **kwargs):
 
     if fname[-4:] in ['.dcd', '.dtr']:
         load_traj_dialog(parent, fname)
+    elif format in ('aln', 'fasta'):
+        load_aln_dialog(parent, fname)
     elif format == 'mae':
         load_mae_dialog(parent, fname)
     elif format == 'ccp4':
@@ -181,6 +183,73 @@ def load_mtz_dialog(parent, filename):
     form._dialog.accepted.connect(run)
     form._dialog.setModal(True)
     form._dialog.show()
+
+
+def load_aln_dialog(parent, filename):
+    _self = parent.cmd
+
+    import numpy
+    import difflib
+    import pymol.seqalign as seqalign
+
+    try:
+        alignment = seqalign.aln_magic_read(filename)
+    except ValueError:
+        # fails for fasta files which don't contain alignments
+        _self.load(filename)
+        return
+
+    # alignment record ids and PyMOL model names
+    ids = [rec.id for rec in alignment]
+    ids_remain = list(ids)
+    models = _self.get_object_list()
+    models_remain = list(models)
+    mapping = {}
+
+    N = len(ids)
+    M = len(models)
+
+    # ids -> models similarity matrix
+    similarity = numpy.zeros((N, M))
+    for i in range(N):
+        for j in range(M):
+            similarity[i, j] = difflib.SequenceMatcher(None,
+                    ids[i], models[j], False).ratio()
+
+    # guess mapping
+    for _ in range(min(N, M)):
+        i, j = numpy.unravel_index(similarity.argmax(), similarity.shape)
+        mapping[ids_remain.pop(i)] = models_remain.pop(j)
+        similarity = numpy.delete(similarity, i, axis=0)
+        similarity = numpy.delete(similarity, j, axis=1)
+
+    form = parent.load_form('load_aln')
+    comboboxes = {}
+
+    # mapping GUI
+    for row, rec_id in enumerate(ids, 1):
+        label = QtWidgets.QLabel(rec_id, form._dialog)
+        combobox = QtWidgets.QComboBox(form._dialog)
+        combobox.addItem("")
+        combobox.addItems(models)
+        combobox.setCurrentText(mapping.get(rec_id, ""))
+        form.layout_mapping.addWidget(label, row, 0)
+        form.layout_mapping.addWidget(combobox, row, 1)
+        comboboxes[rec_id] = combobox
+
+    def run():
+        mapping = dict((rec_id, combobox.currentText())
+                for (rec_id, combobox) in comboboxes.items())
+        seqalign.load_aln_multi(filename, mapping=mapping, _self=_self)
+        form._dialog.close()
+
+    # hook up events
+    form.button_ok.clicked.connect(run)
+    form.button_cancel.clicked.connect(form._dialog.close)
+
+    form._dialog.setModal(True)
+    form._dialog.show()
+
 
 def load_mae_dialog(parent, filename):
     form = parent.load_form('load_mae')
