@@ -1,0 +1,7 @@
+CLUSTAL O(1.2.3) multiple sequence alignment
+
+
+seq1         -ACDEFGHIKLMNPQRS---
+seq2         -----ACDIKLM-----NP-
+seq3         G------HI---KPQR---S
+                    .*           
