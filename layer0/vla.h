@@ -92,8 +92,9 @@ public:
 
   T** operator&() { return &m_vla; }
 
-  const T* operator+(size_t i) const { return m_vla + i; }
-  T* operator+(size_t i) { return m_vla + i; }
+  // note: VS2015 fails with operator+(size_t)
+  const T* operator+(int i) const { return m_vla + i; }
+  T* operator+(int i) { return m_vla + i; }
 
   T& operator[](std::size_t i) { return m_vla[i]; }
   const T& operator[](std::size_t i) const { return m_vla[i]; }
