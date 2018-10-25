@@ -578,3 +578,10 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_discrete('*'), ndiscrete)
         self.assertEqual(cmd.count_atoms(), natoms)
         self.assertEqual(len(cmd.get_object_list()), nmodel)
+
+    @testing.requires_version('2.3')
+    @testing.requires('incentive')
+    def testLoadMaeUserLabel(self):
+        cmd.load(self.datafile('userlabels2.mae'), 'm')
+        cmd.iterate('rank 1', 'stored.label = label')
+        self.assertEqual(stored.label, '1.31 TRP')
