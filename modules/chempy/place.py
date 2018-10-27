@@ -21,6 +21,8 @@ from . import bond_amber
 
 from chempy.cpv import *
 from chempy import feedback
+import chempy.models
+
 
 TET_TAN = 1.41
 TRI_TAN = 1.732
@@ -51,7 +53,7 @@ def simple_unknowns(model,bondfield=bond_amber):
         print(" "+str(__name__)+": placing unknowns...")
     # this can be used to build hydrogens and would robably work for
     # acyclic carbons as well
-    if str(model.__class__) != 'chempy.models.Connected':
+    if not isinstance(model, chempy.models.Connected):
         raise ValueError('model is not a "Connected" model object')
     if model.nAtom:
         if not model.index:
