@@ -141,7 +141,7 @@ class Atom(object):
             obj.segi,
             obj.chain,
             obj.resi_number,
-            obj.resi,
+            obj.ins_code,
             obj.resn,
             obj.symbol,
             obj.name,
