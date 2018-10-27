@@ -24,6 +24,7 @@ if __name__=='pymol.editing':
           boolean_sc,boolean_dict,safe_list_eval, is_sequence, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error              
     from chempy import cpv
+    import pymol.wizard.dragging
     
     ref_action_dict = {
         'store'     : 1,
@@ -979,7 +980,7 @@ NOTES
                 wiz = _self.get_wizard()
                 if (wiz == None):
                     _self.wizard("dragging",old_button_mode)
-                elif wiz.__class__ != 'pymol.wizard.dragging.Dragging':
+                elif not isinstance(wiz, pymol.wizard.dragging.Dragging):
                     _self.wizard("dragging",old_button_mode)
                 else:
                     wiz.recount()

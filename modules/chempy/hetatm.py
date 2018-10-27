@@ -16,6 +16,7 @@
 #
 #
 
+import chempy.models
 from chempy.neighbor import Neighbor
 from chempy.models import Connected
 from chempy import Bond
@@ -35,7 +36,7 @@ def generate(model, topology= None, forcefield = None ):
 
 #---------------------------------------------------------------------------------
 def assign_types(model, topology = None, forcefield = None ):
-    if str(model.__class__) != 'chempy.models.Indexed':
+    if not isinstance(model, chempy.models.Indexed):
         raise ValueError('model is not an "Indexed" model object')
     nAtom = model.nAtom
     if nAtom:
@@ -67,7 +68,7 @@ def assign_types(model, topology = None, forcefield = None ):
 
 #---------------------------------------------------------------------------------
 def add_bonds(model, topology = None, forcefield = None ):
-    if str(model.__class__) != 'chempy.models.Indexed':
+    if not isinstance(model, chempy.models.Indexed):
         raise ValueError('model is not an "Indexed" model object')
     nAtom = model.nAtom
     if nAtom:
@@ -108,7 +109,7 @@ def add_bonds(model, topology = None, forcefield = None ):
                             
 #---------------------------------------------------------------------------------
 def add_hydrogens(model,topology=None,forcefield=None):  
-    if str(model.__class__) != 'chempy.models.Connected':
+    if not isinstance(model, chempy.models.Connected):
         raise ValueError('model is not a "Connected" model object')
     nAtom = model.nAtom
     if nAtom:

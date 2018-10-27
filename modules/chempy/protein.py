@@ -22,6 +22,7 @@ from . import bond_amber
 from . import protein_residues
 from . import protein_amber
 
+import chempy.models
 from chempy.neighbor import Neighbor
 from chempy.models import Connected
 from chempy import Bond,place,feedback
@@ -66,7 +67,7 @@ but does not add any bonds!
 '''
     if feedback['actions']:
         print(" "+str(__name__)+": assigning types...")
-    if str(model.__class__) != 'chempy.models.Indexed':
+    if not isinstance(model, chempy.models.Indexed):
         raise ValueError('model is not an "Indexed" model object')
     if model.nAtom:
         crd = model.get_coord_list()
@@ -164,7 +165,7 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
     '''
     if feedback['actions']:
         print(" "+str(__name__)+": assigning types and bonds...")
-    if str(model.__class__) != 'chempy.models.Indexed':
+    if not isinstance(model, chempy.models.Indexed):
         raise ValueError('model is not an "Indexed" model object')
     if model.nAtom:
         crd = model.get_coord_list()
@@ -283,7 +284,7 @@ def add_hydrogens(model,forcefield=protein_amber,skip_sort=None):
     # assumes no bonds between non-hetatms
     if feedback['actions']:
         print(" "+str(__name__)+": adding hydrogens...")
-    if str(model.__class__) != 'chempy.models.Connected':
+    if not isinstance(model, chempy.models.Connected):
         raise ValueError('model is not a "Connected" model object')
     if model.nAtom:
         if not model.index:
