@@ -16,11 +16,13 @@ from __future__ import print_function
 
 import os
 import copy
+import functools
 
 #
 # Basic chempy types
 #
 
+@functools.total_ordering
 class Atom(object):
 
     def __reduce__(self):
@@ -132,7 +134,27 @@ class Atom(object):
                 cmp(self.symbol, other.symbol) or \
                 cmp(self.name, other.name) or \
                 cmp(id(self), id(other))
-        
+
+    @staticmethod
+    def _order(obj):
+        return (
+            obj.segi,
+            obj.chain,
+            obj.resi_number,
+            obj.resi,
+            obj.resn,
+            obj.symbol,
+            obj.name,
+            id(obj),
+        )
+
+    def __gt__(self, other):
+        return Atom._order(self) > Atom._order(other)
+
+    def __eq__(self, other):
+        return Atom._order(self) == Atom._order(other)
+
+
 class Bond:
 
     order   = 1
