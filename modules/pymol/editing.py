@@ -24,7 +24,6 @@ if __name__=='pymol.editing':
           boolean_sc,boolean_dict,safe_list_eval, is_sequence, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error              
     from chempy import cpv
-    import pymol.wizard.dragging
     
     ref_action_dict = {
         'store'     : 1,
@@ -952,6 +951,8 @@ NOTES
     single molecular object.
 
 '''
+        import pymol.wizard.dragging
+
         quiet = int(quiet)
         if (selection!=None) and (selection!=""):
             selection = selector.process(selection)
