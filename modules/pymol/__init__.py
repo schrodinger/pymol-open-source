@@ -344,6 +344,9 @@ def adapt_to_hardware(self):
             if invocation.options.show_splash:
                 print(" Disabling shaders for Intel Express graphics")
             cmd.set("use_shaders", 0)
+        elif version.startswith("4.5.0 - Build 24.20.100."):
+            # Driver update breaks lighting
+            cmd.set("precomputed_lighting", quiet=0)
 
     elif (vendor == 'nouveau'
             or ' R300 ' in vendor # V: X.Org R300 Project, R: Gallium 0.4 on ATI RV370
