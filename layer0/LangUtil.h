@@ -45,15 +45,4 @@ const T& clamp(const T& value, const T& low, const T& high){
   return std::max(low, std::min(value, high));
 }
 
-}// namespace schrodinger
-
-
-/*
- * Allows for operator |= on std::bitset::reference
- */
-
-template<typename T, typename U, typename =
-    typename std::enable_if<std::is_convertible<T, bool>::value &&
-                            std::is_convertible<U, bool>::value>::type>
-void operator|= (T l, const U r)
-  { l = l | r; }
+} // namespace pymol
