@@ -799,6 +799,7 @@ namespace {
 
   class AtomArray : public Array {
     int i_name, i_resname, i_resid, i_x, i_y, i_z, i_vx, i_vy, i_vz, 
+        i_inscode,
         i_anum, i_chain, i_segid, i_charge;
     std::vector<molfile_atom_t> &atoms;
     std::vector<pos_t> &pos;
@@ -811,6 +812,7 @@ namespace {
       i_name(-1), i_resname(-1), i_resid(-1), 
       i_x(-1), i_y(-1), i_z(-1), 
       i_vx(-1), i_vy(-1), i_vz(-1),
+      i_inscode(-1),
       i_anum(-1), i_chain(-1), i_segid(-1),
       i_charge(0),
       atoms( h->ctmap[m_ct].particles ),
@@ -840,6 +842,7 @@ namespace {
         else if (attr=="m_chain_name")       i_chain=i;
         else if (attr=="m_pdb_segment_name") i_segid=i;
         else if (attr=="m_formal_charge")  { i_charge=i; h->optflags |= MOLFILE_CHARGE; }
+        else if (attr=="m_insertion_code") { i_inscode=i; }
       }
     }
 
@@ -852,6 +855,7 @@ namespace {
       if (i_resid>=0)   get_int(row[i_resid], a.resid);
       if (i_segid>=0)   GET_STR(row[i_segid], a.segid);
       if (i_chain>=0)   GET_STR(row[i_chain], a.chain);
+      if (i_inscode>=0) GET_STR(row[i_inscode], a.insertion);
 
 #if defined(DESRES_CTNUMBER)
       a.ctnumber = m_ct;
