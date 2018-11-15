@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
+#include"PyMOLGlobals.h"
 #include"Base.h"
 #include"OVLexicon.h"
 

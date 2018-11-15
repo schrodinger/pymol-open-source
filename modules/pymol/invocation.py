@@ -29,6 +29,7 @@ Options
   --version display PyMOL version and exit
   --retina  use retina resolution (MacPyMOL) and set display_scale_factor=2
   --gldebug use glDebugMessageCallback for GL debugging
+  --testing run pymol testing
 
   -1        config_mouse one_button
   -2        config_mouse two_button
@@ -170,6 +171,7 @@ if __name__=='pymol.invocation':
     options.no_spacenav = 0
     options.launch_status = 0
     options.gldebug = 0
+    options.testing = 0
 
     options.win_py = { 'irix':240,
                        'darwin': 214, # hmm...need to set to 192 for Leopard?...
@@ -281,6 +283,8 @@ if __name__=='pymol.invocation':
                         print(' Warning: --nospnav not available in Open-Source PyMOL')
                     elif a == "--gldebug":
                         options.gldebug = 1
+                    elif a == "--testing":
+                        options.testing = 1
                     else:
                         # double hypen signals end of PyMOL arguments
                         if python_script == None:

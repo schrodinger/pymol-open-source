@@ -439,6 +439,8 @@ def launch(args=None, block_input_hook=0):
     if invocation.options.gui == 'pmg_qt':
         if invocation.options.no_gui:
             return _launch_no_gui()
+        elif invocation.options.testing:
+            return pymol._cmd.test2()
 
         try:
             from pmg_qt import pymol_qt_gui

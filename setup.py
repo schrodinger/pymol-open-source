@@ -25,6 +25,7 @@ class options:
     no_glut = True
     use_msgpackc = 'guess'
     help_distutils = False
+    testing = False
 
 try:
     import argparse
@@ -47,6 +48,8 @@ try:
             "shared library; no: disable fast MMTF load support")
     parser.add_argument('--help-distutils', action="store_true",
             help="show help for distutils options and exit")
+    parser.add_argument('--testing', action="store_true",
+            help="Build C-level tests")
     options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 except ImportError:
     print("argparse not available")
@@ -310,6 +313,10 @@ if options.no_glut:
     def_macros += [
         ("_PYMOL_NO_MAIN", None),
     ]
+
+if options.testing:
+    pymol_src_dirs += ["layerCTest"]
+    def_macros += [("_PYMOL_CTEST", None)]
 
 inc_dirs = list(pymol_src_dirs)
 

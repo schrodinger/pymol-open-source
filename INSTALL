@@ -21,6 +21,7 @@ REQUIREMENTS
     - mmtf-cpp (for fast MMTF export, disable with --use-msgpackc=no)
     - PyQt5, PyQt4, or PySide (optional, will fall back to Tk interface)
     - glm
+    - catch2 (optional, enable with --testing)
 
 SETUP OPTIONS
 

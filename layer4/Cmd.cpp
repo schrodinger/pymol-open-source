@@ -116,6 +116,19 @@ static int run_only_once = true;
   G = _api_get_pymol_globals(self)
 
 /*
+ * C-level tests
+ */
+#ifdef _PYMOL_CTEST
+#include "TestCmdTest2.h"
+#else
+static PyObject* CmdTest2(PyObject*, PyObject*)
+{
+  PyErr_SetString(PyExc_NotImplementedError, "compile with --testing");
+  return nullptr;
+}
+#endif
+
+/*
  * Start a headless singleton instance in the current thread.
  *
  * Unlike when calling `pymol.finish_launching()`, there is no event loop,
@@ -8685,6 +8698,7 @@ static PyMethodDef Cmd_methods[] = {
   {"symexp", CmdSymExp, METH_VARARGS},
   {"symmetry_copy", CmdSymmetryCopy, METH_VARARGS},
   {"test", CmdTest, METH_VARARGS},
+  {"test2", CmdTest2, METH_VARARGS},
   {"toggle", CmdToggle, METH_VARARGS},
   {"matrix_copy", CmdMatrixCopy, METH_VARARGS},
   {"transform_object", CmdTransformObject, METH_VARARGS},
