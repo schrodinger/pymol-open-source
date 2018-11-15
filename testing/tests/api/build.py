@@ -3,6 +3,7 @@ Testing PyQt Fab & Builder
 """
 from pymol import cmd, testing
 
+@testing.requires('incentive')
 @testing.requires_version('2.3')
 class TestNucBuilder(testing.PyMOLTestCase):
     def testCanInit(self):
