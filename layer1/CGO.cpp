@@ -6925,7 +6925,7 @@ static void CGO_gl_special_with_arg(CCGORenderer * I, float **pc)
     }
     break;
   case LINE_LIGHTING:
-    if(!SettingGetGlobal_b(I->G, cSetting_use_shaders)){
+    if (!I->isPicking && !SettingGetGlobal_b(I->G, cSetting_use_shaders)) {
       if (!I->info->line_lighting){
         bool enableLighting = (int)argval;
         if (enableLighting)
