@@ -815,14 +815,20 @@ DESCRIPTION
         '''
 DESCRIPTION
 
-    "overlap" is an unsupported command that may have something to do
-    with measuring the total amount of van der Waals overlap between
-    two selections.
+    "overlap" is an unsupported command that sums up
+    [(VDWi + VDWj) - distance_ij]/2 between pairs of
+    selected atoms.
+
+PYMOL API
+
+    cmd.overlap(string selection1, string selection2 [, int state1=1, int state2=1, float adjust=0.0])
 
 NOTES
 
-    For best performance, use the smaller molecule as selection 1.
-    
+    It does not compute the volume overlap,
+    selections with more atoms will have a larger
+    sum.
+
     '''
         
         # preprocess selections
