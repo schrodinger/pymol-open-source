@@ -5571,7 +5571,7 @@ int ExecutiveGetSession(PyMOLGlobals * G, PyObject * dict, const char *names, in
     PyDict_SetItemString(dict, "editor", tmp);
     Py_XDECREF(tmp);
 
-    tmp = MainAsPyList();
+    tmp = MainAsPyList(G);
     PyDict_SetItemString(dict, "main", tmp);
     Py_XDECREF(tmp);
 
@@ -5979,7 +5979,7 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
           /* PYMOL-775 added suspend_updates check, but does it make sense? */
           !SettingGetGlobal_b(G, cSetting_suspend_updates) &&
           !partial_restore) {
-        ok = MainFromPyList(tmp);
+        ok = MainFromPyList(G, tmp);
 #ifndef _PYMOL_NOPY
       } else if (!quiet) {
         int viewport[2];

@@ -22,8 +22,8 @@ int MainSavingUnderWhileIdle(void);
 #include"os_python.h"
 #include"PyMOLGlobals.h"
 
-PyObject *MainAsPyList(void);
-int MainFromPyList(PyObject * list);
+PyObject *MainAsPyList(PyMOLGlobals *G);
+int MainFromPyList(PyMOLGlobals *G, PyObject * list);
 
 #ifndef _PYMOL_NO_MAIN
 

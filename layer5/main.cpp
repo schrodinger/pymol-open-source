@@ -1707,15 +1707,11 @@ static int main_common(void)
 
 /*========================================================================*/
 
-PyObject *MainAsPyList(void);
-
-PyObject *MainAsPyList(void)
+PyObject *MainAsPyList(PyMOLGlobals *G)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-
   PyObject *result = NULL;
   int width, height;
   result = PyList_New(2);
@@ -1730,8 +1726,7 @@ PyObject *MainAsPyList(void)
 #endif
 }
 
-int MainFromPyList(PyObject * list);
-int MainFromPyList(PyObject * list)
+int MainFromPyList(PyMOLGlobals *G, PyObject * list)
 {
 #ifdef _PYMOL_NOPY
   return 0;
@@ -1740,7 +1735,6 @@ int MainFromPyList(PyObject * list)
   int ok = true;
   int win_x, win_y;
   int ll = 0;
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
   OrthoLineType buffer;
 
   if(ok)
