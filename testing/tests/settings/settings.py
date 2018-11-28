@@ -139,3 +139,55 @@ class TestSettings(testing.PyMOLTestCase):
         img = self.get_imagearray()
         self.assertImageHasColor('blue', img)
         self.assertImageHasColor('red', img)
+
+    @testing.requires_version('2.3')
+    def testAtomCartoonTransparency(self):
+        '''
+        Test atom-level cartoon_transparency
+        '''
+        self.ambientOnly()
+        cmd.viewport(100, 100)
+        cmd.set('opaque_background')
+        cmd.set('ray_shadow', 0)
+
+        cmd.load(self.datafile('1oky-frag.pdb'))
+        cmd.orient()
+
+        cmd.show_as('cartoon')
+        cmd.select('sele', 'resi 106-111', 0)
+
+        # hide blended parts between residues
+        cmd.cartoon('skip', 'resi 105+112')
+
+        cmd.color('0xFF0000')
+        cmd.color('0x0000FF', 'sele')
+
+        # all opaque
+        img = self.get_imagearray()
+        self.assertImageHasColor('0xFF0000', img)
+        self.assertImageHasColor('0x0000FF', img)
+
+        # object-level transparency
+        cmd.set('cartoon_transparency', 0.4)
+        img = self.get_imagearray()
+        self.assertImageHasColor('0x990000', img) # 40%
+        self.assertImageHasColor('0x000099', img) # 40%
+
+        # atom-level full-opaque
+        cmd.set('cartoon_transparency', 0.0, 'sele')
+        img = self.get_imagearray()
+        self.assertImageHasColor('0x990000', img) # 40%
+        self.assertImageHasColor('0x0000FF', img) #  0%
+
+        # atom-level semi-transparent
+        cmd.set('cartoon_transparency', 0.6, 'sele')
+        img = self.get_imagearray()
+        self.assertImageHasColor('0x990000', img) # 40%
+        self.assertImageHasColor('0x000066', img) # 60%
+
+        # atom-level full-transparent (expect only two color values)
+        cmd.set('cartoon_transparency', 0.0)
+        cmd.set('cartoon_transparency', 1.0, 'sele')
+        img = self.get_imagearray()
+        self.assertImageHasColor('0xFF0000', img)
+        self.assertTrue(len(numpy.unique(img[...,:3])) == 2)
