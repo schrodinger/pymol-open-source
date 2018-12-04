@@ -57,7 +57,6 @@
 
 #include<GL/glew.h>
 #include<GL/gl.h>
-#include<GL/glext.h>
 
 #define GLDOUBLEMULTMATRIX glMultMatrixd
 #define GLDOUBLETRANSLATE glTranslated

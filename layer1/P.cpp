@@ -1615,7 +1615,7 @@ void init_pyomm(void);
 
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef WIN32
+#if 0 // def WIN32
 static int IsSecurityRequired()
 {
   DWORD WindowsVersion = GetVersion();
@@ -1637,7 +1637,7 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
   PyObject *args;
 
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef WIN32
+#if 0 // def WIN32
 
   /* Windows PyMOL now ships with Python 2.5 for both
      32 and 64 bit */

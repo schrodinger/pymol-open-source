@@ -14,8 +14,12 @@ from distutils.command.build_py import build_py
 from glob import glob
 import shutil
 import sys, os, re
-import platform
 
+# non-empty DEBUG variable turns off optimization and adds -g flag
+DEBUG = bool(os.getenv('DEBUG', ''))
+
+WIN = sys.platform.startswith('win')
+MAC = sys.platform.startswith('darwin')
 
 # handle extra arguments
 class options:
@@ -102,18 +106,6 @@ def is_conda_env():
         'conda' in sys.version or
         'Continuum' in sys.version or
         sys.prefix == os.getenv('CONDA_PREFIX'))
-
-
-def posix_find_lib(names, lib_dirs):
-    # http://stackoverflow.com/questions/1376184/determine-if-c-library-is-installed-on-unix
-    from subprocess import Popen, PIPE
-    args = ["cc", "-shared", "-o", os.devnull] + ["-L" + d for d in lib_dirs]
-    for name in names:
-        p = Popen(args + ["-l" + name], stdout=PIPE, stderr=PIPE)
-        p.communicate()
-        if p.wait() == 0:
-            return name
-    raise IOError('could not find any of ' + str(names))
 
 
 def guess_msgpackc():
@@ -225,8 +217,6 @@ class install_pymol(install):
                 out.write(' %*' + os.linesep)
             else:
                 out.write('#!/bin/sh' + os.linesep)
-                if sys.platform.startswith('darwin'):
-                    out.write('[ "$DISPLAY" == "" ] && export DISPLAY=":0.0"' + os.linesep)
                 out.write('export PYMOL_PATH="%s"' % pymol_path + os.linesep)
                 out.write('"%s" "%s" "$@"' % (python_exe, pymol_file) + os.linesep)
 
@@ -244,6 +234,9 @@ create_shadertext.create_all(generated_dir)
 # can be changed with environment variable PREFIX_PATH
 prefix_path = get_prefix_path()
 
+inc_dirs = [
+]
+
 pymol_src_dirs = [
     "ov/src",
     "layer0",
@@ -258,11 +251,11 @@ pymol_src_dirs = [
 
 def_macros = [
     ("_PYMOL_LIBPNG", None),
+    ("_PYMOL_FREETYPE", None),
     ("_PYMOL_INLINE", None),
 ]
 
-libs = []
-pyogl_libs = []
+libs = ["png", "freetype"]
 lib_dirs = []
 ext_comp_args = [
     "-Wno-narrowing",
@@ -271,7 +264,7 @@ ext_comp_args = [
     # optimizations
     "-ffast-math",
     "-funroll-loops",
-    "-O0" if os.getenv('DEBUG', '') else "-O3",
+    "-O0" if DEBUG else "-O3",
     "-fcommon",
 ]
 ext_link_args = []
@@ -281,8 +274,10 @@ ext_modules = []
 
 if True:
     # VMD plugin support
-    pymol_src_dirs += [
+    inc_dirs += [
         'contrib/uiuc/plugins/include',
+    ]
+    pymol_src_dirs += [
         'contrib/uiuc/plugins/molfile_plugin/src',
     ]
     def_macros += [
@@ -318,38 +313,71 @@ if options.testing:
     pymol_src_dirs += ["layerCTest"]
     def_macros += [("_PYMOL_CTEST", None)]
 
-inc_dirs = list(pymol_src_dirs)
+inc_dirs += pymol_src_dirs
 
 #============================================================================
-if sys.platform=='win32': 
-    # NOTE: this branch not tested in years and may not work...
-    inc_dirs += [
-              "win32/include"]
-    libs=["opengl32","glu32","glut32","libpng","zlib"]
-    pyogl_libs = ["opengl32","glu32","glut32"]
-    lib_dirs=["win32/lib"]
-    def_macros += [
-                ("WIN32",None),
-                ("_PYMOL_LIBPNG",None),
-                ]
-    ext_link_args=['/NODEFAULTLIB:"LIBC"']
-#============================================================================
-elif sys.platform=='cygwin':
-    # NOTE: this branch not tested in years and may not work...
-    libs=["glut32","opengl32","glu32","png"]
-    pyogl_libs = ["glut32","opengl32","glu32"]
-    lib_dirs=["/usr/lib/w32api"]
-    def_macros += [
-                ("CYGWIN",None),
-                ("_PYMOL_LIBPNG",None)]
-#============================================================================
-else: # unix style (linux, mac, ...)
+if MAC:
+        libs += ["GLEW"]
 
-    def_macros += [
-            ("_PYMOL_FREETYPE",None),
-            ("NO_MMLIBS",None),
+        if options.osx_frameworks:
+            ext_link_args += [
+                "-framework", "OpenGL",
+            ] + (not options.no_glut) * [
+                "-framework", "GLUT",
+            ]
+            def_macros += [
+                ("_PYMOL_OSX", None),
+            ]
+        else:
+            libs += [
+                "GL",
+            ] + (not options.no_glut) * [
+                "glut",
             ]
 
+if WIN:
+        # clear
+        libs = []
+        ext_comp_args = []
+
+        def_macros += [
+            ("WIN32", None),
+            ("CINTERFACE", None),   # avoid "Alloc" macro conflict
+        ]
+
+        libs += [
+            "Ws2_32",   # htonl
+        ]
+
+        if True:
+
+            libs += [
+                "glew32",
+                "freetype",
+                "libpng",
+            ] + (not options.no_glut) * [
+                "freeglut",
+            ] + (not options.no_libxml) * [
+                "libxml2",
+            ]
+
+        if DEBUG:
+            ext_comp_args += ['/Z7']
+            ext_link_args += ['/DEBUG']
+
+        libs += [
+            "opengl32",
+        ]
+
+if not (MAC or WIN):
+        libs += [
+            "GL",
+            "GLEW",
+        ] + (not options.no_glut) * [
+            "glut",
+        ]
+
+if True:
     try:
         import numpy
         inc_dirs += [
@@ -361,8 +389,7 @@ else: # unix style (linux, mac, ...)
     except ImportError:
         print("numpy not available")
 
-    libs += ["png", "freetype"]
-
+if True:
     for prefix in prefix_path:
         for dirs, suffixes in [
                 [inc_dirs, [("include",), ("include", "freetype2"), ("include", "libxml2")]],
@@ -370,23 +397,7 @@ else: # unix style (linux, mac, ...)
                 ]:
             dirs.extend(filter(os.path.isdir, [os.path.join(prefix, *s) for s in suffixes]))
 
-    if sys.platform == 'darwin' and options.osx_frameworks:
-        ext_link_args += [
-            "-framework", "OpenGL",
-            "-framework", "GLUT",
-        ]
-        def_macros += [
-            ("_PYMOL_OSX", None),
-        ]
-    else:
-        pyogl_libs += ["GL"]
-        if not options.no_glut:
-            glut = posix_find_lib(['glut', 'freeglut'], lib_dirs)
-            pyogl_libs += [glut]
-
-    libs += ["GLEW"]
-    libs += pyogl_libs
-
+if True:
     if sys.platform.startswith("freebsd"):
         libs += ["execinfo"]
 
