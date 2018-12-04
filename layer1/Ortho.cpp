@@ -15,6 +15,10 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#include <queue>
+#include <string>
+#include <array>
+
 #include"os_python.h"
 
 #include"os_predef.h"
@@ -36,7 +40,6 @@ Z* -------------------------------------------------------------------
 #include"Control.h"
 #include"Setting.h"
 #include"Wizard.h"
-#include"Queue.h"
 #include"Pop.h"
 #include"Seq.h"
 #include"Text.h"
@@ -90,9 +93,10 @@ struct _COrtho {
   BlockRect LoopRect;
   int LoopFlag;
   int cmdNestLevel;
-  CQueue *cmdQueue[CMD_QUEUE_MASK + 1], *cmdActiveQueue;
+  std::array<std::queue<std::string>, CMD_QUEUE_MASK + 1> cmdQueue;
+  std::queue<std::string> *cmdActiveQueue;
   int cmdActiveBusy;
-  CQueue *feedback;
+  std::queue<std::string> feedback;
   int Pushed;
   std::vector<std::unique_ptr<CDeferred>> deferred; //Ortho manages DeferredObjs
   int RenderMode;
@@ -423,34 +427,24 @@ void OrthoCommandNest(PyMOLGlobals * G, int dir)
       level = 0;
     if(level > CMD_QUEUE_MASK)
       level = CMD_QUEUE_MASK;
-    I->cmdActiveQueue = I->cmdQueue[level];
+    I->cmdActiveQueue = &I->cmdQueue[level];
   }
 }
 
 
 /*========================================================================*/
-int OrthoCommandOutSize(PyMOLGlobals * G){
-  if(G) {
-    COrtho *I = G->Ortho;
-    if(I && I->cmdActiveQueue) {
-      return QueueStrCheck(I->cmdActiveQueue);
-    }
-  }
-  return 0;
+bool OrthoCommandIsEmpty(COrtho& ortho){
+  return ortho.cmdActiveQueue->empty();
 }
 
-int OrthoCommandOut(PyMOLGlobals * G, char *buffer)
-{
-  if(G && buffer) {
-    COrtho *I = G->Ortho;
-
-    if(I && I->cmdActiveQueue) {
-      int result;
-      result = QueueStrOut(I->cmdActiveQueue, buffer);
-      return (result);
-    }
+/*========================================================================*/
+std::string OrthoCommandOut(COrtho& ortho){
+  std::string str;
+  if(ortho.cmdActiveQueue){
+    str = std::move(ortho.cmdActiveQueue->front());
+    ortho.cmdActiveQueue->pop();
   }
-  return 0;
+  return str;
 }
 
 
@@ -458,7 +452,7 @@ int OrthoCommandOut(PyMOLGlobals * G, char *buffer)
 int OrthoCommandWaiting(PyMOLGlobals * G)
 {
   COrtho *I = G->Ortho;
-  return (I->cmdActiveBusy || QueueStrCheck(I->cmdActiveQueue));
+  return (I->cmdActiveBusy || !OrthoCommandIsEmpty(*I));
 }
 
 
@@ -481,26 +475,26 @@ void OrthoFeedbackIn(PyMOLGlobals * G, const char *buffer)
 {
   COrtho *I = G->Ortho;
   if(G->Option->pmgui) {
-    if(I->feedback)
-      QueueStrIn(I->feedback, buffer);
+    I->feedback.emplace(buffer);
   }
 }
 
 
 /*========================================================================*/
-int OrthoFeedbackOut(PyMOLGlobals * G, char *buffer)
+// For now keep G here for Settings
+std::string OrthoFeedbackOut(PyMOLGlobals* G, COrtho& ortho)
 {
-  COrtho *I = G->Ortho;
-  if(!I->feedback)
-    return 0;
-
-  int status = QueueStrOut(I->feedback, buffer);
-
-  if (status && !SettingGetGlobal_b(G, cSetting_colored_feedback)) {
+  std::string buffer;
+  if (ortho.feedback.empty()) {
+    return buffer;
+  }
+  buffer = std::move(ortho.feedback.front());
+  ortho.feedback.pop();
+  if (!SettingGetGlobal_b(G, cSetting_colored_feedback)) {
     UtilStripANSIEscapes(buffer);
   }
 
-  return status;
+  return buffer;
 }
 
 
@@ -2527,19 +2521,15 @@ int OrthoInit(PyMOLGlobals * G, int showSplash)
   if((I = (G->Ortho = Calloc(COrtho, 1)))) {
 
     new (&I->deferred)(decltype(I->deferred));
+    new (&I->feedback)(decltype(I->feedback));
+    new (&I->cmdQueue)(decltype(I->cmdQueue));
 
     ListInit(I->Blocks);
 
     I->ActiveButton = -1;
     I->Pushed = 0;
-    {
-      int a;
-      for(a = 0; a <= CMD_QUEUE_MASK; a++)
-        I->cmdQueue[a] = QueueNew(G, 0x7FFF);   /* 32K ea. level for commands */
-      I->cmdActiveQueue = I->cmdQueue[0];
-      I->cmdNestLevel = 0;
-    }
-    I->feedback = QueueNew(G, 0x3FFFF); /* ~256K for output */
+    I->cmdActiveQueue = &(*I->cmdQueue.begin());
+    I->cmdNestLevel = 0;
     I->RenderMode = 0;
     I->WrapXFlag = false;
 
@@ -2627,15 +2617,11 @@ void OrthoFree(PyMOLGlobals * G)
   {
     int a;
     I->cmdActiveQueue = NULL;
-    for(a = 0; a <= CMD_QUEUE_MASK; a++) {
-      QueueFree(I->cmdQueue[a]);
-      I->cmdQueue[a] = NULL;
-    }
   }
-  QueueFree(I->feedback);
-  I->feedback = NULL;
 
   pymol::destroy_at(&I->deferred);
+  pymol::destroy_at(&I->feedback);
+  pymol::destroy_at(&I->cmdQueue);
 
   if (I->bgData){
     FreeP(I->bgData);
@@ -2726,11 +2712,11 @@ int OrthoGetPushed(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-void OrthoCommandIn(PyMOLGlobals * G, const char *buffer)
+void OrthoCommandIn(COrtho& ortho, const char* buffer)
 {
-  COrtho *I = G->Ortho;
-  if(I->cmdActiveQueue)
-    QueueStrIn(I->cmdActiveQueue, buffer);
+  if (ortho.cmdActiveQueue) {
+    ortho.cmdActiveQueue->emplace(buffer);
+  }
 }
 
 void OrthoCommandSetBusy(PyMOLGlobals * G, int busy){

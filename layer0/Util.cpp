@@ -217,6 +217,11 @@ void UtilStripANSIEscapes(char *s)
       break;
   }
 }
+void UtilStripANSIEscapes(std::string& str)
+{
+  UtilStripANSIEscapes(&str[0]);
+  str.resize(strlen(str.c_str()));
+}
 
 void UtilZeroMem(void *ptr,ov_size howMuch)
 {

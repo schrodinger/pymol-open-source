@@ -80,14 +80,17 @@ void OrthoBusySlow(PyMOLGlobals * G, int progress, int total);
 void OrthoBusyFast(PyMOLGlobals * G, int progress, int total);
 void OrthoBusyPrime(PyMOLGlobals * G);
 void OrthoCommandSetBusy(PyMOLGlobals * G, int busy);
-void OrthoCommandIn(PyMOLGlobals * G, const char *buffer);
+void OrthoCommandIn(COrtho&, const char *buffer);
+inline void OrthoCommandIn(PyMOLGlobals * G, const char *buffer){
+  OrthoCommandIn(*G->Ortho, buffer);
+}
 int OrthoCommandSize(PyMOLGlobals * G);
-int OrthoCommandOut(PyMOLGlobals * G, char *buffer);
+std::string OrthoCommandOut(COrtho& ortho);
 void OrthoCommandNest(PyMOLGlobals * G, int dir);
-int OrthoCommandOutSize(PyMOLGlobals * G);
+bool OrthoCommandIsEmpty(COrtho& ortho);
 
-void OrthoFeedbackIn(PyMOLGlobals * G, const char *buffer);
-int OrthoFeedbackOut(PyMOLGlobals * G, char *buffer);
+void OrthoFeedbackIn(COrtho& ortho, std::string str);
+std::string OrthoFeedbackOut(PyMOLGlobals* G, COrtho& ortho);
 
 void OrthoSetWizardPrompt(PyMOLGlobals * G, char *vla);
 

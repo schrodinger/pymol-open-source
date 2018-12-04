@@ -4890,8 +4890,6 @@ static PyObject *CmdGetFeedback(PyObject * self, PyObject * args)
   if(ok) {
     if(G->Ready) {
       PyObject *result = NULL;
-      OrthoLineType buffer;
-      int ok;
 
       if(G->Terminating) {      /* try to bail */
         /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
@@ -4904,10 +4902,10 @@ static PyObject *CmdGetFeedback(PyObject * self, PyObject * args)
 
       /* ALLOWED DURING MODAL DRAWING */
       APIEnterBlocked(G);
-      ok = OrthoFeedbackOut(G, buffer);
+      auto buffer = OrthoFeedbackOut(G, *G->Ortho);
       APIExitBlocked(G);
-      if(ok)
-        result = Py_BuildValue("s", buffer);
+      if(!buffer.empty())
+        result = Py_BuildValue("s", buffer.c_str());
       return (APIAutoNone(result));
     }
   }

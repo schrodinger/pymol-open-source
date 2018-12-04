@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 
 #include "PyMOLGlobals.h"
 #include "Base.h"
+#include <string>
 
 void UtilZeroMem(void *ptr, ov_size howMuch);
 void UtilCopyMem(void *dst, const void *src, ov_size howMuch);
@@ -35,6 +36,7 @@ void UtilNCopy(char *dst, const char *src, ov_size n);        /* up to N-1 chars
 void UtilNCopyToLower(char *dst, const char *src, ov_size n); /* up to N-1 chars */
 void UtilCleanStr(char *s);
 void UtilStripANSIEscapes(char *s);
+void UtilStripANSIEscapes(std::string& str);
 int UtilCountStringVLA(char *vla);
 
 double UtilGetSeconds(PyMOLGlobals * G);

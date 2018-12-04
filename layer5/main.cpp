@@ -90,7 +90,7 @@ void MainUnlockAPIAsGlut()
 int MainFeedbackOut(char *st)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
-  return OrthoFeedbackOut(G, st);
+  return OrthoFeedbackOut(G, *G->Ortho);
 }
 
 void MainRunCommand(const char *str1)

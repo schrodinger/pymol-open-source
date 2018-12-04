@@ -2499,16 +2499,10 @@ int PFlush(PyMOLGlobals * G)
     PBlock(G);
     if(!(PIsGlutThread() && G->P_inst->glut_thread_keep_out)) {
       /* don't run if we're currently banned */
-      char *buffer = 0;
-      int size;
-      while((size = OrthoCommandOutSize(G))){
-	if (!buffer){
-	  buffer = VLACalloc(char, size);
-	} else {
-	  VLACheck(buffer, char, size);
-	}
-	OrthoCommandSetBusy(G, true);
-	OrthoCommandOut(G, buffer);
+      auto ortho = G->Ortho;
+      while(!OrthoCommandIsEmpty(*ortho)){
+        auto buffer = OrthoCommandOut(*ortho);
+        OrthoCommandSetBusy(G, true);
         OrthoCommandNest(G, 1);
         PUnlockAPIWhileBlocked(G);
         if(PyErr_Occurred()) {
@@ -2516,7 +2510,7 @@ int PFlush(PyMOLGlobals * G)
           PRINTFB(G, FB_Python, FB_Errors)
             " PFlush: Uncaught exception.  PyMOL may have a bug.\n" ENDFB(G);
         }
-        PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->parse, "si", buffer, 0));
+        PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->parse, "si", buffer.c_str(), 0));
         err = PyErr_Occurred();
         if(err) {
           PyErr_Print();
@@ -2524,14 +2518,12 @@ int PFlush(PyMOLGlobals * G)
             " PFlush: Uncaught exception.  PyMOL may have a bug.\n" ENDFB(G);
         }
         PLockAPIWhileBlocked(G);
-	OrthoCommandSetBusy(G, false);
+        OrthoCommandSetBusy(G, false);
         /* make sure no commands left at this level */
         while(OrthoCommandWaiting(G))
           PFlushFast(G);
         OrthoCommandNest(G, -1);
       }
-      if (buffer)
-	VLAFreeP(buffer);
     }
     PUnblock(G);
   }
@@ -2543,20 +2535,14 @@ int PFlushFast(PyMOLGlobals * G)
   /* NOTE: ASSUMES we currently have blocked Python threads and an unlocked API */
   PyObject *err;
   int did_work = false;
-  char *buffer = 0;
-  int size;
-  while((size = OrthoCommandOutSize(G))){
-    if (!buffer){
-      buffer = VLACalloc(char, size);
-    } else {
-      VLACheck(buffer, char, size);
-    }
+  auto ortho = G->Ortho;
+  while(!OrthoCommandIsEmpty(*ortho)){
+    auto buffer = OrthoCommandOut(*ortho);
     OrthoCommandSetBusy(G, true);
-    OrthoCommandOut(G, buffer);
     OrthoCommandNest(G, 1);
     did_work = true;
     PRINTFD(G, FB_Threads)
-      " PFlushFast-DEBUG: executing '%s' as thread %ld\n", buffer,
+      " PFlushFast-DEBUG: executing '%s' as thread %ld\n", buffer.c_str(),
       PyThread_get_thread_ident()
       ENDFD;
     if(PyErr_Occurred()) {
@@ -2564,7 +2550,7 @@ int PFlushFast(PyMOLGlobals * G)
       PRINTFB(G, FB_Python, FB_Errors)
         " PFlushFast: Uncaught exception.  PyMOL may have a bug.\n" ENDFB(G);
     }
-    PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->parse, "si", buffer, 0));
+    PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->parse, "si", buffer.c_str(), 0));
     err = PyErr_Occurred();
     if(err) {
       PyErr_Print();
@@ -2577,9 +2563,6 @@ int PFlushFast(PyMOLGlobals * G)
       PFlushFast(G);
     OrthoCommandNest(G, -1);
   }
-  if (buffer)
-    VLAFreeP(buffer);
-
   return did_work;
 }
 
