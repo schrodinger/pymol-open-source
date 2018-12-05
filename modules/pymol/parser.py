@@ -32,6 +32,7 @@ if __name__=='pymol.parser':
     
     import pymol
     import traceback
+    import collections
     import re
     import glob
     import sys
@@ -110,7 +111,7 @@ if __name__=='pymol.parser':
 
             self.cmd = cmd
             self.nest = 0
-            self.layer = { 0: NestLayer() }
+            self.layer = collections.defaultdict(NestLayer)
             self.pymol_names = self.cmd._pymol.__dict__
             
             # parsing state implemented with dictionaries to enable safe recursion
@@ -161,7 +162,14 @@ if __name__=='pymol.parser':
         # main parser routine
 
         def parse(self,s,secure=0):
-            layer = self.layer.get(self.nest,None)
+            try:
+                self.nest += 1
+                return self._parse(s, secure)
+            finally:
+                self.nest -= 1
+
+        def _parse(self, s, secure):
+            layer = self.layer[self.nest]
             self.result = None
 # report any uncaught errors...
 # WLD: this is problematic if parse is called inside an exception...removed.
