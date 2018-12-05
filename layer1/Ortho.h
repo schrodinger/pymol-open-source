@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #define cOrthoLineHeight DIP2PIXEL(12)
 
 #include <memory>
+#include <string>
 
 #include"os_gl.h"
 #include"Block.h"
