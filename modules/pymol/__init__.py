@@ -344,7 +344,8 @@ def adapt_to_hardware(self):
             if invocation.options.show_splash:
                 print(" Disabling shaders for Intel Express graphics")
             cmd.set("use_shaders", 0)
-        elif version.startswith("4.5.0 - Build 24.20.100."):
+        elif ".100." in version:
+            # 4.5.0 - Build *.20.100.*
             # Driver update breaks lighting
             cmd.set("precomputed_lighting", quiet=0)
 
