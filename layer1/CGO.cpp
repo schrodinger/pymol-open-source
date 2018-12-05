@@ -1801,7 +1801,13 @@ CGO *CGOCombineBeginEnd(const CGO * I, int est, bool do_not_split_lines)
 	      notHaveValue = damode;
 	      break;
 	    case CGO_ALPHA:
+	      // in case we're before CGO_COLOR
 	      cgo->alpha = *pc;
+	      if (colorVals) {
+		// in case we're after CGO_COLOR
+		colorVals[plc + 3] = *pc;
+	      }
+	      break;
 	    }
 	  }
 	}
@@ -4361,7 +4367,13 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
 	      end = 1;
 	      break;
 	    case CGO_ALPHA:
+	      // in case we're before CGO_COLOR
 	      cgo->alpha = *pc;
+	      if (colorVals) {
+		// in case we're after CGO_COLOR
+		colorVals[plc + 3] = *pc;
+	      }
+	      break;
 	    default:
 	      break;
 	    }
@@ -5690,6 +5702,7 @@ int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, Obj
 	  if (colorVals){
 	    c0 = &colorVals[plc];
 	    ray->color3fv(c0);
+	    ray->transparentf(1.0f - c0[3]);
 	  }
 	  if (vertexVals){
 	    v0 = &vertexVals[pl];

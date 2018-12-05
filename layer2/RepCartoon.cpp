@@ -104,6 +104,15 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
   int use_shaders, has_cylinders_to_optimize;
   float alpha = 1.0F - SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_cartoon_transparency);
 
+  auto hasAtomLevelAlpha = [](RepCartoon * I){
+    for(CoordSetAtomIterator iter(I->R.cs); iter.next();){
+      auto ai = iter.getAtomInfo();
+      if(AtomSettingGetWD(I->R.G, ai, cSetting_cartoon_transparency, 0.0f)){
+        return true;
+      }
+    }
+    return false;
+  }(I);
   use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_cartoon_use_shader);
   has_cylinders_to_optimize = G->ShaderMgr->Get_CylinderShader(info->pass, 0) && 
                               SettingGetGlobal_i(G, cSetting_cartoon_nucleic_acid_as_cylinders) && 
@@ -119,7 +128,8 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
  I->hasTransparency = 0;
   if (use_shaders){
     CGO *convertcgo = NULL, *tmpCGO = NULL, *tmp2CGO = NULL;
-    if ((alpha < 1.f) && (SettingGetGlobal_i(G, cSetting_transparency_mode) != 3)){
+    if (((alpha < 1.f) || hasAtomLevelAlpha) && 
+        (SettingGetGlobal_i(G, cSetting_transparency_mode) != 3)){
       // some transparency
       const float *color;
       float colorWithA[4];
@@ -207,15 +217,16 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
     }
   } else {
     if (ok){
-      if (alpha < 1.f){
-        CGO *tmpCGO = NULL;
-        tmpCGO = CGOConvertTrianglesToAlpha(I->preshader);
-        I->std = tmpCGO;
+      auto simplifiedCGO = CGOSimplify(I->preshader, 0);
+      if (alpha < 1.f || hasAtomLevelAlpha){
+        auto convertedCGO = CGOConvertTrianglesToAlpha(simplifiedCGO);
+        CGOFree(simplifiedCGO);
+        I->std = convertedCGO;
         if(I->std){
           I->std->render_alpha = 1; // CGORenderGL should call CGOSetZVector/CGORenderGLAlpha only
         }
       } else {
-        I->std = CGOSimplify(I->preshader, 0);
+        I->std = simplifiedCGO;
         CHECKOK(ok, I->std);
       }
       if(I->std) {
@@ -1629,11 +1640,12 @@ int GenerateRepCartoonDrawDebugOrient(CGO *cgo, int nAt, float *pv, float *pvo, 
 static
 int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule * obj, CoordSet *cs, CGO *cgo, CExtrude *ex, int nAt, int *seg, float *pv, float *tv, float *pvo,
     const CCInOut *cc,
-    int *at, float *dl, int cartoon_color, int discrete_colors, float loop_radius){
+    int *at, float *dl, int cartoon_color, int discrete_colors, float loop_radius, const float objAlpha){
   int ok = true;
   int n_p, n_pm1, n_pm2;
   const float *v0;
   float *v, *v1, *v2, *vo, *d;
+  float *valpha;
   float *vc = NULL;
   int atom_index1, atom_index2, *s,
       *atp, a, cur_car;
@@ -1654,6 +1666,7 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
   n_p = 0;
   v = ex->p;
   vc = ex->c;
+  valpha = ex->alpha;
   vi = ex->i;
   
   last_color = -1;
@@ -1679,6 +1692,7 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
         n_p = 0;
         v = ex->p;
         vc = ex->c;
+        valpha = ex->alpha;
         vi = ex->i;
         last_color = -1;
         uniform_color = true;
@@ -1692,6 +1706,7 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
           n_p = 0;
           v = ex->p;
           vc = ex->c;
+          valpha = ex->alpha;
           vi = ex->i;
           last_color = -1;
           uniform_color = true;
@@ -1708,12 +1723,18 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
 
         c1 = AtomSettingGetWD(G, ai1, cSetting_cartoon_color, cartoon_color);
         c2 = AtomSettingGetWD(G, ai2, cSetting_cartoon_color, cartoon_color);
+        float alpha1 = AtomSettingGetWD(G, ai1, cSetting_cartoon_transparency, 1.0f - objAlpha);
+        float alpha2 = AtomSettingGetWD(G, ai2, cSetting_cartoon_transparency, 1.0f - objAlpha);
+
 
         if (c1 < 0) c1 = ai1->color;
         if (c2 < 0) c2 = ai2->color;
 
         if((*(cc) == *(cc + 1)) && (c1 != c2))
           uniform_color = false;
+        if(alpha1 != alpha2){
+          uniform_color = false;
+        }
         if(last_color >= 0) {
           if(c1 != last_color)
             uniform_color = false;
@@ -1724,15 +1745,18 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
         *(vc++) = *(v0++);
         *(vc++) = *(v0++);
         *(vc++) = *(v0++);
+        *(valpha++) = alpha1;
         *(vi++) = ai1->masked ? -1 : atom_index1;
         
         v0 = ColorGet(G, c2); /* kludge */
         *(vc) = *(v0++);
         *(vc + 1) = *(v0++);
         *(vc + 2) = *(v0++);
+        *(valpha) = alpha2;
         *(vi) = ai2->masked ? -1 : atom_index2;
       } else {
         vc += 3;              /* part of kludge */
+        valpha++;
         vi++;
       }
       if(cur_car == cCartoon_skip_helix) {
@@ -1766,6 +1790,11 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
 
         c1 = AtomSettingGetWD(G, obj->AtomInfo + atom_index1,
             cSetting_cartoon_color, cartoon_color);
+
+        auto ai1 = obj->AtomInfo + atom_index1;
+        auto ai2 = obj->AtomInfo + atom_index2;
+        float alpha1 = AtomSettingGetWD(G, ai1, cSetting_cartoon_transparency, 1.0f - objAlpha);
+        float alpha2 = AtomSettingGetWD(G, ai2, cSetting_cartoon_transparency, 1.0f - objAlpha);
 
         if (c1 < 0) c1 = (obj->AtomInfo + atom_index1)->color;
 
@@ -1851,6 +1880,7 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
       n_p = 0;
       v = ex->p;
       vc = ex->c;
+      valpha = ex->alpha;
       vi = ex->i;
       uniform_color = true;
       last_color = -1;
@@ -2005,8 +2035,6 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
   return ok;
 }
 
-#define EXTRUDE_TRUNCATE() { ExtrudeTruncate(ex, 0); n_p = 0; v = ex->p;        \
-                             vc = ex->c; vn = ex->n; vi = ex->i; }
 
 /*
  * skip > dash > loop
@@ -2053,7 +2081,7 @@ int CheckExtrudeContigFlags(int nAt, int n_p, int a,
 static
 void ComputeCartoonAtomColors(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet *cs, int *nuc_flag, int atom_index1, int atom_index2, int *c1a, int *c2a, int *atp,
     const CCInOut *cc,
-    int cur_car, int cartoon_color, int nucleic_color, int discrete_colors, int n_p, int contigFlag){
+    int cur_car, int cartoon_color, float& alpha1, float& alpha2, int nucleic_color, int discrete_colors, int n_p, int contigFlag){
 
   int c1, c2;
 
@@ -2068,6 +2096,8 @@ void ComputeCartoonAtomColors(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet *cs
 
   AtomSettingGetIfDefined(G, ai1, cSetting_cartoon_color, &c1);
   AtomSettingGetIfDefined(G, ai2, cSetting_cartoon_color, &c2);
+  alpha1 = 1.0f - AtomSettingGetWD(G, ai1, cSetting_cartoon_transparency, 1.0f - alpha1);
+  alpha2 = 1.0f - AtomSettingGetWD(G, ai2, cSetting_cartoon_transparency, 1.0f - alpha2);
 
   if (c1 < 0) c1 = ai1->color;
   if (c2 < 0) c2 = ai2->color;
@@ -2098,13 +2128,16 @@ void ComputeCartoonAtomColors(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet *cs
 static
 void CartoonGenerateSample(PyMOLGlobals *G, int sampling, int *n_p, float dev, float *vo,
                            float *v1,
-                           float *v2, int c1, int c2, int atom_index1, int atom_index2,
-                           float power_a, float power_b, float **vc_p, unsigned int **vi_p,
-                           float **v_p, float **vn_p){
+                           float *v2, int c1, int c2, float alpha1, float alpha2,
+                           int atom_index1, int atom_index2,
+                           float power_a, float power_b, float **vc_p, float **valpha_p,
+                           unsigned int **vi_p, float **v_p, float **vn_p){
   int b, i0;
   float f0, f1, f2, f3, f4;
+  float a0;
   const float *v0;
   unsigned int *vi = *vi_p;
+  float *valpha = *valpha_p;
   float *vc = *vc_p, *v = *v_p, *vn = *vn_p;
   for(b = 0; b < sampling; b++) {       /* needs optimization */
     if(*n_p == 0) {
@@ -2113,15 +2146,18 @@ void CartoonGenerateSample(PyMOLGlobals *G, int sampling, int *n_p, float dev, f
       if(f0 <= 0.5) {
         v0 = ColorGet(G, c1);
         i0 = atom_index1;
+        a0 = alpha1;
       } else {
         v0 = ColorGet(G, c2);
         i0 = atom_index2;
+        a0 = alpha2;
       }
       f0 = smooth(f0, power_a); /* bias sampling towards the center of the curve */
-      /* store colors */
+      /* store colors and alpha*/
       *(vc++) = *(v0++);
       *(vc++) = *(v0++);
       *(vc++) = *(v0++);
+      *(valpha++) = a0;
       *(vi++) = i0;
       /* start of line/cylinder */
       f1 = 1.0F - f0;
@@ -2140,16 +2176,19 @@ void CartoonGenerateSample(PyMOLGlobals *G, int sampling, int *n_p, float dev, f
     if(f0 <= 0.5) {
       v0 = ColorGet(G, c1);
       i0 = atom_index1;
+      a0 = alpha1;
     } else {
       v0 = ColorGet(G, c2);
       i0 = atom_index2;
+      a0 = alpha2;
     }
     f0 = smooth(f0, power_a);   /* bias sampling towards the center of the curve */
     
-    /* store colors */
+    /* store colors and alpha*/
     *(vc++) = *(v0++);
     *(vc++) = *(v0++);
     *(vc++) = *(v0++);
+    *(valpha++) = a0;
     *(vi++) = i0;
     
     /* end of line/cylinder */
@@ -2174,6 +2213,7 @@ void CartoonGenerateSample(PyMOLGlobals *G, int sampling, int *n_p, float dev, f
     (*n_p)++;
   }
   (*vc_p) = vc;
+  (*valpha_p) = valpha;
   (*vi_p) = vi;
   (*v_p) = v;
   (*vn_p) = vn;
@@ -2426,6 +2466,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   int atom_index1, atom_index2;
   float *v, *v1, *v2, *vo;
   float *d, *vc = NULL, *vn;
+  float *valpha = nullptr;
   int *atp;
   int c1, c2;
   int a;
@@ -2448,6 +2489,17 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   float oval_width, oval_length;
   float dumbbell_radius, dumbbell_width, dumbbell_length;
   float ring_width;
+
+  auto EXTRUDE_TRUNCATE = [&ex, &n_p, &v, &vc, &valpha, &vn, &vi]() {
+    ExtrudeTruncate(ex, 0);
+    n_p = 0;
+    v = ex->p;
+    vc = ex->c;
+    valpha = ex->alpha;
+    vn = ex->n;
+    vi = ex->i;
+  };
+
   cartoon_color =
     SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_color);
   ring_width =
@@ -2541,7 +2593,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   /* process cylindrical helices first */
   if(ok && (nAt > 1) && cylindrical_helices) {
     ok = GenerateRepCartoonProcessCylindricalHelices(G, obj, cs, cgo, ex, nAt, seg, pv, tv,
-                                                     pvo, car, at, dl, cartoon_color, discrete_colors, loop_radius);
+                                                     pvo, car, at, dl, cartoon_color, discrete_colors, loop_radius, alpha);
   }
   if(ok && nAt > 1) {
     EXTRUDE_TRUNCATE();
@@ -2570,11 +2622,14 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
           atom_index2 = cs->IdxToAtm[*(atp + 1)];
           ai1 = obj->AtomInfo + atom_index1;
           ai2 = obj->AtomInfo + atom_index2;
-          ComputeCartoonAtomColors(G, obj, cs, nuc_flag, atom_index1, atom_index2, &c1, &c2, atp, cc, cur_car, cartoon_color, nucleic_color, discrete_colors, n_p, contigFlag);
 
+          float alpha1 = alpha;
+          float alpha2 = alpha;
+
+          ComputeCartoonAtomColors(G, obj, cs, nuc_flag, atom_index1, atom_index2, &c1, &c2, atp, cc, cur_car, cartoon_color, alpha1, alpha2, nucleic_color, discrete_colors, n_p, contigFlag);
           dev = throw_ * (*d);
-          CartoonGenerateSample(G, sampling, &n_p, dev, vo, v1, v2, c1, c2, 
-                                ai1->masked ? -1 : atom_index1, ai2->masked ? -1 : atom_index2, power_a, power_b, &vc, &vi, &v, &vn);
+          CartoonGenerateSample(G, sampling, &n_p, dev, vo, v1, v2, c1, c2, alpha1, alpha2,
+                                ai1->masked ? -1 : atom_index1, ai2->masked ? -1 : atom_index2, power_a, power_b, &vc, &valpha, &vi, &v, &vn);
 
           /* now do a smoothing pass along orientation 
              vector to smooth helices, etc... */

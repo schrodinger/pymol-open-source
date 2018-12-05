@@ -365,7 +365,7 @@ enum {
   REC_b( 276, stick_ball                              , atom      , false ),
   REC_f( 277, stick_ball_ratio                        , ostate    , 1.0F ),
   REC_b( 278, stick_fixed_radius                      , ostate    , false ),
-  REC_f( 279, cartoon_transparency                    , ostate    , 0.0F ),
+  REC_f( 279, cartoon_transparency                    , atom      , 0.0F ),
   REC_b( 280, dash_round_ends                         , ostate    , 1 ),
   REC_f( 281, h_bond_max_angle                        , global    , 63.0F ),
   REC_f( 282, h_bond_cutoff_center                    , global    , 3.6F ),

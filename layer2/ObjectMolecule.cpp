@@ -7225,6 +7225,19 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
         }
         Py_XDECREF(tmp);
       }
+      if(ok && PyObject_HasAttrString(atom, "cartoon_transparency")) {
+        tmp = PyObject_GetAttrString(atom, "cartoon_transparency");
+        if(tmp) {
+          float alpha_val;
+          ok = PConvPyObjectToFloat(tmp, &alpha_val);
+          if(!ok)
+            ErrMessage(G, __FUNCTION__, "bad alpha value");
+          else {
+            SettingSet(G, cSetting_cartoon_transparency, alpha_val, ai);
+          }
+        }
+        Py_XDECREF(tmp);
+      }
       if(ok && PyObject_HasAttrString(atom, "cartoon_trgb")) {
         tmp = PyObject_GetAttrString(atom, "cartoon_trgb");
         if(tmp) {

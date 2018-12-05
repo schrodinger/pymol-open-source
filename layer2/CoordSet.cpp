@@ -1453,7 +1453,6 @@ void CoordSet::render(RenderInfo * info)
               if(!pass)
                 r->fRender(r, info);
               break;
-            case cRepCartoon:
             case cRepNonbonded:
             case cRepRibbon:
               render_both = false; // cartoon and nonbonded do not have atom-level transparency
@@ -1461,6 +1460,7 @@ void CoordSet::render(RenderInfo * info)
             case cRepSurface:
             case cRepEllipsoid:
             case cRepCyl:
+            case cRepCartoon:
             case cRepSphere:
               {
                 if (render_both){
@@ -1469,7 +1469,7 @@ void CoordSet::render(RenderInfo * info)
                     r->fRender(r, info);
                   }
                 } else {
-                  bool checkAlphaCGO = abit & (cRepSurfaceBit | cRepCartoonBit);
+                  bool checkAlphaCGO = abit & (cRepSurfaceBit);
                   int check_setting = RepToTransparencySetting(a);
                   bool cont = true;
                   if (checkAlphaCGO){
