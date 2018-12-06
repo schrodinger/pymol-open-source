@@ -902,11 +902,10 @@ void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence,
 {
   int i0;
   int sele0, sele1;
-  AtomInfoType *ai;
   ObjectMolecule *obj0 = NULL, *obj1 = NULL;
   int ok = true;
 
-  ai = (AtomInfoType *) VLAMalloc(1, sizeof(AtomInfoType), 1, true);
+  auto ai = pymol::vla<AtomInfoType>(1);
   if(EditorActive(G)) {
 
     sele0 = SelectorIndexByName(G, cEditorSele1);

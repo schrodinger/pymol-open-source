@@ -4015,7 +4015,7 @@ void SelectorUpdateObjectSele(PyMOLGlobals * G, ObjectMolecule * obj)
 
       // for file formats other than PDB
       if (obj->need_hetatm_classification) {
-        for (auto ai = obj->AtomInfo, ai_end = ai + obj->NAtom;
+        for (auto ai = obj->AtomInfo.data(), ai_end = ai + obj->NAtom;
             ai != ai_end; ++ai) {
           if (!(ai->flags & cAtomFlag_polymer)) {
             ai->hetatm = true;
@@ -6637,7 +6637,6 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
   BondType *ii1, *bond = NULL;
   int nBond = 0;
   int nCSet, nAtom, ts;
-  AtomInfoType *atInfo = NULL;
   int isNew;
   CoordSet *cs = NULL;
   CoordSet *cs1, *cs2;
@@ -6731,7 +6730,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
     }
   }
 
-  atInfo = VLACalloc(AtomInfoType, nAtom);
+  pymol::vla<AtomInfoType> atInfo(nAtom);
   /* copy the atom info records and create new zero-based IDs */
   c = 0;
   {

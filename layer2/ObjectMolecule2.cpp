@@ -236,10 +236,12 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
   float pos_array[3] = { 0.0F, 0.0F, 0.0F };
   int ok = true;
 
-  AtomInfoType *atInfo = VLACalloc(AtomInfoType, 1);
+  pymol::vla<AtomInfoType> atInfo(1);
+
 #ifdef _PYMOL_IP_EXTRAS
   atInfo->oldid = -1;
 #endif
+
   if(state >= 0) {              /* specific state */
     start_state = state;
     stop_state = state + 1;
@@ -4416,7 +4418,6 @@ int ObjectMoleculeSort(ObjectMolecule * I)
   int *outdex = NULL;
   int a, b;
   CoordSet *cs, **dcs;
-  AtomInfoType *atInfo;
   int *dAtmToIdx = NULL;
   int ok = true;
   if(!I->DiscreteFlag) {        /* currently, discrete objects are never sorted */
@@ -4466,7 +4467,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
 
       ExecutiveUniqueIDAtomDictInvalidate(I->Obj.G);
 
-      atInfo = (AtomInfoType *) VLAMalloc(i_NAtom, sizeof(AtomInfoType), 5, true);
+      pymol::vla<AtomInfoType> atInfo(i_NAtom);
       CHECKOK(ok, atInfo);
       if (ok){
 	/* autozero here is important */

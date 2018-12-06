@@ -2412,7 +2412,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
                                          char *TOPStr, int frame, int discrete)
 {
   CoordSet *cset = NULL;
-  AtomInfoType *atInfo = nullptr;
+  pymol::vla<AtomInfoType> atInfo(1);
   int ok = true;
   int isNew = true;
   unsigned int nAtom = 0;
@@ -2428,11 +2428,6 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
       CHECKOK(ok, I);
       if (ok)
         std::swap(atInfo, I->AtomInfo);
-      isNew = true;
-    } else {                    /* never */
-      atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
-      CHECKOK(ok, atInfo);
-      isNew = false;
     }
     if(ok && isNew) {
       I->Obj.Color = AtomInfoUpdateAutoColor(G);
@@ -3335,7 +3330,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
 {
   PyMOLGlobals *G = I->Obj.G;
   int a;
-  AtomInfoType *ai0, *ai1, *nai;
+  AtomInfoType *ai0, *ai1;
   int n, nn;
   int at0 = -1;
   int at1 = -1;
@@ -3401,8 +3396,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
 
   if((at0 >= 0) && (at1 >= 0) && scs && (anch1 >= 0)) { /* have anchors and source coordinate set */
 
-    nai = (AtomInfoType *) VLAMalloc(src->NAtom, sizeof(AtomInfoType), 1, true);
-    CHECKOK(ok, nai);
+    auto nai = pymol::vla<AtomInfoType>(src->NAtom);
     /* copy atoms and atom info into a 1:1 direct mapping */
     if (ok)
       cs = CoordSetNew(I->Obj.G);
@@ -3628,7 +3622,8 @@ int ObjectMoleculeVerifyChemistry(ObjectMolecule * I, int state)
 
 
 /*========================================================================*/
-int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType *&& nai)
+int ObjectMoleculeAttach(ObjectMolecule * I, int index,
+    pymol::vla<AtomInfoType>&& nai)
 {
   int a;
   AtomInfoType *ai;
@@ -3688,7 +3683,7 @@ ok_except1:
 int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 {
   int a;
-  AtomInfoType *ai, *nai;
+  AtomInfoType *ai;
   int n, nn;
   int result = 0;
   int flag = true;
@@ -3733,9 +3728,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
       
       if(ok)
         cs->enumIndices();
-      if (ok)
-	nai = (AtomInfoType *) VLAMalloc(1, sizeof(AtomInfoType), 1, true);
-      CHECKOK(ok, nai);
+      auto nai = pymol::vla<AtomInfoType>(1);
       if (ok){
 	UtilNCopy(nai->elem, "H", 2);
 	nai->geom = cAtomInfoSingle;
@@ -7475,7 +7468,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
   return NULL;
 #else
   CoordSet *cset = NULL;
-  AtomInfoType *atInfo = nullptr;
+  auto atInfo = pymol::vla<AtomInfoType>(10);
   int ok = true;
   int isNew = true;
   unsigned int nAtom = 0;
@@ -7496,8 +7489,6 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
       std::swap(atInfo, I->AtomInfo);
       isNew = true;
     } else {
-      atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
-      isNew = false;
       if (discrete)
 	ObjectMoleculeSetDiscrete(G, I, true);
     }
@@ -8804,7 +8795,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
 {
   int ok = true;
   CoordSet *cset = NULL;
-  AtomInfoType *atInfo = nullptr;
+  pymol::vla<AtomInfoType> atInfo(nullptr);
   int isNew;
   int nAtom;
   const char *restart = NULL, *start = *next_entry;
@@ -8831,7 +8822,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       I = (ObjectMolecule *) ObjectMoleculeNew(G, (discrete > 0));
       std::swap(atInfo, I->AtomInfo);
     } else {
-      atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
+      atInfo = pymol::vla<AtomInfoType>(10);
     }
 
     if(isNew) {
@@ -8985,7 +8976,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
 
 /*========================================================================*/
 typedef int CompareFn(PyMOLGlobals *, const AtomInfoType *, const AtomInfoType *);
-int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType *&& ai,
+int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 			CoordSet * cs, int bondSearchFlag, int aic_mask, int invalidate)
 {
   PyMOLGlobals *G = I->Obj.G;
@@ -8996,7 +8987,6 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType *&& ai,
   int found;
   int nAt, nBd, nBond;
   int expansionFlag = false;
-  AtomInfoType *ai2;
   int oldNAtom, oldNBond;
   int ok = true;
 
@@ -9016,14 +9006,12 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType *&& ai,
   for(b = 0; b < cs->NIndex; b++)
     cs->AtmToIdx[cs->IdxToAtm[b]] = b;
 
-  ai2 = (AtomInfoType *) VLAMalloc(cs->NIndex, sizeof(AtomInfoType), 5, true);  /* autozero here is important */
-  CHECKOK(ok, ai2);
+  auto ai2 = pymol::vla<AtomInfoType>(cs->NIndex);
   if (ok){
     for(a = 0; a < cs->NIndex; a++)
       ai2[a] = std::move(ai[index[a]]);      /* creates a sorted list of atom info records */
   }
-  VLAFreeP(ai);
-  ai = ai2;
+  ai = std::move(ai2);
 
   /* now, match it up with the current object's atomic information */
 
@@ -11582,7 +11570,6 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
   int nAtom;
   float *coord = NULL;
   CoordSet *cset = NULL;
-  AtomInfoType *atInfo = NULL;
   int frame = -1;
   int ok = true;
 
@@ -11600,17 +11587,9 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
   }
   zero3f(coord);
 
-  atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);        /* autozero here is important */
-  CHECKOK(ok, atInfo);
-  if (!ok){
-    VLAFreeP(coord);
-    ObjectMoleculeFree(I);
-    return NULL;
-  }
   cset = CoordSetNew(G);
   CHECKOK(ok, cset);
   if (!ok){
-    VLAFreeP(atInfo);
     VLAFreeP(coord);
     ObjectMoleculeFree(I);
     return NULL;
@@ -11624,6 +11603,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
   cset->Obj = I;
   cset->enumIndices();
 
+  pymol::vla<AtomInfoType> atInfo(nAtom);
   ok &= ObjectMoleculeMerge(I, std::move(atInfo), cset, false, cAIC_IDMask, true);
   if (ok){
     if(frame < 0)
@@ -11708,7 +11688,7 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
     ObjectMoleculeGetObjectState;
 
   I->Obj.fGetCaption = (char *(*)(CObject *, char *, int)) ObjectMoleculeGetCaption;
-  I->AtomInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);   /* autozero here is important */
+  I->AtomInfo = pymol::vla<AtomInfoType>(10);
   CHECKOK(ok, I->AtomInfo);
   if (!ok){
     ObjectMoleculeFree(I);
@@ -11730,7 +11710,6 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
 
   int a;
   BondType *i0, *i1;
-  AtomInfoType *a0, *a1;
   OOCalloc(G, ObjectMolecule);
   (*I) = (*obj);
   I->Symmetry = SymmetryCopy(I->Symmetry);      /* null-safe */
@@ -11767,9 +11746,14 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
     AtomInfoBondCopy(G, i1++, i0++);
   }
 
-  I->AtomInfo = VLACalloc(AtomInfoType, I->NAtom);
-  a0 = I->AtomInfo;
-  a1 = obj->AtomInfo;
+  // unfortunately, the AtomInfoType is not copy-constructable yet
+  // assert copy done correct
+  if (I->AtomInfo.size() != obj->AtomInfo.size()) {
+    throw "AtomInfo copy failed";
+  }
+  AtomInfoType *a0 = I->AtomInfo;
+  const AtomInfoType* a1 = obj->AtomInfo;
+  memset(a0, 0, sizeof(AtomInfoType) * I->NAtom);
   for(a = 0; a < I->NAtom; a++)
     AtomInfoCopy(G, a1++, a0++);
 
@@ -11866,7 +11850,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
                                          int quiet, int *model_number)
 {
   CoordSet *cset = NULL;
-  AtomInfoType *atInfo = nullptr;
+  pymol::vla<AtomInfoType> atInfo(nullptr);
   int ok = true;
   int isNew = true;
   unsigned int nAtom = 0;
@@ -11894,7 +11878,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
           std::swap(atInfo, I->AtomInfo);
         isNew = true;
       } else {
-        atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);  /* autozero here is important */
+        atInfo = pymol::vla<AtomInfoType>(10);
 	CHECKOK(ok, atInfo);
         isNew = false;
       }
