@@ -570,7 +570,7 @@ void CShaderMgr::Reload_Shader_Variables() {
   int stereo, stereo_mode;
   const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
   short bg_image = bg_image_filename && bg_image_filename[0];
-  bg_image_mode_solid = !(bg_gradient || bg_image || OrthoBackgroundDataIsSet(G));
+  bg_image_mode_solid = !(bg_gradient || bg_image || OrthoBackgroundDataIsSet(*G->Ortho));
 
   SetPreprocVar("bg_image_mode_solid", bg_image_mode_solid);
   if (!bg_image_mode_solid) {
@@ -1310,7 +1310,7 @@ CShaderPrg *CShaderMgr::Enable_ScreenShader(){
   shaderPrg->Enable();
 
   int ortho_width, ortho_height;
-  OrthoGetSize(G, &ortho_width, &ortho_height);
+  std::tie(ortho_width, ortho_height) = OrthoGetSize(*G->Ortho);
   shaderPrg->Set2f("t2PixelSize", 2.f / ortho_width, 2.f / ortho_height);
 
   return Setup_LabelShader(shaderPrg);

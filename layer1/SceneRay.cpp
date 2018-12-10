@@ -102,7 +102,7 @@ bool SceneRay(PyMOLGlobals * G,
   float fov;
   int stereo_hand = 0;
   int grid_mode = SettingGetGlobal_i(G, cSetting_grid_mode);
-  ImageType *stereo_image = NULL;
+  std::shared_ptr<pymol::Image> stereo_image;
   OrthoLineType prefix = "";
   int ortho = SettingGetGlobal_i(G, cSetting_ray_orthoscopic);
   int last_grid_active = I->grid.active;
@@ -320,43 +320,36 @@ bool SceneRay(PyMOLGlobals * G,
       switch (mode) {
       case 0:                  /* mode 0 is built-in */
         {
+          auto pixelSize = pymol::Image::getPixelSize();
           unsigned int buffer_size = 4 * ray_width * ray_height;
-          unsigned int *buffer = (unsigned int*) Alloc(unsigned int, ray_width * ray_height);
-          unsigned int background;
-          ErrChkPtr(G, buffer);
+          std::vector<unsigned char> buffer(buffer_size);
+          std::uint32_t background;
+          ErrChkPtr(G, buffer.data());
 
-          RayRender(ray, buffer, timing, angle, antialias, &background);
+          RayRender(ray, reinterpret_cast<unsigned int*>(buffer.data()), timing, angle, antialias, &background);
 
           /*    RayRenderColorTable(ray,ray_width,ray_height,buffer); */
           if(!I->grid.active) {
-            I->Image = Calloc(ImageType, 1);
-            I->Image->data = (unsigned char *) buffer;
-            I->Image->size = buffer_size;
-            I->Image->width = ray_width;
-            I->Image->height = ray_height;
+            I->Image = pymol::make_unique<pymol::Image>(std::move(buffer), ray_width, ray_height);
           } else {
             if(!I->Image) {     /* alloc on first pass */
-              I->Image = Calloc(ImageType, 1);
+              I->Image = pymol::make_unique<pymol::Image>(tot_width, tot_height);
               if(I->Image) {
-                unsigned int tot_size = 4 * tot_width * tot_height;
-                I->Image->data = Alloc(unsigned char, tot_size);
-                I->Image->size = tot_size;
-                I->Image->width = tot_width;
-                I->Image->height = tot_height;
+                unsigned int tot_size = tot_width * tot_height * pixelSize;
                 {               /* fill with background color */
                   unsigned int i;
-                  unsigned int *ptr = (unsigned int *) I->Image->data;
-                  for(i = 0; i < tot_size; i += 4) {
+                  unsigned int *ptr = (unsigned int *) I->Image->bits();
+                  for(i = 0; i < tot_size; i += pixelSize) {
                     *(ptr++) = background;
                   }
                 }
               }
             }
             /* merge in the latest rendering */
-            if(I->Image && I->Image->data) {
+            if(I->Image && I->Image->bits()) {
               int i, j;
-              unsigned int *src = buffer;
-              unsigned int *dst = (unsigned int *) I->Image->data;
+              unsigned int *src = reinterpret_cast<unsigned int *>(buffer.data());
+              unsigned int *dst = reinterpret_cast<unsigned int *>(I->Image->bits());
 
               dst += (ray_x + ray_y * tot_width);
 
@@ -370,12 +363,10 @@ bool SceneRay(PyMOLGlobals * G,
                 dst += (tot_width - ray_width);
               }
             }
-            FreeP(buffer);
           }
           I->DirtyFlag = false;
           I->CopyType = true;
           I->CopyForced = true;
-          I->MovieOwnsImageFlag = false;
         }
         break;
 
@@ -485,9 +476,9 @@ bool SceneRay(PyMOLGlobals * G,
     if(I->grid.active)
       GridSetRayViewport(&I->grid, -1, &ray_x, &ray_y, &ray_width, &ray_height);
 
-    if((mode == 0) && I->Image && I->Image->data) {
-      SceneApplyImageGamma(G, (unsigned int *) I->Image->data, I->Image->width,
-                           I->Image->height);
+    if((mode == 0) && I->Image && !I->Image->empty()) {
+      SceneApplyImageGamma(G, reinterpret_cast<unsigned int *>(I->Image->bits()), I->Image->getWidth(),
+                           I->Image->getHeight());
     }
 
     stereo_hand--;
@@ -495,7 +486,6 @@ bool SceneRay(PyMOLGlobals * G,
       break;
     else {
       stereo_image = I->Image;
-      I->Image = NULL;
     }
   }
 
@@ -504,32 +494,30 @@ bool SceneRay(PyMOLGlobals * G,
       switch (I->StereoMode) {
       case cStereo_quadbuffer:
       case cStereo_geowall:
-        /* merge the two images into one pointer */
-        I->Image->data = Realloc(I->Image->data, unsigned char, I->Image->size * 2);
-        UtilCopyMem(I->Image->data + I->Image->size, stereo_image->data, I->Image->size);
-        I->Image->stereo = true;
+        /* merge the two images into one */
+        I->Image->merge(*stereo_image);
         break;
       case cStereo_crosseye:
       case cStereo_walleye:
         {
           /* merge the two images into one */
 
-          unsigned char *merged_image = Alloc(unsigned char, I->Image->size * 2);
-          unsigned int *q = (unsigned int *) merged_image;
+          std::vector<unsigned char> merged_image(I->Image->getSizeInBytes() * 2);
+          unsigned int *q = reinterpret_cast<unsigned int *>(merged_image.data());
           unsigned int *l;
           unsigned int *r;
           int height, width;
           int a, b;
 
           if(I->StereoMode == 2) {
-            l = (unsigned int *) stereo_image->data;
-            r = (unsigned int *) I->Image->data;
+            l = (unsigned int *) stereo_image->bits();
+            r = (unsigned int *) I->Image->bits();
           } else {
-            r = (unsigned int *) stereo_image->data;
-            l = (unsigned int *) I->Image->data;
+            r = (unsigned int *) stereo_image->bits();
+            l = (unsigned int *) I->Image->bits();
           }
-          height = I->Image->height;
-          width = I->Image->width;
+          height = I->Image->getHeight();
+          width = I->Image->getWidth();
 
           for(a = 0; a < height; a++) {
             for(b = 0; b < width; b++)
@@ -537,10 +525,8 @@ bool SceneRay(PyMOLGlobals * G,
             for(b = 0; b < width; b++)
               *(q++) = *(r++);
           }
-          FreeP(I->Image->data);
-          I->Image->data = merged_image;
-          I->Image->width *= 2;
-          I->Image->size *= 2;
+          *I->Image = pymol::Image(std::move(merged_image), I->Image->getWidth() * 2,
+                          I->Image->getHeight());
         }
         break;
       case cStereo_anaglyph:
@@ -556,8 +542,8 @@ bool SceneRay(PyMOLGlobals * G,
           {
             extern float anaglyphR_constants[6][9];
             extern float anaglyphL_constants[6][9];
-            unsigned int *l = (unsigned int *) stereo_image->data;
-            unsigned int *r = (unsigned int *) I->Image->data;
+            unsigned int *l = reinterpret_cast<unsigned int *>(stereo_image->bits());
+            unsigned int *r = reinterpret_cast<unsigned int *>(I->Image->bits());
 	    int anaglyph_mode = SettingGetGlobal_i(G, cSetting_anaglyph_mode);
 	    /* anaglyph scalars */
 	    float * a_r = anaglyphR_constants[anaglyph_mode];
@@ -566,8 +552,8 @@ bool SceneRay(PyMOLGlobals * G,
             int height, width;
             int a, b;
 	    float _r[3] = {0.F,0.F,0.F}, _l[3] = {0.F,0.F,0.F}, _b[3] = {0.F,0.F,0.F};
-            height = I->Image->height;
-            width = I->Image->width;
+            height = I->Image->getHeight();
+            width = I->Image->getWidth();
             
             for(a = 0; a < height; a++) {
               for(b = 0; b < width; b++) {
@@ -647,8 +633,8 @@ bool SceneRay(PyMOLGlobals * G,
         {
           /* merge the two images into one */
 
-          unsigned char *merged_image = Alloc(unsigned char, I->Image->size);
-          unsigned int *q = (unsigned int *) merged_image;
+          std::vector<unsigned char> merged_image(I->Image->getSizeInBytes());
+          unsigned int *q = reinterpret_cast<unsigned int *>(merged_image.data());
           unsigned int *l;
           unsigned int *r;
           int height, width;
@@ -661,11 +647,11 @@ bool SceneRay(PyMOLGlobals * G,
               parity = 1 - parity;
           }
 
-          l = (unsigned int *) stereo_image->data;
-          r = (unsigned int *) I->Image->data;
+          l = reinterpret_cast<unsigned int *>(stereo_image->bits());
+          r = reinterpret_cast<unsigned int *>(I->Image->bits());
 
-          height = I->Image->height;
-          width = I->Image->width;
+          height = I->Image->getHeight();
+          width = I->Image->getWidth();
 
           for(a = 0; a < height; a++) {
             for(b = 0; b < width; b++) {
@@ -700,14 +686,11 @@ bool SceneRay(PyMOLGlobals * G,
               }
             }
           }
-          FreeP(I->Image->data);
-          I->Image->data = merged_image;
+          *I->Image = pymol::Image(std::move(merged_image), height, width);
         }   
         break;
       }
     }
-    FreeP(stereo_image->data);
-    FreeP(stereo_image);
   }
   timing = UtilGetSeconds(G) - timing;
   if(mode != 2) {               /* don't show timings for tests */
@@ -742,7 +725,7 @@ bool SceneRay(PyMOLGlobals * G,
 
 static int SceneDeferredRay(DeferredRay * dr)
 {
-  PyMOLGlobals *G = dr->G;
+  PyMOLGlobals *G = dr->m_G;
   SceneRay(G, dr->ray_width, dr->ray_height, dr->mode,
            NULL, NULL, dr->angle, dr->shift, dr->quiet,
            NULL, dr->show_timing, dr->antialias);
@@ -797,9 +780,9 @@ void SceneRenderRayVolume(PyMOLGlobals * G, CScene *I){
 #endif
   glDepthMask(GL_FALSE);
 #ifndef PURE_OPENGL_ES_2
-  if (PIsGlutThread() && I->Image && I->Image->data){
+  if (PIsGlutThread() && I->Image && !I->Image->empty()){
     if (rayWidth == I->Width && rayHeight == I->Height){
-      glDrawPixels(I->Image->width, I->Image->height, GL_RGBA, GL_UNSIGNED_BYTE, I->Image->data);
+      glDrawPixels(I->Image->getWidth(), I->Image->getHeight(), GL_RGBA, GL_UNSIGNED_BYTE, I->Image->bits());
     } else {
       SceneDrawImageOverlay(G, 1, NULL);
     }

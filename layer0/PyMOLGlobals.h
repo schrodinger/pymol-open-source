@@ -38,7 +38,7 @@ typedef struct _CTetsurf CTetsurf;
 typedef struct _CSphere CSphere;
 typedef struct _CFeedback CFeedback;
 typedef struct _CUtil CUtil;
-typedef struct _CColor CColor;
+struct CColor;
 struct CMovie;
 struct CControl;
 struct CButMode;

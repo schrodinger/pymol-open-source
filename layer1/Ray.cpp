@@ -352,8 +352,8 @@ static void compute_background_for_pixel(unsigned char *bkrd, short isOutsideInY
 }
 
 static void fill_background_image(CRay * I, unsigned int *buffer, int width, int height, unsigned int cnt){
-  int bkgrd_width = I->bkgrd_width, bkgrd_height = I->bkgrd_height;
-  unsigned char *bkgrd_data = I->bkgrd_data;
+  int bkgrd_width = I->bkgrd_data->getWidth(), bkgrd_height = I->bkgrd_data->getHeight();
+  unsigned char *bkgrd_data = I->bkgrd_data->bits();
   int bg_image_mode = SettingGetGlobal_i(I->G, cSetting_bg_image_mode);
   int bg_image_linear = SettingGetGlobal_b(I->G, cSetting_bg_image_linear);
   float bg_rgb[3];
@@ -5566,9 +5566,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   int ray_trace_mode;
   const float _0 = 0.0F, _p499 = 0.499F;
   int volume;
-  short bkgrd_data_allocated = 0;
   const char * bg_image_filename;
-  unsigned char *old_bkgrd_data = NULL;
   int ok = true;
 
   if(n_light > 10)
@@ -5645,18 +5643,10 @@ void RayRender(CRay * I, unsigned int *image, double timing,
 
   bkrd_is_gradient = SettingGetGlobal_b(I->G, cSetting_bg_gradient);
   bg_image_filename = SettingGet_s(I->G, NULL, NULL, cSetting_bg_image_filename);
-  old_bkgrd_data = I->bkgrd_data;
-  I->bkgrd_data = (unsigned char*) OrthoBackgroundDataGet(I->G, &I->bkgrd_width, &I->bkgrd_height);
-  if (!I->bkgrd_data && bg_image_filename && bg_image_filename[0] && I->bkgrd_width > 0 && I->bkgrd_height > 0){
-    if (old_bkgrd_data){
-      free(old_bkgrd_data);
-    }
-    if(MyPNGRead(bg_image_filename,
-		 (unsigned char **) &I->bkgrd_data,
-		 (unsigned int *) &I->bkgrd_width, (unsigned int *) &I->bkgrd_height)) {
-      bkgrd_data_allocated = 1;
-      bkrd_is_gradient = 0;
-    }
+  I->bkgrd_data = OrthoBackgroundDataGet(*I->G->Ortho);
+  if (!I->bkgrd_data && bg_image_filename && bg_image_filename[0]){
+    I->bkgrd_data = MyPNGRead(bg_image_filename);
+    bkrd_is_gradient = 0;
   }
   if (I->bkgrd_data){
     opaque_back = 1;
@@ -6122,9 +6112,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         rt[a].fov = fov;
         rt[a].pos[2] = pos[2];
         rt[a].depth = depth;
-        rt[a].bgWidth = I->bkgrd_width;
-        rt[a].bgHeight = I->bkgrd_height;
-        rt[a].bkrd_data = I->bkgrd_data;
+        rt[a].bkrd_data = I->bkgrd_data ? I->bkgrd_data->bits() : nullptr;
       }
 
 #ifndef _PYMOL_NOPY
@@ -6579,11 +6567,8 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       rayVolume = 3;
     } else 
       FreeP(depth);
-    if (bkgrd_data_allocated && I->bkgrd_data){
-      free(I->bkgrd_data);
-    }
   }
-  I->bkgrd_data = NULL;
+  I->bkgrd_data = nullptr;
 }
 
 
@@ -7515,7 +7500,7 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
   unsigned char *testPtr;
   int a;
 
-  OOAlloc(I->G, CRay);
+  OOCalloc(I->G, CRay);
   I->G = G;
   test = 0xFF000000;
   testPtr = (unsigned char *) &test;
@@ -7554,8 +7539,7 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
     v = ColorGet(I->G, color);
     copy3f(v, I->IntColor);
   }
-  I->bkgrd_data = NULL;
-  I->bkgrd_width = I->bkgrd_height = 0;
+
   return (I);
 }
 

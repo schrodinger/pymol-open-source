@@ -170,10 +170,13 @@ static void write_data_to_file(
 }
 #endif
 
-int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *data_ptr,
-               unsigned int width, unsigned int height, float dpi, int format, int quiet,
-               void * io_ptr)
+int MyPNGWrite(const char* file_name, const pymol::Image& img, const float dpi,
+    const int format, const int quiet, const float screen_gamma,
+    const float file_gamma, void* io_ptr)
 {
+  const unsigned char* data_ptr = img.bits();
+  int width = img.getWidth();
+  int height = img.getHeight();
   switch (format) {
   case cMyPNG_FormatPNG:
     {
@@ -264,8 +267,7 @@ int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *dat
                      PNG_RESOLUTION_METER);
       }
 
-      png_set_gamma(png_ptr, SettingGetGlobal_f(G, cSetting_png_screen_gamma),
-                    SettingGetGlobal_f(G, cSetting_png_file_gamma));
+      png_set_gamma(png_ptr, screen_gamma, file_gamma);
 
       /* stamp the image as being created by PyMOL we could consider
        * supporting optional annotations as well: PDB codes, canonical
@@ -359,10 +361,9 @@ int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *dat
   return 0;
 }
 
-int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_ptr,
-              unsigned int *height_ptr)
+std::unique_ptr<pymol::Image> MyPNGRead(const char *file_name)
 {
-
+  std::unique_ptr<pymol::Image> img;
 #ifdef _PYMOL_LIBPNG
 
   FILE *png_file = NULL;
@@ -382,12 +383,11 @@ int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_
   int ret;
   int i;
   int ok = true;
-  unsigned char *p = NULL;
   double file_gamma;
   uchar2p data = {NULL, NULL};
 
   if(!file_name)
-    return 0;
+    return nullptr;
 
   if(!strncmp(file_name, "data:image/png;base64,", 22)) {
     const char *base64str = file_name + 22;
@@ -398,7 +398,7 @@ int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_
   } else {
     png_file = pymol_fopen(file_name, "rb");
     if(png_file == NULL)
-      return 0;
+      return nullptr;
 
     /* read and check signature in PNG file */
     ret = fread(buf, 1, 8, png_file);
@@ -497,17 +497,9 @@ int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_
     png_read_end(png_ptr, info_ptr);
   }
 
+  img = pymol::make_unique<pymol::Image>(width, height);
   if(ok) {
-    /* now reformat image into PyMOL format */
-
-    p = (unsigned char *) mmalloc(4 * width * height);
-    if(!p)
-      ok = false;
-  }
-  if(ok) {
-    *(p_ptr) = p;
-    *(width_ptr) = width;
-    *(height_ptr) = height;
+    auto p = img->bits();
     for(row = 0; row < (signed) height; row++) {
       pix_ptr = row_pointers[(height - 1) - row];
       for(col = 0; col < (signed) width; col++) {
@@ -533,9 +525,9 @@ int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_
   if(data.h)
     mfree(data.h);
 
-  return (ok);
+  return img;
 #else
-  return (false);
+  return nullptr;
 #endif
 
 }                               /* end of source */

@@ -2747,7 +2747,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
       /* clamp this value */
       const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
       if(!(bg_image_filename && bg_image_filename[0]) &&
-          SettingGetGlobal_b(G, cSetting_bg_gradient) && !OrthoBackgroundDataIsSet(G)) {
+          SettingGetGlobal_b(G, cSetting_bg_gradient) && !OrthoBackgroundDataIsSet(*G->Ortho)) {
         ColorUpdateFrontFromSettings(G);
 	ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
 	OrthoBackgroundTextureNeedsUpdate(G);
@@ -2761,7 +2761,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
       const float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
       {
         const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
-        if(!(bg_image_filename && bg_image_filename[0]) && !OrthoBackgroundDataIsSet(G)) {
+        if(!(bg_image_filename && bg_image_filename[0]) && !OrthoBackgroundDataIsSet(*G->Ortho)) {
 	  ColorUpdateFront(G, v);
 	  ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
 	}

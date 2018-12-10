@@ -17,9 +17,12 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Ray
 #define _H_Ray
 
+#include <vector>
+
 #include"Base.h"
 #include"Basis.h"
 #include"PyMOLGlobals.h"
+#include"Image.h"
 
 #define cRayMaxBasis 10
 
@@ -151,8 +154,7 @@ struct _CRay {
   double PrimSize;
   int PrimSizeCnt;
   float Fov, Pos[3];
-  unsigned char *bkgrd_data;
-  int bkgrd_width, bkgrd_height;
+  std::shared_ptr<pymol::Image> bkgrd_data;
 };
 
 void RayGetScreenVertex(CRay * I, float *v, float *dest);

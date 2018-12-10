@@ -17,8 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Movie
 #define _H_Movie
 
+#include <memory>
 #include"os_python.h"
-
 #include"Ortho.h"
 #include"Scene.h"
 #include"View.h"
@@ -61,8 +61,9 @@ int MoviePlaying(PyMOLGlobals * G);
 void MovieSetSize(PyMOLGlobals * G, unsigned int width, unsigned int height);
 
 void MovieClearImages(PyMOLGlobals * G);
-ImageType *MovieGetImage(PyMOLGlobals * G, int image);
-void MovieSetImage(PyMOLGlobals * G, int index, ImageType * image);
+//Return copy of Image
+std::shared_ptr<pymol::Image> MovieGetImage(PyMOLGlobals * G, int index);
+void MovieSetImage(PyMOLGlobals * G, int index, std::shared_ptr<pymol::Image> image);
 
 int MovieGetLength(PyMOLGlobals * G);
 int MovieGetPanelHeight(PyMOLGlobals * G);

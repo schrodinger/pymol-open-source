@@ -1,0 +1,222 @@
+#include "Image.h"
+#include "MyPNG.h"
+#include "Test.h"
+#include "os_predef.h"
+
+#include <cstdio>
+#include <fstream>
+#include <utility>
+
+using namespace pymol::test;
+using pymol::Image;
+
+TEST_CASE("Image Default Constructor", "[Image]")
+{
+  Image img;
+  REQUIRE(true);
+}
+
+static const std::size_t width = 64u;
+static const std::size_t height = 128u;
+
+Image getMockImage(bool stereoImage = false)
+{
+  std::vector<unsigned char> bytes(width * height * Image::getPixelSize(), 128);
+  if (stereoImage) {
+    bytes.resize(bytes.size() * 2);
+  }
+  return Image(bytes, width, height, stereoImage);
+}
+
+TEST_CASE("Image Ill-Informed Constructor", "[Image]")
+{
+  bool caught = false;
+  try {
+    std::vector<unsigned char> bytes(width * height * Image::getPixelSize(), 128);
+    Image img(bytes, width, height, true);
+  } catch (const std::exception& e){
+    caught = true;
+  }
+  REQUIRE(caught);
+}
+
+TEST_CASE("Image Get Size", "[Image]")
+{
+  Image img;
+  int rwidth, rheight;
+  std::tie(rwidth, rheight) = img.getSize();
+  REQUIRE(rwidth == 0);
+  REQUIRE(rheight == 0);
+  REQUIRE(img.getSizeInBytes() == 0u);
+
+  Image img2(width, height);
+  std::tie(rwidth, rheight) = img2.getSize();
+  REQUIRE(rwidth == width);
+  REQUIRE(rheight == height);
+  REQUIRE(img2.getSizeInBytes() == width * height * Image::getPixelSize());
+  Image img3(width, height, true);
+  REQUIRE(img3.getSizeInBytes() == width * height * Image::getPixelSize());
+}
+
+TEST_CASE("Image Forwarding Constructor && Get Size In Bytes", "[Image]")
+{
+  Image img = getMockImage();
+  REQUIRE(img.getSizeInBytes() == width * height * Image::getPixelSize());
+  Image img2 = getMockImage(true);
+  REQUIRE(img2.getSizeInBytes() == width * height * Image::getPixelSize());
+}
+
+TEST_CASE("Image Get Width and Get Height", "[Image]")
+{
+  Image img(width, height);
+  REQUIRE(img.getWidth() == width);
+  REQUIRE(img.getHeight() == height);
+}
+
+TEST_CASE("Image Is Stereo", "[Image]")
+{
+  Image img(0, 0);
+  REQUIRE(!img.isStereo());
+  Image img2(0, 0, false);
+  REQUIRE(!img2.isStereo());
+  Image img3(0, 0, true);
+  REQUIRE(img3.isStereo());
+}
+
+TEST_CASE("Image Get Bits", "[Image]")
+{
+  Image img = getMockImage();
+  REQUIRE(img.bits()[3] == 128);
+}
+
+TEST_CASE("Image Equality", "[Image]")
+{
+  Image img = getMockImage();
+  Image img2 = getMockImage();
+  REQUIRE(img.isSameImage(img2));
+  REQUIRE(img == img2);
+}
+
+TEST_CASE("Image Regularity", "[Image]")
+{
+  REQUIRE(isRegular<Image>());
+}
+
+TEST_CASE("Image Copy Construct", "[Image]")
+{
+  Image img = getMockImage();
+  Image img2 = img;
+  REQUIRE(img == img2);
+  REQUIRE(&img != &img2);
+  img2.bits()[3] = 200;
+  REQUIRE(img != img2);
+}
+
+TEST_CASE("Image Copy Assign", "[Image]")
+{
+  Image img = getMockImage();
+  Image img2;
+  img2 = img;
+  REQUIRE(img == img2);
+  REQUIRE(&img != &img2);
+  img2.bits()[3] = 200;
+  REQUIRE(img != img2);
+}
+
+TEST_CASE("Image Move Construct", "[Image]")
+{
+  Image img = getMockImage(true);
+  Image img2 = std::move(img);
+  REQUIRE(img2.getSizeInBytes() == width * height * Image::getPixelSize());
+}
+
+TEST_CASE("Image Move Assign", "[Image]")
+{
+  Image img = getMockImage(true);
+  Image img2;
+  img2 = std::move(img);
+  REQUIRE(img2.getSizeInBytes() == width * height * Image::getPixelSize());
+}
+
+TEST_CASE("Image Merge", "[Image]")
+{
+  Image img = getMockImage();
+  REQUIRE(!img.isStereo());
+  Image img2 = getMockImage();
+  img.merge(img2);
+  REQUIRE(img.isStereo());
+  REQUIRE(img.getSizeInBytes() == img2.getSizeInBytes());
+}
+
+TEST_CASE("Image Empty", "[Image]")
+{
+  Image img;
+  REQUIRE(img.empty());
+
+  Image img2 = getMockImage(true);
+  img2 = std::move(img);
+  REQUIRE(img2.empty());
+}
+
+TEST_CASE("Image Erase", "[Image]")
+{
+  Image img = getMockImage();
+  img.erase();
+  REQUIRE(img.empty());
+}
+
+static void save_image(const char* filename, const Image& img){
+  auto dpi = 0.0f;
+  auto format = 0; // png == 0
+  auto quiet = 0;
+  auto screen_gamma = 2.4f;
+  auto file_gamma = 1.0f;
+  MyPNGWrite(filename, img, dpi, format, quiet, screen_gamma, file_gamma);
+}
+TEST_CASE("Image Make Image", "[Image]")
+{
+  auto dim = 64u;
+  std::vector<unsigned char> bytes(dim * dim * Image::getPixelSize());
+  Image img(bytes, dim, dim);
+  for (int i = 0; i < img.getSizeInBytes(); i++) {
+    if (i % 4 == Image::Channel::ALPHA) {
+      img.bits()[i] = 0xff;
+    } else if (i % 4 == Image::Channel::BLUE) {
+      img.bits()[i] = 0xff;
+    } else {
+      img.bits()[i] = 0x00;
+    }
+  }
+  TmpFILE tmpfile;
+  save_image(tmpfile.getFilename(), img);
+  std::ifstream iFILE(tmpfile.getFilename());
+  REQUIRE(iFILE.good());
+}
+
+TEST_CASE("Image Deinterlace Data", "[Image]")
+{
+  auto test_folder = std::string(std::getenv("PYMOL_DATA")).append(PATH_SEP).append("test").append(PATH_SEP);
+  auto deinterlacedimage_loc = std::string(test_folder).append("single.png");
+  auto interlacedimage_loc = std::string(test_folder).append("double.png");
+  auto deinterlacedimage = MyPNGRead(deinterlacedimage_loc.c_str());
+  auto interlacedimage = MyPNGRead(interlacedimage_loc.c_str());
+  auto solution = interlacedimage->deinterlace(true);
+  TmpFILE tmpfile;
+  save_image(tmpfile.getFilename(), solution);
+  auto corrected = MyPNGRead(tmpfile.getFilename());
+  REQUIRE(!deinterlacedimage->isStereo());
+  REQUIRE(solution.isStereo());
+  REQUIRE(corrected->getSizeInBytes() == interlacedimage->getSizeInBytes() / 2);
+}
+
+TEST_CASE("Image Interlace Data", "[Image]")
+{
+  auto test_folder = std::string(std::getenv("PYMOL_DATA")).append(PATH_SEP).append("test").append(PATH_SEP);
+  auto deinterlacedimage_loc = std::string(test_folder).append("single.png");
+  auto interlacedimage_loc = std::string(test_folder).append("double.png");
+  auto deinterlacedimage = MyPNGRead(deinterlacedimage_loc.c_str());
+  auto interlacedimage = MyPNGRead(interlacedimage_loc.c_str());
+  auto solution = deinterlacedimage->interlace();
+  REQUIRE(solution.getSizeInBytes() == deinterlacedimage->getSizeInBytes());
+}
+

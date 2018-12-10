@@ -301,7 +301,7 @@ int SceneGetGridSize(PyMOLGlobals * G, int grid_mode)
 int SceneHasImage(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-  return (I->Image && I->Image->data);
+  return (I->Image && !I->Image->empty());
 }
 
 int SceneMustDrawBoth(PyMOLGlobals * G)
@@ -412,16 +412,8 @@ static void ScenePurgeImage(PyMOLGlobals * G)
 void ScenePurgeImageImpl(PyMOLGlobals * G, int noinvalid)
 {
   CScene *I = G->Scene;
-  if(I->MovieOwnsImageFlag) {
-    I->MovieOwnsImageFlag = false;
-    I->Image = NULL;
-  } else {
-    if(I->Image) {
-      FreeP(I->Image->data);
-    }
-    FreeP(I->Image);
-  }
   I->CopyType = false;
+  I->Image = nullptr;
   if (!noinvalid)
     OrthoInvalidateDoDraw(G); // right now, need to invalidate since text could be shown
 }
@@ -430,11 +422,11 @@ void SceneInvalidateCopy(PyMOLGlobals * G, int free_buffer)
 {
   CScene *I = G->Scene;
   if(I) {
-    if(I->MovieOwnsImageFlag) {
-      I->MovieOwnsImageFlag = false;
-      I->Image = NULL;
-    } else if(free_buffer) {
+    if(free_buffer){
       ScenePurgeImage(G);
+    }
+    else{
+      I->Image = nullptr;
     }
     if (I->CopyType)
       OrthoInvalidateDoDraw(G); // right now, need to invalidate since text could be shown
@@ -1390,8 +1382,7 @@ int SceneCaptureWindow(PyMOLGlobals * G)
       I->DirtyFlag = false;
       I->CopyType = 2;          /* suppresses display of copied image */
       if(SettingGetGlobal_b(G, cSetting_opaque_background))
-        I->Image->needs_alpha_reset = true;
-      I->MovieOwnsImageFlag = false;
+        I->Image->m_needs_alpha_reset = true;
     }
   } else {
     ok = false;
@@ -1490,19 +1481,15 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
       factor = 0;
 
     {
-      unsigned int final_buffer_size = width * height;
-      unsigned int *final_image = NULL;
+      unsigned int final_buffer_size = width * height * pymol::Image::getPixelSize();
       int nXStep = (width / (I->Width + 1)) + 1;
       int nYStep = (height / (I->Height + 1)) + 1;
       int x, y;
       int draw_both = SceneMustDrawBoth(G);
       /* note here we're treating the buffer as 32-bit unsigned ints, not chars */
 
-      final_image = Alloc(unsigned int, final_buffer_size);
+      std::vector<unsigned char> final_image(final_buffer_size);
 
-      if(!final_image) {
-        ok = false;
-      }
       ScenePurgeImage(G);
 
       if(draw_both) {
@@ -1548,8 +1535,8 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
             }
 
             if(I->Image) {      /* the image into place */
-              p = (unsigned int *) I->Image->data;
-              q = final_image + (x * I->Width) + (y * I->Height) * width;
+              p = (unsigned int *) I->Image->bits();
+              q = reinterpret_cast<unsigned int*>(final_image.data()) + (x * I->Width) + (y * I->Height) * width;
               {
                 int y_limit;
                 int x_limit;
@@ -1593,9 +1580,9 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
           height = height / factor;
 
           {
-            unsigned char *p = (unsigned char *) final_image;
-            unsigned char *buffer = Alloc(unsigned char, 4 * width * height);
-            unsigned char *q = buffer;
+            unsigned char *p = final_image.data();
+            std::vector<unsigned char> buffer(width * height * pymol::Image::getPixelSize());
+            unsigned char *q = buffer.data();
             unsigned char *pp, *ppp, *pppp;
             int a, b, c, d;
             unsigned int c1, c2, c3, c4, alpha;
@@ -1648,30 +1635,20 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
               p += factor_row_bytes;
             }
 
-            FreeP(final_image);
-            final_image = (unsigned int *) buffer;
+            final_image = std::move(buffer);
           }
         }
         ScenePurgeImage(G);
 
-        I->Image = Calloc(ImageType, 1);
-        I->Image->data = (unsigned char *) final_image;
-        final_image = NULL;
-        I->Image->size = final_buffer_size * 4; /* in bytes, not 32-bit words */
-        I->Image->width = width;
-        I->Image->height = height;
-        I->Image->stereo = false;
-
+        I->Image = std::make_shared<pymol::Image>(std::move(final_image), width, height);
         I->DirtyFlag = false;
         I->CopyType = true;
         I->CopyForced = true;
 
         if(SettingGetGlobal_b(G, cSetting_opaque_background))
-          I->Image->needs_alpha_reset = true;
+          I->Image->m_needs_alpha_reset = true;
 
-        I->MovieOwnsImageFlag = false;
       }
-      FreeP(final_image);
     }
   } else {
     ok = false;
@@ -1685,74 +1662,56 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
 
 }
 
-
-#define SceneImagePrepareImpl SceneImagePrepare
-
-unsigned char *SceneImagePrepareImpl(PyMOLGlobals * G, int prior_only, int noinvalid)
+pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only, bool noinvalid)
 {
   CScene *I = G->Scene;
-  unsigned char *image = NULL;
+  pymol::Image* image = nullptr;
   int save_stereo = (I->StereoMode == 1);
   int ok = true;
 
   if(!noinvalid && !(I->CopyType || prior_only)) {
     if(G->HaveGUI && G->ValidContext) {
-      unsigned int buffer_size;
+      ScenePurgeImageImpl(G, noinvalid);
+      I->Image = nullptr;
+      if(save_stereo){
+        I->Image = std::make_shared<pymol::Image>(I->Width * 2, I->Height, false);
+      }
+      else{
+        I->Image = std::make_shared<pymol::Image>(I->Width, I->Height);
+      }
+      image = I->Image.get();
 
-      buffer_size = 4 * I->Width * I->Height;
-      if(save_stereo)
-        image = Alloc(unsigned char, buffer_size * 2);
-      else
-        image = Alloc(unsigned char, buffer_size);
-      CHECKOK(ok, image);
-      if (!ok)
-	return NULL;
+#ifndef PURE_OPENGL_ES_2
       if(SceneMustDrawBoth(G) || save_stereo) {
         glReadBuffer(GL_BACK_LEFT);
       } else {
         glReadBuffer(GL_BACK);
       }
+#endif
       PyMOLReadPixels(I->rect.left, I->rect.bottom, I->Width, I->Height,
-                      GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image));
+                      GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image->bits()));
+#ifndef PURE_OPENGL_ES_2
       if(save_stereo) {
         glReadBuffer(GL_BACK_RIGHT);
         PyMOLReadPixels(I->rect.left, I->rect.bottom, I->Width, I->Height,
-                        GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image + buffer_size));
+                        GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image->bits() + image->getSizeInBytes()/2));
       }
-      ScenePurgeImageImpl(G, noinvalid);
-      I->Image = Calloc(ImageType, 1);
-      I->Image->needs_alpha_reset = true;
-      I->Image->data = image;
-      I->Image->height = I->Height;
-      I->Image->width = I->Width;
-      I->Image->size = buffer_size;
-      if(save_stereo)
-        I->Image->stereo = 1;
+#endif
+      I->Image->m_needs_alpha_reset = true;
     }
   } else if(I->Image) {
-    image = I->Image->data;
+    image = I->Image.get();
   }
   if(image) {
     int opaque_back = SettingGetGlobal_b(G, cSetting_opaque_background);
-    if(opaque_back && I->Image->needs_alpha_reset) {
-      int i, s = 4 * I->Image->width * I->Image->height;
+    if(opaque_back && I->Image->m_needs_alpha_reset) {
+      int i, s = I->Image->getSizeInBytes();
       for(i = 3; i < s; i += 4)
-        image[i] = 0xFF;
-      I->Image->needs_alpha_reset = false;
+        image->bits()[i] = 0xFF;
+      I->Image->m_needs_alpha_reset = false;
     }
   }
-  return (unsigned char *) image;
-}
-
-void SceneImageFinish(PyMOLGlobals * G, GLvoid *image)
-{
-  CScene *I = G->Scene;
-  if(I->Image) {
-    if(I->Image->data != (unsigned char *) image)       /* purge the image if this isn't the active copy */
-      FreeP(image);
-  } else {
-    FreeP(image);
-  }
+  return image;
 }
 
 /*
@@ -1760,21 +1719,18 @@ void SceneImageFinish(PyMOLGlobals * G, GLvoid *image)
  * cmd.get_viewport(), or the dimensions which were last passed to
  * cmd.draw(), cmd.ray() or cmd.png().
  */
-void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height)
+std::pair<int, int> SceneGetImageSize(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
   // TODO: calling ImagePrepare looks like a heavy side effect. Need to
   // clarify if checking (CopyType && Image && Image->data) here would
   // be sufficient.
-  GLvoid *image = SceneImagePrepareImpl(G, false, false);
+  auto image = SceneImagePrepare(G, false, false);
   if(image && I->Image) {
-    *width = I->Image->width;
-    *height = I->Image->height;
+    return I->Image->getSize();
   } else {
-    *width = I->Width;
-    *height = I->Height;
+    return std::make_pair(I->Width, I->Height);
   }
-  SceneImageFinish(G, image);   /* don't leak if(image != I->Image) */
 }
 
 float SceneGetGridAspectRatio(PyMOLGlobals * G){
@@ -1786,7 +1742,7 @@ float SceneGetGridAspectRatio(PyMOLGlobals * G){
 int SceneCopyExternal(PyMOLGlobals * G, int width, int height,
                       int rowbytes, unsigned char *dest, int mode)
 {
-  GLvoid *image = SceneImagePrepare(G, false);
+  auto image = SceneImagePrepare(G, false);
   CScene *I = G->Scene;
   int result = false;
   int i, j;
@@ -1818,9 +1774,9 @@ int SceneCopyExternal(PyMOLGlobals * G, int width, int height,
      printf("%d %d %d %d\n",I->Image->width,width,I->Image->height,height);
      } */
 
-  if(image && I->Image && (I->Image->width == width) && (I->Image->height == height)) {
+  if(image && I->Image && (I->Image->getWidth() == width) && (I->Image->getHeight() == height)) {
     for(i = 0; i < height; i++) {
-      unsigned char *src = ((unsigned char *) image) + ((height - 1) - i) * width * 4;
+      unsigned char *src = image->bits() + ((height - 1) - i) * width * 4;
       unsigned char *dst;
       if(mode & 0x4) {
         dst = dest + (height - (i + 1)) * (rowbytes);
@@ -1861,81 +1817,38 @@ int SceneCopyExternal(PyMOLGlobals * G, int width, int height,
   } else {
     printf("image or size mismatch\n");
   }
-  SceneImageFinish(G, image);
   return (result);
 }
 
-static void interlace(unsigned int *dst, unsigned int *src, int width, int height)
-{
-  int a, b;
-  unsigned int *p0 = src, *p1 = src + (height * width);
-  unsigned int *q = dst;
-  for(a = 0; a < height; a++) {
-    for(b = 0; b < width; b++) {
-      *(q++) = *(p0++);
-    }
-    for(b = 0; b < width; b++) {
-      *(q++) = *(p1++);
-    }
-  }
-}
-
-static void deinterlace(unsigned int *dst, unsigned int *src,
-                        int width, int height, int swap)
-{
-  int a, b;
-  unsigned int *p = src;
-  unsigned int *q0 = dst, *q1 = dst + (height * width);
-  if(swap) {
-    q0 = dst + (height * width);
-    q1 = dst;
-  }
-
-  for(a = 0; a < height; a++) {
-    for(b = 0; b < width; b++) {
-      *(q0++) = *(p++);
-    }
-    for(b = 0; b < width; b++) {
-      *(q1++) = *(p++);
-    }
-  }
-}
-
-int ScenePNG(PyMOLGlobals * G, const char *png, float dpi, int quiet,
+bool ScenePNG(PyMOLGlobals * G, const char *png, float dpi, int quiet,
              int prior_only, int format)
 {
   CScene *I = G->Scene;
-  GLvoid *image = SceneImagePrepare(G, prior_only);
-  if(image && I->Image) {
-    int width = I->Image->width;
-    int height = I->Image->height;
-    unsigned char *save_image = (unsigned char*) image;
-
-    if((image == I->Image->data) && I->Image->stereo) {
-      width = I->Image->width;
-      save_image = Alloc(unsigned char, I->Image->size * 2);
-      interlace((unsigned int *) save_image, (unsigned int *) I->Image->data, width,
-                height);
-      width *= 2;
+  SceneImagePrepare(G, prior_only);
+  if(I->Image) {
+    int width, height;
+    std::tie(width, height) = I->Image->getSize();
+    auto saveImage = I->Image;
+    if(I->Image && I->StereoMode) {
+      *(saveImage) = I->Image->interlace();
     }
     if(dpi < 0.0F)
       dpi = SettingGetGlobal_f(G, cSetting_image_dots_per_inch);
-    if(MyPNGWrite(G, png, save_image, width, height, dpi, format, quiet)) {
+    auto screen_gamma = SettingGetGlobal_f(G, cSetting_png_screen_gamma);
+    auto file_gamma = SettingGetGlobal_f(G, cSetting_png_file_gamma);
+    if(MyPNGWrite(png, *saveImage, dpi, format, quiet, screen_gamma, file_gamma)) {
       if(!quiet) {
         PRINTFB(G, FB_Scene, FB_Actions)
           " ScenePNG: wrote %dx%d pixel image to file \"%s\".\n",
-          width, I->Image->height, png ENDFB(G);
+          width, I->Image->getHeight(), png ENDFB(G);
       }
     } else {
       PRINTFB(G, FB_Scene, FB_Errors)
         " ScenePNG-Error: error writing \"%s\"! Please check directory...\n",
         png ENDFB(G);
     }
-    if(save_image && (save_image != image))
-      FreeP(save_image);
   }
-  SceneImageFinish(G, image);
-  return (image != NULL);
+  return I->Image.get() != nullptr;
 }
 
 
@@ -2232,14 +2145,9 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
     }
     break;
   }
-  if(I->Image) {
-    MovieSetImage(G,
-                  MovieFrameToImage(G, SettingGetGlobal_i(G, cSetting_frame) - 1),
-                  I->Image);
-    I->MovieOwnsImageFlag = true;
-  } else {
-    I->MovieOwnsImageFlag = false;
-  }
+  MovieSetImage(G,
+                MovieFrameToImage(G, SettingGetGlobal_i(G, cSetting_frame) - 1),
+                I->Image);
   if(I->Image)
     I->CopyType = true;
   return valid;
@@ -2537,38 +2445,20 @@ int SceneLoadPNG(PyMOLGlobals * G, const char *fname, int movie_flag, int stereo
   CScene *I = G->Scene;
   int ok = false;
   if(I->Image) {
-    if(I->MovieOwnsImageFlag) {
-      I->MovieOwnsImageFlag = false;
-      I->Image = NULL;
-    } else {
-      ScenePurgeImage(G);
-    }
+    ScenePurgeImage(G);
     I->CopyType = false;
     OrthoInvalidateDoDraw(G); // right now, need to invalidate since text could be shown
   }
-  I->Image = Calloc(ImageType, 1);
-  if(MyPNGRead(fname,
-               (unsigned char **) &I->Image->data,
-               (unsigned int *) &I->Image->width, (unsigned int *) &I->Image->height)) {
-    I->Image->size = I->Image->width * I->Image->height * 4;
+  I->Image = MyPNGRead(fname);
+  if(I->Image) {
     if(!quiet) {
       PRINTFB(G, FB_Scene, FB_Details)
         " Scene: loaded image from '%s'.\n", fname ENDFB(G);
     }
     if((stereo > 0) || ((stereo < 0) &&
-                        (I->Image->width == 2 * I->Width) &&
-                        (I->Image->height == I->Height))) {
-      unsigned char *tmp = Alloc(unsigned char, I->Image->size);
-      if(tmp) {
-        I->Image->width /= 2;
-        I->Image->stereo = true;
-        I->Image->size /= 2;
-        deinterlace((unsigned int *) tmp,
-                    (unsigned int *) I->Image->data,
-                    I->Image->width, I->Image->height, (stereo == 2));
-        FreeP(I->Image->data);
-        I->Image->data = tmp;
-      }
+                        (I->Image->getWidth() == 2 * I->Width) &&
+                        (I->Image->getHeight() == I->Height))) {
+      *(I->Image) = I->Image->deinterlace(stereo == 2);
     }
 
     I->CopyType = true;
@@ -2576,13 +2466,11 @@ int SceneLoadPNG(PyMOLGlobals * G, const char *fname, int movie_flag, int stereo
     OrthoRemoveSplash(G);
     SettingSetGlobal_b(G, cSetting_text, 0);
     if(movie_flag &&
-       I->Image && I->Image->data) {
+       I->Image && !I->Image->empty()) {
       MovieSetImage(G, MovieFrameToImage(G, SettingGetGlobal_i(G, cSetting_frame) - 1)
                     , I->Image);
-      I->MovieOwnsImageFlag = true;
       I->MovieFrameFlag = true;
     } else {
-      I->MovieOwnsImageFlag = false;
       I->DirtyFlag = false;     /* make sure we don't overwrite image */
     }
     OrthoDirty(G);
@@ -2914,28 +2802,28 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
     /* is the text/overlay (ESC) on? */
   int overlay = OrthoGetOverlayStatus(G);
 
-  if(((!text) || overlay) && (override || I->CopyType == true) && I->Image && I->Image->data) {
+  if(((!text) || overlay) && (override || I->CopyType == true) && I->Image && !I->Image->empty()) {
     /* show transparent bg as checkboard? */
     int show_alpha = SettingGetGlobal_b(G, cSetting_show_alpha_checker);
     const float *bg_color = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
     unsigned int bg_rr, bg_r = (unsigned int) (255 * bg_color[0]);
     unsigned int bg_gg, bg_g = (unsigned int) (255 * bg_color[1]);
     unsigned int bg_bb, bg_b = (unsigned int) (255 * bg_color[2]);
-    int width = I->Image->width;
-    int height = I->Image->height;
-    unsigned char *data = I->Image->data;
+    int width = I->Image->getWidth();
+    int height = I->Image->getHeight();
+    unsigned char *data = I->Image->bits();
 
-    if(I->Image->stereo) {
+    if(I->Image->isStereo()) {
       int buffer;
       glGetIntegerv(GL_DRAW_BUFFER, (GLint *) & buffer);
       if(buffer == GL_BACK_RIGHT)     /* hardware stereo */
-	data += I->Image->size;
+	data += I->Image->getSizeInBytes();
       else {
 	int stereo = SettingGetGlobal_i(G, cSetting_stereo);
 	if (stereo){
 	  switch (OrthoGetRenderMode(G)) {
 	  case cStereo_geowall:
-	    data += I->Image->size;
+	    data += I->Image->getSizeInBytes();
 	    break;
 	  }
 	}
@@ -2947,9 +2835,9 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
       {
 	int factor = 1;
 	int shift = 0;
-	int tmp_height = I->Image->height;
-	int tmp_width = I->Image->width;
-	int src_row_bytes = I->Image->width * 4;
+	int tmp_height = I->Image->getHeight();
+	int tmp_width = I->Image->getWidth();
+	int src_row_bytes = I->Image->getWidth() * pymol::Image::getPixelSize();
 	unsigned int color_word;
 	float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
 	
@@ -3064,7 +2952,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
 	    y_pos = text_pos;
 	  }
 	  
-	  sprintf(buffer, "Image size = %d x %d", I->Image->width, I->Image->height);
+	  sprintf(buffer, "Image size = %d x %d", I->Image->getWidth(), I->Image->getHeight());
 	  
 	  TextSetColor3f(G, rgba[0], rgba[1], rgba[2]);
 	  TextDrawStrAt(G, buffer,
@@ -5686,9 +5574,9 @@ bool call_raw_image_callback(PyMOLGlobals * G) {
 
     // RGBA image as uint8 numpy array
     import_array1(0);
-    npy_intp dims[3] = {image->width, image->height, 4};
+    npy_intp dims[3] = {image->getWidth(), image->getHeight(), 4};
     auto py = PyArray_SimpleNew(3, dims, NPY_UINT8);
-    memcpy(PyArray_DATA((PyArrayObject *)py), image->data, dims[0] * dims[1] * 4);
+    memcpy(PyArray_DATA((PyArrayObject *)py), image->bits(), dims[0] * dims[1] * 4);
 
     PYOBJECT_CALLFUNCTION(raw_image_callback, "O", py);
     Py_DECREF(py);
@@ -5709,7 +5597,7 @@ bool call_raw_image_callback(PyMOLGlobals * G) {
 
 static int SceneDeferredImage(DeferredImage * di)
 {
-  PyMOLGlobals *G = di->G;
+  PyMOLGlobals *G = di->m_G;
   SceneMakeSizedImage(G, di->width, di->height, di->antialias);
   if(!di->filename.empty()) {
     ScenePNG(G, di->filename.c_str(), di->dpi, di->quiet, false, di->format);
@@ -6288,18 +6176,14 @@ void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window)
       ScenePurgeImage(G);
       buffer_size = 4 * w * h;
       if(buffer_size) {
-        I->Image = Calloc(ImageType, 1);
-        I->Image->data = Alloc(unsigned char, buffer_size);
-        I->Image->size = buffer_size;
-        I->Image->width = w;
-        I->Image->height = h;
+        I->Image = std::make_shared<pymol::Image>(w, h);
         if(G->HaveGUI && G->ValidContext) {
           glReadBuffer(buffer);
-          PyMOLReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, I->Image->data);
+          PyMOLReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, I->Image->bits());
         }
       }
       I->CopyType = true;
-      I->Image->needs_alpha_reset = true;
+      I->Image->m_needs_alpha_reset = true;
       I->CopyForced = force;
     }
   }
@@ -6546,7 +6430,7 @@ int SceneRenderCached(PyMOLGlobals * G)
   /* sets up a cached image buffer is one is available, or if we are
    * using cached images by default */
   CScene *I = G->Scene;
-  ImageType *image;
+  std::shared_ptr<pymol::Image> image;
   int renderedFlag = false;
   int draw_mode = SettingGetGlobal_i(G, cSetting_draw_mode);
   PRINTFD(G, FB_Scene)
@@ -6562,9 +6446,9 @@ int SceneRenderCached(PyMOLGlobals * G)
                             MovieFrameToImage(G,
                                               SettingGetGlobal_i(G, cSetting_frame) - 1));
       if(image) {
-        if(I->Image && (!I->MovieOwnsImageFlag))
+        if(I->Image){
           ScenePurgeImage(G);
-        I->MovieOwnsImageFlag = true;
+        }
         I->CopyType = true;
         I->Image = image;
         OrthoDirty(G);

@@ -18,6 +18,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Block
 #define _H_Block
 
+#include<utility>
+
 #include "PyMOLGlobals.h"
 
 struct BlockRect{
@@ -59,6 +61,6 @@ struct Block {
   bool rectXYInside(int x, int y) const;
 };
 
-typedef Block **CBlock;
+typedef Block** CBlock;
 
 #endif

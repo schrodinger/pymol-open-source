@@ -18,15 +18,20 @@ Z* -------------------------------------------------------------------
 #ifndef _H_MyPNG
 #define _H_MyPNG
 
+#include <memory>
+#include <vector>
+
+#include "Image.h"
+#include "LangUtil.h"
+
 #include"PyMOLGlobals.h"
 
 #define cMyPNG_FormatPNG 0
 #define cMyPNG_FormatPPM 1
 
-int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *p,
-               unsigned int width, unsigned int height, float dpi, int format, int quiet,
-               void * io_ptr = NULL);
-int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_ptr,
-              unsigned int *height_ptr);
+int MyPNGWrite(const char *file_name, const pymol::Image& img,
+               const float dpi, const int format, const int quiet, const float screen_gamma, const float file_gamma, void * io_ptr = nullptr);
+
+std::unique_ptr<pymol::Image> MyPNGRead(const char *file_name);
 
 #endif

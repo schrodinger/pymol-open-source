@@ -2471,11 +2471,6 @@ void PyMOL_DrawWithoutLock(CPyMOL * I)
       if(SceneHasImage(G)) {
         I->ImageReadyFlag = true;
         I->ImageRequestedFlag = false;
-        {
-          int w, h;
-          SceneGetImageSize(I->G, &w, &h);
-        }
-
       } else {
         I->ImageReadyFlag = false;
       }
@@ -2872,7 +2867,7 @@ PyMOLreturn_int_array PyMOL_GetImageInfo(CPyMOL * I)
   if(!result.array) {
     result.status = PyMOLstatus_FAILURE;
   } else {
-    SceneGetImageSize(I->G, result.array, result.array + 1);
+    std::tie(result.array[0], result.array[1]) = SceneGetImageSize(I->G);
   }
   PYMOL_API_UNLOCK return result;
 }

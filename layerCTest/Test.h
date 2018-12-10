@@ -38,13 +38,15 @@ static bool isArrayEqual(const T *arr1, const T *arr2, const std::size_t len) {
 }
 
 // Checks whether type has all special member functions
-template <typename T> static bool hasAllSpecialMemberFunctions()
+template <typename T> static bool isRegular()
 {
   return std::is_default_constructible<T>::value &&
          std::is_copy_constructible<T>::value &&
          std::is_copy_assignable<T>::value &&
          std::is_move_constructible<T>::value &&
-         std::is_move_assignable<T>::value;
+         std::is_move_assignable<T>::value &&
+         std::is_destructible<T>::value;
+         //std::is_nothrow_swappable<T>::value; C++17
 }
 
 // Checks whether ptr is equal to nullptr
@@ -55,6 +57,21 @@ struct PYMOL_TEST_API {
   static PyObject *PYMOL_TEST_SUCCESS;
   static PyObject *PYMOL_TEST_FAILURE;
 };
+
+class TmpFILE
+{
+  std::string tmpFilename;
+public:
+  TmpFILE() : tmpFilename{std::tmpnam(nullptr)}{};
+  TmpFILE(const TmpFILE&) = delete;
+  TmpFILE& operator=(const TmpFILE&) = delete;
+  TmpFILE(TmpFILE&&) = default;
+  TmpFILE& operator=(TmpFILE&&) = default;
+  ~TmpFILE() {std::remove(tmpFilename.c_str()); }
+  const char* getFilename() const { return tmpFilename.c_str(); }
+  const std::string& getFilenameStr() const { return tmpFilename; }
+};
+
 }; // namespace test
 }; // namespace pymol
 

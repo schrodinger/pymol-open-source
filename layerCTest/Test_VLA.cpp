@@ -33,7 +33,7 @@ TEST_CASE("VLA Initializer List", "[VLA]")
 
 TEST_CASE("VLA Special Member Functions", "[VLA]")
 {
-  REQUIRE(hasAllSpecialMemberFunctions<vla<int>>());
+  REQUIRE(isRegular<vla<int>>());
 }
 
 TEST_CASE("VLA Copy Construct", "[VLA]")

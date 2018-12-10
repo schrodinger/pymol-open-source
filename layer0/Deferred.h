@@ -21,11 +21,11 @@ Z* -------------------------------------------------------------------
 #include "PyMOLGlobals.h"
 
 struct CDeferred {
-  PyMOLGlobals *G { nullptr };
+  PyMOLGlobals *m_G { nullptr };
   int (*fn)(CDeferred *) = nullptr;
   CDeferred *next { nullptr };
   void exec();
-  CDeferred(PyMOLGlobals * _G) : G(_G){};
+  CDeferred(PyMOLGlobals * G) : m_G(G){};
 };
 
 typedef int DeferredFn(CDeferred * D);

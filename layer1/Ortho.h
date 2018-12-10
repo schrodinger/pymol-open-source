@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #define cOrthoBottomSceneMargin DIP2PIXEL(18)
 #define cOrthoLineHeight DIP2PIXEL(12)
 
+#include <vector>
 #include <memory>
 #include <string>
 
@@ -32,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Block.h"
 #include"Feedback.h"
 #include"Deferred.h"
+#include"Image.h"
 
 #define cOrthoScene 1
 #define cOrthoTool 2
@@ -124,13 +126,13 @@ GLuint OrthoGetBackgroundTextureID(PyMOLGlobals * G);
 void OrthoInvalidateBackgroundTexture(PyMOLGlobals * G);
 void OrthoBackgroundTextureNeedsUpdate(PyMOLGlobals * G);
 
-void OrthoGetBackgroundSize(PyMOLGlobals * G, int *width, int *height);
+std::pair<int, int> OrthoGetBackgroundSize(const COrtho& ortho);
 
 void OrthoSetBackgroundImage(PyMOLGlobals * G, const char *image_data, int width, int height);
 
-int OrthoBackgroundDataIsSet(PyMOLGlobals *G);
-void *OrthoBackgroundDataGet(PyMOLGlobals *G, int *width, int *height);
-void OrthoGetSize(PyMOLGlobals *G, int *width, int *height);
+bool OrthoBackgroundDataIsSet(const COrtho& ortho);
+std::shared_ptr<pymol::Image> OrthoBackgroundDataGet(const COrtho& ortho);
+std::pair<int, int> OrthoGetSize(const COrtho& ortho);
 
 void OrthoInvalidateDoDraw(PyMOLGlobals * G);
 void OrthoRenderCGO(PyMOLGlobals * G);

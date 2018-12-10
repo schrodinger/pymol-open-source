@@ -114,33 +114,31 @@ struct _COrtho {
   GLuint bg_texture_id;
   short bg_texture_needs_update;
   CGO *bgCGO;
-  int bgWidth, bgHeight;
-  void *bgData;  // this is the image data set from CMol, takes precedence of bg_gradient or bg_image_filename
+  //void *bgData;  // this is the image data set from CMol, takes precedence of bg_gradient or bg_image_filename
+  std::shared_ptr<pymol::Image> bgData;
   CGO *orthoCGO, *orthoFastCGO;
 };
 
-int OrthoBackgroundDataIsSet(PyMOLGlobals *G){
-  COrtho *I = G->Ortho;
-  return (I->bgData && (I->bgWidth > 0 && I->bgHeight > 0));
-  //  return (I->bgCGO != NULL && (I->bgWidth > 0 && I->bgHeight > 0));
-}
-void *OrthoBackgroundDataGet(PyMOLGlobals *G, int *width, int *height){
-  COrtho *I = G->Ortho;
-  *width = I->bgWidth;
-  *height = I->bgHeight;
-  return (I->bgData);
+bool OrthoBackgroundDataIsSet(const COrtho& ortho)
+{
+  return (ortho.bgData && (!ortho.bgData->empty()));
 }
 
-void OrthoGetSize(PyMOLGlobals *G, int *width, int *height){
-  COrtho *I = G->Ortho;
-  *width = I->Width;
-  *height = I->Height;
+std::shared_ptr<pymol::Image> OrthoBackgroundDataGet(const COrtho& ortho)
+{
+  return ortho.bgData;
 }
 
-void OrthoGetBackgroundSize(PyMOLGlobals * G, int *width, int *height){
-  COrtho *I = G->Ortho;
-  *width = I->bgWidth;
-  *height = I->bgHeight;
+std::pair<int, int> OrthoGetSize(const COrtho& ortho){
+  return std::make_pair(ortho.Width, ortho.Height);
+}
+
+std::pair<int, int> OrthoGetBackgroundSize(const COrtho& ortho){
+  if(ortho.bgData){
+    return ortho.bgData->getSize();
+  } else{
+    return std::make_pair(0, 0);
+  }
 }
 
 void OrthoParseCurrentLine(PyMOLGlobals * G);
@@ -1381,7 +1379,7 @@ void bg_grad(PyMOLGlobals * G) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
       }
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-		   I->bgWidth, I->bgHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)I->bgData);
+		   I->bgData->getWidth(), I->bgData->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)I->bgData->bits());
 
       bg_image = false;
       bg_gradient = I->bg_texture_needs_update = 0;
@@ -1389,15 +1387,10 @@ void bg_grad(PyMOLGlobals * G) {
 
     if (ok && !bg_is_solid && (bg_image && (!I->bg_texture_id || I->bg_texture_needs_update))){
       // checking to see if bg_image_filename can be loaded into texture
-      ImageType *bgImage = Calloc(ImageType, 1);
-      if(MyPNGRead(bg_image_filename,
-		   (unsigned char **) &bgImage->data,
-		   (unsigned int *) &bgImage->width, (unsigned int *) &bgImage->height)) {
+      auto bgImage = MyPNGRead(bg_image_filename);
+      if(bgImage) {
 	short is_new = !I->bg_texture_id;
-	int buff_total = bgImage->width * bgImage->height;
-	I->bgWidth = bgImage->width;
-	I->bgHeight = bgImage->height;
-	bgImage->size = buff_total * 4;
+        int buff_total = bgImage->getWidth() * bgImage->getHeight();
 	if (is_new){
 	  glGenTextures(1, &I->bg_texture_id);
 	}
@@ -1412,30 +1405,26 @@ void bg_grad(PyMOLGlobals * G) {
 	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
 	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-		     bgImage->width, bgImage->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)bgImage->data);
-	FreeP(bgImage->data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bgImage->getWidth(),
+            bgImage->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
+            (GLvoid*) bgImage->bits());
+        bgImage.reset();
       bg_gradient = I->bg_texture_needs_update = 0;
       } else {
-	I->bgWidth = 0;
-	I->bgHeight = 0;
 	PRINTFB(G, FB_Ortho, FB_Errors)
 	  "Ortho: bg_grad: bg_image_filename='%s' cannot be loaded, unset\n", bg_image_filename
 	  ENDFB(G);
 	SettingSetGlobal_s(G, cSetting_bg_image_filename, "");
 	G->ShaderMgr->Reload_All_Shaders();
       }
-      FreeP(bgImage);
+      bgImage = nullptr;
     }
 
     if (ok && !bg_is_solid && bg_gradient && (!I->bg_texture_id || I->bg_texture_needs_update)){
       short is_new = !I->bg_texture_id;
       int tex_dim = BACKGROUND_TEXTURE_SIZE;
-      int buff_total = tex_dim * tex_dim;
-      unsigned char *temp_buffer = Alloc(unsigned char, buff_total * 4);
+      pymol::Image tmpImg(tex_dim, tex_dim);
       I->bg_texture_needs_update = 0;
-      I->bgWidth = BACKGROUND_TEXTURE_SIZE;
-      I->bgHeight = BACKGROUND_TEXTURE_SIZE;
       if (is_new){
 	glGenTextures(1, &I->bg_texture_id);
       }
@@ -1449,7 +1438,6 @@ void bg_grad(PyMOLGlobals * G) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
       }
-      UtilZeroMem(temp_buffer, buff_total * 4);
 
       {
 	int a, b;
@@ -1465,7 +1453,7 @@ void bg_grad(PyMOLGlobals * G) {
 	  val[1] = (unsigned char)pymol_roundf(bot[1] + tmpb*diff[1]) ;
 	  val[2] = (unsigned char)pymol_roundf(bot[2] + tmpb*diff[2]) ;
 	  for(a = 0; a < BACKGROUND_TEXTURE_SIZE; a++) {
-	    q = temp_buffer + (4 * BACKGROUND_TEXTURE_SIZE * b) + 4 * a;
+	    q = tmpImg.bits() + (4 * BACKGROUND_TEXTURE_SIZE * b) + 4 * a;
 	    *(q++) = val[0];
 	    *(q++) = val[1];
 	    *(q++) = val[2];
@@ -1474,8 +1462,7 @@ void bg_grad(PyMOLGlobals * G) {
 	}
       }
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-		   tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)temp_buffer);
-      FreeP(temp_buffer);
+		   tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)tmpImg.bits());
     }
     if (ok && I->bgCGO) {
        	CGORenderGL(I->bgCGO, NULL, NULL, NULL, NULL, NULL);
@@ -1648,7 +1635,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 	    CHECKOK(ok, expandedCGO);
 	    if (ok)
 	      I->orthoFastCGO = CGOOptimizeScreenTexturesAndPolygons(expandedCGO, 0);
-	    CHECKOK(ok, I->orthoFastCGO);
+	    CHECKOK(ok, orthoFastCGO);
 	    CGOFree(orthoFastCGO);
 	    CGOFree(expandedCGO);
 	  } else {
@@ -2570,8 +2557,7 @@ int OrthoInit(PyMOLGlobals * G, int showSplash)
     I->bg_texture_id = 0;
     I->bg_texture_needs_update = 0;
     I->bgCGO = NULL;
-    I->bgWidth = I->bgHeight = 0;
-    I->bgData = NULL;
+    I->bgData = nullptr;
     I->orthoCGO = NULL;
     I->orthoFastCGO = NULL;
 
@@ -2623,10 +2609,8 @@ void OrthoFree(PyMOLGlobals * G)
   pymol::destroy_at(&I->feedback);
   pymol::destroy_at(&I->cmdQueue);
 
-  if (I->bgData){
-    FreeP(I->bgData);
-    I->bgData = NULL;
-  }
+  I->bgData = nullptr;
+
     CGOFree(I->bgCGO);
   CGOFree(I->orthoCGO);
   CGOFree(I->orthoFastCGO);
@@ -2781,6 +2765,8 @@ void OrthoPasteIn(PyMOLGlobals * G, const char *buffer)
     I->InputFlag = true;
 }
 
+#if 0
+/* TODO: Removed. Check in Mobile PyMOL to see if needed - PYMOL-3148*/
 void OrthoSetBackgroundImage(PyMOLGlobals * G, const char *image_data, int width, int height){
   COrtho *I = G->Ortho;
   int buff_total = width * height;  
@@ -2811,6 +2797,7 @@ void OrthoSetBackgroundImage(PyMOLGlobals * G, const char *image_data, int width
     I->bg_texture_needs_update = 1;
   }
 }
+#endif
 
 void OrthoInvalidateDoDraw(PyMOLGlobals * G)
 {

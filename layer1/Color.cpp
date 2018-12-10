@@ -31,7 +31,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"MyPNG.h"
 #include"Scene.h"
-
+#include"LangUtil.h"
 #include"OVContext.h"
 #include"OVreturns.h"
 
@@ -823,16 +823,13 @@ int ColorGetNColor(PyMOLGlobals * G)
 void ColorFree(PyMOLGlobals * G)
 {
   CColor *I = G->Color;
-  if(I->ColorTable) {
-    FreeP(I->ColorTable);
-  }
   VLAFreeP(I->Color);
   VLAFreeP(I->Ext);
   if(I->Lex)
     OVLexicon_Del(I->Lex);
   if(I->Idx)
     OVOneToOne_Del(I->Idx);
-  FreeP(I);
+  DeleteP(I);
 }
 
 
@@ -2505,12 +2502,9 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
     ColorUpdateFromLut(G, -1);
   } else {
     int width = 512, height = 512;
-    unsigned int *table = NULL;
-
     if(!strcmp(fname, "rgb")) {
-      if(I->ColorTable) {
-        FreeP(I->ColorTable);
-        I->ColorTable = NULL;
+      if(!I->ColorTable.empty()) {
+        I->ColorTable.clear();
         PRINTFB(G, FB_Color, FB_Actions)
           " Color: purged table; restoring RGB colors.\n" ENDFB(G);
       }
@@ -2522,15 +2516,14 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
       unsigned int *pixel, mask, *p;
       unsigned int rc;
 
-      FreeP(I->ColorTable);
       if(I->BigEndian)
         mask = 0x000000FF;
       else
         mask = 0xFF000000;
 
-      table = Alloc(unsigned int, 512 * 512);
+      I->ColorTable.resize(512 * 512);
 
-      p = (unsigned int *) table;
+      p = I->ColorTable.data();
       for(x = 0; x < width; x++)
         for(y = 0; y < height; y++)
           *(p++) = mask;
@@ -2539,7 +2532,7 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
         for(x = 0; x < width; x++) {
           rc = (r + g + b)/3;
 
-          pixel = table + ((width) * y) + x;
+          pixel = I->ColorTable.data() + ((width) * y) + x;
           if(I->BigEndian) {
             *(pixel) = mask | (rc << 24) | (rc << 16) | (rc << 8);
           } else {
@@ -2556,7 +2549,6 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
           }
         }
 
-      I->ColorTable = table;
       if(!quiet) {
         PRINTFB(G, FB_Color, FB_Actions)
           " Color: defined table '%s'.\n", fname ENDFB(G);
@@ -2586,15 +2578,15 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
       blue_max = SettingGetGlobal_f(G, cSetting_pymol_space_max_blue);
       min_factor = SettingGetGlobal_f(G, cSetting_pymol_space_min_factor);
 
-      FreeP(I->ColorTable);
       if(I->BigEndian)
         mask = 0x000000FF;
       else
         mask = 0xFF000000;
 
-      table = Alloc(unsigned int, 512 * 512);
+      I->ColorTable.clear();
+      I->ColorTable.resize(512 * 512);
 
-      p = (unsigned int *) table;
+      p = I->ColorTable.data();
       for(x = 0; x < width; x++)
         for(y = 0; y < height; y++)
           *(p++) = mask;
@@ -2651,7 +2643,7 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
           if(gc > 255)
             gc = 255;
 
-          pixel = table + ((width) * y) + x;
+          pixel = I->ColorTable.data() + ((width) * y) + x;
           if(I->BigEndian) {
             *(pixel) = mask | (rc << 24) | (gc << 16) | (bc << 8);
           } else {
@@ -2668,7 +2660,6 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
           }
         }
 
-      I->ColorTable = table;
       if(!quiet) {
         PRINTFB(G, FB_Color, FB_Actions)
           " Color: defined table '%s'.\n", fname ENDFB(G);
@@ -2682,14 +2673,17 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
       if(strlen(fname)) {
 
         unsigned int u_width = (unsigned int) width, u_height = (unsigned int) height;
-        unsigned char *u_table = (unsigned char *) table;
-        if(MyPNGRead(fname, &u_table, &u_width, &u_height)) {
-          table = (unsigned int *) u_table;
-          width = (signed int) u_width;
-          height = (signed int) u_height;
+        auto image = MyPNGRead(fname);
+        if(image) {
+          auto imageSize = image->getWidth() * image->getHeight();
+          auto imageSizeBytes = imageSize * pymol::Image::getPixelSize();
+          I->ColorTable.clear();
+          I->ColorTable.resize(imageSize);
+          auto color_uchar =
+              reinterpret_cast<unsigned char*>(I->ColorTable.data());
+          std::copy(image->bits(), image->bits() + imageSizeBytes, color_uchar);
+          std::tie(width, height) = image->getSize();
           if((width == 512) && (height == 512)) {
-            FreeP(I->ColorTable);
-            I->ColorTable = table;
             if(!quiet) {
               PRINTFB(G, FB_Color, FB_Actions)
                 " Color: loaded table '%s'.\n", fname ENDFB(G);
@@ -2712,11 +2706,8 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
       } else {
         PRINTFB(G, FB_Color, FB_Actions)
           " Color: purged table; colors unchanged.\n" ENDFB(G);
-        FreeP(I->ColorTable);
+        I->ColorTable.clear();
       }
-    }
-    if(!ok) {
-      FreeP(table);
     }
   }
   if(ok) {
@@ -2729,7 +2720,7 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
 static void lookup_color(CColor * I, const float *in, float *out, int big_endian)
 {
   const float _1 = 1.0F;
-  unsigned int *table = I->ColorTable;
+  unsigned int *table = I->ColorTable.data();
   if(table) {
     unsigned int r, g, b, rr, gr, br;
     unsigned int ra, ga, ba;
@@ -2869,7 +2860,7 @@ void ColorUpdateFromLut(PyMOLGlobals * G, int index)
   CColor *I = G->Color;
   float *color, *new_color;
 
-  I->LUTActive = (I->ColorTable || (I->Gamma != 1.0F));
+  I->LUTActive = (!I->ColorTable.empty() || (I->Gamma != 1.0F));
 
   i = index;
   if(index >= 0) {
@@ -2920,7 +2911,8 @@ int ColorInit(PyMOLGlobals * G)
 {
   CColor *I = NULL;
 
-  if((I = (G->Color = Calloc(CColor, 1)))) {
+  if(G->Color = new CColor()){
+    I = G->Color;
     unsigned int test;
     unsigned char *testPtr;
 
@@ -2930,12 +2922,8 @@ int ColorInit(PyMOLGlobals * G)
 
     I->Color = VLACalloc(ColorRec, 5500);
     I->Ext = VLACalloc(ExtRec, 2);
-    I->Gamma = 1.0F;
 
     ColorReset(G);              /* will alloc I->Idx and I->Lex */
-    I->Front[0] = 1.0F;
-    I->Front[1] = 1.0F;
-    I->Front[2] = 1.0F;
     return 1;
   } else {
     return 0;
@@ -2959,7 +2947,7 @@ void ColorUpdateFrontFromSettings(PyMOLGlobals * G){
   short bg_image = bg_image_filename && bg_image_filename[0];
   
   if (!bg_gradient){
-    if (!bg_image && !OrthoBackgroundDataIsSet(G)){
+    if (!bg_image && !OrthoBackgroundDataIsSet(*G->Ortho)){
       const float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
       ColorUpdateFront(G, v);
     } else {

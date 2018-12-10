@@ -73,7 +73,7 @@ typedef struct {
 } CMovieModal;
 
 struct CMovie : public Block {
-  ImageType **Image {};
+  std::vector<std::shared_ptr<pymol::Image>> Image;
   int *Sequence { nullptr };
   MovieCmdType *Cmd { nullptr };
   int NImage { 0 }, NFrame { 0 };
@@ -280,7 +280,7 @@ void MovieCopyPrepare(PyMOLGlobals * G, int *width, int *height, int *length)
   if((start != 0) || (stop != (nFrame + 1)))
     SceneSetFrame(G, 0, 0);
   MoviePlay(G, cMoviePlay);
-  VLACheck(I->Image, ImageType *, nFrame);
+  VecCheck(I->Image, nFrame);
   SceneGetWidthHeight(G, width, height);
   {
     int uniform_height = -1;
@@ -288,18 +288,17 @@ void MovieCopyPrepare(PyMOLGlobals * G, int *width, int *height, int *length)
     int uniform_flag = false;
     int scene_match = true;
     int a;
-    ImageType *image;
     /* make sure all the movie frames match the screen size or are pre-rendered and are already the same size */
     for(a = 0; a < nFrame; a++) {
-      image = I->Image[a];
+      const pymol::Image* image = I->Image[a].get();
       if(image) {
-        if((image->height != *height) || (image->width != *width)) {
+        if((image->getHeight() != *height) || (image->getWidth() != *width)) {
           scene_match = false;
           if(uniform_height < 0) {
-            uniform_height = image->height;
-            uniform_width = image->width;
+            uniform_height = image->getHeight();
+            uniform_width = image->getWidth();
           } else {
-            if((image->height != uniform_height) || (image->width != uniform_width))
+            if((image->getHeight() != uniform_height) || (image->getWidth() != uniform_width))
               uniform_flag = false;
           }
         }
@@ -345,7 +344,7 @@ int MovieCopyFrame(PyMOLGlobals * G, int frame, int width, int height, int rowby
     MovieDoFrameCommand(G, a);
     MovieFlushCommands(G);
     i = MovieFrameToImage(G, a);
-    VLACheck(I->Image, ImageType *, i);
+    VecCheck(I->Image, i);
     if(!I->Image[i]) {
       SceneUpdate(G, false);
       SceneMakeMovieImage(G, false, false, cSceneImage_Default);
@@ -354,8 +353,8 @@ int MovieCopyFrame(PyMOLGlobals * G, int frame, int width, int height, int rowby
       PRINTFB(G, FB_Movie, FB_Errors)
         "MoviePNG-Error: Missing rendered image.\n" ENDFB(G);
     } else {
-      if((I->Image[i]->height == height) && (I->Image[i]->width == width)) {
-        unsigned char *srcImage = (unsigned char *) I->Image[i]->data;
+      if((I->Image[i]->getHeight() == height) && (I->Image[i]->getWidth() == width)) {
+        unsigned char *srcImage = I->Image[i]->bits();
         int i, j;
         for(i = 0; i < height; i++) {
           unsigned char *dst = ((unsigned char *) ptr) + i * rowbytes;
@@ -379,8 +378,7 @@ int MovieCopyFrame(PyMOLGlobals * G, int frame, int width, int height, int rowby
     }
     if(!I->CacheSave) {
       if(I->Image[i]) {
-        FreeP(I->Image[i]->data);
-        FreeP(I->Image[i]);
+        I->Image[i] = nullptr;
       }
     }
   }
@@ -401,11 +399,9 @@ int MoviePurgeFrame(PyMOLGlobals * G, int frame)
     if(frame < nFrame) {
       int a = frame;
       i = MovieFrameToImage(G, a);
-      VLACheck(I->Image, ImageType *, i);
+      VecCheck(I->Image, i);
       if(I->Image[i]) {
-        FreeP(I->Image[i]->data);
-        FreeP(I->Image[i]);
-        I->Image[i] = NULL;
+        I->Image[i] = nullptr;
         result = true;
       }
     }
@@ -588,7 +584,7 @@ PyObject *MovieAsPyList(PyMOLGlobals * G)
   }
 
 
-  /*   ImageType *Image;
+  /*   pymol::Image *Image;
        int *Sequence;
        MovieCmdType *Cmd;
        int NImage,NFrame;
@@ -721,7 +717,7 @@ static void MovieModalPNG(PyMOLGlobals * G, CMovie * I, CMovieModal * M)
     if((M->start != 0) || (M->stop != (M->nFrame + 1)))
       SceneSetFrame(G, 0, 0);
     MoviePlay(G, cMoviePlay);
-    VLACheck(I->Image, ImageType *, M->nFrame);
+    VecCheck(I->Image, M->nFrame);
     M->frame = 0;
     M->stage = 1;
     if(G->Interrupt) {
@@ -770,7 +766,7 @@ static void MovieModalPNG(PyMOLGlobals * G, CMovie * I, CMovieModal * M)
 
   switch (M->stage) {
   case 2:                      /* IN RENDER LOOP: create the image */
-    VLACheck(I->Image, ImageType *, M->image);
+    VecCheck(I->Image, M->image);
     if((M->frame >= M->start) &&        /* only render frames in the specified interval... */
        (M->frame <= M->stop) && (M->file_missing)) {    /* ...that don't already exist */
       if(!I->Image[M->image]) {
@@ -802,11 +798,10 @@ static void MovieModalPNG(PyMOLGlobals * G, CMovie * I, CMovieModal * M)
       PRINTFB(G, FB_Movie, FB_Errors)
         "MoviePNG-Error: Missing rendered image.\n" ENDFB(G);
     } else {
-      if(!MyPNGWrite(G, M->fname, I->Image[M->image]->data,
-                     I->Image[M->image]->width,
-                     I->Image[M->image]->height,
-                     SettingGetGlobal_f(G, cSetting_image_dots_per_inch),
-                     M->format, M->quiet)) {
+      if (!MyPNGWrite(M->fname, *I->Image[M->image],
+              SettingGetGlobal_f(G, cSetting_image_dots_per_inch), M->format,
+              M->quiet, SettingGetGlobal_f(G, cSetting_png_screen_gamma),
+              SettingGetGlobal_f(G, cSetting_png_file_gamma))) {
         PRINTFB(G, FB_Movie, FB_Errors)
           " MoviePNG-Error: unable to write '%s'\n", M->fname ENDFB(G);
       }
@@ -816,11 +811,10 @@ static void MovieModalPNG(PyMOLGlobals * G, CMovie * I, CMovieModal * M)
         PyMOL_SwapBuffers(G->PyMOL);
       PRINTFB(G, FB_Movie, FB_Debugging)
         " MoviePNG-DEBUG: i = %d, I->Image[image] = %p\n", M->image,
-        I->Image[M->image]->data ENDFB(G);
+        I->Image[M->image]->bits() ENDFB(G);
     }
     if(I->Image[M->image]) {
-      FreeP(I->Image[M->image]->data);
-      FreeP(I->Image[M->image]);
+      I->Image[M->image] = nullptr;
     }
     M->timing = UtilGetSeconds(G) - M->timing;
     M->accumTiming += M->timing;
@@ -1009,7 +1003,7 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from,int freeze)
   // fixes PYMOL-2710
   MovieClearImages(G);
 
-  VLASize(I->Image, ImageType *, I->NFrame);
+  I->Image.resize(I->NFrame);
   PRINTFB(G, FB_Movie, FB_Debugging)
     " MovieSequence: leaving... I->NFrame%d\n", I->NFrame ENDFB(G);
 
@@ -1053,16 +1047,14 @@ int MovieFrameToIndex(PyMOLGlobals * G, int frame)
   }
 }
 /*========================================================================*/
-void MovieSetImage(PyMOLGlobals * G, int index, ImageType * image)
+void MovieSetImage(PyMOLGlobals * G, int index, std::shared_ptr<pymol::Image> image)
 {
   CMovie *I = G->Movie;
 
   PRINTFB(G, FB_Movie, FB_Blather)
     " MovieSetImage: setting movie image %d\n", index + 1 ENDFB(G);
 
-  VLACheck(I->Image, ImageType *, index);
-  if(I->Image[index])
-    FreeP(I->Image[index]);
+  VecCheck(I->Image, index);
   I->Image[index] = image;
   if(I->NImage < (index + 1))
     I->NImage = index + 1;
@@ -1468,13 +1460,13 @@ void MovieAppendCommand(PyMOLGlobals * G, int frame, char *command)
 
 
 /*========================================================================*/
-ImageType *MovieGetImage(PyMOLGlobals * G, int index)
+std::shared_ptr<pymol::Image> MovieGetImage(PyMOLGlobals * G, int index)
 {
   CMovie *I = G->Movie;
   if((index >= 0) && (index < I->NImage))
-    return (I->Image[index]);
+    return I->Image[index];
   else
-    return (NULL);
+    return nullptr;
 }
 
 
@@ -1507,15 +1499,7 @@ void MovieClearImages(PyMOLGlobals * G)
 
   PRINTFB(G, FB_Movie, FB_Blather)
     " MovieClearImages: clearing...\n" ENDFB(G);
-  if(I->Image) {
-    for(a = 0; a < I->NImage; a++) {
-      if(I->Image[a]) {
-        FreeP(I->Image[a]->data);
-        FreeP(I->Image[a]);
-        I->Image[a] = NULL;
-      }
-    }
-  }
+  I->Image.clear();
   I->NImage = 0;
   SceneInvalidate(G);
   SceneSuppressMovieFrame(G);
@@ -1544,7 +1528,6 @@ void MovieFree(PyMOLGlobals * G)
 {
   CMovie *I = G->Movie;
   MovieClearImages(G);
-  VLAFree(I->Image);
   VLAFreeP(I->ViewElem);
   VLAFreeP(I->Cmd);
   VLAFreeP(I->Sequence);
@@ -1974,7 +1957,6 @@ int MovieInit(PyMOLGlobals * G)
     I->active = true;
     OrthoAttach(G, I, cOrthoTool);
 
-    I->Image = VLACalloc(ImageType *, 10);       /* auto-zero */
     for(a = 0; a < 16; a++)
       I->Matrix[a] = 0.0F;
     return 1;

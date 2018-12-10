@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 #include"Ortho.h"
 #include"View.h"
+#include"Image.h"
 #include"ScrollBar.h"
 #include<list>
 #include<vector>
@@ -84,14 +85,6 @@ typedef struct {
 } SceneElem;
 
 typedef struct {
-  unsigned char *data;
-  int size;
-  int width, height;
-  int stereo;                   /* indicates data actually contains two back to back full-screen images */
-  int needs_alpha_reset;        /* needs alpha reset */
-} ImageType;
-
-typedef struct {
   float unit_left, unit_right, unit_top, unit_bottom, unit_front, unit_back;
 } SceneUnitContext;
 
@@ -138,8 +131,7 @@ class CScene : public Block {
   int CopyType, CopyNextFlag, CopyForced;
   int NFrame { 0 };
   int HasMovie { 0 };
-  ImageType *Image { nullptr };
-  int MovieOwnsImageFlag;
+  std::shared_ptr<pymol::Image> Image { nullptr };
   int MovieFrameFlag;
   double LastRender, RenderTime, LastFrameTime, LastFrameAdjust;
   double LastSweep, LastSweepTime;

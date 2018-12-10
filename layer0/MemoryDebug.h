@@ -18,6 +18,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_MemoryDebug
 #define _H_MemoryDebug
 
+#include <vector>
+
 #include "os_std.h"
 #include "PyMOLGlobals.h"
 
@@ -101,6 +103,21 @@ inline unsigned int VLAGetByteSize(const void *ptr) {
 template <typename T>
 T * VLACopy2(const T * vla) {
   return VLACopy((void*)vla, T);
+}
+
+/*
+ * @brief std::vector version of VLACheck. Checks to see if index i is valid for insertion.
+ *        If not, a resize will be attempted.
+ * @param vec: vector whose size will be check for valid insertion at index i
+ * @param i: index for position where an element may be inserted into vec
+ * Note: Use of this function should be limited. Used for safe replacement of VLACheck
+ * Note: This function can throw.
+ */
+template <typename T>
+void VecCheck(std::vector<T> &vec, std::size_t i){
+  if(i >= vec.size()){
+    vec.resize(i + 1);
+  }
 }
 
 template <typename T>

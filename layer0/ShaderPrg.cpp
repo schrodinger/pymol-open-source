@@ -446,7 +446,7 @@ void CShaderPrg::SetBgUniforms() {
   Set3fv("bgSolidColor", ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb)));
 
   SceneGetWidthHeight(G, &scene_width, &scene_height);
-  OrthoGetBackgroundSize(G, &bg_width, &bg_height);
+  std::tie(bg_width, bg_height) = OrthoGetBackgroundSize(*G->Ortho);
 
   Set2f("tiledSize", bg_image_tilesize[0]/(float)scene_width, bg_image_tilesize[1]/(float)scene_height);
   Set2f("tileSize", 1.f/(float)bg_image_tilesize[0], 1.f/(float)bg_image_tilesize[1]);

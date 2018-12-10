@@ -89,7 +89,7 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
     int width=0, int height=0);
 int SceneValidateImageMode(PyMOLGlobals * G, int mode, bool defaultdraw);
 
-int ScenePNG(PyMOLGlobals * G, const char *png, float dpi, int quiet,
+bool ScenePNG(PyMOLGlobals * G, const char *png, float dpi, int quiet,
              int prior_only, int format);
 int SceneCopyExternal(PyMOLGlobals * G, int width, int height, int rowbytes,
                       unsigned char *dest, int mode);
@@ -107,7 +107,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
 void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_mode);
 
 void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, int state);
-void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height);
+std::pair<int, int> SceneGetImageSize(PyMOLGlobals * G);
 float SceneGetGridAspectRatio(PyMOLGlobals * G);
 void SceneScale(PyMOLGlobals * G, float scale);
 void SceneResetNormalCGO(PyMOLGlobals * G, CGO *cgo, int lines);
@@ -251,8 +251,7 @@ void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window);
 
 void SceneInvalidatePicking(PyMOLGlobals * G);
 
-unsigned char *SceneImagePrepare(PyMOLGlobals * G, int prior_only, int noinvalid=0);
-void SceneImageFinish(PyMOLGlobals * G, GLvoid *image);
+pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only, bool noinvalid=0);
 
 #endif
 

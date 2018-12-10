@@ -58,23 +58,24 @@ typedef struct {
   int old_session_index;
 } ExtRec;
 
-struct _CColor {
-  ColorRec *Color;
-  int NColor;
-  ExtRec *Ext;
-  int NExt;
-  int LUTActive;
-  unsigned int *ColorTable;
-  float Gamma;
-  int BigEndian;
-  OVLexicon *Lex;
-  OVOneToOne *Idx;
-  float RGBColor[3];            /* save global float for returning (float*) */
-  char RGBName[11]; // "0xTTRRGGBB"
+struct CColor {
+  ColorRec *Color{};
+  int NColor{};
+  ExtRec *Ext{};
+  int NExt{};
+  int LUTActive{};
+  std::vector<unsigned int> ColorTable{};
+  float Gamma = 1.0f;
+  int BigEndian{};
+  OVLexicon *Lex{};
+  OVOneToOne *Idx{};
+  float RGBColor[3]{};            /* save global float for returning (float*) */
+  char RGBName[11]{}; // "0xTTRRGGBB"
   /* not stored */
-  int HaveOldSessionColors;
-  int HaveOldSessionExtColors;
-  float Front[3], Back[3];
+  int HaveOldSessionColors{};
+  int HaveOldSessionExtColors{};
+  float Front[3] { 1.0f, 1.0f, 1.0f };
+  float Back[3]{};
 };
 
 int ColorInit(PyMOLGlobals * G);
