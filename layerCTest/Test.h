@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <array>
 #include <vector>
 #include <functional>
 #include <cstring>
@@ -16,11 +17,8 @@ namespace test {
 // values are 0)
 template <typename T> static bool isStructZero(const T &obj) {
   const auto size = sizeof(T);
-  std::vector<char> buffer{size, 0};
-  if (std::memcmp(buffer.data(), &obj, size)) {
-    return false;
-  }
-  return true;
+  std::array<char, size> buffer{};
+  return std::memcmp(buffer.data(), &obj, size) == 0;
 }
 
 // Checks whether array arr is zeroed
