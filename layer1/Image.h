@@ -77,6 +77,16 @@ public:
   // Returns raw underlying data
   unsigned char* bits() noexcept { return m_data.data(); }
   const unsigned char* bits() const noexcept { return m_data.data(); }
+
+  std::uint32_t* pixels() noexcept
+  {
+    return reinterpret_cast<std::uint32_t*>(bits());
+  }
+  const std::uint32_t* pixels() const noexcept
+  {
+    return reinterpret_cast<const std::uint32_t*>(bits());
+  }
+
   bool empty() const noexcept { return m_data.empty(); }
   bool operator==(const Image& other) const noexcept
   {
@@ -119,9 +129,9 @@ public:
   {
     auto half_width = m_width / 2;
     Image newImg(half_width, m_height, true);
-    auto* src = reinterpret_cast<const unsigned int*>(bits());
+    auto* src = pixels();
     auto* src_end = src + m_width * m_height;
-    auto* dst1 = reinterpret_cast<unsigned int*>(newImg.bits());
+    auto* dst1 = newImg.pixels();
     auto* dst2 = dst1 + (m_height * half_width);
 
     if (toSwap) {
@@ -153,8 +163,8 @@ public:
   {
     Image newImg(m_width, m_height);
     auto half_width = m_width / 2u;
-    auto* src = reinterpret_cast<const unsigned int*>(bits());
-    auto* dst = reinterpret_cast<unsigned int*>(newImg.bits());
+    auto* src = pixels();
+    auto* dst = newImg.pixels();
     auto* dst_end = dst + m_width * m_height;
     const unsigned int* src_half = src + (m_height * half_width);
 
