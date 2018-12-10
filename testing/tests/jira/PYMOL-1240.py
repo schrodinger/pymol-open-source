@@ -18,6 +18,8 @@ v_pdbstr_rotated = (
 class TestPYMOL1240(testing.PyMOLTestCase):
 
     def testSaveANISO(self):
+        cmd.set('pdb_use_ter_records', 0);
+
         cmd.read_pdbstr(v_pdbstr_anisou, 'm1')
         v = cmd.get_pdbstr()
         self.assertEqual(v, v_pdbstr_anisou, 'ANISOU records missing:\n' + v)
