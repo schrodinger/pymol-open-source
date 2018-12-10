@@ -428,6 +428,8 @@ struct MoleculeExporterPDB : public MoleculeExporter {
   bool m_conect_all;
   bool m_conect_nodup;
   bool m_mdl_written;
+  bool m_use_ter_records;
+  const AtomInfoType * m_pre_ter = nullptr;
   PDBInfoRec m_pdb_info;
 
   // quasi constructor
@@ -440,6 +442,7 @@ struct MoleculeExporterPDB : public MoleculeExporter {
     m_mdl_written   = false;
     m_conect_nodup  = SettingGetGlobal_b(G, cSetting_pdb_conect_nodup);
     m_retain_ids    = SettingGetGlobal_b(G, cSetting_pdb_retain_ids);
+    m_use_ter_records = SettingGetGlobal_b(G, cSetting_pdb_use_ter_records);
   }
 
   int getMultiDefault() const {
@@ -461,7 +464,28 @@ struct MoleculeExporterPDB : public MoleculeExporter {
     }
   }
 
+  /*
+   * Write a TER record if the previous atom was polymer and `ai`
+   * is NULL, non-polymer, or has a different chain identifier.
+   */
+  void writeTER(const AtomInfoType* ai) {
+    if (!m_use_ter_records)
+      return;
+
+    if (ai && !(ai->flags & cAtomFlag_polymer)) {
+      ai = nullptr;
+    }
+
+    if (m_pre_ter && !(ai && ai->chain == m_pre_ter->chain)) {
+      m_offset += VLAprintf(m_buffer, m_offset, "TER   \n");
+    }
+
+    m_pre_ter = ai;
+  }
+
   void writeAtom() {
+    writeTER(m_iter.getAtomInfo());
+
     CoordSetAtomToPDBStrVLA(G, &m_buffer, &m_offset, m_iter.getAtomInfo(),
         m_coord, getTmpID() - 1, &m_pdb_info, m_mat_full.ptr);
   }
@@ -540,6 +564,8 @@ struct MoleculeExporterPDB : public MoleculeExporter {
   }
 
   void endCoordSet() {
+    writeTER(nullptr);
+
     MoleculeExporter::endCoordSet();
 
     if (m_iter.isPerObject() || m_iter.state != m_last_state) {
