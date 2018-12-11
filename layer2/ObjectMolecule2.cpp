@@ -237,6 +237,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
   int ok = true;
 
   pymol::vla<AtomInfoType> atInfo(1);
+  AtomInfoType* ai = atInfo.data();
 
 #ifdef _PYMOL_IP_EXTRAS
   atInfo->oldid = -1;
@@ -263,7 +264,6 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
   }
   {
     /* match existing properties of the old atom */
-    AtomInfoType *ai = atInfo;
     ai->setResi(resi);
     ai->hetatm = hetatm;
     ai->geom = cAtomInfoNone;
@@ -356,7 +356,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
               break;
             }
             if(vdw >= 0.0F)
-              atInfo->vdw = vdw;        /* NOTE: only uses vdw from first state selection... */
+              ai->vdw = vdw;        /* NOTE: only uses vdw from first state selection... */
           }
         } else {
           pos = NULL;           /* skip this state */

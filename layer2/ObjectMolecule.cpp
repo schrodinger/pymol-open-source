@@ -3728,7 +3728,8 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
       
       if(ok)
         cs->enumIndices();
-      auto nai = pymol::vla<AtomInfoType>(1);
+      auto atInfo = pymol::vla<AtomInfoType>(1);
+      AtomInfoType* nai = atInfo.data();
       if (ok){
 	UtilNCopy(nai->elem, "H", 2);
 	nai->geom = cAtomInfoSingle;
@@ -3736,7 +3737,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 	ok &= ObjectMoleculePrepareAtom(I, index, nai);
 	d = AtomInfoGetBondLength(I->Obj.G, ai, nai);
 	if (ok)
-          ok &= ObjectMoleculeMerge(I, std::move(nai),
+          ok &= ObjectMoleculeMerge(I, std::move(atInfo),
               cs, false, cAIC_AllMask, true);       /* will free nai and cs->TmpLinkBond  */
       }
       if (ok)

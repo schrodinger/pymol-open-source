@@ -905,7 +905,9 @@ void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence,
   ObjectMolecule *obj0 = NULL, *obj1 = NULL;
   int ok = true;
 
-  auto ai = pymol::vla<AtomInfoType>(1);
+  auto atInfo = pymol::vla<AtomInfoType>(1);
+  AtomInfoType* ai = atInfo.data();
+
   if(EditorActive(G)) {
 
     sele0 = SelectorIndexByName(G, cEditorSele1);
@@ -934,14 +936,13 @@ void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence,
               if(name[0])
                 LexAssign(G, ai->name, name);
               if (ok)
-		ok &= ObjectMoleculeAttach(obj0, i0, std::move(ai));       /* will free ai */
+		ok &= ObjectMoleculeAttach(obj0, i0, std::move(atInfo));
             }
           }
         }
       }
     }
   }
-  VLAFreeP(ai);                 /* safety */
 }
 
 
