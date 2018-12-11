@@ -1648,6 +1648,7 @@ PYMOL API
     cmd.get_raw_alignment(name)
 
         '''
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.get_raw_alignment(_self._COb,str(name),int(active_only))

@@ -499,6 +499,7 @@ int ExecutiveSetDrag(PyMOLGlobals * G, const char *name, int quiet,int mode);
 int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int log);
 int ExecutiveGetActiveSele(PyMOLGlobals * G);
 int ExecutiveGetActiveAlignmentSele(PyMOLGlobals * G);
+const char* ExecutiveGetActiveAlignment(PyMOLGlobals* G);
 CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char *oname, cLoadType_t type);
 int ExecutiveAngle(PyMOLGlobals * G, float *result,
                    const char *nam, const char *s1, const char *s2, const char *s3, int mode,

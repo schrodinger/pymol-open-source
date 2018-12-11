@@ -192,10 +192,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
 
           ObjectMolecule *obj;
 
-          if(align_sele < 0) {
-            align_sele = ExecutiveGetActiveAlignmentSele(G);
-          }
-          if(align_sele >= 0) {
+          {
             row_vla = VLACalloc(CSeqRow, 10);
 
             /* first, find out which objects are included in the

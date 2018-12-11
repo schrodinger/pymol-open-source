@@ -3371,12 +3371,30 @@ int ExecutivePop(PyMOLGlobals * G, const char *target, const char *source, int q
     return result;
 }
 
+/*
+ * Return the selector index of the "active" alignment.
+ */
 int ExecutiveGetActiveAlignmentSele(PyMOLGlobals * G)
 {
+  const char* alignment = ExecutiveGetActiveAlignment(G);
+  if (alignment && alignment[0]) {
+    return SelectorIndexByName(G, alignment);
+  }
+  return -1;
+}
+
+/*
+ * Return the name of the "active" alignment. That is:
+ *
+ * 1) The "seq_view_alignment" setting if it's set
+ * 2) or the name of the first enabled alignment object
+ * 3) or NULL
+ */
+const char* ExecutiveGetActiveAlignment(PyMOLGlobals* G)
+{
   const char *alignment = SettingGetGlobal_s(G, cSetting_seq_view_alignment);
-  int align_sele = -1;
   if(alignment && alignment[0]) {       /* explicit alignment setting name */
-    align_sele = SelectorIndexByName(G, alignment);
+    return alignment;
   } else {                      /* otherwise, use the first active alignment */
     SpecRec *rec = NULL;
     CExecutive *I = G->Executive;
@@ -3384,16 +3402,12 @@ int ExecutiveGetActiveAlignmentSele(PyMOLGlobals * G)
       if(rec->visible) {
         if(rec->type == cExecObject)
           if(rec->obj->type == cObjectAlignment) {
-            if(rec->obj->fUpdate)       /* allow object to update selection, if necessary */
-              rec->obj->fUpdate(rec->obj);
-            align_sele = SelectorIndexByName(G, rec->obj->Name);
-            if(align_sele >= 0)
-              break;
+            return rec->obj->Name;
           }
       }
     }
   }
-  return align_sele;
+  return nullptr;
 }
 
 int ExecutiveGetActiveSele(PyMOLGlobals * G)

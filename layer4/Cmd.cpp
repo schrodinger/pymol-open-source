@@ -745,14 +745,61 @@ static PyObject *CmdSetRawAlignment(PyObject * self, PyObject * args)
   return APISuccess();
 }
 
+static PyObject* GetRawAlignment(PyMOLGlobals* G,
+    const ObjectAlignment* alnobj,
+    bool active_only,
+    int state)
+{
+  if (state >= alnobj->NState) {
+    PyErr_Format(PyExc_IndexError, "state %d >= NState %d", state, alnobj->NState);
+    return nullptr;
+  }
+
+  const auto& vla = alnobj->State[state].alignVLA;
+
+  if (!vla) {
+    PyErr_Format(PyExc_IndexError, "state %d not valid", state);
+    return nullptr;
+  }
+
+  auto hide_underscore = SettingGet<bool>(G, cSetting_hide_underscore_names);
+  const auto vla_len = VLAGetSize(vla);
+
+  PyObject * raw = PyList_New(0);
+
+  for (size_t i = 0; i < vla_len; ++i) {
+    PyObject * col = PyList_New(0);
+
+    for (int id; (id = vla[i]); ++i) {
+      auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
+      if (eoo
+          && (!active_only || eoo->obj->Obj.Enabled)
+          && (!hide_underscore || eoo->obj->Obj.Name[0] != '_')) {
+        PyObject * idx = Py_BuildValue("si", eoo->obj->Obj.Name, eoo->atm + 1);
+        PyList_Append(col, idx);
+        Py_DECREF(idx);
+      }
+    }
+
+    if (PyList_Size(col) > 0) {
+      PyList_Append(raw, col);
+    }
+
+    Py_DECREF(col);
+  }
+
+  return raw;
+}
+
 static PyObject *CmdGetRawAlignment(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int ok = false;
-  char *name;
+  const char *name;
   int active_only;
+  int state = 0;
   PyObject *result = NULL;
-  ok = PyArg_ParseTuple(args, "Osi", &self, &name, &active_only);
+  ok = PyArg_ParseTuple(args, "Osi|i", &self, &name, &active_only, &state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -760,21 +807,20 @@ static PyObject *CmdGetRawAlignment(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    int align_sele = -1;
-    if(name[0]) {
-      CObject *obj = ExecutiveFindObjectByName(G, name);
-      if(obj->type == cObjectAlignment) {
-        align_sele = SelectorIndexByName(G, obj->Name);
-      }
-    } else {
-      align_sele = ExecutiveGetActiveAlignmentSele(G);
+    if (!name[0]) {
+      name = ExecutiveGetActiveAlignment(G);
     }
-    if(align_sele >= 0) {
-      result = SeekerGetRawAlignment(G, align_sele, active_only);
+    if (name && name[0]) {
+      CObject *obj = ExecutiveFindObjectByName(G, name);
+      if (obj && obj->type == cObjectAlignment) {
+        result = GetRawAlignment(G, (ObjectAlignment*) obj, active_only, state);
+      } else {
+        PyErr_Format(PyExc_KeyError, "no such alignment: '%s'", name);
+      }
     }
     APIExitBlocked(G);
   }
-  if(!result) {
+  if(!result && !PyErr_Occurred()) {
     return APIFailure();
   } else
     return result;

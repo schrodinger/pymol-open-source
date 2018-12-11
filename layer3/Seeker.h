@@ -33,6 +33,4 @@ enum {
 };
 }//namespace GapMode
 
-PyObject *SeekerGetRawAlignment(PyMOLGlobals * G, int align_sele, int active_only);
-
 #endif
