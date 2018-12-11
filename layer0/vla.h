@@ -96,8 +96,10 @@ public:
   template <typename S> const T* operator+(S i) const { return m_vla + i; }
   template <typename S> T* operator+(S i) { return m_vla + i; }
 
-  T& operator[](std::size_t i) { return m_vla[i]; }
-  const T& operator[](std::size_t i) const { return m_vla[i]; }
+  // note: VS2015 32bit fails with "overloads have similar conversions" if this is not a template
+  template <typename S> T& operator[](S i) { return m_vla[i]; }
+  template <typename S> const T& operator[](S i) const { return m_vla[i]; }
+
   T* operator->() { return m_vla; }
   const T* operator->() const { return m_vla; }
 
