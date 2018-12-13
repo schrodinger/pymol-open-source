@@ -2583,7 +2583,6 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
       else
         mask = 0xFF000000;
 
-      I->ColorTable.clear();
       I->ColorTable.resize(512 * 512);
 
       p = I->ColorTable.data();
@@ -2672,18 +2671,14 @@ int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
     } else {
       if(strlen(fname)) {
 
-        unsigned int u_width = (unsigned int) width, u_height = (unsigned int) height;
         auto image = MyPNGRead(fname);
         if(image) {
-          auto imageSize = image->getWidth() * image->getHeight();
-          auto imageSizeBytes = imageSize * pymol::Image::getPixelSize();
-          I->ColorTable.clear();
-          I->ColorTable.resize(imageSize);
-          auto color_uchar =
-              reinterpret_cast<unsigned char*>(I->ColorTable.data());
-          std::copy(image->bits(), image->bits() + imageSizeBytes, color_uchar);
           std::tie(width, height) = image->getSize();
           if((width == 512) && (height == 512)) {
+            auto imageSize = width * height;
+            I->ColorTable.resize(imageSize);
+            std::copy(image->pixels(), image->pixels() + imageSize, I->ColorTable.data());
+
             if(!quiet) {
               PRINTFB(G, FB_Color, FB_Actions)
                 " Color: loaded table '%s'.\n", fname ENDFB(G);

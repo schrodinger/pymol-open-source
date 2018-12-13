@@ -320,7 +320,6 @@ bool SceneRay(PyMOLGlobals * G,
       switch (mode) {
       case 0:                  /* mode 0 is built-in */
         {
-          auto pixelSize = pymol::Image::getPixelSize();
           auto image = pymol::make_unique<pymol::Image>(ray_width, ray_height);
           std::uint32_t background;
 
@@ -333,11 +332,10 @@ bool SceneRay(PyMOLGlobals * G,
             if(!I->Image) {     /* alloc on first pass */
               I->Image = pymol::make_unique<pymol::Image>(tot_width, tot_height);
               if(I->Image) {
-                unsigned int tot_size = tot_width * tot_height * pixelSize;
+                unsigned int tot_size = tot_width * tot_height;
                 {               /* fill with background color */
-                  unsigned int i;
-                  unsigned int *ptr = (unsigned int *) I->Image->bits();
-                  for(i = 0; i < tot_size; i += pixelSize) {
+                  unsigned int *ptr = I->Image->pixels();
+                  for(size_t i = 0; i < tot_size; ++i) {
                     *(ptr++) = background;
                   }
                 }

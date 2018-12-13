@@ -1481,14 +1481,13 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
       factor = 0;
 
     {
-      unsigned int final_buffer_size = width * height * pymol::Image::getPixelSize();
       int nXStep = (width / (I->Width + 1)) + 1;
       int nYStep = (height / (I->Height + 1)) + 1;
       int x, y;
       int draw_both = SceneMustDrawBoth(G);
       /* note here we're treating the buffer as 32-bit unsigned ints, not chars */
 
-      std::vector<unsigned char> final_image(final_buffer_size);
+      auto final_image = pymol::Image(width, height);
 
       ScenePurgeImage(G);
 
@@ -1535,8 +1534,8 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
             }
 
             if(I->Image) {      /* the image into place */
-              p = (unsigned int *) I->Image->bits();
-              q = reinterpret_cast<unsigned int*>(final_image.data()) + (x * I->Width) + (y * I->Height) * width;
+              p = I->Image->pixels();
+              q = final_image.pixels() + (x * I->Width) + (y * I->Height) * width;
               {
                 int y_limit;
                 int x_limit;
@@ -1580,9 +1579,9 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
           height = height / factor;
 
           {
-            unsigned char *p = final_image.data();
-            std::vector<unsigned char> buffer(width * height * pymol::Image::getPixelSize());
-            unsigned char *q = buffer.data();
+            unsigned char *p = final_image.bits();
+            auto buffer = pymol::Image(width, height);
+            unsigned char *q = buffer.bits();
             unsigned char *pp, *ppp, *pppp;
             int a, b, c, d;
             unsigned int c1, c2, c3, c4, alpha;
@@ -1640,7 +1639,7 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
         }
         ScenePurgeImage(G);
 
-        I->Image = std::make_shared<pymol::Image>(std::move(final_image), width, height);
+        I->Image = std::make_shared<pymol::Image>(std::move(final_image));
         I->DirtyFlag = false;
         I->CopyType = true;
         I->CopyForced = true;
