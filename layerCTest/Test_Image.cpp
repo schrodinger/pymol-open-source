@@ -21,19 +21,16 @@ static const std::size_t height = 128u;
 
 Image getMockImage(bool stereoImage = false)
 {
-  std::vector<unsigned char> bytes(width * height * Image::getPixelSize(), 128);
-  if (stereoImage) {
-    bytes.resize(bytes.size() * 2);
-  }
-  return Image(bytes, width, height, stereoImage);
+  auto image = Image(width, height, stereoImage);
+  std::fill(image.bits(), image.bits() + image.getSizeInBytes(), 128);
+  return image;
 }
 
 TEST_CASE("Image Ill-Informed Constructor", "[Image]")
 {
   bool caught = false;
   try {
-    std::vector<unsigned char> bytes(width * height * Image::getPixelSize(), 128);
-    Image img(bytes, width, height, true);
+    Image img(100, -100);
   } catch (const std::exception& e){
     caught = true;
   }
@@ -93,7 +90,6 @@ TEST_CASE("Image Equality", "[Image]")
 {
   Image img = getMockImage();
   Image img2 = getMockImage();
-  REQUIRE(img.isSameImage(img2));
   REQUIRE(img == img2);
 }
 
@@ -176,8 +172,7 @@ static void save_image(const char* filename, const Image& img){
 TEST_CASE("Image Make Image", "[Image]")
 {
   auto dim = 64u;
-  std::vector<unsigned char> bytes(dim * dim * Image::getPixelSize());
-  Image img(bytes, dim, dim);
+  Image img(dim, dim);
   for (int i = 0; i < img.getSizeInBytes(); i++) {
     if (i % 4 == Image::Channel::ALPHA) {
       img.bits()[i] = 0xff;

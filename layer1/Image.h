@@ -40,22 +40,6 @@ public:
     }
     m_data.resize(newSize, 0x00);
   }
-  // Forwarding reference taking either l-value or r-value reference of
-  // std::vector<unsigned char>  This way we can keep the original buffer
-  // untouched or std::move it in.
-  template <typename T, typename = pymol::forward_check_t<T, decltype(m_data)>>
-  Image(T&& vec, int width, int height, bool stereo = false)
-      : m_data(std::forward<T>(vec)), m_width(width), m_height(height),
-        m_stereo(stereo)
-  {
-    auto stereoFactor = stereo ? 2 : 1;
-    if (m_data.size() / getPixelSize() != width * height * stereoFactor) {
-      throw ill_informed_image{};
-    }
-    if (m_width < 0 || m_height < 0) {
-      throw ill_informed_image{};
-    }
-  }
 
   const std::pair<int, int> getSize() const
   {
@@ -93,7 +77,6 @@ public:
     return m_width == other.m_width && m_height == other.m_height &&
            m_stereo == other.m_stereo && m_data == other.m_data;
   }
-  bool isSameImage(const Image& other) const noexcept { return *this == other; }
   bool operator!=(const Image& other) const noexcept
   {
     return !(*this == other);
