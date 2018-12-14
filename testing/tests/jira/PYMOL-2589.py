@@ -5,7 +5,6 @@ some stick_ball caps missing
 import pymol
 from pymol import cmd, util, testing, stored
 
-@testing.requires('incentive')
 class Test2589(testing.PyMOLTestCase):
 
     def test(self):

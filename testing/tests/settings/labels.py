@@ -81,7 +81,6 @@ class TestLabels(testing.PyMOLTestCase):
         self.assertImageHasNotColor(color, img,
                 msg='%s outside of Q(%d,%d)' % (color, x, y))
 
-    @testing.requires('incentive')
     @testing.requires_version('1.8.7')
     def testLabelRelativeMode(self):
         # +-----+-----+

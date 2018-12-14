@@ -7,7 +7,6 @@ from pymol import cmd, CmdException, testing, stored
 
 class TestPYMOL2667(testing.PyMOLTestCase):
 
-    @testing.requires('incentive')
     @testing.requires_version('1.7.6.7')
     def test2667(self):
         cmd.fragment('ala', 'm1')

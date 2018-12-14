@@ -3,7 +3,6 @@ import pymol
 from pymol import cmd, testing, stored
 import unittest
 
-@testing.requires('incentive')
 class TestCGOLighting(testing.PyMOLTestCase):
 
     @testing.foreach((0),(1))

@@ -6,7 +6,6 @@ import unittest
 from collections import defaultdict
 from pymol import cmd, testing, stored
 
-@testing.requires('incentive')
 class Test132(testing.PyMOLTestCase):
 
     @testing.foreach(0, 1)

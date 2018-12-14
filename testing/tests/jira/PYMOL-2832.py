@@ -1,7 +1,6 @@
 from pymol import cmd, testing
 
 @testing.requires_version('1.8.4.1')
-@testing.requires('incentive')
 class TestDiscreteRibbonColors(testing.PyMOLTestCase):
 
     @testing.foreach(1, 0)
