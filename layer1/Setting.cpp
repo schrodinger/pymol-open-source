@@ -746,9 +746,11 @@ int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_resto
               if(ok) {
                 int setting_id;
                 int setting_type;
+                float val_3f[3];
                 union {
                   int int_;
                   float float_;
+		  float * float3_;
                 } value_store;
                 if(ok)
                   ok = PConvPyIntToInt(PyList_GetItem(entry_list, 0), &setting_id);
@@ -767,6 +769,14 @@ int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_resto
                     ok = PConvPyFloatToFloat(PyList_GetItem(entry_list, 2),
                                              &value_store.float_);
                     break;
+		  case cSetting_float3:
+		    {
+		      CPythonVal *el = CPythonVal_PyList_GetItem(G, entry_list, 2);
+		      value_store.float3_ = val_3f;
+		      ok = PConvPyListToFloatArrayInPlace(el, value_store.float3_, 3);
+		      CPythonVal_Free(el);
+		    }
+		    break;
                   }
                 if(ok) {
                   SettingUniqueSetTypedValue(G, unique_id, setting_id,
