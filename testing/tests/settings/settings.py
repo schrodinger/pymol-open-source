@@ -145,19 +145,49 @@ class TestSettings(testing.PyMOLTestCase):
         '''
         Test atom-level cartoon_transparency
         '''
+        cmd.load(self.datafile('1oky-frag.pdb'))
+        cmd.select('sele', 'resi 106-111', 0)
+
+        # hide blended parts between residues
+        cmd.cartoon('skip', 'resi 105+112')
+
+        return self._testAtomCartoonTransparency()
+
+    @testing.requires_version('2.3')
+    def testAtomCartoonTransparencyCylHelices(self):
+        '''
+        Test atom-level cartoon_transparency with cylindrical helices
+        '''
+        cmd.load(self.datafile('1oky-frag.pdb'))
+        cmd.select('sele', 'resi 113-', 0)
+
+        # hide blended parts between residues
+        cmd.cartoon('skip', 'resi 112')
+
+        cmd.set('cartoon_cylindrical_helices')
+
+        return self._testAtomCartoonTransparency()
+
+    @testing.requires_version('2.3')
+    def testAtomCartoonTransparencyNuc(self):
+        '''
+        Test atom-level cartoon_transparency with nucleic acid
+        '''
+        cmd.load(self.datafile('1ehz-5.pdb'))
+        cmd.select('sele', 'resi 4-', 0)
+
+        # hide blended parts between residues
+        cmd.cartoon('skip', 'resi 3')
+
+        return self._testAtomCartoonTransparency()
+
+    def _testAtomCartoonTransparency(self):
         self.ambientOnly()
         cmd.viewport(100, 100)
         cmd.set('opaque_background')
         cmd.set('ray_shadow', 0)
 
-        cmd.load(self.datafile('1oky-frag.pdb'))
         cmd.orient()
-
-        cmd.show_as('cartoon')
-        cmd.select('sele', 'resi 106-111', 0)
-
-        # hide blended parts between residues
-        cmd.cartoon('skip', 'resi 105+112')
 
         cmd.color('0xFF0000')
         cmd.color('0x0000FF', 'sele')
@@ -172,18 +202,25 @@ class TestSettings(testing.PyMOLTestCase):
         img = self.get_imagearray()
         self.assertImageHasColor('0x990000', img) # 40%
         self.assertImageHasColor('0x000099', img) # 40%
+        self.assertImageHasNotColor('0xFF0000', img)
+        self.assertImageHasNotColor('0x0000FF', img)
 
         # atom-level full-opaque
         cmd.set('cartoon_transparency', 0.0, 'sele')
         img = self.get_imagearray()
         self.assertImageHasColor('0x990000', img) # 40%
         self.assertImageHasColor('0x0000FF', img) #  0%
+        self.assertImageHasNotColor('0xFF0000', img)
+        self.assertImageHasNotColor('0x000099', img)
 
         # atom-level semi-transparent
         cmd.set('cartoon_transparency', 0.6, 'sele')
         img = self.get_imagearray()
         self.assertImageHasColor('0x990000', img) # 40%
-        self.assertImageHasColor('0x000066', img) # 60%
+        self.assertImageHasColor('0x000066', img, delta=1) # 60%
+        self.assertImageHasNotColor('0xFF0000', img)
+        self.assertImageHasNotColor('0x0000FF', img)
+        self.assertImageHasNotColor('0x000099', img)
 
         # atom-level full-transparent (expect only two color values)
         cmd.set('cartoon_transparency', 0.0)
