@@ -66,7 +66,8 @@ enum attrib_op_type {
   UB1_TO_INTERP,
   CYL_CAPS_ARE_ROUND,
   CYL_CAPS_ARE_FLAT,
-  CYL_CAPS_ARE_CUSTOM
+  CYL_CAPS_ARE_CUSTOM,
+  FLOAT4_TO_UB4
 };
 
 struct AttribDesc;

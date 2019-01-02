@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"PConv.h"
 #include"MyPNG.h"
+#include"CGO.h"
 
 #define SettingGetfv SettingGetGlobal_3fv
 
@@ -6877,7 +6878,12 @@ int CRay::character(int char_id)
 
 
 /*========================================================================*/
-int CRay::cylinder3fv(const float *v1, const float *v2, float r, const float *c1, const float *c2)
+int CRay::cylinder3fv(const cgo::draw::cylinder &cyl, const float alpha1, const float alpha2){
+  return cylinder3fv(cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1, cyl.color2, alpha1, alpha2);
+}
+
+int CRay::cylinder3fv(const float *v1, const float *v2, float r, const float *c1, const float *c2,
+                      const float alpha1, const float alpha2)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -6933,6 +6939,7 @@ int CRay::cylinder3fv(const float *v1, const float *v2, float r, const float *c1
   (*vv++) = (*c2++);
   (*vv++) = (*c2++);
 
+  p->trans = 1.0 - alpha1;
   {
     float *v;
     vv = p->ic;
@@ -6948,8 +6955,18 @@ int CRay::cylinder3fv(const float *v1, const float *v2, float r, const float *c1
 
 
 /*========================================================================*/
+int CRay::customCylinder3fv(const cgo::draw::custom_cylinder& cyl, const float alpha1, const float alpha2){
+  return customCylinder3fv(cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1,
+                        cyl.color2, cyl.cap1, cyl.cap2, alpha1, alpha2);
+}
+int CRay::customCylinderAlpha3fv(const cgo::draw::custom_cylinder_alpha& cyl, const float alpha1, const float alpha2){
+  return customCylinder3fv(cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1,
+                        cyl.color2, cyl.cap1, cyl.cap2, alpha1, alpha2);
+}
+
 int CRay::customCylinder3fv(const float *v1, const float *v2, float r,
-			 const float *c1, const float *c2, int cap1, int cap2)
+                            const float *c1, const float *c2, const int cap1,
+                            const int cap2, const float alpha1, const float alpha2)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -7005,6 +7022,9 @@ int CRay::customCylinder3fv(const float *v1, const float *v2, float r,
   (*vv++) = (*c2++);
   (*vv++) = (*c2++);
   vv = p->ic;
+
+  p->trans = 1.0f - alpha1;
+
   {
     float *v;
     vv = p->ic;

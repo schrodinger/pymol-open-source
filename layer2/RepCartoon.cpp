@@ -1039,8 +1039,9 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                     float axis[3];
                     subtract3f(g2p, g1p, axis);
                     CGOColorv(cgo, color1);
-                    cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, g1p, axis, glyco_radius, 0x1f, color2, &pickcolor2);
-		  }
+                    float ladder_alpha = 1.0f - AtomSettingGetWD(G, ai_i[i], cSetting_cartoon_transparency, 1.0f - alpha);
+                    cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, g1p, axis, glyco_radius, 0x1f, color2, &pickcolor2, ladder_alpha);
+                  }
                 }
               }
             }
@@ -1095,8 +1096,9 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                       float axis[3];
                       subtract3f(cs->Coord + 3 * bas, cs->Coord + 3 * sug, axis);
                       CGOColorv(cgo, color1);
-                      cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, cs->Coord + 3 * sug, axis, ladder_radius, 0x1f, color2, &pickcolor2);
-		    }
+                      float ladder_alpha = 1.0f - AtomSettingGetWD(G, ai_i[i], cSetting_cartoon_transparency, 1.0f - alpha);
+                      cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, cs->Coord + 3 * sug, axis, ladder_radius, 0x1f, color2, &pickcolor2, ladder_alpha);
+                    }
                   }
                 }
               }
@@ -1174,8 +1176,9 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                   float axis[3];
                   subtract3f(cs->Coord + 3 * bas, v_outer, axis);
                   CGOColorv(cgo, color1);
-                  cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, v_outer, axis, ladder_radius, 0x1f, color2, &pickcolor2);
-		}
+                  float ladder_alpha = 1.0f - AtomSettingGetWD(G, sug_ai, cSetting_cartoon_transparency, 1.0f - alpha);
+                  cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, v_outer, axis, ladder_radius, 0x1f, color2, &pickcolor2, ladder_alpha);
+                }
               }
             }
           }
@@ -1236,8 +1239,14 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
           ((finder == 2) && ((have_C4 >= 0))) ||
           ((finder == 3) && ((have_C_number >= 0))) || ((finder == 4)))) {
 
-        if((alpha != 1.0F) || (ring_alpha != alpha))
-          CGOAlpha(cgo, ring_alpha);
+        auto atom_alpha = 1.0f - AtomSettingGetWD(G, ai_i[i], cSetting_cartoon_transparency, 1.0f - ring_alpha);
+        if((alpha != 1.0F) || (ring_alpha != alpha) || atom_alpha != 1.0){
+          if(atom_alpha != ring_alpha){
+            CGOAlpha(cgo, atom_alpha);
+          } else {
+            CGOAlpha(cgo, ring_alpha);
+          }
+        }
 
         if(ring_color >= 0) {
           color = ColorGet(G, ring_color);
@@ -1411,8 +1420,9 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                   float axis[3];
                   subtract3f(v_i[ii], v_i[i], axis);
                   CGOColorv(cgo, color1);
-                  cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, v_i[i], axis, ring_width_for_mode, 0x1f, color2, &pickcolor2);
-		}
+                  float ladder_alpha = 1.0f - AtomSettingGetWD(G, ai_i[i], cSetting_cartoon_transparency, 1.0f - alpha);
+                  cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, v_i[i], axis, ring_width_for_mode, 0x1f, color2, &pickcolor2, ladder_alpha);
+                }
               }
             }
           }
@@ -1651,6 +1661,7 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
       *atp, a, cur_car;
   unsigned *vi;
   int last_color, uniform_color;
+  bool hasAtomLevelTrans = false;
   int contFlag, extrudeFlag;
   int b, c1, c2;
   float *h_start = NULL, *h_end = NULL;
@@ -1723,18 +1734,18 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
 
         c1 = AtomSettingGetWD(G, ai1, cSetting_cartoon_color, cartoon_color);
         c2 = AtomSettingGetWD(G, ai2, cSetting_cartoon_color, cartoon_color);
-        float alpha1 = AtomSettingGetWD(G, ai1, cSetting_cartoon_transparency, 1.0f - objAlpha);
-        float alpha2 = AtomSettingGetWD(G, ai2, cSetting_cartoon_transparency, 1.0f - objAlpha);
 
+        float alpha1 = 1.0f - AtomSettingGetWD(G, ai1, cSetting_cartoon_transparency, 1.0f - objAlpha);
+        float alpha2 = 1.0f - AtomSettingGetWD(G, ai2, cSetting_cartoon_transparency, 1.0f - objAlpha);
+        if (!hasAtomLevelTrans && (alpha1 != objAlpha || alpha2 != objAlpha)) {
+          hasAtomLevelTrans = true;
+        }
 
         if (c1 < 0) c1 = ai1->color;
         if (c2 < 0) c2 = ai2->color;
 
         if((*(cc) == *(cc + 1)) && (c1 != c2))
           uniform_color = false;
-        if(alpha1 != alpha2){
-          uniform_color = false;
-        }
         if(last_color >= 0) {
           if(c1 != last_color)
             uniform_color = false;
@@ -1793,9 +1804,12 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
 
         auto ai1 = obj->AtomInfo + atom_index1;
         auto ai2 = obj->AtomInfo + atom_index2;
-        float alpha1 = AtomSettingGetWD(G, ai1, cSetting_cartoon_transparency, 1.0f - objAlpha);
-        float alpha2 = AtomSettingGetWD(G, ai2, cSetting_cartoon_transparency, 1.0f - objAlpha);
 
+        float alpha1 = 1.0f - AtomSettingGetWD(G, ai1, cSetting_cartoon_transparency, 1.0f - objAlpha);
+        float alpha2 = 1.0f - AtomSettingGetWD(G, ai2, cSetting_cartoon_transparency, 1.0f - objAlpha);
+        if(!hasAtomLevelTrans && (alpha1 != objAlpha || alpha2 != objAlpha)){
+          hasAtomLevelTrans = true;
+        }
         if (c1 < 0) c1 = (obj->AtomInfo + atom_index1)->color;
 
         if(n_p < 5) {
@@ -1849,29 +1863,28 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
         add3f(t0, t4, t4);
         invert3f(t0);
         add3f(t0, t3, t3);
-        
-        if(uniform_color) {
-	  CGOCylinderv(cgo, t3, t4, helix_radius, ex->c, ex->c);
+        if(uniform_color && !hasAtomLevelTrans) {
+          cgo->add<cgo::draw::cylinder>(t3, t4, helix_radius, ex->c, ex->c);
         } else {
           subtract3f(t4, t3, t0);
           n_pm1 = n_p - 1;
           n_pm2 = n_p - 2;
           for(b = 0; ok && b < n_pm1; b++) {
-            if(!b) {
-              scale3f(t0, ((float) b - 0.005F) / n_pm1, t1);  /* add small overlap */
-            } else {
-              scale3f(t0, ((float) b) / n_pm1, t1);
-            }
-            if(b < n_pm2) {
-              scale3f(t0, ((float) b + 1.005F) / n_pm1, t2);
-            } else {
-              scale3f(t0, ((float) b + 1) / n_pm1, t2);
-            }
+            scale3f(t0, ((float) b) / n_pm1, t1);
+            scale3f(t0, ((float) b + 1) / n_pm1, t2);
+
             add3f(t3, t1, t1);
             add3f(t3, t2, t2);
-            CGOCustomCylinderv(cgo, t1, t2, helix_radius, ex->c + (b * 3),
+            if(hasAtomLevelTrans){
+              cgo->add<cgo::draw::custom_cylinder_alpha>(t1, t2, helix_radius, ex->c + (b * 3),
+                                     ex->c + (b + 1) * 3, ex->alpha[b], ex->alpha[b + 1], (float) (b ? 0 : cCylCapFlat),
+                                     (float) (b == n_pm2 ? cCylCapFlat : 0));
+           } else {
+              cgo->add<cgo::draw::custom_cylinder>(t1, t2, helix_radius, ex->c + (b * 3),
                                      ex->c + (b + 1) * 3, (float) (b ? 0 : cCylCapFlat),
                                      (float) (b == n_pm2 ? cCylCapFlat : 0));
+
+           }
           }
         }
       }

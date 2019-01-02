@@ -255,6 +255,8 @@ inline uchar CLIP_NORMAL_VALUE(float cv){ return ((cv>1.f) ? 127 :
 
 #define CGO_VERTEX_ATTRIB_4UB_IF_PICKING   0x40
 
+#define CGO_CUSTOM_CYLINDER_ALPHA      0x41
+
 #define CGO_MASK                0x7F
 
 
@@ -582,12 +584,14 @@ namespace cgo {
     struct shadercylinder2ndcolor {
       static const int op_code = CGO_SHADER_CYLINDER_WITH_2ND_COLOR;
       shadercylinder2ndcolor(CGO *I, const float *_origin, const float *_axis, const float _radius,
-                             int _cap, const float *_color2, Pickable *pickcolor2 = NULL);
+                             int _cap, const float *_color2, Pickable *pickcolor2 = NULL,
+                             const float alpha = 1.0f);
       float origin[3], axis[3], tube_size;
       int cap;
       float color2[3];
       unsigned int pick_color_index;
       int pick_color_bond;
+      float alpha;
     };
 
     struct sausage {
@@ -624,6 +628,23 @@ namespace cgo {
           copy3f(_color2, color2);
       };
       float vertex1[3], vertex2[3], radius, color1[3], color2[3];
+      float cap1, cap2;
+    };
+
+    struct custom_cylinder_alpha {
+      static const int op_code = CGO_CUSTOM_CYLINDER_ALPHA;
+      custom_cylinder_alpha(const float *_vertex1, const float *_vertex2, const float _radius, const float *_color1, const float *_color2,
+                            const float _alpha1, const float _alpha2,
+                            const float _cap1, const float _cap2) :
+      radius(_radius), cap1(_cap1), cap2(_cap2) {
+          copy3f(_vertex1, vertex1);
+          copy3f(_vertex2, vertex2);
+          copy3f(_color1, color1);
+          copy3f(_color2, color2);
+          color1[3] = _alpha1;
+          color2[3] = _alpha2;
+      };
+      float vertex1[3], vertex2[3], radius, color1[4], color2[4];
       float cap1, cap2;
     };
   };

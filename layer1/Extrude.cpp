@@ -2225,6 +2225,7 @@ int ExtrudeAllocPointsNormalsColors(CExtrude * I, int n)
     FreeP(I->p);
     FreeP(I->n);
     FreeP(I->c);
+    FreeP(I->alpha);
     FreeP(I->i);
     FreeP(I->sf);               /* PUTTY */
     I->p = Alloc(float, 3 * (n + 1));
