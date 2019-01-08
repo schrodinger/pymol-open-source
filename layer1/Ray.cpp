@@ -6878,6 +6878,9 @@ int CRay::character(int char_id)
 
 
 /*========================================================================*/
+int CRay::cylinder3fv(const cgo::draw::cylinder &cyl){
+  return cylinder3fv(cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1, cyl.color2, 1.0f - Trans, 1.0f - Trans);
+}
 int CRay::cylinder3fv(const cgo::draw::cylinder &cyl, const float alpha1, const float alpha2){
   return cylinder3fv(cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1, cyl.color2, alpha1, alpha2);
 }
@@ -6959,9 +6962,22 @@ int CRay::customCylinder3fv(const cgo::draw::custom_cylinder& cyl, const float a
   return customCylinder3fv(cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1,
                         cyl.color2, cyl.cap1, cyl.cap2, alpha1, alpha2);
 }
-int CRay::customCylinderAlpha3fv(const cgo::draw::custom_cylinder_alpha& cyl, const float alpha1, const float alpha2){
+
+int CRay::customCylinder3fv(const cgo::draw::custom_cylinder& cyl){
   return customCylinder3fv(cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1,
-                        cyl.color2, cyl.cap1, cyl.cap2, alpha1, alpha2);
+                        cyl.color2, cyl.cap1, cyl.cap2, 1.f - Trans, 1.f - Trans);
+}
+
+int CRay::customCylinderAlpha3fv(const cgo::draw::custom_cylinder_alpha& cyl){
+  return customCylinder3fv(cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1,
+                        cyl.color2, cyl.cap1, cyl.cap2, cyl.color1[3], cyl.color2[3]);
+}
+
+int CRay::customCylinder3fv(const float* v1, const float* v2, float r,
+    const float* c1, const float* c2, const int cap1, const int cap2)
+{
+  return customCylinder3fv(
+      v1, v2, r, c1, c2, cap1, cap2, 1.f - Trans, 1.f - Trans);
 }
 
 int CRay::customCylinder3fv(const float *v1, const float *v2, float r,

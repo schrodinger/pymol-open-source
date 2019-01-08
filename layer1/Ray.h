@@ -103,12 +103,16 @@ struct _CRay {
 
   // methods
   int sphere3fv(const float *v, float r);
-  int cylinder3fv(const cgo::draw::cylinder &cyl, const float alpha1 = 1.0f, const float alpha2 = 1.0f);
-  int customCylinder3fv(const cgo::draw::custom_cylinder &cyl, const float alpha1 = 1.0f, const float alpha2 = 1.0f);
-  int customCylinderAlpha3fv(const cgo::draw::custom_cylinder_alpha &cyl, const float alpha1 = 1.0f, const float alpha2 = 1.0f);
+  int cylinder3fv(const cgo::draw::cylinder &cyl);
+  int cylinder3fv(const cgo::draw::cylinder &cyl, const float alpha1, const float alpha2);
+  int customCylinder3fv(const cgo::draw::custom_cylinder &cyl, const float alpha1, const float alpha2);
+  int customCylinder3fv(const cgo::draw::custom_cylinder &cyl);
   int customCylinder3fv(const float *v1, const float *v2, float r, const float *c1,
                         const float *c2, const int cap1, const int cap2,
-                        const float alpha1 = 1.0f, const float alpha2 = 1.0f);
+                        const float alpha1, const float alpha2);
+  int customCylinder3fv(const float *v1, const float *v2, float r, const float *c1,
+                        const float *c2, const int cap1, const int cap2);
+  int customCylinderAlpha3fv(const cgo::draw::custom_cylinder_alpha &cyl);
   int cone3fv(const float *v1, const float *v2, float r1, float r2, const float *c1,
 		   const float *c2, int cap1, int cap2);
   int sausage3fv(const float *v1, const float *v2, float r, const float *c1, const float *c2);
@@ -169,7 +173,7 @@ struct _CRay {
 
 private:
   int cylinder3fv(const float *v1, const float *v2, float r, const float *c1, const float *c2,
-                  const float alpha1 = 1.0f, const float alpha2 = 1.0f);
+                  const float alpha1, const float alpha2);
 };
 
 void RayGetScreenVertex(CRay * I, float *v, float *dest);

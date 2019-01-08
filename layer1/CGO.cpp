@@ -5662,7 +5662,7 @@ int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, Obj
     case CGO_CUSTOM_CYLINDER_ALPHA:
       {
         auto cyl = reinterpret_cast<cgo::draw::custom_cylinder_alpha*>(pc);
-        ok &= ray->customCylinderAlpha3fv(*cyl, cyl->color1[3], cyl->color2[3]);
+        ok &= ray->customCylinderAlpha3fv(*cyl);
       }
       break;
     case CGO_SHADER_CYLINDER:
