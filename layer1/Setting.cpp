@@ -3061,6 +3061,11 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
     set_b(I, cSetting_cache_display, 0);
 
+    // PYMOL-3143/PYMOL-3181 Intel HD Graphics
+    // 4.5.0 - Build *.20.100.*
+    // Driver update breaks lighting
+    set_b(I, cSetting_precomputed_lighting, 1);
+
 #ifndef _PYMOL_ACTIVEX
     {
       SYSTEM_INFO SysInfo;
