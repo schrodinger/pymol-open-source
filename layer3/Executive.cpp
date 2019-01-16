@@ -2451,8 +2451,7 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
               int found = ObjectGetTTT(source_obj, &tttf, -1);
               if(found) {
                 ObjectSetTTT(target_obj, tttf, -1, -1);
-                if(target_obj->fInvalidate)
-                  target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
+                target_obj->invalidate(cRepNone, cRepInvExtents, -1);
               }
             }
           }
@@ -2465,8 +2464,7 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
           } else {
             ObjectSetTTT(target_obj, NULL, -1, -1);
           }
-          if(target_obj->fInvalidate)
-            target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
+          target_obj->invalidate(cRepNone, cRepInvExtents, -1);
           break;
         case 2:                /* applying changes to the state matrix */
           ok = ExecutiveSetObjectMatrix2(G, target_obj, target_state, history);
@@ -2491,8 +2489,7 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
           break;
         case 1:                /* TTT */
           ObjectSetTTT(target_obj, tttf, -1, -1);
-          if(target_obj->fInvalidate)
-            target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
+          target_obj->invalidate(cRepNone, cRepInvExtents, -1);
           break;
         case 2:                /* State */
           if(tttf) {
@@ -2521,12 +2518,10 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
             float tttf[16];
             convertR44dTTTf(homo, tttf);
             ObjectSetTTT(target_obj, tttf, -1, -1);
-            if(target_obj->fInvalidate)
-              target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
+            target_obj->invalidate(cRepNone, cRepInvExtents, -1);
           } else {
             ObjectSetTTT(target_obj, NULL, -1, -1);
-            if(target_obj->fInvalidate)
-              target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
+            target_obj->invalidate(cRepNone, cRepInvExtents, -1);
           }
           break;
         case 2:                /* State */
@@ -2536,8 +2531,7 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
             int found = ObjectGetTTT(source_obj, &tttf, -1);
             if(found) {
               ObjectSetTTT(target_obj, tttf, -1, -1);
-              if(target_obj->fInvalidate)
-                target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
+              target_obj->invalidate(cRepNone, cRepInvExtents, -1);
             }
           }
           break;
@@ -2917,8 +2911,7 @@ void ExecutiveResetMatrix(PyMOLGlobals * G,
             break;
           case 1:              /* operate on the TTT display matrix */
             ObjectResetTTT(obj,SettingGetGlobal_b(G,cSetting_movie_auto_store));
-            if(obj->fInvalidate)
-              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+            obj->invalidate(cRepNone, cRepInvExtents, -1);
 
             break;
           case 2:              /* applying changes to the state matrix */
@@ -4657,8 +4650,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
               if(ok)
                 if(PyInt_Check(col)) {
                   ok = PConvPyObjectToInt(col, &rec->obj->Color);
-                  if(rec->obj->fInvalidate)
-                    rec->obj->fInvalidate(rec->obj, cRepAll, cRepInvColor, -1);
+                  rec->obj->invalidate(cRepAll, cRepInvColor, -1);
                 }
             }
           }
@@ -7759,8 +7751,7 @@ int ExecutiveCombineObjectTTT(PyMOLGlobals * G, const char *name, float *ttt, in
           CObject *obj = rec->obj;
           if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
             ObjectCombineTTT(obj, ttt, reverse_order, store);
-            if(obj->fInvalidate)
-              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+            obj->invalidate(cRepNone, cRepInvExtents, -1);
           }
         }
         break;
@@ -7782,8 +7773,7 @@ int ExecutiveCombineObjectTTT(PyMOLGlobals * G, const char *name, float *ttt, in
           {
             CObject *obj = rec->obj;
             ObjectCombineTTT(obj, ttt, reverse_order, store);
-            if(obj->fInvalidate)
-              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+            obj->invalidate(cRepNone, cRepInvExtents, -1);
           }
           break;
         }
@@ -7813,8 +7803,7 @@ int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, const char *name, float *trans
           CObject *obj = rec->obj;
           if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
             ObjectTranslateTTT(obj, trans, store);
-            if(obj->fInvalidate)
-              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+            obj->invalidate(cRepNone, cRepInvExtents, -1);
           }
         }
         break;
@@ -7835,8 +7824,7 @@ int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, const char *name, float *trans
           {
             CObject *obj = rec->obj;
             ObjectTranslateTTT(obj, trans, store);
-            if(obj->fInvalidate)
-              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+            obj->invalidate(cRepNone, cRepInvExtents, -1);
           }
           break;
         }
@@ -7865,8 +7853,7 @@ int ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt, 
           CObject *obj = rec->obj;
           if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
             ObjectSetTTT(obj, ttt, state, store);
-            if(obj->fInvalidate)
-              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+            obj->invalidate(cRepNone, cRepInvExtents, -1);
           }
         }
         break;
@@ -7888,8 +7875,7 @@ int ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt, 
           {
             CObject *obj = rec->obj;
              ObjectSetTTT(obj, ttt, state, store);
-            if(obj->fInvalidate)
-              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+             obj->invalidate(cRepNone, cRepInvExtents, -1);
           }
           break;
         }
@@ -9505,9 +9491,7 @@ void ExecutiveRebuildAll(PyMOLGlobals * G)
       case cObjectSlice:
       case cObjectAlignment:
       case cObjectCGO:
-        if(rec->obj->fInvalidate) {
-          rec->obj->fInvalidate((CObject *) rec->obj, cRepAll, cRepInvAll, -1);
-        }
+        rec->obj->invalidate(cRepAll, cRepInvAll, -1);
         break;
       }
     }
@@ -11829,8 +11813,7 @@ int ExecutiveReset(PyMOLGlobals * G, int cmd, const char *name)
             CObject *obj = rec->obj;
             if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
               ObjectResetTTT(obj, SettingGetGlobal_b(G,cSetting_movie_auto_store));
-              if(obj->fInvalidate)
-                obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+              obj->invalidate(cRepNone, cRepInvExtents, -1);
             }
           }
           break;
@@ -11852,8 +11835,7 @@ int ExecutiveReset(PyMOLGlobals * G, int cmd, const char *name)
             {
               CObject *obj = rec->obj;
               ObjectResetTTT(obj, SettingGetGlobal_b(G,cSetting_movie_auto_store));
-              if(obj->fInvalidate)
-                obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+              obj->invalidate(cRepNone, cRepInvExtents, -1);
             }
             break;
           }
@@ -13126,8 +13108,7 @@ int ExecutiveColor(PyMOLGlobals * G, const char *name, const char *color, int fl
         switch (rec->type) {    /* sets object color */
         case cExecObject:
           rec->obj->Color = col_ind;
-          if(rec->obj->fInvalidate)
-            rec->obj->fInvalidate(rec->obj, cRepAll, cRepInvColor, -1);
+          rec->obj->invalidate(cRepAll, cRepInvColor, -1);
           n_obj++;
           ok = true;
           SceneInvalidate(G);
@@ -13137,8 +13118,7 @@ int ExecutiveColor(PyMOLGlobals * G, const char *name, const char *color, int fl
           while(ListIterate(I->Spec, rec, next)) {
             if(rec->type == cExecObject) {
               rec->obj->Color = col_ind;
-              if(rec->obj->fInvalidate)
-                rec->obj->fInvalidate(rec->obj, cRepAll, cRepInvColor, -1);
+              rec->obj->invalidate(cRepAll, cRepInvColor, -1);
               n_obj++;
               ok = true;
               SceneInvalidate(G);
@@ -14373,8 +14353,8 @@ void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int lev
               op.i1 = (rep == cRepAll) ? cRepBitmask : (1 << rep);
               op.i2 = level;
               ExecutiveObjMolSeleOp(G, sele, &op);
-            } else if(rec->obj->fInvalidate) {
-              rec->obj->fInvalidate(rec->obj, rep, level, -1);
+            } else {
+              rec->obj->invalidate(rep, level, -1);
             }
           }
           break;
@@ -14383,7 +14363,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int lev
           while(ListIterate(I->Spec, rec, next)) {
             if(rec->type == cExecObject) {
               if(rec->obj->fInvalidate) {
-                rec->obj->fInvalidate(rec->obj, rep, level, -1);
+                rec->obj->invalidate(rep, level, -1);
                 SceneInvalidate(G);
               }
             }
@@ -16762,8 +16742,7 @@ int ExecutiveReinitialize(PyMOLGlobals * G, int what, const char *pattern)
             case 1:
               if(rec->obj->Setting) {
                 ObjectPurgeSettings(rec->obj);
-                if(rec->obj->fInvalidate)
-                  rec->obj->fInvalidate(rec->obj, cRepAll, cRepInvAll, -1);
+                rec->obj->invalidate(cRepAll, cRepInvAll, -1);
                 SceneInvalidate(G);
                 SeqChanged(G);
               }

@@ -1133,8 +1133,8 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
     }
   }
   if (!ok){
-    I->Obj.fInvalidate(&I->Obj, cRepMesh, cRepInvPurge, -1);
-    I->Obj.fInvalidate(&I->Obj, cRepCGO, cRepInvPurge, -1);
+    I->Obj.invalidate(cRepMesh, cRepInvPurge, -1);
+    I->Obj.invalidate(cRepCGO, cRepInvPurge, -1);
     ObjectSetRepVisMask(&I->Obj, 0, cVis_AS);
   }
 
