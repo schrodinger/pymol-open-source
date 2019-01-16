@@ -340,9 +340,8 @@ void CShaderMgr::Reload_CallComputeColorForLight(){
 }
 
 void CShaderMgr::Invalidate_All_Shaders(){
-  for (map<string, CShaderPrg*>::iterator
-      it = programs.begin(); it != programs.end(); ++it) {
-    it->second->Invalidate();
+  for (auto& prog : programs) {
+    prog.second->Invalidate();
   }
 }
 
@@ -354,9 +353,9 @@ void CShaderMgr::Reload_All_Shaders(){
     Reload_Derivatives("NO_ORDER_TRANSP");
   }
 
-  for (auto it = programs.begin(); it != programs.end(); ++it) {
-    if (it->second->derivative.empty())
-      it->second->reload();
+  for (auto& prog : programs) {
+    if (prog.second->derivative.empty())
+      prog.second->reload();
   }
 }
 
@@ -795,8 +794,8 @@ void CShaderMgr::Config() {
 #endif
 
   // get filename -> shader program dependencies
-  for (auto it = programs.begin(); it != programs.end(); ++it) {
-    RegisterDependantFileNames(it->second);
+  for (auto& prog : programs) {
+    RegisterDependantFileNames(prog.second);
   }
 
   // make transparency_mode_3 shader derivatives
@@ -910,8 +909,8 @@ CShaderMgr::CShaderMgr(PyMOLGlobals * G_)
 }
 
 CShaderMgr::~CShaderMgr() {
-  for (auto it = programs.begin(); it != programs.end(); ++it) {
-    delete it->second;
+  for (auto& prog : programs) {
+    delete prog.second;
   }
   programs.clear();
 
@@ -1401,10 +1400,8 @@ CShaderPrg *CShaderMgr::Enable_IndicatorShader() {
 
 
 void CShaderMgr::ResetUniformSet() {
-  for (map<string, CShaderPrg*>::iterator
-      it = programs.begin(),
-      end = programs.end(); it != end; ++it) {
-    it->second->uniform_set = 0;
+  for (auto & prog : programs) {
+    prog.second->uniform_set = 0;
   }
 }
 
@@ -1582,8 +1579,8 @@ void CShaderMgr::Check_Reload() {
 
   if (reload_bits){
     if (reload_bits == RELOAD_ALL_SHADERS) {
-      for (auto it = programs.begin(); it != programs.end(); ++it)
-        it->second->is_valid = false;
+      for (auto& prog : programs)
+        prog.second->is_valid = false;
       shader_cache_processed.clear();
     }
 
@@ -1639,16 +1636,16 @@ void CShaderMgr::MakeDerivatives(const std::string &suffix, const std::string &v
   }
 
   // files -> shaders
-  for (auto f_it = filenames.begin(); f_it != filenames.end(); ++f_it) {
-    auto &vec = shader_deps[*f_it];
-    for (auto n_it = vec.begin(); n_it != vec.end(); ++n_it) {
-      shadernames.insert(*n_it);
+  for (auto& filename : filenames) {
+    auto &vec = shader_deps[filename];
+    for (auto& n_it : vec) {
+      shadernames.insert(n_it);
     }
   }
 
   // create shader derivatives
-  for (auto s_it = shadernames.begin(); s_it != shadernames.end(); ++s_it) {
-    CShaderPrg * shader = programs[*s_it]->DerivativeCopy(*s_it + suffix, variable);
+  for (const auto& shadername : shadernames) {
+    auto shader = programs[shadername]->DerivativeCopy(shadername + suffix, variable);
     programs[shader->name] = shader;
 
     // register dependency
@@ -1662,9 +1659,9 @@ void CShaderMgr::MakeDerivatives(const std::string &suffix, const std::string &v
 void CShaderMgr::Reload_Derivatives(const std::string &variable, bool value) {
   SetPreprocVar(variable, value, false);
 
-  for (auto it = programs.begin(); it != programs.end(); ++it) {
-    if (it->second->derivative == variable)
-      it->second->reload();
+  for (auto& prog : programs) {
+    if (prog.second->derivative == variable)
+      prog.second->reload();
   }
 
   SetPreprocVar(variable, !value, false);
@@ -1688,8 +1685,8 @@ void CShaderMgr::ShaderSourceInvalidate(const char * filename, bool invshaders) 
   // invalidate shaders
   if (invshaders) {
     auto &vec = shader_deps[filename];
-    for (auto it = vec.begin(); it != vec.end(); ++it) {
-      programs[*it]->is_valid = false;
+    for (const auto& shadername : vec) {
+      programs[shadername]->is_valid = false;
     }
   }
 

@@ -456,8 +456,8 @@ void renderTarget_t::resize(ivec2 size) {
   delete _fbo;
 
   std::vector<rt_layout_t> desc;
-  for (size_t i = 0; i < _desc.size(); ++i) {
-    desc.emplace_back(_desc[i].nchannels, _desc[i].type, size.x, size.y);
+  for (auto& i : _desc) {
+    desc.emplace_back(i.nchannels, i.type, size.x, size.y);
   }
 
   layout(std::move(desc), _rbo);

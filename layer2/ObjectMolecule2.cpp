@@ -3728,9 +3728,9 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
     char *strpl = (char*)((char*)strinfo + (1 + lexIDs.size()) * sizeof(int));
     /* write map of lex ids and strings into binary data string as an array of ids
        and null-terminated strings */
-    for (auto it = lexIDs.begin(); it != lexIDs.end(); ++it){
-      *(strval++) = converter.to_lexidx_int(*it);
-      const char *strptr = LexStr(G, *it);
+    for (const auto& lexID : lexIDs) {
+      *(strval++) = converter.to_lexidx_int(lexID);
+      const char *strptr = LexStr(G, lexID);
       strcpy(strpl, strptr);
       strpl += strlen(strptr) + 1;
     }

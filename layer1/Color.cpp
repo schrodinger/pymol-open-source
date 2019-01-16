@@ -2906,7 +2906,7 @@ int ColorInit(PyMOLGlobals * G)
 {
   CColor *I = NULL;
 
-  if(G->Color = new CColor()){
+  if ((G->Color = new CColor())) {
     I = G->Color;
     unsigned int test;
     unsigned char *testPtr;

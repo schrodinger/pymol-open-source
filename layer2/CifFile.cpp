@@ -217,9 +217,8 @@ cif_file::cif_file(const char* filename, const char* contents_) {
 
 // destructor
 cif_file::~cif_file() {
-  for (m_str_cifdatap_t::iterator it = datablocks.begin(),
-      it_end = datablocks.end(); it != it_end; ++it)
-    delete it->second;
+  for (auto& datablock : datablocks)
+    delete datablock.second;
 
   if (contents)
     mfree(contents);
@@ -227,13 +226,11 @@ cif_file::~cif_file() {
 
 // destructor
 cif_data::~cif_data() {
-  for (m_str_cifdatap_t::iterator it = saveframes.begin(),
-      it_end = saveframes.end(); it != it_end; ++it)
-    delete it->second;
+  for (auto& saveframe : saveframes)
+    delete saveframe.second;
 
-  for (v_cifloopp_t::iterator it = loops.begin(),
-      it_end = loops.end(); it != it_end; ++it)
-    delete *it;
+  for (auto& loop : loops)
+    delete loop;
 }
 
 // parse CIF contents

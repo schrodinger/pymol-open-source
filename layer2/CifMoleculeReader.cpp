@@ -363,9 +363,8 @@ static bond_dict_t * get_global_components_bond_dict(PyMOLGlobals * G) {
     path.append(PATH_SEP).append("chem_comp_bond-top100.cif");
     cif_file cif(path.c_str());
 
-    for (m_str_cifdatap_t::iterator data_it = cif.datablocks.begin(),
-        data_it_end = cif.datablocks.end(); data_it != data_it_end; ++data_it) {
-      read_chem_comp_bond_dict(data_it->second, bond_dict);
+    for (const auto& datablock : cif.datablocks) {
+      read_chem_comp_bond_dict(datablock.second, bond_dict);
     }
   }
 
@@ -558,8 +557,8 @@ static oper_collection_t parse_oper_expression(const std::string &expr) {
   vector<string> a_vec = strsplit(expr, ')');
 
   // loop over chunks (still include leading '(')
-  for (auto a_it = a_vec.begin(); a_it != a_vec.end(); ++a_it) {
-    const char * a_chunk = a_it->c_str();
+  for (auto& a_item : a_vec) {
+    const char * a_chunk = a_item.c_str();
 
     // finish chunk
     while (*a_chunk == '(')
@@ -576,11 +575,9 @@ static oper_collection_t parse_oper_expression(const std::string &expr) {
     vector<string> b_vec = strsplit(a_chunk, ',');
 
     // look for ranges
-    for (vector<string>::iterator
-        b_it = b_vec.begin();
-        b_it != b_vec.end(); ++b_it) {
+    for (auto& b_item : b_vec) {
       // "c_d" will have either one (no range) or two items
-      vector<string> c_d = strsplit(*b_it, '-');
+      vector<string> c_d = strsplit(b_item, '-');
 
       ids.push_back(c_d[0]);
 
@@ -706,8 +703,8 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
 
     // new coord set VLA
     int ncsets = 1;
-    for (auto c_it = collection.begin(); c_it != collection.end(); ++c_it) {
-      ncsets *= c_it->size();
+    for (const auto& c_item : collection) {
+      ncsets *= c_item.size();
     }
 
     if (!csets) {
@@ -737,8 +734,8 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
 
       // transform
       j = 0;
-      for (auto s_it = c_it->begin(); s_it != c_it->end(); ++s_it) {
-        const float * matrix = oper_list[*s_it].data();
+      for (auto& s_item : *c_it) {
+        const float * matrix = oper_list[s_item].data();
 
         // cartesian product
         for (int k = 0; k < c_src_len; ++k, ++j) {

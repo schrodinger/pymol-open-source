@@ -274,11 +274,11 @@ int SceneGetGridSize(PyMOLGlobals * G, int grid_mode)
     }
     {
       int max_slot = 0;
-      for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
-        if((*it)->fGetNFrame) {
-          slot = (*it)->fGetNFrame(*it);
+      for (auto& obj : I->Obj) {
+        if(obj->fGetNFrame) {
+          slot = obj->fGetNFrame(obj);
           if(grid_mode == 3) {
-            (*it)->grid_slot = max_slot; // slot offset for 1st state
+            obj->grid_slot = max_slot; // slot offset for 1st state
             max_slot += slot;
           } else if(max_slot < slot) {
             max_slot = slot;
@@ -2408,9 +2408,9 @@ int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge)
 
   if(!obj) {                    /* deletes all members */
     if(allow_purge && (defer_builds_mode >= 3)) {
-      for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
+      for (auto& obj : I->Obj) {
         /* purge graphics representation when no longer used */
-        (*it)->invalidate(cRepAll, cRepInvPurge, -1);
+        obj->invalidate(cRepAll, cRepInvPurge, -1);
       }
     }
     I->Obj.clear();
@@ -6287,8 +6287,8 @@ void SceneUpdate(PyMOLGlobals * G, int force)
       PyMOL_SetBusy(G->PyMOL, true);    /*  race condition -- may need to be fixed */
 
       /* update all gadgets first (single-threaded since they're thread-unsafe) */
-      for ( auto it = I->GadgetObjs.begin(); it != I->GadgetObjs.end(); ++it) {
-        (*it)->update();
+      for (auto& GadgetObj : I->GadgetObjs) {
+        GadgetObj->update();
       }
 
       {
@@ -6300,16 +6300,16 @@ void SceneUpdate(PyMOLGlobals * G, int force)
           int max_stop = -1;
           int n_frame = SceneGetNFrame(G, NULL);
           int n_obj = 0;
-          for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
+          for (auto& obj : I->Obj) {
             int start = 0;
             int stop = n_frame;
             n_obj++;
-            if((*it)->fGetNFrame) {
-              stop = (*it)->fGetNFrame(*it);
+            if(obj->fGetNFrame) {
+              stop = obj->fGetNFrame(obj);
             }
 	    /* set start/stop to define the range for this object
 	     * depending upon various build settings */
-            ObjectAdjustStateRebuildRange(*it, &start, &stop);
+            ObjectAdjustStateRebuildRange(obj, &start, &stop);
             if(min_start < 0) {
               min_start = start;
               max_stop = stop;
@@ -6345,8 +6345,8 @@ void SceneUpdate(PyMOLGlobals * G, int force)
             CObjectUpdateThreadInfo *thread_info = Alloc(CObjectUpdateThreadInfo, cnt);
             if(thread_info) {
               cnt = 0;
-              for ( auto it = I->NonGadgetObjs.begin(); it != I->NonGadgetObjs.end(); ++it) {
-                thread_info[cnt++].obj = *it;
+              for (auto& NonGadgetObj : I->NonGadgetObjs) {
+                thread_info[cnt++].obj = NonGadgetObj;
               }
               SceneObjectUpdateSpawn(G, thread_info, n_thread, cnt);
               FreeP(thread_info);
@@ -6355,16 +6355,16 @@ void SceneUpdate(PyMOLGlobals * G, int force)
         } else
 #endif
           /* single-threaded update */
-          for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
-            (*it)->update();
+          for (auto& obj : I->Obj) {
+            obj->update();
           }
       }
       PyMOL_SetBusy(G->PyMOL, false);   /*  race condition -- may need to be fixed */
     } else { /* defer builds mode == 5 -- for now, only update non-molecular objects */
       /* single-threaded update */
-      for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
-        if((*it)->type != cObjectMolecule) {
-          (*it)->update();
+      for (auto& obj : I->Obj) {
+        if(obj->type != cObjectMolecule) {
+          obj->update();
         }
       }
     }

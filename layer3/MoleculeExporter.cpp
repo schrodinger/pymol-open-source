@@ -495,8 +495,7 @@ struct MoleculeExporterPDB : public MoleculeExporter {
 
     std::map<int, std::vector<int>> conect;
 
-    for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
-      auto& bond = *bond_it;
+    for (auto& bond : m_bonds) {
       int order = m_conect_nodup ? 1 : bond.ref->order;
       for (int i = 0; i < 2; ++i) {
         for (int d = 0; d < order; ++d) {
@@ -508,8 +507,7 @@ struct MoleculeExporterPDB : public MoleculeExporter {
 
     m_bonds.clear();
 
-    for (auto rec_it = conect.begin(); rec_it != conect.end(); ++rec_it) {
-      const auto& rec = *rec_it;
+    for (auto& rec : conect) {
       for (int i = 0, i_end = rec.second.size(); i != i_end;) {
         m_offset += VLAprintf(m_buffer, m_offset, "CONECT%5d", rec.first);
         // up to 4 bonds per record
@@ -774,8 +772,7 @@ struct MoleculeExporterPMCIF : public MoleculeExporterCIF {
         "_pymol_bond.atom_site_id_2\n"
         "_pymol_bond.order\n");
 
-    for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
-      const auto& bond = *bond_it;
+    for (auto& bond : m_bonds) {
       m_offset += VLAprintf(m_buffer, m_offset, "%d %d %d\n",
           bond.id1, bond.id2, bond.ref->order);
     }
@@ -818,8 +815,7 @@ struct MoleculeExporterMOL : public MoleculeExporter {
         m_atoms.size(), m_bonds.size(), m_chiral_flag);
 
     // write atoms
-    for (auto atom_it = m_atoms.begin(); atom_it != m_atoms.end(); ++atom_it) {
-      const auto& atom = *atom_it;
+    for (auto& atom : m_atoms) {
       auto ai = atom.ref;
 
       m_offset += VLAprintf(m_buffer, m_offset, "M  V30 %d %s %.4f %.4f %.4f 0",
@@ -842,8 +838,7 @@ struct MoleculeExporterMOL : public MoleculeExporter {
 
     // write bonds
     int n_bonds = 0;
-    for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
-      const auto& bond = *bond_it;
+    for (auto& bond : m_bonds) {
       m_offset += VLAprintf(m_buffer, m_offset, "M  V30 %d %d %d %d\n",
           ++n_bonds, bond.ref->order, bond.id1, bond.id2);
     }
@@ -864,8 +859,7 @@ struct MoleculeExporterMOL : public MoleculeExporter {
         (int) m_atoms.size(), (int) m_bonds.size(), m_chiral_flag);
 
     // write atoms
-    for (auto atom_it = m_atoms.begin(); atom_it != m_atoms.end(); ++atom_it) {
-      const auto& atom = *atom_it;
+    for (auto& atom : m_atoms) {
       auto ai = atom.ref;
       int chg = ai->formalCharge;
       m_offset += VLAprintf(m_buffer, m_offset,
@@ -877,8 +871,7 @@ struct MoleculeExporterMOL : public MoleculeExporter {
     m_atoms.clear();
 
     // write bonds
-    for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
-      const auto& bond = *bond_it;
+    for (auto& bond : m_bonds) {
       m_offset += VLAprintf(m_buffer, m_offset, "%3d%3d%3d%3d  0  0  0\n",
           bond.id1, bond.id2, bond.ref->order, (int) bond.ref->stereo);
     }
@@ -1031,8 +1024,7 @@ struct MoleculeExporterMOL2 : public MoleculeExporter {
     m_offset += VLAprintf(m_buffer, m_offset, "@<TRIPOS>BOND\n");
 
     int bond_id = 0;
-    for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
-      const auto& bond = *bond_it;
+    for (auto& bond : m_bonds) {
       m_offset += VLAprintf(m_buffer, m_offset, "%d %d %d %s\n",
           ++bond_id,
           bond.id1,
@@ -1049,8 +1041,7 @@ struct MoleculeExporterMOL2 : public MoleculeExporter {
     m_offset += VLAprintf(m_buffer, m_offset, "@<TRIPOS>SUBSTRUCTURE\n");
 
     int subst_id = 0;
-    for (auto subst_it = m_substs.begin(); subst_it != m_substs.end(); ++subst_it) {
-      const auto& subst = *subst_it;
+    for (auto& subst : m_substs) {
       const auto& ai = subst.ai;
       m_offset += VLAprintf(m_buffer, m_offset, "%d\t%s%d%.1s\t%d\t%s\t1 %s\t%s\n",
           ++subst_id,
@@ -1221,8 +1212,7 @@ struct MoleculeExporterMAE : public MoleculeExporter {
           ":::\n", (int) m_bonds.size());
 
       int b = 0;
-      for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
-        const auto& bond = *bond_it;
+      for (auto& bond : m_bonds) {
         int order = bond.ref->order;
         if (order > 3) {
           ++m_n_arom_bonds;

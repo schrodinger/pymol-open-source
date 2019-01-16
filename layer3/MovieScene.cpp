@@ -148,10 +148,10 @@ bool MovieSceneOrder(PyMOLGlobals * G, const char * names, bool sort,
     names_list = strsplit(names);
 
     // check that all given names are existing scenes
-    for (auto it = names_list.begin(); it != names_list.end(); ++it) {
-      if (G->scenes->dict.find(*it) == G->scenes->dict.end()) {
+    for (auto& name : names_list) {
+      if (G->scenes->dict.find(name) == G->scenes->dict.end()) {
         PRINTFB(G, FB_Scene, FB_Errors)
-          " Error: scene '%s' is not defined.\n", it->c_str() ENDFB(G);
+          " Error: scene '%s' is not defined.\n", name.c_str() ENDFB(G);
         return false;
       }
     }
@@ -190,10 +190,10 @@ bool MovieSceneOrder(PyMOLGlobals * G, const char * names, bool sort,
       new_order.insert(new_order.end(), names_list.begin(), names_list.end());
     }
 
-    for (auto it = G->scenes->order.begin(); it != G->scenes->order.end(); ++it) {
-      if (!names_set.count(*it)) {
-        new_order.push_back(*it);
-      } else if (loc == 'c' /* current */ && *it == names_list[0]) {
+    for (auto& name : G->scenes->order) {
+      if (!names_set.count(name)) {
+        new_order.push_back(name);
+      } else if (loc == 'c' /* current */ && name == names_list[0]) {
         new_order.insert(new_order.end(), names_list.begin(), names_list.end());
       }
     }
@@ -472,9 +472,8 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
   }
 
   // invalidate
-  for (auto it = objectstoinvalidate.begin();
-      it != objectstoinvalidate.end(); ++it) {
-    it->first->invalidate(cRepAll, it->second ? cRepInvVisib : cRepInvColor, -1);
+  for (auto& item : objectstoinvalidate) {
+    item.first->invalidate(cRepAll, item.second ? cRepInvVisib : cRepInvColor, -1);
   }
 
   // camera view
@@ -810,9 +809,9 @@ static bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, MovieScene &out)
 
   // restore atomdata dict but with converted ids
   PConvFromPyObject(G, PyList_GetItem(obj, 4), atomdata_old_ids);
-  for (auto it = atomdata_old_ids.begin(); it != atomdata_old_ids.end(); ++it) {
-    int unique_id = SettingUniqueConvertOldSessionID(G, it->first);
-    std::swap(out.atomdata[unique_id], it->second);
+  for (auto& item : atomdata_old_ids) {
+    int unique_id = SettingUniqueConvertOldSessionID(G, item.first);
+    std::swap(out.atomdata[unique_id], item.second);
   }
 
   return true;

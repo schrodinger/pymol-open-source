@@ -5005,9 +5005,8 @@ const char **ExecutiveGetChains(PyMOLGlobals * G, const char *sele, int state)
     op.i1 = 0;
     ExecutiveObjMolSeleOp(G, sele1, &op);
     result = VLAlloc(const char*, chains.size());
-    for (auto it = chains.begin(),
-        it_end = chains.end(); it != it_end; ++it) {
-      result[c++] = LexStr(G, *it);
+    for (const auto& chain : chains) {
+      result[c++] = LexStr(G, chain);
     }
     // sort the array
     UtilSortInPlace(G, result, chains.size(), sizeof(char *),
