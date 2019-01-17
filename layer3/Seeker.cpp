@@ -1296,12 +1296,13 @@ void SeekerUpdate(PyMOLGlobals * G)
             }
         }
 
-        auto push_gap = [&](const std::string& str)
+        auto push_gap = [&](const char* str)
           {
-            UtilConcatVLA(&row->txt, &row->len, str.c_str());
-            VLACheck(row->col, CSeqCol, nCol + str.size());
+            auto str_size = strlen(str);
+            UtilConcatVLA(&row->txt, &row->len, str);
+            VLACheck(row->col, CSeqCol, nCol + str_size);
             r1 = row->col + nCol;
-            for(int i = 0; i < str.size(); i++){
+            for(int i = 0; i < str_size; i++){
                 r1->color = missing_color;
                 r1->spacer = true;
                 r1->stop = r1->start + 1;
