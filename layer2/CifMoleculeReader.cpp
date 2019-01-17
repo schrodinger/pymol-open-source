@@ -1242,91 +1242,6 @@ static bool read_entity_poly(PyMOLGlobals * G, const cif_data * data, CifContent
   return true;
 }
 
-#if 0
-/*
- * Read missing residues.
- *
- * This is under the assumption that _pdbx_poly_seq_scheme has complete
- * mon_id, asym_id, and seq_id arrays, but auth_seq_num only for residues with
- * coordinates (present in _atom_site) and ? values for missing residues.
- *
- * Append CA atoms to atInfoPtr, with no modification to coord sets. Sorting
- * will be necesarry to move those atoms to the correct place in the sequence.
- */
-static bool read_pdbx_poly_seq_scheme(PyMOLGlobals * G, const cif_data * data,
-    AtomInfoType ** atInfoPtr, CifContentInfo &info) {
-
-  const cif_array *arr_resn = NULL, *arr_resi = NULL, *arr_chain = NULL,
-    *arr_segi = NULL, *arr_ins_code = NULL, *arr_auth_seq_num = NULL,
-    *arr_entity_id = NULL;
-
-  if (!(arr_resn          = data->get_arr("_pdbx_poly_seq_scheme.mon_id")) ||
-      !(arr_segi          = data->get_arr("_pdbx_poly_seq_scheme.asym_id")) ||
-      !(arr_entity_id     = data->get_arr("_pdbx_poly_seq_scheme.entity_id")) ||
-      !(arr_auth_seq_num  = data->get_arr("_pdbx_poly_seq_scheme.auth_seq_num")))
-    return false;
-
-  if (info.use_auth) {
-    arr_resi      = data->get_arr("_pdbx_poly_seq_scheme.pdb_seq_num");
-    arr_chain     = data->get_arr("_pdbx_poly_seq_scheme.pdb_strand_id");
-    arr_ins_code  = data->get_arr("_pdbx_poly_seq_scheme.pdb_ins_code");
-  }
-
-  if (!arr_resi && !(arr_resi = data->get_arr("_pdbx_poly_seq_scheme.seq_id")))
-    return false;
-
-  if (!arr_chain)
-    arr_chain = arr_segi;
-
-  int nrows = arr_resn->get_nrows();
-  const char * resi;
-  AtomInfoType *ai;
-  int atomCount = VLAGetSize(*atInfoPtr);
-
-  for (int i = 0, n = nrows; i < n; i++) {
-    if (!arr_auth_seq_num->is_missing(i))
-      continue;
-
-    const char * segi = arr_segi->as_s(i);
-    if (info.is_excluded_chain(segi))
-      continue;
-
-    const char * entity_id = arr_entity_id->as_s(i);
-    if (!info.is_polypeptide(entity_id))
-      continue;
-
-    VLACheck(*atInfoPtr, AtomInfoType, atomCount); // auto-zero
-    ai = *atInfoPtr + atomCount;
-
-    ai->rank = atomCount;
-    ai->id = -1;
-
-    ai->elem[0] = 'C';
-
-    ai->name = LexIdx(G, "CA");
-    ai->resn = LexIdx(G, arr_resn->as_s(i));
-    ai->segi = LexIdx(G, segi);
-    ai->chain = LexIdx(G, arr_chain->as_s(i));
-
-    ai->resv = arr_resi->as_i(i);
-
-    if (arr_ins_code) {
-      ai->setInscode(arr_ins_code->as_s(i)[0]);
-    }
-
-    AtomInfoAssignParameters(G, ai);
-    AtomInfoAssignColors(G, ai);
-    AtomInfoSetEntityId(G, ai, entity_id);
-
-    atomCount++;
-  }
-
-  VLASize(*atInfoPtr, AtomInfoType, atomCount);
-
-  return true;
-}
-#endif
-
 /*
  * Sub-routine for `add_missing_ca`
  */
@@ -2083,11 +1998,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
 
     // missing residues
     if (!I->DiscreteFlag && !SettingGetGlobal_i(G, cSetting_retain_order)) {
-#if 0
-      read_pdbx_poly_seq_scheme(G, datablock, &I->AtomInfo, info);
-#else
       add_missing_ca(G, I->AtomInfo, info);
-#endif
     }
   } else if ((csets = read_chem_comp_atom_model(G, datablock, &I->AtomInfo))) {
     info.type = CIF_CHEM_COMP;
