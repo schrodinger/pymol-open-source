@@ -35,11 +35,11 @@ static char * fgetcontents(FILE *fp, long *size) {
 
   char *contents = (char*) mmalloc(filesize + 255);
   if (!contents)
-    return NULL;
+    return nullptr;
 
   if (1 != fread(contents, filesize, 1, fp)) {
     mfree(contents);
-    return NULL;
+    return nullptr;
   }
 
   if (size)
@@ -78,7 +78,7 @@ char * FileGetContents(const char *filename, long *size) {
   FILE *fp = pymol_fopen(filename, "rb");
 
   if (!fp)
-    return NULL;
+    return nullptr;
 
   contents = fgetcontents(fp, size);
   fclose(fp);

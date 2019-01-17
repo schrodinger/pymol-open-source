@@ -177,7 +177,7 @@ std::string MaeExportGetSubGroupId(PyMOLGlobals * G,
     const CObject * obj)
 {
   std::string subgroupid;
-  const SpecRec * rec = NULL;
+  const SpecRec * rec = nullptr;
 
   // obj -> spec rec
   for (ObjectIterator iter(G); iter.next();) {

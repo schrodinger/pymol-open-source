@@ -95,8 +95,8 @@ void SeleCoordIterator::init(PyMOLGlobals * G_, int sele_, int state_) {
 void SeleCoordIterator::reset() {
   a = cNDummyAtoms - 1;
   state = statearg;
-  prev_obj = NULL;
-  cs = NULL;
+  prev_obj = nullptr;
+  cs = nullptr;
 
   if (isMultistate()) {
     state = 0;

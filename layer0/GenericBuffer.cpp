@@ -412,7 +412,7 @@ void renderTarget_t::layout(std::vector<rt_layout_t> &&desc,
         format, type, tex::filter::LINEAR, tex::filter::LINEAR,
         tex::wrap::CLAMP, tex::wrap::CLAMP));
     auto tex = _textures.back();
-    tex->texture_data_2D(d.width, d.height, 0);
+    tex->texture_data_2D(d.width, d.height, nullptr);
 
     fbo::attachment loc;
     switch (_textures.size()) {

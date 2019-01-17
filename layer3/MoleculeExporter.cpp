@@ -158,10 +158,10 @@ public:
     m_buffer.resize(1280);
     m_buffer[0] = '\0';
 
-    m_mat_ref.ptr = NULL;
+    m_mat_ref.ptr = nullptr;
     m_offset = 0;
-    m_last_cs  = NULL;
-    m_last_obj = NULL;
+    m_last_cs  = nullptr;
+    m_last_obj = nullptr;
     m_last_state = -1;
     m_retain_ids = false;
     m_id = 0;
@@ -365,7 +365,7 @@ void MoleculeExporter::execute(int sele, int state) {
 void MoleculeExporter::setRefObject(const char * ref_object, int ref_state) {
   double matrix[16];
 
-  m_mat_ref.ptr = NULL;
+  m_mat_ref.ptr = nullptr;
 
   if (!ref_object || !ref_object[0])
     return;
@@ -537,7 +537,7 @@ struct MoleculeExporterPDB : public MoleculeExporter {
   void beginObject() {
     MoleculeExporter::beginObject();
 
-    m_conect_all = SettingGet_b(G, m_iter.obj->Obj.Setting, NULL, cSetting_pdb_conect_all);
+    m_conect_all = SettingGet_b(G, m_iter.obj->Obj.Setting, nullptr, cSetting_pdb_conect_all);
 
     if (m_multi == cMolExportByObject) {
       m_offset += VLAprintf(m_buffer, m_offset, "HEADER    %.40s\n", m_iter.obj->Obj.Name);
@@ -684,7 +684,7 @@ struct MoleculeExporterCIF : public MoleculeExporter {
 
   void writeAtom() {
     const AtomInfoType * ai = m_iter.getAtomInfo();
-    const char * entity_id = NULL;
+    const char * entity_id = nullptr;
 
 #ifdef _PYMOL_IP_PROPERTIES
     char entity_id_buf[16];
@@ -1527,7 +1527,7 @@ PyObject *MoleculeExporterGetPyBonds(PyMOLGlobals * G,
   SelectorTmp tmpsele1(G, selection);
   int sele = tmpsele1.getIndex();
   if (sele < 0)
-    return NULL;
+    return nullptr;
 
   int unblock = PAutoBlock(G);
 
@@ -1565,9 +1565,9 @@ public:
   void init(PyMOLGlobals * G_) {
     MoleculeExporter::init(G_);
 
-    m_model = NULL;
+    m_model = nullptr;
     m_n_cs = 0;
-    m_atom_list = NULL;
+    m_atom_list = nullptr;
   }
 
 protected:
@@ -1594,7 +1594,7 @@ protected:
 
   const float * getRefPtr() {
     RefPosType  * ref_pos = m_iter.cs->RefPos;
-    const float * ref_ptr = NULL;
+    const float * ref_ptr = nullptr;
 
     if (ref_pos) {
       ref_pos += m_iter.getIdx();
@@ -1692,7 +1692,7 @@ PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals * G,
 
   int sele = SelectorIndexByName(G, s1);
   if (sele < 0)
-    return NULL;
+    return nullptr;
 
   int unblock = PAutoBlock(G);
 

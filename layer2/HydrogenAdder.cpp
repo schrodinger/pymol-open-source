@@ -240,7 +240,7 @@ int ObjectMoleculeSetMissingNeighborCoords(
   // adding coordinates will invalidate pointer
   float center_coord_copy[3];
   copy3f(center_coord, center_coord_copy);
-  center_coord = NULL;
+  center_coord = nullptr;
 
   for (int i = 0; i < n_missing; ++i) {
     float bondlength = AtomInfoGetBondLength(G,
@@ -322,7 +322,7 @@ int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int st
   }
 
   // grow index arrays
-  for (StateIterator iter(G, NULL, cSelectorUpdateTableAllStates, I->NCSet);
+  for (StateIterator iter(G, nullptr, cSelectorUpdateTableAllStates, I->NCSet);
       iter.next();) {
     CoordSet* cs = I->CSet[iter.state];
     if (cs)
@@ -334,7 +334,7 @@ int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int st
 
   AtomInfoUniquefyNames(G,
       I->AtomInfo, n_atom_old,
-      I->AtomInfo + n_atom_old, NULL,
+      I->AtomInfo + n_atom_old, nullptr,
       I->NAtom - n_atom_old);
 
   // fill coordinates

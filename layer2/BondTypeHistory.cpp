@@ -68,6 +68,6 @@ void *Copy_To_BondType_Version(int bondInfo_version, BondType *Bond, int NBond){
   default:
       printf("ERROR: Copy_To_BondType_Version: unknown bondInfo_version=%d from BondInfoVERSION=%d\n", bondInfo_version, BondInfoVERSION);
   }
-  return NULL;
+  return nullptr;
 
 }

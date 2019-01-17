@@ -112,5 +112,5 @@ void * AtomInfoTypeConverter::allocCopy(int destversion, const AtomInfoType *src
     return allocCopy<AtomInfoType_1_8_1>(src);
   }
   printf("ERROR: AtomInfoTypeConverter: unknown destversion=%d from AtomInfoVERSION=%d\n", destversion, AtomInfoVERSION);
-  return NULL;
+  return nullptr;
 }

@@ -124,8 +124,8 @@ const char * MOLV3000Parse(PyMOLGlobals * G,
   bool inside_bond = false;
   bool inside_any  = false;
   int auto_show = RepGetAutoShowMask(G);
-  const char * error = NULL;
-  AtomInfoType * ai = NULL;
+  const char * error = nullptr;
+  AtomInfoType * ai = nullptr;
   std::string line;
   std::string key, value;
 
@@ -254,7 +254,7 @@ const char * MOLV3000Parse(PyMOLGlobals * G,
   if (error) {
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " MOL-V3000-Error: %s.\n", error ENDFB(G);
-    return NULL;
+    return nullptr;
   }
 
   return buffer;

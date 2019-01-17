@@ -50,9 +50,9 @@ CoordSet ** get_assembly_csets(PyMOLGlobals * G,
   const char * assembly_id = SettingGetGlobal_s(G, cSetting_assembly);
 
   if (!assembly_id || !assembly_id[0])
-    return NULL;
+    return nullptr;
 
-  const MMTF_BioAssembly * assembly = NULL;
+  const MMTF_BioAssembly * assembly = nullptr;
 
   // look up assembly by name
   for (auto a = container->bioAssemblyList,
@@ -67,7 +67,7 @@ CoordSet ** get_assembly_csets(PyMOLGlobals * G,
   if (!assembly) {
     PRINTFB(G, FB_Executive, FB_Details)
       " ExecutiveLoad-Detail: No such assembly: '%s'\n", assembly_id ENDFB(G);
-    return NULL;
+    return nullptr;
   }
 
   PRINTFB(G, FB_Executive, FB_Details)
@@ -113,13 +113,13 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " Error: loading MMTF into existing object not supported, please use 'create'\n"
       "        to append to an existing object.\n" ENDFB(G);
-    return NULL;
+    return nullptr;
   }
 
   if (multiplex > 0) {
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " Error: multiplex not supported for MMTF\n" ENDFB(G);
-    return NULL;
+    return nullptr;
   }
 
   MMTF_container * container = MMTF_container_new();
@@ -128,7 +128,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " Error: Failed to load MMTF file\n" ENDFB(G);
     MMTF_container_free(container);
-    return NULL;
+    return nullptr;
   }
 
   if (!quiet) {

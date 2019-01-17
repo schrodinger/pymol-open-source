@@ -126,11 +126,11 @@ CShaderPrg *CShaderPrg::NewARB(PyMOLGlobals * G, const char * name, const string
       glDeleteProgramsARB(2, programs);
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 int CShaderPrg::DisableARB() {
-  G->ShaderMgr->current_shader = 0;
+  G->ShaderMgr->current_shader = nullptr;
   glDisable(GL_FRAGMENT_PROGRAM_ARB);
   glDisable(GL_VERTEX_PROGRAM_ARB);
   return 1;
@@ -159,7 +159,7 @@ int CShaderPrg::Enable() {
 
 int CShaderPrg::Disable() {
   glUseProgram(0);
-  G->ShaderMgr->current_shader = 0;
+  G->ShaderMgr->current_shader = nullptr;
   glBindTexture(GL_TEXTURE_2D, 0);
   glActiveTexture(GL_TEXTURE0);
   return 1;
@@ -443,7 +443,7 @@ void CShaderPrg::SetBgUniforms() {
   int bg_width, bg_height;
   int scene_width, scene_height;
 
-  Set3fv("bgSolidColor", ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb)));
+  Set3fv("bgSolidColor", ColorGet(G, SettingGet_color(G, nullptr, nullptr, cSetting_bg_rgb)));
 
   SceneGetWidthHeight(G, &scene_width, &scene_height);
   std::tie(bg_width, bg_height) = OrthoGetBackgroundSize(*G->Ortho);

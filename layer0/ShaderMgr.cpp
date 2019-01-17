@@ -93,7 +93,7 @@ using namespace std;
 
 static void glShaderSource1String(GLuint shad, const string &strobj){
   const GLchar *str = (const GLchar *)strobj.c_str();
-  glShaderSource(shad, 1, (const GLchar **)&str, NULL);
+  glShaderSource(shad, 1, (const GLchar **)&str, nullptr);
 }
 
 bool CShaderPrg::reload(){
@@ -249,13 +249,13 @@ PFNGLTEXIMAGE3DPROC getTexImage3D(){
  */
 void disableShaders(PyMOLGlobals * G) {
     /* Auto-disable shader-based rendering */
-    SettingSetGlobal_b(G, cSetting_use_shaders, 0);
+    SettingSetGlobal_b(G, cSetting_use_shaders, false);
 }
 
 static void disableGeometryShaders(PyMOLGlobals * G) {
-  SettingSetGlobal_b(G, cSetting_use_geometry_shaders, 0);
+  SettingSetGlobal_b(G, cSetting_use_geometry_shaders, false);
   if(G->ShaderMgr)
-    G->ShaderMgr->SetPreprocVar("use_geometry_shaders", 0);
+    G->ShaderMgr->SetPreprocVar("use_geometry_shaders", false);
 
   if (G->Option && !G->Option->quiet)
     PRINTFB(G, FB_ShaderMgr, FB_Warnings)
@@ -438,8 +438,8 @@ string CShaderMgr::GetShaderSource(const string &filename)
     return it->second;
   }
 
-  char* buffer = NULL;
-  const char *pl = NULL, *newpl, *tpl;
+  char* buffer = nullptr;
+  const char *pl = nullptr, *newpl, *tpl;
   std::ostringstream newbuffer;
 
   /* "if_depth" counts the level of nesting, and "true_depth" how far the
@@ -457,7 +457,7 @@ string CShaderMgr::GetShaderSource(const string &filename)
       string path(pymol_data);
       path.append(PATH_SEP).append("shaders").append(PATH_SEP).append(filename);
 
-      pl = buffer = FileGetContents(path.c_str(), NULL);
+      pl = buffer = FileGetContents(path.c_str(), nullptr);
 
       if (!buffer) {
         PRINTFB(G, FB_ShaderMgr, FB_Warnings)
@@ -567,7 +567,7 @@ void CShaderMgr::Reload_Shader_Variables() {
   int bg_gradient = SettingGetGlobal_b(G, cSetting_bg_gradient);  
   int bg_image_mode_solid;
   int stereo, stereo_mode;
-  const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
+  const char * bg_image_filename = SettingGet_s(G, nullptr, nullptr, cSetting_bg_image_filename);
   short bg_image = bg_image_filename && bg_image_filename[0];
   bg_image_mode_solid = !(bg_gradient || bg_image || OrthoBackgroundDataIsSet(*G->Ortho));
 
@@ -594,7 +594,7 @@ void CShaderMgr::Reload_Shader_Variables() {
   stereo = SettingGetGlobal_i(G, cSetting_stereo);
   stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
 
-  SetPreprocVar("ANAGLYPH", (stereo && stereo_mode==cStereo_anaglyph) ? 1 : 0);
+  SetPreprocVar("ANAGLYPH", stereo && stereo_mode == cStereo_anaglyph);
   SetPreprocVar("ray_trace_mode_3", SettingGetGlobal_i(G, cSetting_ray_trace_mode) == 3);
   SetPreprocVar("transparency_mode_3", SettingGetGlobal_i(G, cSetting_transparency_mode)==3);
 
@@ -664,7 +664,7 @@ void CShaderPrg::ErrorMsgWithShaderInfoLog(const GLuint sid, const char * msg) {
   GLint infoLogLength = 0;
   glGetShaderiv(sid, GL_INFO_LOG_LENGTH, &infoLogLength);
   vector<GLchar> infoLog(infoLogLength);
-  glGetShaderInfoLog(sid, infoLogLength, NULL, infoLog.data());
+  glGetShaderInfoLog(sid, infoLogLength, nullptr, infoLog.data());
 
   PRINTFB(G, FB_ShaderPrg, FB_Errors) " ShaderPrg-Error: %s; name='%s'\n",
     msg, name.c_str() ENDFB(G);
@@ -713,9 +713,9 @@ void CShaderMgr::Config() {
 #endif
 
   // static preprocessor values
-  preproc_vars["GLEW_VERSION_3_0"] = GLEW_VERSION_3_0 ? 1 : 0;
+  preproc_vars["GLEW_VERSION_3_0"] = GLEW_VERSION_3_0 ? true : false;
   if (TM3_IS_ONEBUF){
-    preproc_vars["ONE_DRAW_BUFFER"] = 1;
+    preproc_vars["ONE_DRAW_BUFFER"] = true;
   }
 #ifdef PURE_OPENGL_ES_2
   preproc_vars["PURE_OPENGL_ES_2"] = 1;
@@ -812,7 +812,7 @@ void CShaderMgr::Config() {
   }
 #endif
   shaders_present |= 0x1;
-  SettingSetGlobal_b(G, cSetting_use_shaders, 1);
+  SettingSetGlobal_b(G, cSetting_use_shaders, true);
 
   is_configured = true;
   return;
@@ -834,7 +834,7 @@ void getGLVersion(PyMOLGlobals * G, int *major, int* minor) {
   /* query the version string */
   const char* verstr = (const char*) glGetString(GL_VERSION);
   /* attempt to store the values into major and minor */
-  if ((verstr==NULL) || (sscanf(verstr,"%d.%d", major, minor) != 2)) {
+  if (!verstr || sscanf(verstr, "%d.%d", major, minor) != 2) {
     *major = *minor = 0;
     /* Use PyMOL FB system, instead of fprintf */
     PRINTFD(G, FB_ObjectVolume) 
@@ -859,8 +859,7 @@ void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor) {
   /* GL version 1 */
   if (1==gl_major) {
     const char* extstr = (const char*) glGetString(GL_EXTENSIONS);
-    if ((extstr!=NULL)  &&
-        (strstr(extstr, "GL_ARB_shading_language_100")!=NULL)){
+    if (extstr && strstr(extstr, "GL_ARB_shading_language_100")) {
       *major = 1;
       *minor = 0;
     }
@@ -869,7 +868,7 @@ void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor) {
   else if (gl_major>=2) {
     const char* verstr = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-    if ((verstr==NULL) || (sscanf(verstr, "%d.%d", major, minor)!=2)){
+    if (!verstr || sscanf(verstr, "%d.%d", major, minor) != 2) {
       *major = *minor = 0;
 
       if (G && G->Option && !G->Option->quiet) {
@@ -889,7 +888,7 @@ void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor) {
 CShaderMgr::CShaderMgr(PyMOLGlobals * G_)
 {
   G = G_;
-  current_shader = 0;
+  current_shader = nullptr;
   shaders_present = 0;
   stereo_flag = 0;
   stereo_blend = 0;
@@ -958,7 +957,7 @@ CShaderPrg * CShaderMgr::GetShaderPrg(std::string name, short set_current_shader
 
   auto it = programs.find(name);
   if (it == programs.end())
-    return NULL;
+    return nullptr;
 
   if (set_current_shader)
     current_shader = it->second;
@@ -1029,24 +1028,24 @@ CShaderPrg *CShaderMgr::Enable_DefaultShaderWithSettings(
 
 CShaderPrg *CShaderMgr::Enable_DefaultShader(int pass){
   CShaderPrg * shaderPrg = Get_DefaultShader(pass);
-  return Setup_DefaultShader(shaderPrg, NULL, NULL);
+  return Setup_DefaultShader(shaderPrg, nullptr, nullptr);
 }
 
 CShaderPrg *CShaderMgr::Enable_LineShader(int pass){
   CShaderPrg * shaderPrg = Get_LineShader(pass);
-  return Setup_DefaultShader(shaderPrg, NULL, NULL);
+  return Setup_DefaultShader(shaderPrg, nullptr, nullptr);
 }
 
 CShaderPrg *CShaderMgr::Enable_SurfaceShader(int pass){
   CShaderPrg * shaderPrg = Get_SurfaceShader(pass);
-  return Setup_DefaultShader(shaderPrg, NULL, NULL);
+  return Setup_DefaultShader(shaderPrg, nullptr, nullptr);
 }
 
 CShaderPrg *CShaderMgr::Enable_ConnectorShader(int pass){
   CShaderPrg * shaderPrg = Get_ConnectorShader(pass);
   if (!shaderPrg)
-    return 0;
-  shaderPrg = Setup_DefaultShader(shaderPrg, NULL, NULL);
+    return nullptr;
+  shaderPrg = Setup_DefaultShader(shaderPrg, nullptr, nullptr);
   shaderPrg->SetLightingEnabled(0);
   {
     float front, back;
@@ -1061,7 +1060,7 @@ CShaderPrg *CShaderMgr::Enable_ConnectorShader(int pass){
   shaderPrg->Set2f("screenSize", width, height);
 
   {
-    float v_scale = SceneGetScreenVertexScale(G, NULL);
+    float v_scale = SceneGetScreenVertexScale(G, nullptr);
     shaderPrg->Set1f("screenOriginVertexScale", v_scale/2.f);
   }
 
@@ -1072,7 +1071,7 @@ CShaderPrg *CShaderMgr::Setup_DefaultShader(CShaderPrg * shaderPrg,
     const CSetting *set1,
     const CSetting *set2) {
   if (!shaderPrg){
-    current_shader = NULL; 
+    current_shader = nullptr; 
     return shaderPrg;
   }
   shaderPrg->Enable();
@@ -1115,7 +1114,7 @@ CShaderPrg *CShaderMgr::Enable_CylinderShader(const char *shader_name, int pass)
   SceneGetWidthHeightStereo(G, &width, &height);
   shaderPrg = GetShaderPrg(shader_name, 1, pass);
   if (!shaderPrg)
-      return NULL;
+      return nullptr;
   shaderPrg->Enable();
 
   shaderPrg->SetLightingEnabled(1); // lighting on by default
@@ -1148,7 +1147,7 @@ CShaderPrg *CShaderMgr::Get_DefaultSphereShader(int pass){
 
 CShaderPrg *CShaderMgr::Enable_DefaultSphereShader(int pass) {
   CShaderPrg *shaderPrg = Get_DefaultSphereShader(pass);
-  if (!shaderPrg) return NULL;
+  if (!shaderPrg) return nullptr;
   shaderPrg->Enable();
   shaderPrg->SetLightingEnabled(1);
   shaderPrg->Set1f("sphere_size_scale", 1.f);
@@ -1165,7 +1164,7 @@ CShaderPrg *CShaderMgr::Enable_DefaultSphereShader(int pass) {
 
 #ifdef _PYMOL_ARB_SHADERS
 CShaderPrg *CShaderMgr::Enable_SphereShaderARB(){
-  CShaderPrg *shaderPrg = NULL;
+  CShaderPrg *shaderPrg = nullptr;
   /* load the vertex program */
   if (current_shader)
     current_shader->Disable();
@@ -1296,7 +1295,7 @@ CShaderPrg *CShaderMgr::Enable_LabelShader(int pass){
   CShaderPrg *shaderPrg;
   shaderPrg = Get_LabelShader(pass);  
   if (!shaderPrg)
-      return NULL;
+      return nullptr;
   shaderPrg->Enable();
   return Setup_LabelShader(shaderPrg);
 }
@@ -1305,7 +1304,7 @@ CShaderPrg *CShaderMgr::Enable_ScreenShader(){
   CShaderPrg *shaderPrg;
   shaderPrg = Get_ScreenShader();  
   if (!shaderPrg)
-      return NULL;
+      return nullptr;
   shaderPrg->Enable();
 
   int ortho_width, ortho_height;
@@ -1319,7 +1318,7 @@ CShaderPrg *CShaderMgr::Enable_RampShader(){
   CShaderPrg *shaderPrg;
   shaderPrg = Get_RampShader();  
   if (!shaderPrg)
-      return NULL;
+      return nullptr;
   shaderPrg->Enable();
   return Setup_LabelShader(shaderPrg);
 }
@@ -1344,7 +1343,7 @@ CShaderPrg *CShaderMgr::Setup_LabelShader(CShaderPrg *shaderPrg) {
   shaderPrg->SetBgUniforms();
 
   {
-    float v_scale = SceneGetScreenVertexScale(G, NULL);
+    float v_scale = SceneGetScreenVertexScale(G, nullptr);
     shaderPrg->Set1f("screenOriginVertexScale", v_scale/2.f);
   }
   {
@@ -1364,7 +1363,7 @@ CShaderPrg *CShaderMgr::Get_LabelShader(int pass){
 
 CShaderPrg *CShaderMgr::Get_ScreenShader() {
   if (is_picking)
-    return NULL;
+    return nullptr;
   return GetShaderPrg("screen");
 }
 
@@ -1780,7 +1779,7 @@ const char *CShaderMgr::GetAttributeName(int uid)
 {
   auto uloc = attribute_uids.find(uid);
   if (uloc == attribute_uids.end())
-    return NULL;
+    return nullptr;
   return attribute_uids[uid].c_str();
 }
 

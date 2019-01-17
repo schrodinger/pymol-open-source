@@ -501,7 +501,7 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
  * name: name to rename or delete, or "*" to delete all
  * new_name: new scene name to rename, or NULL to delete
  */
-static bool MovieSceneRename(PyMOLGlobals * G, const char * name, const char * new_name = NULL) {
+static bool MovieSceneRename(PyMOLGlobals * G, const char * name, const char * new_name = nullptr) {
 
   if (strcmp(name, "*") == 0) {
     // delete all scenes
@@ -620,7 +620,7 @@ static const char * MovieSceneGetNextKey(PyMOLGlobals * G, bool next) {
  */
 static bool MovieSceneOrderBeforeAfter(PyMOLGlobals * G, const char * key, bool before)
 {
-  const char * location = NULL;
+  const char * location = nullptr;
   const char * key2 = SettingGetGlobal_s(G, cSetting_scene_current_name);
 
   if (before) {
@@ -715,7 +715,7 @@ bool MovieSceneFunc(PyMOLGlobals * G, const char * key,
       status = MovieSceneOrderBeforeAfter(G, prev_name.c_str(), beforeafter == 1);
 
   } else if (strcmp(action, "delete") == 0) {
-    status = MovieSceneRename(G, key, NULL);
+    status = MovieSceneRename(G, key, nullptr);
   } else if (strcmp(action, "rename") == 0) {
     status = MovieSceneRename(G, key, new_key);
   } else if (strcmp(action, "order") == 0) {
@@ -730,8 +730,8 @@ bool MovieSceneFunc(PyMOLGlobals * G, const char * key,
   }
 
   // trigger GUI updates (scene buttons, Tcl/Tk menu)
-  SettingSetGlobal_b(G, cSetting_scenes_changed, 1);
-  SettingGenerateSideEffects(G, cSetting_scenes_changed, NULL, 0, true);
+  SettingSetGlobal_b(G, cSetting_scenes_changed, true);
+  SettingGenerateSideEffects(G, cSetting_scenes_changed, nullptr, 0, true);
 
   return status;
 
@@ -753,7 +753,7 @@ void MovieScenesInit(PyMOLGlobals * G) {
 void MovieScenesFree(PyMOLGlobals * G) {
   if (G->scenes) {
     delete G->scenes;
-    G->scenes = NULL;
+    G->scenes = nullptr;
   }
 }
 
@@ -783,11 +783,11 @@ static PyObject * PConvToPyObject(const MovieScene &v) {
 }
 
 static bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, MovieSceneAtom &out) {
-  return PConvArgsFromPyList(NULL, obj, out.color, out.visRep);
+  return PConvArgsFromPyList(nullptr, obj, out.color, out.visRep);
 }
 
 static bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, MovieSceneObject &out) {
-  return PConvArgsFromPyList(NULL, obj, out.color, out.visRep);
+  return PConvArgsFromPyList(nullptr, obj, out.color, out.visRep);
 }
 
 static bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, MovieScene &out) {
@@ -798,7 +798,7 @@ static bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, MovieScene &out)
     return false;
   }
 
-  if (!PConvArgsFromPyList(NULL, obj,
+  if (!PConvArgsFromPyList(nullptr, obj,
         out.storemask,
         out.frame,
         out.message,

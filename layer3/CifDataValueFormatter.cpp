@@ -61,7 +61,7 @@ std::string & CifDataValueFormatter::nextbuf() {
 }
 
 const char * CifDataValueFormatter::quoted(const char * s) {
-  const char * quote = NULL;
+  const char * quote = nullptr;
 
   if (!strchr(s, '\n')) {
     if (!has_quotespace(s, '\'')) {

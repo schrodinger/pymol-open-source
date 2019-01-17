@@ -88,7 +88,7 @@ static void tolowerinplace(char *p) {
 // CIF stuff
 
 static const char * EMPTY_STRING = "";
-static cif_array EMPTY_ARRAY(NULL);
+static cif_array EMPTY_ARRAY(nullptr);
 
 /*
  * Class to store CIF loops. Only for parsing, do not use in any higher level
@@ -107,7 +107,7 @@ public:
 // get table value, return NULL if indices out of bounds
 const char * cif_loop::get_value_raw(int row, int col) const {
   if (row >= nrows)
-    return NULL;
+    return nullptr;
   return values[row * ncols + col];
 }
 
@@ -120,7 +120,7 @@ int cif_array::get_nrows() const {
 // or value in ['.', '?']
 const char * cif_array::get_value(int row) const {
   if (col < 0)
-    return (row > 0) ? NULL : pointer.value;
+    return (row > 0) ? nullptr : pointer.value;
   return pointer.loop->get_value_raw(row, col);
 }
 
@@ -171,7 +171,7 @@ template <> float       cif_array::as<float       >(int row) const { return as_d
  */
 const cif_array * cif_data::get_arr(const char * key, const char * alias1, const char * alias2) const {
   const char * p;
-  const char * aliases[] = {alias1, alias2, NULL};
+  const char * aliases[] = {alias1, alias2, nullptr};
   m_str_cifarray_t::const_iterator it;
 
   for (int j = 0; key; key = aliases[j++]) {
@@ -190,13 +190,13 @@ const cif_array * cif_data::get_arr(const char * key, const char * alias1, const
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 // Get a pointer to array or to a default value if not found
 const cif_array * cif_data::get_opt(const char * key, const char * alias1, const char * alias2) const {
   const cif_array * arr = get_arr(key, alias1, alias2);
-  if (arr == NULL)
+  if (arr == nullptr)
     return &EMPTY_ARRAY;
   return arr;
 }
@@ -206,7 +206,7 @@ cif_file::cif_file(const char* filename, const char* contents_) {
   if (contents_) {
     contents = mstrdup(contents_);
   } else {
-    contents = FileGetContents(filename, NULL);
+    contents = FileGetContents(filename, nullptr);
     if (!contents)
       std::cerr << "ERROR: Failed to load file '" << filename << "'" << std::endl;
   }
@@ -275,7 +275,7 @@ bool cif_file::parse() {
       prev = *p;
       if (p - q == 1 && (*q == '?' || *q == '.')) {
         // store values '.' (inapplicable) and '?' (unknown) as null-pointers
-        q = NULL;
+        q = nullptr;
         keypossible.push_back(false);
       } else {
         if (*p)
@@ -286,7 +286,7 @@ bool cif_file::parse() {
     }
   }
 
-  cif_data *current_data = NULL, *current_frame = NULL, *global_block = NULL;
+  cif_data *current_data = nullptr, *current_frame = nullptr, *global_block = nullptr;
 
   // parse into dictionary
   for (unsigned int i = 0, n = tokens.size(); i < n; i++) {
@@ -308,7 +308,7 @@ bool cif_file::parse() {
     } else if (strcasecmp("loop_", tokens[i]) == 0) {
       int ncols = 0;
       int nrows = 0;
-      cif_loop *loop = NULL;
+      cif_loop *loop = nullptr;
 
       // loop data
       if (current_frame) {
