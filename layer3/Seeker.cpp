@@ -1036,7 +1036,7 @@ void SeekerUpdate(PyMOLGlobals * G)
   int max_row = 50;
   int default_color = 0;
   int align_sele = -1;          /* alignment selection */
-  const int MAXCONSECUTIVEGAPS = 10;
+  const int MAXCONSECUTIVEGAPS = 9;
   CSeqRow *row_vla, *row, *lab = NULL;
   row_vla = VLACalloc(CSeqRow, 10);
   /* FIRST PASS: get all the residues represented properly */
