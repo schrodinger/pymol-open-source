@@ -73,10 +73,10 @@ struct CWizard : public Block {
 
   CWizard(PyMOLGlobals * G) : Block(G) {};
 
-  virtual int click(int button, int x, int y, int mod) override;
-  virtual int drag(int x, int y, int mod) override;
-  virtual void draw(CGO* orthoCGO) override;
-  virtual int release(int button, int x, int y, int mod) override;
+  int click(int button, int x, int y, int mod) override;
+  int drag(int x, int y, int mod) override;
+  void draw(CGO* orthoCGO) override;
+  int release(int button, int x, int y, int mod) override;
 };
 
 #define cWizardLeftMargin DIP2PIXEL(3)

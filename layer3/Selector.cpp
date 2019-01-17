@@ -199,11 +199,11 @@ public:
     reset();
   }
 
-  void reset() {
-  a = cNDummyAtoms - 1;
-}
+  void reset() override {
+    a = cNDummyAtoms - 1;
+  }
 
-  bool next();
+  bool next() override;
 };
 
 bool SelectorAtomIterator::next() {

@@ -55,11 +55,11 @@ struct CSeq : public Block {
 
   CSeq(PyMOLGlobals * G) : Block(G), m_ScrollBar(G, true) {}
 
-  virtual int click(int button, int x, int y, int mod) override;
-  virtual void draw(CGO* orthoCGO) override;
-  virtual int drag(int x, int y, int mod) override;
-  virtual int release(int button, int x, int y, int mod) override;
-  virtual void reshape(int width, int height) override;
+  int click(int button, int x, int y, int mod) override;
+  void draw(CGO* orthoCGO) override;
+  int drag(int x, int y, int mod) override;
+  int release(int button, int x, int y, int mod) override;
+  void reshape(int width, int height) override;
 };
 
 static int SeqFindRowCol(PyMOLGlobals * G, int x, int y, int *row_num_ptr,

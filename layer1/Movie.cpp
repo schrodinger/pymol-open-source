@@ -101,12 +101,12 @@ struct CMovie : public Block {
 
   CMovie(PyMOLGlobals* G) : Block(G), m_ScrollBar(G, true) {}
 
-  virtual int release(int button, int x, int y, int mod) override;
-  virtual int click(int button, int x, int y, int mod) override;
-  virtual int drag(int x, int y, int mod) override;
-  virtual void draw(CGO* orthoCGO) override;
-  virtual bool fastDraw(CGO* orthoCGO) override;
-  virtual void reshape(int width, int height) override;
+  int release(int button, int x, int y, int mod) override;
+  int click(int button, int x, int y, int mod) override;
+  int drag(int x, int y, int mod) override;
+  void draw(CGO* orthoCGO) override;
+  bool fastDraw(CGO* orthoCGO) override;
+  void reshape(int width, int height) override;
 };
 
 void MovieViewReinterpolate(PyMOLGlobals *G)

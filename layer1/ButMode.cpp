@@ -54,9 +54,9 @@ struct CButMode : public Block {
 
   CButMode(PyMOLGlobals * G) : Block(G) {}
 
-  virtual int click(int button, int x, int y, int mod) override;
-  virtual void draw(CGO *orthoCGO) override;
-  virtual bool fastDraw(CGO* orthoCGO) override;
+  int click(int button, int x, int y, int mod) override;
+  void draw(CGO *orthoCGO) override;
+  bool fastDraw(CGO* orthoCGO) override;
 };
 
 

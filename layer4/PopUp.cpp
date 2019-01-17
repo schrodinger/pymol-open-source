@@ -68,9 +68,9 @@ struct CPopUp : public Block {
 
   CPopUp(PyMOLGlobals * G) : Block(G){}
 
-  virtual void draw(CGO *orthoCGO) override;
-  virtual int drag(int x, int y, int mod) override;
-  virtual int release(int button, int x, int y, int mod) override;
+  void draw(CGO *orthoCGO) override;
+  int drag(int x, int y, int mod) override;
+  int release(int button, int x, int y, int mod) override;
 };
 
 int PopUpRelease(Block * block, int button, int x, int y, int mod);

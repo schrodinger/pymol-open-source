@@ -26,7 +26,7 @@ Z* -------------------------------------------------------------------
 struct CPop : public Block {
   CPop(PyMOLGlobals * G) : Block(G){}
 
-  virtual void reshape(int width, int height) override;
+  void reshape(int width, int height) override;
 };
 
 void PopReshape(Block * I, int width, int height);

@@ -73,11 +73,11 @@ struct CControl : public Block {
 
   CControl(PyMOLGlobals * G) : Block(G) {};
 
-  virtual int click(int button, int x, int y, int mod) override;
-  virtual void draw(CGO* ortho) override;
-  virtual int drag(int x, int y, int mod) override;
-  virtual int release(int button, int x, int y, int mod) override;
-  virtual void reshape(int width, int height) override;
+  int click(int button, int x, int y, int mod) override;
+  void draw(CGO* ortho) override;
+  int drag(int x, int y, int mod) override;
+  int release(int button, int x, int y, int mod) override;
+  void reshape(int width, int height) override;
 };
 
 int ControlSdofButton(PyMOLGlobals * G, int button)
