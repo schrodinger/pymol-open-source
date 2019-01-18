@@ -23,10 +23,27 @@ private:
   bool m_stereo{false};
 
 public:
+  /**
+   * Channel indices.
+   * Examples:
+   * - bits()[Channel::ALPHA] -> first pixel's alpha channel
+   * - bits()[Channel::RED + 2 * getPixelSize()] -> third pixel's red channel
+   */
   enum Channel : std::uint8_t { RED = 0, GREEN = 1, BLUE = 2, ALPHA = 3 };
+
+  /**
+   * Get the size of one pixel in bytes (should be 4)
+   */
   static std::size_t getPixelSize() { return sizeof(std::uint32_t); }
 
   Image() = default;
+
+  /**
+   * Construct a black, full-transparent (alpha=0) image.
+   * @param width Width in pixels
+   * @param height Height in pixels
+   * @param stereo Make a stereo image (doubles the buffer size)
+   */
   Image(int width, int height, bool stereo = false)
       : m_width(width), m_height(height), m_stereo(stereo)
   {
@@ -41,11 +58,20 @@ public:
     m_data.resize(newSize, 0x00);
   }
 
+  /**
+   * Get the width and height in pixels
+   */
   const std::pair<int, int> getSize() const
   {
     return std::make_pair(m_width, m_height);
   }
 
+  /**
+   * Get the size of the image (not the stereo buffer) in bytes.
+   * Should be equal to getWidth() * getHeight() * getPixelSize().
+   * If this is a stereo image, then bits() will point to a buffer
+   * of size getSizeInBytes() * 2.
+   */
   const std::size_t getSizeInBytes() const noexcept
   {
     if (!m_stereo) {
@@ -54,14 +80,37 @@ public:
       return m_data.size() / 2;
     }
   }
+
+  /**
+   * Get the width in pixels
+   */
   const int getWidth() const noexcept { return m_width; }
+
+  /**
+   * Get the height in pixels
+   */
   const int getHeight() const noexcept { return m_height; }
+
+  /**
+   * True if this instance holds a stereo image (two images).
+   * bits() will point to the left image and
+   * bits() + getSizeInBytes() will point to the right image.
+   */
   const bool isStereo() const noexcept { return m_stereo; }
 
-  // Returns raw underlying data
+  /**
+   * Returns a pointer to the first pixel's first channel.
+   * Channels are 8 bit values.
+   * @see pixels()
+   */
   unsigned char* bits() noexcept { return m_data.data(); }
   const unsigned char* bits() const noexcept { return m_data.data(); }
 
+  /**
+   * Returns a pointer to the first pixel.
+   * Pixels are 32 bit RGBA values.
+   * @see bits()
+   */
   std::uint32_t* pixels() noexcept
   {
     return reinterpret_cast<std::uint32_t*>(bits());
@@ -71,6 +120,9 @@ public:
     return reinterpret_cast<const std::uint32_t*>(bits());
   }
 
+  /**
+   * True if width and height are both zero.
+   */
   bool empty() const noexcept { return m_data.empty(); }
   bool operator==(const Image& other) const noexcept
   {
@@ -82,32 +134,43 @@ public:
     return !(*this == other);
   }
 
-  // Note: img is copied and retains its original state
-  // Note: forces *this to be stereo
+  /**
+   * Makes this image a stereo image by appending @a img.
+   * @pre isStereo() and img.isStereo() are both false
+   * @post isStereo() is true
+   */
   void merge(const Image& img)
   {
-    if(m_stereo || img.m_stereo){
+    if (m_stereo || img.m_stereo || getSize() != img.getSize()) {
       throw ill_informed_image{};
     }
     m_data.insert(m_data.end(), img.m_data.begin(), img.m_data.end());
     m_stereo = true;
   }
 
-  // Erases the image
+  /**
+   * Erases the image
+   * @post getWidth() == 0
+   * @post getHeight() == 0
+   * @post isStereo() == false
+   */
   void erase() { *this = pymol::Image(); }
 
-  /*
-   * Deinterlace
+  /**
+   * Convert a side-by-side image to a stereo image.
    *
-   * stereo=off          stereo=on
-   * +---- W -----+      +- W/2 -+
-   * H Left Right |  ->  H Left  |
-   * +------------+      +-------+
-   *                     H Right |
-   *                     +-------+
-   *
+   * @verbatim
+     stereo=off          stereo=on
+     +---- W -----+      +- W/2 -+
+     H Left Right |  ->  H Left  |
+     +------------+      +-------+
+                         H Right |
+                         +-------+
+     @endverbatim
+   * @pre isStereo() is false
+   * @pre getWidth() is even
+   * @return A new image with isStereo() == true
    */
-
   Image deinterlace(bool toSwap = false) const
   {
     if (m_stereo || (m_width % 2 == 1)) {
@@ -134,18 +197,20 @@ public:
     return newImg;
   }
 
-  /*
-   * Interlace:
+  /**
+   * Convert a stereo image to a side-by-side (non-stereo) image.
    *
-   * stereo=on        stereo=off
-   * +-- W --+        +---- W*2 ----+
-   * H Left  |   ->   H Left  Right H
-   * +-------+        +-------------+
-   * H Right |
-   * +-------+
-   *
+   * @verbatim
+     stereo=on        stereo=off
+     +-- W --+        +---- W*2 ----+
+     H Left  |   ->   H Left  Right |
+     +-------+        +-------------+
+     H Right |
+     +-------+
+     @endverbatim
+   * @pre isStereo() is true
+   * @return A new image with isStereo() == false
    */
-
   Image interlace() const
   {
     if (!m_stereo) {
