@@ -40,13 +40,13 @@ template <typename T> class vla
 
 public:
   // implicit NULL constructor
-  vla(std::nullptr_t) {}
+  vla(std::nullptr_t = nullptr) {}
 
   /**
    * Takes ownership of a legacy VLA pointer
    * @param vla Pointer to a legacy VLA which was constructed with VLAlloc (or a related function)
    */
-  explicit vla(T* vla = nullptr) : m_vla(vla) {}
+  explicit vla(T*&& vla) : m_vla(vla) {}
 
   /**
    * Construct a new zero-initialized container
@@ -75,7 +75,7 @@ public:
   }
 
   // constructor from std::vector
-  explicit vla(std::vector<T>& vec) : vla(vec.size())
+  explicit vla(const std::vector<T>& vec) : vla(vec.size())
   {
     std::copy(vec.begin(), vec.end(), this->begin());
   }
@@ -102,9 +102,11 @@ public:
   // destructor
   ~vla() { freeP(); }
 
-  // data access - Allows for some usability with VLA APIs
+  /**
+   * Returns pointer to the underlying array serving as element storage.
+   */
   const T* data() const { return m_vla; }
-  T*& data() { return m_vla; }
+  T* data() { return m_vla; }
 
   /// legacy VLA cast
   operator const T*() const { return m_vla; }
@@ -220,7 +222,7 @@ template <typename T> void VLASize2(pymol::vla<T>& v, size_t size)
 
 template <typename T> void VLAFreeP(pymol::vla<T>& v)
 {
-  VLAFreeP(v.data());
+  v.freeP();
 }
 
 // vi:sw=2:expandtab
