@@ -144,16 +144,19 @@ public:
 
   Image interlace() const
   {
-    Image newImg(m_width, m_height);
-    auto half_width = m_width / 2u;
+    if (!m_stereo || (m_width % 2 == 1)) {
+      throw ill_informed_image{};
+    }
+
+    Image newImg(m_width * 2, m_height);
     auto* src = pixels();
     auto* dst = newImg.pixels();
-    auto* dst_end = dst + m_width * m_height;
-    const unsigned int* src_half = src + (m_height * half_width);
+    auto* dst_end = dst + (m_width * 2 * m_height);
+    auto offset = m_width * m_height;
 
-    for (; dst != dst_end; src += half_width, src_half += half_width) {
-      dst = std::copy(src, src + half_width, dst);
-      dst = std::copy(src_half, src_half + half_width, dst);
+    for (; dst != dst_end; src += m_width) {
+      dst = std::copy_n(src, m_width, dst);
+      dst = std::copy_n(src + offset, m_width, dst);
     }
     return newImg;
   }

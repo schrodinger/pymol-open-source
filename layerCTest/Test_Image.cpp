@@ -207,11 +207,16 @@ TEST_CASE("Image Deinterlace Data", "[Image]")
 TEST_CASE("Image Interlace Data", "[Image]")
 {
   auto test_folder = std::string(std::getenv("PYMOL_DATA")).append(PATH_SEP).append("test").append(PATH_SEP);
-  auto deinterlacedimage_loc = std::string(test_folder).append("single.png");
-  auto interlacedimage_loc = std::string(test_folder).append("double.png");
-  auto deinterlacedimage = MyPNGRead(deinterlacedimage_loc.c_str());
-  auto interlacedimage = MyPNGRead(interlacedimage_loc.c_str());
-  auto solution = deinterlacedimage->interlace();
-  REQUIRE(solution.getSizeInBytes() == deinterlacedimage->getSizeInBytes());
-}
 
+  auto loc_left = std::string(test_folder).append("single.png");
+  auto loc_right = std::string(test_folder).append("single-right.png");
+  auto loc_double = std::string(test_folder).append("double.png");
+
+  auto img_stereo = MyPNGRead(loc_left.c_str());
+  img_stereo->merge(*MyPNGRead(loc_right.c_str()));
+
+  auto img_double = MyPNGRead(loc_double.c_str());
+
+  REQUIRE(*img_stereo == img_double->deinterlace());
+  REQUIRE(img_stereo->interlace() == *img_double);
+}

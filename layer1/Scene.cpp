@@ -1828,7 +1828,8 @@ bool ScenePNG(PyMOLGlobals * G, const char *png, float dpi, int quiet,
     int width, height;
     std::tie(width, height) = I->Image->getSize();
     auto saveImage = I->Image;
-    if(I->Image && I->StereoMode) {
+    if(I->Image->isStereo()) {
+      saveImage = std::make_shared<pymol::Image>();
       *(saveImage) = I->Image->interlace();
     }
     if(dpi < 0.0F)
