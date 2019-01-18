@@ -110,6 +110,10 @@ public:
 
   Image deinterlace(bool toSwap = false) const
   {
+    if (m_stereo || (m_width % 2 == 1)) {
+      throw ill_informed_image{};
+    }
+
     auto half_width = m_width / 2;
     Image newImg(half_width, m_height, true);
     auto* src = pixels();
@@ -144,7 +148,7 @@ public:
 
   Image interlace() const
   {
-    if (!m_stereo || (m_width % 2 == 1)) {
+    if (!m_stereo) {
       throw ill_informed_image{};
     }
 
