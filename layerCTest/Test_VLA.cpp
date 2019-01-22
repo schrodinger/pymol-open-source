@@ -124,6 +124,7 @@ TEST_CASE("Range Based For", "[VLA]")
   }
 }
 
+#if 0
 TEST_CASE("To_StdVector", "[VLA]")
 {
   vla<int> myVLA{1, 2, 3, 4, 5};
@@ -139,6 +140,7 @@ TEST_CASE("From_StdVector", "[VLA]")
   REQUIRE(myStdVec.size() == myVLA.size());
   REQUIRE(isArrayEqual(myStdVec.data(), myVLA.data(), myStdVec.size()));
 }
+#endif
 
 TEST_CASE("From_VLACalloc", "[VLA]")
 {

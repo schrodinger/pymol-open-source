@@ -7,9 +7,9 @@
 #include "MemoryDebug.h"
 #include "LangUtil.h"
 #include <algorithm>
-#include <iostream>
-#include <stdexcept>
+#if 0
 #include <vector>
+#endif
 
 namespace pymol
 {
@@ -74,11 +74,14 @@ public:
     std::copy(init.begin(), init.end(), this->begin());
   }
 
+#if 0
   // constructor from std::vector
   explicit vla(const std::vector<T>& vec) : vla(vec.size())
   {
     std::copy(vec.begin(), vec.end(), this->begin());
   }
+#endif
+
   // copy constructor
   vla(const vla<T>& other) { m_vla = VLACopy2<T>(other.m_vla); }
 
@@ -192,11 +195,13 @@ public:
     }
   }
 
+#if 0
   // Util functions
   std::vector<T> toStdVector() const
   {
     return std::vector<T>(m_vla, m_vla + size());
   }
+#endif
 
   T* begin() { return m_vla; }
   T* end() { return m_vla + size(); }
