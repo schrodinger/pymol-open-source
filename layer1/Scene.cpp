@@ -1671,13 +1671,7 @@ pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only, bool noinvali
   if(!noinvalid && !(I->CopyType || prior_only)) {
     if(G->HaveGUI && G->ValidContext) {
       ScenePurgeImageImpl(G, noinvalid);
-      I->Image = nullptr;
-      if(save_stereo){
-        I->Image = std::make_shared<pymol::Image>(I->Width * 2, I->Height, false);
-      }
-      else{
-        I->Image = std::make_shared<pymol::Image>(I->Width, I->Height);
-      }
+      I->Image = std::make_shared<pymol::Image>(I->Width, I->Height, save_stereo);
       image = I->Image.get();
 
 #ifndef PURE_OPENGL_ES_2
@@ -1693,7 +1687,7 @@ pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only, bool noinvali
       if(save_stereo) {
         glReadBuffer(GL_BACK_RIGHT);
         PyMOLReadPixels(I->rect.left, I->rect.bottom, I->Width, I->Height,
-                        GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image->bits() + image->getSizeInBytes()/2));
+                        GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image->bits() + image->getSizeInBytes()));
       }
 #endif
       I->Image->m_needs_alpha_reset = true;
@@ -1704,7 +1698,7 @@ pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only, bool noinvali
   if(image) {
     int opaque_back = SettingGetGlobal_b(G, cSetting_opaque_background);
     if(opaque_back && I->Image->m_needs_alpha_reset) {
-      int i, s = I->Image->getSizeInBytes();
+      int i, s = image->getSizeInBytes() * (image->isStereo() ? 2 : 1);
       for(i = 3; i < s; i += 4)
         image->bits()[i] = 0xFF;
       I->Image->m_needs_alpha_reset = false;
