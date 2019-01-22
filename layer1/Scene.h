@@ -69,10 +69,10 @@ float *SceneGetMatrix(PyMOLGlobals * G);
 float *SceneGetPmvMatrix(PyMOLGlobals * G);
 
 void SceneReshape(Block * block, int width, int height);
-float SceneGetScreenVertexScale(PyMOLGlobals * G, float *v1);
-short SceneGetVisible(PyMOLGlobals * G, float *v1);
-float SceneGetDepth(PyMOLGlobals * G, float *v1);
-float SceneGetRawDepth(PyMOLGlobals * G, float *v1);
+float SceneGetScreenVertexScale(PyMOLGlobals * G, const float *v1);
+bool SceneGetVisible(PyMOLGlobals * G, const float *v1);
+float SceneGetDepth(PyMOLGlobals * G, const float *v1);
+float SceneGetRawDepth(PyMOLGlobals * G, const float *v1);
 
 void SceneTest(PyMOLGlobals * G);
 void SceneIdle(PyMOLGlobals * G);
@@ -120,10 +120,10 @@ void SceneGetResetNormal(PyMOLGlobals * G, float *normal, int lines);
 int SceneObjectAdd(PyMOLGlobals * G, CObject * obj);
 int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge);
 int SceneObjectIsActive(PyMOLGlobals * G, CObject * obj);
-void SceneOriginSet(PyMOLGlobals * G, float *origin, int preserve);
+void SceneOriginSet(PyMOLGlobals * G, const float *origin, int preserve);
 void SceneOriginGet(PyMOLGlobals * G, float *origin);
-void SceneWindowSphere(PyMOLGlobals * G, float *location, float radius);
-void SceneRelocate(PyMOLGlobals * G, float *location);
+void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius);
+void SceneRelocate(PyMOLGlobals * G, const float *location);
 Block *SceneGetBlock(PyMOLGlobals * G);
 void SceneApplyMatrix(PyMOLGlobals * G, float *m);
 void SceneSetStereo(PyMOLGlobals * G, int flag);
@@ -162,7 +162,7 @@ int SceneDeferClick(Block * block, int button, int x, int y, int mod);
 int SceneDeferDrag(Block * block, int x, int y, int mod);
 int SceneDeferImage(PyMOLGlobals * G, int width, int height, const char *filename,
                     int antialias, float dpi, int format, int quiet);
-char *SceneGetSeleModeKeyword(PyMOLGlobals * G);
+const char *SceneGetSeleModeKeyword(PyMOLGlobals * G);
 void SceneUpdateStereo(PyMOLGlobals * G);
 float ScenePushRasterMatrix(PyMOLGlobals * G, float *v);
 void ScenePopRasterMatrix(PyMOLGlobals * G);
@@ -251,7 +251,7 @@ void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window);
 
 void SceneInvalidatePicking(PyMOLGlobals * G);
 
-pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only, bool noinvalid=0);
+pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only);
 
 #endif
 

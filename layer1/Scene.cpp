@@ -402,19 +402,21 @@ static float SceneGetFPS(PyMOLGlobals * G)
   return fps;
 }
 
-void ScenePurgeImageImpl(PyMOLGlobals * G, int noinvalid);
-
+/**
+ * Release `G->Scene->Image` and clear related flags (`CopyType`).
+ *
+ * Invalidates the Ortho CGO and requests a redisplay. It's not entirely clear
+ * why this is done, a code comment says "need to invalidate since text could be
+ * shown".
+ */
 static void ScenePurgeImage(PyMOLGlobals * G)
-{
-  ScenePurgeImageImpl(G, 0);
-}
-
-void ScenePurgeImageImpl(PyMOLGlobals * G, int noinvalid)
 {
   CScene *I = G->Scene;
   I->CopyType = false;
   I->Image = nullptr;
-  if (!noinvalid)
+
+  // TODO does this belong here?
+  if (true /* !noinvalid */)
     OrthoInvalidateDoDraw(G); // right now, need to invalidate since text could be shown
 }
 
@@ -522,7 +524,7 @@ int SceneLoopRelease(Block * block, int button, int x, int y, int mod)
   return 1;
 }
 
-/*
+/**
  * Set FrontSafe and BackSafe
  */
 static void UpdateFrontBackSafe(CScene *I)
@@ -591,7 +593,11 @@ void SceneUpdateStereo(PyMOLGlobals * G)
   PyMOL_NeedRedisplay(G->PyMOL);
 }
 
-char *SceneGetSeleModeKeyword(PyMOLGlobals * G)
+/**
+ * Get the selection operator for the `mouse_selection_mode` setting.
+ * Example: `mouse_selection_mode=2` -> "bychain"
+ */
+const char *SceneGetSeleModeKeyword(PyMOLGlobals * G)
 {
   int sel_mode = SettingGetGlobal_i(G, cSetting_mouse_selection_mode);
   if((sel_mode >= 0) && (sel_mode < SELE_MODE_MAX))
@@ -796,7 +802,7 @@ void ScenePrepareUnitContext(SceneUnitContext * context, int width, int height)
    */
 }
 
-/*
+/**
  * cmd.get_viewport()
  */
 void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height)
@@ -806,7 +812,7 @@ void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height)
   *height = I->Height;
 }
 
-/*
+/**
  * Get the actual current (sub-)viewport size, considering grid mode and
  * side-by-side stereo
  */
@@ -862,8 +868,10 @@ void SceneSuppressMovieFrame(PyMOLGlobals * G)
   I->MovieFrameFlag = false;
 }
 
-/*
+/**
  * Get center of screen in world coordinates
+ *
+ * @param[out] pos 3f output vector
  */
 void SceneGetCenter(PyMOLGlobals * G, float *pos)
 {
@@ -887,15 +895,19 @@ int SceneGetNFrame(PyMOLGlobals * G, int *has_movie)
 }
 
 /*========================================================================*/
-/* SceneGetView: all information required to define the geometry
+/**
+   Get information required to define the geometry
    of a particular view, for shipping to and from python
    as a list of floats
+   @verbatim
    0-15 = 4x4 rotation matrix 
    16-18 = position
    19-21 = origin
    22    = front plane
    23    = rear plane
    24    = orthoscopic flag 
+   @endverbatim
+   @param[out] view buffer to fill
 */
 void SceneGetView(PyMOLGlobals * G, SceneViewType view)
 {
@@ -1661,16 +1673,29 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
 
 }
 
-pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only, bool noinvalid)
+/**
+ * Prepares the scene image for PNG export.
+ *
+ * If there is no rendered image (`G->Scene->CopyType` is false) then read the
+ * current image from the OpenGL back buffer.
+ *
+ * Sets the alpha channel to opaque if the `opaque_background` setting is on.
+ *
+ * Modifies `G->Scene->Image`.
+ *
+ * @param prior_only Return NULL if there is no prior image (`G->Scene->Image` is NULL)
+ * @return The scene image
+ */
+pymol::Image* SceneImagePrepare(PyMOLGlobals* G, bool prior_only)
 {
   CScene *I = G->Scene;
   pymol::Image* image = nullptr;
   int save_stereo = (I->StereoMode == 1);
   int ok = true;
 
-  if(!noinvalid && !(I->CopyType || prior_only)) {
+  if (!(I->CopyType || prior_only)) {
     if(G->HaveGUI && G->ValidContext) {
-      ScenePurgeImageImpl(G, noinvalid);
+      ScenePurgeImage(G);
       I->Image = std::make_shared<pymol::Image>(I->Width, I->Height, save_stereo);
       image = I->Image.get();
 
@@ -1699,7 +1724,8 @@ pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only, bool noinvali
     int opaque_back = SettingGetGlobal_b(G, cSetting_opaque_background);
     if(opaque_back && I->Image->m_needs_alpha_reset) {
       int i, s = image->getSizeInBytes() * (image->isStereo() ? 2 : 1);
-      for(i = 3; i < s; i += 4)
+      for (i = pymol::Image::Channel::ALPHA; i < s;
+           i += pymol::Image::getPixelSize())
         image->bits()[i] = 0xFF;
       I->Image->m_needs_alpha_reset = false;
     }
@@ -1707,7 +1733,7 @@ pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only, bool noinvali
   return image;
 }
 
-/*
+/**
  * Get the size of the rendered image. This is either identical to
  * cmd.get_viewport(), or the dimensions which were last passed to
  * cmd.draw(), cmd.ray() or cmd.png().
@@ -1715,11 +1741,7 @@ pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only, bool noinvali
 std::pair<int, int> SceneGetImageSize(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-  // TODO: calling ImagePrepare looks like a heavy side effect. Need to
-  // clarify if checking (CopyType && Image && Image->data) here would
-  // be sufficient.
-  auto image = SceneImagePrepare(G, false, false);
-  if(image && I->Image) {
+  if (I->CopyType && I->Image) {
     return I->Image->getSize();
   } else {
     return std::make_pair(I->Width, I->Height);
@@ -1857,29 +1879,30 @@ int SceneGetFrame(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-/* GM:
+/**
  * Returns the number of movie frames, or the number of states if no movie
  * is defined.
  */
 int SceneCountFrames(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-  int n;
-  int mov_len;
-  I->NFrame = 0;
-  for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
-    n = (*it)->getNFrame();
-    if(n > I->NFrame)
-      I->NFrame = n;
-  }
-  mov_len = MovieGetLength(G);
+  int mov_len = MovieGetLength(G);
   I->HasMovie = (mov_len != 0);
   if(mov_len > 0) {
     I->NFrame = mov_len;
-  } else if(mov_len < 0) {
-    mov_len = -mov_len;
-    if(I->NFrame < mov_len)     /* allows you to see cached movie even w/o object */
-      I->NFrame = mov_len;
+  } else {
+    if (mov_len < 0) {
+      // allows you to see cached movie even w/o object
+      I->NFrame = -mov_len;
+    } else {
+      I->NFrame = 0;
+    }
+
+    for (const auto& obj : I->Obj) {
+      int n = obj->getNFrame();
+      if (n > I->NFrame)
+        I->NFrame = n;
+    }
   }
   PRINTFD(G, FB_Scene)" SceneCountFrames: leaving... I->NFrame %d\n", I->NFrame ENDFD
   return I->NFrame;
@@ -2280,10 +2303,10 @@ void SceneIdle(PyMOLGlobals * G)
 }
 
 /*========================================================================*/
-/*
+/**
  * Zoom to location and radius
  */
-void SceneWindowSphere(PyMOLGlobals * G, float *location, float radius)
+void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
 {
   CScene *I = G->Scene;
   float v0[3];
@@ -2306,7 +2329,7 @@ void SceneWindowSphere(PyMOLGlobals * G, float *location, float radius)
 
 
 /*========================================================================*/
-void SceneRelocate(PyMOLGlobals * G, float *location)
+void SceneRelocate(PyMOLGlobals * G, const float *location)
 {
   CScene *I = G->Scene;
   float v0[3];
@@ -2339,9 +2362,11 @@ void SceneRelocate(PyMOLGlobals * G, float *location)
 
 
 /*========================================================================*/
-/*
+/**
  * Get the origin of rotation in model space
  * cmd.get_view()[12:15]
+ *
+ * @param[out] origin
  */
 void SceneOriginGet(PyMOLGlobals * G, float *origin)
 {
@@ -2351,7 +2376,14 @@ void SceneOriginGet(PyMOLGlobals * G, float *origin)
 
 
 /*========================================================================*/
-void SceneOriginSet(PyMOLGlobals * G, float *origin, int preserve)
+/**
+ * Set the origin of rotation in model space
+ * (`cmd.get_view()[12:15]`)
+ *
+ * @param origin New origin
+ * @param preserve preserve current viewing location
+ */
+void SceneOriginSet(PyMOLGlobals * G, const float *origin, int preserve)
 {
   CScene *I = G->Scene;
   float v0[3], v1[3];
@@ -2581,8 +2613,10 @@ static void draw_button(int x2, int y2, int z, int w, int h, float *light, float
 }
 #endif
 
-/*
+/**
  * Update the G->Scene->SceneVLA names array which is used for scene buttons
+ *
+ * @param list List of scene names
  */
 void SceneSetNames(PyMOLGlobals * G, const std::vector<std::string> &list)
 {
@@ -4283,9 +4317,11 @@ void ScenePopRasterMatrix(PyMOLGlobals * G)
   glPopMatrix();
 }
 
-/*
+/**
  * Compose the ModelViewMatrix from Pos, RotMatrix and Origin
  * See also: CScene.ModMatrix (queried from OpenGL)
+ *
+ * @param[out] modelView 4x4 matrix
  */
 static void SceneComposeModelViewMatrix(CScene * I, float * modelView) {
   identity44f(modelView);
@@ -4312,22 +4348,22 @@ void SceneGetEyeNormal(PyMOLGlobals * G, float *v1, float *normal)
   invert3f3f(p2, normal);
 }
 
-/*
+/**
  * Return true if the v1 is within the safe clipping planes
  */
-short SceneGetVisible(PyMOLGlobals * G, float *v1)
+bool SceneGetVisible(PyMOLGlobals * G, const float *v1)
 {
   CScene *I = G->Scene;
   float depth = SceneGetRawDepth(G, v1);
   return (I->BackSafe >= depth && depth >= I->FrontSafe);
 }
 
-/*
+/**
  * Get the depth (camera space Z) of v1
  *
- * v1: point (3f) in world space or NULL (= origin)
+ * @param v1 point (3f) in world space or NULL (= origin)
  */
-float SceneGetRawDepth(PyMOLGlobals * G, float *v1)
+float SceneGetRawDepth(PyMOLGlobals * G, const float *v1)
 {
   CScene *I = G->Scene;
   float vt[3];
@@ -4342,13 +4378,13 @@ float SceneGetRawDepth(PyMOLGlobals * G, float *v1)
   return -vt[2];
 }
 
-/*
+/**
  * Get the depth (camera space Z) of v1 in normalized clip space
  * from 0.0 (near) to 1.0 (far)
  *
- * v1: point (3f) in world space or NULL (= origin)
+ * @param v1 point (3f) in world space or NULL (= origin)
  */
-float SceneGetDepth(PyMOLGlobals * G, float *v1)
+float SceneGetDepth(PyMOLGlobals * G, const float *v1)
 {
   CScene *I = G->Scene;
   float rawDepth = SceneGetRawDepth(G, v1);
@@ -4356,13 +4392,13 @@ float SceneGetDepth(PyMOLGlobals * G, float *v1)
 }
 
 /*========================================================================*/
-/*
+/**
  * Get the angstrom per pixel factor at v1. If v1 is NULL, return the
  * factor at the origin, but clamped to an empirical positive value.
  *
- * v1: point (3f) in world space or NULL (= origin)
+ * @param v1 point (3f) in world space or NULL (= origin)
  */
-float SceneGetScreenVertexScale(PyMOLGlobals * G, float *v1)
+float SceneGetScreenVertexScale(PyMOLGlobals * G, const float *v1)
 
 /* does not require OpenGL-provided matrices */
 {
@@ -5548,7 +5584,7 @@ static int SceneDeferredClick(DeferredMouse * dm)
   return 1;
 }
 
-/*
+/**
  * Will call cmd.raw_image_callback(img) with the current RGBA image, copied
  * to a WxHx4 numpy array. Return false if no callback is defined
  * (cmd.raw_image_callback == None).
@@ -6510,13 +6546,14 @@ float SceneGetReflectScaleValue(PyMOLGlobals * G, int limit)
   return result;
 }
 
-/*
+/**
  * Get specular and shininess, adjusted to the number of lights.
  *
- * ptr_spec:              specular for lights 2-N
- * ptr_spec_power:        shininess for lights 2-N
- * ptr_spec_direct:       specular for light 1
- * ptr_spec_direct_power: shininess for light 1
+ * @param[out] ptr_spec              specular for lights 2-N
+ * @param[out] ptr_spec_power        shininess for lights 2-N
+ * @param[out] ptr_spec_direct       specular for light 1
+ * @param[out] ptr_spec_direct_power shininess for light 1
+ * @param limit number of lights (e.g. `light_count` setting)
  */
 void SceneGetAdjustedLightValues(PyMOLGlobals * G,
     float *ptr_spec,
@@ -6570,7 +6607,7 @@ const char * lightsource_diffuse_names[] = {
 };
 #undef TEMPLATE
 
-/*
+/**
  * Sets up lighting for immediate mode if shaderPrg=NULL, otherwise
  * sets lighting uniforms for the given shader program.
  *
@@ -6688,7 +6725,7 @@ void sharp3d_switch_to_right_stereo(void);
 void sharp3d_end_stereo(void);
 #endif
 
-/*
+/**
  * Set up the Scene Fog* member variables and immediate mode fog (incl.
  * gl_Fog struct for non-ES2 shaders)
  */
@@ -6727,7 +6764,7 @@ int SceneSetFog(PyMOLGlobals *G){
   return fog_active;
 }
 
-/*
+/**
  * Set the g_Fog_* uniforms for ES2 shaders
  */
 void SceneSetFogUniforms(PyMOLGlobals * G, CShaderPrg * shaderPrg) {
@@ -7183,7 +7220,7 @@ float SceneGetCurrentFrontSafe(PyMOLGlobals *G){
   return (I->FrontSafe);
 }
 
-/*
+/**
  * Get the field-of-view width at a depth of 1.0
  */
 float GetFovWidth(PyMOLGlobals * G)
