@@ -1,3 +1,11 @@
+#include <stdio.h>
+
+#ifndef _WIN32
+#include <stdlib.h>
+#include <unistd.h>
+#endif
+
+#include <fstream>
 #include <iostream>
 #define CATCH_CONFIG_RUNNER
 #include <catch2/catch.hpp>
@@ -20,3 +28,31 @@ PyObject *CmdTest2(PyObject *, PyObject *) {
     return PyMOL_TestAPI::PYMOL_TEST_FAILURE;
   }
 }
+
+namespace pymol {
+namespace test {
+
+TmpFILE::TmpFILE()
+{
+#ifdef _WIN32
+    tmpFilename.resize(L_tmpnam_s);
+    tmpnam_s(&tmpFilename[0], tmpFilename.size());
+    tmpFilename.resize(strlen(tmpFilename.c_str()));
+
+    // file 'touch'
+    std::ofstream(tmpFilename);
+#else
+    tmpFilename = P_tmpdir;
+
+    if (!tmpFilename.empty() && tmpFilename.back() != '/') {
+      tmpFilename += '/';
+    }
+
+    tmpFilename.append("tmppymoltestXXXXXX");
+
+    close(mkstemp(&tmpFilename[0]));
+#endif
+}
+
+} // namespace test
+} // namespace pymol

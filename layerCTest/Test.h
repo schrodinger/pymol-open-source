@@ -5,6 +5,7 @@
 #include <vector>
 #include <functional>
 #include <cstring>
+#include <string>
 #include <cmath>
 #include "os_python.h"
 #include "PConv.h"
@@ -60,7 +61,7 @@ class TmpFILE
 {
   std::string tmpFilename;
 public:
-  TmpFILE() : tmpFilename{std::tmpnam(nullptr)}{};
+  TmpFILE();
   TmpFILE(const TmpFILE&) = delete;
   TmpFILE& operator=(const TmpFILE&) = delete;
   TmpFILE(TmpFILE&&) = default;
