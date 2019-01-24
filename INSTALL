@@ -10,6 +10,7 @@ REQUIREMENTS
     - C++11 compiler (e.g. gcc 4.7+)
     - Python 2.7+
     - Pmw (Python Megawidgets) (optional, for legacy GUI/plugins)
+      https://github.com/schrodinger/pmw-patched
     - OpenGL
     - GLEW
     - GLUT (freeglut) (optional, disable with --no-glut)
@@ -31,7 +32,6 @@ SETUP OPTIONS
 
     Special install options:
       --pymol-path=       installation directory for PyMOL data ($PYMOL_PATH)
-      --bundled-pmw       install bundled Pmw module
       --no-launcher       skip installation of the pymol launcher
 
     Environment variables:

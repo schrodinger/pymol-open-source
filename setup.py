@@ -156,15 +156,8 @@ class install_pymol(install):
             self.make_launch_script()
 
         if self.bundled_pmw:
-            import tarfile
-            pmwtgz = "modules/pmg_tk/pmw-py%d.tgz" % (sys.version_info[0])
-            if not os.path.exists(pmwtgz):
-                if sys.version_info[0] > 2:
-                    raise UserWarning('bundled pmw.tgz not compatible with Python 3')
-                pmwtgz = "modules/pmg_tk/pmw.tgz"
-            tar = tarfile.open(pmwtgz)
-            tar.extractall(self.install_libbase)
-            tar.close()
+            raise Exception('--bundled-pmw has been removed, please install Pmw from '
+                    'https://github.com/schrodinger/pmw-patched')
 
     def unchroot(self, name):
         if self.root is not None and name.startswith(self.root):
