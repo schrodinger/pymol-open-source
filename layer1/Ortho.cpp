@@ -2293,7 +2293,7 @@ void OrthoReshapeWizard(PyMOLGlobals * G, ov_size wizHeight)
   COrtho *I = G->Ortho;
   I->WizardHeight = wizHeight;
 
-  if(SettingGetGlobal_b(G, cSetting_internal_gui) > 0.0) {
+  if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
     Block *block;
     int internal_gui_width = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_width));
 

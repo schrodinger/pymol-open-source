@@ -591,7 +591,7 @@ void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float
 static float * ObjectVolumeStateGetColors(PyMOLGlobals * G, ObjectVolumeState * ovs,
     int count, float *ramp_min, float *ramp_range) {
   int i, j, k;
-  int lowerId, upperId;
+  int lowerId, upperId = 0;
   float mixc, mixcincr, r_min, range;
   float stdev = ovs->min_max_mean_stdev[3];
   float * colors;
