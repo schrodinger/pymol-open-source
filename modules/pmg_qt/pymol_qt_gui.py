@@ -1126,10 +1126,15 @@ def execapp():
     Run PyMOL as a Qt application
     '''
     global window
+    global pymol
 
     # don't let exceptions stop PyMOL
     import traceback
     sys.excepthook = traceback.print_exception
+
+    # use QT_OPENGL=desktop (auto-detection may fail on Windows)
+    if hasattr(Qt, 'AA_UseDesktopOpenGL') and pymol.IS_WINDOWS:
+        QtCore.QCoreApplication.setAttribute(Qt.AA_UseDesktopOpenGL)
 
     # enable 4K scaling on Windows and Linux
     if hasattr(Qt, 'AA_EnableHighDpiScaling') and not any(
