@@ -429,5 +429,3 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
         
 else:
     from pymol.cmd import *
-    
-

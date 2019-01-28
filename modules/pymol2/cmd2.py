@@ -4,8 +4,6 @@ import inspect
 import itertools
 import weakref
 
-#most recently created Cmd (for now)
-cmd = None
 
 class Cmd:
     '''
@@ -13,8 +11,6 @@ class Cmd:
     '''
 
     def __init__(self, _pymol, _COb):
-        global cmd
-        cmd = weakref.proxy(self)
         self._weakref = weakref.ref(self)
         self._weakrefproxy = weakref.proxy(self)
 
