@@ -4363,6 +4363,9 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 
 void RepSurfaceSmoothEdges(RepSurface * I)
 {
+  if (I->allVisibleFlag)
+    return;
+
   std::vector<std::vector<int>> edges(I->N);
   // Find all edges.
   // Uses the following edge structure:
