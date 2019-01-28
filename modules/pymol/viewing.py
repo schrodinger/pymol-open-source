@@ -14,7 +14,7 @@
 
 from __future__ import print_function, absolute_import
 
-if __name__=='pymol.viewing':
+if True:
 
     import sys
     if sys.version_info[0] == 2:
@@ -23,7 +23,6 @@ if __name__=='pymol.viewing':
         import _thread as thread
 
     import threading
-    import types
     import traceback
     import pymol
     from . import selector

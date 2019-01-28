@@ -14,7 +14,7 @@
 
 from __future__ import print_function
 
-if __name__=='pymol.fitting':
+if True:
 	
         cmd = __import__("sys").modules["pymol.cmd"]
         from .cmd import _cmd,lock,unlock

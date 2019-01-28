@@ -12,7 +12,7 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-if __name__=='pymol.moving':
+if True:
     
     import sys
     if sys.version_info[0] == 2:

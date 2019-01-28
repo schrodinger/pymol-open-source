@@ -14,7 +14,7 @@
 
 from __future__ import print_function, absolute_import
 
-if __name__=='pymol.commanding':
+if True:
 
     import sys
     if sys.version_info[0] == 2:

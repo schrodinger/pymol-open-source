@@ -28,7 +28,7 @@ class SecurityException(Exception):
 SCRIPT_TOPLEVEL = 'toplevel'
 
 
-if __name__=='pymol.parser':
+if True:
     
     import pymol
     import traceback
@@ -37,7 +37,6 @@ if __name__=='pymol.parser':
     import glob
     import sys
     import os
-    import __main__
 
     from . import parsing
     from . import colorprinting

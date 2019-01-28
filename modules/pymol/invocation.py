@@ -111,7 +111,7 @@ helptext2 = '''
 Mail bug reports to https://lists.sourceforge.net/lists/listinfo/pymol-users
 '''
 
-if __name__=='pymol.invocation':
+if True:
 
     import copy
     import re

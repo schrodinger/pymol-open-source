@@ -12,7 +12,7 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-if __name__=='pymol.povray':
+if True:
     
     import os
     import traceback

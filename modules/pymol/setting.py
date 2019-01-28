@@ -14,11 +14,9 @@
 
 from __future__ import print_function
 
-if __name__=='pymol.setting':
+if True:
     
     import traceback
-    import string
-    import types
     from . import selector
     from .shortcut import Shortcut
     cmd = __import__("sys").modules["pymol.cmd"]
@@ -26,14 +24,6 @@ if __name__=='pymol.setting':
           is_string, \
           _feedback,fb_module,fb_mask, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
-    import re
-    
-    boolean_type = 1
-    int_type     = 2
-    float_type   = 3
-    float3_type  = 4
-
-    self = cmd
 
     # name -> index mapping
     index_dict = _cmd.get_setting_indices()

@@ -14,7 +14,7 @@
 
 from __future__ import print_function
 
-if __name__=='pymol.controlling' or __name__=='controlling':
+if True:
     try:
         from . import selector, internal
         from .shortcut import Shortcut

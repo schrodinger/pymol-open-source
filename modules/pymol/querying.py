@@ -14,7 +14,7 @@
 
 from __future__ import print_function
 
-if __name__=='pymol.querying':
+if True:
 
     import time
     from . import selector

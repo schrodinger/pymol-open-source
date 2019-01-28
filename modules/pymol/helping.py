@@ -14,7 +14,7 @@
 
 from __future__ import print_function
 
-if __name__=='pymol.helping':
+if True:
     
     cmd = __import__("sys").modules["pymol.cmd"]
     import pymol

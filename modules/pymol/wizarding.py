@@ -14,7 +14,7 @@
 
 from __future__ import print_function
 
-if __name__=='pymol.wizarding':
+if True:
 
     import pymol
     import sys

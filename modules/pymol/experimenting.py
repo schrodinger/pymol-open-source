@@ -12,7 +12,7 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-if __name__=='pymol.experimenting':
+if True:
     
     from . import selector
     from .cmd import _cmd,lock,unlock,Shortcut,QuietException, \

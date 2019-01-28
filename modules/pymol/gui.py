@@ -14,10 +14,8 @@
 
 # abstract (external or internal) gui control interface
 
-if __name__=='pymol.gui':
-    
-    import pymol
-    cmd = __import__("sys").modules["pymol.cmd"]
+import pymol
+cmd = __import__("sys").modules["pymol.cmd"]
 
 def get_pmgapp():
     '''

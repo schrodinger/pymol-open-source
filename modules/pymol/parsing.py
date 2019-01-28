@@ -63,13 +63,12 @@ from __future__ import absolute_import
 
 # Don't import __future__.print_function
 
-if __name__=='pymol.parsing':
+if True:
 
     import re
     import sys
     import threading
     import types
-    import traceback
     import inspect
     from . import colorprinting
     

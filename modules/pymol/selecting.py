@@ -12,14 +12,13 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-if __name__=='pymol.selecting':
+if True:
     
     from . import selector
 
     cmd = __import__("sys").modules["pymol.cmd"]
 
-    from .cmd import _cmd,lock,unlock,Shortcut, \
-          _feedback,fb_module,fb_mask, is_tuple, \
+    from .cmd import _cmd,Shortcut, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     
     import pymol

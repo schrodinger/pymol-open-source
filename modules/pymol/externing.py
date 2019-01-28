@@ -14,7 +14,7 @@
 
 from __future__ import print_function
 
-if __name__=='pymol.externing':
+if True:
     
     import os
     import pymol

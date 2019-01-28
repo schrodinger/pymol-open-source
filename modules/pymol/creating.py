@@ -14,7 +14,7 @@
 
 from __future__ import print_function, absolute_import
 
-if __name__=='pymol.creating':
+if True:
 
     import pymol
     from . import selector
