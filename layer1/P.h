@@ -99,7 +99,6 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, const char *model, const 
 #define PIsGlutThread() 1
 #define PComplete(G,a,b) 0
 
-#define PSGIStereo(G,a)
 #define PPovrayRender(a,b,c,d,e,f,g) 0
 
 #define PTruthCallStr(a,b,c)
@@ -181,7 +180,6 @@ int PFlush(PyMOLGlobals * G);
 int PFlushFast(PyMOLGlobals * G);
 void PXDecRef(PyObject * obj);
 PyObject *PXIncRef(PyObject * obj);
-void PSGIStereo(PyMOLGlobals * G, int flag);
 void PDefineFloat(PyMOLGlobals * G, const char *name, float value);
 
 void PRunStringModule(PyMOLGlobals * G, const char *str);

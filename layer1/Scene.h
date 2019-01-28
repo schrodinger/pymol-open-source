@@ -154,7 +154,6 @@ int SceneRovingCheckDirty(PyMOLGlobals * G);
 void SceneRovingUpdate(PyMOLGlobals * G);
 void SceneRovingChanged(PyMOLGlobals * G);
 void SceneRovingPostpone(PyMOLGlobals * G);
-void SceneCleanupStereo(PyMOLGlobals * G);
 int SceneReinitialize(PyMOLGlobals * G);
 void SceneUpdateStereoMode(PyMOLGlobals * G);
 void SceneSuppressMovieFrame(PyMOLGlobals * G);

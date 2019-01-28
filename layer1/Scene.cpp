@@ -757,15 +757,6 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
   }
 }
 
-void SceneCleanupStereo(PyMOLGlobals * G)
-{
-#ifndef _PYMOL_NOPY
-  CScene *I = G->Scene;
-  if(I->StereoMode == 1)
-    PSGIStereo(G, 0);
-#endif
-}
-
 void ScenePrepareUnitContext(SceneUnitContext * context, int width, int height)
 {
   float tw = 1.0F;

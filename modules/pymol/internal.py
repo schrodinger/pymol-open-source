@@ -610,19 +610,6 @@ def _refresh(swap_buffers=1,_self=cmd):  # Only call with GLUT thread!
         _self.unlock(-1,_self)
     return r
 
-# stereo (platform dependent )
-
-def _sgi_stereo(flag): # SGI-SPECIFIC - bad bad bad
-    # WARNING: internal routine, subject to change
-    if sys.platform[0:4]=='irix':
-        if os.path.exists("/usr/gfx/setmon"):
-            if flag:
-                mode = os.environ.get('PYMOL_SGI_STEREO','1024x768_96s')
-                os.system("/usr/gfx/setmon -n "+mode)
-            else:
-                mode = os.environ.get('PYMOL_SGI_MONO','72hz')
-                os.system("/usr/gfx/setmon -n "+mode)
-
 # color alias interpretation
 
 def _interpret_color(_self,color):

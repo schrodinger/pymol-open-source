@@ -2151,7 +2151,6 @@ void PyMOL_Stop(CPyMOL * I)
   TetsurfFree(G);
   IsosurfFree(G);
   WizardFree(G);
-  SceneCleanupStereo(G);
   EditorFree(G);
   ExecutiveFree(G);
   VFontFree(G);

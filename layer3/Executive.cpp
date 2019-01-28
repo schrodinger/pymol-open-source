@@ -9871,12 +9871,6 @@ int ExecutiveStereo(PyMOLGlobals * G, int flag)
       switch (stereo_mode) {
       case 0:                  /* off */
         break;
-      case cStereo_quadbuffer:                  /* hardware stereo-in-a-window */
-        SceneSetStereo(G, flag);
-#ifndef _PYMOL_NOPY
-        PSGIStereo(G, flag);    /* does this have any effect anymore? */
-#endif
-        break;
       default:
         SceneSetStereo(G, flag);
         break;

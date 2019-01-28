@@ -2334,18 +2334,6 @@ int PPovrayRender(PyMOLGlobals * G, const char *header, const char *inp, const c
   return (ok);
 }
 
-void PSGIStereo(PyMOLGlobals * G, int flag)
-{
-  int blocked;
-  blocked = PAutoBlock(G);
-  if(flag)
-    PRunStringModule(G, "cmd._sgi_stereo(1)");
-  else
-    PRunStringModule(G, "cmd._sgi_stereo(0)");
-  if(blocked)
-    PUnblock(G);
-}
-
 void PFree(PyMOLGlobals * G)
 {
   PXDecRef(G->P_inst->parse);

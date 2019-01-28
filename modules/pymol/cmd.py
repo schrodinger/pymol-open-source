@@ -216,7 +216,6 @@ if __name__=='pymol.cmd':
         _ray_hash_spawn = internal._ray_hash_spawn
         _ray_spawn = internal._ray_spawn
         _refresh = internal._refresh
-        _sgi_stereo = internal._sgi_stereo
         _special = internal._special
         _validate_color_sc = internal._validate_color_sc
         _cache_get = internal._cache_get
