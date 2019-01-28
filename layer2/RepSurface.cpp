@@ -2194,7 +2194,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
   float *v0, *vc, *va;
   const float *c0;
   float *n0;
-  int *vi, *lc;
+  int *lc;
   char *lv;
   int first_color;
   float *v_pos, v_above[3];
@@ -2316,7 +2316,6 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
     rc = I->RC;
     if(!I->Vis)
       I->Vis = Alloc(int, I->N);
-    vi = I->Vis;
     if(ColorCheckRamped(G, surface_color)) {
       I->oneColorFlag = false;
     } else {
@@ -2373,7 +2372,15 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
       map = NULL;
     }
 
-    if (ambient_occlusion_mode){
+    /**
+     * Update the ambient occlusion accessibility array (VAO)
+     */
+    auto update_VAO = [&]() {
+      if (!ambient_occlusion_mode) {
+        VLAFreeP(I->VAO);
+        return;
+      }
+
       float maxDist = 0.f, maxDistA =0.f;
       int level_min = 64, level_max = 0;
       double start_time, cur_time;
@@ -2592,7 +2599,8 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 	    t = I->T;
 	    c = I->NT;
 	    while (c--){
-              if (visibility_test(I->proximity, vi, t)) {
+              if (I->allVisibleFlag ||
+                  visibility_test(I->proximity, I->Vis, t)) {
 		pt1 = *t; pt2 = *(t+1); pt3 = *(t+2);
 		nVAO[pt1] += 1; nVAO[pt2] += 1; nVAO[pt3] += 1;
 
@@ -2623,12 +2631,9 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 
       PRINTFB(I->R.G, FB_RepSurface, FB_Debugging) "RepSurfaceColor():  Ambient Occlusion computed #atoms=%d #vertices=%d time=%lf seconds\n", cs->NIndex, I->N, (cur_time-start_time) ENDFB(I->R.G);      
       ambient_occlusion_map = NULL;
-    } else {
-      if (I->VAO){
-	VLAFreeP(I->VAO);
-	I->VAO = 0;
-      }
-    }
+
+    }; // update_VAO
+
     /* now, assign colors to each point */
     map = MapNewFlagged(G, cutoff, cs->Coord, cs->NIndex, NULL, present);
     if(map) {
@@ -2650,7 +2655,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
         i0 = -1;
         v0 = I->V + 3 * a;
         n0 = I->VN + 3 * a;
-        vi = I->Vis + a;
+        auto vi = I->Vis + a;
         /* colors */
         i = *(MapLocusEStart(map, v0));
         if(i && map->EList) {
@@ -2828,7 +2833,6 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 
         if(!*vi)
           I->allVisibleFlag = false;
-        vi++;
       }
       MapFree(map);
     }
@@ -2838,6 +2842,9 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
     if(I->oneColorFlag) {
       I->oneColor = first_color;
     }
+
+    // ambient occlusion
+    update_VAO();
   }
   /*
      if(surface_color>=0) {
