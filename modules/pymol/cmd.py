@@ -150,7 +150,7 @@ if __name__=='pymol.cmd':
         def as_pathstr(path):
             # On Windows, always work with unicode file names. On Unix,
             # UTF-8 byte strings seem to be fine, so keep them for now.
-            if isinstance(path, bytes) and sys.platform == 'win32':
+            if isinstance(path, bytes) and pymol.IS_WINDOWS:
                 for encoding in ('utf-8', 'mbcs'):
                     try:
                         return path.decode(encoding)

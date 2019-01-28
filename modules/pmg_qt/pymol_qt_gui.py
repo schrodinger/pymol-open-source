@@ -339,7 +339,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         # hack for macOS to hide "Edit > Start Dictation"
         # https://bugreports.qt.io/browse/QTBUG-43217
-        if sys.platform == 'darwin':
+        if pymol.IS_MACOS:
             self.menudict['Edit'].setTitle('Edit_')
             QtCore.QTimer.singleShot(10, lambda:
                     self.menudict['Edit'].setTitle('Edit'))
@@ -1143,7 +1143,7 @@ def execapp():
         QtCore.QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 
     # fix Windows taskbar icon
-    if sys.platform.startswith('win'):
+    if pymol.IS_WINDOWS:
         import ctypes
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
                 u'com.schrodinger.pymol')
