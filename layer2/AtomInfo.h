@@ -1,4 +1,6 @@
-
+/**
+ * @file
+ */
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -443,7 +445,7 @@ void AtomInfoGetPDB3LetHydroName(PyMOLGlobals * G, const char *resn, const char 
 #define cAIC_MOLMask (cAIC_fc|cAIC_id|cAIC_rank)
 #define cAIC_AllMask 0xFFFF
 
-void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType * src, int mask);
+void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType&& src, int mask);
 int AtomInfoNameOrder(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
 int AtomInfoUpdateAutoColor(PyMOLGlobals * G);
 
@@ -476,7 +478,7 @@ template <typename V, typename T> void SettingSet(PyMOLGlobals * G, int index, V
   SettingUniqueSet(G, ai->unique_id, index, value);
 }
 
-/*
+/**
  * Return true if `item` has the requested setting defined and the
  * value could be assigned to `out`.
  */
@@ -486,7 +488,7 @@ bool AtomSettingGetIfDefined(PyMOLGlobals * G, T * item, int index, V * out) {
     SettingUniqueGetIfDefined<V>(G, item->unique_id, index, out);
 }
 
-/*
+/**
  * Return the `item`-level setting value or `default_`, if `index` is not
  * defined for `item`.
  */

@@ -9129,9 +9129,9 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
       a2 = index[a1];
       i2a[a] = a2;                /* a2 is in object space */
       if(a2 < oldNAtom)
-	AtomInfoCombine(G, I->AtomInfo + a2, ai + a1, aic_mask);
+        AtomInfoCombine(G, I->AtomInfo + a2, std::move(ai[a1]), aic_mask);
       else
-	*(I->AtomInfo + a2) = std::move(*(ai + a1));
+	I->AtomInfo[a2] = std::move(ai[a1]);
     }
   }
 
@@ -10660,20 +10660,6 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                       if(dist > op->f1)
                         op->f1 = dist;
                       op->i1++;
-                    }
-                    break;
-                  case OMOP_MDST:
-                    if(I->DiscreteFlag) {
-                      if(cs == I->DiscreteCSet[a])
-                        a1 = I->DiscreteAtmToIdx[a];
-                      else
-                        a1 = -1;
-                    } else
-                      a1 = cs->AtmToIdx[a];
-                    if(a1 >= 0) {
-                      r = (float) diff3f(op->v1, cs->Coord + (3 * a1));
-                      if(r > op->f1)
-                        op->f1 = r;
                     }
                     break;
                   case OMOP_INVA:

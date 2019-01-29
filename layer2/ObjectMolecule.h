@@ -1,4 +1,6 @@
-
+/**
+ * @file
+ */
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -161,20 +163,17 @@ typedef struct {
    earlier multicharacter constant implementation
    and should be replaced with something more verbose */
 
-#define OMOP_PDB1 1
 #define OMOP_AVRT 2
 #define OMOP_SFIT 3
 #define OMOP_COLR 4
 #define OMOP_VISI 5
 #define OMOP_TTTF 6
 #define OMOP_ALTR 7
-#define OMOP_CSOC 8
 #define OMOP_SUMC 9
 #define OMOP_VERT 10
 #define OMOP_SVRT 11
 #define OMOP_MOME 12
 #define OMOP_INVA 13
-#define OMOP_MDST 14
 #define OMOP_MNMX 15
 #define OMOP_AlterState 16
 #define OMOP_Flag 17
@@ -217,7 +216,6 @@ typedef struct {
 #define OMOP_CheckVis 52
 #define OMOP_OnOff 53
 #define OMOP_Pop 54
-#define OMOP_TransformR44f 55
 #define OMOP_FixHydrogens 56
 #define OMOP_Sort 57
 #define OMOP_SetAtomicSetting 58
@@ -280,16 +278,19 @@ typedef struct {
   ObjectNameType name;
 } ObjMolMultiplexType;
 
-/* loop iterators for the ObjectMolecule::Neighbor array
+/**
+ * loop iterators for the ObjectMolecule::Neighbor array
  *
  * Arguments: (Neighbor array, const int atom-index, int neighbor-atom-or-bond-index, int used-internally)
  *
  * Example:
- * // iterate over neighbors of obj->AtomInfo[at]
- * int neighbor_at, tmp;
- * ITERNEIGHBORATOMS(obj->Neighbor, at, neighbor_at, tmp) {
- *   // do something with obj->AtomInfo[neighbor_at]
- * }
+ * @verbatim
+   // iterate over neighbors of obj->AtomInfo[at]
+   int neighbor_at, tmp;
+   ITERNEIGHBORATOMS(obj->Neighbor, at, neighbor_at, tmp) {
+     // do something with obj->AtomInfo[neighbor_at]
+   }
+   @endverbatim
  */
 #define ITERNEIGHBORATOMS(N, a, n, i) for(i = N[a] + 1; (n = N[i]) > -1; i += 2)
 #define ITERNEIGHBORBONDS(N, a, b, i) for(i = N[a] + 1; (b = N[i + 1]), N[i] > -1; i += 2)

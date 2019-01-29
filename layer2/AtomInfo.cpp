@@ -165,7 +165,7 @@ void BondTypeInit(BondType *bt){
   bt->has_setting = 0;
 }
 
-/*
+/**
  * Set atom indices and bond order, and invalidate all other fields.
  */
 void BondTypeInit2(BondType *bond, int i1, int i2, int order)
@@ -1107,13 +1107,16 @@ void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai)
 
 
 /*========================================================================*/
-/*
+/**
  * Transfer `mask` selected atomic properties (such as b, q, text_type, etc.)
  * from `src` to `dst`, while keeping all atomic identifiers untouched.
  * Purges `src`.
+ *
+ * @param mask bitmask of `cAIC_*` bits
  */
-void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType * src, int mask)
+void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType&& src_, int mask)
 {
+  AtomInfoType* src = &src_;
   if(mask & cAIC_tt) {
     std::swap(dst->textType, src->textType);
   }
@@ -1756,7 +1759,7 @@ float AtomInfoGetBondLength(PyMOLGlobals * G, const AtomInfoType * ai1, const At
   return (result);
 }
 
-/*
+/**
  * Periodic table of elements
  *
  * Note: Default VDW radius is 1.80
@@ -1886,7 +1889,7 @@ const ElementTableItemType ElementTable[] = {
 
 const int ElementTableSize = sizeof(ElementTable) / sizeof(ElementTable[0]) - 1;
 
-/*
+/**
  * Assign atomic color, or G->AtomInfo->CColor in case of carbon.
  */
 void AtomInfoAssignColors(PyMOLGlobals * G, AtomInfoType * at1)
@@ -1894,8 +1897,9 @@ void AtomInfoAssignColors(PyMOLGlobals * G, AtomInfoType * at1)
   at1->color = AtomInfoGetColor(G, at1);
 }
 
-/*
+/**
  * Get atomic color, based on protons and elem
+ * @return color index
  */
 int AtomInfoGetColor(PyMOLGlobals * G, const AtomInfoType * at1)
 {
@@ -2007,7 +2011,7 @@ int AtomInfoCompareAll(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInf
 	  //  float U11, U22, U33, U12, U13, U23;
 }
 
-/*
+/**
  * Compares atoms based on all atom identifiers, discrete state, priority,
  * hetatm (optional) and rank (optional)
  *
@@ -2084,7 +2088,7 @@ int AtomInfoCompareIgnoreHet(PyMOLGlobals * G, const AtomInfoType * at1, const A
   return AtomInfoCompare(G, at1, at2, true, false);
 }
 
-/*
+/**
  * Function only used for matching atoms of two aligned residues.
  *
  * Changed (PyMOL 2.1):
@@ -2185,8 +2189,9 @@ int AtomInfoSequential(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInf
   return 0;
 }
 
-/*
+/**
  * Used in "rms" and "update" for matching two selections
+ * @return 1 if atoms match, 0 otherwise
  */
 int AtomInfoMatch(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2,
     bool ignore_case, bool ignore_case_chain)
@@ -2339,7 +2344,7 @@ int AtomInfoGetExpectedValence(PyMOLGlobals * G, const AtomInfoType * I)
   return (result);
 }
 
-/*
+/**
  * Get number of protons for element symbol
  */
 static int get_protons(const char * symbol)
@@ -2380,7 +2385,7 @@ static int get_protons(const char * symbol)
   return -1;
 }
 
-/*
+/**
  * Assign "protons" from "elem" or "name" property
  */
 static void set_protons(PyMOLGlobals * G, AtomInfoType * I)
@@ -2399,7 +2404,7 @@ static void set_protons(PyMOLGlobals * G, AtomInfoType * I)
   I->protons = protons;
 }
 
-/*
+/**
  * Assign (based on name, elem, protons):
  *  - elem      (if empty string)
  *  - protons   (if < 1)
@@ -2803,12 +2808,17 @@ int BondTypeCompare(PyMOLGlobals * G, const BondType * bt1, const BondType * bt2
 	  bt1->has_setting != bt2->has_setting);
 }
 
+/**
+ * Get the element symbol. E.g. "He" for Helium.
+ * @param[out] dst output buffer of length cElemNameLen
+ * @param protons atomic number, e.g. 2 for Helium
+ */
 void atomicnumber2elem(char * dst, int protons) {
   if (protons > -1 && protons < ElementTableSize)
     strncpy(dst, ElementTable[protons].symbol, cElemNameLen);
 }
 
-/*
+/**
  * Get a string representation of the stereo configuration. Either
  * R/S chirality, if set, or the SDF odd/even parity, if set.
  */
@@ -2830,7 +2840,7 @@ const char * AtomInfoGetStereoAsStr(const AtomInfoType * ai) {
   return "";
 }
 
-/*
+/**
  * Set stereochemistry. Valid are: R, S, N[one], E[ven], O[dd]
  */
 void AtomInfoSetStereo(AtomInfoType * ai, const char * stereo) {
@@ -2846,10 +2856,10 @@ void AtomInfoSetStereo(AtomInfoType * ai, const char * stereo) {
 }
 
 
-/*
+/**
  * Get column aligned (left space padded) PDB residue name
  *
- * resn: output buffer
+ * @param[out] resn output buffer
  */
 void AtomInfoGetAlignedPDBResidueName(PyMOLGlobals * G,
     const AtomInfoType * ai,
@@ -2862,11 +2872,11 @@ void AtomInfoGetAlignedPDBResidueName(PyMOLGlobals * G,
 }
 
 
-/*
+/**
  * Get column aligned (left space padded) PDB atom name
  *
- * resn: space padded residue name
- * name: output buffer
+ * @param resn space padded residue name
+ * @param[out] name output buffer
  */
 void AtomInfoGetAlignedPDBAtomName(PyMOLGlobals * G,
     const AtomInfoType * ai,
