@@ -36,6 +36,9 @@ class TestSystem(testing.PyMOLTestCase):
 
     @testing.requires_version('1.8.4')
     def testNoCmd(self):
+        # https://github.com/schrodinger/pymol-open-source/issues/18
+        self.skipTest("made non-fatal in 2.3.0")
+
         import pymol
         with self.assertRaises(pymol.CmdException):
             import cmd
