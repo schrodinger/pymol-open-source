@@ -13,6 +13,7 @@ from __future__ import absolute_import as _
 DEBUG = False
 
 PYQT_NAME = None
+QtWidgets = None
 
 try:
     from pymol._Qt_pre import *
@@ -22,11 +23,19 @@ except ImportError:
 
 if not PYQT_NAME:
     try:
-        from PyQt5 import QtGui, QtCore, QtOpenGL
+        from PyQt5 import QtGui, QtCore, QtOpenGL, QtWidgets
         PYQT_NAME = 'PyQt5'
     except ImportError:
         if DEBUG:
             print('import PyQt5 failed')
+
+if not PYQT_NAME:
+    try:
+        from PySide2 import QtGui, QtCore, QtOpenGL, QtWidgets
+        PYQT_NAME = 'PySide2'
+    except ImportError:
+        if DEBUG:
+            print('import PySide2 failed')
 
 if not PYQT_NAME:
     try:
@@ -53,11 +62,12 @@ import os
 # qtpy compatibility
 os.environ['QT_API'] = PYQT_NAME
 
-if PYQT_NAME == 'PyQt5':
-    from PyQt5 import QtWidgets
+if QtWidgets is None:
+    QtWidgets = QtGui
+
+if hasattr(QtCore, 'QAbstractProxyModel'):
     QtCoreModels = QtCore
 else:
-    QtWidgets = QtGui
     QtCoreModels = QtGui
 
 if PYQT_NAME == 'PyQt4':

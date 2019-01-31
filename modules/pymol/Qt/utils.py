@@ -265,12 +265,16 @@ def loadUi(uifile, widget):
     @type uifile: str
     @type widget: QtWidgets.QWidget
     """
-    if PYQT_NAME != 'PySide':
+    if PYQT_NAME.startswith('PyQt'):
         m = __import__(PYQT_NAME + '.uic')
         return m.uic.loadUi(uifile, widget)
+    elif PYQT_NAME == 'PySide2':
+        import pyside2uic as pysideuic
+    else:
+        import pysideuic
 
-    import io, pysideuic
-    stream = io.BytesIO()
+    import io
+    stream = io.StringIO()
     pysideuic.compileUi(uifile, stream)
     ns_locals = {}
     exec(stream.getvalue(), None, ns_locals)
