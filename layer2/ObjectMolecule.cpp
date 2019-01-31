@@ -7656,6 +7656,9 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
   }
 
   if (!cset) {
+    // template coordinate set, if available
+    cset = I->CSTmpl;
+
     // find any coordinate set
     for(a = 0; !cset && a < I->NCSet; ++a)
       cset = I->CSet[a];
@@ -7744,6 +7747,9 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
   }
 
   if (!cset) {
+    // template coordinate set, if available
+    cset = I->CSTmpl;
+
     // find any coordinate set
     for(a = 0; !cset && a < I->NCSet; ++a)
       cset = I->CSet[a];
