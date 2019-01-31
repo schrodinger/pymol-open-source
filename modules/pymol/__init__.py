@@ -601,7 +601,7 @@ class _NoCmdFinder:
     def find_spec(self, fullname, path=None, target=None):
         if path is None and fullname == 'cmd':
             msg = 'use "from pymol import cmd" instead of "import cmd"'
-            raise CmdException(msg)
+            print('Warning: {}'.format(msg))
         return None
     find_module = find_spec
 
