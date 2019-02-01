@@ -1353,6 +1353,10 @@ public:
     m_residue->atomNameList.emplace_back(LexStr(G, ai->name));
     m_residue->elementList.emplace_back(m_elemGetter(ai));
 
+    m_raw.bFactorList.emplace_back(ai->b);
+    m_raw.occupancyList.emplace_back(ai->q);
+    m_raw.altLocList.emplace_back(ai->alt[0]);
+
     m_last_ai = ai;
   }
 
