@@ -2873,7 +2873,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
 	
 	if(tmp_height && tmp_width) {
 	  unsigned int buffer_size = tmp_height * tmp_width * 4;
-	  unsigned char *buffer = Alloc(unsigned char, buffer_size);
+	  unsigned char *buffer = pymol::malloc<unsigned char>(buffer_size);
 	  
 	  if(buffer && data) {
 	    unsigned char *p = data;
@@ -2995,7 +2995,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
       }
 
       unsigned int n_word = tmp_height * tmp_width;
-      unsigned int *tmp_buffer = Alloc(unsigned int, n_word);
+      unsigned int *tmp_buffer = pymol::malloc<unsigned int>(n_word);
       ColorGetBkrdContColor(G, rgba, false);
       color_word = ColorGet32BitWord(G, rgba);
       
@@ -3077,7 +3077,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
     } else if(I->CopyForced) {        /* near-exact fit */
       float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
       unsigned int n_word = height * width;
-      unsigned int *tmp_buffer = Alloc(unsigned int, n_word);
+      unsigned int *tmp_buffer = pymol::malloc<unsigned int>(n_word);
       ColorGetBkrdContColor(G, rgba, false);
       
       if(tmp_buffer) {
@@ -6362,7 +6362,7 @@ void SceneUpdate(PyMOLGlobals * G, int force)
           int cnt = I->NonGadgetObjs.size();
 
           if(cnt) {
-            CObjectUpdateThreadInfo *thread_info = Alloc(CObjectUpdateThreadInfo, cnt);
+            CObjectUpdateThreadInfo *thread_info = pymol::malloc<CObjectUpdateThreadInfo>(cnt);
             if(thread_info) {
               cnt = 0;
               for (auto& NonGadgetObj : I->NonGadgetObjs) {

@@ -33,7 +33,7 @@ static long fgetsize(FILE *fp) {
 static char * fgetcontents(FILE *fp, long *size) {
   long filesize = fgetsize(fp);
 
-  char *contents = (char*) mmalloc(filesize + 255);
+  char *contents = pymol::malloc<char>(filesize + 255);
   if (!contents)
     return nullptr;
 

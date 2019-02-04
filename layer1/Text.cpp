@@ -473,7 +473,7 @@ const char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,
 int TextInit(PyMOLGlobals * G)
 {
   CText *I = NULL;
-  if((I = (G->Text = Calloc(CText, 1)))) {
+  if((I = (G->Text = pymol::calloc<CText>(1)))) {
     int i = 0;
     for (; i < NFONTS; i++) {
       I->XHRFetched[i] = 0;

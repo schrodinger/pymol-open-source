@@ -125,7 +125,7 @@ Z* -------------------------------------------------------------------
 {						\
     if(!(Elem))					\
       {							\
-	(Elem) = (ElemType*)mmalloc(sizeof(ElemType));	\
+	(Elem) = pymol::malloc<ElemType>(1);		\
 	ErrChkPtr(G,Elem);				\
       }							\
 }
@@ -134,7 +134,7 @@ Z* -------------------------------------------------------------------
 {						\
   if(!(Elem))						  \
     {							  \
-      (Elem) = (ElemType*)mcalloc(sizeof(ElemType),1);	  \
+      (Elem) = pymol::calloc<ElemType>(1);		  \
       ErrChkPtr(G,Elem);				  \
     }							  \
 }
@@ -210,7 +210,7 @@ do { \
 do {						\
  if(!(Elem))						\
    {							\
-     (Elem) = (ElemType*)mmalloc(sizeof(ElemType));	\
+     (Elem) = pymol::malloc<ElemType>(1);		\
      ErrChkPtr(G,Elem);					\
    }							\
  } while (0)
@@ -219,7 +219,7 @@ do {						\
 do {							  \
   if(!(Elem))						  \
     {							  \
-      (Elem) = (ElemType*)mcalloc(sizeof(ElemType),1);	  \
+      (Elem) = pymol::calloc<ElemType>(1);		  \
       ErrChkPtr(G,Elem);				  \
     }							  \
 } while (0)

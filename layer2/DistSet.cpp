@@ -158,7 +158,7 @@ static CMeasureInfo * MeasureInfoListFromPyList(PyMOLGlobals * G, PyObject * lis
   ll = PyList_Size(list);
 
   for (i = 0; i < ll; i++) {
-    ok_assert(1, item = Alloc(CMeasureInfo, 1));
+    ok_assert(1, item = pymol::malloc<CMeasureInfo>(1));
     ListPrepend(I, item, next);
 
     val = CPythonVal_PyList_GetItem(G, list, i);

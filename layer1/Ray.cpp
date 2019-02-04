@@ -1664,7 +1664,7 @@ static void VectorHash_Free(VectorHash * I)
 
 static VectorHash *VectorHash_New(void)
 {
-  VectorHash *I = Calloc(VectorHash, 1);
+  VectorHash *I = pymol::calloc<VectorHash>(1);
   if(I) {
     I->elem = VLACalloc(VectorHashElem, 100);
     if(!I->elem) {
@@ -2374,7 +2374,7 @@ void RayRenderIDTF(CRay * I, char **node_vla, char **rsrc_vla)
          mesh->face_shading_list appropriately for each face */
 
       {
-        IdtfMaterial *material = Calloc(IdtfMaterial, 1);
+        IdtfMaterial *material = pymol::calloc<IdtfMaterial>(1);
         if(material &&
            (material->color_list = VLAlloc(float, 4)) &&
            (material->color_hash = VectorHash_New())) {
@@ -5633,9 +5633,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     buffer_size = width * height;
   }
   if(ray_trace_mode) {
-    depth = Calloc(float, width * height);
+    depth = pymol::calloc<float>(width * height);
   } else if(oversample_cutoff) {
-    depth = Calloc(float, width * height);
+    depth = pymol::calloc<float>(width * height);
   }
   ambient = SettingGetGlobal_f(I->G, cSetting_ambient);
 
@@ -5885,7 +5885,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
 #ifndef _PYMOL_NOPY
     if(shadows && (n_thread > 1)) {     /* parallel execution */
 
-      CRayHashThreadInfo *thread_info = Calloc(CRayHashThreadInfo, I->NBasis);
+      CRayHashThreadInfo *thread_info = pymol::calloc<CRayHashThreadInfo>(I->NBasis);
 
       /* rendering map */
 
@@ -5993,7 +5993,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
 
     if (ok){
       /* now spawn threads as needed */
-      CRayThreadInfo *rt = Calloc(CRayThreadInfo, n_thread);
+      CRayThreadInfo *rt = pymol::calloc<CRayThreadInfo>(n_thread);
 
       int x_start = 0, y_start = 0;
       int x_stop = 0, y_stop = 0;
@@ -6145,7 +6145,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   }
 
   if(ok && depth && ray_trace_mode) {
-    float *delta = Alloc(float, 3 * width * height);
+    float *delta = pymol::malloc<float>(3 * width * height);
     int x, y;
     ErrChkPtr(I->G, delta);
     if (ok) {
@@ -6232,7 +6232,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         }
 
         if(fogFlag) {           /* make sure we have depth values at every potentially drawn pixel */
-          float *tmp = Alloc(float, width * height);
+          float *tmp = pymol::malloc<float>(width * height);
           float dep;
           float *p, *q;
           int cnt;
@@ -6510,7 +6510,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
 
   if(ok && antialias > 1) {
     /* now spawn threads as needed */
-    CRayAntiThreadInfo *rt = Calloc(CRayAntiThreadInfo, n_thread);
+    CRayAntiThreadInfo *rt = pymol::calloc<CRayAntiThreadInfo>(n_thread);
 
     for(a = 0; a < n_thread; a++) {
       rt[a].width = width;

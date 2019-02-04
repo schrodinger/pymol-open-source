@@ -298,7 +298,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
     }
 
     if(ok && SettingGet_b(G, NULL, ds->Obj->Obj.Setting, cSetting_pickable)) {
-      I->R.P = Alloc(Pickable, ds->NLabel + 1);
+      I->R.P = pymol::malloc<Pickable>(ds->NLabel + 1);
       CHECKOK(ok, I->R.P);
       if (ok)
 	rp = I->R.P + 1;          /* skip first record! */

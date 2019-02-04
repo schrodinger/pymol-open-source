@@ -93,7 +93,7 @@ bool SettingLevelCheck(PyMOLGlobals * G, int index, unsigned char level) {
 static CSetting *SettingCopyAll(PyMOLGlobals * G, const CSetting * src, CSetting * dst)
 {
   if(!dst) {
-    dst = Calloc(CSetting, 1);
+    dst = pymol::calloc<CSetting>(1);
   } else {
     SettingPurge(dst);
   }
@@ -587,7 +587,7 @@ static void SettingUniqueInit(PyMOLGlobals * G)
 {
   CSettingUnique *I = G->SettingUnique;
 
-  if((I = (G->SettingUnique = Calloc(CSettingUnique, 1)))) {
+  if((I = (G->SettingUnique = pymol::calloc<CSettingUnique>(1)))) {
     I->id2offset = OVOneToOne_New(G->Context->heap);
     {
       int a;
@@ -2977,7 +2977,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
   int (*set_b) (CSetting * I, int index, int value) = SettingSet_b;
 
   if(alloc || !I) {
-    I = (G->Setting = Calloc(CSetting, 1));
+    I = (G->Setting = pymol::calloc<CSetting>(1));
     SettingUniqueInit(G);
     SettingInit(G, I);
   }

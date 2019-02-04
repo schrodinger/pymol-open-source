@@ -81,9 +81,9 @@ Z* -------------------------------------------------------------------
 #define VLACacheMalloc(G,a,b,c,d,t,i) VLAMalloc(a,b,c,d)
 #define VLACacheFree(G,p,t,i,f) VLAFree(p)
 
-#define CacheAlloc(G,type,size,thread,id) (type*)mmalloc(sizeof(type)*(size))
-#define CacheCalloc(G,type,size,thread,id) (type*)mcalloc(sizeof(type),size)
-#define CacheRealloc(G,ptr,type,size,thread,id) (type*)mrealloc(sizeof(type)*(size))
+#define CacheAlloc(G,type,size,thread,id) pymol::malloc<type>(size)
+#define CacheCalloc(G,type,size,thread,id) pymol::calloc<type>(size)
+#define CacheRealloc(G,ptr,type,size,thread,id) pymol::realloc<type>(size)
 #define CacheFreeP(G,ptr,thread,id,force) {if(ptr) {mfree(ptr);ptr=NULL;}}
 
 #endif

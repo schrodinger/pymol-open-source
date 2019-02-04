@@ -180,7 +180,7 @@ void BondTypeInit2(BondType *bond, int i1, int i2, int order)
 int AtomInfoInit(PyMOLGlobals * G)
 {
   CAtomInfo *I = NULL;
-  if((I = (G->AtomInfo = Calloc(CAtomInfo, 1)))) {
+  if((I = (G->AtomInfo = pymol::calloc<CAtomInfo>(1)))) {
     AtomInfoPrimeColors(G);
     I->NextUniqueID = 1;
     return 1;

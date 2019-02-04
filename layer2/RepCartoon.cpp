@@ -1909,8 +1909,8 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
   int mem[8];
   int nbr[7];
   int *neighbor;
-  int *marked = Calloc(int, obj->NAtom);
-  float *moved = Calloc(float, obj->NAtom * 3);
+  int *marked = pymol::calloc<int>(obj->NAtom);
+  float *moved = pymol::calloc<float>(obj->NAtom * 3);
   int ring_color;
   int ok = true;
   int escape_count;
@@ -2582,7 +2582,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   cylindrical_helices =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_cylindrical_helices);
 
-  sampling_tmp = Alloc(float, sampling * 3);
+  sampling_tmp = pymol::malloc<float>(sampling * 3);
   cartoon_debug = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_debug);
 
   cgo = CGONew(G);
@@ -3755,18 +3755,18 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
   /* find all of the CA points */
 
-  at = Alloc(int, cs->NAtIndex);        /* cs index pointers */
-  pv = Alloc(float, cs->NAtIndex * 3);
-  tmp = Alloc(float, cs->NAtIndex * 3);
-  pvo = Alloc(float, cs->NAtIndex * 3); /* orientation vector */
-  pva = Alloc(float, cs->NAtIndex * 6); /* alternative orientation vectors, two per atom */
-  seg = Alloc(int, cs->NAtIndex);
-  car = Calloc(CCInOut, cs->NAtIndex);       /* cartoon type for each atom */
-  sstype = Alloc(int, cs->NAtIndex);
-  flag_tmp = Calloc(int, cs->NAtIndex);
-  nuc_flag = Calloc(int, cs->NAtIndex);
+  at = pymol::malloc<int>(cs->NAtIndex);        /* cs index pointers */
+  pv = pymol::malloc<float>(cs->NAtIndex * 3);
+  tmp = pymol::malloc<float>(cs->NAtIndex * 3);
+  pvo = pymol::malloc<float>(cs->NAtIndex * 3); /* orientation vector */
+  pva = pymol::malloc<float>(cs->NAtIndex * 6); /* alternative orientation vectors, two per atom */
+  seg = pymol::malloc<int>(cs->NAtIndex);
+  car = pymol::calloc<CCInOut>(cs->NAtIndex);       /* cartoon type for each atom */
+  sstype = pymol::malloc<int>(cs->NAtIndex);
+  flag_tmp = pymol::calloc<int>(cs->NAtIndex);
+  nuc_flag = pymol::calloc<int>(cs->NAtIndex);
 
-  I->LastVisib = Calloc(char, cs->NAtIndex);
+  I->LastVisib = pymol::calloc<char>(cs->NAtIndex);
   
   auto cartoon_all_alt =
     SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_all_alt);
@@ -3823,13 +3823,13 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     " RepCartoon-Debug: path outlined, interpolating... nAt=%d\n", nAt ENDFD;
 
   if(nAt) {
-    dv = Alloc(float, nAt * 3);  /* differences between next and current 3f */
-    nv = Alloc(float, nAt * 3);  /* normal */
-    dl = Alloc(float, nAt);      /* length (i.e., normal * length = difference) */
+    dv = pymol::malloc<float>(nAt * 3);  /* differences between next and current 3f */
+    nv = pymol::malloc<float>(nAt * 3);  /* normal */
+    dl = pymol::malloc<float>(nAt);      /* length (i.e., normal * length = difference) */
     RepCartoonComputeDifferencesAndNormals(G, nAt, seg, pv, dv, nv, dl, true);
 
     /* compute tangents */
-    tv = Alloc(float, nAt * 3 + 6);
+    tv = pymol::malloc<float>(nAt * 3 + 6);
     RepCartoonComputeTangents(nAt, seg, nv, tv);
 
     PRINTFD(G, FB_RepCartoon)

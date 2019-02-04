@@ -596,8 +596,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     return (NULL);              /* skip if no sticks are visible */
   }
 
-  capdrawn = Calloc(float, obj->NAtom); // max radius of caps
-  marked = Calloc(bool, obj->NAtom);
+  capdrawn = pymol::calloc<float>(obj->NAtom); // max radius of caps
+  marked = pymol::calloc<bool>(obj->NAtom);
   CHECKOK(ok, marked);
   if (!ok){
     RepCylBondFree(I);
@@ -974,7 +974,7 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
 
   if (dir){
     if (!*dir){
-      *dir = Alloc(float, 3);
+      *dir = pymol::malloc<float>(3);
       (*dir)[0] = d[0]; (*dir)[1] = d[1]; (*dir)[2] = d[2];
     } else {
       if (get_angle3f(d, *dir)>=(cPI/2.)){

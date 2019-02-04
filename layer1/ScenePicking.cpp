@@ -78,7 +78,7 @@ unsigned int SceneFindTriplet(PyMOLGlobals * G, int x, int y, GLenum gl_buffer, 
     if (!hasFrameBufferBinding())
       glReadBuffer(gl_buffer);
 #endif
-    extra_safe_buffer = Alloc(pix, w * h * 21);
+    extra_safe_buffer = pymol::malloc<pix>(w * h * 21);
     buffer = extra_safe_buffer + (w * h * 10);
 
     PyMOLReadPixels(x - cRangeVal, y - cRangeVal, cRangeVal * 2 + 1, cRangeVal * 2 + 1, GL_RGBA,
@@ -328,7 +328,7 @@ unsigned int *SceneReadTriplets(PyMOLGlobals * G, int x, int y, int w, int h,
        ReadPixels implementations tend to trash RAM surrounding the
        target block */
 
-    extra_safe_buffer = Alloc(pix, w * h * 11);
+    extra_safe_buffer = pymol::malloc<pix>(w * h * 11);
     buffer = extra_safe_buffer + (w * h * 5);
 
     result = VLAlloc(unsigned int, w * h);

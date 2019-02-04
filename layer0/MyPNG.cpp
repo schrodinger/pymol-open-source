@@ -84,7 +84,7 @@ static unsigned char *base64_decode(const char *data,
   if (input_length < 1)
     input_length = strlen(data);
 
-  ok_assert(1, decoded_data = (unsigned char*) mmalloc(input_length / 4 * 3));
+  ok_assert(1, decoded_data = pymol::malloc<unsigned char>(input_length / 4 * 3));
 
   while (i < input_length) {
     triple = 0;
@@ -192,7 +192,7 @@ int MyPNGWrite(const char* file_name, const pymol::Image& img, const float dpi,
       png_bytep *row_pointers;
       int fd = 0;
 
-      row_pointers = Alloc(png_bytep, height);
+      row_pointers = pymol::malloc<png_bytep>(height);
 
       /* open the file, allowing use of an encoded file descriptor, with
          approach adapted from TJO: chr(1) followed by ascii-format integer */
@@ -327,7 +327,7 @@ int MyPNGWrite(const char* file_name, const pymol::Image& img, const float dpi,
   case cMyPNG_FormatPPM:
     {
       FILE *fil = pymol_fopen(file_name, "wb");
-      unsigned char *buffer = Alloc(unsigned char, 3 * width * height);
+      unsigned char *buffer = pymol::malloc<unsigned char>(3 * width * height);
 
       if(fil && buffer) {
         fprintf(fil, "P6\n");

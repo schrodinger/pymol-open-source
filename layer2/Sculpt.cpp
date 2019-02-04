@@ -248,9 +248,9 @@ CSculpt *SculptNew(PyMOLGlobals * G)
   I->G = G;
   I->Shaker = ShakerNew(G);
   I->NBList = VLAlloc(int, 150000);
-  I->NBHash = Calloc(int, NB_HASH_SIZE);
+  I->NBHash = pymol::calloc<int>(NB_HASH_SIZE);
   I->EXList = VLAlloc(int, 100000);
-  I->EXHash = Calloc(int, EX_HASH_SIZE);
+  I->EXHash = pymol::calloc<int>(EX_HASH_SIZE);
   I->Don = VLAlloc(int, 1000);
   I->Acc = VLAlloc(int, 1000);
   {
@@ -443,10 +443,10 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
       int *neighbor = obj->Neighbor;
       int n_atom = obj->NAtom;
 
-      planar = Alloc(int, n_atom);
-      linear = Alloc(int, n_atom);
-      single = Alloc(int, n_atom);
-      crdidx = Alloc(int, n_atom);
+      planar = pymol::malloc<int>(n_atom);
+      linear = pymol::malloc<int>(n_atom);
+      single = pymol::malloc<int>(n_atom);
+      crdidx = pymol::malloc<int>(n_atom);
       ai = obj_atomInfo;
 
       for(a = 0; a < n_atom; a++) {
@@ -709,8 +709,8 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
           float maxim_max =
             SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sculpt_max_max);
 
-          int *site = Calloc(int, n_atom);
-          float *weight = Calloc(float, n_atom);
+          int *site = pymol::calloc<int>(n_atom);
+          float *weight = pymol::calloc<float>(n_atom);
           /* first, find candidate atoms with sufficient connectivity */
           CountCall cnt;
 
@@ -1703,11 +1703,11 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
 
   if((state < obj->NCSet) && obj->CSet[state] && n_cycle) {
 
-    disp = Alloc(float, 3 * obj->NAtom);
-    atm2idx = Alloc(int, obj->NAtom);
-    cnt = Alloc(int, obj->NAtom);
-    active = Alloc(int, obj->NAtom);
-    exclude = Calloc(int, obj->NAtom);
+    disp = pymol::malloc<float>(3 * obj->NAtom);
+    atm2idx = pymol::malloc<int>(obj->NAtom);
+    cnt = pymol::malloc<int>(obj->NAtom);
+    active = pymol::malloc<int>(obj->NAtom);
+    exclude = pymol::calloc<int>(obj->NAtom);
     shk = I->Shaker;
 
     PRINTFD(G, FB_Sculpt)

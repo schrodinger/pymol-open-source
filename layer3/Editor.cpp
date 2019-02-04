@@ -2358,7 +2358,7 @@ void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
 int EditorInit(PyMOLGlobals * G)
 {
   CEditor *I = NULL;
-  if((I = (G->Editor = Calloc(CEditor, 1)))) {
+  if((I = (G->Editor = pymol::calloc<CEditor>(1)))) {
 
     I->DihedObject = NULL;
     I->NFrag = 0;

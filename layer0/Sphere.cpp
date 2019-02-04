@@ -263,10 +263,10 @@ static void SphereDumpAll(CSphere *I)
 
 void SphereInit(PyMOLGlobals * G)
 {
-  CSphere *I = (G->Sphere = Calloc(CSphere, 1));
+  CSphere *I = (G->Sphere = pymol::calloc<CSphere>(1));
 
 #ifdef FAST_SPHERE_INIT
-  I->Array = Alloc(SphereRec, Sphere_NSpheres);
+  I->Array = pymol::malloc<SphereRec>(Sphere_NSpheres);
 
   {
     int i;
@@ -400,13 +400,13 @@ static SphereRec *MakeDotSphere(PyMOLGlobals * G, int level)
   SphereBuilderRec SBuild, *S;
   S = &SBuild;
 
-  S->Dot = (float *) mmalloc(sizeof(float) * 3 * MAXDOT);
+  S->Dot = pymol::malloc<float>(3 * MAXDOT);
   ErrChkPtr(G, S->Dot);
-  S->EdgeRef = (EdgeArray *) mmalloc(sizeof(EdgeArray));
+  S->EdgeRef = pymol::malloc<EdgeArray>(1);
   ErrChkPtr(G, S->EdgeRef);
-  S->Tri = Alloc(Triangle, MAXTRI);
+  S->Tri = pymol::malloc<Triangle>(MAXTRI);
   ErrChkPtr(G, S->Tri);
-  TriFlag = Alloc(int, MAXTRI);
+  TriFlag = pymol::malloc<int>(MAXTRI);
   ErrChkPtr(G, TriFlag);
 
   S->NDot = 12;
@@ -464,15 +464,15 @@ static SphereRec *MakeDotSphere(PyMOLGlobals * G, int level)
     //    printf( "MakeDotSphere: Level: %i  S->NTri: %i\n",c, S->NTri); 
   }
   //  printf(" MakeDotSphere: NDot %i S->NTri %i\n",S->NDot,S->NTri);
-  result = Alloc(SphereRec, 1);
+  result = pymol::malloc<SphereRec>(1);
   ErrChkPtr(G, result);
-  result->dot = Alloc(Vector3f, S->NDot);
+  result->dot = pymol::malloc<Vector3f>(S->NDot);
   ErrChkPtr(G, result->dot);
-  result->area = Alloc(float, S->NDot);
+  result->area = pymol::malloc<float>(S->NDot);
   ErrChkPtr(G, result->area);
-  result->StripLen = Alloc(int, S->NTri * 3);
+  result->StripLen = pymol::malloc<int>(S->NTri * 3);
   ErrChkPtr(G, result->StripLen);
-  result->Sequence = Alloc(int, S->NTri * 3);
+  result->Sequence = pymol::malloc<int>(S->NTri * 3);
   ErrChkPtr(G, result->Sequence);
 
   for(a = 0; a < S->NDot; a++) {
@@ -632,12 +632,12 @@ static SphereRec *MakeDotSphere(PyMOLGlobals * G, int level)
   mfree(S->EdgeRef);
   mfree(TriFlag);
   result->Tri = (int *) S->Tri;
-  result->Tri = Realloc(result->Tri, int, S->NTri * 3);
+  result->Tri = pymol::realloc(result->Tri, S->NTri * 3);
   result->NTri = S->NTri;
-  result->StripLen = Realloc(result->StripLen, int, nStrip);
-  result->Sequence = Realloc(result->Sequence, int, nVertTot);
-  result->dot = Realloc(result->dot, Vector3f, S->NDot);
-  result->area = Realloc(result->area, float, S->NDot);
+  result->StripLen = pymol::realloc(result->StripLen, nStrip);
+  result->Sequence = pymol::realloc(result->Sequence, nVertTot);
+  result->dot = pymol::realloc(result->dot, S->NDot);
+  result->area = pymol::realloc(result->area, S->NDot);
   result->nDot = S->NDot;
   result->NStrip = nStrip;
   result->NVertTot = nVertTot;

@@ -79,7 +79,7 @@ static char *get_st(const char array[][STR_MAX])
     l += strlen(array[c]);
     c++;
   }
-  result = Alloc(char, l + 1);
+  result = pymol::malloc<char>(l + 1);
 
   l = 0;
   c = 0;

@@ -105,7 +105,7 @@ int PlugIOManagerInitAll(PyMOLGlobals * G);     /* defined externally */
 int PlugIOManagerInit(PyMOLGlobals * G)
 {
   CPlugIOManager *I = NULL;
-  if((I = (G->PlugIOManager = Calloc(CPlugIOManager, 1)))) {
+  if((I = (G->PlugIOManager = pymol::calloc<CPlugIOManager>(1)))) {
     I->NPlugin = 0;
     I->PluginVLA = VLAlloc(molfile_plugin_t *, 10);
     return PlugIOManagerInitAll(G);
@@ -364,7 +364,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
             continue;
           }
 
-          ok_assert(1, datablock = Alloc(float, size));
+          ok_assert(1, datablock = pymol::malloc<float>(size));
 
           if(plugin->read_volumetric_data(file_handle, i, datablock, NULL) != MOLFILE_SUCCESS) {
             PRINTFB(G, FB_ObjectMolecule, FB_Errors)
@@ -392,10 +392,10 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
             ms->FDim[2] = v->zsize;
             ms->FDim[3] = 3;
 
-            ms->Grid = Alloc(float, 3);
-            ms->Dim = Alloc(int, 3);
-            ms->Origin = Calloc(float, 3);
-            ms->Range = Alloc(float, 3);
+            ms->Grid = pymol::malloc<float>(3);
+            ms->Dim = pymol::malloc<int>(3);
+            ms->Origin = pymol::calloc<float>(3);
+            ms->Range = pymol::malloc<float>(3);
 
             // special case: orthogonal & cartesian-aligned
             // -> don't use State.Matrix which causes trouble for e.g. CCP4 export
@@ -413,7 +413,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
               double m44d[16];
 
               if(!ms->State.Matrix)
-                ms->State.Matrix = Alloc(double, 16);
+                ms->State.Matrix = pymol::malloc<double>(16);
 
               // state matrix transformation
               identity44d(m44d);
@@ -576,7 +576,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   }
 
   // read atoms
-  atoms = Calloc(molfile_atom_t, natoms);
+  atoms = pymol::calloc<molfile_atom_t>(natoms);
   if (plugin->read_structure(file_handle, &optflags, atoms) != MOLFILE_SUCCESS) {
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " ObjectMolecule: plugin '%s' failed to read atoms.\n", plugin_type ENDFB(G);

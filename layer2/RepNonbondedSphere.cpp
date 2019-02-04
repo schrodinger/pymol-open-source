@@ -122,7 +122,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   CHECKOK(ok, I);
 
   if (ok)
-    active = Alloc(unsigned char, cs->NIndex);
+    active = pymol::malloc<unsigned char>(cs->NIndex);
   CHECKOK(ok, active);
 
   if((obj->RepVisCache & cRepNonbondedSphereBit)){

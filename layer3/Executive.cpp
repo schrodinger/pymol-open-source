@@ -3077,10 +3077,10 @@ int ExecutiveOrder(PyMOLGlobals * G, const char *s1, int sort, int location)
     int n_sel;
     int source_row = -1;
     int min_row = -1;
-    list = Alloc(SpecRec *, n_names);
-    subset = Calloc(SpecRec *, n_names);
-    sorted = Calloc(SpecRec *, n_names);
-    index = Alloc(int, n_names);
+    list = pymol::malloc<SpecRec *>(n_names);
+    subset = pymol::calloc<SpecRec *>(n_names);
+    sorted = pymol::calloc<SpecRec *>(n_names);
+    index = pymol::malloc<int>(n_names);
     if(list && subset) {
       /* create an array of current names */
       {
@@ -4602,7 +4602,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
     ExecutiveInvalidateSceneMembers(G);
 
     // stack for putative visible records
-    recstack = Calloc(SpecRec*, PyDict_Size(dict) + 1);
+    recstack = pymol::calloc<SpecRec*>(PyDict_Size(dict) + 1);
 
     while(PyDict_Next(dict, &pos, &key, &list)) {
       if(!PConvPyStrToStr(key, name, sizeof(WordType))) {
@@ -4724,7 +4724,7 @@ float * ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_poin
   }
 
   if(oms) {
-    float *hist = Calloc(float, n_points + 4);
+    float *hist = pymol::calloc<float>(n_points + 4);
     float range = SettingGet_f(G, obj->Setting, NULL, cSetting_volume_data_range);
     ObjectMapStateGetHistogram(G, oms, n_points, range, hist, min_val, max_val);
     return hist;
@@ -4833,7 +4833,7 @@ int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float 
 
     n_color = abs(first - last) + 1;
     if(n_color) {
-      color_index = Alloc(int, n_color);
+      color_index = pymol::malloc<int>(n_color);
       for(a = 0; a < n_color; a++) {
         b = first + ((last - first) * a) / (n_color - 1);
         sprintf(at, pat, b);
@@ -4850,7 +4850,7 @@ int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float 
       }
 
       if(n_atom) {
-        value = Calloc(float, n_atom);
+        value = pymol::calloc<float>(n_atom);
 
         if(WordMatchExact(G, "count", expr, true)) {
           for(a = 0; a < n_atom; a++) {
@@ -6470,10 +6470,10 @@ int ExecutiveSmooth(PyMOLGlobals * G, const char *selection, int cycles,
       n_atom = op.i1;
       if(n_atom) {
         /* allocate storage */
-        coord0 = Alloc(float, 3 * n_atom * n_state);
-        coord1 = Alloc(float, 3 * n_atom * n_state);
-        flag0 = Alloc(int, n_atom * n_state);
-        flag1 = Alloc(int, n_atom * n_state);
+        coord0 = pymol::malloc<float>(3 * n_atom * n_state);
+        coord1 = pymol::malloc<float>(3 * n_atom * n_state);
+        flag0 = pymol::malloc<int>(n_atom * n_state);
+        flag1 = pymol::malloc<int>(n_atom * n_state);
 
         /* clear the arrays */
 
@@ -6863,10 +6863,10 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
         int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
         int n_pnt = (ms->Field->points->size / ms->Field->points->base_size) / 3;
         float *pnt = (float *) ms->Field->points->data;
-        float *r_value = Alloc(float, n_pnt);
-        float *l_value = Calloc(float, n_pnt);
-        int *present = Calloc(int, n_pnt);
-        int *inside = Alloc(int, n_pnt);
+        float *r_value = pymol::malloc<float>(n_pnt);
+        float *l_value = pymol::calloc<float>(n_pnt);
+        int *present = pymol::calloc<int>(n_pnt);
+        int *inside = pymol::malloc<int>(n_pnt);
         SpecRec *rec;
 
         while(TrackerIterNextCandInList(I_Tracker, iter_id,
@@ -8536,7 +8536,7 @@ void ExecutiveInvalidateSelectionIndicatorsCGO(PyMOLGlobals *G){
 
 static void ExecutiveRegenerateTextureForSelector(PyMOLGlobals *G, int round_points, int *widths_arg){
   CExecutive *I = G->Executive;
-  unsigned char *temp_buffer = Alloc(unsigned char, widths_arg[0] * widths_arg[0] * 4);
+  unsigned char *temp_buffer = pymol::malloc<unsigned char>(widths_arg[0] * widths_arg[0] * 4);
   int a, b;
   float mid_point, disty, distx, dist, wminusd;
   float widths[] = { widths_arg[0]/2.f, widths_arg[1]/2.f, widths_arg[2]/2.f };
@@ -11056,8 +11056,8 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
 
       if(ok && op1.nvv1 && op2.nvv1 && (matchmaker > 0)) {
         /* matchmaker 0 is the default... by internal atom ordering only */
-        int *idx1 = Alloc(int, op1.nvv1);
-        int *idx2 = Alloc(int, op2.nvv1);
+        int *idx1 = pymol::malloc<int>(op1.nvv1);
+        int *idx2 = pymol::malloc<int>(op2.nvv1);
         int sort_flag = false;
         if(!(idx1 && idx2))
           ok = false;
@@ -11310,7 +11310,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
               PRINTFB(G, FB_Executive, FB_Warnings)
                 "Executive-Warning: Ordering requested but not well defined.\n" ENDFB(G);
             } else {
-              FitVertexRec *vert = Alloc(FitVertexRec, n_pair);
+              FitVertexRec *vert = pymol::malloc<FitVertexRec>(n_pair);
 
               if(sort_flag1) {
                 float *src, *dst;
@@ -11378,7 +11378,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
               int n_next = n_pair;
               AtomInfoType **ai1, **ai2;
 
-              flag = Alloc(int, n_pair);
+              flag = pymol::malloc<int>(n_pair);
 
               if(flag) {
                 for(a = 0; a < n_pair; a++) {

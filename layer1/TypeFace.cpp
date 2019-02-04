@@ -65,7 +65,7 @@ CTypeFace *TypeFaceLoad(PyMOLGlobals * G, unsigned char *dat, unsigned int len)
 {
   CType *I = G->Type;
   int ok = true;
-  CTypeFace *result = Calloc(CTypeFace, 1);
+  CTypeFace *result = pymol::calloc<CTypeFace>(1);
   if(result) {
     FT_Error error = FT_New_Memory_Face(I->library, dat, len, 0, &result->Face);
     result->G = G;
@@ -129,7 +129,7 @@ void TypeFaceFree(CTypeFace * I)
 int TypeInit(PyMOLGlobals * G)
 {
   CType *I;
-  if((I = (G->Type = Calloc(CType, 1)))) {
+  if((I = (G->Type = pymol::calloc<CType>(1)))) {
     FT_Error error = FT_Init_FreeType(&I->library);
     return !error;
   }

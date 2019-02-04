@@ -218,8 +218,8 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
   dim[1] = mx + 1;
   I->Command = (char **) UtilArrayCalloc((unsigned int *) (void *) dim, 2, 1);
 
-  I->Code = Alloc(int, I->NLine + 1);
-  I->Sub = Calloc(PyObject *, I->NLine + 1);
+  I->Code = pymol::malloc<int>(I->NLine + 1);
+  I->Sub = pymol::calloc<PyObject *>(I->NLine + 1);
 
   for(a = 0; a < I->NLine; a++) {
     PyObject *command;

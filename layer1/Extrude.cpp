@@ -91,16 +91,16 @@ int ExtrudeCircle(CExtrude * I, int n, float size)
   FreeP(I->tv);
   FreeP(I->tn);
 
-  I->sv = Alloc(float, 3 * (n + 1));
+  I->sv = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->sv);
   if (ok)
-    I->sn = Alloc(float, 3 * (n + 1));
+    I->sn = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->sn);
   if (ok)
-    I->tv = Alloc(float, 3 * (n + 1));
+    I->tv = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->tv);
   if (ok)
-    I->tn = Alloc(float, 3 * (n + 1));
+    I->tn = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->tn);
 
   if (ok){
@@ -153,16 +153,16 @@ int ExtrudeOval(CExtrude * I, int n, float width, float length)
   FreeP(I->tv);
   FreeP(I->tn);
 
-  I->sv = Alloc(float, 3 * (n + 1));
+  I->sv = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->sv);
   if (ok)
-    I->sn = Alloc(float, 3 * (n + 1));
+    I->sn = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->sn);
   if (ok)
-    I->tv = Alloc(float, 3 * (n + 1));
+    I->tv = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->tv);
   if (ok)
-    I->tn = Alloc(float, 3 * (n + 1));
+    I->tn = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->tn);
   I->Ns = n;
 
@@ -211,16 +211,16 @@ int ExtrudeRectangle(CExtrude * I, float width, float length, int mode)
   FreeP(I->tv);
   FreeP(I->tn);
 
-  I->sv = Alloc(float, 3 * (I->Ns + 1));
+  I->sv = pymol::malloc<float>(3 * (I->Ns + 1));
   CHECKOK(ok, I->sv);
   if (ok)
-    I->sn = Alloc(float, 3 * (I->Ns + 1));
+    I->sn = pymol::malloc<float>(3 * (I->Ns + 1));
   CHECKOK(ok, I->sn);
   if (ok)
-    I->tv = Alloc(float, 3 * (I->Ns + 1));
+    I->tv = pymol::malloc<float>(3 * (I->Ns + 1));
   CHECKOK(ok, I->tv);
   if (ok)
-    I->tn = Alloc(float, 3 * (I->Ns + 1));
+    I->tn = pymol::malloc<float>(3 * (I->Ns + 1));
   CHECKOK(ok, I->tn);
 
   if (!ok){
@@ -327,16 +327,16 @@ int ExtrudeDumbbell1(CExtrude * I, float width, float length, int mode)
   FreeP(I->tv);
   FreeP(I->tn);
 
-  I->sv = Alloc(float, 3 * (I->Ns + 1));
+  I->sv = pymol::malloc<float>(3 * (I->Ns + 1));
   CHECKOK(ok, I->sv);
   if (ok)
-    I->sn = Alloc(float, 3 * (I->Ns + 1));
+    I->sn = pymol::malloc<float>(3 * (I->Ns + 1));
   CHECKOK(ok, I->sn);
   if (ok)
-    I->tv = Alloc(float, 3 * (I->Ns + 1));
+    I->tv = pymol::malloc<float>(3 * (I->Ns + 1));
   CHECKOK(ok, I->tv);
   if (ok)
-    I->tn = Alloc(float, 3 * (I->Ns + 1));
+    I->tn = pymol::malloc<float>(3 * (I->Ns + 1));
   CHECKOK(ok, I->tn);
 
   if (!ok){
@@ -432,16 +432,16 @@ int ExtrudeDumbbell2(CExtrude * I, int n, int sign, float length, float size)
   FreeP(I->tv);
   FreeP(I->tn);
   
-  I->sv = Alloc(float, 3 * (n + 1));
+  I->sv = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->sv);
   if (ok)
-    I->sn = Alloc(float, 3 * (n + 1));
+    I->sn = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->sn);
   if (ok)
-    I->tv = Alloc(float, 3 * (n + 1));
+    I->tv = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->tv);
   if (ok)
-    I->tn = Alloc(float, 3 * (n + 1));
+    I->tn = pymol::malloc<float>(3 * (n + 1));
   CHECKOK(ok, I->tn);
 
   if (!ok){
@@ -587,7 +587,7 @@ int ExtrudeComputeTangents(CExtrude * I)
   PRINTFD(I->G, FB_Extrude)
     " ExtrudeComputeTangents-DEBUG: entered.\n" ENDFD;
 
-  nv = Alloc(float, I->N * 3);
+  nv = pymol::malloc<float>(I->N * 3);
   CHECKOK(ok, nv);
   if (!ok)
     return ok;
@@ -746,10 +746,10 @@ int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, const float *color_o
     " ExtrudeCGOSurfaceTube-DEBUG: entered.\n" ENDFD;
 
   if(I->N && I->Ns) {
-    TV = Alloc(float, 3 * (I->Ns + 1) * I->N);
+    TV = pymol::malloc<float>(3 * (I->Ns + 1) * I->N);
     CHECKOK(ok, TV);
     if (ok)
-      TN = Alloc(float, 3 * (I->Ns + 1) * I->N);
+      TN = pymol::malloc<float>(3 * (I->Ns + 1) * I->N);
     CHECKOK(ok, TN);
     /* compute transformed shape vertices */
 
@@ -1115,9 +1115,9 @@ int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
 
   if(I->N && I->Ns) {
 
-    TV = Alloc(float, 3 * (I->Ns + 1) * I->N);
-    TN = Alloc(float, 3 * (I->Ns + 1) * I->N);
-    AN = Alloc(float, 3 * I->N);        /* normals adjusted for changing widths */
+    TV = pymol::malloc<float>(3 * (I->Ns + 1) * I->N);
+    TN = pymol::malloc<float>(3 * (I->Ns + 1) * I->N);
+    AN = pymol::malloc<float>(3 * I->N);        /* normals adjusted for changing widths */
 
     /* compute transformed shape vertices */
 
@@ -1389,10 +1389,10 @@ int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, const float *colo
 
   if(I->N && I->Ns) {
 
-    TV = Alloc(float, 3 * (I->Ns + 1) * I->N);
+    TV = pymol::malloc<float>(3 * (I->Ns + 1) * I->N);
     CHECKOK(ok, TV);
     if (ok)
-      TN = Alloc(float, 3 * (I->Ns + 1) * I->N);
+      TN = pymol::malloc<float>(3 * (I->Ns + 1) * I->N);
     CHECKOK(ok, TN);
     /* compute transformed shape vertices */
 
@@ -1589,10 +1589,10 @@ int ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo, int sampling,
 
   if(I->N && I->Ns) {
 
-    TV = Alloc(float, 3 * (I->Ns + 1) * I->N);
+    TV = pymol::malloc<float>(3 * (I->Ns + 1) * I->N);
     CHECKOK(ok, TV);
     if (ok)
-      TN = Alloc(float, 3 * (I->Ns + 1) * I->N);
+      TN = pymol::malloc<float>(3 * (I->Ns + 1) * I->N);
     CHECKOK(ok, TN);
     /* compute transformed shape vertices */
 
@@ -1729,10 +1729,10 @@ int ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, const float *
 
   if(I->N && I->Ns) {
 
-    TV = Alloc(float, 3 * (I->Ns + 1) * I->N);
+    TV = pymol::malloc<float>(3 * (I->Ns + 1) * I->N);
     CHECKOK(ok, TV);
     if (ok)
-      TN = Alloc(float, 3 * (I->Ns + 1) * I->N);
+      TN = pymol::malloc<float>(3 * (I->Ns + 1) * I->N);
     CHECKOK(ok, TN);
     /* compute transformed shape vertices */
 
@@ -2175,7 +2175,7 @@ int ExtrudeComputePuttyScaleFactors(CExtrude * I, ObjectMolecule * obj, int tran
     /* now compute window average */
 
     {
-      float *SF = Alloc(float, I->N);
+      float *SF = pymol::malloc<float>(I->N);
       int w, ww;
       float accum;
       int cnt;
@@ -2229,22 +2229,22 @@ int ExtrudeAllocPointsNormalsColors(CExtrude * I, int n)
     FreeP(I->alpha);
     FreeP(I->i);
     FreeP(I->sf);               /* PUTTY */
-    I->p = Alloc(float, 3 * (n + 1));
+    I->p = pymol::malloc<float>(3 * (n + 1));
     CHECKOK(ok, I->p);
     if (ok)
-      I->n = Alloc(float, 9 * (n + 1));
+      I->n = pymol::malloc<float>(9 * (n + 1));
     CHECKOK(ok, I->n);
     if (ok)
-      I->c = Alloc(float, 3 * (n + 1));
+      I->c = pymol::malloc<float>(3 * (n + 1));
     CHECKOK(ok, I->c);
     if (ok)
-      I->alpha = Alloc(float, n + 1);
+      I->alpha = pymol::malloc<float>(n + 1);
     CHECKOK(ok, I->alpha);
     if (ok)
-      I->i = Alloc(unsigned int, 3 * (n + 1));
+      I->i = pymol::malloc<unsigned int>(3 * (n + 1));
     CHECKOK(ok, I->i);
     if (ok)
-      I->sf = Alloc(float, n + 1);        /* PUTTY: scale factors */
+      I->sf = pymol::malloc<float>(n + 1);        /* PUTTY: scale factors */
     CHECKOK(ok, I->sf);
     if (!ok){
       FreeP(I->p);

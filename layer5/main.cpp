@@ -1025,7 +1025,7 @@ void MainDoReshape(int width, int height)
 static void MainInit(PyMOLGlobals * G)
 {
 
-  CMain *I = (G->Main = Calloc(CMain, 1));
+  CMain *I = (G->Main = pymol::calloc<CMain>(1));
   /* Data structure is zeroed on start...no need for explicit zero inits */
 
   I->DeferReshapeDeferral = 1;

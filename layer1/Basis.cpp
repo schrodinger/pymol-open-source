@@ -3283,10 +3283,10 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
       int prm_index;
       MapType *map = I->Map;
 
-      prm_spanner = Calloc(int, n_prim);
+      prm_spanner = pymol::calloc<int>(n_prim);
       CHECKOK(ok, prm_spanner);
       if (ok)
-	spanner = Calloc(int, n);
+	spanner = pymol::calloc<int>(n);
       CHECKOK(ok, spanner);
 
       /* figure out which primitives span more than one voxel */

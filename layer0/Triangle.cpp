@@ -123,7 +123,7 @@ static int *TriangleMakeStripVLA(TriangleSurfaceRec * II, float *v, float *vn, i
   float *v0, *v1, *v2, vt1[3], vt2[3], *tn0, *tn1, *tn2, tn[3], xtn[3];
 
   strip = VLAlloc(int, I->nTri * 4);    /* strip VLA is count,vert,vert,...count,vert,vert...zero */
-  tFlag = Alloc(int, I->nTri);
+  tFlag = pymol::malloc<int>(I->nTri);
   for(a = 0; a < I->nTri; a++)
     tFlag[a] = 0;
   s = strip;
@@ -318,9 +318,9 @@ static int TriangleAdjustNormals(TriangleSurfaceRec * II, float *v, float *vn, i
   float *v0, *v1, *v2, *tn, vt1[3], vt2[3], *vn0, *tn0, *tn1, *tn2, *tw;
   int a, *t, i0, i1, i2;
   float tmp[3];
-  tNorm = Alloc(float, 3 * I->nTri);
-  tWght = Alloc(float, I->nTri);
-  vFlag = Alloc(int, n);
+  tNorm = pymol::malloc<float>(3 * I->nTri);
+  tWght = pymol::malloc<float>(I->nTri);
+  vFlag = pymol::malloc<int>(n);
   for(a = 0; a < n; a++) {
     vFlag[a] = 0;
   }
@@ -381,7 +381,7 @@ static int TriangleAdjustNormals(TriangleSurfaceRec * II, float *v, float *vn, i
   if(final_pass) {
     int repeat = true;
     int max_cyc = 5;
-    float *va = Alloc(float, 3 * n), *va0, *va1, *va2;
+    float *va = pymol::malloc<float>(3 * n), *va0, *va1, *va2;
     float vt[3];
     while(repeat && max_cyc) {
       repeat = false;
@@ -2015,8 +2015,8 @@ static int TriangleFixProblems(TriangleSurfaceRec * II, float *v, float *vn, int
   int *vFlag = NULL;
   problemFlag = false;
 
-  pFlag = Alloc(int, n);
-  vFlag = Alloc(int, n);
+  pFlag = pymol::malloc<int>(n);
+  vFlag = pymol::malloc<int>(n);
   for(a = 0; a < n; a++) {
     vFlag[a] = 0;
     if(I->vertActive[a]) {
@@ -2159,11 +2159,11 @@ static int TriangleBruteForceClosure(TriangleSurfaceRec * II, float *v, float *v
   int p1, p2;
   float dp;
 
-  active = Alloc(int, n);
+  active = pymol::malloc<int>(n);
   ac = 0;
-  pair = Alloc(int, n * 2);
+  pair = pymol::malloc<int>(n * 2);
   pc = 0;
-  pFlag = Alloc(int, n);
+  pFlag = pymol::malloc<int>(n);
   for(a = 0; a < n; a++) {
     if(I->vertActive[a]) {
       pFlag[a] = 1;
@@ -2288,8 +2288,9 @@ int *TrianglePointsToSurface(PyMOLGlobals * G, float *v, float *vn, int n,
   int a;
 
   if(n >= 3) {
-    I = Alloc(TriangleSurfaceRec, 1);
-    if(I) {
+    I = pymol::malloc<TriangleSurfaceRec>(1);
+    CHECKOK(ok, I);
+    if(ok) {
       float maxEdgeLen = 0.0F;
   
       I->G = G;
@@ -2325,20 +2326,29 @@ int *TrianglePointsToSurface(PyMOLGlobals * G, float *v, float *vn, int n,
         ok = false;
 
       if(ok) {
-        I->edgeStatus = Alloc(int, n);
+        I->edgeStatus = pymol::malloc<int>(n);
+	CHECKOK(ok, I->edgeStatus);
+	if (ok){
         for(a = 0; a < n; a++) {
           I->edgeStatus[a] = 0;
         }
-
-        I->vertActive = Alloc(int, n);
+	}
+	if (ok)
+	  I->vertActive = pymol::malloc<int>(n);
+	CHECKOK(ok, I->vertActive);
+	if (ok){
         for(a = 0; a < n; a++) {
           I->vertActive[a] = -1;
         }
-
-        I->vertWeight = Alloc(int, n);
+	}
+	if (ok)
+	  I->vertWeight = pymol::malloc<int>(n);
+	CHECKOK(ok, I->vertWeight);
+	if (ok){
         for(a = 0; a < n; a++) {
           I->vertWeight[a] = 2;
         }
+      }
       }
 
       if(ok) {

@@ -109,7 +109,7 @@ static const char *_FontTypeRenderOpenGL(RenderInfo * info,
       float screenWorldOffset[3] = { 0.0F, 0.0F, 0.0F };
       float tot_height;
       if (nlines>1){
-	line_widths = Calloc(float, nlines);
+	line_widths = pymol::calloc<float>(nlines);
       }
       if(size < _0) {
         size = (int) (0.5F - size / v_scale);
@@ -347,7 +347,7 @@ static const char *FontTypeRenderRay(CRay * ray, CFontType * I, const char *st, 
     float *line_widths = NULL;
     float tot_height;
     if (nlines>1){
-      line_widths = Calloc(float, nlines);
+      line_widths = pymol::calloc<float>(nlines);
     }
     if(size < _0) {
       size = (int) (0.5F - size / v_scale);

@@ -22,13 +22,11 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 
 #define OOAlloc(G,type) \
-type *I;					\
-I = (type*)mmalloc(sizeof(type));		\
+auto* I = pymol::malloc<type>(1); \
 ErrChkPtr(G,I);
 
 #define OOCalloc(G,type) \
-type *I;					 \
-I = (type*)mcalloc(sizeof(type),1);		 \
+auto* I = pymol::calloc<type>(1); \
 ErrChkPtr(G,I);
 
 #define OOFreeP(ptr) \

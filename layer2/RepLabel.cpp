@@ -1537,16 +1537,16 @@ Rep *RepLabelNew(CoordSet * cs, int state)
 
   /* raytracing primitives */
 
-  I->L = Calloc(lexidx_t, cs->NIndex);
+  I->L = pymol::calloc<lexidx_t>(cs->NIndex);
   ErrChkPtr(G, I->L);
-  I->V = Calloc(float, cs->NIndex * 28);
+  I->V = pymol::calloc<float>(cs->NIndex * 28);
   ErrChkPtr(G, I->V);
 
   I->OutlineColor =
     SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_label_outline_color);
 
   if(SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
-    I->R.P = Alloc(Pickable, cs->NIndex + 1);
+    I->R.P = pymol::malloc<Pickable>(cs->NIndex + 1);
     ErrChkPtr(G, I->R.P);
     rp = I->R.P + 1;            /* skip first record! */
   }

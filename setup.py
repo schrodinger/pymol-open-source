@@ -336,7 +336,6 @@ if WIN:
 
         def_macros += [
             ("WIN32", None),
-            ("CINTERFACE", None),   # avoid "Alloc" macro conflict
         ]
 
         libs += [

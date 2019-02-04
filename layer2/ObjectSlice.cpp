@@ -589,7 +589,7 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
     } else {
       VLACheck(oss->normals, float, oss->n_points * 3); /* note: this is a macro which reassigns the pointer */
     }
-    cnt = Calloc(int, oss->n_points);
+    cnt = pymol::calloc<int>(oss->n_points);
 
     if(cnt && oss->normals) {
       int *strip = oss->strips;

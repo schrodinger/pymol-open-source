@@ -451,7 +451,7 @@ int ObjectMapInterpolate(ObjectMap * I, int state, const float *array, float *re
     if(matrix) {
       /* we have to back-transform points */
       if(n > 1) {
-        txf = Alloc(float, 3 * n);
+        txf = pymol::malloc<float>(3 * n);
       }
 
       const float *src = array;
@@ -1393,7 +1393,7 @@ static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, Obje
 	I->Symmetry = NULL;
 
       if(src->Origin) {
-        I->Origin = Alloc(float, 3);
+        I->Origin = pymol::malloc<float>(3);
         if(I->Origin) {
           copy3f(src->Origin, I->Origin);
         }
@@ -1402,7 +1402,7 @@ static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, Obje
       }
 
       if(src->Range) {
-        I->Range = Alloc(float, 3);
+        I->Range = pymol::malloc<float>(3);
         if(I->Range) {
           copy3f(src->Range, I->Range);
         }
@@ -1411,7 +1411,7 @@ static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, Obje
       }
 
       if(src->Grid) {
-        I->Grid = Alloc(float, 3);
+        I->Grid = pymol::malloc<float>(3);
         if(I->Grid) {
           copy3f(src->Grid, I->Grid);
         }
@@ -1420,7 +1420,7 @@ static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, Obje
       }
 
       if(src->Dim) {
-        I->Dim = Alloc(int, 4);
+        I->Dim = pymol::malloc<int>(4);
         if(I->Dim) {
           copy3f(src->Dim, I->Dim);
         }
@@ -2202,9 +2202,9 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
   *(md) = *(inp_md);
 
   if(I) {
-    ms->Origin = Alloc(float, 3);
-    ms->Range = Alloc(float, 3);
-    ms->Grid = Alloc(float, 3);
+    ms->Origin = pymol::malloc<float>(3);
+    ms->Range = pymol::malloc<float>(3);
+    ms->Grid = pymol::malloc<float>(3);
     ms->MapSource = cMapSourceDesc;
   }
   switch (md->mode) {
@@ -3095,7 +3095,7 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
   p += 16;
   p += 4;
 
-  ms->Grid = Alloc(float, 3);
+  ms->Grid = pymol::malloc<float>(3);
   p += 4;
   if(little_endian != map_endian) {
     rev[0] = p[3];
@@ -3113,7 +3113,7 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
   ms->Grid[2] = ms->Grid[0];
   p += 4;
 
-  ms->Origin = Alloc(float, 3);
+  ms->Origin = pymol::malloc<float>(3);
   if(little_endian != map_endian) {
     rev[0] = p[3];
     rev[1] = p[2];
@@ -3606,9 +3606,9 @@ static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
 
     int pass = 0;
 
-    ms->Origin = Alloc(float, 3);
-    ms->Range = Alloc(float, 3);
-    ms->Grid = Alloc(float, 3);
+    ms->Origin = pymol::malloc<float>(3);
+    ms->Range = pymol::malloc<float>(3);
+    ms->Grid = pymol::malloc<float>(3);
 
     copy3f(ms->ExtentMin, ms->Origin);
     subtract3f(ms->ExtentMax, ms->ExtentMin, ms->Range);
@@ -4914,8 +4914,8 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
   ms = &I->State[state];
   ObjectMapStateInit(I->Obj.G, ms);
 
-  ms->Origin = Alloc(float, 3);
-  ms->Grid = Alloc(float, 3);
+  ms->Origin = pymol::malloc<float>(3);
+  ms->Grid = pymol::malloc<float>(3);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -5016,7 +5016,7 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
         ms->Grid[2] = delta[8];
       } else {
         if(!ms->State.Matrix)
-          ms->State.Matrix = Alloc(double, 16);
+          ms->State.Matrix = pymol::malloc<double>(16);
 
         copy33f44d(delta, ms->State.Matrix);
         ms->State.Matrix[3] = ms->Origin[0];
@@ -5239,8 +5239,8 @@ static int ObjectMapACNTStrToMap(ObjectMap * I, char *ACNTStr, int bytes, int st
   ms = &I->State[state];
   ObjectMapStateInit(I->Obj.G, ms);
 
-  ms->Origin = Alloc(float, 3);
-  ms->Grid = Alloc(float, 3);
+  ms->Origin = pymol::malloc<float>(3);
+  ms->Grid = pymol::malloc<float>(3);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;

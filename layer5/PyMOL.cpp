@@ -1844,7 +1844,7 @@ static const CPyMOLOptions Defaults = {
 CPyMOLOptions *PyMOLOptions_New(void)
 {
   CPyMOLOptions *result = NULL;
-  result = Calloc(CPyMOLOptions, 1);
+  result = pymol::calloc<CPyMOLOptions>(1);
   if(result)
     *result = Defaults;
   return result;
@@ -1962,9 +1962,9 @@ static CPyMOL *_PyMOL_New(void)
 
   /* allocate global container */
 
-  if((result = Calloc(CPyMOL, 1))) {    /* all values initialized to zero */
+  if((result = pymol::calloc<CPyMOL>(1))) {    /* all values initialized to zero */
 
-    if((result->G = Calloc(PyMOLGlobals, 1))) {
+    if((result->G = pymol::calloc<PyMOLGlobals>(1))) {
 
       result->G->PyMOL = result;        /* store the instance pointer */
 
@@ -2006,7 +2006,7 @@ CPyMOL *PyMOL_New(void)
 {
   CPyMOL *result = _PyMOL_New();
   if(result && result->G) {
-    result->G->Option = Calloc(CPyMOLOptions, 1);
+    result->G->Option = pymol::calloc<CPyMOLOptions>(1);
     if(result->G->Option)
       (*result->G->Option) = Defaults;
     _PyMOL_Config(result);
@@ -2018,7 +2018,7 @@ CPyMOL *PyMOL_NewWithOptions(const CPyMOLOptions * option)
 {
   CPyMOL *result = _PyMOL_New();
   if(result && result->G) {
-    result->G->Option = Calloc(CPyMOLOptions, 1);
+    result->G->Option = pymol::calloc<CPyMOLOptions>(1);
     if(result->G->Option)
       *(result->G->Option) = *option;
     _PyMOL_Config(result);
@@ -2780,7 +2780,7 @@ char *PyMOL_GetClickString(CPyMOL * I, int reset)
   if(reset)
     I->ClickReadyFlag = false;
   if(ready) {
-    result = Alloc(char, OrthoLineLength + 1);
+    result = pymol::malloc<char>(OrthoLineLength + 1);
     if(result) {
       WordType butstr = "left", modstr = "", posstr = "";
       result[0] = 0;

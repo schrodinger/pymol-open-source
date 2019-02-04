@@ -200,9 +200,9 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
 
   /* find all of the CA points */
 
-  at = Alloc(int, cs->NAtIndex * 2);
-  pv = Alloc(float, cs->NAtIndex * 6);
-  seg = Alloc(int, cs->NAtIndex * 2);
+  at = pymol::malloc<int>(cs->NAtIndex * 2);
+  pv = pymol::malloc<float>(cs->NAtIndex * 6);
+  seg = pymol::malloc<int>(cs->NAtIndex * 2);
 
   i = at;
   v = pv;
@@ -353,9 +353,9 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     s = seg;
     v = pv;
 
-    dv = Alloc(float, nAt * 6);
-    nv = Alloc(float, nAt * 6);
-    dl = Alloc(float, nAt * 2);
+    dv = pymol::malloc<float>(nAt * 6);
+    nv = pymol::malloc<float>(nAt * 6);
+    dl = pymol::malloc<float>(nAt * 2);
     v1 = dv;
     v2 = nv;
     d = dl;
@@ -386,7 +386,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     s = seg;
     v = nv;
 
-    tv = Alloc(float, nAt * 6 + 6);
+    tv = pymol::malloc<float>(nAt * 6 + 6);
     v1 = tv;
 
     *(v1++) = *(v++);           /* first segment */

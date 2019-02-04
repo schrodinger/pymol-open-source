@@ -46,9 +46,23 @@ typedef struct VLARec {
 #define VLAInsert(ptr,type,index,count) {ptr=(type*)VLAInsertRaw(ptr,index,count);}
 #define VLADelete(ptr,type,index,count) {ptr=(type*)VLADeleteRaw(ptr,index,count);}
 
-#define Alloc(type,size) (type*)mmalloc(sizeof(type)*(size))
-#define Calloc(type,size) (type*)mcalloc(sizeof(type),size)
-#define Realloc(ptr,type,size) (type*)mrealloc(ptr,sizeof(type)*(size))
+namespace pymol
+{
+template <typename T> T* malloc(size_t num)
+{
+  return (T*) ::malloc(num * sizeof(T));
+}
+
+template <typename T> T* calloc(size_t num)
+{
+  return (T*) ::calloc(num, sizeof(T));
+}
+
+template <typename T> T* realloc(T* ptr, size_t num)
+{
+  return (T*) ::realloc(ptr, num * sizeof(T));
+}
+} // namespace pymol
 
 #define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=NULL;}}
 #define DeleteP(ptr) {if(ptr) {delete ptr;ptr=NULL;}}
@@ -72,22 +86,9 @@ void *VLANewCopy(const void *ptr);
 void MemoryZero(char *p, char *q);
 
 
-#define mcalloc calloc
-#define mmalloc malloc
-#define mrealloc realloc
 #define mfree free
 #define mstrdup strdup
 #define ReallocForSure(ptr,type,size) (type*)MemoryReallocForSure(ptr,sizeof(type)*(size))
-#define ReallocForSureSafe(ptr,type,size,old_size) (type*)MemoryReallocForSure(ptr,sizeof(type)*(size),sizeof(type)*(old_size))
-
-#ifdef __cplusplus
-#define mnew new
-#endif
-
-#define MD_FILE_LINE_Call
-#define MD_FILE_LINE_Decl
-#define MD_FILE_LINE_Nest
-#define MD_FILE_LINE_PTR_Call
 
 
 inline unsigned int VLAGetByteSize(const void *ptr) {

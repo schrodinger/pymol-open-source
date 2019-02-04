@@ -28,8 +28,8 @@ Z* -------------------------------------------------------------------
 
 /* Jenarix owned types, aliases, and defines */
 
-#define xx_os_malloc mmalloc
-#define xx_os_free mfree
+#define xx_os_malloc malloc
+#define xx_os_free free
 #define xx_os_memcpy memcpy
 #define xx_os_memset memset
 #define xx_fabs fabs
@@ -660,8 +660,8 @@ int *MatrixFilter(float cutoff, int window, int n_pass, int nv, const float *v1,
   int start, finish;
   int cnt;
 
-  flag = Alloc(int, nv);        /* allocate flag matrix */
-  dev = Alloc(float, nv);       /* allocate matrix for storing deviations */
+  flag = pymol::malloc<int>(nv);        /* allocate flag matrix */
+  dev = pymol::malloc<float>(nv);       /* allocate matrix for storing deviations */
 
   for(a = 0; a < nv; a++) {
     flag[a] = true;

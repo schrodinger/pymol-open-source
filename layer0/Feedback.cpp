@@ -27,7 +27,7 @@ int FeedbackInit(PyMOLGlobals * G, int quiet)
   int a;
 
   CFeedback *I;
-  I = (G->Feedback = Calloc(CFeedback, 1));
+  I = (G->Feedback = pymol::calloc<CFeedback>(1));
 
   I->Stack = VLAlloc(char, FB_Total);
   I->Depth = 0;

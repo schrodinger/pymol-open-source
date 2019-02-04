@@ -4398,7 +4398,7 @@ static PyObject *Cmd_New(PyObject * self, PyObject * args)
         PyMOLGlobals *G = PyMOL_GetGlobals(I);
         if(I) {
 
-          G->P_inst = Calloc(CP_inst, 1);
+          G->P_inst = pymol::calloc<CP_inst>(1);
           G->P_inst->obj = pymol;
           G->P_inst->dict = PyObject_GetAttrString(pymol, "__dict__");
           Py_DECREF(G->P_inst->dict); // borrow reference
@@ -5149,7 +5149,7 @@ static PyObject *CmdFitPairs(PyObject * self, PyObject * args)
       ok = false;
 
     if(ok) {
-      word = Alloc(WordType, ln);
+      word = pymol::malloc<WordType>(ln);
 
       a = 0;
       while(a < ln) {

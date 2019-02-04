@@ -290,13 +290,13 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
             }
             /* allocate storage for the sequence alignment */
 
-            cons_str = Calloc(char, nCol + 1);  /* conservation string */
+            cons_str = pymol::calloc<char>(nCol + 1);  /* conservation string */
 
             {
               int a;
               for(a = 0; a < nRow; a++) {
                 row = row_vla + a;
-                row->txt = Calloc(char, nCol + 1);
+                row->txt = pymol::calloc<char>(nCol + 1);
                 row->len = 0;
                 row->last_ai = NULL;
                 row->cCol = 0;

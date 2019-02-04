@@ -29,7 +29,7 @@ struct _CUtil {
 
 int UtilInit(PyMOLGlobals *G) 
 {
-  G->Util = Calloc(CUtil,1);
+  G->Util = pymol::calloc<CUtil>(1);
   G->Util->StartSec = UtilGetSeconds(G);
   return 1;
 }
@@ -281,7 +281,7 @@ void *UtilArrayCalloc(unsigned int *dim,ov_size ndim,ov_size atom_size)
   for(a=0;a<ndim;a++)
 	 size = size * dim[a];
   size = size + sum;
-  result = (void*)mcalloc(size*2,1); /* what is this *2 for ??? */
+  result = pymol::calloc<char>(size);
 
   if(result) {
     chunk = 1;
@@ -405,7 +405,7 @@ int UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
 
 int UtilSemiSortFloatIndexWithNBins(int n, int nbins, float *array, int *destx, int forward)
 {
-  int *start1 = Calloc(int,n + nbins);
+  int *start1 = pymol::calloc<int>(n + nbins);
   int ret = UtilSemiSortFloatIndexWithNBinsImpl(start1, n, nbins, array, destx, forward);
   mfree(start1);
   return ret;
@@ -509,8 +509,8 @@ void UtilSortInPlace(PyMOLGlobals *G,void *array,int nItem,
   int a;
   if(nItem>0)
 	 {
-	   tmp = Alloc(char,(itemSize*nItem));
-	   index = Alloc(int,nItem+1);
+	   tmp = pymol::malloc<char>((itemSize*nItem));
+	   index = pymol::malloc<int>(nItem+1);
 	   ErrChkPtr(G,tmp);
 	   ErrChkPtr(G,index);
 	   UtilSortIndex(nItem,array,index,fOrdered);

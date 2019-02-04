@@ -184,7 +184,7 @@ int CGORendererInit(PyMOLGlobals * G)
 {
   CCGORenderer *I = NULL;
 
-  I = (G->CGORenderer = Calloc(CCGORenderer, 1));
+  I = (G->CGORenderer = pymol::calloc<CCGORenderer>(1));
   if(I) {
     I->G = G;
     I->isPicking = false;
@@ -2209,7 +2209,7 @@ static int OptimizePointsToVBO(const CGO *I, CGO *cgo, int num_total_vertices_po
   //    tot = num_total_indexes * (3 * 3 + 2) ;
   /* NOTE/TODO: Not sure why 3*5 needs to be used, but 3*3+2, which is the 
      correct length, crashes in glBufferData */
-  vertexVals = Alloc(float, tot);
+  vertexVals = pymol::malloc<float>(tot);
   CHECKOK(ok, vertexVals);
   if (!ok){
     PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: OptimizePointsToVBO() vertexVals could not be allocated\n" ENDFB(I->G);	
@@ -2817,7 +2817,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
        correct length, crashes in glBufferData */
     /* before allocating anything, we should check to make sure that we have enough memory on IOS,
        otherwise we should just fail */
-    vertexVals = Alloc(float, tot);
+    vertexVals = pymol::malloc<float>(tot);
     if (!vertexVals){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBONotIndexed() vertexVals could not be allocated\n" ENDFB(I->G);	
       CGOFree(cgo);
@@ -2942,7 +2942,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
     //    tot = num_total_indexes * (3 * 3 + 2) ;
     /* NOTE/TODO: Not sure why 3*5 needs to be used, but 3*3+2, which is the 
        correct length, crashes in glBufferData */
-    vertexVals = Alloc(float, tot);
+    vertexVals = pymol::malloc<float>(tot);
     if (!vertexVals){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBONotIndexed() vertexVals could not be allocated\n" ENDFB(I->G);	
       CGOFree(cgo);
@@ -3264,7 +3264,7 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
       // round to 4 byte words for the length of the CGO
       n_data = bytes_to_allocate / 4 + (((bytes_to_allocate % 4) == 0) ? 0 : 1) ;
     }
-    vertexIndices = Calloc(GL_C_INT_TYPE, num_total_indexes);
+    vertexIndices = pymol::calloc<GL_C_INT_TYPE>(num_total_indexes);
     vertexIndicesAllocated = 1;
     if (!vertexIndices){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBOIndexed() vertexIndices could not be allocated\n" ENDFB(I->G);	
@@ -3275,7 +3275,7 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
     //    tot = num_total_vertices * (3 * 3 + 2) ;
     /* NOTE/TODO: Not sure why 3*5 needs to be used, but 3*3+2, which is the 
        correct length, crashes in glBufferData */
-    vertexVals = Alloc(float, tot);
+    vertexVals = pymol::malloc<float>(tot);
     if (!vertexVals){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBOIndexed() vertexVals could not be allocated\n" ENDFB(I->G);	
       CGOFree(cgo);
@@ -3577,7 +3577,7 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
 
     pc = I->op;
     hasNormals = !CGOHasAnyLineVerticesWithoutNormals(I);
-    vertexIndexes = Alloc(GL_C_INT_TYPE, num_total_indexes_lines);
+    vertexIndexes = pymol::malloc<GL_C_INT_TYPE>(num_total_indexes_lines);
     if (!vertexIndexes){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBOIndexed() vertexIndexes could not be allocated\n" ENDFB(I->G);	
       CGOFree(cgo);
@@ -3587,7 +3587,7 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
     //    tot = num_total_vertices * (3 * 3 + 2) ;
     /* NOTE/TODO: Not sure why 3*5 needs to be used, but 3*3+2, which is the 
        correct length, crashes in glBufferData */
-    vertexVals = Alloc(float, tot);
+    vertexVals = pymol::malloc<float>(tot);
     if (!vertexVals){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBOIndexed() vertexVals could not be allocated\n" ENDFB(I->G);	
       CGOFree(cgo);
@@ -3878,14 +3878,14 @@ CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est, bool addshaders, 
 
     cgo_shader_ub_flags = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_flags);
   
-    org_vertVals = vertVals = Alloc(float, tot);
+    org_vertVals = vertVals = pymol::malloc<float>(tot);
     if (!org_vertVals){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeSpheresToVBONonIndexed() org_vertVals could not be allocated\n" ENDFB(I->G);	
       CGOFree(cgo);
       return (NULL);
     }
 
-    org_colorValsUB = colorValsUB = Alloc(GLubyte, tot);
+    org_colorValsUB = colorValsUB = pymol::malloc<GLubyte>(tot);
     if (!org_colorValsUB){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeSpheresToVBONonIndexed() org_colorValsUB could not be allocated\n" ENDFB(I->G);	
       FreeP(org_vertVals);
@@ -3894,7 +3894,7 @@ CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est, bool addshaders, 
     }
 
     if (cgo_shader_ub_flags){
-      org_rightUpFlagValsUB = rightUpFlagValsUB = Alloc(GLubyte, VALUES_PER_IMPOSTER_SPACE_COORD * VERTICES_PER_SPHERE * num_total_spheres);
+      org_rightUpFlagValsUB = rightUpFlagValsUB = pymol::malloc<GLubyte>(VALUES_PER_IMPOSTER_SPACE_COORD * VERTICES_PER_SPHERE * num_total_spheres);
       if (!org_rightUpFlagValsUB){
 	PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeSpheresToVBONonIndexed() org_rightUpFlagValsUB could not be allocated\n" ENDFB(I->G);	
 	FreeP(org_colorValsUB);	FreeP(org_vertVals);
@@ -3902,7 +3902,7 @@ CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est, bool addshaders, 
 	return (NULL);
       }
     } else {
-      org_rightUpFlagVals = rightUpFlagVals = Alloc(float, VALUES_PER_IMPOSTER_SPACE_COORD * VERTICES_PER_SPHERE * num_total_spheres);
+      org_rightUpFlagVals = rightUpFlagVals = pymol::malloc<float>(VALUES_PER_IMPOSTER_SPACE_COORD * VERTICES_PER_SPHERE * num_total_spheres);
       if (!org_rightUpFlagVals){
 	PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeSpheresToVBONonIndexed() org_rightUpFlagVals could not be allocated\n" ENDFB(I->G);	
 	FreeP(org_colorValsUB);	FreeP(org_vertVals);
@@ -3912,7 +3912,7 @@ CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est, bool addshaders, 
     }
     if (has_picking){
       // atom/bond info for picking, 2 ints for each sphere
-      org_pickcolorVals = pickcolorVals = Alloc(int, num_total_spheres * 2 * 4);
+      org_pickcolorVals = pickcolorVals = pymol::malloc<int>(num_total_spheres * 2 * 4);
     }
 
     pc = I->op;
@@ -4565,25 +4565,25 @@ CGO *CGOOptimizeTextures(CGO * I, int est)
   if (num_total_textures){
     float *worldPos, *screenValues, *textExtents, *pickColorVals;
     int place3 = 0, place2 = 0;
-    worldPos = Alloc(float, num_total_textures * 18);
+    worldPos = pymol::malloc<float>(num_total_textures * 18);
     if (!worldPos){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeTextures() worldPos could not be allocated\n" ENDFB(I->G);
       return NULL;
     }
-    screenValues = Alloc(float, num_total_textures * 18);
+    screenValues = pymol::malloc<float>(num_total_textures * 18);
     if (!screenValues){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeTextures() screenValues could not be allocated\n" ENDFB(I->G);
       FreeP(worldPos);
       return NULL;
     }
-    textExtents = Alloc(float, num_total_textures * 12);
+    textExtents = pymol::malloc<float>(num_total_textures * 12);
     if (!textExtents){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeTextures() textExtents could not be allocated\n" ENDFB(I->G);
       FreeP(screenValues);
       FreeP(worldPos);
       return NULL;
     }
-    pickColorVals = Alloc(float, num_total_textures * 12); /* pick index and bond */
+    pickColorVals = pymol::malloc<float>(num_total_textures * 12); /* pick index and bond */
     if (!pickColorVals){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeTextures() pickColorVals could not be allocated\n" ENDFB(I->G);
       FreeP(textExtents);
@@ -4776,7 +4776,7 @@ CGO *CGOOptimizeLabels(CGO * I, int est, bool addshaders)
     float *targetPos, *worldPos, *screenValues, *screenWorldValues, *textExtents, *pickColorVals;
     float *relativeMode;
     int place3 = 0, place2 = 0, place = 0;
-    worldPos = Alloc(float, num_total_labels * 6 * 17); 
+    worldPos = pymol::malloc<float>(num_total_labels * 6 * 17); 
     if (!worldPos){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeLabels() worldPos could not be allocated\n" ENDFB(I->G);
       return NULL;
@@ -4939,7 +4939,7 @@ CGO *CGOOptimizeConnectors(CGO * I, int est)
     uchar *relativeMode, *drawBkgrd;
     uchar *isCenterPt = NULL;
     int place3 = 0, place2 = 0, place = 0;
-    targetPt3d = Calloc(float, num_total_connectors * 20 * factor); /* too much, relativeMode only needs 1 byte per vertex, instead of 1 float */
+    targetPt3d = pymol::calloc<float>(num_total_connectors * 20 * factor); /* too much, relativeMode only needs 1 byte per vertex, instead of 1 float */
     if (!targetPt3d){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeConnectors() could not be allocated\n" ENDFB(I->G);
       return NULL;
@@ -8148,7 +8148,7 @@ void CGORenderGLAlpha(CGO * I, RenderInfo * info, bool calcDepth)
     if(I->z_flag) {
       if(!I->i_start) {
         I->i_size = 256;
-        I->i_start = Calloc(int, I->i_size);
+        I->i_start = pymol::calloc<int>(I->i_size);
       } else {
         UtilZeroMem(I->i_start, sizeof(int) * I->i_size);
       }
@@ -9541,7 +9541,7 @@ CGO *CGOOptimizeScreenTexturesAndPolygons(CGO * I, int est)
 	}*/
       tot = num_total_indices * mul ;
     }
-    vertexVals = Alloc(float, tot);
+    vertexVals = pymol::malloc<float>(tot);
     if (!vertexVals){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeScreenTexturesAndPolygons() vertexVals could not be allocated\n" ENDFB(I->G);	
       CGOFree(cgo);
@@ -11258,7 +11258,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
     int nfrags = nfragspergroup * ntotalverts/vertsperpickinfo;
     int nvertsperindivfrag = vertsperpickinfo/nfragspergroup;
     num_total_indexes = nfrags * nvertsperfrag;
-    vertexIndices = Calloc(GL_C_INT_TYPE, num_total_indexes);
+    vertexIndices = pymol::calloc<GL_C_INT_TYPE>(num_total_indexes);
     int idxpl=0;
     // using vertsperpickinfo as verts per frag
     for (int cnt = 0, vpl = 0; cnt < nfrags; ++cnt){

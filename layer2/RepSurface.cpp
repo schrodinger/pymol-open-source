@@ -566,17 +566,17 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
             glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
 
             if(I->oneColorFlag) {
-              t_buf = Alloc(float *, I->NT * 6);
+	  t_buf = pymol::malloc<float *>(I->NT * 6);
             } else {
-              t_buf = Alloc(float *, I->NT * 12);
+	  t_buf = pymol::malloc<float *>(I->NT * 12);
             }
 	    CHECKOK(ok, t_buf);
 	    if (ok){
-	      z_value = Alloc(float, I->NT);
+	  z_value = pymol::malloc<float>(I->NT);
 	      CHECKOK(ok, z_value);
 	    }
 	    if (ok){
-	      ix = Alloc(int, I->NT);
+	  ix = pymol::malloc<int>(I->NT);
 	      CHECKOK(ok, ix);
 	    }
             zv = z_value;
@@ -1588,7 +1588,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       float radius;
       int t0, t1, t2;
       int spacing = 10;
-      int *cache = Calloc(int, spacing * (I->N + 1));
+      int *cache = pymol::calloc<int>(spacing * (I->N + 1));
       CHECKOK(ok, cache);
 
       radius = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_radius);
@@ -1780,17 +1780,17 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
             glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
 
             if(I->oneColorFlag) {
-              t_buf = Alloc(float *, I->NT * 6);
+              t_buf = pymol::malloc<float *>(I->NT * 6);
             } else {
-              t_buf = Alloc(float *, I->NT * 12);
+              t_buf = pymol::malloc<float *>(I->NT * 12);
             }
 	    CHECKOK(ok, t_buf);
 	    if (ok){
-	      z_value = Alloc(float, I->NT);
+	      z_value = pymol::malloc<float>(I->NT);
 	      CHECKOK(ok, z_value);
 	    }
 	    if (ok){
-	      ix = Alloc(int, I->NT);
+	      ix = pymol::malloc<int>(I->NT);
 	      CHECKOK(ok, ix);
 	    }
             zv = z_value;
@@ -2262,9 +2262,9 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
   cutoff = I->max_vdw + 2 * probe_radius;
 
   if(!I->LastVisib)
-    I->LastVisib = Alloc(char, cs->NIndex);
+    I->LastVisib = pymol::malloc<char>(cs->NIndex);
   if(!I->LastColor)
-    I->LastColor = Alloc(int, cs->NIndex);
+    I->LastColor = pymol::malloc<int>(cs->NIndex);
   lv = I->LastVisib;
   lc = I->LastColor;
   for(a = 0; a < cs->NIndex; a++) {
@@ -2307,16 +2307,16 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
     }
 
     if(!I->VC)
-      I->VC = Alloc(float, 3 * I->N);
+      I->VC = pymol::malloc<float>(3 * I->N);
     vc = I->VC;
     if(!I->VA)
-      I->VA = Alloc(float, I->N);
+      I->VA = pymol::malloc<float>(I->N);
     va = I->VA;
     if(!I->RC)
-      I->RC = Alloc(int, I->N);
+      I->RC = pymol::malloc<int>(I->N);
     rc = I->RC;
     if(!I->Vis)
-      I->Vis = Alloc(int, I->N);
+      I->Vis = pymol::malloc<int>(I->N);
     if(ColorCheckRamped(G, surface_color)) {
       I->oneColorFlag = false;
     } else {
@@ -2324,7 +2324,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
     }
     first_color = -1;
 
-    present = Alloc(int, cs->NIndex);
+    present = pymol::malloc<int>(cs->NIndex);
     {
       int *ap = present;
       for(a = 0; a < cs->NIndex; a++) {
@@ -2413,8 +2413,8 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 
       if (ambient_occlusion_mode==3){
 	/* per atom */
-	float *VAO = Alloc(float, cs->NIndex);
-	short *nVAO = Alloc(short, cs->NIndex);
+	float *VAO = pymol::malloc<float>(cs->NIndex);
+	short *nVAO = pymol::malloc<short>(cs->NIndex);
 	memset(VAO, 0, sizeof(float)*cs->NIndex);
 	memset(nVAO, 0, sizeof(short)*cs->NIndex);
 
@@ -2590,8 +2590,8 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 	if (ambient_occlusion_smooth && I->T){
 	  int i, j, pt1, pt2, pt3;
 	  float ave;
-	  float *tmpVAO = Alloc(float, I->N);
-	  int *nVAO = Alloc(int, I->N), c, *t;
+	  float *tmpVAO = pymol::malloc<float>(I->N);
+	  int *nVAO = pymol::malloc<int>(I->N), c, *t;
 	  
 	  for (j=0; j<ambient_occlusion_smooth; j++){
 	    memset(nVAO, 0, sizeof(int)*I->N);
@@ -3215,7 +3215,7 @@ static int SurfaceJobEliminateCloseDots(PyMOLGlobals * G, SurfaceJob * I){
   int ok = true;
   if(I->N) {
     int repeat_flag = true;
-    int *dot_flag = Alloc(int, I->N);
+    int *dot_flag = pymol::malloc<int>(I->N);
     CHECKOK(ok, dot_flag);
     while(ok && repeat_flag) {
       repeat_flag = false;
@@ -3290,7 +3290,7 @@ static int SurfaceJobEliminateTroublesomeVertices(PyMOLGlobals * G, SurfaceJob *
     int repeat_flag = true;
     float point_sep = I->pointSep;
     float neighborhood = trim_factor * point_sep;
-    int *dot_flag = Alloc(int, I->N);
+    int *dot_flag = pymol::malloc<int>(I->N);
     CHECKOK(ok, dot_flag);
     if(ok && I->surfaceType == 6) {       /* emprical tweaks */
       trim_factor *= 2.5;
@@ -3672,7 +3672,7 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
 	    ok &= !G->Interrupt;
 	    ok &= map->EList && solv_map->EList;
             if(sol_dot->nDot && ok) {
-              Vector3f *dot = Alloc(Vector3f, sp->nDot);
+              Vector3f *dot = pymol::malloc<Vector3f>(sp->nDot);
               float *v0, *n0;
 	      CHECKOK(ok, dot);
               if (ok){
@@ -3769,7 +3769,7 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
 
         if(ok && I->N && (surface_type == 0) && (circumscribe)) {
           /* combine scribing with an atom proximity cleanup pass */
-          int *dot_flag = Calloc(int, I->N);
+          int *dot_flag = pymol::calloc<int>(I->N);
 	  CHECKOK(ok, dot_flag);
 	  ok &= SurfaceJobAtomProximityCleanupPass(G, I, dot_flag, present_vla, probe_radius);
 	  /* purge unused dots */
@@ -4900,7 +4900,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
       MapFree(map);
     }
     {
-      int *dot_flag = Calloc(int, I->nDot);
+      int *dot_flag = pymol::calloc<int>(I->nDot);
       ErrChkPtr(G, dot_flag);
       {
         MapType *map = MapNew(G, cavity_cutoff, cavityDot, nCavityDot, NULL);
@@ -4918,7 +4918,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
 
   if(ok && (cavity_mode != 1) && (cavity_cull > 0) && 
      (probe_radius > 0.75F) && (!surface_solvent)) {
-    int *dot_flag = Calloc(int, I->nDot);
+    int *dot_flag = pymol::calloc<int>(I->nDot);
     float probe_radius_plus;
     probe_radius_plus = probe_radius * 1.5F;
 

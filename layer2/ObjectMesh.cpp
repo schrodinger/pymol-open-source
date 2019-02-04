@@ -469,10 +469,10 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
 
     if(!ms->VC) {
       ms->VCsize = n_vert;
-      ms->VC = Alloc(float, n_vert * 3);
+      ms->VC = pymol::malloc<float>(n_vert * 3);
     }
     if(!ms->RC) {
-      ms->RC = Alloc(int, n_vert);
+      ms->RC = pymol::malloc<int>(n_vert);
     }
     rc = ms->RC;
     vc = ms->VC;

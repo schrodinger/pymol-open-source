@@ -116,7 +116,7 @@ void TextureInitTextTextureImpl(PyMOLGlobals *G, int textureSizeArg){
     if (is_new){
       int tex_dim = textureSize;
       int buff_total = tex_dim * tex_dim;
-      unsigned char *temp_buffer = Alloc(unsigned char, buff_total * 4);
+      unsigned char *temp_buffer = pymol::malloc<unsigned char>(buff_total * 4);
       UtilZeroMem(temp_buffer, buff_total * 4);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 		   tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)temp_buffer);
@@ -156,7 +156,7 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
         GLuint texture_id = 0;
         int buff_incr = is_new ? tex_dim : w;
         int buff_total = is_new ? tex_dim * tex_dim : w * h;
-        unsigned char *temp_buffer = Alloc(unsigned char, buff_total * 4);
+        unsigned char *temp_buffer = pymol::malloc<unsigned char>(buff_total * 4);
 
         {
           int a, b;

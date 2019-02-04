@@ -591,8 +591,8 @@ CWordList *WordListNew(PyMOLGlobals * G, const char *st)
     }
     /* allocate the storage we'll need to hold the words */
     {
-      I->word = Alloc(char, len);
-      I->start = Alloc(char *, n_word);
+      I->word = pymol::malloc<char>(len);
+      I->start = pymol::malloc<char *>(n_word);
 
       /* and copy the words */
 
@@ -670,7 +670,7 @@ int WordInit(PyMOLGlobals * G)
 {
   CWord *I = NULL;
 
-  I = (G->Word = Calloc(CWord, 1));
+  I = (G->Word = pymol::calloc<CWord>(1));
   if(I) {
     return 1;
   } else

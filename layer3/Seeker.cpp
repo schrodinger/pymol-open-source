@@ -2013,7 +2013,7 @@ void SeekerUpdate(PyMOLGlobals * G)
 int SeekerInit(PyMOLGlobals * G)
 {
   CSeeker *I = NULL;
-  if((I = (G->Seeker = Calloc(CSeeker, 1)))) {
+  if((I = (G->Seeker = pymol::calloc<CSeeker>(1)))) {
 
     UtilZeroMem(I, sizeof(CSeeker));
     I->drag_row = -1;

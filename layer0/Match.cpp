@@ -286,7 +286,7 @@ int MatchMatrixFromFile(CMatch * I, const char *fname, int quiet)
       ok = false;
     }
   } else {
-    buffer = Alloc(char, BLOSUM62_ROWS * BLOSUM62_COLS);
+    buffer = pymol::malloc<char>(BLOSUM62_ROWS * BLOSUM62_COLS);
     if(buffer) {
       p = buffer;
       a = 0;
@@ -321,7 +321,7 @@ int MatchMatrixFromFile(CMatch * I, const char *fname, int quiet)
     if(!n_entry)
       ok = false;
     else {
-      code = (char *) Calloc(char, n_entry * sizeof(int));
+      code = (char*) pymol::calloc<int>(n_entry);
 
       /* read codes */
 

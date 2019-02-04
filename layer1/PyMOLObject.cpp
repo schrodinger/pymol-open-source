@@ -1291,7 +1291,7 @@ void ObjectStateCopy(CObjectState * dst, const CObjectState * src)
   *dst = *src;
   /* deep copy matrices if necessary */
   if(src->Matrix) {
-    dst->Matrix = Alloc(double, 16);
+    dst->Matrix = pymol::malloc<double>(16);
     if(dst->Matrix) {
       copy44d(src->Matrix, dst->Matrix);
     }
@@ -1310,7 +1310,7 @@ int ObjectStateSetMatrix(CObjectState * I, double *matrix)
   int ok = true;
   if(matrix) {
     if(!I->Matrix)
-      I->Matrix = Alloc(double, 16);
+      I->Matrix = pymol::malloc<double>(16);
     CHECKOK(ok, I->Matrix);
     if(I->Matrix) {
       copy44d(matrix, I->Matrix);
@@ -1327,7 +1327,7 @@ void ObjectStateRightCombineMatrixR44d(CObjectState * I, double *matrix)
 {
   if(matrix) {
     if(!I->Matrix) {
-      I->Matrix = Alloc(double, 16);
+      I->Matrix = pymol::malloc<double>(16);
       copy44d(matrix, I->Matrix);
     } else {
       right_multiply44d44d(I->Matrix, matrix);
@@ -1340,7 +1340,7 @@ void ObjectStateLeftCombineMatrixR44d(CObjectState * I, double *matrix)
 {
   if(matrix) {
     if(!I->Matrix) {
-      I->Matrix = Alloc(double, 16);
+      I->Matrix = pymol::malloc<double>(16);
       copy44d(matrix, I->Matrix);
     } else {
       left_multiply44d44d(matrix, I->Matrix);
@@ -1354,7 +1354,7 @@ void ObjectStateCombineMatrixTTT(CObjectState * I, float *matrix)
 
   if(matrix) {
     if(!I->Matrix) {
-      I->Matrix = Alloc(double, 16);
+      I->Matrix = pymol::malloc<double>(16);
       convertTTTfR44d(matrix, I->Matrix);
     } else {
       double tmp[16];
@@ -1376,7 +1376,7 @@ double *ObjectStateGetMatrix(CObjectState * I)
 double *ObjectStateGetInvMatrix(CObjectState * I)
 {
   if(I->Matrix && !I->InvMatrix) {
-    I->InvMatrix = Alloc(double, 16);
+    I->InvMatrix = pymol::malloc<double>(16);
     xx_matrix_invert(I->InvMatrix, I->Matrix, 4);
   }
   return I->InvMatrix;
@@ -1385,7 +1385,7 @@ double *ObjectStateGetInvMatrix(CObjectState * I)
 void ObjectStateTransformMatrix(CObjectState * I, double *matrix)
 {
   if(!I->Matrix) {
-    I->Matrix = Alloc(double, 16);
+    I->Matrix = pymol::malloc<double>(16);
     if(I->Matrix) {
       copy44d(matrix, I->Matrix);
     }

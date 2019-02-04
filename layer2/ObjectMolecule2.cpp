@@ -416,7 +416,7 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
   int a, b;
   int b1, b2, a1, a2, a3;
   OtherRec *o;
-  OtherRec *other = Calloc(OtherRec, cs->NIndex);
+  OtherRec *other = pymol::calloc<OtherRec>(cs->NIndex);
   int *result = NULL;
   int offset;
   int n_alloc = 0;
@@ -454,7 +454,7 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
   if (ok){
     n_alloc = 3 * (n_alloc + cs->NIndex);
     o = other;
-    result = Alloc(int, n_alloc);
+    result = pymol::malloc<int>(n_alloc);
     CHECKOK(ok, result);
   }
   if (ok){
@@ -1516,7 +1516,7 @@ int ObjectMoleculeConvertIDsToIndices(ObjectMolecule * I, int *id, int n_id)
       int a, offset;
 
       range = max_id - min_id + 1;
-      lookup = Calloc(int, range);
+      lookup = pymol::calloc<int>(range);
       for(a = 0; a < I->NAtom; a++) {
         offset = I->AtomInfo[a].id - min_id;
         if(!lookup[offset])
@@ -1717,7 +1717,7 @@ static void ObjectMoleculePDBStr2CoordSetPASS1(PyMOLGlobals * G, int *ok,
             p = ntrim(cc, p, 6);      /* get context name */
             if(WordMatchExact(G, "ALIGN", cc, true)) {        /* ALIGN is special */
               if(!m4x->align) {
-                m4x->align = Calloc(M4XAlignType, 1);
+		m4x->align = pymol::calloc<M4XAlignType>(1);
                 CHECKOK(*ok, m4x->align);
                 if (*ok){
                   M4XAlignInit(m4x->align);
@@ -1838,7 +1838,7 @@ static void sshash_free(SSHash *hash) {
 }
 
 static SSHash * sshash_new() {
-  SSHash *hash = Calloc(SSHash, 1);
+  SSHash *hash = pymol::calloc<SSHash>(1);
   ok_assert(1, hash);
   hash->n_ss = 1;
   hash->ss_list = VLAlloc(SSEntry, 50);
@@ -1871,7 +1871,7 @@ static int sshash_register_rec(SSHash * hash,
   for (a = 0, chain = ss_chain1; a < 2; a++, chain = ss_chain2) {
     // allocate new array for chain if necc.
     if(!hash->ss[chain]) {
-      ok_assert(1, hash->ss[chain] = Calloc(int, cResvMask + 1));
+      ok_assert(1, hash->ss[chain] = pymol::calloc<int>(cResvMask + 1));
     }
 
     sst = NULL;
@@ -3002,7 +3002,7 @@ pqr_done:
           maxAt = atInfo[a].id;
       /* build index */
       maxAt++;
-      idx = Alloc(int, maxAt + 1);
+      idx = pymol::malloc<int>(maxAt + 1);
       CHECKOK(ok, idx);
       if (ok){
 	for(a = 0; a < maxAt; a++) {
@@ -3722,7 +3722,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
       totalstlen += lexlen + 1;
     }
     int strinfolen = totalstlen + sizeof(int) * (lexIDs.size() + 1);
-    void *strinfo = Alloc(unsigned char, strinfolen);
+    void *strinfo = pymol::malloc<unsigned char>(strinfolen);
     int *strval = (int*)strinfo;
     *(strval++) = lexIDs.size(); // first write number of strings into binary data string
     char *strpl = (char*)((char*)strinfo + (1 + lexIDs.size()) * sizeof(int));
@@ -3960,7 +3960,7 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
       }
     }
 
-    dcs = Alloc(int, I->NAtom);
+    dcs = pymol::malloc<int>(I->NAtom);
 
     for(a = 0; a < I->NAtom; a++) {
       cs = I->DiscreteCSet[a];
@@ -4137,7 +4137,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
       case 2:                  /* distance-based only */  {
           /* distance-based bond location  */
           int violations = 0;
-          int *cnt = Alloc(int, cs->NIndex);
+          int *cnt = pymol::malloc<int>(cs->NIndex);
           int valcnt;
 
 	  CHECKOK(ok, cnt);

@@ -109,7 +109,7 @@ void ObjectMoleculeRemoveDuplicateBonds(PyMOLGlobals * G, ObjectMolecule * I) {
   }
 
   // get sorted indices
-  int * sorted = Alloc(int, I->NBond);
+  int * sorted = pymol::malloc<int>(I->NBond);
   UtilSortIndexGlobals(G, I->NBond, I->Bond, sorted,
       (UtilOrderFnGlobals *) BondTypeInOrder);
 
@@ -243,8 +243,8 @@ int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete
   maxnatom = I->NAtom * I->NCSet;
 
   // mapping (for bonds): atom_old -> atom_new
-  ok_assert(1, aostate2an = Alloc(int, I->NAtom));
-  ok_assert(1, bondseen = Calloc(char , I->NBond));
+  ok_assert(1, aostate2an = pymol::malloc<int>(I->NAtom));
+  ok_assert(1, bondseen = pymol::calloc<char >(I->NBond));
 
   // discrete setup
   I->DiscreteFlag = discrete;
@@ -692,7 +692,7 @@ int ObjectMoleculeXferValences(ObjectMolecule * Ia, int sele1, int sele2,
     int max_match = Ia->NAtom + Ia->NBond;
     if(max_match < (Ib->NAtom + Ib->NBond))
       max_match = (Ib->NAtom + Ib->NBond);
-    matched = Calloc(int, max_match * 4);
+    matched = pymol::calloc<int>(max_match * 4);
   }
 
   {
@@ -1022,7 +1022,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
     }
 
     if(sele0 >= 0) {            /* build array of cross-references */
-      xref = Alloc(int, I->NAtom);
+      xref = pymol::malloc<int>(I->NAtom);
       c = 0;
       for(a = 0; a < I->NAtom; a++) {
         if(SelectorIsMember(G, I->AtomInfo[a].selEntry, sele0)) {
@@ -1059,7 +1059,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
     }
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       " ObjMolLoadTRJFile: Loading from \"%s\".\n", fname ENDFB(G);
-    buffer = (char *) mmalloc(BUFSIZE + 1);     /* 1 MB read buffer */
+    buffer = pymol::malloc<char>(BUFSIZE + 1);     /* 1 MB read buffer */
     p = buffer;
     buffer[0] = 0;
     n_read = 0;
@@ -1890,7 +1890,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
       p = findflag(G, buffer, "RESIDUE_LABEL", "20a4");
     }
 
-    resn = Alloc(ResName, NRES);
+    resn = pymol::malloc<ResName>(NRES);
 
     b = 0;
     for(a = 0; a < NRES; a++) {
@@ -3443,7 +3443,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
     }
 
     if (ok)
-      backup = Alloc(float, cs->NIndex * 3);      /* make untransformed copy of coordinate set */
+      backup = pymol::malloc<float>(cs->NIndex * 3);      /* make untransformed copy of coordinate set */
     CHECKOK(ok, backup);
     if (ok){
       for(a = 0; a < cs->NIndex; a++) {
@@ -4034,10 +4034,10 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
 
   nRow = I->NAtom * sp->nDot;
 
-  center = Alloc(float, I->NAtom * 3);
-  count = Alloc(int, I->NAtom);
-  fsum = Alloc(float, nRow);
-  max_sq = Alloc(float, I->NAtom);
+  center = pymol::malloc<float>(I->NAtom * 3);
+  count = pymol::malloc<int>(I->NAtom);
+  fsum = pymol::malloc<float>(nRow);
+  max_sq = pymol::malloc<float>(I->NAtom);
 
   spheroid_smooth = SettingGetGlobal_f(I->Obj.G, cSetting_spheroid_smooth);
   spheroid_fill = SettingGetGlobal_f(I->Obj.G, cSetting_spheroid_fill);
@@ -4060,7 +4060,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
         " ObjectMolecule: computing spheroid from states %d to %d.\n",
         first + 1, last ENDFB(I->Obj.G);
 
-      spheroid = Alloc(float, nRow);
+      spheroid = pymol::malloc<float>(nRow);
 
       v = center;
       i = count;
@@ -4179,7 +4179,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
 
       /* now compute surface normals */
 
-      norm = Alloc(float, nRow * 3);
+      norm = pymol::malloc<float>(nRow * 3);
       for(a = 0; a < nRow; a++) {
         zero3f(norm + a * 3);
       }
@@ -4414,7 +4414,7 @@ void ObjectMoleculeSaveUndo(ObjectMolecule * I, int state, int log)
   state = state % I->NCSet;
   cs = I->CSet[state];
   if(cs) {
-    I->UndoCoord[I->UndoIter] = Alloc(float, cs->NIndex * 3);
+    I->UndoCoord[I->UndoIter] = pymol::malloc<float>(cs->NIndex * 3);
     memcpy(I->UndoCoord[I->UndoIter], cs->Coord, sizeof(float) * cs->NIndex * 3);
     I->UndoState[I->UndoIter] = state;
     I->UndoNIndex[I->UndoIter] = cs->NIndex;
@@ -4448,7 +4448,7 @@ void ObjectMoleculeUndo(ObjectMolecule * I, int dir)
   state = state % I->NCSet;
   cs = I->CSet[state];
   if(cs) {
-    I->UndoCoord[I->UndoIter] = Alloc(float, cs->NIndex * 3);
+    I->UndoCoord[I->UndoIter] = pymol::malloc<float>(cs->NIndex * 3);
     memcpy(I->UndoCoord[I->UndoIter], cs->Coord, sizeof(float) * cs->NIndex * 3);
     I->UndoState[I->UndoIter] = state;
     I->UndoNIndex[I->UndoIter] = cs->NIndex;
@@ -4720,7 +4720,7 @@ void ObjectMoleculePurge(ObjectMolecule * I)
   PRINTFD(I->Obj.G, FB_ObjectMolecule)
     " ObjMolPurge-Debug: step 3, old-to-new mapping\n" ENDFD;
 
-  oldToNew = Alloc(int, I->NAtom);
+  oldToNew = pymol::malloc<int>(I->NAtom);
   ai0 = I->AtomInfo;
   ai1 = I->AtomInfo;
   for(a = 0; a < I->NAtom; a++) {
@@ -5046,10 +5046,10 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
     cs = I->CSet[state];
   }
   if(cs) {
-    obs_atom = Calloc(ObservedInfo, I->NAtom);
-    obs_bond = Calloc(ObservedInfo, I->NBond);
+    obs_atom = pymol::calloc<ObservedInfo>(I->NAtom);
+    obs_bond = pymol::calloc<ObservedInfo>(I->NBond);
   }
-  flag = Calloc(int, I->NAtom);
+  flag = pymol::calloc<int>(I->NAtom);
   if(flag) {
     if(!flag1) {
       int a, *flag_a = flag;
@@ -9178,7 +9178,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
   if(ok && expansionFlag) {           /* expansion flag means we have introduced at least 1 new atom */
     ok &= ObjectMoleculeConnect(I, &nBond, &bond, I->AtomInfo, cs, bondSearchFlag, -1);
     if(nBond) {
-      index = Alloc(int, nBond);
+      index = pymol::malloc<int>(nBond);
       CHECKOK(ok, index);
       c = 0;
       b = 0;
@@ -9576,7 +9576,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_SFIT:            /* state fitting within a single object */
-      vt = Alloc(float, 3 * op->nvv2);  /* temporary (matching) target vertex pointers */
+      vt = pymol::malloc<float>(3 * op->nvv2);  /* temporary (matching) target vertex pointers */
       cnt = 0;
       for(a = 0; a < I->NAtom; a++) {
         s = I->AtomInfo[a].selEntry;
@@ -10813,8 +10813,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         break;
       case OMOP_RevalenceByGuessing:
         {
-          int *flag1 = Calloc(int, I->NAtom);
-          int *flag2 = Calloc(int, I->NAtom);
+          int *flag1 = pymol::calloc<int>(I->NAtom);
+          int *flag2 = pymol::calloc<int>(I->NAtom);
           if(flag1 && flag2) {
             int a;
             int *f1 = flag1;
@@ -11041,7 +11041,7 @@ static void ObjectMoleculeUpdate(ObjectMolecule * I)
           if((a<I->NCSet) && I->CSet[a])
             cnt++;
         {
-          CCoordSetUpdateThreadInfo *thread_info = Alloc(CCoordSetUpdateThreadInfo, cnt);
+          CCoordSetUpdateThreadInfo *thread_info = pymol::malloc<CCoordSetUpdateThreadInfo>(cnt);
           if(thread_info) {
             cnt = 0;
             for(a = start; a < stop; a++) {
@@ -11225,8 +11225,8 @@ int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float 
 int ObjectMoleculeInitBondPath(ObjectMolecule * I, ObjectMoleculeBPRec * bp)
 {
   int a;
-  bp->dist = Alloc(int, I->NAtom);
-  bp->list = Alloc(int, I->NAtom);
+  bp->dist = pymol::malloc<int>(I->NAtom);
+  bp->list = pymol::malloc<int>(I->NAtom);
   for(a = 0; a < I->NAtom; a++)
     bp->dist[a] = -1;
   bp->n_atom = 0;
@@ -12268,8 +12268,8 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj,
   int a;
   CSetting *setting = NULL;
 
-  ok_assert(1, index = Alloc(int, n + 1));
-  ok_assert(1, (*outdex) = Alloc(int, n + 1));
+  ok_assert(1, index = pymol::malloc<int>(n + 1));
+  ok_assert(1, (*outdex) = pymol::malloc<int>(n + 1));
 
   if(obj && obj->DiscreteFlag) {
     for(a = 0; a < n; a++)

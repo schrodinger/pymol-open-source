@@ -69,7 +69,7 @@ PyObject *FieldAsNumPyArray(CField * field, short copy)
     return NULL;
   }
 
-  ok_assert(1, dims = Alloc(npy_intp, field->n_dim));
+  ok_assert(1, dims = pymol::malloc<npy_intp>(field->n_dim));
   copyN(field->dim, dims, field->n_dim);
 
   if(copy) {
@@ -133,8 +133,8 @@ CField *FieldNewCopy(PyMOLGlobals * G, const CField * src)
 
   {
     int a;
-    I->dim = Alloc(unsigned int, src->n_dim);
-    I->stride = Alloc(unsigned int, src->n_dim);
+    I->dim = pymol::malloc<unsigned int>(src->n_dim);
+    I->stride = pymol::malloc<unsigned int>(src->n_dim);
     ok = I->dim && I->stride;
     if(ok)
       for(a = 0; a < src->n_dim; a++) {
@@ -144,24 +144,9 @@ CField *FieldNewCopy(PyMOLGlobals * G, const CField * src)
   }
 
   if(ok) {
-    unsigned int n_elem = I->size / I->base_size;
-    switch (I->type) {
-    case cFieldInt:
-      ok = ((I->data = (char *) Alloc(char, n_elem * sizeof(int))) != NULL);
-      if(ok)
-        memcpy(I->data, src->data, sizeof(int) * n_elem);
-      break;
-    case cFieldFloat:
-      ok = ((I->data = (char *) Alloc(char, n_elem * sizeof(float))) != NULL);
-      if(ok)
-        memcpy(I->data, src->data, sizeof(float) * n_elem);
-      break;
-    default:
-      ok = ((I->data = (char *) Alloc(char, I->size)) != NULL);
+      ok = ((I->data = pymol::malloc<char>(I->size)) != nullptr);
       if(ok)
         memcpy(I->data, src->data, I->size);
-      break;
-    }
   }
   if(!ok) {
     if(I) {
@@ -224,7 +209,7 @@ CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list)
       }
       break;
     default:
-      I->data = (char *) mmalloc(I->size);
+      I->data = pymol::malloc<char>(I->size);
       break;
     }
   }
@@ -375,7 +360,7 @@ int FieldSmooth3f(CField * I)
   int a, b, c;
   int na = I->dim[0], nb = I->dim[1], nc = I->dim[2];
   int n_pts = na * nb * nc;
-  char *data = (char *) mmalloc(sizeof(float) * n_pts);
+  auto data = (char*) pymol::malloc<float>(n_pts);
   int x, y, z;
   int da, db, dc;
   double tot;
@@ -466,8 +451,8 @@ CField *FieldNew(PyMOLGlobals * G, int *dim, int n_dim, unsigned int base_size, 
   OOAlloc(G, CField);
   I->type = type;
   I->base_size = base_size;
-  I->stride = (unsigned int *) Alloc(unsigned int, n_dim);
-  I->dim = (unsigned int *) Alloc(unsigned int, n_dim);
+  I->stride = pymol::malloc<unsigned int>(n_dim);
+  I->dim = pymol::malloc<unsigned int>(n_dim);
 
   stride = base_size;
   for(a = n_dim - 1; a >= 0; a--) {
@@ -475,7 +460,7 @@ CField *FieldNew(PyMOLGlobals * G, int *dim, int n_dim, unsigned int base_size, 
     I->dim[a] = dim[a];
     stride *= dim[a];
   }
-  I->data = (char *) mmalloc(stride);
+  I->data = pymol::malloc<char>(stride);
   I->n_dim = n_dim;
   I->size = stride;
   return (I);

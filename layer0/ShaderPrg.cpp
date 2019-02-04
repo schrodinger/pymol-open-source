@@ -193,7 +193,7 @@ int CShaderPrg::Link() {
 	ENDFB(G);
       glGetProgramiv(id, GL_INFO_LOG_LENGTH, &infoLogLength);
       if (!glGetError() && infoLogLength>0){
-	char *infoLog = Alloc(char, infoLogLength);
+	char *infoLog = pymol::malloc<char>(infoLogLength);
 	glGetProgramInfoLog(id, infoLogLength, &howLong, infoLog);
 	PRINTFB(G, FB_ShaderMgr, FB_Errors)
 	  "%s\n", infoLog

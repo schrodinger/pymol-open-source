@@ -349,25 +349,25 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
   I->R.obj = (CObject *) obj;
   I->R.cs = cs;
 
-  I->V = (float *) mmalloc(sizeof(float) * cs->NIndex * sp->nDot * 10);
+  I->V = pymol::malloc<float>(cs->NIndex * sp->nDot * 10);
   CHECKOK(ok, I->V);
 
   if(ok && mode == cRepDotAreaType) { /* in area mode, we need to export save addl. info 
                                  * such as the normal vectors, the partial area, 
                                  * the originating atom, etc. */
-    I->A = Alloc(float, cs->NIndex * sp->nDot);
+    I->A = pymol::malloc<float>(cs->NIndex * sp->nDot);
     CHECKOK(ok, I->A);
     if (ok)
-      I->T = Alloc(int, cs->NIndex * sp->nDot);
+      I->T = pymol::malloc<int>(cs->NIndex * sp->nDot);
     CHECKOK(ok, I->T);
     if (ok)
-      I->F = Alloc(int, cs->NIndex * sp->nDot);
+      I->F = pymol::malloc<int>(cs->NIndex * sp->nDot);
     CHECKOK(ok, I->F);
     if (ok)
-      I->VN = Alloc(float, cs->NIndex * sp->nDot * 3);
+      I->VN = pymol::malloc<float>(cs->NIndex * sp->nDot * 3);
     CHECKOK(ok, I->VN);
     if (ok)
-      I->Atom = Alloc(int, cs->NIndex * sp->nDot);
+      I->Atom = pymol::malloc<int>(cs->NIndex * sp->nDot);
     CHECKOK(ok, I->Atom);
     if (ok){
       aa = I->A;

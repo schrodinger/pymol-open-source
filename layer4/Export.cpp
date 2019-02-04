@@ -52,11 +52,11 @@ ExportCoords *ExportCoordsExport(PyMOLGlobals * G, char *name, int state, int or
   if(obj && (state >= 0) && (state < obj->NCSet) && (!obj->DiscreteFlag)
      && obj->CSet[state]) {
     cs = obj->CSet[state];
-    io = (ExportCoords *) mmalloc(sizeof(ExportCoords));
+    io = pymol::malloc<ExportCoords>(1);
 
     if(io) {
       io->nAtom = cs->NIndex;
-      io->coord = Alloc(float, cs->NIndex * 3);
+      io->coord = pymol::malloc<float>(cs->NIndex * 3);
 
       if(io->coord) {
         crd0 = cs->Coord;
@@ -183,7 +183,7 @@ ExportDotsObj *ExportDots(PyMOLGlobals * G, char *name, int csIndex)
     if(!rep)
       ok = ErrMessage(G, "ExportDots", "Couldn't get dot representation.");
     else {
-      result = Alloc(ExportDotsObj, 1);
+      result = pymol::malloc<ExportDotsObj>(1);
       ErrChkPtr(G, result);
       result->export_.fFree = (void (*)(struct Export *)) ExportDotsObjFree;
       /* cannabilize the data structures */

@@ -625,7 +625,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     OOFreeP(I);
     return (NULL);              /* skip if no dots are visible */
   }
-  marked = Calloc(bool, obj->NAtom);
+  marked = pymol::calloc<bool>(obj->NAtom);
   CHECKOK(ok, marked);
   if (!ok){
     OOFreeP(I);

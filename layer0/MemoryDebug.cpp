@@ -14,9 +14,6 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-
-/* This file can be compiled under C as a .c file, or under C++ as a .cc file*/
-
 #include"os_predef.h"
 #include"ov_port.h"
 
@@ -28,20 +25,20 @@ Z* -------------------------------------------------------------------
 void *MemoryReallocForSureSafe(void *ptr, unsigned int new_size, unsigned int old_size)
 {
   if(new_size < old_size) {
-    float *tmp = (float*) mmalloc(new_size);
+    auto tmp = pymol::malloc<char>(new_size);
     if(tmp && new_size && old_size) {
       memcpy(tmp, ptr, new_size);
     }
     FreeP(ptr);
     return tmp;
   } else {
-    return mrealloc(ptr, new_size);
+    return pymol::realloc((char*) ptr, new_size);
   }
 }
 
 void *MemoryReallocForSure(void *ptr, unsigned int new_size)
 {                               /* unsafe -- replace with above */
-  float *tmp = (float*) mmalloc(new_size);
+  auto tmp = pymol::malloc<char>(new_size);
   if(tmp)
     memcpy(tmp, ptr, new_size);
   FreeP(ptr);
@@ -60,6 +57,12 @@ static void DieOutOfMemory(void)
     ("*** that you are viewing or rendering.    Sorry for the inconvenience... ***\n");
   printf
     ("****************************************************************************\n");
+
+#if defined(_PYMOL_IOS) && !defined(_WEBGL)
+  fireMemoryWarning();
+  return;
+#endif
+
 #ifdef GDB_ENTRY
   abort();
 #endif
@@ -73,6 +76,19 @@ void MemoryZero(char *p, char *q)
     memset(p, 0, q - p);
 }
 
+/**
+ * Update `size` and reallocate this vla
+ *
+ * @param size number of elements
+ * @return reallocated pointer or NULL if realloc failed
+ */
+static VLARec* VLARec_resize(VLARec* vla, ov_size size)
+{
+  vla->size = size;
+  return (VLARec*) pymol::realloc(
+      (char*) (void*) vla, (vla->unit_size * size) + sizeof(VLARec));
+}
+
 void *VLAExpand(void *ptr, ov_size rec)
 {
   VLARec *vla;
@@ -82,25 +98,22 @@ void *VLAExpand(void *ptr, ov_size rec)
   if(rec >= vla->size) {
     if(vla->auto_zero)
       soffset = sizeof(VLARec) + (vla->unit_size * vla->size);
-    vla->size = ((unsigned int) (rec * vla->grow_factor)) + 1;
-#if 0
-    if(vla->size <= rec)
-      vla->size = rec + 1;
-#endif
-    {
-      VLARec *old_vla = vla;
-      vla = (VLARec *) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
-      while(!vla) {             /* back off on the request size until it actually fits */
-        vla = old_vla;
-        vla->grow_factor = (vla->grow_factor - 1.0F) / 2.0F + 1.0F;
-        vla->size = ((unsigned int) (rec * vla->grow_factor)) + 1;
-        vla = (VLARec *) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
-        if(!vla) {
-          if(old_vla->grow_factor < 1.001F) {
-            printf("VLAExpand-ERR: realloc failed.\n");
-            DieOutOfMemory();
-          }
-        }
+
+    // back off on the request size until it actually fits
+    while (true) {
+      auto resized_vla = VLARec_resize(vla, rec * vla->grow_factor + 1);
+      if (resized_vla) {
+        vla = resized_vla;
+        break;
+      }
+
+      vla->grow_factor = (vla->grow_factor - 1.0F) / 2.0F + 1.0F;
+
+      if (vla->grow_factor < 1.001F) {
+        mfree(vla);
+        printf("VLAExpand-ERR: realloc failed.\n");
+        DieOutOfMemory();
+        return nullptr;
       }
     }
     if(vla->auto_zero) {
@@ -117,11 +130,12 @@ void *VLAMalloc(ov_size init_size, ov_size unit_size, unsigned int grow_factor,
 {
   VLARec *vla;
   char *start, *stop;
-  vla = (VLARec*) mmalloc((init_size * unit_size) + sizeof(VLARec));
+  vla = (VLARec*) pymol::malloc<char>((init_size * unit_size) + sizeof(VLARec));
 
   if(!vla) {
     printf("VLAMalloc-ERR: malloc failed\n");
     DieOutOfMemory();
+    return nullptr;
   }
   vla->size = init_size;
   vla->unit_size = unit_size;
@@ -161,7 +175,7 @@ void *VLANewCopy(const void *ptr)
     unsigned int size;
     vla = &((VLARec *) ptr)[-1];
     size = (vla->unit_size * vla->size) + sizeof(VLARec);
-    new_vla = (VLARec*) mmalloc(size);
+    new_vla = (VLARec*) pymol::malloc<char>(size);
     if(!new_vla) {
       printf("VLACopy-ERR: mmalloc failed\n");
       exit(EXIT_FAILURE);
@@ -184,8 +198,7 @@ void *VLASetSize(void *ptr, unsigned int new_size)
   if(vla->auto_zero) {
     soffset = sizeof(VLARec) + (vla->unit_size * vla->size);
   }
-  vla->size = new_size;
-  vla = (VLARec*) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
+  vla = VLARec_resize(vla, new_size);
   if(!vla) {
     printf("VLASetSize-ERR: realloc failed.\n");
     DieOutOfMemory();
@@ -284,8 +297,7 @@ void *VLASetSizeForSure(void *ptr, unsigned int new_size)
                                    (vla->unit_size * vla->size) + sizeof(VLARec));
     vla->size = new_size;
   } else {
-    vla->size = new_size;
-    vla = (VLARec*) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
+    vla = VLARec_resize(vla, new_size);
   }
   if(!vla) {
     printf("VLASetSize-ERR: realloc failed.\n");

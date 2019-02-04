@@ -512,7 +512,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     return NULL;
   obj = cs->Obj;
 
-  marked = Calloc(bool, obj->NAtom);
+  marked = pymol::calloc<bool>(obj->NAtom);
   CHECKOK(ok, marked);
   if (ok)
     RepInit(G, &I->R);
@@ -555,7 +555,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     }
     
     if(SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
-      I->R.P = Alloc(Pickable, cs->NIndex + 1);
+      I->R.P = pymol::malloc<Pickable>(cs->NIndex + 1);
       CHECKOK(ok, I->R.P);
     }
   }
@@ -584,7 +584,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     float cut_mult = SphereComputeCutMultiplier(G->Sphere->Sphere[1]);
     float *dot = G->Sphere->Sphere[1]->dot[0];
     int n_dot = G->Sphere->Sphere[1]->nDot;
-    int *active = Alloc(int, 2 * n_dot);
+    int *active = pymol::malloc<int>(2 * n_dot);
 
 	ok &= MapSetupExpress(map);
     for(a = 0; ok && a < cs->NIndex; a++) {
@@ -618,10 +618,10 @@ Rep *RepSphereNew(CoordSet * cs, int state)
 
   if(ok) {
     if(!I->LastVisib)
-      I->LastVisib = Alloc(bool, cs->NIndex);
+      I->LastVisib = pymol::malloc<bool>(cs->NIndex);
     CHECKOK(ok, I->LastVisib);
     if(ok && !I->LastColor)
-      I->LastColor = Alloc(int, cs->NIndex);
+      I->LastColor = pymol::malloc<int>(cs->NIndex);
     CHECKOK(ok, I->LastColor);
     if (ok){
       lv = I->LastVisib;

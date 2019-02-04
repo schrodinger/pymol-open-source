@@ -157,7 +157,7 @@ Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list)
   /* TO ENABLE BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
   if(ok)
-    ok = ((result = Alloc(Isofield, 1)) != NULL);
+    ok = ((result = pymol::malloc<Isofield>(1)) != nullptr);
   if(ok) {
     result->data = NULL;
     result->points = NULL;
@@ -196,7 +196,7 @@ Isofield *IsosurfNewCopy(PyMOLGlobals * G, const Isofield * src)
 {
   int ok = true;
 
-  Isofield *result = Calloc(Isofield, 1);
+  Isofield *result = pymol::calloc<Isofield>(1);
 
   copy3f(src->dimensions, result->dimensions);
   result->save_points = src->save_points;
@@ -389,7 +389,7 @@ Isofield *IsosurfFieldAlloc(PyMOLGlobals * G, int *dims)
 
   /* Warning: ...FromPyList also allocs and inits from the heap */
 
-  result = Alloc(Isofield, 1);
+  result = pymol::malloc<Isofield>(1);
   ErrChkPtr(G, result);
   result->data = FieldNew(G, dims, 3, sizeof(float), cFieldFloat);
   ErrChkPtr(G, result->data);
@@ -460,7 +460,7 @@ static void IsosurfCode(CIsosurf * II, const char *bits1, const char *bits2)
 static CIsosurf *IsosurfNew(PyMOLGlobals * G)
 {
   int c;
-  CIsosurf *I = Calloc(CIsosurf, 1);
+  CIsosurf *I = pymol::calloc<CIsosurf>(1);
   I->G = G;
   I->VertexCodes = NULL;
   I->ActiveEdges = NULL;
@@ -1143,15 +1143,16 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
     range_dim[2] = (range[5] - range[2]);
 
     range_size = range_dim[0] * range_dim[1] * range_dim[2];
-
-    flag = Calloc(int, range_size);
-
+    if (ok)
+      flag = pymol::calloc<int>(range_size);
+    CHECKOK(ok, flag);
     flag_stride[0] = 1;
     flag_stride[1] = range_dim[0];
     flag_stride[2] = range_dim[0] * range_dim[1];
 
-    order = Calloc(int, 3 * range_size);
-
+    if (ok)
+      order = pymol::calloc<int>(3 * range_size);
+    CHECKOK(ok, order);
     if(order && flag && (range_dim[0] > 1) && (range_dim[1] > 1) && (range_dim[2] > 1)) {
 
       {

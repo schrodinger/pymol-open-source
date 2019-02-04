@@ -587,9 +587,9 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
   inclH = !(mesh_mode == cRepMesh_heavy_atoms);
 
   if(!I->LastVisib)
-    I->LastVisib = Alloc(int, cs->NIndex);
+    I->LastVisib = pymol::malloc<int>(cs->NIndex);
   if(!I->LastColor)
-    I->LastColor = Alloc(int, cs->NIndex);
+    I->LastColor = pymol::malloc<int>(cs->NIndex);
   lv = I->LastVisib;
   lc = I->LastColor;
   for(a = 0; a < cs->NIndex; a++) {
@@ -615,7 +615,7 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
     }
     first_color = -1;
     if(!I->VC)
-      I->VC = Alloc(float, 3 * I->NTot);
+      I->VC = pymol::malloc<float>(3 * I->NTot);
     vc = I->VC;
     /* now, assign colors to each point */
     map = MapNew(G, I->max_vdw + probe_radius, cs->Coord, cs->NIndex, NULL);
@@ -1223,7 +1223,7 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
   cullByFlag = (mesh_mode == cRepMesh_by_flags);
   inclH = !(mesh_mode == cRepMesh_heavy_atoms);
 
-  I->Dot = (float *) mmalloc(sizeof(float) * cs->NIndex * 3 * sp->nDot);
+  I->Dot = pymol::malloc<float>(cs->NIndex * 3 * sp->nDot);
   ErrChkPtr(G, I->Dot);
 
   probe_radius_plus = probe_radius * 1.5F;
@@ -1301,7 +1301,7 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
   }
 
   if(ok && (cavity_cull > 0)) {
-    dot_flag = Alloc(int, I->NDot);
+    dot_flag = pymol::malloc<int>(I->NDot);
     ErrChkPtr(G, dot_flag);
     for(a = 0; a < I->NDot; a++) {
       dot_flag[a] = 0;
