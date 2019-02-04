@@ -843,8 +843,6 @@ class PyMOLDesktopGUI(object):
                 ('command', 'Filter', 'wizard filter'),
                 ('command', 'Sculpting', 'wizard sculpting'),
                 ('separator',),
-                ('command', 'Cleanup', 'wizard cleanup'),
-                ('separator',),
                 ('command', 'Label', 'wizard label'),
                 ('command', 'Charge', 'wizard charge'),
                 ('separator',),

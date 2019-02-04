@@ -48,6 +48,10 @@ class Cleanup(Wizard):
 
     def __init__(self,_self=cmd):
         Wizard.__init__(self,_self)
+
+        if auto_configure() < 1:
+            raise pymol.CmdException('cannot find "szybki" executable, please '
+                    'set OE_DIR environment variable')
         
         self.ligand = ""
         for a in self.cmd.get_names("public_objects",1):
