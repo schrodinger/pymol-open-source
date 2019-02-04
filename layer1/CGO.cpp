@@ -2350,7 +2350,7 @@ static int OptimizePointsToVBO(const CGO *I, CGO *cgo, int num_total_vertices_po
     if (has_colors){
       bufData.push_back( { "a_Color",  ctp,      4, sizeof(float) * num_total_vertices_points * csz, colorVals, cnorm } );
     }
-    ok = vbo->bufferData((BufferDataDesc)bufData);
+    ok = vbo->bufferData(std::move(bufData));
 
     if (ok && has_colors){
       arrays |= CGO_COLOR_ARRAY;
@@ -2880,7 +2880,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
       if (has_accessibility){
         bufData.push_back( { "a_Accessibility", GL_FLOAT, 1, sizeof(float) * num_total_indexes, accessibilityVals, GL_FALSE } );
       }
-      ok = vbo->bufferData((BufferDataDesc)bufData);
+      ok = vbo->bufferData(std::move(bufData));
 
       size_t vboid = vbo->get_hash_id();
       // picking VBO: generate a buffer twice the size needed, for each picking pass
@@ -3131,7 +3131,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
       if (has_color){
         bufData.push_back( { "a_Color",  ctp,      4, sizeof(float) * num_total_indexes_lines * csz, colorVals, cnorm } );
       }
-      ok = vbo->bufferData((BufferDataDesc)bufData);
+      ok = vbo->bufferData(std::move(bufData));
       size_t vboid = vbo->get_hash_id();
 
       // picking VBO: generate a buffer twice the size needed, for each picking pass
@@ -11461,7 +11461,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
                                             pickDesc.type_dim, pickSize * nvert, NULL, pickDesc.data_norm));
       }
     }
-    pickvbo->bufferData(BufferDataDesc(pickBufferData));
+    pickvbo->bufferData(std::move(pickBufferData));
   }
 
   /* Generate VBO Buffers with all pick attributes based on the VertexBuffer type SEPARATE/SEQUENTIAL/INTERLEAVED*/
@@ -11482,7 +11482,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
         bufferData.push_back(BufferDesc(attrDesc->attr_name, attrDesc->type_size, 
                                         attrDesc->type_dim, nvert * attrSize, dataPtr, attrDesc->data_norm));
       }
-        vbo->bufferData(BufferDataDesc(bufferData));
+        vbo->bufferData(std::move(bufferData));
     break;
     }
     break;
@@ -11496,7 +11496,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
         bufferData.push_back(BufferDesc(attrDesc->attr_name, attrDesc->type_size,
                                         attrDesc->type_dim, offset, attrDesc->data_norm));
       }
-      vbo->bufferData(BufferDataDesc(bufferData), (const void *)allData,
+      vbo->bufferData(std::move(bufferData), (const void *)allData,
                       (size_t)(nvert*vertexDataSize), (size_t)vertexDataSize);
     break;
     }
