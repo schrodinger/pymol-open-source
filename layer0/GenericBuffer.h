@@ -218,11 +218,6 @@ public:
     m_buffer_usage(usage), m_layout(layout) {}
 
   ~GenericBuffer() {
-    if (m_generated)
-      freeBuffers();
-  }
-
-  bool freeBuffers() {
     for (auto &d : m_desc) {
       if (d.gl_id) {
 	glDeleteBuffers(1, &d.gl_id);
@@ -231,8 +226,6 @@ public:
     if (m_interleavedID) {
       glDeleteBuffers(1, &m_interleavedID);
     }
-    m_generated = false;
-    return true;
   }
 
   /***********************************************************************
@@ -323,7 +316,6 @@ protected:
 	}
       }
     }
-    m_generated = true;
     return true;
   }
 
@@ -350,10 +342,8 @@ protected:
       offset += d.data_size;
     }
 
-    m_generated = true;
     bool ok = true;
     ok = genBuffer(m_interleavedID, buffer_size, buffer_data);
-    m_generated = true;
     delete[] buffer_data;
     return ok;
   }
@@ -414,7 +404,6 @@ protected:
     bool ok = true;
     ok = genBuffer(m_interleavedID, interleaved_size, interleaved_data);
     m_interleaved = true;
-    m_generated = true;
     free(interleaved_data);
     return ok;
   }
@@ -434,7 +423,6 @@ protected:
 
 protected:
   bool m_status                { false };
-  bool m_generated             { false };
   bool m_interleaved           { false };
   GLuint m_interleavedID       { 0 };
   const GLenum m_buffer_usage  { GL_STATIC_DRAW };
