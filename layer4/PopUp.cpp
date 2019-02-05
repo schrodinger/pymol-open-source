@@ -71,6 +71,7 @@ struct CPopUp : public Block {
   void draw(CGO *orthoCGO) override;
   int drag(int x, int y, int mod) override;
   int release(int button, int x, int y, int mod) override;
+  void reshape(int width, int height) override {};
 };
 
 int PopUpRelease(Block * block, int button, int x, int y, int mod);
