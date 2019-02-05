@@ -280,14 +280,12 @@ int PConvPyIntToInt(PyObject * obj, int *ptr)
   int ok = true;
   if(!obj) {
     ok = false;
-  } else if(!PyInt_Check(obj)) {
-    if(!PyLong_Check(obj)) {
-      ok = false;
-    } else {
-      *ptr = (int) PyLong_AsLongLong(obj);
-    }
-  } else {
+  } else if(PyLong_Check(obj)) {
+    *ptr = (int) PyLong_AsLongLong(obj);
+  } else if(PyInt_Check(obj)) {
     *ptr = PyInt_AsLong(obj);
+  } else {
+    ok = false;
   }
   return (ok);
 }
@@ -333,10 +331,10 @@ int PConvPyObjectToFloat(PyObject * object, float *value)
     result = false;
   else if(PyFloat_Check(object)) {
     (*value) = (float) PyFloat_AsDouble(object);
-  } else if(PyInt_Check(object)) {
-    (*value) = (float) PyInt_AsLong(object);
   } else if(PyLong_Check(object)) {
     (*value) = (float) PyLong_AsLongLong(object);
+  } else if(PyInt_Check(object)) {
+    (*value) = (float) PyInt_AsLong(object);
   } else {
     tmp = PyNumber_Float(object);
     if(tmp) {
@@ -352,12 +350,12 @@ int PConvPyObjectToInt(PyObject * object, int *value)
 {
   int result = true;
   PyObject *tmp;
-  if(!object)
+  if(!object) {
     result = false;
-  else if(PyInt_Check(object)) {
-    (*value) = (int) PyInt_AsLong(object);
   } else if(PyLong_Check(object)) {
     (*value) = (int) PyLong_AsLongLong(object);
+  } else if(PyInt_Check(object)) {
+    (*value) = (int) PyInt_AsLong(object);
   } else {
     tmp = PyNumber_Int(object);
     if(tmp) {
