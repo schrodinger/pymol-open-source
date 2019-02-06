@@ -6102,8 +6102,10 @@ static void CGO_gl_draw_arrays(CCGORenderer * I, float **pc){
 #endif
 }
 
+static
 void TransparentInfoSortIX(PyMOLGlobals * G, float *sum, float *z_value, 
 			   int *ix, int n_tri, int *sort_mem, int t_mode);
+static
 void CGOReorderIndicesWithTransparentInfo(PyMOLGlobals * G, int nindices, 
 					  size_t vbuf, int n_tri, int *ix, 
 					  GL_C_INT_TYPE *vertexIndicesOriginal, 

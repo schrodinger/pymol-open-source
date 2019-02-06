@@ -38,8 +38,7 @@ typedef struct RepNonbonded {
 
 #include"ObjectMolecule.h"
 
-void RepNonbondedFree(RepNonbonded * I);
-
+static
 void RepNonbondedFree(RepNonbonded * I)
 {
   CGOFree(I->primitiveCGO);

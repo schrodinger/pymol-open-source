@@ -68,13 +68,11 @@ float *SceneGetMatrix(PyMOLGlobals * G);
 
 float *SceneGetPmvMatrix(PyMOLGlobals * G);
 
-void SceneReshape(Block * block, int width, int height);
 float SceneGetScreenVertexScale(PyMOLGlobals * G, const float *v1);
 bool SceneGetVisible(PyMOLGlobals * G, const float *v1);
 float SceneGetDepth(PyMOLGlobals * G, const float *v1);
 float SceneGetRawDepth(PyMOLGlobals * G, const float *v1);
 
-void SceneTest(PyMOLGlobals * G);
 void SceneIdle(PyMOLGlobals * G);
 void SceneFree(PyMOLGlobals * G);
 
@@ -129,7 +127,6 @@ void SceneApplyMatrix(PyMOLGlobals * G, float *m);
 void SceneSetStereo(PyMOLGlobals * G, int flag);
 int SceneGetStereo(PyMOLGlobals * G);
 void SceneDontCopyNext(PyMOLGlobals * G);
-void ScenePrepareExit(PyMOLGlobals * G);
 void SceneGetViewNormal(PyMOLGlobals * G, float *v);
 void SceneClipSet(PyMOLGlobals * G, float front, float back);
 void SceneGetView(PyMOLGlobals * G, SceneViewType view);

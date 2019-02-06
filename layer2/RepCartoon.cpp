@@ -64,8 +64,7 @@ typedef struct RepCartoon {
 
 #define ESCAPE_MAX 500
 
-void RepCartoonFree(RepCartoon * I);
-
+static
 void RepCartoonFree(RepCartoon * I)
 {
   if (I->ray != I->preshader)

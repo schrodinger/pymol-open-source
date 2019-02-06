@@ -77,7 +77,6 @@ int WordListMatch(PyMOLGlobals * G, CWordList * I, const char *name, int ignore_
 int WordInit(PyMOLGlobals * G);
 void WordFree(PyMOLGlobals * G);
 
-void WordSetWildcard(PyMOLGlobals * G, char wc);
 int WordMatch(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
 int WordMatchExact(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
 void WordPrimeCommaMatch(PyMOLGlobals * G, char *p);

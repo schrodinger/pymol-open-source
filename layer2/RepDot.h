@@ -41,6 +41,5 @@ typedef struct RepDot {
 
 Rep *RepDotNew(CoordSet * cset, int state);
 Rep *RepDotDoNew(CoordSet * cs, int mode, int state);
-void RepDotInit(void);
 
 #endif

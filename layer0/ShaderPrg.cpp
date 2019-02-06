@@ -53,6 +53,7 @@ using namespace std;
 const float mat3identity[] = { 1., 0., 0., 0., 1., 0., 0., 0., 1. };
 
 #ifdef _PYMOL_ARB_SHADERS
+static
 GLboolean ProgramStringIsNative(PyMOLGlobals * G,
                                        GLenum target, GLenum format,
                                        const string& shaderstr)

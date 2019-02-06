@@ -22,7 +22,6 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 
 Rep *RepMeshNew(CoordSet * cset, int state);
-void RepMeshInit(void);
 
 #define cRepMesh_by_flags     0
 #define cRepMesh_all          1

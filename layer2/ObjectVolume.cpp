@@ -48,12 +48,11 @@ Z* -------------------------------------------------------------------
 
 #define clamp(x,l,h) ((x) < (l) ? (l) : (x) > (h) ? (h) : (x))
 
-ObjectVolume *ObjectVolumeNew(PyMOLGlobals * G);
-
+static ObjectVolume *ObjectVolumeNew(PyMOLGlobals * G);
 static void ObjectVolumeFree(ObjectVolume * I);
 static void ObjectVolumeInvalidate(ObjectVolume * I, int rep, int level, int state);
-void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs);
-void ObjectVolumeRecomputeExtent(ObjectVolume * I);
+static void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs);
+static void ObjectVolumeRecomputeExtent(ObjectVolume * I);
 
 static ObjectVolumeState * ObjectVolumeGetActiveState(ObjectVolume * I) {
   int a;
@@ -580,7 +579,9 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
   }
 }
 
+static
 int ObjectVolumeAddSlicePoint(float *p0, float *p1, float *zaxis, float d, float *slice, float *t0, float *t1, float *tex_coords, float *origin);
+static
 void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float *zaxis);
 
 /*

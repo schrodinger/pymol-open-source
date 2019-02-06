@@ -361,11 +361,6 @@ static int get_stereo_x(int x, int *last_x, int width, int *click_side)
   return x;
 }
 
-int SceneLoopDrag(Block * block, int x, int y, int mod);
-int SceneLoopRelease(Block * block, int button, int x, int y, int mod);
-
-int SceneLoopClick(Block * block, int button, int x, int y, int mod);
-
 void SceneAbortAnimation(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
@@ -473,6 +468,7 @@ void SceneLoadAnimation(PyMOLGlobals * G, double duration, int hand)
   }
 }
 
+static
 int SceneLoopClick(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->m_G;
@@ -488,6 +484,7 @@ int SceneLoopClick(Block * block, int button, int x, int y, int mod)
   return 1;
 }
 
+static
 int SceneLoopDrag(Block * block, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->m_G;
@@ -498,6 +495,7 @@ int SceneLoopDrag(Block * block, int x, int y, int mod)
   return 1;
 }
 
+static
 int SceneLoopRelease(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->m_G;

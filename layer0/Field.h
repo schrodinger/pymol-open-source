@@ -77,6 +77,4 @@ CField *FieldNewFromPyList_From_List(PyMOLGlobals * G, PyObject * list, int);
 CField *FieldNewCopy(PyMOLGlobals * G, const CField * src);
 int FieldSmooth3f(CField * I);
 
-float* FieldSample(CField * I, int skip);
-
 #endif

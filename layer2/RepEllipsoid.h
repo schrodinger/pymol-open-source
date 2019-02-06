@@ -21,6 +21,5 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 
 Rep *RepEllipsoidNew(CoordSet * cset, int state);
-void RepEllipsoidInit(void);
 
 #endif

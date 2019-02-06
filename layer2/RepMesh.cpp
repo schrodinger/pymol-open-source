@@ -54,14 +54,7 @@ typedef struct RepMesh {
 
 #include"ObjectMolecule.h"
 
-void RepMeshFree(RepMesh * I);
-void RepMeshColor(RepMesh * I, CoordSet * cs);
-int RepMeshSameVis(RepMesh * I, CoordSet * cs);
-
-void RepMeshInit(void)
-{
-}
-
+static
 void RepMeshFree(RepMesh * I)
 {
   if (I->shaderCGO){
@@ -76,6 +69,7 @@ void RepMeshFree(RepMesh * I)
   OOFreeP(I);
 }
 
+static
 int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
                           float probe_radius);
 
@@ -542,6 +536,7 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
   }
 }
 
+static
 int RepMeshSameVis(RepMesh * I, CoordSet * cs)
 {
   int *lv, *lc;
@@ -563,6 +558,7 @@ int RepMeshSameVis(RepMesh * I, CoordSet * cs)
   return true;
 }
 
+static
 void RepMeshColor(RepMesh * I, CoordSet * cs)
 {
   PyMOLGlobals *G = cs->State.G;

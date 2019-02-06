@@ -42,11 +42,10 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"CGO.h"
 
-ObjectSurface *ObjectSurfaceNew(PyMOLGlobals * G);
-
+static ObjectSurface *ObjectSurfaceNew(PyMOLGlobals * G);
 static void ObjectSurfaceFree(ObjectSurface * I);
-void ObjectSurfaceStateInit(PyMOLGlobals * G, ObjectSurfaceState * ms);
-void ObjectSurfaceRecomputeExtent(ObjectSurface * I);
+static void ObjectSurfaceStateInit(PyMOLGlobals * G, ObjectSurfaceState * ms);
+static void ObjectSurfaceRecomputeExtent(ObjectSurface * I);
 
 static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState * I)
 {

@@ -38,10 +38,6 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"Selector.h"
 
-int ObjectGetNFrames(CObject * I);
-
-CSetting **ObjectGetSettingHandle(CObject * I, int state);
-
 void ObjectPurgeSettings(CObject * I)
 {
   SettingFreeP(I->Setting);
@@ -1098,6 +1094,7 @@ void ObjectSetTTTOrigin(CObject * I, float *origin)
 
 
 /*========================================================================*/
+static
 CSetting **ObjectGetSettingHandle(CObject * I, int state)
 {
   return (&I->Setting);
@@ -1151,10 +1148,7 @@ void ObjectSetName(CObject * I, const char *name)
 
 
 /*========================================================================*/
-void ObjectUpdate(CObject * I);
-
-
-/*========================================================================*/
+static
 void ObjectUpdate(CObject * I)
 {
 
@@ -1181,6 +1175,7 @@ void ObjectFree(CObject * I)
 
 
 /*========================================================================*/
+static
 int ObjectGetNFrames(CObject * I)
 {
   return 1;

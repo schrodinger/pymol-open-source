@@ -284,9 +284,4 @@ extern PyObject *P_setting;     /* used by Setting.c */
 extern PyTypeObject *P_wrapper;     /* used by P.c for lazy-loading settings/properties/attributes */
 
 #endif
-
-#ifndef _PYMOL_NOPY
-void PSetAtomPropertyInfo(PyMOLGlobals * G, int propid, short pt, int off);
-#endif
-
 #endif

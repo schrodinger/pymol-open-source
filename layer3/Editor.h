@@ -71,7 +71,6 @@ void EditorHFill(PyMOLGlobals * G, int quiet=1);
 void EditorHFix(PyMOLGlobals * G, const char *sele, int quiet);
 void EditorCycleValence(PyMOLGlobals * G, int quiet=1);
 void EditorInactivate(PyMOLGlobals * G);
-void EditorUpdateState(PyMOLGlobals * G);
 
 int EditorIsAnActiveObject(PyMOLGlobals * G, ObjectMolecule * obj);
 

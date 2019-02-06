@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"Scene.h"
 
+static
 void ExportDotsObjFree(PyMOLGlobals * G, ExportDotsObj * rec);
 
 

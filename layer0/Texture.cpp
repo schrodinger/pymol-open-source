@@ -74,6 +74,8 @@ int TextureInit(PyMOLGlobals * G)
   I->xpos = POS_START;
   return (I ? 1 : 0);
 }
+
+static
 void TextureInitTextTextureImpl(PyMOLGlobals *G, int textureSize);
 
 void TextureInitTextTexture(PyMOLGlobals *G){

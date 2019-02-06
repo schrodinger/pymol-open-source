@@ -235,7 +235,7 @@ PyObject *MainComplete(const char *str)
 
 
 void MainFree(void);
-void MainReshape(int width, int height);
+static void MainReshape(int width, int height);
 static void MainDrawLocked(void);
 static void MainDrag(int x, int y);
 
@@ -262,6 +262,7 @@ struct _CMain {
 
 /* global options */
 
+static
 void MainOnExit(void);
 
 static void MainPushValidContext(PyMOLGlobals * G)

@@ -224,8 +224,6 @@ void ButModeSetRate(PyMOLGlobals * G, float renderTime);
 void ButModeResetRate(PyMOLGlobals * G);
 int ButModeGet(PyMOLGlobals * G, int button);
 void ButModeSet(PyMOLGlobals * G, int button, int action);
-void ButModeCaption(PyMOLGlobals * G, char *text);
-void ButModeCaptionReset(PyMOLGlobals * G);
 int ButModeTranslate(PyMOLGlobals * G, int button, int mod);
 int ButModeCheckPossibleSingleClick(PyMOLGlobals * G, int button, int mod);
 int ButModeGetHeight(PyMOLGlobals * G);

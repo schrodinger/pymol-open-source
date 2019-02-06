@@ -30,12 +30,7 @@ Z* -------------------------------------------------------------------
 
 
 /*========================================================================*/
-
-struct Rep *RepUpdate(struct Rep *I, struct CoordSet *cs, int state, int rep);
-struct Rep *RepRebuild(struct Rep *I, struct CoordSet *cs, int state, int rep);
-
-
-/*========================================================================*/
+static
 struct Rep *RepRebuild(struct Rep *I, struct CoordSet *cs, int state, int rep)
 {
   Rep *tmp = NULL;
@@ -59,6 +54,7 @@ struct Rep *RepRebuild(struct Rep *I, struct CoordSet *cs, int state, int rep)
 
 
 /*========================================================================*/
+static
 struct Rep *RepUpdate(struct Rep *I, struct CoordSet *cs, int state, int rep)
 {
 

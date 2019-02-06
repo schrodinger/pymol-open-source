@@ -56,9 +56,7 @@
 
  */
 
-void RepSphereFree(RepSphere * I);
-int RepSphereSameVis(RepSphere * I, CoordSet * cs);
-
+static
 void RepSphereFree(RepSphere * I)
 {
   if (I->primitiveCGO == I->renderCGO) {
@@ -236,6 +234,7 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
   }
 }
 
+static
 int RepSphereSameVis(RepSphere * I, CoordSet * cs)
 {
   bool *lv;

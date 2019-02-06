@@ -71,9 +71,7 @@ typedef struct RepSurface {
 #endif
 } RepSurface;
 
-void RepSurfaceFree(RepSurface * I);
-int RepSurfaceSameVis(RepSurface * I, CoordSet * cs);
-void RepSurfaceColor(RepSurface * I, CoordSet * cs);
+static
 void RepSurfaceSmoothEdges(RepSurface * I);
 
 static void setShaderCGO(RepSurface * I, CGO * cgo) {
@@ -90,6 +88,7 @@ static void setPickingCGO(RepSurface * I, CGO * cgo) {
   I->pickingCGO = cgo;
 }
 
+static
 void RepSurfaceFree(RepSurface * I)
 {
   VLAFreeP(I->V);
@@ -2138,6 +2137,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
   }
 }
 
+static
 int RepSurfaceSameVis(RepSurface * I, CoordSet * cs)
 {
   int same = true;
@@ -2186,6 +2186,7 @@ static int RepSurfaceSameColor(RepSurface * I, CoordSet * cs)
   return true;
 }
 
+static
 void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 {
   PyMOLGlobals *G = cs->State.G;
@@ -3976,6 +3977,7 @@ static int RepSurfacePrepareSurfaceJob(PyMOLGlobals * G, SurfaceJob *surf_job,
 }
 
 #ifndef _PYMOL_NOPY
+static
 void RepSurfaceConvertSurfaceJobToPyObject(PyMOLGlobals *G, SurfaceJob *surf_job, CoordSet *cs, ObjectMolecule *obj, PyObject **entry, PyObject **input, PyObject **output, int *found){
   int cache_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cache_mode);
   

@@ -19,6 +19,7 @@ TEST_CASE("Image Default Constructor", "[Image]")
 static const std::size_t width = 64u;
 static const std::size_t height = 128u;
 
+static
 Image getMockImage(bool stereoImage = false)
 {
   auto image = Image(width, height, stereoImage);

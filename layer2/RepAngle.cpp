@@ -44,8 +44,7 @@ typedef struct RepAngle {
 
 #include"ObjectDist.h"
 
-void RepAngleFree(RepAngle * I);
-
+static
 void RepAngleFree(RepAngle * I)
 {
   if (I->shaderCGO){

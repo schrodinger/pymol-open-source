@@ -38,12 +38,7 @@ typedef struct RepNonbondedSphere {
 
 #include"ObjectMolecule.h"
 
-void RepNonbondedSphereFree(RepNonbondedSphere * I);
-
-void RepNonbondedSphereInit(void)
-{
-}
-
+static
 void RepNonbondedSphereFree(RepNonbondedSphere * I)
 {
   if (I->shaderCGO){

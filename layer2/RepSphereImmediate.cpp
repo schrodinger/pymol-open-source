@@ -225,6 +225,7 @@ static void RenderSphereMode_Immediate_1_2_3(PyMOLGlobals *G, RenderInfo *info,
   }
 }
 
+static
 void RenderImmediate_DoPreGL(PyMOLGlobals *G, int sphere_mode,
                              float *pixel_scale, CoordSet *cs,
                              ObjectMolecule *obj, float sphere_scale) {

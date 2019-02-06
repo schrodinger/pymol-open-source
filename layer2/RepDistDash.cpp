@@ -48,8 +48,7 @@ typedef struct RepDistDash {
 
 #include"ObjectDist.h"
 
-void RepDistDashFree(RepDistDash * I);
-
+static
 void RepDistDashFree(RepDistDash * I)
 {
   if (I->shaderCGO){

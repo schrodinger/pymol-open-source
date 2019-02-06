@@ -27,8 +27,6 @@ Z* -------------------------------------------------------------------
 /* ================================================================ 
  * Don't touch below unless you know what you are doing */
 
-void UtilMemCpy(void *dst, void *src, unsigned int *size);
-
 typedef struct VLARec {
   ov_size size, unit_size;
   float grow_factor;

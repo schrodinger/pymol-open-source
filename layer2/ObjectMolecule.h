@@ -327,7 +327,6 @@ void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec * op);
 int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                 ObjectMolecule ** result);
 PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I);
-int ObjectMoleculeGetSerial(ObjectMolecule * I);
 int ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const char *text);
 const char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state);
 int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int state);
@@ -389,7 +388,6 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op);
 
 struct CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule * I, int setIndex);
-void ObjectMoleculeBlindSymMovie(ObjectMolecule * I);
 int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 			struct CoordSet *cs, int bondSearchFlag,
 			int aic_mask, int invalidate);
@@ -464,8 +462,6 @@ int ObjectMoleculeGetBondPaths(ObjectMolecule * I, int atom, int max,
                                ObjectMoleculeBPRec * bp);
 int ObjectMoleculeInitBondPath(ObjectMolecule * I, ObjectMoleculeBPRec * bp);
 int ObjectMoleculePurgeBondPath(ObjectMolecule * I, ObjectMoleculeBPRec * bp);
-int ObjectMoleculeGetBondPath(ObjectMolecule * I, int atom, int max,
-                              ObjectMoleculeBPRec * bp);
 int ***ObjectMoleculeGetBondPrint(ObjectMolecule * I, int max_bond, int max_type,
                                   int *dim);
 

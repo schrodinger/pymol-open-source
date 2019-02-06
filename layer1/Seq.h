@@ -65,12 +65,9 @@ int SeqInit(PyMOLGlobals * G);
 void SeqFree(PyMOLGlobals * G);
 Block *SeqGetBlock(PyMOLGlobals * G);
 
-int SeqIdling(PyMOLGlobals * G);
-void SeqInterrupt(PyMOLGlobals * G);
 int SeqGetHeight(PyMOLGlobals * G);
 void SeqSetHandler(PyMOLGlobals * G, CSeqHandler * handler);
 void SeqSetRowVLA(PyMOLGlobals * G, CSeqRow * row, int nRow);
-CSeqRow *SeqGetRowVLA(void);
 void SeqDirty(PyMOLGlobals * G);        /* sequence dirty -- need to update selections */
 void SeqChanged(PyMOLGlobals * G);      /* sequence changed -- need to rebuild */
 void SeqUpdate(PyMOLGlobals * G);

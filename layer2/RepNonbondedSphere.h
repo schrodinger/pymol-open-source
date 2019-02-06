@@ -21,6 +21,5 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 
 Rep *RepNonbondedSphereNew(CoordSet * cset, int state);
-void RepNonbondedSphereInit(void);
 
 #endif

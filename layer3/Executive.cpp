@@ -191,6 +191,7 @@ static int ExecutiveSetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
                                      double *matrix);
 static int ExecutiveGetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
                                      double **matrix, int incl_ttt);
+static
 int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int state,
                                        const char *s1, int log, float *matrix, int homogenous,
                                        int global);

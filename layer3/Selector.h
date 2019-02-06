@@ -54,8 +54,6 @@ int SelectorCreateFromTagDict(PyMOLGlobals * G, const char *sname, OVOneToAny * 
 /* if n_idx is negative, then looks for negative *idx as the sentinel */
 int SelectorMoveMember(PyMOLGlobals * G, int s, int sele_old, int sele_new);
 int SelectorCreateEmpty(PyMOLGlobals * G, const char *name, int exec_managed);
-void SelectorToggle(PyMOLGlobals * G, int rep, const char *name);
-void SelectorCylinder(PyMOLGlobals * G, const char *sele, const char *onoff);
 
 int SelectorUpdateTable(PyMOLGlobals * G, int req_state, int domain);
 int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int domain);
@@ -166,8 +164,6 @@ void SelectorComputeFragPos(PyMOLGlobals * G, ObjectMolecule * obj, int state, i
                             char *prefix, float **vla);
 
 int SelectorSetName(PyMOLGlobals * G, const char *new_name, const char *old_name);
-
-ObjectMolecule *SelectorGetCachedSingleAtom(PyMOLGlobals * G, int sele, int *theAtom);
 
 ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals * G, int sele,
                                                      int *index);

@@ -141,15 +141,8 @@ std::pair<int, int> OrthoGetBackgroundSize(const COrtho& ortho){
   }
 }
 
+static
 void OrthoParseCurrentLine(PyMOLGlobals * G);
-
-Block *OrthoFindBlock(PyMOLGlobals * G, int x, int y);
-void OrthoKeyControl(PyMOLGlobals * G, unsigned char k);
-void OrthoKeyAlt(PyMOLGlobals * G, unsigned char k);
-void OrthoKeyCtSh(PyMOLGlobals * G, unsigned char k);
-void OrthoKeyCmmd(PyMOLGlobals * G, unsigned char k);
-
-
 
 #define cBusyWidth 240
 #define cBusyHeight 60
@@ -758,6 +751,7 @@ void OrthoRestorePrompt(PyMOLGlobals * G)
 
 
 /*========================================================================*/
+static
 void OrthoKeyControl(PyMOLGlobals * G, unsigned char k)
 {
   char buffer[OrthoLineLength];
@@ -773,6 +767,7 @@ void OrthoKeyControl(PyMOLGlobals * G, unsigned char k)
 }
 
 /*========================================================================*/
+static
 void OrthoKeyCmmd(PyMOLGlobals * G, unsigned char k)
 {
   char buffer[OrthoLineLength];
@@ -788,6 +783,7 @@ void OrthoKeyCmmd(PyMOLGlobals * G, unsigned char k)
 }
 
 /*========================================================================*/
+static
 void OrthoKeyCtSh(PyMOLGlobals * G, unsigned char k)
 {
   char buffer[OrthoLineLength];
@@ -804,6 +800,7 @@ void OrthoKeyCtSh(PyMOLGlobals * G, unsigned char k)
 
 
 /*========================================================================*/
+static
 void OrthoKeyAlt(PyMOLGlobals * G, unsigned char k)
 {
   char buffer[OrthoLineLength];
@@ -2309,6 +2306,7 @@ void OrthoReshapeWizard(PyMOLGlobals * G, ov_size wizHeight)
 
 
 /*========================================================================*/
+static
 Block *OrthoFindBlock(PyMOLGlobals * G, int x, int y)
 {
   COrtho *I = G->Ortho;

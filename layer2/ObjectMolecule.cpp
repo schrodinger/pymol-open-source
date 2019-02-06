@@ -73,16 +73,13 @@ static
 CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
                                         AtomInfoType ** atInfoPtr, const char **restart);
 
-void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op);
-
+static
 void ObjectMoleculeTransformTTTf(ObjectMolecule * I, float *ttt, int state);
 
+static
 int ObjectMoleculeGetAtomGeometry(ObjectMolecule * I, int state, int at);
-void ObjectMoleculeBracketResidue(ObjectMolecule * I, AtomInfoType * ai, int *st,
-                                  int *nd);
 
-void ObjectMoleculeInferAmineGeomFromBonds(ObjectMolecule * I, int state);
-
+static
 void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I);
 
 /*

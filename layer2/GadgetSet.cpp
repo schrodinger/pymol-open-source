@@ -32,8 +32,6 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"Ray.h"
 
-void GadgetSetStrip(GadgetSet * I);
-
 int GadgetSetGetVertex(GadgetSet * I, int index, int base, float *v)
 {
   int ok = true;
@@ -416,12 +414,6 @@ GadgetSet *GadgetSetNew(PyMOLGlobals * G)
   I->offsetPtOPick = 0;
 
   return (I);
-}
-
-
-/*========================================================================*/
-void GadgetSetStrip(GadgetSet * I)
-{
 }
 
 

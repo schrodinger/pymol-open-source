@@ -37,8 +37,6 @@ typedef struct RepWireBond {
 
 #include"ObjectMolecule.h"
 
-void RepWireBondFree(RepWireBond * I);
-
 static int RepLine(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, float *v2, float *v1color, unsigned int b1, unsigned int b2, int a, float *v2color, bool b1masked, bool b2masked){
   int ok = true;
   if (s1 && s2){
@@ -227,6 +225,7 @@ static void RepAromatic(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, fl
   }
 }
 
+static
 void RepWireBondFree(RepWireBond * I)
 {
     CGOFree(I->shaderCGO);

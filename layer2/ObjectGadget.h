@@ -40,11 +40,6 @@ ObjectGadget *ObjectGadgetNew(PyMOLGlobals * G);
 void ObjectGadgetInit(PyMOLGlobals * G, ObjectGadget * I);
 void ObjectGadgetPurge(ObjectGadget * I);
 void ObjectGadgetFree(ObjectGadget * I);
-ObjectGadget *ObjectGadgetDefine(PyMOLGlobals * G, ObjectGadget * obj, PyObject * pycgo,
-                                 int state);
-ObjectGadget *ObjectGadgetFromCGO(PyMOLGlobals * G, ObjectGadget * obj, CGO * cgo,
-                                  int state);
-void ObjectGadgetRecomputeExtent(ObjectGadget * I);
 
 PyObject *ObjectGadgetAsPyList(ObjectGadget * I);
 PyObject *ObjectGadgetPlainAsPyList(ObjectGadget * I, bool incl_cgos=true);

@@ -54,8 +54,7 @@ typedef struct RepDistLabel {
 
 #include"ObjectDist.h"
 
-void RepDistLabelFree(RepDistLabel * I);
-
+static
 void RepDistLabelFree(RepDistLabel * I)
 {
   if (I->shaderCGO){

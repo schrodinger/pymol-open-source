@@ -1787,10 +1787,6 @@ void SelectorDefragment(PyMOLGlobals * G)
   }
 }
 
-int SelectorWalkTree(PyMOLGlobals * G, int *atom, int *comp, int *toDo, int **stk,
-                     int stkDepth, ObjectMolecule * obj,
-                     int sele1, int sele2, int sele3, int sele4);
-
 typedef struct {
   int color;
   int sele;
@@ -4421,6 +4417,7 @@ static int SelectorCheckNeighbors(PyMOLGlobals * G, int maxDist, ObjectMolecule 
 
 
 /*========================================================================*/
+static
 int SelectorWalkTree(PyMOLGlobals * G, int *atom, int *comp, int *toDo, int **stk,
                      int stkDepth, ObjectMolecule * obj,
                      int sele1, int sele2, int sele3, int sele4)

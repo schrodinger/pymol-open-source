@@ -30,8 +30,6 @@ typedef struct ObjectGroup {
 
 ObjectGroup *ObjectGroupNew(PyMOLGlobals * G);
 
-void ObjectGroupRecomputeExtent(ObjectGroup * I);
-
 PyObject *ObjectGroupAsPyList(ObjectGroup * I);
 
 int ObjectGroupNewFromPyList(PyMOLGlobals * G, PyObject * list,

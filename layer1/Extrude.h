@@ -48,9 +48,6 @@ CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude * orig);
 int ExtrudeAllocPointsNormalsColors(CExtrude * I, int n);
 void ExtrudeTruncate(CExtrude * I, int n);
 
-/* SAUSAGE: look-up table -- nearest neighbors to extrusion points */
-void ExtrudeMakePuttyLUT(CExtrude * I, ObjectMolecule * Sauce_obj);
-
 void ExtrudeFree(CExtrude * I);
 
 int ExtrudeCircle(CExtrude * I, int n, float size);
@@ -68,7 +65,6 @@ void ExtrudeBuildNormals2f(CExtrude * I);
 int ExtrudeComputeTangents(CExtrude * I);
 int ExtrudeCylindersToCGO(CExtrude * I, CGO *cgo, float tube_radius);
 int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, const float *color_override, bool use_spheres, int dash=0);
-void ExtrudeCGOSurfaceTubeToCylinders(CExtrude * I, CGO * cgo, int cap, const float *color_override);
 int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap);
 
 int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, const float *color_override);

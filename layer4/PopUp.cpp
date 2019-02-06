@@ -74,8 +74,7 @@ struct CPopUp : public Block {
   void reshape(int width, int height) override {};
 };
 
-int PopUpRelease(Block * block, int button, int x, int y, int mod);
-void PopUpDraw(Block * block ORTHOCGOARG);
+static
 int PopUpConvertY(CPopUp * I, int value, int mode);
 
 /*========================================================================

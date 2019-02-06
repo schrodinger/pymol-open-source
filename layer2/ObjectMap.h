@@ -94,8 +94,6 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float 
 int ObjectMapValidXtal(ObjectMap * I, int state);
 int ObjectMapStateValidXtal(ObjectMapState * ms);
 
-int ObjectMapStateGetRange(PyMOLGlobals * G, ObjectMapState * ms, float *range);
-
 void ObjectMapStateClamp(ObjectMapState * I, float clamp_floor, float clamp_ceiling);
 
 ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
@@ -118,10 +116,8 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, const char *f
 ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
                                  int state, int quiet);
 
-ObjectMap *ObjectMapLoad(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state);
 ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * Map,
                                     int state, int discrete, int quiet);
-ObjectMap *ObjectMapLoadCObject(PyMOLGlobals * G, ObjectMap * obj, int state);
 ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Map,
                                   int state, int discrete, int quiet);
 int ObjectMapDouble(ObjectMap * I, int state);

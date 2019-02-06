@@ -144,7 +144,6 @@ int ObjectMotion(CObject * I, int action, int first,
                  int hand, int window, int cycles, int state, int quiet);
 int ObjectGetSpecLevel(CObject * I, int frame);
 void ObjectMotionTrim(CObject *I, int n_frame);
-void ObjectMotionExtend(CObject *I, int n_frame);
 void ObjectDrawViewElem(CObject *I, BlockRect *rect, int frames, CGO *orthoCGO);
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I);
 void ObjectStateCopy(CObjectState * dst, const CObjectState * src);

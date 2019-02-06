@@ -23,36 +23,47 @@
 extern float *rayDepthPixels;
 extern int rayVolume, rayWidth, rayHeight;
 
+static
 void SetDrawBufferForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, int times, int fog_active, int offscreen);
+static
 void SceneDrawStencilInBuffer(PyMOLGlobals * G, CScene *I, int stereo_mode);
 
+static
 void SceneRenderStereoLoop(PyMOLGlobals * G, int timesArg, int must_render_stereo, int stereo_mode, 
                            short render_to_texture, int x, int y, int oversize_width, int oversize_height, 
                            int stereo_double_pump_mono, int curState, float *normal, 
                            SceneUnitContext *context, float width_scale, int fog_active, 
                            int onlySelections, int noAA);
 
+static
 void SceneRenderAA(PyMOLGlobals * G);
 
+static
 void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen, int times,
                                   int x, int y, int oversize_width, int oversize_height, GLenum draw_mode,
                                   int position /* left=0, right=1 */);
 
+static
 void PrepareViewPortForMonoInitializeViewPort(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen,
                                               int times, int x, int y, int oversize_width, int oversize_height);
 
+static
 void PrepareViewPortForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen, int times,
                               int x, int y, int oversize_width, int oversize_height);
 
+static
 void PrepareViewPortForStereo2nd(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen,
                                  int times, int x, int y, int oversize_width, int oversize_height);
 
+static
 void InitializeViewPortToScreenBlock(PyMOLGlobals * G, CScene *I, int x, int y, int oversize_width, int oversize_height, 
                                      int *stereo_mode, float *width_scale);
 
+static
 void SceneSetPrepareViewPortForStereo(PyMOLGlobals *G, void (*prepareViewPortForStereo)(PyMOLGlobals *, CScene *, int, short, int, int, int, int, int), 
                                       int times, int x, int y, int oversize_width, int oversize_height, int stereo_mode, float width_scale);
 
+static
 CGO *GenerateUnitScreenCGO(PyMOLGlobals * G);
 
 static int stereo_via_stencil(int stereo_mode)
@@ -527,6 +538,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     " SceneRender: leaving...\n" ENDFD;
 }
 
+static
 void AppendCopyWithChangedShader(PyMOLGlobals * G, CGO *destCGO, CGO *srcCGO, int frommode, int tomode){
   CGO *cgo = CGONew(G);
   CGOAppendNoStop(cgo, srcCGO);
@@ -860,6 +872,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
    This function also renders only the selections (onlySelections) for all grids or
    the full screen.
  */
+static
 void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, int times, 
                  int curState, float *normal, SceneUnitContext *context, 
                  float width_scale, short onlySelections, short excludeSelections){

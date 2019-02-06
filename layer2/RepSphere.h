@@ -30,7 +30,6 @@ typedef struct RepSphere {
 } RepSphere;
 
 Rep *RepSphereNew(CoordSet * cset, int state);
-void RepSphereInit(void);
 void RenderSphereComputeFog(PyMOLGlobals *G, RenderInfo *info, float *fog_info);
 
 #endif

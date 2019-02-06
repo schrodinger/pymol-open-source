@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Feedback.h"
 
+static
 void ExtrudeInit(PyMOLGlobals * G, CExtrude * I);
 
 #define CopyArray(dst,src,type,count) memcpy(dst,src,sizeof(type)*(count))

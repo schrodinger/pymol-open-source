@@ -44,12 +44,7 @@ typedef struct RepRibbon {
 
 #include"ObjectMolecule.h"
 
-void RepRibbonFree(RepRibbon * I);
-
-void RepRibbonInit(void)
-{
-}
-
+static
 void RepRibbonFree(RepRibbon * I)
 {
   if (I->primitiveCGO){

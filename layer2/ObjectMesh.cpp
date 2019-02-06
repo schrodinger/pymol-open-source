@@ -41,12 +41,13 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"ObjectCGO.h"
 
+static
 ObjectMesh *ObjectMeshNew(PyMOLGlobals * G);
 
 static void ObjectMeshFree(ObjectMesh * I);
 static void ObjectMeshInvalidate(ObjectMesh * I, int rep, int level, int state);
-void ObjectMeshStateInit(PyMOLGlobals * G, ObjectMeshState * ms);
-void ObjectMeshRecomputeExtent(ObjectMesh * I);
+static void ObjectMeshStateInit(PyMOLGlobals * G, ObjectMeshState * ms);
+static void ObjectMeshRecomputeExtent(ObjectMesh * I);
 
 static PyObject *ObjectMeshStateAsPyList(ObjectMeshState * I)
 {

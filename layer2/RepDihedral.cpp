@@ -44,8 +44,7 @@ typedef struct RepDihedral {
 
 #include"ObjectDist.h"
 
-void RepDihedralFree(RepDihedral * I);
-
+static
 void RepDihedralFree(RepDihedral * I)
 {
   if (I->shaderCGO){

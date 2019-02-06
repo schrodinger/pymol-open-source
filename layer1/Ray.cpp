@@ -120,18 +120,15 @@ struct _CRayAntiThreadInfo {
   CRay *ray;
 };
 
+static
 void RayRelease(CRay * I);
 
 static void RayApplyMatrix33(unsigned int n, float3 * q, const float m[16], float3 * p);
 static void RayApplyMatrixInverse33(unsigned int n, float3 * q, const float m[16], float3 * p);
-
-int RayExpandPrimitives(CRay * I);
-
-int PrimitiveSphereHit(CRay * I, float *v, float *n, float *minDist, int except);
-
 static void RayTransformNormals33(unsigned int n, float3 * q, const float m[16], float3 * p);
 static void RayTransformInverseNormals33(unsigned int n, float3 * q, const float m[16],
                                   float3 * p);
+static
 void RayProjectTriangle(CRay * I, RayInfo * r, float *light, float *v0, float *n0,
                         float scale);
 void RaySetContext(CRay * I, int context)

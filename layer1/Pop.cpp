@@ -29,8 +29,6 @@ struct CPop : public Block {
   void reshape(int width, int height) override;
 };
 
-void PopReshape(Block * I, int width, int height);
-
 
 /*========================================================================*/
 void CPop::reshape(int width, int height)

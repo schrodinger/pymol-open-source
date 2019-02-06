@@ -35,10 +35,10 @@ Z* -------------------------------------------------------------------
 #include"DistSet.h"
 #include"ListMacros.h"
 
-void ObjectDistFree(ObjectDist * I);
-void ObjectDistUpdate(ObjectDist * I);
-int ObjectDistGetNFrames(ObjectDist * I);
-void ObjectDistUpdateExtents(ObjectDist * I);
+static void ObjectDistFree(ObjectDist * I);
+static void ObjectDistUpdate(ObjectDist * I);
+static int ObjectDistGetNFrames(ObjectDist * I);
+static void ObjectDistUpdateExtents(ObjectDist * I);
 
 int ObjectDistGetLabelTxfVertex(ObjectDist * I, int state, int index, float *v)
 {

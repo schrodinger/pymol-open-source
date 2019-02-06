@@ -859,8 +859,6 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders=true, fl
 CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est=0, bool addshaders=false, CGO *leftOverCGO=NULL);
 #define CGOOptimizeSpheresToVBONonIndexedNoShader(I, est) CGOOptimizeSpheresToVBONonIndexed(I, est, false, NULL)
 
-void CGOReserve(CGO * ptr, int est);
-
 int CGOCheckComplex(CGO * I);
 int CGOPreloadFonts(CGO * I);
 
@@ -985,7 +983,6 @@ PyObject *CGOAsPyList(CGO * I);
 CGO *CGONewFromPyList(PyMOLGlobals * G, PyObject * list, int version, bool shouldCombine=true);
 void SetCGOPickColor(float *colorVals, int nverts, int pl, unsigned int index, int bond);
 int CGOPickColor(CGO * I, unsigned int index, int bond);
-float *CGO_add_GLfloat(CGO * I, int c);
 
 float *CGOGetNextDrawBufferedIndex(float *cgo_op, int optype=CGO_DRAW_BUFFERS_INDEXED);
 #define CGOGetNextDrawBufferedNotIndex(cgo_op) CGOGetNextDrawBufferedIndex(cgo_op, CGO_DRAW_BUFFERS_NOT_INDEXED)
@@ -1006,7 +1003,6 @@ bool CGOHasOperationsOfType(const CGO *I, int optype);
 bool CGOHasOperationsOfTypeN(const CGO *I, const std::set<int> &optype);
 bool CGOHasCylinderOperations(const CGO *I);
 bool CGOHasSphereOperations(const CGO *I);
-bool CGOFilterOutOperationsOfTypeNInto(const CGO *I, CGO *cgo, const std::set<int> &optype);
 bool CGOFilterOutCylinderOperationsInto(const CGO *I, CGO *cgo);
 
 bool CGOCheckWhetherToFree(PyMOLGlobals * G, CGO *I);

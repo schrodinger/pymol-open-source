@@ -36,8 +36,7 @@ typedef struct RepEllipsoid {
 
 #include"ObjectMolecule.h"
 
-void RepEllipsoidFree(RepEllipsoid * I);
-
+static
 void RepEllipsoidFree(RepEllipsoid * I)
 {
   CGOFree(I->ray);

@@ -33,13 +33,9 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"CGO.h"
 
-void RepDotFree(RepDot * I);
 static void RepDotRender(RepDot * I, RenderInfo * info);
 
-void RepDotInit(void)
-{
-}
-
+static
 void RepDotFree(RepDot * I)
 {
   if (I->shaderCGO){

@@ -84,14 +84,13 @@ typedef struct RepLabel {
 
 #include"ObjectMolecule.h"
 
-void RepLabelFree(RepLabel * I);
-
 static void RepLabelInit(RepLabel *I)
 {
   I->shaderCGO = NULL;
   I->texture_font_size = 0;
 }
 
+static
 void RepLabelFree(RepLabel * I)
 {
   RepPurge(&I->R);
@@ -208,6 +207,7 @@ static void RayDrawLineAsGeometryWithOffsets(CRay *ray, float *pt1, float *pt2,
 }
 
 #ifndef PURE_OPENGL_ES_2
+static
 void drawLine2DCross(float cw, float x1, float y1, float x2, float y2, float *cross){
   float lvect[3];
   float nzn[3] = { 0.f, 0.f, 1.f };
@@ -224,15 +224,12 @@ void drawLine2DCross(float cw, float x1, float y1, float x2, float y2, float *cr
   glVertex3f(x2 - cross[0], y2 - cross[1], 0.f);
   glEnd();
 }
-void drawLine2D(float cw, float x1, float y1, float x2, float y2){
-  float cross[3];
-  drawLine2DCross(cw, x1, y1, x2, y2, cross);
-}
 
 /* Draw Line/Polygon from point (x1,y1) to (x2,y2) with different Z's, where the current Z is 
    at world point curpt with the line starting at (x1,y1), and the second point (x2,y2) is 
    at the world point pt (i.e., the offset is embedded into the matrix convMatrix computed from
    SceneGenerateMatrixToAnotherZFromZ */
+static
 void drawLineToPointInWorldCross(PyMOLGlobals *G, float cw, float x1, float y1, float x2, float y2, float *cross, float *pt, float *curpt){
   float lvect[3];
   float nzn[3] = { 0.f, 0.f, 1.f };
@@ -269,6 +266,7 @@ void drawLineToPointInWorldCross(PyMOLGlobals *G, float cw, float x1, float y1, 
 #define CLIP_TOP 4
 #define CLIP_BOTTOM 8
 
+static
 short CLIPt(float denom, float num, float *tE, float *tL, short *clipedges, short bitmask){
   float t;
   if (denom > 0){
@@ -293,6 +291,7 @@ short CLIPt(float denom, float num, float *tE, float *tL, short *clipedges, shor
 }
 
 /* This function clips the line inside of the (-xmax,-ymax, xmax, ymax) rectangle */
+static
 void Clip2D(float xmax, float ymax, float *x0, float *y0, float *x1, float *y1, short *visible, short *clipedges){
   float dx = *x1 - *x0;
   float dy = *y1 - *y0;
@@ -320,16 +319,20 @@ void Clip2D(float xmax, float ymax, float *x0, float *y0, float *x1, float *y1, 
 	  }
   }
 }
+
+static
 void Clip2DLine(float xmax, float ymax, float *line, short *visible, short *clipedges){
   Clip2D(xmax, ymax, &line[0], &line[1], &line[2], &line[3], visible, clipedges);
 }
 
+static
 void glVertex3fTransformed(float *convMatrix, float x, float y, float z){
   float tmppt[3] = { x, y, z };
   MatrixTransformC44f3f(convMatrix, tmppt, tmppt);
   glVertex3fv(tmppt);
 }
 
+static
 void drawLineToPointInWorldCrossClip(PyMOLGlobals *G, int label_z_target, float cw, float x1, float y1, float x2, float y2, float *cross, float *pt, float *curpt, float cx, float cy){
   float lvect[3];
   float nzn[3] = { 0.f, 0.f, 1.f };
@@ -387,11 +390,7 @@ void drawLineToPointInWorldCrossClip(PyMOLGlobals *G, int label_z_target, float 
   }
 }
 
-void drawLineToPointInWorld(PyMOLGlobals *G, float cw, float x1, float y1, float x2, float y2, float *pt, float *curpt){
-  float cross[3];
-  drawLineToPointInWorldCross(G, cw, x1, y1, x2, y2, cross, pt, curpt);
-}
-
+static
 void drawLine2DCheckZTargetCross(PyMOLGlobals *G, short label_z_target, float *pt, float *curpt, float cw, float x1, float y1, float x2, float y2, float *cross){
   if (label_z_target){
     drawLine2DCross(cw, x1, y1, x2, y2, cross);
@@ -400,11 +399,13 @@ void drawLine2DCheckZTargetCross(PyMOLGlobals *G, short label_z_target, float *p
   }
 }
 
+static
 void drawLine2DCheckZTarget(PyMOLGlobals *G, short label_z_target, float *pt, float *curpt, float cw, float x1, float y1, float x2, float y2){
   float cross[3];
   drawLine2DCheckZTargetCross(G, label_z_target, pt, curpt, cw, x1, y1, x2, y2, cross);
 }
 
+static
 void drawLine2DCheckZTargetClip(PyMOLGlobals *G, short label_z_target, float *pt, float *curpt, float cw, float x1, float y1, float x2, float y2, float cx, float cy){
   float cross[3];
   drawLineToPointInWorldCrossClip(G, label_z_target, cw, x1, y1, x2, y2, cross, pt, curpt, cx, cy);
@@ -446,6 +447,7 @@ void drawLineAsGeometryWithOffsets(float *pt1, float *pt2, float *spt1, float *s
   glEnd();
 }
 
+static
 void RepLabelRenderBackgroundInImmediate(PyMOLGlobals *G, RepLabel *I, float *v, int draw_var, float *tCenterPt, short relativeMode, float *xn, float *yn, 
 					 float *PmvMatrix, float *RotMatrix, int screenwidth, int screenheight, float *screenWorldOffset, float *indentFactor, 
 					 float text_width, float text_height, float font_size){

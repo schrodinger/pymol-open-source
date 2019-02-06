@@ -986,8 +986,8 @@ static long P_glut_thread_id = -1;
 /* enables us to keep glut out if by chance it grabs the API
  * in the middle of a nested API based operation */
 
+static
 void PCatchInit(void);
-void my_interrupt(int a);
 
 
 /*
@@ -1115,7 +1115,7 @@ void PXDecRef(PyObject * obj)
   Py_XDECREF(obj);
 }
 
-OV_STATIC ov_status CacheCreateEntry(PyObject ** result, PyObject * input)
+static ov_status CacheCreateEntry(PyObject ** result, PyObject * input)
 {
   ov_status status = OV_STATUS_FAILURE;
   if(input && PyTuple_Check(input)) {
@@ -1287,6 +1287,7 @@ void PSleep(PyMOLGlobals * G, int usec)
 static PyObject *PCatchWrite(PyObject * self, PyObject * args);
 static PyObject *PCatch_install(PyObject * self, PyObject * args);
 
+static
 void my_interrupt(int a)
 {
   exit(EXIT_FAILURE);

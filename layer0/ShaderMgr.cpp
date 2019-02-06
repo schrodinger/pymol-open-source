@@ -229,8 +229,8 @@ bool CShaderPrg::reload(){
 #define MASK_SHADERS_PRESENT_GEOMETRY 0x2;
 #define MASK_SHADERS_PRESENT_SMAA 0x4;
 
-void getGLVersion(PyMOLGlobals * G, int *major, int* minor);
-void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor);
+static void getGLVersion(PyMOLGlobals * G, int *major, int* minor);
+static void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor);
 
 static void disableShaders(PyMOLGlobals * G);
 

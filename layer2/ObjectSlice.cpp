@@ -47,11 +47,10 @@ Z* -------------------------------------------------------------------
 #define START_STRIP -1
 #define STOP_STRIP -2
 
-ObjectSlice *ObjectSliceNew(PyMOLGlobals * G);
-
+static ObjectSlice *ObjectSliceNew(PyMOLGlobals * G);
 static void ObjectSliceFree(ObjectSlice * I);
-void ObjectSliceStateInit(PyMOLGlobals * G, ObjectSliceState * ms);
-void ObjectSliceRecomputeExtent(ObjectSlice * I);
+static void ObjectSliceStateInit(PyMOLGlobals * G, ObjectSliceState * ms);
+static void ObjectSliceRecomputeExtent(ObjectSlice * I);
 
 static PyObject *ObjectSliceStateAsPyList(ObjectSliceState * I)
 {

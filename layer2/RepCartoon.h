@@ -21,6 +21,5 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 
 Rep *RepCartoonNew(CoordSet * cset, int state);
-void RepCartoonInit(void);
 
 #endif
