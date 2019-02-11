@@ -2,6 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2019-02-11 Thomas Holder, Jarrett Johnson
+
+	* 2.3.0
+
+	* atom-level cartoon_transparency
+
+	* aln export for Nucleic Acids
+
+	* new API function: cmd.set_raw_alignment()
+
+	* fetch async=0 by default
+
 2018-08-16 Thomas Holder, Jarrett Johnson
 
 	* fast MMTF export (requires mmtf-cpp)
