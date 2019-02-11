@@ -1350,6 +1350,9 @@ ARGUMENTS
     type = str: cif, pdb, pdb1, 2fofc, fofc, emd, cid, sid {default: cif
     (default was "pdb" up to 1.7.6)}
 
+    async_ = 0/1: download in the background and do not block the PyMOL
+    command line {default: 0 -- changed in PyMOL 2.3}
+
 PYMOL API
 
     cmd.fetch(string code, string name, int state, init finish,
