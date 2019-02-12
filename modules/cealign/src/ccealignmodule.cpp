@@ -610,13 +610,6 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
     std::cout << "ERROR: Best RMSD found was 1e6.  Broken.\n";
     return NULL;
   }
-	
-  // list of list of pairs	
-  PyObject* rVal = PyList_New(0);
-
-  PyObject* pyRMSD = Py_BuildValue( "f", bestRMSD );
-
-  PyObject* pyAliLen = Py_BuildValue( "i", bestLen );
 
   PyObject* pyU = Py_BuildValue( "[f,f,f,f, f,f,f,f, f,f,f,f, f,f,f,f]",
 				 bestU[0][0], bestU[1][0], bestU[2][0], bestCOM1[0],
@@ -627,17 +620,15 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
   PyObject* pyPathA = PyList_New(0);
   PyObject* pyPathB = PyList_New(0);
   for (int j = 0; j < smaller && paths[bestO][j].first != -1; j++) {
-    PyList_Append(pyPathA, Py_BuildValue("i", paths[bestO][j].first));
-    PyList_Append(pyPathB, Py_BuildValue("i", paths[bestO][j].second));
+    PyObject* v = Py_BuildValue("i", paths[bestO][j].first);
+    PyList_Append(pyPathA, v);
+    Py_DECREF(v);
+    v = Py_BuildValue("i", paths[bestO][j].second);
+    PyList_Append(pyPathB, v);
+    Py_DECREF(v);
   }
 
-  PyList_Append(rVal, pyAliLen);
-  PyList_Append(rVal, pyRMSD);
-  PyList_Append(rVal, pyU );
-  PyList_Append(rVal, pyPathA );
-  PyList_Append(rVal, pyPathB );
-
-  return (PyObject*) rVal;
+  return Py_BuildValue("[ifNNN]", bestLen, bestRMSD, pyU, pyPathA, pyPathB);
 }
 
 
