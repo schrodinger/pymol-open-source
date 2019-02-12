@@ -8,6 +8,10 @@ The commercial PyMOL product ("Incentive PyMOL") with maintenance and support is
 
 See [INSTALL](INSTALL).
 
+## Contributing
+
+See [DEVELOPERS](DEVELOPERS).
+
 ## License
 
 Copyright (c) [Schrodinger, LLC](https://www.schrodinger.com/)

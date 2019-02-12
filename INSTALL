@@ -13,14 +13,15 @@ REQUIREMENTS
       https://github.com/schrodinger/pmw-patched
     - OpenGL
     - GLEW
-    - GLUT (freeglut) (optional, disable with --no-glut)
+    - GLUT (freeglut) (optional, enable with --glut)
     - libpng
     - freetype
     - libxml2 (optional, for COLLADA export, disable with --no-libxml)
     - msgpack-c 2.1.5+ (optional, for fast MMTF loading and export,
         disable with --use-msgpackc=no)
     - mmtf-cpp (for fast MMTF export, disable with --use-msgpackc=no)
-    - PyQt5, PyQt4, or PySide (optional, will fall back to Tk interface)
+    - PyQt5, PyQt4, PySide2 or PySide (optional, will fall back to Tk
+        interface if compiled with --glut)
     - glm
     - catch2 (optional, enable with --testing)
 
