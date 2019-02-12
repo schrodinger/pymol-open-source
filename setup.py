@@ -165,7 +165,8 @@ class install_pymol(install):
         return name
 
     def copy_tree_nosvn(self, src, dst):
-        ignore = lambda src, names: set(['.svn']).intersection(names)
+        ignore = lambda src, names: set([
+        ]).intersection(names)
         if os.path.exists(dst):
             shutil.rmtree(dst)
         print('copying %s -> %s' % (src, dst))

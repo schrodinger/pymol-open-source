@@ -2060,7 +2060,7 @@ static PyObject *CmdGetVersion(PyObject * self, PyObject * args)
 #ifdef _PyMOL_BUILD_DATE
       _PyMOL_BUILD_DATE,
       _PYMOL_BUILD_GIT_SHA,
-      _PyMOL_BUILD_SVN_REV
+      0
 #else
       0, "", 0
 #endif

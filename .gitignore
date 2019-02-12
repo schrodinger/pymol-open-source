@@ -1,0 +1,4 @@
+*.pyc
+*.d
+generated
+build

@@ -46,8 +46,6 @@ ARGUMENTS
             body += 'build date: %s %s\n' % (time.ctime(version[3]), TZ)
         if version[4]:
             body += 'git sha: %s\n' % version[4]
-        if version[5]:
-            body += "svn rev: %s\n" % version[5]
 
     try:
         # pymol conda package version

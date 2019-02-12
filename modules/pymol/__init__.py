@@ -177,9 +177,6 @@ def get_version_message(v=None):
     p += "Incentive Product" if invocation.options.incentive_product else \
          "Open-Source"
 
-    if v[5]:
-        p += ", svn rev %s" % v[5]
-
     return p
 
 def guess_pymol_path():
