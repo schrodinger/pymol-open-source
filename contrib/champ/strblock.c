@@ -49,11 +49,12 @@ int main(int argc, char *argv[])
 
 /* right now just a braindead, memory-leaky system */
 
-int StrBlockNewStr(char **list_ptr,char *st,int len)
+int StrBlockNewStr(char **list_ptr,const char *st,int len)
 {
   StrBlock *I;
   register int a;
-  register char *p,*q;
+  register char *q;
+  const char *p;
   char *str;
   int result, new_extent;
   I=*((StrBlock**)list_ptr);

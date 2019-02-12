@@ -23,7 +23,7 @@ typedef struct {
 } StrBlock;
 
 char  *StrBlockNew(int init_size);
-int   StrBlockNewStr(char **block,char *st,int len);
+int   StrBlockNewStr(char **block,const char *st,int len);
 void  StrBlockFree(char *block);
 void  StrBlockFreeStr(char *block,int elem);
 

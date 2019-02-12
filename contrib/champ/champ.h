@@ -282,7 +282,7 @@ int ChampPatIdentical(ListAtom *p,ListAtom *a);
 int ChampAtomMatch(ListAtom *p,ListAtom *a);
 int ChampBondMatch(ListBond *p,ListBond *a);
 
-int ChampSmiToPat(CChamp *I,char *c);
+int ChampSmiToPat(CChamp *I, const char *c);
 void ChampMemoryDump(CChamp *I);
 int ChampMemoryUsage(CChamp *I);
 int ChampMatch_1V1_B(CChamp *I,int pattern,int target);

@@ -34,10 +34,10 @@ Z* -------------------------------------------------------------------
 #define _RINGDEBUG
 #define _AROMDEBUG
 
-char *ChampParseAliphaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp_hyd);
-char *ChampParseAromaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp_hyd);
-char *ChampParseStringAtom(CChamp *I,char *c,int atom,int len);
-int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom);
+char *ChampParseAliphaticAtom(CChamp *I,const char *c,int atom,int mask,int len,int imp_hyd);
+char *ChampParseAromaticAtom(CChamp *I,const char *c,int atom,int mask,int len,int imp_hyd);
+char *ChampParseStringAtom(CChamp *I,const char *c,int atom,int len);
+int ChampParseAtomBlock(CChamp *I,const char **c_ptr,int cur_atom);
 
 void ChampAtomDump(CChamp *I,int index);
 void ChampAtomFlagDump(CChamp *I,int index);
@@ -61,10 +61,10 @@ void ChampMatchFreeChain(CChamp *I,int match_idx);
 void ChampCountRings(CChamp *I,int index);
 void ChampPrepareTarget(CChamp *I,int index);
 void ChampPreparePattern(CChamp *I,int index);
-char *ChampParseBlockAtom(CChamp *I,char *c,int atom,int mask,int len,int not_flag);
+char *ChampParseBlockAtom(CChamp *I,const char *c,int atom,int mask,int len,int not_flag);
 void ChampCountBondsEtc(CChamp *I,int index);
 void ChampCheckCharge(CChamp *I,int index);
-char *ChampParseTag(CChamp *I,char *c,unsigned int *map,unsigned int *not_map,int *ok);
+char *ChampParseTag(CChamp *I,const char *c,unsigned int *map,unsigned int *not_map,int *ok);
 
 
 static int num_to_ring[12] = { 
@@ -108,7 +108,7 @@ static int num_to_degree[9] = {
 
 #ifdef _HAPPY_UT
 
-static void diff(char *p,char *q)
+static void diff(const char *p,const char *q)
 {
   int same=true;
   char *s1,*s2;
@@ -370,7 +370,7 @@ int main(int argc, char *argv[])
 
 #endif
 
-char *ChampParseTag(CChamp *I,char *c,unsigned int *map,unsigned int *not_map,int *ok)
+char *ChampParseTag(CChamp *I,const char *c,unsigned int *map,unsigned int *not_map,int *ok)
 {
   /* parse bit masks like <1> <1,2,3> <12,3,1> etc... */
 
@@ -414,7 +414,7 @@ char *ChampParseTag(CChamp *I,char *c,unsigned int *map,unsigned int *not_map,in
     } else 
       c++;
   }
-  return(c);
+  return (char*)c;
 }
 
 static void merge_lineages(CChamp *I,int *src,int *src_mask,int *dst,int *dst_mask)
@@ -1180,11 +1180,11 @@ void ChampPreparePattern(CChamp *I,int index)
     pat->unique_atom = ChampUniqueListNew(I,pat->atom,0);
 }
 
-static int PTruthCallStr(PyObject *object,char *method,char *argument)
+static int PTruthCallStr(PyObject *object,const char *method,const char *argument)
 {
   int result = false;
   PyObject *tmp;
-  tmp = PyObject_CallMethod(object,method,"s",argument);
+  tmp = PyObject_CallMethod(object,(char*)method,"s",argument);
   if(tmp) {
     if(PyObject_IsTrue(tmp))
       result = 1;
@@ -1241,7 +1241,7 @@ static void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
 
 static int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln)
 {
-  char *st;
+  const char *st;
   PyObject *tmp;
   int result=true;
   if(!object)
@@ -2772,7 +2772,7 @@ int ChampMatch2(CChamp *I,int template,int target,
  * Smiles
  * =============================================================== */
 
-char *ChampParseBlockAtom(CChamp *I,char *c,int atom,int mask,int len,int not_flag)
+char *ChampParseBlockAtom(CChamp *I,const char *c,int atom,int mask,int len,int not_flag)
 {
   ListAtom *at;
   at=I->Atom+atom;
@@ -2798,10 +2798,10 @@ char *ChampParseBlockAtom(CChamp *I,char *c,int atom,int mask,int len,int not_fl
     }
   }
   /* need to include code for loading symbol */
-  return c+len;
+  return (char*)c+len;
 }
 
-char *ChampParseAliphaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp_hyd) 
+char *ChampParseAliphaticAtom(CChamp *I,const char *c,int atom,int mask,int len,int imp_hyd) 
 {
   ListAtom *at;
   at=I->Atom+atom;
@@ -2812,10 +2812,10 @@ char *ChampParseAliphaticAtom(CChamp *I,char *c,int atom,int mask,int len,int im
     " ChampParseAliphaticAtom: called.\n"
     ENDFD;
   /* need to include code for loading symbol */
-  return c+len;
+  return (char*)c+len;
 }
 
-char *ChampParseAromaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp_hyd) 
+char *ChampParseAromaticAtom(CChamp *I,const char *c,int atom,int mask,int len,int imp_hyd) 
 {
   ListAtom *at;
   at=I->Atom+atom;
@@ -2826,10 +2826,10 @@ char *ChampParseAromaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp
   PRINTFD(FB_smiles_parsing) 
     " ChampParseAromaticAtom: called.\n"
     ENDFD;
-  return c+len;
+  return (char*)c+len;
 }
 
-char *ChampParseStringAtom(CChamp *I,char *c,int atom,int len) 
+char *ChampParseStringAtom(CChamp *I,const char *c,int atom,int len) 
 {
   ListAtom *at;
   at=I->Atom+atom;
@@ -2840,12 +2840,12 @@ char *ChampParseStringAtom(CChamp *I,char *c,int atom,int len)
   PRINTFD(FB_smiles_parsing) 
     " ChampParseStringAtom: called.\n"
     ENDFD;
-  return c+len;
+  return (char*)c+len;
 }
 
-int ChampParseNumeral(char *c);
+int ChampParseNumeral(const char *c);
 
-int ChampParseNumeral(char *c) {
+int ChampParseNumeral(const char *c) {
   switch(*c) {
   case '0':
   case '1':
@@ -2864,11 +2864,11 @@ int ChampParseNumeral(char *c) {
   }
 }
 
-int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom) 
+int ChampParseAtomBlock(CChamp *I,const char **c_ptr,int cur_atom) 
 {
   int ok = true;
   ListAtom *at;
-  char *c;
+  const char *c;
   int not_flag = false;
   int num;
   int done=false;
@@ -4739,7 +4739,7 @@ int ChampAddBondToAtom(CChamp *I,int atom_index,int bond_index)
   return(ok);
 }
 
-int ChampSmiToPat(CChamp *I,char *c) 
+int ChampSmiToPat(CChamp *I, const char *c) 
 { /* returns root atom of list */
   int mark[MAX_RING]; /* ring marks 0-9 */
   int mark_pri[MAX_RING]; /* lexical priority of mark */
@@ -4761,7 +4761,7 @@ int ChampSmiToPat(CChamp *I,char *c)
   int a;
   int not_bond = false;
   int lex_pri = 0;
-  char *orig_c=c;
+  const char *orig_c=c;
 
 #define save_bond() { if(last_bond) {I->Bond[last_bond].link=cur_bond;}\
           else {bond_list=cur_bond;}\
