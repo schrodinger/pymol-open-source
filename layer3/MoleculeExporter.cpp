@@ -1357,6 +1357,11 @@ public:
     m_raw.occupancyList.emplace_back(ai->q);
     m_raw.altLocList.emplace_back(ai->alt[0]);
 
+    // don't assign to 'm_retain_ids', it messes up bonds
+    if (SettingGetGlobal_b(G, cSetting_pdb_retain_ids)) {
+      m_raw.atomIdList.emplace_back(ai->id);
+    }
+
     m_last_ai = ai;
   }
 
