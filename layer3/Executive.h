@@ -167,6 +167,7 @@ int ExecutiveScrollTo(PyMOLGlobals * G, const char * name, int);
 
 void ExecutiveInvalidateGroups(PyMOLGlobals * G, int force);
 void ExecutiveUpdateGroups(PyMOLGlobals * G, int force);
+void ExecutiveUpdateSceneMembers(PyMOLGlobals*);
 
 int *ExecutiveGetG3d(PyMOLGlobals * G);
 int ExecutiveOrder(PyMOLGlobals * G, const char *s1, int sort, int location);

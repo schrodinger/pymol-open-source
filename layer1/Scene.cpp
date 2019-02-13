@@ -2117,6 +2117,9 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
   PRINTFB(G, FB_Scene, FB_Blather)
     " Scene: Making movie image.\n" ENDFB(G);
 
+  // PYMOL-3209 objects inside hidden groups become visible
+  ExecutiveUpdateSceneMembers(G);
+
   mode = SceneValidateImageMode(G, mode, width || height);
 
   I->DirtyFlag = false;

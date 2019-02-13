@@ -1580,7 +1580,7 @@ static void ExecutiveInvalidateSceneMembers(PyMOLGlobals * G)
   I->ValidSceneMembers = false;
 }
 
-static void ExecutiveUpdateSceneMembers(PyMOLGlobals * G)
+void ExecutiveUpdateSceneMembers(PyMOLGlobals * G)
 {
   CExecutive *I = G->Executive;
   ExecutiveUpdateGroups(G, false);
