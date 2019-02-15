@@ -30,7 +30,6 @@ from chempy.models import Indexed
 from pymol import util
 
 import re
-import string
 
 from chempy import cex
 CEX=cex
@@ -133,7 +132,7 @@ def readcex(filename, object=''):  # Author: Scott Dixon
             for conf in confs:
                 if conf.value[0] == '"':
                     conf.value = conf.value[1:-1]
-                    xyz = [string.split(x,",") for x in string.split(conf.value,";")]
+                    xyz = [x.split(",") for x in conf.value.split(";")]
                     for at in parser.model.atom:
                         i = at.index
                         at.coord = [ float(xyz[i][0]), float(xyz[i][1]), float(xyz[i][2]) ]
@@ -337,7 +336,7 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
     doc_list = ['\888Legend:']
     obj_name_dict = {}
     for a in list:
-        sf = string.find(a,"_")
+        sf = a.find("_")
         if sf>=0:
             object_name = a[0:sf]
             if object_name not in obj_name_dict:

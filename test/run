@@ -4,7 +4,6 @@ import os
 import sys
 import re
 import glob
-import string
 
 # list of tests to run ...
 
@@ -44,9 +43,7 @@ ref = "ref"
 inp = "inp"
 tmp = "tmp"
 
-python_exe = "../ext/bin/python"
-if not os.path.exists(python_exe):
-   python_exe = "/usr/bin/python"
+python_exe = sys.executable
 if not os.path.exists(python_exe):
    python_exe = "python"
 
@@ -70,14 +67,14 @@ for test in tests:
    for ifil in flist:
       # get options
       f = open(ifil)
-      opt = string.strip(f.readline())
+      opt = f.readline().strip()
       opt = re.sub("^\s*\#","",opt)
       f.close()
       
       tst = re.sub(r".*/","",ifil) # get exact test name without suffix
       tst = re.sub(r"\..*","",tst)
       
-      print " run_tests: "+tst+"..."
+      print(" run_tests: "+tst+"...")
 
       syscmd = cmd+" "+opt+" "+ifil+" 2>&1 | "+python_exe+" trim.py > "+cmp+"/"+tst+".log 2>&1"
 
@@ -93,14 +90,14 @@ for test in tests:
                df = os.popen(diff_cmd+" "+ref_fil+" "+cmp_fil)
                diffs = df.readlines()
                df.close()
-               print " run_tests: "+ \
-                  postfx+" DIFFERS over about %d lines." % int(len(diffs)/2)
+               print(" run_tests: "+ \
+                  postfx+" DIFFERS over about %d lines." % int(len(diffs)/2))
                if os.path.isdir('diffs'):
                   f = open('diffs/' + postfx + '.diff', 'w')
                   f.writelines(diffs)
                   f.close()
          else:
-            print " run_tests: "+postfx+" is missing."
+            print(" run_tests: "+postfx+" is missing.")
             
       # check for extraneous, unverifiable files
       
@@ -108,6 +105,6 @@ for test in tests:
          postfx = re.sub(r".*/","",cmp_fil)
          ref_fil = ref+"/"+postfx
          if not os.path.exists(ref_fil):
-            print " run_tests: no reference version for "+cmp+"/"+postfx+"."
+            print(" run_tests: no reference version for "+cmp+"/"+postfx+".")
 
 # vi:sw=3:expandtab

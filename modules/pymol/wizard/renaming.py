@@ -3,7 +3,6 @@ from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
 import types
-import string
 
 class Renaming(Wizard):
 
@@ -28,7 +27,7 @@ class Renaming(Wizard):
         elif k>32:
             self.new_name= self.new_name + chr(k)
         elif k==10 or k==13:
-            self.new_name = string.strip(self.new_name)
+            self.new_name = self.new_name.strip()
             if self.mode=='object':
                 cmd.do("set_name %s,%s"%
                        (self.old_name,self.new_name),log=0)

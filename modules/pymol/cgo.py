@@ -14,7 +14,6 @@
 
 from __future__ import print_function
 
-import string
 from chempy import cpv
 #import popen2
 import os
@@ -174,7 +173,7 @@ def cyl_text(cgo,font,pos,text,radius=0.1,color=[1.0,1.0,1.0],
 def from_r3d(fname):
     result = DEFAULT_ERROR
     input = None
-    if string.find(fname,':')>1:
+    if '://' in fname:
         try:
             from urllib import urlopen
         except ImportError:
@@ -258,7 +257,7 @@ class RenderReader:
         l = f.readline()
         if l:
             self.app_fn=self.append_tri
-            s = string.split(l)
+            s = l.split()
             self.l_vert = [[float(s[0]),float(s[1]),float(s[2])],
                         [float(s[3]),float(s[4]),float(s[5])],
                         [float(s[6]),float(s[7]),float(s[8])]]
@@ -268,7 +267,7 @@ class RenderReader:
     def tri_normal(self,f):
         l = f.readline()
         if l:
-            s = string.split(l)
+            s = l.split()
             self.l_norm = [[float(s[0]),float(s[1]),float(s[2])],
                         [float(s[3]),float(s[4]),float(s[5])],
                         [float(s[6]),float(s[7]),float(s[8])]]
@@ -278,7 +277,7 @@ class RenderReader:
         l = f.readline()
         if l:
             self.app_fn = self.append_cyl
-            s = string.split(l)
+            s = l.split()
             self.l_vert = [[float(s[0]),float(s[1]),float(s[2])],
                         [float(s[4]),float(s[5]),float(s[6])]]
             self.l_radi = float(s[3])
@@ -289,7 +288,7 @@ class RenderReader:
         self.append_last()
         l = f.readline()
         if l:
-            s = string.split(l)
+            s = l.split()
             self.obj.append(COLOR)
             self.obj.extend([float(s[4]),float(s[5]),float(s[6])])
             self.obj.append(SPHERE)
@@ -299,14 +298,14 @@ class RenderReader:
         self.append_last()
         l = f.readline()
         if l:
-            s = string.split(l)
+            s = l.split()
             self.obj.append(COLOR)
             self.obj.extend([float(s[4]),float(s[5]),float(s[6])])
             self.obj.append(QUADRIC)
             self.obj.extend([float(s[0]),float(s[1]),float(s[2]),float(s[3])])
         l = f.readline()
         if l:
-            s = string.split(l)
+            s = l.split()
             self.obj.extend([float(s[0]),float(s[1]),float(s[2]),
                              float(s[3]),float(s[4]),float(s[5]),
                              float(s[6]),float(s[7]),float(s[8]),float(s[9])])
@@ -316,7 +315,7 @@ class RenderReader:
         l = f.readline()
         print("mat_prop"+l)
         if l:
-            s = string.split(l)
+            s = l.split()
             (mphong, mspec, sr, sg, sb, clrity) = map(float,s[0:6])
             if clrity>0.999:
                 clrity=0.999
@@ -371,7 +370,7 @@ class RenderReader:
             if not l:
                 break
             if l[0] != '#':
-                v = string.split(l)
+                v = l.split()
                 n=int(v[0])
                 if(n<ld):
                     dd = dispatch[n]

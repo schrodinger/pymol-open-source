@@ -27,8 +27,6 @@ else:
     import tkinter.colorchooser as tkColorChooser
 
 import Pmw
-import string
-import copy
 
 class NewColor:
     def __init__(self,app,parent):
@@ -56,7 +54,7 @@ class NewColor:
 
     def command(self,result=None):
         if result=='Create':
-            st = string.strip(self.entry.get())
+            st = self.entry.get().strip()
             if len(st):
                 self.parent.update(st)
             self.app.my_deactivate(self.dialog)
@@ -140,7 +138,7 @@ class ColorEditor:
         elif result=='Edit':
             sels = self.dialog.getcurselection()
             if len(sels)!=0:
-                color = string.strip(sels[0])
+                color = sels[0].strip()
                 ColorEdit(self.app,color,self,self.cmd.get_color_tuple(color))
         else:
             NewColor(self.app,self)

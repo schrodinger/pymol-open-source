@@ -1,4 +1,3 @@
-import string
 import math
 from pymol.cgo import *
 from pymol import cmd
@@ -41,7 +40,7 @@ for a in range(0,63):
    pdb_list = [
       "HETATM%5d  C   UNK     1    %8.3f%8.3f%8.3f  1.00 10.00\n"%(c,2.0,0,2.0),
       ]
-   cmd.read_pdbstr(string.join(pdb_list,''),'lab1',c,discrete=1)
+   cmd.read_pdbstr(''.join(pdb_list),'lab1',c,discrete=1)
    cmd.label("(lab1 and id %d)"%c,"'frame %d %6.3f'"%(c,math.sin(a/10.0)))
 
 
@@ -54,7 +53,7 @@ pdb_list = [
 "HETATM    1  X   UNK     1    %8.3f%8.3f%8.3f  1.00 10.00\n"%(3.2,0,0),
 "HETATM    2  Y   UNK     2    %8.3f%8.3f%8.3f  1.00 10.00\n"%(0,3.2,0),
 "HETATM    3  Z   UNK     3    %8.3f%8.3f%8.3f  1.00 10.00\n"%(0,0,3.2),]
-cmd.read_pdbstr(string.join(pdb_list,''),'lab2')
+cmd.read_pdbstr(''.join(pdb_list),'lab2')
 cmd.hide('(lab2)')
 cmd.label('lab2','name')
 cmd.color('white','lab2')

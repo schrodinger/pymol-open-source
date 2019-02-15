@@ -74,16 +74,6 @@ IS_MACOS = sys.platform.startswith('darwin')
 IS_LINUX = sys.platform.startswith('linux')
 
 if IS_PY3:
-    # legacy string API, still used by Pmw for example
-    import string
-    for attr in ['capitalize', 'count', 'find', 'index', 'lower',
-            'replace', 'rstrip', 'split', 'strip', 'upper', 'zfill']:
-        setattr(string, attr, getattr(str, attr))
-    string.letters      = string.ascii_letters
-    string.lowercase    = string.ascii_lowercase
-    string.join = lambda words, sep=' ': sep.join(words)
-    string.atoi = int
-
     import _thread as thread
 else:
     import thread

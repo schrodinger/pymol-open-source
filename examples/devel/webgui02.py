@@ -277,7 +277,7 @@ def data_from_sdf(sdf_file_path):
         mol_id = mol[0].strip()
 
         # store the MOL record
-        mol_dict[mol_id] = string.join(mol,'')
+        mol_dict[mol_id] = ''.join(mol)
         
         # add row (assuming mol_id is unique)
         row_id_list.append(mol_id)

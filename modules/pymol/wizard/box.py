@@ -429,7 +429,7 @@ class Box(Wizard):
             self.new_name = self.new_name + chr(k)
         elif k==10 or k==13:
             self.editing_name = 0
-            self.new_name = string.strip(self.new_name)
+            self.new_name = self.new_name.strip()
             if self.new_name == '':
                 self.new_name = 'box'
             else:

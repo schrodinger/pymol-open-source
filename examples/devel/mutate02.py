@@ -18,7 +18,7 @@ stored.list = []
 # generate our list of residues (CA-atoms) to mutate
 
 cmd.iterate("1hpv//A//CA",
-"stored.list.append(string.join([model,segi,chain,resi,name],'/'))")
+"stored.list.append('/'.join([model,segi,chain,resi,name]))")
 
 # now iterate through each residue
 
