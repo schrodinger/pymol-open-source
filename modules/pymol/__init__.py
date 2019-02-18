@@ -555,9 +555,6 @@ setup_environ()
 # initialize instance-specific module/object internals
 _init_internals(sys.modules[__name__])
 
-# maximize responsiveness
-sys.setcheckinterval(1)
-
 # get X-window support (machine_get_clipboard)
 if 'DISPLAY' in os.environ:
     from .xwin import *
