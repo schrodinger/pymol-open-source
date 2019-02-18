@@ -14793,23 +14793,6 @@ static void ExecutivePurgeSpec(PyMOLGlobals * G, SpecRec * rec)
 
     CGOFree(rec->gridSlotSelIndicatorsCGO);
 
-  if(rec->group_name[0]) {
-    /* cascade group members up to the surrounding group */
-    SpecRec *rec2 = NULL;
-    while(ListIterate(I->Spec, rec2, next)) {
-      if((rec2->group == rec) || WordMatchExact(G, rec->name, rec2->group_name, true)) {
-        strcpy(rec2->group_name, rec->group_name);
-      }
-    }
-  } else if((rec->type == cExecObject) && (rec->obj->type == cObjectGroup)) {
-    /* and/or delete their group membership */
-    SpecRec *rec2 = NULL;
-    while(ListIterate(I->Spec, rec2, next)) {
-      if((rec2->group == rec) || WordMatchExact(G, rec->name, rec2->group_name, true)) {
-        rec2->group_name[0] = 0;
-      }
-    }
-  }
   ExecutiveInvalidateGroups(G, false);
   ExecutiveInvalidatePanelList(G);
   switch (rec->type) {
