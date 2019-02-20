@@ -30,7 +30,7 @@ struct _CUtil {
 int UtilInit(PyMOLGlobals *G) 
 {
   G->Util = pymol::calloc<CUtil>(1);
-  G->Util->StartSec = UtilGetSeconds(G);
+  G->Util->StartSec = UtilGetSecondsEpoch();
   return 1;
 }
 
@@ -66,18 +66,27 @@ int UtilCountStringVLA(char *vla)
   return(result);
 }
 
+/**
+ * Get a timestamp in seconds since PyMOL was started
+ */
 double UtilGetSeconds(PyMOLGlobals *G)
 {
+  return UtilGetSecondsEpoch() - G->Util->StartSec;
+}
+
+/**
+ * Get a timestamp in seconds since 1970-01-01
+ */
+double UtilGetSecondsEpoch()
+{
 #ifndef _WIN32
-  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
   struct timeval tv;
   gettimeofday(&tv,NULL);
-  return((tv.tv_sec+(tv.tv_usec/((double)1000000.0)))-G->Util->StartSec);
-  /* END PROPRIETARY CODE SEGMENT */
+  return tv.tv_sec + (tv.tv_usec / 1e6);
 #else
    struct __timeb64 timebuffer;
    _ftime64( &timebuffer );
-   return((timebuffer.time+(timebuffer.millitm/((double)1000.0)))-G->Util->StartSec);
+   return timebuffer.time + (timebuffer.millitm / 1e3);
 #endif
 }
 

@@ -39,6 +39,7 @@ void UtilStripANSIEscapes(char *s);
 void UtilStripANSIEscapes(std::string& str);
 int UtilCountStringVLA(char *vla);
 
+double UtilGetSecondsEpoch();
 double UtilGetSeconds(PyMOLGlobals * G);
 int UtilInit(PyMOLGlobals * G);
 void UtilFree(PyMOLGlobals * G);
