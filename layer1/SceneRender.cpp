@@ -401,6 +401,8 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       short render_to_texture_for_pp = 0;
       /* STANDARD RENDERING */
 
+      start_time = UtilGetSeconds(G);
+
       glEnable(GL_BLEND);
       glBlendFunc_default();
     
