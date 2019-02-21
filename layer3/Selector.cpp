@@ -2356,7 +2356,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
         MapFree(map);
 	if (too_many_atoms){
 	  PRINTFB(G, FB_Selector, FB_Errors)
-	    " SelectorAssignSS: ERROR: Unreasonable number of neighbors for dss, cannot assign secondary structure.\n" ENDFB(G);
+	    " %s: ERROR: Unreasonable number of neighbors for dss, cannot assign secondary structure.\n", __func__ ENDFB(G);
 	}
       }
       FreeP(zero);
@@ -3710,7 +3710,7 @@ int SelectorCreateAlignments(PyMOLGlobals * G,
   ObjectMolecule *obj1, *obj2;
   int cmp;
   PRINTFD(G, FB_Selector)
-    " SelectorCreateAlignments-DEBUG: entry.\n" ENDFD cnt = 0;
+    " %s-DEBUG: entry.\n", __func__ ENDFD cnt = 0;
   /* number of pairs of atoms */
   np = VLAGetSize(pair) / 2;
   if(np) {
@@ -3809,7 +3809,7 @@ int SelectorCreateAlignments(PyMOLGlobals * G,
     FreeP(flag2);
   }
   PRINTFD(G, FB_Selector)
-    " SelectorCreateAlignments-DEBUG: exit, cnt = %d.\n", cnt ENDFD return cnt;
+    " %s-DEBUG: exit, cnt = %d.\n", __func__, cnt ENDFD return cnt;
 }
 
 
@@ -3930,7 +3930,7 @@ int *SelectorGetResidueVLA(PyMOLGlobals * G, int sele, int ca_only,
 
   r = result;
   PRINTFD(G, FB_Selector)
-    " SelectorGetResidueVLA-DEBUG: entry, sele = %d\n", sele ENDFD;
+    " %s-DEBUG: entry, sele = %d\n", __func__, sele ENDFD;
 
   for(SeleAtomIterator iter(G, sele); iter.next();) {
     if(iter.obj == exclude)
@@ -3962,7 +3962,7 @@ int *SelectorGetResidueVLA(PyMOLGlobals * G, int sele, int ca_only,
     VLASize(result, int, (ov_size) (r - result));
   }
   PRINTFD(G, FB_Selector)
-    " SelectorGetResidueVLA-DEBUG: exit, result = %p, size = %d\n",
+    " %s-DEBUG: exit, result = %p, size = %d\n", __func__,
     (void *) result, (unsigned int) VLAGetSize(result)
     ENDFD;
 
@@ -6010,7 +6010,7 @@ int SelectorMapCoulomb(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
   }
 
   PRINTFB(G, FB_Selector, FB_Details)
-    " SelectorMapCoulomb: Total charge is %0.3f for %d points (%d atoms).\n", tot_charge,
+    " %s: Total charge is %0.3f for %d points (%d atoms).\n", __func__, tot_charge,
     n_point, n_at ENDFB(G);
 
   if(neutral && (fabs(tot_charge) > R_SMALL4)) {
@@ -6023,7 +6023,7 @@ int SelectorMapCoulomb(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
     }
 
     PRINTFB(G, FB_Selector, FB_Details)
-      " SelectorMapCoulomb: Setting net charge to zero...\n" ENDFB(G);
+      " %s: Setting net charge to zero...\n", __func__ ENDFB(G);
 
   }
 
@@ -6043,11 +6043,11 @@ int SelectorMapCoulomb(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
     if(cutoff > 0.0F) {         /* we are using a cutoff */
       if(shift) {
         PRINTFB(G, FB_Selector, FB_Details)
-          " SelectorMapCoulomb: Evaluating local Coulomb potential for grid (shift=%0.2f)...\n",
+          " %s: Evaluating local Coulomb potential for grid (shift=%0.2f)...\n", __func__,
           cutoff ENDFB(G);
       } else {
         PRINTFB(G, FB_Selector, FB_Details)
-          " SelectorMapCoulomb: Evaluating Coulomb potential for grid (cutoff=%0.2f)...\n",
+          " %s: Evaluating Coulomb potential for grid (cutoff=%0.2f)...\n", __func__,
           cutoff ENDFB(G);
       }
 
@@ -6123,7 +6123,7 @@ int SelectorMapCoulomb(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
     } else {
       float *v1;
       PRINTFB(G, FB_Selector, FB_Details)
-        " SelectorMapCoulomb: Evaluating Coulomb potential for grid (no cutoff)...\n"
+        " %s: Evaluating Coulomb potential for grid (no cutoff)...\n", __func__
         ENDFB(G);
 
       for(a = min[0]; a <= max[0]; a++) {
@@ -6428,7 +6428,7 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
   bool ignore_case_chain = SettingGetGlobal_b(G, cSetting_ignore_case_chain);
 
   PRINTFD(G, FB_Selector)
-    " SelectorUpdateCmd-Debug: entered sta0 %d sta1 %d", sta0, sta1 ENDFD;
+    " %s-Debug: entered sta0 %d sta1 %d", __func__, sta0, sta1 ENDFD;
 
   // either both or none must be "all states"
   if (sta0 != sta1) {
@@ -7050,7 +7050,7 @@ int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet
   /* ASSUMES that store is at least as big as an OrthoLineType */
   CSelector *I = G->Selector;
   PRINTFD(G, FB_Selector)
-    " SelectorGetTmp-Debug: entered with \"%s\".\n", input ENDFD;
+    " %s-Debug: entered with \"%s\".\n", __func__, input ENDFD;
 
   store[0] = 0;
 
@@ -7134,7 +7134,7 @@ int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet
     }
   }
   PRINTFD(G, FB_Selector)
-    " SelectorGetTmp-Debug: leaving with \"%s\".\n", store ENDFD;
+    " %s-Debug: leaving with \"%s\".\n", __func__, store ENDFD;
   return count;
 
 }
@@ -7464,10 +7464,10 @@ static int _SelectorCreate(PyMOLGlobals * G, const char *sname, const char *sele
   }
   if(ok) {
     PRINTFD(G, FB_Selector)
-      " SelectorCreate: \"%s\" created with %d atoms.\n", name, c ENDFD;
+      " %s: \"%s\" created with %d atoms.\n", __func__, name, c ENDFD;
   } else {
     PRINTFD(G, FB_Selector)
-      " SelectorCreate: \"%s\" not created due to error\n", name ENDFD;
+      " %s: \"%s\" not created due to error\n", __func__, name ENDFD;
   }
   if(!ok)
     c = -1;
@@ -8414,7 +8414,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
     break;
   }
   PRINTFD(G, FB_Selector)
-    " SelectorSelect0: %d atoms selected.\n", c ENDFD;
+    " %s: %d atoms selected.\n", __func__, c ENDFD;
 
   return (1);
 }
@@ -8447,7 +8447,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
   base->type = STYP_LIST;
   base->sele = pymol::calloc<int>(I_NAtom);    /* starting with zeros */
   PRINTFD(G, FB_Selector)
-    " SelectorSelect1: base: %p sele: %p\n", (void *) base, (void *) base->sele ENDFD;
+    " %s: base: %p sele: %p\n", __func__, (void *) base, (void *) base->sele ENDFD;
   ErrChkPtr(G, base->sele);
   switch (base->code) {
   case SELE_PEPs:
@@ -9199,7 +9199,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     break;
   }
   PRINTFD(G, FB_Selector)
-    " SelectorSelect1:  %d atoms selected.\n", c ENDFD;
+    " %s:  %d atoms selected.\n", __func__, c ENDFD;
   return (ok);
 }
 
@@ -9446,7 +9446,7 @@ static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base, int state)
   }
 
   PRINTFD(G, FB_Selector)
-    " SelectorSelect2: %d atoms selected.\n", c ENDFD;
+    " %s: %d atoms selected.\n", __func__, c ENDFD;
   return (ok);
 }
 
@@ -10071,7 +10071,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
     break;
   }
   PRINTFD(G, FB_Selector)
-    " SelectorLogic1: %d atoms selected.\n", c ENDFD;
+    " %s: %d atoms selected.\n", __func__, c ENDFD;
   return (1);
 }
 
@@ -10211,7 +10211,7 @@ static int SelectorLogic2(PyMOLGlobals * G, EvalElem * base)
   }
   FreeP(base[2].sele);
   PRINTFD(G, FB_Selector)
-    " SelectorLogic2: %d atoms selected.\n", c ENDFD;
+    " %s: %d atoms selected.\n", __func__, c ENDFD;
   return (1);
 }
 
@@ -10336,7 +10336,7 @@ int SelectorOperator22(PyMOLGlobals * G, EvalElem * base, int state)
   }
   FreeP(base[4].sele);
   PRINTFD(G, FB_Selector)
-    " SelectorOperator22: %d atoms selected.\n", c ENDFD;
+    " %s: %d atoms selected.\n", __func__, c ENDFD;
   return (1);
 }
 

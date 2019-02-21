@@ -1844,12 +1844,12 @@ bool ScenePNG(PyMOLGlobals * G, const char *png, float dpi, int quiet,
     if(MyPNGWrite(png, *saveImage, dpi, format, quiet, screen_gamma, file_gamma)) {
       if(!quiet) {
         PRINTFB(G, FB_Scene, FB_Actions)
-          " ScenePNG: wrote %dx%d pixel image to file \"%s\".\n",
+          " %s: wrote %dx%d pixel image to file \"%s\".\n", __func__,
           width, I->Image->getHeight(), png ENDFB(G);
       }
     } else {
       PRINTFB(G, FB_Scene, FB_Errors)
-        " ScenePNG-Error: error writing \"%s\"! Please check directory...\n",
+        " %s-Error: error writing \"%s\"! Please check directory...\n", __func__,
         png ENDFB(G);
     }
   }
@@ -1893,7 +1893,7 @@ int SceneCountFrames(PyMOLGlobals * G)
         I->NFrame = n;
     }
   }
-  PRINTFD(G, FB_Scene)" SceneCountFrames: leaving... I->NFrame %d\n", I->NFrame ENDFD
+  PRINTFD(G, FB_Scene)" %s: leaving... I->NFrame %d\n", __func__, I->NFrame ENDFD
   return I->NFrame;
 }
 
@@ -1909,7 +1909,7 @@ void SceneSetFrame(PyMOLGlobals * G, int mode, int frame)
 
   newFrame = SettingGetGlobal_i(G, cSetting_frame) - 1;
   PRINTFD(G, FB_Scene)
-    " SceneSetFrame: entered.\n" ENDFD;
+    " %s: entered.\n", __func__ ENDFD;
   switch (mode) {
   case -1:                     /* movie/frame override - go to this state absolutely! */
     newState = frame;
@@ -2007,7 +2007,7 @@ void SceneSetFrame(PyMOLGlobals * G, int mode, int frame)
     SeqChanged(G); // SceneInvalidate(G);
   }
   PRINTFD(G, FB_Scene)
-    " SceneSetFrame: leaving...\n" ENDFD;
+    " %s: leaving...\n", __func__ ENDFD;
   OrthoInvalidateDoDraw(G);
 }
 
@@ -2022,7 +2022,7 @@ void SceneDirty(PyMOLGlobals * G)
   CScene *I = G->Scene;
 
   PRINTFD(G, FB_Scene)
-    " SceneDirty: called.\n" ENDFD;
+    " %s: called.\n", __func__ ENDFD;
 
   if(I) {
     if(!I->DirtyFlag) {
@@ -4278,7 +4278,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
           break;
         }
         PRINTFB(G, FB_Scene, FB_Blather)
-          " SceneClick: no atom found nearby.\n" ENDFB(G);
+          " %s: no atom found nearby.\n", __func__ ENDFB(G);
         SceneInvalidate(G);     /* this here to prevent display weirdness after
                                    an unsuccessful picking pass... not sure it helps though */
         OrthoRestorePrompt(G);
@@ -6442,7 +6442,7 @@ void SceneUpdate(PyMOLGlobals * G, int force)
   }
 
   PRINTFD(G, FB_Scene)
-    " SceneUpdate: leaving...\n" ENDFD;
+    " %s: leaving...\n", __func__ ENDFD;
 }
 
 
@@ -6456,7 +6456,7 @@ int SceneRenderCached(PyMOLGlobals * G)
   int renderedFlag = false;
   int draw_mode = SettingGetGlobal_i(G, cSetting_draw_mode);
   PRINTFD(G, FB_Scene)
-    " SceneRenderCached: entered.\n" ENDFD;
+    " %s: entered.\n", __func__ ENDFD;
 
   G->ShaderMgr->Check_Reload();
   if(I->DirtyFlag) {
@@ -6500,7 +6500,7 @@ int SceneRenderCached(PyMOLGlobals * G)
   }
 
   PRINTFD(G, FB_Scene)
-    " SceneRenderCached: leaving...renderedFlag %d\n", renderedFlag ENDFD;
+    " %s: leaving...renderedFlag %d\n", __func__, renderedFlag ENDFD;
 
   return (renderedFlag);
 }

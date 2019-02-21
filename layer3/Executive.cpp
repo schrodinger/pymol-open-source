@@ -3743,7 +3743,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
       return false;
     } else {
       PRINTFB(G, FB_Executive, FB_Blather)
-        " ExecutiveLoad: Loading from %s.\n", fname ENDFB(G);
+        " %s: Loading from %s.\n", __func__, fname ENDFB(G);
     }
 
     break;
@@ -5013,7 +5013,7 @@ const char **ExecutiveGetChains(PyMOLGlobals * G, const char *sele, int state)
     UtilSortInPlace(G, result, chains.size(), sizeof(char *),
         (UtilOrderFn *) fStrOrderFn);
   } else {
-    ErrMessage(G, "ExecutiveGetChains", "Bad selection.");
+    ErrMessage(G, __func__, "Bad selection.");
   }
   return (result);
 }
@@ -5083,7 +5083,7 @@ int ExecutiveRampNew(PyMOLGlobals * G, const char *name, const char *src_name,
         }
       } else {
         PRINTFB(G, FB_Executive, FB_Errors)
-          "ExecutiveRampNew: Error: object '%s' not found.\n", src_name ENDFB(G);
+          " %s: Error: object '%s' not found.\n", __func__, src_name ENDFB(G);
         return false;
       }
     }
@@ -6402,7 +6402,7 @@ int ExecutiveSmooth(PyMOLGlobals * G, const char *selection, int cycles,
   /*  WordType all = "_all"; */
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveSmooth: entered %s,%d,%d,%d,%d,%d\n", name, cycles, first, last, window,
+    " %s: entered %s,%d,%d,%d,%d,%d\n", __func__, name, cycles, first, last, window,
     ends ENDFD;
 
   /* given a valid selection */
@@ -6457,7 +6457,7 @@ int ExecutiveSmooth(PyMOLGlobals * G, const char *selection, int cycles,
     }
 
     PRINTFD(G, FB_Executive)
-      " ExecutiveSmooth: first %d last %d n_state %d backward %d forward %d range %d\n",
+      " %s: first %d last %d n_state %d backward %d forward %d range %d\n", __func__,
       first, last, n_state, backward, forward, range ENDFD;
 
     if(n_state >= window) {
@@ -6496,7 +6496,7 @@ int ExecutiveSmooth(PyMOLGlobals * G, const char *selection, int cycles,
         ExecutiveObjMolSeleOp(G, sele, &op);
 
         PRINTFD(G, FB_Executive)
-          " ExecutiveSmooth: got %d %d\n", op.i2, op.nvv1 ENDFD;
+          " %s: got %d %d\n", __func__, op.i2, op.nvv1 ENDFD;
 
         UtilZeroMem(coord1, sizeof(float) * 3 * n_atom * n_state);
         UtilZeroMem(flag1, sizeof(int) * n_atom * n_state);
@@ -6582,7 +6582,7 @@ int ExecutiveSmooth(PyMOLGlobals * G, const char *selection, int cycles,
 
         ExecutiveObjMolSeleOp(G, sele, &op);
         PRINTFD(G, FB_Executive)
-          " ExecutiveSmooth: put %d %d\n", op.i2, op.nvv1 ENDFD;
+          " %s: put %d %d\n", __func__, op.i2, op.nvv1 ENDFD;
 
         FreeP(coord0);
         FreeP(coord1);
@@ -8140,7 +8140,7 @@ int ExecutiveAlign(PyMOLGlobals * G, const char *s1, const char *s2, const char 
                 int mode = 2;
                 if(!quiet) {
                   PRINTFB(G, FB_Executive, FB_Actions)
-                    " ExecutiveAlign: %d atoms aligned.\n", c ENDFB(G);
+                    " %s: %d atoms aligned.\n", __func__, c ENDFB(G);
                 }
                 if(oname && oname[0] && reset)
                   ExecutiveDelete(G, oname);
@@ -8187,7 +8187,7 @@ int ExecutivePairIndices(PyMOLGlobals * G, const char *s1, const char *s2, int s
     result = SelectorGetPairIndices(G, sele1, state1, sele2, state2,
                                     mode, cutoff, h_angle, indexVLA, objVLA);
   } else {
-    ErrMessage(G, "ExecutivePairIndices", "One or more bad selections.");
+    ErrMessage(G, __func__, "One or more bad selections.");
   }
   return (result);
 }
@@ -8397,7 +8397,7 @@ PyObject *ExecutiveGetSettingTuple(PyMOLGlobals * G, int index, const char *obje
   CObject *obj = NULL;
   int ok = true;
   PRINTFD(G, FB_Executive)
-    " ExecutiveGetSettingTuple: object %p state %d\n", object, state ENDFD;
+    " %s: object %p state %d\n", __func__, object, state ENDFD;
 
   if(object[0] == 0)            /* global */
     result = SettingGetTuple(G, NULL, NULL, index);
@@ -10046,9 +10046,9 @@ int ExecutiveBond(PyMOLGlobals * G, const char *s1, const char *s2, int order, i
 
     ok = true;
   } else if(sele1 < 0) {
-    ok = ErrMessage(G, "ExecutiveBond", "The first selection contains no atoms.");
+    ok = ErrMessage(G, __func__, "The first selection contains no atoms.");
   } else if(sele2 < 0) {
-    ok = ErrMessage(G, "ExecutiveBond", "The second selection contains no atoms.");
+    ok = ErrMessage(G, __func__, "The second selection contains no atoms.");
   }
 
 ok_except1:
@@ -10091,7 +10091,7 @@ int ExecutiveAngle(PyMOLGlobals * G, float *result, const char *nam,
                                      state1, state2, state3);
     if(!obj) {
       if(!quiet)
-        ErrMessage(G, "ExecutiveAngle", "No angles found.");
+        ErrMessage(G, __func__, "No angles found.");
     } else {
       *result = rad_to_deg(*result);
       if(!anyObj) {
@@ -10104,13 +10104,13 @@ int ExecutiveAngle(PyMOLGlobals * G, float *result, const char *nam,
     }
   } else if(sele1 < 0) {
     if(!quiet)
-      ErrMessage(G, "ExecutiveAngle", "The first selection contains no atoms.");
+      ErrMessage(G, __func__, "The first selection contains no atoms.");
   } else if(sele2 < 0) {
     if(!quiet)
-      ErrMessage(G, "ExecutiveAngle", "The second selection contains no atoms.");
+      ErrMessage(G, __func__, "The second selection contains no atoms.");
   } else if(sele3 < 0) {
     if(!quiet)
-      ErrMessage(G, "ExecutiveAngle", "The third selection contains no atoms.");
+      ErrMessage(G, __func__, "The third selection contains no atoms.");
   }
   return (1);
 }
@@ -10148,7 +10148,7 @@ int ExecutiveDihedral(PyMOLGlobals * G, float *result, const char *nam, const ch
                                         mode, labels, result, reset, state);
     if(!obj) {
       if(!quiet)
-        ErrMessage(G, "ExecutiveDihedral", "No angles found.");
+        ErrMessage(G, __func__, "No angles found.");
     } else {
       *result = rad_to_deg(*result);
       if(!anyObj) {
@@ -10161,16 +10161,16 @@ int ExecutiveDihedral(PyMOLGlobals * G, float *result, const char *nam, const ch
     }
   } else if(sele1 < 0) {
     if(!quiet)
-      ErrMessage(G, "ExecutiveDihedral", "The first selection contains no atoms.");
+      ErrMessage(G, __func__, "The first selection contains no atoms.");
   } else if(sele2 < 0) {
     if(!quiet)
-      ErrMessage(G, "ExecutiveDihedral", "The second selection contains no atoms.");
+      ErrMessage(G, __func__, "The second selection contains no atoms.");
   } else if(sele3 < 0) {
     if(!quiet)
-      ErrMessage(G, "ExecutiveDihedral", "The third selection contains no atoms.");
+      ErrMessage(G, __func__, "The third selection contains no atoms.");
   } else if(sele4 < 0) {
     if(!quiet)
-      ErrMessage(G, "ExecutiveDihedral", "The fourth selection contains no atoms.");
+      ErrMessage(G, __func__, "The fourth selection contains no atoms.");
   }
 
   return 1;
@@ -10594,7 +10594,7 @@ int ExecutiveIterate(PyMOLGlobals * G, const char *str1, const char *expr, int r
   } else {
     if(!quiet) {
       PRINTFB(G, FB_Executive, FB_Warnings)
-        "ExecutiveIterate: No atoms selected.\n" ENDFB(G);
+        " %s: No atoms selected.\n", __func__ ENDFB(G);
     }
   }
   return (op1.i1);
@@ -11410,7 +11410,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
                 }
                 if(!quiet && (n_next != n_pair)) {
                   PRINTFB(G, FB_Executive, FB_Actions)
-                    " ExecutiveRMS: %d atoms rejected during cycle %d (RMSD=%0.2f).\n",
+                    " %s: %d atoms rejected during cycle %d (RMSD=%0.2f).\n", __func__,
                     n_pair - n_next, b, rms ENDFB(G);
                 }
                 n_pair = n_next;
@@ -11539,7 +11539,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
         }
       }
     } else {
-      ErrMessage(G, "ExecutiveRMS", "No atoms selected.");
+      ErrMessage(G, __func__, "No atoms selected.");
     }
   }
 
@@ -11750,7 +11750,7 @@ float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode,
     if(op1.nvv1 != op2.nvv1) {
       sprintf(buffer, "Atom counts between selection sets don't match (%d != %d).",
               op1.nvv1, op2.nvv1);
-      ErrMessage(G, "ExecutiveRMS", buffer);
+      ErrMessage(G, __func__, buffer);
     } else if(op1.nvv1) {
       if(mode != 0)
         rms = MatrixFitRMSTTTf(G, op1.nvv1, op1.vv1, op2.vv1, NULL, op2.ttt);
@@ -11759,7 +11759,7 @@ float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode,
 
       if (!quiet)
       PRINTFB(G, FB_Executive, FB_Results)
-        " ExecutiveRMS: RMSD = %8.3f (%d to %d atoms)\n", rms, op1.nvv1, op2.nvv1 ENDFB(G);
+        " %s: RMSD = %8.3f (%d to %d atoms)\n", __func__, rms, op1.nvv1, op2.nvv1 ENDFB(G);
 
       op2.code = OMOP_TTTF;
       SelectorGetTmp(G, combi, s1);
@@ -11767,7 +11767,7 @@ float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode,
       ExecutiveObjMolSeleOp(G, sele1, &op2);
       SelectorFreeTmp(G, s1);
     } else {
-      ErrMessage(G, "ExecutiveRMS", "No atoms selected.");
+      ErrMessage(G, __func__, "No atoms selected.");
     }
   }
   VLAFreeP(op1.vv1);
@@ -12001,7 +12001,7 @@ int ExecutiveSetBondSettingFromString(PyMOLGlobals * G,
   float float_storage[3];
   int value_type = 0;
   PRINTFD(G, FB_Executive)
-    " ExecutiveSetBondSettingFromString: entered. '%s' '%s'\n", s1, s2 ENDFD;
+    " %s: entered. '%s' '%s'\n", __func__, s1, s2 ENDFD;
   sele1 = SelectorIndexByName(G, s1);
   sele2 = SelectorIndexByName(G, s2);
   value_ptr = &value_storage[0];
@@ -12130,7 +12130,7 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
   PyObject *result = PyList_New(0);
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveGetBondSetting: entered. '%s' '%s'\n", s1, s2 ENDFD;
+    " %s: entered. '%s' '%s'\n", __func__, s1, s2 ENDFD;
   unblock = PAutoBlock(G);
   sele1 = SelectorIndexByName(G, s1);
   sele2 = SelectorIndexByName(G, s2);
@@ -12189,7 +12189,7 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
     }
   }
   PRINTFD(G, FB_Executive)
-    " ExecutiveGetBondSetting: end. '%s' '%s'\n", s1, s2 ENDFD;
+    " %s: end. '%s' '%s'\n", __func__, s1, s2 ENDFD;
   PAutoUnblock(G, unblock);
   return result;
 #endif
@@ -12214,7 +12214,7 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
   int value_type = 0;
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveSetBondSetting: entered. '%s' '%s'\n", s1, s2 ENDFD;
+    " %s: entered. '%s' '%s'\n", __func__, s1, s2 ENDFD;
   unblock = PAutoBlock(G);
   sele1 = SelectorIndexByName(G, s1);
   sele2 = SelectorIndexByName(G, s2);
@@ -12325,7 +12325,7 @@ int ExecutiveUnsetBondSetting(PyMOLGlobals * G, int index, const char *s1, const
   int side_effects = false;
   int sele1, sele2;
   PRINTFD(G, FB_Executive)
-    " ExecutiveUnsetBondSetting: entered. sele '%s' '%s'\n", s1, s2 ENDFD;
+    " %s: entered. sele '%s' '%s'\n", __func__, s1, s2 ENDFD;
   /* unblock = PAutoBlock(G); */
   sele1 = SelectorIndexByName(G, s1);
   sele2 = SelectorIndexByName(G, s2);
@@ -12396,7 +12396,7 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, const cha
   int ok = true;
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveSetSetting: entered. sele \"%s\" updates=%d index=%d\n", sele, updates, index ENDFD;
+    " %s: entered. sele \"%s\" updates=%d index=%d\n", __func__, sele, updates, index ENDFD;
 
   if(!quiet) {
     SettingGetName(G, index, name);
@@ -12624,7 +12624,7 @@ int ExecutiveGetSettingFromString(PyMOLGlobals * G, PyMOLreturn_value *result,
     }
   if(!ok) {
     PRINTFB(G, FB_Executive, FB_Errors)
-      " ExecutiveGetSettingFromString-Error: sele \"%s\" not found.\n", sele ENDFB(G);
+      " %s-Error: sele \"%s\" not found.\n", __func__, sele ENDFB(G);
     ok = false;
   } else if(obj) {
     handle = obj->fGetSettingHandle(obj, -1);
@@ -12636,7 +12636,7 @@ int ExecutiveGetSettingFromString(PyMOLGlobals * G, PyMOLreturn_value *result,
         set_ptr2 = *handle;
       else {
         PRINTFB(G, FB_Executive, FB_Errors)
-          " ExecutiveGetSettingFromString-Error: sele \"%s\" lacks state %d.\n", sele, state + 1
+          " %s-Error: sele \"%s\" lacks state %d.\n", __func__, sele, state + 1
           ENDFB(G);
         ok = false;
       }
@@ -12711,7 +12711,7 @@ int ExecutiveSetSettingFromString(PyMOLGlobals * G,
   int ok = true;
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveSetSettingFromString: entered. sele \"%s\"\n", sele ENDFD;
+    " %s: entered. sele \"%s\"\n", __func__, sele ENDFD;
   if(sele[0] == 0) {            /* global setting */
     ok = SettingSetFromString(G, NULL, index, value);
     if(ok) {
@@ -12917,7 +12917,7 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
   int ok = true;
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveUnsetSetting: entered. sele \"%s\"\n", sele ENDFD;
+    " %s: entered. sele \"%s\"\n", __func__, sele ENDFD;
   unblock = PAutoBlock(G);
   if(sele[0] == 0) {
     // Set global setting to an "off" value.
@@ -13272,7 +13272,7 @@ int ExecutiveGetCameraExtent(PyMOLGlobals * G, const char *name, float *mn, floa
     state = SceneGetState(G);
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveGetCameraExtent: name %s state %d\n", name, state ENDFD;
+    " %s: name %s state %d\n", __func__, name, state ENDFD;
 
   sele = SelectorIndexByName(G, name);
 
@@ -13297,7 +13297,7 @@ int ExecutiveGetCameraExtent(PyMOLGlobals * G, const char *name, float *mn, floa
     ExecutiveObjMolSeleOp(G, sele, &op);
 
     PRINTFD(G, FB_Executive)
-      " ExecutiveGetCameraExtent: minmax over %d vertices\n", op.i1 ENDFD;
+      " %s: minmax over %d vertices\n", __func__, op.i1 ENDFD;
     if(op.i1)
       flag = true;
   }
@@ -13305,7 +13305,7 @@ int ExecutiveGetCameraExtent(PyMOLGlobals * G, const char *name, float *mn, floa
   copy3f(op.v2, mx);
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveGetCameraExtent: returning %d\n", flag ENDFD;
+    " %s: returning %d\n", __func__, flag ENDFD;
 
   return (flag);
 }
@@ -13336,7 +13336,7 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
   }
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveGetExtent: name %s state %d\n", name, state ENDFD;
+    " %s: name %s state %d\n", __func__, name, state ENDFD;
 
   ObjectMoleculeOpRecInit(&op);
   ObjectMoleculeOpRecInit(&op2);
@@ -13409,7 +13409,7 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
                 have_atoms_flag = true;
               }
               PRINTFD(G, FB_Executive)
-                " ExecutiveGetExtent: minmax over %d vertices\n", op.i1 ENDFD;
+                " %s: minmax over %d vertices\n", __func__, op.i1 ENDFD;
             }
 
             if(weighted) {
@@ -13542,7 +13542,7 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
   }
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveGetExtent: returning %d\n", result ENDFD;
+    " %s: returning %d\n", __func__, result ENDFD;
 
   return result;
 }
@@ -13564,7 +13564,7 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals * G, const char *name, float *po
     state = SceneGetState(G);
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveGetExtent: name %s state %d\n", name, state ENDFD;
+    " %s: name %s state %d\n", __func__, name, state ENDFD;
 
   ObjectMoleculeOpRecInit(&op);
   ObjectMoleculeOpRecInit(&op2);
@@ -13721,9 +13721,9 @@ int ExecutiveWindowZoom(PyMOLGlobals * G, const char *name, float buffer,
     if(radius < MAX_VDW)
       radius = MAX_VDW;
     PRINTFD(G, FB_Executive)
-      " ExecutiveWindowZoom: zooming with radius %8.3f...state %d\n", radius, state ENDFD;
+      " %s: zooming with radius %8.3f...state %d\n", __func__, radius, state ENDFD;
     PRINTFD(G, FB_Executive)
-      " ExecutiveWindowZoom: on center %8.3f %8.3f %8.3f...\n", center[0],
+      " %s: on center %8.3f %8.3f %8.3f...\n", __func__, center[0],
       center[1], center[2]
       ENDFD;
     if(animate < 0.0F) {
@@ -13758,7 +13758,7 @@ int ExecutiveWindowZoom(PyMOLGlobals * G, const char *name, float buffer,
       SceneSetDefaultView(G);
       SceneInvalidate(G);
     } else {
-      ErrMessage(G, "ExecutiveWindowZoom", "selection or object unknown.");
+      ErrMessage(G, __func__, "selection or object unknown.");
       ok = false;
     }
   }
@@ -13780,9 +13780,9 @@ int ExecutiveCenter(PyMOLGlobals * G, const char *name, int state,
     average3f(mn, mx, center);
     have_center = true;
     PRINTFD(G, FB_Executive)
-      " ExecutiveCenter: centering state %d\n", state ENDFD;
+      " %s: centering state %d\n", __func__, state ENDFD;
     PRINTFD(G, FB_Executive)
-      " ExecutiveCenter: on center %8.3f %8.3f %8.3f...\n", center[0],
+      " %s: on center %8.3f %8.3f %8.3f...\n", __func__, center[0],
       center[1], center[2]
       ENDFD;
   } else if(pos) {
@@ -13818,7 +13818,7 @@ int ExecutiveCenter(PyMOLGlobals * G, const char *name, int state,
       SceneSetDefaultView(G);
       SceneInvalidate(G);
     } else {
-      ErrMessage(G, "ExecutiveCenter", "selection or object unknown.");
+      ErrMessage(G, __func__, "selection or object unknown.");
       ok = false;
     }
   }
@@ -13856,12 +13856,12 @@ int ExecutiveOrigin(PyMOLGlobals * G, const char *name, int preserve, const char
     if(obj) {
       ObjectSetTTTOrigin(obj, center);
       PRINTFB(G, FB_Executive, FB_Blather)
-        " ExecutiveCenter: origin for %s set to %8.3f %8.3f %8.3f\n",
+        " %s: origin for %s set to %8.3f %8.3f %8.3f\n", __func__,
         oname, center[0], center[1], center[2]
         ENDFB(G);
     } else {
       PRINTFB(G, FB_Executive, FB_Blather)
-        " ExecutiveCenter: scene origin set to %8.3f %8.3f %8.3f\n",
+        " %s: scene origin set to %8.3f %8.3f %8.3f\n", __func__,
         center[0], center[1], center[2]
         ENDFB(G);
       SceneOriginSet(G, center, preserve);
@@ -14054,7 +14054,7 @@ bool ExecutiveIsFullScreen(PyMOLGlobals * G) {
 #endif
 
   PRINTFD(G, FB_Executive)
-    " ExecutiveIsFullScreen: flag=%d fallback=%d.\n",
+    " %s: flag=%d fallback=%d.\n", __func__,
     flag, _is_full_screen ENDFD;
 
   if (flag > -1)
@@ -14144,7 +14144,7 @@ int ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep)
       ExecutiveSetObjVisib(G, name, !tRec->visible, 0);
     } else {
       PRINTFB(G, FB_Executive, FB_Errors)
-        " ExecutiveToggleRepVisib-Error: '%s' not found\n", name ENDFB(G);
+        " %s-Error: '%s' not found\n", __func__, name ENDFB(G);
     }
   } else if(tRec && tRec->type == cExecObject &&
       tRec->obj->type != cObjectMolecule) {
@@ -14574,13 +14574,13 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
   if(ob->type == cObjectMolecule)
     obj = (ObjectMolecule *) ob;
   if(!(obj && sele)) {
-    ErrMessage(G, "ExecutiveSymExp", "Invalid object");
+    ErrMessage(G, __func__, "Invalid object");
   } else if(!obj->Symmetry) {
-    ErrMessage(G, "ExecutiveSymExp", "No symmetry loaded!");
+    ErrMessage(G, __func__, "No symmetry loaded!");
   } else if(!SymmetryAttemptGeneration(obj->Symmetry)) {
     // unknown space group
   } else if(obj->Symmetry->getNSymMat() < 1) {
-    ErrMessage(G, "ExecutiveSymExp", "No symmetry matrices!");
+    ErrMessage(G, __func__, "No symmetry matrices!");
   } else {
     if(!quiet) {
       PRINTFB(G, FB_Executive, FB_Actions)
@@ -14619,7 +14619,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
 
 		/* op.nvv1 is the number of atom coordinates we copied in the previous step */
     if(!op.nvv1) {
-      ErrMessage(G, "ExecutiveSymExp", "No atoms indicated!");
+      ErrMessage(G, __func__, "No atoms indicated!");
     } else {
       int nsymmat = obj->Symmetry->getNSymMat();
       map = MapNew(G, -cutoff, op.vv1, op.nvv1, NULL);
@@ -14913,10 +14913,10 @@ void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj)
     } else if(rec->obj->type == cObjectSurface) {
       ObjectSurfaceDump((ObjectSurface *) rec->obj, fname, 0);
     } else {
-      ErrMessage(G, "ExecutiveDump", "Invalid object type for this operation.");
+      ErrMessage(G, __func__, "Invalid object type for this operation.");
     }
   } else {
-    ErrMessage(G, "ExecutiveDump", "Object not found.");
+    ErrMessage(G, __func__, "Object not found.");
   }
 
 }

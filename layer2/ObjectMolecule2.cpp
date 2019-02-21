@@ -3546,7 +3546,7 @@ static int ObjectMoleculeCSetFromPyList(ObjectMolecule * I, PyObject * list)
       if(ok)
         ok = CoordSetFromPyList(I->Obj.G, PyList_GetItem(list, a), &I->CSet[a]);
       PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Debugging)
-        " ObjectMoleculeCSetFromPyList: ok %d after CoordSet %d\n", ok, a ENDFB(I->Obj.G);
+        " %s: ok %d after CoordSet %d\n", __func__, ok, a ENDFB(I->Obj.G);
 
       if(ok)
         if(I->CSet[a])          /* WLD 030205 */
@@ -3684,7 +3684,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
   }
   }
   PRINTFB(G, FB_ObjectMolecule, FB_Debugging)
-    " ObjectMoleculeBondFromPyList: ok %d after restore\n", ok ENDFB(G);
+    " %s: ok %d after restore\n", __func__, ok ENDFB(G);
 
   return (ok);
 }
@@ -3851,7 +3851,7 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     }
   }
   PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Debugging)
-    " ObjectMoleculeAtomFromPyList: ok %d \n", ok ENDFB(I->Obj.G);
+    " %s: ok %d \n", __func__, ok ENDFB(I->Obj.G);
   return (ok);
 }
 
@@ -4122,11 +4122,11 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
        * (possibly) supplied CONECT records... */
 
       PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-        " ObjectMoleculeConnect: Searching for bonds amongst %d coordinates.\n",
+        " %s: Searching for bonds amongst %d coordinates.\n", __func__,
         cs->NIndex ENDFB(G);
       if(Feedback(G, FB_ObjectMolecule, FB_Debugging)) {
         for(a = 0; a < cs->NIndex; a++)
-          printf(" ObjectMoleculeConnect: coord %d %8.3f %8.3f %8.3f\n",
+          printf(" %s: coord %d %8.3f %8.3f %8.3f\n", __func__,
                  a, cs->Coord[a * 3], cs->Coord[a * 3 + 1], cs->Coord[a * 3 + 2]);
       }
 
@@ -4217,7 +4217,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
                               if(violations > (cs->NIndex >> 3)) {
                                 /* if more than 12% of the structure has excessive #'s of bonds... */
                                 PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-                                  " ObjectMoleculeConnect: Assuming chains are discrete...\n"
+                                  " %s: Assuming chains are discrete...\n", __func__
                                   ENDFB(G);
                                 discrete_chains = 1;
                                 repeat = true;
@@ -4254,10 +4254,10 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
         break;
       }
       PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-        " ObjectMoleculeConnect: Found %d bonds.\n", nBond ENDFB(G);
+        " %s: Found %d bonds.\n", __func__, nBond ENDFB(G);
       if(Feedback(G, FB_ObjectMolecule, FB_Debugging)) {
         for(a = 0; a < nBond; a++)
-          printf(" ObjectMoleculeConnect: bond %d ind0 %d ind1 %d\n",
+          printf(" %s: bond %d ind0 %d ind1 %d\n", __func__,
                  a, (*bond)[a].index[0], (*bond)[a].index[1]);
       }
     }
@@ -4270,7 +4270,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
     int check_conect_all = false;
     int pdb_conect_all = false;
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-      " ObjectMoleculeConnect: incorporating explicit bonds. %d %d\n",
+      " %s: incorporating explicit bonds. %d %d\n", __func__,
       nBond, cs->NTmpBond ENDFB(G);
     if((nBond == 0) && (cs->NTmpBond > 0) &&
        bondSearchMode && (connect_mode == 0) && cs->NIndex) {
@@ -4367,7 +4367,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
   }
 
   PRINTFD(G, FB_ObjectMolecule)
-    " ObjectMoleculeConnect: elminating duplicates with %d bonds...\n", nBond ENDFD;
+    " %s: elminating duplicates with %d bonds...\n", __func__, nBond ENDFD;
 
   if(ok && !I->DiscreteFlag) {
     UtilSortInPlace(G, (*bond), nBond, sizeof(BondType), (UtilOrderFn *) BondInOrder);
@@ -4404,7 +4404,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
   }
 
   PRINTFD(G, FB_ObjectMolecule)
-    " ObjectMoleculeConnect: leaving with %d bonds...\n", nBond ENDFD;
+    " %s: leaving with %d bonds...\n", __func__, nBond ENDFD;
   if (ok)
     *nbond = nBond;
   return ok;
