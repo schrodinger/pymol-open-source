@@ -604,8 +604,15 @@ void ObjectAdjustStateRebuildRange(CObject * I, int *start, int *stop)
   }
 }
 
-void ObjectMakeValidName(char *name)
+/**
+ * Replaces invalid characters in the given object name with an underscore,
+ * or strips them if they are terminal or sequential.
+ * @param[in,out] name Object name to validate
+ * @return true if name was modified, false otherwise
+ */
+bool ObjectMakeValidName(char *name)
 {
+  bool modified = false;
   char *p = name, *q;
   if(p) {
     /* currently legal are A to Z, a to z, 0 to 9, -, _, + */
@@ -624,6 +631,7 @@ void ObjectMakeValidName(char *name)
             break;
         /* must be an ASCII-visible character */
         *p = 1;                 /* placeholder for non-printable */
+        modified = true;
       }
       p++;
     }
@@ -656,6 +664,7 @@ void ObjectMakeValidName(char *name)
       p++;
     }
   }
+  return modified;
 }
 
 /*
@@ -664,14 +673,32 @@ void ObjectMakeValidName(char *name)
  */
 void ObjectMakeValidName(PyMOLGlobals * G, char *name)
 {
-  ObjectMakeValidName(name);
+  if (ObjectMakeValidName(name)) {
+    PRINTFB(G, FB_Executive, FB_Warnings)
+      " Warning: Invalid characters in '%s' have been replaced or stripped\n",
+      name ENDFB(G);
+  }
 
   if (SelectorNameIsKeyword(G, name)) {
     PRINTFB(G, FB_Executive, FB_Warnings)
       " Warning: '%s' is a reserved keyword, appending underscore\n", name
       ENDFB(G);
     strcat(name, "_");
-  } else if (strcmp(name, "protein") == 0 || strcmp(name, "nucleic") == 0) {
+    return;
+  }
+
+  static bool once_protein = false;
+  static bool once_nucleic = false;
+
+  if (!once_protein && strcmp(name, "protein") == 0) {
+    once_protein = true;
+  } else if (!once_nucleic && strcmp(name, "nucleic") == 0) {
+    once_nucleic = true;
+  } else {
+    return;
+  }
+
+  {
     // Warn the user if "protein" or "nucleic" are used as names, but
     // don't modify the name (yet).
     PRINTFB(G, FB_Executive, FB_Warnings)

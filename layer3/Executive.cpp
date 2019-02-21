@@ -3566,7 +3566,12 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
 
   ObjectNameType name;
   UtilNCopy(name, new_name, sizeof(ObjectNameType));
-  ObjectMakeValidName(name);
+
+  if (ObjectMakeValidName(name)) {
+    PRINTFB(G, FB_Executive, FB_Warnings)
+      " Warning: Invalid characters in '%s' have been replaced or stripped\n",
+      name ENDFB(G);
+  }
 
   if(!name[0]) {
     PRINTFB(G, FB_Executive, FB_Errors)
