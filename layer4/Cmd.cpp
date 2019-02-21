@@ -6965,26 +6965,6 @@ static PyObject *CmdFullScreen(PyObject * self, PyObject * args)
   return APIResultOk(ok);
 }
 
-static PyObject *CmdUngroup(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  char *gname, *names;
-  int quiet;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Ossi", &self, &gname, &names, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    /*    ExecutiveGroup(G,gname,names,NULL,quiet,NULL); */
-    APIExit(G);
-  }
-  return APIResultOk(ok);
-}
-
 static PyObject *CmdGroup(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -8755,7 +8735,6 @@ static PyMethodDef Cmd_methods[] = {
   {"volume", CmdVolume, METH_VARARGS},
   {"volume_color", CmdVolumeColor, METH_VARARGS},
   {"undo", CmdUndo, METH_VARARGS},
-  {"ungroup", CmdUngroup, METH_VARARGS},
   {"unpick", CmdUnpick, METH_VARARGS},
   {"unset", CmdUnset, METH_VARARGS},
   {"unset_bond", CmdUnsetBond, METH_VARARGS},
