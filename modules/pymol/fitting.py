@@ -609,7 +609,8 @@ SEE ALSO
                         int(cycles),str(object))
             finally:
                 _self.unlock(r,_self)
-            if _self._raising(r,_self): raise pymol.CmdException		 
+            if r < -0.5:
+                raise pymol.CmdException
             return r
 
         def rms(mobile, target, mobile_state=0, target_state=0, quiet=1,
@@ -654,7 +655,8 @@ SEE ALSO
                         int(cycles),str(object))
             finally:
                 _self.unlock(r,_self)
-            if _self._raising(r,_self): raise pymol.CmdException		 
+            if r < -0.5:
+                raise pymol.CmdException
             return r
 
         def rms_cur(mobile, target, mobile_state=0, target_state=0,
@@ -697,7 +699,8 @@ SEE ALSO
                         int(cycles),str(object))
             finally:
                 _self.unlock(r,_self)
-            if _self._raising(r,_self): raise pymol.CmdException		 
+            if r < -0.5:
+                raise pymol.CmdException
             return r
 
         def pair_fit(*arg, **kw):
@@ -750,7 +753,8 @@ SEE ALSO
                 r = _cmd.fit_pairs(_self._COb,new_arg, quiet)
             finally:
                 _self.unlock(r,_self)
-            if _self._raising(r,_self): raise pymol.CmdException		 
+            if r < -0.5:
+                raise pymol.CmdException
             return r
 
 

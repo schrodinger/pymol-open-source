@@ -2394,7 +2394,7 @@ static PyObject *CmdAlign(PyObject * self, PyObject * args)
     if((ok = APIEnterNotModal(G))) {
       ok = ((SelectorGetTmp(G, str2, s2) >= 0) && (SelectorGetTmp(G, str3, s3) >= 0));
       if(ok) {
-        ExecutiveAlign(G, s2, s3,
+        ok = ExecutiveAlign(G, s2, s3,
                        mfile, gap, extend, max_gap,
                        max_skip, cutoff,
                        cycles, quiet, oname, state1, state2,

@@ -11545,6 +11545,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
       }
     } else {
       ErrMessage(G, __func__, "No atoms selected.");
+      ok = false;
     }
   }
 
@@ -11696,7 +11697,7 @@ float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode,
 {
   int sele1, sele2;
   int a, c;
-  float rms = 0.0, inv, *f;
+  float rms = -1.0, inv, *f;
   OrthoLineType buffer;
 
   ObjectMoleculeOpRec op1;
