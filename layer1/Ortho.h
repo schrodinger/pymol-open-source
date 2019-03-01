@@ -25,8 +25,6 @@ Z* -------------------------------------------------------------------
 #define cOrthoBottomSceneMargin DIP2PIXEL(18)
 #define cOrthoLineHeight DIP2PIXEL(12)
 
-#include <vector>
-#include <memory>
 #include <string>
 
 #include"os_gl.h"

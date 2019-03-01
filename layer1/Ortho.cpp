@@ -15,6 +15,8 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#include <vector>
+#include <memory>
 #include <queue>
 #include <string>
 #include <array>
@@ -63,60 +65,81 @@ Z* -------------------------------------------------------------------
 
 #define CMD_QUEUE_MASK 0x3
 
-struct _COrtho {
-  Block *Blocks;
-  Block *GrabbedBy, *ClickedIn;
-  int X, Y, Height, Width;
-  int LastX, LastY, LastModifiers;
-  int ActiveButton;
-  int DrawText;
-  int InputFlag;                /* whether or not we have active input on the line */
+class COrtho {
+public:
+  std::vector<Block*> Blocks{};
+  Block *GrabbedBy{}, *ClickedIn{};
+  int X{}, Y{}, Height{}, Width{};
+  int LastX{}, LastY{}, LastModifiers{};
+  int ActiveButton{};
+  int DrawText{};
+  int InputFlag{};                /* whether or not we have active input on the line */
 
-  OrthoLineType Line[OrthoSaveLines + 1];
-  OrthoLineType History[OrthoHistoryLines + 1];
-  int HistoryLine, HistoryView;
-  int CurLine, CurChar, PromptChar, CursorChar;
-  int AutoOverlayStopLine;
-  FILE *Pipe;
-  char Prompt[255];
-  int ShowLines;
-  char Saved[OrthoLineLength];
-  int SavedPC, SavedCC;
-  float TextColor[3], OverlayColor[3], WizardBackColor[3], WizardTextColor[3];
-  int DirtyFlag;
-  double BusyLast, BusyLastUpdate;
-  int BusyStatus[4];
-  char BusyMessage[255];
-  char *WizardPromptVLA;
-  int SplashFlag;
-  int HaveSeqViewer;
-  BlockRect LoopRect;
-  int LoopFlag;
-  int cmdNestLevel;
+  OrthoLineType Line[OrthoSaveLines + 1]{};
+  OrthoLineType History[OrthoHistoryLines + 1]{};
+  int HistoryLine{}, HistoryView{};
+  int CurLine{}, CurChar{}, PromptChar{}, CursorChar{};
+  int AutoOverlayStopLine{};
+  char Prompt[255]{};
+  int ShowLines{};
+  char Saved[OrthoLineLength]{};
+  int SavedPC{}, SavedCC{};
+  float TextColor[3]{}, OverlayColor[3]{}, WizardBackColor[3]{}, WizardTextColor[3]{};
+  int DirtyFlag{};
+  double BusyLast{}, BusyLastUpdate{};
+  int BusyStatus[4]{};
+  char BusyMessage[255]{};
+  char *WizardPromptVLA{};
+  int SplashFlag{};
+  int HaveSeqViewer{};
+  BlockRect LoopRect{};
+  int LoopFlag{};
+  int cmdNestLevel{};
   std::array<std::queue<std::string>, CMD_QUEUE_MASK + 1> cmdQueue;
   std::queue<std::string> *cmdActiveQueue;
-  int cmdActiveBusy;
+  int cmdActiveBusy{};
   std::queue<std::string> feedback;
-  int Pushed;
+  int Pushed{};
   std::vector<std::unique_ptr<CDeferred>> deferred; //Ortho manages DeferredObjs
-  int RenderMode;
-  GLint ViewPort[4];
-  int WrapXFlag;
-  GLenum ActiveGLBuffer;
-  double DrawTime, LastDraw;
-  int WrapClickSide;            /* ugly kludge for finding click side in geowall stereo mode */
+  int RenderMode{};
+  GLint ViewPort[4]{};
+  int WrapXFlag{};
+  GLenum ActiveGLBuffer{};
+  double DrawTime{}, LastDraw{};
+  int WrapClickSide{};            /* ugly kludge for finding click side in geowall stereo mode */
 
   /* packing information */
-  int WizardHeight;
-  int TextBottom;
+  int WizardHeight{};
+  int TextBottom{};
 
-  int IssueViewportWhenReleased;
-  GLuint bg_texture_id;
-  short bg_texture_needs_update;
-  CGO *bgCGO;
-  //void *bgData;  // this is the image data set from CMol, takes precedence of bg_gradient or bg_image_filename
-  std::shared_ptr<pymol::Image> bgData;
-  CGO *orthoCGO, *orthoFastCGO;
+  int IssueViewportWhenReleased{};
+  GLuint bg_texture_id{};
+  short bg_texture_needs_update{};
+  CGO *bgCGO{};
+  std::shared_ptr<pymol::Image> bgData; // this is the image data set from CMol, takes precedence of bg_gradient or bg_image_filename
+  CGO *orthoCGO{}, *orthoFastCGO{};
+
+  /**
+   * Finds last block located and coordinate (x, y)
+   * @param x cursor X location
+   * @param y cursor Y location
+   * @return pointer to last block located at (x, y)
+   */
+  Block* findBlock(int x, int y);
+
+public:
+  /**
+   * Draws all blocks
+   * @param orthoCGO CGO to append to
+   */
+  void draw(CGO* orthoCGO);
+
+  /**
+   * Draws all blocks
+   * @param orthoCGO CGO to append to
+   * @return true if anything was drawn to CGO
+   */
+  bool fastDraw(CGO* orthoCGO);
 };
 
 bool OrthoBackgroundDataIsSet(const COrtho& ortho)
@@ -1222,8 +1245,7 @@ void OrthoUngrab(PyMOLGlobals * G)
 /*========================================================================*/
 void OrthoAttach(PyMOLGlobals * G, Block * block, int type)
 {
-  COrtho *I = G->Ortho;
-  ListInsert(I->Blocks, block, NULL, next, Block);
+  G->Ortho->Blocks.push_back(block);
 }
 
 
@@ -1233,7 +1255,10 @@ void OrthoDetach(PyMOLGlobals * G, Block * block)
   COrtho *I = G->Ortho;
   if(I->GrabbedBy == block)
     I->GrabbedBy = NULL;
-  ListDetach(I->Blocks, block, next, Block);
+  auto iter = std::find(I->Blocks.begin(), I->Blocks.end(), block);
+  if(iter != I->Blocks.end()){
+    I->Blocks.erase(iter);
+  }
 }
 
 float *OrthoGetOverlayColor(PyMOLGlobals * G)
@@ -1623,8 +1648,8 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 	if(SettingGetGlobal_b(G, cSetting_internal_gui) && 
 	   SettingGetGlobal_b(G, cSetting_use_shaders)){
 	  CGO *orthoFastCGO = CGONew(G);
-	    CGOFree(I->orthoFastCGO);
-	  if (I->Blocks->recursiveFastDraw(orthoFastCGO)){
+          CGOFree(I->orthoFastCGO);
+	  if (G->Ortho->fastDraw(orthoFastCGO)){
 	    int ok = true;
 	    CGO *expandedCGO;
 	    CGOStop(orthoFastCGO);
@@ -1793,10 +1818,10 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         block = SeqGetBlock(G);
         active_tmp = block->active;
         block->active = false;
-        I->Blocks->recursiveDraw(orthoCGO);
+        G->Ortho->draw(orthoCGO);
         block->active = active_tmp;
       } else {
-        I->Blocks->recursiveDraw(orthoCGO);
+        G->Ortho->draw(orthoCGO);
       }
 
       PRINTFD(G, FB_Ortho)
@@ -2271,8 +2296,8 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
     block->setMargin(sceneTop, 0, sceneBottom, sceneRight);
 
     block = NULL;
-    while(ListIterate(I->Blocks, block, next)){
-        block->reshape(width, height);
+    for(auto block : I->Blocks){
+      block->reshape(width, height);
     }
 
     WizardRefresh(G);           /* safe to call even if no wizard exists */
@@ -2303,17 +2328,6 @@ void OrthoReshapeWizard(PyMOLGlobals * G, ov_size wizHeight)
     block->active = wizHeight ? true : false;
   }
 }
-
-
-/*========================================================================*/
-static
-Block *OrthoFindBlock(PyMOLGlobals * G, int x, int y)
-{
-  COrtho *I = G->Ortho;
-
-  return (I->Blocks->recursiveFind(x, y));
-}
-
 
 /*========================================================================*/
 int OrthoGetWrapClickSide(PyMOLGlobals * G)
@@ -2364,12 +2378,9 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
   if(state == P_GLUT_DOWN) {
     I->ActiveButton = button;
     if(I->GrabbedBy) {
-      if(I->GrabbedBy->inside)
-        block = I->GrabbedBy->inside->recursiveFind(x, y);
-      else
-        block = I->GrabbedBy;
+      block = I->GrabbedBy;
     } else if(!block)
-      block = OrthoFindBlock(G, x, y);
+      block = G->Ortho->findBlock(x, y);
     if(block) {
       I->ClickedIn = block;
       handled = block->click(button, x, y, mod);
@@ -2503,13 +2514,7 @@ int OrthoInit(PyMOLGlobals * G, int showSplash)
 {
   COrtho *I = NULL;
 
-  if((I = (G->Ortho = pymol::calloc<COrtho>(1)))) {
-
-    new (&I->deferred)(decltype(I->deferred));
-    new (&I->feedback)(decltype(I->feedback));
-    new (&I->cmdQueue)(decltype(I->cmdQueue));
-
-    ListInit(I->Blocks);
+  if((I = (G->Ortho = new COrtho()))) {
 
     I->ActiveButton = -1;
     I->Pushed = 0;
@@ -2603,16 +2608,12 @@ void OrthoFree(PyMOLGlobals * G)
     I->cmdActiveQueue = NULL;
   }
 
-  pymol::destroy_at(&I->deferred);
-  pymol::destroy_at(&I->feedback);
-  pymol::destroy_at(&I->cmdQueue);
-
   I->bgData = nullptr;
 
     CGOFree(I->bgCGO);
   CGOFree(I->orthoCGO);
   CGOFree(I->orthoFastCGO);
-  FreeP(G->Ortho);
+  delete G->Ortho;
 }
 
 
@@ -2804,4 +2805,32 @@ void OrthoInvalidateDoDraw(PyMOLGlobals * G)
     CGOFree(I->orthoCGO);
     PyMOL_NeedRedisplay(G->PyMOL);
   }
+}
+
+void COrtho::draw(CGO* orthoCGO)
+{
+  for (auto block : Blocks) {
+    block->recursiveDraw(orthoCGO);
+  }
+}
+
+bool COrtho::fastDraw(CGO* orthoCGO)
+{
+  bool ret{false};
+  for (auto block : Blocks) {
+    ret |= block->recursiveFastDraw(orthoCGO);
+  }
+  return ret;
+}
+
+Block* COrtho::findBlock(int x, int y)
+{
+  for (auto blockIter = Blocks.rbegin(); blockIter != Blocks.rend();
+       ++blockIter) {
+    auto blockFound = (*blockIter)->recursiveFind(x, y);
+    if (blockFound != nullptr) {
+      return blockFound;
+    }
+  }
+  return nullptr;
 }

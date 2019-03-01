@@ -42,7 +42,7 @@ struct CColor;
 struct CMovie;
 struct CControl;
 struct CButMode;
-typedef struct _COrtho COrtho;
+class COrtho;
 typedef struct _CWord CWord;
 typedef struct _CCGORenderer CCGORenderer;
 typedef struct _CCharacter CCharacter;

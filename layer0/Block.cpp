@@ -123,46 +123,28 @@ void Block::translate(int dx, int dy)
 
 
 /*========================================================================*/
-void Block::recursiveDraw(CGO *orthoCGO)
+void Block::recursiveDraw(CGO* orthoCGO)
 {
-  if (this->next)
-    next->recursiveDraw(orthoCGO);
   if (active) {
-      draw(orthoCGO);
-    if (inside)
-      inside->recursiveDraw(orthoCGO);
+    draw(orthoCGO);
   }
 }
 
-/*========================================================================*/
-bool Block::recursiveFastDraw(CGO *orthoCGO)
+bool Block::recursiveFastDraw(CGO* orthoCGO)
 {
   bool ret = false;
-  if (next)
-    ret |= next->recursiveFastDraw(orthoCGO);
   if (active) {
-      ret |= this->fastDraw(orthoCGO);
-    if (inside)
-      ret |= inside->recursiveFastDraw(orthoCGO);
+    ret |= fastDraw(orthoCGO);
   }
   return ret;
 }
 
-/*========================================================================*/
-Block *Block::recursiveFind(int x, int y)
+Block* Block::recursiveFind(int x, int y)
 {
-  Block *check;
-  Block *block = this;
-  if(block) {
-    if(!block->active)
-      block = block->next->recursiveFind(x, y);
-    else if(!rectXYInside(x, y))
-      block = block->next->recursiveFind(x, y);
-    else if(block->inside)
-      if((check = block->inside->recursiveFind(x, y)))
-        block = check;
+  if (!active || !rectXYInside(x, y)) {
+    return nullptr;
   }
-  return (block);
+  return this;
 }
 
 bool Block::rectXYInside(int x, int y) const

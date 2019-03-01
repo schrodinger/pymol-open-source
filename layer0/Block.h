@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Block
 #define _H_Block
 
+#include <vector>
 #include<utility>
 
 #include "PyMOLGlobals.h"
@@ -31,14 +32,22 @@ struct BlockRect{
 
 struct Block {
   PyMOLGlobals * m_G;
-  Block *next = nullptr, *inside = nullptr, *parent = nullptr;
   void *reference = nullptr;
   BlockRect rect {}, margin {};
   bool active = false;
   float BackColor[3] = {0.2F, 0.2F, 0.2F };
   float TextColor[3] = {1.0F, 1.0F, 1.0F };
 
+  /**
+   * Draws this block
+   * @param orthoCGO CGO to append to
+   */
   virtual void draw(CGO *orthoCGO) {};
+
+  /**
+   * Draws this block (uses overidden fastDraw implementation)
+   * @param orthoCGO CGO to append to
+   */
   virtual bool fastDraw(CGO *orthoCGO) { return false; }
   virtual void reshape(int width, int height);
   virtual int click(int button, int x, int y, int mod) { return 0; }
@@ -48,8 +57,29 @@ struct Block {
   Block(PyMOLGlobals * _G) : m_G(_G){}
 
   void globalToLocal(int x, int y, int *lx, int *ly);
+
+  /**
+   * Draws this block
+   * @param orthoCGO CGO to append to
+   * @Note: Implementation no longer recursive.
+   */
   void recursiveDraw(CGO *orthoCGO);
+
+  /**
+   * Draws this block (uses overridden fastDraw implementation)
+   * @param orthoCGO CGO to append to
+   * @Note: Implementation no longer recursive.
+   */
   bool recursiveFastDraw(CGO *orthoCGO);
+
+  /**
+   * Determines whether this block is located at (x, y)
+   * @param x cursor X location
+   * @param y cursor Y location
+   * @return pointer to this block if (x, y) is in this block; nullptr otherwise
+   * Note: Implementation is no longer recursive. This is essentially now
+   * just a evalutation to bool.
+   */
   Block *recursiveFind(int x, int y);
   void setMargin(int t, int l, int b, int r);
   void fill(CGO *orthoCGO);
