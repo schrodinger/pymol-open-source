@@ -309,7 +309,7 @@ class Measurement(Wizard):
     def do_pick(self,bondFlag):
         # update pk1 based on current mouse mode
         (what,code) = self.get_selection_name()
-        self.cmd.select( "(pk1)", code + "(pk1)")
+        self.cmd.select("pk1", code + "(pk1)")
         if bondFlag:
             self.error = "Error: please select an atom, not a bond."
             print(self.error)
