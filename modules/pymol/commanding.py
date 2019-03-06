@@ -101,7 +101,13 @@ DESCRIPTION
 
 USAGE
 
-    log_open filename
+    log_open [ filename [, mode ]]
+
+ARGUMENTS
+
+    filename = str: file to write to (.pml or .py) {default: log.pml}
+
+    mode = w/a: "w" to open an empty log file, "a" to append {default: w}
 
 SEE ALSO
 
