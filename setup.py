@@ -258,7 +258,7 @@ ext_comp_args = [
     # optimizations
     "-ffast-math",
     "-funroll-loops",
-    "-O0" if DEBUG else "-O3",
+    "-Og" if DEBUG else "-O3",
     "-fcommon",
 ]
 ext_link_args = []
