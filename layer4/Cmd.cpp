@@ -773,9 +773,9 @@ static PyObject* GetRawAlignment(PyMOLGlobals* G,
     for (int id; (id = vla[i]); ++i) {
       auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
       if (eoo
-          && (!active_only || eoo->obj->Obj.Enabled)
-          && (!hide_underscore || eoo->obj->Obj.Name[0] != '_')) {
-        PyObject * idx = Py_BuildValue("si", eoo->obj->Obj.Name, eoo->atm + 1);
+          && (!active_only || eoo->obj->Enabled)
+          && (!hide_underscore || eoo->obj->Name[0] != '_')) {
+        PyObject * idx = Py_BuildValue("si", eoo->obj->Name, eoo->atm + 1);
         PyList_Append(col, idx);
         Py_DECREF(idx);
       }
@@ -2344,7 +2344,7 @@ static PyObject *CmdGetPhiPsi(PyObject * self, PyObject * args)
       for(a = 0; a < l; a++) {
         key = PyTuple_New(2);
         PyTuple_SetItem(key, 1, PyInt_FromLong(*(i++) + 1));    /* +1 for index */
-        PyTuple_SetItem(key, 0, PyString_FromString((*(o++))->Obj.Name));
+        PyTuple_SetItem(key, 0, PyString_FromString((*(o++))->Name));
         value = PyTuple_New(2);
         PyTuple_SetItem(value, 0, PyFloat_FromDouble(*(p++)));  /* +1 for index */
         PyTuple_SetItem(value, 1, PyFloat_FromDouble(*(s++)));
@@ -4764,7 +4764,7 @@ static PyObject *CmdIdentify(PyObject * self, PyObject * args)
         for(a = 0; a < l; a++) {
           tuple = PyTuple_New(2);
           PyTuple_SetItem(tuple, 1, PyInt_FromLong(*(i++)));
-          PyTuple_SetItem(tuple, 0, PyString_FromString((*(o++))->Obj.Name));
+          PyTuple_SetItem(tuple, 0, PyString_FromString((*(o++))->Name));
           PyList_SetItem(result, a, tuple);
         }
       }
@@ -4815,7 +4815,7 @@ static PyObject *CmdIndex(PyObject * self, PyObject * args)
       for(a = 0; a < l; a++) {
         tuple = PyTuple_New(2);
         PyTuple_SetItem(tuple, 1, PyInt_FromLong(*(i++) + 1));  /* +1 for index */
-        PyTuple_SetItem(tuple, 0, PyString_FromString((*(o++))->Obj.Name));
+        PyTuple_SetItem(tuple, 0, PyString_FromString((*(o++))->Name));
         PyList_SetItem(result, a, tuple);
       }
     } else {
@@ -4877,10 +4877,10 @@ static PyObject *CmdFindPairs(PyObject * self, PyObject * args)
       o = oVLA;
       for(a = 0; a < l; a++) {
         tuple1 = PyTuple_New(2);
-        PyTuple_SetItem(tuple1, 0, PyString_FromString((*(o++))->Obj.Name));
+        PyTuple_SetItem(tuple1, 0, PyString_FromString((*(o++))->Name));
         PyTuple_SetItem(tuple1, 1, PyInt_FromLong(*(i++) + 1)); /* +1 for index */
         tuple2 = PyTuple_New(2);
-        PyTuple_SetItem(tuple2, 0, PyString_FromString((*(o++))->Obj.Name));
+        PyTuple_SetItem(tuple2, 0, PyString_FromString((*(o++))->Name));
         PyTuple_SetItem(tuple2, 1, PyInt_FromLong(*(i++) + 1)); /* +1 for index */
         tuple = PyTuple_New(2);
         PyTuple_SetItem(tuple, 0, tuple1);
@@ -5346,7 +5346,7 @@ static PyObject *CmdGetObjectList(PyObject * self, PyObject * args)
       if(result) {
         unsigned int a;
         for(a = 0; a < size; a++) {
-          PyList_SetItem(result, a, PyString_FromString(list[a]->Obj.Name));
+          PyList_SetItem(result, a, PyString_FromString(list[a]->Name));
         }
       }
       VLAFreeP(list);

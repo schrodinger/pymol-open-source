@@ -229,7 +229,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
                                 int hetatm, float b, float q, const char *label,
                                 float *pos, int color, int state, int mode, int quiet)
 {
-  PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->G;
   int start_state = 0, stop_state = 0;
   int extant_only = false;
   int ai_merged = false;
@@ -247,7 +247,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
     start_state = state;
     stop_state = state + 1;
   } else if(state == -1) {      /* current state */
-    start_state = ObjectGetCurrentState(&I->Obj, true);
+    start_state = ObjectGetCurrentState(I, true);
     stop_state = start_state + 1;
   } else {                      /* all states */
     if(sele_index >= 0) {
@@ -290,19 +290,19 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
     ai->flags |= cAtomFlag_inorganic; // suppress auto_show_classified
 
     if(color < 0) {
-      AtomInfoAssignColors(I->Obj.G, ai);
+      AtomInfoAssignColors(I->G, ai);
       if((ai->elem[0] == 'C') && (ai->elem[1] == 0))
         /* carbons are always colored according to the object color */
-        ai->color = I->Obj.Color;
+        ai->color = I->Color;
     } else {
       ai->color = color;
     }
-    AtomInfoAssignParameters(I->Obj.G, ai);
-    AtomInfoUniquefyNames(I->Obj.G, I->AtomInfo, I->NAtom, ai, NULL, 1);
+    AtomInfoAssignParameters(I->G, ai);
+    AtomInfoUniquefyNames(I->G, I->AtomInfo, I->NAtom, ai, NULL, 1);
     if(!quiet) {
       PRINTFB(G, FB_ObjectMolecule, FB_Actions)
         " ObjMol: created %s/%s/%s/%s`%d%c/%s\n",
-        I->Obj.Name, LexStr(G, ai->segi), LexStr(G, ai->chain),
+        I->Name, LexStr(G, ai->segi), LexStr(G, ai->chain),
         LexStr(G, ai->resn), ai->resv, ai->getInscode(true),
         LexStr(G, ai->name) ENDFB(G);
     }
@@ -325,7 +325,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
         op.code = OMOP_CSetSumVertices;
         op.cs1 = state;
 
-        ExecutiveObjMolSeleOp(I->Obj.G, sele_index, &op);
+        ExecutiveObjMolSeleOp(I->G, sele_index, &op);
 
         if(op.i1) {
           float factor = 1.0F / op.i1;
@@ -339,7 +339,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
               op.code = OMOP_CSetMaxDistToPt;
               copy3f(pos_array, op.v1);
               op.cs1 = state;
-              ExecutiveObjMolSeleOp(I->Obj.G, sele_index, &op);
+              ExecutiveObjMolSeleOp(I->G, sele_index, &op);
               vdw = op.f1;
               break;
             case 2:
@@ -347,7 +347,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
               op.code = OMOP_CSetSumSqDistToPt;
               copy3f(pos_array, op.v1);
               op.cs1 = state;
-              ExecutiveObjMolSeleOp(I->Obj.G, sele_index, &op);
+              ExecutiveObjMolSeleOp(I->G, sele_index, &op);
               vdw = sqrt1f(op.d1 / op.i1);
               break;
             case 0:
@@ -363,7 +363,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
         }
       } else if(!pos) {
         pos = pos_array;
-        SceneGetCenter(I->Obj.G, pos);
+        SceneGetCenter(I->G, pos);
       }
 
       if(pos) {                 /* only add coordinate to state if we have position for it */
@@ -449,7 +449,7 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
       n_alloc += populate_other(other + a2, a1, I->AtomInfo + b1, bd, I->Neighbor);
     }
     bd++;
-    ok &= !I->Obj.G->Interrupt;
+    ok &= !I->G->Interrupt;
   }
   if (ok){
     n_alloc = 3 * (n_alloc + cs->NIndex);
@@ -542,7 +542,7 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
 
     }
     bd++;
-    ok &= !I->Obj.G->Interrupt;
+    ok &= !I->G->Interrupt;
   }
   FreeP(other);
   return result;
@@ -562,7 +562,7 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point,
   color[2] = 0.0F;
 
   if(state < 0)
-    state = ObjectGetCurrentState(&I->Obj, true);
+    state = ObjectGetCurrentState(I, true);
 
   if((state >= 0) && (state < I->NCSet)) {
     CoordSet *cs = I->CSet[state];
@@ -595,7 +595,7 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point,
                 }
                 if(test < cutoff2) {
                   float weight = cutoff - sqrt1f(test);
-                  const float *at_col = ColorGet(I->Obj.G, I->AtomInfo[cs->IdxToAtm[j]].color);
+                  const float *at_col = ColorGet(I->G, I->AtomInfo[cs->IdxToAtm[j]].color);
                   color[0] += at_col[0] * weight;
                   color[1] += at_col[1] * weight;
                   color[2] += at_col[2] * weight;
@@ -622,7 +622,7 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point,
           }
           if(test < cutoff2) {
             float weight = cutoff - sqrt1f(test);
-            const float *at_col = ColorGet(I->Obj.G, I->AtomInfo[cs->IdxToAtm[j]].color);
+            const float *at_col = ColorGet(I->G, I->AtomInfo[cs->IdxToAtm[j]].color);
             color[0] += at_col[0] * weight;
             color[1] += at_col[1] * weight;
             color[2] += at_col[2] * weight;
@@ -660,7 +660,7 @@ int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, const float *point, fl
   int result = -1;
   float nearest = -1.0F;
   if(state < 0)
-    state = ObjectGetCurrentState(&I->Obj, true);
+    state = ObjectGetCurrentState(I, true);
   if((state >= 0) && (state < I->NCSet)) {
     CoordSet *cs = I->CSet[state];
     if(cs) {
@@ -781,7 +781,7 @@ int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_si
 int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, const char *name, int same_res)
 {
   int a2, s;
-  PyMOLGlobals * G = obj->Obj.G;
+  PyMOLGlobals * G = obj->G;
   AtomInfoType *ai2, *ai0 = obj->AtomInfo + a0;
 
   if(a0 >= 0) {
@@ -837,7 +837,7 @@ int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule * I, int index, int sele)
       if(a1 < 0)
         break;
       ai = I->AtomInfo + a1;
-      if(SelectorIsMember(I->Obj.G, ai->selEntry, sele)) {
+      if(SelectorIsMember(I->G, ai->selEntry, sele)) {
         result = true;
         break;
       }
@@ -1441,13 +1441,13 @@ void ObjectMoleculeFixChemistry(ObjectMolecule * I, int sele1, int sele2, int in
     s1 = ai1->selEntry;
     s2 = ai2->selEntry;
 
-    if((SelectorIsMember(I->Obj.G, s1, sele1) &&
-        SelectorIsMember(I->Obj.G, s2, sele2)) ||
-       (SelectorIsMember(I->Obj.G, s2, sele1) && SelectorIsMember(I->Obj.G, s1, sele2))) {
+    if((SelectorIsMember(I->G, s1, sele1) &&
+        SelectorIsMember(I->G, s2, sele2)) ||
+       (SelectorIsMember(I->G, s2, sele1) && SelectorIsMember(I->G, s1, sele2))) {
       order = -1;
-      if(strlen(LexStr(I->Obj.G, ai1->resn)) < 4) {       /* Standard disconnected PDB residue */
-        if(AtomInfoSameResidue(I->Obj.G, ai1, ai2)) {
-          assign_pdb_known_residue(I->Obj.G, ai1, ai2, &order);
+      if(strlen(LexStr(I->G, ai1->resn)) < 4) {       /* Standard disconnected PDB residue */
+        if(AtomInfoSameResidue(I->G, ai1, ai2)) {
+          assign_pdb_known_residue(I->G, ai1, ai2, &order);
         }
       }
       if(order > 0) {
@@ -1465,7 +1465,7 @@ void ObjectMoleculeFixChemistry(ObjectMolecule * I, int sele1, int sele2, int in
   }
   if(flag) {
     ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
-    SceneChanged(I->Obj.G);
+    SceneChanged(I->G);
   }
 }
 
@@ -1596,16 +1596,16 @@ static int get_multi_object_status(const char *p)
  */
 int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
 {
-  PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->G;
   char wildcard = 0;
   int found_wildcard = false;
 
   {
-    const char *tmp = SettingGet_s(G, NULL, I->Obj.Setting, cSetting_atom_name_wildcard);
+    const char *tmp = SettingGet_s(G, NULL, I->Setting, cSetting_atom_name_wildcard);
     if(tmp && tmp[0]) {
       wildcard = *tmp;
     } else {
-      tmp = SettingGet_s(G, NULL, I->Obj.Setting, cSetting_wildcard);
+      tmp = SettingGet_s(G, NULL, I->Setting, cSetting_wildcard);
       if(tmp) {
         wildcard = *tmp;
       }
@@ -1633,7 +1633,7 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
     }
     if(found_wildcard) {
       ExecutiveSetObjSettingFromString(G, cSetting_atom_name_wildcard, " ",
-                                       &I->Obj, -1, true, true);
+                                       I, -1, true, true);
     }
   }
   return found_wildcard;
@@ -3151,63 +3151,63 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, const char
       cont = m4x->context + a;
 
       if(cont->site) {
-        UtilNCopy(name, I->Obj.Name, sizeof(WordType));
+        UtilNCopy(name, I->Name, sizeof(WordType));
         UtilNConcat(name, "_", sizeof(WordType));
         UtilNConcat(name, cont->name, sizeof(WordType));
         UtilNConcat(name, "_site", sizeof(WordType));
-        SelectorSelectByID(I->Obj.G, name, I, cont->site, cont->n_site);
+        SelectorSelectByID(I->G, name, I, cont->site, cont->n_site);
       }
       if(cont->ligand) {
-        UtilNCopy(name, I->Obj.Name, sizeof(WordType));
+        UtilNCopy(name, I->Name, sizeof(WordType));
         UtilNConcat(name, "_", sizeof(WordType));
         UtilNConcat(name, cont->name, sizeof(WordType));
         UtilNConcat(name, "_ligand", sizeof(WordType));
-        SelectorSelectByID(I->Obj.G, name, I, cont->ligand, cont->n_ligand);
+        SelectorSelectByID(I->G, name, I, cont->ligand, cont->n_ligand);
       }
       if(cont->water) {
-        UtilNCopy(name, I->Obj.Name, sizeof(WordType));
+        UtilNCopy(name, I->Name, sizeof(WordType));
         UtilNConcat(name, "_", sizeof(WordType));
         UtilNConcat(name, cont->name, sizeof(WordType));
         UtilNConcat(name, "_water", sizeof(WordType));
-        SelectorSelectByID(I->Obj.G, name, I, cont->water, cont->n_water);
+        SelectorSelectByID(I->G, name, I, cont->water, cont->n_water);
       }
       if(cont->hbond) {
         ObjectDist *distObj;
-        UtilNCopy(name, I->Obj.Name, sizeof(WordType));
+        UtilNCopy(name, I->Name, sizeof(WordType));
         UtilNConcat(name, "_", sizeof(WordType));
         UtilNConcat(name, cont->name, sizeof(WordType));
         UtilNConcat(name, "_hbond", sizeof(WordType));
-        ExecutiveDelete(I->Obj.G, name);
-        distObj = ObjectDistNewFromM4XBond(I->Obj.G, NULL,
+        ExecutiveDelete(I->G, name);
+        distObj = ObjectDistNewFromM4XBond(I->G, NULL,
                                            I, cont->hbond, cont->n_hbond, nbr_sele);
         if(match_colors)
-          distObj->Obj.Color = I->Obj.Color;
+          distObj->Obj.Color = I->Color;
         else
-          distObj->Obj.Color = ColorGetIndex(I->Obj.G, "yellow");
+          distObj->Obj.Color = ColorGetIndex(I->G, "yellow");
         ObjectSetName((CObject *) distObj, name);
         if(distObj)
-          ExecutiveManageObject(I->Obj.G, (CObject *) distObj, false, true);
+          ExecutiveManageObject(I->G, (CObject *) distObj, false, true);
       }
 
       if(cont->nbond && 0) {
         /*        ObjectDist *distObj; */
-        UtilNCopy(name, I->Obj.Name, sizeof(WordType));
+        UtilNCopy(name, I->Name, sizeof(WordType));
         UtilNConcat(name, "_", sizeof(WordType));
         UtilNConcat(name, cont->name, sizeof(WordType));
         UtilNConcat(name, "_nbond", sizeof(WordType));
-        ExecutiveDelete(I->Obj.G, name);
-        /*        distObj = ObjectDistNewFromM4XBond(I->Obj.G,NULL,
+        ExecutiveDelete(I->G, name);
+        /*        distObj = ObjectDistNewFromM4XBond(I->G,NULL,
            I,
            cont->nbond,
            cont->n_nbond);
            if(distObj)
-           ExecutiveManageObject(I->Obj.G,(CObject*)distObj,false,true); */
+           ExecutiveManageObject(I->G,(CObject*)distObj,false,true); */
 
         {
           CGO *cgo = NULL;
           ObjectCGO *ocgo;
 
-          cgo = CGONew(I->Obj.G);
+          cgo = CGONew(I->G);
           /*
              CGOBegin(cgo,GL_LINES);
              for(a=0;a<op1.nvv1;a++) {
@@ -3217,24 +3217,24 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, const char
            */
           CGOEnd(cgo);
           CGOStop(cgo);
-          ocgo = ObjectCGOFromCGO(I->Obj.G, NULL, cgo, 0);
+          ocgo = ObjectCGOFromCGO(I->G, NULL, cgo, 0);
           if(match_colors)
-            ocgo->Obj.Color = I->Obj.Color;
+            ocgo->Obj.Color = I->Color;
           else
-            ocgo->Obj.Color = ColorGetIndex(I->Obj.G, "yellow");
+            ocgo->Obj.Color = ColorGetIndex(I->G, "yellow");
           ObjectSetName((CObject *) ocgo, name);
-          ExecutiveDelete(I->Obj.G, ocgo->Obj.Name);
+          ExecutiveDelete(I->G, ocgo->Obj.Name);
 
-          ExecutiveManageObject(I->Obj.G, (CObject *) ocgo, false, true);
+          ExecutiveManageObject(I->G, (CObject *) ocgo, false, true);
 
-          SceneInvalidate(I->Obj.G);
+          SceneInvalidate(I->G);
         }
 
       }
 
     }
     if(script_file)
-      PParse(I->Obj.G, script_file);
+      PParse(I->G, script_file);
   }
 }
 
@@ -3544,9 +3544,9 @@ static int ObjectMoleculeCSetFromPyList(ObjectMolecule * I, PyObject * list)
     VLACheck(I->CSet, CoordSet *, I->NCSet);
     for(a = 0; a < I->NCSet; a++) {
       if(ok)
-        ok = CoordSetFromPyList(I->Obj.G, PyList_GetItem(list, a), &I->CSet[a]);
-      PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Debugging)
-        " %s: ok %d after CoordSet %d\n", __func__, ok, a ENDFB(I->Obj.G);
+        ok = CoordSetFromPyList(I->G, PyList_GetItem(list, a), &I->CSet[a]);
+      PRINTFB(I->G, FB_ObjectMolecule, FB_Debugging)
+        " %s: ok %d after CoordSet %d\n", __func__, ok, a ENDFB(I->G);
 
       if(ok)
         if(I->CSet[a])          /* WLD 030205 */
@@ -3564,8 +3564,8 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
   int a;
 
 #ifndef PICKLETOOLS
-  PyMOLGlobals *G = I->Obj.G;
-  int pse_export_version = SettingGetGlobal_f(I->Obj.G, cSetting_pse_export_version) * 1000;
+  PyMOLGlobals *G = I->G;
+  int pse_export_version = SettingGetGlobal_f(I->G, cSetting_pse_export_version) * 1000;
 
   if (SettingGetGlobal_b(G, cSetting_pse_binary_dump) && (!pse_export_version || pse_export_version >= 1765)){
     /* For the pse_binary_dump, save entire Bond array to a binary string array
@@ -3607,7 +3607,7 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
 
 static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
 {
-  PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->G;
   int ok = true;
   int a;
   int stereo, ll = 0;
@@ -3660,7 +3660,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
     if(ok)
       ok = PConvPyIntToInt(PyList_GetItem(bond_list, 1), &bond->index[1]);
     if(ok)
-      if((ok = CPythonVal_PConvPyIntToInt_From_List(I->Obj.G, bond_list, 2, &stereo)))
+      if((ok = CPythonVal_PConvPyIntToInt_From_List(I->G, bond_list, 2, &stereo)))
         bond->order = stereo;
     if(ok)
       ok = PConvPyIntToInt(PyList_GetItem(bond_list, 3), &bond->id);
@@ -3691,12 +3691,12 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
 
 static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
 {
-  PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->G;
   PyObject *result = NULL;
   AtomInfoType *ai;
   int a;
 #ifndef PICKLETOOLS
-  int pse_export_version = SettingGetGlobal_f(I->Obj.G, cSetting_pse_export_version) * 1000;
+  int pse_export_version = SettingGetGlobal_f(I->G, cSetting_pse_export_version) * 1000;
 
   if (SettingGetGlobal_b(G, cSetting_pse_binary_dump) && (!pse_export_version || pse_export_version >= 1765)){
     /* For the pse_binary_dump, record all strings in lex and
@@ -3760,7 +3760,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
   result = PyList_New(I->NAtom);
   ai = I->AtomInfo;
   for(a = 0; a < I->NAtom; a++) {
-    PyList_SetItem(result, a, AtomInfoAsPyList(I->Obj.G, ai));
+    PyList_SetItem(result, a, AtomInfoAsPyList(I->G, ai));
     ai++;
   }
   return (PConvAutoNone(result));
@@ -3768,7 +3768,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
 
 static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
 {
-  PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->G;
   int ok = true;
   int a, ll = 0;
   AtomInfoType *ai;
@@ -3845,13 +3845,13 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     CHECKOK(ok, I->AtomInfo);
     ai = I->AtomInfo;
     for(a = 0; ok && a < I->NAtom; a++) {
-      if(ok)
-        ok = AtomInfoFromPyList(I->Obj.G, ai, PyList_GetItem(list, a));
+      PyObject *val = PyList_GetItem(list, a);
+      ok &= AtomInfoFromPyList(I->G, ai, val);
       ai++;
     }
   }
-  PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Debugging)
-    " %s: ok %d \n", __func__, ok ENDFB(I->Obj.G);
+  PRINTFB(I->G, FB_ObjectMolecule, FB_Debugging)
+    " %s: ok %d \n", __func__, ok ENDFB(I->G);
   return (ok);
 }
 
@@ -3874,8 +3874,10 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     I = ObjectMoleculeNew(G, discrete_flag);
   CHECKOK(ok, I);
 
-  if(ok)
-    ok = ObjectFromPyList(G, PyList_GetItem(list, 0), &I->Obj);
+  if(ok){
+    PyObject *val = PyList_GetItem(list, 0);
+    ok = ObjectFromPyList(G, val, I);
+  }
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->NCSet);
   if(ok)
@@ -3927,7 +3929,7 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
   /* first, dump the atoms */
 
   result = PyList_New(16);
-  PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result, 0, ObjectAsPyList(I));
   PyList_SetItem(result, 1, PyInt_FromLong(I->NCSet));
   PyList_SetItem(result, 2, PyInt_FromLong(I->NBond));
   PyList_SetItem(result, 3, PyInt_FromLong(I->NAtom));
@@ -3942,10 +3944,10 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
   PyList_SetItem(result, 12, PyInt_FromLong(I->BondCounter));
   PyList_SetItem(result, 13, PyInt_FromLong(I->AtomCounter));
 
-  float pse_export_version = SettingGetGlobal_f(I->Obj.G, cSetting_pse_export_version);
+  float pse_export_version = SettingGetGlobal_f(I->G, cSetting_pse_export_version);
 
   if(I->DiscreteFlag
-      && (pse_export_version || !SettingGetGlobal_b(I->Obj.G, cSetting_pse_binary_dump))
+      && (pse_export_version || !SettingGetGlobal_b(I->G, cSetting_pse_binary_dump))
       && pse_export_version < 1.7699) {
     int *dcs;
     int a;
@@ -4068,7 +4070,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
                           int connectModeOverride)
 {
 #define cMULT 1
-  PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->G;
   int a, b, c, d, e, f, i, j;
   int a1, a2;
   float *v1, *v2;
@@ -4226,7 +4228,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
                             }
 
                             if(!ai1->hetatm || ai1->resn == G->lex_const.MSE) {
-                              if(AtomInfoSameResidue(I->Obj.G, ai1, ai2)) {
+                              if(AtomInfoSameResidue(I->G, ai1, ai2)) {
                                 /* hookup standard disconnected PDB residue */
                                 assign_pdb_known_residue(G, ai1, ai2, &order);
                               }
@@ -4325,10 +4327,10 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
       
       if(pdb_conect_all) {
 	int dummy;
-	if(!SettingGetIfDefined_b(G, I->Obj.Setting, cSetting_pdb_conect_all, &dummy)) {
+	if(!SettingGetIfDefined_b(G, I->Setting, cSetting_pdb_conect_all, &dummy)) {
 	  CSetting **handle = NULL;
-	  if(I->Obj.fGetSettingHandle) {
-	    handle = I->Obj.fGetSettingHandle(&I->Obj, -1);
+	  if(I->fGetSettingHandle) {
+	    handle = I->fGetSettingHandle(I, -1);
 	    if(handle) {
 	      SettingCheckHandle(G, handle);
 	      SettingSet_b(*handle, cSetting_pdb_conect_all, true);
@@ -4424,7 +4426,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
     int n_bytes = sizeof(int) * I->NAtom;
     int already_in_order = true;
     int i_NAtom = I->NAtom;
-    index = AtomInfoGetSortedIndex(I->Obj.G, I, I->AtomInfo, i_NAtom, &outdex);
+    index = AtomInfoGetSortedIndex(I->G, I, I->AtomInfo, i_NAtom, &outdex);
     CHECKOK(ok, index);
     if (ok){
       for(a = 0; a < i_NAtom; a++) {
@@ -4465,7 +4467,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
         }
       }
 
-      ExecutiveUniqueIDAtomDictInvalidate(I->Obj.G);
+      ExecutiveUniqueIDAtomDictInvalidate(I->G);
 
       pymol::vla<AtomInfoType> atInfo(i_NAtom);
       CHECKOK(ok, atInfo);
@@ -4501,9 +4503,9 @@ int ObjectMoleculeSort(ObjectMolecule * I)
         I->DiscreteAtmToIdx = dAtmToIdx;
       }
     }
-    AtomInfoFreeSortedIndexes(I->Obj.G, &index, &outdex);
+    AtomInfoFreeSortedIndexes(I->G, &index, &outdex);
     if (ok){
-      UtilSortInPlace(I->Obj.G, I->Bond, I->NBond, sizeof(BondType),
+      UtilSortInPlace(I->G, I->Bond, I->NBond, sizeof(BondType),
 		      (UtilOrderFn *) BondInOrder);
       /* sort...important! */
       ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, -1);     /* important */

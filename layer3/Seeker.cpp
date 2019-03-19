@@ -426,7 +426,7 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, CSeqRow * rowVLA, int button, int 
           SeekerSelectionCenter(G, 0);
         I->handler.box_active = true;
         if(col->state && (obj = ExecutiveFindObjectMoleculeByName(G, row->name))) {
-          SettingSetSmart_i(G, obj->Obj.Setting, NULL, cSetting_state, col->state);
+          SettingSetSmart_i(G, obj->Setting, NULL, cSetting_state, col->state);
           SceneChanged(G);
         }
       }
@@ -439,9 +439,9 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, CSeqRow * rowVLA, int button, int 
         if(mod & cOrthoCTRL) {
           center = 2;
         }
-        int codes = SettingGet_i(G, row->obj->Obj.Setting, NULL, cSetting_seq_view_format);
+        int codes = SettingGet_i(G, row->obj->Setting, NULL, cSetting_seq_view_format);
         if(row->obj->DiscreteFlag && SettingGet_b(G,
-                                           row->obj->Obj.Setting,
+                                           row->obj->Setting,
                                            NULL, cSetting_seq_view_discrete_by_state))
           codes = 4;
         if (codes != 4 || row->obj->DiscreteFlag) { // keep only non-discrete states selectable
@@ -481,7 +481,7 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, CSeqRow * rowVLA, int button, int 
           SeekerSelectionCenter(G, 2);
 
         if(col->state && (obj = ExecutiveFindObjectMoleculeByName(G, row->name))) {
-          SettingSetSmart_i(G, obj->Obj.Setting, NULL, cSetting_state, col->state);
+          SettingSetSmart_i(G, obj->Setting, NULL, cSetting_state, col->state);
           SceneChanged(G);
         }
       }
@@ -1045,8 +1045,8 @@ void SeekerUpdate(PyMOLGlobals * G)
   align_sele = ExecutiveGetActiveAlignmentSele(G);
 
   while(ExecutiveIterateObjectMolecule(G, &obj, &hidden)) {
-    if(obj->Obj.Enabled && (SettingGet_b(G, obj->Obj.Setting, NULL, cSetting_seq_view)) &&
-       (obj->Obj.Name[0] != '_')) {
+    if(obj->Enabled && (SettingGet_b(G, obj->Setting, NULL, cSetting_seq_view)) &&
+       (obj->Name[0] != '_')) {
       int a;
       AtomInfoType *last = NULL, *last_segi = NULL, *last_chain = NULL;
       CoordSet *last_disc = NULL;
@@ -1058,23 +1058,23 @@ void SeekerUpdate(PyMOLGlobals * G)
       int est_col = obj->NAtom / 5 + 1;
       int est_char = obj->NAtom * 4;
       int first_atom_in_label;
-      int missing_color = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_fill_color);
+      int missing_color = SettingGet_i(G, obj->Setting, NULL, cSetting_seq_view_fill_color);
       CoordSet *cs = obj->DiscreteFlag ? NULL : ObjectMoleculeGetCoordSet(obj, std::max(0, obj->getState()));
       bool atom_in_state;
 
-      int gapMode = SettingGet_i(G, obj->Obj.Setting, nullptr, cSetting_seq_view_gap_mode);
+      int gapMode = SettingGet_i(G, obj->Setting, nullptr, cSetting_seq_view_gap_mode);
       int min_pad = -1;
       CSeqCol *r1 = NULL, *l1 = NULL;   /* *col */
 
       if(nRow >= max_row)
         break;
 
-      codes = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_format);
+      codes = SettingGet_i(G, obj->Setting, NULL, cSetting_seq_view_format);
       if(obj->DiscreteFlag && SettingGet_b(G,
-                                           obj->Obj.Setting,
+                                           obj->Setting,
                                            NULL, cSetting_seq_view_discrete_by_state))
         codes = 4;
-      default_color = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_color);
+      default_color = SettingGet_i(G, obj->Setting, NULL, cSetting_seq_view_color);
 
       /* allocate a row for labels, if present
          the text for the labels and the residues will line up exactly 
@@ -1102,8 +1102,8 @@ void SeekerUpdate(PyMOLGlobals * G)
       row->atom_lists[0] = -1;  /* terminate the blank listQ (IMPORTANT!) */
       row->char2col = VLACalloc(int, est_char);
       row->obj = obj;
-      strcpy(row->name, obj->Obj.Name);
-      row->color = obj->Obj.Color;
+      strcpy(row->name, obj->Name);
+      row->color = obj->Color;
       ai = obj->AtomInfo;
 
       /* copy object name onto label row */
@@ -1117,7 +1117,7 @@ void SeekerUpdate(PyMOLGlobals * G)
         l1 = lab->col + nCol;
         l1->start = lab->len;
         UtilConcatVLA(&lab->txt, &lab->len, "/");
-        UtilConcatVLA(&lab->txt, &lab->len, obj->Obj.Name);
+        UtilConcatVLA(&lab->txt, &lab->len, obj->Name);
         l1->stop = lab->len;
         st_len = l1->stop - l1->start;
 
@@ -1140,7 +1140,7 @@ void SeekerUpdate(PyMOLGlobals * G)
         r1 = row->col + nCol;
         r1->start = row->len;
         UtilConcatVLA(&row->txt, &row->len, "/");
-        UtilConcatVLA(&row->txt, &row->len, obj->Obj.Name);
+        UtilConcatVLA(&row->txt, &row->len, obj->Name);
         r1->stop = row->len;
         r1->spacer = true;
         row->column_label_flag = true;
@@ -1483,7 +1483,7 @@ void SeekerUpdate(PyMOLGlobals * G)
             if((cs = obj->DiscreteCSet[a]) != last_disc) {
               last_disc = cs;
               if(cs) {
-                default_color = SettingGet_i(G, cs->Setting, obj->Obj.Setting,
+                default_color = SettingGet_i(G, cs->Setting, obj->Setting,
                                              cSetting_seq_view_color);
                 VLACheck(row->col, CSeqCol, nCol);
                 r1 = row->col + nCol;
@@ -1515,7 +1515,7 @@ void SeekerUpdate(PyMOLGlobals * G)
               for(b = 0; b < obj->NCSet; b++) {
                 cs = obj->CSet[b];
                 if(cs) {
-                  default_color = SettingGet_i(G, cs->Setting, obj->Obj.Setting,
+                  default_color = SettingGet_i(G, cs->Setting, obj->Setting,
                                                cSetting_seq_view_color);
 
                   VLACheck(row->col, CSeqCol, nCol);
@@ -1897,8 +1897,8 @@ void SeekerUpdate(PyMOLGlobals * G)
         row = lab + 1;
         nCol = row->nCol;
         obj = row->obj;
-        div = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_label_spacing);
-        sub = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_label_start);
+        div = SettingGet_i(G, obj->Setting, NULL, cSetting_seq_view_label_spacing);
+        sub = SettingGet_i(G, obj->Setting, NULL, cSetting_seq_view_label_start);
 
         for(b = 0; b < nCol; b++) {
           CSeqCol *r1 = row->col + b;

@@ -53,9 +53,7 @@ typedef struct ObjectMoleculeBPRec {
   int n_atom;
 } ObjectMoleculeBPRec;
 
-typedef struct ObjectMolecule {
-	/* base Object class */
-  CObject Obj;
+struct ObjectMolecule : public CObject {
 	/* array of pointers to coordinate sets; one set per state */
   struct CoordSet **CSet;
 	/* number of coordinate sets */
@@ -101,7 +99,7 @@ typedef struct ObjectMolecule {
   int getState() const;
   bool setNDiscrete(int natom);
   bool updateAtmToIdx();
-} ObjectMolecule;
+};
 
 /* this is a record that holds information for specific types of Operatations on Molecules, eg. translation/rotation/etc */
 typedef struct ObjectMoleculeOpRec {

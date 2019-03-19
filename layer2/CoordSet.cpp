@@ -689,14 +689,14 @@ int CoordSetGetAtomTxfVertex(CoordSet * I, int at, float *v)
 
   /* apply state transformation */
   if(I->State.Matrix && (SettingGet_i(I->State.G,
-          obj->Obj.Setting, I->Setting,
+          obj->Setting, I->Setting,
           cSetting_matrix_mode) > 0)) {
     transform44d3f(I->State.Matrix, v, v);
   }
 
   /* object transformation */
-  if(obj->Obj.TTTFlag) {
-    transformTTT44f3f(obj->Obj.TTT, v, v);
+  if(obj->TTTFlag) {
+    transformTTT44f3f(obj->TTT, v, v);
   }
 
   return true;
@@ -1109,7 +1109,7 @@ void CoordSet::invalidateRep(int type, int level)
   /* graphical representations need redrawing */
   if(level == cRepInvVisib) {
     /* cartoon_side_chain_helper */
-    if(SettingGet_b(I->State.G, I->Setting, I->Obj->Obj.Setting,
+    if(SettingGet_b(I->State.G, I->Setting, I->Obj->Setting,
                     cSetting_cartoon_side_chain_helper)) {
       if((type == cRepCyl) || (type == cRepLine) || (type == cRepSphere))
         invalidateRep(cRepCartoon, cRepInvVisib2);
@@ -1120,7 +1120,7 @@ void CoordSet::invalidateRep(int type, int level)
       }
     }
     /* ribbon_side_chain_helper */
-    if(SettingGet_b(I->State.G, I->Setting, I->Obj->Obj.Setting,
+    if(SettingGet_b(I->State.G, I->Setting, I->Obj->Setting,
                     cSetting_ribbon_side_chain_helper)) {
       if((type == cRepCyl) || (type == cRepLine) || (type == cRepSphere))
         invalidateRep(cRepRibbon, cRepInvVisib2);
@@ -1131,7 +1131,7 @@ void CoordSet::invalidateRep(int type, int level)
       }
     }
     /* line_stick helper  */
-    if(SettingGet_b(I->State.G, I->Setting, I->Obj->Obj.Setting,
+    if(SettingGet_b(I->State.G, I->Setting, I->Obj->Setting,
                     cSetting_line_stick_helper)) {
       if(type == cRepCyl)
         invalidateRep(cRepLine, cRepInvVisib2);
@@ -1222,10 +1222,10 @@ void CoordSet::update(int state)
 {
   CoordSet * I = this;
   int a;
-  PyMOLGlobals *G = I->Obj->Obj.G;
+  PyMOLGlobals *G = I->Obj->G;
 
   PRINTFB(G, FB_CoordSet, FB_Blather) " CoordSetUpdate-Entered: object %s state %d cset %p\n",
-    I->Obj->Obj.Name, state, (void *) I
+    I->Obj->Name, state, (void *) I
     ENDFB(G);
 
   OrthoBusyFast(G, 0, cRepCnt);
@@ -1250,7 +1250,7 @@ void CoordSet::update(int state)
   OrthoBusyFast(G, 1, 1);
   if(Feedback(G, FB_CoordSet, FB_Blather)) {
     printf(" CoordSetUpdate-Leaving: object %s state %d cset %p\n",
-           I->Obj->Obj.Name, state, (void *) I);
+           I->Obj->Name, state, (void *) I);
   }
 }
 
@@ -1310,7 +1310,7 @@ void CoordSet::render(RenderInfo * info)
     " CoordSetRender: entered (%p).\n", (void *) I ENDFD;
 
   if(!(info->ray || info->pick) &&
-     (SettingGet_i(G, I->Setting, I->Obj->Obj.Setting,
+     (SettingGet_i(G, I->Setting, I->Obj->Setting,
                    cSetting_defer_builds_mode) == 5)) {
     if(!info->pass) {
       ObjectUseColor((CObject *) I->Obj);
@@ -1332,13 +1332,13 @@ void CoordSet::render(RenderInfo * info)
     int a, aa, abit, aastart = 0, aaend = cRepCnt;
     ::Rep *r;
     int sculpt_vdw_vis_mode = SettingGet_i(G, I->Setting,
-					   I->Obj->Obj.Setting,
+					   I->Obj->Setting,
 					   cSetting_sculpt_vdw_vis_mode);
     if((!pass) && sculpt_vdw_vis_mode && 
-       I->SculptCGO && (I->Obj->Obj.visRep & cRepCGOBit)) {
+       I->SculptCGO && (I->Obj->visRep & cRepCGOBit)) {
       if(ray) {
         int ok = CGORenderRay(I->SculptCGO, ray, info,
-			      ColorGet(G, I->Obj->Obj.Color), NULL, I->Setting, I->Obj->Obj.Setting);
+			      ColorGet(G, I->Obj->Color), NULL, I->Setting, I->Obj->Setting);
 	if (!ok){
 	  CGOFree(I->SculptCGO);
 	  CGOFree(I->SculptShaderCGO);
@@ -1361,10 +1361,10 @@ void CoordSet::render(RenderInfo * info)
 	  }
 	  if (I->SculptShaderCGO){
 	    CGORenderGL(I->SculptShaderCGO, NULL,
-			I->Setting, I->Obj->Obj.Setting, info, NULL);
+			I->Setting, I->Obj->Setting, info, NULL);
 	  } else {
 	    CGORenderGL(I->SculptCGO, NULL,
-			I->Setting, I->Obj->Obj.Setting, info, NULL);
+			I->Setting, I->Obj->Setting, info, NULL);
 	  }
         }
       }
@@ -1372,7 +1372,7 @@ void CoordSet::render(RenderInfo * info)
 
     if (pick){
       int pick_labels = SettingGet_i(G, I->Setting,
-				     I->Obj->Obj.Setting,
+				     I->Obj->Setting,
 				     cSetting_pick_labels);
       if (pick_labels == 2){ // only pick labels
 	aastart = cRepLabel;
@@ -1398,10 +1398,10 @@ void CoordSet::render(RenderInfo * info)
           if(I->Obj)
             ray->wobble(
                          SettingGet_i(G, I->Setting,
-                                      I->Obj->Obj.Setting,
+                                      I->Obj->Setting,
                                       cSetting_ray_texture),
                          SettingGet_3fv(G, I->Setting,
-                                        I->Obj->Obj.Setting,
+                                        I->Obj->Setting,
                                         cSetting_ray_texture_settings));
           else
             ray->wobble(
@@ -1409,7 +1409,7 @@ void CoordSet::render(RenderInfo * info)
                                       NULL, cSetting_ray_texture),
                          SettingGet_3fv(G, I->Setting, NULL,
                                         cSetting_ray_texture_settings));
-          ray->color3fv(ColorGet(G, I->Obj->Obj.Color));
+          ray->color3fv(ColorGet(G, I->Obj->Color));
         }
 
         if(r->fRender) {        /* do OpenGL rendering in three passes */
@@ -1785,7 +1785,7 @@ void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, V * out) {
   if (AtomSettingGetIfDefined(G, ai, setting_id, out))
     return;
 
-  *out = SettingGet<V>(G, cs->Setting, obj->Obj.Setting, setting_id);
+  *out = SettingGet<V>(G, cs->Setting, obj->Setting, setting_id);
 }
 
 template void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, int * out);

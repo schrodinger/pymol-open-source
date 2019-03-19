@@ -313,7 +313,7 @@ static int EditorGetEffectiveState(PyMOLGlobals * G, CObject * obj, int state)
     
     if(objMol) {
       if((objMol->NCSet == 1) && (state > 0))
-        if(SettingGet_i(G, NULL, objMol->Obj.Setting, cSetting_static_singletons))
+        if(SettingGet_i(G, NULL, objMol->Setting, cSetting_static_singletons))
           return 0;
     }
   }
@@ -1593,7 +1593,7 @@ void EditorRender(PyMOLGlobals * G, int state)
 
         if(obj1) {
 	  /* if the user froze a state, use it instead of the global */
-	  if((frozen = SettingGetIfDefined_i(obj1->Obj.G, obj1->Obj.Setting, cSetting_state, &st))) {
+	  if((frozen = SettingGetIfDefined_i(obj1->G, obj1->Setting, cSetting_state, &st))) {
 	    state = st-1;
 	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj1, state, index1, vv)) {
@@ -1603,7 +1603,7 @@ void EditorRender(PyMOLGlobals * G, int state)
         }
 
         if(obj2) {
-	  if((frozen = SettingGetIfDefined_i(obj2->Obj.G, obj2->Obj.Setting, cSetting_state, &st))) {
+	  if((frozen = SettingGetIfDefined_i(obj2->G, obj2->Setting, cSetting_state, &st))) {
 	    state = st-1;
 	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj2, state, index2, vv)) {
@@ -1613,7 +1613,7 @@ void EditorRender(PyMOLGlobals * G, int state)
         }
 
         if(obj3) {
-	  if((frozen = SettingGetIfDefined_i(obj3->Obj.G, obj3->Obj.Setting, cSetting_state, &st))) {
+	  if((frozen = SettingGetIfDefined_i(obj3->G, obj3->Setting, cSetting_state, &st))) {
 	    state = st-1;
 	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj3, state, index3, vv)) {
@@ -1623,7 +1623,7 @@ void EditorRender(PyMOLGlobals * G, int state)
         }
 
         if(obj4) {
-	  if((frozen = SettingGetIfDefined_i(obj4->Obj.G, obj4->Obj.Setting, cSetting_state, &st))) {
+	  if((frozen = SettingGetIfDefined_i(obj4->G, obj4->Setting, cSetting_state, &st))) {
 	    state = st-1;
 	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj4, state, index4, vv)) {

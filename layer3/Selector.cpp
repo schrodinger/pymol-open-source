@@ -2006,7 +2006,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
                 if(!quiet) {
                   PRINTFB(G, FB_Selector, FB_Warnings)
                     " AssignSS-Warning: Ignoring incomplete residue /%s/%s/%s/%d%c ...\n",
-                    obj->Obj.Name, LexStr(G, ai->segi), LexStr(G, ai->chain), ai->resv, ai->getInscode(true) ENDFB(G);
+                    obj->Name, LexStr(G, ai->segi), LexStr(G, ai->chain), ai->resv, ai->getInscode(true) ENDFB(G);
                 }
               }
             }
@@ -3320,7 +3320,7 @@ PyObject *SelectorAsPyList(PyMOLGlobals * G, int sele1)
         PyList_SetItem(tag_pyobj, b, PyInt_FromLong(vla_list[a][b].tag));
       }
       VLAFreeP(vla_list[a]);
-      PyList_SetItem(obj_pyobj, 0, PyString_FromString(obj_list[a]->Obj.Name));
+      PyList_SetItem(obj_pyobj, 0, PyString_FromString(obj_list[a]->Name));
       PyList_SetItem(obj_pyobj, 1, idx_pyobj);
       PyList_SetItem(obj_pyobj, 2, tag_pyobj);
       PyList_SetItem(result, a, obj_pyobj);
@@ -3806,8 +3806,8 @@ int SelectorCountStates(PyMOLGlobals * G, int sele)
       if(obj != last) {
         at1 = I->Table[a].atom;
         if(SelectorIsMember(G, obj->AtomInfo[at1].selEntry, sele)) {
-          if(obj->Obj.fGetNFrame) {
-            n_frame = obj->Obj.fGetNFrame((CObject *) obj);
+          if(obj->fGetNFrame) {
+            n_frame = obj->fGetNFrame((CObject *) obj);
             if(result < n_frame)
               result = n_frame;
           }
@@ -3977,9 +3977,9 @@ static int *SelectorGetIndexVLAImpl(PyMOLGlobals * G, CSelector *I, int sele)
 /*========================================================================*/
 void SelectorUpdateObjectSele(PyMOLGlobals * G, ObjectMolecule * obj)
 {
-  if(obj->Obj.Name[0]) {
-    SelectorDelete(G, obj->Obj.Name);
-    SelectorCreate(G, obj->Obj.Name, NULL, obj, true, NULL);    
+  if(obj->Name[0]) {
+    SelectorDelete(G, obj->Name);
+    SelectorCreate(G, obj->Name, NULL, obj, true, NULL);    
     /* create a selection with same name */
     if(SettingGetGlobal_b(G, cSetting_auto_classify_atoms))
     {
@@ -4056,7 +4056,7 @@ void SelectorLogSele(PyMOLGlobals * G, const char *name)
           if(robust)
             ObjectMoleculeGetAtomSeleFast(obj, at1, buf1);
           else
-            sprintf(buf1, "%s`%d", obj->Obj.Name, at1 + 1);
+            sprintf(buf1, "%s`%d", obj->Name, at1 + 1);
           strcat(line, buf1);
           append = 1;
           cnt++;
@@ -6239,7 +6239,7 @@ PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state)
 
     if(mat_cs != iter.cs) {
       /* compute the effective matrix for output coordinates */
-      matrix_ptr = ObjectGetTotalMatrix(&iter.obj->Obj, state, false, matrix) ? matrix : NULL;
+      matrix_ptr = ObjectGetTotalMatrix(iter.obj, state, false, matrix) ? matrix : NULL;
       mat_cs = iter.cs;
     }
 
@@ -6355,7 +6355,7 @@ int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
     // coord set specific stuff
     if(mat_cs != iter.cs) {
       // update matrix
-      matrix_ptr = ObjectGetTotalMatrix(&iter.obj->Obj, state, false, matrix) ? matrix : NULL;
+      matrix_ptr = ObjectGetTotalMatrix(iter.obj, state, false, matrix) ? matrix : NULL;
       mat_cs = iter.cs;
 
       // invalidate reps
@@ -6560,8 +6560,8 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
       if(matched_flag) {        /* atom matched, so copy coordinates */
         ccc++;
 
-        StateIterator iter0(G, obj0->Obj.Setting, sta0, obj0->NCSet);
-        StateIterator iter1(G, obj1->Obj.Setting, sta1, obj1->NCSet);
+        StateIterator iter0(G, obj0->Setting, sta0, obj0->NCSet);
+        StateIterator iter1(G, obj1->Setting, sta1, obj1->NCSet);
 
         while (iter0.next() && iter1.next()) {
           cs0 = obj0->CSet[iter0.state];
@@ -6654,7 +6654,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
         }
       }
       if(singleObj)
-        targ->Obj.Color = singleObj->Obj.Color;
+        targ->Color = singleObj->Color;
       /* should also consider copying lots of other stuff from the source object ... */
     }
   } else {
@@ -6923,7 +6923,7 @@ static void SelectorPurgeMembers(PyMOLGlobals * G, int sele)
     int I_FreeMember = I->FreeMember;
 
     while(ExecutiveIterateObjectMolecule(G, &obj, &iterator)) {
-      if(obj->Obj.type == cObjectMolecule) {
+      if(obj->type == cObjectMolecule) {
         AtomInfoType *ai = obj->AtomInfo;
         int a, n_atom = obj->NAtom;
         for(a = 0; a < n_atom; a++) {
@@ -7565,7 +7565,7 @@ static int *SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMolecule * o
   CSelector *I = G->Selector;
 
   PRINTFD(G, FB_Selector)
-    "SelectorUpdateTableSingleObject-Debug: entered for %s...\n", obj->Obj.Name ENDFD;
+    "SelectorUpdateTableSingleObject-Debug: entered for %s...\n", obj->Name ENDFD;
 
   SelectorClean(G);
 
@@ -7574,7 +7574,7 @@ static int *SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMolecule * o
     state = req_state;
     break;
   case cSelectorUpdateTableEffectiveStates:
-    state = ObjectGetCurrentState(&obj->Obj, true);
+    state = ObjectGetCurrentState(obj, true);
     break;
   case cSelectorUpdateTableCurrentState:
     state = SceneGetState(G);
@@ -7782,7 +7782,7 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
         state = SettingGetGlobal_i(G, cSetting_state) - 1;
         break;
       case cSelectorUpdateTableEffectiveStates:
-        state = ObjectGetCurrentState(&obj->Obj, true);
+        state = ObjectGetCurrentState(obj, true);
         break;
       default:                 /* unknown input -- fail safe (all states) */
         state = -1;
@@ -8349,7 +8349,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
       for(a = cNDummyAtoms; a < I->NAtom; a++) {
         flag = false;
         obj = i_obj[i_table[a].model];
-        if(obj->Obj.Enabled) {
+        if(obj->Enabled) {
           ai = obj->AtomInfo + i_table[a].atom;
 
           if(last_obj != obj) {
@@ -8368,7 +8368,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
     break;
   case SELE_ENAz:
     for(a = cNDummyAtoms; a < I->NAtom; a++) {
-      flag = (i_obj[i_table[a].model]->Obj.Enabled);
+      flag = (i_obj[i_table[a].model]->Enabled);
       base[0].sele[a] = flag;
       if(flag)
         c++;
@@ -8558,7 +8558,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
              for handling nucleic acid structures that use "*" in atom names */
 
           const char *atom_name_wildcard =
-            SettingGet_s(G, obj->Obj.Setting, NULL, cSetting_atom_name_wildcard);
+            SettingGet_s(G, obj->Setting, NULL, cSetting_atom_name_wildcard);
 
           if(!atom_name_wildcard[0])
             atom_name_wildcard = wildcard;
@@ -9103,7 +9103,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
           obj = i_obj[table_a->model];
           if(obj != last_obj) {
 
-            obj_matches = WordMatcherMatchAlpha(matcher, i_obj[table_a->model]->Obj.Name);
+            obj_matches = WordMatcherMatchAlpha(matcher, i_obj[table_a->model]->Name);
             last_obj = obj;
           }
           if(obj_matches) {
@@ -10916,11 +10916,11 @@ void SelectorFreeImpl(PyMOLGlobals * G, CSelector *I, short init2)
 {
   SelectorCleanImpl(G, I);
   if(I->Origin)
-    if(I->Origin->Obj.fFree)
-      I->Origin->Obj.fFree((CObject *) I->Origin);
+    if(I->Origin->fFree)
+      I->Origin->fFree((CObject *) I->Origin);
   if(I->Center)
-    if(I->Center->Obj.fFree)
-      I->Center->Obj.fFree((CObject *) I->Center);
+    if(I->Center->fFree)
+      I->Center->fFree((CObject *) I->Center);
   if (init2){
     VLAFreeP(I->Member);
     VLAFreeP(I->Name);

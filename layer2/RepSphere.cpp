@@ -350,7 +350,7 @@ static float SphereComputeCutMultiplier(SphereRec *sr){
  *
  */
 static void RepSphereCGOSetSphereColorAndPick(ObjectMolecule *obj, CoordSet * cs, CGO *cgo, int idx, int state, float transp, int sphere_color){
-  PyMOLGlobals *G = obj->Obj.G;
+  PyMOLGlobals *G = obj->G;
   int a1 = cs->IdxToAtm[idx];
   float at_transp;
   AtomInfoType *ati1 = obj->AtomInfo + a1;
@@ -384,12 +384,12 @@ CGO *RepSphereGeneratespheroidCGO(ObjectMolecule * I, CoordSet *cs, SphereRec *s
   int *q, *s;
   bool ok = true;
   float spheroid_scale =
-    SettingGet_f(I->Obj.G, cs->Setting, I->Obj.Setting, cSetting_spheroid_scale);
+    SettingGet_f(I->G, cs->Setting, I->Setting, cSetting_spheroid_scale);
   int sphere_color =
-    SettingGet_color(I->Obj.G, cs->Setting, I->Obj.Setting, cSetting_sphere_color);
-  float transp = SettingGet_f(I->Obj.G, cs->Setting, I->Obj.Setting, cSetting_sphere_transparency);
+    SettingGet_color(I->G, cs->Setting, I->Setting, cSetting_sphere_color);
+  float transp = SettingGet_f(I->G, cs->Setting, I->Setting, cSetting_sphere_transparency);
 
-  CGO *cgo = CGONew(I->Obj.G);
+  CGO *cgo = CGONew(I->G);
   for(idx = 0; idx < cs->NIndex; idx++) {
     float *v0 = &cs->Coord[3 * idx];
     a = cs->IdxToAtm[idx];
@@ -412,7 +412,7 @@ CGO *RepSphereGeneratespheroidCGO(ObjectMolecule * I, CoordSet *cs, SphereRec *s
       }
       CGOEnd(cgo);
       s++;
-      ok &= !I->Obj.G->Interrupt;
+      ok &= !I->G->Interrupt;
     }
   }
   CGOStop(cgo);
@@ -522,20 +522,20 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     I->spheroidCGO = RepSphereGeneratespheroidCGO(obj, cs, G->Sphere->Sphere[1], state);
 
   if (ok){
-    sphere_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_mode);
+    sphere_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sphere_mode);
     if (!use_shader && (sphere_mode == 5 || sphere_mode == 9)){
       sphere_mode = 0;
     }
   }
   if (ok){
     sphere_color =
-      SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_color);
+      SettingGet_color(G, cs->Setting, obj->Setting, cSetting_sphere_color);
     cartoon_side_chain_helper =
-      SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_side_chain_helper);
+      SettingGet_b(G, cs->Setting, obj->Setting, cSetting_cartoon_side_chain_helper);
     ribbon_side_chain_helper =
-      SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_side_chain_helper);
-    transp = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_transparency);
-    sphere_scale = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_scale);
+      SettingGet_b(G, cs->Setting, obj->Setting, cSetting_ribbon_side_chain_helper);
+    transp = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sphere_transparency);
+    sphere_scale = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sphere_scale);
   }
 
   if (ok){
@@ -550,11 +550,11 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   /* raytracing primitives */
 
   if (ok){
-    if(SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_solvent)) { /* are we generating a solvent surface? */
-      sphere_add = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_solvent_radius);       /* if so, get solvent radius */
+    if(SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sphere_solvent)) { /* are we generating a solvent surface? */
+      sphere_add = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_solvent_radius);       /* if so, get solvent radius */
     }
     
-    if(SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
+    if(SettingGet_b(G, cs->Setting, obj->Setting, cSetting_pickable)) {
       I->R.P = pymol::malloc<Pickable>(cs->NIndex + 1);
       CHECKOK(ok, I->R.P);
     }

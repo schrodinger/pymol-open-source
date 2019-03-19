@@ -115,7 +115,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   unsigned char *active = NULL;
   int nSphere = 0;
   float transp =
-    1.f - SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_nonbonded_transparency);
+    1.f - SettingGet_f(G, cs->Setting, obj->Setting, cSetting_nonbonded_transparency);
   int ok = true;
 
   OOAlloc(G, RepNonbondedSphere);
@@ -139,7 +139,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
     return (NULL);
   }
   float nb_spheres_size =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_nb_spheres_size);
+    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_nb_spheres_size);
 
   RepInit(G, &I->R);
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepNonbondedSphereRender;
@@ -187,7 +187,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
     ok &= !G->Interrupt;
   }
   CGOStop(I->primitiveCGO);
-  I->primitiveCGO->sphere_quality = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_nb_spheres_quality);
+  I->primitiveCGO->sphere_quality = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_nb_spheres_quality);
   if (ok){
     I->R.context.object = (void *) obj;
     I->R.context.state = state;

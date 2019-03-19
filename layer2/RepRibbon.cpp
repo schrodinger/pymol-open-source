@@ -174,27 +174,27 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   obj = cs->Obj;
 
   RepInit(G, &I->R);
-  power_a = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_power);
-  power_b = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_power_b);
-  throw_ = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_throw);
-  int trace_ostate = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_trace_atoms);
-  trace_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_trace_atoms_mode);
+  power_a = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_power);
+  power_b = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_power_b);
+  throw_ = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_throw);
+  int trace_ostate = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_trace_atoms);
+  trace_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_trace_atoms_mode);
   na_mode =
-    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_nucleic_acid_mode);
+    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_nucleic_acid_mode);
 
   ribbon_color =
-    SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_color);
+    SettingGet_color(G, cs->Setting, obj->Setting, cSetting_ribbon_color);
 
-  sampling = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_sampling);
+  sampling = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_sampling);
   if(sampling < 1)
     sampling = 1;
-  I->radius = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_radius);
+  I->radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_radius);
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepRibbonRender;
   I->R.fFree = (void (*)(struct Rep *)) RepRibbonFree;
   I->R.fRecolor = NULL;
   I->R.obj = (CObject *) obj;
   I->R.cs = cs;
-  I->ribbon_width = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_width);
+  I->ribbon_width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_width);
   I->R.context.object = (void *) obj;
   I->R.context.state = state;
 
@@ -574,13 +574,13 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
     AtomInfoType *obj_AtomInfo = obj->AtomInfo;
     AtomInfoType *ai, *last_ai = NULL;
     int trace, trace_ostate =
-      SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_trace_atoms);
+      SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_trace_atoms);
     int trace_mode =
-      SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_trace_atoms_mode);
+      SettingGet_i(G, cs->Setting, obj->Setting, cSetting_trace_atoms_mode);
     int na_mode =
-      SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_nucleic_acid_mode);
+      SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_nucleic_acid_mode);
     float ribbon_width =
-      SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_width);
+      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_width);
     int a1, a2 = -1;
     int color, last_color = -9;
 

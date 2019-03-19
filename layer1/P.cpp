@@ -455,7 +455,7 @@ PyObject *SettingWrapperObjectSubScript(PyObject *obj, PyObject *key){
       // object-state, object, or global
       ret = SettingGetPyObject(G,
           wobj->cs ? wobj->cs->Setting : NULL,
-          wobj->obj->Obj.Setting, setting_id);
+          wobj->obj->Setting, setting_id);
     }
   }
   return PConvAutoNone(ret);
@@ -659,7 +659,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
       }
       break;
     case cPType_model:
-      ret = PyString_FromString(wobj->obj->Obj.Name);
+      ret = PyString_FromString(wobj->obj->Name);
       break;
     case cPType_index:
       {

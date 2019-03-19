@@ -121,7 +121,7 @@ bool get_planer_normal_cs(
 int ObjectMoleculeSetMissingNeighborCoords(
     ObjectMolecule* I, CoordSet* cs, unsigned atm, bool h_fix)
 {
-  auto G = I->Obj.G;
+  auto G = I->G;
   int n_present = 0;
   float cbuf[4 * 3];
   int present_atm = -1;
@@ -265,7 +265,7 @@ int ObjectMoleculeSetMissingNeighborCoords(
  */
 int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int state)
 {
-  auto G = I->Obj.G;
+  auto G = I->G;
   auto const n_atom_old = I->NAtom;
 
   bool seleFlag = false;
@@ -338,7 +338,7 @@ int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int st
       I->NAtom - n_atom_old);
 
   // fill coordinates
-  for (StateIterator iter(G, I->Obj.Setting, state, I->NCSet); iter.next();) {
+  for (StateIterator iter(G, I->Setting, state, I->NCSet); iter.next();) {
     CoordSet* cs = I->CSet[iter.state];
     if (!cs)
       continue;

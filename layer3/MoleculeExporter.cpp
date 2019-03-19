@@ -217,7 +217,7 @@ protected:
   const char * getTitleOrName() {
     if (!m_iter.cs)
       return "untitled";
-    return m_iter.cs->Name[0] ? m_iter.cs->Name : m_iter.obj->Obj.Name;
+    return m_iter.cs->Name[0] ? m_iter.cs->Name : m_iter.obj->Name;
   }
 
 public:
@@ -536,10 +536,10 @@ struct MoleculeExporterPDB : public MoleculeExporter {
   void beginObject() override {
     MoleculeExporter::beginObject();
 
-    m_conect_all = SettingGet_b(G, m_iter.obj->Obj.Setting, nullptr, cSetting_pdb_conect_all);
+    m_conect_all = SettingGet_b(G, m_iter.obj->Setting, nullptr, cSetting_pdb_conect_all);
 
     if (m_multi == cMolExportByObject) {
-      m_offset += VLAprintf(m_buffer, m_offset, "HEADER    %.40s\n", m_iter.obj->Obj.Name);
+      m_offset += VLAprintf(m_buffer, m_offset, "HEADER    %.40s\n", m_iter.obj->Name);
       writeCryst1();
     }
   }
@@ -646,7 +646,7 @@ struct MoleculeExporterCIF : public MoleculeExporter {
     MoleculeExporter::beginMolecule();
 
     switch (m_multi) {
-      case cMolExportByObject:   m_molecule_name = m_iter.obj->Obj.Name; break;
+      case cMolExportByObject:   m_molecule_name = m_iter.obj->Name; break;
       case cMolExportByCoordSet: m_molecule_name = getTitleOrName(); break;
     }
 

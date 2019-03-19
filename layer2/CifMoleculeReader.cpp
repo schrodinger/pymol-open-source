@@ -396,7 +396,7 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
   if (i_end - i_start < 2)
     return;
 
-  auto G = I->Obj.G;
+  auto G = I->G;
   AtomInfoType *a1, *a2, *ai = I->AtomInfo;
   int order;
 
@@ -446,7 +446,7 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
 static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
     bond_dict_t * bond_dict=nullptr) {
 
-  PyMOLGlobals * G = I->Obj.G;
+  PyMOLGlobals * G = I->G;
   int i_start = 0, i_prev_c = 0, i_prev_o3 = 0;
 
   if (!bond_dict) {
@@ -1977,7 +1977,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
 
   // allocate ObjectMolecule
   ObjectMolecule * I = ObjectMoleculeNew(G, (discrete > 0));
-  I->Obj.Color = AtomInfoUpdateAutoColor(G);
+  I->Color = AtomInfoUpdateAutoColor(G);
 
   // read coordsets from datablock
   if ((csets = read_atom_site(G, datablock, &I->AtomInfo, info, I->DiscreteFlag))) {
@@ -2192,7 +2192,7 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
 
     // multiplexing
     ObjectSetName((CObject*) obj, it->first);
-    ExecutiveDelete(G, obj->Obj.Name);
+    ExecutiveDelete(G, obj->Name);
     ExecutiveManageObject(G, (CObject*) obj, zoom, true);
   }
 

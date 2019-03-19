@@ -1025,7 +1025,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
 
         symm = NULL;
         if(sele_obj &&  ObjectMapValidXtal(mapObj, state)) {
-          if(SettingGet_b(G, NULL, sele_obj->Obj.Setting, cSetting_map_auto_expand_sym)
+          if(SettingGet_b(G, NULL, sele_obj->Setting, cSetting_map_auto_expand_sym)
               && (sele_obj->Symmetry)) {
             // legacy default: take symmetry from molecular object
             symm = sele_obj->Symmetry;
@@ -1273,7 +1273,7 @@ int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_n
 
         symm = NULL;
         if(sele_obj && ObjectMapValidXtal(mapObj, state)) {
-          if(SettingGet_b(G, NULL, sele_obj->Obj.Setting, cSetting_map_auto_expand_sym)
+          if(SettingGet_b(G, NULL, sele_obj->Setting, cSetting_map_auto_expand_sym)
               && (sele_obj->Symmetry)) {
             // legacy default: take symmetry from molecular object
             symm = sele_obj->Symmetry;
@@ -1387,7 +1387,7 @@ int ExecutivePseudoatom(PyMOLGlobals * G, const char *object_name, const char *s
       /* new object */
       is_new = true;
       obj = ObjectMoleculeNew(G, false);
-      ObjectSetName(&obj->Obj, object_name);
+      ObjectSetName(obj, object_name);
       if(!obj)
         ok = false;
     }
@@ -1399,9 +1399,13 @@ int ExecutivePseudoatom(PyMOLGlobals * G, const char *object_name, const char *s
                                    state, mode, quiet)) {
       if(is_new) {
         ExecutiveDelete(G, object_name);        /* just in case */
-        ExecutiveManageObject(G, &obj->Obj, false, true);
+        ExecutiveManageObject(G, obj, false, true);
+#ifndef _PYMOL_NO_UNDO
+#endif
       } else {
-        ExecutiveUpdateObjectSelection(G, &obj->Obj);
+        ExecutiveUpdateObjectSelection(G, obj);
+#ifndef _PYMOL_NO_UNDO
+#endif
       }
     }
   }
@@ -1960,7 +1964,7 @@ void ExecutiveUpdateCoordDepends(PyMOLGlobals * G, ObjectMolecule * mol)
   SpecRec *rec = NULL;
   ObjectGadget *gadget;
   int done_inv_all = false;
-  int dynamic_measures = SettingGet_b(G, mol ? mol->Obj.Setting : NULL, NULL,
+  int dynamic_measures = SettingGet_b(G, mol ? mol->Setting : NULL, NULL,
       cSetting_dynamic_measures);
 
   while(ListIterate(I->Spec, rec, next)) {
@@ -3290,7 +3294,7 @@ int ExecutiveSetDrag(PyMOLGlobals * G, const char *name, int quiet,int mode)
             if(objMol) {
               if(mode>0) 
                 sele = -1; /* force drag by matrix */
-              EditorSetDrag(G, &objMol->Obj, sele, quiet, SceneGetState(G));
+              EditorSetDrag(G, objMol, sele, quiet, SceneGetState(G));
               set_flag = true;
             } else {
               PRINTFB(G, FB_Executive, FB_Errors)
@@ -4333,7 +4337,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
         M4XAnnoType *m4x = &current->m4x;
 
         if(m4x->annotated_flag && m4x->align) {
-          if(WordMatchExact(G, current->obj->Obj.Name, m4x->align->target, true)) {
+          if(WordMatchExact(G, current->obj->Name, m4x->align->target, true)) {
             target_rec = current;
             break;
           }
@@ -4420,7 +4424,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
                                                          pairwise.n_pair);
 
                   sprintf(align_name, "%s_%s_alignment",
-                          pairwise.trg_obj->Obj.Name, pairwise.mbl_obj->Obj.Name);
+                          pairwise.trg_obj->Name, pairwise.mbl_obj->Name);
 
                   ExecutiveRMS(G, mbl_sele, trg_sele, 2, 0.0F, 0, 0,
                                align_name, 0, 0, true, 0, NULL);
@@ -6359,7 +6363,7 @@ int ExecutiveSymmetryCopy(PyMOLGlobals * G, const char *source_name, const char 
       /* Invalidate cRepCell */
       /* if the unit cell is shown for molecule, redraw it */
       if(tmp_mol) {
-	if((tmp_mol->Obj.visRep & cRepCellBit)) {
+	if((tmp_mol->visRep & cRepCellBit)) {
 	  if(tmp_mol->Symmetry) {
 	    if(tmp_mol->Symmetry->Crystal) {
 	      if(tmp_mol->UnitCellCGO)
@@ -7271,7 +7275,7 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
       if(rec->type == cExecObject) {
         if(rec->obj->type == cObjectMolecule) {
           objMol = (ObjectMolecule *) rec->obj;
-          if(SettingGet_b(G, NULL, objMol->Obj.Setting, cSetting_sculpting)) {
+          if(SettingGet_b(G, NULL, objMol->Setting, cSetting_sculpting)) {
             int state = ObjectGetCurrentState(rec->obj, true);
             if(state<0)
               state = SceneGetState(G);
@@ -7282,7 +7286,7 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
               }
             }
             ObjectMoleculeSculptIterate(objMol, state,
-                                        SettingGet_i(G, NULL, objMol->Obj.Setting,
+                                        SettingGet_i(G, NULL, objMol->Setting,
                                                      cSetting_sculpting_cycles), center);
             active = true;
           }
@@ -9412,7 +9416,7 @@ void ExecutiveFuse(PyMOLGlobals * G, const char *s0, const char *s1, int mode,
           op.i2 = 0;
           op.i3 = recolor;
           if(recolor)
-            op.i4 = obj1->Obj.Color;
+            op.i4 = obj1->Color;
           ExecutiveObjMolSeleOp(G, sele2, &op);
         }
         SelectorDelete(G, tmp_fuse_sele);
@@ -9658,13 +9662,13 @@ void ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet)
             if(!quiet) {
               PRINTFD(G, FB_Editor)
                 " ExecutiveRemove-Debug: purging %i of %i atoms in %s\n",
-                op.i1, obj->NAtom, obj->Obj.Name ENDFD;
+                op.i1, obj->NAtom, obj->Name ENDFD;
             }
             ObjectMoleculePurge(obj);
             if(!quiet) {
               PRINTFB(G, FB_Editor, FB_Actions)
                 " Remove: eliminated %d atoms in model \"%s\".\n",
-                op.i1, obj->Obj.Name ENDFB(G);
+                op.i1, obj->Name ENDFB(G);
             }
           }
         }
@@ -10368,10 +10372,10 @@ int ExecutiveSeleToObject(PyMOLGlobals * G, const char *name, const char *s1,
            object's state matrix (if any) */
 
         if(old_obj && new_obj) {
-          ExecutiveMatrixCopy(G, old_obj->Obj.Name, new_obj->Obj.Name, 1, 1,    /* TTT mode */
+          ExecutiveMatrixCopy(G, old_obj->Name, new_obj->Name, 1, 1,    /* TTT mode */
                               source, target, false, 0, quiet);
 
-          ExecutiveMatrixCopy(G, old_obj->Obj.Name, new_obj->Obj.Name, 2, 2,    /* Object state mode */
+          ExecutiveMatrixCopy(G, old_obj->Name, new_obj->Name, 2, 2,    /* Object state mode */
                               source, target, false, 0, quiet);
 
           ExecutiveDoZoom(G, (CObject *) new_obj, !exists, zoom, true);
@@ -10398,11 +10402,11 @@ void ExecutiveCopy(PyMOLGlobals * G, const char *src, const char *dst, int zoom)
     oSrc = (ObjectMolecule *) os;
     oDst = ObjectMoleculeCopy(oSrc);
     if(oDst) {
-      strcpy(oDst->Obj.Name, dst);
+      strcpy(oDst->Name, dst);
       ExecutiveManageObject(G, (CObject *) oDst, zoom, false);
 
       PRINTFB(G, FB_Executive, FB_Actions)
-        " Executive: object %s created.\n", oDst->Obj.Name ENDFB(G);
+        " Executive: object %s created.\n", oDst->Name ENDFB(G);
     }
   }
   SceneChanged(G);
@@ -10625,7 +10629,7 @@ int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,
     if(state == -2)
       state = SceneGetState(G);
     if(state == -3)
-      state = ObjectGetCurrentState(&obj->Obj, true);
+      state = ObjectGetCurrentState(obj, true);
     if(state >= 0) {
       cs = ObjectMoleculeGetCoordSet(obj, state);
     } else
@@ -11511,24 +11515,24 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
                object's state matrix (if any) */
 
             if(src_obj && trg_obj) {
-              ExecutiveMatrixCopy(G, trg_obj->Obj.Name, src_obj->Obj.Name, 1, 1,        /* TTT mode */
+              ExecutiveMatrixCopy(G, trg_obj->Name, src_obj->Name, 1, 1,        /* TTT mode */
                                   state2, state1, false, 0, quiet);
 
-              ExecutiveMatrixCopy(G, trg_obj->Obj.Name, src_obj->Obj.Name, 2, 2,        /* Object state mode */
+              ExecutiveMatrixCopy(G, trg_obj->Name, src_obj->Name, 2, 2,        /* Object state mode */
                                   state2, state1, false, 0, quiet);
 
               switch (matrix_mode) {
               case 1:          /* TTTs */
-                ExecutiveCombineObjectTTT(G, src_obj->Obj.Name, op2.ttt, true, -1);
+                ExecutiveCombineObjectTTT(G, src_obj->Name, op2.ttt, true, -1);
                 break;
               case 2:
                 {
                   double homo[16], *src_homo;
                   convertTTTfR44d(op2.ttt, homo);
                   if(ExecutiveGetObjectMatrix
-                     (G, src_obj->Obj.Name, state1, &src_homo, false)) {
+                     (G, src_obj->Name, state1, &src_homo, false)) {
                     left_multiply44d44d(src_homo, homo);
-                    ExecutiveSetObjectMatrix(G, src_obj->Obj.Name, state1, homo);
+                    ExecutiveSetObjectMatrix(G, src_obj->Name, state1, homo);
                   }
                 }
                 break;
@@ -12105,7 +12109,7 @@ int ExecutiveSetBondSettingFromString(PyMOLGlobals * G,
               SettingGetName(G, index, name);
               PRINTF
                 " Setting: %s set for %d bonds in object \"%s\".\n",
-                name, nSet, obj->Obj.Name ENDF(G);
+                name, nSet, obj->Name ENDF(G);
             }
           }
         }
@@ -12166,7 +12170,7 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
 	      if (!pyObjList){
 		pyObjList = PyList_New(2);
 		pyBondList = PyList_New(0);
-		PyList_SetItem(pyObjList, 0, PyString_FromString(obj->Obj.Name));
+		PyList_SetItem(pyObjList, 0, PyString_FromString(obj->Name));
 		PyList_SetItem(pyObjList, 1, pyBondList);
 		PyList_Append(result, pyObjList);
 		Py_DECREF(pyObjList);
@@ -12188,7 +12192,7 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
 	    SettingGetName(G, index, name);
 	    PRINTF
 	      " Getting: %s for %d bonds in object \"%s\".\n",
-	      name, nSet, obj->Obj.Name ENDF(G);
+	      name, nSet, obj->Name ENDF(G);
 	  }
 	}
       }
@@ -12290,7 +12294,7 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
                 SettingGetName(G, index, name);
                 PRINTF
                   " Setting: %s set for %d bonds in object \"%s\".\n",
-                  name, nSet, obj->Obj.Name ENDF(G);
+                  name, nSet, obj->Name ENDF(G);
               }
             }
           }
@@ -14299,7 +14303,7 @@ static void ExecutiveSetAllRepVisMask(PyMOLGlobals * G, int repmask, int state)
         switch (rec->obj->type) {
         case cObjectMolecule:
           obj = (ObjectMolecule *) rec->obj;
-          sele = SelectorIndexByName(G, obj->Obj.Name);
+          sele = SelectorIndexByName(G, obj->Name);
           ObjectMoleculeOpRecInit(&op);
 
           op.code = OMOP_VISI;
@@ -14726,7 +14730,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
                     new_name, name, (int)a, x, y, z ENDFB(G);
 
                   ObjectSetName((CObject *) new_obj, new_name);
-                  ExecutiveDelete(G, new_obj->Obj.Name);
+                  ExecutiveDelete(G, new_obj->Name);
                   ExecutiveManageObject(G, (CObject *) new_obj, -1, quiet);
                   SceneChanged(G);
 									

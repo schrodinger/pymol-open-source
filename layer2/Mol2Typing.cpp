@@ -118,7 +118,7 @@ static int sulfurCountOxygenNeighbors(ObjectMolecule * obj, int atm) {
  * Pre-condition: ObjectMoleculeVerifyChemistry
  */
 const char * getMOL2Type(ObjectMolecule * obj, int atm) {
-  auto G = obj->Obj.G;
+  auto G = obj->G;
   auto ai = obj->AtomInfo + atm;
 
   switch (ai->protons) {

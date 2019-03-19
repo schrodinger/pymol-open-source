@@ -1524,7 +1524,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   RepLabelInit(I);
   obj = cs->Obj;
 
-  label_color = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_label_color);
+  label_color = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_label_color);
   RepInit(G, &I->R);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepLabelRender;
@@ -1543,9 +1543,9 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   ErrChkPtr(G, I->V);
 
   I->OutlineColor =
-    SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_label_outline_color);
+    SettingGet_color(G, cs->Setting, obj->Setting, cSetting_label_outline_color);
 
-  if(SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
+  if(SettingGet_b(G, cs->Setting, obj->Setting, cSetting_pickable)) {
     I->R.P = pymol::malloc<Pickable>(cs->NIndex + 1);
     ErrChkPtr(G, I->R.P);
     rp = I->R.P + 1;            /* skip first record! */

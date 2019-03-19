@@ -70,6 +70,6 @@ void ObjectMoleculeSetAssemblyCSets(
 
   // all_states for multi-model assembly
   if (I->NCSet > 1) {
-    SettingSet(cSetting_all_states, true, &I->Obj);
+    SettingSet(cSetting_all_states, true, I);
   }
 }

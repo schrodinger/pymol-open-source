@@ -20,7 +20,7 @@ void SideChainHelperMarkNonCartoonBonded(bool * marked,
     bool cartoon_side_chain_helper,
     bool ribbon_side_chain_helper)
 {
-  auto G = obj->Obj.G;
+  auto G = obj->G;
   int a1, a2;
 
   auto b = obj->Bond;

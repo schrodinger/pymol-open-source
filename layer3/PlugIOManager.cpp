@@ -302,7 +302,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
         SceneCountFrames(G);
         if(zoom_flag)
           if(SettingGetGlobal_i(G, cSetting_auto_zoom)) {
-            ExecutiveWindowZoom(G, obj->Obj.Name, 0.0, -1, 0, 0, quiet);        /* auto zoom (all states) */
+            ExecutiveWindowZoom(G, obj->Name, 0.0, -1, 0, 0, quiet);        /* auto zoom (all states) */
           }
   }
   return true;
@@ -585,7 +585,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
 
   // Create ObjectMolecule
   ok_assert(1, I = ObjectMoleculeNew(G, false));
-  I->Obj.Color = AtomInfoUpdateAutoColor(G);
+  I->Color = AtomInfoUpdateAutoColor(G);
   VLASize(I->AtomInfo, AtomInfoType, natoms);
   I->NAtom = natoms;
 

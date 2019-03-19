@@ -56,9 +56,9 @@ void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
     int active = false;
     ObjectMolecule *obj = cs->Obj;
     float line_width =
-      SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_line_width);
+      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_line_width);
     float nonbonded_size =
-      SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_nonbonded_size);
+      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_nonbonded_size);
 
     if(info->width_scale_flag)
       glLineWidth(line_width * info->width_scale);
@@ -200,7 +200,7 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
     alpha = 1.0F;
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->R.cs->Setting, I->R.cs->Obj->Obj.Setting);
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->R.cs->Setting, I->R.cs->Obj->Setting);
     ray->transparentf(0.0);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {

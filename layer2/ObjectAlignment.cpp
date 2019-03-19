@@ -199,12 +199,12 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
                alignment and count the name length */
 
             while(ExecutiveIterateObjectMolecule(G, &obj, &hidden)) {
-              if((obj->Obj.Enabled || !active_only) && (obj->Obj.Name[0] != '_')) {
+              if((obj->Enabled || !active_only) && (obj->Name[0] != '_')) {
                 int a;
                 AtomInfoType *ai = obj->AtomInfo;
                 for(a = 0; a < obj->NAtom; a++) {
                   if(SelectorIsMember(G, ai->selEntry, align_sele)) {
-                    int name_len = strlen(obj->Obj.Name);
+                    int name_len = strlen(obj->Name);
                     if(max_name_len < name_len)
                       max_name_len = name_len;
                     VLACheck(row_vla, CSeqRow, nRow);
@@ -424,7 +424,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
                 done = true;
                 for(a = 0; a < nRow; a++) {
                   row = row_vla + a;
-                  UtilNPadVLA(&vla, &len, row->obj->Obj.Name, max_name_len + 1);
+                  UtilNPadVLA(&vla, &len, row->obj->Name, max_name_len + 1);
                   if(seq_len < row->len) {
                     UtilNPadVLA(&vla, &len, row->txt + seq_len, block_width);
                   }
@@ -1244,7 +1244,7 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
     ObjectAlignmentState *oas = I->State + state;
     oas->valid = false;
     if(guide) {
-      strcpy(oas->guide, guide->Obj.Name);
+      strcpy(oas->guide, guide->Name);
     }
     if(align_vla) {
       if(merge && oas->alignVLA) {

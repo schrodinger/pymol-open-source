@@ -157,7 +157,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
   tai.q = 1.0f;
 
   I = ObjectMoleculeNew(G, /* discrete */ 1);
-  I->Obj.Color = AtomInfoUpdateAutoColor(G);
+  I->Color = AtomInfoUpdateAutoColor(G);
   I->NAtom = container->numAtoms;
   I->NCSet = container->numModels;
   I->Bond = VLAlloc(BondType, container->numBonds);

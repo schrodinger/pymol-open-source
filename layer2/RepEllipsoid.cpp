@@ -171,25 +171,25 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
   /*  I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepEllipsoidSameVis; */
 
   {
-    int ellipsoid_color = SettingGet_color(G, cs->Setting, obj->Obj.Setting,
+    int ellipsoid_color = SettingGet_color(G, cs->Setting, obj->Setting,
                                            cSetting_ellipsoid_color);
 
-    int cartoon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Obj.Setting,
+    int cartoon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Setting,
                                                  cSetting_cartoon_side_chain_helper);
 
-    int ribbon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Obj.Setting,
+    int ribbon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Setting,
                                                 cSetting_ribbon_side_chain_helper);
 
-    float ellipsoid_scale = SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+    float ellipsoid_scale = SettingGet_f(G, cs->Setting, obj->Setting,
                                          cSetting_ellipsoid_scale);
 
-    float transp = SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+    float transp = SettingGet_f(G, cs->Setting, obj->Setting,
                                 cSetting_ellipsoid_transparency);
 
-    int pickable = SettingGet_b(G, cs->Setting, obj->Obj.Setting,
+    int pickable = SettingGet_b(G, cs->Setting, obj->Setting,
                                 cSetting_pickable);
 
-    float prob = SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+    float prob = SettingGet_f(G, cs->Setting, obj->Setting,
                               cSetting_ellipsoid_probability);
     double matrix_factor = 0.0F;
     float pradius = 0.0F;
@@ -211,7 +211,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
       AtomInfoType *ai;
       float last_alpha = 1.0F;
 
-      double *csmatrix = SettingGet_i(G, cs->Setting, obj->Obj.Setting,
+      double *csmatrix = SettingGet_i(G, cs->Setting, obj->Setting,
             cSetting_matrix_mode) > 0 ? NULL : cs->State.Matrix;
 
       for(a = 0; a < cs->NIndex; a++) {
