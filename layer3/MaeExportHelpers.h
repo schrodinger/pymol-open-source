@@ -31,4 +31,6 @@ std::string MaeExportGetLabelUserText(PyMOLGlobals * G,
 std::string MaeExportGetSubGroupId(PyMOLGlobals * G,
     const CObject * obj);
 
+std::string MaeExportStrRepr(const char * text);
+
 // vi:sw=2:expandtab

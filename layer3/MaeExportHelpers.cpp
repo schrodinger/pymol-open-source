@@ -197,3 +197,39 @@ std::string MaeExportGetSubGroupId(PyMOLGlobals * G,
 
   return subgroupid;
 }
+
+/*
+ * Get parsable string representation, with quotes and escaped
+ * quotes/backslashes if needed.
+ */
+std::string MaeExportStrRepr(const char * text)
+{
+  if (text[0] /* not empty string */) {
+    bool needquotes = false;
+
+    // check accepted ascii characters
+    for (const char * p = text; *p; ++p) {
+      if (*p < '$' || *p > 'z' || *p == '\\') {
+        needquotes = true;
+        break;
+      }
+    }
+
+    if (!needquotes) {
+      return text;
+    }
+  }
+
+  std::string quoted_text;
+  quoted_text.reserve(strlen(text) + 2);
+  quoted_text += '"';
+
+  for (const char * p = text; *p; ++p) {
+    if (*p == '"' || *p == '\\')
+      quoted_text += '\\';
+    quoted_text += *p;
+  }
+
+  quoted_text += '"';
+  return quoted_text;
+}

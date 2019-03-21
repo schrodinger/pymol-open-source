@@ -1064,6 +1064,39 @@ struct MoleculeExporterMAE : public MoleculeExporter {
   int m_n_arom_bonds;
   std::map<int, const AtomInfoType *> m_atoms;
 
+  /* Write a single string value to the output buffer
+   */
+  void writeMaeValue(const char * s) {
+    auto s_quoted = MaeExportStrRepr(s);
+    m_offset += VLAprintf(m_buffer, m_offset, "%s\n", s_quoted.c_str());
+  }
+
+  /* Write the given keys to the output buffer.
+   * Add type prefix and make key unique if necessary.
+   */
+  void writeMaeKeys(const std::vector<std::string> &keys) {
+    std::set<std::string> unique_keys;
+
+    for (auto key : keys) {
+      // check for "<type>_" prefix or add one
+      if (key.size() < 2 || key[1] != '_' || !strchr("irsb", key[0])) {
+        key = "s_pymol_" + key;
+      }
+
+      auto key_size = key.size();
+
+      // make key unique (append numbers)
+      for (unsigned i = 1; unique_keys.count(key); ++i) {
+        key.resize(key_size);
+        key += std::to_string(i);
+      }
+
+      unique_keys.insert(key);
+
+      writeMaeValue(key.c_str());
+    }
+  }
+
   // quasi constructor
   void init(PyMOLGlobals * G_) override {
     MoleculeExporter::init(G_);
@@ -1089,43 +1122,79 @@ struct MoleculeExporterMAE : public MoleculeExporter {
 
     m_offset += VLAprintf(m_buffer, m_offset,
         "\nf_m_ct {\n"
-        "s_m_subgroupid\n"
-        "s_m_title\n"
+        );
+
+    std::vector<std::string> keys {
+      "s_m_title",
+    };
+
+    if (!groupid.empty()) {
+      keys.emplace_back("s_m_subgroupid");
+    }
+
+#ifdef _PYMOL_MAE_PROP_EXPORT
+#endif
+
+    writeMaeKeys(keys);
+
+    m_offset += VLAprintf(m_buffer, m_offset,
         ":::\n"
-        "\"%s\"\n"
-        "\"%s\"\n",
-        groupid.c_str(),
-        getTitleOrName());
+        );
+
+    // title may contain spaces or quotes
+    writeMaeValue(getTitleOrName());
+
+    if (!groupid.empty()) {
+      m_offset += VLAprintf(m_buffer, m_offset, "\"%s\"\n", groupid.c_str());
+    }
+
+#ifdef _PYMOL_MAE_PROP_EXPORT
+#endif
 
     // defer until number of atoms known
     m_n_atoms_offset = m_offset;
 
+    keys = {
+      "i_m_mmod_type",
+      "r_m_x_coord",
+      "r_m_y_coord",
+      "r_m_z_coord",
+      "i_m_residue_number",
+      "s_m_insertion_code",
+      "s_m_chain_name",
+      "s_m_pdb_residue_name",
+      "s_m_pdb_atom_name",
+      "i_m_atomic_number",
+      "i_m_formal_charge",
+      "s_m_color_rgb",
+      "i_m_secondary_structure",
+      "r_m_pdb_occupancy",
+      "i_pdb_PDB_serial",
+
+      "r_m_pdb_tfactor",
+      "r_m_charge1",
+
+      "i_m_visibility",
+      "i_m_representation",
+      "i_m_ribbon_style",
+      "i_m_ribbon_color",
+      "s_m_ribbon_color_rgb",
+      "s_m_label_format",
+      "i_m_label_color",
+      "s_m_label_user_text",
+    };
+
     m_offset += VLAprintf(m_buffer, m_offset,
         "m_atom[X]            {\n" // place holder
         "# First column is atom index #\n"
-        "i_m_mmod_type\n"
-        "r_m_x_coord\n"
-        "r_m_y_coord\n"
-        "r_m_z_coord\n"
-        "i_m_residue_number\n"
-        "s_m_insertion_code\n"
-        "s_m_chain_name\n"
-        "s_m_pdb_residue_name\n"
-        "s_m_pdb_atom_name\n"
-        "i_m_atomic_number\n"
-        "i_m_formal_charge\n"
-        "s_m_color_rgb\n"
-        "i_m_secondary_structure\n"
-        "r_m_pdb_occupancy\n"
-        "i_pdb_PDB_serial\n"
-        "i_m_visibility\n"
-        "i_m_representation\n"
-        "i_m_ribbon_style\n"
-        "i_m_ribbon_color\n"
-        "s_m_ribbon_color_rgb\n"
-        "s_m_label_format\n"
-        "i_m_label_color\n"
-        "s_m_label_user_text\n"
+        );
+
+#ifdef _PYMOL_MAE_PROP_EXPORT
+#endif
+
+    writeMaeKeys(keys);
+
+    m_offset += VLAprintf(m_buffer, m_offset,
         ":::\n");
 
     m_n_atoms = 0;
@@ -1170,6 +1239,11 @@ struct MoleculeExporterMAE : public MoleculeExporter {
         ai->ssType[0] == 'H' ? 1 : ai->ssType[0] == 'S' ? 2 : 0,
         ai->q,
         ai->id);
+
+    m_offset += VLAprintf(m_buffer, m_offset,
+        "%.2f %.2f ",
+        ai->b,
+        ai->partialCharge);
 
     char ribbon_color_rgb[7] = "<>";
     MaeExportGetRibbonColor(G, m_iter, ribbon_color_rgb);
