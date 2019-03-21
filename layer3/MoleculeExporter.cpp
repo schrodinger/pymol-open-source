@@ -1063,6 +1063,22 @@ struct MoleculeExporterMAE : public MoleculeExporter {
   int m_n_atoms_offset;
   int m_n_arom_bonds;
   std::map<int, const AtomInfoType *> m_atoms;
+  bool m_has_anisou;
+
+#ifdef _PYMOL_MAE_PROP_EXPORT
+#endif
+
+  /* Check if current object has any ANISOU data
+   */
+  bool currentObjectHasAnisou() const {
+    for (auto i = 0; i < m_iter.obj->NAtom; ++i) {
+      if (m_iter.obj->AtomInfo[i].has_anisou()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   /* Write a single string value to the output buffer
    */
@@ -1184,6 +1200,18 @@ struct MoleculeExporterMAE : public MoleculeExporter {
       "s_m_label_user_text",
     };
 
+    // ANISOU
+    if ((m_has_anisou = currentObjectHasAnisou())) {
+      keys.insert(keys.end(), {
+        "i_pdb_anisou_u11",
+        "i_pdb_anisou_u22",
+        "i_pdb_anisou_u33",
+        "i_pdb_anisou_u12",
+        "i_pdb_anisou_u13",
+        "i_pdb_anisou_u23",
+      });
+    }
+
     m_offset += VLAprintf(m_buffer, m_offset,
         "m_atom[X]            {\n" // place holder
         "# First column is atom index #\n"
@@ -1258,6 +1286,28 @@ struct MoleculeExporterMAE : public MoleculeExporter {
         ribbon_color_rgb,
         label_user_text.empty() ? "" : "%UT",
         label_user_text.c_str());
+
+    // ANISOU
+    if (m_has_anisou) {
+      if (ai->has_anisou()) {
+        float anisou[6];
+        std::copy_n(ai->get_anisou(), 6, anisou);
+
+        if (m_mat_full.ptr) {
+          RotateU(m_mat_full.ptr, anisou);
+        }
+
+        m_offset += VLAprintf(m_buffer, m_offset,
+            "%.0f %.0f %.0f %.0f %.0f %.0f\n",
+            anisou[0] * 1e4, anisou[1] * 1e4, anisou[2] * 1e4,
+            anisou[3] * 1e4, anisou[4] * 1e4, anisou[5] * 1e4);
+      } else {
+        m_offset += VLAprintf(m_buffer, m_offset, "<> <> <> <> <> <>\n");
+      }
+    }
+
+#ifdef _PYMOL_MAE_PROP_EXPORT
+#endif
 
     m_atoms[getTmpID()] = ai;
 

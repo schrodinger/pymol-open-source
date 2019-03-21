@@ -851,12 +851,12 @@ bool CoordSetInsureOrthogonal(PyMOLGlobals * G,
 }
 
 /*========================================================================*/
-static char RotateU(const double *matrix, float *anisou)
 /* Rotates the ANISOU vector
  *
  * matrix: flat 4x4, but only rotation (upper left 3x3) is considered
  * anisou: has 6 elements (of symmetric 3x3) and will be rotated in-place
  */
+bool RotateU(const double *matrix, float *anisou)
 {
   int i, j, k;
   float Re[3][3];

@@ -221,4 +221,7 @@ template <typename V> void SettingSet(int index, V value, CoordSet *cs) {
   SettingSet(cs->State.G, &cs->Setting, index, value);
 }
 
+// Rotates the ANISOU vector
+bool RotateU(const double *matrix, float *anisou);
+
 #endif
