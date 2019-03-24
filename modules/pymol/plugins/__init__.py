@@ -428,7 +428,10 @@ def initialize(pmgapp=-1):
 
     if os.path.exists(PYMOLPLUGINSRC):
         from pymol import parsing
-        parsing.run_file(PYMOLPLUGINSRC, {'__script__': PYMOLPLUGINSRC}, {})
+        try:
+            parsing.run_file(PYMOLPLUGINSRC, {'__script__': PYMOLPLUGINSRC}, {})
+        except SyntaxError as e:
+            colorprinting.warning(str(e))
 
     autoload = (pmgapp != -2)
     for parent in [startup]:
