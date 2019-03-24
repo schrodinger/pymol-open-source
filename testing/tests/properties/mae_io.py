@@ -35,10 +35,31 @@ class TestMaePropertiesIO(testing.PyMOLTestCase):
         # atom properties
         self.assertEqual(2, cmd.count_atoms('p.neg_index < -3'))
         self.assertEqual(2, cmd.count_atoms('p.r_custom_indexhalve > 1.0'))
+
+        # changed in 2.3.1: undefined (<>) -> None
         resnname = set()
-        cmd.iterate('m1', 'resnname.add(p["s_pymol_spaced resn name"])', space=locals())
+        cmd.iterate('m1', 'resnname.add(p["s_pymol_spaced resn name"] or "")', space=locals())
         self.assertEqual(resnname, set(['GLY C', 'GLY CA', '']))
 
         # object properties
         for (key, value) in objprops:
             self.assertEqual(cmd.get_property('s_pymol_' + key, 'm1'), value)
+
+    @testing.requires_version('2.3.1')
+    def test_undefined(self):
+        cmd.fragment('gly')
+        cmd.alter('name C', 'p["s_p_foo"] = "bar"')
+        cmd.alter('name N', 'p["r_p_bar"] = 1.234')
+
+        # save/load round-trip
+        with testing.mktemp('.mae') as filename:
+            cmd.save(filename)
+            cmd.delete('*')
+            cmd.load(filename, 'm1')
+
+        myprops = {}
+        cmd.iterate('all', 'myprops[name] = (p.s_p_foo, p.r_p_bar)', space=locals())
+
+        self.assertEqual(myprops['O'], (None, None))
+        self.assertEqual(myprops['C'], ("bar", None))
+        self.assertEqual(myprops['N'], (None, 1.234))
