@@ -2899,6 +2899,10 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
 
   buffer_i[23] = 0; // NSYMBT
 
+  float* b_skwmat = buffer_f + 25;
+  float* b_skwtrn = buffer_f + 34;
+  float* b_origin = buffer_f + 49;
+
   // skew transformation
   if (ms->State.Matrix) {
     double m[16];
@@ -2912,17 +2916,21 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
     xx_matrix_invert(m, m, 4);
     copy44d33f(m, buffer_f + 25);               // SKWMAT
 
-    buffer_i[24] = 1;                           // LSKFLG
+    if (is_identityf(3, b_skwmat)) {
+      // translation only -> use origin instead of skew matrix
+      copy3(b_skwtrn, b_origin);                // MRC ORIGIN
+      zero3(b_skwtrn);
+    } else {
+      buffer_i[24] = 1;                         // LSKFLG
+    }
   }
 
   // origin (stored with skew transformation)
   if (ms->Origin && lengthsq3f(ms->Origin) > R_SMALL4) {
-    auto skwtrn = buffer_f + 34;
-    add3f(ms->Origin, skwtrn, skwtrn);          // add to SKWTRN
-
-    if (!buffer_i[24]) {
-      identity33f(buffer_f + 25);               // SKWMAT (identity)
-      buffer_i[24] = 1;                         // LSKFLG
+    if (buffer_i[24] /* LSKFLG */) {
+      add3f(ms->Origin, b_skwtrn, b_skwtrn);    // add to SKWTRN
+    } else {
+      add3f(ms->Origin, b_origin, b_origin);    // add to MRC ORIGIN
     }
   }
 
