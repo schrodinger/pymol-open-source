@@ -651,6 +651,8 @@ DESCRIPTION
         '''
         assert format not in ('mmtf',), 'binary format, use get_bytes'
         b = get_bytes(format, selection, state, ref, ref_state, multi, quiet, _self)
+        if b is None:
+            return None
         return b.decode('utf-8')
 
     def get_bytes(format, selection='(all)', state=-1, ref='',
