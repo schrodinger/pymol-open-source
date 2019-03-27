@@ -28,11 +28,10 @@ typedef struct ObjectCGOState {
   bool renderWithShaders, hasTransparency, cgo_lighting, hasOpaque;
 } ObjectCGOState;
 
-typedef struct ObjectCGO {
-  CObject Obj;
+struct ObjectCGO : public CObject {
   ObjectCGOState *State;
   int NState;
-} ObjectCGO;
+};
 
 ObjectCGO *ObjectCGONew(PyMOLGlobals * G);
 ObjectCGO *ObjectCGODefine(PyMOLGlobals * G, ObjectCGO * obj, PyObject * pycgo,

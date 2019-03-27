@@ -54,11 +54,10 @@ typedef struct {
   float **c_buf; // colors
 } ObjectSurfaceState;
 
-typedef struct ObjectSurface {
-  CObject Obj;
+struct ObjectSurface : public CObject {
   ObjectSurfaceState *State;
   int NState;
-} ObjectSurface;
+};
 
 ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
                                     ObjectMap * map, int map_state, int state, float *mn,

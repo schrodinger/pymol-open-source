@@ -50,11 +50,10 @@ typedef struct {
   int isUpdated; 
 } ObjectVolumeState;
 
-typedef struct ObjectVolume {
-  CObject Obj;
+struct ObjectVolume : public CObject {
   ObjectVolumeState *State;
   int NState;
-} ObjectVolume;
+};
 
 ObjectVolume *ObjectVolumeFromBox(PyMOLGlobals * G, ObjectVolume * obj, ObjectMap * map,
                               int map_state,

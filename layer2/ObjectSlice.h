@@ -62,12 +62,11 @@ typedef struct {
   float outline_zaxis[3];
 } ObjectSliceState;
 
-typedef struct ObjectSlice {
-  CObject Obj;
+struct ObjectSlice : public CObject {
   ObjectSliceState *State;
   PickContext context;
   int NState;
-} ObjectSlice;
+};
 
 ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap * map,
                                 int state, int map_state);

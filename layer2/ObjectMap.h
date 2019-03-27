@@ -64,11 +64,10 @@ typedef struct ObjectMapState {
   float high_cutoff, low_cutoff;
 } ObjectMapState;
 
-typedef struct ObjectMap {
-  CObject Obj;
+struct ObjectMap : public CObject {
   ObjectMapState *State;
   int NState;
-} ObjectMap;
+};
 
 #define cObjectMap_OrthoMinMaxGrid 0
 

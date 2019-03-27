@@ -37,12 +37,11 @@ typedef struct ObjectAlignmentState {
   bool renderCGO_has_trilines;
 } ObjectAlignmentState;
 
-typedef struct ObjectAlignment {
-  CObject Obj;
+struct ObjectAlignment : public CObject {
   ObjectAlignmentState *State;
   int NState;
   int SelectionState, ForceState;
-} ObjectAlignment;
+};
 
 void ObjectAlignmentUpdate(ObjectAlignment * I);
 

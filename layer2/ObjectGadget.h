@@ -24,14 +24,13 @@ Z* -------------------------------------------------------------------
 
 #include"GadgetSet.h"
 
-typedef struct ObjectGadget {
-  CObject Obj;
+struct ObjectGadget : public CObject {
   struct GadgetSet **GSet;
   int NGSet;
   int CurGSet;
   int GadgetType;
   int Changed;
-} ObjectGadget;
+};
 
 #define cGadgetPlain 0
 #define cGadgetRamp 1

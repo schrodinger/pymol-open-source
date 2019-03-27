@@ -146,7 +146,8 @@ static int ObjectSliceAllStatesFromPyList(ObjectSlice * I, PyObject * list)
     ok = PyList_Check(list);
   if(ok) {
     for(a = 0; a < I->NState; a++) {
-      ok = ObjectSliceStateFromPyList(I->Obj.G, I->State + a, PyList_GetItem(list, a));
+      auto *val = PyList_GetItem(list, a);
+      ok = ObjectSliceStateFromPyList(I->G, I->State + a, val);
       if(!ok)
         break;
     }
@@ -171,8 +172,10 @@ int ObjectSliceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSlice ** r
   if(ok)
     ok = (I != NULL);
 
-  if(ok)
-    ok = ObjectFromPyList(G, PyList_GetItem(list, 0), &I->Obj);
+  if(ok){
+    auto *val = PyList_GetItem(list, 0);
+    ok = ObjectFromPyList(G, val, I);
+  }
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->NState);
   if(ok)
@@ -191,7 +194,7 @@ PyObject *ObjectSliceAsPyList(ObjectSlice * I)
   PyObject *result = NULL;
 
   result = PyList_New(3);
-  PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result, 0, ObjectAsPyList(I));
   PyList_SetItem(result, 1, PyInt_FromLong(I->NState));
   PyList_SetItem(result, 2, ObjectSliceAllStatesAsPyList(I));
 
@@ -217,7 +220,7 @@ static void ObjectSliceFree(ObjectSlice * I)
       ObjectSliceStateFree(I->State + a);
   }
   VLAFreeP(I->State);
-  ObjectPurge(&I->Obj);
+  ObjectPurge(I);
 
   OOFreeP(I);
 }
@@ -232,7 +235,7 @@ static void ObjectSliceInvalidate(ObjectSlice * I, int rep, int level, int state
     if(!once_flag)
       state = a;
     I->State[state].RefreshFlag = true;
-    SceneChanged(I->Obj.G);
+    SceneChanged(I->G);
     if(once_flag)
       break;
   }
@@ -269,14 +272,14 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
   int min[2] = { 0, 0 }, max[2] = {
   0, 0};                        /* limits of the rectangle */
   int need_normals = false;
-  int track_camera = SettingGet_b(I->Obj.G, NULL, I->Obj.Setting, cSetting_slice_track_camera);
-  float grid = SettingGet_f(I->Obj.G, NULL, I->Obj.Setting, cSetting_slice_grid);
+  int track_camera = SettingGet_b(I->G, NULL, I->Setting, cSetting_slice_track_camera);
+  float grid = SettingGet_f(I->G, NULL, I->Setting, cSetting_slice_grid);
   int min_expand = 1;
 
-  if(SettingGet_b(I->Obj.G, NULL, I->Obj.Setting, cSetting_slice_dynamic_grid)) {
-    float resol = SettingGet_f(I->Obj.G, NULL, I->Obj.Setting,
+  if(SettingGet_b(I->G, NULL, I->Setting, cSetting_slice_dynamic_grid)) {
+    float resol = SettingGet_f(I->G, NULL, I->Setting,
                                cSetting_slice_dynamic_grid_resolution);
-    float scale = SceneGetScreenVertexScale(I->Obj.G, oss->origin);
+    float scale = SceneGetScreenVertexScale(I->G, oss->origin);
     oss->last_scale = scale;
     grid = resol * scale;
   }
@@ -422,8 +425,8 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
     }
     if(!(oss->points && oss->values && oss->flags)) {
       ok = false;
-      PRINTFB(I->Obj.G, FB_ObjectSlice, FB_Errors)
-        "ObjectSlice-Error: allocation failed\n" ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectSlice, FB_Errors)
+        "ObjectSlice-Error: allocation failed\n" ENDFB(I->G);
     }
 
     if(!oss->strips)            /* this is range-checked during use */
@@ -459,9 +462,9 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
 
   if(ok) {
 
-    if(SettingGet_b(I->Obj.G, NULL, I->Obj.Setting, cSetting_slice_height_map)) {
+    if(SettingGet_b(I->G, NULL, I->Setting, cSetting_slice_height_map)) {
       float height_scale =
-        SettingGet_f(I->Obj.G, NULL, I->Obj.Setting, cSetting_slice_height_scale);
+        SettingGet_f(I->G, NULL, I->Setting, cSetting_slice_height_scale);
       float *value = oss->values;
       float up[3], scaled[3], factor;
       int x, y;
@@ -673,11 +676,11 @@ static void ObjectSliceUpdate(ObjectSlice * I)
   for(a = 0; a < I->NState; a++) {
     oss = I->State + a;
     if(oss && oss->Active) {
-      map = ExecutiveFindObjectMapByName(I->Obj.G, oss->MapName);
+      map = ExecutiveFindObjectMapByName(I->G, oss->MapName);
       if(!map) {
-        PRINTFB(I->Obj.G, FB_ObjectSlice, FB_Errors)
+        PRINTFB(I->G, FB_ObjectSlice, FB_Errors)
           "ObjectSliceUpdate-Error: map '%s' has been deleted.\n", oss->MapName
-          ENDFB(I->Obj.G);
+          ENDFB(I->G);
       }
       if(map) {
         oms = ObjectMapGetState(map, oss->MapState);
@@ -686,15 +689,15 @@ static void ObjectSliceUpdate(ObjectSlice * I)
 
         if(oss->RefreshFlag) {
           oss->RefreshFlag = false;
-          PRINTFB(I->Obj.G, FB_ObjectSlice, FB_Blather)
-            " ObjectSlice: updating \"%s\".\n", I->Obj.Name ENDFB(I->Obj.G);
+          PRINTFB(I->G, FB_ObjectSlice, FB_Blather)
+            " ObjectSlice: updating \"%s\".\n", I->Name ENDFB(I->G);
           if(oms->Field) {
             ObjectSliceStateUpdate(I, oss, oms);
-            ogr = ColorGetRamp(I->Obj.G, I->Obj.Color);
+            ogr = ColorGetRamp(I->G, I->Color);
             if(ogr)
               ObjectSliceStateAssignColors(oss, ogr);
             else {              /* solid color */
-              const float *solid = ColorGet(I->Obj.G, I->Obj.Color);
+              const float *solid = ColorGet(I->G, I->Color);
               float *color = oss->colors;
               for(a = 0; a < oss->n_points; a++) {
                 *(color++) = solid[0];
@@ -705,7 +708,7 @@ static void ObjectSliceUpdate(ObjectSlice * I)
           }
         }
       }
-      SceneInvalidate(I->Obj.G);
+      SceneInvalidate(I->G);
     }
   }
 }
@@ -752,7 +755,7 @@ void ObjectSliceDrag(ObjectSlice * I, int state, int mode, float *pt, float *mov
         multiply33f33f(mat, oss->system, oss->system);
 
         ObjectSliceInvalidate(I, cRepSlice, cRepAll, state);
-        SceneInvalidate(I->Obj.G);
+        SceneInvalidate(I->G);
 
       }
       break;
@@ -769,7 +772,7 @@ void ObjectSliceDrag(ObjectSlice * I, int state, int mode, float *pt, float *mov
         project3f(mov, up, v1);
         add3f(v1, oss->origin, oss->origin);
         ObjectSliceInvalidate(I, cRepSlice, cRepAll, state);
-        SceneInvalidate(I->Obj.G);
+        SceneInvalidate(I->G);
       }
       break;
     case cButModeTorFrag:
@@ -944,17 +947,17 @@ void GenerateOutlineOfSlice(PyMOLGlobals *G, ObjectSliceState *oss, CGO *cgo){
 static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 {
 
-  PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->G;
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
   int pass = info->pass;
   int cur_state = 0;
   float alpha;
-  int track_camera = SettingGet_b(G, NULL, I->Obj.Setting, cSetting_slice_track_camera);
-  int dynamic_grid = SettingGet_b(G, NULL, I->Obj.Setting, cSetting_slice_dynamic_grid);
+  int track_camera = SettingGet_b(G, NULL, I->Setting, cSetting_slice_track_camera);
+  int dynamic_grid = SettingGet_b(G, NULL, I->Setting, cSetting_slice_dynamic_grid);
   ObjectSliceState *oss = NULL;
-  int use_shaders = !track_camera && SettingGet_b(G, NULL, I->Obj.Setting, cSetting_use_shaders);
+  int use_shaders = !track_camera && SettingGet_b(G, NULL, I->Setting, cSetting_use_shaders);
   if (G->ShaderMgr->Get_Current_Shader()){
     // just in case, since slice uses immediate mode, but this should never happen
     G->ShaderMgr->Get_Current_Shader()->Disable();
@@ -1013,8 +1016,8 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
     ObjectSliceUpdate(I);
   }
 
-  ObjectPrepareContext(&I->Obj, info);
-  alpha = SettingGet_f(G, NULL, I->Obj.Setting, cSetting_transparency);
+  ObjectPrepareContext(I, info);
+  alpha = SettingGet_f(G, NULL, I->Setting, cSetting_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
@@ -1038,7 +1041,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
         if(ray) {
 
           ray->transparentf(1.0F - alpha);
-          if((I->Obj.visRep & cRepSliceBit)) {
+          if((I->visRep & cRepSliceBit)) {
             float normal[3], *n0, *n1, *n2;
             int *strip = oss->strips;
             float *point = oss->points;
@@ -1108,8 +1111,8 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
           ray->transparentf(0.0);
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
-            if (oss->shaderCGO && (I->Obj.visRep & cRepSliceBit)){
-              CGORenderGLPicking(oss->shaderCGO, info, &I->context, I->Obj.Setting, NULL);
+            if (oss->shaderCGO && (I->visRep & cRepSliceBit)){
+              CGORenderGLPicking(oss->shaderCGO, info, &I->context, I->Setting, NULL);
             } else {
 #ifndef PURE_OPENGL_ES_2
             unsigned int i = pick->begin()->src.index;
@@ -1120,7 +1123,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
             p.src.index = state + 1;
             p.src.bond = 0;
 
-            if((I->Obj.visRep & cRepSliceBit)) {
+            if((I->visRep & cRepSliceBit)) {
               int *strip = oss->strips;
               float *point = oss->points;
               int n = oss->n_strips;
@@ -1187,18 +1190,18 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
             if(render_now) {
 	      int already_rendered = false;
 
-		if (oss->shaderCGO){
-		  CGORenderGL(oss->shaderCGO, NULL, NULL, I->Obj.Setting, info, NULL);
-		  already_rendered = true;
-		} else {
+              if (oss->shaderCGO){
+                CGORenderGL(oss->shaderCGO, NULL, NULL, I->Setting, info, NULL);
+                already_rendered = true;
+              } else {
 		  oss->shaderCGO = CGONew(G);
 	      }
 
 	      if (!already_rendered){
 		  SceneResetNormalCGO(G, oss->shaderCGO, false);
-		  ObjectUseColorCGO(oss->shaderCGO, &I->Obj);
+		  ObjectUseColorCGO(oss->shaderCGO, I);
 		
-		  if((I->Obj.visRep & cRepSliceBit)) {
+		  if((I->visRep & cRepSliceBit)) {
 		    int *strip = oss->strips;
 		    float *point = oss->points;
 		    float *color = oss->colors;
@@ -1258,7 +1261,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 		  oss->shaderCGO->use_shader = true;
 		  CGOFree(convertcgo);
                 }
-		  CGORenderGL(oss->shaderCGO, NULL, NULL, I->Obj.Setting, info, NULL);
+                CGORenderGL(oss->shaderCGO, NULL, NULL, I->Setting, info, NULL);
                 SceneInvalidatePicking(G);  // any time cgo is re-generated, needs to invalidate so
                 // pick colors can be re-assigned
 		}
@@ -1308,13 +1311,13 @@ ObjectSlice *ObjectSliceNew(PyMOLGlobals * G)
   I->NState = 0;
   I->State = VLACalloc(ObjectSliceState, 10);  /* autozero important */
 
-  I->Obj.type = cObjectSlice;
+  I->type = cObjectSlice;
 
-  I->Obj.fFree = (void (*)(CObject *)) ObjectSliceFree;
-  I->Obj.fUpdate = (void (*)(CObject *)) ObjectSliceUpdate;
-  I->Obj.fRender = (void (*)(CObject *, RenderInfo *)) ObjectSliceRender;
-  I->Obj.fInvalidate = (void (*)(CObject *, int, int, int)) ObjectSliceInvalidate;
-  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectSliceGetNStates;
+  I->fFree = (void (*)(CObject *)) ObjectSliceFree;
+  I->fUpdate = (void (*)(CObject *)) ObjectSliceUpdate;
+  I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectSliceRender;
+  I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectSliceInvalidate;
+  I->fGetNFrame = (int (*)(CObject *)) ObjectSliceGetNStates;
 
   I->context.object = (void *) I;
   I->context.state = 0;
@@ -1405,7 +1408,7 @@ ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap *
     memcpy(oss->Corner, oms->Corner, 24 * sizeof(float));
   }
 
-  strcpy(oss->MapName, map->Obj.Name);
+  strcpy(oss->MapName, map->Name);
   oss->ExtentFlag = true;
 
   /* set the origin of the slice to the center of the map */
@@ -1430,7 +1433,7 @@ ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap *
     ObjectSliceRecomputeExtent(I);
   }
 
-  I->Obj.ExtentFlag = true;
+  I->ExtentFlag = true;
 
   SceneChanged(G);
   SceneCountFrames(G);
@@ -1452,14 +1455,14 @@ void ObjectSliceRecomputeExtent(ObjectSlice * I)
       if(ms->ExtentFlag) {
         if(!extent_flag) {
           extent_flag = true;
-          copy3f(ms->ExtentMax, I->Obj.ExtentMax);
-          copy3f(ms->ExtentMin, I->Obj.ExtentMin);
+          copy3f(ms->ExtentMax, I->ExtentMax);
+          copy3f(ms->ExtentMin, I->ExtentMin);
         } else {
-          max3f(ms->ExtentMax, I->Obj.ExtentMax, I->Obj.ExtentMax);
-          min3f(ms->ExtentMin, I->Obj.ExtentMin, I->Obj.ExtentMin);
+          max3f(ms->ExtentMax, I->ExtentMax, I->ExtentMax);
+          min3f(ms->ExtentMin, I->ExtentMin, I->ExtentMin);
         }
       }
     }
   }
-  I->Obj.ExtentFlag = extent_flag;
+  I->ExtentFlag = extent_flag;
 }

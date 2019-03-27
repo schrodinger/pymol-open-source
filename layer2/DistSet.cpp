@@ -64,7 +64,7 @@ int DistSetMoveLabel(DistSet * I, int at, float *v, int mode)
       result = 1;
       lp = I->LabPos + a1;
       if(!lp->mode) {
-        const float *lab_pos = SettingGet_3fv(obj->Obj.G, NULL, obj->Obj.Setting,
+        const float *lab_pos = SettingGet_3fv(obj->G, NULL, obj->Setting,
                                         cSetting_label_position);
         copy3f(lab_pos, lp->pos);
       }
@@ -434,7 +434,7 @@ void DistSet::render(RenderInfo * info)
   ::Rep *r;
   for(a = 0; a < I->NRep; a++)
   {
-    if(!GET_BIT(I->Obj->Obj.visRep, a))
+    if(!GET_BIT(I->Obj->visRep, a))
       continue;
     if(!I->Rep[a]) {
       switch(a) {
@@ -457,7 +457,7 @@ void DistSet::render(RenderInfo * info)
         r = I->Rep[a];
         if(ray || pick) {
           if(ray)
-            ray->color3fv(ColorGet(I->State.G, I->Obj->Obj.Color));
+            ray->color3fv(ColorGet(I->State.G, I->Obj->Color));
           r->fRender(r, info);
         } else {
           ObjectUseColor((CObject *) I->Obj);

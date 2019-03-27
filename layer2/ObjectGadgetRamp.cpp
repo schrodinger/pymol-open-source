@@ -43,7 +43,7 @@ static int ObjectGadgetRampHandleInputColors(ObjectGadgetRamp *);
 
 void ObjectGadgetRampFree(ObjectGadgetRamp * I)
 {
-  ColorForgetExt(I->Gadget.Obj.G, I->Gadget.Obj.Name);
+  ColorForgetExt(I->Gadget.G, I->Gadget.Name);
   VLAFreeP(I->Level);
   VLAFreeP(I->Color);
   VLAFreeP(I->LevelTmp);
@@ -333,7 +333,7 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp * I,
           copy3f(object, dst);
           break;
         default:               /* allow nested ramps */
-          ColorGetRamped(I->Gadget.Obj.G, index, vertex, dst, state);
+          ColorGetRamped(I->Gadget.G, index, vertex, dst, state);
           break;
       }
       dst += 3;
@@ -382,7 +382,7 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I)
   // I->Special, removed in PyMOL 1.8
   bool any = false;
   int* special = NULL;
-  int pse_export_version = SettingGetGlobal_f(I->Gadget.Obj.G, cSetting_pse_export_version) * 1000;
+  int pse_export_version = SettingGetGlobal_f(I->Gadget.G, cSetting_pse_export_version) * 1000;
   if (I->Color && pse_export_version < 1800) {
     int n_color = VLAGetSize(I->Color) / 3;
     special = VLAlloc(int, n_color);
@@ -482,8 +482,8 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
   switch (I->RampType) {
   case cRampMap:
     if(!I->Map)
-      I->Map = ExecutiveFindObjectMapByName(I->Gadget.Obj.G, I->SrcName);
-    if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G, (CObject *) I->Map, cObjectMap))
+      I->Map = ExecutiveFindObjectMapByName(I->Gadget.G, I->SrcName);
+    if(!ExecutiveValidateObjectPtr(I->Gadget.G, (CObject *) I->Map, cObjectMap))
       ok = false;
     else {
       int src_state;
@@ -492,7 +492,7 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
       else
         src_state = state;
       if(src_state < 0)
-        src_state = SceneGetState(I->Gadget.Obj.G);
+        src_state = SceneGetState(I->Gadget.G);
       if(ok)
         ok = (I->Map != NULL);
       if(ok)
@@ -503,15 +503,15 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
     break;
   case cRampMol:
     if(!I->Mol)
-      I->Mol = ExecutiveFindObjectMoleculeByName(I->Gadget.Obj.G, I->SrcName);
-    if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G, (CObject *) I->Mol, cObjectMolecule))
+      I->Mol = ExecutiveFindObjectMoleculeByName(I->Gadget.G, I->SrcName);
+    if(!ExecutiveValidateObjectPtr(I->Gadget.G, (CObject *) I->Mol, cObjectMolecule))
       ok = false;
     else {
       float cutoff = 1.0F;
       float dist;
       int sub_vdw = false;
       if(state < 0)
-        state = SceneGetState(I->Gadget.Obj.G);
+        state = SceneGetState(I->Gadget.G);
       if(I->Level && I->NLevel) {
         cutoff = I->Level[I->NLevel - 1];
         if(I->Level[0] < 0.0F) {
@@ -525,14 +525,14 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
 	if (I->Mol->NCSet==1) // if only one state, then set state to 0
 	  state = 0;
         if(SettingGet_b
-           (I->Gadget.Obj.G, I->Gadget.Obj.Setting, NULL,
+           (I->Gadget.G, I->Gadget.Setting, NULL,
             cSetting_ramp_blend_nearby_colors)) {
           float atomic[3];
           int index =
             ObjectMoleculeGetNearestBlendedColor(I->Mol, pos, cutoff, state, &dist,
                                                  atomic, sub_vdw);
           if(index >= 0) {
-            const float *object = ColorGetRaw(I->Gadget.Obj.G, I->Mol->Color);
+            const float *object = ColorGetRaw(I->Gadget.G, I->Mol->Color);
 
             if(!ObjectGadgetRampInterpolateWithSpecial(I, dist, color, atomic,
                                                        object, pos, state, false)) {
@@ -549,8 +549,8 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
           int index =
             ObjectMoleculeGetNearestAtomIndex(I->Mol, pos, cutoff, state, &dist);
           if(index >= 0) {
-            const float *atomic = ColorGetRaw(I->Gadget.Obj.G, I->Mol->AtomInfo[index].color);
-            const float *object = ColorGetRaw(I->Gadget.Obj.G, I->Mol->Color);
+            const float *atomic = ColorGetRaw(I->Gadget.G, I->Mol->AtomInfo[index].color);
+            const float *object = ColorGetRaw(I->Gadget.G, I->Mol->Color);
 
             if(sub_vdw) {
               dist -= I->Mol->AtomInfo[index].vdw;
@@ -597,12 +597,12 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
   int font_id = 0;
   int n_color = I->Color ? VLAGetSize(I->Color) / 3 : 0;
 
-  blocked = PAutoBlock(I->Gadget.Obj.G);
-  font_id = VFontLoad(I->Gadget.Obj.G, 1.0, 1, 1, true);
+  blocked = PAutoBlock(I->Gadget.G);
+  font_id = VFontLoad(I->Gadget.G, 1.0, 1, 1, true);
   if(blocked)
-    PUnblock(I->Gadget.Obj.G);
+    PUnblock(I->Gadget.G);
 
-  cgo = CGONewSized(I->Gadget.Obj.G, 100);
+  cgo = CGONewSized(I->Gadget.G, 100);
 
   /* behind text */
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
@@ -629,7 +629,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
     float color[] = { 1.f, 1.f, 1.f };
     /* left text for ramp */
     sprintf(buffer, "%0.3f", I->Level[0]);
-    VFontWriteToCGO(I->Gadget.Obj.G, font_id, cgo, buffer, pos, scale, axes, color);
+    VFontWriteToCGO(I->Gadget.G, font_id, cgo, buffer, pos, scale, axes, color);
 
     /* right text, right justified for ramp */
     pos[0] = I->width + I->border - exindent;
@@ -637,8 +637,8 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
     pos[2] = I->border + I->text_raise ;
     sprintf(buffer, "%0.3f", I->Level[I->NLevel - 1]);
     /* indent for right justification */
-    VFontIndent(I->Gadget.Obj.G, font_id, buffer, pos, scale, axes, -1.f);
-    VFontWriteToCGO(I->Gadget.Obj.G, font_id, cgo, buffer, pos, scale, axes, color);
+    VFontIndent(I->Gadget.G, font_id, buffer, pos, scale, axes, -1.f);
+    VFontWriteToCGO(I->Gadget.G, font_id, cgo, buffer, pos, scale, axes, color);
   }
 
   /* center */
@@ -679,7 +679,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
 
       if(!GetSpecial(src)) {
         copy3f(src, tmp);
-        ColorLookupColor(I->Gadget.Obj.G, tmp);
+        ColorLookupColor(I->Gadget.G, tmp);
       }
 
       if (a == n_color) {
@@ -764,7 +764,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
   CGOPreloadFonts(gs->ShapeCGO);
   //#endif
 
-  cgo = CGONewSized(I->Gadget.Obj.G, 100);
+  cgo = CGONewSized(I->Gadget.G, 100);
   CGODotwidth(cgo, 5);
   CGOPickColor(cgo, 0, cPickableGadget);
 
@@ -820,10 +820,10 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp * I)
   GadgetSet *gs = NULL;
   ObjectGadget *og;
 
-  OrthoBusyPrime(I->Gadget.Obj.G);
+  OrthoBusyPrime(I->Gadget.G);
 
   og = &I->Gadget;
-  gs = GadgetSetNew(I->Gadget.Obj.G);
+  gs = GadgetSetNew(I->Gadget.G);
 
   gs->NCoord = 2;
   I->var_index = gs->NCoord;
@@ -844,7 +844,7 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp * I)
 
   og->GSet[0] = gs;
   og->NGSet = 1;
-  og->Obj.Context = 1;          /* unit window */
+  og->Context = 1;          /* unit window */
   gs->Obj = (ObjectGadget *) I;
   gs->State = 0;
 
@@ -869,7 +869,7 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp * I)
         for(a = 0; a < I->NLevel; a++) {
           I->Level[a] = I->Level[a] * scale;
         }
-        ExecutiveInvalidateRep(I->Gadget.Obj.G, cKeywordAll, cRepAll, cRepInvColor);
+        ExecutiveInvalidateRep(I->Gadget.G, cKeywordAll, cRepAll, cRepInvColor);
       }
       break;
     default:
@@ -878,13 +878,13 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp * I)
           float mean = (I->Level[0] + I->Level[1]) / 2.0F;
           I->Level[0] = (I->Level[0] - mean) * scale + mean;
           I->Level[1] = (I->Level[1] - mean) * scale + mean;
-          ExecutiveInvalidateRep(I->Gadget.Obj.G, cKeywordAll, cRepAll, cRepInvColor);
+          ExecutiveInvalidateRep(I->Gadget.G, cKeywordAll, cRepAll, cRepInvColor);
         }
         break;
       } else if(I->NLevel == 3) {
         I->Level[0] = (I->Level[0] - I->Level[1]) * scale + I->Level[1];
         I->Level[2] = (I->Level[2] - I->Level[1]) * scale + I->Level[1];
-        ExecutiveInvalidateRep(I->Gadget.Obj.G, cKeywordAll, cRepAll, cRepInvColor);
+        ExecutiveInvalidateRep(I->Gadget.G, cKeywordAll, cRepAll, cRepInvColor);
       }
     }
     VLAFreeP(I->LevelTmp);
@@ -895,7 +895,7 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp * I)
       }
     ObjectGadgetUpdateExtents(&I->Gadget);
     I->Gadget.Changed = false;
-    SceneChanged(I->Gadget.Obj.G);
+    SceneChanged(I->Gadget.G);
   }
 }
 
@@ -919,10 +919,10 @@ static int ObjectGadgetRampHandleInputColors(ObjectGadgetRamp * I)
     }
 
     if(n_color != I->NLevel && I->NLevel != 2) {
-      PRINTFB(I->Gadget.Obj.G, FB_ObjectGadget, FB_Warnings)
+      PRINTFB(I->Gadget.G, FB_ObjectGadget, FB_Warnings)
         " GadgetRamp-Warning: number of colors (%d) and number of levels (%d) don't\n"
         " match and n_level != 2. Support for trailing extreme colors dropped in 1.8.",
-        n_color, I->NLevel ENDFB(I->Gadget.Obj.G);
+        n_color, I->NLevel ENDFB(I->Gadget.G);
     }
 
     if(n_color < I->NLevel) {
@@ -995,8 +995,8 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals * G,
 
   if (map) {
     I->Map = map;
-  I->SrcState = map_state;
-    UtilNCopy(I->SrcName, map->Obj.Name, WordLength);
+    I->SrcState = map_state;
+    UtilNCopy(I->SrcName, map->Name, WordLength);
   }
 
   return (I);
@@ -1062,9 +1062,9 @@ ObjectGadgetRamp *ObjectGadgetRampNew(PyMOLGlobals * G)
   I->Color = NULL;
   I->SrcName[0] = 0;
 
-  I->Gadget.Obj.fUpdate = (void (*)(CObject *)) ObjectGadgetRampUpdate;
-  I->Gadget.Obj.fFree = (void (*)(CObject *)) ObjectGadgetRampFree;
-  I->Gadget.Obj.fInvalidate =
+  I->Gadget.fUpdate = (void (*)(CObject *)) ObjectGadgetRampUpdate;
+  I->Gadget.fFree = (void (*)(CObject *)) ObjectGadgetRampFree;
+  I->Gadget.fInvalidate =
     (void (*)(CObject *, int, int, int)) ObjectGadgetRampInvalidate;
 
   I->Mol = NULL;

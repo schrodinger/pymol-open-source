@@ -45,15 +45,15 @@ int ObjectDistGetLabelTxfVertex(ObjectDist * I, int state, int index, float *v)
   int result = 0;
   if(I->DSet) {
     if(state < 0)
-      state = SettingGet_i(I->Obj.G, NULL, I->Obj.Setting, cSetting_state) - 1;
+      state = SettingGet_i(I->G, NULL, I->Setting, cSetting_state) - 1;
     if(state < 0)
-      state = SceneGetState(I->Obj.G);
+      state = SceneGetState(I->G);
     if(I->NDSet == 1)
       state = 0;                /* static singletons always active here it seems */
     state = state % I->NDSet;
     {
       DistSet *ds = I->DSet[state];
-      if((!ds) && (SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_all_states))) {
+      if((!ds) && (SettingGet_b(I->G, I->Setting, NULL, cSetting_all_states))) {
         state = 0;
         ds = I->DSet[state];
       }
@@ -76,7 +76,7 @@ int ObjectDistMoveLabel(ObjectDist * I, int state, int index, float *v, int mode
     state = 0;
   state = state % I->NDSet;
   if((!I->DSet[state])
-     && (SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_all_states)))
+     && (SettingGet_b(I->G, I->Setting, NULL, cSetting_all_states)))
     state = 0;
   /* find the corresponding distance set, for this state */
   ds = I->DSet[state];
@@ -85,7 +85,7 @@ int ObjectDistMoveLabel(ObjectDist * I, int state, int index, float *v, int mode
     /* force this object to redraw itself; invalidate the Label's coordinates
      * with the new data set, ds */
     ds->invalidateRep(cRepLabel, cRepInvCoord);
-    /*      ExecutiveUpdateCoordDepends(I->Obj.G,I); */
+    /*      ExecutiveUpdateCoordDepends(I->G,I); */
   }
   return (result);
 }
@@ -120,7 +120,7 @@ int ObjectDistMoveWithObject(ObjectDist * I, struct ObjectMolecule * O) {
     }
   }
 	
-  PRINTFD(I->Obj.G, FB_ObjectDist) " ObjectDist-Move: Out of Move\n" ENDFD;
+  PRINTFD(I->G, FB_ObjectDist) " ObjectDist-Move: Out of Move\n" ENDFD;
   return result;
 }
 /* -- JV end */
@@ -311,14 +311,14 @@ void ObjectDistUpdateExtents(ObjectDist * I)
   DistSet *ds;
 
   /* update extents */
-  copy3f(maxv, I->Obj.ExtentMin);
-  copy3f(minv, I->Obj.ExtentMax);
-  I->Obj.ExtentFlag = false;
+  copy3f(maxv, I->ExtentMin);
+  copy3f(minv, I->ExtentMax);
+  I->ExtentFlag = false;
   for(a = 0; a < I->NDSet; a++) {
     ds = I->DSet[a];
     if(ds) {
-      if(DistSetGetExtent(ds, I->Obj.ExtentMin, I->Obj.ExtentMax))
-        I->Obj.ExtentFlag = true;
+      if(DistSetGetExtent(ds, I->ExtentMin, I->ExtentMax))
+        I->ExtentFlag = true;
     }
   }
 }
@@ -347,8 +347,10 @@ static int ObjectDistDSetFromPyList(ObjectDist * I, PyObject * list)
   if(ok) {
     VLACheck(I->DSet, DistSet *, I->NDSet);
     for(a = 0; a < I->NDSet; a++) {
-      if(ok)
-        ok = DistSetFromPyList(I->Obj.G, PyList_GetItem(list, a), &I->DSet[a]);
+      if(ok){
+        auto *val = PyList_GetItem(list, a);
+        ok = DistSetFromPyList(I->G, val, &I->DSet[a]);
+      }
       if(ok)
         I->DSet[a]->Obj = I;
     }
@@ -364,7 +366,7 @@ PyObject *ObjectDistAsPyList(ObjectDist * I)
   /* first, dump the atoms */
 
   result = PyList_New(4);
-  PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result, 0, ObjectAsPyList(I));
   PyList_SetItem(result, 1, PyInt_FromLong(I->NDSet));
   PyList_SetItem(result, 2, ObjectDistDSetAsPyList(I));
   PyList_SetItem(result, 3, PyInt_FromLong(0));
@@ -385,8 +387,10 @@ int ObjectDistNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectDist ** res
   if(ok)
     ok = (I != NULL);
 
-  if(ok)
-    ok = ObjectFromPyList(G, PyList_GetItem(list, 0), &I->Obj);
+  if(ok){
+    auto *val = PyList_GetItem(list, 0);
+    ok = ObjectFromPyList(G, val, I);
+  }
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->NDSet);
   if(ok)
@@ -414,11 +418,11 @@ int ObjectDistGetNFrames(ObjectDist * I)
 void ObjectDistUpdate(ObjectDist * I)
 {
   int a;
-  OrthoBusyPrime(I->Obj.G);
+  OrthoBusyPrime(I->G);
   for(a = 0; a < I->NDSet; a++)
     if(I->DSet[a]) {
-      OrthoBusySlow(I->Obj.G, a, I->NDSet);
-      /*           printf(" ObjectDist: updating state %d of \"%s\".\n" , a+1, I->Obj.Name); */
+      OrthoBusySlow(I->G, a, I->NDSet);
+      /*           printf(" ObjectDist: updating state %d of \"%s\".\n" , a+1, I->Name); */
       I->DSet[a]->update(a);
     }
 }
@@ -428,7 +432,7 @@ void ObjectDistUpdate(ObjectDist * I)
 void ObjectDistInvalidateRep(ObjectDist * I, int rep)
 {
   int a;
-  PRINTFD(I->Obj.G, FB_ObjectDist)
+  PRINTFD(I->G, FB_ObjectDist)
     " ObjectDistInvalidateRep: entered.\n" ENDFD;
 
   for(a = 0; a < I->NDSet; a++)
@@ -458,21 +462,21 @@ static void ObjectDistRender(ObjectDist * I, RenderInfo * info)
   if (!shouldRender)
     return;
 
-  ObjectPrepareContext(&I->Obj, info);
-
-    for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NDSet);
-        iter.next();) {
-      DistSet * ds = I->DSet[iter.state];
-      if(ds)
-        ds->render(info);
-    }
+  ObjectPrepareContext(I, info);
+  
+  for(StateIterator iter(I->G, I->Setting, state, I->NDSet);
+      iter.next();) {
+    DistSet * ds = I->DSet[iter.state];
+    if(ds)
+      ds->render(info);
+  }
 }
 
 #if 0
 static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
 {
   if(state < 0) {
-    return (&I->Obj.Setting);
+    return (&I->Setting);
   } else {
     return (NULL);
   }
@@ -481,7 +485,7 @@ static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
 
 static void ObjectDistInvalidate(CObject * Iarg, int rep, int level, int state){
   ObjectDist * I = (ObjectDist*)Iarg;
-  for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NDSet);
+  for(StateIterator iter(I->G, I->Setting, state, I->NDSet);
       iter.next();) {
     DistSet * ds = I->DSet[iter.state];
     if(ds)
@@ -494,20 +498,20 @@ ObjectDist *ObjectDistNew(PyMOLGlobals * G)
 {
   OOAlloc(G, ObjectDist);
   ObjectInit(G, (CObject *) I);
-  I->Obj.type = cObjectMeasurement;
+  I->type = cObjectMeasurement;
   I->DSet = VLACalloc(DistSet *, 10);  /* auto-zero */
   I->NDSet = 0;
-  I->Obj.fRender = (void (*)(CObject *, RenderInfo * info)) ObjectDistRender;
-  I->Obj.fFree = (void (*)(CObject *)) ObjectDistFree;
-  I->Obj.fUpdate = (void (*)(CObject *)) ObjectDistUpdate;
-  I->Obj.fInvalidate = (void (*)(CObject *, int, int, int)) ObjectDistInvalidate;
-  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectDistGetNFrames;
+  I->fRender = (void (*)(CObject *, RenderInfo * info)) ObjectDistRender;
+  I->fFree = (void (*)(CObject *)) ObjectDistFree;
+  I->fUpdate = (void (*)(CObject *)) ObjectDistUpdate;
+  I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectDistInvalidate;
+  I->fGetNFrame = (int (*)(CObject *)) ObjectDistGetNFrames;
 #if 0
-  I->Obj.fGetSettingHandle = (CSetting ** (*)(CObject *, int state))
+  I->fGetSettingHandle = (CSetting ** (*)(CObject *, int state))
     ObjectDistGetSettingHandle;
 #endif
-  I->Obj.fDescribeElement = NULL;
-  I->Obj.Color = ColorGetIndex(G, "dash");
+  I->fDescribeElement = NULL;
+  I->Color = ColorGetIndex(G, "dash");
   return (I);
 }
 
@@ -845,6 +849,6 @@ void ObjectDistFree(ObjectDist * I)
       I->DSet[a] = NULL;
     }
   VLAFreeP(I->DSet);
-  ObjectPurge(&I->Obj);
+  ObjectPurge(I);
   OOFreeP(I); /* from OOAlloc */
 }

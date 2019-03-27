@@ -146,7 +146,7 @@ int ObjectMapValidXtal(ObjectMap * I, int state)
  */
 void ObjectMapTransformMatrix(ObjectMap * I, int state, double *matrix)
 {
-  for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
+  for(StateIterator iter(I->G, I->Setting, state, I->NState); iter.next();) {
     ObjectMapState *ms = I->State + iter.state;
     if(ms->Active) {
       ObjectStateTransformMatrix(&ms->State, matrix);
@@ -163,7 +163,7 @@ void ObjectMapTransformMatrix(ObjectMap * I, int state, double *matrix)
  */   
 void ObjectMapResetMatrix(ObjectMap * I, int state)
 {
-  for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
+  for(StateIterator iter(I->G, I->Setting, state, I->NState); iter.next();) {
     ObjectMapState *ms = I->State + iter.state;
     if(ms->Active) {
       ObjectStateResetMatrix(&ms->State);
@@ -203,7 +203,7 @@ int ObjectMapSetMatrix(ObjectMap * I, int state, double *matrix)
 {
   bool result = false;
 
-  for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
+  for(StateIterator iter(I->G, I->Setting, state, I->NState); iter.next();) {
     ObjectMapState *ms = I->State + iter.state;
     if(ms->Active) {
       ObjectStateSetMatrix(&ms->State, matrix);
@@ -990,17 +990,17 @@ int ObjectMapTrim(ObjectMap * I, int state, float *mn, float *mx, int quiet)
   if(state < 0) {
     for(a = 0; a < I->NState; a++) {
       if(I->State[a].Active) {
-        if(ObjectMapStateTrim(I->Obj.G, &I->State[a], mn, mx, quiet))
+        if(ObjectMapStateTrim(I->G, &I->State[a], mn, mx, quiet))
           update = true;
         else
           result = false;
       }
     }
   } else if((state >= 0) && (state < I->NState) && (I->State[state].Active)) {
-    update = result = ObjectMapStateTrim(I->Obj.G, &I->State[state], mn, mx, quiet);
+    update = result = ObjectMapStateTrim(I->G, &I->State[state], mn, mx, quiet);
   } else {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
-      " ObjectMap-Error: invalidate state.\n" ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Errors)
+      " ObjectMap-Error: invalidate state.\n" ENDFB(I->G);
     result = false;
   }
   if(update)
@@ -1015,13 +1015,13 @@ int ObjectMapDouble(ObjectMap * I, int state)
   if(state < 0) {
     for(a = 0; a < I->NState; a++) {
       if(I->State[a].Active)
-        result = result && ObjectMapStateDouble(I->Obj.G, &I->State[a]);
+        result = result && ObjectMapStateDouble(I->G, &I->State[a]);
     }
   } else if((state >= 0) && (state < I->NState) && (I->State[state].Active)) {
-    ObjectMapStateDouble(I->Obj.G, &I->State[state]);
+    ObjectMapStateDouble(I->G, &I->State[state]);
   } else {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
-      " ObjectMap-Error: invalidate state.\n" ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Errors)
+      " ObjectMap-Error: invalidate state.\n" ENDFB(I->G);
     result = false;
   }
   return (result);
@@ -1034,14 +1034,14 @@ int ObjectMapHalve(ObjectMap * I, int state, int smooth)
   if(state < 0) {
     for(a = 0; a < I->NState; a++) {
       if(I->State[a].Active)
-        result = result && ObjectMapStateHalve(I->Obj.G, &I->State[a], smooth);
+        result = result && ObjectMapStateHalve(I->G, &I->State[a], smooth);
     }
 
   } else if((state >= 0) && (state < I->NState) && (I->State[state].Active)) {
-    ObjectMapStateHalve(I->Obj.G, &I->State[state], smooth);
+    ObjectMapStateHalve(I->G, &I->State[state], smooth);
   } else {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
-      " ObjectMap-Error: invalidate state.\n" ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Errors)
+      " ObjectMap-Error: invalidate state.\n" ENDFB(I->G);
     result = false;
   }
   ObjectMapUpdateExtents(I);
@@ -1544,7 +1544,8 @@ static int ObjectMapAllStatesFromPyList(ObjectMap * I, PyObject * list)
     ok = PyList_Check(list);
   if(ok) {
     for(a = 0; a < I->NState; a++) {
-      ok = ObjectMapStateFromPyList(I->Obj.G, I->State + a, PyList_GetItem(list, a));
+      auto *val = PyList_GetItem(list, a);
+      ok = ObjectMapStateFromPyList(I->G, I->State + a, val);
       if(!ok)
         break;
     }
@@ -1557,7 +1558,7 @@ PyObject *ObjectMapAsPyList(ObjectMap * I)
   PyObject *result = NULL;
 
   result = PyList_New(3);
-  PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result, 0, ObjectAsPyList(I));
   PyList_SetItem(result, 1, PyInt_FromLong(I->NState));
   PyList_SetItem(result, 2, ObjectMapAllStatesAsPyList(I));
 
@@ -1580,8 +1581,10 @@ int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** resul
   if(ok)
     ok = (I != NULL);
 
-  if(ok)
-    ok = ObjectFromPyList(G, PyList_GetItem(list, 0), &I->Obj);
+  if(ok){
+    auto *val = PyList_GetItem(list, 0);
+    ok = ObjectFromPyList(G, val, I);
+  }  
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->NState);
   if(ok)
@@ -1605,7 +1608,7 @@ int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** resul
   if(ok)
     ok = (I != NULL);
   if(ok)
-    ok = ObjectCopyHeader(&I->Obj, &src->Obj);
+    ok = ObjectCopyHeader(I, src);
   if(ok) {
     if(source_state == -1) {    /* all states */
       int state;
@@ -1637,7 +1640,7 @@ int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** resul
 
 ObjectMapState *ObjectMapGetState(ObjectMap * I, int state)
 {
-  for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
+  for(StateIterator iter(I->G, I->Setting, state, I->NState); iter.next();) {
     return I->State + iter.state;
   }
   return NULL;
@@ -1653,7 +1656,7 @@ ObjectMapState *ObjectMapStatePrime(ObjectMap * I, int state)
     I->NState = state + 1;
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->Obj.G, ms);
+  ObjectMapStateInit(I->G, ms);
   return (ms);
 }
 
@@ -1675,7 +1678,7 @@ void ObjectMapUpdateExtents(ObjectMap * I)
   int a;
   float *min_ext, *max_ext;
   float tr_min[3], tr_max[3];
-  I->Obj.ExtentFlag = false;
+  I->ExtentFlag = false;
 
   for(a = 0; a < I->NState; a++) {
     ObjectMapState *ms = I->State + a;
@@ -1700,30 +1703,30 @@ void ObjectMapUpdateExtents(ObjectMap * I)
         max_ext = ms->ExtentMax;
       }
 
-      if(!I->Obj.ExtentFlag) {
-        copy3f(min_ext, I->Obj.ExtentMin);
-        copy3f(max_ext, I->Obj.ExtentMax);
-        I->Obj.ExtentFlag = true;
+      if(!I->ExtentFlag) {
+        copy3f(min_ext, I->ExtentMin);
+        copy3f(max_ext, I->ExtentMax);
+        I->ExtentFlag = true;
       } else {
-        min3f(min_ext, I->Obj.ExtentMin, I->Obj.ExtentMin);
-        max3f(max_ext, I->Obj.ExtentMax, I->Obj.ExtentMax);
+        min3f(min_ext, I->ExtentMin, I->ExtentMin);
+        max3f(max_ext, I->ExtentMax, I->ExtentMax);
       }
     }
   }
 
-  if(I->Obj.TTTFlag && I->Obj.ExtentFlag) {
+  if(I->TTTFlag && I->ExtentFlag) {
     const float *ttt;
     double tttd[16];
-    if(ObjectGetTTT(&I->Obj, &ttt, -1)) {
+    if(ObjectGetTTT(I, &ttt, -1)) {
       convertTTTfR44d(ttt, tttd);
       MatrixTransformExtentsR44d3f(tttd,
-                                   I->Obj.ExtentMin, I->Obj.ExtentMax,
-                                   I->Obj.ExtentMin, I->Obj.ExtentMax);
+                                   I->ExtentMin, I->ExtentMax,
+                                   I->ExtentMin, I->ExtentMax);
     }
   }
 
-  PRINTFD(I->Obj.G, FB_ObjectMap)
-    " ObjectMapUpdateExtents-DEBUG: ExtentFlag %d\n", I->Obj.ExtentFlag ENDFD;
+  PRINTFD(I->G, FB_ObjectMap)
+    " ObjectMapUpdateExtents-DEBUG: ExtentFlag %d\n", I->ExtentFlag ENDFD;
 }
 
 void ObjectMapStateClamp(ObjectMapState * I, float clamp_floor, float clamp_ceiling)
@@ -1797,26 +1800,26 @@ static void ObjectMapFree(ObjectMap * I)
   int a;
   for(a = 0; a < I->NState; a++) {
     if(I->State[a].Active)
-      ObjectMapStatePurge(I->Obj.G, I->State + a);
+      ObjectMapStatePurge(I->G, I->State + a);
   }
   VLAFreeP(I->State);
-  ObjectPurge(&I->Obj);
+  ObjectPurge(I);
   OOFreeP(I);
 }
 
 static void ObjectMapUpdate(ObjectMap * I)
 {
-  if(!I->Obj.ExtentFlag) {
+  if(!I->ExtentFlag) {
     ObjectMapUpdateExtents(I);
-    if(I->Obj.ExtentFlag)
-      SceneInvalidate(I->Obj.G);
+    if(I->ExtentFlag)
+      SceneInvalidate(I->G);
   }
 }
 
 static void ObjectMapInvalidate(ObjectMap * I, int rep, int level, int state)
 {
   if(level >= cRepInvExtents) {
-    I->Obj.ExtentFlag = false;
+    I->ExtentFlag = false;
   }
   if((rep < 0) || (rep == cRepDot)) {
     int a;
@@ -1826,7 +1829,7 @@ static void ObjectMapInvalidate(ObjectMap * I, int rep, int level, int state)
       CGOFree(I->State[a].shaderCGO);
     }
   }
-  SceneInvalidate(I->Obj.G);
+  SceneInvalidate(I->G);
 }
 
 /* Has no prototype */
@@ -1899,7 +1902,7 @@ static CGO* ObjectMapCGOGenerate(PyMOLGlobals *G, float* corner)
 
 static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
 {
-  PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->G;
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
@@ -1909,7 +1912,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
   if(pass)
     return;
 
-  for(StateIterator iter(G, I->Obj.Setting, state, I->NState);
+  for(StateIterator iter(G, I->Setting, state, I->NState);
       iter.next();) {
     state = iter.state;
     if(I->State[state].Active)
@@ -1918,7 +1921,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
     if(ms) {
       float *corner = ms->Corner;
       float tr_corner[24];
-      ObjectPrepareContext(&I->Obj, info);
+      ObjectPrepareContext(I, info);
 
       if(ms->State.Matrix) {    /* transform the corners before drawing */
         int a;
@@ -1928,11 +1931,11 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
         corner = tr_corner;
       }
 
-      if((I->Obj.visRep & cRepExtentBit)) {
+      if((I->visRep & cRepExtentBit)) {
         if(ray) {
           const float *vc;
           float radius = ray->PixelRadius / 1.4142F;
-          vc = ColorGet(G, I->Obj.Color);
+          vc = ColorGet(G, I->Color);
           ray->color3fv(vc);
           ray->sausage3fv(corner + 3 * 0, corner + 3 * 1, radius, vc, vc);
           ray->sausage3fv(corner + 3 * 0, corner + 3 * 2, radius, vc, vc);
@@ -1951,7 +1954,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
 #ifndef PURE_OPENGL_ES_2
           } else if (!info->use_shaders) {
             // immediate
-            ObjectUseColor(&I->Obj);
+            ObjectUseColor(I);
             glDisable(GL_LIGHTING);
             glBegin(GL_LINES);
             glVertex3fv(corner + 3 * 0);
@@ -2004,7 +2007,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
               if (shaderPrg) {
                 shaderPrg->SetLightingEnabled(0);
 
-                CGORenderGL(ms->shaderCGO, ColorGet(G, I->Obj.Color),
+                CGORenderGL(ms->shaderCGO, ColorGet(G, I->Color),
                     NULL, NULL, info, NULL);
                 shaderPrg->Disable();
               }
@@ -2013,7 +2016,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
         }
       }
 
-      if((I->Obj.visRep & cRepDotBit)) {
+      if((I->visRep & cRepDotBit)) {
         if(!ms->have_range) {
           double sum = 0.0, sumsq = 0.0;
           CField *data = ms->Field->data;
@@ -2034,7 +2037,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
             ms->have_range = true;
           }
         }
-        if(ms->have_range && SettingGet_b(G, NULL, I->Obj.Setting, cSetting_dot_normals)) {
+        if(ms->have_range && SettingGet_b(G, NULL, I->Setting, cSetting_dot_normals)) {
           IsofieldComputeGradients(G, ms->Field);
         }
         if(ms->have_range) {
@@ -2044,7 +2047,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
           CField *points = ms->Field->points;
           CField *gradients = NULL;
 
-          if(SettingGet_b(G, NULL, I->Obj.Setting, cSetting_dot_normals)) {
+          if(SettingGet_b(G, NULL, I->Setting, cSetting_dot_normals)) {
             gradients = ms->Field->gradients;
           }
           if(data && points) {
@@ -2062,16 +2065,16 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
             float *raw_gradient = NULL;
             float high_cut = ms->high_cutoff, low_cut = ms->low_cutoff;
             float width =
-              SettingGet_f(G, NULL, I->Obj.Setting, cSetting_dot_width);
+              SettingGet_f(G, NULL, I->Setting, cSetting_dot_width);
 
             if(ray) {
               float radius = ray->PixelRadius * width / 1.4142F;
               float vc[3];
-              int color = I->Obj.Color;
-              int ramped = ColorCheckRamped(G, I->Obj.Color);
+              int color = I->Color;
+              int ramped = ColorCheckRamped(G, I->Color);
 
               {
-                const float *tmp = ColorGet(G, I->Obj.Color);
+                const float *tmp = ColorGet(G, I->Color);
                 copy3f(tmp, vc);
               }
 
@@ -2095,15 +2098,15 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
                   glDisable(GL_LIGHTING);
                 }
                 {
-                  int ramped = ColorCheckRamped(G, I->Obj.Color);
+                  int ramped = ColorCheckRamped(G, I->Color);
                   float vc[3];
-                  int color = I->Obj.Color;
+                  int color = I->Color;
                   float gt[3];
 
                   glPointSize(width);
                   glDisable(GL_POINT_SMOOTH);
                   glBegin(GL_POINTS);
-                  ObjectUseColor(&I->Obj);
+                  ObjectUseColor(I);
                   for(a = 0; a < cnt; a++) {
                     float f_val = *(raw_data++);
                     RAW_POINT_TRANSFORM(raw_point_ptr, raw_point);
@@ -2170,17 +2173,17 @@ ObjectMap *ObjectMapNew(PyMOLGlobals * G)
   OOAlloc(G, ObjectMap);
 
   ObjectInit(G, (CObject *) I);
-  I->Obj.type = cObjectMap;
+  I->type = cObjectMap;
 
   I->NState = 0;
   I->State = VLACalloc(ObjectMapState, 1);     /* autozero important */
 
-  I->Obj.visRep = cRepExtentBit;
-  I->Obj.fFree = (void (*)(CObject *)) ObjectMapFree;
-  I->Obj.fUpdate = (void (*)(CObject *)) ObjectMapUpdate;
-  I->Obj.fRender = (void (*)(CObject *, RenderInfo *)) ObjectMapRender;
-  I->Obj.fInvalidate = (void (*)(CObject *, int, int, int)) ObjectMapInvalidate;
-  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectMapGetNStates;
+  I->visRep = cRepExtentBit;
+  I->fFree = (void (*)(CObject *)) ObjectMapFree;
+  I->fUpdate = (void (*)(CObject *)) ObjectMapUpdate;
+  I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectMapRender;
+  I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectMapInvalidate;
+  I->fGetNFrame = (int (*)(CObject *)) ObjectMapGetNStates;
 
   return (I);
 }
@@ -2224,16 +2227,16 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
         md->Dim[a]++;
     }
 
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
+    PRINTFB(I->G, FB_ObjectMap, FB_Blather)
       " ObjectMap: Dim %d %d %d\n", md->Dim[0], md->Dim[1], md->Dim[2]
-      ENDFB(I->Obj.G);
+      ENDFB(I->G);
 
     average3f(md->MaxCorner, md->MinCorner, v);
     for(a = 0; a < 3; a++) {
       md->MinCorner[a] = v[a] - 0.5F * md->Dim[a] * md->Grid[a];
     }
 
-    if(Feedback(I->Obj.G, FB_ObjectMap, FB_Blather)) {
+    if(Feedback(I->G, FB_ObjectMap, FB_Blather)) {
       dump3f(md->MinCorner, " ObjectMap: MinCorner:");
       dump3f(md->MaxCorner, " ObjectMap: MaxCorner:");
       dump3f(md->Grid, " ObjectMap: Grid:");
@@ -2276,7 +2279,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
       ms->FDim[a] = ms->Max[a] - ms->Min[a] + 1;
     ms->FDim[3] = 3;
 
-    ms->Field = IsosurfFieldAlloc(I->Obj.G, ms->FDim);
+    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
     if(!ms->Field)
       ok = false;
     else {
@@ -2335,13 +2338,13 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
     ObjectMapUpdateExtents(I);
   }
   if(!ok) {
-    ErrMessage(I->Obj.G, "ObjectMap", "Unable to create map");
+    ErrMessage(I->G, "ObjectMap", "Unable to create map");
     ObjectMapFree(I);
     I = NULL;
   } else {
     if(!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Actions)
-        " ObjectMap: Map created.\n" ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Actions)
+        " ObjectMap: Map created.\n" ENDFB(I->G);
     }
   }
 
@@ -2408,8 +2411,8 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   int expectation;
 
   if(bytes < 256 * sizeof(int)) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
-      " ObjectMapCCP4: Map appears to be truncated -- aborting." ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Errors)
+      " ObjectMapCCP4: Map appears to be truncated -- aborting." ENDFB(I->G);
     return (0);
   }
 
@@ -2422,9 +2425,9 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     I->NState = state + 1;
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->Obj.G, ms);
+  ObjectMapStateInit(I->G, ms);
 
-  normalize = SettingGetGlobal_b(I->Obj.G, cSetting_normalize_ccp4_maps);
+  normalize = SettingGetGlobal_b(I->G, cSetting_normalize_ccp4_maps);
 
   p = CCP4Str;
   little_endian = *((char *) &little_endian);
@@ -2432,8 +2435,8 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
 
   if(little_endian != map_endian) {
     if(!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
-        " ObjectMapCCP4: Map appears to be reverse endian, swapping...\n" ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Blather)
+        " ObjectMapCCP4: Map appears to be reverse endian, swapping...\n" ENDFB(I->G);
     }
     swap_endian(p, 256, sizeof(int));
   }
@@ -2443,8 +2446,8 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   nr = *(i++);                  /* rows */
   ns = *(i++);                  /* sections */
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
-      " ObjectMapCCP4: NC %d   NR %d   NS %d\n", nc, nr, ns ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Blather)
+      " ObjectMapCCP4: NC %d   NR %d   NS %d\n", nc, nr, ns ENDFB(I->G);
   }
   map_mode = *(i++);            /* mode */
 
@@ -2459,24 +2462,24 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     bytes_per_pt = 4; // float
     break;
   default:
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
+    PRINTFB(I->G, FB_ObjectMap, FB_Errors)
       "ObjectMapCCP4-ERR: Only map mode 0-2 currently supported (this map is mode %d)",
-      map_mode ENDFB(I->Obj.G);
+      map_mode ENDFB(I->G);
     return (0);
   }
 
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
-      " ObjectMapCCP4: Map is mode %d.\n", map_mode ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Blather)
+      " ObjectMapCCP4: Map is mode %d.\n", map_mode ENDFB(I->G);
   }
   ncstart = *(i++);
   nrstart = *(i++);
   nsstart = *(i++);
 
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
+    PRINTFB(I->G, FB_ObjectMap, FB_Blather)
       " ObjectMapCCP4: NCSTART %d   NRSTART %d   NSSTART  %d\n",
-      ncstart, nrstart, nsstart ENDFB(I->Obj.G);
+      ncstart, nrstart, nsstart ENDFB(I->G);
   }
 
   nx = *(i++);
@@ -2484,8 +2487,8 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   nz = *(i++);
 
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
-      " ObjectMapCCP4: NX %d   NY %d   NZ  %d \n", nx, ny, nz ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Blather)
+      " ObjectMapCCP4: NX %d   NY %d   NZ  %d \n", nx, ny, nz ENDFB(I->G);
   }
 
   xlen = *(float *) (i++);
@@ -2493,8 +2496,8 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   zlen = *(float *) (i++);
 
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
-      " ObjectMapCCP4: X %8.3f   Y %8.3f  Z  %8.3f \n", xlen, ylen, zlen ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Blather)
+      " ObjectMapCCP4: X %8.3f   Y %8.3f  Z  %8.3f \n", xlen, ylen, zlen ENDFB(I->G);
   }
 
   alpha = *(float *) (i++);
@@ -2502,9 +2505,9 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   gamma = *(float *) (i++);
 
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
+    PRINTFB(I->G, FB_ObjectMap, FB_Blather)
       " ObjectMapCCP4: alpha %8.3f   beta %8.3f  gamma %8.3f \n",
-      alpha, beta, gamma ENDFB(I->Obj.G);
+      alpha, beta, gamma ENDFB(I->G);
   }
 
   mapc = *(i++);
@@ -2512,8 +2515,8 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   maps = *(i++);
 
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
-      " ObjectMapCCP4: MAPC %d   MAPR %d  MAPS  %d \n", mapc, mapr, maps ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Blather)
+      " ObjectMapCCP4: MAPC %d   MAPR %d  MAPS  %d \n", mapc, mapr, maps ENDFB(I->G);
   }
 
   // AMIN, AMAX, AMEAN
@@ -2551,9 +2554,9 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
       // Xo(map) = S * (Xo(atoms) - t)
       ObjectStateSetMatrix(&ms->State, matrix);
 
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+      PRINTFB(I->G, FB_ObjectMap, FB_Details)
         " ObjectMapCCP4: Applied skew transformation\n"
-        ENDFB(I->Obj.G);
+        ENDFB(I->G);
     }
   }
 
@@ -2570,10 +2573,10 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     ObjectStateSetMatrix(&ms->State, matrix);
 
     if (!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+      PRINTFB(I->G, FB_ObjectMap, FB_Details)
         " ObjectMapCCP4: Applied MRC 2000 ORIGIN %.2f %.2f %.2f\n",
         mrc2000origin[0], mrc2000origin[1], mrc2000origin[2]
-          ENDFB(I->Obj.G);
+          ENDFB(I->G);
     }
   }
 
@@ -2581,8 +2584,8 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   stdev = *(float *) (i++);
 
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
-      " ObjectMapCCP4: AMIN %f AMAX %f AMEAN %f ARMS %f\n", mind, maxd, mean, stdev ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Blather)
+      " ObjectMapCCP4: AMIN %f AMAX %f AMEAN %f ARMS %f\n", mind, maxd, mean, stdev ENDFB(I->G);
   }
 
   n_pts = nc * ns * nr;
@@ -2593,35 +2596,35 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     nz = nx;
 
     if(!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Warnings)
+      PRINTFB(I->G, FB_ObjectMap, FB_Warnings)
         " ObjectMapCCP4: NZ value is zero, but NX = NY, so we'll guess NZ = NX = NY.\n"
-        ENDFB(I->Obj.G);
+        ENDFB(I->G);
     }
   }
 
   expectation = sym_skip + sizeof(int) * 256 + bytes_per_pt * n_pts;
 
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
+    PRINTFB(I->G, FB_ObjectMap, FB_Blather)
       " ObjectMapCCP4: sym_skip %d bytes %d expectation %d\n",
-      sym_skip, bytes, expectation ENDFB(I->Obj.G);
+      sym_skip, bytes, expectation ENDFB(I->G);
   }
 
   if(bytes < expectation) {
     if(bytes == (expectation - sym_skip)) {
       /* accomodate bogus CCP4 map files with bad symmetry length information */
       if(!quiet) {
-        PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
+        PRINTFB(I->G, FB_ObjectMap, FB_Blather)
           " ObjectMapCCP4: Map has invalid symmetry length -- working around.\n"
-          ENDFB(I->Obj.G);
+          ENDFB(I->G);
       }
 
       expectation -= sym_skip;
       sym_skip = 0;
 
     } else {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
-        " ObjectMapCCP4: Map appears to be truncated -- aborting.\n" ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Errors)
+        " ObjectMapCCP4: Map appears to be truncated -- aborting.\n" ENDFB(I->G);
       return (0);
     }
   }
@@ -2670,7 +2673,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   ms->Max[maps] = ns + nsstart - 1;
 
   if(!quiet) {
-    if(Feedback(I->Obj.G, FB_ObjectMap, FB_Blather)) {
+    if(Feedback(I->G, FB_ObjectMap, FB_Blather)) {
       dump3i(ms->Div, " ObjectMapCCP4: ms->Div");
       dump3i(ms->Min, " ObjectMapCCP4: ms->Min");
       dump3i(ms->Max, " ObjectMapCCP4: ms->Max");
@@ -2703,7 +2706,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   else {
     SymmetryUpdate(ms->Symmetry);
     /*    CrystalDump(ms->Crystal); */
-    ms->Field = IsosurfFieldAlloc(I->Obj.G, ms->FDim);
+    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
     ms->MapSource = cMapSourceCCP4;
     ms->Field->save_points = false;
 
@@ -2752,22 +2755,22 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   }
 
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
       " ObjectMapCCP4: Map Size %d x %d x %d\n", ms->FDim[0], ms->FDim[1], ms->FDim[2]
-      ENDFB(I->Obj.G);
+      ENDFB(I->G);
   }
 
   if(!quiet) {
     if(n_pts > 1) {
       if(normalize) {
-        PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+        PRINTFB(I->G, FB_ObjectMap, FB_Details)
           " ObjectMapCCP4: Normalizing with mean = %8.6f and stdev = %8.6f.\n",
-          mean, stdev ENDFB(I->Obj.G);
+          mean, stdev ENDFB(I->G);
       } else {
 
-        PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+        PRINTFB(I->G, FB_ObjectMap, FB_Details)
           " ObjectMapCCP4: Map will not be normalized.\n ObjectMapCCP4: Current mean = %8.6f and stdev = %8.6f.\n",
-          mean, stdev ENDFB(I->Obj.G);
+          mean, stdev ENDFB(I->G);
       }
     }
   }
@@ -2795,13 +2798,13 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   fflush(stdout);
 #endif
   if(!ok) {
-    ErrMessage(I->Obj.G, "ObjectMap", "Error reading map");
+    ErrMessage(I->G, "ObjectMap", "Error reading map");
   } else {
     ms->Active = true;
     ObjectMapUpdateExtents(I);
     if(!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Results)
-        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Results)
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->G);
     }
   }
 
@@ -2985,7 +2988,7 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
     I->NState = state + 1;
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->Obj.G, ms);
+  ObjectMapStateInit(I->G, ms);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -3000,8 +3003,8 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
 
   ParseNCopy(cc, p, 20);
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-      " PHIStrToMap: %s\n", cc ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
+      " PHIStrToMap: %s\n", cc ENDFB(I->G);
   }
   p += 20;
   p += 4;
@@ -3009,14 +3012,14 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
   p += 4;
   ParseNCopy(cc, p, 10);
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-      " PHIStrToMap: %s\n", cc ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
+      " PHIStrToMap: %s\n", cc ENDFB(I->G);
   }
   p += 10;
   ParseNCopy(cc, p, 60);
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-      " PHIStrToMap: %s\n", cc ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
+      " PHIStrToMap: %s\n", cc ENDFB(I->G);
   }
   p += 60;
   p += 4;
@@ -3043,8 +3046,8 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
     map_dim = 65;
 
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-      " PHIStrToMap: Map Size %d x %d x %d\n", map_dim, map_dim, map_dim ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
+      " PHIStrToMap: Map Size %d x %d x %d\n", map_dim, map_dim, map_dim ENDFB(I->G);
   }
   p += 4;
 
@@ -3063,7 +3066,7 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
   ms->Max[1] = ms->Div[1];
   ms->Max[2] = ms->Div[2];
 
-  ms->Field = IsosurfFieldAlloc(I->Obj.G, ms->FDim);
+  ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
   ms->MapSource = cMapSourceGeneralPurpose;
   ms->Field->save_points = false;
 
@@ -3097,8 +3100,8 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
   p += 4;
   ParseNCopy(cc, p, 16);
   if(!quiet) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-      " PHIStrToMap: %s\n", cc ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
+      " PHIStrToMap: %s\n", cc ENDFB(I->G);
   }
   p += 16;
   p += 4;
@@ -3229,13 +3232,13 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
    */
 
   if(!ok) {
-    ErrMessage(I->Obj.G, "ObjectMap", "Error reading map");
+    ErrMessage(I->G, "ObjectMap", "Error reading map");
   } else {
     ms->Active = true;
     ObjectMapUpdateExtents(I);
     if(!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Results)
-        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Results)
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->G);
     }
   }
   return (ok);
@@ -3262,7 +3265,7 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
   }
 
   ms = &I->State[state];
-  ObjectMapStateInit(I->Obj.G, ms);
+  ObjectMapStateInit(I->G, ms);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -3349,7 +3352,7 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
       ok = false;
     else {
       SymmetryUpdate(ms->Symmetry);
-      ms->Field = IsosurfFieldAlloc(I->Obj.G, ms->FDim);
+      ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
       ms->MapSource = cMapSourceCrystallographic;
       ms->Field->save_points = false;
       for(c = 0; c < ms->FDim[2]; c++) {
@@ -3423,13 +3426,13 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
   fflush(stdout);
 #endif
   if(!ok) {
-    ErrMessage(I->Obj.G, "ObjectMap", "Error reading map");
+    ErrMessage(I->G, "ObjectMap", "Error reading map");
   } else {
     ms->Active = true;
     ObjectMapUpdateExtents(I);
     if(!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Results)
-        " ObjectMap: Map read.  Range = %5.3f to %5.3f\n", mind, maxd ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Results)
+        " ObjectMap: Map read.  Range = %5.3f to %5.3f\n", mind, maxd ENDFB(I->G);
     }
   }
 
@@ -3476,7 +3479,7 @@ static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
     I->NState = state + 1;
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->Obj.G, ms);
+  ObjectMapStateInit(I->G, ms);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -3622,9 +3625,9 @@ static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
     subtract3f(ms->ExtentMax, ms->ExtentMin, ms->Range);
     ms->FDim[3] = 3;
 
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
       " FLDStrToMap: Map Size %d x %d x %d\n", ms->FDim[0], ms->FDim[1], ms->FDim[2]
-      ENDFB(I->Obj.G);
+      ENDFB(I->G);
 
     for(a = 0; a < 3; a++) {
       ms->Min[a] = 0;
@@ -3637,7 +3640,7 @@ static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
         ms->Grid[a] = 0.0F;
     }
 
-    ms->Field = IsosurfFieldAlloc(I->Obj.G, ms->FDim);
+    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
     ms->MapSource = cMapSourceFLD;
     ms->Field->save_points = false;
 
@@ -3747,12 +3750,12 @@ static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
     ms->Active = true;
     ObjectMapUpdateExtents(I);
     if(!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Results)
-        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Results)
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->G);
     }
   } else {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
-      " Error: unable to read FLD file.\n" ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Errors)
+      " Error: unable to read FLD file.\n" ENDFB(I->G);
     /*  printf(" got_ndim %d\n",got_ndim);
        printf(" got_dim1 %d\n",got_dim1);
        printf(" got_dim2 %d\n",got_dim2);
@@ -3798,8 +3801,8 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
   int normalize;
   int swap_bytes;
 
-  normalize = SettingGetGlobal_b(I->Obj.G, cSetting_normalize_o_maps);
-  swap_bytes = SettingGetGlobal_b(I->Obj.G, cSetting_swap_dsn6_bytes);
+  normalize = SettingGetGlobal_b(I->G, cSetting_normalize_o_maps);
+  swap_bytes = SettingGetGlobal_b(I->G, cSetting_swap_dsn6_bytes);
   if(state < 0)
     state = I->NState;
   if(I->NState <= state) {
@@ -3807,7 +3810,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
     I->NState = state + 1;
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->Obj.G, ms);
+  ObjectMapStateInit(I->G, ms);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -3827,7 +3830,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
 
       if(!got_origin) {
         pp = ParseWordCopy(cc, p, 6);
-        if(WordMatch(I->Obj.G, "origin", cc, true) < 0) {
+        if(WordMatch(I->G, "origin", cc, true) < 0) {
           p = ParseWordCopy(cc, pp, 50);
           if(sscanf(cc, "%d", &ms->Min[0]) == 1) {
             p = ParseWordCopy(cc, p, 50);
@@ -3843,7 +3846,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
 
       if(!got_extent) {
         pp = ParseWordCopy(cc, p, 6);
-        if(WordMatch(I->Obj.G, "extent", cc, true) < 0) {
+        if(WordMatch(I->G, "extent", cc, true) < 0) {
           p = ParseWordCopy(cc, pp, 50);
           if(sscanf(cc, "%d", &ms->Max[0]) == 1) {
             p = ParseWordCopy(cc, p, 50);
@@ -3862,7 +3865,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
 
       if(!got_grid) {
         pp = ParseWordCopy(cc, p, 4);
-        if(WordMatch(I->Obj.G, "grid", cc, true) < 0) {
+        if(WordMatch(I->G, "grid", cc, true) < 0) {
           p = ParseWordCopy(cc, pp, 50);
           if(sscanf(cc, "%d", &ms->Div[0]) == 1) {
             p = ParseWordCopy(cc, p, 50);
@@ -3878,7 +3881,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
 
       if(!got_cell) {
         pp = ParseWordCopy(cc, p, 4);
-        if(WordMatch(I->Obj.G, "cell", cc, true) < 0) {
+        if(WordMatch(I->G, "cell", cc, true) < 0) {
           p = ParseWordCopy(cc, pp, 50);
 
           if(sscanf(cc, "%f", &ms->Symmetry->Crystal->Dim[0]) == 1) {
@@ -3904,7 +3907,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
 
       if(!got_plus) {
         pp = ParseWordCopy(cc, p, 4);
-        if(WordMatch(I->Obj.G, "plus", cc, true) < 0) {
+        if(WordMatch(I->G, "plus", cc, true) < 0) {
           p = ParseWordCopy(cc, pp, 50);
           if(sscanf(cc, "%f", &plus) == 1) {
             got_plus = true;
@@ -3914,7 +3917,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
 
       if(!got_prod) {
         pp = ParseWordCopy(cc, p, 4);
-        if(WordMatch(I->Obj.G, "prod", cc, true) < 0) {
+        if(WordMatch(I->G, "prod", cc, true) < 0) {
           p = ParseWordCopy(cc, pp, 50);
           if(sscanf(cc, "%f", &prod) == 1) {
             got_prod = true;
@@ -3924,7 +3927,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
 
       if(!got_sigma) {
         pp = ParseWordCopy(cc, p, 5);
-        if(WordMatch(I->Obj.G, "sigma", cc, true) < 0) {
+        if(WordMatch(I->G, "sigma", cc, true) < 0) {
           p = ParseWordCopy(cc, pp, 50);
           if(sscanf(cc, "%f", &sigma) == 1) {
             got_sigma = true;
@@ -3973,9 +3976,9 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
     }
 
     if(!passed_endian_check) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
+      PRINTFB(I->G, FB_ObjectMap, FB_Errors)
         " Error: This looks like a DSN6 map file, but I can't match endianness.\n"
-        ENDFB(I->Obj.G);
+        ENDFB(I->G);
     } else {
       shint_ptr = (short int *) p;
 
@@ -4022,8 +4025,8 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
 
   if(got_origin && got_extent && got_grid && got_cell && got_plus && got_prod) {
 
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
-      " BRIXStrToMap: Prod = %8.3f, Plus = %8.3f\n", prod, plus ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Blather)
+      " BRIXStrToMap: Prod = %8.3f, Plus = %8.3f\n", prod, plus ENDFB(I->G);
 
     ms->FDim[0] = ms->Max[0] - ms->Min[0] + 1;
     ms->FDim[1] = ms->Max[1] - ms->Min[1] + 1;
@@ -4033,7 +4036,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
       ok = false;
     else {
       SymmetryUpdate(ms->Symmetry);
-      ms->Field = IsosurfFieldAlloc(I->Obj.G, ms->FDim);
+      ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
       ms->MapSource = cMapSourceBRIX;
       ms->Field->save_points = false;
 
@@ -4139,25 +4142,25 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
 
       transform33f3f(ms->Symmetry->Crystal->FracToReal, v, ms->ExtentMax);
 
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+      PRINTFB(I->G, FB_ObjectMap, FB_Details)
         " BRIXStrToMap: Map Size %d x %d x %d\n", ms->FDim[0], ms->FDim[1], ms->FDim[2]
-        ENDFB(I->Obj.G);
+        ENDFB(I->G);
 
       if(got_sigma) {
-        PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-          " BRIXStrToMap: Reported Sigma = %8.3f\n", sigma ENDFB(I->Obj.G);
+        PRINTFB(I->G, FB_ObjectMap, FB_Details)
+          " BRIXStrToMap: Reported Sigma = %8.3f\n", sigma ENDFB(I->G);
       }
 
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-        " BRIXStrToMap: Range = %5.6f to %5.6f\n", mind, maxd ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Details)
+        " BRIXStrToMap: Range = %5.6f to %5.6f\n", mind, maxd ENDFB(I->G);
 
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+      PRINTFB(I->G, FB_ObjectMap, FB_Details)
         " BRIXStrToMap: Calculated Mean = %8.3f, Sigma = %8.3f\n", calc_mean, calc_sigma
-        ENDFB(I->Obj.G);
+        ENDFB(I->G);
 
       if(normalize) {
-        PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-          " BRIXStrToMap: Normalizing...\n" ENDFB(I->Obj.G);
+        PRINTFB(I->G, FB_ObjectMap, FB_Details)
+          " BRIXStrToMap: Normalizing...\n" ENDFB(I->G);
       }
 
       ms->Active = true;
@@ -4165,8 +4168,8 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
 
     }
   } else {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
-      " Error: unable to read BRIX/DSN6 file.\n" ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Errors)
+      " Error: unable to read BRIX/DSN6 file.\n" ENDFB(I->G);
   }
 
   return (ok);
@@ -4214,8 +4217,8 @@ static int ObjectMapGRDStrToMap(ObjectMap * I, char *GRDStr, int bytes, int stat
     I->NState = state + 1;
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->Obj.G, ms);
-  normalize = SettingGetGlobal_b(I->Obj.G, cSetting_normalize_grd_maps);
+  ObjectMapStateInit(I->G, ms);
+  normalize = SettingGetGlobal_b(I->G, cSetting_normalize_grd_maps);
   maxd = -FLT_MAX;
   mind = FLT_MAX;
 
@@ -4290,8 +4293,8 @@ end d
 */
 
     if(!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Warnings)
-        " ObjectMapGRD-Warning: Binary GRD reader not yet validated.\n" ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Warnings)
+        " ObjectMapGRD-Warning: Binary GRD reader not yet validated.\n" ENDFB(I->G);
     }
 
     if(little_endian != map_endian) {
@@ -4328,8 +4331,8 @@ end d
     f = (float *) p;
   }
 
-  PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-    " ObjectMap: %s\n", cc ENDFB(I->Obj.G);
+  PRINTFB(I->G, FB_ObjectMap, FB_Details)
+    " ObjectMap: %s\n", cc ENDFB(I->G);
 
   if(ascii)
     p = ParseNextLine(p);
@@ -4347,9 +4350,9 @@ end d
       block_len_check = *((int *) (f++));
 
       if(rev_union.block_len != block_len_check) {
-        PRINTFB(I->Obj.G, FB_ObjectMap, FB_Warnings)
+        PRINTFB(I->G, FB_ObjectMap, FB_Warnings)
           " ObjectMapGRD-Warning: block length not matched -- not a true GRD binary?\n"
-          ENDFB(I->Obj.G);
+          ENDFB(I->G);
       }
 
       rev_union.block_len = *((int *) (f++));
@@ -4359,9 +4362,9 @@ end d
 
       if((ivary) || (nbyte != 4) || (intdat)) {
         if(!quiet) {
-          PRINTFB(I->Obj.G, FB_ObjectMap, FB_Warnings)
+          PRINTFB(I->G, FB_ObjectMap, FB_Warnings)
             " ObjectMapGRD-Warning: funky ivary, nbyte, intdat -- not a true GRD binary?\n"
-            ENDFB(I->Obj.G);
+            ENDFB(I->G);
         }
       }
     }
@@ -4490,9 +4493,9 @@ end d
 
       block_len_check = *((int *) (f++));
       if(rev_union.block_len != block_len_check) {
-        PRINTFB(I->Obj.G, FB_ObjectMap, FB_Warnings)
+        PRINTFB(I->G, FB_ObjectMap, FB_Warnings)
           " ObjectMapGRD-Warning: block length not matched -- not a true GRD binary?\n"
-          ENDFB(I->Obj.G);
+          ENDFB(I->G);
       }
     }
   }
@@ -4511,7 +4514,7 @@ end d
 
     ms->FDim[3] = 3;
 
-    if(Feedback(I->Obj.G, FB_ObjectMap, FB_Blather)) {
+    if(Feedback(I->G, FB_ObjectMap, FB_Blather)) {
       dump3i(ms->Div, "ms->Div");
       dump3i(ms->Min, "ms->Min");
       dump3i(ms->Max, "ms->Max");
@@ -4519,14 +4522,14 @@ end d
     }
 
     SymmetryUpdate(ms->Symmetry);
-    ms->Field = IsosurfFieldAlloc(I->Obj.G, ms->FDim);
+    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
     ms->MapSource = cMapSourceGRD;
     ms->Field->save_points = false;
 
     switch (fast_axis) {
     case 3:                    /* Fast Y - BROKEN! */
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Warnings)
-        " ObjectMapGRD-Warning: fast_axis %d unsupported!\n", fast_axis ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Warnings)
+        " ObjectMapGRD-Warning: fast_axis %d unsupported!\n", fast_axis ENDFB(I->G);
       /* intentional fall though... */
     case 1:                    /* Fast X */
     default:
@@ -4575,9 +4578,9 @@ end d
     stdev = (float) sqrt1d((sumsq - (sum * sum / n_pts)) / (n_pts - 1));
 
     if(normalize) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+      PRINTFB(I->G, FB_ObjectMap, FB_Details)
         " ObjectMapGRDStrToMap: Normalizing: mean = %8.6f and stdev = %8.6f.\n",
-        mean, stdev ENDFB(I->Obj.G);
+        mean, stdev ENDFB(I->G);
       if(stdev < R_SMALL8)
         stdev = 1.0F;
       for(c = 0; c < ms->FDim[2]; c++)
@@ -4588,9 +4591,9 @@ end d
           }
         }
     } else {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+      PRINTFB(I->G, FB_ObjectMap, FB_Details)
         " ObjectMapGRDStrToMap: Mean = %8.6f and stdev = %8.6f.\n",
-        mean, stdev ENDFB(I->Obj.G);
+        mean, stdev ENDFB(I->G);
     }
   }
 
@@ -4621,19 +4624,19 @@ end d
 
     transform33f3f(ms->Symmetry->Crystal->FracToReal, v, ms->ExtentMax);
 
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
       " GRDXStrToMap: Map Size %d x %d x %d\n", ms->FDim[0], ms->FDim[1], ms->FDim[2]
-      ENDFB(I->Obj.G);
+      ENDFB(I->G);
 
     ms->Active = true;
     ObjectMapUpdateExtents(I);
     if(!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Results)
-        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Results)
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->G);
     }
   } else {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
-      " Error: unable to read GRD file.\n" ENDFB(I->Obj.G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Errors)
+      " Error: unable to read GRD file.\n" ENDFB(I->G);
   }
 
   return (ok);
@@ -4661,8 +4664,8 @@ static ObjectMap *ObjectMapReadXPLORStr(PyMOLGlobals * G, ObjectMap * I, char *X
     }
     ObjectMapXPLORStrToMap(I, XPLORStr, state, quiet);
 
-    SceneChanged(I->Obj.G);
-    SceneCountFrames(I->Obj.G);
+    SceneChanged(I->G);
+    SceneCountFrames(I->G);
   }
   return (I);
 }
@@ -4920,7 +4923,7 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
     I->NState = state + 1;
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->Obj.G, ms);
+  ObjectMapStateInit(I->G, ms);
 
   ms->Origin = pymol::malloc<float>(3);
   ms->Grid = pymol::malloc<float>(3);
@@ -4954,9 +4957,9 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
   }
 
   if(ok && (stage == 1)) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
       " DXStrToMap: Dimensions: %d %d %d\n", ms->FDim[0], ms->FDim[1], ms->FDim[2]
-      ENDFB(I->Obj.G);
+      ENDFB(I->G);
   }
 
   /* get the origin */
@@ -4982,10 +4985,10 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
   }
 
   if(ok && (stage == 2)) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
       " DXStrToMap: Origin %8.3f %8.3f %8.3f\n", ms->Origin[0], ms->Origin[1],
       ms->Origin[2]
-      ENDFB(I->Obj.G);
+      ENDFB(I->G);
   }
 
   float delta[9];
@@ -5038,9 +5041,9 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
   }
 
   if(ok && (stage == 3)) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
       " DXStrToMap: Grid %8.3f %8.3f %8.3f\n", ms->Grid[0], ms->Grid[1], ms->Grid[2]
-      ENDFB(I->Obj.G);
+      ENDFB(I->G);
   }
 
   while(ok && (*p) && (stage == 3)) {
@@ -5064,11 +5067,11 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
   if(stage == 4) {
 
     if(ok && (stage == 4)) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-        " DXStrToMap: %d data points.\n", n_items ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Details)
+        " DXStrToMap: %d data points.\n", n_items ENDFB(I->G);
     }
 
-    ms->Field = IsosurfFieldAlloc(I->Obj.G, ms->FDim);
+    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
     ms->MapSource = cMapSourceGeneralPurpose;
     ms->Field->save_points = false;
 
@@ -5141,13 +5144,13 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
     ok = false;
 
   if(!ok) {
-    ErrMessage(I->Obj.G, "ObjectMap", "Error reading map");
+    ErrMessage(I->G, "ObjectMap", "Error reading map");
   } else {
     ms->Active = true;
     ObjectMapUpdateExtents(I);
     if(!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Results)
-        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Results)
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->G);
     }
   }
   return (ok);
@@ -5245,7 +5248,7 @@ static int ObjectMapACNTStrToMap(ObjectMap * I, char *ACNTStr, int bytes, int st
   }
 
   ms = &I->State[state];
-  ObjectMapStateInit(I->Obj.G, ms);
+  ObjectMapStateInit(I->G, ms);
 
   ms->Origin = pymol::malloc<float>(3);
   ms->Grid = pymol::malloc<float>(3);
@@ -5290,25 +5293,25 @@ static int ObjectMapACNTStrToMap(ObjectMap * I, char *ACNTStr, int bytes, int st
 
   if(ok && (stage == 3)) {
 
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
       " ACNTStrToMap: Dimensions: %d %d %d\n", ms->FDim[0], ms->FDim[1], ms->FDim[2]
-      ENDFB(I->Obj.G);
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+      ENDFB(I->G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
       " ACNTStrToMap: Origin %8.3f %8.3f %8.3f\n", ms->Origin[0], ms->Origin[1],
       ms->Origin[2]
-      ENDFB(I->Obj.G);
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+      ENDFB(I->G);
+    PRINTFB(I->G, FB_ObjectMap, FB_Details)
       " ACNTStrToMap: Grid %8.3f %8.3f %8.3f\n", ms->Grid[0], ms->Grid[1], ms->Grid[2]
-      ENDFB(I->Obj.G);
+      ENDFB(I->G);
 
     n_items = ms->FDim[0] * ms->FDim[1] * ms->FDim[2];
 
     if(ok && (stage == 1)) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-        " ACNTStrToMap: %d data points.\n", n_items ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Details)
+        " ACNTStrToMap: %d data points.\n", n_items ENDFB(I->G);
     }
 
-    ms->Field = IsosurfFieldAlloc(I->Obj.G, ms->FDim);
+    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
     ms->MapSource = cMapSourceGeneralPurpose;
     ms->Field->save_points = false;
 
@@ -5377,13 +5380,13 @@ static int ObjectMapACNTStrToMap(ObjectMap * I, char *ACNTStr, int bytes, int st
     ok = false;
 
   if(!ok) {
-    ErrMessage(I->Obj.G, "ObjectMap", "Error reading map");
+    ErrMessage(I->G, "ObjectMap", "Error reading map");
   } else {
     ms->Active = true;
     ObjectMapUpdateExtents(I);
     if(!quiet) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Results)
-        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->Obj.G);
+      PRINTFB(I->G, FB_ObjectMap, FB_Results)
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->G);
     }
   }
   return (ok);
@@ -5616,7 +5619,7 @@ int ObjectMapSetBorder(ObjectMap * I, float level, int state)
   int a;
   int result = true;
   if(state == -2)
-    state = ObjectGetCurrentState(&I->Obj, false);
+    state = ObjectGetCurrentState(I, false);
   for(a = 0; a < I->NState; a++) {
     if((state < 0) || (state == a)) {
       if(I->State[a].Active)
@@ -5962,8 +5965,8 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
       ms->Active = true;
       ObjectMapUpdateExtents(I);
       if(!quiet) {
-        PRINTFB(I->Obj.G, FB_ObjectMap, FB_Results)
-          " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->Obj.G);
+        PRINTFB(I->G, FB_ObjectMap, FB_Results)
+          " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->G);
       }
     }
 

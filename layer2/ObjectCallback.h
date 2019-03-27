@@ -26,11 +26,10 @@ typedef struct {
   bool is_callable;
 } ObjectCallbackState;
 
-typedef struct ObjectCallback {
-  CObject Obj;
+struct ObjectCallback : public CObject {
   ObjectCallbackState *State;
   int NState;
-} ObjectCallback;
+};
 
 ObjectCallback *ObjectCallbackNew(PyMOLGlobals * G);
 ObjectCallback *ObjectCallbackDefine(PyMOLGlobals * G, ObjectCallback * obj,

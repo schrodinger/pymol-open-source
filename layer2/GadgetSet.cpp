@@ -286,7 +286,7 @@ void GadgetSet::render(RenderInfo * info)
   context.object = I->Obj;
   context.state = I->State;
 
-  color = ColorGet(I->G, I->Obj->Obj.Color);
+  color = ColorGet(I->G, I->Obj->Color);
 
   if(pass < 0 || ray || pick) {
     PyMOLGlobals *G = I->G;
@@ -300,7 +300,7 @@ void GadgetSet::render(RenderInfo * info)
 	RayPushTTT(ray);
 	RaySetTTT(ray, true, mat);  /* Used to set the ray-tracing matrix,
 				       this works, but is there another way to do this? */
-	CGORenderRay(I->ShapeCGO, ray, info, color, NULL, I->Obj->Obj.Setting, NULL);
+	CGORenderRay(I->ShapeCGO, ray, info, color, NULL, I->Obj->Setting, NULL);
 	RayPopTTT(ray);
       }
     } else if(G->HaveGUI && G->ValidContext) {
@@ -335,12 +335,12 @@ void GadgetSet::render(RenderInfo * info)
 	}
         if(I->PickCGO) {
 	  if (use_shader){
-	    CGORenderGLPicking(I->PickCGO, info, &context, I->Obj->Obj.Setting, NULL);
+	    CGORenderGLPicking(I->PickCGO, info, &context, I->Obj->Setting, NULL);
 #ifndef PURE_OPENGL_ES_2
 	  } else {
 	    glDisable(GL_DEPTH_TEST);
 	    glTranslatef(I->Coord[0],I->Coord[1],I->Coord[2]);
-	    CGORenderGLPicking(I->PickShapeCGO, info, &context, I->Obj->Obj.Setting, NULL);
+	    CGORenderGLPicking(I->PickShapeCGO, info, &context, I->Obj->Setting, NULL);
 	    glTranslatef(-I->Coord[0],-I->Coord[1],-I->Coord[2]);
 	    glEnable(GL_DEPTH_TEST);
 #endif
@@ -377,12 +377,12 @@ void GadgetSet::render(RenderInfo * info)
         if(I->StdCGO) {
 	  if (use_shader){
 	    if (color)
-              CGORenderGL(I->StdCGO, NULL, I->Obj->Obj.Setting, NULL, info, NULL);
+              CGORenderGL(I->StdCGO, NULL, I->Obj->Setting, NULL, info, NULL);
 #ifndef PURE_OPENGL_ES_2
 	  } else {
 	    glDisable(GL_DEPTH_TEST);
 	    glTranslatef(I->Coord[0],I->Coord[1],I->Coord[2]);
-	    CGORenderGL(I->ShapeCGO, NULL, I->Obj->Obj.Setting, NULL, info, NULL);
+	    CGORenderGL(I->ShapeCGO, NULL, I->Obj->Setting, NULL, info, NULL);
 	    glTranslatef(-I->Coord[0],-I->Coord[1],-I->Coord[2]);
 	    glEnable(GL_DEPTH_TEST);
 #endif

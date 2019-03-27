@@ -1028,7 +1028,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
               && (sele_obj->Symmetry)) {
             // legacy default: take symmetry from molecular object
             symm = sele_obj->Symmetry;
-          } else if(SettingGet_b(G, NULL, mapObj->Obj.Setting, cSetting_map_auto_expand_sym)) {
+          } else if(SettingGet_b(G, NULL, mapObj->Setting, cSetting_map_auto_expand_sym)) {
             // fallback: take symmetry from map state
             symm = ms->Symmetry;
           }
@@ -1276,7 +1276,7 @@ int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_n
               && (sele_obj->Symmetry)) {
             // legacy default: take symmetry from molecular object
             symm = sele_obj->Symmetry;
-          } else if(SettingGet_b(G, NULL, mapObj->Obj.Setting, cSetting_map_auto_expand_sym)) {
+          } else if(SettingGet_b(G, NULL, mapObj->Setting, cSetting_map_auto_expand_sym)) {
             // fallback: take symmetry from map state
             symm = ms->Symmetry;
           }
@@ -7053,9 +7053,9 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
   if(target) {
     ObjectMapUpdateExtents(target);
     if(isNew) {
-      ExecutiveManageObject(G, &target->Obj, -1, quiet);
+      ExecutiveManageObject(G, target, -1, quiet);
     } else {
-      ExecutiveDoZoom(G, &target->Obj, false, zoom, true);
+      ExecutiveDoZoom(G, target, false, zoom, true);
     }
     SceneChanged(G);
   }
@@ -7461,7 +7461,7 @@ int ExecutiveMapSetBorder(PyMOLGlobals * G, const char *name, float level, int s
           result = ObjectMapSetBorder(obj, level, state);
 
           if(result) {
-            ExecutiveInvalidateMapDependents(G, obj->Obj.Name);
+            ExecutiveInvalidateMapDependents(G, obj->Name);
           }
         }
         break;
@@ -7491,7 +7491,7 @@ int ExecutiveMapDouble(PyMOLGlobals * G, const char *name, int state)
           ObjectMap *obj = (ObjectMap *) rec->obj;
           result = ObjectMapDouble(obj, state);
           if(result) {
-            ExecutiveInvalidateMapDependents(G, obj->Obj.Name);
+            ExecutiveInvalidateMapDependents(G, obj->Name);
           }
           if(result && rec->visible)
             SceneChanged(G);
@@ -7523,7 +7523,7 @@ int ExecutiveMapHalve(PyMOLGlobals * G, const char *name, int state, int smooth)
           ObjectMap *obj = (ObjectMap *) rec->obj;
           result = ObjectMapHalve(obj, state, smooth);
           if(result) {
-            ExecutiveInvalidateMapDependents(G, obj->Obj.Name);
+            ExecutiveInvalidateMapDependents(G, obj->Name);
           }
           if(result && rec->visible)
             SceneChanged(G);
@@ -7571,7 +7571,7 @@ int ExecutiveMapTrim(PyMOLGlobals * G, const char *name,
             ObjectMap *obj = (ObjectMap *) rec->obj;
             result = result && ObjectMapTrim(obj, map_state, mn, mx, quiet);
             if(result)
-              ExecutiveInvalidateMapDependents(G, obj->Obj.Name);
+              ExecutiveInvalidateMapDependents(G, obj->Name);
             if(result && rec->visible)
               SceneChanged(G);
           }
@@ -11493,7 +11493,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
                 obj =
                   ObjectAlignmentDefine(G, obj, align_vla, align_state, true, trg_obj,
                                         mobile_obj);
-                obj->Obj.Color = ColorGetIndex(G, "yellow");
+                obj->Color = ColorGetIndex(G, "yellow");
                 ObjectSetName((CObject *) obj, oname);
                 ExecutiveManageObject(G, (CObject *) obj, 0, quiet);
                 align_to_update = obj;

@@ -238,9 +238,9 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   float *v, *v1, *v2, *v3, d[3], di;
   char buffer[255];
   const float *lab_pos =
-    SettingGet_3fv(G, NULL, ds->Obj->Obj.Setting, cSetting_label_position);
+    SettingGet_3fv(G, NULL, ds->Obj->Setting, cSetting_label_position);
   int default_digits =
-    SettingGet_i(G, NULL, ds->Obj->Obj.Setting, cSetting_label_digits);
+    SettingGet_i(G, NULL, ds->Obj->Setting, cSetting_label_digits);
   Pickable *rp = NULL;
   int ok = true;
 
@@ -297,7 +297,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
       CHECKOK(ok, ds->LabPos);
     }
 
-    if(ok && SettingGet_b(G, NULL, ds->Obj->Obj.Setting, cSetting_pickable)) {
+    if(ok && SettingGet_b(G, NULL, ds->Obj->Setting, cSetting_pickable)) {
       I->R.P = pymol::malloc<Pickable>(ds->NLabel + 1);
       CHECKOK(ok, I->R.P);
       if (ok)
@@ -315,7 +315,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
     lc = ds->LabCoord;
 
     if(ds->NIndex) {
-      int digits = SettingGet_i(G, NULL, ds->Obj->Obj.Setting,
+      int digits = SettingGet_i(G, NULL, ds->Obj->Setting,
                                 cSetting_label_distance_digits);
       WordType format;
       if(digits < 0)
@@ -376,7 +376,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
 
       float l1, l2;
       float radius;
-      int digits = SettingGet_i(G, NULL, ds->Obj->Obj.Setting,
+      int digits = SettingGet_i(G, NULL, ds->Obj->Setting,
                                 cSetting_label_angle_digits);
       WordType format;
       if(digits < 0)
@@ -405,9 +405,9 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
         else
           radius = l1;
         radius *=
-          SettingGet_f(G, NULL, ds->Obj->Obj.Setting,
+          SettingGet_f(G, NULL, ds->Obj->Setting,
                        cSetting_angle_size) * SettingGet_f(G, NULL,
-                                                           ds->Obj->Obj.Setting,
+                                                           ds->Obj->Setting,
                                                            cSetting_angle_label_position);
 
         normalize3f(avg);
@@ -465,13 +465,13 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
       float l1, l2;
       float radius;
       float dihedral_size =
-        SettingGet_f(G, NULL, ds->Obj->Obj.Setting, cSetting_dihedral_size);
-      float dihedral_label_position = SettingGet_f(G, NULL, ds->Obj->Obj.Setting,
+        SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dihedral_size);
+      float dihedral_label_position = SettingGet_f(G, NULL, ds->Obj->Setting,
                                                    cSetting_dihedral_label_position);
 
       float *v4;
       float avg[3];
-      int digits = SettingGet_i(G, NULL, ds->Obj->Obj.Setting,
+      int digits = SettingGet_i(G, NULL, ds->Obj->Setting,
                                 cSetting_label_dihedral_digits);
       WordType format;
       if(digits < 0)

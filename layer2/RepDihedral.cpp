@@ -66,11 +66,11 @@ static int RepDihedralCGOGenerate(RepDihedral * I, RenderInfo * info)
   CGO *convertcgo = NULL;
   short dash_as_cylinders = 0;
   int color =
-    SettingGet_color(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dihedral_color);
+    SettingGet_color(G, NULL, I->ds->Obj->Setting, cSetting_dihedral_color);
   I->linewidth = line_width =
-    SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_width);
+    SettingGet_f(G, NULL, I->ds->Obj->Setting, cSetting_dash_width);
   I->radius =
-    SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_radius);
+    SettingGet_f(G, NULL, I->ds->Obj->Setting, cSetting_dash_radius);
 
   line_width = SceneGetDynamicLineWidth(info, line_width);
 
@@ -173,11 +173,11 @@ static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
   int round_ends;
   int ok = true;
   int color =
-    SettingGet_color(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dihedral_color);
+    SettingGet_color(G, NULL, I->ds->Obj->Setting, cSetting_dihedral_color);
   float dash_transparency =
-    SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_transparency);
+    SettingGet_f(G, NULL, I->ds->Obj->Setting, cSetting_dash_transparency);
   bool t_mode_3 =
-    SettingGet_i(G, NULL, I->ds->Obj->Obj.Setting, cSetting_transparency_mode) == 3;
+    SettingGet_i(G, NULL, I->ds->Obj->Setting, cSetting_transparency_mode) == 3;
   short dash_transparency_enabled;
   if(color < 0)
     color = I->Obj->Color;
@@ -188,11 +188,11 @@ static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
     return;
 
   I->linewidth = line_width =
-    SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_width);
+    SettingGet_f(G, NULL, I->ds->Obj->Setting, cSetting_dash_width);
   I->radius =
-    SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_radius);
+    SettingGet_f(G, NULL, I->ds->Obj->Setting, cSetting_dash_radius);
   round_ends =
-    SettingGet_b(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_round_ends);
+    SettingGet_b(G, NULL, I->ds->Obj->Setting, cSetting_dash_round_ends);
 
   line_width = SceneGetDynamicLineWidth(info, line_width);
 
@@ -334,13 +334,13 @@ Rep *RepDihedralNew(DistSet * ds, int state)
   I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepDihedralRender;
   I->R.fFree = (void (*)(struct Rep *)) RepDihedralFree;
   I->R.fRecolor = NULL;
-  I->R.obj = &ds->Obj->Obj;
+  I->R.obj = ds->Obj;
   I->R.cs = NULL;
   if (ds && ds->Rep && ds->Rep[cRepDihedral])
     I->R.cs = ds->Rep[cRepDihedral]->cs;
 
-  dash_len = SettingGet_f(G, NULL, ds->Obj->Obj.Setting, cSetting_dash_length);
-  dash_gap = SettingGet_f(G, NULL, ds->Obj->Obj.Setting, cSetting_dash_gap);
+  dash_len = SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dash_length);
+  dash_gap = SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dash_gap);
   dash_sum = dash_len + dash_gap;
   if(dash_sum < R_SMALL4)
     dash_sum = 0.5;
@@ -366,7 +366,7 @@ Rep *RepDihedralNew(DistSet * ds, int state)
     float d3[3], n1[3], n3[3], x[3], y[3];
     float radius, length, angle, phase, pos;
     float dihedral_size =
-      SettingGet_f(G, NULL, ds->Obj->Obj.Setting, cSetting_dihedral_size);
+      SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dihedral_size);
 
     I->V = VLAlloc(float, ds->NDihedralIndex * 10);
     CHECKOK(ok, I->V);

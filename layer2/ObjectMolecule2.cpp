@@ -3181,9 +3181,9 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, const char
         distObj = ObjectDistNewFromM4XBond(I->G, NULL,
                                            I, cont->hbond, cont->n_hbond, nbr_sele);
         if(match_colors)
-          distObj->Obj.Color = I->Color;
+          distObj->Color = I->Color;
         else
-          distObj->Obj.Color = ColorGetIndex(I->G, "yellow");
+          distObj->Color = ColorGetIndex(I->G, "yellow");
         ObjectSetName((CObject *) distObj, name);
         if(distObj)
           ExecutiveManageObject(I->G, (CObject *) distObj, false, true);
@@ -3219,11 +3219,11 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, const char
           CGOStop(cgo);
           ocgo = ObjectCGOFromCGO(I->G, NULL, cgo, 0);
           if(match_colors)
-            ocgo->Obj.Color = I->Color;
+            ocgo->Color = I->Color;
           else
-            ocgo->Obj.Color = ColorGetIndex(I->G, "yellow");
+            ocgo->Color = ColorGetIndex(I->G, "yellow");
           ObjectSetName((CObject *) ocgo, name);
-          ExecutiveDelete(I->G, ocgo->Obj.Name);
+          ExecutiveDelete(I->G, ocgo->Name);
 
           ExecutiveManageObject(I->G, (CObject *) ocgo, false, true);
 

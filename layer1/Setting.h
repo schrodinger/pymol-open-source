@@ -263,7 +263,7 @@ int SettingCheckFontID(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int f
  * the current state (state == -2), or all states (state == -1). Takes
  * static singletons into account. Zero iterations if state >= nstate.
  *
- * StateIterator iter(G, I->Obj.Setting, state, I->NState);
+ * StateIterator iter(G, I->Setting, state, I->NState);
  * while(iter.next()) {
  *   printf("in state %d\n", iter.state);
  * }

@@ -24,14 +24,12 @@ Z* -------------------------------------------------------------------
 
 /* NOTE: "Dist" names & symbols should be updated to "Measurement" */
 
-typedef struct ObjectDist {
-  /* base class, this IS-A CObject */
-  CObject Obj;
+struct ObjectDist : public CObject {
   /* Array of pointers to DistSets */
   struct DistSet **DSet;
   /* number of dist sets */
   int NDSet;
-} ObjectDist;
+};
 
 ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
                                   int sele1, int sele2, int mode, float cutoff,

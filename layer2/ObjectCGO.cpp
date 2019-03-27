@@ -101,8 +101,9 @@ static int ObjectCGOAllStatesFromPyList(ObjectCGO * I, PyObject * list, int vers
     ok = PyList_Check(list);
   if(ok) {
     for(a = 0; a < I->NState; a++) {
+      auto *val = PyList_GetItem(list, a);
       ok =
-        ObjectCGOStateFromPyList(I->Obj.G, I->State + a, PyList_GetItem(list, a),
+        ObjectCGOStateFromPyList(I->G, I->State + a, val,
                                  version);
       if(!ok)
         break;
@@ -127,8 +128,10 @@ int ObjectCGONewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCGO ** resul
   if(ok)
     ok = (I != NULL);
 
-  if(ok)
-    ok = ObjectFromPyList(G, PyList_GetItem(list, 0), &I->Obj);
+  if(ok){
+    auto *val = PyList_GetItem(list, 0);
+    ok = ObjectFromPyList(G, val, I);
+  }
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->NState);
   if(ok)
@@ -147,7 +150,7 @@ PyObject *ObjectCGOAsPyList(ObjectCGO * I)
   PyObject *result = NULL;
 
   result = PyList_New(3);
-  PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result, 0, ObjectAsPyList(I));
   PyList_SetItem(result, 1, PyInt_FromLong(I->NState));
   PyList_SetItem(result, 2, ObjectCGOAllStatesAsPyList(I));
 
@@ -165,7 +168,7 @@ void ObjectCGOFree(ObjectCGO * I)
     CGOFree(I->State[a].origCGO);
   }
   VLAFreeP(I->State);
-  ObjectPurge(&I->Obj);
+  ObjectPurge(I);
   OOFreeP(I);
 }
 
@@ -188,11 +191,11 @@ void ObjectCGORecomputeExtent(ObjectCGO * I)
       if(CGOGetExtent(cgo, mn, mx)) {
         if(!extent_flag) {
           extent_flag = true;
-          copy3f(mx, I->Obj.ExtentMax);
-          copy3f(mn, I->Obj.ExtentMin);
+          copy3f(mx, I->ExtentMax);
+          copy3f(mn, I->ExtentMin);
         } else {
-          max3f(mx, I->Obj.ExtentMax, I->Obj.ExtentMax);
-          min3f(mn, I->Obj.ExtentMin, I->Obj.ExtentMin);
+          max3f(mx, I->ExtentMax, I->ExtentMax);
+          min3f(mn, I->ExtentMin, I->ExtentMin);
         }
       }
       if (!has_normals && cgo && CGOHasNormals(cgo)){
@@ -200,9 +203,9 @@ void ObjectCGORecomputeExtent(ObjectCGO * I)
       }
     }
   }
-  I->Obj.ExtentFlag = extent_flag;
-  SettingCheckHandle(I->Obj.G, &I->Obj.Setting);
-  SettingSet_i(I->Obj.Setting, cSetting_cgo_lighting, has_normals);
+  I->ExtentFlag = extent_flag;
+  SettingCheckHandle(I->G, &I->Setting);
+  SettingSet_i(I->Setting, cSetting_cgo_lighting, has_normals);
 }
 
 
@@ -244,7 +247,7 @@ static void ObjectCGOUpdate(ObjectCGO * I)
       ocs->renderCGO = 0;
     }
   }
-  SceneInvalidate(I->Obj.G);    /* needed ? */
+  SceneInvalidate(I->G);    /* needed ? */
 }
 
 
@@ -266,7 +269,7 @@ static void ObjectCGORenderState(PyMOLGlobals* G, int pass, CRay* ray,
         if (cgo_lighting && CGOHasAnyTriangleVerticesWithoutNormals(cgo)) {
           cgo = cgo_copy = CGOGenerateNormalsForTriangles(cgo);
         }
-        CGORenderRay(cgo, ray, info, color, ramp, I->Obj.Setting, NULL);
+        CGORenderRay(cgo, ray, info, color, ramp, I->Setting, NULL);
         CGOFree(cgo_copy);
       }
     }
@@ -277,8 +280,8 @@ static void ObjectCGORenderState(PyMOLGlobals* G, int pass, CRay* ray,
       if(sobj && ((sobj->hasTransparency ^ pass_is_opaque) || (sobj->hasOpaque == pass_is_opaque))){
 	{
 	  CShaderPrg *shaderPrg;
-	  int two_sided_lighting = SettingGet_i(G, I->Obj.Setting, NULL, cSetting_two_sided_lighting);
-          bool backface_cull = SettingGet_i(G, I->Obj.Setting, NULL, cSetting_backface_cull);
+	  int two_sided_lighting = SettingGet_i(G, I->Setting, NULL, cSetting_two_sided_lighting);
+          bool backface_cull = SettingGet_i(G, I->Setting, NULL, cSetting_backface_cull);
 	  if (two_sided_lighting<0){
 	    two_sided_lighting = !cgo_lighting;
 	  }
@@ -311,12 +314,12 @@ static void ObjectCGORenderState(PyMOLGlobals* G, int pass, CRay* ray,
 	    shaderPrg->Set1i("two_sided_lighting_enabled", two_sided_lighting);
 	    sobj->renderCGO->use_shader = use_shader;
 	    sobj->renderCGO->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
-	    CGORenderGL(sobj->renderCGO, color, I->Obj.Setting, NULL, info, NULL);
+	    CGORenderGL(sobj->renderCGO, color, I->Setting, NULL, info, NULL);
 	    shaderPrg->Disable();
 	  } else {
 	    sobj->renderCGO->use_shader = use_shader;
 	    sobj->renderCGO->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
-	    CGORenderGL(sobj->renderCGO, color, I->Obj.Setting, NULL, info, NULL);
+	    CGORenderGL(sobj->renderCGO, color, I->Setting, NULL, info, NULL);
 	  }
 
 	    if (backface_cull){
@@ -357,7 +360,7 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
     } else {
       colorWithA[0] = 1.f; colorWithA[1] = 1.f; colorWithA[2] = 1.f;
     }
-    colorWithA[3] = 1.f - SettingGet_f(G, I->Obj.Setting, NULL, cSetting_cgo_transparency);
+    colorWithA[3] = 1.f - SettingGet_f(G, I->Setting, NULL, cSetting_cgo_transparency);
     preOpt = sobj->origCGO;
 
     bool hasTransparency = (colorWithA[3] < 1.f || CGOHasTransparency(preOpt));
@@ -437,7 +440,7 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
     }
 
     if (ramp){
-      convertcgo = CGOColorByRamp(G, preOpt, ramp, state, I->Obj.Setting);
+      convertcgo = CGOColorByRamp(G, preOpt, ramp, state, I->Setting);
       CGOFree(preOpt);
       preOpt = convertcgo;
     }
@@ -491,7 +494,7 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
 
 static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 {
-  PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->G;
   int state = info->state;
   CRay *ray = info->ray;
   int pass = info->pass;
@@ -502,18 +505,18 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
   
   use_shader = SettingGetGlobal_b(G, cSetting_cgo_use_shader) &
     SettingGetGlobal_b(G, cSetting_use_shaders);
-  cgo_lighting = SettingGet_i(G, I->Obj.Setting, NULL, cSetting_cgo_lighting);
+  cgo_lighting = SettingGet_i(G, I->Setting, NULL, cSetting_cgo_lighting);
 
-  ObjectPrepareContext(&I->Obj, info);
-  ramp = ColorGetRamp(G, I->Obj.Color);
-  color = ColorGet(G, I->Obj.Color);
+  ObjectPrepareContext(I, info);
+  ramp = ColorGetRamp(G, I->Color);
+  color = ColorGet(G, I->Color);
 
   if(!I->State)
     return;
 
   if(pass || info->ray) {
-    if((I->Obj.visRep & cRepCGOBit)) {
-      for(StateIterator iter(G, I->Obj.Setting, state, I->NState); iter.next();) {
+    if((I->visRep & cRepCGOBit)) {
+      for(StateIterator iter(G, I->Setting, state, I->NState); iter.next();) {
         sobj = I->State + iter.state;
         if (!sobj->origCGO)
           continue;
@@ -535,13 +538,13 @@ ObjectCGO *ObjectCGONew(PyMOLGlobals * G)
 
   I->State = VLACalloc(ObjectCGOState, 10);
   I->NState = 0;
-  I->Obj.type = cObjectCGO;
-  I->Obj.fFree = (void (*)(CObject *)) ObjectCGOFree;
-  I->Obj.fUpdate = (void (*)(CObject *)) ObjectCGOUpdate;
-  I->Obj.fInvalidate = (void (*)(CObject *, int rep, int level, int state))
+  I->type = cObjectCGO;
+  I->fFree = (void (*)(CObject *)) ObjectCGOFree;
+  I->fUpdate = (void (*)(CObject *)) ObjectCGOUpdate;
+  I->fInvalidate = (void (*)(CObject *, int rep, int level, int state))
     ObjectCGOInvalidate;
-  I->Obj.fRender = (void (*)(CObject *, RenderInfo *)) ObjectCGORender;
-  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectCGOGetNState;
+  I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectCGORender;
+  I->fGetNFrame = (int (*)(CObject *)) ObjectCGOGetNState;
 
   return (I);
 }
@@ -606,7 +609,7 @@ ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals * G, ObjectCGO * obj, CGO * cgo, int st
   ObjectCGO *I = NULL;
 
   if(obj) {
-    if(obj->Obj.type != cObjectCGO)     /* TODO: handle this */
+    if(obj->type != cObjectCGO)     /* TODO: handle this */
       obj = NULL;
   }
   if(!obj) {
@@ -662,7 +665,7 @@ ObjectCGO *ObjectCGODefine(PyMOLGlobals * G, ObjectCGO * obj, PyObject * pycgo, 
   int est;
 
   if(obj) {
-    if(obj->Obj.type != cObjectCGO)     /* TODO: handle this */
+    if(obj->type != cObjectCGO)     /* TODO: handle this */
       obj = NULL;
   }
   if(!obj) {
@@ -716,7 +719,7 @@ ObjectCGO *ObjectCGOFromFloatArray(PyMOLGlobals * G, ObjectCGO * obj,
   int est;
 
   if(obj) {
-    if(obj->Obj.type != cObjectCGO)     /* TODO: handle this */
+    if(obj->type != cObjectCGO)     /* TODO: handle this */
       obj = NULL;
   }
   if(!obj) {

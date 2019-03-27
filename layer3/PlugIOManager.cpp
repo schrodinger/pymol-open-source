@@ -385,7 +385,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
               obj->NState = state + 1;
             }
             ms = &obj->State[state];
-            ObjectMapStateInit(obj->Obj.G, ms);
+            ObjectMapStateInit(obj->G, ms);
 
             ms->FDim[0] = v->xsize;
             ms->FDim[1] = v->ysize;

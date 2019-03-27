@@ -246,7 +246,8 @@ static int ObjectVolumeAllStatesFromPyList(ObjectVolume * I, PyObject * list)
     ok = PyList_Check(list);
   if(ok) {
     for(a = 0; a < I->NState; a++) {
-      ok = ObjectVolumeStateFromPyList(I->Obj.G, I->State + a, PyList_GetItem(list, a));
+      auto *val = PyList_GetItem(list, a);
+      ok = ObjectVolumeStateFromPyList(I->G, I->State + a, val);
       if(!ok)
         break;
     }
@@ -268,8 +269,10 @@ int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume **
   I = ObjectVolumeNew(G);
   if(ok)
     ok = (I != NULL);
-  if(ok)
-    ok = ObjectFromPyList(G, PyList_GetItem(list, 0), &I->Obj);
+  if(ok){
+    auto *val = PyList_GetItem(list, 0);
+    ok = ObjectFromPyList(G, val, I);
+  }
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->NState);
   if(ok)
@@ -288,7 +291,7 @@ PyObject *ObjectVolumeAsPyList(ObjectVolume * I)
   PyObject *result = NULL;
 
   result = PyList_New(3);
-  PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result, 0, ObjectAsPyList(I));
   PyList_SetItem(result, 1, PyInt_FromLong(I->NState));
   PyList_SetItem(result, 2, ObjectVolumeAllStatesAsPyList(I));
   return (PConvAutoNone(result));
@@ -325,7 +328,7 @@ static void ObjectVolumeFree(ObjectVolume * I)
     ObjectVolumeStateFree(I->State + a);
   }
   VLAFreeP(I->State);
-  ObjectPurge(&I->Obj);
+  ObjectPurge(I);
 
   OOFreeP(I);
 }
@@ -354,12 +357,12 @@ static void ObjectVolumeInvalidate(ObjectVolume * I, int rep, int level, int sta
   int a;
   int once_flag = true;
   if(level >= cRepInvExtents) {
-    I->Obj.ExtentFlag = false;
+    I->ExtentFlag = false;
   }
 
-  PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
+  PRINTFB(I->G, FB_ObjectVolume, FB_Blather)
     "ObjectVolumeInvalidate-Msg: %d states.\n", I->NState
-    ENDFB(I->Obj.G);
+    ENDFB(I->G);
 
   if((rep == cRepVolume) || (rep == cRepAll) || (rep == cRepExtent)) {
     for(a = 0; a < I->NState; a++) {
@@ -374,7 +377,7 @@ static void ObjectVolumeInvalidate(ObjectVolume * I, int rep, int level, int sta
         I->State[state].ResurfaceFlag = true;
         I->State[state].RefreshFlag = true;
       }
-      SceneChanged(I->Obj.G);
+      SceneChanged(I->G);
       if(once_flag)
         break;
     }
@@ -423,7 +426,7 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
   int i, j;
   float range;
   MapType *voxelmap;            /* this has nothing to do with isosurfaces... */
-  PyMOLGlobals * G = I->Obj.G;
+  PyMOLGlobals * G = I->G;
 
   for(a = 0; a < I->NState; a++) {
     vs = I->State + a;
@@ -449,8 +452,8 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
       }
 
       // data min/max/mean/stdev
-      range = SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_volume_data_range);
-      ObjectMapStateGetHistogram(I->Obj.G, oms, 0, range, vs->min_max_mean_stdev, 0.f, 0.f);
+      range = SettingGet_f(I->G, I->Setting, NULL, cSetting_volume_data_range);
+      ObjectMapStateGetHistogram(I->G, oms, 0, range, vs->min_max_mean_stdev, 0.f, 0.f);
     }
 
     // handle legacy or default color ramp
@@ -485,7 +488,7 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
       }
     }
 
-    if((I->Obj.visRep & cRepVolumeBit) && vs->ResurfaceFlag) {
+    if((I->visRep & cRepVolumeBit) && vs->ResurfaceFlag) {
       Isofield *field = NULL;
       vs->ResurfaceFlag = false;
       if(vs->Field) {
@@ -519,7 +522,7 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
         }
 
         // cull my friend, cull */ 
-        voxelmap = MapNew(I->Obj.G,
+        voxelmap = MapNew(I->G,
             -carve_buffer, vs->AtomVertex,
             VLAGetSize(vs->AtomVertex) / 3, NULL);
         if(voxelmap) {
@@ -570,12 +573,12 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
       }
     }
     vs->isUpdated = true;
-    SceneInvalidate(I->Obj.G);
+    SceneInvalidate(I->G);
   }
-  if(!I->Obj.ExtentFlag) {
+  if(!I->ExtentFlag) {
     ObjectVolumeRecomputeExtent(I);
-    if(I->Obj.ExtentFlag)
-      SceneInvalidate(I->Obj.G);
+    if(I->ExtentFlag)
+      SceneInvalidate(I->G);
   }
 }
 
@@ -745,12 +748,12 @@ static size_t createPreintegrationTexture(PyMOLGlobals * G, const float *Table, 
 static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 {
 #ifndef PURE_OPENGL_ES_2
-  PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->G;
   int state = info->state;
   int pass = info->pass;
   int a = 0;
   ObjectVolumeState *vs = NULL;
-  float volume_layers =  SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_volume_layers);
+  float volume_layers =  SettingGet_f(I->G, I->Setting, NULL, cSetting_volume_layers);
   short volume_mode = SettingGetGlobal_i(G, cSetting_volume_mode);
   short ortho = SettingGetGlobal_i(G, cSetting_ortho);
   /* make this a setting? */
@@ -782,7 +785,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
   }
 
   // ViewElem/TTT Matrix
-  ObjectPrepareContext(&I->Obj, info);
+  ObjectPrepareContext(I, info);
 
   for(a = 0; a < I->NState; ++a) {
 
@@ -797,19 +800,19 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
     if(!vs || !vs->Active)
       continue;
 
-    PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
+    PRINTFB(I->G, FB_ObjectVolume, FB_Blather)
       "ObjectVolumeRender-Msg: state=%d, pass=%d, refresh=%d, recolor=%d.\n",
-      a, pass, vs->RefreshFlag, vs->RecolorFlag ENDFB(I->Obj.G); 
+      a, pass, vs->RefreshFlag, vs->RecolorFlag ENDFB(I->G); 
 
     corner = vs->Corner;
 
-    SceneResetNormal(I->Obj.G, false);
+    SceneResetNormal(I->G, false);
 
     // render bounding box
-    if((I->Obj.visRep & cRepExtentBit)) {
+    if((I->visRep & cRepExtentBit)) {
       if(!info->line_lighting)
         glDisable(GL_LIGHTING);
-      ObjectUseColor(&I->Obj);
+      ObjectUseColor(I);
       ExtentRender(corner);
     }
 
@@ -851,7 +854,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
         return;
       }
 
-      int volume_bit_val = SettingGet_i(G, I->Obj.Setting, NULL, cSetting_volume_bit_depth);
+      int volume_bit_val = SettingGet_i(G, I->Setting, NULL, cSetting_volume_bit_depth);
       volume_bit_depth = (volume_bit_val < 17) ? tex::data_type::HALF_FLOAT : tex::data_type::FLOAT;
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
@@ -912,7 +915,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
     }
 
     // render volume
-    if((I->Obj.visRep & cRepVolumeBit)) {
+    if((I->visRep & cRepVolumeBit)) {
       int i, j;
 
       glDisable(GL_LIGHTING);
@@ -934,7 +937,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       }
 
       // TTT (movie object motions)
-      if(ObjectGetTTT(&I->Obj, &ttt, -1))
+      if(ObjectGetTTT(I, &ttt, -1))
         MatrixTransformC44fAs33f3f(ttt, zaxis, zaxis);
 
       // determine number of slices based on max extent
@@ -1125,13 +1128,13 @@ ObjectVolume *ObjectVolumeNew(PyMOLGlobals * G)
   I->NState = 0;
   I->State = VLACalloc(ObjectVolumeState, 10);   /* autozero important */
 
-  I->Obj.type = cObjectVolume;
+  I->type = cObjectVolume;
 
-  I->Obj.fFree = (void (*)(CObject *)) ObjectVolumeFree;
-  I->Obj.fUpdate = (void (*)(CObject *)) ObjectVolumeUpdate;
-  I->Obj.fRender = (void (*)(CObject *, RenderInfo *)) ObjectVolumeRender;
-  I->Obj.fInvalidate = (void (*)(CObject *, int, int, int)) ObjectVolumeInvalidate;
-  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectVolumeGetNStates;
+  I->fFree = (void (*)(CObject *)) ObjectVolumeFree;
+  I->fUpdate = (void (*)(CObject *)) ObjectVolumeUpdate;
+  I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectVolumeRender;
+  I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectVolumeInvalidate;
+  I->fGetNFrame = (int (*)(CObject *)) ObjectVolumeGetNStates;
   return (I);
 }
 
@@ -1197,7 +1200,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
   vs = I->State + state;
   ObjectVolumeStateInit(G, vs);
 
-  strcpy(vs->MapName, map->Obj.Name);
+  strcpy(vs->MapName, map->Name);
   vs->MapState = map_state;
   oms = ObjectMapGetState(map, map_state);
 
@@ -1241,7 +1244,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
           fdim[0] = eff_range[3] - eff_range[0];
           fdim[1] = eff_range[4] - eff_range[1];
           fdim[2] = eff_range[5] - eff_range[2];
-          vs->Field = IsosurfFieldAlloc(I->Obj.G, fdim);
+          vs->Field = IsosurfFieldAlloc(I->G, fdim);
 
           expand_result =
             IsosurfExpand(oms->Field, vs->Field, oms->Symmetry->Crystal, sym, eff_range);
@@ -1267,7 +1270,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
   vs->CarveBuffer = carve;
   vs->AtomVertex = vert_vla;
 
-  I->Obj.ExtentFlag = false;
+  I->ExtentFlag = false;
 
   SceneChanged(G);
   SceneCountFrames(G);
@@ -1301,26 +1304,26 @@ void ObjectVolumeRecomputeExtent(ObjectVolume * I)
       if(vs->ExtentFlag) {
         if(!extent_flag) {
           extent_flag = true;
-          copy3f(vs->ExtentMax, I->Obj.ExtentMax);
-          copy3f(vs->ExtentMin, I->Obj.ExtentMin);
+          copy3f(vs->ExtentMax, I->ExtentMax);
+          copy3f(vs->ExtentMin, I->ExtentMin);
         } else {
-          max3f(vs->ExtentMax, I->Obj.ExtentMax, I->Obj.ExtentMax);
-          min3f(vs->ExtentMin, I->Obj.ExtentMin, I->Obj.ExtentMin);
+          max3f(vs->ExtentMax, I->ExtentMax, I->ExtentMax);
+          min3f(vs->ExtentMin, I->ExtentMin, I->ExtentMin);
         }
       }
     }
   }
 
-  I->Obj.ExtentFlag = extent_flag;
+  I->ExtentFlag = extent_flag;
 
-  if(I->Obj.TTTFlag && I->Obj.ExtentFlag) {
+  if(I->TTTFlag && I->ExtentFlag) {
     const float *ttt;
     double tttd[16];
-    if(ObjectGetTTT(&I->Obj, &ttt, -1)) {
+    if(ObjectGetTTT(I, &ttt, -1)) {
       convertTTTfR44d(ttt, tttd);
       MatrixTransformExtentsR44d3f(tttd,
-                                   I->Obj.ExtentMin, I->Obj.ExtentMax,
-                                   I->Obj.ExtentMin, I->Obj.ExtentMax);
+                                   I->ExtentMin, I->ExtentMax,
+                                   I->ExtentMin, I->ExtentMax);
     }
   }
 }
@@ -1356,11 +1359,11 @@ int ObjectVolumeSetRamp(ObjectVolume * I, float *ramp_list, int list_size)
   ovs->RampSize = list_size / 5;
   ovs->RecolorFlag = true;
 
-  SceneChanged(I->Obj.G);
+  SceneChanged(I->G);
 
   return true;
 ok_except1:
-  PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Errors)
-    "ObjectVolumeSetRamp failed" ENDFB(I->Obj.G);
+  PRINTFB(I->G, FB_ObjectVolume, FB_Errors)
+    "ObjectVolumeSetRamp failed" ENDFB(I->G);
   return false;
 }

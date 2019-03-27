@@ -228,7 +228,7 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
 
   I->GSet[0] = gs;
   I->NGSet = 1;
-  I->Obj.Context = 1;
+  I->Context = 1;
   gs->update();
   ObjectGadgetUpdateExtents(I);
   return (I);
@@ -243,14 +243,14 @@ void ObjectGadgetUpdateExtents(ObjectGadget * I)
   GadgetSet *ds;
 
   /* update extents */
-  copy3f(maxv, I->Obj.ExtentMin);
-  copy3f(minv, I->Obj.ExtentMax);
-  I->Obj.ExtentFlag = false;
+  copy3f(maxv, I->ExtentMin);
+  copy3f(minv, I->ExtentMax);
+  I->ExtentFlag = false;
   for(a = 0; a < I->NGSet; a++) {
     ds = I->GSet[a];
     if(ds) {
-      if(GadgetSetGetExtent(ds, I->Obj.ExtentMin, I->Obj.ExtentMax))
-        I->Obj.ExtentFlag = true;
+      if(GadgetSetGetExtent(ds, I->ExtentMin, I->ExtentMax))
+        I->ExtentFlag = true;
     }
   }
 }
@@ -281,8 +281,10 @@ static int ObjectGadgetGSetFromPyList(ObjectGadget * I, PyObject * list, int ver
   if(ok) {
     VLACheck(I->GSet, GadgetSet *, I->NGSet);
     for(a = 0; a < I->NGSet; a++) {
-      if(ok)
-        ok = GadgetSetFromPyList(I->Obj.G, PyList_GetItem(list, a), &I->GSet[a], version);
+      if(ok){
+        auto *val = PyList_GetItem(list, a);
+        ok = GadgetSetFromPyList(I->G, val, &I->GSet[a], version);
+      }
       if(ok && I->GSet[a]) {
         I->GSet[a]->Obj = I;
         I->GSet[a]->State = a;
@@ -302,8 +304,10 @@ int ObjectGadgetInitFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget *
     ok = PyList_Check(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
-  if(ok)
-    ok = ObjectFromPyList(G, PyList_GetItem(list, 0), &I->Obj);
+  if(ok){
+    auto *val = PyList_GetItem(list, 0);
+    ok = ObjectFromPyList(G, val, I);
+  }
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->GadgetType);
   if(ok)
@@ -373,7 +377,7 @@ PyObject *ObjectGadgetPlainAsPyList(ObjectGadget * I, bool incl_cgos)
   /* first, dump the atoms */
 
   result = PyList_New(5);
-  PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result, 0, ObjectAsPyList(I));
   PyList_SetItem(result, 1, PyInt_FromLong(I->GadgetType));
   PyList_SetItem(result, 2, PyInt_FromLong(I->NGSet));
   PyList_SetItem(result, 3, ObjectGadgetGSetAsPyList(I, incl_cgos));
@@ -408,7 +412,7 @@ void ObjectGadgetPurge(ObjectGadget * I)
       I->GSet[a] = NULL;
     }
   VLAFreeP(I->GSet);
-  ObjectPurge(&I->Obj);
+  ObjectPurge(I);
 }
 
 void ObjectGadgetFree(ObjectGadget * I)
@@ -420,11 +424,11 @@ void ObjectGadgetFree(ObjectGadget * I)
 void ObjectGadgetUpdateStates(ObjectGadget * I)
 {
   int a;
-  OrthoBusyPrime(I->Obj.G);
+  OrthoBusyPrime(I->G);
   for(a = 0; a < I->NGSet; a++)
     if(I->GSet[a]) {
-      OrthoBusySlow(I->Obj.G, a, I->NGSet);
-      /*           printf(" ObjectGadget: updating state %d of \"%s\".\n" , a+1, I->Obj.Name); */
+      OrthoBusySlow(I->G, a, I->NGSet);
+      /*           printf(" ObjectGadget: updating state %d of \"%s\".\n" , a+1, I->Name); */
       I->GSet[a]->update();
     }
 }
@@ -456,8 +460,8 @@ static void ObjectGadgetRender(ObjectGadget * I, RenderInfo * info)
   int pass = info->pass;
   if(pass < 0 || info->ray || info->pick) {
 
-    ObjectPrepareContext(&I->Obj, info);
-    for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NGSet);
+    ObjectPrepareContext(I, info);
+    for(StateIterator iter(I->G, I->Setting, state, I->NGSet);
         iter.next();) {
       GadgetSet * gs = I->GSet[iter.state];
       gs->render(info);
@@ -471,16 +475,16 @@ void ObjectGadgetInit(PyMOLGlobals * G, ObjectGadget * I)
 {
   ObjectInit(G, (CObject *) I);
 
-  I->Obj.type = cObjectGadget;
+  I->type = cObjectGadget;
   I->GSet = VLACalloc(GadgetSet *, 10);        /* auto-zero */
   I->NGSet = 0;
   I->Changed = true;
 
-  I->Obj.fFree = (void (*)(CObject *)) ObjectGadgetFree;
-  I->Obj.fUpdate = (void (*)(CObject *)) ObjectGadgetUpdate;
-  I->Obj.fRender = (void (*)(CObject *, RenderInfo * info)) ObjectGadgetRender;
-  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectGadgetGetNState;
-  I->Obj.fDescribeElement = NULL;
+  I->fFree = (void (*)(CObject *)) ObjectGadgetFree;
+  I->fUpdate = (void (*)(CObject *)) ObjectGadgetUpdate;
+  I->fRender = (void (*)(CObject *, RenderInfo * info)) ObjectGadgetRender;
+  I->fGetNFrame = (int (*)(CObject *)) ObjectGadgetGetNState;
+  I->fDescribeElement = NULL;
   I->CurGSet = 0;
 }
 

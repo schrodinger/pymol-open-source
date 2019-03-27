@@ -51,11 +51,10 @@ typedef struct {
   CGO *shaderUnitCellCGO;
 } ObjectMeshState;
 
-typedef struct ObjectMesh {
-  CObject Obj;
+struct ObjectMesh : public CObject {
   ObjectMeshState *State;
   int NState;
-} ObjectMesh;
+};
 
 ObjectMesh *ObjectMeshFromBox(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * map,
                               int map_state,

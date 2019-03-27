@@ -41,8 +41,10 @@ int ObjectGroupNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGroup ** r
   I = ObjectGroupNew(G);
   if(ok)
     ok = (I != NULL);
-  if(ok)
-    ok = ObjectFromPyList(G, PyList_GetItem(list, 0), &I->Obj);
+  if(ok){
+    auto *val = PyList_GetItem(list, 0);
+    ok = ObjectFromPyList(G, val, I);
+  }
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->OpenOrClosed);
   if(ok && (ll > 2))
@@ -60,7 +62,7 @@ PyObject *ObjectGroupAsPyList(ObjectGroup * I)
   PyObject *result = NULL;
 
   result = PyList_New(3);
-  PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result, 0, ObjectAsPyList(I));
   PyList_SetItem(result, 1, PyInt_FromLong(I->OpenOrClosed));
   PyList_SetItem(result, 2, ObjectStateAsPyList(&I->State));
   return (PConvAutoNone(result));
@@ -72,7 +74,7 @@ PyObject *ObjectGroupAsPyList(ObjectGroup * I)
 static void ObjectGroupFree(ObjectGroup * I)
 {
   ObjectStatePurge(&I->State);
-  ObjectPurge(&I->Obj);
+  ObjectPurge(I);
   OOFreeP(I);
 }
 
@@ -91,11 +93,11 @@ ObjectGroup *ObjectGroupNew(PyMOLGlobals * G)
 
   ObjectInit(G, (CObject *) I);
 
-  I->Obj.type = cObjectGroup;
-  I->Obj.fFree = (void (*)(CObject *)) ObjectGroupFree;
-  I->Obj.fRender = NULL;
+  I->type = cObjectGroup;
+  I->fFree = (void (*)(CObject *)) ObjectGroupFree;
+  I->fRender = NULL;
   I->OpenOrClosed = false;
-  I->Obj.fGetObjectState = (CObjectState * (*)(CObject *, int state))
+  I->fGetObjectState = (CObjectState * (*)(CObject *, int state))
     ObjectGroupGetObjectState;
 
   ObjectStateInit(G, &I->State);
