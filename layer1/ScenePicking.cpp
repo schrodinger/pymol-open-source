@@ -8,7 +8,6 @@
 #include"MemoryDebug.h"
 #include"PyMOL.h"
 #include"P.h"
-#include "MacPyMOL.h"
 #include "Err.h"
 
 typedef unsigned char pix[4];

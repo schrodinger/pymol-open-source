@@ -42,27 +42,6 @@ void MainCheckWindowFit(PyMOLGlobals * G);
 
 #endif
 
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _MACPYMOL_XCODE
-void MainUnblock(void);
-int MainCheckRedundantOpen(char *file);
-void MainRunString(const char *str);
-PyObject *MainGetStringResult(const char *str);
-void MainDoCommand(const char *str1);
-int MainFeedbackOut(char *st);
-void MainRunCommand(const char *str1);
-void MainMoviePrepareCopy(int *width, int *height, int *length);
-int MainMovieCopy(int frame, int width, int height, int rowbytes, void *ptr);
-void MainMovieCopyPrepare(int *width, int *height, int *length);
-int MainMovieCopyFrame(int frame, int width, int height, int rowbytes, void *ptr);
-int MainMoviePurgeFrame(int frame);
-void MainMovieCopyFinish(void);
-void MainSceneGetSize(int *width, int *height);
-int MainSceneCopy(int width, int height, int rowbytes, void *ptr);
-#endif
-
-/* END PROPRIETARY CODE SEGMENT */
-
 #define PYMOL_MAX_OPT_STR  1025
 
 int main_exec(int, char **);

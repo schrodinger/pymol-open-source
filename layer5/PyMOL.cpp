@@ -76,28 +76,6 @@
 PyMOLGlobals *SingletonPyMOLGlobals = NULL;
 #endif
 
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifndef _PYMOL_NOPY
-#ifdef _MACPYMOL_XCODE
-extern int *MacPyMOLReady;
-extern CPyMOLOptions *MacPyMOLOption;
-#endif
-#endif
-
-/* END PROPRIETARY CODE SEGMENT */
-
-#ifdef _MACPYMOL_XCODE
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#define PYMOL_API_LOCK if((I->PythonInitStage) && (!I->ModalDraw) && PLockAPIAsGlut(I->G,true)) {
-#define PYMOL_API_LOCK_MODAL if((I->PythonInitStage) && PLockAPIAsGlut(I->G,true)) {
-#define PYMOL_API_TRYLOCK PYMOL_API_LOCK
-#define PYMOL_API_UNLOCK PUnlockAPIAsGlut(I->G); }
-#define PYMOL_API_UNLOCK_NO_FLUSH PUnlockAPIAsGlutNoFlush(I->G); }
-
-/* END PROPRIETARY CODE SEGMENT */
-#else
 #ifdef _PYMOL_LIB_HAS_PYTHON
 #define PYMOL_API_LOCK if(I->PythonInitStage && (!I->ModalDraw)) { PLockAPIAndUnblock(I->G); {
 #define PYMOL_API_LOCK_MODAL if(I->PythonInitStage) { PLockAPIAndUnblock(I->G); {
@@ -110,7 +88,6 @@ extern CPyMOLOptions *MacPyMOLOption;
 #define PYMOL_API_TRYLOCK if(!I->ModalDraw) {
 #define PYMOL_API_UNLOCK }
 #define PYMOL_API_UNLOCK_NO_FLUSH }
-#endif
 #endif
 #define IDLE_AND_READY 3
 
@@ -1862,21 +1839,6 @@ static void init_python(int argc, char *argv[])
 #endif
   }
 
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _MACPYMOL_XCODE
-  /* there appears to be a bug or a race collection in the garbage
-     collector of the Python version that ships with Mac OS --
-     better to potentially leak a little RAM than crash unexpectedly
-     in a _PyObject_GC_Del call.
-     BTW: PyMOL doesn't itself need the GC, but end-user code
-     might. */
-  PyRun_SimpleString("import gc");
-  PyRun_SimpleString("gc.disable()");
-#endif
-
-/* END PROPRIETARY CODE SEGMENT */
-
   PyEval_InitThreads();
 
   PyRun_SimpleString("import sys");
@@ -2082,18 +2044,6 @@ void PyMOL_Start(CPyMOL * I)
   TrackerUnitTest(G);
 #endif
 
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _MACPYMOL_XCODE
-  SettingSetGlobal_b(G, cSetting_stereo_double_pump_mono, true);
-  if(G->Option->stereo_capable) {
-    SettingSetGlobal_i(G, cSetting_stereo_mode, cStereo_quadbuffer);
-  }
-  /*       SettingSetGlobal_i(G,cSetting_show_progress, 0);  */
-#endif
-
-/* END PROPRIETARY CODE SEGMENT */
-
   I->DrawnFlag = false;
   I->RedisplayFlag = true;
   G->Ready = true;
@@ -2123,23 +2073,11 @@ void PyMOL_StartWithPython(CPyMOL * I)
 
   /* now locate all the C to Python function hooks and objects we need */
 
-#ifdef _MACPYMOL_XCODE
-  PInit(I->G, true);
-#else
   PInit(I->G, false);
-#endif
 
   /* and begin the initialization sequence */
 
   I->PythonInitStage = 1;
-
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _MACPYMOL_XCODE
-  MacPyMOLOption = I->G->Option;
-  MacPyMOLReady = &I->G->Ready;
-#endif
-/* END PROPRIETARY CODE SEGMENT */
 }
 
 #endif
@@ -2427,16 +2365,6 @@ void PyMOL_DrawWithoutLock(CPyMOL * I)
 
       setup_gl_state();
 
-      /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _MACPYMOL_XCODE
-      {                         /* on a mac, this can change if we've switched contexts... */
-        GLboolean state;
-        glGetBooleanv(GL_STEREO, &state);
-        G->StereoCapable = (int) state;
-      }
-#endif
-      /* END PROPRIETARY CODE SEGMENT */
-
       if(!I->DrawnFlag) {
         SceneSetCardInfo(G, (char *) glGetString(GL_VENDOR),
                          (char *) glGetString(GL_RENDERER),
@@ -2576,14 +2504,6 @@ int PyMOL_Idle(CPyMOL * I)
     } else {
       I->PythonInitStage = -1;
       PBlock(G);
-      /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _MACPYMOL_XCODE
-      /* restore working directory if asked to */
-      PRunStringModule(G,
-                       "if 'PYMOL_WD' in os.environ: os.chdir(os.environ['PYMOL_WD'])");
-      PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->obj, "launch_gui", "O", G->P_inst->obj));
-#endif
-      /* END PROPRIETARY CODE SEGMENT */
 
       PXDecRef(PYOBJECT_CALLMETHOD
                (G->P_inst->obj, "adapt_to_hardware", "O", G->P_inst->obj));

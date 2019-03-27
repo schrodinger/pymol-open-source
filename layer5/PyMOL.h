@@ -305,9 +305,6 @@ int PyMOL_GetIdleAndReady(CPyMOL * I);
 
 PyMOLreturn_int_array PyMOL_GetReshapeInfo(CPyMOL * I, int reset);
 
-/*PyMOLreturn_int_array PyMOL_GetStereoInfo(CPyMOL *I,int reset);  * to come for MacPyMOL -- blue line, etc */
-
-
 /* string results */
 
 char *PyMOL_GetClickString(CPyMOL * I, int reset);

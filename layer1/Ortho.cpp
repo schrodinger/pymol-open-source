@@ -52,7 +52,6 @@ Z* -------------------------------------------------------------------
 #include "Vector.h"
 #include "CGO.h"
 #include "MyPNG.h"
-#include "MacPyMOL.h"
 #include "File.h"
 #include "LangUtil.h"
 
@@ -622,18 +621,6 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
     I->BusyLast = now;
     if(PIsGlutThread()) {
 
-#ifdef _MACPYMOL_XCODE
-      /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-      float busyValue = 0.0F;
-      if(I->BusyStatus[1]) {
-        busyValue = (I->BusyStatus[0] * 1.0F / I->BusyStatus[1]);
-      }
-      if(I->BusyStatus[3]) {
-        busyValue = (I->BusyStatus[2] * 1.0F / I->BusyStatus[3]);
-      }
-      MacPyMOL_SetProgress(busyValue);
-      /* END PROPRIETARY CODE SEGMENT */
-#else
       if(G->HaveGUI && G->ValidContext
           // only draw into GL_FRONT if default draw buffer is GL_BACK
           // (not the case for QOpenGLWidget)
@@ -733,7 +720,6 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
         OrthoPopMatrix(G);
         OrthoDirty(G);
       }
-#endif
 
     }
   }

@@ -83,7 +83,6 @@
 
 #include"ShaderMgr.h"
 #include"File.h"
-#include"MacPyMOL.h"
 
 #include "MovieScene.h"
 #include "Texture.h"
@@ -14057,9 +14056,7 @@ bool ExecutiveIsFullScreen(PyMOLGlobals * G) {
 
   int flag = -1;
 
-#ifdef _MACPYMOL_XCODE
-  flag = MacPyMOL_fullScreenActive();
-#elif defined(GLUT_FULL_SCREEN)
+#if defined(GLUT_FULL_SCREEN)
   flag = glutGet(GLUT_FULL_SCREEN);
 #endif
 

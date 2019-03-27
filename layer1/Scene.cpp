@@ -59,7 +59,6 @@ Z* -------------------------------------------------------------------
 #include"ScrollBar.h"
 #include "ShaderMgr.h"
 #include "PopUp.h"
-#include "MacPyMOL.h"
 #include <string>
 #include <vector>
 #include <algorithm>

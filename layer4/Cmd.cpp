@@ -85,7 +85,6 @@ Z* -------------------------------------------------------------------
 #include"PlugIOManager.h"
 #include"Seeker.h"
 #include"ListMacros.h"
-#include"MacPyMOL.h"
 #include"ObjectAlignment.h"
 
 #include "MovieScene.h"
@@ -8139,21 +8138,12 @@ static PyObject *CmdWindow(PyObject * self, PyObject * args)
         MainCheckWindowFit(G);
       break;
 #endif
-#ifdef _MACPYMOL_XCODE
-    default:
-      MacPyMOL_doWindow(int1, x, y, width, height);
-      break;
-#endif
     }
 
     APIExit(G);
   }
   return APIResultOk(ok);
 }
-
-#ifdef _PYMOL_IP_EXTRAS
-#include "IncentiveCopyToClipboard.h"
-#endif
 
 static PyObject *CmdCopyImage(PyObject * self, PyObject * args)
 {                               /* should come in as GLUT thread just to be safe... */
@@ -8169,15 +8159,8 @@ static PyObject *CmdCopyImage(PyObject * self, PyObject * args)
   }
   if(ok) {
     if(G->HaveGUI) {
-
-#ifdef _PYMOL_IP_EXTRAS
-      ok = IncentiveCopyToClipboard(G, quiet);
-#else
-#ifdef PYMOL_EVAL
       PRINTFB(G, FB_Scene, FB_Warnings)
-        " Warning: Clipboard image transfers disabled in Evaluation Builds.\n" ENDFB(G);
-#endif
-#endif
+        " Warning: %s Implementation removed.\n", __func__ ENDFB(G);
     } else {
       ok = false;
     }

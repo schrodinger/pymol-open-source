@@ -34,7 +34,6 @@ Z* -------------------------------------------------------------------
 #include "File.h"
 #include "Matrix.h"
 #include "Scene.h"
-#include "MacPyMOL.h"
 #include "Parse.h"
 #ifdef _WEBGL
 #include "Matrix.h"
