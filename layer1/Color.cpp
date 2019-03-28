@@ -295,7 +295,7 @@ void ColorRegisterExt(PyMOLGlobals * G, const char *name, void *ptr, int type)
     {
       OVreturn_word result = OVLexicon_GetFromCString(I->Lex, name);
       if(OVreturn_IS_OK(result)) {
-        OVOneToOne_Set(I->Idx, result.word, cColorExtCutoff - a);
+        I->Idx[result.word] = cColorExtCutoff - a;
         I->Ext[a].Name = result.word;
       } else {
         I->Ext[a].Name = 0;
@@ -317,7 +317,7 @@ void ColorForgetExt(PyMOLGlobals * G, const char *name)
   if(a >= 0) {                  /* currently leaks memory in I->Ext array -- TODO fix */
     if(I->Ext[a].Name) {
       OVLexicon_DecRef(I->Lex, I->Ext[a].Name);
-      OVOneToOne_DelForward(I->Idx, I->Ext[a].Name);
+      I->Idx.erase(I->Ext[a].Name);
     }
     I->Ext[a].Name = 0;
     I->Ext[a].Ptr = NULL;
@@ -463,7 +463,7 @@ int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
         OVreturn_word result;
         ok = PConvPyStrToStr(PyList_GetItem(rec, 0), name, sizeof(WordType));
         if(OVreturn_IS_OK(result = OVLexicon_GetFromCString(I->Lex, name))) {
-          OVOneToOne_Set(I->Idx, result.word, cColorExtCutoff - a);
+          I->Idx[result.word] = cColorExtCutoff - a;
           ext->Name = result.word;
         } else {
           ext->Name = 0;
@@ -540,7 +540,7 @@ int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
           OVreturn_word result;
           ok = PConvPyStrToStr(PyList_GetItem(rec, 0), name, sizeof(WordType));
           if(OVreturn_IS_OK(result = OVLexicon_GetFromCString(I->Lex, name))) {
-            OVOneToOne_Set(I->Idx, result.word, index);
+            I->Idx[result.word] = index;
             color->Name = result.word;
           } else {
             color->Name = 0;
@@ -585,10 +585,12 @@ void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int 
 
   {
     OVreturn_word result;
-    if(OVreturn_IS_OK(result = OVLexicon_BorrowFromCString(I->Lex, name)))
-      if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->Idx, result.word))) {
-        color = result.word;
+    if(OVreturn_IS_OK(result = OVLexicon_BorrowFromCString(I->Lex, name))){
+      auto it = I->Idx.find(result.word);
+      if(it != I->Idx.end()){
+        color = it->second;
       }
+    }
   }
 
   if(color < 0) {
@@ -612,7 +614,7 @@ void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int 
     I->NColor++;
 
     if(OVreturn_IS_OK(result = OVLexicon_GetFromCString(I->Lex, name))) {
-      OVOneToOne_Set(I->Idx, result.word, color);
+      I->Idx[result.word] = color;
       I->Color[color].Name = result.word;
     } else {
       I->Color[color].Name = 0;
@@ -719,11 +721,13 @@ int ColorGetIndex(PyMOLGlobals * G, const char *name)
 
   if(I->Lex) {                  /* search for a perfect match (fast!) */
     OVreturn_word result;
-    if(OVreturn_IS_OK(result = OVLexicon_BorrowFromCString(I->Lex, name)))
-      if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->Idx, result.word))) {
+    if(OVreturn_IS_OK(result = OVLexicon_BorrowFromCString(I->Lex, name))){
+      auto it = I->Idx.find(result.word);
+      if(it != I->Idx.end()){
         found = true;
-        color = result.word;
+        color = it->second;
       }
+    }
   }
   if(!found) {                  /* search for an imperfect match */
     for(a = 0; a < I->NColor; a++) {
@@ -827,19 +831,17 @@ void ColorFree(PyMOLGlobals * G)
   VLAFreeP(I->Ext);
   if(I->Lex)
     OVLexicon_Del(I->Lex);
-  if(I->Idx)
-    OVOneToOne_Del(I->Idx);
   DeleteP(I);
 }
 
 
 /*========================================================================*/
 
-static int reg_name(OVLexicon * lex, OVOneToOne * o2o, int index, const char *name)
+static int reg_name(OVLexicon * lex, std::unordered_map<CColor::LexID, CColor::ColorIdx>& idx, int index, const char *name)
 {
   OVreturn_word result;
   if(OVreturn_IS_OK(result = OVLexicon_GetFromCString(lex, name))) {
-    OVOneToOne_Set(o2o, result.word, index);
+    idx[result.word] = index;
     return result.word;
   } else {
     return 0;
@@ -1033,10 +1035,7 @@ void ColorReset(PyMOLGlobals * G)
     OVLexicon_Del(I->Lex);
   I->Lex = OVLexicon_New(G->Context->heap);
 
-  if(I->Idx)
-    OVOneToOne_Del(I->Idx);
-
-  I->Idx = OVOneToOne_New(G->Context->heap);
+  I->Idx.clear();
 
   /* BLUE->VIOLET->RED r546 to r909 */
   /* BLUE->CYAN->GREEN->YELLOW->RED s182 to s909 */

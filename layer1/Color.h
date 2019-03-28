@@ -17,6 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Color
 #define _H_Color
 
+#include <unordered_map>
+
 #include"os_python.h"
 
 #include"Rep.h"
@@ -59,6 +61,8 @@ typedef struct {
 } ExtRec;
 
 struct CColor {
+  using LexID = ov_word;
+  using ColorIdx = int;
   ColorRec *Color{};
   int NColor{};
   ExtRec *Ext{};
@@ -68,7 +72,7 @@ struct CColor {
   float Gamma = 1.0f;
   int BigEndian{};
   OVLexicon *Lex{};
-  OVOneToOne *Idx{};
+  std::unordered_map<LexID, ColorIdx> Idx;
   float RGBColor[3]{};            /* save global float for returning (float*) */
   char RGBName[11]{}; // "0xTTRRGGBB"
   /* not stored */
