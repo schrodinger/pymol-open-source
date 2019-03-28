@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #define _H_Color
 
 #include <unordered_map>
+#include <string>
 
 #include"os_python.h"
 
@@ -44,7 +45,7 @@ Z* -------------------------------------------------------------------
 #define cColor_TRGB_Mask  0xC0000000
 
 typedef struct {
-  int Name;
+  const char* Name;
   Vector3f Color, LutColor;
   char LutColorFlag;
   char Custom, Fixed;
@@ -53,7 +54,7 @@ typedef struct {
 } ColorRec;
 
 typedef struct {
-  int Name;
+  const char* Name;
   void *Ptr;
   int Type;
   /* not saved */
@@ -61,7 +62,6 @@ typedef struct {
 } ExtRec;
 
 struct CColor {
-  using LexID = ov_word;
   using ColorIdx = int;
   ColorRec *Color{};
   int NColor{};
@@ -71,8 +71,7 @@ struct CColor {
   std::vector<unsigned int> ColorTable{};
   float Gamma = 1.0f;
   int BigEndian{};
-  OVLexicon *Lex{};
-  std::unordered_map<LexID, ColorIdx> Idx;
+  std::unordered_map<std::string, ColorIdx> Idx;
   float RGBColor[3]{};            /* save global float for returning (float*) */
   char RGBName[11]{}; // "0xTTRRGGBB"
   /* not stored */
