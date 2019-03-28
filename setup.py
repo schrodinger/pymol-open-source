@@ -246,7 +246,6 @@ pymol_src_dirs = [
 def_macros = [
     ("_PYMOL_LIBPNG", None),
     ("_PYMOL_FREETYPE", None),
-    ("_PYMOL_INLINE", None),
 ]
 
 libs = ["png", "freetype"]

@@ -70,9 +70,6 @@ Z* -------------------------------------------------------------------
 (((((a)^((a)>>5)))&0x00FF)|\
  (((    ((b)<<5)))&0xFF00))
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static float ShakerDoDist(float target, float *v0, float *v1, float *d0to1, float *d1to0,
                           float wt)
 {
@@ -104,9 +101,6 @@ static float ShakerDoDist(float target, float *v0, float *v1, float *d0to1, floa
   return result;
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static float ShakerDoTors(int type, float *v0, float *v1, float *v2, float *v3,
                           float *p0, float *p1, float *p2, float *p3, float tole,
                           float wt)
@@ -193,9 +187,6 @@ static float ShakerDoTors(int type, float *v0, float *v1, float *v2, float *v3,
 
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static float ShakerDoDistLimit(float target, float *v0, float *v1, float *d0to1,
                                float *d1to0, float wt)
 {
@@ -217,9 +208,6 @@ static float ShakerDoDistLimit(float target, float *v0, float *v1, float *d0to1,
   }
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static float ShakerDoDistMinim(float target, float *v0, float *v1, float *d0to1,
                                float *d1to0, float wt)
 {
@@ -1417,9 +1405,6 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
 
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int SculptCheckBump(float *v1, float *v2, float *diff, float *dist, float cutoff)
 {
   float d2;
@@ -1440,9 +1425,6 @@ static int SculptCheckBump(float *v1, float *v2, float *diff, float *dist, float
   return (false);
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int SculptCGOBump(float *v1, float *v2,
                          float vdw1, float vdw2,
                          float cutoff,
@@ -1552,9 +1534,6 @@ static int SculptCGOBump(float *v1, float *v2,
   }
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int SculptDoBump(float target, float actual, float *d,
                         float *d0to1, float *d1to0, float wt, float *strain)
 {
@@ -1579,9 +1558,6 @@ static int SculptDoBump(float target, float actual, float *d,
   return 0;
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int SculptCheckAvoid(float *v1, float *v2, float *diff,
                             float *dist, float avoid, float range)
 {
@@ -1607,9 +1583,6 @@ static int SculptCheckAvoid(float *v1, float *v2, float *diff,
   return (false);
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int SculptDoAvoid(float avoid, float range, float actual, float *d,
                          float *d0to1, float *d1to0, float wt, float *strain)
 {

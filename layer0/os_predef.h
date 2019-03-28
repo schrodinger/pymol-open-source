@@ -49,10 +49,6 @@ typedef float aliased_float;
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 
-#if defined(_MSC_VER)
-#define __inline__ __inline
-#endif
-
 #ifdef WIN32
 #define PATH_SEP "\\"
 #else

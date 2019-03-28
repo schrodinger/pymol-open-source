@@ -690,9 +690,7 @@ static void TetsurfPurge(CTetsurf * II)
 
 
 /*===========================================================================*/
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
+inline
 static void TetsurfInterpolate2(float *pt, float *v0, float l0, float *v1, float l1,
                                 float level)
 {
@@ -705,9 +703,6 @@ static void TetsurfInterpolate2(float *pt, float *v0, float l0, float *v1, float
 
 
 /*===========================================================================*/
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static void TetsurfInterpolate4(float *pt, float *v0, float l0, float *v1, float l1,
                                 float l2, float l3, float level)
 {
@@ -730,9 +725,6 @@ static void TetsurfInterpolate4(float *pt, float *v0, float l0, float *v1, float
 
 
 /*===========================================================================*/
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static void TetsurfInterpolate8(float *pt, float *v0, float l0, float *v1, float l1,
                                 float l2, float l3, float l4,
                                 float l5, float l6, float l7, float level)

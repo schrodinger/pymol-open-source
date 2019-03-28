@@ -51,9 +51,6 @@ void ObjectGadgetRampFree(ObjectGadgetRamp * I)
   OOFreeP(I);
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static void ObjectGadgetRampCalculate(ObjectGadgetRamp * I, float v, float *result)
 {
   const float _1 = 1.0F;
@@ -219,9 +216,6 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp * I, float level, float
   return (ok);
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int _ObjectGadgetRampBlend(ObjectGadgetRamp * I, float *color,
                                   const float *table, int mode)
 {

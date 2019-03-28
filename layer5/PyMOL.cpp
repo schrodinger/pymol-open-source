@@ -207,13 +207,7 @@ typedef struct _CPyMOL {
 
 /* convenience functions -- inline */
 
-#ifdef _PYMOL_INLINE
-#define CC_INLINE __inline__
-#else
-#define CC_INLINE
-#endif
-
-CC_INLINE static PyMOLstatus get_status_ok(int ok)
+inline PyMOLstatus get_status_ok(int ok)
 {
   if(ok)
     return PyMOLstatus_SUCCESS;
@@ -221,14 +215,14 @@ CC_INLINE static PyMOLstatus get_status_ok(int ok)
     return PyMOLstatus_FAILURE;
 }
 
-CC_INLINE static PyMOLreturn_status return_status_ok(int ok)
+inline PyMOLreturn_status return_status_ok(int ok)
 {
   PyMOLreturn_status result;
   result.status = get_status_ok(ok);
   return result;
 }
 
-CC_INLINE static PyMOLreturn_status return_status(int status)
+inline PyMOLreturn_status return_status(int status)
 {
   PyMOLreturn_status result;
   result.status = status;

@@ -14,13 +14,8 @@
 
 /* defines */
 
-#ifdef WIN32
-#define OV_INLINE static
+#define OV_INLINE inline
 #define OV_STATIC static
-#else
-#define OV_INLINE __inline__ static
-#define OV_STATIC static
-#endif
 
 #ifndef OV_FALSE
 #define OV_FALSE 0

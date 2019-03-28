@@ -43,11 +43,7 @@ Z* -------------------------------------------------------------------
 
 #define SettingGetfv SettingGetGlobal_3fv
 
-#ifdef _PYMOL_INLINE
-#undef _PYMOL_INLINE
-#include"Basis.cpp"
-#define _PYMOL_INLINE
-#endif
+#include"Basis.h"
 
 #ifndef RAY_SMALL
 #define RAY_SMALL 0.00001
@@ -218,9 +214,6 @@ int RayGetNPrimitives(CRay * I)
 
 /*========================================================================*/
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static void RayGetSphereNormal(CRay * I, RayInfo * r)
 {
 
@@ -235,9 +228,6 @@ static void RayGetSphereNormal(CRay * I, RayInfo * r)
   normalize3f(r->surfnormal);
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static void RayGetSphereNormalPerspective(CRay * I, RayInfo * r)
 {
 
@@ -463,9 +453,6 @@ static void fill_gradient(CRay * I, int opaque_back, unsigned int *buffer, float
 }
 
 /*========================================================================*/
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static void RayReflectAndTexture(CRay * I, RayInfo * r, int perspective)
 {
   if(r->prim->wobble)

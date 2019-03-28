@@ -75,9 +75,6 @@ typedef struct {
   CTypeFace *TypeFace;
 } CFontType;
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static const char *_FontTypeRenderOpenGL(RenderInfo * info,
                                    CFontType * I, const char *st,
                                    float size, int flat, float *rpos, short needSize, short relativeMode, short shouldRender SHADERCGOARG)

@@ -398,7 +398,7 @@ inline void cross_product3f(const float * v1, const float * v2, float * cross) {
   cross[2] = (v1[0] * v2[1]) - (v1[1] * v2[0]);
 }
 
-__inline__ static double inline_sqrt1f(float f)
+inline double inline_sqrt1f(float f)
 {                               /* no good as a macro because f is used twice */
   if(f > _0f_inline)
     return (sqrt(f));
@@ -406,7 +406,7 @@ __inline__ static double inline_sqrt1f(float f)
     return (_0d_inline);
 }
 
-__inline__ static double inline_sqrt1d(double f)
+inline double inline_sqrt1d(double f)
 {                               /* no good as a macro because f is used twice */
   if(f > _0d_inline)
     return (sqrt(f));
@@ -422,7 +422,7 @@ inline float length2f(const float * v1) {
   return sqrt1f((v1[0] * v1[0]) + (v1[1] * v1[1]));
 }
 
-__inline__ static void inline_normalize3f(float *v1)
+inline void inline_normalize3f(float *v1)
 {
   double vlen = length3f(v1);
   if(vlen > R_SMALLd_inline) {
@@ -435,7 +435,7 @@ __inline__ static void inline_normalize3f(float *v1)
   }
 }
 
-__inline__ static double inline_diff3f(const float *v1, const float *v2)
+inline double inline_diff3f(const float *v1, const float *v2)
 {
   float dx, dy, dz;
   dx = (v1[0] - v2[0]);
@@ -444,7 +444,7 @@ __inline__ static double inline_diff3f(const float *v1, const float *v2)
   return (sqrt1d(dx * dx + dy * dy + dz * dz));
 }
 
-__inline__ static float inline_diffsq3f(const float *v1, const float *v2)
+inline float inline_diffsq3f(const float *v1, const float *v2)
 {
   float dx, dy, dz;
   dx = (v1[0] - v2[0]);
@@ -455,7 +455,7 @@ __inline__ static float inline_diffsq3f(const float *v1, const float *v2)
   return (dz * dz + (dx + dy));
 }
 
-__inline__ static int inline_within3f(const float *v1, const float *v2, float dist)
+inline int inline_within3f(const float *v1, const float *v2, float dist)
 {
   float dx, dy, dz, dist2;
   dx = (float) fabs(v1[0] - v2[0]);
@@ -473,7 +473,7 @@ __inline__ static int inline_within3f(const float *v1, const float *v2, float di
   return (((dx + dy) + dz * dz) <= dist2);
 }
 
-__inline__ static int inline_within3fsq(const float *v1, const float *v2, float dist, float dist2)
+inline int inline_within3fsq(const float *v1, const float *v2, float dist, float dist2)
 {
   /* manually optimized to take advantage of parallel execution units */
   float dx, dy, dz;
@@ -498,7 +498,7 @@ __inline__ static int inline_within3fsq(const float *v1, const float *v2, float 
   return ((dx + dz) <= (dist2));
 }
 
-__inline__ static int inline_within3fret(const float *v1, const float *v2, float cutoff,
+inline int inline_within3fret(const float *v1, const float *v2, float cutoff,
                                          const float cutoff2, float *diff, float *dist)
 {
   float dx, dy, dz, dist2;
@@ -519,7 +519,7 @@ __inline__ static int inline_within3fret(const float *v1, const float *v2, float
   return 1;
 }
 
-__inline__ static void inline_remove_component3f(const float *v1, const float *unit, float *result)
+inline void inline_remove_component3f(const float *v1, const float *unit, float *result)
 {
   float dot;
 
@@ -529,7 +529,7 @@ __inline__ static void inline_remove_component3f(const float *v1, const float *u
   result[2] = v1[2] - unit[2] * dot;
 }
 
-__inline__ static float inline_project3f(const float *v1, const float *v2, float *proj)
+inline float inline_project3f(const float *v1, const float *v2, float *proj)
 {
   float dot;
 

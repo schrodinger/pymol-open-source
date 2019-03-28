@@ -83,8 +83,6 @@ static int IsosurfAlloc(PyMOLGlobals * G, CIsosurf * II);
 static void IsosurfPurge(CIsosurf * II);
 static int IsosurfCurrent(CIsosurf * II);
 static int IsosurfCodeVertices(CIsosurf * II);
-static void IsosurfInterpolate(CIsosurf * II, float *v1, float *l1, float *v2, float *l2,
-                               float *pt);
 static int IsosurfFindActiveEdges(CIsosurf * II);
 static int IsosurfFindLines(CIsosurf * II);
 static int IsosurfDrawLines(CIsosurf * II);
@@ -128,9 +126,7 @@ PyObject *IsosurfAsPyList(PyMOLGlobals * G, Isofield * field)
 
 
 /*===========================================================================*/
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
+inline
 static void IsosurfInterpolate(CIsosurf * I, float *v1, float *l1, float *v2, float *l2,
                                float *pt)
 {

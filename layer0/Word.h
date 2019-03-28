@@ -91,51 +91,7 @@ int WordIndex(PyMOLGlobals * G, WordType * list, const char *word, int minMatch,
 int WordKey(PyMOLGlobals * G, WordKeyValue * list, const char *word, int minMatch, int ignCase,
             int *exact);
 
-#ifdef _PYMOL_INLINE
-__inline__ static int WordCompare(PyMOLGlobals * G, const char *p, const char *q, int ignCase)
-
-
-/* all things equal, shorter is smaller */
-{
-  int result = 0;
-  char cp, cq, tlp, tlq;
-  if(ignCase) {
-    while((cp = *p) && (cq = *q)) {
-      p++;
-      q++;
-      if(cp != cq) {
-        (tlp = tolower(cp));
-        (tlq = tolower(cq));
-        if(tlp < tlq)
-          return -1;
-        else if(tlp > tlq) {
-          return 1;
-        }
-      }
-    }
-  } else {
-    while((cp = *p) && (cq = *q)) {
-      p++;
-      q++;
-      if(cp != cq) {
-        if(cp < cq) {
-          return -1;
-        } else if(cp > cq) {
-          return 1;
-        }
-      }
-    }
-  }
-  if((!result) && (!*p) && (*q))
-    return -1;
-  else if((!result) && (*p) && (!*q))
-    return 1;
-  return 0;
-}
-#else
 int WordCompare(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
-
-#endif
 
 inline int WordCompare(PyMOLGlobals * G, const lexidx_t& s1, const lexidx_t& s2, int ignCase) {
   if (s1 == s2)

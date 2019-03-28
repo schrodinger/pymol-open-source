@@ -15,8 +15,6 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#ifndef _PYMOL_INLINE
-
 #include"os_predef.h"
 #include"os_std.h"
 
@@ -34,9 +32,6 @@ static const float kR_SMALL5 = 0.0001F;
 #define EPSILON 0.000001F
 
 /*========================================================================*/
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int ZLineToSphere(float *base, float *point, float *dir, float radius,
                          float maxial, float *sphere, float *asum, float *pre)
 {
@@ -159,9 +154,6 @@ static int ZLineToSphere(float *base, float *point, float *dir, float radius,
   return (1);
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int LineToSphere(float *base, float *ray, float *point, float *dir, float radius,
                         float maxial, float *sphere, float *asum)
 {
@@ -315,9 +307,6 @@ static int LineToSphere(float *base, float *ray, float *point, float *dir, float
   return (1);
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int FrontToInteriorSphere(float *front,
                                  float *point,
                                  float *dir, float radius, float radius2, float maxial)
@@ -347,9 +336,6 @@ static int FrontToInteriorSphere(float *front,
 
 
 /*========================================================================*/
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int ZLineToSphereCapped(float *base, float *point,
                                float *dir, float radius, float maxial,
                                float *sphere, float *asum, int cap1, int cap2, float *pre)
@@ -572,9 +558,6 @@ static int ZLineToSphereCapped(float *base, float *point,
   return (1);
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int LineToSphereCapped(float *base, float *ray,
                               float *point, float *dir, float radius, float maxial,
                               float *sphere, float *asum, int cap1, int cap2)
@@ -1073,9 +1056,6 @@ static int ConeLineToSphereCapped(float *base, float *ray,
   return 0;
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int FrontToInteriorSphereCapped(float *front,
                                        float *point,
                                        float *dir,
@@ -1108,9 +1088,6 @@ static int FrontToInteriorSphereCapped(float *front,
 
 
 /*========================================================================*/
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static float ZLineClipPoint(float *base, float *point, float *alongNormalSq, float cutoff)
 {
   float hyp0, hyp1, hyp2;
@@ -1143,9 +1120,6 @@ static float ZLineClipPoint(float *base, float *point, float *alongNormalSq, flo
   return result;
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static float ZLineClipPointNoZCheck(float *base, float *point, float *alongNormalSq,
                                     float cutoff)
 {
@@ -1178,9 +1152,6 @@ static float ZLineClipPointNoZCheck(float *base, float *point, float *alongNorma
   return result;
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int LineClipPoint(float *base, float *ray,
                          float *point, float *dist, float cutoff, float cutoff2)
 {
@@ -1524,9 +1495,6 @@ int n_sausages = 0;
 int n_skipped = 0;
 #endif
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 int BasisHitPerspective(BasisCallRec * BC)
 {
   CBasis *BI = BC->Basis;
@@ -2021,9 +1989,6 @@ int BasisHitPerspective(BasisCallRec * BC)
   }
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 int BasisHitOrthoscopic(BasisCallRec * BC)
 {
   const float _0 = 0.0F, _1 = 1.0F;
@@ -2345,9 +2310,6 @@ int BasisHitOrthoscopic(BasisCallRec * BC)
   return (-1);
 }
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 int BasisHitShadow(BasisCallRec * BC)
 {
   const float _0 = 0.0F;
@@ -3681,8 +3643,3 @@ void BasisCylinderSausagePrecompute(float *dir, float *pre)
   pre[0] = dir[1] * ln;
   pre[1] = -dir[0] * ln;
 }
-
-#else
-typedef int this_file_is_no_longer_empty;
-
-#endif
