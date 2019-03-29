@@ -451,3 +451,29 @@ class TestViewing(testing.PyMOLTestCase):
         self.assertImageHasColor('red', img)
         self.assertImageHasColor('blue', img)
         self.assertImageHasColor('0x7f007f', img, delta=30)
+
+    def testSetColor(self):
+        self._testSpectrum_setup()
+        cmd.color('red')
+        self.assertImageHasColor('red')
+
+        # redefine existing name, [0-1] float range
+        cmd.set_color('red', [0., 0., 1.])
+        cmd.recolor()
+        self.assertImageHasColor('blue')
+
+        # add new name, [0-1] float range
+        cmd.set_color('thomas', [0., 1., 0.])
+        cmd.color('thomas')
+        self.assertImageHasColor('green')
+
+        # redefine existing (custom) name, [0-255] int range
+        cmd.set_color('thomas', [0x00, 0x80, 0x80])
+        cmd.recolor()
+        self.assertImageHasColor('0x008080')
+
+        # add new very long name, [0-255] int range
+        longname = 'some' + 'very' * 10 + 'longcolorname'
+        cmd.set_color(longname, [0xFF, 0xFF, 0x00])
+        cmd.color(longname)
+        self.assertImageHasColor('yellow')
