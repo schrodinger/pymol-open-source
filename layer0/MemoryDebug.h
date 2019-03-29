@@ -48,6 +48,8 @@ typedef struct VLARec {
 
 namespace pymol
 {
+using ::free;
+
 template <typename T> T* malloc(size_t num)
 {
   return (T*) ::malloc(num * sizeof(T));
@@ -86,7 +88,7 @@ void *VLANewCopy(const void *ptr);
 void MemoryZero(char *p, char *q);
 
 
-#define mfree free
+#define mfree pymol::free
 #define mstrdup strdup
 #define ReallocForSure(ptr,type,size) (type*)MemoryReallocForSure(ptr,sizeof(type)*(size))
 
