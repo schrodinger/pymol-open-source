@@ -153,9 +153,10 @@ def createlegacypmgapp():
 
 class _tkMessageBox(object):
     def __getattr__(self, name):
-        if sys.version_info[0] == 2:
+        try:
+            # pmg_qt.mimic_tk provides this for all Python versions
             import tkMessageBox as module
-        else:
+        except ImportError:
             import tkinter.messagebox as module
         from . import pref_get
         wrapped = getattr(module, name)
@@ -170,9 +171,10 @@ class _tkMessageBox(object):
 
 class _tkFileDialog(object):
     def __getattr__(self, name):
-        if sys.version_info[0] == 2:
+        try:
+            # pmg_qt.mimic_tk provides this for all Python versions
             import tkFileDialog as module
-        else:
+        except ImportError:
             import tkinter.filedialog as module
         wrapped = getattr(module, name)
         def dialog(parent=None, *args, **kwargs):

@@ -127,17 +127,23 @@ class _qtFileDialog:
                 options.get('initialdir', ''))
 
 
+qtMessageBox = _qtMessageBox()
+qtFileDialog = _qtFileDialog()
+
+# for all Python versions - allows plugin manager to import this with Python 3
+# without importing "tkinter"
+sys.modules['tkMessageBox'] = qtMessageBox
+sys.modules['tkFileDialog'] = qtFileDialog
+
 if sys.version_info[0] < 3:
-    sys.modules['tkMessageBox'] = _qtMessageBox()
-    sys.modules['tkFileDialog'] = _qtFileDialog()
     sys.modules['tkSimpleDialog'] = _qtSimpleDialog()
 else:
     # injecting 'X.Y' into sys.modules without assigning the attribute
     # (import X;X.Y = ...) doesn't work. Use a meta_path solution instead.
 
     mapping = {
-        'tkinter.messagebox': _qtMessageBox(),
-        'tkinter.filedialog': _qtFileDialog(),
+        'tkinter.messagebox': qtMessageBox,
+        'tkinter.filedialog': qtFileDialog,
     }
 
     class MimicTkImporter:
