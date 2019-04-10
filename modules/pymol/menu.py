@@ -1426,13 +1426,15 @@ def mesh_action(self_cmd, sele):
 
 def ramp_action(self_cmd, sele):
     return [[ 2, 'Action:'     , ''                       ],
-              [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
-              [ 0, '', '' ],
               [ 1, 'levels', [
                   [ 1, 'Range +/- %.1f' % (L),
                       'cmd.ramp_update("%s", range=[%f, %f])' % (sele, -L, L) ]
                   for L in [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100]
                   ]],
+              [ 0, '', '' ],
+              [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
+              [ 0, '', '' ],
+              [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
               ]
 
 def ramp_color(self_cmd, sele):
