@@ -99,6 +99,7 @@ struct ObjectMolecule : public CObject {
   int getState() const;
   bool setNDiscrete(int natom);
   bool updateAtmToIdx();
+  bool atomHasAnyCoordinates(size_t atm) const;
 };
 
 /* this is a record that holds information for specific types of Operatations on Molecules, eg. translation/rotation/etc */

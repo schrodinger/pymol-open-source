@@ -1156,8 +1156,19 @@ void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType&& src_, 
 
 
 /*========================================================================*/
+/**
+ * Make atom names in `atInfo1` unique w.r.t.\ `atInfo0` (and to `atInfo1` itself).
+ * @param atInfo0 List of reference atoms
+ * @param n0 Size of atInfo0 list
+ * @param atInfo1 List of atoms which need to be made unique
+ * @param flag1 Optional whitelist mask for `atInfo1` or NULL
+ * @param n1 Size of atInfo1 list
+ * @param mol Optional reference molecule to limit to atoms with coordinates
+ * @return Number of renamed atoms
+ */
 int AtomInfoUniquefyNames(PyMOLGlobals * G, const AtomInfoType * atInfo0, int n0,
-                          AtomInfoType * atInfo1, int *flag1, int n1)
+                          AtomInfoType * atInfo1, int *flag1, int n1,
+                          const ObjectMolecule * mol)
 {
   /* makes sure all names in atInfo1 are unique WRT 0 and 1 */
 
@@ -1221,27 +1232,20 @@ int AtomInfoUniquefyNames(PyMOLGlobals * G, const AtomInfoType * atInfo0, int n0
       if(atInfo0) {
         /* check within object 2 */
 
-        if(!lai0)
-          bracketFlag = true;
-        else if(!AtomInfoSameResidue(G, lai0, ai1))
-          bracketFlag = true;
-        else
-          bracketFlag = false;
-        if(bracketFlag) {
+        if (!lai0 || !AtomInfoSameResidue(G, lai0, ai1)) {
           AtomInfoBracketResidue(G, atInfo0, n0, ai1, &st0, &nd0);
           lai0 = ai1;
         }
-        ai0 = atInfo0 + st0;
-        for(a = st0; a <= nd0; a++) {
-          if(!WordMatchExact(G, ai1->name, ai0->name, true))
-            ai0++;
-          else if(!AtomInfoSameResidue(G, ai1, ai0))
-            ai0++;
-          else if(ai1 != ai0) {
+
+        for (a = st0; a <= nd0; ++a) {
+          ai0 = atInfo0 + a;
+
+          if (WordMatchExact(G, ai1->name, ai0->name, true) &&
+              AtomInfoSameResidue(G, ai1, ai0) && ai1 != ai0 &&
+              (!mol || mol->atomHasAnyCoordinates(a))) {
             matchFlag = true;
             break;
-          } else
-            ai0++;
+          }
         }
       }
     }
@@ -1266,6 +1270,19 @@ int AtomInfoUniquefyNames(PyMOLGlobals * G, const AtomInfoType * atInfo0, int n0
   return result;
 }
 
+/**
+ * Make atom names in `atoms` unique w.r.t.\ atoms-with-coordinates in `mol`.
+ * @param mol Reference molecule
+ * @param atoms List of atoms which need to be made unique
+ * @param natoms Size of atoms list
+ * @return Number of renamed atoms
+ */
+int AtomInfoUniquefyNames(
+    const ObjectMolecule* mol, AtomInfoType* atoms, size_t natoms)
+{
+  return AtomInfoUniquefyNames(
+      mol->G, mol->AtomInfo, mol->NAtom, atoms, nullptr, natoms, mol);
+}
 
 /*========================================================================*/
 void AtomInfoBracketResidue(PyMOLGlobals * G, const AtomInfoType * ai0, int n0,

@@ -3489,7 +3489,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
 
     if (ok){
       d = AtomInfoGetBondLength(I->G, ai0 + at0, ai1 + at1);
-      AtomInfoUniquefyNames(I->G, I->AtomInfo, I->NAtom, nai, NULL, cs->NIndex);
+      AtomInfoUniquefyNames(I, nai, cs->NIndex);
     }
 
     /* set up tags which will enable use to continue editing bond */
@@ -12364,5 +12364,20 @@ bool ObjectMolecule::updateAtmToIdx() {
 
   return true;
 ok_except1:
+  return false;
+}
+
+/**
+ * Check if this atom has coordinates in any state
+ */
+bool ObjectMolecule::atomHasAnyCoordinates(size_t atm) const
+{
+  for (size_t i = 0; i < NCSet; ++i) {
+    auto cset = CSet[i];
+    if (cset && cset->atmToIdx(atm) != -1) {
+      return true;
+    }
+  }
+
   return false;
 }

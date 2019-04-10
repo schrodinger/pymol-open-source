@@ -414,7 +414,11 @@ void AtomInfoBracketResidueFast(PyMOLGlobals * G, const AtomInfoType * ai0, int 
                                 int *st, int *nd);
 
 int AtomInfoUniquefyNames(PyMOLGlobals * G, const AtomInfoType * atInfo0, int n0,
-                          AtomInfoType * atInfo1, int *flag1, int n1);
+                          AtomInfoType * atInfo1, int *flag1, int n1,
+                          const ObjectMolecule* mol = nullptr);
+int AtomInfoUniquefyNames(
+    const ObjectMolecule* mol, AtomInfoType* atoms, size_t natoms);
+
 bool AtomResiFromResv(char *resi, size_t size, int resv, char inscode);
 inline bool AtomResiFromResv(char *resi, size_t size, const AtomInfoType * ai) {
   return AtomResiFromResv(resi, size, ai->resv, ai->inscode);

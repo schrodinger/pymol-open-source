@@ -64,6 +64,7 @@ typedef struct _CTexture CTexture;
 typedef struct _CType CType;
 typedef struct _CMain CMain;
 typedef struct _CPlugIOManager CPlugIOManager;
+struct ObjectMolecule;
 
 class CShaderMgr;
 class CMovieScenes;
