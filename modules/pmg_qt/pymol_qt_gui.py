@@ -1081,6 +1081,15 @@ class PyMOLApplication(QtWidgets.QApplication):
         if ev.type() != QtCore.QEvent.FileOpen:
             return False
 
+        # When double clicking a file in Finder, open it in a new instance
+        if not pymol.invocation.options.reuse_helper and pymol.cmd.get_names():
+            window.new_window([ev.file()])
+            return True
+
+        # pymol -I -U
+        if pymol.invocation.options.auto_reinitialize:
+            pymol.cmd.reinitialize()
+
         # PyMOL Show
         if ev.file().endswith('.psw'):
             pymol.cmd.set('presentation')
