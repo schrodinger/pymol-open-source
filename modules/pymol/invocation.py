@@ -27,7 +27,6 @@ Options
 
   --help    display this help and exit
   --version display PyMOL version and exit
-  --retina  use retina resolution (MacPyMOL) and set display_scale_factor=2
   --gldebug use glDebugMessageCallback for GL debugging
   --testing run pymol testing
 
@@ -167,7 +166,6 @@ if True:
     options.plugins = 2
     options.exit_on_error = 0
     options.pymolrc = None
-    options.retina = 0
     options.no_spacenav = 0
     options.launch_status = 0
     options.gldebug = 0
@@ -278,7 +276,7 @@ if True:
                             print(helptext2)
                         sys.exit()
                     elif a == "--retina":
-                        options.retina = 1
+                        print("Warning: --retina option has been removed")
                     elif a == "--nospnav":
                         print(' Warning: --nospnav not available in Open-Source PyMOL')
                     elif a == "--gldebug":

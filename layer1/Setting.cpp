@@ -3018,11 +3018,6 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
       set_i(I, cSetting_stereo_mode, cStereo_quadbuffer);      /* quadbuffer if we can */
     }
 
-    if(G->Option->retina) {
-      _gScaleFactor = 2;
-      set_i(I, cSetting_display_scale_factor, _gScaleFactor);
-    }
-
     /* In order to get electrostatic potentials in kT from the Coulomb equation... 
 
        PyMOL charges: Q, in e

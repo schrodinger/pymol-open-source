@@ -2061,7 +2061,6 @@ void PConvertOptions(CPyMOLOptions * rec, PyObject * options)
   rec->stereo_mode = PyInt_AsLong(PyObject_GetAttrString(options, "stereo_mode"));
   rec->zoom_mode = PyInt_AsLong(PyObject_GetAttrString(options, "zoom_mode"));
   rec->no_quit = PyInt_AsLong(PyObject_GetAttrString(options, "no_quit"));
-  rec->retina = PyInt_AsLong(PyObject_GetAttrString(options, "retina"));
   rec->launch_status = PyInt_AsLong(PyObject_GetAttrString(options, "launch_status"));
   rec->gldebug = PyInt_AsLong(PyObject_GetAttrString(options, "gldebug"));
 
