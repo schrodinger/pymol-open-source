@@ -172,8 +172,23 @@ PYMOL API
     def select_list(name,object,id_list,state=0,mode='id',quiet=1,_self=cmd):
         '''
 DESCRIPTION
-    "select_list" is currently in development
-    
+
+    API only. Select by atom indices within a single object.
+
+    Returns the number of selected atoms.
+
+ARGUMENTS
+
+    name = str: a unique name for the selection
+
+    object = str: object name
+
+    id_list = list of integers: ID, index, or rank list.
+
+    state = int: object state, to limit selection to atoms which have
+    coordinates in that state (-1 = current, 0 = ignore) {default: 0}
+
+    mode = id|index|rank: {default: id}
         '''
         #
         r = DEFAULT_ERROR
