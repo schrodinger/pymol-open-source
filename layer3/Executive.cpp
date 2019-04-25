@@ -10599,6 +10599,11 @@ int ExecutiveIterate(PyMOLGlobals * G, const char *str1, const char *expr, int r
           " Iterate: iterated over %i atoms.\n", op1.i1 ENDFB(G);
       }
     }
+    if (!read_only) {
+      SeqChanged(G);
+    }
+#ifndef _PYMOL_NO_UNDO
+#endif
   } else {
     if(!quiet) {
       PRINTFB(G, FB_Executive, FB_Warnings)
