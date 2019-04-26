@@ -14,6 +14,11 @@
 #include <vector>
 #include <string>
 
+enum {
+  cMovieSceneStackDefault = 0,
+  cMovieSceneStack_SIZE
+};
+
 bool MovieSceneFunc(PyMOLGlobals * G, const char * name,
     const char * action,
     const char * message = "",
@@ -25,7 +30,8 @@ bool MovieSceneFunc(PyMOLGlobals * G, const char * name,
     float animate = -1.0,
     const char * new_key = "",
     bool hand = true,
-    const char * sele = "all");
+    const char * sele = "all",
+    size_t stack = cMovieSceneStackDefault);
 
 bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate = -1.0,
     bool recall_view = true,
@@ -33,7 +39,11 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate = -1.0,
     bool recall_active = true,
     bool recall_rep = true,
     bool recall_frame = true,
-    const char * sele = "all");
+    const char * sele = "all",
+    size_t stack = cMovieSceneStackDefault);
+
+bool MovieSceneDelete(PyMOLGlobals * G, const char * name,
+    size_t stack = cMovieSceneStackDefault);
 
 bool MovieSceneOrder(PyMOLGlobals * G, const char * names,
     bool sort = false,

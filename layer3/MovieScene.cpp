@@ -228,23 +228,27 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
     bool store_active,
     bool store_rep,
     bool store_frame,
-    const char * sele)
+    const char * sele,
+    size_t stack)
 {
-  auto scenes = G->scenes;
+  const bool is_defaultstack = stack == cMovieSceneStackDefault;
+  auto scenes = G->scenes + stack;
   std::string key(name);
 
-  // new key?
-  if (key.empty() || key == "new") {
-    key = scenes->getUniqueKey();
-    scenes->order.push_back(key);
-  } else if (scenes->dict.find(key) == scenes->dict.end()) {
-    scenes->order.push_back(key);
+  if (is_defaultstack) {
+    // new key?
+    if (key.empty() || key == "new") {
+      key = scenes->getUniqueKey();
+      scenes->order.push_back(key);
+    } else if (scenes->dict.find(key) == scenes->dict.end()) {
+      scenes->order.push_back(key);
+    }
+
+    SceneSetNames(G, scenes->order);
+
+    // set scene_current_name
+    SettingSetGlobal_s(G, cSetting_scene_current_name, key.c_str());
   }
-
-  SceneSetNames(G, scenes->order);
-
-  // set scene_current_name
-  SettingSetGlobal_s(G, cSetting_scene_current_name, key.c_str());
 
   MovieScene &scene = scenes->dict[key];
 
@@ -272,7 +276,7 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
     for (SeleAtomIterator iter(G, sele); iter.next();) {
 
       // don't store atom data for disabled objects
-      if (!((CObject*)iter.obj)->Enabled)
+      if (!((CObject*)iter.obj)->Enabled && is_defaultstack)
         continue;
 
       AtomInfoType * ai = iter.getAtomInfo();
@@ -297,8 +301,10 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
     SET_BIT_TO(sceneobj.visRep, 0, rec->visible);
   }
 
-  PRINTFB(G, FB_Scene, FB_Details)
+  if (is_defaultstack) {
+    PRINTFB(G, FB_Scene, FB_Details)
     " scene: scene stored as \"%s\".\n", key.c_str() ENDFB(G);
+  }
 
   return true;
 }
@@ -375,9 +381,10 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
     bool recall_active,
     bool recall_rep,
     bool recall_frame,
-    const char * sele)
+    const char * sele,
+    size_t stack)
 {
-  auto scenes = G->scenes;
+  auto scenes = G->scenes + stack;
   auto it = scenes->dict.find(name);
 
   if (it == scenes->dict.end()) {
@@ -387,8 +394,10 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
     return false;
   }
 
-  // set scene_current_name
-  SettingSetGlobal_s(G, cSetting_scene_current_name, name);
+  if (stack == cMovieSceneStackDefault) {
+    // set scene_current_name
+    SettingSetGlobal_s(G, cSetting_scene_current_name, name);
+  }
 
   MovieScene &scene = it->second;
 
@@ -559,6 +568,20 @@ static bool MovieSceneRename(PyMOLGlobals * G, const char * name, const char * n
   return false;
 }
 
+/**
+ * Delete a scene
+ *
+ * @param name scene name or "*" to delete all scenes (for default stack)
+ */
+bool MovieSceneDelete(PyMOLGlobals* G, const char* name, size_t stack) {
+  if (stack != cMovieSceneStackDefault) {
+    return G->scenes[stack].dict.erase(name) != 0;
+  }
+
+  // takes also care of scene order and name="*"
+  return MovieSceneRename(G, name, nullptr);
+}
+
 /*
  * Print current scene order
  */
@@ -655,9 +678,10 @@ bool MovieSceneFunc(PyMOLGlobals * G, const char * key,
     float animate,
     const char * new_key,
     bool hand,
-    const char * sele)
+    const char * sele,
+    size_t stack)
 {
-  auto scenes = G->scenes;
+  auto scenes = G->scenes + stack;
   std::string prev_name;
   short beforeafter = 0;
   bool status = false;
@@ -703,19 +727,19 @@ bool MovieSceneFunc(PyMOLGlobals * G, const char * key,
       MovieSceneRecallMessage(G, "");
     } else {
       status = MovieSceneRecall(G, key, animate, store_view, store_color,
-          store_active, store_rep, store_frame, sele);
+          store_active, store_rep, store_frame, sele, stack);
     }
 
   } else if (strcmp(action, "store") == 0) {
     status = MovieSceneStore(G, key, message, store_view, store_color,
-        store_active, store_rep, store_frame, sele);
+        store_active, store_rep, store_frame, sele, stack);
 
     // insert_before, insert_after
     if (status && beforeafter)
       status = MovieSceneOrderBeforeAfter(G, prev_name.c_str(), beforeafter == 1);
 
   } else if (strcmp(action, "delete") == 0) {
-    status = MovieSceneRename(G, key, nullptr);
+    status = MovieSceneDelete(G, key, stack);
   } else if (strcmp(action, "rename") == 0) {
     status = MovieSceneRename(G, key, new_key);
   } else if (strcmp(action, "order") == 0) {
@@ -747,12 +771,12 @@ ok_exceptNOSCENES:
 
 void MovieScenesInit(PyMOLGlobals * G) {
   MovieScenesFree(G);
-  G->scenes = new CMovieScenes;
+  G->scenes = new CMovieScenes[cMovieSceneStack_SIZE];
 }
 
 void MovieScenesFree(PyMOLGlobals * G) {
   if (G->scenes) {
-    delete G->scenes;
+    delete[] G->scenes;
     G->scenes = nullptr;
   }
 }
