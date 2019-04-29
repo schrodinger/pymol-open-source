@@ -130,7 +130,7 @@ void ObjectPrepareContext(CObject * I, RenderInfo * info);
 void ObjectSetTTT(CObject * I, const float *ttt, int state,int store);
 int ObjectGetTTT(CObject * I, const float **ttt, int state);
 int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix);
-void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order, int store);
+void ObjectCombineTTT(CObject * I, const float *ttt, int reverse_order, int store);
 void ObjectTranslateTTT(CObject * T, float *v,int store);
 void ObjectSetTTTOrigin(CObject * I, float *origin);
 void ObjectResetTTT(CObject * I,int store);

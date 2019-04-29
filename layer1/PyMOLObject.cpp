@@ -847,7 +847,7 @@ int ObjectCopyHeader(CObject * I, const CObject * src)
 
 
 /*========================================================================*/
-void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order, int store)
+void ObjectCombineTTT(CObject * I, const float *ttt, int reverse_order, int store)
 {
   if(I->type == cObjectGroup) {
     ExecutiveGroupCombineTTT(I->G, I, ttt, reverse_order,store);

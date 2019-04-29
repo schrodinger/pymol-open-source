@@ -785,7 +785,7 @@ int ObjectMoleculeXferValences(ObjectMolecule * Ia, int sele1, int sele2,
   return match_found;
 }
 
-void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, float *matrix,
+void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, const float *matrix,
                                      int log_trans, int homogenous, int transformed)
 {
   int a;
@@ -6460,7 +6460,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
 
 /*========================================================================*/
 int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
-                                     int sele, float *matrix, int log,
+                                     int sele, const float *matrix, int log,
                                      const char *sname, int homogenous, int global)
 {
   /* called from "translate [5,5,5], objSele" */
@@ -6473,7 +6473,8 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
   int logging;
   int all_states = false, inp_state;
   int ok = true;
-  float homo_matrix[16], tmp_matrix[16], *input_matrix = matrix;
+  float homo_matrix[16], tmp_matrix[16];
+  const float* input_matrix = matrix;
 
   inp_state = state;
   if(state == -2)

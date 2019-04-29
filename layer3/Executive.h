@@ -421,7 +421,7 @@ int ExecutiveMapHalve(PyMOLGlobals * G, const char *name, int state, int smooth)
 int ExecutiveIdentifyObjects(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
                              ObjectMolecule *** objVLA);
 int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, const char *name, float *trans, int store, int quiet);
-int ExecutiveCombineObjectTTT(PyMOLGlobals * G, const char *name, float *ttt,
+int ExecutiveCombineObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt,
                               int reverse_order, int store);
 int ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt, int state, int quiet, int store);
 int ExecutiveGetObjectTTT(PyMOLGlobals * G, const char *name, const float **ttt, int state,
@@ -561,7 +561,7 @@ int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,
                          int last, float power, float bias,
                          int simple, float linear, int wrap,
                          int hand, int window, int cycles, int state, int quiet);
-int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, float *ttt, int reverse_order, int store);
+int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, const float *ttt, int reverse_order, int store);
 int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, float *v, int store);
 void ExecutiveMotionClick(PyMOLGlobals * G, BlockRect *rect, int mode, int expected, int x, int y, int nearest);
 void ExecutiveMotionTrim(PyMOLGlobals * G);

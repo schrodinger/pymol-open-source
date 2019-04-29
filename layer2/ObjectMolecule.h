@@ -399,7 +399,7 @@ int ObjectMoleculeGetAtomVertex(ObjectMolecule * I, int state, int index, float 
 int ObjectMoleculeGetAtomTxfVertex(ObjectMolecule * I, int state, int index, float *v);
 int ObjectMoleculeGetAtomIndex(ObjectMolecule * I, int sele);
 int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
-                                     int sele, float *TTT, int log,
+                                     int sele, const float *TTT, int log,
                                      const char *sname, int homogenous, int global);
 int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule * I, int index, int sele);
 void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule * I, int state);
@@ -485,7 +485,7 @@ int ObjectMoleculeConvertIDsToIndices(ObjectMolecule * I, int *id, int n_id);
 ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int mode);
 void ObjectMoleculeDummyUpdate(ObjectMolecule * I, int mode);
 
-void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, float *matrix,
+void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, const float *matrix,
                                      int log_trans, int homogenous, int transformed);
 
 

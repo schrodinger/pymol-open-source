@@ -292,7 +292,7 @@ int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,
   return result;
 }
 
-int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, float *ttt, int reverse_order, int store)
+int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, const float *ttt, int reverse_order, int store)
 {
   CExecutive *I = G->Executive;
   int result = true;
@@ -7746,7 +7746,7 @@ int ExecutiveTranslateAtom(PyMOLGlobals * G, const char *sele, float *v, int sta
   return (ok);
 }
 
-int ExecutiveCombineObjectTTT(PyMOLGlobals * G, const char *name, float *ttt, int reverse_order, int store)
+int ExecutiveCombineObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt, int reverse_order, int store)
 {
   int ok = true;
   CExecutive *I = G->Executive;
