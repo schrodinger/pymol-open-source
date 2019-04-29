@@ -1249,16 +1249,25 @@ struct MoleculeExporterMAE : public MoleculeExporter {
     if (ai->name)
       AtomInfoGetAlignedPDBAtomName(G, ai, resn, name);
 
+    // 4-letter padding for atom name
+    for (auto i = strlen(name); i < 4; ++i) {
+      name[i] = ' ';
+    }
+    name[4] = '\0';
+
+    // 1-letter padding for chain
+    const char* chain = ai->chain ? LexStr(G, ai->chain) : " ";
+
     m_offset += VLAprintf(m_buffer, m_offset,
-        "%d %d %.3f %.3f %.3f %d %s %s \"%-4s\" \"%-4s\" %d %d %02X%02X%02X %d %.2f %d\n",
+        "%d %d %.3f %.3f %.3f %d %s %s \"%-4s\" %s %d %d %02X%02X%02X %d %.2f %d\n",
         getTmpID(),
         getMacroModelAtomType(ai),
         m_coord[0], m_coord[1], m_coord[2],
         ai->resv,
         inscode,
-        ai->chain ? LexStr(G, ai->chain) : "\" \"",
+        MaeExportStrRepr(chain).c_str(),
         resn,
-        name,
+        MaeExportStrRepr(name).c_str(),
         ai->protons,
         ai->formalCharge,
         int(rgb[0] * 255),
