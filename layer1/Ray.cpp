@@ -6885,7 +6885,6 @@ int CRay::cylinder3fv(const float *v1, const float *v2, float r, const float *c1
 
   p->type = cPrimCylinder;
   p->r1 = r;
-  p->trans = I->Trans;
   p->cap1 = cCylCapFlat;
   p->cap2 = cCylCapFlat;
   p->wobble = I->Wobble;
@@ -6926,7 +6925,8 @@ int CRay::cylinder3fv(const float *v1, const float *v2, float r, const float *c1
   (*vv++) = (*c2++);
   (*vv++) = (*c2++);
 
-  p->trans = 1.0 - alpha1;
+  // FIXME: alpha1 is not used
+  p->trans = 1.0 - alpha2;
   {
     float *v;
     vv = p->ic;
@@ -6981,7 +6981,6 @@ int CRay::customCylinder3fv(const float *v1, const float *v2, float r,
 
   p->type = cPrimCylinder;
   p->r1 = r;
-  p->trans = I->Trans;
   p->cap1 = cap1;
   p->cap2 = cap2;
   p->wobble = I->Wobble;
@@ -7023,7 +7022,8 @@ int CRay::customCylinder3fv(const float *v1, const float *v2, float r,
   (*vv++) = (*c2++);
   vv = p->ic;
 
-  p->trans = 1.0f - alpha1;
+  // FIXME: alpha1 is not used
+  p->trans = 1.0f - alpha2;
 
   {
     float *v;

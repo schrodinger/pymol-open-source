@@ -4162,14 +4162,15 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
         float mid[3];
         mult3f(cyl->axis, .5f, mid);
         add3f(cyl->origin, mid, mid);
+        float alpha2 = cyl->alpha >= 0.f ? cyl->alpha : cgo->alpha;
         if (cap & cCylShaderInterpColor){
-          ok &= CGOSimpleCylinder(cgo, cyl->origin, v1, cyl->tube_size, color1, cyl->color2, cyl->alpha, cyl->alpha, true, bcap, fcap, &pickcolor2, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, cyl->origin, v1, cyl->tube_size, color1, cyl->color2, cgo->alpha, alpha2, true, bcap, fcap, &pickcolor2, stick_round_nub);
         } else {
           ok &= CGOColorv(cgo, color1);
-          ok &= CGOSimpleCylinder(cgo, cyl->origin, mid, cyl->tube_size, color1, NULL, cyl->alpha, cyl->alpha, false, fcap, 0, nullptr, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, cyl->origin, mid, cyl->tube_size, color1, NULL, cgo->alpha, alpha2, false, fcap, 0, nullptr, stick_round_nub);
           ok &= CGOColorv(cgo, cyl->color2);
           ok &= CGOPickColor(cgo, pickcolor2.index, pickcolor2.bond);
-          ok &= CGOSimpleCylinder(cgo, mid, v1, cyl->tube_size, cyl->color2, NULL, cyl->alpha, cyl->alpha, false, 0, bcap, nullptr, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, mid, v1, cyl->tube_size, cyl->color2, NULL, cgo->alpha, alpha2, false, 0, bcap, nullptr, stick_round_nub);
         }
       }
       break;
@@ -4471,14 +4472,15 @@ CGO *CGOSimplifyNoCompress(const CGO * I, int est, short sphere_quality, bool st
         float mid[3];
         mult3f(cyl->axis, .5f, mid);
         add3f(cyl->origin, mid, mid);
+        float alpha2 = cyl->alpha >= 0.f ? cyl->alpha : cgo->alpha;
         if (cap & cCylShaderInterpColor){
-          ok &= CGOSimpleCylinder(cgo, cyl->origin, v1, cyl->tube_size, color1, cyl->color2, cyl->alpha, cyl->alpha, true, bcap, fcap, &pickcolor2, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, cyl->origin, v1, cyl->tube_size, color1, cyl->color2, cgo->alpha, alpha2, true, bcap, fcap, &pickcolor2, stick_round_nub);
         } else {
           ok &= CGOColorv(cgo, color1);
-          ok &= CGOSimpleCylinder(cgo, cyl->origin, mid, cyl->tube_size, color1, NULL, cyl->alpha, cyl->alpha, false, fcap, 0, NULL, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, cyl->origin, mid, cyl->tube_size, color1, NULL, cgo->alpha, alpha2, false, fcap, 0, NULL, stick_round_nub);
           ok &= CGOColorv(cgo, cyl->color2);
           ok &= CGOPickColor(cgo, pickcolor2.index, pickcolor2.bond);
-          ok &= CGOSimpleCylinder(cgo, mid, v1, cyl->tube_size, cyl->color2, NULL, cyl->alpha, cyl->alpha, false, 0, bcap, NULL, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, mid, v1, cyl->tube_size, cyl->color2, NULL, cgo->alpha, alpha2, false, 0, bcap, NULL, stick_round_nub);
         }
       }
       break;
@@ -5687,17 +5689,19 @@ int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, Obj
         const float *color1 = c0;
         const float *color2 = cyl->color2;
         add3f(cyl->origin, cyl->axis, v1);
+        float alpha1 = I->G->CGORenderer->alpha;
+        float alpha2 = cyl->alpha >= 0.f ? cyl->alpha : alpha1;
         if (colorinterp || equal3f(color1, color2)) {
-          ok &= ray->customCylinder3fv(pc, v1, cyl->tube_size, color1, color2, fcap, bcap, cyl->alpha, cyl->alpha);
+          ok &= ray->customCylinder3fv(pc, v1, cyl->tube_size, color1, color2, fcap, bcap, alpha1, alpha2);
         } else {
           float mid[3];
           mult3f(cyl->axis, .5f, mid);
           add3f(cyl->origin, mid, mid);
 
           ray->color3fv(c0);
-          ok &= ray->customCylinder3fv(cyl->origin, mid, cyl->tube_size, color1, color1, fcap, 0, cyl->alpha, cyl->alpha);
+          ok &= ray->customCylinder3fv(cyl->origin, mid, cyl->tube_size, color1, color1, fcap, 0, alpha1, alpha2);
           ray->color3fv(cyl->color2);
-          ok &= ray->customCylinder3fv(mid, v1, cyl->tube_size, color2, color2, 0, bcap, cyl->alpha, cyl->alpha);
+          ok &= ray->customCylinder3fv(mid, v1, cyl->tube_size, color2, color2, 0, bcap, alpha1, alpha2);
         }
       }
       break;

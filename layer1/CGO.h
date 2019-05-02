@@ -585,7 +585,7 @@ namespace cgo {
       static const int op_code = CGO_SHADER_CYLINDER_WITH_2ND_COLOR;
       shadercylinder2ndcolor(CGO *I, const float *_origin, const float *_axis, const float _radius,
                              int _cap, const float *_color2, Pickable *pickcolor2 = NULL,
-                             const float alpha = 1.0f);
+                             const float alpha = -1.f);
       float origin[3], axis[3], tube_size;
       int cap;
       float color2[3];
