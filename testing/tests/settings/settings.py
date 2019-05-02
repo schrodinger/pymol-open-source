@@ -228,3 +228,57 @@ class TestSettings(testing.PyMOLTestCase):
         img = self.get_imagearray()
         self.assertImageHasColor('0xFF0000', img)
         self.assertTrue(len(numpy.unique(img[...,:3])) == 2)
+
+    def _testTransparency(self, rep, setting_name):
+        cmd.fab('GGGG')
+        cmd.remove('resi 2+3')
+        cmd.select('sele', 'resi 4', 0)
+
+        self.ambientOnly()
+        cmd.viewport(100, 100)
+        cmd.set('opaque_background')
+        cmd.set('ray_shadow', 0)
+
+        cmd.orient()
+
+        cmd.color('0xFF0000')
+        cmd.show_as(rep)
+
+        # all opaque
+        img = self.get_imagearray()
+        self.assertImageHasColor('0xFF0000', img)
+
+        # object-level transparency
+        cmd.set(setting_name, 0.4)
+        img = self.get_imagearray()
+        self.assertImageHasColor('0x990000', img) # 40%
+        self.assertImageHasNotColor('0xFF0000', img)
+
+        # atom-level full-opaque
+        cmd.set(setting_name, 0.0, 'sele')
+        img = self.get_imagearray()
+        self.assertImageHasColor('0x990000', img) # 40%
+        self.assertImageHasColor('0xFF0000', img) #  0%
+
+        # atom-level semi-transparent
+        cmd.set(setting_name, 0.6, 'sele')
+        img = self.get_imagearray()
+        self.assertImageHasColor('0x990000', img) # 40%
+        self.assertImageHasColor('0x660000', img, delta=1) # 60%
+        self.assertImageHasNotColor('0xFF0000', img)
+
+        # atom-level full-transparent (expect only two color values)
+        cmd.set(setting_name, 0.0)
+        cmd.set(setting_name, 1.0, 'sele')
+        img = self.get_imagearray()
+        self.assertImageHasColor('0xFF0000', img)
+        self.assertTrue(len(numpy.unique(img[...,:3])) == 2)
+
+    def testStickTransparency(self):
+        self._testTransparency('sticks', 'stick_transparency')
+
+    def testSphereTransparency(self):
+        self._testTransparency('spheres', 'sphere_transparency')
+
+    def testSurfaceTransparency(self):
+        self._testTransparency('surface', 'transparency')
