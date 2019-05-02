@@ -3127,19 +3127,19 @@ static PyObject *CmdSetFeedbackMask(PyObject * self, PyObject * args)
   if(ok && (ok = APIEnterNotModal(G))) {
     switch (i1) {               /* TODO STATUS */
     case 0:
-      FeedbackSetMask(G, i2, (uchar) i3);
+      G->Feedback->setMask(i2, (uchar) i3);
       break;
     case 1:
-      FeedbackEnable(G, i2, (uchar) i3);
+      G->Feedback->enable(i2, (uchar) i3);
       break;
     case 2:
-      FeedbackDisable(G, i2, (uchar) i3);
+      G->Feedback->disable(i2, (uchar) i3);
       break;
     case 3:
-      FeedbackPush(G);
+      G->Feedback->push();
       break;
     case 4:
-      FeedbackPop(G);
+      G->Feedback->pop();
       break;
     }
     APIExit(G);

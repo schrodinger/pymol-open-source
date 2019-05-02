@@ -1746,19 +1746,19 @@ PyMOLreturn_status PyMOL_CmdSetFeedbackMask(CPyMOL * I, int action, int module, 
   PYMOL_API_LOCK PyMOLGlobals * G = I->G;
   switch (action){
   case 0:
-    FeedbackSetMask(G, module, (uchar) mask);
+    G->Feedback->setMask(module, (uchar) mask);
     break;
   case 1:
-    FeedbackEnable(G, module, (uchar) mask);
+    G->Feedback->enable(module, (uchar) mask);
     break;
   case 2:
-    FeedbackDisable(G, module, (uchar) mask);
+    G->Feedback->disable(module, (uchar) mask);
     break;
   case 3:
-    FeedbackPush(G);
+    G->Feedback->push();
     break;
   case 4:
-    FeedbackPop(G);
+    G->Feedback->pop();
     break;
   }
   PYMOL_API_UNLOCK return result;
@@ -2002,7 +2002,7 @@ void PyMOL_Start(CPyMOL * I)
 #define LEX_CONSTANTS_IMPL
 #include "lex_constants.h"
 
-  FeedbackInit(G, G->Option->quiet);
+  G->Feedback = new CFeedback(G, G->Option->quiet);
   WordInit(G);
   UtilInit(G);
   ColorInit(G);
@@ -2110,7 +2110,7 @@ void PyMOL_Stop(CPyMOL * I)
   ColorFree(G);
   UtilFree(G);
   WordFree(G);
-  FeedbackFree(G);
+  delete G->Feedback;
 
   PyMOL_PurgeAPI(I);
   /*    printf("%d \n", OVLexicon_GetNActive(G->Lexicon)); */
@@ -2233,14 +2233,14 @@ static void PyMOL_LaunchStatus_Feedback(PyMOLGlobals * G)
         " OpenGL quad-buffer stereo 3D detected and enabled.\n");;
   } else {
     if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_StereoFailed) {
-      FeedbackAddColored(G,
+      G->Feedback->addColored(
           "Error: The requested stereo 3D visualization mode is not available.\n",
           FB_Errors);
     }
   }
 
   if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_MultisampleFailed) {
-    FeedbackAddColored(G,
+    G->Feedback->addColored(
         "Error: The requested multisampling mode is not available.\n",
         FB_Errors);
   }
@@ -3045,7 +3045,7 @@ void PyMOL_SetDefaultMouse(CPyMOL * I)
     }
 
   }
-  G->Feedback->Mask[FB_Scene] &= ~(FB_Results); /* suppress click messages */
+  G->Feedback->currentMask(FB_Scene) &= ~(FB_Results); /* suppress click messages */
 PYMOL_API_UNLOCK}
 
 PyMOLreturn_status PyMOL_CmdRock(CPyMOL * I, int mode){

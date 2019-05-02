@@ -36,7 +36,7 @@ typedef struct _CMemoryCache CMemoryCache;
 typedef struct _CIsosurf CIsosurf;
 typedef struct _CTetsurf CTetsurf;
 typedef struct _CSphere CSphere;
-typedef struct _CFeedback CFeedback;
+struct CFeedback;
 typedef struct _CUtil CUtil;
 struct CColor;
 struct CMovie;

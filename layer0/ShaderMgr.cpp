@@ -695,17 +695,17 @@ void CShaderMgr::Config() {
       " Detected OpenGL version %d.%d.", gl_major, gl_minor ENDFB(G);
 
     if (GLEW_VERSION_2_0) {
-      FeedbackAdd(G, " Shaders available.\n");
+      G->Feedback->add(" Shaders available.\n");
     }
     else { 
-      FeedbackAdd(G, " Shaders and volumes unavailable.\n");
+      G->Feedback->add(" Shaders and volumes unavailable.\n");
       disableShaders(G);
       return;
     }
   } 
   else {
     /* print info on glew error? */
-    FeedbackAdd(G, " There was an error intializing GLEW.  Basic graphics, including\n shaders and volumes may be unavailable.\n");
+    G->Feedback->add(" There was an error intializing GLEW.  Basic graphics, including\n shaders and volumes may be unavailable.\n");
     disableShaders(G);
     fprintf(stderr, " GLEW-Error: %s\n", glewGetErrorString(err));
     return;
@@ -808,7 +808,7 @@ void CShaderMgr::Config() {
     int major, minor;
     getGLSLVersion(G, &major, &minor);
     sprintf(buf, " Detected GLSL version %d.%d.\n", major, minor);
-    FeedbackAdd(G, buf);
+    G->Feedback->add(buf);
   }
 #endif
   shaders_present |= 0x1;

@@ -20,12 +20,8 @@ Z* -------------------------------------------------------------------
 #define _H_Feedback
 
 #include"PyMOLGlobals.h"
-
-struct _CFeedback {
-  char *Mask;
-  char *Stack;
-  int Depth;
-};
+#include <vector>
+#include <array>
 
 
 /* 
@@ -221,28 +217,36 @@ function name.
 
 #define FB_Everything      0xFF
 
-int FeedbackInit(PyMOLGlobals * G, int quiet);
-void FeedbackFree(PyMOLGlobals * G);
-void FeedbackPush(PyMOLGlobals * G);
-void FeedbackPop(PyMOLGlobals * G);
+class CFeedback
+{
+  std::vector<std::array<unsigned char, FB_Total>> m_stack{{}};
+  PyMOLGlobals* m_G;
 
-void FeedbackAutoAdd(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask,
-                     const char *str);
-void FeedbackAdd(PyMOLGlobals * G, const char *str);
-void FeedbackAddColored(PyMOLGlobals * G, const char *str, unsigned char mask);
-
-void FeedbackSetMask(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask);
-void FeedbackDisable(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask);
-void FeedbackEnable(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask);
-
+public:
+  CFeedback(PyMOLGlobals* G, int quiet);
+  decltype(m_stack)::value_type& currentLayer() { return m_stack.back(); };
+  void push();
+  void pop();
+  void autoAdd(unsigned int sysmod, unsigned char mask, const char* str);
+  void add(const char* str);
+  void addColored(const char* str, unsigned char mask);
+  void setMask(unsigned int sysmod, unsigned char mask);
+  unsigned char& currentMask(unsigned int sysmod);
+  bool testMask(unsigned int sysmod, unsigned char mask);
+  void disable(unsigned int sysmod, unsigned char mask);
+  void enable(unsigned int sysmod, unsigned char mask);
+};
 
 /* Mechanism: a high-speed bit test, with no range checking 
  * in order to avoid penalizing performance-senstive code
  * modules which may contain live debugging code.  
  */
 
-#define Feedback(G,sysmod,mask) (G->Feedback->Mask[sysmod]&(mask))
-
+inline
+bool Feedback(PyMOLGlobals* G, unsigned int sysmod, unsigned char mask)
+{
+  return G->Feedback->testMask(sysmod, mask);
+}
 
 /* FEEDBACK_MAX_OUTPUT should be as small as is reasonable
  * since this much space gets consumed on the stack
@@ -259,16 +263,30 @@ typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
  * variable arguments.
 */
 
-#define PRINTFB(G,sysmod,mask) { FeedbackLineType _FBstr; if(Feedback(G,sysmod,mask)) {(snprintf)( _FBstr, FEEDBACK_MAX_OUTPUT,
-#define ENDFB(G) );  FeedbackAdd(G,_FBstr);}}
+#ifdef _WEBGL
+#else
+
+#define PRINTFB(G,sysmod,mask) \
+{ \
+  FeedbackLineType _FBstr; \
+  if(G->Feedback->testMask(sysmod,mask)) {\
+    const unsigned char _mask = mask; \
+    (snprintf)( _FBstr, FEEDBACK_MAX_OUTPUT,
+
+#define ENDFB(G) \
+    ); \
+    G->Feedback->addColored(_FBstr,_mask); \
+  } \
+}
 
 #define PRINTF { FeedbackLineType _FBstr; (snprintf)( _FBstr, FEEDBACK_MAX_OUTPUT,
-#define ENDF(G)  ); FeedbackAdd(G,_FBstr);}
+#define ENDF(G)  ); G->Feedback->add(_FBstr);}
+#endif
 
 
 /* debugging: goes to stderr */
 
-#define PRINTFD(G,sysmod) {if(Feedback(G,sysmod,FB_Debugging)) { fprintf(stderr,
+#define PRINTFD(G,sysmod) {if(G->Feedback->testMask(sysmod, FB_Debugging)) { fprintf(stderr,
 #define ENDFD   );fflush(stderr);}}
 
 

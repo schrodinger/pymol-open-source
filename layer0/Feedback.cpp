@@ -16,34 +16,23 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#include <algorithm>
+
 #include"os_predef.h"
 #include"os_std.h"
 #include"MemoryDebug.h"
 #include"Feedback.h"
 #include"Ortho.h"
 
-int FeedbackInit(PyMOLGlobals * G, int quiet)
+CFeedback::CFeedback(PyMOLGlobals* G, int quiet) : m_G{G}
 {
-  int a;
-
-  CFeedback *I;
-  I = (G->Feedback = pymol::calloc<CFeedback>(1));
-
-  I->Stack = VLAlloc(char, FB_Total);
-  I->Depth = 0;
-  G->Feedback->Mask = I->Stack;
-
-  if(quiet) {
-    for(a = 0; a < FB_Total; a++) {
-      G->Feedback->Mask[a] = 0;
-    }
-  } else {
-    for(a = 0; a < FB_Total; a++) {
-      G->Feedback->Mask[a] =
-        FB_Output | FB_Results | FB_Errors | FB_Warnings | FB_Actions | FB_Details;
+  if(!quiet) {
+    for(auto& mask : currentLayer()) {
+      mask = FB_Output | FB_Results | FB_Errors | FB_Warnings | FB_Actions |
+             FB_Details;
     }
 
-    G->Feedback->Mask[FB_Main] &= ~(FB_Errors); /* suppress opengl errors in main */
+    currentMask(FB_Main) &= ~(FB_Errors); /* suppress opengl errors in main */
 
   }
 
@@ -51,108 +40,94 @@ int FeedbackInit(PyMOLGlobals * G, int quiet)
   if(fb_env) {
     int n, sysmod, mask;
     while(sscanf(fb_env, "%i:%i%n", &sysmod, &mask, &n) > 1) {
-      FeedbackSetMask(G, sysmod, mask);
+      setMask(sysmod, mask);
       fb_env += n;
     }
   }
-
-  return 1;
 }
-
-void FeedbackFree(PyMOLGlobals * G)
-{
-  CFeedback *I = G->Feedback;
-
-  VLAFreeP(I->Stack);
-  FreeP(G->Feedback);
-
-}
-
 
 /* below we'll presume that any standard feedback on the feedback
 module itself will be effected at the Python level, since feedback
 levels will be changed as a matter of course inside of PyMOL in order
 to quietly perform complex actions.  */
 
-void FeedbackPush(PyMOLGlobals * G)
+void CFeedback::push()
 {
-  CFeedback *I = G->Feedback;
-  int a;
-  I->Depth++;
-  VLACheck(I->Stack, char, (I->Depth + 1) * FB_Total);
-  G->Feedback->Mask = I->Stack + (I->Depth * FB_Total);
-  for(a = 0; a < FB_Total; a++) {
-    G->Feedback->Mask[a] = G->Feedback->Mask[a - FB_Total];
-  }
-  PRINTFD(G, FB_Feedback) " Feedback: push\n" ENDFD;
+  m_stack.push_back(m_stack.back());
+  PRINTFD(m_G, FB_Feedback) " Feedback: push\n" ENDFD;
 }
 
-void FeedbackPop(PyMOLGlobals * G)
+void CFeedback::pop()
 {
-  CFeedback *I = G->Feedback;
-  if(I->Depth) {
-    I->Depth--;
-    G->Feedback->Mask = I->Stack + (I->Depth * FB_Total);
+  if(m_stack.size() > 1) {
+    m_stack.pop_back();
   }
-  PRINTFD(G, FB_Feedback) " Feedback: pop\n" ENDFD;
+  PRINTFD(m_G, FB_Feedback) " Feedback: pop\n" ENDFD;
 }
 
-void FeedbackSetMask(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask)
+void CFeedback::setMask(unsigned int sysmod, unsigned char mask)
 {
-  int a;
   if((sysmod > 0) && (sysmod < FB_Total)) {
-    G->Feedback->Mask[sysmod] = mask;
+    currentMask(sysmod) = mask;
   } else if(!sysmod) {
-    for(a = 0; a < FB_Total; a++) {
-      G->Feedback->Mask[a] = mask;
-    }
+    std::fill(currentLayer().begin(), currentLayer().end(), mask);
   }
-  PRINTFD(G, FB_Feedback)
+  PRINTFD(m_G, FB_Feedback)
     " FeedbackSetMask: sysmod %d, mask 0x%02X\n", sysmod, mask ENDFD;
 }
 
-void FeedbackDisable(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask)
+unsigned char& CFeedback::currentMask(unsigned int sysmod)
 {
-  int a;
+  return m_stack.back()[sysmod];
+}
+
+bool CFeedback::testMask(unsigned int sysmod, unsigned char mask)
+{
+  return currentMask(sysmod) & mask;
+}
+
+void CFeedback::disable(unsigned int sysmod, unsigned char mask)
+{
   if((sysmod > 0) && (sysmod < FB_Total)) {
-    G->Feedback->Mask[sysmod] = G->Feedback->Mask[sysmod] & (0xFF - mask);
+    auto& targetMask = currentMask(sysmod);
+    targetMask &= 0xFF - mask;
   } else if(!sysmod) {
-    for(a = 0; a < FB_Total; a++) {
-      G->Feedback->Mask[a] = G->Feedback->Mask[a] & (0xFF - mask);
+    for(auto& obj_mask : currentLayer()) {
+      obj_mask &=  0xFF - mask;
     }
   }
-  PRINTFD(G, FB_Feedback)
+  PRINTFD(m_G, FB_Feedback)
     " FeedbackDisable: sysmod %d, mask 0x%02X\n", sysmod, mask ENDFD;
 
 }
 
-void FeedbackEnable(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask)
+void CFeedback::enable(unsigned int sysmod, unsigned char mask)
 {
-  int a;
   if((sysmod > 0) && (sysmod < FB_Total)) {
-    G->Feedback->Mask[sysmod] = G->Feedback->Mask[sysmod] | mask;
+    auto& targetMask = currentMask(sysmod);
+    targetMask |= mask;
   } else if(!sysmod) {
-    for(a = 0; a < FB_Total; a++) {
-      G->Feedback->Mask[a] = G->Feedback->Mask[a] | mask;
+    for(auto& obj_mask : currentLayer()) {
+      obj_mask |= mask;
     }
   }
-  PRINTFD(G, FB_Feedback)
+  PRINTFD(m_G, FB_Feedback)
     " FeedbackEnable: sysmod %d, mask 0x%02X\n", sysmod, mask ENDFD;
 
 }
 
-void FeedbackAutoAdd(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask, const char *str)
+void CFeedback::autoAdd(unsigned int sysmod, unsigned char mask, const char *str)
 {
-  if(Feedback(G, sysmod, mask))
-    FeedbackAddColored(G, str, mask);
+  if(testMask(sysmod, mask))
+    addColored(str, mask);
 }
 
-void FeedbackAdd(PyMOLGlobals * G, const char *str)
+void CFeedback::add(const char *str)
 {
-  OrthoAddOutput(G, str);
+  OrthoAddOutput(m_G, str);
 }
 
-void FeedbackAddColored(PyMOLGlobals * G, const char *str, unsigned char mask)
+void CFeedback::addColored(const char *str, unsigned char mask)
 {
-  FeedbackAdd(G, str);
+  add(str);
 }
