@@ -344,6 +344,22 @@ static PyObject* APIResultOk(PyMOLGlobals* G, bool ok)
   return APIFailure(G);
 }
 
+/**
+ * If `res` is true, return res.result().
+ * Else if `raise_exceptions` is false, return -1 (DEFAULT_ERROR).
+ * Else raise CmdException(res.error()).
+ */
+template <typename T>
+PyObject* APIResult(PyMOLGlobals* G, pymol::Result<T>& res)
+{
+  if (res)
+    return PConvToPyObject(res.result());
+  if (G && !SettingGet<bool>(G, cSetting_raise_exceptions))
+    return APIFailure();
+  PyErr_SetString(P_CmdException, res.error().what().c_str());
+  return nullptr;
+}
+
 static PyObject *APIIncRef(PyObject * result)
 {
   Py_INCREF(result);
@@ -995,32 +1011,17 @@ static PyObject * CmdGetVolumeField(PyObject * self, PyObject * args)
 static PyObject * CmdGetVolumeHistogram(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  PyObject *result = NULL;
-  int ok = false;
   char* objName;
   float min_val = 0.f, max_val = 0.f;
   int n_points = 64;
-  ok = PyArg_ParseTuple(args, "Os|i(ff)", &self, &objName, &n_points, &min_val, &max_val);
+  API_SETUP_ARGS(G, self, args, "Os|i(ff)", &self, &objName, &n_points,
+      &min_val, &max_val);
+  API_ASSERT(APIEnterBlockedNotModal(G));
 
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    float * hist = ExecutiveGetHistogram(G, objName, n_points, min_val, max_val);
-    if (hist) {
-      result = PConvFloatArrayToPyList(hist, n_points + 4);
-      mfree(hist);
-    }
-    APIExitBlocked(G);
-  }
+  auto res = ExecutiveGetHistogram(G, objName, n_points, min_val, max_val);
 
-  if(!result) {
-    return APIFailure();
-  } else
-    return result;
+  APIExitBlocked(G);
+  return APIResult(G, res);
 }
 
 static PyObject * CmdGetVolumeRamp(PyObject * self, PyObject * args)
@@ -1146,33 +1147,16 @@ static PyObject *CmdSpectrum(PyObject * self, PyObject * args)
   float min, max;
   int digits, start, stop, byres;
   int quiet;
-  int ok = false;
   float min_ret, max_ret;
-  PyObject *result = Py_None;
-  ok = PyArg_ParseTuple(args, "Ossffiisiii", &self, &str1, &expr,
-                        &min, &max, &start, &stop, &prefix, &digits, &byres, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    if(ok) {
-      auto res = ExecutiveSpectrum(
-            G, str1, expr, min, max, start, stop, prefix, digits, byres, quiet);
-      if (res) {
-        std::tie(min_ret, max_ret) = res.result();
-      } else {
-        ok = false;
-      }
-    }
-    APIExit(G);
-    if(ok) {
-      result = Py_BuildValue("ff", min_ret, max_ret);
-    }
-  }
-  return (APIAutoNone(result));
+  API_SETUP_ARGS(G, self, args, "Ossffiisiii", &self, &str1, &expr, &min, &max,
+      &start, &stop, &prefix, &digits, &byres, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+
+  auto res = ExecutiveSpectrum(
+      G, str1, expr, min, max, start, stop, prefix, digits, byres, quiet);
+
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdMDump(PyObject * self, PyObject * args)

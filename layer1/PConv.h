@@ -271,6 +271,17 @@ PyObject * PConvToPyObject(const std::map<K, V> &v) {
   return o;
 }
 
+/*
+ * Convert a pair to a Python tuple
+ */
+template <class T1, class T2>
+PyObject* PConvToPyObject(const std::pair<T1, T2> &v) {
+  PyObject* o = PyTuple_New(2);
+  PyTuple_SET_ITEM(o, 0, PConvToPyObject(v.first));
+  PyTuple_SET_ITEM(o, 1, PConvToPyObject(v.second));
+  return o;
+}
+
 /* ============================================================ */
 /*
  * PConvFromPyObject: Templated conversion of a python object to a

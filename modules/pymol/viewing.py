@@ -2304,7 +2304,6 @@ PYMOL API
                                     int(digits),int(byres),int(quiet))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
         return r
 
     def set_color(name, rgb, mode=0, quiet=1, _self=cmd):

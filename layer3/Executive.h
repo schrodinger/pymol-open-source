@@ -503,7 +503,8 @@ CField   *ExecutiveGetVolumeField(PyMOLGlobals * G, const char * objName, int st
 int       ExecutiveSetVolumeRamp(PyMOLGlobals * G, const char * objName, float *ramp_list, int list_size);
 PyObject *ExecutiveGetVolumeRamp(PyMOLGlobals * G, const char * objName);
 
-float * ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points,
+pymol::Result<std::vector<float>>
+ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points,
         float min_val, float max_val);
 
 int ExecutiveIterateObjectMolecule(PyMOLGlobals * G, ObjectMolecule ** obj,

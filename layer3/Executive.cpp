@@ -4712,12 +4712,16 @@ ok_except1:
 /*
  * returns allocated memory
  */
-float * ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points, float min_val, float max_val) {
+pymol::Result<std::vector<float>>
+ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points, float min_val, float max_val) {
   CObject *obj;
   ObjectMapState *oms = NULL;
 
   obj = ExecutiveFindObjectByName(G, objName);
-  ok_assert(1, obj);
+
+  if (!obj) {
+    return pymol::Error("could not find object ", objName);
+  }
 
   switch (obj->type) {
   case cObjectMap:
@@ -4727,19 +4731,18 @@ float * ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_poin
     oms = ObjectVolumeGetMapState((ObjectVolume *) obj);
     break;
   default:
-    PRINTFB(G, FB_Executive, FB_Errors)
-      " GetHistogram-Error: wrong object type." ENDFB(G);
+    return pymol::Error("object type must be map or volume");
   }
 
   if(oms) {
-    float *hist = pymol::calloc<float>(n_points + 4);
+    auto hist = std::vector<float>(n_points + 4);
     float range = SettingGet_f(G, obj->Setting, NULL, cSetting_volume_data_range);
-    ObjectMapStateGetHistogram(G, oms, n_points, range, hist, min_val, max_val);
+    ObjectMapStateGetHistogram(
+        G, oms, n_points, range, hist.data(), min_val, max_val);
     return hist;
   }
 
-ok_except1:
-  return NULL;
+  return pymol::Error("failed to get map state");
 }
 
 PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, const char * objName) {
@@ -4874,9 +4877,7 @@ pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
           // look up expression definition
           auto ap = PyMOL_GetAtomPropertyInfo(G->PyMOL, expr);
           if (!ap) {
-            PRINTFB(G, FB_Executive, FB_Errors)
-              " Spectrum-Error: Unknown expr '%s'\n", expr ENDFB(G);
-              return pymol::Error{"Spectrum-Error Unknown Expression: ", expr};
+            return pymol::Error{"Unknown expression: ", expr};
           }
 
           // for enumerated values
@@ -4923,9 +4924,7 @@ pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
                 value_e = (size_t) iter.obj;
                 break;
               default:
-                PRINTFB(G, FB_Executive, FB_Errors)
-                  " Spectrum-Error: Unsupported Ptype for expr '%s'\n", expr ENDFB(G);
-                  return pymol::Error{"Unsupported Ptype for expr: ", expr};
+                return pymol::Error{"Unsupported Ptype for expr: ", expr};
             }
 
             // lookup or insert value
