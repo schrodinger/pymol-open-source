@@ -19,6 +19,7 @@ except NameError:
 Qt = QtCore.Qt
 
 DOT_RADIUS = 5
+ALPHA_LOG_BASE = 10.0
 
 DEFAULT_COLORS = [
     (1., 1., 0.),
@@ -471,7 +472,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         """
         Converts <0, 1> normalized Y position to alpha value.
         """
-        y = (10.0**y - 1.0) / 9.0
+        y = (ALPHA_LOG_BASE**y - 1.0) / (ALPHA_LOG_BASE - 1.0)
         return y * self.amax
 
     def alphaToY(self, a):
@@ -481,7 +482,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         if self.amax == 0.0:
             return 0.0
         y = a / self.amax
-        return math.log(1.0 + 9.0 * y, 10.0)
+        return math.log(1.0 + (ALPHA_LOG_BASE - 1.0) * y, ALPHA_LOG_BASE)
 
     def updateVolumeColors(self):
         """
@@ -682,15 +683,23 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         self.original_vmin = self.vmin
         self.original_vmax = self.vmax
         self.path = []
-        if len(histogram[4:]) == 0:
+
+        hist = histogram[4:]
+        N = len(hist)
+        if N == 0:
             return
-        xstep = 1.0 / len(histogram[4:])
-        max_value = max(histogram[4:])
+
+        # cut extreme peaks in distribution
+        shist = sorted(hist)
+        q90 = shist[int(N * 0.9)]
+        max_value = min(q90 * 4, shist[N - 1])
         if max_value == 0.0:
             return
+
+        xstep = 1.0 / N
         ynorm = 1.0 / max_value
         x = 0.0
-        for v in histogram[4:]:
+        for v in hist:
             x += xstep
             y = v * ynorm
             self.path.append((x, y))
