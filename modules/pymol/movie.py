@@ -575,7 +575,7 @@ DESCRIPTION
 
 ARGUMENTS
 
-    names = str: list of scenes names {default: all scenes}
+    names = list: list of scenes names {default: all scenes}
 
     pause = float: display time per scene in seconds {default: 8}
 
@@ -608,7 +608,7 @@ ARGUMENTS
         animate = float(cmd.get("scene_animation_duration"))
     if names == None:
         names = cmd.get_scene_list()
-    elif cmd.is_str(names):
+    elif cmd.is_string(names):
         names = cmd.safe_alpha_list_eval(names)
     n_scene = len(names)
     duration = n_scene*(pause+animate)
