@@ -6,6 +6,8 @@ together with an index.html file.
 
 """
 
+from __future__ import print_function
+
 import os, sys, tempfile, re, socket, time
 import datetime
 from optparse import OptionParser
@@ -52,8 +54,8 @@ def get_unused_png(key):
 # create output dir
 outdir = tempfile.mkdtemp()
 htmlout = open(os.path.join(outdir, "index.html"), "w")
-print >> htmlout, "<h1>PyMOL Benchmarks,", socket.gethostname()
-print >> htmlout, time.strftime("%D-%T"), "</h1>"
+print("<h1>PyMOL Benchmarks,", socket.gethostname(), file=htmlout)
+print(time.strftime("%D-%T"), "</h1>", file=htmlout)
 
 # make plots
 for key in sorted(db):
@@ -63,7 +65,7 @@ for key in sorted(db):
     maxy = 0.0
     for mac in data:
         x, y = zip(*data[mac])
-        x = map(datetime.datetime.fromtimestamp, x)
+        x = list(map(datetime.datetime.fromtimestamp, x))
         maxy = max(maxy, max(y))
         ax.plot(x, y, "o-", label=mac[:290])
 
@@ -77,11 +79,11 @@ for key in sorted(db):
     pyplot.legend(loc="best")
     pngname = get_unused_png(key)
     pyplot.savefig(os.path.join(outdir, pngname), dpi=70)
-    print >> htmlout, "<img src='%s'>" % (pngname)
+    print("<img src='%s'>" % (pngname), file=htmlout)
 
 # done
 if not options.quiet:
-    print outdir
+    print(outdir)
 
 # open index.html
 if options.browse:
