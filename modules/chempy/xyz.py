@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -63,13 +63,13 @@ generics =  {
 }
 
 class XYZ(Storage):
-    
+
 #------------------------------------------------------------------------------
     def toList(self,model,mapping=None):
 
         conn = copy.deepcopy(model)
         conn = conn.convert_to_connected()
-        
+
         list = []
 
         if len(model.atom):
@@ -107,4 +107,3 @@ class XYZ(Storage):
         for a in list[1:]:
             model.atom[c].coord = [ float(a[11:23]),float(a[23:35]),float(a[35:47])]
             c = c + 1
-

@@ -17,17 +17,17 @@ class Density(Wizard):
 
         self.cmd = _self
         self.cmd.unpick()
-        
+
         Wizard.__init__(self,_self)
-        
+
         # mode selection subsystem
-        
+
         self.radius = default_radius
         self.map = copy.deepcopy(default_map)
         self.level = copy.deepcopy(default_level)
         self.track = copy.deepcopy(default_track)
         self.avail_maps = []
-        
+
         self.menu['radius'] = [
                                       [1, '4.0 A Radius','cmd.get_wizard().set_radius(4)'],
                                       [1, '5.0 A Radius','cmd.get_wizard().set_radius(5)'],
@@ -38,7 +38,7 @@ class Density(Wizard):
                                       [1, '20.0 A Radius','cmd.get_wizard().set_radius(20)'],
                                       [1, '50.0 A Radius','cmd.get_wizard().set_radius(50)'],
                                       ]
-                                        
+
         self.menu['map0'] = []
         self.menu['map1'] = []
         self.menu['map2'] = []
@@ -49,11 +49,11 @@ class Density(Wizard):
                                         [1, '3.0 sigma','cmd.get_wizard().set_level(%d,3.0)'%x],
                                         [1, '5.0 sigma','cmd.get_wizard().set_level(%d,5.0)'%x],
                                         [1, '-3.0 sigma','cmd.get_wizard().set_level(%d,-3.0)'%x]]
-        
+
         self.menu['level0'] = level_menu(0)
         self.menu['level1'] = level_menu(1)
         self.menu['level2'] = level_menu(2)
-        
+
         self.menu['track'] = [
         [ 1, "Track & Zoom", 'cmd.get_wizard().set_track(0)'],
         [ 1, "Track & Center", 'cmd.get_wizard().set_track(1)'],
@@ -69,12 +69,12 @@ class Density(Wizard):
         self.update_map_menus()
 
         self.cmd.set_key('pgup',lambda c=cmd:c.get_wizard().next_res(d=-1))
-        self.cmd.set_key('pgdn',lambda c=cmd:c.get_wizard().next_res())      
-        
+        self.cmd.set_key('pgdn',lambda c=cmd:c.get_wizard().next_res())
+
     def update_map_menus(self):
 
         self.avail_maps = []
-        
+
         for a in self.cmd.get_names('objects'):
             if self.cmd.get_type(a)=='object:map':
                 self.avail_maps.append(a)
@@ -92,7 +92,7 @@ class Density(Wizard):
     def set_track(self,track):
         self.track = track
         self.cmd.refresh_wizard()
-        
+
     def set_level(self,map,level):
         self.level[map] = level
         self.update_maps()
@@ -113,7 +113,7 @@ class Density(Wizard):
             sele_name = "center"
         if 1:
             save = self.cmd.get_setting_text('auto_zoom')
-            self.cmd.set('auto_zoom',0,quiet=1)                     
+            self.cmd.set('auto_zoom',0,quiet=1)
             c = 0
             for a in self.map:
                 oname = 'w'+str(c+1)+'_'+a
@@ -133,7 +133,7 @@ class Density(Wizard):
                         else:
                             self.cmd.color('magenta',oname)
                 c = c + 1
-            save = self.cmd.set('auto_zoom',save,quiet=1)            
+            save = self.cmd.set('auto_zoom',save,quiet=1)
             if self.track==0:
                 if zoom:
                     self.cmd.zoom(sele_name,self.radius,animate=0.67)
@@ -143,7 +143,7 @@ class Density(Wizard):
             elif self.track==2:
                 if zoom:
                     self.cmd.origin(sele_name)
-        self.cmd.refresh_wizard()      
+        self.cmd.refresh_wizard()
 # generic set routines
 
     def zoom(self):
@@ -158,13 +158,13 @@ class Density(Wizard):
                         self.cmd.zoom(oname,animate=0.67)
 
                 c = c + 1
-                
+
     def get_panel(self):
         self.update_map_menus()
         return [
             [ 1, 'Density Map Wizard',''],
             [ 2, 'Update Maps' , 'cmd.get_wizard().update_maps()'],
-            [ 2, 'Zoom' , 'cmd.get_wizard().zoom()'],         
+            [ 2, 'Zoom' , 'cmd.get_wizard().zoom()'],
             [ 2, 'Next Res. (PgDown)' , 'cmd.get_wizard().next_res()'],
             [ 2, 'Previous Res. (PgUp)' , 'cmd.get_wizard().next_res(d=-1)'],
             [ 3, "Radius: %3.1f A"%self.radius,'radius'],
@@ -187,7 +187,7 @@ class Density(Wizard):
         self.clear()
         self.cmd.set_key('pgup',None)
         self.cmd.set_key('pgdn',None)
-        
+
     def clear(self):
         pass
 
@@ -207,7 +207,7 @@ class Density(Wizard):
 
     def get_event_mask(self):
         return Wizard.event_mask_pick + Wizard.event_mask_select + Wizard.event_mask_position
-    
+
     def do_position(self):
         if '_dw' not in cmd.get_names("selections"):
             self.update_maps(zoom=0)
@@ -250,7 +250,7 @@ class Density(Wizard):
                 else:
                     n = self.cmd.select('_dw2', ''+obj+'/'+a0.segi+'/'+a0.chain+'/'+resids[next_i]+'/'+atn)
             if (n > 0):
-                self.cmd.hide("labels", "?_dw") 
+                self.cmd.hide("labels", "?_dw")
                 self.cmd.select('dw_resi', 'byres _dw2')
                 self.cmd.disable('dw_resi')
                 self.cmd.label('(_dw2)', '"  %s %s/%s/" % (resn,chain,resi)')

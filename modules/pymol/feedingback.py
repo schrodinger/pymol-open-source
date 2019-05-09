@@ -74,7 +74,7 @@ EXAMPLES
     feedback enable, main, blather
 
     '''
-    
+
     r = None
 
     # validate action

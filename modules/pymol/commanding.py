@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ if True:
     from . import parsing
     cmd = sys.modules["pymol.cmd"]
     import pymol
-    
+
     from .cmd import _cmd, Shortcut, QuietException, \
           fb_module, fb_mask, is_list, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, is_string
@@ -92,7 +92,7 @@ SEE ALSO
         def write(self, s):
             s = re_fetch.sub(self._append_async0, s)
             file.write(self, s.encode())
- 
+
     def log_open(filename='log.pml', mode='w', _self=cmd):
         '''
 DESCRIPTION
@@ -207,7 +207,7 @@ SEE ALSO
     log, log_open
     
         '''
-        pymol=_self._pymol        
+        pymol=_self._pymol
         cmd=_self
         if hasattr(pymol,"_log_file"):
             if pymol._log_file!=None:
@@ -217,7 +217,7 @@ SEE ALSO
                 if _self._feedback(fb_module.cmd,fb_mask.details): # redundant
                     print(" Cmd: log closed.")
 
-    def cls(_self=cmd): 
+    def cls(_self=cmd):
         '''
 DESCRIPTION
 
@@ -343,7 +343,7 @@ USAGE
         'original_settings' : 3,
         'purge_defaults' : 4,
     }
-    
+
     reinit_sc = Shortcut(reinit_code.keys())
 
     def reinitialize(what='everything', object='', _self=cmd):
@@ -400,7 +400,7 @@ SEE ALSO
                 del e
                 if (timeout>=0.0) and ((time.time()-now)>timeout):
                     break
-        if _cmd.wait_deferred(_self._COb): 
+        if _cmd.wait_deferred(_self._COb):
             # deferred tasks waiting for a display event?
             if thread.get_ident() == pymol.glutThread:
                 _self.refresh()
@@ -423,7 +423,7 @@ SEE ALSO
             del e
             if (timeout>=0.0) and ((time.time()-now)>timeout):
                 break
-                    
+
     def do(commands,log=1,echo=1,flush=0,_self=cmd):
         # WARNING: don't call this routine if you already have the API lock
         # use cmd._do instead
@@ -543,15 +543,15 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.delete(_self._COb,str(name))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException      
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def extend(name, function=None, _self=cmd):
-        
+
         '''
 DESCRIPTION
 
@@ -622,7 +622,7 @@ EXAMPLE
             return func
         return wrapper
 
-    def alias(name, command, _self=cmd): 
+    def alias(name, command, _self=cmd):
         '''
 DESCRIPTION
 
@@ -654,7 +654,7 @@ SEE ALSO
 
     cmd.extend, api
             '''
-        _self.keyword[name] = [eval("lambda :do('''%s ''')"%command.replace("'''","")), 
+        _self.keyword[name] = [eval("lambda :do('''%s ''')"%command.replace("'''","")),
                                0,0,',',parsing.STRICT]
         _self.kwhash.append(name)
 

@@ -12,7 +12,7 @@ redo_object = "_w_cleanup_redo"
 
 def auto_configure():
     result = -1
-    
+
     global SZYBKI_EXE
     OE_DIR = os.environ.get("OE_DIR",None)
     if OE_DIR == None:
@@ -30,7 +30,7 @@ def auto_configure():
             SZYBKI_EXE = os.path.join(OE_DIR,"arch/microsoft-win32-i586/bin/szybki-1.0b7.exe")
             if os.path.exists(SZYBKI_EXE):
                  result = 1
-	
+
     return result
 
 class Cleanup(Wizard):
@@ -38,7 +38,7 @@ class Cleanup(Wizard):
     def update_menus(self):
         ligand = [ [2, 'Ligand', '']]
         target = [ [2, 'Target', ''], [1, '(none)',' cmd.get_wizard().set_target("(none)")' ]]
-        
+
         for a in self.cmd.get_names("public_objects"):
             ligand.append([1, a, 'cmd.get_wizard().set_ligand("'+a+'")'])
             if a!=self.ligand:
@@ -52,7 +52,7 @@ class Cleanup(Wizard):
         if auto_configure() < 1:
             raise pymol.CmdException('cannot find "szybki" executable, please '
                     'set OE_DIR environment variable')
-        
+
         self.ligand = ""
         for a in self.cmd.get_names("public_objects",1):
             if self.cmd.count_atoms(a) < 1000:
@@ -74,7 +74,7 @@ class Cleanup(Wizard):
             if self.ligand in self.cmd.get_names("objects"):
                 self.cmd.delete(redo_object)
                 self.cmd.set_name(self.ligand,redo_object)
-                self.cmd.disable(redo_object)            
+                self.cmd.disable(redo_object)
             self.cmd.create(self.ligand,undo_object,zoom=0)
 
     def redo(self):
@@ -84,13 +84,13 @@ class Cleanup(Wizard):
                 self.cmd.set_name(self.ligand,undo_object)
                 self.cmd.disable(undo_object)
             self.cmd.create(self.ligand,redo_object,zoom=0)
-        
+
     def run(self):
         exe = SZYBKI_EXE
         inp = "ligand_inp.mol"
         out = "ligand_out.mol"
         tmp_obj = "_cleanup_tmp_obj"
-        
+
         if self.ligand in self.cmd.get_names("objects"):
             self.save_undo()
             if os.path.exists(inp): os.unlink(inp)
@@ -114,15 +114,15 @@ class Cleanup(Wizard):
             self.cmd.delete(tmp_obj)
             self.cmd.sculpt_deactivate(self.ligand)
             self.cmd.sculpt_purge()
-            
+
     def set_target(self,target):
         self.target = target
         self.cmd.refresh_wizard()
-        
+
     def set_ligand(self,ligand):
         self.ligand = ligand
         self.cmd.refresh_wizard()
-        
+
     def get_panel(self):
         return [
             [ 1, 'Cleanup',''],
@@ -132,23 +132,23 @@ class Cleanup(Wizard):
             [ 2, "Redo", 'cmd.get_wizard().redo()' ],
             [ 3, "\\999Ligand:\\000 "+self.ligand,'ligand'],
 #         [ 3, "\\999Target:\\000 "+self.target,'target'],
-            [ 2, 'Refresh','cmd.get_wizard().update()'],         
+            [ 2, 'Refresh','cmd.get_wizard().update()'],
             [ 2, 'Done','cmd.set_wizard()'],
             ]
 
     def update(self):
         self.update_menus()
         self.cmd.refresh_wizard()
-        
+
     def cleanup(self):
         self.clear()
         self.cmd.delete(undo_object)
         self.cmd.delete(redo_object)
-        
+
     def clear(self):
         self.cmd.unpick()
         self.cmd.refresh_wizard()
-        
+
     def get_prompt(self):
         self.prompt = []
         if self.ligand=="":
@@ -156,7 +156,7 @@ class Cleanup(Wizard):
         if self.message!=None:
             self.prompt.append(self.message)
         return self.prompt
-    
+
     def set_status(self,status):
         self.status = status
         self.cmd.refresh_wizard()

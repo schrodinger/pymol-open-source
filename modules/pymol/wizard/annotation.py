@@ -8,16 +8,16 @@ class Annotation(Wizard):
 
     def get_event_mask(self):
         return Wizard.event_mask_scene+Wizard.event_mask_state+Wizard.event_mask_frame
-    
+
     def do_scene(self):
         self.cmd.dirty_wizard()
-        
+
     def do_frame(self,frame):
         self.cmd.dirty_wizard()
 
     def do_state(self,state):
         self.cmd.dirty_wizard()
-            
+
     def get_prompt(self):
         prompt = []
         pymol = self.cmd._pymol
@@ -44,7 +44,7 @@ from chempy.sdf import SDF
 def load_annotated_sdf(filename, object=None, state=1, discrete=1, _self=cmd):
     pymol=_self._pymol
     cmd=_self
-    
+
     # get object name from file prefix
 
     if object==None:
@@ -66,7 +66,7 @@ def load_annotated_sdf(filename, object=None, state=1, discrete=1, _self=cmd):
 
     while 1:
 
-        # get next record 
+        # get next record
 
         sdf_rec = inp_sdf.read()
 
@@ -95,7 +95,7 @@ def load_annotated_sdf(filename, object=None, state=1, discrete=1, _self=cmd):
                     ' '.join(map(str.strip, sdf_rec.data[key]))))
         state_dict[state] = anno_list
 
-        # increment the state index 
+        # increment the state index
 
         state = state + 1
 

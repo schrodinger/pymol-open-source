@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -22,12 +22,12 @@ if True:
         from .cmd import _cmd, QuietException, is_string, \
              boolean_dict, boolean_sc, \
              DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
-             location_code, location_sc 
+             location_code, location_sc
         import pymol
     except:
         from shortcut import Shortcut
         cmd = None
-    
+
 
     button_code = {
         'left' : 0,
@@ -84,7 +84,7 @@ if True:
         'pktb' : 24 ,
         'slab' : 25 ,
         'movs' : 26 ,
-        
+
         'pk1'  : 27 ,
         'mova' : 28 ,
         'menu' : 29 ,
@@ -111,7 +111,7 @@ if True:
         'mvvz' : 47 ,
 
         # 48 for internal use only
-        
+
         'drgo' : 49 ,
 
         'imsz' : 50 ,
@@ -122,21 +122,21 @@ if True:
         'movl' : 55 ,
         'mvzl' : 56
         }
-    
+
     but_act_sc = Shortcut(but_act_code.keys())
 
     ring_dict = {
         'maestro' : [ 'three_button_maestro' ],
-        
+
         'three_button' : [ 'three_button_viewing',
                            'three_button_editing',
                          ], # LEGACY
-                        
+
         'three_button_viewing' : [ 'three_button_viewing',
                                    'three_button_editing',
                                  ],
-                                   
-        'three_button_editing' : [ 'three_button_editing', 
+
+        'three_button_editing' : [ 'three_button_editing',
                                    'three_button_viewing',
                                  ],
 
@@ -144,7 +144,7 @@ if True:
                          'two_button_selecting',
                        ],
 
-        'two_button_viewing' : [ 'two_button_viewing', 
+        'two_button_viewing' : [ 'two_button_viewing',
                                  'two_button_selecting',
                                ],
 
@@ -206,7 +206,7 @@ SEE ALSO
 
     mode_name_dict = {
         'three_button_lights'  : '3-Button Lights',
-        'three_button_maestro' : '3-Button Maestro',        
+        'three_button_maestro' : '3-Button Maestro',
         'three_button_viewing' : '3-Button Viewing',
         'three_button_editing' : '3-Button Editing',
         'three_button_motions' : '3-Button Motions',
@@ -222,13 +222,13 @@ SEE ALSO
         'three_button_viewing',
         'three_button_editing',
         'three_button_motions',
-        'three_button_maestro' ,        
+        'three_button_maestro' ,
         'two_button_viewing' ,
         'two_button_selecting' ,
         'two_button_editing',
         'two_button_lights',
-        'one_button_viewing' , 
-        'default' , 
+        'one_button_viewing' ,
+        'default' ,
         # okay to append new mode name, but don't insert: order & position matter
         ]
 
@@ -239,10 +239,10 @@ SEE ALSO
           ('r','none','movz'),
           ('l','shft','rotl'),
           ('m','shft','movl'),
-          ('r','shft','mvzl') ,                 
+          ('r','shft','mvzl') ,
           ('l','ctrl','none'),
           ('m','ctrl','none'),
-          ('r','ctrl','none'),                  
+          ('r','ctrl','none'),
           ('l','ctsh','none'),
           ('m','ctsh','none'),
           ('r','ctsh','none'),
@@ -267,10 +267,10 @@ SEE ALSO
           ('r','none','movz'),
           ('l','shft','rotl'),
           ('m','shft','none'),
-          ('r','shft','mvzl'),                 
+          ('r','shft','mvzl'),
           ('l','ctrl','movl'),
           ('m','ctrl','none'),
-          ('r','ctrl','none'),                 
+          ('r','ctrl','none'),
           ('l','ctsh','none'),
           ('m','ctsh','none'),
           ('r','ctsh','cent'),
@@ -282,7 +282,7 @@ SEE ALSO
           ('w','ctrl','none'),
           ('w','ctsh','none'),
           ('double_left','none','menu'),
-          ('double_middle','none','none'),                               
+          ('double_middle','none','none'),
           ('double_right','none','cent'),
           ('single_left','none','none'),
           ('single_middle','none','none'),
@@ -295,10 +295,10 @@ SEE ALSO
           ('r','none','move'),
           ('l','shft','+Box'),
           ('m','shft','-Box'),
-          ('r','shft','clip'),                 
+          ('r','shft','clip'),
           ('l','ctrl','+/-'),
           ('m','ctrl','irtz'),
-          ('r','ctrl','pk1'),                 
+          ('r','ctrl','pk1'),
           ('l','ctsh','Sele'),
           ('m','ctsh','orig'),
           ('r','ctsh','clip'),
@@ -324,10 +324,10 @@ SEE ALSO
           ('r','none','movz'),
           ('l','shft','+Box'),
           ('m','shft','-Box'),
-          ('r','shft','clip'),                 
+          ('r','shft','clip'),
           ('l','ctrl','move'),
           ('m','ctrl','pkat'),
-          ('r','ctrl','pk1'),                 
+          ('r','ctrl','pk1'),
           ('l','ctsh','Sele'),
           ('m','ctsh','orig'),
           ('r','ctsh','clip'),
@@ -353,10 +353,10 @@ SEE ALSO
           ('r','none','movz'),
           ('l','shft','roto'),
           ('m','shft','movo'),
-          ('r','shft','mvoz') ,                 
+          ('r','shft','mvoz') ,
           ('l','ctrl','torf'),
           ('m','ctrl','+/-'),
-          ('r','ctrl','pktb'),                  
+          ('r','ctrl','pktb'),
           ('l','ctsh','mova'),
           ('m','ctsh','orig'),
           ('r','ctsh','clip'),
@@ -382,10 +382,10 @@ SEE ALSO
           ('r','none','movz'),
           ('l','shft','rotv'),
           ('m','shft','movv'),
-          ('r','shft','mvvz') ,                 
+          ('r','shft','mvvz') ,
           ('l','ctrl','torf'),
           ('m','ctrl','pkat'),
-          ('r','ctrl','pktb'),                  
+          ('r','ctrl','pktb'),
           ('l','ctsh','mova'),
           ('m','ctsh','orig'),
           ('r','ctsh','clip'),
@@ -412,10 +412,10 @@ SEE ALSO
           ('r','none','movz'),
           ('l','shft','pk1'),
           ('m','shft','none'),
-          ('r','shft','clip'),                 
+          ('r','shft','clip'),
           ('l','ctrl','move'),
           ('m','ctrl','none'),
-          ('r','ctrl','pkat'),                 
+          ('r','ctrl','pkat'),
           ('l','ctsh','sele'),
           ('m','ctsh','none'),
           ('r','ctsh','cent'),
@@ -427,7 +427,7 @@ SEE ALSO
           ('w','ctrl','none'),
           ('w','ctsh','none'),
           ('double_left','none','menu'),
-          ('double_middle','none','none'),                               
+          ('double_middle','none','none'),
           ('double_right','none','cent'),
           ('single_left','none','pkat'),
           ('single_middle','none','none'),
@@ -440,10 +440,10 @@ SEE ALSO
           ('r','none','movz'),
           ('l','shft','+Box'),
           ('m','shft','none'),
-          ('r','shft','-Box'),                 
+          ('r','shft','-Box'),
           ('l','ctrl','+/-'),
           ('m','ctrl','none'),
-          ('r','ctrl','pkat'),                 
+          ('r','ctrl','pkat'),
           ('l','ctsh','sele'),
           ('m','ctsh','none'),
           ('r','ctsh','cent'),
@@ -456,7 +456,7 @@ SEE ALSO
           ('w','ctsh','none'),
           ('double_left','none','menu'),
           ('double_left','none','menu'),
-          ('double_middle','none','none'),                               
+          ('double_middle','none','none'),
           ('double_right','none','cent'),
           ('single_left','none','+/-'),
           ('single_right','none', 'menu'),
@@ -468,10 +468,10 @@ SEE ALSO
           ('r','none','movz'),
           ('l','shft','pkat'),
           ('m','shft','none'),
-          ('r','shft','clip'),                 
+          ('r','shft','clip'),
           ('l','ctrl','torf'),
           ('m','ctrl','none'),
-          ('r','ctrl','pktb'),                 
+          ('r','ctrl','pktb'),
           ('l','ctsh','rotf'),
           ('m','ctsh','none'),
           ('r','ctsh','movf'),
@@ -483,11 +483,11 @@ SEE ALSO
           ('w','ctrl','none'),
           ('w','ctsh','none'),
           ('double_left','none','menu'),
-          ('double_middle','none','none'),                               
+          ('double_middle','none','none'),
           ('double_right','none','cent'),
           ('single_left','none','pkat'),
-          ('single_middle','none','none'),                               
-          ('single_right','none','menu'),                               
+          ('single_middle','none','none'),
+          ('single_right','none','menu'),
           ('single_left','alt', 'cent'),
           ],
          'one_button_viewing' :
@@ -527,7 +527,7 @@ SEE ALSO
           ('single_right','none', 'none'),
           ('single_left','shft','none'),
           ('single_left','ctrl','menu'),
-          ('single_left','ctsh','pkat'), 
+          ('single_left','ctsh','pkat'),
           ('single_left','alt', 'cent'),
           ('single_left','alsh','none'),
           ('single_left','ctal','none'),
@@ -604,7 +604,7 @@ SEE ALSO
             r = _cmd.order(_self._COb,str(names),int(sort),int(location))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def mouse(action=None, quiet=1, _self=cmd):# INTERNAL
@@ -645,7 +645,7 @@ USAGE
                 sm = sm - 1
                 if sm<0: sm = 6
                 _self.set("mouse_selection_mode",sm,quiet=1)
-            
+
             mode_list = None
             if action==None:
                 bm = _self.get_setting_int("button_mode")
@@ -658,7 +658,7 @@ USAGE
                     bm = (-1-bm) % len(mode_name_list)
                     mode = mode_name_list[bm]
                     _self.set("button_mode_name",mode_name_dict.get(mode,mode))
-                    mode_list = mode_dict[mode]                    
+                    mode_list = mode_dict[mode]
             elif action in mouse_ring:
                 mode = action
                 _self.set("button_mode_name",mode_name_dict.get(mode,mode))
@@ -682,10 +682,10 @@ USAGE
             r = DEFAULT_SUCCESS
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                     
+        if _self._raising(r,_self): raise pymol.CmdException
         _self.refresh_wizard() # refresh mouse config in GUI
         return r
-            
+
 
     def edit_mode(active=1,quiet=1,_self=cmd):
         '''
@@ -711,13 +711,13 @@ DESCRIPTION
                         mouse(action='three_button_editing',quiet=quiet,_self=_self)
             else:
                 if mouse_mode[0:10]=='two_button':
-                    if mouse_mode!='two_button_viewing':               
+                    if mouse_mode!='two_button_viewing':
                         mouse(action='two_button_viewing',quiet=quiet,_self=_self)
                 elif mouse_mode[0:12] == 'three_button':
                     if mouse_mode!='three_button_viewing':
                         mouse(action='three_button_viewing',quiet=quiet,_self=_self)
         return DEFAULT_SUCCESS
-    
+
     def set_key(key,fn=None,arg=(),kw={},_self=cmd):
         '''
 DESCRIPTION
@@ -866,7 +866,7 @@ SEE ALSO
             r = _cmd.button(_self._COb,but_code,act_code)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
@@ -896,11 +896,11 @@ SEE ALSO
         selection = selector.process(selection)
         #
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.mask(_self._COb,"("+str(selection)+")",1,int(quiet))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def unmask(selection="(all)",quiet=1,_self=cmd):
@@ -924,12 +924,11 @@ SEE ALSO
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
-        #   
+        #
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.mask(_self._COb,"("+str(selection)+")",0,int(quiet))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
-

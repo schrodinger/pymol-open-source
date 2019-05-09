@@ -4,11 +4,11 @@
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 

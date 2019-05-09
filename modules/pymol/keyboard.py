@@ -33,7 +33,7 @@ class _PersistentEditing:
         if self._init == 0:
             self._obj = self._cmd.get_unused_name("_persistent_obj")
             self._init = 1
-        
+
     def set_sel(self,sel):
         self._sel = sel
 
@@ -117,7 +117,7 @@ def editing_ring(action, space=_persistent, self_cmd=cmd):
 
             # copying or pasting; enable that object
             # and create the duplicate
-            
+
             self_cmd.enable(space._obj)
 
             self_cmd.copy(self_cmd.get_unused_name("obj"),space._obj,zoom=0)
@@ -128,7 +128,7 @@ def editing_ring(action, space=_persistent, self_cmd=cmd):
 
         finally:
             self_cmd.set("suspend_updates", 0)
-            
+
 
 #
 # collapse down to one function in a switch
@@ -150,7 +150,7 @@ def invert_active_selection(self_cmd=cmd):
     sel = get_active_selection_name(self_cmd)
     if sel:
         self_cmd.select(sel, 'not %s' % sel)
-    
+
 def get_active_selection_name(self_cmd=cmd):
     # find the name of the active selection
 

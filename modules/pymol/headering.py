@@ -64,7 +64,7 @@ class baseHeader:
                 print("Error: Please provide the setting 'default_%s_names' a comma separated string" % (prg))
                 print("       with the values for 2FoFc and FoFc, amplitude and phase names, respectively.")
                 return [None]*3
-                        
+
 
             # defaultF =~ "FWT", "2FOFCFWT", "2FOFCWT_no_fill", "2FOFCWT", "DELFWT", "FOFCWT", ..
             for curFCol in fC:
@@ -75,7 +75,7 @@ class baseHeader:
 
                     ## print "curFCol = %s" % curFCol
                     ## print "curPCol = %s" % curPCol
-                    
+
                     if curPCol in pC:
                         # found perfectly matching columns
                         looksLike = prg
@@ -83,8 +83,8 @@ class baseHeader:
                         PCol = curPCol
                         return (FCol, PCol, looksLike)
         return [None]*3
-                            
-        
+
+
 
 class CNSHeader(baseHeader):
     """
@@ -94,7 +94,7 @@ class CNSHeader(baseHeader):
         ## print "CNSHeader cstr"
         baseHeader.__init__(self,filename)
         self.parseFile()
-    
+
 class CIFHeader(baseHeader):
     """
     mmCIF
@@ -111,7 +111,7 @@ class CIFHeader(baseHeader):
                 inFile.close()
 
                 in_loop = False
-                
+
                 curLine = data.pop(0)
                 while curLine!=None:
                     if in_loop:
@@ -225,7 +225,7 @@ class MTZHeader(baseHeader):
     def getColumnsOfType(self,colType):
         self.format_cols(colType)
         return baseHeader.getColumns(self)
-        
+
     def get_byteorder(self):
         f = open(self.filename, 'rb')
         f.seek(8)
@@ -260,7 +260,7 @@ class MTZHeader(baseHeader):
         elif i==4:
             self.byteorder_int = "<"
             self.wordsize = 4
-        
+
     def parseFile(self):
         import shlex
 
@@ -291,7 +291,7 @@ class MTZHeader(baseHeader):
                 bAdjust = author_word_size * host_word_size
             else:
                 bAdjust = host_word_size
-                
+
             header_start  = (header_start-1) * (bAdjust)
 
             if file_len<header_start:
@@ -303,11 +303,11 @@ class MTZHeader(baseHeader):
 
             curLine = struct.unpack("80s", f.read(80))[0]
             curLine = str(curLine.decode())
-            
+
             while not (curLine.startswith("END")):
                 # yank field identifier
                 (field, tokens) = curLine.split(" ",1)
-                
+
                 H = MTZHeader.HEADER_KEYWORDS
                 try:
                     if field.startswith(H["VERS"]):
@@ -351,7 +351,7 @@ class MTZHeader(baseHeader):
                         if i not in self.datasets:
                             self.datasets[i] = {}
                             self.datasets[i]["cols"]  = {}
-                            
+
                         self.datasets[i]["cols"][lab] = {}
                         self.datasets[i]["cols"][lab]["type"] = typ
                         self.datasets[i]["cols"][lab]["min"]  = m
@@ -367,7 +367,7 @@ class MTZHeader(baseHeader):
                     elif field.startswith(H["CRYSTAL"]):
                         # can have multiple crystals per dataset?
                         # if, so not supported (overwritten) here.
-                        (i,cryst) = tokens.split(None, 1) 
+                        (i,cryst) = tokens.split(None, 1)
                         if i not in self.datasets:
                             self.datasets[i] = {}
                         self.datasets[i]["crystal"] = cryst.strip()

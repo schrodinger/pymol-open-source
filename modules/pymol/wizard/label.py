@@ -48,7 +48,7 @@ class Label(Wizard):
     def set_mode(self, i):
         self.mode = i
         self.cmd.refresh_wizard()
-        
+
     def get_prompt(self):
         self.prompt = []
         if (not self.messages):
@@ -99,4 +99,3 @@ class Label(Wizard):
         self.cmd.label('first ?' + sele, label)
         self.cmd.deselect()
         self.cmd.refresh_wizard()
-

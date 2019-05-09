@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -118,19 +118,19 @@ if True:
     import glob
     import sys
     import traceback
-    
+
     pymolrc_pat1 = '.pymolrc*'
     pymolrc_pat2 = 'pymolrc*'
-    
+
     ros_pat = 'run_on_startup*'
-    
+
     class generic:
         pass
 
     global_options = generic();
 
     options = global_options
-    
+
     options.deferred = []
     options.no_gui = 0
     options.internal_gui = 1
@@ -145,7 +145,7 @@ if True:
     options.win_x = 640
     options.win_y = 480
     options.win_xy_set = False
-    options.win_px = 4 
+    options.win_px = 4
     options.sigint_handler = 1 # terminate on Ctrl-C?
     options.reuse_helper = 0
     options.auto_reinitialize = 0
@@ -184,7 +184,7 @@ if True:
     options.rpcServer = 0
     # end
     options.security = 1
-    
+
     script_re = re.compile(r"pymolrc$|\.pml$|\.PML$|\.p1m$|\.P1M$")
     py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
 
@@ -230,7 +230,7 @@ if True:
             if py_re.search(a):
                 first.append(a) # preceeding "_ " cloaks
             elif script_re.search(a):
-                second.append(a) # preceeding "_ " cloaks 
+                second.append(a) # preceeding "_ " cloaks
 
         first.sort()
         second.sort()
@@ -298,7 +298,7 @@ if True:
                 if ("A" in a) or ("a" in a): # application configuration
                     new_args = []
                     # ====== mode 1 - simple viewer window ======
-                    if a[2:3] == "1": 
+                    if a[2:3] == "1":
                         if 'A1' not in once_dict:
                             once_dict['A1'] = 1
                             new_args = ["-qxiF",
@@ -307,7 +307,7 @@ if True:
                                 ]
                     # ====== mode 2 - not available -- clashes with -2 =======
                     # ====== mode 3 - internal GUI only no splash ======
-                    if a[2:3] == "3": 
+                    if a[2:3] == "3":
                         if 'A3' not in once_dict:
                             once_dict['A3'] = 1
                             new_args = ["-qx",
@@ -323,7 +323,7 @@ if True:
                                 "-Y","100",
                                 ]
                     # ====== mode 5 - mode 5 helper application ======
-                    if a[2:3] == "5": 
+                    if a[2:3] == "5":
                         if 'A5' not in once_dict:
                             once_dict['A5'] = 1
                             new_args = ["-QxiICUF",
@@ -331,7 +331,7 @@ if True:
                                 "-Y","100",
                                 ]
                     # ====== mode 6 - mode 6 presentation (no GUI) ======
-                    if a[2:3] == "6": 
+                    if a[2:3] == "6":
                         if 'A6' not in once_dict:
                             once_dict['A6'] = 1
                             new_args = ["-qxieICUPF",
@@ -356,7 +356,7 @@ if True:
                 if "E" in a:
                     options.multisample = int(av.pop())
                 if "P" in a:
-                    options.presentation = 1 
+                    options.presentation = 1
                 if "W" in a:
                     options.win_x = int(av.pop())
                     options.win_xy_set = True
@@ -381,7 +381,7 @@ if True:
                     options.incentive_product = 1
                 if "t" in a: # type of stereo to use
                     options.stereo_mode = int(av.pop())
-                if "T" in a: # what skin to use? 
+                if "T" in a: # what skin to use?
                     options.skin = str(av.pop())
                 if "w" in a: # what gui to use
                     options.gui = str(av.pop())
@@ -404,8 +404,8 @@ if True:
                                 options.win_py = 216
                         else:
                             options.external_gui = 2
-                            options.win_py = 184 
-                    
+                            options.win_py = 184
+
                     if "e" in a:
                         options.full_screen = 1
                     if "G" in a: # Game mode (reqd for Mac stereo)
@@ -416,7 +416,7 @@ if True:
                         options.force_stereo = 1
                         if options.stereo_mode == 0:
                             options.stereo_mode = 1  # quadbuffer
-                        if sys.platform=='darwin': 
+                        if sys.platform=='darwin':
                             options.deferred.append(
                               "_do__ set stereo_double_pump_mono,1,quiet=1")
                     if "M" in a: # Force mono on stereo hardware (all)
@@ -470,7 +470,7 @@ if True:
                             options.deferred.append("_do__ cmd.get_wizard().ray_trace1()")
                         if a[2:]=='2':
                             options.deferred.append("_do__ cmd.get_wizard().ray_trace2()")
-                        
+
                     if "p" in a:
                         options.read_stdin = 1
                     if "K" in a:
@@ -495,7 +495,7 @@ if True:
             elif not restricted:
                 suffix = a[-4:].lower().split('.')[-1]
                 if suffix == "p5m":
-                    # mode 5 helper application 
+                    # mode 5 helper application
                     av.append("-A5")
                 elif suffix == "psw":
                     # presentation mode

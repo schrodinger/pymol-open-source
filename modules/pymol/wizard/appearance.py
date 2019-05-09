@@ -48,7 +48,7 @@ class Appearance(Wizard):
         8 : ['\\595lime'      , 'lime' ],
         9 : ['\\967pink'  , 'pink' ],
         10 : ['\\559slate' ,  'slate' ],
-        11 : ['\\949violet' , 'violet' ],    
+        11 : ['\\949violet' , 'violet' ],
         12 : ['\\950orange'  , 'orange' ],
         13 : ['\\059marine'   ,  'marine' ],
         14 : ['\\905hotpink' , 'hotpink' ],
@@ -68,7 +68,7 @@ class Appearance(Wizard):
         self.cmd.deselect()
         self.cmd.unpick()
         self.selection_mode = self.cmd.get_setting_int("mouse_selection_mode")
-        self.cmd.set("mouse_selection_mode",0) # set selection mode to atomic      
+        self.cmd.set("mouse_selection_mode",0) # set selection mode to atomic
         self.current_mode = saved_mode
         self.current_what = saved_what
         self.current_scope = saved_scope
@@ -77,11 +77,11 @@ class Appearance(Wizard):
             [2, 'Mode', '' ],
             [1, self.mode_dict[0][0], 'cmd.get_wizard().set_mode(0)' ],
             [1, self.mode_dict[1][0], 'cmd.get_wizard().set_mode(1)' ],
-            [ 0, ''           , '' ],         
+            [ 0, ''           , '' ],
             [1, self.mode_dict[2][0], 'cmd.get_wizard().set_mode(2)' ],
             [1, self.mode_dict[3][0], 'cmd.get_wizard().set_mode(3)' ],
             [1, self.mode_dict[4][0], 'cmd.get_wizard().set_mode(4)' ],
-#         [1, self.mode_dict[5][0], 'cmd.get_wizard().set_mode(4)' ],         
+#         [1, self.mode_dict[5][0], 'cmd.get_wizard().set_mode(4)' ],
             ]
 
         self.menu['what'] = [
@@ -93,7 +93,7 @@ class Appearance(Wizard):
             [1, self.what_dict[5][0], 'cmd.get_wizard().set_what(5)' ],
             [0, '', '' ],
             [1, self.what_dict[6][0], 'cmd.get_wizard().set_what(6)' ],
-            [0, '', '' ],         
+            [0, '', '' ],
             [1, self.what_dict[7][0], 'cmd.get_wizard().set_what(7)' ],
             [1, self.what_dict[8][0], 'cmd.get_wizard().set_what(8)' ],
             [1, self.what_dict[9][0], 'cmd.get_wizard().set_what(9)' ],
@@ -117,7 +117,7 @@ class Appearance(Wizard):
             [1, self.color_dict[11][0], 'cmd.get_wizard().set_color(11)' ],
             [1, self.color_dict[12][0], 'cmd.get_wizard().set_color(12)' ],
             [1, self.color_dict[13][0], 'cmd.get_wizard().set_color(13)' ],
-            [1, self.color_dict[14][0], 'cmd.get_wizard().set_color(14)' ],         
+            [1, self.color_dict[14][0], 'cmd.get_wizard().set_color(14)' ],
             ]
 
         self.menu['scope'] = [
@@ -126,9 +126,9 @@ class Appearance(Wizard):
             [ 1, self.scope_dict[1][0], 'cmd.get_wizard().set_scope(1)' ],
             [ 1, self.scope_dict[2][0], 'cmd.get_wizard().set_scope(2)' ],
             [ 1, self.scope_dict[3][0], 'cmd.get_wizard().set_scope(3)' ],
-            [ 1, self.scope_dict[4][0], 'cmd.get_wizard().set_scope(4)' ],        
+            [ 1, self.scope_dict[4][0], 'cmd.get_wizard().set_scope(4)' ],
             [ 0, ''           , '' ],
-            [ 1, self.scope_dict[5][0], 'cmd.get_wizard().set_scope(5)' ],                 
+            [ 1, self.scope_dict[5][0], 'cmd.get_wizard().set_scope(5)' ],
             ]
 
     def set_scope(self,scope):
@@ -157,7 +157,7 @@ class Appearance(Wizard):
 
     def undo(self):
         print("no undo!")
-        
+
     def get_prompt(self):
         self.prompt = []
         return self.prompt
@@ -176,14 +176,14 @@ class Appearance(Wizard):
         else: # select mode
             panel.append(
                 [ 1, 'Atoms' , '' ])
-            
+
         panel.extend([
                 [ 3, self.scope_dict[self.current_scope][0], 'scope' ],
                 #         [ 2, 'Undo', 'cmd.get_wizard().undo()' ],
                 [ 2, 'Done','cmd.set_wizard()'],
                 ])
         return panel
-            
+
 
     def do_pick(self,bondFlag):
         if self.current_mode in [0,1]: # color
@@ -224,7 +224,7 @@ class Appearance(Wizard):
         return 1
 
     def cleanup(self):
-        self.cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode      
+        self.cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode
         global saved_scope
         saved_scope = self.current_scope
         global saved_mode

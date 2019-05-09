@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ def createlegacypmgapp():
     import pymol.plugins.legacysupport as m
     return m.createlegacypmgapp()
 
-# external gui control 
+# external gui control
 
 def ext_hide(_self=cmd):
     qtwindow = get_qtwindow()
@@ -52,7 +52,7 @@ def ext_hide(_self=cmd):
         pymol._ext_gui.fifo.put('self.root.withdraw()')
     else:
         pass
-    
+
 def ext_show(_self=cmd):
     qtwindow = get_qtwindow()
     if qtwindow is not None:
@@ -90,4 +90,3 @@ def save_image(_self=cmd):
         pymol._ext_gui.fifo.put('self.skin.file_save_png()')
     else:
         pass
-    

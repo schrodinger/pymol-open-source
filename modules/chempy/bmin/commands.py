@@ -29,15 +29,14 @@ def bmin_sync(object,iter=500,grad=0.1,interval=100,
                       solvation=solvation,
                       rest_flag=2,
                       fix_flag=3)
-    
+
 def pmin():
     cmd.delete('min')
     realtime.assign('lig')
     cmd.create('min','(lig|prot)')
     bmin('min')
-    
+
 cmd.extend('bmin',bmin)
 cmd.extend('bmin_sync',bmin_sync)
 cmd.extend('amin',amin)
 cmd.extend('pmin',pmin)
-

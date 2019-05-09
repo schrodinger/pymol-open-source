@@ -1,26 +1,26 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
 if True:
-    
+
     from . import selector
 
     cmd = __import__("sys").modules["pymol.cmd"]
 
     from .cmd import _cmd,Shortcut, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
-    
+
     import pymol
 
     def deselect(_self=cmd):
@@ -41,11 +41,11 @@ PYMOL API
         arg = _self.get_names("selections",enabled_only=1)
         for a in arg:
             _self.disable(a)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
-    
 
-    def select(name, selection="", enable=-1, quiet=1, merge=0, state=0, domain='',_self=cmd): 
+
+    def select(name, selection="", enable=-1, quiet=1, merge=0, state=0, domain='',_self=cmd):
         '''
 DESCRIPTION
 
@@ -86,7 +86,7 @@ SEE ALSO
         try:
             _self.lock(_self)
             if selection=="":
-                selection = name                    
+                selection = name
                 if _self.get_setting_boolean("auto_number_selections"):
                     sel_cnt = _self.get_setting_int("sel_counter") + 1
                     _self.set("sel_counter", sel_cnt)
@@ -97,7 +97,7 @@ SEE ALSO
                 sel_cnt = _self.get_setting_int("sel_counter") + 1
                 _self.set("sel_counter", sel_cnt)
                 name = "sel%02.0f" % sel_cnt
-                
+
             # preprocess selection (note: inside TRY)
             selection = selector.process(selection)
             merge = int(merge)
@@ -114,7 +114,7 @@ SEE ALSO
                 _cmd.onoff(_self._COb,str(name),0,0)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
@@ -158,7 +158,7 @@ PYMOL API
                     r = _cmd.onoff(_self._COb,str(name),0,0)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     id_type_dict = {
@@ -166,9 +166,9 @@ PYMOL API
         'id'    : 1,
         'rank'  : 2,
         }
-    
+
     id_type_sc = Shortcut(id_type_dict.keys())
-    
+
     def select_list(name,object,id_list,state=0,mode='id',quiet=1,_self=cmd):
         '''
 DESCRIPTION
@@ -219,9 +219,9 @@ PYMOL API
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
-        #      
+        #
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.select(_self._COb,"indicate","("+str(selection)+")",1,-1,'')
             if is_error(r):
                 _self.delete("indicate")
@@ -229,7 +229,7 @@ PYMOL API
                 _self.enable("indicate")
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def objsele_state_iter(selection, state=0, _self=cmd):
@@ -250,8 +250,3 @@ DESCRIPTION
                 last = _self.count_states('%' + oname)
             for ostate in range(first, last + 1):
                 yield osele, ostate
-
-
-
-
-

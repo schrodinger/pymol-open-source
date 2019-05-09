@@ -25,7 +25,7 @@ from .importing import \
       read_xplorstr,      \
       fetch,              \
       set_session,        \
-      space              
+      space
 
 #--------------------------------------------------------------------
 from . import creating
@@ -175,7 +175,7 @@ from .exporting import \
       multifilenamegen,   \
       multisave,          \
       png,                \
-      save               
+      save
 
 #--------------------------------------------------------------------
 from . import editing
@@ -247,11 +247,11 @@ from .editing import \
       unpick,             \
       update,             \
       valence,            \
-      vdw_fit 
+      vdw_fit
 
 from .editor import \
       fab
-      
+
 from .computing import \
       clean
 
@@ -291,7 +291,7 @@ from .fitting import \
       intra_rms,         \
       intra_rms_cur,     \
       cealign,          \
-      pair_fit          
+      pair_fit
 
 #--------------------------------------------------------------------
 # ARE ALL OF THESE UNUSED AND/OR DEPRECATED (?)
@@ -336,7 +336,7 @@ from .moving import \
       get_movie_playing, \
       set_frame,         \
       get_state,         \
-      get_frame         
+      get_frame
 
 #--------------------------------------------------------------------
 from . import viewing

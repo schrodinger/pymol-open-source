@@ -18,7 +18,7 @@ class Pair_fit(Wizard):
     def __init__(self,_self=cmd):
 
         Wizard.__init__(self,_self)
-        
+
         self.memory = 0
         self.n_pair = 0
         self.status = 0 # 0 no atoms selections, 1 atom selected
@@ -27,32 +27,32 @@ class Pair_fit(Wizard):
         self.selection_mode = cmd.get_setting_int("mouse_selection_mode")
         cmd.set("mouse_selection_mode",0) # set selection mode to atomic
         cmd.deselect() # disable the active selection (if any)
-        
+
     def get_panel(self):
         return [
             [ 1, 'Pair Fitting',''],
             [ 2, 'Fit %d Pairs'%self.n_pair,'cmd.get_wizard().fit()'],
             [ 2, 'Delete Last Pair','cmd.get_wizard().remove_last()'],
-            [ 2, 'Redraw','cmd.get_wizard().update_dashes()'],         
+            [ 2, 'Redraw','cmd.get_wizard().update_dashes()'],
             [ 2, 'Clear','cmd.get_wizard().clear()'],
             [ 2, 'Done','cmd.set_wizard()'],
             ]
 
     def cleanup(self):
         self.clear()
-        cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode        
-        
+        cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode
+
     def clear(self):
         cmd.delete(sele_prefix+"*")
         cmd.delete(dist_prefix+"*")
-        cmd.delete(indi_sele)        
+        cmd.delete(indi_sele)
         lst = cmd.get_names('selections')
         self.n_pair = 0
         self.status = 0
         self.message = None
         cmd.unpick()
         cmd.refresh_wizard()
-        
+
     def get_prompt(self):
         self.prompt = None
         if self.status==0:
@@ -62,7 +62,7 @@ class Pair_fit(Wizard):
         if self.message!=None:
             self.prompt.append(self.message)
         return self.prompt
-    
+
     def set_status(self,status):
         self.status = status
         cmd.refresh_wizard()
@@ -72,11 +72,11 @@ class Pair_fit(Wizard):
         lst = [x for x in lst if x[0:sele_prefix_len]==sele_prefix]
         lst.sort()
         if mode == 'mobile': # mobile
-            lst=[x for x in lst if x[-1:]=='b'] 
+            lst=[x for x in lst if x[-1:]=='b']
         elif mode == 'target': # target
             lst=[x for x in lst if x[-1:]=='a']
         return lst
-    
+
     def fit(self):
         # build up the pair-wise list of selections
         cmd.delete(dist_prefix+"*")
@@ -97,7 +97,7 @@ class Pair_fit(Wizard):
             self.message = "RMS over %d pairs = %5.3f"%(self.n_pair,dist)
             cmd.refresh_wizard()
         self.update_dashes()
-                                    
+
     def remove_last(self):
         # build up the pair-wise list of selections
         cmd.delete(dist_prefix+"*")
@@ -105,12 +105,12 @@ class Pair_fit(Wizard):
         if len(lst):
             cmd.delete(lst.pop())
             if len(lst):
-                cmd.delete(lst.pop())         
+                cmd.delete(lst.pop())
             self.n_pair = self.n_pair - 1
         self.update_dashes()
         self.status=0
         cmd.refresh_wizard()
-        
+
     def update_dashes(self):
         cmd.delete(dist_prefix+"*")
         lst = self.get_sele_list()
@@ -189,5 +189,5 @@ class Pair_fit(Wizard):
                         self.n_pair = self.n_pair + 1
                         self.status = 0
                         self.update_dashes()
-                
+
         cmd.refresh_wizard()

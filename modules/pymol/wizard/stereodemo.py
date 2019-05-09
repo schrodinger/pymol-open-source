@@ -29,7 +29,7 @@ class Stereodemo(Wizard):
 
     def __init__(self,*arg,**kw):
         _self=kw.get('_self',cmd)
-        Wizard.__init__(self,_self)        
+        Wizard.__init__(self,_self)
         self.message = []
         self.last = None
         cmd.full_screen("off")
@@ -52,14 +52,14 @@ class Stereodemo(Wizard):
         return [
             [ 1, 'Structural Biology', '' ],
             [ 2, 'X-ray Crystallography', 'cmd.get_wizard().launch("roving_density")'],
-            [ 2, 'Electron Tomography', 
+            [ 2, 'Electron Tomography',
 	      'cmd.get_wizard().launch("electomo", "Electron Tomography")'],
-            [ 1, 'Drug Discovery', '' ],	    
-            [ 2, 'Medicinal Chemistry', 
+            [ 1, 'Drug Discovery', '' ],
+            [ 2, 'Medicinal Chemistry',
 	      'cmd.get_wizard().launch("medchem","Medicinal Chemistry")'],
             [ 2, 'Computational Chemistry', 'cmd.get_wizard().launch("electro","Computational Chemistry")'],
-            [ 1, 'Presentation Graphics', '' ],	    
-            [ 2, 'Molecular Animation', 'cmd.get_wizard().launch("animate","Molecular Animation")'],         
+            [ 1, 'Presentation Graphics', '' ],
+            [ 2, 'Molecular Animation', 'cmd.get_wizard().launch("animate","Molecular Animation")'],
             [ 2, 'Multiprocessor Raytracing', 'cmd.get_wizard().launch("ray")'],
 	    [ 1, 'Bioinformatics', ''],
             [ 2, 'Structure Alignments', 'cmd.get_wizard().launch("structure","Structure Alignment")'],
@@ -68,9 +68,9 @@ class Stereodemo(Wizard):
 	    [ 1, 'Science Education', ''],
             [ 2, 'Interactive Modeling', 'cmd.get_wizard().launch("sculpt")'],
             [ 1, 'Configuration', ''],
-	    [ 2, 'Toggle Fullscreen', 
+	    [ 2, 'Toggle Fullscreen',
 	      'cmd.full_screen()'],
-	    [ 2, 'Toggle Stereo 3D', 
+	    [ 2, 'Toggle Stereo 3D',
               'cmd.stereo("off" if cmd.get_setting_int("stereo") else "on")'],
 #            [ 2, 'End Demonstration', 'cmd.get_wizard().launch("finish")' ],
 #            [ 2, 'Swap Left/Right Stereo', 'stereo swap'],
@@ -85,7 +85,7 @@ import threading
 class DemoInfo:
 
     message_dict = {
-        'roving' : [ 
+        'roving' : [
         "Middle-click-and-drag to move...",],
         'roving_density' : [
         "Middle-click-and-drag to move..."],
@@ -204,7 +204,7 @@ class DemoInfo:
                 util.cbac("rep3")
                 util.cbas("rep4")
                 util.cbab("rep5")
-                util.cbaw("rep6")            
+                util.cbaw("rep6")
                 util.cbay("rep8")
 
 
@@ -255,8 +255,8 @@ class DemoInfo:
                 cmd.mstop()
         except:
             traceback.print_exc()
-            
- 
+
+
     def roving(self,cleanup=0):
         if not cleanup:
             cmd.load("$PYMOL_DATA/demo/il2.pdb")
@@ -281,7 +281,7 @@ class DemoInfo:
             cmd.set("roving_detail",0)
             cmd.refresh()
             cmd.delete("rov_*")
-            
+
     def roving_density(self,cleanup=0):
         if not cleanup:
             try:
@@ -302,7 +302,7 @@ class DemoInfo:
                 cmd.set("roving_map1_name","map")
                 cmd.isomesh("rov_m1","map",9999.0,"il2")
                 cmd.color("density","rov_m1")
-                
+
                 cmd.set_view ((\
           0.132852688,   -0.729740858,    0.670686543,\
           -0.228543565,    0.635894477,    0.737154961,\
@@ -325,13 +325,13 @@ class DemoInfo:
             cmd.set("roving_detail",0)
             cmd.delete("rov_*")
             cmd.sync()
-            
+
     def cartoon(self,cleanup=0):
         if not cleanup:
             try:
                 cmd.set("suspend_updates",1,quiet=1)
                 cmd.disable()
-                cmd.delete("1tii")      
+                cmd.delete("1tii")
                 cmd.load("$PYMOL_DATA/demo/1tii.pdb")
                 cmd.hide("(1tii)")
                 cmd.show("cartoon","1tii")
@@ -363,7 +363,7 @@ class DemoInfo:
             cmd.delete("pept")
             cmd.delete("e_pot")
             cmd.delete("e_lvl")
-            
+
     def trans(self,cleanup=0):
         if not cleanup:
             try:
@@ -404,7 +404,7 @@ class DemoInfo:
             cmd.do("ray")
         else:
             cmd.delete("ray")
-            
+
     def finish(self,cleanup=0):
         cmd.do("_ wizard")
 

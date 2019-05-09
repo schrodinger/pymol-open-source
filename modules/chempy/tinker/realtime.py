@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
 #-* Scott Dixon, Metaphorics, LLC
-#-* 
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ def assign(sele,preserve=0):
     global model
 
     result = 1
-    
+
     state = State()
 
     model = cmd.get_model(sele)
@@ -57,7 +57,7 @@ def assign(sele,preserve=0):
     mobj.fromChemPyModel(model)
 
     typed = Typer(molObj = mobj)
-    
+
     print(" realtime: assigning atom types")
     typed.applyRules(ruleSet)
 
@@ -90,10 +90,10 @@ def assign(sele,preserve=0):
 #   param = Parameters("simple_parm.dat")
 
 def setup(sele,preserve=0):
-    
+
     global state
     global model
-    
+
     state = State()
 
     model = cmd.get_model(sele)
@@ -164,7 +164,7 @@ def dyna(steps,iter=1):
 def check(obj='check'):
     global state
     global model
-    
+
     if not state:
         if not model:
             print(" realtime.reload: please run setup first.")
@@ -174,7 +174,7 @@ def check(obj='check'):
         model = state.model
         cmd.load_model(model,obj,1)
 
-    
+
 def mini(total_step=100,gradient=0.001,interval=100,obj='rt'):
 
     global state
@@ -211,10 +211,6 @@ def mini(total_step=100,gradient=0.001,interval=100,obj='rt'):
             for a in state.summary:
                 print(a)
             if state.summary[-1][7]=='SmallGrad':
-                break;         
+                break;
         io.pkl.toFile(model,"realtime.pkl")
         print(" realtime.mini: terminated after %d steps." % state.counter)
-
-
-
-

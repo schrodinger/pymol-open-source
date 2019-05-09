@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
 #-* Filipe Maia (slicing code)
-#-* 
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ if True:
     from . import parsing
     import re
     cmd = sys.modules["pymol.cmd"]
-    
+
     from .cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
           _feedback,fb_module,fb_mask, \
           repres,repres_sc, is_string, is_list, is_ok, is_error, \
@@ -40,7 +40,7 @@ if True:
           safe_list_eval, safe_alpha_list_eval, \
           location_code, location_sc, boolean_dict, boolean_sc, \
           DEFAULT_ERROR, DEFAULT_SUCCESS
-        
+
     palette_colors_dict = {
         'rainbow_cycle'     : 'magenta blue cyan green yellow orange red magenta',
         'rainbow_cycle_rev' : 'magenta red orange yellow green cyan blue magenta',
@@ -53,7 +53,7 @@ if True:
         'cbmr'              : 'cyan blue magenta red',
         'rmbc'              : 'red magenta blue cyan',
     }
-    
+
     rep_list = [ "lines", "sticks", "spheres", "dots", "surface",
                  "mesh", "nonbonded", "nb_spheres", "cartoon",
                  "ribbon", "labels", "slice", "ellipsoids", "volume" ]
@@ -133,7 +133,7 @@ SEE ALSO
         #
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.zoom(_self._COb,str(selection),float(buffer),
                               int(state)-1,int(complete),float(animate))
         finally:
@@ -184,7 +184,7 @@ SEE ALSO
         selection = selector.process(selection)
         #
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.center(_self._COb,str(selection),int(state)-1,int(origin),float(animate))
         finally:
             _self.unlock(r,_self)
@@ -230,19 +230,19 @@ SEE ALSO
 
     zoom, orient, reset
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         mode = clip_action_sc.auto_err(str(mode),'mode')
         if selection!=None:
             selection = selector.process(selection)
         else:
             selection = ''
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.clip(_self._COb,str(mode),float(distance),
                           str(selection),int(state)-1)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException         
+        if _self._raising(r,_self): raise QuietException
         return r
 
     def origin(selection="(all)", object=None, position=None, state=0, _self=cmd):
@@ -282,10 +282,10 @@ SEE ALSO
     zoom, orient, reset
         '''
         #'
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
-        #   
+        #
         try:
             _self.lock(_self)
             if object==None: object=''
@@ -301,7 +301,7 @@ SEE ALSO
                                   ),int(state)-1)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException         
+        if _self._raising(r,_self): raise QuietException
         return r
 
     def orient(selection="(all)", state=0, animate=0, _self=cmd):
@@ -341,16 +341,16 @@ SEE ALSO
 
     zoom, origin, reset
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
-        #   
+        #
         try:
             _self.lock(_self)
             r = _cmd.orient(_self._COb,"("+selection+")",int(state)-1,float(animate))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException         
+        if _self._raising(r,_self): raise QuietException
         return r
 
     def move(axis, distance, _self=cmd):
@@ -376,13 +376,13 @@ SEE ALSO
 
     turn, rotate, translate, zoom, center, clip
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.move(_self._COb,str(axis),float(distance))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException         
+        if _self._raising(r,_self): raise QuietException
         return r
 
     def enable(name='all', parents=0, _self=cmd):
@@ -426,7 +426,7 @@ SEE ALSO
 
     show, hide, disable
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         if name[0]=='(':
             selection = selector.process(name)
             try:
@@ -436,11 +436,11 @@ SEE ALSO
                 _self.unlock(r,_self)
         else:
             try:
-                _self.lock(_self)   
+                _self.lock(_self)
                 r = _cmd.onoff(_self._COb,str(name),1,int(parents));
             finally:
                 _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException            
+        if _self._raising(r,_self): raise QuietException
         return r
 
     def disable(name='all',_self=cmd):
@@ -465,7 +465,7 @@ SEE ALSO
 
     show, hide, enable   
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         if name[0]=='(':
             selection = selector.process(name)
             try:
@@ -475,11 +475,11 @@ SEE ALSO
                 _self.unlock(r,_self)
         else:
             try:
-                _self.lock(_self)   
+                _self.lock(_self)
                 r = _cmd.onoff(_self._COb,str(name),0,0);
             finally:
                 _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException            
+        if _self._raising(r,_self): raise QuietException
         return r
 
     def _rep_to_repmask(rep):
@@ -526,7 +526,7 @@ SEE ALSO
                 repn = -2
             else:
                 repn = _rep_to_repmask(representation)
-                # preprocess selection 
+                # preprocess selection
                 selection = selector.process(selection)
             r = _cmd.toggle(_self._COb,str(selection),int(repn));
         finally:
@@ -741,7 +741,7 @@ SEE ALSO
                     _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19],
                               "  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19])
                     _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22],
-                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22]) 
+                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22])
                     _self.log("_  %14.9f, %14.9f, %14.9f )\n"%r[22:25] ,
                               "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
                     if output<2: # suppress if we have a log file open
@@ -864,18 +864,18 @@ SEE ALSO
     scene, set_view, get_view
         '''
         pymol=_self._pymol
-        
+
         if key=='*':
             action = view_sc.auto_err(action,'action')
             if action=='clear':
                 pymol._view_dict = {}
-                pymol._view_dict_sc = Shortcut(pymol._view_dict.keys())                        
+                pymol._view_dict_sc = Shortcut(pymol._view_dict.keys())
             else:
                 print(" view: stored views:")
                 lst = list(pymol._view_dict.keys())
                 lst.sort()
                 parsing.dump_str_list(lst)
-                
+
         else:
             action = view_sc.auto_err(action,'action')
             if action=='recall':
@@ -892,7 +892,7 @@ SEE ALSO
                 key = pymol._view_dict_sc.auto_err(key,'view')
                 if key in pymol._view_dict:
                     del pymol._view_dict[key]
-                    pymol._view_dict_sc = Shortcut(pymol._view_dict.keys())            
+                    pymol._view_dict_sc = Shortcut(pymol._view_dict.keys())
                     if _feedback(fb_module.scene,fb_mask.actions,_self): # redundant
                         print(" view: '%s' deleted."%key)
 
@@ -952,7 +952,7 @@ PYMOL API
         return r
 
     def get_vis(_self=cmd):
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.get_vis(_self._COb)
@@ -962,9 +962,9 @@ PYMOL API
         return r
 
     def set_vis(dict,_self=cmd):
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)         
+            _self.lock(_self)
             r = _cmd.set_vis(_self._COb,dict)
         finally:
             _self.unlock(r,_self)
@@ -972,9 +972,9 @@ PYMOL API
         return r
 
     def get_colorection(key,_self=cmd):
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)         
+            _self.lock(_self)
             r = _cmd.get_colorection(_self._COb,key)
         finally:
             _self.unlock(r,_self)
@@ -982,9 +982,9 @@ PYMOL API
         return r
 
     def set_colorection(dict,key,_self=cmd):
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)         
+            _self.lock(_self)
             r = _cmd.set_colorection(_self._COb,dict,key)
         finally:
             _self.unlock(r,_self)
@@ -992,9 +992,9 @@ PYMOL API
         return r
 
     def del_colorection(dict,key,_self=cmd):
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)         
+            _self.lock(_self)
             r = _cmd.del_colorection(_self._COb,dict,key)
         finally:
             _self.unlock(r,_self)
@@ -1173,7 +1173,7 @@ SEE ALSO
 
         # presentation auto quit
         if (pymol._scene_quit_on_action == action and
-                action in ('next', 'previous') and 
+                action in ('next', 'previous') and
                 _self.get_setting_boolean("presentation") and
                 _self.get_setting_boolean("presentation_auto_quit") and
                 _self.get("scene_current_name") == ""):
@@ -1194,7 +1194,7 @@ SEE ALSO
         pymol._scene_quit_on_action = action
 
         return r
-                        
+
     def _legacy_scene(key='auto', action='recall', message=None, view=1,
               color=1, active=1, rep=1, frame=1, animate=-1,
               new_key=None, hand=1, quiet=1, _self=cmd):
@@ -1256,7 +1256,7 @@ SEE ALSO
         return r
 
     def session_save_views(session,_self=cmd):
-        pymol=_self._pymol        
+        pymol=_self._pymol
         session['view_dict']=copy.deepcopy(pymol._view_dict)
         return 1
 
@@ -1366,10 +1366,10 @@ PYMOL API
     cmd.stereo(string toggle)
         '''
         toggle = stereo_dict[stereo_sc.auto_err(str(toggle),'toggle')]
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            if(toggle>0) : # stereo mode code 
+            if(toggle>0) : # stereo mode code
                 _self.set("stereo_mode",str(toggle),quiet=quiet)
                 toggle=1
             r = _cmd.stereo(_self._COb,toggle)
@@ -1405,7 +1405,7 @@ SEE ALSO
 
     move, rotate, translate, zoom, center, clip
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.turn(_self._COb,str(axis),float(angle))
@@ -1441,7 +1441,7 @@ NOTES
     '''
         toggle = toggle_dict[toggle_sc.auto_err(str(toggle),'toggle')]
         if thread.get_ident() == pymol.glutThread:
-            try: 
+            try:
                 _self.lock(_self)
                 r = _cmd.full_screen(_self._COb,int(toggle))
             finally:
@@ -1470,9 +1470,9 @@ PYMOL API
 
     cmd.rock()
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.rock(_self._COb,int(mode))
         finally:
             _self.unlock(r,_self)
@@ -1522,7 +1522,7 @@ NOTES
         # preprocess selection
         selection = selector.process(selection)
         #
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             if len(str(expression))==0:
@@ -1530,7 +1530,7 @@ NOTES
             else:
                 r = _cmd.label(_self._COb,"("+str(selection)+")",str(expression),quiet)
         finally:
-            _self.unlock(r,_self)   
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
 
@@ -1538,7 +1538,7 @@ NOTES
         # preprocess selection
         selection = selector.process(selection)
         #
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             if len(str(expression))==0:
@@ -1546,7 +1546,7 @@ NOTES
             else:
                 r = _cmd.label2(_self._COb,"("+str(selection)+")",str(expression),quiet)
         finally:
-            _self.unlock(r,_self)   
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
 
@@ -1568,7 +1568,7 @@ PYMOL API
         action = window_sc.auto_err(action,'action')
         action = window_dict[str(action)]
 
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             from pymol.gui import get_qtwindow as getPyMOLWindow
@@ -1582,7 +1582,7 @@ PYMOL API
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
-        
+
     def viewport(width=-1,height=-1,_self=cmd):
         '''
 DESCRIPTION
@@ -1650,7 +1650,7 @@ PYMOL API
 
         '''
         color = _self._interpret_color(_self,color)
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.bg_color(_self._COb,str(color))
@@ -1709,9 +1709,9 @@ NOTES
         selection = selector.process(selection)
         #
         type = cartoon_dict[cartoon_sc.auto_err(str(type),'type')];
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.cartoon(_self._COb,"("+str(selection)+")",int(type))
         finally:
             _self.unlock(r,_self)
@@ -1738,7 +1738,7 @@ NOTES
 
     def capture(quiet=1, _self=cmd):
         _self.draw(antialias=-2,quiet=quiet)
-        
+
     def draw(width=0, height=0, antialias=-1, quiet=1, _self=cmd):
         '''
 DESCRIPTION
@@ -1799,7 +1799,7 @@ SEE ALSO
             r = _cmd.draw(_self._COb,int(width),int(height),
                           int(antialias),int(quiet))
         finally:
-            _self.unlock(r,_self)      
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
 
@@ -1945,9 +1945,9 @@ PYMOL API
 
     cmd.reset()
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.reset(_self._COb,0,str(object))
         finally:
             _self.unlock(r,_self)
@@ -1956,7 +1956,7 @@ PYMOL API
 
 
     def dirty(_self=cmd): # OBSOLETE?
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.dirty(_self._COb)
@@ -1975,9 +1975,9 @@ USAGE
 
     meter_reset
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.reset_rate(_self._COb)
         finally:
             _self.unlock(r,_self)
@@ -2000,8 +2000,8 @@ NOTES
     reduced 2-fold repeatedly until it fits.
     
     '''
-        
-        r = DEFAULT_ERROR      
+
+        r = DEFAULT_ERROR
         filename = _self.exp_path(str(filename))
         try:
             _self.lock(_self)
@@ -2040,7 +2040,7 @@ SEE ALSO
         selection = selector.process(selection)
         representation = repres_sc.auto_err(representation,'representation')
         repn = repres[representation];
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.rebuild(_self._COb,selection,repn)
@@ -2048,7 +2048,7 @@ SEE ALSO
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
-    
+
     def recolor(selection='all', representation='everything', _self=cmd):
         '''
 DESCRIPTION
@@ -2081,7 +2081,7 @@ SEE ALSO
         selection = selector.process(selection)
         representation = repres_sc.auto_err(representation,'representation')
         repn = repres[representation];
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.recolor(_self._COb,selection,repn)
@@ -2130,7 +2130,7 @@ EXAMPLE
         selection = selector.process(selection)
         color = _self._interpret_color(_self,str(color))
 
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.color(_self._COb,str(color),str(selection),int(flags),int(quiet))
@@ -2217,7 +2217,7 @@ DESCRIPTION
     def spectrum(expression="count", palette="rainbow",
                  selection="(all)", minimum=None, maximum=None,
                  byres=0, quiet=1, _self=cmd):
-        
+
         '''
 DESCRIPTION
 
@@ -2285,7 +2285,7 @@ PYMOL API
         if not expression.replace('_', '').isalpha() or not palette_hit:
             return spectrumany(expression, palette, selection,
                     minimum, maximum, quiet, _self)
-        
+
         (prefix,digits,first,last) = palette_dict[str(palette)]
 
         if (maximum==None) or (minimum==None):
@@ -2295,7 +2295,7 @@ PYMOL API
         # preprocess selection
         selection = selector.process(selection)
         #
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.spectrum(_self._COb,str(selection),str(expression),
@@ -2306,7 +2306,7 @@ PYMOL API
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
-    
+
     def set_color(name, rgb, mode=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
@@ -2360,7 +2360,7 @@ PYMOL API
                 # these days, we'll accept 0-1 or 0-255, so long as [1,1,1] is white
                 rgb[0] = rgb[0]/255.0
                 rgb[1] = rgb[1]/255.0
-                rgb[2] = rgb[2]/255.0            
+                rgb[2] = rgb[2]/255.0
             try:
                 _self.lock(_self)
                 if len(rgb)==3:
@@ -2379,7 +2379,6 @@ PYMOL API
     set_colour = set_color
     bg_colour = bg_color
     recolour = recolor
-    
+
 
     from . import setting
-    

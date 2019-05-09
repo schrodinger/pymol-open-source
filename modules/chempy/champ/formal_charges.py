@@ -417,4 +417,3 @@ for alias in (
     ( 'ARGP', 'ARG'), # default +1
     ):
     formal_charge_dict[alias[0]] = formal_charge_dict[alias[1]]
-

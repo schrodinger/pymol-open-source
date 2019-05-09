@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ SCRIPT_TOPLEVEL = 'toplevel'
 
 
 if True:
-    
+
     import pymol
     import traceback
     import collections
@@ -44,7 +44,7 @@ if True:
 
     QuietException = parsing.QuietException
     CmdException = pymol.CmdException
-    
+
     py_delims = { '=' : 1, '+='  : 1, '-='  : 1, '*=' : 1,
                       '/=' :1, '//=' : 1, '%='  : 1, '&=' : 1,
                       '|=' :1, '^='  : 1, '>>=' : 1,'<<=' : 1,
@@ -89,7 +89,7 @@ if True:
             if len(css)>len(st):
                 result = css
         return result
-    
+
     class NestLayer:
 
         def __init__(self):
@@ -112,7 +112,7 @@ if True:
             self.nest = 0
             self.layer = collections.defaultdict(NestLayer)
             self.pymol_names = self.cmd._pymol.__dict__
-            
+
             # parsing state implemented with dictionaries to enable safe recursion
             # to arbitrary depths
 
@@ -222,11 +222,11 @@ if True:
                         if layer.cont != '':
                             layer.com1 = layer.cont + "\n" + layer.com1
                             layer.cont = ''
-        # this routine splits up the line first based on semicolon 
-                        
+        # this routine splits up the line first based on semicolon
+
                         layer.next = parsing.split(layer.com1,';',1) + layer.next[1:]
-                        
-        # layer.com2 now a full non-compound command            
+
+        # layer.com2 now a full non-compound command
                         layer.com2 = layer.next[0]
                         layer.input = layer.com2.split(' ',1)
                         lin = len(layer.input)
@@ -234,7 +234,7 @@ if True:
                             layer.input[0] = layer.input[0].strip()
                             com = layer.input[0]
                             if (com[0:1]=='/'):
-                                # explicit literal python 
+                                # explicit literal python
                                 layer.com2 = layer.com2[1:].strip()
                                 if len(layer.com2)>0:
                                     self.exec_python(layer.com2, secure)
@@ -319,11 +319,11 @@ if True:
                                         if layer.kw[1]<= len(layer.args) <= layer.kw[2]:
                                             layer.args = [a.strip() for a in layer.args]
                                             if layer.kw[4]<parsing.RUN:
-                                                #                           
+                                                #
                                                 # this is where old-style commands are invoked
                                                 #
                                                 self.result=layer.kw[0](*layer.args)
-                                                #                           
+                                                #
                                             elif (layer.kw[4]==parsing.EMBED):
                                                 layer.next = []
                                                 if secure or self.nest==0: # only legal on top level and p1m files
@@ -428,7 +428,7 @@ if True:
                                                     break;
                                         self.nest=self.nest-1
                                         layer=self.layer[self.nest]
-                                        
+
                                         layer.script.close()
                                         self.cmd._pymol.__script__ = layer.sc_path
                                     else: # nothing found, try literal python
@@ -453,7 +453,7 @@ if True:
             except (QuietException, CmdException) as e:
                 if e.args:
                     colorprinting.error(e)
-                if self.cmd._feedback(fb_module.parser,fb_mask.blather):         
+                if self.cmd._feedback(fb_module.parser,fb_mask.blather):
                     print("Parser: caught " + type(e).__name__)
                 p_result = 0
             except SecurityException as e:
@@ -528,10 +528,10 @@ if True:
                                 flag = 1
                                 pre = re.sub(r"^[^ ]* ",' ',st,count=1) # trim command
                                 if re.search(r",",pre)!=None:
-                                    pre = re.sub(r"[^\, ]*$","",pre,count=1) 
+                                    pre = re.sub(r"[^\, ]*$","",pre,count=1)
                                     pre = re.sub(r",\s*[^\, ]*$",", ",pre,count=1) # trim 1 arg
                                 else:
-                                    pre = re.sub("[^ ]*$","",pre,count=1) # trim 1 arg               
+                                    pre = re.sub("[^ ]*$","",pre,count=1) # trim 1 arg
                                 pre = re.sub(r"^ *",'',pre)
                                 pre = full+' '+pre
                                 pat = re.sub(r".*[\, ]",'',st)
@@ -593,7 +593,3 @@ if True:
 #            return a
 #        else:
 #            return None
-
-    
-
-

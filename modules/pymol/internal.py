@@ -37,7 +37,7 @@ def _cache_validate(_self=cmd):
             _pymol._cache_memory = 0
     finally:
         _self.unlock_data(_self)
-        
+
 def _cache_clear(_self=cmd):
     r = DEFAULT_SUCCESS
     try:
@@ -48,14 +48,14 @@ def _cache_clear(_self=cmd):
     finally:
         _self.unlock_data(_self)
     return r
-    
+
 def _cache_mark(_self=cmd):
     r = DEFAULT_SUCCESS
     try:
         _self.lock_data(_self)
         _pymol = _self._pymol
         _cache_validate(_self)
-        for entry in _self._pymol._cache: 
+        for entry in _self._pymol._cache:
             entry[5] = 0.0
     finally:
         _self.unlock_data(_self)
@@ -77,7 +77,7 @@ def _cache_purge(max_size, _self=cmd):
                 new_cache = [x[1] for x in new_cache]
                 # remove oldest entries one by one until size requirement is met
                 while (cur_size>max_size) and (len(new_cache)>1):
-                    entry = new_cache.pop() 
+                    entry = new_cache.pop()
                     cur_size = cur_size - entry[0]
                 _pymol._cache = new_cache
                 _pymol._cache_memory = cur_size
@@ -94,7 +94,7 @@ def _cache_purge(max_size, _self=cmd):
     finally:
         _self.unlock_data(_self)
     return result
-        
+
 def _cache_get(target, hash_size = None, _self=cmd):
     result = None
     try:
@@ -132,10 +132,10 @@ def _cache_set(new_entry, max_size, _self=cmd):
             found = 0
             new_entry[4] = new_entry[4] + 1 # incr access count
             new_entry[5] = time.time() # timestamp
-            for entry in _pymol._cache: 
+            for entry in _pymol._cache:
                 if entry[1][0:hash_size] == key:
                     if entry[2] == new_entry[2]: # dupe (shouldn't happen)
-                        entry[3] = new_entry[3] 
+                        entry[3] = new_entry[3]
                         found = 1
                         break
                 count = count + 1
@@ -150,11 +150,11 @@ def _cache_set(new_entry, max_size, _self=cmd):
     finally:
         _self.unlock_data(_self)
     return r
-        
+
 # ray tracing threads
 
 def _ray_anti_spawn(thread_info,_self=cmd):
-    # WARNING: internal routine, subject to change      
+    # WARNING: internal routine, subject to change
     # internal routine to support multithreaded raytracing
     thread_list = []
     for a in thread_info[1:]:
@@ -169,7 +169,7 @@ def _ray_anti_spawn(thread_info,_self=cmd):
         t.join()
 
 def _ray_hash_spawn(thread_info,_self=cmd):
-    # WARNING: internal routine, subject to change      
+    # WARNING: internal routine, subject to change
     # internal routine to support multithreaded raytracing
     thread_list = []
     for a in thread_info[1:]:
@@ -186,7 +186,7 @@ def _ray_hash_spawn(thread_info,_self=cmd):
         t.join()
 
 def _ray_spawn(thread_info,_self=cmd):
-    # WARNING: internal routine, subject to change      
+    # WARNING: internal routine, subject to change
     # internal routine to support multithreaded raytracing
     thread_list = []
     for a in thread_info[1:]:
@@ -272,7 +272,7 @@ def _mpng(prefix, first=-1, last=-1, preserve=0, modal=0,
     format = int(format)
     # WARNING: internal routine, subject to change
     try:
-        _self.lock(_self)   
+        _self.lock(_self)
         fname = prefix
         if re.search("[0-9]*\.png$",fname): # remove numbering, etc.
             fname = re.sub("[0-9]*\.png$","",fname)
@@ -296,7 +296,7 @@ def _mpng(prefix, first=-1, last=-1, preserve=0, modal=0,
 def _copy_image(_self=cmd,quiet=1):
     r = DEFAULT_ERROR
     try:
-        _self.lock(_self)   
+        _self.lock(_self)
         r = _cmd.copy_image(_self._COb,int(quiet))
     finally:
         _self.unlock(r,_self)
@@ -537,7 +537,7 @@ def _cmmd(k,_self=cmd):
 def _ctsh(k,_self=cmd):
     # WARNING: internal routine, subject to change
     _invoke_key('CTSH-' + k, 0, _self)
-    
+
 
 # writing PNG files (thread-unsafe)
 
@@ -545,7 +545,7 @@ def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,prior=0,format=-1,_self=cmd):
     # INTERNAL - can only be safely called by GLUT thread (unless prior == 1)
     # WARNING: internal routine, subject to change
     try:
-        _self.lock(_self)   
+        _self.lock(_self)
         fname = a
         if re.search("\.ppm$",fname):
             if format<0:
@@ -603,7 +603,7 @@ def _refresh(swap_buffers=1,_self=cmd):  # Only call with GLUT thread!
                 else:
                     r = _cmd.refresh(_self._COb)
             else:
-                r = _cmd.refresh_later(_self._COb)                
+                r = _cmd.refresh_later(_self._COb)
         else:
             r = _cmd.refresh_later(_self._COb)
     finally:
@@ -667,7 +667,7 @@ def _fake_drag(_self=cmd): # internal
 
 def _sdof(tx,ty,tz,rx,ry,rz,_self=cmd):
     _cmd._sdof(_self._COb,tx,ty,tz,rx,ry,rz)
-    
+
 # testing tools
 
 # for comparing floating point numbers calculated using

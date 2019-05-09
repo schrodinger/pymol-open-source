@@ -502,7 +502,7 @@ class ChargeWizard(RepeatableActionWizard):
 
     @undoablemethod("bymol ?pk1")
     def do_pick(self, bondFlag):
-        self.cmd.select(active_sele, "bymol pk1") 
+        self.cmd.select(active_sele, "bymol pk1")
         self.cmd.alter("pk1","formal_charge=%s" % self.charge)
         self.cmd.h_fill()
         if abs(float(self.charge))>0.0001:
@@ -832,10 +832,10 @@ class AtomFlagWizard(ActionWizard):
     def do_less(self,mode):
         if active_sele in self.cmd.get_names("selections"):
             if mode == 0:
-                self.cmd.flag(self.flag,"(( byobj " + active_sele + 
+                self.cmd.flag(self.flag,"(( byobj " + active_sele +
                               " ) and not flag %d) extend 1"%self.flag,"clear")
             elif mode == 1:
-                self.cmd.flag(self.flag,"byres ((( byobj " + active_sele + 
+                self.cmd.flag(self.flag,"byres ((( byobj " + active_sele +
                               " ) and not flag %d) extend 1)"%self.flag,"clear")
             self.update_display()
 
@@ -1365,4 +1365,3 @@ def BuilderPanelDocked(parent, *args, **kwargs):
     window.setWidget(widget)
     window.setFloating(True)
     return window
-

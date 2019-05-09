@@ -1,20 +1,20 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
 # bond lengths and other information useful for simply building atoms
 #
-# compatible with parm94, 96, or 99 
+# compatible with parm94, 96, or 99
 
 length = {
     ( 'OW', 'HW' ) : 0.9572,
@@ -137,12 +137,12 @@ length = {
 
 for a in list(length.keys()):
     length[(a[1],a[0])]=length[a]
-             
+
 nonlinear = {
     'OW' : 1 ,
     'OH' : 1 ,
     'OS' : 1 ,
-    'P'  : 1 ,   
+    'P'  : 1 ,
     'S'  : 1 ,
     'SH' : 1 ,
 }
@@ -150,7 +150,7 @@ nonlinear = {
 tetrahedral = {
     'CT' : 1 ,
     'N3' : 1 ,
-    'NT' : 1 ,   
+    'NT' : 1 ,
     }
 
 planer = {
@@ -169,7 +169,7 @@ planer = {
     'CW' : 1 ,
     'N'  : 1 ,
     'N*' : 1 ,
-    'N2' : 1 ,   
+    'N2' : 1 ,
     'NA' : 1 ,
     'NB' : 1 ,
     'NC' : 1 ,

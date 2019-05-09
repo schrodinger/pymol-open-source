@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -85,7 +85,7 @@ class PKL(Storage):
         if 'bin' not in params:
             result = cPickle.dump(indexed,fp,1)
         else:
-            result = cPickle.dump(indexed,fp,params['bin'])         
+            result = cPickle.dump(indexed,fp,params['bin'])
         fp.close()
 
 #---------------------------------------------------------------------------
@@ -100,8 +100,8 @@ class PKL(Storage):
         if 'bin' not in params:
             result = cPickle.dump(indexed,fp,1)
         else:
-            result = cPickle.dump(indexed,fp,params['bin'])         
- 
+            result = cPickle.dump(indexed,fp,params['bin'])
+
 #---------------------------------------------------------------------------
     def fromString(self,st):
         return cPickle.loads(st)
@@ -109,4 +109,3 @@ class PKL(Storage):
 #---------------------------------------------------------------------------
     def toString(self,model):
         return cPickle.dumps(model)
-

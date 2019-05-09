@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ if True:
     from . import selector
     import re
     import copy
-    
+
     import pymol
     cmd = sys.modules["pymol.cmd"]
     from .cmd import _cmd,lock,unlock,Shortcut,QuietException
@@ -42,7 +42,7 @@ if True:
             r = _self._copy_image(_self,int(quiet))
         else:
             r = _self.do('cmd._copy_image(quiet=%d)'%int(quiet))
-        if _self._raising(r,_self): raise QuietException         
+        if _self._raising(r,_self): raise QuietException
         return r
 
     cache_action_dict = {
@@ -91,7 +91,7 @@ PYMOL API
     cmd.cache(string action, string scenes, int state, int quiet)
 
     '''
-        
+
         r = DEFAULT_ERROR
         action = cache_action_dict[cache_action_sc.auto_err(str(action),'action')]
         quiet = int(quiet)
@@ -110,7 +110,7 @@ PYMOL API
             cache_max = int(_self.get('cache_max'))
             if cache_max>0:
                 # allow double memory for an optimized cache
-                _self.set('cache_max',cache_max*2) 
+                _self.set('cache_max',cache_max*2)
             scenes = str(scenes)
             scene_list = scenes.split()
             cache_mode = int(_self.get('cache_mode'))
@@ -141,13 +141,13 @@ PYMOL API
             else:
                 _self.set('cache_mode',2) # hmm... could use 1 here instead.
             _self.set('cache_max',cache_max) # restore previous limits
-            if not quiet:            
+            if not quiet:
                 print(" cache: optimization complete (~%0.1f MB)."%(usage*4/1000000.0))
         try:
             _self.lock(_self)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException         
+        if _self._raising(r,_self): raise QuietException
         return r
 
     _resn_to_aa =  {
@@ -182,7 +182,7 @@ PYMOL API
             'DG'  : 'G',
             'DC'  : 'C',
             }
-    
+
     def get_fastastr(selection="all", state=-1, quiet=1, key='', _self=cmd):
         '''
 DESCRIPTION
@@ -273,7 +273,7 @@ NOTES
         else:
             result = str(obj)
         return result
-    
+
     def _session_convert_legacy(session, version, _self=cmd):
         '''
         Convert session contents to be compatible with previous PyMOL versions
@@ -467,9 +467,9 @@ NOTES
                 session = zlib.compress(cPickle.dumps(session, 1))
             return session
         elif _self._raising(r,_self):
-            raise QuietException                  
+            raise QuietException
         return r
-        
+
     def _unit2px(value, dpi, unit=''):
         '''API only. Returns pixel units given a string representation in other units'''
         if cmd.is_string(value):
@@ -542,10 +542,10 @@ PYMOL API
         if format == 'png':
             format = 0
 
-        if prior: 
+        if prior:
             # fetch the prior image, without doing any work (fast-path / non-GLUT thread-safe)
             r = _self._png(str(filename),0,0,float(dpi),0,int(quiet),1,
-                           int(format),_self)            
+                           int(format),_self)
             if r != 1: # no prior image available -- revert to default behavior
                 if prior < 0: # default is to fall back to actual rendering
                     prior = 0
@@ -569,7 +569,7 @@ PYMOL API
     def export_coords(obj,state,_self=cmd): # experimental
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.export_coords(_self._COb,str(obj),int(state)-1)
         finally:
             _self.unlock(r,_self)
@@ -577,7 +577,7 @@ PYMOL API
         return r
 
     def multisave(filename, pattern="all", state=-1,
-                  append=0, format='', quiet=1, _self=cmd): 
+                  append=0, format='', quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -809,7 +809,7 @@ SEE ALSO
 
         # preprocess selection
         selection = selector.process(selection)
-        #   
+        #
         r = DEFAULT_ERROR
 
         # analyze filename
@@ -897,7 +897,7 @@ SEE ALSO
             with fopen(filename, 'wb') as handle:
                 handle.write(contents)
             r = DEFAULT_SUCCESS
-            
+
         if _self._raising(r,_self): raise QuietException
 
         if not quiet:

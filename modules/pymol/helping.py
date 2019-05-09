@@ -1,21 +1,21 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
 from __future__ import print_function
 
 if True:
-    
+
     cmd = __import__("sys").modules["pymol.cmd"]
     import pymol
     from pymol import CmdException
@@ -73,7 +73,7 @@ USAGE
     help command
         '''
         r = DEFAULT_SUCCESS
-        cmmd = _self.help_sc.auto_err(command,'topic')   
+        cmmd = _self.help_sc.auto_err(command,'topic')
         if cmmd in _self.keyword:
             doc = _self.keyword[cmmd][0].__doc__
         elif cmmd in _self.help_only:
@@ -718,7 +718,7 @@ SEE ALSO
     embed, skip, python
     '''
         return None
-    
+
     def skip(_self=cmd):
         '''
 DESCRIPTION
@@ -777,7 +777,7 @@ SEE ALSO
     '''
         pymol_names = _self._pymol.__dict__
         exec(string, pymol_names, pymol_names)
-    
+
     def embed(_self=cmd):
         '''
 DESCRIPTION

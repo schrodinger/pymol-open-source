@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
 #-* Filipe Maia (slicing code)
-#-* 
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ if True:
         "grayscale" : 8,
         "object" : [[-1.0,-1.0,-1.0]]
         }
-    
+
     ramp_spectrum_sc = Shortcut(ramp_spectrum_dict.keys())
 
     group_action_dict = {
@@ -78,7 +78,7 @@ if True:
         "mtz" : 2,
         "cif" : 3
         }
-    
+
     def group(name, members="", action='auto', quiet=1,_self=cmd):
         '''
 
@@ -122,8 +122,8 @@ SEE ALSO
     ungroup, order, "group_auto_mode" setting
     
 '''
-        
-        r = DEFAULT_ERROR        
+
+        r = DEFAULT_ERROR
         action = group_action_dict[group_action_sc.auto_err(str(action),'group action')]
         if name=='all': name='*'
         if action==6:
@@ -138,9 +138,9 @@ SEE ALSO
             r = _cmd.group(_self._COb,str(name),str(members),int(action),int(quiet))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
-    
+
     def ungroup(name, members="", quiet=1, _self=cmd):
         '''
 
@@ -159,14 +159,14 @@ SEE ALSO
     group
     
     '''
-        
+
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.group(_self._COb,str(name),str(members),7,int(quiet))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def map_generate(name, reflection_file, amplitudes, phases, weights="None",
@@ -230,7 +230,7 @@ NOTES
             # TODO: work for CIF, MTZ, and CNS
             from . import headering
             mtzFile = headering.MTZHeader(reflection_file)
-                
+
             # FORMAT: crystal/dataset/column
             _, datasetName, ampColName = ('//' + amplitudes).rsplit('/', 2)
 
@@ -280,10 +280,10 @@ NOTES
             print(" MapGenerate-Error: Cannot import headering module.  Cannot read MTZ file or make map.")
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
 
         return name
-    
+
     def map_new(name, type='gaussian', grid=None, selection="(all)",
                 buffer=None, box=None, state=0, quiet=1, zoom=0,
                 normalize=-1, clamp=[1.0,-1.0], resolution=0.0, _self=cmd):
@@ -364,7 +364,7 @@ NOTES
                              float(clamp[0]),float(clamp[1]),float(resolution))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def ramp_new(name, map_name, range=[-1.0,0.0,1.0],
@@ -482,7 +482,7 @@ SEE ALSO
             _self._invalidate_color_sc(_self)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def ramp_update(name, range=[], color=[], quiet=1, _self=cmd):
@@ -575,7 +575,7 @@ SEE ALSO
                              float(level))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def volume(name, map, ramp='', selection='', buffer=0.0,
@@ -621,7 +621,7 @@ SEE ALSO
 
 '''
         r = DEFAULT_ERROR
-        
+
         if selection!='':
             region = 1 # about a selection
         else:
@@ -640,7 +640,7 @@ SEE ALSO
             ramp = ''
         except (ValueError, TypeError):
             level = 0.0
-        
+
         try:
             _self.lock(_self)
 
@@ -652,7 +652,7 @@ SEE ALSO
 
         finally:
             _self.unlock(r,_self)
-        
+
         if _self._raising(r,_self): raise pymol.CmdException
 
         if ramp:
@@ -729,7 +729,7 @@ SEE ALSO
             r = _cmd.slice_new(_self._COb,str(name),str(map),int(state)-1,int(source_state)-1)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
@@ -793,7 +793,7 @@ SEE ALSO
 
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,
@@ -847,7 +847,7 @@ SEE ALSO
                              float(level))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
@@ -870,7 +870,7 @@ USAGE
         finally:
             _self.unlock(r,_self)
         if not int(query):
-            if _self._raising(r,_self): raise pymol.CmdException                  
+            if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def gradient(name, map, minimum=1.0, maximum=-1.0,
@@ -920,7 +920,7 @@ SEE ALSO
                              float(maximum))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def copy(target,source,zoom=-1,_self=cmd):
@@ -942,13 +942,13 @@ SEE ALSO
 
     create
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.copy(_self._COb,str(source),str(target),int(zoom))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def symexp(prefix, object, selection, cutoff, segi=0, quiet=1,_self=cmd):
@@ -982,7 +982,7 @@ SEE ALSO
                             int(segi),int(quiet))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                           
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def fragment(name, object=None, origin=1, zoom=0, quiet=1, _self=cmd):
@@ -1013,7 +1013,7 @@ USAGE
             r = _self.load_model(model,str(object),quiet=quiet,zoom=zoom, _self=_self)
         except IOError:
             raise pymol.CmdException("unable to load fragment '%s'." % name)
-        if _self._raising(r,_self): raise pymol.CmdException                                    
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def create(name, selection, source_state=0,
@@ -1111,7 +1111,7 @@ SEE ALSO
     create
     
     '''
-        
+
         kw['extract'] = 1
         return create(*arg, **kw)
 
@@ -1119,13 +1119,13 @@ SEE ALSO
         "unit" : 0, # radius 0.5
         "extent" : 1,
         "rms" : 2,
-#        "ellipse" : 2,  for anisotropic b-factors? 
+#        "ellipse" : 2,  for anisotropic b-factors?
         }
 
     pseudoatom_mode_sc =  Shortcut(pseudoatom_mode_dict.keys())
 
     unquote_re = re.compile(r"r?('.*'|\".*\")$")
-    
+
     def unquote(s):
         if sys.version_info[0] > 2 and isinstance(s, bytes):
             s = s.decode('utf-8', 'replace')
@@ -1137,7 +1137,7 @@ SEE ALSO
             except SyntaxError:
                 print(" Warning: unquote failed for", repr(s))
         return s
-    
+
     def pseudoatom(object='', selection='', name='PS1', resn='PSD', resi='1', chain='P',
                    segi='PSDO', elem='PS', vdw=-1.0, hetatm=1, b=0.0, q=0.0, color='',
                    label='', pos=None, state=0, mode='rms', quiet=1,_self=cmd):
@@ -1160,8 +1160,8 @@ NOTES
     on must place an atom or a label in 3D space.
     
     '''
-        
-        r = DEFAULT_ERROR      
+
+        r = DEFAULT_ERROR
         # preprocess selection
         if len(color):
             color = _self.get_color_index(str(color))
@@ -1169,9 +1169,9 @@ NOTES
             color = -1 # default
         selection = selector.process(selection)
         mode = pseudoatom_mode_dict[pseudoatom_mode_sc.auto_err(str(mode),'pseudoatom mode')]
-        
+
         (name,resn,resi,chain,segi,elem,label) = list(map(unquote,(name,resn,resi,chain,segi,elem,label)))
-        #      
+        #
         try:
             _self.lock(_self)
             if pos!=None:
@@ -1189,9 +1189,9 @@ NOTES
                                 int(state)-1, int(mode), int(quiet))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                                    
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
-        
+
     def join_states(name, selection='all', mode=2, zoom=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
@@ -1256,4 +1256,3 @@ EXAMPLE
 
         if int(zoom):
             _self.zoom(name, state=0)
-

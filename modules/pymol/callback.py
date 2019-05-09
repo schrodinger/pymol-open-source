@@ -8,12 +8,12 @@
 # in order to get useful information:
 #
 #    cmd.get_frame()
-#    cmd.get_state() 
+#    cmd.get_state()
 
 class Callback(object):
     def __call__(self):
         pass
 
     def get_extent(self):
-        # should return [ [min_x, min_y, min_z], [ max_x, max_y, max_z ] ] 
+        # should return [ [min_x, min_y, min_z], [ max_x, max_y, max_z ] ]
         return None

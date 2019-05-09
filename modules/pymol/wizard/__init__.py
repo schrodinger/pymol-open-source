@@ -6,14 +6,14 @@ class Wizard:
     event_mask_pick    = 1
     event_mask_select  = 2
     event_mask_key     = 4
-    event_mask_special = 8 
+    event_mask_special = 8
     event_mask_scene   = 16 # scene changed
     event_mask_state   = 32 # state changed
     event_mask_frame   = 64 # frame changed
     event_mask_dirty   = 128 # anything changed (BEWARE FEEDBACK!)
     event_mask_view    = 256 # view (matrix) changed
     event_mask_position = 512 # center of the view changed
-    
+
     def migrate_session(self, version):
         '''A derived class might convert the pickled state from
         an older version here.'''
@@ -24,8 +24,8 @@ class Wizard:
         self.prompt = None
         self.panel = None
         self.cmd = _self
-        self._validate_instance() 
-        
+        self._validate_instance()
+
     def __getstate__(self):
         d = self.__dict__.copy()
         d.pop('cmd', None)
@@ -45,7 +45,7 @@ class Wizard:
         # create a dictionary for per-class storage in session
         if not self.session:
             wizard_storage[class_key] = self.session
-        
+
     def get_prompt(self):
         return self.prompt
 
@@ -72,7 +72,7 @@ class Wizard:
 
     def do_dirty(self):
         return None
-    
+
     def do_pick(self,bondFlag):
         return None
 
@@ -93,4 +93,3 @@ class Wizard:
         if tag in self.menu:
             result = self.menu[tag]
         return result
-

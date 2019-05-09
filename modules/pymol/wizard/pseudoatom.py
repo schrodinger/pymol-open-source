@@ -13,7 +13,7 @@ class Pseudoatom(Wizard):
             self.prefix = 'Label text: \888'
         self.text = ''
         self.pos = pos
-        
+
     def get_event_mask(self):
         return Wizard.event_mask_key
 
@@ -34,7 +34,7 @@ class Pseudoatom(Wizard):
             self.cmd.set_wizard()
         self.cmd.refresh_wizard()
         return 1
-        
+
     def get_prompt(self):
         self.prompt = [ self.prefix + self.text + "_" ]
         return self.prompt
@@ -43,5 +43,3 @@ class Pseudoatom(Wizard):
         return [
             [ 2, 'Cancel', 'cmd.set_wizard()' ]
             ]
-
-

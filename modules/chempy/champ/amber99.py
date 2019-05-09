@@ -19,7 +19,7 @@ amber99_dict = {
          3: ('HH31', 'HC'  ,    0.0976,    1.3870),
          4: ('HH32', 'HC'  ,    0.0976,    1.3870),
          5: ('HH33', 'HC'  ,    0.0976,    1.3870),
-         
+
       },
    ),
 ],
@@ -1660,8 +1660,8 @@ amber99_dict = {
          2: ('H2'  , 'HW'  ,    0.4170,    0.0000),
       },
    ),
-], 
-'HOH': [ 
+],
+'HOH': [
    (
       'O<0>([H]<1>)[H]<2>',
       {
@@ -1671,7 +1671,7 @@ amber99_dict = {
       },
    ),
 ],
-'TIP': [ 
+'TIP': [
    (
       'O<0>([H]<1>)[H]<2>',
       {
@@ -1684,7 +1684,7 @@ amber99_dict = {
 
 }
 
-# also want commong residues like PTyr, PSer, 
+# also want commong residues like PTyr, PSer,
 
 # missing neutrals GLUH/GLUN,GLH, ASPH/ASH/ASPN, LYSN, ARGN
 

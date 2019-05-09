@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
 #-* Scott Dixon, Metaphorics, LLC
-#-* 
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ def get_restrain_positions(model,flag,w_width,f_cnst):
         c = c + 1
     if chempy.feedback['actions']:
         print(' '+str(__name__)+': %d atoms restrained using flag %d ...' % (n,flag))
-        
+
     return list
 
 def get_inactive(model,flag):
@@ -56,4 +56,3 @@ def get_inactive(model,flag):
     if chempy.feedback['actions']:
         print(' '+str(__name__)+': %d atoms fixed using flag %d ...' % (n,flag))
     return list
-

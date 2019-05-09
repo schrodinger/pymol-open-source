@@ -10,7 +10,7 @@ import random
 
 def cap(object):
     from pymol import cmd
-    
+
     model = cmd.get_model(object)
     # guarantee identical ordering
     cmd.delete(object)
@@ -57,5 +57,3 @@ def cap(object):
     cmd.delete(object)
     cmd.load_model(model,object)
     cmd.sort(object)
-    
-

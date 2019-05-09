@@ -1,19 +1,19 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
 class Map:
-    
+
     def __init__(self):
         self.cell_dim = [ 1.0, 1.0, 1.0]
         self.cell_ang = [ 90.0, 90.0, 90.0 ]
@@ -21,7 +21,7 @@ class Map:
         self.first = [ 0, 0, 0 ] # first slice on each axis
         self.last = [ 9, 9, 9 ] # last slice on each axis
         self.format = 'Empty'
-        
+
     def from_c_object(self,cobj,format,cell_dim,cell_ang,cell_div,first,last):
         # pack with defined types
         self.format = str(format)
@@ -41,5 +41,3 @@ class Map:
         self.last = [ int(last[0]),
                           int(last[1]),
                           int(last[2])]
-        
-

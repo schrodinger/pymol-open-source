@@ -1,20 +1,20 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
 # bond lengths and other information useful for simply building atoms
 #
-# 
+#
 
 length = {
     ( 'C3', 'H1') : 1.0900,
@@ -151,7 +151,7 @@ tetrahedral = {
 
 planer = {
     'C2' : 1,
-    'CP' : 1, 
+    'CP' : 1,
     'CM' : 1, # ?
     'CR' : 1, # ?
     'O2' : 1,
@@ -163,7 +163,7 @@ planer = {
     '' : 1,
     '' : 1,
     '' : 1,
-    
-    
+
+
     'O2' : 1,
 }

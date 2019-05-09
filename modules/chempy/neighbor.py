@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ class Neighbor:
             return self.voxel[k]
         else:
             return []
-        
+
     def get_neighbors(self,vect):
         if self.neighbor:
             k = self.address(vect)
@@ -72,5 +72,3 @@ class Neighbor:
                         if k2 in voxel:
                             lst.extend(voxel[k2])
             return lst
-            
-            

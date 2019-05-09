@@ -70,10 +70,10 @@ class Measurement(Wizard):
 
         # mode selection subsystem
         self.mode = self.session.get('default_mode','pairs')
-        
+
         self.neighbor_target = ""
 
-        # TODO: 
+        # TODO:
         # make this a function, and call it when we call refresh wizard
         # to update the object/selection list
         smm = []
@@ -117,7 +117,7 @@ class Measurement(Wizard):
         for b in list:
             result.append( [ 1, b,  'cmd.get_wizard().set_neighbor_target("%s","%s")' % (a,b)])
         return result
-        
+
     def neighbor_selections(self,a):
         """
         get list of public selections for populating the menu
@@ -141,8 +141,8 @@ class Measurement(Wizard):
     def _validate_instance(self):
         Wizard._validate_instance(self)
         if not hasattr(self,'meas_count'):
-            self.meas_count = self.session.get('meas_count',0)            
-            
+            self.meas_count = self.session.get('meas_count',0)
+
     def get_name(self,untaken=1,increment=1):
         """
         get a name for the next measurement object
@@ -159,7 +159,7 @@ class Measurement(Wizard):
                 self.meas_count = self.meas_count + 1
                 obj_name = obj_prefix+"%02d"%self.meas_count
         return obj_name
-    
+
 # generic set routines
 
     def set_neighbor_target(self,mode,target):
@@ -171,7 +171,7 @@ class Measurement(Wizard):
         self.status = 0
         self.clear_input()
         self.cmd.refresh_wizard()
-        
+
     def set_mode(self,mode):
         """
         sets what we're measuring, distance, angle, dihedral, etc.
@@ -193,7 +193,7 @@ class Measurement(Wizard):
         self.status = 0
         self.cmd.refresh_wizard()
 
-        
+
     def get_panel(self):
         return [
             [ 1, 'Measurement',''],
@@ -212,12 +212,12 @@ class Measurement(Wizard):
         self.session['default_object_mode'] = self.object_mode
         self.clear_input()
         self.cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode
-        
+
     def clear_input(self):
         """
         delete our user selections for this wizard
         """
-        self.cmd.delete(sele_prefix+"*") 
+        self.cmd.delete(sele_prefix+"*")
         self.cmd.delete(indi_sele)
         self.cmd.delete("pk1")
         self.status = 0
@@ -240,7 +240,7 @@ class Measurement(Wizard):
             return ("molecule", " bm. ")
         elif self.cmd.get("mouse_selection_mode", quiet=1)=="6":
             return ("C-alpha", " bca. ")
-        
+
     def get_prompt(self):
         (what, code) = self.get_selection_name()
         self.prompt = None
@@ -264,7 +264,7 @@ class Measurement(Wizard):
         if self.error!=None:
             self.prompt.append(self.error)
         return self.prompt
-    
+
     def delete_last(self):
         """
         Corresponds to the "Delete Last Object" menu button
@@ -302,7 +302,7 @@ class Measurement(Wizard):
             self.do_pick(0)
         except pymol.CmdException:
             if self.status:
-                sele_name = sele_prefix + str(self.status-1)         
+                sele_name = sele_prefix + str(self.status-1)
                 self.cmd.select(indi_sele, sele_name)
                 self.cmd.enable(indi_sele)
 
@@ -461,7 +461,7 @@ class Measurement(Wizard):
                     cutoffType = self.heavy_neighbor_cutoff
                     cnt = self.cmd.select(sele_prefix,
 "(v. and (pk1 a; %f) and (not h.) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))) and (%s))"
-                    %(self.heavy_neighbor_cutoff, sel_mod))            
+                    %(self.heavy_neighbor_cutoff, sel_mod))
                 if cnt:
                     self.cmd.dist(obj_name,"(pk1)",sele_prefix,cutoff=cutoffType,reset=reset)
                 else:

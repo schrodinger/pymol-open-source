@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ def generate(model, forcefield = protein_amber, histidine = 'HIE',
                  skip_sort=None, bondfield = bond_amber ):
 
     strip_atom_bonds(model) # remove bonds between non-hetatms (ATOM)
-    add_bonds(model,forcefield=forcefield)   
+    add_bonds(model,forcefield=forcefield)
     connected = model.convert_to_connected()
     add_hydrogens(connected,forcefield=forcefield,skip_sort=skip_sort)
     place.simple_unknowns(connected,bondfield = bondfield)
@@ -58,7 +58,7 @@ def strip_atom_bonds(model):
         if matom[a.index[0]].hetatm or matom[a.index[1]].hetatm:
             new_bond.append(a)
     model.bond = new_bond
-    
+
 #---------------------------------------------------------------------------------
 def assign_types(model, forcefield = protein_amber, histidine = 'HIE' ):
     '''   
@@ -82,7 +82,7 @@ but does not add any bonds!
                         for c in range(a[0],a[1]): # this residue
                             model.atom[c].resn = histidine
                         resn = histidine
-                    if resn == 'N-M': # N-methyl from Insight II, 
+                    if resn == 'N-M': # N-methyl from Insight II,
                         for c in range(a[0],a[1]): # this residue
                             model.atom[c].resn = 'NME'
                         resn = 'NME'
@@ -153,7 +153,7 @@ but does not add any bonds!
                                                                 atx.resn = 'CYX'
                                                                 # since b>cur, assume assignment later on
                                             break
-    
+
 #---------------------------------------------------------------------------------
 def add_bonds(model, forcefield = protein_amber, histidine = 'HIE' ):
     '''
@@ -180,7 +180,7 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                         for c in range(a[0],a[1]): # this residue
                             model.atom[c].resn = histidine
                         resn = histidine
-                    if resn == 'N-M': # N-methyl from Insight II, 
+                    if resn == 'N-M': # N-methyl from Insight II,
                         for c in range(a[0],a[1]): # this residue
                             model.atom[c].resn = 'NME'
                         resn = 'NME'
@@ -271,14 +271,14 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                                                             atx.partial_charge = ffld[k]['charge']
                                                         else:
                                                             raise RuntimeError("no parameters for '"+str(k)+"'")
-                                                    for d in res_list: 
+                                                    for d in res_list:
                                                         if (b>=d[0]) and (b<d[1]): # find other residue
                                                             for c in range(d[0],d[1]):
                                                                 atx = model.atom[c]
                                                                 atx.resn = 'CYX'
                                                                 # since b>cur, assume assignment later on
                                                 break
-                            
+
 #---------------------------------------------------------------------------------
 def add_hydrogens(model,forcefield=protein_amber,skip_sort=None):
     # assumes no bonds between non-hetatms

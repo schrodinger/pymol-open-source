@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -73,14 +73,14 @@ isp = iw + sp
 
 # 0 = newpath, x,y
 # 1 = continue, x,y
-     
+
 plain = {
-    ' ': [ Nsp, []],   
+    ' ': [ Nsp, []],
     'A': [ Nsp,
              [ 0, 0.0, 0.0,
                 1, 0.0, Ht_Bvl,
                 1, Bvl, Ht,
-                1, Nw_Bvl, Ht,            
+                1, Nw_Bvl, Ht,
                 1, Nw, Ht_Bvl,
                 1, Nw, 0.0,
                 0, 0.0, Ht_2,
@@ -91,7 +91,7 @@ plain = {
              [ 0, 0.0, 0.0,
                 1, 0.0, Ht,
                 1, Nw_BBvl, Ht,
-                1, Nw_Btop, Ht_Bvl,            
+                1, Nw_Btop, Ht_Bvl,
                 1, Nw_Btop, Ht_2pBvl,
                 1, Nw_BBvl, Ht_2,
                 0, 0.0, Ht_2,
@@ -110,7 +110,7 @@ plain = {
                 1, 0.0, Bvl,
                 1, 0.0, Ht_Bvl,
                 1, Bvl, Ht,
-                1, Nw_Bvl, Ht,            
+                1, Nw_Bvl, Ht,
                 1, Nw, Ht_Bvl,
                 ],
              ],
@@ -118,7 +118,7 @@ plain = {
              [ 0, 0.0, 0.0,
                 1, 0.0, Ht,
                 1, Nw_2, Ht,
-                1, Nw, Ht-Bvl*2,            
+                1, Nw, Ht-Bvl*2,
                 1, Nw, Bvl*2,
                 1, Nw_2, 0.0,
                 1, 0.0, 0.0,
@@ -134,7 +134,7 @@ plain = {
                 ],
              ],
     'F': [ Nsp,
-             [ 
+             [
                 0, 0.0, 0.0,
                 1, 0.0, Ht,
                 1, Nw, Ht,
@@ -144,20 +144,20 @@ plain = {
              ],
     'G': [ Nsp,
              [
-                0, Nw_2, Ht_2,   
-                1, Nw, Ht_2,   
+                0, Nw_2, Ht_2,
+                1, Nw, Ht_2,
                 1, Nw, Bvl,
                 1, Nw_Bvl, 0.0,
                 1, Bvl, 0.0,
                 1, 0.0, Bvl,
                 1, 0.0, Ht_Bvl,
                 1, Bvl, Ht,
-                1, Nw_Bvl, Ht,            
+                1, Nw_Bvl, Ht,
                 1, Nw, Ht_Bvl,
                 ],
              ],
     'H': [ Nsp,
-             [ 
+             [
                 0, 0.0, 0.0,
                 1, 0.0, Ht,
                 0, Nw, 0.0,
@@ -167,7 +167,7 @@ plain = {
                 ],
              ],
     'I': [ Isp,
-             [ 
+             [
                 0, 0.0, 0.0,
                 1, Iw, 0.0,
                 0, Iw_2, 0.0,
@@ -181,14 +181,14 @@ plain = {
                 0, 0.0, Bvl,
                 1, Bvl, 0.0,
                 1, Nw_Iw_2_Bvl, 0.0,
-                1, Nw_Iw_2, Bvl,            
+                1, Nw_Iw_2, Bvl,
                 1, Nw_Iw_2, Ht,
                 0, Nw_Iw, Ht,
                 1, Nw, Ht,
                 ],
              ],
     'K': [ Nsp,
-             [ 
+             [
                 0, 0.0, 0.0,
                 1, 0.0, Ht,
                 0, Nw, Ht,
@@ -212,40 +212,40 @@ plain = {
                 ],
              ],
     'N': [ Nsp,
-             [ 
+             [
                 0, 0.0, 0.0,
                 1, 0.0, Ht,
                 1, Nw, 0.0,
-                1, Nw, Ht,                        
+                1, Nw, Ht,
                 ],
              ],
     'O': [ Nsp,
-             [ 
-                0, Nw_Bvl, Ht,   
-                1, Nw, Ht_Bvl,   
+             [
+                0, Nw_Bvl, Ht,
+                1, Nw, Ht_Bvl,
                 1, Nw, Bvl,
                 1, Nw_Bvl, 0.0,
                 1, Bvl, 0.0,
                 1, 0.0, Bvl,
                 1, 0.0, Ht_Bvl,
                 1, Bvl, Ht,
-                1, Nw_Bvl, Ht,            
+                1, Nw_Bvl, Ht,
                 ],
              ],
     'P': [ Nsp,
              [ 0, 0.0, 0.0,
                 1, 0.0, Ht,
                 1, Nw_Bvl, Ht,
-                1, Nw, Ht_Bvl,            
+                1, Nw, Ht_Bvl,
                 1, Nw, Ht_2pBvl,
                 1, Nw_Bvl, Ht_2,
                 1, 0.0, Ht_2,
                 ],
              ],
     'Q': [ Nsp,
-             [ 
-                0, Nw_Bvl, Ht,   
-                1, Nw, Ht_Bvl,   
+             [
+                0, Nw_Bvl, Ht,
+                1, Nw, Ht_Bvl,
                 1, Nw, Bvl,
                 1, Nw_Bvl, 0.0,
                 1, Bvl, 0.0,
@@ -261,7 +261,7 @@ plain = {
              [ 0, 0.0, 0.0,
                 1, 0.0, Ht,
                 1, Nw_Bvl, Ht,
-                1, Nw, Ht_Bvl,            
+                1, Nw, Ht_Bvl,
                 1, Nw, Ht_2pBvl,
                 1, Nw_Bvl, Ht_2,
                 1, 0.0, Ht_2,
@@ -278,10 +278,10 @@ plain = {
                 1, Nw, Ht_2mBvl,
                 1, Nw_Bvl, Ht_2,
                 1, Bvl, Ht_2,
-                1, 0.0, Ht_2pBvl,                                    
+                1, 0.0, Ht_2pBvl,
                 1, 0.0, Ht_Bvl,
                 1, Bvl, Ht,
-                1, Nw_Bvl, Ht,            
+                1, Nw_Bvl, Ht,
                 1, Nw, Ht_Bvl,
                 ],
              ],
@@ -294,7 +294,7 @@ plain = {
              ],
     'U': [ Nsp,
              [
-                0, Nw, Ht,   
+                0, Nw, Ht,
                 1, Nw, Bvl,
                 1, Nw_Bvl, 0.0,
                 1, Bvl, 0.0,
@@ -305,7 +305,7 @@ plain = {
              ],
     'V': [ Nsp,
              [
-                0, 0.0, Ht,   
+                0, 0.0, Ht,
                 1, Nw_2, 0.0,
                 1, Nw, Ht,
                 ],
@@ -334,15 +334,15 @@ plain = {
                 ],
              ],
     'Z': [ Nsp,
-             [ 
+             [
                 0, 0.0, Ht,
                 1, Nw, Ht,
                 1, 0.0, 0.0,
-                1, Nw, 0.0,                        
+                1, Nw, 0.0,
                 ],
              ],
     '1': [ Isp,
-             [ 
+             [
                 0, 0.0, Ht_Bvl,
                 1, Iw_2, Ht,
                 1, Iw_2, 0.0,
@@ -355,9 +355,9 @@ plain = {
                 0, Nw, 0.0,
                 1, 0.0, 0.0,
                 1, 0.0, Bvl,
-                1, Nw, Ht_Bvl - Bvl,            
+                1, Nw, Ht_Bvl - Bvl,
                 1, Nw, Ht_Bvl,
-                1, Nw_Bvl, Ht,            
+                1, Nw_Bvl, Ht,
                 1, Bvl, Ht,
                 1, 0.0, Ht_Bvl,
                 ],
@@ -372,9 +372,9 @@ plain = {
                 1, Nw_Bvl, Ht_2,
                 1, Bvl, Ht_2,
                 0, Nw_Bvl, Ht_2,
-                1, Nw, Ht_2pBvl,            
+                1, Nw, Ht_2pBvl,
                 1, Nw, Ht_Bvl,
-                1, Nw_Bvl, Ht,            
+                1, Nw_Bvl, Ht,
                 1, Bvl, Ht,
                 1, 0.0, Ht_Bvl,
                 ],
@@ -385,7 +385,7 @@ plain = {
                 1, 0.0, Ht_2,
                 1, Nw, Ht_2,
                 0, Nw_Bvl,Ht,
-                1, Nw_Bvl,0.0            
+                1, Nw_Bvl,0.0
                 ],
              ],
     '5': [ Nsp,
@@ -397,7 +397,7 @@ plain = {
                 1, Nw, Ht_2,
                 1, Nw_Bvl, Ht_2pBvl,
                 1, Bvl, Ht_2pBvl,
-                1, 0.0, Ht_2,                                    
+                1, 0.0, Ht_2,
                 1, 0.0, Ht,
                 1, Nw, Ht,
                 ],
@@ -405,9 +405,9 @@ plain = {
     '6': [ Nsp,
              [
                 0, Nw, Ht_Bvl,
-                1, Nw_Bvl, Ht,         
-                1, Bvl, Ht,      
-                1, 0.0, Ht_Bvl,   
+                1, Nw_Bvl, Ht,
+                1, Bvl, Ht,
+                1, 0.0, Ht_Bvl,
                 1, 0.0, Bvl,
                 1, Bvl, 0.0,
                 1, Nw_Bvl, 0.0,
@@ -415,7 +415,7 @@ plain = {
                 1, Nw, Ht_2mBvl,
                 1, Nw_Bvl, Ht_2,
                 1, Bvl, Ht_2,
-                1, 0.0, Ht_2mBvl,                                    
+                1, 0.0, Ht_2mBvl,
                 ],
              ],
     '7': [ Nsp,
@@ -429,7 +429,7 @@ plain = {
     '8': [ Nsp,
              [
                 0, Bvl, Ht_2,
-                1, 0.0, Ht_2mBvl,            
+                1, 0.0, Ht_2mBvl,
                 1, 0.0, Bvl,
                 1, Bvl, 0.0,
                 1, Nw_Bvl, 0.0,
@@ -437,13 +437,13 @@ plain = {
                 1, Nw, Ht_2mBvl,
                 1, Nw_Bvl, Ht_2,
                 1, Bvl, Ht_2,
-                1, 0.0, Ht_2pBvl,                                    
+                1, 0.0, Ht_2pBvl,
                 1, 0.0, Ht_Bvl,
                 1, Bvl, Ht,
-                1, Nw_Bvl, Ht,            
+                1, Nw_Bvl, Ht,
                 1, Nw, Ht_Bvl,
                 1, Nw, Ht_2pBvl,
-                1, Nw_Bvl, Ht_2,                        
+                1, Nw_Bvl, Ht_2,
                 ],
              ],
     '9': [ Nsp,
@@ -451,10 +451,10 @@ plain = {
                 0, Nw, Ht_2pBvl,
                 1, Nw_Bvl, Ht_2,
                 1, Bvl, Ht_2,
-                1, 0.0, Ht_2pBvl,                                    
+                1, 0.0, Ht_2pBvl,
                 1, 0.0, Ht_Bvl,
                 1, Bvl, Ht,
-                1, Nw_Bvl, Ht,            
+                1, Nw_Bvl, Ht,
                 1, Nw, Ht_Bvl,
                 1, Nw, Bvl,
                 1, Nw_Bvl, 0.0,
@@ -463,9 +463,9 @@ plain = {
                 ],
              ],
     '0': [ Nsp,
-             [ 
-                0, Nw_Bvl, Ht,   
-                1, Nw, Ht_Bvl,   
+             [
+                0, Nw_Bvl, Ht,
+                1, Nw, Ht_Bvl,
                 1, Nw, Bvl,
                 1, Nw_Bvl, 0.0,
                 1, Bvl, 0.0,
@@ -482,7 +482,7 @@ plain = {
                 0, 0.0, ht_bvl,
                 1, bvl, ht,
                 1, nw_bvl, ht,
-                1, nw, ht_bvl,            
+                1, nw, ht_bvl,
                 0, nw, ht_2,
                 1, nw_bvl, ht_2pbvl,
                 1, bvl, ht_2pbvl,
@@ -492,7 +492,7 @@ plain = {
                 1, nw_bvl, 0.0,
                 1, nw, bvl,
                 0, nw, 0.0,
-                1, nw, ht,            
+                1, nw, ht,
                 ],
              ],
     'b': [ nsp,
@@ -505,9 +505,9 @@ plain = {
                 1, nw_bvl, 0.0,
                 1, bvl, 0.0,
                 1, 0.0, bvl,
-                
+
                 0, 0.0,0.0,
-                1, 0.0, Ht,            
+                1, 0.0, Ht,
                 ],
              ],
     'c': [ nsp,
@@ -533,14 +533,14 @@ plain = {
                 1, nw_bvl, 0.0,
                 1, nw, bvl,
                 0, nw, 0.0,
-                1, nw, Ht,            
+                1, nw, Ht,
                 ],
              ],
     'e': [ nsp,
              [
                 0, 0.0, ht_2,
                 1, nw_bvl, ht_2,
-                1, nw, ht_2pbvl,            
+                1, nw, ht_2pbvl,
                 1, nw, ht_bvl,
                 1, nw_bvl, ht,
                 1, bvl, ht,
@@ -565,9 +565,9 @@ plain = {
     'g': [ nsp,
              [
                 0, 0.0, ds_bvl,
-                1, bvl, ds,                  
-                1, nw_bvl, ds,      
-                1, nw, ds_bvl,   
+                1, bvl, ds,
+                1, nw_bvl, ds,
+                1, nw, ds_bvl,
                 1, nw, ht_bvl,
                 1, nw_bvl, ht,
                 1, bvl, ht,
@@ -587,7 +587,7 @@ plain = {
                 1, nw, bvl,
                 1, nw, 0.0,
                 0, 0.0,0.0,
-                1, 0.0, Ht,            
+                1, 0.0, Ht,
                 ],
              ],
     'i': [ isp,
@@ -601,9 +601,9 @@ plain = {
     'j': [ nsp,
              [
                 0, 0.0, ds_bvl,
-                1, bvl, ds,                  
-                1, nw_bvl, ds,      
-                1, nw, ds_bvl,   
+                1, bvl, ds,
+                1, nw_bvl, ds,
+                1, nw, ds_bvl,
                 1, nw, ht_bvl,
                 0, nw, ht+bvl,
                 1, nw, ht+2*bvl,
@@ -619,7 +619,7 @@ plain = {
                 ],
              ],
     'l': [ isp,
-             [ 
+             [
                 0, 0.0, Ht,
                 1, 0.0, 0.0,
                 ],
@@ -637,7 +637,7 @@ plain = {
                 1, mw, ht_bvl,
                 1, mw, 0.0,
                 0, 0.0,0.0,
-                1, 0.0, ht,            
+                1, 0.0, ht,
                 ],
              ],
     'n': [ nsp,
@@ -649,7 +649,7 @@ plain = {
                 1, nw, bvl,
                 1, nw, 0.0,
                 0, 0.0,0.0,
-                1, 0.0, ht,            
+                1, 0.0, ht,
                 ],
              ],
     'o': [ nsp,
@@ -662,7 +662,7 @@ plain = {
                 1, nw_bvl, 0.0,
                 1, bvl, 0.0,
                 1, 0.0, bvl,
-                1, 0.0, ht_bvl,            
+                1, 0.0, ht_bvl,
                 ],
              ],
     'p': [ nsp,
@@ -675,9 +675,9 @@ plain = {
                 1, nw_bvl, 0.0,
                 1, bvl, 0.0,
                 1, 0.0, bvl,
-                
+
                 0, 0.0,ds,
-                1, 0.0, ht,            
+                1, 0.0, ht,
                 ],
              ],
     'q': [ nsp,
@@ -691,7 +691,7 @@ plain = {
                 1, nw_bvl, 0.0,
                 1, nw, bvl,
                 0, nw, ds,
-                1, nw, ht,            
+                1, nw, ht,
                 ],
              ],
     'r': [ nsp,
@@ -701,7 +701,7 @@ plain = {
                 1, nw_bvl, ht,
                 1, nw, ht_bvl,
                 0, 0.0,0.0,
-                1, 0.0, ht,            
+                1, 0.0, ht,
                 ],
              ],
     's': [ nsp,
@@ -713,7 +713,7 @@ plain = {
                 1, 0.0, ht_2pbvl,
                 1, bvl, ht_2,
                 1, nw_bvl, ht_2,
-                1, nw, ht_2mbvl,                                                
+                1, nw, ht_2mbvl,
                 1, nw, bvl,
                 1, nw_bvl, 0.0,
                 1, bvl, 0.0,
@@ -739,7 +739,7 @@ plain = {
                 1, nw_bvl, 0.0,
                 1, nw, bvl,
                 0, nw, 0.0,
-                1, nw, ht,            
+                1, nw, ht,
                 ],
              ],
     'v': [ nsp,
@@ -768,9 +768,9 @@ plain = {
     'y': [ nsp,
              [
                 0, 0.0, ds_bvl,
-                1, bvl, ds,                  
-                1, nw_bvl, ds,      
-                1, nw, ds_bvl,   
+                1, bvl, ds,
+                1, nw_bvl, ds,
+                1, nw, ds_bvl,
                 1, nw, ht,
                 0, 0.0, ht,
                 1, 0.0, bvl,
@@ -842,7 +842,7 @@ plain = {
                 1, 0.0, Ht-Bvl*2,
                 1, 0.0, Bvl*2,
                 1, Nw_2, 0.0,
-                1, Nw, 0.0,            
+                1, Nw, 0.0,
                 ],
              ],
     ')': [ Nsp,
@@ -852,7 +852,7 @@ plain = {
                 1, Nw, Ht-Bvl*2,
                 1, Nw, Bvl*2,
                 1, Nw_2, 0.0,
-                1, 0.0, 0.0,            
+                1, 0.0, 0.0,
                 ],
              ],
     '[': [ Isp,
@@ -891,13 +891,13 @@ plain = {
                 1, Bvl, Ht,
                 1, Bvl, Ht-Bvl,
                 1, 0.0, Ht-Bvl,
-                1, 0.0, Ht,            
+                1, 0.0, Ht,
 
                 0, Nw, 0.0,
                 1, Nw, Bvl,
                 1, Nw-Bvl, Bvl,
                 1, Nw-Bvl, 0.0,
-                1, Nw, 0.0,            
+                1, Nw, 0.0,
                 ],
              ],
     '<': [ Nsp,
@@ -914,11 +914,8 @@ plain = {
                 1, 0.0, Bvl,
                 ],
              ],
-    
+
     }
 
 def get_font(size,face,style):
     return plain
-
-
-

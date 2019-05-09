@@ -17,13 +17,13 @@ class State:
         self.model = None
         self.counter = 0
         self.prefix = "bmintmp"
-        
+
     def minimize(self,max_iter=100,fix_flag=None,rest_flag=None,
                      rest_coeff = 100.0,solvation=None):
         if feedback['actions']:
             print(' '+str(self.__class__)+': starting minimization run...')
         io.mmd.toFile(self.model,self.prefix+".dat")
-        
+
         f = open(self.prefix+".com",'w')
         # get home-relative path
 #      pth = os.getcwd()
@@ -37,7 +37,7 @@ class State:
         # select forcefield treatments
         if not solvation: # no solvent, constant dielectric
             f.write(" FFLD      10      1      0      1     1.0000     0.0000     0.0000     0.0000\n")
-        else: 
+        else:
             f.write(''' FFLD      10      1      0      1     1.0000     0.0000     0.0000     0.0000
  SOLV       3      1      0      0     0.0000     0.0000     0.0000     0.0000
  EXNB       0      0      0      0     0.0000     0.0000     0.0000     0.0000
@@ -67,7 +67,7 @@ class State:
  DEBG 6
  '''%(max_iter))
         f.close()
-        
+
         bmin.do(self.prefix)
         io.mmd.updateFromFile(self.model,self.prefix+".out")
         if hasattr(self.model.molecule,'energy'):
@@ -76,8 +76,3 @@ class State:
         if feedback['verbose']:
             print(' '+str(self.__class__)+': new model loaded.')
         self.model = a
-
-
-
-
-

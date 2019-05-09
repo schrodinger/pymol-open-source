@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -16,7 +16,7 @@
 # knows very little about the program (WLD) - hence the version 1 identifier...
 
 # by the way, most of the below is untested...
-        
+
 from __future__ import print_function
 
 import os
@@ -49,7 +49,7 @@ def do(input,run_prefix=None,echo=None,
     if not skip:
         if feedback['gamess']:
             print(" "+str(__name__)+': creating temporary files "%s.*"' % (run_prefix))
-            print(" "+str(__name__)+': launching gamess...') 
+            print(" "+str(__name__)+': launching gamess...')
         try:
             for a in glob.glob(run_prefix+".*"):
                 os.unlink(a)
@@ -62,7 +62,7 @@ def do(input,run_prefix=None,echo=None,
         if echo:
             os.system(rungms_path+' '+run_prefix+" 2>&1 | tee "+run_prefix+".out")
         else:
-            os.system(rungms_path+' '+run_prefix+" > "+run_prefix+".out 2>&1")      
+            os.system(rungms_path+' '+run_prefix+" > "+run_prefix+".out 2>&1")
 # NFS workaround (flushes the directory cache so that glob will work)
         try: os.unlink(".sync")
         except: pass
@@ -98,7 +98,7 @@ class State:
         self.model = None
         self.data = None
         self.vec = None
-        
+
     def load_model(self,model):
         self.model = model
 
@@ -107,12 +107,12 @@ class State:
         for z in self.model.get_internal_tuples():
             lst.append(z[0])
         return lst
-    
+
     def get_data_group(self,basis = None,zmat = 1):
         model = self.model
-            
+
         gmsList = []
-        
+
         # write header records
         gmsList.append(" $DATA\n")
         gmsList.append(model.molecule.title+" from "+str(__name__)+"\n")
@@ -134,7 +134,7 @@ class State:
         gmsList.append(" $END\n")
         return gmsList
 
-    def get_ordered_data_group(self): 
+    def get_ordered_data_group(self):
         gmsList = self.data[0:3]
         flag = 1
         c = 3
@@ -146,7 +146,7 @@ class State:
                 flag = 1
             c = c + 1
         return gmsList
-    
+
     def get_contrl_group(self,
                                 scftyp='RHF',
                                 runtyp='ENERGY',
@@ -232,7 +232,7 @@ class State:
             self.model.molecule.energy = float(l[38:58].strip())*627.5095
             if feedback['gamess']:
                 print(" "+str(__name__)+': energy updated %12.6f.' % self.model.molecule.energy)
-            
+
     def read_punch_list(self,list):
         ll = len(list)
         c = 0
@@ -292,7 +292,7 @@ class State:
                 if not a.strip():
                     flag = 1
                 c = c + 1
-    
+
     def read_density_list(self,list,brick,z_step):
         ll = len(list)
         c = 0
@@ -307,7 +307,7 @@ class State:
             for x in range(brick.dim[0]):
                 for y in range(brick.dim[1]):
                     brick.lvl[x][y][z_step] = float(list[a][36:51])
-                    a = a + 1 
+                    a = a + 1
             if feedback['gamess']:
                 print(" "+str(__name__)+': read density slice %d of %d.' %(
                     z_step+1,brick.dim[2]))
@@ -364,7 +364,7 @@ class State:
         # requires list of dihedrals from tinker.amber
         #
         from pymol import cmd
-        from .tinker.amber import Topology      
+        from .tinker.amber import Topology
 
         cmd.load_model(self.model,'_gamess1')
         model = self.model
@@ -494,7 +494,7 @@ class State:
             return zmat_ext
         else:
             return None
-        
+
     def get_zmat_group(self,auto=1,dlc=1,zmat_extend=None):
         gmsList = []
         if auto and dlc:
@@ -503,11 +503,11 @@ class State:
             else:
                 gmsList.append(" $ZMAT DLC=.TRUE. AUTO=.TRUE.\n")
                 gmsList.extend(zmat_extend)
-                gmsList.append(" $END\n")            
+                gmsList.append(" $END\n")
         else:
             raise RuntimeError
         return gmsList
-    
+
     def get_eldens_group(self,morb=0):
         gmsList = []
         gmsList.append(" $ELDENS IEDEN=1 MORB=%i \n" % morb)
@@ -522,7 +522,7 @@ class State:
 
     def get_guess_group(self,guess='HUCKEL'):
         return [" $GUESS GUESS=%s $END\n"%guess]
-    
+
     def get_grid_group(self,brick,z_step):
         origin = (
             brick.origin[0],
@@ -544,7 +544,7 @@ class State:
             " $END\n"
             ]
         return gmsList
-    
+
     def get_scf(self,dirscf=1):
         gmsList = []
         if dirscf:
@@ -560,7 +560,7 @@ class State:
         gmsList.extend(self.get_zmat_group(zmat_extend=zmat_extend))
         gmsList.append(" $STATPT NSTEP=50 $END\n")
         return gmsList
-            
+
     def get_optimize_charge_job(self):
         gmsList = self.get_optimize_job()
         gmsList.append(" $ELPOT IEPOT=1 WHERE=PDC $END\n")
@@ -572,7 +572,7 @@ class State:
         gmsList.append(" $ELPOT IEPOT=1 WHERE=PDC $END\n")
         gmsList.append(" $PDC PTSEL=GEODESIC CONSTR=CHARGE $END\n")
         return gmsList
-    
+
     def get_prop_job(self):
         gmsList = []
         gmsList.extend(self.get_contrl_group(runtyp = 'PROP',
@@ -582,7 +582,7 @@ class State:
         gmsList.extend(self.data)
         gmsList.extend(self.vec)
         return gmsList
-        
+
     def get_energy_job(self):
         gmsList=[]
         gmsList.extend(self.get_contrl_group(
@@ -668,9 +668,3 @@ if 'GAMESS' in os.environ:
 else:
     base = ''
     rungms_path = ''
-
-
-
-
-
-

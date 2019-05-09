@@ -1,21 +1,21 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
 from __future__ import division
 from __future__ import print_function
 
-# xray.py 
+# xray.py
 # This section contains python code for supporting
 # x-ray crystallography functions
 
@@ -44,7 +44,7 @@ def sg_sym_to_mat_list(sgsymbol): # TODO _self
     else:
         try:
             from .cmd import QuietException, \
-                 _feedback,fb_module,fb_mask 
+                 _feedback,fb_module,fb_mask
             if(_feedback(fb_module.symmetry,fb_mask.errors)):
                 print("Symmetry-Error: Unrecognized space group symbol '"+sgsymbol+"'.")
         except:
@@ -54,18 +54,18 @@ def sg_sym_to_mat_list(sgsymbol): # TODO _self
 hex_to_rhom_xHM = {
     #  extended Hermann Mauguin symbol translation
     #  from CCP4's syminfo.lib
-    
+
     'H 3'      : 'R 3 :H',
     'H -3'     : 'R -3 :H',
     'H 3 2'    : 'R 3 2 :H',
-    
+
     'H 3 m'    : 'R 3 m :H',
     'H 3 c'    : 'R 3 c :H',
     'H -3 2/m' : 'R -3 m :H',
     'H -3 m'   : 'R -3 m :H',
     'H -3 2/c' : 'R -3 c :H',
     'H -3 c'   : 'R -3 c :H',
-    
+
     'H 3 M'    : 'R 3 m :H',
     'H 3 C'    : 'R 3 c :H',
     'H -3 2/M' : 'R -3 m :H',
@@ -8504,15 +8504,15 @@ for key in list(sym_base.keys()):
 
 space_group_map = {
     ""       : "",
-    "P1"     : "P 1",       
-    "P111"   : "P 1 1 1",    
+    "P1"     : "P 1",
+    "P111"   : "P 1 1 1",
     "A111"   : "A 1 1 1",
     "P-1"    : "P -1",
     "P1-"    : "P 1-",
     "P2"     : "P 2",
     "P121"   : "P 1 2 1",
-    "P21"    : "P 21", 
-    "P1211"  : "P 1 21 1", 
+    "P21"    : "P 21",
+    "P1211"  : "P 1 21 1",
     "P1121"  : "P 1 1 21",
     "B2"     : "B 2",
     "B112"   : "B 1 1 2",
@@ -8546,7 +8546,7 @@ space_group_map = {
     "P4322"  : "P 43 2 2",
     "P43212" : "P 43 21 2",
     "I422"   : "I 4 2 2",
-    "I4132"  : "I 41 3 2",     
+    "I4132"  : "I 41 3 2",
     "I432"   : "I 4 3 2",
     "I4122"  : "I 41 2 2",
     "P3"     : "P 3",
@@ -8559,7 +8559,7 @@ space_group_map = {
     "P3112"  : "P 31 1 2",
     "P3121"  : "P 31 2 1",
     "P3212"  : "P 32 1 2",
-    "P3221"  : "P 32 2 1", 
+    "P3221"  : "P 32 2 1",
     "H32"    : "H 3 2",
     "R32"    : "R 3 2",
     "P6"     : "P 6",

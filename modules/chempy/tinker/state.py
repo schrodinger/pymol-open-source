@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
 #-* Scott Dixon, Metaphorics, LLC
-#-* 
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ class State:
 
         self.keywords = {}
         self.keywords['verbose'] = ''
-        self.keywords['cutoff'] = 8.0      
+        self.keywords['cutoff'] = 8.0
         self.keywords['randomseed'] = 1234567890
 
         self.mapping = None
@@ -45,7 +45,7 @@ class State:
     def reset_fragile(self):
         self.restart = None
         self.frames = None
-        
+
     def __write_keys(self,list):
         f=open(self.prefix+"_inp.key",'w')
         f.writelines(list)
@@ -160,7 +160,7 @@ class State:
              self.energy = self.summary[-1][1]
         else:
              self.energy = None
-            
+
     def dynamics(self,steps=100,
                      timestep=None,
                      interval=None,
@@ -177,7 +177,7 @@ class State:
             f.close()
             if feedback['actions']:
                 print(' '+str(self.__class__)+': using restart information...')
-#         
+#
         kw_list = [ "parameters "+self.params+"\n" ]
         for a in self.keywords.keys():
             kw_list.append("%s %s\n" % ( a,str(self.keywords[a])))
@@ -248,14 +248,9 @@ class State:
         else:
             self.energy = None
 
-        
+
     def load_model(self,a):
         if feedback['verbose']:
             print(' '+str(self.__class__)+': new model loaded.')
         self.model = a
         self.reset_fragile()
-
-
-
-
-

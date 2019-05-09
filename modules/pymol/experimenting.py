@@ -1,27 +1,27 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
 if True:
-    
+
     from . import selector
     from .cmd import _cmd,lock,unlock,Shortcut,QuietException, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
+          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     cmd = __import__("sys").modules["pymol.cmd"]
     import threading
     import pymol
     import string
-    
+
     def get_bond_print(obj,max_bond,max_type,_self=cmd):
         r = DEFAULT_ERROR
         try:
@@ -29,7 +29,7 @@ if True:
             r = _cmd.get_bond_print(_self._COb,str(obj),int(max_bond),int(max_type))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def spheroid(object="",average=0,_self=cmd):  # EXPERIMENTAL
@@ -54,7 +54,7 @@ USAGE
             r = _cmd.spheroid(_self._COb,str(object),int(average))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def mem(_self=cmd):
@@ -71,7 +71,7 @@ DESCRIPTION
             r = _cmd.mem(_self._COb)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
@@ -83,7 +83,7 @@ DESCRIPTION
     to do with assigning forcefield parameters to a selection of
     atoms.
     
-'''        
+'''
         # This function relies on code that is not currently part of PyMOL/ChemPy
         # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
         from chempy.tinker import realtime
@@ -106,7 +106,7 @@ DESCRIPTION
     eventually have something to do with doing a quick clean up of the
     molecular structure.
     
-'''        
+'''
         kwargs['_setup'] = 0
         return minimize(*args, **kwargs)
 
@@ -117,8 +117,8 @@ DESCRIPTION
     "fast_minimize" is an unsupported nonfunctional command that may
     eventually have something to do with minimization.
     
-'''        
-        from chempy.tinker import realtime  
+'''
+        from chempy.tinker import realtime
 
         if not sele:
             names = _self.get_names("objects")
@@ -147,7 +147,7 @@ DESCRIPTION
             r = _cmd.dump(_self._COb,str(fnam),obj)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
@@ -163,21 +163,21 @@ DESCRIPTION
     '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r=_cmd.test(_self._COb,int(group),int(index))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def import_coords(coords,name,state,_self=cmd): # experimental
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.import_coords(_self._COb,str(name),int(state)-1,coords)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def load_coords(model, oname, state=1): # UNSUPPORTED

@@ -18,6 +18,3 @@ def machine_get_clipboard():
         p.stdin.close()
         result = p.stdout.readlines()
     return result
-
-                      
-    

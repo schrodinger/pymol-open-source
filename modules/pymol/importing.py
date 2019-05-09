@@ -1,21 +1,21 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
 from __future__ import print_function, absolute_import
 
 if True:
-    
+
     import re
     import os
     import sys
@@ -30,13 +30,13 @@ if True:
           _load, is_list, space_sc, safe_list_eval, is_string, loadable
     from .constants import _loadable
     from pymol.creating import unquote
-    
+
     def incentive_format_not_available_func(format=''):
         raise pymol.IncentiveOnlyException(
                 "'%s' format not supported by this PyMOL build" % format)
 
     from chempy import io
-    
+
     def filename_to_objectname(fname, _self=cmd):
         oname, _, _, _ = filename_to_format(fname)
         return _self.get_legal_name(oname)
@@ -124,7 +124,7 @@ if True:
 
     def set_session(session,partial=0,quiet=1,cache=1,steal=-1,_self=cmd):
         r = DEFAULT_SUCCESS
-        if is_string(session): # string implies compressed session data 
+        if is_string(session): # string implies compressed session data
             import zlib
             session = io.pkl.fromString(zlib.decompress(session))
             if steal<0:
@@ -189,7 +189,7 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.load_object(_self._COb,str(name),object,int(state)-1,
                                         int(type),int(finish),int(discrete),
                                         int(quiet),int(zoom))
@@ -271,19 +271,19 @@ SEE ALSO
     
     '''
         r = DEFAULT_ERROR
-        
+
         tables = { 'cmyk' : "$PYMOL_DATA/pymol/cmyk.png",
                    'pymol' : 'pymol',
                    'rgb' : 'rgb',
                    'greyscale': 'greyscale' }
-        
+
         space_auto = space_sc.interpret(space)
         if (space_auto != None) and not is_list(space_auto):
             space = space_auto
 
-        if space=="": 
+        if space=="":
             filename = ""
-        else:         
+        else:
             filename = tables.get(space.lower(),"")
             if filename == "":
                 print("Error: unknown color space '%s'."%space)
@@ -333,8 +333,8 @@ PYMOL API
         _self = kw.get('_self',cmd)
         lst = [loadable.cgo]
         lst.extend(list(arg))
-        if not is_list(lst[1]): 
-           lst[1] = list(lst[1]) 
+        if not is_list(lst[1]):
+           lst[1] = list(lst[1])
         return _self.load_object(*lst, **kw)
 
     def load_model(*arg,**kw):
@@ -409,7 +409,7 @@ SEE ALSO
 
             # preprocess selection
             selection = selector.process(selection)
-            #   
+            #
 
             filename = unquote(filename)
 
@@ -454,7 +454,7 @@ SEE ALSO
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
-    
+
     def _processALN(fname,quiet=1,_self=cmd):
         legal_dict = {}
         seq_dict = {}
@@ -506,7 +506,7 @@ SEE ALSO
         for key in seq_order:
             raw_seq = seq_dict[key].replace('-','')
             _self.fab(raw_seq, key, quiet=quiet)
-        
+
     def _processPWG(fname,_self=cmd):
         r = DEFAULT_ERROR
 
@@ -538,7 +538,7 @@ SEE ALSO
                             if len(input)>1:
                                 port = int(input[1].strip())
                                 launch_flag = 1
-                        elif keyword == 'logging': 
+                        elif keyword == 'logging':
                             if len(input)>1:
                                 logging = int(input[1].strip())
                         elif keyword == 'root': # must encode a valid filesystem path to local content
@@ -602,7 +602,7 @@ SEE ALSO
         if is_error(r):
             print("Error: unable to handle PWG file")
         return r
-    
+
     def _magic_check_cor_charmm(filename):
         # http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/corplugin.html
         # assume at least 2 title/comment lines, starting with *
@@ -895,7 +895,7 @@ NOTES
                 raise pymol.CmdException("unknown raw format '%s'", format)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
-        
+
     def read_sdfstr(sdfstr,name,state=0,finish=1,discrete=1,quiet=1,
                     zoom=-1,multiplex=-2,object_props=None,_self=cmd):
         '''
@@ -978,7 +978,7 @@ DESCRIPTION
     '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.load(_self._COb, str(name).strip(), str(content),
                     int(state)-1, loadable.mmodstr, 1, 1, int(quiet), 0,
                     int(zoom))
@@ -1015,7 +1015,7 @@ NOTES
     '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             ftype = loadable.pdbstr
             pdb = contents
             r = _cmd.load(_self._COb,str(oname),pdb,int(state)-1,int(ftype),
@@ -1054,7 +1054,7 @@ NOTES
     '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             ftype = loadable.mol2str
             oname = str(name).strip()
             r = _cmd.load(_self._COb,str(oname),mol2,int(state)-1,int(ftype),
@@ -1086,7 +1086,7 @@ NOTES
     '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             ftype = loadable.xplorstr
             oname = str(name).strip()
             r = _cmd.load(_self._COb,str(oname),xplor,int(state)-1,int(ftype),
@@ -1114,7 +1114,7 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.finish_object(_self._COb,name)
         finally:
             _self.unlock(r,_self)
@@ -1323,11 +1323,11 @@ PYMOL API
                 _self.remove(r'?%s & ! c. \%s' % (r, chain))
 
         return r
-    
+
     def fetch(code, name='', state=0, finish=1, discrete=-1,
               multiplex=-2, zoom=-1, type='', async_=0, path='',
               file=None, quiet=1, _self=cmd, **kwargs):
-        
+
         '''
 DESCRIPTION
 
@@ -1396,7 +1396,7 @@ NOTES
             finally:
                 _self.unblock_flush(_self)
         return r
-        
+
     def load_coordset(coords, object, state=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION

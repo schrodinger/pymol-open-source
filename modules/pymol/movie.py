@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
 #-* Peter Haebel, Byron DeLaBarre
-#-* 
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ def pause(pause=15,cycles=1,_self=cmd):
     movie_list = [ pass_string ] * cycles
     movie_string = " ".join(movie_list)
     _self.mset(movie_string)
-                
+
 def load(*args,**kw):
     _self = kw.get('_self',cmd)
     nam = "mov"
@@ -92,7 +92,7 @@ def rock(first=1,last=-1,angle=30,phase=0,loop=1,axis='y',_self=cmd):
         diff = disp-last
         # com = "mdo %d:turn %s,%8.3f" % (first+a,axis,diff)
         # _self.do(com)
-        _self.mdo("%d"%(first+a),"turn %s,%8.3f"% (axis,diff))      
+        _self.mdo("%d"%(first+a),"turn %s,%8.3f"% (axis,diff))
         a = a + 1
 
 def roll(first=1,last=-1,loop=1,axis='y',_self=cmd):
@@ -106,7 +106,7 @@ def roll(first=1,last=-1,loop=1,axis='y',_self=cmd):
     if loop:
         step = 2*math.pi/(n+1)
     else:
-        step = 2*math.pi/n   
+        step = 2*math.pi/n
     a = 0
     invert = 1
     if axis[0:1]=='-':
@@ -209,7 +209,7 @@ def nutate(first,last,angle=30,phase=0,loop=1,shift=math.pi/2.0,_self=cmd):
         lasty = angle*math.sin(ang_cur+shift)/2
         ang_cur = ang_cur + ang_inc
         nextx = angle*math.sin(ang_cur)/2
-        nexty = angle*math.sin(ang_cur+shift)/2      
+        nexty = angle*math.sin(ang_cur+shift)/2
         # com = "mdo %d:turn %s,%8.3f" % (first+a,axis,diff)
         # _self.do(com)
         _self.mdo("%d"%(first+a),"turn x,%8.3f;turn y,%8.3f;turn y,%8.3f;turn x,%8.3f"%
@@ -255,7 +255,7 @@ def timed_roll(period=12.0,cycles=1,axis='y',_self=cmd):
         frames_per_sec=30.0
     frames_per_cycle = int(period*frames_per_sec)
     total = frames_per_cycle * cycles
-    
+
     _self.mset("1 x%d"%total)
     step = 2*math.pi/(frames_per_cycle)
     deg = (180*step/math.pi)
@@ -330,7 +330,7 @@ ARGUMENTS
         if loop:
             if (start == 1):
                 cmd.mview("interpolate",wrap=1)
-                cmd.turn(axis,120)                
+                cmd.turn(axis,120)
                 cmd.mview("store",start+n_frame-1,power=1,freeze=1)
                 cmd.turn(axis,120)
             else:
@@ -338,7 +338,7 @@ ARGUMENTS
                 cmd.turn(axis,120 - adjustment)
                 cmd.mview("store",start+n_frame-1,power=1,freeze=1)
                 cmd.mview("interpolate")
-                cmd.turn(axis,adjustment) 
+                cmd.turn(axis,adjustment)
         else:
             cmd.turn(axis,120)
             cmd.mview("store",start+n_frame-1,power=1,freeze=1)
@@ -347,7 +347,7 @@ ARGUMENTS
         # PYMOL-2881
         if cmd.get_setting_int('movie_auto_interpolate'):
             cmd.mview("reinterpolate")
-        
+
 def add_rock(duration=8.0,angle=30.0,loop=1,axis='y',start=0,_self=cmd):
     '''
 DESCRIPTION
@@ -435,7 +435,7 @@ def add_state_loop(factor=1,pause=2.0,first=-1,last=-1,loop=1,start=0,_self=cmd)
         if cmd.get_setting_int('movie_auto_interpolate'):
             cmd.mview("reinterpolate")
 
-def add_nutate(duration=8.0, angle=30.0, spiral=0, loop=1, 
+def add_nutate(duration=8.0, angle=30.0, spiral=0, loop=1,
                offset=0, phase=0, shift=math.pi/2.0, start=0,
                _self=cmd):
     '''
@@ -482,7 +482,7 @@ ARGUMENTS
                 sp_angle = angle
             ang_cur = math.pi*phase/180.0 + (2*math.pi*index)/n_frame
             x_rot = sp_angle * math.sin(ang_cur)/2
-            y_rot = sp_angle * math.sin(ang_cur+shift)/2      
+            y_rot = sp_angle * math.sin(ang_cur+shift)/2
             cmd.turn('x',x_rot)
             cmd.turn('y',y_rot)
             cmd.mview('store',start+index,freeze=1)
@@ -491,7 +491,7 @@ ARGUMENTS
     # PYMOL-2881
     if cmd.get_setting_int('movie_auto_interpolate'):
         cmd.mview("reinterpolate")
-    
+
 def _rock(mode,axis,first,last,period,pause,_self=cmd):
     cmd = _self
     n_frame = last - first + 1
@@ -519,7 +519,7 @@ def _rock(mode,axis,first,last,period,pause,_self=cmd):
         cmd.mview("store",last,power=-1,freeze=1)
         cmd.mview("interpolate",first,last)
 
-def _nutate_sub(start_frame, stop_frame, angle=15.0, spiral=0, loop=1, 
+def _nutate_sub(start_frame, stop_frame, angle=15.0, spiral=0, loop=1,
                 offset=0, phase=0, shift=math.pi/2.0, _self=cmd):
     cmd = _self
     angle = float(angle)
@@ -538,13 +538,13 @@ def _nutate_sub(start_frame, stop_frame, angle=15.0, spiral=0, loop=1,
                 sp_angle = angle
             ang_cur = math.pi*phase/180.0 + (2*math.pi*index)/n_frame
             x_rot = sp_angle * math.sin(ang_cur)/2
-            y_rot = sp_angle * math.sin(ang_cur+shift)/2      
+            y_rot = sp_angle * math.sin(ang_cur+shift)/2
             cmd.turn('x',x_rot)
             cmd.turn('y',y_rot)
             cmd.mview('store',start_frame+index,freeze=1)
             cmd.turn('y',-y_rot)
             cmd.turn('x',-x_rot)
-    
+
 def _nutate(mode,first,last,period,pause,_self=cmd):
     cmd = _self
     n_frame = last - first + 1
@@ -563,7 +563,7 @@ def _nutate(mode,first,last,period,pause,_self=cmd):
     for frame in frame_list:
         _nutate_sub(frame[0], frame[1], angle, spiral, _self=_self)
         spiral = 0
-        
+
 def add_scenes(names=None, pause=8.0, cut=0.0, loop=1,
                rock=-1, period=8.0, animate=-1, start=0,
                _self=cmd):
@@ -642,7 +642,7 @@ ARGUMENTS
                     if sweep_mode==1: # x-axis rock
                         _rock(sweep_mode, 'x', sweep_first, sweep_last,
                                 period, pause, _self=_self)
-                    elif sweep_mode<3: # y-axis rock                        
+                    elif sweep_mode<3: # y-axis rock
                         _rock(sweep_mode, 'y', sweep_first, sweep_last,
                                 period, pause, _self=_self)
                     elif sweep_mode == 3:
@@ -670,7 +670,7 @@ def _watch(filename,done_event):
         tries = tries - 1
         if tries < 0:
             break
-        time.sleep(1) 
+        time.sleep(1)
     if os.path.exists(filename):
         tries = 5
     while os.path.exists(filename):
@@ -688,7 +688,7 @@ def _watch(filename,done_event):
         time.sleep(2)
         if done_event.isSet():
             break
-            
+
 def _encode(filename,first,last,preserve,
             encoder,tmp_path,prefix,img_ext,quality,quiet,_self=cmd):
     import os
@@ -705,7 +705,7 @@ def _encode(filename,first,last,preserve,
             break
         elif _self.get_modal_draw(): # keep looping so long as we're rendering...
             tries = 10
-        else: 
+        else:
             tries = tries - 1
             if tries < 0:
                 done = 0
@@ -731,7 +731,7 @@ def _encode(filename,first,last,preserve,
                 ok = 0
                 print("produce-error: Unable to validate freemol.mpeg_encode.")
         if not ok:
-            print("produce-error: Unable to create mpeg file.")            
+            print("produce-error: Unable to create mpeg file.")
         else:
             mpeg_quality = 1+int(((100-quality)*29)/100) # 1 to 30
             input = mpeg_encode.input(fn_rel, '.',
@@ -792,7 +792,7 @@ def _encode(filename,first,last,preserve,
             for fil in glob.glob(os.path.join(tmp_path,prefix+"*")):
                 os.unlink(fil)
             os.rmdir(tmp_path)
-    
+
 produce_mode_dict = {
     'normal'  : 0,
     'draw'    : 1,
@@ -964,4 +964,3 @@ ARGUMENTS
         return _self.DEFAULT_SUCCESS
     else:
         return _self.DEFAULT_ERROR
-    

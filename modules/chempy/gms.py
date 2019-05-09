@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ class GMS(Storage):
     def toList(self,model,runtyp='OPTIMIZE',exetyp='RUN',
                   gbasis='N31',ngauss=6,ndfunc=1,dirscf=1):
 
-            
+
         gmsList = []
 
         # write header records
@@ -59,7 +59,7 @@ class GMS(Storage):
             else:
                 diffsp=''
         gmsList.append(
-            " $CONTRL RUNTYP=%s COORD=UNIQUE EXETYP=%s NZVAR=%d %s $END\n" % 
+            " $CONTRL RUNTYP=%s COORD=UNIQUE EXETYP=%s NZVAR=%d %s $END\n" %
             (runtyp,exetyp,nzvar,icharg))
         if ndfunc>0:
             gmsList.append(" $BASIS GBASIS=%s NGAUSS=%d NDFUNC=%d %s $END\n" %
@@ -92,12 +92,5 @@ class GMS(Storage):
             gmsList.append(" $STATPT NPRT=-2 NPUN=-2 NSTEP=50 $END\n")
         gmsList.append(" $ELPOT IEPOT=1 WHERE=PDC $END\n")
         gmsList.append(" $PDC PTSEL=GEODESIC CONSTR=CHARGE $END\n")
-                            
+
         return(gmsList)
-
-
-
-
-
-
-

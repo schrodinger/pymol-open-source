@@ -1,21 +1,21 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
 from __future__ import print_function
 
 if True:
-	
+
         cmd = __import__("sys").modules["pymol.cmd"]
         from .cmd import _cmd,lock,unlock
         from . import selector
@@ -71,7 +71,7 @@ SEE ALSO
                 # handle PyMOL's macro /// notation
                 mobile = selector.process(mobile)
                 target = selector.process(target)
-                                
+
                 # make the lists for holding coordinates and IDs
                 mod1 = _self.get_model(target, state=target_state)
                 mod2 = _self.get_model(mobile, state=mobile_state)
@@ -79,7 +79,7 @@ SEE ALSO
                 sel2 = mod2.get_coord_list()
                 ids1 = [a.id for a in mod1.atom]
                 ids2 = [a.id for a in mod2.atom]
-                
+
                 if len(sel1) < 2 * window:
                         print("CEalign-Error: Your target selection is too short.")
                         raise pymol.CmdException
@@ -94,7 +94,7 @@ SEE ALSO
                         raise pymol.CmdException
 
                 r = DEFAULT_ERROR
-                
+
                 try:
                         _self.lock(_self)
 
@@ -133,7 +133,7 @@ SEE ALSO
                     print(" CEalign-Error: alignment failed")
                 finally:
                         _self.unlock(r,_self)
-                if _self._raising(r,_self): raise pymol.CmdException             
+                if _self._raising(r,_self): raise pymol.CmdException
                 return ( {"alignment_length": aliLen, "RMSD" : RMSD, "rotation_matrix" : rotMat } )
 
         def extra_fit(selection='(all)', reference='', method='align', zoom=1,
@@ -232,17 +232,17 @@ SEE ALSO
                         raise pymol.CmdException('no public objects')
                     selection = '%' + ' %'.join(names)
                 return extra_fit(selection, target, method, 0, quiet, _self, **kwargs)
-                                
+
 
 
         def super(mobile, target, cutoff=2.0, cycles=5,
                           gap=-1.5, extend=-0.7, max_gap=50, object=None,
-                          matrix="BLOSUM62", mobile_state=0, target_state=0, 
+                          matrix="BLOSUM62", mobile_state=0, target_state=0,
                           quiet=1, max_skip=0, transform=1, reset=0,
                           seq=0.0, radius=12.0, scale=17.0, base=0.65,
                           coord=0.0, expect=6.0, window=3, ante=-1.0,
                           _self=cmd):
-                
+
                 '''
 DESCRIPTION
 
@@ -283,7 +283,7 @@ SEE ALSO
                 # delete existing alignment object (if asked to reset it)
                 try:
                         _self.lock(_self)
-                        
+
                         r = _cmd.align(_self._COb,mobile,"("+target+")",float(cutoff),
                                                    int(cycles),float(gap),float(extend),int(max_gap),
                                                    str(object),str(mfile),
@@ -293,17 +293,17 @@ SEE ALSO
                                                    float(radius),float(scale),float(base),
                                                    float(coord),float(expect),int(window),
                                                    float(ante))
-                        
+
                 finally:
                         _self.unlock(r,_self)
-                if _self._raising(r,_self): raise pymol.CmdException             
+                if _self._raising(r,_self): raise pymol.CmdException
                 return r
 
         def align(mobile, target, cutoff=2.0, cycles=5, gap=-10.0,
                           extend=-0.5, max_gap=50, object=None,
                           matrix="BLOSUM62", mobile_state=0, target_state=0,
                           quiet=1, max_skip=0, transform=1, reset=0, _self=cmd):
-                
+
                 '''
 DESCRIPTION
 
@@ -386,7 +386,7 @@ SEE ALSO
                                                    -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0)
                 finally:
                         _self.unlock(r,_self)
-                if _self._raising(r,_self): raise pymol.CmdException             
+                if _self._raising(r,_self): raise pymol.CmdException
                 return r
 
         def intra_fit(selection, state=1, quiet=1, mix=0, _self=cmd):
@@ -426,7 +426,7 @@ SEE ALSO
                 '''
                 # preprocess selection
                 selection = selector.process(selection)
-                #       
+                #
                 r = DEFAULT_ERROR
                 state = int(state)
                 mix = int(mix)
@@ -446,7 +446,7 @@ SEE ALSO
                                         else:
                                                 print(" cmd.intra_fit: %5.3f in state %d vs state %d"%(a,st,state))
                                 st = st + 1
-                if _self._raising(r,_self): raise pymol.CmdException             
+                if _self._raising(r,_self): raise pymol.CmdException
                 return r
 
         def intra_rms(selection, state=0, quiet=1, _self=cmd):
@@ -474,7 +474,7 @@ SEE ALSO
                 '''
                 # preprocess selection
                 selection = selector.process(selection)
-                #       
+                #
                 r = DEFAULT_ERROR
                 state = int(state)
                 try:
@@ -490,7 +490,7 @@ SEE ALSO
                                 if a>=0.0:
                                         print(" cmd.intra_rms: %5.3f in state %d vs state %d"%(a,st,state))
                                 st = st + 1
-                if _self._raising(r,_self): raise pymol.CmdException             
+                if _self._raising(r,_self): raise pymol.CmdException
                 return r
 
         def intra_rms_cur(selection, state=0, quiet=1, _self=cmd):
@@ -517,7 +517,7 @@ SEE ALSO
                 '''
                 # preprocess selection
                 selection = selector.process(selection)
-                #       
+                #
                 r = DEFAULT_ERROR
                 state = int(state)
                 try:
@@ -587,7 +587,7 @@ SEE ALSO
 
 	align, super, pair_fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
             '''
-            r = DEFAULT_ERROR	   
+            r = DEFAULT_ERROR
             a=str(mobile)
             b=str(target)
             # preprocess selections
@@ -633,14 +633,14 @@ SEE ALSO
 
 	fit, rms_cur, intra_fit, intra_rms, intra_rms_cur, pair_fit	  
             '''
-            r = DEFAULT_ERROR	   
+            r = DEFAULT_ERROR
             a=str(mobile)
             b=str(target)
             # preprocess selections
             a = selector.process(a)
             b = selector.process(b)
             #
-            if object==None: object=''		
+            if object==None: object=''
             if int(matchmaker)==0:
                 sele1 = "((%s) in (%s))" % (str(a),str(b))
                 sele2 = "((%s) in (%s))" % (str(b),str(a))
@@ -648,7 +648,7 @@ SEE ALSO
                 sele1 = str(a)
                 sele2 = str(b)
             try:
-                _self.lock(_self)	
+                _self.lock(_self)
                 r = _cmd.fit(_self._COb,sele1,sele2,1,
                         int(mobile_state)-1,int(target_state)-1,
                         int(quiet),int(matchmaker),float(cutoff),
@@ -662,7 +662,7 @@ SEE ALSO
         def rms_cur(mobile, target, mobile_state=0, target_state=0,
 				quiet=1, matchmaker=0, cutoff=2.0, cycles=0,
 				object=None, _self=cmd):
-		
+
             '''
 DESCRIPTION
 
@@ -677,14 +677,14 @@ SEE ALSO
 
 	fit, rms, intra_fit, intra_rms, intra_rms_cur, pair_fit	  
             '''
-            r = DEFAULT_ERROR	   
+            r = DEFAULT_ERROR
             a=str(mobile)
             b=str(target)
             # preprocess selections
             a = selector.process(a)
             b = selector.process(b)
             #
-            if object==None: object=''			  
+            if object==None: object=''
             if int(matchmaker)==0:
                 sele1 = "((%s) in (%s))" % (str(a),str(b))
                 sele2 = "((%s) in (%s))" % (str(b),str(a))
@@ -742,23 +742,17 @@ SEE ALSO
             if kw:
                 raise pymol.CmdException('unexpected keyword arguments: ' + str(list(kw)))
 
-            r = DEFAULT_ERROR	   
+            r = DEFAULT_ERROR
             if len(arg) < 2:
                 raise pymol.CmdException('need at least 2 selection')
             if len(arg) % 2:
                 raise pymol.CmdException('need even number of selections')
             new_arg = list(map(selector.process, arg))
             try:
-                _self.lock(_self)	
+                _self.lock(_self)
                 r = _cmd.fit_pairs(_self._COb,new_arg, quiet)
             finally:
                 _self.unlock(r,_self)
             if r < -0.5:
                 raise pymol.CmdException
             return r
-
-
-
-
-
-

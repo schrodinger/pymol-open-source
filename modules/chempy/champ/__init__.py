@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ except ImportError:
 
 # okay, this module is going to take some planning, since Champ
 # has the potential to evolve into a full-blown
-# chemical informatics system 
+# chemical informatics system
 
 # what do we need to be prepared to handle?
 #
@@ -74,8 +74,8 @@ class Champ:
         (e,r) = _champ.pattern_clear_tags(self._champ,int(index))
         if e: raise RuntimeError
         return r
-        
-    
+
+
     def pattern_get_string(self,index):
         '''
         retrieves the smiles string for a given pattern index
@@ -115,7 +115,7 @@ class Champ:
         (e,r) = _champ.list_prepend_pattern_index(self._champ,int(handle),int(index))
         if e: raise RuntimeError
         return r
-    
+
     def list_new(self):
         '''
         returns a new list handle
@@ -187,7 +187,7 @@ class Champ:
         if e: raise RuntimeError
         return r
 
-        
+
     def match_1vN_n(self,pattern,handle):
         '''
         returns count of how many times pattern occurs in list
@@ -208,7 +208,7 @@ class Champ:
                                     int(pattern),int(handle))
         if e: raise RuntimeError
         return r
-        
+
     def memory_dump(self):
         '''
         dump bulk memory information
@@ -248,7 +248,7 @@ class Champ:
         (e,r) = _champ.pattern_get_tag_masks(self._champ,int(index))
         if e: raise RuntimeError
         return r
-    
+
     def pattern_get_tags(self,index):
         '''
         get tags (numeric lists)
@@ -312,5 +312,3 @@ class Champ:
         (e,r) = _champ.pattern_generalize(self._champ,int(index))
         if e: raise RuntimeError
         return r
-
-        

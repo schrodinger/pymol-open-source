@@ -20,7 +20,7 @@ def assign(sele,preserve=0):
     import rules
 
     result = 1
-    
+
     state = State()
 
     model = cmd.get_model(sele)
@@ -30,12 +30,12 @@ def assign(sele,preserve=0):
 
     ruleSet.fromList(rules.mmff_types)
     ruleSet.mappingFromList(rules.mmff_mapping)
-    
+
     mobj = MolObj()
     mobj.fromChemPyModel(model)
 
     typed = Typer(molObj = mobj)
-    
+
     print(" realtime: assigning atom types")
     typed.applyRules(ruleSet)
 
@@ -62,10 +62,10 @@ def assign(sele,preserve=0):
     return result
 
 def setup(sele,preserve=0):
-    
+
     global state
     global model
-    
+
     state = State()
     model = cmd.get_model(sele)
 
@@ -80,7 +80,7 @@ def setup(sele,preserve=0):
 def check(obj='check'):
     global state
     global model
-    
+
     if not state:
         if not model:
             print(" realtime.reload: please run setup first.")
@@ -128,7 +128,3 @@ def mini_threaded(*args,**kwargs):
                                 kwargs=kwargs)
     t.setDaemon(1)
     t.start()
-    
-
-
-

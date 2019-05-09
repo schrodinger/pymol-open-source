@@ -54,10 +54,10 @@ class FastModel:
 
 #------------------------------------------------------------------------------
     def convert_to_indexed(self):
-        
+
         model = Indexed()
         model.molecule = copy.deepcopy(self.molecule)
-        
+
         for c in range(self.nAtom):
             at = chempy.Atom()
             txta = self.txta[c]
@@ -81,9 +81,9 @@ class FastModel:
 
             # probably need to add some checking here to eliminate values
             # which come back as defaults
-            
+
             model.atom.append(at)
-            
+
         for c in range(self.nBond):
             bnd = chempy.Bond()
             bnda = self.bnda[c]
@@ -93,7 +93,7 @@ class FastModel:
             model.bond.append(bnd)
 
         return model
-    
+
 #------------------------------------------------------------------------------
 
 # text properties
@@ -176,5 +176,3 @@ bi_index1         = 1
 bi_order          = 2
 bi_stereo         = 3
 bi_width          = 4
-
-

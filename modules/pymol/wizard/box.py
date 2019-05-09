@@ -33,17 +33,17 @@ class Box(Wizard):
 
     def __init__(self,_self=cmd):
         Wizard.__init__(self,_self)
-        
+
         self.editing_name = 0
         self.copying = 0
-        
+
         self.points_name = ''
         self.set_name(default_name)
-    
+
         self.mode = default_mode
         self.modes = [
             'box',
-            'walls', 
+            'walls',
             'plane',
 	    'quad',
             ]
@@ -62,14 +62,14 @@ class Box(Wizard):
         self.menu['mode']=smm
 
         self.update_box()
-        
+
     def set_mode(self,mode):
         if mode in self.modes:
             self.mode = mode
         self.status = 0
         self.update_box()
         self.cmd.refresh_wizard()
-        
+
     def get_prompt(self):
         self.prompt = []
         return self.prompt
@@ -125,7 +125,7 @@ class Box(Wizard):
                 [ -plane_size, -plane_size, plane_z2 ],
                 ]
 
-            # then transform plane coordinates into model space 
+            # then transform plane coordinates into model space
 
             plane = list(map( lambda p,v=view: [
                v[0] * p[0] + v[1] * p[1] + v[2]* p[2],
@@ -155,12 +155,12 @@ class Box(Wizard):
     def set_name(self,name):
 
         hidden_name = None
-        
+
         if self.points_name != '':
             if self.points_name in self.cmd.get_names("all"):
                 hidden_name = "_"+self.cgo_name
                 self.cmd.disable(self.points_name)
-                self.cmd.set_name(self.points_name, hidden_name) # hide 
+                self.cmd.set_name(self.points_name, hidden_name) # hide
 
         self.name = name
         self.points_name = self.name + "_points"
@@ -171,9 +171,9 @@ class Box(Wizard):
         else:
             hidden_name = "_"+self.cgo_name
             if hidden_name in self.cmd.get_names("all"):
-                self.cmd.set_name(hidden_name, self.points_name) 
+                self.cmd.set_name(hidden_name, self.points_name)
         self.copying = 0
-        
+
         if not self.points_name in self.cmd.get_names():
             model = Indexed()
             origin = self.cmd.get_view()[12:15]
@@ -185,7 +185,7 @@ class Box(Wizard):
                 new_atom.coord[2] = new_atom.coord[2] + origin[2]
                 new_atom.flags = 0x2200000 # set surface ignore flag
                 model.atom.append(new_atom)
-                
+
             self.cmd.load_model(model,self.points_name,zoom=0)
             self.cmd.set("surface_mode",0,self.points_name) # make sure no surface is shown
             self.coord = None
@@ -199,7 +199,7 @@ class Box(Wizard):
 
         self.cmd.enable(self.points_name)
         self.points_enabled = 1
-        
+
     def update_box(self):
 
         if self.points_name in self.cmd.get_names():
@@ -382,9 +382,9 @@ class Box(Wizard):
             self.cmd.load_cgo(obj,self.cgo_name,zoom=0)
             self.cmd.order(self.cgo_name+" "+self.points_name,sort=1,location='bottom')
             self.cmd.set("nonbonded_size",math.sqrt(dot_product(d10,d10))/10,self.points_name)
-        
+
     def get_panel(self):
-        
+
         return [
             [ 1, 'Box Wizard',''],
             [ 3, self.mode_name[self.mode],'mode'],
@@ -402,7 +402,7 @@ class Box(Wizard):
             return Wizard.event_mask_pick + Wizard.event_mask_select + \
                    Wizard.event_mask_scene + Wizard.event_mask_key
         else:
-            return Wizard.event_mask_pick + Wizard.event_mask_select + Wizard.event_mask_scene 
+            return Wizard.event_mask_pick + Wizard.event_mask_select + Wizard.event_mask_scene
 
     def do_scene(self):
         if self.points_name in self.cmd.get_names("objects"):
@@ -418,7 +418,7 @@ class Box(Wizard):
                     )
                 if self.coord != coord:
                     self.update_box()
-                
+
     def do_pick(self,bondFlag):
         pass
 

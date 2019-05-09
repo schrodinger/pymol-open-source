@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 # Generic vector and matrix routines for 3-Space
@@ -31,7 +31,7 @@ RSMALL4 = 0.0001
 def get_null():
     return [0.0,0.0,0.0]
 
-#------------------------------------------------------------------------------   
+#------------------------------------------------------------------------------
 def get_identity():
     return [[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]
 
@@ -141,7 +141,7 @@ def multiply(m1,m2): # HAVEN'T YET VERIFIED THAT THIS CONFORMS TO STANDARD DEFT
                 m1[2][0]*m2[0][2] + m1[2][1]*m2[1][2] + m1[2][2]*m2[2][2]]]
 
 #------------------------------------------------------------------------------
-def transpose(m1): 
+def transpose(m1):
     return [[m1[0][0],
              m1[1][0],
              m1[2][0]],
@@ -196,11 +196,11 @@ def get_angle_formed_by(p1,p2,p3): # angle formed by three positions in space
     r1 = distance(p1,p2)
     r2 = distance(p2,p3)
     r3 = distance(p1,p3)
-    
+
     small = 1.0e-10
-    
+
     if (r1 + r2 - r3) < small:
-        # This seems to happen occasionally for 180 angles 
+        # This seems to happen occasionally for 180 angles
         theta = math.pi
     else:
         theta = math.acos( (r1*r1 + r2*r2  - r3*r3) / (2.0 * r1*r2) )
@@ -238,11 +238,11 @@ def normalize_failsafe(v):
 
 #------------------------------------------------------------------------------
 def rotation_matrix(angle,axis):
-    
+
     x=axis[0]
     y=axis[1]
     z=axis[2]
-    
+
     s = math.sin(angle)
     c = math.cos(angle)
 
@@ -250,11 +250,11 @@ def rotation_matrix(angle,axis):
 
     if abs(mag)<RSMALL4:
         return get_identity()
-    
+
     x = x / mag
     y = y / mag
     z = z / mag
- 
+
     xx = x * x
     yy = y * y
     zz = z * z
@@ -265,7 +265,7 @@ def rotation_matrix(angle,axis):
     ys = y * s
     zs = z * s
     one_c = 1.0 - c
- 
+
     return [[ (one_c * xx) + c , (one_c * xy) - zs, (one_c * zx) + ys],
               [ (one_c * xy) + zs, (one_c * yy) + c , (one_c * yz) - xs],
               [ (one_c * zx) - ys, (one_c * yz) + xs, (one_c * zz) + c ]]
@@ -405,4 +405,3 @@ def fit(target_array, source_array):
 # Too many iterations; something wrong.
     print ("Error: Too many iterations in RMS fit.")
     raise ValueError
-

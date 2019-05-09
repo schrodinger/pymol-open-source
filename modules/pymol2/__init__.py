@@ -21,7 +21,7 @@ from pymol import _cmd
 import threading
 import sys
 
-pymol2_lock = threading.RLock() 
+pymol2_lock = threading.RLock()
 
 ##
 ## FIXME: The PyMOL and SingletonPyMOL classes are partly redundant with the
@@ -115,13 +115,13 @@ class PyMOL(SingletonPyMOL):
                     options.no_quit = 1
             else:
                 options.show_splash = 0 # suppress this annoyance by default
-                    
+
             self._COb = _cmd._new(self,self.invocation.options)
 
             # initialize the cmd API
 
             self.cmd = Cmd(self,self._COb)
-            
+
             # begin assembling the instance member by member
 
             self.glutThread = None
@@ -129,10 +129,10 @@ class PyMOL(SingletonPyMOL):
     def __del__(self):
         _cmd._del(self._COb)
         self.cmd.__dict__.clear()
-        
+
     def start(self):
         with pymol2_lock:
             _cmd._start(self._COb, self.cmd)
-        
+
     def stop(self):
         _cmd._stop(self._COb)

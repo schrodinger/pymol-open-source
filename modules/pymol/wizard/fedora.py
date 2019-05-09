@@ -16,7 +16,7 @@ class Fedora(Wizard):
                 self.message.append(a)
             else:
                 self.message.extend(a)
-            
+
     def get_prompt(self):
         self.prompt = self.message
         return self.prompt
@@ -29,12 +29,9 @@ class Fedora(Wizard):
     def do_select(self,name):
 #      cmd.deselect()
         pass
-        
+
     def get_panel(self):
         return [
             [ 1, 'Message', '' ],
             [ 2, 'Dismiss', 'cmd.set_wizard()' ]
             ]
-
-
-

@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -33,8 +33,8 @@ class MAEParser:
 
     def __init__(self,lst=None):
         self.i = 0 # index in list
-        self.t = [] # token list 
-        self.d = [] # hiearchy of data read 
+        self.t = [] # token list
+        self.d = [] # hiearchy of data read
         self.lst = lst
         self.lst_len = len(lst)
 
@@ -60,7 +60,7 @@ class MAEParser:
 
     def push_tok(self,tok):
         self.t.insert(0,tok)
-        
+
     def parse_top(self):
         dct = {}
         stk = [] # keyword stack
@@ -124,7 +124,7 @@ class MAEParser:
                         if tok=='}':
                             break
         return (n_rec,dct,data) # return a tuple
-        
+
     def parse_m_ct(self):
         dct = {}
         stk = [] # keyword stack
@@ -154,7 +154,7 @@ class MAEParser:
             if tok=='}':
                 break
         return dct
-        
+
     def parse(self):
         while 1:
             tok = self.nxt_tok()
@@ -166,24 +166,24 @@ class MAEParser:
                 self.nxt_tok() # skip '{'
                 self.d.append(tok,self.parse_m_ct())
         return self.d
-    
+
 class MAE(Storage):
 
     def _read_m_atom(self,m_atom,model):
         ma = model.atom
         at_ent = m_atom[1]
         at_dat = m_atom[2]
-        
-        nAtom = m_atom[0]      
+
+        nAtom = m_atom[0]
         if 'i_m_mmod_type' in at_ent:
             a1 = at_dat[at_ent['i_m_mmod_type']]
-            
+
             for b in range(nAtom):
                 nt = a1[b]
-                ma[b].numeric_type = nt 
+                ma[b].numeric_type = nt
                 ma[b].symbol = MMOD_atom_data[nt][1]
                 ma[b].text_type = MMOD_atom_data[nt][0]
-                
+
         if 'r_m_x_coord' in at_ent and \
             'r_m_y_coord' in at_ent and \
             'r_m_z_coord' in at_ent:
@@ -192,53 +192,53 @@ class MAE(Storage):
             a3 = at_dat[at_ent['r_m_z_coord']]
             for b in range(nAtom):
                 ma[b].coord = [a1[b],a2[b],a3[b] ]
-                
+
         if 'i_m_residue_number' in at_ent:
             a1 = at_dat[at_ent['i_m_residue_number']]
             for b in range(nAtom):
                 resi = a1[b]
                 ma[b].resi = str(resi)
                 ma[b].resi_number = resi
-                
+
         if 's_m_mmod_res' in at_ent:
             a1 = at_dat[at_ent['s_m_mmod_res']]
-            for b in range(nAtom):         
+            for b in range(nAtom):
                 ma[b].resi_code = a1[b]
-                
+
         if 's_m_chain_name' in at_ent:
             a1 = at_dat[at_ent['s_m_chain_name']]
             for b in range(nAtom):
                 ma[b].chain = a1[b]
-                
+
         if 'i_m_color' in at_ent:
             a1 = at_dat[at_ent['i_m_color']]
             for b in range(nAtom):
                 ma[b].color_code = a1[b]
-                
+
         if 'r_m_charge1' in at_ent:
             a1 = at_dat[at_ent['r_m_charge1']]
             for b in range(nAtom):
                 ma[b].partial_charge = a1[b]
-                
+
         if 's_m_pdb_residue_name' in at_ent:
             a1 = at_dat[at_ent['s_m_pdb_residue_name']]
             for b in range(nAtom):
                 resn = a1[b].strip()
                 if len(resn):
                     ma[b].resn = resn
-                    
+
         if 'i_m_formal_charge' in at_ent:
             a1 = at_dat[at_ent['i_m_formal_charge']]
             for b in range(nAtom):
                 ma[b].formal_charge = a1[b]
-                
+
         if 's_m_atom_name' in at_ent:
             a1 = at_dat[at_ent['s_m_atom_name']]
             for b in range(nAtom):
                 nam = a1[b].strip()
                 if len(nam):
                     ma[b].name = nam
-                
+
         if 's_m_pdb_atom_name' in at_ent:
             a1 = at_dat[at_ent['s_m_pdb_atom_name']]
             for b in range(nAtom):
@@ -249,8 +249,8 @@ class MAE(Storage):
     def _read_m_bond(self,m_bond,model):
         bd_ent = m_bond[1]
         bd_dat = m_bond[2]
-        
-        nBond = m_bond[0]      
+
+        nBond = m_bond[0]
 
         if len(bd_dat[0]): # not empty right?
             if 'i_m_from' in bd_ent and \
@@ -269,7 +269,7 @@ class MAE(Storage):
                         bnd.index = [ bd1,bd2 ]
                         bnd.order = bd3
                         model.bond.append(bnd)
-                        
+
 #---------------------------------------------------------------------------------
     def fromList(self,MMODList): # returns a list of indexed models
 
@@ -278,7 +278,7 @@ class MAE(Storage):
 
         full_model = None
         result = []
-        
+
         for mp_ent in mp_rec:
             if mp_ent[0] == 'f_m_ct':
                 f_m_ct = mp_ent[1]
@@ -298,7 +298,7 @@ class MAE(Storage):
                     self._read_m_bond(m_bond,model)
                 full_model = model
                 result.append(model)
-                
+
             elif mp_ent[0]=='p_m_ct' and full_model!=None:
                 model = copy.deepcopy(full_model)
                 f_m_ct = mp_ent[1]
@@ -379,4 +379,3 @@ MMOD_atom_data = {
   62: ['Du','Du','unk',-1, 0],
   63: ['Lp','Lp','unk', 1, 0],
   64: ['Du','Du','unk',-1, 0]};
-

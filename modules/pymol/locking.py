@@ -13,8 +13,8 @@ from .cmd import fb_module, fb_mask, fb_action, fb_debug
 
 from pymol import _cmd
 
-# WARNING: internal routines, subject to change      
-def lock_c(_self=cmd): 
+# WARNING: internal routines, subject to change
+def lock_c(_self=cmd):
     _self.lock_api_c.acquire(1)
 
 def unlock_c(_self=cmd):
@@ -25,17 +25,17 @@ def lock_data(_self=cmd):
 
 def unlock_data(_self=cmd):
     _self.lock_api_data.release()
-    
+
 def lock_status_attempt(_self=cmd):
     return _self.lock_api_status.acquire(0)
 
-def lock_status(_self=cmd): 
+def lock_status(_self=cmd):
     _self.lock_api_status.acquire(1)
 
 def unlock_status(_self=cmd):
     _self.lock_api_status.release()
 
-def lock_glut(_self=cmd): 
+def lock_glut(_self=cmd):
     _self.lock_api_glut.acquire(1)
 
 def unlock_glut(_self=cmd):
@@ -63,8 +63,8 @@ def lock(_self=cmd): # INTERNAL -- API lock
     if not _self.lock_api.acquire(0):
         w = 0.0001
         while 1:
-            e = threading.Event() 
-            e.wait(w)  
+            e = threading.Event()
+            e.wait(w)
             del e
             if _self.lock_api.acquire(0):
                 break
@@ -86,7 +86,7 @@ def unblock_flush(_self=cmd):
     lock(_self)
     _self.lock_api_allow_flush = 1
     unlock(None,_self)
-    
+
 def unlock(result=None,_self=cmd): # INTERNAL
     if (thread.get_ident() == pymol.glutThread):
         if _self.reaper:
@@ -103,7 +103,7 @@ def unlock(result=None,_self=cmd): # INTERNAL
             if result is None: # don't flush if we have an incipient error (negative input)
                 _cmd.flush_now(_self._COb)
             elif _self.is_ok(result):
-                
+
                 _cmd.flush_now(_self._COb)
     else:
         _self.lock_api.release()
@@ -122,7 +122,7 @@ def unlock(result=None,_self=cmd): # INTERNAL
                         fb_debug.write("Debug: avoiding possible dead-lock?\n")
                     break
                 w = w * 2 # wait twice as long each time until flushed
-            
+
 def is_glut_thread(): # internal
     if thread.get_ident() == pymol.glutThread:
         return 1

@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -52,9 +52,9 @@ def _prepare(selection,polar_contacts=None,_self=cmd):
 
     s, selection, dname = get_sname_oname_dname(selection, _self=cmd)
 
-    cmd.cartoon("auto",s)   
+    cmd.cartoon("auto",s)
     cmd.hide("everything",s)
-    
+
     cmd.set("two_sided_lighting",0) # global
     cmd.unset("transparency",s)
     cmd.unset("surface_quality", selection)
@@ -66,7 +66,7 @@ def _prepare(selection,polar_contacts=None,_self=cmd):
     cmd.unset("cartoon_fancy_helices",selection)
     cmd.unset("cartoon_smooth_loops",selection)
     cmd.unset("cartoon_flat_sheets",selection)
-    cmd.unset("cartoon_side_chain_helper",selection)   
+    cmd.unset("cartoon_side_chain_helper",selection)
     if polar_contacts == None:
         polar_contacts = dname
         if polar_contacts in cmd.get_names('objects'):
@@ -160,7 +160,7 @@ def ball_and_stick(selection="(all)",mode=1,_self=cmd):
         cmd.set("stick_ball_color","atomic")
         cmd.show("sticks",s)
     cmd.delete(s)
-    
+
 def b_factor_putty(selection="(name CA+P)",_self=cmd):
     cmd=_self
     s, selection = _prepare(selection, _self=cmd)[:2]
@@ -179,7 +179,7 @@ def ligand_cartoon(selection="(all)",_self=cmd):
     cmd.hide("ribbon")
     cmd.hide("surface")
     cmd.delete(s)
-    
+
 def ligand_sites(selection="(all)",_self=cmd):
     cmd=_self
     try:
@@ -218,7 +218,7 @@ def ligand_sites(selection="(all)",_self=cmd):
                 cmd.show("dashes",polar_contacts)
         else:
             cmd.delete(polar_contacts)
-                
+
         cmd.show("nb_spheres",lig+"|"+host+"|"+near_solvent)
         if cmd.count_atoms(lig):
             cmd.zoom(lig,3, animate=1)
@@ -257,7 +257,7 @@ def ligand_sites_trans_hq(selection="(all)",_self=cmd):
     cmd.set("surface_type",0,selection)
     cmd.set("surface_quality",1,selection)
     cmd.delete(s)
-    
+
 def ligand_sites_mesh(selection="(all)",_self=cmd):
     cmd=_self
     s, selection = ligand_sites(selection, _self)[:2]
@@ -266,7 +266,7 @@ def ligand_sites_mesh(selection="(all)",_self=cmd):
     cmd.set("surface_type","2",selection)
     cmd.set("surface_quality","0",selection)
     cmd.delete(s)
-    
+
 def ligand_sites_dots(selection="(all)",_self=cmd):
     cmd=_self
     s, selection = ligand_sites(selection, _self)[:2]
@@ -280,7 +280,7 @@ def technical(selection="(all)",_self=cmd):
     cmd=_self
     s, selection, polar_contacts = _prepare(selection, _self=cmd)
     util.chainbow(s,_self=cmd)
-    util.cbc("("+lig_sele+" and ("+s+"))",_self=cmd)   
+    util.cbc("("+lig_sele+" and ("+s+"))",_self=cmd)
     util.cbac("(("+s+") and not elem C)",_self=cmd)
     cmd.show("nonbonded",s)
     cmd.show("lines","((("+s+") and not "+lig_sele+") extend 1)")
@@ -310,9 +310,9 @@ def pretty_solv(selection="(all)",_self=cmd):
     cmd.set("cartoon_fancy_helices",0,selection)
     cmd.set("cartoon_smooth_loops",0,selection)
     cmd.set("cartoon_flat_sheets",1,selection)
-    cmd.set("cartoon_side_chain_helper",0,selection)   
+    cmd.set("cartoon_side_chain_helper",0,selection)
     cmd.delete(s)
-        
+
 def pretty(selection,_self=cmd):
     cmd=_self
     pretty_solv(selection,_self)
@@ -330,7 +330,7 @@ def pub_solv(selection="(all)",_self=cmd):
     cmd.set("cartoon_highlight_color","grey50",selection)
     cmd.set("cartoon_fancy_helices",1,selection)
     cmd.set("cartoon_flat_sheets",1,selection)
-    cmd.set("cartoon_side_chain_helper",0,selection)   
+    cmd.set("cartoon_side_chain_helper",0,selection)
     cmd.delete(s)
 
 def publication(selection="(all)",_self=cmd):
@@ -354,7 +354,7 @@ def default(selection="(all)",_self=cmd):
         util.cnc(selection,_self=cmd)
         cmd.color(str(color),"("+s+") and elem C")
     cmd.delete(s)
-        
+
 
 def interface(selection='*', _self=cmd):
     '''

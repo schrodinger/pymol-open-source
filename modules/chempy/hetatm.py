@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ PEPT_CUTOFF = 1.7
 
 #---------------------------------------------------------------------------------
 def generate(model, topology= None, forcefield = None ):
-    
+
     add_bonds(model,topology=topology,forcefield=forcefield)
     connected = model.convert_to_connected()
     add_hydrogens(connected,topology=topology,forcefield=forcefield)
@@ -106,9 +106,9 @@ def add_bonds(model, topology = None, forcefield = None ):
                             bnd.index = [ dict[b[0]], dict[b[1]] ]
                             bnd.order = bonds[b]['order']
                             mbond.append(bnd)
-                            
+
 #---------------------------------------------------------------------------------
-def add_hydrogens(model,topology=None,forcefield=None):  
+def add_hydrogens(model,topology=None,forcefield=None):
     if not isinstance(model, chempy.models.Connected):
         raise ValueError('model is not a "Connected" model object')
     nAtom = model.nAtom
@@ -172,4 +172,3 @@ def add_hydrogens(model,topology=None,forcefield=None):
                                     bnd.order = bonds[b]['order']
                                     mbond[idx1].append(bnd)
                                     mbond[idx2].append(bnd)
-

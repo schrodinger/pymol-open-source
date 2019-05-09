@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ import copy
 from chempy import io
 
 class SDFRec:
-    
+
     def __init__(self,sdflist):
         getkee = re.compile("^>\s+<([^>]*)>")
         gettag = re.compile("^>\s+<[^>]*>\s+\((.*)\)")
@@ -81,7 +81,7 @@ class SDFRec:
                 if self.ref_code[k]!='':
                     r.append(">  <"+k+"> ("+self.ref_code[k]+")\n")
                 else:
-                    r.append(">  <"+k+">\n")               
+                    r.append(">  <"+k+">\n")
             for a in self.data[k]:
                 r.append(a)
             if k!='MOL':
@@ -103,16 +103,16 @@ class SDFRec:
                 return None
         else:
             return None
-            
+
     def set_single(self,kee,data,ref_code=None): # adds LF
         self.set(kee,[data+'\n'],ref_code)
-        
+
     def get_model(self):
         return io.mol.fromList(self.get('MOL'))
-        
+
     def set_model(self,model):
         self.set('MOL',io.mol.toList(model))
-                    
+
     def set(self,kee,data,ref_code=None):
         if kee not in self.kees:
             self.kees.append(kee)
@@ -126,7 +126,7 @@ class SDFRec:
         del self.data[kee]
 
 class SDF:
-    
+
     def __init__(*args):
         mode = 'r'
         if len(args)<2:
@@ -157,7 +157,7 @@ class SDF:
         for a in lst:
             self.file.write(a)
         self.file.write('$$$$\n')
-        
+
     def read(self): # returns SDFRec or None at end of file
         cur = []
         while 1:
@@ -171,5 +171,3 @@ class SDF:
 
     def close(self):
         self.file.close()
-        
-    

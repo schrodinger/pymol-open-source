@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
 #-* Scott Dixon, Metaphorics LLC
-#-* 
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -57,12 +57,12 @@ class CEXpyParser(CEX.CEXsmilesParser): # Author: Scott Dixon
     def SetAtomicMass(self, atom, mass):
         pass
 
-   
+
 #---------------------------------------------------------------------------------
 def readcex(filename, object=''):  # Author: Scott Dixon
     import os.path
 
-      
+
     standardResidues = ("ALA", "ARG", "ASP", "ASN", "ASX", "CYS", "GLY", "GLU",
                         "GLN", "HIS", "ILE", "LEU", "LYS", "MET", "PHE", "PRO",
                         "SER", "THR", "TYR", "TRP", "VAL", "HID", "HIE")
@@ -74,7 +74,7 @@ def readcex(filename, object=''):  # Author: Scott Dixon
             return list
         except IndexError:
             return None
-        
+
     f = open(filename,"r")
     cs = CEX.CEXstream(f)
     modelname = object if object else \
@@ -141,7 +141,7 @@ def readcex(filename, object=''):  # Author: Scott Dixon
             pass
     _cmd.finish_object(_self._COb,modelname)
     f.close()
- 
+
 def colorbyB(selection="spheres",first=7,last=3): # Author: Scott Dixon
     cols = [(0.,0.,1.),(.5,.5,1.),(.8,.8,1.),(1.,1.,1.),
             (1.,.9,.9),(1.,.6,.6),(1.,0.,0.)]
@@ -153,7 +153,7 @@ def colorbyB(selection="spheres",first=7,last=3): # Author: Scott Dixon
         b = first - i*incr
         cmd.color(cname,"((%s) and not(b > %f) and b > %f)"%(selection,b,b-incr))
 
-def metaphorics(): 
+def metaphorics():
     cmd.extend("readcex",readcex)
     cmd.extend("colorbyB",colorbyB)
 
@@ -161,14 +161,14 @@ def get_context_info():  # Author: Warren DeLano
     context_dict= {}
     context_list= []
     for a in cmd.get_names("all"):
-       context = None   
-       if a[-6:]=='_water': 
-          context = a[:-6] 
-       if a[-7:]=='_ligand':  
-          context = a[:-7] 
-       if a[-5:]=='_site':  
-          context = a[:-5] 
-       if a[-6:]=='_hbond':  
+       context = None
+       if a[-6:]=='_water':
+          context = a[:-6]
+       if a[-7:]=='_ligand':
+          context = a[:-7]
+       if a[-5:]=='_site':
+          context = a[:-5]
+       if a[-6:]=='_hbond':
           context = a[:-6]
        if context!=None:
            if context not in context_dict:
@@ -268,12 +268,12 @@ def setup_contexts(context_info):   # Author: Warren DeLano
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,toggle_labels)
-        doc_list.append(key+": Toggle Dist")        
+        doc_list.append(key+": Toggle Dist")
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,lambda :(cmd.zoom(),toggle_labels(0)))
         doc_list.append(key+": Zoom All")
-    
+
     for a in list:
         water = a+"_water"
         ligand = a+"_ligand"
@@ -313,12 +313,12 @@ def setup_contexts(context_info):   # Author: Warren DeLano
                 else:
                     cont_name = a
                 doc_list.append(key+": Zoom "+cont_name)
-                
+
         if hbond in name_list:
             cmd.show("dashes",hbond)
             cmd.show("labels",hbond)
 
-        
+
     cmd.wizard("fedora",doc_list)
     if zoom_context not in (0,1):
         cmd.zoom(zoom_context)
@@ -329,8 +329,8 @@ def setup_contexts(context_info):   # Author: Warren DeLano
     cmd.feedback("disable","scene","actions")
     cmd.set("internal_feedback",1)
     cmd.set("internal_prompt",0)
-    
-        
+
+
 def setup_alignment_contexts(context_info):   # Author: Warren DeLano
     (list,dict) = context_info[0:2]
     doc_list = ['\888Legend:']
@@ -348,7 +348,7 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
                         col_int = [int(x*9+0.49999) for x in col_tup]
                         col_str = ''.join([chr(ord('0')+x) for x in col_int])
                         doc_list.append("\\"+col_str+object_name+"\\---")
-                    
+
     key_list = [
         'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10', #,'F11','F12',
         'SHFT-F1','SHFT-F2','SHFT-F3','SHFT-F4','SHFT-F5','SHFT-F6','SHFT-F7',
@@ -356,7 +356,7 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
     doc_list.append("")
     doc_list.append("\\888Toggles:")
     zoom_context = 1
-                                  
+
     global labels,ligands,waters,sites,cgos,zooms,dashes
     labels = 1
     ligands = 1
@@ -372,7 +372,7 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
 
     cmd.select(m4x_sites,"none")
     cmd.select(m4x_ligands,"none")
-    cmd.select(m4x_waters,"none")   
+    cmd.select(m4x_waters,"none")
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,toggle_zooms)
@@ -380,28 +380,28 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,toggle_sites)
-        doc_list.append(key+": Sites")        
+        doc_list.append(key+": Sites")
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,toggle_waters)
-        doc_list.append(key+": Waters")        
+        doc_list.append(key+": Waters")
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,toggle_dashes)
-        doc_list.append(key+": H-Bonds")        
+        doc_list.append(key+": H-Bonds")
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,toggle_cgos)
-        doc_list.append(key+": Fits")        
+        doc_list.append(key+": Fits")
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,toggle_ligands)
-        doc_list.append(key+": Ligands")        
+        doc_list.append(key+": Ligands")
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,toggle_labels)
-        doc_list.append(key+": HB-Dists")        
-    
+        doc_list.append(key+": HB-Dists")
+
     for a in list:
         include_flag = 0
         water = a+"_water"

@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -35,7 +35,7 @@ if True:
                         _self.angle()
                 else:
                     _self.distance()
-        _self.unpick()   
+        _self.unpick()
 
     def get_volume_field(objName, state=1, copy=1, _self=cmd):
         '''
@@ -91,7 +91,7 @@ DESCRIPTION
     def get_modal_draw(_self=cmd,quiet=1):
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.get_modal_draw(_self._COb)
         finally:
             _self.unlock(r,_self)
@@ -100,7 +100,7 @@ DESCRIPTION
     def get_drag_object_name(_self=cmd):
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.get_drag_object_name(_self._COb)
         finally:
             _self.unlock(r,_self)
@@ -117,7 +117,7 @@ DESCRIPTION
         r = DEFAULT_ERROR
         object = str(object)
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.get_object_matrix(_self._COb,str(object), int(state)-1, int(incl_ttt))
         finally:
             _self.unlock(r,_self)
@@ -161,7 +161,7 @@ DESCRIPTION
     "get_object_list" is an unsupported command that may have
     something to do with querying the objects covered by a selection.
     '''
-        
+
         r = DEFAULT_ERROR
         selection = selector.process(selection)
         try:
@@ -232,15 +232,15 @@ PYMOL API
             r = _cmd.get_title(_self._COb,str(object),int(state)-1)
             if not quiet:
                 if r!=None:
-                    print(" get_title: %s"%r)      
+                    print(" get_title: %s"%r)
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
         return r
 
 
-    def angle(name=None, selection1="(pk1)", selection2="(pk2)", 
-	      selection3="(pk3)", mode=None, label=1, reset=0, 
+    def angle(name=None, selection1="(pk1)", selection2="(pk2)",
+	      selection3="(pk3)", mode=None, label=1, reset=0,
 	      zoom=0, state=0, quiet=1, _self=cmd,
               state1=-3, state2=-3, state3=-3):
 
@@ -268,7 +268,7 @@ SEE ALSO
 
     distance, dihedral
     '''
-        
+
         r = DEFAULT_SUCCESS
         if selection1=="(pk1)":
             if "pk1" not in _self.get_names('selections'):
@@ -277,17 +277,17 @@ SEE ALSO
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
             if "pk2" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print("cmd-Error: The 'pk2' selection is undefined.")
                 r = DEFAULT_ERROR
         if selection3=="(pk3)":
             if "pk3" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print("cmd-Error: The 'pk3' selection is undefined.")
                 r = DEFAULT_ERROR
         if is_ok(r):
             r = DEFAULT_ERROR
-            
+
             # if unlabeled, then get next name in series
 
             if name!=None:
@@ -354,7 +354,7 @@ SEE ALSO
 
     distance, angle
     '''
-        r = DEFAULT_SUCCESS      
+        r = DEFAULT_SUCCESS
         if selection1=="(pk1)":
             if "pk1" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):
@@ -362,17 +362,17 @@ SEE ALSO
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
             if "pk2" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print("cmd-Error: The 'pk2' selection is undefined.")
                 r = DEFAULT_ERROR
         if selection3=="(pk3)":
             if "pk3" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print("cmd-Error: The 'pk3' selection is undefined.")
                 r = DEFAULT_ERROR
         if selection3=="(pk4)":
             if "pk4" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print("cmd-Error: The 'pk4' selection is undefined.")
                 r = DEFAULT_ERROR
         if is_ok(r):
@@ -418,12 +418,12 @@ SEE ALSO
                 _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
         return r
-        
-    def distance(name=None, selection1="(pk1)", selection2="(pk2)", 
+
+    def distance(name=None, selection1="(pk1)", selection2="(pk2)",
 		 cutoff=None, mode=None, zoom=0, width=None, length=None,
                  gap=None, label=1, quiet=1, reset=0, state=0,
                  state1=-3, state2=-3, _self=cmd):
-	
+
         '''
 DESCRIPTION
 
@@ -501,7 +501,7 @@ PYMOL API
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
             if "pk2" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print("cmd-Error: The 'pk2' selection is undefined.")
                 r = DEFAULT_ERROR
         if is_ok(r):
@@ -569,7 +569,7 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.get_povray(_self._COb)
         finally:
             _self.unlock(r,_self)
@@ -590,7 +590,7 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.get_idtf(_self._COb)
         finally:
             _self.unlock(r,_self)
@@ -619,13 +619,13 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.get_mtl_obj(_self._COb)
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
         return r
-    
+
     def get_version(quiet=1,_self=cmd):
         '''
 DESCRIPTION
@@ -657,7 +657,7 @@ PYMOL API
                         print(' git sha:', r[4])
         return r
 
-    def get_vrml(version=2,_self=cmd): 
+    def get_vrml(version=2,_self=cmd):
         '''
 DESCRIPTION
 
@@ -671,7 +671,7 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.get_vrml(_self._COb,int(version))
         finally:
             _self.unlock(r,_self)
@@ -726,10 +726,10 @@ SEE ALSO
             _self.unlock(r,_self)
         if is_ok(r):
             if not quiet:
-                print(" cmd.count_states: %d states."%r)            
+                print(" cmd.count_states: %d states."%r)
         if _raising(r,_self): raise pymol.CmdException
         return r
-    
+
     def get_movie_length(quiet=1, images=-1, _self=cmd):
         '''
 DESCRIPTION
@@ -758,7 +758,7 @@ SEE ALSO
                 if r>0:
                     r = 0
             if r>=0 and not quiet:
-                print(" cmd.get_movie_length: %d frames"%r)      
+                print(" cmd.get_movie_length: %d frames"%r)
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
@@ -787,13 +787,13 @@ SEE ALSO
         try:
             _self.lock(_self)
             r = _cmd.count_frames(_self._COb)
-            if not quiet: print(" cmd.count_frames: %d frames"%r)      
+            if not quiet: print(" cmd.count_frames: %d frames"%r)
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
         return r
 
-    def export_dots(object,state,_self=cmd):  
+    def export_dots(object,state,_self=cmd):
         '''
 DESCRIPTION
 
@@ -830,7 +830,7 @@ NOTES
     sum.
 
     '''
-        
+
         # preprocess selections
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
@@ -864,10 +864,10 @@ NOTES
             _self.lock(_self)
             r = _cmd.get_object_color_index(_self._COb,name)
         finally:
-            _self.unlock(r,_self)      
+            _self.unlock(r,_self)
 #        if _raising(r,_self): raise pymol.CmdException
         return r
-    
+
     def get_color_tuple(name,mode=0,_self=cmd):
         name=str(name)
         r = DEFAULT_ERROR
@@ -875,7 +875,7 @@ NOTES
             _self.lock(_self)
             r = _cmd.get_color(_self._COb,name,mode)
             if r==None:
-                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print("cmd-Error: Unknown color '%s'."%name)
         finally:
             _self.unlock(r,_self)
@@ -889,7 +889,7 @@ NOTES
             if all:
                 r = _cmd.get_color(_self._COb,'',2)
             else:
-                r = _cmd.get_color(_self._COb,'',1)            
+                r = _cmd.get_color(_self._COb,'',1)
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
@@ -903,7 +903,7 @@ NOTES
         finally:
             _self.unlock(r,_self)
         return r
-            
+
     def get_renderer(quiet=1, _self=cmd):
         '''
 DESCRIPTION
@@ -929,7 +929,7 @@ DESCRIPTION
     def get_phipsi(selection="(name CA)",state=-1,_self=cmd):
         # preprocess selections
         selection = selector.process(selection)
-        #   
+        #
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -1000,7 +1000,7 @@ ARGUMENTS
             r = _cmd.get_coordset(_self._COb, name, int(state) - 1, int(copy))
             return r
 
-    
+
     def get_position(quiet=1, _self=cmd):
         '''
 DESCRIPTION
@@ -1009,7 +1009,7 @@ DESCRIPTION
     viewer window.
 
     '''
-        
+
         try:
             _self.lock(_self)
             r = _cmd.get_position(_self._COb)
@@ -1047,7 +1047,7 @@ PYMOL API
         # preprocess selections
         atom1 = selector.process(atom1)
         atom2 = selector.process(atom2)
-        #   
+        #
         r = None
         try:
             _self.lock(_self)
@@ -1086,7 +1086,7 @@ PYMOL API
         atom1 = selector.process(atom1)
         atom2 = selector.process(atom2)
         atom3 = selector.process(atom3)
-        #   
+        #
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -1098,7 +1098,7 @@ PYMOL API
         elif not quiet:
             print(" cmd.get_angle: %5.3f degrees."%r)
         return r
-        
+
     def get_dihedral(atom1="pk1",atom2="pk2",atom3="pk3",atom4="pk4",state=-1,quiet=1,_self=cmd):
         '''
 DESCRIPTION
@@ -1129,7 +1129,7 @@ PYMOL API
         atom2 = selector.process(atom2)
         atom3 = selector.process(atom3)
         atom4 = selector.process(atom4)
-        #   
+        #
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -1155,7 +1155,7 @@ PYMOL API
         '''
         # preprocess selection
         selection = selector.process(selection)
-        #   
+        #
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -1294,7 +1294,7 @@ SEE ALSO
             mode = 9
         else:
             print("Error: unknown type: '%s'"%str(type))
-            if _raising(-1,_self): raise pymol.CmdException            
+            if _raising(-1,_self): raise pymol.CmdException
         try:
             _self.lock(_self)
             r = _cmd.get_names(_self._COb,int(mode),int(enabled_only),str(selection))
@@ -1350,7 +1350,7 @@ SEE ALSO
         finally:
             _self.unlock(r,_self)
         if is_error(r):
-            if not quiet and _feedback(fb_module.cmd,fb_mask.errors,_self):      
+            if not quiet and _feedback(fb_module.cmd,fb_mask.errors,_self):
                 print("Cmd-Error: unrecognized name.")
         elif not quiet:
             print(r)
@@ -1449,7 +1449,7 @@ NOTE
         '''
         # preprocess selection
         selection = selector.process(selection)
-        #      
+        #
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -1495,7 +1495,7 @@ NOTE
         # preprocess selection
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
-        #      
+        #
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -1524,7 +1524,7 @@ PYMOL API
         '''
         # preprocess selection
         selection = selector.process(selection)
-        #      
+        #
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -1535,7 +1535,7 @@ PYMOL API
             if _self._raising(_self=_self): raise pymol.CmdException
         elif not quiet:
             print(" cmd.extent: min: [%8.3f,%8.3f,%8.3f]"%(r[0][0],r[0][1],r[0][2]))
-            print(" cmd.extent: max: [%8.3f,%8.3f,%8.3f]"%(r[1][0],r[1][1],r[1][2]))      
+            print(" cmd.extent: max: [%8.3f,%8.3f,%8.3f]"%(r[1][0],r[1][1],r[1][2]))
         if _raising(r,_self): raise pymol.CmdException
         return r
 
@@ -1548,7 +1548,7 @@ DESCRIPTION
     
 USAGE
         '''
-        
+
         r = cmd.get_phipsi(selection)
         if r!=None:
             kees = list(r.keys())
@@ -1561,7 +1561,7 @@ USAGE
                                 ("( %6.1f, %6.1f )"%r[a])+
                                 "'%(resn+'-'+resi+':'))")
                 _self.feedback('pop')
-        elif _feedback(fb_module.cmd,fb_mask.errors,_self):      
+        elif _feedback(fb_module.cmd,fb_mask.errors,_self):
             print("cmd-Error: can't compute phi_psi")
         if _raising(r,_self): raise pymol.CmdException
         return r
@@ -1582,7 +1582,7 @@ USAGE
         selection = selector.process(selection)
         #
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.select(_self._COb,"_count_tmp","("+str(selection)+")",1,int(state)-1,str(domain))
             _cmd.delete(_self._COb,"_count_tmp")
         finally:
@@ -1622,7 +1622,7 @@ DESCRIPTION
             obj = _self.get_names(obj_type)
         except:
             pass
-    
+
         if obj:
             try:
                 types = list(map(_self.get_type,obj))

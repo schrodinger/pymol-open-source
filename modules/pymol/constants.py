@@ -1,5 +1,5 @@
 
-# constant objects 
+# constant objects
 
 from .parsing import QuietException
 from .shortcut import Shortcut
@@ -14,7 +14,7 @@ class _loadable:
     mmodstr = 6
     xplor = 7
     model = 8
-    pdbstr = 9    
+    pdbstr = 9
     brick = 10    # chempy.brick object
     map = 11      # chempy.map object
     callback = 12 # pymol callback obejct
@@ -120,8 +120,8 @@ stereo_dict = {'on':-2,'off':0,'0':0,'1':-2,'swap':-1,
                'chromadepth': -3,
                'quadbuffer':1,'crosseye':2,
                'walleye':3,'geowall':4,'sidebyside':5,
-               'byrow':6, 'bycolumn':7, 'checkerboard':8, 
-               'custom': 9, 'anaglyph' : 10, 
+               'byrow':6, 'bycolumn':7, 'checkerboard':8,
+               'custom': 9, 'anaglyph' : 10,
                'dynamic' : 11, 'clonedynamic': 12 }
 
 stereo_sc = Shortcut(stereo_dict.keys())
@@ -240,7 +240,7 @@ class fb_module:
     cgo                       =11
     feedback                  =12
     scene                     =13
-    threads                   =14  
+    threads                   =14
     symmetry                  =15
     ray                       =16
     setting                   =17
@@ -259,7 +259,7 @@ class fb_module:
     objectmolecule            =30
     objectmap                 =31
     objectmesh                =32
-    objectdist                =33 
+    objectdist                =33
     objectcgo                 =34
     objectcallback            =35
     objectsurface             =36
@@ -296,12 +296,12 @@ class fb_module:
     selector                  =71
     editor                    =72
     nag                       =73
-    
+
     export                    =75
     ccmd                      =76
-    api                       =77   
+    api                       =77
 
-    main                      =80  
+    main                      =80
 
 # This second set, with negative indices
 # represent "python-only" subsystems
@@ -319,4 +319,3 @@ class fb_mask:
     blather =             0x40
     debugging =           0x80
     everything =          0xFF
-

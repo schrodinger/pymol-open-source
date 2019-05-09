@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ implicit_valence = {
 def implicit_mass(indexed):
     valence = [0]*len(indexed.atom)
     implicit = [0]*len(indexed.atom)
-    
+
     for a in indexed.bond:
         ai0 = a.index[0]
         ai1 = a.index[1]
@@ -42,4 +42,3 @@ def implicit_mass(indexed):
         valence[c] = valence[c] - a.formal_charge
         implicit[c] = implicit_valence[a.symbol][valence[c]]
     c = c + 1
-    

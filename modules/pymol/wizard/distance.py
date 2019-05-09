@@ -19,18 +19,18 @@ dist_count = 0
 class Distance(Wizard):
 
     cutoff = 3.5
-    
+
     def __init__(self,_self=cmd):
 
         cmd.unpick();
         Wizard.__init__(self,_self)
-        
+
         self.status = 0 # 0 no atoms selections, 1 atom selected
         self.error = None
         self.object_name = None
 
         # mode selection subsystem
-        
+
         self.mode = default_mode
         self.modes = [
             'polar',
@@ -38,7 +38,7 @@ class Distance(Wizard):
             'neigh',
             'pairs',
             ]
-        
+
         self.mode_name = {
             'polar':'Polar Neighbors',
             'heavy':'Heavy Neighbors',
@@ -53,7 +53,7 @@ class Distance(Wizard):
         self.menu['mode']=smm
 
         # overwrite mode selection subsystem
-        
+
         self.object_mode=default_object_mode
         self.object_modes = [
             'overwr',
@@ -61,7 +61,7 @@ class Distance(Wizard):
             ]
         self.object_mode_name = {
             'overwr':'Replace Previous',
-            'append':'Create New',         
+            'append':'Create New',
             }
 
         smm = []
@@ -72,7 +72,7 @@ class Distance(Wizard):
         self.selection_mode = cmd.get_setting_int("mouse_selection_mode")
         cmd.set("mouse_selection_mode",0) # set selection mode to atomic
         cmd.deselect() # disable the active selection (if any)
-        
+
 # generic set routines
 
     def set_mode(self,mode):
@@ -88,7 +88,7 @@ class Distance(Wizard):
         self.status = 0
         cmd.refresh_wizard()
 
-        
+
     def get_panel(self):
         return [
             [ 1, 'Distance Measurement',''],
@@ -105,10 +105,10 @@ class Distance(Wizard):
         default_object_mode = self.object_mode
         self.clear()
         cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode
-        
+
     def clear(self):
         cmd.delete(sele_prefix+"*")
-        
+
     def get_prompt(self):
         self.prompt = None
         if self.mode == 'pairs':
@@ -121,7 +121,7 @@ class Distance(Wizard):
         if self.error!=None:
             self.prompt.append(self.error)
         return self.prompt
-    
+
     def delete_last(self):
         global dist_count
         if self.status==0:
@@ -147,7 +147,7 @@ class Distance(Wizard):
         cmd.edit(name)
         cmd.delete(name)
         self.do_pick(0)
-        
+
     def do_pick(self,bondFlag):
         global dist_count
 
@@ -157,7 +157,7 @@ class Distance(Wizard):
         else:
             if self.mode == 'pairs':
                 if self.status==0:
-                    name = sele_prefix 
+                    name = sele_prefix
                     cmd.select(name,"(pk1)")
                     self.status = 1
                     self.error = None
@@ -182,9 +182,9 @@ class Distance(Wizard):
                 if self.mode == 'neigh':
                     cnt = cmd.select(sele_prefix,"(v. and (pk1 a; %f) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))))"%self.__class__.cutoff)
                 elif self.mode == 'polar':
-                    cnt = cmd.select(sele_prefix,"(v. and (pk1 a; %f) and (e. n,o) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))))"%self.__class__.cutoff)            
+                    cnt = cmd.select(sele_prefix,"(v. and (pk1 a; %f) and (e. n,o) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))))"%self.__class__.cutoff)
                 elif self.mode == 'heavy':
-                    cnt = cmd.select(sele_prefix,"(v. and (pk1 a; %f) and (not h.) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))))"%self.__class__.cutoff)            
+                    cnt = cmd.select(sele_prefix,"(v. and (pk1 a; %f) and (not h.) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))))"%self.__class__.cutoff)
                 cmd.delete(name)
                 if cnt:
                     cmd.dist(name,"(pk1)",sele_prefix)

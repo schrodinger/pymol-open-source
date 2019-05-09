@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ def combine_fragments(*arg,**kw):
     calculations (you can use PyMOL to rename these if they
     happen to coincide).
 '''
-    
+
     if 'net_charge' in kw:
         net_charge = kw['net_charge']
     else:
@@ -43,7 +43,7 @@ def combine_fragments(*arg,**kw):
     n_dst_atm = len(dst.atom)
 
     # create dictionary/indices for shared atoms
-    
+
     n_tot = 0
     dst_dict = {}
     for a in dst.atom:
@@ -52,11 +52,11 @@ def combine_fragments(*arg,**kw):
         n_tot = n_tot + 1
 
     # create fragment membership list for destination atoms
-    
+
     members = []
     for a in range(n_tot):
         members.append([])
-    
+
     # create indices for unique atoms
 
     for fragment in frg_lst:
@@ -84,13 +84,13 @@ def combine_fragments(*arg,**kw):
                     a.attached_index = attached_index
                 n_tot = n_tot + 1
             c = c + 1
-                
+
     # create array for charges
-    
+
     chg = []
     for a in range(n_frg):
         chg.append([0.0] * n_tot)
-    
+
     # now load and count measurements
 
     cnt = [0] * n_tot
@@ -117,7 +117,7 @@ def combine_fragments(*arg,**kw):
             avg.append(sum(tmp_lst)/cnt[index])
         else:
             avg.append(0.0)
-        
+
     # correct total charge
 
     chg_sum = sum(avg)
@@ -128,11 +128,10 @@ def combine_fragments(*arg,**kw):
         chg_adjust = chg_diff / n_dst_atm
     else:
         chg_adjust = 0.0
-        
+
     c = 0
     for a in dst.atom:
         a.partial_charge = avg[c] + chg_adjust
         c = c + 1
 
     return dst
-

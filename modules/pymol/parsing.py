@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -27,7 +27,7 @@
 # command
 
 # * commands with arguments
-#            
+#
 # command value1
 # command value1,value2
 # command value1,value2,value3
@@ -36,7 +36,7 @@
 #
 # command argument1=value1
 # command argument1=value1,argument2=value2,argument3=value3
-# command argument3=value1,argument2=value2,argument1=value1   
+# command argument3=value1,argument2=value2,argument1=value1
 
 # * mixed...
 #
@@ -44,7 +44,7 @@
 
 # * commands with legacy '=' support for first argument
 #
-# command string1=value1    
+# command string1=value1
 # * which should map to
 # command string1,value1
 
@@ -57,7 +57,7 @@
 # === Burdens placed on API functions...
 #
 # None. However, function must have real arguments for error checking.
-# 
+#
 
 from __future__ import absolute_import
 
@@ -71,7 +71,7 @@ if True:
     import types
     import inspect
     from . import colorprinting
-    
+
     class QuietException(BaseException):
         pass
 
@@ -79,21 +79,21 @@ if True:
 
     SIMPLE      = 0  # original pymol parsing (deprecated)
     MOVIE       = 1  # ignore ";", treat entire line as a single command
-    RUN         = 2  # run command 
+    RUN         = 2  # run command
     SPAWN       = 3  # for spawn and fork commands
     ABORT       = 4  # terminates command script
     PYTHON      = 5  # pass entire line to python
     EMBED       = 6  # embedded data
     PYTHON_BLOCK = 7 # embedded python block
     SKIP        = 8  # skipping commands
-    NO_CHECK    = 10 # no error checking 
+    NO_CHECK    = 10 # no error checking
     STRICT      = 11 # strict name->argument checking
     SECURE      = 12 # command not available in "secure" mode
     LEGACY      = 13 # support legacy construct str1=val1,... -> str1,val1,...
-    LITERAL     = 20 # argument is to be treated as a literal string 
+    LITERAL     = 20 # argument is to be treated as a literal string
     LITERAL1    = 21 # one regular argument, followed by literal string
     LITERAL2    = 22 # two regular argument, followed by literal string
-    
+
     # key regular expressions
 
     arg_name_re = re.compile(r"[A-Za-z0-9_]+\s*\=")
@@ -107,7 +107,7 @@ if True:
     arg_value_re = re.compile(r"'''[^']*'''|'[^']*'|"+r'"[^"]*"|[^,;]+')
     def trim_nester(st):
         # utility routine, returns single instance of a nested string
-        # should be modified to handle quotes too                  
+        # should be modified to handle quotes too
         pc = 1
         l = len(st)
         c = 1
@@ -150,7 +150,7 @@ if True:
         if len(inp_dict):
             raise QuietException("Error: invalid argument(s).")
         return result
-    
+
     def parse_arg(st,mode=STRICT,_self=None):
         '''
     parse_arg(st)
@@ -159,7 +159,7 @@ if True:
 
     returns list of tuples of strings: [(None,value),(name,value)...]
     '''
-        result = [] 
+        result = []
         # current character
         cc = 0
         a = st.split(None, 1)
@@ -174,7 +174,7 @@ if True:
                 st = st.lstrip()
                 if st == '':
                     break
-                # read argument name, if any         
+                # read argument name, if any
                 mo = arg_name_re.match(st)
                 if mo:
                     nam = mo.group(0)[:-1].strip()
@@ -197,7 +197,7 @@ if True:
                         # special handling for nesters (selections, lists, tuples, etc.)
                         mo = arg_easy_nester_re.match(st[cc:]) # no internal commas
                         if mo:
-                            cnt = len(nester_char_re.findall(mo.group(0))) 
+                            cnt = len(nester_char_re.findall(mo.group(0)))
                             if cnt % 2 == 1: # make sure nesters are matched in count
                                 mo = None
                         if mo:
@@ -349,7 +349,7 @@ if True:
         nreq = narg-ndef
         if len(lst)==1:
             if lst[0]==(None,'?'):
-                dump_arg(name,arg_nam,nreq)         
+                dump_arg(name,arg_nam,nreq)
                 raise QuietException
 
         if mode==NO_CHECK:
@@ -399,7 +399,7 @@ if True:
                 else:
                     colorprinting.error("Error: too many arguments for %s; %d to %d expected, %d found."%(
                         name,nreq,narg,len(lst)))
-                    dump_arg(name,arg_nam,nreq)            
+                    dump_arg(name,arg_nam,nreq)
                 raise QuietException
             # match names to unnamed arguments to create argument dictionary
             ac = 0
@@ -536,7 +536,7 @@ SEE ALSO
             # without any further output
             _print_exc()
             raise QuietException
-    
+
     def run_file_as_module(file,spawn=0):
         name = re.sub('[^A-Za-z0-9]','_',file)
         if not isinstance(name, str):

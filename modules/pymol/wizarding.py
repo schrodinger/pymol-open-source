@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ if True:
     from .cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
           _feedback,fb_module,fb_mask, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
-    
+
     try:
         import cPickle
     except ImportError:
@@ -31,7 +31,7 @@ if True:
 
     class WizardError(Exception):
         pass
-    
+
     def _wizard(name,arg,kwd,replace,_self=cmd):
         r = DEFAULT_ERROR
         from . import wizard
@@ -56,11 +56,11 @@ if True:
                         _self.set_wizard(wiz,replace)
                         _self.do("_ refresh_wizard")
                 else:
-                    print("Error: Sorry, couldn't find the '"+oname+"' class.")                             
+                    print("Error: Sorry, couldn't find the '"+oname+"' class.")
             else:
-                print("Error: Sorry, couldn't import the '"+name+"' wizard.")         
+                print("Error: Sorry, couldn't import the '"+name+"' wizard.")
         return r
-    
+
     def wizard(name=None,*arg,**kwd):
         '''
 DESCRIPTION
@@ -93,7 +93,7 @@ EXAMPLE
             r = _wizard(name,arg,kwd,0,_self=_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
-        
+
     def replace_wizard(name=None,*arg,**kwd):
         '''
 DESCRIPTION
@@ -138,7 +138,7 @@ DESCRIPTION
     "refresh_wizard" is in unsupported internal command.
     
     '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.refresh_wizard(_self._COb)
@@ -198,5 +198,3 @@ DESCRIPTION
                     print(e)
                     print("Session-Warning: unable to restore wizard.")
         return 1
-
-

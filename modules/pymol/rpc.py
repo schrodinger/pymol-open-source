@@ -23,12 +23,12 @@ else:
   import xmlrpc.server as SimpleXMLRPCServer
 import threading,os,tempfile
 from pymol import cmd,cgo
- 
+
 # initial port to try for the server
 _xmlPort=9123
 # number of alternate ports to try if the first fails
 _nPortsToTry=5
- 
+
 def rpcPing():
   """ Used to establish whether or not the server is alive.
  
@@ -39,7 +39,7 @@ def rpcPing():
  
   """
   return 1
- 
+
 def rpcLabel(pos,labelText,id='lab1',color=(1,1,1)):
   """ create a text label
  
@@ -57,7 +57,7 @@ def rpcLabel(pos,labelText,id='lab1',color=(1,1,1)):
   cmd.set_color("%s-color"%id,color)
   cmd.color("%s-color"%id,id)
   return 1
- 
+
 def rpcResetCGO(id):
   """ removes a CGO from the local dictionary
  
@@ -72,7 +72,7 @@ def rpcResetCGO(id):
   else:
     res = 0
   return res
- 
+
 def rpcSphere(pos,rad,color,id='cgo',extend=1,
               transparent=0,transparency=0.5):
   """ create a sphere
@@ -123,7 +123,7 @@ def rpcRenderCGO(cgoV,id='cgo',extend=1):
   cmd.load_cgo(obj,id,1)
   return 1
 
- 
+
 def rpcSpheres(sphereD,id='cgo',extend=1):
   """ create a sphere
  
@@ -150,7 +150,7 @@ def rpcSpheres(sphereD,id='cgo',extend=1):
   cgoDict[id] = obj
   cmd.load_cgo(obj,id,1)
   return 1
- 
+
 def rpcCylinder(end1,end2,rad,color1,id='cgo',color2=None,extend=1,
                 transparent=0,transparency=0.5):
   """ create a cylinder
@@ -175,7 +175,7 @@ is white
  
   """
   global cgoDict
- 
+
   if color2 is None: color2 = color1
   r1,g1,b1 = color1
   r2,g2,b2 = color2
@@ -194,7 +194,7 @@ is white
   cgoDict[id] = obj
   cmd.load_cgo(obj,id,1)
   return 1
- 
+
 def rpcDeleteObject(objName):
   """ deletes an object """
   try:
@@ -203,8 +203,8 @@ def rpcDeleteObject(objName):
     res = 0
   else:
     res = 1
-  return res  
- 
+  return res
+
 def rpcDeleteAll():
   """ deletes all objects """
   res = cmd.delete('all')
@@ -212,7 +212,7 @@ def rpcDeleteAll():
     return res
   else:
     return ''
- 
+
 def colorObj(objName,colorScheme):
   """ sets an molecule's color scheme
     Arguments:
@@ -238,7 +238,7 @@ def colorObj(objName,colorScheme):
   else:
     res = 0
   return res
- 
+
 def rpcLoadPDB(data,objName,colorScheme='',replace=1):
   """ loads a molecule from a pdb string
  
@@ -263,7 +263,7 @@ def rpcLoadPDB(data,objName,colorScheme='',replace=1):
   else:
     return ''
 
- 
+
 def rpcLoadMolBlock(data,objName,colorScheme='',replace=1):
   """ loads a molecule from a mol block
  
@@ -287,7 +287,7 @@ def rpcLoadMolBlock(data,objName,colorScheme='',replace=1):
   else:
     return ''
 
- 
+
 def rpcLoadFile(fileName,objName='',format='',colorScheme='',replace=1):
   """ loads an object from a file
  
@@ -312,7 +312,7 @@ def rpcLoadFile(fileName,objName='',format='',colorScheme='',replace=1):
   else:
     return ''
 
- 
+
 def rpcLoadSurface(fileName,objName,format='',surfaceLevel=1.0):
   """ loads surface data from a file and adds an isosurface
  
@@ -322,7 +322,7 @@ def rpcLoadSurface(fileName,objName,format='',surfaceLevel=1.0):
       format: (OPTIONAL) the format of the input file
       surfaceLevel: (OPTIONAL) the isosurface level
  
-   """   
+   """
   if not objName:
     objName = fileName.split('.')[0]
   gridName = 'grid-%s'%objName
@@ -332,7 +332,7 @@ def rpcLoadSurface(fileName,objName,format='',surfaceLevel=1.0):
     return res
   else:
     return ''
- 
+
 def rpcLoadSurfaceData(data,objName='surface',format='',surfaceLevel=1.0):
   """ loads surface data from a string and adds an isosurface
  
@@ -342,7 +342,7 @@ def rpcLoadSurfaceData(data,objName='surface',format='',surfaceLevel=1.0):
       format: (OPTIONAL) the format of the input file
       surfaceLevel: (OPTIONAL) the isosurface level
  
-   """   
+   """
   gridName = 'grid-%s'%objName
   # it would be nice if we didn't have to go by way of the temporary file,
   # but at the moment pymol will only read shapes from files
@@ -355,7 +355,7 @@ def rpcLoadSurfaceData(data,objName='surface',format='',surfaceLevel=1.0):
   else:
     return ''
 
- 
+
 def rpcRotate(vect,objName='',state=-1):
   """ rotates objects
  
@@ -374,16 +374,16 @@ def rpcRotate(vect,objName='',state=-1):
 def rpcGetNames(what='selections',enabledOnly=1):
   """ returns the results of cmd.get_names(what) """
   return cmd.get_names(what,enabled_only=enabledOnly)
- 
+
 def rpcIdAtom(what='all',mode=0):
   """ returns the results of cmd.id_atom(what) """
   return cmd.id_atom(what,mode=mode)
- 
+
 def rpcGetAtomCoords(what='all',state=0):
   """ returns the results of cmd.get_atom_coords(what,state) """
   return cmd.get_atom_coords(what,state=state)
- 
- 
+
+
 def rpcHelp(what=''):
   """ returns general help text or help on a particular command """
   global serv
@@ -410,9 +410,9 @@ def rpcHelp(what=''):
       res += ')\n'
       if fn.__doc__:
         res += fn.__doc__
-  return res  
- 
- 
+  return res
+
+
 def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
   """ launches the xmlrpc server into a separate thread
  
@@ -427,7 +427,7 @@ def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
   if not hostname:
     import os
     hostname = os.environ.get('PYMOL_RPCHOST', 'localhost')
- 
+
   global cgoDict,serv
   cgoDict = {}
   for i in range(nToTry):
@@ -467,7 +467,7 @@ def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
 
     # legacy stuff, should be removed because overwrites API names!
     serv.register_function(rpcLabel,'label')   # pseudoatom
-    serv.register_function(rpcRotate,'rotate') 
+    serv.register_function(rpcRotate,'rotate')
 
     serv.register_introspection_functions()
     t = threading.Thread(target=serv.serve_forever)
@@ -475,5 +475,5 @@ def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
     t.start()
   else:
     print('xml-rpc server could not be started')
-    
+
 # vi:expandtab:smarttab:sw=2

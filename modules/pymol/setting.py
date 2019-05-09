@@ -1,21 +1,21 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
 from __future__ import print_function
 
 if True:
-    
+
     import traceback
     from . import selector
     from .shortcut import Shortcut
@@ -23,7 +23,7 @@ if True:
     from .cmd import _cmd,lock,lock_attempt,unlock,QuietException, \
           is_string, \
           _feedback,fb_module,fb_mask, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
+          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
     # name -> index mapping
     index_dict = _cmd.get_setting_indices()
@@ -184,13 +184,13 @@ PYMOL API
                     raise _self.pymol.CmdException("invalid value: %s" % repr(value))
             finally:
                 _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException            
+        if _self._raising(r,_self): raise QuietException
         return r
 
-        
+
     def set(name, value=1, selection='', state=0, updates=1, log=0,
             quiet=1,_self=cmd):
-        
+
         '''
 DESCRIPTION
 
@@ -290,7 +290,7 @@ SEE ALSO
                     raise _self.pymol.CmdException("invalid value: %s" % repr(value))
             finally:
                 _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException            
+        if _self._raising(r,_self): raise QuietException
         return r
 
     def unset(name, selection='', state=0, updates=1, log=0, quiet=1, _self=cmd):
@@ -350,7 +350,7 @@ SEE ALSO
                 finally:
                     _self.unlock(r,_self)
         return r
-    
+
     def unset_bond(name,selection1,selection2=None,state=0,updates=1,log=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
@@ -384,7 +384,7 @@ USAGE
                     print("Error: unable to unset setting value.")
             finally:
                 _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException            
+        if _self._raising(r,_self): raise QuietException
         return r
 
     def get_setting(name,object='',state=0,_self=cmd): # INTERNAL
@@ -407,7 +407,7 @@ USAGE
         if is_ok(r):
             return value
         elif _self._raising(r,_self):
-            raise QuietException                     
+            raise QuietException
         return r
 
     def get(name, selection='', state=0, quiet=1, _self=cmd):
@@ -447,7 +447,7 @@ SEE ALSO
     set, set_bond, get_bond
 
     '''
-        
+
         r = DEFAULT_ERROR
         state = int(state)
         i = _get_index(name)
@@ -470,7 +470,7 @@ SEE ALSO
                     print(" get: %s = %s in object %s state %d"%(name,r_str,selection,state))
         if _self._raising(r,_self): raise QuietException
         return r
-    
+
     def get_setting_tuple_new(name,object='',state=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         i = _get_index(name)
@@ -488,7 +488,7 @@ SEE ALSO
             # legacy API
             r = (r[0], (r[1],))
         return r
-    
+
     def get_setting_boolean(name,object='',state=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         i = _get_index(name)
@@ -499,7 +499,7 @@ SEE ALSO
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
-    
+
     def get_setting_int(name,object='',state=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         i = _get_index(name)
@@ -509,7 +509,7 @@ SEE ALSO
         finally:
             _self.unlock(r,_self)
         return r
-    
+
     def get_setting_float(name,object='',state=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         i = _get_index(name)
@@ -609,7 +609,7 @@ PYMOL API
                     raise QuietException
             finally:
                 _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException            
+        if _self._raising(r,_self): raise QuietException
         if not quiet:
             name = name_dict.get(index, name)
             suffix = ' state %d' % state if state > 0 else ''

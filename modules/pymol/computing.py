@@ -4,11 +4,11 @@
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -82,7 +82,7 @@ def get_energy_from_rec(rec):
     except:
         traceback.print_exc()
     return result
-    
+
 class CleanJob:
     def __init__(self,self_cmd,sele,state=-1,message=None):
         self.cmd = self_cmd
@@ -121,7 +121,7 @@ class CleanJob:
             result = None
             if is_list(obj_list) and (len(obj_list)==1):
                 obj_name = obj_list[0]
-                self_cmd.sculpt_deactivate(obj_name) 
+                self_cmd.sculpt_deactivate(obj_name)
                 # eliminate all sculpting information for object
                 self.cmd.sculpt_purge()
                 self.cmd.set("sculpting",0)
@@ -165,7 +165,7 @@ class CleanJob:
                                     self_cmd.push_undo(obj_name)
                                     self_cmd.update(obj_name, clean_name, matchmaker=0,
                                                     source_state=1, target_state=state)
-                                    self_cmd.sculpt_activate(obj_name) 
+                                    self_cmd.sculpt_activate(obj_name)
                                     self_cmd.sculpt_deactivate(obj_name)
                                     self.ok = 1
                                     message = "Clean: Finished. Energy = %3.2f" % self.energy
@@ -199,7 +199,7 @@ class CleanJob:
                 except IOError:
                     print("Unabled to write '%s"%failed_file)
                 if aromatic:
-                    print("Clean-Warning: Please eliminate aromatic bonds and then try again.")                    
+                    print("Clean-Warning: Please eliminate aromatic bonds and then try again.")
         if message!=None:
             self_cmd.do("_ wizard")
 
@@ -228,7 +228,7 @@ def _clean(selection, present='', state=-1, fix='', restrain='',
             self_cmd.create(clean_obj, clean2_sele, zoom=0, source_state=state,target_state=1)
             self_cmd.disable(clean_obj)
             self_cmd.unset("suspend_updates")
-            
+
             self_cmd.flag(3,clean_obj+" in ("+clean2_sele+" and not "+clean1_sele+")","set")
             # fix nearby atoms
 
@@ -243,7 +243,7 @@ def _clean(selection, present='', state=-1, fix='', restrain='',
             if c.ok:
                 self_cmd.set("suspend_undo", suspend_undo, updates=0)
                 self_cmd.push_undo(selection)
-                self_cmd.update(clean1_sele, clean_obj, 
+                self_cmd.update(clean1_sele, clean_obj,
                                 source_state=1, target_state=state)
             self_cmd.set("suspend_undo", True, updates=0)
             self_cmd.delete(clean_obj)
@@ -281,5 +281,3 @@ def clean(selection, present='', state=-1, fix='', restrain='',
         except:
             traceback.print_exc()
         return 0
-
-

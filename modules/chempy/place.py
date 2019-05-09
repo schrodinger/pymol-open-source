@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 #
@@ -99,7 +99,7 @@ def simple_unknowns(model,bondfield=bond_amber):
                             p0 = normalize(d1)
                             d2 = sub(at4.coord,at3.coord)
                             p1 = normalize(cross_product(d2,p0))
-                            p2 = normalize(cross_product(p0,p1))                     
+                            p2 = normalize(cross_product(p0,p1))
                             v = scale(p2,TRI_TAN)
                             v = normalize(add(p0,v))
                             at2.coord = add(at1.coord,scale(v,
@@ -153,7 +153,7 @@ def simple_unknowns(model,bondfield=bond_amber):
                         v = scale(p2,TRI_TAN)
                         v = normalize(add(p0,v))
                         at2.coord = add(at1.coord,scale(v,
-                          bnd_len[(at1.text_type,at2.text_type)]))                                                         
+                          bnd_len[(at1.text_type,at2.text_type)]))
                         at2 = model.atom[a[1][1]]
                         v = scale(p2,-TRI_TAN)
                         v = normalize(add(p0,v))
@@ -163,7 +163,7 @@ def simple_unknowns(model,bondfield=bond_amber):
                         d2 = [1.0,0,0]
                         at3 = model.atom[know[0]]
                         d1 = sub(at1.coord,at3.coord)
-                        p0 = normalize(d1)                  
+                        p0 = normalize(d1)
                         p1 = normalize(cross_product(d2,p0))
                         p2 = normalize(cross_product(p0,p1))
                         v = scale(p2,TRI_TAN)
@@ -191,17 +191,17 @@ def simple_unknowns(model,bondfield=bond_amber):
                     v = normalize(add(p0,v))
                     at2.coord = add(at1.coord,scale(v,
                             bnd_len[(at1.text_type,at2.text_type)]))
-                    at2 = model.atom[a[1][1]]               
+                    at2 = model.atom[a[1][1]]
                     v = scale(p1,-TET_TAN)
                     v = normalize(add(p0,v))
                     at2.coord = add(at1.coord,scale(v,
                             bnd_len[(at1.text_type,at2.text_type)]))
                 else:
-                    if len(know): # sulfonamide? 
+                    if len(know): # sulfonamide?
                         d2 = [1.0,0,0]
                         at3 = model.atom[know[0]]
                         d1 = sub(at1.coord,at3.coord)
-                        p0 = normalize(d1)                                    
+                        p0 = normalize(d1)
                         p1 = normalize(cross_product(d2,p0))
                         v = scale(p1,TET_TAN)
                         v = normalize(add(p0,v))
@@ -244,7 +244,7 @@ def simple_unknowns(model,bondfield=bond_amber):
                     v = scale(p2,-TET_TAN)
                     v = normalize(add(p0,v))
                     at2.coord = add(at1.coord,scale(v,
-                          bnd_len[(at1.text_type,at2.text_type)]))                                                         
+                          bnd_len[(at1.text_type,at2.text_type)]))
                     at4 = at2
                     at2 = model.atom[a[1][1]]
                     d1 = sub(at1.coord,at3.coord)
@@ -256,14 +256,14 @@ def simple_unknowns(model,bondfield=bond_amber):
                     v = normalize(add(p0,v))
                     at2.coord = add(at1.coord,scale(v,
                             bnd_len[(at1.text_type,at2.text_type)]))
-                    at2 = model.atom[a[1][2]]               
+                    at2 = model.atom[a[1][2]]
                     v = scale(p1,-TET_TAN)
                     v = normalize(add(p0,v))
                     at2.coord = add(at1.coord,scale(v,
                             bnd_len[(at1.text_type,at2.text_type)]))
                 elif len(know): # fall-back
                     d2 = [1.0,0,0]
-                    at3 = model.atom[know[0]]                  
+                    at3 = model.atom[know[0]]
 
                     # 2013-08-14 added by thomas, not sure if this is correct
                     d1 = sub(at1.coord,at3.coord)
@@ -335,5 +335,3 @@ def test_random():
                 del a.coord
         simple_unknowns(m)
         cmd.load_model(m.convert_to_indexed(), 'm' + str(i + 1))
-
-

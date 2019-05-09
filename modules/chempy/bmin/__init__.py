@@ -35,7 +35,7 @@ def do(run_prefix):
         time.sleep(0.1)
     if feedback['bmin']:
         os.system("cat bmintmp.log")
-        print(" "+str(__name__)+': bmin job complete. ') 
+        print(" "+str(__name__)+': bmin job complete. ')
         if hasattr(sys.stdout,"flush"):
             sys.stdout.flush()
 
@@ -47,4 +47,3 @@ if 'SCHRODINGER' in os.environ:
 #   bmin_path = os.environ['MMOD_EXEC']+"/bmin"
 else:
     bmin_path = "bmin"
-

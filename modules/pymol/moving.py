@@ -1,19 +1,19 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
 if True:
-    
+
     import sys
     if sys.version_info[0] == 2:
         import thread
@@ -26,7 +26,7 @@ if True:
     cmd = sys.modules["pymol.cmd"]
     from .cmd import _cmd,Shortcut, \
           toggle_dict,toggle_sc, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
+          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
     def accept(_self=cmd):
         '''
@@ -37,7 +37,7 @@ DESCRIPTION
     security.
 
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.accept(_self._COb)
@@ -55,7 +55,7 @@ DESCRIPTION
     security.
 
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.decline(_self._COb)
@@ -71,7 +71,7 @@ DECRIPTION
     as to whether or not the movie is currently playing.
     
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.get_movie_playing(_self._COb)
@@ -79,7 +79,7 @@ DECRIPTION
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
-    
+
     def mdump(_self=cmd):
         '''
 DESCRIPTION
@@ -96,7 +96,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.mdump(_self._COb)
         finally:
             _self.unlock(r,_self)
@@ -109,10 +109,10 @@ DESCRIPTION
 
     "mtoggle" toggles playing of the movie.
     
-    '''        
-        r = DEFAULT_ERROR      
+    '''
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.mplay(_self._COb,-1)
         finally:
             _self.unlock(r,_self)
@@ -136,7 +136,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.mplay(_self._COb,0)
         finally:
             _self.unlock(r,_self)
@@ -153,7 +153,7 @@ SEE ALSO
         'reset'    : 5,
         'uninterpolate' : 6,
         'toggle'    : 7,
-        'toggle_interp' : 8, 
+        'toggle_interp' : 8,
         'purge'      : 9
         }
 
@@ -207,7 +207,7 @@ SEE ALSO
 
     mplay, mset, mdo, mclear, mmatrix
         '''
-        
+
         r = DEFAULT_ERROR
         first = int(first)
         last = int(last)
@@ -232,20 +232,20 @@ SEE ALSO
                            int(simple), float(linear),str(object),
                            int(wrap),int(hand),int(window),int(cycles),
                            str(scene),float(cut),int(quiet),int(state)-1,0)
-            if (not freeze and 
-                ((auto>0) or ((auto<0) and 
+            if (not freeze and
+                ((auto>0) or ((auto<0) and
                               (_self.get_setting_int("movie_auto_interpolate")>0)))):
                 if action in [0,1,7]: # reinterpolate after store, clear, or toggle
                     _cmd.mview(_self._COb,3,-1,-1,
                                float(power),float(bias),
                                int(simple), float(linear),str(object),
                                int(wrap),int(hand),int(window),int(cycles),
-                               str(scene),float(cut),int(quiet),-1,1)                    
+                               str(scene),float(cut),int(quiet),-1,1)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
-    
+
     def mplay(_self=cmd):
         '''
 DESCRIPTION
@@ -266,7 +266,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.mplay(_self._COb,1)
         finally:
             _self.unlock(r,_self)
@@ -315,7 +315,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.mdo(_self._COb,int(frame)-1,str(command),0)
         finally:
             _self.unlock(r,_self)
@@ -358,7 +358,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.mdo(_self._COb,int(frame)-1,str(";"+command),1)
         finally:
             _self.unlock(r,_self)
@@ -451,7 +451,7 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.mclear(_self._COb)
         finally:
             _self.unlock(r,_self)
@@ -491,7 +491,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.frame(_self._COb, int(frame) - 1, int(trigger))
         finally:
             _self.unlock(r,_self)
@@ -668,7 +668,7 @@ SEE ALSO
         count = int(count)
         freeze = int(freeze)
         object = str(object)
-        quiet = int(quiet)        
+        quiet = int(quiet)
         if not frame: # 0 means use current frame
             frame = _self.get_frame() - 1
         else:
@@ -695,7 +695,7 @@ SEE ALSO
 
     '''
         mset(specification,frame,freeze,_self=_self)
-        
+
     def mset(specification="",frame=1,freeze=0,_self=cmd):
         '''
 DESCRIPTION
@@ -751,7 +751,7 @@ SEE ALSO
                     if x[0]=="x":
                         if last<0:
                             last = cur_state
-                            cnt = int(x[1:])                     
+                            cnt = int(x[1:])
                         else:
                             cnt = int(x[1:])-1
                         while cnt>0:
@@ -809,7 +809,7 @@ EXAMPLES
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             if action=="clear":
                 r = _cmd.mmatrix(_self._COb,0)
             elif action=="store":
@@ -844,7 +844,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.set_frame(_self._COb,5,1)
         finally:
             _self.unlock(r,_self)
@@ -871,7 +871,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.set_frame(_self._COb,5,-1)
         finally:
             _self.unlock(r,_self)
@@ -895,7 +895,7 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.set_frame(_self._COb,4,0)
         finally:
             _self.unlock(r,_self)
@@ -907,9 +907,9 @@ PYMOL API
         '''
 internal
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r=_cmd.set_frame(_self._COb, int(mode), int(frame)-1)
         finally:
             _self.unlock(r,_self)
@@ -930,9 +930,9 @@ PYMOL API
 
     cmd.ending()
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r=_cmd.set_frame(_self._COb,6,0)
         finally:
             _self.unlock(r,_self)
@@ -955,7 +955,7 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            _self.lock(_self)   
+            _self.lock(_self)
             r = _cmd.set_frame(_self._COb,3,0)
         finally:
             _self.unlock(r,_self)

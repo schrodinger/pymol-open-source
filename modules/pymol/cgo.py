@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ TRIANGLE_STRIP     = 5.0
 TRIANGLE_FAN       = 6.0
 #QUADS              = 7.0
 #QUAD_STRIP         = 8.0
-#POLYGON            = 9.0                                                            
+#POLYGON            = 9.0
 
 STOP               =  0.0
 NULL               =  1.0
@@ -64,7 +64,7 @@ CHAR               = 23.0
 
 ALPHA              = 25.0
 QUADRIC            = 26.0 # NOTE: Only works with ellipsoids and disks
-CONE               = 27.0 
+CONE               = 27.0
 
 LIGHTING           = float(0x0B50)
 
@@ -120,7 +120,7 @@ def wire_text(cgo,font,pos,text,
                 cgo.append(VERTEX)
                 cgo.append(pos[0]+x[0]*ax+y[0]*ay)
                 cgo.append(pos[1]+x[1]*ax+y[1]*ay)
-                cgo.append(pos[2]+x[2]*ax+y[2]*ay)         
+                cgo.append(pos[2]+x[2]*ax+y[2]*ay)
                 c = c + 3
             pos[0] = pos[0] + w*x[0]
             pos[1] = pos[1] + w*x[1]
@@ -184,7 +184,7 @@ class RenderReader:
         if self.app_fn:
             self.app_fn()
             self.app_fn=None
-        
+
     def append_tri(self):
         if self.l_vert:
             d0 = cpv.sub(self.l_vert[0],self.l_vert[1])
@@ -301,7 +301,7 @@ class RenderReader:
             self.obj.extend([float(s[0]),float(s[1]),float(s[2]),
                              float(s[3]),float(s[4]),float(s[5]),
                              float(s[6]),float(s[7]),float(s[8]),float(s[9])])
-        
+
     def mat_prop(self,f):
         self.append_last()
         l = f.readline()
@@ -323,7 +323,7 @@ class RenderReader:
 
     def reset(self,f):
         pass
-    
+
     def __init__(self,input):
         # Author: Warren DeLano
         # Modifications: Robert Campbell

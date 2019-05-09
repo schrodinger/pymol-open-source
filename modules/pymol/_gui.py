@@ -65,7 +65,7 @@ class PyMOLDesktopGUI(object):
         def transparency_menu(setting_name):
             return [
                 ('radio', lab, setting_name, val)
-                for lab, val in [ ('Off', 0.0), ('20%', 0.2), ('40%', 0.4), 
+                for lab, val in [ ('Off', 0.0), ('20%', 0.2), ('40%', 0.4),
                     ('50%', 0.5), ('60%', 0.6), ('80%', 0.8) ]
             ]
 
@@ -674,7 +674,7 @@ class PyMOLDesktopGUI(object):
                 ]),
                 ('menu', 'Transparency', [
                     ('menu', 'Surface', transparency_menu('transparency')),
-                    ('menu', 'Sphere',  transparency_menu('sphere_transparency')),      
+                    ('menu', 'Sphere',  transparency_menu('sphere_transparency')),
                     ('menu', 'Cartoon', transparency_menu('cartoon_transparency')),
                     ('menu', 'Stick',   transparency_menu('stick_transparency')),
                     ('separator',),
@@ -835,7 +835,7 @@ class PyMOLDesktopGUI(object):
                 ('command', 'Measurement', 'wizard measurement'),
                 ('menu', 'Mutagenesis', [
                     ('command', 'Protein', 'wizard mutagenesis'),
-                    ('command', 'Nucleic Acids', 'wizard nucmutagenesis'), 
+                    ('command', 'Nucleic Acids', 'wizard nucmutagenesis'),
                 ]),
                 ('command', 'Pair Fitting', 'wizard pair_fit'),
                 ('separator',),

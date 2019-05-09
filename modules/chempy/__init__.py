@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -80,7 +80,7 @@ class Atom(object):
     ss                  = ''
 
     def get_mass(self):
-        '''Given the chemical symbol the atomic mass is returned'''      
+        '''Given the chemical symbol the atomic mass is returned'''
         return atomic_mass[self.symbol]
 
     def get_number(self):
@@ -97,9 +97,9 @@ class Atom(object):
             print("unknown implicit_valence for", self.symbol)
             return 0
         return max(0, maxfree - npaired + self.formal_charge)
-    
+
     def has(self,attr):
-        return attr in self.__dict__ 
+        return attr in self.__dict__
 
     def in_same_residue(self,other):
         if self.resi == other.resi:
@@ -122,7 +122,7 @@ class Atom(object):
     def get_signature(self):
         return ':'.join([self.segi, self.chain, self.resn,
             self.resi, self.symbol, self.name])
-    
+
     def __cmp__(self,other):
         return \
                 cmp(type(self), type(other)) or \
@@ -161,7 +161,7 @@ class Bond:
     stereo  = 0
 
     def has(self,attr):
-        return attr in self.__dict__ 
+        return attr in self.__dict__
 
 class Molecule:
 
@@ -179,10 +179,10 @@ class Molecule:
             return Molecule.defaults[attr]
         else:
             raise AttributeError(attr)
-        
+
     def has(self,attr):
-        return attr in self.__dict__ 
-    
+        return attr in self.__dict__
+
 class Storage:
 
     def my_open(self,fname,mode='r'):
@@ -197,13 +197,13 @@ class Storage:
             return gzip.open(fname, mode)
         else:
             return open(fname,mode)
-        
+
     def updateFromList(self,indexed,**params):
         return NotImplementedError
-    
+
     def fromList(self,**params):
         return NotImplementedError
-    
+
     def toList(self,indexed,**params):
         return NotImplementedError
 
@@ -235,7 +235,7 @@ class PseudoFile:
 
     def write(self,st):
         self.list.append(str(st))
-    
+
     def readline(self):
         try:
             return self.list.pop(0)
@@ -244,25 +244,25 @@ class PseudoFile:
 
     def close(self):
         self.list = None
-  
+
 feedback = { 'warnings': 1,
                  'terse'   : 1,
                  'io'      : 1,
                  'actions' : 1,
                  'tinker'  : 1,
-                 'gamess'  : 1,             
+                 'gamess'  : 1,
                  'atoms'   : 0,
-                 'bonds'   : 0,                          
+                 'bonds'   : 0,
                  'verbose' : 0,
                  'bmin'    : 1,
                  }
 
-if 'CHEMPY_DATA' in os.environ:  # 
+if 'CHEMPY_DATA' in os.environ:  #
     path = os.environ['CHEMPY_DATA'] + '/'
 elif 'PYMOL_DATA' in os.environ:
     path = os.environ['PYMOL_DATA'] + '/chempy/'
 elif 'PYMOL_PATH' in os.environ:
-    path = os.environ['PYMOL_PATH'] + '/data/chempy/'   
+    path = os.environ['PYMOL_PATH'] + '/data/chempy/'
 elif 'FREEMOL_MODULES' in os.environ:
     path = os.environ['FREEMOL_MODULES'] + '/chempy/'
 else:
@@ -332,7 +332,7 @@ atomic_mass = {
     'Se' :  78.96,
     'SE' :  78.96,
     'Br' :  79.904,
-    'BR' :  79.904,   
+    'BR' :  79.904,
     'Kr' :  83.80,
     'KR' :  83.80,
     'Rb' :  85.4678,

@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ from pymol import cmd
 def missing_c_termini(selection="(all)",quiet=0,_self=cmd):
     cmd=_self
     # assumes that hydogens are not present!
-    
+
     sele_list = []
     ch=Champ()
     model = cmd.get_model(selection)
@@ -43,30 +43,30 @@ def missing_c_termini(selection="(all)",quiet=0,_self=cmd):
         cmd.attach("O",1,1,"OXT",quiet=1)
         cmd.unpick()
     cmd.delete(tmp_sele1)
-    
-    
+
+
 def formal_charges(selection="(all)",quiet=0,_self=cmd):
     cmd=_self
     result = 1
     # assumes that hydogens are not present!
-    
+
     # first, set all formal charges to zero
-    
+
     cmd.alter(selection,"formal_charge=0")
 
     # next, flag all atoms so that we'll be able to detect what we miss
-    
+
     cmd.flag(23,selection,'set')
 
     # get the residue dictionary for formal charges
-    
+
     if not hasattr(champ,'formal_charge_dict'):
         from chempy.champ.formal_charges import formal_charge_dict
         champ.formal_charge_dict = formal_charge_dict
 
     # iterate through the residue dictionary matching each residue based on chemistry
     # and generating the expressions for reassigning formal charges
-    
+
     alter_list = []
     for resn in champ.formal_charge_dict.keys():
         if cmd.select(tmp_sele1,"(%s) and resn %s"%(selection,resn))>0:
@@ -74,7 +74,7 @@ def formal_charges(selection="(all)",quiet=0,_self=cmd):
             for rule in entry:
                 model = cmd.get_model(tmp_sele1)
                 ch = Champ()
-                model_pat = ch.insert_model(model)         
+                model_pat = ch.insert_model(model)
                 assn_pat = ch.insert_pattern_string(rule[0])
                 ch.pattern_clear_tags(model_pat)
                 if ch.match_1v1_n(assn_pat,model_pat,10000,2)>0:
@@ -88,7 +88,7 @@ def formal_charges(selection="(all)",quiet=0,_self=cmd):
                                                      "formal_charge=%d;flags=flags&-8388609"%formal_charge])
 
     if 1: # n-terminal amine
-        # non-proline 
+        # non-proline
         ch=Champ()
         model = cmd.get_model(selection)
         model_pat = ch.insert_model(model)
@@ -116,7 +116,7 @@ def formal_charges(selection="(all)",quiet=0,_self=cmd):
                             # the following expression both changes the formal charge and resets flag 23
                             alter_list.append([atom_tag[0],
                                                      "formal_charge=1;flags=flags&-8388609"])
-                                    
+
     if 1: # c-terminal acid
         ch=Champ()
         model = cmd.get_model(selection)
@@ -131,8 +131,8 @@ def formal_charges(selection="(all)",quiet=0,_self=cmd):
                             # the following expression both changes the formal charge and resets flag 23
                             alter_list.append([atom_tag[0],
                                                      "formal_charge=-1;flags=flags&-8388609"])
-        
-    # now evaluate all of these expressions efficiently en-masse 
+
+    # now evaluate all of these expressions efficiently en-masse
     cmd.alter_list(selection,alter_list)
 
     # see if we missed any atoms
@@ -144,9 +144,9 @@ def formal_charges(selection="(all)",quiet=0,_self=cmd):
             print(" WARNING: %d atoms did not have formal charges assigned"%missed_count)
         result = 0
     # remove the temporary selection we used to select appropriate residues
-    
+
     cmd.delete(tmp_sele1)
-    
+
     return result
 
 def amber99(selection="(all)",quiet=0,_self=cmd):
@@ -159,18 +159,18 @@ def amber99(selection="(all)",quiet=0,_self=cmd):
     cmd.alter(selection,"text_type=''")
 
     # next, flag all atoms so that we'll be able to detect what we miss
-    
+
     cmd.flag(23,selection,'set')
 
     # get the amber99 dictionary
-    
+
     if not hasattr(champ,'amber99_dict'):
         from chempy.champ.amber99 import amber99_dict
         champ.amber99_dict = amber99_dict
 
     # iterate through the residue dictionary matching each residue based on chemistry
     # and generating the expressions for reassigning formal charges
-    
+
     alter_list = []
     for resn in champ.amber99_dict.keys():
         if cmd.select(tmp_sele1,"(%s) and resn %s"%(selection,resn))>0:
@@ -192,7 +192,7 @@ def amber99(selection="(all)",quiet=0,_self=cmd):
                             alter_list.append([atom_tag[0],
             "name='''%s''';text_type='''%s''';partial_charge=%f;elec_radius=%f;flags=flags&-8388609"%prop_list])
 
-    # now evaluate all of these expressions efficiently en-masse 
+    # now evaluate all of these expressions efficiently en-masse
     cmd.alter_list(selection,alter_list)
 
     # see if we missed any atoms
@@ -205,9 +205,7 @@ def amber99(selection="(all)",quiet=0,_self=cmd):
         result = 0
 
     # remove the temporary selection we used to select appropriate residues
-    
+
     cmd.delete(tmp_sele1)
 
     return result
-
-    

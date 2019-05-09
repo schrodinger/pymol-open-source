@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC. 
+#C* Copyright (c) Schrodinger, LLC.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
-#-* 
+#-*
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -271,7 +271,7 @@ def mass_align(target,enabled_only=0,max_gap=50,_self=cmd):
                 cmd.align('polymer and name CA and (%s)'%name,
                 'polymer and name CA and (%s)'%target,max_gap=max_gap,quiet=0,
                           object=aln_object)
-    
+
 def sum_formal_charges(selection="(all)",quiet=1,_self=cmd):
     _util_sum_fc = [0]
     _self.iterate(selection, "_util_sum_fc[0] += formal_charge", space=locals())
@@ -337,14 +337,14 @@ NOTES
     if not quiet:
         print(" util.compute_mass: mass = %0.4f u"%result)
     return result
-    
+
 def protein_assign_charges_and_radii(obj_name,_self=cmd):
     cmd=_self
 
     from chempy.champ import assign
 
     # apply a few kludges
-    
+
     # convent Seleno-methionine to methionine
 
     cmd.alter(obj_name+"///MSE/SE","elem='S';name='SD'",quiet=1)
@@ -357,12 +357,12 @@ def protein_assign_charges_and_radii(obj_name,_self=cmd):
     cmd.alter(obj_name,"alt=''")
     cmd.sort(obj_name)
     cmd.fix_chemistry(obj_name,obj_name,1)
-    
+
     # make sure all atoms are included...
     cmd.alter(obj_name,"q=1.0",quiet=1)
-    
+
     print(" Util: Fixing termini and assigning formal charges...")
-    
+
     assign.missing_c_termini(obj_name,quiet=1,_self=_self)
 
     while not assign.formal_charges(obj_name,quiet=1,_self=_self):
@@ -371,23 +371,23 @@ def protein_assign_charges_and_radii(obj_name,_self=cmd):
                         'print("  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/")',quiet=1)
         cmd.remove("byres ("+obj_name+" and flag 23)") # get rid of residues that weren't assigned
         assign.missing_c_termini(obj_name,quiet=1,_self=_self)
-        
+
     print(" Util: Assigning Amber 99 charges and radii...")
-    
+
     cmd.h_add(obj_name)
     if not assign.amber99(obj_name,quiet=1,_self=_self):
         print(" WARNING: some unassigned atoms are being deleted:")
         cmd.iterate("byres ("+obj_name+" and flag 23)",
                         'print("  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/"+name+"? ["+elem+"]")',quiet=1)
         cmd.remove(obj_name+" and flag 23") # get rid of any atoms that weren't assigned
-        
+
     # show the user what the net charges are...
-        
+
     formal = sum_formal_charges(obj_name,quiet=0,_self=_self)
     partial = sum_partial_charges(obj_name,quiet=0,_self=_self)
     if round(formal)!=round(partial):
         print(" WARNING: formal and partial charge sums don't match -- there is a problem!")
-    
+
 def protein_vacuum_esp(selection, mode=2, border=10.0, quiet = 1, _self=cmd):
     cmd=_self
 
@@ -408,7 +408,7 @@ def protein_vacuum_esp(selection, mode=2, border=10.0, quiet = 1, _self=cmd):
          # try to just get protein...
 
     protein_assign_charges_and_radii(obj_name,_self=_self)
-        
+
     ext = cmd.get_extent(obj_name)
     max_length = max(abs(ext[0][0] - ext[1][0]),abs(ext[0][1] - ext[1][1]),abs(ext[0][2]-ext[1][2])) + 2*border
 
@@ -422,19 +422,19 @@ def protein_vacuum_esp(selection, mode=2, border=10.0, quiet = 1, _self=cmd):
     elif mode==1: # neutral, no cutoff
         cmd.map_new(map_name,"coulomb_neutral",sep,obj_name,border)
     else: # local, with cutoff
-        cmd.map_new(map_name,"coulomb_local",sep,obj_name,border)      
-        
+        cmd.map_new(map_name,"coulomb_local",sep,obj_name,border)
+
     cmd.ramp_new(pot_name, map_name, selection=obj_name,zero=1)
     cmd.hide("everything",obj_name)
     cmd.show("surface",obj_name)
     cmd.set("surface_color",pot_name,obj_name)
     cmd.set("surface_ramp_above_mode",1,obj_name)
-    
+
 def color_carbon(color,selection="(all)",_self=cmd):
     cmd=_self
     selection = str(selection)
     cmd.color(color,"(%s) and elem C"%selection)
-    
+
 def cbss(selection="(all)",helix_color="red",sheet_color="yellow",loop_color="green",quiet=1,_self=cmd):
     cmd=_self
     sel = str(selection)
@@ -451,67 +451,67 @@ def cbag(selection="(all)",quiet=1,_self=cmd):
     s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
     cmd.color("carbon","(elem C and ("+s+"))",quiet=quiet)
-    
+
 def cbac(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
     cmd=_self
     s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
     cmd.color("cyan","(elem C and ("+s+"))",quiet=quiet)
-    
+
 def cbam(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
     cmd=_self
-    s = str(selection)   
+    s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
     cmd.color("lightmagenta","(elem C and ("+s+"))",quiet=quiet)
 
 def cbay(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
     cmd=_self
-    s = str(selection)   
+    s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
     cmd.color("yellow","(elem C and ("+s+"))",quiet=quiet)
 
 def cbas(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
     cmd=_self
-    s = str(selection)   
+    s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
     cmd.color("salmon","(elem C and ("+s+"))",quiet=quiet)
 
 def cbaw(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
     cmd=_self
-    s = str(selection)   
+    s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
     cmd.color("hydrogen","(elem C and ("+s+"))",quiet=quiet)
 
 def cbab(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
     cmd=_self
-    s = str(selection)   
+    s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
     cmd.color("slate","(elem C and ("+s+"))",quiet=quiet)
 
 def cbao(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
     cmd=_self
-    s = str(selection)   
+    s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
     cmd.color("brightorange","(elem C and ("+s+"))",quiet=quiet)
 
 def cbap(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
     cmd=_self
-    s = str(selection)   
+    s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
     cmd.color("purple","(elem C and ("+s+"))",quiet=quiet)
 
 def cbak(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
     cmd=_self
-    s = str(selection)   
+    s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
     cmd.color("pink","(elem C and ("+s+"))",quiet=quiet)
 
@@ -563,7 +563,7 @@ def modernize_rendering(mode,_self=cmd):
     and quality.
     """
     cmd = _verbose_cmd_proxy(_self)
-    
+
     cmd.set("max_ups",0)
 
     enable_all_shaders(cmd)
@@ -579,7 +579,7 @@ def performance(mode,_self=cmd):
     mode = int(mode)
     if mode==0: # maximum quality
         cmd.set('line_smooth',1)
-        cmd.set('depth_cue',1)         
+        cmd.set('depth_cue',1)
         cmd.set('specular',1)
         cmd.set('surface_quality',1)
         cmd.set('cartoon_sampling',14)
@@ -615,8 +615,8 @@ def performance(mode,_self=cmd):
             cmd.set('sphere_quality',2)
             cmd.set('stick_ball',1)
     elif mode==33:
-        cmd.set('line_smooth',1)         
-        cmd.set('depth_cue',1)         
+        cmd.set('line_smooth',1)
+        cmd.set('depth_cue',1)
         cmd.set('specular',1)
         cmd.set('surface_quality',0)
         cmd.set('cartoon_sampling',7)
@@ -654,7 +654,7 @@ def performance(mode,_self=cmd):
 
     elif mode==66: # good perfomance
         cmd.set('line_smooth',0)
-        cmd.set('depth_cue',0)         
+        cmd.set('depth_cue',0)
         cmd.set('specular',1)
         cmd.set('surface_quality',0)
         cmd.set('cartoon_sampling',6)
@@ -723,7 +723,7 @@ def performance(mode,_self=cmd):
 
     cmd.do("rebuild")
 
-    
+
 def label_chains(sele="all",_self=cmd):
     pymol=_self._pymol
     cmd=_self
@@ -743,9 +743,9 @@ def label_chains(sele="all",_self=cmd):
     list = [_f for _f in list if _f]
     for a in list:
         if(a[1]==''):
-            cmd.label("%s`%d"%(a[0],a[2]),'''"chain ''"''',quiet=1)         
+            cmd.label("%s`%d"%(a[0],a[2]),'''"chain ''"''',quiet=1)
         elif(a[1]==' '):
-            cmd.label("%s`%d"%(a[0],a[2]),'''"chain ' '"''',quiet=1)         
+            cmd.label("%s`%d"%(a[0],a[2]),'''"chain ' '"''',quiet=1)
         else:
             cmd.label("%s`%d"%(a[0],a[2]),"'chain '+chain",quiet=1)
 
@@ -768,9 +768,9 @@ def label_segments(sele="all",_self=cmd):
     list = [_f for _f in list if _f]
     for a in list:
         if(a[1]==''):
-            cmd.label("%s`%d"%(a[0],a[2]),'''"segi ''"''',quiet=1)         
+            cmd.label("%s`%d"%(a[0],a[2]),'''"segi ''"''',quiet=1)
         elif(a[1]==' '):
-            cmd.label("%s`%d"%(a[0],a[2]),'''"segi ' '"''',quiet=1)         
+            cmd.label("%s`%d"%(a[0],a[2]),'''"segi ' '"''',quiet=1)
         else:
             cmd.label("%s`%d"%(a[0],a[2]),"'segi '+segi",quiet=1)
 
@@ -789,9 +789,9 @@ def cbc(selection='(all)',first_color=7,quiet=1,legacy=0,_self=cmd):
         if not quiet:
             print(" util.cbc: color %s, (chain %s)" % (color, a))
         _self.color(color, "(chain %s and (%s))" % (a, selection), quiet=quiet)
-        
+
 def color_objs(selection='(all)',quiet=1,_self=cmd):
-    cmd=_self 
+    cmd=_self
     '''
     Color all chains a different color
     '''
@@ -822,7 +822,7 @@ def chainbow(selection='(all)', palette="rainbow", quiet=1, _self=cmd):
             _self.spectrum('count', palette,
                     "(chain '%s' & model %s & (%s))" % (a, model, selection),
                     byres=1, quiet=quiet)
-            
+
 color_chains = cbc
 
 def ray_shadows(mode,_self=cmd):
@@ -832,7 +832,7 @@ def ray_shadows(mode,_self=cmd):
         cmd.set('ray_shadow',0)
     else:
         cmd.set('ray_shadow',1)
-    if mode=='light': 
+    if mode=='light':
         cmd.set('light_count',2)
         cmd.set("light","[-0.4,-0.4,-1.0]")
         cmd.set('ambient',0.14)
@@ -855,7 +855,7 @@ def ray_shadows(mode,_self=cmd):
         cmd.set('reflect',0.45)
         cmd.set('shininess',25)
         cmd.set('power',1.25)
-        cmd.set('spec_count',-1)                
+        cmd.set('spec_count',-1)
         cmd.set('specular_intensity',0.2)
         cmd.set('spec_direct',0)
         cmd.set('ray_shadow_decay_factor',0)
@@ -877,7 +877,7 @@ def ray_shadows(mode,_self=cmd):
         cmd.set('spec_count',1)
         cmd.set('shininess',55)
         cmd.set('power',1.0)
-        cmd.set('spec_direct',0)        
+        cmd.set('spec_direct',0)
         cmd.set('ray_shadow_decay_factor',0.1)
         cmd.set('ray_shadow_decay_range',1.8)
     elif mode=='occlusion':
@@ -894,7 +894,7 @@ def ray_shadows(mode,_self=cmd):
         cmd.set('direct',0.10)
         cmd.set('reflect',0.80)
         cmd.set('shininess',10)
-        cmd.set('spec_count',-1)        
+        cmd.set('spec_count',-1)
         cmd.set('power',1.0)
         cmd.set('specular_intensity',0)
         cmd.set('spec_direct',0.25)
@@ -926,14 +926,14 @@ def ray_shadows(mode,_self=cmd):
         cmd.set('spec_direct',0)
         cmd.set('ray_shadow_decay_factor',0)
     elif mode=='heavy':
-        cmd.set('light_count',2)        
+        cmd.set('light_count',2)
         cmd.set("light","[-0.4,-0.4,-1.0]")
         cmd.set('ambient',0.05)
         cmd.set('direct',0.20)
         cmd.set('reflect',0.85)
         cmd.set('spec_count',-1)
-        cmd.set('shininess',90) 
-        cmd.set('power',1.0) 
+        cmd.set('shininess',90)
+        cmd.set('power',1.0)
         cmd.set('specular_intensity',0.5)
         cmd.set('spec_direct',0)
         cmd.set('ray_shadow_decay_factor',0)
@@ -949,7 +949,7 @@ def ray_shadows(mode,_self=cmd):
         cmd.set('specular_intensity',0.5)
         cmd.set('spec_direct',0)
         cmd.set('ray_shadow_decay_factor',0)
-        
+
 def ff_copy(src,dst,_self=cmd):
     pymol=_self._pymol
     cmd=_self # NOT THREAD SAFE
@@ -961,12 +961,12 @@ def ff_copy(src,dst,_self=cmd):
     cmd.iterate("(%s)"%src,"_rcopy.tt[name]=text_type")
     cmd.alter("(%s)"%dst,"text_type=_rcopy.tt[name]")
     del pymol._rcopy
-    
+
 def b2vdw(selection='all', _self=cmd):
     # use B values to create RMS VDW spheres
     # rms = sqrt(b/(8*(PI^2)))
     _self.alter(selection, "vdw=(b/78.9568352087)**0.5")
-    
+
 def phipsi(selection="(pk1)",_self=cmd):
     cmd=_self # NOT THREAD SAFE
     n_sele =   "((byres (%s)) & name N)"%selection
@@ -1005,24 +1005,24 @@ def rainbow(selection="(name CA and alt ''+A)",reverse=0,_self=cmd):
     '''
     print(' util.rainbow: Deprecated, use cmd.spectrum() instead')
     list = [
-        (0,0,255),      
+        (0,0,255),
         (0,0,255),
         (0,128,255),
         (0,255,255),
-        (0,255,128),           
+        (0,255,128),
         (0,255,0),
         (128,255,0),
         (255,255,0),
         (255,128,0),
         (255,0,0),
-        (255,0,0)      
+        (255,0,0)
         ]
     if reverse:
         list.reverse()
     list = ['0x%02x%02x%02x' % rgb for rgb in list]
     _self.spectrum('count', ' '.join(list), selection)
 
-    
+
 def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
     '''
     Legacy secondary structure assignment routine. Don't use.
@@ -1031,7 +1031,7 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
     '''
     print(' util.ss: Deprecated, use cmd.dss() instead')
     _self.dss(selection, state)
-    
+
 
 def colors(scheme="",_self=cmd):
     cmd=_self

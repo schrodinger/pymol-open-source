@@ -1,14 +1,14 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
+#G* Please see the accompanying LICENSE file for further information.
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
 #-* Scott Dixon, Metaphorics, LLC
-#-* 
+#-*
 #-*
 #Z* -------------------------------------------------------------------
 
@@ -75,13 +75,13 @@ class CEXstream:
                         return ("|","")
                     else:
                         return (None, None)
-            else: break    
+            else: break
         s = str.find("<")
         if s < 0:
             return (None, None)
         else:
             return (str[:s],str[s+1:-1])
-        
+
 class CEXsmilesError(Exception):
     def __init__(self,smiles,p,msg):
         self.args=("Smiles error: " + msg + "\n" + smiles + "\n" + p*" " + "^",)
@@ -91,7 +91,7 @@ class CEXsmilesParser:
     CEX toolkit"""
     MX_NESTING=4096
     MX_RINGS=1000
-    ptab = {"*":0, 
+    ptab = {"*":0,
    "H":1, "He":2, "Li":3, "Be":4, "B":5, "C":6, "N":7, "O":8, "F":9, "Ne":10,
    "Na":11, "Mg":12, "Al":13, "Si":14, "P":15, "S":16, "Cl":17, "Ar":18, "K":19, "Ca":20,
    "Sc:":21, "Ti":22, "V":23, "Cr":24, "Mn":25, "Fe":26, "Co":27, "Ni":28, "Cu":29, "Zn":30,
@@ -103,7 +103,7 @@ class CEXsmilesParser:
    "Tl":81, "Pb":82, "Bi":83, "Po":84, "At":85, "Rn":86, "Fr":87, "Ra":88, "Ac":89, "Th":90,
    "Pa":91, "U":92, "Np":93, "Pu":94, "Am":95, "Cm":96, "Bk":97, "Cf":98, "Es":99, "Fm":100,
    "Md":101, "No":102, "Lr":103, "Rf":104, "Ha":105}
-    stab = {0:"*", 
+    stab = {0:"*",
    1:"H", 2:"He", 3:"Li", 4:"Be", 5:"B", 6:"C", 7:"N", 8:"O", 9:"F", 10:"Ne",
    11:"Na", 12:"Mg", 13:"Al", 14:"Si", 15:"P", 16:"S", 17:"Cl", 18:"Ar", 19:"K", 20:"Ca",
    21:"Sc:", 22:"Ti", 23:"V", 24:"Cr", 25:"Mn", 26:"Fe", 27:"Co", 28:"Ni", 29:"Cu", 30:"Zn",
@@ -300,7 +300,7 @@ class CEXprop:
         self.value = value
     def __str__(self):
         return self.name + "<" + self.value + ">"
-        
+
 class CEXchild(CEXprop):
     def __init__(self, tag, value):
         CEXprop.__init__(self, tag, value)
@@ -329,7 +329,7 @@ class CEXroot(CEXchild):
         for p in self.children():
             str = str + "\n" + p.__str__()
         return str
-    
+
 def readTree(cxstream):
     """Read tree of CEX object from stream"""
     (tag, value) = cxstream.readEntry()
@@ -453,4 +453,3 @@ if __name__ == "__main__":
     test3("C%1CC%1")
     test3("C^12CC^12")
     test3("[NH2+]")
-

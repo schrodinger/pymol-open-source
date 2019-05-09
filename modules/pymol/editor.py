@@ -62,12 +62,12 @@ ARGUMENTS
         if _self.count_atoms("((%s) and elem H)"%selection,quiet=1):
             _self.fuse("(%s and id %d)"%(tmp_editor,hydrogen),"(pk1)",1)
             if _self.get_setting_boolean("auto_remove_hydrogens"):
-                _self.remove("(hydro and pkmol)")            
+                _self.remove("(hydro and pkmol)")
         else:
             _self.remove("(%s and id %d)"%(tmp_editor,hydrogen))
             _self.fuse("(%s and id %d)"%(tmp_editor,anchor),"(pk1)",1)
             if _self.get_setting_boolean("auto_remove_hydrogens"):
-                _self.remove("(hydro and pkmol)")            
+                _self.remove("(hydro and pkmol)")
             elif _self.count_atoms('hydro and (neighbor pk2)'):
                 _self.h_fill()
         _self.delete(tmp_editor)
@@ -111,7 +111,7 @@ ARGUMENTS
             else _self.count_atoms(selection) == 0):
         if object == "":
             object = amino_acid
-        # create new object 
+        # create new object
         if amino_acid in _self.get_names("objects"):
             print("Error: an object with than name already exists")
             raise QuietException
@@ -168,7 +168,7 @@ ARGUMENTS
 
                 if ((_self.select(tmp3,"(name CA,CH3 & nbr. ?pk1)",domain=tmp_domain)==1) and
                     (_self.select(tmp4,"(name CA,CH3 & nbr. ?pk2)",domain=tmp_domain)==1)):
-                    _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0) 
+                    _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0)
 
                 if hydro:
                     _self.h_fix(tmp2) # fix hydrogen position
@@ -183,7 +183,7 @@ ARGUMENTS
                                           domain=tmp_domain)==1)):
                             _self.set_dihedral( # PHI
                                 tmp4, # C
-                                tmp3, # CA 
+                                tmp3, # CA
                                 tmp2, # N
                                 tmp1, # C
                                 phi)
@@ -213,14 +213,14 @@ ARGUMENTS
             _self.select(tmp_domain, "byresi (pk1 | pk2)")
 
             if not hydro:
-                _self.remove("(pkmol and hydro)") 
+                _self.remove("(pkmol and hydro)")
 
             if (( _self.select(tmp1,"?pk1",domain=tmp_domain)==1) and
                 ( _self.select(tmp2,"?pk2",domain=tmp_domain)==1)):
 
                 if ((_self.select(tmp3,"(name CA,CH3 & nbr. ?pk1)",domain=tmp_domain)==1) and
                     (_self.select(tmp4,"(name CA,CH3 & nbr. ?pk2)",domain=tmp_domain)==1)):
-                    _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0) 
+                    _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0)
                 if hydro:
                     _self.h_fix("pk1") # fix hydrogen position
                 if ss:
@@ -239,7 +239,7 @@ ARGUMENTS
                             _self.set_dihedral( # PHI
                                 tmp2, # C
                                 tmp1, # N
-                                tmp3, # CA 
+                                tmp3, # CA
                                 tmp4, # C
                                 phi)
                     if ((_self.select(tmp3,"(name CA & nbr. "+tmp2+")",domain=tmp_domain)==1) and
@@ -260,7 +260,7 @@ ARGUMENTS
         elif _self.count_atoms("((%s) and elem H)"%selection):
             print("Error: please pick a nitrogen or carbonyl carbon to grow from.")
             _self.delete(tmp_wild)
-            raise QuietException            
+            raise QuietException
         else:
             print("Error: unable to attach fragment.")
             _self.delete(tmp_wild)
@@ -311,7 +311,7 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
 
     if hydro < 0:
         hydro = not _self.get_setting_boolean("auto_remove_hydrogens")
-    
+
     seq_len = 0
     if (mode == 'peptide') and is_string(input):
         # '123/ ADC B/234/ AFCD' to [ '123/','A','D','C','B/234/','F','C','D' ]
@@ -425,4 +425,3 @@ EXAMPLE
 def build_peptide(sequence,_self=cmd): # legacy
     for aa in sequence:
         attach_amino_acid("pk1",_aa_codes[aa])
-        

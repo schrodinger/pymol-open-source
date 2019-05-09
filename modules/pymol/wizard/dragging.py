@@ -13,7 +13,7 @@ drag_sele = "_drag"
 #    time.sleep(delay)
 #    from pymol import cmd
 #    cmd.disable(name)
-    
+
 class Dragging(Wizard):
 
     def __init__(self,*arg,**kw):
@@ -45,7 +45,7 @@ class Dragging(Wizard):
     def do_dirty(self):
         if self.valid:
             self.check_valid()
-        
+
     def check_valid(self):
         if (not hasattr(self,"cmd")) or self.cmd == None:
             return 0
@@ -60,10 +60,10 @@ class Dragging(Wizard):
 
     def get_event_mask(self):
         return Wizard.event_mask_pick + Wizard.event_mask_dirty
-        
+
     def set_old_button_mode(self,button_mode):
         self.old_button_mode = button_mode
-        
+
     def indicate(self):
         if self.check_valid():
             if drag_sele in self.cmd.get_names("all",enabled_only=1):
@@ -81,18 +81,18 @@ class Dragging(Wizard):
         if self.old_button_mode != None:
             self.cmd.set("button_mode",self.old_button_mode,quiet=1)
             self.cmd.mouse()
-    
+
     def get_panel(self):
         if self.check_valid():
             if self.atom_count:
                 panel = [
                     [ 1, 'Dragging %d atoms in'%self.atom_count, ''],
                     [ 1, 'object "'+self.obj+'"', ''],
-                    [ 2, 'Undo (CTRL-Z)', 
+                    [ 2, 'Undo (CTRL-Z)',
                       'cmd.undo()'],
-                    [ 2, 'Redo (CTRL-A)', 
+                    [ 2, 'Redo (CTRL-A)',
                       'cmd.redo()'],
-                    [ 2, 'Indicate', 
+                    [ 2, 'Indicate',
                       'cmd.get_wizard().indicate()'],
                     [ 2, 'Done', 'cmd.set_wizard()' ]
                     ]
@@ -103,10 +103,7 @@ class Dragging(Wizard):
                     [ 2, 'Reset', 'cmd.reset(object="%s")'%self.obj],
                     [ 2, 'Done', 'cmd.set_wizard()' ]
                     ]
-                
+
         else:
             panel = None
         return panel
-
-
-
