@@ -223,11 +223,7 @@ if True:
         _cache_purge = internal._cache_purge
         _cache_mark = internal._cache_mark
         _sdof = internal._sdof
-        
-        # when adding, remember to also edit cmd2.py
 
-        get_feedback = _get_feedback # legacy
-        
         #######################################################################
         # now import modules which depend on the above
         #######################################################################

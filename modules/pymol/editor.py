@@ -82,14 +82,6 @@ def combine_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
         finally:
             _self.delete(tmp_editor)
 
-#from time import time as ___time
-#___total = 0.0
-#___seg1 = 0.0
-#___seg2 = 0.0
-#___seg3 = 0.0
-#___pass = 0
-#___last = ___time()
-
 def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",hydro=-1,ss=-1,_self=cmd):
     '''
 ARGUMENTS
@@ -108,11 +100,6 @@ ARGUMENTS
 
     ss = int: Secondary structure 1=alpha helix, 2=antiparallel beta, 3=parallel beta, 4=flat
     '''
-#    global ___total, ___seg1, ___seg2, ___seg3, ___pass, ___last
-#    ___mark0 = ___time()
-#    ___mark1 = ___time()
-#    ___mark2 = ___time()
-#    ___entry = ___time()
     r = DEFAULT_SUCCESS
     ss = int(ss)
     center = int(center)
@@ -231,7 +218,6 @@ ARGUMENTS
             if (( _self.select(tmp1,"?pk1",domain=tmp_domain)==1) and
                 ( _self.select(tmp2,"?pk2",domain=tmp_domain)==1)):
 
-#                ___mark1 = ___time()
                 if ((_self.select(tmp3,"(name CA,CH3 & nbr. ?pk1)",domain=tmp_domain)==1) and
                     (_self.select(tmp4,"(name CA,CH3 & nbr. ?pk2)",domain=tmp_domain)==1)):
                     _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0) 
@@ -264,7 +250,6 @@ ARGUMENTS
                             tmp2, # C
                             tmp1, # N
                             psi)
-#            ___mark2 = ___time()
             sele = ("(name C & (byres nbr. %s) & !(byres %s))"% (tmp_connect,tmp_connect))
             if _self.select(tmp1,sele,domain=tmp_domain):
                 _self.edit(tmp1)
@@ -281,17 +266,6 @@ ARGUMENTS
             _self.delete(tmp_wild)
             raise QuietException
     _self.delete(tmp_wild)
-
-#    ___exit = ___time()
-#    ___seg1 = ___seg1 + ___mark1 - ___entry
-#    ___seg2 = ___seg2 + ___mark2 - ___mark1
-#    ___seg3 = ___seg3 + ___exit  - ___mark2
-#    ___total = ___total + ___exit - ___entry
-#    ___pass = ___pass + 1
-#    print "%0.3f %0.3f %0.3f / %0.3f + %0.3f + %0.3f = %0.3f vs %0.3f"%(___seg1/___total,___seg2/___total,___seg3/___total,
-#                                                          ___seg1/___pass, ___seg2/___pass, ___seg3/___pass,
-#                                                          ___total/___pass, (___time()-___last) - (___exit - ___entry))
-#    ___last = ___time()
 
     return r
 
@@ -355,10 +329,6 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
     elif name in _self.get_names():
         _self.delete(name)
 
-#    if mode in [ 'smiles' ]: # small molecule (FUTURE)
-#        from chempy.champ import Champ
-#        ch = Champ()
-#        ch.insert_pattern_string(input)
     if mode in [ 'peptide' ]:  # polymers
         if (seq_len>99) and not quiet:
             print(" Generating a %d residue peptide from sequence..."%seq_len)

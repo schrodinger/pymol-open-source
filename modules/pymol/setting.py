@@ -37,11 +37,6 @@ if True:
     # legacy
     index_dict['ray_shadows'] =     index_dict['ray_shadow']
 
-    # legacy, in case someone used that in a script
-    class SettingIndex:
-        def __getattr__(self, name):
-            return index_dict[name]
-
     boolean_dict = {
         "true" : 1,
         "false": 0,

@@ -73,8 +73,6 @@ USAGE
     help command
         '''
         r = DEFAULT_SUCCESS
-#        if cmd.get_setting_legacy("internal_feedback")>0.1:
-#            cmd.set("text","1",quiet=1)
         cmmd = _self.help_sc.auto_err(command,'topic')   
         if cmmd in _self.keyword:
             doc = _self.keyword[cmmd][0].__doc__

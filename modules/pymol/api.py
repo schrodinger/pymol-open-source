@@ -453,19 +453,8 @@ from .stereochemistry import \
       assign_stereo
 
 #--------------------------------------------------------------------
-#from m4x import \
-#     metaphorics
-
-#--------------------------------------------------------------------
 # Modules which contain programs used explicity as "module.xxx"
 
 from . import util
 from . import movie
 from . import gui
-
-# dang! Python 2.6 will break PyMOL's "as" method. 
-# Proposal:
-#  1. stick with Python <=2.5 for as long as possible
-#  2. convert API method to cmd.show_as() and leave "as" in the scripting langauge
-#  3. allow "show_as" in the scripting language
-globals()['as'] = show_as

@@ -1,77 +1,10 @@
 
 # constant objects 
 
-cmd = __import__('sys').modules['pymol.cmd']
-
-from . import parsing
+from .parsing import QuietException
+from .shortcut import Shortcut
+from .constants_palette import palette_dict
 import re
-from .cmd import Shortcut
-
-# TODO remove (keep for now for eventual legacy uses in scripts)
-gz_ext_re = re.compile(r"(\.?gz|\.bz2)$", re.I)
-
-# TODO remove (keep for now for eventual legacy uses in scripts)
-file_ext_re = re.compile(''.join([
-    "\.pdb$|\.pdb1$|\.ent$|\.mol$|\.p5m$|",
-    r"\.mmtf$|"
-    r"\.vdb$|"
-    r"\.pdbml$|\.pdbqt$|\.cml$|",
-    r"\.mmod$|\.mmd$|\.dat$|\.out$|\.mol2$|",
-    r"\.xplor$|\.pkl$|\.sdf$|\.pqr|", 
-    r"\.r3d$|\.xyz$|\.xyz_[0-9]*$|", 
-    r"\.cc1$|\.cc2$|", # ChemDraw 3D
-    r"\.cif$|", # CIF/mmCIF
-    r"\.cube$|", # Gaussian Cube
-    r"\.dx$|", # DX files (APBS)
-    r"\.pse$|\.psw$|\.pze$|\.pzw$|", # PyMOL session (pickled dictionary) and gzipped
-    r"\.pmo$|", # Experimental molecular object format
-    r"\.moe$|", # MOE (proprietary)
-    r"\.mae$|", # MAE (proprietary)
-    r"\.cms$|", # CMS (proprietary)
-    r"\.idx$|", # Desmond Traj (proprietary)
-    r"\.spi$|\.spider$|", # Spider Map
-    r"\.ccp4$|\.mrc$|\.map$|", # CCP4
-    r"\.top$|", # AMBER Topology
-    r"\.trj$|", # AMBER Trajectory
-    r"\.crd$|", # AMBER coordinate file
-    r"\.rst7?$|", # AMBER restart
-    r"\.psf$|", # protein structure file
-    r"\.cex$|", # CEX format (used by metaphorics)
-    r"\.phi$|", # PHI format (delphi)
-    r"\.fld$|", # FLD format (AVS)
-    r"\.trj$|\.trr$|\.xtc$|\.gro$|\.g96$|\.dcd$|", # Trajectories
-    r"\.o$|\.omap$|\.dsn6$|\.brix$|", # BRIX/O format
-    r"\.grd$|", # InsightII Grid format
-    r"\.acnt$", # Tripos / Sybyl ACNT format
-    ]), re.I)
-
-# TODO remove (keep for now for eventual legacy uses in scripts)
-class _loadable_legacy:
-    r3d = 14      # r3d, only used within cmd.py
-    sdf1 = 16     # sdf, only used within cmd.py
-    cc1 = 17      # cc1 and cc2, only used within cmd.py
-    cex = 20      # cex format
-    pse = 25      # PyMOL session
-    png = 39      # png image
-    psw = 40      #
-    moe = 41      # Chemical Computing Group ".moe" format (proprietary)
-    xtc = 42      # xtc trajectory format (via plugin)
-    trr = 43      # trr trajectory format (via plugin)
-    gro = 44      # gro trajectory format (via plugin)
-    g96 = 46      # g96 trajectory format (via plugin)
-    dcd = 47      # dcd trajectory format (via plugin)
-    cube = 48     # cube volume file (via plugin)
-    cif1 = 50     # Python-based CIF parser
-    pim = 52      # General-purpose programmatic import (powerful, insecure)
-    pwg = 53      # PyMOL web gui launch script
-    aln = 54      # CLUSTALW alignment file
-    fasta = 55    # FASTA sequence file
-    dtr = 57      # DESRES / Desmond
-    pze = 58
-    pzw = 59
-    spider = 62   # spider map
-    cms = 63      # desmond topology ("mae" plugin)
-    mae1 = 68     # Python-based MAE parser (proprietary and obsolete)
 
 class _loadable:
     pdb = 0
@@ -122,7 +55,7 @@ class _loadable:
     mmtf = 71
     mmtfstr = 72
 
-class loadable(_loadable, _loadable_legacy):
+class loadable(_loadable):
     @classmethod
     def _reverse_lookup(cls, number):
         for name in dir(cls):
@@ -143,31 +76,36 @@ _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.xyz  : loadable.xyzstr,
               loadable.sdf2 : loadable.sdf2str}
 
-# TODO remove (keep for now for eventual legacy uses in scripts)
-safe_oname_re = re.compile(r"[ ()|&!,`]")  # TODO use get_legal_name
-sanitize_list_re = re.compile(r"[^0-9\.\-\[\]\,]+")
-
 sanitize_alpha_list_re = re.compile(r"[^a-zA-Z0-9_\'\"\.\-\[\]\,]+")
 nt_hidden_path_re = re.compile(r"\$[\/\\]")
-quote_alpha_list_re = re.compile(
-    r'''([\[\,]\s*)([a-zA-Z_][a-zA-Z0-9_\ ]*[a-zA-Z0-9_]*)(\s*[\,\]])''')
 
 def safe_alpha_list_eval(st):
+    '''Like `safe_eval` but removes most non-alpha-numeric characters.
+
+    >>> safe_alpha_list_eval("[A B/C, D+E:F]")
+    ['ABC', 'DEF']
+    '''
     st = sanitize_alpha_list_re.sub('',st)
-    st = quote_alpha_list_re.sub(r'\1"\2"\3',st) # need to do this twice
-    st = quote_alpha_list_re.sub(r'\1"\2"\3',st)
-    return eval(sanitize_alpha_list_re.sub('',st)) 
+    return safe_list_eval(st)
 
 class SafeEvalNS(object):
     def __getitem__(self, name):
         return name
 
 def safe_eval(st):
+    '''Safe version of "eval" which evaluates names to strings.
+
+    # "foo" is a string
+    >>> safe_eval('foo, 123, 4 + 5, "A B C", {}, "{}"')
+    ('foo', 123, 9, 'A B C', {}, '{}')
+
+    # no harmful code possible
+    >>> safe_eval('__import__("os").unlink("foo.txt")')
+    TypeError: 'str' object is not callable
+    '''
     return eval(st, {}, SafeEvalNS())
 
 safe_list_eval = safe_eval
-
-QuietException = parsing.QuietException
 
 DEFAULT_ERROR = -1
 DEFAULT_SUCCESS = None
@@ -262,8 +200,6 @@ boolean_dict = {
     }
 
 boolean_sc = Shortcut(boolean_dict.keys())
-
-from .constants_palette import palette_dict
 
 palette_sc = Shortcut(palette_dict.keys())
 

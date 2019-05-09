@@ -65,8 +65,6 @@ def model_to_sdf_list(self_cmd,model):
         sdf_list.append("| NONE\n")
         sdf_list.append("\n")
     sdf_list.append("$$$$\n")
-#    for line in sdf_list:
-#        print line,
     return (fit_flag, sdf_list)
 
 def get_energy_from_rec(rec):
@@ -133,7 +131,6 @@ class CleanJob:
                 input_model = self_cmd.get_model(obj_name,state=state)
                 (fit_flag, sdf_list) = model_to_sdf_list(self_cmd,input_model)
                 input_sdf = ''.join(sdf_list)
-#                print input_sdf
 
                 if sys.version_info[0] > 2:
                     input_sdf = input_sdf.encode()

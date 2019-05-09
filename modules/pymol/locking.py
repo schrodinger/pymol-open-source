@@ -60,11 +60,9 @@ class LockCM(object):
         unlock(None, self.cmd)
 
 def lock(_self=cmd): # INTERNAL -- API lock
-#      print " lock: acquiring as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
     if not _self.lock_api.acquire(0):
         w = 0.0001
         while 1:
-#            print " lock: ... as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
             e = threading.Event() 
             e.wait(w)  
             del e
@@ -75,7 +73,6 @@ def lock(_self=cmd): # INTERNAL -- API lock
             else: # we're not getting lucky, so block for real
                 _self.lock_api.acquire(1)
                 break
-#      print "lock: acquired by 0x%x"%thread.get_ident()
 
 def lock_attempt(_self=cmd): # INTERNAL
     return _self.lock_api.acquire(blocking=0)
@@ -102,7 +99,6 @@ def unlock(result=None,_self=cmd): # INTERNAL
             except:
                 pass
         _self.lock_api.release()
-    #         print "lock: released by 0x%x (glut)"%thread.get_ident()
         if _self.lock_api_allow_flush:
             if result is None: # don't flush if we have an incipient error (negative input)
                 _cmd.flush_now(_self._COb)
@@ -110,7 +106,6 @@ def unlock(result=None,_self=cmd): # INTERNAL
                 
                 _cmd.flush_now(_self._COb)
     else:
-    #         print "lock: released by 0x%x (not glut), waiting queue"%thread.get_ident()
         _self.lock_api.release()
         if _cmd.wait_queue(_self._COb): # commands waiting to be executed?
             e = threading.Event() # abdicate control for a 100 usec for quick tasks
@@ -125,7 +120,6 @@ def unlock(result=None,_self=cmd): # INTERNAL
                 if w > 0.1: # wait up 0.2 sec max for PyMOL to flush queue
                     if _self._feedback(fb_module.cmd,fb_mask.debugging,_self):
                         fb_debug.write("Debug: avoiding possible dead-lock?\n")
-   #                      print "dead locked as 0x%x"%thread.get_ident()
                     break
                 w = w * 2 # wait twice as long each time until flushed
             

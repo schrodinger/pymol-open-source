@@ -657,8 +657,6 @@ def _get_feedback(_self=cmd): # INTERNAL
         l = None
     return l
 
-get_feedback = _get_feedback # for legacy compatibility
-
 def _fake_drag(_self=cmd): # internal
     _self.lock(_self)
     try:

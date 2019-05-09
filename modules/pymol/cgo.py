@@ -88,14 +88,6 @@ def molauto(*arg,**kw):
     f.close()
     _self.load_cgo(rr.obj,name)
 
-# the following implementation causes full-blown system crashes on some machines.
-#   (stdout,stdin) = popen2.popen2("molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg)
-#
-#   if stdin:
-#      stdin.close()
-#      rr = RenderReader(stdout)
-#      cmd.load_cgo(rr.obj,name)
-
 def measure_text(font,text,
                       axes=[[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]):
     w = 0
