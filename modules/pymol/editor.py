@@ -49,7 +49,7 @@ ARGUMENTS
 
     anchor = int: none-hydrogen atom ID in fragment to fuse
     '''
-    if not selection in _self.get_names("selections"):
+    if selection not in _self.get_names("selections"):
         if fragment in _self.get_names("objects"):
             print(" Error: an object with than name already exists")
             raise QuietException

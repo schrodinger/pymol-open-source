@@ -1223,7 +1223,7 @@ SEE ALSO
     remove, attach, fuse, bond, unbond
     '''
         r = DEFAULT_ERROR
-        if not "pk1" in _self.get_names("selections"):
+        if "pk1" not in _self.get_names("selections"):
             print(" Error: you must first pick an atom to replace.")
             raise pymol.CmdException
         try:

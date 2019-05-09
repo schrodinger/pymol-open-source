@@ -815,7 +815,7 @@ def find_exe(exe):
         # filter out C:\Windows\System32
         path = os.pathsep.join(p
                 for p in path.split(os.pathsep)
-                if not r'\windows\system32' in p.lower())
+                if r'\windows\system32' not in p.lower())
 
     e = find_executable(exe, path)
 

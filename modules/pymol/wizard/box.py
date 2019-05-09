@@ -174,7 +174,7 @@ class Box(Wizard):
                 self.cmd.set_name(hidden_name, self.points_name)
         self.copying = 0
 
-        if not self.points_name in self.cmd.get_names():
+        if self.points_name not in self.cmd.get_names():
             model = Indexed()
             origin = self.cmd.get_view()[12:15]
             for a in pseudo_atoms:
