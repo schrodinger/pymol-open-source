@@ -87,13 +87,13 @@ DESCRIPTION
         # This function relies on code that is not currently part of PyMOL/ChemPy
         # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
         from chempy.tinker import realtime
-        if selection==None:
+        if selection is None:
             arg = cmd.get_names("objects")
             arg = arg[0:1]
             if arg:
                 if len(arg):
                     selection = arg
-        if selection!=None:
+        if selection is not None:
             selection = selector.process(selection)
             realtime.assign("("+selection+")",int(preserve))
             realtime.setup("("+selection+")")

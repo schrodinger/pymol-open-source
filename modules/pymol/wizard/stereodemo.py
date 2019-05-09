@@ -14,7 +14,7 @@ class Stereodemo(Wizard):
                 getattr(demo,self.last)(cleanup=1)
         if hasattr(demo,name):
             cmd.delete("all")
-            if pretty_name != None:
+            if pretty_name is not None:
                 cmd.do("_ wizard message, Please wait while the %s example loads..., dismiss=0"%pretty_name)
             self.message = demo.message_dict.get(name,None)
             cmd.refresh_wizard()

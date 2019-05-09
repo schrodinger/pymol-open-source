@@ -43,7 +43,7 @@ class _PersistentEditing:
 
     def create_tmp(self,sel,extract):
 
-        if sel==None: return
+        if sel is None: return
 
         # creates an invisible temporary persistent
         # object for pasting; it is created via CTRL-C

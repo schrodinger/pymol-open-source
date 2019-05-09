@@ -231,7 +231,7 @@ PYMOL API
             _self.lock(_self)
             r = _cmd.get_title(_self._COb,str(object),int(state)-1)
             if not quiet:
-                if r!=None:
+                if r is not None:
                     print(" get_title: %s"%r)
         finally:
             _self.unlock(r,_self)
@@ -290,7 +290,7 @@ SEE ALSO
 
             # if unlabeled, then get next name in series
 
-            if name!=None:
+            if name is not None:
                 nam=name
             else:
                 try:
@@ -302,7 +302,7 @@ SEE ALSO
                     _self.unlock(r,_self)
 
             # defaults
-            if mode == None:
+            if mode is None:
                 mode = 0
             # preprocess selections
             selection1 = selector.process(selection1)
@@ -379,7 +379,7 @@ SEE ALSO
             r = DEFAULT_ERROR
             # if unlabeled, then get next name in series
 
-            if name!=None:
+            if name is not None:
                 nam=name
             else:
                 try:
@@ -391,7 +391,7 @@ SEE ALSO
                     _self.unlock(r,_self)
 
             # defaults
-            if mode == None:
+            if mode is None:
                 mode = 0
             # preprocess selections
             selection1 = selector.process(selection1)
@@ -482,10 +482,10 @@ PYMOL API
     '''
         # handle unnamed distance
         r = DEFAULT_SUCCESS
-        if name!=None:
+        if name is not None:
             if len(name):
                 if name[0]=='(' or ' ' in name or '/' in name: # we're one argument off...
-                    if cutoff!=None:
+                    if cutoff is not None:
                         mode = cutoff
                     if selection2!="(pk2)":
                         cutoff = selection2
@@ -509,7 +509,7 @@ PYMOL API
 
             # if unlabeled, then get next name in series
 
-            if name!=None:
+            if name is not None:
                 nam=name
             else:
                 try:
@@ -521,9 +521,9 @@ PYMOL API
                     _self.unlock(r,_self)
 
             # defaults
-            if mode == None:
+            if mode is None:
                 mode = 0
-            if cutoff == None:
+            if cutoff is None:
                 cutoff = -1.0
             # preprocess selections
             selection1 = selector.process(selection1)
@@ -538,11 +538,11 @@ PYMOL API
                               int(label),int(quiet),int(reset),
                               int(state)-1,int(zoom),
                               int(state1)-1, int(state2)-1)
-                if width!=None:
+                if width is not None:
                     _self.set("dash_width",width,nam)
-                if length!=None:
+                if length is not None:
                     _self.set("dash_length",length,nam)
-                if gap!=None:
+                if gap is not None:
                     _self.set("dash_gap",gap,nam)
             finally:
                 _self.unlock(r,_self)
@@ -874,7 +874,7 @@ NOTES
         try:
             _self.lock(_self)
             r = _cmd.get_color(_self._COb,name,mode)
-            if r==None:
+            if r is None:
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print("cmd-Error: Unknown color '%s'."%name)
         finally:
@@ -954,7 +954,7 @@ DESCRIPTION
             r = _cmd.get_atom_coords(_self._COb,str(selection),int(state)-1,int(quiet))
         finally:
             _self.unlock(r,_self)
-        if r==None:
+        if r is None:
             if _self._raising(_self=_self): raise pymol.CmdException
         elif not quiet:
             for a in r:
@@ -1160,7 +1160,7 @@ PYMOL API
         try:
             _self.lock(_self)
             r = _cmd.get_model(_self._COb,"("+str(selection)+")",int(state)-1,str(ref),int(ref_state)-1)
-            if r==None:
+            if r is None:
                 r = DEFAULT_ERROR
         finally:
             _self.unlock(r,_self)
@@ -1241,7 +1241,7 @@ ARGUMENTS
             r = _cmd.get_chains(_self._COb,"("+str(selection)+")",int(state)-1)
         finally:
             _self.unlock(r,_self)
-        if r==None:
+        if r is None:
             return []
         if _raising(r,_self):
             raise pymol.CmdException
@@ -1550,7 +1550,7 @@ USAGE
         '''
 
         r = cmd.get_phipsi(selection)
-        if r!=None:
+        if r is not None:
             kees = list(r.keys())
             kees.sort()
             if not quiet:

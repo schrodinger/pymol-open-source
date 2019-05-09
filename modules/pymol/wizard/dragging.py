@@ -47,7 +47,7 @@ class Dragging(Wizard):
             self.check_valid()
 
     def check_valid(self):
-        if (not hasattr(self,"cmd")) or self.cmd == None:
+        if (not hasattr(self,"cmd")) or self.cmd is None:
             return 0
         elif self.cmd.get_editor_scheme()!=3:
             if self.valid:
@@ -73,12 +73,12 @@ class Dragging(Wizard):
             self.cmd.refresh_wizard()
 
     def cleanup(self):
-        if (not hasattr(self,"cmd")) or self.cmd == None:
+        if (not hasattr(self,"cmd")) or self.cmd is None:
             return
         self.cmd.drag()
         if drag_sele in self.cmd.get_names("all",enabled_only=1):
             self.cmd.disable(drag_sele)
-        if self.old_button_mode != None:
+        if self.old_button_mode is not None:
             self.cmd.set("button_mode",self.old_button_mode,quiet=1)
             self.cmd.mouse()
 

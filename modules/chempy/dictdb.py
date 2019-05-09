@@ -462,7 +462,7 @@ class DictDBLocal:
 
                 while f.tell()!=eof:
                     key, info = cPickle_load(f)
-                    if info!=None:
+                    if info is not None:
 
                         # account for space (if replacing)
                         if key in rec:
@@ -498,7 +498,7 @@ class DictDBClient:
 
     def _remote_call(self,meth,args,kwds):
         result = None
-        if self.sock == None:
+        if self.sock is None:
             self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
             self.sock.connect((self.host,self.port))
             self.send = self.sock.makefile('w')

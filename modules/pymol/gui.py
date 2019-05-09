@@ -48,7 +48,7 @@ def ext_hide(_self=cmd):
         return
 
     pymol = _self._pymol
-    if pymol._ext_gui != None:
+    if pymol._ext_gui is not None:
         pymol._ext_gui.fifo.put('self.root.withdraw()')
     else:
         pass
@@ -60,7 +60,7 @@ def ext_show(_self=cmd):
         return
 
     pymol = _self._pymol
-    if pymol._ext_gui != None:
+    if pymol._ext_gui is not None:
         pymol._ext_gui.fifo.put('self.root.deiconify()')
     else:
         pass
@@ -74,7 +74,7 @@ def save_as(_self=cmd):
         return
 
     pymol = _self._pymol
-    if pymol._ext_gui != None:
+    if pymol._ext_gui is not None:
         pymol._ext_gui.fifo.put('self.skin.session_save_as()')
     else:
         pass
@@ -86,7 +86,7 @@ def save_image(_self=cmd):
         return
 
     pymol = _self._pymol
-    if pymol._ext_gui != None:
+    if pymol._ext_gui is not None:
         pymol._ext_gui.fifo.put('self.skin.file_save_png()')
     else:
         pass

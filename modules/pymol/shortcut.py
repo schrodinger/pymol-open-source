@@ -152,7 +152,7 @@ if True:
         def auto_err(self,kee,descrip=None):
             result = None
             if kee not in self.shortcut:
-                if descrip!=None:
+                if descrip is not None:
                     print("Error: unknown %s: '%s'." % (descrip, kee), end=' ')
                     lst = self.interpret('')
                     if is_list(lst):
@@ -170,7 +170,7 @@ if True:
             else:
                 result = self.interpret(kee)
                 if not is_string(result):
-                    if descrip!=None:
+                    if descrip is not None:
                         print("Error: ambiguous %s:"%descrip)
                         lst = parsing.list_to_str_list(result)
                         for a in lst:

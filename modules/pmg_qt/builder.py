@@ -50,7 +50,7 @@ class ActionWizard(Wizard):
     def activateOrDismiss(self):
         activate_flag = 1
         cur_wiz = self.cmd.get_wizard()
-        if cur_wiz != None:
+        if cur_wiz is not None:
             if cur_wiz.__class__ == self.__class__:
                 if cur_wiz.actionHash == self.actionHash:
                     activate_flag = 0
@@ -157,7 +157,7 @@ class SculptWizard(ActionWizard):
                 print("Error: cannot sculpt more than one object at a time")
 
     def sculpt_deactivate(self):
-        if ((self.sculpt_object != None) and
+        if ((self.sculpt_object is not None) and
             self.sculpt_object in self.cmd.get_names()):
             self.cmd.set("sculpt_vdw_vis_mode","0",self.sculpt_object)
             self.cmd.sculpt_iterate(self.sculpt_object,self.cmd.get_state(),0)
@@ -167,7 +167,7 @@ class SculptWizard(ActionWizard):
             self.cmd.refresh_wizard()
 
     def do_pick(self, bondFlag):
-        if self.sculpt_object == None:
+        if self.sculpt_object is None:
             self.cmd.select(active_sele, "byobj pk1")
             self.sculpt_activate()
         else:
@@ -179,7 +179,7 @@ class SculptWizard(ActionWizard):
                 self.sculpt_activate()
 
     def get_prompt(self):
-        if self.sculpt_object == None:
+        if self.sculpt_object is None:
             return ["Pick object to sculpt..."]
         else:
             return ["Sculpting %s..."%self.sculpt_object]
@@ -243,7 +243,7 @@ class RepeatableActionWizard(ActionWizard):
     def activateRepeatOrDismiss(self):
         activate_flag = 1
         cur_wiz = self.cmd.get_wizard()
-        if cur_wiz != None:
+        if cur_wiz is not None:
             if cur_wiz.__class__ == self.__class__:
                 if cur_wiz.actionHash == self.actionHash:
                     if cur_wiz.getRepeating():
@@ -1203,7 +1203,7 @@ class _BuilderPanel(QtWidgets.QWidget):
             index = new_list.pop()
             try:
                 self.cmd.edit("%s`%d" % index)
-                if self.cmd.get_wizard()!=None:
+                if self.cmd.get_wizard() is not None:
                     self.cmd.do("_ cmd.get_wizard().do_pick(0)")
             except pymol.CmdException:
                 print(" doAutoPick-Error: exception")

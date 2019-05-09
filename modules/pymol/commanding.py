@@ -122,7 +122,7 @@ SEE ALSO
             try:
                 try:
                     if hasattr(pymol,"_log_file"):
-                        if pymol._log_file!=None:
+                        if pymol._log_file is not None:
                             pymol._log_file.close()
                             del pymol._log_file
                 except:
@@ -210,7 +210,7 @@ SEE ALSO
         pymol=_self._pymol
         cmd=_self
         if hasattr(pymol,"_log_file"):
-            if pymol._log_file!=None:
+            if pymol._log_file is not None:
                 pymol._log_file.close()
                 del pymol._log_file
                 _self.set("logging",0,quiet=1)

@@ -337,10 +337,10 @@ def readTree(cxstream):
     if tag[0] != "$": return None
     root = CEXroot(tag,value)
     (tag, value) = cxstream.readEntry()
-    if tag == None: return None
+    if tag is None: return None
     while 1:
         if tag == "|": break
-        if tag == None: break
+        if tag is None: break
         if tag[0] == "/":
             root.addProp(CEXprop(tag, value))
             (tag, value) = cxstream.readEntry()
@@ -350,7 +350,7 @@ def readTree(cxstream):
             while 1:
                 (tag, value) = cxstream.readEntry()
                 if tag == "|": break
-                if tag == None: break
+                if tag is None: break
                 if tag[0] == "/":
                     child.addProp(CEXprop(tag, value))
                     continue

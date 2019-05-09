@@ -260,13 +260,13 @@ class CIFRec(CIFData):
         partial_charge = field_dict.get('_chem_comp_atom_partial_charge',None)
         formal_charge = field_dict.get('chem_comp_atom_charge',None)
         str_fields = []
-        if symbol != None: str_fields.append( ('symbol',symbol) )
-        if name != None: str_fields.append( ('name',name) )
-        if resn != None: str_fields.append( ('resn',resn) )
+        if symbol is not None: str_fields.append( ('symbol',symbol) )
+        if name is not None: str_fields.append( ('name',name) )
+        if resn is not None: str_fields.append( ('resn',resn) )
         float_fields = []
-        if partial_charge != None: float_fields.append( ('partial_charge',partial_charge) )
+        if partial_charge is not None: float_fields.append( ('partial_charge',partial_charge) )
         int_fields = []
-        if formal_charge != None: int_fields.append( ('formal_charge',formal_charge) )
+        if formal_charge is not None: int_fields.append( ('formal_charge',formal_charge) )
         for value in values:
             atom = Atom()
             atom.coord = [
@@ -302,10 +302,10 @@ class CIFRec(CIFData):
             name = field_dict.get('_atom_site_id',None)
         u = field_dict.get('_atom_site_u_iso_or_equiv',None)
         str_fields = []
-        if symbol != None: str_fields.append( ('symbol',symbol) )
-        if name != None: str_fields.append( ('name',name) )
+        if symbol is not None: str_fields.append( ('symbol',symbol) )
+        if name is not None: str_fields.append( ('name',name) )
         float_fields = []
-        if u != None: float_fields.append( ('u', u))
+        if u is not None: float_fields.append( ('u', u))
         int_fields = []
         for value in values:
             atom = Atom()
@@ -343,29 +343,29 @@ class CIFRec(CIFData):
         auth_resi = field_dict.get('_atom_site_auth_seq_id',None)
         auth_name = field_dict.get('_atom_site_auth_atom_id',None)
         auth_chain = field_dict.get('_atom_site_auth_asym_id',None)
-        if auth_resn != None: resn = auth_resn
-        if auth_resi != None: resi = auth_resi
-        if auth_name != None: name = auth_name
-        if auth_chain != None: chain = auth_chain
+        if auth_resn is not None: resn = auth_resn
+        if auth_resi is not None: resi = auth_resi
+        if auth_name is not None: name = auth_name
+        if auth_chain is not None: chain = auth_chain
         b = field_dict.get('_atom_site_b_iso_or_equiv',None)
         q = field_dict.get('_atom_site_occupancy',None)
         ID = field_dict.get('_atom_site_id',None)
         str_fields = []
-        if symbol != None: str_fields.append( ('symbol',symbol) )
-        if name != None: str_fields.append( ('name',name) )
-        if resn != None: str_fields.append( ('resn',resn) )
-        if resi != None: str_fields.append( ('resi',resi) )
-        if chain != None:
+        if symbol is not None: str_fields.append( ('symbol',symbol) )
+        if name is not None: str_fields.append( ('name',name) )
+        if resn is not None: str_fields.append( ('resn',resn) )
+        if resi is not None: str_fields.append( ('resi',resi) )
+        if chain is not None:
             str_fields.append( ('chain',chain) )
             if ASYM_ID_AS_SEGI:
                 str_fields.append( ('segi',chain) )
-        if alt != None: str_fields.append( ('alt',alt) )
-        if ins_code != None: str_fields.append( ('ins_code',ins_code) )
+        if alt is not None: str_fields.append( ('alt',alt) )
+        if ins_code is not None: str_fields.append( ('ins_code',ins_code) )
         float_fields = []
-        if q != None: float_fields.append( ('q',q) )
-        if b != None: float_fields.append( ('b',b) )
+        if q is not None: float_fields.append( ('q',q) )
+        if b is not None: float_fields.append( ('b',b) )
         int_fields = []
-        if ID != None: int_fields.append( ('id',ID) )
+        if ID is not None: int_fields.append( ('id',ID) )
 
         first_model_num = self.index_to_int(model_num, values[0])
 
@@ -384,7 +384,7 @@ class CIFRec(CIFData):
             atom = Atom()
             atom.coord = coord
             self.model.atom.append(atom)
-            if group_pdb != None:
+            if group_pdb is not None:
                 if value[group_pdb] == 'ATOM':
                     atom.hetatm = 0
                 else:
@@ -575,7 +575,7 @@ class CIFRec(CIFData):
                 continue
             bond = Bond()
             bond.index = index
-            if order != None:
+            if order is not None:
                 order_string = self.index_to_str(order,value).lower()
                 bond.order = order_table.get(order_string[0:4],1)
             else:

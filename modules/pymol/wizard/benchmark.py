@@ -30,7 +30,7 @@ class Benchmark(Wizard):
         self.short_cpu = 8.0
         self.long_cpu = 16.0
         self.message = []
-        if arg0!=None:
+        if arg0 is not None:
             if hasattr(self,arg0):
                 getattr(self,arg0)()
 

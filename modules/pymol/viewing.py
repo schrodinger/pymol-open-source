@@ -232,7 +232,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         mode = clip_action_sc.auto_err(str(mode),'mode')
-        if selection!=None:
+        if selection is not None:
             selection = selector.process(selection)
         else:
             selection = ''
@@ -288,8 +288,8 @@ SEE ALSO
         #
         try:
             _self.lock(_self)
-            if object==None: object=''
-            if position==None: position=(0.0,0.0,0.0)
+            if object is None: object=''
+            if position is None: position=(0.0,0.0,0.0)
             else:
                 if _self.is_string(position):
                     position = safe_list_eval(position)
@@ -1013,7 +1013,7 @@ PYMOL API
         re_pat = re.compile("[0-9]+\.")
         if len(session_file): # find next session file, if it exists
             mo = re_pat.search(session_file)
-            if mo!=None:
+            if mo is not None:
                 pat = mo.group(0)
                 if len(pat):
                     file_no = int(float(pat)) + 1
@@ -1218,7 +1218,7 @@ SEE ALSO
                         scene_list = pymol._scene_dict[key]
                         if len(scene_list)>3:
                             colorection = scene_list[3]
-                            if colorection!=None:
+                            if colorection is not None:
                                 _self.del_colorection(colorection,key)
                         name = "_scene_"+key+"_*"
                         _self.delete(name)
@@ -2288,7 +2288,7 @@ PYMOL API
 
         (prefix,digits,first,last) = palette_dict[str(palette)]
 
-        if (maximum==None) or (minimum==None):
+        if (maximum is None) or (minimum is None):
             minimum = 0 # signal to auto-adjust levels
             maximum = -1
 

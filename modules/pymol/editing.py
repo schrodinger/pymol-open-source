@@ -359,7 +359,7 @@ PYMOL API
 
         r = DEFAULT_ERROR
 
-        if source_name == None:
+        if source_name is None:
             source_name = ''
 
         target_name = str(target_name).strip()
@@ -567,11 +567,11 @@ SEE ALSO
             order = int(order)
         r = DEFAULT_ERROR
         # preprocess selections
-        if selection1 == None:
+        if selection1 is None:
             selection1="(pk1)"
-            if selection2 == None:
+            if selection2 is None:
                 selection2="(pk2)"
-        if selection2 == None:
+        if selection2 is None:
             selection2 = selection1
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
@@ -954,7 +954,7 @@ NOTES
         import pymol.wizard.dragging
 
         quiet = int(quiet)
-        if (selection!=None) and (selection!=""):
+        if (selection is not None) and (selection!=""):
             selection = selector.process(selection)
             if is_string(edit):
                 edit=boolean_dict[boolean_sc.auto_err(edit,'boolean')]
@@ -979,7 +979,7 @@ NOTES
                 _self.edit_mode(edit)
             if wizard:
                 wiz = _self.get_wizard()
-                if (wiz == None):
+                if (wiz is None):
                     _self.wizard("dragging",old_button_mode)
                 elif not isinstance(wiz, pymol.wizard.dragging.Dragging):
                     _self.wizard("dragging",old_button_mode)
@@ -1320,7 +1320,7 @@ PYMOL API
         # preprocess selections
         selection = selector.process(selection)
         r = DEFAULT_ERROR
-        if context==None:
+        if context is None:
             context = ""
         else:
             context = selector.process(context)
@@ -1379,7 +1379,7 @@ SEE ALSO
         if not expression:
             raise pymol.CmdException('missing expression')
 
-        if space == None:
+        if space is None:
             space = _self._pymol.__dict__
         r = DEFAULT_ERROR
         # preprocess selections
@@ -1401,7 +1401,7 @@ DESCRIPTION
     
         '''
         #
-        if space == None:
+        if space is None:
             space = _self._pymol.__dict__
         try:
             _self.lock(_self)
@@ -1447,7 +1447,7 @@ SEE ALSO
         if not expression:
             raise pymol.CmdException('missing expression')
 
-        if space == None:
+        if space is None:
             space = _self._pymol.__dict__
         r = DEFAULT_ERROR
         # preprocess selection
@@ -1495,7 +1495,7 @@ SEE ALSO
         if not expression:
             raise pymol.CmdException('missing expression')
 
-        if space == None:
+        if space is None:
             space = _self._pymol.__dict__
         r = DEFAULT_ERROR
         # preprocess selection
@@ -1539,7 +1539,7 @@ SEE ALSO
             raise pymol.CmdException('missing expression')
 
         r = DEFAULT_ERROR
-        if space == None:
+        if space is None:
             space = _self._pymol.__dict__
         # preprocess selection
         selection = selector.process(selection)
@@ -1632,7 +1632,7 @@ NOTES
                 shift = cpv.transform(mat,vector)
             else:
                 shift = vector
-            if object==None:
+            if object is None:
                 ttt = [1.0,0.0,0.0,shift[0],
                          0.0,1.0,0.0,shift[1],
                          0.0,0.0,1.0,shift[2],
@@ -1740,7 +1740,7 @@ PYMOL API
             axis = [float(axis[0]),float(axis[1]),float(axis[2])]
             angle = math.pi*float(angle)/180.0
             view = _self.get_view(0)
-            if origin!=None:
+            if origin is not None:
                 have_origin = 1
                 if _self.is_string(origin):
                     if ',' in origin:
@@ -1759,7 +1759,7 @@ PYMOL API
                 vmat = [ view[0:3],view[3:6],view[6:9] ]
                 axis = cpv.transform(vmat,axis)
             mat = cpv.rotation_matrix(angle,axis)
-            if object==None:
+            if object is None:
                 ttt = [mat[0][0],mat[0][1],mat[0][2],origin[0],
                        mat[1][0],mat[1][1],mat[1][2],origin[1],
                        mat[2][0],mat[2][1],mat[2][2],origin[2],
@@ -2030,7 +2030,7 @@ SEE ALSO
 '''
 
         r = DEFAULT_ERROR
-        if source_name == None:
+        if source_name is None:
             source_name = ''
         target_name = str(target_name).strip()
         source_name = str(source_name).strip()

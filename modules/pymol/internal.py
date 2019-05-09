@@ -100,7 +100,7 @@ def _cache_get(target, hash_size = None, _self=cmd):
     try:
         _self.lock_data(_self)
         try:
-            if hash_size == None:
+            if hash_size is None:
                 hash_size = len(target[1])
             key = target[1][0:hash_size]
             # should optimize this with a dictionary lookup, key -> index in _cache
@@ -173,14 +173,14 @@ def _ray_hash_spawn(thread_info,_self=cmd):
     # internal routine to support multithreaded raytracing
     thread_list = []
     for a in thread_info[1:]:
-        if a != None:
+        if a is not None:
             t = threading.Thread(target=_cmd.ray_hash_thread,
                                  args=(_self._COb,a))
             t.setDaemon(1)
             thread_list.append(t)
     for t in thread_list:
         t.start()
-    if thread_info[0] != None:
+    if thread_info[0] is not None:
         _cmd.ray_hash_thread(_self._COb,thread_info[0])
     for t in thread_list:
         t.join()
@@ -530,7 +530,7 @@ def _cmmd(k,_self=cmd):
     # command-key on macs
     if k in _self.cmmd:
         ak = _self.cmmd[k]
-        if ak[0]!=None:
+        if ak[0] is not None:
             ak[0](*ak[1], **ak[2])
     return None
 
@@ -570,7 +570,7 @@ def _quit(code=0, _self=cmd):
     try:
         _self.lock(_self)
         try: # flush and close log if possible to avoid threading exception
-            if pymol._log_file!=None:
+            if pymol._log_file is not None:
                 try:
                     pymol._log_file.flush()
                 except:
@@ -579,7 +579,7 @@ def _quit(code=0, _self=cmd):
                 del pymol._log_file
         except:
             pass
-        if _self.reaper!=None:
+        if _self.reaper is not None:
             try:
                 _self.reaper.join()
             except:
@@ -626,7 +626,7 @@ def _interpret_color(_self,color):
 
 def _validate_color_sc(_self=cmd):
     # WARNING: internal routine, subject to change
-    if _self.color_sc == None: # update color shortcuts if needed
+    if _self.color_sc is None: # update color shortcuts if needed
         lst = _self.get_color_indices()
         names = [x[0] for x in lst]
         names.extend(['default', 'auto', 'current', 'atomic'])

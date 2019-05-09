@@ -424,7 +424,7 @@ NOTES
                 if ((cache_mode > 0) and (cache_opt != 0)) or (cache_opt==1):
                     _self.cache('optimize')
         for a in _self._pymol._session_save_tasks:
-            if a==None:
+            if a is None:
                 try:
                     _self.lock(_self)
                     r = _cmd.get_session(_self._COb,session,str(names),

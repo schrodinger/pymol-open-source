@@ -98,7 +98,7 @@ class PyMOL(SingletonPyMOL):
 
             options = self.invocation.options
 
-            if scheme!=None: #
+            if scheme is not None: #
                 if scheme == 'presentation':
                     options.quiet = 0
                     options.show_splash = 0

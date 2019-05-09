@@ -272,7 +272,7 @@ SEE ALSO
                 r = DEFAULT_ERROR
                 mobile = selector.process(mobile)
                 target = selector.process(target)
-                if object==None: object=''
+                if object is None: object=''
                 matrix = str(matrix)
                 if matrix.lower() in ['none', '']:
                         mfile = ''
@@ -374,7 +374,7 @@ SEE ALSO
                         mfile = matrix
                 else:
                         mfile = cmd.exp_path("$PYMOL_DATA/pymol/matrices/"+matrix)
-                if object==None: object=''
+                if object is None: object=''
                 # delete existing alignment object (if asked to reset it)
                 try:
                         _self.lock(_self)
@@ -594,7 +594,7 @@ SEE ALSO
             a = selector.process(a)
             b = selector.process(b)
             #
-            if object==None: object=''
+            if object is None: object=''
             if int(matchmaker)==0:
                 sele1 = "((%s) in (%s))" % (str(a),str(b))
                 sele2 = "((%s) in (%s))" % (str(b),str(a))
@@ -640,7 +640,7 @@ SEE ALSO
             a = selector.process(a)
             b = selector.process(b)
             #
-            if object==None: object=''
+            if object is None: object=''
             if int(matchmaker)==0:
                 sele1 = "((%s) in (%s))" % (str(a),str(b))
                 sele2 = "((%s) in (%s))" % (str(b),str(a))
@@ -684,7 +684,7 @@ SEE ALSO
             a = selector.process(a)
             b = selector.process(b)
             #
-            if object==None: object=''
+            if object is None: object=''
             if int(matchmaker)==0:
                 sele1 = "((%s) in (%s))" % (str(a),str(b))
                 sele2 = "((%s) in (%s))" % (str(b),str(a))

@@ -85,7 +85,7 @@ EXAMPLES
         act_int = 0
     else:
         act_kee = fb_action_sc.interpret(action)
-        if act_kee == None:
+        if act_kee is None:
             print("Error: invalid feedback action '%s'."%action)
             if _raising(_self=_self):
                 raise QuietException
@@ -126,7 +126,7 @@ EXAMPLES
         mask_lst = mask.split()
         for mask in mask_lst:
             mask_kee = fb_mask_sc.interpret(mask)
-            if mask_kee == None:
+            if mask_kee is None:
                 print("Error: invalid feedback mask '%s'."%mask)
                 if _raising(_self=_self): raise QuietException
                 else: return None
@@ -141,7 +141,7 @@ EXAMPLES
         mod_lst = module.split()
         for module in mod_lst:
             mod_kee = fb_module_sc.interpret(module)
-            if mod_kee == None:
+            if mod_kee is None:
                 print("Error: invalid feedback module '%s'."%module)
                 if _raising(_self=_self): raise QuietException
                 else: return None

@@ -267,7 +267,7 @@ NOTES
                               float(cellX), float(cellY), float(cellZ),
                               float(cellAlpha), float(cellBeta), float(cellGamma),
                               int(quiet),int(zoom))
-            if r!=None:
+            if r is not None:
                 if not quiet:
                     print("Loading map '%s'" % (name))
                 r = _self.load(r, name, format="ccp4", finish=1)
@@ -332,7 +332,7 @@ NOTES
         # preprocess selection
         r = DEFAULT_ERROR
         selection = selector.process(selection)
-        if box!=None: # box should be [[x1,y1,z1],[x2,y2,z2]]
+        if box is not None: # box should be [[x1,y1,z1],[x2,y2,z2]]
             if _self.is_string(box):
                 box = safe_list_eval(box)
             box = (float(box[0][0]),
@@ -345,9 +345,9 @@ NOTES
         else:
             box = (0.0,0.0,0.0,1.0,1.0,1.0)
             box_flag = 0
-        if grid==None:
+        if grid is None:
             grid = _self.get_setting_float('gaussian_resolution')/3.0
-        if buffer==None:
+        if buffer is None:
             buffer = -1.0
         grid = float(grid) # for now, uniform xyz; later (x,y,z)
 
@@ -564,7 +564,7 @@ SEE ALSO
         if selection not in [ 'center', 'origin' ]:
             selection = "("+selection+")"
         #
-        if carve==None:
+        if carve is None:
             carve=0.0
         try:
             _self.lock(_self)
@@ -631,7 +631,7 @@ SEE ALSO
         if selection not in [ 'center', 'origin' ]:
             selection = "("+selection+")"
 
-        if carve==None:
+        if carve is None:
             carve=0.0
 
         try:
@@ -782,7 +782,7 @@ SEE ALSO
         if selection not in [ 'center', 'origin' ]:
             selection = "("+selection+")"
       #
-        if carve==None:
+        if carve is None:
             carve=0.0
         try:
             _self.lock(_self)
@@ -836,7 +836,7 @@ SEE ALSO
         if selection not in [ 'center', 'origin' ]:
             selection = "("+selection+")"
         #
-        if carve==None:
+        if carve is None:
             carve=0.0
         try:
             _self.lock(_self)
@@ -909,7 +909,7 @@ SEE ALSO
         if selection not in [ 'center', 'origin' ]:
             selection = "("+selection+")"
         #
-        if carve==None:
+        if carve is None:
             carve=0.0
         try:
             _self.lock(_self)
@@ -999,7 +999,7 @@ USAGE
     '''
         r = DEFAULT_ERROR
         try:
-            if object==None:
+            if object is None:
                 object=name
             model = fragments.get(str(name))
             la = len(model.atom)
@@ -1174,7 +1174,7 @@ NOTES
         #
         try:
             _self.lock(_self)
-            if pos!=None:
+            if pos is not None:
                 if not (is_list(pos) or is_tuple(pos)):
                     pos = safe_list_eval(pos)
                 pos = (float(pos[0]), # tuple-ize

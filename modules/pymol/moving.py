@@ -220,7 +220,7 @@ SEE ALSO
         if last<0:
             last = _self.count_frames() + last + 1
         action = mview_action_dict[mview_action_sc.auto_err(action,'action')]
-        if (scene==None) or (scene=='auto'):
+        if (scene is None) or (scene=='auto'):
             scene = _self.get("scene_current_name")
         scene = str(scene)
         if (scene!=''):

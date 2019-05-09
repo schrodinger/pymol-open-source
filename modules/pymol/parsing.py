@@ -129,13 +129,13 @@ if True:
         result = []
         inp_dict = {}
         for a in inp_arg:
-            if a[0] != None:
+            if a[0] is not None:
                 inp_dict[a[0]] = a[1];
         c = 0
         for p in par:
             if c<n_inp:
                 a = inp_arg[c]
-                if a[0] == None:
+                if a[0] is None:
                     result.append(a[1])
                     c = c + 1
                     continue
@@ -214,7 +214,7 @@ if True:
                             mo = arg_hard_nester_re.match(st[cc:])
                             if mo:
                                 se = trim_nester(mo.group(0))
-                                if se==None:
+                                if se is None:
                                     colorprinting.error("Error: "+st)
                                     colorprinting.error("Error: "+" "*cc+"^ syntax error (type 1).")
                                     raise QuietException
@@ -252,7 +252,7 @@ if True:
                                 break
                             argval = argval + mo.group(0)
                             cc=cc+mo.end(0)
-                        if argval!=None:
+                        if argval is not None:
                             result.append((nam, argval.strip()))
                 # clean whitespace
                 st = st[cc:].lstrip()
@@ -331,7 +331,7 @@ if True:
         print(st + " " + "]"*pc)
 
     def prepare_call(fn,lst,mode=STRICT,name=None,_self=None): # returns tuple of arg,kw or excepts if error
-        if name==None:
+        if name is None:
             name=fn.__name__
         result = (None,None)
         arg = []
@@ -355,7 +355,7 @@ if True:
         if mode==NO_CHECK:
             # no error checking
             for a in lst:
-                if a[0]==None:
+                if a[0] is None:
                     arg.append(a[1])
                 else:
                     kw[a[0]]=a[1]
@@ -380,7 +380,7 @@ if True:
                 # handle legacy string=value transformation
                 tmp_lst = []
                 for a in lst:
-                    if(a[0]!=None):
+                    if(a[0] is not None):
                         if a[0] not in arg_dct:
                             tmp_lst.extend([(None,a[0]),(None,a[1])])
                         else:
@@ -405,7 +405,7 @@ if True:
             ac = 0
             val_dct = {}
             for a in lst:
-                if a[0]==None:
+                if a[0] is None:
                     if ac>=narg:
                         raise QuietException("Parsing-Error: ambiguous argument: '"+str(a[1])+"'")
                     else:

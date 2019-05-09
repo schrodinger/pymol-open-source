@@ -115,7 +115,7 @@ def mini(total_steps=500,
                 cmd.delete(object)
                 cmd.load_model(state.model,object,1)
                 cmd.refresh()
-                if finish!=None:
+                if finish is not None:
                     finish[0](*finish[1], **finish[2])
         except:
             cmd.load_model(state.model,'ref')

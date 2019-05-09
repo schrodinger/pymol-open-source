@@ -83,7 +83,7 @@ EXAMPLE
     '''
         _self = kwd.get('_self',cmd)
         r = DEFAULT_ERROR
-        if name==None:
+        if name is None:
             _self.set_wizard()
             r = DEFAULT_SUCCESS
         else:
@@ -103,7 +103,7 @@ DESCRIPTION
     '''
         _self = kwd.get('_self',cmd)
         r = DEFAULT_ERROR
-        if name==None:
+        if name is None:
             _self.set_wizard()
             r = DEFAULT_SUCCESS
         else:
@@ -184,7 +184,7 @@ DESCRIPTION
         return 1
 
     def session_restore_wizard(session,_self=cmd):
-        if session!=None:
+        if session is not None:
             version = session.get('version', 0)
             if 'wizard' in session:
                 from chempy.io import pkl

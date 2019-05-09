@@ -67,7 +67,7 @@ def _prepare(selection,polar_contacts=None,_self=cmd):
     cmd.unset("cartoon_smooth_loops",selection)
     cmd.unset("cartoon_flat_sheets",selection)
     cmd.unset("cartoon_side_chain_helper",selection)
-    if polar_contacts == None:
+    if polar_contacts is None:
         polar_contacts = dname
         if polar_contacts in cmd.get_names('objects'):
             cmd.delete(polar_contacts)

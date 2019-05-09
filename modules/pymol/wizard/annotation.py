@@ -47,7 +47,7 @@ def load_annotated_sdf(filename, object=None, state=1, discrete=1, _self=cmd):
 
     # get object name from file prefix
 
-    if object==None:
+    if object is None:
         object = re.sub(r"\.[sS][dD][fF]$","",filename)
 
     # open the SD file

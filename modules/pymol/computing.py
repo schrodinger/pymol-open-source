@@ -114,7 +114,7 @@ class CleanJob:
             # we can't call warn because this is the not the tcl-tk gui thread
             # warn("Please be sure that FreeMOL is correctly installed.")
         else:
-            if message != None:
+            if message is not None:
                 self.cmd.do("_ cmd.wizard('message','''%s''')"%message)
             obj_list = self_cmd.get_object_list("bymol ("+sele+")")
             self.ok = 0
@@ -136,7 +136,7 @@ class CleanJob:
                     input_sdf = input_sdf.encode()
 
                 result = mengine.run(input_sdf)
-                if result != None:
+                if result is not None:
                     if len(result):
                         clean_sdf = result[0]
 
@@ -169,7 +169,7 @@ class CleanJob:
                                     self_cmd.sculpt_deactivate(obj_name)
                                     self.ok = 1
                                     message = "Clean: Finished. Energy = %3.2f" % self.energy
-                                    if message != None:
+                                    if message is not None:
                                         self.cmd.do("_ cmd.wizard('message','''%s''')"%message)
                                         self.cmd.do("_ wizard")
                         except ValueError:
@@ -179,7 +179,7 @@ class CleanJob:
                             self_cmd.unset("suspend_updates")
             if not self.ok:
                 # we can't call warn because this is the not the tcl-tk gui thread
-                if result != None:
+                if result is not None:
                     if len(result)>1:
                         print("\n=== mengine errors below === ")
                         print(result[1].replace("\n\n","\n"), end=' ')
@@ -200,7 +200,7 @@ class CleanJob:
                     print("Unabled to write '%s"%failed_file)
                 if aromatic:
                     print("Clean-Warning: Please eliminate aromatic bonds and then try again.")
-        if message!=None:
+        if message is not None:
             self_cmd.do("_ wizard")
 
 def _clean(selection, present='', state=-1, fix='', restrain='',
@@ -234,7 +234,7 @@ def _clean(selection, present='', state=-1, fix='', restrain='',
 
             self_cmd.h_add(clean_obj) # fill any open valences
 
-            if message == None:
+            if message is None:
                 at_cnt = self_cmd.count_atoms(clean_obj)
                 message = 'Clean: Cleaning %d atoms.  Please wait...'%at_cnt
 

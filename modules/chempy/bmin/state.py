@@ -45,7 +45,7 @@ class State:
         # read files
         f.write(" READ       0      0      0      0     0.0000     0.0000     0.0000     0.0000\n")
         # fix/restrain atoms according to flags provided
-        if fix_flag!=None: # are we fixing any atoms?
+        if fix_flag is not None: # are we fixing any atoms?
             c = 0
             mask= 2 ** fix_flag
             for a in self.model.atom:
@@ -53,7 +53,7 @@ class State:
                 if mask&a.flags:
                     f.write(" FXAT  %6d      0      0      0    -1.0000     0.0000     0.0000     0.0000\n"%
                               c)
-        if rest_flag!=None: # are we restraining any atoms?
+        if rest_flag is not None: # are we restraining any atoms?
             c = 0
             mask= 2 ** rest_flag
             for a in self.model.atom:

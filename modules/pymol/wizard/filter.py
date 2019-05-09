@@ -149,7 +149,7 @@ class Filter(Wizard):
         if self.browse == 1:
             print(" Filter: Browsing all compounds.")
             cmd.mset() # all states visible
-        elif self.object==None:
+        elif self.object is None:
             print(" Filter-Error: please choose an object first")
         else:
             self.check_object_dict()
@@ -202,7 +202,7 @@ class Filter(Wizard):
         self.state_dict = {}
         sd = self.state_dict
         so = self.object
-        if so!=None:
+        if so is not None:
             cnt = cmd.count_states(so)
             for a in range(1,cnt+1):
                 sd[self.get_ident(so,a)] = a
@@ -210,7 +210,7 @@ class Filter(Wizard):
     def count_object(self):
         # record how many molecular are in an object, etc.
         self.check_object_dict()
-        if self.object!=None:
+        if self.object is not None:
             self.acce = 0
             self.reje = 0
             self.defe = 0
@@ -237,7 +237,7 @@ class Filter(Wizard):
         # 3 = pop-up menu
 
         self.update_object_menu()
-        if self.object != None:
+        if self.object is not None:
             save_str = 'Save %s.txt'%self.object
         else:
             save_str = ""
@@ -265,7 +265,7 @@ class Filter(Wizard):
         # returns text prompt
 
         self.prompt = None
-        if self.object == None:
+        if self.object is None:
             self.prompt = [ 'Please select a multi-state object...' ]
         else:
             self.prompt = [ '%s: %d accepted, %d rejected, %d deferred, %d remaining'%(
@@ -293,7 +293,7 @@ class Filter(Wizard):
 
     def accept(self):
         # accept compound and advance
-        if self.object==None:
+        if self.object is None:
             print(" Filter-Error: Please choose an object first")
         else:
             state = cmd.get_object_state(self.object)
@@ -305,7 +305,7 @@ class Filter(Wizard):
 
     def reject(self):
         # reject compound and advance
-        if self.object==None:
+        if self.object is None:
             print(" Filter-Error: Please choose an object first")
         else:
             state = cmd.get_object_state(self.object)
@@ -318,7 +318,7 @@ class Filter(Wizard):
 
     def defer(self):
         # defer compound and advance
-        if self.object==None:
+        if self.object is None:
             print(" Filter-Error: Please choose an object first")
         else:
             state = cmd.get_object_state(self.object)
@@ -351,7 +351,7 @@ class Filter(Wizard):
 
     def save(self):
         # write compounds to a file
-        if self.object==None:
+        if self.object is None:
             print(" Filter-Error: please choose an object first")
         else:
             self.check_object_dict()

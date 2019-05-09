@@ -261,7 +261,7 @@ class Measurement(Wizard):
             else:
                 letterN = ""
             self.prompt = [ 'Please click a%s %s...' % (letterN, what)]
-        if self.error!=None:
+        if self.error is not None:
             self.prompt.append(self.error)
         return self.prompt
 

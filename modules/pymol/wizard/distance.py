@@ -118,7 +118,7 @@ class Distance(Wizard):
                 self.prompt = [ 'Please click on the second atom...' ]
         elif self.mode in [ 'polar', 'neigh' ]:
             self.prompt = [ 'Please click an atom...']
-        if self.error!=None:
+        if self.error is not None:
             self.prompt.append(self.error)
         return self.prompt
 

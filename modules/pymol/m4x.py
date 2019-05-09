@@ -170,7 +170,7 @@ def get_context_info():  # Author: Warren DeLano
           context = a[:-5]
        if a[-6:]=='_hbond':
           context = a[:-6]
-       if context!=None:
+       if context is not None:
            if context not in context_dict:
                context_list.append(context)
                context_dict[context] = [a]

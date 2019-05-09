@@ -117,7 +117,7 @@ class SDFRec:
         if kee not in self.kees:
             self.kees.append(kee)
             self.ref_code[kee]=''
-        if ref_code!=None:
+        if ref_code is not None:
             self.ref_code[kee]=ref_code
         self.data[kee] = copy.deepcopy(data)
 

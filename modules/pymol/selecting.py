@@ -93,7 +93,7 @@ SEE ALSO
                     name = "sel%02.0f" % sel_cnt
                 else:
                     name = "sele"
-            if name == None:
+            if name is None:
                 sel_cnt = _self.get_setting_int("sel_counter") + 1
                 _self.set("sel_counter", sel_cnt)
                 name = "sel%02.0f" % sel_cnt

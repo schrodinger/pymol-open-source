@@ -113,7 +113,7 @@ class CIFHeader(baseHeader):
                 in_loop = False
 
                 curLine = data.pop(0)
-                while curLine!=None:
+                while curLine is not None:
                     if in_loop:
                         if curLine.startswith("_refln."):
                             self.cols.append(curLine.split(".",1)[1].strip())
@@ -199,7 +199,7 @@ class MTZHeader(baseHeader):
             c=[]
             ## print "KEY = %s" % key
             # user wants all columns
-            if colType==None:
+            if colType is None:
                 c = list(self.datasets[key]["cols"].keys())
             else:
                 # user wants a specfic column
@@ -275,7 +275,7 @@ class MTZHeader(baseHeader):
             file_len = f.tell()
             # get header offset
             f.seek(4)
-            if self.wordsize!=None:
+            if self.wordsize is not None:
                 (header_start,) = struct.unpack(self.byteorder_int+"i", f.read(4))
             else:
                 print("Warning: Byte order of file unknown.  Guessing header location.")

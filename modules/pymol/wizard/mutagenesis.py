@@ -590,12 +590,12 @@ class Mutagenesis(Wizard):
                     lib = self.dep_library.get(key,None)
             except:
                 pass
-        if lib == None:
+        if lib is None:
             key = rot_type
             lib = self.ind_library.get(key,None)
-            if (lib!= None) and self.dep == 'dep':
+            if (lib is not None) and self.dep == 'dep':
                 print(' Mutagenesis: no phi/psi, using backbone-independent rotamers.')
-        if lib != None:
+        if lib is not None:
             state = 1
             for a in lib:
                 cmd.create(obj_name,frag_name,1,state)

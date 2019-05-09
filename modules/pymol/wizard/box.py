@@ -165,7 +165,7 @@ class Box(Wizard):
         self.name = name
         self.points_name = self.name + "_points"
         self.cgo_name = self.name
-        if self.copying and hidden_name != None:
+        if self.copying and hidden_name is not None:
             self.cmd.copy(self.points_name, hidden_name, zoom=0)
             print("copy")
         else:
@@ -406,7 +406,7 @@ class Box(Wizard):
 
     def do_scene(self):
         if self.points_name in self.cmd.get_names("objects"):
-            if self.coord == None:
+            if self.coord is None:
                 self.update_box()
             else:
                 model = self.cmd.get_model(self.points_name)

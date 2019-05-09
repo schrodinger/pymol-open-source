@@ -647,7 +647,7 @@ USAGE
                 _self.set("mouse_selection_mode",sm,quiet=1)
 
             mode_list = None
-            if action==None:
+            if action is None:
                 bm = _self.get_setting_int("button_mode")
                 if bm>=0:
                     bm = bm % len(mouse_ring)
@@ -671,7 +671,7 @@ USAGE
                 bm = -1 - mode_name_list.index(action)
                 _self.set("button_mode",bm)
                 mode_list = mode_dict[mode]
-            if mode_list!=None:
+            if mode_list is not None:
                 kw_dict = {'_self':_self}
                 for a in mode_list:
                     button(*a, **kw_dict)

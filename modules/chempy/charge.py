@@ -75,12 +75,12 @@ def combine_fragments(*arg,**kw):
                         attached = fragment.atom[b.index[1]]
                     elif b.index[1]==c:
                         attached = fragment.atom[b.index[0]]
-                    if attached!=None:
+                    if attached is not None:
                         if attached.name in dst_dict:
                             attached_index = dst_dict[attached.name]
                             break
                 a.chg_index = n_tot
-                if attached_index!=None:
+                if attached_index is not None:
                     a.attached_index = attached_index
                 n_tot = n_tot + 1
             c = c + 1
@@ -123,7 +123,7 @@ def combine_fragments(*arg,**kw):
     chg_sum = sum(avg)
 
     print("chg_sum",chg_sum)
-    if net_charge != None:
+    if net_charge is not None:
         chg_diff = net_charge - chg_sum
         chg_adjust = chg_diff / n_dst_atm
     else:

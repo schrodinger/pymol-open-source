@@ -456,7 +456,7 @@ SEE ALSO
             r = _cmd.get_setting_text(_self._COb,i,str(selection),state-1)
         finally:
             _self.unlock(r,_self)
-        if is_ok(r) and (r!=None):
+        if is_ok(r) and (r is not None):
             if not int(quiet):
                 name = name_dict.get(i, name)
                 r_str = str(r)

@@ -241,8 +241,8 @@ if True:
             global _argv
             _argv = copy.deepcopy(argv) # pymol.invocation._argv
             global global_options
-            if options == None:
-                if _pymol==None:
+            if options is None:
+                if _pymol is None:
                     options = global_options
                 else:
                     options = _pymol.invocation.options
@@ -285,7 +285,7 @@ if True:
                         options.testing = 1
                     else:
                         # double hypen signals end of PyMOL arguments
-                        if python_script == None:
+                        if python_script is None:
                             python_script = argv[0]
                         rev_av = copy.deepcopy(av)
                         rev_av.reverse()
@@ -511,7 +511,7 @@ if True:
                         traceback.print_exc()
                 options.deferred.append(a)
                 loaded_something = 1
-        if pymolrc != None:
+        if pymolrc is not None:
             options.deferred = [('_do__ @' + a) if script_re.search(a) else a
                     for a in pymolrc] + options.deferred
             options.pymolrc = pymolrc

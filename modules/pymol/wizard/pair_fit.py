@@ -59,7 +59,7 @@ class Pair_fit(Wizard):
             self.prompt = [ 'Pick the mobile atom...']
         elif self.status==1:
             self.prompt = [ 'Pick the target atom...' ]
-        if self.message!=None:
+        if self.message is not None:
             self.prompt.append(self.message)
         return self.prompt
 

@@ -33,7 +33,7 @@ def sg_register_if_unknown(sg, sym_op):
 def sg_sym_to_mat_list(sgsymbol): # TODO _self
     result = None
     sym_op = sym_dict.get(sg_canonicalize(sgsymbol))
-    if sym_op != None:
+    if sym_op is not None:
         result = []
         for op in sym_op:
             mat = []

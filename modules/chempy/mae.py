@@ -67,7 +67,7 @@ class MAEParser:
         mode = 0 # 0 = definition, 1 = data
         while 1:
             tok = self.nxt_tok()
-            if tok==None:
+            if tok is None:
                 break
             if tok==':::':
                 mode = 1
@@ -93,7 +93,7 @@ class MAEParser:
         cc = 0
         while 1:
             tok = self.nxt_tok()
-            if tok==None:
+            if tok is None:
                 break
             if tok=='}':
                 break
@@ -118,7 +118,7 @@ class MAEParser:
                     c = 0
                     for c in range(n_fld):
                         tok = self.nxt_tok()
-                        if tok==None:
+                        if tok is None:
                             break
                         data[c].append(coer[c](*(tok,)))
                         if tok=='}':
@@ -131,7 +131,7 @@ class MAEParser:
         mode = 0 # 0 = definition, 1 = data
         while 1:
             tok = self.nxt_tok()
-            if tok==None:
+            if tok is None:
                 break
             if tok==':::':
                 mode = 1
@@ -158,7 +158,7 @@ class MAEParser:
     def parse(self):
         while 1:
             tok = self.nxt_tok()
-            if tok==None:
+            if tok is None:
                 break
             if tok=='{':
                 self.d.append('top',self.parse_top())
@@ -299,7 +299,7 @@ class MAE(Storage):
                 full_model = model
                 result.append(model)
 
-            elif mp_ent[0]=='p_m_ct' and full_model!=None:
+            elif mp_ent[0]=='p_m_ct' and full_model is not None:
                 model = copy.deepcopy(full_model)
                 f_m_ct = mp_ent[1]
                 if 's_m_title' in f_m_ct:

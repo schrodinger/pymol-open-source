@@ -498,7 +498,7 @@ class State:
     def get_zmat_group(self,auto=1,dlc=1,zmat_extend=None):
         gmsList = []
         if auto and dlc:
-            if zmat_extend == None:
+            if zmat_extend is None:
                 gmsList.append(" $ZMAT DLC=.TRUE. AUTO=.TRUE. $END\n")
             else:
                 gmsList.append(" $ZMAT DLC=.TRUE. AUTO=.TRUE.\n")

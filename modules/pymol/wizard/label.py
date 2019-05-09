@@ -54,7 +54,7 @@ class Label(Wizard):
         if (not self.messages):
             return None
 
-        if (self.atom == None):
+        if (self.atom is None):
             self.prompt = ['Click atoms...']
         else:
             self.prompt = [

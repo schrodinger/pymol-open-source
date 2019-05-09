@@ -606,7 +606,7 @@ ARGUMENTS
     rock = int(rock)
     if animate<0:
         animate = float(cmd.get("scene_animation_duration"))
-    if names == None:
+    if names is None:
         names = cmd.get_scene_list()
     elif cmd.is_string(names):
         names = cmd.safe_alpha_list_eval(names)
@@ -750,7 +750,7 @@ def _encode(filename,first,last,preserve,
                 result = mpeg_encode.run(input)
             finally:
                 os.chdir(old_cwd)
-                if done_event != None:
+                if done_event is not None:
                     done_event.set()
     elif encoder == 'ffmpeg':
         fps = get_movie_fps(_self)
@@ -781,7 +781,7 @@ def _encode(filename,first,last,preserve,
             pass
     if not quiet:
                 if not os.path.exists(filename):
-                    if result != None:
+                    if result is not None:
                         print(input, result[0], result[1])
                     print(" produce: compression failed")
                 else:

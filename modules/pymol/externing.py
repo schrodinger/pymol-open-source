@@ -95,7 +95,7 @@ SEE ALSO
 
     cd, pwd, system   
         '''
-        if pattern==None:
+        if pattern is None:
             pattern = u"*"
         else:
             pattern = exp_path(pattern)

@@ -60,7 +60,7 @@ if True:
         except:
             traceback.print_exc()
         amb = sc.interpret(st, mode)
-        if amb==None:
+        if amb is None:
             colorprinting.warning(" parser: no matching %s."%type_name)
         elif isinstance(amb, str):
             result = amb+postfix
@@ -244,7 +244,7 @@ if True:
                                 # try to find a keyword which matches
                                 if com in self.cmd.kwhash:
                                     amb = self.cmd.kwhash.interpret(com)
-                                    if amb == None:
+                                    if amb is None:
                                         com = self.cmd.kwhash[com]
                                     elif not isinstance(amb, str):
                                         colorprinting.warning('Error: ambiguous command: ')
@@ -394,7 +394,7 @@ if True:
                                             nest_securely = 1
                                         else:
                                             nest_securely = secure
-                                        if re.search("\.py$|\.pym$",path) != None:
+                                        if re.search("\.py$|\.pym$",path) is not None:
                                             if self.cmd._feedback(fb_module.parser,fb_mask.warnings):
                                                 print("Warning: use 'run' instead of '@' with Python files?")
                                         layer.script = open(path,'rU')
@@ -413,13 +413,13 @@ if True:
                                             tmp_cmd = inp_cmd.strip()
                                             if len(tmp_cmd):
                                                 if tmp_cmd[0] not in ['#','_','/']: # suppress comments, internals, python
-                                                    if layer.embed_sentinel==None:
+                                                    if layer.embed_sentinel is None:
                                                         colorprinting.parrot("PyMOL>"+tmp_cmd)
                                                 elif tmp_cmd[0]=='_' and \
                                                       tmp_cmd[1:2] in [' ','']: # "_ " remove echo suppression signal
                                                     inp_cmd=inp_cmd[2:]
                                             pp_result = self.parse(inp_cmd,nest_securely)
-                                            if pp_result==None: # RECURSION
+                                            if pp_result is None: # RECURSION
                                                 break # abort command gets us out
                                             elif pp_result==0: # QuietException
                                                 if self.cmd.get_setting_boolean("stop_on_exceptions"):
@@ -471,7 +471,7 @@ if True:
         def get_embedded(self,key=None):
             layer = self.layer[self.nest]
             dict = layer.embed_dict
-            if key==None:
+            if key is None:
                 key = self.get_default_key()
             return dict.get(key,None)
 
@@ -490,7 +490,7 @@ if True:
                     if self.nest==0:
                         # if we're reading embedded input on stdin
                         # then bypass PyMOL C code altogether
-                        if self.layer[0].embed_sentinel!=None:
+                        if self.layer[0].embed_sentinel is not None:
                             self.parse(l)
                         else:
                             self.cmd.do(l, flush=True)
@@ -527,7 +527,7 @@ if True:
                             if full in self.cmd.auto_arg[count]: # autocomplete arguments
                                 flag = 1
                                 pre = re.sub(r"^[^ ]* ",' ',st,count=1) # trim command
-                                if re.search(r",",pre)!=None:
+                                if re.search(r",",pre) is not None:
                                     pre = re.sub(r"[^\, ]*$","",pre,count=1)
                                     pre = re.sub(r",\s*[^\, ]*$",", ",pre,count=1) # trim 1 arg
                                 else:
@@ -571,7 +571,7 @@ if True:
                         css = os.path.commonprefix(flist)
                         if len(css)>len(st3):
                             result = css
-            if result!=None:
+            if result is not None:
                 result = pre+result
             return result
 

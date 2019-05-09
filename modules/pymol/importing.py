@@ -134,7 +134,7 @@ if True:
         # use the pymol instance to store state, not the code module
         _pymol = _self._pymol
         for a in _pymol._session_restore_tasks:
-            if a==None:
+            if a is None:
                 try:
                     _self.lock(_self)
                     r = _cmd.set_session(_self._COb,session,int(partial),int(quiet))
@@ -278,7 +278,7 @@ SEE ALSO
                    'greyscale': 'greyscale' }
 
         space_auto = space_sc.interpret(space)
-        if (space_auto != None) and not is_list(space_auto):
+        if (space_auto is not None) and not is_list(space_auto):
             space = space_auto
 
         if space=="":
@@ -288,7 +288,7 @@ SEE ALSO
             if filename == "":
                 print("Error: unknown color space '%s'."%space)
                 filename = None
-        if filename!=None:
+        if filename is not None:
             try:
                 if filename!="":
                     filename = _self.exp_path(filename)
@@ -589,7 +589,7 @@ SEE ALSO
                     r = DEFAULT_SUCCESS
                 else:
                     r = DEFAULT_SUCCESS
-                if report_url != None: # report port back to server url (is this secure?)
+                if report_url is not None: # report port back to server url (is this secure?)
                     try:
                         report_url = report_url + str(port)
                         print(" Reporting back pymol port via: '%s'"%report_url)
@@ -705,7 +705,7 @@ SEE ALSO
             finish = int(finish)
             zoom = int(zoom)
             discrete = int(discrete)
-            if multiplex==None:
+            if multiplex is None:
                 multiplex=-2
 
             filename = unquote(filename)
@@ -865,7 +865,7 @@ NOTES
         if object_props or atom_props:
             print(' Warning: properties are not supported in Open-Source PyMOL')
         list = _self._parser.get_embedded(key)
-        if list == None:
+        if list is None:
             print("Error: embedded data '%s' not found."%key)
             return DEFAULT_ERROR
 
@@ -878,7 +878,7 @@ NOTES
     def load_raw(content,  format='', object='', state=0, finish=1,
                  discrete=-1, quiet=1, multiplex=None, zoom=-1,_self=cmd):
         r = DEFAULT_ERROR
-        if multiplex==None:
+        if multiplex is None:
             multiplex=-2
         ftype = getattr(loadable, format, None)
         if True:

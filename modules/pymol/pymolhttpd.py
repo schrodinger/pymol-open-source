@@ -179,7 +179,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         formatted results.  other requests will have come from
         ordinary GET or POST requests via links or forms
         """
-        if self.callback != None:
+        if self.callback is not None:
             self.send_resp_header(200,'text/javascript')
             self.wfile_write("%s(%s)"%(self.callback,self.wrap_return(result)))
 
@@ -196,7 +196,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.wfile_write("</pre>")
 
     def send_json_error(self, code, message):
-        if self.callback != None:
+        if self.callback is not None:
             self.send_resp_header(code,'text/javascript')
             self.wfile_write("%s(%s)"%(self.callback,self.wrap_return(message,"ERROR")))
         else:
@@ -216,7 +216,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         tb = fp.getvalue()
         message = message + tb.split('\n')
         response = json.dumps(message)
-        if self.callback != None:
+        if self.callback is not None:
             self.send_resp_header(code, 'text/javascript')
             self.wfile_write("%s(%s)"%(self.callback,response))
         else:
@@ -264,9 +264,9 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         blocks = []
         if isinstance(method, str):
             # method is merely a string
-            if kwds == None:
+            if kwds is None:
                 kwds = query_kwds
-            if args == None:
+            if args is None:
                 args = ()
             if len(method):
                 blocks = [ [ method, args, kwds ] ]
@@ -290,7 +290,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 fn = self.session.get(block[0],None)
                 if fn is None and block[0].startswith('pymol.cmd.'):
                     fn = getattr(self.server.pymol_cmd, block[0][10:], None)
-                if fn != None:
+                if fn is not None:
                     len_block = len(block)
                     if len_block>1:
                         args = tuple(block[1])
@@ -322,7 +322,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         href = str(kwds['href'])
                     elif len(args):
                         href = str(args[1])
-                    if href == None:
+                    if href is None:
                         self.wfile_write("<body>")
                     elif not len(href): # simply
                         self.wfile_write("<body onload=\"window.close()\">")
@@ -353,7 +353,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if '..' in path_list: # prevent access to parent directories
             self.send_error(404,"Illegal path.")
             self.wfile_write(": %s" % self.path)
-        elif self.server.pymol_root == None:
+        elif self.server.pymol_root is None:
             self.send_error(404,"No content root specified.")
         else:
             try:
@@ -448,7 +448,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 class PymolHttpd:
 
     def __init__(self, port=8080, root=None, logging=1, wrap_natives=0, self_cmd=None):
-        if self_cmd == None:
+        if self_cmd is None:
             # fallback on the global singleton PyMOL API
             try:
                 from pymol import cmd
@@ -484,7 +484,7 @@ class PymolHttpd:
             self.port = self.server.socket.getsockname()[1]
         self.server.pymol_session = self.session
         self.server.pymol_root = self.root
-        if self.root != None:
+        if self.root is not None:
             os.environ['PYMOL_HTTP_ROOT'] = self.root
         self.server.pymol_cmd = self.cmd
         self.server.pymol_logging = logging

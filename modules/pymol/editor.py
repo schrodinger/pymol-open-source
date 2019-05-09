@@ -324,7 +324,7 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
                 seq_len = seq_len + len(frag)
                 input.extend(list(frag))
                 input.append("/") # breaks chain
-    if name == None:
+    if name is None:
         name = _self.get_unused_name("obj")
     elif name in _self.get_names():
         _self.delete(name)
@@ -334,7 +334,7 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
             print(" Generating a %d residue peptide from sequence..."%seq_len)
         input.reverse()
         sequence = input
-        if code != None:
+        if code is not None:
             while len(sequence):
                 while len(sequence) and '/' in sequence[-1]:
                     part = sequence.pop().split('/')

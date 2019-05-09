@@ -15,7 +15,7 @@ class Demo(Wizard):
         self.last = None
         if 'last' in saved:
             self.last = saved['last']
-        if name!=None:
+        if name is not None:
             demo = DemoInfo(_self=_self)
             if self.last:
                 if hasattr(demo,self.last):

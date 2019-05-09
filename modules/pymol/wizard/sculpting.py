@@ -198,7 +198,7 @@ class Sculpting(Wizard):
         default_mode = self.mode
         default_radius = self.radius
         default_cushion = self.cushion
-        if self.restore_edit_mode != None:
+        if self.restore_edit_mode is not None:
             self.cmd.edit_mode(self.restore_edit_mode)
         self.cmd.set("sculpt_vdw_vis_mode",self.restore_sculpt_vdw_vis_mode)
         self.cmd.set("sculpting",0)
@@ -208,7 +208,7 @@ class Sculpting(Wizard):
         self.prompt = None
         if self.status == NO_SELECTIONS:
             self.prompt = [ 'Please pick the center atom...']
-        if self.error!=None:
+        if self.error is not None:
             self.prompt.append(self.error)
         return self.prompt
 

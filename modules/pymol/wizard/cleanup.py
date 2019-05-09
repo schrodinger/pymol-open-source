@@ -15,9 +15,9 @@ def auto_configure():
 
     global SZYBKI_EXE
     OE_DIR = os.environ.get("OE_DIR",None)
-    if OE_DIR == None:
+    if OE_DIR is None:
         OE_DIR = os.environ.get("OEDIR",None)
-    if OE_DIR != None:
+    if OE_DIR is not None:
         SZYBKI_EXE = os.path.join(OE_DIR,"bin/szybki")
         if os.path.exists(SZYBKI_EXE):
             result = 1
@@ -153,7 +153,7 @@ class Cleanup(Wizard):
         self.prompt = []
         if self.ligand=="":
             self.prompt = [ 'Please pick a ligand...' ]
-        if self.message!=None:
+        if self.message is not None:
             self.prompt.append(self.message)
         return self.prompt
 
