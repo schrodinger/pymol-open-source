@@ -26,8 +26,75 @@ class TestSelecting(testing.PyMOLTestCase):
         self.assertEquals(cnt,10)
 
     def testSelect(self):
-        cmd.select
-        self.skipTest("TODO: This will take forever.")
+        cmd.fragment("gly", "m1")
+        NC = 2
+
+        # auto_number_selections=0
+        cmd.select("elem C")
+        self.assertEquals(NC, cmd.count_atoms("sele"))
+        self.assertEquals(0, cmd.get_setting_int("sel_counter"))
+
+        # auto_number_selections=1
+        cmd.set('auto_number_selections', 1)
+        cmd.set('sel_counter', 3)
+        cmd.select("elem C")
+        self.assertEquals(NC, cmd.count_atoms("sel04"))
+        self.assertEquals(4, cmd.get_setting_int("sel_counter"))
+
+        cmd.set('auto_number_selections', 1)
+        cmd.select(None, "elem C")
+        self.assertEquals(NC, cmd.count_atoms("sel05"))
+        self.assertEquals(5, cmd.get_setting_int("sel_counter"))
+
+        # name=None always numbers the selection
+        cmd.set('auto_number_selections', 0)
+        cmd.select(None, "elem C")
+        self.assertEquals(NC, cmd.count_atoms("sel06"))
+        self.assertEquals(6, cmd.get_setting_int("sel_counter"))
+
+        # default
+        cmd.select("foo", "elem C")
+        self.assertEquals(NC, cmd.count_atoms("foo"))
+        self.assertEquals(["foo"], cmd.get_names("selections", enabled_only=1))
+
+        # merge with non-existing, enable=0
+        cmd.delete('foo')
+        cmd.select("foo", "elem C", 0, merge=1)
+        self.assertEquals(NC, cmd.count_atoms("foo"))
+        self.assertEquals([], cmd.get_names("selections", enabled_only=1))
+
+        # merge, enable=1
+        cmd.select("foo", "elem N", 1)
+        self.assertEquals(1, cmd.count_atoms("foo"))
+        self.assertEquals(["foo"], cmd.get_names("selections", enabled_only=1))
+
+        cmd.select("foo", "elem C", -1, merge=1)
+        self.assertEquals(NC + 1, cmd.count_atoms("foo"))
+        self.assertEquals(["foo"], cmd.get_names("selections", enabled_only=1))
+
+        cmd.select("foo", "elem O", -1, merge=2)
+        self.assertEquals(NC + 2, cmd.count_atoms("foo"))
+        self.assertEquals(["foo"], cmd.get_names("selections", enabled_only=1))
+
+        # merge, enable=0
+        cmd.select("foo", "elem N", 0)
+        self.assertEquals(1, cmd.count_atoms("foo"))
+        self.assertEquals([], cmd.get_names("selections", enabled_only=1))
+
+        cmd.select("foo", "elem C", -1, merge=1)
+        self.assertEquals(NC + 1, cmd.count_atoms("foo"))
+        self.assertEquals([], cmd.get_names("selections", enabled_only=1))
+
+        cmd.select("foo", "elem O", -1, merge=2)
+        self.assertEquals(1, cmd.count_atoms("foo"))
+        self.assertEquals([], cmd.get_names("selections", enabled_only=1))
+
+        # state
+        cmd.create('m1', 'm1 & elem C', 1, 2)
+        self.assertEquals(7, cmd.select('present'))
+        self.assertEquals(7, cmd.select('present', state=1))
+        self.assertEquals(2, cmd.select('present', state=2))
+        self.assertEquals(0, cmd.select('present', state=3))
 
     def testSelectList(self):
         cmd.select_list
