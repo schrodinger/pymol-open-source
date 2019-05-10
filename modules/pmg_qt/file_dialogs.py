@@ -27,7 +27,7 @@ def load_dialog(parent, fname, **kwargs):
 
     format = pymol.importing.filename_to_format(fname)[2]
 
-    if fname[-4:] in ['.dcd', '.dtr']:
+    if fname[-4:] in ['.dcd', '.dtr', '.xtc', '.trr']:
         load_traj_dialog(parent, fname)
     elif format in ('aln', 'fasta'):
         load_aln_dialog(parent, fname)
@@ -54,9 +54,14 @@ def load_dialog(parent, fname, **kwargs):
 
         # auto-load desmond trajectory
         if fname.endswith('-out.cms'):
-            traj = os.path.join(fname[:-8] + '_trj', 'clickme.dtr')
-            if os.path.exists(traj):
-                load_traj_dialog(parent, traj)
+            for suffix in [
+                ('_trj', 'clickme.dtr'),
+                ('.xtc',),
+            ]:
+                traj = os.path.join(fname[:-8] + suffix[0], *suffix[1:])
+                if os.path.exists(traj):
+                    load_traj_dialog(parent, traj)
+                    break
 
     return True
 
