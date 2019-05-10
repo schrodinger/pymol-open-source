@@ -241,6 +241,11 @@ int ExecutiveIterate(PyMOLGlobals * G, const char *str1, const char *expr, int r
 #endif
 int ExecutiveIterateList(PyMOLGlobals * G, const char *s1, PyObject * list, int read_only,
                          int quiet, PyObject * space);
+
+pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const char* sname,
+    const char* sele, int enable, int quiet, int merge, int state,
+    const char* domain);
+
 int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1, int *list,
                         int list_len, int state, int mode, int quiet);
 

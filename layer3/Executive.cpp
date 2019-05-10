@@ -10566,6 +10566,80 @@ int ExecutiveIterate(PyMOLGlobals * G, const char *str1, const char *expr, int r
   return (op1.i1);
 }
 
+/**
+ * cmd.select() implementation
+ *
+ * @param name Name of selection to create, or selection expression if `sele` is
+ * empty. If `sele` is empty, `name` will become "sele" or "sel01", depending on
+ * `auto_number_selections` and `sel_counter`. If `name` is empty, it will
+ * become "sel01", depending on `sel_counter` but independent of
+ * `auto_number_selections`.
+ * @param sele Selection expression
+ * @param enable Enable the named selection's SpecRec if 1, disable if 0, keep
+ * unchanged (if exists, otherwise enable) if -1.
+ * @param merge Discard existing named selection if 0. Merge with existing named
+ * selection if 1, merge only if existing one is enabled if 2.
+ * @param state Object state for state (coordinate) dependent expressions
+ * @param domain Existing selection name, same as selecting `(sele) and (domain)`
+ * @return Number of selected atoms
+ */
+pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const char* name,
+    const char* sele, int enable, int quiet, int merge, int state,
+    const char* domain)
+{
+  // selection in first argument (cmd.select("expr"))
+  if (!sele[0]) {
+    sele = name;
+    name = SettingGet<bool>(G, cSetting_auto_number_selections) ? "" : "sele";
+  }
+
+  // auto name (cmd.select("", "expr"))
+  char namebuf[16];
+  if (!name[0]) {
+    auto sel_num = SettingGet<int>(G, cSetting_sel_counter) + 1;
+    SettingSet<int>(G, cSetting_sel_counter, sel_num);
+    snprintf(
+        namebuf, sizeof(namebuf), "sel%02u", static_cast<unsigned>(sel_num));
+    name = namebuf;
+  }
+
+  // bail if name not available
+  if (ExecutiveFindObjectByName(G, name)) {
+    return pymol::Error("name conflicts with an object");
+  }
+
+  // merge with existing selection
+  std::string selebuf;
+  if (merge) {
+    if (merge == 2) {
+      // merge if exists and active
+      selebuf = pymol::join_to_string("(", sele, ") or ??", name);
+    } else {
+      // merge if exists
+      selebuf = pymol::join_to_string("(", sele, ") or ?", name);
+    }
+    sele = selebuf.c_str();
+  }
+
+  auto count = SelectorCreateWithStateDomain(
+      G, name, sele, nullptr, quiet, nullptr, state, domain);
+
+  if (count < 0) {
+    // TODO
+    return pymol::Error("should raise from SelectorCreateWithStateDomain");
+  }
+
+  if (enable == 1) {
+    ExecutiveSetObjVisib(G, name, 1, 0);
+  } else if (enable == 0) {
+    ExecutiveSetObjVisib(G, name, 0, 0);
+  }
+
+  SceneInvalidate(G);
+  SeqDirty(G);
+
+  return count;
+}
 
 /*========================================================================*/
 int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,

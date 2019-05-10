@@ -7045,33 +7045,19 @@ static PyObject *CmdSelect(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *sname, *sele;
   int quiet;
-  int ok = false;
-  int count = 0;
   int state = 0;
   char *domain;
-  ok = PyArg_ParseTuple(args, "Ossiis", &self, &sname, &sele, &quiet, &state, &domain);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    if(!domain[0])
-      domain = NULL;
-    if(ExecutiveFindObjectByName(G, sname)) {   /* name conflicts with an object */
-      count = -1;
-    } else {
-      count =
-        SelectorCreateWithStateDomain(G, sname, sele, NULL, quiet, NULL, state, domain);
-    }
-    if(count < 0)
-      ok = false;
-    SceneInvalidate(G);
-    SeqDirty(G);
-    APIExit(G);
-  }
-  return ok ? APIResultCode(count) : APIFailure();
+  int enable = -1;
+  int merge = 0;
+  API_SETUP_ARGS(G, self, args, "Ossiis|ii", &self, &sname, &sele, &quiet,
+      &state, &domain, &enable, &merge);
+  API_ASSERT(APIEnterNotModal(G));
+
+  auto res =
+      ExecutiveSelect(G, sname, sele, enable, quiet, merge, state, domain);
+
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdFinishObject(PyObject * self, PyObject * args)
