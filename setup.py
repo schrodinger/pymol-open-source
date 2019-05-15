@@ -8,9 +8,6 @@
 
 from distutils.core import setup, Extension
 from distutils.util import change_root
-from distutils.errors import *
-from distutils.command.install import install
-from distutils.command.build_py import build_py
 from glob import glob
 import shutil
 import sys, os, re
@@ -124,6 +121,17 @@ def guess_msgpackc():
 
     return 'no'
 
+
+# Important: import 'distutils.command' modules after monkeypatch_distutils
+from distutils.command.build_ext import build_ext
+from distutils.command.build_py import build_py
+from distutils.command.install import install
+
+class build_ext_pymol(build_ext):
+    def initialize_options(self):
+        build_ext.initialize_options(self)
+        if DEBUG and not WIN:
+            self.debug = True
 
 class build_py_pymol(build_py):
     def run(self):
@@ -439,6 +447,7 @@ ext_modules += [
 
 distribution = setup ( # Distribution meta-data
     cmdclass  = {
+        'build_ext': build_ext_pymol,
         'build_py': build_py_pymol,
         'install': install_pymol,
     },

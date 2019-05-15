@@ -105,9 +105,6 @@ def compile(self, sources, output_dir=None, macros=None,
 
     To do a clean build, please remove the "build" directory.
     '''
-    if os.getenv('DEBUG', ''):
-        debug = 1
-
     macros, objects, extra_postargs, pp_opts, build = self._setup_compile(
             output_dir, macros, include_dirs, sources, depends, extra_postargs)
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
