@@ -783,18 +783,20 @@ static short ObjectMeshStateRenderShader(ObjectMeshState *ms, ObjectMesh *I,
     RenderInfo *info, short mesh_as_cylinders, float mesh_width)
 {
   PyMOLGlobals *G = I->G;
-  CShaderPrg *shaderPrg;
+  CShaderPrg *shaderPrg = nullptr;
 
   if (!mesh_as_cylinders) {
     shaderPrg = G->ShaderMgr->Enable_DefaultShader(info->pass);
     shaderPrg->SetLightingEnabled(0);
     shaderPrg->Set1i("two_sided_lighting_enabled",
 		     SceneGetTwoSidedLighting(G));
-  if (!shaderPrg)
-    return false;
   }
 
   CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
+
+  if (shaderPrg) {
+    shaderPrg->Disable();
+  }
 
   if (ms->shaderUnitCellCGO){
     shaderPrg = G->ShaderMgr->Enable_DefaultShader(info->pass);
