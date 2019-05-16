@@ -3,15 +3,15 @@ PyMOL Testing Framework
 
 This is a python unittest based testing framework for PyMOL.
 
-Feel free to clone this repository and contribute.
-https://help.github.com/articles/fork-a-repo
+*Notice: "gui" tests currently don't work with PyMOL 2.x, tests should be
+run with "pymol -c ...".*
 
 How to Run Tests
 ----------------
 
 From the system command line:
 
-    pymol -q /path/to/pymol-testing/runall.pml
+    pymol -cq /path/to/pymol-testing/runall.pml
 
 From the pymol command line:
 
@@ -57,10 +57,12 @@ class, these assertion methods are currently available:
 *   `assertImageHasColor(color, img=None, delta=0)`: Takes a color name, RGB
     or RGBA color tuple and an image (or grab the current scene) and check
     if it contains the given color
+*   `assertImageHasNotColor`
 *   `assertImageHasTransparency`
 *   `assertImageHasNoTransparency`
 *   `assertColorEqual`
 *   `assertArrayEqual`
+*   `assertArrayNotEqual`
 
 Code Example
 ------------
