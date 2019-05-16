@@ -96,6 +96,11 @@ class TestSelecting(testing.PyMOLTestCase):
         self.assertEquals(2, cmd.select('present', state=2))
         self.assertEquals(0, cmd.select('present', state=3))
 
+        # domain
+        cmd.select("foo", "elem C")
+        cmd.select("bar", "name CA+N+O", domain="foo")
+        self.assertEquals(1, cmd.count_atoms("bar"))
+
     def testSelectList(self):
         cmd.select_list
         self.skipTest("TODO")
