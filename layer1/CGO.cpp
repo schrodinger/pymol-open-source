@@ -2786,7 +2786,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
   int num_total_vertices = 0, num_total_indexes = 0, num_total_vertices_lines = 0, num_total_indexes_lines = 0,
     num_total_vertices_points = 0;
   short has_draw_buffer = false;
-  float min[3] = { MAXFLOAT, MAXFLOAT, MAXFLOAT }, max[3] = { -MAXFLOAT, -MAXFLOAT, -MAXFLOAT };
+  float min[3] = { FLT_MAX, FLT_MAX, FLT_MAX }, max[3] = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
   int ambient_occlusion = 0;
   int ok = true;
   cgo = CGONewSized(I->G, 0);
@@ -3206,7 +3206,7 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
   int num_total_vertices = 0, num_total_indexes = 0, num_total_vertices_lines = 0, num_total_indexes_lines = 0,
     num_total_vertices_points = 0;
   short has_draw_buffer = false;
-  float min[3] = { MAXFLOAT, MAXFLOAT, MAXFLOAT }, max[3] = { -MAXFLOAT, -MAXFLOAT, -MAXFLOAT };
+  float min[3] = { FLT_MAX, FLT_MAX, FLT_MAX }, max[3] = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
   int ok = true;
 
   CGOCountNumVertices(I, &num_total_vertices, &num_total_indexes,
@@ -3853,7 +3853,7 @@ CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est, bool addshaders, 
   float *save_pc;
   int num_total_spheres = 0;
   short has_draw_buffer = false;
-  float min[3] = { MAXFLOAT, MAXFLOAT, MAXFLOAT }, max[3] = { -MAXFLOAT, -MAXFLOAT, -MAXFLOAT };
+  float min[3] = { FLT_MAX, FLT_MAX, FLT_MAX }, max[3] = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
   int vv, total_vert = 0, total_spheres = 0;
   int ok = true;
 

@@ -2424,7 +2424,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 	  unsigned long bits = 0L, bit;
 	  float d[3], *vn0, v0mod[3];
 	  int closeA = -1;
-	  float closeDist = MAXFLOAT;
+	  float closeDist = FLT_MAX;
 	  has = 0;
 	  
 	  v0 = I->V + 3 * a;
@@ -2649,7 +2649,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
         float at_transp = transp;
 
         AtomInfoType *ai0 = NULL;
-        float minDist = MAXFLOAT, minDist2 = MAXFLOAT, distDiff = MAXFLOAT;
+        float minDist = FLT_MAX, minDist2 = FLT_MAX, distDiff = FLT_MAX;
 	int pi = -1, catm = -1; /* variables for color smoothing */
         AtomInfoType *pai = NULL, *pai2 = NULL; /* variables for color smoothing */
         c1 = 1;
@@ -2709,7 +2709,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 
           if(at_surface_color != -1) {
             c1 = at_surface_color;
-            distDiff = MAXFLOAT;
+            distDiff = FLT_MAX;
           } else {
             c1 = ai0->color;
           }

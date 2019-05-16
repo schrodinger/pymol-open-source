@@ -85,7 +85,7 @@ static int ZLineToSphere(float *base, float *point, float *dir, float radius,
   if(ab_dangle > kR_SMALL4)
     tan_acos_dangle = (float) (sqrt1d(1.0 - dangle * dangle) / dangle);
   else
-    tan_acos_dangle = MAXFLOAT;
+    tan_acos_dangle = FLT_MAX;
 
   /* now we need to define the triangle in the perp-plane  
      to figure out where the projected line intersection point is */
@@ -236,7 +236,7 @@ static int LineToSphere(float *base, float *ray, float *point, float *dir, float
   if(ab_dangle > kR_SMALL4)
     tan_acos_dangle = (float) (sqrt1d(1.0 - dangle * dangle) / dangle);
   else
-    tan_acos_dangle = MAXFLOAT;
+    tan_acos_dangle = FLT_MAX;
 
   /* now we need to define the triangle in the perp-plane  
      to figure out where the projected line intersection point is */
@@ -1091,7 +1091,7 @@ static int FrontToInteriorSphereCapped(float *front,
 static float ZLineClipPoint(float *base, float *point, float *alongNormalSq, float cutoff)
 {
   float hyp0, hyp1, hyp2;
-  float result = MAXFLOAT;
+  float result = FLT_MAX;
 
   /* this routine determines whether or not a vector starting at "base"
      heading in the direction "normal" intersects a sphere located at "point".
@@ -1124,7 +1124,7 @@ static float ZLineClipPointNoZCheck(float *base, float *point, float *alongNorma
                                     float cutoff)
 {
   float hyp0, hyp1, hyp2;
-  float result = MAXFLOAT;
+  float result = FLT_MAX;
 
   /* this routine determines whether or not a vector starting at "base"
      heading in the direction "normal" intersects a sphere located at "point".
@@ -1585,7 +1585,7 @@ int BasisHitPerspective(BasisCallRec * BC)
 
     elist = map->EList;
 
-    r_dist = MAXFLOAT;
+    r_dist = FLT_MAX;
 
     excl_trans_flag = (excl_trans != _0);
 
@@ -2038,7 +2038,7 @@ int BasisHitOrthoscopic(BasisCallRec * BC)
 
     excl_trans_flag = (excl_trans != _0);
 
-    r_dist = MAXFLOAT;
+    r_dist = FLT_MAX;
 
     xxtmp = BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]) + c;
 
@@ -2360,7 +2360,7 @@ int BasisHitShadow(BasisCallRec * BC)
       except2 = vert2prim[except2];
 
     r_trans = _1;
-    r_dist = MAXFLOAT;
+    r_dist = FLT_MAX;
 
     xxtmp = BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]) + c;
 

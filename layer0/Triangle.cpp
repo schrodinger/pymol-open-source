@@ -784,7 +784,7 @@ static int TriangleBuildObvious(TriangleSurfaceRec * II, int i1, int i2, float *
   if(s12 > 0)
     used = I->edge[s12].vert3;
   if(s12 >= 0) {
-    float minDist2 = MAXFLOAT;
+    float minDist2 = FLT_MAX;
     maxDot = _plus;
     i0 = -1;
     v1 = v + i1 * 3;
@@ -2314,7 +2314,7 @@ int *TrianglePointsToSurface(PyMOLGlobals * G, float *v, float *vn, int n,
         maxEdgeLen = (cutoff*1.414F);
         I->maxEdgeLenSq = maxEdgeLen * maxEdgeLen;
       } else {
-        I->maxEdgeLenSq = MAXFLOAT;
+        I->maxEdgeLenSq = FLT_MAX;
       }
 
       I->map = MapNew(I->G, cutoff, v, n, extent);

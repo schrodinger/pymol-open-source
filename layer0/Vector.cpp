@@ -1780,7 +1780,7 @@ double distance_halfline2point3f(const float *base, const float *normal, const f
     else
       return (sqrt1d(result));
   } else {
-    return (MAXFLOAT);
+    return FLT_MAX;
   }
 }
 

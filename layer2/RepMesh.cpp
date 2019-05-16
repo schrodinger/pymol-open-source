@@ -624,7 +624,7 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
       for(a = 0; a < I->NTot; a++) {
         AtomInfoType *ai0 = NULL;
         c1 = 1;
-        minDist = MAXFLOAT;
+        minDist = FLT_MAX;
         i0 = -1;
         v0 = I->V + 3 * a;
         MapLocus(map, v0, &h, &k, &l);
@@ -902,8 +902,8 @@ Rep *RepMeshNew(CoordSet * cs, int state)
 
     if (ok){
       for(c = 0; c < 3; c++) {
-	minE[c] = MAXFLOAT;
-	maxE[c] = -(MAXFLOAT);
+	minE[c] = FLT_MAX;
+	maxE[c] = -FLT_MAX;
       }
       for(b = 0; b < obj->NCSet; b++) {
 	ccs = obj->CSet[b];
@@ -979,8 +979,8 @@ Rep *RepMeshNew(CoordSet * cs, int state)
             point[2] = minE[2] + c * gridSize;
             copy3f(point, F3Ptr(field->points, a, b, c));
             aNear = -1;
-            bestDist = MAXFLOAT;
-            aLen = MAXFLOAT;
+            bestDist = FLT_MAX;
+            aLen = FLT_MAX;
             MapLocus(map, point, &h, &k, &l);
             d = *(MapEStart(map, h, k, l));
             if(d) {
@@ -1008,7 +1008,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
                 inSolvFlag = false;
                 /* this point lies within a water radius of the atom, so
                    lets see if it is actually near a water */
-                aLen = MAXFLOAT;
+                aLen = FLT_MAX;
 
                 MapLocus(smap, point, &h, &k, &l);
                 d = *(MapEStart(smap, h, k, l));

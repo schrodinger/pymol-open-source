@@ -32,10 +32,6 @@ typedef unsigned int uint;
 
 #define MAX_VDW 2.5F            /* this has to go */
 
-#ifndef MAXFLOAT
-#define MAXFLOAT FLT_MAX
-#endif
-
 #ifndef R_SMALL4
 #define R_SMALL4 0.0001F
 #endif
