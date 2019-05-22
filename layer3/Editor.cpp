@@ -1716,7 +1716,7 @@ void EditorAutoMeasure(PyMOLGlobals * G,
   float _measure_value;
 
   if (sele3 < 0) {
-    ExecutiveDist(G, &_measure_value, cEditorMeasure,
+    ExecutiveDistance(G, &_measure_value, cEditorMeasure,
         cEditorSele1, cEditorSele2,
         0, -1.f, true, true, false /* reset */, state, false);
   } else if (sele4 < 0) {

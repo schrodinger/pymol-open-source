@@ -3918,7 +3918,7 @@ static PyObject *CmdDist(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveDist(G, &result, name, str1, str2, mode, cutoff,
+    ok = ExecutiveDistance(G, &result, name, str1, str2, mode, cutoff,
         labels, quiet, reset, state, zoom, state1, state2);
     APIExit(G);
   }

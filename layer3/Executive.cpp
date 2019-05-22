@@ -10191,7 +10191,7 @@ int ExecutiveDihedral(PyMOLGlobals * G, float *result, const char *nam, const ch
  * s2: selection expression or "same" keyword (shortcut for s1 = s2)
  * mode: 0 (any), 1 (bonds), 2 (hbonds), 3 (distance_exclusion), 4 (centroids)
  */
-int ExecutiveDist(PyMOLGlobals * G, float *result, const char *nam,
+int ExecutiveDistance(PyMOLGlobals * G, float *result, const char *nam,
                   const char *s1, const char *s2, int mode, float cutoff,
                   int labels, int quiet, int reset, int state, int zoom,
                   int state1, int state2)
@@ -10241,60 +10241,6 @@ int ExecutiveDist(PyMOLGlobals * G, float *result, const char *nam,
   }
   return 1;
 }
-
-
-#if 0
-/*========================================================================*/
-float ExecutiveDistance(PyMOLGlobals * G, const char *s1, const char *s2)
-{
-  int sele1, sele2;
-  float dist = -1.0;
-
-  ObjectMoleculeOpRec op1;
-  ObjectMoleculeOpRec op2;
-
-  ObjectMoleculeOpRecInit(&op1);
-  ObjectMoleculeOpRecInit(&op2);
-  sele1 = SelectorIndexByName(G, s1);
-  op1.i1 = 0;
-  op2.i2 = 0;
-  if(sele1 >= 0) {
-    op1.code = OMOP_SUMC;
-    op1.v1[0] = 0.0;
-    op1.v1[1] = 0.0;
-    op1.v1[2] = 0.0;
-    ExecutiveObjMolSeleOp(G, sele1, &op1);
-  } else {
-    ErrMessage(G, "ExecutiveDistance", "The first selection contains no atoms.");
-  }
-
-  sele2 = SelectorIndexByName(G, s2);
-  op2.i1 = 0;
-  op2.i2 = 0;
-  if(sele2 >= 0) {
-    op2.code = OMOP_SUMC;
-    op2.v1[0] = 0.0;
-    op2.v1[1] = 0.0;
-    op2.v1[2] = 0.0;
-    op2.i1 = 0;
-    ExecutiveObjMolSeleOp(G, sele2, &op2);
-  } else {
-    ErrMessage(G, "ExecutiveDistance", "The second selection contains no atoms.");
-  }
-
-  if(op1.i1 && op2.i1) {
-    scale3f(op1.v1, 1.0F / op1.i1, op1.v1);
-    scale3f(op2.v1, 1.0F / op2.i1, op2.v1);
-    dist = (float) diff3f(op1.v1, op2.v1);
-    PRINTFB(G, FB_Executive, FB_Results)
-      " Distance: %8.3f [%i atom(s) to %i atom(s)]\n", dist, op1.i1, op2.i1 ENDFB(G);
-  } else {
-    ErrMessage(G, "ExecutiveRMS", "No atoms selected.");
-  }
-  return (dist);
-}
-#endif
-
 
 /*========================================================================*/
 char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals * G, const char *name, int state, int format,

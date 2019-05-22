@@ -1190,7 +1190,7 @@ PyMOLreturn_float PyMOL_CmdDistance(CPyMOL * I,
   int ok = true;
   PyMOLreturn_float result;
   PYMOL_API_LOCK {
-    ok = ExecutiveDist(I->G, &result.value, name,
+    ok = ExecutiveDistance(I->G, &result.value, name,
         selection1,
         selection2,
         mode, cutoff, label, quiet, reset, state, zoom);
