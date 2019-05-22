@@ -985,4 +985,5 @@ SEE ALSO
         'idtf': 'pymol.querying:get_idtf',
         'mtl': _get_mtl_obj, # TODO not implemented
         'obj': _get_mtl_obj,
+        'stl': 'pymol.lazyio:get_stlstr',
     }

@@ -1633,6 +1633,7 @@ DESCRIPTION
         'r3d': load_r3d,
         'cc1': load_cc1,
         'pdb': read_pdbstr,
+        'stl': 'pymol.lazyio:read_stlstr',
 
         # Incentive
         'vis': incentive_format_not_available_func,

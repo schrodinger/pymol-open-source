@@ -9,6 +9,7 @@ from __future__ import absolute_import as _
 
 import os
 
+import pymol
 from pymol import cmd, CmdException
 
 try:
@@ -221,6 +222,26 @@ DESCRIPTION
 
         _self.load_model(model, oname,
                 state=model_num, zoom=zoom, discrete=discrete)
+
+
+def get_stlstr(binary=1, quiet=0, _self=cmd):
+    '''
+DESCRIPTION
+
+    STL geometry export
+    '''
+    raise pymol.IncentiveOnlyException(
+            "STL export not supported by this PyMOL build")
+
+
+def read_stlstr(contents, object, state=0, zoom=-1, _self=cmd):
+    '''
+DESCRIPTION
+
+    Load STL ASCII or binary content as a CGO object
+    '''
+    raise pymol.IncentiveOnlyException(
+            "STL import not supported by this PyMOL build")
 
 
 def get_mmtfstr(selection='all', state=1, _self=cmd):
