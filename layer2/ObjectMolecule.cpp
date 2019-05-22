@@ -2961,7 +2961,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
   atInfo = *atInfoPtr;
 
   p_store = p;
-  p = ncopy(cc, p, 10);
+  p = ncopy(cc, p, MAXLINELEN - 1);
   if(sscanf(cc, "%d", &nAtom) != 1) {
     nAtom = 0;
     tinker_xyz = false;
@@ -3173,7 +3173,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
     p = nextline(p);
     if(have_n_atom && (atomCount >= nAtom)) {
       int dummy;
-      ncopy(cc, p, 6);
+      ncopy(cc, p, MAXLINELEN - 1);
       if(sscanf(cc, "%d", &dummy) == 1)
         *restart = p;
       break;
