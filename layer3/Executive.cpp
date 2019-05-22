@@ -10105,7 +10105,6 @@ int ExecutiveAngle(PyMOLGlobals * G, float *result, const char *nam,
       if(!anyObj) {
         ObjectSetName((CObject *) obj, nam);
         ExecutiveManageObject(G, (CObject *) obj, zoom, quiet);
-        ExecutiveSetRepVisib(G, nam, cRepLine, 1);
         if(!labels)
           ExecutiveSetRepVisib(G, nam, cRepLabel, 0);
       }
@@ -10162,7 +10161,6 @@ int ExecutiveDihedral(PyMOLGlobals * G, float *result, const char *nam, const ch
       if(!anyObj) {
         ObjectSetName((CObject *) obj, nam);
         ExecutiveManageObject(G, (CObject *) obj, zoom, quiet);
-        ExecutiveSetRepVisib(G, nam, cRepLine, 1);
         if(!labels)
           ExecutiveSetRepVisib(G, nam, cRepLabel, 0);
       }
@@ -10227,7 +10225,6 @@ int ExecutiveDist(PyMOLGlobals * G, float *result, const char *nam,
     } else {
       ObjectSetName((CObject *) obj, nam);
       ExecutiveManageObject(G, (CObject *) obj, zoom, quiet);
-      ExecutiveSetRepVisib(G, nam, cRepLine, 1);
       if(!labels)
         ExecutiveSetRepVisib(G, nam, cRepLabel, 0);
     }
@@ -13404,6 +13401,9 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
         if(rec) {
           switch (rec->type) {
           case cExecObject:
+            if (rec->obj->type != cObjectMolecule &&
+                rec->obj->type != cObjectAlignment)
+              break;
           case cExecSelection:
           case cExecAll:
             if(rec->type == cExecAll)
@@ -14215,8 +14215,11 @@ void ExecutiveSetRepVisMask(PyMOLGlobals * G, const char *name, int repmask, int
         /* per-atom */
 
         switch (rec->type) {
-        case cExecSelection:
         case cExecObject:
+          if (rec->obj->type != cObjectMolecule &&
+              rec->obj->type != cObjectAlignment)
+            break;
+        case cExecSelection:
           {
             int sele = SelectorIndexByName(G, rec->name);
             if(sele >= 0) {
