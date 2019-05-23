@@ -171,6 +171,11 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             def mouseDoubleClickEvent(_, event):
                 self.toggle_ext_window_dockable(True)
 
+            _size_hint = QtCore.QSize(options.win_x, options.ext_y)
+
+            def sizeHint(self):
+                return self._size_hint
+
         dockWidgetContents = ExtGuiFrame(self)
         dockWidgetContents.setLayout(extguilayout)
         dockWidgetContents.setObjectName("extgui")
