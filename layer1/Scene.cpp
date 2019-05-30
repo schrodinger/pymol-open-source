@@ -526,8 +526,8 @@ int SceneLoopRelease(Block * block, int button, int x, int y, int mod)
  */
 static void UpdateFrontBackSafe(CScene *I)
 {
-  float front = I->Front;
-  float back = I->Back;
+  float front = I->m_view.m_clip.m_front;
+  float back = I->m_view.m_clip.m_back;
 
   // minimum slab
   if(back - front < cSliceMin) {
@@ -545,8 +545,8 @@ static void UpdateFrontBackSafe(CScene *I)
       back = front + cSliceMin;
   }
 
-  I->FrontSafe = front;
-  I->BackSafe = back;
+  I->m_view.m_clipSafe.m_front = front;
+  I->m_view.m_clipSafe.m_back = back;
 }
 
 #define SELE_MODE_MAX 7
@@ -564,7 +564,7 @@ static const char SelModeKW[][20] = {
 static void SceneUpdateInvMatrix(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-  float *rm = I->RotMatrix;
+  float *rm = I->m_view.m_rotMatrix;
   float *im = I->InvMatrix;
   im[0] = rm[0];
   im[1] = rm[4];
@@ -611,7 +611,7 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
   /* copy rotation matrix */
   elem->matrix_flag = true;
   dp = elem->matrix;
-  fp = I->RotMatrix;
+  fp = I->m_view.m_rotMatrix;
   *(dp++) = (double) *(fp++);
   *(dp++) = (double) *(fp++);
   *(dp++) = (double) *(fp++);
@@ -635,7 +635,7 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
   /* copy position */
   elem->pre_flag = true;
   dp = elem->pre;
-  fp = I->Pos;
+  fp = I->m_view.m_pos;
   *(dp++) = (double) *(fp++);
   *(dp++) = (double) *(fp++);
   *(dp++) = (double) *(fp++);
@@ -643,14 +643,14 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
   /* copy origin (negative) */
   elem->post_flag = true;
   dp = elem->post;
-  fp = I->Origin;
+  fp = I->m_view.m_origin;
   *(dp++) = (double) (-*(fp++));
   *(dp++) = (double) (-*(fp++));
   *(dp++) = (double) (-*(fp++));
 
   elem->clip_flag = true;
-  elem->front = I->Front;
-  elem->back = I->Back;
+  elem->front = I->m_view.m_clip.m_front;
+  elem->back = I->m_view.m_clip.m_back;
 
   elem->ortho_flag = true;
   elem->ortho = SettingGetGlobal_b(G, cSetting_ortho) ? SettingGetGlobal_f(G, cSetting_field_of_view) :
@@ -685,7 +685,7 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
 
   if(elem->matrix_flag) {
     dp = elem->matrix;
-    fp = I->RotMatrix;
+    fp = I->m_view.m_rotMatrix;
 
     *(fp++) = (float) *(dp++);
     *(fp++) = (float) *(dp++);
@@ -712,7 +712,7 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
 
   if(elem->pre_flag) {
     dp = elem->pre;
-    fp = I->Pos;
+    fp = I->m_view.m_pos;
     *(fp++) = (float) *(dp++);
     *(fp++) = (float) *(dp++);
     *(fp++) = (float) *(dp++);
@@ -721,7 +721,7 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
 
   if(elem->post_flag) {
     dp = elem->post;
-    fp = I->Origin;
+    fp = I->m_view.m_origin;
     *(fp++) = (float) (-*(dp++));
     *(fp++) = (float) (-*(dp++));
     *(fp++) = (float) (-*(dp++));
@@ -865,12 +865,12 @@ void SceneGetCenter(PyMOLGlobals * G, float *pos)
 {
   CScene *I = G->Scene;
 
-  MatrixTransformC44fAs33f3f(I->RotMatrix, I->Origin, pos);
+  MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, I->m_view.m_origin, pos);
 
-  pos[0] -= I->Pos[0];
-  pos[1] -= I->Pos[1];
+  pos[0] -= I->m_view.m_pos[0];
+  pos[1] -= I->m_view.m_pos[1];
 
-  MatrixInvTransformC44fAs33f3f(I->RotMatrix, pos, pos);
+  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, pos, pos);
 }
 
 /*========================================================================*/
@@ -904,20 +904,18 @@ void SceneGetView(PyMOLGlobals * G, SceneViewType view)
   CScene *I = G->Scene;
   p = view;
   for(a = 0; a < 16; a++)
-    *(p++) = I->RotMatrix[a];
-  *(p++) = I->Pos[0];
-  *(p++) = I->Pos[1];
-  *(p++) = I->Pos[2];
-  *(p++) = I->Origin[0];
-  *(p++) = I->Origin[1];
-  *(p++) = I->Origin[2];
-  *(p++) = I->Front;
-  *(p++) = I->Back;
+    *(p++) = I->m_view.m_rotMatrix[a];
+  *(p++) = I->m_view.m_pos[0];
+  *(p++) = I->m_view.m_pos[1];
+  *(p++) = I->m_view.m_pos[2];
+  *(p++) = I->m_view.m_origin[0];
+  *(p++) = I->m_view.m_origin[1];
+  *(p++) = I->m_view.m_origin[2];
+  *(p++) = I->m_view.m_clip.m_front;
+  *(p++) = I->m_view.m_clip.m_back;
   *(p++) = SettingGetGlobal_b(G, cSetting_ortho) ? SettingGetGlobal_f(G, cSetting_field_of_view) :
     -SettingGetGlobal_f(G, cSetting_field_of_view);
-
 }
-
 
 /*========================================================================*/
 void SceneSetView(PyMOLGlobals * G, SceneViewType view,
@@ -941,14 +939,14 @@ void SceneSetView(PyMOLGlobals * G, SceneViewType view,
 
   p = view;
   for(a = 0; a < 16; a++)
-    I->RotMatrix[a] = *(p++);
+    I->m_view.m_rotMatrix[a] = *(p++);
   SceneUpdateInvMatrix(G);
-  I->Pos[0] = *(p++);
-  I->Pos[1] = *(p++);
-  I->Pos[2] = *(p++);
-  I->Origin[0] = *(p++);
-  I->Origin[1] = *(p++);
-  I->Origin[2] = *(p++);
+  I->m_view.m_pos[0] = *(p++);
+  I->m_view.m_pos[1] = *(p++);
+  I->m_view.m_pos[2] = *(p++);
+  I->m_view.m_origin[0] = *(p++);
+  I->m_view.m_origin[1] = *(p++);
+  I->m_view.m_origin[2] = *(p++);
 
   I->LastSweep = 0.0F;
   I->LastSweepX = 0.0F;
@@ -1035,10 +1033,10 @@ void SceneSetStereo(PyMOLGlobals * G, int flag)
 void SceneTranslate(PyMOLGlobals * G, float x, float y, float z)
 {
   CScene *I = G->Scene;
-  I->Pos[0] += x;
-  I->Pos[1] += y;
-  I->Pos[2] += z;
-  SceneClipSet(G, I->Front - z, I->Back - z);
+  I->m_view.m_pos[0] += x;
+  I->m_view.m_pos[1] += y;
+  I->m_view.m_pos[2] += z;
+  SceneClipSet(G, I->m_view.m_clip.m_front - z, I->m_view.m_clip.m_back - z);
 }
 
 void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_mode)
@@ -1051,17 +1049,17 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
     if((x != 0.0F) || (y != 0.0F)) {
       float vScale = SceneGetExactScreenVertexScale(G, NULL);
       float factor = vScale * (I->Height + I->Width) / 2;
-      I->Pos[0] += x * factor;
-      I->Pos[1] += y * factor;
+      I->m_view.m_pos[0] += x * factor;
+      I->m_view.m_pos[1] += y * factor;
       invalidate = true;
     }
     if(z != 0.0F) {
-      float factor = ((I->FrontSafe + I->BackSafe) / 2);        /* average distance within visible space */
+      float factor = ((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2);        /* average distance within visible space */
       if(factor > 0.0F) {
         factor *= z;
-        I->Pos[2] += factor;
-        I->Front -= factor;
-        I->Back -= factor;
+        I->m_view.m_pos[2] += factor;
+        I->m_view.m_clip.m_front -= factor;
+        I->m_view.m_clip.m_back -= factor;
         UpdateFrontBackSafe(I);
       }
       invalidate = true;
@@ -1071,18 +1069,18 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
     if((x != 0.0F) || (y != 0.0F)) {
       float vScale = SceneGetExactScreenVertexScale(G, NULL);
       float factor = vScale * (I->Height + I->Width) / 2;
-      I->Pos[0] += x * factor;
-      I->Pos[1] += y * factor;
+      I->m_view.m_pos[0] += x * factor;
+      I->m_view.m_pos[1] += y * factor;
       invalidate = true;
     }
     if(z != 0.0F) {
-      float factor = ((I->FrontSafe + I->BackSafe) / 2);        /* average distance within visible space */
+      float factor = ((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2);        /* average distance within visible space */
       if(factor > 0.0F) {
         factor *= z;
         {
-          float old_front = I->Front;
-          float old_back = I->Back;
-          float old_origin = -I->Pos[2];
+          float old_front = I->m_view.m_clip.m_front;
+          float old_back = I->m_view.m_clip.m_back;
+          float old_origin = -I->m_view.m_pos[2];
           SceneClip(G, 7, factor, NULL, 0);
           SceneDoRoving(G, old_front, old_back, old_origin, true, true);
         }
@@ -1109,7 +1107,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
       v2[2] = z * scale;
 
       /* transform into model coodinate space */
-      MatrixInvTransformC44fAs33f3f(I->RotMatrix, v2, v2);
+      MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
 
       EditorDrag(G, NULL, -1, cButModeMovDrag,
                  SettingGetGlobal_i(G, cSetting_state) - 1, NULL, v2, NULL);
@@ -1181,7 +1179,7 @@ void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_
         v1[0] = cPI * (60 * angle / 180.0F) * scale;
 
         /* transform into model coodinate space */
-        MatrixInvTransformC44fAs33f3f(I->RotMatrix, axis, v2);
+        MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, axis, v2);
 
         EditorDrag(G, NULL, -1, cButModeRotDrag,
                    SettingGetGlobal_i(G, cSetting_state) - 1, v1, v2, NULL);
@@ -1209,8 +1207,8 @@ static void SceneClipSetWithDirty(PyMOLGlobals * G, float front, float back, int
     front = avg - cSliceMin / 2.0;
   }
 
-  I->Front = front;
-  I->Back = back;
+  I->m_view.m_clip.m_front = front;
+  I->m_view.m_clip.m_back = back;
 
   UpdateFrontBackSafe(I);
 
@@ -1236,13 +1234,13 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
   float mn[3], mx[3], cent[3], v0[3], offset[3], origin[3];
   switch (plane) {
   case 0:                      /* near */
-    SceneClipSet(G, I->Front - movement, I->Back);
+    SceneClipSet(G, I->m_view.m_clip.m_front - movement, I->m_view.m_clip.m_back);
     break;
   case 1:                      /* far */
-    SceneClipSet(G, I->Front, I->Back - movement);
+    SceneClipSet(G, I->m_view.m_clip.m_front, I->m_view.m_clip.m_back - movement);
     break;
   case 2:                      /* move */
-    SceneClipSet(G, I->Front - movement, I->Back - movement);
+    SceneClipSet(G, I->m_view.m_clip.m_front - movement, I->m_view.m_clip.m_back - movement);
     break;
   case 3:                      /* slab */
     if(sele[0]) {
@@ -1250,16 +1248,16 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
         sele = NULL;
       else {
         average3f(mn, mx, cent);        /* get center of selection */
-        subtract3f(cent, I->Origin, v0);        /* how far from origin? */
-        MatrixTransformC44fAs33f3f(I->RotMatrix, v0, offset);   /* convert to view-space */
+        subtract3f(cent, I->m_view.m_origin, v0);        /* how far from origin? */
+        MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, v0, offset);   /* convert to view-space */
       }
     } else {
       sele = NULL;
     }
-    avg = (I->Front + I->Back) / 2.0F;
+    avg = (I->m_view.m_clip.m_front + I->m_view.m_clip.m_back) / 2.0F;
     movement /= 2.0F;
     if(sele) {
-      avg = -I->Pos[2] - offset[2];
+      avg = -I->m_view.m_pos[2] - offset[2];
     }
     SceneClipSet(G, avg - movement, avg + movement);
     break;
@@ -1270,20 +1268,20 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
       sele = cKeywordAll;
     }
     if(WordMatchExact(G, sele, cKeywordCenter, true)) {
-      MatrixTransformC44fAs33f3f(I->RotMatrix, I->Origin, origin);      /* convert to view-space */
+      MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, I->m_view.m_origin, origin);      /* convert to view-space */
       SceneClipSet(G, origin[2] - movement, origin[2] + movement);
     } else if(WordMatchExact(G, sele, cKeywordOrigin, true)) {
-      SceneClipSet(G, -I->Pos[2] - movement, -I->Pos[2] + movement);
+      SceneClipSet(G, -I->m_view.m_pos[2] - movement, -I->m_view.m_pos[2] + movement);
     } else {
       if(!ExecutiveGetCameraExtent(G, sele, mn, mx, true, state))
         sele = NULL;
       if(sele) {
         if(sele[0]) {
           average3f(mn, mx, cent);      /* get center of selection */
-          MatrixTransformC44fAs33f3f(I->RotMatrix, I->Origin, origin);  /* convert to view-space */
+          MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, I->m_view.m_origin, origin);  /* convert to view-space */
           subtract3f(mx, origin, mx);   /* how far from origin? */
           subtract3f(mn, origin, mn);   /* how far from origin? */
-          SceneClipSet(G, -I->Pos[2] - mx[2] - movement, -I->Pos[2] - mn[2] + movement);
+          SceneClipSet(G, -I->m_view.m_pos[2] - mx[2] - movement, -I->m_view.m_pos[2] - mn[2] + movement);
         } else {
           sele = NULL;
         }
@@ -1292,8 +1290,8 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
     break;
   case 5:                      /* scaling */
     {
-      double avg = (I->Front / 2.0) + (I->Back / 2.0);
-      double width_half = I->Back - avg;
+      double avg = (I->m_view.m_clip.m_front / 2.0) + (I->m_view.m_clip.m_back / 2.0);
+      double width_half = I->m_view.m_clip.m_back - avg;
       double new_w_half = std::min(movement * width_half,
           width_half + 1000.0); // prevent exploding of clipping planes
 
@@ -1302,13 +1300,13 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
     break;
   case 6:                      /* proportional movement */
     {
-      float shift = (I->Front - I->Back) * movement;
-      SceneClipSet(G, I->Front + shift, I->Back + shift);
+      float shift = (I->m_view.m_clip.m_front - I->m_view.m_clip.m_back) * movement;
+      SceneClipSet(G, I->m_view.m_clip.m_front + shift, I->m_view.m_clip.m_back + shift);
     }
     break;
   case 7:                      /* linear movement */
     {
-      SceneClipSet(G, I->Front + movement, I->Back + movement);
+      SceneClipSet(G, I->m_view.m_clip.m_front + movement, I->m_view.m_clip.m_back + movement);
     }
     break;
   }
@@ -1321,7 +1319,7 @@ void SceneSetMatrix(PyMOLGlobals * G, float *m)
   CScene *I = G->Scene;
   int a;
   for(a = 0; a < 16; a++)
-    I->RotMatrix[a] = m[a];
+    I->m_view.m_rotMatrix[a] = m[a];
   SceneUpdateInvMatrix(G);
 }
 
@@ -1345,7 +1343,7 @@ int SceneGetState(PyMOLGlobals * G)
 float *SceneGetMatrix(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-  return (I->RotMatrix);
+  return (I->m_view.m_rotMatrix);
 }
 
 float *SceneGetPmvMatrix(PyMOLGlobals * G)
@@ -2304,16 +2302,16 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
   float dist = 2.f * radius / GetFovWidth(G);
 
   /* find where this point is in relationship to the origin */
-  subtract3f(I->Origin, location, v0);
+  subtract3f(I->m_view.m_origin, location, v0);
 
-  MatrixTransformC44fAs33f3f(I->RotMatrix, v0, I->Pos); /* convert to view-space */
+  MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, v0, I->m_view.m_pos); /* convert to view-space */
 
   if (I->Height > I->Width && I->Height && I->Width)
     dist *= I->Height / I->Width;
 
-  I->Pos[2] -= dist;
-  I->Front = (-I->Pos[2] - radius * 1.2F);
-  I->Back = (-I->Pos[2] + radius * 1.2F);
+  I->m_view.m_pos[2] -= dist;
+  I->m_view.m_clip.m_front = (-I->m_view.m_pos[2] - radius * 1.2F);
+  I->m_view.m_clip.m_back = (-I->m_view.m_pos[2] + radius * 1.2F);
   UpdateFrontBackSafe(I);
   SceneRovingDirty(G);
 }
@@ -2327,25 +2325,25 @@ void SceneRelocate(PyMOLGlobals * G, const float *location)
   float slab_width;
   float dist;
 
-  slab_width = I->Back - I->Front;
+  slab_width = I->m_view.m_clip.m_back - I->m_view.m_clip.m_front;
 
   /* find out how far camera was from previous origin */
-  dist = I->Pos[2];
+  dist = I->m_view.m_pos[2];
 
   // stay in front of camera, empirical value to show at least 1 bond
   if (dist > -5.f)
     dist = -5.f;
 
   /* find where this point is in relationship to the origin */
-  subtract3f(I->Origin, location, v0);
+  subtract3f(I->m_view.m_origin, location, v0);
 
-  /*  printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back); */
+  /*  printf("%8.3f %8.3f %8.3f\n",I->m_view.m_clip.m_front,I->m_view.m_pos[2],I->m_view.m_clip.m_back); */
 
-  MatrixTransformC44fAs33f3f(I->RotMatrix, v0, I->Pos); /* convert to view-space */
+  MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, v0, I->m_view.m_pos); /* convert to view-space */
 
-  I->Pos[2] = dist;
-  I->Front = (-I->Pos[2] - (slab_width * 0.50F));
-  I->Back = (-I->Pos[2] + (slab_width * 0.50F));
+  I->m_view.m_pos[2] = dist;
+  I->m_view.m_clip.m_front = (-I->m_view.m_pos[2] - (slab_width * 0.50F));
+  I->m_view.m_clip.m_back = (-I->m_view.m_pos[2] + (slab_width * 0.50F));
   UpdateFrontBackSafe(I);
   SceneRovingDirty(G);
 
@@ -2362,7 +2360,7 @@ void SceneRelocate(PyMOLGlobals * G, const float *location)
 void SceneOriginGet(PyMOLGlobals * G, float *origin)
 {
   CScene *I = G->Scene;
-  copy3f(I->Origin, origin);
+  copy3f(I->m_view.m_origin, origin);
 }
 
 
@@ -2380,13 +2378,13 @@ void SceneOriginSet(PyMOLGlobals * G, const float *origin, int preserve)
   float v0[3], v1[3];
 
   if(preserve) {                /* preserve current viewing location */
-    subtract3f(origin, I->Origin, v0);  /* model-space translation */
-    MatrixTransformC44fAs33f3f(I->RotMatrix, v0, v1);   /* convert to view-space */
-    add3f(I->Pos, v1, I->Pos);  /* offset view to compensate */
+    subtract3f(origin, I->m_view.m_origin, v0);  /* model-space translation */
+    MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, v0, v1);   /* convert to view-space */
+    add3f(I->m_view.m_pos, v1, I->m_view.m_pos);  /* offset view to compensate */
   }
-  I->Origin[0] = origin[0];     /* move origin */
-  I->Origin[1] = origin[1];
-  I->Origin[2] = origin[2];
+  I->m_view.m_origin[0] = origin[0];     /* move origin */
+  I->m_view.m_origin[1] = origin[1];
+  I->m_view.m_origin[2] = origin[2];
   SceneInvalidate(G);
 }
 
@@ -3322,23 +3320,23 @@ static void SceneDoRoving(PyMOLGlobals * G, float old_front,
 
     z_buffer = SettingGetGlobal_f(G, cSetting_roving_origin_z_cushion);
 
-    delta_front = I->Front - old_front;
-    delta_back = I->Back - old_back;
+    delta_front = I->m_view.m_clip.m_front - old_front;
+    delta_back = I->m_view.m_clip.m_back - old_back;
 
     zero3f(v2);
 
-    slab_width = I->Back - I->Front;
+    slab_width = I->m_view.m_clip.m_back - I->m_view.m_clip.m_front;
 
     /* first, check to make sure that the origin isn't too close to either plane */
     if((z_buffer * 2) > slab_width)
       z_buffer = slab_width * 0.5F;
 
-    if(old_origin < (I->Front + z_buffer)) {    /* old origin behind front plane */
+    if(old_origin < (I->m_view.m_clip.m_front + z_buffer)) {    /* old origin behind front plane */
       front_weight = 1.0F;
-      delta_front = (I->Front + z_buffer) - old_origin; /* move origin into allowed regioin */
-    } else if(old_origin > (I->Back - z_buffer)) {      /* old origin was behind back plane */
+      delta_front = (I->m_view.m_clip.m_front + z_buffer) - old_origin; /* move origin into allowed regioin */
+    } else if(old_origin > (I->m_view.m_clip.m_back - z_buffer)) {      /* old origin was behind back plane */
       front_weight = 0.0F;
-      delta_back = (I->Back - z_buffer) - old_origin;
+      delta_back = (I->m_view.m_clip.m_back - z_buffer) - old_origin;
 
     } else if(slab_width >= R_SMALL4) { /* otherwise, if slab exists */
       front_weight = (old_back - old_origin) / slab_width;      /* weight based on relative proximity */
@@ -3367,10 +3365,10 @@ static void SceneDoRoving(PyMOLGlobals * G, float old_front,
       }
     }
 
-    old_pos2 = I->Pos[2];
+    old_pos2 = I->m_view.m_pos[2];
 
-    MatrixInvTransformC44fAs33f3f(I->RotMatrix, v2, v2);        /* transform offset into realspace */
-    subtract3f(I->Origin, v2, v2);      /* calculate new origin location */
+    MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);        /* transform offset into realspace */
+    subtract3f(I->m_view.m_origin, v2, v2);      /* calculate new origin location */
     SceneOriginSet(G, v2, true);        /* move origin, preserving camera location */
 
     if(SettingGetGlobal_b(G, cSetting_ortho) || zoom_flag) {
@@ -3378,11 +3376,11 @@ static void SceneDoRoving(PyMOLGlobals * G, float old_front,
          to change.  Thus, we have to hold Pos[2] constant, and instead
          move the planes.
        */
-      float delta = old_pos2 - I->Pos[2];
-      I->Pos[2] += delta;
-      SceneClipSet(G, I->Front - delta, I->Back - delta);
+      float delta = old_pos2 - I->m_view.m_pos[2];
+      I->m_view.m_pos[2] += delta;
+      SceneClipSet(G, I->m_view.m_clip.m_front - delta, I->m_view.m_clip.m_back - delta);
     }
-    slab_width = I->Back - I->Front;
+    slab_width = I->m_view.m_clip.m_back - I->m_view.m_clip.m_front;
 
     /* first, check to make sure that the origin isn't too close to either plane */
     if((z_buffer * 2) > slab_width)
@@ -3502,7 +3500,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     v[0] = -(I->Width / 2 - (x - I->rect.left)) * vScale;
     v[1] = -(I->Height / 2 - (y - I->rect.bottom)) * vScale;
     v[2] = 0;
-    MatrixInvTransformC44fAs33f3f(I->RotMatrix, v, v);
+    MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v, v);
     add3f(v, I->LastClickVertex, I->LastClickVertex);
   }
 
@@ -3580,9 +3578,9 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     case cButModeMoveSlabForward:
       SceneNoteMouseInteraction(G);
       {
-        float old_front = I->Front;
-        float old_back = I->Back;
-        float old_origin = -I->Pos[2];
+        float old_front = I->m_view.m_clip.m_front;
+        float old_back = I->m_view.m_clip.m_back;
+        float old_origin = -I->m_view.m_pos[2];
         SceneClip(G, 6, 0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL,
                   0);
         SceneDoRoving(G, old_front, old_back, old_origin, true, false);
@@ -3591,9 +3589,9 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     case cButModeMoveSlabBackward:
       SceneNoteMouseInteraction(G);
       {
-        float old_front = I->Front;
-        float old_back = I->Back;
-        float old_origin = -I->Pos[2];
+        float old_front = I->m_view.m_clip.m_front;
+        float old_back = I->m_view.m_clip.m_back;
+        float old_origin = -I->m_view.m_pos[2];
 
         SceneClip(G, 6, -0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL,
                   0);
@@ -3603,12 +3601,12 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     case cButModeZoomForward:
       SceneNoteMouseInteraction(G);
       {
-        float factor = -((I->FrontSafe + I->BackSafe) / 2) * 0.1 *
+        float factor = -((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2) * 0.1 *
           SettingGetGlobal_f(G, cSetting_mouse_wheel_scale);
         if(factor <= 0.0F) {
-          I->Pos[2] += factor;
-          I->Front -= factor;
-          I->Back -= factor;
+          I->m_view.m_pos[2] += factor;
+          I->m_view.m_clip.m_front -= factor;
+          I->m_view.m_clip.m_back -= factor;
           UpdateFrontBackSafe(I);
         }
       }
@@ -3616,12 +3614,12 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     case cButModeZoomBackward:
       SceneNoteMouseInteraction(G);
       {
-        float factor = ((I->FrontSafe + I->BackSafe) / 2) * 0.1F
+        float factor = ((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2) * 0.1F
           * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale);
         if(factor >= 0.0F) {
-          I->Pos[2] += factor;
-          I->Front -= factor;
-          I->Back -= factor;
+          I->m_view.m_pos[2] += factor;
+          I->m_view.m_clip.m_front -= factor;
+          I->m_view.m_clip.m_back -= factor;
           UpdateFrontBackSafe(I);
         }
       }
@@ -3629,9 +3627,9 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     case cButModeMoveSlabAndZoomForward:
       SceneNoteMouseInteraction(G);
       {
-        float old_front = I->Front;
-        float old_back = I->Back;
-        float old_origin = -I->Pos[2];
+        float old_front = I->m_view.m_clip.m_front;
+        float old_back = I->m_view.m_clip.m_back;
+        float old_origin = -I->m_view.m_pos[2];
         SceneClip(G, 6, 0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL,
                   0);
         SceneDoRoving(G, old_front, old_back, old_origin, true, true);
@@ -3640,9 +3638,9 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     case cButModeMoveSlabAndZoomBackward:
       SceneNoteMouseInteraction(G);
       {
-        float old_front = I->Front;
-        float old_back = I->Back;
-        float old_origin = -I->Pos[2];
+        float old_front = I->m_view.m_clip.m_front;
+        float old_back = I->m_view.m_clip.m_back;
+        float old_origin = -I->m_view.m_pos[2];
         SceneClip(G, 6, -0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL,
                   0);
         SceneDoRoving(G, old_front, old_back, old_origin, true, true);
@@ -4316,9 +4314,9 @@ void ScenePopRasterMatrix(PyMOLGlobals * G)
  */
 static void SceneComposeModelViewMatrix(CScene * I, float * modelView) {
   identity44f(modelView);
-  MatrixTranslateC44f(modelView, I->Pos[0], I->Pos[1], I->Pos[2]);
-  MatrixMultiplyC44f(I->RotMatrix, modelView);
-  MatrixTranslateC44f(modelView, -I->Origin[0], -I->Origin[1], -I->Origin[2]);
+  MatrixTranslateC44f(modelView, I->m_view.m_pos[0], I->m_view.m_pos[1], I->m_view.m_pos[2]);
+  MatrixMultiplyC44f(I->m_view.m_rotMatrix, modelView);
+  MatrixTranslateC44f(modelView, -I->m_view.m_origin[0], -I->m_view.m_origin[1], -I->m_view.m_origin[2]);
 }
 
 /*========================================================================*/
@@ -4335,7 +4333,7 @@ void SceneGetEyeNormal(PyMOLGlobals * G, float *v1, float *normal)
   MatrixTransformC44f4f(modelView, p1, p2);     /* modelview transformation */
   copy3f(p2, p1);
   normalize3f(p1);
-  MatrixInvTransformC44fAs33f3f(I->RotMatrix, p1, p2);
+  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, p1, p2);
   invert3f3f(p2, normal);
 }
 
@@ -4346,7 +4344,7 @@ bool SceneGetVisible(PyMOLGlobals * G, const float *v1)
 {
   CScene *I = G->Scene;
   float depth = SceneGetRawDepth(G, v1);
-  return (I->BackSafe >= depth && depth >= I->FrontSafe);
+  return (I->m_view.m_clipSafe.m_back >= depth && depth >= I->m_view.m_clipSafe.m_front);
 }
 
 /**
@@ -4361,7 +4359,7 @@ float SceneGetRawDepth(PyMOLGlobals * G, const float *v1)
   float modelView[16];
 
   if(!v1 || SettingGetGlobal_i(G, cSetting_ortho))
-    return -I->Pos[2];
+    return -I->m_view.m_pos[2];
 
   SceneComposeModelViewMatrix(I, modelView);
 
@@ -4379,7 +4377,7 @@ float SceneGetDepth(PyMOLGlobals * G, const float *v1)
 {
   CScene *I = G->Scene;
   float rawDepth = SceneGetRawDepth(G, v1);
-  return ((rawDepth - I->FrontSafe)/(I->BackSafe-I->FrontSafe));
+  return ((rawDepth - I->m_view.m_clipSafe.m_front)/(I->m_view.m_clipSafe.m_back-I->m_view.m_clipSafe.m_front));
 }
 
 /*========================================================================*/
@@ -4884,7 +4882,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
               v2[0] = (x - I->LastX) * vScale;
               v2[1] = (y - I->LastY) * vScale;
               v2[2] = 0;
-              MatrixInvTransformC44fAs33f3f(I->RotMatrix, v2, v2);
+              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
               break;
             }
             add3f(v1, v2, v2);
@@ -4984,7 +4982,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
       theta = theta / (1.0F + (float) fabs(axis[2]));
 
       /* transform into model coodinate space */
-      MatrixInvTransformC44fAs33f3f(I->RotMatrix, axis, v2);
+      MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, axis, v2);
       v1[0] = (float) (cPI * theta / 180.0);
       EditorDrag(G, NULL, -1, mode,
                  SettingGetGlobal_i(G, cSetting_state) - 1, v1, v2, v3);
@@ -5001,7 +4999,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
       }
       if(!I->Threshold) {
 
-        copy3f(I->Origin, v1);
+        copy3f(I->m_view.m_origin, v1);
         vScale = SceneGetExactScreenVertexScale(G, v1);
         if(stereo_via_adjacent_array(I->StereoMode)) {
           x = get_stereo_x(x, &I->LastX, I->Width, NULL);
@@ -5022,8 +5020,8 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
         v3[2] = 1.0F;
 
         /* transform into model coodinate space */
-        MatrixInvTransformC44fAs33f3f(I->RotMatrix, v2, v2);
-        MatrixInvTransformC44fAs33f3f(I->RotMatrix, v3, v3);
+        MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
+        MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v3, v3);
 
         EditorDrag(G, NULL, -1, mode,
                    SettingGetGlobal_i(G, cSetting_state) - 1, v1, v2, v3);
@@ -5085,7 +5083,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
                 v2[0] = (x - I->LastX) * vScale;
                 v2[1] = (y - I->LastY) * vScale;
                 v2[2] = 0;
-                MatrixInvTransformC44fAs33f3f(I->RotMatrix, v2, v2);
+                MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
                 break;
               }
               add3f(v1, v2, v2);
@@ -5131,8 +5129,8 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
               v3[2] = 1.0F;
 
               /* transform into model coodinate space */
-              MatrixInvTransformC44fAs33f3f(I->RotMatrix, v2, v2);
-              MatrixInvTransformC44fAs33f3f(I->RotMatrix, v3, v3);
+              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
+              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v3, v3);
 
               if(I->LastPicked.src.bond >= cPickableAtom) {
                 if((mode != cButModeMoveAtom) && (mode != cButModeMoveAtomZ)) {
@@ -5199,8 +5197,8 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
                 v3[2] = 1.0F;
 
                 /* transform into model coodinate space */
-                MatrixInvTransformC44fAs33f3f(I->RotMatrix, v2, v2);
-                MatrixInvTransformC44fAs33f3f(I->RotMatrix, v3, v3);
+                MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
+                MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v3, v3);
 
                 ObjectSliceDrag(slice, SceneGetState(G), mode, v1, v2, v3);
               }
@@ -5237,8 +5235,8 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
               v3[2] = 1.0F;
 
               /* transform into model coodinate space */
-              MatrixInvTransformC44fAs33f3f(I->RotMatrix, v2, v2);
-              MatrixInvTransformC44fAs33f3f(I->RotMatrix, v3, v3);
+              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
+              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v3, v3);
 
               if(I->LastPicked.src.bond == cPickableLabel) {
                 int log_trans = SettingGetGlobal_b(G, cSetting_log_conformations);
@@ -5260,7 +5258,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
 
       SceneNoteMouseInteraction(G);
 
-      vScale = SceneGetExactScreenVertexScale(G, I->Origin);
+      vScale = SceneGetExactScreenVertexScale(G, I->m_view.m_origin);
       if(stereo_via_adjacent_array(I->StereoMode)) {
 
         x = get_stereo_x(x, &I->LastX, I->Width, NULL);
@@ -5272,13 +5270,13 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
 
       moved_flag = false;
       if(I->LastX != x) {
-        I->Pos[0] += v2[0];
+        I->m_view.m_pos[0] += v2[0];
         I->LastX = x;
         SceneInvalidate(G);
         moved_flag = true;
       }
       if(I->LastY != y) {
-        I->Pos[1] += v2[1];
+        I->m_view.m_pos[1] += v2[1];
         I->LastY = y;
         SceneInvalidate(G);
         moved_flag = true;
@@ -5396,9 +5394,9 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
                  cPI);
       normalize23f(cp, axis2);
 
-      old_front = I->Front;
-      old_back = I->Back;
-      old_origin = -I->Pos[2];
+      old_front = I->m_view.m_clip.m_front;
+      old_back = I->m_view.m_clip.m_back;
+      old_origin = -I->m_view.m_pos[2];
 
       moved_flag = false;
       adjust_flag = false;
@@ -5440,12 +5438,12 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
           {
             // the 5.0 min depth below is an empirical value
             float factor = SettingGetGlobal_f(G, cSetting_mouse_z_scale) *
-              (y - I->LastY) / 400.0 * std::max(5.f, -I->Pos[2]);
+              (y - I->LastY) / 400.0 * std::max(5.f, -I->m_view.m_pos[2]);
             if(!SettingGetGlobal_b(G, cSetting_legacy_mouse_zoom))
               factor = -factor;
-            I->Pos[2] += factor;
-            I->Front -= factor;
-            I->Back -= factor;
+            I->m_view.m_pos[2] += factor;
+            I->m_view.m_clip.m_front -= factor;
+            I->m_view.m_clip.m_back -= factor;
             UpdateFrontBackSafe(I);
           }
           I->LastY = y;
@@ -5455,34 +5453,34 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
         break;
       case cButModeClipNF:
         if(I->LastX != x) {
-          I->Back -= (((float) x) - I->LastX) / 10;
+          I->m_view.m_clip.m_back -= (((float) x) - I->LastX) / 10;
           I->LastX = x;
           moved_flag = true;
         }
         if(I->LastY != y) {
-          I->Front -= (((float) y) - I->LastY) / 10;
+          I->m_view.m_clip.m_front -= (((float) y) - I->LastY) / 10;
           I->LastY = y;
           moved_flag = true;
         }
         if(moved_flag) {
-          SceneClipSet(G, I->Front, I->Back);
+          SceneClipSet(G, I->m_view.m_clip.m_front, I->m_view.m_clip.m_back);
         }
         break;
       case cButModeClipN:
         if(I->LastX != x || I->LastY != y) {
-          I->Front -= (x - I->LastX + y - I->LastY) / 10.f;
+          I->m_view.m_clip.m_front -= (x - I->LastX + y - I->LastY) / 10.f;
           I->LastX = x;
           I->LastY = y;
-          SceneClipSet(G, I->Front, I->Back);
+          SceneClipSet(G, I->m_view.m_clip.m_front, I->m_view.m_clip.m_back);
           moved_flag = true;
         }
         break;
       case cButModeClipF:
         if(I->LastX != x || I->LastY != y) {
-          I->Back -= (x - I->LastX + y - I->LastY) / 10.f;
+          I->m_view.m_clip.m_back -= (x - I->LastX + y - I->LastY) / 10.f;
           I->LastX = x;
           I->LastY = y;
-          SceneClipSet(G, I->Front, I->Back);
+          SceneClipSet(G, I->m_view.m_clip.m_front, I->m_view.m_clip.m_back);
           moved_flag = true;
         }
         break;
@@ -5533,7 +5531,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
               SettingGetGlobal_i(G, cSetting_edit_light), 1, 9) - 1];
 
 	  if(I->LastY != y) {
-	    factor = 400 / ((I->FrontSafe + I->BackSafe) / 2);
+	    factor = 400 / ((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2);
 	    if(factor >= 0.0F) {
 	      factor = SettingGetGlobal_f(G, cSetting_mouse_z_scale) * 
 		(((float) y) - I->LastY) / factor;
@@ -5754,7 +5752,7 @@ void SceneFree(PyMOLGlobals * G)
 void SceneResetMatrix(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-  identity44f(I->RotMatrix);
+  identity44f(I->m_view.m_rotMatrix);
   SceneUpdateInvMatrix(G);
 }
 
@@ -5764,23 +5762,23 @@ void SceneSetDefaultView(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
 
-  identity44f(I->RotMatrix);
+  identity44f(I->m_view.m_rotMatrix);
   SceneUpdateInvMatrix(G);
 
   I->ViewNormal[0] = 0.0F;
   I->ViewNormal[1] = 0.0F;
   I->ViewNormal[2] = 1.0F;
 
-  I->Pos[0] = 0.0F;
-  I->Pos[1] = 0.0F;
-  I->Pos[2] = -50.0F;
+  I->m_view.m_pos[0] = 0.0F;
+  I->m_view.m_pos[1] = 0.0F;
+  I->m_view.m_pos[2] = -50.0F;
 
-  I->Origin[0] = 0.0F;
-  I->Origin[1] = 0.0F;
-  I->Origin[2] = 0.0F;
+  I->m_view.m_origin[0] = 0.0F;
+  I->m_view.m_origin[1] = 0.0F;
+  I->m_view.m_origin[2] = 0.0F;
 
-  I->Front = 40.0F;
-  I->Back = 100.0F;
+  I->m_view.m_clip.m_front = 40.0F;
+  I->m_view.m_clip.m_back = 100.0F;
   UpdateFrontBackSafe(I);
 
   I->Scale = 1.0F;
@@ -6724,11 +6722,11 @@ int SceneSetFog(PyMOLGlobals *G){
   CScene *I = G->Scene;
   int fog_active = false;
   float fog_density = SettingGetGlobal_f(G, cSetting_fog);
-  I->FogStart = (I->BackSafe - I->FrontSafe) * SettingGetGlobal_f(G, cSetting_fog_start) + I->FrontSafe;
+  I->FogStart = (I->m_view.m_clipSafe.m_back - I->m_view.m_clipSafe.m_front) * SettingGetGlobal_f(G, cSetting_fog_start) + I->m_view.m_clipSafe.m_front;
   if((fog_density > R_SMALL8) && (fog_density != 1.0F)) {
-    I->FogEnd = I->FogStart + (I->BackSafe - I->FogStart) / fog_density;
+    I->FogEnd = I->FogStart + (I->m_view.m_clipSafe.m_back - I->FogStart) / fog_density;
   } else {
-    I->FogEnd = I->BackSafe;
+    I->FogEnd = I->m_view.m_clipSafe.m_back;
   }
   
   if(SettingGetGlobal_b(G, cSetting_depth_cue) && fog_density != 0.0F) {
@@ -6825,8 +6823,8 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode)
       stAng = SettingGetGlobal_f(G, cSetting_stereo_angle);// * cPI / 180.f;
       stShift = SettingGetGlobal_f(G, cSetting_stereo_shift);
 
-      stShift = (float) (stShift * fabs(I->Pos[2]) / 100.0);
-      stAng = (float) (-stAng * atan(stShift / fabs(I->Pos[2])) / 2.f);
+      stShift = (float) (stShift * fabs(I->m_view.m_pos[2]) / 100.0);
+      stAng = (float) (-stAng * atan(stShift / fabs(I->m_view.m_pos[2])) / 2.f);
 
       if(mode == 2) {             /* left hand */
 	stAng = -stAng;
@@ -6839,10 +6837,10 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode)
       identity44f(tmpMatrix);
       identity44f(I->ModelViewMatrix);
       MatrixRotateC44f(I->ModelViewMatrix, stAng, 0.f, 1.f, 0.f);
-      MatrixTranslateC44f(tmpMatrix, I->Pos[0] + stShift, I->Pos[1], I->Pos[2]);
+      MatrixTranslateC44f(tmpMatrix, I->m_view.m_pos[0] + stShift, I->m_view.m_pos[1], I->m_view.m_pos[2]);
       MatrixMultiplyC44f(tmpMatrix, I->ModelViewMatrix);
-      MatrixMultiplyC44f(I->RotMatrix, I->ModelViewMatrix);
-      MatrixTranslateC44f(I->ModelViewMatrix, -I->Origin[0], -I->Origin[1], -I->Origin[2]);
+      MatrixMultiplyC44f(I->m_view.m_rotMatrix, I->ModelViewMatrix);
+      MatrixTranslateC44f(I->ModelViewMatrix, -I->m_view.m_origin[0], -I->m_view.m_origin[1], -I->m_view.m_origin[2]);
 
     }
   }
@@ -6865,9 +6863,9 @@ static void SceneRotateWithDirty(PyMOLGlobals * G, float angle, float x, float y
   angle = (float) (-PI * angle / 180.0);
   identity44f(temp);
   MatrixRotateC44f(temp, angle, x, y, z);
-  MatrixMultiplyC44f(I->RotMatrix, temp);
+  MatrixMultiplyC44f(I->m_view.m_rotMatrix, temp);
   for(a = 0; a < 16; a++)
-    I->RotMatrix[a] = temp[a];
+    I->m_view.m_rotMatrix[a] = temp[a];
   SceneUpdateInvMatrix(G);
   if(dirty) {
     SceneInvalidate(G);
@@ -6878,8 +6876,8 @@ static void SceneRotateWithDirty(PyMOLGlobals * G, float angle, float x, float y
   /*  glPushMatrix();
      glLoadIdentity();
      glRotatef(angle,x,y,z);
-     glMultMatrixf(I->RotMatrix);
-     glGetFloatv(GL_MODELVIEW_MATRIX,I->RotMatrix);
+     glMultMatrixf(I->m_view.m_rotMatrix);
+     glGetFloatv(GL_MODELVIEW_MATRIX,I->m_view.m_rotMatrix);
      glPopMatrix(); */
 }
 
@@ -6893,14 +6891,14 @@ void SceneRotate(PyMOLGlobals * G, float angle, float x, float y, float z)
 void SceneApplyMatrix(PyMOLGlobals * G, float *m)
 {
   CScene *I = G->Scene;
-  MatrixMultiplyC44f(m, I->RotMatrix);
+  MatrixMultiplyC44f(m, I->m_view.m_rotMatrix);
   SceneDirty(G);
 
   /*  glPushMatrix();
      glLoadIdentity();
      glMultMatrixf(m);
-     glMultMatrixf(I->RotMatrix);
-     glGetFloatv(GL_MODELVIEW_MATRIX,I->RotMatrix);
+     glMultMatrixf(I->m_view.m_rotMatrix);
+     glGetFloatv(GL_MODELVIEW_MATRIX,I->m_view.m_rotMatrix);
      glPopMatrix(); */
 }
 
@@ -6915,11 +6913,11 @@ void SceneScale(PyMOLGlobals * G, float scale)
 
 void SceneZoom(PyMOLGlobals * G, float scale){
   CScene *I = G->Scene;
-  float factor = -((I->FrontSafe + I->BackSafe) / 2) * 0.1 * scale;
+  float factor = -((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2) * 0.1 * scale;
   /*    SettingGetGlobal_f(G, cSetting_mouse_wheel_scale); */
-  I->Pos[2] += factor;
-  I->Front -= factor;
-  I->Back -= factor;
+  I->m_view.m_pos[2] += factor;
+  I->m_view.m_clip.m_front -= factor;
+  I->m_view.m_clip.m_back -= factor;
   UpdateFrontBackSafe(I);
   SceneInvalidate(G);
 }
@@ -7037,11 +7035,11 @@ void SceneTranslateSceneXYWithScale(PyMOLGlobals * G, float x, float y){
   float v2[3], vScale;
   float old_front, old_back, old_origin;
 
-  old_front = I->Front;
-  old_back = I->Back;
-  old_origin = -I->Pos[2];
+  old_front = I->m_view.m_clip.m_front;
+  old_back = I->m_view.m_clip.m_back;
+  old_origin = -I->m_view.m_pos[2];
 
-  vScale = SceneGetExactScreenVertexScale(G, I->Origin);
+  vScale = SceneGetExactScreenVertexScale(G, I->m_view.m_origin);
   /*  if(stereo_via_adjacent_array(I->StereoMode)) {
     x = get_stereo_x(x, &I->LastX, I->Width, NULL);
     }*/
@@ -7052,13 +7050,13 @@ void SceneTranslateSceneXYWithScale(PyMOLGlobals * G, float x, float y){
 
   moved_flag = false;
   if(x != 0.f) {
-    I->Pos[0] += v2[0];
+    I->m_view.m_pos[0] += v2[0];
     I->LastX = x;
     SceneInvalidate(G);
     moved_flag = true;
   }
   if(y != 0.f) {
-    I->Pos[1] += v2[1];
+    I->m_view.m_pos[1] += v2[1];
     I->LastY = y;
     SceneInvalidate(G);
     moved_flag = true;
@@ -7105,8 +7103,8 @@ void SceneGetScaledAxesAtPoint(PyMOLGlobals * G, float *pt, float *xn, float *yn
 
   v_scale = SceneGetScreenVertexScale(G, pt);
 
-  MatrixInvTransformC44fAs33f3f(I->RotMatrix, xn0, xn0);
-  MatrixInvTransformC44fAs33f3f(I->RotMatrix, yn0, yn0);
+  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, xn0, xn0);
+  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, yn0, yn0);
   scale3f(xn0, v_scale, xn);
   scale3f(yn0, v_scale, yn);
 }
@@ -7130,8 +7128,8 @@ void SceneGetScaledAxes(PyMOLGlobals * G, CObject *obj, float *xn, float *yn)
 
   v_scale = SceneGetScreenVertexScale(G, vt);
 
-  MatrixInvTransformC44fAs33f3f(I->RotMatrix, xn0, xn0);
-  MatrixInvTransformC44fAs33f3f(I->RotMatrix, yn0, yn0);
+  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, xn0, xn0);
+  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, yn0, yn0);
   scale3f(xn0, v_scale, xn);
   scale3f(yn0, v_scale, yn);
 }
@@ -7149,7 +7147,7 @@ void SceneGenerateMatrixToAnotherZFromZ(PyMOLGlobals *G, float *convMatrix, floa
   MatrixSetScaleC44f(scaleMatrix, pscale);
   identity44f(convMatrix);
   MatrixSetScaleC44f(convMatrix, 1.f/cscale);
-  MatrixMultiplyC44f(I->RotMatrix, convMatrix);
+  MatrixMultiplyC44f(I->m_view.m_rotMatrix, convMatrix);
   MatrixTranslateC44f(convMatrix, pt[0]-curpt[0], pt[1]-curpt[1], pt[2]-curpt[2]);
   MatrixMultiplyC44f(I->InvMatrix, convMatrix);
   MatrixMultiplyC44f(scaleMatrix, convMatrix);
@@ -7157,9 +7155,9 @@ void SceneGenerateMatrixToAnotherZFromZ(PyMOLGlobals *G, float *convMatrix, floa
 
 void SceneAdjustZtoScreenZ(PyMOLGlobals *G, float *pos, float zarg){
   CScene *I = G->Scene;
-  float clipRange = (I->BackSafe-I->FrontSafe);
+  float clipRange = (I->m_view.m_clipSafe.m_back-I->m_view.m_clipSafe.m_front);
   float z = (zarg + 1.f) / 2.f;
-  float zInPreProj = -(z * clipRange + I->FrontSafe);
+  float zInPreProj = -(z * clipRange + I->m_view.m_clipSafe.m_front);
   float pos4[4], tpos[4], npos[4];
   float InvModMatrix[16];
   copy3f(pos, pos4);
@@ -7204,11 +7202,11 @@ void SceneSetPointToWorldScreenRelative(PyMOLGlobals *G, float *pos, float *scre
 
 float SceneGetCurrentBackSafe(PyMOLGlobals *G){
   CScene *I = G->Scene;
-  return (I->BackSafe);
+  return (I->m_view.m_clipSafe.m_back);
 }
 float SceneGetCurrentFrontSafe(PyMOLGlobals *G){
   CScene *I = G->Scene;
-  return (I->FrontSafe);
+  return (I->m_view.m_clipSafe.m_front);
 }
 
 /**

@@ -335,15 +335,15 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     }
     if(!SettingGetGlobal_b(G, cSetting_ortho)) {
 	double xmin, xmax, ymin, ymax;
-	ymax = I->FrontSafe * GetFovWidth(G) / 2.0;
+	ymax = I->m_view.m_clipSafe.m_front * GetFovWidth(G) / 2.0;
 	ymin = -ymax;
 	xmin = ymin * aspRat;
 	xmax = ymax * aspRat;
-      glFrustum44f(I->ProjectionMatrix, xmin, xmax, ymin, ymax, I->FrontSafe, I->BackSafe);
+      glFrustum44f(I->ProjectionMatrix, xmin, xmax, ymin, ymax, I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back);
     } else {
-      height = std::max(R_SMALL4, -I->Pos[2]) * GetFovWidth(G) / 2.f;
+      height = std::max(R_SMALL4, -I->m_view.m_pos[2]) * GetFovWidth(G) / 2.f;
       width = height * aspRat;
-      glOrtho44f(I->ProjectionMatrix, -width, width, -height, height, I->FrontSafe, I->BackSafe);
+      glOrtho44f(I->ProjectionMatrix, -width, width, -height, height, I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back);
     }
 
 #ifndef PURE_OPENGL_ES_2
@@ -374,7 +374,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     /* 2. set the normals to reflect light back at the camera */
 
     float zAxis[4] = { 0.0, 0.0, 1.0, 0.0 };
-    MatrixInvTransformC44fAs33f3f(I->RotMatrix, zAxis, normal);
+    MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, zAxis, normal);
     copy3f(normal, I->ViewNormal);
 
     if(SettingGetGlobal_b(G, cSetting_normal_workaround)) {
@@ -748,7 +748,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
   info.vertex_scale = I->VertexScale;
   info.fog_start = I->FogStart;
   info.fog_end = I->FogEnd;
-  info.front = I->FrontSafe;
+  info.front = I->m_view.m_clipSafe.m_front;
   info.use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
 #if defined(_PYMOL_IOS) && !defined(_WEBGL)
   /* For now, on IOS, just crank up the sampling for text, 
@@ -774,15 +774,15 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
     float stAng, stShift;
     stAng = SettingGetGlobal_f(G, cSetting_stereo_angle);
     stShift = SettingGetGlobal_f(G, cSetting_stereo_shift);
-    stShift = (float) (stShift * fabs(I->Pos[2]) / 100.0);
-    stAng = (float) (stAng * atan(stShift / fabs(I->Pos[2])) * 90.0 / cPI);
+    stShift = (float) (stShift * fabs(I->m_view.m_pos[2]) / 100.0);
+    stAng = (float) (stAng * atan(stShift / fabs(I->m_view.m_pos[2])) * 90.0 / cPI);
     buffer = fabs(I->Width * I->VertexScale * tan(cPI * stAng / 180.0));
-    info.stereo_front = I->FrontSafe + buffer;
+    info.stereo_front = I->m_view.m_clipSafe.m_front + buffer;
   } else {
-    info.stereo_front = I->FrontSafe;
+    info.stereo_front = I->m_view.m_clipSafe.m_front;
   }
 
-  info.back = I->BackSafe;
+  info.back = I->m_view.m_clipSafe.m_back;
   SceneGetViewNormal(G, info.view_normal);
 
   if(info.alpha_cgo && (pass == 1)) {

@@ -103,10 +103,22 @@ typedef struct {
   SceneUnitContext context;     /* for whole-window display */
 } GridInfo;
 
+struct SceneView {
+  struct ClippingPlane {
+    float m_front;
+    float m_back;
+  };
+  float m_rotMatrix[16]; /*Column major--consistent with OpenGL spec*/
+  float m_pos[3];
+  float m_origin[3];
+  ClippingPlane m_clip;
+  ClippingPlane m_clipSafe;
+};
+
 class CScene : public Block {
  public:
   std::list<CObject*> Obj, GadgetObjs, NonGadgetObjs;
-  float RotMatrix[16];          /* WARNING: column major, as per OpenGL spec */
+  SceneView m_view{};
   float InvMatrix[16];          /* WARNING: column major, as per OpenGL spec */
   float PmvMatrix[16];
   float Scale;
@@ -121,9 +133,7 @@ class CScene : public Block {
   double LastReleaseTime;
   double SingleClickDelay;
   float ViewNormal[3], LinesNormal[3];
-  float Pos[3], Origin[3];
   float H;
-  float Front, Back, FrontSafe, BackSafe;
   float TextColor[3];
   double SweepTime;
   int DirtyFlag;
@@ -145,7 +155,6 @@ class CScene : public Block {
   int RovingCleanupFlag;
   double RovingLastUpdate;
   int Threshold, ThresholdX, ThresholdY;
-  CView *View { nullptr };
   float LastPickVertex[3], LastClickVertex[3];
   int LastPickVertexFlag;
   int LoopFlag;
@@ -222,6 +231,8 @@ class CScene : public Block {
     memset(mem, 0, size);
     return mem;
   }
+  SceneView getSceneView() const { return m_view; }
+  void setSceneView(const SceneView& view) { m_view = view; }
 };
 
 #endif
