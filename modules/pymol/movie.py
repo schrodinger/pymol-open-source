@@ -719,6 +719,7 @@ def _encode(filename,first,last,preserve,
     # by changing directory
     fn_rel = os.path.relpath(filename, tmp_path)
     old_cwd = os.getcwd()
+    fps = get_movie_fps(_self)
 
     if done and ok and (encoder == 'mpeg_encode'):
         try:
@@ -736,6 +737,17 @@ def _encode(filename,first,last,preserve,
             mpeg_quality = 1+int(((100-quality)*29)/100) # 1 to 30
             input = mpeg_encode.input(fn_rel, '.',
                                       prefix,first,last,mpeg_quality);
+
+            FPS_LEGAL_VALUES = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60]
+            fps_legal = min(FPS_LEGAL_VALUES, key=lambda v: abs(v - fps))
+            if fps_legal != round(fps, 3):
+                from . import colorprinting
+                colorprinting.warning(
+                    " Warning: Adjusting frame rate to {} fps (legal values are: {})"
+                    .format(fps_legal, FPS_LEGAL_VALUES))
+            input = input.replace('FRAME_RATE 30',
+                                  'FRAME_RATE {:.3f}'.format(fps_legal))
+
             if not quiet:
                 print(" produce: creating '%s' (in background)..."%(filename))
 
@@ -753,13 +765,12 @@ def _encode(filename,first,last,preserve,
                 if done_event is not None:
                     done_event.set()
     elif encoder == 'ffmpeg':
-        fps = get_movie_fps(_self)
         import subprocess
         os.chdir(tmp_path)
         try:
             args = ['ffmpeg',
                 '-f', 'image2',
-                '-framerate', '%d' % fps, # framerate
+                '-framerate', '{:.3f}'.format(fps),
                 '-i', prefix + '%04d' + img_ext,
             ]
             if not fn_rel.endswith('.gif'):
@@ -775,6 +786,7 @@ def _encode(filename,first,last,preserve,
         exe = find_exe(encoder)
         try:
             subprocess.check_call([exe,
+                '-delay', '{:.3f}'.format(100. / fps), # framerate
                 os.path.join(tmp_path, prefix) + '*' + img_ext,
                 filename])
         finally:
