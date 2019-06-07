@@ -38,6 +38,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Executive.h"
 #include "Lex.h"
+#include "pymol/zstring_view.h"
 
 #include <map>
 
@@ -2367,7 +2368,7 @@ int AtomInfoGetExpectedValence(PyMOLGlobals * G, const AtomInfoType * I)
 static int get_protons(const char * symbol)
 {
   char titleized[4];
-  static std::map<const char *, int, cstrless_t> lookup;
+  static std::map<pymol::zstring_view, int> lookup;
 
   if (lookup.empty()) {
     for (int i = 0; i < ElementTableSize; i++)

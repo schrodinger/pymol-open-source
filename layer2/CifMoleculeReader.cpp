@@ -33,6 +33,7 @@
 #include "Vector.h"
 #include "Lex.h"
 #include "strcasecmp.h"
+#include "pymol/zstring_view.h"
 
 // canonical amino acid three letter codes
 const char * aa_three_letter[] = {
@@ -765,7 +766,7 @@ static bool read_pdbx_coordinate_model(PyMOLGlobals * G, cif_data * data, Object
     return false;
 
   // affected chains
-  std::set<const char*, strless2_t> asyms;
+  std::set<pymol::zstring_view> asyms;
 
   // collect CA/P-only chain identifiers
   for (int i = 0, nrows = arr_type->get_nrows(); i < nrows; ++i) {

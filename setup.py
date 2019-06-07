@@ -237,6 +237,7 @@ create_shadertext.create_all(generated_dir)
 prefix_path = get_prefix_path()
 
 inc_dirs = [
+    "include",
 ]
 
 pymol_src_dirs = [
