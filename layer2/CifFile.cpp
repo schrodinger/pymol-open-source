@@ -10,32 +10,45 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <vector>
+#include <cassert>
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include "CifFile.h"
 #include "File.h"
 #include "MemoryDebug.h"
 #include "strcasecmp.h"
 
-// basic IO and string handling
+namespace pymol {
+namespace _cif_detail {
 
-/*
- * atof which ignores uncertainty notation
+template <> const char* raw_to_typed(const char* s) { return s; }
+template <> std::string raw_to_typed(const char* s) { return s; }
+template <> char        raw_to_typed(const char* s) { return s[0]; }
+template <> int         raw_to_typed(const char* s) { return atoi(s); }
+
+/**
+ * Convert to floating point number, ignores uncertainty notation
  * 1.23(45)e2 -> 1.23e2
  */
-double scifloat(const char *str) {
-  const char *close, *open = strchr(str, '(');
+template <> double raw_to_typed(const char* s)
+{
+  const char *close, *open = strchr(s, '(');
   if (open && (close = strchr(open, ')'))) {
-    double value;
-    char *copy = strdup(str);
-    strcpy(copy + (open - str), close + 1);
-    value = atof(copy);
-    free(copy);
-    return value;
+    return atof(std::string(s, open - s).append(close + 1).c_str());
   }
-  return atof(str);
+  return atof(s);
 }
+
+template <> float raw_to_typed(const char* s)
+{
+  return static_cast<float>(raw_to_typed<double>(s));
+}
+
+} // namespace _cif_detail
+
+// basic IO and string handling
 
 // Return true if "c" is whitespace or null
 static bool iswhitespace0(char c) {
@@ -87,8 +100,7 @@ static void tolowerinplace(char *p) {
 
 // CIF stuff
 
-static const char * EMPTY_STRING = "";
-static cif_array EMPTY_ARRAY(nullptr);
+static const cif_array EMPTY_ARRAY(nullptr);
 
 /*
  * Class to store CIF loops. Only for parsing, do not use in any higher level
@@ -112,41 +124,21 @@ const char * cif_loop::get_value_raw(int row, int col) const {
 }
 
 // get the number of elements in this array
-int cif_array::get_nrows() const {
-  return (col < 0) ? 1 : pointer.loop->nrows;
+unsigned cif_array::size() const {
+  return (col == NOT_IN_LOOP) ? 1 : pointer.loop->nrows;
 }
 
-// get array value, return NULL if row-index out of bounds
-// or value in ['.', '?']
-const char * cif_array::get_value(int row) const {
-  if (col < 0)
-    return (row > 0) ? nullptr : pointer.value;
-  return pointer.loop->get_value_raw(row, col);
-}
-
-// get array value, return an empty string if missing
-const char * cif_array::as_s(int row) const {
-  const char * s = get_value(row);
-  return s ? s : EMPTY_STRING;
-}
-
-// get array value as integer, return d (default 0) if missing
-int cif_array::as_i(int row, int d) const {
-  const char * s = get_value(row);
-  return s ? atoi(s) : d;
-}
-
-// get array value as double, return d (default 0.0) if missing
-double cif_array::as_d(int row, double d) const {
-  const char * s = get_value(row);
-  return s ? scifloat(s) : d;
+/// Get array value, return NULL if `pos >= size()` or value in ['.', '?']
+const char* cif_array::get_value_raw(unsigned pos) const
+{
+  if (col == NOT_IN_LOOP)
+    return (pos > 0) ? nullptr : pointer.value;
+  return pointer.loop->get_value_raw(pos, col);
 }
 
 // true if all values in ['.', '?']
 bool cif_array::is_missing_all() const {
-  int n = get_nrows();
-
-  for (int i = 0; i < n; ++i) {
+  for (unsigned i = 0, n = size(); i != n; ++i) {
     if (!is_missing(i))
       return false;
   }
@@ -154,88 +146,104 @@ bool cif_array::is_missing_all() const {
   return true;
 }
 
-// templated getters
-template <> const char* cif_array::as<const char* >(int row) const { return get_value(row); }
-template <> std::string cif_array::as<std::string >(int row) const { return as_s(row); }
-template <> int         cif_array::as<int         >(int row) const { return as_i(row); }
-template <> double      cif_array::as<double      >(int row) const { return as_d(row); }
-template <> float       cif_array::as<float       >(int row) const { return as_d(row); }
-
-/*
+/**
  * Get a pointer to array or NULL if not found
  *
- * Can lookup up to 3 different aliases, the first one found is returned.
+ * Can lookup different aliases, the first one found is returned.
  * Also supports an alias shortcut for the trivial case where mmCIF uses
- * a colon and CIF uses an underscore: (key="_foo?bar") is identical to
- * (key="_foo.bar", alias1="_foo_bar")
+ * a colon and CIF uses an underscore: `get_arr("_foo?bar")` is identical to
+ * `get_arr("_foo.bar", "_foo_bar")`
+ *
+ * @param key data name, must be lower case
  */
-const cif_array * cif_data::get_arr(const char * key, const char * alias1, const char * alias2) const {
-  const char * p;
-  const char * aliases[] = {alias1, alias2, nullptr};
-  m_str_cifarray_t::const_iterator it;
+const cif_array * cif_data::get_arr(const char * key) const {
+  const char* p = strchr(key, '?');
+  decltype(m_dict)::const_iterator it;
 
-  for (int j = 0; key; key = aliases[j++]) {
-    // support alias shortcut: '?' matches '.' and '_'
-    if ((p = strchr(key, '?'))) {
-      std::string tmp(key);
-      for (const char * d = "._"; *d; ++d) {
-        // replace '?' by '.' or '_'
-        tmp[p - key] = *d;
-        if ((it = dict.find(tmp.c_str())) != dict.end())
-          return &it->second;
-      }
-    } else {
-      if ((it = dict.find(key)) != dict.end())
-        return &it->second;
-    }
+#ifndef NDEBUG
+  for (const char* q = key; *q; ++q) {
+    assert("key must be lower case" && !('Z' >= *q && *q >= 'A'));
+  }
+#endif
+
+  // support alias shortcut: '?' matches '.' and '_'
+  if (p != nullptr) {
+    std::string tmp(key);
+    // replace '?' by '.' or '_'
+    tmp[p - key] = '.';
+    if ((it = m_dict.find(tmp.c_str())) != m_dict.end())
+      return &it->second;
+    tmp[p - key] = '_';
+    if ((it = m_dict.find(tmp.c_str())) != m_dict.end())
+      return &it->second;
+  } else {
+    if ((it = m_dict.find(key)) != m_dict.end())
+      return &it->second;
   }
 
   return nullptr;
 }
 
-// Get a pointer to array or to a default value if not found
-const cif_array * cif_data::get_opt(const char * key, const char * alias1, const char * alias2) const {
-  const cif_array * arr = get_arr(key, alias1, alias2);
-  if (arr == nullptr)
-    return &EMPTY_ARRAY;
-  return arr;
+const cif_array* cif_data::empty_array() {
+  return &EMPTY_ARRAY;
+}
+
+const cif_data* cif_data::get_saveframe(const char* code) const {
+  auto it = m_saveframes.find(code);
+  if (it != m_saveframes.end())
+    return &it->second;
+  return nullptr;
+}
+
+bool cif_file::parse_file(const char* filename) {
+  char* contents = FileGetContents(filename, nullptr);
+
+  if (!contents) {
+    error(std::string("failed to read file ").append(filename).c_str());
+    return false;
+  }
+
+  return parse(std::move(contents));
+}
+
+bool cif_file::parse_string(const char* contents) {
+  return parse(std::move(mstrdup(contents)));
+}
+
+void cif_file::error(const char* msg) {
+  std::cout << "ERROR " << msg << std::endl;
 }
 
 // constructor
 cif_file::cif_file(const char* filename, const char* contents_) {
   if (contents_) {
-    contents = mstrdup(contents_);
-  } else {
-    contents = FileGetContents(filename, nullptr);
-    if (!contents)
-      std::cerr << "ERROR: Failed to load file '" << filename << "'" << std::endl;
+    parse_string(contents_);
+  } else if (filename) {
+    parse_file(filename);
+  }
+}
+
+// constructor
+cif_file::cif_file() = default;
+cif_file::cif_file(cif_file&&) = default;
+
+// move assignment
+cif_file& cif_file::operator=(cif_file&&) = default;
+
+// destructor
+cif_file::~cif_file() = default;
+
+bool cif_file::parse(char*&& p) {
+  m_datablocks.clear();
+  m_tokens.clear();
+  m_contents.reset(p);
+
+  if (!p) {
+    error("parse(nullptr)");
+    return false;
   }
 
-  if (contents)
-    parse();
-}
-
-// destructor
-cif_file::~cif_file() {
-  for (auto& datablock : datablocks)
-    delete datablock.second;
-
-  if (contents)
-    mfree(contents);
-}
-
-// destructor
-cif_data::~cif_data() {
-  for (auto& saveframe : saveframes)
-    delete saveframe.second;
-
-  for (auto& loop : loops)
-    delete loop;
-}
-
-// parse CIF contents
-bool cif_file::parse() {
-  char *p = contents;
+  auto& tokens = m_tokens;
   char quote;
   char prev = '\0';
 
@@ -286,45 +294,49 @@ bool cif_file::parse() {
     }
   }
 
-  cif_data *current_data = nullptr, *current_frame = nullptr, *global_block = nullptr;
+  cif_data* current_frame = nullptr;
+  std::vector<cif_data*> frame_stack;
+  std::unique_ptr<cif_data> global_block;
 
   // parse into dictionary
   for (unsigned int i = 0, n = tokens.size(); i < n; i++) {
     if (!keypossible[i]) {
-      std::cout << "ERROR" << std::endl;
-      break;
+      error("expected key (1)");
+      return false;
     } else if (tokens[i][0] == '_') {
-      if (i + 1 == n) {
-        std::cout << "ERROR truncated" << std::endl;
-        break;
+      if (!current_frame) {
+        error("missing data_ (unexpected data name)");
+        return false;
       }
 
-      if (current_frame) {
-        tolowerinplace(tokens[i]);
-        current_frame->dict[tokens[i]].set_value(tokens[i + 1]);
+      if (i + 1 == n) {
+        error("truncated");
+        return false;
       }
+
+      tolowerinplace(tokens[i]);
+      current_frame->m_dict[tokens[i]].set_value(tokens[i + 1]);
 
       i++;
     } else if (strcasecmp("loop_", tokens[i]) == 0) {
+      if (!current_frame) {
+        error("missing data_ (unexpected loop)");
+        return false;
+      }
+
       int ncols = 0;
       int nrows = 0;
       cif_loop *loop = nullptr;
 
       // loop data
-      if (current_frame) {
-        loop = new cif_loop;
-
-        // add to loops list
-        current_frame->loops.push_back(loop);
-      }
+      loop = new cif_loop;
+      current_frame->m_loops.emplace_back(loop);
 
       // columns
       while (++i < n && keypossible[i] && tokens[i][0] == '_') {
         tolowerinplace(tokens[i]);
 
-        if (current_frame) {
-          current_frame->dict[tokens[i]].set_loop(loop, ncols);
-        }
+        current_frame->m_dict[tokens[i]].set_loop(loop, ncols);
 
         ncols++;
       }
@@ -340,8 +352,8 @@ bool cif_file::parse() {
         i += ncols;
 
         if (i > n) {
-          std::cout << "ERROR truncated loop" << std::endl;
-          break;
+          error("truncated loop");
+          return false;
         }
 
         nrows++;
@@ -355,32 +367,47 @@ bool cif_file::parse() {
       i--;
 
     } else if (strncasecmp("data_", tokens[i], 5) == 0) {
-      const char * key(tokens[i] + 5);
-      datablocks[key] = current_data = current_frame = new cif_data;
+      m_datablocks.emplace_back();
+      current_frame = &m_datablocks.back();
+      current_frame->m_code = tokens[i] + 5;
+      frame_stack = {current_frame};
 
     } else if (strncasecmp("global_", tokens[i], 5) == 0) {
       // STAR feature, not supported in CIF
-      global_block = current_data = current_frame = new cif_data;
+      current_frame = new cif_data;
+      global_block.reset(current_frame);
+      frame_stack = {current_frame};
 
     } else if (strncasecmp("save_", tokens[i], 5) == 0) {
-      if (tokens[i][5] && current_data) {
+      if (tokens[i][5]) {
         // begin
+        if (!current_frame) {
+          error("top-level save_");
+          return false;
+        }
+
         const char * key(tokens[i] + 5);
-        current_data->saveframes[key] = current_frame = new cif_data;
+        current_frame = &current_frame->m_saveframes[key];
+        frame_stack.push_back(current_frame);
       } else {
         // end
-        current_frame = current_data;
+        if (frame_stack.size() < 2) {
+          error("unexpected save_");
+          return false;
+        }
+
+        frame_stack.pop_back();
+        current_frame = frame_stack.back();
       }
     } else {
-      std::cout << "ERROR" << std::endl;
-      break;
+      error("expected key (2)");
+      return false;
     }
   }
 
-  if (global_block)
-    delete global_block;
-
   return true;
 }
+
+} // namespace pymol
 
 // vi:sw=2:ts=2

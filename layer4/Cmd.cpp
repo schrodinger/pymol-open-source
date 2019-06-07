@@ -8281,7 +8281,7 @@ static PyObject *CmdCifGetArray(PyObject * self, PyObject * args)
       " ! The 'cif_keepinmemory' setting needs to be set prior to loading a cif file.\n",
       name ENDFB(G);
   } else {
-    const cif_array *arr = obj->m_cifdata->get_arr(key);
+    auto* arr = obj->m_cifdata->get_arr(key);
     if (!arr) {
       PRINTFB(G, FB_Executive, FB_Details)
         " Executive-Details: key '%s' not in cif data for object '%s'.\n", key, name ENDFB(G);

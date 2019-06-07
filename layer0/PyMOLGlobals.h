@@ -18,6 +18,12 @@ Z* -------------------------------------------------------------------
 #ifndef _H_PyMOLGlobals
 #define _H_PyMOLGlobals
 
+namespace pymol
+{
+class cif_file;
+class cif_data;
+}; // namespace pymol
+
 /* retina scale factor for ortho gui */
 extern int _gScaleFactor;
 inline int DIP2PIXEL(int v) { return v * _gScaleFactor; }

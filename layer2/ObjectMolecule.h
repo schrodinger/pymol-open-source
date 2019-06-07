@@ -28,7 +28,6 @@ Z* -------------------------------------------------------------------
 #include"Symmetry.h"
 #include"DistSet.h"
 #include "Executive_pre.h"
-#include "CifFile.h"
 #include "vla.h"
 
 #include <memory>
@@ -89,8 +88,8 @@ struct ObjectMolecule : public CObject {
   int RepVisCache;     /* for transient storage during updates */
 
   // for reporting available assembly ids after mmCIF loading - SUBJECT TO CHANGE
-  std::shared_ptr<cif_file> m_ciffile;
-  const cif_data * m_cifdata;
+  std::shared_ptr<pymol::cif_file> m_ciffile;
+  const pymol::cif_data * m_cifdata;
 
   // hetatm and ignore-flag by non-polymer classification
   bool need_hetatm_classification;

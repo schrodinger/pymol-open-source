@@ -50,6 +50,10 @@ namespace pymol
 {
 using ::free;
 
+struct default_free {
+  void operator()(void* ptr) const { free(ptr); }
+};
+
 template <typename T> T* malloc(size_t num)
 {
   return (T*) ::malloc(num * sizeof(T));

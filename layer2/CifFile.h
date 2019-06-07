@@ -7,59 +7,122 @@
 #ifndef _H_CIFFILE
 #define _H_CIFFILE
 
-#include <vector>
+#include <cstddef>
+#include <cstring>
 #include <map>
+#include <memory>
+#include <vector>
 
-#include <string.h>
+// for pymol::default_free
+#include "MemoryDebug.h"
 
-/*
- * C string comparison class
+namespace pymol {
+namespace _cif_detail {
+
+/**
+ * Null-terminated string view.
  */
-struct strless2_t {
-  bool operator()(const char * a, const char * b) const {
-    return strcmp(a, b) < 0;
+class zstring_view {
+  const char* m_data;
+
+public:
+  zstring_view(const char* s) : m_data(s) {}
+
+  bool operator<(zstring_view rhs) const {
+    return std::strcmp(m_data, rhs.m_data) < 0;
   }
 };
+
+/**
+ * Convert a raw cif data value to a typed value
+ */
+template <typename T> T raw_to_typed(const char*);
+
+} // namespace _cif_detail
 
 // cif data types
 class cif_data;
 class cif_loop;
 class cif_array;
-typedef std::vector<cif_loop*> v_cifloopp_t;
-typedef std::map<const char*, cif_data*, strless2_t> m_str_cifdatap_t;
-typedef std::map<const char*, cif_array, strless2_t> m_str_cifarray_t;
 
-// atof with uncertanty notation handling
-double scifloat(const char *);
-
-/*
+/**
  * Class for reading CIF files.
  * Parses the entire file and exposes its data blocks.
+ *
+ * Read CIF file:
+ * @verbatim auto cf = cif_file("file.cif"); @endverbatim
+ *
+ * Read CIF string:
+ * @verbatim auto cf = cif_file(nullptr, cifstring); @endverbatim
+ *
+ * Iterate over data blocks:
+ * @verbatim
+   for (auto& block : cf.datablocks()) {
+     // data_<code>
+     const char* code = block->code();
+
+     // get data item pointer, or NULL if name not found
+     auto* dataitem1 = block->get_arr("_some.name1");
+     auto* dataitem2 = block->get_arr("_some.name2", "_alternate.name");
+
+     // get data item pointer, or default item if name not found
+     auto* dataitem3 = block->get_opt("_some.name3");
+
+     // value of data item
+     const char* stringvalue = dataitem3->as_s();
+     int intvalue = dataitem3->as_i();
+
+     // values of looped data item
+     for (unsigned i = 0, i_end = dataitem3->size(); i != i_end; ++i) {
+       const char* stringvalue = dataitem3->as_s(i);
+     }
+   }
+   @endverbatim
  */
 class cif_file {
+  std::vector<char*> m_tokens;
+  std::vector<cif_data> m_datablocks;
+  std::unique_ptr<char, pymol::default_free> m_contents;
+
+  /**
+   * Parse CIF string
+   * @param p CIF string (takes ownership)
+   * @post datablocks() is valid
+   */
+  bool parse(char*&&);
+
+protected:
+  /// Parse CIF file
+  bool parse_file(const char*);
+
+  /// Parse CIF string
+  bool parse_string(const char*);
+
+  /// Report a parsing error
+  virtual void error(const char*);
+
 public:
-  m_str_cifdatap_t datablocks;
+  cif_file();
+  cif_file(cif_file&&);
+  cif_file& operator=(cif_file&&);
+  virtual ~cif_file();
 
-  // constructors & destructor
-  cif_file(const char* filename, const char* contents=NULL);
-  ~cif_file();
+  /// Construct from file name or buffer
+  cif_file(const char* filename, const char* contents = nullptr);
 
-private:
-  char * contents;
-
-  std::vector<char*> tokens;
-
-  // methods
-  bool parse();
+  /// Data blocks
+  const std::vector<cif_data>& datablocks() const { return m_datablocks; }
 };
 
-/*
- * High-level access to CIF arrays
+/**
+ * View on a CIF data array. The viewed data is owned by the cif_file
  */
 class cif_array {
   friend class cif_file;
 
 private:
+  enum { NOT_IN_LOOP = -1 };
+
   // column index, -1 if not in loop
   short col;
 
@@ -69,8 +132,8 @@ private:
     const char * value;
   } pointer;
 
-  // methods
-  const char * get_value(int row = 0) const;
+  // Raw data value or NULL for unknown/inapplicable and `pos >= size()`
+  const char* get_value_raw(unsigned pos = 0) const;
 
   // point this array to a loop (only for parsing)
   void set_loop(const cif_loop * loop, short col_) {
@@ -80,74 +143,110 @@ private:
 
   // point this array to a single value (only for parsing)
   void set_value(const char * value) {
-    col = -1;
+    col = NOT_IN_LOOP;
     pointer.value = value;
   };
 
 public:
   // constructor
-  cif_array() {
-  };
+  cif_array() = default;
 
   // constructor (only needed for EMPTY_ARRAY)
-  cif_array(const char * value) {
-    set_value(value);
-  };
+  cif_array(std::nullptr_t) { set_value(nullptr); }
 
-  // get the number of elements in this array
-  int get_nrows() const;
+  /// Number of elements in this array (= number of rows in loop)
+  unsigned size() const;
 
-  // get element as string, integer or double. If index is out of bounds,
-  // then return a default value.
-  const char * as_s(int row = 0) const;
-  int          as_i(int row = 0, int d = 0) const;
-  double       as_d(int row = 0, double d = 0.0) const;
+  /// True if value in ['.', '?']
+  bool is_missing(unsigned pos = 0) const { return !get_value_raw(pos); }
 
-  // true if value in ['.', '?']
-  bool is_missing(int row = 0) const {
-    return !get_value(row);
-  }
-
-  // true if all values in ['.', '?']
+  /// True if all values in ['.', '?']
   bool is_missing_all() const;
 
-  // templated getter
-  template <typename T> T as(int row = 0) const;
+  /**
+   * Get element as type T. If `pos >= size()` then return `d`.
+   * @param pos element index (= row index in loop)
+   * @param d default value for unknown/inapplicable elements
+   */
+  template <typename T> T as(unsigned pos = 0, T d = T()) const {
+    const char* s = get_value_raw(pos);
+    return s ? _cif_detail::raw_to_typed<T>(s) : d;
+  }
 
-  // get a copy of the entire array
-  template <typename T> std::vector<T> to_vector() const {
-    int n = get_nrows();
+  /**
+   * Get element as null-terminated string. The default value is the empty
+   * string, unlike as<const char*>() which returns NULL as the default value.
+   * If `pos >= size()` then return `d`.
+   * @param pos element index (= row index in loop)
+   * @param d default value for unknown/inapplicable elements
+   */
+  const char* as_s(unsigned pos = 0, const char* d = "") const {
+    return as(pos, d);
+  }
+
+  /// Alias for as<int>()
+  int as_i(unsigned pos = 0, int d = 0) const { return as(pos, d); }
+
+  /// Alias for as<double>()
+  double as_d(unsigned pos = 0, double d = 0.) const { return as(pos, d); }
+
+  /**
+   * Get a copy of the array.
+   * @param d default value for unknown/inapplicable elements
+   */
+  template <typename T> std::vector<T> to_vector(T d = T()) const {
+    auto n = size();
     std::vector<T> v;
     v.reserve(n);
-    for (int i = 0; i < n; ++i)
-      v.push_back(as<T>(i));
+    for (unsigned i = 0; i < n; ++i)
+      v.push_back(as<T>(i, d));
     return v;
   }
 };
 
-/*
- * High-level access to CIF data blocks
+/**
+ * CIF data block. The viewed data is owned by the cif_file.
  */
 class cif_data {
   friend class cif_file;
 
-private:
-  m_str_cifarray_t dict;
-  m_str_cifdatap_t saveframes;
+  // data_<code>
+  const char* m_code = nullptr;
+
+  std::map<_cif_detail::zstring_view, cif_array> m_dict;
+  std::map<_cif_detail::zstring_view, cif_data> m_saveframes;
 
   // only needed for freeing
-  v_cifloopp_t loops;
+  std::vector<std::unique_ptr<cif_loop>> m_loops;
+
+  // generic default value
+  static const cif_array* empty_array();
 
 public:
+  /// Block code (never NULL)
+  const char* code() const { return m_code ? m_code : ""; }
+
   // Get a pointer to array or NULL if not found
-  const cif_array * get_arr(const char * key, const char * alias1=NULL, const char * alias2=NULL) const;
+  const cif_array* get_arr(const char* key) const;
+  template <typename... Args>
+  const cif_array* get_arr(const char* key, Args... aliases) const
+  {
+    auto arr = get_arr(key);
+    return arr ? arr : get_arr(aliases...);
+  }
 
-  // Get a pointer to array or to a default value if not found
-  const cif_array * get_opt(const char * key, const char * alias1=NULL, const char * alias2=NULL) const;
+  /// Like get_arr() but return a default value instead of NULL if not found
+  template <typename... Args> const cif_array* get_opt(Args... keys) const
+  {
+    auto arr = get_arr(keys...);
+    return arr ? arr : empty_array();
+  }
 
-  // destructor
-  ~cif_data();
+  /// Get a pointer to a save frame or NULL if not found
+  const cif_data* get_saveframe(const char* code) const;
 };
+
+} // namespace pymol
 
 #endif
 // vi:sw=2:ts=2
