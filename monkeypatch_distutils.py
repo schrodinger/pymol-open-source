@@ -116,18 +116,42 @@ def compile(self, sources, output_dir=None, macros=None,
         compiler_so = _osx_support.compiler_fixup(compiler_so, cc_args + extra_postargs)
         compiler_so_cxx = _osx_support.compiler_fixup(compiler_so_cxx, cc_args + extra_postargs)
 
-    def _single_compile(obj):
+    mtimes = {}
+
+    def need_compile(obj):
         try:
             src, ext = build[obj]
         except KeyError:
-            return
+            return False
+
+        if self.force:
+            return True
+
         try:
-            if not self.force and \
-                    os.path.getmtime(obj) > \
-                    os.path.getmtime(src):
-                return
+            # parse .d file if it exists (Makefile syntax)
+            deps = []
+            with open(os.path.splitext(obj)[0] + '.d') as handle:
+                contents = handle.read().split(': ', 1)[-1]
+                for line in contents.splitlines():
+                    deps.extend(line.rstrip('\n\r\\').split())
+        except EnvironmentError:
+            # no .d file, consider src the only dependency
+            deps = [src]
+
+        try:
+            obj_mtime = os.path.getmtime(obj)
+            for dep in deps:
+                if dep not in mtimes:
+                    mtimes[dep] = os.path.getmtime(dep)
+                if obj_mtime < mtimes[dep]:
+                    return True
         except OSError:
-            pass
+            return True
+
+        return False
+
+    def _single_compile(obj):
+        src = build[obj][0]
 
         # _compile
         compiler = compiler_so_cxx \
@@ -138,7 +162,7 @@ def compile(self, sources, output_dir=None, macros=None,
         except distutils.errors.DistutilsExecError as msg:
             raise distutils.errors.CompileError(msg)
 
-    for _ in pmap(_single_compile, objects):
+    for _ in pmap(_single_compile, filter(need_compile, objects)):
         pass
 
     return objects
