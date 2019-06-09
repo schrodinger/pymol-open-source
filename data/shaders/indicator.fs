@@ -1,3 +1,5 @@
+#include webgl_header.fs
+
 #ifdef PYMOL_WEBGL_IOS
 precision highp float;
 #else

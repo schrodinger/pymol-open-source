@@ -14,6 +14,9 @@ varying vec3 point;
 varying vec2 bgTextureLookup;
 
 uniform bool lighting_enabled;
+uniform mat4 g_ProjectionMatrix;
+uniform float g_Fog_end;
+uniform float g_Fog_scale;
 
 #include anaglyph_header.fs
 #include compute_fog_color.fs

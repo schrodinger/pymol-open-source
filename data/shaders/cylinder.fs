@@ -9,6 +9,10 @@
 uniform float inv_height;
 uniform bool no_flat_caps;
 uniform float half_bond;
+uniform mat4 g_ProjectionMatrix;
+uniform float g_Fog_end;
+uniform float g_Fog_scale;
+
 
 #include anaglyph_header.fs
 

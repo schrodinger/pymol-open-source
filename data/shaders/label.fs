@@ -1,3 +1,5 @@
+#include webgl_header.fs
+
 #ifdef PURE_OPENGL_ES_2
 precision highp float;
 #endif

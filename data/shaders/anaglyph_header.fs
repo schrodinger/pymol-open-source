@@ -10,10 +10,6 @@ uniform float gamma;
 
 #ifdef ONE_DRAW_BUFFER
 uniform float which_pass;  // 0. - first, 1. - second
-#else
-#ifdef PURE_OPENGL_ES_2
-#extension GL_EXT_draw_buffers : require
-#endif
 #endif
 
 #define gl_FragColor gl_FragData[0]
