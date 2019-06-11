@@ -163,7 +163,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             for i in xrange(rect.width()):
                 pos = (i * iwidth * dnorm + norm_min) * len(self.path)
                 ipos = int(pos)
-                if ipos < 0 or ipos >= len(self.path) - 1:
+                if pos < 0 or ipos >= len(self.path) - 1:
                     continue
                 y0 = self.path[ipos][1]
                 y1 = self.path[ipos+1][1]
