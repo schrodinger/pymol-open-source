@@ -198,12 +198,12 @@ class PluginManager(QtCore.QObject):
             self.form.l_repositories.addItem(repo)
 
     def remove_repository(self):
-        items = self.form.l_repositories.selecteditems()
+        items = self.form.l_repositories.selectedItems()
         if len(items) == 0:
             return
         row = self.form.l_repositories.row(items[0])
         self.form.l_repositories.takeItem(row)
-        items = self.form.l_repositories.selecteditems()
+        items = self.form.l_repositories.selectedItems()
         if len(items) > 0:
             self.repo_changed(items[0])
 
