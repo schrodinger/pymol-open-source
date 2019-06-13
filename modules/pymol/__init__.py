@@ -332,8 +332,7 @@ def adapt_to_hardware(self):
                 print(" Disabling shaders for Intel Express graphics")
             cmd.set("use_shaders", 0)
 
-    elif (vendor == 'nouveau'
-            or ' R300 ' in vendor # V: X.Org R300 Project, R: Gallium 0.4 on ATI RV370
+    elif (' R300 ' in vendor # V: X.Org R300 Project, R: Gallium 0.4 on ATI RV370
             ):
         if invocation.options.show_splash:
             print(" Detected blacklisted graphics driver.  Disabling shaders.")
