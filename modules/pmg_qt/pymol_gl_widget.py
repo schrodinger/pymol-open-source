@@ -73,6 +73,7 @@ class PyMOLGLWidget(BaseGLWidget):
         if USE_QOPENGLWIDGET:
             super(PyMOLGLWidget, self).__init__(parent=parent)
             self.setFormat(f)
+            self.setUpdateBehavior(QtWidgets.QOpenGLWidget.PartialUpdate)
         else:
             super(PyMOLGLWidget, self).__init__(f, parent=parent)
 
