@@ -27,7 +27,7 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 #include"P.h"
 #include"Util.h"
-
+#include"Scene.h"
 
 /*========================================================================*/
 static
@@ -112,10 +112,10 @@ struct Rep *RepUpdate(struct Rep *I, struct CoordSet *cs, int state, int rep)
   return (I);
 }
 
-
 /*========================================================================*/
 void RepInvalidate(struct Rep *I, struct CoordSet *cs, int level)
 {
+  SceneInvalidatePicking(I->G); // for now, if anything invalidated, then invalidate picking
   if(level > I->MaxInvalid)
     I->MaxInvalid = level;
 }
