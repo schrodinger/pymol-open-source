@@ -4622,7 +4622,8 @@ static PyObject *Cmd_Sdof(PyObject * self, PyObject * args)
 static PyObject *CmdRunPyMOL(PyObject * self, PyObject * args)
 {
 #ifdef _PYMOL_NO_MAIN
-  exit(0);
+  PyErr_SetString(PyExc_NotImplementedError, "compile with --glut");
+  return nullptr;
 #else
 #ifndef _PYMOL_WX_GLUT
 
