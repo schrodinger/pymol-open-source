@@ -115,6 +115,12 @@ static int run_only_once = true;
 #define API_SETUP_PYMOL_GLOBALS \
   G = _api_get_pymol_globals(self)
 
+#define API_SETUP_ARGS(G, self, args, ...)                                     \
+  if (!PyArg_ParseTuple(args, __VA_ARGS__))                                    \
+    return nullptr;                                                            \
+  G = _api_get_pymol_globals(self);                                            \
+  API_ASSERT(G);
+
 /*
  * C-level tests
  */
@@ -165,10 +171,22 @@ static PyMOLGlobals * _api_get_pymol_globals(PyObject * self) {
   return NULL;
 }
 
+/**
+ * Reports an error but keeps going
+ */
 #define API_HANDLE_ERROR \
    if (PyErr_Occurred()) PyErr_Print(); \
    fprintf(stderr,"API-Error: in %s line %d.\n",__FILE__,__LINE__);
 
+/**
+ * If `x` is false, raises CmdException("x")
+ */
+#define API_ASSERT(x)                                                          \
+  if (!(x)) {                                                                  \
+    if (!PyErr_Occurred())                                                     \
+      PyErr_SetString(P_CmdException, #x);                                     \
+    return nullptr;                                                            \
+  }
 
 /* NOTE: the glut_thread_keep_out variable can only be changed by the thread
    holding the API lock, therefore this is safe even through increment
@@ -262,15 +280,37 @@ static void APIExitBlocked(PyMOLGlobals * G)
     ENDFD;
 }
 
+/**
+ * Return None (pymol.constants.DEFAULT_SUCCESS)
+ */
 static PyObject *APISuccess(void)
 {                               /* success returns None */
   return PConvAutoNone(Py_None);
 }
 
+/**
+ * Return -1 (pymol.constants.DEFAULT_ERROR)
+ */
 static PyObject *APIFailure(void)
 {                               /* returns -1: a general unspecified
                                  * error */
   return (Py_BuildValue("i", -1));
+}
+
+/**
+ * If `raise_exceptions` is false, return -1 (DEFAULT_ERROR).
+ * Else raise CmdException(msg).
+ */
+static PyObject* APIFailure(PyMOLGlobals* G, const char* msg = nullptr)
+{
+  if (G && !SettingGet<bool>(G, cSetting_raise_exceptions))
+    return APIFailure();
+  if (msg) {
+    PyErr_SetString(P_CmdException, msg);
+  } else {
+    PyErr_SetNone(P_CmdException);
+  }
+  return nullptr;
 }
 
 static PyObject *APIResultCode(int code)
@@ -280,12 +320,28 @@ static PyObject *APIResultCode(int code)
   return (Py_BuildValue("i", code));
 }
 
+/**
+ * If `ok` is true, return None (DEFAULT_SUCCESS).
+ * Else return -1 (DEFAULT_ERROR).
+ */
 static PyObject *APIResultOk(int ok)
 {
   if(ok)
     return APISuccess();
   else
     return APIFailure();
+}
+
+/**
+ * If `ok` is true, return None (DEFAULT_SUCCESS).
+ * Else If `raise_exceptions` is false, return -1 (DEFAULT_ERROR).
+ * Else raise CmdException().
+ */
+static PyObject* APIResultOk(PyMOLGlobals* G, bool ok)
+{
+  if (ok)
+    return APISuccess();
+  return APIFailure(G);
 }
 
 static PyObject *APIIncRef(PyObject * result)
@@ -3650,23 +3706,18 @@ static PyObject *CmdIsomesh(PyObject * self, PyObject * args)
   int quiet;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
-  ok = PyArg_ParseTuple(args, "Ossisffiifiif", &self, &mesh_name, &map_name, &box_mode,
+  API_SETUP_ARGS(G, self, args, "Ossisffiifiif", &self, &mesh_name, &map_name, &box_mode,
                         &sele, &fbuf, &lvl, &mesh_mode, &state, &carve, &map_state,
                         &quiet, &alt_lvl);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  API_ASSERT(APIEnterNotModal(G));
+  {
     ok = ExecutiveIsomeshEtc(G, mesh_name, map_name, lvl, sele, fbuf,
                              state, carve, map_state, quiet, mesh_mode, box_mode,
                              alt_lvl);
 
     APIExit(G);
   }
-  return APIResultOk(ok);
+  return APIResultOk(G, ok);
 }
 
 static int ExecutiveSliceNew(PyMOLGlobals * G, char *slice_name,
@@ -3792,23 +3843,17 @@ static PyObject *CmdIsosurface(PyObject * self, PyObject * args)
   int quiet;
   /* box_mode 0 = all, 1 = sele + buffer, 2 = vector */
 
-  ok = PyArg_ParseTuple(args, "Ossisffiifiii", &self, &surf_name, &map_name, &box_mode,
+  API_SETUP_ARGS(G, self, args, "Ossisffiifiii", &self, &surf_name, &map_name, &box_mode,
                         &sele, &fbuf, &lvl, &surf_mode, &state, &carve, &map_state,
                         &side, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-
+  API_ASSERT(APIEnterNotModal(G));
+  {
     ok = ExecutiveIsosurfaceEtc(G, surf_name, map_name, lvl, sele, fbuf, state,
                                 carve, map_state, side, quiet, surf_mode, box_mode);
 
     APIExit(G);
   }
-  return APIResultOk(ok);
+  return APIResultOk(G, ok);
 }
 
 static PyObject *CmdSymExp(PyObject * self, PyObject * args)

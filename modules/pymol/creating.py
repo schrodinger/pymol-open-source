@@ -566,17 +566,12 @@ SEE ALSO
         #
         if carve is None:
             carve=0.0
-        try:
-            _self.lock(_self)
-            r = _cmd.isomesh(_self._COb,str(name),str(map),int(region),
+        with _self.lockcm:
+            return _cmd.isomesh(_self._COb,str(name),str(map),int(region),
                              selection,float(buffer),
                              float(level),0,int(state)-1,float(carve),
                              int(source_state)-1,int(quiet),
                              float(level))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
 
     def volume(name, map, ramp='', selection='', buffer=0.0,
                 state=1, carve=None, source_state=0, quiet=1, _self=cmd):
@@ -793,7 +788,6 @@ SEE ALSO
 
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,

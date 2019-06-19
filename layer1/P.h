@@ -282,6 +282,7 @@ extern PyObject *P_chempy;      /* used by CoordSet and Selector for constructio
 extern PyObject *P_models;      /* used by Selector for construction of models */
 extern PyObject *P_setting;     /* used by Setting.c */
 extern PyTypeObject *P_wrapper;     /* used by P.c for lazy-loading settings/properties/attributes */
+extern PyObject *P_CmdException;    /* pymol.CmdException */
 
 #endif
 #endif

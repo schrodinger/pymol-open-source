@@ -57,7 +57,7 @@ class LockCM(object):
     def __enter__(self):
         lock(self.cmd)
     def __exit__(self, type, value, traceback):
-        unlock(None, self.cmd)
+        unlock(None if type is None else -1, self.cmd)
 
 def lock(_self=cmd): # INTERNAL -- API lock
     if not _self.lock_api.acquire(0):

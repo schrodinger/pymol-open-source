@@ -364,6 +364,7 @@ PyObject *P_xray = NULL;        /* okay as global */
 PyObject *P_chempy = NULL;      /* okay as global */
 PyObject *P_models = NULL;      /* okay as global */
 PyObject *P_setting = NULL;     /* okay as global -- just used for names */
+PyObject *P_CmdException = nullptr;
 
 static PyMappingMethods wrapperMappingMethods, settingMappingMethods;
 static PyTypeObject Wrapper_Type = {
@@ -2267,6 +2268,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
 
     P_chempy = PImportModuleOrFatal("chempy");
     P_models = PImportModuleOrFatal("chempy.models");
+    P_CmdException = PGetAttrOrFatal(P_pymol, "CmdException");
 
     /* backwards compatibility */
 
