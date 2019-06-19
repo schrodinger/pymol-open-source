@@ -124,6 +124,16 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual(3, cmd.count_atoms())
         self.assertEqual(['C01', 'C02', 'PS1'], sorted(get_atom_names()))
 
+    @testing.requires_version('2.4')
+    def test_add_bond(self):
+        cmd.pseudoatom('m1', pos=(0,0,0))
+        cmd.pseudoatom('m1', pos=(1,0,0))
+        cmd.pseudoatom('m1', pos=(1,1,0))
+        cmd.add_bond('m1', 1, 2) # 1-indexed
+        cmd.add_bond('m1', 2, 3, order=2)
+        bonds = cmd.get_bonds('m1') # 0-indexed
+        self.assertEqual(bonds, [(0, 1, 1), (1, 2, 2)])
+
     def test_bond(self):
         cmd.pseudoatom('m1', pos=(0,0,0))
         cmd.pseudoatom('m1', pos=(1,0,0))
