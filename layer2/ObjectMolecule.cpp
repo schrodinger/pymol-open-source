@@ -4517,6 +4517,8 @@ int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order)
             c++;
             I->AtomInfo[a1].chemFlag = false;
             I->AtomInfo[a2].chemFlag = false;
+            I->AtomInfo[a1].bonded = true;
+            I->AtomInfo[a2].bonded = true;
           }
         }
         ai2++;
@@ -4525,17 +4527,39 @@ int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order)
     ai1++;
   }
   if(c) {
-    ObjectMoleculeInvalidate(I, cRepLine, cRepInvBonds, -1);
-    ObjectMoleculeInvalidate(I, cRepCyl, cRepInvBonds, -1);
-    ObjectMoleculeInvalidate(I, cRepNonbonded, cRepInvBonds, -1);
-    ObjectMoleculeInvalidate(I, cRepNonbondedSphere, cRepInvBonds, -1);
-    ObjectMoleculeInvalidate(I, cRepRibbon, cRepInvBonds, -1);
-    ObjectMoleculeInvalidate(I, cRepCartoon, cRepInvBonds, -1);
-    ObjectMoleculeUpdateIDNumbers(I);
+    ObjectMoleculeInvalidate(I, cRepAll, cRepInvBondsNoNonbonded, -1);
   }
   return (c);
 }
 
+/*========================================================================*/
+bool ObjectMoleculeAddBondByIndices(
+    ObjectMolecule* I, unsigned atm1, unsigned atm2, int order)
+{
+  if (atm1 >= I->NAtom || atm2 >= I->NAtom) {
+    ErrMessage(I->G, __func__, "atom index out of bounds");
+    return false;
+  }
+
+  if (!I->Bond) {
+    I->Bond = VLACalloc(BondType, 1);
+  } else {
+    VLACheck(I->Bond, BondType, I->NBond);
+  }
+
+  auto& bnd = I->Bond[I->NBond++];
+  BondTypeInit2(&bnd, atm1, atm2, order);
+  bnd.stereo = 0;
+
+  I->AtomInfo[atm1].chemFlag = false;
+  I->AtomInfo[atm2].chemFlag = false;
+  I->AtomInfo[atm1].bonded = true;
+  I->AtomInfo[atm2].bonded = true;
+
+  ObjectMoleculeInvalidate(I, cRepAll, cRepInvBondsNoNonbonded, -1);
+
+  return true;
+}
 
 /*========================================================================*/
 int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode,
@@ -11099,13 +11123,20 @@ void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state)
     I->RepVisCacheValid = false;
   }
 
+  if (level >= cRepInvBondsNoNonbonded) {
+    if (level < cRepInvBonds) {
+      level = cRepInvBonds;
+    } else {
+      ObjectMoleculeUpdateNonbonded(I);
+    }
+  }
+
   if(level >= cRepInvBonds) {
     VLAFreeP(I->Neighbor);      /* set I->Neighbor to NULL */
     if(I->Sculpt) {
       SculptFree(I->Sculpt);
       I->Sculpt = NULL;
     }
-    ObjectMoleculeUpdateNonbonded(I);
     if(level >= cRepInvAtoms) {
       SelectorUpdateObjectSele(I->G, I);
     }

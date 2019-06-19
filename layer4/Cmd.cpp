@@ -4051,6 +4051,27 @@ static PyObject *CmdBond(PyObject * self, PyObject * args)
   return APIResultOk(ok);
 }
 
+static PyObject* CmdAddBond(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  const char* oname;
+  int atm1, atm2;
+  int order;
+  API_SETUP_ARGS(G, self, args, "Osiii", &self, &oname, &atm1, &atm2, &order);
+  APIEnterBlocked(G);
+
+  auto obj = ExecutiveFindObjectMoleculeByName(G, oname);
+  if (!obj) {
+    APIExitBlocked(G);
+    return APIFailure(G, "cannot find object");
+  }
+
+  bool ok = ObjectMoleculeAddBondByIndices(obj, atm1, atm2, order);
+
+  APIExitBlocked(G);
+  return APIResultOk(G, ok);
+}
+
 static PyObject *CmdRevalence(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -8372,6 +8393,7 @@ static PyMethodDef Cmd_methods[] = {
   {"attach", CmdAttach, METH_VARARGS},
   {"bg_color", CmdBackgroundColor, METH_VARARGS},
   {"bond", CmdBond, METH_VARARGS},
+  {"add_bond", CmdAddBond, METH_VARARGS},
   {"busy_draw", CmdBusyDraw, METH_VARARGS},
   {"button", CmdButton, METH_VARARGS},
   /*  {"cache",                 CmdCache,                METH_VARARGS }, */

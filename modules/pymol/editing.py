@@ -593,6 +593,32 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
+    def add_bond(oname, index1, index2, order=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    API-only function to add a bond by atom indices (1-based, same as "index"
+    in cmd.iterate()).
+
+    To add bonds by atom selection, use cmd.bond()
+
+ARGUMENTS
+
+    oname = str: object name
+
+    index1 = int: first atom index
+
+    index2 = int: second atom index
+
+    order = int: bond order {default: 1}
+
+SEE ALSO
+
+    cmd.get_bonds()
+        '''
+        with _self.lockcm:
+            return _cmd.add_bond(_self._COb, oname, index1 - 1, index2 - 1, order)
+
     def bond(atom1="(pk1)", atom2="(pk2)", order=1, edit=1, quiet=1, _self=cmd):
         '''
 DESCRIPTION

@@ -151,6 +151,9 @@ const int cRepsObjectMask = (cRepSurfaceBit | cRepMeshBit | cRepDotBit | \
 /* invalidate graphic representation */
 #define cRepInvRep    35
 
+/* don't call ObjectMoleculeUpdateNonbonded */
+#define cRepInvBondsNoNonbonded 38
+
 /* invalidate bond structure */
 #define cRepInvBonds  40
 

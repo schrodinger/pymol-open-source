@@ -1171,7 +1171,15 @@ PYMOL API
         '''
 DESCRIPTION
 
-    Get a list of (atm1, atm2, order) tuples.
+    Get a list of (atm1, atm2, order) tuples for bonds with coordinates in
+    the given state (same logic as cmd.get_model()).
+
+    WARNING: atm1/atm2 are 0-based indices! They enumerate the atoms in the
+    selection and do not necessarily correspond to the "index" atom property.
+
+    To get a atm1/atm2 to index mapping, you can do:
+    >>> stored.indices = []
+    >>> cmd.iterate_state(state, selection, "stored.indices.append(index)")
 
 SEE ALSO
 

@@ -180,6 +180,7 @@ from .exporting import \
 #--------------------------------------------------------------------
 from . import editing
 from .editing import \
+      add_bond,           \
       alter,              \
       alter_list,         \
       alter_state,        \
