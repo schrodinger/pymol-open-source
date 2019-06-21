@@ -148,18 +148,12 @@ static DistSet *ObjectDistGetDistSetFromM4XBond(PyMOLGlobals * G,
     /* determine range */
 
     {
-      int a, cur_id;
-      cur_id = obj->AtomInfo[0].id;
-      min_id = cur_id;
-      max_id = cur_id;
-      for(a = 1; a < obj->NAtom; a++) {
-        cur_id = obj->AtomInfo[a].id;
-        if(min_id > cur_id)
-          min_id = cur_id;
-        if(max_id < cur_id)
-          max_id = cur_id;
-      }
-    }
+      auto iterPair = std::minmax_element(std::begin(obj->AtomInfo),
+          std::begin(obj->AtomInfo) + obj->NAtom,
+          [](const AtomInfoType& a, const AtomInfoType& b) { return a.id < b.id; });
+      min_id = iterPair.first->id;
+      max_id = iterPair.second->id;
+     }
 
     /* create cross-reference table */
 
