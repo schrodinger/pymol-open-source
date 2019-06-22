@@ -104,7 +104,9 @@ protected:
 public:
   cif_file();
   cif_file(cif_file&&);
+  cif_file(const cif_file&) = delete;
   cif_file& operator=(cif_file&&);
+  cif_file& operator=(const cif_file&) = delete;
   virtual ~cif_file();
 
   /// Construct from file name or buffer
@@ -223,6 +225,13 @@ class cif_data {
   static const cif_array* empty_array();
 
 public:
+
+  cif_data() = default;
+  cif_data(const cif_data&) = delete;
+  cif_data(cif_data&&) = default;
+  cif_data& operator=(const cif_data&) = delete;
+  cif_data& operator=(cif_data&&) = default;
+
   /// Block code (never NULL)
   const char* code() const { return m_code ? m_code : ""; }
 
