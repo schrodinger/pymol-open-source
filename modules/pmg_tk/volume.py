@@ -172,7 +172,7 @@ class ColorChooser(Tkinter.Toplevel):
         Update RGB entry field and optionally move the oval
         '''
         self.var_color.set('#%02x%02x%02x' % tuple(
-            min(max(v, 0), 1) * 255 for v in rgb))
+            int(min(max(v, 0), 1) * 0xFF) for v in rgb))
 
         if update_oval:
             h, s, v = colorsys.rgb_to_hsv(*rgb)
@@ -262,8 +262,7 @@ class VRGBA(object):
         '''
         @type: str
         '''
-        r, g, b = self.rgb
-        return "#%02x%02x%02x" % (r * 255, g * 255, b * 255)
+        return "#%02x%02x%02x" % tuple(int(v * 0xFF) for v in self.rgb)
 
 class RangeEntry(Tkinter.Entry):
     '''

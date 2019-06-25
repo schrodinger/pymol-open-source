@@ -9556,10 +9556,6 @@ CGO *CGOOptimizeScreenTexturesAndPolygons(CGO * I, int est)
     colorVals = texcoordVals + nxtn * num_total_indices;
     colorValsUC = (uchar*) colorVals;
     nxtn = 1;
-      /*    if (true) { //SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
-    } else {
-      nxtn = 4;
-      }*/
     ok = CGOProcessScreenCGOtoArrays(I->G, pc, I, vertexVals, texcoordVals, colorVals, colorValsUC);
     if (!ok){
       if (!I->G->Interrupt)
@@ -9592,8 +9588,8 @@ CGO *CGOOptimizeScreenTexturesAndPolygons(CGO * I, int est)
       }
     }
     FreeP(vertexVals);
+    cgo->use_shader = true;
   }
-  cgo->use_shader = true;
   return cgo;
 }
 

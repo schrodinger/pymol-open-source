@@ -199,6 +199,12 @@ class Normal(PMGSkin, pymol._gui.PyMOLDesktopGUI):
         self.messageBar = Pmw.MessageBar(self.commandFrame, entry_width = 25,
              entry_relief='sunken', entry_borderwidth=1) #, labelpos = 'w')
 
+
+        self.abortButton=Button(self.commandFrame,
+                      text='Abort',highlightthickness=0,
+                      command=lambda s=self:self.abort(),padx=0,pady=0)
+        self.abortButton.pack(side=RIGHT,fill=BOTH,expand=YES)
+
         self.abortButton=Button(self.commandFrame,
                                 text='Rebuild',highlightthickness=0,
                                 #                                state=DISABLED,
@@ -308,7 +314,7 @@ class Normal(PMGSkin, pymol._gui.PyMOLDesktopGUI):
         self.volB = self.buttonAdd(row4, 'Volume',
                                     self.newVolumeFrame)
         # initialize disabled
-        self.volB.config(state=DISABLED)
+        # self.volB.config(state=DISABLED)
 
     def newVolumeFrame(self):
         volumes = self.cmd.get_names_of_type("object:volume", public=1)
@@ -572,7 +578,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
     def update_menus(self):
         self.setting.refresh()
 
-        if True:
+        # 2019-06-25 Disabled because cmd.get_names_of_type() is a blocking
+        # command if the API is locked, blocks progress display.
+        if False:
             # volume frame is closed, update the button
             if len(self.cmd.get_names_of_type("object:volume",public=1))>0:
                 self.volB.config(state=NORMAL)
