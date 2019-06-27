@@ -22,7 +22,6 @@ Z* -------------------------------------------------------------------
 #include <vector>
 
 #include "Image.h"
-#include "LangUtil.h"
 
 #include"PyMOLGlobals.h"
 

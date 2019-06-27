@@ -15,6 +15,7 @@ Z* -------------------------------------------------------------------
 */
 #include"os_predef.h"
 #include"MemoryDebug.h"
+#include"pymol/memory.h"
 
 
 /* backwards compatibility */

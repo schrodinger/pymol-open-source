@@ -1,7 +1,10 @@
 #pragma once
-#include "LangUtil.h"
+
+#include <cstdint>
 #include <exception>
 #include <vector>
+#include "pymol/algorithm.h"
+#include "pymol/type_traits.h"
 
 namespace pymol
 {

@@ -9,7 +9,6 @@
 #include"ListMacros.h"
 #include"Color.h"
 #include"P.h"
-#include"LangUtil.h"
 
 static double accumTiming = 0.0;
 

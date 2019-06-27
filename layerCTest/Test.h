@@ -9,7 +9,7 @@
 #include <cmath>
 #include "os_python.h"
 #include "PConv.h"
-#include "LangUtil.h"
+#include "pymol/type_traits.h"
 #include <catch2/catch.hpp>
 
 namespace pymol {

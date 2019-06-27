@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Ray
 #define _H_Ray
 
+#include <memory>
 #include <vector>
 
 #include"Base.h"

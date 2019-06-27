@@ -21,7 +21,6 @@ Z* -------------------------------------------------------------------
 #include"os_numpy.h"
 
 #include"Util.h"
-#include"LangUtil.h"
 
 #include"Word.h"
 #include"main.h"

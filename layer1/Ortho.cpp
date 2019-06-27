@@ -53,7 +53,6 @@ Z* -------------------------------------------------------------------
 #include "CGO.h"
 #include "MyPNG.h"
 #include "File.h"
-#include "LangUtil.h"
 
 #define OrthoSaveLines 0xFF
 #define OrthoHistoryLines 0xFF

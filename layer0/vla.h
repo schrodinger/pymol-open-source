@@ -5,7 +5,7 @@
 #pragma once
 
 #include "MemoryDebug.h"
-#include "LangUtil.h"
+#include "pymol/memory.h"
 #include <algorithm>
 #if 0
 #include <vector>

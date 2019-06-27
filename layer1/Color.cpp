@@ -31,7 +31,6 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"MyPNG.h"
 #include"Scene.h"
-#include"LangUtil.h"
 #include"OVContext.h"
 #include"OVreturns.h"
 

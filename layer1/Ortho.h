@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"Deferred.h"
 #include"Image.h"
+#include"pymol/memory.h"
 
 #define cOrthoScene 1
 #define cOrthoTool 2
