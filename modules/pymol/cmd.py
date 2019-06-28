@@ -166,7 +166,6 @@ if True:
         # one active thread enters PyMOL at a given time.
 
         lock_api = pymol.lock_api
-        lock_api_c = pymol.lock_api_c
         lock_api_status = pymol.lock_api_status
         lock_api_glut = pymol.lock_api_glut
         lock_api_data = pymol.lock_api_data

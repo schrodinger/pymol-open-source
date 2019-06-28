@@ -28,43 +28,33 @@ from .cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, loadable, _load2str, Shortcut, 
 
 def _cache_validate(_self=cmd):
     r = DEFAULT_SUCCESS
-    try:
-        _self.lock_data(_self)
+    with _self.lock_api_data:
         _pymol = _self._pymol
         if not hasattr(_pymol,"_cache"):
             _pymol._cache = []
         if not hasattr(_pymol,"_cache_memory"):
             _pymol._cache_memory = 0
-    finally:
-        _self.unlock_data(_self)
 
 def _cache_clear(_self=cmd):
     r = DEFAULT_SUCCESS
-    try:
-        _self.lock_data(_self)
+    with _self.lock_api_data:
         _pymol = _self._pymol
         _pymol._cache = []
         _pymol._cache_memory = 0
-    finally:
-        _self.unlock_data(_self)
     return r
 
 def _cache_mark(_self=cmd):
     r = DEFAULT_SUCCESS
-    try:
-        _self.lock_data(_self)
+    with _self.lock_api_data:
         _pymol = _self._pymol
         _cache_validate(_self)
         for entry in _self._pymol._cache:
             entry[5] = 0.0
-    finally:
-        _self.unlock_data(_self)
     return r
 
 def _cache_purge(max_size, _self=cmd):
     r = DEFAULT_SUCCESS
-    try:
-        _self.lock_data(_self)
+    with _self.lock_api_data:
         _pymol = _self._pymol
         _cache_validate(_self)
         if len(_pymol._cache):
@@ -91,14 +81,11 @@ def _cache_purge(max_size, _self=cmd):
                 _pymol._cache = new_cache
                 _pymol._cache_memory = cur_size
         result = _pymol._cache_memory
-    finally:
-        _self.unlock_data(_self)
     return result
 
 def _cache_get(target, hash_size = None, _self=cmd):
     result = None
-    try:
-        _self.lock_data(_self)
+    with _self.lock_api_data:
         try:
             if hash_size is None:
                 hash_size = len(target[1])
@@ -115,14 +102,11 @@ def _cache_get(target, hash_size = None, _self=cmd):
                         break
         except:
             traceback.print_exc()
-    finally:
-        _self.unlock_data(_self)
     return result
 
 def _cache_set(new_entry, max_size, _self=cmd):
     r = DEFAULT_SUCCESS
-    try:
-        _self.lock_data(_self)
+    with _self.lock_api_data:
         _pymol = _self._pymol
         _cache_validate(_self)
         try:
@@ -147,8 +131,6 @@ def _cache_set(new_entry, max_size, _self=cmd):
                         _cache_purge(max_size, _self)
         except:
             traceback.print_exc()
-    finally:
-        _self.unlock_data(_self)
     return r
 
 # ray tracing threads
@@ -567,6 +549,7 @@ def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,prior=0,format=-1,_self=cmd):
 def _quit(code=0, _self=cmd):
     pymol=_self._pymol
     # WARNING: internal routine, subject to change
+    _self.interrupt()
     try:
         _self.lock(_self)
         try: # flush and close log if possible to avoid threading exception
@@ -596,14 +579,11 @@ def _refresh(swap_buffers=1,_self=cmd):  # Only call with GLUT thread!
     r = None
     try:
         _self.lock(_self)
-        if hasattr(_self._pymol,'glutThread'):
-            if thread.get_ident() == _self._pymol.glutThread:
+        if _self.is_gui_thread():
                 if swap_buffers:
                     r = _cmd.refresh_now(_self._COb)
                 else:
                     r = _cmd.refresh(_self._COb)
-            else:
-                r = _cmd.refresh_later(_self._COb)
         else:
             r = _cmd.refresh_later(_self._COb)
     finally:

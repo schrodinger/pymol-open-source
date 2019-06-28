@@ -93,6 +93,17 @@ inline SomeString PyBytes_AsSomeString(PyObject * o) {
   return SomeString(PyBytes_AsString(o), PyBytes_Size(o));
 }
 
+namespace pymol {
+/**
+ * Destruction policy for unique_ptr<PyObject, pymol::pyobject_delete>
+ */
+struct pyobject_delete {
+  void operator()(PyObject* o) const { Py_XDECREF(o); }
+};
+} // namespace pymol
+
+#define unique_PyObject_ptr std::unique_ptr<PyObject, pymol::pyobject_delete>
+
 #endif
 
 #include "os_predef.h"

@@ -62,6 +62,22 @@ the initialization functions for these libraries on startup.
 #include "Lex.h"
 #include "Seeker.h"
 
+#ifdef _PYMOL_IP_PROPERTIES
+#include"Property.h"
+#endif
+
+#include <memory>
+
+/**
+ * Use with functions which return a PyObject - if they return NULL, then an
+ * unexpected exception has occured.
+ */
+#define ASSERT_PYOBJECT_NOT_NULL(obj, return_value)                            \
+  if (!obj) {                                                                  \
+    PyErr_Print();                                                             \
+    return return_value;                                                       \
+  }
+
 static int label_copy_text(char *dst, const char *src, int len, int max)
 {
   dst += len;
@@ -945,40 +961,56 @@ static void PLockAPIWhileBlocked(PyMOLGlobals * G);
 
 #define P_log_file_str "_log_file"
 
-#define xxxPYMOL_NEW_THREADS 1
-
+/**
+ * Acquire the status lock (blocking)
+ * @pre GIL
+ */
 void PLockStatus(PyMOLGlobals * G)
 {                               /* assumes we have the GIL */
-  PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->lock_status, "O", G->P_inst->cmd));
+  PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->lock_api_status, "acquire", nullptr));
 }
 
+/**
+ * Acquire the status lock (non-blocking)
+ * @return True if lock could be acquired
+ * @pre GIL
+ */
 int PLockStatusAttempt(PyMOLGlobals * G)
 {                               /* assumes we have the GIL */
-  int result = true;
-  PyObject *got_lock =
-    PYOBJECT_CALLFUNCTION(G->P_inst->lock_status_attempt, "O", G->P_inst->cmd);
-  if(got_lock) {
-    if(!PyInt_AsLong(got_lock)) {
-      result = false;
-    }
-    Py_DECREF(got_lock);
-  }
-  return result;
+
+  unique_PyObject_ptr got_lock(
+      PYOBJECT_CALLMETHOD(G->P_inst->lock_api_status, "acquire", "i", 0));
+
+  ASSERT_PYOBJECT_NOT_NULL(got_lock, true);
+
+  return PyObject_IsTrue(got_lock.get());
 }
 
+/**
+ * Release the status lock
+ * @pre GIL
+ */
 void PUnlockStatus(PyMOLGlobals * G)
 {                               /* assumes we have the GIL */
-  PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock_status, "O", G->P_inst->cmd));
+  PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->lock_api_status, "release", nullptr));
 }
 
+/**
+ * Acquire GLUT lock
+ * @pre GIL
+ */
 static void PLockGLUT(PyMOLGlobals * G)
 {                               /* assumes we have the GIL */
-  PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->lock_glut, "O", G->P_inst->cmd));
+  PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->lock_api_glut, "acquire", nullptr));
 }
 
+/**
+ * Release GLUT lock
+ * @pre GIL
+ */
 static void PUnlockGLUT(PyMOLGlobals * G)
 {                               /* assumes we have the GIL */
-  PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock_glut, "O", G->P_inst->cmd));
+  PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->lock_api_glut, "release", nullptr));
 }
 
 static long P_glut_thread_id = -1;
@@ -1420,11 +1452,14 @@ int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject
   return (result);
 }
 
+/**
+ * - Release API lock with flushing
+ * - Pop valid context
+ * - Release GLUT lock
+ * @pre no GIL
+ */
 void PUnlockAPIAsGlut(PyMOLGlobals * G)
 {                               /* must call with unblocked interpreter */
-  PRINTFD(G, FB_Threads)
-    " PUnlockAPIAsGlut-DEBUG: entered as thread %ld\n", PyThread_get_thread_ident()
-    ENDFD;
   PBlock(G);
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock, "iO", 0, G->P_inst->cmd));  /* NOTE this may flush the command buffer! */
   PLockStatus(G);
@@ -1434,11 +1469,14 @@ void PUnlockAPIAsGlut(PyMOLGlobals * G)
   PUnblock(G);
 }
 
+/**
+ * - Release API lock without flushing
+ * - Pop valid context
+ * - Release GLUT lock
+ * @pre no GIL
+ */
 void PUnlockAPIAsGlutNoFlush(PyMOLGlobals * G)
 {                               /* must call with unblocked interpreter */
-  PRINTFD(G, FB_Threads)
-    " PUnlockAPIAsGlut-DEBUG: entered as thread %ld\n", PyThread_get_thread_ident()
-    ENDFD;
   PBlock(G);
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock, "iO", -1, G->P_inst->cmd)); /* prevents flushing of the buffer */
   PLockStatus(G);
@@ -1448,49 +1486,49 @@ void PUnlockAPIAsGlutNoFlush(PyMOLGlobals * G)
   PUnblock(G);
 }
 
+/**
+ * Acquire API lock
+ * @param block_if_busy If false and PyMOL is busy, do not block
+ * @return False if API lock could not be acquired
+ * @pre GIL
+ */
 static int get_api_lock(PyMOLGlobals * G, int block_if_busy)
 {
-  int result = true;
+  if (!block_if_busy) {
+    unique_PyObject_ptr got_lock(
+        PYOBJECT_CALLFUNCTION(G->P_inst->lock_attempt, "O", G->P_inst->cmd));
 
-  if(block_if_busy) {
+    ASSERT_PYOBJECT_NOT_NULL(got_lock, false);
 
-    PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->lock, "O", G->P_inst->cmd));
+    if (PyObject_IsTrue(got_lock.get())) {
+      return true;
+    }
 
-  } else {                      /* not blocking if PyMOL is busy */
+    PLockStatus(G);
+    bool busy = PyMOL_GetBusy(G->PyMOL, false);
+    PUnlockStatus(G);
 
-    PyObject *got_lock =
-      PYOBJECT_CALLFUNCTION(G->P_inst->lock_attempt, "O", G->P_inst->cmd);
-
-    if(got_lock) {
-      if(!PyInt_AsLong(got_lock)) {
-        if(!G) {                /* impossible (unless stack trashed?) */
-          result = false;
-        } else {
-          PLockStatus(G);
-          if(PyMOL_GetBusy(G->PyMOL, false))
-            result = false;
-          PUnlockStatus(G);
-          if(!G) {              /* impossible (unless stack trashed?) */
-            result = false;
-          } else {
-            if(result) {        /* didn't get lock, but not busy, so block and wait for lock */
-              PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->lock, "O", G->P_inst->cmd));
-            }
-          }
-        }
-      }
-      Py_DECREF(got_lock);
+    if (busy) {
+      return false;
     }
   }
-  return result;
+
+  PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->lock, "O", G->P_inst->cmd));
+  return true;
 }
 
+/**
+ * - Acquire GLUT lock
+ * - Push valid context
+ * - Acquire API lock
+ * - Wait for glut_thread_keep_out == 0
+ *
+ * @param block_if_busy If false and PyMOL is busy, API lock is non-blocking
+ * @return False if locks could not be acquired
+ * @pre no GIL
+ */
 int PLockAPIAsGlut(PyMOLGlobals * G, int block_if_busy)
 {
-  PRINTFD(G, FB_Threads)
-    "*PLockAPIAsGlut-DEBUG: entered as thread %ld\n", PyThread_get_thread_ident()
-    ENDFD;
-
   PBlock(G);
 
   PLockGLUT(G);
@@ -1499,27 +1537,24 @@ int PLockAPIAsGlut(PyMOLGlobals * G, int block_if_busy)
   PyMOL_PushValidContext(G->PyMOL);
   PUnlockStatus(G);
 
-  PRINTFD(G, FB_Threads)
-    "#PLockAPIAsGlut-DEBUG: acquiring lock as thread %ld\n", PyThread_get_thread_ident()
-    ENDFD;
+  while (true) {
+    if(!get_api_lock(G, block_if_busy)) {
+      PLockStatus(G);
+      PyMOL_PopValidContext(G->PyMOL);
+      PUnlockStatus(G);
+      PUnlockGLUT(G);
+      PUnblock(G);
+      return false;               /* busy -- so allow main to update busy status display (if any) */
+    }
 
-  if(!get_api_lock(G, block_if_busy)) {
-    PLockStatus(G);
-    PyMOL_PopValidContext(G->PyMOL);
-    PUnlockStatus(G);
-    PUnlockGLUT(G);
-    PUnblock(G);
-    return false;               /* busy -- so allow main to update busy status display (if any) */
-  }
+    if (G->P_inst->glut_thread_keep_out == 0) {
+      break;
+    }
 
-  while(G->P_inst->glut_thread_keep_out) {
     /* IMPORTANT: keeps the glut thread out of an API operation... */
     /* NOTE: the keep_out variable can only be changed or read by the thread
        holding the API lock, therefore it is safe even through increment
        isn't atomic. */
-    PRINTFD(G, FB_Threads)
-      "-PLockAPIAsGlut-DEBUG: glut_thread_keep_out %ld\n", PyThread_get_thread_ident()
-      ENDFD;
 
     PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock, "iO", -1, G->P_inst->cmd));       /* prevent buffer flushing */
 #ifndef WIN32
@@ -1537,22 +1572,10 @@ int PLockAPIAsGlut(PyMOLGlobals * G, int block_if_busy)
     PXDecRef(PYOBJECT_CALLFUNCTION(P_sleep, "f", 0.050));
     /* END PROPRIETARY CODE SEGMENT */
 #endif
-
-    if(!get_api_lock(G, block_if_busy)) {
-      /* return false-- allow main to update busy status display (if any) */
-      PLockStatus(G);
-      PyMOL_PopValidContext(G->PyMOL);
-      PUnlockStatus(G);
-      PUnlockGLUT(G);
-      PUnblock(G);
-      return false;
-    }
   }
 
   PUnblock(G);                  /* API is now locked, so we can free up Python... */
 
-  PRINTFD(G, FB_Threads)
-    "=PLockAPIAsGlut-DEBUG: acquired\n" ENDFD;
   return true;
 }
 
@@ -2089,13 +2112,21 @@ void PGetOptions(CPyMOLOptions * rec)
   Py_XDECREF(pymol);
 }
 
+/**
+ * Runs a string in the namespace of the pymol global module
+ * @pre GIL
+ */
 void PRunStringModule(PyMOLGlobals * G, const char *str)
-{                               /* runs a string in the namespace of the pymol global module */
+{
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->exec, "Os", P_pymol, str));
 }
 
+/**
+ * Runs a string in the namespace of the pymol instance
+ * @pre GIL
+ */
 void PRunStringInstance(PyMOLGlobals * G, const char *str)
-{                               /* runs a string in the namespace of the pymol instance */
+{
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->exec, "Os", G->P_inst->obj, str));
 }
 
@@ -2116,10 +2147,6 @@ void WrapperObjectReset(WrapperObject *wo){
 
 void PInit(PyMOLGlobals * G, int global_instance)
 {
-#ifdef PYMOL_NEW_THREADS
-  PyEval_InitThreads();
-#endif
-
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 #ifdef _PYMOL_MONOLITHIC
@@ -2209,14 +2236,8 @@ void PInit(PyMOLGlobals * G, int global_instance)
     G->P_inst->lock = PGetAttrOrFatal(G->P_inst->cmd, "lock");
     G->P_inst->lock_attempt = PGetAttrOrFatal(G->P_inst->cmd, "lock_attempt");
     G->P_inst->unlock = PGetAttrOrFatal(G->P_inst->cmd, "unlock");
-    G->P_inst->lock_c = PGetAttrOrFatal(G->P_inst->cmd, "lock_c");
-    G->P_inst->unlock_c = PGetAttrOrFatal(G->P_inst->cmd, "unlock_c");
-    G->P_inst->lock_status = PGetAttrOrFatal(G->P_inst->cmd, "lock_status");
-    G->P_inst->lock_status_attempt =
-      PGetAttrOrFatal(G->P_inst->cmd, "lock_status_attempt");
-    G->P_inst->unlock_status = PGetAttrOrFatal(G->P_inst->cmd, "unlock_status");
-    G->P_inst->lock_glut = PGetAttrOrFatal(G->P_inst->cmd, "lock_glut");
-    G->P_inst->unlock_glut = PGetAttrOrFatal(G->P_inst->cmd, "unlock_glut");
+    G->P_inst->lock_api_status = PGetAttrOrFatal(G->P_inst->cmd, "lock_api_status");
+    G->P_inst->lock_api_glut = PGetAttrOrFatal(G->P_inst->cmd, "lock_api_glut");
 
     /* 'do' command */
 
@@ -2343,6 +2364,9 @@ void PFree(PyMOLGlobals * G)
   PXDecRef(G->P_inst->colortype);
 }
 
+/**
+ * Terminates the application with a call to `exit(code)`.
+ */
 void PExit(PyMOLGlobals * G, int code)
 {
   ExecutiveDelete(G, "all");
@@ -2372,11 +2396,19 @@ void PExit(PyMOLGlobals * G, int code)
 #endif
 }
 
+/**
+ * Add `str` to the command queue
+ */
 void PParse(PyMOLGlobals * G, const char *str)
 {
   OrthoCommandIn(G, str);
 }
 
+/**
+ * Call `cmd.do(str)`
+ *
+ * Effectively calls `PParse(str.splitlines())` with logging and echo.
+ */
 void PDo(PyMOLGlobals * G, const char *str)
 {                               /* assumes we already hold the re-entrant API lock */
   int blocked;
@@ -2463,6 +2495,9 @@ void PLog(PyMOLGlobals * G, const char *str, int format)
   }
 }
 
+/**
+ * Call flush() on the open log file handle
+ */
 void PLogFlush(PyMOLGlobals * G)
 {
   int mode;
@@ -2479,14 +2514,26 @@ void PLogFlush(PyMOLGlobals * G)
   }
 }
 
+#define PFLUSH_REPORT_UNCAUGHT_EXCEPTIONS(G)                                   \
+  if (PyErr_Occurred()) {                                                      \
+    PyErr_Print();                                                             \
+    PRINTFB(G, FB_Python, FB_Errors)                                           \
+    " %s: Uncaught exception.  PyMOL may have a bug.\n", __func__ ENDFB(G);    \
+  }
+
+/**
+ * Execute commands from the command queue.
+ * If the current thread holds the GIL, do nothing. Otherwise the queue will
+ * be empty after this call.
+ * @return False if the queue was empty
+ */
 int PFlush(PyMOLGlobals * G)
 {
   /* NOTE: ASSUMES unblocked Python threads and a locked API */
-  PyObject *err;
-  int did_work = false;
-  if(OrthoCommandWaiting(G)) {
-    did_work = true;
-    PBlock(G);
+  if(!OrthoCommandWaiting(G))
+    return false;
+
+  if (PAutoBlock(G)) {
     if(!(PIsGlutThread() && G->P_inst->glut_thread_keep_out)) {
       /* don't run if we're currently banned */
       auto ortho = G->Ortho;
@@ -2494,20 +2541,21 @@ int PFlush(PyMOLGlobals * G)
         auto buffer = OrthoCommandOut(*ortho);
         OrthoCommandSetBusy(G, true);
         OrthoCommandNest(G, 1);
-        PUnlockAPIWhileBlocked(G);
-        if(PyErr_Occurred()) {
-          PyErr_Print();
-          PRINTFB(G, FB_Python, FB_Errors)
-            " PFlush: Uncaught exception.  PyMOL may have a bug.\n" ENDFB(G);
-        }
+
+        // TODO if we release here, another thread might acquire the API lock
+        // and block us when we try to lock again. (see PYMOL-3249)
+        // Example: set_key F1, ray async=1
+        //          => hitting F1 will block GUI updates, even though ray
+        //             is running async
+        // PUnlockAPIWhileBlocked(G);
+
+        PFLUSH_REPORT_UNCAUGHT_EXCEPTIONS(G);
         PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->parse, "si", buffer.c_str(), 0));
-        err = PyErr_Occurred();
-        if(err) {
-          PyErr_Print();
-          PRINTFB(G, FB_Python, FB_Errors)
-            " PFlush: Uncaught exception.  PyMOL may have a bug.\n" ENDFB(G);
-        }
-        PLockAPIWhileBlocked(G);
+        PFLUSH_REPORT_UNCAUGHT_EXCEPTIONS(G);
+
+        // TODO see above
+        // PLockAPIWhileBlocked(G);
+
         OrthoCommandSetBusy(G, false);
         /* make sure no commands left at this level */
         while(OrthoCommandWaiting(G))
@@ -2517,9 +2565,15 @@ int PFlush(PyMOLGlobals * G)
     }
     PUnblock(G);
   }
-  return did_work;
+  return true;
 }
 
+/**
+ * Execute commands from the command queue.
+ * @return False if the queue was empty
+ * @pre GIL
+ * @post queue is empty
+ */
 int PFlushFast(PyMOLGlobals * G)
 {
   /* NOTE: ASSUMES we currently have blocked Python threads and an unlocked API */
@@ -2531,22 +2585,11 @@ int PFlushFast(PyMOLGlobals * G)
     OrthoCommandSetBusy(G, true);
     OrthoCommandNest(G, 1);
     did_work = true;
-    PRINTFD(G, FB_Threads)
-      " PFlushFast-DEBUG: executing '%s' as thread %ld\n", buffer.c_str(),
-      PyThread_get_thread_ident()
-      ENDFD;
-    if(PyErr_Occurred()) {
-      PyErr_Print();
-      PRINTFB(G, FB_Python, FB_Errors)
-        " PFlushFast: Uncaught exception.  PyMOL may have a bug.\n" ENDFB(G);
-    }
+
+    PFLUSH_REPORT_UNCAUGHT_EXCEPTIONS(G);
     PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->parse, "si", buffer.c_str(), 0));
-    err = PyErr_Occurred();
-    if(err) {
-      PyErr_Print();
-      PRINTFB(G, FB_Python, FB_Errors)
-        " PFlushFast: Uncaught exception.  PyMOL may have a bug.\n" ENDFB(G);
-    }
+    PFLUSH_REPORT_UNCAUGHT_EXCEPTIONS(G);
+
     OrthoCommandSetBusy(G, false);
     /* make sure no commands left at this level */
     while(OrthoCommandWaiting(G))
@@ -2566,138 +2609,107 @@ void PUnblockLegacy()
   PUnblock(SingletonPyMOLGlobals);
 }
 
+/**
+ * Acquire the GIL.
+ * @pre no GIL
+ * @post GIL
+ */
 void PBlock(PyMOLGlobals * G)
 {
 
   if(!PAutoBlock(G)) {
-    // int *p = 0;
-    //  *p = 0;
     ErrFatal(G, "PBlock", "Threading error detected.  Terminating...");
   }
 }
 
+/**
+ * Acquire the GIL.
+ * Return false if the current thread already holds the GIL.
+ */
 int PAutoBlock(PyMOLGlobals * G)
 {
 #ifndef _PYMOL_EMBEDDED
-  int a;
-  long id;
   SavedThreadRec *SavedThread = G->P_inst->savedThread;
-  /* synchronize python */
 
-  id = PyThread_get_thread_ident();
+  auto id = PyThread_get_thread_ident();
 
-  PRINTFD(G, FB_Threads)
-    " PAutoBlock-DEBUG: search %ld (%ld, %ld, %ld)\n", id,
-    SavedThread[MAX_SAVED_THREAD - 1].id,
-    SavedThread[MAX_SAVED_THREAD - 2].id, SavedThread[MAX_SAVED_THREAD - 3].id ENDFD;
-  a = MAX_SAVED_THREAD - 1;
-  while(a) {
-    if(!((SavedThread + a)->id - id)) {
-      /* astoundingly, equality test fails on ALPHA even 
-       * though the ints are equal. Must be some kind of optimizer bug
-       * or mis-assumption */
+  for (auto a = MAX_SAVED_THREAD - 1; a; --a) {
+    if (SavedThread[a].id == id) {
+      // Aquire GIL
+      PyEval_RestoreThread(SavedThread[a].state);
 
-      PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: seeking global lock %ld\n", id ENDFD;
-
-#ifdef PYMOL_NEW_THREADS
-
-      PyEval_AcquireLock();
-
-      PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG (NewThreads): restoring %ld\n", id ENDFD;
-
-      PyThreadState_Swap((SavedThread + a)->state);
-
-#else
-      PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: restoring %ld\n", id ENDFD;
-
-      PyEval_RestoreThread((SavedThread + a)->state);
-#endif
-
-      PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: restored %ld\n", id ENDFD;
-
-      PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: clearing %ld\n", id ENDFD;
-
-      PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->lock_c, "O", G->P_inst->cmd));
       SavedThread[a].id = -1;
-      /* this is the only safe time we can change things */
-      PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock_c, "O", G->P_inst->cmd));
-
-      PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: blocked %ld (%ld, %ld, %ld)\n",
-        PyThread_get_thread_ident(), SavedThread[MAX_SAVED_THREAD - 1].id,
-        SavedThread[MAX_SAVED_THREAD - 2].id, SavedThread[MAX_SAVED_THREAD - 3].id ENDFD;
 
       return 1;
     }
-    a--;
   }
-  PRINTFD(G, FB_Threads)
-    " PAutoBlock-DEBUG: %ld not found, thus already blocked.\n",
-    PyThread_get_thread_ident()
-    ENDFD;
   return 0;
 #else
   return 1;
 #endif
 }
 
+/**
+ * Can be called anytime, no lock conditions
+ * @return True if the current thread is the GUI thread
+ */
 int PIsGlutThread(void)
 {
   return (PyThread_get_thread_ident() == P_glut_thread_id);
 }
 
+/**
+ * Release GIL
+ * @pre GIL
+ * @post no GIL
+ */
 void PUnblock(PyMOLGlobals * G)
 {
 #ifndef _PYMOL_EMBEDDED
-  int a;
   SavedThreadRec *SavedThread = G->P_inst->savedThread;
+  auto a = MAX_SAVED_THREAD - 1;
   /* NOTE: ASSUMES a locked API */
-  PRINTFD(G, FB_Threads)
-    " PUnblock-DEBUG: entered as thread %ld\n", PyThread_get_thread_ident()
-    ENDFD;
 
   /* reserve a space while we have a lock */
-  PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->lock_c, "O", G->P_inst->cmd));
-  a = MAX_SAVED_THREAD - 1;
-  while(a) {
-    if((SavedThread + a)->id == -1) {
-      (SavedThread + a)->id = PyThread_get_thread_ident();
-#ifdef PYMOL_NEW_THREADS
-      (SavedThread + a)->state = PyThreadState_Get();
-#endif
+  for (; a; --a) {
+    if (SavedThread[a].id == -1) {
+      SavedThread[a].id = PyThread_get_thread_ident();
       break;
     }
-    a--;
   }
-  PRINTFD(G, FB_Threads)
-    " PUnblock-DEBUG: %ld stored in slot %d\n", (SavedThread + a)->id, a ENDFD;
-  PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock_c, "O", G->P_inst->cmd));
-#ifdef PYMOL_NEW_THREADS
-  PyThreadState_Swap(NULL);
-  PyEval_ReleaseLock();
-#else
-  (SavedThread + a)->state = PyEval_SaveThread();
-#endif
+
+  // Release GIL
+  SavedThread[a].state = PyEval_SaveThread();
 #endif
 }
 
+/**
+ * Release GIL if flag=true
+ */
 void PAutoUnblock(PyMOLGlobals * G, int flag)
 {
   if(flag)
     PUnblock(G);
 }
 
+/**
+ * Acquire GIL, release API lock and flush
+ * @pre no GIL
+ * @post GIL
+ * @post no API lock
+ */
 void PBlockAndUnlockAPI(PyMOLGlobals * G)
 {
   PBlock(G);
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock, "iO", 0, G->P_inst->cmd));
 }
 
+/**
+ * Acquire API lock
+ * @param block_if_busy If false and PyMOL is busy, do not block
+ * @return False if API lock could not be acquired
+ * @pre no GIL
+ */
 int PLockAPI(PyMOLGlobals * G, int block_if_busy)
 {
   int result = true;
@@ -2718,6 +2730,11 @@ int PLockAPI(PyMOLGlobals * G, int block_if_busy)
   return result;
 }
 
+/**
+ * Release API lock with flushing
+ * @pre no GIL
+ * @pre API lock
+ */
 void PUnlockAPI(PyMOLGlobals * G)
 {
   PBlock(G);
@@ -2725,16 +2742,34 @@ void PUnlockAPI(PyMOLGlobals * G)
   PUnblock(G);
 }
 
+/**
+ * Release API lock without flushing
+ * @pre GIL
+ * @pre API lock
+ * @post no API lock
+ */
 static void PUnlockAPIWhileBlocked(PyMOLGlobals * G)
 {
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock, "iO", -1, G->P_inst->cmd));
 }
 
+/**
+ * Acquire API lock
+ * @pre GIL
+ * @post GIL
+ * @post API lock
+ */
 static void PLockAPIWhileBlocked(PyMOLGlobals * G)
 {
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->lock, "O", G->P_inst->cmd));
 }
 
+/**
+ * Try to acquire API lock (non-blocking if busy) and release GIL
+ * @return False if API lock could not be acquired
+ * @pre GIL
+ * @post no GIL if API lock could be acquired
+ */
 int PTryLockAPIAndUnblock(PyMOLGlobals * G)
 {
   int result = get_api_lock(G, false);
@@ -2744,12 +2779,26 @@ int PTryLockAPIAndUnblock(PyMOLGlobals * G)
   return result;
 }
 
+/**
+ * Acquire API lock and release the GIL
+ * @pre GIL
+ * @post no GIL
+ * @post API Lock
+ */
 void PLockAPIAndUnblock(PyMOLGlobals * G)
 {
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->lock, "O", G->P_inst->cmd));
   PUnblock(G);
 }
 
+/**
+ * Assign a variable in the pymol namespace, like
+ * @verbatim
+   import pymol
+   setattr(pymol, name, value)
+   @endverbatim
+ * @pre no GIL
+ */
 void PDefineFloat(PyMOLGlobals * G, const char *name, float value)
 {
   char buffer[OrthoLineLength];

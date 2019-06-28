@@ -151,7 +151,6 @@ def _init_internals(_pymol):
     # single Python interpeter
 
     _pymol.lock_api = threading.RLock() # mutex for API calls from the outside
-    _pymol.lock_api_c = threading.RLock() # mutex for C management of python threads
     _pymol.lock_api_status = threading.RLock() # mutex for PyMOL status info
     _pymol.lock_api_glut = threading.RLock() # mutex for GLUT avoidance
     _pymol.lock_api_data = threading.RLock() # mutex for internal data structures
@@ -455,7 +454,7 @@ def finish_launching(args=None):
     if True:
         # run PyMOL in thread
         invocation.options.keep_thread_alive = 1
-        cmd.reaper = threading.currentThread()
+        cmd.reaper = threading.current_thread()
         glutThreadObject = threading.Thread(target=launch,
                 args=(list(args), 1))
         glutThreadObject.start()
@@ -545,7 +544,7 @@ def _colortype(cmd):
 
 ######### VARIABLES ############################
 
-glutThread = 0
+glutThread = None
 
 ######### ENVIRONMENT ##########################
 

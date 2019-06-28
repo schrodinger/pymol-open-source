@@ -6,47 +6,14 @@ else:
     import _thread as thread
 import threading
 
-import pymol
 cmd = sys.modules["pymol.cmd"]
-
-from .cmd import fb_module, fb_mask, fb_action, fb_debug
 
 from pymol import _cmd
 
 # WARNING: internal routines, subject to change
-def lock_c(_self=cmd):
-    _self.lock_api_c.acquire(1)
-
-def unlock_c(_self=cmd):
-    _self.lock_api_c.release()
-
-def lock_data(_self=cmd):
-    _self.lock_api_data.acquire(1)
-
-def unlock_data(_self=cmd):
-    _self.lock_api_data.release()
-
-def lock_status_attempt(_self=cmd):
-    return _self.lock_api_status.acquire(0)
-
-def lock_status(_self=cmd):
-    _self.lock_api_status.acquire(1)
-
-def unlock_status(_self=cmd):
-    _self.lock_api_status.release()
-
-def lock_glut(_self=cmd):
-    _self.lock_api_glut.acquire(1)
-
-def unlock_glut(_self=cmd):
-    _self.lock_api_glut.release()
-
 def lock_without_glut(_self=cmd):
-    try:
-        _self.lock_glut(_self)
+    with _self.lock_api_glut:
         _self.lock(_self)
-    finally:
-        _self.unlock_glut(_self)
 
 class LockCM(object):
     '''
@@ -60,79 +27,66 @@ class LockCM(object):
         unlock(None if type is None else -1, self.cmd)
 
 def lock(_self=cmd): # INTERNAL -- API lock
-    if not _self.lock_api.acquire(0):
-        w = 0.0001
-        while 1:
-            e = threading.Event()
-            e.wait(w)
-            del e
-            if _self.lock_api.acquire(0):
-                break
-            if w<0.05:
-                w = w * 2 # wait twice as long each time until flushed
-            else: # we're not getting lucky, so block for real
-                _self.lock_api.acquire(1)
-                break
+    return _self.lock_api.acquire()
 
 def lock_attempt(_self=cmd): # INTERNAL
     return _self.lock_api.acquire(blocking=0)
 
 def block_flush(_self=cmd):
-    lock(_self)
-    _self.lock_api_allow_flush = 0
-    unlock(None,_self)
+    with _self.lockcm:
+        _self.lock_api_allow_flush = 0
 
 def unblock_flush(_self=cmd):
-    lock(_self)
-    _self.lock_api_allow_flush = 1
-    unlock(None,_self)
+    with _self.lockcm:
+        _self.lock_api_allow_flush = 1
 
 def unlock(result=None,_self=cmd): # INTERNAL
-    if (thread.get_ident() == pymol.glutThread):
-        if _self.reaper:
+    '''
+    Release the API lock and flush the command queue
+    '''
+    thread_owns_gui = _self.is_gui_thread()
+
+    if thread_owns_gui and _self.reaper is not None:
+        # TODO what's the use case? How can the finish_launching() thread
+        # die and what's the expected behavior? (see PYMOL-3247)
             try:
-                if not _self.reaper.isAlive():
-                    if pymol.invocation.options.no_gui:
+                if not _self.reaper.is_alive():
+                    if _self._pymol.invocation.options.no_gui:
                         _cmd.quit(_self._COb) # TO FIX
                     else:
                         _self.reaper = None
             except:
                 pass
-        _self.lock_api.release()
+
+    _self.lock_api.release()
+
+    # don't flush if we have an incipient error (negative input)
+    if _self.is_error(result):
+        return
+
+    if thread_owns_gui:
         if _self.lock_api_allow_flush:
-            if result is None: # don't flush if we have an incipient error (negative input)
-                _cmd.flush_now(_self._COb)
-            elif _self.is_ok(result):
-
-                _cmd.flush_now(_self._COb)
+            _cmd.flush_now(_self._COb)
     else:
-        _self.lock_api.release()
-        if _cmd.wait_queue(_self._COb): # commands waiting to be executed?
-            e = threading.Event() # abdicate control for a 100 usec for quick tasks
-            e.wait(0.0001)
-            del e
-            # then give PyMOL increasingly longer intervals to get its work done...
-            w = 0.0005  # NOTE: affects API perf. for "do" and delayed-exec
-            while _cmd.wait_queue(_self._COb):
-                e = threading.Event() # abdicate control for a 100 usec for quick tasks
-                e.wait(w)
-                del e
-                if w > 0.1: # wait up 0.2 sec max for PyMOL to flush queue
-                    if _self._feedback(fb_module.cmd,fb_mask.debugging,_self):
-                        fb_debug.write("Debug: avoiding possible dead-lock?\n")
-                    break
-                w = w * 2 # wait twice as long each time until flushed
+        # TODO: what's the logic here? We assume we have to wait for
+        # cmd.do() calls being executed by GUI thread, but only for 200ms?
+        # What's the concrete use case and would there be a better (more
+        # predictable) logic for it? Isn't this an invitation for race
+        # conditions, e.g. other threads could call cmd.do() and make us
+        # wait for it? (see PYMOL-3248)
+        # NOTE: affects API perf. for "do" and delayed-exec
+        w = 0.0005
+        while w < 0.1 and _cmd.wait_queue(_self._COb):
+            threading.Event().wait(w)
+            w *= 2
 
-def is_glut_thread(): # internal
-    if thread.get_ident() == pymol.glutThread:
-        return 1
-    else:
-        return 0
-
-def setup_global_locks(): # INTERNAL, OBSOLETE?
-    # WARNING: internal routine, subject to change
-    pass
+def is_gui_thread(_self=cmd): # internal
+    '''
+    Return true if the current thread is the GUI thread (e.g. GLUT or Qt)
+    or if there is no GUI thread. False otherwise.
+    '''
+    gui_ident = _self._pymol.glutThread
+    return gui_ident is None or gui_ident == thread.get_ident()
 
 def interrupt(_self=cmd): # asynch -- no locking!
     _cmd.interrupt(_self._COb,1)
-    return None

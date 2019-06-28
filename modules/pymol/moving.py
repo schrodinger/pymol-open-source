@@ -428,7 +428,7 @@ SEE ALSO
                 int(preserve), int(modal), -1, int(mode), int(quiet),
                 int(width), int(height))
 
-        if thread.get_ident() ==pymol.glutThread:
+        if _self.is_gui_thread():
             r = _self._mpng(*args)
         else:
             r = _self.do('cmd._mpng(*%s)' % repr(args), 0)

@@ -402,7 +402,7 @@ SEE ALSO
                     break
         if _cmd.wait_deferred(_self._COb):
             # deferred tasks waiting for a display event?
-            if thread.get_ident() == pymol.glutThread:
+            if _self.is_gui_thread():
                 _self.refresh()
             else:
                 while 1:
@@ -442,43 +442,23 @@ USAGE (PYTHON)
     from pymol import cmd
     cmd.do("load file.pdb")
         '''
-        r = DEFAULT_SUCCESS
         log = int(log)
-        if is_list(commands):
-            cmmd_list = commands
-        else:
-            cmmd_list = [ commands ]
+        cmmd_list = commands if is_list(commands) else [commands]
+        cmmd_list = [a for cmmd in cmmd_list for a in cmmd.splitlines() if a]
         n_cmmd = len(cmmd_list)
         if n_cmmd>1: # if processing a list of commands, defer updates
             defer = _self.get_setting_int("defer_updates")
             _self.set('defer_updates',1)
-        for cmmd in cmmd_list:
-            lst = cmmd.splitlines()
-            if len(lst)<2:
-                for a in lst:
-                    if(len(a)):
-                        try:
-                            _self.lock(_self)
-                            r = _cmd.do(_self._COb,a,log,echo)
-                        finally:
-                            _self.unlock(r,_self)
-            else:
-                try:
-                    _self.lock(_self)
-                    do_flush = flush or ((thread.get_ident() == _self._pymol.glutThread)
-                                         and _self.lock_api_allow_flush)
-                    for a in lst:
-                        if len(a):
-                            r = _cmd.do(_self._COb,a,log,echo)
-                            if do_flush:
-                                _self.unlock(r,_self) # flushes
-                                _self.lock(_self)
-                finally:
-                    _self.unlock(r,_self)
+        if flush or (_self.is_gui_thread() and _self.lock_api_allow_flush):
+            for a in cmmd_list:
+                with _self.lockcm:
+                    _cmd.do(_self._COb,a,log,echo)
+        else:
+            with _self.lockcm:
+                for a in cmmd_list:
+                    _cmd.do(_self._COb,a,log,echo)
         if n_cmmd>1:
             _self.set('defer_updates',defer)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
 
     def quit(code=0, _self=cmd):
         '''
@@ -499,7 +479,7 @@ PYMOL API
     cmd.quit(int code)
         '''
         code = int(code)
-        if thread.get_ident() == pymol.glutThread:
+        if _self.is_gui_thread():
             _self._quit(code, _self)
         else:
             try:

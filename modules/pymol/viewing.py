@@ -1440,20 +1440,10 @@ NOTES
     
     '''
         toggle = toggle_dict[toggle_sc.auto_err(str(toggle),'toggle')]
-        if thread.get_ident() == pymol.glutThread:
-            try:
-                _self.lock(_self)
-                r = _cmd.full_screen(_self._COb,int(toggle))
-            finally:
-                _self.unlock(r,_self)
-        else:
-            try:
-                _self.lock(_self)
-                r = _self._do("full_screen %s" % (toggle), echo=0)
-            finally:
-                _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        with _self.lockcm:
+            if _self.is_gui_thread():
+                return _cmd.full_screen(_self._COb,int(toggle))
+            return _self._do("full_screen %s" % (toggle), echo=0)
 
 
     def rock(mode=-1,_self=cmd):
@@ -1603,7 +1593,7 @@ PYMOL API
             if _self.is_sequence(width):
                 width, height = width
 
-        if not cmd.is_glut_thread():
+        if not cmd.is_gui_thread():
             _self.do("viewport %d,%d"%(int(width),int(height)),0)
         else:
             try:
@@ -1912,21 +1902,10 @@ SEE ALSO
 
     rebuild
         '''
-        r = None
-        if thread.get_ident() == pymol.glutThread:
-            try:
-                _self.lock(_self)
-                r = _cmd.refresh_now(_self._COb)
-            finally:
-                _self.unlock(r,_self)
-        else:
-            try:
-                _self.lock(_self)
-                r = _self._do("_ cmd._refresh()")
-            finally:
-                _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        with _self.lockcm:
+            if _self.is_gui_thread():
+                return _cmd.refresh_now(_self._COb)
+            return _self._do("_ cmd._refresh()")
 
     def reset(object='',_self=cmd):
         '''

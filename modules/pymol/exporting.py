@@ -38,7 +38,7 @@ if True:
 
     def copy_image(quiet=1,_self=cmd): # incentive feature / proprietary
         r = DEFAULT_ERROR
-        if thread.get_ident() == pymol.glutThread:
+        if _self.is_gui_thread():
             r = _self._copy_image(_self,int(quiet))
         else:
             r = _self.do('cmd._copy_image(quiet=%d)'%int(quiet))
@@ -556,7 +556,7 @@ PYMOL API
             width = _unit2px(width, dpi)
             height = _unit2px(height, dpi)
 
-            if thread.get_ident() == pymol.glutThread:
+            if _self.is_gui_thread():
                 r = _self._png(str(filename),int(width),int(height),float(dpi),
                                int(ray),int(quiet),0,int(format),_self)
             else:

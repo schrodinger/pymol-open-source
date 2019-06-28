@@ -255,15 +255,8 @@ struct _CP_inst {
   PyObject *lock_attempt;
   PyObject *unlock;
 
-  PyObject *lock_c;             /* C locks */
-  PyObject *unlock_c;
-
-  PyObject *lock_status;        /* status locks */
-  PyObject *lock_status_attempt;        /* status locks */
-  PyObject *unlock_status;
-
-  PyObject *lock_glut;          /* GLUT locks */
-  PyObject *unlock_glut;
+  PyObject *lock_api_status;        /* status locks */
+  PyObject *lock_api_glut;          /* GLUT locks */
 
   int glut_thread_keep_out;
   SavedThreadRec savedThread[MAX_SAVED_THREAD];

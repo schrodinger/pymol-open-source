@@ -1,28 +1,10 @@
 
 cmd = __import__("sys").modules["pymol.cmd"]
 from pymol import _cmd
-import sys
 
 def get_progress(reset=0,_self=cmd):
-    r = -1.0
-    try:
-        _self.lock_status(_self)
-        r = _cmd.get_progress(_self._COb,int(reset))
-    finally:
-        _self.unlock_status(_self)
-    return r
-
-def check_redundant_open(file,_self=cmd):
-    found = 0
-    for a in _self._pymol.invocation.options.deferred:
-        if a == file:
-            found = 1
-            break
-    for a in _self._pymol.invocation._argv:
-        if a == file:
-            found = 1
-            break;
-    return found
+    with _self.lock_api_status:
+        return _cmd.get_progress(_self._COb, int(reset))
 
 def ready(_self=cmd): # INTERNAL
     # WARNING: internal routine, subject to change

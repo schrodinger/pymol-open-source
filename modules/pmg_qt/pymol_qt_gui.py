@@ -269,6 +269,19 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
             quickbuttonslayout.addLayout(hbox)
 
+        # progress bar
+        hbox = QtWidgets.QHBoxLayout()
+        self.progressbar = QtWidgets.QProgressBar()
+        self.progressbar.setSizePolicy(
+                QtWidgets.QSizePolicy.Minimum,
+                QtWidgets.QSizePolicy.Minimum)
+        hbox.addWidget(self.progressbar)
+        self.abortbutton = QtWidgets.QPushButton('Abort')
+        self.abortbutton.setStyleSheet("background: #FF0000; color: #FFFFFF")
+        self.abortbutton.released.connect(cmd.interrupt)
+        hbox.addWidget(self.abortbutton)
+        quickbuttonslayout.addLayout(hbox)
+
         quickbuttonslayout.addStretch()
         quickbuttons_stretch_index = quickbuttonslayout.count() - 1
 
@@ -712,7 +725,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             if ray:
                 self.cmd.set('opaque_background',
                         not form.input_transparent.isChecked())
-                self.cmd.do('ray %d, %d' % (width, height))
+                self.cmd.do('ray %d, %d, async=1' % (width, height))
             else:
                 self.cmd.do('draw %d, %d' % (width, height))
             form.stack.setCurrentIndex(1)
@@ -885,7 +898,19 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
     def command_set_cursor(self, i):
         return self.lineedit.setCursorPosition(i)
 
+    def update_progress(self):
+        progress = self.cmd.get_progress()
+        if progress >= 0:
+            self.progressbar.setValue(progress * 100)
+            self.progressbar.show()
+            self.abortbutton.show()
+        else:
+            self.progressbar.hide()
+            self.abortbutton.hide()
+
     def update_feedback(self):
+        self.update_progress()
+
         feedback = self.cmd._get_feedback()
         if feedback:
             html = colorprinting.text2html('\n'.join(feedback))

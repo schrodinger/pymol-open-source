@@ -4544,8 +4544,7 @@ static PyObject *Cmd_Idle(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok) {
-    PLockAPIAndUnblock(G);
+  if(ok && PTryLockAPIAndUnblock(G)) {
     result = PyMOL_Idle(G->PyMOL);
     PBlockAndUnlockAPI(G);
   }
@@ -4564,8 +4563,7 @@ static PyObject *Cmd_Reshape(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok) {
-    PLockAPIAndUnblock(G);
+  if(ok && PTryLockAPIAndUnblock(G)) {
     PyMOL_Reshape(G->PyMOL, width, height, force);
     PBlockAndUnlockAPI(G);
   }
@@ -4585,8 +4583,7 @@ static PyObject *Cmd_GetRedisplay(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok) {
-    PLockAPIAndUnblock(G);
+  if(ok && PTryLockAPIAndUnblock(G)) {
     result = PyMOL_GetRedisplay(G->PyMOL, reset);
     PBlockAndUnlockAPI(G);
   }
@@ -4604,8 +4601,7 @@ static PyObject *Cmd_Draw(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok) {
-    PLockAPIAndUnblock(G);
+  if(ok && PTryLockAPIAndUnblock(G)) {
     PyMOL_Draw(G->PyMOL);
     PBlockAndUnlockAPI(G);
   }
@@ -4625,8 +4621,7 @@ static PyObject *Cmd_Button(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok) {
-    PLockAPIAndUnblock(G);
+  if(ok && PTryLockAPIAndUnblock(G)) {
     PyMOL_Button(G->PyMOL, button, state, x, y, modifiers);
     PBlockAndUnlockAPI(G);
   }
@@ -4645,8 +4640,7 @@ static PyObject *Cmd_Drag(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok) {
-    PLockAPIAndUnblock(G);
+  if(ok && PTryLockAPIAndUnblock(G)) {
     PyMOL_Drag(G->PyMOL, x, y, modifiers);
     PBlockAndUnlockAPI(G);
   }
@@ -5522,16 +5516,10 @@ static PyObject *CmdDo(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *str1;
   int log;
-  int ok = false;
   int echo;
-  ok = PyArg_ParseTuple(args, "Osii", &self, &str1, &log, &echo);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  API_SETUP_ARGS(G, self, args, "Osii", &self, &str1, &log, &echo);
+  API_ASSERT(APIEnterNotModal(G));
+
     if(str1[0] != '_') {        /* suppress internal call-backs */
       if(strncmp(str1, "cmd._", 5) && (strncmp(str1, "_cmd.", 5))) {
         if(echo) {
@@ -5561,8 +5549,7 @@ static PyObject *CmdDo(PyObject * self, PyObject * args)
       PParse(G, str1);
     }
     APIExit(G);
-  }
-  return APIResultOk(ok);
+  return APISuccess();
 }
 
 static PyObject *CmdRock(PyObject * self, PyObject * args)
@@ -7006,18 +6993,11 @@ static PyObject *CmdFullScreen(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   int flag = 0;
   int ok = false;
-  ok = PyArg_ParseTuple(args, "Oi", &self, &flag);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  API_SETUP_ARGS(G, self, args, "Oi", &self, &flag);
+  API_ASSERT(APIEnterNotModal(G));
     ExecutiveFullScreen(G, flag);       /* TODO STATUS */
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  APIExit(G);
+  return APIResultOk(G, ok);
 }
 
 static PyObject *CmdGroup(PyObject * self, PyObject * args)

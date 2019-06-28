@@ -1,8 +1,5 @@
 
-try:
-    cmd = __import__("sys").modules["pymol.cmd"]
-except:
-    cmd = None
+cmd = __import__("sys").modules["pymol.cmd"]
 
 try:
     basestring
@@ -11,10 +8,7 @@ except NameError:
 
 def _raising(code=-1,_self=cmd):
     # WARNING: internal routine, subject to change
-    if isinstance(code, int):
-        if code<0:
-            return _self.get_setting_boolean("raise_exceptions")
-    return 0
+    return is_error(code) and _self.get_setting_boolean("raise_exceptions")
 
 def is_string(obj):
     return isinstance(obj, basestring)
@@ -37,6 +31,4 @@ def is_error(result): # errors are always negative numbers
     return 0
 
 def is_ok(result): # something other than a negative number
-    if isinstance(result, int):
-        return (result>=0)
-    return 1
+    return not is_error(result)

@@ -40,14 +40,12 @@ class Cmd:
         if 1:
             # use own locks (for performance)
             self.lock_api = _pymol.lock_api
-            self.lock_api_c = _pymol.lock_api_c
             self.lock_api_data = _pymol.lock_api_data
             self.lock_api_glut = _pymol.lock_api_glut
             self.lock_api_status = _pymol.lock_api_status
         else:
             # use global locks (for debugging)
             self.lock_api = global_cmd._pymol.lock_api
-            self.lock_api_c = global_cmd._pymol.lock_api_c
             self.lock_api_data = global_cmd._pymol.lock_api_data
             self.lock_api_glut = global_cmd._pymol.lock_api_glut
             self.lock_api_status = global_cmd._pymol.lock_api_status
