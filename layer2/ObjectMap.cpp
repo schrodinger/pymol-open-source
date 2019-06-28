@@ -1407,7 +1407,7 @@ static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, Obje
           copy3f(src->Range, I->Range);
         }
       } else {
-        I->Origin = NULL;
+        I->Range = NULL;
       }
 
       if(src->Grid) {
@@ -1416,7 +1416,7 @@ static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, Obje
           copy3f(src->Grid, I->Grid);
         }
       } else {
-        I->Origin = NULL;
+        I->Grid = NULL;
       }
 
       if(src->Dim) {
@@ -1425,7 +1425,7 @@ static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, Obje
           copy3f(src->Dim, I->Dim);
         }
       } else {
-        I->Origin = NULL;
+        I->Dim = NULL;
       }
 
       {
