@@ -65,6 +65,13 @@ class TestCreating(testing.PyMOLTestCase):
                 cmd.count_atoms('m1'),
                 cmd.count_atoms('m2'))
 
+    @testing.requires_version('2.4')
+    def testCopyMap(self):
+        cmd.load(self.datafile('h2o-elf.ccp4'), 'map1')
+        cmd.copy('map2', 'map1')
+        self.assertEqual(cmd.get_symmetry('map1'), cmd.get_symmetry('map2'))
+        self.assertArrayEqual(cmd.get_volume_field('map1'), cmd.get_volume_field('map2'))
+
     def testSymexp(self):
         cmd.load(self.datafile('1oky.pdb.gz'), 'm1')
         n = cmd.count_atoms()
