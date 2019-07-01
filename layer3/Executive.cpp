@@ -10332,25 +10332,40 @@ int ExecutiveSeleToObject(PyMOLGlobals * G, const char *name, const char *s1,
 /*========================================================================*/
 void ExecutiveCopy(PyMOLGlobals * G, const char *src, const char *dst, int zoom)
 {
-  CObject *os;
-  ObjectMolecule *oSrc, *oDst;
-
-  os = ExecutiveFindObjectByName(G, src);
-  if(!os)
+  const CObject *os = ExecutiveFindObjectByName(G, src);
+  if(!os) {
     ErrMessage(G, " Executive", "object not found.");
-  else if(os->type != cObjectMolecule)
-    ErrMessage(G, " Executive", "bad object type.");
-  else {
-    oSrc = (ObjectMolecule *) os;
-    oDst = ObjectMoleculeCopy(oSrc);
-    if(oDst) {
-      strcpy(oDst->Name, dst);
-      ExecutiveManageObject(G, (CObject *) oDst, zoom, false);
-
-      PRINTFB(G, FB_Executive, FB_Actions)
-        " Executive: object %s created.\n", oDst->Name ENDFB(G);
-    }
+    return;
   }
+
+  CObject *oDst = nullptr;
+  ObjectMap *oDstMap = nullptr;
+
+  switch (os->type) {
+  case cObjectMolecule:
+    oDst = ObjectMoleculeCopy(static_cast<const ObjectMolecule *>(os));
+    break;
+  case cObjectMap:
+    ObjectMapNewCopy(G, static_cast<const ObjectMap *>(os), &oDstMap,
+                     /* source_state=all */ -1,
+                     /* target_state=(unused)*/ 0);
+    oDst = oDstMap;
+    break;
+  default:
+    ErrMessage(G, " Executive", "bad object type.");
+    return;
+  }
+
+  if(!oDst) {
+    ErrMessage(G, __func__, "failed to create copy");
+    return;
+  }
+
+  strcpy(oDst->Name, dst);
+  ExecutiveManageObject(G, (CObject *) oDst, zoom, false);
+
+  PRINTFB(G, FB_Executive, FB_Actions)
+    " Executive: object %s created.\n", oDst->Name ENDFB(G);
   SceneChanged(G);
 }
 
