@@ -1566,7 +1566,7 @@ pymol::vla<char> MoleculeExporterGetStr(PyMOLGlobals * G,
   int sele = tmpsele1.getIndex();
 
   if (sele < 0)
-    return nullptr;
+    return {};
 
   std::unique_ptr<MoleculeExporter> exporter;
 
@@ -1601,12 +1601,12 @@ pymol::vla<char> MoleculeExporterGetStr(PyMOLGlobals * G,
 #else
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " Error: This build has no fast MMTF support.\n" ENDFB(G);
-    return nullptr;
+    return {};
 #endif
   } else {
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " Error: unknown format: '%s'\n", format ENDFB(G);
-    return nullptr;
+    return {};
   }
 
   // Ensure "." decimal point in printf. It's possible to change this from

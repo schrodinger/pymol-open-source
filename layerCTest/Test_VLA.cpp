@@ -17,6 +17,13 @@ TEST_CASE("VLA Alloc And Size", "[VLA]")
   REQUIRE(myVLA.size() == 5);
 }
 
+TEST_CASE("VLA size=0", "[VLA]")
+{
+  vla<int> myVLA(0);
+  REQUIRE(myVLA.size() == 0);
+  REQUIRE(!isNullptr(myVLA.data()));
+}
+
 TEST_CASE("VLA Default Val", "[VLA]")
 {
   vla<int> myVLA(5, 0);
@@ -29,6 +36,42 @@ TEST_CASE("VLA Initializer List", "[VLA]")
   vla<int> myVLA{1, 2, 3, 4, 5};
   const std::array<int, 5> myArr{1, 2, 3, 4, 5};
   REQUIRE(isArrayEqual(myVLA.data(), myArr.data(), myVLA.size()));
+}
+
+TEST_CASE("VLA empty Initializer List", "[VLA]")
+{
+  vla<int> myVLA{};
+  REQUIRE(isNullptr(myVLA.data()));
+}
+
+TEST_CASE("VLA single zero-int Initializer List", "[VLA]")
+{
+  vla<int> myVLA{0};
+  REQUIRE(myVLA.size() == 1);
+  REQUIRE(!isNullptr(myVLA.data()));
+  REQUIRE(myVLA[0] == 0);
+}
+
+TEST_CASE("VLA single non-zero-int Initializer List", "[VLA]")
+{
+  vla<int> myVLA{5};
+  REQUIRE(myVLA.size() == 1);
+  REQUIRE(!isNullptr(myVLA.data()));
+  REQUIRE(myVLA[0] == 5);
+}
+
+TEST_CASE("VLA nullptr Assign", "[VLA]")
+{
+  vla<int> myVLA{1, 2, 3, 4, 5};
+  myVLA = nullptr;
+  REQUIRE(isNullptr(myVLA.data()));
+}
+
+TEST_CASE("VLA NULL Assign", "[VLA]")
+{
+  vla<int> myVLA{1, 2, 3, 4, 5};
+  myVLA = NULL;
+  REQUIRE(isNullptr(myVLA.data()));
 }
 
 TEST_CASE("VLA Special Member Functions", "[VLA]")
@@ -144,7 +187,7 @@ TEST_CASE("From_StdVector", "[VLA]")
 
 TEST_CASE("From_VLACalloc", "[VLA]")
 {
-  vla<int> myVLA(VLACalloc(int, 5));
+  auto myVLA = pymol::vla_take_ownership(VLACalloc(int, 5));
   REQUIRE(myVLA.size() == 5);
   REQUIRE(isArrayZero(myVLA.data(), 5));
 }

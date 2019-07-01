@@ -40,13 +40,20 @@ template <typename T> class vla
 
 public:
   // implicit NULL constructor
-  vla(std::nullptr_t = nullptr) {}
+  vla() = default;
+
+  // NULL assignment
+  vla<T>& operator=(nullptr_t)
+  {
+    freeP();
+    return *this;
+  }
 
   /**
    * Takes ownership of a legacy VLA pointer
-   * @param vla Pointer to a legacy VLA which was constructed with VLAlloc (or a related function)
+   * @param ptr Pointer to a legacy VLA which was constructed with VLAlloc (or a related function)
    */
-  explicit vla(T*&& vla) : m_vla(vla) {}
+  template <typename U> friend vla<U> vla_take_ownership(U* ptr);
 
   /**
    * Construct a new zero-initialized container
@@ -69,8 +76,12 @@ public:
   }
 
   // constructor with initializer list
-  vla(std::initializer_list<T> init) : vla(init.size())
+  // Empty list constructs a NULL VLA to be consistent with default constructor
+  vla(std::initializer_list<T> init)
   {
+    if (init.size() == 0)
+      return;
+    resize(init.size());
     std::copy(init.begin(), init.end(), this->begin());
   }
 
@@ -208,6 +219,13 @@ public:
   const T* begin() const { return m_vla; }
   const T* end() const { return m_vla + size(); }
 };
+
+template <typename U> vla<U> vla_take_ownership(U* ptr)
+{
+  vla<U> instance;
+  instance.m_vla = ptr;
+  return instance;
+}
 } // namespace pymol
 
 template <typename T> pymol::vla<T> VLACopy2(const pymol::vla<T>& v)

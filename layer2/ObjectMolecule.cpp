@@ -8824,7 +8824,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
 {
   int ok = true;
   CoordSet *cset = NULL;
-  pymol::vla<AtomInfoType> atInfo(nullptr);
+  pymol::vla<AtomInfoType> atInfo;
   int isNew;
   int nAtom;
   const char *restart = NULL, *start = *next_entry;
@@ -11872,7 +11872,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
                                          int quiet, int *model_number)
 {
   CoordSet *cset = NULL;
-  pymol::vla<AtomInfoType> atInfo(nullptr);
+  pymol::vla<AtomInfoType> atInfo;
   int ok = true;
   int isNew = true;
   unsigned int nAtom = 0;
