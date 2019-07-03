@@ -19,6 +19,7 @@ mut_sele = "_tmp_mut_sele"
 tmp_obj2 = "_tmp_obj2"
 tmp_sele1 = "_tmp_sele1"
 tmp_sele2 = "_tmp_sele2"
+tmp_hbonds = "_tmp_hbonds"
 
 default_mode = "current"
 default_rep = "lines"
@@ -316,6 +317,7 @@ class Mutagenesis(Wizard):
         cmd=self.cmd
         self.status=0
         self.bump_scores = []
+        cmd.delete(tmp_hbonds)
         cmd.delete(tmp_obj2)
         cmd.delete(mut_sele)
         cmd.delete(src_sele)
@@ -669,6 +671,10 @@ class Mutagenesis(Wizard):
         cmd.set('auto_zoom',auto_zoom,quiet=1)
         cmd.delete(frag_name)
         cmd.frame(state_best)
+
+        # this might be redundant if frame(state_best) changed the state
+        self.do_state(state_best)
+
         cmd.unpick()
         cmd.feedback("pop")
 
@@ -679,9 +685,15 @@ class Mutagenesis(Wizard):
             if (bump_name in names) and (obj_name in names):
                 cmd.update(bump_name,obj_name)
         if self.bump_scores:
-            state = cmd.get_state()
             print(' Rotamer %d/%d, strain=%.2f' % (state,
                     cmd.count_states(obj_name), self.bump_scores[state - 1]))
+
+        # update hbonds (polar contacts)
+        cmd.delete(tmp_hbonds)
+        cmd.distance(tmp_hbonds,
+                "?{}".format(obj_name),
+                "(byobj ?{}) and not ?{}".format(src_sele, src_sele),
+                mode=2, state1=state, state2=1)
 
     def do_select(self,selection):
         print("Selected!")
