@@ -1313,8 +1313,15 @@ PYMOL API
                     obj_name = 'emd_' + obj_code
 
             chain = None
-            if len(obj_code) in (5,6) and type in ('pdb', 'cif', 'mmtf'):
-                obj_code, chain = obj_code[:4], obj_code[-1]
+            if len(obj_code) in (5,6,7) and type in ('pdb', 'cif', 'mmtf'):
+                obj_code = (
+                    obj_code
+                        .replace('.', '')
+                        .replace('_', '')
+                        .replace('-', '')
+                        .replace(':', '')
+                    )
+                obj_code, chain = obj_code[:4], obj_code[4:]
 
             obj_name = _self.get_legal_name(obj_name)
 
