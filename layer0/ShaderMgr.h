@@ -246,6 +246,8 @@ public:
   CShaderPrg *Enable_IndicatorShader();
   CShaderPrg *Enable_BackgroundShader();
 
+  void Disable_Current_Shader();
+
   CShaderPrg *Get_ScreenShader();
   CShaderPrg *Get_ConnectorShader(int pass);
   CShaderPrg *Get_DefaultShader(int pass);

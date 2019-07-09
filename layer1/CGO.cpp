@@ -7213,11 +7213,7 @@ static void CGO_gl_disable(CCGORenderer * I, float **pc)
       case GL_TRILINES_SHADER:
       case GL_OIT_COPY_SHADER:
       case GL_LINE_SHADER:
-        {
-          if (shaderPrg){
-	    shaderPrg->Disable();
-          }
-        }
+        I->G->ShaderMgr->Disable_Current_Shader();
         break;
       case GL_LABEL_FLOAT_TEXT:
         {
@@ -8137,13 +8133,7 @@ void CGORenderGLAlpha(CGO * I, RenderInfo * info, bool calcDepth)
 #ifndef PURE_OPENGL_ES_2
     // not sure why shader is set, but disable it for now,
     // since we are doing immediate mode rendering for global transparency
-    auto shaderPrg = G->ShaderMgr->Get_Current_Shader();
-    if (shaderPrg){
-      shaderPrg->Disable();
-#ifdef _DEAD_CODE_DIE
-      PRINTFB(I->G, FB_CGO, FB_Warnings) "CGORenderGLAlpha: Current Shader should not be still set for global transparency sorting\n" ENDFB(I->G);
-#endif
-    }
+    G->ShaderMgr->Disable_Current_Shader();
 #endif
     /* 1. transform and measure range (if not already known) 
        2. bin into linked lists based on Z-centers

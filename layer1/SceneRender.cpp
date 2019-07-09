@@ -594,16 +594,10 @@ void SceneRenderAA(PyMOLGlobals * G){
     }
   }
   if (ok && I->offscreenCGO) {
-    {
-      CGORenderGL(I->offscreenCGO, NULL, NULL, NULL, NULL, NULL);
-      {
-        CShaderPrg * shaderPrg = G->ShaderMgr->Get_Current_Shader();
-        if (shaderPrg)
-	  shaderPrg->Disable();
-      }
-      glBindTexture(GL_TEXTURE_2D, 0);
-      glEnable(GL_DEPTH_TEST);
-    }
+    CGORenderGL(I->offscreenCGO, NULL, NULL, NULL, NULL, NULL);
+    G->ShaderMgr->Disable_Current_Shader();
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glEnable(GL_DEPTH_TEST);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, G->ShaderMgr->default_framebuffer_id);
   }
 #endif
@@ -909,11 +903,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
     for(pass = 1; cont && pass > -2; pass--) {        /* render opaque, then antialiased, then transparent... */
 #if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
       if (t_mode_3 && pass == -1){
-        {
-          CShaderPrg * shaderPrg = G->ShaderMgr->Get_Current_Shader();
-          if (shaderPrg)
-	    shaderPrg->Disable();
-        }
+        G->ShaderMgr->Disable_Current_Shader();
         int drawbuf = 1;
         if (TM3_IS_ONEBUF){
           if (!t_first_pass){

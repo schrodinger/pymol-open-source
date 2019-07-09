@@ -958,11 +958,9 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
   int dynamic_grid = SettingGet_b(G, NULL, I->Setting, cSetting_slice_dynamic_grid);
   ObjectSliceState *oss = NULL;
   int use_shaders = !track_camera && SettingGet_b(G, NULL, I->Setting, cSetting_use_shaders);
-  if (G->ShaderMgr->Get_Current_Shader()){
-    // just in case, since slice uses immediate mode, but this should never happen
-    G->ShaderMgr->Get_Current_Shader()->Disable();
-  }
-  
+  // just in case, since slice uses immediate mode, but this should never happen
+  G->ShaderMgr->Disable_Current_Shader();
+
   if(track_camera || dynamic_grid) {
     int update_flag = false;
 

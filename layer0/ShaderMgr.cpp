@@ -1166,8 +1166,7 @@ CShaderPrg *CShaderMgr::Enable_DefaultSphereShader(int pass) {
 CShaderPrg *CShaderMgr::Enable_SphereShaderARB(){
   CShaderPrg *shaderPrg = nullptr;
   /* load the vertex program */
-  if (current_shader)
-    current_shader->Disable();
+  Disable_Current_Shader();
   shaderPrg = GetShaderPrg("sphere_arb");
   glBindProgramARB(GL_VERTEX_PROGRAM_ARB, shaderPrg->vid);
   
@@ -1916,5 +1915,12 @@ void CShaderMgr::bindOffscreenOITTexture(int index) {
     auto t = getGPUBuffer<renderTarget_t>(oit_rt[0]);
     if (t)
       t->_textures[index]->bind();
+  }
+}
+
+void CShaderMgr::Disable_Current_Shader()
+{
+  if(current_shader){
+    current_shader->Disable();
   }
 }

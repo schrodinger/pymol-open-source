@@ -1959,8 +1959,7 @@ void OrthoRenderCGO(PyMOLGlobals * G){
       CGORenderGL(I->orthoCGO, NULL, NULL, NULL, NULL, NULL);
     if (I->orthoFastCGO)
       CGORenderGL(I->orthoFastCGO, NULL, NULL, NULL, NULL, NULL);
-    if (G->ShaderMgr->Get_Current_Shader())
-      G->ShaderMgr->Get_Current_Shader()->Disable();
+    G->ShaderMgr->Disable_Current_Shader();
     glEnable(GL_DEPTH_TEST);
   }
 }
