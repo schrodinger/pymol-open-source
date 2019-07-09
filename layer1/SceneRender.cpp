@@ -563,7 +563,7 @@ void SceneRenderAA(PyMOLGlobals * G){
     CGO *unitCGO = GenerateUnitScreenCGO(G);
     ok &= unitCGO!=NULL;
     if (ok){
-      int offscreen = SettingGetGlobal_b(G, cSetting_antialias_shader);
+      int offscreen = SettingGet<int>(G, cSetting_antialias_shader);
 
       I->offscreenCGO = CGONew(G);
 
