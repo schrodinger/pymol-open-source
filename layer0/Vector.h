@@ -318,10 +318,22 @@ inline void ones3f(float * v1) {
   v1[2] = 1.0F;
 }
 
+/**
+ * Takes the dot product of two three-term vectors
+ * @param v1 an array of three constant floats
+ * @param v2 an array of three constant floats
+ * @return the dot product
+ */
 inline float dot_product3f(const float * v1, const float * v2) {
   return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 }
 
+/**
+ * Sets the values of the second vector to the additive inverses of each
+ * respective value of the first vector, leaving the first vector unchanged.
+ * @param v1 an array of three constant floats
+ * @param v2 an array of three constant floats
+ */
 inline void invert3f3f(const float * v1, float * v2) {
   v2[0] = -v1[0];
   v2[1] = -v1[1];
