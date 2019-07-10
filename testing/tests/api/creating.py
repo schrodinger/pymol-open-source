@@ -67,7 +67,7 @@ class TestCreating(testing.PyMOLTestCase):
 
     @testing.requires_version('2.4')
     def testCopyMap(self):
-        cmd.load(self.datafile('h2o-elf.ccp4'), 'map1')
+        cmd.load(self.datafile('emd_1155.ccp4'), 'map1')
         cmd.copy('map2', 'map1')
         self.assertEqual(cmd.get_symmetry('map1'), cmd.get_symmetry('map2'))
         self.assertArrayEqual(cmd.get_volume_field('map1'), cmd.get_volume_field('map2'))
