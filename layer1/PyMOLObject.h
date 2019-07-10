@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 #include"View.h"
 #include"Word.h"
+#include"vla.h"
 
 typedef char ObjectNameType[WordLength];
 
@@ -84,7 +85,7 @@ struct _CObject {
   CSetting *Setting;
   int Enabled;                  /* read-only... maintained by Scene */
   int Context;                  /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
-  CViewElem *ViewElem;          /* for animating objects via the TTT */
+  pymol::vla<CViewElem> ViewElem;          /* for animating objects via the TTT */
 
   /* not pickled */
   int grid_slot;

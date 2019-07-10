@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"CGO.h"
 #include"Selector.h"
+#include"vla.h"
 
 void ObjectPurgeSettings(CObject * I)
 {
@@ -511,7 +512,7 @@ int ObjectMotion(CObject * I, int action, int first,
       if(I->ViewElem) {
         VLAFreeP(I->ViewElem);
       }
-      I->ViewElem = VLACalloc(CViewElem, 0);
+      I->ViewElem = pymol::vla<CViewElem>(0);
       break;
     case 6:                      /* uninterpolate */
       if(I->ViewElem) {
@@ -868,7 +869,7 @@ void ObjectCombineTTT(CObject * I, const float *ttt, int reverse_order, int stor
       store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
     if(store && MovieDefined(I->G)) {
       if(!I->ViewElem)  
-        I->ViewElem = VLACalloc(CViewElem, 0);
+        I->ViewElem = pymol::vla<CViewElem>(0);
       if(I->ViewElem) { /* update motion path waypoint, if active */
         int frame = SceneGetFrame(I->G);
         if(frame >= 0) {
@@ -899,7 +900,7 @@ void ObjectTranslateTTT(CObject * I, float *v, int store)
       store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
     if(store && MovieDefined(I->G)) {
       if(!I->ViewElem)  
-        I->ViewElem = VLACalloc(CViewElem, 0);
+        I->ViewElem = pymol::vla<CViewElem>(0);
       if(I->ViewElem) { /* update motion path waypoint, if active */
         int frame = SceneGetFrame(I->G);
         if(frame >= 0) {
@@ -928,7 +929,7 @@ void ObjectSetTTT(CObject * I, const float *ttt, int state, int store)
       store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
     if(store && MovieDefined(I->G)) {
       if(!I->ViewElem)  
-        I->ViewElem = VLACalloc(CViewElem, 0);
+        I->ViewElem = pymol::vla<CViewElem>(0);
       if(I->ViewElem) { /* update motion path waypoint, if active */
         int frame = SceneGetFrame(I->G);
         if(frame >= 0) {
@@ -969,7 +970,7 @@ void ObjectResetTTT(CObject * I,int store)
     store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
   if(store && MovieDefined(I->G)) {
     if(!I->ViewElem)  
-      I->ViewElem = VLACalloc(CViewElem, 0);
+      I->ViewElem = pymol::vla<CViewElem>(0);
     if(I->ViewElem) { /* update motion path waypoint, if active */
       int frame = SceneGetFrame(I->G);
       if(frame >= 0) {
