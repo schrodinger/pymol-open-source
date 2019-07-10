@@ -13,7 +13,13 @@
 #include <stdlib.h>
 
 #include "File.h"
+#include "FileStream.h"
 #include "MemoryDebug.h"
+
+#include <fstream>
+#include <string>
+
+#include "pymol/zstring_view.h"
 
 /*
  * Get the size from the current file pointer to the end of the file
@@ -84,3 +90,48 @@ char * FileGetContents(const char *filename, long *size) {
   fclose(fp);
   return contents;
 }
+
+namespace pymol
+{
+#ifdef _WIN32
+std::wstring utf8_to_utf16(pymol::zstring_view utf8)
+{
+  std::wstring utf16(utf8.size(), L'\0');
+
+  auto n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, utf8.c_str(), -1,
+      &utf16[0], utf16.size() + 1);
+
+  if (n == 0) {
+    throw std::runtime_error("Could not convert to UTF-16");
+  }
+
+  utf16.resize(n - 1);
+  return utf16;
+}
+#endif
+
+static long istream_get_size(std::istream& file)
+{
+  auto current = file.tellg();
+  file.seekg(0, std::ios::end);
+  auto filesize = file.tellg();
+  file.seekg(current);
+  return filesize;
+}
+
+static std::string istream_get_contents(std::istream& file)
+{
+  auto filesize = istream_get_size(file);
+  std::string contents(filesize, '\0');
+  file.read(&contents[0], filesize);
+  return contents;
+}
+
+std::string file_get_contents(pymol::zstring_view filename)
+{
+  std::ifstream file;
+  fstream_open(file, filename, std::ios::in | std::ios::binary);
+  return istream_get_contents(file);
+}
+
+} // namespace pymol

@@ -27,7 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Feedback.h"
 #include"Parse.h"
-#include"File.h"
+#include"FileStream.h"
 
 #ifndef int2
 typedef int int2[2];
@@ -225,39 +225,40 @@ int MatchPreScore(CMatch * I, int *vla1, int n1, int *vla2, int n2, int quiet)
 #define BLOSUM62_ROWS 33
 #define BLOSUM62_COLS 80
 
-static char blosum62[BLOSUM62_ROWS][BLOSUM62_COLS] = {
+static const char blosum62[] = {
+#if 0
   "#  Matrix made by matblas from blosum62.iij\n",
   "#  * column uses minimum score\n",
   "#  BLOSUM Clustered Scoring Matrix in 1/2 Bit Units\n",
   "#  Blocks Database = /data/blocks_5.0/blocks.dat\n",
   "#  Cluster Percentage: >= 62\n",
   "#  Entropy =   0.6979, Expected =  -0.5209\n",
-  "   A  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V  B  Z  X  *\n",
-  "A  4 -1 -2 -2  0 -1 -1  0 -2 -1 -1 -1 -1 -2 -1  1  0 -3 -2  0 -2 -1  0 -4\n",
-  "R -1  5  0 -2 -3  1  0 -2  0 -3 -2  2 -1 -3 -2 -1 -1 -3 -2 -3 -1  0 -1 -4\n",
-  "N -2  0  6  1 -3  0  0  0  1 -3 -3  0 -2 -3 -2  1  0 -4 -2 -3  3  0 -1 -4\n",
-  "D -2 -2  1  6 -3  0  2 -1 -1 -3 -4 -1 -3 -3 -1  0 -1 -4 -3 -3  4  1 -1 -4\n",
-  "C  0 -3 -3 -3  9 -3 -4 -3 -3 -1 -1 -3 -1 -2 -3 -1 -1 -2 -2 -1 -3 -3 -2 -4\n",
-  "Q -1  1  0  0 -3  5  2 -2  0 -3 -2  1  0 -3 -1  0 -1 -2 -1 -2  0  3 -1 -4\n",
-  "E -1  0  0  2 -4  2  5 -2  0 -3 -3  1 -2 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4\n",
-  "G  0 -2  0 -1 -3 -2 -2  6 -2 -4 -4 -2 -3 -3 -2  0 -2 -2 -3 -3 -1 -2 -1 -4\n",
-  "H -2  0  1 -1 -3  0  0 -2  8 -3 -3 -1 -2 -1 -2 -1 -2 -2  2 -3  0  0 -1 -4\n",
-  "I -1 -3 -3 -3 -1 -3 -3 -4 -3  4  2 -3  1  0 -3 -2 -1 -3 -1  3 -3 -3 -1 -4\n",
-  "L -1 -2 -3 -4 -1 -2 -3 -4 -3  2  4 -2  2  0 -3 -2 -1 -2 -1  1 -4 -3 -1 -4\n",
-  "K -1  2  0 -1 -3  1  1 -2 -1 -3 -2  5 -1 -3 -1  0 -1 -3 -2 -2  0  1 -1 -4\n",
-  "M -1 -1 -2 -3 -1  0 -2 -3 -2  1  2 -1  5  0 -2 -1 -1 -1 -1  1 -3 -1 -1 -4\n",
-  "F -2 -3 -3 -3 -2 -3 -3 -3 -1  0  0 -3  0  6 -4 -2 -2  1  3 -1 -3 -3 -1 -4\n",
-  "P -1 -2 -2 -1 -3 -1 -1 -2 -2 -3 -3 -1 -2 -4  7 -1 -1 -4 -3 -2 -2 -1 -2 -4\n",
-  "S  1 -1  1  0 -1  0  0  0 -1 -2 -2  0 -1 -2 -1  4  1 -3 -2 -2  0  0  0 -4\n",
-  "T  0 -1  0 -1 -1 -1 -1 -2 -2 -1 -1 -1 -1 -2 -1  1  5 -2 -2  0 -1 -1  0 -4\n",
-  "W -3 -3 -4 -4 -2 -2 -3 -2 -2 -3 -2 -3 -1  1 -4 -3 -2 11  2 -3 -4 -3 -2 -4\n",
-  "Y -2 -2 -2 -3 -2 -1 -2 -3  2 -1 -1 -2 -1  3 -3 -2 -2  2  7 -1 -3 -2 -1 -4\n",
-  "V  0 -3 -3 -3 -1 -2 -2 -3 -3  3  1 -2  1 -1 -2 -2  0 -3 -1  4 -3 -2 -1 -4\n",
-  "B -2 -1  3  4 -3  0  1 -1  0 -3 -4  0 -3 -3 -2  0 -1 -4 -3 -3  4  1 -1 -4\n",
-  "Z -1  0  0  1 -3  3  4 -2  0 -3 -3  1 -1 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4\n",
-  "X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4\n",
-  "* -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4  1\n",
-  ""
+#endif
+  "   A  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V  B  Z  X  *\n"
+  "A  4 -1 -2 -2  0 -1 -1  0 -2 -1 -1 -1 -1 -2 -1  1  0 -3 -2  0 -2 -1  0 -4\n"
+  "R -1  5  0 -2 -3  1  0 -2  0 -3 -2  2 -1 -3 -2 -1 -1 -3 -2 -3 -1  0 -1 -4\n"
+  "N -2  0  6  1 -3  0  0  0  1 -3 -3  0 -2 -3 -2  1  0 -4 -2 -3  3  0 -1 -4\n"
+  "D -2 -2  1  6 -3  0  2 -1 -1 -3 -4 -1 -3 -3 -1  0 -1 -4 -3 -3  4  1 -1 -4\n"
+  "C  0 -3 -3 -3  9 -3 -4 -3 -3 -1 -1 -3 -1 -2 -3 -1 -1 -2 -2 -1 -3 -3 -2 -4\n"
+  "Q -1  1  0  0 -3  5  2 -2  0 -3 -2  1  0 -3 -1  0 -1 -2 -1 -2  0  3 -1 -4\n"
+  "E -1  0  0  2 -4  2  5 -2  0 -3 -3  1 -2 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4\n"
+  "G  0 -2  0 -1 -3 -2 -2  6 -2 -4 -4 -2 -3 -3 -2  0 -2 -2 -3 -3 -1 -2 -1 -4\n"
+  "H -2  0  1 -1 -3  0  0 -2  8 -3 -3 -1 -2 -1 -2 -1 -2 -2  2 -3  0  0 -1 -4\n"
+  "I -1 -3 -3 -3 -1 -3 -3 -4 -3  4  2 -3  1  0 -3 -2 -1 -3 -1  3 -3 -3 -1 -4\n"
+  "L -1 -2 -3 -4 -1 -2 -3 -4 -3  2  4 -2  2  0 -3 -2 -1 -2 -1  1 -4 -3 -1 -4\n"
+  "K -1  2  0 -1 -3  1  1 -2 -1 -3 -2  5 -1 -3 -1  0 -1 -3 -2 -2  0  1 -1 -4\n"
+  "M -1 -1 -2 -3 -1  0 -2 -3 -2  1  2 -1  5  0 -2 -1 -1 -1 -1  1 -3 -1 -1 -4\n"
+  "F -2 -3 -3 -3 -2 -3 -3 -3 -1  0  0 -3  0  6 -4 -2 -2  1  3 -1 -3 -3 -1 -4\n"
+  "P -1 -2 -2 -1 -3 -1 -1 -2 -2 -3 -3 -1 -2 -4  7 -1 -1 -4 -3 -2 -2 -1 -2 -4\n"
+  "S  1 -1  1  0 -1  0  0  0 -1 -2 -2  0 -1 -2 -1  4  1 -3 -2 -2  0  0  0 -4\n"
+  "T  0 -1  0 -1 -1 -1 -1 -2 -2 -1 -1 -1 -1 -2 -1  1  5 -2 -2  0 -1 -1  0 -4\n"
+  "W -3 -3 -4 -4 -2 -2 -3 -2 -2 -3 -2 -3 -1  1 -4 -3 -2 11  2 -3 -4 -3 -2 -4\n"
+  "Y -2 -2 -2 -3 -2 -1 -2 -3  2 -1 -1 -2 -1  3 -3 -2 -2  2  7 -1 -3 -2 -1 -4\n"
+  "V  0 -3 -3 -3 -1 -2 -2 -3 -3  3  1 -2  1 -1 -2 -2  0 -3 -1  4 -3 -2 -1 -4\n"
+  "B -2 -1  3  4 -3  0  1 -1  0 -3 -4  0 -3 -3 -2  0 -1 -4 -3 -3  4  1 -1 -4\n"
+  "Z -1  0  0  1 -3  3  4 -2  0 -3 -3  1 -1 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4\n"
+  "X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4\n"
+  "* -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4  1\n"
 };
 
 int MatchMatrixFromFile(CMatch * I, const char *fname, int quiet)
@@ -265,8 +266,8 @@ int MatchMatrixFromFile(CMatch * I, const char *fname, int quiet)
   PyMOLGlobals *G = I->G;
 
   int ok = 1;
-  char *buffer = NULL;
-  char *p;
+  std::string buffer;
+  const char *p;
   char cc[255];
   char *code = NULL;
   unsigned int x, y;
@@ -279,32 +280,22 @@ int MatchMatrixFromFile(CMatch * I, const char *fname, int quiet)
      && !(strcmp(fname, "BLOSUM62") == 0)
 #endif
     ) {
-    buffer = FileGetContents(fname, NULL);
-    if (!buffer) {
+    try {
+      buffer = pymol::file_get_contents(fname);
+    } catch (...) {
       PRINTFB(G, FB_Match, FB_Errors)
         " Match-Error: unable to open matrix file '%s'.\n", fname ENDFB(G);
       ok = false;
     }
   } else {
-    buffer = pymol::malloc<char>(BLOSUM62_ROWS * BLOSUM62_COLS);
-    if(buffer) {
-      p = buffer;
-      a = 0;
-      while(blosum62[a][0]) {
-        strcpy(p, &blosum62[a][0]);
-        p += strlen(p);
-        a++;
-      }
-    } else {
-      ok = false;
-    }
+    buffer = blosum62;
   }
 
-  if(ok && buffer) {
+  if(ok && !buffer.empty()) {
 
     /* count codes */
 
-    p = buffer;
+    p = buffer.c_str();
     n_entry = 0;
     while(*p && ok) {
       switch (*p) {
@@ -325,7 +316,7 @@ int MatchMatrixFromFile(CMatch * I, const char *fname, int quiet)
 
       /* read codes */
 
-      p = buffer;
+      p = buffer.c_str();
       n_entry = 0;
       while(*p && ok) {
         switch (*p) {
@@ -343,7 +334,7 @@ int MatchMatrixFromFile(CMatch * I, const char *fname, int quiet)
 
       /* read values */
 
-      p = buffer;
+      p = buffer.c_str();
       while((*p) && ok) {
         switch (*p) {
         case '#':
@@ -364,7 +355,6 @@ int MatchMatrixFromFile(CMatch * I, const char *fname, int quiet)
         p = ParseNextLine(p);
       }
     }
-    mfree(buffer);
   }
   if(ok) {
     if(!quiet) {

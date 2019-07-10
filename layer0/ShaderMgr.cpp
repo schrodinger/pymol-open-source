@@ -31,7 +31,7 @@ Z* -------------------------------------------------------------------
 #include "Util.h"
 #include "Util2.h"
 #include "Texture.h"
-#include "File.h"
+#include "FileStream.h"
 #include "Matrix.h"
 #include "Parse.h"
 
@@ -438,7 +438,7 @@ string CShaderMgr::GetShaderSource(const string &filename)
     return it->second;
   }
 
-  char* buffer = nullptr;
+  std::string buffer;
   const char *pl = nullptr, *newpl, *tpl;
   std::ostringstream newbuffer;
 
@@ -457,9 +457,10 @@ string CShaderMgr::GetShaderSource(const string &filename)
       string path(pymol_data);
       path.append(PATH_SEP).append("shaders").append(PATH_SEP).append(filename);
 
-      pl = buffer = FileGetContents(path.c_str(), nullptr);
-
-      if (!buffer) {
+      try {
+        buffer = pymol::file_get_contents(path);
+        pl = buffer.c_str();
+      } catch (...) {
         PRINTFB(G, FB_ShaderMgr, FB_Warnings)
           " Warning: shaders_from_dist=on, but unable to open file '%s'\n",
           path.c_str() ENDFB(G);
@@ -546,8 +547,6 @@ string CShaderMgr::GetShaderSource(const string &filename)
       newbuffer.write(pl, newpl - pl);
     }
   }
-
-  FreeP(buffer);
 
   string result = newbuffer.str();
   shader_cache_processed[filename] = result;
