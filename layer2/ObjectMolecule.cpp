@@ -1158,7 +1158,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                 angles = false;
               if(periodic) {
                 if(!cs->PeriodicBox)
-                  cs->PeriodicBox = CrystalNew(G);
+                  cs->PeriodicBox = new CCrystal(G);
                 cs->PeriodicBox->Dim[0] = box[0];
                 cs->PeriodicBox->Dim[1] = box[1];
                 cs->PeriodicBox->Dim[2] = box[2];
@@ -2228,7 +2228,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
 
       if(ok) {
         if(!cset->PeriodicBox)
-          cset->PeriodicBox = CrystalNew(G);
+          cset->PeriodicBox = new CCrystal(G);
         cset->PeriodicBox->Dim[0] = BOX1;
         cset->PeriodicBox->Dim[1] = BOX2;
         cset->PeriodicBox->Dim[2] = BOX3;

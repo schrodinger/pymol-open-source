@@ -65,42 +65,13 @@ int CrystalFromPyList(CCrystal * I, PyObject * list)
   return (rok);
 }
 
-void CrystalFree(CCrystal * I)
+CCrystal::CCrystal(PyMOLGlobals* GParam) : G(GParam)
 {
-  OOFreeP(I);
-}
-
-void CrystalInit(PyMOLGlobals * G, CCrystal * I)
-{
-  int a;
-  I->G = G;
-  for(a = 0; a < 9; a++) {
-    I->RealToFrac[a] = 0.0;
-    I->FracToReal[a] = 0.0;
-  }
-  for(a = 0; a < 3; a++) {
-    I->Angle[a] = 90.0;
-    I->Dim[a] = 1.0;
-    I->RealToFrac[a + a * 3] = 1.0;
-    I->FracToReal[a + a * 3] = 1.0;
-  }
-  I->UnitCellVolume = 1.0;
+  identity33f(RealToFrac);
+  identity33f(FracToReal);
 
 }
 
-CCrystal *CrystalNew(PyMOLGlobals * G)
-{
-  OOAlloc(G, CCrystal);
-  CrystalInit(G, I);
-  return (I);
-}
-
-CCrystal *CrystalCopy(const CCrystal * other)
-{
-  OOAlloc(other->G, CCrystal);
-  UtilCopyMem(I, other, sizeof(CCrystal));
-  return (I);
-}
 
 void CrystalUpdate(CCrystal * I)
 {
@@ -113,7 +84,7 @@ void CrystalUpdate(CCrystal * I)
   /* if we just cleared out the memory, but didn't init
    * then init the crystal and return */
   if (!I->Dim[0] || !I->Dim[1] || !I->Dim[2]) {
-    CrystalInit(I->G, I);
+    *I = CCrystal(I->G);
     return;
   }
 

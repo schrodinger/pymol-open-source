@@ -1538,7 +1538,7 @@ CoordSet *CoordSetCopy(const CoordSet * cs)
   I->Symmetry = SymmetryCopy(cs->Symmetry);
 
   if(I->PeriodicBox)
-    I->PeriodicBox = CrystalCopy(I->PeriodicBox);
+    I->PeriodicBox = new CCrystal(*I->PeriodicBox);
 
   // copy VLAs
   I->Coord      = VLACopy2(cs->Coord);
@@ -1703,7 +1703,7 @@ void CoordSet::fFree()
     if(I->Symmetry)
       SymmetryFree(I->Symmetry);
     if(I->PeriodicBox)
-      CrystalFree(I->PeriodicBox);
+      delete I->PeriodicBox;
     FreeP(I->Spheroid);
     FreeP(I->SpheroidNormal);
     SettingFreeP(I->Setting);

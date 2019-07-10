@@ -246,7 +246,7 @@ int ObjectMotion(CObject * I, int action, int first,
       nFrame = -nFrame;
 
     if(!I->ViewElem) {
-      I->ViewElem = VLACalloc(CViewElem, 0);
+      I->ViewElem = pymol::vla<CViewElem>(0);
     }
     
     if((action == 7) || (action == 8)) { /* toggle */

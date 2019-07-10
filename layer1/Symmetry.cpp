@@ -184,7 +184,7 @@ void SymmetryFree(CSymmetry * I)
 void SymmetryClear(CSymmetry * I)
 {
   if(I->Crystal)
-    CrystalFree(I->Crystal);
+    delete I->Crystal;
   VLAFreeP(I->SymMatVLA);
 }
 
@@ -192,7 +192,7 @@ CSymmetry *SymmetryNew(PyMOLGlobals * G)
 {
   OOCalloc(G, CSymmetry);
   I->G = G;
-  I->Crystal = CrystalNew(G);
+  I->Crystal = new CCrystal(G);
   return (I);
 }
 
@@ -206,7 +206,7 @@ CSymmetry *SymmetryCopy(const CSymmetry * other)
   ok_assert(1, I);
 
   UtilCopyMem(I, other, sizeof(CSymmetry));
-  I->Crystal = CrystalCopy(I->Crystal);
+  I->Crystal = new CCrystal(*other->Crystal);
   I->SymMatVLA = NULL;
 
   ok_assert(2, I->Crystal);

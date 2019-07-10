@@ -21,21 +21,18 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"os_python.h"
 
-typedef struct {
+struct CCrystal {
   PyMOLGlobals *G;
-  float Dim[3];
-  float Angle[3];               /* stored in degrees for convenience */
+  float Dim[3] = {1.0, 1.0, 1.0};
+  float Angle[3] = {90.0, 90.0, 90.0}; /* stored in degrees for convenience */
   float RealToFrac[9];
   float FracToReal[9];
-  float UnitCellVolume;
+  float UnitCellVolume = 1.0;
   float Norm[3];
   float RecipDim[3];
-} CCrystal;
+  CCrystal(PyMOLGlobals* GParam);
+};
 
-void CrystalFree(CCrystal * I);
-void CrystalInit(PyMOLGlobals * G, CCrystal * I);
-CCrystal *CrystalNew(PyMOLGlobals * G);
-CCrystal *CrystalCopy(const CCrystal * I);
 void CrystalUpdate(CCrystal * I);
 void CrystalDump(CCrystal * I);
 CGO *CrystalGetUnitCellCGO(CCrystal * I);
