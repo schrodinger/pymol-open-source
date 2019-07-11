@@ -61,6 +61,7 @@ Z* -------------------------------------------------------------------
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <glm/glm.hpp>
 
 static void glReadBufferError(PyMOLGlobals *G, GLenum b, GLenum e){
   PRINTFB(G, FB_OpenGL, FB_Warnings)

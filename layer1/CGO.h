@@ -30,6 +30,8 @@ Z* -------------------------------------------------------------------
 #include <memory>
 #include "GenericBuffer.h"
 #include <set>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 /* Compiled Graphics Library for simple graphics objects
    in floating point three-space, with the goal of achieving
@@ -415,6 +417,8 @@ namespace cgo {
     };
 
     struct label {
+      using vec3 = glm::vec3;
+      using vec4 = glm::vec4;
       static const int op_code = CGO_DRAW_LABEL;
       label(const vec3& _world_pos, const vec3& _screen_world_offset, const vec3& _screen_min,
             const vec3& _screen_max, const vec4& _text_extent, float _relative_mode,

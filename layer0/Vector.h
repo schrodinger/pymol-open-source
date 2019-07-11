@@ -23,10 +23,8 @@ Z* -------------------------------------------------------------------
 #include<math.h>
 
 // include GLM library
-#include <glm/glm.hpp>
+#include <glm/vec2.hpp>
 
-using glm::vec3;
-using glm::vec4;
 using glm::ivec2;
 
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */

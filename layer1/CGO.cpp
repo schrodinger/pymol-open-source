@@ -4714,8 +4714,8 @@ CGO *CGOConvertToLabelShader(const CGO *I, CGO * addTo){
 
   auto ComputeScreenValues = [](void * varData, const float * pc, void * screenData, int idx) {
     auto sp = reinterpret_cast<const cgo::draw::label *>(pc);
-    const vec3 & smin = sp->screen_min;
-    const vec3 & smax = sp->screen_max;
+    const auto& smin = sp->screen_min;
+    const auto& smax = sp->screen_max;
     float * v = reinterpret_cast<float *>(varData);
     switch (idx) {
     case 0:
@@ -4742,7 +4742,7 @@ CGO *CGOConvertToLabelShader(const CGO *I, CGO * addTo){
   auto ComputeTexCoords = [](void * varData, const float * pc, void * discard, int idx) {
     auto sp = reinterpret_cast<const cgo::draw::label *>(pc);
     float * v = reinterpret_cast<float *>(varData);
-    const vec4 & te = sp->text_extent;
+    const auto& te = sp->text_extent;
     static ivec2 idxs[6] = {
       { 0, 1 },
       { 0, 3 },
