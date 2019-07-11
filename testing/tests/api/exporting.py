@@ -345,6 +345,15 @@ class TestExporting(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_atoms(), 0)
         self.assertEqual(cmd.get_names(), ['m1'])
 
+    @testing.requires_version('2.4')
+    def testglTF(self):
+        '''glTF export'''
+        cmd.fragment('gly')
+
+        with testing.mktemp('.gltf') as filename:
+            self.assertEqual(cmd.save(filename), 0)
+            cmd.delete('*')
+
     def testSaveAln(self):
         cmd.fab('ACDEFGH', 'm1')
         cmd.fab('ACDFGH', 'm2')
