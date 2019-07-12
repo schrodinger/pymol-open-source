@@ -2577,7 +2577,16 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
         " ObjectMapCCP4: Applied MRC 2000 ORIGIN %.2f %.2f %.2f\n",
         mrc2000origin[0], mrc2000origin[1], mrc2000origin[2]
           ENDFB(I->G);
+
+      if (ncstart || nrstart || nsstart) {
+        PRINTFB(I->G, FB_ObjectMap, FB_Details)
+          " ObjectMapCCP4: Ignoring N*START\n" ENDFB(I->G);
+      }
     }
+
+    ncstart = 0;
+    nrstart = 0;
+    nsstart = 0;
   }
 
   i += 54 - 25;
@@ -2819,6 +2828,19 @@ ObjectMapState * getObjectMapState(PyMOLGlobals * G, const char * name, int stat
 
 
 /*========================================================================*/
+/**
+ * Export to CCP4 or MRC map format.
+ *
+ * CCP4:
+ * - can have SKWMAT/SKWTRN, but almost no other progam supports them (Maestro does, to some extent)
+ * - can't have ORIGIN
+ *
+ * MRC:
+ * - can have ORIGIN, most programs support it
+ * - can't have SKWMAT/SKWTRN
+ * - can't have N*START (or shouldn't, because of weird ORIGIN conventions)
+ * - can't have non-orthogonal axes (or shouldn't, because others might ignore it)
+ */
 std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
 {
   std::vector<char> buffer;
@@ -2906,6 +2928,10 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
   float* b_skwtrn = buffer_f + 34;
   float* b_origin = buffer_f + 49;
 
+  // MRC typically only supports orthogonal axes
+  const float _f3_90[3]{90.f, 90.f, 90.f};
+  bool mrc_possible = equal3f(buffer_f + 13 /* CELL B */, _f3_90);
+
   // skew transformation
   if (ms->State.Matrix) {
     double m[16];
@@ -2919,7 +2945,11 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
     xx_matrix_invert(m, m, 4);
     copy44d33f(m, buffer_f + 25);               // SKWMAT
 
-    if (is_identityf(3, b_skwmat)) {
+    if (mrc_possible) {
+      mrc_possible = is_identityf(3, b_skwmat);
+    }
+
+    if (mrc_possible) {
       // translation only -> use origin instead of skew matrix
       copy3(b_skwtrn, b_origin);                // MRC ORIGIN
       zero3(b_skwtrn);
@@ -2930,11 +2960,39 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
 
   // origin (stored with skew transformation)
   if (ms->Origin && lengthsq3f(ms->Origin) > R_SMALL4) {
+    if (!mrc_possible && !buffer_i[24] /* LSKFLG */) {
+      identity33f(b_skwmat);
+      buffer_i[24] = 1;                         // LSKFLG
+    }
+
     if (buffer_i[24] /* LSKFLG */) {
       add3f(ms->Origin, b_skwtrn, b_skwtrn);    // add to SKWTRN
     } else {
       add3f(ms->Origin, b_origin, b_origin);    // add to MRC ORIGIN
     }
+  }
+
+  // Don't write ORIGIN and N*START. The convention is to ignore N*START if
+  // ORIGIN != (0,0,0), likely because IMOD uses ORIGIN but ignores N*START.
+  if (lengthsq3f(b_origin) > R_SMALL4) {
+    // data origin in fractional coordinates
+    float n_start_frac[3] = {
+        float(buffer_i[6] /* NSSTART */) / (buffer_i[7] /* NX */),
+        float(buffer_i[5] /* NRSTART */) / (buffer_i[8] /* NY */),
+        float(buffer_i[4] /* NCSTART */) / (buffer_i[9] /* NZ */)};
+
+    // data origin in Angstrom
+    float n_start_real[3];
+    transform33f3f(ms->Symmetry->Crystal->FracToReal, n_start_frac,
+                   n_start_real);
+
+    // add to MRC origin
+    add3f(n_start_real, b_origin, b_origin);
+
+    // get rid of N*START
+    buffer_i[4] = 0;
+    buffer_i[5] = 0;
+    buffer_i[6] = 0;
   }
 
   // Character string 'MAP ' to identify file type
@@ -2949,7 +3007,7 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
 
   buffer_f[54] = 1.f;   // ARMS
   buffer_i[55] = 1;     // NLABL
-  strcpy(buffer_s + 56 * 4, "PyMOL"); // 57-256  LABEL(20,10)
+  sprintf(buffer_s + 56 * 4, "PyMOL %s", _PyMOL_VERSION); // 57-256 LABEL(20,10)
 
   // Map data array follows
   memcpy(buffer_s + 1024, field->data, field->size);
