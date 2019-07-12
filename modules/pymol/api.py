@@ -120,6 +120,7 @@ from .querying import \
       get_distance,       \
       get_drag_object_name, \
       get_extent,         \
+      get_gltf,           \
       get_idtf,           \
       get_modal_draw,     \
       get_model,          \

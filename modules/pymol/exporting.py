@@ -980,6 +980,7 @@ SEE ALSO
 
         # no arguments (some have a "version" argument)
         'dae': 'pymol.querying:get_collada',
+        'gltf': 'pymol.querying:get_gltf',
         'wrl': 'pymol.querying:get_vrml',
         'pov': 'pymol.querying:get_povray',
         'idtf': 'pymol.querying:get_idtf',

@@ -696,6 +696,43 @@ PYMOL API
         if _raising(r,_self): raise pymol.CmdException
         return r
 
+    def get_gltf(filename, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_gltf" saves a gltf file representing the content
+    currently displayed.
+
+PYMOL API
+
+    cmd.get_gltf()
+
+        '''
+
+        from distutils.spawn import find_executable
+        exe = find_executable('collada2gltf')
+        if exe is None:
+            raise pymol.CmdException('could not find collada2gltf')
+
+        COLLADA_VERSION = 2
+        r = _self.get_collada(COLLADA_VERSION)
+
+        # write collada file
+        with open(filename, 'w') as handle:
+            handle.write(r)
+
+        import subprocess
+
+        result = subprocess.call([exe, '-i', filename, '-o', filename])
+                # convert collada file to gltf by using collada2gltf binary
+
+        if not quiet:
+            if result == 0:
+                print(' Save: wrote "' + filename + '".')
+            else:
+                print(' Save-Error: no file written')
+
+        return result
 
     def count_states(selection="(all)", quiet=1, _self=cmd):
         '''
