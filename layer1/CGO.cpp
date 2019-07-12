@@ -4743,7 +4743,7 @@ CGO *CGOConvertToLabelShader(const CGO *I, CGO * addTo){
     auto sp = reinterpret_cast<const cgo::draw::label *>(pc);
     float * v = reinterpret_cast<float *>(varData);
     const auto& te = sp->text_extent;
-    static ivec2 idxs[6] = {
+    static struct { int x, y; } const idxs[6] = {
       { 0, 1 },
       { 0, 3 },
       { 2, 1 },

@@ -22,11 +22,6 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 #include<math.h>
 
-// include GLM library
-#include <glm/vec2.hpp>
-
-using glm::ivec2;
-
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
 

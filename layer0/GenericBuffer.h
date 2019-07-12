@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <cstdlib>
 #include <string.h>
+#include <glm/vec2.hpp>
 // -----------------------------------------------------------------------------
 // DESCRIPTORS
 // -----------------------------------------------------------------------------
@@ -740,18 +741,22 @@ struct rt_layout_t {
 class renderTarget_t : public gpuBuffer_t {
   friend class CShaderMgr;
 public:
-  renderTarget_t(ivec2 size) : _size(size) {}
+  using shape_type = glm::ivec2;
+
+  renderTarget_t(shape_type size) : _size(size) {}
   ~renderTarget_t();
 
   void bind() const { bind(true); };
   void bind(bool clear) const;
 
   void layout(std::vector<rt_layout_t>&& desc, renderBuffer_t * with_rbo = nullptr);
-  void resize(ivec2 size);
+  void resize(shape_type size);
+
+  const shape_type& size() const { return _size; };
 
 protected:
   bool _shared_rbo { false };
-  ivec2 _size;
+  shape_type _size;
   frameBuffer_t * _fbo;
   renderBuffer_t * _rbo;
   std::vector<rt_layout_t> _desc;

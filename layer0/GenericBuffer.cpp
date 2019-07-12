@@ -441,7 +441,7 @@ void renderTarget_t::layout(std::vector<rt_layout_t> &&desc,
   glCheckOkay();
 }
 
-void renderTarget_t::resize(ivec2 size) {
+void renderTarget_t::resize(shape_type size) {
   _size = size;
   if (!_shared_rbo) {
     delete _rbo;

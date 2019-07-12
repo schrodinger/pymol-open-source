@@ -1784,7 +1784,8 @@ const char *CShaderMgr::GetAttributeName(int uid)
 // SceneRenderBindToOffscreen
 void CShaderMgr::bindOffscreen(int width, int height, GridInfo *grid) {
   using namespace tex;
-  ivec2 req_size(width, height);
+  renderTarget_t::shape_type req_size(width, height);
+  renderTarget_t* rt = nullptr;
 
 #ifndef _PYMOL_NO_AA_SHADERS
 #endif
@@ -1792,8 +1793,8 @@ void CShaderMgr::bindOffscreen(int width, int height, GridInfo *grid) {
   // Doesn't exist, create
   if (!offscreen_rt[0]) {
     CGOFree(G->Scene->offscreenCGO);
-    offscreen_size = req_size;
     auto rt0 = newGPUBuffer<renderTarget_t>(req_size);
+    rt = rt0;
     rt0->layout({ { 4, rt_layout_t::UBYTE } });
     offscreen_rt[0] = rt0->get_hash_id();
 
@@ -1805,15 +1806,15 @@ void CShaderMgr::bindOffscreen(int width, int height, GridInfo *grid) {
     rt2->layout({ { 4, rt_layout_t::UBYTE } });
     offscreen_rt[2] = rt2->get_hash_id();
   } else {
+    rt = getGPUBuffer<renderTarget_t>(offscreen_rt[0]);
+
     // resize
-    if (req_size != offscreen_size) {
+    if (req_size != rt->size()) {
       for (int i = 0; i < 3; ++i)
         getGPUBuffer<renderTarget_t>(offscreen_rt[i])->resize(req_size);
-      offscreen_size = req_size;
     }
   }
 
-  auto rt = getGPUBuffer<renderTarget_t>(offscreen_rt[0]);
   if (rt)
     rt->bind(!stereo_blend);
   glEnable(GL_BLEND);
@@ -1821,8 +1822,8 @@ void CShaderMgr::bindOffscreen(int width, int height, GridInfo *grid) {
   SceneInitializeViewport(G, 1);
   if (grid->active) {
     grid->cur_view[0] = grid->cur_view[1] = 0;
-    grid->cur_view[2] = offscreen_size.x;
-    grid->cur_view[3] = offscreen_size.y;
+    grid->cur_view[2] = req_size.x;
+    grid->cur_view[3] = req_size.y;
   }
 }
 
@@ -1830,7 +1831,7 @@ void CShaderMgr::bindOffscreen(int width, int height, GridInfo *grid) {
 void CShaderMgr::bindOffscreenOIT(int width, int height, int drawbuf) {
   using namespace tex;
 
-  ivec2 req_size(width, height);
+  renderTarget_t::shape_type req_size(width, height);
 
   if (!oit_rt[0] || (req_size != oit_size)) {
     if (oit_rt[0]) {

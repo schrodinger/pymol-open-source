@@ -344,10 +344,9 @@ public:
 
   // Post process render targets
   size_t offscreen_rt[3];
-  ivec2 offscreen_size;
 
   size_t oit_rt[2];
-  ivec2 oit_size;
+  renderTarget_t::shape_type oit_size;
 
   size_t areatex { 0 };
   size_t searchtex { 0 };
