@@ -7,6 +7,7 @@
 #include "MemoryDebug.h"
 #include "pymol/memory.h"
 #include <algorithm>
+#include <cstddef>
 #if 0
 #include <vector>
 #endif
@@ -43,7 +44,7 @@ public:
   vla() = default;
 
   // NULL assignment
-  vla<T>& operator=(nullptr_t)
+  vla<T>& operator=(std::nullptr_t)
   {
     freeP();
     return *this;
