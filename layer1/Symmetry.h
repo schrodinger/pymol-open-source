@@ -23,13 +23,14 @@ Z* -------------------------------------------------------------------
 #include"Crystal.h"
 #include"Word.h"
 #include"os_python.h"
+#include"vla.h"
 
 struct CSymmetry {
   PyMOLGlobals *G;
-  CCrystal *Crystal;
+  CCrystal Crystal;
   int PDBZValue;
   WordType SpaceGroup;
-  float *SymMatVLA;
+  pymol::vla<float> SymMatVLA;
 
   // get the number of symmetry matrices
   int getNSymMat() const;
@@ -38,18 +39,16 @@ struct CSymmetry {
   const float * getSymMat(int i) const {
     return SymMatVLA + i * 16;
   }
+  CSymmetry(PyMOLGlobals* G) : G(G), Crystal(G){};
 };
 
 int SymmetryAttemptGeneration(CSymmetry * I, int quiet=false);
 void SymmetryFree(CSymmetry * I);
 void SymmetryClear(CSymmetry * I);
-CSymmetry *SymmetryNew(PyMOLGlobals * G);
 void SymmetryUpdate(CSymmetry * I);
 void SymmetryDump(CSymmetry * I);
-CSymmetry *SymmetryCopy(const CSymmetry * other);
 PyObject *SymmetryAsPyList(CSymmetry * I);
 CSymmetry *SymmetryNewFromPyList(PyMOLGlobals * G, PyObject * list);
-
 void SymmetrySpaceGroupRegister(PyMOLGlobals * G, const char* sg, const std::vector<std::string>& sym_op);
 
 #endif

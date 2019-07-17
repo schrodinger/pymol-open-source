@@ -556,7 +556,7 @@ static void ObjectMeshUpdate(ObjectMesh * I)
       if(oms) {
         if(ms->RefreshFlag || ms->ResurfaceFlag) {
           if(!ms->Field) {
-            ms->Crystal = *(oms->Symmetry->Crystal);
+            ms->Crystal = oms->Symmetry->Crystal;
           }
 
           if((I->visRep & cRepCellBit)) {
@@ -602,7 +602,7 @@ static void ObjectMeshUpdate(ObjectMesh * I)
                 max_ext = ms->ExtentMax;
               }
 
-              IsosurfGetRange(I->G, field, oms->Symmetry->Crystal,
+              IsosurfGetRange(I->G, field, &oms->Symmetry->Crystal,
                               min_ext, max_ext, ms->Range, true);
             }
             /*                      printf("Mesh-DEBUG: %d %d %d %d %d %d\n",
@@ -1298,19 +1298,19 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
         int eff_range[6];
 
         if(IsosurfGetRange
-           (G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false)) {
+           (G, oms->Field, &oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false)) {
           int fdim[3];
           int expand_result;
           /* need to generate symmetry-expanded temporary map */
 
-          ms->Crystal = *(oms->Symmetry->Crystal);
+          ms->Crystal = (oms->Symmetry->Crystal);
           fdim[0] = eff_range[3] - eff_range[0];
           fdim[1] = eff_range[4] - eff_range[1];
           fdim[2] = eff_range[5] - eff_range[2];
           ms->Field = IsosurfFieldAlloc(I->G, fdim);
 
           expand_result =
-            IsosurfExpand(oms->Field, ms->Field, oms->Symmetry->Crystal, sym, eff_range);
+            IsosurfExpand(oms->Field, ms->Field, &oms->Symmetry->Crystal, sym, eff_range);
 
           if(expand_result == 0) {
             ok = false;
@@ -1341,7 +1341,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
           }
         }
       } else {
-        IsosurfGetRange(G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, ms->Range, true);
+        IsosurfGetRange(G, oms->Field, &oms->Symmetry->Crystal, min_ext, max_ext, ms->Range, true);
       }
     }
     ms->ExtentFlag = true;

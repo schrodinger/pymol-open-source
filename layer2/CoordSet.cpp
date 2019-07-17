@@ -813,7 +813,7 @@ bool CoordSetInsureOrthogonal(PyMOLGlobals * G,
     return false;
 
   if (!cryst)
-    cryst = cset->Symmetry->Crystal;
+    cryst = &cset->Symmetry->Crystal;
 
   const float * r2f = cryst->RealToFrac;
 
@@ -1535,8 +1535,9 @@ CoordSet *CoordSetCopy(const CoordSet * cs)
   /* deep copy state struct */
   ObjectStateCopy(&I->State, &cs->State);
   /* deep copy & return ptr to new symmetry */
-  I->Symmetry = SymmetryCopy(cs->Symmetry);
-
+  if (I->Symmetry != nullptr) {
+    I->Symmetry = new CSymmetry(*cs->Symmetry);
+  }
   if(I->PeriodicBox)
     I->PeriodicBox = new CCrystal(*I->PeriodicBox);
 

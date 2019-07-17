@@ -6689,7 +6689,9 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
     }
   }
   if(isNew && info_src) {       /* copy symmetry information, etc. */
-    targ->Symmetry = SymmetryCopy(info_src->Symmetry);
+    if (targ->Symmetry != nullptr) {
+      targ->Symmetry = new CSymmetry(*info_src->Symmetry);
+    }
   }
   nAtom = c;
 
@@ -9944,7 +9946,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
             if(cs) {
               CCrystal *cryst = cs->PeriodicBox;
               if((!cryst) && (obj->Symmetry))
-                cryst = obj->Symmetry->Crystal;
+                cryst = &obj->Symmetry->Crystal;
               if(cryst) {
                 int idx;
                 idx = cs->atmToIdx(at);
@@ -9976,7 +9978,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
                       if(cs) {
                         CCrystal *cryst = cs->PeriodicBox;
                         if((!cryst) && (obj->Symmetry))
-                          cryst = obj->Symmetry->Crystal;
+                          cryst = &obj->Symmetry->Crystal;
                         if(cryst) {
                           int idx;
                           idx = cs->atmToIdx(at);

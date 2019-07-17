@@ -2320,7 +2320,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       }
     } else if(strstartswith(p, "CRYST1") && (!*restart_model)) {
       if(!symmetry){
-        symmetry = SymmetryNew(G);
+        symmetry = new CSymmetry(G);
 	CHECKOK(ok, symmetry);
       }
       if(symmetry) {
@@ -2330,22 +2330,22 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         p = nskip(p, 6);
         symFlag = true;
         p = ncopy(cc, p, 9);
-        if(sscanf(cc, "%f", &symmetry->Crystal->Dim[0]) != 1)
+        if(sscanf(cc, "%f", &symmetry->Crystal.Dim[0]) != 1)
           symFlag = false;
         p = ncopy(cc, p, 9);
-        if(sscanf(cc, "%f", &symmetry->Crystal->Dim[1]) != 1)
+        if(sscanf(cc, "%f", &symmetry->Crystal.Dim[1]) != 1)
           symFlag = false;
         p = ncopy(cc, p, 9);
-        if(sscanf(cc, "%f", &symmetry->Crystal->Dim[2]) != 1)
+        if(sscanf(cc, "%f", &symmetry->Crystal.Dim[2]) != 1)
           symFlag = false;
         p = ncopy(cc, p, 7);
-        if(sscanf(cc, "%f", &symmetry->Crystal->Angle[0]) != 1)
+        if(sscanf(cc, "%f", &symmetry->Crystal.Angle[0]) != 1)
           symFlag = false;
         p = ncopy(cc, p, 7);
-        if(sscanf(cc, "%f", &symmetry->Crystal->Angle[1]) != 1)
+        if(sscanf(cc, "%f", &symmetry->Crystal.Angle[1]) != 1)
           symFlag = false;
         p = ncopy(cc, p, 7);
-        if(sscanf(cc, "%f", &symmetry->Crystal->Angle[2]) != 1)
+        if(sscanf(cc, "%f", &symmetry->Crystal.Angle[2]) != 1)
           symFlag = false;
         p = nskip(p, 1);
         p = ncopy(symmetry->SpaceGroup, p, 11);

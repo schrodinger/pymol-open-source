@@ -6134,13 +6134,13 @@ int ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a
       if(obj->type==cObjectMolecule) {
 	objMol = (ObjectMolecule*) obj;
 
-	if(objMol->Symmetry && objMol->Symmetry->Crystal) {
-	  *a = objMol->Symmetry->Crystal->Dim[0];
-	  *b = objMol->Symmetry->Crystal->Dim[1];
-	  *c = objMol->Symmetry->Crystal->Dim[2];
-	  *alpha = objMol->Symmetry->Crystal->Angle[0];
-	  *beta = objMol->Symmetry->Crystal->Angle[1];
-	  *gamma = objMol->Symmetry->Crystal->Angle[2];
+	if(objMol->Symmetry) {
+	  *a = objMol->Symmetry->Crystal.Dim[0];
+	  *b = objMol->Symmetry->Crystal.Dim[1];
+	  *c = objMol->Symmetry->Crystal.Dim[2];
+	  *alpha = objMol->Symmetry->Crystal.Angle[0];
+	  *beta = objMol->Symmetry->Crystal.Angle[1];
+	  *gamma = objMol->Symmetry->Crystal.Angle[2];
 	  UtilNCopy(sgroup, objMol->Symmetry->SpaceGroup, sizeof(WordType));
 	  *defined = true;
 	  ok = true;
@@ -6156,14 +6156,14 @@ int ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a
 
 	symm = (objMap->State + state)->Symmetry;
 	
-	if(symm && symm->Crystal) {
+	if(symm) {
 
-	  *a = symm->Crystal->Dim[0];
-	  *b = symm->Crystal->Dim[1];
-	  *c = symm->Crystal->Dim[2];
-	  *alpha = symm->Crystal->Angle[0];
-	  *beta = symm->Crystal->Angle[1];
-	  *gamma = symm->Crystal->Angle[2];
+	  *a = symm->Crystal.Dim[0];
+	  *b = symm->Crystal.Dim[1];
+	  *c = symm->Crystal.Dim[2];
+	  *alpha = symm->Crystal.Angle[0];
+	  *beta = symm->Crystal.Angle[1];
+	  *gamma = symm->Crystal.Angle[2];
 	  UtilNCopy(sgroup, symm->SpaceGroup, sizeof(WordType));
 	  *defined = true;
 	  ok = true;
@@ -6198,14 +6198,14 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, const char *sele, int state, float a,
   int i;
 
   /* create a new symmetry object for copying */
-  symmetry = SymmetryNew(G);
+  symmetry = new CSymmetry(G);
   ok_assert(1, ok = (symmetry != NULL));
-  symmetry->Crystal->Dim[0] = a;
-  symmetry->Crystal->Dim[1] = b;
-  symmetry->Crystal->Dim[2] = c;
-  symmetry->Crystal->Angle[0] = alpha;
-  symmetry->Crystal->Angle[1] = beta;
-  symmetry->Crystal->Angle[2] = gamma;
+  symmetry->Crystal.Dim[0] = a;
+  symmetry->Crystal.Dim[1] = b;
+  symmetry->Crystal.Dim[2] = c;
+  symmetry->Crystal.Angle[0] = alpha;
+  symmetry->Crystal.Angle[1] = beta;
+  symmetry->Crystal.Angle[2] = gamma;
   UtilNCopy(symmetry->SpaceGroup, sgroup, sizeof(WordType));
   SymmetryUpdate(symmetry);
 
@@ -6220,7 +6220,7 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, const char *sele, int state, float a,
         if(symmetry) {
 	  /* right now, ObjectMolecules only have one-state symmetry information */
 	  SymmetryFree(objMol->Symmetry);
-	  objMol->Symmetry = SymmetryCopy(symmetry);
+	  objMol->Symmetry = new CSymmetry(*symmetry);
         }
         break;
       case cObjectMap:
@@ -6230,7 +6230,7 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, const char *sele, int state, float a,
 	  for(StateIterator iter(G, obj->Setting, state, objMap->NState); iter.next();) {
 	    ObjectMapState *oms = objMap->State + iter.state;
 	    SymmetryFree(oms->Symmetry);
-	    oms->Symmetry = SymmetryCopy(symmetry);
+	    oms->Symmetry = new CSymmetry(*symmetry);
 	  }
 	  ObjectMapRegeneratePoints(objMap);
 	}
@@ -6352,18 +6352,16 @@ int ExecutiveSymmetryCopy(PyMOLGlobals * G, const char *source_name, const char 
       if(*target_symm)
 	SymmetryFree(*target_symm);
       
-      *target_symm = SymmetryCopy(source_symm);
+      *target_symm = new CSymmetry(*source_symm);
 
       /* Invalidate cRepCell */
       /* if the unit cell is shown for molecule, redraw it */
       if(tmp_mol) {
 	if((tmp_mol->visRep & cRepCellBit)) {
 	  if(tmp_mol->Symmetry) {
-	    if(tmp_mol->Symmetry->Crystal) {
-	      if(tmp_mol->UnitCellCGO)
-		CGOFree(tmp_mol->UnitCellCGO);
-	      tmp_mol->UnitCellCGO = CrystalGetUnitCellCGO(tmp_mol->Symmetry->Crystal);
-	    }
+            CGOFree(tmp_mol->UnitCellCGO);
+            tmp_mol->UnitCellCGO =
+                CrystalGetUnitCellCGO(&tmp_mol->Symmetry->Crystal);
 	  }
 	}
       }
@@ -14654,7 +14652,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
       tc[2] /= op.i1;
     }
 		/* Transformation: RealToFrac (3x3) * tc (3x1) = (3x1) */
-    transform33f3f(obj->Symmetry->Crystal->RealToFrac, tc, tc);
+    transform33f3f(obj->Symmetry->Crystal.RealToFrac, tc, tc);
 
 		/* 2.  Copy the coordinates for the atoms in this selection into op */
     op.code = OMOP_VERT;
@@ -14685,7 +14683,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
                     cs = new_obj->CSet[b];
                     os = obj->CSet[b];
 										/* convert coordinates into fractional, based on unit cell */
-                    CoordSetRealToFrac(cs, obj->Symmetry->Crystal);
+                    CoordSetRealToFrac(cs, &obj->Symmetry->Crystal);
                     CoordSetTransform44f(cs, obj->Symmetry->getSymMat(a));
                     CoordSetGetAverage(cs, ts);
                     identity44f(m);
@@ -14711,7 +14709,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
                     CoordSetTransform44f(cs, m);
 										
 										/* this steps through the coordinate list until it finds a vertex close enough */
-                    CoordSetFracToReal(cs, obj->Symmetry->Crystal);
+                    CoordSetFracToReal(cs, &obj->Symmetry->Crystal);
                     if(!keepFlag) {
 											/* for each coordinate in this coordinate set */
                       v2 = cs->Coord;

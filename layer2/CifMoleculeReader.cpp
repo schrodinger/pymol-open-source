@@ -817,13 +817,13 @@ static CSymmetry * read_symmetry(PyMOLGlobals * G, const cif_data * data) {
     if (cell[i] == nullptr)
       return nullptr;
 
-  CSymmetry * symmetry = SymmetryNew(G);
+  CSymmetry * symmetry = new CSymmetry(G);
   if (!symmetry)
     return nullptr;
 
   for (int i = 0; i < 3; i++) {
-    symmetry->Crystal->Dim[i] = cell[i]->as_d();
-    symmetry->Crystal->Angle[i] = cell[i + 3]->as_d();
+    symmetry->Crystal.Dim[i] = cell[i]->as_d();
+    symmetry->Crystal.Angle[i] = cell[i + 3]->as_d();
   }
 
   strncpy(symmetry->SpaceGroup,
@@ -2036,25 +2036,23 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
   if (I->Symmetry) {
     SymmetryUpdate(I->Symmetry);
 
-    if(I->Symmetry->Crystal) {
-      float sca[16];
+    float sca[16];
 
-      CrystalUpdate(I->Symmetry->Crystal);
+    CrystalUpdate(&I->Symmetry->Crystal);
 
-      if(info.fractional) {
-        for (int i = 0; i < ncsets; i++) {
-          if (csets[i])
-            CoordSetFracToReal(csets[i], I->Symmetry->Crystal);
-        }
+    if (info.fractional) {
+      for (int i = 0; i < ncsets; i++) {
+        if (csets[i])
+          CoordSetFracToReal(csets[i], &I->Symmetry->Crystal);
+      }
       } else if (info.chains_filter.empty() &&
           read_atom_site_fract_transf(G, datablock, sca)) {
         // don't do this for assemblies
         for (int i = 0; i < ncsets; i++) {
           if (csets[i])
-            CoordSetInsureOrthogonal(G, csets[i], sca, I->Symmetry->Crystal);
+            CoordSetInsureOrthogonal(G, csets[i], sca, &I->Symmetry->Crystal);
         }
       }
-    }
   }
 
   // coord set to use for distance based bonding and for attaching TmpBond

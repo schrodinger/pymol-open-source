@@ -171,17 +171,17 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
   if (container->unitCell &&
       container->spaceGroup &&
       container->spaceGroup[0]) {
-    CSymmetry * symmetry = I->Symmetry = SymmetryNew(G);
+    CSymmetry * symmetry = I->Symmetry = new CSymmetry(G);
 
     for (int i = 0; i < 3; i++) {
-      symmetry->Crystal->Dim[i] = container->unitCell[i];
-      symmetry->Crystal->Angle[i] = container->unitCell[i + 3];
+      symmetry->Crystal.Dim[i] = container->unitCell[i];
+      symmetry->Crystal.Angle[i] = container->unitCell[i + 3];
     }
 
     strncpy(symmetry->SpaceGroup, container->spaceGroup, WordLength - 1);
 
     SymmetryUpdate(symmetry);
-    CrystalUpdate(symmetry->Crystal);
+    CrystalUpdate(&symmetry->Crystal);
   }
 
   // models (states)

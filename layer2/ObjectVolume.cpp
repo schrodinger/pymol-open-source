@@ -1234,7 +1234,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
       if(sym && box_mode) {
         int eff_range[6];
 
-        IsosurfGetRange(G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false);
+        IsosurfGetRange(G, oms->Field, &oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false);
 
         {
           int fdim[3];
@@ -1247,7 +1247,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
           vs->Field = IsosurfFieldAlloc(I->G, fdim);
 
           expand_result =
-            IsosurfExpand(oms->Field, vs->Field, oms->Symmetry->Crystal, sym, eff_range);
+            IsosurfExpand(oms->Field, vs->Field, &oms->Symmetry->Crystal, sym, eff_range);
 
           if(expand_result == 0) {
             if(!quiet) {

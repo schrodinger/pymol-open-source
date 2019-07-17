@@ -2469,7 +2469,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
     if(ok && isNew)
       ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, false, -1);
     if(cset->Symmetry && (!I->Symmetry)) {
-      I->Symmetry = SymmetryCopy(cset->Symmetry);
+      I->Symmetry = new CSymmetry(*cset->Symmetry);
       CHECKOK(ok, I->Symmetry);
       if (ok)
         SymmetryUpdate(I->Symmetry);
@@ -7554,7 +7554,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
       }
       if(PyObject_HasAttrString(model, "spacegroup") &&
          PyObject_HasAttrString(model, "cell")) {
-        CSymmetry *symmetry = SymmetryNew(G);
+        CSymmetry *symmetry = new CSymmetry(G);
         if(symmetry) {
           tmp = PyObject_GetAttrString(model, "spacegroup");
           if(tmp) {
@@ -7568,8 +7568,8 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
           if(tmp) {
             float cell[6];
             if(PConvPyListToFloatArrayInPlace(tmp, cell, 6)) {
-              copy3f(cell, symmetry->Crystal->Dim);
-              copy3f(cell + 3, symmetry->Crystal->Angle);
+              copy3f(cell, symmetry->Crystal.Dim);
+              copy3f(cell + 3, symmetry->Crystal.Angle);
             }
             Py_DECREF(tmp);
           }
@@ -7630,14 +7630,14 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
     if(I->CSet[frame])
       I->CSet[frame]->fFree();
     I->CSet[frame] = cset;
-    if(fractional && cset->Symmetry && cset->Symmetry->Crystal) {
-      CrystalUpdate(cset->Symmetry->Crystal);
-      CoordSetFracToReal(cset, cset->Symmetry->Crystal);
+    if (fractional && cset->Symmetry) {
+      CrystalUpdate(&cset->Symmetry->Crystal);
+      CoordSetFracToReal(cset, &cset->Symmetry->Crystal);
     }
     if(ok && isNew)
       ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, auto_bond, connect_mode);
     if(cset->Symmetry && (!I->Symmetry)) {
-      I->Symmetry = SymmetryCopy(cset->Symmetry);
+      I->Symmetry = new CSymmetry(*cset->Symmetry);
       SymmetryUpdate(I->Symmetry);
     }
     SceneCountFrames(G);
@@ -11099,11 +11099,9 @@ static void ObjectMoleculeUpdate(ObjectMolecule * I)
     }
     /* if the unit cell is shown, redraw it */
     if((I->visRep & cRepCellBit)) {
-      if(I->Symmetry) {
-        if(I->Symmetry->Crystal) {
-          CGOFree(I->UnitCellCGO);
-          I->UnitCellCGO = CrystalGetUnitCellCGO(I->Symmetry->Crystal);
-        }
+      if (I->Symmetry) {
+        CGOFree(I->UnitCellCGO);
+        I->UnitCellCGO = CrystalGetUnitCellCGO(&I->Symmetry->Crystal);
       }
     }
   } /* end block */
@@ -11734,7 +11732,9 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
   BondType *i0, *i1;
   OOCalloc(G, ObjectMolecule);
   (*I) = (*obj);
-  I->Symmetry = SymmetryCopy(I->Symmetry);      /* null-safe */
+  if (I->Symmetry != nullptr) {
+    I->Symmetry = new CSymmetry(*I->Symmetry);
+  }
   I->UnitCellCGO = NULL;
   I->Neighbor = NULL;
   I->Sculpt = NULL;
@@ -11973,10 +11973,10 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
         ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, true, -1);
       if(ok && cset->Symmetry) {
         SymmetryFree(I->Symmetry);
-        I->Symmetry = SymmetryCopy(cset->Symmetry);
+        I->Symmetry = new CSymmetry(*cset->Symmetry);
         SymmetryUpdate(I->Symmetry);
       }
-      if (I->Symmetry && I->Symmetry->Crystal) {
+      if (I->Symmetry) {
           /* check scale records */
           if(pdb_info &&
              pdb_info->scale.flag[0] &&
@@ -11985,7 +11985,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
             float *sca = pdb_info->scale.matrix;
             sca[15] = 1.0F;
 
-            CoordSetInsureOrthogonal(G, cset, sca, I->Symmetry->Crystal, quiet);
+            CoordSetInsureOrthogonal(G, cset, sca, &I->Symmetry->Crystal, quiet);
           }
       }
       SceneCountFrames(G);

@@ -39,7 +39,7 @@ PyObject *SymmetryAsPyList(CSymmetry * I)
 
   if(I) {
     result = PyList_New(2);
-    PyList_SetItem(result, 0, CrystalAsPyList(I->Crystal));
+    PyList_SetItem(result, 0, CrystalAsPyList(&I->Crystal));
     PyList_SetItem(result, 1, PyString_FromString(I->SpaceGroup));
   }
   return (PConvAutoNone(result));
@@ -64,10 +64,10 @@ static int SymmetryFromPyList(CSymmetry * I, PyObject * list)
     if (PyList_Check(secondval)){
       /* if only the crystal, read it */
       if(ok)
-	ok = CrystalFromPyList(I->Crystal, list);    
+	ok = CrystalFromPyList(&I->Crystal, list);    
     } else {
       if(ok)
-	ok = CrystalFromPyList(I->Crystal, PyList_GetItem(list, 0));
+	ok = CrystalFromPyList(&I->Crystal, PyList_GetItem(list, 0));
       if(ok)
 	PConvPyStrToStr(PyList_GetItem(list, 1), I->SpaceGroup, sizeof(WordType));
     }
@@ -83,7 +83,7 @@ static int SymmetryFromPyList(CSymmetry * I, PyObject * list)
 CSymmetry *SymmetryNewFromPyList(PyMOLGlobals * G, PyObject * list)
 {
   CSymmetry *I = NULL;
-  I = SymmetryNew(G);
+  I = new CSymmetry(G);
   if(I) {
     if(!SymmetryFromPyList(I, list)) {
       SymmetryFree(I);
@@ -129,10 +129,10 @@ int SymmetryAttemptGeneration(CSymmetry * I, int quiet)
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_XRAY
   PyMOLGlobals *G = I->G;
-  CrystalUpdate(I->Crystal);
+  CrystalUpdate(&I->Crystal);
   if(!quiet) {
     if(Feedback(G, FB_Symmetry, FB_Blather)) {
-      CrystalDump(I->Crystal);
+      CrystalDump(&I->Crystal);
     }
   }
   /* TAKEN OUT BB 2/2012  SpaceGroup can be blank, 
@@ -147,7 +147,7 @@ int SymmetryAttemptGeneration(CSymmetry * I, int quiet)
     mats = PYOBJECT_CALLMETHOD(P_xray, "sg_sym_to_mat_list", "s", I->SpaceGroup);
     if(mats && (mats != Py_None)) {
       l = PyList_Size(mats);
-      I->SymMatVLA = VLAlloc(float, 16 * l);
+      I->SymMatVLA = pymol::vla<float>(16*l);
       if(!quiet) {
         PRINTFB(G, FB_Symmetry, FB_Details)
         " Symmetry: Found %d symmetry operators.\n", (int) l ENDFB(G);
@@ -177,52 +177,13 @@ void SymmetryFree(CSymmetry * I)
   if (!I)
     return;
 
-  SymmetryClear(I);
-  OOFreeP(I);
-}
-
-void SymmetryClear(CSymmetry * I)
-{
-  if(I->Crystal)
-    delete I->Crystal;
-  VLAFreeP(I->SymMatVLA);
-}
-
-CSymmetry *SymmetryNew(PyMOLGlobals * G)
-{
-  OOCalloc(G, CSymmetry);
-  I->G = G;
-  I->Crystal = new CCrystal(G);
-  return (I);
-}
-
-CSymmetry *SymmetryCopy(const CSymmetry * other)
-{
-  if (!other) {
-    return NULL;
-  }
-
-  OOAlloc(other->G, CSymmetry);
-  ok_assert(1, I);
-
-  UtilCopyMem(I, other, sizeof(CSymmetry));
-  I->Crystal = new CCrystal(*other->Crystal);
-  I->SymMatVLA = NULL;
-
-  ok_assert(2, I->Crystal);
-
-  return (I);
-ok_except2:
-  SymmetryFree(I);
-ok_except1:
-  return NULL;
+  delete I;
 }
 
 void SymmetryUpdate(CSymmetry * I)
 {
-  if(I->Crystal)
-    CrystalUpdate(I->Crystal);
-  VLAFreeP(I->SymMatVLA);
+  CrystalUpdate(&I->Crystal);
+  I->SymMatVLA.freeP();
 }
 
 void SymmetryDump(CSymmetry * I)

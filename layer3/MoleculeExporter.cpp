@@ -523,9 +523,9 @@ struct MoleculeExporterPDB : public MoleculeExporter {
   void writeCryst1() {
     const auto& sym = m_iter.cs->Symmetry ? m_iter.cs->Symmetry : m_iter.obj->Symmetry;
 
-    if (sym && sym->Crystal) {
-      const auto& dim   = sym->Crystal->Dim;
-      const auto& angle = sym->Crystal->Angle;
+    if (sym) {
+      const auto& dim   = sym->Crystal.Dim;
+      const auto& angle = sym->Crystal.Angle;
       m_offset += VLAprintf(m_buffer, m_offset,
           "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %-11s%4d\n",
           dim[0], dim[1], dim[2], angle[0], angle[1], angle[2],
@@ -622,9 +622,9 @@ struct MoleculeExporterCIF : public MoleculeExporter {
   void writeCellSymmetry() {
     const auto& sym = m_iter.cs->Symmetry ? m_iter.cs->Symmetry : m_iter.obj->Symmetry;
 
-    if (sym && sym->Crystal) {
-      const auto& dim   = sym->Crystal->Dim;
-      const auto& angle = sym->Crystal->Angle;
+    if (sym) {
+      const auto& dim   = sym->Crystal.Dim;
+      const auto& angle = sym->Crystal.Angle;
       m_offset += VLAprintf(m_buffer, m_offset, "#\n"
           "_cell.entry_id %s\n"
           "_cell.length_a %.3f\n"

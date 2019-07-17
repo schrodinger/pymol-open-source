@@ -512,7 +512,7 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
 
         if(I->visRep & cRepCellBit){
           if (!ms->UnitCellCGO || ms->RefreshFlag || ms->ResurfaceFlag) {
-            ms->Crystal = *(oms->Symmetry->Crystal);
+            ms->Crystal = oms->Symmetry->Crystal;
             if((I->visRep & cRepCellBit)) {
               CGOFree(ms->UnitCellCGO);
               ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
@@ -547,7 +547,7 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
                 max_ext = ms->ExtentMax;
               }
 
-              TetsurfGetRange(I->G, oms->Field, oms->Symmetry->Crystal,
+              TetsurfGetRange(I->G, oms->Field, &oms->Symmetry->Crystal,
                               min_ext, max_ext, ms->Range);
             }
 
@@ -1174,7 +1174,7 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
         max_ext = ms->ExtentMax;
       }
 
-      TetsurfGetRange(G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, ms->Range);
+      TetsurfGetRange(G, oms->Field, &oms->Symmetry->Crystal, min_ext, max_ext, ms->Range);
     }
     ms->ExtentFlag = true;
   }
