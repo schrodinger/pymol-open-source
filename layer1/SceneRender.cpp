@@ -809,40 +809,45 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
   }
   {
     int *slot_vla = I->SlotVLA;
-    switch (which_objects){
+    switch (which_objects) {
     case 0:
-      for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
+      for (auto obj : I->Obj) {
         /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
-        /*      if(rec->obj->fRender) { */
-        if((*it)->fRender && (!rayVolume || (*it)->type==cObjectVolume)) {
-          SceneRenderAllObject(G, I, context, &info, normal, state, *it, grid, slot_vla, fat);
+        if (obj->fRender && (!rayVolume || obj->type == cObjectVolume)) {
+          SceneRenderAllObject(
+              G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
         }
       }
       break;
     case 1:
-      for ( auto it = I->GadgetObjs.begin(); it != I->GadgetObjs.end(); ++it) {
-        if((*it)->fRender)
-	  SceneRenderAllObject(G, I, context, &info, normal, state, *it, grid, slot_vla, fat);
+      for (auto obj : I->GadgetObjs) {
+        if (obj->fRender) {
+          SceneRenderAllObject(
+              G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
+        }
       }
       break;
     case 2:
-      for ( auto it = I->NonGadgetObjs.begin(); it != I->NonGadgetObjs.end(); ++it) {
-        if((*it)->fRender)
-	  SceneRenderAllObject(G, I, context, &info, normal, state, *it, grid, slot_vla, fat);
+      for (auto obj : I->NonGadgetObjs) {
+        if (obj->fRender) {
+          SceneRenderAllObject(
+              G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
+        }
       }
       break;
     case 3:
       // Gadgets Last
-      for ( auto it = I->NonGadgetObjs.begin(); it != I->NonGadgetObjs.end(); ++it) {
+      for (auto obj : I->NonGadgetObjs) {
         /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
-        /*      if(rec->obj->fRender) { */
-        if((*it)->fRender && (!rayVolume || (*it)->type==cObjectVolume)) {
-          SceneRenderAllObject(G, I, context, &info, normal, state, *it, grid, slot_vla, fat);
+        if (obj->fRender && (!rayVolume || obj->type == cObjectVolume)) {
+          SceneRenderAllObject(
+              G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
         }
       }
-      for ( auto it = I->GadgetObjs.begin(); it != I->GadgetObjs.end(); ++it) {
-        if((*it)->fRender)
-	  SceneRenderAllObject(G, I, context, &info, normal, state, *it, grid, slot_vla, fat);
+      for (auto obj : I->GadgetObjs) {
+        if (obj->fRender)
+          SceneRenderAllObject(
+              G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
       }
       break;
     }
