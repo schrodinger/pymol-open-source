@@ -181,6 +181,20 @@ static std::string make_mm_atom_site_label(PyMOLGlobals * G, const char * asym_i
   return key;
 }
 
+/**
+ * Like strncpy, but only copy alphabetic characters.
+ */
+static void strncpy_alpha(char* dest, const char* src, size_t n)
+{
+  for (size_t i = 0; i != n; ++i) {
+    if (!isalpha(src[i])) {
+      memset(dest + i, 0, n - i);
+      break;
+    }
+    dest[i] = src[i];
+  }
+}
+
 /*
  * Get first non-NULL element
  */
@@ -827,7 +841,8 @@ static CSymmetry * read_symmetry(PyMOLGlobals * G, const cif_data * data) {
   }
 
   strncpy(symmetry->SpaceGroup,
-      data->get_opt("_symmetry?space_group_name_h-m")->as_s(),
+      data->get_opt("_symmetry?space_group_name_h-m",
+                    "_space_group?name_h-m_alt")->as_s(),
       WordLength - 1);
 
   symmetry->PDBZValue = data->get_opt("_cell.z_pdb")->as_i(0, 1);
@@ -1139,7 +1154,7 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, const cif_data * data,
              arr_b->as_d(i);
     ai->q = arr_q->as_d(i, 1.0);
 
-    strncpy(ai->elem, arr_symbol->as_s(i), cElemNameLen);
+    strncpy_alpha(ai->elem, arr_symbol->as_s(i), cElemNameLen);
 
     ai->chain = LexIdx(G, arr_chain->as_s(i));
     ai->name = LexIdx(G, arr_name->as_s(i));
