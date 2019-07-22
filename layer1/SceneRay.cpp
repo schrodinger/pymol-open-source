@@ -289,12 +289,18 @@ bool SceneRay(PyMOLGlobals * G,
                 ray->interiorColor3fv(icolor, false);
               }
 
-              if((!I->grid.active) || (I->grid.mode != 2)) {
+              if((!I->grid.active) || (I->grid.mode < 2)) {
                 info.state = ObjectGetCurrentState(obj, false);
                 obj->render(&info);
               } else if(I->grid.slot) {
-                if((info.state = state + I->grid.slot - 1) >= 0)
-                  obj->render(&info);
+                if (I->grid.mode == 2) {
+                  if((info.state = state + I->grid.slot - 1) >= 0)
+                    obj->render(&info);
+                } else if (I->grid.mode == 3) {
+                  info.state = I->grid.slot - obj->grid_slot - 1;
+                  if (info.state >= 0 && info.state < obj->getNFrame())
+                    obj->render(&info);
+                }
               }
             }
           }
