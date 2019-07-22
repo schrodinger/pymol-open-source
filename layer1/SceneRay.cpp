@@ -268,38 +268,33 @@ bool SceneRay(PyMOLGlobals * G,
           info.dynamic_width_max = SettingGetGlobal_f(G, cSetting_dynamic_width_max);
         }
 
-        for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
-          if((*it)->fRender) {
-            if(SceneGetDrawFlag(&I->grid, slot_vla, (*it)->grid_slot)) {
-              int obj_color = (*it)->Color;
+        for (auto* obj : I->Obj) {
+          if(obj->fRender) {
+            if(SceneGetDrawFlag(&I->grid, slot_vla, obj->grid_slot)) {
               float color[3];
-              int icx;
-              ColorGetEncoded(G, obj_color, color);
-              RaySetContext(ray, (*it)->Context);
+              ColorGetEncoded(G, obj->Color, color);
+              RaySetContext(ray, obj->Context);
               ray->color3fv(color);
 
-              if(SettingGetIfDefined_i
-                 (G, (*it)->Setting, cSetting_ray_interior_color, &icx)) {
-                float icolor[3];
-                if(icx != -1) {
-                  if(icx == cColorObject) {
-                    ray->interiorColor3fv(color, false);
-                  } else {
-                    ColorGetEncoded(G, icx, icolor);
-                    ray->interiorColor3fv(icolor, false);
-                  }
-                } else {
-                  ray->interiorColor3fv(color, true);
-                }
-              } else {
+              auto icx = SettingGetWD<int>(
+                  obj->Setting, cSetting_ray_interior_color, cColorDefault);
+
+              if (icx == cColorDefault) {
                 ray->interiorColor3fv(color, true);
+              } else if (icx == cColorObject) {
+                ray->interiorColor3fv(color, false);
+              } else {
+                float icolor[3];
+                ColorGetEncoded(G, icx, icolor);
+                ray->interiorColor3fv(icolor, false);
               }
+
               if((!I->grid.active) || (I->grid.mode != 2)) {
-                info.state = ObjectGetCurrentState((*it), false);
-                (*it)->fRender(*it, &info);
+                info.state = ObjectGetCurrentState(obj, false);
+                obj->render(&info);
               } else if(I->grid.slot) {
                 if((info.state = state + I->grid.slot - 1) >= 0)
-                  (*it)->fRender(*it, &info);
+                  obj->render(&info);
               }
             }
           }

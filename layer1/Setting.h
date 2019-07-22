@@ -374,6 +374,17 @@ bool SettingGetIfDefined(const CSetting * s, int index, V * out) {
   return false;
 }
 
+/**
+ * Return setting value if it's defined in the given set, or `default_` otherwise.
+ */
+template <typename V>
+V SettingGetWD(const CSetting* s, int index, V default_) {
+  V out;
+  if (SettingGetIfDefined<V>(s, index, &out))
+    return out;
+  return default_;
+}
+
 #define SettingGet_b            SettingGet<bool>
 #define SettingGet_i            SettingGet<int>
 #define SettingGet_color        SettingGet<int>
