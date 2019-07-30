@@ -1044,7 +1044,7 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, const cif_data * data,
   }
 
   arr_segi        = data->get_opt("_atom_site.label_asym_id");
-  arr_symbol      = data->get_opt("_atom_site?type_symbol");
+  arr_symbol      = data->get_opt("_atom_site?type_symbol", "_atom_site_label");
   arr_group_pdb   = data->get_opt("_atom_site.group_pdb");
   arr_alt         = data->get_opt("_atom_site.label_alt_id");
   arr_b           = data->get_opt("_atom_site?b_iso_or_equiv");
