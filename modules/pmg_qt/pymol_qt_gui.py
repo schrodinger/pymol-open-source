@@ -1156,6 +1156,12 @@ def execapp():
             for v in ['QT_SCALE_FACTOR', 'QT_SCREEN_SCALE_FACTORS']):
         QtCore.QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 
+    # native dialogs broken on macOS 10.15 (attribute new in Qt 5.7)
+    import platform
+    if pymol.IS_MACOS and platform.mac_ver()[0] >= '10.15' and hasattr(
+            Qt, 'AA_DontUseNativeDialogs'):
+        QtCore.QCoreApplication.setAttribute(Qt.AA_DontUseNativeDialogs)
+
     # fix Windows taskbar icon
     if pymol.IS_WINDOWS:
         import ctypes
