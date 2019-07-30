@@ -18,32 +18,11 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_predef
 #define _H_os_predef
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-
 /* Macros used by Fortify source in GCC 4.1.x are incompatible with
    PyMOL's Feedback system... */
 
 #ifdef _FORTIFY_SOURCE
 #undef _FORTIFY_SOURCE
-#endif
-
-
-/* Alias-able typedefs */
-
-#ifdef __GNUC__
-#if __GNUC__ > 3
-typedef int aliased_int __attribute__ ((may_alias));
-typedef float aliased_float __attribute__ ((may_alias));
-#else
-typedef int aliased_int;
-typedef float aliased_float;
-#endif
-#else
-typedef int aliased_int;
-typedef float aliased_float;
 #endif
 
 

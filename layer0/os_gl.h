@@ -102,33 +102,12 @@ int PyMOLCheckOpenGLErr(const char *pos);
 
 /* determine whether or not we have a real GLUT */
 
+#ifdef _PYMOL_NO_MAIN
+#define _PYMOL_NO_GLUT
+#endif
+
 #ifdef _PYMOL_NO_GLUT
 #define _PYMOL_PRETEND_GLUT
-#endif
-
-#ifdef _PYMOL_ACTIVEX_OLD
-#define _PYMOL_WX_GLUT
-#endif
-
-
-/*
-#ifdef _EPYMOL
-#define _PYMOL_WX_GLUT
-#endif
-*/
-
-#ifdef _PYMOL_MIN_GLUT
-#define _PYMOL_PRETEND_GLUT
-#endif
-
-#ifdef _PYMOL_WX_GLUT
-#define _PYMOL_PRETEND_GLUT
-#define _PYMOL_PRETEND_GLUT_FONT
-#endif
-
-#ifdef _PYMOL_NO_MAIN
-#define _PYMOL_PRETEND_GLUT
-#define _PYMOL_NO_GLUT
 #endif
 
 #ifndef _PYMOL_PRETEND_GLUT
@@ -225,33 +204,6 @@ int PyMOLCheckOpenGLErr(const char *pos);
 int p_glutGet(GLenum type);
 
 /* ============ GLUT EMULATION MODE ============= */
-
-#ifndef _PYMOL_NO_GLUT
-
-#define P_GLUT_IDLE_EVENT            0
-#define P_GLUT_DISPLAY_EVENT         1
-#define P_GLUT_RESHAPE_EVENT         2
-#define P_GLUT_MOUSE_EVENT           3
-#define P_GLUT_MOTION_EVENT          4
-#define P_GLUT_CHAR_EVENT            5
-#define P_GLUT_SPECIAL_EVENT         6
-#define P_GLUT_PASSIVE_MOTION_EVENT  7
-
-typedef struct {
-  int event_code;
-  int x, y;
-  int input, state, mod;
-} p_glut_event;
-
-
-/* here is the pretend GLUT event handler */
-
-void p_glutHandleEvent(p_glut_event * ev);
-int p_glutGetRedisplay(void);
-
-
-#endif
-
 
 /* here is the interface and constants for pretend or no GLUT */
 

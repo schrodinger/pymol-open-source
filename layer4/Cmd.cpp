@@ -100,16 +100,7 @@ Z* -------------------------------------------------------------------
 static int flush_count = 0;
 
 #ifndef _PYMOL_NO_MAIN
-#ifndef _PYMOL_WX_GLUT
 static int run_only_once = true;
-#endif
-#endif
-#ifdef _PYMOL_WX_GLUT
-#ifndef _PYMOL_OLD_ACTIVEX
-#ifndef _PYMOL_EMBEDDED
-static int run_only_once = true;
-#endif
-#endif
 #endif
 
 #define API_SETUP_PYMOL_GLOBALS \
@@ -1417,44 +1408,6 @@ static PyObject *CmdDebug(PyObject * self, PyObject * args)
     ok = ExecutiveDebug(G, str1);
     APIExit(G);
   }
-  return APIResultOk(ok);
-}
-
-static PyObject *CmdPGlutGetRedisplay(PyObject * self, PyObject * args)
-{
-#ifdef _PYMOL_PRETEND_GLUT
-#ifndef _PYMOL_NO_GLUT
-  return (APIResultCode(p_glutGetRedisplay()));
-#else
-  return (APIResultCode(0));
-#endif
-#else
-  return (APIResultCode(0));
-#endif
-}
-
-static PyObject *CmdPGlutEvent(PyObject * self, PyObject * args)
-{
-  int ok = false;
-#ifdef _PYMOL_PRETEND_GLUT
-#ifndef _PYMOL_NO_GLUT
-  PyMOLGlobals *G = NULL;
-  p_glut_event ev;
-  ok = PyArg_ParseTuple(args, "Oiiiiii", &self, &ev.event_code,
-                        &ev.x, &ev.y, &ev.input, &ev.state, &ev.mod);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    PUnblock(G);
-    p_glutHandleEvent(&ev);
-    PBlock(G);
-  }
-#endif
-#endif
   return APIResultOk(ok);
 }
 
@@ -4673,7 +4626,6 @@ static PyObject *CmdRunPyMOL(PyObject * self, PyObject * args)
   PyErr_SetString(PyExc_NotImplementedError, "compile with --glut");
   return nullptr;
 #else
-#ifndef _PYMOL_WX_GLUT
 
   if(run_only_once) {
     run_only_once = false;
@@ -4687,23 +4639,6 @@ static PyObject *CmdRunPyMOL(PyObject * self, PyObject * args)
       main_shared(block_input_hook);
     }
   }
-#endif
-#endif
-
-  return APISuccess();
-}
-
-static PyObject *CmdRunWXPyMOL(PyObject * self, PyObject * args)
-{
-#ifdef _PYMOL_WX_GLUT
-#ifndef _PYMOL_OLD_ACTIVEX
-#ifndef _PYMOL_EMBEDDED
-  if(run_only_once) {
-    run_only_once = false;
-    was_main();
-  }
-#endif
-#endif
 #endif
 
   return APISuccess();
@@ -8518,8 +8453,6 @@ static PyMethodDef Cmd_methods[] = {
   {"order", CmdOrder, METH_VARARGS},
   {"scrollto", CmdScrollTo, METH_VARARGS},
   {"overlap", CmdOverlap, METH_VARARGS},
-  {"p_glut_event", CmdPGlutEvent, METH_VARARGS},
-  {"p_glut_get_redisplay", CmdPGlutGetRedisplay, METH_VARARGS},
   {"paste", CmdPaste, METH_VARARGS},
   {"png", CmdPNG, METH_VARARGS},
   {"pop", CmdPop, METH_VARARGS},
@@ -8551,7 +8484,6 @@ static PyMethodDef Cmd_methods[] = {
   {"revalence", CmdRevalence, METH_VARARGS},
   {"rock", CmdRock, METH_VARARGS},
   {"runpymol", CmdRunPyMOL, METH_VARARGS},
-  {"runwxpymol", CmdRunWXPyMOL, METH_VARARGS},
   {"select", CmdSelect, METH_VARARGS},
   {"select_list", CmdSelectList, METH_VARARGS},
   {"set", CmdSet, METH_VARARGS},

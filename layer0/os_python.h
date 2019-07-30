@@ -18,10 +18,6 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_python
 #define _H_os_python
 
-#ifdef PYMOL_ICC_LINUX
-#include"/usr/include/bits/types.h"
-#endif
-
 #ifdef _PYMOL_NOPY
 typedef int PyObject;
 #undef _PYMOL_NUMPY

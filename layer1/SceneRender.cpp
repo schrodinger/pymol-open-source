@@ -1302,9 +1302,6 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, 
     }
     break;
   case cStereo_stencil_custom:
-#ifdef _PYMOL_SHARP3D
-    sharp3d_begin_left_stereo();
-#endif
     break;
   case cStereo_anaglyph:
     /* glClear(GL_ACCUM_BUFFER_BIT); */
@@ -1438,9 +1435,6 @@ void SetDrawBufferForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, int ti
     glDisable(GL_STENCIL_TEST);
     break;
   case cStereo_stencil_custom:
-#ifdef _PYMOL_SHARP3D
-    sharp3d_end_stereo();
-#endif
     break;
   case cStereo_anaglyph:
     glColorMask(true, true, true, true);

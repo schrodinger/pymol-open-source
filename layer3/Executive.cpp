@@ -12249,7 +12249,10 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
   int unblock;
   int ok = true;
   int side_effects = false;
-  int value_storage, *value_ptr;
+  union {
+    int value_ptr[1];
+    float float_storage[1];
+  };
   int value_type = 0;
 
   PRINTFD(G, FB_Executive)
@@ -12257,7 +12260,6 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
   unblock = PAutoBlock(G);
   sele1 = SelectorIndexByName(G, s1);
   sele2 = SelectorIndexByName(G, s2);
-  value_ptr = &value_storage;
   if((sele1 >= 0) && (sele2 >= 0)) {
     int have_value = false;
     int type = PyInt_AsLong(PyTuple_GetItem(tuple, 0));
@@ -12275,8 +12277,7 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
         have_value = true;
         break;
       case cSetting_float:
-        *(aliased_float *) value_ptr =
-          (float) PyFloat_AsDouble(value);
+        float_storage[0] = PyFloat_AsDouble(value);
         value_type = cSetting_float;
         have_value = true;
         break;

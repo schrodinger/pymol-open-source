@@ -75,11 +75,7 @@ static void glReadBufferError(PyMOLGlobals *G, GLenum b, GLenum e){
 #define glReadBuffer(b) {   int e; if (PIsGlutThread()) glReadBuffer(b); \
     if((e = glGetError())) glReadBufferError(G, b, e); }
 
-#ifdef _PYMOL_SHARP3D
-#define cSliceMin 0.1F
-#else
 #define cSliceMin 1.0F
-#endif
 
 #define SceneLineHeight 127
 #define SceneTopMargin 0
@@ -6707,12 +6703,6 @@ void SceneProgramLighting(PyMOLGlobals * G, CShaderPrg * shaderPrg)
   }
 #endif
 }
-
-#ifdef _PYMOL_SHARP3D
-void sharp3d_begin_left_stereo(void);
-void sharp3d_switch_to_right_stereo(void);
-void sharp3d_end_stereo(void);
-#endif
 
 /**
  * Set up the Scene Fog* member variables and immediate mode fog (incl.

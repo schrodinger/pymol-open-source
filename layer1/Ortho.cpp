@@ -1738,11 +1738,6 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         x = cOrthoLeftMargin;
         y = cOrthoBottomMargin + MovieGetPanelHeight(G);
 
-#ifdef _PYMOL_SHARP3D
-        if(SceneGetStereo(G) && SettingGetGlobal_b(G, cSetting_overlay)) {
-          y += (7 * cOrthoLineHeight) / 10;
-        }
-#endif
         if(SettingGetGlobal_b(G, cSetting_text) || I->SplashFlag)
           showLines = I->ShowLines;
         else {

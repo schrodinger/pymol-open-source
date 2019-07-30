@@ -425,12 +425,6 @@ static void MainDrawLocked(void)
     if(PyErr_Occurred())
       PyErr_Print();
 
-#ifdef _PYMOL_SHARP3D
-    /*PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on"); */
-    /*PParse("stereo on");
-       PParse("wizard demo,cartoon"); */
-#endif
-
     if(G->HaveGUI)
       MainPopValidContext(G);
 
@@ -962,10 +956,6 @@ void MainRefreshNow(void)
 
 /*========================================================================*/
 
-#ifdef _PYMOL_SHARP3D
-static int Sharp3DLastWindowX = -1000;
-#endif
-
 static void MainBusyIdle(void)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
@@ -1049,10 +1039,6 @@ static void MainBusyIdle(void)
     /* the following code enables PyMOL to avoid busy-idling 
      * even though we're using GLUT! */
 
-#ifndef _PYMOL_WX_GLUT
-    /* however, don't spend any extra time sleeping in PYMOL if we're
-       running under wxPython though... */
-
     switch (I->IdleMode) {
     case 2:                    /* avoid racing the CPU */
       if((UtilGetSeconds(G) - I->IdleTime) > (SettingGetGlobal_f(G, cSetting_idle_delay) / 5.0)) {
@@ -1070,8 +1056,6 @@ static void MainBusyIdle(void)
         break;
       }
     }
-
-#endif
 
     PRINTFD(G, FB_Main)
       " MainBusyIdle: unlocking.\n" ENDFD;
@@ -1255,10 +1239,6 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType     /*  control signal type */
 }
 #endif
 
-#ifdef _PYMOL_SHARP3D
-void sharp3d_prepare_context(void);
-#endif
-
 static void launch(CPyMOLOptions * options, int own_the_options)
 {
 
@@ -1296,10 +1276,6 @@ static void launch(CPyMOLOptions * options, int own_the_options)
     SetConsoleTitle(_T("PyMOL"));
 #endif
 
-#ifdef _PYMOL_SHARP3D
-    sharp3d_prepare_context();
-#endif
-
     int myArgc = 0;
     char *myArgv[8] = {"pymol"};
     p_glutInit(&myArgc, myArgv);
@@ -1316,9 +1292,6 @@ static void launch(CPyMOLOptions * options, int own_the_options)
       case 1:                  /* force quad buffer stereo (if possible) */
         G->Option->stereo_mode = cStereo_quadbuffer;
       case 0:                  /* default/autodetect */
-#ifdef _PYMOL_SHARP3D
-        G->Option->stereo_mode = cStereo_stencil_custom;
-#endif
         switch (G->Option->stereo_mode) {
         case cStereo_default:
         case cStereo_quadbuffer:
@@ -1425,11 +1398,6 @@ static void launch(CPyMOLOptions * options, int own_the_options)
       p_glutEnterGameMode();
     }
   }
-#ifdef _PYMOL_SHARP3D
-  /* Setup OpenGL */
-  glEnable(GL_DEPTH_TEST);
-  glDepthFunc(GL_LESS);
-#endif
   MainInit(G);
   if(own_the_options)
     G->Main->OwnedOptions = options;
@@ -1440,10 +1408,6 @@ static void launch(CPyMOLOptions * options, int own_the_options)
     I->TheWindow = theWindow;
 
     PInit(G, true);
-
-#ifdef _PYMOL_SHARP3D
-    SettingSetGlobal_f(G, cSetting_stereo_shift, 2.5);  /* increase strength */
-#endif
 
     if(G->HaveGUI) {
       p_glutDisplayFunc(MainDraw);

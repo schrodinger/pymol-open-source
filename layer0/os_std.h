@@ -20,10 +20,6 @@ Z* -------------------------------------------------------------------
 
 #include "os_predef.h"
 
-#ifdef PYMOL_ICC_LINUX
-#include"/usr/include/bits/types.h"
-#endif
-
 #include<stdio.h>
 #include<math.h>
 #include<string.h>
