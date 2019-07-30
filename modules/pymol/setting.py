@@ -630,7 +630,7 @@ DESCRIPTION
 
     Note: Does currently NOT unset atom-state level settings. Check for
     atom-state level settings with:
-    PyMOL> iterate_state 1, *, print list(s)
+    PyMOL> iterate_state 1, *, print(list(s))
     Unset e.g. atom-state level "label_screen_point" (index 728) with:
     PyMOL> alter_state 1, *, del s[728]
 

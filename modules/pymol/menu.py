@@ -626,7 +626,7 @@ def all_colors_generic(self_cmd, expr):
     return r
 
 def all_colors(self_cmd, sele):
-    expr = 'util.color_deep("{0}", ' + repr(sele) + ', 0)'
+    expr = 'cmd.color_deep("{0}", ' + repr(sele) + ', 0)'
     with menucontext(self_cmd, sele):
         return all_colors_generic(self_cmd, expr)
 

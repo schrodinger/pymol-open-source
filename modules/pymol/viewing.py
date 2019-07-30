@@ -2098,7 +2098,7 @@ PYMOL API
 
 SEE ALSO
 
-    set_color, recolor
+    color_deep, set_color, recolor
     
 EXAMPLE 
 
@@ -2117,6 +2117,30 @@ EXAMPLE
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
+
+
+    def color_deep(color, name='all', quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Unset all object and atom level (not global) color settings and
+    apply given color.
+
+ARGUMENTS
+
+    color = str: color name or number
+
+    name = str: object name or pattern {default: all}
+
+SEE ALSO
+
+    color, unset_deep
+        '''
+        from pymol.menu import rep_setting_lists
+        _self.unset_deep([s for L in rep_setting_lists for (r, s) in L if s],
+                name, updates=0, quiet=quiet)
+        _self.color(color, name, quiet=quiet)
+
 
     def spectrumany(expression, colors, selection='(all)', minimum=None,
             maximum=None, quiet=1, _self=cmd):

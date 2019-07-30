@@ -46,6 +46,7 @@ def get_command_keywords(self_cmd=cmd):
         '_ctrl'         : [ self_cmd._ctrl             , 0 , 0 , ''  , parsing.STRICT ],
         '_ctsh'         : [ self_cmd._ctsh             , 0 , 0 , ''  , parsing.STRICT ],
         'color'         : [ self_cmd.color             , 0 , 0 , ''  , parsing.STRICT ],
+        'color_deep'    : [ self_cmd.color_deep        , 0 , 0 , ''  , parsing.STRICT ],
         'config_mouse'  : [ self_cmd.config_mouse      , 0 , 0 , ''  , parsing.STRICT ],
         'copy'          : [ self_cmd.copy              , 0 , 0 , ''  , parsing.LEGACY ],
         'copy_to'       : [ self_cmd.copy_to           , 0 , 0 , ''  , parsing.STRICT ],

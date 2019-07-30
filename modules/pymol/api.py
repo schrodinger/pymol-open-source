@@ -350,6 +350,7 @@ from .viewing import \
       capture,            \
       clip,               \
       color,              \
+      color_deep,         \
       colour,             \
       del_colorection,    \
       dirty,              \

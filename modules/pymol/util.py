@@ -808,10 +808,8 @@ def color_deep(color, name='all', quiet=1, _self=cmd):
     Unset all object and atom level (not global) color settings and
     apply given color.
     '''
-    from pymol.menu import rep_setting_lists
-    _self.unset_deep([s for L in rep_setting_lists for (r, s) in L if s],
-            name, updates=0, quiet=quiet)
-    _self.color(color, name, quiet=quiet)
+    print(' util.color_deep: Deprecated, use cmd.color_deep() instead')
+    _self.color_deep(color, name, quiet)
 
 def chainbow(selection='(all)', palette="rainbow", quiet=1, _self=cmd):
     '''
