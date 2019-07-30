@@ -178,11 +178,6 @@ class TestUtil(testing.PyMOLTestCase):
         pymol.util.color_objs
         self.skipTest("TODO")
 
-    @testing.requires_version('1.6.0')
-    def test_color_deep(self):
-        pymol.util.color_deep
-        self.skipTest("TODO")
-
     def test_chainbow(self):
         pymol.util.chainbow
         self.skipTest("TODO")

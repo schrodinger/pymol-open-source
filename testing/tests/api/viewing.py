@@ -428,6 +428,35 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.iterate('all', 'colors.add(color)', space=locals())
         self.assertItemsEqual(colors, [3])
 
+    @testing.requires_version('2.4')
+    def test_color_deep(self):
+        cmd.viewport(100, 70)
+        self.ambientOnly()
+
+        cmd.fragment('trp', 'm1')
+        cmd.orient('m1')
+        cmd.show_as('sticks')
+        cmd.show('spheres', 'name C')
+        cmd.set('stick_color', 'blue', 'm1')
+        cmd.set('stick_color', 'red', 'name CH2+CZ3+CE3+CD2')
+        cmd.set('sphere_color', 'yellow', 'name C')
+
+        cmd.color('green')
+
+        img = self.get_imagearray()
+        self.assertImageHasColor('blue', img)
+        self.assertImageHasColor('red', img)
+        self.assertImageHasColor('yellow', img)
+        self.assertImageHasNotColor('green', img)
+
+        cmd.color_deep('green')
+
+        img = self.get_imagearray()
+        self.assertImageHasNotColor('blue', img)
+        self.assertImageHasNotColor('red', img)
+        self.assertImageHasNotColor('yellow', img)
+        self.assertImageHasColor('green', img)
+
     def _testSpectrum_setup(self):
         cmd.pseudoatom('m1', pos=(-2,0,0))
         cmd.pseudoatom('m2', pos=(0,0,0))
