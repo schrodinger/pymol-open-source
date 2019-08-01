@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include "Rep.h"
 #include "GenericBuffer.h"
 #include "SceneDef.h"
+#include "PostProcess.h"
 #include <map>
 #include <set>
 #include <string>
@@ -343,20 +344,23 @@ public:
   std::map<std::string, std::vector<std::string> > shader_deps;
 
   // Post process render targets
-  size_t offscreen_rt[3];
-
-  size_t oit_rt[2];
-  renderTarget_t::shape_type oit_size;
-
-  size_t areatex { 0 };
-  size_t searchtex { 0 };
+  std::size_t offscreen_rt { 0 }; //Texture before postprocessing;
+#ifndef _PYMOL_NO_AA_SHADERS
+  std::unique_ptr<PostProcess> smaa_pp;
+#endif
+  std::unique_ptr<PostProcess> oit_pp;
 
   void bindOffscreen(int width, int height, GridInfo * grid);
   void bindOffscreenOIT(int width, int height, int drawbuf = 0);
-  void bindOffscreenFBO(int index);
-  void bindOffscreenOITFBO(int index);
-  void bindOffscreenTexture(int index);
-  void bindOffscreenOITTexture(int index);
+
+  /**
+   * Activates/Binds offscreen render target.
+   * @param textureIdx offset of texture unit to assign (0 for GL_TEXTURE0, 1
+   * for GL_TEXTURE1, etc...)
+   * @Note: indices should preferably be passed in as enum or named variable for
+   * clarity
+   */
+  void activateOffscreenTexture(GLuint textureIdx);
 };
 
 bool ShaderMgrInit(PyMOLGlobals * G);

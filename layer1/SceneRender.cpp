@@ -917,7 +917,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
           drawbuf = t_first_pass ? 1 : 2;
         }
         G->ShaderMgr->bindOffscreenOIT(I->Width, I->Height, drawbuf);
-        G->ShaderMgr->bindOffscreenOITFBO(drawbuf); // for transparency pass, render to OIT texture
+        G->ShaderMgr->oit_pp->bindRT(drawbuf); // for transparency pass, render to OIT texture
         if (currentFrameBuffer == G->ShaderMgr->default_framebuffer_id){
           SceneInitializeViewport(G, 2);
         }

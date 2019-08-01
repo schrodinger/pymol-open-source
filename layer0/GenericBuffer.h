@@ -744,15 +744,25 @@ public:
   using shape_type = glm::ivec2;
 
   renderTarget_t(shape_type size) : _size(size) {}
+  renderTarget_t(int width, int height) : _size(width, height) {}
   ~renderTarget_t();
 
   void bind() const { bind(true); };
   void bind(bool clear) const;
+  void bindFBORBO() const
+  {
+    _fbo->bind();
+    _rbo->bind();
+  }
 
   void layout(std::vector<rt_layout_t>&& desc, renderBuffer_t * with_rbo = nullptr);
   void resize(shape_type size);
 
   const shape_type& size() const { return _size; };
+
+  renderBuffer_t* rbo() const noexcept { return _rbo; }
+  frameBuffer_t* fbo() const noexcept { return _fbo; }
+  const std::vector<textureBuffer_t*>& textures() const noexcept { return _textures; }
 
 protected:
   bool _shared_rbo { false };

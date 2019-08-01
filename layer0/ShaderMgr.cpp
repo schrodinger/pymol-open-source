@@ -641,12 +641,6 @@ bool ShaderMgrInit(PyMOLGlobals * G) {
 
   G->ShaderMgr = new CShaderMgr(G);
 
-  for (int i = 0; i < 3; ++i)
-    G->ShaderMgr->offscreen_rt[i] = 0;
-
-  for (int i = 0; i < 2; ++i)
-    G->ShaderMgr->oit_rt[i] = 0;
-
   if(!G->ShaderMgr)
     return false;
 
@@ -914,14 +908,7 @@ CShaderMgr::~CShaderMgr() {
 
   shader_cache_processed.clear();
 
-  for (int i = 0; i < 3; ++i)
-    freeGPUBuffer(offscreen_rt[i]);
-
-  for (int i = 0; i < 2; ++i)
-    freeGPUBuffer(oit_rt[i]);
-
-  freeGPUBuffer(areatex);
-  freeGPUBuffer(searchtex);
+  freeGPUBuffer(offscreen_rt);
 
   FreeAllVBOs();
 }
@@ -1249,12 +1236,13 @@ CShaderPrg *CShaderMgr::Enable_OITShader() {
   CShaderPrg * shaderPrg = GetShaderPrg("oit");
   if (!shaderPrg) return shaderPrg;
   shaderPrg->Enable();
-  glActiveTexture(GL_TEXTURE5);
-  bindOffscreenOITTexture(0);
-  glActiveTexture(GL_TEXTURE6);
-  bindOffscreenOITTexture(1);
-  shaderPrg->Set1i("accumTex", 5);
-  shaderPrg->Set1i("revealageTex", 6);
+
+  constexpr GLuint accumTexUnit = 5;
+  constexpr GLuint revealageTexUnit = 6;
+  oit_pp->activateRTAsTexture(OIT_PostProcess::OITRT::ACCUM, accumTexUnit);
+  oit_pp->activateRTAsTexture(OIT_PostProcess::OITRT::REVEALAGE, revealageTexUnit);
+  shaderPrg->Set1i("accumTex", accumTexUnit);
+  shaderPrg->Set1i("revealageTex", revealageTexUnit);
   shaderPrg->Set1f("isRight", stereo_flag > 0 ? 1. : 0);
   glEnable(GL_BLEND);
   glBlendFuncSeparate(
@@ -1272,9 +1260,10 @@ CShaderPrg *CShaderMgr::Enable_OITCopyShader() {
   CShaderPrg * shaderPrg = GetShaderPrg("copy");
   if (!shaderPrg) return shaderPrg;
   shaderPrg->Enable();
-  glActiveTexture(GL_TEXTURE7);
-  bindOffscreenTexture(0);
-  shaderPrg->Set1i("colorTex", 7);
+
+  constexpr GLuint colorTexUnit = 7;
+  activateOffscreenTexture(colorTexUnit);
+  shaderPrg->Set1i("colorTex", colorTexUnit);
   if (G->ShaderMgr->stereo_blend){
     // for full-screen stereo
     glEnable(GL_BLEND);
@@ -1791,27 +1780,19 @@ void CShaderMgr::bindOffscreen(int width, int height, GridInfo *grid) {
 #endif
 
   // Doesn't exist, create
-  if (!offscreen_rt[0]) {
+  if (!offscreen_rt) {
     CGOFree(G->Scene->offscreenCGO);
-    auto rt0 = newGPUBuffer<renderTarget_t>(req_size);
-    rt = rt0;
-    rt0->layout({ { 4, rt_layout_t::UBYTE } });
-    offscreen_rt[0] = rt0->get_hash_id();
-
-    auto rt1 = newGPUBuffer<renderTarget_t>(req_size);
-    rt1->layout({ { 4, rt_layout_t::UBYTE } });
-    offscreen_rt[1] = rt1->get_hash_id();
-
-    auto rt2 = newGPUBuffer<renderTarget_t>(req_size);
-    rt2->layout({ { 4, rt_layout_t::UBYTE } });
-    offscreen_rt[2] = rt2->get_hash_id();
+    rt = newGPUBuffer<renderTarget_t>(req_size);
+    rt->layout({ { 4, rt_layout_t::UBYTE } });
+    offscreen_rt = rt->get_hash_id();
   } else {
-    rt = getGPUBuffer<renderTarget_t>(offscreen_rt[0]);
+    rt = getGPUBuffer<renderTarget_t>(offscreen_rt);
 
     // resize
     if (req_size != rt->size()) {
-      for (int i = 0; i < 3; ++i)
-        getGPUBuffer<renderTarget_t>(offscreen_rt[i])->resize(req_size);
+      rt->resize(req_size);
+#ifndef _PYMOL_NO_AA_SHADERS
+#endif
     }
   }
 
@@ -1833,89 +1814,22 @@ void CShaderMgr::bindOffscreenOIT(int width, int height, int drawbuf) {
 
   renderTarget_t::shape_type req_size(width, height);
 
-  if (!oit_rt[0] || (req_size != oit_size)) {
-    if (oit_rt[0]) {
-      freeGPUBuffers({ oit_rt[0], oit_rt[1] });
-    }
-    if (TM3_IS_ONEBUF){
-      auto rt0 = newGPUBuffer<renderTarget_t>(req_size);
-      rt0->layout({ { 4, rt_layout_t::FLOAT } }, getGPUBuffer<renderTarget_t>(offscreen_rt[0])->_rbo);
-      oit_rt[0] = rt0->get_hash_id();
-
-      auto rt1 = newGPUBuffer<renderTarget_t>(req_size);
-      rt1->layout({ { 1, rt_layout_t::FLOAT } }, rt0->_rbo);
-      oit_rt[1] = rt1->get_hash_id();
-    } else {
-      std::vector<rt_layout_t> layout;
-      layout.emplace_back(4, rt_layout_t::FLOAT);
-      if (GLEW_VERSION_3_0)
-        layout.emplace_back(1, rt_layout_t::FLOAT);
-      else
-        layout.emplace_back(2, rt_layout_t::FLOAT);
-
-      auto rt0 = newGPUBuffer<renderTarget_t>(req_size);
-      rt0->layout(std::move(layout), getGPUBuffer<renderTarget_t>(offscreen_rt[0])->_rbo);
-      oit_rt[0] = rt0->get_hash_id();
-    }
-    oit_size = req_size;
+  if(!oit_pp || oit_pp->size() != req_size) {
+    oit_pp = pymol::make_unique<OIT_PostProcess>(
+        width, height, getGPUBuffer<renderTarget_t>(offscreen_rt)->_rbo);
   } else {
-    if (!TM3_IS_ONEBUF){
+    if (!TM3_IS_ONEBUF) {
       drawbuf = 1;
     }
-    getGPUBuffer<renderTarget_t>(oit_rt[drawbuf - 1])->_fbo->bind();
-    getGPUBuffer<renderTarget_t>(oit_rt[drawbuf - 1])->_rbo->bind();
+    oit_pp->bindFBORBO(drawbuf - 1);
   }
 }
 
-void CShaderMgr::bindOffscreenFBO(int index) {
-  bool clear = true;
-  if (index == 0)
-    clear = !stereo_blend;
-  auto t = getGPUBuffer<renderTarget_t>(offscreen_rt[index]);
-  if (t)
-    t->bind(clear);
-}
-
-void CShaderMgr::bindOffscreenOITFBO(int index) {
-#if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
-  if (TM3_IS_ONEBUF){
-    auto rt = getGPUBuffer<renderTarget_t>(oit_rt[index - 1]);
-    if (rt)
-      rt->_fbo->bind();
-  } else {
-    const GLenum bufs[] = { GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT };
-    auto rt = getGPUBuffer<renderTarget_t>(oit_rt[0]);
-    if (rt)
-      rt->_fbo->bind();
-    glDrawBuffers(2, bufs);
-  }
-  glClearColor(0.f, 0.f, 0.f, 0.f);
-  glClear(GL_COLOR_BUFFER_BIT);
-  glDepthMask(GL_FALSE);
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
-  glBlendFuncSeparate(
-      GL_ONE, GL_ONE,
-      GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-#endif
-}
-
-void CShaderMgr::bindOffscreenTexture(int index) {
-  auto t = getGPUBuffer<renderTarget_t>(offscreen_rt[index]);
+void CShaderMgr::activateOffscreenTexture(GLuint textureIdx) {
+  glActiveTexture(GL_TEXTURE0 + textureIdx);
+  auto t = getGPUBuffer<renderTarget_t>(offscreen_rt);
   if (t->_textures[0])
     t->_textures[0]->bind();
-}
-
-void CShaderMgr::bindOffscreenOITTexture(int index) {
-  if (TM3_IS_ONEBUF){
-    auto t = getGPUBuffer<renderTarget_t>(oit_rt[index]);
-    if (t->_textures[0])
-      t->_textures[0]->bind();
-  } else {
-    auto t = getGPUBuffer<renderTarget_t>(oit_rt[0]);
-    if (t)
-      t->_textures[index]->bind();
-  }
 }
 
 void CShaderMgr::Disable_Current_Shader()
