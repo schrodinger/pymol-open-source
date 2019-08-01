@@ -999,9 +999,8 @@ int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
     if(use_matrices || history) {
       if(I->fGetObjectState) {
         CObjectState *obj_state = I->fGetObjectState(I, state);
-        if(obj_state) {
-          double *state_matrix = obj_state->Matrix;
-          if(state_matrix) {
+          if(!obj_state->Matrix.empty()) {
+            const double *state_matrix = obj_state->Matrix.data();
             if(result) {
               right_multiply44d44d(matrix, state_matrix);
             } else {
@@ -1009,7 +1008,6 @@ int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
             }
             result = true;
           }
-        }
       }
     }
   }
@@ -1306,96 +1304,75 @@ void ObjectInit(PyMOLGlobals * G, CObject * I)
 
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I)
 {
-  I->G = G;
-  I->Matrix = NULL;
-  I->InvMatrix = NULL;
-}
-
-/* ObjectStateCopy -- deep copy the State struct from src to dst */
-void ObjectStateCopy(CObjectState * dst, const CObjectState * src)
-{
-  /* State is a ptr to globals and an array of matrices. */
-  /* Shallow cpy; good enough for G */
-  *dst = *src;
-  /* deep copy matrices if necessary */
-  if(src->Matrix) {
-    dst->Matrix = pymol::malloc<double>(16);
-    if(dst->Matrix) {
-      copy44d(src->Matrix, dst->Matrix);
-    }
-  }
-  dst->InvMatrix = NULL;
+  new (I) CObjectState(G);
 }
 
 void ObjectStatePurge(CObjectState * I)
 {
-  FreeP(I->Matrix);
-  FreeP(I->InvMatrix);
+  pymol::destroy_at(I);
 }
 
 int ObjectStateSetMatrix(CObjectState * I, double *matrix)
 {
   int ok = true;
   if(matrix) {
-    if(!I->Matrix)
-      I->Matrix = pymol::malloc<double>(16);
-    CHECKOK(ok, I->Matrix);
-    if(I->Matrix) {
-      copy44d(matrix, I->Matrix);
-    }
-  } else if(I->Matrix) {
-    FreeP(I->Matrix);
-    I->Matrix = NULL;
+    I->Matrix.resize(16);
+    copy44d(matrix, I->Matrix.data());
+  } else {
+    I->Matrix.clear();
   }
-  FreeP(I->InvMatrix);
+  I->InvMatrix.clear();
   return ok;
 }
 
 void ObjectStateRightCombineMatrixR44d(CObjectState * I, double *matrix)
 {
   if(matrix) {
-    if(!I->Matrix) {
-      I->Matrix = pymol::malloc<double>(16);
-      copy44d(matrix, I->Matrix);
+    if(I->Matrix.empty()) {
+      I->Matrix = std::vector<double>(16);
+      copy44d(matrix, I->Matrix.data());
     } else {
-      right_multiply44d44d(I->Matrix, matrix);
+      right_multiply44d44d(I->Matrix.data(), matrix);
     }
   }
-  FreeP(I->InvMatrix);
+  I->InvMatrix.clear();
 }
 
 void ObjectStateLeftCombineMatrixR44d(CObjectState * I, double *matrix)
 {
   if(matrix) {
-    if(!I->Matrix) {
-      I->Matrix = pymol::malloc<double>(16);
-      copy44d(matrix, I->Matrix);
+    if(I->Matrix.empty()) {
+      I->Matrix = std::vector<double>(16);
+      copy44d(matrix, I->Matrix.data());
     } else {
-      left_multiply44d44d(matrix, I->Matrix);
+      left_multiply44d44d(matrix, I->Matrix.data());
     }
   }
-  FreeP(I->InvMatrix);
+  I->InvMatrix.clear();
 }
 
 void ObjectStateCombineMatrixTTT(CObjectState * I, float *matrix)
 {
 
   if(matrix) {
-    if(!I->Matrix) {
-      I->Matrix = pymol::malloc<double>(16);
-      convertTTTfR44d(matrix, I->Matrix);
+    if(I->Matrix.empty()) {
+      I->Matrix = std::vector<double>(16);
+      convertTTTfR44d(matrix, I->Matrix.data());
     } else {
       double tmp[16];
       convertTTTfR44d(matrix, tmp);
-      right_multiply44d44d(I->Matrix, tmp);
+      right_multiply44d44d(I->Matrix.data(), tmp);
     }
   }
-  FreeP(I->InvMatrix);
+  I->InvMatrix.clear();
 }
 
 double *ObjectStateGetMatrix(CObjectState * I)
 {
-  return I->Matrix;
+  if(!I->Matrix.empty()) {
+    return I->Matrix.data();
+  }
+  return nullptr;
 }
 
 /*
@@ -1403,31 +1380,34 @@ double *ObjectStateGetMatrix(CObjectState * I)
  */
 double *ObjectStateGetInvMatrix(CObjectState * I)
 {
-  if(I->Matrix && !I->InvMatrix) {
-    I->InvMatrix = pymol::malloc<double>(16);
-    xx_matrix_invert(I->InvMatrix, I->Matrix, 4);
+  if(!I->Matrix.empty() && I->InvMatrix.empty()) {
+    I->InvMatrix = std::vector<double>(16);
+    xx_matrix_invert(I->InvMatrix.data(), I->Matrix.data(), 4);
   }
-  return I->InvMatrix;
+  return I->InvMatrix.data();
 }
 
 void ObjectStateTransformMatrix(CObjectState * I, double *matrix)
 {
-  if(!I->Matrix) {
-    I->Matrix = pymol::malloc<double>(16);
-    if(I->Matrix) {
-      copy44d(matrix, I->Matrix);
+  if(I->Matrix.empty()) {
+    I->Matrix = std::vector<double>(16);
+    if(!I->Matrix.empty()) {
+      copy44d(matrix, I->Matrix.data());
     }
   } else {
-    right_multiply44d44d(I->Matrix, matrix);
+    right_multiply44d44d(I->Matrix.data(), matrix);
   }
-  FreeP(I->InvMatrix);
+  I->InvMatrix.clear();
 }
 
 int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
 {
   PyMOLGlobals *G = I->G;
   float matrix[16];
-  double *i_matrix = I->Matrix;
+  const double *i_matrix = nullptr;
+  if(!I->Matrix.empty()) {
+    i_matrix = I->Matrix.data();
+  }
   int result = false;
   if(i_matrix) {
     if(info->ray) {
@@ -1483,10 +1463,10 @@ void ObjectStatePopMatrix(CObjectState * I, RenderInfo * info)
   }
 }
 
-void ObjectStateResetMatrix(CObjectState * I)
+void ObjectStateResetMatrix(CObjectState* I)
 {
-  FreeP(I->Matrix);
-  FreeP(I->InvMatrix);
+  I->Matrix.clear();
+  I->InvMatrix.clear();
 }
 
 PyObject *ObjectStateAsPyList(CObjectState * I)
@@ -1496,8 +1476,8 @@ PyObject *ObjectStateAsPyList(CObjectState * I)
   if(I) {
     result = PyList_New(1);
 
-    if(I->Matrix) {
-      PyList_SetItem(result, 0, PConvDoubleArrayToPyList(I->Matrix, 16));
+    if(!I->Matrix.empty()) {
+      PyList_SetItem(result, 0, PConvDoubleArrayToPyList(I->Matrix.data(), 16));
     } else {
       PyList_SetItem(result, 0, PConvAutoNone(Py_None));
     }
@@ -1522,7 +1502,7 @@ int ObjectStateFromPyList(PyMOLGlobals * G, PyObject * list, CObjectState * I)
     if(ok) {
       tmp = PyList_GetItem(list, 0);
       if(tmp != Py_None)
-        ok = PConvPyListToDoubleArray(tmp, &I->Matrix);
+        ok = PConvFromPyObject(G, tmp, I->Matrix);
     }
   }
   return (ok);

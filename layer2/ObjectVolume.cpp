@@ -445,9 +445,9 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
     }
 
     if(vs->RefreshFlag || vs->ResurfaceFlag) {
-      if(oms->State.Matrix) {
-        ObjectStateSetMatrix(&vs->State, oms->State.Matrix);
-      } else if(vs->State.Matrix) {
+      if(!oms->State.Matrix.empty()) {
+        ObjectStateSetMatrix(&vs->State, oms->State.Matrix.data());
+      } else if(!vs->State.Matrix.empty()) {
         ObjectStateResetMatrix(&vs->State);
       }
 
@@ -505,9 +505,9 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
         IsofieldGetCorners(G, field, vs->Corner);
 
         // transform corners by state matrix
-        if(vs->State.Matrix) {
+        if(!vs->State.Matrix.empty()) {
           for(i = 0; i < 8; i++)
-            transform44d3f(vs->State.Matrix,
+            transform44d3f(vs->State.Matrix.data(),
                 vs->Corner + 3 * i,
                 vs->Corner + 3 * i);
         }
@@ -1148,7 +1148,7 @@ void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs)
     IsosurfFieldFree(vs->State.G, vs->Field);
     vs->Field = NULL;
   }
-  ObjectStateInit(G, &vs->State);
+  vs->State = CObjectState(G);
   if(vs->AtomVertex) {
     VLAFreeP(vs->AtomVertex);
   }
@@ -1212,16 +1212,16 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
     copy3f(mn, vs->ExtentMin);  /* this is not exactly correct...should actually take vertex points from range */
     copy3f(mx, vs->ExtentMax);
 
-    if(oms->State.Matrix) {
-      ObjectStateSetMatrix(&vs->State, oms->State.Matrix);
-    } else if(vs->State.Matrix) {
+    if(!oms->State.Matrix.empty()) {
+      ObjectStateSetMatrix(&vs->State, oms->State.Matrix.data());
+    } else if(!vs->State.Matrix.empty()) {
       ObjectStateResetMatrix(&vs->State);
     }
 
     {
       float *min_ext, *max_ext;
       float tmp_min[3], tmp_max[3];
-      if(MatrixInvTransformExtentsR44d3f(vs->State.Matrix,
+      if(MatrixInvTransformExtentsR44d3f(vs->State.Matrix.data(),
                                          vs->ExtentMin, vs->ExtentMax,
                                          tmp_min, tmp_max)) {
         min_ext = tmp_min;

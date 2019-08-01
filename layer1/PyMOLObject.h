@@ -53,11 +53,12 @@ enum cObject_t : int {
    for simplified implementation of future multi-state objects.
  */
 
-typedef struct CObjectState {
+struct CObjectState {
   PyMOLGlobals *G;
-  double *Matrix;
-  double *InvMatrix;
-} CObjectState;
+  std::vector<double> Matrix;
+  std::vector<double> InvMatrix;
+  CObjectState(PyMOLGlobals * G): G(G) {};
+};
 
 #ifndef CObject_DEFINED
 typedef struct _CObject CObject;
@@ -147,7 +148,6 @@ int ObjectGetSpecLevel(CObject * I, int frame);
 void ObjectMotionTrim(CObject *I, int n_frame);
 void ObjectDrawViewElem(CObject *I, BlockRect *rect, int frames, CGO *orthoCGO);
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I);
-void ObjectStateCopy(CObjectState * dst, const CObjectState * src);
 void ObjectStatePurge(CObjectState * I);
 int ObjectStateSetMatrix(CObjectState * I, double *matrix);
 double *ObjectStateGetMatrix(CObjectState * I);

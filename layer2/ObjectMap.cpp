@@ -1445,7 +1445,7 @@ static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, Obje
       copy3f(src->FDim, I->FDim);
 
       I->Field = IsosurfNewCopy(G, src->Field);
-      ObjectStateCopy(&I->State, &src->State);
+      I->State = src->State;
       if(ok)
         ObjectMapStateRegeneratePoints(I);
     }
@@ -1683,9 +1683,9 @@ void ObjectMapUpdateExtents(ObjectMap * I)
   for(a = 0; a < I->NState; a++) {
     ObjectMapState *ms = I->State + a;
     if(ms->Active) {
-      if(ms->State.Matrix) {
-        transform44d3f(ms->State.Matrix, ms->ExtentMin, tr_min);
-        transform44d3f(ms->State.Matrix, ms->ExtentMax, tr_max);
+      if(!ms->State.Matrix.empty()) {
+        transform44d3f(ms->State.Matrix.data(), ms->ExtentMin, tr_min);
+        transform44d3f(ms->State.Matrix.data(), ms->ExtentMax, tr_max);
         {
           float tmp;
           int a;
@@ -1923,10 +1923,10 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
       float tr_corner[24];
       ObjectPrepareContext(I, info);
 
-      if(ms->State.Matrix) {    /* transform the corners before drawing */
+      if(!ms->State.Matrix.empty()) {    /* transform the corners before drawing */
         int a;
         for(a = 0; a < 8; a++) {
-          transform44d3f(ms->State.Matrix, corner + 3 * a, tr_corner + 3 * a);
+          transform44d3f(ms->State.Matrix.data(), corner + 3 * a, tr_corner + 3 * a);
         }
         corner = tr_corner;
       }
@@ -2055,8 +2055,8 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
             float raw_point[3], *raw_point_ptr = (float *) points->data;
 
 #define RAW_POINT_TRANSFORM(ptr, v3f) { \
-  if(ms->State.Matrix) \
-    transform44d3f(ms->State.Matrix, ptr, v3f); \
+  if(!ms->State.Matrix.empty()) \
+    transform44d3f(ms->State.Matrix.data(), ptr, v3f); \
   else \
     copy3f(ptr, v3f); \
   ptr += 3; \
@@ -2933,9 +2933,9 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
   bool mrc_possible = equal3f(buffer_f + 13 /* CELL B */, _f3_90);
 
   // skew transformation
-  if (ms->State.Matrix) {
+  if (!ms->State.Matrix.empty()) {
     double m[16];
-    copy44d(ms->State.Matrix, m);
+    copy44d(ms->State.Matrix.data(), m);
 
     // Skew translation t
     set3f(buffer_f + 34, m[3], m[7], m[11]);    // SKWTRN
@@ -5084,10 +5084,10 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
         ms->Grid[1] = delta[4];
         ms->Grid[2] = delta[8];
       } else {
-        if(!ms->State.Matrix)
-          ms->State.Matrix = pymol::malloc<double>(16);
+        if(ms->State.Matrix.empty())
+          ms->State.Matrix = std::vector<double>(16);
 
-        copy33f44d(delta, ms->State.Matrix);
+        copy33f44d(delta, ms->State.Matrix.data());
         ms->State.Matrix[3] = ms->Origin[0];
         ms->State.Matrix[7] = ms->Origin[1];
         ms->State.Matrix[11] = ms->Origin[2];

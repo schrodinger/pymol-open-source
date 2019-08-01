@@ -688,10 +688,10 @@ int CoordSetGetAtomTxfVertex(CoordSet * I, int at, float *v)
   copy3f(I->Coord + 3 * a1, v);
 
   /* apply state transformation */
-  if(I->State.Matrix && (SettingGet_i(I->State.G,
+  if(!I->State.Matrix.empty() && (SettingGet_i(I->State.G,
           obj->Setting, I->Setting,
           cSetting_matrix_mode) > 0)) {
-    transform44d3f(I->State.Matrix, v, v);
+    transform44d3f(I->State.Matrix.data(), v, v);
   }
 
   /* object transformation */
@@ -1532,8 +1532,6 @@ CoordSet *CoordSetCopy(const CoordSet * cs)
   OOCalloc(G, CoordSet);
   /* shallow copy */
   (*I) = (*cs);                 /* NOTE: must deep-copy all pointers in this struct */
-  /* deep copy state struct */
-  ObjectStateCopy(&I->State, &cs->State);
   /* deep copy & return ptr to new symmetry */
   if (I->Symmetry != nullptr) {
     I->Symmetry = new CSymmetry(*cs->Symmetry);

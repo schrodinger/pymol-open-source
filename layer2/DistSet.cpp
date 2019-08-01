@@ -473,7 +473,7 @@ void DistSet::render(RenderInfo * info)
 DistSet *DistSetNew(PyMOLGlobals * G)
 {
   int a;
-  OOAlloc(G, DistSet);
+  OOCalloc(G, DistSet);
   ObjectStateInit(G, &I->State);
   I->NIndex = 0;
   I->Coord = NULL;

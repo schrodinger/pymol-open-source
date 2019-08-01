@@ -564,9 +564,9 @@ static void ObjectMeshUpdate(ObjectMesh * I)
             ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
           }
 
-          if(oms->State.Matrix) {
-            ObjectStateSetMatrix(&ms->State, oms->State.Matrix);
-          } else if(ms->State.Matrix) {
+          if(!oms->State.Matrix.empty()) {
+            ObjectStateSetMatrix(&ms->State, oms->State.Matrix.data());
+          } else if(!ms->State.Matrix.empty()) {
             ObjectStateResetMatrix(&ms->State);
           }
           ms->RefreshFlag = false;
@@ -592,7 +592,7 @@ static void ObjectMeshUpdate(ObjectMesh * I)
             {
               float *min_ext, *max_ext;
               float tmp_min[3], tmp_max[3];
-              if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix,
+              if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix.data(),
                                                  ms->ExtentMin, ms->ExtentMax,
                                                  tmp_min, tmp_max)) {
                 min_ext = tmp_min;
@@ -663,13 +663,13 @@ static void ObjectMeshUpdate(ObjectMesh * I)
 
             }
 
-            if(ms->State.Matrix && VLAGetSize(ms->N) && VLAGetSize(ms->V)) {
+            if(!ms->State.Matrix.empty() && VLAGetSize(ms->N) && VLAGetSize(ms->V)) {
               int count;
               /* take map coordinates back to view coordinates if necessary */
               v = ms->V;
               count = VLAGetSize(ms->V) / 3;
               while(count--) {
-                transform44d3f(ms->State.Matrix, v, v);
+                transform44d3f(ms->State.Matrix.data(), v, v);
                 v += 3;
               }
             }
@@ -1275,16 +1275,16 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
     copy3f(mn, ms->ExtentMin);  /* this is not exactly correct...should actually take vertex points from range */
     copy3f(mx, ms->ExtentMax);
 
-    if(oms->State.Matrix) {
-      ok &= ObjectStateSetMatrix(&ms->State, oms->State.Matrix);
-    } else if(ms->State.Matrix) {
+    if(!oms->State.Matrix.empty()) {
+      ok &= ObjectStateSetMatrix(&ms->State, oms->State.Matrix.data());
+    } else if(!ms->State.Matrix.empty()) {
       ObjectStateResetMatrix(&ms->State);
     }
 
     if (ok) {
       float *min_ext, *max_ext;
       float tmp_min[3], tmp_max[3];
-      if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix,
+      if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix.data(),
                                          ms->ExtentMin, ms->ExtentMax,
                                          tmp_min, tmp_max)) {
         min_ext = tmp_min;

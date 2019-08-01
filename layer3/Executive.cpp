@@ -829,9 +829,9 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
             mn[c] = ms->Corner[c];
             mx[c] = ms->Corner[3 * 7 + c];
           }
-          if(ms->State.Matrix) {
-            transform44d3f(ms->State.Matrix, mn, mn);
-            transform44d3f(ms->State.Matrix, mx, mx);
+          if(!ms->State.Matrix.empty()) {
+            transform44d3f(ms->State.Matrix.data(), mn, mn);
+            transform44d3f(ms->State.Matrix.data(), mx, mx);
             {
               float tmp;
               int a;
@@ -978,9 +978,9 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
               mx[c] = ms->Corner[3 * 7 + c];
             }
           }
-          if(ms->State.Matrix) {
-            transform44d3f(ms->State.Matrix, mn, mn);
-            transform44d3f(ms->State.Matrix, mx, mx);
+          if(!ms->State.Matrix.empty()) {
+            transform44d3f(ms->State.Matrix.data(), mn, mn);
+            transform44d3f(ms->State.Matrix.data(), mx, mx);
             {
               float tmp;
               int a;
@@ -1227,9 +1227,9 @@ int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_n
               mx[c] = ms->Corner[3 * 7 + c];
             }
           }
-          if(ms->State.Matrix) {
-            transform44d3f(ms->State.Matrix, mn, mn);
-            transform44d3f(ms->State.Matrix, mx, mx);
+          if(!ms->State.Matrix.empty()) {
+            transform44d3f(ms->State.Matrix.data(), mn, mn);
+            transform44d3f(ms->State.Matrix.data(), mx, mx);
             {
               float tmp;
               int a;

@@ -412,8 +412,8 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
 
               double m44d[16];
 
-              if(!ms->State.Matrix)
-                ms->State.Matrix = pymol::malloc<double>(16);
+              if(ms->State.Matrix.empty())
+                ms->State.Matrix = std::vector<double>(16);
 
               // state matrix transformation
               identity44d(m44d);
@@ -421,7 +421,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
               copy3(v->yaxis, m44d + 4);
               copy3(v->zaxis, m44d + 8);
               copy3(v->origin, m44d + 12);
-              transpose44d44d(m44d, ms->State.Matrix);
+              transpose44d44d(m44d, ms->State.Matrix.data());
             }
 
             // axis and corner stuff in a unit cube

@@ -504,9 +504,9 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
         oms = ObjectMapGetState(map, ms->MapState);
       }
       if(oms) {
-        if(oms->State.Matrix) {
-          ObjectStateSetMatrix(&ms->State, oms->State.Matrix);
-        } else if(ms->State.Matrix) {
+        if(!oms->State.Matrix.empty()) {
+          ObjectStateSetMatrix(&ms->State, oms->State.Matrix.data());
+        } else if(!ms->State.Matrix.empty()) {
           ObjectStateResetMatrix(&ms->State);
         }
 
@@ -537,7 +537,7 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
             {
               float *min_ext, *max_ext;
               float tmp_min[3], tmp_max[3];
-              if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix,
+              if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix.data(),
                                                  ms->ExtentMin, ms->ExtentMax,
                                                  tmp_min, tmp_max)) {
                 min_ext = tmp_min;
@@ -620,8 +620,8 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
             if(voxelmap)
               MapFree(voxelmap);
 
-            if(ms->State.Matrix) {      /* in we're in a different reference frame... */
-              double *matrix = ms->State.Matrix;
+            if(!ms->State.Matrix.empty()) {      /* in we're in a different reference frame... */
+              double *matrix = ms->State.Matrix.data();
               float *v;
               int *n, c;
 
@@ -1087,7 +1087,7 @@ void ObjectSurfaceStateInit(PyMOLGlobals * G, ObjectSurfaceState * ms)
 {
   if(ms->Active)
     ObjectStatePurge(&ms->State);
-  ObjectStateInit(G, &ms->State);
+    ObjectStateInit(G, &ms->State);
   if(!ms->V) {
     ms->V = VLAlloc(float, 10000);
   }
@@ -1152,9 +1152,9 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
   ms->quiet = quiet;
   if(oms) {
 
-    if(oms->State.Matrix) {
-      ObjectStateSetMatrix(&ms->State, oms->State.Matrix);
-    } else if(ms->State.Matrix) {
+    if(!oms->State.Matrix.empty()) {
+      ObjectStateSetMatrix(&ms->State, oms->State.Matrix.data());
+    } else if(!ms->State.Matrix.empty()) {
       ObjectStateResetMatrix(&ms->State);
     }
 
@@ -1164,7 +1164,7 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
     {
       float *min_ext, *max_ext;
       float tmp_min[3], tmp_max[3];
-      if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix,
+      if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix.data(),
                                          ms->ExtentMin, ms->ExtentMax,
                                          tmp_min, tmp_max)) {
         min_ext = tmp_min;

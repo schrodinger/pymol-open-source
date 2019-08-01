@@ -89,7 +89,7 @@ static CObjectState *ObjectGroupGetObjectState(ObjectGroup * I, int state)
 /*========================================================================*/
 ObjectGroup *ObjectGroupNew(PyMOLGlobals * G)
 {
-  OOAlloc(G, ObjectGroup);
+  OOCalloc(G, ObjectGroup);
 
   ObjectInit(G, (CObject *) I);
 

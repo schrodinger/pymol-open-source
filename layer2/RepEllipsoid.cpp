@@ -212,7 +212,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
       float last_alpha = 1.0F;
 
       double *csmatrix = SettingGet_i(G, cs->Setting, obj->Setting,
-            cSetting_matrix_mode) > 0 ? NULL : cs->State.Matrix;
+            cSetting_matrix_mode) > 0 ? NULL : cs->State.Matrix.data();
 
       for(a = 0; a < cs->NIndex; a++) {
         a1 = cs->IdxToAtm[a];
