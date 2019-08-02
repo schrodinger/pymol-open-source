@@ -1802,7 +1802,6 @@ static void ObjectMapFree(ObjectMap * I)
     if(I->State[a].Active)
       ObjectMapStatePurge(I->G, I->State + a);
   }
-  VLAFreeP(I->State);
   ObjectPurge(I);
   OOFreeP(I);
 }
@@ -2176,7 +2175,7 @@ ObjectMap *ObjectMapNew(PyMOLGlobals * G)
   I->type = cObjectMap;
 
   I->NState = 0;
-  I->State = VLACalloc(ObjectMapState, 1);     /* autozero important */
+  I->State = pymol::vla<ObjectMapState>(1);     /* autozero important */
 
   I->visRep = cRepExtentBit;
   I->fFree = (void (*)(CObject *)) ObjectMapFree;

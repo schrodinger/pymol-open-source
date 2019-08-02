@@ -1304,12 +1304,11 @@ void ObjectInit(PyMOLGlobals * G, CObject * I)
 
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I)
 {
-  new (I) CObjectState(G);
+  I->G = G;
 }
 
 void ObjectStatePurge(CObjectState * I)
 {
-  pymol::destroy_at(I);
 }
 
 int ObjectStateSetMatrix(CObjectState * I, double *matrix)

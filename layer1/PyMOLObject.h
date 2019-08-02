@@ -57,6 +57,7 @@ struct CObjectState {
   PyMOLGlobals *G;
   std::vector<double> Matrix;
   std::vector<double> InvMatrix;
+  CObjectState() : G(nullptr){};
   CObjectState(PyMOLGlobals * G): G(G) {};
 };
 

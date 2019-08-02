@@ -621,7 +621,7 @@ void WordListFreeP(CWordList * I)
   if(I) {
     FreeP(I->word);
     FreeP(I->start);
-    FreeP(I);
+    OOFreeP(I);
   }
 }
 

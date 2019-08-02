@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 #include"Symmetry.h"
 #include"Isosurf.h"
+#include"vla.h"
 
 #define cMapSourceUndefined 0
 
@@ -65,7 +66,7 @@ typedef struct ObjectMapState {
 } ObjectMapState;
 
 struct ObjectMap : public CObject {
-  ObjectMapState *State;
+  pymol::vla<ObjectMapState> State;
   int NState;
 };
 

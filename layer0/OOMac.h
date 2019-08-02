@@ -22,14 +22,14 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 
 #define OOAlloc(G,type) \
-auto* I = pymol::malloc<type>(1); \
+auto* I = new type; \
 ErrChkPtr(G,I);
 
 #define OOCalloc(G,type) \
-auto* I = pymol::calloc<type>(1); \
+auto* I = new type(); \
 ErrChkPtr(G,I);
 
 #define OOFreeP(ptr) \
-{if(ptr) {mfree(ptr);ptr=NULL;}}
+{if(ptr) {delete(ptr);ptr=NULL;}}
 
 #endif
