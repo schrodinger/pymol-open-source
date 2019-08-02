@@ -198,8 +198,9 @@ class PluginInfo(object):
         Parse plugin file for metadata (hash-commented block at beginning of file).
         '''
         metadata = dict()
-        f = open(self.filename, 'rU')
+        f = open(self.filename, 'rb')
         for line in f:
+            line = line.decode('utf-8', errors='replace')
             if line.strip() == '':
                 continue
             if not line.startswith('#'):
@@ -238,7 +239,7 @@ class PluginInfo(object):
             return self.module.__doc__
 
         try:
-            c = compile(''.join(open(self.filename)), 'x', 'exec', dont_inherit=True)
+            c = compile(b''.join(open(self.filename, 'rb')), 'x', 'exec', dont_inherit=True)
             s = c.co_consts[0]
             if cmd.is_string(s):
                 return s
