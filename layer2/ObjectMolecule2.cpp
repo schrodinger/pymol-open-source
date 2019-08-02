@@ -310,7 +310,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
 
   CoordSet *cset = CoordSetNew(G);
   cset->NIndex = 1;
-  cset->Coord = VLAlloc(float, 3);
+  cset->Coord = pymol::vla<float>(3);
   cset->Obj = I;
   cset->enumIndices();
 
@@ -3079,7 +3079,7 @@ pqr_done:
     CHECKOK(ok, cset);
 
     cset->NIndex = nAtom;
-    cset->Coord = coord;
+    cset->Coord = pymol::vla_take_ownership(coord);
     cset->TmpBond = bond;
     cset->NTmpBond = nBond;
     if(symmetry)

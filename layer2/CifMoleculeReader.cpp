@@ -957,7 +957,7 @@ static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, const cif_data * 
   CoordSet ** csets = VLACalloc(CoordSet*, 1);
   csets[0] = CoordSetNew(G);
   csets[0]->NIndex = atomCount;
-  csets[0]->Coord = coord;
+  csets[0]->Coord= pymol::vla_take_ownership(coord);
 
   return csets;
 }
@@ -1093,8 +1093,8 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, const cif_data * data,
   CoordSet ** csets = VLACalloc(CoordSet*, ncsets);
   for (auto it = atoms_per_model.begin(); it != atoms_per_model.end(); ++it) {
     csets[it->first] = cset = CoordSetNew(G);
-    cset->Coord = VLAlloc(float, 3 * it->second);
-    cset->IdxToAtm = VLAlloc(int, it->second);
+    cset->Coord = pymol::vla<float> (3 * it->second);
+    cset->IdxToAtm = pymol::vla<int>(it->second);
   }
 
   // mm_atom_site_label -> atom index (1-indexed)

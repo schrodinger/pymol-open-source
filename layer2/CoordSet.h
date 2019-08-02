@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"Setting.h"
 #include"ObjectMolecule.h"
+#include"vla.h"
 
 #define COORD_SET_HAS_ANISOU 0x01
 
@@ -70,8 +71,8 @@ typedef struct CoordSet {
 
   CObjectState State;
   ObjectMolecule *Obj;
-  float *Coord;
-  int *IdxToAtm;
+  pymol::vla<float> Coord;
+  pymol::vla<int> IdxToAtm;
   int *AtmToIdx;
   int NIndex, NAtIndex, prevNIndex, prevNAtIndex;
   ::Rep *Rep[cRepCnt];            /* an array of pointers to representations */

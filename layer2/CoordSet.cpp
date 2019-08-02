@@ -1540,11 +1540,9 @@ CoordSet *CoordSetCopy(const CoordSet * cs)
     I->PeriodicBox = new CCrystal(*I->PeriodicBox);
 
   // copy VLAs
-  I->Coord      = VLACopy2(cs->Coord);
   I->LabPos     = VLACopy2(cs->LabPos);
   I->RefPos     = VLACopy2(cs->RefPos);
   I->AtmToIdx   = VLACopy2(cs->AtmToIdx);
-  I->IdxToAtm   = VLACopy2(cs->IdxToAtm);
 
   UtilZeroMem(I->Rep, sizeof(::Rep *) * cRepCnt);
 
@@ -1617,7 +1615,7 @@ void CoordSet::appendIndices(int offset)
   int a, b;
   ObjectMolecule *obj = I->Obj;
 
-  I->IdxToAtm = VLACalloc(int, I->NIndex);
+  I->IdxToAtm = pymol::vla<int>(I->NIndex);
   if(I->NIndex) {
     ErrChkPtr(I->State.G, I->IdxToAtm);
     for(a = 0; a < I->NIndex; a++)
@@ -1652,7 +1650,7 @@ void CoordSet::enumIndices()
   /* set up for simple case where 1 = 1, etc. */
   int a;
   I->AtmToIdx = VLACalloc(int, I->NIndex);
-  I->IdxToAtm = VLACalloc(int, I->NIndex);
+  I->IdxToAtm = pymol::vla<int>(I->NIndex);
   if(I->NIndex) {
     ErrChkPtr(I->State.G, I->AtmToIdx);
     ErrChkPtr(I->State.G, I->IdxToAtm);

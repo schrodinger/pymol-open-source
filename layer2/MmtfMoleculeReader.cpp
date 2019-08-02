@@ -189,8 +189,8 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
     int modelChainCount = container->chainsPerModel[modelIndex];
 
     CoordSet * cset = CoordSetNew(G);
-    cset->Coord = VLAlloc(float, 3 * nindexEstimate);
-    cset->IdxToAtm = VLAlloc(int, nindexEstimate);
+    cset->Coord = pymol::vla<float>(3 * nindexEstimate);
+    cset->IdxToAtm = pymol::vla<int>(nindexEstimate);
     cset->Obj = I;
     I->CSet[modelIndex] = cset;
 

@@ -6789,12 +6789,12 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
     {
       cs2 = CoordSetNew(G);
       c = 0;
-      cs2->Coord = VLAlloc(float, 3 * nAtom);
+      cs2->Coord = pymol::vla<float>(3 * nAtom);
       cs2->AtmToIdx = VLACalloc(int, targ->NAtom + 1);
       for(a = 0; a < targ->NAtom; a++)
         cs2->AtmToIdx[a] = -1;
       cs2->NAtIndex = targ->NAtom;
-      cs2->IdxToAtm = VLACalloc(int, nAtom);
+      cs2->IdxToAtm = pymol::vla<int>(nAtom);
       for(a = cNDummyAtoms; a < I->NAtom; a++)  /* any selected atoms in this state? */
         if(I->Table[a].index >= 0) {
           at = I->Table[a].atom;

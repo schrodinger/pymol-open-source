@@ -208,7 +208,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
         ok_assert(1, cs = CoordSetCopy(cs));
       } else {
         ok_assert(1, cs = CoordSetNew(G));
-        ok_assert(1, cs->Coord = VLAlloc(float, 3 * natoms));
+        ok_assert(1, cs->Coord = pymol::vla<float>(3 * natoms));
 
         cs->Obj = obj;
         cs->NIndex = natoms;
@@ -625,7 +625,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   // read coordinates
   while (/* true */ plugin->read_next_timestep != NULL) {
     ok_assert(1, cs = CoordSetNew(G));
-    ok_assert(1, cs->Coord = VLAlloc(float, 3 * natoms));
+    ok_assert(1, cs->Coord = pymol::vla<float>(3 * natoms));
 
     timestep.coords = cs->Coord;
     timestep.velocities = NULL;
@@ -647,7 +647,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   // topology-only (with template coord set)
   if (!I->NCSet) {
     ok_assert(1, cs = CoordSetNew(G));
-    ok_assert(1, cs->Coord = VLAlloc(float, 3 * natoms));
+    ok_assert(1, cs->Coord = pymol::vla<float>(3 * natoms));
 
     cs->Obj = I;
     cs->NIndex = natoms;

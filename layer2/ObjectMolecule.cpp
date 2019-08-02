@@ -2391,7 +2391,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
   }
   if(ok) {
     cset->NIndex = nAtom;
-    cset->Coord = coord;
+    cset->Coord = pymol::vla_take_ownership(coord);
     cset->TmpBond = bond;
     cset->NTmpBond = nBond;
   } else {
@@ -3192,7 +3192,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
 
   cset = CoordSetNew(G);
   cset->NIndex = nAtom;
-  cset->Coord = coord;
+  cset->Coord = pymol::vla_take_ownership(coord);
   cset->TmpBond = bond;
   cset->NTmpBond = nBond;
   strcpy(cset->Name, tmp_name);
@@ -3403,7 +3403,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
       cs = CoordSetNew(I->G);
     CHECKOK(ok, cs);
     if (ok)
-      cs->Coord = VLAlloc(float, scs->NIndex * 3);
+      cs->Coord = pymol::vla<float>(scs->NIndex * 3);
     CHECKOK(ok, cs->Coord);
     if (ok)
       cs->NIndex = scs->NIndex;
@@ -3637,7 +3637,7 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index,
   ai = I->AtomInfo + index;
 
   ok_assert(1, cs = CoordSetNew(I->G));
-  ok_assert(1, cs->Coord = VLAlloc(float, 3));
+  ok_assert(1, cs->Coord = pymol::vla<float>(3));
 
   cs->NIndex = 1;
   ok_assert(1, cs->TmpLinkBond = VLACalloc(BondType, 1));
@@ -3708,7 +3708,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 	cs = CoordSetNew(I->G);
       CHECKOK(ok, cs);
       if (ok){
-	cs->Coord = VLAlloc(float, 3);
+	cs->Coord = pymol::vla<float>(3);
 	CHECKOK(ok, cs->Coord);
 
 	cs->NIndex = 1;
@@ -7469,7 +7469,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
   if(ok) {
     cset = CoordSetNew(G);
     cset->NIndex = nAtom;
-    cset->Coord = coord;
+    cset->Coord = pymol::vla_take_ownership(coord);
     cset->NTmpBond = nBond;
     cset->TmpBond = bond;
   } else {
@@ -8052,7 +8052,7 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, const char *buf
     (*restart) = p;
     cset = CoordSetNew(G);
     cset->NIndex = nAtom;
-    cset->Coord = coord;
+    cset->Coord = pymol::vla_take_ownership(coord);
     cset->NTmpBond = nBond;
     cset->TmpBond = bond;
     strcpy(cset->Name, nameTmp);
@@ -8799,7 +8799,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
   if(ok) {
     cset = CoordSetNew(G);
     cset->NIndex = nAtom;
-    cset->Coord = coord;
+    cset->Coord = pymol::vla_take_ownership(coord);
     cset->NTmpBond = nBond;
     cset->TmpBond = bond;
     strcpy(cset->Name, nameTmp);
@@ -9176,7 +9176,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 
   VLAFreeP(cs->AtmToIdx);
   VLAFreeP(cs->IdxToAtm);
-  cs->IdxToAtm = i2a;
+  cs->IdxToAtm = pymol::vla_take_ownership(i2a);
 
   if (ok){
     if(I->DiscreteFlag) {
@@ -11592,8 +11592,6 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
   ObjectMolecule *I = NULL;
 
   int nAtom;
-  float *coord = NULL;
-  CoordSet *cset = NULL;
   int frame = -1;
   int ok = true;
 
@@ -11603,7 +11601,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
     return NULL;
 
   nAtom = 1;
-  coord = VLAlloc(float, 3 * nAtom);
+  float *coord = VLAlloc(float, 3 * nAtom);
   CHECKOK(ok, coord);
   if (!ok){
     ObjectMoleculeFree(I);
@@ -11611,7 +11609,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
   }
   zero3f(coord);
 
-  cset = CoordSetNew(G);
+  CoordSet *cset = CoordSetNew(G);
   CHECKOK(ok, cset);
   if (!ok){
     VLAFreeP(coord);
@@ -11619,7 +11617,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
     return NULL;
   }
   cset->NIndex = nAtom;
-  cset->Coord = coord;
+  cset->Coord = pymol::vla_take_ownership(coord);
   cset->TmpBond = NULL;
   cset->NTmpBond = 0;
   strcpy(cset->Name, "_origin");
@@ -12212,7 +12210,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
   if(ok) {
     cset = CoordSetNew(G);
     cset->NIndex = nAtom;
-    cset->Coord = coord;
+    cset->Coord = pymol::vla_take_ownership(coord);
     cset->NTmpBond = nBond;
     cset->TmpBond = bond;
     strcpy(cset->Name, title);
