@@ -39,7 +39,11 @@ if not PYQT_NAME:
 
 if not PYQT_NAME:
     try:
-        __import__("sip").setapi("QString", 2)
+        try:
+            import PyQt4.sip as sip
+        except ImportError:
+            import sip
+        sip.setapi("QString", 2)
         from PyQt4 import QtGui, QtCore, QtOpenGL
         PYQT_NAME = 'PyQt4'
     except ImportError:
