@@ -4810,16 +4810,16 @@ int ExecutiveIsolevel(PyMOLGlobals * G, const char *name, float level, int state
 
 }
 
-int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float min, float max,
-                      int first, int last, const char *prefix, int digits, int byres, int quiet,
-                      float *min_ret, float *max_ret)
+pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
+    const char* s1, const char* expr, float min, float max, int first, int last,
+    const char* prefix, int digits, int byres, int quiet)
 {
-  int ok = true;
+  std::pair<float, float> ret;
   int n_color, n_atom;
   ObjectMoleculeOpRec op;
   WordType buffer;
-  int *color_index = NULL;
-  float *value = NULL;
+  std::vector<int> color_index;
+  std::vector<float> value;
   int a, b;
   char pat[] = "%0Xd";
   int pref_len;
@@ -4841,7 +4841,7 @@ int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float 
 
     n_color = abs(first - last) + 1;
     if(n_color) {
-      color_index = pymol::malloc<int>(n_color);
+      color_index.resize(n_color);
       for(a = 0; a < n_color; a++) {
         b = first + ((last - first) * a) / (n_color - 1);
         sprintf(at, pat, b);
@@ -4858,7 +4858,7 @@ int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float 
       }
 
       if(n_atom) {
-        value = pymol::calloc<float>(n_atom);
+        value.resize(n_atom);
 
         if(WordMatchExact(G, "count", expr, true)) {
           for(a = 0; a < n_atom; a++) {
@@ -4876,7 +4876,7 @@ int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float 
           if (!ap) {
             PRINTFB(G, FB_Executive, FB_Errors)
               " Spectrum-Error: Unknown expr '%s'\n", expr ENDFB(G);
-            ok_raise(1);
+              return pymol::Error{"Spectrum-Error Unknown Expression: ", expr};
           }
 
           // for enumerated values
@@ -4925,7 +4925,7 @@ int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float 
               default:
                 PRINTFB(G, FB_Executive, FB_Errors)
                   " Spectrum-Error: Unsupported Ptype for expr '%s'\n", expr ENDFB(G);
-                ok_raise(1);
+                  return pymol::Error{"Unsupported Ptype for expr: ", expr};
             }
 
             // lookup or insert value
@@ -4959,16 +4959,16 @@ int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float 
         }
         if(range == 0.0F)
           range = 1.0F;
-        *min_ret = min;
-        *max_ret = max;
+        ret.first = min;
+        ret.second = max;
 
         op.code = OMOP_Spectrum;
         op.i1 = n_color - 1;
         op.i2 = n_atom;
         op.i3 = 0;
         op.i4 = byres;
-        op.ii1 = color_index;
-        op.ff1 = value;
+        op.ii1 = color_index.data();
+        op.ff1 = value.data();
         op.f1 = min;
         op.f2 = range;
 
@@ -4981,12 +4981,8 @@ int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float 
 
       }
     }
-
-ok_except1:
-    FreeP(color_index);
-    FreeP(value);
   }
-  return (ok);
+  return ret;
 }
 
 static int fStrOrderFn(const char ** array, int l, int r) {

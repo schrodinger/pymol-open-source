@@ -1159,9 +1159,13 @@ static PyObject *CmdSpectrum(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     if(ok) {
-      ok =
-        ExecutiveSpectrum(G, str1, expr, min, max, start, stop, prefix, digits, byres,
-                          quiet, &min_ret, &max_ret);
+      auto res = ExecutiveSpectrum(
+            G, str1, expr, min, max, start, stop, prefix, digits, byres, quiet);
+      if (res) {
+        std::tie(min_ret, max_ret) = res.result();
+      } else {
+        ok = false;
+      }
     }
     APIExit(G);
     if(ok) {

@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include "PyMOL.h"
 #include "Executive_pre.h"
 #include "Scene.h"
+#include "Result.h"
 
 enum cLoadType_t : int {
   cLoadTypeUnknown = -1,
@@ -475,9 +476,24 @@ int ExecutiveRampNew(PyMOLGlobals * G, const char *name, const char *src_name, f
 
 int ExecutiveValidateObjectPtr(PyMOLGlobals * G, CObject * ptr, int object_type);
 
-int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float min, float max,
-                      int first, int last, const char *prefix, int digits, int byres, int quiet,
-                      float *min_ret, float *max_ret);
+/**
+ * Colors atoms with a spectrum of colors based on atomic property
+ * @param G pointer to global pymol singletons
+ * @param s1 selection of atoms to color
+ * @param expr property expression
+ * @param min minimum of color range
+ * @param max maximum of color range
+ * @param first color idx of first color
+ * @param last color idx of last color
+ * @param prefix specifies spectrum mode
+ * @param digits (unknown)
+ * @param byres determines whether coloring is applied per-residue
+ * @param quiet determines whether feedback is displayed
+ * @return pair of minimum and maximum of spectrum range
+ */
+pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
+    const char* s1, const char* expr, float min, float max, int first, int last,
+    const char* prefix, int digits, int byres, int quiet);
 
 int ExecutiveReinitialize(PyMOLGlobals * G, int what, const char *pattern);
 const char *ExecutiveFindBestNameMatch(PyMOLGlobals * G, const char *name);
