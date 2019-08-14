@@ -3080,7 +3080,7 @@ pqr_done:
 
     cset->NIndex = nAtom;
     cset->Coord = pymol::vla_take_ownership(coord);
-    cset->TmpBond = bond;
+    cset->TmpBond = pymol::vla_take_ownership(bond);
     cset->NTmpBond = nBond;
     if(symmetry)
       cset->Symmetry = symmetry;

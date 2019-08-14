@@ -2392,7 +2392,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
   if(ok) {
     cset->NIndex = nAtom;
     cset->Coord = pymol::vla_take_ownership(coord);
-    cset->TmpBond = bond;
+    cset->TmpBond = pymol::vla_take_ownership(bond);
     cset->NTmpBond = nBond;
   } else {
 ok_except1:
@@ -3193,7 +3193,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
   cset = CoordSetNew(G);
   cset->NIndex = nAtom;
   cset->Coord = pymol::vla_take_ownership(coord);
-  cset->TmpBond = bond;
+  cset->TmpBond = pymol::vla_take_ownership(bond);
   cset->NTmpBond = nBond;
   strcpy(cset->Name, tmp_name);
   if(atInfoPtr)
@@ -3425,7 +3425,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
 
     /* copy internal bond information */
     if (ok)
-      cs->TmpBond = VLACalloc(BondType, src->NBond);
+      cs->TmpBond = pymol::vla<BondType>(src->NBond);
     CHECKOK(ok, cs->TmpBond);
     if (ok){
       BondTypeInit(cs->TmpBond);
@@ -7471,7 +7471,10 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
     cset->NIndex = nAtom;
     cset->Coord = pymol::vla_take_ownership(coord);
     cset->NTmpBond = nBond;
-    cset->TmpBond = bond;
+    cset->TmpBond = pymol::vla_take_ownership(bond);
+
+#ifdef _PYMOL_IP_PROPERTIES
+#endif
   } else {
     VLAFreeP(bond);
     VLAFreeP(coord);
@@ -8054,7 +8057,7 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, const char *buf
     cset->NIndex = nAtom;
     cset->Coord = pymol::vla_take_ownership(coord);
     cset->NTmpBond = nBond;
-    cset->TmpBond = bond;
+    cset->TmpBond = pymol::vla_take_ownership(bond);
     strcpy(cset->Name, nameTmp);
   } else {
     VLAFreeP(bond);
@@ -8801,7 +8804,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
     cset->NIndex = nAtom;
     cset->Coord = pymol::vla_take_ownership(coord);
     cset->NTmpBond = nBond;
-    cset->TmpBond = bond;
+    cset->TmpBond = pymol::vla_take_ownership(bond);
     strcpy(cset->Name, nameTmp);
   } else {
     VLAFreeP(bond);
@@ -9190,7 +9193,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 	}
       }
     } else {
-      cs->AtmToIdx = a2i;
+      cs->AtmToIdx = pymol::vla_take_ownership(a2i);
       for(a = 0; a < cs->NAtIndex; a++)
 	cs->AtmToIdx[a] = -1;
       for(a = 0; a < cs->NIndex; a++)
@@ -12212,7 +12215,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
     cset->NIndex = nAtom;
     cset->Coord = pymol::vla_take_ownership(coord);
     cset->NTmpBond = nBond;
-    cset->TmpBond = bond;
+    cset->TmpBond = pymol::vla_take_ownership(bond);
     strcpy(cset->Name, title);
   } else {
     VLAFreeP(bond);
@@ -12371,14 +12374,14 @@ bool ObjectMolecule::updateAtmToIdx() {
 
     if (!DiscreteFlag) {
       if (!cset->AtmToIdx) {
-        cset->AtmToIdx = VLACalloc(int, NAtom);
+        cset->AtmToIdx = pymol::vla<int>(NAtom);
       } else {
         VLASize(cset->AtmToIdx, int, NAtom);
       }
 
       ok_assert(1, cset->AtmToIdx);
 
-      std::fill_n(cset->AtmToIdx, NAtom, -1);
+      std::fill_n(cset->AtmToIdx.data(), NAtom, -1);
     }
 
     for (int idx = 0; idx < cset->NIndex; ++idx) {

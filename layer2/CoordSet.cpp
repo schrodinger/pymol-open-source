@@ -1574,8 +1574,7 @@ int CoordSet::extendIndices(int nAtom)
     ok = obj->setNDiscrete(nAtom);
 
     if(I->AtmToIdx) {           /* convert to discrete if necessary */
-      VLAFree(I->AtmToIdx);
-      I->AtmToIdx = NULL;
+      I->AtmToIdx.freeP();
       if (ok){
 	for(a = 0; a < I->NIndex; a++) {
 	  b = I->IdxToAtm[a];
@@ -1595,7 +1594,7 @@ int CoordSet::extendIndices(int nAtom)
       }
       I->NAtIndex = nAtom;
     } else if(!obj->DiscreteFlag) {
-      I->AtmToIdx = VLACalloc(int, nAtom);
+      I->AtmToIdx = pymol::vla<int>(nAtom);
       CHECKOK(ok, I->AtmToIdx);
       if (ok){
 	for(a = 0; a < nAtom; a++)
@@ -1630,7 +1629,7 @@ void CoordSet::appendIndices(int offset)
       obj->DiscreteCSet[b] = I;
     }
   } else {
-    I->AtmToIdx = VLACalloc(int, I->NIndex + offset);
+    I->AtmToIdx = pymol::vla<int>(I->NIndex + offset);
     if(I->NIndex + offset) {
       ErrChkPtr(I->State.G, I->AtmToIdx);
       for(a = 0; a < offset; a++)
@@ -1649,7 +1648,7 @@ void CoordSet::enumIndices()
   CoordSet * I = this;
   /* set up for simple case where 1 = 1, etc. */
   int a;
-  I->AtmToIdx = VLACalloc(int, I->NIndex);
+  I->AtmToIdx = pymol::vla<int>(I->NIndex);
   I->IdxToAtm = pymol::vla<int>(I->NIndex);
   if(I->NIndex) {
     ErrChkPtr(I->State.G, I->AtmToIdx);

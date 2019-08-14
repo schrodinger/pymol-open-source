@@ -73,12 +73,12 @@ typedef struct CoordSet {
   ObjectMolecule *Obj;
   pymol::vla<float> Coord;
   pymol::vla<int> IdxToAtm;
-  int *AtmToIdx;
+  pymol::vla<int> AtmToIdx;
   int NIndex, NAtIndex, prevNIndex, prevNAtIndex;
   ::Rep *Rep[cRepCnt];            /* an array of pointers to representations */
   int Active[cRepCnt];          /* active flags */
   int NTmpBond;                 /* optional, temporary (for coord set transfers) */
-  BondType *TmpBond;            /* actual bond info is stored in ObjectMolecule */
+  pymol::vla<BondType> TmpBond;            /* actual bond info is stored in ObjectMolecule */
   int NTmpLinkBond;             /* optional, temporary storage of linkage  info. */
   BondType *TmpLinkBond;        /* first atom is in obj, second is in cset */
   CSymmetry *Symmetry;

@@ -6738,7 +6738,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
   cs = CoordSetNew(G);          /* set up a dummy coordinate set for the merge xref */
   cs->NIndex = nAtom;
   cs->enumIndices();
-  cs->TmpBond = bond;           /* load up the bonds */
+  cs->TmpBond = pymol::vla_take_ownership(bond);           /* load up the bonds */
   cs->NTmpBond = nBond;
   bond = NULL;
 
@@ -6790,7 +6790,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
       cs2 = CoordSetNew(G);
       c = 0;
       cs2->Coord = pymol::vla<float>(3 * nAtom);
-      cs2->AtmToIdx = VLACalloc(int, targ->NAtom + 1);
+      cs2->AtmToIdx = pymol::vla<int>(targ->NAtom + 1);
       for(a = 0; a < targ->NAtom; a++)
         cs2->AtmToIdx[a] = -1;
       cs2->NAtIndex = targ->NAtom;
@@ -6850,8 +6850,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
             targ->DiscreteAtmToIdx[b] = a;
             targ->DiscreteCSet[b] = cs;
           }
-          VLAFree(cs->AtmToIdx);
-          cs->AtmToIdx = NULL;
+          cs->AtmToIdx.freeP();
         }
       }
     }

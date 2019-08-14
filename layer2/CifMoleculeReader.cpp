@@ -1779,7 +1779,8 @@ static bool read_struct_conn_(PyMOLGlobals * G, const cif_data * data,
   int nAtom = VLAGetSize(atInfo);
   int nBond = 0;
 
-  BondType *bond = cset->TmpBond = VLACalloc(BondType, 6 * nAtom);
+  cset->TmpBond = pymol::vla<BondType>(6 * nAtom);
+  auto bond = cset->TmpBond.data();
 
   // identifiers -> coord set index
   std::map<std::string, int> name_dict;
