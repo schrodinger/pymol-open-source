@@ -8807,7 +8807,12 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     state = state - 1;
     obj = NULL;
 
-    {
+    if (state < 0 && state != cSelectorUpdateTableCurrentState) {
+      PRINTFB(G, FB_Selector, FB_Errors)
+        " Selector-Error: state %d unsupported (must be -1 (current) or >=1)\n",
+        state + 1 ENDFB(G);
+      ok = false;
+    } else {
       auto state_arg = state;
       for(a = cNDummyAtoms; a < I_NAtom; a++) {
         base[0].sele[a] = false;
