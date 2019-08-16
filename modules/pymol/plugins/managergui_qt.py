@@ -295,6 +295,7 @@ class PluginManager(QtCore.QObject):
     def installplugin(self):
         from .legacysupport import installPlugin
         installPlugin(self)
+        self.reload_plugins()
 
     def fetchplugin(self):
         if not confirm_network_access():
