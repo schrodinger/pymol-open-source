@@ -315,8 +315,6 @@ def get_command_keywords(self_cmd=cmd):
         'movie.sweep'   : [ self_cmd.movie.sweep       , 0 , 0 , ''  , parsing.STRICT ],
         'movie.tdroll'  : [ self_cmd.movie.tdroll      , 0 , 0 , ''  , parsing.STRICT ],
         'movie.zoom'    : [ self_cmd.movie.zoom        , 0 , 0 , ''  , parsing.STRICT ],
-        # activate metaphorics extensions
-        #   'metaphorics'   : [ self_cmd.metaphorics       , 0 , 0 , ''  , parsing.STRICT ],
         }
 
 def fix_list(kw_list):

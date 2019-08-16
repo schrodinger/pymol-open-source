@@ -480,7 +480,6 @@ PyMOL COMMAND LINE OPTIONS
      .cc1, .cc2      ChemDraw 3D cartesian coordinate file
      .pkl            Pickled ChemPy Model (class "chempy.model.Indexed")
      .r3d            Raster3D file
-     .cex            CEX file (Metaphorics)
      .top            AMBER topology file
      .crd            AMBER coordinate file
      .rst            AMBER restart file

@@ -1635,7 +1635,6 @@ DESCRIPTION
         'idx': load_idx,
         'pse': load_pse,
         'psw': load_pse,
-        'cex': 'pymol.m4x:readcex',
         'ply': load_ply,
         'r3d': load_r3d,
         'cc1': load_cc1,

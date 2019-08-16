@@ -237,45 +237,6 @@ typedef struct {
 void ObjMolPairwiseInit(ObjMolPairwise * pairwise);
 void ObjMolPairwisePurge(ObjMolPairwise * pairwise);
 
-
-/* Metaphorics Annotated PDB stuff */
-
-typedef struct M4XBondType {    /* now used for non-bonds as well as h-bonds */
-  int atom1;
-  int atom2;
-  float strength;
-} M4XBondType;
-
-typedef struct {
-  WordType name;
-  int *site, n_site;
-  int *ligand, n_ligand;
-  int *water, n_water;
-  M4XBondType *hbond, *nbond;
-  int n_hbond, n_nbond;
-} M4XContextType;
-
-typedef struct {
-  ObjectNameType target;
-  int n_point;
-  int *id_at_point;
-  float *fitness;
-} M4XAlignType;
-
-typedef struct {
-  int annotated_flag;
-  int invisible;
-  int n_context;
-  M4XContextType *context;
-  int xname_flag;
-  ObjectNameType xname;
-  M4XAlignType *align;
-} M4XAnnoType;
-
-typedef struct {
-  ObjectNameType name;
-} ObjMolMultiplexType;
-
 /**
  * loop iterators for the ObjectMolecule::Neighbor array
  *
@@ -293,12 +254,6 @@ typedef struct {
 #define ITERNEIGHBORATOMS(N, a, n, i) for(i = N[a] + 1; (n = N[i]) > -1; i += 2)
 #define ITERNEIGHBORBONDS(N, a, b, i) for(i = N[a] + 1; (b = N[i + 1]), N[i] > -1; i += 2)
 
-void M4XAnnoInit(M4XAnnoType * m4x);
-void M4XAnnoPurge(M4XAnnoType * m4x);
-
-void M4XAlignInit(M4XAlignType * align);
-void M4XAlignPurge(M4XAlignType * align);
-
 int ObjectMoleculeGetMatrix(ObjectMolecule * I, int state, double **history);
 int ObjectMoleculeSetMatrix(ObjectMolecule * I, int state, double *matrix);
 int ObjectMoleculeGetTopNeighbor(PyMOLGlobals * G,
@@ -312,9 +267,6 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point,
 
 int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, struct CoordSet *cs);
 int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_sided);
-
-void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, const char *script_file,
-                               int match_colors, int nbr_sele);
 
 
 /* */
@@ -372,7 +324,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
 
 ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * obj,
                                          const char *molstr, int frame, int discrete,
-                                         M4XAnnoType * m4x, char *pdb_name,
+                                         char *pdb_name,
                                          const char **next_pdb, PDBInfoRec * pdb_info,
                                          int quiet, int *model_number);
 
@@ -497,7 +449,6 @@ struct CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                                                AtomInfoType ** atInfoPtr,
                                                const char **restart_model,
                                                char *segi_override,
-                                               M4XAnnoType * m4x,
                                                char *pdb_name,
                                                const char **next_pdb,
                                                PDBInfoRec * pdb_info,

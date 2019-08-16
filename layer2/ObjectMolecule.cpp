@@ -897,43 +897,6 @@ static const char *skip_fortran(int num, int per_line, const char *p)
   return (p);
 }
 
-void M4XAnnoInit(M4XAnnoType * m4x)
-{
-  UtilZeroMem((char *) m4x, sizeof(M4XAnnoType));
-}
-
-void M4XAnnoPurge(M4XAnnoType * m4x)
-{
-  int c;
-  if(m4x) {
-    for(c = 0; c < m4x->n_context; c++) {
-      VLAFreeP(m4x->context[c].hbond);
-      VLAFreeP(m4x->context[c].nbond);
-      VLAFreeP(m4x->context[c].site);
-      VLAFreeP(m4x->context[c].ligand);
-      VLAFreeP(m4x->context[c].water);
-    }
-    if(m4x->align) {
-      M4XAlignPurge(m4x->align);
-    }
-    VLAFreeP(m4x->context);
-  }
-}
-
-void M4XAlignInit(M4XAlignType * align)
-{
-  UtilZeroMem((char *) align, sizeof(M4XAlignType));
-  align->id_at_point = VLACalloc(int, 100);
-  align->fitness = VLAlloc(float, 100);
-}
-
-void M4XAlignPurge(M4XAlignType * align)
-{
-  VLAFreeP(align->id_at_point);
-  VLAFreeP(align->fitness);
-  FreeP(align);
-}
-
 void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec * op)
 {
   UtilZeroMem((char *) op, sizeof(ObjectMoleculeOpRec));
@@ -11872,7 +11835,7 @@ void ObjectMoleculeFree(ObjectMolecule * I)
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
                                          const char *PDBStr, int state, int discrete,
-                                         M4XAnnoType * m4x, char *pdb_name,
+                                         char *pdb_name,
                                          const char **next_pdb, PDBInfoRec * pdb_info,
                                          int quiet, int *model_number)
 {
@@ -11921,15 +11884,10 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       }
       if (ok)
 	cset = ObjectMoleculePDBStr2CoordSet(G, start, &atInfo, &restart,
-					     segi_override, m4x, pdb_name,
+					     segi_override, pdb_name,
 					     next_pdb, pdb_info, quiet, model_number);
       CHECKOK(ok, cset);
       if (ok){
-	if(m4x){                  /* preserve original atom IDs for annotated Metaphorics files */
-	  if(m4x->annotated_flag){
-	    aic_mask = (cAIC_b | cAIC_q);
-	  }
-	}
 	nAtom = cset->NIndex;
       }
     }

@@ -60,10 +60,4 @@ int ObjectDistNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectDist ** res
 struct ObjectMolecule;
 int ObjectDistMoveWithObject(ObjectDist * I, struct ObjectMolecule * O);
 
-struct M4XBondType;
-ObjectDist *ObjectDistNewFromM4XBond(PyMOLGlobals * G, ObjectDist * oldObj,
-                                     struct ObjectMolecule *objMol,
-                                     struct M4XBondType *hbond, int n_hbond,
-                                     int nbr_sele);
-
 #endif

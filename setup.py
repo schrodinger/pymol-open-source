@@ -186,7 +186,7 @@ class install_pymol(install):
 
     def install_pymol_path(self):
         self.mkpath(self.pymol_path)
-        for name in [ 'LICENSE', 'data', 'test', 'scripts', 'examples', ]:
+        for name in [ 'LICENSE', 'data', 'test', 'examples', ]:
             self.copy(name, os.path.join(self.pymol_path, name))
 
     def make_launch_script(self):

@@ -3265,11 +3265,6 @@ ObjectMolecule **ExecutiveGetObjectMoleculeVLA(PyMOLGlobals * G, const char *sel
 #define ExecToggleSize DIP2PIXEL(16)
 #define ExecToggleTextShift DIP2PIXEL(4)
 
-typedef struct {
-  M4XAnnoType m4x;
-  ObjectMolecule *obj;
-} ProcPDBRec;
-
 int ExecutiveSetDrag(PyMOLGlobals * G, const char *name, int quiet,int mode)
 {
   char drag_name[] = cEditorDrag;
@@ -4117,12 +4112,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
   char cur_name[WordLength] = "";
   const char *next_pdb = NULL;
   int repeat_flag = true;
-  ProcPDBRec *processed = NULL;
   int n_processed = 0;
-  int m4x_mode = 0;             /* 0 = annotate, 1 = alignment */
-  ProcPDBRec *target_rec = NULL;
-  char nbrhood_sele[] = "m4x_nearby";
-  ProcPDBRec *current = NULL;
   PDBInfoRec pdb_info_rec, *pdb_info = NULL;
   int model_number;
   CObject *deferred_zoom_obj = NULL;
@@ -4132,9 +4122,6 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
   pdb_info->multiplex = multiplex;
   pdb_info->variant = variant;
 
-  if(ok) {
-    processed = VLACalloc(ProcPDBRec, 10);
-  }
   while(repeat_flag && ok) {
     const char *start_at = buffer;
     int is_repeat_pass = false;
@@ -4142,17 +4129,10 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
     int is_new = false;
     CObject *tmpObj;
 
-    VLACheck(processed, ProcPDBRec, n_processed);
-    current = processed + n_processed;
-
-    PRINTFD(G, FB_CCmd) " ExecutiveProcessPDBFile-DEBUG: loading PDB\n" ENDFD;
-
     if(next_pdb) {
       start_at = next_pdb;
       is_repeat_pass = true;
     }
-
-    M4XAnnoInit(&current->m4x);
 
     repeat_flag = false;
     next_pdb = NULL;
@@ -4163,14 +4143,14 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
       model_number = 0;
       obj = (CObject *) ObjectMoleculeReadPDBStr(G, (ObjectMolecule *) origObj,
                                                  start_at, eff_frame, discrete,
-                                                 &current->m4x, pdb_name,
+                                                 pdb_name,
                                                  &next_pdb, pdb_info, quiet,
                                                  &model_number);
 
     } else {
       model_number = 0;
       ObjectMoleculeReadPDBStr(G, (ObjectMolecule *) origObj,
-                               start_at, eff_frame, discrete, &current->m4x,
+                               start_at, eff_frame, discrete,
                                pdb_name, &next_pdb, pdb_info, quiet, &model_number);
 
       if(finish) {
@@ -4199,29 +4179,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
 
     if(is_new) {
       if(obj) {
-        if(current->m4x.xname_flag) {   /* USER XNAME trumps the PDB Header name */
-          ObjectSetName(obj, current->m4x.xname);       /* from PDB */
-          if((tmpObj = ExecutiveFindObjectByName(G, obj->Name))) {
-            if(tmpObj->type != cObjectMolecule)
-              ExecutiveDelete(G, current->m4x.xname);   /* just in case */
-            else {
-              if(is_repeat_pass) {
-                /* this is a workaround for when PLANET accidentally duplicates the target */
-                {
-                  int a;
-                  for(a = 0; a < n_processed; a++) {
-                    ProcPDBRec *cur = processed + a;
-                    if(cur->obj == (ObjectMolecule *) tmpObj) {
-                      cur->m4x.invisible = false;
-                    }
-                  }
-                }
-                ObjectMoleculeFree((ObjectMolecule *) obj);
-                obj = NULL;
-              }
-            }
-          }
-        } else if(next_pdb) {
+        if(next_pdb) {
           if(pdb_name[0] == 0) {
             if(cur_name[0]) {
               sprintf(pdb_name, "%s_%04d", cur_name, n_processed + 1);
@@ -4301,8 +4259,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
       }
     }
 
-    if(obj && current) {
-      current->obj = (ObjectMolecule *) obj;
+    if(obj) {
       n_processed++;
     }
   }
@@ -4311,181 +4268,6 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
     ExecutiveDoZoom(G, deferred_zoom_obj, true, zoom, true);
   }
 
-  /* BEGIN METAPHORICS ANNOTATION AND ALIGNMENT CODE */
-
-  /* sanity check -- make sure all objects are present */
-  if(ok && n_processed) {
-    int a;
-    for(a = 0; a < n_processed; a++) {
-      ProcPDBRec *current = processed + a;
-      if(!ExecutiveValidateObjectPtr(G, (CObject *) current->obj, cObjectMolecule)) {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          " Error: Missing object! possible invalid/corrupt file.\n" ENDFB(G);
-        ok = false;
-        break;
-      }
-    }
-  }
-
-  if(ok && n_processed) {       /* first, perform any Metaphorics alignment */
-    /* is there a target structure? */
-    {
-      int a;
-      for(a = 0; a < n_processed; a++) {
-        ProcPDBRec *current = processed + a;
-        M4XAnnoType *m4x = &current->m4x;
-
-        if(m4x->annotated_flag && m4x->align) {
-          if(WordMatchExact(G, current->obj->Name, m4x->align->target, true)) {
-            target_rec = current;
-            break;
-          }
-        }
-      }
-    }
-    if(target_rec) {            /* there is a target.. */
-
-      /* first, convert all IDs to genuine atom indices */
-
-      {
-        int a;
-        for(a = 0; a < n_processed; a++) {
-          ProcPDBRec *current = processed + a;
-          M4XAnnoType *m4x = &current->m4x;
-          if(m4x->align) {
-            ObjectMoleculeConvertIDsToIndices(current->obj,
-                                              m4x->align->id_at_point,
-                                              m4x->align->n_point);
-          }
-        }
-      }
-
-      /* next, peform the alignments against the target */
-
-      {
-        int a;
-        char aligned_name[] = "m4x_aligned";
-        char tmp_sele[WordLength * 4];
-
-        SelectorCreateEmpty(G, "m4x_aligned", -1);
-
-        for(a = 0; a < n_processed; a++) {
-          ProcPDBRec *current = processed + a;
-          if(current != target_rec) {
-            M4XAnnoType *m4x = &current->m4x;
-            if(m4x->align) {
-              ObjMolPairwise pairwise;
-
-              m4x_mode = 1;     /* performing an alignment */
-
-              ObjMolPairwiseInit(&pairwise);
-              pairwise.trg_obj = target_rec->obj;
-              pairwise.mbl_obj = current->obj;
-
-              /* create ordered matches */
-
-              {
-                M4XAlignType *trg_align = target_rec->m4x.align;
-                M4XAlignType *mbl_align = m4x->align;
-
-                int n_point;
-                int a;
-
-                n_point = trg_align->n_point;
-                if(n_point > mbl_align->n_point)
-                  n_point = mbl_align->n_point;
-
-                VLACheck(pairwise.trg_vla, int, n_point);
-                VLACheck(pairwise.mbl_vla, int, n_point);
-
-                for(a = 0; a < n_point; a++) {
-                  int trg_index = trg_align->id_at_point[a];
-                  int mbl_index = mbl_align->id_at_point[a];
-                  if((trg_index >= 0) && (mbl_index >= 0) &&
-                     (mbl_align->fitness[a] >= 0.0F)) {
-                    pairwise.trg_vla[pairwise.n_pair] = trg_index;
-                    pairwise.mbl_vla[pairwise.n_pair] = mbl_index;
-                    pairwise.n_pair++;
-                  }
-                }
-
-                {
-                  char trg_sele[WordLength], mbl_sele[WordLength];
-                  char align_name[WordLength];
-                  SelectorGetUniqueTmpName(G, trg_sele);
-                  SelectorGetUniqueTmpName(G, mbl_sele);
-
-                  SelectorCreateOrderedFromObjectIndices(G, trg_sele, pairwise.trg_obj,
-                                                         pairwise.trg_vla,
-                                                         pairwise.n_pair);
-                  SelectorCreateOrderedFromObjectIndices(G, mbl_sele, pairwise.mbl_obj,
-                                                         pairwise.mbl_vla,
-                                                         pairwise.n_pair);
-
-                  sprintf(align_name, "%s_%s_alignment",
-                          pairwise.trg_obj->Name, pairwise.mbl_obj->Name);
-
-                  ExecutiveRMS(G, mbl_sele, trg_sele, 2, 0.0F, 0, 0,
-                               align_name, 0, 0, true, 0, NULL);
-                  ExecutiveColor(G, align_name, "white", 0, true);
-                  if(target_rec->m4x.invisible)
-                    sprintf(tmp_sele, "(%s) | (%s)", aligned_name, mbl_sele);
-                  else
-                    sprintf(tmp_sele, "(%s) | (%s) | (%s)", aligned_name, trg_sele,
-                            mbl_sele);
-                  SelectorCreateSimple(G, aligned_name, tmp_sele);
-                  /*ExecutiveDelete(G,trg_sele);
-                     ExecutiveDelete(G,mbl_sele); */
-                }
-
-              }
-              ObjMolPairwisePurge(&pairwise);
-            }
-          }
-        }
-        sprintf(tmp_sele, "bychain %s", aligned_name);
-        SelectorCreateSimple(G, aligned_name, tmp_sele);
-        sprintf(tmp_sele, "byres (%s expand 3.5)", aligned_name);
-        SelectorCreateSimple(G, nbrhood_sele, tmp_sele);
-      }
-    }
-  }
-
-  if(ok && n_processed) {       /* next, perform any and all Metaphorics annotations */
-    int a;
-    int nbr_sele = SelectorIndexByName(G, nbrhood_sele);
-
-    for(a = 0; a < n_processed; a++) {
-      ProcPDBRec *current = processed + a;
-      if(current->m4x.annotated_flag) {
-        char annotate_script[] = "@$PYMOL_SCRIPTS/metaphorics/annotate.pml";
-        char align_script[] = "@$PYMOL_SCRIPTS/metaphorics/alignment.pml";
-        char *script_file = NULL;
-
-        if(a == (n_processed - 1)) {
-          /* for multi-PDB files, don't execute script until after the last file */
-          switch (m4x_mode) {
-          case 0:
-            script_file = annotate_script;
-            break;
-          case 1:
-            script_file = align_script;
-            break;
-          }
-        }
-
-        if((current != target_rec) || (!current->m4x.invisible)) {
-          /* suppress annotations if target invisible */
-          ObjectMoleculeM4XAnnotate(current->obj, &current->m4x, script_file,
-                                    (m4x_mode == 1), nbr_sele);
-        }
-        M4XAnnoPurge(&current->m4x);
-      }
-    }
-  }
-  /* END METAPHORICS ANNOTATION AND ALIGNMENT CODE */
-
-  VLAFreeP(processed);
   return ok;
 }
 

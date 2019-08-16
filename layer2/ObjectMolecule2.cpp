@@ -1647,7 +1647,7 @@ static void ObjectMoleculePDBStr2CoordSetPASS1(PyMOLGlobals * G, int *ok,
     const char **restart_model, const char *p, int n_tags, const char* const* tag_start,
     int *nAtom, char cc[], int quiet, int *bogus_name_alignment,
     int *ssFlag, const char **next_pdb, PDBInfoRec *info, int only_read_one_model,
-    int *ignore_conect, int *bondFlag, M4XAnnoType * m4x, int *have_bond_order) {
+    int *ignore_conect, int *bondFlag, int *have_bond_order) {
   int seen_end_of_atoms = false;
   *restart_model = NULL;
   while(*ok && *p) {
@@ -1705,114 +1705,6 @@ static void ObjectMoleculePDBStr2CoordSetPASS1(PyMOLGlobals * G, int *ok,
       if(!*ignore_conect) 
         *bondFlag = true;
     } else if(strstartswith(p, "USER") && (!*restart_model)) {
-      /* Metaphorics key now 'USER M4X ', changed from 'USER    ' */
-      if(strstartswith(p + 4, " M4X ") && m4x) {
-        p = nskip(p, 10);
-        p = ntrim(cc, p, 6);
-        m4x->annotated_flag = true;
-        switch (cc[0]) {
-        case 'H':
-          if(WordMatchExact(G, "HINT", cc, true)) {
-            p = nskip(p, 1);
-            p = ntrim(cc, p, 6);      /* get context name */
-            if(WordMatchExact(G, "ALIGN", cc, true)) {        /* ALIGN is special */
-              if(!m4x->align) {
-		m4x->align = pymol::calloc<M4XAlignType>(1);
-                CHECKOK(*ok, m4x->align);
-                if (*ok){
-                  M4XAlignInit(m4x->align);
-                  p = nskip(p, 8);
-                  p = ntrim(cc, p, 6);  /* get visibility of this structure */
-                }
-              }
-            } else if(WordMatchExact(G, "HIDE", cc, true)) {
-              m4x->invisible = 1;
-            } else {
-              if(!m4x->context) {
-                m4x->context = VLACalloc(M4XContextType, 10);
-                CHECKOK(*ok, m4x->context);
-              }
-              if(*ok && m4x->context) {
-                int cn;
-                int found = false;
-
-                /* does context already exist ? */
-                for(cn = 0; cn < m4x->n_context; cn++) {
-                  if(WordMatchExact(G, m4x->context[cn].name, cc, true)) {
-                    found = true;
-                    break;
-                  }
-                }
-
-                /* if not, then create it */
-                if(!found) {
-                  cn = m4x->n_context++;
-                  VLACheck(m4x->context, M4XContextType, cn);
-                  CHECKOK(*ok, m4x->context);
-                  if (*ok){
-                    UtilNCopy(m4x->context[cn].name, cc, sizeof(WordType));
-                  }
-                }
-
-                while(*ok && *cc) {
-                  p = nskip(p, 1);
-                  p = ntrim(cc, p, 6);
-                  switch (cc[0]) {
-                    case 'B':
-                      if(WordMatchExact(G, "BORDER", cc, true)) {
-                        /* ignore PDB CONECT if BORDER present */
-                        *ignore_conect = true;
-                        *have_bond_order = true;
-                        *bondFlag = true;
-                      }
-                      break;
-                    case 'S':
-                      if(WordMatchExact(G, "SITE", cc, true)) {
-                        if(!m4x->context[cn].site) {
-                          m4x->context[cn].site = VLAlloc(int, 50);
-                          CHECKOK(*ok, m4x->context[cn].site);
-                        }
-                      }
-                      break;
-                    case 'L':
-                      if(WordMatchExact(G, "LIGAND", cc, true)) {
-                        if(!m4x->context[cn].ligand) {
-                          m4x->context[cn].ligand = VLAlloc(int, 50);
-                          CHECKOK(*ok, m4x->context[cn].ligand);
-                        }
-                      }
-                      break;
-                    case 'W':
-                      if(WordMatchExact(G, "WATER", cc, true)) {
-                        if(!m4x->context[cn].water) {
-                          m4x->context[cn].water = VLAlloc(int, 50);
-                          CHECKOK(*ok, m4x->context[cn].water);
-                        }
-                      }
-                      break;
-                    case 'H':
-                      if(WordMatchExact(G, "HBOND", cc, true)) {
-                        if(!m4x->context[cn].hbond) {
-                          m4x->context[cn].hbond = VLAlloc(M4XBondType, 50);
-                          CHECKOK(*ok, m4x->context[cn].hbond);
-                        }
-                      }
-                      break;
-                    case 'N':
-                      if(WordMatchExact(G, "NBOND", cc, true)) {
-                        if(!m4x->context[cn].nbond) {
-                          m4x->context[cn].nbond = VLAlloc(M4XBondType, 50);
-                          CHECKOK(*ok, m4x->context[cn].nbond);
-                        }
-                      }
-                      break;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
     p = nextline(p);
   }
@@ -2012,7 +1904,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                                         AtomInfoType ** atInfoPtr,
                                         const char **restart_model,
                                         char *segi_override,
-                                        M4XAnnoType * m4x,
                                         char *pdb_name,
                                         const char **next_pdb,
                                         PDBInfoRec * info, int quiet, int *model_number)
@@ -2108,7 +1999,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   /* PASS 1 */
   ObjectMoleculePDBStr2CoordSetPASS1(G, &ok, restart_model, p, n_tags,
       tag_start, &nAtom, cc, quiet, &bogus_name_alignment, &ssFlag, next_pdb,
-      info, only_read_one_model, &ignore_conect, &bondFlag, m4x, &have_bond_order);
+      info, only_read_one_model, &ignore_conect, &bondFlag, &have_bond_order);
   /* INPUT USED:
      only_read_one_model - only reads one pdb model if set
      n_tags, tag_start - tags defined to report in log
@@ -2116,10 +2007,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
      OUTPUT USED:
      bogus_name_alignment - whether all ATOM/HETATM has correct names in PDB (12-16, starting with space
      ssFlag - if PDB has HELIX and/or SHEET records
-     m4x - M4XAnnoType information from Metaphorics (USER records)
      both INPUT/OUTPUT:
      nAtom - returns the number of atoms read in, also uses it to detect multiple PDBs
-     ignore_conect - do not set bondFlag if set, also set if Metaphorics has BORDER info (bondFlag will also be set in this case)
+     ignore_conect - do not set bondFlag if set
 
      END PASS 1 */
 
@@ -2424,239 +2314,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           }
         }
     } else if(strstartswith(p, "USER") && (!*restart_model)) {
-      /* Metaphorics key 'USER M4X ' was 'USER     ' */
-      if(strstartswith(p + 4, " M4X ") && m4x) {
-
-        int parsed_flag = false;
-
-        p = nskip(p, 10);
-        p = ntrim(cc, p, 6);
-
-        /* is this a context name or a USER record? */
-        switch (cc[0]) {
-        case 'X':
-          if(WordMatchExact(G, "XNAME", cc, true)) {    /* object name */
-            p = nskip(p, 1);
-            p = ntrim(m4x->xname, p, 10);
-            if(m4x->xname[0]) {
-              m4x->xname_flag = true;
-              parsed_flag = true;
-            }
-          }
-          break;
-        case 'A':              /* alignment information */
-          if(WordMatchExact(G, "ALIGN", cc, true)) {
-            if(m4x->align && m4x->align->id_at_point) {
-              M4XAlignType *align = m4x->align;
-              char target[11];
-              int atom_id, point_id;
-              float fitness;
-              p = nskip(p, 1);
-              p = ncopy(cc, p, 6);
-              if(sscanf(cc, "%d", &atom_id) == 1) {
-                p = nskip(p, 1);
-                p = ntrim(target, p, 10);
-                if(target[0]) {
-                  if(!align->target[0])
-                    UtilNCopy(align->target, target, WordLength);
-                  if(WordMatchExact(G, align->target, target, true)) {  /* must match the one target allowed */
-                    p = nskip(p, 1);
-                    p = ncopy(cc, p, 6);
-                    if(sscanf(cc, "%d", &point_id) == 1) {
-                      p = nskip(p, 1);
-                      p = ncopy(cc, p, 6);
-                      if(sscanf(cc, "%f", &fitness) == 1) {
-                        VLACheck(align->id_at_point, int, point_id);
-			CHECKOK(ok, align->id_at_point);
-			if (ok){
-			  VLACheck(align->fitness, float, point_id);
-			  CHECKOK(ok, align->id_at_point);
-			  if (ok){
-			    if(point_id >= align->n_point)
-			      align->n_point = point_id + 1;
-			    align->id_at_point[point_id] = atom_id;
-			    align->fitness[point_id] = fitness;
-			  }
-			}
-			  /*                        printf("read alignment atom %d to target %s point %d fitness %8.3f\n",
-                           atom_id,target,point_id,fitness); */
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            parsed_flag = true;
-          }
-          break;
-        }
-
-        if(ok && (!parsed_flag) && m4x->context) {    /* named context of some sort... */
-          int cn;
-          int found = false;
-
-          /* does context already exist ? */
-          for(cn = 0; cn < m4x->n_context; cn++) {
-            if(WordMatchExact(G, m4x->context[cn].name, cc, true)) {
-              found = true;
-              break;
-            }
-          }
-
-          if(found) {
-
-            M4XContextType *cont = m4x->context + cn;
-
-            p = nskip(p, 1);
-            p = ntrim(cc, p, 6);
-            switch (cc[0]) {
-            case 'B':
-              if(WordMatchExact(G, "BORDER", cc, true) && bondFlag) {
-                int order;
-
-                p = nskip(p, 1);
-                p = ncopy(cc, p, 6);
-                if(sscanf(cc, "%d", &b1) == 1) {
-                  p = nskip(p, 1);
-                  p = ncopy(cc, p, 6);
-                  if(sscanf(cc, "%d", &b2) == 1) {
-                    p = nskip(p, 1);
-                    p = ncopy(cc, p, 6);
-                    if(sscanf(cc, "%d", &order) == 1) {
-                      if((b1 >= 0) && (b2 >= 0)) {      /* IDs must be positive */
-                        VLACheck(bond, BondType, nBond);
-			CHECKOK(ok, bond);
-			if (ok){
-			  if(b1 <= b2) {
-			    bond[nBond].index[0] = b1;    /* temporarily store the atom indexes */
-			    bond[nBond].index[1] = b2;
-			    bond[nBond].order = order;
-			    bond[nBond].stereo = 0;
-			  } else {
-			    bond[nBond].index[0] = b2;
-			    bond[nBond].index[1] = b1;
-			    bond[nBond].order = order;
-			    bond[nBond].stereo = 0;
-			  }
-			}
-                        nBond++;
-                      }
-                    }
-                  }
-                }
-              }
-              break;
-            case 'S':
-              if(WordMatchExact(G, "SITE", cc, true)) {
-                if(cont->site) {
-                  int id;
-                  while(ok && *cc) {
-                    p = nskip(p, 1);
-                    p = ncopy(cc, p, 6);
-                    if(sscanf(cc, "%d", &id) == 1) {
-                      VLACheck(cont->site, int, cont->n_site);
-		      CHECKOK(ok, cont->site);
-		      if (ok)
-			cont->site[cont->n_site++] = id;
-                    }
-                  }
-                }
-              }
-              break;
-            case 'L':
-              if(WordMatchExact(G, "LIGAND", cc, true)) {
-                if(cont->ligand) {
-                  int id;
-                  while(ok && *cc) {
-                    p = nskip(p, 1);
-                    p = ncopy(cc, p, 6);
-                    if(sscanf(cc, "%d", &id) == 1) {
-                      VLACheck(cont->ligand, int, cont->n_ligand);
-		      CHECKOK(ok, cont->ligand);
-		      if (ok)
-			cont->ligand[cont->n_ligand++] = id;
-                    }
-                  }
-                }
-              }
-              break;
-            case 'W':
-              if(WordMatchExact(G, "WATER", cc, true)) {
-                if(cont->water) {
-                  int id;
-                  while(ok && *cc) {
-                    p = nskip(p, 1);
-                    p = ncopy(cc, p, 6);
-                    if(sscanf(cc, "%d", &id) == 1) {
-                      VLACheck(cont->water, int, cont->n_water);
-		      CHECKOK(ok, cont->water);
-		      if (ok)
-			cont->water[cont->n_water++] = id;
-                    }
-                  }
-                }
-              }
-              break;
-            case 'H':
-              if(WordMatchExact(G, "HBOND", cc, true)) {
-                if(cont->hbond) {
-                  int id1, id2;
-                  float strength;
-                  p = nskip(p, 1);
-                  p = ncopy(cc, p, 6);
-                  if(sscanf(cc, "%d", &id1) == 1) {
-                    p = nskip(p, 1);
-                    p = ncopy(cc, p, 6);
-                    if(sscanf(cc, "%d", &id2) == 1) {
-                      p = nskip(p, 1);
-                      p = ncopy(cc, p, 6);
-                      if(sscanf(cc, "%f", &strength) == 1) {
-                        VLACheck(cont->hbond, M4XBondType, cont->n_hbond);
-			CHECKOK(ok, cont->hbond);
-			if (ok){
-			  cont->hbond[cont->n_hbond].atom1 = id1;
-			  cont->hbond[cont->n_hbond].atom2 = id2;
-			  cont->hbond[cont->n_hbond].strength = strength;
-			  cont->n_hbond++;
-			}
-                      }
-                    }
-                  }
-                }
-              }
-              break;
-            case 'N':
-              if(WordMatchExact(G, "NBOND", cc, true)) {
-                if(cont->nbond) {
-                  int id1, id2;
-                  float strength;
-                  p = nskip(p, 1);
-                  p = ncopy(cc, p, 6);
-                  if(sscanf(cc, "%d", &id1) == 1) {
-                    p = nskip(p, 1);
-                    p = ncopy(cc, p, 6);
-                    if(sscanf(cc, "%d", &id2) == 1) {
-                      p = nskip(p, 1);
-                      p = ncopy(cc, p, 6);
-                      if(sscanf(cc, "%f", &strength) == 1) {
-                        VLACheck(cont->nbond, M4XBondType, cont->n_nbond);
-			CHECKOK(ok, cont->nbond);
-			if (ok){
-			  cont->nbond[cont->n_nbond].atom1 = id1;
-			  cont->nbond[cont->n_nbond].atom2 = id2;
-			  cont->nbond[cont->n_nbond].strength = strength;
-			  cont->n_nbond++;
-			}
-                      }
-                    }
-                  }
-                }
-              }
-              break;
-            }
-          }
-        }
-      }
     } else if(strstartswith(p, "ANISOU") && (!*restart_model) && (atomCount)) {
       ai = atInfo + atomCount - 1;
 
@@ -3138,105 +2795,6 @@ pqr_done:
 
 
 /*========================================================================*/
-
-void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, const char *script_file,
-                               int match_colors, int nbr_sele)
-{
-  int a;
-  WordType name;
-  M4XContextType *cont;
-
-  if(m4x) {
-    for(a = 0; a < m4x->n_context; a++) {
-      cont = m4x->context + a;
-
-      if(cont->site) {
-        UtilNCopy(name, I->Name, sizeof(WordType));
-        UtilNConcat(name, "_", sizeof(WordType));
-        UtilNConcat(name, cont->name, sizeof(WordType));
-        UtilNConcat(name, "_site", sizeof(WordType));
-        SelectorSelectByID(I->G, name, I, cont->site, cont->n_site);
-      }
-      if(cont->ligand) {
-        UtilNCopy(name, I->Name, sizeof(WordType));
-        UtilNConcat(name, "_", sizeof(WordType));
-        UtilNConcat(name, cont->name, sizeof(WordType));
-        UtilNConcat(name, "_ligand", sizeof(WordType));
-        SelectorSelectByID(I->G, name, I, cont->ligand, cont->n_ligand);
-      }
-      if(cont->water) {
-        UtilNCopy(name, I->Name, sizeof(WordType));
-        UtilNConcat(name, "_", sizeof(WordType));
-        UtilNConcat(name, cont->name, sizeof(WordType));
-        UtilNConcat(name, "_water", sizeof(WordType));
-        SelectorSelectByID(I->G, name, I, cont->water, cont->n_water);
-      }
-      if(cont->hbond) {
-        ObjectDist *distObj;
-        UtilNCopy(name, I->Name, sizeof(WordType));
-        UtilNConcat(name, "_", sizeof(WordType));
-        UtilNConcat(name, cont->name, sizeof(WordType));
-        UtilNConcat(name, "_hbond", sizeof(WordType));
-        ExecutiveDelete(I->G, name);
-        distObj = ObjectDistNewFromM4XBond(I->G, NULL,
-                                           I, cont->hbond, cont->n_hbond, nbr_sele);
-        if(match_colors)
-          distObj->Color = I->Color;
-        else
-          distObj->Color = ColorGetIndex(I->G, "yellow");
-        ObjectSetName((CObject *) distObj, name);
-        if(distObj)
-          ExecutiveManageObject(I->G, (CObject *) distObj, false, true);
-      }
-
-      if(cont->nbond && 0) {
-        /*        ObjectDist *distObj; */
-        UtilNCopy(name, I->Name, sizeof(WordType));
-        UtilNConcat(name, "_", sizeof(WordType));
-        UtilNConcat(name, cont->name, sizeof(WordType));
-        UtilNConcat(name, "_nbond", sizeof(WordType));
-        ExecutiveDelete(I->G, name);
-        /*        distObj = ObjectDistNewFromM4XBond(I->G,NULL,
-           I,
-           cont->nbond,
-           cont->n_nbond);
-           if(distObj)
-           ExecutiveManageObject(I->G,(CObject*)distObj,false,true); */
-
-        {
-          CGO *cgo = NULL;
-          ObjectCGO *ocgo;
-
-          cgo = CGONew(I->G);
-          /*
-             CGOBegin(cgo,GL_LINES);
-             for(a=0;a<op1.nvv1;a++) {
-             CGOVertexv(cgo,op2.vv1+(a*3));
-             MatrixApplyTTTfn3f(1,v1,op2.ttt,op1.vv1+(a*3));
-             CGOVertexv(cgo,v1);
-           */
-          CGOEnd(cgo);
-          CGOStop(cgo);
-          ocgo = ObjectCGOFromCGO(I->G, NULL, cgo, 0);
-          if(match_colors)
-            ocgo->Color = I->Color;
-          else
-            ocgo->Color = ColorGetIndex(I->G, "yellow");
-          ObjectSetName((CObject *) ocgo, name);
-          ExecutiveDelete(I->G, ocgo->Name);
-
-          ExecutiveManageObject(I->G, (CObject *) ocgo, false, true);
-
-          SceneInvalidate(I->G);
-        }
-
-      }
-
-    }
-    if(script_file)
-      PParse(I->G, script_file);
-  }
-}
 
 void ObjectMoleculeInitHBondCriteria(PyMOLGlobals * G, HBondCriteria * hbc)
 {
