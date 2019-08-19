@@ -239,6 +239,21 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load_raw(open(self.datafile("sampletrajectory.pdb")).read(), "pdb")
         self.assertEqual(115, cmd.count_atoms())
 
+    @testing.requires_version('2.4')
+    def testLoadRawMMTF(self):
+        import gzip
+        with gzip.open(self.datafile("3njw.mmtf.gz")) as handle:
+            cmd.load_raw(handle.read(), "mmtf")
+        self.assertEqual(169, cmd.count_atoms())
+
+    @testing.requires_version('2.4')
+    def testLoadMMTFStr(self):
+        # deprecated
+        import gzip
+        with gzip.open(self.datafile("3njw.mmtf.gz")) as handle:
+            cmd.load(handle.read(), "m1", format="mmtfstr")
+        self.assertEqual(169, cmd.count_atoms())
+
     @testing.foreach(
             ['.pdb', '.dcd'],
             ['.pdb', '.crd'],
