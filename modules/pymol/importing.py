@@ -708,11 +708,6 @@ SEE ALSO
             if multiplex is None:
                 multiplex=-2
 
-            filename = unquote(filename)
-
-            # analyze filename
-            noext, ext, format_guessed, zipped = filename_to_format(filename)
-
             # file format
             try:
                 # user specified the type as an int
@@ -720,6 +715,22 @@ SEE ALSO
                 format = loadable._reverse_lookup(format)
             except ValueError:
                 format = str(format)
+                ftype = getattr(_loadable, format, -1)
+
+            if ftype in _self._load2str.values():
+                assert format.endswith('str')
+                colorprinting.warning(
+                    ' cmd.load(format="{}") is deprecated, use cmd.load_raw(format="{}")'
+                    .format(format, format[:-3]))
+                return _self.load_raw(filename, format[:-3], object, state,
+                        finish, discrete, quiet, multiplex, zoom)
+
+            filename = unquote(filename)
+
+            # analyze filename
+            noext, ext, format_guessed, zipped = filename_to_format(filename)
+
+            if ftype == -1:
                 if not format:
                     format = format_guessed
                 elif format.startswith('plugin'):
@@ -730,8 +741,7 @@ SEE ALSO
                     format = 'model' # legacy
                 ftype = getattr(_loadable, format, -1)
 
-            if ftype not in _self._load2str.values():
-                filename = _self.exp_path(filename)
+            filename = _self.exp_path(filename)
 
             # object name
             object = str(object).strip()
@@ -875,24 +885,36 @@ NOTES
         return _self.load_raw(''.join(list[1]), list[0], name, state,
                 finish, discrete, quiet, multiplex, zoom)
 
-    def load_raw(content,  format='', object='', state=0, finish=1,
+    def load_raw(content, format, object='', state=0, finish=1,
                  discrete=-1, quiet=1, multiplex=None, zoom=-1,_self=cmd):
+        '''
+DESCRIPTION
+
+    API-only function for loading data from memory.
+
+EXAMPLE
+
+    contents = open('example.mmtf', 'rb').read()
+    cmd.load_raw(contents, 'mmtf')
+        '''
         r = DEFAULT_ERROR
         if multiplex is None:
             multiplex=-2
         ftype = getattr(loadable, format, None)
+        if not isinstance(content, bytes):
+            content = content.encode('utf-8')
         if True:
             _raw_dict = cmd._load2str
             if ftype in _raw_dict:
                 try:
                     _self.lock(_self)
-                    r = _cmd.load(_self._COb,str(object),str(content),int(state)-1,
+                    r = _cmd.load(_self._COb,str(object),content,int(state)-1,
                                   _raw_dict[ftype],int(finish),int(discrete),
                                   int(quiet),int(multiplex),int(zoom))
                 finally:
                     _self.unlock(r,_self)
             else:
-                raise pymol.CmdException("unknown raw format '%s'", format)
+                raise pymol.CmdException("unknown raw format '{}'".format(format))
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
@@ -1260,10 +1282,10 @@ PYMOL API
             r = _self.read_pdbstr(contents, name, state,
                     finish, discrete, quiet, zoom, multiplex)
         elif contents and bioType in ('cif', 'cc'):
-            r = _self.load(contents, name, state, loadable.cifstr,
+            r = _self.load_raw(contents, 'cif', name, state,
                     finish, discrete, quiet, multiplex, zoom)
         elif contents and bioType in ('mmtf',):
-            r = _self.load(contents, name, state, loadable.mmtfstr,
+            r = _self.load_raw(contents, 'mmtf', name, state,
                     finish, discrete, quiet, multiplex, zoom)
 
         if not _self.is_error(r):
