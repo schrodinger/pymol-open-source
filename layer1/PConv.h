@@ -282,6 +282,20 @@ PyObject* PConvToPyObject(const std::pair<T1, T2> &v) {
   return o;
 }
 
+namespace pymol
+{
+struct Void;
+}
+
+inline PyObject* PConvToPyObject(const pymol::Void&)
+{
+#ifndef _PYMOL_NOPY
+  Py_RETURN_NONE;
+#else
+  return nullptr;
+#endif
+}
+
 /* ============================================================ */
 /*
  * PConvFromPyObject: Templated conversion of a python object to a

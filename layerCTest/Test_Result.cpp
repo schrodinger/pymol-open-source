@@ -2,6 +2,7 @@
 #include "Test.h"
 using namespace pymol::test;
 
+static
 pymol::Result<int> sum(int i, int j)
 {
   return i + j;
@@ -19,6 +20,7 @@ TEST_CASE("Result simple", "[Result]")
 }
 
 template <typename T, typename U>
+static
 pymol::Result<pymol::common_type_t<T, U>> sum(T i, U j)
 {
   return i + j;
@@ -35,6 +37,7 @@ TEST_CASE("Result template", "[Result]")
   REQUIRE(isAlmostEqual(ans.result(), 8.));
 }
 
+static
 pymol::Result<int> sumError(int i, int j)
 {
   return pymol::Error{"Values cannot be summed."};
@@ -49,5 +52,16 @@ TEST_CASE("Err Message", "[Result]")
       "Not correct result type");
   REQUIRE(!ans);
   REQUIRE(ans.error().what() == "Values cannot be summed.");
+}
+
+static pymol::Result<> returnEmptyBrackets()
+{
+  return {};
+}
+
+TEST_CASE("Default constructor", "[Result]")
+{
+  auto ans = returnEmptyBrackets();
+  REQUIRE(ans);
 }
 

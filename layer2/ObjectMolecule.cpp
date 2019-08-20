@@ -4500,12 +4500,11 @@ int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order)
 }
 
 /*========================================================================*/
-bool ObjectMoleculeAddBondByIndices(
+pymol::Result<> ObjectMoleculeAddBondByIndices(
     ObjectMolecule* I, unsigned atm1, unsigned atm2, int order)
 {
   if (atm1 >= I->NAtom || atm2 >= I->NAtom) {
-    ErrMessage(I->G, __func__, "atom index out of bounds");
-    return false;
+    return pymol::Error("atom index out of bounds");
   }
 
   if (!I->Bond) {
@@ -4525,7 +4524,7 @@ bool ObjectMoleculeAddBondByIndices(
 
   ObjectMoleculeInvalidate(I, cRepAll, cRepInvBondsNoNonbonded, -1);
 
-  return true;
+  return {};
 }
 
 /*========================================================================*/

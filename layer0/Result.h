@@ -1,9 +1,14 @@
+#pragma once
+
 #include "Util2.h"
 #include <string>
 #include <type_traits>
 
 namespace pymol
 {
+struct Void {
+};
+
 /**
  * Expressive error handling alternative
  */
@@ -38,11 +43,13 @@ private:
  * Class that expresses the expected result of a function
  */
 
-template <typename ResultT> class Result
+template <typename ResultT=Void> class Result
 {
 
 public:
   using type = ResultT;
+
+  Result() = default;
 
   /**
    * Constructor alternative that allows for convertible types

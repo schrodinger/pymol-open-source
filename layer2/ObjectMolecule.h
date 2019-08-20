@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"DistSet.h"
 #include "Executive_pre.h"
 #include "vla.h"
+#include "Result.h"
 
 #include <memory>
 
@@ -364,7 +365,7 @@ int ObjectMoleculeXferValences(ObjectMolecule * Ia, int sele1, int sele2,
 void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int *flag2,
                                  int reset);
 int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order);
-bool ObjectMoleculeAddBondByIndices(
+pymol::Result<> ObjectMoleculeAddBondByIndices(
     ObjectMolecule* I, unsigned atm1, unsigned atm2, int order);
 int ObjectMoleculeRemoveBonds(ObjectMolecule * I, int sele1, int sele2);
 

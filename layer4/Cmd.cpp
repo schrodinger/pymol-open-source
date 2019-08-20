@@ -4007,10 +4007,10 @@ static PyObject* CmdAddBond(PyObject* self, PyObject* args)
     return APIFailure(G, "cannot find object");
   }
 
-  bool ok = ObjectMoleculeAddBondByIndices(obj, atm1, atm2, order);
+  auto result = ObjectMoleculeAddBondByIndices(obj, atm1, atm2, order);
 
   APIExitBlocked(G);
-  return APIResultOk(G, ok);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdRevalence(PyObject * self, PyObject * args)
