@@ -83,8 +83,8 @@ typedef struct CoordSet {
   BondType *TmpLinkBond;        /* first atom is in obj, second is in cset */
   CSymmetry *Symmetry;
   WordType Name;
-  float *Spheroid;
-  float *SpheroidNormal;
+  pymol::vla<float> Spheroid;
+  pymol::vla<float> SpheroidNormal;
   int NSpheroid;
   int SpheroidSphereSize;
   CSetting *Setting;

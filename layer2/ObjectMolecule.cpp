@@ -4192,8 +4192,8 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
           FreeP(I->CSet[first]->Spheroid);
         if(I->CSet[first]->SpheroidNormal)
           FreeP(I->CSet[first]->SpheroidNormal);
-        I->CSet[first]->Spheroid = spheroid;
-        I->CSet[first]->SpheroidNormal = norm;
+        I->CSet[first]->Spheroid = pymol::vla_take_ownership(spheroid);
+        I->CSet[first]->SpheroidNormal = pymol::vla_take_ownership(norm);
         I->CSet[first]->NSpheroid = nRow;
       } else {
         FreeP(spheroid);

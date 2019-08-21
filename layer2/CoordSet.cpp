@@ -1700,15 +1700,13 @@ void CoordSet::fFree()
       SymmetryFree(I->Symmetry);
     if(I->PeriodicBox)
       delete I->PeriodicBox;
-    FreeP(I->Spheroid);
-    FreeP(I->SpheroidNormal);
     SettingFreeP(I->Setting);
     ObjectStatePurge(&I->State);
     CGOFree(I->SculptCGO);
     VLAFreeP(I->LabPos);
     VLAFreeP(I->RefPos);
     /* free and make null */
-    OOFreeP(I);
+    FreeP(I);
   }
 }
 void LabPosTypeCopy(const LabPosType * src, LabPosType * dst){
