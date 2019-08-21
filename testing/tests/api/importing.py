@@ -239,7 +239,7 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load_raw(open(self.datafile("sampletrajectory.pdb")).read(), "pdb")
         self.assertEqual(115, cmd.count_atoms())
 
-    @testing.requires_version('2.4')
+    @testing.requires_version('2.3.3')
     def testLoadRawMMTF(self):
         import gzip
         with gzip.open(self.datafile("3njw.mmtf.gz")) as handle:
@@ -461,6 +461,12 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load(self.datafile("mmtf/empty-mmtfVersion99999999.mmtf"))
         self.assertEqual(cmd.get_names(), [])
         cmd.delete('*')
+
+    @testing.requires_version('2.3.3')
+    def testLoadMMTFMissingOptionalGroupTypeFields(self):
+        cmd.load(self.datafile("mmtf/missing-optional-grouptype-fields.mmtf.gz"))
+        self.assertEqual(cmd.count_atoms(), 17)
+        self.assertEqual(len(cmd.get_bonds()), 7)
 
     @testing.foreach(
             ['', '*',                   True],
