@@ -1125,7 +1125,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                 angles = false;
               if(periodic) {
                 if(!cs->PeriodicBox)
-                  cs->PeriodicBox = new CCrystal(G);
+                  cs->PeriodicBox = pymol::make_unique<CCrystal>(G);
                 cs->PeriodicBox->Dim[0] = box[0];
                 cs->PeriodicBox->Dim[1] = box[1];
                 cs->PeriodicBox->Dim[2] = box[2];
@@ -1134,7 +1134,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                   cs->PeriodicBox->Angle[1] = angle[1];
                   cs->PeriodicBox->Angle[2] = angle[2];
                 }
-                CrystalUpdate(cs->PeriodicBox);
+                CrystalUpdate(cs->PeriodicBox.get());
                 /*                    CrystalDump(cs->PeriodicBox); */
                 p = nextline(p);
                 b = 0;
@@ -1419,9 +1419,9 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
             PRINTFB(G, FB_ObjectMolecule, FB_Details)
               " ObjectMolecule: read coordinates into state %d...\n", frame + 1 ENDFB(G);
 
-	    if (ok)
-	      cs = CoordSetCopy(cs);
-	    CHECKOK(ok, cs);
+            if (ok)
+              cs = CoordSetCopy(cs);
+            CHECKOK(ok, cs);
 
             if (mode == 0) // restart file has only one frame
               break;
@@ -2195,7 +2195,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
 
       if(ok) {
         if(!cset->PeriodicBox)
-          cset->PeriodicBox = new CCrystal(G);
+          cset->PeriodicBox = pymol::make_unique<CCrystal>(G);
         cset->PeriodicBox->Dim[0] = BOX1;
         cset->PeriodicBox->Dim[1] = BOX2;
         cset->PeriodicBox->Dim[2] = BOX3;
@@ -2216,8 +2216,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
           cset->PeriodicBox->Angle[1] = BETA;
           cset->PeriodicBox->Angle[2] = 90.0;
         }
-
-        CrystalUpdate(cset->PeriodicBox);
+        CrystalUpdate(cset->PeriodicBox.get());
         /*        CrystalDump(cset->PeriodicBox); */
       }
       /* skip periodic box */
@@ -3438,7 +3437,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
 
     if(ok && mode != 3) {
       /* set up the linking bond */
-      cs->TmpLinkBond = VLACalloc(BondType, 1);
+      cs->TmpLinkBond = pymol::vla<BondType>(1);
       CHECKOK(ok, cs->TmpLinkBond);
       if (ok){
 	BondTypeInit(cs->TmpLinkBond);
@@ -3603,7 +3602,7 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index,
   ok_assert(1, cs->Coord = pymol::vla<float>(3));
 
   cs->NIndex = 1;
-  ok_assert(1, cs->TmpLinkBond = VLACalloc(BondType, 1));
+  ok_assert(1, cs->TmpLinkBond = pymol::vla<BondType>(1));
 
   BondTypeInit(cs->TmpLinkBond);
   cs->NTmpLinkBond = 1;
@@ -3676,7 +3675,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 
 	cs->NIndex = 1;
 	if (ok)
-	  cs->TmpLinkBond = VLACalloc(BondType, 1);
+	  cs->TmpLinkBond = pymol::vla<BondType>(1);
 	CHECKOK(ok, cs->TmpLinkBond);
 	if (ok){
 	  BondTypeInit(cs->TmpLinkBond);
@@ -3975,7 +3974,6 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
 void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
 {
   CoordSet *cs;
-  float *spheroid = NULL;
   int a, b, c, a0;
   SphereRec *sp;
   float *v, *v0, *s, *f, ang, min_dist, *max_sq;
@@ -3985,7 +3983,6 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
   float p0[3], p1[3], p2[3];
   int t0, t1, t2, bt0, bt1, bt2;
   float dp, l, *fsum = NULL;
-  float *norm = NULL;
   float spheroid_smooth;
   float spheroid_fill;
   float spheroid_ratio = 0.1F;  /* minimum ratio of width over length */
@@ -4027,7 +4024,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
         " ObjectMolecule: computing spheroid from states %d to %d.\n",
         first + 1, last ENDFB(I->G);
 
-      spheroid = pymol::malloc<float>(nRow);
+      auto spheroid = std::vector<float>(nRow);
 
       v = center;
       i = count;
@@ -4067,7 +4064,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
       /* now go through and compute radial distances */
 
       f = fsum;
-      s = spheroid;
+      s = spheroid.data();
       for(a = 0; a < nRow; a++) {
         *(f++) = 0.0;
         *(s++) = 0.0;
@@ -4114,7 +4111,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
       }
 
       f = fsum;
-      s = spheroid;
+      s = spheroid.data();
       for(a = 0; a < I->NAtom; a++) {
         min_dist = (float) (spheroid_ratio * sqrt(max_sq[a]));
         if(min_dist < spheroid_minimum)
@@ -4146,9 +4143,9 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
 
       /* now compute surface normals */
 
-      norm = pymol::malloc<float>(nRow * 3);
+      auto norm = std::vector<float>(nRow * 3);
       for(a = 0; a < nRow; a++) {
-        zero3f(norm + a * 3);
+        zero3f(norm.data() + a * 3);
       }
       for(a = 0; a < I->NAtom; a++) {
         base = a * sp->nDot;
@@ -4169,16 +4166,16 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
           subtract3f(p2, p0, d2);
           cross_product3f(d1, d2, n0);
           normalize3f(n0);
-          v = norm + bt0 * 3;
+          v = norm.data() + bt0 * 3;
           add3f(n0, v, v);
-          v = norm + bt1 * 3;
+          v = norm.data() + bt1 * 3;
           add3f(n0, v, v);
-          v = norm + bt2 * 3;
+          v = norm.data() + bt2 * 3;
           add3f(n0, v, v);
         }
       }
 
-      f = norm;
+      f = norm.data();
       for(a = 0; a < I->NAtom; a++) {
         base = a * sp->nDot;
         for(b = 0; b < sp->nDot; b++) {
@@ -4188,16 +4185,8 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
       }
 
       if(I->CSet[first]) {
-        if(I->CSet[first]->Spheroid)
-          FreeP(I->CSet[first]->Spheroid);
-        if(I->CSet[first]->SpheroidNormal)
-          FreeP(I->CSet[first]->SpheroidNormal);
-        I->CSet[first]->Spheroid = pymol::vla_take_ownership(spheroid);
-        I->CSet[first]->SpheroidNormal = pymol::vla_take_ownership(norm);
-        I->CSet[first]->NSpheroid = nRow;
-      } else {
-        FreeP(spheroid);
-        FreeP(norm);
+        I->CSet[first]->Spheroid = std::move(spheroid);
+        I->CSet[first]->SpheroidNormal = std::move(norm);
       }
 
       for(b = first + 1; b < last; b++) {
@@ -7510,14 +7499,12 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
          PyObject_HasAttrString(model, "spheroid_normals")) {
         tmp = PyObject_GetAttrString(model, "spheroid");
         if(tmp) {
-          cset->NSpheroid = PConvPyListToFloatArray(tmp, &cset->Spheroid);
-          if(cset->NSpheroid < 0)
-            cset->NSpheroid = 0;
+          PConvFromPyObject(G, tmp, cset->Spheroid);
           Py_DECREF(tmp);
         }
         tmp = PyObject_GetAttrString(model, "spheroid_normals");
         if(tmp) {
-          PConvPyListToFloatArray(tmp, &cset->SpheroidNormal);
+          PConvFromPyObject(G, tmp, cset->SpheroidNormal);
           Py_DECREF(tmp);
         }
       }
@@ -7542,7 +7529,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
             }
             Py_DECREF(tmp);
           }
-          cset->Symmetry = symmetry;
+          cset->Symmetry = std::unique_ptr<CSymmetry>(symmetry);
         }
       }
       if(PyObject_HasAttrString(model, "fractional")) {

@@ -33,7 +33,7 @@ enum mmpymolx_prop_state_t {
   MMPYMOLX_PROP_STATE_USER,     // user-assigned (cmd.alter)
 };
 
-typedef struct CoordSet {
+struct CoordSet {
   // methods (not fully refactored yet)
   void fFree();
 
@@ -70,34 +70,33 @@ typedef struct CoordSet {
   }
 
   CObjectState State;
-  ObjectMolecule *Obj;
+  ObjectMolecule *Obj = nullptr;
   pymol::vla<float> Coord;
   pymol::vla<int> IdxToAtm;
   pymol::vla<int> AtmToIdx;
-  int NIndex, NAtIndex, prevNIndex, prevNAtIndex;
-  ::Rep *Rep[cRepCnt];            /* an array of pointers to representations */
-  int Active[cRepCnt];          /* active flags */
-  int NTmpBond;                 /* optional, temporary (for coord set transfers) */
+  int NIndex = 0, NAtIndex = 0, prevNIndex = 0, prevNAtIndex = 0;
+  ::Rep *Rep[cRepCnt] = {0};            /* an array of pointers to representations */
+  int Active[cRepCnt] = {0};          /* active flags */
+  int NTmpBond = 0;                 /* optional, temporary (for coord set transfers) */
   pymol::vla<BondType> TmpBond;            /* actual bond info is stored in ObjectMolecule */
-  int NTmpLinkBond;             /* optional, temporary storage of linkage  info. */
-  BondType *TmpLinkBond;        /* first atom is in obj, second is in cset */
-  CSymmetry *Symmetry;
-  WordType Name;
-  pymol::vla<float> Spheroid;
-  pymol::vla<float> SpheroidNormal;
-  int NSpheroid;
-  int SpheroidSphereSize;
-  CSetting *Setting;
+  int NTmpLinkBond = 0;             /* optional, temporary storage of linkage  info. */
+  pymol::vla<BondType> TmpLinkBond;        /* first atom is in obj, second is in cset */
+  std::unique_ptr<CSymmetry> Symmetry;
+  WordType Name = {0};
+  std::vector<float> Spheroid;
+  std::vector<float> SpheroidNormal;
+  int SpheroidSphereSize = 0;
+  CSetting *Setting = nullptr;
   /* for periodic MD boxes -- may be merge into symmetry lattice later... */
-  CCrystal *PeriodicBox;
-  int PeriodicBoxType;
-  int tmp_index;                /* for saving */
+  std::unique_ptr<CCrystal> PeriodicBox;
+  int PeriodicBoxType = 0;
+  int tmp_index = 0;                /* for saving */
 
-  LabPosType *LabPos;
+  pymol::vla<LabPosType> LabPos;
 
   /* not saved in state */
 
-  RefPosType *RefPos;
+  pymol::vla<RefPosType> RefPos;
 
   /* idea:  
      int start_atix, stop_atix <-- for discrete objects, we need
@@ -108,13 +107,14 @@ typedef struct CoordSet {
      byres/bychain actions which assume such atoms to be adjancent...
    */
 
-  CGO *SculptCGO, *SculptShaderCGO;
-  MapType *Coord2Idx;
-  float Coord2IdxReq, Coord2IdxDiv;
+  CGO *SculptCGO = nullptr;
+  CGO *SculptShaderCGO = nullptr;
+  MapType *Coord2Idx = nullptr;
+  float Coord2IdxReq = 0, Coord2IdxDiv = 0;
 
   /* temporary / optimization */
 
-  int objMolOpInvalidated;
+  int objMolOpInvalidated = 0;
 #ifdef _PYMOL_IP_EXTRAS
   mmpymolx_prop_state_t validMMStereo;
   mmpymolx_prop_state_t validTextType;
@@ -124,9 +124,12 @@ typedef struct CoordSet {
 #endif
 
   /* Atom-state Settings */
-  int *atom_state_setting_id;
-  char *has_atom_state_settings;
-} CoordSet;
+  pymol::vla<int> atom_state_setting_id;
+  pymol::vla<char> has_atom_state_settings;
+  CoordSet(PyMOLGlobals * G);
+  CoordSet(const CoordSet &cs);
+  ~CoordSet();
+};
 
 typedef void (*fUpdateFn) (CoordSet *, int);
 
@@ -141,13 +144,13 @@ PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy);
 PyObject *CoordSetAsPyList(CoordSet * I);
 int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs);
 
-CoordSet *CoordSetNew(PyMOLGlobals * G);
 void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
                              const AtomInfoType * ai,
                              const float *v, int cnt,
                              const PDBInfoRec * pdb_info,
                              const double *matrix);
-CoordSet *CoordSetCopy(const CoordSet * cs);
+#define CoordSetNew(G) new CoordSet(G)
+CoordSet* CoordSetCopy(const CoordSet* src);
 
 void CoordSetTransform44f(CoordSet * I, const float *mat);
 void CoordSetTransform33f(CoordSet * I, const float *mat);

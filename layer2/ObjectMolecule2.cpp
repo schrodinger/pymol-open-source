@@ -2740,7 +2740,7 @@ pqr_done:
     cset->TmpBond = pymol::vla_take_ownership(bond);
     cset->NTmpBond = nBond;
     if(symmetry)
-      cset->Symmetry = symmetry;
+      cset->Symmetry = std::unique_ptr<CSymmetry>(symmetry);
     if(atInfoPtr)
       *atInfoPtr = atInfo;
     

@@ -283,7 +283,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                   }
 
                   frame++;
-		  /* make a new cs */
+                  /* make a new cs */
                   cs = CoordSetCopy(cs);        /* otherwise, we need a place to put the next set */
                   timestep.coords = (float *) cs->Coord;
                   n_avg = 0;

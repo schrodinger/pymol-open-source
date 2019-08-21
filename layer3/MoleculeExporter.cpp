@@ -521,7 +521,7 @@ struct MoleculeExporterPDB : public MoleculeExporter {
   }
 
   void writeCryst1() {
-    const auto& sym = m_iter.cs->Symmetry ? m_iter.cs->Symmetry : m_iter.obj->Symmetry;
+    const auto& sym = m_iter.cs->Symmetry ? m_iter.cs->Symmetry.get(): m_iter.obj->Symmetry;
 
     if (sym) {
       const auto& dim   = sym->Crystal.Dim;
@@ -620,7 +620,7 @@ struct MoleculeExporterCIF : public MoleculeExporter {
   }
 
   void writeCellSymmetry() {
-    const auto& sym = m_iter.cs->Symmetry ? m_iter.cs->Symmetry : m_iter.obj->Symmetry;
+    const auto& sym = m_iter.cs->Symmetry.get() ? m_iter.cs->Symmetry.get() : m_iter.obj->Symmetry;
 
     if (sym) {
       const auto& dim   = sym->Crystal.Dim;

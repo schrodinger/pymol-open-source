@@ -397,8 +397,8 @@ CGO *RepSphereGeneratespheroidCGO(ObjectMolecule * I, CoordSet *cs, SphereRec *s
     s = sp->StripLen;
     RepSphereCGOSetSphereColorAndPick(I, cs, cgo, idx, state, transp, sphere_color);
     for(b = 0; ok && b < sp->NStrip; b++) {
-      float *sphLen = cs->Spheroid + (sp->nDot * a);
-      float *sphNorm = cs->SpheroidNormal + (3 * sp->nDot * a);
+      float *sphLen = cs->Spheroid.data() + (sp->nDot * a);
+      float *sphNorm = cs->SpheroidNormal.data() + (3 * sp->nDot * a);
       CGOBegin(cgo, GL_TRIANGLE_STRIP);
       for(c = 0; c < (*s); c++) {
         float sphTmp, *sphTmpN = sphNorm + 3 * (*q);
@@ -518,7 +518,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     RepInit(G, &I->R);
   I->renderCGO = NULL;
   I->primitiveCGO = NULL;
-  if (cs->Spheroid)
+  if (!cs->Spheroid.empty())
     I->spheroidCGO = RepSphereGeneratespheroidCGO(obj, cs, G->Sphere->Sphere[1], state);
 
   if (ok){

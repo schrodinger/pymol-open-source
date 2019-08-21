@@ -81,7 +81,7 @@ int CoordSetValidateRefPos(CoordSet * I)
     VLACheck(I->RefPos, RefPosType, I->NIndex);
     return true;
   } else {
-    int ok = true && (I->RefPos = VLACalloc(RefPosType, I->NIndex));
+    int ok = true && (I->RefPos = pymol::vla<RefPosType>(I->NIndex));
     if(ok) {
       int a;
       for(a = 0; a < I->NIndex; a++) {
@@ -186,8 +186,8 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
 	CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 11);
 	if (!CPythonVal_IsNone(val)){
 	  int a;
-	  I->atom_state_setting_id = VLACalloc(int, I->NIndex);
-	  I->has_atom_state_settings = VLACalloc(char, I->NIndex);
+	  I->atom_state_setting_id = pymol::vla<int>(I->NIndex);
+	  I->has_atom_state_settings = pymol::vla<char>(I->NIndex);
 	  for (a=0; a<I->NIndex; a++){
 	    CPythonVal *val2 = CPythonVal_PyList_GetItem(G, val, a);
 	    if (!CPythonVal_IsNone(val2)){
@@ -384,6 +384,14 @@ void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom)
 
 }
 
+CoordSet* CoordSetCopy(const CoordSet* src)
+{
+  if(!src) {
+    return nullptr;
+  }
+  return new CoordSet(*src);
+}
+
 
 /*========================================================================*/
 int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs)
@@ -415,7 +423,7 @@ int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs)
   if (ok){
     if(cs->LabPos) {
       if(!I->LabPos)
-	I->LabPos = VLACalloc(LabPosType, nIndex);
+	I->LabPos = pymol::vla<LabPosType>(nIndex);
       else
 	VLACheck(I->LabPos, LabPosType, nIndex);
       if(I->LabPos) {
@@ -428,7 +436,7 @@ int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs)
   if (ok){
     if(cs->RefPos) {
       if(!I->RefPos)
-	I->RefPos = VLACalloc(RefPosType, nIndex);
+	I->RefPos = pymol::vla<RefPosType>(nIndex);
       else
 	VLACheck(I->RefPos, RefPosType, nIndex);
       if(I->RefPos) {
@@ -1141,10 +1149,10 @@ void CoordSet::invalidateRep(int type, int level)
     }
   }
 
-  if(I->Spheroid)
-    if(I->NSpheroid != I->NAtIndex * I->SpheroidSphereSize) {
-      FreeP(I->Spheroid);
-      FreeP(I->SpheroidNormal);
+  if(!I->Spheroid.empty())
+    if(I->Spheroid.size() != I->NAtIndex * I->SpheroidSphereSize) {
+      I->Spheroid.clear();
+      I->SpheroidNormal.clear();
     }
 
   /* invalidate basd on one representation, 'type' */
@@ -1507,59 +1515,57 @@ void CoordSet::render(RenderInfo * info)
 
 
 /*========================================================================*/
-CoordSet *CoordSetNew(PyMOLGlobals * G)
+CoordSet::CoordSet(PyMOLGlobals * G)
 {
-  OOCalloc(G, CoordSet);        /* NULL-initializes all fields */
-  ObjectStateInit(G, &I->State);
-  I->State.G = G;
-  I->PeriodicBoxType = cCSet_NoPeriodicity;
+  ObjectStateInit(G, &this->State);
+  this->PeriodicBoxType = cCSet_NoPeriodicity;
 
-  I->SpheroidSphereSize = I->State.G->Sphere->Sphere[1]->nDot;  /* does this make any sense? */
+  this->SpheroidSphereSize = this->State.G->Sphere->Sphere[1]->nDot;  /* does this make any sense? */
 
-  return (I);
 }
 
 /*========================================================================*/
-CoordSet *CoordSetCopy(const CoordSet * cs)
+CoordSet::CoordSet(const CoordSet& cs)
 {
-  if (!cs)
-    return NULL;
+  PyMOLGlobals * G = const_cast<PyMOLGlobals*>(cs.State.G);
 
-  PyMOLGlobals * G = const_cast<PyMOLGlobals*>(cs->State.G);
-
-  /* OOAlloc declares and defines, I:
-   * I = ... */
-  OOCalloc(G, CoordSet);
-  /* shallow copy */
-  (*I) = (*cs);                 /* NOTE: must deep-copy all pointers in this struct */
+  this->State = cs.State;
+  this->Obj = cs.Obj;
+  this->Coord = cs.Coord;
+  this->IdxToAtm = cs.IdxToAtm;
+  this->NIndex = cs.NIndex;
+  this->NAtIndex = cs.NAtIndex;
+  this->prevNIndex = cs.prevNIndex;
+  this->prevNAtIndex = cs.prevNAtIndex;
+  std::copy(std::begin(cs.Rep), std::end(cs.Rep), std::begin(this->Rep));
+  std::copy(std::begin(cs.Active), std::end(cs.Active), std::begin(this->Active));
+  this->NTmpBond = cs.NTmpBond;
+  this->NTmpLinkBond = cs.NTmpLinkBond;
   /* deep copy & return ptr to new symmetry */
-  if (I->Symmetry != nullptr) {
-    I->Symmetry = new CSymmetry(*cs->Symmetry);
+  if(cs.Symmetry) {
+    this->Symmetry = pymol::make_unique<CSymmetry>(*cs.Symmetry);
   }
-  if(I->PeriodicBox)
-    I->PeriodicBox = new CCrystal(*I->PeriodicBox);
+  if(cs.PeriodicBox) {
+    this->PeriodicBox = pymol::make_unique<CCrystal>(*cs.PeriodicBox);
+  }
+  std::copy(std::begin(cs.Name), std::end(cs.Name), std::begin(this->Name));
+  this->SpheroidSphereSize = cs.SpheroidSphereSize;
+  this->PeriodicBoxType = cs.PeriodicBoxType;
+  this->tmp_index = cs.tmp_index;
+  this->Coord2IdxReq = cs.Coord2IdxReq;
+  this->Coord2IdxDiv = cs.Coord2IdxDiv;
+  this->objMolOpInvalidated = cs.objMolOpInvalidated;
 
   // copy VLAs
-  I->LabPos     = VLACopy2(cs->LabPos);
-  I->RefPos     = VLACopy2(cs->RefPos);
-  I->AtmToIdx   = VLACopy2(cs->AtmToIdx);
+  this->LabPos     = cs.LabPos;
+  this->RefPos     = cs.RefPos;
+  this->AtmToIdx   = cs.AtmToIdx;
 
-  UtilZeroMem(I->Rep, sizeof(::Rep *) * cRepCnt);
+  UtilZeroMem(this->Rep, sizeof(::Rep *) * cRepCnt);
 
 #ifdef _PYMOL_IP_PROPERTIES
 #endif
 
-  I->Setting = NULL;
-  I->atom_state_setting_id = NULL;
-  I->has_atom_state_settings = NULL;
-  I->SculptCGO = NULL;
-  I->SculptShaderCGO = NULL;
-  I->TmpLinkBond = NULL;
-  I->TmpBond = NULL;
-  I->Spheroid = NULL;
-  I->SpheroidNormal = NULL;
-  I->Coord2Idx = NULL;
-  return (I);
 }
 
 
@@ -1663,7 +1669,7 @@ void CoordSet::enumIndices()
 
 
 /*========================================================================*/
-void CoordSet::fFree()
+CoordSet::~CoordSet()
 {
   CoordSet * I = this;
   int a;
@@ -1674,12 +1680,10 @@ void CoordSet::fFree()
 
     if (I->has_atom_state_settings){
       for(a = 0; a < I->NIndex; a++){
-	if (I->has_atom_state_settings[a]){
-	  SettingUniqueDetachChain(I->State.G, I->atom_state_setting_id[a]);
-	}
+        if (I->has_atom_state_settings[a]){
+          SettingUniqueDetachChain(I->State.G, I->atom_state_setting_id[a]);
+        }
       }
-      VLAFreeP(I->has_atom_state_settings);
-      VLAFreeP(I->atom_state_setting_id);
     }
     for(a = 0; a < cRepCnt; a++)
       if(I->Rep[a])
@@ -1691,23 +1695,14 @@ void CoordSet::fFree()
           obj->DiscreteAtmToIdx[I->IdxToAtm[a]] = -1;
           obj->DiscreteCSet[I->IdxToAtm[a]] = NULL;
         }
-    VLAFreeP(I->AtmToIdx);
-    VLAFreeP(I->IdxToAtm);
     MapFree(I->Coord2Idx);
-    VLAFreeP(I->Coord);
-    VLAFreeP(I->TmpBond);
-    if(I->Symmetry)
-      SymmetryFree(I->Symmetry);
-    if(I->PeriodicBox)
-      delete I->PeriodicBox;
     SettingFreeP(I->Setting);
-    ObjectStatePurge(&I->State);
     CGOFree(I->SculptCGO);
-    VLAFreeP(I->LabPos);
-    VLAFreeP(I->RefPos);
-    /* free and make null */
-    FreeP(I);
   }
+}
+void CoordSet::fFree()
+{
+  delete this;
 }
 void LabPosTypeCopy(const LabPosType * src, LabPosType * dst){
   dst->mode = src->mode;
@@ -1758,10 +1753,10 @@ PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, CoordSet *cs, int at, in
 
 int CoordSetCheckUniqueID(PyMOLGlobals * G, CoordSet *I, int at){
   if (!I->atom_state_setting_id){
-    I->atom_state_setting_id = VLACalloc(int, I->NIndex);
+    I->atom_state_setting_id = pymol::vla<int>(I->NIndex);
   }
   if (!I->has_atom_state_settings){
-    I->has_atom_state_settings = VLACalloc(char, I->NIndex);
+    I->has_atom_state_settings = pymol::vla<char>(I->NIndex);
   }
   if (!I->atom_state_setting_id[at]){
     I->atom_state_setting_id[at] = AtomInfoGetNewUniqueID(G);

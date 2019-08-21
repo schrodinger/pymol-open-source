@@ -9948,7 +9948,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
             else
               cs = NULL;
             if(cs) {
-              CCrystal *cryst = cs->PeriodicBox;
+              CCrystal *cryst = cs->PeriodicBox.get();
               if((!cryst) && (obj->Symmetry))
                 cryst = &obj->Symmetry->Crystal;
               if(cryst) {
@@ -9980,7 +9980,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
                       else
                         cs = NULL;
                       if(cs) {
-                        CCrystal *cryst = cs->PeriodicBox;
+                        CCrystal *cryst = cs->PeriodicBox.get();
                         if((!cryst) && (obj->Symmetry))
                           cryst = &obj->Symmetry->Crystal;
                         if(cryst) {
