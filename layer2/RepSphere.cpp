@@ -189,6 +189,11 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
     if(pick) {
       RepSphereRenderPick(I, info, sphere_mode);
     } else {                    /* not pick, render! */
+      if (I->spheroidCGO) {
+        CGORenderGL(I->spheroidCGO, NULL, NULL, NULL, info, &I->R);
+        return;
+      }
+
 #ifdef _PYMOL_ARB_SHADERS
       if (sphere_mode == 5){
         // we need to check sphere_mode 5 here until
@@ -519,7 +524,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   I->renderCGO = NULL;
   I->primitiveCGO = NULL;
   if (!cs->Spheroid.empty())
-    I->spheroidCGO = RepSphereGeneratespheroidCGO(obj, cs, G->Sphere->Sphere[1], state);
+    I->spheroidCGO = RepSphereGeneratespheroidCGO(obj, cs, GetSpheroidSphereRec(G), state);
 
   if (ok){
     sphere_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sphere_mode);

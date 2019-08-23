@@ -1150,7 +1150,8 @@ void CoordSet::invalidateRep(int type, int level)
   }
 
   if(!I->Spheroid.empty())
-    if(I->Spheroid.size() != I->NAtIndex * I->SpheroidSphereSize) {
+    if (I->Spheroid.size() !=
+        I->NAtIndex * GetSpheroidSphereRec(I->State.G)->nDot) {
       I->Spheroid.clear();
       I->SpheroidNormal.clear();
     }
@@ -1519,9 +1520,6 @@ CoordSet::CoordSet(PyMOLGlobals * G)
 {
   ObjectStateInit(G, &this->State);
   this->PeriodicBoxType = cCSet_NoPeriodicity;
-
-  this->SpheroidSphereSize = this->State.G->Sphere->Sphere[1]->nDot;  /* does this make any sense? */
-
 }
 
 /*========================================================================*/
@@ -1549,7 +1547,6 @@ CoordSet::CoordSet(const CoordSet& cs)
     this->PeriodicBox = pymol::make_unique<CCrystal>(*cs.PeriodicBox);
   }
   std::copy(std::begin(cs.Name), std::end(cs.Name), std::begin(this->Name));
-  this->SpheroidSphereSize = cs.SpheroidSphereSize;
   this->PeriodicBoxType = cs.PeriodicBoxType;
   this->tmp_index = cs.tmp_index;
   this->Coord2IdxReq = cs.Coord2IdxReq;

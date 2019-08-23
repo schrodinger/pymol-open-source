@@ -3994,7 +3994,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
   int current;
   int cscount;
   int n_state = 0;
-  sp = I->G->Sphere->Sphere[1];
+  sp = GetSpheroidSphereRec(I->G);
 
   nRow = I->NAtom * sp->nDot;
 

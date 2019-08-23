@@ -687,3 +687,8 @@ void SphereRender(PyMOLGlobals * G, int level, const float *centroid, const floa
   }
 #endif
 }
+
+SphereRec* GetSpheroidSphereRec(PyMOLGlobals* G)
+{
+  return G->Sphere->Sphere[2];
+}

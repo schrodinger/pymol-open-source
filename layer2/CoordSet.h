@@ -85,7 +85,6 @@ struct CoordSet {
   WordType Name = {0};
   std::vector<float> Spheroid;
   std::vector<float> SpheroidNormal;
-  int SpheroidSphereSize = 0;
   CSetting *Setting = nullptr;
   /* for periodic MD boxes -- may be merge into symmetry lattice later... */
   std::unique_ptr<CCrystal> PeriodicBox;
