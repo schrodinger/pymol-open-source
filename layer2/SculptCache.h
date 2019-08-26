@@ -28,7 +28,7 @@ typedef struct SculptCacheEntry {
 
 struct _CSculptCache {
   int NCached;
-  int *Hash;
+  std::vector<int> Hash;
   SculptCacheEntry *List;
 };
 

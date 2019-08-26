@@ -30,7 +30,7 @@ Z* -------------------------------------------------------------------
 #include "Executive_pre.h"
 #include "vla.h"
 #include "Result.h"
-
+#include "Sculpt.h"
 #include <memory>
 
 #ifdef _WEBGL

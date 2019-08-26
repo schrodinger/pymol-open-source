@@ -33,40 +33,32 @@ Z* -------------------------------------------------------------------
 static void SculptCacheCheck(PyMOLGlobals * G)
 {
   CSculptCache *I = G->SculptCache;
-  if(!I->Hash) {
-    I->Hash = pymol::calloc<int>(CACHE_HASH_SIZE);
+  if(I->Hash.empty()) {
+    I->Hash = std::vector<int>(CACHE_HASH_SIZE);
   }
 }
 
 int SculptCacheInit(PyMOLGlobals * G)
 {
-  CSculptCache *I = NULL;
-  if((I = (G->SculptCache = pymol::calloc<CSculptCache>(1)))) {
-    I->Hash = NULL;             /* don't allocate until we need it */
-    I->List = VLAlloc(SculptCacheEntry, 16);
-    I->NCached = 1;
-    return 1;
-  } else {
-    return 0;
-  }
+  G->SculptCache = new CSculptCache();
+  auto I = G->SculptCache;
+  I->List = VLAlloc(SculptCacheEntry, 16);
+  I->NCached = 1;
+  return 1;
 }
 
 void SculptCachePurge(PyMOLGlobals * G)
 {
   CSculptCache *I = G->SculptCache;
-  if(I->Hash) {
-    FreeP(I->Hash);
-    I->Hash = NULL;
-  }
+  I->Hash.clear();
   I->NCached = 1;
 }
 
 void SculptCacheFree(PyMOLGlobals * G)
 {
   CSculptCache *I = G->SculptCache;
-  FreeP(I->Hash);
   VLAFreeP(I->List);
-  FreeP(G->SculptCache);
+  DeleteP(I);
 }
 
 int SculptCacheQuery(PyMOLGlobals * G, int rest_type, int id0, int id1, int id2, int id3,
@@ -76,10 +68,10 @@ int SculptCacheQuery(PyMOLGlobals * G, int rest_type, int id0, int id1, int id2,
   int *v, i;
   SculptCacheEntry *e;
   int found = false;
-  if(!I->Hash)
+  if(I->Hash.empty())
     SculptCacheCheck(G);
-  if(I->Hash) {
-    v = I->Hash + cache_hash(id0, id1, id2, id3);
+  if(!I->Hash.empty()) {
+    v = I->Hash.data() + cache_hash(id0, id1, id2, id3);
     i = (*v);
     while(i) {
       e = I->List + i;
@@ -102,10 +94,10 @@ void SculptCacheStore(PyMOLGlobals * G, int rest_type, int id0, int id1, int id2
   int *v, i;
   SculptCacheEntry *e;
   int found = false;
-  if(!I->Hash)
+  if(I->Hash.empty())
     SculptCacheCheck(G);
-  if(I->Hash) {
-    v = I->Hash + cache_hash(id0, id1, id2, id3);
+  if(!I->Hash.empty()) {
+    v = I->Hash.data() + cache_hash(id0, id1, id2, id3);
     i = (*v);
     while(i) {
       e = I->List + i;;
@@ -119,7 +111,7 @@ void SculptCacheStore(PyMOLGlobals * G, int rest_type, int id0, int id1, int id2
     }
     if(!found) {
       VLACheck(I->List, SculptCacheEntry, I->NCached);
-      v = I->Hash + cache_hash(id0, id1, id2, id3);
+      v = I->Hash.data() + cache_hash(id0, id1, id2, id3);
       e = I->List + I->NCached;
       e->next = *v;
       *v = I->NCached;          /* become new head of list */

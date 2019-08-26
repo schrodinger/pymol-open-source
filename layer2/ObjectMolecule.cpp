@@ -2487,10 +2487,8 @@ void ObjectMoleculeSculptClear(ObjectMolecule * I)
 {
   PRINTFD(I->G, FB_ObjectMolecule)
     " %s: entered.\n", __func__ ENDFD;
-
   if(I->Sculpt)
-    SculptFree(I->Sculpt);
-  I->Sculpt = NULL;
+    DeleteP(I->Sculpt);
 }
 
 void ObjectMoleculeSculptImprint(ObjectMolecule * I, int state, int match_state,
@@ -2500,7 +2498,7 @@ void ObjectMoleculeSculptImprint(ObjectMolecule * I, int state, int match_state,
     " %s: entered.\n", __func__ ENDFD;
 
   if(!I->Sculpt)
-    I->Sculpt = SculptNew(I->G);
+    I->Sculpt = new CSculpt(I->G);
   SculptMeasureObject(I->Sculpt, I, state, match_state, match_by_segment);
 }
 
@@ -11088,8 +11086,7 @@ void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state)
   if(level >= cRepInvBonds) {
     VLAFreeP(I->Neighbor);      /* set I->Neighbor to NULL */
     if(I->Sculpt) {
-      SculptFree(I->Sculpt);
-      I->Sculpt = NULL;
+      DeleteP(I->Sculpt);
     }
     if(level >= cRepInvAtoms) {
       SelectorUpdateObjectSele(I->G, I);
@@ -11810,7 +11807,7 @@ void ObjectMoleculeFree(ObjectMolecule * I)
   for(a = 0; a <= cUndoMask; a++)
     FreeP(I->UndoCoord[a]);
   if(I->Sculpt)
-    SculptFree(I->Sculpt);
+    DeleteP(I->Sculpt);
   if(I->CSTmpl)
     I->CSTmpl->fFree();
   ObjectPurge(I);

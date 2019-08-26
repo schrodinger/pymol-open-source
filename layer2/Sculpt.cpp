@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"Editor.h"
 #include "Lex.h"
+#include "ObjectMolecule.h"
 
 #include"CGO.h"
 
@@ -230,23 +231,21 @@ static float ShakerDoDistMinim(float target, float *v0, float *v1, float *d0to1,
   }
 }
 
-CSculpt *SculptNew(PyMOLGlobals * G)
+CSculpt::CSculpt (PyMOLGlobals * G)
 {
-  OOAlloc(G, CSculpt);
-  I->G = G;
-  I->Shaker = ShakerNew(G);
-  I->NBList = VLAlloc(int, 150000);
-  I->NBHash = pymol::calloc<int>(NB_HASH_SIZE);
-  I->EXList = VLAlloc(int, 100000);
-  I->EXHash = pymol::calloc<int>(EX_HASH_SIZE);
-  I->Don = VLAlloc(int, 1000);
-  I->Acc = VLAlloc(int, 1000);
+  this->G = G;
+  this->Shaker = ShakerNew(G);
+  this->NBList = pymol::vla<int>(150000);
+  this->NBHash = std::vector<int>(NB_HASH_SIZE);
+  this->EXList = pymol::vla<int>(100000);
+  this->EXHash = std::vector<int>(EX_HASH_SIZE);
+  this->Don = pymol::vla<int>(1000);
+  this->Acc = pymol::vla<int>(1000);
   {
     int a;
     for(a = 1; a < 256; a++)
-      I->inverse[a] = 1.0F / a;
+      this->inverse[a] = 1.0F / a;
   }
-  return (I);
 }
 
 typedef struct {
@@ -405,8 +404,8 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
 
   ShakerReset(I->Shaker);
 
-  UtilZeroMem(I->NBHash, NB_HASH_SIZE * sizeof(int));
-  UtilZeroMem(I->EXHash, EX_HASH_SIZE * sizeof(int));
+  UtilZeroMem(I->NBHash.data(), NB_HASH_SIZE * sizeof(int));
+  UtilZeroMem(I->EXHash.data(), EX_HASH_SIZE * sizeof(int));
 
   if((state >= 0) && (state < obj->NCSet) && (obj->CSet[state])) {
     obj_atomInfo = obj->AtomInfo;
@@ -606,7 +605,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
         xhash = ((b2 > b1) ? ex_hash(b1, b2) : ex_hash(b2, b1));
         VLACheck(I->EXList, int, nex + 3);
         j = I->EXList + nex;
-        *(j++) = *(I->EXHash + xhash);
+        *(j++) = I->EXHash[xhash];
         if(b2 > b1) {
           *(j++) = b1;
           *(j++) = b2;
@@ -615,7 +614,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
           *(j++) = b1;
         }
         *(j++) = 2;             /* 1-2 exclusion */
-        *(I->EXHash + xhash) = nex;
+        I->EXHash[xhash] = nex;
         nex += 4;
 
         a1 = crdidx[b1];
@@ -871,7 +870,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
             xhash = ((b2 > b1) ? ex_hash(b1, b2) : ex_hash(b2, b1));
             VLACheck(I->EXList, int, nex + 3);
             j = I->EXList + nex;
-            *(j++) = *(I->EXHash + xhash);
+            *(j++) = I->EXHash[xhash];
             if(b2 > b1) {
               *(j++) = b1;
               *(j++) = b2;
@@ -880,7 +879,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
               *(j++) = b1;
             }
             *(j++) = 3;         /* 1-3 exclusion */
-            *(I->EXHash + xhash) = nex;
+            I->EXHash[xhash] = nex;
             nex += 4;
 
             a0 = crdidx[b0];
@@ -1103,7 +1102,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
 
                   ex_type = 4;
 
-                  xoffset = *(I->EXHash + xhash);
+                  xoffset = I->EXHash[xhash];
                   while(xoffset) {
                     k = I->EXList + xoffset;
                     if((abs(*(k + 3)) == 4) && (*(k + 1) == b1) && (*(k + 2) == b3)) {
@@ -1122,7 +1121,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                   if(ex_type) {
                     VLACheck(I->EXList, int, nex + 5);
                     j = I->EXList + nex;
-                    *(j++) = *(I->EXHash + xhash);
+                    *(j++) = I->EXHash[xhash];
                     *(j++) = b1;
                     *(j++) = b3;
                     if(planar[b0] && planar[b2])
@@ -1131,7 +1130,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                       *(j++) = ex_type;
                     *(j++) = b0;
                     *(j++) = b2;
-                    *(I->EXHash + xhash) = nex;
+                    I->EXHash[xhash]= nex;
 
                     nex += 6;
                   }
@@ -1286,7 +1285,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
 
                           ex_type = 5;
 
-                          xoffset = *(I->EXHash + xhash);
+                          xoffset = I->EXHash[xhash];
                           while(xoffset) {
                             k = I->EXList + xoffset;
                             if(((*(k + 3)) == ex_type) &&
@@ -1300,14 +1299,14 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                           if(ex_type) {
                             VLACheck(I->EXList, int, nex + 6);
                             j = I->EXList + nex;
-                            *(j++) = *(I->EXHash + xhash);
+                            *(j++) = I->EXHash[xhash];
                             *(j++) = b1;
                             *(j++) = b4;
                             *(j++) = ex_type;
                             *(j++) = b0;
                             *(j++) = b2;
                             *(j++) = b3;
-                            *(I->EXHash + xhash) = nex;
+                            I->EXHash[xhash] = nex;
                             nex += 6;
                           }
                         }
@@ -1371,11 +1370,11 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
 
                     VLACheck(I->EXList, int, nex + 3);
                     j = I->EXList + nex;
-                    *(j++) = *(I->EXHash + xhash);
+                    *(j++) = I->EXHash[xhash];
                     *(j++) = b0;
                     *(j++) = bd;
                     *(j++) = depth + 1; /* 1-5, 1-6, 1-7 etc. */
-                    *(I->EXHash + xhash) = nex;
+                    I->EXHash[xhash] = nex;
                     nex += 4;
                   }
                 } else {
@@ -2099,10 +2098,10 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
               v0 = cs_coord + 3 * a0;
               hash = nb_hash(v0);
               i = I->NBList + nb_next;
-              *(i++) = *(I->NBHash + hash);
+              *(i++) = I->NBHash[hash];
               *(i++) = hash;
               *(i++) = b0;
-              *(I->NBHash + hash) = nb_next;
+              I->NBHash[hash] = nb_next;
               nb_next += 3;
             }
 
@@ -2125,7 +2124,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
                     nb_off1 = nb_off0 | nb_hash_off_i1(v1i, k);
                     for(l = -4; l < 5; l += 4) {
                       /*  offset = *(I->NBHash+nb_hash_off(v0,h,k,l)); */
-                      offset = *(I->NBHash + (nb_off1 | nb_hash_off_i2(v2i, l)));
+                      offset = I->NBHash[nb_off1 | nb_hash_off_i2(v2i, l)];
                       while(offset) {
                         i = I->NBList + offset;
                         b1 = *(i + 2);
@@ -2136,7 +2135,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
                             int *I_EXList = I->EXList;
                             int ex1;
                             int *j;
-                            xoffset = *(I->EXHash + (x0i | ex_hash_i1(b1)));
+                            xoffset = I->EXHash[x0i | ex_hash_i1(b1)];
                             ex = 10;
                             while(xoffset) {
                               xoffset = (*(j = I_EXList + xoffset));
@@ -2243,7 +2242,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
                     nb_off1 = nb_off0 | nb_hash_off_i1(v1i, k);
                     for(l = -8; l < 9; l += 4) {
                       /*  offset = *(I->NBHash+nb_hash_off(v0,h,k,l)); */
-                      offset = *(I->NBHash + (nb_off1 | nb_hash_off_i2(v2i, l)));
+                      offset = I->NBHash[nb_off1 | nb_hash_off_i2(v2i, l)];
                       while(offset) {
                         i = I->NBList + offset;
                         b1 = *(i + 2);
@@ -2254,7 +2253,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
                             int *I_EXList = I->EXList;
                             int ex1;
                             int *j;
-                            xoffset = *(I->EXHash + (x0i | ex_hash_i1(b1)));
+                            xoffset = I->EXHash[x0i | ex_hash_i1(b1)];
                             ex = 10;
                             while(xoffset) {
                               xoffset = (*(j = I_EXList + xoffset));
@@ -2295,7 +2294,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
 
             i = I->NBList + 2;
             while(nb_next > 1) {
-              *(I->NBHash + *i) = 0;
+              I->NBHash[*i] = 0;
               i += 3;
               nb_next -= 3;
             }
@@ -2398,15 +2397,8 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
   return total_strain;
 }
 
-void SculptFree(CSculpt * I)
+CSculpt::~CSculpt()
 {
-  VLAFreeP(I->Don);
-  VLAFreeP(I->Acc);
-  VLAFreeP(I->NBList);
-  VLAFreeP(I->EXList);
 
-  FreeP(I->NBHash);
-  FreeP(I->EXHash);
-  ShakerFree(I->Shaker);
-  OOFreeP(I);
+  ShakerFree(this->Shaker);
 }

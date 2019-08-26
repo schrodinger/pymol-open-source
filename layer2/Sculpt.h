@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 #define _H_Sculpt
 
 #include"Shaker.h"
-#include"ObjectMolecule.h"
+#include"vla.h"
 
 #define cSculptBond  0x001
 #define cSculptAngl  0x002
@@ -33,25 +33,27 @@ Z* -------------------------------------------------------------------
 #define cSculptMax   0x400
 #define cSculptAvoid 0x800
 
-typedef struct CSculpt {
+struct CSculpt {
   PyMOLGlobals *G;
   CShaker *Shaker;
   ObjectMolecule *Obj;
-  int *NBHash;
-  int *NBList;
-  int *EXHash;
-  int *EXList;
-  int *Don;
-  int *Acc;
+  std::vector<int> NBHash;
+  pymol::vla<int> NBList;
+  std::vector<int> EXHash;
+  pymol::vla<int> EXList;
+  pymol::vla<int> Don;
+  pymol::vla<int> Acc;
   float inverse[256];
-} CSculpt;
+  CSculpt(PyMOLGlobals * G);
+  ~CSculpt();
+};
 
-CSculpt *SculptNew(PyMOLGlobals * G);
+struct ObjectMolecule;
+
 void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match_state,
                          int match_by_segment);
 float SculptIterateObject(CSculpt * I, ObjectMolecule * obj, int state, int n_cycle,
                           float *center);
 
-void SculptFree(CSculpt * I);
 
 #endif
