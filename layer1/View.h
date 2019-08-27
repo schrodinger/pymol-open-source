@@ -102,5 +102,7 @@ int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, i
 int ViewElemXtoFrame(BlockRect *rect, int frames, int x, int nearest);
 void ViewElemDrawBox(PyMOLGlobals *G, BlockRect *rect,int first, int last,
                      int frames, float *color4, int fill, CGO *orthoCGO);
+void ViewElemDrawLabel(
+    PyMOLGlobals* G, const char* label, const BlockRect* rect, CGO* orthoCGO);
 
 #endif

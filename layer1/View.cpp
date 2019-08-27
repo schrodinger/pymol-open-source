@@ -301,8 +301,15 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
     }
 
     if(title)
-      TextDrawStrAt(G, title, rect->right + 1, (rect->bottom+rect->top)/2 - 3 ORTHOCGOARGVAR);
+      ViewElemDrawLabel(G, title, rect, orthoCGO);
   }
+}
+
+void ViewElemDrawLabel(
+    PyMOLGlobals* G, const char* label, const BlockRect* rect, CGO* orthoCGO)
+{
+  TextDrawStrAt(
+      G, label, rect->right + 1, (rect->bottom + rect->top) / 2 - 3, orthoCGO);
 }
 
 void ViewElemCopy(PyMOLGlobals * G, const CViewElem * src, CViewElem * dst)

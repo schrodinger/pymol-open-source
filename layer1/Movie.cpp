@@ -1781,7 +1781,7 @@ int MovieGetPanelHeight(PyMOLGlobals * G)
     if(MovieGetLength(G)) {
       movie_panel = 1;
     } else {
-      movie_panel = 0;
+      movie_panel = SceneGetNFrame(G) > 1;
     }
   }
   
@@ -1810,10 +1810,6 @@ void MovieDrawViewElem(PyMOLGlobals *G, BlockRect *rect,int frames ORTHOCGOARG)
 
 bool CMovie::fastDraw(CGO* orthoCGO)
 {
-  PyMOLGlobals *G = m_G;
-  CMovie *I = G->Movie;
-  I->m_ScrollBar.drawNoFill(orthoCGO);
-  I->m_ScrollBar.drawHandle(0.35F, orthoCGO);
   return true;
 }
 
@@ -1822,7 +1818,7 @@ void CMovie::draw(CGO* orthoCGO)
   PyMOLGlobals *G = m_G;
   CMovie *I = G->Movie;
   if(I->PanelActive) {
-    int n_frame = MovieGetLength(G);
+    int n_frame = SceneGetNFrame(G);
     int frame = SceneGetFrame(G);
     int count = ExecutiveCountMotions(G);
     BlockRect tmpRect = rect;
@@ -1866,10 +1862,7 @@ void CMovie::draw(CGO* orthoCGO)
       }
       I->m_ScrollBar.setBox(tmpRect.top, tmpRect.left,
                              tmpRect.bottom, tmpRect.right);
-      if (orthoCGO){
-	I->m_ScrollBar.fill(orthoCGO);
-	ExecutiveMotionDraw(G,&tmpRect,count ORTHOCGOARGVAR);
-      } else {
+      {
 	I->m_ScrollBar.draw(orthoCGO);
 	ExecutiveMotionDraw(G,&tmpRect,count ORTHOCGOARGVAR);
 	I->m_ScrollBar.drawHandle(0.35F, orthoCGO);
@@ -1919,6 +1912,10 @@ void CMovie::draw(CGO* orthoCGO)
           break;
         }
 
+      }
+
+      if (!ViewElem) {
+        ViewElemDrawLabel(G, "states", &tmpRect, orthoCGO);
       }
     }
   }

@@ -60,7 +60,7 @@ void SceneInvalidate(PyMOLGlobals * G); /* scene dirty and remove the overlay */
 void SceneChanged(PyMOLGlobals * G);    /* update 3D objects */
 
 int SceneCountFrames(PyMOLGlobals * G);
-int SceneGetNFrame(PyMOLGlobals * G, int *has_movie);
+int SceneGetNFrame(PyMOLGlobals * G, int *has_movie=nullptr);
 void SceneSetMatrix(PyMOLGlobals * G, float *);
 float *SceneGetMatrix(PyMOLGlobals * G);
 

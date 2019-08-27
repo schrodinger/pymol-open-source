@@ -577,6 +577,9 @@ int ExecutiveCountMotions(PyMOLGlobals * G)
       }
     }
   }
+
+  if (count < 1 && SceneGetNFrame(G) > 1)
+    count = 1;
   
   if(count != I->LastMotionCount) {
     if(SettingGetGlobal_i(G,cSetting_movie_panel)) {
