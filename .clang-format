@@ -16,7 +16,7 @@ AlwaysBreakBeforeMultilineStrings: false
 BreakBeforeBraces: Linux
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
-BreakConstructorInitializersBeforeComma: false
+BreakConstructorInitializersBeforeComma: true
 BinPackParameters: true
 BinPackArguments: true
 ColumnLimit:     80
