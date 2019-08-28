@@ -249,7 +249,7 @@ int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete
   // discrete setup
   I->DiscreteFlag = discrete;
   ok_assert(1, I->DiscreteAtmToIdx = pymol::vla<int>(maxnatom));
-  ok_assert(1, I->DiscreteCSet = VLACalloc(CoordSet*, maxnatom));
+  ok_assert(1, I->DiscreteCSet = pymol::vla<CoordSet*>(maxnatom));
 
   // for all coordinate sets
   for (state = 0; state < I->NCSet; state++) {
@@ -11633,7 +11633,7 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
     I->DiscreteAtmToIdx = pymol::vla<int>(0);
     CHECKOK(ok, I->DiscreteAtmToIdx);
     if (ok)
-      I->DiscreteCSet = VLACalloc(CoordSet*, 0);
+      I->DiscreteCSet = pymol::vla<CoordSet*>(0);
     CHECKOK(ok, I->DiscreteCSet);
     if (!ok){
       ObjectMoleculeFree(I);
@@ -11710,7 +11710,7 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
   if (obj->DiscreteFlag){
     int sz = VLAGetSize(obj->DiscreteAtmToIdx);
     I->DiscreteAtmToIdx = VLACopy2(obj->DiscreteAtmToIdx);
-    I->DiscreteCSet = VLACalloc(CoordSet*, sz);
+    I->DiscreteCSet = pymol::vla<CoordSet*>(sz);
     I->updateAtmToIdx();
   }
   I->Bond = pymol::vla<BondType>(I->NBond);

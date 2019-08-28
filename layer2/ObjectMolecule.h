@@ -69,7 +69,7 @@ struct ObjectMolecule : public CObject {
 	/* is this object loaded as a discrete object? if so, number of states */
   int DiscreteFlag;
   pymol::vla<int> DiscreteAtmToIdx;
-  struct CoordSet **DiscreteCSet;
+  pymol::vla<CoordSet*> DiscreteCSet;
   /* proposed, for storing uniform trajectory data more efficiently:
      int *UniformAtmToIdx, *UniformIdxToAtm;  */
   int CurCSet;                  /* Current state number */

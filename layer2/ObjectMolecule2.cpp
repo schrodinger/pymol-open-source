@@ -4057,7 +4057,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
 	}
         VLAFreeP(I->DiscreteCSet);
         VLAFreeP(I->DiscreteAtmToIdx);
-        I->DiscreteCSet = dcs;
+        I->DiscreteCSet = pymol::vla_take_ownership(dcs);
         I->DiscreteAtmToIdx = pymol::vla_take_ownership(dAtmToIdx);
       }
     }
