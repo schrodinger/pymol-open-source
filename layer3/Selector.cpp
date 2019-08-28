@@ -6650,7 +6650,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
     if(discrete < 0)
       discrete = SelectorIsSelectionDiscrete(G, sele, false);
     targ = ObjectMoleculeNew(G, discrete);
-    targ->Bond = VLACalloc(BondType, 1);
+    targ->Bond = pymol::vla<BondType>(1);
     {
       /* copy object color of previous object (if any) */
       ObjectMolecule *singleObj = NULL;

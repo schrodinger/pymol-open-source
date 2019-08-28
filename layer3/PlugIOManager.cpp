@@ -668,7 +668,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   // copy bonds
   if (nbonds) {
     I->NBond = nbonds;
-    I->Bond = VLACalloc(BondType, nbonds);
+    I->Bond = pymol::vla<BondType>(nbonds);
     for (int i = 0; i < nbonds; i++) {
       BondTypeInit2(I->Bond + i, from[i] - 1, to[i] - 1,
           order ? (int) order[i] : 1);

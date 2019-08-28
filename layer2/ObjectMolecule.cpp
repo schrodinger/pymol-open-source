@@ -4455,7 +4455,7 @@ int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order)
         s2 = ai2->selEntry;
         if(SelectorIsMember(I->G, s2, sele1)) {
           if(!I->Bond){
-            I->Bond = VLACalloc(BondType, 1);
+            I->Bond = pymol::vla<BondType>(1);
 	    BondTypeInit(I->Bond);
 	  }
           if(I->Bond) {
@@ -4495,7 +4495,7 @@ pymol::Result<> ObjectMoleculeAddBondByIndices(
   }
 
   if (!I->Bond) {
-    I->Bond = VLACalloc(BondType, 1);
+    I->Bond = pymol::vla<BondType>(1);
   } else {
     VLACheck(I->Bond, BondType, I->NBond);
   }
@@ -9206,7 +9206,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
         nBd = I->NBond + c;
 
         if(!I->Bond)
-          I->Bond = VLACalloc(BondType, 1);
+          I->Bond = pymol::vla<BondType>(1);
 	CHECKOK(ok, I->Bond);
 	if (ok)
 	  VLACheck(I->Bond, BondType, nBd);
@@ -11680,7 +11680,8 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
   PyMOLGlobals * G = const_cast<PyMOLGlobals*>(obj->G);
 
   int a;
-  BondType *i0, *i1;
+  BondType *i0;
+  const BondType *i1;
   OOCalloc(G, ObjectMolecule);
   (*I) = (*obj);
   if (I->Symmetry != nullptr) {
@@ -11712,9 +11713,9 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
     I->DiscreteCSet = VLACalloc(CoordSet*, sz);
     I->updateAtmToIdx();
   }
-  I->Bond = VLACalloc(BondType, I->NBond);
+  I->Bond = pymol::vla<BondType>(I->NBond);
   i0 = I->Bond;
-  i1 = obj->Bond;
+  i1 = obj->Bond.data();
   for(a = 0; a < I->NBond; a++) {
     AtomInfoBondCopy(G, i1++, i0++);
   }

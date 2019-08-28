@@ -23,7 +23,7 @@ void SideChainHelperMarkNonCartoonBonded(bool * marked,
   auto G = obj->G;
   int a1, a2;
 
-  auto b = obj->Bond;
+  auto b = obj->Bond.data();
   auto b_end = b + obj->NBond;
 
   for(; b < b_end; ++b) {

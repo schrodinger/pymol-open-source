@@ -60,7 +60,7 @@ struct ObjectMolecule : public CObject {
   int NCSet;
   struct CoordSet *CSTmpl;      /* template for trajectories, etc. */
 	/* array of bonds */
-  BondType *Bond;
+  pymol::vla<BondType> Bond;
 	/* array of atoms (infos) */
   pymol::vla<AtomInfoType> AtomInfo;
 	/* number of atoms and bonds */

@@ -160,7 +160,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
   I->Color = AtomInfoUpdateAutoColor(G);
   I->NAtom = container->numAtoms;
   I->NCSet = container->numModels;
-  I->Bond = VLAlloc(BondType, container->numBonds);
+  I->Bond = pymol::vla<BondType>(container->numBonds);
   VLASize(I->AtomInfo, AtomInfoType, I->NAtom);
   VLASize(I->CSet, CoordSet *, I->NCSet);
 

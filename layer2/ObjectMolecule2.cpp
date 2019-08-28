@@ -3195,7 +3195,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
     auto strval = PyBytes_AsSomeString(strobj);
 
     if(ok)
-      ok = ((I->Bond = VLAlloc(BondType, I->NBond)) != NULL);
+      ok = bool((I->Bond = pymol::vla<BondType>(I->NBond)));
 
     Copy_Into_BondType_From_Version(strval.data(), bondInfo_version, I->Bond, I->NBond);
 
@@ -3203,7 +3203,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
     CPythonVal_Free(strobj);
   } else {
     if(ok)
-    ok = ((I->Bond = VLAlloc(BondType, I->NBond)) != NULL);
+      ok = bool((I->Bond = pymol::vla<BondType>(I->NBond)));
   bond = I->Bond;
   for(a = 0; a < I->NBond; a++) {
     bond_list = NULL;

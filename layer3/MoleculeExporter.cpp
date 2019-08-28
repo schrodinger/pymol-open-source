@@ -400,7 +400,7 @@ void MoleculeExporter::populateBondRefs() {
   auto& obj = m_last_obj;
   int id1, id2;
 
-  for (auto bond = obj->Bond, bond_end = obj->Bond + obj->NBond;
+  for (auto bond = obj->Bond.data(), bond_end = obj->Bond.data() + obj->NBond;
       bond != bond_end; ++bond) {
 
     auto atm1 = bond->index[0];

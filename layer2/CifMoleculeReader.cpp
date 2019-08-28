@@ -269,7 +269,7 @@ static void ObjectMoleculeConnectDiscrete(ObjectMolecule * I) {
       continue;
 
     if (!I->Bond) {
-      I->Bond = bond;
+      I->Bond = pymol::vla_take_ownership(bond);
     } else {
       VLASize(I->Bond, BondType, I->NBond + nbond);
       std::copy(bond, bond + nbond, I->Bond + I->NBond);
@@ -479,7 +479,7 @@ static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
 
   // reserve some memory for new bonds
   if (!I->Bond) {
-    I->Bond = VLACalloc(BondType, I->NAtom * 4);
+    I->Bond = pymol::vla<BondType>(I->NAtom * 4);
   } else {
     VLACheck(I->Bond, BondType, I->NAtom * 4);
   }
@@ -1601,7 +1601,7 @@ static bool read_atom_site_aniso(PyMOLGlobals * G, const cif_data * data,
  *
  * return: BondType VLA
  */
-static BondType * read_geom_bond(PyMOLGlobals * G, const cif_data * data,
+static pymol::vla<BondType> read_geom_bond(PyMOLGlobals * G, const cif_data * data,
     AtomInfoType * atInfo) {
 
   const cif_array *arr_ID_1, *arr_ID_2;
@@ -1609,7 +1609,7 @@ static BondType * read_geom_bond(PyMOLGlobals * G, const cif_data * data,
                                 "_geom_bond_atom_site_label_1")) == nullptr ||
       (arr_ID_2 = data->get_arr("_geom_bond.atom_site_id_2",
                                 "_geom_bond_atom_site_label_2")) == nullptr)
-    return nullptr;
+    return {};
 
   const cif_array *arr_symm_1 = data->get_opt("_geom_bond?site_symmetry_1");
   const cif_array *arr_symm_2 = data->get_opt("_geom_bond?site_symmetry_2");
@@ -1618,8 +1618,8 @@ static BondType * read_geom_bond(PyMOLGlobals * G, const cif_data * data,
   int nAtom = VLAGetSize(atInfo);
   int nBond = 0;
 
-  BondType *bondvla, *bond;
-  bondvla = bond = VLACalloc(BondType, 6 * nAtom);
+  auto bondvla = pymol::vla<BondType>(6 * nAtom);
+  auto bond = bondvla.data();
 
   // name -> atom index
   std::map<std::string, int> name_dict;
@@ -1667,7 +1667,7 @@ static BondType * read_geom_bond(PyMOLGlobals * G, const cif_data * data,
  *
  * return: BondType VLA
  */
-static BondType * read_chemical_conn_bond(PyMOLGlobals * G, const cif_data * data) {
+static pymol::vla<BondType> read_chemical_conn_bond(PyMOLGlobals * G, const cif_data * data) {
 
   const cif_array *arr_number, *arr_atom_1, *arr_atom_2, *arr_type;
 
@@ -1675,13 +1675,13 @@ static BondType * read_chemical_conn_bond(PyMOLGlobals * G, const cif_data * dat
       (arr_atom_1 = data->get_arr("_chemical_conn_bond?atom_1")) == nullptr ||
       (arr_atom_2 = data->get_arr("_chemical_conn_bond?atom_2")) == nullptr ||
       (arr_type   = data->get_arr("_chemical_conn_bond?type")) == nullptr)
-    return nullptr;
+    return {};
 
   int nAtom = arr_number->size();
   int nBond = arr_atom_1->size();
 
-  BondType *bondvla, *bond;
-  bondvla = bond = VLACalloc(BondType, nBond);
+  auto bondvla = pymol::vla<BondType>(nBond);
+  auto bond = bondvla.data();
 
   // chemical_conn_number -> atom index
   std::map<int, int> number_dict;
@@ -1867,7 +1867,7 @@ next_row:;
  *
  * return: BondType VLA
  */
-static BondType * read_chem_comp_bond(PyMOLGlobals * G, const cif_data * data,
+static pymol::vla<BondType> read_chem_comp_bond(PyMOLGlobals * G, const cif_data * data,
     AtomInfoType * atInfo) {
 
   const cif_array *col_ID_1, *col_ID_2, *col_comp_id;
@@ -1875,7 +1875,7 @@ static BondType * read_chem_comp_bond(PyMOLGlobals * G, const cif_data * data,
   if ((col_ID_1    = data->get_arr("_chem_comp_bond.atom_id_1")) == nullptr ||
       (col_ID_2    = data->get_arr("_chem_comp_bond.atom_id_2")) == nullptr ||
       (col_comp_id = data->get_arr("_chem_comp_bond.comp_id")) == nullptr)
-    return nullptr;
+    return {};
 
   // "_chem_comp_bond.type" seems to be non-standard here. It's found in the
   // wild with values like "double" and "aromatic". mmcif_nmr-star.dic defines
@@ -1889,8 +1889,8 @@ static BondType * read_chem_comp_bond(PyMOLGlobals * G, const cif_data * data,
   int nAtom = VLAGetSize(atInfo);
   int nBond = 0;
 
-  BondType *bondvla, *bond;
-  bondvla = bond = VLACalloc(BondType, 6 * nAtom);
+  auto bondvla = pymol::vla<BondType>(6 * nAtom);
+  auto bond = bondvla.data();
 
   // name -> atom index
   std::map<std::string, int> name_dict;
@@ -1933,7 +1933,7 @@ static BondType * read_chem_comp_bond(PyMOLGlobals * G, const cif_data * data,
  *
  * return: BondType VLA
  */
-static BondType * read_pymol_bond(PyMOLGlobals * G, const cif_data * data,
+static pymol::vla<BondType> read_pymol_bond(PyMOLGlobals * G, const cif_data * data,
     AtomInfoType * atInfo) {
 
   const cif_array *col_ID_1, *col_ID_2, *col_order;
@@ -1941,13 +1941,13 @@ static BondType * read_pymol_bond(PyMOLGlobals * G, const cif_data * data,
   if ((col_ID_1    = data->get_arr("_pymol_bond.atom_site_id_1")) == nullptr ||
       (col_ID_2    = data->get_arr("_pymol_bond.atom_site_id_2")) == nullptr ||
       (col_order   = data->get_arr("_pymol_bond.order")) == nullptr)
-    return nullptr;
+    return {};
 
   int nrows = col_ID_1->size();
   int nAtom = VLAGetSize(atInfo);
 
-  BondType *bondvla, *bond;
-  bondvla = bond = VLACalloc(BondType, nrows);
+  auto bondvla = pymol::vla<BondType>(nrows);
+  auto bond = bondvla.data();
 
   // ID -> atom index
   std::map<int, int> id_dict;
