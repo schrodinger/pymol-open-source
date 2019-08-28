@@ -26,22 +26,22 @@ Z* -------------------------------------------------------------------
 #include"Map.h"
 
 #include"Shaker.h"
+#include"vla.h"
+#include<memory>
 
-CShaker *ShakerNew(PyMOLGlobals * G)
+CShaker::CShaker(PyMOLGlobals * G)
 {
-  OOAlloc(G, CShaker);
-  I->G = G;
-  I->DistCon = VLAlloc(ShakerDistCon, 1000);
-  I->PyraCon = VLAlloc(ShakerPyraCon, 1000);
-  I->PlanCon = VLAlloc(ShakerPlanCon, 1000);
-  I->TorsCon = VLAlloc(ShakerTorsCon, 1000);
-  I->LineCon = VLAlloc(ShakerLineCon, 100);
-  I->NDistCon = 0;
-  I->NPyraCon = 0;
-  I->NPlanCon = 0;
-  I->NLineCon = 0;
-  I->NTorsCon = 0;
-  return (I);
+  this->G = G;
+  this->DistCon = pymol::vla<ShakerDistCon>(1000);
+  this->PyraCon = pymol::vla<ShakerPyraCon>(1000);
+  this->PlanCon = pymol::vla<ShakerPlanCon>(1000);
+  this->TorsCon = pymol::vla<ShakerTorsCon>(1000);
+  this->LineCon = pymol::vla<ShakerLineCon>(100);
+  this->NDistCon = 0;
+  this->NPyraCon = 0;
+  this->NPlanCon = 0;
+  this->NLineCon = 0;
+  this->NTorsCon = 0;
 }
 
 void ShakerReset(CShaker * I)
@@ -345,12 +345,3 @@ void ShakerAddLineCon(CShaker * I, int atom0, int atom1, int atom2)
   I->NLineCon++;
 }
 
-void ShakerFree(CShaker * I)
-{
-  VLAFreeP(I->PlanCon);
-  VLAFreeP(I->PyraCon);
-  VLAFreeP(I->DistCon);
-  VLAFreeP(I->LineCon);
-  VLAFreeP(I->TorsCon);
-  OOFreeP(I);
-}

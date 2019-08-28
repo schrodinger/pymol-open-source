@@ -234,7 +234,7 @@ static float ShakerDoDistMinim(float target, float *v0, float *v1, float *d0to1,
 CSculpt::CSculpt (PyMOLGlobals * G)
 {
   this->G = G;
-  this->Shaker = ShakerNew(G);
+  this->Shaker = pymol::make_unique<CShaker>(G);
   this->NBList = pymol::vla<int>(150000);
   this->NBHash = std::vector<int>(NB_HASH_SIZE);
   this->EXList = pymol::vla<int>(100000);
@@ -402,7 +402,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
   if(state < 0)
     state = ObjectGetCurrentState(obj, true);
 
-  ShakerReset(I->Shaker);
+  ShakerReset(I->Shaker.get());
 
   UtilZeroMem(I->NBHash.data(), NB_HASH_SIZE * sizeof(int));
   UtilZeroMem(I->EXHash.data(), EX_HASH_SIZE * sizeof(int));
@@ -632,7 +632,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                                obj_atomInfo[b1].unique_id,
                                obj_atomInfo[b2].unique_id, 0, 0, d);
           }
-          ShakerAddDistCon(I->Shaker, b1, b2, d, cShakerDistBond, 1.0F);
+          ShakerAddDistCon(I->Shaker.get(), b1, b2, d, cShakerDistBond, 1.0F);
           /* NOTE: storing atom indices, not coord. ind.! */
         }
         b++;
@@ -644,7 +644,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
         ai1 = obj_atomInfo;
 
         atl.G = I->G;
-        atl.Shaker = I->Shaker;
+        atl.Shaker = I->Shaker.get();
         atl.ai = obj_atomInfo;
         atl.cSet = cs;
 
@@ -840,11 +840,11 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                     dist1 = diff3f(v0b, v1b);
                     min_dist = (dist0 < dist1) ? dist0 : dist1;
                     if((min_dist >= minim_min) && (min_dist <= minim_max)) {
-                      ShakerAddDistCon(I->Shaker, b0, b1, min_dist, cShakerDistMinim, wt);
+                      ShakerAddDistCon(I->Shaker.get(), b0, b1, min_dist, cShakerDistMinim, wt);
                     }
                     max_dist = (dist0 > dist1) ? dist0 : dist1;
                     if((max_dist >= maxim_min) && (max_dist <= maxim_max)) {
-                      ShakerAddDistCon(I->Shaker, b0, b1, max_dist, cShakerDistMaxim, wt);
+                      ShakerAddDistCon(I->Shaker.get(), b0, b1, max_dist, cShakerDistMaxim, wt);
                     }
                   }
                 }
@@ -901,7 +901,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                                    obj_atomInfo[b2].unique_id, 0, d);
               }
 
-              ShakerAddDistCon(I->Shaker, b1, b2, d, cShakerDistAngle, 1.0F);
+              ShakerAddDistCon(I->Shaker.get(), b1, b2, d, cShakerDistAngle, 1.0F);
 
               if(linear[b0] && (linear[b1] || linear[b2])) {
 
@@ -915,7 +915,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                                      obj_atomInfo[b0].unique_id,
                                      obj_atomInfo[b2].unique_id, 0, 0.0);
                 }
-                ShakerAddLineCon(I->Shaker, b1, b0, b2);
+                ShakerAddLineCon(I->Shaker.get(), b1, b0, b2);
               }
             }
             n1 += 2;
@@ -982,7 +982,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                                      obj_atomInfo[b2].unique_id,
                                      obj_atomInfo[b3].unique_id, d2);
                 }
-                ShakerAddPyraCon(I->Shaker, b0, b1, b2, b3, d, d2);
+                ShakerAddPyraCon(I->Shaker.get(), b0, b1, b2, b3, d, d2);
               }
               n2 += 2;
             }
@@ -1010,7 +1010,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                       type = cShakerTorsDisulfide;
                     else
                       type = cShakerTorsSP3SP3;
-                    ShakerAddTorsCon(I->Shaker, b1, b0, b2, b3, type);
+                    ShakerAddTorsCon(I->Shaker.get(), b1, b0, b2, b3, type);
                   }
                   if(planar[b0] && planar[b2]) {
 
@@ -1089,10 +1089,10 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                             (obj_atomInfo[b0].protons == cAN_C) &&
                             (obj_atomInfo[b1].protons == cAN_O) && planar[b1])) {
                           /* biased, asymmetric term for amides */
-                          ShakerAddTorsCon(I->Shaker, b1, b0, b2, b3, cShakerTorsAmide);
+                          ShakerAddTorsCon(I->Shaker.get(), b1, b0, b2, b3, cShakerTorsAmide);
                         } else {
                           /* biased, symmetric term for all others */
-                          ShakerAddTorsCon(I->Shaker, b1, b0, b2, b3, cShakerTorsFlat);
+                          ShakerAddTorsCon(I->Shaker.get(), b1, b0, b2, b3, cShakerTorsFlat);
                         }
                       }
                     }
@@ -1238,7 +1238,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                                                obj_atomInfo[b3].unique_id, d);
                           }
 
-                          ShakerAddPlanCon(I->Shaker, b1, b0, b2, b3, d, cycle);
+                          ShakerAddPlanCon(I->Shaker.get(), b1, b0, b2, b3, d, cycle);
 
                           if(planar[b1] && planar[b3] && ((cycle == 5) || (cycle == 6))) {
 
@@ -1246,7 +1246,8 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
 
                             d = (float) diff3f(v1, v3);
 
-                            ShakerAddDistCon(I->Shaker, b1, b3, d, cShakerDistBond, 1.0F);
+                            ShakerAddDistCon(I->Shaker.get(), b1, b3, d, cShakerDistBond, 1.0F);
+
                           }
                         }
                       }
@@ -1680,7 +1681,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
     cnt = pymol::malloc<int>(obj->NAtom);
     active = pymol::malloc<int>(obj->NAtom);
     exclude = pymol::calloc<int>(obj->NAtom);
-    shk = I->Shaker;
+    shk = I->Shaker.get();
 
     PRINTFD(G, FB_Sculpt)
       " SIO-Debug: NDistCon %d\n", shk->NDistCon ENDFD;
@@ -2395,10 +2396,4 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
     " SculptIterateObject-Debug: leaving...\n" ENDFD;
 
   return total_strain;
-}
-
-CSculpt::~CSculpt()
-{
-
-  ShakerFree(this->Shaker);
 }

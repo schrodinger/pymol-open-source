@@ -17,6 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Shaker
 #define _H_Shaker
 
+#include "vla.h"
+
 #define cShakerDistBond 0
 #define cShakerDistAngle 1
 #define cShakerDistLimit 2
@@ -56,21 +58,21 @@ typedef struct {
   int at0, at1, at2;
 } ShakerLineCon;
 
-typedef struct {
+struct CShaker {
   PyMOLGlobals *G;
-  ShakerDistCon *DistCon;
+  pymol::vla<ShakerDistCon> DistCon;
   int NDistCon;
-  ShakerPyraCon *PyraCon;
+  pymol::vla<ShakerPyraCon> PyraCon;
   int NPyraCon;
-  ShakerPlanCon *PlanCon;
+  pymol::vla<ShakerPlanCon> PlanCon;
   int NPlanCon;
-  ShakerLineCon *LineCon;
+  pymol::vla<ShakerLineCon> LineCon;
   int NLineCon;
-  ShakerTorsCon *TorsCon;
+  pymol::vla<ShakerTorsCon> TorsCon;
   int NTorsCon;
-} CShaker;
+  CShaker(PyMOLGlobals * G);
+};
 
-CShaker *ShakerNew(PyMOLGlobals * G);
 void ShakerReset(CShaker * I);
 void ShakerAddDistCon(CShaker * I, int atom0, int atom1, float dist, int type,
                       float weight);
@@ -107,6 +109,5 @@ float ShakerDoPlan(float *v0, float *v1, float *v2, float *v3,
                    float *p0, float *p1, float *p2, float *p3,
                    float target, int fixed, float wt);
 
-void ShakerFree(CShaker * I);
 
 #endif

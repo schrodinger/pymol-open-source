@@ -20,6 +20,8 @@ Z* -------------------------------------------------------------------
 #include"Shaker.h"
 #include"vla.h"
 
+#include <memory>
+
 #define cSculptBond  0x001
 #define cSculptAngl  0x002
 #define cSculptPyra  0x004
@@ -35,7 +37,7 @@ Z* -------------------------------------------------------------------
 
 struct CSculpt {
   PyMOLGlobals *G;
-  CShaker *Shaker;
+  std::unique_ptr<CShaker> Shaker;
   ObjectMolecule *Obj;
   std::vector<int> NBHash;
   pymol::vla<int> NBList;
@@ -45,7 +47,6 @@ struct CSculpt {
   pymol::vla<int> Acc;
   float inverse[256];
   CSculpt(PyMOLGlobals * G);
-  ~CSculpt();
 };
 
 struct ObjectMolecule;
