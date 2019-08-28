@@ -114,6 +114,7 @@ public:
   GLuint bg_texture_id{};
   short bg_texture_needs_update{};
   CGO *bgCGO{};
+  int bgWidth = 0, bgHeight = 0;
   std::shared_ptr<pymol::Image> bgData; // this is the image data set from CMol, takes precedence of bg_gradient or bg_image_filename
   CGO *orthoCGO{}, *orthoFastCGO{};
 
@@ -158,7 +159,7 @@ std::pair<int, int> OrthoGetBackgroundSize(const COrtho& ortho){
   if(ortho.bgData){
     return ortho.bgData->getSize();
   } else{
-    return std::make_pair(0, 0);
+    return std::make_pair(ortho.bgWidth, ortho.bgHeight);
   }
 }
 
@@ -1396,6 +1397,9 @@ void bg_grad(PyMOLGlobals * G) {
       // checking to see if bg_image_filename can be loaded into texture
       auto bgImage = MyPNGRead(bg_image_filename);
       if(bgImage) {
+        I->bgWidth = bgImage->getWidth();
+        I->bgHeight = bgImage->getHeight();
+
 	short is_new = !I->bg_texture_id;
         int buff_total = bgImage->getWidth() * bgImage->getHeight();
 	if (is_new){
