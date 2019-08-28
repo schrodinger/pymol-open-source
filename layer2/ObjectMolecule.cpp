@@ -248,7 +248,7 @@ int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete
 
   // discrete setup
   I->DiscreteFlag = discrete;
-  ok_assert(1, I->DiscreteAtmToIdx = VLACalloc(int, maxnatom));
+  ok_assert(1, I->DiscreteAtmToIdx = pymol::vla<int>(maxnatom));
   ok_assert(1, I->DiscreteCSet = VLACalloc(CoordSet*, maxnatom));
 
   // for all coordinate sets
@@ -11630,7 +11630,7 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
   I->BondCounter = -1;
   I->DiscreteFlag = discreteFlag;
   if(I->DiscreteFlag) {         /* discrete objects don't share atoms between states */
-    I->DiscreteAtmToIdx = VLACalloc(int, 0);
+    I->DiscreteAtmToIdx = pymol::vla<int>(0);
     CHECKOK(ok, I->DiscreteAtmToIdx);
     if (ok)
       I->DiscreteCSet = VLACalloc(CoordSet*, 0);

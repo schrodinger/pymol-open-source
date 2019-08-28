@@ -4058,7 +4058,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
         VLAFreeP(I->DiscreteCSet);
         VLAFreeP(I->DiscreteAtmToIdx);
         I->DiscreteCSet = dcs;
-        I->DiscreteAtmToIdx = dAtmToIdx;
+        I->DiscreteAtmToIdx = pymol::vla_take_ownership(dAtmToIdx);
       }
     }
     AtomInfoFreeSortedIndexes(I->G, &index, &outdex);
