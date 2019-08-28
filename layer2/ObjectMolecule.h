@@ -55,7 +55,7 @@ typedef struct ObjectMoleculeBPRec {
 
 struct ObjectMolecule : public CObject {
 	/* array of pointers to coordinate sets; one set per state */
-  struct CoordSet **CSet;
+  pymol::vla<CoordSet*> CSet;
 	/* number of coordinate sets */
   int NCSet;
   struct CoordSet *CSTmpl;      /* template for trajectories, etc. */

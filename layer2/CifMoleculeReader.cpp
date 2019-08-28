@@ -2043,7 +2043,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
 
   // get coordinate sets into ObjectMolecule
   VLAFreeP(I->CSet);
-  I->CSet = csets;
+  I->CSet = pymol::vla_take_ownership(csets);
   I->NCSet = ncsets;
   I->updateAtmToIdx();
 

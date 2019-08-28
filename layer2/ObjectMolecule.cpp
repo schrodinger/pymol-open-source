@@ -11620,7 +11620,7 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
     return NULL;
   ObjectInit(G, (CObject *) I);
   I->type = cObjectMolecule;
-  I->CSet = VLACalloc(CoordSet *, 10); /* auto-zero */
+  I->CSet = pymol::vla<CoordSet*>(10); /* auto-zero */
   CHECKOK(ok, I->CSet);
   if (!ok){
     OOFreeP(I);
@@ -11697,7 +11697,7 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
 
   for(a = 0; a <= cUndoMask; a++)
     I->UndoCoord[a] = NULL;
-  I->CSet = VLACalloc(CoordSet *, I->NCSet);   /* auto-zero */
+  I->CSet = pymol::vla<CoordSet*>(I->NCSet);   /* auto-zero */
   for(a = 0; a < I->NCSet; a++) {
     I->CSet[a] = CoordSetCopy(obj->CSet[a]);
     if (I->CSet[a])
@@ -11756,7 +11756,7 @@ int ObjectMoleculeSetStateOrder(ObjectMolecule * I, int * order, int len) {
   }
 
   VLAFreeP(I->CSet);
-  I->CSet = csets;
+  I->CSet = pymol::vla_take_ownership(csets);
 
   return true;
 ok_except1:

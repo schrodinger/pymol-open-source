@@ -64,7 +64,7 @@ void ObjectMoleculeSetAssemblyCSets(
   VLAFreeP(I->CSet);
 
   // get assembly coordinate sets into ObjectMolecule
-  I->CSet = assembly_csets;
+  I->CSet = pymol::vla_take_ownership(assembly_csets);
   I->NCSet = VLAGetSize(assembly_csets);
   I->updateAtmToIdx();
 
