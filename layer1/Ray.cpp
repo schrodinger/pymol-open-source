@@ -6097,6 +6097,10 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         rt[a].fov = fov;
         rt[a].pos[2] = pos[2];
         rt[a].depth = depth;
+        if (I->bkgrd_data) {
+          rt[a].bgWidth = I->bkgrd_data->getWidth();
+          rt[a].bgHeight = I->bkgrd_data->getHeight();
+        }
         rt[a].bkrd_data = I->bkgrd_data ? I->bkgrd_data->bits() : nullptr;
       }
 
