@@ -348,7 +348,7 @@ void ExecutiveOrient(PyMOLGlobals * G, const char *sele, double *mi,
 char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals * G, const char *name, int state, int format,
                                     int quiet);
 
-int ExecutiveStereo(PyMOLGlobals * G, int flag);
+pymol::Result<> ExecutiveStereo(PyMOLGlobals * G, int flag);
 void ExecutiveCopy(PyMOLGlobals * G, const char *src, const char *dst, int zoom);
 float ExecutiveOverlap(PyMOLGlobals * G, const char *s1, int state1, const char *s2, int state2,
                        float adjust);

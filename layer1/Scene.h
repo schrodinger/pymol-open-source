@@ -124,7 +124,7 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius);
 void SceneRelocate(PyMOLGlobals * G, const float *location);
 Block *SceneGetBlock(PyMOLGlobals * G);
 void SceneApplyMatrix(PyMOLGlobals * G, float *m);
-void SceneSetStereo(PyMOLGlobals * G, int flag);
+void SceneSetStereo(PyMOLGlobals * G, bool flag);
 int SceneGetStereo(PyMOLGlobals * G);
 void SceneDontCopyNext(PyMOLGlobals * G);
 void SceneGetViewNormal(PyMOLGlobals * G, float *v);

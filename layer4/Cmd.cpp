@@ -5800,20 +5800,11 @@ static PyObject *CmdStereo(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int i1;
-  int ok = false;
-
-  ok = PyArg_ParseTuple(args, "Oi", &self, &i1);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveStereo(G, i1);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Oi", &self, &i1);
+  API_ASSERT(APIEnterNotModal(G));
+  auto res = ExecutiveStereo(G, i1);
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdReset(PyObject * self, PyObject * args)

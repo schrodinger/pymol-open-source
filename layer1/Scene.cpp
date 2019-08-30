@@ -994,12 +994,11 @@ void SceneUpdateStereoMode(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-void SceneSetStereo(PyMOLGlobals * G, int flag)
+void SceneSetStereo(PyMOLGlobals * G, bool flag)
 {
   CScene *I = G->Scene;
-  int cur_stereo, cur_stereo_mode = I->StereoMode, reload = 0;
+  int cur_stereo_mode = I->StereoMode;
 
-  cur_stereo = SettingGetGlobal_b(G, cSetting_stereo);
   if(flag) {
     I->StereoMode = SettingGetGlobal_i(G, cSetting_stereo_mode);
   } else {
@@ -1008,18 +1007,14 @@ void SceneSetStereo(PyMOLGlobals * G, int flag)
   
   SettingSetGlobal_b(G, cSetting_stereo, flag);
 
-  if((cur_stereo_mode != I->StereoMode) && (cur_stereo_mode == cStereo_geowall || I->StereoMode == cStereo_geowall)) {
-    reload = 1;
-    OrthoReshape(G, G->Option->winX, G->Option->winY, true);
-#ifndef _PYMOL_NOPY
-    if(cur_stereo_mode == cStereo_geowall) {
-      PParse(G, "viewport");
+  if (cur_stereo_mode != I->StereoMode) {
+    if (cur_stereo_mode == cStereo_geowall ||
+        I->StereoMode == cStereo_geowall) {
+      OrthoReshape(G, G->Option->winX, G->Option->winY, true);
     }
-#endif
-}
-  SceneInvalidateStencil(G);
-  SceneInvalidate(G);
-  if (cur_stereo != flag || (flag && reload)){
+
+    SceneInvalidateStencil(G);
+    SceneInvalidate(G);
     G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
   }
 }

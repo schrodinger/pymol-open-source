@@ -9638,11 +9638,15 @@ void ExecutiveMask(PyMOLGlobals * G, const char *s1, int mode, int quiet)
 
 
 /*========================================================================*/
-int ExecutiveStereo(PyMOLGlobals * G, int flag)
+/**
+ * flag > 0:  Set stereo_mode and turn stereo on
+ * flag = 0:  Turn off stereo
+ * flag = -1: Swap eyes (stereo_shift *= -1)
+ * flag = -2: Turn on stereo with current stereo_mode
+ * flag = -3: Turn on chromadepth and turn off stereo
+ */
+pymol::Result<> ExecutiveStereo(PyMOLGlobals * G, int flag)
 {
-  int ok = 1;
-  int stereo_mode;
-
   switch (flag) {
   case -3:
     SettingSet(G, cSetting_chromadepth, 1);
@@ -9651,25 +9655,25 @@ int ExecutiveStereo(PyMOLGlobals * G, int flag)
   case -1:
     SettingSetGlobal_f(G, cSetting_stereo_shift, -SettingGetGlobal_f(G, cSetting_stereo_shift));
     break;
-  default:                     /* -2 */
+  default:
     SettingSet(G, cSetting_chromadepth, 0);
-    {
-      stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
-      switch (stereo_mode) {
-      case 0:                  /* off */
-        break;
-      default:
-        SceneSetStereo(G, flag);
-        break;
-      }
+
+    if (flag == cStereo_quadbuffer && !G->StereoCapable) {
+      return pymol::Error("no 'quadbuffer' support detected (force with 'pymol -S')");
     }
+
+    if (flag > 0) {
+      SettingSet(G, cSetting_stereo_mode, flag);
+    }
+
+    SceneSetStereo(G, flag != 0);
   }
 
   // for chromadepth
   G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
 
   SceneDirty(G);
-  return (ok);
+  return {};
 }
 
 

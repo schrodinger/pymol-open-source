@@ -1366,19 +1366,8 @@ PYMOL API
     cmd.stereo(string toggle)
         '''
         toggle = stereo_dict[stereo_sc.auto_err(str(toggle),'toggle')]
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            if(toggle>0) : # stereo mode code
-                _self.set("stereo_mode",str(toggle),quiet=quiet)
-                toggle=1
-            r = _cmd.stereo(_self._COb,toggle)
-            if is_error(r):
-                print("Error: Selected stereo mode is not available.")
-        finally:
-            _self.unlock(r,_self);
-        if _self._raising(r,_self): raise QuietException
-        return r
+        with _self.lockcm:
+            return _cmd.stereo(_self._COb, toggle)
 
 
     def turn(axis, angle, _self=cmd):
