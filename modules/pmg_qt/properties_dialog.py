@@ -114,37 +114,37 @@ def props_dialog(parent):  #noqa
         parent = item.parent()
 
         result = False
-        if item == item_object_ttt:
+        if item is item_object_ttt:
             try:
                 if new_value:
                     result = cmd.set_object_ttt(model, new_value)
             except (ValueError, IndexError):
                 result = False
-        elif item == item_ostate_title:
+        elif item is item_ostate_title:
             result = cmd.set_title(model, state, new_value)
-        elif item == item_ostate_matrix:
+        elif item is item_ostate_matrix:
             cmd.matrix_reset(model, state)
             try:
                 new_value = cmd.safe_eval(new_value)
                 result = cmd.transform_object(model, new_value, state)
             except: # CmdTransformObject-DEBUG: bad matrix
                 result = False
-        elif parent == item_object_settings:
+        elif parent is item_object_settings:
             with PopupOnException():
                 cmd.set(key, new_value, model, quiet=0)
-        elif parent == item_ostate_settings:
+        elif parent is item_ostate_settings:
             with PopupOnException():
                 cmd.set(key, new_value, model, state, quiet=0)
-        elif parent == item_ostate_properties:
+        elif parent is item_ostate_properties:
             cmd.set_property(key, new_value, model, state, quiet=0)
         else:
             is_state = False
 
-            if parent == item_atom_properties:
+            if parent is item_atom_properties:
                 key = 'p.' + key
-            elif parent == item_atom_settings:
+            elif parent is item_atom_settings:
                 key = 's.' + key
-            elif parent == item_astate_settings:
+            elif parent is item_astate_settings:
                 key = 's.' + key
                 is_state = True
             elif key in keys_astate_builtins:
