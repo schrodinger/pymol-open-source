@@ -10,6 +10,16 @@
 using namespace pymol::test;
 using pymol::Image;
 
+static std::string get_test_folder()
+{
+  const char* pymol_data = std::getenv("PYMOL_DATA");
+  REQUIRE(pymol_data);
+  return std::string(pymol_data)
+      .append(PATH_SEP)
+      .append("test")
+      .append(PATH_SEP);
+}
+
 TEST_CASE("Image Default Constructor", "[Image]")
 {
   Image img;
@@ -191,7 +201,7 @@ TEST_CASE("Image Make Image", "[Image]")
 
 TEST_CASE("Image Deinterlace Data", "[Image]")
 {
-  auto test_folder = std::string(std::getenv("PYMOL_DATA")).append(PATH_SEP).append("test").append(PATH_SEP);
+  auto test_folder = get_test_folder();
   auto deinterlacedimage_loc = std::string(test_folder).append("single.png");
   auto interlacedimage_loc = std::string(test_folder).append("double.png");
   auto deinterlacedimage = MyPNGRead(deinterlacedimage_loc.c_str());
@@ -207,7 +217,7 @@ TEST_CASE("Image Deinterlace Data", "[Image]")
 
 TEST_CASE("Image Interlace Data", "[Image]")
 {
-  auto test_folder = std::string(std::getenv("PYMOL_DATA")).append(PATH_SEP).append("test").append(PATH_SEP);
+  auto test_folder = get_test_folder();
 
   auto loc_left = std::string(test_folder).append("single.png");
   auto loc_right = std::string(test_folder).append("single-right.png");
