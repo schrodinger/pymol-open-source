@@ -2387,7 +2387,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
 
   if(ok) {
     if(isNew) {
-      I = (ObjectMolecule *) ObjectMoleculeNew(G, discrete);
+      I = (ObjectMolecule *) new ObjectMolecule(G, discrete);
       CHECKOK(ok, I);
       if (ok)
         std::swap(atInfo, I->AtomInfo);
@@ -2456,8 +2456,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
     }
   }
   if (!ok){
-    ObjectMoleculeFree(I);
-    I = NULL;
+    DeleteP(I)
   }
   return (I);
 }
@@ -7464,7 +7463,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
   if(ok) {
 
     if(isNew) {
-      I = (ObjectMolecule *) ObjectMoleculeNew(G, discrete);
+      I = (ObjectMolecule *) new ObjectMolecule(G, discrete);
       std::swap(atInfo, I->AtomInfo);
       isNew = true;
     } else {
@@ -8802,7 +8801,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       isNew = false;
 
     if(isNew) {
-      I = (ObjectMolecule *) ObjectMoleculeNew(G, (discrete > 0));
+      I = (ObjectMolecule *) new ObjectMolecule(G, (discrete > 0));
       std::swap(atInfo, I->AtomInfo);
     } else {
       atInfo = pymol::vla<AtomInfoType>(10);
@@ -8850,8 +8849,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(!successCnt) {
 	if (isNew)
           std::swap(I->AtomInfo, atInfo);
-        ObjectMoleculeFree(I);
-        I = NULL;
+        DeleteP(I);
         ok = false;
       } else {
         skip_out = true;
@@ -11544,7 +11542,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
   int frame = -1;
   int ok = true;
 
-  I = ObjectMoleculeNew(G, false);
+  I = new ObjectMolecule(G, false);
   CHECKOK(ok, I);
   if (!ok)
     return NULL;
@@ -11553,7 +11551,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
   float *coord = VLAlloc(float, 3 * nAtom);
   CHECKOK(ok, coord);
   if (!ok){
-    ObjectMoleculeFree(I);
+    DeleteP(I);
     return NULL;
   }
   zero3f(coord);
@@ -11562,7 +11560,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
   CHECKOK(ok, cset);
   if (!ok){
     VLAFreeP(coord);
-    ObjectMoleculeFree(I);
+    DeleteP(I);
     return NULL;
   }
   cset->NIndex = nAtom;
@@ -11601,8 +11599,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
     ObjectMoleculeUpdateNonbonded(I);
   }
   if (!ok){
-    ObjectMoleculeFree(I);
-    I = NULL;
+    DeleteP(I);
   }
   return (I);
 }
@@ -11610,43 +11607,23 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
 
 /*========================================================================*/
 
-ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
+ObjectMolecule::ObjectMolecule(PyMOLGlobals * G, int discreteFlag) : CObject(G)
 {
+  auto I = this;
   int a;
-  int ok = true;
-  OOCalloc(G, ObjectMolecule);
-  CHECKOK(ok, I);
-  if (!ok)
-    return NULL;
-  ObjectInit(G, (CObject *) I);
   I->type = cObjectMolecule;
   I->CSet = pymol::vla<CoordSet*>(10); /* auto-zero */
-  CHECKOK(ok, I->CSet);
-  if (!ok){
-    OOFreeP(I);
-    return NULL;
-  }
   I->AtomCounter = -1;
   I->BondCounter = -1;
   I->DiscreteFlag = discreteFlag;
   if(I->DiscreteFlag) {         /* discrete objects don't share atoms between states */
     I->DiscreteAtmToIdx = pymol::vla<int>(0);
-    CHECKOK(ok, I->DiscreteAtmToIdx);
-    if (ok)
-      I->DiscreteCSet = pymol::vla<CoordSet*>(0);
-    CHECKOK(ok, I->DiscreteCSet);
-    if (!ok){
-      ObjectMoleculeFree(I);
-      return NULL;
-    }
-    //    I->DiscreteAtmToIdx = VLAMalloc(10, sizeof(int), 6, false);
-    //    I->DiscreteCSet = VLAMalloc(10, sizeof(CoordSet *), 5, false);
+    I->DiscreteCSet = pymol::vla<CoordSet*>(0);
   } else {
     I->DiscreteAtmToIdx = NULL;
     I->DiscreteCSet = NULL;
   }
   I->fRender = (void (*)(CObject *, RenderInfo * info)) ObjectMoleculeRender;
-  I->fFree = (void (*)(CObject *)) ObjectMoleculeFree;
   I->fUpdate = (void (*)(CObject *)) ObjectMoleculeUpdate;
   I->fGetNFrame = (int (*)(CObject *)) ObjectMoleculeGetNFrames;
   I->fInvalidate = (void (*)(CObject *, int rep, int level, int state))
@@ -11660,17 +11637,14 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
 
   I->fGetCaption = (char *(*)(CObject *, char *, int)) ObjectMoleculeGetCaption;
   I->AtomInfo = pymol::vla<AtomInfoType>(10);
-  CHECKOK(ok, I->AtomInfo);
-  if (!ok){
-    ObjectMoleculeFree(I);
-    return NULL;
-  }
   for(a = 0; a <= cUndoMask; a++) {
     I->UndoCoord[a] = NULL;
     I->UndoState[a] = -1;
   }
   I->UndoIter = 0;
-  return (I);
+
+#ifndef _PYMOL_NO_UNDO
+#endif
 }
 
 
@@ -11680,9 +11654,9 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
   PyMOLGlobals * G = const_cast<PyMOLGlobals*>(obj->G);
 
   int a;
+  auto I = new ObjectMolecule(G, obj->DiscreteFlag);
   BondType *i0;
   const BondType *i1;
-  OOCalloc(G, ObjectMolecule);
   (*I) = (*obj);
   if (I->Symmetry != nullptr) {
     I->Symmetry = new CSymmetry(*I->Symmetry);
@@ -11766,8 +11740,9 @@ ok_except1:
 }
 
 /*========================================================================*/
-void ObjectMoleculeFree(ObjectMolecule * I)
+ObjectMolecule::~ObjectMolecule()
 {
+  auto I = this;
   int a;
   SelectorPurgeObjectMembers(I->G, I);
   for(a = 0; a < I->NCSet; a++){
@@ -11811,8 +11786,6 @@ void ObjectMoleculeFree(ObjectMolecule * I)
     DeleteP(I->Sculpt);
   if(I->CSTmpl)
     I->CSTmpl->fFree();
-  ObjectPurge(I);
-  OOFreeP(I);
 }
 
 
@@ -11846,7 +11819,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
 
     if(ok) {
       if(isNew) {
-        I = (ObjectMolecule *) ObjectMoleculeNew(G, discrete);
+        I = (ObjectMolecule *) new ObjectMolecule(G, discrete);
 	CHECKOK(ok, I);
 	if (ok)
           std::swap(atInfo, I->AtomInfo);
@@ -11968,8 +11941,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
     }
   }
   if (!ok && isNew){
-    ObjectMoleculeFree(I);
-    I = NULL;
+    DeleteP(I);
   }
   return (I);
 }

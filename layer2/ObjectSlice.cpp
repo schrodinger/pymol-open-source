@@ -47,8 +47,6 @@ Z* -------------------------------------------------------------------
 #define START_STRIP -1
 #define STOP_STRIP -2
 
-static ObjectSlice *ObjectSliceNew(PyMOLGlobals * G);
-static void ObjectSliceFree(ObjectSlice * I);
 static void ObjectSliceStateInit(PyMOLGlobals * G, ObjectSliceState * ms);
 static void ObjectSliceRecomputeExtent(ObjectSlice * I);
 
@@ -168,7 +166,7 @@ int ObjectSliceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSlice ** r
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
 
-  I = ObjectSliceNew(G);
+  I = new ObjectSlice(G);
   if(ok)
     ok = (I != NULL);
 
@@ -212,17 +210,14 @@ static void ObjectSliceStateFree(ObjectSliceState * oss)
   VLAFreeP(oss->strips);
 }
 
-static void ObjectSliceFree(ObjectSlice * I)
+ObjectSlice::~ObjectSlice()
 {
-  int a;
-  for(a = 0; a < I->NState; a++) {
+  auto I = this;
+  for(int a = 0; a < I->NState; a++) {
     if(I->State[a].Active)
       ObjectSliceStateFree(I->State + a);
   }
   VLAFreeP(I->State);
-  ObjectPurge(I);
-
-  OOFreeP(I);
 }
 
 static void ObjectSliceInvalidate(ObjectSlice * I, int rep, int level, int state)
@@ -1300,18 +1295,13 @@ ObjectSliceState *ObjectSliceStateGetActive(ObjectSlice * I, int state)
 
 
 /*========================================================================*/
-ObjectSlice *ObjectSliceNew(PyMOLGlobals * G)
+ObjectSlice::ObjectSlice(PyMOLGlobals * G) : CObject(G)
 {
-  OOAlloc(G, ObjectSlice);
-
-  ObjectInit(G, (CObject *) I);
-
-  I->NState = 0;
+  auto I = this;
   I->State = VLACalloc(ObjectSliceState, 10);  /* autozero important */
 
   I->type = cObjectSlice;
 
-  I->fFree = (void (*)(CObject *)) ObjectSliceFree;
   I->fUpdate = (void (*)(CObject *)) ObjectSliceUpdate;
   I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectSliceRender;
   I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectSliceInvalidate;
@@ -1319,7 +1309,6 @@ ObjectSlice *ObjectSliceNew(PyMOLGlobals * G)
 
   I->context.object = (void *) I;
   I->context.state = 0;
-  return (I);
 }
 
 
@@ -1361,7 +1350,7 @@ ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap *
   ObjectMapState *oms;
 
   if(!obj) {
-    I = ObjectSliceNew(G);
+    I = new ObjectSlice(G);
   } else {
     I = obj;
   }

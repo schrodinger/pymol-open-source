@@ -97,7 +97,7 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
     0.0, -1.0, 0.0,
   };
 
-  I = ObjectGadgetNew(G);
+  I = new ObjectGadget(G);
   gs = GadgetSetNew(G);
 
   gs->NCoord = 13;
@@ -355,7 +355,7 @@ int ObjectGadgetNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget **
       ok = ObjectGadgetRampNewFromPyList(G, list, (ObjectGadgetRamp **) result, version);
       break;
     case cGadgetPlain:
-      I = ObjectGadgetNew(G);
+      I = new ObjectGadget(G);
       if(ok)
         ok = (I != NULL);
       if(ok)
@@ -402,23 +402,14 @@ PyObject *ObjectGadgetAsPyList(ObjectGadget * I)
   return (PConvAutoNone(result));
 }
 
-void ObjectGadgetPurge(ObjectGadget * I)
+ObjectGadget::~ObjectGadget()
 {
-  int a;
-
-  for(a = 0; a < I->NGSet; a++)
+  auto I = this;
+  for(int a = 0; a < I->NGSet; a++)
     if(I->GSet[a]) {
       I->GSet[a]->fFree();
       I->GSet[a] = NULL;
     }
-  VLAFreeP(I->GSet);
-  ObjectPurge(I);
-}
-
-void ObjectGadgetFree(ObjectGadget * I)
-{
-  ObjectGadgetPurge(I);
-  OOFreeP(I);
 }
 
 void ObjectGadgetUpdateStates(ObjectGadget * I)
@@ -471,30 +462,14 @@ static void ObjectGadgetRender(ObjectGadget * I, RenderInfo * info)
 
 
 /*========================================================================*/
-void ObjectGadgetInit(PyMOLGlobals * G, ObjectGadget * I)
+ObjectGadget::ObjectGadget(PyMOLGlobals * G) : CObject(G)
 {
-  ObjectInit(G, (CObject *) I);
-
-  I->type = cObjectGadget;
-  I->GSet = VLACalloc(GadgetSet *, 10);        /* auto-zero */
-  I->NGSet = 0;
-  I->Changed = true;
-
-  I->fFree = (void (*)(CObject *)) ObjectGadgetFree;
-  I->fUpdate = (void (*)(CObject *)) ObjectGadgetUpdate;
-  I->fRender = (void (*)(CObject *, RenderInfo * info)) ObjectGadgetRender;
-  I->fGetNFrame = (int (*)(CObject *)) ObjectGadgetGetNState;
-  I->fDescribeElement = NULL;
-  I->CurGSet = 0;
+  type = cObjectGadget;
+  GSet = pymol::vla<GadgetSet*>(10);        /* auto-zero */
+  fUpdate = (void (*)(CObject *)) ObjectGadgetUpdate;
+  fRender = (void (*)(CObject *, RenderInfo * info)) ObjectGadgetRender;
+  fGetNFrame = (int (*)(CObject *)) ObjectGadgetGetNState;
+  fDescribeElement = NULL;
 }
 
-
-/*========================================================================*/
-ObjectGadget *ObjectGadgetNew(PyMOLGlobals * G)
-{
-  OOAlloc(G, ObjectGadget);
-
-  ObjectGadgetInit(G, I);
-  return (I);
-}
 

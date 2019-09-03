@@ -1120,7 +1120,6 @@ void ObjectSetTTTOrigin(CObject * I, float *origin)
 
 
 /*========================================================================*/
-static
 CSetting **ObjectGetSettingHandle(CObject * I, int state)
 {
   return (&I->Setting);
@@ -1128,7 +1127,7 @@ CSetting **ObjectGetSettingHandle(CObject * I, int state)
 
 
 /*========================================================================*/
-static void ObjectDescribeElement(CObject * I, int index, char *buffer)
+void ObjectDescribeElement(CObject * I, int index, char *buffer)
 {
   buffer[0] = 0;
 }
@@ -1174,7 +1173,6 @@ void ObjectSetName(CObject * I, const char *name)
 
 
 /*========================================================================*/
-static
 void ObjectUpdate(CObject * I)
 {
 
@@ -1182,26 +1180,14 @@ void ObjectUpdate(CObject * I)
 
 
 /*========================================================================*/
-void ObjectPurge(CObject * I)
+CObject::~CObject()
 {
-  if(I) {
-    SceneObjectDel(I->G, I, false);
-    SettingFreeP(I->Setting);
-    VLAFreeP(I->ViewElem);
-  }
+  SceneObjectDel(this->G, this, false);
+  SettingFreeP(this->Setting);
 }
 
 
 /*========================================================================*/
-void ObjectFree(CObject * I)
-{
-  if(I)
-    ObjectPurge(I);
-}
-
-
-/*========================================================================*/
-static
 int ObjectGetNFrames(CObject * I)
 {
   return 1;
@@ -1226,14 +1212,14 @@ void ObjectUseColorCGO(CGO *cgo, CObject * I)
 }
 
 /*========================================================================*/
-static void ObjectInvalidate(CObject * this_, int rep, int level, int state)
+void ObjectInvalidate(CObject * this_, int rep, int level, int state)
 {
 
 }
 
 
 /*========================================================================*/
-static void ObjectRenderUnitBox(CObject * this_, RenderInfo * info)
+void ObjectRenderUnitBox(CObject * this_, RenderInfo * info)
 {
   PyMOLGlobals *G = this_->G;
   if(G->HaveGUI && G->ValidContext) {
@@ -1269,38 +1255,13 @@ static void ObjectRenderUnitBox(CObject * this_, RenderInfo * info)
 
 
 /*========================================================================*/
-void ObjectInit(PyMOLGlobals * G, CObject * I)
+CObject::CObject(PyMOLGlobals * G) : G(G)
 {
-  UtilZeroMem(I, sizeof(CObject));
-
-  I->G = G;
-  I->fFree = ObjectFree;
-  I->fRender = ObjectRenderUnitBox;
-  I->fUpdate = ObjectUpdate;
-  I->fGetNFrame = ObjectGetNFrames;
-  I->fDescribeElement = ObjectDescribeElement;
-  I->fGetSettingHandle = ObjectGetSettingHandle;
-  I->fInvalidate = ObjectInvalidate;
-
-  /*
-     I->fGetCaption = NULL;
-     I->fGetObjectState = NULL;
-     I->Name[0]=0;
-     I->Color=0;
-     I->ExtentFlag=false;
-     I->Setting=NULL;
-     I->TTTFlag=false;
-     I->Enabled=false;
-     zero3f(I->ExtentMin);
-     zero3f(I->ExtentMax);
-     for(a=0;a<16;a++) I->TTT[a]=0.0F;
-     I->Context=0;
-     I->ViewElem = NULL;
-   */
-
   OrthoRemoveSplash(G);         /* HMM... this seems like an inappropriate sideeffect */
-  I->visRep = cRepBitmask & ~(cRepCellBit | cRepExtentBit);
+  visRep = cRepBitmask & ~(cRepCellBit | cRepExtentBit);
 }
+
+/*========================================================================*/
 
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I)
 {

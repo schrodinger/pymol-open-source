@@ -25,20 +25,17 @@ Z* -------------------------------------------------------------------
 #include"GadgetSet.h"
 
 struct ObjectGadget : public CObject {
-  struct GadgetSet **GSet;
-  int NGSet;
-  int CurGSet;
+  pymol::vla<GadgetSet*> GSet;
+  int NGSet = 0;
+  int CurGSet = 0;
   int GadgetType;
-  int Changed;
+  bool Changed = true;
+  ObjectGadget(PyMOLGlobals* G);
+  virtual ~ObjectGadget();
 };
 
 #define cGadgetPlain 0
 #define cGadgetRamp 1
-
-ObjectGadget *ObjectGadgetNew(PyMOLGlobals * G);
-void ObjectGadgetInit(PyMOLGlobals * G, ObjectGadget * I);
-void ObjectGadgetPurge(ObjectGadget * I);
-void ObjectGadgetFree(ObjectGadget * I);
 
 PyObject *ObjectGadgetAsPyList(ObjectGadget * I);
 PyObject *ObjectGadgetPlainAsPyList(ObjectGadget * I, bool incl_cgos=true);

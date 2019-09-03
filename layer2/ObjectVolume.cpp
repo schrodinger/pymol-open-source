@@ -48,8 +48,6 @@ Z* -------------------------------------------------------------------
 
 #define clamp(x,l,h) ((x) < (l) ? (l) : (x) > (h) ? (h) : (x))
 
-static ObjectVolume *ObjectVolumeNew(PyMOLGlobals * G);
-static void ObjectVolumeFree(ObjectVolume * I);
 static void ObjectVolumeInvalidate(ObjectVolume * I, int rep, int level, int state);
 static void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs);
 static void ObjectVolumeRecomputeExtent(ObjectVolume * I);
@@ -266,7 +264,7 @@ int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume **
     ok = PyList_Check(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
-  I = ObjectVolumeNew(G);
+  I = new ObjectVolume(G);
   if(ok)
     ok = (I != NULL);
   if(ok){
@@ -321,16 +319,13 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
   vs->Active = false;
 }
 
-static void ObjectVolumeFree(ObjectVolume * I)
+ObjectVolume::~ObjectVolume()
 {
-  int a;
-  for(a = 0; a < I->NState; a++) {
+  auto I = this;
+  for(int a = 0; a < I->NState; a++) {
     ObjectVolumeStateFree(I->State + a);
   }
   VLAFreeP(I->State);
-  ObjectPurge(I);
-
-  OOFreeP(I);
 }
 
 int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name, const char * new_name)
@@ -1119,23 +1114,17 @@ static int ObjectVolumeGetNStates(ObjectVolume * I)
 
 
 /*========================================================================*/
-ObjectVolume *ObjectVolumeNew(PyMOLGlobals * G)
+ObjectVolume::ObjectVolume(PyMOLGlobals * G) : CObject(G)
 {
-  OOAlloc(G, ObjectVolume);
-
-  ObjectInit(G, (CObject *) I);
-
-  I->NState = 0;
+  auto I = this;
   I->State = VLACalloc(ObjectVolumeState, 10);   /* autozero important */
 
   I->type = cObjectVolume;
 
-  I->fFree = (void (*)(CObject *)) ObjectVolumeFree;
   I->fUpdate = (void (*)(CObject *)) ObjectVolumeUpdate;
   I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectVolumeRender;
   I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectVolumeInvalidate;
   I->fGetNFrame = (int (*)(CObject *)) ObjectVolumeGetNStates;
-  return (I);
 }
 
 
@@ -1186,7 +1175,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
   int created = !obj;
 
   if(created) {
-    I = ObjectVolumeNew(G);
+    I = new ObjectVolume(G);
   } else {
     I = obj;
   }

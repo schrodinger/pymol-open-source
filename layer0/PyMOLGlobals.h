@@ -100,10 +100,7 @@ typedef struct _OVOneToOne OVOneToOne;
 #endif
 
 
-#ifndef CObject_DEFINED
-typedef struct _CObject CObject;
-#define CObject_DEFINED
-#endif
+struct CObject;
 
 #ifndef CPyMOL_DEFINED
 typedef struct _CPyMOL CPyMOL;

@@ -124,7 +124,7 @@ int ObjectCGONewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCGO ** resul
   if(ok)
     ok = PyList_Check(list);
 
-  I = ObjectCGONew(G);
+  I = new ObjectCGO(G);
   if(ok)
     ok = (I != NULL);
 
@@ -160,16 +160,14 @@ PyObject *ObjectCGOAsPyList(ObjectCGO * I)
 
 /*========================================================================*/
 
-void ObjectCGOFree(ObjectCGO * I)
+ObjectCGO::~ObjectCGO()
 {
-  int a;
-  for(a = 0; a < I->NState; a++) {
+  auto I = this;
+  for(int a = 0; a < I->NState; a++) {
     CGOFree(I->State[a].renderCGO);
     CGOFree(I->State[a].origCGO);
   }
   VLAFreeP(I->State);
-  ObjectPurge(I);
-  OOFreeP(I);
 }
 
 
@@ -530,23 +528,17 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 
 
 /*========================================================================*/
-ObjectCGO *ObjectCGONew(PyMOLGlobals * G)
+ObjectCGO::ObjectCGO(PyMOLGlobals * G) : CObject(G)
 {
-  OOAlloc(G, ObjectCGO);
-
-  ObjectInit(G, (CObject *) I);
-
+  auto I = this;
   I->State = VLACalloc(ObjectCGOState, 10);
-  I->NState = 0;
+
   I->type = cObjectCGO;
-  I->fFree = (void (*)(CObject *)) ObjectCGOFree;
   I->fUpdate = (void (*)(CObject *)) ObjectCGOUpdate;
   I->fInvalidate = (void (*)(CObject *, int rep, int level, int state))
     ObjectCGOInvalidate;
   I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectCGORender;
   I->fGetNFrame = (int (*)(CObject *)) ObjectCGOGetNState;
-
-  return (I);
 }
 
 
@@ -613,7 +605,7 @@ ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals * G, ObjectCGO * obj, CGO * cgo, int st
       obj = NULL;
   }
   if(!obj) {
-    I = ObjectCGONew(G);
+    I = new ObjectCGO(G);
   } else {
     I = obj;
   }
@@ -669,7 +661,7 @@ ObjectCGO *ObjectCGODefine(PyMOLGlobals * G, ObjectCGO * obj, PyObject * pycgo, 
       obj = NULL;
   }
   if(!obj) {
-    I = ObjectCGONew(G);
+    I = new ObjectCGO(G);
   } else {
     I = obj;
   }
@@ -723,7 +715,7 @@ ObjectCGO *ObjectCGOFromFloatArray(PyMOLGlobals * G, ObjectCGO * obj,
       obj = NULL;
   }
   if(!obj) {
-    I = ObjectCGONew(G);
+    I = new ObjectCGO(G);
   } else {
     I = obj;
   }

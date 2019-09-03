@@ -67,7 +67,9 @@ typedef struct ObjectMapState {
 
 struct ObjectMap : public CObject {
   pymol::vla<ObjectMapState> State;
-  int NState;
+  int NState = 0;
+  ObjectMap(PyMOLGlobals* G);
+  ~ObjectMap();
 };
 
 #define cObjectMap_OrthoMinMaxGrid 0
@@ -83,7 +85,6 @@ typedef struct ObjectMapDesc {  /* information for creating a new map */
 } ObjectMapDesc;
 
 
-ObjectMap *ObjectMapNew(PyMOLGlobals * G);
 int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** result,
                      int source_state, int target_state);
 ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,

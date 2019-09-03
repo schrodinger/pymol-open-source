@@ -52,7 +52,9 @@ typedef struct {
 
 struct ObjectVolume : public CObject {
   ObjectVolumeState *State;
-  int NState;
+  int NState = 0;
+  ObjectVolume(PyMOLGlobals* G);
+  ~ObjectVolume();
 };
 
 ObjectVolume *ObjectVolumeFromBox(PyMOLGlobals * G, ObjectVolume * obj, ObjectMap * map,

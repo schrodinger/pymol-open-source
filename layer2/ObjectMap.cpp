@@ -1577,7 +1577,7 @@ int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** resul
     ok = PyList_Check(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
-  I = ObjectMapNew(G);
+  I = new ObjectMap(G);
   if(ok)
     ok = (I != NULL);
 
@@ -1604,7 +1604,7 @@ int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** resul
 {
   int ok = true;
   ObjectMap *I = NULL;
-  I = ObjectMapNew(G);
+  I = new ObjectMap(G);
   if(ok)
     ok = (I != NULL);
   if(ok)
@@ -1794,16 +1794,13 @@ void ObjectMapStatePurge(PyMOLGlobals * G, ObjectMapState * I)
   I->Active = false;
 }
 
-static void ObjectMapFree(ObjectMap * I)
+ObjectMap::~ObjectMap()
 {
-
-  int a;
-  for(a = 0; a < I->NState; a++) {
+  auto I = this;
+  for(int a = 0; a < I->NState; a++) {
     if(I->State[a].Active)
       ObjectMapStatePurge(I->G, I->State + a);
   }
-  ObjectPurge(I);
-  OOFreeP(I);
 }
 
 static void ObjectMapUpdate(ObjectMap * I)
@@ -2167,24 +2164,18 @@ int ObjectMapGetNStates(ObjectMap * I)
 
 
 /*========================================================================*/
-ObjectMap *ObjectMapNew(PyMOLGlobals * G)
+ObjectMap::ObjectMap(PyMOLGlobals * G) : CObject(G)
 {
-  OOAlloc(G, ObjectMap);
-
-  ObjectInit(G, (CObject *) I);
+  auto I = this;
   I->type = cObjectMap;
 
-  I->NState = 0;
   I->State = pymol::vla<ObjectMapState>(1);     /* autozero important */
 
   I->visRep = cRepExtentBit;
-  I->fFree = (void (*)(CObject *)) ObjectMapFree;
   I->fUpdate = (void (*)(CObject *)) ObjectMapUpdate;
   I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectMapRender;
   I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectMapInvalidate;
   I->fGetNFrame = (int (*)(CObject *)) ObjectMapGetNStates;
-
-  return (I);
 }
 
 
@@ -2338,8 +2329,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
   }
   if(!ok) {
     ErrMessage(I->G, "ObjectMap", "Unable to create map");
-    ObjectMapFree(I);
-    I = NULL;
+    DeleteP(I);
   } else {
     if(!quiet) {
       PRINTFB(I->G, FB_ObjectMap, FB_Actions)
@@ -4714,7 +4704,7 @@ static ObjectMap *ObjectMapReadXPLORStr(PyMOLGlobals * G, ObjectMap * I, char *X
     isNew = false;
   if(ok) {
     if(isNew) {
-      I = (ObjectMap *) ObjectMapNew(G);
+      I = (ObjectMap *) new ObjectMap(G);
       isNew = true;
     } else {
       isNew = false;
@@ -4741,7 +4731,7 @@ static ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals * G, ObjectMap * I, char *XP
     isNew = false;
   if(ok) {
     if(isNew) {
-      I = (ObjectMap *) ObjectMapNew(G);
+      I = (ObjectMap *) new ObjectMap(G);
       isNew = true;
     } else {
       isNew = false;
@@ -4811,7 +4801,7 @@ static ObjectMap *ObjectMapReadFLDStr(PyMOLGlobals * G, ObjectMap * I, char *Map
     isNew = false;
   if(ok) {
     if(isNew) {
-      I = (ObjectMap *) ObjectMapNew(G);
+      I = (ObjectMap *) new ObjectMap(G);
       isNew = true;
     } else {
       isNew = false;
@@ -4837,7 +4827,7 @@ static ObjectMap *ObjectMapReadBRIXStr(PyMOLGlobals * G, ObjectMap * I, char *Ma
     isNew = false;
   if(ok) {
     if(isNew) {
-      I = (ObjectMap *) ObjectMapNew(G);
+      I = (ObjectMap *) new ObjectMap(G);
       isNew = true;
     } else {
       isNew = false;
@@ -4863,7 +4853,7 @@ static ObjectMap *ObjectMapReadGRDStr(PyMOLGlobals * G, ObjectMap * I, char *Map
     isNew = false;
   if(ok) {
     if(isNew) {
-      I = (ObjectMap *) ObjectMapNew(G);
+      I = (ObjectMap *) new ObjectMap(G);
       isNew = true;
     } else {
       isNew = false;
@@ -4889,7 +4879,7 @@ static ObjectMap *ObjectMapReadPHIStr(PyMOLGlobals * G, ObjectMap * I, char *Map
     isNew = false;
   if(ok) {
     if(isNew) {
-      I = (ObjectMap *) ObjectMapNew(G);
+      I = (ObjectMap *) new ObjectMap(G);
       isNew = true;
     } else {
       isNew = false;
@@ -5227,7 +5217,7 @@ static ObjectMap *ObjectMapReadDXStr(PyMOLGlobals * G, ObjectMap * I,
     isNew = false;
   if(ok) {
     if(isNew) {
-      I = (ObjectMap *) ObjectMapNew(G);
+      I = (ObjectMap *) new ObjectMap(G);
       isNew = true;
     } else {
       isNew = false;
@@ -5461,7 +5451,7 @@ static ObjectMap *ObjectMapReadACNTStr(PyMOLGlobals * G, ObjectMap * I,
     isNew = false;
   if(ok) {
     if(isNew) {
-      I = (ObjectMap *) ObjectMapNew(G);
+      I = (ObjectMap *) new ObjectMap(G);
       isNew = true;
     } else {
       isNew = false;
@@ -5804,7 +5794,7 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * 
   if(ok) {
 
     if(isNew) {
-      I = (ObjectMap *) ObjectMapNew(G);
+      I = (ObjectMap *) new ObjectMap(G);
       isNew = true;
     } else {
       isNew = false;
@@ -5904,7 +5894,7 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
   if(ok) {
 
     if(isNew) {
-      I = (ObjectMap *) ObjectMapNew(G);
+      I = (ObjectMap *) new ObjectMap(G);
       isNew = true;
     } else {
       isNew = false;

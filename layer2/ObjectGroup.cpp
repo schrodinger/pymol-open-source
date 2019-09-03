@@ -38,7 +38,7 @@ int ObjectGroupNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGroup ** r
     ok = PyList_Check(list);
   if(ok)
     ll = PyList_Size(list);
-  I = ObjectGroupNew(G);
+  I = new ObjectGroup(G);
   if(ok)
     ok = (I != NULL);
   if(ok){
@@ -71,11 +71,10 @@ PyObject *ObjectGroupAsPyList(ObjectGroup * I)
 
 /*========================================================================*/
 
-static void ObjectGroupFree(ObjectGroup * I)
+ObjectGroup::~ObjectGroup()
 {
+  auto I = this;
   ObjectStatePurge(&I->State);
-  ObjectPurge(I);
-  OOFreeP(I);
 }
 
 
@@ -87,21 +86,16 @@ static CObjectState *ObjectGroupGetObjectState(ObjectGroup * I, int state)
 
 
 /*========================================================================*/
-ObjectGroup *ObjectGroupNew(PyMOLGlobals * G)
+ObjectGroup::ObjectGroup(PyMOLGlobals * G) : CObject(G)
 {
-  OOCalloc(G, ObjectGroup);
-
-  ObjectInit(G, (CObject *) I);
-
+  auto I = this;
   I->type = cObjectGroup;
-  I->fFree = (void (*)(CObject *)) ObjectGroupFree;
   I->fRender = NULL;
   I->OpenOrClosed = false;
   I->fGetObjectState = (CObjectState * (*)(CObject *, int state))
     ObjectGroupGetObjectState;
 
   ObjectStateInit(G, &I->State);
-  return (I);
 }
 
 void ObjectGroupResetMatrix(ObjectGroup * I, int state)

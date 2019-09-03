@@ -61,40 +61,47 @@ struct CObjectState {
   CObjectState(PyMOLGlobals * G): G(G) {};
 };
 
-#ifndef CObject_DEFINED
-typedef struct _CObject CObject;
-#define CObject_DEFINED
-#endif
+void ObjectUpdate(CObject*);
+void ObjectRenderUnitBox(CObject*, RenderInfo*);
+int ObjectGetNFrames(CObject*);
+void ObjectDescribeElement(CObject*, int, char*);
+void ObjectInvalidate(CObject*, int, int, int);
+CSetting** ObjectGetSettingHandle(CObject*, int);
 
-struct _CObject {
-  PyMOLGlobals *G;
-  void (*fUpdate) (CObject * I);        /* update representations */
-  void (*fRender) (CObject * I, RenderInfo * info);
-  void (*fFree) (CObject * I);
-  int (*fGetNFrame) (CObject * I);
-  void (*fDescribeElement) (CObject * I, int index, char *buffer);
-  void (*fInvalidate) (CObject * I, int rep, int level, int state);
-  CSetting **(*fGetSettingHandle) (CObject * I, int state);
-  char *(*fGetCaption) (CObject * I, char * ch, int len);
-  CObjectState *(*fGetObjectState) (CObject * I, int state);
+struct CObject {
+  PyMOLGlobals *G = nullptr;
+  void (*fUpdate) (CObject * I) = ObjectUpdate;        /* update representations */
+  void (*fRender) (CObject * I, RenderInfo * info) = ObjectRenderUnitBox;
+  int (*fGetNFrame) (CObject * I) = ObjectGetNFrames;
+  void (*fDescribeElement) (CObject * I, int index, char *buffer) = ObjectDescribeElement;
+  void (*fInvalidate) (CObject * I, int rep, int level, int state) = ObjectInvalidate;
+  CSetting **(*fGetSettingHandle) (CObject * I, int state) = ObjectGetSettingHandle;
+  char *(*fGetCaption) (CObject * I, char * ch, int len) = nullptr;
+  CObjectState *(*fGetObjectState) (CObject * I, int state) = nullptr;
   cObject_t type;
-  ObjectNameType Name;
-  int Color;
-  int visRep;
-  float ExtentMin[3], ExtentMax[3];
-  int ExtentFlag, TTTFlag;
-  float TTT[16];                /* translate, transform, translate matrix (to apply when rendering) */
-  CSetting *Setting;
-  int Enabled;                  /* read-only... maintained by Scene */
-  int Context;                  /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
+  ObjectNameType Name {};
+  int Color = 0;
+  int visRep = 0;
+  float ExtentMin[3]{}, ExtentMax[3]{};
+  int ExtentFlag = false, TTTFlag = false;
+  float TTT[16]{};                /* translate, transform, translate matrix (to apply when rendering) */
+  CSetting *Setting = nullptr;
+  int Enabled = 0;                  /* read-only... maintained by Scene */
+  int Context = 0;                  /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
   pymol::vla<CViewElem> ViewElem;          /* for animating objects via the TTT */
 
   /* not pickled */
-  int grid_slot;
-  CGO *gridSlotSelIndicatorsCGO;
-  int Grabbed;
+  int grid_slot = 0;
+  CGO *gridSlotSelIndicatorsCGO = nullptr;
+  int Grabbed = 0;
 
   // methods
+
+protected:
+  CObject(PyMOLGlobals* G);
+
+public:
+  virtual ~CObject();
 
   void update() {
     if (fUpdate)
@@ -117,14 +124,11 @@ struct _CObject {
   }
 };
 
-void ObjectInit(PyMOLGlobals * G, CObject * I);
 int ObjectCopyHeader(CObject * I, const CObject * src);
-void ObjectPurge(CObject * I);
 void ObjectSetName(CObject * I, const char *name);
 bool ObjectMakeValidName(char *name);
 void ObjectMakeValidName(PyMOLGlobals * G, char *name);
 void ObjectPurgeSettings(CObject * I);
-void ObjectFree(CObject * I);
 void ObjectUseColor(CObject * I);
 void ObjectUseColorCGO(CGO *cgo, CObject * I);
 void ObjectSetRepVisMask(CObject * I, int repmask, int value);

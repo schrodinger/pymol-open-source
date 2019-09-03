@@ -57,7 +57,7 @@ static int TestPyMOL_00_00(PyMOLGlobals * G)
   }
   md->init_mode = -2;
 
-  obj = ObjectMapNew(G);
+  obj = new ObjectMap(G);
   if(obj) {
     ms = ObjectMapNewStateFromDesc(G, obj, md, 0, true);
     ms->Active = true;

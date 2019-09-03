@@ -376,7 +376,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
             ObjectMapState *ms = NULL;
 
             if(!obj)
-              ok_assert(1, obj = ObjectMapNew(G));
+              ok_assert(1, obj = new ObjectMap(G));
 
             if(state < 0)
               state = obj->NState;
@@ -584,7 +584,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   }
 
   // Create ObjectMolecule
-  ok_assert(1, I = ObjectMoleculeNew(G, false));
+  ok_assert(1, I = new ObjectMolecule(G, false));
   I->Color = AtomInfoUpdateAutoColor(G);
   VLASize(I->AtomInfo, AtomInfoType, natoms);
   I->NAtom = natoms;

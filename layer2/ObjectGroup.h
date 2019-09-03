@@ -22,11 +22,11 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 
 struct ObjectGroup : public CObject {
-  int OpenOrClosed;
+  int OpenOrClosed = false;
   CObjectState State;           /* groups only have one state */
+  ObjectGroup(PyMOLGlobals* G);
+  ~ObjectGroup();
 };
-
-ObjectGroup *ObjectGroupNew(PyMOLGlobals * G);
 
 PyObject *ObjectGroupAsPyList(ObjectGroup * I);
 

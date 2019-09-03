@@ -56,7 +56,9 @@ typedef struct {
 
 struct ObjectSurface : public CObject {
   ObjectSurfaceState *State;
-  int NState;
+  int NState = 0;
+  ObjectSurface(PyMOLGlobals* G);
+  ~ObjectSurface();
 };
 
 ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,

@@ -208,7 +208,7 @@ int ObjectDistNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectDist ** res
   if(ok)
     ok = PyList_Check(list);
 
-  I = ObjectDistNew(G);
+  I = new ObjectDist(G);
   if(ok)
     ok = (I != NULL);
 
@@ -319,25 +319,18 @@ static void ObjectDistInvalidate(CObject * Iarg, int rep, int level, int state){
 }
 
 /*========================================================================*/
-ObjectDist *ObjectDistNew(PyMOLGlobals * G)
+ObjectDist::ObjectDist(PyMOLGlobals * G) : CObject(G)
 {
-  OOAlloc(G, ObjectDist);
-  ObjectInit(G, (CObject *) I);
+  auto I = this;
   I->type = cObjectMeasurement;
   I->DSet = VLACalloc(DistSet *, 10);  /* auto-zero */
-  I->NDSet = 0;
+
   I->fRender = (void (*)(CObject *, RenderInfo * info)) ObjectDistRender;
-  I->fFree = (void (*)(CObject *)) ObjectDistFree;
   I->fUpdate = (void (*)(CObject *)) ObjectDistUpdate;
   I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectDistInvalidate;
   I->fGetNFrame = (int (*)(CObject *)) ObjectDistGetNFrames;
-#if 0
-  I->fGetSettingHandle = (CSetting ** (*)(CObject *, int state))
-    ObjectDistGetSettingHandle;
-#endif
   I->fDescribeElement = NULL;
   I->Color = ColorGetIndex(G, "dash");
-  return (I);
 }
 
 
@@ -390,7 +383,7 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
    * overwrite it by resetting it; otherwise intialize the
    * objectDistance and its base class */
   if(!oldObj)
-    I = ObjectDistNew(G);
+    I = new ObjectDist(G);
   else {
     I = oldObj;
     if(reset)
@@ -483,7 +476,7 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
 
   int frozen1=-1, frozen2=-1, frozen3=-1;
   if(!oldObj)                   /* create object if new */
-    I = ObjectDistNew(G);
+    I = new ObjectDist(G);
   else {                        /* otherwise, use existing object */
     I = oldObj;
     if(reset) {                 /* if reseting, then clear out all existing coordinate sets */
@@ -581,7 +574,7 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
   int frozen1=-1, frozen2=-1, frozen3=-1, frozen4=-1;
 
   if(!oldObj)                   /* create object if new */
-    I = ObjectDistNew(G);
+    I = new ObjectDist(G);
   else {                        /* otherwise, use existing object */
     I = oldObj;
     if(reset) {                 /* if reseting, then clear out all existing coordinate sets */
@@ -665,15 +658,13 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
 
 
 /*========================================================================*/
-void ObjectDistFree(ObjectDist * I)
+ObjectDist::~ObjectDist()
 {
-  int a;
-  for(a = 0; a < I->NDSet; a++)
+  auto I = this;
+  for(int a = 0; a < I->NDSet; a++)
     if(I->DSet[a]) {
       I->DSet[a]->fFree();
       I->DSet[a] = NULL;
     }
   VLAFreeP(I->DSet);
-  ObjectPurge(I);
-  OOFreeP(I); /* from OOAlloc */
 }

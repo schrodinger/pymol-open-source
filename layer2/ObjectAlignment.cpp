@@ -49,8 +49,6 @@ Z* -------------------------------------------------------------------
 
 */
 
-static ObjectAlignment *ObjectAlignmentNew(PyMOLGlobals * G);
-static void ObjectAlignmentFree(ObjectAlignment * I);
 void ObjectAlignmentUpdate(ObjectAlignment * I);
 
 static int GroupOrderKnown(PyMOLGlobals * G,
@@ -833,7 +831,7 @@ int ObjectAlignmentNewFromPyList(PyMOLGlobals * G, PyObject * list,
   if(ok)
     ok = PyList_Check(list);
 
-  I = ObjectAlignmentNew(G);
+  I = new ObjectAlignment(G);
   if(ok)
     ok = (I != NULL);
 
@@ -869,18 +867,16 @@ PyObject *ObjectAlignmentAsPyList(ObjectAlignment * I)
 
 /*========================================================================*/
 
-static void ObjectAlignmentFree(ObjectAlignment * I)
+ObjectAlignment::~ObjectAlignment()
 {
-  int a;
-  for(a = 0; a < I->NState; a++) {
+  auto I = this;
+  for(int a = 0; a < I->NState; a++) {
     CGOFree(I->State[a].renderCGO);
     CGOFree(I->State[a].primitiveCGO);
     VLAFreeP(I->State[a].alignVLA);
     OVOneToAny_DEL_AUTO_NULL(I->State[a].id2tag);
   }
   VLAFreeP(I->State);
-  ObjectPurge(I);
-  OOFreeP(I);
 }
 
 
@@ -1193,26 +1189,17 @@ static void ObjectAlignmentInvalidate(ObjectAlignment * I, int rep, int level, i
 
 
 /*========================================================================*/
-static ObjectAlignment *ObjectAlignmentNew(PyMOLGlobals * G)
+ObjectAlignment::ObjectAlignment(PyMOLGlobals * G) : CObject(G)
 {
-  OOAlloc(G, ObjectAlignment);
-
-  ObjectInit(G, (CObject *) I);
-
+  auto I = this;
   I->State = VLACalloc(ObjectAlignmentState, 10);      /* auto-zero */
-  I->NState = 0;
-  I->SelectionState = -1;
-  I->ForceState = -1;
 
   I->type = cObjectAlignment;
-  I->fFree = (void (*)(CObject *)) ObjectAlignmentFree;
   I->fUpdate = (void (*)(CObject *)) ObjectAlignmentUpdate;
   I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectAlignmentRender;
   I->fGetNFrame = (int (*)(CObject *)) ObjectAlignmentGetNState;
   I->fInvalidate = (void (*)(CObject *, int rep, int level, int state))
     ObjectAlignmentInvalidate;
-
-  return (I);
 }
 
 
@@ -1231,7 +1218,7 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
       obj = NULL;
   }
   if(!obj) {
-    I = ObjectAlignmentNew(G);
+    I = new ObjectAlignment(G);
   } else {
     I = obj;
   }

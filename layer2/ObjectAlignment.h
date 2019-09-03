@@ -38,9 +38,12 @@ typedef struct ObjectAlignmentState {
 } ObjectAlignmentState;
 
 struct ObjectAlignment : public CObject {
-  ObjectAlignmentState *State;
-  int NState;
-  int SelectionState, ForceState;
+  ObjectAlignmentState *State = nullptr;
+  int NState = 0;
+  int SelectionState = -1;
+  int ForceState = -1;
+  ObjectAlignment(PyMOLGlobals* G);
+  ~ObjectAlignment();
 };
 
 void ObjectAlignmentUpdate(ObjectAlignment * I);

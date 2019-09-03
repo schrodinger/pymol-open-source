@@ -1388,7 +1388,7 @@ int ExecutivePseudoatom(PyMOLGlobals * G, const char *object_name, const char *s
     if(!obj) {
       /* new object */
       is_new = true;
-      obj = ObjectMoleculeNew(G, false);
+      obj = new ObjectMolecule(G, false);
       ObjectSetName(obj, object_name);
       if(!obj)
         ok = false;
@@ -2180,7 +2180,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
     }
   } else {
     if((!obj) && (action == cExecutiveGroupAdd)) {
-      obj = (CObject *) ObjectGroupNew(G);
+      obj = (CObject *) new ObjectGroup(G);
       if(obj) {
         ObjectSetName(obj, valid_name);
         ExecutiveManageObject(G, obj, false, true);
@@ -6537,7 +6537,7 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
       if(need_union_geometry) {
         int src_state, trg_state;
         ObjectMapDesc desc;
-        target = ObjectMapNew(G);
+        target = new ObjectMap(G);
 
         ObjectSetName((CObject *) target, name);
         isNew = true;
@@ -6962,7 +6962,7 @@ int ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float *grid,
 
     if(ok) {
       if(isNew)
-        objMap = ObjectMapNew(G);
+        objMap = new ObjectMap(G);
       else
         objMap = (ObjectMap *) origObj;
       if(objMap) {
@@ -14607,7 +14607,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
                     }
                   }
                 } else {
-                  ((CObject *) new_obj)->fFree((CObject *) new_obj);
+                  DeleteP(new_obj);
                 }
               }
         MapFree(map);
@@ -14642,8 +14642,7 @@ static void ExecutivePurgeSpec(PyMOLGlobals * G, SpecRec * rec)
     }
     ExecutiveDelKey(I, rec);
     SelectorDelete(G, rec->name);
-    rec->obj->fFree(rec->obj);
-    rec->obj = NULL;
+    DeleteP(rec->obj);
     TrackerDelCand(I->Tracker, rec->cand_id);
     break;
   case cExecSelection:
@@ -14810,7 +14809,7 @@ static void ExecutiveDoAutoGroup(PyMOLGlobals * G, SpecRec * rec)
         }
 
         if((!found_group) && (auto_mode == 2)) {
-          CObject *obj = (CObject *) ObjectGroupNew(G);
+          auto obj = new ObjectGroup(G);
           if(obj) {
             ObjectSetName(obj, seek_group_name);
             strcpy(rec->group_name, obj->Name);
@@ -14853,8 +14852,7 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
       /* purge it */
       SceneObjectDel(G, rec->obj, false);
       ExecutiveInvalidateSceneMembers(G);
-      rec->obj->fFree(rec->obj);
-      rec->obj = NULL;
+      DeleteP(rec->obj);
     } else {
       if(!quiet)
         if(obj->Name[0] != '_') {       /* suppress internal objects */
@@ -16625,7 +16623,7 @@ void ExecutiveFree(PyMOLGlobals * G)
     CGOFree(I->selIndicatorsCGO);
   while(ListIterate(I->Spec, rec, next)) {
     if(rec->type == cExecObject)
-      rec->obj->fFree(rec->obj);
+      DeleteP(rec->obj);
   }
   ListFree(I->Spec, next, SpecRec);
   ListFree(I->Panel, next, PanelRec);

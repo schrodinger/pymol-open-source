@@ -41,10 +41,6 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"ObjectCGO.h"
 
-static
-ObjectMesh *ObjectMeshNew(PyMOLGlobals * G);
-
-static void ObjectMeshFree(ObjectMesh * I);
 static void ObjectMeshInvalidate(ObjectMesh * I, int rep, int level, int state);
 static void ObjectMeshStateInit(PyMOLGlobals * G, ObjectMeshState * ms);
 static void ObjectMeshRecomputeExtent(ObjectMesh * I);
@@ -229,9 +225,8 @@ int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** res
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
 
-  I = ObjectMeshNew(G);
-  if(ok)
-    ok = (I != NULL);
+  I = new ObjectMesh(G);
+  CHECKOK(ok, I);
 
   if(ok)
     ok = ObjectFromPyList(G, PyList_GetItem(list, 0), I);
@@ -243,7 +238,7 @@ int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** res
     (*result) = I;
     ObjectMeshRecomputeExtent(I);
   } else {
-    ObjectMeshFree(I);
+    DeleteP(I);
     (*result) = NULL;
   }
   return (ok);
@@ -264,7 +259,7 @@ PyObject *ObjectMeshAsPyList(ObjectMesh * I)
     PyList_SetItem(result, 2, ObjectMeshAllStatesAsPyList(I));
   } else {
     /* save ObjectMesh as ObjectCGO */
-    ObjectCGO *retObjectCGO = ObjectCGONew(I->G);
+    ObjectCGO *retObjectCGO = new ObjectCGO(I->G);
     ObjectCopyHeader(retObjectCGO, I);
     retObjectCGO->type = cObjectCGO;
 
@@ -279,7 +274,7 @@ PyObject *ObjectMeshAsPyList(ObjectMesh * I)
     }
     ObjectSetRepVisMask(retObjectCGO, cRepCGOBit, cVis_AS);
     result = ObjectCGOAsPyList(retObjectCGO);
-    ObjectCGOFree(retObjectCGO);
+    DeleteP(retObjectCGO);
   }
   return (PConvAutoNone(result));
 }
@@ -307,17 +302,14 @@ static void ObjectMeshStateFree(ObjectMeshState * ms)
   FreeP(ms->RC);
 }
 
-static void ObjectMeshFree(ObjectMesh * I)
+ObjectMesh::~ObjectMesh()
 {
-  int a;
-  for(a = 0; a < I->NState; a++) {
+  auto I = this;
+  for(int a = 0; a < I->NState; a++) {
     if(I->State[a].Active)
       ObjectMeshStateFree(I->State + a);
   }
   VLAFreeP(I->State);
-  ObjectPurge(I);
-
-  OOFreeP(I);
 }
 
 int ObjectMeshInvalidateMapName(ObjectMesh * I, const char *name, const char * new_name)
@@ -1155,34 +1147,16 @@ static int ObjectMeshGetNStates(ObjectMesh * I)
 
 
 /*========================================================================*/
-ObjectMesh *ObjectMeshNew(PyMOLGlobals * G)
+ObjectMesh::ObjectMesh(PyMOLGlobals * G) : CObject(G)
 {
-  int ok = true;
-  OOAlloc(G, ObjectMesh);
-  CHECKOK(ok, I);
-  if (ok)
-    ObjectInit(G, (CObject *) I);
-
-  if (ok){
-    I->NState = 0;
-    I->State = VLACalloc(ObjectMeshState, 10);   /* autozero important */
-    CHECKOK(ok, I->State);
-  }
-  if (ok){
-    I->type = cObjectMesh;
+  auto I = this;
+  I->State = VLACalloc(ObjectMeshState, 10);   /* autozero important */
+  I->type = cObjectMesh;
     
-    I->fFree = (void (*)(CObject *)) ObjectMeshFree;
-    I->fUpdate = (void (*)(CObject *)) ObjectMeshUpdate;
-    I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectMeshRender;
-    I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectMeshInvalidate;
-    I->fGetNFrame = (int (*)(CObject *)) ObjectMeshGetNStates;
-  }
-  if (!ok){
-    ObjectMeshFree(I);
-    I = NULL;
-  }
-  /*  I->fGetCaption = (char *(*)(CObject *))ObjectMeshGetCaption; */
-  return (I);
+  I->fUpdate = (void (*)(CObject *)) ObjectMeshUpdate;
+  I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectMeshRender;
+  I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectMeshInvalidate;
+  I->fGetNFrame = (int (*)(CObject *)) ObjectMeshGetNStates;
 }
 
 
@@ -1231,7 +1205,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
   int created = !obj;
 
   if(created) {
-    I = ObjectMeshNew(G);
+    I = new ObjectMesh(G);
   } else {
     I = obj;
   }
@@ -1359,8 +1333,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
     /*  printf("Brick %d %d %d %d %d %d\n",I->Range[0],I->Range[1],I->Range[2],I->Range[3],I->Range[4],I->Range[5]); */
   }
   if(!ok && created) {
-    ObjectMeshFree(I);
-    I = NULL;
+    DeleteP(I);
   }
   SceneChanged(G);
   SceneCountFrames(G);

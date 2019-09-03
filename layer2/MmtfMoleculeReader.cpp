@@ -156,7 +156,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
   tai.id = -1;
   tai.q = 1.0f;
 
-  I = ObjectMoleculeNew(G, /* discrete */ 1);
+  I = new ObjectMolecule(G, /* discrete */ 1);
   I->Color = AtomInfoUpdateAutoColor(G);
   I->NAtom = container->numAtoms;
   I->NCSet = container->numModels;

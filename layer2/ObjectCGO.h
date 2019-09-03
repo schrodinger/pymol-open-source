@@ -29,11 +29,12 @@ typedef struct ObjectCGOState {
 } ObjectCGOState;
 
 struct ObjectCGO : public CObject {
-  ObjectCGOState *State;
-  int NState;
+  ObjectCGOState *State = nullptr;
+  int NState = 0;
+  ObjectCGO(PyMOLGlobals* G);
+  ~ObjectCGO();
 };
 
-ObjectCGO *ObjectCGONew(PyMOLGlobals * G);
 ObjectCGO *ObjectCGODefine(PyMOLGlobals * G, ObjectCGO * obj, PyObject * pycgo,
                            int state);
 ObjectCGO *ObjectCGOFromFloatArray(PyMOLGlobals * G, ObjectCGO * obj, float *array,
@@ -45,7 +46,5 @@ PyObject *ObjectCGOAsPyList(ObjectCGO * I);
 int ObjectCGONewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCGO ** result,
 			       int version);
 ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals * G, const char *text, float *pos);
-
-void ObjectCGOFree(ObjectCGO * I);
 
 #endif

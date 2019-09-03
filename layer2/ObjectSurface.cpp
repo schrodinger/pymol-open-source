@@ -42,8 +42,6 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"CGO.h"
 
-static ObjectSurface *ObjectSurfaceNew(PyMOLGlobals * G);
-static void ObjectSurfaceFree(ObjectSurface * I);
 static void ObjectSurfaceStateInit(PyMOLGlobals * G, ObjectSurfaceState * ms);
 static void ObjectSurfaceRecomputeExtent(ObjectSurface * I);
 
@@ -191,7 +189,7 @@ int ObjectSurfaceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSurface 
   if(ok)
     ok = PyList_Check(list);
 
-  I = ObjectSurfaceNew(G);
+  I = new ObjectSurface(G);
   if(ok)
     ok = (I != NULL);
 
@@ -238,17 +236,14 @@ static void ObjectSurfaceStateFree(ObjectSurfaceState * ms)
   FreeP(ms->c_buf);
 }
 
-static void ObjectSurfaceFree(ObjectSurface * I)
+ObjectSurface::~ObjectSurface()
 {
-  int a;
-  for(a = 0; a < I->NState; a++) {
+  auto I = this;
+  for(int a = 0; a < I->NState; a++) {
     if(I->State[a].Active)
       ObjectSurfaceStateFree(I->State + a);
   }
   VLAFreeP(I->State);
-  ObjectPurge(I);
-
-  OOFreeP(I);
 }
 
 void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state)
@@ -1062,23 +1057,17 @@ static int ObjectSurfaceGetNStates(ObjectSurface * I)
 
 
 /*========================================================================*/
-ObjectSurface *ObjectSurfaceNew(PyMOLGlobals * G)
+ObjectSurface::ObjectSurface(PyMOLGlobals * G) : CObject(G)
 {
-  OOAlloc(G, ObjectSurface);
-
-  ObjectInit(G, (CObject *) I);
-
-  I->NState = 0;
+  auto I = this;
   I->State = VLACalloc(ObjectSurfaceState, 10);        /* autozero important */
 
   I->type = cObjectSurface;
 
-  I->fFree = (void (*)(CObject *)) ObjectSurfaceFree;
   I->fUpdate = (void (*)(CObject *)) ObjectSurfaceUpdate;
   I->fRender = (void (*)(CObject *, RenderInfo * info)) ObjectSurfaceRender;
   I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectSurfaceInvalidate;
   I->fGetNFrame = (int (*)(CObject *)) ObjectSurfaceGetNStates;
-  return (I);
 }
 
 
@@ -1127,7 +1116,7 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
   ObjectMapState *oms;
 
   if(!obj) {
-    I = ObjectSurfaceNew(G);
+    I = new ObjectSurface(G);
   } else {
     I = obj;
   }

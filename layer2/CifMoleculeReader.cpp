@@ -2000,7 +2000,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
   }
 
   // allocate ObjectMolecule
-  ObjectMolecule * I = ObjectMoleculeNew(G, (discrete > 0));
+  ObjectMolecule * I = new ObjectMolecule(G, (discrete > 0));
   I->Color = AtomInfoUpdateAutoColor(G);
 
   // read coordsets from datablock
@@ -2024,7 +2024,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
   } else if ((csets = read_chem_comp_atom_model(G, datablock, &I->AtomInfo))) {
     info.type = CIF_CHEM_COMP;
   } else {
-    ObjectMoleculeFree(I);
+    DeleteP(I);
     return nullptr;
   }
 

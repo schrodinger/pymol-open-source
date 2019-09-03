@@ -64,8 +64,10 @@ typedef struct {
 
 struct ObjectSlice : public CObject {
   ObjectSliceState *State;
-  PickContext context;
-  int NState;
+  PickContext context{};
+  int NState = 0;
+  ObjectSlice(PyMOLGlobals* G);
+  ~ObjectSlice();
 };
 
 ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap * map,

@@ -6649,7 +6649,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
     isNew = true;
     if(discrete < 0)
       discrete = SelectorIsSelectionDiscrete(G, sele, false);
-    targ = ObjectMoleculeNew(G, discrete);
+    targ = new ObjectMolecule(G, discrete);
     targ->Bond = pymol::vla<BondType>(1);
     {
       /* copy object color of previous object (if any) */
@@ -10914,11 +10914,9 @@ void SelectorFreeImpl(PyMOLGlobals * G, CSelector *I, short init2)
 {
   SelectorCleanImpl(G, I);
   if(I->Origin)
-    if(I->Origin->fFree)
-      I->Origin->fFree((CObject *) I->Origin);
+    DeleteP(I->Origin);
   if(I->Center)
-    if(I->Center->fFree)
-      I->Center->fFree((CObject *) I->Center);
+    DeleteP(I->Center);
   if (init2){
     VLAFreeP(I->Member);
     VLAFreeP(I->Name);

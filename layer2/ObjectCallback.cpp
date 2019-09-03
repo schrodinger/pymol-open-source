@@ -30,18 +30,15 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Setting.h"
 
-static void ObjectCallbackFree(ObjectCallback * I);
-
-
 /*========================================================================*/
 
-static void ObjectCallbackFree(ObjectCallback * I)
+ObjectCallback::~ObjectCallback()
 {
+  auto I = this;
 #ifndef _PYMOL_NOPY
-  int a;
   PyMOLGlobals *G = I->G;
   int blocked = PAutoBlock(G);
-  for(a = 0; a < I->NState; a++) {
+  for(int a = 0; a < I->NState; a++) {
     if(I->State[a].PObj) {
       Py_DECREF(I->State[a].PObj);
       I->State[a].PObj = NULL;
@@ -50,8 +47,6 @@ static void ObjectCallbackFree(ObjectCallback * I)
   PAutoUnblock(G, blocked);
 #endif
   VLAFreeP(I->State);
-  ObjectPurge(I);
-  OOFreeP(I);
 }
 
 
@@ -123,23 +118,17 @@ static int ObjectCallbackGetNStates(ObjectCallback * I)
 
 
 /*========================================================================*/
-ObjectCallback *ObjectCallbackNew(PyMOLGlobals * G)
+ObjectCallback::ObjectCallback(PyMOLGlobals * G) : CObject(G)
 {
-  OOAlloc(G, ObjectCallback);
-
-  ObjectInit(G, (CObject *) I);
-
-  I->State = VLACalloc(ObjectCallbackState, 10);       /* autozero */
+  auto I = this;
+  State = VLACalloc(ObjectCallbackState, 10);       /* autozero */
   I->NState = 0;
 
   I->type = cObjectCallback;
-  I->fFree = (void (*)(CObject *)) ObjectCallbackFree;
   I->fUpdate = (void (*)(CObject *)) ObjectCallbackUpdate;
   I->fRender = (void (*)(CObject *, RenderInfo *))
     ObjectCallbackRender;
   I->fGetNFrame = (int (*)(CObject *)) ObjectCallbackGetNStates;
-
-  return (I);
 }
 
 
@@ -153,7 +142,7 @@ ObjectCallback *ObjectCallbackDefine(PyMOLGlobals * G, ObjectCallback * obj,
   ObjectCallback *I = NULL;
 
   if(!obj) {
-    I = ObjectCallbackNew(G);
+    I = new ObjectCallback(G);
   } else {
     I = obj;
   }
@@ -279,7 +268,7 @@ int ObjectCallbackNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCallbac
   ok_assert(1, list != NULL);
   ok_assert(1, PyList_Check(list));
 
-  ok_assert(1, I = ObjectCallbackNew(G));
+  ok_assert(1, I = new ObjectCallback(G));
 
   val = PyList_GetItem(list, 0);
   ok_assert(2, ObjectFromPyList(G, val, I));
@@ -292,7 +281,7 @@ int ObjectCallbackNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCallbac
   *result = I;
   return true;
 ok_except2:
-  ObjectCallbackFree(I);
+  DeleteP(I);
 ok_except1:
   *result = NULL;
   return false;

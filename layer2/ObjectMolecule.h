@@ -57,45 +57,50 @@ struct ObjectMolecule : public CObject {
 	/* array of pointers to coordinate sets; one set per state */
   pymol::vla<CoordSet*> CSet;
 	/* number of coordinate sets */
-  int NCSet;
-  struct CoordSet *CSTmpl;      /* template for trajectories, etc. */
+  int NCSet = 0;
+  struct CoordSet *CSTmpl = nullptr;      /* template for trajectories, etc. */
 	/* array of bonds */
   pymol::vla<BondType> Bond;
 	/* array of atoms (infos) */
   pymol::vla<AtomInfoType> AtomInfo;
 	/* number of atoms and bonds */
-  int NAtom, prevNAtom;
-  int NBond, prevNBond;
+  int NAtom = 0, prevNAtom = 0;
+  int NBond = 0, prevNBond = 0;
 	/* is this object loaded as a discrete object? if so, number of states */
-  int DiscreteFlag;
+  int DiscreteFlag = 0;
   pymol::vla<int> DiscreteAtmToIdx;
   pymol::vla<CoordSet*> DiscreteCSet;
   /* proposed, for storing uniform trajectory data more efficiently:
      int *UniformAtmToIdx, *UniformIdxToAtm;  */
-  int CurCSet;                  /* Current state number */
-  int SeleBase;                 /* for internal usage by  selector & only valid during selection process */
-  CSymmetry *Symmetry;
-  int *Neighbor;
-  float *UndoCoord[cUndoMask + 1];
-  int UndoState[cUndoMask + 1];
-  int UndoNIndex[cUndoMask + 1];
-  int UndoIter;
-  CGO *UnitCellCGO;
-  int BondCounter;
-  int AtomCounter;
+  int CurCSet = 0;                  /* Current state number */
+  int SeleBase = 0;                 /* for internal usage by  selector & only valid during selection process */
+  CSymmetry *Symmetry = 0;
+  int *Neighbor = 0;
+  float *UndoCoord[cUndoMask + 1] {};
+  int UndoState[cUndoMask + 1] {};
+  int UndoNIndex[cUndoMask + 1] {};
+  int UndoIter = 0;
+  CGO *UnitCellCGO = nullptr;
+  int BondCounter = 0;
+  int AtomCounter = 0;
   /* not stored */
-  struct CSculpt *Sculpt;
-  int RepVisCacheValid;
-  int RepVisCache;     /* for transient storage during updates */
+  struct CSculpt *Sculpt =  nullptr;
+  int RepVisCacheValid = 0;
+  int RepVisCache = 0;     /* for transient storage during updates */
+
+#ifndef _PYMOL_NO_UNDO
+#endif
 
   // for reporting available assembly ids after mmCIF loading - SUBJECT TO CHANGE
   std::shared_ptr<pymol::cif_file> m_ciffile;
-  const pymol::cif_data * m_cifdata;
+  const pymol::cif_data * m_cifdata = nullptr;
 
   // hetatm and ignore-flag by non-polymer classification
-  bool need_hetatm_classification;
+  bool need_hetatm_classification = false;
 
   // methods
+  ObjectMolecule(PyMOLGlobals* G, int discreteFlag);
+  ~ObjectMolecule();
   int getState() const;
   bool setNDiscrete(int natom);
   bool updateAtmToIdx();
@@ -281,7 +286,6 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I);
 int ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const char *text);
 const char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state);
 int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int state);
-void ObjectMoleculeFree(ObjectMolecule * I);    /* only for friends of ObjectMolecule */
 
 int ObjectMoleculeSetStateOrder(ObjectMolecule * I, int * order, int len);
 
@@ -291,7 +295,6 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
                                 int hetatm, float b, float q, const char *label,
                                 float *pos, int color, int state, int more, int quiet);
 
-ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag);
 int ObjectMoleculeSort(ObjectMolecule * I);
 ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj);
 void ObjectMoleculeFixChemistry(ObjectMolecule * I, int sele1, int sele2, int invalidate);

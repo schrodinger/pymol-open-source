@@ -53,7 +53,9 @@ typedef struct {
 
 struct ObjectMesh : public CObject {
   ObjectMeshState *State;
-  int NState;
+  int NState = 0;
+  ObjectMesh(PyMOLGlobals* G);
+  ~ObjectMesh();
 };
 
 ObjectMesh *ObjectMeshFromBox(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * map,

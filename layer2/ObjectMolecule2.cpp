@@ -3429,7 +3429,7 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     ok = PConvPyIntToInt(PyList_GetItem(list, 8), &discrete_flag);
 
   if (ok)
-    I = ObjectMoleculeNew(G, discrete_flag);
+    I = new ObjectMolecule(G, discrete_flag);
   CHECKOK(ok, I);
 
   if(ok){
@@ -3472,7 +3472,7 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
   else {
     /* cleanup */
     if (I)
-        ObjectMoleculeFree(I);
+        DeleteP(I);
     (*result) = NULL;
   }
   return (ok);

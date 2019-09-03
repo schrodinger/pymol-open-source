@@ -27,11 +27,12 @@ typedef struct {
 } ObjectCallbackState;
 
 struct ObjectCallback : public CObject {
-  ObjectCallbackState *State;
-  int NState;
+  ObjectCallbackState *State = nullptr;
+  int NState = 0;
+  ObjectCallback(PyMOLGlobals* G);
+  ~ObjectCallback();
 };
 
-ObjectCallback *ObjectCallbackNew(PyMOLGlobals * G);
 ObjectCallback *ObjectCallbackDefine(PyMOLGlobals * G, ObjectCallback * obj,
                                      PyObject * PObj, int state);
 void ObjectCallbackRecomputeExtent(ObjectCallback * I);
