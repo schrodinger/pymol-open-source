@@ -310,7 +310,6 @@ int CControl::release(int button, int x, int y, int mod)
         SettingSetGlobal_b(G, cSetting_sculpting, 0);
       if(SettingGetGlobal_b(G, cSetting_rock))
         SettingSetGlobal_b(G, cSetting_rock, false);
-      ExecutiveDrawNow(G);
       OrthoDirty(G);
       PLog(G, "cmd.mstop()", cPLog_pym);
       break;
@@ -327,7 +326,6 @@ int CControl::release(int button, int x, int y, int mod)
         }
       } else {
         MoviePlay(G, cMovieStop);
-        ExecutiveDrawNow(G);
         OrthoDirty(G);
         PLog(G, "cmd.mstop()", cPLog_pym);
       }
@@ -402,15 +400,6 @@ int ControlIdling(PyMOLGlobals * G)
   return (I->sdofActive ||
           MoviePlaying(G) ||
           SettingGetGlobal_b(G, cSetting_rock) || SettingGetGlobal_b(G, cSetting_sculpting));
-}
-
-
-/*========================================================================*/
-void ControlInterrupt(PyMOLGlobals * G)
-{
-  /*  register CControl *I=G->Control; */
-  MoviePlay(G, cMovieStop);
-  ExecutiveDrawNow(G);
 }
 
 
