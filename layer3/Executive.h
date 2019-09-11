@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include "Executive_pre.h"
 #include "Scene.h"
 #include "Result.h"
+#include "vla.h"
 
 enum cLoadType_t : int {
   cLoadTypeUnknown = -1,
@@ -395,7 +396,7 @@ PyObject *ExecutiveGetSettingTuple(PyMOLGlobals * G, int index, const char *obje
 PyObject *ExecutiveGetSettingText(PyMOLGlobals * G, int index, const char *object, int state);
 PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index, const char *object, int state,
                                     int type);
-ObjectMolecule **ExecutiveGetObjectMoleculeVLA(PyMOLGlobals * G, const char *sele);
+pymol::vla<ObjectMolecule*> ExecutiveGetObjectMoleculeVLA(PyMOLGlobals * G, const char *sele);
 int ExecutivePairIndices(PyMOLGlobals * G, const char *s1, const char *s2, int state1, int state2,
                          int mode, float cutoff, float h_angle,
                          int **indexVLA, ObjectMolecule *** objVLA);

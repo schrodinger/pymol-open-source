@@ -3240,7 +3240,7 @@ int ExecutiveOrder(PyMOLGlobals * G, const char *s1, int sort, int location)
   return (ok);
 }
 
-ObjectMolecule **ExecutiveGetObjectMoleculeVLA(PyMOLGlobals * G, const char *sele)
+pymol::vla<ObjectMolecule*> ExecutiveGetObjectMoleculeVLA(PyMOLGlobals * G, const char *sele)
 {
   ObjectMolecule **result = NULL;
   int s1 = SelectorIndexByName(G, sele);
@@ -3254,7 +3254,7 @@ ObjectMolecule **ExecutiveGetObjectMoleculeVLA(PyMOLGlobals * G, const char *sel
     result = (ObjectMolecule **) op.obj1VLA;
     VLASize(result, ObjectMolecule *, op.i1);
   }
-  return result;
+  return pymol::vla_take_ownership(result);
 }
 
 

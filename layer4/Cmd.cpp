@@ -5310,7 +5310,6 @@ static PyObject *CmdGetObjectList(PyObject * self, PyObject * args)
   char *str1;
   OrthoLineType s1;
   int ok = false;
-  ObjectMolecule **list = NULL;
   PyObject *result = NULL;
 
   ok = PyArg_ParseTuple(args, "Os", &self, &str1);
@@ -5323,7 +5322,7 @@ static PyObject *CmdGetObjectList(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterBlockedNotModal(G))) {
     ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    list = ExecutiveGetObjectMoleculeVLA(G, s1);
+    auto list = ExecutiveGetObjectMoleculeVLA(G, s1);
     if(list) {
       unsigned int size = VLAGetSize(list);
       result = PyList_New(size);
@@ -5333,7 +5332,6 @@ static PyObject *CmdGetObjectList(PyObject * self, PyObject * args)
           PyList_SetItem(result, a, PyString_FromString(list[a]->Name));
         }
       }
-      VLAFreeP(list);
     }
     SelectorFreeTmp(G, s1);
     APIExitBlocked(G);
@@ -8178,7 +8176,7 @@ static PyObject *CmdCountDiscrete(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
-  ObjectMolecule **list;
+  pymol::vla<ObjectMolecule*> list;
   int discrete = 0;
 
   ok_assert(1, PyArg_ParseTuple(args, "Os", &self, &str1));
@@ -8191,7 +8189,6 @@ static PyObject *CmdCountDiscrete(PyObject * self, PyObject * args)
     for(i = 0; i < size; i++)
       if(list[i]->DiscreteFlag)
         discrete++;
-    VLAFreeP(list);
   }
 
   SelectorFreeTmp(G, s1);
