@@ -176,6 +176,7 @@ void BondTypeInit2(BondType *bond, int i1, int i2, int order)
   bond->index[1] = i2;
   bond->order = order;
   bond->id = -1;
+  bond->stereo = 0;
 }
 
 int AtomInfoInit(PyMOLGlobals * G)

@@ -73,13 +73,13 @@ void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
     {
       int a;
       int nIndex = cs->NIndex;
-      AtomInfoType *atomInfo = obj->AtomInfo;
-      int *i2a = cs->IdxToAtm;
+      const AtomInfoType* atomInfo = obj->AtomInfo.data();
+      const int* i2a = cs->IdxToAtm.data();
       int last_color = -1;
-      float *v = cs->Coord;
+      const float *v = cs->Coord;
 
       for(a = 0; a < nIndex; a++) {
-        AtomInfoType *ai = atomInfo + *(i2a++);
+        const AtomInfoType* ai = atomInfo + *(i2a++);
         if((!ai->bonded) && (ai->visRep & cRepNonbondedBit)) {
           int c = ai->color;
           float v0 = v[0];

@@ -2143,7 +2143,7 @@ int RepSurfaceSameVis(RepSurface * I, CoordSet * cs)
   int same = true;
   char *lv;
   int a;
-  AtomInfoType *ai;
+  const AtomInfoType *ai;
 
   ai = cs->Obj->AtomInfo;
   lv = I->LastVisib;
@@ -3924,7 +3924,7 @@ static int RepSurfacePrepareSurfaceJob(PyMOLGlobals * G, SurfaceJob *surf_job,
       int *p = present_vla;
       SurfaceJobAtomInfo *ai_src = surf_job->atomInfo;
       SurfaceJobAtomInfo *ai_dst = surf_job->atomInfo;
-      float *v_src = cs->Coord;
+      const float *v_src = cs->Coord.data();
       float *v_dst = surf_job->coord;
       int a;
       
@@ -4005,11 +4005,11 @@ void RepSurfaceConvertSurfaceJobToPyObject(PyMOLGlobals *G, SurfaceJob *surf_job
 
 static void RepSurfaceFindAllPresentAtoms(ObjectMolecule *obj, CoordSet *cs, int *present_vla, int inclH, int cullByFlag){
   int *ap = present_vla;
-  int *idx_to_atm = cs->IdxToAtm;
-  AtomInfoType *obj_AtomInfo = obj->AtomInfo;
+  const int *idx_to_atm = cs->IdxToAtm.data();
+  const AtomInfoType *obj_AtomInfo = obj->AtomInfo.data();
   int a, cs_NIndex = cs->NIndex;
   for(a = 0; a < cs_NIndex; a++) {
-    AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
+    const AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
     if((ai1->visRep & cRepSurfaceBit) &&
        (inclH || (!ai1->isHydrogen())) &&
        ((!cullByFlag) || (!(ai1->flags &
@@ -4115,11 +4115,11 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
     int visFlag = false;
 
     if(GET_BIT(obj->RepVisCache,cRepSurface)) {
-      int *idx_to_atm = cs->IdxToAtm;
-      AtomInfoType *obj_AtomInfo = obj->AtomInfo;
+      const int *idx_to_atm = cs->IdxToAtm.data();
+      const AtomInfoType *obj_AtomInfo = obj->AtomInfo.data();
       int a, cs_NIndex = cs->NIndex;
       for(a = 0; a < cs_NIndex; a++) {
-        AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
+        const AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
         if((ai1->visRep & cRepSurfaceBit) &&
            (inclH || (!ai1->isHydrogen())) &&
            ((!cullByFlag) || (!(ai1->flags & (cAtomFlag_exfoliate | cAtomFlag_ignore))))) {
@@ -4175,11 +4175,11 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 
       /* don't waist time computing a Surface unless we need it!! */
       {
-        int *idx_to_atm = cs->IdxToAtm;
-        AtomInfoType *obj_AtomInfo = obj->AtomInfo;
+        const int *idx_to_atm = cs->IdxToAtm.data();
+        const AtomInfoType *obj_AtomInfo = obj->AtomInfo.data();
         int a, cs_NIndex = cs->NIndex;
         for(a = 0; a < cs_NIndex; a++) {
-          AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
+          const AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
           if((ai1->visRep & cRepSurfaceBit) &&
              (inclH || (!ai1->isHydrogen())) &&
              ((!cullByFlag) || (!(ai1->flags &
@@ -4196,8 +4196,8 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
         SurfaceJobAtomInfo *atom_info = VLACalloc(SurfaceJobAtomInfo, cs->NIndex);
 	CHECKOK(ok, atom_info);
         if(ok && atom_info) {
-          AtomInfoType *i_ai, *obj_atom_info = obj->AtomInfo;
-          int *idx_to_atm = cs->IdxToAtm;
+          const AtomInfoType *i_ai, *obj_atom_info = obj->AtomInfo.data();
+          const int *idx_to_atm = cs->IdxToAtm.data();
           int n_index = cs->NIndex;
           SurfaceJobAtomInfo *i_atom_info = atom_info;
           int i;

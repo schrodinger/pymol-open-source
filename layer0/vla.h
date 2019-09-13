@@ -7,6 +7,7 @@
 #include "MemoryDebug.h"
 #include "pymol/memory.h"
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #if 0
 #include <vector>
@@ -125,8 +126,6 @@ public:
 
   /// legacy VLA cast
   operator const T*() const { return m_vla; }
-  /// legacy VLA cast
-  operator T*&() { return m_vla; }
 
   /// legacy address-of VLA cast
   T** operator&() { return &m_vla; }
@@ -187,9 +186,11 @@ public:
    * Grow the container size if index @a i is out-of-bounds.
    * @post size() > i
    * @return pointer to element @a i
+   * @pre operator bool() != false
    */
   T* check(std::size_t i)
   {
+    assert(m_vla != nullptr);
     VLACheck(m_vla, T, i);
     return m_vla + i;
   }

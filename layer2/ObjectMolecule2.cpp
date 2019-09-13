@@ -101,8 +101,10 @@ typedef struct {
   int score;
 } OtherRec;
 
-static int populate_other(OtherRec * other, int at, AtomInfoType * ai, BondType * bd,
-                          int *neighbor)
+static int populate_other(OtherRec * other, int at,
+    const AtomInfoType* ai,
+    const BondType* bd,
+    const int* neighbor)
 {
   int five_cycle = false;
   int six_cycle = false;
@@ -368,7 +370,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
 
       if(pos) {                 /* only add coordinate to state if we have position for it */
 
-        float *coord = cset->Coord;
+        float *coord = cset->Coord.data();
 
         copy3f(pos, coord);
 
@@ -420,7 +422,7 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
   int *result = NULL;
   int offset;
   int n_alloc = 0;
-  BondType *bd;
+  const BondType *bd;
   int ok = true;
 
   CHECKOK(ok, other);
@@ -610,7 +612,8 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point,
             }
       } else {
         int j;
-        float test, *v = cs->Coord;
+        float test;
+        const float* v = cs->Coord.data();
         for(j = 0; j < cs->NIndex; j++) {
           test = diffsq3f(v, point);
           if(sub_vdw) {
@@ -688,7 +691,8 @@ int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, const float *point, fl
             }
       } else {
         int j;
-        float test, *v = cs->Coord;
+        float test;
+        const float* v = cs->Coord.data();
         for(j = 0; j < cs->NIndex; j++) {
           test = diffsq3f(v, point);
           if(test <= nearest) {
@@ -712,7 +716,7 @@ int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, const float *point, fl
   return result;
 }
 
-int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_sided)
+int ObjectMoleculeGetPrioritizedOther(const int *other, int a1, int a2, int *double_sided)
 {
   int a3 = -1;
   int lvl = -1, ck, ck_lvl;
@@ -1432,8 +1436,7 @@ void ObjectMoleculeFixChemistry(ObjectMolecule * I, int sele1, int sele2, int in
   int s1, s2;
   AtomInfoType *ai1, *ai2;
   int order;
-  BondType *bond;
-  bond = I->Bond;
+  BondType* bond = I->Bond.data();
   for(b = 0; b < I->NBond; b++) {
     flag = false;
     ai1 = I->AtomInfo + bond->index[0];
@@ -1619,7 +1622,7 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
     int a;
     const char *p;
     char ch;
-    AtomInfoType *ai = I->AtomInfo;
+    const AtomInfoType *ai = I->AtomInfo;
 
     for(a = 0; a < I->NAtom; a++) {
       p = LexStr(G, ai->name);
@@ -3057,7 +3060,7 @@ float ObjectMoleculeGetMaxVDW(ObjectMolecule * I)
 {
   float max_vdw = 0.0F;
   int a;
-  AtomInfoType *ai;
+  const AtomInfoType *ai;
   if(I->NAtom) {
     ai = I->AtomInfo;
     for(a = 0; a < I->NAtom; a++) {
@@ -3118,7 +3121,7 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
 {
   PyObject *result = NULL;
   PyObject *bond_list;
-  BondType *bond;
+  const BondType *bond;
   int a;
 
 #ifndef PICKLETOOLS
@@ -3133,7 +3136,7 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
     auto version = (!pse_export_version || pse_export_version >= 1810) ?
       181 : (pse_export_version >= 1770) ? 177 : 176;
 
-    auto blob = Copy_To_BondType_Version(version, I->Bond, I->NBond);
+    auto blob = Copy_To_BondType_Version(version, I->Bond.data(), I->NBond);
     auto blobsize = VLAGetByteSize(blob);
 
     result = PyList_New(2);
@@ -3197,14 +3200,14 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
     if(ok)
       ok = bool((I->Bond = pymol::vla<BondType>(I->NBond)));
 
-    Copy_Into_BondType_From_Version(strval.data(), bondInfo_version, I->Bond, I->NBond);
+    Copy_Into_BondType_From_Version(strval.data(), bondInfo_version, I->Bond.data(), I->NBond);
 
     CPythonVal_Free(verobj);
     CPythonVal_Free(strobj);
   } else {
     if(ok)
       ok = bool((I->Bond = pymol::vla<BondType>(I->NBond)));
-  bond = I->Bond;
+    bond = I->Bond.data();
   for(a = 0; a < I->NBond; a++) {
     bond_list = NULL;
     if(ok)
@@ -3251,7 +3254,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
 {
   PyMOLGlobals *G = I->G;
   PyObject *result = NULL;
-  AtomInfoType *ai;
+  const AtomInfoType *ai;
   int a;
 #ifndef PICKLETOOLS
   int pse_export_version = SettingGetGlobal_f(I->G, cSetting_pse_export_version) * 1000;
@@ -3263,7 +3266,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
     AtomInfoTypeConverter converter(G, I->NAtom);
     std::set<lexidx_t> lexIDs;
     int totalstlen = 0;
-    AtomInfoType *ai = I->AtomInfo;
+    ai = I->AtomInfo.data();
     for(a = 0; a < I->NAtom; a++) {
       if (ai->textType) lexIDs.insert(ai->textType);
       if (ai->chain) lexIDs.insert(ai->chain);
@@ -3377,12 +3380,12 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     auto strval_2 = PyBytes_AsSomeString(strobj);
 
     VLACheck(I->AtomInfo, AtomInfoType, I->NAtom + 1);
-    converter.copy(I->AtomInfo, strval_2.data(), atomInfo_version);
+    converter.copy(I->AtomInfo.data(), strval_2.data(), atomInfo_version);
 
     // go through AtomInfo array, swap new strings, convert colors, convert settings
     // (everything that AtomInfoFromPyList does except set properties, which are currently 
     //  not saved for pse_binary_dump) 
-    AtomInfoType *ai = I->AtomInfo;
+    AtomInfoType *ai = I->AtomInfo.data();
     for(a = 0; a < I->NAtom; ++a, ++ai) {
       ai->color = ColorConvertOldSessionIndex(G, ai->color);
       if (ai->unique_id){
@@ -3401,7 +3404,7 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     if (ok)
       VLACheck(I->AtomInfo, AtomInfoType, I->NAtom + 1);
     CHECKOK(ok, I->AtomInfo);
-    ai = I->AtomInfo;
+    ai = I->AtomInfo.data();
     for(a = 0; ok && a < I->NAtom; a++) {
       PyObject *val = PyList_GetItem(list, a);
       ok &= AtomInfoFromPyList(I->G, ai, val);
@@ -3621,9 +3624,34 @@ bool is_distance_bonded(
   return true;
 }
 
+/**
+ * Do bonding of atoms in `I`, using distances and/or temporary bonds in `cs`.
+ *
+ * Incorporates `cs->TmpBond` unless `connect_mode` is 2.
+ * Incorporates `cs->TmpLinkBond`.
+ *
+ * @param I Molecule to modify
+ * @param cs Coordinates and temporary bonds to consider
+ * @param bondSearchMode If false and `connect_mode` != 2, do not search for new
+ * bonds (only use TmpBond/TmpLinkBond).
+ * @param connectModeOverride Overrides `connect_mode` setting if not -1
+ *
+ * `connect_mode` options:
+ * 0 = distance-based (excluding HETATM to HETATM) and CONECT records (default)
+ * 1 = CONECT records
+ * 2 = distance-based, ignores CONECT records
+ * 3 = distance-based (including HETATM to HETATM) and CONECT records
+ * 4 = same as `connect_mode` = 0 (special meaning during mmCIF loading)
+ */
+bool ObjectMoleculeConnect(ObjectMolecule* I, CoordSet* cs, bool bondSearchMode,
+    int connectModeOverride)
+{
+  return ObjectMoleculeConnect(
+      I, I->NBond, I->Bond, cs, bondSearchMode, connectModeOverride);
+}
 
 /*========================================================================*/
-int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, AtomInfoType * ai,
+bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& bondvla,
                           struct CoordSet *cs, int bondSearchMode,
                           int connectModeOverride)
 {
@@ -3634,10 +3662,11 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
   float *v1, *v2;
   int maxBond;
   MapType *map;
-  int nBond;
-  BondType *ii1, *ii2;
+  BondType *ii1;
+  const BondType* ii2;
   int flag;
   int order;
+  AtomInfoType* const ai = I->AtomInfo.data();
   AtomInfoType *ai1, *ai2;
   /* Sulfur cutoff */
   float cutoff_s;
@@ -3669,8 +3698,8 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
   /*  FeedbackMask[FB_ObjectMolecule]=0xFF; */
   nBond = 0;
   maxBond = cs->NIndex * 8;
-  (*bond) = VLACalloc(BondType, maxBond);
-  CHECKOK(ok, (*bond));
+  bondvla.resize(maxBond);
+  CHECKOK(ok, bool(bondvla));
   while(ok && repeat) {
     repeat = false;
 
@@ -3755,12 +3784,10 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
 
 			  /* we have a bond, now process it */
                           if(flag) {
-                            VLACheck((*bond), BondType, nBond);
-			    CHECKOK(ok, (*bond));
+                            auto bnd = bondvla.check(nBond);
+			    CHECKOK(ok, bool(bondvla));
 			    if (ok){
-			      (*bond)[nBond].index[0] = a1;
-			      (*bond)[nBond].index[1] = a2;
-			      (*bond)[nBond].stereo = 0;
+                              BondTypeInit2(bnd, a1, a2);
 			      order = 1;
 			    }
 			    /* if we allow bonds between chains and it screws up the
@@ -3791,7 +3818,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
                                 assign_pdb_known_residue(G, ai1, ai2, &order);
                               }
                             }
-                            (*bond)[nBond].order = -order;      /* store tentative valence as negative */
+                            bnd->order = -order;      /* store tentative valence as negative */
                             nBond++;
                           }
                         }
@@ -3815,11 +3842,6 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
       }
       PRINTFB(G, FB_ObjectMolecule, FB_Blather)
         " %s: Found %d bonds.\n", __func__, nBond ENDFB(G);
-      if(Feedback(G, FB_ObjectMolecule, FB_Debugging)) {
-        for(a = 0; a < nBond; a++)
-          printf(" %s: bond %d ind0 %d ind1 %d\n", __func__,
-                 a, (*bond)[a].index[0], (*bond)[a].index[1]);
-      }
     }
     if(repeat) {
       nBond = 0;
@@ -3847,10 +3869,10 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
       }
     }
 
-    VLACheck((*bond), BondType, (nBond + cs->NTmpBond));
-    CHECKOK(ok, (*bond));
+    bondvla.check(nBond + cs->NTmpBond);
+    CHECKOK(ok, bool(bondvla));
     if (ok){
-      ii1 = (*bond) + nBond;
+      ii1 = bondvla.data() + nBond;
       ii2 = cs->TmpBond;
     }
     if (ok) {
@@ -3902,12 +3924,12 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
   /* Link b/t ligand and residue? */
   if(ok && cs->NTmpLinkBond && cs->TmpLinkBond) {
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-      "ObjectMoleculeConnect: incorporating linkage bonds. %d %d\n",
+      "%s: incorporating linkage bonds. %d %d\n", __func__,
       nBond, cs->NTmpLinkBond ENDFB(G);
-    VLACheck((*bond), BondType, (nBond + cs->NTmpLinkBond));
-    CHECKOK(ok, (*bond));
+    bondvla.check(nBond + cs->NTmpLinkBond);
+    CHECKOK(ok, bool(bondvla));
     if (ok){
-      ii1 = (*bond) + nBond;
+      ii1 = bondvla.data() + nBond;
       ii2 = cs->TmpLinkBond;
       for(a = 0; a < cs->NTmpLinkBond; a++) {
 	a1 = ii2->index[0];       /* first atom is in object */
@@ -3930,10 +3952,10 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
     " %s: elminating duplicates with %d bonds...\n", __func__, nBond ENDFD;
 
   if(ok && !I->DiscreteFlag) {
-    UtilSortInPlace(G, (*bond), nBond, sizeof(BondType), (UtilOrderFn *) BondInOrder);
+    UtilSortInPlace(G, bondvla.data(), nBond, sizeof(BondType), (UtilOrderFn *) BondInOrder);
     if(nBond) {                 /* eliminate duplicates */
-      ii1 = (*bond) + 1;
-      ii2 = (*bond) + 1;
+      ii1 = bondvla.data() + 1;
+      ii2 = bondvla.data() + 1;
       a = nBond - 1;
       nBond = 1;
       if(a > 0)
@@ -3948,14 +3970,14 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
             ii2++;              /* skip bond */
           }
         }
-      VLASize((*bond), BondType, nBond);
-      CHECKOK(ok, (*bond));
+      bondvla.resize(nBond);
+      CHECKOK(ok, bool(bondvla));
     }
   }
   /* restore bond oder positivity */
 
   if (ok){
-    ii1 = *bond;
+    ii1 = bondvla.data();
     for(a = 0; a < nBond; a++) {
       if(ii1->order < 0)
 	ii1->order = -ii1->order;
@@ -3965,8 +3987,6 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
 
   PRINTFD(G, FB_ObjectMolecule)
     " %s: leaving with %d bonds...\n", __func__, nBond ENDFD;
-  if (ok)
-    *nbond = nBond;
   return ok;
 }
 
@@ -4010,8 +4030,8 @@ int ObjectMoleculeSort(ObjectMolecule * I)
 
         if(cs) {
           int cs_NIndex = cs->NIndex;
-          int *cs_IdxToAtm = cs->IdxToAtm;
-          int *cs_AtmToIdx = cs->AtmToIdx;
+          int *cs_IdxToAtm = cs->IdxToAtm.data();
+          int *cs_AtmToIdx = cs->AtmToIdx.data();
           for(b = 0; b < cs_NIndex; b++)
             cs_IdxToAtm[b] = outdex[cs_IdxToAtm[b]];
           if(cs_AtmToIdx) {
@@ -4063,7 +4083,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
     }
     AtomInfoFreeSortedIndexes(I->G, &index, &outdex);
     if (ok){
-      UtilSortInPlace(I->G, I->Bond, I->NBond, sizeof(BondType),
+      UtilSortInPlace(I->G, I->Bond.data(), I->NBond, sizeof(BondType),
 		      (UtilOrderFn *) BondInOrder);
       /* sort...important! */
       ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, -1);     /* important */

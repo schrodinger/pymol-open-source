@@ -84,7 +84,8 @@ void ShakerAddPlanCon(CShaker * I, int atom0, int atom1, int atom2, int atom3,
 
 void ShakerAddLineCon(CShaker * I, int atom0, int atom1, int atom2);
 
-float ShakerGetPyra(float *targ2, float *v0, float *v1, float *v2, float *v3);
+float ShakerGetPyra(float *targ2,
+    const float *v0, const float *v1, const float *v2, const float *v3);
 
 
 /* the following fn's have been inlined in Sculpt.c  
@@ -99,13 +100,17 @@ float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1t
 */
 
 float ShakerDoPyra(float targ1, float targ2,
-                   float *v0, float *v1, float *v2, float *v3,
+                   const float *v0, const float *v1, const float *v2, const float *v3,
                    float *p0, float *p1, float *p2, float *p3, float wt, float inv_wt);
 
-float ShakerDoLine(float *v0, float *v1, float *v2,
+float ShakerDoLine(const float *v0, const float *v1, const float *v2,
                    float *p0, float *p1, float *p2, float wt);
 
-float ShakerDoPlan(float *v0, float *v1, float *v2, float *v3,
+float ShakerDoPlan(
+    const float *v0,
+    const float *v1,
+    const float *v2,
+    const float *v3,
                    float *p0, float *p1, float *p2, float *p3,
                    float target, int fixed, float wt);
 

@@ -632,7 +632,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
       lv = I->LastVisib;
       lc = I->LastColor;
       obj = cs->Obj;
-      AtomInfoType *ai2 = obj->AtomInfo;
+      const AtomInfoType *ai2 = obj->AtomInfo.data();
       if(sphere_color == -1){
 	for(a = 0; a < cs->NIndex; a++) {
           int at = cs->IdxToAtm[a];

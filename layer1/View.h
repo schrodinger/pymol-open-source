@@ -62,12 +62,12 @@ typedef struct CViewElem {
 
 } CViewElem;
 
-PyObject *ViewElemAsPyList(PyMOLGlobals * G, CViewElem * view);
+PyObject *ViewElemAsPyList(PyMOLGlobals * G, const CViewElem * view);
 int ViewElemFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem * view);
 
 int ViewElemVLAFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem ** vla,
                           int nFrame);
-PyObject *ViewElemVLAAsPyList(PyMOLGlobals * G, CViewElem * vla, int nFrame);
+PyObject *ViewElemVLAAsPyList(PyMOLGlobals * G, const CViewElem * vla, int nFrame);
 
 void ViewElemArrayPurge(PyMOLGlobals * G, CViewElem * view, int nFrame);
 void ViewElemCopy(PyMOLGlobals * G, const CViewElem * src, CViewElem * dst);
@@ -91,7 +91,9 @@ int ViewElemSmooth(CViewElem * first, CViewElem * last, int window, int loop);
 int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
                         float power, float bias,
                         int simple, float linearity, int hand, float cut);
-void ViewElemDraw(PyMOLGlobals *G, CViewElem * src, BlockRect *rect, int frames, const char *title, CGO *orthoCGO);
+void ViewElemDraw(PyMOLGlobals *G,
+    const CViewElem * src,
+    const BlockRect *rect, int frames, const char *title, CGO *orthoCGO);
 
 #define cViewElemModifyInsert 1
 #define cViewElemModifyDelete -1

@@ -43,10 +43,11 @@ void ExportDotsObjFree(PyMOLGlobals * G, ExportDotsObj * rec);
 ExportCoords *ExportCoordsExport(PyMOLGlobals * G, char *name, int state, int order)
 {
   ExportCoords *io = NULL;
-  ObjectMolecule *obj;
-  CoordSet *cs;
+  const ObjectMolecule *obj;
+  const CoordSet *cs;
   int a, a0;
-  float *crd0, *crd1;
+  const float* crd0;
+  float* crd1;
 
   obj = ExecutiveFindObjectMoleculeByName(G, name);
   if(obj && (state >= 0) && (state < obj->NCSet) && (!obj->DiscreteFlag)
@@ -113,7 +114,7 @@ int ExportCoordsImport(PyMOLGlobals * G, char *name, int state, ExportCoords * i
               io->nAtom ENDF(G);
           } else {
 
-            crd0 = cs->Coord;
+            crd0 = cs->Coord.data();
             crd1 = io->coord;
             if(order) {
               /* Coordinate Set Ordering */

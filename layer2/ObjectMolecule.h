@@ -232,7 +232,6 @@ typedef struct {
 #define OMOP_ReferenceSwap 65
 #define OMOP_RenameAtoms 66
 
-#include"CoordSet.h"
 
 typedef struct {
   ObjectMolecule *trg_obj, *mbl_obj;    /* target and mobile objects */
@@ -272,7 +271,7 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point,
                                          int sub_vdw);
 
 int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, struct CoordSet *cs);
-int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_sided);
+int ObjectMoleculeGetPrioritizedOther(const int *other, int a1, int a2, int *double_sided);
 
 
 /* */
@@ -421,7 +420,9 @@ int ObjectMoleculePurgeBondPath(ObjectMolecule * I, ObjectMoleculeBPRec * bp);
 int ***ObjectMoleculeGetBondPrint(ObjectMolecule * I, int max_bond, int max_type,
                                   int *dim);
 
-int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, AtomInfoType * ai,
+bool ObjectMoleculeConnect(ObjectMolecule* I, CoordSet* cs,
+    bool searchFlag = true, int connectModeOverride = -1);
+bool ObjectMoleculeConnect(ObjectMolecule* I, int& nbond, pymol::vla<BondType>& bond,
                           struct CoordSet *cs, int searchFlag, int connectModeOverride);
 int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete);
 
@@ -475,7 +476,9 @@ void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAto
 
 void AtomInfoSettingGenerateSideEffects(PyMOLGlobals * G, ObjectMolecule *obj, int index, int id);
 
-int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj, AtomInfoType * rec, int n,
+int *AtomInfoGetSortedIndex(PyMOLGlobals * G,
+    const ObjectMolecule* obj,
+    const AtomInfoType* rec, int n,
                             int **outdex);
 
 ObjectMolecule *ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,

@@ -571,8 +571,8 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
     int active = false;
     int nAtIndex = cs->NAtIndex;
     int a;
-    AtomInfoType *obj_AtomInfo = obj->AtomInfo;
-    AtomInfoType *ai, *last_ai = NULL;
+    const AtomInfoType *obj_AtomInfo = obj->AtomInfo.data();
+    const AtomInfoType *ai, *last_ai = NULL;
     int trace, trace_ostate =
       SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_trace_atoms);
     int trace_mode =

@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Editor.h"
 #include "Lex.h"
 #include "ObjectMolecule.h"
+#include "CoordSet.h"
 
 #include"CGO.h"
 
@@ -249,19 +250,20 @@ CSculpt::CSculpt (PyMOLGlobals * G)
 }
 
 typedef struct {
-  int *neighbor;
+  const int *neighbor;
   AtomInfoType *ai;
-  int *atm2idx1, *atm2idx2;
+  const int *atm2idx1, *atm2idx2;
 } CountCall;
 
 typedef struct {
   PyMOLGlobals *G;
   CShaker *Shaker;
   AtomInfoType *ai;
-  int *atm2idx;
-  CoordSet *cSet, **discCSet;
-  float *coord;
-  int *neighbor;
+  const int *atm2idx;
+  const CoordSet *cSet;
+  const CoordSet *const *discCSet;
+  const float *coord;
+  const int *neighbor;
   int atom0;
   int min, max, mode;
 } ATLCall;
@@ -333,8 +335,8 @@ static void add_triangle_limits(ATLCall * ATL, int prev, int cur, float dist, in
             int ia = I->atm2idx[ref];
             int ib = I->atm2idx[atom1];
             if((ia >= 0) && (ib >= 0)) {
-              float *va = I->coord + 3 * ia;
-              float *vb = I->coord + 3 * ib;
+              const float *va = I->coord + 3 * ia;
+              const float *vb = I->coord + 3 * ib;
               dist_limit = dist + diff3f(va, vb);
               ShakerAddDistCon(I->Shaker, I->atom0, atom1, dist_limit, cShakerDistLimit,
                                1.0F);
@@ -359,8 +361,8 @@ static void add_triangle_limits(ATLCall * ATL, int prev, int cur, float dist, in
             int ia = I->atm2idx[prev];
             int ib = I->atm2idx[atom1];
             if((ia >= 0) && (ib >= 0)) {
-              float *va = I->coord + 3 * ia;
-              float *vb = I->coord + 3 * ib;
+              const float *va = I->coord + 3 * ia;
+              const float *vb = I->coord + 3 * ib;
               dist_limit += diff3f(va, vb);
             }
           }
@@ -379,7 +381,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
 {
   PyMOLGlobals *G = I->G;
   int a, a0, a1, a2, a3, b0, b1, b2, b3, b4;
-  BondType *b;
+  const BondType *b;
   float *v0, *v1, *v2, *v3, d, dummy;
   CoordSet *cs;
   int n0, n1, n2, n3;
@@ -408,7 +410,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
   UtilZeroMem(I->EXHash.data(), EX_HASH_SIZE * sizeof(int));
 
   if((state >= 0) && (state < obj->NCSet) && (obj->CSet[state])) {
-    obj_atomInfo = obj->AtomInfo;
+    obj_atomInfo = obj->AtomInfo.data();
 
     VLACheck(I->Don, int, obj->NAtom);
     VLACheck(I->Acc, int, obj->NAtom);
@@ -427,7 +429,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
 
     use_cache = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sculpt_memory);
     if(obj->NBond) {
-      int *neighbor = obj->Neighbor;
+      const int *neighbor = obj->Neighbor;
       int n_atom = obj->NAtom;
 
       planar = pymol::malloc<int>(n_atom);
@@ -1650,7 +1652,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
   float hb_overlap, hb_overlap_base;
   int *active, n_active;
   int *exclude;
-  AtomInfoType *ai0, *ai1;
+  const AtomInfoType *ai0, *ai1;
   double task_time;
   float vdw_magnify, vdw_magnified = 1.0F;
   int nb_skip, nb_skip_count;
@@ -1687,7 +1689,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
       " SIO-Debug: NDistCon %d\n", shk->NDistCon ENDFD;
 
     cs = obj->CSet[state];
-    cs_coord = cs->Coord;
+    cs_coord = cs->Coord.data();
 
     vdw = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_vdw_scale);
     vdw14 = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_vdw_scale14);
@@ -1830,7 +1832,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         /* apply distance constraints */
 
         {
-          ShakerDistCon *sdc = shk->DistCon;
+          const ShakerDistCon *sdc = shk->DistCon.data();
           int a,ndc = shk->NDistCon;
           for(a = 0; a < ndc; a++) {
             int sdc_type = sdc->type;
@@ -1919,7 +1921,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         /* apply line constraints */
 
         if(cSculptLine & mask) {
-          ShakerLineCon *slc = shk->LineCon;
+          const ShakerLineCon *slc = shk->LineCon.data();
           int nlc = shk->NLineCon;
           int a,b1,b2;
           for(a = 0; a < nlc; a++) {
@@ -1950,7 +1952,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         /* apply pyramid constraints */
 
         if(cSculptPyra & mask) {
-          ShakerPyraCon *spc = shk->PyraCon;
+          const ShakerPyraCon *spc = shk->PyraCon.data();
           int npc = shk->NPyraCon;
           int a,b1,b2;
           for(a = 0; a < npc; a++) {
@@ -1989,12 +1991,11 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         }
 
         if(cSculptPlan & mask) {
-          ShakerPlanCon *snc = shk->PlanCon;
+          const ShakerPlanCon *snc = shk->PlanCon.data();
           int npc = shk->NPlanCon;
           int a,b1,b2;
           /* apply planarity constraints */
 
-          snc = shk->PlanCon;
           for(a = 0; a < npc; a++) {
 
             b0 = snc->at0;
@@ -2032,7 +2033,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         /* apply torsion constraints */
 
         if(cSculptTors & mask) {
-          ShakerTorsCon *stc = shk->TorsCon;
+          const ShakerTorsCon *stc = shk->TorsCon.data();
           int ntc = shk->NTorsCon;
           int a,b1,b2;
           /* apply planarity constraints */
@@ -2133,9 +2134,9 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
                           /* determine exclusion (if any) */
                           {
                             int xoffset;
-                            int *I_EXList = I->EXList;
+                            const int *I_EXList = I->EXList.data();
                             int ex1;
-                            int *j;
+                            const int *j;
                             xoffset = I->EXHash[x0i | ex_hash_i1(b1)];
                             ex = 10;
                             while(xoffset) {
@@ -2251,9 +2252,9 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
                           /* determine exclusion (if any) */
                           {
                             int xoffset;
-                            int *I_EXList = I->EXList;
+                            const int *I_EXList = I->EXList.data();
                             int ex1;
-                            int *j;
+                            const int *j;
                             xoffset = I->EXHash[x0i | ex_hash_i1(b1)];
                             ex = 10;
                             while(xoffset) {
@@ -2312,16 +2313,16 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
           for(aa = 0; aa < n_active; aa++) {
             if((cnt_a = cnt[(a = *(a_ptr++))])) {
               AtomInfoType *ai = obj->AtomInfo + a;
-              RefPosType *cs_refpos = cs->RefPos;
+              const RefPosType *cs_refpos = cs->RefPos.data();
               int flags;
               if(!(ai->protekted || ((flags = ai->flags) & cAtomFlag_fix))) {
                 v1 = disp + 3 * a;
                 v2 = cs_coord + 3 * atm2idx[a];
 
                 if((flags & cAtomFlag_restrain) && cs_refpos) {
-                  RefPosType *rp = cs_refpos + atm2idx[a];
+                  const RefPosType *rp = cs_refpos + atm2idx[a];
                   if(rp->specified) {
-                    float *v3 = rp->coord;
+                    const float *v3 = rp->coord;
                     cnt_a++;
                     v1[0] += v3[0] - v2[0];
                     v1[1] += v3[1] - v2[1];

@@ -27,8 +27,8 @@ Z* ------------------------------------------------------------------- */
 #include"MemoryCache.h"
 #include"Base.h"
 
-static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
-                        float *extent, int *flag, int group_id, int block_id);
+static MapType *_MapNew(PyMOLGlobals * G, float range, const float *vert, int nVert,
+                        const float *extent, const int *flag, int group_id, int block_id);
 
 float MapGetDiv(MapType * I)
 {
@@ -423,8 +423,8 @@ int MapSetupExpressXYVert(MapType * I, float *vert, int n_vert, int negative_sta
   return ok;
 }
 
-int MapSetupExpressPerp(MapType * I, float *vert, float front, int nVertHint,
-			int negative_start, int *spanner)
+int MapSetupExpressPerp(MapType * I, const float *vert, float front, int nVertHint,
+			int negative_start, const int *spanner)
 {
   PyMOLGlobals *G = I->G;
   int n = 0;
@@ -443,7 +443,7 @@ int MapSetupExpressPerp(MapType * I, float *vert, float front, int nVertHint,
   float min0 = I->Min[0] * iDiv;
   float min1 = I->Min[1] * iDiv;
   float base0, base1;
-  float perp_factor, premult, *v0;
+  float perp_factor, premult;
   int *emask, dim1, *link, *ptr1, *ptr2;
 
   PRINTFD(G, FB_Map)
@@ -478,7 +478,7 @@ int MapSetupExpressPerp(MapType * I, float *vert, float front, int nVertHint,
 
         i = *MapFirst(I, a, b, c);
         while(i >= 0) {
-          v0 = vert + 3 * i;
+          const float* v0 = vert + 3 * i;
           perp_factor = premult / v0[2];
           base0 = v0[0] * perp_factor;
           base1 = v0[1] * perp_factor;
@@ -802,31 +802,31 @@ float MapGetSeparation(PyMOLGlobals * G, float range, const float *mx, const flo
   return (divSize);
 }
 
-MapType *MapNew(PyMOLGlobals * G, float range, float *vert, int nVert, float *extent)
+MapType *MapNew(PyMOLGlobals * G, float range, const float *vert, int nVert, const float *extent)
 {
   return (_MapNew(G, range, vert, nVert, extent, NULL, -1, 0));
 }
 
-MapType *MapNewCached(PyMOLGlobals * G, float range, float *vert, int nVert,
-                      float *extent, int group_id, int block_id)
+MapType *MapNewCached(PyMOLGlobals * G, float range, const float *vert, int nVert,
+                      const float *extent, int group_id, int block_id)
 {
   return (_MapNew(G, range, vert, nVert, extent, NULL, group_id, block_id));
 }
 
-MapType *MapNewFlagged(PyMOLGlobals * G, float range, float *vert, int nVert,
-                       float *extent, int *flag)
+MapType *MapNewFlagged(PyMOLGlobals * G, float range, const float *vert, int nVert,
+                       const float *extent, const int *flag)
 {
   return (_MapNew(G, range, vert, nVert, extent, flag, -1, 0));
 }
 
-static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
-                        float *extent, int *flag, int group_id, int block_base)
+static MapType *_MapNew(PyMOLGlobals * G, float range, const float *vert, int nVert,
+                        const float *extent, const int *flag, int group_id, int block_base)
 {
   int a, c;
   int mapSize;
   int h, k, l;
   int *list;
-  float *v, tmp_f;
+  const float *v;
   int firstFlag;
   Vector3f diagonal;
   int ok = true;
@@ -930,9 +930,7 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
   /* sanity check */
   for(a = 0; a < 3; a++) {
     if(I->Min[a] > I->Max[a]) {
-      tmp_f = I->Min[a];
-      I->Max[a] = I->Min[a];
-      I->Min[a] = tmp_f;
+      std::swap(I->Max[a], I->Min[a]);
     }
 
     // empirical limit to avoid crash in PYMOL-3002

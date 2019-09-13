@@ -318,7 +318,7 @@ typedef struct nuc_acid_data {
   int *nuc_flag;   // whether atom is part of nucleotide
   int a2;          // defaults to -1
   int nSeg;        // defaults to 0
-  float *v_o_last; // defaults to NULL
+  const float *v_o_last; // defaults to NULL
   int *sptr;
   int *iptr;
   CCInOut * cc;
@@ -405,14 +405,14 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                     float ring_alpha, float alpha, int *marked, float *moved,
                     float ring_radius)
 {
-  float *v_i[MAX_RING_ATOM];
+  const float *v_i[MAX_RING_ATOM];
   const float *col[MAX_RING_ATOM];
   float n_up[MAX_RING_ATOM][3];
   float n_dn[MAX_RING_ATOM][3];
-  AtomInfoType *ai_i[MAX_RING_ATOM];
+  const AtomInfoType *ai_i[MAX_RING_ATOM];
   int have_all = true;
   int all_marked = true;
-  AtomInfoType *ai;
+  const AtomInfoType *ai;
   int have_C4 = -1;
   int have_C4_prime = -1;
   int have_C_number = -1;
@@ -478,8 +478,8 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
     if(ladder_mode) {
       int i;
       int a1;
-      AtomInfoType *ai2;
-      AtomInfoType *atomInfo = obj->AtomInfo;
+      const AtomInfoType* ai2;
+      const AtomInfoType* atomInfo = obj->AtomInfo.data();
       int mem0, mem1, mem2, mem3, mem4, mem5, mem6, mem7;
       int *neighbor = obj->Neighbor;
       int nbr[7];
@@ -982,8 +982,8 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
               }
 
               if((g1 >= 0) && (g2 >= 0)) {
-                AtomInfoType *g1_ai = atomInfo + g1;
-                AtomInfoType *g2_ai = atomInfo + g2;
+                const AtomInfoType *g1_ai = atomInfo + g1;
+                const AtomInfoType *g2_ai = atomInfo + g2;
 
                 if (ring_connector_visible(G, g1_ai, g2_ai, sc_helper)) {
 
@@ -1061,8 +1061,8 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
               int save_at = sugar_at;
               sugar_at = c1_at;
               {
-                AtomInfoType *sug_ai = atomInfo + sugar_at;
-                AtomInfoType *bas_ai = atomInfo + base_at;
+                const AtomInfoType *sug_ai = atomInfo + sugar_at;
+                const AtomInfoType *bas_ai = atomInfo + base_at;
 
                 if (ring_connector_visible(G, bas_ai, sug_ai, sc_helper)) {
 
@@ -1106,8 +1106,8 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
             }
           }
           if((base_at >= 0) && (sugar_at >= 0)) {
-            AtomInfoType *sug_ai = atomInfo + sugar_at;
-            AtomInfoType *bas_ai = atomInfo + base_at;
+            const AtomInfoType *sug_ai = atomInfo + sugar_at;
+            const AtomInfoType *bas_ai = atomInfo + base_at;
 
             if (ring_connector_visible(G, bas_ai, sug_ai, sc_helper)) {
 
@@ -1436,12 +1436,15 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
  * - cartoon type and secondary structure
  * - check if single nucleotide or actual polymer
  */
-static void nuc_acid(PyMOLGlobals * G, nuc_acid_data *ndata, int a, int a1, AtomInfoType * ai, CoordSet * cs,
-                     ObjectMolecule * obj, int set_flags)
+static void nuc_acid(PyMOLGlobals * G, nuc_acid_data *ndata, int a, int a1,
+    const AtomInfoType* ai,
+    const CoordSet* cs,
+    const ObjectMolecule* obj,
+    int set_flags)
 {
   int a3, a4, st, nd;
-  float *v_o, *v_c;
-  float *v1;
+  const float *v_o, *v_c;
+  const float *v1;
   int cur_car;
   const auto& nuc_flag = ndata->nuc_flag;
 
@@ -1914,7 +1917,7 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
   int ring_color;
   int ok = true;
   int escape_count;
-  int *atmToIdx = NULL;
+  const int* atmToIdx = nullptr;
   int ladder_mode, ladder_color;
   float ladder_radius, ring_radius;
   int cartoon_side_chain_helper;
@@ -2754,9 +2757,9 @@ static
 int RepCartoonSameVis(RepCartoon * I, CoordSet * cs)
 {
   int same = true;
-  char *lv;
+  const char *lv;
   int a;
-  AtomInfoType *ai;
+  const AtomInfoType *ai;
 
   if (!I->LastVisib)
     return false;

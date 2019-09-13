@@ -110,7 +110,7 @@ void ObjectMoleculeRemoveDuplicateBonds(PyMOLGlobals * G, ObjectMolecule * I) {
 
   // get sorted indices
   int * sorted = pymol::malloc<int>(I->NBond);
-  UtilSortIndexGlobals(G, I->NBond, I->Bond, sorted,
+  UtilSortIndexGlobals(G, I->NBond, I->Bond.data(), sorted,
       (UtilOrderFnGlobals *) BondTypeInOrder);
 
   // purge duplicated bonds and mark for removal
@@ -356,7 +356,7 @@ int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int stat
   PyMOLGlobals *G = I->G;
   int result = false;
   if((state >= 0) && (state < I->NCSet)) {
-    AtomInfoType *ai = I->AtomInfo;
+    const AtomInfoType *ai = I->AtomInfo.data();
     CoordSet *cs = I->CSet[state];
     if(cs) {
       int a;
@@ -701,8 +701,8 @@ int ObjectMoleculeXferValences(ObjectMolecule * Ia, int sele1, int sele2,
 
   {
     int a, b;
-    AtomInfoType *ai_a = Ia->AtomInfo;
-    AtomInfoType *ai_b = Ib->AtomInfo;
+    AtomInfoType *ai_a = Ia->AtomInfo.data();
+    AtomInfoType *ai_b = Ib->AtomInfo.data();
     for(a = 0; a < Ia->NAtom; a++) {
       (ai_a++)->temp1 = false;
     }
@@ -713,8 +713,8 @@ int ObjectMoleculeXferValences(ObjectMolecule * Ia, int sele1, int sele2,
 
   {
     int a, b;
-    BondType *bi_a = Ia->Bond;
-    BondType *bi_b = Ib->Bond;
+    BondType *bi_a = Ia->Bond.data();
+    BondType *bi_b = Ib->Bond.data();
     for(a = 0; a < Ia->NBond; a++) {
       (bi_a++)->temp1 = false;
     }
@@ -725,10 +725,10 @@ int ObjectMoleculeXferValences(ObjectMolecule * Ia, int sele1, int sele2,
 
   {
     int a, b;
-    AtomInfoType *ai_a = Ia->AtomInfo;
-    AtomInfoType *ai_b = Ib->AtomInfo;
-    BondType *bi_a = Ia->Bond;
-    BondType *bi_b = Ib->Bond;
+    AtomInfoType *ai_a = Ia->AtomInfo.data();
+    AtomInfoType *ai_b = Ib->AtomInfo.data();
+    BondType *bi_a = Ia->Bond.data();
+    BondType *bi_b = Ib->Bond.data();
 
     match_info mi;
 
@@ -838,7 +838,9 @@ static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int stat
 {
   int a;
   int seleFlag = false;
-  AtomInfoType *ai0;
+  const AtomInfoType *ai0;
+#ifndef _PYMOL_NO_UNDO
+#endif
   int ok = true;
 
   ai0 = I->AtomInfo;
@@ -1005,7 +1007,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
         }
       }
 
-      to = cs->IdxToAtm;
+      to = cs->IdxToAtm.data();
       c = 0;
       for(a = 0; a < cs->NIndex; a++) { /* now fix IdxToAtm, AtmToIdx,
                                            and remap xref to coordinate space */
@@ -1164,7 +1166,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
 
                   /* compute average */
                   if(n_avg > 1) {
-                    fp = cs->Coord;
+                    fp = cs->Coord.data();
                     for(i = 0; i < cs->NIndex; i++) {
                       *(fp++) /= n_avg;
                       *(fp++) /= n_avg;
@@ -2408,7 +2410,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
     if(I->DiscreteFlag && atInfo) {
       unsigned int a;
       int fp1 = frame + 1;
-      AtomInfoType *ai = atInfo;
+      AtomInfoType *ai = atInfo.data();
       for(a = 0; a < nAtom; a++) {
         (ai++)->discrete_state = fp1;
       }
@@ -2433,7 +2435,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
      */
 
     if(ok && isNew)
-      ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, false, -1);
+      ok &= ObjectMoleculeConnect(I, cset, false);
     if(cset->Symmetry && (!I->Symmetry)) {
       I->Symmetry = new CSymmetry(*cset->Symmetry);
       CHECKOK(ok, I->Symmetry);
@@ -2529,7 +2531,7 @@ void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I)
 
   if(I->AtomCounter < 0) {
     max = -1;
-    ai = I->AtomInfo;
+    ai = I->AtomInfo.data();
     for(a = 0; a < I->NAtom; a++) {
       if(ai->id > max)
         max = ai->id;
@@ -2537,7 +2539,7 @@ void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I)
     }
     I->AtomCounter = max + 1;
   }
-  ai = I->AtomInfo;
+  ai = I->AtomInfo.data();
   for(a = 0; a < I->NAtom; a++) {
     if(ai->id < 0)
       ai->id = I->AtomCounter++;
@@ -2546,7 +2548,7 @@ void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I)
 
   if(I->BondCounter < 0) {
     max = -1;
-    b = I->Bond;
+    b = I->Bond.data();
     for(a = 0; a < I->NBond; a++) {
       if(b->id > max)
         max = b->id;
@@ -2554,7 +2556,7 @@ void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I)
     }
     I->BondCounter = max + 1;
   }
-  b = I->Bond;
+  b = I->Bond.data();
   for(a = 0; a < I->NBond; a++) {
     if(!b->id)
       b->id = I->BondCounter++;
@@ -2570,7 +2572,7 @@ int ObjectMoleculeGetPhiPsi(ObjectMolecule * I, int ca, float *phi, float *psi, 
   int c = -1;
   int n = -1;
   int result = false;
-  AtomInfoType *ai;
+  const AtomInfoType *ai;
   int n0, at;
   float v_ca[3];
   float v_n[3];
@@ -2818,8 +2820,9 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 
   PyMOLGlobals *G = I->G;
   CoordSet *cs;
-  int a, *idx2atm, nIndex;
-  float *coord, *v;
+  int a, nIndex;
+  const int* idx2atm;
+  const float *coord, *v;
   int flag = true;
   int all_vis = !vis_only;
   int visRep;
@@ -2836,7 +2839,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
   }
 
   if(G->HaveGUI && G->ValidContext) {
-    AtomInfoType *atInfo = I->AtomInfo;
+    const AtomInfoType *atInfo = I->AtomInfo.data();
 
     for(StateIterator iter(G, I->Setting, curState, I->NCSet);
         iter.next();) {
@@ -3166,7 +3169,7 @@ int ObjectMoleculeAreAtomsBonded(ObjectMolecule * I, int i0, int i1)
 {
   int result = false;
   int a;
-  BondType *b;
+  const BondType *b;
   b = I->Bond;
   for(a = 0; a < I->NBond; a++) {
     if(i0 == b->index[0]) {
@@ -3195,7 +3198,7 @@ int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force)
   int a;
   int result;
   if(force) {
-    ai = I->AtomInfo;
+    ai = I->AtomInfo.data();
     if(!flag) {
       for(a = 0; a < I->NAtom; a++) {
         LexAssign(G, ai->name, 0);
@@ -3209,14 +3212,14 @@ int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force)
       }
     }
   }
-  result = AtomInfoUniquefyNames(I->G, NULL, 0, I->AtomInfo, flag, I->NAtom);
+  result = AtomInfoUniquefyNames(I->G, NULL, 0, I->AtomInfo.data(), flag, I->NAtom);
   return result;
 }
 
 
 /*========================================================================*/
 static int AddCoordinateIntoCoordSet(ObjectMolecule * I, int a, CoordSet *tcs,
-    int *AtmToIdx, CoordSet *cs, float *backup, int mode, int at0,
+    const int *AtmToIdx, CoordSet *cs, float *backup, int mode, int at0,
 			       int index0, int move_flag, float *va1, float *vh1, 
 			       float *x1, float *y1, float *z1, float d, int ca0){
   float *f0, *f1;
@@ -3232,7 +3235,7 @@ static int AddCoordinateIntoCoordSet(ObjectMolecule * I, int a, CoordSet *tcs,
   if(tcs) {
     if(mode == 3) {
       f0 = backup;
-      f1 = cs->Coord;
+      f1 = cs->Coord.data();
       for(b = 0; b < cs->NIndex; b++) {     /* brute force transformation */
 	copy3f(f0, f1);
       }
@@ -3261,7 +3264,7 @@ static int AddCoordinateIntoCoordSet(ObjectMolecule * I, int a, CoordSet *tcs,
       add3f(va0, t2, t2);
       
       f0 = backup;
-      f1 = cs->Coord;
+      f1 = cs->Coord.data();
       for(b = 0; b < cs->NIndex; b++) {     /* brute force transformation */
 	if(move_flag) {
 	  subtract3f(f0, va1, t);
@@ -3290,14 +3293,13 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
 {
   PyMOLGlobals *G = I->G;
   int a;
-  AtomInfoType *ai0, *ai1;
+  const AtomInfoType *ai0, *ai1;
   int n, nn;
   int at0 = -1;
   int at1 = -1;
   int a0, a1;
   int hydr1 = -1;
   int anch1 = -1;
-  BondType *b0, *b1;
   float *backup = NULL;
   //  float d;
   CoordSet *cs = NULL, *scs = NULL;
@@ -3387,9 +3389,8 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
       cs->TmpBond = pymol::vla<BondType>(src->NBond);
     CHECKOK(ok, cs->TmpBond);
     if (ok){
-      BondTypeInit(cs->TmpBond);
-      b1 = src->Bond;
-      b0 = cs->TmpBond;
+      const BondType* b1 = src->Bond.data();
+      BondType* b0 = cs->TmpBond.data();
       cs->NTmpBond = 0;
       for(a = 0; a < src->NBond; a++) {
 	a0 = scs->AtmToIdx[b1->index[0]];
@@ -3437,13 +3438,9 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
       cs->TmpLinkBond = pymol::vla<BondType>(1);
       CHECKOK(ok, cs->TmpLinkBond);
       if (ok){
-	BondTypeInit(cs->TmpLinkBond);
 	cs->NTmpLinkBond = 1;
-	cs->TmpLinkBond->index[0] = at0;
-	cs->TmpLinkBond->index[1] = anch1;
-	cs->TmpLinkBond->order = 1;
-	cs->TmpLinkBond->stereo = 0;
-	cs->TmpLinkBond->id = -1;
+        auto* bond = cs->TmpLinkBond.data();
+        BondTypeInit2(bond, at0, anch1);
       }
     }
 
@@ -3452,7 +3449,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
 
     if (ok){
       d = AtomInfoGetBondLength(I->G, ai0 + at0, ai1 + at1);
-      AtomInfoUniquefyNames(I, nai, cs->NIndex);
+      AtomInfoUniquefyNames(I, nai.data(), cs->NIndex);
     }
 
     /* set up tags which will enable use to continue editing bond */
@@ -3537,7 +3534,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
 int ObjectMoleculeVerifyChemistry(ObjectMolecule * I, int state)
 {
   int result = false;
-  AtomInfoType *ai;
+  const AtomInfoType *ai;
   int a;
   int flag;
 
@@ -3587,6 +3584,7 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index,
 {
   int a;
   AtomInfoType *ai;
+  BondType* bond;
   float v[3], v0[3], d;
   CoordSet *cs = NULL;
   int ok = false;
@@ -3601,17 +3599,12 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index,
   cs->NIndex = 1;
   ok_assert(1, cs->TmpLinkBond = pymol::vla<BondType>(1));
 
-  BondTypeInit(cs->TmpLinkBond);
   cs->NTmpLinkBond = 1;
-  cs->TmpLinkBond->index[0] = index;
-  cs->TmpLinkBond->index[1] = 0;
-  cs->TmpLinkBond->order = 1;
-  cs->TmpLinkBond->stereo = 0;
-
-  cs->TmpLinkBond->id = -1;
+  bond = cs->TmpLinkBond.data();
+  BondTypeInit2(bond, index, 0);
   cs->enumIndices();
 
-  ok_assert(1, ObjectMoleculePrepareAtom(I, index, nai));
+  ok_assert(1, ObjectMoleculePrepareAtom(I, index, nai.data()));
   d = AtomInfoGetBondLength(I->G, ai, nai);
 
   ok_assert(1, ObjectMoleculeMerge(I, std::move(nai),
@@ -3624,7 +3617,7 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index,
       ObjectMoleculeGetAtomVertex(I, a, index, v0);
       ObjectMoleculeFindOpenValenceVector(I, a, index, v, NULL, -1);
       scale3f(v, d, v);
-      add3f(v0, v, cs->Coord);
+      add3f(v0, v, cs->Coord.data());
       ok_assert(1, CoordSetMerge(I, I->CSet[a], cs));
     }
   }
@@ -3675,14 +3668,9 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 	  cs->TmpLinkBond = pymol::vla<BondType>(1);
 	CHECKOK(ok, cs->TmpLinkBond);
 	if (ok){
-	  BondTypeInit(cs->TmpLinkBond);
 	  cs->NTmpLinkBond = 1;
-	  cs->TmpLinkBond->index[0] = index;
-	  cs->TmpLinkBond->index[1] = 0;
-	  cs->TmpLinkBond->order = 1;
-	  cs->TmpLinkBond->stereo = 0;
-	  
-	  cs->TmpLinkBond->id = -1;
+          auto* bond = cs->TmpLinkBond.data();
+          BondTypeInit2(bond, index, 0);
 	}
       }
       
@@ -3709,7 +3697,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
           ObjectMoleculeGetAtomVertex(I, a, index, v0);
           ObjectMoleculeFindOpenValenceVector(I, a, index, v, NULL, -1);
           scale3f(v, d, v);
-          add3f(v0, v, cs->Coord);
+          add3f(v0, v, cs->Coord.data());
 	  if (ok)
 	    ok &= CoordSetMerge(I, I->CSet[a], cs);
         }
@@ -4035,7 +4023,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
       for(b = first; b < last; b++) {
         cs = I->CSet[b];
         if(cs) {
-          v = cs->Coord;
+          v = cs->Coord.data();
           for(a = 0; a < cs->NIndex; a++) {
             a0 = cs->IdxToAtm[a];
             v0 = center + 3 * a0;
@@ -4074,7 +4062,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
       for(b = first; b < last; b++) {
         cs = I->CSet[b];
         if(cs) {
-          v = cs->Coord;
+          v = cs->Coord.data();
           for(a = 0; a < cs->NIndex; a++) {
             a0 = cs->IdxToAtm[a];
             base = (a0 * sp->nDot);
@@ -4129,7 +4117,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
 
       cs = I->CSet[first];
       if(cs) {
-        v = cs->Coord;
+        v = cs->Coord.data();
         for(a = 0; a < cs->NIndex; a++) {
           a0 = cs->IdxToAtm[a];
           v0 = center + 3 * a0;
@@ -4422,7 +4410,7 @@ void ObjectMoleculeUndo(ObjectMolecule * I, int dir)
     cs = I->CSet[state];
     if(cs) {
       if(cs->NIndex == I->UndoNIndex[I->UndoIter]) {
-        memcpy(cs->Coord, I->UndoCoord[I->UndoIter], sizeof(float) * cs->NIndex * 3);
+        memcpy(cs->Coord.data(), I->UndoCoord[I->UndoIter], sizeof(float) * cs->NIndex * 3);
         I->UndoState[I->UndoIter] = -1;
         FreeP(I->UndoCoord[I->UndoIter]);
         cs->invalidateRep(cRepAll, cRepInvCoord);
@@ -4440,32 +4428,24 @@ int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order)
   AtomInfoType *ai1, *ai2;
   int s1, s2;
   int c = 0;
-  BondType *bnd;
 
   /* TO DO: optimize for performance -- we shouldn't be doing full
      table scans */
 
-  ai1 = I->AtomInfo;
+  ai1 = I->AtomInfo.data();
   for(a1 = 0; a1 < I->NAtom; a1++) {
     s1 = ai1->selEntry;
     if(SelectorIsMember(I->G, s1, sele0)) {
-      ai2 = I->AtomInfo;
+      ai2 = I->AtomInfo.data();
       for(a2 = 0; a2 < I->NAtom; a2++) {
         s2 = ai2->selEntry;
         if(SelectorIsMember(I->G, s2, sele1)) {
           if(!I->Bond){
             I->Bond = pymol::vla<BondType>(1);
-	    BondTypeInit(I->Bond);
 	  }
           if(I->Bond) {
-            VLACheck(I->Bond, BondType, I->NBond);
-            bnd = I->Bond + (I->NBond);
-            BondTypeInit(bnd);
-            bnd->index[0] = a1;
-            bnd->index[1] = a2;
-            bnd->order = order;
-            bnd->stereo = 0;
-            bnd->id = -1;
+            BondType* bnd = I->Bond.check(I->NBond);
+            BondTypeInit2(bnd, a1, a2, order);
             I->NBond++;
             c++;
             I->AtomInfo[a1].chemFlag = false;
@@ -4525,7 +4505,7 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode
   int a;
 
   if(I->Bond) {
-    b0 = I->Bond;
+    b0 = I->Bond.data();
     for(a = 0; a < I->NBond; a++) {
       a0 = b0->index[0];
       a1 = b0->index[1];
@@ -4617,8 +4597,8 @@ int ObjectMoleculeRemoveBonds(ObjectMolecule * I, int sele0, int sele1)
 
   if(I->Bond) {
     offset = 0;
-    b0 = I->Bond;
-    b1 = I->Bond;
+    b0 = I->Bond.data();
+    b1 = I->Bond.data();
     for(a = 0; a < I->NBond; a++) {
       a0 = b0->index[0];
       a1 = b0->index[1];
@@ -4697,8 +4677,8 @@ void ObjectMoleculePurge(ObjectMolecule * I)
     " ObjMolPurge-Debug: step 3, old-to-new mapping\n" ENDFD;
 
   oldToNew = pymol::malloc<int>(I->NAtom);
-  ai0 = I->AtomInfo;
-  ai1 = I->AtomInfo;
+  ai0 = I->AtomInfo.data();
+  ai1 = I->AtomInfo.data();
   for(a = 0; a < I->NAtom; a++) {
     if(ai0->deleteFlag) {
       AtomInfoPurge(G, ai0);
@@ -4730,8 +4710,8 @@ void ObjectMoleculePurge(ObjectMolecule * I)
     " ObjMolPurge-Debug: step 4, bonds\n" ENDFD;
 
   offset = 0;
-  b0 = I->Bond;
-  b1 = I->Bond;
+  b0 = I->Bond.data();
+  b1 = I->Bond.data();
   for(a = 0; a < I->NBond; a++) {
     a0 = b0->index[0];
     a1 = b0->index[1];
@@ -5029,7 +5009,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
   if(flag) {
     if(!flag1) {
       int a, *flag_a = flag;
-      AtomInfoType *ai = I->AtomInfo;
+      const AtomInfoType *ai = I->AtomInfo.data();
       /* default behavior: only reset hetatm valences */
       for(a = 0; a < I->NAtom; a++) {
         *(flag_a++) = (ai++)->hetatm;
@@ -5054,7 +5034,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
     /* reset chemistry information and bond orders for selected atoms */
     {
       int a;
-      AtomInfoType *ai = I->AtomInfo;
+      AtomInfoType *ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
         if(flag[a])
           ai->chemFlag = 0;
@@ -5063,7 +5043,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
     }
     {
       int b;
-      BondType *bi = I->Bond;
+      BondType *bi = I->Bond.data();
       for(b = 0; b < I->NBond; b++) {
         int at0 = bi->index[0];
         int at1 = bi->index[1];
@@ -5076,8 +5056,8 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
   if(cs && obs_bond && obs_atom && flag && flag1 && flag2) {
     int a;
     int *neighbor = I->Neighbor;
-    AtomInfoType *atomInfo = I->AtomInfo;
-    BondType *bondInfo = I->Bond;
+    AtomInfoType *atomInfo = I->AtomInfo.data();
+    BondType *bondInfo = I->Bond.data();
 
     for(a = 0; a < I->NAtom; a++) {
       AtomInfoType *ai = atomInfo + a;
@@ -5087,7 +5067,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
         {
           int mem[9];
           int nbr[7];
-          int *atmToIdx = NULL;
+          const int* atmToIdx = nullptr;
           const int ESCAPE_MAX = 500;
 
           int escape_count;
@@ -5642,7 +5622,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
 
           int mem[9];
           int nbr[7];
-          int *atmToIdx = NULL;
+          const int* atmToIdx = nullptr;
           const int ESCAPE_MAX = 500;
 
           int escape_count;
@@ -6039,7 +6019,7 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I)
   /* initialize accumulators on uncategorized atoms */
 
   ObjectMoleculeUpdateNeighbors(I);
-  ai = I->AtomInfo;
+  ai = I->AtomInfo.data();
   for(a = 0; a < I->NAtom; a++) {
     n = I->Neighbor[a];
     nn = I->Neighbor[n++];
@@ -6178,7 +6158,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
 {
 
   int a, b;
-  BondType *b0;
+  const BondType *b0;
   AtomInfoType *ai, *ai0, *ai1 = NULL;
   int a0, a1;
   int expect, order;
@@ -6187,7 +6167,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
   /* initialize accumulators on uncategorized atoms */
 
   ObjectMoleculeUpdateNeighbors(I);
-  ai = I->AtomInfo;
+  ai = I->AtomInfo.data();
   for(a = 0; a < I->NAtom; a++) {
     if(!ai->chemFlag) {
       ai->geom = 0;
@@ -6285,7 +6265,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
 
   /* now set up valences and geometries */
 
-  ai = I->AtomInfo;
+  ai = I->AtomInfo.data();
   for(a = 0; a < I->NAtom; a++) {
     if(!ai->chemFlag) {
       expect = AtomInfoGetExpectedValence(I->G, ai);
@@ -6371,7 +6351,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
   changedFlag = true;
   while(changedFlag) {
     changedFlag = false;
-    ai = I->AtomInfo;
+    ai = I->AtomInfo.data();
     for(a = 0; a < I->NAtom; a++) {
       if(ai->chemFlag) {
         if(ai->protons == cAN_N)
@@ -6404,7 +6384,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
   changedFlag = true;
   while(changedFlag) {
     changedFlag = false;
-    ai = I->AtomInfo;
+    ai = I->AtomInfo.data();
     for(a = 0; a < I->NAtom; a++) {
       if(ai->chemFlag) {
         if(ai->protons == cAN_O)
@@ -6445,7 +6425,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
   int a, s;
   int flag = false;
   CoordSet *cs;
-  AtomInfoType *ai;
+  const AtomInfoType *ai;
   int logging;
   int all_states = false, inp_state;
   int ok = true;
@@ -6625,18 +6605,18 @@ int ObjectMoleculeGetAtomIndex(ObjectMolecule * I, int sele)
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I)
 {
   int a;
-  BondType *b;
+  const BondType *b;
   AtomInfoType *ai;
   int nAtom = I->NAtom;
   int nBond = I->NBond;
 
-  ai = I->AtomInfo;
+  ai = I->AtomInfo.data();
 
   for(a = 0; a < nAtom; a++)
     (ai++)->bonded = false;
 
   b = I->Bond;
-  ai = I->AtomInfo;
+  ai = I->AtomInfo.data();
   for(a = 0; a < nBond; a++) {
     ai[b->index[0]].bonded = true;
     ai[b->index[1]].bonded = true;
@@ -6717,7 +6697,7 @@ int ObjectMoleculeUpdateNeighbors(ObjectMolecule * I)
 
   int size;
   int a, b, c, d, l0, l1, *l;
-  BondType *bnd;
+  const BondType *bnd;
   int ok = true;
 
   /* If no neighbors have been calculated, fill in the table */
@@ -7561,7 +7541,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
     if(I->DiscreteFlag && atInfo) {
       unsigned int a;
       int fp1 = frame + 1;
-      AtomInfoType *ai = atInfo;
+      AtomInfoType *ai = atInfo.data();
       for(a = 0; a < nAtom; a++) {
         (ai++)->discrete_state = fp1;
       }
@@ -7588,7 +7568,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
       CoordSetFracToReal(cset, &cset->Symmetry->Crystal);
     }
     if(ok && isNew)
-      ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, auto_bond, connect_mode);
+      ok &= ObjectMoleculeConnect(I, cset, auto_bond, connect_mode);
     if(cset->Symmetry && (!I->Symmetry)) {
       I->Symmetry = new CSymmetry(*cset->Symmetry);
       SymmetryUpdate(I->Symmetry);
@@ -7741,7 +7721,7 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
   }
 
   // copy coordinates
-  f = cset->Coord;
+  f = cset->Coord.data();
   for(a = 0; a < l; a++) {
     v = PySequence_ITEM(coords, a);
 
@@ -8878,7 +8858,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(I->DiscreteFlag && atInfo) {
         int a;
         int fp1 = frame + 1;
-        AtomInfoType *ai = atInfo;
+        AtomInfoType *ai = atInfo.data();
         for(a = 0; a < nAtom; a++) {
           (ai++)->discrete_state = fp1;
         }
@@ -8909,7 +8889,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       I->CSet[frame] = cset;
 
       if(ok && isNew)
-        ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, connect, -1);
+        ok &= ObjectMoleculeConnect(I, cset, connect);
 
       if (ok)
 	ok &= ObjectMoleculeExtendIndices(I, frame);
@@ -8962,7 +8942,6 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 {
   PyMOLGlobals *G = I->G;
   int *index, *outdex, *a2i = NULL, *i2a = NULL;
-  BondType *bond = NULL;
   int a, b, lb = 0, ac;
   int c, nb, a1, a2;
   int found;
@@ -9006,7 +8985,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
   if (ok) {
     int n_index = cs->NIndex;
     int n_atom = I->NAtom;
-    AtomInfoType *atInfo = I->AtomInfo, *ai_a;
+    const AtomInfoType *atInfo = I->AtomInfo.data(), *ai_a;
     CompareFn *fCompare;
 
     if(SettingGetGlobal_b(G, cSetting_pdb_hetatm_sort)) {
@@ -9153,7 +9132,8 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 
   /* now find and integrate and any new bonds */
   if(ok && expansionFlag) {           /* expansion flag means we have introduced at least 1 new atom */
-    ok &= ObjectMoleculeConnect(I, &nBond, &bond, I->AtomInfo, cs, bondSearchFlag, -1);
+    pymol::vla<BondType> bond;
+    ok &= ObjectMoleculeConnect(I, nBond, bond, cs, bondSearchFlag, -1);
     if(nBond) {
       index = pymol::malloc<int>(nBond);
       CHECKOK(ok, index);
@@ -9219,7 +9199,6 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
       }
       FreeP(index);
     }
-    VLAFreeP(bond);
   }
   if(invalidate) {
     if(oldNAtom) {
@@ -9256,7 +9235,7 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule * I, float *ttt, int frame)
       cs = I->CSet[b];
       if(cs) {
         cs->invalidateRep(cRepAll, cRepInvCoord);
-        MatrixTransformTTTfN3f(cs->NIndex, cs->Coord, ttt, cs->Coord);
+        MatrixTransformTTTfN3f(cs->NIndex, cs->Coord.data(), ttt, cs->Coord.data());
         CoordSetRecordTxfApplied(cs, ttt, false);
       }
     }
@@ -9398,7 +9377,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       break;
     case OMOP_RevalenceFromSource:
     case OMOP_RevalenceByGuessing:
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
         if(SelectorIsMember(G, ai->selEntry, sele)) {
           hit_flag = true;
@@ -9451,7 +9430,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_SetAtomicSetting:
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
         if(SelectorIsMember(G, ai->selEntry, sele)) {
           int uid = AtomInfoCheckUniqueID(G, ai);
@@ -9756,7 +9735,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_CountAtoms:      /* count atoms in object, in selection */
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
         if(SelectorIsMember(G, s, sele))
@@ -9765,7 +9744,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_PhiPsi:
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
         if(SelectorIsMember(G, s, sele)) {
@@ -9783,7 +9762,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_Cartoon:         /* adjust cartoon type */
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
         if(SelectorIsMember(G, s, sele)) {
@@ -9797,7 +9776,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_Protect:         /* protect atoms from movement */
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
         if(SelectorIsMember(G, s, sele)) {
@@ -9808,7 +9787,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_Mask:            /* protect atoms from selection */
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
         if(SelectorIsMember(G, s, sele)) {
@@ -9819,7 +9798,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_SetB:            /* set B-value */
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
         if(SelectorIsMember(G, s, sele)) {
@@ -9830,7 +9809,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_Remove:          /* flag atoms for deletion */
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
 	ai->deleteFlag = false;
 	s = ai->selEntry;
@@ -9842,7 +9821,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_GetChains:
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
         if(SelectorIsMember(G, s, sele)) {
@@ -9855,7 +9834,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       break;
 
     case OMOP_Spectrum:
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       ai0 = NULL;
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
@@ -9905,7 +9884,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       break;
 
     case OMOP_SingleStateVertices:     /* same as OMOP_VERT for a single state */
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       if(op->cs1 < I->NCSet) {
         if(I->CSet[op->cs1]) {
           b = op->cs1;
@@ -9937,7 +9916,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_CSetIdxGetAndFlag:
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
         if(SelectorIsMember(G, s, sele)) {
@@ -9970,7 +9949,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_CSetIdxSetFlagged:
-      ai = I->AtomInfo;
+      ai = I->AtomInfo.data();
       hit_flag = false;
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
@@ -10015,13 +9994,13 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         int i_NCSet = I->NCSet;
         int i_NAtom = I->NAtom;
         int i_DiscreteFlag = I->DiscreteFlag;
-        CoordSet **i_CSet = I->CSet;
+        CoordSet* const* i_CSet = I->CSet.data();
         if(op_i2) {
           use_matrices =
             SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
           if(use_matrices<0) use_matrices = 0;
         }
-        ai = I->AtomInfo;
+        ai = I->AtomInfo.data();
         for(a = 0; a < i_NAtom; a++) {
           s = ai->selEntry;
 					/* for each atom, if this current atom is in the selection */
@@ -10075,13 +10054,13 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         int i_NCSet = I->NCSet;
         int i_NAtom = I->NAtom;
         int i_DiscreteFlag = I->DiscreteFlag;
-        CoordSet **i_CSet = I->CSet;
+        CoordSet* const* i_CSet = I->CSet.data();
         if(op_i2) {
           use_matrices =
             SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
           if(use_matrices<0) use_matrices = 0;
         }
-        ai = I->AtomInfo;
+        ai = I->AtomInfo.data();
         for(a = 0; a < i_NAtom; a++) {
           s = ai->selEntry;
           if(SelectorIsMember(G, s, sele)) {
@@ -10158,7 +10137,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         }
         use_matrices = SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
         if(use_matrices<0) use_matrices = 0;
-        ai = I->AtomInfo;
+        ai = I->AtomInfo.data();
 
 #ifdef _PYMOL_IP_EXTRAS
         // use stereo or text_type ?
@@ -10796,7 +10775,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
             int a;
             int *f1 = flag1;
             int *f2 = flag2;
-            AtomInfoType *ai = I->AtomInfo;
+            const AtomInfoType *ai = I->AtomInfo.data();
             for(a = 0; a < I->NAtom; a++) {
               *(f1++) = SelectorIsMember(G, ai->selEntry, op->i1);
               *(f2++) = SelectorIsMember(G, ai->selEntry, op->i2);
@@ -10974,7 +10953,7 @@ static void ObjectMoleculeUpdate(ObjectMolecule * I)
     /* note which representations are active */
     /* for each atom in each coordset, blank out the representation cache */
     if(I->NCSet > 1) {
-      AtomInfoType *ai = I->AtomInfo;
+      const AtomInfoType *ai = I->AtomInfo.data();
       I->RepVisCache = 0;
       for(a = 0; a < I->NAtom; a++) {
         I->RepVisCache |= ai->visRep;
@@ -11524,10 +11503,10 @@ void ObjectMoleculeDummyUpdate(ObjectMolecule * I, int mode)
 {
   switch (mode) {
   case cObjectMoleculeDummyOrigin:
-    SceneOriginGet(I->G, I->CSet[0]->Coord);
+    SceneOriginGet(I->G, I->CSet[0]->Coord.data());
     break;
   case cObjectMoleculeDummyCenter:
-    SceneGetCenter(I->G, I->CSet[0]->Coord);
+    SceneGetCenter(I->G, I->CSet[0]->Coord.data());
     break;
   }
 }
@@ -11688,7 +11667,7 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
     I->updateAtmToIdx();
   }
   I->Bond = pymol::vla<BondType>(I->NBond);
-  i0 = I->Bond;
+  i0 = I->Bond.data();
   i1 = obj->Bond.data();
   for(a = 0; a < I->NBond; a++) {
     AtomInfoBondCopy(G, i1++, i0++);
@@ -11699,8 +11678,8 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
   if (I->AtomInfo.size() != obj->AtomInfo.size()) {
     throw "AtomInfo copy failed";
   }
-  AtomInfoType *a0 = I->AtomInfo;
-  const AtomInfoType* a1 = obj->AtomInfo;
+  AtomInfoType *a0 = I->AtomInfo.data();
+  const AtomInfoType* a1 = obj->AtomInfo.data();
   memset(a0, 0, sizeof(AtomInfoType) * I->NAtom);
   for(a = 0; a < I->NAtom; a++)
     AtomInfoCopy(G, a1++, a0++);
@@ -11761,7 +11740,7 @@ ObjectMolecule::~ObjectMolecule()
 
   {
     int nAtom = I->NAtom;
-    AtomInfoType *ai = I->AtomInfo;
+    AtomInfoType *ai = I->AtomInfo.data();
 
     for(a = 0; a < nAtom; a++) {
       AtomInfoPurge(I->G, ai);
@@ -11771,7 +11750,7 @@ ObjectMolecule::~ObjectMolecule()
   }
   {
     int nBond = I->NBond;
-    BondType *bi = I->Bond;
+    BondType *bi = I->Bond.data();
 
     for(a = 0; a < nBond; a++) {
       AtomInfoPurgeBond(I->G, bi);
@@ -11857,7 +11836,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(I->DiscreteFlag && atInfo) {
         unsigned int a;
         int fp1 = state + 1;
-        AtomInfoType *ai = atInfo;
+        AtomInfoType *ai = atInfo.data();
         for(a = 0; a < nAtom; a++) {
           (ai++)->discrete_state = fp1;
         }
@@ -11890,7 +11869,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
 	I->CSet[state] = cset;
       }
       if(ok && isNew)
-        ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, true, -1);
+        ok &= ObjectMoleculeConnect(I, cset);
       if(ok && cset->Symmetry) {
         SymmetryFree(I->Symmetry);
         I->Symmetry = new CSymmetry(*cset->Symmetry);
@@ -12144,8 +12123,8 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
 #ifdef _PYMOL_IP_EXTRAS
 void ObjectMoleculeSetAtomBondInfoTypeOldId(PyMOLGlobals * G, ObjectMolecule * obj){
   int i;
-  AtomInfoType *ai = obj->AtomInfo;
-  BondType *bi = obj->Bond;
+  AtomInfoType *ai = obj->AtomInfo.data();
+  BondType *bi = obj->Bond.data();
   for (i=0; i<obj->NAtom; i++){
     ai->oldid = i;
     ai++;
@@ -12157,8 +12136,8 @@ void ObjectMoleculeSetAtomBondInfoTypeOldId(PyMOLGlobals * G, ObjectMolecule * o
 }
 void ObjectMoleculeSetAtomBondInfoTypeOldIdToNegOne(PyMOLGlobals * G, ObjectMolecule * obj){
   int i;
-  AtomInfoType *ai = obj->AtomInfo;
-  BondType *bi = obj->Bond;
+  AtomInfoType *ai = obj->AtomInfo.data();
+  BondType *bi = obj->Bond.data();
   for (i=0; i<obj->NAtom; i++){
     ai->oldid = -1;
     ai++;
@@ -12193,18 +12172,18 @@ void AtomInfoSettingGenerateSideEffects(PyMOLGlobals * G, ObjectMolecule *obj, i
   }
 }
 
-static int AtomInfoInOrder(PyMOLGlobals * G, AtomInfoType * atom, int atom1, int atom2)
+static int AtomInfoInOrder(PyMOLGlobals * G, const AtomInfoType * atom, int atom1, int atom2)
 {
   return (AtomInfoCompare(G, atom + atom1, atom + atom2) <= 0);
 }
 
-static int AtomInfoInOrderIgnoreHet(PyMOLGlobals * G, AtomInfoType * atom,
+static int AtomInfoInOrderIgnoreHet(PyMOLGlobals * G, const AtomInfoType * atom,
     int atom1, int atom2)
 {
   return (AtomInfoCompareIgnoreHet(G, atom + atom1, atom + atom2) <= 0);
 }
 
-static int AtomInfoInOrigOrder(PyMOLGlobals * G, AtomInfoType * atom,
+static int AtomInfoInOrigOrder(PyMOLGlobals * G, const AtomInfoType * atom,
     int atom1, int atom2)
 {
   if(atom[atom1].rank == atom[atom2].rank)
@@ -12212,12 +12191,13 @@ static int AtomInfoInOrigOrder(PyMOLGlobals * G, AtomInfoType * atom,
   return (atom[atom1].rank < atom[atom2].rank);
 }
 
-int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj,
-    AtomInfoType * rec, int n, int **outdex)
+int *AtomInfoGetSortedIndex(PyMOLGlobals * G,
+    const ObjectMolecule* obj,
+    const AtomInfoType* rec, int n, int **outdex)
 {
   int *index;
   int a;
-  CSetting *setting = NULL;
+  const CSetting* setting = nullptr;
 
   ok_assert(1, index = pymol::malloc<int>(n + 1));
   ok_assert(1, (*outdex) = pymol::malloc<int>(n + 1));

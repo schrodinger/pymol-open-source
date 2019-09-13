@@ -199,7 +199,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
             while(ExecutiveIterateObjectMolecule(G, &obj, &hidden)) {
               if((obj->Enabled || !active_only) && (obj->Name[0] != '_')) {
                 int a;
-                AtomInfoType *ai = obj->AtomInfo;
+                const AtomInfoType *ai = obj->AtomInfo.data();
                 for(a = 0; a < obj->NAtom; a++) {
                   if(SelectorIsMember(G, ai->selEntry, align_sele)) {
                     int name_len = strlen(obj->Name);

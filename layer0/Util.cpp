@@ -364,7 +364,7 @@ void UtilSortIndex(int n,void *array,int *x,UtilOrderFn* fOrdered)
   for(a=0;a<n;a++) x[a]--;
 }
 
-void UtilSortIndexGlobals(PyMOLGlobals *G,int n,void *array,int *x,UtilOrderFnGlobals* fOrdered)
+void UtilSortIndexGlobals(PyMOLGlobals *G,int n,const void *array,int *x,UtilOrderFnGlobals* fOrdered)
 {
   int l,a,r,t,i;
 

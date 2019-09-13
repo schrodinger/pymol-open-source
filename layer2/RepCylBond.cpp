@@ -312,13 +312,14 @@ static int RepZeroOrderBond(RepCylBond *I, CGO *cgo, bool s1, bool s2, float *vv
 
 static int RepValence(RepCylBond *I, CGO *cgo, bool s1, bool s2, bool isRamped,
 		      float *v1, float *v2, int *other,
-		      int a1, int a2, float *coord,
+		      int a1, int a2, const float *coord,
 		      float *color1, float *color2, int ord,
 		      float tube_size,
 		      bool fixed_r, float scale_r,
 		      Pickable pickdata[] = NULL)
 {
-  float d[3], t[3], p0[3], p1[3], p2[3], *vv;
+  float d[3], t[3], p0[3], p1[3], p2[3];
+  const float* vv;
   float v1t[3], v2t[3];
   int a3;
   int double_sided;
@@ -543,7 +544,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   int a;
   int c1, c2, s1, s2;
   unsigned int b1, b2;
-  BondType *b;
+  const BondType *b;
   float radius;
   float valence;
   int half_bonds, *other = NULL;
@@ -551,7 +552,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   int ord;
   int stick_ball, stick_ball_color = -1;
   float stick_ball_ratio = 1.0F;
-  AtomInfoType *ai1;
+  const AtomInfoType *ai1;
   bool fixed_radius = false;
   int valence_flag = false;
   int hide_long = false;
@@ -937,7 +938,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 }
 
 #ifndef PURE_OPENGL_ES_2
-static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
+static void RepCylinderImmediate(const float *v1arg, const float *v2arg, int nEdge,
                                  int frontCapArg, int endCapArg,
                                  float overlap, float nub, float radius, float **dir)
 {
@@ -1127,16 +1128,16 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
     {
       int a;
       int nBond = obj->NBond;
-      BondType *bd = obj->Bond;
-      AtomInfoType *ai = obj->AtomInfo;
+      const BondType *bd = obj->Bond.data();
+      const AtomInfoType *ai = obj->AtomInfo.data();
       int last_color = -9;
-      float *coord = cs->Coord;
+      const float *coord = cs->Coord.data();
       const float _pt5 = 0.5F;
 
       for(a = 0; a < nBond; a++) {
         int b1 = bd->index[0];
         int b2 = bd->index[1];
-        AtomInfoType *ai1, *ai2;
+        const AtomInfoType *ai1, *ai2;
         bd++;
 
         if( ((ai1 = ai + b1)->visRep & cRepCylBit) &&
@@ -1150,8 +1151,8 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
             int c1 = ai1->color;
             int c2 = ai2->color;
 
-            float *v1 = coord + 3 * a1;
-            float *v2 = coord + 3 * a2;
+            const float *v1 = coord + 3 * a1;
+            const float *v2 = coord + 3 * a2;
 
             if(c1 == c2) {      /* same colors -> one cylinder */
               if(c1 != last_color) {

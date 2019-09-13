@@ -78,11 +78,11 @@ void RenderSphereMode_Immediate_5(PyMOLGlobals *G, RenderInfo *info,
       float last_radius = -1.0F, cur_radius;
       int a;
       int nIndex = cs->NIndex;
-      AtomInfoType *atomInfo = obj->AtomInfo;
-      int *i2a = cs->IdxToAtm;
-      float *v = cs->Coord;
+      const AtomInfoType *atomInfo = obj->AtomInfo.data();
+      const int *i2a = cs->IdxToAtm.data();
+      const float *v = cs->Coord.data();
       for (a = 0; a < nIndex; a++) {
-        AtomInfoType *ai = atomInfo + *(i2a++);
+        const AtomInfoType *ai = atomInfo + *(i2a++);
         if (GET_BIT(ai->visRep, cRepSphere)) {
           float vr[4];
           copy3f(v, vr);
@@ -113,17 +113,17 @@ static void RenderSphereMode_Immediate_Triangles(PyMOLGlobals *G, CoordSet *cs,
   {
     int a;
     int nIndex = cs->NIndex;
-    AtomInfoType *atomInfo = obj->AtomInfo;
-    int *i2a = cs->IdxToAtm;
+    const AtomInfoType *atomInfo = obj->AtomInfo.data();
+    const int *i2a = cs->IdxToAtm.data();
     int last_color = -1;
-    float *v = cs->Coord;
+    const float *v = cs->Coord.data();
     int *sp_Sequence = sp->Sequence;
     int *sp_StripLen = sp->StripLen;
     int sp_NStrip = sp->NStrip;
     Vector3f *sp_dot = sp->dot;
 
     for (a = 0; a < nIndex; a++) {
-      AtomInfoType *ai = atomInfo + *(i2a++);
+      const AtomInfoType *ai = atomInfo + *(i2a++);
       if (GET_BIT(ai->visRep, cRepSphere)) {
         float vdw = ai->vdw * sphere_scale;
         int c = ai->color;
@@ -171,17 +171,17 @@ static void RenderSphereMode_Immediate_1_2_3(PyMOLGlobals *G, RenderInfo *info,
 
   int a;
   int nIndex = cs->NIndex;
-  AtomInfoType *atomInfo = obj->AtomInfo;
-  int *i2a = cs->IdxToAtm;
+  const AtomInfoType *atomInfo = obj->AtomInfo.data();
+  const int* i2a = cs->IdxToAtm.data();
   int last_color = -1;
-  float *v = cs->Coord;
+  const float *v = cs->Coord.data();
   float last_radius = -1.0F;
 
   if (!info->line_lighting) glDisable(GL_LIGHTING);
 
   glBegin(GL_POINTS);
   for (a = 0; a < nIndex; a++) {
-    AtomInfoType *ai = atomInfo + *(i2a++);
+    const AtomInfoType *ai = atomInfo + *(i2a++);
     if (GET_BIT(ai->visRep, cRepSphere)) {
       int c = ai->color;
       (*repActive) = true;

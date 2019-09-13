@@ -49,15 +49,15 @@ typedef struct {
 
 #define MapBorder 2
 
-MapType *MapNew(PyMOLGlobals * G, float range, float *vert, int nVert, float *extent);
-MapType *MapNewCached(PyMOLGlobals * G, float range, float *vert, int nVert,
-                      float *extent, int group_id, int block_id);
+MapType *MapNew(PyMOLGlobals * G, float range, const float *vert, int nVert, const float *extent);
+MapType *MapNewCached(PyMOLGlobals * G, float range, const float *vert, int nVert,
+                      const float *extent, int group_id, int block_id);
 
-MapType *MapNewFlagged(PyMOLGlobals * G, float range, float *vert, int nVert,
-                       float *extent, int *flag);
+MapType *MapNewFlagged(PyMOLGlobals * G, float range, const float *vert, int nVert,
+                       const float *extent, const int *flag);
 int MapSetupExpress(MapType * I);
-int MapSetupExpressPerp(MapType * I, float *vert, float front, int nVertHint,
-			int negative_start, int *spanner);
+int MapSetupExpressPerp(MapType * I, const float *vert, float front, int nVertHint,
+			int negative_start, const int *spanner);
 
 void MapFree(MapType * I);
 

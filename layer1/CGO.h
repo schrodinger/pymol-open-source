@@ -460,7 +460,7 @@ namespace cgo {
 
     struct line {
       static const int op_code = CGO_LINE;
-      line(float *v1, float *v2) {
+      line(const float *v1, const float *v2) {
         copy3f(v1, vertex1);
         copy3f(v2, vertex2);
       };

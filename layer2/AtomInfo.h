@@ -363,7 +363,7 @@ typedef struct AtomInfoType {
 void AtomInfoFree(PyMOLGlobals * G);
 int AtomInfoInit(PyMOLGlobals * G);
 void BondTypeInit(BondType *bt);
-void BondTypeInit2(BondType *bt, int i1, int i2, int order);
+void BondTypeInit2(BondType *bt, int i1, int i2, int order = 1);
 void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai);
 void AtomInfoCopy(PyMOLGlobals * G, const AtomInfoType * src, AtomInfoType * dst, int copy_properties=true);
 int AtomInfoReserveUniqueID(PyMOLGlobals * G, int unique_id);

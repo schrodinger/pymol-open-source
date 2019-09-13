@@ -67,7 +67,8 @@ void ShakerAddDistCon(CShaker * I, int atom0, int atom1, float target, int type,
   I->NDistCon++;
 }
 
-float ShakerGetPyra(float *targ2, float *v0, float *v1, float *v2, float *v3)
+float ShakerGetPyra(float *targ2,
+    const float *v0, const float *v1, const float *v2, const float *v3)
 {
   float d0[3], cp[3], d2[3], d3[3];
   float av[3], t0[3];
@@ -87,7 +88,7 @@ float ShakerGetPyra(float *targ2, float *v0, float *v1, float *v2, float *v3)
 }
 
 float ShakerDoPyra(float targ1, float targ2,
-                   float *v0, float *v1, float *v2, float *v3,
+                   const float *v0, const float *v1, const float *v2, const float *v3,
                    float *p0, float *p1, float *p2, float *p3, float wt, float inv_wt)
 {
   float d0[3], cp[3], d2[3], d3[3];
@@ -141,7 +142,7 @@ float ShakerDoPyra(float targ1, float targ2,
   return result1 + result2;
 }
 
-float ShakerDoLine(float *v0, float *v1, float *v2,
+float ShakerDoLine(const float *v0, const float *v1, const float *v2,
                    float *p0, float *p1, float *p2, float wt)
 {
   /* v0-v1-v2 */
@@ -184,7 +185,11 @@ float ShakerDoLine(float *v0, float *v1, float *v2,
 
 }
 
-float ShakerDoPlan(float *v0, float *v1, float *v2, float *v3,
+float ShakerDoPlan(
+    const float *v0,
+    const float *v1,
+    const float *v2,
+    const float *v3,
                    float *p0, float *p1, float *p2, float *p3,
                    float target, int fixed, float wt)
 {

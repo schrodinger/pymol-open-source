@@ -37,7 +37,14 @@ typedef struct RepWireBond {
 
 #include"ObjectMolecule.h"
 
-static int RepLine(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, float *v2, float *v1color, unsigned int b1, unsigned int b2, int a, float *v2color, bool b1masked, bool b2masked){
+static int RepLine(CGO *cgo, bool s1, bool s2, bool isRamped,
+    const float *v1,
+    const float *v2,
+    const float *v1color,
+    unsigned int b1, unsigned int b2, int a,
+    const float *v2color,
+    bool b1masked, bool b2masked)
+{
   int ok = true;
   if (s1 && s2){
     CGOColorv(cgo, v1color);
@@ -73,9 +80,15 @@ static int RepLine(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, float *
   return ok;
 }
 
-static void RepValence(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, float *v2, int *other,
-                       int a1, int a2, float *coord, float *color1, float *color2, int ord,
-                       float tube_size, int fancy, unsigned int b1, unsigned int b2, int a, bool b1masked, bool b2masked)
+static void RepValence(CGO *cgo, bool s1, bool s2, bool isRamped,
+    const float *v1,
+    const float *v2,
+    const int *other,
+    int a1, int a2,
+    const float *coord,
+    const float *color1,
+    const float *color2, int ord,
+    float tube_size, int fancy, unsigned int b1, unsigned int b2, int a, bool b1masked, bool b2masked)
 {
 
   float d[3], t[3], p0[3], p1[3], p2[3];
@@ -136,11 +149,17 @@ static void RepValence(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, flo
   }
 }
 
-static void RepAromatic(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, float *v2, int *other,
-                        int a1, int a2, float *coord, float *color1, float *color2,
+static void RepAromatic(CGO *cgo, bool s1, bool s2, bool isRamped,
+    const float *v1,
+    const float *v2,
+    const int *other,
+    int a1, int a2,
+    const float *coord,
+    const float *color1,
+    const float *color2,
                         float tube_size, int half_state, unsigned int b1, unsigned int b2, int a, bool b1masked, bool b2masked)
 {
-  float d[3], t[3], p0[3], p1[3], p2[3], *vv;
+  float d[3], t[3], p0[3], p1[3], p2[3];
   int a3;
   int double_sided;
 
@@ -158,7 +177,7 @@ static void RepAromatic(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, fl
     t[1] = p0[1];
     t[2] = -p0[2];
   } else {
-    vv = coord + 3 * a3;
+    const float* vv = coord + 3 * a3;
     t[0] = *(vv++) - v1[0];
     t[1] = *(vv++) - v1[1];
     t[2] = *(vv++) - v1[2];
@@ -276,18 +295,18 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
     {
       int a;
       int nBond = obj->NBond;
-      BondType *bd = obj->Bond;
-      AtomInfoType *ai = obj->AtomInfo;
-      int *atm2idx = cs->AtmToIdx;
+      const BondType *bd = obj->Bond.data();
+      const AtomInfoType *ai = obj->AtomInfo.data();
+      const int *atm2idx = cs->AtmToIdx.data();
       int discreteFlag = obj->DiscreteFlag;
       int last_color = -9;
-      float *coord = cs->Coord;
+      const float *coord = cs->Coord.data();
       const float _pt5 = 0.5F;
 
       for(a = 0; a < nBond; a++) {
         int b1 = bd->index[0];
         int b2 = bd->index[1];
-        AtomInfoType *ai1, *ai2;
+        const AtomInfoType *ai1, *ai2;
         bd++;
         if(GET_BIT((ai1 = ai + b1)->visRep,cRepLine) && GET_BIT((ai2 = ai + b2)->visRep,cRepLine)) {
           int a1, a2;
@@ -309,8 +328,8 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
             int c1 = ai1->color;
             int c2 = ai2->color;
 
-            float *v1 = coord + 3 * a1;
-            float *v2 = coord + 3 * a2;
+            const float *v1 = coord + 3 * a1;
+            const float *v2 = coord + 3 * a2;
 
             if(c1 == c2) {      /* same colors -> one line */
               if(c1 != last_color) {
@@ -447,11 +466,11 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 
 static
 bool IsBondTerminal(ObjectMolecule *obj, int b1, int b2){
-  int *neighbor = obj->Neighbor;
+  const int *neighbor = obj->Neighbor;
   if(neighbor) {
     int mem, nbr;
     int heavy1 = 0, heavy2 = 0;
-    AtomInfoType *atomInfo = obj->AtomInfo;
+    const AtomInfoType *atomInfo = obj->AtomInfo.data();
     nbr = neighbor[b1] + 1;
     while(((mem = neighbor[nbr]) >= 0)) {
       if(atomInfo[mem].protons > 1) {
@@ -472,7 +491,11 @@ bool IsBondTerminal(ObjectMolecule *obj, int b1, int b2){
   return false;
 }
 
-static int RepWireZeroOrderBond(CGO *cgo, bool s1, bool s2, float *v1, float *v2, float *rgb1, float *rgb2,
+static int RepWireZeroOrderBond(CGO *cgo, bool s1, bool s2,
+    const float *v1,
+    const float *v2,
+    const float *rgb1,
+    const float *rgb2,
                                 unsigned int b1, unsigned int b2, int a, float dash_gap, float dash_length, bool b1masked, bool b2masked)
 {
   int ok = true;
@@ -580,14 +603,14 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   unsigned int b1, b2;
   int a, c1, c2, ord;
   bool s1, s2;
-  BondType *b;
+  const BondType *b;
   int half_bonds, *other = NULL;
   float valence;
-  float *v1, *v2;
+  const float *v1, *v2;
   int visFlag;
   float line_width;
   int valence_flag = false;
-  AtomInfoType *ai1;
+  const AtomInfoType *ai1;
   int cartoon_side_chain_helper = 0;
   int ribbon_side_chain_helper = 0;
   int line_stick_helper = 0;

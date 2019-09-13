@@ -1527,7 +1527,7 @@ public:
     auto buffer = stream.str();
     auto bufferSize = buffer.size();
     m_buffer.resize(bufferSize);
-    std::memcpy(m_buffer, buffer.data(), bufferSize);
+    std::memcpy(m_buffer.data(), buffer.data(), bufferSize);
     m_offset = bufferSize;
   }
 };
@@ -1734,7 +1734,7 @@ protected:
   }
 
   const float * getRefPtr() {
-    RefPosType  * ref_pos = m_iter.cs->RefPos;
+    const RefPosType* ref_pos = m_iter.cs->RefPos.data();
     const float * ref_ptr = nullptr;
 
     if (ref_pos) {

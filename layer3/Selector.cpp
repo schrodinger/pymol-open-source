@@ -711,7 +711,7 @@ int SelectorRenameObjectAtoms(PyMOLGlobals * G, ObjectMolecule * obj, int sele, 
     if(!flag) {
       result = -1;
     } else {
-      AtomInfoType *ai = obj->AtomInfo;
+      const AtomInfoType *ai = obj->AtomInfo.data();
       int a;
       for(a = 0; a < obj_nAtom; a++) {
         if(SelectorIsMember(G, ai->selEntry, sele)) {
@@ -749,10 +749,10 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
 
     for(pass = 0; pass < 2; pass++) {
       ObjectMolecule *obj;
-      CoordSet *cs;
-      int *neighbor = NULL;
-      AtomInfoType *atomInfo = NULL;
-      ObjectMolecule *last_obj = NULL;
+      const CoordSet *cs;
+      const int *neighbor = NULL;
+      const AtomInfoType *atomInfo = NULL;
+      const ObjectMolecule *last_obj = NULL;
       float **dist_mat;
       float *inter;
       int state;
@@ -803,7 +803,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
           if(idx_ca1 >= 0) {
             int mem0, mem1, mem2, mem3, mem4;
             int nbr0, nbr1, nbr2, nbr3;
-            float *v_ca1 = cs->Coord + 3 * idx_ca1;
+            const float *v_ca1 = cs->Coord + 3 * idx_ca1;
             int idx_cb1 = -1;
             int cnt = 0;
 
@@ -826,7 +826,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
             /* find remote CA, CB */
 
             if(idx_cb1 >= 0) {
-              float *v_cb1 = cs->Coord + 3 * idx_cb1;
+              const float *v_cb1 = cs->Coord + 3 * idx_cb1;
 
               mem0 = at_ca1;
               nbr0 = neighbor[mem0] + 1;
@@ -849,7 +849,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
                       nbr2 += 2;
                     }
                     if(idx_ca2 >= 0) {
-                      float *v_ca2 = cs->Coord + 3 * idx_ca2;
+                      const float *v_ca2 = cs->Coord + 3 * idx_ca2;
 
                       nbr2 = neighbor[mem2] + 1;
                       while((mem3 = neighbor[nbr2]) >= 0) {
@@ -868,7 +868,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
                           }
 
                           if(idx_cb2 >= 0) {
-                            float *v_cb2 = NULL;
+                            const float *v_cb2 = NULL;
                             v_cb2 = cs->Coord + 3 * idx_cb2;
                             {
                               float angle = get_dihedral3f(v_cb1, v_ca1, v_ca2, v_cb2);
@@ -1138,7 +1138,7 @@ static sele_array_t SelectorUpdateTableMultiObjectIdxTag(PyMOLGlobals * G,
   return (result);
 }
 
-static int IntInOrder(int *list, int a, int b)
+static int IntInOrder(const int *list, int a, int b)
 {
   return (list[a] <= list[b]);
 }
@@ -1569,7 +1569,6 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int stat
         CoordSet *cs;
         int at;
         int idx;
-        float *src, *dst;
         for(i = 0; i < n; i++) {
           a = index_vla[i];
 
@@ -1591,11 +1590,9 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int stat
               }
               if(idx >= 0) {
                 VLACheck(coord, float, nc * 3 + 2);
-                src = cs->Coord + 3 * idx;
-                dst = coord + 3 * nc;
-                *(dst++) = *(src++);
-                *(dst++) = *(src++);
-                *(dst++) = *(src++);
+                const float* src = cs->Coord + 3 * idx;
+                float* dst = coord + 3 * nc;
+                copy3f(src, dst);
                 nc++;
               }
             }
@@ -4301,7 +4298,7 @@ int SelectorGetSingleAtomObjectIndex(PyMOLGlobals * G, int sele, ObjectMolecule 
 
   while(ExecutiveIterateObjectMolecule(G, &obj, &iterator)) {
     int n_atom = obj->NAtom;
-    AtomInfoType *ai = obj->AtomInfo;
+    const AtomInfoType *ai = obj->AtomInfo.data();
     for(a = 0; a < n_atom; a++) {
       int s = (ai++)->selEntry;
       if(SelectorIsMember(G, s, sele)) {
@@ -5202,7 +5199,7 @@ static int SelectorGetInterstateVLA(PyMOLGlobals * G,
 {                               /* Assumes valid tables */
   CSelector *I = G->Selector;
   MapType *map;
-  float *v2;
+  const float *v2;
   int n1, n2;
   int c, i, j, h, k, l;
   int at;
@@ -6622,7 +6619,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
   CSelector *I = G->Selector;
   int ok = true;
   int a, b, a2, b1, b2, c, d, s, at;
-  BondType *ii1, *bond = NULL;
+  const BondType *ii1;
   int nBond = 0;
   int nCSet, nAtom, ts;
   int isNew;
@@ -6696,7 +6693,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
   nAtom = c;
 
   nBond = 0;
-  bond = VLACalloc(BondType, nAtom * 4);
+  auto bond = pymol::vla<BondType>(nAtom * 4);
   for(a = cNDummyModels; a < I->NModel; a++) {  /* find bonds wholly contained in the selection */
     obj = I->Obj[a];
     ii1 = obj->Bond;
@@ -6705,9 +6702,8 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
       b2 = SelectorGetObjAtmOffset(I, obj, ii1->index[1]);
       if((b1 >= 0) && (b2 >= 0)) {
         if((I->Table[b1].index >= 0) && (I->Table[b2].index >= 0)) {
-          VLACheck(bond, BondType, nBond);
+          BondType* dst_bond = bond.check(nBond);
           {
-            BondType *dst_bond = bond + nBond;
             AtomInfoBondCopy(G, ii1, dst_bond);
             dst_bond->index[0] = I->Table[b1].index;    /* store what will be the new index */
             dst_bond->index[1] = I->Table[b2].index;
@@ -6738,9 +6734,8 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
   cs = CoordSetNew(G);          /* set up a dummy coordinate set for the merge xref */
   cs->NIndex = nAtom;
   cs->enumIndices();
-  cs->TmpBond = pymol::vla_take_ownership(bond);           /* load up the bonds */
+  cs->TmpBond = std::move(bond);           /* load up the bonds */
   cs->NTmpBond = nBond;
-  bond = NULL;
 
   /*  printf("Selector-DEBUG nAtom %d\n",nAtom); */
   ObjectMoleculeMerge(targ, std::move(atInfo), cs, false, cAIC_AllMask, true);     /* will free atInfo */
@@ -6837,7 +6832,6 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
       cs2->Obj = targ;
     }
   }
-  VLAFreeP(bond);               /* null-safe */
   if(cs)
     cs->fFree();
   if(targ->DiscreteFlag) {      /* if the new object is discrete, then eliminate the AtmToIdx array */
@@ -6940,7 +6934,7 @@ static void SelectorPurgeMembers(PyMOLGlobals * G, int sele)
 
     while(ExecutiveIterateObjectMolecule(G, &obj, &iterator)) {
       if(obj->type == cObjectMolecule) {
-        AtomInfoType *ai = obj->AtomInfo;
+        AtomInfoType *ai = obj->AtomInfo.data();
         int a, n_atom = obj->NAtom;
         for(a = 0; a < n_atom; a++) {
           int s = (ai++)->selEntry;
@@ -7824,7 +7818,7 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
               rec++;
             }
           } else {
-            AtomInfoType *ai = obj->AtomInfo;
+            const AtomInfoType *ai = obj->AtomInfo.data();
             int included_one = false;
             int excluded_one = false;
             for(a = 0; a < n_atom; a++) {
@@ -7862,7 +7856,7 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
               }
             }
           } else {
-            AtomInfoType *ai = obj->AtomInfo;
+            const AtomInfoType *ai = obj->AtomInfo.data();
             for(a = 0; a < n_atom; a++) {
               /* does coordinate exist for this atom in the requested state? */
               if(state < obj->NCSet)

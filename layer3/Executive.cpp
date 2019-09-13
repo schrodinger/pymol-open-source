@@ -2346,7 +2346,7 @@ static int ExecutiveGetUniqueIDAtomVLADict(PyMOLGlobals * G,
         if(rec->obj->type == cObjectMolecule) {
           ObjectMolecule *obj = (ObjectMolecule *) rec->obj;
           int a, id, n_atom = obj->NAtom;
-          AtomInfoType *ai = obj->AtomInfo;
+          const AtomInfoType *ai = obj->AtomInfo.data();
           for(a = 0; a < n_atom; a++) {
             if((id = ai->unique_id)) {
               if(OVOneToOne_GetForward(o2o, id).status == OVstatus_NOT_FOUND) {
@@ -3042,7 +3042,7 @@ static int ExecutiveCountNames(PyMOLGlobals * G)
   return (count);
 }
 
-static int ReorderOrderFn(PyMOLGlobals * G, SpecRec ** rec, int l, int r)
+static int ReorderOrderFn(PyMOLGlobals* G, const SpecRec* const* rec, int l, int r)
 {
   return (WordCompare(G, rec[l]->name, rec[r]->name, true) <= 0);
 }
@@ -4769,7 +4769,7 @@ pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
   return ret;
 }
 
-static int fStrOrderFn(const char ** array, int l, int r) {
+static int fStrOrderFn(const char * const* array, int l, int r) {
   return strcmp(array[l], array[r]) < 0;
 }
 
@@ -9007,7 +9007,7 @@ char *ExecutiveGetNames(PyMOLGlobals * G, int mode, int enabled_only, const char
               if(rec->obj->type == cObjectMolecule) {
                 int a;
                 ObjectMolecule *obj_mol = (ObjectMolecule *) rec->obj;
-                AtomInfoType *ai = obj_mol->AtomInfo;
+                const AtomInfoType *ai = obj_mol->AtomInfo.data();
                 for(a = 0; a < obj_mol->NAtom; a++) {
                   if(SelectorIsMember(G, ai->selEntry, sele0)) {
                     incl_flag = 1;
@@ -10474,7 +10474,7 @@ int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,
             OVreturn_word ret;
             int n_idx = 0;
             int *idx_list = VLAlloc(int, list_len);
-            ai = obj->AtomInfo;
+            ai = obj->AtomInfo.data();
 
             for(a = 0; a < obj->NAtom; a++) {
               ai->temp1 = -1;
@@ -10483,7 +10483,7 @@ int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,
 
             /* create linked list using temp1 as "next" field */
 
-            ai = obj->AtomInfo;
+            ai = obj->AtomInfo.data();
             for(a = 0; a < obj->NAtom; a++) {
               if(mode == 1) {   /* id */
                 index = ai[a].id;
@@ -10732,27 +10732,27 @@ typedef struct {
   AtomInfoType *ai;
 } FitVertexRec;
 
-static int fVertexOrdered(FitVertexRec * array, int l, int r)
+static int fVertexOrdered(const FitVertexRec * array, int l, int r)
 {
   return (array[l].priority <= array[r].priority);
 }
 
-static int fAtomOrdered(PyMOLGlobals * G, AtomInfoType ** array, int l, int r)
+static int fAtomOrdered(PyMOLGlobals * G, const AtomInfoType* const* array, int l, int r)
 {
   return (AtomInfoCompare(G, array[l], array[r]));
 }
 
-static int fAtomIDOrdered(AtomInfoType ** array, int l, int r)
+static int fAtomIDOrdered(const AtomInfoType* const* array, int l, int r)
 {
   return (array[l]->id <= array[r]->id);
 }
 
-static int fAtomRankOrdered(AtomInfoType ** array, int l, int r)
+static int fAtomRankOrdered(const AtomInfoType* const* array, int l, int r)
 {
   return (array[l]->rank <= array[r]->rank);
 }
 
-static int fAtomTemp1Ordered(AtomInfoType ** array, int l, int r)
+static int fAtomTemp1Ordered(const AtomInfoType* const* array, int l, int r)
 {
   return (array[l]->temp1 <= array[r]->temp1);
 }
@@ -11903,8 +11903,8 @@ int ExecutiveSetBondSettingFromString(PyMOLGlobals * G,
           {
             int a, nBond = obj->NBond;
             int nSet = 0;
-            BondType *bi = obj->Bond;
-            AtomInfoType *ai1, *ai2, *ai = obj->AtomInfo;
+            BondType *bi = obj->Bond.data();
+            const AtomInfoType *ai1, *ai2, *ai = obj->AtomInfo.data();
             for(a = 0; a < nBond; a++) {
               ai1 = ai + bi->index[0];
               ai2 = ai + bi->index[1];
@@ -11970,8 +11970,8 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
 	{
 	  int a, nBond = obj->NBond ;
 	  int nSet = 0;
-	  BondType *bi = obj->Bond;
-	  AtomInfoType *ai1, *ai2, *ai = obj->AtomInfo;
+	  const BondType *bi = obj->Bond.data();
+	  const AtomInfoType *ai1, *ai2, *ai = obj->AtomInfo.data();
 
 	  PyObject *pyObjList = NULL;
 	  PyObject *pyBondList = NULL;
@@ -11996,8 +11996,7 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
 	      PyList_SetItem(pyBondInfo, 0, PyInt_FromLong((long)bi->index[0]+1));
 	      PyList_SetItem(pyBondInfo, 1, PyInt_FromLong((long)bi->index[1]+1));
 	      if (bi->has_setting){
-		int uid = AtomInfoCheckUniqueBondID(G, bi);
-		bond_setting_value = SettingUniqueGetPyObject(G, uid, index);
+		bond_setting_value = SettingUniqueGetPyObject(G, bi->unique_id, index);
 	      }
 	      PyList_SetItem(pyBondInfo, 2, PConvAutoNone(bond_setting_value));
 	      PyList_Append(pyBondList, pyBondInfo);
@@ -12090,8 +12089,8 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
             {
               int a, nBond = obj->NBond;
               int nSet = 0;
-              BondType *bi = obj->Bond;
-              AtomInfoType *ai1, *ai2, *ai = obj->AtomInfo;
+              BondType *bi = obj->Bond.data();
+              const AtomInfoType *ai1, *ai2, *ai = obj->AtomInfo.data();
               for(a = 0; a < nBond; a++) {
                 ai1 = ai + bi->index[0];
                 ai2 = ai + bi->index[1];
@@ -12165,9 +12164,9 @@ int ExecutiveUnsetBondSetting(PyMOLGlobals * G, int index, const char *s1, const
         obj = (ObjectMolecule *) rec->obj;
         {
           int nSet = 0;
-          BondType *bi = obj->Bond;
+          BondType *bi = obj->Bond.data();
           BondType *bi_end = bi + obj->NBond;
-          AtomInfoType *ai1, *ai2, *ai = obj->AtomInfo;
+          AtomInfoType *ai1, *ai2, *ai = obj->AtomInfo.data();
           for(; bi != bi_end; ++bi) {
             if(!bi->has_setting)
               continue;
@@ -14387,7 +14386,8 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
   ov_size a;
   CoordSet *cs, *os;
   int keepFlag, sele, tt[3];
-  float *v1, *v2, m[16], tc[3], ts[3];
+  const float *v1, *v2;
+  float m[16], tc[3], ts[3];
   OrthoLineType new_name;
   float auto_save;
 
@@ -14597,7 +14597,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
                     {
                       lexidx_t segi = LexIdx(G, seg);
                       int a;
-                      AtomInfoType *ai = new_obj->AtomInfo;
+                      AtomInfoType *ai = new_obj->AtomInfo.data();
                       for(a = 0; a < new_obj->NAtom; a++) {
                         LexAssign(G, ai->segi, segi);
                         ai++;

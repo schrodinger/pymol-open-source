@@ -215,7 +215,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
         cs->enumIndices();
       }
 
-      timestep.coords = (float *) cs->Coord;
+      timestep.coords = cs->Coord.data();
 
       {
 	  /* read_next_timestep fills in &timestep for each iteration; we need
@@ -242,7 +242,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                   if(n_avg > 1) {
                     float *fp;
                     int i;
-                    fp = cs->Coord;
+                    fp = cs->Coord.data();
                     for(i = 0; i < cs->NIndex; i++) {
                       *(fp++) /= n_avg;
                       *(fp++) /= n_avg;
@@ -285,7 +285,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                   frame++;
                   /* make a new cs */
                   cs = CoordSetCopy(cs);        /* otherwise, we need a place to put the next set */
-                  timestep.coords = (float *) cs->Coord;
+                  timestep.coords = cs->Coord.data();
                   n_avg = 0;
                 }
               }
@@ -627,7 +627,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
     ok_assert(1, cs = CoordSetNew(G));
     ok_assert(1, cs->Coord = pymol::vla<float>(3 * natoms));
 
-    timestep.coords = cs->Coord;
+    timestep.coords = cs->Coord.data();
     timestep.velocities = NULL;
 
     if (plugin->read_next_timestep(file_handle, natoms, &timestep) != MOLFILE_SUCCESS) {
@@ -674,7 +674,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
           order ? (int) order[i] : 1);
     }
   } else if (I->NCSet) {
-    ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, I->CSet[0], true, -1);
+    ObjectMoleculeConnect(I, I->CSet[0]);
   }
 
   // symmetry

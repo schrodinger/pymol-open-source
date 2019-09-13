@@ -261,7 +261,7 @@ PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy)
     if((result = PyArray_SimpleNew(2, dims, typenum)))
       memcpy(PyArray_DATA((PyArrayObject *)result), cs->Coord, cs->NIndex * 3 * base_size);
   } else {
-    result = PyArray_SimpleNewFromData(2, dims, typenum, cs->Coord);
+    result = PyArray_SimpleNewFromData(2, dims, typenum, cs->Coord.data());
   }
 
   return result;
@@ -329,9 +329,6 @@ void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom)
   char *new_has_atom_state_settings_by_atom = NULL;
   int *new_atom_state_setting_id_by_atom = NULL;
   int nIndex = I->NIndex;
-  PRINTFD(I->State.G, FB_CoordSet)
-    " CoordSetAdjustAtmIdx-Debug: entered NAtIndex: %d NIndex %d\n I->AtmToIdx %p\n",
-    I->NAtIndex, I->NIndex, (void *) I->AtmToIdx ENDFD;
 
   if (I->has_atom_state_settings){
     new_has_atom_state_settings_by_atom = VLACalloc(char, nIndex);
@@ -472,11 +469,11 @@ void CoordSetPurge(CoordSet * I)
   PRINTFD(I->State.G, FB_CoordSet)
     " CoordSetPurge-Debug: entering..." ENDFD;
 
-  c0 = c1 = I->Coord;
-  r0 = r1 = I->RefPos;
-  l0 = l1 = I->LabPos;
-  atom_state0 = atom_state1 = I->atom_state_setting_id;
-  has_atom_state0 = has_atom_state1 = I->has_atom_state_settings;
+  c0 = c1 = I->Coord.data();
+  r0 = r1 = I->RefPos.data();
+  l0 = l1 = I->LabPos.data();
+  atom_state0 = atom_state1 = I->atom_state_setting_id.data();
+  has_atom_state0 = has_atom_state1 = I->has_atom_state_settings.data();
 
   /* This loop slides down the atoms that are not deleted (deleteFlag)
      it moves the Coord, RefPos, and LabPos */
@@ -728,8 +725,7 @@ int CoordSetSetAtomVertex(CoordSet * I, int at, const float *v)
 void CoordSetRealToFrac(CoordSet * I, const CCrystal * cryst)
 {
   int a;
-  float *v;
-  v = I->Coord;
+  float* v = I->Coord.data();
   for(a = 0; a < I->NIndex; a++) {
     transform33f3f(cryst->RealToFrac, v, v);
     v += 3;
@@ -741,8 +737,7 @@ void CoordSetRealToFrac(CoordSet * I, const CCrystal * cryst)
 void CoordSetTransform44f(CoordSet * I, const float *mat)
 {
   int a;
-  float *v;
-  v = I->Coord;
+  float* v = I->Coord.data();
   for(a = 0; a < I->NIndex; a++) {
     transform44f3f(mat, v, v);
     v += 3;
@@ -755,8 +750,7 @@ void CoordSetTransform44f(CoordSet * I, const float *mat)
 void CoordSetTransform33f(CoordSet * I, const float *mat)
 {
   int a;
-  float *v;
-  v = I->Coord;
+  float* v = I->Coord.data();
   for(a = 0; a < I->NIndex; a++) {
     transform33f3f(mat, v, v);
     v += 3;
@@ -768,10 +762,9 @@ void CoordSetTransform33f(CoordSet * I, const float *mat)
 void CoordSetGetAverage(CoordSet * I, float *v0)
 {
   int a;
-  float *v;
   double accum[3];
   if(I->NIndex) {
-    v = I->Coord;
+    const float* v = I->Coord.data();
     accum[0] = *(v++);
     accum[1] = *(v++);
     accum[2] = *(v++);
@@ -791,8 +784,7 @@ void CoordSetGetAverage(CoordSet * I, float *v0)
 void CoordSetFracToReal(CoordSet * I, const CCrystal * cryst)
 {
   int a;
-  float *v;
-  v = I->Coord;
+  float* v = I->Coord.data();
   for(a = 0; a < I->NIndex; a++) {
     transform33f3f(cryst->FracToReal, v, v);
     v += 3;

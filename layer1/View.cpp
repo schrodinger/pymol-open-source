@@ -155,7 +155,9 @@ void ViewElemDrawBox(PyMOLGlobals *G, BlockRect *rect, int first, int last,
   }
 }
 
-void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames,
+void ViewElemDraw(PyMOLGlobals *G,
+    const CViewElem * view_elem,
+    const BlockRect *rect, int frames,
     const char *title ORTHOCGOARG)
 {
   if(G->HaveGUI && G->ValidContext && view_elem) {
@@ -336,7 +338,7 @@ void ViewElemArrayPurge(PyMOLGlobals * G, CViewElem * view, int nFrame)
   }
 }
 
-PyObject *ViewElemAsPyList(PyMOLGlobals * G, CViewElem * view)
+PyObject *ViewElemAsPyList(PyMOLGlobals * G, const CViewElem * view)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -549,7 +551,7 @@ int ViewElemVLAFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem ** vla_pt
   return ok;
 }
 
-PyObject *ViewElemVLAAsPyList(PyMOLGlobals * G, CViewElem * vla, int nFrame)
+PyObject *ViewElemVLAAsPyList(PyMOLGlobals * G, const CViewElem * vla, int nFrame)
 {
 #ifdef _PYMOL_NOPY
   return NULL;

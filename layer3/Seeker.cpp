@@ -511,7 +511,7 @@ static void SeekerRefresh(PyMOLGlobals * G, CSeqRow * rowVLA)
 
       if((obj = ExecutiveFindObjectMoleculeByName(G, row->name))) {
         int a;
-        AtomInfoType *atInfo = obj->AtomInfo;
+        const AtomInfoType *atInfo = obj->AtomInfo.data();
         int at;
         int selected;
 
@@ -961,10 +961,10 @@ char SeekerGetAbbr(PyMOLGlobals * G, const char *abbr, char water, char unknown)
   return unknown;
 }
 
-static int SeekerFindColor(PyMOLGlobals * G, AtomInfoType * ai, int n_more_plus_one)
+static int SeekerFindColor(PyMOLGlobals * G, const AtomInfoType * ai, int n_more_plus_one)
 {
   int result = ai->color;      /* default -- use first atom color */
-  AtomInfoType *ai0 = ai;
+  const AtomInfoType *ai0 = ai;
   while(1) {
     if(ai0->flags & cAtomFlag_guide)    /* best use guide color */
       return ai0->color;
@@ -981,11 +981,11 @@ static int SeekerFindColor(PyMOLGlobals * G, AtomInfoType * ai, int n_more_plus_
   return result;
 }
 
-static int SeekerFindTag(PyMOLGlobals * G, AtomInfoType * ai, int sele, int codes,
+static int SeekerFindTag(PyMOLGlobals * G, const AtomInfoType * ai, int sele, int codes,
                          int n_more_plus_one)
 {
   int result = 0;      /* default -- no tag */
-  AtomInfoType *ai0 = ai;
+  const AtomInfoType *ai0 = ai;
   while(1) {
     int tag = SelectorIsMember(G, ai0->selEntry, sele);
     if(tag && (codes < 2) && (ai0->flags & cAtomFlag_guide))    /* use guide atom if present */
@@ -1028,7 +1028,7 @@ void SeekerUpdate(PyMOLGlobals * G)
      int s; */
 
   void *hidden = NULL;
-  AtomInfoType *ai;
+  const AtomInfoType *ai;
   ObjectMolecule *obj;
   int nRow = 0;
   int label_mode = 0;
@@ -1048,8 +1048,8 @@ void SeekerUpdate(PyMOLGlobals * G)
     if(obj->Enabled && (SettingGet_b(G, obj->Setting, NULL, cSetting_seq_view)) &&
        (obj->Name[0] != '_')) {
       int a;
-      AtomInfoType *last = NULL, *last_segi = NULL, *last_chain = NULL;
-      CoordSet *last_disc = NULL;
+      const AtomInfoType *last = NULL, *last_segi = NULL, *last_chain = NULL;
+      const CoordSet *last_disc = NULL;
       int last_state;
       int last_abbr = true;
       int last_spacer = false;
@@ -1059,7 +1059,7 @@ void SeekerUpdate(PyMOLGlobals * G)
       int est_char = obj->NAtom * 4;
       int first_atom_in_label;
       int missing_color = SettingGet_i(G, obj->Setting, NULL, cSetting_seq_view_fill_color);
-      CoordSet *cs = obj->DiscreteFlag ? NULL : ObjectMoleculeGetCoordSet(obj, std::max(0, obj->getState()));
+      const CoordSet *cs = obj->DiscreteFlag ? NULL : ObjectMoleculeGetCoordSet(obj, std::max(0, obj->getState()));
       bool atom_in_state;
 
       int gapMode = SettingGet_i(G, obj->Setting, nullptr, cSetting_seq_view_gap_mode);
@@ -1508,7 +1508,7 @@ void SeekerUpdate(PyMOLGlobals * G)
 
             if(last_state < 0) {
               int b;
-              CoordSet *cs;
+              const CoordSet *cs;
               WordType buf1;
               last_state = 1;
               first_atom_in_label = true;
@@ -1891,9 +1891,9 @@ void SeekerUpdate(PyMOLGlobals * G)
         int draw_it;
         int n_skipped = 0;
         int last_resv = -1;
-        AtomInfoType *last_ai = NULL;
-        ObjectMolecule *obj;
-        AtomInfoType *ai;
+        const AtomInfoType *last_ai = NULL;
+        const ObjectMolecule *obj;
+        const AtomInfoType *ai;
         row = lab + 1;
         nCol = row->nCol;
         obj = row->obj;

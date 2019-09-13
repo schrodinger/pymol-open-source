@@ -118,7 +118,7 @@ struct CifContentInfo {
   std::set<std::string> polypeptide_entities; // entity ids
   std::map<std::string, seqvec_t> sequences;  // entity_id -> [resn1, resn2, ...]
 
-  bool is_excluded_chain(const char * chain) {
+  bool is_excluded_chain(const char * chain) const {
     if (chains_filter.empty())
       return false;
 
@@ -129,12 +129,12 @@ struct CifContentInfo {
     return false;
   }
 
-  bool is_excluded_chain(const lexborrow_t& chain) {
+  bool is_excluded_chain(const lexborrow_t& chain) const {
     return (!chains_filter.empty() &&
         chains_filter.count(reinterpret_cast<const lexidx_t&>(chain)) == 0);
   }
 
-  bool is_polypeptide(const char * entity_id) {
+  bool is_polypeptide(const char * entity_id) const {
     return polypeptide_entities.count(entity_id);
   }
 
@@ -150,7 +150,7 @@ struct CifContentInfo {
  * atom id, comp id and seq id components of the label for a macromolecular
  * atom site.
  */
-static std::string make_mm_atom_site_label(PyMOLGlobals * G, AtomInfoType * a) {
+static std::string make_mm_atom_site_label(PyMOLGlobals * G, const AtomInfoType * a) {
   char resi[8];
   AtomResiFromResv(resi, sizeof(resi), a);
 
@@ -261,19 +261,18 @@ static void ObjectMoleculeConnectDiscrete(ObjectMolecule * I) {
       continue;
 
     int nbond = 0;
-    BondType * bond = nullptr;
+    pymol::vla<BondType> bond;
 
-    ObjectMoleculeConnect(I, &nbond, &bond, I->AtomInfo, I->CSet[i], true, 3);
+    ObjectMoleculeConnect(I, nbond, bond, I->CSet[i], true, 3);
 
     if (!bond)
       continue;
 
     if (!I->Bond) {
-      I->Bond = pymol::vla_take_ownership(bond);
+      I->Bond = std::move(bond);
     } else {
-      VLASize(I->Bond, BondType, I->NBond + nbond);
-      std::copy(bond, bond + nbond, I->Bond + I->NBond);
-      VLAFreeP(bond);
+      I->Bond.check(I->NBond + nbond - 1);
+      std::copy_n(bond.data(), nbond, I->Bond.data() + I->NBond);
     }
 
     I->NBond += nbond;
@@ -419,7 +418,7 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
     return;
 
   auto G = I->G;
-  AtomInfoType *a1, *a2, *ai = I->AtomInfo;
+  const AtomInfoType *a1, *a2, *ai = I->AtomInfo.data();
   int order;
 
   // get residue bond dictionary
@@ -1266,7 +1265,7 @@ static bool read_entity_poly(PyMOLGlobals * G, const cif_data * data, CifContent
  * Sub-routine for `add_missing_ca`
  */
 static void add_missing_ca_sub(PyMOLGlobals * G,
-    AtomInfoType *& atInfo,
+    pymol::vla<AtomInfoType>& atInfo,
     int& current_resv,
     int& atomCount,
     const int i_ref, int resv,
@@ -1281,9 +1280,7 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
     if (!resn)
       continue;
 
-    VLACheck(atInfo, AtomInfoType, atomCount);
-
-    AtomInfoType *ai = atInfo + atomCount;
+    AtomInfoType *ai = atInfo.check(atomCount);
 
     ai->rank = atomCount;
     ai->id = -1;
@@ -1316,9 +1313,9 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
  * to present complete sequences in the sequence viewer.
  */
 static bool add_missing_ca(PyMOLGlobals * G,
-    AtomInfoType *& atInfo, CifContentInfo &info) {
+    pymol::vla<AtomInfoType>& atInfo, CifContentInfo &info) {
 
-  int oldAtomCount = VLAGetSize(atInfo);
+  int oldAtomCount = atInfo.size();
   int atomCount = oldAtomCount;
   int current_resv = 0;
   const seqvec_t * current_seq = nullptr;
@@ -1370,7 +1367,7 @@ static bool add_missing_ca(PyMOLGlobals * G,
         current_seq, current_entity_id);
   }
 
-  VLASize(atInfo, AtomInfoType, atomCount);
+  atInfo.resize(atomCount);
 
   return true;
 }
@@ -1439,7 +1436,7 @@ static bool read_ss_(PyMOLGlobals * G, const cif_data * data, char ss,
  * Read secondary structure
  */
 static bool read_ss(PyMOLGlobals * G, const cif_data * datablock,
-    AtomInfoType * atInfo, CifContentInfo &info)
+    pymol::vla<AtomInfoType>& atInfo, CifContentInfo &info)
 {
   sshashmap ssrecords;
 
@@ -1452,7 +1449,7 @@ static bool read_ss(PyMOLGlobals * G, const cif_data * datablock,
   AtomInfoType *aj, *ai, *atoms_end = atInfo + VLAGetSize(atInfo);
   sshashkey key;
 
-  for (ai = atInfo; ai < atoms_end;) {
+  for (ai = atInfo.data(); ai < atoms_end;) {
     // advance to the next residue
     aj = ai;
     while (++ai < atoms_end &&
@@ -1516,7 +1513,7 @@ static bool read_atom_site_fract_transf(PyMOLGlobals * G, const cif_data * data,
  * Read anisotropic temperature factors from ATOM_SITE or ATOM_SITE_ANISOTROP
  */
 static bool read_atom_site_aniso(PyMOLGlobals * G, const cif_data * data,
-    AtomInfoType * atInfo) {
+    pymol::vla<AtomInfoType>& atInfo) {
 
   const cif_array *arr_label, *arr_u11, *arr_u22, *arr_u33, *arr_u12, *arr_u13, *arr_u23;
   bool mmcif = true;
@@ -1602,7 +1599,7 @@ static bool read_atom_site_aniso(PyMOLGlobals * G, const cif_data * data,
  * return: BondType VLA
  */
 static pymol::vla<BondType> read_geom_bond(PyMOLGlobals * G, const cif_data * data,
-    AtomInfoType * atInfo) {
+    const pymol::vla<AtomInfoType>& atInfo) {
 
   const cif_array *arr_ID_1, *arr_ID_2;
   if ((arr_ID_1 = data->get_arr("_geom_bond.atom_site_id_1",
@@ -1716,7 +1713,7 @@ static pymol::vla<BondType> read_chemical_conn_bond(PyMOLGlobals * G, const cif_
  *   cset->NTmpBond
  */
 static bool read_struct_conn_(PyMOLGlobals * G, const cif_data * data,
-    AtomInfoType * atInfo, CoordSet * cset,
+    const pymol::vla<AtomInfoType>& atInfo, CoordSet * cset,
     CifContentInfo &info) {
 
   const cif_array *col_type_id = data->get_arr("_struct_conn.conn_type_id");
@@ -1868,7 +1865,7 @@ next_row:;
  * return: BondType VLA
  */
 static pymol::vla<BondType> read_chem_comp_bond(PyMOLGlobals * G, const cif_data * data,
-    AtomInfoType * atInfo) {
+    const pymol::vla<AtomInfoType>& atInfo) {
 
   const cif_array *col_ID_1, *col_ID_2, *col_comp_id;
 
@@ -1934,7 +1931,7 @@ static pymol::vla<BondType> read_chem_comp_bond(PyMOLGlobals * G, const cif_data
  * return: BondType VLA
  */
 static pymol::vla<BondType> read_pymol_bond(PyMOLGlobals * G, const cif_data * data,
-    AtomInfoType * atInfo) {
+    const pymol::vla<AtomInfoType>& atInfo) {
 
   const cif_array *col_ID_1, *col_ID_2, *col_order;
 
@@ -2115,7 +2112,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
     if (I->DiscreteFlag) {
       ObjectMoleculeConnectDiscrete(I);
     } else if (cset) {
-      ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, true, 3);
+      ObjectMoleculeConnect(I, cset, true, 3);
     }
 
     // guess valences for distance based bonding
