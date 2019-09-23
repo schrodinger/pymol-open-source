@@ -3339,8 +3339,8 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
 
     if(src->NCSet) {
       scs = src->CSet[state1];
-      anch1 = scs->AtmToIdx[at1];
-      hydr1 = scs->AtmToIdx[index1];
+      anch1 = scs->atmToIdx(at1);
+      hydr1 = scs->atmToIdx(index1);
     }
     break;
   case 1:                      /* fuse merely by drawing a bond */
@@ -3350,7 +3350,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
 
     if(src->NCSet) {
       scs = src->CSet[state1];
-      anch1 = scs->AtmToIdx[at1];
+      anch1 = scs->atmToIdx(at1);
     }
 
     break;
@@ -3393,8 +3393,8 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
       BondType* b0 = cs->TmpBond.data();
       cs->NTmpBond = 0;
       for(a = 0; a < src->NBond; a++) {
-	a0 = scs->AtmToIdx[b1->index[0]];
-	a1 = scs->AtmToIdx[b1->index[1]];
+	a0 = scs->atmToIdx(b1->index[0]);
+	a1 = scs->atmToIdx(b1->index[1]);
 	if((a0 >= 0) && (a1 >= 0)) {
 	  *b0 = *b1;
 	  b0->index[0] = a0;
