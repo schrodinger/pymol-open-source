@@ -9106,23 +9106,11 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
   cs->IdxToAtm = pymol::vla_take_ownership(i2a);
 
   if (ok){
-    if(I->DiscreteFlag) {
-      VLAFreeP(a2i);
-      cs->AtmToIdx = NULL;
-      for(a = 0; a < cs->NIndex; a++) {
-	int atm = cs->IdxToAtm[a];
-	if (atm>=0){
-	  I->DiscreteAtmToIdx[atm] = a;
-	  I->DiscreteCSet[atm] = cs;
-	}
-      }
-    } else {
       cs->AtmToIdx = pymol::vla_take_ownership(a2i);
       for(a = 0; a < cs->NAtIndex; a++)
 	cs->AtmToIdx[a] = -1;
       for(a = 0; a < cs->NIndex; a++)
 	cs->AtmToIdx[cs->IdxToAtm[a]] = a;
-    }
   }
 
   VLAFreeP(ai);                 /* note that we're trusting AtomInfoCombine to have 
