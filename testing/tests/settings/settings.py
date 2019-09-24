@@ -6,6 +6,9 @@ import numpy
 from pymol import cmd, testing
 
 class TestSettings(testing.PyMOLTestCase):
+    def assertNumColorsEqual(self, img, count, delta=0):
+        self.assertTrue(len(numpy.unique(img[...,:3] // (delta + 1))) == count)
+
     @testing.foreach(True, False)
     def testStickBall(self, use_shader):
         '''
@@ -80,7 +83,7 @@ class TestSettings(testing.PyMOLTestCase):
 
         # b/w image, we expect only two color values
         img = self.get_imagearray()
-        self.assertTrue(len(numpy.unique(img[...,:3])) == 2)
+        self.assertNumColorsEqual(img, 2)
 
         for aa in (1, 2):
             cmd.set('antialias_shader', aa)
@@ -227,7 +230,8 @@ class TestSettings(testing.PyMOLTestCase):
         cmd.set('cartoon_transparency', 1.0, 'sele')
         img = self.get_imagearray()
         self.assertImageHasColor('0xFF0000', img)
-        self.assertTrue(len(numpy.unique(img[...,:3])) == 2)
+        # need delta=1 with clang, but not with gcc
+        self.assertNumColorsEqual(img, 2, delta=1)
 
     def _testTransparency(self, rep, setting_name):
         cmd.fab('GGGG')
@@ -272,7 +276,8 @@ class TestSettings(testing.PyMOLTestCase):
         cmd.set(setting_name, 1.0, 'sele')
         img = self.get_imagearray()
         self.assertImageHasColor('0xFF0000', img)
-        self.assertTrue(len(numpy.unique(img[...,:3])) == 2)
+        # need delta=1 with clang, but not with gcc
+        self.assertNumColorsEqual(img, 2, delta=1)
 
     def testStickTransparency(self):
         self._testTransparency('sticks', 'stick_transparency')
