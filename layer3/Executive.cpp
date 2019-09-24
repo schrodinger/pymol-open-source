@@ -11456,6 +11456,14 @@ int ExecutiveIndex(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
 
 
 /*========================================================================*/
+/**
+ * Fit states or calculate ensemble RMSD
+ *
+ * @param s1 atom selection expression
+ * @param target reference state
+ * @param mode 2=intra_fit, 1=intra_rms, 0=intra_rms_cur
+ * @param mix intra_fit only, average the prior target coordinates
+ */
 float *ExecutiveRMSStates(PyMOLGlobals * G, const char *s1, int target, int mode, int quiet,
                           int mix)
 {
@@ -11472,7 +11480,9 @@ float *ExecutiveRMSStates(PyMOLGlobals * G, const char *s1, int target, int mode
   op1.vv1 = NULL;
   op2.vv1 = NULL;
 
-  if(!SelectorGetSingleObjectMolecule(G, sele1)) {
+  ObjectMolecule* obj = SelectorGetSingleObjectMolecule(G, sele1);
+
+  if (!obj) {
     if(mode != 2) {
       PRINTFB(G, FB_Executive, FB_Warnings)
         "Executive-Warning: Mobile selection spans more than one object.\n" ENDFB(G);
@@ -11508,6 +11518,10 @@ float *ExecutiveRMSStates(PyMOLGlobals * G, const char *s1, int target, int mode
     VLAFreeP(op1.vv1);
     VLAFreeP(op1.i1VLA);
     VLAFreeP(op2.vv1);
+
+    if (mode == 2) {
+      ExecutiveUpdateCoordDepends(G, obj);
+    }
   }
   return (result);
 }
