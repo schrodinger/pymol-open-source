@@ -15,6 +15,12 @@ struct Void {
 class Error
 {
 public:
+  enum Code {
+    DEFAULT,
+    QUIET,
+    MEMORY,
+  };
+
   Error() {}
 
   /**
@@ -35,8 +41,33 @@ public:
 
   const std::string& what() const noexcept { return m_errMsg; }
 
+  /**
+   * Error code
+   */
+  Code code() const noexcept { return m_code; }
+
+  /**
+   * Make an error instance with error code.
+   */
+  template <Code C, typename... PrintableTs>
+  static Error make(PrintableTs&&... ts)
+  {
+    auto error = Error(std::forward<PrintableTs>(ts)...);
+    error.m_code = C;
+    return error;
+  }
+
+  /**
+   * Construct from error code.
+   */
+  Error(Code code)
+      : m_code(code)
+  {
+  }
+
 private:
   std::string m_errMsg;
+  Code m_code = DEFAULT;
 };
 
 /**
@@ -68,6 +99,15 @@ public:
    */
 
   Result(Error&& e) : m_error{std::move(e)}, m_valid{false} {}
+
+  /**
+   * Construct from error code.
+   */
+  Result(Error::Code code)
+      : m_error(code)
+      , m_valid{false}
+  {
+  }
 
   /**
    * Determines whether the value of the expected type can be used.

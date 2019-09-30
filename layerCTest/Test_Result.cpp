@@ -65,3 +65,23 @@ TEST_CASE("Default constructor", "[Result]")
   REQUIRE(ans);
 }
 
+TEST_CASE("Error codes", "[Result]")
+{
+  auto error1 = pymol::Error();
+  REQUIRE(error1.code() == pymol::Error::DEFAULT);
+  auto error2 = pymol::Error::make<pymol::Error::QUIET>();
+  REQUIRE(error2.code() == pymol::Error::QUIET);
+}
+
+TEST_CASE("Result from error code", "[Result]")
+{
+  // error
+  pymol::Result<int> result1 = pymol::Error::QUIET;
+  REQUIRE(!bool(result1));
+  REQUIRE(result1.error().code() == pymol::Error::QUIET);
+
+  // no error
+  pymol::Result<int> result2 = static_cast<int>(pymol::Error::QUIET);
+  REQUIRE(bool(result2));
+  REQUIRE(result2.result() == static_cast<int>(pymol::Error::QUIET));
+}

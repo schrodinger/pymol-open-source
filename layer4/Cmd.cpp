@@ -347,7 +347,20 @@ PyObject* APIResult(PyMOLGlobals* G, pymol::Result<T>& res)
     return PConvToPyObject(res.result());
   if (G && !SettingGet<bool>(G, cSetting_raise_exceptions))
     return APIFailure();
-  PyErr_SetString(P_CmdException, res.error().what().c_str());
+
+  PyObject* exc_type;
+  switch (res.error().code()) {
+  case pymol::Error::QUIET:
+    exc_type = P_QuietException;
+    break;
+  case pymol::Error::MEMORY:
+    exc_type = PyExc_MemoryError;
+    break;
+  default:
+    exc_type = P_CmdException;
+  }
+
+  PyErr_SetString(exc_type, res.error().what().c_str());
   return nullptr;
 }
 

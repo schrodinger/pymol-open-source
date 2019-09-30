@@ -4476,7 +4476,11 @@ pymol::Result<> ObjectMoleculeAddBondByIndices(
   if (!I->Bond) {
     I->Bond = pymol::vla<BondType>(1);
   } else {
-    VLACheck(I->Bond, BondType, I->NBond);
+    I->Bond.check(I->NBond);
+  }
+
+  if (!I->Bond) {
+    return pymol::Error::MEMORY;
   }
 
   auto& bnd = I->Bond[I->NBond++];
