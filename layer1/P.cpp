@@ -2088,6 +2088,7 @@ void PConvertOptions(CPyMOLOptions * rec, PyObject * options)
   rec->no_quit = PyInt_AsLong(PyObject_GetAttrString(options, "no_quit"));
   rec->launch_status = PyInt_AsLong(PyObject_GetAttrString(options, "launch_status"));
   rec->gldebug = PyInt_AsLong(PyObject_GetAttrString(options, "gldebug"));
+  rec->openvr_stub = PyInt_AsLong(PyObject_GetAttrString(options, "openvr_stub"));
 
   if(load_str) {
     if(load_str[0]) {

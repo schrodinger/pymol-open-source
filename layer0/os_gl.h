@@ -315,4 +315,27 @@ void p_glutMainLoop(void);
 
 #define hasFrameBufferBinding() false
 
+#define GL_DEBUG_PUSH(title) \
+  GLEW_KHR_debug ? glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, title) : (void)0
+
+#define GL_DEBUG_POP() \
+  GLEW_KHR_debug ? glPopDebugGroup() : (void)0
+
+#ifdef __cplusplus
+
+class glDebugBlock {
+public:
+  explicit glDebugBlock(char const* title) {
+    GL_DEBUG_PUSH(title);
+  }
+  ~glDebugBlock() {
+    GL_DEBUG_POP();
+  }
+};
+
+#define GL_DEBUG_FUN() \
+  glDebugBlock glDebugBlockVariable(__FUNCTION__)
+
+#endif /* __cplusplus */
+
 #endif

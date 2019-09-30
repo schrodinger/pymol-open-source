@@ -1436,7 +1436,7 @@ void CoordSet::render(RenderInfo * info)
             case cRepLabel:
               {
                 int t_mode_3 = SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
-                if (pass == -1 || (t_mode_3 && pass == 1))
+                if (pass == -1 || (t_mode_3 && pass == 1 /* TODO_OPENVR 0 */))
                   r->fRender(r, info);
               }
               break;

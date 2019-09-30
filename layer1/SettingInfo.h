@@ -270,7 +270,7 @@ enum {
   REC_i( 185, fit_iterations                          , global    , 1000 ),
   REC_f( 186, fit_tolerance                           , global    , 0.0000001F ),
   REC_s( 187, batch_prefix                            , global    , "tmp_pymol" ),
-  REC_i( 188, stereo_mode                             , global    , 2, 1, 12 ),        /* crosseye by default */
+  REC_i( 188, stereo_mode                             , global    , 2, 1, 13 ),        /* crosseye by default */
   REC_i( 189, cgo_sphere_quality                      , global    , 1, 0, MAX_SPHERE_QUALITY ),
   REC_b( 190, pdb_literal_names                       , global    , 0 ),
   REC_b( 191, wrap_output                             , global    , 0 ),
@@ -876,6 +876,22 @@ enum {
   REC_b( 766, cif_metalc_as_zero_order_bonds          , global    , 1 ),
   REC_i( 767, seq_view_gap_mode                       , global    , 1 ),
   REC_i( 768, internal_gui_name_color_mode            , global    , 0, 0, 2 ),
+  REC_f( 769, openvr_gui_fov                          , global    , 35.0f, 0.0f, 89.0f ),
+  REC_f( 770, openvr_gui_alpha                        , global    , 1.0f, 0.0f, 1.0f ),
+  REC_i( 771, openvr_gui_use_alpha                    , global    , 0, 0, 2 ), // 0: off, 1: on, 2: depends (if not hit by laser)
+  REC_f( 772, openvr_gui_scene_color                  , global    , 0.0f ),
+  REC_f( 773, openvr_gui_scene_alpha                  , global    , 0.75f ),
+  REC_f( 774, openvr_gui_back_color                   , global    , 0.2f ),
+  REC_f( 775, openvr_gui_back_alpha                   , global    , 0.75f ),
+  REC_i( 776, openvr_gui_use_backdrop                 , global    , 0, 0, 2 ), // 0: off, 1: on, 2: depends (if hit by laser)
+  REC_i( 777, openvr_gui_overlay                      , global    , 0, 0, 2 ), // 0: off, 1: on, 2: depends (if hit by laser)
+  REC_i( 778, openvr_gui_text                         , global    , 0 ), // DOESN'T WORK YET ! 0: copy, 1: force, 2: only
+  REC_b( 779, openvr_disable_clipping                 , global    , false ), // turn on to disable clipping
+  REC_f( 780, openvr_near_plane                       , global    , 0.1f ),
+  REC_f( 781, openvr_far_plane                        , global    , 100.f ),
+  REC_b( 782, openvr_cut_laser                        , global    , false ), // turn on to enable tu cut laser for molecule picker
+  REC_f( 783, openvr_laser_width                      , global    , 3.0f ), // increase to make laser ray wider
+  REC_f( 784, openvr_gui_distance                     , global    , 1.5f ),
 
 
 #ifdef SETTINGINFO_IMPLEMENTATION

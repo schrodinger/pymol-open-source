@@ -27,6 +27,7 @@ class options:
     use_msgpackc = 'guess'
     help_distutils = False
     testing = False
+    openvr = False
 
 try:
     import argparse
@@ -51,6 +52,7 @@ try:
             help="show help for distutils options and exit")
     parser.add_argument('--testing', action="store_true",
             help="Build C-level tests")
+    parser.add_argument('--openvr', dest='openvr', action='store_true')
     options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 except ImportError:
     print("argparse not available")
@@ -189,6 +191,10 @@ class install_pymol(install):
         for name in [ 'LICENSE', 'data', 'test', 'examples', ]:
             self.copy(name, os.path.join(self.pymol_path, name))
 
+        if options.openvr:
+            self.copy('contrib/vr/README.md',
+                      os.path.join(self.pymol_path, 'README-VR.txt'))
+
     def make_launch_script(self):
         if sys.platform.startswith('win'):
            launch_script = 'pymol.bat'
@@ -315,6 +321,12 @@ if options.testing:
     pymol_src_dirs += ["layerCTest"]
     def_macros += [("_PYMOL_CTEST", None)]
 
+if options.openvr:
+    def_macros += [("_PYMOL_OPENVR", None)]
+    pymol_src_dirs += [
+        "contrib/vr",
+    ]
+
 inc_dirs += pymol_src_dirs
 
 #============================================================================
@@ -347,6 +359,7 @@ if WIN:
         ]
 
         libs += [
+            "Advapi32", # Registry (RegCloseKey etc.)
             "Ws2_32",   # htonl
         ]
 
@@ -378,6 +391,11 @@ if not (MAC or WIN):
             "glut",
         ]
 
+if options.openvr:
+    libs += [
+        "openvr_api",
+    ]
+
 if True:
     try:
         import numpy
@@ -393,7 +411,7 @@ if True:
 if True:
     for prefix in prefix_path:
         for dirs, suffixes in [
-                [inc_dirs, [("include",), ("include", "freetype2"), ("include", "libxml2")]],
+                [inc_dirs, [("include",), ("include", "freetype2"), ("include", "libxml2"), ("include", "openvr")]],
                 [lib_dirs, [("lib64",), ("lib",)]],
                 ]:
             dirs.extend(filter(os.path.isdir, [os.path.join(prefix, *s) for s in suffixes]))

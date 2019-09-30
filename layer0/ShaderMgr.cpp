@@ -593,6 +593,10 @@ void CShaderMgr::Reload_Shader_Variables() {
   stereo = SettingGetGlobal_i(G, cSetting_stereo);
   stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
 
+#ifdef _PYMOL_OPENVR
+  SetPreprocVar("openvr_enabled", stereo && stereo_mode == cStereo_openvr);
+#endif
+
   SetPreprocVar("ANAGLYPH", stereo && stereo_mode == cStereo_anaglyph);
   SetPreprocVar("ray_trace_mode_3", SettingGetGlobal_i(G, cSetting_ray_trace_mode) == 3);
   SetPreprocVar("transparency_mode_3", SettingGetGlobal_i(G, cSetting_transparency_mode)==3);

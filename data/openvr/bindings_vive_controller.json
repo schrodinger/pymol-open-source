@@ -1,0 +1,119 @@
+{
+  "app_key": "system.generated.python.exe",
+  "controller_type": "vive_controller",
+
+  "name": "Vive Controller Bindings",
+  "description": "Default Vive Controller bindings for PyMOL VR",
+
+  "bindings": {
+    "/actions/pymol": {
+
+      "poses": [{
+        "path": "/user/hand/left/pose/raw",
+        "output": "/actions/pymol/in/LeftHand"
+      }, {
+        "path": "/user/hand/right/pose/raw",
+        "output": "/actions/pymol/in/RightHand"
+      }],
+
+      "sources": [{
+        "path": "/user/hand/left/input/grip",
+        "mode": "button",
+        "inputs": {
+          "click": {
+            "output": "/actions/pymol/in/LGrip"
+          }
+        }
+      }, {
+        "path": "/user/hand/right/input/grip",
+        "mode": "button",
+        "inputs": {
+          "click": {
+            "output": "/actions/pymol/in/RGrip"
+          }
+        }
+      }, {
+        "path": "/user/hand/right/input/application_menu",
+        "mode": "button",
+        "inputs": {
+          "click": {
+            "output": "/actions/pymol/in/ToggleMenu"
+          }
+        }
+      }, {
+        "path": "/user/hand/left/input/application_menu",
+        "mode": "button",
+        "inputs": {
+          "click": {
+            "output": "/actions/pymol/in/ToggleMenu"
+          }
+        }
+      }, {
+        "path": "/user/hand/right/input/trackpad",
+        "mode": "trackpad",
+        "inputs": {
+          "touch": {
+            "output": "/actions/pymol/in/Laser"
+          }
+        }
+      }, {
+        "path": "/user/hand/left/input/trackpad",
+        "mode": "trackpad",
+        "inputs": {
+          "touch": {
+            "output": "/actions/pymol/in/Laser"
+          }
+        }
+      }, {
+        "path": "/user/hand/right/input/trackpad",
+        "mode": "dpad_click",
+        "parameters": {
+          "deadzone_pct": "50",
+          "overlap_pct": "0"
+        },
+        "inputs": {
+          "west": {
+            "output": "/actions/pymol/in/Action1"
+          },
+          "center": {
+            "output": "/actions/pymol/in/Action2"
+          },
+          "east": {
+            "output": "/actions/pymol/in/Action3"
+          },
+          "north": {
+            "output": "/actions/pymol/in/ActionSetPrev"
+          },
+          "south": {
+            "output": "/actions/pymol/in/ActionSetNext"
+          }
+        }
+      }, {
+        "path": "/user/hand/left/input/trackpad",
+        "mode": "dpad_click",
+        "parameters": {
+          "deadzone_pct": "50",
+          "overlap_pct": "0"
+        },
+        "inputs": {
+          "west": {
+            "output": "/actions/pymol/in/Action1"
+          },
+          "center": {
+            "output": "/actions/pymol/in/Action2"
+          },
+          "east": {
+            "output": "/actions/pymol/in/Action3"
+          },
+          "north": {
+            "output": "/actions/pymol/in/ActionSetPrev"
+          },
+          "south": {
+            "output": "/actions/pymol/in/ActionSetNext"
+          }
+        }
+      }]
+
+    }
+  }
+}

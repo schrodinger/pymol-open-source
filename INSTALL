@@ -24,6 +24,7 @@ REQUIREMENTS
         interface if compiled with --glut)
     - glm
     - catch2 (optional, enable with --testing)
+    - openvr 1.0.x (optional, enable with --openvr)
 
 SETUP OPTIONS
 

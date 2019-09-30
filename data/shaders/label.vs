@@ -49,8 +49,19 @@ void main()
   zTarget = step(8., mod(attr_relative_mode, 16.));
   isProjected = step(isPixelCoord + isScreenCoord, 0.5);
 
-  float screenVertexScale = scaleByVertexScale * screenOriginVertexScale * labelTextureSize + (1. - scaleByVertexScale);
   vec3 viewVector = vec3(vec4(0.,0.,-1.,0.) * g_ModelViewMatrix);
+  float sovx = screenOriginVertexScale;
+
+#ifdef openvr_enabled
+  // calc real view vector for label (not negative z-axis in camera space)
+  vec3 camPos = vec4(gl_ModelViewMatrixInverse * vec4(0.,0.,0.,1.)).xyz;
+  viewVector = normalize(attr_worldpos.xyz - camPos);
+  // don't use vertexscale for openvr, because the scale is calced from Pos.z as a distance 
+  sovx = 1.0 / 2.0;
+#endif
+
+  float screenVertexScale = scaleByVertexScale * sovx * labelTextureSize + (1. - scaleByVertexScale);
+
   vec4 transformedPosition = g_ProjectionMatrix * g_ModelViewMatrix * attr_worldpos;
   vec4 targetPosition = normalizeVec4(g_ProjectionMatrix * g_ModelViewMatrix * attr_targetpos);
   transformedPosition.xyz = transformedPosition.xyz/transformedPosition.w;
@@ -62,7 +73,7 @@ void main()
   transformedPositionZ.w = 1.;
   vec2 pixOffset = ((2. * attr_worldpos.xy / screenSize) - 1.);
   transformedPosition = isProjected * transformedPosition + isScreenCoord * attr_worldpos + isPixelCoord * vec4(pixOffset.x, pixOffset.y, -0.5, 0.);
-  transformedPosition.xy = transformedPosition.xy + attr_screenworldoffset.xy/(screenSize*screenOriginVertexScale);
+  transformedPosition.xy = transformedPosition.xy + attr_screenworldoffset.xy/(screenSize*sovx);
 
   transformedPosition.z = (1.-zTarget) * ((isProjected * transformedPositionZ.z) + (1.-isProjected) * convertNormalZToScreenZ(attr_worldpos.z)) + zTarget * targetPosition.z;
 

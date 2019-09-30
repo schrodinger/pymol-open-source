@@ -53,6 +53,8 @@ struct _CPyMOLOptions {
   /* WARNING: for the sake of forward compability, never delete or
      move any fields in the above ...initialization struct in PyMOL.c */
 
+  bool openvr_stub;
+
   /* WARNING: don't add, delete, or change item order unless you also update
      PyMOL.c "CPyMOLOptions Defaults"where this global structure is initialized */
 };

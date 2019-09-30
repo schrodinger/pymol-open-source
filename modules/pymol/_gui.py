@@ -427,6 +427,7 @@ class PyMOLDesktopGUI(object):
                     ('command', 'Wall-Eye Stereo', 'stereo walleye'),
                     ('command', 'Quad-Buffered Stereo', 'stereo quadbuffer'),
                     ('command', 'Zalman Stereo', 'stereo byrow'),
+                    ('command', 'OpenVR', 'stereo openvr'),
                     ('separator',),
                     ('command', 'Swap Sides', 'stereo swap'),
                     ('separator',),

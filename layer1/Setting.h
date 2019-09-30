@@ -258,6 +258,7 @@ int SettingCheckFontID(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int f
 #define cStereo_anaglyph            10
 #define cStereo_dynamic             11  /* dynamic polarization */
 #define cStereo_clone_dynamic       12
+#define cStereo_openvr              13
 
 /*
  * State index iterator which iterates either over a single state (state >= 0),
