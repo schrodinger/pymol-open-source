@@ -54,6 +54,10 @@ Z* -------------------------------------------------------------------
 #include "MyPNG.h"
 #include "File.h"
 
+#ifdef _PYMOL_OPENVR
+#include "OpenVRMode.h"
+#endif
+
 #define OrthoSaveLines 0xFF
 #define OrthoHistoryLines 0xFF
 
@@ -1502,6 +1506,9 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
   int skip_prompt = 0;
   int render = false;
   int internal_gui_mode = SettingGetGlobal_i(G, cSetting_internal_gui_mode);
+  bool offscreen_vr = false;
+  int openvr_text = 0;
+
   int generate_shader_cgo = 0;
 
   I->RenderMode = render_mode;
@@ -1579,11 +1586,20 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
     if(text)
       overlay = 0;
 
-    if(overlay || (!text))
+    if(overlay || (!text) || render_mode < 0)
       if(!SceneRenderCached(G))
         render = true;
 
-    if(render_mode < 2) {
+    if(render_mode < 0) {
+#ifdef _PYMOL_OPENVR
+      times = 2;
+      double_pump = false;
+      offscreen_vr = true;
+      OrthoDrawBuffer(G, GL_BACK);
+      SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      openvr_text = SettingGetGlobal_i(G, cSetting_openvr_gui_text);
+#endif
+    } else if(render_mode < 2) {
       if(SceneMustDrawBoth(G)) {
         OrthoDrawBuffer(G, GL_BACK_LEFT);
         SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -1617,13 +1633,25 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
     origtimes = times;
     while(times--) {
+      bool draw_text = text;
 
       switch (times) {
       case 1:
-        OrthoDrawBuffer(G, GL_BACK_LEFT);
-
+#ifdef _PYMOL_OPENVR
+        if(offscreen_vr) {
+          draw_text = text || (openvr_text == 1);
+          OrthoDrawBuffer(G, GL_NONE);
+          OpenVRMenuBufferStart(G, I->Width, I->Height);
+        } else
+#endif
+          OrthoDrawBuffer(G, GL_BACK_LEFT);
         break;
       case 0:
+#ifdef _PYMOL_OPENVR
+        if(offscreen_vr) {
+          draw_text = text && (openvr_text != 2);
+        }
+#endif
         if(double_pump) {
           OrthoDrawBuffer(G, GL_BACK_RIGHT);
         } else
@@ -1658,6 +1686,11 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 	  } else {
 	    OrthoRenderCGO(G);
 	    OrthoPopMatrix(G);
+#ifdef _PYMOL_OPENVR
+	    if (offscreen_vr && times) {
+	      OpenVRMenuBufferFinish(G);
+	    }
+#endif
 	    continue;
 	  }
 	}
@@ -1742,7 +1775,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         x = cOrthoLeftMargin;
         y = cOrthoBottomMargin + MovieGetPanelHeight(G);
 
-        if(SettingGetGlobal_b(G, cSetting_text) || I->SplashFlag)
+        if(draw_text || I->SplashFlag)
           showLines = I->ShowLines;
         else {
           showLines = internal_feedback + overlay;
@@ -1796,7 +1829,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
       OrthoDrawWizardPrompt(G ORTHOCGOARGVAR);
 
-      if(SettingGetGlobal_b(G, cSetting_text) || I->SplashFlag) {
+      if(draw_text || I->SplashFlag) {
         Block *block;
         int active_tmp;
         block = SeqGetBlock(G);
@@ -1877,6 +1910,12 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
       OrthoPopMatrix(G);
 
+#ifdef _PYMOL_OPENVR
+      if (offscreen_vr && times) {
+        OpenVRMenuBufferFinish(G);
+      }
+#endif
+
       if(Feedback(G, FB_OpenGL, FB_Debugging))
         PyMOLCheckOpenGLErr("OrthoDoDraw final checkpoint");
 
@@ -1926,7 +1965,13 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
       while(origtimes--){
 	switch (origtimes){
 	case 1:
-	  OrthoDrawBuffer(G, GL_BACK_LEFT);
+#ifdef _PYMOL_OPENVR
+	  if(offscreen_vr) {
+	    OrthoDrawBuffer(G, GL_NONE);
+	    OpenVRMenuBufferStart(G, I->Width, I->Height);
+	  } else
+#endif
+	    OrthoDrawBuffer(G, GL_BACK_LEFT);
 	  break;
 	case 0:
 	  if(double_pump) {
@@ -1938,6 +1983,11 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 	OrthoPushMatrix(G);
 	OrthoRenderCGO(G);
 	OrthoPopMatrix(G);
+#ifdef _PYMOL_OPENVR
+        if (offscreen_vr && origtimes) {
+          OpenVRMenuBufferFinish(G);
+        }
+#endif
       }
     }
   }
@@ -2391,6 +2441,35 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
   return (handled);
 }
 
+struct COrthoButtonDeferred : public CDeferred {
+  int button;
+  int state;
+  int x;
+  int y;
+  int mod;
+  COrthoButtonDeferred(PyMOLGlobals *G) : CDeferred(G) {}
+};
+
+static
+void OrthoButtonDeferred(COrthoButtonDeferred * d)
+{
+  OrthoButton(d->m_G, d->button, d->state, d->x, d->y, d->mod);
+}
+
+int OrthoButtonDefer(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
+{
+  auto d = pymol::make_unique<COrthoButtonDeferred>(G);
+  if(d) {
+    d->fn = (DeferredFn *)OrthoButtonDeferred;
+    d->button = button;
+    d->state = state;
+    d->x = x;
+    d->y = y;
+    d->mod = mod;
+  }
+  OrthoDefer(G, std::move(d));
+  return 1;
+}
 
 /*========================================================================*/
 int OrthoDrag(PyMOLGlobals * G, int x, int y, int mod)

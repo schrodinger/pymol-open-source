@@ -19,6 +19,10 @@
 #include"P.h"
 #include"Err.h"
 
+#ifdef _PYMOL_OPENVR
+#include"OpenVRMode.h"
+#endif
+
 /* EXPERIMENTAL VOLUME RAYTRACING DATA */
 extern float *rayDepthPixels;
 extern int rayVolume, rayWidth, rayHeight;
@@ -273,6 +277,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       switch (stereo_mode) {
       case cStereo_quadbuffer:       /* hardware stereo */
       case cStereo_clone_dynamic:
+      case cStereo_openvr:
 	render_buffer = GL_BACK_LEFT;
 	break;
       }
@@ -339,7 +344,9 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 	ymin = -ymax;
 	xmin = ymin * aspRat;
 	xmax = ymax * aspRat;
-      glFrustum44f(I->ProjectionMatrix, xmin, xmax, ymin, ymax, I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back);
+        glFrustum44f(I->ProjectionMatrix, xmin, xmax, ymin, ymax,
+                     stereo_mode == cStereo_openvr ? 0.1f : I->m_view.m_clipSafe.m_front,
+                     I->m_view.m_clipSafe.m_back);
     } else {
       height = std::max(R_SMALL4, -I->m_view.m_pos[2]) * GetFovWidth(G) / 2.f;
       width = height * aspRat;
@@ -535,6 +542,15 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       I->CopyType = 2;          /* do not display force copies */
     }
   }
+
+#ifdef _PYMOL_OPENVR
+  if(stereo_mode == cStereo_openvr && (!SettingGetGlobal_b(G, cSetting_text) || SettingGetGlobal_i(G, cSetting_openvr_gui_text) == 2)) {
+    Block* scene_block = I;
+    int scene_width = scene_block->rect.right - scene_block->rect.left;
+    int scene_height = scene_block->rect.top - scene_block->rect.bottom;
+    OpenVRSceneFinish(G, scene_block->rect.left, scene_block->rect.bottom, scene_width, scene_height);
+  }
+#endif
 
   PRINTFD(G, FB_Scene)
     " SceneRender: leaving...\n" ENDFD;
@@ -1099,6 +1115,16 @@ void SceneRenderStereoLoop(PyMOLGlobals * G, int timesArg, int must_render_stere
 	G->ShaderMgr->stereo_flag = -1; // left eye
 	G->ShaderMgr->stereo_blend = 0;
       }
+
+#ifdef _PYMOL_OPENVR
+      int savedWidth, savedHeight;
+      if (stereo_mode == cStereo_openvr) {
+        savedWidth = I->Width;
+        savedHeight = I->Height;
+        OpenVRGetWidthHeight(G, &I->Width, &I->Height);
+      }
+#endif
+
       SceneSetPrepareViewPortForStereo(G, PrepareViewPortForStereo, times, x, y, oversize_width, oversize_height, stereo_mode, width_scale);
 
       if (!offscreen_aa){
@@ -1112,13 +1138,22 @@ void SceneRenderStereoLoop(PyMOLGlobals * G, int timesArg, int must_render_stere
         bg_grad(G);
       }
 #endif
-      ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 1);
+      ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 1, stereo_mode);
       DoRendering(G, I, render_to_texture, &I->grid, times, curState, normal, context, width_scale, onlySelections, render_to_texture);
                   
 #ifndef PURE_OPENGL_ES_2
       if (use_shaders)
         glPopMatrix();        // 0 
 #endif
+
+#ifdef _PYMOL_OPENVR
+      // TODO Check if this is the correct place for this block. In openvr branch, was last block in DoHandedStereo.
+      if (stereo_mode == cStereo_openvr) {
+        OpenVRDraw(G);
+        OpenVREyeFinish(G);
+      }
+#endif
+
       PRINTFD(G, FB_Scene)
 	" SceneRender: right hand stereo...\n" ENDFD;
       if (offscreen_aa){
@@ -1146,7 +1181,7 @@ void SceneRenderStereoLoop(PyMOLGlobals * G, int timesArg, int must_render_stere
         bg_grad(G);
       }
 #endif
-      ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 2);
+      ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 2, stereo_mode);
       glClear(GL_DEPTH_BUFFER_BIT);
       DoRendering(G, I, render_to_texture, &I->grid, times, curState, normal, context, width_scale, onlySelections, render_to_texture);
       if (anaglyph){
@@ -1157,6 +1192,18 @@ void SceneRenderStereoLoop(PyMOLGlobals * G, int timesArg, int must_render_stere
       if (!use_shaders)
         glPopMatrix();        // 0
 #endif
+
+#ifdef _PYMOL_OPENVR
+      if (stereo_mode == cStereo_openvr) {
+        // TODO Check if this is the correct place for this block. In openvr branch, was last block in DoHandedStereo.
+        OpenVRDraw(G);
+        OpenVREyeFinish(G);
+
+        I->Width = savedWidth;
+        I->Height = savedHeight;
+      }
+#endif
+
       /* restore draw buffer */
       if (offscreen_aa){
 	SceneRenderAA(G);	
@@ -1408,6 +1455,11 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, 
       }
     }
     break;
+#ifdef _PYMOL_OPENVR
+  case cStereo_openvr:
+    OpenVREyeStart(G, position);
+    break;
+#endif
 #endif
   }
 }
@@ -1425,6 +1477,7 @@ void SetDrawBufferForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, int ti
   case cStereo_crosseye:
   case cStereo_walleye:
   case cStereo_sidebyside:
+  case cStereo_openvr:
     OrthoDrawBuffer(G, GL_BACK);
     break;
   case cStereo_geowall:

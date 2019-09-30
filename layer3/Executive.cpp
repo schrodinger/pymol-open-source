@@ -87,6 +87,10 @@
 #include "MovieScene.h"
 #include "Texture.h"
 
+#ifdef _PYMOL_OPENVR
+#include "OpenVRMode.h"
+#endif
+
 #ifndef _PYMOL_NOPY
 #include "ce_types.h"
 #endif
@@ -9564,6 +9568,15 @@ pymol::Result<> ExecutiveStereo(PyMOLGlobals * G, int flag)
       return pymol::Error("no 'quadbuffer' support detected (force with 'pymol -S')");
     }
 
+    if (flag == cStereo_openvr) {
+#ifdef _PYMOL_OPENVR
+      OpenVRInit(G);
+      OpenVRFeedback(G);
+#else
+      return pymol::Error("'openvr' stereo mode not available in this build");
+#endif
+    }
+
     if (flag > 0) {
       SettingSet(G, cSetting_stereo_mode, flag);
     }
@@ -11618,6 +11631,29 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
 	  glViewport(0, 0, width, height);
 	}
 	break;
+#ifdef _PYMOL_OPENVR
+      case cStereo_openvr:
+        {
+          Block* scene_block = SceneGetBlock(G);
+          int scene_width = scene_block->rect.right - scene_block->rect.left;
+          int scene_height = scene_block->rect.top - scene_block->rect.bottom;
+          OpenVRFrameStart(G);
+          float matrix[16];
+          SceneGetModel2WorldMatrix(G, matrix);
+          OpenVRHandleInput(G, scene_block->rect.left, scene_block->rect.bottom, scene_width, scene_height, matrix);
+          OrthoDoDraw(G, -1);
+          if (SettingGetGlobal_b(G, cSetting_openvr_cut_laser) && OpenVRIsScenePickerActive(G)) {
+            int x = scene_block->rect.left + scene_width / 2;
+            int y = scene_block->rect.bottom + scene_height / 2;
+            float atomWorldPos[3];
+            ScenePickAtomInWorld(G, x, y, atomWorldPos);
+            OpenVRUpdateScenePickerLength(G, atomWorldPos);
+          }
+          OpenVRFrameFinish(G);
+          PyMOL_NeedRedisplay(G->PyMOL);
+        }
+        break;
+#endif
       default:
 	OrthoDoDraw(G, 0);
 	break;

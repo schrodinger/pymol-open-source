@@ -4757,7 +4757,7 @@ static PyObject *CmdCreate(PyObject * self, PyObject * args)
   char *str1, *str2;
   int target, source, discrete, quiet;
   int singletons;
-  int copy_properties;
+  int copy_properties = 0;
   int ok = false;
   int zoom;
   ok = PyArg_ParseTuple(args, "Ossiiiiii", &self, &str1, &str2, &source,

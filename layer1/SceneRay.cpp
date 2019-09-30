@@ -148,6 +148,7 @@ bool SceneRay(PyMOLGlobals * G,
 
   switch (I->StereoMode) {
   case cStereo_quadbuffer:
+  case cStereo_openvr:
     stereo_hand = 2;
     break;
   case cStereo_crosseye:
@@ -498,6 +499,7 @@ bool SceneRay(PyMOLGlobals * G,
       switch (I->StereoMode) {
       case cStereo_quadbuffer:
       case cStereo_geowall:
+      case cStereo_openvr:
         /* merge the two images into one */
         I->Image->merge(*stereo_image);
         break;

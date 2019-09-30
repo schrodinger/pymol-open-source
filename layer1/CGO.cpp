@@ -6656,6 +6656,7 @@ static void glLineWidthAndUniform(float line_width,
 static void CGO_gl_special(CCGORenderer * I, float **pc)
 {
   int mode = CGO_get_int(*pc);
+  bool openVR = SceneGetStereo(I->G) == cStereo_openvr;
   char varwidth = 0;
   float vScale = (I->info ? I->info->vertex_scale : SceneGetScreenVertexScale(I->G, NULL));
 
@@ -6670,7 +6671,8 @@ static void CGO_gl_special(CCGORenderer * I, float **pc)
   switch (mode){
   case LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON:
     {
-      float line_width = SceneGetDynamicLineWidth(I->info, SettingGet_f(I->G, NULL, NULL, cSetting_ribbon_width));
+      float line_width = SettingGet_f(I->G, NULL, NULL, cSetting_ribbon_width);
+      if (!openVR) line_width = SceneGetDynamicLineWidth(I->info, line_width);
       if (I->info && I->info->width_scale_flag){
         line_width *= I->info->width_scale;
       }
@@ -6679,7 +6681,8 @@ static void CGO_gl_special(CCGORenderer * I, float **pc)
     break;
   case LINEWIDTH_DYNAMIC_WITH_SCALE_DASH:
     {
-      float line_width = SceneGetDynamicLineWidth(I->info, SettingGet_f(I->G, NULL, NULL, cSetting_dash_width));
+      float line_width = SettingGet_f(I->G, NULL, NULL, cSetting_dash_width);
+      if (!openVR) line_width = SceneGetDynamicLineWidth(I->info, line_width);
       if (I->info && I->info->width_scale_flag){
         line_width *= I->info->width_scale;
       }
@@ -6688,7 +6691,8 @@ static void CGO_gl_special(CCGORenderer * I, float **pc)
     break;
   case LINEWIDTH_DYNAMIC_WITH_SCALE:
     {
-      float line_width = SceneGetDynamicLineWidth(I->info, SettingGet_f(I->G, NULL, NULL, cSetting_line_width));
+      float line_width = SettingGet_f(I->G, NULL, NULL, cSetting_line_width);
+      if (!openVR) line_width = SceneGetDynamicLineWidth(I->info, line_width);
       if (I->info && I->info->width_scale_flag){
         line_width *= I->info->width_scale;
       }
@@ -6712,7 +6716,7 @@ static void CGO_gl_special(CCGORenderer * I, float **pc)
       } else {
         line_width = SettingGet_f(I->G, NULL, NULL, cSetting_mesh_width);
       }
-      line_width = SceneGetDynamicLineWidth(I->info, line_width);
+      if (!openVR) line_width = SceneGetDynamicLineWidth(I->info, line_width);
       glLineWidthAndUniform(line_width, shaderPrg);
     }
     break;
@@ -6764,7 +6768,6 @@ static void CGO_gl_special(CCGORenderer * I, float **pc)
     break;
   case CYLINDER_WIDTH_FOR_DISTANCES:
     {
-      float pixel_scale_value = SettingGetGlobal_f(I->G, cSetting_ray_pixel_scale);
       float line_width, radius;
       int round_ends;
       round_ends =
@@ -6776,11 +6779,10 @@ static void CGO_gl_special(CCGORenderer * I, float **pc)
       
       line_width = SceneGetDynamicLineWidth(I->info, line_width);
 
-      if(pixel_scale_value < 0)
-        pixel_scale_value = 1.0F;
       if (shaderPrg) {
 	if(radius == 0.0F) {
-	  shaderPrg->Set1f("uni_radius", vScale * pixel_scale_value * line_width/ 2.f);
+          float dash_size = SettingGet_f(I->G, csSetting, objSetting, cSetting_dash_width);
+	  shaderPrg->Set1f("uni_radius", SceneGetLineWidthForCylindersStatic(I->G, I->info, line_width, dash_size));
 	} else {
 	  shaderPrg->Set1f("uni_radius", radius);
 	}
@@ -6845,17 +6847,9 @@ static void CGO_gl_special(CCGORenderer * I, float **pc)
     break;
   case CYLINDER_WIDTH_FOR_NONBONDED:
     {
-      float line_width = SettingGet_f(I->G, csSetting, objSetting, cSetting_line_width);
-      float pixel_scale_value = SettingGetGlobal_f(I->G, cSetting_ray_pixel_scale);
-      /*
-      float scale_bound = SettingGetGlobal_f(I->G, cSetting_field_of_view)  * cPI / 180.0f * 0.018f;
-      if (I->info && I->info->vertex_scale < scale_bound) {
-        I->info->vertex_scale = scale_bound;
-        }*/ // should this be here???
-      if(pixel_scale_value < 0)
-        pixel_scale_value = 1.0F;
       if (shaderPrg){
-        shaderPrg->Set1f("uni_radius", vScale * pixel_scale_value * line_width/ 2.f);
+        float line_width = SettingGet_f(I->G, csSetting, objSetting, cSetting_line_width);
+        shaderPrg->Set1f("uni_radius", SceneGetLineWidthForCylindersStatic(I->G, I->info, line_width, line_width));
       }
     }
     break;

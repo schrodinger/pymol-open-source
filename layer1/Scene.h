@@ -185,6 +185,7 @@ int SceneGetTwoSidedLighting(PyMOLGlobals * G);
 int SceneGetTwoSidedLightingSettings(PyMOLGlobals * G, const CSetting *set1, const CSetting *set2);
 
 float SceneGetLineWidthForCylinders(PyMOLGlobals * G, RenderInfo * info, float line_width);
+float SceneGetLineWidthForCylindersStatic(PyMOLGlobals * G, RenderInfo * info, float dynamic_line_width_arg, float line_width);
 
 void ScenePushModelViewMatrix(PyMOLGlobals * G);
 void ScenePopModelViewMatrix(PyMOLGlobals * G, bool);
@@ -241,9 +242,16 @@ void ScenePrepareUnitContext(SceneUnitContext * context, int width, int height);
 
 float GetFovWidth(PyMOLGlobals * G);
 
-void ScenePrepareMatrix(PyMOLGlobals * G, int mode);
+void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode = 0);
 
 void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window);
+
+// FIXME use pymol matrices
+void SceneGetModel2WorldMatrix(PyMOLGlobals * G, float *matrix);
+void SceneSetModel2WorldMatrix(PyMOLGlobals * G, float const *matrix);
+float SceneGetScale(PyMOLGlobals * G);
+
+void ScenePickAtomInWorld(PyMOLGlobals * G, int x, int y, float *atomWorldPos);
 
 void SceneInvalidatePicking(PyMOLGlobals * G);
 

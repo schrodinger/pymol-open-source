@@ -54,6 +54,7 @@ void OrthoPopMatrix(PyMOLGlobals * G);
 int OrthoGetPushed(PyMOLGlobals * G);
 
 int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod);
+int OrthoButtonDefer(PyMOLGlobals * G, int button, int state, int x, int y, int mod);
 
 void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod);
 

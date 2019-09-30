@@ -80,7 +80,7 @@ Options
   -T name   UNSUPPORTED - Tcl/Tk GUI skin
   -u file   resume log file (execute existing content and append new log output)
   -U        UNSUPPORTED reuse the helper application
-  -v        UNUSED
+  -v        use openvr stub instead of a real hardware
   -V N      external GUI window height in pixels
   -w name   UNSUPPORTED - external gui type (pmg_qt or pmg_tk) (same as -N)
   -W N      window width in pixels
@@ -170,6 +170,7 @@ if True:
     options.launch_status = 0
     options.gldebug = 0
     options.testing = 0
+    options.openvr_stub = False
 
     options.win_py = { 'irix':240,
                        'darwin': 214, # hmm...need to set to 192 for Leopard?...
@@ -371,6 +372,8 @@ if True:
                     options.win_py = int(av.pop())
                 if "D" in a:
                     options.defer_builds_mode = int(av.pop())
+                if "v" in a:
+                    options.openvr_stub = True
                 if "V" in a:
                     options.ext_y = int(av.pop())
                 if "N" in a: # external gui name...

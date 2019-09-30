@@ -63,6 +63,10 @@
 #include "MovieScene.h"
 #include "Lex.h"
 
+#ifdef _PYMOL_OPENVR
+#include "OpenVRMode.h"
+#endif
+
 #include "PyMOL.h"
 #include "PyMOLGlobals.h"
 #include "PyMOLOptions.h"
@@ -1845,6 +1849,7 @@ static const CPyMOLOptions Defaults = {
   0,                            /* launch_status */
   0,                            /* no quit */
   0,                            /* gldebug */
+  false,                        /* no openvr stub */
 };
 
 CPyMOLOptions *PyMOLOptions_New(void)
@@ -2052,6 +2057,7 @@ void PyMOL_Start(CPyMOL * I)
   CharacterInit(G);
   PlugIOManagerInit(G);
   SphereInit(G);
+  // OpenVRInit() called in ExecutiveStereo
   OrthoInit(G, G->Option->show_splash);
   SceneInit(G);
   MovieScenesInit(G);
@@ -2132,6 +2138,9 @@ void PyMOL_Stop(CPyMOL * I)
   SceneFree(G);
   MovieScenesFree(G);
   OrthoFree(G);
+#ifdef _PYMOL_OPENVR
+  OpenVRFree(G);
+#endif
   DeleteP(G->ShaderMgr);
   SettingFreeGlobal(G);
   CharacterFree(G);
