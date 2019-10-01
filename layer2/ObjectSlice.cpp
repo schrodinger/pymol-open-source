@@ -47,7 +47,6 @@ Z* -------------------------------------------------------------------
 #define START_STRIP -1
 #define STOP_STRIP -2
 
-static void ObjectSliceStateInit(PyMOLGlobals * G, ObjectSliceState * ms);
 static void ObjectSliceRecomputeExtent(ObjectSlice * I);
 
 static PyObject *ObjectSliceStateAsPyList(ObjectSliceState * I)
@@ -99,7 +98,7 @@ static int ObjectSliceStateFromPyList(PyMOLGlobals * G, ObjectSliceState * I,
     if(!PyList_Check(list))
       I->Active = false;
     else {
-      ObjectSliceStateInit(G, I);
+      *I = ObjectSliceState(G);
       if(ok)
         ok = (list != NULL);
       if(ok)
@@ -199,25 +198,11 @@ PyObject *ObjectSliceAsPyList(ObjectSlice * I)
   return (PConvAutoNone(result));
 }
 
-static void ObjectSliceStateFree(ObjectSliceState * oss)
+ObjectSliceState::~ObjectSliceState()
 {
-  CGOFree(oss->shaderCGO);
-  VLAFreeP(oss->normals);
-  VLAFreeP(oss->colors);
-  VLAFreeP(oss->values);
-  VLAFreeP(oss->points);
-  VLAFreeP(oss->flags);
-  VLAFreeP(oss->strips);
-}
-
-ObjectSlice::~ObjectSlice()
-{
-  auto I = this;
-  for(int a = 0; a < I->NState; a++) {
-    if(I->State[a].Active)
-      ObjectSliceStateFree(I->State + a);
+  if(Active) {
+    CGOFree(shaderCGO);
   }
-  VLAFreeP(I->State);
 }
 
 static void ObjectSliceInvalidate(ObjectSlice * I, int rep, int level, int state)
@@ -243,9 +228,9 @@ static void ObjectSliceStateAssignColors(ObjectSliceState * oss, ObjectGadgetRam
     int x, y;
     int *min = oss->min;
     int *max = oss->max;
-    float *value = oss->values;
-    int *flag = oss->flags;
-    float *color = oss->colors;
+    float *value = oss->values.data();
+    int *flag = oss->flags.data();
+    float *color = oss->colors.data();
     for(y = min[1]; y <= max[1]; y++) {
       for(x = min[0]; x <= max[0]; x++) {
         if(*flag) {
@@ -395,29 +380,11 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
   if(ok) {
     int n_alloc = (1 + oss->max[0] - oss->min[0]) * (1 + oss->max[1] - oss->min[1]);
 
-    if(!oss->points) {
-      oss->points = VLAlloc(float, n_alloc * 3);
-    } else {
-      VLACheck(oss->points, float, n_alloc * 3);        /* note: this is a macro which reassigns the pointer */
-    }
+    oss->points.reserve(n_alloc * 3);
+    oss->values.reserve(n_alloc);
+    oss->colors.reserve(n_alloc * 3);
+    oss->flags.reserve(n_alloc);
 
-    if(!oss->values) {
-      oss->values = VLAlloc(float, n_alloc);
-    } else {
-      VLACheck(oss->values, float, n_alloc);    /* note: this is a macro which reassigns the pointer */
-    }
-
-    if(!oss->colors) {
-      oss->colors = VLACalloc(float, n_alloc * 3);
-    } else {
-      VLACheck(oss->colors, float, n_alloc * 3);        /* note: this is a macro which reassigns the pointer */
-    }
-
-    if(!oss->flags) {
-      oss->flags = VLAlloc(int, n_alloc);
-    } else {
-      VLACheck(oss->flags, int, n_alloc);       /* note: this is a macro which reassigns the pointer */
-    }
     if(!(oss->points && oss->values && oss->flags)) {
       ok = false;
       PRINTFB(I->G, FB_ObjectSlice, FB_Errors)
@@ -425,7 +392,7 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
     }
 
     if(!oss->strips)            /* this is range-checked during use */
-      oss->strips = VLAlloc(int, n_alloc);
+      oss->strips = pymol::vla<int>(n_alloc);
 
     oss->n_points = n_alloc;
   }
@@ -434,7 +401,7 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
 
   if(ok) {
     int x, y;
-    float *point = oss->points;
+    float *point = oss->points.data();
     for(y = min[1]; y <= max[1]; y++) {
       for(x = min[0]; x <= max[0]; x++) {
         point[0] = grid * x;
@@ -450,7 +417,7 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
   /* interpolate and flag the points inside the map */
 
   if(ok) {
-    ObjectMapStateInterpolate(oms, oss->points, oss->values, oss->flags, oss->n_points);
+    ObjectMapStateInterpolate(oms, oss->points.data(), oss->values.data(), oss->flags.data(), oss->n_points);
   }
 
   /* apply the height scale (if nonzero) */
@@ -460,10 +427,10 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
     if(SettingGet_b(I->G, NULL, I->Setting, cSetting_slice_height_map)) {
       float height_scale =
         SettingGet_f(I->G, NULL, I->Setting, cSetting_slice_height_scale);
-      float *value = oss->values;
+      float *value = oss->values.data();
       float up[3], scaled[3], factor;
       int x, y;
-      float *point = oss->points;
+      float *point = oss->points.data();
 
       need_normals = true;
       up[0] = oss->system[2];
@@ -582,17 +549,13 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
   } else {
     int *cnt = NULL;
 
-    if(!oss->normals) {
-      oss->normals = VLAlloc(float, oss->n_points * 3);
-    } else {
-      VLACheck(oss->normals, float, oss->n_points * 3); /* note: this is a macro which reassigns the pointer */
-    }
+    oss->normals.reserve(oss->n_points * 3);
     cnt = pymol::calloc<int>(oss->n_points);
 
     if(cnt && oss->normals) {
-      int *strip = oss->strips;
-      float *point = oss->points;
-      float *normal = oss->normals;
+      int *strip = oss->strips.data();
+      float *point = oss->points.data();
+      float *normal = oss->normals.data();
       int n = oss->n_strips;
       int a;
       int offset0 = 0, offset1 = 0, offset2, offset;
@@ -600,7 +563,7 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
       int tri_count = 0;
 
       float d1[3], d2[3], cp[3];
-      UtilZeroMem(oss->normals, sizeof(float) * 3 * oss->n_points);
+      UtilZeroMem(oss->normals.data(), sizeof(float) * 3 * oss->n_points);
 
       for(a = 0; a < n; a++) {
         offset = *(strip++);
@@ -643,7 +606,7 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
 
       {                         /* now normalize the average normals for active vertices */
         int x, y;
-        float *normal = oss->normals;
+        float *normal = oss->normals.data();
         int *c = cnt;
         for(y = min[1]; y <= max[1]; y++) {
           for(x = min[0]; x <= max[0]; x++) {
@@ -693,7 +656,7 @@ static void ObjectSliceUpdate(ObjectSlice * I)
               ObjectSliceStateAssignColors(oss, ogr);
             else {              /* solid color */
               const float *solid = ColorGet(I->G, I->Color);
-              float *color = oss->colors;
+              float *color = oss->colors.data();
               for(a = 0; a < oss->n_points; a++) {
                 *(color++) = solid[0];
                 *(color++) = solid[1];
@@ -1026,7 +989,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
     } else {
       if(!oss) {
         if(I->NState && ((SettingGetGlobal_b(G, cSetting_static_singletons) && (I->NState == 1))))
-          oss = I->State;
+          oss = I->State.data();
       }
     }
     if(oss) {
@@ -1036,9 +999,9 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
           ray->transparentf(1.0F - alpha);
           if((I->visRep & cRepSliceBit)) {
             float normal[3], *n0, *n1, *n2;
-            int *strip = oss->strips;
-            float *point = oss->points;
-            float *color = oss->colors;
+            int *strip = oss->strips.data();
+            float *point = oss->points.data();
+            float *color = oss->colors.data();
             int n = oss->n_strips;
             int a;
             int offset0 = 0, offset1 = 0, offset2, offset;
@@ -1117,8 +1080,8 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
             p.src.bond = 0;
 
             if((I->visRep & cRepSliceBit)) {
-              int *strip = oss->strips;
-              float *point = oss->points;
+              int *strip = oss->strips.data();
+              float *point = oss->points.data();
               int n = oss->n_strips;
               int a;
               int offset0 = 0, offset1 = 0, offset2, offset;
@@ -1195,10 +1158,10 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 		  ObjectUseColorCGO(oss->shaderCGO, I);
 		
 		  if((I->visRep & cRepSliceBit)) {
-		    int *strip = oss->strips;
-		    float *point = oss->points;
-		    float *color = oss->colors;
-		    float *vnormal = oss->normals;
+                  int *strip = oss->strips.data();
+                  float *point = oss->points.data();
+                  float *color = oss->colors.data();
+                  float *vnormal = oss->normals.data();
 		    int n = oss->n_strips;
 		    int a;
 		    int offset;
@@ -1298,7 +1261,7 @@ ObjectSliceState *ObjectSliceStateGetActive(ObjectSlice * I, int state)
 ObjectSlice::ObjectSlice(PyMOLGlobals * G) : CObject(G)
 {
   auto I = this;
-  I->State = VLACalloc(ObjectSliceState, 10);  /* autozero important */
+  I->State = pymol::vla<ObjectSliceState>(10);  /* autozero important */
 
   I->type = cObjectSlice;
 
@@ -1310,36 +1273,6 @@ ObjectSlice::ObjectSlice(PyMOLGlobals * G) : CObject(G)
   I->context.object = (void *) I;
   I->context.state = 0;
 }
-
-
-/*========================================================================*/
-void ObjectSliceStateInit(PyMOLGlobals * G, ObjectSliceState * oss)
-{
-  oss->G = G;
-  oss->Active = true;
-  oss->RefreshFlag = true;
-  oss->ExtentFlag = false;
-
-  oss->values = NULL;
-  oss->points = NULL;
-  oss->flags = NULL;
-  oss->colors = NULL;
-  oss->strips = NULL;
-
-  oss->n_points = 0;
-  oss->n_strips = 0;
-  oss->last_scale = 0.0F;
-
-  UtilZeroMem(&oss->system, sizeof(float) * 9); /* simple orthogonal coordinate system */
-  oss->system[0] = 1.0F;
-  oss->system[4] = 1.0F;
-  oss->system[8] = 1.0F;
-
-  zero3f(oss->origin);
-
-  oss->shaderCGO = NULL;
-}
-
 
 /*========================================================================*/
 ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap * map,
@@ -1364,7 +1297,7 @@ ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap *
 
   oss = I->State + state;
 
-  ObjectSliceStateInit(G, oss);
+  *oss = ObjectSliceState(G);
   oss->MapState = map_state;
   oms = ObjectMapGetState(map, map_state);
   if(oms) {

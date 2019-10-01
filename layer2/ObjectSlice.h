@@ -19,55 +19,60 @@ Z* -------------------------------------------------------------------
 
 #include"ObjectMap.h"
 
-typedef struct {
+struct ObjectSliceState {
   PyMOLGlobals *G;
   /* stored in a session */
 
-  int Active;
-  ObjectNameType MapName;
-  int MapState;
-  float MapMean;
-  float MapStdev;
+  int Active = true;
+  ObjectNameType MapName{};
+  int MapState = 0;
+  float MapMean = 0.0f;
+  float MapStdev = 0.0f;
 
-  float ExtentMin[3];
-  float ExtentMax[3];
-  int ExtentFlag;
+  float ExtentMin[3]{};
+  float ExtentMax[3]{};
+  int ExtentFlag = false;
 
-  float origin[3];              /* the origin of the plane */
-  float system[9];              /* x, y, and z of the system */
+  float origin[3]{};              /* the origin of the plane */
+  float system[9]{              /* x, y, and z of the system */
+    1.f, 0.f, 0.f,
+    0.f, 1.f, 0.f,
+    0.f, 0.f, 1.0f};
 
   /* not stored in session */
 
-  int RefreshFlag;
-  int min[2], max[2];           /* extents of the arrays */
-  float last_scale;
+  int RefreshFlag = true;
+  int min[2]{}, max[2]{};           /* extents of the arrays */
+  float last_scale = 0.0f;
 
   /* the data is normalized for easier ploting */
-  int n_points;
+  int n_points = 0;
 
-  float *values;
-  float *points;
-  int *flags;
-  float *colors;
-  float *normals;
+  pymol::vla<float> values;
+  pymol::vla<float> points;
+  pymol::vla<int> flags;
+  pymol::vla<float> colors;
+  pymol::vla<float> normals;
 
-  int n_strips;
-  int *strips;
+  int n_strips = 0;
+  pymol::vla<int> strips;
 
-  CGO *shaderCGO;
+  CGO *shaderCGO = nullptr;
   float Corner[24];
 
   float outline_points[36];
-  int outline_n_points;
+  int outline_n_points = 0;
   float outline_zaxis[3];
-} ObjectSliceState;
+  ObjectSliceState(PyMOLGlobals* G)
+      : G(G){};
+  ~ObjectSliceState();
+};
 
 struct ObjectSlice : public CObject {
-  ObjectSliceState *State;
+  pymol::vla<ObjectSliceState> State;
   PickContext context{};
   int NState = 0;
   ObjectSlice(PyMOLGlobals* G);
-  ~ObjectSlice();
 };
 
 ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap * map,

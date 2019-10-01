@@ -220,6 +220,21 @@ public:
   T* end() { return m_vla + size(); }
   const T* begin() const { return m_vla; }
   const T* end() const { return m_vla + size(); }
+
+  /**
+   * Unlike resize(), won't shrink the size, and unlike check(), can be
+   * called on empty container.
+   * @post size() >= count
+   * @post operator bool() != false
+   */
+  void reserve(std::size_t count)
+  {
+    if (m_vla == nullptr) {
+      m_vla = VLACalloc(T, count);
+    } else if (count != 0) {
+      VLACheck(m_vla, T, count - 1);
+    }
+  }
 };
 
 template <typename U> vla<U> vla_take_ownership(U* ptr)
