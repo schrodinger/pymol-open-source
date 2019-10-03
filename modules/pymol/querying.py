@@ -1223,8 +1223,7 @@ SEE ALSO
     cmd.get_model().bond
         '''
         with _self.lockcm:
-            r = _cmd.get_bonds(_self._COb, selection, int(state))
-        return r
+            return _cmd.get_bonds(_self._COb, selection, int(state) - 1)
 
     def get_area(selection="(all)",state=1,load_b=0,quiet=1,_self=cmd):
         '''
