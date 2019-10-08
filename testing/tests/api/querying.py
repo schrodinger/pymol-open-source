@@ -43,6 +43,7 @@ class TestQuerying(testing.PyMOLTestCase):
         cmd.create("m1", "m1", 1, 2)
         self.assertEqual(cmd.count_states(), 2)
 
+    @testing.requires_version('2.1')
     def testDihedral(self):
         # result was 0.01318 due to numeric precision in get_angle3f
         self._testMeasure(cmd.dihedral, cmd.get_dihedral, 4, 0.0)
@@ -121,6 +122,9 @@ class TestQuerying(testing.PyMOLTestCase):
     def testGetColorIndices(self):
         r = cmd.get_color_indices()
         self.assertTrue(set(r).issuperset([('white', 0), ('black', 1), ('blue', 2)]))
+        self.assertFalse(('grey50', 104) in r)
+        r = cmd.get_color_indices(all=1)
+        self.assertTrue(('grey50', 104) in r)
 
     def testGetColorTuple(self):
         self.assertEqual((0.0, 0.0, 1.0), cmd.get_color_tuple("blue"))
@@ -134,24 +138,36 @@ class TestQuerying(testing.PyMOLTestCase):
         pass
 
     def testGetDragObjectName(self):
-        cmd.get_drag_object_name
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        self.assertEqual(cmd.get_drag_object_name(), '')
+        cmd.drag('gly')
+        self.assertEqual(cmd.get_drag_object_name(), 'gly')
 
     def testGetExtent(self):
-        cmd.get_extent
-        self.skipTest("TODO")
+        cmd.load(self.datafile("1ehz-5.pdb"), "m1")
+        self.assertArrayEqual(cmd.get_extent(),
+                [[49.85, 40.59, 41.73], [69.99, 51.73, 56.47]], delta=1e-2)
+        self.assertArrayEqual(cmd.get_extent("resi 3"),
+                [[58.29, 40.87, 48.52], [64.74, 50.42, 55.29]], delta=1e-2)
+        cmd.load(self.datafile("h2o-elf.cube"), "map1")
+        self.assertArrayEqual(cmd.get_extent("map1"),
+                [[-0.075, -0.075, -0.075], [5.925, 5.925, 5.925]], delta=1e-2)
 
     def testGetIdtf(self):
-        cmd.get_idtf
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.show_as('surface')
+        r = cmd.get_idtf()
+        self.assertTrue(isinstance(r, tuple))
+        self.assertEqual(len(r), 2)
+        self.assertTrue(r[0].startswith('FILE_FORMAT "IDTF"'))
+        self.assertTrue('MODEL_POSITION_LIST' in r[1])
+        self.assertTrue('MODEL_NORMAL_LIST' in r[1])
 
     def testGetLegalName(self):
-        cmd.get_legal_name
-        self.skipTest("TODO")
+        self.assertEqual(cmd.get_legal_name("foo bar baz"), "foo_bar_baz")
 
     def testGetModalDraw(self):
-        cmd.get_modal_draw
-        self.skipTest("TODO")
+        self.assertEqual(cmd.get_modal_draw(), 0)
 
     def testGetModel(self):
         '''
@@ -227,48 +243,151 @@ class TestQuerying(testing.PyMOLTestCase):
         self.assertArrayEqual(a.coord,      coord, delta=1e-4)
 
     def testGetMovieLength(self):
-        cmd.get_movie_length
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        self.assertEqual(cmd.get_movie_length(), 0)
+        cmd.mset('1x10')
+        self.assertEqual(cmd.get_movie_length(), 10)
+        self.assertEqual(cmd.get_movie_length(images=1), 0)
 
     def testGetMovieLocked(self):
-        cmd.get_movie_locked
-        self.skipTest("TODO")
+        self.assertEqual(cmd.get_movie_locked(), 0)
+        cmd.mset('1x1')
+        cmd.mdo(1, 'cmd.color("blue")')
+        s = cmd.get_session()
+        cmd.set_session(s)
+        self.assertEqual(cmd.get_movie_locked(), 1)
+        cmd.set('security', 0)
+        cmd.set_session(s)
+        self.assertEqual(cmd.get_movie_locked(), 0)
 
     def testGetMtlObj(self):
-        cmd.get_mtl_obj
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.show_as('surface')
+        r = cmd.get_mtl_obj()
+        self.assertTrue(isinstance(r, tuple))
+        self.assertEqual(len(r), 2)
+        lines = r[1].splitlines()
+        self.assertTrue(lines[0].startswith('v '))
+        self.assertTrue(lines[1].startswith('v '))
+        self.assertTrue(lines[2].startswith('v '))
+        self.assertTrue(lines[3].startswith('vn '))
+        self.assertTrue(lines[4].startswith('vn '))
+        self.assertTrue(lines[5].startswith('vn '))
+        self.assertTrue(lines[6].startswith('f '))
+        self.assertTrue(all(len(line.split()) == 4 for line in lines))
 
     def testGetNames(self):
-        cmd.get_names
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.fragment('cys')
+        cmd.ramp_new('ramp1', 'none')  # non-molecular object
+        cmd.select('foo', 'none')
+        self.assertEqual(cmd.get_names(), ['gly', 'cys', 'ramp1'])
+        cmd.disable('gly')
+        cmd.disable('ramp1')
+        self.assertEqual(cmd.get_names(enabled_only=1), ['cys'])
+        self.assertEqual(cmd.get_names('selections'), ['foo'])
+        self.assertEqual(cmd.get_names('all'), ['gly', 'cys', 'ramp1', 'foo'])
 
+    @testing.requires_version('1.6')
     def testGetNamesOfType(self):
-        cmd.get_names_of_type
-        self.skipTest("TODO")
+        cmd.fragment('gly', 'm1')
+        cmd.fragment('ala', 'm2')
+        cmd.ramp_new('ramp1', 'none')
+        self.assertEqual(cmd.get_names_of_type('object:molecule'), ['m1', 'm2'])
+        self.assertEqual(cmd.get_names_of_type('object:ramp'), ['ramp1'])
+        self.assertEqual(cmd.get_names_of_type('object:map'), [])
 
     def testGetObjectColorIndex(self):
-        cmd.get_object_color_index
-        self.skipTest("TODO")
+        cmd.fragment('gly', 'm1')
+        cmd.color(3, 'm1')
+        self.assertEqual(cmd.get_object_color_index('m1'), 3)
+        cmd.color(5, '(m1)')
+        self.assertEqual(cmd.get_object_color_index('m1'), 3)
+        cmd.color(5, 'm1')
+        self.assertEqual(cmd.get_object_color_index('m1'), 5)
+        cmd.set_object_color('m1', 7)
+        self.assertEqual(cmd.get_object_color_index('m1'), 7)
 
     def testGetObjectList(self):
-        cmd.get_object_list
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.fragment('cys')
+        cmd.ramp_new('ramp1', 'none')  # non-molecular object
+        self.assertEqual(cmd.get_object_list(), ['gly', 'cys'])
+        self.assertEqual(cmd.get_object_list('elem S'), ['cys'])
 
+    @testing.requires_version('1.6')
     def testGetObjectMatrix(self):
-        cmd.get_object_matrix
-        self.skipTest("TODO")
+        identity = (
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0)
+        mat_x90 = (
+            1.0, 0.0,  0.0, 0.0,
+            0.0, 0.0, -1.0, 0.0,
+            0.0, 1.0,  0.0, 0.0,
+            0.0, 0.0,  0.0, 1.0)
+
+        cmd.fragment('ala', 'm1')
+        cmd.fragment('gly', 'm2')
+
+        # default/identity
+        mat = cmd.get_object_matrix('m1', incl_ttt=1)
+        self.assertTrue(isinstance(mat, tuple))
+        self.assertArrayEqual(mat, identity, delta=1e-6)
+        mat = cmd.get_object_matrix('m1', incl_ttt=0)
+        self.assertArrayEqual(mat, identity, delta=1e-6)
+
+        # TTT
+        cmd.rotate('x', 90, object='m1', camera=0, object_mode=0)
+        mat = cmd.get_object_matrix('m1', incl_ttt=1)
+        self.assertArrayEqual(mat, mat_x90, delta=1e-6)
+        mat = cmd.get_object_matrix('m1', incl_ttt=0)
+        self.assertArrayEqual(mat, identity, delta=1e-6)
+
+        # state matrix
+        cmd.rotate('x', 90, object='m2', camera=0, object_mode=1)
+        mat = cmd.get_object_matrix('m2', incl_ttt=1)
+        self.assertArrayEqual(mat, mat_x90, delta=1e-6)
+        mat = cmd.get_object_matrix('m2', incl_ttt=0)
+        self.assertArrayEqual(mat, mat_x90, delta=1e-6)
+
+    def assertPhiPsiEqual(self, pp, pp_ref):
+        self.assertEqual(len(pp), len(pp_ref))
+        for key in pp:
+            self.assertArrayEqual(pp[key], pp_ref[key], delta=1e-2)
+
+    def _testGetPhipsi(self, func):
+        cmd.load(self.datafile("1oky-frag.pdb"), "m1")
+        pp = func("resi 1-81")
+        self.assertPhiPsiEqual(pp, {
+            ('m1', 13): (-43.4902, -42.8589),
+            ('m1', 20): (-61.0592, -19.4712),
+            ('m1', 29): (-72.9009, -8.8334)
+        })
+        pp = func("resi 117- & name CA")
+        self.assertPhiPsiEqual(pp, {
+            ('m1', 316): (-59.7243, -43.9939),
+            ('m1', 326): (-61.4714, -47.4775)
+        })
 
     def testGetPhipsi(self):
-        cmd.get_phipsi
-        self.skipTest("TODO")
+        return self._testGetPhipsi(cmd.get_phipsi)
 
     def testGetPosition(self):
-        cmd.get_position
-        self.skipTest("TODO")
+        cmd.pseudoatom(pos=(1, 2, 3))
+        self.assertArrayEqual(cmd.get_position(), [0., 0., 0.], delta=1e-4)
+        cmd.zoom(animate=0)
+        self.assertArrayEqual(cmd.get_position(), [1., 2., 3.], delta=1e-4)
 
     def testGetPovray(self):
-        cmd.get_povray
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.show_as('sticks')
+        pov = cmd.get_povray()
+        self.assertTrue(isinstance(pov, tuple))
+        self.assertEqual(len(pov), 2)
+        self.assertTrue(pov[0].startswith('camera {direction<0.0,0.0'))
+        self.assertTrue(pov[1].startswith('cylinder{<'))
 
     def testGetRawAlignment(self):
         from collections import defaultdict
@@ -311,28 +430,62 @@ class TestQuerying(testing.PyMOLTestCase):
         self.assertEqual(dictify(aln), aln_expect)
 
     def testGetRenderer(self):
-        cmd.get_renderer
-        self.skipTest("TODO")
+        r = cmd.get_renderer()
+        self.assertEqual(len(r), 3)
 
+    @testing.requires_version('1.5')
     def testGetSymmetry(self):
-        cmd.get_symmetry
-        self.skipTest("TODO")
+        cmd.load(self.datafile('1rx1.pdb'))
+        sym = cmd.get_symmetry('1rx1')
+        self.assertArrayEqual(sym[:6],
+                [34.455, 45.370, 98.701, 90.0, 90.0, 90.0], delta=1e-3)
+        self.assertEqual(sym[6], 'P 21 21 21')
+
+        cmd.fragment('gly', 'm1')
+        self.assertTrue(cmd.get_symmetry('m1') is None)
 
     def testGetTitle(self):
-        cmd.get_title
-        self.skipTest("TODO")
+        cmd.fragment('gly', 'm1')
+        cmd.create('m1', 'm1', 1, 2)
+        title = cmd.get_title('m1', 1)
+        self.assertEqual(title, '')
+        cmd.set_title('m1', 1, 'foo bar')
+        title = cmd.get_title('m1', 1)
+        self.assertEqual(title, 'foo bar')
+        title = cmd.get_title('m1', 2)
+        self.assertEqual(title, '')
+        cmd.set_title('m1', 2, 'second state')
+        title = cmd.get_title('m1', 2)
+        self.assertEqual(title, 'second state')
 
+    @testing.requires_version('1.6')
     def testGetType(self):
-        cmd.get_type
-        self.skipTest("TODO")
+        cmd.fragment('gly', 'm1')
+        self.assertEqual(cmd.get_type('m1'), 'object:molecule')
+        cmd.ramp_new('ramp1', 'none')
+        self.assertEqual(cmd.get_type('ramp1'), 'object:ramp')
+        cmd.select('s1', 'elem C')
+        self.assertEqual(cmd.get_type('s1'), 'selection')
 
     def testGetUnusedName(self):
-        cmd.get_unused_name
-        self.skipTest("TODO")
+        n1 = cmd.get_unused_name()
+        self.assertEqual(n1, "tmp01")
+        n2 = cmd.get_unused_name("foo", 0)
+        self.assertEqual(n2, "foo")
+        cmd.pseudoatom("foo")
+        n3 = cmd.get_unused_name("foo", 0)
+        self.assertEqual(n3, "foo01")
+        cmd.pseudoatom("foo01")
+        cmd.pseudoatom("foo02")
+        n4 = cmd.get_unused_name("foo")
+        self.assertEqual(n4, "foo03")
+        cmd.delete('*')
+        n5 = cmd.get_unused_name("foo")
+        self.assertEqual(n5, "foo01")
 
     def testGetVersion(self):
-        cmd.get_version
-        self.skipTest("TODO")
+        # see tests/api/get_version.py
+        pass
 
     @testing.requires_version('1.7.3.0')
     def testGetVolumeField(self):
@@ -349,13 +502,28 @@ class TestQuerying(testing.PyMOLTestCase):
         mean2 = cmd.get_volume_field('map1', copy=0)[:].mean()
         self.assertAlmostEqual(mean1 + 5.0, mean2, delta=1e-2)
 
+    @testing.requires_version('1.7.3.0')
     def testGetVolumeHistogram(self):
-        cmd.get_volume_histogram
-        self.skipTest("TODO")
+        cmd.load(self.datafile('h2o-elf.cube'), 'map1')
+        hist1 = cmd.get_volume_histogram('map1', 10)
+        self.assertEqual(len(hist1), 14)
+        hist2 = cmd.get_volume_histogram('map1', 2)
+        self.assertArrayEqual(hist2, [-0.0151, 0.9292, 0.0692, 0.1720, 63812.0, 188.0], delta=1e-4)
+        self.assertArrayEqual(hist1[:4], hist2[:4])
+        self.assertEqual(sum(hist1[4:]), sum(hist2[4:]))
+        hist2 = cmd.get_volume_histogram('map1', 2, (0.3, 0.7))
+        self.assertArrayEqual(hist2, [0.3, 0.7, 0.0692, 0.172, 62263.0, 1737.0], delta=1e-4)
 
     def testGetVrml(self):
-        cmd.get_vrml
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.show_as('sticks')
+        s = cmd.get_vrml()
+        self.assertTrue(s.startswith('#VRML V'))
+        self.assertTrue('geometry Cylinder' in s)
+        cmd.show_as('spheres')
+        s = cmd.get_vrml()
+        self.assertFalse('geometry Cylinder' in s)
+        self.assertTrue('geometry Sphere' in s)
 
     def testIdAtom(self):
         cmd.fragment('gly', 'm1')
@@ -387,8 +555,7 @@ class TestQuerying(testing.PyMOLTestCase):
         self.assertEqual(r, 1.0)
 
     def testPhiPsi(self):
-        cmd.phi_psi
-        self.skipTest("TODO")
+        return self._testGetPhipsi(cmd.phi_psi)
 
     @testing.requires_version('2.1')
     def testGetBonds(self):
