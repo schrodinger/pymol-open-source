@@ -28,28 +28,74 @@ class TestSetting(testing.PyMOLTestCase):
         pass
 
     def testGetSettingBoolean(self):
-        cmd.get_setting_boolean
-        self.skipTest("TODO")
+        for v_ref in (0, 1):
+            cmd.set('orthoscopic', v_ref)
+            v = cmd.get_setting_boolean('orthoscopic')
+            self.assertTrue(isinstance(v, int))
+            self.assertEqual(v, v_ref)
 
     def testGetSettingFloat(self):
-        cmd.get_setting_float
-        self.skipTest("TODO")
+        for v_ref in (0.0, 1.0):
+            # bool as float
+            cmd.set('orthoscopic', v_ref)
+            v = cmd.get_setting_float('orthoscopic')
+            self.assertTrue(isinstance(v, float))
+            self.assertEqual(v, v_ref)
+
+        # float with 6 significant digits
+        cmd.set('sphere_scale', 1.234565)
+        v = cmd.get_setting_float('sphere_scale')
+        self.assertEqual(int(v * 1e5), 123456)
 
     def testGetSettingInt(self):
-        cmd.get_setting_int
-        self.skipTest("TODO")
+        cmd.set('light_count', 4)
+        v = cmd.get_setting_int('light_count')
+        self.assertTrue(isinstance(v, int))
+        self.assertEqual(v, 4)
+
+        # float as int gets floored
+        cmd.set('sphere_scale', 3.7)
+        v = cmd.get_setting_int('sphere_scale')
+        self.assertTrue(isinstance(v, int))
+        self.assertEqual(v, 3)
 
     def testGetSettingText(self):
-        cmd.get_setting_text
-        self.skipTest("TODO")
+        # int
+        cmd.set('light_count', 4)
+        v = cmd.get_setting_text('light_count')
+        self.assertTrue(isinstance(v, str))
+        self.assertEqual(v, '4')
+
+        # bool
+        cmd.set('orthoscopic', 0)
+        v = cmd.get_setting_text('orthoscopic')
+        self.assertEqual(v, 'off')
+
+        # float gets rounded to 5 digits
+        cmd.set('sphere_scale', 3.7)
+        v = cmd.get_setting_text('sphere_scale')
+        self.assertEqual(v, '3.70000')
+
+        # float3 gets nicely formatted
+        cmd.set('label_position', (0.100009, 2.3, 4.56789))
+        v = cmd.get_setting_text('label_position')
+        self.assertEqual(v, '[ 0.10001, 2.30000, 4.56789 ]')
+
+        # string
+        cmd.set('pdb_echo_tags', 'Hello World')
+        v = cmd.get_setting_text('pdb_echo_tags')
+        self.assertEqual(v, 'Hello World')
 
     def testGetSettingTuple(self):
-        cmd.get_setting_tuple
-        self.skipTest("TODO")
+        cmd.set('label_position', (1, 2, 4))
+        v = cmd.get_setting_tuple('label_position')
+        self.assertEqual(v, (4, (1.0, 2.0, 4.0)))
 
     def testGetSettingUpdates(self):
-        cmd.get_setting_updates
-        self.skipTest("TODO")
+        v = cmd.get_setting_updates() # consume whatever
+        cmd.set('orthoscopic', 1)
+        v = cmd.get_setting_updates()
+        self.assertEqual(v, [23])
 
     @testing.foreach.product(
             ('', 'ala', '(elem O)'),
@@ -57,6 +103,7 @@ class TestSetting(testing.PyMOLTestCase):
             (2.3,),
             (1.0,),
             )
+    @testing.requires_version('1.7')
     def testSet(self, sele, name, value, defaultvalue):
         cmd.fragment('ala')
         cmd.set(name, value, sele)
@@ -70,6 +117,7 @@ class TestSetting(testing.PyMOLTestCase):
             self.assertEqual(n, 1)
             self.assertEqual(stored.v, defaultvalue)
 
+    @testing.requires_version('1.5')
     def testSetBond(self):
         value = 2.3
         cmd.fragment('ala')
