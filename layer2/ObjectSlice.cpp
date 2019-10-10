@@ -26,7 +26,6 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"MemoryDebug.h"
 #include"Map.h"
-#include"Debug.h"
 #include"Parse.h"
 #include"Isosurf.h"
 #include"Vector.h"

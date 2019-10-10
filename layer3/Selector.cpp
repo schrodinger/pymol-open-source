@@ -25,7 +25,6 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"Map.h"
 #include"Vector.h"
-#include"Debug.h"
 #include"Err.h"
 #include"Word.h"
 #include"Util.h"

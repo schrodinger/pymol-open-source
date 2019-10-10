@@ -25,7 +25,6 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"MemoryDebug.h"
 #include"Map.h"
-#include"Debug.h"
 #include"Parse.h"
 #include"Tetsurf.h"
 #include"Vector.h"
