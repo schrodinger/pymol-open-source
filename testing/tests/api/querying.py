@@ -282,6 +282,7 @@ class TestQuerying(testing.PyMOLTestCase):
         cmd.ramp_new('ramp1', 'none')  # non-molecular object
         cmd.select('foo', 'none')
         self.assertEqual(cmd.get_names(), ['gly', 'cys', 'ramp1'])
+        self.assertEqual(cmd.get_names(selection="elem S"), ['cys'])
         cmd.disable('gly')
         cmd.disable('ramp1')
         self.assertEqual(cmd.get_names(enabled_only=1), ['cys'])
