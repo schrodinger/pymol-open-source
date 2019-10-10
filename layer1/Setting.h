@@ -111,6 +111,7 @@ struct _CSetting {
   SettingRec *info;
 };
 
+#define cSetting_tuple      -1 // for get_setting_tuple
 #define cSetting_blank       0
 #define cSetting_boolean     1
 #define cSetting_int         2

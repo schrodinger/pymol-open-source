@@ -1097,6 +1097,9 @@ PyObject *PConvStringListToPyList(int l, const char * const *str)
   return (PConvAutoNone(result));
 }
 
+/**
+ * Converts concatenated null-terminated strings to a list of strings.
+ */
 PyObject *PConvStringVLAToPyList(const char *vla)
 {
   int a, c, n = 0;
@@ -1118,6 +1121,10 @@ PyObject *PConvStringVLAToPyList(const char *vla)
   return (PConvAutoNone(result));
 }
 
+/**
+ * Concatenates a list of null-terminated strings (the null-terminator serves as
+ * the delimiter).
+ */
 int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr)
 {
   int a, l, ll;

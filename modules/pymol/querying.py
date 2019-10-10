@@ -14,6 +14,8 @@
 
 from __future__ import print_function
 
+from .constants import CURRENT_STATE, ALL_STATES
+
 if True:
 
     import time
@@ -55,12 +57,8 @@ ARGUMENTS
     memory. If the internal memory gets freed or reallocated, this wrapper
     will become invalid.
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _self._cmd.get_volume_field(_self._COb, objName, int(state) - 1, int(copy))
-        finally:
-            _self.unlock(r,_self)
         return r
 
     def get_volume_histogram(objName, bins=64, range=None, _self=cmd):
@@ -70,40 +68,24 @@ DESCRIPTION
     API ONLY.  Get min, max, mean, stdev and histogram of a map or volume
     object as a list of length bins + 4.
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _self._cmd.get_volume_histogram(_self._COb,objName,
                     int(bins), range or (0., 0.))
-        finally:
-            _self.unlock(r,_self)
         return r
 
     def get_unused_name(prefix="tmp",alwaysnumber=1,_self=cmd):
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_unused_name(_self._COb, prefix, alwaysnumber)
-        finally:
-            _self.unlock(r,_self)
         return r
 
     def get_modal_draw(_self=cmd,quiet=1):
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_modal_draw(_self._COb)
-        finally:
-            _self.unlock(r,_self)
         return r
 
     def get_drag_object_name(_self=cmd):
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_drag_object_name(_self._COb)
-        finally:
-            _self.unlock(r,_self)
         return r
 
     def get_object_matrix(object,state=1, incl_ttt=1, _self=cmd):
@@ -114,14 +96,9 @@ DESCRIPTION
     something to do with querying the transformation matrices
     associated with an object
         '''
-        r = DEFAULT_ERROR
         object = str(object)
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_object_matrix(_self._COb,str(object), int(state)-1, int(incl_ttt))
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_object_ttt(object, quiet=1, _self=cmd):
@@ -143,7 +120,7 @@ DESCRIPTION
                     print('TTT %8.2f %8.2f %8.2f | %8.2f' % tuple(r[i * 4:i * 4 + 4]))
         return r
 
-    def get_object_settings(object, state=0, quiet=1, _self=cmd):
+    def get_object_settings(object, state=ALL_STATES, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -161,21 +138,15 @@ DESCRIPTION
     "get_object_list" is an unsupported command that may have
     something to do with querying the objects covered by a selection.
     '''
-
-        r = DEFAULT_ERROR
         selection = selector.process(selection)
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_object_list(_self._COb,str(selection))
             if not quiet:
                 if(is_list(r)):
                     print(" get_object_list: ",str(r))
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
-    def get_symmetry(selection="(all)",state=-1,quiet=1,_self=cmd):
+    def get_symmetry(selection="(all)",state=CURRENT_STATE,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -192,22 +163,16 @@ PYMOL API
 
 
         '''
-        r = DEFAULT_ERROR
         selection = selector.process(selection)
-        try:
-            _self.lock(_self)
-            r = _cmd.get_symmetry(_self._COb,str(selection),int(state))
-            if not quiet:
-                if(is_list(r)):
-                    if(len(r)):
+        with _self.lockcm:
+            r = _cmd.get_symmetry(_self._COb,str(selection),int(state) - 1)
+        if not quiet:
+            if r:
                         print(" get_symmetry: A     = %7.3f B    = %7.3f C     = %7.3f"%tuple(r[0:3]))
                         print(" get_symmetry: Alpha = %7.3f Beta = %7.3f Gamma = %7.3f"%tuple(r[3:6]))
                         print(" get_symmetry: SpaceGroup = %s"%r[6])
-                    else:
+            else:
                         print(" get_symmetry: No symmetry defined.")
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_title(object, state, quiet=1, _self=cmd):
@@ -226,22 +191,17 @@ PYMOL API
     cmd.set_title(string object, int state, string text)
 
     '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_title(_self._COb,str(object),int(state)-1)
-            if not quiet:
+        if not quiet:
                 if r is not None:
                     print(" get_title: %s"%r)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
 
     def angle(name=None, selection1="(pk1)", selection2="(pk2)",
 	      selection3="(pk3)", mode=None, label=1, reset=0,
-	      zoom=0, state=0, quiet=1, _self=cmd,
+	      zoom=0, state=ALL_STATES, quiet=1, _self=cmd,
               state1=-3, state2=-3, state3=-3):
 
         '''
@@ -328,7 +288,7 @@ SEE ALSO
 
     def dihedral(name=None, selection1="(pk1)", selection2="(pk2)",
 		 selection3="(pk3)", selection4="(pk4)", mode=None,
-		 label=1, reset=0, zoom=0, state=0, quiet=1, _self=cmd):
+		 label=1, reset=0, zoom=0, state=ALL_STATES, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -421,7 +381,7 @@ SEE ALSO
 
     def distance(name=None, selection1="(pk1)", selection2="(pk2)",
 		 cutoff=None, mode=None, zoom=0, width=None, length=None,
-                 gap=None, label=1, quiet=1, reset=0, state=0,
+                 gap=None, label=1, quiet=1, reset=0, state=ALL_STATES,
                  state1=-3, state2=-3, _self=cmd):
 
         '''
@@ -567,13 +527,8 @@ PYMOL API
     cmd.get_povray()
 
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_povray(_self._COb)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_idtf(quiet=1, _self=cmd):
@@ -588,13 +543,8 @@ PYMOL API
     cmd.idtf()
 
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_idtf(_self._COb)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
 
         if not quiet:
             fov = _self.get_setting_float("field_of_view")
@@ -617,13 +567,8 @@ PYMOL API
     cmd.get_obj_mtl()
 
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_mtl_obj(_self._COb)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_version(quiet=1,_self=cmd):
@@ -642,9 +587,7 @@ PYMOL API
         '''
         # get_version doesn't need the _COb and doesn't require a lock
         r = _cmd.get_version()
-        if _raising(r,_self):
-            raise pymol.CmdException
-        else:
+        if True:
             quiet = int(quiet)
             if quiet < 1 and _feedback(fb_module.cmd, fb_mask.results, _self):
                 import re
@@ -669,13 +612,8 @@ PYMOL API
     cmd.get_vrml()
 
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_vrml(_self._COb,int(version))
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_collada(version=2, _self=cmd):
@@ -690,10 +628,8 @@ PYMOL API
     cmd.get_collada()
 
         '''
-        r = DEFAULT_ERROR
         with _self.lockcm:
             r = _cmd.get_collada(_self._COb,int(version))
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_gltf(filename, quiet=1, _self=cmd):
@@ -755,16 +691,10 @@ SEE ALSO
         # preprocess selection
         selection = selector.process(selection)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.count_states(_self._COb,selection)
-        finally:
-            _self.unlock(r,_self)
-        if is_ok(r):
-            if not quiet:
+        if not quiet:
                 print(" cmd.count_states: %d states."%r)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_movie_length(quiet=1, images=-1, _self=cmd):
@@ -782,9 +712,7 @@ SEE ALSO
 
     frame, count_states, count_frames
     '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_movie_length(_self._COb)
             if r<0:
                 if images==0:
@@ -796,9 +724,6 @@ SEE ALSO
                     r = 0
             if r>=0 and not quiet:
                 print(" cmd.get_movie_length: %d frames"%r)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def count_frames(quiet=1, _self=cmd):
@@ -820,14 +745,9 @@ SEE ALSO
 
     frame, count_states
     '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.count_frames(_self._COb)
             if not quiet: print(" cmd.count_frames: %d frames"%r)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def export_dots(object,state,_self=cmd):
@@ -839,13 +759,8 @@ DESCRIPTION
     representation back to the Python layer.
 
     '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.export_dots(_self._COb,object,int(state)-1)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def overlap(selection1, selection2, state1=1, state2=1, adjust=0.0, quiet=1, _self=cmd):
@@ -872,73 +787,53 @@ NOTES
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.overlap(_self._COb,str(selection1),str(selection2),
                                   int(state1)-1,int(state2)-1,
                                   float(adjust))
             if not quiet: print(" cmd.overlap: %5.3f Angstroms."%r)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_movie_locked(_self=cmd):
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_movie_locked(_self._COb)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_object_color_index(name,_self=cmd):
         name = str(name)
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_object_color_index(_self._COb,name)
-        finally:
-            _self.unlock(r,_self)
-#        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_color_tuple(name,mode=0,_self=cmd):
+        '''Get the RGB color tuple for a color (range 0.0 to 1.0)
+        :param name: color name or index
+        :param mode: don't use (mode 4 returns negative R for special colors)
+        '''
         name=str(name)
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        mod = int(mode)
+        if mode in (1, 2):
+            print(' Warning: use get_color_indices instead of get_color_tuple(mode={})'.format(mode))
+        elif mode == 3:
+            print(' Warning: use get_color_index instead of get_color_tuple(mode=3)')
+        with _self.lockcm:
             r = _cmd.get_color(_self._COb,name,mode)
             if r is None:
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print("cmd-Error: Unknown color '%s'."%name)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_color_indices(all=0,_self=cmd):
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             if all:
                 r = _cmd.get_color(_self._COb,'',2)
             else:
                 r = _cmd.get_color(_self._COb,'',1)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_color_index(color,_self=cmd):
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_color(_self._COb,str(color),3)
-        finally:
-            _self.unlock(r,_self)
         return r
 
     def get_renderer(quiet=1, _self=cmd):
@@ -947,13 +842,8 @@ DESCRIPTION
 
     Prints OpenGL renderer information.
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_renderer(_self._COb)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
 
         if not int(quiet):
             print(" OpenGL graphics engine:")
@@ -963,20 +853,15 @@ DESCRIPTION
 
         return r
 
-    def get_phipsi(selection="(name CA)",state=-1,_self=cmd):
+    def get_phipsi(selection="(name CA)",state=CURRENT_STATE,_self=cmd):
         # preprocess selections
         selection = selector.process(selection)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_phipsi(_self._COb,"("+str(selection)+")",int(state)-1)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
-    def get_atom_coords(selection, state=0,quiet=1,_self=cmd):
+    def get_atom_coords(selection, state=ALL_STATES,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -984,19 +869,12 @@ DESCRIPTION
     
     '''
         # low performance way to get coords for a single atom
-        r = []
         selection = selector.process(selection)
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_atom_coords(_self._COb,str(selection),int(state)-1,int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if r is None:
-            if _self._raising(_self=_self): raise pymol.CmdException
-        elif not quiet:
+        if not quiet:
             for a in r:
                 print(" cmd.get_atom_coords: [%8.3f,%8.3f,%8.3f]"%(a))
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_coords(selection='all', state=1, quiet=1, _self=cmd):
@@ -1047,18 +925,13 @@ DESCRIPTION
 
     '''
 
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_position(_self._COb)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self):
-            raise pymol.CmdException
-        elif not quiet:
+        if not quiet:
             print(" cmd.get_position: [%8.3f,%8.3f,%8.3f]"%(r[0],r[1],r[2]))
         return r
 
-    def get_distance(atom1="pk1",atom2="pk2",state=-1,quiet=1,_self=cmd):
+    def get_distance(atom1="pk1",atom2="pk2",state=CURRENT_STATE,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1080,24 +953,17 @@ PYMOL API
     cmd.get_distance(atom1="pk1",atom2="pk2",state=-1)
 
         '''
-        r = DEFAULT_ERROR
         # preprocess selections
         atom1 = selector.process(atom1)
         atom2 = selector.process(atom2)
         #
-        r = None
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_distance(_self._COb,str(atom1),str(atom2),int(state)-1)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self):
-            raise pymol.CmdException
-        elif not quiet:
+        if not quiet:
             print(" cmd.get_distance: %5.3f Angstroms."%r)
         return r
 
-    def get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=-1,quiet=1,_self=cmd):
+    def get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=CURRENT_STATE,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1124,19 +990,13 @@ PYMOL API
         atom2 = selector.process(atom2)
         atom3 = selector.process(atom3)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_angle(_self._COb,str(atom1),str(atom2),str(atom3),int(state)-1)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self):
-            raise pymol.CmdException
-        elif not quiet:
+        if not quiet:
             print(" cmd.get_angle: %5.3f degrees."%r)
         return r
 
-    def get_dihedral(atom1="pk1",atom2="pk2",atom3="pk3",atom4="pk4",state=-1,quiet=1,_self=cmd):
+    def get_dihedral(atom1="pk1",atom2="pk2",atom3="pk3",atom4="pk4",state=CURRENT_STATE,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1167,15 +1027,9 @@ PYMOL API
         atom3 = selector.process(atom3)
         atom4 = selector.process(atom4)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_dihe(_self._COb,str(atom1),str(atom2),str(atom3),str(atom4),int(state)-1)
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self):
-            raise pymol.CmdException
-        elif not quiet:
+        if not quiet:
             print(" cmd.get_dihedral: %5.3f degrees."%r)
         return r
 
@@ -1193,18 +1047,11 @@ PYMOL API
         # preprocess selection
         selection = selector.process(selection)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_model(_self._COb,"("+str(selection)+")",int(state)-1,str(ref),int(ref_state)-1)
-            if r is None:
-                r = DEFAULT_ERROR
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
-    def get_bonds(selection="(all)", state=-1, _self=cmd):
+    def get_bonds(selection="(all)", state=CURRENT_STATE, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1248,19 +1095,13 @@ SEE ALSO
         # preprocess selection
         selection = selector.process(selection)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_area(_self._COb,"("+str(selection)+")",int(state)-1,int(load_b))
-        finally:
-            _self.unlock(r,_self)
-        if r<0.0: # negative area signals error condition
-            if _self._raising(): raise pymol.CmdException
-        elif not quiet:
+        if not quiet:
             print(" cmd.get_area: %5.3f Angstroms^2."%r)
         return r
 
-    def get_chains(selection="(all)",state=0,quiet=1,_self=cmd):
+    def get_chains(selection="(all)",state=ALL_STATES,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1279,17 +1120,11 @@ ARGUMENTS
         # preprocess selection
         selection = selector.process(selection)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_chains(_self._COb,"("+str(selection)+")",int(state)-1)
-        finally:
-            _self.unlock(r,_self)
         if r is None:
             return []
-        if _raising(r,_self):
-            raise pymol.CmdException
-        elif not quiet:
+        if not quiet:
             print(" cmd.get_chains: ",str(r))
         return r
 
@@ -1313,9 +1148,7 @@ SEE ALSO
     get_type, count_atoms, count_states
         '''
         selection = selector.process(selection)
-        r = DEFAULT_ERROR
         # this needs to be replaced with a flag & masking scheme...
-        mode = 1
         if type=='objects':
             mode = 1
         elif type=='selections':
@@ -1337,24 +1170,14 @@ SEE ALSO
         elif type=='group_objects':
             mode = 9
         else:
-            print("Error: unknown type: '%s'"%str(type))
-            if _raising(-1,_self): raise pymol.CmdException
-        try:
-            _self.lock(_self)
+            raise pymol.CmdException("unknown type: '{}'".format(type))
+        with _self.lockcm:
             r = _cmd.get_names(_self._COb,int(mode),int(enabled_only),str(selection))
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_legal_name(name,_self=cmd):
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_legal_name(_self._COb,str(name))
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_type(name,quiet=1,_self=cmd):
@@ -1387,18 +1210,10 @@ SEE ALSO
 
     get_names
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_type(_self._COb,str(name))
-        finally:
-            _self.unlock(r,_self)
-        if is_error(r):
-            if not quiet and _feedback(fb_module.cmd,fb_mask.errors,_self):
-                print("Cmd-Error: unrecognized name.")
-        elif not quiet:
+        if not quiet:
             print(r)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def id_atom(selection,mode=0,quiet=1,_self=cmd):
@@ -1455,12 +1270,8 @@ NOTES
         # preprocess selection
         selection = selector.process(selection)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.identify(_self._COb,"("+str(selection)+")",int(mode)) # 0 = default mode
-        finally:
-            _self.unlock(r,_self)
         if is_list(r):
             if len(r):
                 if not quiet:
@@ -1470,7 +1281,6 @@ NOTES
                     else:
                         for a in r:
                             print(" cmd.identify: (id %d)"%a)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def index(selection="(all)",quiet=1,_self=cmd):
@@ -1494,18 +1304,13 @@ NOTE
         # preprocess selection
         selection = selector.process(selection)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.index(_self._COb,"("+str(selection)+")",0) # 0 = default mode
-        finally:
-            _self.unlock(r,_self)
         if not quiet:
             if is_list(r):
                 if len(r):
                     for a in r:
                         print(" cmd.index: (%s`%d)"%(a[0],a[1]))
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def find_pairs(selection1,selection2,state1=1,state2=1,cutoff=3.5,mode=0,angle=45,_self=cmd):
@@ -1540,20 +1345,14 @@ NOTE
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.find_pairs(_self._COb,"("+str(selection1)+")",
                                       "("+str(selection2)+")",
                                       int(state1)-1,int(state2)-1,
                                       int(mode),float(cutoff),float(angle))
-            # 0 = default mode
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
-    def get_extent(selection="(all)",state=0,quiet=1,_self=cmd):
+    def get_extent(selection="(all)",state=ALL_STATES,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1569,18 +1368,11 @@ PYMOL API
         # preprocess selection
         selection = selector.process(selection)
         #
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_min_max(_self._COb,str(selection),int(state)-1)
-        finally:
-            _self.unlock(r,_self)
-        if not r:
-            if _self._raising(_self=_self): raise pymol.CmdException
-        elif not quiet:
+        if not quiet:
             print(" cmd.extent: min: [%8.3f,%8.3f,%8.3f]"%(r[0][0],r[0][1],r[0][2]))
             print(" cmd.extent: max: [%8.3f,%8.3f,%8.3f]"%(r[1][0],r[1][1],r[1][2]))
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def phi_psi(selection="(byres pk1)", quiet=1, _self=cmd):
@@ -1594,24 +1386,15 @@ USAGE
         '''
 
         r = cmd.get_phipsi(selection)
-        if r is not None:
-            kees = list(r.keys())
-            kees.sort()
-            if not quiet:
-                _self.feedback('push')
-                _self.feedback('disable','executive','actions')
-                for a in kees:
+        if not quiet and isinstance(r, dict):
+            for a in sorted(r):
                     _self.iterate("(%s`%d)"%a,"print(' %-9s "+
                                 ("( %6.1f, %6.1f )"%r[a])+
                                 "'%(resn+'-'+resi+':'))")
-                _self.feedback('pop')
-        elif _feedback(fb_module.cmd,fb_mask.errors,_self):
-            print("cmd-Error: can't compute phi_psi")
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
 
-    def count_atoms(selection="(all)",quiet=1,state=0,domain='',_self=cmd):
+    def count_atoms(selection="(all)",quiet=1,state=ALL_STATES,domain='',_self=cmd):
         '''
 DESCRIPTION
 
@@ -1692,13 +1475,8 @@ PYMOL API
     cmd.get_raw_alignment(name)
 
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.get_raw_alignment(_self._COb,str(name),int(active_only))
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
 
     def get_object_state(name, _self=cmd):
@@ -1732,7 +1510,7 @@ DESCRIPTION
             raise pymol.CmdException('Selection spans multiple object states')
         return state_set.pop()
 
-    def centerofmass(selection='(all)', state=-1, quiet=1, _self=cmd):
+    def centerofmass(selection='(all)', state=CURRENT_STATE, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 

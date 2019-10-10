@@ -668,22 +668,28 @@ bool ObjectMakeValidName(char *name)
   return modified;
 }
 
-/*
- * Strip invalid characters from `name`, and if `name` equals a reserved
+/**
+ * Replaces invalid characters in `name` with an underscore,
+ * or strips them if they are terminal or sequential - if `name` equals a reserved
  * selection keyword, then also append an underscore.
+ *
+ * @param[in,out] name Object name to validate
+ * @param quiet If false, print warnings if the name gets modified.
  */
-void ObjectMakeValidName(PyMOLGlobals * G, char *name)
+void ObjectMakeValidName(PyMOLGlobals * G, char *name, bool quiet)
 {
-  if (ObjectMakeValidName(name)) {
+  if (ObjectMakeValidName(name) && !quiet) {
     PRINTFB(G, FB_Executive, FB_Warnings)
       " Warning: Invalid characters in '%s' have been replaced or stripped\n",
       name ENDFB(G);
   }
 
   if (SelectorNameIsKeyword(G, name)) {
-    PRINTFB(G, FB_Executive, FB_Warnings)
+    if (!quiet) {
+      PRINTFB(G, FB_Executive, FB_Warnings)
       " Warning: '%s' is a reserved keyword, appending underscore\n", name
       ENDFB(G);
+    }
     strcat(name, "_");
     return;
   }

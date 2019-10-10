@@ -14,6 +14,16 @@
 
 from __future__ import print_function
 
+# must match layer1/Setting.h
+cSetting_tuple = -1
+cSetting_blank = 0
+cSetting_boolean = 1
+cSetting_int = 2
+cSetting_float = 3
+cSetting_float3 = 4
+cSetting_color = 5
+cSetting_string = 6
+
 if True:
 
     import traceback
@@ -71,29 +81,29 @@ if True:
         return name_list
 
     def _validate_value(type, value):
-        if type==1: # boolean (also support non-zero float for truth)
+        if type == cSetting_boolean:  # (also support non-zero float for truth)
             try: # number, non-zero, then interpret as TRUE
                 return 1 if float(value) else 0
             except:
                 pass
             return boolean_dict[boolean_sc.auto_err(str(value), "boolean")]
-        if type < 4:
+        if type in (cSetting_int, cSetting_float):
             if is_string(value) and boolean_sc.has_key(value):
                 value = boolean_dict[boolean_sc.auto_err(str(value), "boolean")]
-            if type == 2:
+            if type == cSetting_int:
                 return int(value)
             return float(value)
-        if type==4: # float3 - some legacy handling req.
+        if type == cSetting_float3:  # some legacy handling req.
             if not is_string(value):
                 v = value
             elif ',' in value:
-                v = eval(value)
+                v = cmd.safe_eval(value)
             else:
                 v = value.split()
             return (float(v[0]), float(v[1]), float(v[2]))
-        if type==5: # color
+        if type == cSetting_color:
             return str(value)
-        if type==6: # string
+        if type == cSetting_string:
             v = str(value)
             # strip outermost quotes (cheesy approach)
             if len(v) > 1 and v[0] == v[-1] and v[0] in ('"', "'"):
@@ -388,27 +398,7 @@ USAGE
         return r
 
     def get_setting(name,object='',state=0,_self=cmd): # INTERNAL
-        r = DEFAULT_ERROR
-        i = _get_index(name)
-        try:
-            _self.lock(_self)
-            r = _cmd.get_setting_tuple(_self._COb,i,str(object),int(state)-1)
-            typ = r[0]
-            if typ<3: # boolean, int
-                value = int(r[1][0])
-            elif typ<4: # float
-                value = r[1][0]
-            elif typ<5: # vector
-                value = r[1]
-            else:
-                value = r[1] # color or string
-        finally:
-            _self.unlock(r,_self)
-        if is_ok(r):
-            return value
-        elif _self._raising(r,_self):
-            raise QuietException
-        return r
+        return get_setting_tuple_new(name, object, state, _self)[1]
 
     def get(name, selection='', state=0, quiet=1, _self=cmd):
         '''
@@ -448,14 +438,9 @@ SEE ALSO
 
     '''
 
-        r = DEFAULT_ERROR
         state = int(state)
         i = _get_index(name)
-        try:
-            _self.lock(_self)
-            r = _cmd.get_setting_text(_self._COb,i,str(selection),state-1)
-        finally:
-            _self.unlock(r,_self)
+        r = get_setting_text(i, str(selection), state, _self)
         if is_ok(r) and (r is not None):
             if not int(quiet):
                 name = name_dict.get(i, name)
@@ -468,69 +453,39 @@ SEE ALSO
                     print(" get: %s = %s in object %s"%(name,r_str,selection))
                 else:
                     print(" get: %s = %s in object %s state %d"%(name,r_str,selection,state))
-        if _self._raising(r,_self): raise QuietException
         return r
 
     def get_setting_tuple_new(name,object='',state=0,_self=cmd): # INTERNAL
-        r = DEFAULT_ERROR
         i = _get_index(name)
-        try:
-            _self.lock(_self)
-            r = _cmd.get_setting_tuple(_self._COb,i,str(object),int(state)-1)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        with _self.lockcm:
+            return _cmd.get_setting_of_type(_self._COb, i, str(object), int(state) - 1, cSetting_tuple)
 
     def get_setting_tuple(name,object='',state=0,_self=cmd): # INTERNAL
         r = get_setting_tuple_new(name, object, state, _self)
-        if r[0] != 4:
+        if r[0] != cSetting_float3:
             # legacy API
             r = (r[0], (r[1],))
         return r
 
     def get_setting_boolean(name,object='',state=0,_self=cmd): # INTERNAL
-        r = DEFAULT_ERROR
         i = _get_index(name)
-        try:
-            _self.lock(_self)
-            r = _cmd.get_setting_of_type(_self._COb,i,str(object),int(state)-1,1)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        with _self.lockcm:
+            return _cmd.get_setting_of_type(_self._COb, i, str(object), int(state) - 1, cSetting_boolean)
 
     def get_setting_int(name,object='',state=0,_self=cmd): # INTERNAL
-        r = DEFAULT_ERROR
         i = _get_index(name)
-        try:
-            _self.lock(_self)
-            r = _cmd.get_setting_of_type(_self._COb,i,str(object),int(state)-1,2)
-        finally:
-            _self.unlock(r,_self)
-        return r
+        with _self.lockcm:
+            return _cmd.get_setting_of_type(_self._COb, i, str(object), int(state) - 1, cSetting_int)
 
     def get_setting_float(name,object='',state=0,_self=cmd): # INTERNAL
-        r = DEFAULT_ERROR
         i = _get_index(name)
-        try:
-            _self.lock(_self)
-            r = _cmd.get_setting_of_type(_self._COb,i,str(object),int(state)-1,3)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        with _self.lockcm:
+            return _cmd.get_setting_of_type(_self._COb, i, str(object), int(state) - 1, cSetting_float)
 
     def get_setting_text(name,object='',state=0,_self=cmd):  # INTERNAL
-        r = DEFAULT_ERROR
         i = _get_index(name)
-        try:
-            _self.lock(_self)
-            r = _cmd.get_setting_text(_self._COb,i,str(object),int(state)-1)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        with _self.lockcm:
+            return _cmd.get_setting_of_type(_self._COb, i, str(object), int(state) - 1, cSetting_string)
 
     def get_setting_updates(object='', state=0, _self=cmd): # INTERNAL
         r = []

@@ -127,7 +127,7 @@ public:
 int ObjectCopyHeader(CObject * I, const CObject * src);
 void ObjectSetName(CObject * I, const char *name);
 bool ObjectMakeValidName(char *name);
-void ObjectMakeValidName(PyMOLGlobals * G, char *name);
+void ObjectMakeValidName(PyMOLGlobals * G, char *name, bool quiet = false);
 void ObjectPurgeSettings(CObject * I);
 void ObjectUseColor(CObject * I);
 void ObjectUseColorCGO(CGO *cgo, CObject * I);

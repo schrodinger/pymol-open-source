@@ -4776,9 +4776,9 @@ static int fStrOrderFn(const char * const* array, int l, int r) {
 /*
  * Returns an VLA with pointers into G->Lexicon
  */
-const char **ExecutiveGetChains(PyMOLGlobals * G, const char *sele, int state)
+pymol::Result<std::vector<const char*>> ExecutiveGetChains(
+    PyMOLGlobals* G, const char* sele, int state)
 {
-  const char **result = NULL;
   std::set<lexidx_t> chains;
   int c = 0;
   ObjectMoleculeOpRec op;
@@ -4793,17 +4793,17 @@ const char **ExecutiveGetChains(PyMOLGlobals * G, const char *sele, int state)
     op.ii1 = (int*) (void*) &chains; // pointer pack
     op.i1 = 0;
     ExecutiveObjMolSeleOp(G, sele1, &op);
-    result = VLAlloc(const char*, chains.size());
+    std::vector<const char*> result(chains.size());
     for (const auto& chain : chains) {
       result[c++] = LexStr(G, chain);
     }
     // sort the array
-    UtilSortInPlace(G, result, chains.size(), sizeof(char *),
+    UtilSortInPlace(G, result.data(), chains.size(), sizeof(char *),
         (UtilOrderFn *) fStrOrderFn);
-  } else {
-    ErrMessage(G, __func__, "Bad selection.");
+    return result;
   }
-  return (result);
+
+  return pymol::Error("Bad selection");
 }
 
 int ExecutiveValidateObjectPtr(PyMOLGlobals * G, CObject * ptr, int object_type)
@@ -5879,95 +5879,50 @@ static CObject **ExecutiveSeleToObjectVLA(PyMOLGlobals * G, const char *s1)
   return (result);
 }
 
-int ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a, float *b, float *c,
-                        float *alpha, float *beta, float *gamma, char *sgroup, int *defined)
+/**
+ * @param sele object name (or single-object atom selection expression)
+ * @param state object state (only for maps, ignored for molecules)
+ * @return true if symmetry is defined
+ */
+pymol::Result<bool>
+ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a, float *b, float *c,
+                        float *alpha, float *beta, float *gamma, char *sgroup)
 {
-  int ok = false;
+  // try `sele` as an object name
+  auto obj = ExecutiveFindObjectByName(G, sele);
 
-  ObjectMolecule *objMol;
-  ObjectMap *objMap;
-  int n_obj;
-  CObject **objVLA = NULL;
-  CObject *obj = NULL;
-  CSymmetry* symm;
-
-  if(state<0) {
-    state = 0;
-  } else if(state>0) {
-    state--;
+  // odd feature: accept atom selections to select single object
+  if (!obj) {
+    SelectorTmp tmpsele1(G, sele);
+    obj = SelectorGetSingleObjectMolecule(G, tmpsele1.getIndex());
+    if (!obj) {
+      return pymol::Error("selection must refer to exactly one object");
+    }
   }
 
-  objVLA = ExecutiveSeleToObjectVLA(G, sele);
-  n_obj = VLAGetSize(objVLA);
+  const CSymmetry* symm = nullptr;
 
-  switch(n_obj) {
-
-    /* No object found */
-  case 0:
-    {
-      PRINTFB(G, FB_Executive, FB_Errors)
-	"Error: invalid selection.\n" ENDFB(G);
-      ok = false;
+  if(obj->type==cObjectMolecule) {
+    symm = static_cast<const ObjectMolecule*>(obj)->Symmetry;
+  } else if(obj->type==cObjectMap) {
+    const auto* ms = ObjectMapGetState(static_cast<ObjectMap*>(obj), state);
+    if (ms) {
+      symm = ms->Symmetry;
     }
-    break;
-
-    /* One unique object found */
-  case 1:
-    {
-      obj = objVLA[0];
-
-      if(obj->type==cObjectMolecule) {
-	objMol = (ObjectMolecule*) obj;
-
-	if(objMol->Symmetry) {
-	  *a = objMol->Symmetry->Crystal.Dim[0];
-	  *b = objMol->Symmetry->Crystal.Dim[1];
-	  *c = objMol->Symmetry->Crystal.Dim[2];
-	  *alpha = objMol->Symmetry->Crystal.Angle[0];
-	  *beta = objMol->Symmetry->Crystal.Angle[1];
-	  *gamma = objMol->Symmetry->Crystal.Angle[2];
-	  UtilNCopy(sgroup, objMol->Symmetry->SpaceGroup, sizeof(WordType));
-	  *defined = true;
-	  ok = true;
-	}
-      } else if(obj->type==cObjectMap) {
-	objMap = (ObjectMap*) obj;
-
-	/* maps can have multiple symmetry states */
-	if(state>objMap->NState) {
-	  ok = false;
-	  break;
-	}
-
-	symm = (objMap->State + state)->Symmetry;
-	
-	if(symm) {
-
-	  *a = symm->Crystal.Dim[0];
-	  *b = symm->Crystal.Dim[1];
-	  *c = symm->Crystal.Dim[2];
-	  *alpha = symm->Crystal.Angle[0];
-	  *beta = symm->Crystal.Angle[1];
-	  *gamma = symm->Crystal.Angle[2];
-	  UtilNCopy(sgroup, symm->SpaceGroup, sizeof(WordType));
-	  *defined = true;
-	  ok = true;
-	}
-      }
-    }
-    break;
-
-    /* Too many objects found */
-  default:
-    PRINTFB(G, FB_Executive, FB_Errors)
-      "Error: selection must refer to exactly one object.\n" ENDFB(G);
-    ok = false;
-    break;
   }
 
-  VLAFreeP(objVLA);
+  if(symm) {
+    *a = symm->Crystal.Dim[0];
+    *b = symm->Crystal.Dim[1];
+    *c = symm->Crystal.Dim[2];
+    *alpha = symm->Crystal.Angle[0];
+    *beta = symm->Crystal.Angle[1];
+    *gamma = symm->Crystal.Angle[2];
+    UtilNCopy(sgroup, symm->SpaceGroup, sizeof(WordType));
+    return true;
+  }
 
-  return (ok);
+  return false;
 }
 
 int ExecutiveSetSymmetry(PyMOLGlobals * G, const char *sele, int state, float a, float b, float c,
@@ -7960,20 +7915,36 @@ int ExecutiveAlign(PyMOLGlobals * G, const char *s1, const char *s2, const char 
   return ok;
 }
 
-int ExecutivePairIndices(PyMOLGlobals * G, const char *s1, const char *s2, int state1, int state2,
+/**
+ * Implementation of `cmd.find_pairs()`
+ *
+ * @param s1 atom selection expression
+ * @param s2 atom selection expression
+ * @param state1 object state
+ * @param state2 object state
+ * @param mode 0: find all pairs, 1: find hydrogen bonds
+ * @param cutoff maximum distance in Angstrom
+ * @param h_angle hydrogen bond angle cutoff for mode=1
+ * @param[out] indexVLA pairs of atom indices (0-based)
+ * @param[out] objVLA pairs of objects
+ * @return number of pairs
+ */
+pymol::Result<int>
+ExecutivePairIndices(PyMOLGlobals * G, const char *s1, const char *s2, int state1, int state2,
                          int mode, float cutoff, float h_angle,
                          int **indexVLA, ObjectMolecule *** objVLA)
 {
   int result = 0;
-  int sele1, sele2;
+  SelectorTmp tmpsele1(G, s1);
+  SelectorTmp tmpsele2(G, s2);
+  int sele1 = tmpsele1.getIndex();
+  int sele2 = tmpsele2.getIndex();
 
-  sele1 = SelectorIndexByName(G, s1);
-  sele2 = SelectorIndexByName(G, s2);
   if((sele1 >= 0) && (sele2 >= 0)) {
     result = SelectorGetPairIndices(G, sele1, state1, sele2, state2,
                                     mode, cutoff, h_angle, indexVLA, objVLA);
   } else {
-    ErrMessage(G, __func__, "One or more bad selections.");
+    return pymol::Error("One or more bad selections.");
   }
   return (result);
 }
@@ -8034,29 +8005,19 @@ float *ExecutiveGetVertexVLA(PyMOLGlobals * G, const char *s1, int state)
 
 
 /*========================================================================*/
+#ifndef _PYMOL_NOPY
 PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
                                     const char *object, int state, int type)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   /* Assumes blocked Python interpreter */
   PyObject *result = NULL;
   CObject *obj = NULL;
   CSetting **handle = NULL, *set_ptr1 = NULL, *set_ptr2 = NULL;
-  int ok = true;
 
-  if(object)
-    if(object[0]) {
+  if(object && object[0]) {
       obj = ExecutiveFindObjectByName(G, object);
       if(!obj)
-        ok = false;
-    }
-  if(!ok) {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      " SettingGet-Error: object \"%s\" not found.\n", object ENDFB(G);
-    ok = false;
-  } else if(obj) {
+        return PyErr_Format(P_CmdException, "object \"%s\" not found", object);
     handle = obj->fGetSettingHandle(obj, -1);
     if(handle)
       set_ptr1 = *handle;
@@ -8065,14 +8026,12 @@ PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
       if(handle)
         set_ptr2 = *handle;
       else {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          " SettingGet-Error: object \"%s\" lacks state %d.\n", object, state + 1
-          ENDFB(G);
-        ok = false;
+        return PyErr_Format(
+            P_CmdException, "object \"%s\" lacks state %d", object, state + 1);
       }
     }
   }
-  if(ok) {
+  {
     switch (type) {
     case cSetting_boolean:
       {
@@ -8095,7 +8054,11 @@ PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
     case cSetting_float3:
       {
         const float * value = SettingGet_3fv(G, set_ptr2, set_ptr1, index);
-        result = Py_BuildValue("fff", value[0], value[1], value[2]);
+        if (value) {
+          result = Py_BuildValue("fff", value[0], value[1], value[2]);
+        } else {
+          PyErr_SetNone(PyExc_ValueError);
+        }
       }
       break;
     case cSetting_color:
@@ -8111,106 +8074,17 @@ PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
             SettingGetTextPtr(G, set_ptr2, set_ptr1, index, buffer));
       }
       break;
+    case cSetting_tuple:
+      result = SettingGetTuple(G, set_ptr2, set_ptr1, index);
+      break;
     default:
-      result = Py_BuildValue("i", 0);
+      PyErr_Format(PyExc_ValueError, "invalid setting type %d", type);
       break;
     }
   }
   return (result);
-#endif
-
 }
-
-
-/*========================================================================*/
-PyObject *ExecutiveGetSettingText(PyMOLGlobals * G, int index, const char *object, int state)
-{
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-  /* Assumes blocked Python interpreter */
-  PyObject *result = NULL;
-  OrthoLineType buffer = "";
-  CObject *obj = NULL;
-  CSetting **handle = NULL, *set_ptr1 = NULL, *set_ptr2 = NULL;
-  int ok = true;
-
-  if(object)
-    if(object[0]) {
-      obj = ExecutiveFindObjectByName(G, object);
-      if(!obj)
-        ok = false;
-    }
-  if(!ok) {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      " SettingGet-Error: object \"%s\" not found.\n", object ENDFB(G);
-    ok = false;
-  } else if(obj) {
-    handle = obj->fGetSettingHandle(obj, -1);
-    if(handle)
-      set_ptr1 = *handle;
-    if(state >= 0) {
-      handle = obj->fGetSettingHandle(obj, state);
-      if(handle)
-        set_ptr2 = *handle;
-      else {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          " SettingGet-Error: object \"%s\" lacks state %d.\n", object, state + 1
-          ENDFB(G);
-        ok = false;
-      }
-    }
-  }
-  if(ok) {
-    result = Py_BuildValue("s",
-        SettingGetTextPtr(G, set_ptr2, set_ptr1, index, buffer));
-  }
-
-  return (result);
 #endif
-
-}
-
-
-/*========================================================================*/
-PyObject *ExecutiveGetSettingTuple(PyMOLGlobals * G, int index, const char *object, int state)
-{                               /* Assumes blocked Python interpreter */
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-  PyObject *result = NULL;
-  CSetting **handle = NULL;
-  CObject *obj = NULL;
-  int ok = true;
-  PRINTFD(G, FB_Executive)
-    " %s: object %p state %d\n", __func__, object, state ENDFD;
-
-  if(object[0] == 0)            /* global */
-    result = SettingGetTuple(G, NULL, NULL, index);
-  else {
-
-    if(strlen(object)) {
-      obj = ExecutiveFindObjectByName(G, object);
-      if(!obj)
-        ok = false;
-    } else
-      ok = false;
-    if(!ok) {
-      PRINTFB(G, FB_Executive, FB_Errors)
-        " Executive: object not found.\n" ENDFB(G);
-    } else {
-      handle = obj->fGetSettingHandle(obj, state);
-      if(handle && (*handle) && index < cSetting_INIT
-          && (*handle)->info[index].defined)
-        result = SettingGetTuple(G, *handle, NULL, index);
-    }
-  }
-  if(!ok) {
-    result = PConvAutoNone(Py_None);
-  }
-  return (result);
-#endif
-}
 
 
 /*========================================================================*/
@@ -8719,7 +8593,17 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
 }
 
 /*========================================================================*/
-int ExecutiveGetDistance(PyMOLGlobals * G, const char *s0, const char *s1, float *value, int state)
+/**
+ * Get the distance between two atoms.
+ * Implementation of `cmd.get_distance()`
+ *
+ * @param s0 single-atom selection expression
+ * @param s1 single-atom selection expression
+ * @param state object state
+ * @return distance in Angstrom
+ */
+pymol::Result<float> ExecutiveGetDistance(
+    PyMOLGlobals* G, const char* s0, const char* s1, int state)
 {
   SelectorTmp tmpsele0(G, s0);
   SelectorTmp tmpsele1(G, s1);
@@ -8728,30 +8612,32 @@ int ExecutiveGetDistance(PyMOLGlobals * G, const char *s0, const char *s1, float
 
   Vector3f v0, v1;
   int sele0 = -1, sele1 = -1;
-  int ok = true;
 
   if((sele0 = tmpsele0.getIndex()) < 0)
-    ok = ErrMessage(G, "GetDistance", "Selection 1 invalid.");
+    return pymol::Error("Selection 1 invalid.");
   else if((sele1 = tmpsele1.getIndex()) < 0)
-    ok = ErrMessage(G, "GetDistance", "Selection 2 invalid.");
-  if(ok) {
-    if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
-      ok =
-        ErrMessage(G, "GetDistance", "Selection 1 doesn't contain a single atom/vertex.");
-    if(!SelectorGetSingleAtomVertex(G, sele1, state, v1))
-      ok =
-        ErrMessage(G, "GetDistance", "Selection 2 doesn't contain a single atom/vertex.");
-  }
-  if(ok) {
-    (*value) = (float) diff3f(v0, v1);
-  }
-  return ok;
+    return pymol::Error("Selection 2 invalid.");
+  if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
+    return pymol::Error("Selection 1 doesn't contain a single atom/vertex.");
+  if(!SelectorGetSingleAtomVertex(G, sele1, state, v1))
+    return pymol::Error("Selection 2 doesn't contain a single atom/vertex.");
+  return static_cast<float>(diff3f(v0, v1));
 }
 
 
 /*========================================================================*/
-int ExecutiveGetAngle(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, float *value,
-                      int state)
+/**
+ * Get the angle between tree atoms s0-s1-s2.
+ * Implementation of `cmd.get_angle()`
+ *
+ * @param s0 single-atom selection expression
+ * @param s1 single-atom selection expression
+ * @param s2 single-atom selection expression
+ * @param state object state
+ * @return angle in degrees
+ */
+pymol::Result<float> ExecutiveGetAngle(
+    PyMOLGlobals* G, const char* s0, const char* s1, const char* s2, int state)
 {
   SelectorTmp tmpsele0(G, s0);
   SelectorTmp tmpsele1(G, s1);
@@ -8761,34 +8647,40 @@ int ExecutiveGetAngle(PyMOLGlobals * G, const char *s0, const char *s1, const ch
 
   Vector3f v0, v1, v2;
   int sele0 = -1, sele1 = -1, sele2 = -1;
-  int ok = true;
   float d1[3], d2[3];
   if((sele0 = tmpsele0.getIndex()) < 0)
-    ok = ErrMessage(G, "GetAngle", "Selection 1 invalid.");
+    return pymol::Error("Selection 1 invalid.");
   else if((sele1 = tmpsele1.getIndex()) < 0)
-    ok = ErrMessage(G, "GetAngle", "Selection 2 invalid.");
+    return pymol::Error("Selection 2 invalid.");
   else if((sele2 = tmpsele2.getIndex()) < 0)
-    ok = ErrMessage(G, "GetAngle", "Selection 3 invalid.");
-  if(ok) {
-    if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
-      ok = ErrMessage(G, "GetAngle", "Selection 1 doesn't contain a single atom/vertex.");
-    if(!SelectorGetSingleAtomVertex(G, sele1, state, v1))
-      ok = ErrMessage(G, "GetAngle", "Selection 2 doesn't contain a single atom/vertex.");
-    if(!SelectorGetSingleAtomVertex(G, sele2, state, v2))
-      ok = ErrMessage(G, "GetAngle", "Selection 3 doesn't contain a single atom/vertex.");
-  }
-  if(ok) {
-    subtract3f(v0, v1, d1);
-    subtract3f(v2, v1, d2);
-    (*value) = rad_to_deg(get_angle3f(d1, d2));
-  }
-  return ok;
+    return pymol::Error("Selection 3 invalid.");
+  if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
+    return pymol::Error("Selection 1 doesn't contain a single atom/vertex.");
+  if(!SelectorGetSingleAtomVertex(G, sele1, state, v1))
+    return pymol::Error("Selection 2 doesn't contain a single atom/vertex.");
+  if(!SelectorGetSingleAtomVertex(G, sele2, state, v2))
+    return pymol::Error("Selection 3 doesn't contain a single atom/vertex.");
+
+  subtract3f(v0, v1, d1);
+  subtract3f(v2, v1, d2);
+  return rad_to_deg(get_angle3f(d1, d2));
 }
 
 
 /*========================================================================*/
-int ExecutiveGetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
-                     float *value, int state)
+/**
+ * Get the dihedral angle between four atoms.
+ * Implementation of `cmd.get_dihedral()`
+ *
+ * @param s0 single-atom selection expression
+ * @param s1 single-atom selection expression
+ * @param s2 single-atom selection expression
+ * @param s3 single-atom selection expression
+ * @param state object state
+ * @return dihedral angle in degrees
+ */
+pymol::Result<float> ExecutiveGetDihe(PyMOLGlobals* G, const char* s0,
+    const char* s1, const char* s2, const char* s3, int state)
 {
   SelectorTmp tmpsele0(G, s0);
   SelectorTmp tmpsele1(G, s1);
@@ -8799,34 +8691,24 @@ int ExecutiveGetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const cha
 
   Vector3f v0, v1, v2, v3;
   int sele0 = -1, sele1 = -1, sele2 = -1, sele3 = -1;
-  int ok = true;
 
   if((sele0 = tmpsele0.getIndex()) < 0)
-    ok = ErrMessage(G, "GetDihedral", "Selection 1 invalid.");
+    return pymol::Error("Selection 1 invalid.");
   else if((sele1 = tmpsele1.getIndex()) < 0)
-    ok = ErrMessage(G, "GetDihedral", "Selection 2 invalid.");
+    return pymol::Error("Selection 2 invalid.");
   else if((sele2 = tmpsele2.getIndex()) < 0)
-    ok = ErrMessage(G, "GetDihedral", "Selection 3 invalid.");
+    return pymol::Error("Selection 3 invalid.");
   else if((sele3 = tmpsele3.getIndex()) < 0)
-    ok = ErrMessage(G, "GetDihedral", "Selection 4 invalid.");
-  if(ok) {
-    if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
-      ok =
-        ErrMessage(G, "GetDihedral", "Selection 1 doesn't contain a single atom/vertex.");
-    if(!SelectorGetSingleAtomVertex(G, sele1, state, v1))
-      ok =
-        ErrMessage(G, "GetDihedral", "Selection 2 doesn't contain a single atom/vertex.");
-    if(!SelectorGetSingleAtomVertex(G, sele2, state, v2))
-      ok =
-        ErrMessage(G, "GetDihedral", "Selection 3 doesn't contain a single atom/vertex.");
-    if(!SelectorGetSingleAtomVertex(G, sele3, state, v3))
-      ok =
-        ErrMessage(G, "GetDihedral", "Selection 4 doesn't contain a single atom/vertex.");
-  }
-  if(ok) {
-    (*value) = rad_to_deg(get_dihedral3f(v0, v1, v2, v3));
-  }
-  return ok;
+    return pymol::Error("Selection 4 invalid.");
+  if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
+    return pymol::Error("Selection 1 doesn't contain a single atom/vertex.");
+  if(!SelectorGetSingleAtomVertex(G, sele1, state, v1))
+    return pymol::Error("Selection 2 doesn't contain a single atom/vertex.");
+  if(!SelectorGetSingleAtomVertex(G, sele2, state, v2))
+    return pymol::Error("Selection 3 doesn't contain a single atom/vertex.");
+  if(!SelectorGetSingleAtomVertex(G, sele3, state, v3))
+    return pymol::Error("Selection 4 doesn't contain a single atom/vertex.");
+  return rad_to_deg(get_dihedral3f(v0, v1, v2, v3));
 }
 
 
@@ -8972,32 +8854,68 @@ float ExecutiveGetArea(PyMOLGlobals * G, const char *s0, int sta0, int load_b)
 
 
 /*========================================================================*/
-char *ExecutiveGetNames(PyMOLGlobals * G, int mode, int enabled_only, const char *s0)
+/**
+ * Implementation of `cmd.get_names()`
+ *
+ * @param mode see modules/pymol/querying.py
+ * @param enabled_only only include enabled names
+ * @param s0 atom selection expression, limits results to molecular objects and
+ * named selections which have at least one atom in the selection.
+ */
+pymol::Result<std::vector<const char*>> ExecutiveGetNames(
+    PyMOLGlobals* G, int mode, int enabled_only, const char* s0)
 {
+  enum {
+    cGetNames_all = 0,
+    cGetNames_objects = 1,
+    cGetNames_selections = 2,
+    cGetNames_public = 3,
+    cGetNames_public_objects = 4,
+    cGetNames_public_selections = 5,
+    cGetNames_public_nongroup_objects = 6,
+    cGetNames_public_group_objects = 7,
+    cGetNames_nongroup_objects = 8,
+    cGetNames_group_objects = 9,
+  };
+
+  bool include_objects = //
+      mode == cGetNames_all || mode == cGetNames_objects ||
+      mode == cGetNames_public || mode == cGetNames_public_objects;
+  bool include_selections =
+      mode == cGetNames_all || mode == cGetNames_selections ||
+      mode == cGetNames_public || mode == cGetNames_public_selections;
+  bool include_group_objects =
+      mode == cGetNames_group_objects || mode == cGetNames_public_group_objects;
+  bool include_nongroup_objects = //
+      mode == cGetNames_nongroup_objects ||
+      mode == cGetNames_public_nongroup_objects;
+  bool public_only =
+      mode >= cGetNames_public && mode <= cGetNames_public_group_objects;
+
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
-  char *result;
-  int size = 0;
-  int stlen;
+  std::vector<const char*> result;
+  SelectorTmp tmpsele0;
   int sele0 = -1;
   int incl_flag;
   if(s0[0]) {
-    sele0 = SelectorIndexByName(G, s0);
+    tmpsele0 = SelectorTmp(G, s0);
+    sele0 = tmpsele0.getIndex();
+    if (sele0 == -1) {
+      return pymol::Error("invalid selection");
+    }
   }
-  result = VLAlloc(char, 1000);
 
   while(ListIterate(I->Spec, rec, next)) {
     incl_flag = 0;
     if((rec->type == cExecObject
-        && (((!mode) || (mode == 1) || (mode == 3) || (mode == 4))
-            || ((rec->obj->type != cObjectGroup) && ((mode == 6) || (mode == 8)))
-            || ((rec->obj->type == cObjectGroup) && ((mode == 7) || (mode == 9)))))
-       || (rec->type == cExecSelection
-           && ((!mode) || (mode == 2) || (mode == 3) || (mode == 5)))
+        && (include_objects
+            || (rec->obj->type != cObjectGroup && include_nongroup_objects)
+            || (rec->obj->type == cObjectGroup && include_group_objects)))
+       || (rec->type == cExecSelection && include_selections)
       ) {
-      if((mode < 3) || (mode > 7) || (mode == 9) || (rec->name[0] != '_')) {
+      if(!public_only || rec->name[0] != '_') {
         if((!enabled_only) || (rec->visible)) {
-          stlen = strlen(rec->name);
           incl_flag = 0;
           if(sele0 < 0)
             incl_flag = 1;
@@ -9025,15 +8943,12 @@ char *ExecutiveGetNames(PyMOLGlobals * G, int mode, int enabled_only, const char
               break;
             }
           if(incl_flag) {
-            VLACheck(result, char, size + stlen + 1);
-            strcpy(result + size, rec->name);
-            size += stlen + 1;
+            result.push_back(rec->name);
           }
         }
       }
     }
   }
-  VLASize(result, char, size);
   return (result);
 }
 
@@ -11388,43 +11303,38 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
 
 
 /*========================================================================*/
-int *ExecutiveIdentify(PyMOLGlobals * G, const char *s1, int mode)
-{
-  int sele1;
-  ObjectMoleculeOpRec op2;
-  int *result = NULL;
-  sele1 = SelectorIndexByName(G, s1);
-  if(sele1 >= 0) {
-    ObjectMoleculeOpRecInit(&op2);
-    op2.code = OMOP_Identify;
-    op2.i1 = 0;
-    op2.i1VLA = VLAlloc(int, 1000);
-    ExecutiveObjMolSeleOp(G, sele1, &op2);
-    result = op2.i1VLA;
-    VLASize(result, int, op2.i1);
-  }
-  return (result);
-}
-
-
-/*========================================================================*/
+/**
+ * Implementation of `cmd.identify()`
+ *
+ * @param s1 atom selection expression
+ * @param mode 0 for index only, 1 for (obj, index)
+ * @param[out] indexVLA
+ * @param[out] objVLA
+ * @return number of atoms or -1 on selection error
+ */
 int ExecutiveIdentifyObjects(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
                              ObjectMolecule *** objVLA)
 {
-  int sele1;
+  SelectorTmp tmpsele1(G, s1);
+  int sele1 = tmpsele1.getIndex();
   ObjectMoleculeOpRec op2;
-  sele1 = SelectorIndexByName(G, s1);
   if(sele1 >= 0) {
     ObjectMoleculeOpRecInit(&op2);
     op2.code = OMOP_IdentifyObjects;
-    op2.obj1VLA = VLAlloc(ObjectMolecule *, 1000);
+    if (mode != 0) {
+      op2.obj1VLA = VLAlloc(ObjectMolecule*, 1000);
+    }
     op2.i1VLA = VLAlloc(int, 1000);
     op2.i1 = 0;
     ExecutiveObjMolSeleOp(G, sele1, &op2);
     VLASize(op2.i1VLA, int, op2.i1);
-    VLASize(op2.obj1VLA, ObjectMolecule *, op2.i1);
+    if (mode != 0) {
+      VLASize(op2.obj1VLA, ObjectMolecule*, op2.i1);
+    }
     (*indexVLA) = op2.i1VLA;
     (*objVLA) = op2.obj1VLA;
+  } else {
+    return -1;
   }
   return (op2.i1);
 }
@@ -11450,6 +11360,8 @@ int ExecutiveIndex(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
     VLASize(op2.obj1VLA, ObjectMolecule *, op2.i1);
     (*indexVLA) = op2.i1VLA;
     (*objVLA) = op2.obj1VLA;
+  } else {
+    return -1; // invalid selection
   }
   return (op2.i1);
 }

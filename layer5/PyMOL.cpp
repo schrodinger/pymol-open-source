@@ -91,10 +91,6 @@ PyMOLGlobals *SingletonPyMOLGlobals = NULL;
 #endif
 #define IDLE_AND_READY 3
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct _CPyMOL {
   PyMOLGlobals *G;
   int FakeDragFlag;
@@ -228,6 +224,49 @@ inline PyMOLreturn_status return_status(int status)
   result.status = status;
   return result;
 }
+
+inline PyMOLreturn_float return_result(const pymol::Result<float>& res)
+{
+  PyMOLreturn_float result = {PyMOLstatus_FAILURE};
+  if (res) {
+    result.status = PyMOLstatus_SUCCESS;
+    result.value = res.result();
+  }
+  return result;
+}
+
+static PyMOLreturn_string_array return_result(
+    const pymol::Result<std::vector<const char*>>& res)
+{
+  PyMOLreturn_string_array result = {
+      PyMOLstatus_SUCCESS, 0, nullptr};
+  if (!res) {
+    result.status = PyMOLstatus_FAILURE;
+  } else if (!res.result().empty()) {
+    const auto& vec = res.result();
+    result.size = vec.size();
+    result.array = VLAlloc(char*, result.size);
+
+    // allocate space for concatenated string in first array element
+    size_t reslen = 0;
+    for (const char* s : vec) {
+      reslen += strlen(s) + 1;
+    }
+    result.array[0] = VLAlloc(char, reslen);
+
+    // copy elements
+    for (size_t pl = 0, i = 0; i != vec.size(); ++i) {
+      result.array[i] = result.array[0] + pl;
+      strcpy(result.array[i], vec[i]);
+      pl += strlen(vec[i]) + 1;
+    }
+  }
+  return result;
+}
+
+#if defined(__cplusplus) && !defined(_WEBGL)
+extern "C" {
+#endif
 
 #ifdef _PYMOL_LIB
 int initial_button_modes[cButModeInputCount];
@@ -1170,11 +1209,10 @@ PyMOLreturn_float PyMOL_CmdGetDistance(CPyMOL * I,
   int ok = true;
   PyMOLreturn_float result;
   PYMOL_API_LOCK {
-    ok = ExecutiveGetDistance(I->G,
+    result = return_result(ExecutiveGetDistance(I->G,
         selection1,
         selection2,
-        &result.value, state);
-    result.status = get_status_ok(ok);
+        state));
   }
   PYMOL_API_UNLOCK return result;
 }
@@ -1204,15 +1242,13 @@ PyMOLreturn_float PyMOL_CmdGetAngle(CPyMOL * I,
                                     const char *selection2,
                                     const char *selection3, int state, int quiet)
 {
-  int ok = true;
   PyMOLreturn_float result;
   PYMOL_API_LOCK {
-    ok = ExecutiveGetAngle(I->G,
+    result = return_result(ExecutiveGetAngle(I->G,
         selection1,
         selection2,
         selection3,
-        &result.value, state);
-    result.status = get_status_ok(ok);
+        state));
   }
   PYMOL_API_UNLOCK return result;
 }
@@ -1247,13 +1283,12 @@ PyMOLreturn_float PyMOL_CmdGetDihedral(CPyMOL * I,
   int ok = true;
   PyMOLreturn_float result;
   PYMOL_API_LOCK {
-    ok = ExecutiveGetDihe(I->G,
+    result = return_result(ExecutiveGetDihe(I->G,
         selection1,
         selection2,
         selection3,
         selection4,
-        &result.value, state);
-    result.status = get_status_ok(ok);
+        state));
   }
   PYMOL_API_UNLOCK return result;
 }
@@ -3057,46 +3092,9 @@ PyMOLreturn_status PyMOL_CmdRock(CPyMOL * I, int mode){
 
 
 PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, const char *s0, int enabled_only){
-  char *res;
-  char *p;
-  int c = 0;
-  int numstrs = 0;
-  long reslen, pl = 0;
-  OrthoLineType str0 = "";
-  PyMOLreturn_string_array result = { PyMOLstatus_SUCCESS };
+  PyMOLreturn_string_array result = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK PyMOLGlobals * G = I->G;
-
-  if (s0[0]){
-    ok_assert(1, SelectorGetTmp(G, s0, str0) >= 0);
-  }
-  res = ExecutiveGetNames(G, mode, enabled_only, str0);
-
-  if(str0[0])
-      SelectorFreeTmp(G, str0);
-
-  // count strings
-  p = res;
-  c = VLAGetSize(res);
-  while(c--) {                  /* count strings */
-    if(!*(p++))
-      numstrs++;
-  }
-
-  if (numstrs){
-    reslen = VLAGetSize(res);
-    result.array = VLAlloc(char*, numstrs);
-    result.size = numstrs;
-    numstrs = 0;
-    for (pl=0; pl<reslen;){
-      result.array[numstrs] = &res[pl];
-      pl += strlen(res + pl) + 1;
-      numstrs++;
-    }
-  } else {
-ok_except1:
-    result.array = NULL;
-    result.size = 0;
-  }
+  result = return_result(ExecutiveGetNames(G, mode, enabled_only, s0));
   PYMOL_API_UNLOCK 
   return (result);
 }

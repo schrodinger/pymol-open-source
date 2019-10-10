@@ -9682,23 +9682,16 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         }
       }
       break;
-    case OMOP_Identify:        /* identify atoms */
-      for(a = 0; a < I->NAtom; a++) {
-        s = I->AtomInfo[a].selEntry;
-        if(SelectorIsMember(G, s, sele)) {
-          VLACheck(op->i1VLA, int, op->i1);
-          op->i1VLA[op->i1++] = I->AtomInfo[a].id;
-        }
-      }
-      break;
     case OMOP_IdentifyObjects: /* identify atoms */
       for(a = 0; a < I->NAtom; a++) {
         s = I->AtomInfo[a].selEntry;
         if(SelectorIsMember(G, s, sele)) {
           VLACheck(op->i1VLA, int, op->i1);
           op->i1VLA[op->i1] = I->AtomInfo[a].id;
-          VLACheck(op->obj1VLA, ObjectMolecule *, op->i1);
-          op->obj1VLA[op->i1] = I;
+          if (op->obj1VLA != nullptr) {
+            VLACheck(op->obj1VLA, ObjectMolecule*, op->i1);
+            op->obj1VLA[op->i1] = I;
+          }
           op->i1++;
         }
       }

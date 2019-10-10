@@ -182,7 +182,9 @@ typedef struct {
 #define OMOP_AlterState 16
 #define OMOP_Flag 17
 #define OMOP_LABL 18
+#if 0
 #define OMOP_Identify    19
+#endif
 #define OMOP_Remove 20
 #define OMOP_Protect 21
 #define OMOP_Mask 22

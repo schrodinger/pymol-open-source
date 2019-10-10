@@ -301,11 +301,12 @@ int ExecutiveSetObjSettingFromString(PyMOLGlobals * G,
                                      int state, int quiet, int updates);
 int ExecutiveRay(PyMOLGlobals * G, int width, int height, int mode,
                  float angle, float shift, int quiet, int defer, int antialias);
-int ExecutiveGetDistance(PyMOLGlobals * G, const char *s0, const char *s1, float *value, int state);
-int ExecutiveGetAngle(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, float *value,
-                      int state);
-int ExecutiveGetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
-                     float *value, int state);
+pymol::Result<float> ExecutiveGetDistance(
+    PyMOLGlobals* G, const char* s0, const char* s1, int state);
+pymol::Result<float> ExecutiveGetAngle(
+    PyMOLGlobals* G, const char* s0, const char* s1, const char* s2, int state);
+pymol::Result<float> ExecutiveGetDihe(PyMOLGlobals* G, const char* s0,
+    const char* s1, const char* s2, const char* s3, int state);
 int ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
                      float value, int state=0, int quiet=1);
 int ExecutiveRMS(PyMOLGlobals * G, const char *sele1, const char *sele2, int mode, float refine,
@@ -317,7 +318,6 @@ void ExecutiveUpdateCmd(PyMOLGlobals * G, const char *sele1, const char *sele2, 
 float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode, bool quiet);
 float *ExecutiveRMSStates(PyMOLGlobals * G, const char *s1, int target, int mode, int quiet,
                           int mix);
-int *ExecutiveIdentify(PyMOLGlobals * G, const char *s1, int mode);
 int ExecutiveIndex(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
                    ObjectMolecule *** objVLA);
 int ExecutiveReset(PyMOLGlobals * G, int cmd, const char *name);
@@ -342,7 +342,7 @@ int ExecutiveWindowZoom(PyMOLGlobals * G, const char *name, float buffer,
                         int state, int inclusive, float animate, int quiet);
 int ExecutiveGetMoment(PyMOLGlobals * G, const char *name, double *mi, int state);
 
-const char **ExecutiveGetChains(PyMOLGlobals * G, const char *sele, int state);
+pymol::Result<std::vector<const char*>> ExecutiveGetChains(PyMOLGlobals* G, const char* sele, int state);
 
 void ExecutiveOrient(PyMOLGlobals * G, const char *sele, double *mi,
                      int state, float animate, int complete, float buffer, int quiet);
@@ -378,7 +378,7 @@ void ExecutiveFuse(PyMOLGlobals * G, const char *s0="(pk1)", const char *s1="(pk
 void ExecutiveRenameObjectAtoms(PyMOLGlobals * G, const char *name, int force, int quiet);
 int ExecutiveInvert(PyMOLGlobals * G, int quiet);
 
-char *ExecutiveGetNames(PyMOLGlobals * G, int mode, int enabled_only, const char *s0);
+pymol::Result<std::vector<const char*>> ExecutiveGetNames(PyMOLGlobals*, int, int, const char*);
 bool ExecutiveIsMoleculeOrSelection(PyMOLGlobals * G, const char *name);
 int ExecutiveGetType(PyMOLGlobals * G, const char *name, WordType type);
 float ExecutiveGetArea(PyMOLGlobals * G, const char *s0, int sta0, int load_b);
@@ -392,12 +392,14 @@ void ExecutiveSetLastObjectEdited(PyMOLGlobals * G, CObject * o);
 CObject *ExecutiveGetLastObjectEdited(PyMOLGlobals * G);
 bool ExecutiveIsFullScreen(PyMOLGlobals * G);
 void ExecutiveFullScreen(PyMOLGlobals * G, int flag);
-PyObject *ExecutiveGetSettingTuple(PyMOLGlobals * G, int index, const char *object, int state);
-PyObject *ExecutiveGetSettingText(PyMOLGlobals * G, int index, const char *object, int state);
+
+#ifndef _PYMOL_NOPY
 PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index, const char *object, int state,
                                     int type);
+#endif
+
 pymol::vla<ObjectMolecule*> ExecutiveGetObjectMoleculeVLA(PyMOLGlobals * G, const char *sele);
-int ExecutivePairIndices(PyMOLGlobals * G, const char *s1, const char *s2, int state1, int state2,
+pymol::Result<int> ExecutivePairIndices(PyMOLGlobals * G, const char *s1, const char *s2, int state1, int state2,
                          int mode, float cutoff, float h_angle,
                          int **indexVLA, ObjectMolecule *** objVLA);
 void ExecutiveRebuildAllObjectDist(PyMOLGlobals * G);
@@ -452,9 +454,10 @@ int ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float *grid, c
 
 int ***ExecutiveGetBondPrint(PyMOLGlobals * G, const char *name, int max_bond, int max_type,
                              int *dim);
-int ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a, float *b, float *c,
-                        float *alpha, float *beta, float *gamma, char *sgroup,
-                        int *defined);
+
+pymol::Result<bool>
+ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a, float *b, float *c,
+                        float *alpha, float *beta, float *gamma, char *sgroup);
 int ExecutiveSetSymmetry(PyMOLGlobals * G, const char *sele, int state, float a, float b, float c,
                         float alpha, float beta, float gamma, const char *sgroup);
 int ExecutiveSymmetryCopy(PyMOLGlobals * G,

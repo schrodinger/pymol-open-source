@@ -319,3 +319,8 @@ class fb_mask:
     blather =             0x40
     debugging =           0x80
     everything =          0xFF
+
+
+# State count starts at 1. Values <=0 have special meaning.
+ALL_STATES = 0
+CURRENT_STATE = -1

@@ -200,13 +200,20 @@ int SelectorIsMember(PyMOLGlobals * G, int start, int sele);
  * Temporary named selection gets deleted when instance gets out of scope.
  */
 class SelectorTmp {
-  PyMOLGlobals * m_G;
-  char m_name[1024]; // OrthoLineType
-  int m_count;
+  PyMOLGlobals* m_G = nullptr;
+  char m_name[1024]{}; // OrthoLineType
+  int m_count = -1;
 
 public:
+  SelectorTmp() = default;
   SelectorTmp(PyMOLGlobals * G, const char * sele) : m_G(G) {
     m_count = SelectorGetTmp(m_G, sele, m_name);
+  }
+  SelectorTmp& operator=(SelectorTmp&& other) {
+    std::swap(m_G, other.m_G);
+    std::swap(m_count, other.m_count);
+    std::swap(m_name, other.m_name);
+    return *this;
   }
   ~SelectorTmp() {
     SelectorFreeTmp(m_G, m_name);

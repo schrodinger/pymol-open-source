@@ -126,6 +126,7 @@ public:
    */
 
   ResultT& result() { return m_result; }
+  const ResultT& result() const { return m_result; }
 
 private:
   ResultT m_result;
