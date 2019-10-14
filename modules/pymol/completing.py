@@ -151,6 +151,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'pseudoatom'     : aa_obj_c,
         'ramp_new'       : aa_ramp_c,
         'ramp_update'    : aa_ramp_c,
+        'rebond'         : aa_obj_e,
         'rebuild'        : aa_sel_e,
         'reference'      : [ self_cmd.editing.ref_action_sc  , 'action'          , ', ' ],
         'remove'         : aa_sel_e,

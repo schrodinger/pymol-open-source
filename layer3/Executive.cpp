@@ -16783,3 +16783,33 @@ const ExecutiveObjectOffset * ExecutiveUniqueIDAtomDictGet(PyMOLGlobals * G, int
 
   return I->m_eoo + offset.word;
 }
+
+/**
+ * Discard all bonds and do distance based bonding.
+ * Implementation of `cmd.rebond()`
+ *
+ * @param oname object name
+ * @param state object state, negative values fall back to current state
+ */
+pymol::Result<> ExecutiveRebond(PyMOLGlobals* G, const char* oname, int state)
+{
+  auto obj = ExecutiveFindObjectMoleculeByName(G, oname);
+  if (!obj) {
+    return pymol::Error("cannot find object");
+  }
+
+  if (state < 0) {
+    state = obj->getState();
+  }
+
+  auto cs = ObjectMoleculeGetCoordSet(obj, state);
+  if (!cs) {
+    return pymol::Error("no such state");
+  }
+
+  ObjectMoleculeRemoveBonds(obj, 0, 0);
+  ObjectMoleculeConnect(obj, cs, true, 3);
+  ObjectMoleculeInvalidate(obj, cRepAll, cRepInvAll, -1);
+
+  return {};
+}

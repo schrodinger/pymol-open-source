@@ -619,4 +619,6 @@ CoordSet * ExecutiveGetCoordSet(PyMOLGlobals * G, const char * name, int state, 
 void ExecutiveUndo(PyMOLGlobals * G, int dir);
 int ExecutiveSaveUndo(PyMOLGlobals * G, const char *s1, int state);
 
+pymol::Result<> ExecutiveRebond(PyMOLGlobals* G, const char* oname, int state);
+
 #endif

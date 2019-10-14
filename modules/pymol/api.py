@@ -214,6 +214,7 @@ from .editing import \
       mse2met,            \
       protect,            \
       push_undo,          \
+      rebond,             \
       reference,          \
       redo,               \
       remove,             \

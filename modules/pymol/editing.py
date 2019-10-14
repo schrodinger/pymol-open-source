@@ -14,6 +14,8 @@
 
 from __future__ import print_function
 
+from .constants import CURRENT_STATE, ALL_STATES
+
 if True:
 
     import pymol
@@ -618,6 +620,21 @@ SEE ALSO
         '''
         with _self.lockcm:
             return _cmd.add_bond(_self._COb, oname, index1 - 1, index2 - 1, order)
+
+    def rebond(oname, state=CURRENT_STATE, _self=cmd):
+        '''
+DESCRIPTION
+
+    Discard all bonds and do distance based bonding.
+
+ARGUMENTS
+
+    oname = str: object name
+
+    state = int: object state {default: -1 (current state)}
+        '''
+        with _self.lockcm:
+            return _cmd.rebond(_self._COb, oname, state - 1)
 
     def bond(atom1="(pk1)", atom2="(pk2)", order=1, edit=1, quiet=1, _self=cmd):
         '''

@@ -3817,6 +3817,18 @@ static PyObject* CmdAddBond(PyObject* self, PyObject* args)
   return APIResult(G, result);
 }
 
+static PyObject* CmdRebond(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  const char* oname;
+  int state;
+  API_SETUP_ARGS(G, self, args, "Osi", &self, &oname, &state);
+  API_ASSERT(APIEnterNotModal(G));
+  auto res = ExecutiveRebond(G, oname, state);
+  APIExit(G);
+  return APIResult(G, res);
+}
+
 static PyObject *CmdRevalence(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -7831,6 +7843,7 @@ static PyMethodDef Cmd_methods[] = {
   {"bg_color", CmdBackgroundColor, METH_VARARGS},
   {"bond", CmdBond, METH_VARARGS},
   {"add_bond", CmdAddBond, METH_VARARGS},
+  {"rebond", CmdRebond, METH_VARARGS},
   {"busy_draw", CmdBusyDraw, METH_VARARGS},
   {"button", CmdButton, METH_VARARGS},
   /*  {"cache",                 CmdCache,                METH_VARARGS }, */

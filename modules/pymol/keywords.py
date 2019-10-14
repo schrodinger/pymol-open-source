@@ -167,6 +167,7 @@ def get_command_keywords(self_cmd=cmd):
         'meter_reset'   : [ self_cmd.meter_reset       , 0 , 0 , ''  , parsing.STRICT ],
         'minsert'       : [ self_cmd.minsert           , 0 , 0 , ''  , parsing.STRICT ],
         'mmove'         : [ self_cmd.mmove             , 0 , 0 , ''  , parsing.STRICT ],
+        'rebond'        : [ self_cmd.rebond            , 0 , 0 , ''  , parsing.STRICT ],
         'move'          : [ self_cmd.move              , 0 , 0 , ''  , parsing.STRICT ],
         'mse2met'       : [ self_cmd.mse2met           , 0 , 0 , ''  , parsing.STRICT ],
         'mset'          : [ self_cmd.mset              , 0 , 0 , ''  , parsing.STRICT ],
