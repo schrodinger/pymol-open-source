@@ -2056,7 +2056,7 @@ void PyMOL_Start(CPyMOL * I)
   SceneInit(G);
   MovieScenesInit(G);
   WizardInit(G);                /* must come after ortho & scene */
-  MovieInit(G);
+  G->Movie = new CMovie(G);
   SelectorInit(G);
   SeqInit(G);
   SeekerInit(G);
@@ -2128,7 +2128,7 @@ void PyMOL_Stop(CPyMOL * I)
   SeekerFree(G);
   SeqFree(G);
   SelectorFree(G);
-  MovieFree(G);
+  DeleteP(G->Movie);
   SceneFree(G);
   MovieScenesFree(G);
   OrthoFree(G);
@@ -2145,7 +2145,7 @@ void PyMOL_Stop(CPyMOL * I)
   ColorFree(G);
   UtilFree(G);
   WordFree(G);
-  delete G->Feedback;
+  DeleteP(G->Feedback);
 
   PyMOL_PurgeAPI(I);
   /*    printf("%d \n", OVLexicon_GetNActive(G->Lexicon)); */

@@ -47,67 +47,13 @@ Z* -------------------------------------------------------------------
 #define cMovieDragModeCopyKey   3
 #define cMovieDragModeOblate    4
 
-typedef struct {
-  int stage;
-
-  /* input parameters */
-  OrthoLineType prefix;
-  int save, start, stop, missing_only;
-  int modal, mode;
-
-  int width;
-  int height;
-
-  /* job / local parameters */
-  int frame;
-  int image;
-  int nFrame;
-  double accumTiming;
-  double timing;
-  int complete;
-  int file_missing;
-  int format;
-  int quiet;
-  OrthoLineType fname;
-
-} CMovieModal;
-
-struct CMovie : public Block {
-  std::vector<std::shared_ptr<pymol::Image>> Image;
-  int *Sequence { nullptr };
-  MovieCmdType *Cmd { nullptr };
-  int NImage { 0 }, NFrame { 0 };
-  int MatrixFlag { false };
-  SceneViewType Matrix {};
-  int Playing { false };
-  int Locked {};
-  int CacheSave {};
-  int OverlaySave {};
-  CViewElem *ViewElem { nullptr };
-  bool RecursionFlag { false };
-  bool RealtimeFlag { true };
-  CMovieModal Modal {};
-  int Width {}, Height {};
-  ScrollBar m_ScrollBar;
-  int DragMode {};
-  int Dragging {};
-  CObject *DragObj {}; /* if not dragging all */
-  BlockRect DragRect {};
-  int DragX {}, DragY {}, DragMenu {};
-  int DragStartFrame {}, DragCurFrame {}, DragNearest {}, DragDraw {};
-  int DragColumn {};
-  int LabelIndent {};
-  int PanelActive {};
-
-  CMovie(PyMOLGlobals* G) : Block(G), m_ScrollBar(G, true) {}
-
-  int release(int button, int x, int y, int mod) override;
-  int click(int button, int x, int y, int mod) override;
-  int drag(int x, int y, int mod) override;
-  void draw(CGO* orthoCGO) override;
-  bool fastDraw(CGO* orthoCGO) override;
-  void reshape(int width, int height) override;
-};
+CMovie::CMovie(PyMOLGlobals* G)
+    : Block(G)
+    , m_ScrollBar(G, true)
+{
+  active = true;
+  OrthoAttach(G, this, cOrthoTool);
+}
 
 void MovieViewReinterpolate(PyMOLGlobals *G)
 {
@@ -131,21 +77,9 @@ void MovieViewTrim(PyMOLGlobals *G,int n_frame)
 {
   CMovie *I = G->Movie;
   if(n_frame>=0) {
-    if(!I->Sequence) {
-      I->Sequence = VLACalloc(int, n_frame);
-    } else {
-      VLASize(I->Sequence, int, n_frame);
-    }
-    if(!I->Cmd) {
-      I->Cmd = VLACalloc(MovieCmdType, n_frame);
-    } else {
-      VLASize(I->Cmd, MovieCmdType, n_frame);
-    }
-    if(!I->ViewElem) {
-      I->ViewElem = VLACalloc(CViewElem, n_frame);
-    } else {
-      VLASize(I->ViewElem, CViewElem, n_frame);
-    }
+    I->Sequence.resize(n_frame);
+    I->Cmd.resize(n_frame);
+    I->ViewElem.resize(n_frame);
     I->NFrame = n_frame;
   }
 }
@@ -159,8 +93,8 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
   if( (ok = ViewElemModify(G,&I->ViewElem, action, index, count, target)) ) {
     switch(action) {
     case cViewElemModifyInsert: 
-      VLAInsert(I->Sequence,int,index,count);
-      VLAInsert(I->Cmd,MovieCmdType,index,count);
+      I->Sequence.insert(index, count);
+      I->Cmd.insert(index, count);
       I->NFrame = VLAGetSize(I->Sequence);
       {
         int frame = SceneGetFrame(G);
@@ -170,8 +104,8 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
       }
       break;
     case cViewElemModifyDelete:
-      VLADelete(I->Sequence,int,index,count);
-      VLADelete(I->Cmd,MovieCmdType,index,count);
+      I->Sequence.erase(index, count);
+      I->Cmd.erase(index, count);
       I->NFrame = VLAGetSize(I->Sequence);
       break;
     case cViewElemModifyMove:
@@ -478,7 +412,7 @@ static int MovieCmdFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
 
   for(a = 0; a < I->NFrame; a++) {
     if(ok)
-      ok = PConvPyStrToStr(PyList_GetItem(list, a), I->Cmd[a], OrthoLineLength);
+      ok = PConvPyStrToStr(PyList_GetItem(list, a), I->Cmd[a].data(), OrthoLineLength);
     if(ok)
       warn = (warn || I->Cmd[a][0]);
   }
@@ -511,10 +445,10 @@ int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 3), &I->Playing);
   if(ok && I->NFrame) {
-    I->Sequence = VLACalloc(int, I->NFrame);
-    I->Cmd = VLACalloc(MovieCmdType, I->NFrame);
+    I->Sequence = pymol::vla<int>(I->NFrame);
+    I->Cmd = pymol::vla<MovieCmdType>(I->NFrame);
     if(ok)
-      ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list, 4), I->Sequence, I->NFrame);
+      ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list, 4), I->Sequence.data(), I->NFrame);
     if(ok)
       ok = MovieCmdFromPyList(G, PyList_GetItem(list, 5), warning);
     if((*warning) && G->Security) {
@@ -550,7 +484,7 @@ static PyObject *MovieCmdAsPyList(PyMOLGlobals * G)
   result = PyList_New(I->NFrame);
   if(result)
     for(a = 0; a < I->NFrame; a++) {
-      PyList_SetItem(result, a, PyString_FromString(I->Cmd[a]));
+      PyList_SetItem(result, a, PyString_FromString(I->Cmd[a].data()));
     }
   return (PConvAutoNone(result));
 
@@ -934,13 +868,14 @@ int MoviePNG(PyMOLGlobals * G, char *prefix, int save, int start,
 
 
 /*========================================================================*/
-void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from,int freeze)
+void MovieAppendSequence(PyMOLGlobals * G, const char *str, int start_from,int freeze)
 {
   CMovie *I = G->Movie;
   int c = 0;
   int i;
   /*  int old_NFrame = I->NFrame; */
-  char *s, number[20];
+  const char *s;
+  char number[20];
 
   if(start_from < 0)
     start_from = I->NFrame;
@@ -964,24 +899,15 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from,int freeze)
     VLAFreeP(I->ViewElem);
     I->NFrame = 0;
   } else {
-    if(!I->Sequence) {
-      I->Sequence = VLACalloc(int, c);
-    } else {
-      VLASize(I->Sequence, int, start_from);    /* to clear */
-      VLASize(I->Sequence, int, c);
-    }
-    if(!I->Cmd) {
-      I->Cmd = VLACalloc(MovieCmdType, c);
-    } else {
-      VLASize(I->Cmd, MovieCmdType, start_from);
-      VLASize(I->Cmd, MovieCmdType, c);
-    }
-    if(!I->ViewElem) {
-      I->ViewElem = VLACalloc(CViewElem, c);
-    } else {
-      VLASize(I->ViewElem, CViewElem, start_from);
-      VLASize(I->ViewElem, CViewElem, c);
-    }
+    // to clear
+    I->Sequence.resize(start_from);
+    I->Cmd.resize(start_from);
+    I->ViewElem.resize(start_from);
+
+    // append (c - start_from) zero-initialized elements
+    I->Sequence.resize(c);
+    I->Cmd.resize(c);
+    I->ViewElem.resize(c);
   }
 
   if(c && str[0]) {             /* not just a reset */
@@ -1106,7 +1032,7 @@ void MovieDoFrameCommand(PyMOLGlobals * G, int frame)
     if((frame >= 0) && (frame < I->NFrame)) {
       if(I->Cmd[frame][0]) {
         if(!I->RecursionFlag) {
-          PParse(G, I->Cmd[frame]);
+          PParse(G, I->Cmd[frame].data());
         }
       }
       if(I->ViewElem) {
@@ -1406,8 +1332,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
   case 5:                      /* reset */
     if(I->ViewElem) {
       int size = VLAGetSize(I->ViewElem);
-      VLAFreeP(I->ViewElem);
-      I->ViewElem = VLACalloc(CViewElem, size);
+      I->ViewElem = pymol::vla<CViewElem>(size);
     }
     break;
   case 6:                      /* uninterpolate */
@@ -1445,7 +1370,7 @@ void MovieAppendCommand(PyMOLGlobals * G, int frame, char *command)
   int a, len, cur_len;
   if((frame >= 0) && (frame < I->NFrame)) {
     len = strlen(command);
-    cur_len = strlen(I->Cmd[frame]);
+    cur_len = strlen(I->Cmd[frame].data());
     if((unsigned) len > (sizeof(MovieCmdType) + cur_len - 1))
       len = sizeof(MovieCmdType) + cur_len - 1;
     for(a = 0; a < len; a++)
@@ -1492,19 +1417,20 @@ int MovieGetLength(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-void MovieClearImages(PyMOLGlobals * G)
+void MovieClearImages(PyMOLGlobals * G, CMovie* I)
 {
-  CMovie *I = G->Movie;
-  int a;
-
-  PRINTFB(G, FB_Movie, FB_Blather)
-    " MovieClearImages: clearing...\n" ENDFB(G);
   I->Image.clear();
   I->NImage = 0;
   SceneInvalidate(G);
   SceneSuppressMovieFrame(G);
 }
 
+void MovieClearImages(PyMOLGlobals * G)
+{
+  PRINTFB(G, FB_Movie, FB_Blather)
+    " MovieClearImages: clearing...\n" ENDFB(G);
+  MovieClearImages(G, G->Movie);
+}
 
 /*========================================================================*/
 void MovieReset(PyMOLGlobals * G)
@@ -1524,14 +1450,9 @@ void MovieReset(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-void MovieFree(PyMOLGlobals * G)
+CMovie::~CMovie()
 {
-  CMovie *I = G->Movie;
-  MovieClearImages(G);
-  VLAFreeP(I->ViewElem);
-  VLAFreeP(I->Cmd);
-  VLAFreeP(I->Sequence);
-  DeleteP(G->Movie);
+  MovieClearImages(m_G, this);
 }
 
 Block *MovieGetBlock(PyMOLGlobals * G)
@@ -1943,21 +1864,3 @@ void CMovie::reshape(int width, int height)
   }
 }
 
-
-/*========================================================================*/
-int MovieInit(PyMOLGlobals * G)
-{
-  CMovie *I = NULL;
-
-  if((I = (G->Movie = new CMovie(G)))) {
-    int a;
-    I->active = true;
-    OrthoAttach(G, I, cOrthoTool);
-
-    for(a = 0; a < 16; a++)
-      I->Matrix[a] = 0.0F;
-    return 1;
-  } else {
-    return 0;
-  }
-}

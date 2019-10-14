@@ -235,6 +235,26 @@ public:
       VLACheck(m_vla, T, count - 1);
     }
   }
+
+  /**
+   * Inserts 'count' number of elements to the vla at a given index
+   * @param index position of the vla where elements are added
+   * @param count number of elements added
+   */
+  void insert(int index, int count)
+  {
+    m_vla = static_cast<T*>(VLAInsertRaw(m_vla, index, count));
+  }
+
+  /**
+   * Removes 'count' number of elements to the vla at a given index
+   * @param index position of the vla where elements are removed
+   * @param count number of elements removed
+   */
+  void erase(int index, int count)
+  {
+    m_vla = static_cast<T*>(VLADeleteRaw(m_vla, index, count));
+  }
 };
 
 template <typename U> vla<U> vla_take_ownership(U* ptr)

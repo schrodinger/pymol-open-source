@@ -18,24 +18,86 @@ Z* -------------------------------------------------------------------
 #define _H_Movie
 
 #include <memory>
+#include <array>
 #include"os_python.h"
 #include"Ortho.h"
 #include"Scene.h"
 #include"View.h"
 
-typedef char MovieCmdType[OrthoLineLength];
+using MovieCmdType = std::array<char, 1024>;
+
+struct CMovieModal {
+  int stage;
+
+  /* input parameters */
+  OrthoLineType prefix;
+  int save, start, stop, missing_only;
+  int modal, mode;
+
+  int width;
+  int height;
+
+  /* job / local parameters */
+  int frame;
+  int image;
+  int nFrame;
+  double accumTiming;
+  double timing;
+  int complete;
+  int file_missing;
+  int format;
+  int quiet;
+  OrthoLineType fname;
+};
+
+struct CMovie : public Block {
+  std::vector<std::shared_ptr<pymol::Image>> Image;
+  pymol::vla<int> Sequence;
+  pymol::vla<MovieCmdType> Cmd;
+  int NImage { 0 }, NFrame { 0 };
+  int MatrixFlag { false };
+  SceneViewType Matrix {};
+  int Playing { false };
+  int Locked {};
+  int CacheSave {};
+  int OverlaySave {};
+  pymol::vla<CViewElem> ViewElem;
+  bool RecursionFlag { false };
+  bool RealtimeFlag { true };
+  CMovieModal Modal {};
+  int Width {}, Height {};
+  ScrollBar m_ScrollBar;
+  int DragMode {};
+  int Dragging {};
+  CObject *DragObj {}; /* if not dragging all */
+  BlockRect DragRect {};
+  int DragX {}, DragY {}, DragMenu {};
+  int DragStartFrame {}, DragCurFrame {}, DragNearest {}, DragDraw {};
+  int DragColumn {};
+  int LabelIndent {};
+  int PanelActive {};
+
+  CMovie(PyMOLGlobals* G);
+  ~CMovie();
+
+  int release(int button, int x, int y, int mod) override;
+  int click(int button, int x, int y, int mod) override;
+  int drag(int x, int y, int mod) override;
+  void draw(CGO* orthoCGO) override;
+  bool fastDraw(CGO* orthoCGO) override;
+  void reshape(int width, int height) override;
+};
 
 int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning);
 PyObject *MovieAsPyList(PyMOLGlobals * G);
 int MovieGetSpecLevel(PyMOLGlobals *G,int frame);
 void MovieDrawViewElem(PyMOLGlobals *G, BlockRect *rect,int frames ORTHOCGOARG);
 
-int MovieInit(PyMOLGlobals * G);
 Block *MovieGetBlock(PyMOLGlobals * G);
 void MovieFree(PyMOLGlobals * G);
 void MovieReset(PyMOLGlobals * G);
 void MovieDump(PyMOLGlobals * G);
-void MovieAppendSequence(PyMOLGlobals * G, char *seq, int start_from,int freeze);
+void MovieAppendSequence(PyMOLGlobals * G, const char *seq, int start_from,int freeze);
 int MovieSeekScene(PyMOLGlobals * G, int loop);
 int MoviePNG(PyMOLGlobals * G, char *prefix, int save, int start, int stop,
              int missing_only, int modal, int format, int mode, int quiet,
