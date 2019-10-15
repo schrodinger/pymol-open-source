@@ -134,6 +134,16 @@ class TestEditing(testing.PyMOLTestCase):
         bonds = cmd.get_bonds('m1') # 0-indexed
         self.assertEqual(bonds, [(0, 1, 1), (1, 2, 2)])
 
+    @testing.requires_version('2.4')
+    def test_rebond(self):
+        cmd.pseudoatom('m1', pos=(0, 0, 0), vdw=0.8)
+        cmd.pseudoatom('m1', pos=(1, 0, 0), vdw=0.8)
+        cmd.pseudoatom('m1', pos=(1, 1, 0), vdw=0.8)
+        cmd.add_bond('m1', 1, 3) # this bond will be removed by "rebond"
+        cmd.rebond('m1')
+        bonds = cmd.get_bonds('m1') # 0-indexed
+        self.assertEqual(bonds, [(0, 1, 1), (1, 2, 1)])
+
     def test_bond(self):
         cmd.pseudoatom('m1', pos=(0,0,0))
         cmd.pseudoatom('m1', pos=(1,0,0))
