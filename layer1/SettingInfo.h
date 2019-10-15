@@ -875,6 +875,7 @@ enum {
   REC_b( 765, sdf_write_zero_order_bonds              , global    , 0 ),
   REC_b( 766, cif_metalc_as_zero_order_bonds          , global    , 1 ),
   REC_i( 767, seq_view_gap_mode                       , global    , 1 ),
+  REC_i( 768, internal_gui_name_color_mode            , global    , 0, 0, 2 ),
 
 
 #ifdef SETTINGINFO_IMPLEMENTATION

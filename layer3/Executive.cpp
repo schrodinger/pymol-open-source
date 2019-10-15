@@ -15862,8 +15862,8 @@ int CExecutive::drag(int x, int y, int mod)
   return (1);
 }
 
-static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
-                        float *inside ORTHOCGOARG)
+static void draw_button(int x2, int y2, int w, int h, const float *light, const float *dark,
+                        const float *inside ORTHOCGOARG)
 {
   if (orthoCGO){
     CGOColorv(orthoCGO, light);
@@ -15955,6 +15955,62 @@ static void draw_button_char(PyMOLGlobals * G, int x2, int y2, char ch ORTHOCGOA
 }
 #endif
 
+/**
+ * Get the text color for the object name.
+ * @param obj Object pointer, may be NULL
+ * @param mode 0: default, 1: first carbon atom color, 2: object color
+ * @param bg_rgb Background color
+ * @param default_rgb Default text color
+ * @return pointer to borrowed RGB array
+ */
+static const float* getNameColor(
+    const CObject* obj, int mode, const float* bg_rgb, const float* default_rgb)
+{
+  enum {
+    cNameColorMode_default = 0,
+    cNameColorMode_carbon = 1,
+    cNameColorMode_object = 2,
+  };
+
+  if (mode == cNameColorMode_default || !obj) {
+    return default_rgb;
+  }
+
+  int color = cColorDefault;
+
+  switch (mode) {
+  case cNameColorMode_carbon:
+    // First carbon atom color
+    // Assuming that there is typically a carbon atom within the first few
+    // atoms, this procedure should be cheap (O(1)).
+    if (obj->type == cObjectMolecule) {
+      auto objmol = static_cast<const ObjectMolecule*>(obj);
+      for (auto ai = objmol->AtomInfo.data(), ai_end = ai + objmol->NAtom;
+           ai != ai_end; ++ai) {
+        if (ai->protons == cAN_C) {
+          color = ai->color;
+          break;
+        }
+      }
+    }
+    break;
+  case cNameColorMode_object:
+    // Object color
+    color = obj->Color;
+    break;
+  }
+
+  if (color != cColorDefault) {
+    const float* rgb = ColorGet(obj->G, color);
+
+    // only use if it's different from the background color
+    if (!within3f(bg_rgb, rgb, 0.1f)) {
+      return rgb;
+    }
+  }
+
+  return default_rgb;
+}
 
 /*========================================================================*/
 void CExecutive::draw(CGO* orthoCGO)
@@ -15989,6 +16045,7 @@ void CExecutive::draw(CGO* orthoCGO)
   int op_cnt = get_op_cnt(G);
   int full_names = SettingGetGlobal_b(G, cSetting_group_full_member_names);
   int arrows = SettingGetGlobal_b(G, cSetting_group_arrow_prefix);
+  auto name_color_mode = SettingGet<int>(G, cSetting_internal_gui_name_color_mode);
 
   ExecutiveUpdatePanelList(G);
   
@@ -16200,6 +16257,8 @@ void CExecutive::draw(CGO* orthoCGO)
               x3 += panel->nest_level * DIP2PIXEL(8);
               TextSetPos2i(G, x3 + DIP2PIXEL(2), y2 + text_lift);
               nChar -= panel->nest_level;
+
+              const float* but_color = disabledColor;
               {
                 int but_width = (x2 - x3) - 1;
 
@@ -16232,8 +16291,7 @@ void CExecutive::draw(CGO* orthoCGO)
 
                 if((rec->hilight == 1) || ((row == I->Over) && (I->OverWhat == 1))) {
 		  /* button hull */
-                  draw_button(x3, y2, but_width, (ExecLineHeight - 1), lightEdge,
-                              darkEdge, pressedColor ORTHOCGOARGVAR);
+                  but_color = pressedColor;
                 } else if(rec->visible) {
                   int enabled = true;
                   SpecRec *group_rec = rec->group;
@@ -16245,19 +16303,18 @@ void CExecutive::draw(CGO* orthoCGO)
                   }
 
                   if(enabled) {
-                    draw_button(x3, y2, but_width, (ExecLineHeight - 1), lightEdge,
-                                darkEdge, enabledColor ORTHOCGOARGVAR);
+                    but_color = enabledColor;
                   } else {
-                    draw_button(x3, y2, but_width, (ExecLineHeight - 1), lightEdge,
-                                darkEdge, cloakedColor ORTHOCGOARGVAR);
+                    but_color = cloakedColor;
                   }
-                } else {
-                  draw_button(x3, y2, but_width, (ExecLineHeight - 1), lightEdge,
-                              darkEdge, disabledColor ORTHOCGOARGVAR);
                 }
+
+                draw_button(x3, y2, but_width, (ExecLineHeight - 1), lightEdge,
+                    darkEdge, but_color ORTHOCGOARGVAR);
               }
 
-              TextSetColor(G, TextColor);
+              TextSetColor(G, getNameColor(rec->obj, name_color_mode, but_color,
+                                  TextColor));
 
 	      /* object name */
               c = rec->name;
