@@ -8036,7 +8036,7 @@ PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
     case cSetting_boolean:
       {
         int value = SettingGet_b(G, set_ptr2, set_ptr1, index);
-        result = Py_BuildValue("i", value);
+        result = PyBool_FromLong(value);
       }
       break;
     case cSetting_int:
