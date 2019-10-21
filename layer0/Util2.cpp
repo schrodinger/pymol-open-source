@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <cctype>
+#include <cmath>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -97,3 +98,23 @@ bool p_strcasestartswith(const char * s, const char * prefix) {
       return false;
   return true;
 }
+
+namespace pymol
+{
+
+/**
+ * Convert float to double, rounded to decimal precision.
+ */
+double pretty_f2d(float f)
+{
+  if (f == 0.0f) {
+    // don't call log10(0.0)
+    return 0.0;
+  }
+
+  int digits = std::ceil(std::log10(std::fabs(f)));
+  auto factor = std::pow(10.0L, 7 - digits);
+  return std::round(f * factor) / factor;
+}
+
+} // namespace pymol

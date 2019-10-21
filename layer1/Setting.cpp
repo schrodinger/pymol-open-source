@@ -1413,7 +1413,8 @@ PyObject *SettingGetPyObject(PyMOLGlobals * G, const CSetting * set1, const CSet
     break;
   case cSetting_float3:
     ptr = SettingGet_3fv(G, set1, set2, index);
-    result = Py_BuildValue("(fff)", ptr[0], ptr[1], ptr[2]);
+    result = Py_BuildValue("(fff)", pymol::pretty_f2d(ptr[0]),
+        pymol::pretty_f2d(ptr[1]), pymol::pretty_f2d(ptr[2]));
     break;
   case cSetting_color:
     {
@@ -1445,11 +1446,13 @@ PyObject *SettingGetTuple(PyMOLGlobals * G, const CSetting * set1, const CSettin
     result = Py_BuildValue("ii", type, SettingGet_i(G, set1, set2, index));
     break;
   case cSetting_float:
-    result = Py_BuildValue("if", type, SettingGet_f(G, set1, set2, index));
+    result = Py_BuildValue(
+        "if", type, pymol::pretty_f2d(SettingGet_f(G, set1, set2, index)));
     break;
   case cSetting_float3:
     ptr = SettingGet_3fv(G, set1, set2, index);
-    result = Py_BuildValue("i(fff)", type, ptr[0], ptr[1], ptr[2]);
+    result = Py_BuildValue("i(fff)", type, pymol::pretty_f2d(ptr[0]),
+        pymol::pretty_f2d(ptr[1]), pymol::pretty_f2d(ptr[2]));
     break;
   case cSetting_string:
     result = Py_BuildValue("is", type, SettingGet_s(G, set1, set2, index));

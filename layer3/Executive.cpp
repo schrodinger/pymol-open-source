@@ -8048,14 +8048,15 @@ PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
     case cSetting_float:
       {
         float value = SettingGet_f(G, set_ptr2, set_ptr1, index);
-        result = Py_BuildValue("f", value);
+        result = PyFloat_FromDouble(pymol::pretty_f2d(value));
       }
       break;
     case cSetting_float3:
       {
         const float * value = SettingGet_3fv(G, set_ptr2, set_ptr1, index);
         if (value) {
-          result = Py_BuildValue("fff", value[0], value[1], value[2]);
+          result = Py_BuildValue("fff", pymol::pretty_f2d(value[0]),
+              pymol::pretty_f2d(value[1]), pymol::pretty_f2d(value[2]));
         } else {
           PyErr_SetNone(PyExc_ValueError);
         }

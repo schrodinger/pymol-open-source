@@ -58,5 +58,7 @@ std::string join_to_string(PrintableTs&&... ts)
       stream, std::forward<PrintableTs>(ts)...);
   return stream.str();
 }
-} // namespace pymol
 
+double pretty_f2d(float v);
+
+} // namespace pymol
