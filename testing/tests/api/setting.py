@@ -47,6 +47,14 @@ class TestSetting(testing.PyMOLTestCase):
         v = cmd.get_setting_float('sphere_scale')
         self.assertEqual(int(v * 1e5), 123456)
 
+    @testing.requires_version('2.4')
+    def testGetSettingFloatExact(self):
+        # PyMOL 2.4 uses pymol::pretty_f2d which rounds 7 significant digits
+        for v_ref in (1.234567, 1234567.e6, 9999999.0):
+            cmd.set('sphere_scale', v_ref)
+            v = cmd.get_setting_float('sphere_scale')
+            self.assertEqual(v, v_ref)
+
     def testGetSettingInt(self):
         cmd.set('light_count', 4)
         v = cmd.get_setting_int('light_count')
