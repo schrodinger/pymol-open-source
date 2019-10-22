@@ -13,6 +13,7 @@
 static double accumTiming = 0.0;
 
 /* EXPERIMENTAL VOLUME RAYTRACING DATA */
+static std::shared_ptr<pymol::Image> rayVolumeImage;
 extern float *rayDepthPixels;
 extern int rayVolume, rayWidth, rayHeight;
 
@@ -363,6 +364,12 @@ bool SceneRay(PyMOLGlobals * G,
           I->DirtyFlag = false;
           I->CopyType = true;
           I->CopyForced = true;
+
+          if (SettingGet<bool>(G, cSetting_ray_volume) && !I->Image->empty()) {
+            rayVolumeImage = I->Image;
+          } else {
+            rayVolumeImage = nullptr;
+          }
         }
         break;
 
@@ -773,9 +780,10 @@ void SceneRenderRayVolume(PyMOLGlobals * G, CScene *I){
 #endif
   glDepthMask(GL_FALSE);
 #ifndef PURE_OPENGL_ES_2
-  if (PIsGlutThread() && I->Image && !I->Image->empty()){
+  if (PIsGlutThread() && rayVolumeImage) {
     if (rayWidth == I->Width && rayHeight == I->Height){
-      glDrawPixels(I->Image->getWidth(), I->Image->getHeight(), GL_RGBA, GL_UNSIGNED_BYTE, I->Image->bits());
+      glDrawPixels(rayVolumeImage->getWidth(), rayVolumeImage->getHeight(),
+          GL_RGBA, GL_UNSIGNED_BYTE, rayVolumeImage->bits());
     } else {
       SceneDrawImageOverlay(G, 1, NULL);
     }
