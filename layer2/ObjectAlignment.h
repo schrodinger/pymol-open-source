@@ -22,35 +22,34 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 #include"CGO.h"
 #include"ObjectMolecule.h"
-#include"OVOneToAny.h"
+#include"pymol/memory.h"
 
-typedef struct ObjectAlignmentState {
+struct ObjectAlignmentState {
   CObjectState state;
-  int *alignVLA;
+  pymol::vla<int> alignVLA;
   WordType guide;
   /* not stored */
   int valid;
-  OVOneToAny *id2tag;
-  CGO *primitiveCGO;
-  CGO *renderCGO;
+  std::unordered_map<int, int> id2tag;
+  pymol::cache_ptr<CGO, CGODeleter> primitiveCGO;
+  pymol::cache_ptr<CGO, CGODeleter> renderCGO;
   bool renderCGO_has_cylinders;
   bool renderCGO_has_trilines;
-} ObjectAlignmentState;
+};
 
 struct ObjectAlignment : public CObject {
-  ObjectAlignmentState *State = nullptr;
+  std::vector<ObjectAlignmentState> State;
   int NState = 0;
   int SelectionState = -1;
   int ForceState = -1;
   ObjectAlignment(PyMOLGlobals* G);
-  ~ObjectAlignment();
 };
 
 void ObjectAlignmentUpdate(ObjectAlignment * I);
 
 ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
                                        ObjectAlignment * obj,
-                                       int *align_vla,
+                                       const pymol::vla<int>& align_vla,
                                        int state,
                                        int merge,
                                        ObjectMolecule * guide, ObjectMolecule * flush);

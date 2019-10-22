@@ -53,7 +53,7 @@ void ObjectAlignmentUpdate(ObjectAlignment * I);
 
 static int GroupOrderKnown(PyMOLGlobals * G,
                            int *curVLA,
-                           int *newVLA,
+                           const int *newVLA,
                            int cur_start,
                            int new_start, ObjectMolecule * guide, int *action)
 {
@@ -165,7 +165,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
   if(state < 0)
     state = SceneGetState(G);
   if((state >= 0) && (state < I->NState)) {
-    ObjectAlignmentState *oas = I->State + state;
+    ObjectAlignmentState *oas = I->State.data() + state;
     if(oas->alignVLA) {
       if(state != I->SelectionState) {  /* get us a selection for the current state */
         I->ForceState = state;
@@ -471,7 +471,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
   return ok;
 }
 
-static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
+static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
                            ObjectMolecule * guide, ObjectMolecule * flush)
 {
   /* curVLA and newVLA must be properly sized and zero terminated... */
@@ -766,7 +766,7 @@ static PyObject *ObjectAlignmentAllStatesAsPyList(ObjectAlignment * I)
   int a;
   result = PyList_New(I->NState);
   for(a = 0; a < I->NState; a++) {
-    PyList_SetItem(result, a, ObjectAlignmentStateAsPyList(I->State + a));
+    PyList_SetItem(result, a, ObjectAlignmentStateAsPyList(I->State.data() + a));
   }
   return (PConvAutoNone(result));
 
@@ -789,11 +789,10 @@ static int ObjectAlignmentStateFromPyList(PyMOLGlobals * G, ObjectAlignmentState
     PConvPyListToIntVLA(PyList_GetItem(list, 0), &I->alignVLA);
     strcpy(I->guide, PyString_AsString(PyList_GetItem(list, 1)));
 
-    if (I->alignVLA)
-    for (auto it = I->alignVLA, it_end = I->alignVLA + VLAGetSize(I->alignVLA);
-        it != it_end; ++it) {
-      if (*it)
-        *it = SettingUniqueConvertOldSessionID(G, *it);
+    for (auto& align : I->alignVLA) {
+      if (align) {
+        align = SettingUniqueConvertOldSessionID(G, align);
+      }
     }
   }
   return (ok);
@@ -804,14 +803,14 @@ static int ObjectAlignmentAllStatesFromPyList(ObjectAlignment * I, PyObject * li
 {
   int ok = true;
   int a;
-  VLACheck(I->State, ObjectAlignmentState, I->NState);
+  VecCheck(I->State, I->NState);
   if(ok)
     ok = PyList_Check(list);
   if(ok) {
     for(a = 0; a < I->NState; a++) {
       auto *val = PyList_GetItem(list, a);
       ok =
-        ObjectAlignmentStateFromPyList(I->G, I->State + a, val,
+        ObjectAlignmentStateFromPyList(I->G, I->State.data() + a, val,
                                        version);
       if(!ok)
         break;
@@ -867,21 +866,6 @@ PyObject *ObjectAlignmentAsPyList(ObjectAlignment * I)
 
 /*========================================================================*/
 
-ObjectAlignment::~ObjectAlignment()
-{
-  auto I = this;
-  for(int a = 0; a < I->NState; a++) {
-    CGOFree(I->State[a].renderCGO);
-    CGOFree(I->State[a].primitiveCGO);
-    VLAFreeP(I->State[a].alignVLA);
-    OVOneToAny_DEL_AUTO_NULL(I->State[a].id2tag);
-  }
-  VLAFreeP(I->State);
-}
-
-
-/*========================================================================*/
-
 void ObjectAlignmentRecomputeExtent(ObjectAlignment * I)
 {
   float mx[3], mn[3];
@@ -889,7 +873,7 @@ void ObjectAlignmentRecomputeExtent(ObjectAlignment * I)
   int a;
   for(a = 0; a < I->NState; a++)
     if(I->State[a].primitiveCGO) {
-      if(CGOGetExtent(I->State[a].primitiveCGO, mn, mx)) {
+      if(CGOGetExtent(I->State[a].primitiveCGO.get(), mn, mx)) {
         if(!extent_flag) {
           extent_flag = true;
           copy3f(mx, I->ExtentMax);
@@ -912,7 +896,7 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
   {
     int a;
     for(a = 0; a < I->NState; a++) {
-      ObjectAlignmentState *oas = I->State + a;
+      ObjectAlignmentState *oas = I->State.data() + a;
       if(!oas->valid){
         update_needed = true;
       }
@@ -922,7 +906,7 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
     {
       int a;
       for(a = 0; a < I->NState; a++) {
-        ObjectAlignmentState *oas = I->State + a;
+        ObjectAlignmentState *oas = I->State.data() + a;
 	if(!oas->valid){
           ObjectMolecule *guide_obj = NULL;
           if(oas->guide[0]) {
@@ -931,25 +915,21 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
           if(I->SelectionState == a)
             I->SelectionState = -1;
 
-          CGOFree(oas->primitiveCGO);
+          oas->primitiveCGO.reset();
 
-          if(oas->id2tag) {
-            OVOneToAny_Reset(oas->id2tag);
-          } else {
-            oas->id2tag = OVOneToAny_New(G->Context->heap);
-          }
+          oas->id2tag.clear();
 
           {
             CGO *cgo = CGONew(G);
 
             if(oas->alignVLA) {
               int id, b = 0, c;
-              int *vla = oas->alignVLA;
-              int n_id = VLAGetSize(vla);
+              auto& vla = oas->alignVLA;
+              int n_id = vla.size();
               float mean[3], vert[3], gvert[3];
               int n_coord = 0;
               int tag = SELECTOR_BASE_TAG + 1;
-              OVOneToAny *id2tag = oas->id2tag;
+              auto& id2tag = oas->id2tag;
 
               CGOBegin(cgo, GL_LINES);
 
@@ -1026,7 +1006,7 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                 tag++;
 
                 while((b < n_id) && vla[b]) {
-                  OVOneToAny_SetKey(id2tag, vla[b], tag);
+                  id2tag[vla[b]] = tag;
                   b++;
                 }
               }
@@ -1034,9 +1014,9 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
             }
 
             CGOStop(cgo);
-            oas->primitiveCGO = cgo;
-            if (!CGOHasOperationsOfType(oas->primitiveCGO, cgo::draw::line::op_code)){
-              CGOFree(oas->primitiveCGO);
+            oas->primitiveCGO.reset(cgo);
+            if (!CGOHasOperationsOfType(oas->primitiveCGO.get(), cgo::draw::line::op_code)){
+              oas->primitiveCGO.reset();
             }
           }
           oas->valid = true;
@@ -1059,8 +1039,8 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
     if(state < 0)
       state = 0;
     if(state < I->NState) {
-      ObjectAlignmentState *oas = I->State + state;
-      if(oas->id2tag) {
+      ObjectAlignmentState *oas = I->State.data() + state;
+      if(!oas->id2tag.empty()) {
         SelectorDelete(G, I->Name);
         SelectorCreateFromTagDict(G, I->Name, oas->id2tag, false);
         I->SelectionState = state;
@@ -1102,13 +1082,13 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
     if((I->visRep & cRepCGOBit)) {
 
       for(StateIterator iter(G, I->Setting, state, I->NState); iter.next();) {
-        sobj = I->State + iter.state;
+        sobj = I->State.data() + iter.state;
 
         if (!sobj->primitiveCGO)
           continue;
 
 	if(ray) {
-	    CGORenderRay(sobj->primitiveCGO, ray, info, color, NULL, I->Setting, NULL);
+	    CGORenderRay(sobj->primitiveCGO.get(), ray, info, color, NULL, I->Setting, NULL);
 	} else if(G->HaveGUI && G->ValidContext) {
 #ifndef PURE_OPENGL_ES_2
 	  if(!info->line_lighting)
@@ -1129,7 +1109,7 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
             if (sobj->renderCGO && (
                   (as_cylinders ^ sobj->renderCGO_has_cylinders) ||
                   (trilines ^ sobj->renderCGO_has_trilines))){
-              CGOFree(sobj->renderCGO);
+              sobj->renderCGO.reset();
             }
 
             if (!sobj->renderCGO) {
@@ -1142,25 +1122,25 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
               CGOSpecial(tmpCGO, SET_ALIGNMENT_UNIFORMS_ATTRIBS);
 
               if (as_cylinders) {
-                tmp2CGO = CGOConvertLinesToCylinderShader(sobj->primitiveCGO, tmpCGO, false);
+                tmp2CGO = CGOConvertLinesToCylinderShader(sobj->primitiveCGO.get(), tmpCGO, false);
               } else if (trilines) {
-                tmp2CGO = CGOConvertToTrilinesShader(sobj->primitiveCGO, tmpCGO, false);
+                tmp2CGO = CGOConvertToTrilinesShader(sobj->primitiveCGO.get(), tmpCGO, false);
               } else {
-                tmp2CGO = CGOConvertToLinesShader(sobj->primitiveCGO, tmpCGO, false);
+                tmp2CGO = CGOConvertToLinesShader(sobj->primitiveCGO.get(), tmpCGO, false);
               }
 
               tmpCGO->free_append(tmp2CGO);
 
               CGODisable(tmpCGO, shader);
 
-              sobj->renderCGO = tmpCGO;
+              sobj->renderCGO.reset(tmpCGO);
               sobj->renderCGO_has_cylinders = as_cylinders;
               sobj->renderCGO_has_trilines = trilines;
             }
 
-            cgo = sobj->renderCGO;
+            cgo = sobj->renderCGO.get();
           } else {
-            cgo = sobj->primitiveCGO;
+            cgo = sobj->primitiveCGO.get();
           }
 
           if (cgo) {
@@ -1180,9 +1160,9 @@ static void ObjectAlignmentInvalidate(ObjectAlignment * I, int rep, int level, i
 {
   if((rep == cRepAll) || (rep == cRepCGO)) {
     for(StateIterator iter(I->G, I->Setting, state, I->NState); iter.next();) {
-      ObjectAlignmentState *sobj = I->State + iter.state;
+      ObjectAlignmentState *sobj = I->State.data() + iter.state;
       sobj->valid = false;
-      CGOFree(sobj->renderCGO);
+      sobj->renderCGO.reset();
     }
   }
 }
@@ -1192,7 +1172,6 @@ static void ObjectAlignmentInvalidate(ObjectAlignment * I, int rep, int level, i
 ObjectAlignment::ObjectAlignment(PyMOLGlobals * G) : CObject(G)
 {
   auto I = this;
-  I->State = VLACalloc(ObjectAlignmentState, 10);      /* auto-zero */
 
   I->type = cObjectAlignment;
   I->fUpdate = (void (*)(CObject *)) ObjectAlignmentUpdate;
@@ -1206,7 +1185,7 @@ ObjectAlignment::ObjectAlignment(PyMOLGlobals * G) : CObject(G)
 /*========================================================================*/
 ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
                                        ObjectAlignment * obj,
-                                       int *align_vla,
+                                       const pymol::vla<int>& align_vla,
                                        int state,
                                        int merge,
                                        ObjectMolecule * guide, ObjectMolecule * flush)
@@ -1226,30 +1205,24 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
     state = I->NState;
 
   if(I->NState <= state) {
-    VLACheck(I->State, ObjectAlignmentState, state);
+    VecCheck(I->State, state);
     I->NState = state + 1;
   }
 
   {
-    ObjectAlignmentState *oas = I->State + state;
+    ObjectAlignmentState *oas = I->State.data() + state;
     oas->valid = false;
     if(guide) {
       strcpy(oas->guide, guide->Name);
     }
-    if(align_vla) {
+    if(align_vla.data()) {
       if(merge && oas->alignVLA) {
-        int *new_vla = AlignmentMerge(G, oas->alignVLA, align_vla, guide, flush);
+        int *new_vla = AlignmentMerge(G, oas->alignVLA.data(), align_vla.data(), guide, flush);
         if(new_vla) {
-          VLAFreeP(oas->alignVLA);
-          oas->alignVLA = new_vla;
+          oas->alignVLA = pymol::vla_take_ownership(new_vla);
         }
       } else {
-        int size = VLAGetSize(align_vla);
-        if(oas->alignVLA)
-          VLAFreeP(oas->alignVLA);
-        oas->alignVLA = VLAlloc(int, size);
-        UtilCopyMem(oas->alignVLA, align_vla, sizeof(int) * size);
-        VLASize(oas->alignVLA, int, size);
+        oas->alignVLA = align_vla;
       }
     } else {
       VLAFreeP(oas->alignVLA);

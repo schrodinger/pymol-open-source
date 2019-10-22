@@ -806,7 +806,7 @@ static PyObject *CmdSetRawAlignment(PyObject * self, PyObject * args)
 
   // create alignment object
   cobj = (CObject*) ObjectAlignmentDefine(G, (ObjectAlignment*) cobj,
-      align_vla.data(), state, true, guide, nullptr);
+      align_vla, state, true, guide, nullptr);
 
   // manage alignment object
   ObjectSetName(cobj, alnname);

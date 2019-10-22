@@ -7337,7 +7337,7 @@ static sele_array_t SelectorApplyMultipick(PyMOLGlobals * G, Multipick * mp)
 
 
 /*========================================================================*/
-static sele_array_t SelectorSelectFromTagDict(PyMOLGlobals * G, OVOneToAny * id2tag)
+static sele_array_t SelectorSelectFromTagDict(PyMOLGlobals * G, const std::unordered_map<int, int>& id2tag)
 {
   CSelector *I = G->Selector;
   sele_array_t result{};
@@ -7356,8 +7356,10 @@ static sele_array_t SelectorSelectFromTagDict(PyMOLGlobals * G, OVOneToAny * id2
       for(a = cNDummyAtoms; a < I->NAtom; a++) {
         ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
         if(ai->unique_id) {
-          if(!OVreturn_IS_ERROR(ret = OVOneToAny_GetKey(id2tag, ai->unique_id)))
-            result[a] = ret.word;
+          auto it = id2tag.find(ai->unique_id);
+          if(it != id2tag.end()) {
+            result[a] = it->second;
+          }
         }
         table_a++;
       }
@@ -7372,7 +7374,7 @@ static sele_array_t SelectorSelectFromTagDict(PyMOLGlobals * G, OVOneToAny * id2
 static int _SelectorCreate(PyMOLGlobals * G, const char *sname, const char *sele,
                            ObjectMolecule ** obj, int quiet, Multipick * mp,
                            CSeqRow * rowVLA, int nRow, int **obj_idx, int *n_idx,
-                           int n_obj, OVOneToAny * id2tag, int executive_manage,
+                           int n_obj, const std::unordered_map<int, int>* id2tag, int executive_manage,
                            int state, int domain)
 {
   sele_array_t atom{};
@@ -7406,7 +7408,7 @@ static int _SelectorCreate(PyMOLGlobals * G, const char *sname, const char *sele
       if(!atom)
         ok = false;
     } else if(id2tag) {
-      atom = SelectorSelectFromTagDict(G, id2tag);
+      atom = SelectorSelectFromTagDict(G, *id2tag);
     } else if(obj && obj[0]) {  /* optimized full-object selection */
       if(n_obj <= 0) {
         embed_obj = *obj;
@@ -7457,10 +7459,10 @@ static int _SelectorCreate(PyMOLGlobals * G, const char *sname, const char *sele
   return (c);
 }
 
-int SelectorCreateFromTagDict(PyMOLGlobals * G, const char *sname, OVOneToAny * id2tag,
+int SelectorCreateFromTagDict(PyMOLGlobals * G, const char *sname, const std::unordered_map<int, int>& id2tag,
                               int exec_managed)
 {
-  return _SelectorCreate(G, sname, NULL, NULL, true, NULL, NULL, 0, NULL, NULL, 0, id2tag,
+  return _SelectorCreate(G, sname, NULL, NULL, true, NULL, NULL, 0, NULL, NULL, 0, &id2tag,
                          exec_managed, -1, -1);
 }
 

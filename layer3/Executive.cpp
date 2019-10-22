@@ -11201,10 +11201,10 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
 
             {
               /* Get unique ids and construct the alignment vla */
-              int *align_vla = VLAlloc(int, n_pair * 3);
+              pymol::vla<int> align_vla(n_pair * 3);
 
               {
-                int *id_p = align_vla;
+                int *id_p = align_vla.data();
                 int i;
                 for(i = 0; i < n_pair; i++) {
                   id_p[0] = AtomInfoCheckUniqueID(G, op2.ai1VLA[i]);    /* target */
@@ -11234,7 +11234,6 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
                 align_to_update = obj;
                 SceneInvalidate(G);
               }
-              VLAFreeP(align_vla);
             }
         }
         if(ok && mode == 2) {

@@ -1088,4 +1088,8 @@ CGO *CGOConvertShaderCylindersToCylinderShader(const CGO *I, CGO *addTo);
 
 bool AssignNewPickColor(CGO *cgo, unsigned int &i, std::vector<Picking>* pick, PickContext * context, unsigned char *color, unsigned int index, int bond);
 
+struct CGODeleter {
+  void operator()(CGO* cgo) { CGOFree(cgo); }
+};
+
 #endif

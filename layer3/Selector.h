@@ -17,6 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Selector
 #define _H_Selector
 
+#include <unordered_map>
+
 #include"os_python.h"
 
 #include"ObjectMolecule.h"
@@ -47,7 +49,7 @@ int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals * G, const char *sna
                                                ObjectMolecule ** obj, int **pri_idx,
                                                int *n_idx, int n_obj);
 
-int SelectorCreateFromTagDict(PyMOLGlobals * G, const char *sname, OVOneToAny * id2tag,
+int SelectorCreateFromTagDict(PyMOLGlobals * G, const char *sname, const std::unordered_map<int, int>& id2tag,
                               int exec_managed);
 
 
