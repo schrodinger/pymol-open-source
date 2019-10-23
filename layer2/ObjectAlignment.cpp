@@ -1200,6 +1200,7 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
     I = new ObjectAlignment(G);
   } else {
     I = obj;
+    ObjectAlignmentInvalidate(I, cRepAll, cRepInvRep, state);
   }
   if(state < 0)
     state = I->NState;
