@@ -1990,6 +1990,10 @@ void ExecutiveUpdateCoordDepends(PyMOLGlobals * G, ObjectMolecule * mol)
         if(dynamic_measures)
           ObjectDistMoveWithObject((ObjectDist*) rec->obj, mol);
         break;
+      case cObjectAlignment:
+        rec->obj->invalidate(
+            cRepAll, cRepInvRep, cSelectorUpdateTableAllStates);
+        break;
       }
     }
   }
