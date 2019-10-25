@@ -2399,13 +2399,13 @@ void RayRenderIDTF(CRay * I, char **node_vla, char **rsrc_vla)
             int cnt = 0;
             cnt = idtf_dump_file_header(node_vla, cnt);
             cnt = idtf_dump_model_nodes(node_vla, cnt, mesh_vla, mesh_cnt);
-            VLASize((*node_vla), char, cnt);
+            VLASize((*node_vla), char, cnt + 1);
           }
           {
             int cnt = 0;
             cnt = idtf_dump_resource_header(rsrc_vla, cnt);
             cnt = idtf_dump_resources(rsrc_vla, cnt, mesh_vla, mesh_cnt, material);
-            VLASize((*rsrc_vla), char, cnt);
+            VLASize((*rsrc_vla), char, cnt + 1);
           }
 
           VLAFreeP(material->color_list);
