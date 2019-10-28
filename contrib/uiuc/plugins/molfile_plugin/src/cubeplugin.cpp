@@ -231,7 +231,9 @@ static void *open_cube_read(const char *filepath, const char *filetype,
   // the cellvectors (and the coordinates) in such a way,
   // that the a-vector is collinear with the x-axis and
   // the b-vector is in the xy-plane. 
+#if 0
   cube_buildrotmat(cube, voltmpl.origin, a, b);
+#endif
   // print warning, if the rotation will be significant:
   if ((fabs((double) a[1]) + fabs((double) a[2]) + fabs((double) b[2]))
       > 0.001) {
