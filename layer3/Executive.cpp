@@ -3691,6 +3691,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
   long size = (long) content_length;
   OrthoLineType buf = "";
   char plugin[16] = "";
+  int plugin_mask = 0;
   CObject *obj = NULL;
   CObject *origObj = NULL;
   int pdb_variant = PDB_VARIANT_DEFAULT;
@@ -3790,8 +3791,18 @@ int ExecutiveLoad(PyMOLGlobals * G,
     strcpy(plugin, "mae");
     break;
   default:
-    if (plugin_arg)
+    if (plugin_arg) {
       strcpy(plugin, plugin_arg);
+      // Hackish way to request a "sub-plugin". For example the "cube" plugin
+      // can load maps or molecules:
+      // load example.cube, molobj, format=plugin:cube:1
+      // load example.cube, mapobj, format=plugin:cube:4
+      char* p = strchr(plugin, ':');
+      if (p) {
+        *p = '\0';
+        plugin_mask = atoi(p + 1);
+      }
+    }
     break;
   }
 
@@ -3982,7 +3993,8 @@ int ExecutiveLoad(PyMOLGlobals * G,
     break;
   default:
     if(plugin[0]) {
-      obj = PlugIOManagerLoad(G, origObj ? &origObj : NULL, fname, state, quiet, plugin);
+      obj = PlugIOManagerLoad(G, origObj ? &origObj : NULL, fname, state, quiet,
+          plugin, plugin_mask);
     } else {
       PRINTFB(G, FB_Executive, FB_Errors)
         "ExecutiveLoad-Error: unable to read that file type from C (%d, '%s')\n",

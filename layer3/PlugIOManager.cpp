@@ -79,7 +79,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
 }
 
 CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
-    const char *fname, int state, int quiet, const char *plugin_type)
+    const char *fname, int state, int quiet, const char *plugin_type, int mask)
 {
   PRINTFB(G, FB_ObjectMolecule, FB_Errors)
     " ObjectMolecule-Error: sorry, VMD Molfile Plugins not compiled into this build.\n"
@@ -843,7 +843,7 @@ ok_except1:
  * (not for trajectories).
  */
 CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
-    const char *fname, int state, int quiet, const char *plugin_type)
+    const char *fname, int state, int quiet, const char *plugin_type, int mask)
 {
   CObject *obj = obj_ptr ? *obj_ptr : NULL;
   CPlugIOManager *manager = G->PlugIOManager;
@@ -858,7 +858,10 @@ CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
     return NULL;
   }
 
-  if (plugin->read_volumetric_data != NULL) {
+  if (!mask)
+    mask = cPlugIOManager_any;
+
+  if ((mask & cPlugIOManager_vol) && plugin->read_volumetric_data) {
     // maps
 
     if (obj && obj->type != cObjectMap) {
@@ -869,7 +872,7 @@ CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
     return (CObject *) PlugIOManagerLoadVol(G, (ObjectMap *) obj,
         fname, state, quiet, plugin_type);
 
-  } else if (plugin->read_structure != NULL) {
+  } else if ((mask & cPlugIOManager_mol) && plugin->read_structure) {
     // molecules
 
     if (obj
@@ -886,7 +889,7 @@ CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
     return (CObject *) PlugIOManagerLoadMol(G, (ObjectMolecule *) obj,
         fname, state, quiet, plugin_type);
 
-  } else if (plugin->read_next_timestep != NULL) {
+  } else if ((mask & cPlugIOManager_traj) && plugin->read_next_timestep) {
     // trajectories
 
     float shift[] = {0.f, 0.f, 0.f};
@@ -901,7 +904,7 @@ CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
         fname, state, 1, 1, 1, -1, -1, "all", 1, shift, quiet, plugin_type);
     return NULL;
 
-  } else if (plugin->read_rawgraphics != NULL) {
+  } else if ((mask & cPlugIOManager_graphics) && plugin->read_rawgraphics) {
     // geometry (CGO)
 
     if (obj) {
@@ -938,7 +941,7 @@ const char * PlugIOManagerFindPluginByExt(PyMOLGlobals * G, const char * ext, in
   CPlugIOManager *I = G->PlugIOManager;
 
   if (!mask)
-    mask = 0xF;
+    mask = cPlugIOManager_any;
 
   for (auto it = I->PluginVLA, it_end = it + I->NPlugin; it != it_end; ++it) {
     const molfile_plugin_t * p = *it;
@@ -946,10 +949,10 @@ const char * PlugIOManagerFindPluginByExt(PyMOLGlobals * G, const char * ext, in
     if (WordMatchCommaExact(G, p->filename_extension, ext, true) >= 0)
       continue;
 
-    if (((mask & 0x1) && p->read_structure) ||
-        ((mask & 0x2) && p->read_next_timestep) ||
-        ((mask & 0x4) && p->read_volumetric_data) ||
-        ((mask & 0x8) && p->read_rawgraphics))
+    if (((mask & cPlugIOManager_mol) && p->read_structure) ||
+        ((mask & cPlugIOManager_traj) && p->read_next_timestep) ||
+        ((mask & cPlugIOManager_graphics) && p->read_rawgraphics) ||
+        ((mask & cPlugIOManager_vol) && p->read_volumetric_data))
       return p->name;
   }
 #endif

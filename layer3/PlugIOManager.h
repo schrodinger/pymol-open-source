@@ -22,6 +22,14 @@ Z* -------------------------------------------------------------------
 #include "ObjectMolecule.h"
 #include "ObjectMap.h"
 
+enum {
+  cPlugIOManager_mol = 1,
+  cPlugIOManager_traj = 2,
+  cPlugIOManager_vol = 4,
+  cPlugIOManager_graphics = 8,
+  cPlugIOManager_any = 0xF,
+};
+
 const char * PlugIOManagerFindPluginByExt(PyMOLGlobals * G, const char * ext, int mask=0);
 
 #ifdef __cplusplus
@@ -40,7 +48,8 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
 ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
     const char *fname, int state, int quiet, const char *plugin_type);
 CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
-    const char *fname, int state, int quiet, const char *plugin_type);
+    const char *fname, int state, int quiet, const char *plugin_type,
+    int mask=0);
 
 #ifdef __cplusplus
 }
