@@ -61,6 +61,10 @@ struct ObjectGadgetRamp : public ObjectGadget {
   float y = 0.12f;
   ObjectGadgetRamp(PyMOLGlobals* G);
   ~ObjectGadgetRamp();
+
+  // virtual methods
+  void update() override;
+  void invalidate(int rep, int level, int state) override;
 };
 
 #define cRAMP_TRADITIONAL 1
@@ -95,6 +99,5 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I);
 int ObjectGadgetRampNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                   ObjectGadgetRamp ** result, int version);
 
-void ObjectGadgetRampUpdate(ObjectGadgetRamp * I);
 void ObjectGadgetRampFree(ObjectGadgetRamp * I);
 #endif

@@ -31,6 +31,11 @@ struct ObjectCallback : public CObject {
   int NState = 0;
   ObjectCallback(PyMOLGlobals* G);
   ~ObjectCallback();
+
+  // virtual methods
+  void update() override;
+  void render(RenderInfo* info) override;
+  int getNFrame() const override;
 };
 
 ObjectCallback *ObjectCallbackDefine(PyMOLGlobals * G, ObjectCallback * obj,

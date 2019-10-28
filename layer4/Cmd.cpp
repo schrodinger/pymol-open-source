@@ -824,8 +824,8 @@ static PyObject* GetRawAlignment(PyMOLGlobals* G,
     bool active_only,
     int state)
 {
-  if (state >= alnobj->NState) {
-    PyErr_Format(PyExc_IndexError, "state %d >= NState %d", state, alnobj->NState);
+  if (state >= alnobj->getNFrame()) {
+    PyErr_Format(PyExc_IndexError, "state %d >= NState %d", state, alnobj->getNFrame());
     return nullptr;
   }
 
@@ -2693,11 +2693,11 @@ static PyObject *CmdGetObjectSettings(PyObject * self, PyObject * args)
 
   if(!obj) {
     ErrMessage(G, "GetObjectSettings", "named object not found.");
-  } else if (obj->fGetSettingHandle) {
-    auto handle = obj->fGetSettingHandle(obj, -1);
+  } else {
+    auto handle = obj->getSettingHandle(-1);
 
     if (state != -1) {
-      auto handle_state = obj->fGetSettingHandle(obj, state);
+      auto handle_state = obj->getSettingHandle(state);
 
       // only accept handle if different from object-level settings
       handle = (handle_state == handle) ? NULL : handle_state;
@@ -3497,8 +3497,7 @@ static int ExecutiveSliceNew(PyMOLGlobals * G, char *slice_name,
     } else if(state == -3) {    /* append mode */
       state = 0;
       if(origObj)
-        if(origObj->fGetNFrame)
-          state = origObj->fGetNFrame(origObj);
+        state = origObj->getNFrame();
     } else {
       if(map_state == -1) {
         map_state = 0;
@@ -3511,7 +3510,7 @@ static int ExecutiveSliceNew(PyMOLGlobals * G, char *slice_name,
       if(map_state == -2)
         map_state = SceneGetState(G);
       if(map_state == -3)
-        map_state = ObjectMapGetNStates(mapObj) - 1;
+        map_state = mapObj->getNFrame() - 1;
       ms = ObjectMapStateGetActive(mapObj, map_state);
       if(ms) {
         obj = (CObject *) ObjectSliceFromMap(G, (ObjectSlice *) origObj, mapObj,
@@ -6570,7 +6569,7 @@ static PyObject *CmdFinishObject(PyObject * self, PyObject * args)
       if(origObj->type == cObjectMolecule) {
         ObjectMoleculeUpdateIDNumbers((ObjectMolecule *) origObj);
         ObjectMoleculeUpdateNonbonded((ObjectMolecule *) origObj);
-        ObjectMoleculeInvalidate((ObjectMolecule *) origObj, cRepAll, cRepInvAll, -1);
+        origObj->invalidate(cRepAll, cRepInvAll, -1);
       }
       ExecutiveUpdateObjectSelection(G, origObj);       /* TODO STATUS */
     } else

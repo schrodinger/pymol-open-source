@@ -40,7 +40,6 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"ObjectCGO.h"
 
-static void ObjectMeshInvalidate(ObjectMesh * I, int rep, int level, int state);
 static void ObjectMeshStateInit(PyMOLGlobals * G, ObjectMeshState * ms);
 static void ObjectMeshRecomputeExtent(ObjectMesh * I);
 
@@ -322,7 +321,7 @@ int ObjectMeshInvalidateMapName(ObjectMesh * I, const char *name, const char * n
       if(strcmp(ms->MapName, name) == 0) {
         if (new_name)
           strcpy(ms->MapName, new_name);
-        ObjectMeshInvalidate(I, cRepAll, cRepInvAll, a);
+        I->invalidate(cRepAll, cRepInvAll, a);
         result = true;
       }
     }
@@ -361,8 +360,9 @@ void ObjectMeshDump(ObjectMesh * I, const char *fname, int state)
   }
 }
 
-static void ObjectMeshInvalidate(ObjectMesh * I, int rep, int level, int state)
+void ObjectMesh::invalidate(int rep, int level, int state)
 {
+  auto I = this;
   if(level >= cRepInvExtents) {
     I->ExtentFlag = false;
   }
@@ -505,9 +505,9 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
   }
 }
 
-static void ObjectMeshUpdate(ObjectMesh * I)
+void ObjectMesh::update()
 {
-  PyMOLGlobals *G = I->G;
+  auto I = this;
   int a;
   int c;
   ObjectMeshState *ms;
@@ -765,9 +765,9 @@ static void ObjectMeshUpdate(ObjectMesh * I)
 }
 
 
-static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
+void ObjectMesh::render(RenderInfo * info)
 {
-  ObjectMeshRenderImpl(I, info, 0, 0);
+  ObjectMeshRenderImpl(this, info, false, 0);
 }
 
 static short ObjectMeshStateRenderShader(ObjectMeshState *ms, ObjectMesh *I,
@@ -1139,9 +1139,9 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 
 /*========================================================================*/
 
-static int ObjectMeshGetNStates(ObjectMesh * I)
+int ObjectMesh::getNFrame() const
 {
-  return (I->NState);
+  return NState;
 }
 
 
@@ -1151,11 +1151,6 @@ ObjectMesh::ObjectMesh(PyMOLGlobals * G) : CObject(G)
   auto I = this;
   I->State = VLACalloc(ObjectMeshState, 10);   /* autozero important */
   I->type = cObjectMesh;
-    
-  I->fUpdate = (void (*)(CObject *)) ObjectMeshUpdate;
-  I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectMeshRender;
-  I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectMeshInvalidate;
-  I->fGetNFrame = (int (*)(CObject *)) ObjectMeshGetNStates;
 }
 
 

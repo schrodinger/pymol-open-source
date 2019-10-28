@@ -1003,8 +1003,8 @@ int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
     int use_matrices = SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
     if(use_matrices<0) use_matrices = 0;
     if(use_matrices || history) {
-      if(I->fGetObjectState) {
-        CObjectState *obj_state = I->fGetObjectState(I, state);
+      CObjectState* obj_state = I->getObjectState(state);
+      if (obj_state) {
           if(!obj_state->Matrix.empty()) {
             const double *state_matrix = obj_state->Matrix.data();
             if(result) {
@@ -1126,14 +1126,14 @@ void ObjectSetTTTOrigin(CObject * I, float *origin)
 
 
 /*========================================================================*/
-CSetting **ObjectGetSettingHandle(CObject * I, int state)
+CSetting **CObject::getSettingHandle(int state)
 {
-  return (&I->Setting);
+  return &Setting;
 }
 
 
 /*========================================================================*/
-void ObjectDescribeElement(CObject * I, int index, char *buffer)
+void CObject::describeElement(int index, char* buffer) const
 {
   buffer[0] = 0;
 }
@@ -1179,24 +1179,10 @@ void ObjectSetName(CObject * I, const char *name)
 
 
 /*========================================================================*/
-void ObjectUpdate(CObject * I)
-{
-
-}
-
-
-/*========================================================================*/
 CObject::~CObject()
 {
   SceneObjectDel(this->G, this, false);
   SettingFreeP(this->Setting);
-}
-
-
-/*========================================================================*/
-int ObjectGetNFrames(CObject * I)
-{
-  return 1;
 }
 
 
@@ -1218,16 +1204,11 @@ void ObjectUseColorCGO(CGO *cgo, CObject * I)
 }
 
 /*========================================================================*/
-void ObjectInvalidate(CObject * this_, int rep, int level, int state)
+/**
+ * Render a unit box (dummy representation)
+ */
+void CObject::render(RenderInfo * info)
 {
-
-}
-
-
-/*========================================================================*/
-void ObjectRenderUnitBox(CObject * this_, RenderInfo * info)
-{
-  PyMOLGlobals *G = this_->G;
   if(G->HaveGUI && G->ValidContext) {
 #ifdef PURE_OPENGL_ES_2
     /* TODO */

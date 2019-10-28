@@ -681,7 +681,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   I->Symmetry = SymmetryNewFromTimestep(G, &timestep);
 
   // finalize
-  ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+  I->invalidate(cRepAll, cRepInvAll, -1);
   ObjectMoleculeUpdateIDNumbers(I);
   ObjectMoleculeUpdateNonbonded(I);
 

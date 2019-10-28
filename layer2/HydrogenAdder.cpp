@@ -329,7 +329,7 @@ int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int st
       cs->extendIndices(I->NAtom);
   }
 
-  ObjectMoleculeInvalidate(I, cRepAll, cRepInvBonds, state);
+  I->invalidate(cRepAll, cRepInvBonds, state);
   ObjectMoleculeUpdateNeighbors(I);
 
   AtomInfoUniquefyNames(G,
@@ -356,7 +356,7 @@ int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int st
     }
   }
 
-  ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, state);
+  I->invalidate(cRepAll, cRepInvAtoms, state);
   ObjectMoleculeSort(I);
   ObjectMoleculeUpdateIDNumbers(I);
 

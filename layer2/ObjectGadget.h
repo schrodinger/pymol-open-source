@@ -32,6 +32,11 @@ struct ObjectGadget : public CObject {
   bool Changed = true;
   ObjectGadget(PyMOLGlobals* G);
   virtual ~ObjectGadget();
+
+  // virtual methods
+  virtual void update() override;
+  void render(RenderInfo* info) override;
+  int getNFrame() const override;
 };
 
 #define cGadgetPlain 0
@@ -48,7 +53,6 @@ int ObjectGadgetInitFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget *
 ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G);
 int ObjectGadgetGetVertex(ObjectGadget * I, int index, int base, float *v);     /* in current state */
 int ObjectGadgetSetVertex(ObjectGadget * I, int index, int base, float *v);     /* in current state */
-void ObjectGadgetUpdate(ObjectGadget * I);
 void ObjectGadgetUpdateExtents(ObjectGadget * I);
 void ObjectGadgetUpdateStates(ObjectGadget * I);
 

@@ -270,15 +270,13 @@ int SceneGetGridSize(PyMOLGlobals * G, int grid_mode)
     {
       int max_slot = 0;
       for (auto& obj : I->Obj) {
-        if(obj->fGetNFrame) {
-          slot = obj->fGetNFrame(obj);
+          slot = obj->getNFrame();
           if(grid_mode == 3) {
             obj->grid_slot = max_slot; // slot offset for 1st state
             max_slot += slot;
           } else if(max_slot < slot) {
             max_slot = slot;
           }
-        }
       }
       size = max_slot;
     }
@@ -3733,7 +3731,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
                                  is_single_click, "pick_sele", name, name);
               } else {
 		/* user clicked on an atom not in a selection */
-                obj->fDescribeElement(obj, I->LastPicked.src.index, buffer);
+                obj->describeElement(I->LastPicked.src.index, buffer);
                 ObjectMoleculeGetAtomSeleLog((ObjectMolecule *) obj,
                                              I->LastPicked.src.index, buf1, false);
                 MenuActivate2Arg(G, I->LastWinX, I->LastWinY + 20, I->LastWinX,
@@ -3744,8 +3742,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
           case cButModePickAtom1:
             if(obj && obj->type == cObjectMolecule) {
               if(Feedback(G, FB_Scene, FB_Results)) {
-                if(obj->fDescribeElement)
-                  obj->fDescribeElement(obj, I->LastPicked.src.index, buffer);
+                obj->describeElement(I->LastPicked.src.index, buffer);
                 PRINTF " You clicked %s -> (%s)\n", buffer, cEditorSele1 ENDF(G);
               }
               if(SettingGetGlobal_i(G, cSetting_logging)) {
@@ -3769,8 +3766,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
           case cButModePickAtom:
             if(obj && obj->type == cObjectMolecule) {
               WordType name;
-              if(obj->fDescribeElement)
-                obj->fDescribeElement(obj, I->LastPicked.src.index, buffer);
+              obj->describeElement(I->LastPicked.src.index, buffer);
               if(EditorIsBondMode(G)
                  /* &&!(EditorIsAnActiveObject(G,(ObjectMolecule*)obj)) */
                 ) {
@@ -3859,8 +3855,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
 
           EditorInactivate(G);
           if(Feedback(G, FB_Scene, FB_Results)) {
-            if(obj->fDescribeElement)
-              obj->fDescribeElement(obj, I->LastPicked.src.index, buffer);
+            obj->describeElement(I->LastPicked.src.index, buffer);
             PRINTF " You clicked %s -> (%s)", buffer, cEditorSele1 ENDF(G);
             OrthoRestorePrompt(G);
           }
@@ -3876,8 +3871,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
             if(atIndex == I->LastPicked.src.index)
               atIndex = objMol->Bond[I->LastPicked.src.bond].index[1];
             if(Feedback(G, FB_Scene, FB_Results)) {
-              if(obj->fDescribeElement)
-                obj->fDescribeElement(obj, atIndex, buffer);
+              obj->describeElement(atIndex, buffer);
               PRINTF " You clicked %s -> (%s)", buffer, cEditorSele2 ENDF(G);
               OrthoRestorePrompt(G);
             }
@@ -3991,8 +3985,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
           
           if(I->LastPicked.src.bond >= cPickableAtom) {
             if(Feedback(G, FB_Scene, FB_Results)) {
-              if(obj->fDescribeElement)
-                obj->fDescribeElement(obj, I->LastPicked.src.index, buffer);
+              obj->describeElement(I->LastPicked.src.index, buffer);
               PRINTF " You clicked %s", buffer ENDF(G);
               OrthoRestorePrompt(G);
             }
@@ -4050,8 +4043,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
         switch (obj->type) {
         case cObjectMolecule:
           if(Feedback(G, FB_Scene, FB_Results)) {
-            if(obj->fDescribeElement)
-              obj->fDescribeElement(obj, I->LastPicked.src.index, buffer);
+            obj->describeElement(I->LastPicked.src.index, buffer);
             PRINTF " You clicked %s", buffer ENDF(G);
             OrthoRestorePrompt(G);
           }
@@ -4113,8 +4105,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
 
               }
               if(Feedback(G, FB_Scene, FB_Results)) {
-                if(obj->fDescribeElement)
-                  obj->fDescribeElement(obj, I->LastPicked.src.index, buffer);
+                obj->describeElement(I->LastPicked.src.index, buffer);
                 PRINTF " You clicked %s", buffer ENDF(G);
                 OrthoRestorePrompt(G);
               }
@@ -6213,8 +6204,8 @@ struct _CObjectUpdateThreadInfo {
 
 void SceneObjectUpdateThread(CObjectUpdateThreadInfo * T)
 {
-  if(T->obj && T->obj->fUpdate) {
-    T->obj->fUpdate(T->obj);
+  if(T->obj) {
+    T->obj->update();
   }
 }
 
@@ -6309,15 +6300,11 @@ void SceneUpdate(PyMOLGlobals * G, int force)
         if(multithread && (n_thread > 1)) {
           int min_start = -1;
           int max_stop = -1;
-          int n_frame = SceneGetNFrame(G, NULL);
           int n_obj = 0;
           for (auto& obj : I->Obj) {
             int start = 0;
-            int stop = n_frame;
             n_obj++;
-            if(obj->fGetNFrame) {
-              stop = obj->fGetNFrame(obj);
-            }
+            int stop = obj->getNFrame();
 	    /* set start/stop to define the range for this object
 	     * depending upon various build settings */
             ObjectAdjustStateRebuildRange(obj, &start, &stop);
@@ -6332,7 +6319,7 @@ void SceneUpdate(PyMOLGlobals * G, int force)
             }
           }
 
-          n_frame = max_stop - min_start;
+          int n_frame = max_stop - min_start;
 
           if(n_frame > n_thread) {
             n_thread = 1;
@@ -6387,8 +6374,7 @@ void SceneUpdate(PyMOLGlobals * G, int force)
       /* purge graphics representation when no longer used */
       if(I->LastStateBuilt >= 0) {
         for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
-          if((*it)->fInvalidate &&
-             (((*it)->type != cObjectMolecule) || force || defer_builds_mode != 5)) {
+          if ((*it)->type != cObjectMolecule || force || defer_builds_mode != 5) {
             int static_singletons =
               SettingGet_b(G, (*it)->Setting, NULL, cSetting_static_singletons);
             int async_builds =
@@ -6396,10 +6382,7 @@ void SceneUpdate(PyMOLGlobals * G, int force)
             int max_threads =
               SettingGet_i(G, (*it)->Setting, NULL, cSetting_max_threads);
             int nFrame = 0;
-            if((*it)->fGetNFrame)
-              nFrame = (*it)->fGetNFrame(*it);
-            else
-              nFrame = 0;
+            nFrame = (*it)->getNFrame();
             if((nFrame > 1) || (!static_singletons)) {
               int start = I->LastStateBuilt;
               int stop = start + 1;

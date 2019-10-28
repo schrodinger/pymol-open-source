@@ -59,6 +59,12 @@ struct ObjectSurface : public CObject {
   int NState = 0;
   ObjectSurface(PyMOLGlobals* G);
   ~ObjectSurface();
+
+  // virtual methods
+  void update() override;
+  void render(RenderInfo* info) override;
+  void invalidate(int rep, int level, int state) override;
+  int getNFrame() const override;
 };
 
 ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,

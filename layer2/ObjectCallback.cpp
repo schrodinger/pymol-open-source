@@ -52,17 +52,18 @@ ObjectCallback::~ObjectCallback()
 
 /*========================================================================*/
 
-static void ObjectCallbackUpdate(ObjectCallback * I)
+void ObjectCallback::update()
 {
-  SceneInvalidate(I->G);
+  SceneInvalidate(G);
 }
 
 
 /*========================================================================*/
 
-static void ObjectCallbackRender(ObjectCallback * I, RenderInfo * info)
+void ObjectCallback::render(RenderInfo * info)
 {
 #ifndef _PYMOL_NOPY
+  auto I = this;
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
@@ -111,24 +112,17 @@ static void ObjectCallbackRender(ObjectCallback * I, RenderInfo * info)
 
 
 /*========================================================================*/
-static int ObjectCallbackGetNStates(ObjectCallback * I)
+int ObjectCallback::getNFrame() const
 {
-  return (I->NState);
+  return NState;
 }
 
 
 /*========================================================================*/
 ObjectCallback::ObjectCallback(PyMOLGlobals * G) : CObject(G)
 {
-  auto I = this;
   State = VLACalloc(ObjectCallbackState, 10);       /* autozero */
-  I->NState = 0;
-
-  I->type = cObjectCallback;
-  I->fUpdate = (void (*)(CObject *)) ObjectCallbackUpdate;
-  I->fRender = (void (*)(CObject *, RenderInfo *))
-    ObjectCallbackRender;
-  I->fGetNFrame = (int (*)(CObject *)) ObjectCallbackGetNStates;
+  type = cObjectCallback;
 }
 
 

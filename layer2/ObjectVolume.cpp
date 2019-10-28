@@ -47,7 +47,6 @@ Z* -------------------------------------------------------------------
 
 #define clamp(x,l,h) ((x) < (l) ? (l) : (x) > (h) ? (h) : (x))
 
-static void ObjectVolumeInvalidate(ObjectVolume * I, int rep, int level, int state);
 static void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs);
 static void ObjectVolumeRecomputeExtent(ObjectVolume * I);
 
@@ -338,7 +337,7 @@ int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name, const char
       if(strcmp(vs->MapName, name) == 0) {
         if (new_name)
           strcpy(vs->MapName, new_name);
-        ObjectVolumeInvalidate(I, cRepAll, cRepInvAll, a);
+        I->invalidate(cRepAll, cRepInvAll, a);
         result = true;
       }
     }
@@ -346,8 +345,9 @@ int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name, const char
   return result;
 }
 
-static void ObjectVolumeInvalidate(ObjectVolume * I, int rep, int level, int state)
+void ObjectVolume::invalidate(int rep, int level, int state)
 {
+  auto I = this;
   int a;
   int once_flag = true;
   if(level >= cRepInvExtents) {
@@ -408,8 +408,9 @@ static void get44FracToRealFromCorner(const float * corner, float * frac2real)
   transpose44f44f(tmp, frac2real);
 }
 
-static void ObjectVolumeUpdate(ObjectVolume * I)
+void ObjectVolume::update()
 {
+  auto I = this;
   int a;
   ObjectVolumeState *vs;
   ObjectMapState *oms = NULL;
@@ -420,7 +421,6 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
   int i, j;
   float range;
   MapType *voxelmap;            /* this has nothing to do with isosurfaces... */
-  PyMOLGlobals * G = I->G;
 
   for(a = 0; a < I->NState; a++) {
     vs = I->State + a;
@@ -739,10 +739,10 @@ static size_t createPreintegrationTexture(PyMOLGlobals * G, const float *Table, 
   return tex->get_hash_id();
 }
 
-static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
+void ObjectVolume::render(RenderInfo * info)
 {
 #ifndef PURE_OPENGL_ES_2
-  PyMOLGlobals *G = I->G;
+  auto I = this;
   int state = info->state;
   int pass = info->pass;
   int a = 0;
@@ -793,6 +793,10 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 
     if(!vs || !vs->Active)
       continue;
+
+    // PYMOL-3283
+    if (!vs->isUpdated)
+      I->update();
 
     PRINTFB(I->G, FB_ObjectVolume, FB_Blather)
       "ObjectVolumeRender-Msg: state=%d, pass=%d, refresh=%d, recolor=%d.\n",
@@ -1106,9 +1110,9 @@ int ObjectVolumeAddSlicePoint(float *pt0, float *pt1, float *zaxis, float d,
 
 /*========================================================================*/
 
-static int ObjectVolumeGetNStates(ObjectVolume * I)
+int ObjectVolume::getNFrame() const
 {
-  return (I->NState);
+  return NState;
 }
 
 
@@ -1119,11 +1123,6 @@ ObjectVolume::ObjectVolume(PyMOLGlobals * G) : CObject(G)
   I->State = VLACalloc(ObjectVolumeState, 10);   /* autozero important */
 
   I->type = cObjectVolume;
-
-  I->fUpdate = (void (*)(CObject *)) ObjectVolumeUpdate;
-  I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectVolumeRender;
-  I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectVolumeInvalidate;
-  I->fGetNFrame = (int (*)(CObject *)) ObjectVolumeGetNStates;
 }
 
 
@@ -1326,7 +1325,7 @@ PyObject * ObjectVolumeGetRamp(ObjectVolume * I)
 
   if(I && (ovs = ObjectVolumeGetActiveState(I))) {
     if(!ovs->isUpdated)
-      ObjectVolumeUpdate(I);
+      I->update();
 
     result = PConvFloatArrayToPyList(ovs->Ramp, 5 * ovs->RampSize);
   }

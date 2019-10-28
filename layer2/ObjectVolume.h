@@ -55,6 +55,12 @@ struct ObjectVolume : public CObject {
   int NState = 0;
   ObjectVolume(PyMOLGlobals* G);
   ~ObjectVolume();
+
+  // virtual methods
+  void update() override;
+  void render(RenderInfo* info) override;
+  void invalidate(int rep, int level, int state) override;
+  int getNFrame() const override;
 };
 
 ObjectVolume *ObjectVolumeFromBox(PyMOLGlobals * G, ObjectVolume * obj, ObjectMap * map,

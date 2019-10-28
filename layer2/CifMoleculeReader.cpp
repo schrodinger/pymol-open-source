@@ -2149,7 +2149,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
 
   // computationally intense update tasks
   SceneCountFrames(G);
-  ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+  I->invalidate(cRepAll, cRepInvAll, -1);
   ObjectMoleculeUpdateIDNumbers(I);
   ObjectMoleculeUpdateNonbonded(I);
   ObjectMoleculeAutoDisableAtomNameWildcard(I);

@@ -39,13 +39,16 @@ struct ObjectAlignmentState {
 
 struct ObjectAlignment : public CObject {
   std::vector<ObjectAlignmentState> State;
-  int NState = 0;
   int SelectionState = -1;
   int ForceState = -1;
   ObjectAlignment(PyMOLGlobals* G);
-};
 
-void ObjectAlignmentUpdate(ObjectAlignment * I);
+  // virtual methods
+  void update() override;
+  void render(RenderInfo* info) override;
+  void invalidate(int rep, int level, int state) override;
+  int getNFrame() const override;
+};
 
 ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
                                        ObjectAlignment * obj,

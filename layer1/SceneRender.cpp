@@ -663,7 +663,7 @@ void SceneRenderAllObject(PyMOLGlobals * G,
 #endif
 
         info->state = ObjectGetCurrentState(obj, false);
-        obj->fRender(obj, info);
+        obj->render(info);
 
         copy44f(projSave, I->ProjectionMatrix);
 
@@ -691,15 +691,15 @@ void SceneRenderAllObject(PyMOLGlobals * G,
 
       if((!grid->active) || (grid->mode < 2)) {
 	info->state = ObjectGetCurrentState(obj, false);
-	obj->fRender(obj, info);
+	obj->render(info);
       } else if(grid->slot) {
         if (grid->mode == 2) {
           if((info->state = state + grid->slot - 1) >= 0)
-            obj->fRender(obj, info);
+            obj->render(info);
         } else if (grid->mode == 3) {
           info->state = grid->slot - obj->grid_slot - 1;
           if (info->state >= 0 && info->state < obj->getNFrame())
-            obj->fRender(obj, info);
+            obj->render(info);
         }
       }
 
@@ -813,7 +813,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
     case 0:
       for (auto obj : I->Obj) {
         /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
-        if (obj->fRender && (!rayVolume || obj->type == cObjectVolume)) {
+        if (!rayVolume || obj->type == cObjectVolume) {
           SceneRenderAllObject(
               G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
         }
@@ -821,15 +821,14 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
       break;
     case 1:
       for (auto obj : I->GadgetObjs) {
-        if (obj->fRender) {
           SceneRenderAllObject(
               G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
-        }
       }
       break;
     case 2:
       for (auto obj : I->NonGadgetObjs) {
-        if (obj->fRender) {
+        // ObjectGroup used to have fRender = NULL
+        if (obj->type != cObjectGroup) {
           SceneRenderAllObject(
               G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
         }
@@ -839,13 +838,14 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
       // Gadgets Last
       for (auto obj : I->NonGadgetObjs) {
         /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
-        if (obj->fRender && (!rayVolume || obj->type == cObjectVolume)) {
+        if (obj->type !=
+                cObjectGroup && // ObjectGroup used to have fRender = NULL
+            (!rayVolume || obj->type == cObjectVolume)) {
           SceneRenderAllObject(
               G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
         }
       }
       for (auto obj : I->GadgetObjs) {
-        if (obj->fRender)
           SceneRenderAllObject(
               G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
       }

@@ -1120,7 +1120,7 @@ std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char * name, int s
     CObject *obj = ExecutiveFindObjectByName(G, name);
 
     if (!obj ||
-        !(handle = obj->fGetSettingHandle(obj, state)) ||
+        !(handle = obj->getSettingHandle(state)) ||
         !(I = *handle))
       // not found -> empty list
       return result;

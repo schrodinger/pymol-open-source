@@ -56,6 +56,12 @@ struct ObjectMesh : public CObject {
   int NState = 0;
   ObjectMesh(PyMOLGlobals* G);
   ~ObjectMesh();
+
+  // virtual methods
+  void update() override;
+  void render(RenderInfo* info) override;
+  void invalidate(int rep, int level, int state) override;
+  int getNFrame() const override;
 };
 
 ObjectMesh *ObjectMeshFromBox(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * map,

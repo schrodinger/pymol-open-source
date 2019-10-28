@@ -36,8 +36,6 @@ Z* -------------------------------------------------------------------
 #include"ListMacros.h"
 
 static void ObjectDistFree(ObjectDist * I);
-static void ObjectDistUpdate(ObjectDist * I);
-static int ObjectDistGetNFrames(ObjectDist * I);
 static void ObjectDistUpdateExtents(ObjectDist * I);
 
 int ObjectDistGetLabelTxfVertex(ObjectDist * I, int state, int index, float *v)
@@ -233,15 +231,16 @@ int ObjectDistNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectDist ** res
 }
 
 /*========================================================================*/
-int ObjectDistGetNFrames(ObjectDist * I)
+int ObjectDist::getNFrame() const
 {
-  return I->NDSet;
+  return NDSet;
 }
 
 
 /*========================================================================*/
-void ObjectDistUpdate(ObjectDist * I)
+void ObjectDist::update()
 {
+  auto I = this;
   int a;
   OrthoBusyPrime(I->G);
   for(a = 0; a < I->NDSet; a++)
@@ -268,8 +267,9 @@ void ObjectDistInvalidateRep(ObjectDist * I, int rep)
 
 
 /*========================================================================*/
-static void ObjectDistRender(ObjectDist * I, RenderInfo * info)
+void ObjectDist::render(RenderInfo * info)
 {
+  auto I = this;
   int state = info->state;
   int pass = info->pass;
   CRay *ray = info->ray;
@@ -308,8 +308,8 @@ static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
 }
 #endif
 
-static void ObjectDistInvalidate(CObject * Iarg, int rep, int level, int state){
-  ObjectDist * I = (ObjectDist*)Iarg;
+void ObjectDist::invalidate(int rep, int level, int state){
+  auto I = this;
   for(StateIterator iter(I->G, I->Setting, state, I->NDSet);
       iter.next();) {
     DistSet * ds = I->DSet[iter.state];
@@ -324,12 +324,6 @@ ObjectDist::ObjectDist(PyMOLGlobals * G) : CObject(G)
   auto I = this;
   I->type = cObjectMeasurement;
   I->DSet = VLACalloc(DistSet *, 10);  /* auto-zero */
-
-  I->fRender = (void (*)(CObject *, RenderInfo * info)) ObjectDistRender;
-  I->fUpdate = (void (*)(CObject *)) ObjectDistUpdate;
-  I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectDistInvalidate;
-  I->fGetNFrame = (int (*)(CObject *)) ObjectDistGetNFrames;
-  I->fDescribeElement = NULL;
   I->Color = ColorGetIndex(G, "dash");
 }
 

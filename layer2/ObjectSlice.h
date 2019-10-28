@@ -73,6 +73,12 @@ struct ObjectSlice : public CObject {
   PickContext context{};
   int NState = 0;
   ObjectSlice(PyMOLGlobals* G);
+
+  // virtual methods
+  void update() override;
+  void render(RenderInfo* info) override;
+  void invalidate(int rep, int level, int state) override;
+  int getNFrame() const override;
 };
 
 ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap * map,

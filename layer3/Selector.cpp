@@ -2947,7 +2947,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
 
           if(obj != last_obj) {
             if(changed_flag && last_obj) {
-              ObjectMoleculeInvalidate(last_obj, cRepCartoon, cRepInvRep, -1);
+              last_obj->invalidate(cRepCartoon, cRepInvRep, -1);
               SceneChanged(G);
               changed_flag = false;
             }
@@ -2965,7 +2965,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
       }
 
       if(changed_flag && last_obj) {
-        ObjectMoleculeInvalidate(last_obj, cRepCartoon, cRepInvRep, -1);
+        last_obj->invalidate(cRepCartoon, cRepInvRep, -1);
         SceneChanged(G);
         changed_flag = false;
       }
@@ -3108,7 +3108,7 @@ int SelectorColorectionApply(PyMOLGlobals * G, PyObject * list, const char *pref
         if(SelectorIsMember(G, ai->selEntry, used[b].sele)) {
           ai->color = used[b].color;
           if(obj != last) {
-            ObjectMoleculeInvalidate(obj, cRepAll, cRepInvColor, -1);
+            obj->invalidate(cRepAll, cRepInvColor, -1);
             last = obj;
           }
           break;
@@ -3815,8 +3815,8 @@ int SelectorCountStates(PyMOLGlobals * G, int sele)
       if(obj != last) {
         at1 = I->Table[a].atom;
         if(SelectorIsMember(G, obj->AtomInfo[at1].selEntry, sele)) {
-          if(obj->fGetNFrame) {
-            n_frame = obj->fGetNFrame((CObject *) obj);
+          {
+            n_frame = obj->getNFrame();
             if(result < n_frame)
               result = n_frame;
           }
@@ -6593,7 +6593,7 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
       ObjectMolecule **objs = SelectorGetObjectMoleculeVLA(G, sele0);
       int sz = VLAGetSize(objs);
       for(b = 0; b < sz; b++) {
-	ObjectMoleculeInvalidate(objs[b], cRepAll, cRepInvCoord, -1);
+	objs[b]->invalidate(cRepAll, cRepInvCoord, -1);
       }
       VLAFree(objs);
     }

@@ -850,8 +850,9 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp * I)
 
 
 /*========================================================================*/
-void ObjectGadgetRampUpdate(ObjectGadgetRamp * I)
+void ObjectGadgetRamp::update()
 {
+  auto I = this;
   float scale;
 
   if(I->Changed) {
@@ -1037,7 +1038,7 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals * G,
   return (I);
 }
 
-static void ObjectGadgetRampInvalidate(ObjectGadgetRamp * I, int rep, int level,
+void ObjectGadgetRamp::invalidate(int rep, int level,
                                        int state)
 {
 }
@@ -1049,9 +1050,4 @@ ObjectGadgetRamp::ObjectGadgetRamp(PyMOLGlobals * G) : ObjectGadget(G)
   auto I = this;
   I->GadgetType = cGadgetRamp;
   I->SrcName[0] = 0;
-
-  I->fUpdate = (void (*)(CObject *)) ObjectGadgetRampUpdate;
-  I->fInvalidate =
-    (void (*)(CObject *, int, int, int)) ObjectGadgetRampInvalidate;
-
 }

@@ -270,7 +270,8 @@ bool SceneRay(PyMOLGlobals * G,
         }
 
         for (auto* obj : I->Obj) {
-          if(obj->fRender) {
+          // ObjectGroup used to have fRender = NULL
+          if (obj->type != cObjectGroup) {
             if(SceneGetDrawFlag(&I->grid, slot_vla, obj->grid_slot)) {
               float color[3];
               ColorGetEncoded(G, obj->Color, color);

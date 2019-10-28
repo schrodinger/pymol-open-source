@@ -26,6 +26,10 @@ struct ObjectGroup : public CObject {
   CObjectState State;           /* groups only have one state */
   ObjectGroup(PyMOLGlobals* G);
   ~ObjectGroup();
+
+  // virtual methods
+  void render(RenderInfo* info) override {}
+  CObjectState* getObjectState(int state) override;
 };
 
 PyObject *ObjectGroupAsPyList(ObjectGroup * I);

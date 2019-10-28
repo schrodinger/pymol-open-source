@@ -809,8 +809,7 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
     } else if(state == -3) {    /* append mode */
       state = 0;
       if(origObj)
-        if(origObj->fGetNFrame)
-          state = origObj->fGetNFrame(origObj);
+        state = origObj->getNFrame();
     } else {
       if(map_state == -1) {
         map_state = 0;
@@ -823,7 +822,7 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
       if(map_state == -2)
         map_state = SceneGetState(G);
       if(map_state == -3)
-        map_state = ObjectMapGetNStates(mapObj) - 1;
+        map_state = mapObj->getNFrame() - 1;
       ms = ObjectMapStateGetActive(mapObj, map_state);
       if(ms) {
         switch (box_mode) {
@@ -955,8 +954,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
     } else if(state == -3) {    /* append mode */
       state = 0;
       if(origObj)
-        if(origObj->fGetNFrame)
-          state = origObj->fGetNFrame(origObj);
+        state = origObj->getNFrame();
     } else {
       if(map_state == -1) {
         map_state = 0;
@@ -969,7 +967,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
       if(map_state == -2)
         map_state = SceneGetState(G);
       if(map_state == -3)
-        map_state = ObjectMapGetNStates(mapObj) - 1;
+        map_state = mapObj->getNFrame() - 1;
       ms = ObjectMapStateGetActive(mapObj, map_state);
       if(ms) {
         switch (box_mode) {
@@ -1201,8 +1199,7 @@ int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_n
     } else if(state == -3) {    /* append mode */
       state = 0;
       if(origObj)
-        if(origObj->fGetNFrame)
-          state = origObj->fGetNFrame(origObj);
+        state = origObj->getNFrame();
     } else {
       if(map_state == -1) {
         map_state = 0;
@@ -1217,7 +1214,7 @@ int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_n
       if(map_state == -2)
         map_state = SceneGetState(G);
       if(map_state == -3)
-        map_state = ObjectMapGetNStates(mapObj) - 1;
+        map_state = mapObj->getNFrame() - 1;
       ms = ObjectMapStateGetActive(mapObj, map_state);
       if(ms) {
 	/* determine extents */
@@ -8034,11 +8031,11 @@ PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
       obj = ExecutiveFindObjectByName(G, object);
       if(!obj)
         return PyErr_Format(P_CmdException, "object \"%s\" not found", object);
-    handle = obj->fGetSettingHandle(obj, -1);
+    handle = obj->getSettingHandle(-1);
     if(handle)
       set_ptr1 = *handle;
     if(state >= 0) {
-      handle = obj->fGetSettingHandle(obj, state);
+      handle = obj->getSettingHandle(state);
       if(handle)
         set_ptr2 = *handle;
       else {
@@ -9176,7 +9173,7 @@ void ExecutiveSpheroid(PyMOLGlobals * G, const char *name, int average)
           if((!os) || (rec->obj == os)) {
             obj = (ObjectMolecule *) rec->obj;
             ObjectMoleculeCreateSpheroid(obj, average);
-            ObjectMoleculeInvalidate(obj, cRepAll, cRepInvRep, -1);
+            obj->invalidate(cRepAll, cRepInvRep, -1);
           }
     }
     SceneChanged(G);
@@ -9191,25 +9188,22 @@ void ExecutiveRebuildAll(PyMOLGlobals * G)
   SpecRec *rec = NULL;
   PRINTFD(G, FB_Executive)
     " ExecutiveRebuildAll: entered.\n" ENDFD;
+  auto defer_builds_mode = SettingGet<bool>(G, cSetting_defer_builds_mode);
   while(ListIterate(I->Spec, rec, next)) {
     if(rec->type == cExecObject) {
+      auto level = cRepInvAll;
       switch (rec->obj->type) {
-      case cObjectMolecule:
-        if(SettingGetGlobal_b(G, cSetting_defer_builds_mode))
-          ObjectMoleculeInvalidate((ObjectMolecule *) rec->obj, cRepAll, cRepInvPurge,
-                                   -1);
-        else
-          ObjectMoleculeInvalidate((ObjectMolecule *) rec->obj, cRepAll, cRepInvRep, -1);
-        break;
       case cObjectMeasurement:
         ObjectDistInvalidateRep((ObjectDist *) rec->obj, cRepAll);
         break;
+      case cObjectMolecule:
+        level = defer_builds_mode ? cRepInvPurge : cRepInvRep;
       case cObjectSurface:
       case cObjectMesh:
       case cObjectSlice:
       case cObjectAlignment:
       case cObjectCGO:
-        rec->obj->invalidate(cRepAll, cRepInvAll, -1);
+        rec->obj->invalidate(cRepAll, level, -1);
         break;
       }
     }
@@ -11303,7 +11297,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
   }
 
   if(align_to_update) {
-    ObjectAlignmentUpdate(align_to_update);
+    align_to_update->update();
   }
 
   VLAFreeP(op1.vv1);
@@ -11691,11 +11685,9 @@ int ExecutiveCountStates(PyMOLGlobals * G, const char *s1)
           rec = NULL;
           while(ListIterate(I->Spec, rec, next)) {
             if(rec->type == cExecObject) {
-              if(rec->obj->fGetNFrame) {
-                n_state = rec->obj->fGetNFrame(rec->obj);
+                n_state = rec->obj->getNFrame();
                 if(result < n_state)
                   result = n_state;
-              }
             }
           }
           break;
@@ -11709,11 +11701,9 @@ int ExecutiveCountStates(PyMOLGlobals * G, const char *s1)
           }
           break;
         case cExecObject:
-          if(rec->obj->fGetNFrame) {
-            n_state = rec->obj->fGetNFrame(rec->obj);
+            n_state = rec->obj->getNFrame();
             if(result < n_state)
               result = n_state;
-          }
           break;
         }
       }
@@ -12202,8 +12192,8 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, const cha
           rec = NULL;
           while(ListIterate(I->Spec, rec, next)) {
             if(rec->type == cExecObject) {
-              if(rec->obj->fGetSettingHandle) {
-                handle = rec->obj->fGetSettingHandle(rec->obj, state);
+              {
+                handle = rec->obj->getSettingHandle(state);
                 if(handle) {
                   SettingCheckHandle(G, handle);
                   ok = SettingSetFromTuple(G, *handle, index, tuple);
@@ -12324,8 +12314,8 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, const cha
           break;
         case cExecObject:
           levelmask |= SettingLevelInfo[state < 0 ? cSettingLevel_object : cSettingLevel_ostate].mask;
-          if(rec->obj->fGetSettingHandle) {
-            handle = rec->obj->fGetSettingHandle(rec->obj, state);
+          {
+            handle = rec->obj->getSettingHandle(state);
             if(handle) {
               SettingCheckHandle(G, handle);
               ok = SettingSetFromTuple(G, *handle, index, tuple);
@@ -12397,11 +12387,11 @@ int ExecutiveGetSettingFromString(PyMOLGlobals * G, PyMOLreturn_value *result,
       " %s-Error: sele \"%s\" not found.\n", __func__, sele ENDFB(G);
     ok = false;
   } else if(obj) {
-    handle = obj->fGetSettingHandle(obj, -1);
+    handle = obj->getSettingHandle(-1);
     if(handle)
       set_ptr1 = *handle;
     if(state >= 0) {
-      handle = obj->fGetSettingHandle(obj, state);
+      handle = obj->getSettingHandle(state);
       if(handle)
         set_ptr2 = *handle;
       else {
@@ -12507,8 +12497,8 @@ int ExecutiveSetSettingFromString(PyMOLGlobals * G,
           rec = NULL;
           while(ListIterate(I->Spec, rec, next)) {
             if(rec->type == cExecObject) {
-              if(rec->obj->fGetSettingHandle) {
-                handle = rec->obj->fGetSettingHandle(rec->obj, state);
+              {
+                handle = rec->obj->getSettingHandle(state);
                 if(handle) {
                   SettingCheckHandle(G, handle);
                   ok = SettingSetFromString(G, *handle, index, value);
@@ -12571,8 +12561,8 @@ int ExecutiveSetSettingFromString(PyMOLGlobals * G,
           }
           break;
         case cExecObject:
-          if(rec->obj->fGetSettingHandle) {
-            handle = rec->obj->fGetSettingHandle(rec->obj, state);
+          {
+            handle = rec->obj->getSettingHandle(state);
             if(handle) {
               SettingCheckHandle(G, handle);
               ok = SettingSetFromString(G, *handle, index, value);
@@ -12636,8 +12626,8 @@ int ExecutiveSetObjSettingFromString(PyMOLGlobals * G,
         SettingGenerateSideEffects(G, index, obj->Name, state, quiet);
     }
   } else {                      /* based on a single object */
-    if(obj->fGetSettingHandle) {
-      handle = obj->fGetSettingHandle(obj, state);
+    {
+      handle = obj->getSettingHandle(state);
       if(handle) {
         SettingCheckHandle(G, handle);
         ok = SettingSetFromString(G, *handle, index, value);
@@ -12719,8 +12709,8 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
           rec = NULL;
           while(ListIterate(I->Spec, rec, next)) {
             if(rec->type == cExecObject) {
-              if(rec->obj->fGetSettingHandle) {
-                handle = rec->obj->fGetSettingHandle(rec->obj, state);
+              {
+                handle = rec->obj->getSettingHandle(state);
                 if(handle) {
                   SettingCheckHandle(G, handle);
                   ok = SettingUnset(*handle, index);
@@ -12777,8 +12767,8 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
           }
           break;
         case cExecObject:
-          if(rec->obj->fGetSettingHandle) {
-            handle = rec->obj->fGetSettingHandle(rec->obj, state);
+          {
+            handle = rec->obj->getSettingHandle(state);
             if(handle) {
               SettingCheckHandle(G, handle);
               ok = SettingUnset(*handle, index);
@@ -13223,8 +13213,8 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
                   case cObjectMesh:
                   case cObjectSurface:
                     if(!rec->obj->ExtentFlag) {
-                      if(rec->obj->fUpdate)     /* allow object to update extents, if necessary */
-                        rec->obj->fUpdate(rec->obj);
+                      /* allow object to update extents, if necessary */
+                      rec->obj->update();
                     }
                   }
                 }
@@ -13255,8 +13245,8 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
               case cObjectMesh:
               case cObjectSurface:
                 if(!rec->obj->ExtentFlag) {
-                  if(rec->obj->fUpdate) /* allow object to update extents, if necessary */
-                    rec->obj->fUpdate(rec->obj);
+                  /* allow object to update extents, if necessary */
+                  rec->obj->update();
                 }
               }
             }
@@ -13886,12 +13876,10 @@ void ExecutiveFullScreen(PyMOLGlobals * G, int flag)
 /*========================================================================*/
 static
 void fInvalidateRepMask(CObject * obj, int repmask, int state=-1) {
-  if(obj->fInvalidate) {
     for(int a = 0; a < cRepCnt; a++) {
       if ((1 << a) & repmask)
-        obj->fInvalidate(obj, a, cRepInvVisib, state);
+        obj->invalidate(a, cRepInvVisib, state);
     }
-  }
 }
 
 
@@ -14130,12 +14118,10 @@ void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int lev
           rec = NULL;
           while(ListIterate(I->Spec, rec, next)) {
             if(rec->type == cExecObject) {
-              if(rec->obj->fInvalidate) {
-                rec->obj->invalidate(rep, level, -1);
-                SceneInvalidate(G);
-              }
+              rec->obj->invalidate(rep, level, -1);
             }
           }
+          SceneInvalidate(G);
           break;
         }
       }
@@ -14857,8 +14843,8 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
     }
   }
 
-  if(obj->fGetNFrame) {
-    int n_state = obj->fGetNFrame(obj);
+  {
+    int n_state = obj->getNFrame();
     int defer_limit = SettingGetGlobal_i(G, cSetting_auto_defer_builds);
     if((defer_limit >= 0) && (n_state >= defer_limit)) {
       int defer_builds = SettingGetGlobal_b(G, cSetting_defer_builds_mode);
@@ -16382,18 +16368,15 @@ void CExecutive::draw(CGO* orthoCGO)
               if((nChar--) > 0) {
                 TextDrawChar(G, ')' ORTHOCGOARGVAR);
               }
-              c = rec->name;
             }
 
 	    /* OBJECTS: output any label captions, like state number, state title */
             if(rec->type == cExecObject) {
-              if(rec->obj->fGetCaption) {
 		/* get this object's "caption" that goes on its title line,
 		 * currently, this is "state-title [curState/nState]" */
-                c = rec->obj->fGetCaption(rec->obj, ch, WordLength);
-	      }
+              c = rec->obj->getCaption(ch, WordLength);
 	      /* now print the caption */
-              if(c && c[0] && nChar > 1 && strcmp(c, rec->obj->Name) != 0) {
+              if(c && c[0] && nChar > 1) {
                 TextSetColor(G, captionColor);
                 TextSetPos2i(G, x + DIP2PIXEL(2) + DIP2PIXEL(8) * (max_char - nChar), y2 + text_lift);
                 if((nChar--) > 0)
@@ -16882,7 +16865,7 @@ pymol::Result<> ExecutiveRebond(PyMOLGlobals* G, const char* oname, int state)
 
   ObjectMoleculeRemoveBonds(obj, 0, 0);
   ObjectMoleculeConnect(obj, cs, true, 3);
-  ObjectMoleculeInvalidate(obj, cRepAll, cRepInvAll, -1);
+  obj->invalidate(cRepAll, cRepInvAll, -1);
 
   return {};
 }

@@ -208,8 +208,9 @@ void ObjectCGORecomputeExtent(ObjectCGO * I)
 
 
 /*========================================================================*/
-static void ObjectCGOInvalidate(ObjectCGO * I, int rep, int level, int state)
+void ObjectCGO::invalidate(int rep, int level, int state)
 {
+  auto I = this;
   ObjectCGOState *sobj = NULL;
 
   if(state < 0) {
@@ -235,25 +236,20 @@ static void ObjectCGOInvalidate(ObjectCGO * I, int rep, int level, int state)
 
 /*========================================================================*/
 
-static void ObjectCGOUpdate(ObjectCGO * I)
+void ObjectCGO::update()
 {
-  int a;
-  for(a = 0; a < I->NState; a++) {
-    ObjectCGOState *ocs = I->State + a;
-    if (ocs->renderCGO){
-      CGOFree(ocs->renderCGO);	      
-      ocs->renderCGO = 0;
-    }
+  for (int a = 0; a < NState; ++a) {
+    CGOFree(State[a].renderCGO);
   }
-  SceneInvalidate(I->G);    /* needed ? */
+  SceneInvalidate(G);    /* needed ? */
 }
 
 
 /*========================================================================*/
 
-static int ObjectCGOGetNState(ObjectCGO * I)
+int ObjectCGO::getNFrame() const
 {
-  return (I->NState);
+  return NState;
 }
 
 static void ObjectCGORenderState(PyMOLGlobals* G, int pass, CRay* ray,
@@ -490,9 +486,9 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
 }
 /*========================================================================*/
 
-static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
+void ObjectCGO::render(RenderInfo * info)
 {
-  PyMOLGlobals *G = I->G;
+  auto I = this;
   int state = info->state;
   CRay *ray = info->ray;
   int pass = info->pass;
@@ -530,15 +526,8 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 /*========================================================================*/
 ObjectCGO::ObjectCGO(PyMOLGlobals * G) : CObject(G)
 {
-  auto I = this;
-  I->State = VLACalloc(ObjectCGOState, 10);
-
-  I->type = cObjectCGO;
-  I->fUpdate = (void (*)(CObject *)) ObjectCGOUpdate;
-  I->fInvalidate = (void (*)(CObject *, int rep, int level, int state))
-    ObjectCGOInvalidate;
-  I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectCGORender;
-  I->fGetNFrame = (int (*)(CObject *)) ObjectCGOGetNState;
+  State = VLACalloc(ObjectCGOState, 10);
+  type = cObjectCGO;
 }
 
 

@@ -204,17 +204,17 @@ ObjectSliceState::~ObjectSliceState()
   }
 }
 
-static void ObjectSliceInvalidate(ObjectSlice * I, int rep, int level, int state)
+void ObjectSlice::invalidate(int rep, int level, int state)
 {
   int a;
   int once_flag = true;
-  for(a = 0; a < I->NState; a++) {
+  for(a = 0; a < NState; a++) {
     if(state < 0)
       once_flag = false;
     if(!once_flag)
       state = a;
-    I->State[state].RefreshFlag = true;
-    SceneChanged(I->G);
+    State[state].RefreshFlag = true;
+    SceneChanged(G);
     if(once_flag)
       break;
   }
@@ -621,9 +621,10 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
   }
 }
 
-static void ObjectSliceUpdate(ObjectSlice * I)
+void ObjectSlice::update()
 {
 
+  auto I = this;
   ObjectSliceState *oss;
   ObjectMapState *oms = NULL;
   ObjectMap *map = NULL;
@@ -711,7 +712,7 @@ void ObjectSliceDrag(ObjectSlice * I, int state, int mode, float *pt, float *mov
 
         multiply33f33f(mat, oss->system, oss->system);
 
-        ObjectSliceInvalidate(I, cRepSlice, cRepAll, state);
+        I->invalidate(cRepSlice, cRepAll, state);
         SceneInvalidate(I->G);
 
       }
@@ -728,7 +729,7 @@ void ObjectSliceDrag(ObjectSlice * I, int state, int mode, float *pt, float *mov
 
         project3f(mov, up, v1);
         add3f(v1, oss->origin, oss->origin);
-        ObjectSliceInvalidate(I, cRepSlice, cRepAll, state);
+        I->invalidate(cRepSlice, cRepAll, state);
         SceneInvalidate(I->G);
       }
       break;
@@ -901,10 +902,10 @@ void GenerateOutlineOfSlice(PyMOLGlobals *G, ObjectSliceState *oss, CGO *cgo){
 #endif
 
 
-static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
+void ObjectSlice::render(RenderInfo * info)
 {
 
-  PyMOLGlobals *G = I->G;
+  auto I = this;
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
@@ -968,7 +969,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
           break;
       }
     }
-    ObjectSliceUpdate(I);
+    I->update();
   }
 
   ObjectPrepareContext(I, info);
@@ -1237,9 +1238,9 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 
 /*========================================================================*/
 
-static int ObjectSliceGetNStates(ObjectSlice * I)
+int ObjectSlice::getNFrame() const
 {
-  return (I->NState);
+  return NState;
 }
 
 ObjectSliceState *ObjectSliceStateGetActive(ObjectSlice * I, int state)
@@ -1263,11 +1264,6 @@ ObjectSlice::ObjectSlice(PyMOLGlobals * G) : CObject(G)
   I->State = pymol::vla<ObjectSliceState>(10);  /* autozero important */
 
   I->type = cObjectSlice;
-
-  I->fUpdate = (void (*)(CObject *)) ObjectSliceUpdate;
-  I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectSliceRender;
-  I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectSliceInvalidate;
-  I->fGetNFrame = (int (*)(CObject *)) ObjectSliceGetNStates;
 
   I->context.object = (void *) I;
   I->context.state = 0;

@@ -105,6 +105,16 @@ struct ObjectMolecule : public CObject {
   bool setNDiscrete(int natom);
   bool updateAtmToIdx();
   bool atomHasAnyCoordinates(size_t atm) const;
+
+  // virtual methods
+  void update() override;
+  void render(RenderInfo* info) override;
+  void invalidate(int rep, int level, int state) override;
+  int getNFrame() const override;
+  void describeElement(int index, char* buffer) const override;
+  char* getCaption(char* ch, int len) const override;
+  CObjectState* getObjectState(int state) override;
+  CSetting **getSettingHandle(int state) override;
 };
 
 /* this is a record that holds information for specific types of Operatations on Molecules, eg. translation/rotation/etc */
@@ -335,7 +345,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * obj,
 
 int ObjectMoleculeExtendIndices(ObjectMolecule * I, int state);
 
-void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state);
 void ObjectMoleculeInvalidateAtomType(ObjectMolecule *I, int state);
 
 void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vis_only SELINDICATORARG);
@@ -402,9 +411,9 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule * I, int atom, int state, f
 int ObjectMoleculeCheckBondSep(ObjectMolecule * I, int a0, int a1, int dist);
 int ObjectMoleculeGetPhiPsi(ObjectMolecule * I, int ca, float *phi, float *psi,
                             int state);
-void ObjectMoleculeGetAtomSele(ObjectMolecule * I, int index, char *buffer);
-void ObjectMoleculeGetAtomSeleFast(ObjectMolecule * I, int index, char *buffer);
-void ObjectMoleculeGetAtomSeleLog(ObjectMolecule * I, int index, char *buffer, int quote);
+void ObjectMoleculeGetAtomSele(const ObjectMolecule * I, int index, char *buffer);
+void ObjectMoleculeGetAtomSeleFast(const ObjectMolecule * I, int index, char *buffer);
+void ObjectMoleculeGetAtomSeleLog(const ObjectMolecule * I, int index, char *buffer, int quote);
 
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I);
 

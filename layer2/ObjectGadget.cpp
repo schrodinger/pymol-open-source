@@ -426,8 +426,9 @@ void ObjectGadgetUpdateStates(ObjectGadget * I)
 
 
 /*========================================================================*/
-void ObjectGadgetUpdate(ObjectGadget * I)
+void ObjectGadget::update()
 {
+  auto I = this;
   if(I->Changed) {
     ObjectGadgetUpdateStates(I);
     ObjectGadgetUpdateExtents(I);
@@ -438,15 +439,16 @@ void ObjectGadgetUpdate(ObjectGadget * I)
 
 /*========================================================================*/
 
-static int ObjectGadgetGetNState(ObjectGadget * I)
+int ObjectGadget::getNFrame() const
 {
-  return (I->NGSet);
+  return NGSet;
 }
 
 
 /*========================================================================*/
-static void ObjectGadgetRender(ObjectGadget * I, RenderInfo * info)
+void ObjectGadget::render(RenderInfo * info)
 {
+  auto I = this;
   int state = info->state;
   int pass = info->pass;
   if(pass < 0 || info->ray || info->pick) {
@@ -466,10 +468,6 @@ ObjectGadget::ObjectGadget(PyMOLGlobals * G) : CObject(G)
 {
   type = cObjectGadget;
   GSet = pymol::vla<GadgetSet*>(10);        /* auto-zero */
-  fUpdate = (void (*)(CObject *)) ObjectGadgetUpdate;
-  fRender = (void (*)(CObject *, RenderInfo * info)) ObjectGadgetRender;
-  fGetNFrame = (int (*)(CObject *)) ObjectGadgetGetNState;
-  fDescribeElement = NULL;
 }
 
 

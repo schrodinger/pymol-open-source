@@ -290,8 +290,9 @@ void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state)
   }
 }
 
-static void ObjectSurfaceInvalidate(ObjectSurface * I, int rep, int level, int state)
+void ObjectSurface::invalidate(int rep, int level, int state)
 {
+  auto I = this;
   int a;
   int once_flag = true;
   if(level >= cRepInvExtents) {
@@ -338,7 +339,7 @@ int ObjectSurfaceInvalidateMapName(ObjectSurface * I, const char *name, const ch
       if(strcmp(ms->MapName, name) == 0) {
         if (new_name)
           strcpy(ms->MapName, new_name);
-        ObjectSurfaceInvalidate(I, cRepAll, cRepInvAll, a);
+        I->invalidate(cRepAll, cRepInvAll, a);
         result = true;
       }
     }
@@ -476,8 +477,9 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
   }
 }
 
-static void ObjectSurfaceUpdate(ObjectSurface * I)
+void ObjectSurface::update()
 {
+  auto I = this;
   int a;
   float carve_buffer;
   for(a = 0; a < I->NState; a++) {
@@ -939,9 +941,9 @@ static void ObjectSurfaceRenderCell(PyMOLGlobals *G, ObjectSurface * I,
               I->Setting, NULL, info, NULL);
 }
 
-static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
+void ObjectSurface::render(RenderInfo * info)
 {
-  PyMOLGlobals *G = I->G;
+  auto I = this;
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
@@ -1049,9 +1051,9 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 
 /*========================================================================*/
 
-static int ObjectSurfaceGetNStates(ObjectSurface * I)
+int ObjectSurface::getNFrame() const
 {
-  return (I->NState);
+  return NState;
 }
 
 
@@ -1062,11 +1064,6 @@ ObjectSurface::ObjectSurface(PyMOLGlobals * G) : CObject(G)
   I->State = VLACalloc(ObjectSurfaceState, 10);        /* autozero important */
 
   I->type = cObjectSurface;
-
-  I->fUpdate = (void (*)(CObject *)) ObjectSurfaceUpdate;
-  I->fRender = (void (*)(CObject *, RenderInfo * info)) ObjectSurfaceRender;
-  I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectSurfaceInvalidate;
-  I->fGetNFrame = (int (*)(CObject *)) ObjectSurfaceGetNStates;
 }
 
 

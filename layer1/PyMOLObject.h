@@ -61,23 +61,8 @@ struct CObjectState {
   CObjectState(PyMOLGlobals * G): G(G) {};
 };
 
-void ObjectUpdate(CObject*);
-void ObjectRenderUnitBox(CObject*, RenderInfo*);
-int ObjectGetNFrames(CObject*);
-void ObjectDescribeElement(CObject*, int, char*);
-void ObjectInvalidate(CObject*, int, int, int);
-CSetting** ObjectGetSettingHandle(CObject*, int);
-
 struct CObject {
   PyMOLGlobals *G = nullptr;
-  void (*fUpdate) (CObject * I) = ObjectUpdate;        /* update representations */
-  void (*fRender) (CObject * I, RenderInfo * info) = ObjectRenderUnitBox;
-  int (*fGetNFrame) (CObject * I) = ObjectGetNFrames;
-  void (*fDescribeElement) (CObject * I, int index, char *buffer) = ObjectDescribeElement;
-  void (*fInvalidate) (CObject * I, int rep, int level, int state) = ObjectInvalidate;
-  CSetting **(*fGetSettingHandle) (CObject * I, int state) = ObjectGetSettingHandle;
-  char *(*fGetCaption) (CObject * I, char * ch, int len) = nullptr;
-  CObjectState *(*fGetObjectState) (CObject * I, int state) = nullptr;
   cObject_t type;
   ObjectNameType Name {};
   int Color = 0;
@@ -103,25 +88,14 @@ protected:
 public:
   virtual ~CObject();
 
-  void update() {
-    if (fUpdate)
-      fUpdate(this);
-  }
-
-  void render(RenderInfo * info) {
-    if (fRender)
-      fRender(this, info);
-  }
-
-  void invalidate(int rep, int level, int state) {
-    if (fInvalidate)
-      fInvalidate(this, rep, level, state);
-  }
-  int getNFrame() {
-    if (fGetNFrame)
-      return fGetNFrame(this);
-    return 0;
-  }
+  virtual void update() {}
+  virtual void render(RenderInfo* info);
+  virtual void invalidate(int rep, int level, int state) {}
+  virtual int getNFrame() const { return 1; }
+  virtual void describeElement(int index, char* buffer) const;
+  virtual char* getCaption(char* ch, int len) const { return nullptr; };
+  virtual CObjectState* getObjectState(int state) { return nullptr; }
+  virtual CSetting **getSettingHandle(int state);
 };
 
 int ObjectCopyHeader(CObject * I, const CObject * src);
@@ -186,11 +160,9 @@ typedef struct _CObjectUpdateThreadInfo CObjectUpdateThreadInfo;
 
 // object and object-state level setting
 template <typename V> void SettingSet(int index, V value, CObject * obj, int state=-1) {
-  if (obj->fGetSettingHandle) {
-    auto handle = obj->fGetSettingHandle(obj, state);
+    auto handle = obj->getSettingHandle(state);
     if (handle)
       SettingSet(obj->G, handle, index, value);
-  }
 }
 
 #endif

@@ -31,6 +31,12 @@ struct ObjectDist : public CObject {
   int NDSet = 0;
   ObjectDist(PyMOLGlobals* G);
   ~ObjectDist();
+
+  // virtual methods
+  void update() override;
+  void render(RenderInfo* info) override;
+  void invalidate(int rep, int level, int state) override;
+  int getNFrame() const override;
 };
 
 ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,

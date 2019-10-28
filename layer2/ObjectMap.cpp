@@ -1803,8 +1803,9 @@ ObjectMap::~ObjectMap()
   }
 }
 
-static void ObjectMapUpdate(ObjectMap * I)
+void ObjectMap::update()
 {
+  auto I = this;
   if(!I->ExtentFlag) {
     ObjectMapUpdateExtents(I);
     if(I->ExtentFlag)
@@ -1812,8 +1813,9 @@ static void ObjectMapUpdate(ObjectMap * I)
   }
 }
 
-static void ObjectMapInvalidate(ObjectMap * I, int rep, int level, int state)
+void ObjectMap::invalidate(int rep, int level, int state)
 {
+  auto I = this;
   if(level >= cRepInvExtents) {
     I->ExtentFlag = false;
   }
@@ -1896,9 +1898,9 @@ static CGO* ObjectMapCGOGenerate(PyMOLGlobals *G, float* corner)
   return shaderCGO;
 }
 
-static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
+void ObjectMap::render(RenderInfo * info)
 {
-  PyMOLGlobals *G = I->G;
+  auto I = this;
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
@@ -2157,9 +2159,9 @@ void ObjectMapStateInit(PyMOLGlobals * G, ObjectMapState * I)
   I->have_range = false;
 }
 
-int ObjectMapGetNStates(ObjectMap * I)
+int ObjectMap::getNFrame() const
 {
-  return (I->NState);
+  return NState;
 }
 
 
@@ -2172,10 +2174,6 @@ ObjectMap::ObjectMap(PyMOLGlobals * G) : CObject(G)
   I->State = pymol::vla<ObjectMapState>(1);     /* autozero important */
 
   I->visRep = cRepExtentBit;
-  I->fUpdate = (void (*)(CObject *)) ObjectMapUpdate;
-  I->fRender = (void (*)(CObject *, RenderInfo *)) ObjectMapRender;
-  I->fInvalidate = (void (*)(CObject *, int, int, int)) ObjectMapInvalidate;
-  I->fGetNFrame = (int (*)(CObject *)) ObjectMapGetNStates;
 }
 
 

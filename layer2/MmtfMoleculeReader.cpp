@@ -323,7 +323,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
 
   MMTF_container_free(container);
 
-  ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+  I->invalidate(cRepAll, cRepInvAll, -1);
   ObjectMoleculeUpdateNonbonded(I);
   ObjectMoleculeAutoDisableAtomNameWildcard(I);
 

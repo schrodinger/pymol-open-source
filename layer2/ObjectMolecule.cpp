@@ -340,7 +340,7 @@ int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete
 
   I->setNDiscrete(I->NAtom);
 
-  ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+  I->invalidate(cRepAll, cRepInvAll, -1);
 
   return true;
 
@@ -381,8 +381,9 @@ int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int stat
  * NOTES
  *   User owns the buffer so must clean up after it
  */
-static char *ObjectMoleculeGetCaption(ObjectMolecule * I, char * ch, int len)
+char *ObjectMolecule::getCaption(char * ch, int len) const
 {
+  auto I = this;
   int objState;
   int n = 0;
   int show_state = 0;
@@ -432,7 +433,7 @@ static char *ObjectMoleculeGetCaption(ObjectMolecule * I, char * ch, int len)
   /* if the state is valid, setup the label */
   if(state >= 0) {
     if (state < I->NCSet) {
-      CoordSet *cs = I->CSet[state];
+      const CoordSet *cs = I->CSet[state];
       if(cs) {
 	if(show_state) {
 	  if (show_as_fraction) {
@@ -878,7 +879,7 @@ static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int stat
       }
     }
     if(seleFlag)
-      ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+      I->invalidate(cRepAll, cRepInvAll, -1);
   }
   return ok;
 }
@@ -2723,8 +2724,9 @@ void ObjectGotoState(ObjectMolecule * I, int state)
 
 
 /*========================================================================*/
-static CObjectState *ObjectMoleculeGetObjectState(ObjectMolecule * I, int state)
+CObjectState *ObjectMolecule::getObjectState(int state)
 {
+  auto I = this;
   CObjectState *result = NULL;
   if(state < 0) {
     state = ObjectGetCurrentState(I, true);
@@ -2740,8 +2742,10 @@ static CObjectState *ObjectMoleculeGetObjectState(ObjectMolecule * I, int state)
 
 
 /*========================================================================*/
-static CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule * I, int state)
+CSetting **ObjectMolecule::getSettingHandle(int state)
 {
+  auto I = this;
+
   if (state < -1) {
     state = I->getState();
   }
@@ -4197,7 +4201,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
   FreeP(fsum);
   FreeP(max_sq);
 
-  ObjectMoleculeInvalidate(I, cRepSphere, cRepInvProp, -1);
+  I->invalidate(cRepSphere, cRepInvProp, -1);
 }
 
 
@@ -4206,7 +4210,7 @@ void ObjectMoleculeReplaceAtom(ObjectMolecule * I, int index, AtomInfoType&& ai)
 {
   if((index >= 0) && (index <= I->NAtom)) {
     I->AtomInfo[index] = std::move(ai);
-    ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, -1);
+    I->invalidate(cRepAll, cRepInvAtoms, -1);
     /* could we put in a refinement step here? */
   }
 }
@@ -4459,7 +4463,7 @@ int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order)
     ai1++;
   }
   if(c) {
-    ObjectMoleculeInvalidate(I, cRepAll, cRepInvBondsNoNonbonded, -1);
+    I->invalidate(cRepAll, cRepInvBondsNoNonbonded, -1);
   }
   return (c);
 }
@@ -4491,7 +4495,7 @@ pymol::Result<> ObjectMoleculeAddBondByIndices(
   I->AtomInfo[atm1].bonded = true;
   I->AtomInfo[atm2].bonded = true;
 
-  ObjectMoleculeInvalidate(I, cRepAll, cRepInvBondsNoNonbonded, -1);
+  I->invalidate(cRepAll, cRepInvBondsNoNonbonded, -1);
 
   return {};
 }
@@ -4575,12 +4579,12 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode
       b0++;
     }
     if(cnt) {
-      ObjectMoleculeInvalidate(I, cRepLine, cRepInvBonds, -1);
-      ObjectMoleculeInvalidate(I, cRepCyl, cRepInvBonds, -1);
-      ObjectMoleculeInvalidate(I, cRepNonbonded, cRepInvBonds, -1);
-      ObjectMoleculeInvalidate(I, cRepNonbondedSphere, cRepInvBonds, -1);
-      ObjectMoleculeInvalidate(I, cRepRibbon, cRepInvBonds, -1);
-      ObjectMoleculeInvalidate(I, cRepCartoon, cRepInvBonds, -1);
+      I->invalidate(cRepLine, cRepInvBonds, -1);
+      I->invalidate(cRepCyl, cRepInvBonds, -1);
+      I->invalidate(cRepNonbonded, cRepInvBonds, -1);
+      I->invalidate(cRepNonbondedSphere, cRepInvBonds, -1);
+      I->invalidate(cRepRibbon, cRepInvBonds, -1);
+      I->invalidate(cRepCartoon, cRepInvBonds, -1);
     }
   }
 
@@ -4638,12 +4642,12 @@ int ObjectMoleculeRemoveBonds(ObjectMolecule * I, int sele0, int sele1)
     if(offset) {
       I->NBond += offset;
       VLASize(I->Bond, BondType, I->NBond);
-      ObjectMoleculeInvalidate(I, cRepLine, cRepInvBonds, -1);
-      ObjectMoleculeInvalidate(I, cRepCyl, cRepInvBonds, -1);
-      ObjectMoleculeInvalidate(I, cRepNonbonded, cRepInvBonds, -1);
-      ObjectMoleculeInvalidate(I, cRepNonbondedSphere, cRepInvBonds, -1);
-      ObjectMoleculeInvalidate(I, cRepRibbon, cRepInvBonds, -1);
-      ObjectMoleculeInvalidate(I, cRepCartoon, cRepInvBonds, -1);
+      I->invalidate(cRepLine, cRepInvBonds, -1);
+      I->invalidate(cRepCyl, cRepInvBonds, -1);
+      I->invalidate(cRepNonbonded, cRepInvBonds, -1);
+      I->invalidate(cRepNonbondedSphere, cRepInvBonds, -1);
+      I->invalidate(cRepRibbon, cRepInvBonds, -1);
+      I->invalidate(cRepCartoon, cRepInvBonds, -1);
     }
   }
 
@@ -4742,7 +4746,7 @@ void ObjectMoleculePurge(ObjectMolecule * I)
   PRINTFD(I->G, FB_ObjectMolecule)
     " ObjMolPurge-Debug: step 5, invalidate...\n" ENDFD;
 
-  ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, -1);
+  I->invalidate(cRepAll, cRepInvAtoms, -1);
 
   PRINTFD(I->G, FB_ObjectMolecule)
     " ObjMolPurge-Debug: leaving...\n" ENDFD;
@@ -8930,7 +8934,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       ObjectMoleculeMOL2SetFormalCharges(G, I);
     }
     SceneCountFrames(G);
-    ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+    I->invalidate(cRepAll, cRepInvAll, -1);
     ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
   }
@@ -9195,10 +9199,10 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
     if(oldNAtom) {
       if(oldNAtom == I->NAtom) {
         if(oldNBond != I->NBond) {
-          ObjectMoleculeInvalidate(I, cRepAll, cRepInvBonds, -1);
+          I->invalidate(cRepAll, cRepInvBonds, -1);
         }
       } else {
-        ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, -1);
+        I->invalidate(cRepAll, cRepInvAtoms, -1);
       }
     }
   }
@@ -10725,16 +10729,16 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         ObjectMoleculeTransformTTTf(I, op->ttt, -1);
         break;
       case OMOP_LABL:
-        ObjectMoleculeInvalidate(I, cRepLabel, cRepInvText, -1);
+        I->invalidate(cRepLabel, cRepInvText, -1);
         break;
       case OMOP_AlterState:    /* overly coarse - doing all states, could do just 1 */
         if(!op->i3) {           /* not read_only? */
-          ObjectMoleculeInvalidate(I, -1, cRepInvRep, -1);
+          I->invalidate(-1, cRepInvRep, -1);
           SceneChanged(G);
         }
         break;
       case OMOP_CSetIdxSetFlagged:
-        ObjectMoleculeInvalidate(I, -1, cRepInvRep, -1);
+        I->invalidate(-1, cRepInvRep, -1);
         SceneChanged(G);
         break;
       case OMOP_SaveUndo:
@@ -10748,7 +10752,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         if(ObjectMoleculeXferValences(I, op->i1, op->i2,
                                       op->i3, op->obj3, op->i4, op->i5, op->i6)) {
           ObjectMoleculeVerifyChemistry(I, op->i3);
-          ObjectMoleculeInvalidate(I, cRepAll, cRepInvBonds, op->i3);
+          I->invalidate(cRepAll, cRepInvBonds, op->i3);
         }
         break;
       case OMOP_RevalenceByGuessing:
@@ -10771,7 +10775,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                 target_state = 0;       /* TO DO */
               ObjectMoleculeGuessValences(I, target_state, flag1, flag2, op->i4);
               ObjectMoleculeVerifyChemistry(I, target_state);
-              ObjectMoleculeInvalidate(I, cRepAll, cRepInvBonds, target_state);
+              I->invalidate(cRepAll, cRepInvBonds, target_state);
             }
             FreeP(flag1);
             FreeP(flag2);
@@ -10799,11 +10803,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 
 
 /*========================================================================*/
-void ObjectMoleculeGetAtomSele(ObjectMolecule * I, int index, char *buffer)
+void ObjectMoleculeGetAtomSele(const ObjectMolecule * I, int index, char *buffer)
 {
   PyMOLGlobals * G = I->G;
-  AtomInfoType *ai;
-  ai = I->AtomInfo + index;
+  auto* ai = I->AtomInfo + index;
   char inscode_str[2] = { ai->inscode, '\0' };
 
   snprintf(buffer, OrthoLineLength, "/%s/%s/%s/%s`%d%s/%s`%s", I->Name,
@@ -10815,8 +10818,9 @@ void ObjectMoleculeGetAtomSele(ObjectMolecule * I, int index, char *buffer)
 
 
 /*========================================================================*/
-static void ObjectMoleculeDescribeElement(ObjectMolecule * I, int index, char *buffer)
+void ObjectMolecule::describeElement(int index, char *buffer) const
 {
+  auto I = this;
   ObjectMoleculeGetAtomSele(I, index, buffer);
   if(!I->AtomInfo[index].alt[0]) {
     // don't include the trailing backtick
@@ -10826,7 +10830,7 @@ static void ObjectMoleculeDescribeElement(ObjectMolecule * I, int index, char *b
 
 
 /*========================================================================*/
-void ObjectMoleculeGetAtomSeleLog(ObjectMolecule * I, int index, char *buffer, int quote)
+void ObjectMoleculeGetAtomSeleLog(const ObjectMolecule * I, int index, char *buffer, int quote)
 {
   char *p = quote ? buffer + 1 : buffer;
 
@@ -10843,11 +10847,10 @@ void ObjectMoleculeGetAtomSeleLog(ObjectMolecule * I, int index, char *buffer, i
   }
 }
 
-void ObjectMoleculeGetAtomSeleFast(ObjectMolecule * I, int index, char *buffer)
+void ObjectMoleculeGetAtomSeleFast(const ObjectMolecule * I, int index, char *buffer)
 {
-  AtomInfoType *ai;
   WordType segi, chain, resi, name, alt;
-  ai = I->AtomInfo + index;
+  auto* ai = I->AtomInfo + index;
 
   if(ai->segi) {
     strcpy(segi, "s;");
@@ -10879,9 +10882,9 @@ void ObjectMoleculeGetAtomSeleFast(ObjectMolecule * I, int index, char *buffer)
 
 
 /*========================================================================*/
-static int ObjectMoleculeGetNFrames(ObjectMolecule * I)
+int ObjectMolecule::getNFrame() const
 {
-  return I->NCSet;
+  return NCSet;
 }
 
 struct _CCoordSetUpdateThreadInfo {
@@ -10926,10 +10929,10 @@ static void ObjMolCoordSetUpdateSpawn(PyMOLGlobals * G,
 
 
 /*========================================================================*/
-static void ObjectMoleculeUpdate(ObjectMolecule * I)
+void ObjectMolecule::update()
 {
+  auto I = this;
   int a; /*, ok; */
-  PyMOLGlobals *G = I->G;
 
   OrthoBusyPrime(G);
   /* if the cached representation is invalid, reset state */
@@ -11026,8 +11029,9 @@ static void ObjectMoleculeUpdate(ObjectMolecule * I)
 }
 
 /*========================================================================*/
-void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state)
+void ObjectMolecule::invalidate(int rep, int level, int state)
 {
+  auto I = this;
   int a;
   PRINTFD(I->G, FB_ObjectMolecule)
     " %s: entered. rep: %d level: %d\n", __func__, rep, level ENDFD;
@@ -11432,9 +11436,9 @@ int ObjectMoleculeSetAtomVertex(ObjectMolecule * I, int state, int index, float 
 
 
 /*========================================================================*/
-static void ObjectMoleculeRender(ObjectMolecule * I, RenderInfo * info)
+void ObjectMolecule::render(RenderInfo * info)
 {
-  PyMOLGlobals *G = I->G;
+  auto I = this;
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
@@ -11586,19 +11590,6 @@ ObjectMolecule::ObjectMolecule(PyMOLGlobals * G, int discreteFlag) : CObject(G)
     I->DiscreteAtmToIdx = NULL;
     I->DiscreteCSet = NULL;
   }
-  I->fRender = (void (*)(CObject *, RenderInfo * info)) ObjectMoleculeRender;
-  I->fUpdate = (void (*)(CObject *)) ObjectMoleculeUpdate;
-  I->fGetNFrame = (int (*)(CObject *)) ObjectMoleculeGetNFrames;
-  I->fInvalidate = (void (*)(CObject *, int rep, int level, int state))
-    ObjectMoleculeInvalidate;
-  I->fDescribeElement = (void (*)(CObject *, int index, char *buffer))
-    ObjectMoleculeDescribeElement;
-  I->fGetSettingHandle = (CSetting ** (*)(CObject *, int state))
-    ObjectMoleculeGetSettingHandle;
-  I->fGetObjectState = (CObjectState * (*)(CObject *, int state))
-    ObjectMoleculeGetObjectState;
-
-  I->fGetCaption = (char *(*)(CObject *, char *, int)) ObjectMoleculeGetCaption;
   I->AtomInfo = pymol::vla<AtomInfoType>(10);
   for(a = 0; a <= cUndoMask; a++) {
     I->UndoCoord[a] = NULL;
@@ -11683,7 +11674,7 @@ int ObjectMoleculeSetStateOrder(ObjectMolecule * I, int * order, int len) {
   ok_assert(1, len == I->NCSet);
 
   // invalidate
-  ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+  I->invalidate(cRepAll, cRepInvAll, -1);
 
   // new coord set array
   for(a = 0; a < I->NCSet; a++) {
@@ -12152,7 +12143,7 @@ void AtomInfoSettingGenerateSideEffects(PyMOLGlobals * G, ObjectMolecule *obj, i
   case cSetting_label_placement_offset:
   case cSetting_label_screen_point:
   case cSetting_label_relative_mode:
-    ObjectMoleculeInvalidate(obj, cRepLabel, cRepInvCoord, -1);
+    obj->invalidate(cRepLabel, cRepInvCoord, -1);
   }
 }
 

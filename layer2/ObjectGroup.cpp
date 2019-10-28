@@ -79,9 +79,9 @@ ObjectGroup::~ObjectGroup()
 
 
 /*========================================================================*/
-static CObjectState *ObjectGroupGetObjectState(ObjectGroup * I, int state)
+CObjectState *ObjectGroup::getObjectState(int state)
 {
-  return &I->State;
+  return &State;
 }
 
 
@@ -90,11 +90,7 @@ ObjectGroup::ObjectGroup(PyMOLGlobals * G) : CObject(G)
 {
   auto I = this;
   I->type = cObjectGroup;
-  I->fRender = NULL;
   I->OpenOrClosed = false;
-  I->fGetObjectState = (CObjectState * (*)(CObject *, int state))
-    ObjectGroupGetObjectState;
-
   ObjectStateInit(G, &I->State);
 }
 

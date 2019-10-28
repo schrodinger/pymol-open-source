@@ -405,7 +405,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
       ok &= ObjectMoleculeSort(I);
     ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
-    ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, -1);
+    I->invalidate(cRepAll, cRepInvAtoms, -1);
   } else {
     VLAFreeP(atInfo);
   }
@@ -1466,7 +1466,7 @@ void ObjectMoleculeFixChemistry(ObjectMolecule * I, int sele1, int sele2, int in
     bond++;
   }
   if(flag) {
-    ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+    I->invalidate(cRepAll, cRepInvAll, -1);
     SceneChanged(I->G);
   }
 }
@@ -3468,7 +3468,7 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
   I->updateAtmToIdx();
 
   if (ok)
-    ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+    I->invalidate(cRepAll, cRepInvAll, -1);
   if(ok)
     (*result) = I;
   else {
@@ -3907,10 +3907,9 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
       if(pdb_conect_all) {
 	int dummy;
 	if(!SettingGetIfDefined_b(G, I->Setting, cSetting_pdb_conect_all, &dummy)) {
-	  CSetting **handle = NULL;
-	  if(I->fGetSettingHandle) {
-	    handle = I->fGetSettingHandle(I, -1);
-	    if(handle) {
+          {
+            CSetting** handle = I->getSettingHandle(-1);
+            if(handle) {
 	      SettingCheckHandle(G, handle);
 	      SettingSet_b(*handle, cSetting_pdb_conect_all, true);
 	    }
@@ -4085,7 +4084,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
       UtilSortInPlace(I->G, I->Bond.data(), I->NBond, sizeof(BondType),
 		      (UtilOrderFn *) BondInOrder);
       /* sort...important! */
-      ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, -1);     /* important */
+      I->invalidate(cRepAll, cRepInvAtoms, -1);     /* important */
     }
   }
   return ok;
