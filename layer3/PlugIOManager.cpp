@@ -397,13 +397,29 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
             ms->Origin = pymol::calloc<float>(3);
             ms->Range = pymol::malloc<float>(3);
 
+            float axes33f[9];
+            float originf[3];
+            copy3(v->xaxis, axes33f + 0);
+            copy3(v->yaxis, axes33f + 3);
+            copy3(v->zaxis, axes33f + 6);
+            copy3(v->origin, originf);
+
+            // check if inverted volume (TetsurfVolume would get normals wrong)
+            bool inverted = determinant33f(axes33f) < 0;
+            if (inverted) {
+              // flip the z-axis
+              add3f(axes33f + 6, originf, originf);
+              invert3f(axes33f + 6);
+            }
+
             // special case: orthogonal & cartesian-aligned
             // -> don't use State.Matrix which causes trouble for e.g. CCP4 export
             // (non-standard header) and ObjectSlice (incomplete implementation)
             bool aligned_axes =
-              fabs(v->xaxis[1]) <= R_SMALL4 && fabs(v->xaxis[2]) <= R_SMALL4 &&
-              fabs(v->yaxis[0]) <= R_SMALL4 && fabs(v->yaxis[2]) <= R_SMALL4 &&
-              fabs(v->zaxis[0]) <= R_SMALL4 && fabs(v->zaxis[1]) <= R_SMALL4;
+              axes33f[0] > 0 && axes33f[4] > 0 && axes33f[8] > 0 &&
+              fabs(axes33f[1]) <= R_SMALL4 && fabs(axes33f[2]) <= R_SMALL4 &&
+              fabs(axes33f[3]) <= R_SMALL4 && fabs(axes33f[5]) <= R_SMALL4 &&
+              fabs(axes33f[6]) <= R_SMALL4 && fabs(axes33f[7]) <= R_SMALL4;
 
             // set corners to a unit cube, and manage world space with the state matrix
             if (!aligned_axes) {
@@ -416,11 +432,8 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
                 ms->State.Matrix = std::vector<double>(16);
 
               // state matrix transformation
-              identity44d(m44d);
-              copy3(v->xaxis, m44d + 0);
-              copy3(v->yaxis, m44d + 4);
-              copy3(v->zaxis, m44d + 8);
-              copy3(v->origin, m44d + 12);
+              copy33f44d(axes33f, m44d);
+              copy3(originf, m44d + 12);
               transpose44d44d(m44d, ms->State.Matrix.data());
             }
 
@@ -450,12 +463,12 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
             }
 
             if (aligned_axes) {
-              ms->Grid[0] = v->xaxis[0] / (ms->FDim[0] - 1);
-              ms->Grid[1] = v->yaxis[1] / (ms->FDim[1] - 1);
-              ms->Grid[2] = v->zaxis[2] / (ms->FDim[2] - 1);
+              ms->Grid[0] = axes33f[0] / (ms->FDim[0] - 1);
+              ms->Grid[1] = axes33f[4] / (ms->FDim[1] - 1);
+              ms->Grid[2] = axes33f[8] / (ms->FDim[2] - 1);
 
               for(int a = 0; a < 3; a++) {
-                ms->Origin[a] = v->origin[a];
+                ms->Origin[a] = originf[a];
                 ms->Range[a] = ms->Grid[a] * (ms->Dim[a] - 1);
                 ms->ExtentMin[a] = ms->Origin[a];
                 ms->ExtentMax[a] = ms->Origin[a] + ms->Grid[a] * ms->Max[a];
@@ -491,9 +504,10 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
               /* VMD plugins appear to use fast-x med-y slow-z ordering: "&datablock[z*xysize + y*xsize + x]" */
 
               for(c = 0; c < ms->FDim[2]; c++) {
+                int cc = inverted ? (ms->FDim[2] - c - 1) : c;
                 for(b = 0; b < ms->FDim[1]; b++) {
                   for(a = 0; a < ms->FDim[0]; a++) {
-                    F3(ms->Field->data, a, b, c) = *(data_ptr++);
+                    F3(ms->Field->data, a, b, cc) = *(data_ptr++);
                   }
                 }
               }
