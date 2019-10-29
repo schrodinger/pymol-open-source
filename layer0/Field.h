@@ -25,24 +25,58 @@ Z* -------------------------------------------------------------------
 #define cFieldInt 1
 #define cFieldOther 2
 
-typedef struct {
+struct CField {
   int type;
-  char *data;
-  unsigned int *dim;
-  unsigned int *stride;
-  int n_dim;
-  unsigned int size;
+  std::vector<char> data;
+  std::vector<unsigned int> dim;
+  std::vector<unsigned int> stride;
   unsigned int base_size;
-} CField;
+  CField() = default;
+  CField(
+      PyMOLGlobals* G, const int* const dim, int n_dim, unsigned int base_size, int type);
+  int n_dim() const noexcept { return dim.size(); }
+  unsigned int size() const noexcept { return data.size(); }
+
+  /**
+   * Copies data from another vector as stream of bytes
+   * @param other source typed buffer
+   */
+  template <typename T> void set_data(const std::vector<T>& other)
+  {
+    auto nbytes = other.size() * sizeof(T);
+    data.resize(nbytes);
+    std::copy_n(
+        reinterpret_cast<const char*>(other.data()), nbytes, data.begin());
+  }
+
+  /**
+   * Returns heap-allocated handle to CField based on stored type
+   * @param dim dimensions
+   * @param n_dim number of dimensions
+   * @return pointer to heap-allocated CField object.
+   * Note: Lifetime of object (via heap-allocation) must be managed by owner.
+   */
+  template <typename T>
+  static CField* make(PyMOLGlobals* G, const int* const dim, int n_dim)
+  {
+    int local_type = cFieldOther;
+    if (std::is_same<T, float>::value) {
+      local_type = cFieldFloat;
+    } else if (std::is_same<T, int>::value) {
+      local_type = cFieldInt;
+    }
+    return new CField(G, dim, n_dim, sizeof(T), local_type);
+  }
+};
 
 /* accessors for getting data from a field */
 
-#define F3p(f,a,b,c) ((f)->data + \
+#define F3p(f,a,b,c) ((f)->data.data() + \
         (a)*(f)->stride[0] + \
         (b)*(f)->stride[1] + \
         (c)*(f)->stride[2])
 
-#define F4p(f,a,b,c,d) ((f)->data + \
+#define F4p(f,a,b,c,d) ((f)->data.data() + \
         (a)*(f)->stride[0] + \
         (b)*(f)->stride[1] + \
         (c)*(f)->stride[2] + \
@@ -62,19 +96,14 @@ typedef struct {
 
 #define Fvoid4p(f,a,b,c,d) ((void*)F4p(f,a,b,c,d))
 
-CField *FieldNew(PyMOLGlobals * G, int *dim, int n_dim, unsigned int base_size, int type);
 void FieldZero(CField * I);
-void FieldFree(CField * I);
 float FieldInterpolatef(CField * I, int a, int b, int c, float x, float y, float z);
 void FieldInterpolate3f(CField * I, int *locus, float *fract, float *result);
-
-#define FieldFreeP(ptr) {if(ptr){FieldFree(ptr);ptr=NULL;}}
 
 PyObject *FieldAsNumPyArray(CField * I, short copy);
 PyObject *FieldAsPyList(PyMOLGlobals * G, CField * I);
 CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list);
 CField *FieldNewFromPyList_From_List(PyMOLGlobals * G, PyObject * list, int);
-CField *FieldNewCopy(PyMOLGlobals * G, const CField * src);
 int FieldSmooth3f(CField * I);
 
 #endif

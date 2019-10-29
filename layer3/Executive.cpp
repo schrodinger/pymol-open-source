@@ -6605,8 +6605,8 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
       ms = target->State + target_state;
       if(ms->Active) {
         int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-        int n_pnt = (ms->Field->points->size / ms->Field->points->base_size) / 3;
-        float *pnt = (float *) ms->Field->points->data;
+        int n_pnt = (ms->Field->points->size() / ms->Field->points->base_size) / 3;
+        float *pnt = (float *) ms->Field->points->data.data();
         float *r_value = pymol::malloc<float>(n_pnt);
         float *l_value = pymol::calloc<float>(n_pnt);
         int *present = pymol::calloc<int>(n_pnt);
@@ -6773,7 +6773,7 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
 
         /* copy after calculation so that operand can include target */
 
-        memcpy(ms->Field->data->data, l_value, n_pnt * sizeof(float));
+        memcpy(ms->Field->data->data.data(), l_value, n_pnt * sizeof(float));
 
         FreeP(present);
         FreeP(l_value);

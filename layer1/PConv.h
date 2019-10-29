@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include <set>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 /* Convenient conversion routines for C<->Python data interchange
    
@@ -307,6 +308,11 @@ inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, int &out) {
   return true;
 }
 
+inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, unsigned &out) {
+  out = PyInt_AsLong(obj);
+  return true;
+}
+
 inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, float &out) {
   out = PyFloat_AsDouble(obj);
   return true;
@@ -328,6 +334,21 @@ inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, float * out) {
 
 template <class T>
 bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, std::vector<T> &out) {
+  if (PyBytes_Check(obj)) {
+    // binary_dump
+    size_t slen = PyBytes_Size(obj);
+
+    if (slen % sizeof(T)) {
+      return false;
+    }
+
+    out.resize(slen / sizeof(T));
+
+    auto strval = PyBytes_AsSomeString(obj);
+    std::copy_n(strval.data(), slen, reinterpret_cast<char*>(out.data()));
+    return true;
+  }
+
   if (!PyList_Check(obj))
     return false;
 
@@ -405,5 +426,14 @@ bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, std::map<K, V> &out) {
 }
 
 /* ============================================================ */
+
+template <class T>
+bool PConvFromPyListItem(PyMOLGlobals* G, PyObject* list, size_t i, T& out)
+{
+  auto item = PyList_GetItem(list, i);
+  auto ok = PConvFromPyObject(G, item, out);
+  CPythonVal_Free(item);
+  return ok;
+}
 
 #endif

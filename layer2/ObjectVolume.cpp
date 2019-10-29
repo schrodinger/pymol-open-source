@@ -310,7 +310,7 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
     IsosurfFieldFree(vs->State.G, vs->Field);
     vs->Field = NULL;
   }
-  FieldFreeP(vs->carvemask);
+  DeleteP(vs->carvemask);
   VLAFreeP(vs->AtomVertex);
   if (vs->Ramp)
     FreeP(vs->Ramp);
@@ -495,7 +495,7 @@ void ObjectVolume::update()
 
       if(field) {
         // get bounds and dimension data from field
-        copy3(field->data->dim, vs->dim);
+        copy3(field->data->dim.data(), vs->dim);
         IsofieldGetCorners(G, field, vs->Corner);
 
         // transform corners by state matrix
@@ -535,8 +535,8 @@ void ObjectVolume::update()
           get44FracToRealFromCorner(vs->Corner, frac2real);
 
           // initialize carve mask
-          FieldFreeP(vs->carvemask);
-          vs->carvemask = FieldNew(G, (int*) vs->dim, 3, sizeof(GLubyte), cFieldOther);
+          DeleteP(vs->carvemask);
+          vs->carvemask = new CField(G, (int*) vs->dim, 3, sizeof(GLubyte), cFieldOther);
 
           // loop over voxels
           for (z = 0; z < dz; z++) {
@@ -892,7 +892,7 @@ void ObjectVolume::render(RenderInfo * info)
       // Create a 3D texture
       vs->textures[0] = tex3dGenBind(G, volume_bit_depth);
       auto t0 = G->ShaderMgr->getGPUBuffer<textureBuffer_t>(vs->textures[0]);
-      t0->texture_data_3D(field->dim[2], field->dim[1], field->dim[0], field->data);
+      t0->texture_data_3D(field->dim[2], field->dim[1], field->dim[0], field->data.data());
 
       // Create 3D carve mask texture
       if(vs->carvemask) {
@@ -902,11 +902,11 @@ void ObjectVolume::render(RenderInfo * info)
           vs->carvemask->dim[2],
           vs->carvemask->dim[1],
           vs->carvemask->dim[0],
-          vs->carvemask->data
+          vs->carvemask->data.data()
           );
 
         // not needed anymore, data now in texture memory
-        FieldFreeP(vs->carvemask);
+        DeleteP(vs->carvemask);
       }
 
       vs->RefreshFlag = false;

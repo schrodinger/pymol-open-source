@@ -253,7 +253,7 @@ int ObjectMapStateGetDataRange(PyMOLGlobals * G, ObjectMapState * ms, float *min
   float max_val = 0.0F, min_val = 0.0F;
   CField *data = ms->Field->data;
   int cnt = data->dim[0] * data->dim[1] * data->dim[2];
-  float *raw_data = (float *) data->data;
+  float *raw_data = (float *) data->data.data();
   if(cnt) {
     int a;
     min_val = (max_val = *(raw_data++));
@@ -296,7 +296,7 @@ int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
   int pos;
   CField *data = ms->Field->data;
   int cnt = data->dim[0] * data->dim[1] * data->dim[2];
-  float *raw_data = (float *) data->data;
+  float *raw_data = (float *) data->data.data();
   if(cnt) {
     int a;
 
@@ -336,7 +336,7 @@ int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
       irange = (float)(n_points-1) / (max_his - min_his);
       for (a = 0; a < n_points; a++)
         histogram[a+4] = 0.0f;
-      raw_data = (float *) data->data;
+      raw_data = (float *) data->data.data();
       for (a = 0; a < cnt; a++) {
         double f_val = *(raw_data++);
         pos = (int)(irange * (f_val-min_his));
@@ -1941,7 +1941,7 @@ void ObjectMap::render(RenderInfo * info)
           double sum = 0.0, sumsq = 0.0;
           CField *data = ms->Field->data;
           int cnt = data->dim[0] * data->dim[1] * data->dim[2];
-          float *raw_data = (float *) data->data;
+          float *raw_data = (float *) data->data.data();
           int a;
           for(a = 0; a < cnt; a++) {
             double f_val = *(raw_data++);
@@ -1971,8 +1971,8 @@ void ObjectMap::render(RenderInfo * info)
             gradients = ms->Field->gradients;
           }
           if(data && points) {
-            float *raw_data = (float *) data->data;
-            float raw_point[3], *raw_point_ptr = (float *) points->data;
+            float *raw_data = (float *) data->data.data();
+            float raw_point[3], *raw_point_ptr = (float *) points->data.data();
 
 #define RAW_POINT_TRANSFORM(ptr, v3f) { \
   if(!ms->State.Matrix.empty()) \
@@ -2013,7 +2013,7 @@ void ObjectMap::render(RenderInfo * info)
               if(pick) {
               } else if (ALWAYS_IMMEDIATE_OR(!info->use_shaders)) {
                 if(gradients) {
-                  raw_gradient = (float *) gradients->data;
+                  raw_gradient = (float *) gradients->data.data();
                 } else {
                   glDisable(GL_LIGHTING);
                 }
@@ -2778,7 +2778,7 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
     return buffer; // empty
   }
 
-  buffer.resize(1024 + field->size, 0);
+  buffer.resize(1024 + field->size(), 0);
   auto buffer_s = reinterpret_cast<char*>(&buffer.front());
   auto buffer_i = reinterpret_cast<int32_t*>(&buffer.front());
   auto buffer_f = reinterpret_cast<float*>(&buffer.front());
@@ -2930,7 +2930,7 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
   sprintf(buffer_s + 56 * 4, "PyMOL %s", _PyMOL_VERSION); // 57-256 LABEL(20,10)
 
   // Map data array follows
-  memcpy(buffer_s + 1024, field->data, field->size);
+  memcpy(buffer_s + 1024, field->data.data(), field->size());
 
   return buffer;
 }

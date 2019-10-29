@@ -172,15 +172,15 @@ Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list)
       for(a = 0; a < 3; a++)
         dim4[a] = result->dimensions[a];
       dim4[3] = 3;
-      ok = ((result->points = FieldNew(G, dim4, 4, sizeof(float), cFieldFloat)) != NULL);
+      ok = ((result->points = CField::make<float>(G, dim4, 4)) != NULL);
     }
   }
   if(!ok) {
     if(result) {
       if(result->data)
-        FieldFree(result->data);
+        DeleteP(result->data);
       if(result->points)
-        FieldFree(result->points);
+        DeleteP(result->points);
       mfree(result);
       result = NULL;
     }
@@ -197,15 +197,15 @@ Isofield *IsosurfNewCopy(PyMOLGlobals * G, const Isofield * src)
   copy3f(src->dimensions, result->dimensions);
   result->save_points = src->save_points;
 
-  ok = ((result->data = FieldNewCopy(G, src->data)) != NULL);
-  ok = ((result->points = FieldNewCopy(G, src->points)) != NULL);
+  result->data = new CField(*src->data);
+  result->points = new CField(*src->points);
 
   result->gradients = NULL;
   if(!ok) {
     if(result->data)
-      FieldFree(result->data);
+      DeleteP(result->data);
     if(result->points)
-      FieldFree(result->points);
+      DeleteP(result->points);
     FreeP(result);
   }
   return result;
@@ -227,7 +227,7 @@ void IsofieldComputeGradients(PyMOLGlobals * G, Isofield * field)
     for(a = 0; a < 3; a++)
       dim[a] = field->dimensions[a];
     dim[3] = 3;
-    field->gradients = FieldNew(G, dim, 4, sizeof(float), cFieldFloat);
+    field->gradients = CField::make<float>(G, dim, 4);
     gradients = field->gradients;
     dim[3] = 3;
 
@@ -387,9 +387,9 @@ Isofield *IsosurfFieldAlloc(PyMOLGlobals * G, int *dims)
 
   result = pymol::malloc<Isofield>(1);
   ErrChkPtr(G, result);
-  result->data = FieldNew(G, dims, 3, sizeof(float), cFieldFloat);
+  result->data = CField::make<float>(G, dims, 3);
   ErrChkPtr(G, result->data);
-  result->points = FieldNew(G, dim4, 4, sizeof(float), cFieldFloat);
+  result->points = CField::make<float>(G, dim4, 4);
   ErrChkPtr(G, result->points);
   result->dimensions[0] = dims[0];
   result->dimensions[1] = dims[1];
@@ -403,10 +403,9 @@ Isofield *IsosurfFieldAlloc(PyMOLGlobals * G, int *dims)
 /*===========================================================================*/
 void IsosurfFieldFree(PyMOLGlobals * G, Isofield * field)
 {
-  if(field->gradients)
-    FieldFree(field->gradients);
-  FieldFree(field->points);
-  FieldFree(field->data);
+  DeleteP(field->gradients);
+  DeleteP(field->points);
+  DeleteP(field->data);
   mfree(field);
 }
 
@@ -998,12 +997,9 @@ static int IsosurfAlloc(PyMOLGlobals * G, CIsosurf * II)
     dim4[a] = I->CurDim[a];
   dim4[3] = 3;
 
-  I->VertexCodes = FieldNew(G, I->CurDim, 3, sizeof(int), cFieldInt);
-  ErrChkPtr(G, I->VertexCodes);
-  I->ActiveEdges = FieldNew(G, dim4, 4, sizeof(int), cFieldInt);
-  ErrChkPtr(G, I->ActiveEdges);
-  I->Point = FieldNew(G, dim4, 4, sizeof(PointType), cFieldOther);
-  ErrChkPtr(G, I->Point);
+  I->VertexCodes = CField::make<int>(G, I->CurDim, 3);
+  I->ActiveEdges = CField::make<int>(G, dim4, 4);
+  I->Point = CField::make<PointType>(G, dim4, 4);
   if(!(I->VertexCodes && I->ActiveEdges && I->Point)) {
     IsosurfPurge(I);
     ok = false;
@@ -1019,18 +1015,9 @@ static int IsosurfAlloc(PyMOLGlobals * G, CIsosurf * II)
 static void IsosurfPurge(CIsosurf * II)
 {
   CIsosurf *I = II;
-  if(I->VertexCodes) {
-    FieldFree(I->VertexCodes);
-    I->VertexCodes = NULL;
-  }
-  if(I->ActiveEdges) {
-    FieldFree(I->ActiveEdges);
-    I->ActiveEdges = NULL;
-  }
-  if(I->Point) {
-    FieldFree(I->Point);
-    I->Point = NULL;
-  }
+  DeleteP(I->VertexCodes);
+  DeleteP(I->ActiveEdges);
+  DeleteP(I->Point);
 }
 
 

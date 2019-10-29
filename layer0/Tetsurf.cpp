@@ -641,13 +641,13 @@ static int TetsurfAlloc(CTetsurf * II)
     dim4[a] = I->CurDim[a];
   dim4[3] = 3;
 
-  I->VertexCodes = FieldNew(G, I->CurDim, 3, sizeof(int), cFieldInt);
+  I->VertexCodes = CField::make<int>(G, I->CurDim, 3);
   ErrChkPtr(G, I->VertexCodes);
-  I->ActiveEdges = FieldNew(G, I->CurDim, 3, sizeof(int), cFieldInt);
+  I->ActiveEdges = CField::make<int>(G, I->CurDim, 3);
   ErrChkPtr(G, I->ActiveEdges);
 
   dim4[3] = 7;                  /* seven different ways now... */
-  I->Point = FieldNew(G, dim4, 4, sizeof(PointType), cFieldOther);
+  I->Point = CField::make<PointType>(G, dim4, 4);
   ErrChkPtr(G, I->Point);
 
   I->Tri = VLAlloc(TriangleType, 50000);
@@ -674,18 +674,9 @@ static void TetsurfPurge(CTetsurf * II)
   if(I->PtLink) {
     VLAFreeP(I->PtLink);
   }
-  if(I->VertexCodes) {
-    FieldFree(I->VertexCodes);
-    I->VertexCodes = NULL;
-  }
-  if(I->ActiveEdges) {
-    FieldFree(I->ActiveEdges);
-    I->ActiveEdges = NULL;
-  }
-  if(I->Point) {
-    FieldFree(I->Point);
-    I->Point = NULL;
-  }
+  DeleteP(I->VertexCodes);
+  DeleteP(I->ActiveEdges);
+  DeleteP(I->Point);
 }
 
 
