@@ -93,25 +93,3 @@ ObjectGroup::ObjectGroup(PyMOLGlobals * G) : CObject(G)
   I->OpenOrClosed = false;
   ObjectStateInit(G, &I->State);
 }
-
-void ObjectGroupResetMatrix(ObjectGroup * I, int state)
-{
-  ObjectStateResetMatrix(&I->State);
-}
-
-int ObjectGroupGetMatrix(ObjectGroup * I, int state, double **matrix)
-{
-  *matrix = ObjectStateGetMatrix(&I->State);
-  return true;
-}
-
-int ObjectGroupSetMatrix(ObjectGroup * I, int state, double *matrix)
-{
-  ObjectStateSetMatrix(&I->State, matrix);
-  return true;
-}
-
-void ObjectGroupTransformMatrix(ObjectGroup * I, int state, double *matrix)
-{
-  ObjectStateTransformMatrix(&I->State, matrix);
-}

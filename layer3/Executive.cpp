@@ -2931,11 +2931,11 @@ void ExecutiveResetMatrix(PyMOLGlobals * G,
             break;
           }
           break;
-        case cObjectMap:
-          ObjectMapResetMatrix((ObjectMap *) obj, state);
-          break;
-        case cObjectGroup:
-          ObjectGroupResetMatrix((ObjectGroup *) obj, state);
+        default:
+          if (auto* objstate = obj->getObjectState(state)) {
+            ObjectStateResetMatrix(objstate);
+            obj->invalidate(cRepNone, cRepInvExtents, state);
+          }
           break;
         }
       }
@@ -2955,16 +2955,9 @@ static int ExecutiveGetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
   if(state < 0) {
     /* to do -- TTT only */
   } else {
-    switch (obj->type) {
-    case cObjectMolecule:
-      ok = ObjectMoleculeGetMatrix((ObjectMolecule *) obj, state, matrix);
-      break;
-    case cObjectMap:
-      ok = ObjectMapGetMatrix((ObjectMap *) obj, state, matrix);
-      break;
-    case cObjectGroup:
-      ok = ObjectGroupGetMatrix((ObjectGroup *) obj, state, matrix);
-      break;
+    if (auto* objstate = obj->getObjectState(state)) {
+      *matrix = ObjectStateGetMatrix(objstate);
+      ok = true;
     }
 
     if(ok && incl_ttt) {
@@ -3007,16 +3000,9 @@ static int ExecutiveSetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
   if(state < 0) {
 
   } else {
-    switch (obj->type) {
-    case cObjectMolecule:
-      ok = ObjectMoleculeSetMatrix((ObjectMolecule *) obj, state, matrix);
-      break;
-    case cObjectMap:
-      ok = ObjectMapSetMatrix((ObjectMap *) obj, state, matrix);
-      break;
-    case cObjectGroup:
-      ok = ObjectGroupSetMatrix((ObjectGroup *) obj, state, matrix);
-      break;
+    if (auto* objstate = obj->getObjectState(state)) {
+      ObjectStateSetMatrix(objstate, matrix);
+      ok = true;
     }
   }
   return ok;
@@ -7720,26 +7706,16 @@ int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int stat
       SceneInvalidate(G);
     }
     break;
-  case cObjectMap:
-    {
+  default:
+    if (auto* objstate = obj->getObjectState(state)) {
       double matrixd[116];
       if(homogenous) {
         convert44f44d(matrix, matrixd);
       } else {
         convertTTTfR44d(matrix, matrixd);
       }
-      ObjectMapTransformMatrix((ObjectMap *) obj, state, matrixd);
-    }
-    break;
-  case cObjectGroup:
-    {
-      double matrixd[116];
-      if(homogenous) {
-        convert44f44d(matrix, matrixd);
-      } else {
-        convertTTTfR44d(matrix, matrixd);
-      }
-      ObjectGroupTransformMatrix((ObjectGroup *) obj, state, matrixd);
+      ObjectStateTransformMatrix(objstate, matrixd);
+      obj->invalidate(cRepNone, cRepInvExtents, state);
     }
     break;
   }

@@ -76,6 +76,7 @@ struct ObjectMap : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(int rep, int level, int state) override;
   int getNFrame() const override;
+  CObjectState* getObjectState(int state) override;
 };
 
 #define cObjectMap_OrthoMinMaxGrid 0
@@ -148,10 +149,6 @@ int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** resul
 int ObjectMapInterpolate(ObjectMap * I, int state, const float *array, float *result, int *flag,
                          int n);
 
-void ObjectMapTransformMatrix(ObjectMap * I, int state, double *matrix);
-void ObjectMapResetMatrix(ObjectMap * I, int state);
-int ObjectMapGetMatrix(ObjectMap * I, int state, double **matrix);
-int ObjectMapSetMatrix(ObjectMap * I, int state, double *matrix);
 void ObjectMapRegeneratePoints(ObjectMap * om);
 void ObjectMapStateRegeneratePoints(ObjectMapState * ms);
 int ObjectMapStateGetDataRange(PyMOLGlobals * G, ObjectMapState * ms, float *min,

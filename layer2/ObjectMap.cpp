@@ -136,84 +136,6 @@ int ObjectMapValidXtal(ObjectMap * I, int state)
   return false;
 }
 
-/* Map::TransformMatrix -- transform this map's matrix by 'matrix' parameter
- * PARAMS
- *   I, the map
- *   state, the map's state
- *   matrix, matrix to mult. by
- * RETURNS
- *   None; updates Map
- */
-void ObjectMapTransformMatrix(ObjectMap * I, int state, double *matrix)
-{
-  for(StateIterator iter(I->G, I->Setting, state, I->NState); iter.next();) {
-    ObjectMapState *ms = I->State + iter.state;
-    if(ms->Active) {
-      ObjectStateTransformMatrix(&ms->State, matrix);
-    }
-  }
-
-  ObjectMapUpdateExtents(I);
-}
-
-/* Map::ResetMatrix -- reset's the map's matrix for the given state
- * PARAMS
- *   I, the map
- *   state, the map's state
- */   
-void ObjectMapResetMatrix(ObjectMap * I, int state)
-{
-  for(StateIterator iter(I->G, I->Setting, state, I->NState); iter.next();) {
-    ObjectMapState *ms = I->State + iter.state;
-    if(ms->Active) {
-      ObjectStateResetMatrix(&ms->State);
-    }
-  }
-
-  ObjectMapUpdateExtents(I);
-}
-
-/* Map::GetMatrix
- * PARAMS
- *   I, the map
- *   state, the map's state
- *   matrix, ptr to the the buffer to copy the data into
- * RETURNS
- *  true/false; updates matrix parameter
- */
-int ObjectMapGetMatrix(ObjectMap * I, int state, double **matrix)
-{
-  ObjectMapState *ms = ObjectMapGetState(I, state);
-
-  if(ms->Active) {
-    *matrix = ObjectStateGetMatrix(&ms->State);
-    return true;
-  }
-
-  return false;
-}
-
-/* Map::SetMatrix
- * PARAMS
- *   I, the map
- *   state, the map's state
- *   matrix, the matrix to set to
- */
-int ObjectMapSetMatrix(ObjectMap * I, int state, double *matrix)
-{
-  bool result = false;
-
-  for(StateIterator iter(I->G, I->Setting, state, I->NState); iter.next();) {
-    ObjectMapState *ms = I->State + iter.state;
-    if(ms->Active) {
-      ObjectStateSetMatrix(&ms->State, matrix);
-      result = true;
-    }
-  }
-
-  return result;
-}
-
 /* MapState::GetExcludedStats -- 
  * PARARMS
  *   G, usual PyMOL globals
@@ -2164,6 +2086,17 @@ int ObjectMap::getNFrame() const
   return NState;
 }
 
+/*========================================================================*/
+CObjectState* ObjectMap::getObjectState(int state)
+{
+  auto* ms = ObjectMapGetState(this, state);
+
+  if (ms && ms->Active) {
+    return &ms->State;
+  }
+
+  return nullptr;
+}
 
 /*========================================================================*/
 ObjectMap::ObjectMap(PyMOLGlobals * G) : CObject(G)
