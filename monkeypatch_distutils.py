@@ -97,6 +97,26 @@ def monkeypatch(parent, name):
         return func
     return wrapper
 
+
+def strip_broken_isysroot(args, start=0):
+    '''
+    Strip -isysroot which don't exist from args.
+
+    Those can come from lib/python2.7/_sysconfigdata_x86_64_apple_darwin13_4_0.py
+    '''
+    assert isinstance(args, list)
+
+    try:
+        i = args.index('-isysroot', start)
+    except ValueError:
+        return
+
+    strip_broken_isysroot(args, i + 2)
+
+    if not os.path.isdir(args[i + 1]):
+        args[i:i + 2] = []
+
+
 @monkeypatch(distutils.sysconfig, 'customize_compiler')
 def customize_compiler(compiler):
     # remove problematic flags
@@ -153,7 +173,12 @@ def compile(self, sources, output_dir=None, macros=None,
     compiler_so = self.compiler_so
     compiler_so_cxx = self.compiler_so_cxx
 
+    # strips non-existing -isysroot
+    strip_broken_isysroot(compiler_so)
+    strip_broken_isysroot(compiler_so_cxx)
+
     if sys.platform == 'darwin' and _osx_support is not None:
+        # strips duplicated -isysroot
         compiler_so = _osx_support.compiler_fixup(compiler_so, cc_args + extra_postargs)
         compiler_so_cxx = _osx_support.compiler_fixup(compiler_so_cxx, cc_args + extra_postargs)
 
