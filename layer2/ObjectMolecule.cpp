@@ -12039,9 +12039,16 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
         p = nskip(p, 1);
         p = ncopy(cc, p, 5);
         ai->setResi(cc);
+
+        // single-letter code
+        p = nskip(p, 1);
+
+        // chain
+        p = ncopy(cc, p, 1);
+        LexAssign(G, ai->chain, cc);
       }
       if(ok) {
-        p = nskip(p, 6);
+        p = nskip(p, 4);
         p = ncopy(cc, p, 9);
         if(sscanf(cc, "%f", &ai->partialCharge) != 1)
           ok = ErrMessage(G, "ReadMMDFile", "bad charge");
