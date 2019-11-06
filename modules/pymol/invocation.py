@@ -29,6 +29,7 @@ Options
   --version display PyMOL version and exit
   --gldebug use glDebugMessageCallback for GL debugging
   --testing run pymol testing
+  --diagnostics dump system diagnostics
 
   -1        config_mouse one_button
   -2        config_mouse two_button
@@ -284,6 +285,10 @@ if True:
                         options.gldebug = 1
                     elif a == "--testing":
                         options.testing = 1
+                    elif a == "--diagnostics":
+                        # same as: -cd diagnostics
+                        options.no_gui=1
+                        options.deferred.append("_do_diagnostics")
                     else:
                         # double hypen signals end of PyMOL arguments
                         if python_script is None:
