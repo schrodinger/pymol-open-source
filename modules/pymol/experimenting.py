@@ -133,18 +133,54 @@ DESCRIPTION
             print(" minimize: missing parameters, can't continue")
 
 
-    def dump(fnam,obj,_self=cmd):
+    def dump(fnam, obj, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
-    "dump" is an unsupported command which may have something to do
-    with outputing isosurface meshes and surface objects to a file.
+    The dump command writes the geometry of an isosurface, isomesh,
+    or isodot object to a simple text file. Each line contains one
+    vertex.
+
+    For surface objects, XYZ coordinates and the normal are exported.
+    Three lines make one triangle (like GL_TRIANGLES).
+
+    For mesh objects, XYZ coordinates are exported (no normals).
+    The vertices form line strips (like GL_LINE_STRIP), a blank
+    line starts a new strip.
+
+    For dot objects, XYZ coordinates are exported. 
+
+USAGE
+
+    dump filename, object
+
+ARGUMENTS
+
+    filename = str: file that will be written
+    object = str: object name
+
+EXAMPLE
+
+    fetch 1ubq, mymap, type=2fofc, async=0
+
+    isosurface mysurface, mymap
+    dump surfacegeometry.txt, mysurface
+
+    isomesh mymesh, mymap
+    dump meshgeometry.txt, mymesh
+
+    isodot mydot, mymap, quiet=0
+    dump dotgeometry.txt, mydot
+
+SEE ALSO
+
+    COLLADA export
 
     '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.dump(_self._COb,str(fnam),obj)
+            r = _cmd.dump(_self._COb, str(fnam), obj, int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException

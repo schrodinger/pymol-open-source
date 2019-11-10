@@ -71,7 +71,7 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
                                     ObjectMap * map, int map_state, int state, float *mn,
                                     float *mx, float level, int mode, float carve,
                                     float *vert_vla, int side, int quiet);
-void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state);
+void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state, int quiet);
 
 int ObjectSurfaceNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                ObjectSurface ** result);

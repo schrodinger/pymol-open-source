@@ -3419,8 +3419,9 @@ static PyObject *CmdDump(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *str1, *str2;
+  int quiet;
   int ok = false;
-  ok = PyArg_ParseTuple(args, "Oss", &self, &str1, &str2);
+  ok = PyArg_ParseTuple(args, "Ossi", &self, &str1, &str2, &quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -3428,7 +3429,7 @@ static PyObject *CmdDump(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ExecutiveDump(G, str1, str2);       /* TODO STATUS */
+    ExecutiveDump(G, str1, str2, quiet);       /* TODO STATUS */
     APIExit(G);
   }
   return APIResultOk(ok);
