@@ -275,7 +275,7 @@ ObjectMolecule *ExecutiveFindObjectMoleculeByName(PyMOLGlobals * G, const char *
 CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType);
 int ExecutiveIterateObject(PyMOLGlobals * G, CObject ** obj, void **hidden);
 void ExecutiveDelete(PyMOLGlobals * G, const char *name);
-void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj, int quiet);
+void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj, int state, int quiet);
 void ExecutiveSort(PyMOLGlobals * G, const char *name);
 PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index, 
 				  char *s1, const char *s2, int state, int quiet, int updates);

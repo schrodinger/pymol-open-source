@@ -14613,7 +14613,7 @@ void ExecutiveDelete(PyMOLGlobals * G, const char *name)
 
 
 /*========================================================================*/
-void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj, int quiet)
+void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj, int state, int quiet)
 {
   SpecRec *rec = NULL;
   CExecutive *I = G->Executive;
@@ -14628,9 +14628,9 @@ void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj, int qui
   }
   if(rec) {
     if(rec->obj->type == cObjectMesh) {
-      ObjectMeshDump((ObjectMesh *) rec->obj, fname, 0, quiet);
+      ObjectMeshDump((ObjectMesh *) rec->obj, fname, state, quiet);
     } else if(rec->obj->type == cObjectSurface) {
-      ObjectSurfaceDump((ObjectSurface *) rec->obj, fname, 0, quiet);
+      ObjectSurfaceDump((ObjectSurface *) rec->obj, fname, state, quiet);
     } else {
       ErrMessage(G, __func__, "Invalid object type for this operation.");
     }
