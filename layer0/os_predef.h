@@ -88,8 +88,24 @@ Z* -------------------------------------------------------------------
 #include <stddef.h>
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
+#if defined(_MSC_VER)
+// conversion from '...' to '...', possible loss of data
+#pragma warning (disable:4244)
+
+// conversion from 'size_t' to '...', possible loss of data
+#pragma warning (disable:4267)
+
+// truncation from 'double' to 'float'
+#pragma warning (disable:4305)
+
+// forcing value to bool (performance warning)
+#pragma warning (disable:4800)
+
+// '_snprintf', 'sscanf', 'sprintf', 'strcpy', 'strncpy': This function or
+// variable may be unsafe. To disable deprecation, use _CRT_SECURE_NO_WARNINGS.
 #pragma warning (disable:4996)
+
+// TODO: remove, use std::snprintf instead (C++11)
 #if !defined(snprintf) && (_MSC_VER < 1900)
 #define snprintf sprintf_s
 #endif

@@ -18,6 +18,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_python
 #define _H_os_python
 
+#include "os_predef.h"
+
 #ifdef _PYMOL_NOPY
 typedef int PyObject;
 #undef _PYMOL_NUMPY
@@ -101,8 +103,6 @@ struct pyobject_delete {
 #define unique_PyObject_ptr std::unique_ptr<PyObject, pymol::pyobject_delete>
 
 #endif
-
-#include "os_predef.h"
 
 #define PYOBJECT_CALLMETHOD(o, m, ...) PyObject_CallMethod(o, (char*)m, (char*)__VA_ARGS__)
 #define PYOBJECT_CALLFUNCTION(o, ...) PyObject_CallFunction(o, (char*)__VA_ARGS__)
