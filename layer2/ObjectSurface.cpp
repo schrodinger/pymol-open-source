@@ -245,7 +245,7 @@ ObjectSurface::~ObjectSurface()
   VLAFreeP(I->State);
 }
 
-void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state)
+void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state, int quiet)
 {
   float *v;
   int *n;
@@ -285,8 +285,10 @@ void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state)
         }
     }
     fclose(f);
-    PRINTFB(I->G, FB_ObjectSurface, FB_Actions)
-      " ObjectSurfaceDump: %s written to %s\n", I->Name, fname ENDFB(I->G);
+    if (!quiet) {
+      PRINTFB(I->G, FB_ObjectSurface, FB_Actions)
+        " ObjectSurfaceDump: %s written to %s\n", I->Name, fname ENDFB(I->G);
+    }
   }
 }
 

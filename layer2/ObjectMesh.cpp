@@ -329,15 +329,16 @@ int ObjectMeshInvalidateMapName(ObjectMesh * I, const char *name, const char * n
   return result;
 }
 
-void ObjectMeshDump(ObjectMesh * I, const char *fname, int state)
+void ObjectMeshDump(ObjectMesh * I, const char *fname, int state, int quiet)
 {
   float *v;
   int *n;
   int c;
   FILE *f;
   f = fopen(fname, "wb");
-  if(!f)
+  if(!f) {
     ErrMessage(I->G, "ObjectMeshDump", "can't open file for writing");
+  }
   else {
     if(state < I->NState) {
       n = I->State[state].N;
@@ -355,8 +356,10 @@ void ObjectMeshDump(ObjectMesh * I, const char *fname, int state)
         }
     }
     fclose(f);
-    PRINTFB(I->G, FB_ObjectMesh, FB_Actions)
-      " ObjectMeshDump: %s written to %s\n", I->Name, fname ENDFB(I->G);
+    if (!quiet) {
+      PRINTFB(I->G, FB_ObjectMesh, FB_Actions)
+        " ObjectMeshDump: %s written to %s\n", I->Name, fname ENDFB(I->G);
+    }
   }
 }
 
