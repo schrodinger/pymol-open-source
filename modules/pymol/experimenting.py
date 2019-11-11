@@ -133,7 +133,7 @@ DESCRIPTION
             print(" minimize: missing parameters, can't continue")
 
 
-    def dump(fnam, obj, state=0, quiet=1, _self=cmd):
+    def dump(fnam, obj, state=1, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -152,7 +152,7 @@ DESCRIPTION
 
 USAGE
 
-    dump filename, object, state=0, quiet=1
+    dump filename, object, state=1, quiet=1
 
 ARGUMENTS
 
@@ -180,7 +180,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.dump(_self._COb, str(fnam), obj, int(state), int(quiet))
+            r = _cmd.dump(_self._COb, str(fnam), obj, int(state) - 1, int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
