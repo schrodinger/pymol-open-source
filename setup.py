@@ -266,6 +266,8 @@ def_macros = [
 libs = ["png", "freetype"]
 lib_dirs = []
 ext_comp_args = [
+    "-Wunused-variable",
+    "-Wno-switch",
     "-Wno-narrowing",
     # legacy stuff
     '-Wno-char-subscripts',

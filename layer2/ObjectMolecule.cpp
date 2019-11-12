@@ -9245,7 +9245,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
   int a, b, s;
   int c, d, t_i;
   int a1 = 0, ind;
-  float r, rms;
+  float rms;
   float v1[3], v2, *vv1, *vv2, *vt, *vt1, *vt2;
   int hit_flag = false;
   int ok = true;

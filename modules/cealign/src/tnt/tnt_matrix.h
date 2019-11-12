@@ -546,22 +546,9 @@ inline Matrix<T> mult(const Matrix<T>  &A, const Matrix<T> &B)
 #endif
 
     Subscript M = A.num_rows();
-    Subscript N = A.num_cols();
     Subscript K = B.num_cols();
 
     Matrix<T> tmp(M,K);
-
-    // for (Subscript i=0; i<M; i++)
-		// {
-    // for (Subscript k=0; k<K; k++)
-   	//  	{
-    // 	    T sum = 0;
-   	//  	    for (Subscript j=0; j<N; j++)
-    // 	        sum = sum +  A[i][j] * B[j][k];
-		// 	
-		//         tmp[i][k] = sum; 
-	  //   }
-		// }
 
 		mult(tmp, A, B);		// tmp = A*B
 

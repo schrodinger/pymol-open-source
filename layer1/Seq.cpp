@@ -777,8 +777,6 @@ void SeqSetRowVLA(PyMOLGlobals * G, CSeqRow * row, int nRow)
 
 void SeqFree(PyMOLGlobals * G)
 {
-  CSeq *I = G->Seq;
-
   SeqPurgeRowVLA(G);
   DeleteP(G->Seq);
 }

@@ -1788,7 +1788,9 @@ static bool read_struct_conn_(PyMOLGlobals * G, const cif_data * data,
       name_dict[make_mm_atom_site_label(G, atInfo + i)] = idx;
   }
 
+#ifdef _PYMOL_IP_EXTRAS
   bool metalc_as_zero = SettingGetGlobal_b(G, cSetting_cif_metalc_as_zero_order_bonds);
+#endif
 
   for (int i = 0; i < nrows; i++) {
     const char * type_id = col_type_id->as_s(i);

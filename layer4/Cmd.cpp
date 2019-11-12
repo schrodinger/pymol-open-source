@@ -868,7 +868,6 @@ static PyObject* GetRawAlignment(PyMOLGlobals* G,
 static PyObject *CmdGetRawAlignment(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
   const char *name;
   int active_only;
   int state = 0;
@@ -1144,7 +1143,6 @@ static PyObject *CmdSpectrum(PyObject * self, PyObject * args)
   float min, max;
   int digits, start, stop, byres;
   int quiet;
-  float min_ret, max_ret;
   API_SETUP_ARGS(G, self, args, "Ossffiisiii", &self, &str1, &expr, &min, &max,
       &start, &stop, &prefix, &digits, &byres, &quiet);
   API_ASSERT(APIEnterNotModal(G));

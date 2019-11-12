@@ -7343,7 +7343,6 @@ static sele_array_t SelectorSelectFromTagDict(PyMOLGlobals * G, const std::unord
   sele_array_t result{};
   int a;
   AtomInfoType *ai;
-  OVreturn_word ret;
 
   SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);    /* for now, update the entire table */
   {

@@ -467,7 +467,6 @@ int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
         ok = PyList_Check(rec);
       if(ok) {
         WordType name;
-        OVreturn_word result;
         ok = PConvPyStrToStr(PyList_GetItem(rec, 0), name, sizeof(WordType));
         ext->Name = reg_name(I->Idx, cColorExtCutoff - a, name);
       }
@@ -539,7 +538,6 @@ int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
         color->old_session_index = old_session_index;
         if(ok) {
           WordType name;
-          OVreturn_word result;
           ok = PConvPyStrToStr(PyList_GetItem(rec, 0), name, sizeof(WordType));
           color->Name = reg_name(I->Idx, index, name);
         }
@@ -601,7 +599,6 @@ void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int 
   }
 
   if(color < 0) {
-    OVreturn_word result;
     color = I->NColor;
     VLACheck(I->Color, ColorRec, I->NColor);
     I->NColor++;

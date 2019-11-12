@@ -51,7 +51,6 @@ Block *PopGetBlock(PyMOLGlobals * G)
 /*========================================================================*/
 void PopFree(PyMOLGlobals * G)
 {
-  CPop *I = G->Pop;
   DeleteP(G->Pop);
 }
 

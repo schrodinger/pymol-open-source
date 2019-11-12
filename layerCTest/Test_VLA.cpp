@@ -154,15 +154,15 @@ TEST_CASE("Index", "[VLA]")
 
 TEST_CASE("Range Based For", "[VLA]")
 {
-  vla<int> myVLA{0, 1, 2, 3, 4};
+  vla<int> myVLA{0, 1, 9, 3, 4};
   std::size_t i{0u};
   for (auto& m : myVLA) {
-    REQUIRE(myVLA[i] == i);
+    REQUIRE(myVLA[i] == m);
     i++;
   }
   i = 0;
   for (const auto& m : myVLA) {
-    REQUIRE(myVLA[i] == i);
+    REQUIRE(myVLA[i] == m);
     i++;
   }
 }

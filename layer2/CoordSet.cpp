@@ -1517,8 +1517,6 @@ CoordSet::CoordSet(PyMOLGlobals * G)
 /*========================================================================*/
 CoordSet::CoordSet(const CoordSet& cs)
 {
-  PyMOLGlobals * G = const_cast<PyMOLGlobals*>(cs.State.G);
-
   this->State = cs.State;
   this->Obj = cs.Obj;
   this->Coord = cs.Coord;

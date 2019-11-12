@@ -1210,7 +1210,6 @@ PyMOLreturn_float PyMOL_CmdGetDistance(CPyMOL * I,
                                        const char *selection1,
                                        const char *selection2, int state, int quiet)
 {
-  int ok = true;
   PyMOLreturn_float result;
   PYMOL_API_LOCK {
     result = return_result(ExecutiveGetDistance(I->G,
@@ -1284,7 +1283,6 @@ PyMOLreturn_float PyMOL_CmdGetDihedral(CPyMOL * I,
                                        const char *selection3,
                                        const char *selection4, int state, int quiet)
 {
-  int ok = true;
   PyMOLreturn_float result;
   PYMOL_API_LOCK {
     result = return_result(ExecutiveGetDihe(I->G,

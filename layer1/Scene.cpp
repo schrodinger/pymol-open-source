@@ -602,7 +602,10 @@ const char *SceneGetSeleModeKeyword(PyMOLGlobals * G)
   return (char *) SelModeKW[0];
 }
 
+#ifdef _PYMOL_OPENVR
 static float s_oldFov = -1.0f;
+#endif
+
 void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
 {
   float *fp;
@@ -611,11 +614,11 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
 
   float dY = 0, dZ = 0;
   float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
-  float dist = fabsf(I->m_view.m_pos[2]);
   float scale = 1.0f / I->Scale;
 
 #ifdef _PYMOL_OPENVR
   if (I->StereoMode == cStereo_openvr) {
+    float dist = fabsf(I->m_view.m_pos[2]);
     float fovVR = fov;
     fov = s_oldFov;
     dY = scale * 1.0f;
@@ -1152,8 +1155,6 @@ void ResetFovWidth(PyMOLGlobals * G, bool enableOpenVR, float fovNew) {
 /*========================================================================*/
 static
 void SceneResetOpenVRSettings(PyMOLGlobals * G, bool enableOpenVR) { 
-  CScene *I = G->Scene;
-
   // set FOV = 110 for openVR
   float openVRFov = 110.0 * 0.5;
 
@@ -1867,7 +1868,6 @@ pymol::Image* SceneImagePrepare(PyMOLGlobals* G, bool prior_only)
   CScene *I = G->Scene;
   pymol::Image* image = nullptr;
   int save_stereo = (I->StereoMode == 1);
-  int ok = true;
 
   if (!(I->CopyType || prior_only)) {
     if(G->HaveGUI && G->ValidContext) {
@@ -6115,13 +6115,6 @@ void CScene::reshape(int width, int height)
 
 
 /*========================================================================*/
-void SceneDone(PyMOLGlobals * G)
-{
-  CScene *I = G->Scene;
-}
-
-
-/*========================================================================*/
 void SceneResetNormal(PyMOLGlobals * G, int lines)
 {
   CScene *I = G->Scene;
@@ -7540,6 +7533,9 @@ void ScenePickAtomInWorld(PyMOLGlobals * G, int x, int y, float *atomWorldPos) {
   CScene *I = G->Scene;
   if (SceneDoXYPick(G, x, y, 0)) {
     CObject *obj = (CObject *) I->LastPicked.context.object;
+    if (obj->type != cObjectMolecule) {
+      return;
+    }
     // get atom pos in Local CS
     float atomPos[3];
     ObjectMoleculeGetAtomTxfVertex((ObjectMolecule *)I->LastPicked.context.object, 0, I->LastPicked.src.index, atomPos);

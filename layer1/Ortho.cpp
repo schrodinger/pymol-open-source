@@ -1405,7 +1405,6 @@ void bg_grad(PyMOLGlobals * G) {
         I->bgHeight = bgImage->getHeight();
 
 	short is_new = !I->bg_texture_id;
-        int buff_total = bgImage->getWidth() * bgImage->getHeight();
 	if (is_new){
 	  glGenTextures(1, &I->bg_texture_id);
 	}
@@ -1506,8 +1505,10 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
   int skip_prompt = 0;
   int render = false;
   int internal_gui_mode = SettingGetGlobal_i(G, cSetting_internal_gui_mode);
+#ifdef _PYMOL_OPENVR
   bool offscreen_vr = false;
   int openvr_text = 0;
+#endif
 
   int generate_shader_cgo = 0;
 
@@ -2666,7 +2667,6 @@ void OrthoFree(PyMOLGlobals * G)
   VLAFreeP(I->WizardPromptVLA);
   PopFree(G);
   {
-    int a;
     I->cmdActiveQueue = NULL;
   }
 

@@ -2580,7 +2580,6 @@ int PFlush(PyMOLGlobals * G)
 int PFlushFast(PyMOLGlobals * G)
 {
   /* NOTE: ASSUMES we currently have blocked Python threads and an unlocked API */
-  PyObject *err;
   int did_work = false;
   auto ortho = G->Ortho;
   while(!OrthoCommandIsEmpty(*ortho)){

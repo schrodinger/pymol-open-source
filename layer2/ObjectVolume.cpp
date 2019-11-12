@@ -748,8 +748,10 @@ void ObjectVolume::render(RenderInfo * info)
   int a = 0;
   ObjectVolumeState *vs = NULL;
   float volume_layers =  SettingGet_f(I->G, I->Setting, NULL, cSetting_volume_layers);
+#ifdef _PYMOL_IP_EXTRAS
   short volume_mode = SettingGetGlobal_i(G, cSetting_volume_mode);
   short ortho = SettingGetGlobal_i(G, cSetting_ortho);
+#endif
   /* make this a setting? */
   GLint alpha_func;
   GLfloat alpha_ref;

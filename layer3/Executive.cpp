@@ -4133,7 +4133,6 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
     int is_repeat_pass = false;
     int eff_frame = frame;
     int is_new = false;
-    CObject *tmpObj;
 
     if(next_pdb) {
       start_at = next_pdb;
