@@ -220,7 +220,7 @@ class install_pymol(install):
             else:
                 out.write('#!/bin/sh' + os.linesep)
                 out.write('export PYMOL_PATH="%s"' % pymol_path + os.linesep)
-                out.write('"%s" "%s" "$@"' % (python_exe, pymol_file) + os.linesep)
+                out.write('exec "%s" "%s" "$@"' % (python_exe, pymol_file) + os.linesep)
 
         os.chmod(launch_script, 0o755)
 
