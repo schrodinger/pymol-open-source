@@ -18,14 +18,4 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Font.h"
 
-int FontInit(PyMOLGlobals * G, CFont * I)
-{
-  UtilZeroMem(I, sizeof(CFont));
-  I->G = G;
-  return 1;
-}
-
-void FontPurge(CFont * I)
-{
-
-}
+CFont::~CFont() = default;

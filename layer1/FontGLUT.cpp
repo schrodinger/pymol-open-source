@@ -108,10 +108,12 @@ static unsigned int next_utf8_character(const char * &st, bool &error) {
   return c;
 }
 
-static const char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, const char *st, float size,
-                                  float *rpos, short needSize, short relativeMode, short shouldRender SHADERCGOARG)
+const char* CFontGLUT::RenderOpenGL(RenderInfo* info, const char* st,
+    float size, float* rpos, bool needSize, short relativeMode,
+    bool shouldRender, CGO* shaderCGO)
 {
-  PyMOLGlobals *G = I->Font.G;
+  auto I = this;
+  PyMOLGlobals *G = I->G;
   if(G->ValidContext) {
     int c;
     FontGLUTBitmapFontRec *font_info = I->glutFont;
@@ -267,7 +269,7 @@ static const char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, const 
               CharFngrprnt fprnt;
               unsigned char *rgba;
               UtilZeroMem(&fprnt, sizeof(fprnt));
-              fprnt.u.i.text_id = I->Font.TextID;
+              fprnt.u.i.text_id = I->TextID;
               fprnt.u.i.size = sampling;
               rgba = fprnt.u.i.color;
               TextGetColorUChar(G, rgba, rgba + 1, rgba + 2, rgba + 3);
@@ -305,10 +307,19 @@ static const char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, const 
   return st;
 }
 
-static const char *FontGLUTRenderRay(CRay * ray, CFontGLUT * I, const char *st, float size,
-                               float *rpos, short needSize, short relativeMode)
+const char* CFontGLUT::RenderOpenGLFlat(RenderInfo* info, const char* st,
+    float size, float* rpos, bool needSize, short relativeMode,
+    bool shouldRender, CGO* shaderCGO)
 {
-  PyMOLGlobals *G = I->Font.G;
+  return RenderOpenGL(
+      info, st, size, rpos, needSize, relativeMode, shouldRender, shaderCGO);
+}
+
+const char* CFontGLUT::RenderRay(CRay* ray, const char* st, float size,
+    float* rpos, bool needSize, short relativeMode)
+{
+  auto I = this;
+  PyMOLGlobals *G = I->G;
   int c;
   FontGLUTBitmapFontRec *font_info = I->glutFont;
   int first, last;
@@ -344,7 +355,7 @@ static const char *FontGLUTRenderRay(CRay * ray, CFontGLUT * I, const char *st, 
     UtilZeroMem(&fprnt, sizeof(fprnt));
     first = font_info->first;
     last = first + font_info->num_chars;
-    fprnt.u.i.text_id = I->Font.TextID;
+    fprnt.u.i.text_id = I->TextID;
     fprnt.u.i.size = sampling;
     rgba = fprnt.u.i.color;
     TextGetColorUChar(G, rgba, rgba + 1, rgba + 2, rgba + 3);
@@ -428,19 +439,10 @@ static const char *FontGLUTRenderRay(CRay * ray, CFontGLUT * I, const char *st, 
   return st;
 }
 
-void FontGLUTFree(CFont * I)
+CFontGLUT::CFontGLUT(PyMOLGlobals* G, int font_code)
+    : CFont(G)
 {
-  OOFreeP(I);
-}
-
-CFont *FontGLUTNew(PyMOLGlobals * G, int font_code)
-{
-  OOAlloc(G, CFontGLUT);
-  FontInit(G, &I->Font);
-  I->Font.fRenderOpenGL = (FontRenderOpenGLFn *) FontGLUTRenderOpenGL;
-  I->Font.fRenderOpenGLFlat = (FontRenderOpenGLFn *) FontGLUTRenderOpenGL;
-  I->Font.fRenderRay = (FontRenderRayFn *) FontGLUTRenderRay;
-  I->Font.fFree = FontGLUTFree;
+  auto I = this;
   switch (font_code) {
   case cFontGLUT9x15:
     I->glutFont = &FontGLUTBitmap9By15;
@@ -459,5 +461,4 @@ CFont *FontGLUTNew(PyMOLGlobals * G, int font_code)
     I->glutFont = &FontGLUTBitmap8By13;
     break;
   }
-  return (CFont *) I;
 }

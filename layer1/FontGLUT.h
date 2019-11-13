@@ -69,17 +69,21 @@ extern FontGLUTBitmapFontRec FontGLUTBitmapHelvetica10;
 extern FontGLUTBitmapFontRec FontGLUTBitmapHelvetica12;
 extern FontGLUTBitmapFontRec FontGLUTBitmapHelvetica18;
 
-typedef struct {
-  CFont Font;
+struct CFontGLUT : public CFont {
   FontGLUTBitmapFontRec *glutFont;
 
   /* save fields */
   int swapbytes, lsbfirst, rowlength;
   int skiprows, skippixels, alignment;
-
-} CFontGLUT;
-
-CFont *FontGLUTNew(PyMOLGlobals * G, int font_code);
-void FontGLUTFree(CFont * I);
+  const char* RenderOpenGL(RenderInfo* info, const char* text,
+      float size, float* rpos, bool needSize, short relativeMode,
+      bool shouldRender, CGO* shaderCGO) override;
+  const char* RenderOpenGLFlat(RenderInfo* info, const char* text,
+      float size, float* rpos, bool needSize, short relativeMode,
+      bool shouldRender, CGO* shaderCGO) override;
+  const char* RenderRay(CRay* ray, const char* text, float size,
+      float* rpos, bool needSize, short relativeMode) override;
+  CFontGLUT(PyMOLGlobals* G, int font_code);
+};
 
 #endif

@@ -32,29 +32,35 @@ Z* -------------------------------------------------------------------
 #define cFontModePixels    0
 #define cFontModeSpacial   1
 
-typedef struct _CFont CFont;
-
 #include "os_gl.h"
 
 #define SHADERCGOARG , CGO *shaderCGO
 #define SHADERCGOARGVAR ,shaderCGO
 #define SHADERCGOARGV shaderCGO
 
-typedef char *FontRenderOpenGLFn(RenderInfo * info, CFont *, const char *text, float size,
-                                 float *rpos, short needSize, short relativeMode, short shouldRender SHADERCGOARG);
-typedef char *FontRenderRayFn(CRay * ray, CFont *, const char *text, float size, float *rpos, short needSize, short relativeMode);
-
-struct _CFont {
-  PyMOLGlobals *G;
-  int TextID;
-  void (*fFree) (CFont *);
-  FontRenderOpenGLFn *fRenderOpenGL;
-  FontRenderOpenGLFn *fRenderOpenGLFlat;
-  FontRenderRayFn *fRenderRay;
+struct CFont {
+  PyMOLGlobals* G = nullptr;
+  int TextID = 0;
+  virtual const char* RenderOpenGL(RenderInfo* info, const char* text,
+      float size, float* rpos, bool needSize, short relativeMode,
+      bool shouldRender, CGO* shaderCGO)
+  {
+    return nullptr;
+  }
+  virtual const char* RenderOpenGLFlat(RenderInfo* info, const char* text,
+      float size, float* rpos, bool needSize, short relativeMode,
+      bool shouldRender, CGO* shaderCGO)
+  {
+    return nullptr;
+  }
+  virtual const char* RenderRay(CRay* ray, const char* text, float size,
+      float* rpos, bool needSize, short relativeMode)
+  {
+    return nullptr;
+  }
+  CFont(PyMOLGlobals* G)
+      : G(G){};
+  virtual ~CFont() = 0;
 };
-
-int FontInit(PyMOLGlobals * G, CFont * I);
-
-void FontPurge(CFont * I);
 
 #endif
