@@ -37,9 +37,10 @@ Z* -------------------------------------------------------------------
 
 typedef struct RepMesh {
   Rep R;
-  int *N;
+  pymol::vla<int> N;
   int NTot;
-  float *V, *VC;
+  pymol::vla<float> V;
+  float* VC;
   int NDot;
   float *Dot;
   float Radius, Width;
@@ -62,8 +63,6 @@ void RepMeshFree(RepMesh * I)
     I->shaderCGO = 0;
   }
   FreeP(I->VC);
-  VLAFreeP(I->V);
-  VLAFreeP(I->N);
   FreeP(I->LastColor);
   FreeP(I->LastVisib);
   OOFreeP(I);
@@ -76,9 +75,9 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
 static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 {
   PyMOLGlobals *G = I->R.G;
-  float *v = I->V;
+  float *v = I->V.data();
   float *vc = I->VC;
-  int *n = I->N;
+  int *n = I->N.data();
   int ok = true;
   short use_shader;
   short mesh_as_cylinders;
@@ -302,9 +301,9 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
   CRay *ray = info->ray;
   auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
-  float *v = I->V;
+  float *v = I->V.data();
   float *vc = I->VC;
-  int *n = I->N;
+  int *n = I->N.data();
   int c;
   const float *col = NULL;
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
@@ -626,7 +625,7 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
         c1 = 1;
         minDist = FLT_MAX;
         i0 = -1;
-        v0 = I->V + 3 * a;
+        v0 = I->V.data() + 3 * a;
         MapLocus(map, v0, &h, &k, &l);
 
         i = *(MapEStart(map, h, k, l));
@@ -892,10 +891,10 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     }
 
     if (ok)
-      I->V = (float*) VLAMalloc(1000, sizeof(float), 9, false);
+      I->V = pymol::vla_take_ownership((float*)VLAMalloc(1000, sizeof(float), 9, false));
     CHECKOK(ok, I->V);
     if (ok)
-      I->N = (int*) VLAMalloc(100, sizeof(int), 9, false);
+      I->N = pymol::vla_take_ownership((int*)VLAMalloc(100, sizeof(int), 9, false));
     CHECKOK(ok, I->N);
     if (ok)
       I->N[0] = 0;
@@ -946,7 +945,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
       
       for(c = 0; c < 3; c++)
 	dims[c] = (int) ((sizeE[c] / gridSize) + 1.5F);
-      field = IsosurfFieldAlloc(G, dims);
+      field = new Isofield(G, dims);
       CHECKOK(ok, field);
     }
 
@@ -1057,19 +1056,18 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     FreeP(I->Dot);
     OrthoBusyFast(G, 2, 3);
     if(ok) {
-      ok &= IsosurfVolume(G, NULL, NULL, field, 1.0, &I->N, &I->V, NULL, mesh_type, mesh_skip,
+      ok &= IsosurfVolume(G, NULL, NULL, field, 1.0, I->N, I->V, NULL, mesh_type, mesh_skip,
                     1.0F);
     }
-    if (field)
-      IsosurfFieldFree(G, field);
-    if(ok && (I->N && I->V && (carve_flag || clear_flag || trim_flag))) {
+    DeleteP(field);
+    if(ok && (I->N.data() && I->V.data() && (carve_flag || clear_flag || trim_flag))) {
       int cur_size = VLAGetSize(I->N);
       if((mesh_type == 0) && cur_size) {
-        int *n = I->N;
+        int *n = I->N.data();
         int *new_n = VLACalloc(int, cur_size);
         int new_size = 0;
-        float *new_v = I->V;
-        float *v = I->V;
+        float *new_v = I->V.data();
+        float *v = I->V.data();
 	CHECKOK(ok, new_n);
         while(ok && (c = *(n++))) {
           int new_c = 0;
@@ -1165,8 +1163,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
             new_c = 0;
           }
         }
-        VLAFreeP(I->N);
-        I->N = new_n;
+        I->N = pymol::vla_take_ownership(new_n);
       }
     }
     MapFree(trim_map);
@@ -1175,7 +1172,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     VLAFreeP(trim_vla);
     VLAFreeP(carve_vla);
     VLAFreeP(clear_vla);
-    n = I->N;
+    n = I->N.data();
     I->NTot = 0;
     if (ok){
       while(*n)

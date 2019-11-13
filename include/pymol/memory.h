@@ -77,6 +77,11 @@ public:
   }
 };
 
+template <typename T, typename... Args>
+copyable_ptr<T> make_copyable(Args &&... args) {
+  return copyable_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
 /**
  * A unique pointer which copies to nullptr.
  */
@@ -103,5 +108,10 @@ public:
     return *this;
   }
 };
+
+template <typename T, typename... Args>
+cache_ptr<T> make_cache(Args &&... args) {
+  return cache_ptr<T>(new T(std::forward<Args>(args)...));
+}
 
 } // namespace pymol

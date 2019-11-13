@@ -39,7 +39,7 @@ typedef int lexidx_t;
 typedef int lexborrow_t;
 
 typedef struct _CMemoryCache CMemoryCache;
-typedef struct _CIsosurf CIsosurf;
+struct CIsosurf;
 typedef struct _CTetsurf CTetsurf;
 typedef struct _CSphere CSphere;
 struct CFeedback;

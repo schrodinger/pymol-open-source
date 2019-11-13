@@ -306,10 +306,7 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
   if(vs->State.G->HaveGUI) {
     vs->State.G->ShaderMgr->freeGPUBuffers(vs->textures, 3);
   }
-  if(vs->Field) {
-    IsosurfFieldFree(vs->State.G, vs->Field);
-    vs->Field = NULL;
-  }
+  DeleteP(vs->Field);
   DeleteP(vs->carvemask);
   VLAFreeP(vs->AtomVertex);
   if (vs->Ramp)
@@ -386,8 +383,8 @@ static CField * ObjectVolumeStateGetField(ObjectVolumeState * vs) {
   if (!vs)
     return NULL;
   if(vs->Field)
-    return vs->Field->data;
-  return ObjectVolumeStateGetMapState(vs)->Field->data;
+    return vs->Field->data.get();
+  return ObjectVolumeStateGetMapState(vs)->Field->data.get();
 }
 
 CField * ObjectVolumeGetField(ObjectVolume * I) {
@@ -1133,10 +1130,7 @@ void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs)
 {
   if(vs->Active)
     ObjectStatePurge(&vs->State);
-  if(vs->Field) {
-    IsosurfFieldFree(vs->State.G, vs->Field);
-    vs->Field = NULL;
-  }
+  DeleteP(vs->Field);
   vs->State = CObjectState(G);
   if(vs->AtomVertex) {
     VLAFreeP(vs->AtomVertex);
@@ -1233,7 +1227,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
           fdim[0] = eff_range[3] - eff_range[0];
           fdim[1] = eff_range[4] - eff_range[1];
           fdim[2] = eff_range[5] - eff_range[2];
-          vs->Field = IsosurfFieldAlloc(I->G, fdim);
+          vs->Field = new Isofield(I->G, fdim);
 
           expand_result =
             IsosurfExpand(oms->Field, vs->Field, &oms->Symmetry->Crystal, sym, eff_range);

@@ -250,8 +250,8 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float 
 int ObjectMapStateGetDataRange(PyMOLGlobals * G, ObjectMapState * ms, float *min,
                                float *max)
 {
-  float max_val = 0.0F, min_val = 0.0F;
-  CField *data = ms->Field->data;
+float max_val = 0.0F, min_val = 0.0F;
+  CField *data = ms->Field->data.get();
   int cnt = data->dim[0] * data->dim[1] * data->dim[2];
   float *raw_data = (float *) data->data.data();
   if(cnt) {
@@ -294,7 +294,7 @@ int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
   float sum = 0.0f, sumsq = 0.0f;
   float min_his, max_his, irange, mean, stdev;
   int pos;
-  CField *data = ms->Field->data;
+  CField *data = ms->Field->data.get();
   int cnt = data->dim[0] * data->dim[1] * data->dim[2];
   float *raw_data = (float *) data->data.data();
   if(cnt) {
@@ -475,7 +475,7 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
       orig_size = fdim[0] * fdim[1] * fdim[2];
       new_size = new_fdim[0] * new_fdim[1] * new_fdim[2];
 
-      field = IsosurfFieldAlloc(G, new_fdim);
+      field = new Isofield(G, new_fdim);
       field->save_points = ms->Field->save_points;
 
       for(c = 0; c < new_fdim[2]; c++) {
@@ -491,7 +491,7 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
           }
         }
       }
-      IsosurfFieldFree(G, ms->Field);
+      DeleteP(ms->Field);
       for(a = 0; a < 3; a++) {
         ms->Min[a] = new_min[a];
         ms->Max[a] = new_max[a];
@@ -579,7 +579,7 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
       orig_size = fdim[0] * fdim[1] * fdim[2];
       new_size = new_fdim[0] * new_fdim[1] * new_fdim[2];
 
-      field = IsosurfFieldAlloc(G, new_fdim);
+      field = new Isofield(G, new_fdim);
       field->save_points = ms->Field->save_points;
 
       for(c = 0; c < new_fdim[2]; c++) {
@@ -595,7 +595,7 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
           }
         }
       }
-      IsosurfFieldFree(G, ms->Field);
+      DeleteP(ms->Field);
       for(a = 0; a < 3; a++) {
         ms->Min[a] = new_min[a];
         ms->Max[a] = new_max[a];
@@ -658,7 +658,7 @@ static int ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
       fdim[a] = ms->FDim[a] * 2 - 1;
     }
     fdim[3] = 3;
-    field = IsosurfFieldAlloc(G, fdim);
+    field = new Isofield(G, fdim);
     field->save_points = ms->Field->save_points;
     for(c = 0; c < fdim[2]; c++) {
       v[2] = (c + min[2]) / ((float) div[2]);
@@ -673,7 +673,7 @@ static int ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
           vt = F4Ptr(field->points, a, b, c, 0);
           copy3f(vr, vt);
           if((a & 0x1) || (b & 0x1) || (c & 0x1)) {
-            F3(field->data, a, b, c) = FieldInterpolatef(ms->Field->data,
+            F3(field->data, a, b, c) = FieldInterpolatef(ms->Field->data.get(),
                                                          a / 2, b / 2, c / 2, x, y, z);
           } else {
             F3(field->data, a, b, c) = F3(ms->Field->data, a / 2, b / 2, c / 2);
@@ -681,7 +681,7 @@ static int ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
         }
       }
     }
-    IsosurfFieldFree(G, ms->Field);
+    DeleteP(ms->Field);
     for(a = 0; a < 3; a++) {
       ms->Min[a] = min[a];
       ms->Max[a] = max[a];
@@ -699,7 +699,7 @@ static int ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
     }
     fdim[3] = 3;
 
-    field = IsosurfFieldAlloc(G, fdim);
+    field = new Isofield(G, fdim);
     field->save_points = ms->Field->save_points;
 
     for(c = 0; c < fdim[2]; c++) {
@@ -714,7 +714,7 @@ static int ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
           vt = F4Ptr(field->points, a, b, c, 0);
           copy3f(v, vt);
           if((a & 0x1) || (b & 0x1) || (c & 0x1)) {
-            F3(field->data, a, b, c) = FieldInterpolatef(ms->Field->data,
+            F3(field->data, a, b, c) = FieldInterpolatef(ms->Field->data.get(),
                                                          a / 2, b / 2, c / 2, x, y, z);
           } else {
             F3(field->data, a, b, c) = F3(ms->Field->data, a / 2, b / 2, c / 2);
@@ -722,7 +722,7 @@ static int ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
         }
       }
     }
-    IsosurfFieldFree(G, ms->Field);
+    DeleteP(ms->Field);
     for(a = 0; a < 3; a++) {
       ms->Min[a] = min[a];
       ms->Max[a] = max[a];
@@ -776,9 +776,9 @@ static int ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smooth
     old_max = ms->Max;
 
     if(smooth)
-      FieldSmooth3f(ms->Field->data);
+      FieldSmooth3f(ms->Field->data.get());
 
-    field = IsosurfFieldAlloc(G, fdim);
+    field = new Isofield(G, fdim);
     field->save_points = ms->Field->save_points;
 
     /*
@@ -815,12 +815,12 @@ static int ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smooth
           transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
           vt = F4Ptr(field->points, a, b, c, 0);
           copy3f(vr, vt);
-          F3(field->data, a, b, c) = FieldInterpolatef(ms->Field->data,
+          F3(field->data, a, b, c) = FieldInterpolatef(ms->Field->data.get(),
                                                        a_2, b_2, c_2, x, y, z);
         }
       }
     }
-    IsosurfFieldFree(G, ms->Field);
+    DeleteP(ms->Field);
     for(a = 0; a < 3; a++) {
       ms->Min[a] = min[a];
       ms->Max[a] = max[a];
@@ -870,7 +870,7 @@ static int ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smooth
     }
     fdim[3] = 3;
 
-    field = IsosurfFieldAlloc(G, fdim);
+    field = new Isofield(G, fdim);
     field->save_points = ms->Field->save_points;
 
     for(c = 0; c < fdim[2]; c++) {
@@ -885,7 +885,7 @@ static int ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smooth
         }
       }
     }
-    IsosurfFieldFree(G, ms->Field);
+    DeleteP(ms->Field);
     for(a = 0; a < 3; a++) {
       ms->Min[a] = min[a];
       ms->Max[a] = max[a];
@@ -1112,7 +1112,7 @@ int ObjectMapStateInterpolate(ObjectMapState * ms, const float *array, float *re
         c = ms->FDim[2] + ms->Min[2] - 1;
       }
       /*      printf("%d %d %d %8.3f %8.3f %8.3f\n",a,b,c,x,y,z); */
-      *(result++) = FieldInterpolatef(ms->Field->data,
+      *(result++) = FieldInterpolatef(ms->Field->data.get(),
                                       a - ms->Min[0],
                                       b - ms->Min[1], c - ms->Min[2], x, y, z);
       if(flag)
@@ -1179,7 +1179,7 @@ int ObjectMapStateInterpolate(ObjectMapState * ms, const float *array, float *re
           *flag = 0;
       }
       /*      printf("%d %d %d %8.3f %8.3f %8.3f\n",a,b,c,x,y,z); */
-      *(result++) = FieldInterpolatef(ms->Field->data,
+      *(result++) = FieldInterpolatef(ms->Field->data.get(),
                                       a - ms->Min[0],
                                       b - ms->Min[1], c - ms->Min[2], x, y, z);
       if(flag)
@@ -1366,7 +1366,7 @@ static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, Obje
       copy3f(src->Max, I->Max);
       copy3f(src->FDim, I->FDim);
 
-      I->Field = IsosurfNewCopy(G, src->Field);
+      I->Field = new Isofield(*src->Field);
       I->State = src->State;
       if(ok)
         ObjectMapStateRegeneratePoints(I);
@@ -1698,10 +1698,7 @@ int ObjectMapStateSetBorder(ObjectMapState * I, float level)
 void ObjectMapStatePurge(PyMOLGlobals * G, ObjectMapState * I)
 {
   ObjectStatePurge(&I->State);
-  if(I->Field) {
-    IsosurfFieldFree(G, I->Field);
-    I->Field = NULL;
-  }
+  DeleteP(I->Field);
   FreeP(I->Origin);
   FreeP(I->Dim);
   FreeP(I->Range);
@@ -1939,7 +1936,7 @@ void ObjectMap::render(RenderInfo * info)
       if((I->visRep & cRepDotBit)) {
         if(!ms->have_range) {
           double sum = 0.0, sumsq = 0.0;
-          CField *data = ms->Field->data;
+          CField *data = ms->Field->data.get();
           int cnt = data->dim[0] * data->dim[1] * data->dim[2];
           float *raw_data = (float *) data->data.data();
           int a;
@@ -1962,13 +1959,13 @@ void ObjectMap::render(RenderInfo * info)
         }
         if(ms->have_range) {
           int a;
-          CField *data = ms->Field->data;
+          CField *data = ms->Field->data.get();
           int cnt = data->dim[0] * data->dim[1] * data->dim[2];
-          CField *points = ms->Field->points;
+          CField *points = ms->Field->points.get();
           CField *gradients = NULL;
 
           if(SettingGet_b(G, NULL, I->Setting, cSetting_dot_normals)) {
-            gradients = ms->Field->gradients;
+            gradients = ms->Field->gradients.get();
           }
           if(data && points) {
             float *raw_data = (float *) data->data.data();
@@ -2200,7 +2197,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
       ms->FDim[a] = ms->Max[a] - ms->Min[a] + 1;
     ms->FDim[3] = 3;
 
-    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
+    ms->Field = new Isofield(I->G, ms->FDim);
     if(!ms->Field)
       ok = false;
     else {
@@ -2635,7 +2632,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   else {
     SymmetryUpdate(ms->Symmetry);
     /*    CrystalDump(ms->Crystal); */
-    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
+    ms->Field = new Isofield(I->G, ms->FDim);
     ms->MapSource = cMapSourceCCP4;
     ms->Field->save_points = false;
 
@@ -3044,7 +3041,7 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
   ms->Max[1] = ms->Div[1];
   ms->Max[2] = ms->Div[2];
 
-  ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
+  ms->Field = new Isofield(I->G, ms->FDim);
   ms->MapSource = cMapSourceGeneralPurpose;
   ms->Field->save_points = false;
 
@@ -3330,7 +3327,7 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
       ok = false;
     else {
       SymmetryUpdate(ms->Symmetry);
-      ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
+      ms->Field = new Isofield(I->G, ms->FDim);
       ms->MapSource = cMapSourceCrystallographic;
       ms->Field->save_points = false;
       for(c = 0; c < ms->FDim[2]; c++) {
@@ -3618,7 +3615,7 @@ static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
         ms->Grid[a] = 0.0F;
     }
 
-    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
+    ms->Field = new Isofield(I->G, ms->FDim);
     ms->MapSource = cMapSourceFLD;
     ms->Field->save_points = false;
 
@@ -4014,7 +4011,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
       ok = false;
     else {
       SymmetryUpdate(ms->Symmetry);
-      ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
+      ms->Field = new Isofield(I->G, ms->FDim);
       ms->MapSource = cMapSourceBRIX;
       ms->Field->save_points = false;
 
@@ -4500,7 +4497,7 @@ end d
     }
 
     SymmetryUpdate(ms->Symmetry);
-    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
+    ms->Field = new Isofield(I->G, ms->FDim);
     ms->MapSource = cMapSourceGRD;
     ms->Field->save_points = false;
 
@@ -5049,7 +5046,7 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
         " DXStrToMap: %d data points.\n", n_items ENDFB(I->G);
     }
 
-    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
+    ms->Field = new Isofield(I->G, ms->FDim);
     ms->MapSource = cMapSourceGeneralPurpose;
     ms->Field->save_points = false;
 
@@ -5289,7 +5286,7 @@ static int ObjectMapACNTStrToMap(ObjectMap * I, char *ACNTStr, int bytes, int st
         " ACNTStrToMap: %d data points.\n", n_items ENDFB(I->G);
     }
 
-    ms->Field = IsosurfFieldAlloc(I->G, ms->FDim);
+    ms->Field = new Isofield(I->G, ms->FDim);
     ms->MapSource = cMapSourceGeneralPurpose;
     ms->Field->save_points = false;
 
@@ -5634,7 +5631,7 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * ms,
     if(!(ms->FDim[0] && ms->FDim[1] && ms->FDim[2]))
       ok = false;
     else {
-      ms->Field = IsosurfFieldAlloc(G, ms->FDim);
+      ms->Field = new Isofield(G, ms->FDim);
       for(c = 0; c < ms->FDim[2]; c++) {
         v[2] = ms->Origin[2] + ms->Grid[2] * c;
         for(b = 0; b < ms->FDim[1]; b++) {
@@ -5879,7 +5876,7 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
           ok = false;
         else {
           SymmetryUpdate(ms->Symmetry);
-          ms->Field = IsosurfFieldAlloc(G, ms->FDim);
+          ms->Field = new Isofield(G, ms->FDim);
           for(c = 0; c < ms->FDim[2]; c++) {
             v[2] = (c + ms->Min[2]) / ((float) ms->Div[2]);
             for(b = 0; b < ms->FDim[1]; b++) {

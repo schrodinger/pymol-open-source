@@ -18,44 +18,47 @@ Z* -------------------------------------------------------------------
 #define _H_ObjectMesh
 
 #include"ObjectMap.h"
+#include "CGO.h"
 #include"Word.h"
 #include"Symmetry.h"
 
-typedef struct {
-  CObjectState State;
-  ObjectNameType MapName;
+struct ObjectMeshState : public CObjectState {
+  ObjectNameType MapName{};
   int MapState;
   CCrystal Crystal;
-  int Active;
-  int *N, *RC, VCsize, base_n_V;
+  int Active = true;
+  pymol::vla<int> N;
+  std::vector<int> RC;
+  int VCsize, base_n_V;
   int OneColor;
-  float *V, *VC;
-  int Range[6];
-  float ExtentMin[3], ExtentMax[3];
-  int ExtentFlag;
+  pymol::vla<float> V;
+  std::vector<float> VC;
+  int Range[6]{};
+  float ExtentMin[3]{}, ExtentMax[3]{};
+  int ExtentFlag = false;
   float Level, Radius;
   int RefreshFlag;
-  int ResurfaceFlag;
-  int quiet;
-  int RecolorFlag;
-  float *AtomVertex;
-  int CarveFlag;
-  float CarveBuffer;
+  int ResurfaceFlag = true;
+  int quiet = true;
+  int RecolorFlag = false;
+  pymol::vla<float> AtomVertex;
+  int CarveFlag = false;
+  float CarveBuffer = 0.0f;
   int MeshMode;
-  CGO *UnitCellCGO;
-  WordType caption;
+  pymol::cache_ptr<CGO, CGODeleter> UnitCellCGO;
+  WordType caption{};
   float AltLevel;
+  pymol::copyable_ptr<Isofield> Field;
   /* not stored */
-  Isofield *Field;
-  CGO *shaderCGO;
-  CGO *shaderUnitCellCGO;
-} ObjectMeshState;
+  pymol::cache_ptr<CGO, CGODeleter> shaderCGO;
+  pymol::cache_ptr<CGO, CGODeleter> shaderUnitCellCGO;
+  ObjectMeshState(PyMOLGlobals* G);
+};
 
 struct ObjectMesh : public CObject {
-  ObjectMeshState *State;
+  pymol::vla<ObjectMeshState> State;
   int NState = 0;
   ObjectMesh(PyMOLGlobals* G);
-  ~ObjectMesh();
 
   // virtual methods
   void update() override;

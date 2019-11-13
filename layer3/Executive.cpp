@@ -4489,7 +4489,7 @@ CField * ExecutiveGetVolumeField(PyMOLGlobals * G, const char * objName, int sta
   case cObjectMap:
     oms = ObjectMapGetState((ObjectMap *) obj, state);
     ok_assert(1, oms && oms->Field);
-    return oms->Field->data;
+    return oms->Field->data.get();
   }
 
 ok_except1:

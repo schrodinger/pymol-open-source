@@ -37,10 +37,8 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"Matrix.h"
 #include"ShaderMgr.h"
-#include"CGO.h"
 #include"ObjectCGO.h"
 
-static void ObjectMeshStateInit(PyMOLGlobals * G, ObjectMeshState * ms);
 static void ObjectMeshRecomputeExtent(ObjectMesh * I);
 
 static PyObject *ObjectMeshStateAsPyList(ObjectMeshState * I)
@@ -70,7 +68,7 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState * I)
   PyList_SetItem(result, 14, PyFloat_FromDouble(I->AltLevel));
   PyList_SetItem(result, 15, PyInt_FromLong(I->quiet));
   if(I->Field) {
-    PyList_SetItem(result, 16, IsosurfAsPyList(I->State.G, I->Field));
+    PyList_SetItem(result, 16, IsosurfAsPyList(I->G, I->Field.get()));
   } else {
     PyList_SetItem(result, 16, PConvAutoNone(NULL));
   }
@@ -122,7 +120,7 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals * G, ObjectMeshState * I,
     if(!PyList_Check(list))
       I->Active = false;
     else {
-      ObjectMeshStateInit(G, I);
+      *I = ObjectMeshState(G);
       if(ok)
         ok = (list != NULL);
       if(ok)
@@ -183,8 +181,11 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals * G, ObjectMeshState * I,
         tmp = PyList_GetItem(list, 16);
         if(tmp == Py_None)
           I->Field = NULL;
-        else
-          ok = ((I->Field = IsosurfNewFromPyList(G, tmp)) != NULL);
+        else {
+          I->Field.reset(IsosurfNewFromPyList(G, tmp));
+          ok = I->Field != nullptr;
+        }
+	CPythonVal_Free(tmp);
       }
     }
   }
@@ -277,39 +278,6 @@ PyObject *ObjectMeshAsPyList(ObjectMesh * I)
   return (PConvAutoNone(result));
 }
 
-static void ObjectMeshStatePurge(ObjectMeshState * ms)
-{
-  ObjectStatePurge(&ms->State);
-  if(ms->Field) {
-    IsosurfFieldFree(ms->State.G, ms->Field);
-    ms->Field = NULL;
-  }
-  VLAFreeP(ms->AtomVertex);
-  CGOFree(ms->shaderCGO);
-  CGOFree(ms->shaderUnitCellCGO);
-  CGOFree(ms->UnitCellCGO);
-  ms->Active = false;
-}
-
-static void ObjectMeshStateFree(ObjectMeshState * ms)
-{
-  ObjectMeshStatePurge(ms);
-  VLAFreeP(ms->N);
-  VLAFreeP(ms->V);
-  FreeP(ms->VC);
-  FreeP(ms->RC);
-}
-
-ObjectMesh::~ObjectMesh()
-{
-  auto I = this;
-  for(int a = 0; a < I->NState; a++) {
-    if(I->State[a].Active)
-      ObjectMeshStateFree(I->State + a);
-  }
-  VLAFreeP(I->State);
-}
-
 int ObjectMeshInvalidateMapName(ObjectMesh * I, const char *name, const char * new_name)
 {
   int a;
@@ -341,8 +309,8 @@ void ObjectMeshDump(ObjectMesh * I, const char *fname, int state, int quiet)
   }
   else {
     if(state < I->NState) {
-      n = I->State[state].N;
-      v = I->State[state].V;
+      n = I->State[state].N.data();
+      v = I->State[state].V.data();
       if(n && v)
         while(*n) {
           c = *(n++);
@@ -374,8 +342,8 @@ void ObjectMesh::invalidate(int rep, int level, int state)
     for(StateIterator iter(I->G, NULL, state, I->NState); iter.next();) {
       ObjectMeshState *ms = I->State + iter.state;
 
-      CGOFree(ms->shaderCGO);
-      CGOFree(ms->shaderUnitCellCGO);
+      ms->shaderCGO.reset();
+      ms->shaderUnitCellCGO.reset();
 
       ms->RefreshFlag = true;
       if(level >= cRepInvAll) {
@@ -449,7 +417,7 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
   ms->OneColor = cur_color;
   if(ms->V) {
     int ramped_flag = false;
-    float *v = ms->V;
+    float *v = ms->V.data();
     float *vc;
     int *rc;
     int a;
@@ -457,20 +425,20 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
     int n_vert = VLAGetSize(ms->V) / 3;
     int base_n_vert = ms->base_n_V / 3;
 
-    if(ms->VC && (ms->VCsize < n_vert)) {
-      FreeP(ms->VC);
-      FreeP(ms->RC);
+    if(!ms->VC.empty() && (ms->VCsize < n_vert)) {
+      ms->VC.clear();
+      ms->RC.clear();
     }
 
-    if(!ms->VC) {
+    if(ms->VC.empty()) {
       ms->VCsize = n_vert;
-      ms->VC = pymol::malloc<float>(n_vert * 3);
+      ms->VC = std::vector<float>(n_vert * 3);
     }
-    if(!ms->RC) {
-      ms->RC = pymol::malloc<int>(n_vert);
+    if(ms->RC.empty()) {
+      ms->RC = std::vector<int>(n_vert);
     }
-    rc = ms->RC;
-    vc = ms->VC;
+    rc = ms->RC.data();
+    vc = ms->VC.data();
     if(vc) {
       for(a = 0; a < n_vert; a++) {
         if(a == base_n_vert) {
@@ -498,12 +466,12 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
     }
 
     if(one_color_flag && (!ramped_flag)) {
-      FreeP(ms->VC);
-      FreeP(ms->RC);
+      ms->VC.clear();
+      ms->RC.clear();
     } else if((!ramped_flag)
               ||
               (!SettingGet_b(I->G, NULL, I->Setting, cSetting_ray_color_ramps))) {
-      FreeP(ms->RC);
+      ms->RC.clear();
     }
   }
 }
@@ -521,8 +489,6 @@ void ObjectMesh::update()
   float *v;
   float carve_buffer;
   int avoid_flag = false;
-  int *old_n;
-  float *old_v;
   int n_cur;
   int n_seg;
   int n_line;
@@ -554,14 +520,13 @@ void ObjectMesh::update()
           }
 
           if((I->visRep & cRepCellBit)) {
-            CGOFree(ms->UnitCellCGO);
-            ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
+            ms->UnitCellCGO.reset(CrystalGetUnitCellCGO(&ms->Crystal));
           }
 
           if(!oms->State.Matrix.empty()) {
-            ObjectStateSetMatrix(&ms->State, oms->State.Matrix.data());
-          } else if(!ms->State.Matrix.empty()) {
-            ObjectStateResetMatrix(&ms->State);
+            ObjectStateSetMatrix(ms, oms->State.Matrix.data());
+          } else if(!ms->Matrix.empty()) {
+            ObjectStateResetMatrix(ms);
           }
           ms->RefreshFlag = false;
         }
@@ -577,7 +542,7 @@ void ObjectMesh::update()
               " ObjectMesh: updating \"%s\".\n", I->Name ENDFB(G);
           }
           if(ms->Field) {
-            field = ms->Field;
+            field = ms->Field.get();
           } else if(oms->Field) {
             field = oms->Field;
           }
@@ -586,7 +551,7 @@ void ObjectMesh::update()
             {
               float *min_ext, *max_ext;
               float tmp_min[3], tmp_max[3];
-              if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix.data(),
+              if(MatrixInvTransformExtentsR44d3f(ms->Matrix.data(),
                                                  ms->ExtentMin, ms->ExtentMax,
                                                  tmp_min, tmp_max)) {
                 min_ext = tmp_min;
@@ -609,7 +574,7 @@ void ObjectMesh::update()
             IsosurfVolume(I->G, I->Setting, NULL,
                           field,
                           ms->Level,
-                          &ms->N, &ms->V,
+                          ms->N, ms->V,
                           ms->Range, ms->MeshMode, mesh_skip, ms->AltLevel);
 
             if(!SettingGet_b
@@ -618,13 +583,13 @@ void ObjectMesh::update()
             } else if(ms->MeshMode != 3) {
               /* do we want the negative surface too? */
 
-              int *N2 = VLAlloc(int, 10000);
-              float *V2 = VLAlloc(float, 10000);
+              pymol::vla<int> N2(10000);
+              pymol::vla<float> V2(10000);
 
               IsosurfVolume(I->G, I->Setting, NULL,
                             field,
                             -ms->Level,
-                            &N2, &V2, ms->Range, ms->MeshMode, mesh_skip, ms->AltLevel);
+                            N2, V2, ms->Range, ms->MeshMode, mesh_skip, ms->AltLevel);
 
               if(N2 && V2) {
 
@@ -642,12 +607,12 @@ void ObjectMesh::update()
 
                 /* copy vertex data */
 
-                memcpy(((char *) ms->V) + (sizeof(float) * base_n_V),
+                memcpy(((char *) ms->V.data()) + (sizeof(float) * base_n_V),
                        V2, sizeof(float) * addl_n_V);
 
                 /* copy strip counts */
 
-                memcpy(((char *) ms->N) + (sizeof(int) * (base_n_N - 1)),
+                memcpy(((char *) ms->N.data()) + (sizeof(int) * (base_n_N - 1)),
                        N2, sizeof(int) * addl_n_N);
                 ms->N[base_n_N + addl_n_N - 1] = 0;
 
@@ -657,13 +622,13 @@ void ObjectMesh::update()
 
             }
 
-            if(!ms->State.Matrix.empty() && VLAGetSize(ms->N) && VLAGetSize(ms->V)) {
+            if(!ms->Matrix.empty() && VLAGetSize(ms->N) && VLAGetSize(ms->V)) {
               int count;
               /* take map coordinates back to view coordinates if necessary */
-              v = ms->V;
+              v = ms->V.data();
               count = VLAGetSize(ms->V) / 3;
               while(count--) {
-                transform44d3f(ms->State.Matrix.data(), v, v);
+                transform44d3f(ms->Matrix.data(), v, v);
                 v += 3;
               }
             }
@@ -684,13 +649,13 @@ void ObjectMesh::update()
 
               MapSetupExpress(voxelmap);
 
-              old_n = ms->N;
-              old_v = ms->V;
-              ms->N = VLAlloc(int, VLAGetSize(old_n));
-              ms->V = VLAlloc(float, VLAGetSize(old_v));
+              pymol::vla<int> old_n = std::move(ms->N);
+              pymol::vla<float> old_v = std::move(ms->V);
+              ms->N = pymol::vla<int>(old_n.size());
+              ms->V = pymol::vla<float>(old_v.size());
 
-              n = old_n;
-              v = old_v;
+              n = old_n.data();
+              v = old_v.data();
               n_cur = 0;
               n_seg = 0;
               n_line = 0;
@@ -743,8 +708,6 @@ void ObjectMesh::update()
               }
               VLACheck(ms->N, int, n_seg);
               ms->N[n_seg] = 0;
-              VLAFreeP(old_n);
-              VLAFreeP(old_v);
               MapFree(voxelmap);
             }
           }
@@ -755,8 +718,8 @@ void ObjectMesh::update()
         }
       }
 
-      CGOFree(ms->shaderCGO);
-      CGOFree(ms->shaderUnitCellCGO);
+      ms->shaderCGO.reset();
+      ms->shaderUnitCellCGO.reset();
     }
     SceneInvalidate(I->G);
   }
@@ -786,7 +749,7 @@ static short ObjectMeshStateRenderShader(ObjectMeshState *ms, ObjectMesh *I,
 		     SceneGetTwoSidedLighting(G));
   }
 
-  CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
+  CGORenderGL(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
 
   if (shaderPrg) {
     shaderPrg->Disable();
@@ -795,7 +758,7 @@ static short ObjectMeshStateRenderShader(ObjectMeshState *ms, ObjectMesh *I,
   if (ms->shaderUnitCellCGO){
     shaderPrg = G->ShaderMgr->Enable_DefaultShader(info->pass);
     shaderPrg->SetLightingEnabled(0);
-    CGORenderGL(ms->shaderUnitCellCGO, NULL, NULL, NULL, info, NULL);
+    CGORenderGL(ms->shaderUnitCellCGO.get(), NULL, NULL, NULL, info, NULL);
     shaderPrg->Disable();
   }
 
@@ -838,14 +801,14 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
       continue;
 
     {
-        v = ms->V;
-        n = ms->N;
+        v = ms->V.data();
+        n = ms->N.data();
         if(ok && ray) {
           if(ms->UnitCellCGO && (I->visRep & cRepCellBit)){
-            ok &= CGORenderRay(ms->UnitCellCGO, ray, info, ColorGet(I->G, I->Color),
+            ok &= CGORenderRay(ms->UnitCellCGO.get(), ray, info, ColorGet(I->G, I->Color),
 			       NULL, I->Setting, NULL);
 	    if (!ok){
-	      CGOFree(ms->UnitCellCGO);
+	      ms->UnitCellCGO.reset();
 	      break;
 	    }
 	  }
@@ -868,8 +831,8 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
             float cc[3];
             float colA[3], colB[3];
             ColorGetEncoded(G, ms->OneColor, cc);
-            vc = ms->VC;
-            rc = ms->RC;
+            vc = ms->VC.data();
+            rc = ms->RC.data();
             if(ms->MeshMode == 1) {
               ray->color3fv(cc);
               while(ok && *n) {
@@ -931,8 +894,8 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && ms->MeshMode != 1;
 
 	      if (ms->shaderCGO && (!use_shader || (mesh_as_cylinders ^ ms->shaderCGO->has_draw_cylinder_buffers))){
-		CGOFree(ms->shaderCGO);
-		CGOFree(ms->shaderUnitCellCGO);
+            ms->shaderCGO.reset();
+            ms->shaderUnitCellCGO.reset();
 	      }
 
 	      if (ms->shaderCGO && !returnCGO) {
@@ -952,12 +915,12 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      if(ms->UnitCellCGO && (I->visRep & cRepCellBit)) {
 		const float *color = ColorGet(I->G, I->Color);
 		if (!use_shader) {
-		  CGORenderGL(ms->UnitCellCGO, color, I->Setting, NULL, info, NULL);
+		  CGORenderGL(ms->UnitCellCGO.get(), color, I->Setting, NULL, info, NULL);
 		} else if(!ms->shaderUnitCellCGO) {
 		  CGO *newUnitCellCGO = CGONewSized(G, 0);
 		  CGOColorv(newUnitCellCGO, color);
-		  CGOAppend(newUnitCellCGO, ms->UnitCellCGO);
-		  ms->shaderUnitCellCGO = CGOOptimizeToVBONotIndexedNoShader(newUnitCellCGO, 0);
+		  CGOAppend(newUnitCellCGO, ms->UnitCellCGO.get());
+		  ms->shaderUnitCellCGO.reset(CGOOptimizeToVBONotIndexedNoShader(newUnitCellCGO, 0));
 		  CGOFree(newUnitCellCGO);
 		  ms->shaderUnitCellCGO->use_shader = true;
 		}
@@ -979,7 +942,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      }
 	      if(n && v && (I->visRep & cRepMeshBit)) {
 		if(use_shader) {
-		  vc = ms->VC;
+		  vc = ms->VC.data();
 
 		  if(!vc)
 		    ok &= CGOColorv(shaderCGO, ColorGet(I->G, ms->OneColor));
@@ -1048,7 +1011,8 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		    }
 		  }
 		} else {
-		  vc = ms->VC;
+#ifndef PURE_OPENGL_ES_2
+		  vc = ms->VC.data();
 
 		  if(!vc)
 		    glColor3fv(ColorGet(I->G, ms->OneColor));
@@ -1074,6 +1038,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		    }
 		    glEnd();
 		  }
+#endif
 		}
 	      }
 	      if(info && !info->line_lighting){
@@ -1097,14 +1062,14 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  if (returnCGO){
 		    return (shaderCGO);
 		  } else {
-		    ms->shaderCGO = shaderCGO;
+		    ms->shaderCGO.reset(shaderCGO);
 		  }
 		  if (ok){
 		    if (mesh_as_cylinders){
                       CGO *tmpCGO = CGONew(G);
                       ok &= CGOEnable(tmpCGO, GL_CYLINDER_SHADER);
                       if (ok) ok &= CGOSpecial(tmpCGO, MESH_WIDTH_FOR_SURFACES);
-                      convertcgo = CGOConvertShaderCylindersToCylinderShader(ms->shaderCGO,  tmpCGO);
+                      convertcgo = CGOConvertShaderCylindersToCylinderShader(ms->shaderCGO.get(), tmpCGO);
                       if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
                       if (ok) ok &= CGODisable(tmpCGO, GL_CYLINDER_SHADER);
                       if (ok) ok &= CGOStop(tmpCGO);
@@ -1112,13 +1077,12 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
                       convertcgo = tmpCGO;
                       convertcgo->use_shader = convertcgo->has_draw_cylinder_buffers = true;
 		    } else {
-		      convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(ms->shaderCGO, 0, false, NULL);
+		      convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(ms->shaderCGO.get(), 0, false, NULL);
 		    }
 		    CHECKOK(ok, convertcgo);
 		  }
 		  if (convertcgo){
-		    CGOFree(ms->shaderCGO);
-		    ms->shaderCGO = convertcgo;
+		    ms->shaderCGO.reset(convertcgo);
 		  }
 		}
 		
@@ -1152,37 +1116,18 @@ int ObjectMesh::getNFrame() const
 ObjectMesh::ObjectMesh(PyMOLGlobals * G) : CObject(G)
 {
   auto I = this;
-  I->State = VLACalloc(ObjectMeshState, 10);   /* autozero important */
+  I->State = pymol::vla<ObjectMeshState>(10);   /* autozero important */
   I->type = cObjectMesh;
 }
 
 
 /*========================================================================*/
-void ObjectMeshStateInit(PyMOLGlobals * G, ObjectMeshState * ms)
+ObjectMeshState::ObjectMeshState(PyMOLGlobals* G)
+    : CObjectState(G)
+    , Crystal(G)
 {
-  if(ms->Active)
-    ObjectMeshStatePurge(ms);
-  ObjectStateInit(G, &ms->State);
-  if(!ms->V) {
-    ms->V = VLAlloc(float, 10000);
-  }
-  if(!ms->N) {
-    ms->N = VLAlloc(int, 10000);
-  }
-  ms->N[0] = 0;
-  ms->Active = true;
-  ms->ResurfaceFlag = true;
-  ms->RecolorFlag = false;
-  ms->ExtentFlag = false;
-  ms->CarveFlag = false;
-  ms->quiet = true;
-  ms->CarveBuffer = 0.0;
-  ms->AtomVertex = NULL;
-  ms->UnitCellCGO = NULL;
-  ms->caption[0] = 0;
-  ms->Field = NULL;
-  ms->shaderCGO = NULL;
-  ms->shaderUnitCellCGO = NULL;
+  V = pymol::vla<float>(10000);
+  N = pymol::vla<int>(10000);
 }
 
 
@@ -1221,7 +1166,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
 
   if (ok){
     ms = I->State + state;
-    ObjectMeshStateInit(G, ms);
+    *ms = ObjectMeshState(G);
   }
 
   if (ok){
@@ -1247,15 +1192,15 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
     copy3f(mx, ms->ExtentMax);
 
     if(!oms->State.Matrix.empty()) {
-      ok &= ObjectStateSetMatrix(&ms->State, oms->State.Matrix.data());
-    } else if(!ms->State.Matrix.empty()) {
-      ObjectStateResetMatrix(&ms->State);
+      ok &= ObjectStateSetMatrix(ms, oms->State.Matrix.data());
+    } else if(!ms->Matrix.empty()) {
+      ObjectStateResetMatrix(ms);
     }
 
     if (ok) {
       float *min_ext, *max_ext;
       float tmp_min[3], tmp_max[3];
-      if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix.data(),
+      if(MatrixInvTransformExtentsR44d3f(ms->Matrix.data(),
                                          ms->ExtentMin, ms->ExtentMax,
                                          tmp_min, tmp_max)) {
         min_ext = tmp_min;
@@ -1278,10 +1223,10 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
           fdim[0] = eff_range[3] - eff_range[0];
           fdim[1] = eff_range[4] - eff_range[1];
           fdim[2] = eff_range[5] - eff_range[2];
-          ms->Field = IsosurfFieldAlloc(I->G, fdim);
+          ms->Field = pymol::make_copyable<Isofield>(I->G, fdim);
 
           expand_result =
-            IsosurfExpand(oms->Field, ms->Field, &oms->Symmetry->Crystal, sym, eff_range);
+            IsosurfExpand(oms->Field, ms->Field.get(), &oms->Symmetry->Crystal, sym, eff_range);
 
           if(expand_result == 0) {
             ok = false;
@@ -1321,7 +1266,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
     if(carve != 0.0) {
       ms->CarveFlag = true;
       ms->CarveBuffer = carve;
-      ms->AtomVertex = vert_vla;
+      ms->AtomVertex = pymol::vla_take_ownership(vert_vla);
     }
     if(I) {
       ObjectMeshRecomputeExtent(I);

@@ -6023,8 +6023,8 @@ int SelectorMapCoulomb(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
   if(n_point) {
     int *min = oMap->Min;
     int *max = oMap->Max;
-    CField *data = oMap->Field->data;
-    CField *points = oMap->Field->points;
+    CField *data = oMap->Field->data.get();
+    CField *points = oMap->Field->points.get();
     float dist;
 
     if(cutoff > 0.0F) {         /* we are using a cutoff */

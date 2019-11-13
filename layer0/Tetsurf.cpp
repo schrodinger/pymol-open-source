@@ -563,9 +563,9 @@ int TetsurfVolume(PyMOLGlobals * G, Isofield * field, float level, int **num,
        }
      */
 
-    I->Coord = field->points;
-    I->Grad = field->gradients;
-    I->Data = field->data;
+    I->Coord = field->points.get();
+    I->Grad = field->gradients.get();
+    I->Data = field->data.get();
     I->Level = level;
     if(ok)
       ok = TetsurfAlloc(I);

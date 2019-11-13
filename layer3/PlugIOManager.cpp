@@ -489,7 +489,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
             }
 
             // field
-            ms->Field = IsosurfFieldAlloc(G, ms->FDim);
+            ms->Field = new Isofield(G, ms->FDim);
             ms->MapSource = cMapSourceVMDPlugin;
             ms->Field->save_points = false;     /* save points in RAM only, not session file */
             ms->Active = true;

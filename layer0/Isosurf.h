@@ -26,13 +26,15 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 #include"Setting.h"
 
-typedef struct {
-  int dimensions[3];
-  int save_points;
-  CField *points;
-  CField *data;
-  CField *gradients;
-} Isofield;
+struct Isofield {
+  int dimensions[3]{};
+  int save_points = true;
+  pymol::copyable_ptr<CField> points;
+  pymol::copyable_ptr<CField> data;
+  pymol::cache_ptr<CField> gradients;
+  Isofield() = default;
+  Isofield(PyMOLGlobals * G, const int * const dims);
+};
 
 #define F3(field,P1,P2,P3) Ffloat3(field,P1,P2,P3)
 #define F3Ptr(field,P1,P2,P3) Ffloat3p(field,P1,P2,P3)
@@ -40,12 +42,9 @@ typedef struct {
 #define F4(field,P1,P2,P3,P4) Ffloat4(field,P1,P2,P3,P4)
 #define F4Ptr(field,P1,P2,P3,P4) Ffloat4p(field,P1,P2,P3,P4)
 
-Isofield *IsosurfFieldAlloc(PyMOLGlobals * G, int *dims);
-void IsosurfFieldFree(PyMOLGlobals * G, Isofield * field);
-
-int IsosurfVolume(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
-                  Isofield * field, float level, int **num,
-                  float **vert, int *range, int mode, int skip, float alt_level);
+int IsosurfVolume(PyMOLGlobals* G, CSetting* set1, CSetting* set2,
+    Isofield* field, float level, pymol::vla<int>& num, pymol::vla<float>& vert,
+    int* range, int mode, int skip, float alt_level);
 
 int IsosurfGetRange(PyMOLGlobals * G, Isofield * field, CCrystal * cryst,
                     float *mn, float *mx, int *range, int clamp);
@@ -61,7 +60,6 @@ void IsosurfFree(PyMOLGlobals * G);
 void IsofieldComputeGradients(PyMOLGlobals * G, Isofield * field);
 PyObject *IsosurfAsPyList(PyMOLGlobals *G, Isofield * I);
 Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list);
-Isofield *IsosurfNewCopy(PyMOLGlobals * G, const Isofield * src);
 
 void IsofieldGetCorners(PyMOLGlobals *, Isofield *, float *);
 
