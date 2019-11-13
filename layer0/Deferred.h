@@ -26,6 +26,7 @@ struct CDeferred {
   CDeferred *next { nullptr };
   void exec();
   CDeferred(PyMOLGlobals * G) : m_G(G){};
+  virtual ~CDeferred() = default;
 };
 
 typedef int DeferredFn(CDeferred * D);
