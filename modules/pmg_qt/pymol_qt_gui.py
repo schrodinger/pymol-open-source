@@ -800,6 +800,12 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
     def file_save_mov(self):
         self.file_save_mpeg('mov')
 
+    def file_save_stl(self):
+        self._file_save('STL File (*.stl)', 'stl')
+
+    def file_save_gltf(self):
+        self._file_save('GLTF File (*.gltf)', 'gltf')
+
     LOG_FORMATS = [
         'PyMOL Script (*.pml)',
         'Python Script (*.py *.pym)',
