@@ -5956,3 +5956,44 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
   return (I);
 #endif
 }
+
+void ObjectMapDump(ObjectMap* om, const char* fname, int state, int quiet)
+{
+  auto file = fopen(fname, "wb");
+  if (!file) {
+    ErrMessage(om->G, "ObjectMapDump", "can't open file for writing");
+  }
+  
+  ObjectMapState* oms = om->State + 0;
+  
+  int zd = oms->Field->dimensions[2];
+  int yd = oms->Field->dimensions[1];
+  int xd = oms->Field->dimensions[0];
+  
+  float zs = (oms->ExtentMax[2] - oms->ExtentMin[2]) / (oms->Field->dimensions[2]);
+  float ys = (oms->ExtentMax[1] - oms->ExtentMin[1]) / (oms->Field->dimensions[1]);
+  float xs = (oms->ExtentMax[0] - oms->ExtentMin[0]) / (oms->Field->dimensions[0]);
+  
+  int offset = 0;
+  for (int zi = 0; zi < oms->Field->dimensions[2]; zi++) {
+    for (int yi = 0; yi < oms->Field->dimensions[1]; yi++) {
+      for (int xi = 0; xi < oms->Field->dimensions[0]; xi++) {
+        
+        float z = oms->ExtentMin[2] + zs * zi;
+        float y = oms->ExtentMin[1] + ys * yi;
+        float x = oms->ExtentMin[0] + xs * xi;
+        
+        float* data = (float*) oms->Field->data->data;
+        float value = data[offset];
+        offset += 1;
+        
+        fprintf(file, "%10.4f%10.4f%10.4f%10.4f\n", x, y, z, value);
+      }
+    }
+  }
+  fclose(file);
+  if (!quiet) {
+    PRINTFB(om->G, FB_ObjectMap, FB_Actions)
+      " ObjectMapDump: %s written to %s\n", om->Name, fname ENDFB(om->G);
+  }
+}
