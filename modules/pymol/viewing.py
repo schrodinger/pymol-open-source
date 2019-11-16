@@ -841,7 +841,7 @@ ARGUMENTS
 
     key = string or *
 
-    action = store or recall: {default: recall}
+    action = store, recall, clear: {default: recall}
 
 NOTES
 
