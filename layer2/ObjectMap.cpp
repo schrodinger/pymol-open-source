@@ -3419,7 +3419,7 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
 
 
 /*========================================================================*/
-static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int state,
+  static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int state,
                                 int quiet)
 {
   char *p;
@@ -5964,30 +5964,29 @@ void ObjectMapDump(ObjectMap* om, const char* fname, int state, int quiet)
     ErrMessage(om->G, "ObjectMapDump", "can't open file for writing");
   }
   
-  ObjectMapState* oms = om->State + 0;
+  ObjectMapState* oms = &om->State[state];
   
-  int zd = oms->Field->dimensions[2];
-  int yd = oms->Field->dimensions[1];
   int xd = oms->Field->dimensions[0];
+  int yd = oms->Field->dimensions[1];
+  int zd = oms->Field->dimensions[2];
   
-  float zs = (oms->ExtentMax[2] - oms->ExtentMin[2]) / (oms->Field->dimensions[2]);
-  float ys = (oms->ExtentMax[1] - oms->ExtentMin[1]) / (oms->Field->dimensions[1]);
   float xs = (oms->ExtentMax[0] - oms->ExtentMin[0]) / (oms->Field->dimensions[0]);
+  float ys = (oms->ExtentMax[1] - oms->ExtentMin[1]) / (oms->Field->dimensions[1]);
+  float zs = (oms->ExtentMax[2] - oms->ExtentMin[2]) / (oms->Field->dimensions[2]);
   
   int offset = 0;
-  for (int zi = 0; zi < oms->Field->dimensions[2]; zi++) {
+  for (int xi = 0; xi < oms->Field->dimensions[0]; xi++) {
     for (int yi = 0; yi < oms->Field->dimensions[1]; yi++) {
-      for (int xi = 0; xi < oms->Field->dimensions[0]; xi++) {
-        
-        float z = oms->ExtentMin[2] + zs * zi;
-        float y = oms->ExtentMin[1] + ys * yi;
+      for (int zi = 0; zi < oms->Field->dimensions[2]; zi++) {
         float x = oms->ExtentMin[0] + xs * xi;
+        float y = oms->ExtentMin[1] + ys * yi;
+        float z = oms->ExtentMin[2] + zs * zi;
         
-        float* data = (float*) oms->Field->data->data;
-        float value = data[offset];
-        offset += 1;
+        float* field = (float*) oms->Field->data->data;
+        float value = value = field[offset];
         
         fprintf(file, "%10.4f%10.4f%10.4f%10.4f\n", x, y, z, value);
+        offset += 1;
       }
     }
   }
