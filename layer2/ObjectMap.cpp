@@ -3419,7 +3419,7 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
 
 
 /*========================================================================*/
-  static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int state,
+static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int state,
                                 int quiet)
 {
   char *p;
@@ -5982,10 +5982,24 @@ void ObjectMapDump(ObjectMap* om, const char* fname, int state, int quiet)
         float y = oms->ExtentMin[1] + ys * yi;
         float z = oms->ExtentMin[2] + zs * zi;
         
-        float* field = (float*) oms->Field->data->data;
-        float value = value = field[offset];
+        CField* field = oms->Field->data;
         
-        fprintf(file, "%10.4f%10.4f%10.4f%10.4f\n", x, y, z, value);
+        switch (field->type) {
+          case cFieldFloat: {
+            float value = ((float*)field->data)[offset];
+            fprintf(file, "%10.4f%10.4f%10.4f%10.4f\n", x, y, z, value);
+            break;
+          }
+          case cFieldInt: {
+            int value = ((int*)field->data)[offset];
+            fprintf(file, "%10.4f%10.4f%10.4f%10d\n", x, y, z, value);
+            break;
+          }
+          default:
+            ErrMessage(om->G, "ObjectMapDump", "unknown field type");
+        }
+        
+        
         offset += 1;
       }
     }
