@@ -44,6 +44,7 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"File.h"
 #include"Executive.h"
+#include"Field.h"
 
 #define n_space_group_numbers 231
 static const char * space_group_numbers[] = {
@@ -5986,19 +5987,18 @@ void ObjectMapDump(ObjectMap* om, const char* fname, int state, int quiet)
         
         switch (field->type) {
           case cFieldFloat: {
-            float value = ((float*)field->data)[offset];
+            float value = Ffloat3(field, xi, yi, zi);
             fprintf(file, "%10.4f%10.4f%10.4f%10.4f\n", x, y, z, value);
             break;
           }
           case cFieldInt: {
-            int value = ((int*)field->data)[offset];
+            int value = Fint3(field, xi, yi, zi);
             fprintf(file, "%10.4f%10.4f%10.4f%10d\n", x, y, z, value);
             break;
           }
           default:
             ErrMessage(om->G, "ObjectMapDump", "unknown field type");
         }
-        
         
         offset += 1;
       }
