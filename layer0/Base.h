@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 
 #include "os_limits.h"
 #include "os_types.h"
+#include "Picking.h"
 #include <vector>
 
 #ifndef PI
@@ -40,27 +41,6 @@ typedef unsigned int uint;
 #define R_SMALL8 0.00000001F
 #endif
 
-typedef struct {
-  unsigned int index;           /* atom index.
-                                   NOTE: that first record contains the list count...not pick info */
-  int bond;                     /* bond index, 
-                                   >=0 for bond
-                                   -1 for atom
-                                   -2 for label
-                                   -3 for gadget
-                                   bond - first index in pickVLA defines what pick
-                                   0 - first pass
-                                   1 - second pass
-                                   2 - first pass, reload VBOs with pick colors
-                                   3 - second pass, reload VBOs with pick colors */
-} Pickable;
-
-#define cPickableAtom -1
-#define cPickableLabel -2
-#define cPickableGadget -3
-#define cPickableNoPick -4
-
-
 #define cPuttyTransformNormalizedNonlinear 0
 #define cPuttyTransformRelativeNonlinear   1
 #define cPuttyTransformScaledNonlinear     2
@@ -72,23 +52,6 @@ typedef struct {
 #define cPuttyTransformAbsoluteLinear      7
 
 #define cPuttyTransformImpliedRMS          8
-
-typedef struct {
-  void *object;
-  int state;
-  /*  int instance; *//* to come... */
-} PickContext;
-
-typedef struct {
-  Pickable src;
-  PickContext context;
-} Picking;
-
-typedef struct {
-  int mode;
-  int x, y, w, h;
-  Picking *picked;
-} Multipick;
 
 typedef struct LabPosType {
   int mode;
@@ -119,7 +82,7 @@ struct RenderInfo {
   int state;
   CRay *ray;
   CGO *alpha_cgo;
-  std::vector<Picking>* pick = nullptr;
+  PickColorManager* pick = nullptr;
   int pass;
   int width_scale_flag;
   float front, back, stereo_front;
@@ -134,9 +97,6 @@ struct RenderInfo {
   float dynamic_width_factor, dynamic_width_min, dynamic_width_max;
   int texture_font_size;
   int use_shaders;
-  bool picking_32bit;
-  void (*setUCColorFromIndex)(uchar *color, unsigned int idx);
-  void (*setUCColorToZero)(uchar *color);
 };
 
 #define MAXLINELEN 1024

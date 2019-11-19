@@ -189,7 +189,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   CGOStop(I->primitiveCGO);
   I->primitiveCGO->sphere_quality = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_nb_spheres_quality);
   if (ok){
-    I->R.context.object = (void *) obj;
+    I->R.context.object = obj;
     I->R.context.state = state;
   }
   FreeP(active);

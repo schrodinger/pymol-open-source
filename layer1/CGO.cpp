@@ -42,6 +42,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"ObjectGadgetRamp.h"
 #include"Triangle.h"
+#include "Picking.h"
 
 #if defined(_PYMOL_IOS) && !defined(_WEBGL)
 #define ALIGN_VBOS_TO_4_BYTE_ARRAYS
@@ -75,6 +76,7 @@ Z* -------------------------------------------------------------------
     (data)[0] / 255.f, (data)[1] / 255.f, (data)[2] / 255.f, (data)[3] / 255.f);
 #endif
 
+#include <cassert>
 #include <iostream>
 #include <algorithm>
 
@@ -113,49 +115,41 @@ struct _CCGORenderer {
   float alpha;
   short sphere_quality;
   bool isPicking;
-  bool pick_mode; // bit 1 of (*pick)[0].src.bond 0 - first pass, 1 - second pass
+  unsigned pick_pass() const { return info->pick->m_pass; }
   bool use_shader; // OpenGL 1.4+, e.g., glEnableVertexAttribArray() (on) vs. glEnableClientState() (off)
   bool debug;
-  bool picking_32bit;
   CSetting *set1, *set2;
 };
 
 static
 void set_current_pick_color(
     CGO * cgo,
-    Picking * p,
-    const PickContext * context,
     unsigned int idx,
     int bnd)
 {
-  p->context = (*context);
-  p->src.index = idx;
-  p->src.bond = bnd; // actually holds state information
   if (cgo) {
     cgo->current_pick_color_index = idx;
     cgo->current_pick_color_bond = bnd;
   }
 }
 
-bool AssignNewPickColor(CGO *cgo, unsigned int &i, std::vector<Picking>* pick, PickContext * context, unsigned char *color, unsigned int index, int bond){
-  i++;
-  if(!(pick->begin()->src.bond & 1)) {
-    /* pass 1 - low order bits */
-    color[0] = (uchar)((i & 0xF) << 4);
-    color[1] = (uchar)((i & 0xF0) | 0x8);
-    color[2] = (uchar)((i & 0xF00) >> 4);
-    if (pick->size() <= i) {
-      pick->resize((i + 1) * 3 / 2); // grow by 50%
-    }
-    set_current_pick_color(cgo, pick->data() + i, context, index, bond);
-  } else {
-    int j = i >> 12;
-    color[0] = (uchar)((j & 0xF) << 4);
-    color[1] = (uchar)((j & 0xF0) | 0x8);
-    color[2] = (uchar)((j & 0xF00) >> 4);
-  }
-  color[3] = 255;
-  return true;
+/**
+ * Assign a new pick color index for {context, index, bond} (only in the
+ * first pass) and convert that to an RGBA color for the current picking pass.
+ *
+ * @param[out] cgo Set the "current pick color" in this CGO
+ * @param[in,out] pickmgr Pick color manager
+ * @param[out] color RGBA pick color to use in this pass
+ * @param[in] context Object state identifier
+ * @param[in] index Primary index
+ * @param[in] bond Secondary index
+ */
+void AssignNewPickColor(CGO* cgo, PickColorManager* pickmgr,
+    unsigned char* color, const PickContext* context, unsigned int index,
+    int bond)
+{
+  set_current_pick_color(cgo, index, bond);
+  pickmgr->colorNext(color, context, index, bond);
 }
 
 static
@@ -865,13 +859,6 @@ int CGOConev(CGO * I,
   return true;
 }
 
-void SetCGOPickColor(float *begPickColorVals, int nverts, int pl, unsigned int index, int bond){
-  float *colorVals = begPickColorVals + nverts;
-  int pld = pl / 3;
-  /* Picking Color stores atom/bond info in the second 2/3rds of the array */
-  CGO_put_uint(colorVals + (pld*2), index);
-  CGO_put_int(colorVals + (pld*2) + 1, bond);
-}
 int CGOPickColor(CGO * I, unsigned int index, int bond)
 {
   // check if uchar is -1 since extrude does this for masked atoms
@@ -5930,8 +5917,7 @@ static void CGO_gl_splitline(CCGORenderer * I, float **v){
         glVertex3fv(splitline->vertex1);
         glVertex3fv(h);
         unsigned char col[4];
-        auto pick = I->info->pick;
-        AssignNewPickColor(NULL, (*pick)[0].src.index, pick, &I->rep->context, col,
+        AssignNewPickColor(nullptr, I->info->pick, col, &I->rep->context,
                            splitline->index, splitline->bond);
         glColor4ubv(col);
         glVertex3fv(h);
@@ -6140,13 +6126,7 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer * I, float **pc){
     if (I->use_shader){
       if (sp->pickvboid){
         VertexBuffer * pickvbo = I->G->ShaderMgr->getGPUBuffer<VertexBuffer>(sp->pickvboid);
-        if (I->pick_mode){
-          // second pass
-          pickvbo->bind(shaderPrg->id, 1);
-        } else {
-          // first pass
-          pickvbo->bind(shaderPrg->id, 0);
-        }
+        pickvbo->bind(shaderPrg->id, I->pick_pass());
       } else {
         glEnableVertexAttribArray(attr_a_Color);
         glVertexAttribPointer(attr_a_Color, VERTEX_COLOR_SIZE, GL_UNSIGNED_BYTE, GL_TRUE, 0, sp->floatdata);
@@ -6215,13 +6195,7 @@ static void CGO_gl_draw_buffers_not_indexed(CCGORenderer * I, float **pc){
     if (I->use_shader){
       if (sp->pickvboid){
         VertexBuffer * pickvbo = I->G->ShaderMgr->getGPUBuffer<VertexBuffer>(sp->pickvboid);
-        if (I->pick_mode){
-          // second pass
-          pickvbo->bind(shaderPrg->id, 1);
-        } else {
-          // first pass
-          pickvbo->bind(shaderPrg->id, 0);
-        }
+        pickvbo->bind(shaderPrg->id, I->pick_pass());
       } else {
         glEnableVertexAttribArray(attr_a_Color);
         glVertexAttribPointer(attr_a_Color, VERTEX_COLOR_SIZE, GL_UNSIGNED_BYTE, GL_TRUE, 0, sp->floatdata);
@@ -6269,13 +6243,7 @@ static void CGO_gl_bind_vbo_for_picking(CCGORenderer * I, float **pc){
     VertexBuffer * vbo = I->G->ShaderMgr->getGPUBuffer<VertexBuffer>(sp->vboid);
     if (!vbo)
       return;
-    if (I->pick_mode){
-        // second pass
-        vbo->bind(shaderPrg->id, sp->which_attr_idx + sp->npickattrs);
-    } else {
-        // first pass
-        vbo->bind(shaderPrg->id, sp->which_attr_idx);
-    }
+    vbo->bind(shaderPrg->id, sp->which_attr_idx + sp->npickattrs * I->pick_pass());
   }
 }
 
@@ -6334,15 +6302,12 @@ static void CGO_gl_draw_sphere_buffers(CCGORenderer * I, float **pc) {
     pickable = SettingGet_i(I->G, I->set1, I->set2, cSetting_pickable);
     shaderPrg->Set1i("lighting_enabled", 0);
     if (pickable){
-      if (I->pick_mode){
-        // second pass
-        pickvbo->bind(shaderPrg->id, 1);
-      } else {
-        // first pass
-        pickvbo->bind(shaderPrg->id, 0);
-      }
+      pickvbo->bind(shaderPrg->id, I->pick_pass());
     } else {
-      glVertexAttrib4f(attr_color, 0.f, 0.f, 0.f, 1.f);
+      assert(I->info->pick);
+      unsigned char nopick[4] = {};
+      I->info->pick->colorNoPick(nopick);
+      glVertexAttrib4ubv(attr_color, nopick);
     }
   }
 
@@ -6378,20 +6343,17 @@ static void CGO_gl_draw_cylinder_buffers(CCGORenderer * I, float **pc) {
   if (I->isPicking){
     vbo->maskAttributes({ attr_colors, attr_colors2 });
     if (pickable){
-      if (I->pick_mode){
-        // first color (offset 0), second pass (2nd half of vbo)
-        pickvbo->bind( shaderPrg->id, 1 );
-        // second color (offset 4), second pass (2nd half of vbo)
-        pickvbo->bind( shaderPrg->id, 3 );
-      } else {
-        // first color (offset 0), first pass (1st half of vbo)
-        pickvbo->bind( shaderPrg->id, 0 );
-        // second color (offset 4), first pass (1st half of vbo)
-        pickvbo->bind( shaderPrg->id, 2 );
-      }
+      // in first pass: 1st half of vbo, in second pass: 2nd half of vbo
+      // first color (offset 0)
+      pickvbo->bind(shaderPrg->id, I->pick_pass());
+      // second color (offset 4)
+      pickvbo->bind(shaderPrg->id, I->pick_pass() + SHADER_PICKING_PASSES_MAX);
     } else {
-      glVertexAttrib4f(attr_colors, 0.f, 0.f, 0.f, I->picking_32bit ? 0.f : 1.f);
-      glVertexAttrib4f(attr_colors2, 0.f, 0.f, 0.f, I->picking_32bit ? 0.f : 1.f);
+      assert(I->info->pick);
+      unsigned char nopick[4] = {};
+      I->info->pick->colorNoPick(nopick);
+      glVertexAttrib4ubv(attr_colors, nopick);
+      glVertexAttrib4ubv(attr_colors2, nopick);
     }
   }
 
@@ -6447,17 +6409,8 @@ static void CGO_gl_draw_labels(CCGORenderer * I, float **pc) {
   VertexBuffer * vbo     = I->G->ShaderMgr->getGPUBuffer<VertexBuffer>(sp->vboid);
   VertexBuffer * pickvbo = I->G->ShaderMgr->getGPUBuffer<VertexBuffer>(sp->pickvboid);
 
-  int attr_pickcolor = shaderPrg->GetAttribLocation("attr_pickcolor");
-
   if (I->isPicking){
-    if (I->pick_mode){
-      // second pass
-      pickvbo->bind(shaderPrg->id, 1);
-    } else {
-      pickvbo->bind(shaderPrg->id, 0);
-    }
-  } else {
-    glVertexAttrib4f(attr_pickcolor, 0.f, 0.f, 0.f, 0.f);
+    pickvbo->bind(shaderPrg->id, I->pick_pass());
   }
 
   if (!vbo)
@@ -7428,34 +7381,6 @@ CGO_op_fn CGO_gl[] = {
   CGO_gl_error
 };
 
-void SetUCColorFromIndex_32bit(uchar *color, unsigned int idx){
-  color[0] = (idx & 0xFF);
-  color[1] = (idx & 0xFF00) >> 8;
-  color[2] = ((idx & 0xFF0000) >> 16);
-  color[3] = ((idx & 0xFF000000) >> 24);
-}
-
-void SetUCColorFromIndex_16bit(uchar *color, unsigned int idx){
-  color[0] = ((idx & 0xF) << 4);// | 0x8;
-  color[1] = ((idx & 0xF0) | 0x8);
-  color[2] = ((idx & 0xF00) >> 4);// | 0x8;
-  color[3] = 255;
-}
-
-void SetUCColorToZero_32bit(uchar *color){
-  color[0] = 0;
-  color[1] = 0;
-  color[2] = 0;
-  color[3] = 0;
-}
-
-void SetUCColorToZero_16bit(uchar *color){
-  color[0] = 0;
-  color[1] = 0;
-  color[2] = 0;
-  color[3] = 255;
-}
-
 #if 0
 static
 void SetUCColorToPrev(uchar *color){
@@ -7511,23 +7436,17 @@ void CGORenderGLPicking(CGO * I, RenderInfo *info, PickContext * context, CSetti
 
   int op;
   CCGORenderer *R = G->CGORenderer;
-  unsigned int i, j;
   bool pickable = (!I->no_pick) &&
     SettingGet_b(G, set1, set2, cSetting_pickable);
   auto pick = info->pick;
-  bool use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
-  bool reset_colors = !use_shaders || (pick->begin()->src.bond & 2);
+  bool reset_colors = !pick->pickColorsValid();
 
   R->use_shader = I->use_shader;
   R->isPicking = true;
-  R->picking_32bit = info->picking_32bit;
-  R->pick_mode = pick->begin()->src.bond & 1;
   R->set1 = set1;
   R->set2 = set2;
   R->info = info;
   R->rep = rep;
-
-  i = pick->begin()->src.index;
 
 #ifndef _WEBGL
       glLineWidth(SettingGet_f(G, set1, set2, cSetting_cgo_line_width));
@@ -7545,14 +7464,17 @@ void CGORenderGLPicking(CGO * I, RenderInfo *info, PickContext * context, CSetti
 
         if (reset_colors){ // only if picking info is invalid
           unsigned char col[4];
-          AssignNewPickColor(I, i, pick, context, col, CGO_get_uint(pc), 
+          AssignNewPickColor(I, pick, col, context, CGO_get_uint(pc),
               pickable ? CGO_get_int(pc + 1) : cPickableNoPick);
-          pick->begin()->src.index = i;
 #ifndef PURE_OPENGL_ES_2
           if (!I->use_shader){
             glColor4ubv(col);
           }
 #endif
+        } else {
+          PRINTFB(G, FB_CGO, FB_Warnings)
+          " %s: unexpected CGO_PICK_COLOR with !reset_colors\n",
+              __func__ ENDFB(G);
         }
         continue;
 
@@ -7573,26 +7495,9 @@ void CGORenderGLPicking(CGO * I, RenderInfo *info, PickContext * context, CSetti
 
             for (v=0;v<nverts; v++) {
               bnd = pickable ? pickColorVals[v * 2 + 1] : cPickableNoPick;
-
-              if (bnd == cPickableNoPick){
-                info->setUCColorToZero(pickColorValsUC + (v * 4));
-                continue;
-              }
-
-              i++;
-
-              if(!R->pick_mode) {
-                idx = pickColorVals[v * 2];
-                if (pick->size() <= i) {
-                  pick->resize((i + 1) * 3 / 2); // grow by 50%
-                }
-                set_current_pick_color(I, pick->data() + i, context, idx, bnd);
-                j = i;
-              } else {
-                j = i >> 12;
-              }
-
-              info->setUCColorFromIndex(pickColorValsUC + (v * 4), j);
+              idx = pickColorVals[v * 2];
+              AssignNewPickColor(
+                  I, pick, pickColorValsUC + (v * 4), context, idx, bnd);
             }
           }
         }
@@ -7611,13 +7516,15 @@ void CGORenderGLPicking(CGO * I, RenderInfo *info, PickContext * context, CSetti
           if (!pickcolors_are_set_ptr)
             pickcolors_are_set_ptr = &pickcolors_are_set;
 
+          // TODO remove `pickcolorsset` fields from CGOs
+          assert(reset_colors || *pickcolors_are_set_ptr);
+
           if (reset_colors || !*pickcolors_are_set_ptr){ // only if picking info is invalid
             int nverts = 0;
             int nvertsperfrag = 1;
             int v, pl;
-            int bnd = cPickableNoPick, pbnd = cPickableNoPick;
-            int chg = 0;
-            unsigned int idx = 0, pidx = 0;
+            int bnd = cPickableNoPick;
+            unsigned int idx = 0;
             int srcp;
             float *pca = nullptr;
             int *pickDataSrc ;
@@ -7705,14 +7612,12 @@ void CGORenderGLPicking(CGO * I, RenderInfo *info, PickContext * context, CSetti
               pickDataSrc = (int*)(pca + nverts);
             }
 
-            if(!R->pick_mode) {
-              destOffset = 0;
-            } else {
-              destOffset = sizeof(float) * nverts * bufsizemult;
-            }
+            destOffset = R->pick_pass() * sizeof(float) * nverts * bufsizemult;
 
             if (!pickable){
-              memset(pickColorDestUC, 0, 4 * nverts * bufsizemult);
+              for (int i = 0; i < nverts * bufsizemult; ++i) {
+                pick->colorNoPick(pickColorDestUC + 4 * i);
+              }
             } else {
               int npickbufs = bufsizemult;
               int ploffsetforbuf = 0;
@@ -7741,29 +7646,11 @@ void CGORenderGLPicking(CGO * I, RenderInfo *info, PickContext * context, CSetti
                   for (int pi = 0; pi < npickbufs; ++pi){
                     int ploffset = ploffsetforbuf * pi;
                     srcp = 2* ((npickbufs * frag) + pi);
-                    pidx = idx;
-                    pbnd = bnd;
                     idx = pickDataSrc[srcp];
                     bnd = pickDataSrc[srcp + 1];
-                    if (bnd == cPickableNoPick){
-                      info->setUCColorToZero(&pickColorDestUC[pl+ploffset]);
-                      continue;
-                    }
-                    chg = idx != pidx || bnd != pbnd;
-                    if (chg)
-                      i++;
-                    if(!R->pick_mode) {
-                      j = i;
-                      if (chg){
-                        if (pick->size() <= i) {
-                          pick->resize((i + 1) * 3 / 2);
-                        }
-                        set_current_pick_color(I, pick->data() + i, context, idx, bnd);
-                      }
-                    } else {
-                      j = i >> 12;
-                    }
-                    info->setUCColorFromIndex(&pickColorDestUC[pl+ploffset], j);
+
+                    AssignNewPickColor(I, pick, &pickColorDestUC[pl + ploffset],
+                        context, idx, bnd);
                   }
                 }
               }
@@ -7787,13 +7674,7 @@ void CGORenderGLPicking(CGO * I, RenderInfo *info, PickContext * context, CSetti
     }
 
     CGO_gl[op] (R, &pc);
-
-    if(!use_shaders && op == CGO_SPLITLINE) {
-      i = (*pick)[0].src.index;
-    }
   }
-
-  (*pick)[0].src.index = i; /* pass the count */
 
   R->isPicking = false;
 }
@@ -11219,9 +11100,9 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
     }
   }
 
-  // defines how many passes we have, not sure if npickcolattr is actually ever not 32bits with shaders,
-  // but we support two-pass picking
-  int npickcolattr = SceneHas32BitColor(I->G) ? 1 : 2;
+  // defines how many passes we have
+  // We *could* set npickcolattr=1 if we had access to PickColorConverter here and getTotalBits() == 32
+  const int npickcolattr = SHADER_PICKING_PASSES_MAX;
   /* for picking, we need to mask the attributes and bind the buffer in the the picking VBO */
   int pl = 0;
   int npickattr = pickData.size();

@@ -2675,6 +2675,7 @@ int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge)
   }
   SceneCountFrames(G);
   SceneInvalidate(G);
+  SceneInvalidatePicking(G);
   return 0;
 }
 
@@ -6047,7 +6048,6 @@ int SceneInit(PyMOLGlobals * G)
 
     I->LastStateBuilt = -1;
     I->CopyNextFlag = true;
-    I->invPick = true;
 
     SceneRestartFrameTimer(G);
     SceneRestartPerfTimer(G);
@@ -7522,7 +7522,7 @@ float GetFovWidth(PyMOLGlobals * G)
 
 void SceneInvalidatePicking(PyMOLGlobals * G){
   CScene *I = G->Scene;
-  I->invPick = true;
+  I->pickmgr.invalidate();
 }
 
 float SceneGetScale(PyMOLGlobals * G) {

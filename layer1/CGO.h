@@ -985,7 +985,6 @@ void CGOSetUseShader(CGO *I, int use_shader);
 
 PyObject *CGOAsPyList(CGO * I);
 CGO *CGONewFromPyList(PyMOLGlobals * G, PyObject * list, int version, bool shouldCombine=true);
-void SetCGOPickColor(float *colorVals, int nverts, int pl, unsigned int index, int bond);
 int CGOPickColor(CGO * I, unsigned int index, int bond);
 
 float *CGOGetNextDrawBufferedIndex(float *cgo_op, int optype=CGO_DRAW_BUFFERS_INDEXED);
@@ -1061,12 +1060,6 @@ CGO *CGOTurnLightingOnLinesOff(CGO * I);
 // returns offset of floats in CGO array
 int CGOUniform3f(CGO *I, int uniform_id, const float *value);
 
-void SetUCColorFromIndex_32bit(uchar *color, unsigned int idx);
-void SetUCColorFromIndex_16bit(uchar *color, unsigned int idx);
-
-void SetUCColorToZero_32bit(uchar *color);
-void SetUCColorToZero_16bit(uchar *color);
-
 CGO *CGOConvertSpheresToPoints(CGO *I);
 
 #ifdef _PYMOL_ARB_SHADERS
@@ -1086,7 +1079,8 @@ CGO *CGOConvertCrossesToLinesShader(const CGO *I, CGO *addTo, float cross_size);
 CGO *CGOConvertCrossesToTrilinesShader(const CGO *I, CGO *addTo, float cross_size);
 CGO *CGOConvertShaderCylindersToCylinderShader(const CGO *I, CGO *addTo);
 
-bool AssignNewPickColor(CGO *cgo, unsigned int &i, std::vector<Picking>* pick, PickContext * context, unsigned char *color, unsigned int index, int bond);
+void AssignNewPickColor(CGO* cgo, PickColorManager*, unsigned char* color,
+    const PickContext* context, unsigned int index, int bond);
 
 struct CGODeleter {
   void operator()(CGO* cgo) { CGOFree(cgo); }

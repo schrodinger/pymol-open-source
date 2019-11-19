@@ -721,7 +721,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   I->shaderCGO_has_cylinders = 0;
   I->R.P = NULL;
   I->R.fRecolor = NULL;
-  I->R.context.object = (void *) obj;
+  I->R.context.object = obj;
   I->R.context.state = state;
   I->R.cs = cs;
 

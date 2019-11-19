@@ -84,6 +84,10 @@ void main(void)
       }
       PostLightingEffects(depth);
     } else {
+      if (COLOR.a == 0.0) {
+        // cPickableThrough
+        discard;
+      }
       gl_FragColor = COLOR;
     }
 

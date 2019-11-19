@@ -671,7 +671,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   I->R.fFree = (void (*)(struct Rep *)) RepCylBondFree;
   I->R.obj = (CObject *) obj;
   I->R.cs = cs;
-  I->R.context.object = (void *) obj;
+  I->R.context.object = obj;
   I->R.context.state = state;
 
   I->renderCGO = 0;

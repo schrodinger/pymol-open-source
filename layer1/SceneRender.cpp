@@ -18,6 +18,7 @@
 #include"Executive.h"
 #include"P.h"
 #include"Err.h"
+#include"Picking.h"
 
 #ifdef _PYMOL_OPENVR
 #include"OpenVRMode.h"
@@ -729,7 +730,6 @@ void SceneRenderAllObject(PyMOLGlobals * G,
  * 
  * context: context info
  * normal: initial normal (for immediate mode)
- * pickVLA: for picking
  * pass: which pass (opaque, antialias, transparent)
  * fat: wide lines (i.e., for picking)
  * width_scale: specifies width_scale and sampling
@@ -741,9 +741,9 @@ void SceneRenderAllObject(PyMOLGlobals * G,
  *        3 - gadgets last
  */
 void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
-                    float *normal, std::vector<Picking>* pickVLA,
+                    float *normal, PickColorManager* pickmgr,
                     int pass, int fat, float width_scale,
-                    GridInfo * grid, int dynamic_pass, short which_objects, bool picking32bit)
+                    GridInfo * grid, int dynamic_pass, short which_objects)
 {
   CScene *I = G->Scene;
   int state = SceneGetState(G);
@@ -753,7 +753,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
     return;
 #endif
   UtilZeroMem(&info, sizeof(RenderInfo));
-  info.pick = pickVLA;
+  info.pick = pickmgr;
   info.pass = pass;
   info.vertex_scale = I->VertexScale;
   info.fog_start = I->FogStart;
@@ -813,15 +813,6 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
     info.sampling = (int) info.width_scale;
     if(info.sampling < 1)
       info.sampling = 1;
-  }
-  if (picking32bit){
-    info.setUCColorFromIndex = SetUCColorFromIndex_32bit;
-    info.setUCColorToZero = SetUCColorToZero_32bit;
-    info.picking_32bit = true;
-  } else {
-    info.setUCColorFromIndex = SetUCColorFromIndex_16bit;
-    info.setUCColorToZero = SetUCColorToZero_16bit;
-    info.picking_32bit = false;
   }
   {
     int *slot_vla = I->SlotVLA;
@@ -979,7 +970,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
               EditorRender(G, curState);
             }
             // transparency-mode == 3 render all objects for this pass
-            SceneRenderAll(G, context, normal, NULL, pass, false, width_scale, grid, times, 2 /* non-gadgets */, false); // opaque
+            SceneRenderAll(G, context, normal, NULL, pass, false, width_scale, grid, times, 2 /* non-gadgets */); // opaque
           } else {
 #else
             {
@@ -987,7 +978,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
               // transparency-mode != 3 render all objects for each pass
               for(pass = 1; pass > -2; pass--) {        /* render opaque, then antialiased, then transparent... */
                 SceneRenderAll(G, context, normal, NULL, pass, false, width_scale, grid,
-                               times, 3 /* gadgets last */, false);
+                               times, 3 /* gadgets last */);
               }
               cont = false;
             }
@@ -997,7 +988,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
             glBlendFunc_default();
 
             SceneRenderAll(G, context, normal, NULL, -1 /* gadgets render in transp pass */, false, width_scale, grid,
-                           times, 1 /* only gadgets */, false);
+                           times, 1 /* only gadgets */);
             glDisable(GL_BLEND);
           }
 #ifdef PURE_OPENGL_ES_2
@@ -1060,7 +1051,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
         if ((currentFrameBuffer == G->ShaderMgr->default_framebuffer_id) && t_mode_3){
           // onlySelections and t_mode_3, render only gadgets
           SceneRenderAll(G, context, normal, NULL, -1 /* gadgets render in transp pass */, false, width_scale, grid,
-                         times, 1 /* only gadgets */, false);
+                         times, 1 /* only gadgets */);
         }
 
         glDisable(GL_BLEND);

@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"Vector.h"
 #include"Executive.h"
+#include"Picking.h"
 
 #ifdef _PYMOL_FREETYPE
 #include "FontTTF.h"
@@ -288,24 +289,6 @@ void TextSetOutlineColor(PyMOLGlobals * G, int color)
 }
 
 static const float _inv255 = 1.0F / 255.0F;
-
-void TextSetPickColor(PyMOLGlobals * G, int first_pass, int index)
-{
-  CText *I = G->Text;
-  if(!first_pass)
-    index = (index >> 12);      /* high order bits */
-
-  I->Flat = true;
-  I->UColor[0] = ((unsigned char) ((index & 0xF) << 4));
-  I->UColor[1] = ((unsigned char) ((index & 0xF0) | 0x8));
-  I->UColor[2] = ((unsigned char) ((index & 0xF00) >> 4));
-  I->UColor[3] = 0xFF;
-
-  I->Color[0] = I->UColor[0] * _inv255;
-  I->Color[1] = I->UColor[1] * _inv255;
-  I->Color[2] = I->UColor[2] * _inv255;
-  I->Color[3] = 1.0F;
-}
 
 void TextSetColorFromUColor(PyMOLGlobals * G)
 {

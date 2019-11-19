@@ -165,7 +165,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
   I->R.fFree = (void (*)(struct Rep *)) RepEllipsoidFree;
   I->R.cs = cs;
   I->R.obj = (CObject *) obj;
-  I->R.context.object = (void *) obj;
+  I->R.context.object = obj;
   I->R.context.state = state;
 
   /*  I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepEllipsoidSameVis; */

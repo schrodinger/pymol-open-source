@@ -435,7 +435,8 @@ class DemoInfo:
             self.cmd.load("$PYMOL_DATA/demo/pept.pdb","sculpt")
             self.cmd.hide("everything","sculpt")
             self.cmd.show("sticks","sculpt")
-            self.cmd.show("spheres","sculpt")
+            if self.cmd.get_setting_boolean("use_shaders"):
+                self.cmd.show("spheres","sculpt")
             self.cmd.set("sphere_transparency","0.75","sculpt")
             self.cmd.set("sphere_color","grey","sculpt")
             self.cmd.frame(1)

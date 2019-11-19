@@ -737,7 +737,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
   " RepMeshNew-DEBUG: entered with coord-set %p\n", (void *) cs ENDFD;
   if (ok){
     obj = cs->Obj;
-    I->R.context.object = (void *) obj;
+    I->R.context.object = obj;
     I->R.context.state = state;
   }
   if (ok){

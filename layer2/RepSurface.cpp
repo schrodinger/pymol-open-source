@@ -4160,7 +4160,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       RepSurfaceSetSettings(G, cs, obj, surface_quality, surface_type, &point_sep, &sphere_idx, &solv_sph_idx, &circumscribe);
 
       RepInit(G, &I->R);
-      I->R.context.object = (void *) obj;
+      I->R.context.object = obj;
       I->R.context.state = state;
       I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepSurfaceRender;
       I->R.fFree = (void (*)(struct Rep *)) RepSurfaceFree;

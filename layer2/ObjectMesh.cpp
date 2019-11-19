@@ -774,7 +774,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
   float radius;
   int state = 0;
   CRay *ray = 0;
-  std::vector<Picking>* pick = nullptr;
+  bool pick = false;
   int pass = 0;
   int *n = NULL;
   int c;

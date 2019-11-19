@@ -2935,8 +2935,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     }
     break;
   case cSetting_pick32bit:
-    ExecutiveInvalidateRep(G, NULL, cRepAll, cRepInvRep);
-    SceneChanged(G);
+    SceneInvalidatePicking(G);
     break;
   case cSetting_display_scale_factor:
   {

@@ -195,7 +195,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   I->R.obj = (CObject *) obj;
   I->R.cs = cs;
   I->ribbon_width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_width);
-  I->R.context.object = (void *) obj;
+  I->R.context.object = obj;
   I->R.context.state = state;
 
   /* find all of the CA points */

@@ -312,9 +312,20 @@ static void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj,
 
   if(AtomSettingGetIfDefined(G, ati1, cSetting_sphere_transparency, &at_transp))
     *variable_alpha = true;
-  
-  CGOPickColor(I->primitiveCGO, a1, ati1->masked ? cPickableNoPick : cPickableAtom);
-  
+
+  int trans_pick_mode = SettingGet<int>(
+      G, cs->Setting, obj->Setting, cSetting_transparency_picking_mode);
+
+  int pickmode = cPickableAtom;
+  if (trans_pick_mode != cTransparencyPickingModePickable &&
+      at_transp > PICKABLE_THROUGH_CUTOFF) {
+    pickmode = cPickableThrough;
+  } else if (ati1->masked) {
+    pickmode = cPickableNoPick;
+  }
+
+  CGOPickColor(I->primitiveCGO, a1, pickmode);
+
   if(at_sphere_color == -1)
     c1 = ati1->color;
   else
@@ -549,7 +560,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     I->R.fSameVis = (int (*)(struct Rep *, struct CoordSet *)) RepSphereSameVis;
     I->R.obj = (CObject *) obj;
     I->R.cs = cs;
-    I->R.context.object = (void *) obj;
+    I->R.context.object = obj;
     I->R.context.state = state;
   }
   /* raytracing primitives */

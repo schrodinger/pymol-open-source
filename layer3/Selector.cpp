@@ -7319,18 +7319,13 @@ static sele_array_t SelectorApplyMultipick(PyMOLGlobals * G, Multipick * mp)
 {
   CSelector *I = G->Selector;
   sele_array_t result;
-  int n;
-  Picking *p;
-  ObjectMolecule *obj;
   SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
   sele_array_calloc(result, I->NAtom);
-  n = mp->picked[0].src.index;
-  p = mp->picked + 1;
-  while(n--) {                  /* what if this object isn't a molecule object?? */
-    obj = (ObjectMolecule *) p->context.object;
+  for (const auto& p : mp->picked) {
+    assert(p.context.object->type == cObjectMolecule);
+    auto obj = static_cast<const ObjectMolecule*>(p.context.object);
     /* NOTE: SeleBase only safe with cSelectorUpdateTableAllStates!  */
-    result[obj->SeleBase + p->src.index] = true;
-    p++;
+    result[obj->SeleBase + p.src.index] = true;
   }
   return (result);
 }

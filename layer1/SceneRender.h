@@ -18,15 +18,17 @@ Z* -------------------------------------------------------------------
 #ifndef _H_SceneRender
 #define _H_SceneRender
 
+#include "Picking.h"
+
 #include <vector>
 
 void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
                  Multipick * smp, int oversize_width, int oversize_height,
                  int click_side, int force_copy);
 void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
-                    float *normal, std::vector<Picking>* pickVLA,
+                    float *normal, PickColorManager*,
                     int pass, int fat, float width_scale,
-                    GridInfo * grid, int dynamic_pass, short which_objects, bool picking32bit);
+                    GridInfo * grid, int dynamic_pass, short which_objects);
 
 void SceneInitializeViewport(PyMOLGlobals * G, int offscreen);
 

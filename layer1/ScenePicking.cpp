@@ -9,8 +9,8 @@
 #include"PyMOL.h"
 #include"P.h"
 #include "Err.h"
+#include "Picking.h"
 
-typedef unsigned char pix[4];
 #define cRange 7
 
 int SceneDoXYPick(PyMOLGlobals * G, int x, int y, int click_side)
@@ -26,203 +26,81 @@ int SceneDoXYPick(PyMOLGlobals * G, int x, int y, int click_side)
 
   I->LastPicked.context.object = NULL;
   SceneRender(G, &I->LastPicked, x, y, NULL, 0, 0, click_side, 0);
-  I->invPick = false;
   return (I->LastPicked.context.object != NULL);
   /* did we pick something? */
 }
 
-static
-unsigned int SceneFindTriplet(PyMOLGlobals * G, int x, int y, GLenum gl_buffer, bool bits32)
+/**
+ * Query the number of RED, GREEN, BLUE, and ALPHA bitplanes from OpenGL
+ * @param[out] pickconv picking instance to update
+ */
+static void PickColorConverterSetRgbaBitsFromGL(
+    PyMOLGlobals* G, PickColorConverter& pickconv)
 {
-  unsigned int result = 0;
-  /*int before_check[100];
-     int *int_ptr;
-   */
-  pix *buffer = NULL;
-  pix *extra_safe_buffer = NULL;
+  GLint rgba_bits[4] = {4, 4, 4, 0};
 
-  /*int after_check[100]; */
-  /* pix_array *array_ptr;
-     char *safe_place;
-   */
-  int a, b, d, flag;
-  float contentScaleFactor = DIP2PIXEL(1);
-  int cRangeVal = contentScaleFactor < 1.5 ? 7 : 21;
-
-  int h = (cRangeVal * 2 + 1), w = (cRangeVal * 2 + 1);
-
-  int debug = false;
-  unsigned char *c;
-  int bits15 = false;
-  GLint rb, gb, bb, ab;
-  int bkrd_alpha = 0xFF;
-  int check_alpha = false;
-
-  if(G->HaveGUI && G->ValidContext) {   /*just in case */
-
-    glGetIntegerv(GL_RED_BITS, &rb);
-    glGetIntegerv(GL_GREEN_BITS, &gb);
-    glGetIntegerv(GL_BLUE_BITS, &bb);
-    glGetIntegerv(GL_ALPHA_BITS, &ab);
-
-    bits15 = (rb == 5) && (gb == 5) && (bb == 5);
-    if((rb < 4) && (gb < 4) && (bb < 4)){
-      PRINTFB(G, FB_Scene, FB_Errors) "SceneFindTriplet: ERROR: not enough colors to pick: rb=%d gb=%d bb=%d\n", rb, gb, bb ENDFB(G);
-      return 0;
-    }
-    if(Feedback(G, FB_Scene, FB_Debugging))
-      debug = true;
-
-#ifndef PURE_OPENGL_ES_2
-    if (!hasFrameBufferBinding())
-      glReadBuffer(gl_buffer);
-#endif
-    extra_safe_buffer = pymol::malloc<pix>(w * h * 21);
-    buffer = extra_safe_buffer + (w * h * 10);
-
-    PyMOLReadPixels(x - cRangeVal, y - cRangeVal, cRangeVal * 2 + 1, cRangeVal * 2 + 1, GL_RGBA,
-                    GL_UNSIGNED_BYTE, &buffer[0][0]);
-
-    if(debug) {
-      for(a = 0; a <= (cRangeVal * 2); a++) {
-        for(b = 0; b <= (cRangeVal * 2); b++)
-          printf("%2x ",
-                 (buffer[a + b * w][0] + buffer[a + b * w][1] +
-                  buffer[a + b * w][2]) & 0xFF);
-        printf("\n");
-      }
-      printf("\n");
-      for(a = 0; a <= (cRangeVal * 2); a++) {
-        for(b = 0; b <= (cRangeVal * 2); b++)
-          printf("%02x ", (buffer[a + b * w][3]) & 0xFF);
-        printf("\n");
-      }
-      printf("\n");
-      for(a = 0; a <= (cRangeVal * 2); a++) {
-        for(b = 0; b <= (cRangeVal * 2); b++)
-          printf("%02x%02x%02x ", (buffer[a + b * w][0]) & 0xFF,
-                 (buffer[a + b * w][1]) & 0xFF, (buffer[a + b * w][2]) & 0xFF);
-        printf("\n");
-      }
-      printf("\n");
-    }
-
-    /* first, check to make sure bkrd_alpha is correct 
-       (this is a bug for systems with broken alpha, such as Extreme 3D on Solaris 8 */
-
-    if (bits32){
-      check_alpha = false;
-    } else {
-      flag = true;
-      for(d = 0; ab && flag && (d < cRangeVal); d++)
-        for(a = -d; flag && (a <= d); a++)
-          for(b = -d; flag && (b <= d); b++) {
-            c = &buffer[(a + cRangeVal) + (b + cRangeVal) * w][0];
-            if(c[3] == bkrd_alpha) {
-              check_alpha = true;
-              flag = false;
-            }
-          }
-    }
-
-    /* now find the correct pixel */
-    flag = true;
-    bool check_green_bit = !bits32;
-    bool strict = true;
-    if (bits32 || bits15)
-      strict = false;
-    for(d = 0; flag && (d < cRangeVal); d++)
-      for(a = -d; flag && (a <= d); a++)
-        for(b = -d; flag && (b <= d); b++) {
-          c = &buffer[(a + cRangeVal) + (b + cRangeVal) * w][0];
-          if(
-             ((c[3] == bkrd_alpha) || (!check_alpha)) &&
-             ((bits15 && c[1]) || (c[1] & 0x8) || !check_green_bit) &&
-             ((!strict) || ((c[1] & 0xF) == 8 && (c[0] & 0xF) == 0 && (c[2] & 0xF) == 0))
-             ) {           /* only consider intact, saturated pixels */
-	    if (bits15){  /* workaround for 15 bit rendering, for some reason red/green need rounding */
-	      c[0] += 0x8;
-	      c[2] += 0x8;
-	    }
-            if (bits32){
-              result = (c[0] & 0xFF) + ((c[1] & 0xFF) << 8) + ((c[2] & 0xFF) << 16) + ((c[3] & 0xFF) << 24);
-	      if (result)
-		flag = false;
-	    }
-            else {
-              result = ((c[0] >> 4) & 0xF) + (c[1] & 0xF0) + ((c[2] << 4) & 0xF00);
-	      flag = false;
-	    }
-          }
-        }
-    FreeP(extra_safe_buffer);
+  if (!SettingGet<bool>(G, cSetting_pick32bit)) {
+    pickconv.setRgbaBits(rgba_bits);
+    return;
   }
-  return (result);
-}
 
-bool SceneHas32BitColor(PyMOLGlobals * G) {
-#ifndef PURE_OPENGL_ES_2
-  GLint bits;
-  GLint currentFrameBuffer;
+  GLint currentFrameBuffer = G->ShaderMgr->default_framebuffer_id;
 
-  ok_assert(1, SettingGetGlobal_b(G, cSetting_use_shaders));
-  ok_assert(1, SettingGetGlobal_b(G, cSetting_pick32bit));
-
-  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFrameBuffer);
+  if (SettingGet<bool>(G, cSetting_use_shaders)) {
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFrameBuffer);
+  }
 
   if (currentFrameBuffer != G->ShaderMgr->default_framebuffer_id) {
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, G->ShaderMgr->default_framebuffer_id);
   }
 
-  glGetIntegerv(GL_ALPHA_BITS,  &bits); ok_assert(2, bits >= 8);
-  glGetIntegerv(GL_BLUE_BITS,   &bits); ok_assert(2, bits >= 8);
-  glGetIntegerv(GL_GREEN_BITS,  &bits); ok_assert(2, bits >= 8);
-  glGetIntegerv(GL_RED_BITS,    &bits);
+  glGetIntegerv(GL_RED_BITS, rgba_bits + 0);
+  glGetIntegerv(GL_GREEN_BITS, rgba_bits + 1);
+  glGetIntegerv(GL_BLUE_BITS, rgba_bits + 2);
+  glGetIntegerv(GL_ALPHA_BITS, rgba_bits + 3);
 
-ok_except2:
+  PRINTFD(G, FB_Scene)
+  " %s: GL RGBA BITS: (%d, %d, %d, %d)\n", __func__, rgba_bits[0], rgba_bits[1],
+      rgba_bits[2], rgba_bits[3] ENDFD;
+
   if (currentFrameBuffer != G->ShaderMgr->default_framebuffer_id) {
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFrameBuffer);
   }
 
-  ok_assert(1, bits >= 8);
-
-  PRINTFD(G, FB_Scene) "Scene-DEBUG: 32bit picking\n" ENDFD;
-  return true;
-
-ok_except1:
-  PRINTFD(G, FB_Scene) "Scene-DEBUG: 16bit picking\n" ENDFD;
-#endif
-  return false;
+  pickconv.setRgbaBits(rgba_bits);
 }
 
-static
-void SceneRenderPickingSinglePick(PyMOLGlobals * G, SceneUnitContext *context, Picking * pick, int x, int y, GLenum render_buffer){
-  /* atom picking HACK - obfuscative coding */
+/**
+ * Get picking indices for the rectangle (x,y,w,h)
+ */
+static std::vector<unsigned> SceneGetPickIndices(PyMOLGlobals* G,
+    SceneUnitContext* context, int x, int y, int w, int h, GLenum gl_buffer)
+{
   CScene *I = G->Scene;
-  int debug_pick = 0;
-  unsigned int lowBits = 0, highBits = 0;
-  unsigned int index;
-  bool bits32 = SceneHas32BitColor(G);
+  auto& pickmgr = I->pickmgr;
+  const auto use_shaders = SettingGet<bool>(G, cSetting_use_shaders);
 
-  debug_pick = SettingGetGlobal_i(G, cSetting_debug_pick);
   SceneGLClearColor(0.0, 0.0, 0.0, 0.);
 
-  if (I->pickVLA.empty()){
-    I->pickVLA.resize(5000);
+  if (!pickmgr.m_valid) {
+    PickColorConverterSetRgbaBitsFromGL(G, pickmgr);
   }
+
+  const auto shift_per_pass = pickmgr.getTotalBits();
+  const auto pass_max = use_shaders ? SHADER_PICKING_PASSES_MAX : 99;
+
+  std::vector<unsigned> indices(w * h);
 
   if(I->grid.active)
     GridGetGLViewport(G, &I->grid);
 
-  // two passes in 16bit picking mode, if needed
   for (int pass = 0;; ++pass) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (I->invPick || !SettingGetGlobal_b(G, cSetting_use_shaders)){
-      I->pickVLA.begin()->src.index = 0;
-      I->pickVLA.begin()->src.bond = 2 + pass;
-    } else {
-      I->pickVLA.begin()->src.bond = 0 + pass;
+    pickmgr.m_pass = pass;
+
+    if (!pickmgr.m_valid || !use_shaders) {
+      pickmgr.resetCount();
     }
     {
       int slot;
@@ -230,26 +108,45 @@ void SceneRenderPickingSinglePick(PyMOLGlobals * G, SceneUnitContext *context, P
         if(I->grid.active) {
           GridSetGLViewport(&I->grid, slot);
         }
-        SceneRenderAll(G, context, NULL, std::addressof(I->pickVLA), 0, true, 0.0F, &I->grid, 0, 0, bits32);
+        SceneRenderAll(
+            G, context, NULL, &pickmgr, 0, true, 0.0F, &I->grid, 0, 0);
       }
     }
 
+#ifndef _PYMOL_NO_MAIN
+    const auto debug_pick = SettingGet<int>(G, cSetting_debug_pick);
     if(debug_pick) {
       PyMOL_SwapBuffers(G->PyMOL);
       PSleep(G, 1000000 * debug_pick / 4);
       PyMOL_SwapBuffers(G->PyMOL);
     }
+#endif
 
-    if (pass == 1) {
-      highBits = SceneFindTriplet(G, x, y, render_buffer, false);
-      index += (highBits << 12);
+#ifndef PURE_OPENGL_ES_2
+    if (!hasFrameBufferBinding()) {
+      glReadBuffer(gl_buffer);
+    }
+#endif
+
+    // assume glReadPixels does not overrun the buffer - previous version of
+    // PyMOL allocated a larger buffer to account for "buggy glReadPixels"
+    std::vector<unsigned char> buffer(4 * indices.size());
+    PyMOLReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &buffer[0]);
+
+    for (size_t i = 0; i < indices.size(); ++i) {
+      const auto* c = &buffer[4 * i];
+      indices[i] |= pickmgr.indexFromColor(c) << (shift_per_pass * pass);
+    }
+
+    if (pickmgr.count() < (1ULL << shift_per_pass * (pass + 1))) {
       break;
     }
 
-    index = lowBits = SceneFindTriplet(G, x, y, render_buffer, bits32);
-
-    if (bits32 || I->pickVLA[0].src.index < (1 << 12)) {
-      // no need for a second pass
+    if (pass + 1 == pass_max) {
+      PRINTFB(G, FB_Scene, FB_Warnings)
+        " Scene-Warning: Maximum number of picking passes exceeded\n"
+        " (%u picking colors, %u color bits)\n",
+        pickmgr.count(), shift_per_pass ENDFB(G);
       break;
     }
   }
@@ -257,18 +154,50 @@ void SceneRenderPickingSinglePick(PyMOLGlobals * G, SceneUnitContext *context, P
   if(I->grid.active)
     GridSetGLViewport(&I->grid, -1);
 
-  if(debug_pick) {
-    if (bits32){
-      PRINTFB(G, FB_Scene, FB_Details)
-	" SceneClick-Detail: lowBits=%u index %u < %u?\n", lowBits, index, I->pickVLA.begin()->src.index ENDFB(G);
-    } else {
-      PRINTFB(G, FB_Scene, FB_Details)
-	" SceneClick-Detail: lowBits=%u highBits=%u index %u < %u?\n", lowBits, highBits, index, I->pickVLA.begin()->src.index ENDFB(G);
+  pickmgr.m_valid = true;
+
+  return indices;
+}
+
+/**
+ * Pick a single point
+ *
+ * @param[out] pick Copy picking result here
+ * @param x X position in the window to pick
+ * @param y Y position in the window to pick
+ */
+static void SceneRenderPickingSinglePick(PyMOLGlobals* G,
+    SceneUnitContext* context, Picking* pick, int x, int y,
+    GLenum render_buffer)
+{
+  CScene *I = G->Scene;
+  const int debug_pick = SettingGet<int>(G, cSetting_debug_pick);
+  const int cRangeVal = DIP2PIXEL(cRange);
+  const int h = (cRangeVal * 2 + 1), w = (cRangeVal * 2 + 1);
+
+  auto indices = SceneGetPickIndices(
+      G, context, x - cRangeVal, y - cRangeVal, w, h, render_buffer);
+
+  assert(!indices.empty());
+
+  /* now find the correct pixel */
+  unsigned int index = 0;
+  for (int d = 0; (d < cRangeVal); ++d) {
+    for (int a = -d; (a <= d); ++a) {
+      for (int b = -d; (b <= d); ++b) {
+        index = indices[a + cRangeVal + (b + cRangeVal) * w];
+        if (index) {
+          a = d = cRangeVal;
+          break;
+        }
+      }
     }
   }
 
-  if(index && (index <= I->pickVLA.begin()->src.index)) {
-    *pick = I->pickVLA[index];       /* return object info */
+  auto* pik = I->pickmgr.getIdentifier(index);
+
+  if (pik) {
+    *pick = *pik;
     if(debug_pick) {
       PRINTFB(G, FB_Scene, FB_Details)
 	" SceneClick-Detail: obj %p index %d bond %d\n",
@@ -291,197 +220,34 @@ void SceneRenderPickingSinglePick(PyMOLGlobals * G, SceneUnitContext *context, P
 #endif
 }
 
-/*========================================================================*/
-static
-unsigned int *SceneReadTriplets(PyMOLGlobals * G, int x, int y, int w, int h,
-                                GLenum gl_buffer, bool bits32)
-{
-  unsigned int *result = NULL;
-  pix *buffer = NULL;
-  pix *extra_safe_buffer = NULL;
-  int a, b;
-  unsigned char *c;
-  int cc = 0;
-  int bits15 = false;
-  int bkrd_alpha = 0xFF;
-  int check_alpha = false;
-
-  GLint rb, gb, bb, ab;
-
-  if(w < 1)
-    w = 1;
-  if(h < 1)
-    h = 1;
-  if(G->HaveGUI && G->ValidContext) {   /*just in case */
-    glGetIntegerv(GL_RED_BITS, &rb);
-    glGetIntegerv(GL_GREEN_BITS, &gb);
-    glGetIntegerv(GL_BLUE_BITS, &bb);
-    glGetIntegerv(GL_ALPHA_BITS, &ab);
-
-    bits15 = (rb == 5) && (gb == 5) && (bb == 5);
-    if((rb < 4) && (gb < 4) && (bb < 4)){
-      PRINTFB(G, FB_Scene, FB_Errors) "SceneReadTriplet: ERROR: not enough colors to pick: rb=%d gb=%d bb=%d\n", rb, gb, bb ENDFB(G);
-      return 0;
-    }
-    /* create some safe RAM on either side of the read buffer -- buggy
-       ReadPixels implementations tend to trash RAM surrounding the
-       target block */
-
-    extra_safe_buffer = pymol::malloc<pix>(w * h * 11);
-    buffer = extra_safe_buffer + (w * h * 5);
-
-    result = VLAlloc(unsigned int, w * h);
-#ifndef PURE_OPENGL_ES_2
-    if (!hasFrameBufferBinding())
-      glReadBuffer(gl_buffer);
-#endif
-    PyMOLReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &buffer[0][0]);
-
-    /* first, check to make sure bkrd_alpha is correct 
-       (this is a bug for systems with broken alpha, such as Extreme 3D on Solaris 8 */
-
-    if (bits32)
-      check_alpha = false;
-    else
-      for(a = 0; ab && a < w; a++)
-	for(b = 0; b < h; b++) {
-	  c = &buffer[a + b * w][0];
-	  if(c[3] == bkrd_alpha) {
-	    check_alpha = true;
-	  }
-        }
-
-    bool check_green_bit = !bits32;
-    bool strict = true;
-    if (bits32 || bits15)
-      strict = false;
-    /* now read pixels */
-    for(a = 0; a < w; a++)
-      for(b = 0; b < h; b++) {
-        c = &buffer[a + b * w][0];
-        if(
-           ((c[3] == bkrd_alpha) || (!check_alpha)) &&
-           ((bits15 && c[1]) || (c[1] & 0x8) || !check_green_bit) &&
-           ((!strict) || ((c[1] & 0xF) == 8 && (c[0] & 0xF) == 0 && (c[2] & 0xF) == 0))
-           ) {             /* only consider intact, saturated pixels */
-          VLACheck(result, unsigned int, cc + 1);
-	  if (bits15){  /* workaround for 15 bit rendering, for some reason red/green need rounding */
-	    c[0] += 0x8;
-	    c[2] += 0x8;
-	  }
-          if (bits32)
-            result[cc] = (c[0] & 0xFF) + ((c[1] & 0xFF) << 8) + ((c[2] & 0xFF) << 16) + ((c[3] & 0xFF) << 24);
-          else {
-            result[cc] = ((c[0] >> 4) & 0xF) + (c[1] & 0xF0) + ((c[2] << 4) & 0xF00);
-          }
-          result[cc + 1] = b + a * h; // resulting pixel offset
-          if (result[cc] || (!bits32))  // !bits32 because it should hit the high-order bits
-            cc += 2;
-        }
-      }
-    FreeP(extra_safe_buffer);
-    VLASize(result, unsigned int, cc);
-  }
-  return (result);
-}
-
+/**
+ * Pick all items in a rectangle
+ * @param[in,out] smp Defines the (x,y,w,h) rectangle (input), and takes the
+ * picking result in `smp->picked` (output)
+ */
 static
 void SceneRenderPickingMultiPick(PyMOLGlobals * G, SceneUnitContext *context, Multipick * smp, GLenum render_buffer){
-  /* multiple atom picking HACK - even more obfuscative coding */
   CScene *I = G->Scene;
-  Picking *pik;
-  unsigned int *lowBitVLA = NULL, *highBitVLA = NULL;
-  int high, low;
-  unsigned int lastIndex = 0;
-  unsigned int index;
-  void *lastPtr = NULL;
-  int nPick;
-  int nHighBits = 0, nLowBits;
-  bool bits32 = SceneHas32BitColor(G);
+  Picking previous;
 
-  SceneGLClearColor(0.0, 0.0, 0.0, 0.0);
+  assert(smp->picked.empty());
 
-  if (I->pickVLA.empty()){
-    I->pickVLA.resize(5000);
-  }
-
-  if(I->grid.active)
-    GridGetGLViewport(G, &I->grid);
-
-  // two passes in 16bit picking mode, if needed
-  for (int pass = 0;; ++pass) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    if (I->invPick || !SettingGetGlobal_b(G, cSetting_use_shaders)){
-      I->pickVLA.begin()->src.index = 0;
-      I->pickVLA.begin()->src.bond = 2 + pass;
-    } else {
-      I->pickVLA.begin()->src.bond = 0 + pass;
-    }
-
-    {
-      int slot;
-      for(slot = 0; slot <= I->grid.last_slot; slot++) {
-        if(I->grid.active) {
-          GridSetGLViewport(&I->grid, slot);
-        }
-        SceneRenderAll(G, context, NULL, std::addressof(I->pickVLA), 0, true, 0.0F, &I->grid, 0, 0, bits32);
-      }
-    }
-
-    if (pass == 1) {
-      highBitVLA = SceneReadTriplets(G, smp->x, smp->y, smp->w, smp->h, render_buffer, false);
-      nHighBits = VLAGetSize(highBitVLA);
-      break;
-    }
-
-    lowBitVLA = SceneReadTriplets(G, smp->x, smp->y, smp->w, smp->h, render_buffer, bits32);
-    nLowBits = VLAGetSize(lowBitVLA);
-
-    if (bits32 || I->pickVLA.begin()->src.index < (1 << 12)) {
-      // no need for a second pass
-      bits32 = true; // continue like with 32bit picking
-      break;
-    }
-  }
-
-  if(I->grid.active)
-    GridSetGLViewport(&I->grid, -1);
+  auto indices = SceneGetPickIndices(G, context, smp->x, smp->y,
+      std::max(1, smp->w), std::max(1, smp->h), render_buffer);
 
   /* need to scissor this */ 
-  nPick = 0;
-  if(nLowBits && (bits32 || nHighBits)) {
-    low = 0;
-    high = 0;
-    while((low < nLowBits) && (bits32 || high < nHighBits)) {
-      if(bits32 || lowBitVLA[low + 1] == highBitVLA[high + 1]) {
-        if (bits32){
-          // 32bit picking
-          index = lowBitVLA[low];
-        } else {
-          index = lowBitVLA[low] + (highBitVLA[high] << 12);
+  for (auto index : indices) {
+    const auto* pik = I->pickmgr.getIdentifier(index);
+    if (pik) {
+      if (pik->src.index != previous.src.index ||
+          pik->context.object != previous.context.object) {
+        if (pik->context.object->type == cObjectMolecule) {
+          smp->picked.push_back(*pik);
         }
-        if(index && (index <= I->pickVLA.begin()->src.index)) {
-          pik = I->pickVLA.data() + index;  /* just using as a tmp */
-          if((pik->src.index != lastIndex) || (pik->context.object != lastPtr)) {
-            if(((CObject *) pik->context.object)->type == cObjectMolecule) {
-              nPick++;    /* start from 1 */
-              VLACheck(smp->picked, Picking, nPick);
-              smp->picked[nPick] = *pik;  /* return atom/object info -- will be redundant */
-            }
-            lastIndex = pik->src.index;
-            lastPtr = pik->context.object;
-          }
-        }
-        low += 2;
-        high += 2;
-      } else if(lowBitVLA[low + 1] < highBitVLA[high + 1])
-        low += 2;
-      else
-        high += 2;
+        previous = *pik;
+      }
     }
   }
-  smp->picked[0].src.index = nPick;
 #ifndef PURE_OPENGL_ES_2
   /* Picking changes the Shading model to GL_FLAT,
      we need to change it back to GL_SMOOTH. This is because
@@ -490,8 +256,6 @@ void SceneRenderPickingMultiPick(PyMOLGlobals * G, SceneUnitContext *context, Mu
   //      glEnable(GL_COLOR_MATERIAL);
   glShadeModel(SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
 #endif
-  VLAFreeP(lowBitVLA);
-  VLAFreeP(highBitVLA);
 }
 
 void SceneRenderPicking(PyMOLGlobals * G, int stereo_mode, int *click_side, int stereo_double_pump_mono, 

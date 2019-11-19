@@ -29,7 +29,5 @@ void SceneRenderPicking(PyMOLGlobals * G, int stereo_mode, int *click_side, int 
 			GLenum render_buffer);
 int SceneMultipick(PyMOLGlobals * G, Multipick * smp);
 
-bool SceneHas32BitColor(PyMOLGlobals * G);
-
 #endif
 

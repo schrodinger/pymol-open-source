@@ -1071,10 +1071,9 @@ void ObjectSlice::render(RenderInfo * info)
               CGORenderGLPicking(oss->shaderCGO, info, &I->context, I->Setting, NULL);
             } else {
 #ifndef PURE_OPENGL_ES_2
-            unsigned int i = pick->begin()->src.index;
             Picking p;
 	    SceneSetupGLPicking(G);
-            p.context.object = (void *) I;
+            p.context.object = I;
             p.context.state = 0;
             p.src.index = state + 1;
             p.src.bond = 0;
@@ -1111,7 +1110,8 @@ void ObjectSlice::render(RenderInfo * info)
 
                     if(tri_count >= 3) {
                       unsigned char color[4];
-                      AssignNewPickColor(NULL, i, pick, &I->context, color, p.src.index, p.src.bond);
+                      AssignNewPickColor(nullptr, pick, color, &I->context,
+                          p.src.index, p.src.bond);
                       glColor4ubv(color);
 
                       if(tri_count & 0x1) {     /* get the handedness right ... */
@@ -1133,7 +1133,6 @@ void ObjectSlice::render(RenderInfo * info)
                 glEnd();
               }
             }
-            (*pick)[0].src.index = i;   /* pass the count */
 #endif
             }
           } else {  // !pick
@@ -1265,7 +1264,7 @@ ObjectSlice::ObjectSlice(PyMOLGlobals * G) : CObject(G)
 
   I->type = cObjectSlice;
 
-  I->context.object = (void *) I;
+  I->context.object = I;
   I->context.state = 0;
 }
 

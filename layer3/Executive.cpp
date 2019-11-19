@@ -7335,13 +7335,12 @@ void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode)
     log_box = SettingGetGlobal_b(G, cSetting_log_box_selections);
   /*  if(logging==cPLog_pml)
      strcpy(prefix,"_ "); */
-  smp.picked = VLAlloc(Picking, 1000);
   smp.x = rect->left;
   smp.y = rect->bottom;
   smp.w = rect->right - rect->left;
   smp.h = rect->top - rect->bottom;
   SceneMultipick(G, &smp);
-  if(smp.picked[0].src.index) {
+  if (!smp.picked.empty()) {
     SelectorCreate(G, cTempRectSele, NULL, NULL, 1, &smp);
     if(log_box)
       SelectorLogSele(G, cTempRectSele);
@@ -7446,7 +7445,6 @@ void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode)
       break;
     }
   }
-  VLAFreeP(smp.picked);
 }
 
 int ExecutiveTranslateAtom(PyMOLGlobals * G, const char *sele, float *v, int state, int mode,

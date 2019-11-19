@@ -296,7 +296,7 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
   }
   CGOEnd(I->primitiveCGO); // for immediate mode
   CGOSpecialWithArg(I->primitiveCGO, LINE_LIGHTING, 1.f);
-    I->R.context.object = (void *) obj;
-    I->R.context.state = state;
+  I->R.context.object = obj;
+  I->R.context.state = state;
   return (Rep *) I;
 }

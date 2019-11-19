@@ -1216,7 +1216,6 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
 	return;
       } else {
         Pickable *p = I->R.P;
-        unsigned int i;
         TextSetIsPicking(G, true);
         SceneSetupGLPicking(G);
         if(c) {
@@ -1228,7 +1227,6 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
           if (!I->shaderCGO){
             SceneGetWidthHeight(G, &screenwidth, &screenheight);
           }
-          i = pick->begin()->src.index;
 
           while(c--) {
             if(*l) {
@@ -1255,14 +1253,14 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
                   copy3f(offpt, tCenterPt);
                 }
               }
-              i++;
               TextSetPosNColor(G, tCenterPt, v);
               TextSetTargetPos(G, v + 3);
               TextSetLabelBkgrdInfo(G, *(v + 16), *(v + 17), (v + 18));
 
               if (p) {
                 p++;
-                AssignNewPickColor(NULL, i, pick, &I->R.context, TextGetColorUChar4uv(G), p->index, p->bond);
+                AssignNewPickColor(nullptr, pick, TextGetColorUChar4uv(G),
+                    &I->R.context, p->index, p->bond);
               }
 
               TextSetColorFromUColor(G);
@@ -1278,7 +1276,6 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
           }
           if(float_text)
             glEnable(GL_DEPTH_TEST);
-          (*pick)[0].src.index = i;       /* pass the count */
         }
         TextSetIsPicking(G, false);
       }
@@ -1532,7 +1529,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   I->R.fRecolor = NULL;
   I->R.obj = (CObject *) obj;
   I->R.cs = cs;
-  I->R.context.object = (void *) obj;
+  I->R.context.object = obj;
   I->R.context.state = state;
 
   /* raytracing primitives */

@@ -3753,7 +3753,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   I->ray = NULL;
   I->std = NULL;
   I->preshader = NULL;
-  I->R.context.object = (void *) obj;
+  I->R.context.object = obj;
   I->R.context.state = state;
 
   /* find all of the CA points */
