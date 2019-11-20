@@ -115,8 +115,8 @@ struct CoordSet {
 
   int objMolOpInvalidated = 0;
 #ifdef _PYMOL_IP_EXTRAS
-  mmpymolx_prop_state_t validMMStereo;
-  mmpymolx_prop_state_t validTextType;
+  mmpymolx_prop_state_t validMMStereo = MMPYMOLX_PROP_STATE_NULL;
+  mmpymolx_prop_state_t validTextType = MMPYMOLX_PROP_STATE_NULL;
 #endif
 
 #ifdef _PYMOL_IP_PROPERTIES
@@ -125,6 +125,8 @@ struct CoordSet {
   /* Atom-state Settings */
   pymol::vla<int> atom_state_setting_id;
   pymol::vla<char> has_atom_state_settings;
+
+  // special member functions
   CoordSet(PyMOLGlobals * G);
   CoordSet(const CoordSet &cs);
   ~CoordSet();
