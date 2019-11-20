@@ -1,0 +1,67 @@
+data_sia-alt-id
+loop_
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_comp_id
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+1   C C1  SIA -9.792  2.643 -25.471
+2   C C2  SIA -8.461  2.401 -24.761
+3   C C3  SIA -7.200  2.488 -25.651
+4   C C4  SIA -6.995  3.928 -26.085
+5   O O4  SIA -5.761  4.004 -26.809
+6   C C5  SIA -6.891  4.846 -24.874
+7   N N5  SIA -6.770  6.210 -25.392
+8   C C6  SIA -8.191  4.667 -24.064
+9   O O6  SIA -8.297  3.294 -23.642
+10  C C7  SIA -8.309  5.553 -22.832
+11  O O7  SIA -7.121  5.555 -22.009
+12  C C8  SIA -9.437  5.080 -21.937
+13  O O8  SIA -10.621 4.808 -22.722
+14  C C9  SIA -9.711  6.183 -20.926
+15  O O9  SIA -10.787 5.756 -20.068
+16  C C10 SIA -5.843  7.103 -25.047
+17  O O10 SIA -4.971  6.834 -24.241
+18  C C11 SIA -5.961  8.457 -25.719
+# <<< old nomenclature
+19  O O1A SIA -9.933  2.165 -26.635
+20  O O1B SIA -10.697 3.279 -24.857
+# >>>
+
+# mapping to new nomenclature
+loop_
+_chem_comp_atom.comp_id
+_chem_comp_atom.atom_id
+_chem_comp_atom.alt_atom_id
+SIA  O11   O1A
+SIA  O12   O1B
+
+# bonds with new nomenclature
+loop_
+_chem_comp_bond.comp_id
+_chem_comp_bond.atom_id_1
+_chem_comp_bond.atom_id_2
+_chem_comp_bond.value_order
+SIA  C1   C2    SING
+SIA  C1   O11   DOUB
+SIA  C1   O12   SING
+SIA  C2   C3    SING
+SIA  C2   O2    SING
+SIA  C2   O6    SING
+SIA  C3   C4    SING
+SIA  C4   C5    SING
+SIA  C4   O4    SING
+SIA  C5   C6    SING
+SIA  C5   N5    SING
+SIA  C6   C7    SING
+SIA  C6   O6    SING
+SIA  C7   C8    SING
+SIA  C7   O7    SING
+SIA  C8   C9    SING
+SIA  C8   O8    SING
+SIA  C9   O9    SING
+SIA  C10  C11   SING
+SIA  C10  N5    SING
+SIA  C10  O10   DOUB

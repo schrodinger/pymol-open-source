@@ -574,6 +574,11 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(cif_get_array("m2", "_atom_site.pdbx_pdb_ins_code"),   [None] * N)
         self.assertEqual(cif_get_array("m2", "_atom_site.label_alt_id"),        [None] * N)
 
+    @testing.requires_version('2.4')
+    def testCifAltAtomId(self):
+        cmd.load(self.datafile('sia-alt-id.cif'), 'm1')
+        self.assertEqual(cmd.count_atoms('bound_to name C1'), 3)
+
     @testing.foreach.product((0, 1), (0, 1))
     @testing.requires_version('2.3')
     @testing.requires('incentive')
