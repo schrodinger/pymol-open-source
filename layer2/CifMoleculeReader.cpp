@@ -481,7 +481,11 @@ static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
     bond_dict_t * bond_dict=nullptr) {
 
   PyMOLGlobals * G = I->G;
-  int i_start = 0, i_prev_c = 0, i_prev_o3 = 0;
+  int i_start = 0;
+  std::vector<int> i_prev_c[2], i_prev_o3[2];
+
+  const lexborrow_t lex_O3s = LexBorrow(G, "O3*");
+  const lexborrow_t lex_O3p = LexBorrow(G, "O3'");
 
   if (!bond_dict) {
     // read components.cif
@@ -490,41 +494,40 @@ static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
   }
 
   // reserve some memory for new bonds
-  if (!I->Bond) {
-    I->Bond = pymol::vla<BondType>(I->NAtom * 4);
-  } else {
-    VLACheck(I->Bond, BondType, I->NAtom * 4);
-  }
+  I->Bond.reserve(I->NAtom * 4);
 
   for (int i = 0; i < I->NAtom; ++i) {
+    auto const& atom = I->AtomInfo[i];
+
     // intra-residue
     if(!AtomInfoSameResidue(G, I->AtomInfo + i_start, I->AtomInfo + i)) {
       ConnectComponent(I, i_start, i, bond_dict);
       i_start = i;
+      i_prev_c[0] = std::move(i_prev_c[1]);
+      i_prev_o3[0] = std::move(i_prev_o3[1]);
+      i_prev_c[1].clear();
+      i_prev_o3[1].clear();
     }
 
-    // ignore alt coords for inter-residue bonding
-    if (I->AtomInfo[i].alt[0] && I->AtomInfo[i].alt[0] != 'A')
-      continue;
-
-    const char *name = LexStr(G, I->AtomInfo[i].name);
-
     // inter-residue polymer bonds
-    if (strcmp("C", name) == 0) {
-      i_prev_c = i;
-    } else if (strncmp("O3", name, 2) == 0 && (name[2] == '*' || name[2] == '\'')) {
-      // name in ('O3*', "O3'")
-      i_prev_o3 = i;
+    if (atom.name == G->lex_const.C) {
+      i_prev_c[1].push_back(i);
+    } else if (atom.name == lex_O3s || atom.name == lex_O3p) {
+      i_prev_o3[1].push_back(i);
     } else {
-      int i_prev =
-        (strcmp("N", name) == 0) ? i_prev_c :
-        (strcmp("P", name) == 0) ? i_prev_o3 : -1;
+      auto const* i_prev_ptr =
+        (atom.name == G->lex_const.N) ? i_prev_c :
+        (atom.name == G->lex_const.P) ? i_prev_o3 : nullptr;
 
-      if (i_prev >= 0 && !AtomInfoSameResidue(G,
-            I->AtomInfo + i_prev, I->AtomInfo + i)
-          && GetDistance(I, i_prev, i) < 1.8) {
-        // make bond
-        ObjectMoleculeAddBond2(I, i_prev, i, 1);
+      if (i_prev_ptr && !i_prev_ptr->empty()) {
+        for (int i_prev : *i_prev_ptr) {
+          bool alt_check = !atom.alt[0] || !I->AtomInfo[i_prev].alt[0] ||
+                           atom.alt[0] == I->AtomInfo[i_prev].alt[0];
+          if (alt_check && GetDistance(I, i_prev, i) < 1.8) {
+            // make bond
+            ObjectMoleculeAddBond2(I, i_prev, i, 1);
+          }
+        }
       }
     }
   }
