@@ -362,7 +362,20 @@ static bool read_chem_comp_bond_dict(const cif_data * data, bond_dict_t &bond_di
     const char *order = arr_order->as_s(i);
     order_value = bondOrderLookup(order);
 
-    bond_dict.set(resn, name1, name2, order_value);
+    bond_dict[resn].set(name1, name2, order_value);
+  }
+
+  // alt_atom_id -> atom_id
+  if ((arr_comp_id = data->get_arr("_chem_comp_atom.comp_id")) &&
+      (arr_id_1 = data->get_arr("_chem_comp_atom.atom_id")) &&
+      (arr_id_2 = data->get_arr("_chem_comp_atom.alt_atom_id"))) {
+    nrows = arr_id_1->size();
+    for (int i = 0; i < nrows; ++i) {
+      resn = arr_comp_id->as_s(i);
+      name1 = arr_id_1->as_s(i);
+      name2 = arr_id_2->as_s(i);
+      bond_dict[resn].add_alt_name(name1, name2);
+    }
   }
 
   return true;
@@ -2225,9 +2238,9 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
  */
 const bond_dict_t::mapped_type * bond_dict_t::get(PyMOLGlobals * G, const char * resn, bool try_download) {
   auto key = make_key(resn);
-  auto it = find(key);
+  auto it = m_map.find(key);
 
-  if (it != end())
+  if (it != m_map.end())
     return &it->second;
 
   if (unknown_resn.count(key))
