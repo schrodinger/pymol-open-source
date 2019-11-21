@@ -2131,8 +2131,15 @@ SEE ALSO
         _self.color(color, name, quiet=quiet)
 
 
+    import colorsys
+    _spectrumany_interpolations = {
+        'hls': (colorsys.rgb_to_hls, colorsys.hls_to_rgb),
+        'hsv': (colorsys.rgb_to_hsv, colorsys.hsv_to_rgb),
+        'rgb': ((lambda *rgb: rgb), (lambda *rgb: rgb)),
+    }
+
     def spectrumany(expression, colors, selection='(all)', minimum=None,
-            maximum=None, quiet=1, _self=cmd):
+            maximum=None, quiet=1, interpolation='rgb', _self=cmd):
         '''
 DESCRIPTION
 
@@ -2146,6 +2153,12 @@ DESCRIPTION
         '''
         from . import CmdException
 
+        try:
+            from_rgb, to_rgb = _spectrumany_interpolations[interpolation]
+        except KeyError:
+            raise CmdException('interpolation must be one of {}'.format(
+                list(_spectrumany_interpolations)))
+
         if ' ' not in colors:
             colors = palette_colors_dict.get(colors) or colors.replace('_', ' ')
 
@@ -2158,6 +2171,8 @@ DESCRIPTION
         col_tuples = [_self.get_color_tuple(i) for i in colors]
         if None in col_tuples:
             raise CmdException('unknown color')
+
+        col_tuples = [from_rgb(*c) for c in col_tuples]
 
         expression = {'pc': 'partial_charge', 'fc': 'formal_charge',
                 'resi': 'resv'}.get(expression, expression)
@@ -2197,8 +2212,12 @@ DESCRIPTION
             v = min(1.0, max(0.0, (float(v) - minimum) / val_range)) * (n_colors - 1)
             i = min(int(v), n_colors - 2)
             p = v - i
-            rgb = [int(255 * (col_tuples[i+1][j] * p + col_tuples[i][j] * (1.0 - p)))
+
+            col = [(col_tuples[i+1][j] * p + col_tuples[i][j] * (1.0 - p))
                     for j in range(3)]
+
+            rgb = [int(0xFF * v) for v in to_rgb(*col)]
+
             return 0x40000000 + rgb[0] * 0x10000 + rgb[1] * 0x100 + rgb[2]
 
         _self.alter(selection, 'color = next_color() or color', space=locals())
@@ -2208,7 +2227,7 @@ DESCRIPTION
 
     def spectrum(expression="count", palette="rainbow",
                  selection="(all)", minimum=None, maximum=None,
-                 byres=0, quiet=1, _self=cmd):
+                 byres=0, quiet=1, interpolation='rgb', _self=cmd):
 
         '''
 DESCRIPTION
@@ -2276,7 +2295,7 @@ PYMOL API
 
         if not expression.replace('_', '').isalpha() or not palette_hit:
             return spectrumany(expression, palette, selection,
-                    minimum, maximum, quiet, _self)
+                    minimum, maximum, quiet, interpolation, _self=_self)
 
         (prefix,digits,first,last) = palette_dict[str(palette)]
 
