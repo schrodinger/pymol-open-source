@@ -387,7 +387,7 @@ void MovieDump(PyMOLGlobals * G)
       " Movie: General Purpose Commands:\n" ENDFB(G);
     for(a = 0; a < I->NFrame; a++) {
       if(I->Cmd[a][0]) {
-        sprintf(buffer, "%5d: %s\n", a + 1, I->Cmd[a]);
+        sprintf(buffer, "%5d: %s\n", a + 1, I->Cmd[a].data());
         OrthoAddOutput(G, buffer);
       }
     }

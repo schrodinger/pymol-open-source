@@ -315,6 +315,7 @@ void p_glutMainLoop(void);
 
 #define hasFrameBufferBinding() false
 
+#ifndef PURE_OPENGL_ES_2
 #define GL_DEBUG_PUSH(title) \
   GLEW_KHR_debug ? glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, title) : (void)0
 
@@ -337,5 +338,8 @@ public:
   glDebugBlock glDebugBlockVariable(__FUNCTION__)
 
 #endif /* __cplusplus */
+#else
+#define GL_DEBUG_FUN()
+#endif
 
 #endif
