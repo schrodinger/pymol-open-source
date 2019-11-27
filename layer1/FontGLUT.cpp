@@ -116,7 +116,7 @@ const char* CFontGLUT::RenderOpenGL(RenderInfo* info, const char* st,
   PyMOLGlobals *G = I->G;
   if(G->ValidContext) {
     int c;
-    FontGLUTBitmapFontRec *font_info = I->glutFont;
+    FontGLUTBitmapFontRec const *font_info = glutFont;
     int first, last;
     FontGLUTBitmapCharRec const *ch;
     int textured = true && SHADERCGOARGV;
@@ -321,7 +321,7 @@ const char* CFontGLUT::RenderRay(CRay* ray, const char* st, float size,
   auto I = this;
   PyMOLGlobals *G = I->G;
   int c;
-  FontGLUTBitmapFontRec *font_info = I->glutFont;
+  FontGLUTBitmapFontRec const *font_info = glutFont;
   int first, last;
   FontGLUTBitmapCharRec const *ch;
   CharFngrprnt fprnt;
@@ -439,26 +439,8 @@ const char* CFontGLUT::RenderRay(CRay* ray, const char* st, float size,
   return st;
 }
 
-CFontGLUT::CFontGLUT(PyMOLGlobals* G, int font_code)
+CFontGLUT::CFontGLUT(PyMOLGlobals* G, const FontGLUTBitmapFontRec* rec)
     : CFont(G)
+    , glutFont(rec)
 {
-  auto I = this;
-  switch (font_code) {
-  case cFontGLUT9x15:
-    I->glutFont = &FontGLUTBitmap9By15;
-    break;
-  case cFontGLUTHel10:
-    I->glutFont = &FontGLUTBitmapHelvetica10;
-    break;
-  case cFontGLUTHel12:
-    I->glutFont = &FontGLUTBitmapHelvetica12;
-    break;
-  case cFontGLUTHel18:
-    I->glutFont = &FontGLUTBitmapHelvetica18;
-    break;
-  case cFontGLUT8x13:
-  default:
-    I->glutFont = &FontGLUTBitmap8By13;
-    break;
-  }
 }

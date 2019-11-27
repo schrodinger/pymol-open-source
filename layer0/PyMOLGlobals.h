@@ -57,7 +57,7 @@ class CScene;
 struct CSeq;
 typedef struct _CSetting CSetting;
 typedef struct _CSettingUnique CSettingUnique;
-typedef struct _CText CText;
+struct CText;
 struct CWizard;
 typedef struct _CAtomInfo CAtomInfo;
 typedef struct _CSculptCache CSculptCache;

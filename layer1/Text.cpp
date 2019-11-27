@@ -38,20 +38,9 @@ Z* -------------------------------------------------------------------
 static const float _255 = 255.0F;
 static const float _499 = 0.4999F;
 
-typedef struct {
-  int Src;
-  int Code;
-  char Name[FONT_NAME_MAX];
-  int Mode;
-  int Style;
-  CFont *Font;
-} ActiveRec;
-
 #define NFONTS 20
 
-struct _CText {
-  int NActive;
-  ActiveRec *Active;
+struct CText {
   float Pos[4];
   float WorldPos[4];
   float ScreenWorldOffset[3];
@@ -63,14 +52,39 @@ struct _CText {
   float Color[4];
   unsigned char UColor[4];
   unsigned char OutlineColor[4];
-  int Default_ID;
+  int Default_ID = 0;
   float Height, Width;
   float Spacing, Just;
   float LabelBuf[2];
 
-  int XHRFetched[NFONTS];
-  int XHRFailed[NFONTS];
-  bool Flat, IsPicking;
+#ifdef _WEBGL
+  bool XHRFetched[NFONTS] = {};
+  bool XHRFailed[NFONTS] = {};
+#endif
+
+  bool Flat = false;
+  bool IsPicking = false;
+
+private:
+  std::vector<std::unique_ptr<CFont>> m_fonts;
+
+public:
+  // TODO make const
+  CFont* getFont(unsigned font_id) {
+    if (font_id < m_fonts.size()) {
+      return m_fonts[font_id].get();
+    }
+    return nullptr;
+  }
+
+  //! Takes ownership of pointer
+  void addFont(unsigned font_id, CFont* font) {
+    if (!font)
+      return;
+    VecCheck(m_fonts, font_id);
+    m_fonts[font_id].reset(font);
+    font->TextID = font_id + 1;
+  }
 };
 
 static void TextUpdateUColor(CText * I)
@@ -381,13 +395,11 @@ const char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
     CGO *shaderCGO)
 {
   CText *I = G->Text;
-  if((text_id < 0) || (text_id >= I->NActive))
-    text_id = 0;
 
   if(st && (*st)) {
-    if((text_id >= 0) && (text_id < I->NActive)) {
-      if (I->Active[text_id].Font) {
-        auto font = I->Active[text_id].Font;
+    auto font = I->getFont(text_id);
+
+    if (font) {
         if (I->Flat) {
           return font->RenderOpenGLFlat(info, st, size, rpos, needSize,
               relativeMode, shouldRender, shaderCGO);
@@ -395,7 +407,6 @@ const char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
           return font->RenderOpenGL(info, st, size, rpos, needSize,
               relativeMode, shouldRender, shaderCGO);
         }
-      }
     }
     /* make sure we got to end of string */
     if(*st)
@@ -430,12 +441,9 @@ const char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,
 {
   CText *I = G->Text;
 
-  if((text_id < 0) || (text_id >= I->NActive))
-    text_id = 0;
-
   if(st && (*st)) {
-    if((text_id >= 0) && (text_id < I->NActive)) {
-      auto font = I->Active[text_id].Font;
+    auto font = I->getFont(text_id);
+    if (font) {
       if(size >= 0.0F)
         size *= ray->Magnified;
 
@@ -450,276 +458,42 @@ const char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,
 
 int TextInit(PyMOLGlobals * G)
 {
+  assert(!G->Text);
   G->Text = new CText();
   auto I = G->Text;
-  if(I) {
-    for (int i = 0; i < NFONTS; i++) {
-      I->XHRFetched[i] = 0;
-      I->XHRFailed[i] = 0;
-    }
 
-    I->NActive = 0;
-    I->Active = VLACalloc(ActiveRec, 10);
-    I->Default_ID = 0;
-    I->Flat = false;
+  I->addFont(0, new CFontGLUT(G, &FontGLUTBitmap8By13));
+  I->addFont(1, new CFontGLUT(G, &FontGLUTBitmap9By15));
+  I->addFont(2, new CFontGLUT(G, &FontGLUTBitmapHelvetica10));
+  I->addFont(3, new CFontGLUT(G, &FontGLUTBitmapHelvetica12));
+  I->addFont(4, new CFontGLUT(G, &FontGLUTBitmapHelvetica18));
 
-    /* font 0 is old reliable GLUT 8x13 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font = new CFontGLUT(G, cFontGLUT8x13);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcGLUT;
-      I->Active[I->NActive].Code = cFontGLUT8x13;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* font 1 is GLUT 9x15 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font = new CFontGLUT(G, cFontGLUT9x15);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcGLUT;
-      I->Active[I->NActive].Code = cFontGLUT9x15;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* font 2 is GLUT Helvetica10 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font = new CFontGLUT(G, cFontGLUTHel10);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcGLUT;
-      I->Active[I->NActive].Code = cFontGLUTHel10;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* font 3 is GLUT Helvetica12 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font = new CFontGLUT(G, cFontGLUTHel12);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcGLUT;
-      I->Active[I->NActive].Code = cFontGLUTHel12;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* font 4 is GLUT Helvetica18 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font = new CFontGLUT(G, cFontGLUTHel18);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcGLUT;
-      I->Active[I->NActive].Code = cFontGLUTHel18;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
 #ifdef _PYMOL_FREETYPE
-
-    /* 5 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G, TTF_DejaVuSans_dat, TTF_DejaVuSans_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* 6 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_DejaVuSans_Oblique_dat, TTF_DejaVuSans_Oblique_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* 7 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_DejaVuSans_Bold_dat, TTF_DejaVuSans_Bold_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* 8 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_DejaVuSans_BoldOblique_dat, TTF_DejaVuSans_BoldOblique_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* 9 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G, TTF_DejaVuSerif_dat, TTF_DejaVuSerif_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* 10 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_DejaVuSerif_Bold_dat, TTF_DejaVuSerif_Bold_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* 11 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_DejaVuSansMono_dat, TTF_DejaVuSansMono_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* 12 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_DejaVuSansMono_Oblique_dat, TTF_DejaVuSansMono_Oblique_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* 13 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_DejaVuSansMono_Bold_dat, TTF_DejaVuSansMono_Bold_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* 14 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_DejaVuSansMono_BoldOblique_dat,
-                  TTF_DejaVuSansMono_BoldOblique_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* Gentium */
-
-    /* 15 */
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G, TTF_GenR102_dat, TTF_GenR102_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* 16 */
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G, TTF_GenI102_dat, TTF_GenI102_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* back to DejaVu for the last two */
-
-    /* 17 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_DejaVuSerif_Oblique_dat, TTF_DejaVuSerif_Oblique_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    /* 18 */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_DejaVuSerif_BoldOblique_dat, TTF_DejaVuSerif_BoldOblique_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
+#if !defined(_WEBGL) || defined(_WEBGL_INCLUDE_DEFAULT_FONT)
+  I->addFont(5, FontTypeNew(G, TTF_DejaVuSans_dat, TTF_DejaVuSans_len));
+#endif
+#ifndef _WEBGL
+  I->addFont(6, FontTypeNew(G, TTF_DejaVuSans_Oblique_dat, TTF_DejaVuSans_Oblique_len));
+  I->addFont(7, FontTypeNew(G, TTF_DejaVuSans_Bold_dat, TTF_DejaVuSans_Bold_len));
+  I->addFont(8, FontTypeNew(G, TTF_DejaVuSans_BoldOblique_dat, TTF_DejaVuSans_BoldOblique_len));
+  I->addFont(9, FontTypeNew(G, TTF_DejaVuSerif_dat, TTF_DejaVuSerif_len));
+  I->addFont(10, FontTypeNew(G, TTF_DejaVuSerif_Bold_dat, TTF_DejaVuSerif_Bold_len));
+  I->addFont(11, FontTypeNew(G, TTF_DejaVuSansMono_dat, TTF_DejaVuSansMono_len));
+  I->addFont(12, FontTypeNew(G, TTF_DejaVuSansMono_Oblique_dat, TTF_DejaVuSansMono_Oblique_len));
+  I->addFont(13, FontTypeNew(G, TTF_DejaVuSansMono_Bold_dat, TTF_DejaVuSansMono_Bold_len));
+  I->addFont(14, FontTypeNew(G, TTF_DejaVuSansMono_BoldOblique_dat, TTF_DejaVuSansMono_BoldOblique_len));
+  I->addFont(15, FontTypeNew(G, TTF_GenR102_dat, TTF_GenR102_len));
+  I->addFont(16, FontTypeNew(G, TTF_GenI102_dat, TTF_GenI102_len));
+  I->addFont(17, FontTypeNew(G, TTF_DejaVuSerif_Oblique_dat, TTF_DejaVuSerif_Oblique_len));
+  I->addFont(18, FontTypeNew(G, TTF_DejaVuSerif_BoldOblique_dat, TTF_DejaVuSerif_BoldOblique_len));
+#endif
 #endif
 
-    return 1;
-  } else
-    return 0;
-
-}
-
-int TextGetFontID(PyMOLGlobals * G, int src, int code, const char *name, int mode, int style)
-{
-  /* first, return the font code if it is already active */
-  CText *I = G->Text;
-  {
-    int a;
-    ActiveRec *rec = I->Active;
-    for(a = 0; I->NActive; a++) {
-      if((src == rec->Src) &&
-         (code == rec->Code) && (mode == rec->Mode) && (style == rec->Style))
-        if(((!name) && (!rec->Name[0])) || (name && (strcmp(name, rec->Name) == 0))) {
-          return a;
-        }
-      rec++;
-    }
-  }
-
-  switch (src) {
-  case cTextSrcGLUT:
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font = new CFontGLUT(G, code);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcGLUT;
-      I->Active[I->NActive].Code = code;
-      I->NActive++;
-    }
-    break;
-  case cTextSrcFreeType:
-
-    break;
-  }
-  return -1;
+  return true;
 }
 
 void TextFree(PyMOLGlobals * G)
 {
-  CText *I = G->Text;
-  for(int a = 0; a < I->NActive; a++) {
-    delete I->Active[a].Font;
-  }
-  VLAFreeP(I->Active);
   DeleteP(G->Text);
 }
 float TextGetSpacing(PyMOLGlobals * G)

@@ -71,9 +71,6 @@ Z* -------------------------------------------------------------------
 #define cTextSrcFreeType  2
 
 int TextInit(PyMOLGlobals * G);
-int TextGetFontID(PyMOLGlobals * G, int src, int code, const char *name, int size_mode,
-                  int style);
-
 void TextFree(PyMOLGlobals * G);
 
 void TextSetLabPos(PyMOLGlobals * G, const float *pos, const LabPosType * labpos, const char *text);

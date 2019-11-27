@@ -57,12 +57,6 @@ typedef void *GLUTbitmapFont;
 
 /* end GLUT Excerpt */
 
-#define cFontGLUT8x13   0
-#define cFontGLUT9x15   1
-#define cFontGLUTHel10  2
-#define cFontGLUTHel12  3
-#define cFontGLUTHel18  4
-
 extern FontGLUTBitmapFontRec FontGLUTBitmap8By13;
 extern FontGLUTBitmapFontRec FontGLUTBitmap9By15;
 extern FontGLUTBitmapFontRec FontGLUTBitmapHelvetica10;
@@ -70,7 +64,7 @@ extern FontGLUTBitmapFontRec FontGLUTBitmapHelvetica12;
 extern FontGLUTBitmapFontRec FontGLUTBitmapHelvetica18;
 
 struct CFontGLUT : public CFont {
-  FontGLUTBitmapFontRec *glutFont;
+  const FontGLUTBitmapFontRec *glutFont;
 
   /* save fields */
   int swapbytes, lsbfirst, rowlength;
@@ -83,7 +77,7 @@ struct CFontGLUT : public CFont {
       bool shouldRender, CGO* shaderCGO) override;
   const char* RenderRay(CRay* ray, const char* text, float size,
       float* rpos, bool needSize, short relativeMode) override;
-  CFontGLUT(PyMOLGlobals* G, int font_code);
+  CFontGLUT(PyMOLGlobals* G, const FontGLUTBitmapFontRec*);
 };
 
 #endif
