@@ -237,3 +237,112 @@ index a0f6c8e..e79fb98 100644
  PlyProperty vert_props[] = { /* list of property information for a vertex */
    {"x", Float32, Float32, offsetof(Vertex,x), 0, 0, 0, 0},
    {"y", Float32, Float32, offsetof(Vertex,y), 0, 0, 0, 0},
+diff --git a/contrib/uiuc/plugins/molfile_plugin/src/msmsplugin.cpp b/contrib/uiuc/plugins/molfile_plugin/src/msmsplugin.cpp
+index a8acdcb1d..008ad6c28 100644
+--- a/contrib/uiuc/plugins/molfile_plugin/src/msmsplugin.cpp
++++ b/contrib/uiuc/plugins/molfile_plugin/src/msmsplugin.cpp
+@@ -109,6 +109,8 @@ static void *open_file_read(const char *filepath, const char *filetype,
+   msms->vfd = vfd;
+   msms->graphics = NULL;
+   *natoms = 0;
++  free(facefilepath);
++  free(vertfilepath);
+   return msms;
+ }
+ 
+diff --git a/contrib/uiuc/plugins/molfile_plugin/src/vaspoutcarplugin.c b/contrib/uiuc/plugins/molfile_plugin/src/vaspoutcarplugin.c
+index 7d74ba305..d981df93f 100644
+--- a/contrib/uiuc/plugins/molfile_plugin/src/vaspoutcarplugin.c
++++ b/contrib/uiuc/plugins/molfile_plugin/src/vaspoutcarplugin.c
+@@ -139,7 +139,7 @@ static int read_vaspoutcar_structure(void *mydata, int *optflags, molfile_atom_t
+    * that contains the name of the element (H, He, C etc.).
+    * Otherwise try to find similar mass in periodic table.
+    */
+-  if (strstr(potcarfile, "OUTCAR")) {
++  if (strstr(data->filename, "OUTCAR")) {
+     strcpy(potcarfile, data->filename);
+     strcpy(strstr(potcarfile, "OUTCAR"), "POTCAR");
+     potcar = fopen(potcarfile, "r");
+diff --git a/contrib/uiuc/plugins/molfile_plugin/src/vaspposcarplugin.c b/contrib/uiuc/plugins/molfile_plugin/src/vaspposcarplugin.c
+index 5bff3c70b..42f02409e 100644
+--- a/contrib/uiuc/plugins/molfile_plugin/src/vaspposcarplugin.c
++++ b/contrib/uiuc/plugins/molfile_plugin/src/vaspposcarplugin.c
+@@ -75,13 +75,14 @@ static void *open_vaspposcar_read(const char *filename, const char *filetype, in
+   /* Read the number of atoms per atom type */
+   data->numatoms = 0;
+   for (i = 0; i < MAXATOMTYPES; ++i) {
+-    char const *tmplineptr = strdup(lineptr);
++    char const *tmplineptr = lineptr;
+     char const *token = (i == 0 ? strtok(lineptr, " ") : strtok(NULL, " "));
+     int const n = (token ? atoi(token) : -1);
+ 
+     /* if fails to read number of atoms, then assume VASP5 */
+     if (i == 0 && n <= 0) {
+       data->version = 5;
++      free(data->titleline);
+       data->titleline =  strdup(tmplineptr);
+       fgets(lineptr, LINESIZE, data->file);
+       break;
+diff --git a/contrib/uiuc/plugins/molfile_plugin/src/corplugin.c b/contrib/uiuc/plugins/molfile_plugin/src/corplugin.c
+index a01ea4241..9243b4f25 100644
+--- a/contrib/uiuc/plugins/molfile_plugin/src/corplugin.c
++++ b/contrib/uiuc/plugins/molfile_plugin/src/corplugin.c
+@@ -127,7 +127,7 @@ static FILE *open_cor_file(const char *fname, int *natom, int *iofoext) {
+       return NULL;
+     }
+ 
+-    if (sscanf(inbuf, "%10c", header) != 1) {
++    if (sscanf(inbuf, "%10s", header) != 1) {
+       fclose(f);
+       printf("corplugin) Error opening file: improperly formatted line.\n");
+       return NULL;
+diff --git a/contrib/uiuc/plugins/molfile_plugin/src/maeffplugin.cpp b/contrib/uiuc/plugins/molfile_plugin/src/maeffplugin.cpp
+index 8308fd90f..e55e6f0db 100644
+--- a/contrib/uiuc/plugins/molfile_plugin/src/maeffplugin.cpp
++++ b/contrib/uiuc/plugins/molfile_plugin/src/maeffplugin.cpp
+@@ -799,6 +799,7 @@ namespace {
+ 
+   class AtomArray : public Array {
+     int i_name, i_resname, i_resid, i_x, i_y, i_z, i_vx, i_vy, i_vz, 
++        i_inscode,
+         i_anum, i_chain, i_segid, i_charge;
+     std::vector<molfile_atom_t> &atoms;
+     std::vector<pos_t> &pos;
+@@ -811,6 +812,7 @@ namespace {
+       i_name(-1), i_resname(-1), i_resid(-1), 
+       i_x(-1), i_y(-1), i_z(-1), 
+       i_vx(-1), i_vy(-1), i_vz(-1),
++      i_inscode(-1),
+       i_anum(-1), i_chain(-1), i_segid(-1),
+       i_charge(0),
+       atoms( h->ctmap[m_ct].particles ),
+@@ -840,6 +842,7 @@ namespace {
+         else if (attr=="m_chain_name")       i_chain=i;
+         else if (attr=="m_pdb_segment_name") i_segid=i;
+         else if (attr=="m_formal_charge")  { i_charge=i; h->optflags |= MOLFILE_CHARGE; }
++        else if (attr=="m_insertion_code") { i_inscode=i; }
+       }
+     }
+ 
+@@ -852,6 +855,7 @@ namespace {
+       if (i_resid>=0)   get_int(row[i_resid], a.resid);
+       if (i_segid>=0)   GET_STR(row[i_segid], a.segid);
+       if (i_chain>=0)   GET_STR(row[i_chain], a.chain);
++      if (i_inscode>=0) GET_STR(row[i_inscode], a.insertion);
+ 
+ #if defined(DESRES_CTNUMBER)
+       a.ctnumber = m_ct;
+diff --git a/contrib/uiuc/plugins/molfile_plugin/src/cubeplugin.cpp b/contrib/uiuc/plugins/molfile_plugin/src/cubeplugin.cpp
+index 5d95c4344..f6a8f02bf 100644
+--- a/contrib/uiuc/plugins/molfile_plugin/src/cubeplugin.cpp
++++ b/contrib/uiuc/plugins/molfile_plugin/src/cubeplugin.cpp
+@@ -231,7 +231,9 @@ static void *open_cube_read(const char *filepath, const char *filetype,
+   // the cellvectors (and the coordinates) in such a way,
+   // that the a-vector is collinear with the x-axis and
+   // the b-vector is in the xy-plane. 
++#if 0
+   cube_buildrotmat(cube, voltmpl.origin, a, b);
++#endif
+   // print warning, if the rotation will be significant:
+   if ((fabs((double) a[1]) + fabs((double) a[2]) + fabs((double) b[2]))
+       > 0.001) {
