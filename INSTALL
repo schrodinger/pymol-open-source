@@ -25,6 +25,7 @@ REQUIREMENTS
     - glm
     - catch2 (optional, enable with --testing)
     - openvr 1.0.x (optional, enable with --openvr)
+    - libnetcdf (optional, disable with --no-vmd-plugins)
 
 SETUP OPTIONS
 

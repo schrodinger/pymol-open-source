@@ -52,7 +52,7 @@ try:
     parser.add_argument('--openvr', dest='openvr', action='store_true')
     parser.add_argument('--no-vmd-plugins', dest='vmd_plugins',
             action='store_false',
-            help='Disable VMD molfile plugins')
+            help='Disable VMD molfile plugins (libnetcdf dependency)')
     options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 except ImportError:
     print("argparse not available")
@@ -395,6 +395,7 @@ if not (MAC or WIN):
 
 if options.vmd_plugins:
     libs += [
+        "netcdf",
     ]
 
 if options.openvr:

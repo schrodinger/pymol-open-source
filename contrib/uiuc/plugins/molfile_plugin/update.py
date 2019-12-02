@@ -21,7 +21,6 @@ blacklist = [
     'gaussianplugin',   #
     'hoomdplugin',      # requires expat
     'lammpsplugin',     # requires gz
-    'netcdfplugin',     # requires netcdf
     'webpdbplugin',     # tcl dependent
     'tngplugin',        # requires Gromacs TNG library
     'dmsplugin',        # requires sqlite3
