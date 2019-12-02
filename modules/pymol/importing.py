@@ -102,13 +102,19 @@ if True:
         return pre, ext, format, zipped
 
     def check_gromacs_trj_magic(filename):
+        colorprinting.warning('check_gromacs_trj_magic is deprecated')
+        return check_trj_magic(filename)[0] == 'trj'
+
+    def check_trj_magic(filename):
         try:
             magic = open(filename, 'rb').read(4)
             if b'\xc9' in magic and b'\x07' in magic:
-                return True
+                return 'trj', loadable.trj2
+            if magic in (b'CDF\001', b'CDF\002'):
+                return 'netcdf', loadable.plugin
         except IOError as e:
             print('trj magic test failed: ' + str(e))
-        return False
+        return '', loadable.trj
 
     def _guess_trajectory_object(candidate, _self):
         # if candidate does not exist as a molecular object, return last
@@ -424,10 +430,7 @@ SEE ALSO
 
             if not plugin:
                 if format == 'trj':
-                    if check_gromacs_trj_magic(fname):
-                        plugin = "trj"
-                    else:
-                        ftype = loadable.trj
+                    plugin, ftype = check_trj_magic(fname)
                 else:
                     try:
                         ftype = int(format)
@@ -760,8 +763,10 @@ SEE ALSO
                 ftype = loadable.plugin
 
             # special handling for trj files (autodetect AMBER versus GROMACS)
-            if ftype == loadable.trj and check_gromacs_trj_magic(filename):
-                ftype = loadable.trj2
+            if ftype == loadable.trj:
+                plugin, ftype = check_trj_magic(filename)
+                if plugin:
+                    plugin += ':2'  # cPlugIOManager_traj
 
             # special handling for cdr files (autodetect AMBER versus CHARMM)
             if ftype == loadable.crd and _magic_check_cor_charmm(filename):

@@ -28,19 +28,16 @@ class options:
     help_distutils = False
     testing = False
     openvr = False
+    vmd_plugins = True
 
 try:
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--no-glut', action="store_true")
     parser.add_argument('--glut', dest='no_glut', action="store_false",
             help="link with GLUT (legacy GUI)")
     parser.add_argument('--no-osx-frameworks', dest='osx_frameworks',
+            help="on MacOS use XQuartz instead of native frameworks",
             action="store_false")
-    parser.add_argument('--osx-frameworks', action="store_true",
-            help="on MacOS use OpenGL and GLUT frameworks instead of shared "
-            "libraries from XQuartz. Note that the GLUT framework has no "
-            "mouse wheel support, so this option is generally not desired.")
     parser.add_argument('--jobs', '-j', type=int, help="for parallel builds "
             "(defaults to number of processors)")
     parser.add_argument('--no-libxml', action="store_true",
@@ -53,6 +50,9 @@ try:
     parser.add_argument('--testing', action="store_true",
             help="Build C-level tests")
     parser.add_argument('--openvr', dest='openvr', action='store_true')
+    parser.add_argument('--no-vmd-plugins', dest='vmd_plugins',
+            action='store_false',
+            help='Disable VMD molfile plugins')
     options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 except ImportError:
     print("argparse not available")
@@ -282,7 +282,7 @@ ext_objects = []
 data_files = []
 ext_modules = []
 
-if True:
+if options.vmd_plugins:
     # VMD plugin support
     inc_dirs += [
         'contrib/uiuc/plugins/include',
@@ -392,6 +392,10 @@ if not (MAC or WIN):
         ] + (not options.no_glut) * [
             "glut",
         ]
+
+if options.vmd_plugins:
+    libs += [
+    ]
 
 if options.openvr:
     libs += [
