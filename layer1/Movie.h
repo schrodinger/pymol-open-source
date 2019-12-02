@@ -18,19 +18,17 @@ Z* -------------------------------------------------------------------
 #define _H_Movie
 
 #include <memory>
-#include <array>
+#include <string>
 #include"os_python.h"
 #include"Ortho.h"
 #include"Scene.h"
 #include"View.h"
 
-using MovieCmdType = std::array<char, 1024>;
-
 struct CMovieModal {
   int stage;
 
   /* input parameters */
-  OrthoLineType prefix;
+  std::string prefix;
   int save, start, stop, missing_only;
   int modal, mode;
 
@@ -47,13 +45,13 @@ struct CMovieModal {
   int file_missing;
   int format;
   int quiet;
-  OrthoLineType fname;
+  std::string fname;
 };
 
 struct CMovie : public Block {
   std::vector<std::shared_ptr<pymol::Image>> Image;
   pymol::vla<int> Sequence;
-  pymol::vla<MovieCmdType> Cmd;
+  std::vector<std::string> Cmd;
   int NImage { 0 }, NFrame { 0 };
   int MatrixFlag { false };
   SceneViewType Matrix {};
@@ -99,12 +97,12 @@ void MovieReset(PyMOLGlobals * G);
 void MovieDump(PyMOLGlobals * G);
 void MovieAppendSequence(PyMOLGlobals * G, const char *seq, int start_from,int freeze);
 int MovieSeekScene(PyMOLGlobals * G, int loop);
-int MoviePNG(PyMOLGlobals * G, char *prefix, int save, int start, int stop,
+int MoviePNG(PyMOLGlobals * G, const char* prefix, int save, int start, int stop,
              int missing_only, int modal, int format, int mode, int quiet,
              int width=0, int height=0);
 void MovieSetScrollBarFrame(PyMOLGlobals * G, int frame);
-void MovieSetCommand(PyMOLGlobals * G, int frame, char *command);
-void MovieAppendCommand(PyMOLGlobals * G, int frame, char *command);
+void MovieSetCommand(PyMOLGlobals* G, int frame, const char* command);
+void MovieAppendCommand(PyMOLGlobals * G, int frame, const char* command);
 
 void MovieDoFrameCommand(PyMOLGlobals * G, int frame);
 
