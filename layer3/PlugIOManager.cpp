@@ -14,6 +14,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
+#include <vector>
+
 #include"os_python.h"
 #include "os_std.h"
 #include "MemoryDebug.h"
@@ -172,6 +175,12 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
     return false;
   }
 
+  if (obj->DiscreteFlag) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " %s: Discrete objects not supported\n", __func__ ENDFB(G);
+    return false;
+  }
+
   {
       int natoms;
       molfile_timestep_t timestep;
@@ -196,7 +205,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
 
       if(natoms == -1) {
         natoms = obj->NAtom;
-      } else if(natoms != obj->NAtom) {
+      } else if(natoms != obj->NAtom || (cs && cs->NIndex != natoms)) {
 	PRINTFB(G, FB_ObjectMolecule, FB_Errors)
           " ObjectMolecule: plugin '%s' cannot open file because the number "
           "of atoms in the object (%d) did not equal the number of atoms in "
@@ -215,7 +224,10 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
         cs->enumIndices();
       }
 
-      timestep.coords = cs->Coord.data();
+      auto xref = LoadTrajSeleHelper(obj, cs, sele);
+
+      auto coordbuf = std::vector<float>(natoms * 3);
+      timestep.coords = coordbuf.data();
 
       {
 	  /* read_next_timestep fills in &timestep for each iteration; we need
@@ -240,16 +252,24 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                 } else {
                   /* compute average */
                   if(n_avg > 1) {
-                    float *fp;
-                    int i;
-                    fp = cs->Coord.data();
-                    for(i = 0; i < cs->NIndex; i++) {
+                    // TODO this doesn't make any sense
+                    float* fp = timestep.coords;
+                    for (int i = 0; i < natoms; ++i) {
                       *(fp++) /= n_avg;
                       *(fp++) /= n_avg;
                       *(fp++) /= n_avg;
                     }
                   }
                   /* add new coord set */
+
+                  for (int i = 0; i < natoms; ++i) {
+                    int idx = xref ? xref[i] : i;
+                    if (idx >= 0) {
+                      assert(idx < cs->NIndex);
+                      copy3(timestep.coords + 3 * i, cs->coordPtr(idx));
+                    }
+                  }
+
                   cs->invalidateRep(cRepAll, cRepInvRep);
                   if(frame < 0) frame = obj->NCSet;
                   if(!obj->NCSet) zoom_flag = true;
@@ -285,7 +305,6 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                   frame++;
                   /* make a new cs */
                   cs = CoordSetCopy(cs);        /* otherwise, we need a place to put the next set */
-                  timestep.coords = cs->Coord.data();
                   n_avg = 0;
                 }
               }

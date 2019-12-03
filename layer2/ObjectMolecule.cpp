@@ -934,6 +934,50 @@ int ObjectMoleculeGetTopNeighbor(PyMOLGlobals * G,
   return highest_at;
 }
 
+/**
+ * Selection mapping for `load_traj` to only load coordinates for a subset of
+ * atoms. Returns a mapping of old to new coordinate indices and modifies the
+ * index-related members of `cs`.
+ *
+ * @param[in] obj Object Molecule for evaluation of the selection
+ * @param[in,out] cs Candidate coordinate set (with valid index arrays)
+ * @param[in] selection Named selection
+ * @return index mapping, or NULL if `selection` is not valid
+ */
+std::unique_ptr<int[]> LoadTrajSeleHelper(
+    const ObjectMolecule* obj, CoordSet* cs, const char* selection)
+{
+  auto G = obj->G;
+  int sele0 = SelectorIndexByName(G, selection);
+
+  // We can skip "all" (0) here since it's a trivial case
+  if (sele0 <= 0) {
+    return nullptr;
+  }
+
+  auto xref = std::unique_ptr<int[]>(new int[cs->NIndex]);
+
+  int idx_new = 0;
+
+  for (int idx = 0; idx < cs->NIndex; ++idx) {
+    auto atm = cs->IdxToAtm[idx];
+    if (SelectorIsMember(G, obj->AtomInfo[atm].selEntry, sele0)) {
+      cs->IdxToAtm[idx_new] = atm;
+      cs->AtmToIdx[atm] = idx_new;
+      xref[idx] = idx_new;
+      ++idx_new;
+    } else {
+      cs->AtmToIdx[atm] = -1;
+      xref[idx] = -1;
+    }
+  }
+
+  cs->NIndex = idx_new;
+  cs->IdxToAtm.resize(cs->NIndex);
+  cs->Coord.resize(cs->NIndex * 3);
+
+  return xref;
+}
 
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
@@ -956,16 +1000,19 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
   int r_act, r_val, r_cnt;
   float *r_fp_start = NULL, *r_fp_stop = NULL;
   int a, b, c, i;
-  int *to, at_i;
   int zoom_flag = false;
   int cnt = 0;
   int n_avg = 0;
   int icnt;
   int ncnt = 0;
-  int sele0 = SelectorIndexByName(G, sele);
-  int *xref = NULL;
   float zerovector[3] = { 0.0, 0.0, 0.0 };
   CoordSet *cs = NULL;
+
+  if (I->DiscreteFlag) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " %s: Discrete objects not supported\n", __func__ ENDFB(G);
+    return I;
+  }
 
   if(!shift)
     shift = zerovector;
@@ -990,42 +1037,8 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
       return (I);
     }
 
-    if(sele0 >= 0) {            /* build array of cross-references */
-      xref = pymol::malloc<int>(I->NAtom);
-      c = 0;
-      for(a = 0; a < I->NAtom; a++) {
-        if(SelectorIsMember(G, I->AtomInfo[a].selEntry, sele0)) {
-          xref[a] = c++;
-        } else {
-          xref[a] = -1;
-        }
-      }
+    auto xref = LoadTrajSeleHelper(I, cs, sele);
 
-      for(a = 0; a < I->NAtom; a++) {   /* now terminate the excluded references */
-        if(xref[a] < 0) {
-          cs->AtmToIdx[a] = -1;
-        }
-      }
-
-      to = cs->IdxToAtm.data();
-      c = 0;
-      for(a = 0; a < cs->NIndex; a++) { /* now fix IdxToAtm, AtmToIdx,
-                                           and remap xref to coordinate space */
-        at_i = cs->IdxToAtm[a];
-        if(cs->AtmToIdx[at_i] >= 0) {
-          *(to++) = at_i;
-          cs->AtmToIdx[at_i] = c;
-          xref[a] = c;
-          c++;
-        } else {
-          xref[a] = -1;
-        }
-      }
-
-      cs->NIndex = c;
-      VLASize(cs->IdxToAtm, int, cs->NIndex + 1);
-      VLASize(cs->Coord, float, cs->NIndex * 3);
-    }
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       " ObjMolLoadTRJFile: Loading from \"%s\".\n", fname ENDFB(G);
     buffer = pymol::malloc<char>(BUFSIZE + 1);     /* 1 MB read buffer */
@@ -1308,7 +1321,6 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
         break;
       }
     }
-    FreeP(xref);
     mfree(buffer);
   }
   if(cs)

@@ -375,6 +375,38 @@ USAGE
                              [,start [,stop [,max [,selection [,image [,shift
                              ]]]]]]]]]
 
+ARGUMENTS
+
+    filename = str: path to trajectory file
+
+    object = str: name of the molecular object where the trajectory should be
+    appended as states {default: guess from filename or last object in list}
+
+    state = int: first object state to populate, or 0 to append after
+    last state {default: 0}
+
+    format = str: file format {default: guess from extension}
+
+    interval = int: interval to take frames from file {default: 1}
+
+    average = int: ? (trj only, possibly broken)
+
+    start = int: first frame to load from file {default: 1}
+
+    stop = int: last frame to load from file, or -1 to load all {default: -1}
+
+    max = int: maximum number of states to load, or 0 to load all {default: 0}
+
+    selection = str: atom selection to only load a subset of coordinates
+    {default: all}
+
+    image = 0/1: residue-based period image transformation (trj only)
+
+    shift = float-3: offset for image transformation {default: (0,0,0}
+
+    plugin = str: name of VMD plugin to use {default: guess from magic string
+    of from format}
+
 PYMOL API
 
     cmd.load_traj(filename,object='',state=0,format='',interval=1,

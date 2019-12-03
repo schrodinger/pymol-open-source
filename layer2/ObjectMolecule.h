@@ -502,4 +502,7 @@ template <typename V> void SettingSet(int index, V value, ObjectMolecule * I, in
   SettingSet(index, value, (CObject*)I, state);
 }
 
+std::unique_ptr<int[]> LoadTrajSeleHelper(
+    const ObjectMolecule* obj, CoordSet* cs, const char* selection);
+
 #endif
