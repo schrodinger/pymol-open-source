@@ -5979,20 +5979,19 @@ void ObjectMapDump(ObjectMap* om, const char* fname, int state, int quiet)
   for (int xi = 0; xi < oms->Field->dimensions[0]; xi++) {
     for (int yi = 0; yi < oms->Field->dimensions[1]; yi++) {
       for (int zi = 0; zi < oms->Field->dimensions[2]; zi++) {
-        float x = oms->ExtentMin[0] + xs * xi;
-        float y = oms->ExtentMin[1] + ys * yi;
-        float z = oms->ExtentMin[2] + zs * zi;
-        
-        CField* field = oms->Field->data;
-        
-        switch (field->type) {
+
+        float x = Ffloat4(oms->Field->points, xi, yi, zi, 0);
+        float y = Ffloat4(oms->Field->points, xi, yi, zi, 1);
+        float z = Ffloat4(oms->Field->points, xi, yi, zi, 2);
+
+        switch (oms->Field->data->type) {
           case cFieldFloat: {
-            float value = Ffloat3(field, xi, yi, zi);
+            float value = Ffloat3(oms->Field->data, xi, yi, zi);
             fprintf(file, "%10.4f%10.4f%10.4f%10.4f\n", x, y, z, value);
             break;
           }
           case cFieldInt: {
-            int value = Fint3(field, xi, yi, zi);
+            int value = Fint3(oms->Field->data, xi, yi, zi);
             fprintf(file, "%10.4f%10.4f%10.4f%10d\n", x, y, z, value);
             break;
           }
