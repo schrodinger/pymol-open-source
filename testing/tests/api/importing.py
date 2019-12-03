@@ -284,6 +284,21 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(3, cmd.count_states())
         cmd.delete('*')
 
+    # via ObjectMoleculeLoadTRJFile
+    def testLoadTraj_selection_trj(self):
+        base = self.datafile("sampletrajectory")
+        cmd.load(base + ".pdb")
+        cmd.load_traj(base + ".crd", selection="backbone", format="trj")
+        self.assertEqual(55, cmd.count_atoms('state 10'))
+
+    # via PlugIOManager
+    @testing.requires_version('2.4')
+    def testLoadTraj_selection(self):
+        base = self.datafile("sampletrajectory")
+        cmd.load(base + ".gro")
+        cmd.load_traj(base + ".xtc", selection="backbone")
+        self.assertEqual(55, cmd.count_atoms('state 10'))
+
     @testing.requires_version('1.8.5')
     def testLoadCharmmCor(self):
         # http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/corplugin.html
