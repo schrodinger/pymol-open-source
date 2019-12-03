@@ -44,6 +44,7 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"File.h"
 #include"Executive.h"
+#include"Field.h"
 
 #define n_space_group_numbers 231
 static const char * space_group_numbers[] = {
@@ -5952,4 +5953,53 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
   }
   return (I);
 #endif
+}
+
+void ObjectMapDump(const ObjectMap* om, const char* fname, int state, int quiet)
+{
+  if (state < 0 || state >= om->getNFrame()) {
+    ErrMessage(om->G, __func__, "state out of range");
+    return;
+  }
+
+  auto file = fopen(fname, "wb");
+  if (!file) {
+    ErrMessage(om->G, __func__, "can't open file for writing");
+    return;
+  }
+
+  auto* field = om->State[state].Field;
+
+  for (int xi = 0; xi < field->dimensions[0]; xi++) {
+    for (int yi = 0; yi < field->dimensions[1]; yi++) {
+      for (int zi = 0; zi < field->dimensions[2]; zi++) {
+
+        float x = Ffloat4(field->points, xi, yi, zi, 0);
+        float y = Ffloat4(field->points, xi, yi, zi, 1);
+        float z = Ffloat4(field->points, xi, yi, zi, 2);
+
+        switch (field->data->type) {
+          case cFieldFloat: {
+            float value = Ffloat3(field->data, xi, yi, zi);
+            fprintf(file, "%10.4f%10.4f%10.4f%10.4f\n", x, y, z, value);
+            break;
+          }
+          case cFieldInt: {
+            int value = Fint3(field->data, xi, yi, zi);
+            fprintf(file, "%10.4f%10.4f%10.4f%10d\n", x, y, z, value);
+            break;
+          }
+          default:
+            ErrMessage(om->G, __func__, "unknown field type");
+            fclose(file);
+            return;
+        }
+      }
+    }
+  }
+  fclose(file);
+  if (!quiet) {
+    PRINTFB(om->G, FB_ObjectMap, FB_Actions)
+      " ObjectMapDump: %s written to %s\n", om->Name, fname ENDFB(om->G);
+  }
 }

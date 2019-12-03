@@ -157,6 +157,8 @@ int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
                                int n_points, float limit, float *histogram,
                                float min_arg, float max_arg);
 
+void ObjectMapDump(const ObjectMap* I, const char* fname, int state, int quiet);
+
 /*========================================================================*/
 inline
 ObjectMapState * getObjectMapState(PyMOLGlobals * G, ObjectMap * I, int state) {

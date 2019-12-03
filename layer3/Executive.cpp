@@ -29,6 +29,7 @@
 #include"OOMac.h"
 #include"Executive.h"
 #include"SpecRec.h"
+#include"ObjectMap.h"
 #include"ObjectMesh.h"
 #include"ObjectDist.h"
 #include"ObjectSurface.h"
@@ -14664,6 +14665,8 @@ void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj, int sta
       ObjectMeshDump((ObjectMesh *) rec->obj, fname, state, quiet);
     } else if(rec->obj->type == cObjectSurface) {
       ObjectSurfaceDump((ObjectSurface *) rec->obj, fname, state, quiet);
+    } else if (rec->obj->type == cObjectMap) {
+      ObjectMapDump((ObjectMap *) rec->obj, fname, state, quiet);
     } else {
       ErrMessage(G, __func__, "Invalid object type for this operation.");
     }

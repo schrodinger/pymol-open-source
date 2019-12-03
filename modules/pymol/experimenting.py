@@ -138,8 +138,8 @@ DESCRIPTION
 DESCRIPTION
 
     The dump command writes the geometry of an isosurface, isomesh,
-    or isodot object to a simple text file. Each line contains one
-    vertex.
+    isodot, or map object to a simple text file. Each line contains one
+    vertex in case of representations, or one grid point in case of a map.
 
     For surface objects, XYZ coordinates and the normal are exported.
     Three lines make one triangle (like GL_TRIANGLES).
@@ -148,7 +148,10 @@ DESCRIPTION
     The vertices form line strips (like GL_LINE_STRIP), a blank
     line starts a new strip.
 
-    For dot objects, XYZ coordinates are exported. 
+    For dot objects, XYZ coordinates are exported.
+
+    For map objects, XYZ coordinates and the value at the point are
+    exported. This forms a grid map.
 
 USAGE
 
@@ -162,6 +165,8 @@ ARGUMENTS
 EXAMPLE
 
     fetch 1ubq, mymap, type=2fofc, async=0
+
+    dump gridmap.txt, mymap
 
     isosurface mysurface, mymap
     dump surfacegeometry.txt, mysurface
