@@ -14278,32 +14278,6 @@ CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType) {
 }
 
 /*========================================================================*/
-ObjectMap *ExecutiveFindObjectMapByName(PyMOLGlobals * G, const char *name)
-{
-  CObject *obj;
-
-  obj = ExecutiveFindObjectByName(G, name);
-  if(obj)
-    if(obj->type != cObjectMap)
-      obj = NULL;
-  return ((ObjectMap *) obj);
-}
-
-
-/*========================================================================*/
-ObjectMolecule *ExecutiveFindObjectMoleculeByName(PyMOLGlobals * G, const char *name)
-{
-  CObject *obj;
-
-  obj = ExecutiveFindObjectByName(G, name);
-  if(obj)
-    if(obj->type != cObjectMolecule)
-      obj = NULL;
-  return ((ObjectMolecule *) obj);
-}
-
-
-/*========================================================================*/
 Block *ExecutiveGetBlock(PyMOLGlobals * G)
 {
   CExecutive *I = G->Executive;

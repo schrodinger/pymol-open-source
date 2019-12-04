@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 #include"PyMOLObject.h"
 #include"ObjectMolecule.h"
-#include"ObjectMap.h"
+#include"Field.h"
 
 #include"Ortho.h"
 #include"Word.h"
@@ -271,7 +271,20 @@ void ExecutiveUpdateObjectSelection(PyMOLGlobals * G, CObject * obj);
 void ExecutiveManageSelection(PyMOLGlobals * G, const char *name);
 Block *ExecutiveGetBlock(PyMOLGlobals * G);
 CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, const char *name);
-ObjectMolecule *ExecutiveFindObjectMoleculeByName(PyMOLGlobals * G, const char *name);
+
+/**
+ * Typed version of `ExecutiveFindObjectByName`
+ * @param name Object name
+ * @return NULL if object can't be found or has the wrong type
+ */
+template <typename T> T* ExecutiveFindObject(PyMOLGlobals* G, const char* name)
+{
+  return dynamic_cast<T*>(ExecutiveFindObjectByName(G, name));
+}
+
+#define ExecutiveFindObjectMoleculeByName ExecutiveFindObject<ObjectMolecule>
+#define ExecutiveFindObjectMapByName ExecutiveFindObject<ObjectMap>
+
 CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType);
 int ExecutiveIterateObject(PyMOLGlobals * G, CObject ** obj, void **hidden);
 void ExecutiveDelete(PyMOLGlobals * G, const char *name);
@@ -469,8 +482,6 @@ int ExecutiveGetSession(PyMOLGlobals * G, PyObject * dict, const char *names, in
                         int quiet);
 int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session, int partial_restore,
                         int quiet);
-
-ObjectMap *ExecutiveFindObjectMapByName(PyMOLGlobals * G, const char *name);
 
 int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
                           int state, int quiet, int updates);
