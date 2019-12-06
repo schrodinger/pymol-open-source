@@ -7517,7 +7517,9 @@ void CGORenderGLPicking(CGO * I, RenderInfo *info, PickContext * context, CSetti
             pickcolors_are_set_ptr = &pickcolors_are_set;
 
           // TODO remove `pickcolorsset` fields from CGOs
-          assert(reset_colors || *pickcolors_are_set_ptr);
+          // This assert can fail during "Roving Detail" demo. However, I still
+          // question the need of the `pickcolorsset` fields.
+          // assert(reset_colors || *pickcolors_are_set_ptr);
 
           if (reset_colors || !*pickcolors_are_set_ptr){ // only if picking info is invalid
             int nverts = 0;
