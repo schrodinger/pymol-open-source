@@ -17,20 +17,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_SculptCache
 #define _H_SculptCache
 
-#include"Sculpt.h"
-
-typedef struct SculptCacheEntry {
-  int rest_type;
-  int id0, id1, id2, id3;
-  float value;
-  int next;
-} SculptCacheEntry;
-
-struct _CSculptCache {
-  int NCached;
-  std::vector<int> Hash;
-  SculptCacheEntry *List;
-};
+#include "PyMOLGlobals.h"
 
 int SculptCacheInit(PyMOLGlobals * G);
 void SculptCacheFree(PyMOLGlobals * G);

@@ -14,116 +14,76 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include"os_python.h"
+
+#include <unordered_map>
+
 #include"os_predef.h"
-#include"os_std.h"
-#include"os_gl.h"
-#include"OOMac.h"
-#include"Feedback.h"
-#include"Util.h"
 #include"SculptCache.h"
 
-#define CACHE_HASH_SIZE 65536
+struct SculptCacheKey {
+  int rest_type;
+  int id0, id1, id2, id3;
 
-#define cache_hash(d,e,f,g) \
-((((d)      )&0x003F)|\
- (((e+g)<< 6)&0x0FC0)|\
- (((f-g)<<12)&0xF000))
-
-static void SculptCacheCheck(PyMOLGlobals * G)
-{
-  CSculptCache *I = G->SculptCache;
-  if(I->Hash.empty()) {
-    I->Hash = std::vector<int>(CACHE_HASH_SIZE);
+  bool operator==(const SculptCacheKey& other) const noexcept
+  {
+    return rest_type == other.rest_type && id0 == other.id0 &&
+           id1 == other.id1 && id2 == other.id2 && id3 == other.id3;
   }
-}
+
+  struct Hash {
+    size_t operator()(const SculptCacheKey& key) const noexcept
+    {
+      // Notes: id0 - id3 are unique atom indices which for typical use cases
+      // (sculpting of small systems) don't exceed 16bit. Also, id2 is zero
+      // for distance restraints, and id3 is zero for distance and angle
+      // restraints. rest_type is currently <= 10.
+      constexpr auto N = sizeof(size_t);
+      return size_t(key.id0) << (4 * N) ^ size_t(key.id1) ^
+             size_t(key.id2) << (6 * N) ^ size_t(key.id3) << (2 * N) ^
+             size_t(key.id2) >> (2 * N) ^ size_t(key.rest_type) << (3 * N);
+    }
+  };
+};
+
+struct _CSculptCache {
+  std::unordered_map<SculptCacheKey, float, SculptCacheKey::Hash> m_data;
+};
 
 int SculptCacheInit(PyMOLGlobals * G)
 {
   G->SculptCache = new CSculptCache();
-  auto I = G->SculptCache;
-  I->List = VLAlloc(SculptCacheEntry, 16);
-  I->NCached = 1;
   return 1;
 }
 
 void SculptCachePurge(PyMOLGlobals * G)
 {
   CSculptCache *I = G->SculptCache;
-  I->Hash.clear();
-  I->NCached = 1;
+  I->m_data.clear();
 }
 
 void SculptCacheFree(PyMOLGlobals * G)
 {
-  CSculptCache *I = G->SculptCache;
-  VLAFreeP(I->List);
-  DeleteP(I);
+  delete G->SculptCache;
+  G->SculptCache = nullptr;
 }
 
 int SculptCacheQuery(PyMOLGlobals * G, int rest_type, int id0, int id1, int id2, int id3,
                      float *value)
 {
   CSculptCache *I = G->SculptCache;
-  int *v, i;
-  SculptCacheEntry *e;
-  int found = false;
-  if(I->Hash.empty())
-    SculptCacheCheck(G);
-  if(!I->Hash.empty()) {
-    v = I->Hash.data() + cache_hash(id0, id1, id2, id3);
-    i = (*v);
-    while(i) {
-      e = I->List + i;
-      if((e->rest_type == rest_type) && (e->id0 == id0) && (e->id1 == id1)
-         && (e->id2 == id2) && (e->id3 == id3)) {
-        found = true;
-        *value = e->value;
-        break;
-      }
-      i = e->next;
-    }
+  SculptCacheKey key = {rest_type, id0, id1, id2, id3};
+  auto it = I->m_data.find(key);
+  if (it != I->m_data.end()) {
+    *value = it->second;
+    return true;
   }
-  return (found);
+  return false;
 }
 
 void SculptCacheStore(PyMOLGlobals * G, int rest_type, int id0, int id1, int id2, int id3,
                       float value)
 {
   CSculptCache *I = G->SculptCache;
-  int *v, i;
-  SculptCacheEntry *e;
-  int found = false;
-  if(I->Hash.empty())
-    SculptCacheCheck(G);
-  if(!I->Hash.empty()) {
-    v = I->Hash.data() + cache_hash(id0, id1, id2, id3);
-    i = (*v);
-    while(i) {
-      e = I->List + i;;
-      if((e->rest_type == rest_type) && (e->id0 == id0) && (e->id1 == id1)
-         && (e->id2 == id2) && (e->id3 == id3)) {
-        e->value = value;
-        found = true;
-        break;
-      }
-      i = e->next;
-    }
-    if(!found) {
-      VLACheck(I->List, SculptCacheEntry, I->NCached);
-      v = I->Hash.data() + cache_hash(id0, id1, id2, id3);
-      e = I->List + I->NCached;
-      e->next = *v;
-      *v = I->NCached;          /* become new head of list */
-
-      e->rest_type = rest_type;
-      e->id0 = id0;
-      e->id1 = id1;
-      e->id2 = id2;
-      e->id3 = id3;
-      e->value = value;
-
-      I->NCached++;
-    }
-  }
+  SculptCacheKey key = {rest_type, id0, id1, id2, id3};
+  I->m_data[key] = value;
 }
