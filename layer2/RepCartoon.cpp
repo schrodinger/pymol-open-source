@@ -56,8 +56,20 @@ public:
 typedef struct RepCartoon {
   Rep R;                        /* must be first! */
   CGO *ray, *std, *preshader;
+
+  /**
+   * Free the preshader CGO or move to another owner.
+   * @post preshader == NULL
+   */
+  void disposePreshaderCGO() {
+    if (!ray) {
+      std::swap(ray, preshader);
+    } else {
+      CGOFree(preshader);
+    }
+  }
+
   char *LastVisib;
-  unsigned char renderWithShaders, hasTransparency;
 } RepCartoon;
 
 #include"ObjectMolecule.h"
@@ -67,7 +79,7 @@ typedef struct RepCartoon {
 static
 void RepCartoonFree(RepCartoon * I)
 {
-  if (I->ray != I->preshader)
+  assert(I->ray != I->preshader);
     CGOFree(I->preshader);
   CGOFree(I->ray);
   CGOFree(I->std);
@@ -85,6 +97,10 @@ void RepCartoonFree(RepCartoon * I)
  */
 static
 CGO *CGOAddTwoSidedBackfaceSpecialOps(PyMOLGlobals *G, CGO *cgo){
+  if (!CGOHasOperations(cgo)) {
+    return cgo;
+  }
+
   CGO *tmpCGO = CGONew(G);
   CGOSpecial(tmpCGO, ENABLE_BACK_FACES_IF_NOT_TWO_SIDED);
   CGOAppendNoStop(tmpCGO, cgo);
@@ -118,13 +134,8 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
                               SettingGetGlobal_b(G, cSetting_render_as_cylinders) && 
                               CGOHasCylinderOperations(I->preshader);
 
- if (I->std && 
-      (use_shaders ^ I->renderWithShaders)){
-    // if renderWithShaders doesn't match use_shader, clear CGO and re-generate
-    CGOFree(I->std);
-    I->std = 0;
-  }
- I->hasTransparency = 0;
+  assert(!I->std);
+
   if (use_shaders){
     CGO *convertcgo = NULL, *tmpCGO = NULL, *tmp2CGO = NULL;
     if (((alpha < 1.f) || hasAtomLevelAlpha) && 
@@ -152,7 +163,6 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
       CGOFreeWithoutVBOs(tmpCGO);
 
       I->std = tmp2CGO;
-      I->hasTransparency = 1;
     } else {
       CGO *leftOverCGO = NULL;
       if (has_cylinders_to_optimize && G->ShaderMgr->Get_CylinderShader(info->pass, 0)){
@@ -186,7 +196,7 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
         } else {
           CGOFree(leftOverAfterSpheresCGO);
         }
-        if (leftOverCGO!=I->ray && leftOverCGO!=I->preshader){
+        if (leftOverCGO != I->preshader) {
           CGOFree(leftOverCGO);
         }
         if (leftOverAfterSpheresCGO)
@@ -200,7 +210,7 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
       CHECKOK(ok, leftOverCGOSimplified);
       leftOverCGOCombined = CGOCombineBeginEnd(leftOverCGOSimplified, 0);
       CGOFree(leftOverCGOSimplified);
-      if (leftOverCGO!=I->ray && leftOverCGO!=I->preshader){
+      if (leftOverCGO != I->preshader) {
         CGOFree(leftOverCGO);
       }
       // Convert all DrawArrays and Geometry to VBOs 
@@ -214,6 +224,7 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
       tmpCGO = NULL;
       I->std = CGOAddTwoSidedBackfaceSpecialOps(G, convertcgo);
     }
+    I->std->use_shader = true;
   } else {
     if (ok){
       auto simplifiedCGO = CGOSimplify(I->preshader, 0);
@@ -233,77 +244,52 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
       }
     }
   }
-  if(I->preshader && (I->ray!=I->preshader)){
-    CGOFree(I->preshader);
-  }
-  I->preshader = NULL;
-  I->renderWithShaders = use_shaders;
+  I->disposePreshaderCGO();
 
   return ok;
 }
 
 static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 {
-  CRay *ray = info->ray;
-  auto pick = info->pick;
   PyMOLGlobals *G = I->R.G;
-  int ok = true;
 
-  if (!ray && I->preshader) {
-    ok &= RepCartoonCGOGenerate(I, info);
-  }
-
-  if(ray) {
+  if (info->ray) {
 #ifndef _PYMOL_NO_RAY
-    int try_std = false;
-    PRINTFD(G, FB_RepCartoon)
-      " RepCartoonRender: rendering raytracable...\n" ENDFD;
+    CGO* raycgo = I->ray ? I->ray : I->preshader;
 
-    if(I->ray){
-      int rok = CGORenderRay(I->ray, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
-      if (!rok){
-        if (I->ray == I->preshader)
-          I->preshader = NULL;
+    if (raycgo && !CGORenderRay(raycgo, info->ray, info, nullptr, nullptr,
+                      I->R.cs->Setting, I->R.obj->Setting)) {
+      PRINTFB(G, FB_RepCartoon, FB_Warnings)
+        " %s-Warning: ray rendering failed\n", __func__ ENDFB(G);
 	CGOFree(I->ray);
-	try_std = true;
       }
-    } else {
-      try_std = true;
-    }
-    if(try_std && I->std){
-      ok &= CGORenderRay(I->std, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
-      if (!ok){
-	CGOFree(I->std);
-      }
-    }
 #endif
-  } else if(G->HaveGUI && G->ValidContext) {
-    int use_shader;
-    use_shader = SettingGetGlobal_b(G, cSetting_cartoon_use_shader) &&
-                 SettingGetGlobal_b(G, cSetting_use_shaders);
-    if(pick) {
-      if(I->std) {
-        I->std->use_shader = use_shader;
+    return;
+    }
+
+  if (G->HaveGUI && G->ValidContext) {
+    if (I->preshader) {
+      assert(!I->std);
+
+      bool ok = RepCartoonCGOGenerate(I, info);
+
+      if (!ok){
+        I->disposePreshaderCGO();
+        I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
+        I->R.cs->Active[cRepCartoon] = false;
+      }
+    }
+
+    if (I->std && CGOHasOperations(I->std)) {
+      assert(!I->preshader);
+
+      if (info->pick) {
         CGORenderGLPicking(I->std, info, &I->R.context,
                            I->R.cs->Setting, I->R.obj->Setting);
-      }
     } else {
-        PRINTFD(G, FB_RepCartoon)
-          " RepCartoonRender: rendering GL...\n" ENDFD;
-
-        if(ok && I->std){
-	  I->std->use_shader = use_shader;
           CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
 	}
     }
-  }
-  if (!ok || !I->ray || !CGOHasOperations(I->ray)){
-    if (I->ray == I->preshader)
-      I->preshader = NULL;
-    CGOFree(I->ray);
-    CGOFree(I->std);
-    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
-    I->R.cs->Active[cRepCartoon] = false;
   }
 }
 
@@ -3866,27 +3852,25 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     }
   }
 
-  I->ray = GenerateRepCartoonCGO(cs, obj, &ndata, na_strands_as_cylinders, pv, nAt, tv, pvo, dl, car, seg, at, nuc_flag,
-                                 putty_vals, alpha);
+    CGO* preshadercgo =
+        GenerateRepCartoonCGO(cs, obj, &ndata, na_strands_as_cylinders, pv, nAt,
+            tv, pvo, dl, car, seg, at, nuc_flag, putty_vals, alpha);
 
-  if (I->ray && I->ray->has_begin_end){
-    CGOCombineBeginEnd(&I->ray);
+    if (preshadercgo && preshadercgo->has_begin_end) {
+      CGOCombineBeginEnd(&preshadercgo);
   }
 
     if (I->preshader) {
-      CGOAppend(I->preshader, I->ray);
-      CGOFree(I->ray);
+      I->preshader->free_append(preshadercgo);
     } else {
-      I->preshader = I->ray;
+      I->preshader = preshadercgo;
     }
   } while (ndata.next_alt && cartoon_all_alt);
 
-  I->ray = I->preshader;
-
-  CHECKOK(ok, I->ray);
+  CHECKOK(ok, I->preshader);
 
   ok &= !G->Interrupt;
-  if (!ok){
+  if (!ok || !CGOHasOperations(I->preshader)) {
     /* cannot generate RepCartoon */
     RepCartoonFree(I);
     I = NULL;
