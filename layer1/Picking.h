@@ -146,6 +146,10 @@ public:
   //! Invalidate identifiers
   void invalidate()
   {
+    if (!m_valid) {
+      // protect against calls during rendering
+      return;
+    }
     m_identifiers.clear();
     m_valid = false;
   }
