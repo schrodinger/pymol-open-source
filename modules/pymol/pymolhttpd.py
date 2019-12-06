@@ -395,12 +395,17 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             return 'text/plain'
 
+    def send_custom_headers(self):
+        for item in getattr(self.server, 'custom_headers', ()):
+            self.send_header(item[0], item[1])
+
     def send_error(self,errcode,errmsg):
         self.send_response(errcode)
         self.send_header('Content-type', 'text/plain')
         self.send_header('Pragma','no-cache')
         self.send_header('Cache-Control','no-cache, must-revalidate')
         self.send_header('Expires','Sat, 10 Jan 2008 01:00:00 GMT')
+        self.send_custom_headers()
         self.end_headers()
         self.wfile_write("PyMOL-HTTPd-Error: "+errmsg+"\n")
 
@@ -410,6 +415,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_header('Pragma','no-cache')
         self.send_header('Cache-Control','no-cache, must-revalidate')
         self.send_header('Expires','Sat, 10 Jan 2008 01:00:00 GMT')
+        self.send_custom_headers()
         self.end_headers()
 
     def echo_args(self):
@@ -447,7 +453,10 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 class PymolHttpd:
 
-    def __init__(self, port=8080, root=None, logging=1, wrap_natives=0, self_cmd=None):
+    def __init__(self, port=8080, root=None, logging=1, wrap_natives=0, self_cmd=None, headers=()):
+        '''
+        :param headers: A list or tuple of (key, value) header items to send with each response.
+        '''
         if self_cmd is None:
             # fallback on the global singleton PyMOL API
             try:
@@ -479,6 +488,7 @@ class PymolHttpd:
         self.server = BaseHTTPServer.HTTPServer(('', self.port),
                                                 _PymolHTTPRequestHandler)
         self.server.wrap_natives = wrap_natives
+        self.server.custom_headers = headers
 
         if self.port == 0:
             self.port = self.server.socket.getsockname()[1]

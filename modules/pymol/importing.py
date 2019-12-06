@@ -550,6 +550,8 @@ SEE ALSO
         else:
             import urllib.request as urllib
 
+        import shlex
+
         try:
             from .pymolhttpd import PymolHttpd
             browser_flag = 0
@@ -559,6 +561,7 @@ SEE ALSO
             root = None
             port = 0
             wrap_native = 0
+            headers = []
             if '://' in fname:
                 lines = urllib.urlopen(fname).readlines()
             else:
@@ -573,6 +576,11 @@ SEE ALSO
                             if len(input)>1:
                                 port = int(input[1].strip())
                                 launch_flag = 1
+                        elif keyword == 'header':
+                            a = shlex.split(input[1])
+                            if len(a) != 3 or a[0] != 'add' or a[1].endswith(':'):
+                                raise ValueError('header command must be: header add Some-Key "some value"')
+                            headers.append(a[1:])
                         elif keyword == 'logging':
                             if len(input)>1:
                                 logging = int(input[1].strip())
@@ -614,7 +622,7 @@ SEE ALSO
                         else:
                             print("Error: unrecognized input:  %s"%str(input))
             if launch_flag:
-                server = PymolHttpd(port,root,logging,wrap_native)
+                server = PymolHttpd(port,root,logging,wrap_native,headers=headers)
                 if port == 0:
                     port = server.port # get the dynamically assigned port number
                 server.start()

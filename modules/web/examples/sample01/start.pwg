@@ -1,2 +1,3 @@
 root $PYMOL_PATH/modules/web/examples/sample01/htdocs
+header add Access-Control-Allow-Origin *
 browser
