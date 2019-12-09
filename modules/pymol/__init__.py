@@ -166,6 +166,12 @@ def get_version_message(v=None):
     p += "Incentive Product" if invocation.options.incentive_product else \
          "Open-Source"
 
+    if v[4]:
+        p += ' (' + v[4][:10] + ')'
+
+    if v[3]:
+        p += ', ' + time.strftime('%Y-%m-%d', time.localtime(v[3]))
+
     return p
 
 def guess_pymol_path():
