@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include "Lex.h"
 #include "CGO.h"
 #include "ObjectCGO.h"
+#include "Util.h"
 
 #ifndef _PYMOL_VMD_PLUGINS
 int PlugIOManagerInit(PyMOLGlobals * G)
@@ -587,6 +588,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   int *bondtype, nbondtypes;
   char **bondtypename;
   int auto_show = RepGetAutoShowMask(G);
+  auto literal_names = SettingGet<bool>(G, cSetting_pdb_literal_names);
 
   memset(&timestep, 0, sizeof(molfile_timestep_t));
 
@@ -626,6 +628,13 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   for (int i = 0; i < natoms; i++) {
     AtomInfoType *ai = I->AtomInfo + i;
     molfile_atom_t *a = atoms + i;
+
+    if (!literal_names) {
+      UtilCleanStr(a->segid);
+      UtilCleanStr(a->chain);
+      UtilCleanStr(a->resname);
+      UtilCleanStr(a->name);
+    }
 
     ai->rank = i;
     ai->id = i + 1;
