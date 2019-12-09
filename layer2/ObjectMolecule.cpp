@@ -4723,6 +4723,9 @@ void ObjectMoleculePurge(ObjectMolecule * I)
     for(a = 0; a < I->NCSet; a++)
       if(I->CSet[a])
 	CoordSetAdjustAtmIdx(I->CSet[a], oldToNew, I->NAtom);
+    if (I->CSTmpl) {
+      CoordSetAdjustAtmIdx(I->CSTmpl, oldToNew, I->NAtom);
+    }
   }
 
   PRINTFD(I->G, FB_ObjectMolecule)
