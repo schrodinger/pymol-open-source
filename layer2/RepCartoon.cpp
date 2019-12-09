@@ -37,9 +37,8 @@ Z* -------------------------------------------------------------------
 #include "AtomIterators.h"
 
 class CCInOut {
-  // skip c++11 initialization, this is Calloc'd
-  signed char cc_in; // { 0 };
-  signed char cc_out; // { 0 };
+  signed char cc_in { cCartoon_auto /* 0 */ };
+  signed char cc_out { 0 };
 
 public:
   signed char getCCIn() const { return cc_in; }
@@ -80,7 +79,7 @@ static
 void RepCartoonFree(RepCartoon * I)
 {
   assert(I->ray != I->preshader);
-    CGOFree(I->preshader);
+  CGOFree(I->preshader);
   CGOFree(I->ray);
   CGOFree(I->std);
   FreeP(I->LastVisib);
@@ -261,11 +260,11 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
                       I->R.cs->Setting, I->R.obj->Setting)) {
       PRINTFB(G, FB_RepCartoon, FB_Warnings)
         " %s-Warning: ray rendering failed\n", __func__ ENDFB(G);
-	CGOFree(I->ray);
-      }
+      CGOFree(I->ray);
+    }
 #endif
     return;
-    }
+  }
 
   if (G->HaveGUI && G->ValidContext) {
     if (I->preshader) {
@@ -273,7 +272,7 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 
       bool ok = RepCartoonCGOGenerate(I, info);
 
-      if (!ok){
+      if (!ok) {
         I->disposePreshaderCGO();
         I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
         I->R.cs->Active[cRepCartoon] = false;
@@ -286,9 +285,9 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
       if (info->pick) {
         CGORenderGLPicking(I->std, info, &I->R.context,
                            I->R.cs->Setting, I->R.obj->Setting);
-    } else {
-          CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
-	}
+      } else {
+        CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+      }
     }
   }
 }
@@ -1011,14 +1010,14 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                     g1p = avg;
                   }
 
-		  {
+                  {
                     const float *color1, *color2;
-		    if (ladder_color >= 0) {
-		      color1 = color2 = ColorGet(G, ladder_color);
-		    } else {
-		      color1 = ColorGet(G, g1_ai->color);
-		      color2 = ColorGet(G, g2_ai->color);
-		    }
+                    if (ladder_color >= 0) {
+                      color1 = color2 = ColorGet(G, ladder_color);
+                    } else {
+                      color1 = ColorGet(G, g1_ai->color);
+                      color2 = ColorGet(G, g2_ai->color);
+                    }
                     CGOPickColor(cgo, g1, g1_ai->masked ? cPickableNoPick : cPickableAtom);
                     Pickable pickcolor2 = { g2, g2_ai->masked ? cPickableNoPick : cPickableAtom };
                     float axis[3];
@@ -1068,14 +1067,14 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                   }
 
                   if((sug >= 0) && (bas >= 0)) {
-		    {
+                    {
                       const float *color1, *color2;
-		      if (ladder_color >= 0) {
-			color1 = color2 = ColorGet(G, ladder_color);
-		      } else {
-			color1 = ColorGet(G, sug_ai->color);
-			color2 = ColorGet(G, bas_ai->color);
-		      }
+                      if (ladder_color >= 0) {
+                        color1 = color2 = ColorGet(G, ladder_color);
+                      } else {
+                        color1 = ColorGet(G, sug_ai->color);
+                        color2 = ColorGet(G, bas_ai->color);
+                      }
                       CGOPickColor(cgo, sugar_at, sug_ai->masked ? cPickableNoPick : cPickableAtom);
                       Pickable pickcolor2 = { base_at, bas_ai->masked ? cPickableNoPick : cPickableAtom };
                       float axis[3];
@@ -1147,14 +1146,14 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                     v_outer = outer;
                   }
                 }
-		{
+                {
                   const float *color1, *color2;
-		  if (ladder_color >= 0) {
-		    color1 = color2 = ColorGet(G, ladder_color);
-		  } else {
-		    color1 = ColorGet(G, sug_ai->color);
-		    color2 = ColorGet(G, bas_ai->color);
-		  }
+                  if (ladder_color >= 0) {
+                    color1 = color2 = ColorGet(G, ladder_color);
+                  } else {
+                    color1 = ColorGet(G, sug_ai->color);
+                    color2 = ColorGet(G, bas_ai->color);
+                  }
                   
                   CGOPickColor(cgo, sugar_at, sug_ai->masked ? cPickableNoPick : cPickableAtom);
                   Pickable pickcolor2 = { base_at, bas_ai->masked ? cPickableNoPick : cPickableAtom };
@@ -1257,7 +1256,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
           }
 
           if(n_atom) {
-	    CGOColorv(cgo, avg_col);
+            CGOColorv(cgo, avg_col);
             CGOPickColor(cgo, atix[0], ai_i[0]->masked ? cPickableNoPick : cPickableAtom);
             CGOSphere(cgo, avg, radius);
           }
@@ -1337,13 +1336,13 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
               CGONormalv(cgo, n_up[i]);
               if(ring_color < 0)
                 CGOColorv(cgo, col[i]);
-	      //              CGOPickColor(cgo, atix[i], cPickableAtom);
+              //              CGOPickColor(cgo, atix[i], cPickableAtom);
               CGOVertexv(cgo, v0t);
               CGONormalv(cgo, n_up[ii]);
               if(ring_color < 0)
                 CGOColorv(cgo, col[ii]);
               CGOPickColor(cgo, atix[ii], ai_i[ii]->masked ? cPickableNoPick : cPickableAtom);
-	      //              CGOPickColor(cgo, atix[ii], cPickableAtom);
+              //              CGOPickColor(cgo, atix[ii], cPickableAtom);
               CGOVertexv(cgo, v1t);
 
               if(ring_mode > 1) {
@@ -1351,7 +1350,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
 
                 if(ring_color < 0)
                   CGOColorv(cgo, col[i]);
-		//                CGOPickColor(cgo, atix[i], cPickableAtom);
+                //                CGOPickColor(cgo, atix[i], cPickableAtom);
                 CGOVertexv(cgo, v0t);
                 CGOVertexv(cgo, v0b);
                 if(ring_color < 0)
@@ -1385,21 +1384,21 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
             if((alpha != 1.0F) || (ring_alpha != alpha))
               CGOAlpha(cgo, alpha);
 
-	    {
-	      float ring_width_for_mode = ring_width;
-	      if (ring_mode == 3){
-		ring_width_for_mode = 3.f * ring_width;
-	      }
+            {
+              float ring_width_for_mode = ring_width;
+              if (ring_mode == 3){
+                ring_width_for_mode = 3.f * ring_width;
+              }
               for(i = 0; i < n_atom; i++) {
                 ii = i + 1;
-		{
+                {
                   const float *color1, *color2;
-		  if (ring_color < 0) {
-		    color1 = col[i];
-		    color2 = col[ii];
-		  } else {
-		    color1 = color2 = color;
-		  }
+                  if (ring_color < 0) {
+                    color1 = col[i];
+                    color2 = col[ii];
+                  } else {
+                    color1 = color2 = color;
+                  }
                   CGOPickColor(cgo, atix[i], ai_i[i]->masked ? cPickableNoPick : cPickableAtom);
                   Pickable pickcolor2 = { atix[ii], ai_i[ii]->masked ? cPickableNoPick : cPickableAtom };
                   float axis[3];
@@ -3858,7 +3857,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
     if (preshadercgo && preshadercgo->has_begin_end) {
       CGOCombineBeginEnd(&preshadercgo);
-  }
+    }
 
     if (I->preshader) {
       I->preshader->free_append(preshadercgo);
