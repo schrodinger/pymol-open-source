@@ -25,26 +25,30 @@ Z* -------------------------------------------------------------------
 #include"View.h"
 
 struct CMovieModal {
-  int stage;
+  int stage = 0;
 
   /* input parameters */
   std::string prefix;
-  int save, start, stop, missing_only;
-  int modal, mode;
+  int save = 0;
+  int start = 0;
+  int stop = 0;
+  int missing_only = 0;
+  int modal = 0;
+  int mode = 0;
 
-  int width;
-  int height;
+  int width = 0;
+  int height = 0;
 
   /* job / local parameters */
-  int frame;
-  int image;
-  int nFrame;
-  double accumTiming;
-  double timing;
-  int complete;
-  int file_missing;
-  int format;
-  int quiet;
+  int frame = 0;
+  int image = 0;
+  int nFrame = 0;
+  double accumTiming = 0;
+  double timing = 0;
+  int complete = 0;
+  int file_missing = 0;
+  int format = 0;
+  int quiet = 0;
   std::string fname;
 };
 

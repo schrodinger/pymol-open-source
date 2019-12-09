@@ -823,7 +823,7 @@ int MoviePNG(PyMOLGlobals * G, const char* prefix, int save, int start,
 
   CMovieModal *M = &I->Modal;
 
-  UtilZeroMem(M, sizeof(CMovieModal));
+  *M = CMovieModal();
 
   mode = SceneValidateImageMode(G, mode, width || height);
 
