@@ -33,3 +33,10 @@ class TestPYMOL2727(testing.PyMOLTestCase):
         seq = self._get_seq('segi B')
         self.assertEqual(seq, 'VHLTPEEKSAVTALWGKVNVDEVGGEALGRLLVVYPWTQRFFESFGDLSTPDAVMGNPKVKAHGKKVLGAFSDGLAHLDNLKGTFATLSELHCDKLHVDPENFRLLGNVLVCVLAHHFGKEFTPPVQAAYQKVVAGVANALAHKYH')
         
+    @testing.requires_version('2.4')
+    def testMissingResIns(self):
+        # label_seq_id 10-19 can't be inserted (without insertion codes)
+        cmd.load(self.datafile('1hbb_pdbx_seq_one_letter_code-ins.cif'), '1hbb')
+
+        seq = self._get_seq('segi A')
+        self.assertEqual(seq, 'VLSPADKTNHAGEYGAEALERMFLSFPTTKTYFPHFDLSHGSAQVKGHGKKVADALTNAVAHVDDMPNALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLASVSTVLTSKYR')
