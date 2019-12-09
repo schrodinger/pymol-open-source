@@ -1279,6 +1279,11 @@ static bool read_entity_poly(PyMOLGlobals * G, const cif_data * data, CifContent
 
 /*
  * Sub-routine for `add_missing_ca`
+ *
+ * @param i_ref Atom index of the next observed residue if `!at_terminus`,
+ * otherwise of the last observed residue in this chain.
+ * @param at_terminus True if adding residues beyond the last observed residue
+ * in this chain.
  */
 static void add_missing_ca_sub(PyMOLGlobals * G,
     pymol::vla<AtomInfoType>& atInfo,
@@ -1286,15 +1291,28 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
     int& atomCount,
     const int i_ref, int resv,
     const seqvec_t * current_seq,
-    const char * entity_id)
+    const char * entity_id,
+    bool at_terminus = true)
 {
   if (!atInfo[i_ref].temp1)
     return;
+
+  if (current_resv == 0) {
+    at_terminus = true;
+  }
 
   for (++current_resv; current_resv < resv; ++current_resv) {
     const char * resn = current_seq->get(current_resv);
     if (!resn)
       continue;
+
+    int added_resv = current_resv + (atInfo[i_ref].resv - atInfo[i_ref].temp1);
+
+    if (!at_terminus && (i_ref > 0 && added_resv <= atInfo[i_ref - 1].resv ||
+                            added_resv >= atInfo[i_ref].resv)) {
+      // don't use insertion codes
+      continue;
+    }
 
     AtomInfoType *ai = atInfo.check(atomCount);
 
@@ -1308,7 +1326,7 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
     LexAssign(G, ai->chain, atInfo[i_ref].chain);
 
     ai->temp1 = current_resv;
-    ai->resv = current_resv + (atInfo[i_ref].resv - atInfo[i_ref].temp1);
+    ai->resv = added_resv;
 
     AtomInfoAssignParameters(G, ai);
     AtomInfoAssignColors(G, ai);
@@ -1371,7 +1389,7 @@ static bool add_missing_ca(PyMOLGlobals * G,
       add_missing_ca_sub(G,
           atInfo, current_resv, atomCount,
           i, atInfo[i].temp1,
-          current_seq, entity_id);
+          current_seq, entity_id, false);
     }
   }
 
