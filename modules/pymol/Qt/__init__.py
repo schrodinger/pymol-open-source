@@ -64,7 +64,7 @@ if not PYQT_NAME:
 import os
 
 # qtpy compatibility
-os.environ['QT_API'] = PYQT_NAME
+os.environ['QT_API'] = PYQT_NAME.lower()
 
 if QtWidgets is None:
     QtWidgets = QtGui
