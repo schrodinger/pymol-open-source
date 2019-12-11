@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -13,6 +14,7 @@
 #include <sstream>
 
 #include "pymol/type_traits.h"
+#include "pymol/zstring_view.h"
 
 std::vector<std::string> strsplit(const std::string &s, char delim=0);
 
@@ -104,6 +106,18 @@ std::string string_format(const char (&fmt)[N], FmtArgs&&... fmtargs)
   static_assert(N > 0, "Format string must not be empty");
   return string_format_detail::string_format_impl(
       fmt, string_format_detail::fwdArgs(std::forward<FmtArgs>(fmtargs))...);
+}
+
+/**
+ * C++20's std::string::start_with
+ * @param str string whose contents will be checked
+ * @param pre candidate prefix string
+ * @return true if str begins with pre
+ *
+ */
+inline bool starts_with(pymol::zstring_view str, pymol::zstring_view pre)
+{
+  return str.starts_with(pre);
 }
 
 double pretty_f2d(float v);

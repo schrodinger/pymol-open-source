@@ -62,6 +62,7 @@
 #include "PlugIOManager.h"
 #include "MovieScene.h"
 #include "Lex.h"
+#include "SelectorDef.h"
 
 #ifdef _PYMOL_OPENVR
 #include "OpenVRMode.h"
@@ -2061,7 +2062,8 @@ void PyMOL_Start(CPyMOL * I)
   MovieScenesInit(G);
   WizardInit(G);                /* must come after ortho & scene */
   G->Movie = new CMovie(G);
-  SelectorInit(G);
+  G->SelectorMgr = new CSelectorManager();
+  G->Selector = new CSelector(G, G->SelectorMgr);
   SeqInit(G);
   SeekerInit(G);
   ButModeInit(G);
@@ -2131,7 +2133,8 @@ void PyMOL_Stop(CPyMOL * I)
   ControlFree(G);
   SeekerFree(G);
   SeqFree(G);
-  SelectorFree(G);
+  DeleteP(G->Selector);
+  DeleteP(G->SelectorMgr);
   DeleteP(G->Movie);
   SceneFree(G);
   MovieScenesFree(G);

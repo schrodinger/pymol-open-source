@@ -535,6 +535,7 @@ int ExecutiveSetOnOffBySele(PyMOLGlobals * G, const char *name, int onoff);
 int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_name);
 int ExecutiveSetDrag(PyMOLGlobals * G, const char *name, int quiet,int mode);
 int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int log);
+int ExecutiveGetActiveSeleName(PyMOLGlobals * G, std::string& name, int create_new, int log);
 int ExecutiveGetActiveSele(PyMOLGlobals * G);
 int ExecutiveGetActiveAlignmentSele(PyMOLGlobals * G);
 const char* ExecutiveGetActiveAlignment(PyMOLGlobals* G);

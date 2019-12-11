@@ -1767,12 +1767,7 @@ void EditorActivate(PyMOLGlobals * G, int state, int enable_bond)
     state = EditorGetEffectiveState(G, NULL, state);
     I->ActiveState = state;
 
-    if(0 && (I->NFrag > 1) && SettingGetGlobal_b(G, cSetting_editor_label_fragments)) {
-      /*      SelectorComputeFragPos(G,obj,I->ActiveState,I->NFrag,cEditorFragPref,&I->PosVLA); */
-      I->ShowFrags = true;
-    } else {
-      I->ShowFrags = false;
-    }
+    I->ShowFrags = false;
     if(SettingGetGlobal_b(G, cSetting_auto_hide_selections))
       ExecutiveHideSelections(G);
 
@@ -1851,7 +1846,7 @@ void EditorPrepareDrag(PyMOLGlobals * G, CObject * obj,
     I->DragSelection = sele;
     I->DragHaveBase = false;
     if(sele >= 0) {
-      char *sele_name = SelectorGetNameFromIndex(G, sele);
+      auto sele_name = SelectorGetNameFromIndex(G, sele);
       if(sele_name) {
         strcpy(I->DragSeleName, sele_name);
         if(SettingGetGlobal_b(G, cSetting_editor_auto_origin)) {

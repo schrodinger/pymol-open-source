@@ -10862,39 +10862,15 @@ void ObjectMoleculeGetAtomSeleLog(const ObjectMolecule * I, int index, char *buf
   }
 }
 
-void ObjectMoleculeGetAtomSeleFast(const ObjectMolecule * I, int index, char *buffer)
+std::string ObjectMoleculeGetAtomSeleFast(const ObjectMolecule* I, int index)
 {
-  WordType segi, chain, resi, name, alt;
+  auto G = I->G;
   auto* ai = I->AtomInfo + index;
-
-  if(ai->segi) {
-    strcpy(segi, "s;");
-    strcat(segi, LexStr(I->G, ai->segi));
-  } else {
-    strcpy(segi, "s;''");
-  }
-  if(ai->chain) {
-    strcpy(chain, "c;");
-    strcat(chain, LexStr(I->G, ai->chain));
-  } else {
-    strcpy(chain, "c;''");
-  }
-  sprintf(resi, "i;%d%c", ai->resv, ai->inscode);
-  if(ai->name) {
-    strcpy(name, "n;");
-    strcat(name, LexStr(I->G, ai->name));
-  } else {
-    strcpy(name, "n;''");
-  }
-  if(ai->alt[0]) {
-    strcpy(alt, "alt ");
-    strcat(alt, ai->alt);
-  } else {
-    strcpy(alt, "alt ''");
-  }
-  sprintf(buffer, "(%s&%s&%s&%s&%s&%s)", I->Name, segi, chain, resi, name, alt);
+  char inscodestr[2] = {ai->inscode, 0};
+  return pymol::string_format("(/'%s'/'%s'/'%s'/'%s'`%d%s/'%s'`'%s')", I->Name,
+      LexStr(G, ai->segi), LexStr(G, ai->chain), LexStr(G, ai->resn), ai->resv,
+      inscodestr, ai->name, ai->alt);
 }
-
 
 /*========================================================================*/
 int ObjectMolecule::getNFrame() const

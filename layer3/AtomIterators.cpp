@@ -55,7 +55,7 @@ void SeleAtomIterator::reset() {
 bool SeleAtomIterator::next() {
   CSelector *I = G->Selector;
 
-  while ((++a) < I->NAtom) {
+  while ((++a) < I->Table.size()) {
     atm = I->Table[a].atom;
     obj = I->Obj[I->Table[a].model];
 
@@ -111,7 +111,7 @@ void SeleCoordIterator::reset() {
 bool SeleCoordIterator::next() {
   CSelector *I = G->Selector;
 
-  for (a++; a < I->NAtom; a++) {
+  for (a++; a < I->Table.size(); a++) {
     obj = I->Obj[I->Table[a].model];
 
     if (isMultistate()) {

@@ -65,7 +65,7 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
 #define cSelectorUpdateTableEffectiveStates -3
 
 int SelectorIndexByName(PyMOLGlobals * G, const char *sele, int ignore_case=-1);
-char *SelectorGetNameFromIndex(PyMOLGlobals * G, int index);
+const char *SelectorGetNameFromIndex(PyMOLGlobals * G, int index);
 void SelectorFree(PyMOLGlobals * G);
 void SelectorFreeImpl(PyMOLGlobals * G, CSelector *I, short init2);
 void SelectorDelete(PyMOLGlobals * G, const char *sele);
@@ -157,13 +157,14 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present, int state_value,
 
 int SelectorPurgeObjectMembers(PyMOLGlobals * G, ObjectMolecule * obj);
 void SelectorDefragment(PyMOLGlobals * G);
-void SelectorSelectByID(PyMOLGlobals * G, const char *name, ObjectMolecule * obj, int *id,
-                        int n_id);
-void SelectorGetUniqueTmpName(PyMOLGlobals * G, char *name_buffer);
+
+/**
+ * Retrives unique selector name
+ * @return a unique string to identify the selection
+ */
+std::string SelectorGetUniqueTmpName(PyMOLGlobals * G);
 int SelectorIsAtomBondedToSele(PyMOLGlobals * G, ObjectMolecule * obj, int sele1atom,
                                int sele2);
-void SelectorComputeFragPos(PyMOLGlobals * G, ObjectMolecule * obj, int state, int n_frag,
-                            char *prefix, float **vla);
 
 int SelectorSetName(PyMOLGlobals * G, const char *new_name, const char *old_name);
 
@@ -172,7 +173,14 @@ ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals * G, int sele,
 ObjectMolecule *SelectorGetFastSingleObjectMolecule(PyMOLGlobals * G, int sele);
 MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int state,
                                             float cutoff, float **coord_vla);
-int SelectorNameIsKeyword(PyMOLGlobals * G, const char *name);
+
+/**
+ * Determines whether a string is a reserved keyword
+ * @param str string candidate
+ * @return true if the string is a reserved keyword
+ * @Note: case-insensitive
+ */
+bool SelectorNameIsKeyword(PyMOLGlobals * G, const char *name);
 
 int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
                                        int *vla1, int n1, int state1,

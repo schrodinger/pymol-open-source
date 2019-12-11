@@ -35,6 +35,7 @@ void UtilFillVLA(char **vla, ov_size * cc, char what, ov_size len);
 void UtilNCopy(char *dst, const char *src, ov_size n);        /* up to N-1 chars */
 void UtilNCopyToLower(char *dst, const char *src, ov_size n); /* up to N-1 chars */
 void UtilCleanStr(char *s);
+std::string UtilCleanStdStr(const std::string& s);
 void UtilStripANSIEscapes(char *s);
 void UtilStripANSIEscapes(std::string& str);
 int UtilCountStringVLA(char *vla);

@@ -14,6 +14,9 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#include <algorithm>
+#include <iterator>
+
 #include"os_predef.h"
 #include"os_std.h"
 #include"os_time.h"
@@ -208,6 +211,25 @@ void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
 			q--;
 		  }
 	 }
+}
+
+/**
+ * Removes unprintables and flanking whitespace
+ * @param s string to be cleaned
+ * @return whitespace-trimmed string with readable characters
+ */
+std::string UtilCleanStdStr(const std::string& s)
+{
+  std::string ret;
+
+  auto is_not_whitespace = [](char c) { return c > ' '; };
+  auto is_printable = [](char c) { return c >= ' '; };
+
+  auto leading = std::find_if(s.begin(), s.end(), is_not_whitespace);
+  auto trailing = std::find_if(s.rbegin(), s.rend(), is_not_whitespace);
+
+  std::copy_if(leading, trailing.base(), std::back_inserter(ret), is_printable);
+  return ret;
 }
 
 /*

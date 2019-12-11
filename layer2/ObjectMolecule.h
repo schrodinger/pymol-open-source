@@ -412,7 +412,15 @@ int ObjectMoleculeCheckBondSep(ObjectMolecule * I, int a0, int a1, int dist);
 int ObjectMoleculeGetPhiPsi(ObjectMolecule * I, int ca, float *phi, float *psi,
                             int state);
 void ObjectMoleculeGetAtomSele(const ObjectMolecule * I, int index, char *buffer);
-void ObjectMoleculeGetAtomSeleFast(const ObjectMolecule * I, int index, char *buffer);
+
+/**
+ * Retrives selection string of an Object Molecule's atom
+ * @param I ObjectMolecule whose info is retrieved
+ * @param index atom index of I whose info is retrieved
+ * @return selection string unique to the atom
+ */
+std::string ObjectMoleculeGetAtomSeleFast(const ObjectMolecule * I, int index);
+
 void ObjectMoleculeGetAtomSeleLog(const ObjectMolecule * I, int index, char *buffer, int quote);
 
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I);

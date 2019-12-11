@@ -66,6 +66,7 @@ typedef struct _CEditor CEditor;
 struct CExecutive;
 typedef struct _CSeeker CSeeker;
 struct CSelector;
+struct CSelectorManager;
 typedef struct _CTexture CTexture;
 typedef struct _CType CType;
 typedef struct _CMain CMain;
@@ -149,6 +150,7 @@ struct _PyMOLGlobals {
   CEditor *Editor;
   CExecutive *Executive;
   CSeeker *Seeker;
+  CSelectorManager* SelectorMgr;
   CSelector *Selector;
   CTexture *Texture;
   CType *Type;

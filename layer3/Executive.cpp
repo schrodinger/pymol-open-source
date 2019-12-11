@@ -3449,6 +3449,14 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int
   return result;
 }
 
+int ExecutiveGetActiveSeleName(PyMOLGlobals* G, std::string& name, int create_new, int log)
+{
+  ObjectNameType name_arg;
+  auto result = ExecutiveGetActiveSeleName(G, name_arg, create_new, log);
+  name = name_arg;
+  return result;
+}
+
 int ExecutiveFixChemistry(PyMOLGlobals * G, const char *s1, const char *s2, int invalidate, int quiet)
 {
   SelectorTmp tmpsele1(G, s1);

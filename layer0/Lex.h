@@ -9,6 +9,7 @@
 
 #include "PyMOLGlobals.h"
 #include "OVLexicon.h"
+#include "pymol/zstring_view.h"
 
 #define LexDec(G, i) OVLexicon_DecRef(G->Lexicon, i)
 #define LexInc(G, i) OVLexicon_IncRef(G->Lexicon, i)
@@ -25,8 +26,8 @@ inline const char * LexStr(PyMOLGlobals * G, const lexidx_t & i) {
  * Lookup or insert new string `s` into the global lexicon and return
  * it's numerical reference. Will always return 0 for the empty string.
  */
-inline lexidx_t LexIdx(PyMOLGlobals * G, const char * s) {
-  return (s && s[0]) ? OVLexicon_GetFromCString(G->Lexicon, s).word : 0;
+inline lexidx_t LexIdx(PyMOLGlobals * G, pymol::zstring_view s) {
+  return s && !s.empty() ? OVLexicon_GetFromCString(G->Lexicon, s.c_str()).word : 0;
 }
 
 /*
