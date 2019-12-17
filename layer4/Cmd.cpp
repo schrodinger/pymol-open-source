@@ -4891,22 +4891,17 @@ static PyObject *CmdGetAtomCoords(PyObject * self, PyObject * args)
   char *str1;
   int state;
   int quiet;
-  OrthoLineType s1;
-  float vertex[3];
-  int ok = false;
   API_SETUP_ARGS(G, self, args, "Osii", &self, &str1, &state, &quiet);
   APIEnter(G);
-  {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    if(ok)
-      ok = ExecutiveGetAtomVertex(G, s1, state, quiet, vertex);
-    SelectorFreeTmp(G, s1);
-    APIExit(G);
-    if(ok) {
-      return PConvFloatArrayToPyList(vertex, 3);
-    }
+  SelectorTmp s1(G, str1);
+  pymol::Result<std::array<float, 3>> result;
+  if(s1.getAtomCount() > 0) {
+    result = ExecutiveGetAtomVertex(G, s1.getName(), state, quiet);
+  } else {
+    result = pymol::Error("Empty Selection");
   }
-  return APIFailure(G);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdFit(PyObject * self, PyObject * args)
@@ -5072,21 +5067,12 @@ static PyObject *CmdSetDihe(PyObject * self, PyObject * args)
   float float1;
   int int1;
   int quiet;
-  int ok = false;
-  ok =
-    PyArg_ParseTuple(args, "Ossssfii", &self, &str1, &str2, &str3, &str4, &float1, &int1,
-                     &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveSetDihe(G, str1, str2, str3, str4, float1, int1, quiet);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Ossssfii", &self, &str1, &str2, &str3, &str4,
+      &float1, &int1, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveSetDihe(G, str1, str2, str3, str4, float1, int1, quiet);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdDo(PyObject * self, PyObject * args)

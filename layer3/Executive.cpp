@@ -3504,15 +3504,14 @@ int ExecutiveGetObjectColorIndex(PyMOLGlobals * G, const char *name)
   return (result);
 }
 
-int ExecutiveGetAtomVertex(PyMOLGlobals * G, const char *s1, int state, int index, float *v)
+pymol::Result<std::array<float, 3>> ExecutiveGetAtomVertex(PyMOLGlobals * G, const char *s1, int state, int index)
 {
-  int ok = false;
   int sele1 = SelectorIndexByName(G, s1);
 
   if(sele1 >= 0) {
-    ok = SelectorGetSingleAtomVertex(G, sele1, state, v);
+    return SelectorGetSingleAtomVertex(G, sele1, state);
   }
-  return ok;
+  return pymol::make_error("Invalid selection");
 }
 
 void ExecutiveMakeUnusedName(PyMOLGlobals * G, char * prefix, int length,
@@ -4516,7 +4515,7 @@ ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points, floa
   obj = ExecutiveFindObjectByName(G, objName);
 
   if (!obj) {
-    return pymol::Error("could not find object ", objName);
+    return pymol::make_error("could not find object ", objName);
   }
 
   switch (obj->type) {
@@ -4527,7 +4526,7 @@ ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points, floa
     oms = ObjectVolumeGetMapState((ObjectVolume *) obj);
     break;
   default:
-    return pymol::Error("object type must be map or volume");
+    return pymol::make_error("object type must be map or volume");
   }
 
   if(oms) {
@@ -4538,7 +4537,7 @@ ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points, floa
     return hist;
   }
 
-  return pymol::Error("failed to get map state");
+  return pymol::make_error("failed to get map state");
 }
 
 PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, const char * objName) {
@@ -4673,7 +4672,7 @@ pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
           // look up expression definition
           auto ap = PyMOL_GetAtomPropertyInfo(G->PyMOL, expr);
           if (!ap) {
-            return pymol::Error{"Unknown expression: ", expr};
+            return pymol::make_error("Unknown expression: ", expr);
           }
 
           // for enumerated values
@@ -4720,7 +4719,7 @@ pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
                 value_e = (size_t) iter.obj;
                 break;
               default:
-                return pymol::Error{"Unsupported Ptype for expr: ", expr};
+                return pymol::make_error("Unsupported Ptype for expr: ", expr);
             }
 
             // lookup or insert value
@@ -4814,7 +4813,7 @@ pymol::Result<std::vector<const char*>> ExecutiveGetChains(
     return result;
   }
 
-  return pymol::Error("Bad selection");
+  return pymol::make_error("Bad selection");
 }
 
 int ExecutiveValidateObjectPtr(PyMOLGlobals * G, CObject * ptr, int object_type)
@@ -5907,7 +5906,7 @@ ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a, fl
     SelectorTmp tmpsele1(G, sele);
     obj = SelectorGetSingleObjectMolecule(G, tmpsele1.getIndex());
     if (!obj) {
-      return pymol::Error("selection must refer to exactly one object");
+      return pymol::make_error("selection must refer to exactly one object");
     }
   }
 
@@ -7943,7 +7942,7 @@ ExecutivePairIndices(PyMOLGlobals * G, const char *s1, const char *s2, int state
     result = SelectorGetPairIndices(G, sele1, state1, sele2, state2,
                                     mode, cutoff, h_angle, indexVLA, objVLA);
   } else {
-    return pymol::Error("One or more bad selections.");
+    return pymol::make_error("One or more bad selections.");
   }
   return (result);
 }
@@ -8610,18 +8609,21 @@ pymol::Result<float> ExecutiveGetDistance(
 
   /* TO DO: add support for averaging over multiple states */
 
-  Vector3f v0, v1;
   int sele0 = -1, sele1 = -1;
 
   if((sele0 = tmpsele0.getIndex()) < 0)
-    return pymol::Error("Selection 1 invalid.");
+    return pymol::make_error("Selection 1 invalid.");
   else if((sele1 = tmpsele1.getIndex()) < 0)
-    return pymol::Error("Selection 2 invalid.");
-  if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
-    return pymol::Error("Selection 1 doesn't contain a single atom/vertex.");
-  if(!SelectorGetSingleAtomVertex(G, sele1, state, v1))
-    return pymol::Error("Selection 2 doesn't contain a single atom/vertex.");
-  return static_cast<float>(diff3f(v0, v1));
+    return pymol::make_error("Selection 2 invalid.");
+  auto result0 = SelectorGetSingleAtomVertex(G, sele0, state);
+  if(!result0) {
+    return pymol::make_error("Selection 1 doesn't contain a single atom/vertex.");
+  }
+  auto result1 = SelectorGetSingleAtomVertex(G, sele1, state);
+  if(!result1) {
+    return pymol::make_error("Selection 2 doesn't contain a single atom/vertex.");
+  }
+  return static_cast<float>(diff3f(result0.result().data(), result1.result().data()));
 }
 
 
@@ -8645,24 +8647,29 @@ pymol::Result<float> ExecutiveGetAngle(
 
   /* TO DO: add support for averaging over multiple states */
 
-  Vector3f v0, v1, v2;
   int sele0 = -1, sele1 = -1, sele2 = -1;
   float d1[3], d2[3];
   if((sele0 = tmpsele0.getIndex()) < 0)
-    return pymol::Error("Selection 1 invalid.");
+    return pymol::make_error("Selection 1 invalid.");
   else if((sele1 = tmpsele1.getIndex()) < 0)
-    return pymol::Error("Selection 2 invalid.");
+    return pymol::make_error("Selection 2 invalid.");
   else if((sele2 = tmpsele2.getIndex()) < 0)
-    return pymol::Error("Selection 3 invalid.");
-  if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
-    return pymol::Error("Selection 1 doesn't contain a single atom/vertex.");
-  if(!SelectorGetSingleAtomVertex(G, sele1, state, v1))
-    return pymol::Error("Selection 2 doesn't contain a single atom/vertex.");
-  if(!SelectorGetSingleAtomVertex(G, sele2, state, v2))
-    return pymol::Error("Selection 3 doesn't contain a single atom/vertex.");
+    return pymol::make_error("Selection 3 invalid.");
+  auto result0 = SelectorGetSingleAtomVertex(G, sele0, state);
+  if(!result0) {
+    return pymol::make_error("Selection 1 doesn't contain a single atom/vertex.");
+  }
+  auto result1 = SelectorGetSingleAtomVertex(G, sele1, state);
+  if(!result1) {
+    return pymol::make_error("Selection 2 doesn't contain a single atom/vertex.");
+  }
+  auto result2 = SelectorGetSingleAtomVertex(G, sele2, state);
+  if(!result2) {
+    return pymol::make_error("Selection 3 doesn't contain a single atom/vertex.");
+  }
 
-  subtract3f(v0, v1, d1);
-  subtract3f(v2, v1, d2);
+  subtract3f(result0.result().data(), result1.result().data(), d1);
+  subtract3f(result2.result().data(), result1.result().data(), d2);
   return rad_to_deg(get_angle3f(d1, d2));
 }
 
@@ -8689,31 +8696,39 @@ pymol::Result<float> ExecutiveGetDihe(PyMOLGlobals* G, const char* s0,
 
   /* TO DO: add support for averaging over multiple states */
 
-  Vector3f v0, v1, v2, v3;
   int sele0 = -1, sele1 = -1, sele2 = -1, sele3 = -1;
 
   if((sele0 = tmpsele0.getIndex()) < 0)
-    return pymol::Error("Selection 1 invalid.");
+    return pymol::make_error("Selection 1 invalid.");
   else if((sele1 = tmpsele1.getIndex()) < 0)
-    return pymol::Error("Selection 2 invalid.");
+    return pymol::make_error("Selection 2 invalid.");
   else if((sele2 = tmpsele2.getIndex()) < 0)
-    return pymol::Error("Selection 3 invalid.");
+    return pymol::make_error("Selection 3 invalid.");
   else if((sele3 = tmpsele3.getIndex()) < 0)
-    return pymol::Error("Selection 4 invalid.");
-  if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
-    return pymol::Error("Selection 1 doesn't contain a single atom/vertex.");
-  if(!SelectorGetSingleAtomVertex(G, sele1, state, v1))
-    return pymol::Error("Selection 2 doesn't contain a single atom/vertex.");
-  if(!SelectorGetSingleAtomVertex(G, sele2, state, v2))
-    return pymol::Error("Selection 3 doesn't contain a single atom/vertex.");
-  if(!SelectorGetSingleAtomVertex(G, sele3, state, v3))
-    return pymol::Error("Selection 4 doesn't contain a single atom/vertex.");
-  return rad_to_deg(get_dihedral3f(v0, v1, v2, v3));
+    return pymol::make_error("Selection 4 invalid.");
+  auto result0 = SelectorGetSingleAtomVertex(G, sele0, state);
+  if(!result0) {
+    return pymol::make_error("Selection 1 doesn't contain a single atom/vertex.");
+  }
+  auto result1 = SelectorGetSingleAtomVertex(G, sele1, state);
+  if(!result1) {
+    return pymol::make_error("Selection 2 doesn't contain a single atom/vertex.");
+  }
+  auto result2 = SelectorGetSingleAtomVertex(G, sele2, state);
+  if(!result2) {
+    return pymol::make_error("Selection 3 doesn't contain a single atom/vertex.");
+  }
+  auto result3 = SelectorGetSingleAtomVertex(G, sele3, state);
+  if(!result3) {
+    return pymol::make_error("Selection 4 doesn't contain a single atom/vertex.");
+  }
+  return rad_to_deg(get_dihedral3f(result0.result().data(), result1.result().data(),
+      result2.result().data(), result3.result().data()));
 }
 
 
 /*========================================================================*/
-int ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
+pymol::Result<> ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
                      float value, int state, int quiet)
 {
   SelectorTmp tmpsele0(G, s0);
@@ -8721,56 +8736,54 @@ int ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const cha
   SelectorTmp tmpsele2(G, s2);
   SelectorTmp tmpsele3(G, s3);
 
-  Vector3f v0, v1, v2, v3;
   int sele0 = -1, sele1 = -1, sele2 = -1, sele3 = -1;
-  int ok = true;
   int save_state;
   float current;
   float change;
 
   if((sele0 = tmpsele0.getIndex()) < 0)
-    ok = ErrMessage(G, "SetDihedral", "Selection 1 invalid.");
+    return pymol::make_error("Selection 1 invalid.");
   else if((sele1 = tmpsele1.getIndex()) < 0)
-    ok = ErrMessage(G, "SetDihedral", "Selection 2 invalid.");
+    return pymol::make_error("Selection 2 invalid.");
   else if((sele2 = tmpsele2.getIndex()) < 0)
-    ok = ErrMessage(G, "SetDihedral", "Selection 3 invalid.");
+    return pymol::make_error("Selection 3 invalid.");
   else if((sele3 = tmpsele3.getIndex()) < 0)
-    ok = ErrMessage(G, "SetDihedral", "Selection 4 invalid.");
-  if(ok) {
-    if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
-      ok =
-        ErrMessage(G, "SetDihedral", "Selection 1 doesn't contain a single atom/vertex.");
-    if(!SelectorGetSingleAtomVertex(G, sele1, state, v1))
-      ok =
-        ErrMessage(G, "SetDihedral", "Selection 2 doesn't contain a single atom/vertex.");
-    if(!SelectorGetSingleAtomVertex(G, sele2, state, v2))
-      ok =
-        ErrMessage(G, "SetDihedral", "Selection 3 doesn't contain a single atom/vertex.");
-    if(!SelectorGetSingleAtomVertex(G, sele3, state, v3))
-      ok =
-        ErrMessage(G, "SetDihedral", "Selection 4 doesn't contain a single atom/vertex.");
+    return pymol::make_error("Selection 4 invalid.");
+  auto result0 = SelectorGetSingleAtomVertex(G, sele0, state);
+  if(!result0) {
+    return pymol::make_error("Selection 1 doesn't contain a single atom/vertex.");
   }
-  if(ok) {
-    current = rad_to_deg(get_dihedral3f(v0, v1, v2, v3));
-    change = value - current;
-    save_state = SceneGetState(G);
-    SceneSetFrame(G, -1, state);        /* KLUDGE ALERT!
-                                         * necessary because the editor 
-                                         * can only work on the current state...this
-                                         * needs to be changed.*/
-    EditorSelect(G,
-        tmpsele2.getName(),
-        tmpsele1.getName(),
-        NULL, NULL, false, true, true);
-    EditorTorsion(G, change);
-    SceneSetFrame(G, -1, save_state);
-    if(!quiet) {
-      PRINTFB(G, FB_Editor, FB_Actions)
-        " SetDihedral: adjusted to %5.3f\n", value ENDFB(G);
-    }
-
+  auto result1 = SelectorGetSingleAtomVertex(G, sele1, state);
+  if(!result1) {
+    return pymol::make_error("Selection 2 doesn't contain a single atom/vertex.");
   }
-  return ok;
+  auto result2 = SelectorGetSingleAtomVertex(G, sele2, state);
+  if(!result2) {
+    return pymol::make_error("Selection 3 doesn't contain a single atom/vertex.");
+  }
+  auto result3 = SelectorGetSingleAtomVertex(G, sele3, state);
+  if(!result3) {
+    return pymol::make_error("Selection 4 doesn't contain a single atom/vertex.");
+  }
+  current = rad_to_deg(get_dihedral3f(result0.result().data(),
+      result1.result().data(), result2.result().data(), result3.result().data()));
+  change = value - current;
+  save_state = SceneGetState(G);
+  SceneSetFrame(G, -1, state);        /* KLUDGE ALERT!
+                                       * necessary because the editor 
+                                       * can only work on the current state...this
+                                       * needs to be changed.*/
+  EditorSelect(G,
+      tmpsele2.getName(),
+      tmpsele1.getName(),
+      NULL, NULL, false, true, true);
+  EditorTorsion(G, change);
+  SceneSetFrame(G, -1, save_state);
+  if(!quiet) {
+    PRINTFB(G, FB_Editor, FB_Actions)
+      " SetDihedral: adjusted to %5.3f\n", value ENDFB(G);
+  }
+  return {};
 }
 
 
@@ -8902,7 +8915,7 @@ pymol::Result<std::vector<const char*>> ExecutiveGetNames(
     tmpsele0 = SelectorTmp(G, s0);
     sele0 = tmpsele0.getIndex();
     if (sele0 == -1) {
-      return pymol::Error("invalid selection");
+      return pymol::make_error("invalid selection");
     }
   }
 
@@ -9571,7 +9584,7 @@ pymol::Result<> ExecutiveStereo(PyMOLGlobals * G, int flag)
     SettingSet(G, cSetting_chromadepth, 0);
 
     if (flag == cStereo_quadbuffer && !G->StereoCapable) {
-      return pymol::Error("no 'quadbuffer' support detected (force with 'pymol -S')");
+      return pymol::make_error("no 'quadbuffer' support detected (force with 'pymol -S')");
     }
 
     if (flag == cStereo_openvr) {
@@ -9579,7 +9592,7 @@ pymol::Result<> ExecutiveStereo(PyMOLGlobals * G, int flag)
       OpenVRInit(G);
       OpenVRFeedback(G);
 #else
-      return pymol::Error("'openvr' stereo mode not available in this build");
+      return pymol::make_error("'openvr' stereo mode not available in this build");
 #endif
     }
 
@@ -10313,7 +10326,7 @@ pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const char* name,
 
   // bail if name not available
   if (ExecutiveFindObjectByName(G, name)) {
-    return pymol::Error("name conflicts with an object");
+    return pymol::make_error("name conflicts with an object");
   }
 
   // merge with existing selection
@@ -10334,7 +10347,7 @@ pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const char* name,
 
   if (count < 0) {
     // TODO
-    return pymol::Error("should raise from SelectorCreateWithStateDomain");
+    return pymol::make_error("should raise from SelectorCreateWithStateDomain");
   }
 
   if (enable == 1) {
@@ -16844,7 +16857,7 @@ pymol::Result<> ExecutiveRebond(PyMOLGlobals* G, const char* oname, int state)
 {
   auto obj = ExecutiveFindObjectMoleculeByName(G, oname);
   if (!obj) {
-    return pymol::Error("cannot find object");
+    return pymol::make_error("cannot find object");
   }
 
   if (state < 0) {
@@ -16853,7 +16866,7 @@ pymol::Result<> ExecutiveRebond(PyMOLGlobals* G, const char* oname, int state)
 
   auto cs = ObjectMoleculeGetCoordSet(obj, state);
   if (!cs) {
-    return pymol::Error("no such state");
+    return pymol::make_error("no such state");
   }
 
   ObjectMoleculeRemoveBonds(obj, 0, 0);

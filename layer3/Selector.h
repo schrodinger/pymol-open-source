@@ -109,9 +109,8 @@ void SelectorUpdateObjectSele(PyMOLGlobals * G, ObjectMolecule * obj);
 void SelectorDeletePrefixSet(PyMOLGlobals * G, const char *pref);
 void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta1,
                        int method, int quiet);
-int SelectorGetSingleAtomVertex(PyMOLGlobals * G, int sele, int state, float *v);
-int SelectorGetSingleAtomObjectIndex(PyMOLGlobals * G, int sele, ObjectMolecule ** in_obj,
-                                     int *index);
+pymol::Result<std::array<float, 3>> SelectorGetSingleAtomVertex(PyMOLGlobals * G, int sele, int state);
+pymol::Result<std::pair<ObjectMolecule*, int>> SelectorGetSingleAtomObjectIndex(PyMOLGlobals * G, int sele);
 int *SelectorGetResidueVLA(PyMOLGlobals * G, int sele0, int ca_only,
                            ObjectMolecule * exclude);
 int SelectorCreateAlignments(PyMOLGlobals * G, int *pair, int sele1, int *vla1, int sele2,

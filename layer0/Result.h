@@ -24,13 +24,18 @@ public:
   Error() {}
 
   /**
-   * Stores Error message
-   * @param ts collection of printable values to be joined
-   * into an error message
+   * Construct from string
    */
-  template <typename... PrintableTs>
-  Error(PrintableTs&&... ts)
-      : m_errMsg{pymol::join_to_string(std::forward<PrintableTs>(ts)...)}
+  explicit Error(std::string s)
+      : m_errMsg(std::move(s))
+  {
+  }
+
+  /**
+   * Construct from error code.
+   */
+  explicit Error(Code code)
+      : m_code(code)
   {
   }
 
@@ -52,23 +57,26 @@ public:
   template <Code C, typename... PrintableTs>
   static Error make(PrintableTs&&... ts)
   {
-    auto error = Error(std::forward<PrintableTs>(ts)...);
+    auto error = Error(join_to_string(std::forward<PrintableTs>(ts)...));
     error.m_code = C;
     return error;
-  }
-
-  /**
-   * Construct from error code.
-   */
-  Error(Code code)
-      : m_code(code)
-  {
   }
 
 private:
   std::string m_errMsg;
   Code m_code = DEFAULT;
 };
+
+/**
+ * Creates Error message
+ * @param ts collection of printable values to be joined
+ * into an error message
+ */
+template<typename... PrintableTs>
+Error make_error(PrintableTs&&... ts)
+{
+  return Error(join_to_string(std::forward<PrintableTs>(ts)...));
+}
 
 /**
  * Class that expresses the expected result of a function
@@ -87,10 +95,7 @@ public:
    * param r result returned from function with a type convertible to ResultT
    */
 
-  template <typename FwdResultT> Result(FwdResultT&& r)
-  {
-    m_result = std::forward<FwdResultT>(r);
-  }
+  Result(type r) : m_result(std::move(r)) {}
 
   /**
    * Constructor alternative that takes in pymol::Error. Value of expected type
@@ -98,7 +103,7 @@ public:
    * @param e error object to express why value should not be used
    */
 
-  Result(Error&& e) : m_error{std::move(e)}, m_valid{false} {}
+  Result(Error e) : m_error{std::move(e)}, m_valid{false} {}
 
   /**
    * Construct from error code.

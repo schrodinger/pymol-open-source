@@ -175,7 +175,7 @@ int *ExecutiveGetG3d(PyMOLGlobals * G);
 int ExecutiveOrder(PyMOLGlobals * G, const char *s1, int sort, int location);
 int ExecutiveFixChemistry(PyMOLGlobals * G, const char *s1, const char *s2, int invalidate,
                           int quiet);
-int ExecutiveGetAtomVertex(PyMOLGlobals * G, const char *s1, int state, int index, float *v);
+pymol::Result<std::array<float, 3>> ExecutiveGetAtomVertex(PyMOLGlobals * G, const char *s1, int state, int index);
 int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
                             const char *fname, const char *buffer, const char *oname,
                             int frame, int discrete, int finish, OrthoLineType buf,
@@ -320,7 +320,7 @@ pymol::Result<float> ExecutiveGetAngle(
     PyMOLGlobals* G, const char* s0, const char* s1, const char* s2, int state);
 pymol::Result<float> ExecutiveGetDihe(PyMOLGlobals* G, const char* s0,
     const char* s1, const char* s2, const char* s3, int state);
-int ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
+pymol::Result<> ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
                      float value, int state=0, int quiet=1);
 int ExecutiveRMS(PyMOLGlobals * G, const char *sele1, const char *sele2, int mode, float refine,
                  int max_cyc, int quiet, const char *oname, int state1, int state2,

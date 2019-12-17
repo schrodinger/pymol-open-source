@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"OVLexicon.h"
 
+#include <array>
 #include <map>
 #include <set>
 #include <string>
@@ -234,6 +235,17 @@ PyObject * PConvToPyObject(const std::vector<T> &v) {
 
   for (int i = 0; i < n; ++i) {
     PyList_SetItem(o, i, PConvToPyObject(v[i]));
+  }
+
+  return o;
+}
+
+template <class T, std::size_t N>
+PyObject * PConvToPyObject(const std::array<T, N> &arr) {
+  PyObject * o = PyList_New(N);
+
+  for (int i = 0; i < N; ++i) {
+    PyList_SetItem(o, i, PConvToPyObject(arr[i]));
   }
 
   return o;

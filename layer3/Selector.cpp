@@ -3917,8 +3917,12 @@ ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals * G, int sele,
       }
     }
     if(!got_it) {               /* fallback onto slow approach */
-      if(!SelectorGetSingleAtomObjectIndex(G, sele, &result, index))
-        result = NULL;
+      auto res = SelectorGetSingleAtomObjectIndex(G, sele);
+      if(res) {
+        std::tie(result, sele) = res.result();
+      } else {
+        result = nullptr;
+      }
     }
   }
   return (result);
@@ -4016,45 +4020,54 @@ ObjectMolecule **SelectorGetObjectMoleculeVLA(PyMOLGlobals * G, int sele)
 
 
 /*========================================================================*/
-int SelectorGetSingleAtomObjectIndex(PyMOLGlobals * G, int sele, ObjectMolecule ** in_obj,
-                                     int *index)
+pymol::Result<std::pair<ObjectMolecule*, int>> SelectorGetSingleAtomObjectIndex(
+    PyMOLGlobals* G, int sele)
 {
   /* slow way */
 
-  int found_it = false;
-  int a;
+  bool found_it = false;
   void *iterator = NULL;
   ObjectMolecule *obj = NULL;
+  std::pair<ObjectMolecule*, int> result;
 
   while(ExecutiveIterateObjectMolecule(G, &obj, &iterator)) {
-    int n_atom = obj->NAtom;
     const AtomInfoType *ai = obj->AtomInfo.data();
-    for(a = 0; a < n_atom; a++) {
+    for(int a = 0; a < obj->NAtom; a++) {
       int s = (ai++)->selEntry;
       if(SelectorIsMember(G, s, sele)) {
         if(found_it) {
-          return false;         /* ADD'L EXIT POINT */
+          return pymol::Error("More than one atom found");         /* ADD'L EXIT POINT */
         } else {
+          result = std::make_pair(obj, a);
           found_it = true;
-          (*in_obj) = obj;
-          (*index) = a;
         }
       }
     }
   }
-  return (found_it);
+  if(found_it) {
+    return result;
+  } else {
+    return pymol::Error("Not found");
+  }
 }
 
 
 /*========================================================================*/
-int SelectorGetSingleAtomVertex(PyMOLGlobals * G, int sele, int state, float *v)
+pymol::Result<std::array<float, 3>> SelectorGetSingleAtomVertex(PyMOLGlobals * G, int sele, int state)
 {
-  ObjectMolecule *obj = NULL;
-  int index = 0;
-  int found_it = false;
-  if(SelectorGetSingleAtomObjectIndex(G, sele, &obj, &index))
-    found_it = ObjectMoleculeGetAtomTxfVertex(obj, state, index, v);
-  return (found_it);
+  auto atom_index_result = SelectorGetSingleAtomObjectIndex(G, sele);
+  if(atom_index_result) {
+    auto obj_idx = atom_index_result.result();
+    std::array<float, 3> v;
+    auto found_it = ObjectMoleculeGetAtomTxfVertex(obj_idx.first, state, obj_idx.second, v.data());
+    if(found_it) {
+      return v;
+    } else {
+      return pymol::Error("Invalid Atom");
+    }
+  } else {
+    return std::move(atom_index_result.error());
+  }
 }
 
 
