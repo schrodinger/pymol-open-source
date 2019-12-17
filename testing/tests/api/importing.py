@@ -501,7 +501,7 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load(self.datafile('1rx1.pdb'), 'm1', object_props=object_props)
         self.assertEqual(truth, 'pdb_header' in (cmd.get_property_list('m1') or ()))
 
-    @testing.requires_version('1.7.4')
+    @testing.requires_version('2.4')
     def testLoadPWG(self):
         if sys.version_info[0] < 3:
             import urllib2
@@ -515,7 +515,7 @@ class TestImporting(testing.PyMOLTestCase):
         def urlread(url):
             handle = urllib2.urlopen(url, timeout=3.0)
             try:
-                return handle.read()
+                return handle.info(), handle.read()
             finally:
                 handle.close()
 
@@ -528,15 +528,17 @@ class TestImporting(testing.PyMOLTestCase):
             with open(filename, 'w') as handle:
                 handle.write('root %s\n' % rootdir)
                 handle.write('port %d\n' % port)
+                handle.write('header add Test-Key Test-Value\n') # new in 2.4
             cmd.load(filename)
 
-            content = urlread(baseurl)
+            header, content = urlread(baseurl)
+            self.assertEqual(header['Test-Key'], 'Test-Value')
             self.assertEqual(content, content_index)
 
             # Warning: can't call locking functions here, will dead-lock
             # get_version is non-locking since 1.7.4
 
-            content = urlread(baseurl + '/apply/pymol.cmd.get_version')
+            header, content = urlread(baseurl + '/apply/pymol.cmd.get_version')
             content = content.decode('ascii', errors='ignore')
             self.assertTrue(content, cmd.get_version()[0] in content)
 
