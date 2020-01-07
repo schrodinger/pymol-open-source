@@ -30,6 +30,7 @@ if True:
     import time
     import threading
     import traceback
+    from . import colorprinting
     from . import parsing
     cmd = sys.modules["pymol.cmd"]
     import pymol
@@ -399,6 +400,7 @@ SEE ALSO
                 e.wait(poll)
                 del e
                 if (timeout>=0.0) and ((time.time()-now)>timeout):
+                    colorprinting.warning('cmd.sync() timed out (wait_queue)')
                     break
         if _cmd.wait_deferred(_self._COb):
             # deferred tasks waiting for a display event?
@@ -412,6 +414,7 @@ SEE ALSO
                     e.wait(poll)
                     del e
                     if (timeout>=0.0) and ((time.time()-now)>timeout):
+                        colorprinting.warning('cmd.sync() timed out (wait_deferred)')
                         break
         # then make sure we can grab the API
         while 1:
@@ -422,6 +425,7 @@ SEE ALSO
             e.wait(poll)
             del e
             if (timeout>=0.0) and ((time.time()-now)>timeout):
+                colorprinting.warning('cmd.sync() timed out (lock_attempt)')
                 break
 
     def do(commands,log=1,echo=1,flush=0,_self=cmd):
