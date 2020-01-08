@@ -28,8 +28,8 @@ Z* -------------------------------------------------------------------
 struct CSymmetry {
   PyMOLGlobals *G;
   CCrystal Crystal;
-  int PDBZValue;
-  WordType SpaceGroup;
+  int PDBZValue = 0;
+  WordType SpaceGroup{};
   pymol::vla<float> SymMatVLA;
 
   // get the number of symmetry matrices
