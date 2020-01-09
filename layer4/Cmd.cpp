@@ -6719,30 +6719,23 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
   int zoom;
   int bytes;
   int mimic;
-  ok = PyArg_ParseTuple(args, "Oss#iiiiiii|zzzi", &self,
-                        &oname, &fname, &bytes, &frame, &type,
+  const char* contents;
+
+  API_SETUP_ARGS(G, self, args, "Oszz#iiiiiii|zzzi", &self,
+                        &oname, &fname, &contents, &bytes, &frame, &type,
                         &finish, &discrete, &quiet, &multiplex, &zoom,
                         &plugin, &object_props, &atom_props, &mimic);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    PRINTFD(G, FB_CCmd)
-      "CmdLoad-DEBUG %s %s %d %d %d %d\n",
-      oname, fname, frame, type, finish, discrete ENDFD;
-
+  API_ASSERT(APIEnterNotModal(G));
+  {
     ok = ExecutiveLoad(G,
-                         fname, bytes, type,
+                         fname, contents, bytes, type,
                          oname, frame, zoom,
                          discrete, finish, multiplex, quiet, plugin);
 
     OrthoRestorePrompt(G);
     APIExit(G);
   }
-  return APIResultOk(ok);
+  return APIResultOk(G, ok);
 }
 
 static PyObject *CmdLoadTraj(PyObject * self, PyObject * args)

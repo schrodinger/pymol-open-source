@@ -193,6 +193,7 @@ const ExecutiveObjectOffset * ExecutiveUniqueIDAtomDictGet(PyMOLGlobals * G, int
 void ExecutiveUniqueIDAtomDictInvalidate(PyMOLGlobals * G);
 
 int ExecutiveLoad(PyMOLGlobals * G,
+                  const char *fname,
                   const char *content, int content_length,
                   cLoadType_t content_format,
                   const char *object_name,

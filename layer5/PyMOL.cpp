@@ -1653,7 +1653,9 @@ static PyMOLreturn_status Loader(CPyMOL * I, const char *content, const char *co
       if(ok) {
 
         ok = ExecutiveLoad(I->G,
-                           content, content_length,
+            content_is_filename ? content : nullptr,
+            content_is_filename ? nullptr : content,
+                           content_length,
                            pymol_content_type,
                            object_name,
                            state - 1, zoom, discrete, finish, multiplex, quiet, NULL, 0, NULL);

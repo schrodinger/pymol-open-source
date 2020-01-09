@@ -27,7 +27,7 @@ if True:
     from . import colorprinting
     from .cmd import _cmd, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
-          _load, is_list, space_sc, safe_list_eval, is_string, loadable
+          is_list, space_sc, safe_list_eval, is_string, loadable
     from .constants import _loadable
     from pymol.creating import unquote
 
@@ -812,7 +812,7 @@ SEE ALSO
                 plugin = 'cor'
 
             # generic forwarding to format specific load functions
-            func = loadfunctions.get(format, _load)
+            func = loadfunctions.get(format, pymol.internal._load)
             func = _eval_func(func)
             kw = {
                 'filename': filename,
@@ -940,26 +940,16 @@ EXAMPLE
     contents = open('example.mmtf', 'rb').read()
     cmd.load_raw(contents, 'mmtf')
         '''
-        r = DEFAULT_ERROR
         if multiplex is None:
             multiplex=-2
         ftype = getattr(loadable, format, None)
-        if not isinstance(content, bytes):
-            content = content.encode('utf-8')
-        if True:
-            _raw_dict = cmd._load2str
-            if ftype in _raw_dict:
-                try:
-                    _self.lock(_self)
-                    r = _cmd.load(_self._COb,str(object),content,int(state)-1,
-                                  _raw_dict[ftype],int(finish),int(discrete),
+        if ftype is None:
+            raise pymol.CmdException("unknown raw format '{}'".format(format))
+        with _self.lockcm:
+            return _cmd.load(_self._COb, str(object), None, content,
+                    int(state) - 1, cmd._load2str.get(ftype, ftype),
+                    int(finish), int(discrete),
                                   int(quiet),int(multiplex),int(zoom))
-                finally:
-                    _self.unlock(r,_self)
-            else:
-                raise pymol.CmdException("unknown raw format '{}'".format(format))
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
 
     def read_sdfstr(sdfstr,name,state=0,finish=1,discrete=1,quiet=1,
                     zoom=-1,multiplex=-2,object_props=None,_self=cmd):
@@ -985,18 +975,12 @@ NOTES
     no overlapping atoms in the file being loaded.  "discrete"
     objects save memory but can not be edited.
         '''
-        r = DEFAULT_ERROR
         if object_props:
             print(' Warning: properties are not supported in Open-Source PyMOL')
-        try:
-            _self.lock(_self)
-            r = _cmd.load(_self._COb,str(name),str(sdfstr),int(state)-1,
+        with _self.lockcm:
+            return _cmd.load(_self._COb, str(name), None, sdfstr, int(state) - 1,
                               loadable.sdf2str,int(finish),int(discrete),
                               int(quiet),int(multiplex),int(zoom))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
 
     def read_molstr(molstr,name,state=0,finish=1,discrete=1,quiet=1,
                          zoom=-1,_self=cmd):
@@ -1022,16 +1006,11 @@ NOTES
     no overlapping atoms in the file being loaded.  "discrete"
     objects save memory but can not be edited.
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.load(_self._COb,str(name),str(molstr),int(state)-1,
+        with _self.lockcm:
+            return _cmd.load(_self._COb, str(name), None, molstr,
+                          int(state) - 1,
                           loadable.molstr,int(finish),int(discrete),
                           int(quiet),0,int(zoom))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
 
     def read_mmodstr(content, name, state=0, quiet=1, zoom=-1, _self=cmd, **kw):
         '''
@@ -1041,16 +1020,10 @@ DESCRIPTION
     string.
 
     '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.load(_self._COb, str(name).strip(), str(content),
+        with _self.lockcm:
+            return _cmd.load(_self._COb, str(name), None, content,
                     int(state)-1, loadable.mmodstr, 1, 1, int(quiet), 0,
                     int(zoom))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
 
     def read_pdbstr(contents, oname, state=0, finish=1, discrete=0, quiet=1,
             zoom=-1, multiplex=-2, object_props=None, _self=cmd):
@@ -1078,17 +1051,11 @@ NOTES
     no overlapping atoms in the PDB files being loaded.  "discrete"
     objects save memory but can not be edited.
     '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            ftype = loadable.pdbstr
-            pdb = contents
-            r = _cmd.load(_self._COb,str(oname),pdb,int(state)-1,int(ftype),
+        with _self.lockcm:
+            r = _cmd.load(_self._COb, str(oname), None, contents,
+                    int(state) - 1, loadable.pdbstr,
                               int(finish),int(discrete),int(quiet),
                               int(multiplex),int(zoom))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def read_mol2str(mol2,name,state=0,finish=1,discrete=0,
@@ -1117,18 +1084,12 @@ NOTES
     no overlapping atoms in the MOL2 files being loaded.  "discrete"
     objects save memory but can not be edited.
     '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            ftype = loadable.mol2str
-            oname = str(name).strip()
-            r = _cmd.load(_self._COb,str(oname),mol2,int(state)-1,int(ftype),
+        with _self.lockcm:
+            return _cmd.load(_self._COb, str(name), None, mol2,
+                    int(state) - 1, loadable.mol2str,
                               int(finish),int(discrete),int(quiet),
                               int(multiplex),int(zoom))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+
 
     def read_xplorstr(xplor,name,state=0,finish=1,discrete=0,
                             quiet=1,zoom=-1,_self=cmd):
@@ -1149,18 +1110,11 @@ NOTES
     "state" is a 1-based state index for the object.
 
     '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            ftype = loadable.xplorstr
-            oname = str(name).strip()
-            r = _cmd.load(_self._COb,str(oname),xplor,int(state)-1,int(ftype),
+        with _self.lockcm:
+            return _cmd.load(_self._COb, str(name), None, xplor,
+                    int(state) - 1, loadable.xplorstr,
                               int(finish),int(discrete),int(quiet),
                               0,int(zoom))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
 
     def finish_object(name,_self=cmd):
         '''

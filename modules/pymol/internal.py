@@ -364,13 +364,15 @@ def _load(oname,finfo,state,ftype,finish,discrete,
     # caller must already hold API lock
     # NOTE: state index assumes 1-based state
     r = DEFAULT_ERROR
+    contents = None
     size = 0
     if ftype not in (loadable.model,loadable.brick):
         if True:
             if ftype in _load2str:
-                finfo = _self.file_read(finfo)
+                contents = _self.file_read(finfo)
                 ftype = _load2str[ftype]
-            r = _cmd.load(_self._COb,str(oname),finfo,int(state)-1,int(ftype),
+        return _cmd.load(_self._COb, str(oname), str(finfo), contents,
+                          int(state) - 1, int(ftype),
                           int(finish),int(discrete),int(quiet),
                           int(multiplex),int(zoom), plugin,
                           object_props, atom_props, int(mimic))

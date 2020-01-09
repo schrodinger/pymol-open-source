@@ -204,7 +204,6 @@ if True:
         _get_feedback = internal._get_feedback
         _interpret_color = internal._interpret_color
         _invalidate_color_sc = internal._invalidate_color_sc
-        _load = internal._load
         _mpng = internal._mpng
         _object_update_spawn = internal._object_update_spawn
         _object_update_thread = internal._object_update_thread

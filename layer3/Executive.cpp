@@ -3690,6 +3690,7 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
  * atom_props:          names of atom properties to load
  */
 int ExecutiveLoad(PyMOLGlobals * G,
+                  const char *fname,
                   const char *content, int content_length,
                   cLoadType_t content_format,
                   const char *object_name_proposed,
@@ -3701,7 +3702,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
                   bool mimic)
 {
   int ok = true;
-  const char * fname = content;
+  bool fname_null_ok = false;
   char * buffer = NULL;
   long size = (long) content_length;
   OrthoLineType buf = "";
@@ -3744,7 +3745,11 @@ int ExecutiveLoad(PyMOLGlobals * G,
   case cLoadTypeMOL2Str:
   case cLoadTypeSDF2Str:
   case cLoadTypeXYZStr:
-    fname = NULL;
+    if (!content) {
+      ErrMessage(G, __func__, "content is NULL");
+      return false;
+    }
+    fname_null_ok = true;
     break;
   case cLoadTypePQR:
   case cLoadTypePDBQT:
@@ -3762,6 +3767,15 @@ int ExecutiveLoad(PyMOLGlobals * G,
   case cLoadTypeMOL2:
   case cLoadTypeSDF2:
   case cLoadTypeXYZ:
+    if (content) {
+      fname_null_ok = true;
+      break;
+    }
+
+    if (!fname) {
+      break;
+    }
+
     buffer = FileGetContents(fname, &size);
     content = buffer;
 
@@ -3821,6 +3835,11 @@ int ExecutiveLoad(PyMOLGlobals * G,
       }
     }
     break;
+  }
+
+  if (!fname && !fname_null_ok) {
+    ErrMessage(G, __func__, "This format requires a filename to load");
+    return false;
   }
 
   if (plugin[0]) {
