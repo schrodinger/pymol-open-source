@@ -2300,8 +2300,9 @@ static void swap_endian(char * p, int n, int width) {
 }
 
 static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int state,
-                                 int quiet)
+                                 int quiet, int format)
 {
+  auto G = I->G;
   char *p;
   int *i;
   size_t bytes_per_pt;
@@ -2327,6 +2328,18 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   int normalize;
   ObjectMapState *ms;
   int expectation;
+
+  switch (format) {
+  case cLoadTypeCCP4Map:
+    format = cLoadTypeCCP4Str;
+  case cLoadTypeCCP4Str:
+  case cLoadTypeCCP4Unspecified:
+  case cLoadTypeMRC:
+    break;
+  default:
+    ErrMessage(G, __func__, "wrong format");
+    return false;
+  }
 
   if(bytes < 256 * sizeof(int)) {
     PRINTFB(I->G, FB_ObjectMap, FB_Errors)
@@ -2456,7 +2469,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   {
     int skew = *(i++);
 
-    if(skew) {
+    if (format != cLoadTypeMRC && skew) {
       double matrix[16];
       auto i_float = (const float *) i;
 
@@ -2481,7 +2494,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   // XORIGIN, YORIGIN, ZORIGIN (50 - 52)
   // TODO See "Origin Conventions" in http://situs.biomachina.org/fmap.pdf
   float * mrc2000origin = (float *)(i + 49 - 25);
-  if (lengthsq3f(mrc2000origin) > R_SMALL4) {
+  if (format != cLoadTypeCCP4Str && lengthsq3f(mrc2000origin) > R_SMALL4) {
     double matrix[] = {
       1., 0., 0., mrc2000origin[0],
       0., 1., 0., mrc2000origin[1],
@@ -2741,7 +2754,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
 
 /*========================================================================*/
 ObjectMapState * getObjectMapState(PyMOLGlobals * G, const char * name, int state) {
-  return getObjectMapState(G, ExecutiveFindObjectByName(G, name), state);
+  return getObjectMapState(G, ExecutiveFindObject<ObjectMap>(G, name), state);
 }
 
 
@@ -2759,7 +2772,7 @@ ObjectMapState * getObjectMapState(PyMOLGlobals * G, const char * name, int stat
  * - can't have N*START (or shouldn't, because of weird ORIGIN conventions)
  * - can't have non-orthogonal axes (or shouldn't, because others might ignore it)
  */
-std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
+std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet, int format)
 {
   std::vector<char> buffer;
 
@@ -2774,6 +2787,18 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
     PRINTFB(G, FB_ObjectMap, FB_Errors)
       " MapStateToCCP4-Error: Unsupported field type\n" ENDFB(G);
     return buffer; // empty
+  }
+
+  switch (format) {
+  case cLoadTypeCCP4Map:
+    format = cLoadTypeCCP4Str;
+  case cLoadTypeCCP4Str:
+  case cLoadTypeCCP4Unspecified:
+  case cLoadTypeMRC:
+    break;
+  default:
+    ErrMessage(G, __func__, "wrong format");
+    return {};
   }
 
   buffer.resize(1024 + field->size(), 0);
@@ -2848,7 +2873,13 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
 
   // MRC typically only supports orthogonal axes
   const float _f3_90[3]{90.f, 90.f, 90.f};
-  bool mrc_possible = equal3f(buffer_f + 13 /* CELL B */, _f3_90);
+  bool mrc_possible =
+      format != cLoadTypeCCP4Str && equal3f(buffer_f + 13 /* CELL B */, _f3_90);
+
+  if (format == cLoadTypeMRC && !mrc_possible) {
+    PRINTFB(G, FB_ObjectMap, FB_Warnings)
+    " %s-Warning: MRC expects orthogonal axes\n", __func__ ENDFB(G);
+  }
 
   // skew transformation
   if (!ms->State.Matrix.empty()) {
@@ -2865,13 +2896,18 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
 
     if (mrc_possible) {
       mrc_possible = is_identityf(3, b_skwmat);
+
+      if (format == cLoadTypeMRC && !mrc_possible) {
+        PRINTFB(G, FB_ObjectMap, FB_Warnings)
+        " %s-Warning: MRC expects orthonormal map\n", __func__ ENDFB(G);
+      }
     }
 
     if (mrc_possible) {
       // translation only -> use origin instead of skew matrix
       copy3(b_skwtrn, b_origin);                // MRC ORIGIN
       zero3(b_skwtrn);
-    } else {
+    } else if (format != cLoadTypeMRC) {
       buffer_i[24] = 1;                         // LSKFLG
     }
   }
@@ -2892,7 +2928,7 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
 
   // Don't write ORIGIN and N*START. The convention is to ignore N*START if
   // ORIGIN != (0,0,0), likely because IMOD uses ORIGIN but ignores N*START.
-  if (lengthsq3f(b_origin) > R_SMALL4) {
+  if (lengthsq3f(b_origin) > R_SMALL4 || format == cLoadTypeMRC) {
     // data origin in fractional coordinates
     float n_start_frac[3] = {
         float(buffer_i[6] /* NSSTART */) / (buffer_i[7] /* NX */),
@@ -2913,6 +2949,10 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
     buffer_i[6] = 0;
   }
 
+  if (format == cLoadTypeCCP4Unspecified) {
+    format = mrc_possible ? cLoadTypeMRC : cLoadTypeCCP4Str;
+  }
+
   // Character string 'MAP ' to identify file type
   memcpy(buffer_s + 52 * 4, "MAP ", 4); // MAP
 
@@ -2925,7 +2965,8 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
 
   buffer_f[54] = 1.f;   // ARMS
   buffer_i[55] = 1;     // NLABL
-  sprintf(buffer_s + 56 * 4, "PyMOL %s", _PyMOL_VERSION); // 57-256 LABEL(20,10)
+  sprintf(buffer_s + 56 * 4, "PyMOL %s format=%s", _PyMOL_VERSION,
+      (format == cLoadTypeMRC) ? "MRC" : "CCP4"); // 57-256 LABEL(20,10)
 
   // Map data array follows
   memcpy(buffer_s + 1024, field->data.data(), field->size());
@@ -4649,7 +4690,8 @@ static ObjectMap *ObjectMapReadXPLORStr(PyMOLGlobals * G, ObjectMap * I, char *X
 
 /*========================================================================*/
 static ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals * G, ObjectMap * I, char *XPLORStr,
-                                       int bytes, int state, int quiet)
+                                       int bytes, int state, int quiet,
+                                       int format)
 {
   int ok = true;
   int isNew = true;
@@ -4665,7 +4707,7 @@ static ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals * G, ObjectMap * I, char *XP
     } else {
       isNew = false;
     }
-    ObjectMapCCP4StrToMap(I, XPLORStr, bytes, state, quiet);
+    ObjectMapCCP4StrToMap(I, XPLORStr, bytes, state, quiet, format);
     SceneChanged(G);
     SceneCountFrames(G);
   }
@@ -4675,7 +4717,8 @@ static ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals * G, ObjectMap * I, char *XP
 
 /*========================================================================*/
 ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
-                             int is_string, int bytes, int quiet)
+                             int is_string, int bytes, int quiet,
+                             int format)
 {
   ObjectMap *I = NULL;
   char *buffer;
@@ -4696,7 +4739,7 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, const char *fnam
   }
 
   if (buffer) {
-    I = ObjectMapReadCCP4Str(G, obj, buffer, size, state, quiet);
+    I = ObjectMapReadCCP4Str(G, obj, buffer, size, state, quiet, format);
 
     if(!is_string)
       mfree(buffer);

@@ -108,7 +108,7 @@ ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, const char *fna
                               int state, int is_file, int quiet);
 
 ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
-                             int state, int is_string, int bytes, int quiet);
+                             int state, int is_string, int bytes, int quiet, int);
 
 ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                             int is_string, int bytes, int quiet);
@@ -162,23 +162,19 @@ void ObjectMapDump(const ObjectMap* I, const char* fname, int state, int quiet);
 /*========================================================================*/
 inline
 ObjectMapState * getObjectMapState(PyMOLGlobals * G, ObjectMap * I, int state) {
+  if (!I)
+    return nullptr;
   return ObjectMapStateGetActive(I, state < 0 ? 0 : state);
-}
-
-inline
-ObjectMapState * getObjectMapState(PyMOLGlobals * G, CObject * obj, int state) {
-  return (obj && obj->type == cObjectMap) ?
-    getObjectMapState(G, (ObjectMap *) obj, state) : NULL;
 }
 
 ObjectMapState * getObjectMapState(PyMOLGlobals * G, const char * name, int state);
 
 /*========================================================================*/
-std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet);
+std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet, int);
 
 template <typename T>
-std::vector<char> ObjectMapGetCCP4Str(PyMOLGlobals * G, const T * ptr, int state, int quiet) {
-  return ObjectMapStateToCCP4Str(getObjectMapState(G, ptr, state), quiet);
+std::vector<char> ObjectMapGetCCP4Str(PyMOLGlobals * G, const T * ptr, int state, int quiet, int format) {
+  return ObjectMapStateToCCP4Str(getObjectMapState(G, ptr, state), quiet, format);
 }
 
 #endif

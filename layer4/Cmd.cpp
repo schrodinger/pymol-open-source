@@ -958,12 +958,13 @@ static PyObject * CmdGetCCP4Str(PyObject * self, PyObject * args)
   const char * name = NULL;
   int state = 0;
   int quiet = 1;
-  if (!PyArg_ParseTuple(args, "Osii", &self, &name, &state, &quiet)) {
+  int format = cLoadTypeCCP4Unspecified;
+  if (!PyArg_ParseTuple(args, "Osii|i", &self, &name, &state, &quiet, &format)) {
     API_HANDLE_ERROR;
   } else {
     API_SETUP_PYMOL_GLOBALS;
     if (G && APIEnterNotModal(G)) {
-      auto v = ObjectMapGetCCP4Str(G, name, state, quiet);
+      auto v = ObjectMapGetCCP4Str(G, name, state, quiet, format);
       PyObject * result = v.empty() ? NULL :
         PyBytes_FromStringAndSize(&v.front(), v.size());
 

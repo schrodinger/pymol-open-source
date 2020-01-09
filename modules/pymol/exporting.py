@@ -940,10 +940,11 @@ SEE ALSO
     def get_maestr(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
         return get_str('mae', selection, state, ref, ref_state, -1, quiet, _self)
 
-    def get_ccp4str(name, state=1, quiet=1, _self=cmd):
+    def get_ccp4str(name, state=1, quiet=1, format='ccp4', _self=cmd):
+        ftype = getattr(loadable, format, -1)
         with _self.lockcm:
             return _cmd.get_ccp4str(_self._COb, str(name),
-                    int(state) - 1, int(quiet))
+                    int(state) - 1, int(quiet), ftype)
 
     def get_psestr(selection, partial, quiet, _self):
         if '(' in selection: # ignore selections
@@ -975,6 +976,8 @@ SEE ALSO
         'fasta': get_fastastr,
         'aln': get_alnstr,
         'ccp4': get_ccp4str,
+        'mrc': get_ccp4str,
+        'map': get_ccp4str,
 
         'png': png,
 

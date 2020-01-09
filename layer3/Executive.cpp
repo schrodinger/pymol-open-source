@@ -3754,6 +3754,8 @@ int ExecutiveLoad(PyMOLGlobals * G,
   case cLoadTypeMAE:
   case cLoadTypeXPLORMap:
   case cLoadTypeCCP4Map:
+  case cLoadTypeCCP4Unspecified:
+  case cLoadTypeMRC:
   case cLoadTypePHIMap:
   case cLoadTypeMMD:
   case cLoadTypeMOL:
@@ -3959,8 +3961,10 @@ int ExecutiveLoad(PyMOLGlobals * G,
     break;
   case cLoadTypeCCP4Map:
   case cLoadTypeCCP4Str:
+  case cLoadTypeCCP4Unspecified:
+  case cLoadTypeMRC:
     obj = (CObject *) ObjectMapLoadCCP4(G, (ObjectMap *) origObj, content,
-        state, true, size, quiet);
+        state, true, size, quiet, content_format);
     break;
   case cLoadTypeCGO:
     obj = (CObject *) ObjectCGOFromFloatArray(G, (ObjectCGO *) origObj,
@@ -4113,6 +4117,8 @@ CObject* ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char* oname, cLo
     case cLoadTypeXPLORStr:
     case cLoadTypeCCP4Map:
     case cLoadTypeCCP4Str:
+    case cLoadTypeCCP4Unspecified:
+    case cLoadTypeMRC:
     case cLoadTypeFLDMap:
     case cLoadTypeBRIXMap:
     case cLoadTypeGRDMap:

@@ -108,6 +108,13 @@ enum cLoadType_t : int {
 
   cLoadTypeMMTF = 71,
   cLoadTypeMMTFStr = 72,
+
+  // Distinguish CCP4-like map types:
+  // - cLoadTypeCCP4Str/cLoadTypeCCP4Map : CCP4 format, ignore MRC features
+  // - cLoadTypeCCP4Unspecified          : CCP4 or MRC format (auto-detect)
+  // - cLoadTypeMRC                      : MRC format, ignore CCP4 features
+  cLoadTypeCCP4Unspecified = 73,
+  cLoadTypeMRC = 74,
 };
 
 /* NOTE: if you add new content/object type above, then be sure to add

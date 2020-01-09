@@ -69,8 +69,6 @@ if True:
             format = 'psw'
         elif ext in ('mmd', 'out', 'dat',):
             format = 'mmod'
-        elif ext in ('map', 'mrc',):
-            format = 'ccp4'
         elif ext in ('cc2',):
             format = 'cc1'
         elif ext in ('sd',):
@@ -219,7 +217,7 @@ PYMOL API
     Temporary routine for the Phenix project.
     '''
 
-        lst = [loadable.map]
+        lst = [loadable.chempymap]
         lst.extend(list(arg))
         return _self.load_object(*lst, **kw)
 

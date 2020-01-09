@@ -16,7 +16,7 @@ class _loadable:
     model = 8
     pdbstr = 9
     brick = 10    # chempy.brick object
-    map = 11      # chempy.map object
+    chempymap = 11 # chempy.map object (only used by cctbx/examples/view_fft_map.py)
     callback = 12 # pymol callback obejct
     cgo = 13      # compiled graphic object
     xyz = 15      # xyz, tinker format
@@ -54,6 +54,8 @@ class _loadable:
     vdb = 70
     mmtf = 71
     mmtfstr = 72
+    map = 73      # unspecified CCP4 or MRC map
+    mrc = 74
 
 class loadable(_loadable):
     @classmethod
