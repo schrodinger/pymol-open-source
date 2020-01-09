@@ -71,6 +71,7 @@
 #include"PyMOL.h"
 #include"PyMOLOptions.h"
 #include"Tracker.h"
+#include"TrackerList.h"
 #include"Word.h"
 #include"main.h"
 #include"Parse.h"
@@ -185,6 +186,24 @@ ExecutiveSpheroid
 
 static int ExecutiveGetNamesListFromPattern(PyMOLGlobals * G, const char *name,
                                             int allow_partial, int expand_groups);
+
+/**
+ * Retrieves a list of candidates provided by a pattern. Similar to
+ * ExecutiveGetNamesListFromPattern but returns a managed tracker list.
+ *
+ * @param str pattern string provided by user
+ * @param allow_partial allows for partial name matching
+ * @param expand_groups members of the group candidate will be expanded onto the
+ * list.
+ * @return a managed list of candidate records
+ */
+pymol::TrackerAdapter<SpecRec> ExecutiveGetSpecRecsFromPattern(PyMOLGlobals* G,
+    pymol::zstring_view str, bool allow_partial = true, bool expand_groups = true)
+{
+  return pymol::TrackerAdapter<SpecRec>(
+      G->Executive->Tracker, ExecutiveGetNamesListFromPattern(
+                                 G, str.c_str(), allow_partial, expand_groups));
+}
 
 static void ExecutiveSpecEnable(PyMOLGlobals * G, SpecRec * rec, int parents, int log);
 static void ExecutiveSetAllRepVisMask(PyMOLGlobals * G, int repmask, int state);
@@ -11702,45 +11721,35 @@ int ExecutiveCountStates(PyMOLGlobals * G, const char *s1)
   int sele1;
   int result = 0;
   int n_state;
-  SpecRec *rec = NULL;
+  SpecRec* list_rec = nullptr;
   if((!s1) || (!s1[0]))
     s1 = cKeywordAll;
-  {
-    CTracker *I_Tracker = I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G, s1, true, true);
-    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-    while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
-      if(rec) {
-        switch (rec->type) {
-        case cExecAll:
-          rec = NULL;
-          while(ListIterate(I->Spec, rec, next)) {
-            if(rec->type == cExecObject) {
-                n_state = rec->obj->getNFrame();
-                if(result < n_state)
-                  result = n_state;
-            }
-          }
-          break;
-        case cExecSelection:
-          sele1 = SelectorIndexByName(G, rec->name);
-          if(sele1 >= 0) {
-            SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
-            n_state = SelectorGetSeleNCSet(G, sele1);
+  for (const auto& rec : ExecutiveGetSpecRecsFromPattern(G, s1)) {
+    switch (rec.type) {
+    case cExecAll:
+      while(ListIterate(I->Spec, list_rec, next)) {
+        if(list_rec->type == cExecObject) {
+            n_state = list_rec->obj->getNFrame();
             if(result < n_state)
               result = n_state;
-          }
-          break;
-        case cExecObject:
-            n_state = rec->obj->getNFrame();
-            if(result < n_state)
-              result = n_state;
-          break;
         }
       }
+      break;
+    case cExecSelection:
+      sele1 = SelectorIndexByName(G, rec.name);
+      if(sele1 >= 0) {
+        SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
+        n_state = SelectorGetSeleNCSet(G, sele1);
+        if(result < n_state)
+          result = n_state;
+      }
+      break;
+    case cExecObject:
+        n_state = rec.obj->getNFrame();
+        if(result < n_state)
+          result = n_state;
+      break;
     }
-    TrackerDelList(I_Tracker, list_id);
-    TrackerDelIter(I_Tracker, iter_id);
   }
   return (result);
 }
@@ -13111,7 +13120,6 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
   CExecutive *I = G->Executive;
   CObject *obj;
   int result = false;
-  SpecRec *rec = NULL;
   float f1, f2, fmx;
   int a;
 
@@ -13147,8 +13155,7 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
   op2.v2[2] = 1.0;
 
   {
-    CTracker *I_Tracker = I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
+    auto matched_recs = ExecutiveGetSpecRecsFromPattern(G, name);
     int have_atoms_flag = false;
     int have_extent_flag = false;
 
@@ -13174,11 +13181,8 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
 
     /* first, handle molecular objects */
 
-    {
-      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-
-      while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
-        if(rec) {
+    for (auto& recref : matched_recs) {
+      auto* rec = &recref;
           switch (rec->type) {
           case cExecObject:
             if (rec->obj->type != cObjectMolecule &&
@@ -13218,20 +13222,14 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
             }
             break;
           }
-        }
-      }
-      TrackerDelIter(I_Tracker, iter_id);
     }
     if(have_atoms_flag)
       have_extent_flag = true;
 
     /* now handle nonmolecular objects */
 
-    {
-      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-
-      while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
-        if(rec) {
+    for (auto& recref : matched_recs) {
+      auto* rec = &recref;
           switch (rec->type) {
           case cExecAll:
             rec = NULL;
@@ -13298,9 +13296,6 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
               }
             break;
           }
-        }
-      }
-      TrackerDelIter(I_Tracker, iter_id);
     }
 
     if(have_atoms_flag && weighted) {
@@ -13329,7 +13324,6 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
       zero3f(mn);
       zero3f(mx);
     }
-    TrackerDelList(I_Tracker, list_id);
 
     result = have_extent_flag;
 
@@ -13351,7 +13345,6 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals * G, const char *name, float *po
   CExecutive *I = G->Executive;
   CObject *obj;
   int flag = false;
-  SpecRec *rec = NULL;
   float f1, fmx = 0.0F;
 
   if((state == -2) || (state == -3))    /* TO DO: support per-object states */
@@ -13364,8 +13357,7 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals * G, const char *name, float *po
   ObjectMoleculeOpRecInit(&op2);
 
   {
-    CTracker *I_Tracker = I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
+    auto matched_recs = ExecutiveGetSpecRecsFromPattern(G, name);
 
     op2.i1 = 0;
     op2.v1[0] = -1.0;
@@ -13378,10 +13370,8 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals * G, const char *name, float *po
     {
       /* first handle molecular objects */
 
-      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-
-      while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
-        if(rec) {
+      for (auto& recref : matched_recs) {
+        auto* rec = &recref;
           switch (rec->type) {
           case cExecObject:
           case cExecSelection:
@@ -13411,17 +13401,14 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals * G, const char *name, float *po
             }
             break;
           }
-        }
       }
-      TrackerDelIter(I_Tracker, iter_id);
     }
 
     {
       /* now handle nonmolecular objects */
-      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
 
-      while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
-        if(rec) {
+      for (auto& recref : matched_recs) {
+        auto* rec = &recref;
           switch (rec->type) {
           case cExecAll:
             rec = NULL;
@@ -13467,11 +13454,7 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals * G, const char *name, float *po
             }
           }
         }
-      }
-      TrackerDelIter(I_Tracker, iter_id);
     }
-
-    TrackerDelList(I_Tracker, list_id);
   }
   *dev = fmx;
   return (flag);
