@@ -5386,21 +5386,12 @@ static PyObject *CmdStereo(PyObject * self, PyObject * args)
 static PyObject *CmdReset(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int cmd;
-  int ok = false;
   char *obj;
-  ok = PyArg_ParseTuple(args, "Ois", &self, &cmd, &obj);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveReset(G, cmd, obj);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Os", &self, &obj);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveReset(G, obj);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdSetMatrix(PyObject * self, PyObject * args)

@@ -1913,14 +1913,8 @@ PYMOL API
 
     cmd.reset()
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.reset(_self._COb,0,str(object))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        with _self.lockcm:
+            return _cmd.reset(_self._COb, str(object))
 
 
     def dirty(_self=cmd): # OBSOLETE?

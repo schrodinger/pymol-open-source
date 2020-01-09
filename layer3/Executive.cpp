@@ -77,6 +77,7 @@
 #include"Parse.h"
 #include"PlugIOManager.h"
 #include "Lex.h"
+#include "List.h"
 
 #include"OVContext.h"
 #include"OVLexicon.h"
@@ -11579,63 +11580,57 @@ void ExecutiveUpdateObjectSelection(PyMOLGlobals * G, CObject * obj)
 
 
 /*========================================================================*/
-int ExecutiveReset(PyMOLGlobals * G, int cmd, const char *name)
+/**
+ * Reset camera view or object TTT matrix. Stores key frames for modified
+ * objects if `movie_auto_store=on`.
+ *
+ * @param name Empty, "all", "same", or object name pattern
+ *
+ * - empty name: Reset camera view
+ * - "all": Reset TTT matrices and store key frames for all objects
+ * - "same": Reset TTT matrices and store key frames for objects which currently have any key frames
+ * - pattern: Reset TTT matrices and store key frames for objects which match the pattern
+ */
+pymol::Result<> ExecutiveReset(PyMOLGlobals* G, pymol::zstring_view name)
 {
-  int ok = true;
-  int store = SettingGetGlobal_i(G, cSetting_movie_auto_store);
-
-  if(!name[0]) {
+  if (name.empty()) {
     SceneResetMatrix(G);
     ExecutiveWindowZoom(G, cKeywordAll, 0.0, -1, 0, 0, true);   /* reset does all states */
-  } else {
-    CExecutive *I = G->Executive;
-    if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
-      SpecRec *rec = NULL;
-      while(ListIterate(I->Spec, rec, next)) {
-        switch(rec->type) {
-        case cExecObject:
-          {
-            CObject *obj = rec->obj;
-            if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
-              ObjectResetTTT(obj, SettingGetGlobal_b(G,cSetting_movie_auto_store));
-              obj->invalidate(cRepNone, cRepInvExtents, -1);
-            }
-          }
-          break;
-        }
-      }
-      if(store && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
-        ExecutiveMotionReinterpolate(G);
-      }
-    } else { /* pattern */
-      CTracker *I_Tracker = I->Tracker;
-      SpecRec *rec = NULL;
-      int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
-      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-      while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
-        if(rec) {
-          
-          switch (rec->type) {
-          case cExecObject: 
-            {
-              CObject *obj = rec->obj;
-              ObjectResetTTT(obj, SettingGetGlobal_b(G,cSetting_movie_auto_store));
-              obj->invalidate(cRepNone, cRepInvExtents, -1);
-            }
-            break;
-          }
-        }
-      }
-      TrackerDelList(I_Tracker, list_id);
-      TrackerDelIter(I_Tracker, iter_id);
-      if(store && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
-        ExecutiveMotionReinterpolate(G);
-      }
-    }
-    SceneInvalidate(G);
-  return ok;
+    return {};
   }
-  return (ok);
+
+  bool do_reset_all = name == cKeywordAll;
+  auto store = SettingGet<bool>(G, cSetting_movie_auto_store);
+
+  /**
+   * @param any_spec_level If false, then filter for objects with spec level >= 0
+   */
+  auto reset_rec = [&](SpecRec& rec, bool any_spec_level = true) {
+    CObject* obj = rec.obj;
+    if (rec.type == cExecObject &&
+        (any_spec_level || ObjectGetSpecLevel(obj, 0) >= 0)) {
+      ObjectResetTTT(obj, store);
+      obj->invalidate(cRepNone, cRepInvExtents, -1);
+    }
+  };
+
+  if (do_reset_all || name == cKeywordSame) {
+    for (auto& rec : pymol::make_list_adapter(G->Executive->Spec)) {
+      reset_rec(rec, do_reset_all);
+    }
+  } else {
+    for (auto& rec : ExecutiveGetSpecRecsFromPattern(G, name)) {
+      reset_rec(rec);
+    }
+  }
+
+  if (store && SettingGet<bool>(G, cSetting_movie_auto_interpolate)) {
+    ExecutiveMotionReinterpolate(G);
+  }
+
+  SceneInvalidate(G);
+
+  return {};
 }
 
 
