@@ -38,21 +38,136 @@ class TestCreating(testing.PyMOLTestCase):
         cmd.iterate('g2', 'm_list.append(model)', space=locals())
         self.assertItemsEqual(m_list, ['g2.m1', 'g2.m2'])
 
-    @unittest.skip("Not yet implemented.")
     def testIsomesh(self):
-        pass
+        cmd.viewport(100, 100)
 
-    @unittest.skip("Not yet implemented.")
+        cmd.fragment('gly', 'm1')
+        cmd.set('gaussian_b_floor', 30)
+        cmd.set('mesh_width', 5)
+        cmd.map_new('map')
+        cmd.delete('m1')
+
+        # make mesh
+        cmd.isomesh('mesh', 'map')
+        cmd.isomesh('mesh', 'map', source_state=1, state=-2)
+
+        ## check mesh presence by color
+        meshcolor = 'red'
+        cmd.color(meshcolor, 'mesh')
+        self.ambientOnly()
+        self.assertImageHasColor(meshcolor)
+        cmd.frame(2)
+        self.assertEqual(cmd.get_state(), 2)
+        self.assertImageHasColor(meshcolor)
+
+        with testing.mktemp('.pse') as filename:
+            cmd.save(filename)
+
+            cmd.delete('*')
+            self.assertImageHasNotColor(meshcolor)
+
+            cmd.load(filename)
+            self.assertImageHasColor(meshcolor)
+            cmd.frame(2)
+            self.assertEqual(cmd.get_state(), 2)
+            self.assertImageHasColor(meshcolor)
+
     def testIsosurface(self):
-        pass
+        cmd.viewport(100, 100)
 
-    @unittest.skip("Not yet implemented.")
+        cmd.fragment('gly', 'm1')
+        cmd.set('gaussian_b_floor', 30)
+        cmd.set('mesh_width', 5)
+        cmd.map_new('map')
+        cmd.delete('m1')
+
+        # make mesh
+        cmd.isosurface('surface', 'map')
+        cmd.isosurface('surface', 'map', source_state=1, state=-2)
+
+        ## check mesh presence by color
+        meshcolor = 'red'
+        cmd.color(meshcolor, 'surface')
+        self.ambientOnly()
+        self.assertImageHasColor(meshcolor)
+        cmd.frame(2)
+        self.assertEqual(cmd.get_state(), 2)
+        self.assertImageHasColor(meshcolor)
+
+        with testing.mktemp('.pse') as filename:
+            cmd.save(filename)
+
+            cmd.delete('*')
+            self.assertImageHasNotColor(meshcolor)
+
+            cmd.load(filename)
+            self.assertImageHasColor(meshcolor)
+            cmd.frame(2)
+            self.assertEqual(cmd.get_state(), 2)
+            self.assertImageHasColor(meshcolor)
+
     def testIsodot(self):
-        pass
+        cmd.viewport(100, 100)
 
-    @unittest.skip("Not yet implemented.")
+        cmd.fragment('gly', 'm1')
+        cmd.set('gaussian_b_floor', 30)
+        cmd.set('mesh_width', 5)
+        cmd.map_new('map')
+        cmd.delete('m1')
+
+        # make mesh
+        cmd.isodot('dot', 'map')
+        cmd.isodot('dot', 'map', source_state=1, state=-2)
+
+        ## check mesh presence by color
+        meshcolor = 'red'
+        cmd.color(meshcolor, 'dot')
+        self.ambientOnly()
+        self.assertImageHasColor(meshcolor)
+        cmd.frame(2)
+        self.assertEqual(cmd.get_state(), 2)
+        self.assertImageHasColor(meshcolor)
+
+        with testing.mktemp('.pse') as filename:
+            cmd.save(filename)
+
+            cmd.delete('*')
+            self.assertImageHasNotColor(meshcolor)
+
+            cmd.load(filename)
+            self.assertImageHasColor(meshcolor)
+            cmd.frame(2)
+            self.assertEqual(cmd.get_state(), 2)
+            self.assertImageHasColor(meshcolor)
+
     def testIsolevel(self):
-        pass
+        cmd.viewport(100, 100)
+
+        cmd.fragment('gly', 'm1')
+        cmd.set('gaussian_b_floor', 30)
+        cmd.set('mesh_width', 5)
+        cmd.map_new('map')
+        cmd.delete('m1')
+
+        # make mesh
+        cmd.isodot('dot', 'map')
+        cmd.isodot('dot', 'map', source_state=1, state=-2)
+
+        ## check mesh presence by color
+        meshcolor = 'red'
+        cmd.color(meshcolor, 'dot')
+        self.ambientOnly()
+        self.assertImageHasColor(meshcolor)
+        cmd.frame(2)
+        self.assertEqual(cmd.get_state(), 2)
+        self.assertImageHasColor(meshcolor)
+
+        for contourlvl in range(7):
+            cmd.isolevel('dot', contourlvl)
+            self.assertImageHasColor(meshcolor)
+
+        cmd.isolevel('dot', 10)
+        self.assertImageHasNotColor(meshcolor)
 
     @unittest.skip("Not yet implemented.")
     def testGradient(self):
