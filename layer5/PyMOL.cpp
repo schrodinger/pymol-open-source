@@ -1323,26 +1323,11 @@ PyMOLreturn_status PyMOL_CmdIsodot(CPyMOL * I, const char *name, const char *map
                                    const char *selection, float buffer, int state, float carve,
                                    int source_state, int quiet)
 {
-  int ok = true;
-  OrthoLineType s1 = "";
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
-  int box_mode = 0;
-  PYMOL_API_LOCK if(selection && selection[0]) {
-    if(ok)
-      ok = (SelectorGetTmp(I->G, selection, s1) >= 0);
-    if(ok)
-      box_mode = 1;
-  }
-
-  if(ok) {
-    ok = ExecutiveIsomeshEtc(I->G, name, map_name, level, s1, buffer,
-                             state - 1, carve, source_state - 1, quiet, 1, box_mode,
-                             level);
-    result.status = get_status_ok(ok);
-  } else {
-    result.status = PyMOLstatus_FAILURE;
-  }
-  SelectorFreeTmp(I->G, s1);
+  PYMOL_API_LOCK
+  auto res = ExecutiveIsomeshEtc(I->G, name, map_name, level, selection, buffer,
+      state - 1, carve, source_state - 1, quiet, 1, level);
+  result.status = get_status_ok(bool(res));
   PYMOL_API_UNLOCK return result;
 
 }
@@ -1351,25 +1336,11 @@ PyMOLreturn_status PyMOL_CmdIsomesh(CPyMOL * I, const char *name, const char *ma
                                     const char *selection, float buffer, int state, float carve,
                                     int source_state, int quiet)
 {
-  int ok = true;
-  OrthoLineType s1 = "";
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
-  int box_mode = 0;
-  PYMOL_API_LOCK if(selection && selection[0]) {
-    if(ok)
-      ok = (SelectorGetTmp(I->G, selection, s1) >= 0);
-    if(ok)
-      box_mode = 1;
-  }
-  if(ok) {
-    ok = ExecutiveIsomeshEtc(I->G, name, map_name, level, s1, buffer,
-                             state - 1, carve, source_state - 1, quiet, 0, box_mode,
-                             level);
-    result.status = get_status_ok(ok);
-  } else {
-    result.status = PyMOLstatus_FAILURE;
-  }
-  SelectorFreeTmp(I->G, s1);
+  PYMOL_API_LOCK
+  auto res = ExecutiveIsomeshEtc(I->G, name, map_name, level, selection, buffer,
+      state - 1, carve, source_state - 1, quiet, 0, level);
+  result.status = get_status_ok(bool(res));
   PYMOL_API_UNLOCK return result;
 }
 
@@ -1378,26 +1349,11 @@ PyMOLreturn_status PyMOL_CmdIsosurface(CPyMOL * I, const char *name, const char 
                                        int state, float carve, int source_state, int side,
                                        int mode, int quiet)
 {
-  int ok = true;
-  OrthoLineType s1 = "";
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
-  int box_mode = 0;
-  PYMOL_API_LOCK if(selection && selection[0]) {
-    if(ok)
-      ok = (SelectorGetTmp(I->G, selection, s1) >= 0);
-    if(ok)
-      box_mode = 1;
-  }
-
-  if(ok) {
-    ok = ExecutiveIsosurfaceEtc(I->G, name, map_name, level, s1, buffer,
-                                state - 1, carve, source_state - 1, side, quiet, mode,
-                                box_mode);
-    result.status = get_status_ok(ok);
-  } else {
-    result.status = PyMOLstatus_FAILURE;
-  }
-  SelectorFreeTmp(I->G, s1);
+  PYMOL_API_LOCK
+  auto res = ExecutiveIsosurfaceEtc(I->G, name, map_name, level, selection,
+      buffer, state - 1, carve, source_state - 1, side, quiet, mode);
+  result.status = get_status_ok(bool(res));
   PYMOL_API_UNLOCK return result;
 }
 
@@ -1406,26 +1362,11 @@ PyMOLreturn_status PyMOL_CmdGradient(CPyMOL * I, const char *name, const char *m
                                      float buffer, int state, float carve,
                                      int source_state, int quiet)
 {
-  int ok = true;
-  OrthoLineType s1 = "";
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
-  int box_mode = 0;
-  PYMOL_API_LOCK if(selection && selection[0]) {
-    if(ok)
-      ok = (SelectorGetTmp(I->G, selection, s1) >= 0);
-    if(ok)
-      box_mode = 1;
-  }
-
-  if(ok) {
-    ok = ExecutiveIsomeshEtc(I->G, name, map_name, minimum, s1, buffer,
-                             state - 1, carve, source_state - 1, quiet, 3, box_mode,
-                             maximum);
-    result.status = get_status_ok(ok);
-  } else {
-    result.status = PyMOLstatus_FAILURE;
-  }
-  SelectorFreeTmp(I->G, s1);
+  PYMOL_API_LOCK
+  auto res = ExecutiveIsomeshEtc(I->G, name, map_name, minimum, selection,
+      buffer, state - 1, carve, source_state - 1, quiet, 3, maximum);
+  result.status = get_status_ok(bool(res));
   PYMOL_API_UNLOCK return result;
 }
 

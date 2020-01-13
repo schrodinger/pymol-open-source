@@ -3441,25 +3441,17 @@ static PyObject *CmdIsomesh(PyObject * self, PyObject * args)
   float lvl, fbuf, alt_lvl;
   int mesh_mode;
   int state = -1;
-  int box_mode;
   float carve;
-  int ok = false;
   int map_state;
   int quiet;
-  /* oper 0 = all, 1 = sele + buffer, 2 = vector */
-
-  API_SETUP_ARGS(G, self, args, "Ossisffiifiif", &self, &mesh_name, &map_name, &box_mode,
-                        &sele, &fbuf, &lvl, &mesh_mode, &state, &carve, &map_state,
-                        &quiet, &alt_lvl);
+  API_SETUP_ARGS(G, self, args, "Osssffiifiif", &self, &mesh_name, &map_name,
+      &sele, &fbuf, &lvl, &mesh_mode, &state, &carve, &map_state, &quiet,
+      &alt_lvl);
   API_ASSERT(APIEnterNotModal(G));
-  {
-    ok = ExecutiveIsomeshEtc(G, mesh_name, map_name, lvl, sele, fbuf,
-                             state, carve, map_state, quiet, mesh_mode, box_mode,
-                             alt_lvl);
-
-    APIExit(G);
-  }
-  return APIResultOk(G, ok);
+  auto res = ExecutiveIsomeshEtc(G, mesh_name, map_name, lvl, sele, fbuf, state,
+      carve, map_state, quiet, mesh_mode, alt_lvl);
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static int ExecutiveSliceNew(PyMOLGlobals * G, char *slice_name,
@@ -3576,25 +3568,19 @@ static PyObject *CmdIsosurface(PyObject * self, PyObject * args)
   float lvl, fbuf;
   int surf_mode;
   int state = -1;
-  int box_mode;
   float carve;
-  int ok = false;
   int map_state = 0;
   int side;
   int quiet;
-  /* box_mode 0 = all, 1 = sele + buffer, 2 = vector */
 
-  API_SETUP_ARGS(G, self, args, "Ossisffiifiii", &self, &surf_name, &map_name, &box_mode,
+  API_SETUP_ARGS(G, self, args, "Osssffiifiii", &self, &surf_name, &map_name,
                         &sele, &fbuf, &lvl, &surf_mode, &state, &carve, &map_state,
                         &side, &quiet);
   API_ASSERT(APIEnterNotModal(G));
-  {
-    ok = ExecutiveIsosurfaceEtc(G, surf_name, map_name, lvl, sele, fbuf, state,
-                                carve, map_state, side, quiet, surf_mode, box_mode);
-
+  auto res = ExecutiveIsosurfaceEtc(G, surf_name, map_name, lvl, sele, fbuf,
+      state, carve, map_state, side, quiet, surf_mode);
     APIExit(G);
-  }
-  return APIResultOk(G, ok);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdSymExp(PyObject * self, PyObject * args)
@@ -7628,31 +7614,18 @@ static PyObject *CmdVolume(PyObject *self, PyObject *args)
 { 
   PyMOLGlobals *G = NULL;
   char *volume_name, *map_name, *sele;
-  float lvl, fbuf, alt_lvl;
-  int mesh_mode;
+  float lvl, fbuf;
   int state = -1;
-  int box_mode;
   float carve;
-  int ok = false;
   int map_state;
   int quiet;
-
-  ok = PyArg_ParseTuple(args, "Ossisffiifiif", &self, &volume_name, &map_name, &box_mode,
-                        &sele, &fbuf, &lvl, &mesh_mode, &state, &carve, &map_state,
-                        &quiet, &alt_lvl);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveVolume(G, volume_name, map_name, lvl, sele, fbuf,
-                         state, carve, map_state, quiet, mesh_mode, box_mode,
-                         alt_lvl);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Osssffifii", &self, &volume_name, &map_name,
+      &sele, &fbuf, &lvl, &state, &carve, &map_state, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto res = ExecutiveVolume(G, volume_name, map_name, lvl, sele, fbuf, state,
+      carve, map_state, quiet);
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdAssignAtomTypes(PyObject *self, PyObject *args)

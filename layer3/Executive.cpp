@@ -786,70 +786,102 @@ int ExecutiveReference(PyMOLGlobals * G, int action, const char *sele, int state
   return result;
 }
 
-int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
+/**
+ * Does the object and state validation which is common to isosurface, isomesh,
+ * and volume creation.
+ */
+template <typename ObjectT>
+static pymol::Result<> EtcHelper(PyMOLGlobals* G,             //
+    const char* obj_name, int& obj_state, ObjectT*& origObj,  //
+    const char* map_name, int& map_state, ObjectMap*& mapObj, //
+    int& multi)
+{
+  if (obj_state < -3) {
+    return pymol::make_error("Invalid state ", obj_state + 1);
+  }
+
+  if (map_state < -3) {
+    return pymol::make_error("Invalid source_state ", map_state + 1);
+  }
+
+  mapObj = ExecutiveFindObject<ObjectMap>(G, map_name);
+  if (!mapObj) {
+    return pymol::make_error("Map object \"", map_name, "\" not found");
+  }
+
+  // if object with same name but different type exists, overwrite it
+  auto anyOrigObj = ExecutiveFindObjectByName(G, obj_name);
+  origObj = dynamic_cast<ObjectT*>(anyOrigObj);
+  if (anyOrigObj && !origObj) {
+    ExecutiveDelete(G, obj_name);
+  }
+
+  switch (obj_state) {
+  case -1:
+    // all states
+    obj_state = 0;
+    map_state = -1;
+    break;
+  case -2:
+    // current state
+    obj_state = SceneGetState(G);
+    if (map_state < 0)
+      map_state = obj_state;
+    break;
+  case -3:
+    // append mode
+    obj_state = origObj ? origObj->getNFrame() : 0;
+    if (map_state < 0)
+      map_state = obj_state;
+    break;
+  }
+
+  switch (map_state) {
+  case -1:
+    // all states
+    map_state = 0;
+    multi = true;
+    break;
+  case -2:
+    // current state
+    map_state = SceneGetState(G);
+    break;
+  case -3:
+    // append mode
+    map_state = mapObj->getNFrame() - 1;
+    break;
+  }
+
+  return {};
+}
+
+pymol::Result<> ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
                            const char *surf_name, const char *map_name, float lvl,
                            const char *sele, float fbuf, int state,
                            float carve, int map_state, int side,
-                           int quiet, int surf_mode, int box_mode)
+                           int quiet, int surf_mode)
 {
   int c;
   OrthoLineType s1;
-  CObject *obj = NULL, *mObj, *origObj;
+  ObjectSurface *obj = nullptr, *origObj = nullptr;
   ObjectMap *mapObj;
   float mn[3] = { 0, 0, 0 };
   float mx[3] = { 15, 15, 15 };
   float *vert_vla = NULL;
-  int ok = true;
   ObjectMapState *ms;
   int multi = false;
-  /* box_mode 0 = all, 1 = sele + buffer, 2 = vector, 3 = testing */
 
-  /* (pattern) if old_name(origObj) exists, overwrite it */
-  origObj = ExecutiveFindObjectByName(G, surf_name);
-  if(origObj) {
-    if(origObj->type != cObjectSurface) {
-      ExecutiveDelete(G, surf_name);
-      origObj = NULL;
-    }
+  auto res0 = EtcHelper(
+      G, surf_name, state, origObj, map_name, map_state, mapObj, multi);
+  if (!res0) {
+    return res0.error();
   }
 
-  /* (pattern) if old_name(mObj) exists, overwrite it */
-  mObj = ExecutiveFindObjectByName(G, map_name);
-  if(mObj) {
-    if(mObj->type != cObjectMap)
-      mObj = NULL;
-  }
-  /* state finding for the map */
-  if(mObj) {
-    mapObj = (ObjectMap *) mObj;
-    /* state handling */
-    if(state == -1) {
-      multi = true;
-      state = 0;
-      map_state = 0;
-    } else if(state == -2) {    /* current state */
-      state = SceneGetState(G);
-      if(map_state < 0)
-        map_state = state;
-    } else if(state == -3) {    /* append mode */
-      state = 0;
-      if(origObj)
-        state = origObj->getNFrame();
-    } else {
-      if(map_state == -1) {
-        map_state = 0;
-        multi = true;
-      } else {
-        multi = false;
-      }
-    }
+  {
     while(1) {
-      if(map_state == -2)
-        map_state = SceneGetState(G);
-      if(map_state == -3)
-        map_state = mapObj->getNFrame() - 1;
       ms = ObjectMapStateGetActive(mapObj, map_state);
       if(ms) {
+        int box_mode = (sele && sele[0]) ? 1 : 0;
         switch (box_mode) {
         case 0:                /* using map to get extents */
           for(c = 0; c < 3; c++) {
@@ -873,7 +905,9 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
           carve = 0.0F;
           break;
         case 1:                /* using selection to get extents */
-          ok = (SelectorGetTmp2(G, sele, s1) >= 0);
+          if (SelectorGetTmp2(G, sele, s1) < 0) {
+            return pymol::Error("Invalid selection");
+          }
           ExecutiveGetExtent(G, s1, mn, mx, false, -1, false);  /* TODO state */
           if(carve != 0.0F) {
             vert_vla = ExecutiveGetVertexVLA(G, s1, state);
@@ -890,11 +924,11 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
         PRINTFB(G, FB_CCmd, FB_Blather)
           " Isosurface: buffer %8.3f carve %8.3f\n", fbuf, carve ENDFB(G);
         obj =
-          (CObject *) ObjectSurfaceFromBox(G, (ObjectSurface *) origObj, mapObj,
+          ObjectSurfaceFromBox(G, origObj, mapObj,
                                            map_state, state, mn, mx, lvl, surf_mode,
                                            carve, vert_vla, side, quiet);
         /* copy the map's TTT */
-        ExecutiveMatrixCopy2(G, mObj, obj, 1, 1, -1, -1, false, 0, quiet);
+        ExecutiveMatrixCopy2(G, mapObj, obj, 1, 1, -1, -1, false, 0, quiet);
 
         if(!origObj) {
           ObjectSetName(obj, surf_name);
@@ -902,17 +936,15 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
         }
         if(SettingGetGlobal_b(G, cSetting_isomesh_auto_state))
           if(obj)
-            ObjectGotoState((ObjectMolecule *) obj, state);
+            ObjectGotoState(obj, state);
         if(!quiet) {
           PRINTFB(G, FB_ObjectSurface, FB_Actions)
             " Isosurface: created \"%s\", setting level to %5.3f\n", surf_name, lvl
             ENDFB(G);
         }
       } else if(!multi) {
-        PRINTFB(G, FB_ObjectMesh, FB_Warnings)
-          " Isosurface-Warning: state %d not present in map \"%s\".\n", map_state + 1,
-          map_name ENDFB(G);
-        ok = false;
+        return pymol::make_error(
+            "state ", map_state + 1, " not present in map \"", map_name, "\"");
       }
       if(multi) {
         origObj = obj;
@@ -924,22 +956,17 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
         break;
       }
     }
-  } else {
-    PRINTFB(G, FB_ObjectSurface, FB_Errors)
-      " Isosurface: Map or brick object \"%s\" not found.\n", map_name ENDFB(G);
-    ok = false;
   }
-  return ok;
+  return {};
 }
 
-int ExecutiveIsomeshEtc(PyMOLGlobals * G,
+pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
                         const char *mesh_name, const char *map_name, float lvl,
                         const char *sele, float fbuf, int state,
                         float carve, int map_state, int quiet,
-                        int mesh_mode, int box_mode, float alt_lvl)
+                        int mesh_mode, float alt_lvl)
 {
-  int ok = true;
-  CObject *obj = NULL, *mObj, *origObj;
+  ObjectMesh *obj = nullptr, *origObj = nullptr;
   ObjectMap *mapObj;
   float mn[3] = { 0, 0, 0 };
   float mx[3] = { 15, 15, 15 };
@@ -950,51 +977,17 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
   ObjectMolecule *sele_obj = NULL;
   CSymmetry *symm;
 
-  /* (pattern) if old_name(origObj) exists, overwrite it */
-  origObj = ExecutiveFindObjectByName(G, mesh_name);
-  if(origObj) {
-    if(origObj->type != cObjectMesh) {
-      ExecutiveDelete(G, mesh_name);
-      origObj = NULL;
-    }
+  auto res0 = EtcHelper(
+      G, mesh_name, state, origObj, map_name, map_state, mapObj, multi);
+  if (!res0) {
+    return res0.error();
   }
 
-  /* (pattern) if old_name(mObj) exists, overwrite it */
-  mObj = ExecutiveFindObjectByName(G, map_name);
-  if(mObj) {
-    if(mObj->type != cObjectMap)
-      mObj = NULL;
-  }
-  if(mObj) {
-    mapObj = (ObjectMap *) mObj;
-    /* state handling */
-    if(state == -1) {
-      multi = true;
-      state = 0;
-      map_state = 0;
-    } else if(state == -2) {
-      state = SceneGetState(G);
-      if(map_state < 0)
-        map_state = state;
-    } else if(state == -3) {    /* append mode */
-      state = 0;
-      if(origObj)
-        state = origObj->getNFrame();
-    } else {
-      if(map_state == -1) {
-        map_state = 0;
-        multi = true;
-      } else {
-        multi = false;
-      }
-    }
+  {
     while(1) {
-      if(map_state == -2)
-        map_state = SceneGetState(G);
-      if(map_state == -3)
-        map_state = mapObj->getNFrame() - 1;
       ms = ObjectMapStateGetActive(mapObj, map_state);
       if(ms) {
+        int box_mode = (sele && sele[0]) ? 1 : 0;
         switch (box_mode) {
         case 0:                /* do the whole map */
           {
@@ -1022,8 +1015,10 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
           break;
         case 1:                /* just do area around selection */
 	  /* determine the selected object */
-          ok = (SelectorGetTmp2(G, sele, s1) >= 0);
-          if(ok) {
+          if (SelectorGetTmp2(G, sele, s1) < 0) {
+            return pymol::Error("Invalid selection");
+          }
+          {
             int sele1 = SelectorIndexByName(G, s1);
             if(sele1 >= 0)
               sele_obj = SelectorGetSingleObjectMolecule(G, sele1);
@@ -1061,7 +1056,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
         }
 
         if(symm) {
-          obj = (CObject *) ObjectMeshFromXtalSym(G, (ObjectMesh *) origObj, mapObj,
+          obj = ObjectMeshFromXtalSym(G, origObj, mapObj,
                                                   symm,
                                                   map_state, state, mn, mx, lvl,
                                                   mesh_mode, carve, vert_vla, alt_lvl,
@@ -1070,12 +1065,12 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
           obj = NULL;
         }
         if(!obj) {
-          obj = (CObject *) ObjectMeshFromBox(G, (ObjectMesh *) origObj, mapObj,
+          obj = ObjectMeshFromBox(G, origObj, mapObj,
                                               map_state, state, mn, mx, lvl, mesh_mode,
                                               carve, vert_vla, alt_lvl, quiet);
         }
         /* copy the map's TTT */
-        ExecutiveMatrixCopy2(G, mObj, obj, 1, 1, -1, -1, false, 0, quiet);
+        ExecutiveMatrixCopy2(G, mapObj, obj, 1, 1, -1, -1, false, 0, quiet);
 
         if(!origObj) {
           ObjectSetName(obj, mesh_name);
@@ -1084,7 +1079,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
 
         if(SettingGetGlobal_b(G, cSetting_isomesh_auto_state))
           if(obj)
-            ObjectGotoState((ObjectMolecule *) obj, state);
+            ObjectGotoState(obj, state);
         if(!quiet) {
           if(mesh_mode != 3) {
             PRINTFB(G, FB_ObjectMesh, FB_Actions)
@@ -1096,10 +1091,8 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
           }
         }
       } else if(!multi) {
-        PRINTFB(G, FB_ObjectMesh, FB_Warnings)
-          " Isomesh-Warning: state %d not present in map \"%s\".\n", map_state + 1,
-          map_name ENDFB(G);
-        ok = false;
+        return pymol::make_error(
+            "state ", map_state + 1, " not present in map \"", map_name, "\"");
       }
       if(multi) {
         origObj = obj;
@@ -1111,12 +1104,8 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
         break;
       }
     }
-  } else {
-    PRINTFB(G, FB_ObjectMesh, FB_Errors)
-      " Isomesh: Map or brick object \"%s\" not found.\n", map_name ENDFB(G);
-    ok = false;
   }
-  return ok;
+  return {};
 }
 
 
@@ -1147,14 +1136,13 @@ int ExecutiveVolumeColor(PyMOLGlobals * G, const char * volume_name, float * col
 }
 
 
-int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
+pymol::Result<>
+ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
                         float lvl,
                         const char *sele, float fbuf, int state,
-                        float carve, int map_state, int quiet,
-                        int mesh_mode, int box_mode, float alt_lvl)
+                        float carve, int map_state, int quiet)
 {
-  int ok = true;
-  CObject *obj = NULL, *mObj, *origObj;
+  ObjectVolume *obj = nullptr, *origObj = nullptr;
   ObjectMap *mapObj;
   float mn[3] = { 0, 0, 0 };
   float mx[3] = { 15, 15, 15 };
@@ -1195,54 +1183,19 @@ int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_n
    *   - update the map state for the next loop and re-iterate
    */
 
-  /* check for synonymous volume */
-  origObj = ExecutiveFindObjectByName(G, volume_name);
-  if(origObj) {
-    if(origObj->type != cObjectVolume) {
-      ExecutiveDelete(G, volume_name);
-      origObj = NULL;
-    }
-  }
-  /* find the map for this volume */
-  mObj = ExecutiveFindObjectByName(G, map_name);
-  if(mObj) {
-    if(mObj->type != cObjectMap)
-      mObj = NULL;
+  auto res0 = EtcHelper(
+      G, volume_name, state, origObj, map_name, map_state, mapObj, multi);
+  if (!res0) {
+    return res0.error();
   }
 
-  if(mObj) {
-    mapObj = (ObjectMap *) mObj;
-    /* BEGIN state finding */
-    if(state == -1) {
-      multi = true;
-      state = 0;
-      map_state = 0;
-    } else if(state == -2) {
-      state = SceneGetState(G);
-      if(map_state < 0)
-        map_state = state;
-    } else if(state == -3) {    /* append mode */
-      state = 0;
-      if(origObj)
-        state = origObj->getNFrame();
-    } else {
-      if(map_state == -1) {
-        map_state = 0;
-        multi = true;
-      } else {
-        multi = false;
-      }
-      /* END state finding */
-    }
+  {
     /* do for each state */
     while(1) {
-      if(map_state == -2)
-        map_state = SceneGetState(G);
-      if(map_state == -3)
-        map_state = mapObj->getNFrame() - 1;
       ms = ObjectMapStateGetActive(mapObj, map_state);
       if(ms) {
 	/* determine extents */
+        int box_mode = (sele && sele[0]) ? 1 : 0;
         switch (box_mode) {
         case 0:                /* do the whole map */
           {
@@ -1269,8 +1222,10 @@ int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_n
           carve = -0.0;         /* impossible */
           break;
         case 1:                /* just do area around selection */
-          ok = (SelectorGetTmp2(G, sele, s1) >= 0);
-          if(ok) {
+          if (SelectorGetTmp2(G, sele, s1) < 0) {
+            return pymol::Error("Invalid selection");
+          }
+          {
             int sele1 = SelectorIndexByName(G, s1);
             if(sele1 >= 0)
               sele_obj = SelectorGetSingleObjectMolecule(G, sele1);
@@ -1308,22 +1263,22 @@ int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_n
         }
 
         if(symm) {
-          obj = (CObject *) ObjectVolumeFromXtalSym(G, (ObjectVolume *) origObj, mapObj,
+          obj = ObjectVolumeFromXtalSym(G, origObj, mapObj,
                                                   symm,
                                                   map_state, state, mn, mx, lvl,
-                                                  box_mode, carve, vert_vla, alt_lvl,
+                                                  box_mode, carve, vert_vla,
                                                   quiet);
         } else {
           obj = NULL;
         }
 
         if(!obj) {
-          obj = (CObject *) ObjectVolumeFromBox(G, (ObjectVolume *) origObj, mapObj,
+          obj = ObjectVolumeFromBox(G, origObj, mapObj,
                                               map_state, state, mn, mx, lvl, box_mode,
-                                              carve, vert_vla, alt_lvl, quiet);
+                                              carve, vert_vla, quiet);
         }
         /* copy the map's TTT */
-        ExecutiveMatrixCopy2(G, mObj, obj, 1, 1, -1, -1, false, 0, quiet);
+        ExecutiveMatrixCopy2(G, mapObj, obj, 1, 1, -1, -1, false, 0, quiet);
 	/* set the object name
 	 * manage the object in the UI */
         if(!origObj) {
@@ -1333,17 +1288,15 @@ int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_n
 
         if(SettingGetGlobal_b(G, cSetting_isomesh_auto_state))
           if(obj)
-            ObjectGotoState((ObjectMolecule *) obj, state);
+            ObjectGotoState(obj, state);
         if(!quiet) {
 	  PRINTFB(G, FB_ObjectVolume, FB_Actions)
 	    " Volume: created \"%s\"\n", volume_name
 	    ENDFB(G);
         }
       } else if(!multi) {
-        PRINTFB(G, FB_ObjectVolume, FB_Warnings)
-          " Volume-Warning: state %d not present in map \"%s\".\n", map_state + 1,
-          map_name ENDFB(G);
-        ok = false;
+        return pymol::make_error(
+            "state ", map_state + 1, " not present in map \"", map_name, "\"");
       }
       if(multi) {
         origObj = obj;
@@ -1355,12 +1308,8 @@ int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_n
         break;
       }
     }
-  } else {
-    PRINTFB(G, FB_ObjectVolume, FB_Errors)
-      " Volume: Map or brick object \"%s\" not found.\n", map_name ENDFB(G);
-    ok = false;
   }
-  return ok;
+  return {};
 }
 
 int ExecutivePseudoatom(PyMOLGlobals * G, const char *object_name, const char *sele,

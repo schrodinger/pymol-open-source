@@ -554,20 +554,13 @@ SEE ALSO
 
     isodot, load
 '''
-        r = DEFAULT_ERROR
-        if selection!='':
-            region = 1 # about a selection
-        else:
-            region = 0 # render the whole map
         # preprocess selection
         selection = selector.process(selection)
-        if selection not in [ 'center', 'origin' ]:
-            selection = "("+selection+")"
         #
         if carve is None:
             carve=0.0
         with _self.lockcm:
-            return _cmd.isomesh(_self._COb,str(name),str(map),int(region),
+            return _cmd.isomesh(_self._COb,str(name),str(map),
                              selection,float(buffer),
                              float(level),0,int(state)-1,float(carve),
                              int(source_state)-1,int(quiet),
@@ -617,14 +610,8 @@ SEE ALSO
 '''
         r = DEFAULT_ERROR
 
-        if selection!='':
-            region = 1 # about a selection
-        else:
-            region = 0 # render the whole map
         # preprocess selection
         selection = selector.process(selection)
-        if selection not in [ 'center', 'origin' ]:
-            selection = "("+selection+")"
 
         if carve is None:
             carve=0.0
@@ -636,24 +623,15 @@ SEE ALSO
         except (ValueError, TypeError):
             level = 0.0
 
-        try:
-            _self.lock(_self)
-
-            r = _cmd.volume(_self._COb,str(name),str(map),int(region),
+        with _self.lockcm:
+            r = _cmd.volume(_self._COb,str(name),str(map),
                             selection,float(buffer),
-                            float(level),0,int(state)-1,float(carve),
-                            int(source_state)-1,int(quiet),
-                            float(level))
-
-        finally:
-            _self.unlock(r,_self)
-
-        if _self._raising(r,_self): raise pymol.CmdException
+                            float(level),int(state)-1,float(carve),
+                            int(source_state)-1,int(quiet))
 
         if ramp:
             _self.volume_color(name, ramp)
 
-        # unlock and then use this to differentiate our viz
         return r
 
 
@@ -767,28 +745,17 @@ SEE ALSO
 
     isodot, isomesh, load
         '''
-        r = DEFAULT_ERROR
-        if selection!='':
-            region = 1 # about a selection
-        else:
-            region = 0 # render the whole map
         # preprocess selection
         selection = selector.process(selection)
-        if selection not in [ 'center', 'origin' ]:
-            selection = "("+selection+")"
       #
         if carve is None:
             carve=0.0
-        try:
-            _self.lock(_self)
-            r = _cmd.isosurface(_self._COb,str(name),str(map),int(region),
+        with _self.lockcm:
+            return _cmd.isosurface(_self._COb,str(name),str(map),
                                       selection,float(buffer),
                                       float(level),int(mode),int(state)-1,float(carve),
                                       int(source_state)-1,int(side),int(quiet))
 
-        finally:
-            _self.unlock(r,_self)
-        return r
 
     def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,
                   carve=None,source_state=0,quiet=1,_self=cmd):
@@ -820,30 +787,17 @@ SEE ALSO
 
     load, isomesh
         '''
-        r = DEFAULT_ERROR
-        if selection!='':
-            region = 1 # about a selection
-        else:
-            region = 0 # render the whole map
         # preprocess selections
         selection = selector.process(selection)
-        if selection not in [ 'center', 'origin' ]:
-            selection = "("+selection+")"
         #
         if carve is None:
             carve=0.0
-        try:
-            _self.lock(_self)
-            r = _cmd.isomesh(_self._COb,str(name),str(map),int(region),
+        with _self.lockcm:
+            return _cmd.isomesh(_self._COb,str(name),str(map),
                              selection,float(buffer),
                              float(level),1,int(state)-1,
                              float(carve),int(source_state)-1,int(quiet),
                              float(level))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
-
 
 
     def isolevel(name,level=1.0,state=0,query=0,quiet=1,_self=cmd):
@@ -893,29 +847,17 @@ SEE ALSO
 
     load, isomesh
         '''
-        r = DEFAULT_ERROR
-        if selection!='':
-            region = 1 # about a selection
-        else:
-            region = 0 # render the whole map
         # preprocess selections
         selection = selector.process(selection)
-        if selection not in [ 'center', 'origin' ]:
-            selection = "("+selection+")"
         #
         if carve is None:
             carve=0.0
-        try:
-            _self.lock(_self)
-            r = _cmd.isomesh(_self._COb,str(name),str(map),int(region),
+        with _self.lockcm:
+            return _cmd.isomesh(_self._COb,str(name),str(map),
                              selection,float(buffer),
                              float(minimum),3,int(state)-1,
                              float(carve),int(source_state)-1,int(quiet),
                              float(maximum))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
 
     def copy(target,source,zoom=-1,_self=cmd):
         '''

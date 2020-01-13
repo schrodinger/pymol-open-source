@@ -572,23 +572,22 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
 void ExecutiveMemoryDump(PyMOLGlobals * G);
 void ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op);
 
-int ExecutiveIsomeshEtc(PyMOLGlobals * G,
+pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
                         const char *mesh_name, const char *map_name, float lvl,
                         const char *sele, float fbuf, int state,
                         float carve, int map_state, int quiet,
-                        int mesh_mode, int box_mode, float alt_lvl);
+                        int mesh_mode, float alt_lvl);
 
-int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
+pymol::Result<> ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
                            const char *surf_name, const char *map_name, float lvl,
                            const char *sele, float fbuf, int state,
                            float carve, int map_state, int side,
-                           int quiet, int surf_mode, int box_mode);
+                           int quiet, int surf_mode);
 
-int ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
+pymol::Result<> ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
 		    float lvl,
 		    const char *sele, float fbuf, int state,
-		    float carve, int map_state, int quiet,
-		    int mesh_mode, int box_mode, float alt_lvl);
+		    float carve, int map_state, int quiet);
 
 int ExecutiveVolumeColor(PyMOLGlobals * G, const char * volume_name, float * colors, int ncolors );
 

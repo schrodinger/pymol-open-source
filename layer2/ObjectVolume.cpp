@@ -1161,7 +1161,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
                                   int state, float *mn, float *mx,
                                   float level, int box_mode,
                                   float carve, float *vert_vla,
-                                  float alt_level, int quiet)
+                                  int quiet)
 {
   ObjectVolume *I;
   ObjectVolumeState *vs;
@@ -1266,10 +1266,10 @@ ObjectVolume *ObjectVolumeFromBox(PyMOLGlobals * G, ObjectVolume * obj, ObjectMa
                               int map_state,
                               int state, float *mn, float *mx,
                               float level, int meshMode,
-                              float carve, float *vert_vla, float alt_level, int quiet)
+                              float carve, float *vert_vla, int quiet)
 {
   return ObjectVolumeFromXtalSym(G, obj, map, NULL, map_state, state, mn, mx,
-      level, meshMode, carve, vert_vla, alt_level, quiet);
+      level, meshMode, carve, vert_vla, quiet);
 }
 
 

@@ -67,14 +67,14 @@ ObjectVolume *ObjectVolumeFromBox(PyMOLGlobals * G, ObjectVolume * obj, ObjectMa
                               int map_state,
                               int state, float *mn, float *mx,
                               float level, int meshMode,
-                              float carve, float *vert_vla, float alt_level, int quiet);
+                              float carve, float *vert_vla, int quiet);
 ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, ObjectMap * map,
                                   CSymmetry * sym,
                                   int map_state,
                                   int state, float *mn, float *mx,
                                   float level, int meshMode,
                                   float carve, float *vert_vla,
-                                  float alt_level, int quiet);
+                                  int quiet);
 
 PyObject *ObjectVolumeAsPyList(ObjectVolume * I);
 int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume ** result);

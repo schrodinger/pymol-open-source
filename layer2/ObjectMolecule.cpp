@@ -2723,13 +2723,14 @@ int ObjectMoleculeCheckBondSep(ObjectMolecule * I, int a0, int a1, int dist)
 
 
 /*========================================================================*/
-void ObjectGotoState(ObjectMolecule * I, int state)
+void ObjectGotoState(CObject* I, int state)
 {
-  if((I->NCSet > 1) || (!SettingGetGlobal_b(I->G, cSetting_static_singletons))) {
-    if(state > I->NCSet)
-      state = I->NCSet - 1;
+  auto nstates = I->getNFrame();
+  if (nstates > 1 || !SettingGet<bool>(I->G, cSetting_static_singletons)) {
+    if(state > nstates)
+      state = nstates - 1;
     if(state < 0)
-      state = I->NCSet - 1;
+      state = nstates - 1;
     SceneSetFrame(I->G, 0, state);
   }
 }

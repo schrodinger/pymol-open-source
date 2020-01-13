@@ -405,7 +405,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src, int
                         int mode, int move_flag);
 int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force);
 int ObjectMoleculeAreAtomsBonded(ObjectMolecule * I, int i0, int i1);
-void ObjectGotoState(ObjectMolecule * I, int state);
+void ObjectGotoState(CObject* I, int state);
 float ObjectMoleculeGetAvgHBondVector(ObjectMolecule * I, int atom, int state, float *v,
                                       float *incoming);
 int ObjectMoleculeCheckBondSep(ObjectMolecule * I, int a0, int a1, int dist);
