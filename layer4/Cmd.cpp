@@ -6477,18 +6477,13 @@ static PyObject *CmdGroup(PyObject * self, PyObject * args)
   char *gname, *names;
   int quiet, action;
   int ok = false;
-  ok = PyArg_ParseTuple(args, "Ossii", &self, &gname, &names, &action, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  API_SETUP_ARGS(G, self, args, "Ossii", &self, &gname, &names, &action, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  {
     ok = ExecutiveGroup(G, gname, names, action, quiet);
     APIExit(G);
   }
-  return APIResultOk(ok);
+  return APIResultOk(G, ok);
 }
 
 static PyObject *CmdSelect(PyObject * self, PyObject * args)

@@ -98,8 +98,21 @@ ARGUMENTS
     members = string: space-separated list of objects to include in
               the group
 
-    action = add, remove, open, close, toggle, auto, ungroup, empty,
+    action = add, remove, open, close, toggle, auto, empty,
              purge, excise
+
+ACTIONS
+
+    add:     add members to group
+    remove:  remove members from group (members will be ungrouped)
+    empty:   remove all members from group
+    purge:   remove all members from group and delete them
+    excise:  remove all members from group and delete group
+    open:    expand group display in object menu panel
+    close:   collapse group display in object menu panel
+    toggle:  toggle group display in object menu panel
+    auto:    add or toggle
+    ungroup: DEPRECATED, use ungroup command
 
 EXAMPLE
 
@@ -122,26 +135,21 @@ SEE ALSO
     ungroup, order, "group_auto_mode" setting
     
 '''
-
-        r = DEFAULT_ERROR
         action = group_action_dict[group_action_sc.auto_err(str(action),'group action')]
         if name=='all': name='*'
-        if action==6:
+        if action == 6:  # auto
             if len(members):
-                action=1
-            elif (name in _self.get_names()) or ('*' in name):
-                action=5
+                action = 1  # add
+            elif '*' in name or name in _self.get_names():
+                action = 5  # toggle
             else:
-                action=1
-        try:
-            _self.lock(_self)
-            r = _cmd.group(_self._COb,str(name),str(members),int(action),int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+                action = 1  # add
+        elif action == 7:
+            print('action=ungroup is deprecated, use the "ungroup" command')
+        with _self.lockcm:
+            return _cmd.group(_self._COb,str(name),str(members),int(action),int(quiet))
 
-    def ungroup(name, members="", quiet=1, _self=cmd):
+    def ungroup(members, quiet=1, _self=cmd):
         '''
 
 DESCRIPTION
@@ -159,15 +167,8 @@ SEE ALSO
     group
     
     '''
-
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.group(_self._COb,str(name),str(members),7,int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+        with _self.lockcm:
+            return _cmd.group(_self._COb, "", str(members), 7, int(quiet))
 
     def map_generate(name, reflection_file, amplitudes, phases, weights="None",
                      reso_low=50.0, reso_high=1.0,quiet=1,zoom=1,_self=cmd):

@@ -2136,8 +2136,26 @@ static int ExecutiveGetNamesListFromPattern(PyMOLGlobals * G, const char *name,
   return result;
 }
 
+static int ExecutiveUngroup(PyMOLGlobals* G, const char* members, int quiet)
+{
+  for (auto& rec : ExecutiveGetSpecRecsFromPattern(G, members)) {
+    rec.group_name[0] = 0;
+    rec.group = nullptr;
+  }
+  ExecutiveInvalidateGroups(G, true);
+  return true;
+}
+
 int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int action, int quiet)
 {
+  if (action == cExecutiveGroupUngroup) {
+    // Up to PyMOL 2.3 the member argument was ignored and 'name' used for ungrouping
+    if (name[0]) {
+      members = name;
+    }
+    return ExecutiveUngroup(G, members, quiet);
+  }
+
   int ok = true;
   CExecutive *I = G->Executive;
 
@@ -2148,11 +2166,9 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
   CObject *obj = ExecutiveFindObjectByName(G, valid_name);
 
   if(obj && (obj->type != cObjectGroup)) {
-    if((action != 7) || (members[0])) {
       PRINTFB(G, FB_Executive, FB_Errors)
         " Group-Error: object '%s' is not a group object.", name ENDFB(G);
       ok = false;
-    }
   } else {
     if((!obj) && (action == cExecutiveGroupAdd)) {
       obj = (CObject *) new ObjectGroup(G);
@@ -2164,7 +2180,6 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
   }
   if((!members[0]) && ((action == cExecutiveGroupOpen) ||
                        (action == cExecutiveGroupClose) ||
-                       (action == cExecutiveGroupUngroup) ||
                        (action == cExecutiveGroupToggle) ||
                        (action == cExecutiveGroupEmpty) ||
                        (action == cExecutiveGroupPurge) ||
@@ -2184,9 +2199,6 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
           }
 
           switch (action) {
-          case cExecutiveGroupUngroup:
-            rec->group_name[0] = 0;
-            break;
           case cExecutiveGroupOpen:
             if(objGroup)
               objGroup->OpenOrClosed = 1;
@@ -2233,6 +2245,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
                   if((rec2->group == rec) ||
                      WordMatch(G, rec->name, rec2->group_name, true)) {
                     strcpy(rec2->group_name, rec->group_name);
+                    rec2->group = rec->group;
                   }
                 }
               } else if((rec->type == cExecObject) && (rec->obj->type == cObjectGroup)) {
@@ -2242,6 +2255,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
                   if((rec2->group == rec) ||
                      WordMatch(G, rec->name, rec2->group_name, true)) {
                     rec2->group_name[0] = 0;
+                    rec2->group = nullptr;
                   }
                 }
               }
