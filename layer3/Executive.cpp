@@ -2158,6 +2158,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
 
   int ok = true;
   CExecutive *I = G->Executive;
+  auto ignore_case = SettingGet<bool>(G, cSetting_ignore_case);
 
   ObjectNameType valid_name;
   UtilNCopy(valid_name, name, sizeof(ObjectNameType));
@@ -2216,7 +2217,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
               SpecRec *rec2 = NULL;
               while(ListIterate(I->Spec, rec2, next)) {
                 if((rec2->group == rec)
-                   || WordMatchExact(G, rec2->group_name, rec->name, true)) {
+                   || WordMatchExact(G, rec2->group_name, rec->name, ignore_case)) {
                   rec2->group = NULL;
                   rec2->group_name[0] = 0;
                 }
@@ -2228,7 +2229,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
               SpecRec *rec2 = NULL;
               while(ListIterate(I->Spec, rec2, next)) {
                 if((rec2->group == rec)
-                   || WordMatchExact(G, rec2->group_name, rec->name, true)) {
+                   || WordMatchExact(G, rec2->group_name, rec->name, ignore_case)) {
                   ExecutiveDelete(G, rec2->name);
                   rec2 = NULL;  /* restart search (danger order N^2) */
                 }
@@ -2243,7 +2244,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
                 SpecRec *rec2 = NULL;
                 while(ListIterate(I->Spec, rec2, next)) {
                   if((rec2->group == rec) ||
-                     WordMatch(G, rec->name, rec2->group_name, true)) {
+                     WordMatch(G, rec->name, rec2->group_name, ignore_case)) {
                     strcpy(rec2->group_name, rec->group_name);
                     rec2->group = rec->group;
                   }
@@ -2253,7 +2254,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
                 SpecRec *rec2 = NULL;
                 while(ListIterate(I->Spec, rec2, next)) {
                   if((rec2->group == rec) ||
-                     WordMatch(G, rec->name, rec2->group_name, true)) {
+                     WordMatch(G, rec->name, rec2->group_name, ignore_case)) {
                     rec2->group_name[0] = 0;
                     rec2->group = nullptr;
                   }
@@ -12943,12 +12944,13 @@ const char *ExecutiveFindBestNameMatch(PyMOLGlobals * G, const char *name)
   SpecRec *rec = NULL, *best_rec = NULL;
   int best;
   int wm;
+  auto ignore_case = SettingGet<bool>(G, cSetting_ignore_case);
 
   best = 0;
   result = name;
 
   while(ListIterate(I->Spec, rec, next)) {
-    wm = WordMatch(G, name, rec->name, true);
+    wm = WordMatch(G, name, rec->name, ignore_case);
     if(wm < 0) {
       best_rec = rec;
       best = wm;
@@ -14686,6 +14688,7 @@ static void ExecutiveDoAutoGroup(PyMOLGlobals * G, SpecRec * rec)
   CExecutive *I = G->Executive;
   int auto_mode = SettingGetGlobal_i(G, cSetting_group_auto_mode);
   if(auto_mode && (rec->name[0] != '_')) {
+    auto ignore_case = SettingGet<bool>(G, cSetting_ignore_case);
     char *period = rec->name + strlen(rec->name);
     SpecRec *found_group = NULL;
     WordType seek_group_name;
@@ -14699,7 +14702,7 @@ static void ExecutiveDoAutoGroup(PyMOLGlobals * G, SpecRec * rec)
           SpecRec *group_rec = NULL;
           while(ListIterate(I->Spec, group_rec, next)) {
             if((group_rec->type == cExecObject) && (group_rec->obj->type == cObjectGroup)) {
-              if(WordMatchExact(G, group_rec->name, seek_group_name, true)) {
+              if(WordMatchExact(G, group_rec->name, seek_group_name, ignore_case)) {
                 found_group = group_rec;
                 strcpy(rec->group_name, seek_group_name);
                 break;

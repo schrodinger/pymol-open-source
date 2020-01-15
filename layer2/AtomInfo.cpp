@@ -1173,6 +1173,7 @@ int AtomInfoUniquefyNames(PyMOLGlobals * G, const AtomInfoType * atInfo0, int n0
                           const ObjectMolecule * mol)
 {
   /* makes sure all names in atInfo1 are unique WRT 0 and 1 */
+  auto ignore_case = SettingGet<bool>(G, cSetting_ignore_case);
 
   /* tricky optimizations to avoid n^2 dependence in this operation */
   int result = 0;
@@ -1218,7 +1219,7 @@ int AtomInfoUniquefyNames(PyMOLGlobals * G, const AtomInfoType * atInfo0, int n0
 
       ai0 = atInfo1 + st1;
       for(a = st1; a <= nd1; a++) {
-        if(!WordMatchExact(G, ai1->name, ai0->name, true))
+        if(!WordMatchExact(G, ai1->name, ai0->name, ignore_case))
           ai0++;
         else if(!AtomInfoSameResidue(G, ai1, ai0))
           ai0++;
@@ -1242,7 +1243,7 @@ int AtomInfoUniquefyNames(PyMOLGlobals * G, const AtomInfoType * atInfo0, int n0
         for (a = st0; a <= nd0; ++a) {
           ai0 = atInfo0 + a;
 
-          if (WordMatchExact(G, ai1->name, ai0->name, true) &&
+          if (WordMatchExact(G, ai1->name, ai0->name, ignore_case) &&
               AtomInfoSameResidue(G, ai1, ai0) && ai1 != ai0 &&
               (!mol || mol->atomHasAnyCoordinates(a))) {
             matchFlag = true;
@@ -2143,7 +2144,7 @@ int AtomInfoSameResidue(PyMOLGlobals * G, const AtomInfoType * at1, const AtomIn
       at1->discrete_state == at2->discrete_state &&
       at1->inscode == at2->inscode &&
       at1->segi == at2->segi &&
-      WordMatchExact(G, at1->resn, at2->resn, true));
+      WordMatchExact(G, at1->resn, at2->resn, SettingGet<bool>(G, cSetting_ignore_case)));
 }
 
 int AtomInfoSameResidueP(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
