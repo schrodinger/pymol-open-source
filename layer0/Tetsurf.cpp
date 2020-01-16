@@ -93,7 +93,7 @@ static int TetsurfCodeVertices(CTetsurf * II);
 
 static int TetsurfFindActiveBoxes(CTetsurf * II, int mode, int *n_strip, int n_vert,
                                   int **strip_l, float **vert,
-                                  MapType * voxelmap, float *a_vert,
+                                  MapType * voxelmap, const float* a_vert,
                                   float carvebuffer, int side);
 
 #define TetsurfSubSize		50
@@ -516,7 +516,7 @@ void TetsurfGetRange(PyMOLGlobals * G,
 
 /*===========================================================================*/
 int TetsurfVolume(PyMOLGlobals * G, Isofield * field, float level, int **num,
-                  float **vert, int *range, int mode, MapType * voxelmap, float *a_vert,
+                  float **vert, int *range, int mode, MapType * voxelmap, const float* a_vert,
                   float carvebuffer, int side)
 {
 
@@ -741,7 +741,7 @@ static void TetsurfInterpolate8(float *pt, float *v0, float l0, float *v1, float
 /*===========================================================================*/
 static int TetsurfFindActiveBoxes(CTetsurf * II, int mode, int *n_strip, int n_vert,
                                   int **strip_l, float **vert,
-                                  MapType * voxelmap, float *a_vert,
+                                  MapType * voxelmap, const float *a_vert,
                                   float carvebuffer, int side)
 {
   CTetsurf *I = II;

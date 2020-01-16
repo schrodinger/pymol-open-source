@@ -125,6 +125,24 @@ void VecCheck(std::vector<T> &vec, std::size_t i){
   }
 }
 
+/**
+ * @brief Similar to VecCheck but constructs objects with arguments. Useful when
+ * no default constructor available.
+ * @tparam T type of elements in vector and also created during resize
+ * @tparam Ts types of T's constructor arguments
+ * @param vec: vector whose size will be check for valid insertion at index i
+ * @param i: index for position where an element may be inserted into vec
+ * @param args: constructor arguments of T
+ */
+template <typename T, typename... Ts>
+void VecCheckEmplace(std::vector<T>& vec, std::size_t i, Ts... args)
+{
+  vec.reserve(i + 1);
+  for (auto s = vec.size(); s <= i; s++) {
+    vec.emplace_back(args...);
+  }
+}
+
 template <typename T>
 T* VLACheck2(T*& ptr, size_t pos) {
   if (pos >= ((VLARec*) ptr)[-1].size) {

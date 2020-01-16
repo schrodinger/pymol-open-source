@@ -19,46 +19,44 @@ Z* -------------------------------------------------------------------
 
 #include"os_gl.h"
 #include"ObjectMap.h"
+#include"CGO.h"
 
-typedef struct {
-  CObjectState State;
+struct ObjectSurfaceState : public CObjectState
+{
   ObjectNameType MapName;
   int MapState;
   CCrystal Crystal;
-  int Active;
-  int *N, nT, base_n_V;
-  float *V;
-  float *VC;
-  int *RC;
+  int Active = false;
+  pymol::vla<int> N;
+  int nT = 0;
+  int base_n_V;
+  pymol::vla<float> V;
+  std::vector<float> VC;
+  std::vector<int> RC;
   int OneColor;
-  int VCsize;
+  int VCsize() { return VC.size() / 3; }
   int Range[6];
   float ExtentMin[3], ExtentMax[3];
-  int ExtentFlag;
+  int ExtentFlag = false;
   float Level, Radius;
   int RefreshFlag;
-  int ResurfaceFlag;
-  int RecolorFlag;
-  int quiet;
-  float *AtomVertex;
-  int CarveFlag;
+  int ResurfaceFlag = true;
+  int RecolorFlag = false;
+  int quiet = true;
+  pymol::vla<float> AtomVertex;
+  int CarveFlag = false;
   float CarveBuffer;
   int Mode;                     /* 0 dots, 1 lines, 2 triangles */
   int DotFlag;
-  CGO *UnitCellCGO;
-  int Side;
-  CGO *shaderCGO;
-
-  /* for immediate mode, holds vertices and colors, used temporarily to generate CGOs */
-  float **t_buf; // vertices
-  float **c_buf; // colors
-} ObjectSurfaceState;
+  pymol::cache_ptr<CGO, CGODeleter> UnitCellCGO;
+  int Side = 0;
+  pymol::cache_ptr<CGO, CGODeleter> shaderCGO;
+  ObjectSurfaceState(PyMOLGlobals* G);
+};
 
 struct ObjectSurface : public CObject {
-  ObjectSurfaceState *State;
-  int NState = 0;
+  std::vector<ObjectSurfaceState> State;
   ObjectSurface(PyMOLGlobals* G);
-  ~ObjectSurface();
 
   // virtual methods
   void update() override;
