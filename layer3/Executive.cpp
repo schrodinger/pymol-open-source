@@ -21,6 +21,7 @@
 #include <set>
 #include <algorithm>
 #include <map>
+#include <cassert>
 #include <clocale>
 
 #include"Version.h"
@@ -87,6 +88,8 @@
 
 #include"ShaderMgr.h"
 #include"File.h"
+#include"FileStream.h"
+#include"ExecutiveLoad.h"
 
 #include "MovieScene.h"
 #include "Texture.h"
@@ -3667,8 +3670,9 @@ pymol::Result<> ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const c
 /*
  * Load any file type which is implemented in C.
  *
- * content:     Either file name or file contents, depending on "content_format"
- * content_length:      Length of "content", if it's not a file name
+ * fname:       File name, can be empty if content is provided
+ * content:     File contents, if not NULL
+ * content_length:      Length of "content", if not NULL
  * content_format:      File type code
  * object_name:         New object name
  * state:       Object state to start loading new coordsets in
@@ -3692,20 +3696,40 @@ int ExecutiveLoad(PyMOLGlobals * G,
                   const char * atom_props,
                   bool mimic)
 {
-  int ok = true;
+  auto res = ExecutiveLoadPrepareArgs(G, fname, content, content_length,
+      content_format, object_name_proposed, state, zoom, discrete, finish,
+      multiplex, quiet, plugin_arg, object_props, atom_props, mimic);
+  if (!res) {
+    PRINTFB(G, FB_Executive, FB_Errors)
+      " %s-Error: %s\n", __func__, res.error().what().c_str() ENDFB(G);
+    return false;
+  }
+  return ExecutiveLoad(G, res.result());
+}
+
+/**
+ * Prepare arguments for ExecutiveLoad
+ */
+pymol::Result<ExecutiveLoadArgs>
+ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
+                  pymol::null_safe_zstring_view fname,
+                  const char *content, int content_length,
+                  cLoadType_t content_format,
+                  const char *object_name_proposed,
+                  int state, int zoom,
+                  int discrete, int finish, int multiplex, int quiet,
+                  const char * plugin_arg,
+                  const char * object_props,
+                  const char * atom_props,
+                  bool mimic)
+{
+  ExecutiveLoadArgs args;
   bool fname_null_ok = false;
-  char * buffer = NULL;
-  long size = (long) content_length;
-  OrthoLineType buf = "";
-  char plugin[16] = "";
-  int plugin_mask = 0;
-  CObject *obj = NULL;
-  CObject *origObj = NULL;
-  int pdb_variant = PDB_VARIANT_DEFAULT;
 
   // validate proposed object name
   ObjectNameType object_name = "";
   ExecutiveProcessObjectName(G, object_name_proposed, object_name);
+  args.object_name = object_name;
 
   // Ensure correct float parsing with scanf. It's possible to change this from
   // Python, so don't rely on a persistent global value.
@@ -3737,8 +3761,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
   case cLoadTypeSDF2Str:
   case cLoadTypeXYZStr:
     if (!content) {
-      ErrMessage(G, __func__, "content is NULL");
-      return false;
+      return pymol::Error("content is NULL");
     }
     fname_null_ok = true;
     break;
@@ -3763,79 +3786,113 @@ int ExecutiveLoad(PyMOLGlobals * G,
       break;
     }
 
-    if (!fname) {
+    if (fname.empty()) {
       break;
     }
 
-    buffer = FileGetContents(fname, &size);
-    content = buffer;
-
-    if(!buffer) {
-      PRINTFB(G, FB_Executive, FB_Errors)
-        "ExecutiveLoad-Error: Unable to open file '%s'.\n", fname ENDFB(G);
-      return false;
-    } else {
+    try {
+      args.content = pymol::file_get_contents(fname);
       PRINTFB(G, FB_Executive, FB_Blather)
-        " %s: Loading from %s.\n", __func__, fname ENDFB(G);
+        " %s: Loading from %s.\n", __func__, fname.c_str() ENDFB(G);
+    } catch (...) {
+      return pymol::Error(
+          pymol::string_format("Unable to open file '%s'", fname.c_str()));
     }
 
     break;
 
   // molfile_plugin based formats
   case cLoadTypeCUBEMap:
-    strcpy(plugin, "cube");
+    args.plugin = "cube";
     break;
   case cLoadTypeSpider:
-    strcpy(plugin, "spider");
+    args.plugin = "spider";
     break;
   case cLoadTypeXTC:
-    strcpy(plugin, "xtc");
+    args.plugin = "xtc";
     break;
   case cLoadTypeTRR:
-    strcpy(plugin, "trr");
+    args.plugin = "trr";
     break;
   case cLoadTypeGRO:
-    strcpy(plugin, "gro");
+    args.plugin = "gro";
     break;
   case cLoadTypeG96:
-    strcpy(plugin, "g96");
+    args.plugin = "g96";
     break;
   case cLoadTypeTRJ2:
-    strcpy(plugin, "trj");
+    args.plugin = "trj";
     break;
   case cLoadTypeDCD:
-    strcpy(plugin, "dcd");
+    args.plugin = "dcd";
     break;
   case cLoadTypeDTR:
-    strcpy(plugin, "dtr");
+    args.plugin = "dtr";
     break;
   case cLoadTypeCMS:
-    strcpy(plugin, "mae");
+    args.plugin = "mae";
     break;
   default:
     if (plugin_arg) {
-      strcpy(plugin, plugin_arg);
+      args.plugin = plugin_arg;
       // Hackish way to request a "sub-plugin". For example the "cube" plugin
       // can load maps or molecules:
       // load example.cube, molobj, format=plugin:cube:1
       // load example.cube, mapobj, format=plugin:cube:4
-      char* p = strchr(plugin, ':');
-      if (p) {
-        *p = '\0';
-        plugin_mask = atoi(p + 1);
+      auto pos = args.plugin.find(':');
+      if (pos != std::string::npos) {
+        args.plugin_mask = atoi(args.plugin.c_str() + pos + 1);
+        args.plugin.resize(pos);
       }
     }
     break;
   }
 
-  if (!fname && !fname_null_ok) {
-    ErrMessage(G, __func__, "This format requires a filename to load");
-    return false;
+  if (fname.empty() && !fname_null_ok) {
+    return pymol::Error("This format requires a filename to load");
   }
 
-  if (plugin[0]) {
+  if (!args.plugin.empty()) {
     content_format = cLoadTypePlugin;
   }
+
+  if (content) {
+    assert(args.content.empty());
+    args.content = std::string(content, content_length);
+  }
+
+  args.content_format = content_format;
+  args.fname = fname.c_str();
+  args.state = state;
+  args.zoom = zoom;
+  args.discrete = discrete;
+  args.finish = finish;
+  args.multiplex = multiplex;
+  args.quiet = quiet;
+  args.object_props = object_props;
+  args.atom_props = atom_props;
+  args.mimic = mimic;
+  return args;
+}
+
+bool ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
+{
+  CObject* origObj = nullptr;
+  const char* fname = args.fname.c_str();
+  const char* content = args.content.data();
+  int size = args.content.size();
+  const char* object_name = args.object_name.c_str();
+  const char* object_props = args.object_props.c_str();
+  const char* atom_props = args.atom_props.c_str();
+  const char* plugin = args.plugin.c_str();
+  auto content_format = args.content_format;
+  auto state = args.state;
+  auto zoom = args.zoom;
+  auto discrete = args.discrete;
+  auto finish = args.finish;
+  auto multiplex = args.multiplex;
+  auto quiet = args.quiet;
+  auto mimic = args.mimic;
 
   if (multiplex != 1) {
     origObj = ExecutiveGetExistingCompatible(G, object_name, content_format);
@@ -3862,6 +3919,11 @@ int ExecutiveLoad(PyMOLGlobals * G,
       }
     }
   }
+
+  int ok = true;
+  OrthoLineType buf = "";
+  int pdb_variant = PDB_VARIANT_DEFAULT;
+  CObject *obj = NULL;
 
   // downstream file type reading functions
   switch (content_format) {
@@ -4023,7 +4085,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
   default:
     if(plugin[0]) {
       obj = PlugIOManagerLoad(G, origObj ? &origObj : NULL, fname, state, quiet,
-          plugin, plugin_mask);
+          plugin, args.plugin_mask);
     } else {
       PRINTFB(G, FB_Executive, FB_Errors)
         "ExecutiveLoad-Error: unable to read that file type from C (%d, '%s')\n",
@@ -4048,8 +4110,6 @@ int ExecutiveLoad(PyMOLGlobals * G,
     else
       sprintf(buf, " CmdLoad: loaded as \"%s\".\n", obj->Name);
   }
-
-  mfree(buffer);
 
   if(!quiet && buf[0]) {
     PRINTFB(G, FB_Executive, FB_Actions)
