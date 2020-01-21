@@ -397,7 +397,6 @@ void ExecutiveFixHydrogens(PyMOLGlobals * G, const char *s1, int quiet);
 void ExecutiveFuse(PyMOLGlobals * G, const char *s0="(pk1)", const char *s1="(pk2)", int mode=0, int recolor=1,
                    int move_flag=1);
 void ExecutiveRenameObjectAtoms(PyMOLGlobals * G, const char *name, int force, int quiet);
-int ExecutiveInvert(PyMOLGlobals * G, int quiet);
 
 pymol::Result<std::vector<const char*>> ExecutiveGetNames(PyMOLGlobals*, int, int, const char*);
 bool ExecutiveIsMoleculeOrSelection(PyMOLGlobals * G, const char *name);

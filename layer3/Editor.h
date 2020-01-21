@@ -77,7 +77,7 @@ int EditorIsAnActiveObject(PyMOLGlobals * G, ObjectMolecule * obj);
 int EditorSelect(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3, int pkresi,
                  int pkbond, int quiet);
 int EditorTorsion(PyMOLGlobals * G, float angle);
-int EditorInvert(PyMOLGlobals * G, int quiet);
+pymol::Result<> EditorInvert(PyMOLGlobals * G, int quiet);
 
 PyObject *EditorAsPyList(PyMOLGlobals * G);
 int EditorFromPyList(PyMOLGlobals * G, PyObject * list);

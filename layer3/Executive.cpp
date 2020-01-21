@@ -9078,15 +9078,6 @@ void ExecutiveRenameObjectAtoms(PyMOLGlobals * G, const char *s, int force, int 
 
 
 /*========================================================================*/
-int ExecutiveInvert(PyMOLGlobals * G, int quiet)
-{
-  int ok = false;
-  ok = EditorInvert(G, quiet);
-  return (ok);
-}
-
-
-/*========================================================================*/
 void ExecutiveFuse(PyMOLGlobals * G, const char *s0, const char *s1, int mode,
                    int recolor, int move_flag)
 {

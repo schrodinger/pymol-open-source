@@ -10,6 +10,7 @@ import pymol._gui
 from .pymol_gl_widget import PyMOLGLWidget
 from pymol.Qt import QtGui, QtCore
 from pymol.Qt import QtWidgets
+from pymol.Qt.utils import PopupOnException
 
 Qt = QtCore.Qt
 
@@ -541,6 +542,7 @@ class ChargeWizard(RepeatableActionWizard):
 
 class InvertWizard(RepeatableActionWizard):
 
+    @PopupOnException.decorator
     def do_pick(self, bondFlag):
         self.cmd.select(active_sele, "bymol pk1")
         picked = collectPicked(self.cmd)
@@ -1277,7 +1279,8 @@ class _BuilderPanel(QtWidgets.QWidget):
         else:
             HydrogenWizard(_self=self.cmd).toggle('add')
 
-    def invert(self):
+    @PopupOnException.decorator
+    def invert(self, _=None):
         picked = collectPicked(self.cmd)
         if picked == ["pk1","pk2","pk3"]:
             self.cmd.invert()

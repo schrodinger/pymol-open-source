@@ -696,16 +696,9 @@ PYMOL API
     cmd.invert( )
 
     '''
-        r = DEFAULT_ERROR
-        # preprocess selections
         #
-        try:
-            _self.lock(_self)
-            r = _cmd.invert(_self._COb,int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise cmd.QuietException
-        return r
+        with _self.lockcm:
+            return _cmd.invert(_self._COb, int(quiet))
 
     def unbond(atom1="(pk1)", atom2="(pk2)", quiet=1, _self=cmd):
         '''

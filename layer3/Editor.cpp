@@ -598,7 +598,8 @@ int EditorLogState(PyMOLGlobals * G, int pkresi)
 
 /*========================================================================*/
 
-int EditorInvert(PyMOLGlobals * G, int quiet)
+pymol::Result<>
+EditorInvert(PyMOLGlobals * G, int quiet)
 {
   CEditor *I = G->Editor;
   int sele0, sele1, sele2;
@@ -610,13 +611,12 @@ int EditorInvert(PyMOLGlobals * G, int quiet)
   float m[16];
   int state;
   int vf, vf0, vf1;
-  int ok = false;
   int found = false;
   WordType name;
   ObjectMolecule *obj0, *obj1, *obj2;
 
   if(!EditorActive(G)) {
-    ErrMessage(G, "Editor", "Must pick an atom to invert.");
+    return pymol::Error("Must pick an atom to invert");
   } else {
     sele0 = SelectorIndexByName(G, cEditorSele1);
     sele1 = SelectorIndexByName(G, cEditorSele2);
@@ -625,13 +625,13 @@ int EditorInvert(PyMOLGlobals * G, int quiet)
     obj1 = SelectorGetFastSingleAtomObjectIndex(G, sele1, &ia0);
     obj2 = SelectorGetFastSingleAtomObjectIndex(G, sele2, &ia1);
     if(sele0 < 0) {
-      ErrMessage(G, "Editor", "Must pick atom to invert as pk1.");
+      return pymol::Error("Must pick atom to invert as pk1");
     } else if(sele1 < 0) {
-      ErrMessage(G, "Editor", "Must pick immobile atom in pk2.");
+      return pymol::Error("Must pick immobile atom in pk2");
     } else if(sele2 < 0) {
-      ErrMessage(G, "Editor", "Must pick immobile atom in pk3.");
+      return pymol::Error("Must pick immobile atom in pk3");
     } else if(!(obj0 && (obj0 == obj1) && (obj0 = obj2))) {
-      ErrMessage(G, "Editor", "Must pick three atoms in the same object.");
+      return pymol::Error("Must pick three atoms in the same object");
     } else {
 
       state = SceneGetState(G);
@@ -659,7 +659,6 @@ int EditorInvert(PyMOLGlobals * G, int quiet)
              (!ObjectMoleculeDoesAtomNeighborSele(obj0, ia0, sele2)) &&
              (!ObjectMoleculeDoesAtomNeighborSele(obj0, ia1, sele2))) {
             found = true;
-            ok =
               ObjectMoleculeTransformSelection(obj0, state, sele2, m, false, NULL, false,
                                                false);
           }
@@ -670,8 +669,7 @@ int EditorInvert(PyMOLGlobals * G, int quiet)
               " Editor: Inverted atom.\n" ENDFB(G);
           }
         } else {
-          PRINTFB(G, FB_Editor, FB_Errors)
-            " Editor-Error: No free fragments found for inversion.\n" ENDFB(G);
+          return pymol::Error("No free fragments found for inversion");
         }
 
         SceneInvalidate(G);
@@ -681,7 +679,7 @@ int EditorInvert(PyMOLGlobals * G, int quiet)
       }
     }
   }
-  return (ok);
+  return {};
 }
 
 

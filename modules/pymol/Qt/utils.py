@@ -318,8 +318,10 @@ class PopupOnException:
             import traceback
             QMB = QtWidgets.QMessageBox
 
+            parent = QtWidgets.QApplication.focusWidget()
+
             msg = str(e) or 'unknown error'
-            msgbox = QMB(QMB.Critical, 'Error', msg, QMB.Close)
+            msgbox = QMB(QMB.Critical, 'Error', msg, QMB.Close, parent)
             msgbox.setDetailedText(''.join(traceback.format_tb(tb)))
             msgbox.exec_()
 

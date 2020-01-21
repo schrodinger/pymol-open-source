@@ -2810,19 +2810,11 @@ static PyObject *CmdInvert(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int int1;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Oi", &self, &int1);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveInvert(G, int1);
+  API_SETUP_ARGS(G, self, args, "Oi", &self, &int1);
+  API_ASSERT(APIEnterNotModal(G));
+  auto res = EditorInvert(G, int1);
     APIExit(G);
-  }
-  return APIResultOk(ok);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdTorsion(PyObject * self, PyObject * args)
@@ -4678,23 +4670,18 @@ static PyObject *CmdGetStr(PyObject * self, PyObject * args)
   int quiet;
   int multi;
 
-  ok_assert(1, PyArg_ParseTuple(args, "Ossisiii", &self,
-        &format, &sele, &state, &ref, &ref_state, &multi, &quiet));
-  API_SETUP_PYMOL_GLOBALS;
-  ok_assert(1, G && APIEnterNotModal(G));
-
+  API_SETUP_ARGS(G, self, args, "Ossisiii", &self, &format, &sele, &state, &ref,
+      &ref_state, &multi, &quiet);
+  APIEnter(G);
   vla = MoleculeExporterGetStr(G, format, sele, state,
       ref, ref_state, multi, quiet);
-
-  ok_assert(2, vla);
-  result = PyBytes_FromStringAndSize(vla, VLAGetSize(vla));
-
-ok_except2:
   APIExit(G);
+
+  if (vla) {
+    result = PyBytes_FromStringAndSize(vla, vla.size());
+  }
+
   return APIAutoNone(result);
-ok_except1:
-  API_HANDLE_ERROR;
-  return APIAutoNone(NULL);
 }
 
 static PyObject *CmdGetModel(PyObject * self, PyObject * args)
