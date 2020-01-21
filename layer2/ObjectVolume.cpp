@@ -47,23 +47,26 @@ Z* -------------------------------------------------------------------
 
 #define clamp(x,l,h) ((x) < (l) ? (l) : (x) > (h) ? (h) : (x))
 
-static void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs);
 static void ObjectVolumeRecomputeExtent(ObjectVolume * I);
 
-static ObjectVolumeState * ObjectVolumeGetActiveState(ObjectVolume * I) {
-  int a;
-  ok_assert(1, I);
-  for(a = 0; a < I->NState; a++)
-    if(I->State[a].Active)
-      return I->State + a;
-ok_except1:
-  return NULL;
+static ObjectVolumeState* ObjectVolumeGetActiveState(ObjectVolume* I)
+{
+  if (!I) {
+    return nullptr;
+  }
+
+  for (auto& state : I->State) {
+    if (state.Active) {
+      return &state;
+    }
+  }
+  return nullptr;
 }
 
 static ObjectMapState * ObjectVolumeStateGetMapState(ObjectVolumeState * vs) {
   ObjectMap *map = NULL;
 
-  PyMOLGlobals * G = vs->State.G;
+  PyMOLGlobals * G = vs->G;
 
   map = ExecutiveFindObjectMapByName(G, vs->MapName);
   if(!map) {
@@ -97,7 +100,7 @@ static PyObject *ObjectVolumeStateAsPyList(ObjectVolumeState * I)
   PyList_SetItem(result, 7, PConvAutoNone(NULL) /* PConvIntArrayToPyList(I->Range, 6) */);
   PyList_SetItem(result, 8, PyFloat_FromDouble(0.0 /* I->Level */));
   PyList_SetItem(result, 9, PyFloat_FromDouble(0.0 /* I->Radius */));
-  PyList_SetItem(result, 10, PyInt_FromLong(/* I->CarveFlag */ I->AtomVertex != NULL));
+  PyList_SetItem(result, 10, PyInt_FromLong(/* I->CarveFlag */ I->AtomVertex.data() != NULL));
   PyList_SetItem(result, 11, PyFloat_FromDouble(I->CarveBuffer));
   PyList_SetItem(result, 12, I->AtomVertex ?
       PConvFloatVLAToPyList(I->AtomVertex) : PConvAutoNone(NULL));
@@ -105,13 +108,13 @@ static PyObject *ObjectVolumeStateAsPyList(ObjectVolumeState * I)
   PyList_SetItem(result, 14, PyFloat_FromDouble(0.0 /* I->AltLevel */));
   PyList_SetItem(result, 15, PyInt_FromLong(1 /* I->quiet */));
   if(I->Field) {
-    PyList_SetItem(result, 16, IsosurfAsPyList(I->State.G, I->Field));
+    PyList_SetItem(result, 16, IsosurfAsPyList(I->G, I->Field.get()));
   } else {
     PyList_SetItem(result, 16, PConvAutoNone(NULL));
   }
-  PyList_SetItem(result,17,PyInt_FromLong(I->RampSize));
-  if (I->Ramp) {
-    PyList_SetItem(result, 18, PConvFloatArrayToPyList(I->Ramp, 5 * I->RampSize));
+  PyList_SetItem(result,17,PyInt_FromLong(I->RampSize()));
+  if (!I->Ramp.empty()) {
+    PyList_SetItem(result, 18, PConvToPyObject(I->Ramp));
   } else {
     PyList_SetItem(result, 18, PConvAutoNone(NULL));
   }
@@ -120,13 +123,10 @@ static PyObject *ObjectVolumeStateAsPyList(ObjectVolumeState * I)
 
 static PyObject *ObjectVolumeAllStatesAsPyList(ObjectVolume * I)
 {
-
-  PyObject *result = NULL;
-  int a;
-  result = PyList_New(I->NState);
-  for(a = 0; a < I->NState; a++) {
+  auto result = PyList_New(I->State.size());
+  for(int a = 0; a < I->State.size(); a++) {
     if(I->State[a].Active) {
-      PyList_SetItem(result, a, ObjectVolumeStateAsPyList(I->State + a));
+      PyList_SetItem(result, a, ObjectVolumeStateAsPyList(&I->State[a]));
     } else {
       PyList_SetItem(result, a, PConvAutoNone(NULL));
     }
@@ -146,7 +146,7 @@ static int ObjectVolumeStateFromPyList(PyMOLGlobals * G, ObjectVolumeState * I,
     if(!PyList_Check(list))
       I->Active = false;
     else {
-      ObjectVolumeStateInit(G, I);
+      *I = ObjectVolumeState(G);
       if(ok)
         ok = (list != NULL);
       if(ok)
@@ -212,20 +212,25 @@ static int ObjectVolumeStateFromPyList(PyMOLGlobals * G, ObjectVolumeState * I,
 #endif
       if(ok && (ll > 16)) {
         tmp = PyList_GetItem(list, 16);
-        if(tmp == Py_None)
-          I->Field = NULL;
+        if(CPythonVal_IsNone(tmp))
+          I->Field.reset();
         else
-          ok = ((I->Field = IsosurfNewFromPyList(G, tmp)) != NULL);
+          {
+            I->Field.reset(IsosurfNewFromPyList(G, tmp));
+            ok = I->Field != nullptr;
+          }
+	CPythonVal_Free(tmp);
       }
+#if 0
       if (ok && (ll > 17)) {
         ok = PConvPyIntToInt(PyList_GetItem(list, 17), &I->RampSize);
       }
+#endif
       if (ok && (ll > 18)) {
         tmp = PyList_GetItem(list, 18);
-        if(tmp == Py_None)
-          I->Ramp = NULL;
-        else
-          ok = PConvPyListToFloatArray(tmp, &I->Ramp);
+        if(!CPythonVal_IsNone(tmp))
+          ok = PConvFromPyObject(G, tmp, I->Ramp);
+	CPythonVal_Free(tmp);
       }
     }
   }
@@ -236,14 +241,14 @@ static int ObjectVolumeAllStatesFromPyList(ObjectVolume * I, PyObject * list)
 {
 
   int ok = true;
-  int a;
-  VLACheck(I->State, ObjectVolumeState, I->NState);
+  VecCheckEmplace(I->State, I->State.size(), I->G);
   if(ok)
     ok = PyList_Check(list);
   if(ok) {
-    for(a = 0; a < I->NState; a++) {
-      auto *val = PyList_GetItem(list, a);
-      ok = ObjectVolumeStateFromPyList(I->G, I->State + a, val);
+    for(int a = 0; a < I->State.size(); a++) {
+      CPythonVal *val = CPythonVal_PyList_GetItem(I->G, list, a);
+      ok = ObjectVolumeStateFromPyList(I->G, &I->State[a], val);
+      CPythonVal_Free(val);
       if(!ok)
         break;
     }
@@ -269,10 +274,11 @@ int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume **
     auto *val = PyList_GetItem(list, 0);
     ok = ObjectFromPyList(G, val, I);
   }
-  if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->NState);
-  if(ok)
-    ok = ObjectVolumeAllStatesFromPyList(I, PyList_GetItem(list, 2));
+  if(ok){
+    CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 2);
+    ok = ObjectVolumeAllStatesFromPyList(I, val);
+    CPythonVal_Free(val);
+  }
   if(ok) {
     (*result) = I;
     ObjectVolumeRecomputeExtent(I);
@@ -284,52 +290,28 @@ int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume **
 
 PyObject *ObjectVolumeAsPyList(ObjectVolume * I)
 {
-  PyObject *result = NULL;
-
-  result = PyList_New(3);
+  auto result = PyList_New(3);
   PyList_SetItem(result, 0, ObjectAsPyList(I));
-  PyList_SetItem(result, 1, PyInt_FromLong(I->NState));
+  PyList_SetItem(result, 1, PyInt_FromLong(I->State.size()));
   PyList_SetItem(result, 2, ObjectVolumeAllStatesAsPyList(I));
   return (PConvAutoNone(result));
 }
 
-/*
- * Does actually NOT free the instance, only it's fields.
- */
-static void ObjectVolumeStateFree(ObjectVolumeState * vs)
+ObjectVolumeState::~ObjectVolumeState()
 {
-  // the instance is only "Active" when it has been initialized. Never free
-  // uninitialized instances.
-  if(!vs->Active)
-    return;
-  ObjectStatePurge(&vs->State);
-  if(vs->State.G->HaveGUI) {
-    vs->State.G->ShaderMgr->freeGPUBuffers(vs->textures, 3);
+  if(G->HaveGUI) {
+    std::array<std::size_t, std::tuple_size<decltype(textures)>::value> t{};
+    std::transform(textures.begin(), textures.end(), t.begin(),
+        [](const pymol::cache_value<std::size_t>& value) { return value.value; });
+    G->ShaderMgr->freeGPUBuffers(t.data(), 3);
   }
-  DeleteP(vs->Field);
-  DeleteP(vs->carvemask);
-  VLAFreeP(vs->AtomVertex);
-  if (vs->Ramp)
-    FreeP(vs->Ramp);
-  vs->Active = false;
-}
-
-ObjectVolume::~ObjectVolume()
-{
-  auto I = this;
-  for(int a = 0; a < I->NState; a++) {
-    ObjectVolumeStateFree(I->State + a);
-  }
-  VLAFreeP(I->State);
 }
 
 int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name, const char * new_name)
 {
-  int a;
-  ObjectVolumeState *vs;
   int result = false;
-  for(a = 0; a < I->NState; a++) {
-    vs = I->State + a;
+  for(int a = 0; a < I->State.size(); a++) {
+    auto vs = &I->State[a];
     if(vs->Active) {
       if(strcmp(vs->MapName, name) == 0) {
         if (new_name)
@@ -352,11 +334,11 @@ void ObjectVolume::invalidate(int rep, int level, int state)
   }
 
   PRINTFB(I->G, FB_ObjectVolume, FB_Blather)
-    "ObjectVolumeInvalidate-Msg: %d states.\n", I->NState
+    "ObjectVolumeInvalidate-Msg: %d states.\n", I->State.size()
     ENDFB(I->G);
 
   if((rep == cRepVolume) || (rep == cRepAll) || (rep == cRepExtent)) {
-    for(a = 0; a < I->NState; a++) {
+    for(a = 0; a < I->State.size(); a++) {
       if(state < 0)
         once_flag = false;
       if(!once_flag)
@@ -408,8 +390,6 @@ static void get44FracToRealFromCorner(const float * corner, float * frac2real)
 void ObjectVolume::update()
 {
   auto I = this;
-  int a;
-  ObjectVolumeState *vs;
   ObjectMapState *oms = NULL;
   float carve_buffer;
   int avoid_flag = false;
@@ -419,8 +399,8 @@ void ObjectVolume::update()
   float range;
   MapType *voxelmap;            /* this has nothing to do with isosurfaces... */
 
-  for(a = 0; a < I->NState; a++) {
-    vs = I->State + a;
+  for(int a = 0; a < I->State.size(); a++) {
+    auto vs = &I->State[a];
     if(!vs || !vs->Active)
       continue;
 
@@ -437,9 +417,9 @@ void ObjectVolume::update()
 
     if(vs->RefreshFlag || vs->ResurfaceFlag) {
       if(!oms->State.Matrix.empty()) {
-        ObjectStateSetMatrix(&vs->State, oms->State.Matrix.data());
-      } else if(!vs->State.Matrix.empty()) {
-        ObjectStateResetMatrix(&vs->State);
+        ObjectStateSetMatrix(vs, oms->State.Matrix.data());
+      } else if(!vs->Matrix.empty()) {
+        ObjectStateResetMatrix(vs);
       }
 
       // data min/max/mean/stdev
@@ -448,33 +428,30 @@ void ObjectVolume::update()
     }
 
     // handle legacy or default color ramp
-    if(!vs->Ramp || (vs->RampSize
+    if(vs->Ramp.empty() || (vs->RampSize()
           && vs->Ramp[0] == 0.f
-          && vs->Ramp[5 * (vs->RampSize - 1)] == 359.f)) {
+          && vs->Ramp[5 * (vs->RampSize() - 1)] == 359.f)) {
 
-      if(vs->Ramp) {
+      if(!vs->Ramp.empty()) {
         // legacy color ramp (0..359)
         range = vs->min_max_mean_stdev[1] - vs->min_max_mean_stdev[0];
         PRINTFB(G, FB_ObjectVolume, FB_Warnings)
           " ObjectVolumeUpdate: detected legacy color ramp\n" ENDFB(G);
-        for (i = 0; i < vs->RampSize * 5; i += 5) {
+        for (i = 0; i < vs->Ramp.size(); i += 5) {
           vs->Ramp[i] = vs->Ramp[i] / 359.f * range + vs->min_max_mean_stdev[0];
         }
       } else {
         // default color ramp (1.0 sigma peak)
-        if(!vs->Ramp) {
-          float defaultramp[] = {
+        if(vs->Ramp.empty()) {
+          vs->Ramp = std::vector<float>({
             vs->min_max_mean_stdev[2] + 0.7f * vs->min_max_mean_stdev[3],
             0.f, 0.f, 1.f, 0.0f,
             vs->min_max_mean_stdev[2] + 1.0f * vs->min_max_mean_stdev[3],
             0.f, 1.f, 1.f, 0.2f,
             vs->min_max_mean_stdev[2] + 1.3f * vs->min_max_mean_stdev[3],
             0.f, 0.f, 1.f, 0.0f
-          };
+          });
           vs->RecolorFlag = true;
-          vs->RampSize = 3;
-          vs->Ramp = pymol::malloc<float>(5 * vs->RampSize);
-          memcpy(vs->Ramp, defaultramp, 5 * vs->RampSize * sizeof(float));
         }
       }
     }
@@ -483,7 +460,7 @@ void ObjectVolume::update()
       Isofield *field = NULL;
       vs->ResurfaceFlag = false;
       if(vs->Field) {
-        field = vs->Field;
+        field = vs->Field.get();
       } else if(oms->Field) {
         field = oms->Field;
       } else {
@@ -496,9 +473,9 @@ void ObjectVolume::update()
         IsofieldGetCorners(G, field, vs->Corner);
 
         // transform corners by state matrix
-        if(!vs->State.Matrix.empty()) {
+        if(!vs->Matrix.empty()) {
           for(i = 0; i < 8; i++)
-            transform44d3f(vs->State.Matrix.data(),
+            transform44d3f(vs->Matrix.data(),
                 vs->Corner + 3 * i,
                 vs->Corner + 3 * i);
         }
@@ -515,7 +492,7 @@ void ObjectVolume::update()
         // cull my friend, cull */ 
         voxelmap = MapNew(I->G,
             -carve_buffer, vs->AtomVertex,
-            VLAGetSize(vs->AtomVertex) / 3, NULL);
+            vs->AtomVertex.size() / 3, NULL);
         if(voxelmap) {
 
           int x, y, z;
@@ -532,8 +509,7 @@ void ObjectVolume::update()
           get44FracToRealFromCorner(vs->Corner, frac2real);
 
           // initialize carve mask
-          DeleteP(vs->carvemask);
-          vs->carvemask = new CField(G, (int*) vs->dim, 3, sizeof(GLubyte), cFieldOther);
+          vs->carvemask = pymol::make_copyable<CField>(G, (int*) vs->dim, 3, sizeof(GLubyte), cFieldOther);
 
           // loop over voxels
           for (z = 0; z < dz; z++) {
@@ -548,14 +524,14 @@ void ObjectVolume::update()
                 MapLocus(voxelmap, vv, &h, &k, &l);
                 for(i = *(MapEStart(voxelmap, h, k, l));
                     i && (j = voxelmap->EList[i]) >= 0; i++) {
-                  if(within3f(vs->AtomVertex + 3 * j, vv, carve_buffer)) {
+                  if(within3f(vs->AtomVertex.data() + 3 * j, vv, carve_buffer)) {
                     flag = !flag;
                     break;
                   }
                 }
 
                 // 0xFF (masked) or 0 (not masked), will be 1.0 or 0.0 in shader
-                *((GLubyte*)F3p(vs->carvemask, x, y, z)) = flag ? 0x0 : 0xFF;
+                *((GLubyte*)F3p(vs->carvemask.get(), x, y, z)) = flag ? 0x0 : 0xFF;
               }
             }
           }
@@ -591,10 +567,10 @@ static float * ObjectVolumeStateGetColors(PyMOLGlobals * G, ObjectVolumeState * 
   float stdev = ovs->min_max_mean_stdev[3];
   float * colors;
 
-  ok_assert(1, ovs->Ramp && ovs->RampSize > 1);
+  ok_assert(1, ovs->RampSize() > 1);
 
   r_min = ovs->Ramp[0];
-  range = ovs->Ramp[5 * (ovs->RampSize - 1)] - r_min;
+  range = ovs->Ramp[5 * (ovs->RampSize() - 1)] - r_min;
 
   ok_assert(1, range > R_SMALL4);
 
@@ -604,7 +580,7 @@ static float * ObjectVolumeStateGetColors(PyMOLGlobals * G, ObjectVolumeState * 
   colors = pymol::calloc<float>(4 * count);
   ok_assert(1, colors);
 
-  for (i = 0; i < ovs->RampSize; i++) {
+  for (i = 0; i < ovs->RampSize(); i++) {
     lowerId = upperId;
     upperId = (int) (count * (ovs->Ramp[i * 5] - r_min) / range);
 
@@ -780,12 +756,12 @@ void ObjectVolume::render(RenderInfo * info)
   // ViewElem/TTT Matrix
   ObjectPrepareContext(I, info);
 
-  for(a = 0; a < I->NState; ++a) {
+  for(a = 0; a < I->State.size(); ++a) {
 
     if(state < 0 || state == a) {
-      vs = I->State + a;
-    } else if(a == 0 && I->NState == 1 && SettingGetGlobal_b(G, cSetting_static_singletons)) {
-      vs = I->State;
+      vs = &I->State[a];
+    } else if(a == 0 && I->State.size() == 1 && SettingGetGlobal_b(G, cSetting_static_singletons)) {
+      vs = &I->State[a];
     } else {
       continue;
     }
@@ -905,7 +881,7 @@ void ObjectVolume::render(RenderInfo * info)
           );
 
         // not needed anymore, data now in texture memory
-        DeleteP(vs->carvemask);
+        vs->carvemask.reset();
       }
 
       vs->RefreshFlag = false;
@@ -1111,46 +1087,22 @@ int ObjectVolumeAddSlicePoint(float *pt0, float *pt1, float *zaxis, float d,
 
 int ObjectVolume::getNFrame() const
 {
-  return NState;
+  return State.size();
 }
-
 
 /*========================================================================*/
 ObjectVolume::ObjectVolume(PyMOLGlobals * G) : CObject(G)
 {
-  auto I = this;
-  I->State = VLACalloc(ObjectVolumeState, 10);   /* autozero important */
-
-  I->type = cObjectVolume;
+  type = cObjectVolume;
 }
 
 
 /*========================================================================*/
-void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs)
+ObjectVolumeState::ObjectVolumeState(PyMOLGlobals* G)
+    : CObjectState(G)
+    , Crystal(G)
+    , Active(true)
 {
-  if(vs->Active)
-    ObjectStatePurge(&vs->State);
-  DeleteP(vs->Field);
-  vs->State = CObjectState(G);
-  if(vs->AtomVertex) {
-    VLAFreeP(vs->AtomVertex);
-  }
-  vs->Active = true;
-  vs->ResurfaceFlag = true;
-  vs->RecolorFlag = true;
-  vs->ExtentFlag = false;
-  vs->CarveBuffer = 0.0;
-  vs->AtomVertex = NULL;
-  vs->caption[0] = 0;
-  zero3i(vs->dim);
-  vs->carvemask = NULL;
-  vs->textures[0] = 0; // 3D volume (map)
-  vs->textures[1] = 0; // 1D/2D color table
-  vs->textures[2] = 0; // 3D carvemask
-  vs->isUpdated = false;
-  // Initial ramp
-  vs->RampSize = 0;
-  vs->Ramp = NULL;
 }
 
 
@@ -1174,14 +1126,11 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
     I = obj;
   }
   if(state < 0)
-    state = I->NState;
-  if(I->NState <= state) {
-    VLACheck(I->State, ObjectVolumeState, state);
-    I->NState = state + 1;
+    state = I->State.size();
+  if(I->State.size() <= state) {
+    VecCheckEmplace(I->State, state, G);
   }
-
-  vs = I->State + state;
-  ObjectVolumeStateInit(G, vs);
+  vs = &I->State[state];
 
   strcpy(vs->MapName, map->Name);
   vs->MapState = map_state;
@@ -1196,15 +1145,15 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
     copy3f(mx, vs->ExtentMax);
 
     if(!oms->State.Matrix.empty()) {
-      ObjectStateSetMatrix(&vs->State, oms->State.Matrix.data());
-    } else if(!vs->State.Matrix.empty()) {
-      ObjectStateResetMatrix(&vs->State);
+      ObjectStateSetMatrix(vs, oms->State.Matrix.data());
+    } else if(!vs->Matrix.empty()) {
+      ObjectStateResetMatrix(vs);
     }
 
     {
       float *min_ext, *max_ext;
       float tmp_min[3], tmp_max[3];
-      if(MatrixInvTransformExtentsR44d3f(vs->State.Matrix.data(),
+      if(MatrixInvTransformExtentsR44d3f(vs->Matrix.data(),
                                          vs->ExtentMin, vs->ExtentMax,
                                          tmp_min, tmp_max)) {
         min_ext = tmp_min;
@@ -1227,10 +1176,10 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
           fdim[0] = eff_range[3] - eff_range[0];
           fdim[1] = eff_range[4] - eff_range[1];
           fdim[2] = eff_range[5] - eff_range[2];
-          vs->Field = new Isofield(I->G, fdim);
+          vs->Field = pymol::make_copyable<Isofield>(I->G, fdim);
 
           expand_result =
-            IsosurfExpand(oms->Field, vs->Field, &oms->Symmetry->Crystal, sym, eff_range);
+            IsosurfExpand(oms->Field, vs->Field.get(), &oms->Symmetry->Crystal, sym, eff_range);
 
           if(expand_result == 0) {
             if(!quiet) {
@@ -1251,7 +1200,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
   }
 
   vs->CarveBuffer = carve;
-  vs->AtomVertex = vert_vla;
+  vs->AtomVertex = pymol::vla_take_ownership(vert_vla);
 
   I->ExtentFlag = false;
 
@@ -1278,11 +1227,9 @@ ObjectVolume *ObjectVolumeFromBox(PyMOLGlobals * G, ObjectVolume * obj, ObjectMa
 void ObjectVolumeRecomputeExtent(ObjectVolume * I)
 {
   int extent_flag = false;
-  int a;
-  ObjectVolumeState *vs;
 
-  for(a = 0; a < I->NState; a++) {
-    vs = I->State + a;
+  for(int a = 0; a < I->State.size(); a++) {
+    auto vs = &I->State[a];
     if(vs->Active) {
       if(vs->ExtentFlag) {
         if(!extent_flag) {
@@ -1323,23 +1270,21 @@ PyObject * ObjectVolumeGetRamp(ObjectVolume * I)
     if(!ovs->isUpdated)
       I->update();
 
-    result = PConvFloatArrayToPyList(ovs->Ramp, 5 * ovs->RampSize);
+    result = PConvFloatArrayToPyList(ovs->Ramp.data(), ovs->Ramp.size());
   }
   
   return (PConvAutoNone(result));
 }
 
 /*==============================================================================*/
-int ObjectVolumeSetRamp(ObjectVolume * I, float *ramp_list, int list_size)
+int ObjectVolumeSetRamp(ObjectVolume * I, std::vector<float>&& ramp_list)
 {
   /* TODO: Allow for multi-state maps? */
   ObjectVolumeState *ovs = ObjectVolumeGetActiveState(I);
 
-  ok_assert(1, ovs && ramp_list && list_size > 0);
+  ok_assert(1, ovs && !ramp_list.empty());
 
-  FreeP(ovs->Ramp);
-  ovs->Ramp = ramp_list;
-  ovs->RampSize = list_size / 5;
+  ovs->Ramp = std::move(ramp_list);
   ovs->RecolorFlag = true;
 
   SceneChanged(I->G);

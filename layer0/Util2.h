@@ -7,6 +7,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <string>
 #include <vector>
 
@@ -121,5 +122,35 @@ inline bool starts_with(pymol::zstring_view str, pymol::zstring_view pre)
 }
 
 double pretty_f2d(float v);
+
+template <typename T> struct cache_value {
+  using value_type = T;
+
+  value_type value = value_type{};
+
+  cache_value() = default;
+
+  cache_value(T t)
+      : value(std::move(t))
+  {
+  }
+
+  cache_value(const cache_value&) {}
+  cache_value& operator=(const cache_value&) { return *this; }
+  cache_value(cache_value&& other)
+  {
+    std::swap(value, other.value);
+  }
+  cache_value& operator=(cache_value&& other)
+  {
+    std::swap(value, other.value);
+    return *this;
+  }
+
+  operator T&() { return value; }
+};
+
+template <typename T, std::size_t N>
+using cache_array = std::array<cache_value<T>, N>;
 
 } // namespace pymol

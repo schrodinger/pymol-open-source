@@ -1058,8 +1058,7 @@ static PyObject * CmdSetVolumeRamp(PyObject * self, PyObject * args)
   int ok = false;
   char* objName;
   PyObject *ramp_list;
-  float *float_array;
-  int list_len;
+  std::vector<float> float_array;
 
   if(!PyArg_ParseTuple(args, "OsO", &self, &objName, &ramp_list)) {
     API_HANDLE_ERROR;
@@ -1070,13 +1069,9 @@ static PyObject * CmdSetVolumeRamp(PyObject * self, PyObject * args)
   ok_assert(1, G && APIEnterBlockedNotModal(G));
 
   ok_assert(2, PyList_Check(ramp_list));
-  ok_assert(2, list_len = PyList_Size(ramp_list));
-  ok_assert(2, PConvPyListToFloatArray(ramp_list, &float_array));
+  ok_assert(2, PConvFromPyObject(G, ramp_list, float_array));
 
-  ok = ExecutiveSetVolumeRamp(G, objName, float_array, list_len);
-
-  if(!ok)
-    mfree(float_array);
+  ok = ExecutiveSetVolumeRamp(G, objName, std::move(float_array));
 
 ok_except2:
   APIExitBlocked(G);

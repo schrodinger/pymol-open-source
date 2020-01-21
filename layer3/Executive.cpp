@@ -4560,13 +4560,12 @@ PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, const char * objName) {
 #endif
 }
 
-int ExecutiveSetVolumeRamp(PyMOLGlobals * G, const char * objName, float *ramp_list, int list_size) {
-  CObject *obj;
+int ExecutiveSetVolumeRamp(PyMOLGlobals * G, const char * objName, std::vector<float>&& ramp_list) {
   int result = false;
 
-  obj = ExecutiveFindObjectByName(G, objName);
-  if(obj && obj->type==cObjectVolume) {
-    result = ObjectVolumeSetRamp((ObjectVolume *) obj, ramp_list, list_size);
+  auto obj = ExecutiveFindObject<ObjectVolume>(G, objName);
+  if(obj) {
+    result = ObjectVolumeSetRamp(obj, std::move(ramp_list));
   }
 
   return result;

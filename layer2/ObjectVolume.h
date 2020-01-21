@@ -16,45 +16,46 @@ Z* -------------------------------------------------------------------
 #ifndef _H_ObjectVolume
 #define _H_ObjectVolume
 
+#include"CGO.h"
 #include"ObjectMap.h"
 #include"Word.h"
 #include"Symmetry.h"
+#include"Util2.h"
 
-typedef struct {
-  CObjectState State;
+struct ObjectVolumeState : public CObjectState {
   ObjectNameType MapName;
   int MapState;
   CCrystal Crystal;
-  int Active;
+  int Active = false;
   int Range[6];
   float ExtentMin[3], ExtentMax[3];
-  int ExtentFlag;
+  int ExtentFlag = false;
   // TODO difference between Resurface, Recolor, Refresh???
   int RefreshFlag;
-  int ResurfaceFlag;
-  int RecolorFlag;
-  float *AtomVertex;
-  float CarveBuffer;
-  CGO *UnitCellCGO;
-  WordType caption;
+  int ResurfaceFlag = true;
+  int RecolorFlag = true;
+  pymol::vla<float> AtomVertex;
+  float CarveBuffer = 0.0f;
+  WordType caption{};
   float Corner[24];
   /* not stored */
-  size_t textures[3];
-  CField *carvemask;
-  unsigned int dim[3];
-  Isofield *Field;
+  pymol::cache_array<std::size_t, 3> textures{}; // 3D volume (map), 1D/2D color table, 3D carvemask
+  pymol::copyable_ptr<CField> carvemask;
+  unsigned int dim[3]{};
+  pymol::copyable_ptr<Isofield> Field;
   float min_max_mean_stdev[4];
   float ramp_min, ramp_range;
-  int RampSize;
-  float *Ramp;
-  int isUpdated; 
-} ObjectVolumeState;
+  int RampSize() const { return Ramp.size() / 5; };
+  std::vector<float> Ramp;
+  int isUpdated = false;
+
+  ObjectVolumeState(PyMOLGlobals* G);
+  ~ObjectVolumeState();
+};
 
 struct ObjectVolume : public CObject {
-  ObjectVolumeState *State;
-  int NState = 0;
+  std::vector<ObjectVolumeState> State;
   ObjectVolume(PyMOLGlobals* G);
-  ~ObjectVolume();
 
   // virtual methods
   void update() override;
@@ -82,7 +83,7 @@ int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name, const char
 
 CField   * ObjectVolumeGetField(ObjectVolume* I);
 PyObject * ObjectVolumeGetRamp(ObjectVolume* I);
-int        ObjectVolumeSetRamp(ObjectVolume* I, float *ramp_list, int list_size);
+int        ObjectVolumeSetRamp(ObjectVolume* I, std::vector<float>&& ramp_list);
 
 ObjectMapState * ObjectVolumeGetMapState(ObjectVolume * I);
 
