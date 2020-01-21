@@ -72,7 +72,7 @@ if True:
     import inspect
     from . import colorprinting
 
-    class QuietException(BaseException):
+    class QuietException(Exception):
         pass
 
     # constants for keyword modes
