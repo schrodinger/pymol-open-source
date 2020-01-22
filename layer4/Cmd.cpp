@@ -148,8 +148,14 @@ static void launch_library_singleton() {
  */
 static PyMOLGlobals * _api_get_pymol_globals(PyObject * self) {
   if(self == Py_None) {
+#if 0
+    // can be useful to debug the pymol2 API
+    PyErr_SetString(PyExc_RuntimeError, __func__);
+    return nullptr;
+#else
     launch_library_singleton();
     return SingletonPyMOLGlobals;
+#endif
   }
 
   if(self && PyCObject_Check(self)) { \

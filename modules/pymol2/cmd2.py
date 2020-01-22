@@ -92,16 +92,24 @@ class Cmd:
 
     def __getattr__(self, key):
         v = getattr(global_cmd, key)
+        # determine whether `v` is a callable and has a `_self` argument or
+        # a keywords dictionary
         try:
-            i = inspect.getargspec(v).args.index('_self')
-        except:
+            argspec = inspect.getargspec(v)
+            try:
+                i = argspec.args.index('_self')
+            except ValueError:
+                if argspec.keywords is None:
+                    raise TypeError
+                i = -1
+        except TypeError:
             setattr(self, key, v)
             return v
         # don't bind a circular reference into the wrapper
         # namespace, use a weak reference instead
         cmdref = self._weakref
         def wrapper(*a, **k):
-            if len(a) <= i:
+            if i == -1 or len(a) <= i:
                 k['_self'] = cmdref()
             return v(*a, **k)
         wrapper.__name__ = key

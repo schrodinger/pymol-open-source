@@ -539,9 +539,9 @@ class Mutagenesis(Wizard):
                                        (src_sele,src_sele)):
                     if cmd.count_atoms("name C & (%s)"%(frag_name))==1:
                         if self.c_cap == 'amin':
-                            editor.attach_amino_acid("name C & (%s)"%(frag_name), 'nhh')
+                            editor.attach_amino_acid("name C & (%s)"%(frag_name), 'nhh', _self=cmd)
                         elif self.c_cap == 'nmet':
-                            editor.attach_amino_acid("name C & (%s)"%(frag_name), 'nme')
+                            editor.attach_amino_acid("name C & (%s)"%(frag_name), 'nme', _self=cmd)
                         if cmd.count_atoms("hydro & bound_to (name N & bound_to (name C & (%s)))"%frag_name):
                             cmd.h_fix("name N & bound_to (name C & (%s))"%frag_name)
                         # trim hydrogens
@@ -557,7 +557,7 @@ class Mutagenesis(Wizard):
                                        (src_sele,src_sele)):
                     if cmd.count_atoms("name N & (%s)"%(frag_name))==1:
                         if self.n_cap == 'acet':
-                            editor.attach_amino_acid("name N & (%s)"%(frag_name), 'ace')
+                            editor.attach_amino_acid("name N & (%s)"%(frag_name), 'ace', _self=cmd)
                         if cmd.count_atoms("hydro & bound_to (name N & bound_to (name C & (%s)))"%frag_name):
                             cmd.h_fix("name N & (%s)"%frag_name)
                         # trim hydrogens
@@ -660,7 +660,7 @@ class Mutagenesis(Wizard):
             cmd.create(obj_name,frag_name,1,1)
             print(" Mutagenesis: no rotamers found in library.")
         cmd.set("seq_view",0,obj_name,quiet=1)
-        pymol.util.cbaw(obj_name)
+        pymol.util.cbaw(obj_name, _self=cmd)
         cmd.hide("("+obj_name+")")
         cmd.show(self.rep,obj_name)
         cmd.show('lines',obj_name) #neighbor  always show lines
