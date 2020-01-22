@@ -397,7 +397,7 @@ if True:
                                         if re.search("\.py$|\.pym$",path) is not None:
                                             if self.cmd._feedback(fb_module.parser,fb_mask.warnings):
                                                 print("Warning: use 'run' instead of '@' with Python files?")
-                                        layer.script = open(path,'rU')
+                                        layer.script = open(path,'r')
                                         self.cmd._pymol.__script__ = path
                                         self.nest=self.nest+1
                                         self.layer[self.nest] = NestLayer()

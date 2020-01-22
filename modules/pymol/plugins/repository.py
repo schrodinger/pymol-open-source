@@ -224,7 +224,7 @@ class LocalRepository(Repository):
 
     def retrieve(self, name, binary=True):
         url = self.get_full_url(name)
-        handle = open(url, "rb" if binary else "rU")
+        handle = open(url, "rb" if binary else "r")
         content = handle.read()
         handle.close()
         return content

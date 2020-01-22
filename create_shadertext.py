@@ -82,7 +82,7 @@ def create_shadertext(shaderdir, shaderdir2, outputheader, outputfile):
         if not os.path.exists(shaderfile):
             shaderfile = os.path.join(shaderdir2, filename)
 
-        with open(shaderfile, 'rU') as handle:
+        with open(shaderfile, 'r') as handle:
             contents = handle.read()
 
         if True:

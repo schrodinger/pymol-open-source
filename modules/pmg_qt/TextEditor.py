@@ -31,7 +31,7 @@ class TextEditor(QtWidgets.QMainWindow):
     def _open(self, filename):
         self.filename = filename or ''
         if filename and os.path.exists(filename):
-            with open(filename, 'rU') as handle:
+            with open(filename, 'r') as handle:
                 content = handle.read()
         else:
             content = ''

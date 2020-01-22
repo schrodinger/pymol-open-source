@@ -191,7 +191,7 @@ if True:
     py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
 
     def get_pwg_options(filename):
-        for line in open(filename, 'rU'):
+        for line in open(filename, 'r'):
             a = line.split()
             if not a or a[0].startswith('#'):
                 continue
