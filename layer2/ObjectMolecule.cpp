@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 
 #include <algorithm>
+#include <cassert>
 #include <set>
 
 #include"Base.h"
@@ -7082,6 +7083,9 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
             ErrMessage(G, __func__, "can't read u value");
           else
             ai->b *= (8 * cPI * cPI);   /* B-factor = 8 pi^2 U-factor */
+        } else {
+          assert(PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_AttributeError));
+          PyErr_Clear();
         }
         Py_XDECREF(tmp);
       }
@@ -7096,6 +7100,9 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
               std::copy_n(u, 6, ai->get_anisou());
           }
           Py_DECREF(tmp);
+        } else {
+          assert(PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_AttributeError));
+          PyErr_Clear();
         }
       }
 
@@ -7313,6 +7320,8 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
 
       if(!ok)
         break;
+
+      assert(!PyErr_Occurred());
     }
   }
 
