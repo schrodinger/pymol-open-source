@@ -80,8 +80,6 @@ PyObject *ObjectVolumeAsPyList(ObjectVolume * I);
 int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume ** result);
 int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name, const char * new_name);
 
-int ObjectVolumeColor(ObjectVolume * I, float * colors, int ncolors);
-
 CField   * ObjectVolumeGetField(ObjectVolume* I);
 PyObject * ObjectVolumeGetRamp(ObjectVolume* I);
 int        ObjectVolumeSetRamp(ObjectVolume* I, float *ramp_list, int list_size);

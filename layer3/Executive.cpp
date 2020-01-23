@@ -1108,34 +1108,6 @@ pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
   return {};
 }
 
-
-int ExecutiveVolumeColor(PyMOLGlobals * G, const char * volume_name, float * colors, int ncolors) {
- 
-  int ok = true;
-#if 0 
-  CObject * origObj = NULL;
-  
-  origObj = ExecutiveFindObjectByName(G, volume_name);
-  if(origObj) {
-    if(origObj->type != cObjectVolume) {
-      ExecutiveDelete(G, volume_name);
-      origObj = NULL;
-    }
-  }
-
-  if(origObj) {
-    ok = ObjectVolumeColor((ObjectVolume*) origObj, colors, ncolors);
-  } else {
-    PRINTFB(G, FB_ObjectVolume, FB_Errors)
-      " Volume: volume object \"%s\" not found.\n", volume_name ENDFB(G);
-    ok = false;
-  }
-
-#endif
-  return ok;
-}
-
-
 pymol::Result<>
 ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
                         float lvl,

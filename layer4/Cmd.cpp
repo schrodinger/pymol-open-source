@@ -7557,47 +7557,6 @@ static PyObject *CmdCEAlign(PyObject *self, PyObject *args)
   return result;
 }
 
-static PyObject *CmdVolumeColor(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals * G = NULL;
-  char * volume_name;
-  PyObject * oColors;
-  float * colors;
-  int ncolors = 0;
-  int ok = false;
-
-  /* volume_name = (string) name
-   * oColors = array of N-RGBA colors as, [ (r,g,b,a), (r,g,b,a), ..., (r,g,b,a) ],
-   *   which will be unpacked to an array of N*4 floats
-   */
-  ok = PyArg_ParseTuple(args, "OsO", &self, &volume_name, &oColors);
-
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-
-  ncolors = PyList_Size(oColors);
-
-  PRINTFB(G, FB_ObjectVolume, FB_Blather)
-    " CmdVolumeColor-Warning: ncolors=%d were passed in.\n", ncolors
-  ENDFB(G);
-
-  ok = (ncolors!=0);
-
-  if((ok) && (ok = APIEnterNotModal(G))) {
-    ok = PConvPyListToFloatVLA(oColors, &colors);
-    
-    if (ok) 
-      ok = ExecutiveVolumeColor(G, volume_name, colors, ncolors);
-
-    APIExit(G);
-  }
-  return APIResultOk(ok);
-}
-
 static PyObject *CmdVolume(PyObject *self, PyObject *args)
 { 
   PyMOLGlobals *G = NULL;
@@ -8029,7 +7988,6 @@ static PyMethodDef Cmd_methods[] = {
   {"viewport", CmdViewport, METH_VARARGS},
   {"vdw_fit", CmdVdwFit, METH_VARARGS},
   {"volume", CmdVolume, METH_VARARGS},
-  {"volume_color", CmdVolumeColor, METH_VARARGS},
   {"undo", CmdUndo, METH_VARARGS},
   {"unpick", CmdUnpick, METH_VARARGS},
   {"unset", CmdUnset, METH_VARARGS},
