@@ -399,23 +399,21 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
               ok_assert(1, obj = new ObjectMap(G));
 
             if(state < 0)
-              state = obj->NState;
-            if(obj->NState <= state) {
-              VLACheck(obj->State, ObjectMapState, state);
-              obj->NState = state + 1;
+              state = obj->State.size();
+            if(obj->State.size() <= state) {
+              VecCheckEmplace (obj->State, state, G);
             }
             ms = &obj->State[state];
-            ObjectMapStateInit(obj->G, ms);
 
             ms->FDim[0] = v->xsize;
             ms->FDim[1] = v->ysize;
             ms->FDim[2] = v->zsize;
             ms->FDim[3] = 3;
 
-            ms->Grid = pymol::malloc<float>(3);
-            ms->Dim = pymol::malloc<int>(3);
-            ms->Origin = pymol::calloc<float>(3);
-            ms->Range = pymol::malloc<float>(3);
+            ms->Grid = std::vector<float>(3);
+            ms->Dim = std::vector<int>(3);
+            ms->Origin = std::vector<float>(3, 0.0f);
+            ms->Range = std::vector<float>(3);
 
             float axes33f[9];
             float originf[3];
@@ -448,13 +446,13 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
 
               double m44d[16];
 
-              if(ms->State.Matrix.empty())
-                ms->State.Matrix = std::vector<double>(16);
+              if(ms->Matrix.empty())
+                ms->Matrix = std::vector<double>(16);
 
               // state matrix transformation
               copy33f44d(axes33f, m44d);
               copy3(originf, m44d + 12);
-              transpose44d44d(m44d, ms->State.Matrix.data());
+              transpose44d44d(m44d, ms->Matrix.data());
             }
 
             // axis and corner stuff in a unit cube
@@ -462,7 +460,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
               // prime min+max
               zero3f(ms->ExtentMin);
               ones3f(ms->ExtentMax);
-              ones3f(ms->Range);
+              ones3f(ms->Range.data());
 
               for(int a = 0; a < 3; a++) {
                 int dimL1 = ms->FDim[a] - 1;
@@ -509,7 +507,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
             }
 
             // field
-            ms->Field = new Isofield(G, ms->FDim);
+            ms->Field.reset(new Isofield(G, ms->FDim));
             ms->MapSource = cMapSourceVMDPlugin;
             ms->Field->save_points = false;     /* save points in RAM only, not session file */
             ms->Active = true;

@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
+#include"CGO.h"
 #include"PyMOLObject.h"
 #include"Symmetry.h"
 #include"Isosurf.h"
@@ -42,34 +43,34 @@ Z* -------------------------------------------------------------------
 #define cMapSourceVMDPlugin 9
 #define cMapSourceObsolete   10
 
-typedef struct ObjectMapState {
-  CObjectState State;
-  int Active;
-  CSymmetry *Symmetry;
+struct ObjectMapState : public CObjectState {
+  int Active = false;
+  pymol::copyable_ptr<CSymmetry> Symmetry;
   int Div[3];                   /* NOTE: Div is only meaningful for maps defined relative to a unit cell */
   int Min[3], Max[3];           /* valid min and max indices, required. */
   int FDim[4];                  /* Array dimensions with 3 in fourth slot, required */
   int MapSource;
-  Isofield *Field;
+  pymol::copyable_ptr<Isofield> Field;
   float Corner[24];
-  int *Dim;                     /* this field is redundant and should be eliminated -- if exists, must match FDim */
-  float *Origin;                /* Origin for non-xtal maps */
-  float *Range;                 /* Range for non-xtal maps */
-  float *Grid;                  /* Spacing for non-xtal maps */
+  std::vector<int> Dim;                     /* this field is redundant and should be eliminated -- if exists, must match FDim */
+  std::vector<float> Origin;                /* Origin for non-xtal maps */
+  std::vector<float> Range;                 /* Range for non-xtal maps */
+  std::vector<float> Grid;                  /* Spacing for non-xtal maps */
   float ExtentMin[3], ExtentMax[3];
   float Mean, SD; /* -- JV for vol */
-  CGO* shaderCGO;
+  pymol::cache_ptr<CGO, CGODeleter> shaderCGO;
   /* below not stored */
 
-  int have_range;
+  int have_range = false;
   float high_cutoff, low_cutoff;
-} ObjectMapState;
+  ObjectMapState(PyMOLGlobals* G);
+  ObjectMapState(const ObjectMapState&);
+  ObjectMapState& operator=(const ObjectMapState&);
+};
 
 struct ObjectMap : public CObject {
-  pymol::vla<ObjectMapState> State;
-  int NState = 0;
+  std::vector<ObjectMapState> State;
   ObjectMap(PyMOLGlobals* G);
-  ~ObjectMap();
 
   // virtual methods
   void update() override;
@@ -133,7 +134,6 @@ int ObjectMapHalve(ObjectMap * I, int state, int smooth);
 int ObjectMapTrim(ObjectMap * I, int state, float *mn, float *mx, int quiet);
 int ObjectMapSetBorder(ObjectMap * I, float level, int state);
 int ObjectMapStateSetBorder(ObjectMapState * I, float level);
-void ObjectMapStateInit(PyMOLGlobals * G, ObjectMapState * I);
 void ObjectMapStatePurge(PyMOLGlobals * G, ObjectMapState * I);
 int ObjectMapStateInterpolate(ObjectMapState * ms, const float *array, float *result, int *flag,
                               int n);

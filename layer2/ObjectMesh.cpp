@@ -523,8 +523,8 @@ void ObjectMesh::update()
             ms->UnitCellCGO.reset(CrystalGetUnitCellCGO(&ms->Crystal));
           }
 
-          if(!oms->State.Matrix.empty()) {
-            ObjectStateSetMatrix(ms, oms->State.Matrix.data());
+          if(!oms->Matrix.empty()) {
+            ObjectStateSetMatrix(ms, oms->Matrix.data());
           } else if(!ms->Matrix.empty()) {
             ObjectStateResetMatrix(ms);
           }
@@ -544,7 +544,7 @@ void ObjectMesh::update()
           if(ms->Field) {
             field = ms->Field.get();
           } else if(oms->Field) {
-            field = oms->Field;
+            field = oms->Field.get();
           }
 
           if(field) {
@@ -1191,8 +1191,8 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
     copy3f(mn, ms->ExtentMin);  /* this is not exactly correct...should actually take vertex points from range */
     copy3f(mx, ms->ExtentMax);
 
-    if(!oms->State.Matrix.empty()) {
-      ok &= ObjectStateSetMatrix(ms, oms->State.Matrix.data());
+    if(!oms->Matrix.empty()) {
+      ok &= ObjectStateSetMatrix(ms, oms->Matrix.data());
     } else if(!ms->Matrix.empty()) {
       ObjectStateResetMatrix(ms);
     }
@@ -1214,7 +1214,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
         int eff_range[6];
 
         if(IsosurfGetRange
-           (G, oms->Field, &oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false)) {
+           (G, oms->Field.get(), &oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false)) {
           int fdim[3];
           int expand_result;
           /* need to generate symmetry-expanded temporary map */
@@ -1226,7 +1226,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
           ms->Field = pymol::make_copyable<Isofield>(I->G, fdim);
 
           expand_result =
-            IsosurfExpand(oms->Field, ms->Field.get(), &oms->Symmetry->Crystal, sym, eff_range);
+            IsosurfExpand(oms->Field.get(), ms->Field.get(), &oms->Symmetry->Crystal, sym, eff_range);
 
           if(expand_result == 0) {
             ok = false;
@@ -1257,7 +1257,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
           }
         }
       } else {
-        IsosurfGetRange(G, oms->Field, &oms->Symmetry->Crystal, min_ext, max_ext, ms->Range, true);
+        IsosurfGetRange(G, oms->Field.get(), &oms->Symmetry->Crystal, min_ext, max_ext, ms->Range, true);
       }
     }
     ms->ExtentFlag = true;

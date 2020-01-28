@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"os_gl.h"
 #include"Rep.h"
-#include"ObjectGadgetRamp.h"
+#include"MemoryDebug.h"
 #include <vector>
 #include <unordered_map>
 #include <typeinfo>
@@ -277,6 +277,8 @@ size_t CGO_sz_size();
 // CGOs are floating point arrays so we need to work with sizes in terms of floats
 template <typename T>
 static size_t fsizeof() { return sizeof(T) / sizeof(float); }
+
+struct ObjectGadgetRamp;
 
 class CGO;
 

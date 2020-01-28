@@ -416,8 +416,8 @@ void ObjectVolume::update()
     }
 
     if(vs->RefreshFlag || vs->ResurfaceFlag) {
-      if(!oms->State.Matrix.empty()) {
-        ObjectStateSetMatrix(vs, oms->State.Matrix.data());
+      if(!oms->Matrix.empty()) {
+        ObjectStateSetMatrix(vs, oms->Matrix.data());
       } else if(!vs->Matrix.empty()) {
         ObjectStateResetMatrix(vs);
       }
@@ -462,7 +462,7 @@ void ObjectVolume::update()
       if(vs->Field) {
         field = vs->Field.get();
       } else if(oms->Field) {
-        field = oms->Field;
+        field = oms->Field.get();
       } else {
         field = NULL;
       }
@@ -1144,8 +1144,8 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
     copy3f(mn, vs->ExtentMin);  /* this is not exactly correct...should actually take vertex points from range */
     copy3f(mx, vs->ExtentMax);
 
-    if(!oms->State.Matrix.empty()) {
-      ObjectStateSetMatrix(vs, oms->State.Matrix.data());
+    if(!oms->Matrix.empty()) {
+      ObjectStateSetMatrix(vs, oms->Matrix.data());
     } else if(!vs->Matrix.empty()) {
       ObjectStateResetMatrix(vs);
     }
@@ -1166,7 +1166,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
       if(sym && box_mode) {
         int eff_range[6];
 
-        IsosurfGetRange(G, oms->Field, &oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false);
+        IsosurfGetRange(G, oms->Field.get(), &oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false);
 
         {
           int fdim[3];
@@ -1179,7 +1179,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
           vs->Field = pymol::make_copyable<Isofield>(I->G, fdim);
 
           expand_result =
-            IsosurfExpand(oms->Field, vs->Field.get(), &oms->Symmetry->Crystal, sym, eff_range);
+            IsosurfExpand(oms->Field.get(), vs->Field.get(), &oms->Symmetry->Crystal, sym, eff_range);
 
           if(expand_result == 0) {
             if(!quiet) {

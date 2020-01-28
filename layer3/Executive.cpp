@@ -906,9 +906,9 @@ pymol::Result<> ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
             mn[c] = ms->Corner[c];
             mx[c] = ms->Corner[3 * 7 + c];
           }
-          if(!ms->State.Matrix.empty()) {
-            transform44d3f(ms->State.Matrix.data(), mn, mn);
-            transform44d3f(ms->State.Matrix.data(), mx, mx);
+          if(!ms->Matrix.empty()) {
+            transform44d3f(ms->Matrix.data(), mn, mn);
+            transform44d3f(ms->Matrix.data(), mx, mx);
             {
               float tmp;
               int a;
@@ -968,7 +968,7 @@ pymol::Result<> ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
         origObj = obj;
         map_state++;
         state++;
-        if(map_state >= mapObj->NState)
+        if(map_state >= mapObj->State.size())
           break;
       } else {
         break;
@@ -1015,9 +1015,9 @@ pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
               mx[c] = ms->Corner[3 * 7 + c];
             }
           }
-          if(!ms->State.Matrix.empty()) {
-            transform44d3f(ms->State.Matrix.data(), mn, mn);
-            transform44d3f(ms->State.Matrix.data(), mx, mx);
+          if(!ms->Matrix.empty()) {
+            transform44d3f(ms->Matrix.data(), mn, mn);
+            transform44d3f(ms->Matrix.data(), mx, mx);
             {
               float tmp;
               int a;
@@ -1069,7 +1069,7 @@ pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
             symm = sele_obj->Symmetry;
           } else if(SettingGet_b(G, NULL, mapObj->Setting, cSetting_map_auto_expand_sym)) {
             // fallback: take symmetry from map state
-            symm = ms->Symmetry;
+            symm = ms->Symmetry.get();
           }
         }
 
@@ -1116,7 +1116,7 @@ pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
         origObj = obj;
         map_state++;
         state++;
-        if(map_state >= mapObj->NState)
+        if(map_state >= mapObj->State.size())
           break;
       } else {
         break;
@@ -1195,9 +1195,9 @@ ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
               mx[c] = ms->Corner[3 * 7 + c];
             }
           }
-          if(!ms->State.Matrix.empty()) {
-            transform44d3f(ms->State.Matrix.data(), mn, mn);
-            transform44d3f(ms->State.Matrix.data(), mx, mx);
+          if(!ms->Matrix.empty()) {
+            transform44d3f(ms->Matrix.data(), mn, mn);
+            transform44d3f(ms->Matrix.data(), mx, mx);
             {
               float tmp;
               int a;
@@ -1248,7 +1248,7 @@ ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
             symm = sele_obj->Symmetry;
           } else if(SettingGet_b(G, NULL, mapObj->Setting, cSetting_map_auto_expand_sym)) {
             // fallback: take symmetry from map state
-            symm = ms->Symmetry;
+            symm = ms->Symmetry.get();
           }
         }
 
@@ -1292,7 +1292,7 @@ ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
         origObj = obj;
         map_state++;
         state++;
-        if(map_state >= mapObj->NState)
+        if(map_state >= mapObj->State.size())
           break;
       } else {
         break;
@@ -5915,7 +5915,7 @@ ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a, fl
   } else if(obj->type==cObjectMap) {
     const auto* ms = ObjectMapGetState(static_cast<ObjectMap*>(obj), state);
     if (ms) {
-      symm = ms->Symmetry;
+      symm = ms->Symmetry.get();
     }
   }
 
@@ -5975,10 +5975,9 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, const char *sele, int state, float a,
 	objMap = (ObjectMap *) obj;
 	
 	if(symmetry) {
-	  for(StateIterator iter(G, obj->Setting, state, objMap->NState); iter.next();) {
-	    ObjectMapState *oms = objMap->State + iter.state;
-	    SymmetryFree(oms->Symmetry);
-	    oms->Symmetry = new CSymmetry(*symmetry);
+	  for(StateIterator iter(G, obj->Setting, state, objMap->State.size()); iter.next();) {
+	    ObjectMapState *oms = &objMap->State[iter.state];
+	    oms->Symmetry.reset(new CSymmetry(*symmetry));
 	  }
 	  ObjectMapRegeneratePoints(objMap);
 	}
@@ -6009,7 +6008,8 @@ int ExecutiveSymmetryCopy(PyMOLGlobals * G, const char *source_name, const char 
   CObject *source_obj = NULL;
   CObject *target_obj = NULL;
   CSymmetry * source_symm = NULL;
-  CSymmetry ** target_symm = NULL;
+  CSymmetry ** target_symm_mol = NULL;
+  pymol::copyable_ptr<CSymmetry>* target_symm_map = nullptr; // TODO: reunify target_symm pointers
 
   ObjectMolecule * tmp_mol = NULL;
   ObjectMap * tmp_map = NULL, *targ_map = NULL;
@@ -6035,13 +6035,13 @@ int ExecutiveSymmetryCopy(PyMOLGlobals * G, const char *source_name, const char 
     else if(source_obj->type==cObjectMap){
       tmp_map = (ObjectMap*) source_obj;
 
-      if(source_state+1>tmp_map->NState) {
+      if(source_state+1>tmp_map->State.size()) {
 	PRINTFB(G, FB_Executive, FB_Errors)
-	  " SymmetryCopy-Error: source state '%d' greater than number of states in object '%s'.", tmp_map->NState, source_name  ENDFB(G);
+	  " SymmetryCopy-Error: source state '%zu' greater than number of states in object '%s'.", tmp_map->State.size(), source_name  ENDFB(G);
 	ok = false;
       }
       if(ok) {
-	source_symm = (tmp_map->State + source_state)->Symmetry;
+        source_symm = tmp_map->State[source_state].Symmetry.get();
       }
     }
     else {
@@ -6066,19 +6066,19 @@ int ExecutiveSymmetryCopy(PyMOLGlobals * G, const char *source_name, const char 
       /* OVERRIDE STATE for ObjectMolecules */
       target_state = 0;
       tmp_mol = (ObjectMolecule*) target_obj;
-      target_symm = &(tmp_mol->Symmetry); /* + target_state; */
+      target_symm_mol = &(tmp_mol->Symmetry); /* + target_state; */
     }
     /* ObjectMap */
     else if(target_obj->type==cObjectMap){
       targ_map = (ObjectMap*) target_obj;
 
-      if(target_state+1>targ_map->NState) {
+      if(target_state+1>targ_map->State.size()) {
 	PRINTFB(G, FB_Executive, FB_Errors)
-	  " SymmetryCopy-Error: target state '%d' greater than number of states in object '%s'.", targ_map->NState, target_name  ENDFB(G);
+	  " SymmetryCopy-Error: target state '%zu' greater than number of states in object '%s'.", targ_map->State.size(), target_name  ENDFB(G);
 	ok = false;
       }
       if(ok) {
-	target_symm =  (CSymmetry**)  &((targ_map->State + target_state)->Symmetry);
+        target_symm_map = &targ_map->State[target_state].Symmetry;
       }
     }
     else {
@@ -6096,11 +6096,16 @@ int ExecutiveSymmetryCopy(PyMOLGlobals * G, const char *source_name, const char 
 
   /* Do the copy */
   if(ok) {
-    if(target_symm) {
-      if(*target_symm)
-	SymmetryFree(*target_symm);
+    if(target_symm_mol || target_symm_map) {
+      if(target_symm_mol) {
+        if(*target_symm_mol) {
+          SymmetryFree(*target_symm_mol);
+        }
+        *target_symm_mol = new CSymmetry(*source_symm);
+      } else if(target_symm_map && *target_symm_map) {
+        *target_symm_map = pymol::make_copyable<CSymmetry>(*source_symm);
+      }
       
-      *target_symm = new CSymmetry(*source_symm);
 
       /* Invalidate cRepCell */
       /* if the unit cell is shown for molecule, redraw it */
@@ -6117,8 +6122,10 @@ int ExecutiveSymmetryCopy(PyMOLGlobals * G, const char *source_name, const char 
 	ObjectMapRegeneratePoints(targ_map);
       }
 
-      if(! *target_symm)
-	ok = false;
+      if ((target_symm_mol && !*target_symm_mol) ||
+          (target_symm_map && !*target_symm_map)) {
+        ok = false;
+      }
     }
   }
 
@@ -6421,8 +6428,8 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
         case cExecObject:
           if(rec->obj->type == cObjectMap) {
             ObjectMap *obj = (ObjectMap *) rec->obj;
-            if(obj->NState > max_n_state)
-              max_n_state = obj->NState;        /* count states */
+            if(obj->State.size() > max_n_state)
+              max_n_state = obj->State.size();        /* count states */
           }
         }
       }
@@ -6531,8 +6538,8 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
                   if(rec->obj->type == cObjectMap) {
 
                     ObjectMap *obj = (ObjectMap *) rec->obj;
-                    ObjectMapState *ms = obj->State + src_state;
-                    if(src_state < obj->NState) {
+                    ObjectMapState *ms = &obj->State[src_state];
+                    if(src_state < obj->State.size()) {
                       if(ms->Active) {
                         if(first_extent) {
                           copy3f(ms->ExtentMin, desc.MinCorner);
@@ -6572,8 +6579,6 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
               add3f(desc.Grid, desc.MaxCorner, desc.MaxCorner);
               subtract3f(desc.MinCorner, desc.Grid, desc.MinCorner);
               ObjectMapNewStateFromDesc(G, target, &desc, trg_state, quiet);
-              if(trg_state >= target->NState)
-                target->NState = trg_state + 1;
               target->State[trg_state].Active = true;
             }
           }
@@ -6605,9 +6610,9 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
     for(src_state = src_state_start; src_state < src_state_stop; src_state++) {
       int trg_state = src_state + target_state;
       ObjectMapState *ms;
-      VLACheck(target->State, ObjectMapState, trg_state);
+      VecCheckEmplace(target->State, trg_state, G);
 
-      ms = target->State + target_state;
+      ms = &target->State[target_state];
       if(ms->Active) {
         int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
         int n_pnt = (ms->Field->points->size() / ms->Field->points->base_size) / 3;

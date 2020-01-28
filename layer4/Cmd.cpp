@@ -3518,7 +3518,7 @@ static int ExecutiveSliceNew(PyMOLGlobals * G, char *slice_name,
         origObj = obj;
         map_state++;
         state++;
-        if(map_state >= mapObj->NState)
+        if(map_state >= mapObj->State.size())
           break;
       } else {
         break;

@@ -130,8 +130,8 @@ int ObjectMapStateValidXtal(ObjectMapState * ms)
  */
 int ObjectMapValidXtal(ObjectMap * I, int state)
 {
-  if((state >= 0) && (state < I->NState)) {
-    ObjectMapState *ms = I->State + state;
+  if((state >= 0) && (state < I->State.size())) {
+    ObjectMapState *ms = &I->State[state];
     return ObjectMapStateValidXtal(ms);
   }
   return false;
@@ -180,7 +180,7 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float 
     int within_flag, within_default = false;
     int beyond_flag;
 
-    Isofield *field = ms->Field;
+    Isofield *field = ms->Field.get();
     if(list_size)
       MapSetupExpress(voxelmap);
 
@@ -369,7 +369,7 @@ int ObjectMapInterpolate(ObjectMap * I, int state, const float *array, float *re
   ObjectMapState *ms = ObjectMapGetState(I, state);
 
   if(ms && ms->Active) {
-    double *matrix = ObjectStateGetInvMatrix(&ms->State);
+    double *matrix = ObjectStateGetInvMatrix(ms);
 
     if(matrix) {
       /* we have to back-transform points */
@@ -492,13 +492,12 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
           }
         }
       }
-      DeleteP(ms->Field);
       for(a = 0; a < 3; a++) {
         ms->Min[a] = new_min[a];
         ms->Max[a] = new_max[a];
         ms->FDim[a] = new_fdim[a];
       }
-      ms->Field = field;
+      ms->Field.reset(field);
 
       /* compute new extents */
       v[2] = (ms->Min[2]) / ((float) ms->Div[2]);
@@ -534,7 +533,7 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
     }
   } else {                      /* not a crystal map */
     int hit_flag = false;
-    float *origin = ms->Origin;
+    float *origin = ms->Origin.data();
 
     for(a = 0; a < 3; a++) {
       min[a] = ms->Min[a];
@@ -596,16 +595,15 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
           }
         }
       }
-      DeleteP(ms->Field);
       for(a = 0; a < 3; a++) {
         ms->Min[a] = new_min[a];
         ms->Max[a] = new_max[a];
         ms->FDim[a] = new_fdim[a];
-        if(ms->Dim)
+        if(!ms->Dim.empty())
           ms->Dim[a] = new_fdim[a];
       }
 
-      ms->Field = field;
+      ms->Field.reset(field);
 
       for(e = 0; e < 3; e++) {
         ms->ExtentMin[e] = ms->Origin[e] + ms->Grid[e] * ms->Min[e];
@@ -682,7 +680,6 @@ static int ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
         }
       }
     }
-    DeleteP(ms->Field);
     for(a = 0; a < 3; a++) {
       ms->Min[a] = min[a];
       ms->Max[a] = max[a];
@@ -690,7 +687,7 @@ static int ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
       ms->Div[a] = div[a];
     }
 
-    ms->Field = field;
+    ms->Field.reset(field);
   } else {
     for(a = 0; a < 3; a++) {
       grid[a] = ms->Grid[a] / 2.0F;
@@ -723,17 +720,16 @@ static int ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
         }
       }
     }
-    DeleteP(ms->Field);
     for(a = 0; a < 3; a++) {
       ms->Min[a] = min[a];
       ms->Max[a] = max[a];
       ms->FDim[a] = fdim[a];
-      if(ms->Dim)
+      if(!ms->Dim.empty())
         ms->Dim[a] = fdim[a];
-      if(ms->Grid)
+      if(!ms->Grid.empty())
         ms->Grid[a] = grid[a];
     }
-    ms->Field = field;
+    ms->Field.reset(field);
   }
   return 1;
 }
@@ -821,7 +817,6 @@ static int ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smooth
         }
       }
     }
-    DeleteP(ms->Field);
     for(a = 0; a < 3; a++) {
       ms->Min[a] = min[a];
       ms->Max[a] = max[a];
@@ -829,7 +824,7 @@ static int ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smooth
       ms->Div[a] = div[a];
     }
 
-    ms->Field = field;
+    ms->Field.reset(field);
 
     /* compute new extents */
     v[2] = (ms->Min[2]) / ((float) ms->Div[2]);
@@ -886,17 +881,16 @@ static int ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smooth
         }
       }
     }
-    DeleteP(ms->Field);
     for(a = 0; a < 3; a++) {
       ms->Min[a] = min[a];
       ms->Max[a] = max[a];
       ms->FDim[a] = fdim[a];
-      if(ms->Dim)
+      if(!ms->Dim.empty())
         ms->Dim[a] = fdim[a];
-      if(ms->Grid)
+      if(!ms->Grid.empty())
         ms->Grid[a] = grid[a];
     }
-    ms->Field = field;
+    ms->Field.reset(field);
 
   }
   return 1;
@@ -911,7 +905,7 @@ int ObjectMapTrim(ObjectMap * I, int state, float *mn, float *mx, int quiet)
   /* TO DO: convert mn and mx into map local coordinates if map itself is transformed...  */
 
   if(state < 0) {
-    for(a = 0; a < I->NState; a++) {
+    for(a = 0; a < I->State.size(); a++) {
       if(I->State[a].Active) {
         if(ObjectMapStateTrim(I->G, &I->State[a], mn, mx, quiet))
           update = true;
@@ -919,7 +913,7 @@ int ObjectMapTrim(ObjectMap * I, int state, float *mn, float *mx, int quiet)
           result = false;
       }
     }
-  } else if((state >= 0) && (state < I->NState) && (I->State[state].Active)) {
+  } else if((state >= 0) && (state < I->State.size()) && (I->State[state].Active)) {
     update = result = ObjectMapStateTrim(I->G, &I->State[state], mn, mx, quiet);
   } else {
     PRINTFB(I->G, FB_ObjectMap, FB_Errors)
@@ -936,11 +930,11 @@ int ObjectMapDouble(ObjectMap * I, int state)
   int a;
   int result = true;
   if(state < 0) {
-    for(a = 0; a < I->NState; a++) {
+    for(a = 0; a < I->State.size(); a++) {
       if(I->State[a].Active)
         result = result && ObjectMapStateDouble(I->G, &I->State[a]);
     }
-  } else if((state >= 0) && (state < I->NState) && (I->State[state].Active)) {
+  } else if((state >= 0) && (state < I->State.size()) && (I->State[state].Active)) {
     ObjectMapStateDouble(I->G, &I->State[state]);
   } else {
     PRINTFB(I->G, FB_ObjectMap, FB_Errors)
@@ -955,12 +949,12 @@ int ObjectMapHalve(ObjectMap * I, int state, int smooth)
   int a;
   int result = true;
   if(state < 0) {
-    for(a = 0; a < I->NState; a++) {
+    for(a = 0; a < I->State.size(); a++) {
       if(I->State[a].Active)
         result = result && ObjectMapStateHalve(I->G, &I->State[a], smooth);
     }
 
-  } else if((state >= 0) && (state < I->NState) && (I->State[state].Active)) {
+  } else if((state >= 0) && (state < I->State.size()) && (I->State[state].Active)) {
     ObjectMapStateHalve(I->G, &I->State[state], smooth);
   } else {
     PRINTFB(I->G, FB_ObjectMap, FB_Errors)
@@ -1197,8 +1191,8 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * I,
 
 void ObjectMapRegeneratePoints(ObjectMap * om){
   int i;
-  for (i=0; i<om->NState;i++){
-    ObjectMapStateRegeneratePoints(om->State + i);
+  for (i=0; i<om->State.size();i++){
+    ObjectMapStateRegeneratePoints(&om->State[i]);
   }
 }
 
@@ -1243,27 +1237,27 @@ static PyObject *ObjectMapStateAsPyList(ObjectMapState * I)
   result = PyList_New(16);
   PyList_SetItem(result, 0, PyInt_FromLong(I->Active));
   if(I->Symmetry) {
-    PyList_SetItem(result, 1, SymmetryAsPyList(I->Symmetry));
+    PyList_SetItem(result, 1, SymmetryAsPyList(I->Symmetry.get()));
   } else {
     PyList_SetItem(result, 1, PConvAutoNone(Py_None));
   }
-  if(I->Origin) {
-    PyList_SetItem(result, 2, PConvFloatArrayToPyList(I->Origin, 3));
+  if(!I->Origin.empty()) {
+    PyList_SetItem(result, 2, PConvFloatArrayToPyList(I->Origin.data(), 3));
   } else {
     PyList_SetItem(result, 2, PConvAutoNone(Py_None));
   }
-  if(I->Range) {
-    PyList_SetItem(result, 3, PConvFloatArrayToPyList(I->Range, 3));
+  if(!I->Range.empty()) {
+    PyList_SetItem(result, 3, PConvFloatArrayToPyList(I->Range.data(), 3));
   } else {
     PyList_SetItem(result, 3, PConvAutoNone(Py_None));
   }
-  if(I->Dim) {
-    PyList_SetItem(result, 4, PConvIntArrayToPyList(I->Dim, 3));
+  if(!I->Dim.empty()) {
+    PyList_SetItem(result, 4, PConvIntArrayToPyList(I->Dim.data(), 3));
   } else {
     PyList_SetItem(result, 4, PConvAutoNone(Py_None));
   }
-  if(I->Grid) {
-    PyList_SetItem(result, 5, PConvFloatArrayToPyList(I->Grid, 3));
+  if(!I->Grid.empty()) {
+    PyList_SetItem(result, 5, PConvFloatArrayToPyList(I->Grid.data(), 3));
   } else {
     PyList_SetItem(result, 5, PConvAutoNone(Py_None));
   }
@@ -1277,8 +1271,8 @@ static PyObject *ObjectMapStateAsPyList(ObjectMapState * I)
   PyList_SetItem(result, 12, PConvIntArrayToPyList(I->Max, 3));
   PyList_SetItem(result, 13, PConvIntArrayToPyList(I->FDim, 4));
 
-  PyList_SetItem(result, 14, IsosurfAsPyList(I->State.G, I->Field));
-  PyList_SetItem(result, 15, ObjectStateAsPyList(&I->State));
+  PyList_SetItem(result, 14, IsosurfAsPyList(I->G, I->Field.get()));
+  PyList_SetItem(result, 15, ObjectStateAsPyList(I));
   return (PConvAutoNone(result));
 }
 
@@ -1286,10 +1280,10 @@ static PyObject *ObjectMapAllStatesAsPyList(ObjectMap * I)
 {
   PyObject *result = NULL;
   int a;
-  result = PyList_New(I->NState);
-  for(a = 0; a < I->NState; a++) {
+  result = PyList_New(I->State.size());
+  for(a = 0; a < I->State.size(); a++) {
     if(I->State[a].Active) {
-      PyList_SetItem(result, a, ObjectMapStateAsPyList(I->State + a));
+      PyList_SetItem(result, a, ObjectMapStateAsPyList(&I->State[a]));
     } else {
       PyList_SetItem(result, a, PConvAutoNone(NULL));
     }
@@ -1298,64 +1292,18 @@ static PyObject *ObjectMapAllStatesAsPyList(ObjectMap * I)
 
 }
 
-static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, ObjectMapState * I)
+static int ObjectMapStateCopy(const ObjectMapState * src, ObjectMapState * I)
 {
   int ok = true;
   if(ok) {
     I->Active = src->Active;
     if(I->Active) {
-
-      /* if(src->Symmetry->Crystal) */
-      /*   I->Symmetry->Crystal = CrystalCopy(src->Symmetry->Crystal); */
-      /* else */
-      /*   I->Symmetry->Crystal = NULL; */
-
-      if(src->Symmetry)
-	I->Symmetry = new CSymmetry(*src->Symmetry);
-      else
-	I->Symmetry = NULL;
-
-      if(src->Origin) {
-        I->Origin = pymol::malloc<float>(3);
-        if(I->Origin) {
-          copy3f(src->Origin, I->Origin);
-        }
-      } else {
-        I->Origin = NULL;
-      }
-
-      if(src->Range) {
-        I->Range = pymol::malloc<float>(3);
-        if(I->Range) {
-          copy3f(src->Range, I->Range);
-        }
-      } else {
-        I->Range = NULL;
-      }
-
-      if(src->Grid) {
-        I->Grid = pymol::malloc<float>(3);
-        if(I->Grid) {
-          copy3f(src->Grid, I->Grid);
-        }
-      } else {
-        I->Grid = NULL;
-      }
-
-      if(src->Dim) {
-        I->Dim = pymol::malloc<int>(4);
-        if(I->Dim) {
-          copy3f(src->Dim, I->Dim);
-        }
-      } else {
-        I->Dim = NULL;
-      }
-
-      {
-        int a;
-        for(a = 0; a < 24; a++)
-          I->Corner[a] = src->Corner[a];
-      }
+      I->Symmetry = src->Symmetry;
+      I->Origin = src->Origin;
+      I->Range = src->Range;
+      I->Grid = src->Grid;
+      I->Dim = src->Dim;
+      std::copy_n(src->Corner, 24, I->Corner);
 
       copy3f(src->ExtentMin, I->ExtentMin);
       copy3f(src->ExtentMax, I->ExtentMax);
@@ -1367,13 +1315,24 @@ static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, Obje
       copy3f(src->Max, I->Max);
       copy3f(src->FDim, I->FDim);
 
-      I->Field = new Isofield(*src->Field);
-      I->State = src->State;
+      I->Field = src->Field;
       if(ok)
         ObjectMapStateRegeneratePoints(I);
     }
   }
   return (ok);
+}
+
+ObjectMapState::ObjectMapState(const ObjectMapState& src) : CObjectState(src)
+{
+  ObjectMapStateCopy(&src, this);
+}
+
+ObjectMapState& ObjectMapState::operator=(const ObjectMapState& src)
+{
+  CObjectState::operator=(src);
+  ObjectMapStateCopy(&src, this);
+  return *this;
 }
 
 static int ObjectMapStateFromPyList(PyMOLGlobals * G, ObjectMapState * I, PyObject * list)
@@ -1400,36 +1359,43 @@ static int ObjectMapStateFromPyList(PyMOLGlobals * G, ObjectMapState * I, PyObje
         tmp = PyList_GetItem(list, 1);
         if(tmp == Py_None)
           I->Symmetry = NULL;
-        else
-          ok = ((I->Symmetry = SymmetryNewFromPyList(G, tmp)) != NULL);
+        else {
+          I->Symmetry.reset(SymmetryNewFromPyList(G, tmp));
+          ok = I->Symmetry != nullptr;
+        }
+	CPythonVal_Free(tmp);
       }
       if(ok) {
         tmp = PyList_GetItem(list, 2);
-        if(tmp == Py_None)
-          I->Origin = NULL;
+        if(CPythonVal_IsNone(tmp))
+          I->Origin.clear();
         else
-          ok = PConvPyListToFloatArray(tmp, &I->Origin);
+          ok = PConvFromPyObject(G, tmp, I->Origin);
+	CPythonVal_Free(tmp);
       }
       if(ok) {
         tmp = PyList_GetItem(list, 3);
-        if(tmp == Py_None)
-          I->Range = NULL;
+        if(CPythonVal_IsNone(tmp))
+          I->Range.clear();
         else
-          ok = PConvPyListToFloatArray(tmp, &I->Range);
+          ok = PConvFromPyObject(G, tmp, I->Range);
+	CPythonVal_Free(tmp);
       }
       if(ok) {
         tmp = PyList_GetItem(list, 4);
-        if(tmp == Py_None)
-          I->Dim = NULL;
+        if(CPythonVal_IsNone(tmp))
+          I->Dim.clear();
         else
-          ok = PConvPyListToIntArray(tmp, &I->Dim);
+          ok = PConvFromPyObject(G, tmp, I->Dim);
+	CPythonVal_Free(tmp);
       }
       if(ok) {
         tmp = PyList_GetItem(list, 5);
-        if(tmp == Py_None)
-          I->Grid = NULL;
+        if(CPythonVal_IsNone(tmp))
+          I->Grid.clear();
         else
-          ok = PConvPyListToFloatArray(tmp, &I->Grid);
+          ok = PConvFromPyObject(G, tmp, I->Grid);
+	CPythonVal_Free(tmp);
       }
       if(ok)
         ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list, 6), I->Corner, 24);
@@ -1446,11 +1412,18 @@ static int ObjectMapStateFromPyList(PyMOLGlobals * G, ObjectMapState * I, PyObje
       if(ok)
         ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list, 12), I->Max, 3);
       if(ok)
-        ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list, 13), I->FDim, 4);
-      if(ok)
-        ok = ((I->Field = IsosurfNewFromPyList(G, PyList_GetItem(list, 14))) != NULL);
-      if(ok && (ll > 15))
-        ok = ObjectStateFromPyList(G, PyList_GetItem(list, 15), &I->State);
+        ok = CPythonVal_PConvPyListToIntArrayInPlace_From_List(G, list, 13, I->FDim, 4);
+      if(ok){
+	tmp = CPythonVal_PyList_GetItem(G, list, 14);
+        I->Field.reset(IsosurfNewFromPyList(G, tmp));
+        ok = I->Field != nullptr;
+	CPythonVal_Free(tmp);
+      }
+      if(ok && (ll > 15)){
+	tmp = CPythonVal_PyList_GetItem(G, list, 15);
+        ok = ObjectStateFromPyList(G, tmp, I);
+	CPythonVal_Free(tmp);
+      }
       if(ok)
         ObjectMapStateRegeneratePoints(I);
     }
@@ -1462,13 +1435,14 @@ static int ObjectMapAllStatesFromPyList(ObjectMap * I, PyObject * list)
 {
   int ok = true;
   int a;
-  VLACheck(I->State, ObjectMapState, I->NState);
+  VecCheckEmplace(I->State, I->State.size(), I->G);
   if(ok)
     ok = PyList_Check(list);
   if(ok) {
-    for(a = 0; a < I->NState; a++) {
-      auto *val = PyList_GetItem(list, a);
-      ok = ObjectMapStateFromPyList(I->G, I->State + a, val);
+    for(a = 0; a < I->State.size(); a++) {
+      CPythonVal *val = CPythonVal_PyList_GetItem(I->G, list, a);
+      ok = ObjectMapStateFromPyList(I->G, &I->State[a], val);
+      CPythonVal_Free(val);
       if(!ok)
         break;
     }
@@ -1482,7 +1456,7 @@ PyObject *ObjectMapAsPyList(ObjectMap * I)
 
   result = PyList_New(3);
   PyList_SetItem(result, 0, ObjectAsPyList(I));
-  PyList_SetItem(result, 1, PyInt_FromLong(I->NState));
+  PyList_SetItem(result, 1, PyInt_FromLong(I->State.size()));
   PyList_SetItem(result, 2, ObjectMapAllStatesAsPyList(I));
 
   return (PConvAutoNone(result));
@@ -1508,10 +1482,11 @@ int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** resul
     auto *val = PyList_GetItem(list, 0);
     ok = ObjectFromPyList(G, val, I);
   }  
-  if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->NState);
-  if(ok)
-    ok = ObjectMapAllStatesFromPyList(I, PyList_GetItem(list, 2));
+  if(ok){
+    CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 2);    
+    ok = ObjectMapAllStatesFromPyList(I, val);
+    CPythonVal_Free(val);
+  }
   if(ok) {
     (*result) = I;
     ObjectMapUpdateExtents(I);
@@ -1535,21 +1510,18 @@ int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** resul
   if(ok) {
     if(source_state == -1) {    /* all states */
       int state;
-      I->NState = src->NState;
-      VLACheck(I->State, ObjectMapState, I->NState);
-      for(state = 0; state < src->NState; state++) {
-        ok = ObjectMapStateCopy(G, src->State + state, I->State + state);
+      VecCheckEmplace(I->State, I->State.size(), I->G);
+      for(state = 0; state < src->State.size(); state++) {
+        I->State[state] = src->State[state];
       }
     } else {
       if(target_state < 0)
         target_state = 0;
       if(source_state < 0)
         source_state = 0;
-      VLACheck(I->State, ObjectMapState, target_state);
-      if(source_state < src->NState) {
-        ok = ObjectMapStateCopy(G, src->State + source_state, I->State + target_state);
-        if(I->NState < target_state)
-          I->NState = target_state;
+      VecCheckEmplace(I->State, target_state, G);
+      if(source_state < src->State.size()) {
+        I->State[target_state] = src->State[source_state];
       } else {
         ok = false;
         /* to do */
@@ -1563,31 +1535,27 @@ int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** resul
 
 ObjectMapState *ObjectMapGetState(ObjectMap * I, int state)
 {
-  for(StateIterator iter(I->G, I->Setting, state, I->NState); iter.next();) {
-    return I->State + iter.state;
+  for(StateIterator iter(I->G, I->Setting, state, I->State.size()); iter.next();) {
+    return &I->State[iter.state];
   }
   return NULL;
 }
 
 ObjectMapState *ObjectMapStatePrime(ObjectMap * I, int state)
 {
-  ObjectMapState *ms = NULL;
   if(state < 0)
-    state = I->NState;
-  if(I->NState <= state) {
-    VLACheck(I->State, ObjectMapState, state);
-    I->NState = state + 1;
+    state = I->State.size();
+  if(I->State.size() <= state) {
+    VecCheckEmplace(I->State, state, I->G);
   }
-  ms = &I->State[state];
-  ObjectMapStateInit(I->G, ms);
-  return (ms);
+  return &I->State[state];
 }
 
 ObjectMapState *ObjectMapStateGetActive(ObjectMap * I, int state)
 {
   ObjectMapState *ms = NULL;
   if(state >= 0) {
-    if(state < I->NState) {
+    if(state < I->State.size()) {
       ms = &I->State[state];
       if(!ms->Active)
         ms = NULL;
@@ -1603,12 +1571,12 @@ void ObjectMapUpdateExtents(ObjectMap * I)
   float tr_min[3], tr_max[3];
   I->ExtentFlag = false;
 
-  for(a = 0; a < I->NState; a++) {
-    ObjectMapState *ms = I->State + a;
+  for(a = 0; a < I->State.size(); a++) {
+    ObjectMapState *ms = &I->State[a];
     if(ms->Active) {
-      if(!ms->State.Matrix.empty()) {
-        transform44d3f(ms->State.Matrix.data(), ms->ExtentMin, tr_min);
-        transform44d3f(ms->State.Matrix.data(), ms->ExtentMax, tr_max);
+      if(!ms->Matrix.empty()) {
+        transform44d3f(ms->Matrix.data(), ms->ExtentMin, tr_min);
+        transform44d3f(ms->Matrix.data(), ms->ExtentMax, tr_max);
         {
           float tmp;
           int a;
@@ -1698,29 +1666,17 @@ int ObjectMapStateSetBorder(ObjectMapState * I, float level)
 
 void ObjectMapStatePurge(PyMOLGlobals * G, ObjectMapState * I)
 {
-  ObjectStatePurge(&I->State);
-  DeleteP(I->Field);
-  FreeP(I->Origin);
-  FreeP(I->Dim);
-  FreeP(I->Range);
-  FreeP(I->Grid);
-  CGOFree(I->shaderCGO);
+  ObjectStatePurge(I);
+  I->Field = nullptr;
+  I->Origin.clear();
+  I->Dim.clear();
+  I->Range.clear();
+  I->Grid.clear();
+  I->shaderCGO = nullptr;
 
-  if(I->Symmetry) {
-    SymmetryFree(I->Symmetry);
-    I->Symmetry = NULL;
-  }
+  I->Symmetry = nullptr;
 
   I->Active = false;
-}
-
-ObjectMap::~ObjectMap()
-{
-  auto I = this;
-  for(int a = 0; a < I->NState; a++) {
-    if(I->State[a].Active)
-      ObjectMapStatePurge(I->G, I->State + a);
-  }
 }
 
 void ObjectMap::update()
@@ -1741,10 +1697,10 @@ void ObjectMap::invalidate(int rep, int level, int state)
   }
   if((rep < 0) || (rep == cRepDot)) {
     int a;
-    for(a = 0; a < I->NState; a++) {
+    for(a = 0; a < I->State.size(); a++) {
       if(I->State[a].Active)
         I->State[a].have_range = false;
-      CGOFree(I->State[a].shaderCGO);
+      I->State[a].shaderCGO = nullptr;
     }
   }
   SceneInvalidate(I->G);
@@ -1830,7 +1786,7 @@ void ObjectMap::render(RenderInfo * info)
   if(pass)
     return;
 
-  for(StateIterator iter(G, I->Setting, state, I->NState);
+  for(StateIterator iter(G, I->Setting, state, I->State.size());
       iter.next();) {
     state = iter.state;
     if(I->State[state].Active)
@@ -1841,10 +1797,10 @@ void ObjectMap::render(RenderInfo * info)
       float tr_corner[24];
       ObjectPrepareContext(I, info);
 
-      if(!ms->State.Matrix.empty()) {    /* transform the corners before drawing */
+      if(!ms->Matrix.empty()) {    /* transform the corners before drawing */
         int a;
         for(a = 0; a < 8; a++) {
-          transform44d3f(ms->State.Matrix.data(), corner + 3 * a, tr_corner + 3 * a);
+          transform44d3f(ms->Matrix.data(), corner + 3 * a, tr_corner + 3 * a);
         }
         corner = tr_corner;
       }
@@ -1917,7 +1873,7 @@ void ObjectMap::render(RenderInfo * info)
 #endif
             // shader
             if (!ms->shaderCGO) {
-              ms->shaderCGO = ObjectMapCGOGenerate(G, corner);
+              ms->shaderCGO.reset(ObjectMapCGOGenerate(G, corner));
             }
 
             if (ms->shaderCGO) {
@@ -1925,7 +1881,7 @@ void ObjectMap::render(RenderInfo * info)
               if (shaderPrg) {
                 shaderPrg->SetLightingEnabled(0);
 
-                CGORenderGL(ms->shaderCGO, ColorGet(G, I->Color),
+                CGORenderGL(ms->shaderCGO.get(), ColorGet(G, I->Color),
                     NULL, NULL, info, NULL);
                 shaderPrg->Disable();
               }
@@ -1956,7 +1912,7 @@ void ObjectMap::render(RenderInfo * info)
           }
         }
         if(ms->have_range && SettingGet_b(G, NULL, I->Setting, cSetting_dot_normals)) {
-          IsofieldComputeGradients(G, ms->Field);
+          IsofieldComputeGradients(G, ms->Field.get());
         }
         if(ms->have_range) {
           int a;
@@ -1973,8 +1929,8 @@ void ObjectMap::render(RenderInfo * info)
             float raw_point[3], *raw_point_ptr = (float *) points->data.data();
 
 #define RAW_POINT_TRANSFORM(ptr, v3f) { \
-  if(!ms->State.Matrix.empty()) \
-    transform44d3f(ms->State.Matrix.data(), ptr, v3f); \
+  if(!ms->Matrix.empty()) \
+    transform44d3f(ms->Matrix.data(), ptr, v3f); \
   else \
     copy3f(ptr, v3f); \
   ptr += 3; \
@@ -2065,23 +2021,25 @@ void ObjectMap::render(RenderInfo * info)
   }
 }
 
-void ObjectMapStateInit(PyMOLGlobals * G, ObjectMapState * I)
+ObjectMapState::ObjectMapState(PyMOLGlobals* G)
+    : CObjectState(G)
 {
+  auto I = this;
   ObjectMapStatePurge(G, I);
-  ObjectStateInit(G, &I->State);
-  I->Symmetry = new CSymmetry(G);
+  ObjectStateInit(G, I);
+  I->Symmetry.reset(new CSymmetry(G));
   I->Field = NULL;
-  I->Origin = NULL;
-  I->Dim = NULL;
-  I->Range = NULL;
-  I->Grid = NULL;
+  I->Origin.clear();
+  I->Dim.clear();
+  I->Range.clear();
+  I->Grid.clear();
   I->MapSource = cMapSourceUndefined;
   I->have_range = false;
 }
 
 int ObjectMap::getNFrame() const
 {
-  return NState;
+  return State.size();
 }
 
 /*========================================================================*/
@@ -2090,7 +2048,7 @@ CObjectState* ObjectMap::getObjectState(int state)
   auto* ms = ObjectMapGetState(this, state);
 
   if (ms && ms->Active) {
-    return &ms->State;
+    return ms;
   }
 
   return nullptr;
@@ -2101,8 +2059,6 @@ ObjectMap::ObjectMap(PyMOLGlobals * G) : CObject(G)
 {
   auto I = this;
   I->type = cObjectMap;
-
-  I->State = pymol::vla<ObjectMapState>(1);     /* autozero important */
 
   I->visRep = cRepExtentBit;
 }
@@ -2124,9 +2080,9 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
   *(md) = *(inp_md);
 
   if(I) {
-    ms->Origin = pymol::malloc<float>(3);
-    ms->Range = pymol::malloc<float>(3);
-    ms->Grid = pymol::malloc<float>(3);
+    ms->Origin = std::vector<float>(3);
+    ms->Range = std::vector<float>(3);
+    ms->Grid = std::vector<float>(3);
     ms->MapSource = cMapSourceDesc;
   }
   switch (md->mode) {
@@ -2163,8 +2119,8 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
 
     /* now populate the map data structure */
 
-    copy3f(md->MinCorner, ms->Origin);
-    copy3f(md->Grid, ms->Grid);
+    copy3f(md->MinCorner, ms->Origin.data());
+    copy3f(md->Grid, ms->Grid.data());
     for(a = 0; a < 3; a++)
       ms->Range[a] = md->Grid[a] * (md->Dim[a] - 1);
 
@@ -2178,7 +2134,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
     /* define corners */
 
     for(a = 0; a < 8; a++)
-      copy3f(ms->Origin, ms->Corner + 3 * a);
+      copy3f(ms->Origin.data(), ms->Corner + 3 * a);
 
     d = 0;
     for(c = 0; c < 2; c++) {
@@ -2198,7 +2154,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
       ms->FDim[a] = ms->Max[a] - ms->Min[a] + 1;
     ms->FDim[3] = 3;
 
-    ms->Field = new Isofield(I->G, ms->FDim);
+    ms->Field.reset(new Isofield(I->G, ms->FDim));
     if(!ms->Field)
       ok = false;
     else {
@@ -2251,9 +2207,9 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
   }
 
   if(ok) {
-    copy3f(ms->Origin, ms->ExtentMin);
-    copy3f(ms->Origin, ms->ExtentMax);
-    add3f(ms->Range, ms->ExtentMax, ms->ExtentMax);
+    copy3f(ms->Origin.data(), ms->ExtentMin);
+    copy3f(ms->Origin.data(), ms->ExtentMax);
+    add3f(ms->Range.data(), ms->ExtentMax, ms->ExtentMax);
     ObjectMapUpdateExtents(I);
   }
   if(!ok) {
@@ -2349,14 +2305,12 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
 
   /* state check */
   if(state < 0)
-    state = I->NState;
+    state = I->State.size();
   /* alloc/init a new MapState */
-  if(I->NState <= state) {
-    VLACheck(I->State, ObjectMapState, state);
-    I->NState = state + 1;
+  if(I->State.size() <= state) {
+    VecCheckEmplace(I->State, state, I->G);
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->G, ms);
 
   normalize = SettingGetGlobal_b(I->G, cSetting_normalize_ccp4_maps);
 
@@ -2483,7 +2437,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
       matrix[11] = i_float[11];
 
       // Xo(map) = S * (Xo(atoms) - t)
-      ObjectStateSetMatrix(&ms->State, matrix);
+      ObjectStateSetMatrix(ms, matrix);
 
       PRINTFB(I->G, FB_ObjectMap, FB_Details)
         " ObjectMapCCP4: Applied skew transformation\n"
@@ -2501,7 +2455,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
       0., 0., 1., mrc2000origin[2],
       0., 0., 0., 1.};
 
-    ObjectStateSetMatrix(&ms->State, matrix);
+    ObjectStateSetMatrix(ms, matrix);
 
     if (!quiet) {
       PRINTFB(I->G, FB_ObjectMap, FB_Details)
@@ -2644,9 +2598,9 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   if(!(ms->FDim[0] && ms->FDim[1] && ms->FDim[2]))
     ok = false;
   else {
-    SymmetryUpdate(ms->Symmetry);
+    SymmetryUpdate(ms->Symmetry.get());
     /*    CrystalDump(ms->Crystal); */
-    ms->Field = new Isofield(I->G, ms->FDim);
+    ms->Field.reset(new Isofield(I->G, ms->FDim));
     ms->MapSource = cMapSourceCCP4;
     ms->Field->save_points = false;
 
@@ -2779,7 +2733,7 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet, 
   if (!ms || !ms->Active)
     return buffer; // empty
 
-  auto G = ms->State.G;
+  auto G = ms->G;
   auto field = ms->Field->data;
 
   if (field->type != cFieldFloat ||
@@ -2882,9 +2836,9 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet, 
   }
 
   // skew transformation
-  if (!ms->State.Matrix.empty()) {
+  if (!ms->Matrix.empty()) {
     double m[16];
-    copy44d(ms->State.Matrix.data(), m);
+    copy44d(ms->Matrix.data(), m);
 
     // Skew translation t
     set3f(buffer_f + 34, m[3], m[7], m[11]);    // SKWTRN
@@ -2913,16 +2867,16 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet, 
   }
 
   // origin (stored with skew transformation)
-  if (ms->Origin && lengthsq3f(ms->Origin) > R_SMALL4) {
+  if (!ms->Origin.empty() && lengthsq3f(ms->Origin.data()) > R_SMALL4) {
     if (!mrc_possible && !buffer_i[24] /* LSKFLG */) {
       identity33f(b_skwmat);
       buffer_i[24] = 1;                         // LSKFLG
     }
 
     if (buffer_i[24] /* LSKFLG */) {
-      add3f(ms->Origin, b_skwtrn, b_skwtrn);    // add to SKWTRN
+      add3f(ms->Origin.data(), b_skwtrn, b_skwtrn);    // add to SKWTRN
     } else {
-      add3f(ms->Origin, b_origin, b_origin);    // add to MRC ORIGIN
+      add3f(ms->Origin.data(), b_origin, b_origin);    // add to MRC ORIGIN
     }
   }
 
@@ -2999,13 +2953,11 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
   little_endian = *((char *) &little_endian);
 
   if(state < 0)
-    state = I->NState;
-  if(I->NState <= state) {
-    VLACheck(I->State, ObjectMapState, state);
-    I->NState = state + 1;
+    state = I->State.size();
+  if(I->State.size() <= state) {
+    VecCheckEmplace(I->State, state, I->G);
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->G, ms);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -3083,7 +3035,7 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
   ms->Max[1] = ms->Div[1];
   ms->Max[2] = ms->Div[2];
 
-  ms->Field = new Isofield(I->G, ms->FDim);
+  ms->Field.reset(new Isofield(I->G, ms->FDim));
   ms->MapSource = cMapSourceGeneralPurpose;
   ms->Field->save_points = false;
 
@@ -3123,7 +3075,7 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
   p += 16;
   p += 4;
 
-  ms->Grid = pymol::malloc<float>(3);
+  ms->Grid = std::vector<float>(3);
   p += 4;
   if(little_endian != map_endian) {
     rev[0] = p[3];
@@ -3141,7 +3093,7 @@ static int ObjectMapPHIStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
   ms->Grid[2] = ms->Grid[0];
   p += 4;
 
-  ms->Origin = pymol::malloc<float>(3);
+  ms->Origin = std::vector<float>(3);
   if(little_endian != map_endian) {
     rev[0] = p[3];
     rev[1] = p[2];
@@ -3275,14 +3227,12 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
   ObjectMapState *ms;
 
   if(state < 0)
-    state = I->NState;
-  if(I->NState <= state) {
-    VLACheck(I->State, ObjectMapState, state);
-    I->NState = state + 1;
+    state = I->State.size();
+  if(I->State.size() <= state) {
+    VecCheckEmplace(I->State, state, I->G);
   }
 
   ms = &I->State[state];
-  ObjectMapStateInit(I->G, ms);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -3368,8 +3318,8 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
     if(!(ms->FDim[0] && ms->FDim[1] && ms->FDim[2]))
       ok = false;
     else {
-      SymmetryUpdate(ms->Symmetry);
-      ms->Field = new Isofield(I->G, ms->FDim);
+      SymmetryUpdate(ms->Symmetry.get());
+      ms->Field.reset(new Isofield(I->G, ms->FDim));
       ms->MapSource = cMapSourceCrystallographic;
       ms->Field->save_points = false;
       for(c = 0; c < ms->FDim[2]; c++) {
@@ -3490,13 +3440,11 @@ static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
   map_endian = little_endian;
 
   if(state < 0)
-    state = I->NState;
-  if(I->NState <= state) {
-    VLACheck(I->State, ObjectMapState, state);
-    I->NState = state + 1;
+    state = I->State.size();
+  if(I->State.size() <= state) {
+    VecCheckEmplace(I->State, state, I->G);
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->G, ms);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -3634,12 +3582,12 @@ static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
 
     int pass = 0;
 
-    ms->Origin = pymol::malloc<float>(3);
-    ms->Range = pymol::malloc<float>(3);
-    ms->Grid = pymol::malloc<float>(3);
+    ms->Origin = std::vector<float>(3);
+    ms->Range = std::vector<float>(3);
+    ms->Grid = std::vector<float>(3);
 
-    copy3f(ms->ExtentMin, ms->Origin);
-    subtract3f(ms->ExtentMax, ms->ExtentMin, ms->Range);
+    copy3f(ms->ExtentMin, ms->Origin.data());
+    subtract3f(ms->ExtentMax, ms->ExtentMin, ms->Range.data());
     ms->FDim[3] = 3;
 
     PRINTFB(I->G, FB_ObjectMap, FB_Details)
@@ -3657,7 +3605,7 @@ static int ObjectMapFLDStrToMap(ObjectMap * I, char *PHIStr, int bytes, int stat
         ms->Grid[a] = 0.0F;
     }
 
-    ms->Field = new Isofield(I->G, ms->FDim);
+    ms->Field.reset(new Isofield(I->G, ms->FDim));
     ms->MapSource = cMapSourceFLD;
     ms->Field->save_points = false;
 
@@ -3821,13 +3769,11 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
   normalize = SettingGetGlobal_b(I->G, cSetting_normalize_o_maps);
   swap_bytes = SettingGetGlobal_b(I->G, cSetting_swap_dsn6_bytes);
   if(state < 0)
-    state = I->NState;
-  if(I->NState <= state) {
-    VLACheck(I->State, ObjectMapState, state);
-    I->NState = state + 1;
+    state = I->State.size();
+  if(I->State.size() <= state) {
+    VecCheckEmplace(I->State, state, I->G);
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->G, ms);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -4052,8 +3998,8 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
     if(!(ms->FDim[0] && ms->FDim[1] && ms->FDim[2]))
       ok = false;
     else {
-      SymmetryUpdate(ms->Symmetry);
-      ms->Field = new Isofield(I->G, ms->FDim);
+      SymmetryUpdate(ms->Symmetry.get());
+      ms->Field.reset(new Isofield(I->G, ms->FDim));
       ms->MapSource = cMapSourceBRIX;
       ms->Field->save_points = false;
 
@@ -4228,13 +4174,11 @@ static int ObjectMapGRDStrToMap(ObjectMap * I, char *GRDStr, int bytes, int stat
   rev_union.block_len = 0;
 
   if(state < 0)
-    state = I->NState;
-  if(I->NState <= state) {
-    VLACheck(I->State, ObjectMapState, state);
-    I->NState = state + 1;
+    state = I->State.size();
+  if(I->State.size() <= state) {
+    VecCheckEmplace(I->State, state, I->G);
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->G, ms);
   normalize = SettingGetGlobal_b(I->G, cSetting_normalize_grd_maps);
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -4538,8 +4482,8 @@ end d
       dump3i(ms->FDim, "ms->FDim");
     }
 
-    SymmetryUpdate(ms->Symmetry);
-    ms->Field = new Isofield(I->G, ms->FDim);
+    SymmetryUpdate(ms->Symmetry.get());
+    ms->Field.reset(new Isofield(I->G, ms->FDim));
     ms->MapSource = cMapSourceGRD;
     ms->Field->save_points = false;
 
@@ -4746,8 +4690,8 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, const char *fnam
 
     if(!quiet) {
       if(state < 0)
-        state = I->NState - 1;
-      if(state < I->NState) {
+        state = I->State.size() - 1;
+      if(state < I->State.size()) {
         ObjectMapState *ms;
         ms = &I->State[state];
         if(ms->Active) {
@@ -4936,16 +4880,14 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
   char cc[MAXLINELEN];
 
   if(state < 0)
-    state = I->NState;
-  if(I->NState <= state) {
-    VLACheck(I->State, ObjectMapState, state);
-    I->NState = state + 1;
+    state = I->State.size();
+  if(I->State.size() <= state) {
+    VecCheckEmplace(I->State, state, I->G);
   }
   ms = &I->State[state];
-  ObjectMapStateInit(I->G, ms);
 
-  ms->Origin = pymol::malloc<float>(3);
-  ms->Grid = pymol::malloc<float>(3);
+  ms->Origin = std::vector<float>(3);
+  ms->Grid = std::vector<float>(3);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -5045,16 +4987,16 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
         ms->Grid[1] = delta[4];
         ms->Grid[2] = delta[8];
       } else {
-        if(ms->State.Matrix.empty())
-          ms->State.Matrix = std::vector<double>(16);
+        if(ms->Matrix.empty())
+          ms->Matrix = std::vector<double>(16);
 
-        copy33f44d(delta, ms->State.Matrix.data());
-        ms->State.Matrix[3] = ms->Origin[0];
-        ms->State.Matrix[7] = ms->Origin[1];
-        ms->State.Matrix[11] = ms->Origin[2];
+        copy33f44d(delta, ms->Matrix.data());
+        ms->Matrix[3] = ms->Origin[0];
+        ms->Matrix[7] = ms->Origin[1];
+        ms->Matrix[11] = ms->Origin[2];
 
-        ones3f(ms->Grid);
-        zero3f(ms->Origin);
+        ones3f(ms->Grid.data());
+        zero3f(ms->Origin.data());
       }
     }
   }
@@ -5090,7 +5032,7 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
         " DXStrToMap: %d data points.\n", n_items ENDFB(I->G);
     }
 
-    ms->Field = new Isofield(I->G, ms->FDim);
+    ms->Field.reset(new Isofield(I->G, ms->FDim));
     ms->MapSource = cMapSourceGeneralPurpose;
     ms->Field->save_points = false;
 
@@ -5226,8 +5168,8 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, const char *fn
 
     mfree(buffer);
     if(state < 0)
-      state = I->NState - 1;
-    if(state < I->NState) {
+      state = I->State.size() - 1;
+    if(state < I->State.size()) {
       ObjectMapState *ms;
       ms = &I->State[state];
       if(ms->Active) {
@@ -5260,17 +5202,15 @@ static int ObjectMapACNTStrToMap(ObjectMap * I, char *ACNTStr, int bytes, int st
   char cc[MAXLINELEN];
 
   if(state < 0)
-    state = I->NState;
-  if(I->NState <= state) {
-    VLACheck(I->State, ObjectMapState, state);
-    I->NState = state + 1;
+    state = I->State.size();
+  if(I->State.size() <= state) {
+    VecCheckEmplace(I->State, state, I->G);
   }
 
   ms = &I->State[state];
-  ObjectMapStateInit(I->G, ms);
 
-  ms->Origin = pymol::malloc<float>(3);
-  ms->Grid = pymol::malloc<float>(3);
+  ms->Origin = std::vector<float>(3);
+  ms->Grid = std::vector<float>(3);
 
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -5330,7 +5270,7 @@ static int ObjectMapACNTStrToMap(ObjectMap * I, char *ACNTStr, int bytes, int st
         " ACNTStrToMap: %d data points.\n", n_items ENDFB(I->G);
     }
 
-    ms->Field = new Isofield(I->G, ms->FDim);
+    ms->Field.reset(new Isofield(I->G, ms->FDim));
     ms->MapSource = cMapSourceGeneralPurpose;
     ms->Field->save_points = false;
 
@@ -5458,8 +5398,8 @@ ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, const char *
 
     mfree(buffer);
     if(state < 0)
-      state = I->NState - 1;
-    if(state < I->NState) {
+      state = I->State.size() - 1;
+    if(state < I->State.size()) {
       ObjectMapState *ms;
       ms = &I->State[state];
       if(ms->Active) {
@@ -5494,8 +5434,8 @@ ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, const char *f
 
     mfree(buffer);
     if(state < 0)
-      state = I->NState - 1;
-    if(state < I->NState) {
+      state = I->State.size() - 1;
+    if(state < I->State.size()) {
       ObjectMapState *ms;
       ms = &I->State[state];
       if(ms->Active) {
@@ -5530,8 +5470,8 @@ ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, const char *
 
     mfree(buffer);
     if(state < 0)
-      state = I->NState - 1;
-    if(state < I->NState) {
+      state = I->State.size() - 1;
+    if(state < I->State.size()) {
       ObjectMapState *ms;
       ms = &I->State[state];
       if(ms->Active) {
@@ -5567,8 +5507,8 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, const char *f
 
     mfree(buffer);
     if(state < 0)
-      state = I->NState - 1;
-    if(state < I->NState) {
+      state = I->State.size() - 1;
+    if(state < I->State.size()) {
       ObjectMapState *ms;
       ms = &I->State[state];
       if(ms->Active) {
@@ -5615,9 +5555,9 @@ ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, const char *fna
     if(!quiet) {
       if(Feedback(G, FB_ObjectMap, FB_Details)) {
         if(state < 0)
-          state = I->NState - 1;
+          state = I->State.size() - 1;
 
-        if(state < I->NState) {
+        if(state < I->State.size()) {
           ObjectMapState *ms;
           ms = &I->State[state];
           if(ms->Active) {
@@ -5639,7 +5579,7 @@ int ObjectMapSetBorder(ObjectMap * I, float level, int state)
   int result = true;
   if(state == -2)
     state = ObjectGetCurrentState(I, false);
-  for(a = 0; a < I->NState; a++) {
+  for(a = 0; a < I->State.size(); a++) {
     if((state < 0) || (state == a)) {
       if(I->State[a].Active)
         result = result && ObjectMapStateSetBorder(&I->State[a], level);
@@ -5675,7 +5615,7 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * ms,
     if(!(ms->FDim[0] && ms->FDim[1] && ms->FDim[2]))
       ok = false;
     else {
-      ms->Field = new Isofield(G, ms->FDim);
+      ms->Field.reset(new Isofield(G, ms->FDim));
       for(c = 0; c < ms->FDim[2]; c++) {
         v[2] = ms->Origin[2] + ms->Grid[2] * c;
         for(b = 0; b < ms->FDim[1]; b++) {
@@ -5723,9 +5663,9 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * ms,
     }
   }
   if(ok) {
-    copy3f(ms->Origin, ms->ExtentMin);
-    copy3f(ms->Origin, ms->ExtentMax);
-    add3f(ms->Range, ms->ExtentMax, ms->ExtentMax);
+    copy3f(ms->Origin.data(), ms->ExtentMin);
+    copy3f(ms->Origin.data(), ms->ExtentMax);
+    add3f(ms->Range.data(), ms->ExtentMax, ms->ExtentMax);
   }
   if(!ok) {
     ErrMessage(G, "ObjectMap", "Error reading map");
@@ -5773,13 +5713,11 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * 
     }
 
     if(state < 0)
-      state = I->NState;
-    if(I->NState <= state) {
-      VLACheck(I->State, ObjectMapState, state);
-      I->NState = state + 1;
+      state = I->State.size();
+    if(I->State.size() <= state) {
+      VecCheckEmplace(I->State, state, I->G);
     }
     ms = &I->State[state];
-    ObjectMapStateInit(G, ms);
 
     if(PyObject_HasAttrString(Map, "origin") &&
        PyObject_HasAttrString(Map, "dim") &&
@@ -5787,25 +5725,25 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * 
        PyObject_HasAttrString(Map, "grid") && PyObject_HasAttrString(Map, "lvl")) {
       tmp = PyObject_GetAttrString(Map, "origin");
       if(tmp) {
-        PConvPyListToFloatArray(tmp, &ms->Origin);
+        PConvFromPyObject(G, tmp, ms->Origin);
         Py_DECREF(tmp);
       } else
         ok = ErrMessage(G, "ObjectMap", "missing brick origin.");
       tmp = PyObject_GetAttrString(Map, "dim");
       if(tmp) {
-        PConvPyListToIntArray(tmp, &ms->Dim);
+        PConvFromPyObject(G, tmp, ms->Dim);
         Py_DECREF(tmp);
       } else
         ok = ErrMessage(G, "ObjectMap", "missing brick dimension.");
       tmp = PyObject_GetAttrString(Map, "range");
       if(tmp) {
-        PConvPyListToFloatArray(tmp, &ms->Range);
+        PConvFromPyObject(G, tmp, ms->Range);
         Py_DECREF(tmp);
       } else
         ok = ErrMessage(G, "ObjectMap", "missing brick range.");
       tmp = PyObject_GetAttrString(Map, "grid");
       if(tmp) {
-        PConvPyListToFloatArray(tmp, &ms->Grid);
+        PConvFromPyObject(G, tmp, ms->Grid);
         Py_DECREF(tmp);
       } else
         ok = ErrMessage(G, "ObjectMap", "missing brick grid.");
@@ -5873,13 +5811,11 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
     }
 
     if(state < 0)
-      state = I->NState;
-    if(I->NState <= state) {
-      VLACheck(I->State, ObjectMapState, state);
-      I->NState = state + 1;
+      state = I->State.size();
+    if(I->State.size() <= state) {
+      VecCheckEmplace(I->State, state, I->G);
     }
     ms = &I->State[state];
-    ObjectMapStateInit(G, ms);
 
     if(!PConvAttrToStrMaxLen(Map, "format", format, sizeof(WordType) - 1))
       ok = ErrMessage(G, "LoadChemPyMap", "bad 'format' parameter.");
@@ -5919,8 +5855,8 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
         if(!(ms->FDim[0] && ms->FDim[1] && ms->FDim[2]))
           ok = false;
         else {
-          SymmetryUpdate(ms->Symmetry);
-          ms->Field = new Isofield(G, ms->FDim);
+          SymmetryUpdate(ms->Symmetry.get());
+          ms->Field.reset(new Isofield(G, ms->FDim));
           for(c = 0; c < ms->FDim[2]; c++) {
             v[2] = (c + ms->Min[2]) / ((float) ms->Div[2]);
             for(b = 0; b < ms->FDim[1]; b++) {
@@ -6011,7 +5947,7 @@ void ObjectMapDump(const ObjectMap* om, const char* fname, int state, int quiet)
     return;
   }
 
-  auto* field = om->State[state].Field;
+  auto* field = om->State[state].Field.get();
 
   for (int xi = 0; xi < field->dimensions[0]; xi++) {
     for (int yi = 0; yi < field->dimensions[1]; yi++) {

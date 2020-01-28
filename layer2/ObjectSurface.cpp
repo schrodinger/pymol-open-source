@@ -468,8 +468,8 @@ void ObjectSurface::update()
         oms = ObjectMapGetState(map, ms->MapState);
       }
       if(oms) {
-        if(!oms->State.Matrix.empty()) {
-          ObjectStateSetMatrix(ms, oms->State.Matrix.data());
+        if(!oms->Matrix.empty()) {
+          ObjectStateSetMatrix(ms, oms->Matrix.data());
         } else if(!ms->Matrix.empty()) {
           ObjectStateResetMatrix(ms);
         }
@@ -510,7 +510,7 @@ void ObjectSurface::update()
                 max_ext = ms->ExtentMax;
               }
 
-              TetsurfGetRange(I->G, oms->Field, &oms->Symmetry->Crystal,
+              TetsurfGetRange(I->G, oms->Field.get(), &oms->Symmetry->Crystal,
                               min_ext, max_ext, ms->Range);
             }
 
@@ -526,7 +526,7 @@ void ObjectSurface::update()
                 MapSetupExpress(voxelmap);
             }
 
-            ms->nT = TetsurfVolume(I->G, oms->Field,
+            ms->nT = TetsurfVolume(I->G, oms->Field.get(),
                                    ms->Level,
                                    &ms->N, &ms->V,
                                    ms->Range,
@@ -543,7 +543,7 @@ void ObjectSurface::update()
               int *N2 = VLAlloc(int, 10000);
               float *V2 = VLAlloc(float, 10000);
 
-              nT2 = TetsurfVolume(I->G, oms->Field,
+              nT2 = TetsurfVolume(I->G, oms->Field.get(),
                                   -ms->Level,
                                   &N2, &V2,
                                   ms->Range,
@@ -1057,8 +1057,8 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
   ms->quiet = quiet;
   if(oms) {
 
-    if(!oms->State.Matrix.empty()) {
-      ObjectStateSetMatrix(ms, oms->State.Matrix.data());
+    if(!oms->Matrix.empty()) {
+      ObjectStateSetMatrix(ms, oms->Matrix.data());
     } else if(!ms->Matrix.empty()) {
       ObjectStateResetMatrix(ms);
     }
@@ -1079,7 +1079,7 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
         max_ext = ms->ExtentMax;
       }
 
-      TetsurfGetRange(G, oms->Field, &oms->Symmetry->Crystal, min_ext, max_ext, ms->Range);
+      TetsurfGetRange(G, oms->Field.get(), &oms->Symmetry->Crystal, min_ext, max_ext, ms->Range);
     }
     ms->ExtentFlag = true;
   }

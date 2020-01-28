@@ -1,6 +1,7 @@
 #include "ExecutivePython.h"
 #include "ObjectCGO.h"
 #include "ObjectCallback.h"
+#include "ObjectMap.h"
 #include "P.h"
 
 void ExecutiveLoadObject(PyMOLGlobals* G, const char* oname, PyObject* model,
