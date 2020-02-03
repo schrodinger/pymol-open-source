@@ -268,6 +268,14 @@ int CGO_sz[] = {
   CGO_NULL_SZ
 };
 
+/**
+ * Get the number of elements in `CGO_sz`
+ */
+size_t CGO_sz_size()
+{
+  return sizeof(CGO_sz) / sizeof(*CGO_sz);
+}
+
 typedef void CGO_op(CCGORenderer * I, float **);
 typedef CGO_op *CGO_op_fn;
 
@@ -365,11 +373,14 @@ static int CGOArrayFromPyListInPlace(PyObject * list, CGO * I)
   if (!list || !PyList_Check(list))
     return false;
 
+  auto G = I->G;
+
 #define GET_FLOAT(i) ((float) CPythonVal_PyFloat_AsDouble_From_List(I->G, list, i))
 #define GET_INT(i)   ((int)   CPythonVal_PyFloat_AsDouble_From_List(I->G, list, i))
 
   for (int i = 0, l = PyList_Size(list); i < l;) {
-    int op = CGO_MASK & GET_INT(i++);
+    unsigned op = GET_INT(i++);
+    ok_assert(1, op < CGO_sz_size());
     int sz = CGO_sz[op];
     float * fdata = I->add_to_buffer(sz + 1);
     CGO_write_int(fdata, op);
@@ -385,12 +396,14 @@ static int CGOArrayFromPyListInPlace(PyObject * list, CGO * I)
     case CGO_DISABLE:
     case CGO_SPECIAL:
       // first member int
+      ok_assert(1, i < l);
       CGO_write_int(fdata, GET_INT(i++));
       sz--;
       break;
     case CGO_DRAW_ARRAYS:
       {
         // has abstract superclass, need to be constructed!
+        ok_assert(1, i + 3 < l);
         auto sp = new (fdata) cgo::draw::arrays(
             GET_INT(i),
             GET_INT(i + 1),
@@ -415,6 +428,7 @@ static int CGOArrayFromPyListInPlace(PyObject * list, CGO * I)
 
     // float members
     for(; sz; --sz) {
+      ok_assert(1, i < l);
       *(fdata++) = GET_FLOAT(i++);
     }
   }
@@ -423,6 +437,10 @@ static int CGOArrayFromPyListInPlace(PyObject * list, CGO * I)
 #undef GET_INT
 
   return true;
+
+ok_except1:
+  PRINTFB(G, FB_CGO, FB_Errors) " %s-Error: Corrupt data\n", __func__ ENDFB(G);
+  return false;
 }
 
 CGO *CGONewFromPyList(PyMOLGlobals * G, PyObject * list, int version, bool shouldCombine)

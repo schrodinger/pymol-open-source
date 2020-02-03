@@ -272,6 +272,7 @@ inline uchar CLIP_NORMAL_VALUE(float cv){ return ((cv>1.f) ? 127 :
 #define CGO_TEX_COORD_ARRAY      0x20
 
 extern int CGO_sz[];
+size_t CGO_sz_size();
 
 // CGOs are floating point arrays so we need to work with sizes in terms of floats
 template <typename T>
