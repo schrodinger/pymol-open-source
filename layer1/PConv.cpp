@@ -264,6 +264,11 @@ int PConvPyStrToStr(PyObject * obj, char *ptr, int size)
   int ok = true;
   if(!obj) {
     ok = false;
+#if PY_MAJOR_VERSION >= 3
+  } else if(PyBytes_Check(obj)) {
+    auto strval = PyBytes_AsSomeString(obj);
+    UtilNCopy(ptr, strval.c_str(), size);
+#endif
   } else if(!PyString_Check(obj)) {
     ok = false;
     if(size)
