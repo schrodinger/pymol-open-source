@@ -1074,8 +1074,8 @@ void EditorHFix(PyMOLGlobals * G, const char *sele, int quiet)
 
 
 /*========================================================================*/
-void EditorReplace(PyMOLGlobals * G, const char *elem, int geom, int valence, const char *name,
-                   int quiet)
+pymol::Result<> EditorReplace(PyMOLGlobals* G, const char* elem, int geom,
+    int valence, const char* name, int quiet)
 {
   int i0;
   int sele0;
@@ -1084,6 +1084,12 @@ void EditorReplace(PyMOLGlobals * G, const char *elem, int geom, int valence, co
   int ok = true;
   UtilZeroMem(&ai, sizeof(AtomInfoType));
   if(EditorActive(G)) {
+    for (const char* eSele : {cEditorSele2, cEditorSele3, cEditorSele4}) {
+      if (SelectorIndexByName(G, eSele) >= 0) {
+        return pymol::make_error("Only one picked selection allowed.");
+      }
+    }
+
     sele0 = SelectorIndexByName(G, cEditorSele1);
     obj0 = SelectorGetFastSingleObjectMolecule(G, sele0);
     if(obj0->DiscreteFlag) {
@@ -1113,6 +1119,7 @@ void EditorReplace(PyMOLGlobals * G, const char *elem, int geom, int valence, co
       }
     }
   }
+  return {};
 }
 
 static void draw_bond(PyMOLGlobals * G, float *v0, float *v1, CGO *shaderCGO)

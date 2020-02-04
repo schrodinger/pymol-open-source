@@ -7184,20 +7184,12 @@ static PyObject *CmdReplace(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   int i1, i2;
   char *str1, *str2;
-  int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args, "Osiisi", &self, &str1, &i1, &i2, &str2, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    EditorReplace(G, str1, i1, i2, str2, quiet);        /* TODO STATUS */
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Osiisi", &self, &str1, &i1, &i2, &str2, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = EditorReplace(G, str1, i1, i2, str2, quiet);        /* TODO STATUS */
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdSetGeometry(PyObject * self, PyObject * args)
