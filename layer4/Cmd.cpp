@@ -7163,20 +7163,12 @@ static PyObject *CmdHFix(PyObject * self, PyObject * args)
 static PyObject *CmdCycleValence(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args, "Oi", &self, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    EditorCycleValence(G, quiet);       /* TODO STATUS */
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Oi", &self, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = EditorCycleValence(G, quiet);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdReplace(PyObject * self, PyObject * args)

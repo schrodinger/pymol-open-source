@@ -871,26 +871,41 @@ int EditorIsAnActiveObject(PyMOLGlobals * G, ObjectMolecule * obj)
 
 
 /*========================================================================*/
-void EditorCycleValence(PyMOLGlobals * G, int quiet)
+pymol::Result<> EditorCycleValence(PyMOLGlobals * G, int quiet)
 {
   CEditor *I = G->Editor;
-  int sele0, sele1;
 
   if(EditorActive(G)) {
+    for(const char* eSele : {cEditorSele3, cEditorSele4}) {
+      if(SelectorIndexByName(G, eSele) >= 0) {
+        return pymol::make_error("Only two picked selections allowed.");
+      }
+    }
     ObjectMolecule *obj0, *obj1;
-    sele0 = SelectorIndexByName(G, cEditorSele1);
+    auto sele0 = SelectorIndexByName(G, cEditorSele1);
     if(sele0 >= 0) {
-      sele1 = SelectorIndexByName(G, cEditorSele2);
+      auto sele1 = SelectorIndexByName(G, cEditorSele2);
       if(sele1 >= 0) {
         obj0 = SelectorGetFastSingleObjectMolecule(G, sele0);
         obj1 = SelectorGetFastSingleObjectMolecule(G, sele1);
-        if((obj0 == obj1) && I->BondMode) {
+        if(obj0 != obj1) {
+          return pymol::make_error(
+              "Both pk selections must belong to the same molecule.");
+        }
+        if(I->BondMode) {
           ObjectMoleculeVerifyChemistry(obj0, -1);
           ObjectMoleculeAdjustBonds(obj0, sele0, sele1, 0, 0);
+        } else {
+          return pymol::make_error("Invalid bond.");
         }
+      } else {
+        return pymol::make_error("No valid pk2 selection.");
       }
+    } else {
+      return pymol::make_error("No valid pk1 selection.");
     }
   }
+  return {};
 }
 
 

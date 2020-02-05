@@ -69,7 +69,7 @@ void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence, con
 void EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet);
 void EditorHFill(PyMOLGlobals * G, int quiet=1);
 void EditorHFix(PyMOLGlobals * G, const char *sele, int quiet);
-void EditorCycleValence(PyMOLGlobals * G, int quiet=1);
+pymol::Result<> EditorCycleValence(PyMOLGlobals * G, int quiet=1);
 void EditorInactivate(PyMOLGlobals * G);
 
 int EditorIsAnActiveObject(PyMOLGlobals * G, ObjectMolecule * obj);
