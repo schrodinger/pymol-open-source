@@ -873,15 +873,8 @@ PYMOL API
     cmd.attach( element, geometry, valence )
 
     '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.attach(_self._COb,str(element),int(geometry),int(valence),str(name))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
-
+        with _self.lockcm:
+            return _cmd.attach(_self._COb,str(element),int(geometry),int(valence),str(name))
 
     def fuse(selection1="(pk1)", selection2="(pk2)",
              mode=0, recolor=1, move=1, _self=cmd):

@@ -910,52 +910,64 @@ pymol::Result<> EditorCycleValence(PyMOLGlobals * G, int quiet)
 
 
 /*========================================================================*/
-void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence,
+pymol::Result<> EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence,
                   const char *name, int quiet)
 {
-  int i0;
-  int sele0, sele1;
-  ObjectMolecule *obj0 = NULL, *obj1 = NULL;
-  int ok = true;
-
-  auto atInfo = pymol::vla<AtomInfoType>(1);
-  AtomInfoType* ai = atInfo.data();
 
   if(EditorActive(G)) {
 
-    sele0 = SelectorIndexByName(G, cEditorSele1);
-    if(sele0 >= 0) {
-      sele1 = SelectorIndexByName(G, cEditorSele2);
-      obj0 = SelectorGetFastSingleObjectMolecule(G, sele0);
-      obj1 = SelectorGetFastSingleObjectMolecule(G, sele1);
+    for(const char* eSele : {cEditorSele3, cEditorSele4}) {
+      if(SelectorIndexByName(G, eSele) >= 0) {
+        return pymol::make_error("Only 1 or 2 picked selections allowed.");
+      }
+    }
 
+    auto sele0 = SelectorIndexByName(G, cEditorSele1);
+    if(sele0 >= 0) {
+      auto sele1 = SelectorIndexByName(G, cEditorSele2);
+      auto obj0 = SelectorGetFastSingleObjectMolecule(G, sele0);
+      auto obj1 = SelectorGetFastSingleObjectMolecule(G, sele1);
+#ifndef _PYMOL_NO_UNDO
+#endif
       if(obj0) {
         if(obj0->DiscreteFlag) {
-          ErrMessage(G, "Remove", "Can't attach atoms onto discrete objects.");
+          return pymol::make_error("Can't attach atoms onto discrete objects.");
         } else {
           ObjectMoleculeVerifyChemistry(obj0, -1);      /* remember chemistry for later */
           if(obj1) {
             if(obj0 == obj1) {
               /* bond mode - behave like replace */
               EditorReplace(G, elem, geom, valence, name, quiet);
+            } else {
+               return pymol::make_error("Picked atoms must belong to the same object.");
             }
           } else {
+            pymol::vla<AtomInfoType> atInfo(1);
+            auto ai = &atInfo[0];
             /* atom mode */
-            i0 = ObjectMoleculeGetAtomIndex(obj0, sele0);       /* slow */
+            auto i0 = ObjectMoleculeGetAtomIndex(obj0, sele0);       /* slow */
             if(i0 >= 0) {
               UtilNCopy(ai->elem, elem, sizeof(ElemName));
               ai->geom = geom;
               ai->valence = valence;
               if(name[0])
                 LexAssign(G, ai->name, name);
-              if (ok)
-		ok &= ObjectMoleculeAttach(obj0, i0, std::move(atInfo));
+              if(!ObjectMoleculeAttach(obj0, i0, std::move(atInfo))) {
+                return pymol::make_error("Could not attach atom.");
+              }
             }
           }
         }
+      } else {
+        return pymol::make_error("Invalid object.");
       }
+#ifndef _PYMOL_NO_UNDO
+#endif
+    } else {
+      return pymol::make_error("Invalid pk1 selection.");
     }
   }
+  return {};
 }
 
 

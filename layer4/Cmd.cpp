@@ -7209,21 +7209,13 @@ static PyObject *CmdAttach(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   int i1, i2;
   char *str1;
-  int ok = false;
   int quiet;
   char *name;
-  ok = PyArg_ParseTuple(args, "Osiis", &self, &str1, &i1, &i2, &name, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    EditorAttach(G, str1, i1, i2, name, quiet); /* TODO STATUS */
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Osiis", &self, &str1, &i1, &i2, &name, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = EditorAttach(G, str1, i1, i2, name, quiet); /* TODO STATUS */
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdFuse(PyObject * self, PyObject * args)
