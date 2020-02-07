@@ -109,15 +109,12 @@ static void EditorDrawDihedral(PyMOLGlobals * G)
         at3 = ObjectMoleculeGetTopNeighbor(G, obj1, at2, at1);
 
         if((at0 >= 0) && (at3 >= 0)) {
-          float result;
-
           /* find the highest priority atom attached to index1 */
           SelectorCreateOrderedFromObjectIndices(G, cEditorDihe1, obj1, &at0, 1);
           SelectorCreateOrderedFromObjectIndices(G, cEditorDihe2, obj2, &at3, 1);
 
-          ExecutiveDihedral(G, &result, cEditorDihedral, cEditorDihe1,
-                            cEditorSele1, cEditorSele2, cEditorDihe2,
-                            0, true, true, false, true, -1);
+          ExecutiveDihedral(G, cEditorDihedral, cEditorDihe1, cEditorSele1,
+              cEditorSele2, cEditorDihe2, 0, true, true, false, true, -1);
           ExecutiveColor(G, cEditorDihedral, "white", 1, true);
           ExecutiveSetSettingFromString(G, cSetting_float_labels,
                                         "1", cEditorDihedral, 0, true, true);
@@ -1745,20 +1742,16 @@ void EditorAutoMeasure(PyMOLGlobals * G,
   if (sele1 < 0 || sele2 < 0)
     return;
 
-  float _measure_value;
-
   if (sele3 < 0) {
-    ExecutiveDistance(G, &_measure_value, cEditorMeasure,
-        cEditorSele1, cEditorSele2,
-        0, -1.f, true, true, false /* reset */, state, false);
+    ExecutiveDistance(G, cEditorMeasure, cEditorSele1, cEditorSele2, 0, -1.f, true,
+        true, false /* reset */, state, false);
   } else if (sele4 < 0) {
-    ExecutiveAngle(G, &_measure_value, cEditorMeasure,
-        cEditorSele1, cEditorSele2, cEditorSele3,
+    ExecutiveAngle(G, cEditorMeasure, cEditorSele1, cEditorSele2, cEditorSele3,
         0, true, false /* reset */, false, true, state);
   } else {
-    ExecutiveDihedral(G, &_measure_value, cEditorMeasure,
-        cEditorSele1, cEditorSele2, cEditorSele3, cEditorSele4,
-        0, true, false /* reset */, false, true, state);
+    ExecutiveDihedral(G, cEditorMeasure, cEditorSele1, cEditorSele2,
+        cEditorSele3, cEditorSele4, 0, true, false /* reset */, false, true,
+        state);
   }
 
   ExecutiveColor(G, cEditorMeasure, "gray", 0x1, true);

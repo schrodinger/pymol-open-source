@@ -3676,86 +3676,54 @@ static PyObject *CmdDist(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *name, *str1, *str2;
-  float cutoff, result = -1.0;
+  float cutoff;
   int labels, quiet;
   int mode, reset, state, zoom;
   int state1, state2;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Osssifiiiiiii", &self, &name, &str1,
-                        &str2, &mode, &cutoff, &labels, &quiet, &reset, &state, &zoom,
-                        &state1, &state2);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveDistance(G, &result, name, str1, str2, mode, cutoff,
-        labels, quiet, reset, state, zoom, state1, state2);
-    APIExit(G);
-  }
-  if(!ok)
-    return APIFailure();
-  else
-    return (Py_BuildValue("f", result));
+  API_SETUP_ARGS(G, self, args, "Osssifiiiiiii", &self, &name, &str1, &str2,
+      &mode, &cutoff, &labels, &quiet, &reset, &state, &zoom, &state1, &state2);
+  API_ASSERT(APIEnterNotModal(G));
+  auto res = ExecutiveDistance(G, name, str1,
+      str2, mode, cutoff, labels, quiet, reset, state, zoom, state1, state2);
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdAngle(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *name, *str1, *str2, *str3;
-  float result = -999.0;
   int labels, quiet;
   int mode;
-  int ok = false;
   int reset, zoom;
   int state;
   int state1, state2, state3;
-  ok = PyArg_ParseTuple(args, "Ossssiiiiiiiii", &self,
-                        &name, &str1, &str2, &str3,
-                        &mode, &labels, &reset, &zoom, &quiet, &state,
-                        &state1, &state2, &state3);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveAngle(G, &result, name, str1, str2, str3,
-        mode, labels, reset, zoom, quiet, state,
-        state1, state2, state3);
-    APIExit(G);
-  }
-  return (Py_BuildValue("f", result));
+  API_SETUP_ARGS(G, self, args, "Ossssiiiiiiiii", &self, &name, &str1, &str2,
+      &str3, &mode, &labels, &reset, &zoom, &quiet, &state, &state1, &state2,
+      &state3);
+  API_ASSERT(APIEnterNotModal(G));
+  auto res =
+      ExecutiveAngle(G, name, str1, str2, str3,
+          mode, labels, reset, zoom, quiet, state, state1, state2, state3);
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdDihedral(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *name, *str1, *str2, *str3, *str4;
-  float result = -999.0;
   int labels, quiet;
   int mode;
-  int ok = false;
   int reset, zoom;
   int state;
-  ok = PyArg_ParseTuple(args, "Osssssiiiiii", &self,
-                        &name, &str1, &str2, &str3, &str4,
-                        &mode, &labels, &reset, &zoom, &quiet, &state);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveDihedral(G, &result, name, str1, str2, str3, str4,
-        mode, labels, reset, zoom, quiet, state);
-    APIExit(G);
-  }
-  return (Py_BuildValue("f", result));
+  API_SETUP_ARGS(G, self, args, "Osssssiiiiii", &self, &name, &str1, &str2,
+      &str3, &str4, &mode, &labels, &reset, &zoom, &quiet, &state);
+  API_ASSERT(APIEnterNotModal(G));
+  auto res = ExecutiveDihedral(G, name,
+      str1, str2, str3, str4, mode, labels, reset, zoom, quiet, state);
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdBond(PyObject * self, PyObject * args)

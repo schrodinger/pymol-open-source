@@ -1229,14 +1229,12 @@ PyMOLreturn_float PyMOL_CmdDistance(CPyMOL * I,
                                     float cutoff,
                                     int label, int reset, int zoom, int state, int quiet)
 {
-  int ok = true;
   PyMOLreturn_float result;
   PYMOL_API_LOCK {
-    ok = ExecutiveDistance(I->G, &result.value, name,
-        selection1,
-        selection2,
-        mode, cutoff, label, quiet, reset, state, zoom);
-    result.status = get_status_ok(ok);
+    int defState1 = -4, defState2 = -4;
+    auto res = ExecutiveDistance(I->G, name,
+        selection1, selection2, mode, cutoff, label, quiet, reset, state, zoom, defState1, defState2);
+    result = return_result(res);
   }
   PYMOL_API_UNLOCK return result;
 }
@@ -1265,15 +1263,13 @@ PyMOLreturn_float PyMOL_CmdAngle(CPyMOL * I,
                                  int mode,
                                  int label, int reset, int zoom, int state, int quiet)
 {
-  int ok = true;
   PyMOLreturn_float result;
   PYMOL_API_LOCK {
-    ok = ExecutiveAngle(I->G, &result.value, name,
-        selection1,
-        selection2,
-        selection3,
-                        mode, label, reset, zoom, quiet, state);
-    result.status = get_status_ok(ok);
+    int defState1 = -4, defState2 = -4, defState3 = -3;
+    auto res = ExecutiveAngle(I->G, name,
+        selection1, selection2, selection3, mode, label, reset, zoom, quiet,
+        state, defState1, defState2, defState3);
+    result = return_result(res);
   }
   PYMOL_API_UNLOCK return result;
 }
@@ -1305,16 +1301,12 @@ PyMOLreturn_float PyMOL_CmdDihedral(CPyMOL * I,
                                     int mode,
                                     int label, int reset, int zoom, int state, int quiet)
 {
-  int ok = true;
   PyMOLreturn_float result;
   PYMOL_API_LOCK {
-    ExecutiveDihedral(I->G, &result.value, name,
-        selection1,
-        selection2,
-        selection3,
-        selection4,
-                           mode, label, reset, zoom, quiet, state);
-    result.status = get_status_ok(ok);
+    auto res = ExecutiveDihedral(I->G,
+        name, selection1, selection2, selection3, selection4, mode, label,
+        reset, zoom, quiet, state);
+    result = return_result(res);
   }
   PYMOL_API_UNLOCK return result;
 }

@@ -245,6 +245,24 @@ CObject * ObjectIterator::getObject() {
   return rec->obj;
 }
 
+/**
+ * Find object of given type, or delete object if it exists but has the wrong
+ * type.
+ * @param name Object name
+ * @return NULL if object can't be found or has the wrong type
+ */
+template <typename ObjectT>
+ObjectT* ExecutiveFindOrDeleteObject(PyMOLGlobals* G, pymol::zstring_view name)
+{
+  auto anyObj = ExecutiveFindObjectByName(G, name.c_str());
+  auto obj = dynamic_cast<ObjectT*>(anyObj);
+  if (anyObj && !obj) {
+    // incompatible object with the same name
+    ExecutiveDelete(G, name.c_str());
+  }
+  return obj;
+}
+
 /*
  * True if `rec` and all its parent groups are enabled
  */
@@ -9756,118 +9774,95 @@ ok_except1:
 
 
 /*========================================================================*/
-int ExecutiveAngle(PyMOLGlobals * G, float *result, const char *nam,
-                   const char *s1, const char *s2, const char *s3, int mode,
-                   int labels, int reset, int zoom, int quiet, int state,
-                   int state1, int state2, int state3)
+pymol::Result<float> ExecutiveAngle(PyMOLGlobals* G,
+    const char* nam, const char* s1, const char* s2, const char* s3, int mode,
+    int labels, int reset, int zoom, int quiet, int state, int state1,
+    int state2, int state3)
 {
   SelectorTmp tmpsele1(G, s1);
   SelectorTmp tmpsele2(G, s2);
   SelectorTmp tmpsele3(G, s3);
   int sele1 = tmpsele1.getIndex();
+  if (sele1 < 0) {
+    return pymol::Error("invalid selection1");
+  }
   int sele2 = (WordMatchExact(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
+  if (sele2 < 0) {
+    return pymol::Error("invalid selection1");
+  }
   int sele3 = (WordMatchExact(G, s3, cKeywordSame, true)) ? sele2 : tmpsele3.getIndex();
+  if (sele3 < 0) {
+    return pymol::Error("invalid selection1");
+  }
 
-  ObjectDist *obj;
-  CObject *anyObj = NULL;
-  *result = -1.0F;
+  auto obj = ExecutiveFindOrDeleteObject<ObjectDist>(G, nam);
+  auto need_manage = !obj;
+  float result = -1.0F;
 
-  if((sele1 >= 0) && (sele2 >= 0) && (sele3 >= 0)) {
-    anyObj = ExecutiveFindObjectByName(G, nam);
-    if(anyObj) {
-      if(anyObj->type != cObjectMeasurement) {
-        ExecutiveDelete(G, nam);
-        anyObj = NULL;
-      }
-    }
-
-    obj = ObjectDistNewFromAngleSele(G, (ObjectDist *) anyObj,
+  obj = ObjectDistNewFromAngleSele(G, obj,
                                      sele1, sele2, sele3,
-                                     mode, labels, result, reset, state,
+                                     mode, labels, &result, reset, state,
                                      state1, state2, state3);
-    if(!obj) {
-      if(!quiet)
-        ErrMessage(G, __func__, "No angles found.");
-    } else {
-      *result = rad_to_deg(*result);
-      if(!anyObj) {
+
+  // ObjectDistNewFrom... always succeeds
+  assert(obj);
+
+  if (need_manage) {
         ObjectSetName((CObject *) obj, nam);
         ExecutiveManageObject(G, (CObject *) obj, zoom, quiet);
         if(!labels)
           ExecutiveSetRepVisib(G, nam, cRepLabel, 0);
-      }
-    }
-  } else if(sele1 < 0) {
-    if(!quiet)
-      ErrMessage(G, __func__, "The first selection contains no atoms.");
-  } else if(sele2 < 0) {
-    if(!quiet)
-      ErrMessage(G, __func__, "The second selection contains no atoms.");
-  } else if(sele3 < 0) {
-    if(!quiet)
-      ErrMessage(G, __func__, "The third selection contains no atoms.");
   }
-  return (1);
+
+  return rad_to_deg(result);
 }
 
 
 /*========================================================================*/
-int ExecutiveDihedral(PyMOLGlobals * G, float *result, const char *nam, const char *s1,
-                      const char *s2, const char *s3, const char *s4, int mode,
-                      int labels, int reset, int zoom, int quiet, int state)
+pymol::Result<float> ExecutiveDihedral(PyMOLGlobals* G, const char* nam,
+    const char* s1, const char* s2, const char* s3, const char* s4, int mode,
+    int labels, int reset, int zoom, int quiet, int state)
 {
   SelectorTmp tmpsele1(G, s1);
   SelectorTmp tmpsele2(G, s2);
   SelectorTmp tmpsele3(G, s3);
   SelectorTmp tmpsele4(G, s4);
   int sele1 = tmpsele1.getIndex();
+  if (sele1 < 0) {
+    return pymol::Error("invalid selection1");
+  }
   int sele2 = (WordMatchExact(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
+  if (sele2 < 0) {
+    return pymol::Error("invalid selection2");
+  }
   int sele3 = (WordMatchExact(G, s3, cKeywordSame, true)) ? sele2 : tmpsele3.getIndex();
+  if (sele3 < 0) {
+    return pymol::Error("invalid selection3");
+  }
   int sele4 = (WordMatchExact(G, s4, cKeywordSame, true)) ? sele3 : tmpsele4.getIndex();
+  if (sele4 < 0) {
+    return pymol::Error("invalid selection4");
+  }
 
-  ObjectDist *obj;
-  CObject *anyObj = NULL;
-  *result = -1.0F;
+  auto obj = ExecutiveFindOrDeleteObject<ObjectDist>(G, nam);
+  auto need_manage = !obj;
+  float result = -1.0F;
 
-  if((sele1 >= 0) && (sele2 >= 0) && (sele3 >= 0) && (sele4 >= 0)) {
-    anyObj = ExecutiveFindObjectByName(G, nam);
-    if(anyObj) {
-      if(anyObj->type != cObjectMeasurement) {
-        ExecutiveDelete(G, nam);
-        anyObj = NULL;
-      }
-    }
-
-    obj = ObjectDistNewFromDihedralSele(G, (ObjectDist *) anyObj,
+  obj = ObjectDistNewFromDihedralSele(G, obj,
                                         sele1, sele2, sele3, sele4,
-                                        mode, labels, result, reset, state);
-    if(!obj) {
-      if(!quiet)
-        ErrMessage(G, __func__, "No angles found.");
-    } else {
-      *result = rad_to_deg(*result);
-      if(!anyObj) {
+                                        mode, labels, &result, reset, state);
+
+  // ObjectDistNewFrom... always succeeds
+  assert(obj);
+
+  if (need_manage) {
         ObjectSetName((CObject *) obj, nam);
         ExecutiveManageObject(G, (CObject *) obj, zoom, quiet);
         if(!labels)
           ExecutiveSetRepVisib(G, nam, cRepLabel, 0);
-      }
-    }
-  } else if(sele1 < 0) {
-    if(!quiet)
-      ErrMessage(G, __func__, "The first selection contains no atoms.");
-  } else if(sele2 < 0) {
-    if(!quiet)
-      ErrMessage(G, __func__, "The second selection contains no atoms.");
-  } else if(sele3 < 0) {
-    if(!quiet)
-      ErrMessage(G, __func__, "The third selection contains no atoms.");
-  } else if(sele4 < 0) {
-    if(!quiet)
-      ErrMessage(G, __func__, "The fourth selection contains no atoms.");
   }
 
-  return 1;
+  return rad_to_deg(result);
 }
 
 /*
@@ -9879,55 +9874,40 @@ int ExecutiveDihedral(PyMOLGlobals * G, float *result, const char *nam, const ch
  * s2: selection expression or "same" keyword (shortcut for s1 = s2)
  * mode: 0 (any), 1 (bonds), 2 (hbonds), 3 (distance_exclusion), 4 (centroids)
  */
-int ExecutiveDistance(PyMOLGlobals * G, float *result, const char *nam,
-                  const char *s1, const char *s2, int mode, float cutoff,
-                  int labels, int quiet, int reset, int state, int zoom,
-                  int state1, int state2)
+pymol::Result<float> ExecutiveDistance(PyMOLGlobals* G, const char* nam,
+    const char* s1, const char* s2, int mode, float cutoff, int labels,
+    int quiet, int reset, int state, int zoom, int state1, int state2)
 {
   SelectorTmp tmpsele1(G, s1);
   SelectorTmp tmpsele2(G, s2);
   int sele1 = tmpsele1.getIndex();
+  if (sele1 < 0) {
+    return pymol::Error("invalid selection1");
+  }
   int sele2 = (WordMatchExact(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
+  if (sele2 < 0) {
+    return pymol::Error("invalid selection2");
+  }
 
-  ObjectDist *obj;
-  CObject *anyObj = NULL;
-  *result = -1.0F;
-  /* if the distance 'name' we provided exists, overwrite it, by deleting it by its base class */
-  if((sele1 >= 0) && (sele2 >= 0)) {
-    anyObj = ExecutiveFindObjectByName(G, nam);
-    if(anyObj)
-      if(reset || anyObj->type != cObjectMeasurement) {
-        ExecutiveDelete(G, nam);
-        anyObj = NULL;
-      }
-    /* create a new distance from the two selections */
-    obj = ObjectDistNewFromSele(G, (ObjectDist *) anyObj,
-                                sele1, sele2, mode, cutoff, labels, reset, result, state,
-                                state1, state2);
-    /* could insert obj into sele1's mol's object's DistList and sele2's mol's object's DistList */
-    /* if the distance was created, add it to the object list and manage it
-     * otherwise, complain and do nothing */
-    if(!obj) {
-      if(!quiet)
-        ErrMessage(G, "ExecutiveDistance", "No such distances found.");
-    } else {
-      ObjectSetName((CObject *) obj, nam);
+  auto obj = ExecutiveFindOrDeleteObject<ObjectDist>(G, nam);
+  auto need_manage = !obj;
+  float result = -1.0F;
+
+  /* create a new distance from the two selections */
+  obj = ObjectDistNewFromSele(G, obj, sele1, sele2, mode, cutoff, labels, reset,
+      &result, state, state1, state2);
+
+  // ObjectDistNewFrom... always succeeds
+  assert(obj);
+
+  if (need_manage) {
+      ObjectSetName(obj, nam);
       ExecutiveManageObject(G, (CObject *) obj, zoom, quiet);
       if(!labels)
         ExecutiveSetRepVisib(G, nam, cRepLabel, 0);
-    }
-  } else if(sele1 < 0) {
-    if(!quiet)
-      ErrMessage(G, "ExecutiveDistance", "The first selection contains no atoms.");
-    if(reset)
-      ExecutiveDelete(G, nam);
-  } else if(sele2 < 0) {
-    if(!quiet)
-      ErrMessage(G, "ExecutiveDistance", "The second selection contains no atoms.");
-    if(reset)
-      ExecutiveDelete(G, nam);
   }
-  return 1;
+
+  return result;
 }
 
 /*========================================================================*/
