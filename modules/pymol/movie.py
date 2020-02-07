@@ -21,6 +21,7 @@ import os
 import glob
 import threading
 import time
+from . import colorprinting
 
 def get_movie_fps(_self):
     r = _self.get_setting_float('movie_fps')
@@ -741,7 +742,6 @@ def _encode(filename,first,last,preserve,
             FPS_LEGAL_VALUES = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60]
             fps_legal = min(FPS_LEGAL_VALUES, key=lambda v: abs(v - fps))
             if fps_legal != round(fps, 3):
-                from . import colorprinting
                 colorprinting.warning(
                     " Warning: Adjusting frame rate to {} fps (legal values are: {})"
                     .format(fps_legal, FPS_LEGAL_VALUES))
@@ -778,7 +778,12 @@ def _encode(filename,first,last,preserve,
                 '-crf', '10' if quality > 90 else '15' if quality > 80 else '20',
                 '-pix_fmt', 'yuv420p', # needed for Mac support
                 ]
-            subprocess.check_call(args + [fn_rel])
+            process = subprocess.Popen(args + [fn_rel], stderr=subprocess.PIPE)
+            stderr = process.communicate()[1]
+            colorprinting.warning(stderr.strip().decode(errors='replace'))
+            if process.returncode != 0:
+                colorprinting.error('ffmpeg failed with '
+                        'exit status {}'.format(process.returncode))
         finally:
             os.chdir(old_cwd)
     elif encoder == 'convert':
