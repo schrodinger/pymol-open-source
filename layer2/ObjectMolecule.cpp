@@ -2777,6 +2777,14 @@ CSetting **ObjectMolecule::getSettingHandle(int state)
   }
 }
 
+/*========================================================================*/
+bool ObjectMolecule::setSymmetry(CSymmetry const& symmetry, int state)
+{
+  delete Symmetry;
+  Symmetry = new CSymmetry(symmetry);
+  CGOFree(UnitCellCGO);
+  return true;
+}
 
 /*========================================================================*/
 int ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const char *text)

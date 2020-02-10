@@ -115,6 +115,11 @@ struct ObjectMolecule : public CObject {
   char* getCaption(char* ch, int len) const override;
   CObjectState* getObjectState(int state) override;
   CSetting **getSettingHandle(int state) override;
+  CSymmetry const* getSymmetry(int state = 0) const override
+  {
+    return Symmetry;
+  }
+  bool setSymmetry(CSymmetry const& symmetry, int state = 0) override;
 };
 
 /* this is a record that holds information for specific types of Operatations on Molecules, eg. translation/rotation/etc */

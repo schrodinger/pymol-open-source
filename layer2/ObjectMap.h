@@ -78,6 +78,8 @@ struct ObjectMap : public CObject {
   void invalidate(int rep, int level, int state) override;
   int getNFrame() const override;
   CObjectState* getObjectState(int state) override;
+  CSymmetry const* getSymmetry(int state = 0) const override;
+  bool setSymmetry(CSymmetry const& symmetry, int state = 0) override;
 };
 
 #define cObjectMap_OrthoMinMaxGrid 0

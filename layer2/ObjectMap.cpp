@@ -2055,6 +2055,38 @@ CObjectState* ObjectMap::getObjectState(int state)
 }
 
 /*========================================================================*/
+CSymmetry const* ObjectMap::getSymmetry(int state) const
+{
+  auto* ms = ObjectMapGetState(const_cast<ObjectMap*>(this), state);
+
+  if (ms && ms->Active) {
+    return ms->Symmetry.get();
+  }
+
+  return nullptr;
+}
+
+/*========================================================================*/
+bool ObjectMap::setSymmetry(CSymmetry const& symmetry, int state)
+{
+  bool success = false;
+
+  for (StateIterator iter(G, Setting, state, State.size()); iter.next();) {
+    auto& oms = State[iter.state];
+    if (oms.Active) {
+      oms.Symmetry.reset(new CSymmetry(symmetry));
+      success = true;
+    }
+  }
+
+  if (success) {
+    ObjectMapRegeneratePoints(this);
+  }
+
+  return success;
+}
+
+/*========================================================================*/
 ObjectMap::ObjectMap(PyMOLGlobals * G) : CObject(G)
 {
   auto I = this;

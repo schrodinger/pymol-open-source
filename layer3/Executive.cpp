@@ -206,6 +206,34 @@ pymol::TrackerAdapter<SpecRec> ExecutiveGetSpecRecsFromPattern(PyMOLGlobals* G,
                                  G, str.c_str(), allow_partial, expand_groups));
 }
 
+/**
+ * Get the list of objects which match the pattern, or all objects
+ * if pattern equals 'all'.
+ * @param str pattern string provided by user
+ * @return List of borrowed object pointers
+ */
+static std::vector<CObject*> ExecutiveGetObjectsFromPattern(
+    PyMOLGlobals* G, pymol::zstring_view pattern)
+{
+  std::vector<CObject*> objects;
+
+  for (auto& rec : ExecutiveGetSpecRecsFromPattern(G, pattern)) {
+    switch (rec.type) {
+    case cExecObject:
+      objects.push_back(rec.obj);
+      break;
+    case cExecAll:
+      for (auto& rec : pymol::make_list_adapter(G->Executive->Spec)) {
+        if (rec.type == cExecObject) {
+          objects.push_back(rec.obj);
+        }
+      }
+    }
+  }
+
+  return objects;
+}
+
 static void ExecutiveSpecEnable(PyMOLGlobals * G, SpecRec * rec, int parents, int log);
 static void ExecutiveSetAllRepVisMask(PyMOLGlobals * G, int repmask, int state);
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals * G, const char *name);
@@ -5840,53 +5868,6 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
 #define ExecScrollBarMargin DIP2PIXEL(1)
 #define ExecScrollBarWidth DIP2PIXEL(13)
 
-void ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op);
-
-static CObject **ExecutiveSeleToObjectVLA(PyMOLGlobals * G, const char *s1)
-{
-  /* return VLA containing list of atoms references by selection */
-
-  CObject **result = NULL;
-  CExecutive *I = G->Executive;
-  SpecRec *rec = NULL;
-  CObject *obj = NULL;
-  int n = 0;
-  ObjectMoleculeOpRec op2;
-  int sele;
-
-  result = VLAlloc(CObject *, 50);
-  if(WordMatchExact(G, s1, cKeywordAll, true)) {
-    /* all objects */
-    while(ListIterate(I->Spec, rec, next)) {
-      if(rec->type == cExecObject) {
-        VLACheck(result, CObject *, n);
-        result[n] = rec->obj;
-        n++;
-      }
-    }
-  } else {
-    sele = SelectorIndexByName(G, s1);
-    if(sele >= 0) {
-      ObjectMoleculeOpRecInit(&op2);
-      op2.code = OMOP_GetObjects;
-      op2.obj1VLA = (ObjectMolecule **) result;
-      op2.i1 = 0;
-      ExecutiveObjMolSeleOp(G, sele, &op2);
-      n = op2.i1;
-      result = (CObject **) op2.obj1VLA;
-    } else {
-      obj = ExecutiveFindObjectByName(G, s1);
-      if(obj) {
-        VLACheck(result, CObject *, n);
-        result[n] = obj;
-        n++;
-      }
-    }
-  }
-  VLASize(result, CObject *, n);
-  return (result);
-}
-
 /**
  * @param sele object name (or single-object atom selection expression)
  * @param state object state (only for maps, ignored for molecules)
@@ -5908,16 +5889,7 @@ ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a, fl
     }
   }
 
-  const CSymmetry* symm = nullptr;
-
-  if(obj->type==cObjectMolecule) {
-    symm = static_cast<const ObjectMolecule*>(obj)->Symmetry;
-  } else if(obj->type==cObjectMap) {
-    const auto* ms = ObjectMapGetState(static_cast<ObjectMap*>(obj), state);
-    if (ms) {
-      symm = ms->Symmetry.get();
-    }
-  }
+  CSymmetry const* symm = obj->getSymmetry(state);
 
   if(symm) {
     *a = symm->Crystal.Dim[0];
@@ -5933,203 +5905,83 @@ ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a, fl
   return false;
 }
 
-int ExecutiveSetSymmetry(PyMOLGlobals * G, const char *sele, int state, float a, float b, float c,
-                        float alpha, float beta, float gamma, const char *sgroup)
+/**
+ * Set symmetry for one or more objects.
+ * @param names Object name pattern
+ * @param state Object state (supports all=-1 and current=-2)
+ * @return True if symmetry could be set for at least one object
+ */
+static bool ExecutiveSetSymmetry(PyMOLGlobals* G, pymol::zstring_view names,
+    int const state, CSymmetry const& symmetry, bool const quiet = false)
 {
-  CObject **objVLA = NULL;
-  CObject *obj;
-  ObjectMolecule *objMol;
-  ObjectMap *objMap;
-  int ok = true;
-  CSymmetry *symmetry = NULL;
-  int n_obj;
-  int i;
+  auto objects = ExecutiveGetObjectsFromPattern(G, names);
+  bool success = false;
 
-  /* create a new symmetry object for copying */
-  symmetry = new CSymmetry(G);
-  ok_assert(1, ok = (symmetry != NULL));
-  symmetry->Crystal.Dim[0] = a;
-  symmetry->Crystal.Dim[1] = b;
-  symmetry->Crystal.Dim[2] = c;
-  symmetry->Crystal.Angle[0] = alpha;
-  symmetry->Crystal.Angle[1] = beta;
-  symmetry->Crystal.Angle[2] = gamma;
-  UtilNCopy(symmetry->SpaceGroup, sgroup, sizeof(WordType));
-  SymmetryUpdate(symmetry);
-
-  objVLA = ExecutiveSeleToObjectVLA(G, sele);
-  n_obj = VLAGetSize(objVLA);
-  if(n_obj) {
-    for(i = 0; i < n_obj; i++) {
-      obj = objVLA[i];
-      switch (obj->type) {
-      case cObjectMolecule:
-        objMol = (ObjectMolecule *) obj;
-        if(symmetry) {
-	  /* right now, ObjectMolecules only have one-state symmetry information */
-	  SymmetryFree(objMol->Symmetry);
-	  objMol->Symmetry = new CSymmetry(*symmetry);
-        }
-        break;
-      case cObjectMap:
-	objMap = (ObjectMap *) obj;
-	
-	if(symmetry) {
-	  for(StateIterator iter(G, obj->Setting, state, objMap->State.size()); iter.next();) {
-	    ObjectMapState *oms = &objMap->State[iter.state];
-	    oms->Symmetry.reset(new CSymmetry(*symmetry));
-	  }
-	  ObjectMapRegeneratePoints(objMap);
-	}
-	break;
-      }
+  for (auto* obj : objects) {
+    if (!obj->setSymmetry(symmetry, state)) {
+      PRINTFB(G, FB_Executive, FB_Warnings)
+      " %s-Warning: Cannot set symmetry for '%s' (type %s)\n", __func__,
+          obj->Name, typeid(obj).name() ENDFB(G);
+      continue;
     }
-  } else {
-    ok = false;
-    PRINTFB(G, FB_Executive, FB_Errors)
-      " ExecutiveSetSymmetry: no object selected\n" ENDFB(G);
+
+    success = true;
+
+    if (!quiet) {
+      PRINTFB(G, FB_Executive, FB_Details)
+      " %s-Details: Updated symmetry for '%s'\n", __func__, obj->Name ENDFB(G);
+    }
   }
-  if(symmetry)
-    SymmetryFree(symmetry);
-  VLAFreeP(objVLA);
-ok_except1:
-  return (ok);
+
+  return success;
 }
 
-int ExecutiveSymmetryCopy(PyMOLGlobals * G, const char *source_name, const char *target_name,
-			  int source_mode, int target_mode,
-			  int source_state, int target_state,
-			  int target_undo, int log, int quiet) {
+pymol::Result<> ExecutiveSetSymmetry(PyMOLGlobals* G, const char* sele,
+    int state, float a, float b, float c, float alpha, float beta, float gamma,
+    const char* sgroup, int quiet)
+{
+  /* create a new symmetry object for copying */
+  CSymmetry symmetry(G);
+  symmetry.Crystal.Dim[0] = a;
+  symmetry.Crystal.Dim[1] = b;
+  symmetry.Crystal.Dim[2] = c;
+  symmetry.Crystal.Angle[0] = alpha;
+  symmetry.Crystal.Angle[1] = beta;
+  symmetry.Crystal.Angle[2] = gamma;
+  UtilNCopy(symmetry.SpaceGroup, sgroup, sizeof(WordType));
+  SymmetryUpdate(&symmetry);
+
+  if (!ExecutiveSetSymmetry(G, sele, state, symmetry, quiet)) {
+    return pymol::Error("no object selected");
+  }
+
+  return {};
+}
+
+pymol::Result<> ExecutiveSymmetryCopy(PyMOLGlobals* G, const char* source_name,
+    const char* target_name, int source_state, int target_state, int quiet)
+{
 
   /* Copy the symmetry info from source to target; currently maps can have
    * multiple states for symmetry, but ObjectMolecule cannot */
 
-  int ok = true;
-  CObject *source_obj = NULL;
-  CObject *target_obj = NULL;
-  CSymmetry * source_symm = NULL;
-  CSymmetry ** target_symm_mol = NULL;
-  pymol::copyable_ptr<CSymmetry>* target_symm_map = nullptr; // TODO: reunify target_symm pointers
-
-  ObjectMolecule * tmp_mol = NULL;
-  ObjectMap * tmp_map = NULL, *targ_map = NULL;
-
-  /* defaults */
-  if(source_state==-1)
-    source_state = 0;
-  if(target_state==-1)
-    target_state = 0;
-  
-  /* SOURCE OBJECT and its SYMMETRY INFO */
-  source_obj = ExecutiveFindObjectByName(G, source_name);
-
-  if(source_obj) {
-    /* ObjectMolecule */
-    if(source_obj->type==cObjectMolecule){
-      /* OVERRIDE STATE for ObjectMolecules */
-      source_state = 0;
-      tmp_mol = (ObjectMolecule*) source_obj;
-      source_symm = tmp_mol->Symmetry + source_state;
-    }
-    /* ObjectMap */
-    else if(source_obj->type==cObjectMap){
-      tmp_map = (ObjectMap*) source_obj;
-
-      if(source_state+1>tmp_map->State.size()) {
-	PRINTFB(G, FB_Executive, FB_Errors)
-	  " SymmetryCopy-Error: source state '%zu' greater than number of states in object '%s'.", tmp_map->State.size(), source_name  ENDFB(G);
-	ok = false;
-      }
-      if(ok) {
-        source_symm = tmp_map->State[source_state].Symmetry.get();
-      }
-    }
-    else {
-      /* object is not a molecule or a map -- bad input */
-      PRINTFB(G, FB_Executive, FB_Errors)
-	" SymmetryCopy-Error: source '%s' is not a molecular or map object.", source_name  ENDFB(G);
-      ok = false;
-    }
-  } else {
-    /* no source object found */
-    PRINTFB(G, FB_Executive, FB_Errors)
-      " SymmetryCopy-Error: source object not found."  ENDFB(G);
-    ok = false;
+  auto const* source_obj = ExecutiveFindObjectByName(G, source_name);
+  if (!source_obj) {
+    return pymol::Error("source object not found");
   }
 
-  /* TARGET OBJECT and its SYMMETRY INFO */
-  target_obj = ExecutiveFindObjectByName(G, target_name);
-
-  if(target_obj) {
-    /* ObjectMolecule */
-    if(target_obj->type==cObjectMolecule){
-      /* OVERRIDE STATE for ObjectMolecules */
-      target_state = 0;
-      tmp_mol = (ObjectMolecule*) target_obj;
-      target_symm_mol = &(tmp_mol->Symmetry); /* + target_state; */
-    }
-    /* ObjectMap */
-    else if(target_obj->type==cObjectMap){
-      targ_map = (ObjectMap*) target_obj;
-
-      if(target_state+1>targ_map->State.size()) {
-	PRINTFB(G, FB_Executive, FB_Errors)
-	  " SymmetryCopy-Error: target state '%zu' greater than number of states in object '%s'.", targ_map->State.size(), target_name  ENDFB(G);
-	ok = false;
-      }
-      if(ok) {
-        target_symm_map = &targ_map->State[target_state].Symmetry;
-      }
-    }
-    else {
-      /* object is not a molecule or a map -- bad input */
-      PRINTFB(G, FB_Executive, FB_Errors)
-	" SymmetryCopy-Error: target '%s' is not a molecular or map object.", target_name  ENDFB(G);
-      ok = false;
-    }
-  } else {
-    /* no target object found */
-    PRINTFB(G, FB_Executive, FB_Errors)
-      " SymmetryCopy-Error: target object not found."  ENDFB(G);
-    ok = false;
+  auto const* source_symm = source_obj->getSymmetry(source_state);
+  if (!source_symm) {
+    return pymol::Error(pymol::string_format(
+        "no symmetry in object '%s' state %d", source_name, source_state));
   }
 
-  /* Do the copy */
-  if(ok) {
-    if(target_symm_mol || target_symm_map) {
-      if(target_symm_mol) {
-        if(*target_symm_mol) {
-          SymmetryFree(*target_symm_mol);
-        }
-        *target_symm_mol = new CSymmetry(*source_symm);
-      } else if(target_symm_map && *target_symm_map) {
-        *target_symm_map = pymol::make_copyable<CSymmetry>(*source_symm);
-      }
-      
-
-      /* Invalidate cRepCell */
-      /* if the unit cell is shown for molecule, redraw it */
-      if(tmp_mol) {
-	if((tmp_mol->visRep & cRepCellBit)) {
-	  if(tmp_mol->Symmetry) {
-            CGOFree(tmp_mol->UnitCellCGO);
-            tmp_mol->UnitCellCGO =
-                CrystalGetUnitCellCGO(&tmp_mol->Symmetry->Crystal);
-	  }
-	}
-      }
-      if (targ_map){
-	ObjectMapRegeneratePoints(targ_map);
-      }
-
-      if ((target_symm_mol && !*target_symm_mol) ||
-          (target_symm_map && !*target_symm_map)) {
-        ok = false;
-      }
-    }
+  if (!ExecutiveSetSymmetry(
+          G, target_name, target_state, *source_symm, quiet)) {
+    return pymol::Error("target object not found");
   }
 
-  return ok;
+  return {};
 }
 
 int ExecutiveSmooth(PyMOLGlobals * G, const char *selection, int cycles,

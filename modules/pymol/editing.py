@@ -299,7 +299,10 @@ DESCRIPTION
         with _self.lockcm:
             return _cmd.set_discrete(_self._COb, name, int(discrete))
 
-    def set_symmetry(selection, a, b, c, alpha, beta, gamma, spacegroup="P1", state=-1, _self=cmd):
+    def set_symmetry(selection,
+            a, b, c, alpha, beta, gamma, spacegroup="P1",
+            state=-1, quiet=1,
+            _self=cmd):
 
         '''
 DESCRIPTION
@@ -311,10 +314,9 @@ USAGE
 
     set_symmetry selection, a, b, c, alpha, beta, gamma, spacegroup
 
-NOTES
+ARGUMENTS
 
-    The new symmetry will be defined for every object referenced
-    by the selection.
+    selection = str: object name pattern
 
 PYMOL API
 
@@ -322,20 +324,20 @@ PYMOL API
           float alpha, float beta, float gamma, string spacegroup)
 
         '''
-        r = DEFAULT_ERROR
-        selection = selector.process(selection)
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.set_symmetry(_self._COb,str(selection), int(state) - 1,
                                          float(a),float(b),float(c),
                                          float(alpha),float(beta),float(gamma),
-                                         str(spacegroup))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+                                         str(spacegroup),
+                                         int(quiet))
         return r
 
-    def symmetry_copy(source_name='', target_name='', source_state=1, target_state=1, target_undo=1, log=0, quiet=1, _self=cmd):
+    def symmetry_copy(source_name,
+                      target_name,
+                      source_state=1,
+                      target_state=1,
+                      quiet=1,
+                      _self=cmd):
         """
 DESCRIPTION
 
@@ -345,49 +347,24 @@ USAGE
 
     symmetry_copy source_name, target_name, source_state, target_state
 
+ARGUMENTS
+
+    source_name = str: object name
+    target_name = str: object name pattern
+    source_state = int: object state (maps only)
+    target_state = int: object state (maps only)
+
 NOTES
 
-    Maps support accessing and setting states other than the first,
-    but molecular objects do not.
-
-    New in PyMOL v1.5.
-
-PYMOL API
-
-    cmd.symmetry_copy(source_name, target_name, source_state, target_state,
-        target_undo, log, quiet)
-
+    Molecular objects don't support individual states yet.
         """
-
-        r = DEFAULT_ERROR
-
-        if source_name is None:
-            source_name = ''
-
-        target_name = str(target_name).strip()
-        source_name = str(source_name).strip()
-
-        # ignored for now
-        source_mode = 1
-        target_mode = 1
-
-        try:
-            _self.lock(_self)
-
-            r = _cmd.symmetry_copy(_self._COb,str(source_name),
+        with _self.lockcm:
+            return _cmd.symmetry_copy(_self._COb,
+                                   str(source_name),
                                    str(target_name),
-                                   int(source_mode),
-                                   int(target_mode),
                                    int(source_state)-1,
                                    int(target_state)-1,
-                                   int(target_undo),
-                                   int(log),
                                    int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self):
-            raise pymol.CmdException
-        return r
 
 
     def set_name(old_name, new_name,_self=cmd):

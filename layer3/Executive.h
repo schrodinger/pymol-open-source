@@ -478,13 +478,12 @@ int ***ExecutiveGetBondPrint(PyMOLGlobals * G, const char *name, int max_bond, i
 pymol::Result<bool>
 ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a, float *b, float *c,
                         float *alpha, float *beta, float *gamma, char *sgroup);
-int ExecutiveSetSymmetry(PyMOLGlobals * G, const char *sele, int state, float a, float b, float c,
-                        float alpha, float beta, float gamma, const char *sgroup);
-int ExecutiveSymmetryCopy(PyMOLGlobals * G,
+pymol::Result<> ExecutiveSetSymmetry(PyMOLGlobals* G, const char* sele,
+    int state, float a, float b, float c, float alpha, float beta, float gamma,
+    const char* sgroup, int quiet);
+pymol::Result<> ExecutiveSymmetryCopy(PyMOLGlobals * G,
 			  const char *source_name, const char *target_name,
-			  int source_mode, int target_mode,
-			  int source_state, int target_state,
-			  int target_undo, int log, int quiet);
+			  int source_state, int target_state, int quiet);
 int ExecutiveGetSession(PyMOLGlobals * G, PyObject * dict, const char *names, int partial,
                         int quiet);
 int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session, int partial_restore,

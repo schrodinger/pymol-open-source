@@ -1219,28 +1219,18 @@ static PyObject *CmdDecline(PyObject * self, PyObject * args)
 static PyObject *CmdSetSymmetry(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
   char *str1, *str2;
   int state;
-  OrthoLineType s1;
   float a, b, c, alpha, beta, gamma;
+  int quiet;
 
-  ok = PyArg_ParseTuple(args, "Osiffffffs", &self, &str1, &state, &a, &b, &c,
-                        &alpha, &beta, &gamma, &str2);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
-    if(ok)
-      ok = ExecutiveSetSymmetry(G, s1, state, a, b, c, alpha, beta, gamma, str2);
-    SelectorFreeTmp(G, s1);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Osiffffffsi", &self, &str1, &state, &a, &b, &c,
+      &alpha, &beta, &gamma, &str2, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto res = ExecutiveSetSymmetry(
+      G, str1, state, a, b, c, alpha, beta, gamma, str2, quiet);
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdGetSymmetry(PyObject * self, PyObject * args)
@@ -3615,31 +3605,17 @@ static PyObject *CmdSymmetryCopy(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *source_name, *target_name;
-  int source_mode, target_mode;
-  int source_state, target_state, target_undo;
-  int log;
+  int source_state, target_state;
   int quiet;
-  int ok = false;
-
-  ok = PyArg_ParseTuple(args, "Ossiiiiiii", &self,
+  API_SETUP_ARGS(G, self, args, "Ossiii", &self,
                         &source_name, &target_name,
-                        &source_mode, &target_mode,
-                        &source_state, &target_state, &target_undo, &log, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ExecutiveSymmetryCopy(G,
+                        &source_state, &target_state, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto res = ExecutiveSymmetryCopy(G,
 			  source_name, target_name,
-			  source_mode, target_mode,
-			  source_state, target_state, target_undo, log, quiet);
+			  source_state, target_state, quiet);
     APIExit(G);
-  }
-
-  return APIResultOk(ok);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdOverlap(PyObject * self, PyObject * args)

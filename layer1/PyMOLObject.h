@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Ray.h"
 #include"Rep.h"
 #include"Setting.h"
+#include"Symmetry.h"
 #include"PyMOLGlobals.h"
 #include"View.h"
 #include"Word.h"
@@ -96,6 +97,8 @@ public:
   virtual char* getCaption(char* ch, int len) const { return nullptr; };
   virtual CObjectState* getObjectState(int state) { return nullptr; }
   virtual CSetting **getSettingHandle(int state);
+  virtual CSymmetry const* getSymmetry(int state = 0) const { return nullptr; }
+  virtual bool setSymmetry(CSymmetry const&, int state = 0) { return false; }
 };
 
 int ObjectCopyHeader(CObject * I, const CObject * src);
