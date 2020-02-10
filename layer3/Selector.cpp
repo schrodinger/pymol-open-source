@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 
 #include <algorithm>
 #include <cctype>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -6380,7 +6381,6 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
     if(ob->type == cObjectMolecule)
       targ = (ObjectMolecule *) ob;
 
-  c = 0;
     SelectorUpdateTable(G, source, -1);
 
   if(!targ) {
@@ -6414,6 +6414,10 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
     isNew = false;
   }
 
+  std::function<void(int)> const body = [&](int const source) {
+
+  c = 0;
+
   for(a = cNDummyAtoms; a < I->Table.size(); a++) {
     at = I->Table[a].atom;
     I->Table[a].index = -1;
@@ -6431,6 +6435,15 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
       targ->Symmetry = new CSymmetry(*info_src->Symmetry);
     }
   }
+
+  if (info_src && source == cSelectorUpdateTableAllStates &&
+      targ->DiscreteFlag && !info_src->DiscreteFlag) {
+    for (int state = 0; state < info_src->getNFrame(); ++state) {
+      body(state);
+    }
+    return;
+  }
+
   nAtom = c;
 
   nBond = 0;
@@ -6526,9 +6539,6 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
       cs2 = CoordSetNew(G);
       c = 0;
       cs2->Coord = pymol::vla<float>(3 * nAtom);
-      cs2->AtmToIdx = pymol::vla<int>(targ->NAtom + 1);
-      for(a = 0; a < targ->NAtom; a++)
-        cs2->AtmToIdx[a] = -1;
       cs2->NAtIndex = targ->NAtom;
       cs2->IdxToAtm = pymol::vla<int>(nAtom);
       for(a = cNDummyAtoms; a < I->Table.size(); a++)  /* any selected atoms in this state? */
@@ -6548,7 +6558,6 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
             if(CoordSetGetAtomVertex(cs1, at, cs2->Coord + c * 3)) {
               a2 = cs->IdxToAtm[I->Table[a].index];     /* actual merged atom index */
               cs2->IdxToAtm[c] = a2;
-              cs2->AtmToIdx[a2] = c;
               c++;
             }
           }
@@ -6557,10 +6566,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
       VLASize(cs2->Coord, float, c * 3);
       cs2->NIndex = c;
       if(target >= 0) {
-        if(source == -1)
-          ts = target + d;
-        else
-          ts = target;
+        ts = target++;
       } else {
         ts = d;
       }
@@ -6575,21 +6581,13 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
   }
   if(cs)
     cs->fFree();
-  if(targ->DiscreteFlag) {      /* if the new object is discrete, then eliminate the AtmToIdx array */
-    for(d = 0; d < targ->NCSet; d++) {
-      cs = targ->CSet[d];
-      if(cs) {
-        if(cs->AtmToIdx) {
-          for(a = 0; a < cs->NIndex; a++) {
-            b = cs->IdxToAtm[a];
-            targ->DiscreteAtmToIdx[b] = a;
-            targ->DiscreteCSet[b] = cs;
-          }
-          cs->AtmToIdx.freeP();
-        }
-      }
-    }
-  }
+
+  }; // end body
+
+  body(source);
+
+  targ->updateAtmToIdx();
+
   SceneCountFrames(G);
   if(!quiet) {
     PRINTFB(G, FB_Selector, FB_Details)
