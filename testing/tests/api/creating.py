@@ -2,6 +2,7 @@
 Testing: pymol.creating
 '''
 
+import pymol
 from pymol import cmd, testing, stored
 
 import unittest
@@ -328,12 +329,31 @@ class TestCreating(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_states('m2'), 2)
         cmd.delete('m2')
 
-    def testCreateLarge(self):
-        pass
+    # PYMOL-3372
+    @testing.foreach(0, 1)
+    @testing.requires_version('2.4')
+    def testCreateDiscrete(self, discrete_source):
+        self.create_many_states("methanol", "m1", 2)
+        self.create_many_states("benzene", "m2", 2)
+        pymol.editing.set_discrete("m1", discrete=discrete_source)
+        pymol.editing.set_discrete("m2", discrete=discrete_source)
 
-    def testCreateManyLarge(self):
-        pass
-        
+        # create new
+        cmd.create('dm', 'm1', 0, -1, discrete=1)
+        self.assertTrue(cmd.count_discrete('dm'))
+        self.assertEqual(cmd.count_states('dm'), 2)
+        self.assertEqual(cmd.count_atoms('dm'), 2 * 6)
+        self.assertEqual(len(cmd.get_bonds('dm')), 5)
+
+        # append to existing
+        cmd.create('dm', 'm2', 0, -1, discrete=1)
+        self.assertTrue(cmd.count_discrete('dm'))
+        self.assertEqual(cmd.count_states('dm'), 4)
+        self.assertEqual(cmd.count_atoms('dm'), 2 * 6 + 2 * 12)
+        self.assertEqual(len(cmd.get_bonds('dm', 1)), 5)
+        self.assertEqual(len(cmd.get_bonds('dm', 4)), 12)
+        self.assertEqual(len(cmd.get_bonds('dm', 0)), 2 * 5 + 2 * 12)
+
     def testExtract(self):
         cmd.fragment('ala', 'm1')
         cmd.extract('m2', 'elem C')
