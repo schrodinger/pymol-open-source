@@ -304,8 +304,8 @@ int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int st
     if (nimplicit <= 0)
       continue;
 
-    VLACheck(I->AtomInfo, AtomInfoType, I->NAtom + nimplicit - 1);
-    VLACheck(I->Bond,     BondType,     I->NBond + nimplicit - 1);
+    I->AtomInfo.reserve(I->NAtom + nimplicit);
+    I->Bond.reserve(I->NBond + nimplicit);
 
     for (int i = 0; i < nimplicit; ++i) {
       // bond
