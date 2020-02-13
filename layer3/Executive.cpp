@@ -14591,10 +14591,21 @@ void ExecutiveMemoryDump(PyMOLGlobals * G)
           TrackerGetNList(I->Tracker), TrackerGetNLink(I->Tracker));
 }
 
+/**
+ * The `zoom` argument takes the following values:
+ *
+ *   -1 = use `auto_zoom` setting
+ *    0 = do nothing
+ *    1 = zoom `obj` if `is_new` is ture, otherwise do nothing
+ *    2 = zoom `obj`
+ *    3 = zoom current state of `obj`
+ *    4 = zoom all
+ *    5 = zoom `obj` if it is the only object
+ *
+ */
 void ExecutiveDoZoom(PyMOLGlobals * G, CObject * obj, int is_new, int zoom, int quiet)
 {
-  if(zoom) {                    /* -1 = use setting, 0 = never, 1 = zoom new, 
-                                   2 = zoom always, 3 = zoom current, 4 = zoom all, 5= first object */
+  if (zoom) {
     if(zoom < 0) {
       zoom = SettingGetGlobal_i(G, cSetting_auto_zoom);
       if(zoom < 0) {
@@ -14613,7 +14624,6 @@ void ExecutiveDoZoom(PyMOLGlobals * G, CObject * obj, int is_new, int zoom, int 
       break;
     case 3:                    /* always zoom current state */
       ExecutiveWindowZoom(G, obj->Name, 0.0, ObjectGetCurrentState(obj, false), 0, 0, quiet);  
-      /* (all states) */
       break;
     case 4:                    /* zoom all objects */
       ExecutiveWindowZoom(G, cKeywordAll, 0.0, -1, 0, 0, quiet);
@@ -14673,6 +14683,24 @@ static void ExecutiveDoAutoGroup(PyMOLGlobals * G, SpecRec * rec)
 
 
 /*========================================================================*/
+/**
+ * Manages an object. Adds it to the list of spec records and related trackers,
+ * and to the scene for rendering.
+ *
+ * Also handles:
+ * - auto_dss
+ * - group_auto_mode
+ * - auto_defer_builds
+ *
+ * If the object is already managed, then only do `auto_dss` and
+ * `auto_defer_builds`.
+ *
+ * If an object with the same name exists, then delete it and re-use the
+ * existing spec rec to manage the new object.
+ *
+ * @param obj Object to manage. Executive takes ownership.
+ * @param zoom Zoom the camera, see ExecutiveDoZoom for valid values.
+ */
 void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
 {
   SpecRec *rec = NULL;
