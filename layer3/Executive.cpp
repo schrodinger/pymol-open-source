@@ -14688,6 +14688,17 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
     }
   }
   if(!exists) {
+    if (WordMatchExact(G, cKeywordAll, obj->Name, true)) {
+      PRINTFB(G, FB_Executive, FB_Warnings)
+        " Executive: object name \"%s\" is illegal -- renamed to 'all_'.\n", obj->Name
+        ENDFB(G);
+      strcat(obj->Name, "_");   /* don't allow object named "all" */
+    } else if (SelectorNameIsKeyword(G, obj->Name)) {
+      PRINTFB(G, FB_Executive, FB_Warnings)
+        " Executive-Warning: name \"%s\" collides with a selection language keyword.\n",
+        obj->Name ENDFB(G);
+    }
+
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->type == cExecObject) {
         if(strcmp(rec->obj->Name, obj->Name) == 0)
@@ -14709,20 +14720,8 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
     if(!rec)
       ListElemCalloc(G, rec, SpecRec);
 
-    if(WordMatchExact(G, cKeywordAll, obj->Name, true)) {
-      PRINTFB(G, FB_Executive, FB_Warnings)
-        " Executive: object name \"%s\" is illegal -- renamed to 'all_'.\n", obj->Name
-        ENDFB(G);
-      strcat(obj->Name, "_");   /* don't allow object named "all" */
-    }
-    if(SelectorNameIsKeyword(G, obj->Name)) {
-      PRINTFB(G, FB_Executive, FB_Warnings)
-        " Executive-Warning: name \"%s\" collides with a selection language keyword.\n",
-        obj->Name ENDFB(G);
-    }
     strcpy(rec->name, obj->Name);
     rec->type = cExecObject;
-    rec->next = NULL;
     rec->obj = obj;
     previousVisible = rec->visible;
     if(rec->obj->type == cObjectMap) {
@@ -14735,19 +14734,23 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
       ReportEnabledChange(G, rec);
     }
 
-    rec->cand_id = TrackerNewCand(I->Tracker, (TrackerRef *) (void *) rec);
+    // Is this a new rec?
+    if (!rec->cand_id) {
+      rec->cand_id = TrackerNewCand(I->Tracker, (TrackerRef *) (void *) rec);
 
-    TrackerLink(I->Tracker, rec->cand_id, I->all_names_list_id, 1);
-    TrackerLink(I->Tracker, rec->cand_id, I->all_obj_list_id, 1);
-    ListAppend(I->Spec, rec, next, SpecRec);
-    ExecutiveAddKey(I, rec);
-    ExecutiveInvalidatePanelList(G);
+      TrackerLink(I->Tracker, rec->cand_id, I->all_names_list_id, 1);
+      TrackerLink(I->Tracker, rec->cand_id, I->all_obj_list_id, 1);
+      ListAppend(I->Spec, rec, next, SpecRec);
+      ExecutiveAddKey(I, rec);
+      ExecutiveInvalidatePanelList(G);
+
+      ExecutiveDoAutoGroup(G, rec);
+    }
 
     if(rec->visible) {
       rec->in_scene = SceneObjectAdd(G, obj);
       ExecutiveInvalidateSceneMembers(G);
     }
-    ExecutiveDoAutoGroup(G, rec);
   }
 
   ExecutiveUpdateObjectSelection(G, obj);
