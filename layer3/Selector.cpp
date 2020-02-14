@@ -1139,6 +1139,8 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
   int visRep_inorganic = cRepSphereBit;
   int visRep_polymer = cRepCartoonBit;
 
+  const lexborrow_t lex_pseudo = LexBorrow(G, "pseudo");
+
   // detect large systems
   if (auto_show_classified == -1 &&
       only_object &&
@@ -1348,8 +1350,11 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
           mask = cAtomFlag_organic;
         else if((found_o || found_oh2) && (a1 == a0))
           mask = cAtomFlag_solvent;
-        else
+        else if (!ai0->isHydrogen()) {
+          // exclude hydrogens, they get misclassified as
+          // 'inorganic' if they are not sorted
           mask = cAtomFlag_inorganic;
+        }
       }
 
       /* mark which atoms we can write to */
@@ -1375,6 +1380,11 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
                 ai0->visRep = (ai0->visRep & auto_show_mask) | visRep_inorganic;
               } else if (mask & cAtomFlag_polymer) {
                 ai0->visRep = (ai0->visRep & auto_show_mask) | visRep_polymer_obj;
+              }
+
+              // hide Desmond virtual sites and off-centered partial charges
+              if (ai0->name == lex_pseudo) {
+                ai0->visRep = 0;
               }
             }
             ai0->flags = (ai0->flags & cAtomFlag_class_mask) | mask;

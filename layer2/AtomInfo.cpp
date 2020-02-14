@@ -2499,8 +2499,14 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
     case 'Q':
       *(e + 1) = 0;
       break;
+    case 'p':
+      if (p_strstartswith(n, "pseudo")) {
+        strcpy(e, "PS");
+      }
     }
-    if(*(e + 1) && (e[1] != 'P' || e[0] != 'L'))
+    if(*(e + 1) &&
+        (/* e != "LP" */ e[1] != 'P' || e[0] != 'L') &&
+        (/* e != "PS" */ e[1] != 'S' || e[0] != 'P'))
       *(e + 1) = tolower(*(e + 1));
   }
 
