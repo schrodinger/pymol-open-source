@@ -5911,6 +5911,12 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule * I, int state)
 
 
 /*========================================================================*/
+/**
+ * Assigns:
+ * - geom
+ * - valence
+ * - chemFlag
+ */
 void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule * I, int state)
 {
   /* infers chemical relations from neighbors and geometry 
@@ -6033,6 +6039,11 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule * I, int state)
 
 
 /*========================================================================*/
+/**
+ * Assigns, based on valence, geom, formalCharge, and bonded atoms:
+ * - hb_donor
+ * - hb_acceptor
+ */
 void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I)
 {
   int a;
@@ -6041,6 +6052,8 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I)
   int n, nn;
   int has_hydro;
   /* initialize accumulators on uncategorized atoms */
+
+  const lexborrow_t lex_pseudo = LexBorrow(I->G, "pseudo");
 
   ObjectMoleculeUpdateNeighbors(I);
   ai = I->AtomInfo.data();
@@ -6054,13 +6067,16 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I)
 
     if(!has_hydro) {
       /* explicit hydrogens? */
-      has_hydro = false;
       switch (ai->protons) {
       case cAN_N:
       case cAN_O:
         while((a1 = I->Neighbor[n]) >= 0) {
           n += 2;
           if(I->AtomInfo[a1].protons == 1) {
+            has_hydro = true;
+            break;
+          }
+          if (I->AtomInfo[a1].name == lex_pseudo && --nn < ai->valence) {
             has_hydro = true;
             break;
           }
@@ -6178,6 +6194,12 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I)
 
 
 /*========================================================================*/
+/**
+ * Assigns:
+ * - geom
+ * - valence
+ * - chemFlag
+ */
 void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
 {
 
@@ -6200,6 +6222,11 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
     ai++;
   }
 
+  // Ignore "pseudo" atoms (Desmond virtual sites)
+  const lexborrow_t lex_pseudo = LexBorrow(I->G, "pseudo");
+  std::vector<unsigned char> pseudo_neighbor_count(
+      lex_pseudo == LEX_BORROW_NOTFOUND ? 0 : I->NAtom);
+
   /* find maximum bond order for each atom */
 
   b0 = I->Bond;
@@ -6210,6 +6237,17 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
     ai1 = I->AtomInfo + a1;
     order = b0->order;
     b0++;
+
+    // count "pseudo" neighbors
+    if (!pseudo_neighbor_count.empty()) {
+      if (ai0->name == lex_pseudo) {
+        pseudo_neighbor_count[a1] += 1;
+      }
+      if (ai1->name == lex_pseudo) {
+        pseudo_neighbor_count[a0] += 1;
+      }
+    }
+
     if(!ai0->chemFlag) {
       if(order > ai0->geom)
         ai0->geom = order;
@@ -6295,6 +6333,12 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
       expect = AtomInfoGetExpectedValence(I->G, ai);
       n = I->Neighbor[a];
       nn = I->Neighbor[n++];
+
+      // don't count "pseudo" atom neighbors
+      if (!pseudo_neighbor_count.empty()) {
+        nn -= pseudo_neighbor_count[a];
+      }
+
       if(ai->geom == 3) {
         ai->geom = cAtomInfoLinear;
         switch (ai->protons) {
