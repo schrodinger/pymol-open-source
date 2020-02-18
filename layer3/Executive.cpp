@@ -3558,9 +3558,8 @@ int ExecutiveProcessObjectName(PyMOLGlobals * G, const char *proposed, char *act
   return result;
 }
 
-int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_name)
+pymol::Result<> ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_name)
 {
-  int ok = true;
   SpecRec *rec = NULL;
   CExecutive *I = G->Executive;
   int found = false;
@@ -3576,82 +3575,75 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
   }
 
   if(!name[0]) {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      "SetName-Error: blank names not allowed.\n" ENDFB(G);
-    ok = false;
+    return pymol::make_error("Blank names not allowed.");
   } else if(WordMatchExact(G, name, cKeywordSame, ignore_case) || SelectorNameIsKeyword(G, name)) {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      "SetName-Error: name '%s' is a selection keyword.\n", name ENDFB(G);
-    ok = false;
+    return pymol::make_error("Name ", name, " is a selection keyword.");
   }
-  if(ok) {
-    if(!name[0])
-      ok = false;
-    else if(!WordMatchExact(G, name, old_name, ignore_case)) {
+  if(!WordMatchExact(G, name, old_name, ignore_case)) {
+    while(ListIterate(I->Spec, rec, next)) {
+      if(found)
+        break;
+      switch (rec->type) {
+      case cExecObject:
+        if(WordMatchExact(G, rec->obj->Name, old_name, ignore_case)) {
+          ExecutiveDelKey(I, rec);
+          ExecutiveDelete(G, name);
+          ObjectSetName(rec->obj, name);
+          UtilNCopy(rec->name, rec->obj->Name, WordLength);
+          ExecutiveAddKey(I, rec);
+          if(rec->obj->type == cObjectMolecule) {
+            /*
+               SelectorDelete(G,old_name);
+               ExecutiveUpdateObjectSelection(G,rec->obj);
+             */
+            SelectorSetName(G, name, old_name);
+#ifndef _PYMOL_NO_UNDO
+#endif
+            SceneChanged(G);
+            SeqChanged(G);
+          }
+          if (rec->obj->type == cObjectMap)
+            ExecutiveInvalidateMapDependents(G, old_name, name);
 
-      while(ListIterate(I->Spec, rec, next)) {
-        if(found)
-          break;
-        switch (rec->type) {
-        case cExecObject:
-          if(WordMatchExact(G, rec->obj->Name, old_name, ignore_case)) {
+          found = true;
+        }
+        break;
+      case cExecSelection:
+        if(WordMatchExact(G, rec->name, old_name, ignore_case)) {
+          if(SelectorSetName(G, name, old_name)) {
+            ExecutiveDelete(G, name); /* just in case */
             ExecutiveDelKey(I, rec);
-            ExecutiveDelete(G, name);
-            ObjectSetName(rec->obj, name);
-            UtilNCopy(rec->name, rec->obj->Name, WordLength);
+            UtilNCopy(rec->name, name, WordLength);
             ExecutiveAddKey(I, rec);
-            if(rec->obj->type == cObjectMolecule) {
-              /*
-                 SelectorDelete(G,old_name);
-                 ExecutiveUpdateObjectSelection(G,rec->obj);
-               */
-              SelectorSetName(G, name, old_name);
-              SceneChanged(G);
-              SeqChanged(G);
-            }
-            if (rec->obj->type == cObjectMap)
-              ExecutiveInvalidateMapDependents(G, old_name, name);
-
             found = true;
-          }
-          break;
-        case cExecSelection:
-          if(WordMatchExact(G, rec->name, old_name, ignore_case)) {
-            if(SelectorSetName(G, name, old_name)) {
-              ExecutiveDelete(G, name); /* just in case */
-              ExecutiveDelKey(I, rec);
-              UtilNCopy(rec->name, name, WordLength);
-              ExecutiveAddKey(I, rec);
-              found = true;
-              OrthoDirty(G);
-            }
-          }
-          break;
-        }
-      }
-      if(!found)
-        ok = false;
-      else {
-        rec = NULL;
-        int old_name_len = strlen(old_name);
-        int new_name_len = strlen(name);
-        ObjectNameType childname;
-        UtilNCopy(childname, name, sizeof(ObjectNameType));
-        while(ListIterate(I->Spec, rec, next)) {
-          if(WordMatchExact(G, rec->group_name, old_name, ignore_case)) {
-            UtilNCopy(rec->group_name, name, WordLength);
-            // rename group members for group_auto_mode
-            if (strncmp(rec->name, old_name, old_name_len) == 0 && rec->name[old_name_len] == '.') {
-              UtilNCopy(childname + new_name_len, rec->name + old_name_len, sizeof(ObjectNameType) - new_name_len);
-              ExecutiveSetName(G, rec->name, childname);
-            }
+            OrthoDirty(G);
           }
         }
-        ExecutiveInvalidateGroups(G, false);
+        break;
       }
     }
+    if(!found)
+      return pymol::make_error("Could not find object named ", name);
+    else {
+      rec = NULL;
+      int old_name_len = strlen(old_name);
+      int new_name_len = strlen(name);
+      ObjectNameType childname;
+      UtilNCopy(childname, name, sizeof(ObjectNameType));
+      while(ListIterate(I->Spec, rec, next)) {
+        if(WordMatchExact(G, rec->group_name, old_name, ignore_case)) {
+          UtilNCopy(rec->group_name, name, WordLength);
+          // rename group members for group_auto_mode
+          if (strncmp(rec->name, old_name, old_name_len) == 0 && rec->name[old_name_len] == '.') {
+            UtilNCopy(childname + new_name_len, rec->name + old_name_len, sizeof(ObjectNameType) - new_name_len);
+            ExecutiveSetName(G, rec->name, childname);
+          }
+        }
+      }
+      ExecutiveInvalidateGroups(G, false);
+    }
   }
-  return ok;
+  return {};
 }
 
 

@@ -1326,20 +1326,12 @@ static PyObject *CmdSetSession(PyObject * self, PyObject * args)
 static PyObject *CmdSetName(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
   char *str1, *str2;
-  ok = PyArg_ParseTuple(args, "Oss", &self, &str1, &str2);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveSetName(G, str1, str2);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Oss", &self, &str1, &str2);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveSetName(G, str1, str2);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdGetBondPrint(PyObject * self, PyObject * args)

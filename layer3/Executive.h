@@ -538,7 +538,7 @@ int ExecutiveIterateObjectMolecule(PyMOLGlobals * G, ObjectMolecule ** obj,
 int ExecutiveSetObjectColor(PyMOLGlobals * G, const char *name, const char *color, int quiet);
 int ExecutiveGetObjectColorIndex(PyMOLGlobals * G, const char *name);
 int ExecutiveSetOnOffBySele(PyMOLGlobals * G, const char *name, int onoff);
-int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_name);
+pymol::Result<> ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_name);
 int ExecutiveSetDrag(PyMOLGlobals * G, const char *name, int quiet,int mode);
 int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int log);
 int ExecutiveGetActiveSeleName(PyMOLGlobals * G, std::string& name, int create_new, int log);
