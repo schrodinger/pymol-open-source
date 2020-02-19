@@ -5976,8 +5976,8 @@ pymol::Result<> ExecutiveSymmetryCopy(PyMOLGlobals* G, const char* source_name,
   return {};
 }
 
-int ExecutiveSmooth(PyMOLGlobals * G, const char *selection, int cycles,
-                    int window, int first, int last, int ends, int quiet)
+pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* selection,
+    int cycles, int window, int first, int last, int ends, int quiet)
 {
   SelectorTmp tmpsele1(G, selection);
   int sele = tmpsele1.getIndex();
@@ -5991,7 +5991,6 @@ int ExecutiveSmooth(PyMOLGlobals * G, const char *selection, int cycles,
   int a, b, c, d, st, cnt;
   float i_cnt;
   int n_atom;
-  int ok = true;
   int backward;
   int forward;
   int range, offset;
@@ -6191,10 +6190,9 @@ int ExecutiveSmooth(PyMOLGlobals * G, const char *selection, int cycles,
       }
     }
   } else {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      " ExecutiveSmooth: selection not found\n" ENDFB(G);
+    return pymol::make_error("Selection not found");
   }
-  return (ok);
+  return {};
 }
 
 

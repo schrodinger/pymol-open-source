@@ -1261,24 +1261,14 @@ static PyObject *CmdGetSymmetry(PyObject * self, PyObject * args)
 static PyObject *CmdSmooth(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
-  char *str1;
-  int int1, int2, int3, int4, int5, int6;
-  ok =
-    PyArg_ParseTuple(args, "Osiiiiii", &self, &str1, &int1, &int2, &int3, &int4, &int5,
-                     &int6);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    if(ok)
-      ok = ExecutiveSmooth(G, str1, int1, int2, int3, int4, int5, int6);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  char *sele;
+  int cycles, window, first, last, ends, quiet;
+  API_SETUP_ARGS(G, self, args, "Osiiiiii", &self, &sele, &cycles, &window,
+      &first, &last, &ends, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveSmooth(G, sele, cycles, window, first, last, ends, quiet);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdGetSession(PyObject * self, PyObject * args)
