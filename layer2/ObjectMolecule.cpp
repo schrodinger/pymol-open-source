@@ -9730,20 +9730,6 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       FreeP(vt);
       break;
-    case OMOP_SetGeometry:
-      for(a = 0; a < I->NAtom; a++) {
-        s = I->AtomInfo[a].selEntry;
-        if(SelectorIsMember(G, s, sele)) {
-          ai = I->AtomInfo + a;
-          ai->geom = op->i1;
-          ai->valence = op->i2;
-          ai->chemFlag = true;
-          op->i3++;
-          hit_flag = true;
-          break;
-        }
-      }
-      break;
     case OMOP_OnOff:
       for(a = 0; a < I->NAtom; a++) {
         s = I->AtomInfo[a].selEntry;

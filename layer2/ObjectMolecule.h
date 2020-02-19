@@ -518,4 +518,5 @@ template <typename V> void SettingSet(int index, V value, ObjectMolecule * I, in
 std::unique_ptr<int[]> LoadTrajSeleHelper(
     const ObjectMolecule* obj, CoordSet* cs, const char* selection);
 
+int ObjectMoleculeSetGeometry(PyMOLGlobals* G, ObjectMolecule* I, int sele, int geom, int valence);
 #endif

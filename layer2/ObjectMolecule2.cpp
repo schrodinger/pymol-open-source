@@ -4089,3 +4089,23 @@ int ObjectMoleculeSort(ObjectMolecule * I)
   }
   return ok;
 }
+
+int ObjectMoleculeSetGeometry(
+    PyMOLGlobals* G, ObjectMolecule* I, int sele, int geom, int valence)
+{
+  int count = 0;
+  for (int a = 0; a < I->NAtom; ++a) {
+    auto s = I->AtomInfo[a].selEntry;
+
+    if(SelectorIsMember(G, s, sele)) {
+      auto& ai = I->AtomInfo[a];
+      ai.geom = geom;
+      ai.valence = valence;
+      ai.chemFlag = true;
+      count++;
+      break;
+    }
+  }
+  return count;
+}
+

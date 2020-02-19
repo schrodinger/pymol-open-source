@@ -7108,21 +7108,13 @@ static PyObject *CmdReplace(PyObject * self, PyObject * args)
 static PyObject *CmdSetGeometry(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int i1, i2;
-  char *str1;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Osii", &self, &str1, &i1, &i2);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveSetGeometry(G, str1, i1, i2);   /* TODO STATUS */
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  int geom, valence;
+  char *sele;
+  API_SETUP_ARGS(G, self, args, "Osii", &self, &sele, &geom, &valence);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveSetGeometry(G, sele, geom, valence);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdAttach(PyObject * self, PyObject * args)

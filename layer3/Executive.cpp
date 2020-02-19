@@ -299,6 +299,11 @@ static bool SpecRecIsEnabled(const SpecRec * rec) {
   return !rec;
 }
 
+static bool ExecutiveIsObjectType(const SpecRec& rec, int cObjectType)
+{
+  return rec.type == cExecObject && rec.obj->type == cObjectType;
+}
+
 /* ======================================================= */
 
 static void ReportEnabledChange(PyMOLGlobals * G, SpecRec *rec){
@@ -7006,27 +7011,29 @@ int ExecutiveSculptDeactivate(PyMOLGlobals * G, const char *name)
 
 
 /*========================================================================*/
-int ExecutiveSetGeometry(PyMOLGlobals * G, const char *s1, int geom, int valence)
+pymol::Result<> ExecutiveSetGeometry(
+    PyMOLGlobals* G, const char* sele, int geom, int valence)
 {
-  SelectorTmp tmpsele1(G, s1);
-  int sele1 = tmpsele1.getIndex();
+  SelectorTmp s(G, sele);
+  int seleIdx = s.getIndex();
 
-  ObjectMoleculeOpRec op1;
-  int ok = false;
-
-  if(sele1 >= 0) {
-    ObjectMoleculeOpRecInit(&op1);
-    op1.code = OMOP_SetGeometry;
-    op1.i1 = geom;
-    op1.i2 = valence;
-    op1.i3 = 0;
-    ExecutiveObjMolSeleOp(G, sele1, &op1);
-    if(op1.i3)
-      ok = true;
-  } else {
-    ErrMessage(G, "SetGeometry", "Invalid selection.");
+  if(seleIdx < 0) {
+    return pymol::make_error("Invalid selection");
   }
-  return (ok);
+
+  int count = 0;
+  auto recs = pymol::make_list_adapter(G->Executive->Spec);
+  for (auto& rec : recs) {
+    auto obj = ExecutiveIsObjectType(rec, cObjectMolecule) ? rec.obj : nullptr;
+    if(obj) {
+      count += ObjectMoleculeSetGeometry(
+        G, static_cast<ObjectMolecule*>(obj), seleIdx, geom, valence);
+    }
+  }
+  if (count == 0) {
+    return pymol::make_error("Empty selection.");
+  }
+  return {};
 }
 
 
