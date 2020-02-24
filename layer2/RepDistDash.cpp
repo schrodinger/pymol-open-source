@@ -331,7 +331,7 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 
 Rep *RepDistDashNew(DistSet * ds, int state)
 {
-  PyMOLGlobals *G = ds->State.G;
+  PyMOLGlobals *G = ds->G;
   int a;
   int n;
   float *v, *v1, *v2, d[3];

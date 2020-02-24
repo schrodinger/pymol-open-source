@@ -230,7 +230,7 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
 
 Rep *RepDistLabelNew(DistSet * ds, int state)
 {
-  PyMOLGlobals *G = ds->State.G;
+  PyMOLGlobals *G = ds->G;
   int a;
   int n = 0;
   float *v, *v1, *v2, *v3, d[3], di;
@@ -280,15 +280,9 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
     SettingGet_i(G, NULL, I->Obj->Setting, cSetting_label_outline_color);
 
   if(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex) {
-    float *lc;
     ds->NLabel = (ds->NIndex / 2 + ds->NAngleIndex / 5 + ds->NDihedralIndex / 6);
 
-    if(!ds->LabCoord) {         /* store label coordinates */
-      ds->LabCoord = VLAlloc(float, 3 * ds->NLabel);
-    } else {
-      VLACheck(ds->LabCoord, float, 3 * ds->NLabel);
-    }
-    CHECKOK(ok, ds->LabCoord);
+    ds->LabCoord.reserve(3 * ds->NLabel);
       
     if(ok && ds->LabPos) {            /* make sure this VLA covers all labels */
       VLACheck(ds->LabPos, LabPosType, ds->NLabel);
@@ -310,7 +304,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
     CHECKOK(ok, I->L);
 
     n = 0;
-    lc = ds->LabCoord;
+    auto* lc = ds->LabCoord.data();
 
     if(ds->NIndex) {
       int digits = SettingGet_i(G, NULL, ds->Obj->Setting,

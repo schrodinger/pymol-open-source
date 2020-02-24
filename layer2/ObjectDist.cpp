@@ -323,7 +323,7 @@ ObjectDist::ObjectDist(PyMOLGlobals * G) : CObject(G)
 {
   auto I = this;
   I->type = cObjectMeasurement;
-  I->DSet = VLACalloc(DistSet *, 10);  /* auto-zero */
+  I->DSet.reserve(10);  /* auto-zero */
   I->Color = ColorGetIndex(G, "dash");
 }
 
@@ -334,10 +334,7 @@ static void ObjectDistReset(PyMOLGlobals * G, ObjectDist * I)
 	/* This wipes out all the distance sets and clears the state */
   int a;
   for(a = 0; a < I->NDSet; a++)
-    if(I->DSet[a]) {
-      I->DSet[a]->fFree();
-      I->DSet[a] = NULL;
-    }
+    DeleteP(I->DSet[a]);
   I->NDSet = 0;
 }
 
@@ -656,9 +653,6 @@ ObjectDist::~ObjectDist()
 {
   auto I = this;
   for(int a = 0; a < I->NDSet; a++)
-    if(I->DSet[a]) {
-      I->DSet[a]->fFree();
-      I->DSet[a] = NULL;
-    }
+    DeleteP(I->DSet[a]);
   VLAFreeP(I->DSet);
 }

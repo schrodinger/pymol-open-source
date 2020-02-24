@@ -17,18 +17,17 @@ Z* -------------------------------------------------------------------
 #ifndef _H_ObjectDist
 #define _H_ObjectDist
 
-#include"PyMOLObject.h"
-#include"AtomInfo.h"
-#include"Vector.h"
-#include"Color.h"
+#include "PyMOLObject.h"
+#include "vla.h"
+
+struct DistSet;
 
 /* NOTE: "Dist" names & symbols should be updated to "Measurement" */
 
 struct ObjectDist : public CObject {
-  /* Array of pointers to DistSets */
-  struct DistSet **DSet = nullptr;
-  /* number of dist sets */
+  pymol::vla<DistSet*> DSet;
   int NDSet = 0;
+
   ObjectDist(PyMOLGlobals* G);
   ~ObjectDist();
 

@@ -46,6 +46,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"Wizard.h"
 #include"CGO.h"
+#include"ObjectDist.h"
 #include"ObjectGadget.h"
 #include"Seq.h"
 #include"Menu.h"

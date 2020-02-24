@@ -314,7 +314,7 @@ static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
 
 Rep *RepDihedralNew(DistSet * ds, int state)
 {
-  PyMOLGlobals *G = ds->State.G;
+  PyMOLGlobals *G = ds->G;
   int a;
   int n;
   float *v;

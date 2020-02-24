@@ -10614,7 +10614,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   int idx1, idx2;
   int a;
   int nv = 0;
-  float *vv = NULL, *vv0, *vv1;
+  float *vv0, *vv1;
   float dist_sum = 0.0;
   int dist_cnt = 0;
   int s;
@@ -10626,7 +10626,6 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   int bonds_only = 0;
   int from_proton = SettingGetGlobal_b(G, cSetting_h_bond_from_proton);
   AtomInfoType *h_ai;
-  CMeasureInfo *atom1Info=NULL;
 
   /* if we're creating hydrogen bonds, then set some distance cutoffs */
   switch (mode) {
@@ -10647,13 +10646,11 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   if(!ds) {
     ds = DistSetNew(G);
   } else {
-    vv = ds->Coord;  /* vertices */
     nv = ds->NIndex; /* number of vertices */
   }
-  /* make sure we have memory to hold the vertex info for this distance set */
-  if(!vv) {
-    vv = VLAlloc(float, 10);
-  }
+
+  auto& vv = ds->Coord;
+  vv.reserve(10);
 
   /* update states: if the two are the same, update that one state, else update all states */
   if((state1 < 0) || (state2 < 0) || (state1 != state2)) {
@@ -10757,7 +10754,6 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
 
   /* for each state */
   for(a = 0; a < c; a++) {
-    atom1Info = NULL;
     /* get the interstate atom identifier for the two atoms to distance */
     a1 = vla[a * 2];
     a2 = vla[a * 2 + 1];
@@ -10850,7 +10846,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
 
 		/* Insert DistInfo records for updating distances */
 		/* Init/Add the elem to the DistInfo list */
-                atom1Info = pymol::malloc<CMeasureInfo>(1);
+                ds->MeasureInfo.emplace_front();
+                auto* atom1Info = &ds->MeasureInfo.front();
 
                 // TH
                 atom1Info->id[0] = AtomInfoCheckUniqueID(G, ai1);
@@ -10860,7 +10857,6 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
 		atom1Info->state[0] = state1;  /* state1 of sel1 */
 		atom1Info->state[1] = state2;
 		atom1Info->measureType = cRepDash; /* DISTANCE-dash */
-		ListPrepend(ds->MeasureInfo, atom1Info, next);
 
 		/* we have a distance we want to keep */
                 dist_cnt++;
@@ -10914,18 +10910,17 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
                              int mode, float *angle_sum, int *angle_cnt)
 {
   CSelector *I = G->Selector;
-  float *vv = NULL;
   int nv = 0;
   std::vector<bool> coverage;
 
   if(!ds) {
     ds = DistSetNew(G);
   } else {
-    vv = ds->AngleCoord;
     nv = ds->NAngleIndex;
   }
-  if(!vv)
-    vv = VLAlloc(float, 10);
+
+  auto& vv = ds->AngleCoord;
+  vv.reserve(10);
 
   if((state1 < 0) || (state2 < 0) || (state3 < 0) || (state1 != state2)
      || (state1 != state3)) {
@@ -11016,8 +11011,6 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
         float d1[3], d2[3];
         float *v1, *v2, *v3, *vv0;
 
-        CMeasureInfo *atom1Info=NULL;
-
         for(i1 = 0; i1 < n1; i1++) {
           a1 = list1[i1];
           at1 = I->Table[a1].atom;
@@ -11048,7 +11041,6 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
                         bonded12 = ObjectMoleculeAreAtomsBonded2(obj1, at1, obj2, at2);
 
                         for(i3 = 0; i3 < n3; i3++) {
-			  atom1Info = NULL;
                           a3 = list3[i3];
 
                           if( (a1 != a2 || state1 != state2) &&
@@ -11085,7 +11077,8 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
 
 				      /* Insert DistInfo records for updating distances */
 				      /* Init/Add the elem to the DistInfo list */
-				      atom1Info = pymol::malloc<CMeasureInfo>(1);
+                                      ds->MeasureInfo.emplace_front();
+                                      auto* atom1Info = &ds->MeasureInfo.front();
 
                                       // TH
                                       atom1Info->id[0] = AtomInfoCheckUniqueID(G, obj1->AtomInfo + at1);
@@ -11097,7 +11090,6 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
 				      atom1Info->state[1] = state2;
 				      atom1Info->state[2] = state3;
 				      atom1Info->measureType = cRepAngle;
-				      ListPrepend(ds->MeasureInfo, atom1Info, next);
 
                                       angle = get_angle3f(d1, d2);
 
@@ -11160,23 +11152,20 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
                                 int mode, float *angle_sum, int *angle_cnt)
 {
   CSelector *I = G->Selector;
-  float *vv = NULL;
   int nv = 0;
   std::vector<bool> coverage14;
   std::vector<bool> coverage23;
   ObjectMolecule *just_one_object = NULL;
   int just_one_atom[4] = { -1, -1, -1, -1 };
 
-  CMeasureInfo *atom1Info;
-
   if(!ds) {
     ds = DistSetNew(G);
   } else {
-    vv = ds->DihedralCoord;
     nv = ds->NDihedralIndex;
   }
-  if(!vv)
-    vv = VLAlloc(float, 10);
+
+  auto& vv = ds->DihedralCoord;
+  vv.reserve(10);
 
   if((state1 < 0) || (state2 < 0) || (state3 < 0) || (state4 < 0) ||
      (state1 != state2) || (state1 != state3) || (state1 != state4)) {
@@ -11376,7 +11365,6 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
                                     ObjectMoleculeAreAtomsBonded2(obj2, at2, obj3, at3);
                                   if(!mode || ((mode == 1) && bonded23))
                                     for(i4 = 0; i4 < n4; i4++) {
-				      atom1Info = NULL;
                                       a4 = list4[i4];
 
                                       if((a1 != a2) && (a1 != a3) && (a1 != a4)
@@ -11415,7 +11403,8 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
 
 						  /* Insert DistInfo records for updating distances */
 						  /* Init/Add the elem to the DistInfo list */
-						  atom1Info = pymol::malloc<CMeasureInfo >(1);
+                                                  ds->MeasureInfo.emplace_front();
+                                                  auto* atom1Info = &ds->MeasureInfo.front();
 
                                                   // TH
                                                   atom1Info->id[0] = AtomInfoCheckUniqueID(G, obj1->AtomInfo + at1);
@@ -11431,8 +11420,6 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
 						  atom1Info->state[3] = state4;
 
 						  atom1Info->measureType = cRepDihedral;
-
-						  ListPrepend(ds->MeasureInfo, atom1Info, next);
 
                                                   angle = get_dihedral3f(v1, v2, v3, v4);
 

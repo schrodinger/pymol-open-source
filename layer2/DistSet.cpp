@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"RepAngle.h"
 #include"RepDihedral.h"
 #include"PConv.h"
+#include"ObjectDist.h"
 #include"ObjectMolecule.h"
 #include"ListMacros.h"
 #include"Selector.h"
@@ -59,7 +60,7 @@ int DistSetMoveLabel(DistSet * I, int at, float *v, int mode)
   if(a1 >= 0) {
 
     if(!I->LabPos)
-      I->LabPos = VLACalloc(LabPosType, I->NLabel);
+      I->LabPos.resize(I->NLabel);
     if(I->LabPos) {
       result = 1;
       lp = I->LabPos + a1;
@@ -91,33 +92,33 @@ int DistSetMoveLabel(DistSet * I, int at, float *v, int mode)
  */
 int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
 {
-  PyMOLGlobals * G = I->State.G;
+  PyMOLGlobals * G = I->G;
 
   int i, N, rVal = 0;
-  CMeasureInfo * memb = NULL;
   float * varDst;
 
   PRINTFD(G, FB_DistSet)
     " DistSet: adjusting distance vertex\n" ENDFD;
 
-  for(memb = I->MeasureInfo; memb; memb = memb->next) {
+  for (auto& listitem : I->MeasureInfo) {
+    auto* memb = &listitem;
     varDst = NULL;
 
     switch(memb->measureType) {
     case cRepDash:
       N = 2;
       if(memb->offset < I->NIndex + 1)
-        varDst = I->Coord;
+        varDst = I->Coord.data();
       break;
     case cRepAngle:
       N = 3;
       if(memb->offset < I->NAngleIndex + 2)
-        varDst = I->AngleCoord;
+        varDst = I->AngleCoord.data();
       break;
     case cRepDihedral:
       N = 4;
       if(memb->offset < I->NDihedralIndex + 3)
-        varDst = I->DihedralCoord;
+        varDst = I->DihedralCoord.data();
       break;
     }
 
@@ -148,18 +149,19 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
   return rVal;
 }
 
-static CMeasureInfo * MeasureInfoListFromPyList(PyMOLGlobals * G, PyObject * list)
+static decltype(DistSet::MeasureInfo) MeasureInfoListFromPyList(
+    PyMOLGlobals* G, PyObject* list)
 {
   int i, ll, N;
-  CMeasureInfo *item = NULL, *I= NULL;
+  decltype(DistSet::MeasureInfo) I;
   CPythonVal *val, *tmp;
 
   ok_assert(1, list && PyList_Check(list));
   ll = PyList_Size(list);
 
   for (i = 0; i < ll; i++) {
-    ok_assert(1, item = pymol::malloc<CMeasureInfo>(1));
-    ListPrepend(I, item, next);
+    I.emplace_front();
+    auto* item = &I.front();
 
     val = CPythonVal_PyList_GetItem(G, list, i);
     if(val && PyList_Check(val) &&
@@ -188,13 +190,15 @@ ok_except1:
   return I;
 }
 
-static PyObject *MeasureInfoListAsPyList(CMeasureInfo * I)
+static PyObject* MeasureInfoListAsPyList(
+    decltype(DistSet::MeasureInfo) const& list)
 {
   int N;
   PyObject *item, *result = PyList_New(0);
   ok_assert(1, result);
 
-  while (I) {
+  for (auto& listitem : list) {
+    auto const* I = &listitem;
     switch(I->measureType) {
       case cRepDash: N = 2; break;
       case cRepAngle: N = 3; break;
@@ -209,7 +213,6 @@ static PyObject *MeasureInfoListAsPyList(CMeasureInfo * I)
 
     PyList_Append(result, item);
     Py_DECREF(item);
-    I = I->next;
   }
 
 ok_except1:
@@ -222,13 +225,9 @@ int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
   int ll = 0;
   CPythonVal *val;
 
-  if(*cs) {
-    (*cs)->fFree();
-    *cs = NULL;
-  }
+  DeleteP(*cs);
 
-  if(list == Py_None) {         /* allow None for CSet */
-    *cs = NULL;
+  if(CPythonVal_IsNone(list)) {         /* allow None for CSet */
     return true;
   }
 
@@ -273,7 +272,7 @@ ok_except2:
   *cs = I;
   return true;
 ok_except1:
-  I->fFree();
+  delete I;
   return false;
 }
 
@@ -311,10 +310,9 @@ PyObject *DistSetAsPyList(DistSet * I)
 /*========================================================================*/
 int DistSetGetExtent(DistSet * I, float *mn, float *mx)
 {
-  float *v;
   int a;
   int c;
-  v = I->Coord;
+  const float* v = I->Coord.data();
   for(a = 0; a < I->NIndex; a++) {
     min3f(v, mn, mn);
     max3f(v, mx, mx);
@@ -364,12 +362,12 @@ int DistSetGetExtent(DistSet * I, float *mn, float *mx)
  */
 void DistSet::invalidateRep(int type, int level)
 {
-  int a = 0, a_stop = NRep;
+  int a = 0, a_stop = getNRep();
   bool changed = false;
 
   /* if representation type is specified, adjust it */
   if(type >= 0) {
-    if(type >= NRep)
+    if(type >= getNRep())
       return;
 
     a = type;
@@ -385,7 +383,7 @@ void DistSet::invalidateRep(int type, int level)
   }
 
   if (changed)
-    SceneChanged(State.G);
+    SceneChanged(G);
 }
 
 
@@ -394,33 +392,33 @@ void DistSet::update(int state)
 {
   DistSet * I = this;
   /* status bar 0% */
-  OrthoBusyFast(I->State.G, 0, I->NRep);
+  OrthoBusyFast(G, 0, I->getNRep());
   if(!I->Rep[cRepDash]) {
     /* query the dist set looking for the selected atoms for this distance,
      * then update the *coords */
     I->Rep[cRepDash] = RepDistDashNew(I,state);
-    SceneInvalidate(I->State.G);
+    SceneInvalidate(G);
   }
   if(!I->Rep[cRepLabel]) {
     /* query the dist set looking for the selected atoms for this distance,
      * then update the *coords */
     I->Rep[cRepLabel] = RepDistLabelNew(I, state);
-    SceneInvalidate(I->State.G);
+    SceneInvalidate(G);
   }
   if(!I->Rep[cRepAngle]) {
     /* query the angle set looking for the selected atoms for this distance,
      * then update the *coords */
     I->Rep[cRepAngle] = RepAngleNew(I, state);
-    SceneInvalidate(I->State.G);
+    SceneInvalidate(G);
   }
   if(!I->Rep[cRepDihedral]) {
     /* query the dihedral set looking for the selected atoms for this distance,
      * then update the *coords */
     I->Rep[cRepDihedral] = RepDihedralNew(I, state);
-    SceneInvalidate(I->State.G);
+    SceneInvalidate(G);
   }
   /* status bar 100% */
-  OrthoBusyFast(I->State.G, 1, 1);
+  OrthoBusyFast(G, 1, 1);
 }
 
 
@@ -430,10 +428,8 @@ void DistSet::render(RenderInfo * info)
   DistSet * I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  int a;
   ::Rep *r;
-  for(a = 0; a < I->NRep; a++)
-  {
+  for (int a = 0; a < I->getNRep(); a++) {
     if(!GET_BIT(I->Obj->visRep, a))
       continue;
     if(!I->Rep[a]) {
@@ -457,12 +453,12 @@ void DistSet::render(RenderInfo * info)
         r = I->Rep[a];
         if(ray || pick) {
           if(ray)
-            ray->color3fv(ColorGet(I->State.G, I->Obj->Color));
+            ray->color3fv(ColorGet(G, I->Obj->Color));
           r->fRender(r, info);
         } else {
           ObjectUseColor((CObject *) I->Obj);
           // now all filtering for passes happen in ObjectDistRender
-              r->fRender(r, info);
+          r->fRender(r, info);
         }
       }
   }
@@ -470,64 +466,16 @@ void DistSet::render(RenderInfo * info)
 
 
 /*========================================================================*/
-DistSet *DistSetNew(PyMOLGlobals * G)
+DistSet::DistSet(PyMOLGlobals* G)
+    : CObjectState(G)
 {
-  int a;
-  OOCalloc(G, DistSet);
-  ObjectStateInit(G, &I->State);
-  I->NIndex = 0;
-  I->Coord = NULL;
-  I->Rep = VLAlloc(Rep *, cRepCnt);
-  I->NRep = cRepCnt;
-  I->LabPos = NULL;
-  I->LabCoord = NULL;
-  I->AngleCoord = NULL;
-  I->NAngleIndex = 0;
-  I->DihedralCoord = NULL;
-  I->NDihedralIndex = 0;
-  I->NLabel = 0;
-  for(a = 0; a < I->NRep; a++)
-    I->Rep[a] = NULL;
-  I->MeasureInfo = NULL;
-  return (I);
 }
-
 
 /*========================================================================*/
-#if 0
-static void DistSetStrip(DistSet * I)
+DistSet::~DistSet()
 {
-  int a;
-  for(a = 0; a < I->NRep; a++)
-    if(I->Rep[a])
-      I->Rep[a]->fFree(I->Rep[a]);
-  I->NRep = 0;
-}
-#endif
-
-void DistSet::fFree()
-{
-  DistSet * I = this;
-  int a;
-  CMeasureInfo * ptr, *target;
-  if(I) {
-    for(a = 0; a < I->NRep; a++)
-      if(I->Rep[a])
-	I->Rep[a]->fFree(I->Rep[a]);
-    VLAFreeP(I->AngleCoord);
-    VLAFreeP(I->DihedralCoord);
-    VLAFreeP(I->LabCoord);
-    VLAFreeP(I->LabPos);
-    VLAFreeP(I->Coord);
-    VLAFreeP(I->Rep);
-
-    ptr = I->MeasureInfo;
-    while((target = ptr)) {
-      ptr = target->next;
-      ListElemFree(target);
-    }
-
-      /* need to find and decrement the number of dist sets on the objects */
-    OOFreeP(I);
+  for (int a = 0; a < getNRep(); ++a) {
+    if (Rep[a])
+      Rep[a]->fFree(Rep[a]);
   }
 }
