@@ -267,7 +267,7 @@ void RenderImmediate_DoPreGL(PyMOLGlobals *G, int sphere_mode,
 
 void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info) {
 #ifndef PURE_OPENGL_ES_2
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   if (info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)))
     return;
   else {

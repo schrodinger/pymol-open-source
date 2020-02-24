@@ -538,7 +538,7 @@ static int RepValence(RepCylBond *I, CGO *cgo, bool s1, bool s2, bool isRamped,
 
 Rep *RepCylBondNew(CoordSet * cs, int state)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
   int a1, a2; // can be -1 for missing atoms
   int a;
@@ -1110,7 +1110,7 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
 
    */
 
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)))
     return;
   else {

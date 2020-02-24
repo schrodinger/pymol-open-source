@@ -2433,8 +2433,7 @@ int CartoonExtrudeDumbbell(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, int sampling
  * Get cartoon quality setting, adapt to number of atoms if -1
  */
 static int GetCartoonQuality(CoordSet * cs, int setting, int v1, int v2, int v3, int v4, int min_=3) {
-  int quality =
-    SettingGet_i(cs->State.G, cs->Setting, cs->Obj->Setting, setting);
+  int quality = SettingGet<int>(cs->G, cs->Setting, cs->Obj->Setting, setting);
 
   if (quality == -1) {
     int natom = cs->NIndex;
@@ -2456,7 +2455,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
                            const CCInOut *car,
                            int *seg, int *at, int *nuc_flag,
                            float *putty_vals, float alpha){
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   int ok = true;
   CGO *cgo;
   int contigFlag, contFlag, extrudeFlag, n_p;
@@ -3675,7 +3674,7 @@ void RepCartoonSmoothLoops(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs, 
 
 Rep *RepCartoonNew(CoordSet * cs, int state)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
   int *i, *sptr, *at, *seg, nAt, *sstype;
   CCInOut *car, *cc;

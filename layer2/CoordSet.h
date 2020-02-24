@@ -33,7 +33,13 @@ enum mmpymolx_prop_state_t {
   MMPYMOLX_PROP_STATE_USER,     // user-assigned (cmd.alter)
 };
 
-struct CoordSet {
+struct CoordSet : CObjectState {
+  enum {
+    NoPeriodicity = 0,
+    Orthogonal = 1,
+    Octahedral = 2,
+  };
+
   // methods (not fully refactored yet)
   void fFree();
 
@@ -69,7 +75,6 @@ struct CoordSet {
     return false;
   }
 
-  CObjectState State;
   ObjectMolecule *Obj = nullptr;
   pymol::vla<float> Coord;
   pymol::vla<int> IdxToAtm;
@@ -88,7 +93,7 @@ struct CoordSet {
   CSetting *Setting = nullptr;
   /* for periodic MD boxes -- may be merge into symmetry lattice later... */
   std::unique_ptr<CCrystal> PeriodicBox;
-  int PeriodicBoxType = 0;
+  int PeriodicBoxType = NoPeriodicity;
   int tmp_index = 0;                /* for saving */
 
   pymol::vla<LabPosType> LabPos;
@@ -133,10 +138,6 @@ struct CoordSet {
 };
 
 typedef void (*fUpdateFn) (CoordSet *, int);
-
-#define cCSet_NoPeriodicity 0
-#define cCSet_Orthogonal 1
-#define cCSet_Octahedral 2
 
 int BondInOrder(BondType * a, int b1, int b2);
 int BondCompare(BondType * a, BondType * b);
@@ -215,7 +216,7 @@ template <typename V> void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, V * out)
 
 // atom-state level setting
 template <typename V> void SettingSet(int index, V value, CoordSet *cs, int idx) {
-  auto& G = cs->State.G;
+  auto& G = cs->G;
   CoordSetCheckUniqueID(G, cs, idx);
   cs->has_atom_state_settings[idx] = true;
   SettingUniqueSet(G, cs->atom_state_setting_id[idx], index, value);
@@ -223,7 +224,7 @@ template <typename V> void SettingSet(int index, V value, CoordSet *cs, int idx)
 
 // object-state level setting
 template <typename V> void SettingSet(int index, V value, CoordSet *cs) {
-  SettingSet(cs->State.G, &cs->Setting, index, value);
+  SettingSet(cs->G, &cs->Setting, index, value);
 }
 
 // Rotates the ANISOU vector

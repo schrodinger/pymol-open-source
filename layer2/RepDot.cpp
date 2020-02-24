@@ -268,7 +268,7 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
      but also acting as our surface area computation routine.
      Modes: cRepDotNormal,cRepDotAreaType
    */
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
   int a, b, flag, h, k, l, i, j, c1;
   float *v, *v0, vdw, *vn;

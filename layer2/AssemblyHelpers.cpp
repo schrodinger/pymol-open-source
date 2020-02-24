@@ -26,7 +26,7 @@ CoordSet * CoordSetCopyFilterChains(
     if (chains_set.count(atInfo[other->IdxToAtm[idx]].segi) > 0)
       idxmap.push_back(idx);
 
-  CoordSet * cset = CoordSetNew(other->State.G);
+  CoordSet* cset = new CoordSet(other->G);
 
   cset->NIndex = idxmap.size();
   cset->Coord = pymol::vla<float>(cset->NIndex * 3);

@@ -49,7 +49,8 @@ void RepNonbondedFree(RepNonbonded * I)
 
 void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
 {
-  PyMOLGlobals *G = cs->State.G;
+#ifndef PURE_OPENGL_ES_2
+  PyMOLGlobals *G = cs->G;
   if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)))
     return;
   else {
@@ -108,6 +109,7 @@ void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
     if(!active)
       cs->Active[cRepNonbonded] = false;
   }
+#endif
 }
 
 static int RepNonbondedCGOGenerate(RepNonbonded * I, RenderInfo * info)
@@ -239,7 +241,7 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
 
 Rep *RepNonbondedNew(CoordSet * cs, int state)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   bool hasNonbondedAtoms = false;
   OOAlloc(G, RepNonbonded);
 

@@ -140,7 +140,7 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
 
 Rep *RepRibbonNew(CoordSet * cs, int state)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
   int a, b, a1, a2, c1, c2, *i, *s, *at, *seg, nAt, *atp;
   float *v, *v1, *v2, *v3;
@@ -563,7 +563,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
 #ifndef PURE_OPENGL_ES_2
   /* performance optimized to provide a simple C-alpha trace -- no smoothing */
 
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)))
     return;
   else {

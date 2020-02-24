@@ -72,7 +72,6 @@ struct ObjectMolecule : public CObject {
   pymol::vla<CoordSet*> DiscreteCSet;
   /* proposed, for storing uniform trajectory data more efficiently:
      int *UniformAtmToIdx, *UniformIdxToAtm;  */
-  int CurCSet = 0;                  /* Current state number */
   int SeleBase = 0;                 /* for internal usage by  selector & only valid during selection process */
   CSymmetry *Symmetry = 0;
   int *Neighbor = 0;
@@ -276,8 +275,6 @@ void ObjMolPairwisePurge(ObjMolPairwise * pairwise);
 #define ITERNEIGHBORATOMS(N, a, n, i) for(i = N[a] + 1; (n = N[i]) > -1; i += 2)
 #define ITERNEIGHBORBONDS(N, a, b, i) for(i = N[a] + 1; (b = N[i + 1]), N[i] > -1; i += 2)
 
-int ObjectMoleculeGetMatrix(ObjectMolecule * I, int state, double **history);
-int ObjectMoleculeSetMatrix(ObjectMolecule * I, int state, double *matrix);
 int ObjectMoleculeGetTopNeighbor(PyMOLGlobals * G,
                                  ObjectMolecule * I, int start, int excluded);
 

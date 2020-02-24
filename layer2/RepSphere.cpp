@@ -301,7 +301,7 @@ static void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj,
     float sphere_scale, int sphere_color, float transp,
     int *variable_alpha, float sphere_add)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   float at_transp = transp;
   int c1;
   float *v0, vc[3];
@@ -501,7 +501,7 @@ static void RepSphereSetNormalForSphere(RepSphere *I, MapType *map, float *v_tmp
 
 Rep *RepSphereNew(CoordSet * cs, int state)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
   int ok = true;
   int a, a1;

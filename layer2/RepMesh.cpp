@@ -560,7 +560,7 @@ int RepMeshSameVis(RepMesh * I, CoordSet * cs)
 static
 void RepMeshColor(RepMesh * I, CoordSet * cs)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   MapType *map;
   int a, i0, i, j, h, k, l, c1;
   float *v0, *vc;
@@ -700,7 +700,7 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
 
 Rep *RepMeshNew(CoordSet * cs, int state)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
   CoordSet *ccs;
   int a, b, c, d, h, k, l, *n;
@@ -1192,7 +1192,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
 int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
                           float probe_radius)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj = cs->Obj;
   int a, b, c, a1, a2, flag, i, h, k, l, j;
   int ok = true;

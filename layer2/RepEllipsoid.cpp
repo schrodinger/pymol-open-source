@@ -144,7 +144,7 @@ static bool is_sidechainhelper_hidden(PyMOLGlobals * G, const AtomInfoType * ai)
 
 Rep *RepEllipsoidNew(CoordSet * cs, int state)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
   int ok = true;
 
@@ -212,7 +212,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
       float last_alpha = 1.0F;
 
       double *csmatrix = SettingGet_i(G, cs->Setting, obj->Setting,
-            cSetting_matrix_mode) > 0 ? NULL : cs->State.Matrix.data();
+            cSetting_matrix_mode) > 0 ? NULL : cs->Matrix.data();
 
       for(a = 0; a < cs->NIndex; a++) {
         a1 = cs->IdxToAtm[a];

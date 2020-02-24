@@ -2189,7 +2189,7 @@ static int RepSurfaceSameColor(RepSurface * I, CoordSet * cs)
 static
 void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   MapType *map = NULL, *ambient_occlusion_map = NULL;
   int a, i0, i, j, c1;
   float *v0, *vc, *va;
@@ -4093,7 +4093,7 @@ static int RepSurfaceRemoveAtomsNotWithinCutoff(PyMOLGlobals *G,
 Rep *RepSurfaceNew(CoordSet * cs, int state)
 {
   int ok = true;
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj = cs->Obj;
   OOCalloc(G, RepSurface);
   CHECKOK(ok, I);

@@ -241,7 +241,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
   AtomInfoType* ai = atInfo.data();
 
 #ifdef _PYMOL_IP_EXTRAS
-  atInfo->oldid = -1;
+  ai->oldid = -1;
 #endif
 
   if(state >= 0) {              /* specific state */
@@ -3452,14 +3452,26 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     if(I->CSTmpl)
       I->CSTmpl->Obj = I;
   }
-  if(ok)
-    ok = ObjectMoleculeBondFromPyList(I, PyList_GetItem(list, 6));
-  if(ok)
-    ok = ObjectMoleculeAtomFromPyList(I, PyList_GetItem(list, 7));
-  if(ok)
-    I->Symmetry = SymmetryNewFromPyList(G, PyList_GetItem(list, 10));
-  if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 11), &I->CurCSet);
+  if(ok){
+    CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 6);
+    ok = ObjectMoleculeBondFromPyList(I, val);
+    CPythonVal_Free(val);
+  }
+  if (!ok && I)
+    I->NBond = 0;
+  if(ok){
+    CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 7);
+    ok = ObjectMoleculeAtomFromPyList(I, val);
+    CPythonVal_Free(val);
+  }
+  if (!ok && I)
+    I->NAtom = 0;
+  if(ok){
+    CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 10);
+    I->Symmetry = SymmetryNewFromPyList(G, val);
+    CPythonVal_Free(val);
+  }
+  /* 11 was CurCSet */
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 12), &I->BondCounter);
   if(ok)
@@ -3500,7 +3512,7 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
   PyList_SetItem(result, 8, PyInt_FromLong(I->DiscreteFlag));
   PyList_SetItem(result, 9, PyInt_FromLong(I->DiscreteFlag ? I->NAtom : 0 /* NDiscrete */));
   PyList_SetItem(result, 10, SymmetryAsPyList(I->Symmetry));
-  PyList_SetItem(result, 11, PyInt_FromLong(I->CurCSet));
+  PyList_SetItem(result, 11, PyInt_FromLong(0 /* CurCSet */));
   PyList_SetItem(result, 12, PyInt_FromLong(I->BondCounter));
   PyList_SetItem(result, 13, PyInt_FromLong(I->AtomCounter));
 

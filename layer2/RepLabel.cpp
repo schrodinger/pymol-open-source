@@ -1503,7 +1503,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
 
 Rep *RepLabelNew(CoordSet * cs, int state)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
   int a, a1, c1;
   float *v, *v0;

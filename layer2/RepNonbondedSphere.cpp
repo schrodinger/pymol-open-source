@@ -109,7 +109,7 @@ ok_except1:
 
 Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj = cs->Obj;
 
   unsigned char *active = NULL;

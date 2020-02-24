@@ -273,7 +273,7 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
      - transparency 
 
    */
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)))
     return;
   else {
@@ -597,7 +597,7 @@ static int RepWireZeroOrderBond(CGO *cgo, bool s1, bool s2,
 
 Rep *RepWireBondNew(CoordSet * cs, int state)
 {
-  PyMOLGlobals *G = cs->State.G;
+  PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj = cs->Obj;
   int a1, a2;
   unsigned int b1, b2;

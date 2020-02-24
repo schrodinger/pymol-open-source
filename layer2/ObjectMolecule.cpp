@@ -479,44 +479,6 @@ char *ObjectMolecule::getCaption(char * ch, int len) const
 }
 
 
-int ObjectMoleculeGetMatrix(ObjectMolecule * I, int state, double **history)
-{
-  int ok = true;
-  if((state < 0) || (state >= I->NCSet)) {
-    /* nonsensical -- or should get the TTT if state<0 */
-    ok = false;
-  } else {
-    CoordSet *cs = I->CSet[state];
-    if(!cs)
-      ok = false;
-    else {
-      if(cs->State.Matrix.empty()) {
-        (*history) = nullptr;
-      } else {
-          (*history) = cs->State.Matrix.data();    /* note -- can be NULL */
-      }
-    }
-  }
-  return ok;
-}
-
-int ObjectMoleculeSetMatrix(ObjectMolecule * I, int state, double *matrix)
-{
-  int ok = true;
-  if((state < 0) || (state >= I->NCSet)) {
-    /* nonsensical  -- or should set the TTT if state<0 */
-    ok = false;
-  } else {
-    CoordSet *cs = I->CSet[state];
-    if(!cs)
-      ok = false;
-    else {
-      ObjectStateSetMatrix(&cs->State, matrix);
-    }
-  }
-  return ok;
-}
-
 #define MAX_BOND_DIST 50
 
 /* find sets of atoms with identical skeletons */
@@ -818,16 +780,16 @@ void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, const float 
       for(a = 0; a < I->NCSet; a++) {
         cs = I->CSet[a];
         if(cs)
-          ObjectStateLeftCombineMatrixR44d(&cs->State, dbl_matrix);
+          ObjectStateLeftCombineMatrixR44d(cs, dbl_matrix);
       }
     } else if(state < I->NCSet) {       /* single state */
-      cs = I->CSet[(I->CurCSet = state % I->NCSet)];
+      cs = I->CSet[state];
       if(cs)
-        ObjectStateLeftCombineMatrixR44d(&cs->State, dbl_matrix);
+        ObjectStateLeftCombineMatrixR44d(cs, dbl_matrix);
     } else if(I->NCSet == 1) {  /* static singleton state */
       cs = I->CSet[0];
       if(cs && SettingGet_b(I->G, I->Setting, NULL, cSetting_static_singletons)) {
-        ObjectStateLeftCombineMatrixR44d(&cs->State, dbl_matrix);
+        ObjectStateLeftCombineMatrixR44d(cs, dbl_matrix);
       }
     }
   }
@@ -1111,7 +1073,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
               p = nextline(p);
             b = 0;
 
-            if(cs->PeriodicBoxType != cCSet_NoPeriodicity) {
+            if(cs->PeriodicBoxType != CoordSet::NoPeriodicity) {
               /* read periodic box */
 
               c = 0;
@@ -1156,7 +1118,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                 b = 0;
               }
 
-              if(cs->PeriodicBoxType == cCSet_Octahedral)
+              if(cs->PeriodicBoxType == CoordSet::Octahedral)
                 periodic = false;       /* can't handle this yet... */
             }
 
@@ -1744,17 +1706,17 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
 
   switch (IFBOX) {
   case 2:
-    cset->PeriodicBoxType = cCSet_Octahedral;
+    cset->PeriodicBoxType = CoordSet::Octahedral;
     PRINTFB(G, FB_ObjectMolecule, FB_Details)
       " TOPStrToCoordSet: Warning: can't currently image a truncated octahedron...\n"
       ENDFB(G);
     break;
   case 1:
-    cset->PeriodicBoxType = cCSet_Orthogonal;
+    cset->PeriodicBoxType = CoordSet::Orthogonal;
     break;
   case 0:
   default:
-    cset->PeriodicBoxType = cCSet_NoPeriodicity;
+    cset->PeriodicBoxType = CoordSet::NoPeriodicity;
     break;
   }
 
@@ -2215,7 +2177,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
         cset->PeriodicBox->Dim[1] = BOX2;
         cset->PeriodicBox->Dim[2] = BOX3;
         if((BETA > 109.47) && (BETA < 109.48)) {
-          cset->PeriodicBoxType = cCSet_Octahedral;
+          cset->PeriodicBoxType = CoordSet::Octahedral;
           cset->PeriodicBox->Angle[0] =
             (float) (2.0 * acos(1.0 / sqrt(3.0)) * 180.0 / PI);
           cset->PeriodicBox->Angle[1] =
@@ -2740,18 +2702,7 @@ void ObjectGotoState(CObject* I, int state)
 /*========================================================================*/
 CObjectState *ObjectMolecule::getObjectState(int state)
 {
-  auto I = this;
-  CObjectState *result = NULL;
-  if(state < 0) {
-    state = ObjectGetCurrentState(I, true);
-  }
-  if(state >= 0) {
-    if(state < I->NCSet) {
-      CoordSet *cs = I->CSet[state];
-      result = &cs->State;
-    }
-  }
-  return result;
+  return ObjectMoleculeGetCoordSet(this, state);
 }
 
 
@@ -2872,8 +2823,8 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 	    idx2atm = cs->IdxToAtm;
 	    nIndex = cs->NIndex;
 	    coord = cs->Coord;
-	    if(use_matrices && !cs->State.Matrix.empty()) {
-	      copy44d44f(cs->State.Matrix.data(), tmp_matrix);
+	    if(use_matrices && !cs->Matrix.empty()) {
+	      copy44d44f(cs->Matrix.data(), tmp_matrix);
 	      matrix = tmp_matrix;
 	    } else
 	      matrix = NULL;
@@ -6537,7 +6488,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
           homogenous = true;
         }
 
-        if(global &&((use_matrices && !cs->State.Matrix.empty()) || I->TTTFlag)) {
+        if(global &&((use_matrices && !cs->Matrix.empty()) || I->TTTFlag)) {
           /* if input coordinates are in the global system,
              they may need to be converted to local coordinates */
 
@@ -6563,12 +6514,12 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
           /* object to state */
 
           if(use_matrices) {
-            if(!cs->State.Matrix.empty()) {
+            if(!cs->Matrix.empty()) {
               double tmp_double[16], tmp_inv[16];
               copy44f44d(matrix, tmp_double);
-              invert_special44d44d(cs->State.Matrix.data(), tmp_inv);
+              invert_special44d44d(cs->Matrix.data(), tmp_inv);
               left_multiply44d44d(tmp_inv, tmp_double);
-              right_multiply44d44d(tmp_double, cs->State.Matrix.data());
+              right_multiply44d44d(tmp_double, cs->Matrix.data());
               copy44d44f(tmp_double, tmp_matrix);
               matrix = tmp_matrix;
             }
@@ -9290,6 +9241,9 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 /*========================================================================*/
 CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule * I, int setIndex)
 {
+  if (setIndex < 0) {
+    setIndex = I->getState();
+  }
   if((setIndex >= 0) && (setIndex < I->NCSet))
     return (I->CSet[setIndex]);
   else
@@ -9564,8 +9518,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 
             if(op_i2) {   /* do we want transformed coordinates? */
               if(use_matrices) {
-                if(!cs->State.Matrix.empty()) {    /* state transformation */
-                  transform44d3f(cs->State.Matrix.data(), vv2, v1);
+                if(!cs->Matrix.empty()) {    /* state transformation */
+                  transform44d3f(cs->Matrix.data(), vv2, v1);
                   vv2 = v1;
                 }
               }
@@ -10070,8 +10024,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                 coord = cs->Coord + 3 * a1;
                 if(op_i2) {     /* do we want transformed coordinates? */
                   if(use_matrices) {
-                    if(!cs->State.Matrix.empty()) {      /* state transformation */
-                      transform44d3f(cs->State.Matrix.data(), coord, v1);
+                    if(!cs->Matrix.empty()) {      /* state transformation */
+                      transform44d3f(cs->Matrix.data(), coord, v1);
                       coord = v1;
                     }
                   }
@@ -10127,8 +10081,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                 coord = cs->Coord + 3 * a1;
                 if(op_i2) {     /* do we want transformed coordinates? */
                   if(use_matrices) {
-                    if(!cs->State.Matrix.empty()) {      /* state transformation */
-                      transform44d3f(cs->State.Matrix.data(), coord, v1);
+                    if(!cs->Matrix.empty()) {      /* state transformation */
+                      transform44d3f(cs->Matrix.data(), coord, v1);
                       coord = v1;
                     }
                   }
@@ -10412,8 +10366,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     coord = cs->Coord + 3 * a1;
                     if(op->i2) {        /* do we want transformed coordinates? */
                       if(use_matrices) {
-                        if(!cs->State.Matrix.empty()) {  /* state transformation */
-                          transform44d3f(cs->State.Matrix.data(), coord, v1);
+                        if(!cs->Matrix.empty()) {  /* state transformation */
+                          transform44d3f(cs->Matrix.data(), coord, v1);
                           coord = v1;
                         }
                       }
@@ -10438,8 +10392,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     coord = cs->Coord + 3 * a1;
                     if(op->i2) {        /* do we want transformed coordinates? */
                       if(use_matrices) {
-                        if(!cs->State.Matrix.empty()) {  /* state transformation */
-                          transform44d3f(cs->State.Matrix.data(), coord, v1);
+                        if(!cs->Matrix.empty()) {  /* state transformation */
+                          transform44d3f(cs->Matrix.data(), coord, v1);
                           coord = v1;
                         }
                       }
@@ -10476,8 +10430,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     coord = cs->Coord + 3 * a1;
                     if(op->i2) {        /* do we want transformed coordinates? */
                       if(use_matrices) {
-                        if(!cs->State.Matrix.empty()) {  /* state transformation */
-                          transform44d3f(cs->State.Matrix.data(), coord, v1);
+                        if(!cs->Matrix.empty()) {  /* state transformation */
+                          transform44d3f(cs->Matrix.data(), coord, v1);
                           coord = v1;
                         }
                       }
@@ -10518,8 +10472,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     coord = cs->Coord + 3 * a1;
                     if(op->i2) {        /* do we want transformed coordinates? */
                       if(use_matrices) {
-                        if(!cs->State.Matrix.empty()) {  /* state transformation */
-                          transform44d3f(cs->State.Matrix.data(), coord, v1);
+                        if(!cs->Matrix.empty()) {  /* state transformation */
+                          transform44d3f(cs->Matrix.data(), coord, v1);
                           coord = v1;
                         }
                       }
@@ -10546,8 +10500,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     coord = cs->Coord + 3 * a1;
                     if(op->i2) {        /* do we want transformed coordinates? */
                       if(use_matrices) {
-                        if(!cs->State.Matrix.empty()) {  /* state transformation */
-                          transform44d3f(cs->State.Matrix.data(), coord, v1);
+                        if(!cs->Matrix.empty()) {  /* state transformation */
+                          transform44d3f(cs->Matrix.data(), coord, v1);
                           coord = v1;
                         }
                       }
@@ -10614,8 +10568,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                       coord = cs->Coord + 3 * a1;
                       if(op->i2) {      /* do we want transformed coordinates? */
                         if(use_matrices) {
-                          if(!cs->State.Matrix.empty()) {        /* state transformation */
-                            transform44d3f(cs->State.Matrix.data(), coord, v1);
+                          if(!cs->Matrix.empty()) {        /* state transformation */
+                            transform44d3f(cs->Matrix.data(), coord, v1);
                             coord = v1;
                           }
                         }
@@ -10656,8 +10610,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                       coord = cs->Coord + 3 * a1;
                       if(op->i2) {      /* do we want transformed coordinates? */
                         if(use_matrices) {
-                          if(!cs->State.Matrix.empty()) {        /* state transformation */
-                            transform44d3f(cs->State.Matrix.data(), coord, v1);
+                          if(!cs->Matrix.empty()) {        /* state transformation */
+                            transform44d3f(cs->Matrix.data(), coord, v1);
                             coord = v1;
                           }
                         }
@@ -11514,10 +11468,10 @@ void ObjectMolecule::render(RenderInfo * info)
     cs = I->CSet[iter.state];
     if(cs) {
       if(use_matrices)
-        pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State, info);
+        pop_matrix = ObjectStatePushAndApplyMatrix(cs, info);
       cs->render(info);
       if(pop_matrix)
-        ObjectStatePopMatrix(&cs->State, info);
+        ObjectStatePopMatrix(cs, info);
     }
   }
   PRINTFD(I->G, FB_ObjectMolecule)
