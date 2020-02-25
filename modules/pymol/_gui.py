@@ -685,9 +685,9 @@ class PyMOLDesktopGUI(object):
                     ('separator',),
                 ] + [
                     ('command', lab, lambda v=val: (
-                        cmd.set('transparency_mode', v[0]),
-                        cmd.set('backface_cull', v[1]),
-                        cmd.set('two_sided_lighting', v[2])))
+                        cmd.set('transparency_mode', v[0], quiet=0),
+                        cmd.set('backface_cull', v[1], quiet=0),
+                        cmd.set('two_sided_lighting', v[2], quiet=0)))
                     for lab, val in [
                         ('Uni-Layer',     (2, 1, 0)),
                         ('Multi-Layer',   (1, 0, 1)),
