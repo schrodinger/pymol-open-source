@@ -124,7 +124,7 @@ def customize_compiler(compiler):
             'clang' in os.getenv('CC', '') or
             'clang' in os.getenv('LD', '')):
         import re
-        re_flto = re.compile(r'-flto\S*')
+        re_flto = re.compile(r'-flto\S*|-fno-semantic-interposition')
         config_vars = distutils.sysconfig.get_config_vars()
         for (key, value) in config_vars.items():
             if re_flto.search(str(value)) is not None:
