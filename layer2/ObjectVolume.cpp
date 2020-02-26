@@ -334,7 +334,7 @@ void ObjectVolume::invalidate(int rep, int level, int state)
   }
 
   PRINTFB(I->G, FB_ObjectVolume, FB_Blather)
-    "ObjectVolumeInvalidate-Msg: %d states.\n", I->State.size()
+    "ObjectVolumeInvalidate-Msg: %zu states.\n", I->State.size()
     ENDFB(I->G);
 
   if((rep == cRepVolume) || (rep == cRepAll) || (rep == cRepExtent)) {

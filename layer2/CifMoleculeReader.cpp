@@ -1308,7 +1308,7 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
 
     int added_resv = current_resv + (atInfo[i_ref].resv - atInfo[i_ref].temp1);
 
-    if (!at_terminus && (i_ref > 0 && added_resv <= atInfo[i_ref - 1].resv ||
+    if (!at_terminus && ((i_ref > 0 && added_resv <= atInfo[i_ref - 1].resv) ||
                             added_resv >= atInfo[i_ref].resv)) {
       // don't use insertion codes
       continue;

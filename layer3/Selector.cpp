@@ -7036,7 +7036,7 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, const int *atom, pymol::zstr
       ExecutiveManageSelection(G, name.c_str());
   }
   PRINTFD(G, FB_Selector)
-    " Selector: Embedded %s, %d atoms.\n", name, c ENDFD;
+    " Selector: Embedded %s, %d atoms.\n", name.c_str(), c ENDFD;
   return (c);
 }
 
@@ -10559,7 +10559,7 @@ void SelectorMemoryDump(PyMOLGlobals * G)
 {
   auto I = G->SelectorMgr;
   printf(" SelectorMemory: NSelection %d\n", I->NSelection);
-  printf(" SelectorMemory: NActive %d\n", I->Name.size());
+  printf(" SelectorMemory: NActive %zu\n", I->Name.size());
   printf(" SelectorMemory: TmpCounter %d\n", I->TmpCounter);
   printf(" SelectorMemory: NMember %d\n", I->NMember);
 }

@@ -150,8 +150,6 @@ TEST_CASE("pymol::ListAdapter Ranged For", "[List]")
     ListAppend(myList, bar, next, Foo);
   }
 
-  auto myAdapter = pymol::make_list_adapter(myList);
-
   int count = 0;
   for (const auto& foo : pymol::ListAdapter<Foo>(myList)) {
     count += foo.someInt;

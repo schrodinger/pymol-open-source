@@ -336,7 +336,7 @@ Rep *RepDihedralNew(DistSet * ds, int state)
   I->R.fRecolor = NULL;
   I->R.obj = ds->Obj;
   I->R.cs = NULL;
-  if (ds && ds->Rep && ds->Rep[cRepDihedral])
+  if (ds && ds->getNRep() > cRepDihedral && ds->Rep[cRepDihedral])
     I->R.cs = ds->Rep[cRepDihedral]->cs;
 
   dash_len = SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dash_length);
