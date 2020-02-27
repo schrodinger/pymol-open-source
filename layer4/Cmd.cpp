@@ -1967,6 +1967,62 @@ static PyObject *CmdGetVersion(PyObject * self, PyObject * args)
       );
 }
 
+static PyObject* CmdGetCapabilities(PyObject*, PyObject*)
+{
+  static PyObject* caps = nullptr;
+
+  if (!caps) {
+    caps = PySet_New(nullptr);
+#ifndef _PYMOL_NO_MAIN
+    // compiled with --glut
+    PySet_Add(caps, PConvToPyObject("glut"));
+#endif
+#ifndef _PYMOL_NO_MSGPACKC
+    // fast MMTF import and export
+    PySet_Add(caps, PConvToPyObject("mmtf"));
+#endif
+#ifdef _HAVE_LIBXML
+    // COLLADA export
+    PySet_Add(caps, PConvToPyObject("collada"));
+#endif
+#ifdef _PYMOL_CTEST
+    // compiled with --testing
+    PySet_Add(caps, PConvToPyObject("testing"));
+#endif
+#ifdef _PYMOL_OPENVR
+    // openvr stereo support (compiled with --openvr)
+    PySet_Add(caps, PConvToPyObject("openvr"));
+#endif
+#ifdef _PYMOL_VMD_PLUGINS
+    // VMD molfile plugins
+    PySet_Add(caps, PConvToPyObject("vmdplugins"));
+#endif
+#ifdef _PYMOL_NUMPY
+    // numpy support (cmd.get_coords, cmd.get_volume_field)
+    PySet_Add(caps, PConvToPyObject("numpy"));
+#endif
+#ifdef _PYMOL_IP_PROPERTIES
+    // object and atom level properties, incentive feature since PyMOL 1.6
+    PySet_Add(caps, PConvToPyObject("properties"));
+#endif
+#ifndef NO_MMLIBS
+    // mmlibs atom typing and stereochemistry, incentive feature PyMOL 1.4-1.8
+    PySet_Add(caps, PConvToPyObject("mmlibs"));
+#endif
+#ifdef _PYMOL_INCENTIVE
+    // Incentive PyMOL
+    PySet_Add(caps, PConvToPyObject("incentive"));
+#ifndef _PYMOL_NO_UNDO
+    // improved editing undo, incentive feature since PyMOL 1.5
+    PySet_Add(caps, PConvToPyObject("undo1"));
+#endif
+#endif // _PYMOL_INCENTIVE
+  }
+
+  Py_INCREF(caps);
+  return caps;
+}
+
 static PyObject *CmdTranslateAtom(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -7731,6 +7787,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_view", CmdGetView, METH_VARARGS},
   {"get_viewport", CmdGetViewPort, METH_VARARGS},
   {"get_vis", CmdGetVis, METH_VARARGS},
+  {"get_capabilities", CmdGetCapabilities, METH_NOARGS, "Get a set of compiled-in capabilities"},
   {"get_ccp4str", CmdGetCCP4Str, METH_VARARGS},
   {"get_volume_field", CmdGetVolumeField, METH_VARARGS},
   {"get_volume_histogram", CmdGetVolumeHistogram, METH_VARARGS},

@@ -568,6 +568,8 @@ if 'DISPLAY' in os.environ:
 import pymol._cmd
 _cmd = sys.modules['pymol._cmd']
 
+get_capabilities = _cmd.get_capabilities
+
 from . import cmd
 
 cmd._COb = None
