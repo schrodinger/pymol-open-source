@@ -1435,10 +1435,10 @@ static int ObjectMapAllStatesFromPyList(ObjectMap * I, PyObject * list)
 {
   int ok = true;
   int a;
-  VecCheckEmplace(I->State, I->State.size(), I->G);
   if(ok)
     ok = PyList_Check(list);
   if(ok) {
+    I->State.resize(PyList_Size(list), ObjectMapState(I->G));
     for(a = 0; a < I->State.size(); a++) {
       CPythonVal *val = CPythonVal_PyList_GetItem(I->G, list, a);
       ok = ObjectMapStateFromPyList(I->G, &I->State[a], val);
