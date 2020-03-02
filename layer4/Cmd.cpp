@@ -420,49 +420,29 @@ static PyObject *CmdPseudoatom(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *object_name, *sele, *label;
-  OrthoLineType s1;
   char *name, *resn, *resi, *chain, *segi, *elem;
   float vdw;
   int hetatm, color;
   float b, q;
   PyObject *pos;
   int state, mode, quiet;
-  int ok = false;
 
-  ok = PyArg_ParseTuple(args, "OssssssssfiffsOiiii", &self,
-                        &object_name, &sele, &name, &resn, &resi, &chain,
-                        &segi, &elem, &vdw, &hetatm, &b, &q, &label, &pos, &color,
-                        &state, &mode, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    float pos_array[3], *pos_ptr = NULL;
-    if(ok) {
-      if(pos && PyTuple_Check(pos) && (PyTuple_Size(pos) == 3))
-        if(PyArg_ParseTuple(pos, "fff", pos_array, pos_array + 1, pos_array + 2))
-          pos_ptr = pos_array;
-    }
-    if((ok = APIEnterBlockedNotModal(G))) {
-      if(sele[0])
-        ok = (SelectorGetTmp2(G, sele, s1) >= 0);
-      else
-        s1[0] = 0;
-      if(ok) {
-        ok = ExecutivePseudoatom(G, object_name, s1,
-                                 name, resn, resi, chain, segi, elem,
-                                 vdw, hetatm, b, q, label, pos_ptr,
-                                 color, state, mode, quiet);
-      }
-      if(sele[0])
-        SelectorFreeTmp(G, s1);
-      APIExitBlocked(G);
-    }
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "OssssssssfiffsOiiii", &self,
+                 &object_name, &sele, &name, &resn, &resi, &chain,
+                 &segi, &elem, &vdw, &hetatm, &b, &q, &label, &pos, &color,
+                 &state, &mode, &quiet);
+  float pos_array[3], *pos_ptr = NULL;
+  if(pos && PyTuple_Check(pos) && (PyTuple_Size(pos) == 3))
+    if(PyArg_ParseTuple(pos, "fff", pos_array, pos_array + 1, pos_array + 2))
+      pos_ptr = pos_array;
+
+  API_ASSERT(APIEnterBlockedNotModal(G));
+  auto pseudoatom_name = ExecutivePreparePseudoatomName(G, object_name);
+  auto result = ExecutivePseudoatom(G, pseudoatom_name, sele, name, resn, resi,
+      chain, segi, elem, vdw, hetatm, b, q, label, pos_ptr, color, state, mode,
+      quiet);
+  APIExitBlocked(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdFixChemistry(PyObject * self, PyObject * args)

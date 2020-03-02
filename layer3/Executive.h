@@ -214,11 +214,13 @@ typedef struct {
   float final_rms;
 } ExecutiveRMSInfo;
 
-int ExecutivePseudoatom(PyMOLGlobals * G, const char *object_name, const char *sele,
-                        const char *name, const char *resn, const char *resi, const char *chain,
-                        const char *segi, const char *elem, float vdw, int hetatm,
-                        float b, float q, const char *label, float *pos, int color,
-                        int state, int mode, int quiet);
+std::string ExecutivePreparePseudoatomName(PyMOLGlobals* G, pymol::zstring_view object_name);
+
+pymol::Result<> ExecutivePseudoatom(PyMOLGlobals* G, pymol::zstring_view object_name,
+    const char* sele, const char* name, const char* resn, const char* resi,
+    const char* chain, const char* segi, const char* elem, float vdw,
+    int hetatm, float b, float q, const char* label, const float* pos, int color,
+    int state, int mode, int quiet);
 
 int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int, const char *operands,
                     int target_state, int source_state, int zoom, int quiet);

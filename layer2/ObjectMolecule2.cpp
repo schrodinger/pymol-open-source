@@ -228,7 +228,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
                                 const char *resn, const char *resi, const char *chain,
                                 const char *segi, const char *elem, float vdw,
                                 int hetatm, float b, float q, const char *label,
-                                float *pos, int color, int state, int mode, int quiet)
+                                const float *pos, int color, int state, int mode, int quiet)
 {
   PyMOLGlobals *G = I->G;
   int start_state = 0, stop_state = 0;
@@ -363,8 +363,8 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
           pos = NULL;           /* skip this state */
         }
       } else if(!pos) {
+        SceneGetCenter(I->G, pos_array);
         pos = pos_array;
-        SceneGetCenter(I->G, pos);
       }
 
       if(pos) {                 /* only add coordinate to state if we have position for it */

@@ -1335,24 +1335,33 @@ ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
   return {};
 }
 
-int ExecutivePseudoatom(PyMOLGlobals * G, const char *object_name, const char *sele,
-                        const char *name, const char *resn, const char *resi, const char *chain,
-                        const char *segi, const char *elem, float vdw, int hetatm,
-                        float b, float q, const char *label, float *pos, int color,
-                        int state, int mode, int quiet)
+std::string ExecutivePreparePseudoatomName(
+    PyMOLGlobals* G, pymol::zstring_view object_name)
 {
-  int ok = true;
-
-  ObjectMolecule *obj = NULL;
-  ObjectNameType object_name_buf;
-
-  if (!object_name[0]) {
-    strcpy(object_name_buf, "pseudo");
-    ExecutiveMakeUnusedName(G, object_name_buf, sizeof(ObjectNameType));
-    object_name = object_name_buf;
+  std::string new_object_name;
+  if (object_name.empty()) {
+    new_object_name = ExecutiveGetUnusedName(G, "pseudo");
   } else {
-    obj = ExecutiveFindObjectMoleculeByName(G, object_name);
+    ObjectNameType valid_name{};
+    assert(object_name.size() < sizeof(ObjectNameType));
+    std::copy_n(object_name.c_str(), object_name.size(), valid_name);
+    ObjectMakeValidName(G, valid_name);
+    new_object_name = valid_name;
   }
+  return new_object_name;
+}
+
+pymol::Result<> ExecutivePseudoatom(PyMOLGlobals* G, pymol::zstring_view object_name_view,
+    const char* presele, const char* name, const char* resn, const char* resi,
+    const char* chain, const char* segi, const char* elem, float vdw,
+    int hetatm, float b, float q, const char* label, const float* pos, int color,
+    int state, int mode, int quiet)
+{
+  SelectorTmp s1(G, presele);
+  auto sele = s1.getName();
+
+  auto object_name = object_name_view.c_str();
+  auto obj = ExecutiveFindObject<ObjectMolecule>(G, object_name);
 
   int is_new = false;
   int sele_index = -1;
@@ -1371,25 +1380,20 @@ int ExecutivePseudoatom(PyMOLGlobals * G, const char *object_name, const char *s
   }
 
   if(sele && sele[0]) {
-    sele_index = SelectorIndexByName(G, sele);
+    sele_index = s1.getIndex();
     if(sele_index < 0) {
-      ok = false;
-      PRINTFB(G, FB_Executive, FB_Errors)
-        " Pseudoatom-Error: invalid selection\n" ENDFB(G);
+      return pymol::make_error("Invalid selection");
     }
   }
-  if(ok) {
-    if(!obj) {
-      /* new object */
-      is_new = true;
-      obj = new ObjectMolecule(G, false);
-      ObjectSetName(obj, object_name);
-      if(!obj)
-        ok = false;
-    }
+  if(!obj) {
+    /* new object */
+    is_new = true;
+    obj = new ObjectMolecule(G, false);
+    ObjectSetName(obj, object_name);
   }
-
-  if(ok) {
+  
+#ifndef _PYMOL_NO_UNDO
+#endif
     if(ObjectMoleculeAddPseudoatom(obj, sele_index, name, resn, resi, chain,
                                    segi, elem, vdw, hetatm, b, q, label, pos, color,
                                    state, mode, quiet)) {
@@ -1404,8 +1408,9 @@ int ExecutivePseudoatom(PyMOLGlobals * G, const char *object_name, const char *s
 #endif
       }
     }
-  }
-  return ok;
+#ifndef _PYMOL_NO_UNDO
+#endif
+  return {};
 }
 
 static void ExecutiveInvalidateGridSlots(PyMOLGlobals * G)

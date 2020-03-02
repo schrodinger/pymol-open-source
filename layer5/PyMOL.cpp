@@ -1666,9 +1666,7 @@ PyMOLreturn_status PyMOL_CmdPseudoatom(CPyMOL * I, const char *object_name, cons
   int ok = true;
   PYMOL_API_LOCK
   if(ok) {
-    OrthoLineType s1;
     int color_index = ColorGetIndex(I->G, color);
-    ok = (SelectorGetTmp2(I->G, selection, s1)) >= 0;
     if(ok) {
       float pos_tmp[3], *pos = pos_tmp;
       if(use_xyz) {
@@ -1678,11 +1676,12 @@ PyMOLreturn_status PyMOL_CmdPseudoatom(CPyMOL * I, const char *object_name, cons
       } else {
 	pos = NULL;
       }
-      ok = ExecutivePseudoatom(I->G, object_name, s1, name, resn, resi, 
-			       chain, segi, elem, vdw, hetatm, b, q, label, 
-			       pos, color_index, state - 1, mode, quiet);
+      auto pseudoatom_name = ExecutivePreparePseudoatomName(I->G, object_name);
+      auto res = ExecutivePseudoatom(I->G, pseudoatom_name, selection, name,
+          resn, resi, chain, segi, elem, vdw, hetatm, b, q, label, pos,
+          color_index, state - 1, mode, quiet);
+      ok = static_cast<bool>(res);
     }
-    SelectorFreeTmp(I->G, s1);
   }
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }

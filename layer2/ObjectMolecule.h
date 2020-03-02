@@ -306,7 +306,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
                                 const char *resn, const char *resi, const char *chain,
                                 const char *segi, const char *elem, float vdw,
                                 int hetatm, float b, float q, const char *label,
-                                float *pos, int color, int state, int more, int quiet);
+                                const float *pos, int color, int state, int more, int quiet);
 
 int ObjectMoleculeSort(ObjectMolecule * I);
 ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj);
