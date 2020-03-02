@@ -344,8 +344,8 @@ float *ExecutiveRMSStates(PyMOLGlobals * G, const char *s1, int target, int mode
 int ExecutiveIndex(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
                    ObjectMolecule *** objVLA);
 pymol::Result<> ExecutiveReset(PyMOLGlobals*, pymol::zstring_view);
-void ExecutiveResetMatrix(PyMOLGlobals * G,
-                          const char *name, int mode, int state, int log, int quiet);
+pymol::Result<> ExecutiveResetMatrix(
+    PyMOLGlobals* G, const char* name, int mode, int state, int log, int quiet);
 void ExecutiveDrawNow(PyMOLGlobals * G);
 int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
                      int entire_window, int quiet);

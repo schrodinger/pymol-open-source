@@ -2897,8 +2897,8 @@ static void ExecutiveInvalidateMapDependents(PyMOLGlobals * G, const char *map_n
   SceneInvalidate(G);
 }
 
-void ExecutiveResetMatrix(PyMOLGlobals * G,
-                          const char *name, int mode, int state, int log, int quiet)
+pymol::Result<> ExecutiveResetMatrix(
+    PyMOLGlobals* G, const char* name, int mode, int state, int log, int quiet)
 {
   CExecutive *I = G->Executive;
   CTracker *I_Tracker = I->Tracker;
@@ -2912,11 +2912,13 @@ void ExecutiveResetMatrix(PyMOLGlobals * G,
   if(mode < 0)
     mode = matrix_mode;
 
+  bool obj_found = false;
   while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
     if(rec && (rec->type == cExecObject)) {
       /*  CObject *obj = ExecutiveFindObjectByName(G,name); */
       CObject *obj = rec->obj;
       if(obj) {
+        obj_found = true;
         switch (obj->type) {
         case cObjectMolecule:
           switch (mode) {
@@ -2958,6 +2960,10 @@ void ExecutiveResetMatrix(PyMOLGlobals * G,
       }
     }
   }
+  if (!obj_found) {
+    return pymol::make_error("No object found");
+  }
+  return {};
 }
 
 static double ret_mat[16];      /* UGH ..not thread-safe */

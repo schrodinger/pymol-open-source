@@ -2052,19 +2052,11 @@ static PyObject *CmdResetMatrix(PyObject * self, PyObject * args)
   int state;
   int log;
   int quiet;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Osiiii", &self, &name, &mode, &state, &log, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ExecutiveResetMatrix(G, name, mode, state, log, quiet);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Osiiii", &self, &name, &mode, &state, &log, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveResetMatrix(G, name, mode, state, log, quiet);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdTransformObject(PyObject * self, PyObject * args)
