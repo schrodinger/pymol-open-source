@@ -2063,8 +2063,7 @@ SEE ALSO
                 view[15] ,         view[16] ,         view[17] )
             r = _self.set_view(new_view)
         else:
-            try:
-                _self.lock(_self)
+            with _self.lockcm:
                 r = _cmd.matrix_copy(_self._COb,str(source_name),
                                                  str(target_name),
                                                  int(source_mode),
@@ -2074,8 +2073,6 @@ SEE ALSO
                                                  int(target_undo),
                                                  int(log),
                                                  int(quiet))
-            finally:
-                _self.unlock(r,_self)
             if _self._raising(r,_self):
                 raise pymol.CmdException
         return r

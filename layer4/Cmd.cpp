@@ -2034,25 +2034,14 @@ static PyObject *CmdMatrixCopy(PyObject * self, PyObject * args)
   int source_state, target_state, target_undo;
   int log;
   int quiet;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Ossiiiiiii", &self,
-                        &source_name, &target_name,
-                        &source_mode, &target_mode,
-                        &source_state, &target_state, &target_undo, &log, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ExecutiveMatrixCopy(G,
-                        source_name, target_name,
-                        source_mode, target_mode,
-                        source_state, target_state, target_undo, log, quiet);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Ossiiiiiii", &self, &source_name, &target_name,
+      &source_mode, &target_mode, &source_state, &target_state, &target_undo,
+      &log, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  ExecutiveMatrixCopy(G, source_name, target_name, source_mode,
+      target_mode, source_state, target_state, target_undo, log, quiet);
+  APIExit(G);
+  return APISuccess();
 }
 
 static PyObject *CmdResetMatrix(PyObject * self, PyObject * args)

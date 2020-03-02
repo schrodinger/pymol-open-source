@@ -14565,6 +14565,7 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
   CExecutive *I = G->Executive;
   int exists = false;
   int previousVisible;
+  int previousObjType = 0;
 
   if(SettingGetGlobal_b(G, cSetting_auto_hide_selections))
     ExecutiveHideSelections(G);
@@ -14595,6 +14596,7 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
       /* purge it */
       SceneObjectDel(G, rec->obj, false);
       ExecutiveInvalidateSceneMembers(G);
+      previousObjType = rec->obj->type;
       DeleteP(rec->obj);
     } else {
       if(!quiet)
@@ -14610,7 +14612,9 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
     rec->type = cExecObject;
     rec->obj = obj;
     previousVisible = rec->visible;
-    if(rec->obj->type == cObjectMap) {
+    if (previousObjType == rec->obj->type) {
+      // skip
+    } else if (rec->obj->type == cObjectMap) {
       rec->visible = 0;
     } else {
       rec->visible = 1;
