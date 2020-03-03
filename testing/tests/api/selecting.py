@@ -102,8 +102,28 @@ class TestSelecting(testing.PyMOLTestCase):
         self.assertEquals(1, cmd.count_atoms("bar"))
 
     def testSelectList(self):
-        cmd.select_list
-        self.skipTest("TODO")
+        cmd.fragment('ala', 'm1')
+        cmd.alter('m1', 'rank += 10')
+        cmd.alter('m1', 'ID += 20')
+        cmd.select_list('s1', 'm1', [1, 4], mode='index')
+        self.assertEqual(cmd.count_atoms('s1'), 2)
+        self.assertEqual(cmd.count_atoms('s1 & elem N'), 1)
+        self.assertEqual(cmd.count_atoms('s1 & elem O'), 1)
+        cmd.select_list('s1', 'm1', [15, 16, 17, 18, 19], mode='rank')
+        self.assertEqual(cmd.count_atoms('s1'), 5)
+        self.assertEqual(cmd.count_atoms('s1 & elem H'), 5)
+        cmd.select_list('s1', 'm1', [21, 22, 23], mode='id')
+        self.assertEqual(cmd.count_atoms('s1'), 3)
+        self.assertEqual(cmd.count_atoms('s1 & elem C'), 3)
+
+    @testing.requires_version('2.4')
+    def testSelectList_state(self):
+        cmd.fragment('ala', 'm1')
+        cmd.create('m1', 'm1 & elem C', 1, 2)
+        cmd.select_list('s1', 'm1', [100] * 100 + [2, 3, 4], state=1, mode='rank')
+        self.assertEqual(cmd.count_atoms('s1'), 3)
+        cmd.select_list('s1', 'm1', [100] * 100 + [2, 3, 4], state=2, mode='rank')
+        self.assertEqual(cmd.count_atoms('s1'), 2)
 
     def testMacros(self):
         '''
