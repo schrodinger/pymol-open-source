@@ -496,6 +496,31 @@ class TestEditing(testing.PyMOLTestCase):
         cmd.set_title('m1', 1, text)
         self.assertEqual(cmd.get_title('m1', 1), text)
 
+    @testing.requires_version('2.4')
+    def test_set_title_current_state(self):
+        cmd.pseudoatom('m1')
+        cmd.create('m1', 'm1', 1, 2)
+        cmd.create('m1', 'm1', 1, 3)
+        cmd.create('m1', 'm1', 1, 4)
+        # global state
+        cmd.frame(2)
+        cmd.set_title('m1', -1, "foo")
+        self.assertEqual(cmd.get_title('m1', -1), "foo") # current state
+        self.assertEqual(cmd.get_title('m1', -2), "foo") # effective state (same as current)
+        self.assertEqual(cmd.get_title('m1', 1), "")
+        self.assertEqual(cmd.get_title('m1', 2), "foo")
+        self.assertEqual(cmd.get_title('m1', 3), "")
+        self.assertEqual(cmd.get_title('m1', 4), "")
+        # object state
+        cmd.set('state', 3, 'm1')
+        cmd.set_title('m1', -1, "bar")
+        self.assertEqual(cmd.get_title('m1', -1), "bar") # current state
+        self.assertEqual(cmd.get_title('m1', -2), "bar") # effective state (same as current)
+        self.assertEqual(cmd.get_title('m1', 1), "")
+        self.assertEqual(cmd.get_title('m1', 2), "foo")
+        self.assertEqual(cmd.get_title('m1', 3), "bar")
+        self.assertEqual(cmd.get_title('m1', 4), "")
+
     def test_smooth(self):
         cmd.smooth
         self.skipTest("TODO")
