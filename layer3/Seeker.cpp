@@ -1059,7 +1059,7 @@ void SeekerUpdate(PyMOLGlobals * G)
       int est_char = obj->NAtom * 4;
       int first_atom_in_label;
       int missing_color = SettingGet_i(G, obj->Setting, NULL, cSetting_seq_view_fill_color);
-      const CoordSet *cs = obj->DiscreteFlag ? NULL : ObjectMoleculeGetCoordSet(obj, std::max(0, obj->getState()));
+      const CoordSet *cs = obj->DiscreteFlag ? NULL : obj->getCoordSet(-2 /* current */);
       bool atom_in_state;
 
       int gapMode = SettingGet_i(G, obj->Setting, nullptr, cSetting_seq_view_gap_mode);

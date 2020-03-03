@@ -244,12 +244,14 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
   ai->oldid = -1;
 #endif
 
+  // FIXME this should be -2
+  if (state == -1) {
+    state = I->getCurrentState();
+  }
+
   if(state >= 0) {              /* specific state */
     start_state = state;
     stop_state = state + 1;
-  } else if(state == -1) {      /* current state */
-    start_state = ObjectGetCurrentState(I, true);
-    stop_state = start_state + 1;
   } else {                      /* all states */
     if(sele_index >= 0) {
       start_state = 0;
@@ -562,11 +564,10 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point,
   color[1] = 0.0F;
   color[2] = 0.0F;
 
-  if(state < 0)
-    state = ObjectGetCurrentState(I, true);
+  assert(state != -1 /* all states */);
+  auto* cs = I->getCoordSet(state);
 
-  if((state >= 0) && (state < I->NCSet)) {
-    CoordSet *cs = I->CSet[state];
+  {
     if(cs) {
       MapType *map;
       CoordSetUpdateCoord2IdxMap(cs, cutoff);
@@ -661,10 +662,11 @@ int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, const float *point, fl
 {
   int result = -1;
   float nearest = -1.0F;
-  if(state < 0)
-    state = ObjectGetCurrentState(I, true);
-  if((state >= 0) && (state < I->NCSet)) {
-    CoordSet *cs = I->CSet[state];
+
+  assert(state != -1 /* all states */);
+  auto* cs = I->getCoordSet(state);
+
+  {
     if(cs) {
       MapType *map;
       CoordSetUpdateCoord2IdxMap(cs, cutoff);

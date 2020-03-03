@@ -159,7 +159,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
   int max_name_len = 12;        /* default indentation */
 
   if(state < 0)
-    state = ObjectGetCurrentState(I, false);
+    state = I->getCurrentState();
   if(state < 0)
     state = SceneGetState(G);
   if(state >= 0 && state < I->getNFrame()) {
@@ -1026,9 +1026,10 @@ void ObjectAlignment::update()
     if(I->ForceState >= 0) {
       state = I->ForceState;
       I->ForceState = 0;
+    } else {
+      state = I->getCurrentState();
     }
-    if(state < 0)
-      state = SettingGet_i(I->G, NULL, I->Setting, cSetting_state) - 1;
+    // TODO do these fallbacks make any sense?
     if(state < 0)
       state = SceneGetState(G);
     if(state >= I->getNFrame())

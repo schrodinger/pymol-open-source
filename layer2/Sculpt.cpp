@@ -402,7 +402,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
   if(match_state < 0)
     match_state = state;
   if(state < 0)
-    state = ObjectGetCurrentState(obj, true);
+    state = obj->getCurrentState();
 
   ShakerReset(I->Shaker.get());
 
@@ -1621,7 +1621,6 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
   CShaker *shk;
   int a0, a1, a2, a3, b0, b3;
   int aa;
-  CoordSet *cs;
   float *disp = NULL;
   float *v, *v0, *v1, *v2, *v3;
   float diff[3], len;
@@ -1676,7 +1675,9 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
   if(!n_cycle)
     n_cycle = -1;
 
-  if((state < obj->NCSet) && obj->CSet[state] && n_cycle) {
+  auto cs = obj->getCoordSet(state);
+
+  if (cs) {
 
     disp = pymol::malloc<float>(3 * obj->NAtom);
     atm2idx = pymol::malloc<int>(obj->NAtom);
@@ -1688,7 +1689,6 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
     PRINTFD(G, FB_Sculpt)
       " SIO-Debug: NDistCon %d\n", shk->NDistCon ENDFD;
 
-    cs = obj->CSet[state];
     cs_coord = cs->Coord.data();
 
     vdw = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_vdw_scale);

@@ -4376,7 +4376,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
 	    {
 	      float pos_store[3], *pos = pos_store;
 	      int index = I->LastPicked.src.index; /* 1-based */
-	      int state = ObjectGetCurrentState(obj, true);
+	      int state = I->LastPicked.context.state;
 	      if(!( (obj->type == cObjectMolecule) &&
 		    (I->LastPicked.src.bond != cPickableNoPick ) &&
 		    ObjectMoleculeGetAtomTxfVertex((ObjectMolecule *)obj,-1,index, pos)))

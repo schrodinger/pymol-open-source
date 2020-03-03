@@ -373,8 +373,8 @@ void MoleculeExporter::setRefObject(const char * ref_object, int ref_state) {
   if (!base)
     return;
 
-  if(ref_state < 0) {
-    ref_state = ObjectGetCurrentState(base, true);
+  if (ref_state == -1 /* all */) {
+    ref_state = -2; // current
   }
 
   if(ObjectGetTotalMatrix(base, ref_state, true, matrix)) {

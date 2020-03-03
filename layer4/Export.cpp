@@ -174,7 +174,7 @@ ExportDotsObj *ExportDots(PyMOLGlobals * G, char *name, int csIndex)
   if(ok) {
     /*   ExecutiveSetRepVisib(G,name,cRepDot,1); */
     objMol = (ObjectMolecule *) obj;
-    cs = ObjectMoleculeGetCoordSet(objMol, csIndex);
+    cs = objMol->getCoordSet(csIndex);
     if(!cs)
       ok = ErrMessage(G, "ExportDots", "Invalid coordinate set number.");
   }

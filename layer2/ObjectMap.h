@@ -69,17 +69,31 @@ struct ObjectMapState : public CObjectState {
 };
 
 struct ObjectMap : public CObject {
+  using StateT = ObjectMapState;
+
   std::vector<ObjectMapState> State;
   ObjectMap(PyMOLGlobals* G);
+
+  /// Typed version of getObjectState
+  StateT* getObjectMapState(int state)
+  {
+    return static_cast<StateT*>(getObjectState(state));
+  }
+  const StateT* getObjectMapState(int state) const
+  {
+    return static_cast<const StateT*>(getObjectState(state));
+  }
 
   // virtual methods
   void update() override;
   void render(RenderInfo* info) override;
   void invalidate(int rep, int level, int state) override;
   int getNFrame() const override;
-  CObjectState* getObjectState(int state) override;
   CSymmetry const* getSymmetry(int state = 0) const override;
   bool setSymmetry(CSymmetry const& symmetry, int state = 0) override;
+
+protected:
+  CObjectState* _getObjectState(int state) override;
 };
 
 #define cObjectMap_OrthoMinMaxGrid 0
@@ -141,9 +155,10 @@ int ObjectMapStateInterpolate(ObjectMapState * ms, const float *array, float *re
                               int n);
 int ObjectMapStateContainsPoint(ObjectMapState * ms, float *point);
 ObjectMapState *ObjectMapStatePrime(ObjectMap * I, int state);
-ObjectMapState *ObjectMapStateGetActive(ObjectMap * I, int state);
 void ObjectMapUpdateExtents(ObjectMap * I);
-ObjectMapState *ObjectMapGetState(ObjectMap * I, int state);
+
+#define ObjectMapStateGetActive(I, state) (I)->getObjectMapState(state)
+#define ObjectMapGetState(I, state) (I)->getObjectMapState(state)
 
 PyObject *ObjectMapAsPyList(ObjectMap * I);
 int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** result);
@@ -160,14 +175,6 @@ int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
                                float min_arg, float max_arg);
 
 void ObjectMapDump(const ObjectMap* I, const char* fname, int state, int quiet);
-
-/*========================================================================*/
-inline
-ObjectMapState * getObjectMapState(PyMOLGlobals * G, ObjectMap * I, int state) {
-  if (!I)
-    return nullptr;
-  return ObjectMapStateGetActive(I, state < 0 ? 0 : state);
-}
 
 ObjectMapState * getObjectMapState(PyMOLGlobals * G, const char * name, int state);
 

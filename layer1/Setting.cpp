@@ -2837,8 +2837,12 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_security:
     G->Security = SettingGetGlobal_i(G, cSetting_security);
     break;
-  case cSetting_all_states:
   case cSetting_state:
+    if (SettingGet<int>(G, index) < 0 /* all */) {
+      PRINTFB(G, FB_Setting, FB_Warnings)
+        " Setting-Warning: state can't be less than 0.\n" ENDFB(G);
+    }
+  case cSetting_all_states:
   case cSetting_frame:
     ExecutiveInvalidateSelectionIndicatorsCGO(G);
     SceneInvalidatePicking(G);
@@ -3157,6 +3161,11 @@ StateIterator::StateIterator(PyMOLGlobals * G, CSetting * set, int state_, int n
     end = nstate;
 
   state--;
+}
+
+StateIterator::StateIterator(CObject* obj, int state_)
+    : StateIterator(obj->G, obj->Setting, state_, obj->getNFrame())
+{
 }
 
 /*

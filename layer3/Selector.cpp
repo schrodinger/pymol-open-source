@@ -7291,7 +7291,7 @@ static sele_array_t SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMole
     state = req_state;
     break;
   case cSelectorUpdateTableEffectiveStates:
-    state = ObjectGetCurrentState(obj, true);
+    state = obj->getCurrentState();
     break;
   case cSelectorUpdateTableCurrentState:
     state = SceneGetState(G);
@@ -7475,10 +7475,6 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
     modelCnt++;
   }
 
-  if(req_state < cSelectorUpdateTableAllStates) {
-    state = SceneGetState(G);   /* just in case... */
-  }
-
   while(ExecutiveIterateObjectMolecule(G, &obj, &iterator)) {
     int skip_flag = false;
     if(req_state < 0) {
@@ -7491,7 +7487,7 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
         state = SettingGetGlobal_i(G, cSetting_state) - 1;
         break;
       case cSelectorUpdateTableEffectiveStates:
-        state = ObjectGetCurrentState(obj, true);
+        state = obj->getCurrentState();
         break;
       default:                 /* unknown input -- fail safe (all states) */
         state = -1;
@@ -7854,7 +7850,6 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
   int a, b, flag;
   EvalElem *base = passed_base;
   int c = 0;
-  int state;
   ObjectMolecule *obj, *cur_obj = NULL;
   CoordSet *cs;
 
@@ -7991,26 +7986,15 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
     break;
 
   case SELE_PREz:
-    flag = false;
     cs = NULL;
     for(a = cNDummyAtoms; a < I->Table.size(); a++) {
       base[0].sele[a] = false;
       obj = I->Obj[I->Table[a].model];
       if(obj != cur_obj) {      /* different object */
-        state = obj->getState();
-        if(state >= obj->NCSet)
-          flag = false;
-        else if(state < 0)
-          flag = false;
-        else if(!obj->CSet[state])
-          flag = false;
-        else {
-          cs = obj->CSet[state];
-          flag = true;          /* valid state */
-        }
+        cs = obj->getCoordSet(cSelectorUpdateTableCurrentState);
         cur_obj = obj;
       }
-      if(flag && cs) {
+      if(cs) {
         if(cs->atmToIdx(I->Table[a].atom) >= 0) {
           base[0].sele[a] = true;
           c++;
@@ -8488,26 +8472,14 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
         state + 1 ENDFB(G);
       ok = false;
     } else {
-      auto state_arg = state;
       for(a = cNDummyAtoms; a < I_NAtom; a++) {
         base[0].sele[a] = false;
         obj = I->Obj[I->Table[a].model];
         if(obj != cur_obj) {    /* different object */
-          if (state_arg == cSelectorUpdateTableCurrentState)
-            state = obj->getState();
-          if(state >= obj->NCSet)
-            flag = false;
-          else if(state < 0)
-            flag = false;
-          else if(!obj->CSet[state])
-            flag = false;
-          else {
-            cs = obj->CSet[state];
-            flag = true;        /* valid state */
-          }
+          cs = obj->getCoordSet(state);
           cur_obj = obj;
         }
-        if(flag && cs) {
+        if(cs) {
           if(cs->atmToIdx(I->Table[a].atom) >= 0) {
             base[0].sele[a] = true;
             c++;

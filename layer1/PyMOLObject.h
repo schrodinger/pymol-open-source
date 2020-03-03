@@ -82,9 +82,19 @@ struct CObject {
   int Grabbed = 0;
 
   // methods
+  int getCurrentState() const;
+  CObjectState* getObjectState(int state);
+  const CObjectState* getObjectState(int state) const
+  {
+    return const_cast<CObject*>(this)->getObjectState(state);
+  }
 
 protected:
   CObject(PyMOLGlobals* G);
+
+  /// @pre `0 <= state && state < getNFrame()`
+  /// @return NULL if state is empty (not active)
+  virtual CObjectState* _getObjectState(int state) { return nullptr; }
 
 public:
   virtual ~CObject();
@@ -95,7 +105,6 @@ public:
   virtual int getNFrame() const { return 1; }
   virtual void describeElement(int index, char* buffer) const;
   virtual char* getCaption(char* ch, int len) const { return nullptr; };
-  virtual CObjectState* getObjectState(int state) { return nullptr; }
   virtual CSetting **getSettingHandle(int state);
   virtual CSymmetry const* getSymmetry(int state = 0) const { return nullptr; }
   virtual bool setSymmetry(CSymmetry const&, int state = 0) { return false; }

@@ -46,9 +46,10 @@ int ObjectGroupNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGroup ** r
     ok = ObjectFromPyList(G, val, I);
   }
   if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->OpenOrClosed);
-  if(ok && (ll > 2))
-    ok = ObjectStateFromPyList(G, PyList_GetItem(list, 2), &I->State);
+    ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 1, &I->OpenOrClosed);
+  if(ok && (ll > 2)){
+    // State removed because it was unused
+  }
   if(ok) {
     *result = I;
   } else {
@@ -64,7 +65,11 @@ PyObject *ObjectGroupAsPyList(ObjectGroup * I)
   result = PyList_New(3);
   PyList_SetItem(result, 0, ObjectAsPyList(I));
   PyList_SetItem(result, 1, PyInt_FromLong(I->OpenOrClosed));
-  PyList_SetItem(result, 2, ObjectStateAsPyList(&I->State));
+
+  // State removed in PyMOL 2.4.0
+  CObjectState tmp_state(I->G);
+  PyList_SetItem(result, 2, ObjectStateAsPyList(&tmp_state));
+
   return (PConvAutoNone(result));
 }
 
@@ -73,15 +78,6 @@ PyObject *ObjectGroupAsPyList(ObjectGroup * I)
 
 ObjectGroup::~ObjectGroup()
 {
-  auto I = this;
-  ObjectStatePurge(&I->State);
-}
-
-
-/*========================================================================*/
-CObjectState *ObjectGroup::getObjectState(int state)
-{
-  return &State;
 }
 
 
@@ -90,6 +86,4 @@ ObjectGroup::ObjectGroup(PyMOLGlobals * G) : CObject(G)
 {
   auto I = this;
   I->type = cObjectGroup;
-  I->OpenOrClosed = false;
-  ObjectStateInit(G, &I->State);
 }

@@ -129,7 +129,7 @@ bool SeleCoordIterator::next() {
       }
     } else if (statearg == -3 && obj != prev_obj) {
       // "effective" state (no support here for settings all_states=1 or state=0)
-      state = std::max(0, obj->getState());
+      state = std::max(0, obj->getCurrentState());
       prev_obj = obj;
     }
 

@@ -100,10 +100,13 @@ struct ObjectMolecule : public CObject {
   // methods
   ObjectMolecule(PyMOLGlobals* G, int discreteFlag);
   ~ObjectMolecule();
-  int getState() const;
   bool setNDiscrete(int natom);
   bool updateAtmToIdx();
   bool atomHasAnyCoordinates(size_t atm) const;
+
+  /// Typed version of getObjectState
+  CoordSet* getCoordSet(int state);
+  const CoordSet* getCoordSet(int state) const;
 
   // virtual methods
   void update() override;
@@ -112,13 +115,15 @@ struct ObjectMolecule : public CObject {
   int getNFrame() const override;
   void describeElement(int index, char* buffer) const override;
   char* getCaption(char* ch, int len) const override;
-  CObjectState* getObjectState(int state) override;
   CSetting **getSettingHandle(int state) override;
   CSymmetry const* getSymmetry(int state = 0) const override
   {
     return Symmetry;
   }
   bool setSymmetry(CSymmetry const& symmetry, int state = 0) override;
+
+protected:
+  CObjectState* _getObjectState(int state) override;
 };
 
 /* this is a record that holds information for specific types of Operatations on Molecules, eg. translation/rotation/etc */
@@ -353,7 +358,6 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 
 void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op);
 
-struct CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule * I, int setIndex);
 int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 			struct CoordSet *cs, int bondSearchFlag,
 			int aic_mask, int invalidate);

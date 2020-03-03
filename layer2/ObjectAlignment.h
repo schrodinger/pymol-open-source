@@ -25,7 +25,6 @@ Z* -------------------------------------------------------------------
 #include"pymol/memory.h"
 
 struct ObjectAlignmentState {
-  CObjectState state;
   pymol::vla<int> alignVLA;
   WordType guide;
   /* not stored */

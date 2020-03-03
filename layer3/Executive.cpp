@@ -6879,15 +6879,7 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
         if(rec->obj->type == cObjectMolecule) {
           objMol = (ObjectMolecule *) rec->obj;
           if(SettingGet_b(G, NULL, objMol->Setting, cSetting_sculpting)) {
-            int state = ObjectGetCurrentState(rec->obj, true);
-            if(state<0)
-              state = SceneGetState(G);
-            if((state > objMol->NCSet) ) {
-              if((objMol->NCSet == 1)
-                 && SettingGetGlobal_b(G, cSetting_static_singletons)) {
-                state = 0;
-              }
-            }
+            constexpr int state = -2; // current state
             ObjectMoleculeSculptIterate(objMol, state,
                                         SettingGet_i(G, NULL, objMol->Setting,
                                                      cSetting_sculpting_cycles), center);
@@ -8655,7 +8647,6 @@ float ExecutiveGetArea(PyMOLGlobals * G, const char *s0, int sta0, int load_b)
 {
   ObjectMolecule *obj0;
   RepDot *rep;
-  CoordSet *cs;
   float result = -1.0F;
   int a, sele0;
   int known_member = -1;
@@ -8678,7 +8669,7 @@ float ExecutiveGetArea(PyMOLGlobals * G, const char *s0, int sta0, int load_b)
       else
         result = 0.0F;
     } else {
-      cs = ObjectMoleculeGetCoordSet(obj0, sta0);
+      auto cs = obj0->getCoordSet(sta0);
       if(!cs)
         ErrMessage(G, "Area", "Invalid state.");
       else {
@@ -10192,16 +10183,7 @@ int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,
   if(obj) {
     int a;
     int index = 0;
-    int check_state = true;
-    CoordSet *cs = NULL;
-    if(state == -2)
-      state = SceneGetState(G);
-    if(state == -3)
-      state = ObjectGetCurrentState(obj, true);
-    if(state >= 0) {
-      cs = ObjectMoleculeGetCoordSet(obj, state);
-    } else
-      check_state = false;
+    CoordSet* cs = obj->getCoordSet(state);
 
     if(ok && list) {
       if(list_len) {
@@ -10263,23 +10245,7 @@ int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,
                 if((OVreturn_IS_OK((ret = OVOneToAny_GetKey(o2a, index))))) {
                   cur = ret.word;
                   while(cur >= 0) {
-                    if(check_state) {
-                      if(cs) {
-                        int ix;
-                        if(obj->DiscreteFlag) {
-                          if(cs == obj->DiscreteCSet[cur])
-                            ix = obj->DiscreteAtmToIdx[a];
-                          else
-                            ix = -1;
-                        } else
-                          ix = cs->AtmToIdx[a];
-                        if(ix >= 0) {
-                          VLACheck(idx_list, int, n_idx);
-                          idx_list[n_idx] = cur;
-                          n_idx++;
-                        }
-                      }
-                    } else {
+                    if (!cs || cs->atmToIdx(cur) >= 0) {
                       VLACheck(idx_list, int, n_idx);
                       idx_list[n_idx] = cur;
                       n_idx++;
@@ -16620,15 +16586,11 @@ char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, const char *name, int 
  * not NULL, then also store a pointer to the object molecule.
  */
 CoordSet * ExecutiveGetCoordSet(PyMOLGlobals * G, const char * name, int state, ObjectMolecule ** omp) {
-  CObject * obj;
   ObjectMolecule * om = NULL;
   CoordSet * cs = NULL;
 
-  ok_assert(1, obj = ExecutiveFindObjectByName(G, (char*) name));
-  ok_assert(1, obj->type == cObjectMolecule);
-
-  om = (ObjectMolecule*) obj;
-  ok_assert(1, cs = ObjectMoleculeGetCoordSet(om, state));
+  ok_assert(1, om = ExecutiveFindObject<ObjectMolecule>(G, name));
+  ok_assert(1, cs = om->getCoordSet(state));
 
 ok_except1:
   if (omp != NULL)
@@ -16671,11 +16633,7 @@ pymol::Result<> ExecutiveRebond(PyMOLGlobals* G, const char* oname, int state)
     return pymol::make_error("cannot find object");
   }
 
-  if (state < 0) {
-    state = obj->getState();
-  }
-
-  auto cs = ObjectMoleculeGetCoordSet(obj, state);
+  auto cs = obj->getCoordSet(state);
   if (!cs) {
     return pymol::make_error("no such state");
   }

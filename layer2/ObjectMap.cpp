@@ -175,12 +175,11 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float 
   if(voxelmap || (!list_size)) {
     int a, b, c;
     int h, k, l, i, j;
-    int *fdim = ms->FDim;
-    float *v, f_val;
+    const int *fdim = ms->FDim;
     int within_flag, within_default = false;
     int beyond_flag;
 
-    Isofield *field = ms->Field.get();
+    const Isofield *field = ms->Field.get();
     if(list_size)
       MapSetupExpress(voxelmap);
 
@@ -196,7 +195,7 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float 
             within_flag = within_default;
             beyond_flag = true;
 
-            v = F4Ptr(field->points, a, b, c, 0);
+            const float* v = F4Ptr(field->points, a, b, c, 0);
 
             MapLocus(voxelmap, v, &h, &k, &l);
             i = *(MapEStart(voxelmap, h, k, l));
@@ -218,7 +217,7 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float 
           }
 
           if(within_flag && beyond_flag) {      /* point isn't too close to any vertex */
-            f_val = F3(field->data, a, b, c);
+            const float f_val = F3(field->data, a, b, c);
             sum += f_val;
             sumsq += (f_val * f_val);
             cnt++;
@@ -368,7 +367,7 @@ int ObjectMapInterpolate(ObjectMap * I, int state, const float *array, float *re
 
   ObjectMapState *ms = ObjectMapGetState(I, state);
 
-  if(ms && ms->Active) {
+  if(ms) {
     double *matrix = ObjectStateGetInvMatrix(ms);
 
     if(matrix) {
@@ -1533,14 +1532,6 @@ int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** resul
   return ok;
 }
 
-ObjectMapState *ObjectMapGetState(ObjectMap * I, int state)
-{
-  for(StateIterator iter(I->G, I->Setting, state, I->State.size()); iter.next();) {
-    return &I->State[iter.state];
-  }
-  return NULL;
-}
-
 ObjectMapState *ObjectMapStatePrime(ObjectMap * I, int state)
 {
   if(state < 0)
@@ -1549,19 +1540,6 @@ ObjectMapState *ObjectMapStatePrime(ObjectMap * I, int state)
     VecCheckEmplace(I->State, state, I->G);
   }
   return &I->State[state];
-}
-
-ObjectMapState *ObjectMapStateGetActive(ObjectMap * I, int state)
-{
-  ObjectMapState *ms = NULL;
-  if(state >= 0) {
-    if(state < I->State.size()) {
-      ms = &I->State[state];
-      if(!ms->Active)
-        ms = NULL;
-    }
-  }
-  return (ms);
 }
 
 void ObjectMapUpdateExtents(ObjectMap * I)
@@ -2043,15 +2021,11 @@ int ObjectMap::getNFrame() const
 }
 
 /*========================================================================*/
-CObjectState* ObjectMap::getObjectState(int state)
+CObjectState* ObjectMap::_getObjectState(int state)
 {
-  auto* ms = ObjectMapGetState(this, state);
-
-  if (ms && ms->Active) {
-    return ms;
-  }
-
-  return nullptr;
+  if (!State[state].Active)
+    return nullptr;
+  return &State[state];
 }
 
 /*========================================================================*/
@@ -2059,7 +2033,7 @@ CSymmetry const* ObjectMap::getSymmetry(int state) const
 {
   auto* ms = ObjectMapGetState(const_cast<ObjectMap*>(this), state);
 
-  if (ms && ms->Active) {
+  if (ms) {
     return ms->Symmetry.get();
   }
 
@@ -2740,7 +2714,8 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
 
 /*========================================================================*/
 ObjectMapState * getObjectMapState(PyMOLGlobals * G, const char * name, int state) {
-  return getObjectMapState(G, ExecutiveFindObject<ObjectMap>(G, name), state);
+  auto* om = ExecutiveFindObject<ObjectMap>(G, name);
+  return om ? om->getObjectMapState(state) : nullptr;
 }
 
 
@@ -5607,17 +5582,14 @@ ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, const char *fna
 /*========================================================================*/
 int ObjectMapSetBorder(ObjectMap * I, float level, int state)
 {
-  int a;
-  int result = true;
-  if(state == -2)
-    state = ObjectGetCurrentState(I, false);
-  for(a = 0; a < I->State.size(); a++) {
-    if((state < 0) || (state == a)) {
-      if(I->State[a].Active)
-        result = result && ObjectMapStateSetBorder(&I->State[a], level);
+  for (StateIterator iter(I, state); iter.next();) {
+    auto* oms = &I->State[iter.state];
+    if (oms->Active) {
+      if (!ObjectMapStateSetBorder(oms, level))
+        return false;
     }
   }
-  return (result);
+  return true;
 }
 
 
@@ -5968,7 +5940,9 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
 
 void ObjectMapDump(const ObjectMap* om, const char* fname, int state, int quiet)
 {
-  if (state < 0 || state >= om->getNFrame()) {
+  auto* oms = om->getObjectMapState(state);
+
+  if (!oms) {
     ErrMessage(om->G, __func__, "state out of range");
     return;
   }
@@ -5979,7 +5953,7 @@ void ObjectMapDump(const ObjectMap* om, const char* fname, int state, int quiet)
     return;
   }
 
-  auto* field = om->State[state].Field.get();
+  auto* field = oms->Field.get();
 
   for (int xi = 0; xi < field->dimensions[0]; xi++) {
     for (int yi = 0; yi < field->dimensions[1]; yi++) {

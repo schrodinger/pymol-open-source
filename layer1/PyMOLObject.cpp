@@ -714,8 +714,52 @@ void ObjectMakeValidName(PyMOLGlobals * G, char *name, bool quiet)
   }
 }
 
+/**
+ * Get a pointer to an object state.
+ * @param state State (0-indexed) or -2/-3 for current state
+ * @return NULL if state is out of bounds or empty
+ */
+CObjectState* CObject::getObjectState(int state)
+{
+  if (state == -2 /* cSelectorUpdateTableCurrentState */ ||
+      state == -3 /* cSelectorUpdateTableEffectiveStates */) {
+    state = getCurrentState();
+  }
+  if (state < 0 || state >= getNFrame()) {
+    return nullptr;
+  }
+  return _getObjectState(state);
+}
+
+/**
+ * Get the effective state (0-indexed) of an object, based on the `state` and
+ * `static_singletons` settings. Will not validate the value of the `state`
+ * setting, it could be `<0` or `>=getNFrame()`.
+ */
+int CObject::getCurrentState() const
+{
+  if (getNFrame() == 1 &&
+      SettingGet<bool>(G, Setting, nullptr, cSetting_static_singletons))
+    return 0;
+  return SettingGet<int>(G, Setting, nullptr, cSetting_state) - 1;
+}
+
+/**
+ * Like CObject::getCurrentState() but will return `-1` if the `all_states`
+ * setting is set.
+ *
+ * Note: Clamps negative values at `-1` (all states). The usefulness of this
+ * should be questioned, in particular with `ignore_all_states=true` a caller
+ * is likely to discard all negative values, including -1.
+ *
+ * @param ignore_all_states Boolean flag, should be false. You most likely
+ * should use CObject::getCurrentState() instead of setting `ignore_all_states`
+ * to true.
+ */
 int ObjectGetCurrentState(CObject * I, int ignore_all_states)
 {
+  assert("use CObject::getCurrentState()" && !ignore_all_states);
+
   // the previous implementation (up to PyMOL 1.7.6) ignored
   // object-level state=0 (all states)
 
@@ -723,15 +767,7 @@ int ObjectGetCurrentState(CObject * I, int ignore_all_states)
       SettingGet_b(I->G, I->Setting, NULL, cSetting_all_states))
     return -1;
 
-  if (I->getNFrame() == 1 &&
-      SettingGet_b(I->G, I->Setting, NULL, cSetting_static_singletons))
-    return 0;
-
-  int state = SettingGet_i(I->G, I->Setting, NULL, cSetting_state) - 1;
-
-  if(state < -1)
-    state = -1;
-  return (state);
+  return std::max(-1, I->getCurrentState());
 }
 
 PyObject *ObjectAsPyList(CObject * I)
@@ -991,6 +1027,15 @@ void ObjectResetTTT(CObject * I,int store)
 
 
 /*========================================================================*/
+/**
+ * Get the combined transformation of TTT and state matrix. State matrix is
+ * only included if `history=true` or `matrix_mode > 0`.
+ *
+ * @param state See CObject::getObjectState
+ * @param history Boolean flag
+ * @param[out] matrix Homogeneous 4x4 matrix
+ * @return True if `matrix` was populated
+ */
 int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
 {
   int result = false;
@@ -999,10 +1044,13 @@ int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
     result = true;
   }
 
-  {
-    int use_matrices = SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
-    if(use_matrices<0) use_matrices = 0;
-    if(use_matrices || history) {
+  if (!history) {
+    history =
+        SettingGet<int>(I->G, I->Setting, nullptr, cSetting_matrix_mode) > 0;
+  }
+
+  if (history) {
+    {
       CObjectState* obj_state = I->getObjectState(state);
       if (obj_state) {
           if(!obj_state->Matrix.empty()) {

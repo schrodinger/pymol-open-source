@@ -2700,9 +2700,9 @@ void ObjectGotoState(CObject* I, int state)
 
 
 /*========================================================================*/
-CObjectState *ObjectMolecule::getObjectState(int state)
+CObjectState* ObjectMolecule::_getObjectState(int state)
 {
-  return ObjectMoleculeGetCoordSet(this, state);
+  return CSet[state];
 }
 
 
@@ -2712,7 +2712,7 @@ CSetting **ObjectMolecule::getSettingHandle(int state)
   auto I = this;
 
   if (state < -1) {
-    state = I->getState();
+    state = I->getCurrentState();
   }
 
   if(state < 0) {
@@ -2740,53 +2740,27 @@ bool ObjectMolecule::setSymmetry(CSymmetry const& symmetry, int state)
 /*========================================================================*/
 int ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const char *text)
 {
-  int result = false;
-  if(state < 0)
-    state = I->NCSet - 1;
-  if(state >= I->NCSet) {
+  auto cs = I->getCoordSet(state);
+  if (!cs) {
     PRINTFB(I->G, FB_ObjectMolecule, FB_Errors)
       "Error: invalid state %d\n", state + 1 ENDFB(I->G);
-
-  } else if(!I->CSet[state]) {
-    PRINTFB(I->G, FB_ObjectMolecule, FB_Errors)
-      "Error: empty state %d\n", state + 1 ENDFB(I->G);
-  } else {
-    UtilNCopy(I->CSet[state]->Name, text, sizeof(WordType));
-    result = true;
+    return false;
   }
-  return (result);
+  UtilNCopy(cs->Name, text, sizeof(WordType));
+  return true;
 }
 
 
 /*========================================================================*/
 const char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state)
 {
-  char *result = NULL;
-  if(state < 0)
-    state = I->getState();
-  if(state < 0 || state >= I->NCSet) {
+  auto cs = I->getCoordSet(state);
+  if (!cs) {
     PRINTFB(I->G, FB_ObjectMolecule, FB_Errors)
       "Error: invalid state %d\n", state + 1 ENDFB(I->G);
-  } else if(!I->CSet[state]) {
-    PRINTFB(I->G, FB_ObjectMolecule, FB_Errors)
-      "Error: empty state %d\n", state + 1 ENDFB(I->G);
-  } else {
-    result = I->CSet[state]->Name;
+    return nullptr;
   }
-  return (result);
-}
-
-
-/*========================================================================*/
-/*
- * Get the effective state (0-indexed) of an object, based on the "state" and
- * "static_singletons" settings.
- */
-int ObjectMolecule::getState() const {
-  if (NCSet == 1
-      && SettingGet_b(G, Setting, NULL, cSetting_static_singletons))
-    return 0;
-  return SettingGet_i(G, Setting, NULL, cSetting_state) - 1;
+  return cs->Name;
 }
 
 
@@ -9239,15 +9213,17 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 
 
 /*========================================================================*/
-CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule * I, int setIndex)
+/**
+ * @param state Object state or -2 for current state
+ * @return NULL if there is no CoordSet for the given state
+ */
+CoordSet* ObjectMolecule::getCoordSet(int state)
 {
-  if (setIndex < 0) {
-    setIndex = I->getState();
-  }
-  if((setIndex >= 0) && (setIndex < I->NCSet))
-    return (I->CSet[setIndex]);
-  else
-    return (NULL);
+  return static_cast<CoordSet*>(getObjectState(state));
+}
+const CoordSet* ObjectMolecule::getCoordSet(int state) const
+{
+  return static_cast<const CoordSet*>(getObjectState(state));
 }
 
 
@@ -12096,32 +12072,9 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
 }
 
 #ifdef _PYMOL_IP_EXTRAS
-void ObjectMoleculeSetAtomBondInfoTypeOldId(PyMOLGlobals * G, ObjectMolecule * obj){
-  int i;
-  AtomInfoType *ai = obj->AtomInfo.data();
-  BondType *bi = obj->Bond.data();
-  for (i=0; i<obj->NAtom; i++){
-    ai->oldid = i;
-    ai++;
-  }
-  for (i=0; i<obj->NBond; i++){
-    bi->oldid = i;
-    bi++;
-  }
-}
-void ObjectMoleculeSetAtomBondInfoTypeOldIdToNegOne(PyMOLGlobals * G, ObjectMolecule * obj){
-  int i;
-  AtomInfoType *ai = obj->AtomInfo.data();
-  BondType *bi = obj->Bond.data();
-  for (i=0; i<obj->NAtom; i++){
-    ai->oldid = -1;
-    ai++;
-  }
-  for (i=0; i<obj->NBond; i++){
-    bi->oldid = -1;
-    bi++;
-  }
-}
+#endif
+
+#ifndef _PYMOL_NO_UNDO
 #endif
 
 void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAtom){

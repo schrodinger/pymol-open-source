@@ -277,6 +277,7 @@ public:
   int state;
 
   StateIterator(PyMOLGlobals * G, CSetting * set, int state_, int nstate);
+  StateIterator(struct CObject* obj, int state_);
 
   bool next() {
     return (++state < end);
