@@ -435,18 +435,8 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
   for(a = 0; ok && a < I->NBond; a++) {
     b1 = bd->index[0];
     b2 = bd->index[1];
-    if(I->DiscreteFlag) {
-      if((cs == I->DiscreteCSet[b1]) && (cs == I->DiscreteCSet[b2])) {
-        a1 = I->DiscreteAtmToIdx[b1];
-        a2 = I->DiscreteAtmToIdx[b2];
-      } else {
-        a1 = -1;
-        a2 = -1;
-      }
-    } else {
-      a1 = cs->AtmToIdx[b1];
-      a2 = cs->AtmToIdx[b2];
-    }
+    a1 = cs->atmToIdx(b1);
+    a2 = cs->atmToIdx(b2);
     if((a1 >= 0) && (a2 >= 0)) {
       n_alloc += populate_other(other + a1, a2, I->AtomInfo + b2, bd, I->Neighbor);
       n_alloc += populate_other(other + a2, a1, I->AtomInfo + b1, bd, I->Neighbor);
@@ -470,18 +460,8 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
   for(a = 0; ok && a < I->NBond; a++) {
     b1 = bd->index[0];
     b2 = bd->index[1];
-    if(I->DiscreteFlag) {
-      if((cs == I->DiscreteCSet[b1]) && (cs == I->DiscreteCSet[b2])) {
-        a1 = I->DiscreteAtmToIdx[b1];
-        a2 = I->DiscreteAtmToIdx[b2];
-      } else {
-        a1 = -1;
-        a2 = -1;
-      }
-    } else {
-      a1 = cs->AtmToIdx[b1];
-      a2 = cs->AtmToIdx[b2];
-    }
+    a1 = cs->atmToIdx(b1);
+    a2 = cs->atmToIdx(b2);
     if((a1 >= 0) && (a2 >= 0)) {
       if(result[a1] < 0) {
         o = other + a1;
@@ -586,7 +566,7 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point,
             for(f = c - 1; f <= c + 1; f++) {
               j = *(MapFirst(map, d, e, f));
               while(j >= 0) {
-                v = cs->Coord + (3 * j);
+                v = cs->coordPtr(j);
                 test = diffsq3f(v, point);
                 if(sub_vdw) {
                   test = sqrt1f(test);
@@ -681,7 +661,7 @@ int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, const float *point, fl
             for(f = c - 1; f <= c + 1; f++) {
               j = *(MapFirst(map, d, e, f));
               while(j >= 0) {
-                v = cs->Coord + (3 * j);
+                v = cs->coordPtr(j);
                 test = diffsq3f(v, point);
                 if(test <= nearest) {
                   result = j;
@@ -2885,29 +2865,19 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule * I,
   int result = 0;
   CoordSet *cs;
   int n, nn;
-  int idx;
   int a1;
   float cand[3], cand_dir[3];
   float best_dot = 0.0F, cand_dot;
-  float *orig;
 
   ObjectMoleculeUpdateNeighbors(I);
 
   if((state >= 0) && (state < I->NCSet) && (cs = I->CSet[state]) && (atom < I->NAtom)) {
 
-    if(I->DiscreteFlag) {
-      if(cs == I->DiscreteCSet[atom]) {
-        idx = I->DiscreteAtmToIdx[atom];
-      } else {
-        idx = -1;
-      }
-    } else {
-      idx = cs->AtmToIdx[atom];
-    }
+    auto idx = cs->atmToIdx(atom);
 
     if(idx >= 0) {
 
-      orig = cs->Coord + 3 * idx;
+      const float* orig = cs->coordPtr(idx);
 
       /*  do we need to add any new hydrogens? */
 
@@ -2983,9 +2953,7 @@ int ObjectMoleculeGetCheckHBond(AtomInfoType **h_real,
 				HBondCriteria * hbc)
 {
   int result = 0;
-  CoordSet *csD, *csA;
-  int idxD, idxA;
-  float *vAcc, *vDon;
+  const CoordSet *csD, *csA;
   float donToAcc[3];
   float donToH[3];
   float bestH[3];
@@ -3004,33 +2972,16 @@ int ObjectMoleculeGetCheckHBond(AtomInfoType **h_real,
 
     /* now check for coordinates of these actual atoms */
 
-    if(don_obj->DiscreteFlag) {
-      if(csD == don_obj->DiscreteCSet[don_atom]) {
-        idxD = don_obj->DiscreteAtmToIdx[don_atom];
-      } else {
-        idxD = -1;
-      }
-    } else {
-      idxD = csD->AtmToIdx[don_atom];
-    }
-
-    if(acc_obj->DiscreteFlag) {
-      if(csA == acc_obj->DiscreteCSet[acc_atom]) {
-        idxA = acc_obj->DiscreteAtmToIdx[acc_atom];
-      } else {
-        idxA = -1;
-      }
-    } else {
-      idxA = csA->AtmToIdx[acc_atom];
-    }
+    auto idxD = csD->atmToIdx(don_atom);
+    auto idxA = csA->atmToIdx(acc_atom);
 
     if((idxA >= 0) && (idxD >= 0)) {
 
       /* now get local geometries, including 
          real or virtual hydrogen atom positions */
 
-      vDon = csD->Coord + 3 * idxD;
-      vAcc = csA->Coord + 3 * idxA;
+      const float* vDon = csD->coordPtr(idxD);
+      const float* vAcc = csA->coordPtr(idxA);
 
       subtract3f(vAcc, vDon, donToAcc);
 
@@ -3766,7 +3717,7 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
               if(nBond > maxBond)
                 break;
 	      /* atom i's position in space */
-              v1 = cs->Coord + (3 * i);
+              v1 = cs->coordPtr(i);
 
               a1 = cs->IdxToAtm[i];
               ai1 = ai + a1;
@@ -3785,7 +3736,7 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
                     while(ok && j >= 0) {
                       if(i < j) {
 			/* position in space for atom 2 */
-                        v2 = cs->Coord + (3 * j);
+                        v2 = cs->coordPtr(j);
                         a2 = cs->IdxToAtm[j];
                         ai2 = ai + a2;
 
@@ -4009,8 +3960,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
   int *index;
   int *outdex = NULL;
   int a, b;
-  CoordSet *cs, **dcs;
-  int *dAtmToIdx = NULL;
+  CoordSet *cs;
   int ok = true;
   if(!I->DiscreteFlag) {        /* currently, discrete objects are never sorted */
     int n_bytes = sizeof(int) * I->NAtom;
@@ -4068,30 +4018,6 @@ int ObjectMoleculeSort(ObjectMolecule * I)
       }
       VLAFreeP(I->AtomInfo);
       std::swap(I->AtomInfo, atInfo);
-
-      if(ok && I->DiscreteFlag) {
-        dcs = VLAlloc(CoordSet *, i_NAtom);
-	CHECKOK(ok, dcs);
-	if (ok)
-	  dAtmToIdx = VLAlloc(int, i_NAtom);
-	CHECKOK(ok, dAtmToIdx);
-	if (ok){
-	  for(a = 0; a < i_NAtom; a++) {
-	    b = index[a];
-	    dcs[a] = I->DiscreteCSet[b];
-	    dAtmToIdx[a] = I->DiscreteAtmToIdx[b];
-	  }
-	} else {
-	  VLAFreeP(dcs);
-	  VLAFreeP(dAtmToIdx);
-	  dcs = NULL;
-	  dAtmToIdx = NULL;
-	}
-        VLAFreeP(I->DiscreteCSet);
-        VLAFreeP(I->DiscreteAtmToIdx);
-        I->DiscreteCSet = pymol::vla_take_ownership(dcs);
-        I->DiscreteAtmToIdx = pymol::vla_take_ownership(dAtmToIdx);
-      }
     }
     AtomInfoFreeSortedIndexes(I->G, &index, &outdex);
     if (ok){

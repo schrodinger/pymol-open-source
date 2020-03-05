@@ -85,7 +85,7 @@ int CoordSetValidateRefPos(CoordSet * I)
     if(ok) {
       int a;
       for(a = 0; a < I->NIndex; a++) {
-        float *src = I->Coord + 3 * a;
+        const float* src = I->coordPtr(a);
         copy3f(src, I->RefPos[a].coord);
         I->RefPos[a].specified = true;
       }
@@ -424,7 +424,7 @@ int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs)
       } else {
 	I->AtmToIdx[cs->IdxToAtm[a]] = i0;
       }
-      copy3f(cs->Coord + a * 3, I->Coord + i0 * 3);
+      copy3f(cs->coordPtr(a), I->coordPtr(i0));
     }
   }
   if (ok){
@@ -574,12 +574,10 @@ void CoordSetPurge(CoordSet * I)
 int CoordSetTransformAtomTTTf(CoordSet * I, int at, const float *TTT)
 {
   int a1 = I->atmToIdx(at);
-  float *v1;
-
   if(a1 < 0)
     return false;
 
-  v1 = I->Coord + 3 * a1;
+  auto* v1 = I->coordPtr(a1);
   MatrixTransformTTTfN3f(1, v1, TTT, v1);
   return true;
 }
@@ -589,12 +587,10 @@ int CoordSetTransformAtomTTTf(CoordSet * I, int at, const float *TTT)
 int CoordSetTransformAtomR44f(CoordSet * I, int at, const float *matrix)
 {
   int a1 = I->atmToIdx(at);
-  float *v1;
-
   if(a1 < 0)
     return false;
 
-  v1 = I->Coord + 3 * a1;
+  auto* v1 = I->coordPtr(a1);
   MatrixTransformR44fN3f(1, v1, matrix, v1);
   return true;
 }
@@ -619,12 +615,10 @@ void CoordSetRecordTxfApplied(CoordSet * I, const float *matrix, int homogenous)
 int CoordSetMoveAtom(CoordSet * I, int at, const float *v, int mode)
 {
   int a1 = I->atmToIdx(at);
-  float *v1;
-
   if(a1 < 0)
     return false;
 
-  v1 = I->Coord + 3 * a1;
+  auto* v1 = I->coordPtr(a1);
   if(mode) {
     add3f(v, v1, v1);
   } else {
@@ -684,20 +678,20 @@ int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, const float *dif
 
 
 /*========================================================================*/
-int CoordSetGetAtomVertex(CoordSet * I, int at, float *v)
+int CoordSetGetAtomVertex(const CoordSet * I, int at, float *v)
 {
   int a1 = I->atmToIdx(at);
 
   if(a1 < 0)
     return false;
 
-  copy3f(I->Coord + 3 * a1, v);
+  copy3f(I->coordPtr(a1), v);
   return true;
 }
 
 
 /*========================================================================*/
-int CoordSetGetAtomTxfVertex(CoordSet * I, int at, float *v)
+int CoordSetGetAtomTxfVertex(const CoordSet * I, int at, float *v)
 {
   ObjectMolecule *obj = I->Obj;
   int a1 = I->atmToIdx(at);
@@ -705,7 +699,7 @@ int CoordSetGetAtomTxfVertex(CoordSet * I, int at, float *v)
   if(a1 < 0)
     return false;
 
-  copy3f(I->Coord + 3 * a1, v);
+  copy3f(I->coordPtr(a1), v);
 
   /* apply state transformation */
   if (!I->Matrix.empty() && SettingGet<int>(I->G, obj->Setting, I->Setting,
@@ -730,7 +724,7 @@ int CoordSetSetAtomVertex(CoordSet * I, int at, const float *v)
   if(a1 < 0)
    return false;
 
-  copy3f(v, I->Coord + 3 * a1);
+  copy3f(v, I->coordPtr(a1));
   return true;
 }
 
@@ -773,7 +767,7 @@ void CoordSetTransform33f(CoordSet * I, const float *mat)
 
 
 /*========================================================================*/
-void CoordSetGetAverage(CoordSet * I, float *v0)
+void CoordSetGetAverage(const CoordSet * I, float *v0)
 {
   int a;
   double accum[3];

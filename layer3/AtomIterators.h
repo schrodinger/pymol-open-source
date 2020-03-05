@@ -46,7 +46,7 @@ public:
 
   // get current atom's coordinates
   float * getCoord() {
-    return cs->Coord + (3 * idx);
+    return cs->coordPtr(idx);
   };
 
   // get current atom index in object molecule

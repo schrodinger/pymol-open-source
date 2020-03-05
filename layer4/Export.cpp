@@ -74,7 +74,7 @@ ExportCoords *ExportCoordsExport(PyMOLGlobals * G, char *name, int state, int or
           for(a = 0; a < obj->NAtom; a++) {
             a0 = cs->AtmToIdx[a];
             if(a0 >= 0) {
-              crd0 = cs->Coord + 3 * a0;
+              crd0 = cs->coordPtr(a0);
               *(crd1++) = *(crd0++);
               *(crd1++) = *(crd0++);
               *(crd1++) = *(crd0++);
@@ -129,7 +129,7 @@ int ExportCoordsImport(PyMOLGlobals * G, char *name, int state, ExportCoords * i
               for(a = 0; a < obj->NAtom; a++) {
                 a0 = cs->AtmToIdx[a];
                 if((a0 >= 0) && (cc--)) {
-                  crd0 = cs->Coord + 3 * a0;
+                  crd0 = cs->coordPtr(a0);
                   *(crd0++) = *(crd1++);
                   *(crd0++) = *(crd1++);
                   *(crd0++) = *(crd1++);

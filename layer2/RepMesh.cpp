@@ -635,7 +635,7 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
             ai2 = obj->AtomInfo + cs->IdxToAtm[j];
             if((inclH || (!ai2->isHydrogen())) &&
                ((!cullByFlag) || (!(ai2->flags & cAtomFlag_ignore)))) {
-              dist = (float) diff3f(v0, cs->Coord + j * 3) - ai2->vdw;
+              dist = (float) diff3f(v0, cs->coordPtr(j)) - ai2->vdw;
               if(dist < minDist) {
                 i0 = j;
                 ai0 = ai2;
@@ -838,7 +838,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
           VLACheck(trim_vla, float, nc * 3 + 2);
 	  CHECKOK(ok, trim_vla);
           if (ok) {
-            float *src = cs->Coord + 3 * c;
+            const float* src = cs->coordPtr(c);
             float *dst = trim_vla + 3 * nc;
             *(dst++) = *(src++);
             *(dst++) = *(src++);
@@ -988,7 +988,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
                 ai1 = obj->AtomInfo + cs->IdxToAtm[cur];
                 if((inclH || (!ai1->isHydrogen())) &&
                    ((!cullByFlag) || (!(ai1->flags & cAtomFlag_ignore)))) {
-                  vLen = (float) diff3f(point, cs->Coord + (cur * 3));
+                  vLen = (float) diff3f(point, cs->coordPtr(cur));
                   dist2vdw = vLen - (ai1->vdw + vdw_add);
                   if(dist2vdw < bestDist) {
                     bestDist = dist2vdw;
@@ -1239,7 +1239,7 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
         OrthoBusyFast(G, a, cs->NIndex * 3);
         dotCnt = 0;
         a1 = cs->IdxToAtm[a];
-        v0 = cs->Coord + 3 * a;
+        v0 = cs->coordPtr(a);
         vdw = cs->Obj->AtomInfo[a1].vdw + probe_radius;
         inFlag = true;
         for(c = 0; c < 3; c++) {
@@ -1270,7 +1270,7 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
                   if(j != a) {
                     a2 = cs->IdxToAtm[j];
                     if(within3f
-                       (cs->Coord + 3 * j, v, cs->Obj->AtomInfo[a2].vdw + probe_radius)) {
+                       (cs->coordPtr(j), v, cs->Obj->AtomInfo[a2].vdw + probe_radius)) {
                       flag = false;
                       break;
                     }

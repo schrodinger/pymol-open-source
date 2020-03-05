@@ -271,7 +271,7 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
   PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
   int a, b, flag, h, k, l, i, j, c1;
-  float *v, *v0, vdw, *vn;
+  float *v, *vn;
   const float *vc;
   float *aa = NULL;
   int *tp = NULL;
@@ -402,8 +402,8 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
           if(c1 == -1) {
             c1 = ai1->color;
           }
-          v0 = cs->Coord + 3 * a;
-          vdw = ai1->vdw + solv_rad;
+          const float* v0 = cs->coordPtr(a);
+          const float vdw = ai1->vdw + solv_rad;
           for(b = 0; b < sp->nDot; b++) {
             v1[0] = v0[0] + vdw * sp->dot[b][0];
             v1[1] = v0[1] + vdw * sp->dot[b][1];
@@ -424,7 +424,7 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
                      are considered "present" in the surface area 
                      calculation (i.e. able to occlude surface) */
                   if(j != a)
-                    if(within3f(cs->Coord + 3 * j, v1, ai2->vdw + solv_rad)) {
+                    if(within3f(cs->coordPtr(j), v1, ai2->vdw + solv_rad)) {
                       flag = false;
                       break;
                     }

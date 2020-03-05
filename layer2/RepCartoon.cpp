@@ -431,7 +431,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
           AtomSettingGetIfDefined(G, ai, cSetting_cartoon_ladder_radius, &ladder_radius);
 
           col[i] = ColorGet(G, ai->color);
-          v_i[i] = cs->Coord + 3 * a;
+          v_i[i] = cs->coordPtr(a);
           have_atom = true;
           const char * ai_name = LexStr(G, ai->name);
           if(WordMatchExact(G, "C4", ai_name, 1))
@@ -972,27 +972,11 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
 
                 if (ring_connector_visible(G, g1_ai, g2_ai, sc_helper)) {
 
-                  float *g1p, *g2p;
                   float avg[3];
-
-                  {
-                    int g1_x, g2_x;
-
-                    if(obj->DiscreteFlag) {
-                      if(cs == obj->DiscreteCSet[g1] && cs == obj->DiscreteCSet[g2]) {
-                        g1_x = obj->DiscreteAtmToIdx[g1];
-                        g2_x = obj->DiscreteAtmToIdx[g2];
-                      } else {
-                        g1_x = -1;
-                        g2_x = -1;
-                      }
-                    } else {
-                      g1_x = cs->AtmToIdx[g1];
-                      g2_x = cs->AtmToIdx[g2];
-                    }
-                    g1p = cs->Coord + 3 * g1_x;
-                    g2p = cs->Coord + 3 * g2_x;
-                  }
+                  int g1_x = cs->atmToIdx(g1);
+                  int g2_x = cs->atmToIdx(g2);
+                  const float* g1p = cs->coordPtr(g1_x);
+                  const float* g2p = cs->coordPtr(g2_x);
 
                   if(!((!((ring_mode == 0) || (ring_mode == 4) || (ring_mode == 5))) ||
                        (!marked[g2]))) {
@@ -1051,20 +1035,8 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
 
                 if (ring_connector_visible(G, bas_ai, sug_ai, sc_helper)) {
 
-                  int sug, bas;
-                  if(obj->DiscreteFlag) {
-                    if(cs == obj->DiscreteCSet[sugar_at] &&
-                       cs == obj->DiscreteCSet[base_at]) {
-                      sug = obj->DiscreteAtmToIdx[sugar_at];
-                      bas = obj->DiscreteAtmToIdx[base_at];
-                    } else {
-                      sug = -1;
-                      bas = -1;
-                    }
-                  } else {
-                    sug = cs->AtmToIdx[sugar_at];
-                    bas = cs->AtmToIdx[base_at];
-                  }
+                  int sug = cs->atmToIdx(sugar_at);
+                  int bas = cs->atmToIdx(base_at);
 
                   if((sug >= 0) && (bas >= 0)) {
                     {
@@ -1078,10 +1050,10 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                       CGOPickColor(cgo, sugar_at, sug_ai->masked ? cPickableNoPick : cPickableAtom);
                       Pickable pickcolor2 = { base_at, bas_ai->masked ? cPickableNoPick : cPickableAtom };
                       float axis[3];
-                      subtract3f(cs->Coord + 3 * bas, cs->Coord + 3 * sug, axis);
+                      subtract3f(cs->coordPtr(bas), cs->coordPtr(sug), axis);
                       CGOColorv(cgo, color1);
                       float ladder_alpha = 1.0f - AtomSettingGetWD(G, ai_i[i], cSetting_cartoon_transparency, 1.0f - alpha);
-                      cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, cs->Coord + 3 * sug, axis, ladder_radius, 0x1f, color2, &pickcolor2, ladder_alpha);
+                      cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, cs->coordPtr(sug), axis, ladder_radius, 0x1f, color2, &pickcolor2, ladder_alpha);
                     }
                   }
                 }
@@ -1096,24 +1068,12 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
 
             if (ring_connector_visible(G, bas_ai, sug_ai, sc_helper)) {
 
-              int sug, bas;
-              float *v_outer, tmp[3], outer[3];
-              if(obj->DiscreteFlag) {
-                if(cs == obj->DiscreteCSet[sugar_at] && cs == obj->DiscreteCSet[base_at]) {
-                  sug = obj->DiscreteAtmToIdx[sugar_at];
-                  bas = obj->DiscreteAtmToIdx[base_at];
-                } else {
-                  sug = -1;
-                  bas = -1;
-                }
-              } else {
-                sug = cs->AtmToIdx[sugar_at];
-                bas = cs->AtmToIdx[base_at];
-              }
+              int sug = cs->atmToIdx(sugar_at);
+              int bas = cs->atmToIdx(base_at);
 
               if((sug >= 0) && (bas >= 0)) {
-                int p3, p5;
-                v_outer = cs->Coord + 3 * sug;
+                float tmp[3], outer[3];
+                const float* v_outer = cs->coordPtr(sug);
 
                 if((o3_at >= 0) && (phos3_at < 0))
                   phos3_at = o3_at;
@@ -1121,26 +1081,15 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                   phos5_at = o5_at;
                 if((ndata->na_mode != 1) && (phos3_at >= 0) && (phos5_at >= 0)) {
 
-                  if(obj->DiscreteFlag) {
-                    if(cs == obj->DiscreteCSet[phos3_at] &&
-                       cs == obj->DiscreteCSet[phos5_at]) {
-                      p3 = obj->DiscreteAtmToIdx[phos3_at];
-                      p5 = obj->DiscreteAtmToIdx[phos5_at];
-                    } else {
-                      p3 = -1;
-                      p5 = -1;
-                    }
-                  } else {
-                    p3 = cs->AtmToIdx[phos3_at];
-                    p5 = cs->AtmToIdx[phos5_at];
-                  }
+                  int p3 = cs->atmToIdx(phos3_at);
+                  int p5 = cs->atmToIdx(phos5_at);
                   if((p3 >= 0) && (p5 >= 0)) {
                     if(ring_mode) {
-                      scale3f(cs->Coord + 3 * p5, 0.333333F, outer);
-                      scale3f(cs->Coord + 3 * p3, 0.666667F, tmp);
+                      scale3f(cs->coordPtr(p5), 0.333333F, outer);
+                      scale3f(cs->coordPtr(p3), 0.666667F, tmp);
                     } else {
-                      scale3f(cs->Coord + 3 * p3, 0.5F, outer);
-                      scale3f(cs->Coord + 3 * p5, 0.5F, tmp);
+                      scale3f(cs->coordPtr(p3), 0.5F, outer);
+                      scale3f(cs->coordPtr(p5), 0.5F, tmp);
                     }
                     add3f(tmp, outer, outer);
                     v_outer = outer;
@@ -1158,7 +1107,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                   CGOPickColor(cgo, sugar_at, sug_ai->masked ? cPickableNoPick : cPickableAtom);
                   Pickable pickcolor2 = { base_at, bas_ai->masked ? cPickableNoPick : cPickableAtom };
                   float axis[3];
-                  subtract3f(cs->Coord + 3 * bas, v_outer, axis);
+                  subtract3f(cs->coordPtr(bas), v_outer, axis);
                   CGOColorv(cgo, color1);
                   float ladder_alpha = 1.0f - AtomSettingGetWD(G, sug_ai, cSetting_cartoon_transparency, 1.0f - alpha);
                   cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, v_outer, axis, ladder_radius, 0x1f, color2, &pickcolor2, ladder_alpha);
@@ -1448,7 +1397,7 @@ static void nuc_acid(PyMOLGlobals * G, nuc_acid_data *ndata, int a, int a1,
     ndata->putty_flag = true;
 
   *(ndata->cc++) = cur_car;
-  v1 = cs->Coord + 3 * a;
+  v1 = cs->coordPtr(a);
   copy3f(v1, ndata->vptr);
   ndata->vptr += 3;
 
@@ -1491,13 +1440,13 @@ static void nuc_acid(PyMOLGlobals * G, nuc_acid_data *ndata, int a, int a1,
         if(ndata->na_mode == 1) {
           if(WordMatchExact(G, NUCLEIC_NORMAL1, LexStr(G, obj->AtomInfo[a3].name), 1) ||
              WordMatchExact(G, NUCLEIC_NORMAL2, LexStr(G, obj->AtomInfo[a3].name), 1)) {
-            v_c = cs->Coord + 3 * a4;
+            v_c = cs->coordPtr(a4);
           }
         } else if(a3 == a1) {
-          v_c = cs->Coord + 3 * a4;
+          v_c = cs->coordPtr(a4);
         }
         if(WordMatchExact(G, NUCLEIC_NORMAL0, LexStr(G, obj->AtomInfo[a3].name), 1)) {
-          v_o = cs->Coord + 3 * a4;
+          v_o = cs->coordPtr(a4);
         }
       }
     }
@@ -2984,7 +2933,7 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
         ndata->putty_flag = true;
 
       // coordinates
-      copy3f(cs->Coord + 3 * a, ndata->vptr);
+      copy3f(cs->coordPtr(a), ndata->vptr);
 
       *((ndata->cc)++) = cur_car;
       ndata->a2 = a1;
@@ -3029,11 +2978,11 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
         const char * a3name = LexStr(G, obj->AtomInfo[a3].name);
 
         if(WordMatchExact(G, "C", a3name, true)) {
-          v_c = cs->Coord + 3 * a4;
+          v_c = cs->coordPtr(a4);
         } else if(WordMatchExact(G, "N", a3name, true)) {
-          v_n = cs->Coord + 3 * a4;
+          v_n = cs->coordPtr(a4);
         } else if(WordMatchExact(G, "O", a3name, true)) {
-          v_o = cs->Coord + 3 * a4;
+          v_o = cs->coordPtr(a4);
         }
       }
 

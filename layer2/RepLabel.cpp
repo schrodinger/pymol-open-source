@@ -1506,7 +1506,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
   int a, a1, c1;
-  float *v, *v0;
+  float *v;
   const float *vc;
   lexidx_t *l;
   int label_color;
@@ -1572,7 +1572,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
       *(v++) = *(vc++);
       *(v++) = *(vc++);
 
-      v0 = cs->Coord + 3 * a;
+      const float* v0 = cs->coordPtr(a);
       *(v++) = *(v0++);
       *(v++) = *(v0++);
       *(v++) = *(v0++);

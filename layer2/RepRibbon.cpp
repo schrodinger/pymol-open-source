@@ -212,13 +212,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   nSeg = 0;
   a2 = -1;
   for(a1 = 0; a1 < cs->NAtIndex; a1++) {
-    if(obj->DiscreteFlag) {
-      if(cs == obj->DiscreteCSet[a1])
-        a = obj->DiscreteAtmToIdx[a1];
-      else
-        a = -1;
-    } else
-      a = cs->AtmToIdx[a1];
+    a = cs->atmToIdx(a1);
     if(a >= 0) {
       ai = obj->AtomInfo + a1;
       if(GET_BIT(obj->AtomInfo[a1].visRep,cRepRibbon)) {
@@ -254,7 +248,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
           *(s++) = nSeg;
           nAt++;
           *(i++) = a;
-          v1 = cs->Coord + 3 * a;
+          v1 = cs->coordPtr(a);
           *(v++) = *(v1++);
           *(v++) = *(v1++);
           *(v++) = *(v1++);
@@ -273,7 +267,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
                 *(s++) = nSeg;
                 nAt++;
                 *(i++) = trailing_O3p_a;
-                v1 = cs->Coord + 3 * trailing_O3p_a;
+                v1 = cs->coordPtr(trailing_O3p_a);
                 *(v++) = *(v1++);
                 *(v++) = *(v1++);
                 *(v++) = *(v1++);
@@ -291,7 +285,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
               *(s++) = nSeg;
               nAt++;
               *(i++) = leading_O5p_a;
-              v1 = cs->Coord + 3 * leading_O5p_a;
+              v1 = cs->coordPtr(leading_O5p_a);
               *(v++) = *(v1++);
               *(v++) = *(v1++);
               *(v++) = *(v1++);
@@ -305,7 +299,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
           *(s++) = nSeg;
           nAt++;
           *(i++) = a;
-          v1 = cs->Coord + 3 * a;
+          v1 = cs->coordPtr(a);
           *(v++) = *(v1++);
           *(v++) = *(v1++);
           *(v++) = *(v1++);
@@ -339,7 +333,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     *(s++) = nSeg;
     nAt++;
     *(i++) = trailing_O3p_a;
-    v1 = cs->Coord + 3 * trailing_O3p_a;
+    v1 = cs->coordPtr(trailing_O3p_a);
     *(v++) = *(v1++);
     *(v++) = *(v1++);
     *(v++) = *(v1++);
@@ -570,7 +564,6 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
     ObjectMolecule *obj = cs->Obj;
     int active = false;
     int nAtIndex = cs->NAtIndex;
-    int a;
     const AtomInfoType *obj_AtomInfo = obj->AtomInfo.data();
     const AtomInfoType *ai, *last_ai = NULL;
     int trace, trace_ostate =
@@ -590,13 +583,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
       glDisable(GL_LIGHTING);
     glBegin(GL_LINE_STRIP);
     for(a1 = 0; a1 < nAtIndex; a1++) {
-      if(obj->DiscreteFlag) {
-        if(cs == obj->DiscreteCSet[a1])
-          a = obj->DiscreteAtmToIdx[a1];
-        else
-          a = -1;
-      } else
-        a = cs->AtmToIdx[a1];
+      auto a = cs->atmToIdx(a1);
       if(a >= 0) {
         ai = obj_AtomInfo + a1;
         if(GET_BIT(ai->visRep,cRepRibbon)) {
@@ -624,7 +611,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
               last_color = color;
               glColor3fv(ColorGet(G, color));
             }
-            glVertex3fv(cs->Coord + 3 * a);
+            glVertex3fv(cs->coordPtr(a));
             active = true;
             last_ai = ai;
             a2 = a1;
@@ -649,7 +636,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
               last_color = color;
               glColor3fv(ColorGet(G, color));
             }
-            glVertex3fv(cs->Coord + 3 * a);
+            glVertex3fv(cs->coordPtr(a));
             active = true;
             last_ai = ai;
             a2 = a1;

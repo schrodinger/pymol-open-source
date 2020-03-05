@@ -443,15 +443,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
         linear[a] = (ai->geom == cAtomInfoLinear);
         single[a] = (ai->geom == cAtomInfoSingle);
 
-        if(obj->DiscreteFlag) {
-          if(cs == obj->DiscreteCSet[a]) {
-            a0 = obj->DiscreteAtmToIdx[a];
-          } else {
-            a0 = -1;
-          }
-        } else {
-          a0 = cs->AtmToIdx[a];
-        }
+        a0 = cs->atmToIdx(a);
         crdidx[a] = a0;
 
         ai++;
@@ -623,8 +615,8 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
         a2 = crdidx[b2];
 
         if((a1 >= 0) && (a2 >= 0)) {
-          v1 = cs->Coord + 3 * a1;
-          v2 = cs->Coord + 3 * a2;
+          v1 = cs->coordPtr(a1);
+          v2 = cs->coordPtr(a2);
           d = (float) diff3f(v1, v2);
           if(use_cache) {
             if(!SculptCacheQuery(G, cSculptBond,
@@ -833,10 +825,10 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                   if((i0a >= 0) && (i1a >= 0) && (i0b >= 0) && (i1b >= 0) &&
                      ((!match_by_segment)
                       || (obj_atomInfo[b0].segi == obj_atomInfo[b1].segi))) {
-                    float *v0a = cs->Coord + 3 * i0a;
-                    float *v1a = cs->Coord + 3 * i1a;
-                    float *v0b = cs2->Coord + 3 * i0b;
-                    float *v1b = cs2->Coord + 3 * i1b;
+                    const float *v0a = cs->coordPtr(i0a);
+                    const float *v1a = cs->coordPtr(i1a);
+                    const float *v0b = cs2->coordPtr(i0b);
+                    const float *v1b = cs2->coordPtr(i1b);
                     float dist0, dist1, min_dist, max_dist;
                     dist0 = diff3f(v0a, v1a);
                     dist1 = diff3f(v0b, v1b);
@@ -889,8 +881,8 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
             a2 = crdidx[b2];
 
             if((a0 >= 0) && (a1 >= 0) && (a2 >= 0)) {
-              v1 = cs->Coord + 3 * a1;
-              v2 = cs->Coord + 3 * a2;
+              v1 = cs->coordPtr(a1);
+              v2 = cs->coordPtr(a2);
               d = (float) diff3f(v1, v2);
               if(use_cache) {
                 if(!SculptCacheQuery(G, cSculptAngl,
@@ -951,10 +943,10 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
               if((a0 >= 0) && (a1 >= 0) && (a2 >= 0) && (a3 >= 0)) {
                 float d2 = 0.0F;
 
-                v0 = cs->Coord + 3 * a0;
-                v1 = cs->Coord + 3 * a1;
-                v2 = cs->Coord + 3 * a2;
-                v3 = cs->Coord + 3 * a3;
+                v0 = cs->coordPtr(a0);
+                v1 = cs->coordPtr(a1);
+                v2 = cs->coordPtr(a2);
+                v3 = cs->coordPtr(a3);
                 d = ShakerGetPyra(&d2, v0, v1, v2, v3);
 
                 if(fabs(d) < 0.05) {
@@ -1145,10 +1137,10 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                   a3 = crdidx[b3];
 
                   if((a0 >= 0) && (a1 >= 0) && (a2 >= 0) && (a3 >= 0)) {
-                    v0 = cs->Coord + 3 * a0;
-                    v1 = cs->Coord + 3 * a1;
-                    v2 = cs->Coord + 3 * a2;
-                    v3 = cs->Coord + 3 * a3;
+                    v0 = cs->coordPtr(a0);
+                    v1 = cs->coordPtr(a1);
+                    v2 = cs->coordPtr(a2);
+                    v3 = cs->coordPtr(a3);
 
                     d = 0.0;
                     if(planar[b0] && planar[b2]) {
@@ -1765,15 +1757,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
           exclude[a] = true;
           a1 = -1;
         } else {
-          if(obj->DiscreteFlag) {
-            if(cs == obj->DiscreteCSet[a]) {
-              a1 = obj->DiscreteAtmToIdx[a];
-            } else {
-              a1 = -1;
-            }
-          } else {
-            a1 = cs->AtmToIdx[a];
-          }
+          a1 = cs->atmToIdx(a);
         }
         if(a1 >= 0) {
           active_flag = true;

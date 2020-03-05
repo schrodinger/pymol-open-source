@@ -21,7 +21,6 @@ void SideChainHelperMarkNonCartoonBonded(bool * marked,
     bool ribbon_side_chain_helper)
 {
   auto G = obj->G;
-  int a1, a2;
 
   auto b = obj->Bond.data();
   auto b_end = b + obj->NBond;
@@ -30,18 +29,8 @@ void SideChainHelperMarkNonCartoonBonded(bool * marked,
     auto b1 = b->index[0];
     auto b2 = b->index[1];
 
-    if (obj->DiscreteFlag) {
-      if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
-        a1 = obj->DiscreteAtmToIdx[b1];
-        a2 = obj->DiscreteAtmToIdx[b2];
-      } else {
-        a1 = -1;
-        a2 = -1;
-      }
-    } else {
-      a1 = cs->AtmToIdx[b1];
-      a2 = cs->AtmToIdx[b2];
-    }
+    auto a1 = cs->atmToIdx(b1);
+    auto a2 = cs->atmToIdx(b2);
 
     if (a1 < 0 || a2 < 0)
       continue;

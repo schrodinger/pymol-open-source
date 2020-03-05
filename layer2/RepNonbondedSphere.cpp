@@ -161,7 +161,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
       int a1 = cs->IdxToAtm[a];
       AtomInfoType *ai = obj->AtomInfo + a1;
       NP++;
-      const float *v1 = cs->Coord + 3 * a;
+      const float* v1 = cs->coordPtr(a);
       int c1 = ai->color;
       const float *vc;
       if(ColorCheckRamped(G, c1)) {

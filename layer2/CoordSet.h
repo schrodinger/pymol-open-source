@@ -165,11 +165,11 @@ bool CoordSetInsureOrthogonal(PyMOLGlobals * G,
     const CCrystal *cryst=NULL,
     bool quiet=true);
 
-void CoordSetGetAverage(CoordSet * I, float *v0);
+void CoordSetGetAverage(const CoordSet * I, float *v0);
 PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const float *v,
                                    const float *ref, int index, const double *matrix);
-int CoordSetGetAtomVertex(CoordSet * I, int at, float *v);
-int CoordSetGetAtomTxfVertex(CoordSet * I, int at, float *v);
+int CoordSetGetAtomVertex(const CoordSet * I, int at, float *v);
+int CoordSetGetAtomTxfVertex(const CoordSet * I, int at, float *v);
 int CoordSetSetAtomVertex(CoordSet * I, int at, const float *v);
 int CoordSetMoveAtom(CoordSet * I, int at, const float *v, int mode);
 int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, const float *diff);

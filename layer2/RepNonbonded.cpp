@@ -278,7 +278,6 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
   CGOSpecial(I->primitiveCGO, LINEWIDTH_FOR_LINES);
   CGOBegin(I->primitiveCGO, GL_LINES); // for immediate mode
   bool first = true;
-  float *v1;
   int a1, c1;
   float tmpColor[3];
   for(int a = 0; a < cs->NIndex; a++){
@@ -286,7 +285,7 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
     AtomInfoType *ai = obj->AtomInfo + a1;
     if(!ai->bonded && (ai->visRep & cRepNonbondedBit)) {
       c1 = ai->color;
-      v1 = cs->Coord + 3 * a;
+      const float* v1 = cs->coordPtr(a);
       ColorGetCheckRamped(G, c1, v1, tmpColor, state);
       if (first || !equal3f(I->primitiveCGO->color, tmpColor)){
         CGOColorv(I->primitiveCGO, tmpColor);

@@ -797,19 +797,12 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
         else
           cs = NULL;
         if(cs && neighbor && atomInfo) {
-          int idx_ca1 = -1;
-          if(obj->DiscreteFlag) {
-            if(cs == obj->DiscreteCSet[at_ca1])
-              idx_ca1 = obj->DiscreteAtmToIdx[at_ca1];
-            else
-              idx_ca1 = -1;
-          } else
-            idx_ca1 = cs->AtmToIdx[at_ca1];
+          int idx_ca1 = cs->atmToIdx(at_ca1);
 
           if(idx_ca1 >= 0) {
             int mem0, mem1, mem2, mem3, mem4;
             int nbr0, nbr1, nbr2, nbr3;
-            const float *v_ca1 = cs->Coord + 3 * idx_ca1;
+            const float *v_ca1 = cs->coordPtr(idx_ca1);
             int idx_cb1 = -1;
             int cnt = 0;
 
@@ -832,7 +825,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
             /* find remote CA, CB */
 
             if(idx_cb1 >= 0) {
-              const float *v_cb1 = cs->Coord + 3 * idx_cb1;
+              const float *v_cb1 = cs->coordPtr(idx_cb1);
 
               mem0 = at_ca1;
               nbr0 = neighbor[mem0] + 1;
@@ -855,7 +848,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
                       nbr2 += 2;
                     }
                     if(idx_ca2 >= 0) {
-                      const float *v_ca2 = cs->Coord + 3 * idx_ca2;
+                      const float *v_ca2 = cs->coordPtr(idx_ca2);
 
                       nbr2 = neighbor[mem2] + 1;
                       while((mem3 = neighbor[nbr2]) >= 0) {
@@ -875,7 +868,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
 
                           if(idx_cb2 >= 0) {
                             const float *v_cb2 = NULL;
-                            v_cb2 = cs->Coord + 3 * idx_cb2;
+                            v_cb2 = cs->coordPtr(idx_cb2);
                             {
                               float angle = get_dihedral3f(v_cb1, v_ca1, v_ca2, v_cb2);
                               if(idx_cb1 < idx_cb2) {
@@ -1482,7 +1475,7 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int stat
               }
               if(idx >= 0) {
                 VLACheck(coord, float, nc * 3 + 2);
-                const float* src = cs->Coord + 3 * idx;
+                const float* src = cs->coordPtr(idx);
                 float* dst = coord + 3 * nc;
                 copy3f(src, dst);
                 nc++;
@@ -3290,7 +3283,7 @@ int SelectorVdwFit(PyMOLGlobals * G, int sele1, int state1, int sele2, int state
           idx2 = cs2->AtmToIdx[at2];
 
           sumVDW = ai1->vdw + ai2->vdw;
-          dist = (float) diff3f(cs1->Coord + 3 * idx1, cs2->Coord + 3 * idx2);
+          dist = (float) diff3f(cs1->coordPtr(idx1), cs2->coordPtr(idx2));
 
           if(dist < (sumVDW + buffer)) {
             float shift = (dist - (sumVDW + buffer)) / 2.0F;
@@ -3403,7 +3396,7 @@ int SelectorGetPairIndices(PyMOLGlobals * G, int sele1, int state1, int sele2, i
           idx2 = cs2->atmToIdx(at2);
 
           if((idx1 >= 0) && (idx2 >= 0)) {
-            subtract3f(cs1->Coord + 3 * idx1, cs2->Coord + 3 * idx2, dir);
+            subtract3f(cs1->coordPtr(idx1), cs2->coordPtr(idx2), dir);
             dist = (float) length3f(dir);
             if(dist > R_SMALL4) {
               float dist_1 = 1.0F / dist;
@@ -4931,7 +4924,7 @@ float SelectorSumVDWOverlap(PyMOLGlobals * G, int sele1, int state1, int sele2,
         idx2 = cs2->AtmToIdx[at2];
 
         sumVDW = ai1->vdw + ai2->vdw + adjust;
-        dist = (float) diff3f(cs1->Coord + 3 * idx1, cs2->Coord + 3 * idx2);
+        dist = (float) diff3f(cs1->coordPtr(idx1), cs2->coordPtr(idx2));
 
         if(dist < sumVDW) {
           result += ((sumVDW - dist) / 2.0F);
@@ -5004,7 +4997,7 @@ static int SelectorGetInterstateVLA(PyMOLGlobals * G,
           if(cs) {
             idx = cs->atmToIdx(at);
             if(idx >= 0) {
-              v2 = cs->Coord + (3 * idx);
+              v2 = cs->coordPtr(idx);
               if(MapExclLocus(map, v2, &h, &k, &l)) {
                 i = *(MapEStart(map, h, k, l));
                 if(i) {
@@ -5733,7 +5726,7 @@ int SelectorMapCoulomb(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
             if(idx >= 0) {
               VLACheck(point, float, 3 * n_point + 2);
               VLACheck(charge, float, n_point);
-              v0 = cs->Coord + (3 * idx);
+              v0 = cs->coordPtr(idx);
               v1 = point + 3 * n_point;
               copy3f(v0, v1);
               charge[n_point] = ai->partialCharge * ai->q / n_occur;
@@ -6565,7 +6558,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
             if((!cs2->Name[0]) && (cs1->Name[0]))       /* copy the molecule name (if any) */
               strcpy(cs2->Name, cs1->Name);
 
-            if(CoordSetGetAtomVertex(cs1, at, cs2->Coord + c * 3)) {
+            if(CoordSetGetAtomVertex(cs1, at, cs2->coordPtr(c))) {
               a2 = cs->IdxToAtm[I->Table[a].index];     /* actual merged atom index */
               cs2->IdxToAtm[c] = a2;
               c++;
@@ -7682,7 +7675,7 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
                       if(cs) {
                         idx = cs->atmToIdx(at);
                         if(idx >= 0) {
-                          v2 = cs->Coord + (3 * idx);
+                          v2 = cs->coordPtr(idx);
                           MapLocus(map, v2, &h, &k, &l);
                           i = *(MapEStart(map, h, k, l));
                           if(i) {
@@ -7797,7 +7790,7 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
                         idx = cs->atmToIdx(at);
 
                         if(idx >= 0) {
-                          v2 = cs->Coord + (3 * idx);
+                          v2 = cs->coordPtr(idx);
                           MapLocus(map, v2, &h, &k, &l);
                           i = *(MapEStart(map, h, k, l));
                           if(i) {
@@ -9581,7 +9574,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
                 int idx;
                 idx = cs->atmToIdx(at);
                 if(idx >= 0) {
-                  transform33f3f(cryst->RealToFrac, cs->Coord + (3 * idx),
+                  transform33f3f(cryst->RealToFrac, cs->coordPtr(idx),
                                  I->Vertex.data() + 3 * a);
                   I->Flag1[a] = true;
                   n1++;
@@ -9616,7 +9609,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
                             float probe[3], probe_i[3];
                             int h, i, j, k, l;
 
-                            transform33f3f(cryst->RealToFrac, cs->Coord + (3 * idx),
+                            transform33f3f(cryst->RealToFrac, cs->coordPtr(idx),
                                            probe);
                             MapLocus(map, probe, &h, &k, &l);
                             i = *(MapEStart(map, h, k, l));
@@ -9901,7 +9894,7 @@ int SelectorOperator22(PyMOLGlobals * G, EvalElem * base, int state)
                       if(cs) {
                         idx = cs->atmToIdx(at);
                         if(idx >= 0) {
-                          v2 = cs->Coord + (3 * idx);
+                          v2 = cs->coordPtr(idx);
                           MapLocus(map, v2, &h, &k, &l);
                           i = *(MapEStart(map, h, k, l));
                           if(i) {
@@ -10759,7 +10752,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
 
           if((idx1 >= 0) && (idx2 >= 0)) {
 	    /* actual distance calculation from ptA to ptB */
-            dist = (float) diff3f(cs1->Coord + 3 * idx1, cs2->Coord + 3 * idx2);
+            dist = (float) diff3f(cs1->coordPtr(idx1), cs2->coordPtr(idx2));
 
 	    /* if we pass the boding cutoff */
             if(dist < cutoff) {
@@ -10786,9 +10779,9 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
                       ai1 = h_ai;
 		    }
                     else {
-                      don_vv = cs1->Coord + 3 * idx1;
+                      don_vv = cs1->coordPtr(idx1);
 		    }
-                    acc_vv = cs2->Coord + 3 * idx2;
+                    acc_vv = cs2->coordPtr(idx2);
                   }
                 } else if(ai1->hb_acceptor && ai2->hb_donor) {
 		  /* proton comes from ai2 */
@@ -10803,9 +10796,9 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
                       ai2 = h_ai;
 		    }
                     else {
-                      don_vv = cs2->Coord + 3 * idx2;
+                      don_vv = cs2->coordPtr(idx2);
 		    }
-		    acc_vv = cs1->Coord + 3 * idx1;
+		    acc_vv = cs1->coordPtr(idx1);
                   }
                 } else {
                   a_keeper = false;
@@ -10845,11 +10838,11 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
                   *(vv0++) = *(acc_vv++);
                   *(vv0++) = *(acc_vv++);
                 } else {
-                  vv1 = cs1->Coord + 3 * idx1;
+                  vv1 = cs1->coordPtr(idx1);
                   *(vv0++) = *(vv1++);
                   *(vv0++) = *(vv1++);
                   *(vv0++) = *(vv1++);
-                  vv1 = cs2->Coord + 3 * idx2;
+                  vv1 = cs2->coordPtr(idx2);
                   *(vv0++) = *(vv1++);
                   *(vv0++) = *(vv1++);
                   *(vv0++) = *(vv1++);
@@ -11040,9 +11033,9 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
                                     if(!mode || ((mode == 1) && (bonded12 && bonded23))) {
                                       /* store the 3 coordinates */
 
-                                      v1 = cs1->Coord + 3 * idx1;
-                                      v2 = cs2->Coord + 3 * idx2;
-                                      v3 = cs3->Coord + 3 * idx3;
+                                      v1 = cs1->coordPtr(idx1);
+                                      v2 = cs2->coordPtr(idx2);
+                                      v3 = cs3->coordPtr(idx3);
 
                                       subtract3f(v1, v2, d1);
                                       subtract3f(v3, v2, d2);
@@ -11368,10 +11361,10 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
                                                 if(!mode || ((mode == 1) && bonded34)) {
                                                   /* store the 3 coordinates */
 
-                                                  v1 = cs1->Coord + 3 * idx1;
-                                                  v2 = cs2->Coord + 3 * idx2;
-                                                  v3 = cs3->Coord + 3 * idx3;
-                                                  v4 = cs4->Coord + 3 * idx4;
+                                                  v1 = cs1->coordPtr(idx1);
+                                                  v2 = cs2->coordPtr(idx2);
+                                                  v3 = cs3->coordPtr(idx3);
+                                                  v4 = cs4->coordPtr(idx4);
 
 						  /* Insert DistInfo records for updating distances */
 						  /* Init/Add the elem to the DistInfo list */

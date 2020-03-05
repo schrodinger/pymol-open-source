@@ -1046,11 +1046,11 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
             if(icnt <= 1) {
               if(xref) {
                 if(xref[a] >= 0)
-                  fp = cs->Coord + 3 * xref[a];
+                  fp = cs->coordPtr(xref[a]);
                 else
                   fp = NULL;
               } else {
-                fp = cs->Coord + 3 * a;
+                fp = cs->coordPtr(a);
               }
               if(fp) {
                 if(n_avg) {
@@ -1173,11 +1173,11 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                           /* is there a coordinate for atom? */
                           if(xref) {
                             if(xref[i] >= 0)
-                              fp = cs->Coord + 3 * xref[i];
+                              fp = cs->coordPtr(xref[i]);
                             else
                               fp = NULL;
                           } else {
-                            fp = cs->Coord + 3 * i;
+                            fp = cs->coordPtr(i);
                           }
                           if(fp) {      /* yes there is... */
                             if(r_cnt) {
@@ -1364,7 +1364,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
       if(sscanf(cc, "%f", &f2) == 1) {
         if((++c) == 3) {
           c = 0;
-          fp = cs->Coord + 3 * a;
+          fp = cs->coordPtr(a);
           *(fp++) = f0;
           *(fp++) = f1;
           *(fp++) = f2;
@@ -3196,8 +3196,8 @@ static int AddCoordinateIntoCoordSet(ObjectMolecule * I, int a, CoordSet *tcs,
       case 0:
 	ch0 = AtmToIdx[index0];        /* hydrogen */
 	if((ca0 >= 0) && (ch0 >= 0)) {
-	  copy3f(tcs->Coord + 3 * ca0, va0);
-	  copy3f(tcs->Coord + 3 * ch0, vh0);
+	  copy3f(tcs->coordPtr(ca0), va0);
+	  copy3f(tcs->coordPtr(ch0), vh0);
 	  subtract3f(vh0, va0, x0);
 	  get_system1f3f(x0, y0, z0);
 	}
@@ -3205,7 +3205,7 @@ static int AddCoordinateIntoCoordSet(ObjectMolecule * I, int a, CoordSet *tcs,
       case 1:
 	if(ca0 >= 0) {
 	  ObjectMoleculeFindOpenValenceVector(I, a, at0, x0, NULL, -1);
-	  copy3f(tcs->Coord + 3 * ca0, va0);
+	  copy3f(tcs->coordPtr(ca0), va0);
 	  get_system1f3f(x0, y0, z0);
 	}
 	break;
@@ -3320,7 +3320,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
       cs->NIndex = scs->NIndex;
     if (ok){
       for(a = 0; a < scs->NIndex; a++) {
-	copy3f(scs->Coord + a * 3, cs->Coord + a * 3);
+	copy3f(scs->coordPtr(a), cs->coordPtr(a));
 	a1 = scs->IdxToAtm[a];
 	
 	AtomInfoCopy(G, ai1 + a1, nai + a);
@@ -3361,7 +3361,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
     CHECKOK(ok, backup);
     if (ok){
       for(a = 0; a < cs->NIndex; a++) {
-	copy3f(cs->Coord + a * 3, backup + a * 3);
+	copy3f(cs->coordPtr(a), backup + a * 3);
       }
     }
     if (ok){
@@ -4769,18 +4769,12 @@ static float compute_avg_center_dot_cross_fn(ObjectMolecule * I, CoordSet * cs,
     int a, i;
     for(i = 0; i < n_atom; i++) {
       int a1 = atix[i];
-      if(I->DiscreteFlag) {
-        if(cs == I->DiscreteCSet[a1])
-          a = I->DiscreteAtmToIdx[a1];
-        else
-          a = -1;
-      } else
-        a = cs->AtmToIdx[a1];
+      a = cs->atmToIdx(a1);
       if(a < 0) {
         missing_flag = true;
         break;
       } else {
-        v[i] = cs->Coord + a * 3;
+        v[i] = cs->coordPtr(a);
       }
     }
   }
@@ -4818,28 +4812,16 @@ static int verify_planer_bonds(ObjectMolecule * I, CoordSet * cs,
   int a, i;
   for(i = 0; i < n_atom; i++) {
     int a1 = atix[i];
-    if(I->DiscreteFlag) {
-      if(cs == I->DiscreteCSet[a1])
-        a = I->DiscreteAtmToIdx[a1];
-      else
-        a = -1;
-    } else
-      a = cs->AtmToIdx[a1];
+    a = cs->atmToIdx(a1);
     if(a >= 0) {
-      float *v0 = cs->Coord + a * 3;
+      const float* v0 = cs->coordPtr(a);
       int n = neighbor[a1] + 1;
       int a2;
       while((a2 = neighbor[n]) >= 0) {
         n += 2;
-        if(I->DiscreteFlag) {
-          if(cs == I->DiscreteCSet[a2])
-            a = I->DiscreteAtmToIdx[a2];
-          else
-            a = -1;
-        } else
-          a = cs->AtmToIdx[a2];
+        a = cs->atmToIdx(a2);
         if(a >= 0) {
-          float *v1 = cs->Coord + a * 3;
+          const float* v1 = cs->coordPtr(a);
           float d10[] = { 0.f, 0.f, 0.f };
           subtract3f(v1, v0, d10);
           normalize3f(d10);
@@ -4880,18 +4862,12 @@ static float compute_avg_ring_dot_cross_fn(ObjectMolecule * I, CoordSet * cs,
     int a, i;
     for(i = 0; i < n_atom; i++) {
       int a1 = atix[i];
-      if(I->DiscreteFlag) {
-        if(cs == I->DiscreteCSet[a1])
-          a = I->DiscreteAtmToIdx[a1];
-        else
-          a = -1;
-      } else
-        a = cs->AtmToIdx[a1];
+      a = cs->atmToIdx(a1);
       if(a < 0) {
         missing_flag = true;
         break;
       } else {
-        v[i] = cs->Coord + a * 3;
+        v[i] = cs->coordPtr(a);
       }
     }
   }
@@ -5167,16 +5143,9 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
                 float *v0 = NULL;
 
                 {
-                  int idx0 = -1;
-                  if(I->DiscreteFlag) {
-                    if(cs == I->DiscreteCSet[a])
-                      idx0 = I->DiscreteAtmToIdx[a];
-                    else
-                      idx0 = -1;
-                  } else
-                    idx0 = cs->AtmToIdx[a];
+                  int idx0 = cs->atmToIdx(a);
                   if(idx0 >= 0)
-                    v0 = cs->Coord + idx0 * 3;
+                    v0 = cs->coordPtr(idx0);
                 }
                 {
                   int i;
@@ -5184,16 +5153,9 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
                     float *v1 = NULL;
 
                     {
-                      int idx1 = -1;
-                      if(I->DiscreteFlag) {
-                        if(cs == I->DiscreteCSet[atm[i]])
-                          idx1 = I->DiscreteAtmToIdx[atm[i]];
-                        else
-                          idx1 = -1;
-                      } else
-                        idx1 = cs->AtmToIdx[atm[i]];
+                      int idx1 = cs->atmToIdx(atm[i]);
                       if(idx1 >= 0)
-                        v1 = cs->Coord + idx1 * 3;
+                        v1 = cs->coordPtr(idx1);
                     }
                     if(v0 && v1) {
                       float diff[3];
@@ -9320,15 +9282,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
               for(a = 0; a < I->NAtom; a++) {
                 s = I->AtomInfo[a].selEntry;
                 if(SelectorIsMember(G, s, sele)) {
-                  if(I->DiscreteFlag) {
-                    if(cs == I->DiscreteCSet[a])
-                      ind = I->DiscreteAtmToIdx[a];
-                    else
-                      ind = -1;
-                  } else
-                    ind = cs->AtmToIdx[a];
+                  ind = cs->atmToIdx(a);
                   if(ind >= 0) {
-                    float *v = cs->Coord + ind * 3;
+                    float *v = cs->coordPtr(ind);
                     RefPosType *rp = cs->RefPos + ind;
                     switch (op->code) {
                     case OMOP_ReferenceStore:
@@ -9490,7 +9446,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
               VLACheck(op->vv1, float, (op->nvv1 * 3) + 2);
             }
             cnt++;
-            vv2 = cs->Coord + (3 * a1);
+            vv2 = cs->coordPtr(a1);
 
             if(op_i2) {   /* do we want transformed coordinates? */
               if(use_matrices) {
@@ -9555,13 +9511,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
             for(a = 0; a < I->NAtom; a++) {
               s = I->AtomInfo[a].selEntry;
               if(SelectorIsMember(G, s, sele)) {
-                if(I->DiscreteFlag) {
-                  if(I->CSet[b] == I->DiscreteCSet[a])
-                    a1 = I->DiscreteAtmToIdx[a];
-                  else
-                    a1 = -1;
-                } else
-                  a1 = I->CSet[b]->AtmToIdx[a];
+                a1 = I->CSet[b]->atmToIdx(a);
                 if(a1 >= 0) {
 
                   match_flag = false;
@@ -9578,7 +9528,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   }
                   if(match_flag) {
                     VLACheck(op->vv1, float, (op->nvv1 * 3) + 2);
-                    vv2 = I->CSet[b]->Coord + (3 * a1);
+                    vv2 = I->CSet[b]->coordPtr(a1);
                     vv1 = op->vv1 + (op->nvv1 * 3);
                     *(vv1++) = *(vv2++);
                     *(vv1++) = *(vv2++);
@@ -9616,13 +9566,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   for(a = 0; a < I->NAtom; a++) {
                     s = I->AtomInfo[a].selEntry;
                     if(SelectorIsMember(G, s, sele)) {
-                      if(I->DiscreteFlag) {
-                        if(I->CSet[b] == I->DiscreteCSet[a])
-                          a1 = I->DiscreteAtmToIdx[a];
-                        else
-                          a1 = -1;
-                      } else
-                        a1 = I->CSet[b]->AtmToIdx[a];
+                      a1 = I->CSet[b]->atmToIdx(a);
                       if(a1 >= 0) {
 
                         match_flag = false;
@@ -9638,7 +9582,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                             break;
                         }
                         if(match_flag) {
-                          vv2 = I->CSet[b]->Coord + (3 * a1);
+                          vv2 = I->CSet[b]->coordPtr(a1);
                           *(vt2) = ((premult * (*vt2)) + *(vv2++)) / divisor;
                           *(vt2 + 1) = ((premult * (*(vt2 + 1))) + *(vv2++)) / divisor;
                           *(vt2 + 2) = ((premult * (*(vt2 + 2))) + *(vv2++)) / divisor;
@@ -9873,17 +9817,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
             s = ai->selEntry;
             if(SelectorIsMember(G, s, sele)) {
               op->i1++;
-
-              if(I->DiscreteFlag) {
-                if(I->CSet[b] == I->DiscreteCSet[a])
-                  a1 = I->DiscreteAtmToIdx[a];
-                else
-                  a1 = -1;
-              } else
-                a1 = I->CSet[b]->AtmToIdx[a];
+              a1 = I->CSet[b]->atmToIdx(a);
               if(a1 >= 0) {
                 VLACheck(op->vv1, float, (op->nvv1 * 3) + 2);
-                vv2 = I->CSet[b]->Coord + (3 * a1);
+                vv2 = I->CSet[b]->coordPtr(a1);
                 vv1 = op->vv1 + (op->nvv1 * 3);
                 *(vv1++) = *(vv2++);
                 *(vv1++) = *(vv2++);
@@ -9905,17 +9842,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
             offset = b - op->cs1;
             if(b < I->NCSet) {
               if(I->CSet[b]) {
-                if(I->DiscreteFlag) {
-                  if(I->CSet[b] == I->DiscreteCSet[a])
-                    a1 = I->DiscreteAtmToIdx[a];
-                  else
-                    a1 = -1;
-                } else
-                  a1 = I->CSet[b]->AtmToIdx[a];
+                a1 = I->CSet[b]->atmToIdx(a);
                 if(a1 >= 0) {
                   op->ii1[op->i1 * offset + op->i2] = 1;        /* presence flag */
                   vv1 = op->vv1 + 3 * (op->i1 * offset + op->i2);       /* atom-based offset */
-                  vv2 = I->CSet[b]->Coord + (3 * a1);
+                  vv2 = I->CSet[b]->coordPtr(a1);
                   *(vv1++) = *(vv2++);
                   *(vv1++) = *(vv2++);
                   *(vv1++) = *(vv2++);
@@ -9939,17 +9870,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
             offset = b - op->cs1;
             if(b < I->NCSet) {
               if(I->CSet[b]) {
-                if(I->DiscreteFlag) {
-                  if(I->CSet[b] == I->DiscreteCSet[a])
-                    a1 = I->DiscreteAtmToIdx[a];
-                  else
-                    a1 = -1;
-                } else
-                  a1 = I->CSet[b]->AtmToIdx[a];
+                a1 = I->CSet[b]->atmToIdx(a);
                 if(a1 >= 0) {
                   if(op->ii1[op->i1 * offset + op->i2]) {       /* copy flag */
                     vv1 = op->vv1 + 3 * (op->i1 * offset + op->i2);     /* atom-based offset */
-                    vv2 = I->CSet[b]->Coord + (3 * a1);
+                    vv2 = I->CSet[b]->coordPtr(a1);
                     *(vv2++) = *(vv1++);
                     *(vv2++) = *(vv1++);
                     *(vv2++) = *(vv1++);
@@ -9997,7 +9922,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
               }
 							/* if valid coordinate set and atom info for this atom */
               if(cs && (a1 >= 0)) {
-                coord = cs->Coord + 3 * a1;
+                coord = cs->coordPtr(a1);
                 if(op_i2) {     /* do we want transformed coordinates? */
                   if(use_matrices) {
                     if(!cs->Matrix.empty()) {      /* state transformation */
@@ -10054,7 +9979,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   a1 = cs->AtmToIdx[a];
               }
               if(cs && (a1 >= 0)) {
-                coord = cs->Coord + 3 * a1;
+                coord = cs->coordPtr(a1);
                 if(op_i2) {     /* do we want transformed coordinates? */
                   if(use_matrices) {
                     if(!cs->Matrix.empty()) {      /* state transformation */
@@ -10331,15 +10256,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
               if(SelectorIsMember(G, s, sele)) {
                 switch (op->code) {
                 case OMOP_CSetSumVertices:
-                  if(I->DiscreteFlag) {
-                    if(cs == I->DiscreteCSet[a])
-                      a1 = I->DiscreteAtmToIdx[a];
-                    else
-                      a1 = -1;
-                  } else
-                    a1 = cs->AtmToIdx[a];
+                  a1 = cs->atmToIdx(a);
                   if(a1 >= 0) {
-                    coord = cs->Coord + 3 * a1;
+                    coord = cs->coordPtr(a1);
                     if(op->i2) {        /* do we want transformed coordinates? */
                       if(use_matrices) {
                         if(!cs->Matrix.empty()) {  /* state transformation */
@@ -10357,15 +10276,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   }
                   break;
                 case OMOP_CSetMinMax:
-                  if(I->DiscreteFlag) {
-                    if(cs == I->DiscreteCSet[a])
-                      a1 = I->DiscreteAtmToIdx[a];
-                    else
-                      a1 = -1;
-                  } else
-                    a1 = cs->AtmToIdx[a];
+                  a1 = cs->atmToIdx(a);
                   if(a1 >= 0) {
-                    coord = cs->Coord + 3 * a1;
+                    coord = cs->coordPtr(a1);
                     if(op->i2) {        /* do we want transformed coordinates? */
                       if(use_matrices) {
                         if(!cs->Matrix.empty()) {  /* state transformation */
@@ -10395,15 +10308,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   }
                   break;
                 case OMOP_CSetCameraMinMax:
-                  if(I->DiscreteFlag) {
-                    if(cs == I->DiscreteCSet[a])
-                      a1 = I->DiscreteAtmToIdx[a];
-                    else
-                      a1 = -1;
-                  } else
-                    a1 = cs->AtmToIdx[a];
+                  a1 = cs->atmToIdx(a);
                   if(a1 >= 0) {
-                    coord = cs->Coord + 3 * a1;
+                    coord = cs->coordPtr(a1);
                     if(op->i2) {        /* do we want transformed coordinates? */
                       if(use_matrices) {
                         if(!cs->Matrix.empty()) {  /* state transformation */
@@ -10436,16 +10343,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   }
                   break;
                 case OMOP_CSetSumSqDistToPt:
-                  if(I->DiscreteFlag) {
-                    if(cs == I->DiscreteCSet[a])
-                      a1 = I->DiscreteAtmToIdx[a];
-                    else
-                      a1 = -1;
-                  } else
-                    a1 = cs->AtmToIdx[a];
+                  a1 = cs->atmToIdx(a);
                   if(a1 >= 0) {
                     float dist;
-                    coord = cs->Coord + 3 * a1;
+                    coord = cs->coordPtr(a1);
                     if(op->i2) {        /* do we want transformed coordinates? */
                       if(use_matrices) {
                         if(!cs->Matrix.empty()) {  /* state transformation */
@@ -10464,16 +10365,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   }
                   break;
                 case OMOP_CSetMaxDistToPt:
-                  if(I->DiscreteFlag) {
-                    if(cs == I->DiscreteCSet[a])
-                      a1 = I->DiscreteAtmToIdx[a];
-                    else
-                      a1 = -1;
-                  } else
-                    a1 = cs->AtmToIdx[a];
+                  a1 = cs->atmToIdx(a);
                   if(a1 >= 0) {
                     float dist;
-                    coord = cs->Coord + 3 * a1;
+                    coord = cs->coordPtr(a1);
                     if(op->i2) {        /* do we want transformed coordinates? */
                       if(use_matrices) {
                         if(!cs->Matrix.empty()) {  /* state transformation */
@@ -10493,15 +10388,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   }
                   break;
                 case OMOP_CSetMoment:
-                  if(I->DiscreteFlag) {
-                    if(cs == I->DiscreteCSet[a])
-                      a1 = I->DiscreteAtmToIdx[a];
-                    else
-                      a1 = -1;
-                  } else
-                    a1 = cs->AtmToIdx[a];
+                  a1 = cs->atmToIdx(a);
                   if(a1 >= 0) {
-                    subtract3f(cs->Coord + (3 * a1), op->v1, v1);
+                    subtract3f(cs->coordPtr(a1), op->v1, v1);
                     v2 = v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2];
                     op->d[0][0] += v2 - v1[0] * v1[0];
                     op->d[0][1] += -v1[0] * v1[1];
@@ -10533,15 +10422,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                 if(SelectorIsMember(G, s, sele)) {
                   switch (op->code) {
                   case OMOP_CameraMinMax:
-                    if(I->DiscreteFlag) {
-                      if(cs == I->DiscreteCSet[a])
-                        a1 = I->DiscreteAtmToIdx[a];
-                      else
-                        a1 = -1;
-                    } else
-                      a1 = cs->AtmToIdx[a];
+                    a1 = cs->atmToIdx(a);
                     if(a1 >= 0) {
-                      coord = cs->Coord + 3 * a1;
+                      coord = cs->coordPtr(a1);
                       if(op->i2) {      /* do we want transformed coordinates? */
                         if(use_matrices) {
                           if(!cs->Matrix.empty()) {        /* state transformation */
@@ -10574,16 +10457,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     }
                     break;
                   case OMOP_MaxDistToPt:
-                    if(I->DiscreteFlag) {
-                      if(cs == I->DiscreteCSet[a])
-                        a1 = I->DiscreteAtmToIdx[a];
-                      else
-                        a1 = -1;
-                    } else
-                      a1 = cs->AtmToIdx[a];
+                    a1 = cs->atmToIdx(a);
                     if(a1 >= 0) {
                       float dist;
-                      coord = cs->Coord + 3 * a1;
+                      coord = cs->coordPtr(a1);
                       if(op->i2) {      /* do we want transformed coordinates? */
                         if(use_matrices) {
                           if(!cs->Matrix.empty()) {        /* state transformation */
@@ -10606,31 +10483,19 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     if(!cs->objMolOpInvalidated) {
                       /* performance optimization: avoid repeatedly
                          calling invalidate on the same coord sets */
-                      if(I->DiscreteFlag) {
-                        if(cs == I->DiscreteCSet[a])
-                          a1 = I->DiscreteAtmToIdx[a];
-                        else
-                          a1 = -1;
-                      } else
-                        a1 = cs->AtmToIdx[a];
+                      a1 = cs->atmToIdx(a);
                       if(a1 >= 0)       /* selection touches this coordinate set */
                         inv_flag = true;        /* so set the invalidation flag */
                     }
                     break;
                   case OMOP_VERT:
 										/* get the atom index whether it's discrete or not */
-                    if(I->DiscreteFlag) {
-                      if(cs == I->DiscreteCSet[a])
-                        a1 = I->DiscreteAtmToIdx[a];
-                      else
-                        a1 = -1;
-                    } else
-                      a1 = cs->AtmToIdx[a];
+                    a1 = cs->atmToIdx(a);
                     if(a1 >= 0) {
 											/* if a1 is a valid atom index, then copy it's xyz coordinates
 											 * into vv1; increment the counter, nvv1 */
                       VLACheck(op->vv1, float, (op->nvv1 * 3) + 2);
-                      vv2 = cs->Coord + (3 * a1);
+                      vv2 = cs->coordPtr(a1);
                       vv1 = op->vv1 + (op->nvv1 * 3);
                       *(vv1++) = *(vv2++);
                       *(vv1++) = *(vv2++);
@@ -10641,18 +10506,12 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   case OMOP_SVRT:
                     /* gives us only vertices for a specific coordinate set */
                     if(b == op->i1) {
-                      if(I->DiscreteFlag) {
-                        if(cs == I->DiscreteCSet[a])
-                          a1 = I->DiscreteAtmToIdx[a];
-                        else
-                          a1 = -1;
-                      } else
-                        a1 = cs->AtmToIdx[a];
+                      a1 = cs->atmToIdx(a);
                       if(a1 >= 0) {
                         VLACheck(op->vv1, float, (op->nvv1 * 3) + 2);
                         VLACheck(op->i1VLA, int, op->nvv1);
                         op->i1VLA[op->nvv1] = a;        /* save atom index for later comparisons */
-                        vv2 = cs->Coord + (3 * a1);
+                        vv2 = cs->coordPtr(a1);
                         vv1 = op->vv1 + (op->nvv1 * 3);
                         *(vv1++) = *(vv2++);
                         *(vv1++) = *(vv2++);
@@ -10663,15 +10522,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     break;
                   case OMOP_MOME:
                     /* Moment of inertia tensor - unweighted - assumes v1 is center of molecule */
-                    if(I->DiscreteFlag) {
-                      if(cs == I->DiscreteCSet[a])
-                        a1 = I->DiscreteAtmToIdx[a];
-                      else
-                        a1 = -1;
-                    } else
-                      a1 = cs->AtmToIdx[a];
+                    a1 = cs->atmToIdx(a);
                     if(a1 >= 0) {
-                      subtract3f(cs->Coord + (3 * a1), op->v1, v1);
+                      subtract3f(cs->coordPtr(a1), op->v1, v1);
                       v2 = v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2];
                       op->d[0][0] += v2 - v1[0] * v1[0];
                       op->d[0][1] += -v1[0] * v1[1];

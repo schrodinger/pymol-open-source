@@ -2350,7 +2350,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
         if(!present[a]) {
           ai1 = obj->AtomInfo + cs->IdxToAtm[a];
           if((!cullByFlag) || !(ai1->flags & cAtomFlag_ignore)) {
-            v0 = cs->Coord + 3 * a;
+            v0 = cs->coordPtr(a);
             i = *(MapLocusEStart(map, v0));
             if(i && map->EList) {
               j = map->EList[i++];
@@ -2358,7 +2358,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
                 if(present[j] > 1) {
                   ai2 = obj->AtomInfo + cs->IdxToAtm[j];
                   if(within3f
-                     (cs->Coord + 3 * j, v0, ai1->vdw + ai2->vdw + probe_radiusX2)) {
+                     (cs->coordPtr(j), v0, ai1->vdw + ai2->vdw + probe_radiusX2)) {
                     present[a] = 1;
                     break;
                   }
@@ -2436,7 +2436,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 	  if(i && map->EList) {
 	    j = ambient_occlusion_map->EList[i++];
 	    while(j >= 0) {
-	      subtract3f(cs->Coord + j * 3, v0, d);
+	      subtract3f(cs->coordPtr(j), v0, d);
 	      dist = (float) length3f(d);
 	      if (dist < closeDist){
 		closeA = j;
@@ -2449,7 +2449,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 	    if (nVAO[closeA]){
 	      I->VAO[a] = VAO[closeA];
 	    } else {
-	      v0 = cs->Coord + 3 * closeA;
+	      v0 = cs->coordPtr(closeA);
 	      i = *(MapLocusEStart(ambient_occlusion_map, v0));
 	      if (i){
 		j = ambient_occlusion_map->EList[i++];
@@ -2458,7 +2458,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 		    j = ambient_occlusion_map->EList[i++];
 		    continue;
 		  }
-		  subtract3f(cs->Coord + j * 3, v0, d);
+		  subtract3f(cs->coordPtr(j), v0, d);
 		  dist = (float) length3f(d);
 		  if (dist > 12.f){
 		    j = ambient_occlusion_map->EList[i++];
@@ -2524,8 +2524,8 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 		copy3f(I->V + j * 3, pt);
 		subtract3f(I->V + j * 3, v0mod, d);
 	      } else {
-		copy3f(cs->Coord + j * 3, pt);
-		subtract3f(cs->Coord + j * 3, v0mod, d);
+		copy3f(cs->coordPtr(j), pt);
+		subtract3f(cs->coordPtr(j), v0mod, d);
 	      }
 	      dist = (float) length3f(d);
 	      normalize3f(d);
@@ -2666,7 +2666,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
             ai2 = obj->AtomInfo + atm;
             if((inclH || (!ai2->isHydrogen())) &&
                ((!cullByFlag) || (!(ai2->flags & cAtomFlag_ignore)))) {
-              dist = (float) diff3f(v0, cs->Coord + j * 3) - ai2->vdw;
+              dist = (float) diff3f(v0, cs->coordPtr(j)) - ai2->vdw;
               if(color_smoothing){
 		if (dist < minDist){
 		  /* switching closest to 2nd closest */
@@ -2696,7 +2696,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
           i0 = pi;
           ai0 = pai;
           /* TODO: should find point closest to v0 between
-                   atoms points (cs->Coord + pi * 3) and (cs->Coord + pi2 * 3) (including vdw), then set this
+                   atoms points (cs->coordPtr(pi)) and (cs->coordPtr(pi2)) (including vdw), then set this
                    distance to the distance between the vertex v0
                    and that point. We might want to use the normal
                    to compute this distance.
@@ -4034,8 +4034,8 @@ static int RepSurfaceAddNearByAtomsIfNotSurfaced(PyMOLGlobals *G, MapType *map,
       if((inclH || (!ai1->isHydrogen())) &&
 	 ((!cullByFlag) || 
 	  !(ai1->flags & cAtomFlag_ignore))) {
-	float *v0 = cs->Coord + 3 * a;
-	int i = *(MapLocusEStart(map, v0));
+        const float* v0 = cs->coordPtr(a);
+        int i = *(MapLocusEStart(map, v0));
 	if(optimize) {
 	  if(i && map->EList) {
 	    int j = map->EList[i++];
@@ -4043,7 +4043,7 @@ static int RepSurfaceAddNearByAtomsIfNotSurfaced(PyMOLGlobals *G, MapType *map,
 	      if(present_vla[j] > 1) {
 		AtomInfoType *ai2 = obj->AtomInfo + cs->IdxToAtm[j];
 		if(within3f
-		   (cs->Coord + 3 * j, v0,
+		   (cs->coordPtr(j), v0,
 		    ai1->vdw + ai2->vdw + probe_radiusX2)) {
 		  present_vla[a] = 1;
 		  break;
@@ -4070,7 +4070,7 @@ static int RepSurfaceRemoveAtomsNotWithinCutoff(PyMOLGlobals *G,
   for(a = 0; ok && a < cs->NIndex; a++) {
     int include_flag = false;
     if(carve_map) {
-      float *v0 = cs->Coord + 3 * a;
+      const float* v0 = cs->coordPtr(a);
       int i = *(MapLocusEStart(carve_map, v0));
       if(i && carve_map->EList) {
 	int j = carve_map->EList[i++];

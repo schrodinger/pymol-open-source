@@ -297,11 +297,8 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
       int nBond = obj->NBond;
       const BondType *bd = obj->Bond.data();
       const AtomInfoType *ai = obj->AtomInfo.data();
-      const int *atm2idx = cs->AtmToIdx.data();
-      int discreteFlag = obj->DiscreteFlag;
       int last_color = -9;
       const float *coord = cs->Coord.data();
-      const float _pt5 = 0.5F;
 
       for(a = 0; a < nBond; a++) {
         int b1 = bd->index[0];
@@ -309,21 +306,9 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
         const AtomInfoType *ai1, *ai2;
         bd++;
         if(GET_BIT((ai1 = ai + b1)->visRep,cRepLine) && GET_BIT((ai2 = ai + b2)->visRep,cRepLine)) {
-          int a1, a2;
           active = true;
-          if(discreteFlag) {
-            /* not optimized */
-            if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
-              a1 = obj->DiscreteAtmToIdx[b1];
-              a2 = obj->DiscreteAtmToIdx[b2];
-            } else {
-              a1 = -1;
-              a2 = -1;
-            }
-          } else {
-            a1 = atm2idx[b1];
-            a2 = atm2idx[b2];
-          }
+          int a1 = cs->atmToIdx(b1);
+          int a2 = cs->atmToIdx(b2);
           if((a1 >= 0) && (a2 >= 0)) {
             int c1 = ai1->color;
             int c2 = ai2->color;
@@ -340,10 +325,7 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
               glVertex3fv(v2);  /* we done */
             } else {            /* different colors -> two lines */
               float avg[3];
-
-              avg[0] = (v1[0] + v2[0]) * _pt5;
-              avg[1] = (v1[1] + v2[1]) * _pt5;
-              avg[2] = (v1[2] + v2[2]) * _pt5;
+              average3f(v1, v2, avg);
 
               if(c1 != last_color) {
                 last_color = c1;
@@ -685,18 +667,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     b1 = b->index[0];
     b2 = b->index[1];
 
-    if(obj->DiscreteFlag) {
-      if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
-        a1 = obj->DiscreteAtmToIdx[b1];
-        a2 = obj->DiscreteAtmToIdx[b2];
-      } else {
-        a1 = -1;
-        a2 = -1;
-      }
-    } else {
-      a1 = cs->AtmToIdx[b1];
-      a2 = cs->AtmToIdx[b2];
-    }
+    a1 = cs->atmToIdx(b1);
+    a2 = cs->atmToIdx(b2);
     if((a1 >= 0) && (a2 >= 0)) {
       if(!variable_width)
         if (AtomInfoCheckBondSetting(G, b, cSetting_line_width)){
@@ -754,18 +726,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
       if (ord == 0 && valence_zero_mode == 0)
         continue;
 
-      if(obj->DiscreteFlag) {
-        if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
-          a1 = obj->DiscreteAtmToIdx[b1];
-          a2 = obj->DiscreteAtmToIdx[b2];
-        } else {
-          a1 = -1;
-          a2 = -1;
-        }
-      } else {
-        a1 = cs->AtmToIdx[b1];
-        a2 = cs->AtmToIdx[b2];
-      }
+      a1 = cs->atmToIdx(b1);
+      a2 = cs->atmToIdx(b2);
       if((a1 >= 0) && (a2 >= 0)) {
 
         AtomInfoType *ati1 = obj->AtomInfo + b1;
@@ -789,8 +751,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
 
         if(hide_long && (s1 || s2)) {
           float cutoff = (ati1->vdw + ati2->vdw) * _0p9;
-          v1 = cs->Coord + 3 * a1;
-          v2 = cs->Coord + 3 * a2;
+          v1 = cs->coordPtr(a1);
+          v2 = cs->coordPtr(a2);
           ai1 = obj->AtomInfo + b1;
           if(!within3f(v1, v2, cutoff)) /* atoms separated by more than 90% of the sum of their vdw radii */
             s1 = s2 = 0;
@@ -828,8 +790,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
             c1 = (c2 = bd_line_color);
           }
 
-          v1 = cs->Coord + 3 * a1;
-          v2 = cs->Coord + 3 * a2;
+          v1 = cs->coordPtr(a1);
+          v2 = cs->coordPtr(a2);
 
           if (line_stick_helper && (ati1->visRep & ati2->visRep & cRepCylBit)) {
             s1 = s2 = 0;

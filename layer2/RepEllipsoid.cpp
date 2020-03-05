@@ -256,7 +256,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
 
             if(xx_matrix_jacobi_solve(e_vec, e_val, &n_rot, matrix, 4)) {
 
-              float *v = cs->Coord + 3 * a;
+              const float* v = cs->coordPtr(a);
 
               float mag[3];
               float scale[3];

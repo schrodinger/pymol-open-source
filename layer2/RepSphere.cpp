@@ -304,7 +304,7 @@ static void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj,
   PyMOLGlobals *G = cs->G;
   float at_transp = transp;
   int c1;
-  float *v0, vc[3];
+  float vc[3];
   const float *vcptr;
 
   float at_sphere_scale = AtomSettingGetWD(G, ati1, cSetting_sphere_scale, sphere_scale);
@@ -330,7 +330,7 @@ static void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj,
     c1 = ati1->color;
   else
     c1 = at_sphere_color;
-  v0 = cs->Coord + 3 * a;
+  const float* v0 = cs->coordPtr(a);
 
   if(ColorCheckRamped(G, c1)) {
     ColorGetRamped(G, c1, v0, vc, state);
@@ -383,7 +383,7 @@ static void RepSphereCGOSetSphereColorAndPick(ObjectMolecule *obj, CoordSet * cs
   else
     c1 = at_sphere_color;
   if(ColorCheckRamped(G, c1)) {
-    float *v0 = cs->Coord + 3 * idx;
+    const float* v0 = cs->coordPtr(idx);
     float color[3];
     ColorGetRamped(G, c1, v0, color, state);
     CGOColorv(cgo, color);
@@ -592,7 +592,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
         int cnc = nspheres * 3;
         nspheres++;
         VLACheck(v_tmp, float, cnc + 3);
-        copy3f(cs->Coord + 3 * a, &v_tmp[cnc]);
+        copy3f(cs->coordPtr(a), &v_tmp[cnc]);
     }
     ok &= !G->Interrupt;
   }
