@@ -34,6 +34,8 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"DistSet.h"
 #include"ListMacros.h"
+#ifdef _PYMOL_INCENTIVE
+#endif
 
 static void ObjectDistFree(ObjectDist * I);
 static void ObjectDistUpdateExtents(ObjectDist * I);
@@ -427,8 +429,18 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
 
       /* this does the actual work of creating the distances for this state */
       /* I->DSet[a] = new DistSet(G, selections, states, etc) -- created this new DistSet */
-      I->DSet[a] = SelectorGetDistSet(G, I->DSet[a], sele1, state1, sele2, state2, mode, cutoff, &dist);
-
+      if (5 <= mode && mode <= 7) {
+#ifdef _PYMOL_INCENTIVE
+#else
+        PRINTFB(G, FB_ObjectDist, FB_Errors)
+          " ObjectDist-Error: modes 5-7 only available in Incentive PyMOL\n"
+          ENDFB(G);
+        I->DSet[a] = nullptr;
+#endif
+      } else {
+        I->DSet[a] = SelectorGetDistSet(
+            G, I->DSet[a], sele1, state1, sele2, state2, mode, cutoff, &dist);
+      }
 
       /* if the distances are valid, then tally the total and set the ObjectMolecule pointer as necessary */
       if(I->DSet[a]) {

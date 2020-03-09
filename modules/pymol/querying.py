@@ -414,6 +414,12 @@ ARGUMENTS
     mode = 4: distance between centroids (does not support
               dynamic_measures; new in PyMOL 1.8.2)
 
+    mode = 5: pi-pi and pi-cation interactions
+
+    mode = 6: pi-pi interactions
+
+    mode = 7: pi-cation interactions
+
     state = int: object state to create the measurement object in
     and to get coordinates from {default: 0 (all states)}
 
@@ -514,6 +520,28 @@ PYMOL API
 
     # LEGACY support for cmd.dist
     dist = distance
+
+    def pi_interactions(name="",
+                        selection1="all",
+                        selection2="same",
+                        state=ALL_STATES,
+                        state1=-3,
+                        state2=-3,
+                        quiet=1,
+                        reset=0,
+                        _self=cmd):
+        '''
+DESCRIPTION
+
+    Find pi-pi and pi-cation interactions.
+
+    Identical to cmd.distance(..., mode=5, label=0)
+
+SEE ALSO
+
+    distance
+        '''
+        raise pymol.IncentiveOnlyException()
 
     def get_povray(_self=cmd):
         '''

@@ -1028,6 +1028,11 @@ def find(self_cmd, sele):
                   [ 1, 'between chains within %.1fA' % d, 'util.interchain_distances("'+sele+'_interchain_any","'+sele+'",cutoff=%f)' % d]
                   for d in (3.0, 3.5, 4.0)
               ]],
+              [ 1, 'pi interactions', [[ 2, 'Pi Interactions:', '']] + [
+                  [1, 'all', 'cmd.pi_interactions("'+sele+'_pi_interactions","'+sele+'",reset=1)'],
+                  [1, 'pi-pi', 'cmd.distance("'+sele+'_pi_pi","'+sele+'","same",reset=1,mode=6)'],
+                  [1, 'pi-cation', 'cmd.distance("'+sele+'_pi_cation","'+sele+'","same",reset=1,mode=7)'],
+              ]],
               ]
 
 def align_to_object(self_cmd, sele):

@@ -150,6 +150,7 @@ from .querying import \
       identify,           \
       index,              \
       overlap,            \
+      pi_interactions,    \
       phi_psi
 
 #--------------------------------------------------------------------

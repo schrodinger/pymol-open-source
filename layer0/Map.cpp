@@ -35,9 +35,10 @@ float MapGetDiv(MapType * I)
   return I->Div;
 }
 
-void MapFree(MapType * I)
+MapType::~MapType()
 {
-  if(I) {
+  auto I = this;
+  {
     CacheFreeP(I->G, I->Head, I->group_id, I->block_base + cCache_map_head_offset, false);
     CacheFreeP(I->G, I->Link, I->group_id, I->block_base + cCache_map_link_offset, false);
     CacheFreeP(I->G, I->EHead, I->group_id, I->block_base + cCache_map_ehead_offset,
@@ -47,7 +48,6 @@ void MapFree(MapType * I)
     VLACacheFreeP(I->G, I->EList, I->group_id, I->block_base + cCache_map_elist_offset,
                   false);
   }
-  OOFreeP(I);
 }
 
 int MapCacheInit(MapCache * M, MapType * I, int group_id, int block_base)
@@ -733,6 +733,18 @@ int MapExclLocus(MapType * I, const float *v, int *a, int *b, int *c)
   return (1);
 }
 
+/**
+ * Return EList start index for points in proximity to `v`.
+ * Return 0 if `v` is outside the grid or there are no points.
+ */
+int MapExclLocusEStart(MapType* map, const float* v)
+{
+  int h, k, l;
+  if (!MapExclLocus(map, v, &h, &k, &l))
+    return 0;
+  return *(MapEStart(map, h, k, l));
+}
+
 float MapGetSeparation(PyMOLGlobals * G, float range, const float *mx, const float *mn,
                        float *diagonal)
 {
@@ -831,9 +843,7 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, const float *vert, int nV
   Vector3f diagonal;
   int ok = true;
 
-  /* allocate space for a MapType 
-   * "I" is now defined */
-  OOAlloc(G, MapType);
+  auto I = new MapType();
   PRINTFD(G, FB_Map)
     " MapNew-Debug: entered.\n" ENDFD;
   CHECKOK(ok, I);
@@ -844,12 +854,6 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, const float *vert, int nV
   I->G = G;
   I->group_id = group_id;
   I->block_base = block_base;
-  I->Head = NULL;
-  I->Link = NULL;
-  I->EHead = NULL;
-  I->EList = NULL;
-  I->EMask = NULL;
-  I->NEElem = 0;
 
   /* initialize an empty cache for the map */
   I->Link = CacheAlloc(G, int, nVert, group_id, block_base + cCache_map_link_offset);

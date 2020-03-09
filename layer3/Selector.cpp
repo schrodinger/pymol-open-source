@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"PConv.h"
 #include"P.h"
+#include"RingFinder.h"
 
 #include"MemoryDebug.h"
 #include"Selector.h"
@@ -9074,59 +9075,30 @@ ok_except1:
 
 /*
  * Ring finder subroutine
+ * Modifies base[0].sele
  */
-class SelectorRingFinder {
-  CSelector * I;
-  EvalElem * base;
-  ObjectMolecule * obj;
-  std::vector<int> indices;
+class SelectorRingFinder : public AbstractRingFinder
+{
+  CSelector* m_selector;
+  EvalElem* m_base;
 
-  void recursion(int atm, int depth) {
-    int atm_neighbor, offset, j;
-
-    indices[depth] = atm;
-
-    ITERNEIGHBORATOMS(obj->Neighbor, atm, atm_neighbor, j) {
-      // check bond order
-      if (obj->Bond[obj->Neighbor[j + 1]].order < 1)
-        continue;
-
-      // check if closing a ring of size >= 3
-      if (depth > 1 && atm_neighbor == indices[0]) {
-        // found ring, add it to the selection
-        for (int i = 0; i <= depth; ++i)
-          if ((offset = SelectorGetObjAtmOffset(I, obj, indices[i])) >= 0)
-            base->sele[offset] = 1;
-      } else if (depth < indices.size() - 1) {
-        // check for undesired ring with start != 0
-        int i = depth;
-        while ((--i) >= 0)
-          if (atm_neighbor == indices[i])
-            break; // stop recursion
-        if (i == -1) {
-          recursion(atm_neighbor, depth + 1);
-        }
-      }
+protected:
+  void onRingFound(
+      ObjectMolecule* obj, const int* indices, size_t size) override
+  {
+    for (size_t i = 0; i < size; ++i) {
+      int offset = SelectorGetObjAtmOffset(m_selector, obj, indices[i]);
+      if (offset >= 0)
+        m_base->sele[offset] = 1;
     }
   }
 
 public:
-  SelectorRingFinder(CSelector * I, EvalElem * base, int maxringsize=7) :
-    I(I), base(base), obj(NULL), indices(maxringsize) {}
-
-  /*
-   * Does a depth-first search for all paths of length in range [3, maxringsize],
-   * which lead back to `atm` and don't visit any atom twice.
-   *
-   * Modifies base[0].sele
-   */
-  void apply(ObjectMolecule * obj_, int atm) {
-    if (obj != obj_) {
-      obj = obj_;
-      ObjectMoleculeUpdateNeighbors(obj);
-    }
-
-    recursion(atm, 0);
+  SelectorRingFinder(CSelector* selector, EvalElem* base, int maxringsize = 7)
+      : AbstractRingFinder(maxringsize)
+      , m_selector(selector)
+      , m_base(base)
+  {
   }
 };
 

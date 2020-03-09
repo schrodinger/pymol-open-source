@@ -192,6 +192,7 @@ def get_command_keywords(self_cmd=cmd):
         'pair_fit'      : [ self_cmd.pair_fit          , 0 , 0 , ''  , parsing.STRICT ],
         'pass'          : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'phi_psi'       : [ self_cmd.phi_psi           , 0 , 0 , ''  , parsing.STRICT ],
+        'pi_interactions': [ self_cmd.pi_interactions  , 0,  0 , ''  , parsing.STRICT ],
         'pop'           : [ self_cmd.pop               , 0 , 0 , ''  , parsing.STRICT ],
         'protect'       : [ self_cmd.protect           , 0 , 0 , ''  , parsing.STRICT ],
         'pseudoatom'    : [ self_cmd.pseudoatom        , 0 , 0 , ''  , parsing.STRICT ],

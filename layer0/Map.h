@@ -24,21 +24,26 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"PyMOLGlobals.h"
 
-typedef struct {
+struct MapType {
   PyMOLGlobals *G;
   float Div;
   float recipDiv;
   Vector3i Dim;
   int D1D2;
   Vector3i iMin, iMax;
-  int *Head, *Link;
-  int *EHead, *EList, *EMask;
+  int* Head = nullptr;
+  int* Link = nullptr;
+  int* EHead = nullptr;
+  int* EList = nullptr;
+  int* EMask = nullptr;
   int NVert;
-  int NEElem;
+  int NEElem = 0;
   Vector3f Max, Min;
   int group_id;
   int block_base;
-} MapType;
+
+  ~MapType();
+};
 
 typedef struct {
   PyMOLGlobals *G;
@@ -59,7 +64,7 @@ int MapSetupExpress(MapType * I);
 int MapSetupExpressPerp(MapType * I, const float *vert, float front, int nVertHint,
 			int negative_start, const int *spanner);
 
-void MapFree(MapType * I);
+#define MapFree(I) delete(I)
 
 #define MapFirst(m,a,b,c) (m->Head + ((a) * m->D1D2) + ((b)*m->Dim[2]) + (c))
 
@@ -70,6 +75,7 @@ void MapLocus(MapType * map, const float *v, int *a, int *b, int *c);
 int *MapLocusEStart(MapType * map, const float *v);
 
 int MapExclLocus(MapType * map, const float *v, int *a, int *b, int *c);
+int MapExclLocusEStart(MapType* map, const float* v);
 
 #define MapCache(m,a) {(m)->Cache[a]=1;(m)->CacheLink[a]=(m)->CacheStart;(m)->CacheStart=a;}
 #define MapCached(m,a) ((m)->Cache[a])
@@ -91,5 +97,45 @@ int MapInsideXY(MapType * I, const float *v, int *a, int *b, int *c);
 int MapSetupExpressXY(MapType * I, int n_vert, int negative_start);
 
 int MapSetupExpressXYVert(MapType * I, float *vert, int n_vert, int negative_start);
+
+/**
+ * Range iteration over points in proximity of a 3D query point
+ */
+class MapEIter
+{
+  const int* m_elist = nullptr;
+  int m_i = 0;
+
+public:
+  MapEIter() = default;
+
+  /**
+   * @param map Map to query
+   * @param v 3D query point
+   */
+  MapEIter(MapType& map, const float* v)
+  {
+    if (!map.EList) {
+      MapSetupExpress(&map);
+    }
+    m_elist = map.EList;
+    m_i = MapExclLocusEStart(&map, v);
+  }
+
+  bool operator!=(MapEIter const& other) const { return m_i != other.m_i; }
+
+  int operator*() const { return m_elist[m_i]; }
+
+  MapEIter& operator++()
+  {
+    if (m_elist[++m_i] < 0) {
+      m_i = 0;
+    }
+    return *this;
+  }
+
+  MapEIter begin() const { return *this; }
+  MapEIter end() const { return {}; }
+};
 
 #endif

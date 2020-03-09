@@ -9734,14 +9734,21 @@ pymol::Result<float> ExecutiveDistance(PyMOLGlobals* G, const char* nam,
     int quiet, int reset, int state, int zoom, int state1, int state2)
 {
   SelectorTmp tmpsele1(G, s1);
-  SelectorTmp tmpsele2(G, s2);
   int sele1 = tmpsele1.getIndex();
   if (sele1 < 0) {
     return pymol::Error("invalid selection1");
   }
-  int sele2 = (WordMatchExact(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
-  if (sele2 < 0) {
-    return pymol::Error("invalid selection2");
+
+  int sele2;
+  SelectorTmp tmpsele2;
+  if (WordMatchExact(G, s2, cKeywordSame, true) || strcmp(s1, s2) == 0) {
+    sele2 = sele1;
+  } else {
+    tmpsele2 = SelectorTmp(G, s2);
+    sele2 = tmpsele2.getIndex();
+    if (sele2 < 0) {
+      return pymol::Error("invalid selection2");
+    }
   }
 
   auto obj = ExecutiveFindOrDeleteObject<ObjectDist>(G, nam);
