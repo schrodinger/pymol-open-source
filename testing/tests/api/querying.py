@@ -575,3 +575,30 @@ class TestQuerying(testing.PyMOLTestCase):
             (1, 6, 1),
             (2, 3, 2),
         ], cmd.get_bonds())
+
+    @testing.requires('incentive')
+    @testing.requires_version('2.4')
+    def testPiInteractions(self):
+        # 1rx1 has 4 pi-pi and 1 pi-cation
+        coords_ref_pi_pi = [
+                30.962, 56.116,  4.616, 27.154, 59.807,  4.965,
+                23.588, 39.248, 24.729, 18.578, 38.629, 23.297,
+                28.754, 34.308, 11.073, 31.535, 31.381, 12.396,
+                36.444, 30.384, 13.916, 31.535, 31.381, 12.396]
+        coords_ref_pi_cat = [
+                24.198, 57.834, 15.137, 25.219, 59.507, 17.986]
+        coords_ref_pi = coords_ref_pi_pi + coords_ref_pi_cat
+
+        cmd.load(self.datafile('1rx1.pdb'))
+
+        cmd.pi_interactions('p1')
+        coords = cmd.get_session('p1', 1)['names'][0][5][2][0][1]
+        self.assertArrayEqual(coords, coords_ref_pi, delta=1e-2)
+
+        cmd.distance('p2', '1rx1', 'same', mode=6)
+        coords = cmd.get_session('p2', 1)['names'][0][5][2][0][1]
+        self.assertArrayEqual(coords, coords_ref_pi_pi, delta=1e-2)
+
+        cmd.distance('p3', '1rx1', 'same', mode=7)
+        coords = cmd.get_session('p3', 1)['names'][0][5][2][0][1]
+        self.assertArrayEqual(coords, coords_ref_pi_cat, delta=1e-2)
