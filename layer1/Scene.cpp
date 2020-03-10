@@ -6474,8 +6474,8 @@ static void SceneStencilCheck(PyMOLGlobals *G)
 
 #ifndef _PYMOL_PRETEND_GLUT
     if(G->Main)
-#endif
       bottom = p_glutGet(P_GLUT_WINDOW_Y) + p_glutGet(P_GLUT_WINDOW_HEIGHT);
+#endif
 
     int parity = bottom & 0x1;
     if(parity != I->StencilParity) {

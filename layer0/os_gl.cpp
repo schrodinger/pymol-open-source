@@ -102,10 +102,3 @@ int PyMOLCheckOpenGLErr(const char *pos)
   }
   return flag;
 }
-
-#ifdef _PYMOL_NO_GLUT
-int p_glutGet(GLenum type)
-{
-  return 0;
-}
-#endif

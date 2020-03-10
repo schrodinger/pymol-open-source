@@ -289,11 +289,11 @@ static void ObjectCGORenderState(PyMOLGlobals* G, int pass, CRay* ray,
 	  if (two_sided_lighting){
 	    if (use_shader)
 	      glEnable(GL_VERTEX_PROGRAM_TWO_SIDE);
-	    GLLIGHTMODELI(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	  } else {
 	    if (use_shader)
 	      glDisable(GL_VERTEX_PROGRAM_TWO_SIDE);
-	    GLLIGHTMODELI(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 	  }
 #endif
 	  if (backface_cull){
@@ -323,7 +323,7 @@ static void ObjectCGORenderState(PyMOLGlobals* G, int pass, CRay* ray,
 	    if (two_sided_lighting){
 	      if (use_shader)
 		glDisable(GL_VERTEX_PROGRAM_TWO_SIDE);
-	      GLLIGHTMODELI(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+	      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 	    }
 	    if (!cgo_lighting){
 	      glEnable(GL_LIGHTING);

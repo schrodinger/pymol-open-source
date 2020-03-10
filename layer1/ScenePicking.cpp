@@ -51,7 +51,7 @@ static void PickColorConverterSetRgbaBitsFromGL(
   }
 
   if (currentFrameBuffer != G->ShaderMgr->default_framebuffer_id) {
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, G->ShaderMgr->default_framebuffer_id);
+    glBindFramebuffer(GL_FRAMEBUFFER, G->ShaderMgr->default_framebuffer_id);
   }
 
   glGetIntegerv(GL_RED_BITS, rgba_bits + 0);
@@ -64,7 +64,7 @@ static void PickColorConverterSetRgbaBitsFromGL(
       rgba_bits[2], rgba_bits[3] ENDFD;
 
   if (currentFrameBuffer != G->ShaderMgr->default_framebuffer_id) {
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFrameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, currentFrameBuffer);
   }
 
   pickconv.setRgbaBits(rgba_bits);

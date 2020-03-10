@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Ray.h"
 #include"Setting.h"
 #include"os_gl.h"
+#include"os_gl_cgo.h"
 #include"Rep.h"
 #include"MemoryDebug.h"
 #include <vector>

@@ -1678,7 +1678,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
         SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting,
             cSetting_two_sided_lighting) > 0;
       if (two_sided_lighting){
-        GLLIGHTMODELI(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+        glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
       }
 
       if(I->Type == 1) {
@@ -2126,7 +2126,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       }
 
       if (two_sided_lighting){
-        GLLIGHTMODELI(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+        glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
       }
 #endif
     }
