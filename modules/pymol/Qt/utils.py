@@ -269,15 +269,28 @@ def loadUi(uifile, widget):
         m = __import__(PYQT_NAME + '.uic')
         return m.uic.loadUi(uifile, widget)
     elif PYQT_NAME == 'PySide2':
-        import pyside2uic as pysideuic
+        try:
+            import pyside2uic as pysideuic
+        except ImportError:
+            pysideuic = None
     else:
         import pysideuic
 
-    import io
-    stream = io.StringIO()
-    pysideuic.compileUi(uifile, stream)
+    if pysideuic is None:
+        import subprocess
+        p = subprocess.Popen(['uic', '-g', 'python', uifile],
+                             stdout=subprocess.PIPE)
+        source = p.communicate()[0]
+        # workaround for empty retranslateUi bug
+        source += b'\n' + b' ' * 8 + b'pass'
+    else:
+        import io
+        stream = io.StringIO()
+        pysideuic.compileUi(uifile, stream)
+        source = stream.getvalue()
+
     ns_locals = {}
-    exec(stream.getvalue(), None, ns_locals)
+    exec(source, ns_locals)
 
     if 'Ui_Form' in ns_locals:
         form = ns_locals['Ui_Form']()
