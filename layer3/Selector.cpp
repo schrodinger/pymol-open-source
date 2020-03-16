@@ -10564,6 +10564,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   int from_proton = SettingGetGlobal_b(G, cSetting_h_bond_from_proton);
   AtomInfoType *h_ai;
 
+  bool cutoff_is_ratio_distance_to_vdW = false;
+
   /* if we're creating hydrogen bonds, then set some distance cutoffs */
   switch (mode) {
   case 1:
@@ -10572,6 +10574,10 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   case 2:
     exclusion = SettingGetGlobal_i(G, cSetting_h_bond_exclusion);
     break;
+  case 8:
+    cutoff_is_ratio_distance_to_vdW = true;
+    mode = 3;
+    // no break, continue with case 3
   case 3:
     exclusion = SettingGetGlobal_i(G, cSetting_distance_exclusion);
     break;
@@ -10685,8 +10691,14 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
         coverage[iter.a] = true;
     }
 
+    float cutoff_map = cutoff;
+    if (cutoff_is_ratio_distance_to_vdW) {
+      constexpr float vdw_upper_bounds = 3.f;
+      cutoff_map *= 2 * vdw_upper_bounds;
+    }
+
     /* this creates an interleaved list of ints for mapping ids to states within a given neighborhood */
-    c = SelectorGetInterstateVLA(G, sele1, state1, sele2, state2, cutoff, &vla);
+    c = SelectorGetInterstateVLA(G, sele1, state1, sele2, state2, cutoff_map, &vla);
   }
 
   /* for each state */
@@ -10725,6 +10737,10 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
           if((idx1 >= 0) && (idx2 >= 0)) {
 	    /* actual distance calculation from ptA to ptB */
             dist = (float) diff3f(cs1->coordPtr(idx1), cs2->coordPtr(idx2));
+
+            if (cutoff_is_ratio_distance_to_vdW) {
+              dist /= ai1->vdw + ai2->vdw;
+            }
 
 	    /* if we pass the boding cutoff */
             if(dist < cutoff) {

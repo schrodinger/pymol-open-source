@@ -420,6 +420,9 @@ ARGUMENTS
 
     mode = 7: pi-cation interactions
 
+    mode = 8: like mode=3, but cutoff is the ratio between
+              distance and sum of VDW radii
+
     state = int: object state to create the measurement object in
     and to get coordinates from {default: 0 (all states)}
 
