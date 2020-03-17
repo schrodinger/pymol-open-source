@@ -375,9 +375,18 @@ class AttachWizard(RepeatableActionWizard):
 
 class AminoAcidWizard(RepeatableActionWizard):
 
-    def __init__(self,_self):
+    def __init__(self, _self, ss=-1):
         RepeatableActionWizard.__init__(self,_self)
         self.mode = 0
+        self.setSecondaryStructure(ss)
+
+    def setSecondaryStructure(self, ss):
+        self._secondary_structure = ss
+
+    def attach_monomer(self, objectname=""):
+         editor.attach_amino_acid("?pk1", self.aminoAcid, object=objectname,
+                ss=self._secondary_structure,
+                 _self=self.cmd)
 
     def do_pick(self, bondFlag):
         # since this function can change any position of atoms in a related
@@ -386,7 +395,7 @@ class AminoAcidWizard(RepeatableActionWizard):
             self.cmd.select(active_sele, "bymol pk1")
             try:
                 with undocontext(self.cmd, "bymol ?pk1"):
-                    editor.attach_amino_acid("pk1", self.aminoAcid, _self=self.cmd)
+                    self.attach_monomer(self.aminoAcid)
             except QuietException:
                 fin = -1
         elif self.mode == 1:
@@ -412,7 +421,8 @@ class AminoAcidWizard(RepeatableActionWizard):
             if name not in names:
                 break
             num = num + 1
-        editor.attach_amino_acid("pk1", self.aminoAcid, object=name, _self=self.cmd)
+        self.attach_monomer(self.aminoAcid)
+
         if not self.getRepeating():
             self.actionWizardDone()
 
@@ -1072,6 +1082,7 @@ class _BuilderPanel(QtWidgets.QWidget):
         self.ss_cbox.addItem("Beta Sheet (Parallel)")
         self.protein_layout.addWidget(lab, 2, 0, 1, lab_cols)
         self.protein_layout.addWidget(self.ss_cbox, 2, lab_cols, 1, 4)
+        self.ss_cbox.currentIndexChanged[int].connect(self.ssIndexChanged)
 
         buttons = [
             [
@@ -1181,18 +1192,24 @@ class _BuilderPanel(QtWidgets.QWidget):
             ReplaceWizard(_self=self.cmd).toggle(atom,geometry,valence,text)
 
     def attach(self, aa):
+        ss = self.ss_cbox.currentIndex() + 1
         picked = collectPicked(self.cmd)
         if len(picked)==1:
             try:
                 with undocontext(self.cmd, "bymol %s" % picked[0]):
                     editor.attach_amino_acid(picked[0], aa,
-                            ss=self.ss_cbox.currentIndex() + 1, _self=self.cmd)
+                            ss=ss, _self=self.cmd)
             except:
                 fin = -1
             self.doZoom()
         else:
             self.cmd.unpick()
-            AminoAcidWizard(_self=self.cmd).toggle(aa)
+            AminoAcidWizard(_self=self.cmd, ss=ss).toggle(aa)
+
+    def ssIndexChanged(self, index):
+        w = self.cmd.get_wizard()
+        if isinstance(w, AminoAcidWizard):
+            w.setSecondaryStructure(index + 1)
 
     def doAutoPick(self, old_atoms=None):
         self.cmd.unpick()
