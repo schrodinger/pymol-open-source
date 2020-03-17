@@ -800,6 +800,9 @@ namespace {
   class AtomArray : public Array {
     int i_name, i_resname, i_resid, i_x, i_y, i_z, i_vx, i_vy, i_vz, 
         i_inscode,
+        i_radius,
+        i_bfactor,
+        i_occupancy,
         i_anum, i_chain, i_segid, i_charge;
     std::vector<molfile_atom_t> &atoms;
     std::vector<pos_t> &pos;
@@ -813,6 +816,9 @@ namespace {
       i_x(-1), i_y(-1), i_z(-1), 
       i_vx(-1), i_vy(-1), i_vz(-1),
       i_inscode(-1),
+      i_radius(-1),
+      i_bfactor(-1),
+      i_occupancy(-1),
       i_anum(-1), i_chain(-1), i_segid(-1),
       i_charge(0),
       atoms( h->ctmap[m_ct].particles ),
@@ -843,6 +849,9 @@ namespace {
         else if (attr=="m_pdb_segment_name") i_segid=i;
         else if (attr=="m_formal_charge")  { i_charge=i; h->optflags |= MOLFILE_CHARGE; }
         else if (attr=="m_insertion_code") { i_inscode=i; }
+        else if (attr=="m_display_radius") i_radius=i;
+        else if (attr=="m_pdb_tfactor")    i_bfactor=i;
+        else if (attr=="m_pdb_occupancy")  i_occupancy=i;
       }
     }
 
@@ -856,6 +865,9 @@ namespace {
       if (i_segid>=0)   GET_STR(row[i_segid], a.segid);
       if (i_chain>=0)   GET_STR(row[i_chain], a.chain);
       if (i_inscode>=0) GET_STR(row[i_inscode], a.insertion);
+      if (i_radius>=0)  get_float(row[i_radius], a.radius);
+      if (i_bfactor>=0) get_float(row[i_bfactor], a.bfactor);
+      if (i_occupancy>=0) get_float(row[i_occupancy], a.occupancy);
 
 #if defined(DESRES_CTNUMBER)
       a.ctnumber = m_ct;
