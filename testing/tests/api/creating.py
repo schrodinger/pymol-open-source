@@ -22,8 +22,16 @@ class TestCreating(testing.PyMOLTestCase):
         cmd.iterate('g1', 'm_list.append(model)', space=locals())
         self.assertItemsEqual(m_list, ['m1'])
 
+    @unittest.skip("Not yet implemented.")
+    def testUndoGroup(self):
+        pass
+
     def testUngroup(self):
         # see testGroup
+        pass
+
+    @unittest.skip("Not yet implemented.")
+    def testUndoUngroup(self):
         pass
 
     @testing.requires_version('1.7.7')
@@ -73,6 +81,10 @@ class TestCreating(testing.PyMOLTestCase):
             self.assertEqual(cmd.get_state(), 2)
             self.assertImageHasColor(meshcolor)
 
+    @unittest.skip("Not yet implemented.")
+    def testUndoIsomesh(self):
+        pass
+
     def testIsosurface(self):
         cmd.viewport(100, 100)
 
@@ -106,6 +118,20 @@ class TestCreating(testing.PyMOLTestCase):
             cmd.frame(2)
             self.assertEqual(cmd.get_state(), 2)
             self.assertImageHasColor(meshcolor)
+
+    def testUndoIsosurface(self):
+        cmd.fragment('gly', 'm1')
+        cmd.set('gaussian_b_floor', 30)
+        cmd.set('mesh_width', 5)
+        cmd.map_new('map')
+        cmd.delete('m1')
+        surf_name = 'isoSurf'
+        cmd.isosurface(surf_name, 'map')
+        self.assertTrue(surf_name in cmd.get_names())
+        cmd.undo2()
+        self.assertTrue(surf_name not in cmd.get_names())
+        cmd.redo2()
+        self.assertTrue(surf_name in cmd.get_names())
 
     def testIsodot(self):
         cmd.viewport(100, 100)
@@ -141,6 +167,21 @@ class TestCreating(testing.PyMOLTestCase):
             self.assertEqual(cmd.get_state(), 2)
             self.assertImageHasColor(meshcolor)
 
+    @testing.requires("multi_undo")
+    def testUndoIsodot(self):
+        cmd.fragment('gly', 'm1')
+        cmd.set('gaussian_b_floor', 30)
+        cmd.set('mesh_width', 5)
+        cmd.map_new('map')
+        cmd.delete('m1')
+        dot_name = 'isoDot'
+        cmd.isosurface(dot_name, 'map')
+        self.assertTrue(dot_name in cmd.get_names())
+        cmd.undo2()
+        self.assertTrue(dot_name not in cmd.get_names())
+        cmd.redo2()
+        self.assertTrue(dot_name in cmd.get_names())
+
     def testIsolevel(self):
         cmd.viewport(100, 100)
 
@@ -170,8 +211,44 @@ class TestCreating(testing.PyMOLTestCase):
         cmd.isolevel('dot', 10)
         self.assertImageHasNotColor(meshcolor)
 
+    @testing.requires("multi_undo")
+    def testUndoIsolevel(self):
+        cmd.viewport(100, 100)
+
+        cmd.fragment('gly', 'm1')
+        cmd.set('gaussian_b_floor', 30)
+        cmd.set('mesh_width', 5)
+        cmd.map_new('map')
+        cmd.delete('m1')
+
+        # make mesh
+        cmd.isodot('dot', 'map')
+        cmd.isodot('dot', 'map', source_state=1, state=-2)
+
+        ## check mesh presence by color
+        meshcolor = 'red'
+        cmd.color(meshcolor, 'dot')
+        self.ambientOnly()
+        self.assertImageHasColor(meshcolor)
+        cmd.frame(2)
+        self.assertEqual(cmd.get_state(), 2)
+        self.assertImageHasColor(meshcolor)
+
+        cmd.isolevel('dot', 5)
+        self.assertImageHasColor(meshcolor)
+        cmd.isolevel('dot', 10)
+        self.assertImageHasNotColor(meshcolor)
+        cmd.undo2()
+        self.assertImageHasColor(meshcolor)
+        cmd.redo2()
+        self.assertImageHasNotColor(meshcolor)
+
     @unittest.skip("Not yet implemented.")
     def testGradient(self):
+        pass
+
+    @unittest.skip("Not yet implemented. Depends on Isomesh")
+    def testUndoGradient(self):
         pass
 
     def testCopy(self):
@@ -180,6 +257,21 @@ class TestCreating(testing.PyMOLTestCase):
         self.assertEqual(
                 cmd.count_atoms('m1'),
                 cmd.count_atoms('m2'))
+
+    @testing.requires("multi_undo")
+    def testUndoCopy(self):
+        cmd.fragment('ala', 'm1')
+        cmd.copy('m3', 'm1')
+        cmd.undo2()
+        self.assertTrue('m3' not in cmd.get_names())
+        cmd.redo2()
+        self.assertTrue('m3' in cmd.get_names())
+        cmd.fragment('his', 'm2')
+        cmd.copy('m3', 'm2')
+        cmd.undo2()
+        self.assertEqual(cmd.count_atoms('m1'), cmd.count_atoms('m3'))
+        cmd.redo2()
+        self.assertEqual(cmd.count_atoms('m2'), cmd.count_atoms('m3'))
 
     @testing.requires_version('2.4')
     def testCopyMap(self):
@@ -202,8 +294,23 @@ class TestCreating(testing.PyMOLTestCase):
         self.assertEqual(n * 4, cmd.count_atoms())
 
     @unittest.skip("Not yet implemented.")
-    def testFragment(self):
+    def testUndoSymexp(self):
         pass
+
+    def testFragment(self):
+        frag_name = "ala"
+        cmd.fragment(frag_name)
+        self.assertEqual(cmd.count_atoms(frag_name), 10)
+
+    @testing.requires("multi_undo")
+    def testUndoFragment(self):
+        frag_name = "ala"
+        cmd.fragment(frag_name)
+        self.assertTrue(frag_name in cmd.get_names())
+        cmd.undo2()
+        self.assertTrue(frag_name not in cmd.get_names())
+        cmd.redo2()
+        self.assertTrue(frag_name in cmd.get_names())
 
     def testCreate(self):
         cmd.fragment("ala")
@@ -222,6 +329,17 @@ class TestCreating(testing.PyMOLTestCase):
         self.assertEquals(cmd.fit("ala", "foo"), 0.0)
 
         self.assertEquals(cmd.count_states(), 1)
+
+    @testing.requires("multi_undo")
+    def testUndoCreate(self):
+        cmd.fragment("ala")
+        obj_name = "foo"
+        cmd.create(obj_name, "ala", 1, 1)
+        self.assertTrue(obj_name in cmd.get_names())
+        cmd.undo2()
+        self.assertTrue(obj_name not in cmd.get_names())
+        cmd.redo2()
+        self.assertTrue(obj_name in cmd.get_names())
 
     def testCreateMultipleStates(self):
         cmd.fragment("ala")
@@ -361,6 +479,10 @@ class TestCreating(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_atoms('m2'), 3)
     
     @unittest.skip("Not yet implemented.")
+    def testUndoExtract(self):
+        pass
+
+    @unittest.skip("Not yet implemented.")
     def testUnquote(self):
         pass
 
@@ -396,6 +518,15 @@ class TestCreating(testing.PyMOLTestCase):
                 ref[i] = round(ref[i], 1)
             self.assertEqual(ref, values)
 
+    @testing.requires("multi_undo")
+    def testUndoPseudoatom(self):
+        cmd.pseudoatom('m1')
+        self.assertEqual(cmd.count_atoms(), 1)
+        cmd.undo2()
+        self.assertEqual(cmd.count_atoms(), 0)
+        cmd.redo2()
+        self.assertEqual(cmd.count_atoms(), 1)
+
     def testPseudoatomName(self):
         cmd.pseudoatom('m1')
         cmd.pseudoatom('m1')
@@ -413,3 +544,8 @@ class TestCreating(testing.PyMOLTestCase):
         cmd.set_raw_alignment('aln', raw)
         self.assertEqual(cmd.index('m1 & aln'), index_m1)
         self.assertEqual(cmd.index('m2 & aln'), index_m2)
+
+    @unittest.skip("Not yet implemented.")
+    def testUndoSetRawAlignment(self):
+        pass
+

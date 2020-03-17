@@ -147,6 +147,11 @@ else:
             flags = dict.fromkeys(self.flags, True)
             flags_known = []
 
+            if hasattr(pymol, "get_capabilities"):
+                get_capabilities = pymol.get_capabilities
+            else:
+                get_capabilities = lambda: ()
+
             def hasflag(flag):
                 flags_known.append(flag)
                 return flags.pop(flag, False)
@@ -186,6 +191,9 @@ else:
 
             if hasflag('no_win64bit') and is_win64bit:
                 return unittest.skip('skip 64bit')(func)
+
+            if hasflag('multi_undo') and not 'multi_undo' in get_capabilities():
+                return unittest.skip('skip multiundo')(func)
 
             if flags:
                 raise ValueError('unknown flags: ' + ', '.join(flags)
