@@ -58,8 +58,9 @@ MapType *MapNew(PyMOLGlobals * G, float range, const float *vert, int nVert, con
 MapType *MapNewCached(PyMOLGlobals * G, float range, const float *vert, int nVert,
                       const float *extent, int group_id, int block_id);
 
+using MapFlag_t = int;
 MapType *MapNewFlagged(PyMOLGlobals * G, float range, const float *vert, int nVert,
-                       const float *extent, const int *flag);
+                       const float *extent, const MapFlag_t *flag);
 int MapSetupExpress(MapType * I);
 int MapSetupExpressPerp(MapType * I, const float *vert, float front, int nVertHint,
 			int negative_start, const int *spanner);

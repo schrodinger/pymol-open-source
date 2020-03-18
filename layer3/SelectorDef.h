@@ -54,9 +54,6 @@ struct CSelector {
   CSelectorManager* mgr = nullptr;
   std::vector<ObjectMolecule*> Obj;
   std::vector<TableRec> Table;
-  std::vector<float> Vertex;
-  std::vector<int> Flag1;
-  std::vector<int> Flag2;
   pymol::copyable_ptr<ObjectMolecule> Origin;
   pymol::copyable_ptr<ObjectMolecule> Center;
   int NCSet = 0; // Seems to hold the largest NCSet in Obj
