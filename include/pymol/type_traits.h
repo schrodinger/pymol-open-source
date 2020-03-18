@@ -27,4 +27,15 @@ using common_type_t = typename std::common_type<T, U>::type;
 template <typename T, typename U>
 using forward_check_t = pymol::enable_if_t<std::is_same<pymol::remove_reference_t<T>, U>::value>;
 
+//! Casts a pointer of type T to a pointer of type T[N]
+template <size_t N, typename T> remove_reference_t<T (*)[N]> reshape(T* flat)
+{
+  return reinterpret_cast<T(*)[N]>(flat);
+}
+
+//! Casts a pointer of type T[N] to a pointer of type T
+template <typename T> remove_extent_t<T>* flatten(T* shaped)
+{
+  return reinterpret_cast<remove_extent_t<T>*>(shaped);
+}
 }
