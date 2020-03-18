@@ -70,22 +70,21 @@ public:
  * }
  */
 class SeleCoordIterator : public AbstractAtomIterator {
-  PyMOLGlobals * G;
+  PyMOLGlobals* G = nullptr;
   int statearg; // state argument, can be -1 (all), -2 (current), -3 (effective)
   int statemax; // largest state in selection
   bool per_object;              // whether to iterate over object states or global states
   ObjectMolecule * prev_obj;    // for per_object=true
+  int sele = -1;
 
 public:
   int a;        // index in selection
   int state;    // current state
 
-  void init(PyMOLGlobals * G_, int sele_, int state_);
-
-  SeleCoordIterator() {} // undefined state until "init()" called
-  SeleCoordIterator(PyMOLGlobals * G_, int sele_, int state_) {
-    init(G_, sele_, state_);
-  };
+  /// Undefined state until copy assigned from a valid state
+  SeleCoordIterator() = default;
+  SeleCoordIterator(
+      PyMOLGlobals* G_, int sele_, int state_, bool update_table = true);
 
   void reset();
   bool next();

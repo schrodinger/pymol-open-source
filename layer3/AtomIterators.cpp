@@ -70,10 +70,17 @@ bool SeleAtomIterator::next() {
 
 /*========================================================================*/
 /*
- * Quasi constructor, call this if `SeleCoordIterator` has been constructed
- * with the default constructor.
+ * @param sele_ Atom selection to iterate over
+ * @param state_ Object state to iterate over (can be current (-2) or all (-1))
+ * @param update_table If true, then update the table (once) and do not call
+ * `SelectorIsMember` during iteration, assuming that the table stays valid and
+ * contains exactly the selected atoms. If false, then assume the table is
+ * up-to-date with a selection different to `sele_` (e.g. with all atoms) and
+ * `SelectorIsMember` needs to be called during iteration.
  */
-void SeleCoordIterator::init(PyMOLGlobals * G_, int sele_, int state_) {
+SeleCoordIterator::SeleCoordIterator(
+    PyMOLGlobals* G_, int sele_, int state_, bool update_table)
+{
   G = G_;
   statearg = state_;
 
@@ -87,7 +94,12 @@ void SeleCoordIterator::init(PyMOLGlobals * G_, int sele_, int state_) {
     statearg = -3;
   }
 
-  SelectorUpdateTable(G, statearg, sele_);
+  if (update_table) {
+    SelectorUpdateTable(G, statearg, sele_);
+  } else {
+    sele = sele_;
+  }
+
   setPerObject(false);
   reset();
 }
@@ -140,6 +152,9 @@ bool SeleCoordIterator::next() {
     idx = cs->atmToIdx(atm);
 
     if(idx < 0)
+      continue;
+
+    if (sele > 0 && !SelectorIsMember(G, getAtomInfo()->selEntry, sele))
       continue;
 
     return true;

@@ -301,7 +301,7 @@ void MoleculeExporter::endCoordSet() {
 }
 
 void MoleculeExporter::execute(int sele, int state) {
-  m_iter.init(G, sele, state);
+  m_iter = SeleCoordIterator(G, sele, state);
   m_iter.setPerObject(m_multi != cMolExportGlobal);
 
   beginFile();
