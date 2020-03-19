@@ -214,6 +214,25 @@ bool SelectorAtomIterator::next() {
   return true;
 }
 
+/**
+ * Add atom `ai` to selection `sele`
+ */
+static void SelectorManagerInsertMember(
+    CSelectorManager& self, AtomInfoType& ai, int sele, int tag = 1)
+{
+  int m;
+  if (self.FreeMember > 0) {
+    m = self.FreeMember;
+    self.FreeMember = self.Member[m].next;
+  } else {
+    m = self.Member.size();
+    self.Member.emplace_back();
+  }
+  self.Member[m].selection = sele;
+  self.Member[m].tag = tag;
+  self.Member[m].next = ai.selEntry;
+  ai.selEntry = m;
+}
 
 /*========================================================================*/
 static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offset)
@@ -1525,6 +1544,9 @@ static int SelectGetNameOffset(PyMOLGlobals * G, const char *name, ov_size minMa
   return result;
 }
 
+/**
+ * Only called once: When doing `cmd.delete("all")`
+ */
 void SelectorDefragment(PyMOLGlobals * G)
 {
   CSelector* S = G->Selector;
@@ -1546,9 +1568,10 @@ void SelectorDefragment(PyMOLGlobals * G)
       m = I->Member[m].next;
     }
     std::sort(list.begin(), list.end());
+    auto NMember = int(I->Member.size()) - 1;
     while(n_free > 5000) {      /* compact inactive members when possible */
-      if(list[n_free - 1] == I->NMember) {
-        I->NMember--;
+      if(list[n_free - 1] == NMember) {
+        NMember--;
         n_free--;
       } else
         break;
@@ -1558,6 +1581,7 @@ void SelectorDefragment(PyMOLGlobals * G)
     }
     I->Member[list[n_free - 1]].next = 0;
     I->FreeMember = list[0];
+    I->Member.resize(NMember + 1);
   }
 }
 
@@ -2741,7 +2765,6 @@ PyObject *SelectorColorectionGet(PyMOLGlobals * G, const char *prefix)
   ColorectionRec *used = NULL, tmp;
   ov_size a, b;
   int found;
-  int m;
   int color;
   AtomInfoType *ai;
   used = VLAlloc(ColorectionRec, 1000);
@@ -2786,18 +2809,7 @@ PyObject *SelectorColorectionGet(PyMOLGlobals * G, const char *prefix)
         used[b] = tmp;
 
         /* add selection onto atom */
-        if(IM->FreeMember > 0) {
-          m = IM->FreeMember;
-          IM->FreeMember = IM->Member[m].next;
-        } else {
-          IM->NMember++;
-          m = IM->NMember;
-          VecCheck(IM->Member, m);
-        }
-        IM->Member[m].selection = used[0].sele;
-        IM->Member[m].tag = 1;
-        IM->Member[m].next = ai->selEntry;
-        ai->selEntry = m;
+        SelectorManagerInsertMember(*IM, *ai, used[0].sele);
         break;
       }
     }
@@ -3085,7 +3097,6 @@ int SelectorFromPyList(PyMOLGlobals * G, const char *name, PyObject * list)
   int ok = true;
   auto I = G->SelectorMgr;
   ov_size a, b;
-  int m;
   ov_size ll;
   PyObject *obj_list = NULL;
   PyObject *idx_list = NULL, *tag_list;
@@ -3098,7 +3109,6 @@ int SelectorFromPyList(PyMOLGlobals * G, const char *name, PyObject * list)
   ObjectMolecule *singleObject = NULL;
   int singleAtom = -1;
 
-  AtomInfoType *ai;
   if(ok)
     ok = PyList_Check(list);
   if(ok)
@@ -3143,19 +3153,7 @@ int SelectorFromPyList(PyMOLGlobals * G, const char *name, PyObject * list)
           else
             tag = 1;
           if(ok && (idx < obj->NAtom)) {
-            ai = obj->AtomInfo + idx;
-            if(I->FreeMember > 0) {
-              m = I->FreeMember;
-              I->FreeMember = I->Member[m].next;
-            } else {
-              I->NMember++;
-              m = I->NMember;
-              VecCheck(I->Member, m);
-            }
-            I->Member[m].selection = sele;
-            I->Member[m].tag = tag;
-            I->Member[m].next = ai->selEntry;
-            ai->selEntry = m;
+            SelectorManagerInsertMember(*I, obj->AtomInfo[idx], sele, tag);
 
             /* take note of selections which are one atom/one object */
             if(singleObjectFlag) {
@@ -6825,7 +6823,7 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, const int *atom, pymol::zstr
   auto IM = I->mgr;
   int tag;
   int newFlag = true;
-  int a, m, sele;
+  int a, sele;
   int c = 0;
   int start = 0;
   int singleAtomFlag = true;
@@ -6899,20 +6897,9 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, const int *atom, pymol::zstr
 
       /* store this is the Selectors->Member table, so make sure there's room */
       c++;
-      if(IM->FreeMember > 0) {
-        m = IM->FreeMember;
-        IM->FreeMember = IM->Member[m].next;
-      } else {
-        IM->NMember++;
-        m = IM->NMember;
-        VecCheck(IM->Member, m);
-      }
-      IM->Member[m].selection = sele;
-      IM->Member[m].tag = tag;
       /* at runtime, selections can now have transient ordering --
          but these are not yet persistent through session saves & restores */
-      IM->Member[m].next = ai->selEntry;
-      ai->selEntry = m;
+      SelectorManagerInsertMember(*IM, *ai, sele, tag);
     }
   }
 
@@ -10368,12 +10355,15 @@ void SelectorMemoryDump(PyMOLGlobals * G)
   printf(" SelectorMemory: NSelection %d\n", I->NSelection);
   printf(" SelectorMemory: NActive %zu\n", I->Name.size());
   printf(" SelectorMemory: TmpCounter %d\n", I->TmpCounter);
-  printf(" SelectorMemory: NMember %d\n", I->NMember);
+  printf(" SelectorMemory: NMember %d\n", int(I->Member.size()) - 1);
 }
 
 CSelectorManager::CSelectorManager()
 {
   auto I = this;
+
+  // indices are >0 by convention
+  Member.resize(1);
 
   /* create placeholder "all" selection, which is selection 0
      and "none" selection, which is selection 1 */

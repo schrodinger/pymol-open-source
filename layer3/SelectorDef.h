@@ -39,7 +39,6 @@ struct SelectionInfoRec {
 struct CSelectorManager
 {
   std::vector<MemberType> Member;
-  int NMember = 0;
   int FreeMember = 0;
   std::vector<std::string> Name;
   std::vector<SelectionInfoRec> Info;
