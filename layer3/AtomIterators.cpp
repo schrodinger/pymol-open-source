@@ -25,6 +25,9 @@ bool CoordSetAtomIterator::next() {
 }
 
 /*========================================================================*/
+/**
+ * Make a new (owned) atom selection and update the global selector table for it.
+ */
 SeleAtomIterator::SeleAtomIterator(PyMOLGlobals * G_, const char * sele_) {
   G = G_;
 
@@ -69,14 +72,14 @@ bool SeleAtomIterator::next() {
 }
 
 /*========================================================================*/
-/*
+/**
  * @param sele_ Atom selection to iterate over
  * @param state_ Object state to iterate over (can be current (-2) or all (-1))
  * @param update_table If true, then update the table (once) and do not call
  * `SelectorIsMember` during iteration, assuming that the table stays valid and
  * contains exactly the selected atoms. If false, then assume the table is
  * up-to-date with a selection different to `sele_` (e.g. with all atoms) and
- * `SelectorIsMember` needs to be called during iteration.
+ * ::SelectorIsMember needs to be called during iteration.
  */
 SeleCoordIterator::SeleCoordIterator(
     PyMOLGlobals* G_, int sele_, int state_, bool update_table)

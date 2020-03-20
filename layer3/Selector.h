@@ -28,8 +28,6 @@ Z* -------------------------------------------------------------------
 #include"OVOneToAny.h"
 #include"Match.h"
 
-#include "AtomIterators.h"
-
 #define cSelectionAll 0
 #define cSelectionNone 1
 

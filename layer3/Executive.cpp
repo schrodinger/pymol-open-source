@@ -78,6 +78,7 @@
 #include"PlugIOManager.h"
 #include "Lex.h"
 #include "List.h"
+#include "AtomIterators.h"
 
 #include"OVContext.h"
 #include"OVLexicon.h"

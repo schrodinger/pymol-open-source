@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"P.h"
 #include"RingFinder.h"
+#include"AtomIterators.h"
 
 #include"MemoryDebug.h"
 #include"Selector.h"
@@ -171,27 +172,23 @@ static sele_array_t SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMole
 
 
 /*========================================================================*/
-/*
- * Iterator over the selector table (all atoms in universe)
+/**
+ * Iterator over the selector table. If `SelectorUpdateTable(G,
+ * cSelectorUpdateTableAllStates, -1)` was called, this would be all atoms.
  *
- * Selector table must be up-to-date!
  * Does NOT provide coord or coordset access
  *
- * (Implementation in Selector.cpp)
+ * @pre Selector table is up-to-date
  */
 class SelectorAtomIterator : public AbstractAtomIterator {
   CSelector * selector;
 
 public:
-  int a;        // index in selector
+  int a; //!< index in selector table
 
-  SelectorAtomIterator(CSelector * I) {
-    selector = I;
-
-    // no coord set
-    cs = NULL;
-    idx = -1;
-
+  SelectorAtomIterator(CSelector* I)
+      : selector(I)
+  {
     reset();
   }
 

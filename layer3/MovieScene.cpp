@@ -19,6 +19,7 @@
 #include "Executive.h"
 #include "Err.h"
 #include "SpecRec.h"
+#include "AtomIterators.h"
 
 #include <algorithm>
 #include <map>
@@ -39,7 +40,7 @@ enum {
 
 void SceneSetNames(PyMOLGlobals * G, const std::vector<std::string> &list);
 
-/*
+/**
  * Struct to hold scene stored atom properties
  */
 class MovieSceneAtom {
@@ -48,7 +49,7 @@ public:
   int visRep;
 };
 
-/*
+/**
  * Struct to hold scene stored object properties
  */
 class MovieSceneObject {
@@ -57,31 +58,31 @@ public:
   int visRep;
 };
 
-/*
+/**
  * Struct to hold all scene data
  */
 class MovieScene {
 public:
-  // bitmask, features stored in this scene
+  /// bitmask, features stored in this scene
   int storemask;
 
-  // global state or movie frame
+  /// global state or movie frame
   int frame;
 
-  // text to display (with message wizard)
+  /// text to display (with message wizard)
   std::string message;
 
-  // camera view
+  /// camera view
   SceneViewType view;
 
-  // atom properties (color, rep, etc.)
+  /// atom properties (color, rep, etc.)
   std::map<int, MovieSceneAtom> atomdata;
 
-  // objects properties (enabled, color, reps, etc.)
+  /// objects properties (enabled, color, reps, etc.)
   std::map<std::string, MovieSceneObject> objectdata;
 };
 
-/*
+/**
  * Replacement for pymol._scene_dict and pymol._scene_order
  */
 class CMovieScenes {
@@ -98,14 +99,14 @@ public:
   std::string getUniqueKey();
 };
 
-/*
+/**
  * Get read-only pointer to G->scenes->order
  */
 const std::vector<std::string> & MovieSceneGetOrder(PyMOLGlobals * G) {
   return G->scenes->order;
 }
 
-/*
+/**
  * Get a unique scene key
  */
 std::string CMovieScenes::getUniqueKey()
@@ -120,7 +121,7 @@ std::string CMovieScenes::getUniqueKey()
   }
 }
 
-/*
+/**
  * Change the ordering of scenes
  *
  * Examples:
@@ -130,9 +131,9 @@ std::string CMovieScenes::getUniqueKey()
  * move c to the top with:  order("c", "top")
  * c a b d e
  *
- * names: space separated list of names to (optionally) sort and to move to
+ * @param names space separated list of names to (optionally) sort and to move to
  *        given location
- * location: current|top|botton
+ * @param location current|top|botton
  */
 bool MovieSceneOrder(PyMOLGlobals * G, const char * names, bool sort,
     const char * location)
@@ -209,17 +210,17 @@ bool MovieSceneOrder(PyMOLGlobals * G, const char * names, bool sort,
   return true;
 }
 
-/*
+/**
  * Store a scene
  *
- * name:            name (key) of the scene to store or update
+ * @param name            name (key) of the scene to store or update
  *                  ("new"/empty = unique key)
- * message:         wizard message to display with this scene
- * store_view:      store the camera view
- * store_color:     store colors
- * store_active:    store enabled/disabled
- * store_rep:       store reps
- * store_frame:     store movie frame
+ * @param message         wizard message to display with this scene
+ * @param store_view      store the camera view
+ * @param store_color     store colors
+ * @param store_active    store enabled/disabled
+ * @param store_rep       store reps
+ * @param store_frame     store movie frame
  */
 static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
     const char * message,
@@ -309,7 +310,7 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
   return true;
 }
 
-/*
+/**
  * Display a message (with the message wizard)
  */
 static void MovieSceneRecallMessage(PyMOLGlobals * G, const std::string &message)
@@ -325,7 +326,7 @@ static void MovieSceneRecallMessage(PyMOLGlobals * G, const std::string &message
 #endif
 }
 
-/*
+/**
  * Set the frame or state, depending on whether a movie is defined and/or
  * playing, and depending on the scene_frame_mode setting.
  */
@@ -351,7 +352,7 @@ static void MovieSceneRecallFrame(PyMOLGlobals * G, int frame)
 #endif
 }
 
-/*
+/**
  * Scene animation duration from settings
  */
 static float get_scene_animation_duration(PyMOLGlobals * G) {
@@ -365,15 +366,16 @@ static float get_scene_animation_duration(PyMOLGlobals * G) {
   return SettingGetGlobal_f(G, cSetting_scene_animation_duration);
 }
 
-/*
+/**
  * Recall a scene
  *
- * name:            name (key) of the scene to recall
- * animate:         animation duration, use scene_animation_duration if -1
- * store_view:      restore the camera view
- * store_color:     restore colors
- * store_active:    restore enabled/disabled
- * store_rep:       restore reps
+ * @param name            name (key) of the scene to recall
+ * @param animate         animation duration, use scene_animation_duration if -1
+ * @param store_view      restore the camera view
+ * @param store_color     restore colors
+ * @param store_active    restore enabled/disabled
+ * @param store_rep       restore reps
+ * @return False if no scene named `name` exists
  */
 bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
     bool recall_view,
@@ -504,11 +506,11 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
   return true;
 }
 
-/*
+/**
  * Rename or delete a scene
  *
- * name: name to rename or delete, or "*" to delete all
- * new_name: new scene name to rename, or NULL to delete
+ * @param name name to rename or delete, or "*" to delete all
+ * @param new_name new scene name to rename, or NULL to delete
  */
 static bool MovieSceneRename(PyMOLGlobals * G, const char * name, const char * new_name = nullptr) {
 
@@ -582,7 +584,7 @@ bool MovieSceneDelete(PyMOLGlobals* G, const char* name, size_t stack) {
   return MovieSceneRename(G, name, nullptr);
 }
 
-/*
+/**
  * Print current scene order
  */
 static bool MovieScenePrintOrder(PyMOLGlobals * G) {
@@ -600,13 +602,13 @@ static bool MovieScenePrintOrder(PyMOLGlobals * G) {
   return true;
 }
 
-/*
+/**
  * Based on the "scene_current_name" setting, get the next or previous key.
  *
  * If the "scene_loop" setting is false and the key is out of range, return
  * an empty string.
  *
- * next: true = next, false = previous
+ * @param next true = next, false = previous
  */
 static const char * MovieSceneGetNextKey(PyMOLGlobals * G, bool next) {
   const char * current_name = SettingGetGlobal_s(G, cSetting_scene_current_name);
@@ -638,7 +640,7 @@ static const char * MovieSceneGetNextKey(PyMOLGlobals * G, bool next) {
   return it->c_str();
 }
 
-/*
+/**
  * Move the current scene (scene_current_name) before or after "key"
  */
 static bool MovieSceneOrderBeforeAfter(PyMOLGlobals * G, const char * key, bool before)
@@ -664,7 +666,7 @@ static bool MovieSceneOrderBeforeAfter(PyMOLGlobals * G, const char * key, bool 
   return true;
 }
 
-/*
+/**
  * C implementation of the "scene" command
  */
 bool MovieSceneFunc(PyMOLGlobals * G, const char * key,

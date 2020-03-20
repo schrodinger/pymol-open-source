@@ -10,15 +10,21 @@
 #include "HydrogenAdder.h"
 #include "Err.h"
 
-/*
+#include <cassert>
+
+/**
  * Add coordinates for atom `atm`.
  *
- * Pre-conditions:
- * - `atm` doesn't have coordinates yet in given coord set
+ * @param atm Atom index (in ObjectMolecule::AtomInfo)
+ * @param v Atom coordinates (`float[3]`)
+ *
+ * @pre `atm` doesn't have coordinates yet in given coord set
  */
 static
 void AppendAtomVertex(CoordSet* cs, unsigned atm, const float* v)
 {
+  assert(cs->atmToIdx(atm) == -1);
+
   int idx = cs->NIndex++;
   VLACheck(cs->Coord, float, idx * 3 + 2);
   VLACheck(cs->IdxToAtm, int, idx);
@@ -35,12 +41,15 @@ void AppendAtomVertex(CoordSet* cs, unsigned atm, const float* v)
   copy3f(v, cs->coordPtr(idx));
 }
 
-/*
+/**
  * If `atm` has a planar (sp2) configuration, then write the plane's normal
  * vector to the `normal` out pointer and return true.
  *
- * Pre-conditions:
- * - Neighbors up-to-date
+ * @param atm Atom index (in ObjectMolecule::AtomInfo)
+ * @param[out] normal Normal vector (`float[3]` with length 1)
+ * @param h_fix If true, then ignore hydrogen neighbors
+ *
+ * @pre Neighbors up-to-date
  */
 static
 bool get_planer_normal_cs(
@@ -104,18 +113,17 @@ bool get_planer_normal_cs(
   return true;
 }
 
-/*
+/**
  * Calculate plausible coordinates for those neighbors of `atm` which don't
  * have coordinates yet.
  *
- * h_fix: also reposition hydrogens with existing coordinates.
+ * @param h_fix also reposition hydrogens with existing coordinates.
  *
- * Returns the number of added/updated coordinates.
+ * @return Number of added/updated coordinates.
  *
- * Pre-conditions:
- * - Neighbors up-to-date
+ * @pre Neighbors up-to-date
  *
- * Note: Similar to ObjectMoleculeFindOpenValenceVector ("Evolutionary
+ * @note Similar to ::ObjectMoleculeFindOpenValenceVector ("Evolutionary
  * descendant", code duplication event)
  */
 int ObjectMoleculeSetMissingNeighborCoords(
@@ -260,8 +268,14 @@ int ObjectMoleculeSetMissingNeighborCoords(
   return n_missing;
 }
 
-/*
+/**
  * Add hydrogens to selection
+ *
+ * @param sele Valid atom selection
+ * @param state Object state (can be all (-1) or current (-2))
+ *
+ * @return False if `I` has no atoms in the selection or if the chemistry (atom
+ * geometry and valence) can't be determined.
  */
 int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int state)
 {
@@ -338,7 +352,7 @@ int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int st
       I->NAtom - n_atom_old);
 
   // fill coordinates
-  for (StateIterator iter(G, I->Setting, state, I->NCSet); iter.next();) {
+  for (StateIterator iter(I, state); iter.next();) {
     CoordSet* cs = I->CSet[iter.state];
     if (!cs)
       continue;
