@@ -94,9 +94,9 @@ G3dPrimitive *RayRenderG3d(CRay * I, int width, int height, float front,
 
 namespace cgo{
 namespace draw{
-  class cylinder;
-  class custom_cylinder;
-  class custom_cylinder_alpha;
+  struct cylinder;
+  struct custom_cylinder;
+  struct custom_cylinder_alpha;
 }
 };
 

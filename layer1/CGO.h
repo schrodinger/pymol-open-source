@@ -224,7 +224,6 @@ inline uchar CLIP_NORMAL_VALUE(float cv){ return ((cv>1.f) ? 127 :
 
 #define CGO_DRAW_TRILINES        0x32
 #define CGO_DRAW_TRILINES_SZ     2
-#define CGO_DRAW_TRILINES_HEADER 3
 
 #define CGO_UNIFORM3F            0x33
 #define CGO_UNIFORM3F_SZ         4
@@ -260,9 +259,6 @@ inline uchar CLIP_NORMAL_VALUE(float cv){ return ((cv>1.f) ? 127 :
 
 #define CGO_CUSTOM_CYLINDER_ALPHA      0x41
 
-#define CGO_MASK                0x7F
-
-
 #define CGO_LIGHTING             0x0B50
 
 #define CGO_VERTEX_ARRAY         0x01
@@ -286,6 +282,31 @@ class CGO;
 // These are only the optimized operations
 namespace cgo {
   namespace draw {
+    struct begin {
+      static const int op_code = CGO_BEGIN;
+      int mode;
+      begin(int mode) : mode(mode) {}
+    };
+
+    struct enable {
+      static const int op_code = CGO_ENABLE;
+      int mode;
+      enable(int mode) : mode(mode) {}
+    };
+
+    struct disable {
+      static const int op_code = CGO_DISABLE;
+      int mode;
+      disable(int mode) : mode(mode) {}
+    };
+
+    struct trilines {
+      static const int op_code = CGO_DRAW_TRILINES;
+      unsigned nverts;
+      unsigned buffer; // GLuint
+      trilines(unsigned nverts, unsigned buffer) : nverts(nverts), buffer(buffer) {}
+    };
+
     struct op_with_data {
       float * floatdata { nullptr };
       void set_data(float * data) { floatdata = data; };
@@ -698,8 +719,8 @@ public:
       const float * m_pc;
       const float * m_stop;
     public:
-      int op_code() const {
-        return CGO_MASK & *reinterpret_cast<const int*>(m_pc);
+      unsigned op_code() const {
+        return *reinterpret_cast<const unsigned*>(m_pc);
       }
       operator int() const { return op_code(); }
 
@@ -713,10 +734,7 @@ public:
         m_stop = cgo->op + cgo->c;
       }
 
-      const_iterator& operator++() {
-        m_pc += CGO_sz[op_code()] + 1;
-        return *this;
-      }
+      const_iterator& operator++();
 
       bool is_stop() const {
         return m_pc == m_stop || op_code() == CGO_STOP;
@@ -727,6 +745,7 @@ public:
     public:
       iterator(CGO * cgo) : const_iterator(cgo) {}
       float * data() { return const_cast<float*>(m_pc + 1); }
+      template <typename T> T* cast() { return reinterpret_cast<T*>(data()); }
   };
 
   const_iterator begin() const { return this; }
@@ -834,13 +853,13 @@ int CGORendererInit(PyMOLGlobals * G);
 void CGORendererFree(PyMOLGlobals * G);
 CGO *CGONew(PyMOLGlobals * G, int size=0);
 #define CGONewSized CGONew
-int CGOGetExtent(CGO * I, float *mn, float *mx);
-int CGOHasNormals(CGO * I);
+int CGOGetExtent(const CGO * I, float *mn, float *mx);
+int CGOHasNormals(const CGO * I);
 
 void CGOFree(CGO * &I, bool withVBOs=true);
 #define CGOFreeWithoutVBOs(I) CGOFree(I, false)
 
-CGO *CGODrawText(CGO * I, int est, float *camera);
+CGO *CGODrawText(const CGO * I, int est, float *camera);
 
 CGO *CGOSimplify(const CGO * I, int est, short sphere_quality = -1, bool stick_round_nub = true);
 CGO *CGOSimplifyNoCompress(const CGO * I, int est, short sphere_quality = -1, bool stick_round_nub = true);
@@ -945,10 +964,10 @@ int CGOAccessibility(CGO * I, const float a);
 int CGODrawTexture(CGO *I, int texture_id, float *worldPos, float *screenMin, float *screenMax, float *textExtent);
 int CGODrawLabel(CGO *I, int texture_id, float *targetPos, float *worldPos, float *screenWorldOffset, float *screenMin, float *screenMax, float *textExtent, short relativeMode);
 int CGODrawConnector(CGO *I, float *targetPt3d, float *labelCenterPt3d, float text_width, float text_height, float *screenOffset, float *screenWorldOffset, float *connectorColor, short relativeMode, int draw_bkgrd, float bkgrd_transp, float *bkgrd_color, float rel_ext_length, float connectorWidth);
-CGO *CGOOptimizeLabels(CGO * I, int est, bool addshaders=false);
-CGO *CGOOptimizeTextures(CGO * I, int est);
+CGO *CGOOptimizeLabels(const CGO * I, int est, bool addshaders=false);
+CGO *CGOOptimizeTextures(const CGO * I, int est);
 CGO *CGOExpandDrawTextures(const CGO * I, int est);
-CGO *CGOOptimizeConnectors(CGO * I, int est);
+CGO *CGOOptimizeConnectors(const CGO * I, int est);
 
 /*void CGOFontScale(CGO *I,float v);
   void CGOFont(CGO *I,float size,int face,int style);*/
@@ -991,8 +1010,8 @@ PyObject *CGOAsPyList(CGO * I);
 CGO *CGONewFromPyList(PyMOLGlobals * G, PyObject * list, int version, bool shouldCombine=true);
 int CGOPickColor(CGO * I, unsigned int index, int bond);
 
-float *CGOGetNextDrawBufferedIndex(float *cgo_op, int optype=CGO_DRAW_BUFFERS_INDEXED);
-#define CGOGetNextDrawBufferedNotIndex(cgo_op) CGOGetNextDrawBufferedIndex(cgo_op, CGO_DRAW_BUFFERS_NOT_INDEXED)
+const cgo::draw::buffers_not_indexed* CGOGetNextDrawBufferedNotIndex(
+    const CGO*);
 
 float *CGOGetNextOp(float *cgo_op, int optype);
 
@@ -1001,9 +1020,8 @@ inline int CGOAppendNoStop(CGO *dest, const CGO *source) {
   return CGOAppend(dest, source, false);
 }
 
-int CGOCountNumberOfOperationsOfTypeDEBUG(const CGO *I, int optype);
 int CGOCountNumberOfOperationsOfType(const CGO *I, int op);
-int CGOCountNumberOfOperationsOfTypeN(const CGO *I, const std::set<int> &optype, bool debug=false);
+int CGOCountNumberOfOperationsOfTypeN(const CGO *I, const std::set<int> &optype);
 int CGOCountNumberOfOperationsOfTypeN(const CGO *I, const std::map<int, int> &optype);
 bool CGOHasOperations(const CGO *I);
 bool CGOHasOperationsOfType(const CGO *I, int optype);
@@ -1019,10 +1037,10 @@ CGO *CGOSplitUpLinesForPicking(const CGO * I);
 CGO *CGOConvertLinesToTrilines(const CGO * I, bool addshaders=true);
 CGO *CGOConvertToLabelShader(const CGO *I, CGO * addTo);
 
-int CGOChangeShadersTo(CGO *I, int frommode, int tomode);
+void CGOChangeShadersTo(CGO *I, int frommode, int tomode);
 void CGOCountNumVerticesDEBUG(const CGO *I);
 CGO *CGOOptimizeScreenTexturesAndPolygons(CGO * I, int est);
-CGO *CGOColorByRamp(PyMOLGlobals * G, CGO *I, ObjectGadgetRamp *ramp, int state, CSetting * set1);
+CGO *CGOColorByRamp(PyMOLGlobals * G, const CGO *I, ObjectGadgetRamp *ramp, int state, CSetting * set1);
 
 #define CGOLineAsTriangleStrips(CGO, minx, miny, maxx, maxy) \
 	CGOBegin(CGO, GL_TRIANGLE_STRIP);         \
@@ -1056,18 +1074,18 @@ int CGOHasTransparency(const CGO *I, bool checkTransp=true, bool checkOpaque=fal
 CGO *CGOConvertTrianglesToAlpha(const CGO * I);
 CGO *CGOGenerateNormalsForTriangles(const CGO * I);
 
-bool CGOHasAnyTriangleVerticesWithoutNormals(CGO *I, bool checkTriangles=true);
+bool CGOHasAnyTriangleVerticesWithoutNormals(const CGO *I, bool checkTriangles=true);
 #define CGOHasAnyLineVerticesWithoutNormals(I) CGOHasAnyTriangleVerticesWithoutNormals(I, false)
 
-CGO *CGOTurnLightingOnLinesOff(CGO * I);
+CGO *CGOTurnLightingOnLinesOff(const CGO * I);
 
 // returns offset of floats in CGO array
 int CGOUniform3f(CGO *I, int uniform_id, const float *value);
 
-CGO *CGOConvertSpheresToPoints(CGO *I);
+CGO *CGOConvertSpheresToPoints(const CGO *I);
 
 #ifdef _PYMOL_ARB_SHADERS
-void CGORenderSpheresARB(RenderInfo *info, CGO *I, float *fog_info);
+void CGORenderSpheresARB(RenderInfo *info, const CGO *I, const float *fog_info);
 #endif
 
 CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &pickData, int mode, const VertexBuffer::buffer_layout layout=VertexBuffer::INTERLEAVED, bool check_attr_for_data=true, int *idx_array=NULL, int nindicesperfrag=0, int nfragspergroup = 1);
