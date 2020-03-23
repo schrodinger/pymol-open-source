@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 
 #define GDB_ENTRY
 
-void *MemoryReallocForSureSafe(void *ptr, unsigned int new_size, unsigned int old_size)
+void *MemoryReallocForSureSafe(void *ptr, size_t new_size, size_t old_size)
 {
   if(new_size < old_size) {
     auto tmp = pymol::malloc<char>(new_size);
@@ -36,7 +36,7 @@ void *MemoryReallocForSureSafe(void *ptr, unsigned int new_size, unsigned int ol
   }
 }
 
-void *MemoryReallocForSure(void *ptr, unsigned int new_size)
+void *MemoryReallocForSure(void *ptr, size_t new_size)
 {                               /* unsafe -- replace with above */
   auto tmp = pymol::malloc<char>(new_size);
   if(tmp)
@@ -93,7 +93,7 @@ void *VLAExpand(void *ptr, ov_size rec)
 {
   VLARec *vla;
   char *start, *stop;
-  unsigned int soffset = 0;
+  size_t soffset = 0;
   vla = &(((VLARec *) ptr)[-1]);
   if(rec >= vla->size) {
     if(vla->auto_zero)
@@ -160,7 +160,7 @@ void VLAFree(void *ptr)
   mfree(vla);
 }
 
-unsigned int VLAGetSize(const void *ptr)
+size_t VLAGetSize(const void *ptr)
 {
   const VLARec *vla;
   vla = &((VLARec *) ptr)[-1];
@@ -172,9 +172,8 @@ void *VLANewCopy(const void *ptr)
   if(ptr) {                     /* NULL protected */
     const VLARec *vla;
     VLARec *new_vla;
-    unsigned int size;
     vla = &((VLARec *) ptr)[-1];
-    size = (vla->unit_size * vla->size) + sizeof(VLARec);
+    auto size = (vla->unit_size * vla->size) + sizeof(VLARec);
     new_vla = (VLARec*) pymol::malloc<char>(size);
     if(!new_vla) {
       printf("VLACopy-ERR: mmalloc failed\n");
@@ -188,12 +187,12 @@ void *VLANewCopy(const void *ptr)
   }
 }
 
-void *VLASetSize(void *ptr, unsigned int new_size)
+void *VLASetSize(void *ptr, size_t new_size)
 {
   VLARec *vla;
   char *start = NULL;
   char *stop;
-  unsigned int soffset = 0;
+  size_t soffset = 0;
   vla = &((VLARec *) ptr)[-1];
   if(vla->auto_zero) {
     soffset = sizeof(VLARec) + (vla->unit_size * vla->size);
@@ -281,12 +280,12 @@ void *VLAInsertRaw(void *ptr, int index, unsigned int count)
   return ptr;
 }
 
-void *VLASetSizeForSure(void *ptr, unsigned int new_size)
+void *VLASetSizeForSure(void *ptr, size_t new_size)
 {
   VLARec *vla;
   char *start = NULL;
   char *stop;
-  unsigned int soffset = 0;
+  size_t soffset = 0;
   vla = &((VLARec *) ptr)[-1];
   if(vla->auto_zero) {
     soffset = sizeof(VLARec) + (vla->unit_size * vla->size);

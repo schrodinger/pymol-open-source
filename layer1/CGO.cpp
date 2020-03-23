@@ -296,7 +296,7 @@ typedef CGO_OP_DATA_CONST float* const* CGO_op_data;
 typedef void CGO_op(CCGORenderer * I, CGO_op_data);
 typedef CGO_op *CGO_op_fn;
 
-static float *CGO_add(CGO * I, int c);
+static float *CGO_add(CGO * I, unsigned c);
 static float *CGO_size(CGO * I, int sz);
 static int CGOSimpleCylinder(CGO * I, const float *v1, const float *v2, const float tube_size, const float *c1,
                              const float *c2, float a1, const float a2, const bool interp, const int cap1, const int cap2,
@@ -472,7 +472,7 @@ CGO *CGONewFromPyList(PyMOLGlobals * G, PyObject * list, int version, bool shoul
      Always check ll when adding new PyList_GetItem's */
   if((version > 0) && (version <= 86)) {
     if(ok)
-      ok = PConvPyIntToInt(PyList_GetItem(list, 0), &I->c);
+      ok = PConvFromPyListItem(G, list, 0, I->c);
     if(ok)
       VLACheck(I->op, float, I->c);
     if(ok)
@@ -555,7 +555,7 @@ void CGOFree(CGO * &I, bool withVBOs)
   }
 }
 
-static float *CGO_add(CGO * I, int c)
+static float *CGO_add(CGO * I, unsigned c)
 {
   float *at;
   VLACheck(I->op, float, I->c + c);

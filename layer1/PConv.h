@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include <map>
 #include <set>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include <algorithm>
 
@@ -315,22 +316,19 @@ inline PyObject* PConvToPyObject(const pymol::Void&)
  * standart type (primitives and c++ std library).
  */
 
-inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, int &out) {
+template <typename Int,
+    typename std::enable_if<std::is_integral<Int>::value>::type* = nullptr>
+inline bool PConvFromPyObject(PyMOLGlobals*, PyObject* obj, Int& out)
+{
   out = PyInt_AsLong(obj);
   return true;
 }
 
-inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, unsigned &out) {
-  out = PyInt_AsLong(obj);
-  return true;
-}
-
-inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, float &out) {
-  out = PyFloat_AsDouble(obj);
-  return true;
-}
-
-inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, double &out) {
+template <typename Float,
+    typename std::enable_if<std::is_floating_point<Float>::value>::type* =
+        nullptr>
+inline bool PConvFromPyObject(PyMOLGlobals*, PyObject* obj, Float& out)
+{
   out = PyFloat_AsDouble(obj);
   return true;
 }

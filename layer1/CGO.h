@@ -683,8 +683,8 @@ class CGO {
 public:
   PyMOLGlobals *G { nullptr };
   float *op { nullptr };
-  int c { 0 };
-  int z_flag { 0 };
+  size_t c = 0;
+  bool z_flag = false;
   float z_min { 0 }, z_max { 0 };
   float z_vector[3];
   float alpha { 1.f };
