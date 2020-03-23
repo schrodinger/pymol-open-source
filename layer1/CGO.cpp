@@ -9918,7 +9918,7 @@ CGO *CGOGenerateNormalsForTriangles(const CGO * I){
   return (cgo);
 }
 
-CGO* CGOTurnLightingOnLinesOff(const CGO* I)
+CGO* CGOTurnLightingOnLinesOff(const CGO* I, bool use_shader)
 {
   bool cur_mode_is_lines = false;
   auto cgo = CGONewSized(I->G, I->c);
@@ -10001,7 +10001,7 @@ CGO* CGOTurnLightingOnLinesOff(const CGO* I)
           cur_mode_is_lines = true;
           break;
         default:
-          if (!I->use_shader){  // no shaders, not lines, turn lighting on
+          if (!use_shader) { // no shaders, not lines, turn lighting on
             CGOEnable(cgo, CGO_GL_LIGHTING);
           }
         }
@@ -10012,7 +10012,7 @@ CGO* CGOTurnLightingOnLinesOff(const CGO* I)
       cgo->add_to_cgo(op, pc);
     }
   }
-  cgo->use_shader = I->use_shader;
+  cgo->use_shader = use_shader;
   if (cgo->use_shader){
     cgo->cgo_shader_ub_color = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_color);
     cgo->cgo_shader_ub_normal = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_normal);

@@ -1077,7 +1077,11 @@ CGO *CGOGenerateNormalsForTriangles(const CGO * I);
 bool CGOHasAnyTriangleVerticesWithoutNormals(const CGO *I, bool checkTriangles=true);
 #define CGOHasAnyLineVerticesWithoutNormals(I) CGOHasAnyTriangleVerticesWithoutNormals(I, false)
 
-CGO *CGOTurnLightingOnLinesOff(const CGO * I);
+CGO* CGOTurnLightingOnLinesOff(const CGO* I, bool use_shader);
+inline CGO* CGOTurnLightingOnLinesOff(const CGO* I)
+{
+  return CGOTurnLightingOnLinesOff(I, I->use_shader);
+}
 
 // returns offset of floats in CGO array
 int CGOUniform3f(CGO *I, int uniform_id, const float *value);

@@ -217,18 +217,12 @@ void ObjectCGO::invalidate(int rep, int level, int state)
     int a;
     for(a = 0; a < I->NState; a++) {
       sobj = I->State + a;
-      if (sobj->renderCGO){
-	CGOFree(sobj->renderCGO);	      
-	sobj->renderCGO = 0;
-      }
+      CGOFree(sobj->renderCGO);
     }
   } else {
     if((state >= 0) && (state < I->NState)) {
       sobj = I->State + state;
-      if (sobj->renderCGO){
-	CGOFree(sobj->renderCGO);	      
-	sobj->renderCGO = 0;
-      }
+      CGOFree(sobj->renderCGO);
     }
   }
 }
@@ -342,55 +336,48 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
        (cgo_lighting ^ sobj->cgo_lighting))){
     // if renderWithShaders doesn't match use_shader, clear CGO and re-generate
     CGOFree(sobj->renderCGO);
-    sobj->renderCGO = 0;
   }
   if (!sobj->renderCGO){
-    CGO *convertcgo = NULL;
     float colorWithA[4];
     short someLinesWithoutNormals = 0;
-    CGO *preOpt = NULL;
     if (color){
       colorWithA[0] = color[0]; colorWithA[1] = color[1]; colorWithA[2] = color[2];
     } else {
       colorWithA[0] = 1.f; colorWithA[1] = 1.f; colorWithA[2] = 1.f;
     }
     colorWithA[3] = 1.f - SettingGet_f(G, I->Setting, NULL, cSetting_cgo_transparency);
-    preOpt = sobj->origCGO;
 
-    bool hasTransparency = (colorWithA[3] < 1.f || CGOHasTransparency(preOpt));
-    bool hasOpaque = (colorWithA[3] == 1.f || CGOHasOpaque(preOpt));
+    bool hasTransparency = (colorWithA[3] < 1.f || CGOHasTransparency(sobj->origCGO));
+    bool hasOpaque = (colorWithA[3] == 1.f || CGOHasOpaque(sobj->origCGO));
 
     CGO *allCylinders = NULL;
     CGO *allSpheres = NULL;
+    std::unique_ptr<CGO, CGODeleter> preOpt;
+
     {
-      CGO *convertcgo = NULL;
-      bool freePreOpt = false;
+      std::unique_ptr<CGO, CGODeleter> inputWithLighting;
+      const CGO* inputCGO = sobj->origCGO;
+
       if (cgo_lighting){
-	if (CGOHasAnyTriangleVerticesWithoutNormals(preOpt)){
+	if (CGOHasAnyTriangleVerticesWithoutNormals(inputCGO)){
 	  // we only need normals if cgo_lighting is on
-	  preOpt = CGOGenerateNormalsForTriangles(preOpt);
-	  freePreOpt = true;
+          inputWithLighting.reset(CGOGenerateNormalsForTriangles(inputCGO));
+          inputCGO = inputWithLighting.get();
 	}
-	someLinesWithoutNormals = CGOHasAnyLineVerticesWithoutNormals(preOpt);
+	someLinesWithoutNormals = CGOHasAnyLineVerticesWithoutNormals(inputCGO);
 	if (!use_shader && someLinesWithoutNormals){
 	  // if some lines without normals, turn lighting off on lines
-	  CGO *preOpt2 = preOpt;
-          preOpt->use_shader = use_shader;
-	  preOpt = CGOTurnLightingOnLinesOff(preOpt);
-          CGOStop(preOpt);
-	  if (freePreOpt){
-	    CGOFree(preOpt2);
-	  }
-	  freePreOpt = true;
+          inputWithLighting.reset(CGOTurnLightingOnLinesOff(inputCGO, use_shader));
+          inputCGO = inputWithLighting.get();
 	}
       }
-      convertcgo = CGONew(G);
+
+      CGO* convertcgo = CGONew(G);
       CGOColorv(convertcgo, colorWithA);
       CGOAlpha(convertcgo, colorWithA[3]);
-      CGOAppend(convertcgo, preOpt);
-      if (freePreOpt){
-        CGOFree(preOpt);
-      }
+      CGOAppend(convertcgo, inputCGO);
+      inputWithLighting.reset();
+
       if (use_shader){
         bool t_mode_3 = SettingGetGlobal_i(G, cSetting_transparency_mode)==3;
         if ((t_mode_3 || !hasTransparency)
@@ -398,12 +385,11 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
             && G->ShaderMgr->Get_CylinderShader(0))
         {
           if (CGOHasCylinderOperations(convertcgo)){
-            CGO *newCGO = NULL;
             allCylinders = CGONew(G);
             CGOEnable(allCylinders, GL_CYLINDER_SHADER);
-            newCGO = CGOConvertShaderCylindersToCylinderShader(convertcgo, allCylinders);
-            CGOAppendNoStop(allCylinders, newCGO);
-            CGOFreeWithoutVBOs(newCGO);
+            CGO* newCGO = CGOConvertShaderCylindersToCylinderShader(convertcgo, allCylinders);
+            allCylinders->free_append(newCGO);
+            assert(newCGO == nullptr);
             CGODisable(allCylinders, GL_CYLINDER_SHADER);
             CGOStop(allCylinders);
             CGO *allButCylinders = CGONew(G);
@@ -423,63 +409,62 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
               CGOFree(allButSpheres);
             }
           }
-          preOpt = CGOSimplify(convertcgo, 0);
+          preOpt.reset(CGOSimplify(convertcgo, 0));
         } else {
-          preOpt = CGOSimplifyNoCompress(convertcgo, 0) ;
+          preOpt.reset(CGOSimplifyNoCompress(convertcgo, 0));
         }
       } else {
-	preOpt = CGOSimplifyNoCompress(convertcgo, 0) ;
+        preOpt.reset(CGOSimplifyNoCompress(convertcgo, 0));
       }
       CGOFree(convertcgo);
     }
 
     if (ramp){
-      convertcgo = CGOColorByRamp(G, preOpt, ramp, state, I->Setting);
-      CGOFree(preOpt);
-      preOpt = convertcgo;
+      preOpt.reset(CGOColorByRamp(G, preOpt.get(), ramp, state, I->Setting));
     }
+
+    sobj->hasTransparency = hasTransparency;
+    sobj->hasOpaque = hasOpaque;
+
     if (use_shader){
       if(preOpt && preOpt->has_begin_end){
-	CGO *convertcgo = CGOCombineBeginEnd(preOpt, 0);
-	CGOFree(preOpt);
-	preOpt = convertcgo;
+	preOpt.reset(CGOCombineBeginEnd(preOpt.get(), 0));
       }
-      sobj->hasTransparency = hasTransparency;
-      sobj->hasOpaque = hasOpaque;
-      convertcgo = CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(preOpt, 0, colorWithA, false);
+
+      preOpt.reset(CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(
+          preOpt.get(), 0, colorWithA, false));
+
       if (someLinesWithoutNormals){
         // if some lines without normals, turn lighting off on lines
-        convertcgo->use_shader = use_shader;
-        CGO *convertcgo2 = CGOTurnLightingOnLinesOff(convertcgo);
-        CGOStop(convertcgo2);
+        CGO* convertcgo = preOpt.release();
+        preOpt.reset(CGOTurnLightingOnLinesOff(convertcgo, use_shader));
         CGOFreeWithoutVBOs(convertcgo);
-        convertcgo = convertcgo2;
       }
+
       if (allCylinders){
-        CGOAppendNoStop(convertcgo, allCylinders);
-        CGOFreeWithoutVBOs(allCylinders);
+        preOpt->free_append(allCylinders);
       }
+
       if (allSpheres){
-        CGOAppendNoStop(convertcgo, allSpheres);
-        CGOFreeWithoutVBOs(allSpheres);
+        preOpt->free_append(allSpheres);
       }
-      CGOStop(convertcgo);
-      sobj->renderCGO = convertcgo;
+
+      sobj->renderCGO = preOpt.release();
     } else {
-      unsigned char hasTrans = CGOHasTransparency(preOpt);
-      CGOFree(convertcgo);
-      if (hasTrans){
-	CGO *convertcgo ;
-	convertcgo = CGOConvertTrianglesToAlpha(preOpt);
-	sobj->renderCGO = convertcgo;
+      assert(sobj->hasTransparency == CGOHasTransparency(preOpt.get()));
+      assert(sobj->hasOpaque == CGOHasOpaque(preOpt.get()));
+
+      if (sobj->hasTransparency) {
+        sobj->renderCGO = CGOConvertTrianglesToAlpha(preOpt.get());
 	sobj->renderCGO->render_alpha = 2;
       } else {
-	sobj->renderCGO = CGOSimplify(preOpt, 0); // copy, for now
+        sobj->renderCGO = CGOSimplify(preOpt.get(), 0);
       }
-      sobj->hasTransparency = hasTrans;
-      sobj->hasOpaque = CGOHasOpaque(preOpt);
     }
-    CGOFree(preOpt);
+
+    assert(allCylinders == nullptr);
+    assert(allSpheres == nullptr);
+
     sobj->renderWithShaders = use_shader;
     sobj->cgo_lighting = cgo_lighting;
   }
