@@ -437,7 +437,6 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     // This is required for immediate mode rendering
     CGOBegin(I->primitiveCGO, GL_LINES);
 
-    bool first = true;
     int atm1, atm2;
     float origV1[14], origV2[14], *origV = origV2;
     bool origVis1 = false;
@@ -516,13 +515,11 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
 
           isRamped = ColorGetCheckRamped(G, c2, origV + 11, origV + 8, state) || isRamped;
 
-          if (first || I->primitiveCGO->interpolated!=isRamped)
-            CGOInterpolated(I->primitiveCGO, isRamped );
           int atm1pk = ai1->masked ? cPickableNoPick : cPickableAtom;
           int atm2pk = ai2->masked ? cPickableNoPick : cPickableAtom;
           CGOPickColor(I->primitiveCGO, at1, atm1pk);
           CGOColorv(I->primitiveCGO, origV + 1);
-          I->primitiveCGO->add<cgo::draw::splitline>(origV + 4, origV + 11, origV + 8, at2, atm2pk, false, false, false);
+          I->primitiveCGO->add<cgo::draw::splitline>(origV + 4, origV + 11, origV + 8, at2, atm2pk, isRamped, false, false);
         }
       }
       v1 += 3;

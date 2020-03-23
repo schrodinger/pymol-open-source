@@ -11234,7 +11234,6 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
 //   - returns true if always the same
 //   - returns false if not always the same
 bool CGOCheckSplitLineInterpolationIsSame(const CGO *I, bool &interp_value){
-  float *pc = I->op;
   bool interp_value_first = false;
   bool interp_value_is_set = false;
 
@@ -11244,7 +11243,7 @@ bool CGOCheckSplitLineInterpolationIsSame(const CGO *I, bool &interp_value){
       interp_value = (it.cast<cgo::draw::splitline>()->flags & cgo::draw::splitline::interpolation);
       break;
     case CGO_INTERPOLATED:
-      interp_value = (*pc > .5f);
+      interp_value = it.cast<float>()[0] > 0.5f;
       break;
     default:
       continue;
