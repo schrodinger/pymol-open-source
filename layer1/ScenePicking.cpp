@@ -38,9 +38,16 @@ static void PickColorConverterSetRgbaBitsFromGL(
     PyMOLGlobals* G, PickColorConverter& pickconv)
 {
   GLint rgba_bits[4] = {4, 4, 4, 0};
+  int max_check_bits = 0;
+
+#ifdef _WEBGL
+  // Can't turn off antialiasing in WebPyMOL, so we need to add some check bits
+  // to filter out antialiased pixels.
+  max_check_bits = 2;
+#endif
 
   if (!SettingGet<bool>(G, cSetting_pick32bit)) {
-    pickconv.setRgbaBits(rgba_bits);
+    pickconv.setRgbaBits(rgba_bits, max_check_bits);
     return;
   }
 
@@ -67,7 +74,7 @@ static void PickColorConverterSetRgbaBitsFromGL(
     glBindFramebuffer(GL_FRAMEBUFFER, currentFrameBuffer);
   }
 
-  pickconv.setRgbaBits(rgba_bits);
+  pickconv.setRgbaBits(rgba_bits, max_check_bits);
 }
 
 /**

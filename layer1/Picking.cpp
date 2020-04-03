@@ -12,16 +12,70 @@
 constexpr auto MAX_BITS = 8u;
 
 /**
- * Set the number of bits per picking channel
+ * Value to put in the "unused bits" part of a color channel.
+ * May serve several purposes:
+ * - validation (check bits)
+ * - no-pick vs. through-pick
+ * - rounding
+ *
+ * Disclaimer: I'm not sure if rounding is ever needed and if rounding and
+ * validation should be mutually exclusive.
  */
-void PickColorConverter::setRgbaBits(const int* rgba_bits)
+constexpr unsigned make_check_value(unsigned bits)
 {
-  m_rgba_bits[0] = std::min<unsigned>(MAX_BITS, rgba_bits[0]);
-  m_rgba_bits[1] = std::min<unsigned>(MAX_BITS, rgba_bits[1]);
-  m_rgba_bits[2] = std::min<unsigned>(MAX_BITS, rgba_bits[2]);
+  return 0x80u >> bits;
+}
 
-  // we use one bit to distinguish no-pick and through-pick
-  m_rgba_bits[3] = std::min<unsigned>(MAX_BITS - 1, rgba_bits[3]);
+/**
+ * Return true if this RGBA color looks valid, and false if it should
+ * be ignored.
+ */
+bool PickColorConverter::validateCheckBits(const channel_t* rgba) const
+{
+  for (unsigned i = 0; i != 4; ++i) {
+    assert(m_rgba_and_check_bits[i] >= m_rgba_bits[i]);
+
+    // mask to stamp out the validation bits
+    const channel_t check_mask = (0xFFu >> m_rgba_bits[i]) & //
+                                 ~(0xFFu >> m_rgba_and_check_bits[i]);
+
+    const channel_t check_value = make_check_value(m_rgba_bits[i]);
+
+    if ((rgba[i] & check_mask) != (check_value & check_mask)) {
+      // found antialiased bit (or cPickableNoPick/cPickableThrough which can
+      // also be ignored)
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Set the number of bits per picking channel
+ * @param rgba_bits Number of available bits per channel
+ * @param max_check_bits Maximum number of bits (per channel) to use for
+ * validation
+ */
+void PickColorConverter::setRgbaBits(const int* rgba_bits, int max_check_bits)
+{
+  for (unsigned i = 0; i != 4; ++i) {
+    m_rgba_bits[i] = std::min<unsigned>(MAX_BITS, rgba_bits[i]);
+
+    // Use at most half of the pixels for validation
+    int const check_bits = std::min(m_rgba_bits[i] / 2, max_check_bits);
+
+    m_rgba_and_check_bits[i] = m_rgba_bits[i];
+    m_rgba_bits[i] = std::max(0, int(m_rgba_bits[i]) - check_bits);
+  }
+
+  // Use one bit to distinguish no-pick and through-pick.
+  // This bit only has to reach the shader, it's not relevant for the
+  // output buffer. This means it can be part of the check bits, but
+  // doesn't have to be. It can also be beyond the color depth of the
+  // output buffer (In theory, I have no suitable system to test this
+  // assumption).
+  m_rgba_bits[3] = std::min<unsigned>(MAX_BITS - 1, m_rgba_bits[3]);
 }
 
 /**
@@ -32,6 +86,10 @@ void PickColorConverter::setRgbaBits(const int* rgba_bits)
 PickColorConverter::index_t PickColorConverter::indexFromColor(
     const channel_t* rgba) const
 {
+  if (!validateCheckBits(rgba)) {
+    return 0;
+  }
+
   unsigned idx = 0;
   unsigned bits = 0;
   for (unsigned i = 0; i != 4; ++i) {
@@ -52,9 +110,7 @@ void PickColorConverter::colorFromIndex(channel_t* rgba, index_t idx) const
   for (unsigned i = 0; i != 4; ++i) {
     rgba[i] = ((idx >> bits) & 0xFFu) << (MAX_BITS - m_rgba_bits[i]);
 
-    // "rounding" by setting the next bit (like adding 0.5 - values are
-    // effectively floored in indexFromColor()) - may not be necessary?
-    rgba[i] |= 0x80u >> m_rgba_bits[i];
+    rgba[i] |= make_check_value(m_rgba_bits[i]);
 
     bits += m_rgba_bits[i];
   }
@@ -69,7 +125,8 @@ void PickColorConverter::colorNoPick(channel_t* rgba) const
   rgba[0] = 0;
   rgba[1] = 0;
   rgba[2] = 0;
-  rgba[3] = 0x80u >> m_rgba_bits[3]; // lowest bit
+  rgba[3] = make_check_value(m_rgba_bits[3]);
+  assert(rgba[3] != 0);
 }
 
 /**

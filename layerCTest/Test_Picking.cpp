@@ -15,6 +15,29 @@ TEST_CASE("getTotalBits", "[Picking]")
   const int bits2[] = {2, 3, 4, 5};
   pickconv.setRgbaBits(bits2);
   REQUIRE(pickconv.getTotalBits() == 14);
+
+  // check pick-though bit with 32bit
+  const int bits3[] = {8, 8, 8, 8};
+  pickconv.setRgbaBits(bits3);
+  REQUIRE(pickconv.getTotalBits() == 31);
+}
+
+TEST_CASE("validateCheckBits", "[Picking]")
+{
+  PickColorConverter pickconv;
+
+  const int bits1[] = {2, 3, 4, 5};
+  pickconv.setRgbaBits(bits1, 2);
+  REQUIRE(pickconv.getTotalBits() == 8);
+
+  const int bits2[] = {8, 8, 8, 4};
+  pickconv.setRgbaBits(bits2, 3);
+  REQUIRE(pickconv.getTotalBits() == 17);
+
+  unsigned char color2[4] = {0xfc, 0x04, 0x0c, 0x2f};
+  REQUIRE(pickconv.validateCheckBits(color2));
+  color2[1] |= 0x02;
+  REQUIRE(!pickconv.validateCheckBits(color2));
 }
 
 TEST_CASE("indexFromColor", "[Picking]")

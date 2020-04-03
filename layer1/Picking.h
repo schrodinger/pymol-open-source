@@ -96,9 +96,15 @@ class PickColorConverter
   // 12 bit default
   unsigned char m_rgba_bits[4]{4, 4, 4, 0};
 
+  // Number of used bits plus check bits
+  unsigned char m_rgba_and_check_bits[4]{4, 4, 4, 0};
+
 public:
+  // (only public for testing)
+  bool validateCheckBits(const channel_t* rgba) const;
+
   //! Set the number of bits for each channel
-  void setRgbaBits(const int* rgba_bits);
+  void setRgbaBits(const int* rgba_bits, int max_check_bits = 0);
 
   //! Get the sum of bits from all channels
   unsigned getTotalBits() const
