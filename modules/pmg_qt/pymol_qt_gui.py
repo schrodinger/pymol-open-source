@@ -872,7 +872,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         msg = [
             'The PyMOL Molecular Graphics System\n',
             'Version %s' % (self.cmd.get_version()[0]),
-            u'Copyright (C) Schr\xF6dinger LLC.',
+            u'Copyright (C) Schr\xF6dinger, LLC.',
             'All rights reserved.\n',
             'License information:',
         ]
