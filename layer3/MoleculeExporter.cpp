@@ -593,6 +593,11 @@ struct MoleculeExporterPQR: public MoleculeExporterPDB {
     m_pdb_info.pqr_workarounds = SettingGetGlobal_b(G, cSetting_pqr_workarounds);
   }
 
+  // don't write MODEL records
+  void beginCoordSet() override {
+    MoleculeExporter::beginCoordSet();
+  }
+
   bool isExcludedBond(int atm1, int atm2) override {
     // no bonds for PQR format
     return true;
