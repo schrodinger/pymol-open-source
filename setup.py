@@ -273,10 +273,7 @@ ext_comp_args = [
     # legacy stuff
     '-Wno-char-subscripts',
     # optimizations
-    "-ffast-math",
-    "-funroll-loops",
     "-Og" if DEBUG else "-O3",
-    "-fcommon",
 ]
 ext_link_args = []
 ext_objects = []
