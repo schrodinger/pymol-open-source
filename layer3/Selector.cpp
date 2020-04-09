@@ -6340,7 +6340,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
     }
   }
   if(isNew && info_src) {       /* copy symmetry information, etc. */
-    if (targ->Symmetry != nullptr) {
+    if (targ->Symmetry == nullptr && info_src->Symmetry != nullptr) {
       targ->Symmetry = new CSymmetry(*info_src->Symmetry);
     }
   }
