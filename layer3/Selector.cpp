@@ -1207,6 +1207,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
 
         /* does this residue have a canonical atoms? */
 
+        bool found_only_h = true;
         int found_ca = false;
         int found_n = false;
         int found_c = false;
@@ -1334,6 +1335,11 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
               }
             }
           }
+
+          if (!ai0->isHydrogen()) {
+            found_only_h = false;
+          }
+
           ai0++;
         }
 
@@ -1346,7 +1352,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
           mask = cAtomFlag_organic;
         else if((found_o || found_oh2) && (a1 == a0))
           mask = cAtomFlag_solvent;
-        else if (!ai0->isHydrogen()) {
+        else if (!found_only_h) {
           // exclude hydrogens, they get misclassified as
           // 'inorganic' if they are not sorted
           mask = cAtomFlag_inorganic;
