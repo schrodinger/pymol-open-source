@@ -45,9 +45,6 @@ ObjectGadgetRamp::~ObjectGadgetRamp()
 {
   auto I = this;
   ColorForgetExt(I->G, I->Name);
-  VLAFreeP(I->Level);
-  VLAFreeP(I->Color);
-  VLAFreeP(I->LevelTmp);
 }
 
 static void ObjectGadgetRampCalculate(ObjectGadgetRamp * I, float v, float *result)
@@ -125,7 +122,7 @@ static const float * ObjectGadgetRampGetLevel(ObjectGadgetRamp * I) {
 
   if (!I->LevelTmp) {
     float level0 = I->Level[0], level1 = I->Level[I->NLevel - 1];
-    I->LevelTmp = VLAlloc(float, n_color);
+    I->LevelTmp = pymol::vla<float>(n_color);
     for (int i = 0; i < n_color; ++i) {
       float a = i / (float) (n_color - 1);
       I->LevelTmp[i] = level0 * (1.f - a) + level1 * a;
@@ -453,7 +450,7 @@ int ObjectGadgetRampNewFromPyList(PyMOLGlobals * G, PyObject * list,
           VLASize(I->Color, float, I->NLevel * 3);
           for (int i = (I->NLevel - 1) * 3 - 1; i >= 3; --i)
             I->Color[i] = I->Color[i - 3];
-          copy3f(extreme, I->Color);
+          copy3f(extreme, I->Color.data());
           copy3f(extreme + 3, I->Color + (I->NLevel - 1) * 3);
         }
         VLAFreeP(extreme);
@@ -531,13 +528,13 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
 
             if(!ObjectGadgetRampInterpolateWithSpecial(I, dist, color, atomic,
                                                        object, pos, state, false)) {
-              copy3f(I->Color, color);
+              copy3f(I->Color.data(), color);
             }
           } else {
             float white[3] = { 1.0F, 1.0F, 1.0F };
             if(!ObjectGadgetRampInterpolateWithSpecial(I, cutoff + 1.0F, color, white,
                                                        white, pos, state, false)) {
-              copy3f(I->Color, color);
+              copy3f(I->Color.data(), color);
             }
           }
         } else {
@@ -555,13 +552,13 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
 
             if(!ObjectGadgetRampInterpolateWithSpecial(I, dist, color, atomic,
                                                        object, pos, state, false)) {
-              copy3f(I->Color, color);
+              copy3f(I->Color.data(), color);
             }
           } else {
             float white[3] = { 1.0F, 1.0F, 1.0F };
             if(!ObjectGadgetRampInterpolateWithSpecial(I, cutoff + 1.0F, color, white,
                                                        white, pos, state, false)) {
-              copy3f(I->Color, color);
+              copy3f(I->Color.data(), color);
             }
           }
         }
@@ -572,7 +569,7 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
     {
       float white[3] = { 1.0F, 1.0F, 1.0F };
       if(!ObjectGadgetRampInterpolateWithSpecial(I, 0.0F, color, white, white, pos, state, true)) {     /* simple blend */
-        copy3f(I->Color, color);
+        copy3f(I->Color.data(), color);
       }
     }
     break;
@@ -939,8 +936,9 @@ static int ObjectGadgetRampHandleInputColors(ObjectGadgetRamp * I)
 ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals * G,
                                                   ObjectGadgetRamp *I,
                                                   ObjectMap * map,
-                                                  float *level_vla,
-                                                  float *color_vla, int map_state,
+                                                  pymol::vla<float>&& level_vla,
+                                                  pymol::vla<float>&& color_vla,
+                                                  int map_state,
                                                   float *vert_vla, float beyond,
                                                   float within, float sigma, int zero,
                                                   int calc_mode)
@@ -951,8 +949,7 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals * G,
   I->RampType = cRampMap;
 
   if (color_vla || calc_mode > 0) {
-    VLAFreeP(I->Color);
-    I->Color = color_vla;
+    I->Color = std::move(color_vla);
     I->CalcMode = calc_mode;
   }
 
@@ -975,13 +972,11 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals * G,
           }
         }
       }
-      VLAFreeP(I->Level);
-      I->Level = VLAlloc(float, 3);
-      copy3f(tmp_level, I->Level);
+      I->Level = pymol::vla<float>(3);
+      copy3f(tmp_level, I->Level.data());
       VLAFreeP(level_vla);
     } else if (level_vla) {
-      VLAFreeP(I->Level);
-      I->Level = level_vla;
+      I->Level = std::move(level_vla);
     }
   }
 
@@ -1004,8 +999,8 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals * G,
 ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals * G,
                                                   ObjectGadgetRamp *I,
                                                   ObjectMolecule * mol,
-                                                  float *level_vla,
-                                                  float *color_vla,
+                                                  pymol::vla<float>&& level_vla,
+                                                  pymol::vla<float>&& color_vla,
                                                   int mol_state, int calc_mode)
 {
   if (!I) {
@@ -1022,14 +1017,12 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals * G,
   }
 
   if (color_vla || calc_mode > 0) {
-    VLAFreeP(I->Color);
-    I->Color = color_vla;
+    I->Color = std::move(color_vla);
     I->CalcMode = calc_mode;
   }
 
   if(level_vla) {
-    VLAFreeP(I->Level);
-    I->Level = level_vla;
+    I->Level = std::move(level_vla);
     I->NLevel = VLAGetSize(I->Level);
   }
 

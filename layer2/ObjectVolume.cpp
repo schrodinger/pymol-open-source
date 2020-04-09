@@ -1277,21 +1277,24 @@ PyObject * ObjectVolumeGetRamp(ObjectVolume * I)
 }
 
 /*==============================================================================*/
-int ObjectVolumeSetRamp(ObjectVolume * I, std::vector<float>&& ramp_list)
+pymol::Result<> ObjectVolumeSetRamp(ObjectVolume * I, std::vector<float>&& ramp_list)
 {
   /* TODO: Allow for multi-state maps? */
   ObjectVolumeState *ovs = ObjectVolumeGetActiveState(I);
 
-  ok_assert(1, ovs && !ramp_list.empty());
+  if(!ovs || ramp_list.empty()) {
+    return pymol::make_error("ObjectVolumeSetRamp failed.");
+  }
 
   ovs->Ramp = std::move(ramp_list);
   ovs->RecolorFlag = true;
 
   SceneChanged(I->G);
 
-  return true;
-ok_except1:
-  PRINTFB(I->G, FB_ObjectVolume, FB_Errors)
-    "ObjectVolumeSetRamp failed" ENDFB(I->G);
-  return false;
+  return {};
+}
+
+CObject* ObjectVolume::clone() const
+{
+  return new ObjectVolume(*this);
 }

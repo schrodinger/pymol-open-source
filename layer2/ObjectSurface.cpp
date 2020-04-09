@@ -1112,23 +1112,21 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
   return (I);
 }
 
-int ObjectSurfaceGetLevel(ObjectSurface * I, int state, float *result)
+pymol::Result<float> ObjectSurfaceGetLevel(ObjectSurface * I, int state)
 {
-  int ok = true;
-  ObjectSurfaceState *ms;
   if(state >= I->State.size()) {
-    ok = false;
+    return pymol::make_error("Invalid surface state");
   } else {
     if(state < 0) {
       state = 0;
     }
-    ms = &I->State[state];
-    if(ms->Active && result) {
-      *result = ms->Level;
-    } else
-      ok = false;
+    auto ms = &I->State[state];
+    if(ms->Active) {
+      return ms->Level;
+    } else {
+      return pymol::make_error("Invalid Surface state");
+    }
   }
-  return (ok);
 }
 
 int ObjectSurfaceSetLevel(ObjectSurface * I, float level, int state, int quiet)
@@ -1195,3 +1193,11 @@ void ObjectSurfaceRecomputeExtent(ObjectSurface * I)
     }
   }
 }
+
+/*========================================================================*/
+
+CObject* ObjectSurface::clone() const
+{
+  return new ObjectSurface(*this);
+}
+

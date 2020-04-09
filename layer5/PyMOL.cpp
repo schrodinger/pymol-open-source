@@ -73,6 +73,7 @@
 #include "PyMOLOptions.h"
 #include "Feedback.h"
 #include "GraphicsUtil.h"
+#include "pymol/zstring_view.h"
 
 #include "ShaderMgr.h"
 #include "Version.h"
@@ -821,8 +822,9 @@ PyMOLreturn_status PyMOL_CmdZoom(CPyMOL * I, const char *selection, float buffer
 {
   int ok = false;
   PYMOL_API_LOCK
-    ok = ExecutiveWindowZoom(I->G, selection, buffer, state - 1,
+    auto result = ExecutiveWindowZoom(I->G, selection, buffer, state - 1,
                              complete, animate, quiet);
+    ok = static_cast<bool>(result);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
@@ -830,14 +832,10 @@ PyMOLreturn_status PyMOL_CmdOrient(CPyMOL * I, const char *selection, float buff
                                    int state, int complete, float animate, int quiet)
 {
   int ok = true;
-  PYMOL_API_LOCK double m[16];
-  OrthoLineType s1;
-  SelectorGetTmp(I->G, selection, s1);
-  if(ExecutiveGetMoment(I->G, s1, m, state))
-    ExecutiveOrient(I->G, s1, m, state - 1, animate, complete, buffer, quiet);  /* TODO STATUS */
-  else
-    ok = false;
-  SelectorFreeTmp(I->G, s1);
+  PYMOL_API_LOCK
+  auto res = ExecutiveOrient(
+      I->G, selection, state - 1, animate, complete, buffer, quiet);
+  ok = static_cast<bool>(res);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
@@ -846,7 +844,9 @@ PyMOLreturn_status PyMOL_CmdCenter(CPyMOL * I, const char *selection, int state,
 {
   int ok = false;
   PYMOL_API_LOCK
-    ok = ExecutiveCenter(I->G, selection, state - 1, origin, animate, NULL, quiet);
+  auto result = ExecutiveCenter(I->G, selection,
+      state - 1, origin, animate, nullptr, quiet);
+  ok = static_cast<bool>(result);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
@@ -889,14 +889,6 @@ OVreturn_word get_setting_id(CPyMOL * I, const char *setting)
   return OVOneToOne_GetForward(I->Setting, result.word);
 }
 
-static OVreturn_word get_clip_id(CPyMOL * I, const char *clip)
-{
-  OVreturn_word result;
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, clip))))
-    return result;
-  return OVOneToOne_GetForward(I->Clip, result.word);
-}
-
 static OVreturn_word get_reinit_id(CPyMOL * I, const char *reinit)
 {
   OVreturn_word result;
@@ -919,23 +911,19 @@ PyMOLreturn_status PyMOL_CmdClip(CPyMOL * I,
                                  int state, int quiet)
 {
   int ok = true;
-  PYMOL_API_LOCK OrthoLineType s1;
-  OVreturn_word clip_id;
-  if(OVreturn_IS_OK((clip_id = get_clip_id(I, mode)))) {
-    SelectorGetTmp2(I->G, selection, s1);
-    SceneClip(I->G, clip_id.word, amount, s1, state - 1);
-    SelectorFreeTmp(I->G, s1);
-  }
+  PYMOL_API_LOCK
+    cSceneClip clip_id = SceneClipGetEnum(mode);
+    SelectorTmp2 s1(I->G, selection);
+    SceneClip(I->G, clip_id, amount, s1.getName(), state - 1);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdLabel(CPyMOL * I, const char *selection, const char *text, int quiet)
 {
   int ok = true;
-  PYMOL_API_LOCK OrthoLineType s1;
-  SelectorGetTmp(I->G, selection, s1);
-  ok = ExecutiveLabel(I->G, s1, text, quiet, cExecutiveLabelEvalAlt);
-  SelectorFreeTmp(I->G, s1);
+  PYMOL_API_LOCK
+  auto result = ExecutiveLabel(I->G, selection, text, quiet, cExecutiveLabelEvalAlt);
+  ok = static_cast<bool>(result);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
@@ -1008,13 +996,11 @@ PyMOLreturn_status PyMOL_CmdEnable(CPyMOL * I, const char *name, int quiet)
 {
   int ok = false;
   PYMOL_API_LOCK if(name[0] == '(') {
-    OrthoLineType s1;
-    ok = (SelectorGetTmp2(I->G, name, s1) >= 0);
-    if(ok)
-      ok = ExecutiveSetOnOffBySele(I->G, s1, true);
-    SelectorFreeTmp(I->G, s1);
+    auto result1 = ExecutiveSetOnOffBySele(I->G, name, true);
+    ok = static_cast<bool>(ok);
   }
-  ok = ExecutiveSetObjVisib(I->G, name, true, false);   /* TO DO: parents */
+  auto result2 = ExecutiveSetObjVisib(I->G, name, true, false);   /* TO DO: parents */
+  ok &= static_cast<bool>(result2);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
@@ -1022,13 +1008,11 @@ PyMOLreturn_status PyMOL_CmdDisable(CPyMOL * I, const char *name, int quiet)
 {
   int ok = false;
   PYMOL_API_LOCK if(name[0] == '(') {
-    OrthoLineType s1 = "";
-    ok = (SelectorGetTmp2(I->G, name, s1) >= 0);
-    if(ok)
-      ok = ExecutiveSetOnOffBySele(I->G, s1, false);
-    SelectorFreeTmp(I->G, s1);
+    auto result = ExecutiveSetOnOffBySele(I->G, name, true);
+    ok = static_cast<bool>(result);
   } else {
-    ok = ExecutiveSetObjVisib(I->G, name, false, false);
+    auto result = ExecutiveSetObjVisib(I->G, name, false, false);
+    ok = static_cast<bool>(result);
   }
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
@@ -1187,7 +1171,8 @@ PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL * I,
   int ok = true;
   OVreturn_word what_id;
   PYMOL_API_LOCK if(OVreturn_IS_OK((what_id = get_reinit_id(I, what)))) {
-    ok = ExecutiveReinitialize(I->G, what_id.word, object_name);
+    auto res = ExecutiveReinitialize(I->G, what_id.word, object_name);
+    ok = static_cast<bool>(res);
   }
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
@@ -1365,18 +1350,16 @@ PyMOLreturn_status PyMOL_CmdGradient(CPyMOL * I, const char *name, const char *m
 PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL * I, const char *name, float level, int state,
                                     int query, int quiet)
 {
-  int ok = true;
-  OrthoLineType s1 = "";
   PyMOLreturn_float result;
-  PYMOL_API_LOCK if(ok) {
-    ok = ExecutiveIsolevel(I->G, name, level, state - 1, query, &result.value, quiet);
-
-    result.status = get_status_ok(ok);
+  PYMOL_API_LOCK
+    if(query) {
+      auto res = ExecutiveGetIsolevel(I->G, name, state - 1);
+      result = return_result(res);
   } else {
-    result.status = PyMOLstatus_FAILURE;
-    result.value = 0.0F;
+      auto res = ExecutiveIsolevel(I->G, name, level, state - 1, quiet);
+      result.status = get_status_ok(static_cast<bool>(res));
+      result.value = level;
   }
-  SelectorFreeTmp(I->G, s1);
   PYMOL_API_UNLOCK return result;
 }
 
@@ -1455,9 +1438,11 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL * I, const char *name, const char *ma
     }
   }
   if(ok) {
-    ok = ExecutiveRampNew(I->G, name, map, range_vla,
-                          color_vla, state, s1, beyond, within, sigma,
-                          zero, calc_mode, quiet);
+    auto res =
+        ExecutiveRampNew(I->G, name, map, pymol::vla_take_ownership(range_vla),
+            pymol::vla_take_ownership(color_vla), state, s1, beyond, within,
+            sigma, zero, calc_mode, quiet);
+    ok = static_cast<bool>(res);
     result.status = get_status_ok(ok);
   } else {
     result.status = PyMOLstatus_FAILURE;
@@ -1584,14 +1569,14 @@ static PyMOLreturn_status Loader(CPyMOL * I, const char *content, const char *co
       }
 
       if(ok) {
-
-        ok = ExecutiveLoad(I->G,
+        auto result = ExecutiveLoad(I->G,
             content_is_filename ? content : nullptr,
             content_is_filename ? nullptr : content,
                            content_length,
                            pymol_content_type,
                            object_name,
                            state - 1, zoom, discrete, finish, multiplex, quiet, NULL, 0, NULL);
+        ok = static_cast<bool>(result);
       }
     }
   }
@@ -1651,8 +1636,10 @@ PyMOLreturn_status PyMOL_CmdCreate(CPyMOL * I,
 {
   int ok = true;
   PYMOL_API_LOCK
-    ok = ExecutiveSeleToObject(I->G, name, selection, source_state, target_state,
-                               discrete, zoom, quiet, singletons, copy_properties);
+  auto result = ExecutiveSeleToObject(I->G,
+      name, selection, source_state, target_state, discrete, zoom, quiet,
+      singletons, copy_properties);
+  ok = static_cast<bool>(result);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
@@ -3046,19 +3033,16 @@ PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, const char *s0,
 PyMOLreturn_status PyMOL_CmdMapNew(CPyMOL * I, const char *name, int type, float grid_spacing, 
 				   const char *selection, int state, int normalize,
 				   int zoom, int quiet){
-  int ok = true;
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
-  float grid[3];
   float minCorner[3], maxCorner[3];
   PYMOL_API_LOCK 
 
-  grid[0] = grid[1] = grid[2] = grid_spacing ;
   minCorner[0] = minCorner[1] = minCorner[2] = 0.;
   maxCorner[0] = maxCorner[1] = maxCorner[2] = 1.;
-  ok = ExecutiveMapNew(I->G, name, type, grid,
-		       selection, -1., minCorner, maxCorner,
-		       state, 0, quiet, 0, normalize, 1., -1., 0.);
-  result.status = get_status_ok(ok);
+  auto res = ExecutiveMapNew(I->G, name, type, grid_spacing,
+      selection, -1., minCorner, maxCorner, state, 0, quiet, 0, normalize, 1.,
+      -1., 0.);
+  result.status = get_status_ok(static_cast<bool>(res));
 
   PYMOL_API_UNLOCK return result;
 }

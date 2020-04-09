@@ -1,4 +1,4 @@
-
+#pragma once
 
 /**
  * Copyable arguments container for ExecutiveLoad
@@ -29,7 +29,7 @@ pymol::Result<ExecutiveLoadArgs> ExecutiveLoadPrepareArgs(PyMOLGlobals* G,
     int content_length, cLoadType_t content_format,
     const char* object_name_proposed, int state, int zoom, int discrete,
     int finish, int multiplex, int quiet, const char* plugin_arg,
-    const char* object_props, const char* atom_props, bool mimic);
+    const char* object_props, const char* atom_props, bool mimic = false);
 
 /**
  * Implementation of ExecutiveLoad
@@ -37,4 +37,4 @@ pymol::Result<ExecutiveLoadArgs> ExecutiveLoadPrepareArgs(PyMOLGlobals* G,
  * @param args Prepared arguments
  * @return true on success
  */
-bool ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args);
+pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args);

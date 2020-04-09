@@ -412,7 +412,7 @@ void ControlFree(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-int ControlRock(PyMOLGlobals * G, int mode)
+pymol::Result<bool> ControlRock(PyMOLGlobals * G, int mode)
 {
   switch (mode) {
   case -2:

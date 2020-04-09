@@ -59,7 +59,7 @@ typedef struct {
   int member;
 } TrackerIter;
 
-struct _CTracker {
+struct CTracker {
   int next_id;
   int next_free_info;
   int next_free_member;

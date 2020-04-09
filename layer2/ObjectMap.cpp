@@ -634,7 +634,7 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
   return result;
 }
 
-static int ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
+static void ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
 {
   int div[3];
   int min[3];
@@ -730,10 +730,9 @@ static int ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
     }
     ms->Field.reset(field);
   }
-  return 1;
 }
 
-static int ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smooth)
+static void ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smooth)
 {
   int div[3];
   int min[3];
@@ -892,7 +891,6 @@ static int ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smooth
     ms->Field.reset(field);
 
   }
-  return 1;
 }
 
 int ObjectMapTrim(ObjectMap * I, int state, float *mn, float *mx, int quiet)
@@ -924,45 +922,36 @@ int ObjectMapTrim(ObjectMap * I, int state, float *mn, float *mx, int quiet)
   return (result);
 }
 
-int ObjectMapDouble(ObjectMap * I, int state)
+pymol::Result<> ObjectMapDouble(ObjectMap* I, int state)
 {
-  int a;
-  int result = true;
   if(state < 0) {
-    for(a = 0; a < I->State.size(); a++) {
-      if(I->State[a].Active)
-        result = result && ObjectMapStateDouble(I->G, &I->State[a]);
+    for(auto& state : I->State) {
+      if(state.Active)
+        ObjectMapStateDouble(I->G, &state);
     }
   } else if((state >= 0) && (state < I->State.size()) && (I->State[state].Active)) {
     ObjectMapStateDouble(I->G, &I->State[state]);
   } else {
-    PRINTFB(I->G, FB_ObjectMap, FB_Errors)
-      " ObjectMap-Error: invalidate state.\n" ENDFB(I->G);
-    result = false;
+    return pymol::make_error("Invalidate state.");
   }
-  return (result);
+  return {};
 }
 
-int ObjectMapHalve(ObjectMap * I, int state, int smooth)
+pymol::Result<> ObjectMapHalve(ObjectMap * I, int state, int smooth)
 {
-  int a;
-  int result = true;
   if(state < 0) {
-    for(a = 0; a < I->State.size(); a++) {
-      if(I->State[a].Active)
-        result = result && ObjectMapStateHalve(I->G, &I->State[a], smooth);
+    for(auto& state : I->State) {
+      if(state.Active)
+        ObjectMapStateHalve(I->G, &state, smooth);
     }
-
   } else if((state >= 0) && (state < I->State.size()) && (I->State[state].Active)) {
     ObjectMapStateHalve(I->G, &I->State[state], smooth);
   } else {
-    PRINTFB(I->G, FB_ObjectMap, FB_Errors)
-      " ObjectMap-Error: invalidate state.\n" ENDFB(I->G);
-    result = false;
+    return pymol::make_error("Invalidate state.");
   }
   ObjectMapUpdateExtents(I);
 
-  return (result);
+  return {};
 }
 
 int ObjectMapStateContainsPoint(ObjectMapState * ms, float *point)
@@ -5988,3 +5977,9 @@ void ObjectMapDump(const ObjectMap* om, const char* fname, int state, int quiet)
       " ObjectMapDump: %s written to %s\n", om->Name, fname ENDFB(om->G);
   }
 }
+
+CObject* ObjectMap::clone() const
+{
+  return new ObjectMap(*this);
+}
+

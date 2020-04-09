@@ -33,7 +33,7 @@ Z* -------------------------------------------------------------------
 
 */
 
-typedef struct _CTracker CTracker;
+struct CTracker;
 
 typedef void *TrackerRef;
 

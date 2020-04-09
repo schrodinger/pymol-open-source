@@ -1019,7 +1019,7 @@ SEE ALSO
                 name = _self.get_unused_name("obj")
             r = _cmd.create(_self._COb,str(name),"("+str(selection)+")",
                             int(source_state)-1,int(target_state)-1,
-                            int(discrete),int(zoom),int(quiet),int(singletons))
+                            int(discrete),int(zoom),int(quiet),int(singletons), int(copy_properties))
         finally:
             _self.unlock(r,_self)
 

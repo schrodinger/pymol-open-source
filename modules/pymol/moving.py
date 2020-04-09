@@ -489,14 +489,8 @@ SEE ALSO
 
     count_states
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.frame(_self._COb, int(frame) - 1, int(trigger))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+        with _self.lockcm:
+            return _cmd.frame(_self._COb, int(frame) - 1, int(trigger))
 
     def mmove(target,source=0,count=-1,freeze=0,object='',quiet=1,_self=cmd):
         '''

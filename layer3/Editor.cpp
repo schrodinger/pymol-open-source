@@ -681,7 +681,7 @@ EditorInvert(PyMOLGlobals * G, int quiet)
 
 
 /*========================================================================*/
-int EditorTorsion(PyMOLGlobals * G, float angle)
+pymol::Result<> EditorTorsion(PyMOLGlobals * G, float angle)
 {
   CEditor *I = G->Editor;
   int sele0, sele1, sele2;
@@ -709,7 +709,7 @@ int EditorTorsion(PyMOLGlobals * G, float angle)
       sele2 = SelectorIndexByName(G, sele);
       obj2 = SelectorGetFastSingleObjectMolecule(G, sele2);
       if(!((sele0 >= 0) && (sele1 >= 0) && (sele2 >= 0) && (obj0 == obj1))) {
-        ErrMessage(G, "Editor", "Must specify a bond first.");
+        return pymol::Error("Must specify a bond first.");
       } else {
         if((i0 >= 0) && (i1 >= 0)) {
           state = SceneGetState(G);
@@ -749,19 +749,31 @@ int EditorTorsion(PyMOLGlobals * G, float angle)
       }
     }
   }
-  return (ok);
+  if(ok) {
+    return {};
+  } else {
+    return pymol::Error("Error occurred.");
+  }
 }
 
 
 /*========================================================================*/
-int EditorSelect(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2,
-                 const char *s3, int pkresi, int pkbond, int quiet)
+pymol::Result<> EditorSelect(PyMOLGlobals* G, const char* str0,
+    const char* str1, const char* str2, const char* str3, int pkresi,
+    int pkbond, int quiet)
 {
+  SelectorTmp tmp0(G, str0);
+  SelectorTmp tmp1(G, str1);
+  SelectorTmp tmp2(G, str2);
+  SelectorTmp tmp3(G, str3);
+  auto s0 = tmp0.getName();
+  auto s1 = tmp1.getName();
+  auto s2 = tmp2.getName();
+  auto s3 = tmp3.getName();
   int i0 = -1;
   int i1 = -1;
   int i2 = -1;
   int i3 = -1;
-  int sele0 = -1, sele1 = -1, sele2 = -1, sele3 = -1;
   int result = false;
   int ok = true;
   ObjectMolecule *obj0 = NULL, *obj1 = NULL, *obj2 = NULL, *obj3 = NULL;
@@ -780,26 +792,22 @@ int EditorSelect(PyMOLGlobals * G, const char *s0, const char *s1, const char *s
       s3 = NULL;
 
   if(s0) {
-    sele0 = SelectorIndexByName(G, s0);
-    obj0 = SelectorGetFastSingleAtomObjectIndex(G, sele0, &i0);
+    obj0 = SelectorGetFastSingleAtomObjectIndex(G, tmp0.getIndex(), &i0);
     ExecutiveDelete(G, cEditorSele1);
   }
 
   if(s1) {
-    sele1 = SelectorIndexByName(G, s1);
-    obj1 = SelectorGetFastSingleAtomObjectIndex(G, sele1, &i1);
+    obj1 = SelectorGetFastSingleAtomObjectIndex(G, tmp1.getIndex(), &i1);
     ExecutiveDelete(G, cEditorSele2);
   }
 
   if(s2) {
-    sele2 = SelectorIndexByName(G, s2);
-    obj2 = SelectorGetFastSingleAtomObjectIndex(G, sele2, &i2);
+    obj2 = SelectorGetFastSingleAtomObjectIndex(G, tmp2.getIndex(), &i2);
     ExecutiveDelete(G, cEditorSele3);
   }
 
   if(s3) {
-    sele3 = SelectorIndexByName(G, s3);
-    obj3 = SelectorGetFastSingleAtomObjectIndex(G, sele3, &i3);
+    obj3 = SelectorGetFastSingleAtomObjectIndex(G, tmp3.getIndex(), &i3);
     ExecutiveDelete(G, cEditorSele4);
   }
 
@@ -836,11 +844,10 @@ int EditorSelect(PyMOLGlobals * G, const char *s0, const char *s1, const char *s
   } else {
     EditorInactivate(G);
     if(s0 && s0[0]) {
-      PRINTFB(G, FB_Editor, FB_Errors)
-        "Editor-Error: Invalid input selection(s).\n" ENDFB(G);
+      return pymol::Error("Invalid input selection(s)");
     }
   }
-  return (result);
+  return {};
 }
 
 
@@ -1027,11 +1034,10 @@ void EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet)
 
 
 /*========================================================================*/
-void EditorHFill(PyMOLGlobals * G, int quiet)
+pymol::Result<> EditorHFill(PyMOLGlobals * G, int quiet)
 {
   int sele0, sele1;
   int i0;
-  OrthoLineType buffer, s1, s2;
   ObjectMolecule *obj0 = NULL, *obj1 = NULL;
 
   if(EditorActive(G)) {
@@ -1042,36 +1048,38 @@ void EditorHFill(PyMOLGlobals * G, int quiet)
       
       sele1 = SelectorIndexByName(G, cEditorSele2);
       if(sele0 >= 0) {
+        std::string s1, s2;
 	if(sele1 >= 0){
-	  sprintf(s2, "(%s) or (%s)",
-		  cEditorSele1, cEditorSele2);
-	  sprintf(buffer, "((neighbor (%s)) and hydro and not (%s))",
-                  s2, s2);
+          s2 = pymol::string_format("%s|%s", cEditorSele1, cEditorSele2);
+          s1 = pymol::string_format("(neighbor (%s)) & hydro & !(%s)", s2, s2);
 	} else {
-	  sprintf(s2, "(%s)", cEditorSele1);
-	  sprintf(buffer, "((neighbor %s) & hydro)", cEditorSele1);
+          s2 = cEditorSele1;
+          s1 = pymol::string_format("(neighbor (%s)) & hydro", s2);
 	}
-	SelectorGetTmp(G, buffer, s1);
-	ExecutiveRemoveAtoms(G, s1, quiet);
-	SelectorFreeTmp(G, s1);
+	ExecutiveRemoveAtoms(G, s1.c_str(), quiet);
 	i0 = ObjectMoleculeGetAtomIndex(obj0, sele0);
 	obj0->AtomInfo[i0].chemFlag = false;
-	  ExecutiveAddHydrogens(G, cEditorSele1, quiet);
+        ExecutiveAddHydrogens(G, cEditorSele1, quiet);
 
 	if(sele1 >= 0) {
 	  obj1 = SelectorGetFastSingleObjectMolecule(G, sele1);
 	  i0 = ObjectMoleculeGetAtomIndex(obj1, sele1);
 	  obj1->AtomInfo[i0].chemFlag = false;
-	    ExecutiveAddHydrogens(G, cEditorSele2, quiet);
+          ExecutiveAddHydrogens(G, cEditorSele2, quiet);
 	}
-	}
+      }
+    } else {
+      return pymol::Error("Nothing picked.");
     }
+  } else {
+    return pymol::Error("Editor not active.");
   }
+  return {};
 }
 
 
 /*========================================================================*/
-void EditorHFix(PyMOLGlobals * G, const char *sele, int quiet)
+pymol::Result<> EditorHFix(PyMOLGlobals * G, const char *sele, int quiet)
 {
   int sele0, sele1;
   ObjectMolecule *obj0, *obj1;
@@ -1090,10 +1098,13 @@ void EditorHFix(PyMOLGlobals * G, const char *sele, int quiet)
         ObjectMoleculeVerifyChemistry(obj1, -1);
         ExecutiveFixHydrogens(G, cEditorSele2, quiet);
       }
+    } else {
+      return pymol::Error("No valid selection and active editor.");
     }
   } else {
     ExecutiveFixHydrogens(G, sele, quiet);
   }
+  return {};
 }
 
 
@@ -1117,7 +1128,7 @@ pymol::Result<> EditorReplace(PyMOLGlobals* G, const char* elem, int geom,
     sele0 = SelectorIndexByName(G, cEditorSele1);
     obj0 = SelectorGetFastSingleObjectMolecule(G, sele0);
     if(obj0->DiscreteFlag) {
-      ErrMessage(G, "Remove", "Can't attach atoms onto discrete objects.");
+      return pymol::make_error("Can't attach atoms onto discrete objects.");
     } else {
       ObjectMoleculeVerifyChemistry(obj0, -1);  /* remember chemistry for later */
       if(sele0 >= 0) {
@@ -1143,7 +1154,11 @@ pymol::Result<> EditorReplace(PyMOLGlobals* G, const char* elem, int geom,
       }
     }
   }
+  if(ok) {
   return {};
+  } else {
+    return pymol::make_error("Could not replace atom.");
+  }
 }
 
 static void draw_bond(PyMOLGlobals * G, float *v0, float *v1, CGO *shaderCGO)

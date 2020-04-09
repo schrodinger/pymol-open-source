@@ -2738,16 +2738,14 @@ bool ObjectMolecule::setSymmetry(CSymmetry const& symmetry, int state)
 }
 
 /*========================================================================*/
-int ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const char *text)
+pymol::Result<> ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const char *text)
 {
   auto cs = I->getCoordSet(state);
   if (!cs) {
-    PRINTFB(I->G, FB_ObjectMolecule, FB_Errors)
-      "Error: invalid state %d\n", state + 1 ENDFB(I->G);
-    return false;
+    return pymol::make_error("Invalid state ", state + 1);
   }
   UtilNCopy(cs->Name, text, sizeof(WordType));
-  return true;
+  return {};
 }
 
 
@@ -3256,7 +3254,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
   int state1 = 0;
   CoordSet *tcs;
   int edit = 1;
-  OrthoLineType sele1, sele2, s1, s2;
+  OrthoLineType sele1, sele2;
   float va1[3] = { 0.0F, 0.0F, 0.0F };
   float vh1[3];
   float x1[3], y1[3], z1[3];
@@ -3465,11 +3463,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
       if((at0 >= 0) && (at1 >= 0)) {
         sprintf(sele1, "%s`%d", I->Name, at1 + 1);  /* points outward... */
         sprintf(sele2, "%s`%d", I->Name, at0 + 1);
-        SelectorGetTmp(I->G, sele1, s1);
-        SelectorGetTmp(I->G, sele2, s2);
-        EditorSelect(I->G, s1, s2, NULL, NULL, false, true, true);
-        SelectorFreeTmp(I->G, s1);
-        SelectorFreeTmp(I->G, s2);
+        EditorSelect(I->G, sele1, sele2, "", "", false, true, true);
       }
     }
   }
@@ -4420,7 +4414,7 @@ pymol::Result<> ObjectMoleculeAddBondByIndices(
     ObjectMolecule* I, unsigned atm1, unsigned atm2, int order)
 {
   if (atm1 >= I->NAtom || atm2 >= I->NAtom) {
-    return pymol::Error("atom index out of bounds");
+    return pymol::make_error("atom index out of bounds");
   }
 
   if (!I->Bond) {
@@ -10933,7 +10927,7 @@ void ObjectMoleculeInvalidateAtomType(ObjectMolecule *I, int state){
 }
 
 /*========================================================================*/
-int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, float *v, int mode,
+int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, const float *v, int mode,
                            int log)
 {
   int result = 0;
@@ -11425,12 +11419,11 @@ ObjectMolecule::ObjectMolecule(PyMOLGlobals * G, int discreteFlag) : CObject(G)
 
 
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
+void ObjectMoleculeCopyNoAlloc(const ObjectMolecule* obj, ObjectMolecule* I)
 {
   PyMOLGlobals * G = const_cast<PyMOLGlobals*>(obj->G);
 
   int a;
-  auto I = new ObjectMolecule(G, obj->DiscreteFlag);
   BondType *i0;
   const BondType *i1;
   (*I) = (*obj);
@@ -11480,7 +11473,13 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
   memset(a0, 0, sizeof(AtomInfoType) * I->NAtom);
   for(a = 0; a < I->NAtom; a++)
     AtomInfoCopy(G, a1++, a0++);
+}
 
+ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
+{
+  PyMOLGlobals * G = const_cast<PyMOLGlobals*>(obj->G);
+  auto I = new ObjectMolecule(G, obj->DiscreteFlag);
+  ObjectMoleculeCopyNoAlloc(obj, I);
   return (I);
 
 }
@@ -11563,7 +11562,6 @@ ObjectMolecule::~ObjectMolecule()
   if(I->CSTmpl)
     I->CSTmpl->fFree();
 }
-
 
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
@@ -12093,3 +12091,9 @@ bool ObjectMolecule::atomHasAnyCoordinates(size_t atm) const
 
   return false;
 }
+
+CObject* ObjectMolecule::clone() const
+{
+  return ObjectMoleculeCopy(this);
+}
+

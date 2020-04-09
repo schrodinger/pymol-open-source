@@ -18,13 +18,14 @@ Z* -------------------------------------------------------------------
 #define _H_Control
 
 #include"Ortho.h"
+#include "Result.h"
 
 int ControlInit(PyMOLGlobals * G);
 void ControlFree(PyMOLGlobals * G);
 Block *ControlGetBlock(PyMOLGlobals * G);
 int ControlIdling(PyMOLGlobals * G);
 void ControlInterrupt(PyMOLGlobals * G);
-int ControlRock(PyMOLGlobals * G, int mode);
+pymol::Result<bool> ControlRock(PyMOLGlobals * G, int mode);
 int ControlRocking(PyMOLGlobals * G);
 int ControlSdofUpdate(PyMOLGlobals * G, float tx, float ty, float tz, float rx, float ry,
                       float rz);

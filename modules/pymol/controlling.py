@@ -891,17 +891,11 @@ SEE ALSO
 
     unmask, protect, deprotect, mouse
     '''
-        r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
         #
-        try:
-            _self.lock(_self)
-            r = _cmd.mask(_self._COb,"("+str(selection)+")",1,int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+        with _self.lockcm:
+            return _cmd.mask(_self._COb,"("+str(selection)+")",1,int(quiet))
 
     def unmask(selection="(all)",quiet=1,_self=cmd):
         '''

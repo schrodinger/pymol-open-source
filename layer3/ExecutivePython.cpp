@@ -4,8 +4,9 @@
 #include "ObjectMap.h"
 #include "P.h"
 
-void ExecutiveLoadObject(PyMOLGlobals* G, const char* oname, PyObject* model,
-    int frame, int type, int finish, int discrete, int quiet, int zoom)
+pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
+    const char* oname, PyObject* model, int frame, int type, int finish,
+    int discrete, int quiet, int zoom)
 {
   ObjectNameType valid_name = "";
   CObject *origObj = NULL, *obj;
@@ -147,4 +148,5 @@ void ExecutiveLoadObject(PyMOLGlobals* G, const char* oname, PyObject* model,
     "%s", buf ENDFB(G);
     OrthoRestorePrompt(G);
   }
+  return {};
 }

@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include "CGO.h"
 #include"Word.h"
 #include"Symmetry.h"
+#include"Result.h"
 
 struct ObjectMeshState : public CObjectState {
   ObjectNameType MapName{};
@@ -65,6 +66,7 @@ struct ObjectMesh : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(int rep, int level, int state) override;
   int getNFrame() const override;
+  CObject* clone() const override;
 };
 
 ObjectMesh *ObjectMeshFromBox(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * map,
@@ -84,7 +86,7 @@ void ObjectMeshDump(ObjectMesh * I, const char *fname, int state, int quiet);
 PyObject *ObjectMeshAsPyList(ObjectMesh * I);
 int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** result);
 int ObjectMeshSetLevel(ObjectMesh * I, float level, int state, int quiet);
-int ObjectMeshGetLevel(ObjectMesh * I, int state, float *result);
+pymol::Result<float> ObjectMeshGetLevel(ObjectMesh * I, int state);
 int ObjectMeshInvalidateMapName(ObjectMesh * I, const char *name, const char * new_name);
 int ObjectMeshAllMapsInStatesExist(ObjectMesh * I);
 

@@ -67,16 +67,16 @@ pymol::Result<> EditorReplace(PyMOLGlobals* G, const char* elem, int geom,
 pymol::Result<> EditorAttach(PyMOLGlobals* G, const char* elem, int geom,
     int valence, const char* name, int quiet);
 void EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet);
-void EditorHFill(PyMOLGlobals * G, int quiet=1);
-void EditorHFix(PyMOLGlobals * G, const char *sele, int quiet);
+pymol::Result<> EditorHFill(PyMOLGlobals * G, int quiet=1);
+pymol::Result<> EditorHFix(PyMOLGlobals * G, const char *sele, int quiet);
 pymol::Result<> EditorCycleValence(PyMOLGlobals * G, int quiet=1);
 void EditorInactivate(PyMOLGlobals * G);
 
 int EditorIsAnActiveObject(PyMOLGlobals * G, ObjectMolecule * obj);
 
-int EditorSelect(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3, int pkresi,
-                 int pkbond, int quiet);
-int EditorTorsion(PyMOLGlobals * G, float angle);
+pymol::Result<> EditorSelect(PyMOLGlobals* G, const char* s0, const char* s1,
+    const char* s2, const char* s3, int pkresi, int pkbond, int quiet);
+pymol::Result<> EditorTorsion(PyMOLGlobals * G, float angle);
 pymol::Result<> EditorInvert(PyMOLGlobals * G, int quiet);
 
 PyObject *EditorAsPyList(PyMOLGlobals * G);

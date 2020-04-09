@@ -47,6 +47,7 @@ struct ObjectAlignment : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(int rep, int level, int state) override;
   int getNFrame() const override;
+  CObject* clone() const override;
 };
 
 ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,

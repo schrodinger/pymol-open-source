@@ -106,6 +106,7 @@ public:
   virtual void describeElement(int index, char* buffer) const;
   virtual char* getCaption(char* ch, int len) const { return nullptr; };
   virtual CSetting **getSettingHandle(int state);
+  virtual CObject* clone() const { return nullptr; };
   virtual CSymmetry const* getSymmetry(int state = 0) const { return nullptr; }
   virtual bool setSymmetry(CSymmetry const&, int state = 0) { return false; }
 };
@@ -124,7 +125,7 @@ void ObjectSetTTT(CObject * I, const float *ttt, int state,int store);
 int ObjectGetTTT(CObject * I, const float **ttt, int state);
 int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix);
 void ObjectCombineTTT(CObject * I, const float *ttt, int reverse_order, int store);
-void ObjectTranslateTTT(CObject * T, float *v,int store);
+void ObjectTranslateTTT(CObject * T, const float *v,int store);
 void ObjectSetTTTOrigin(CObject * I, float *origin);
 void ObjectResetTTT(CObject * I,int store);
 PyObject *ObjectAsPyList(CObject * I);

@@ -1001,10 +1001,10 @@ void SceneGetView(PyMOLGlobals * G, SceneViewType view)
 }
 
 /*========================================================================*/
-void SceneSetView(PyMOLGlobals * G, SceneViewType view,
+void SceneSetView(PyMOLGlobals * G, const SceneViewType view,
                   int quiet, float animate, int hand)
 {
-  float *p;
+  const float *p;
   int a;
   CScene *I = G->Scene;
 
@@ -7544,3 +7544,18 @@ void ScenePickAtomInWorld(PyMOLGlobals * G, int x, int y, float *atomWorldPos) {
     MatrixTransformC44f3f(I->ModMatrix, atomPos, atomWorldPos);
   }
 }
+
+cSceneClip SceneClipGetEnum(pymol::zstring_view mode)
+{
+  static const std::unordered_map<pymol::zstring_view, cSceneClip> modes{
+      {"near", cSceneClip_near},
+      {"far", cSceneClip_far},
+      {"move", cSceneClip_move},
+      {"slab", cSceneClip_slab},
+      {"atoms", cSceneClip_atoms},
+  };
+
+  auto it = modes.find(mode);
+  return (it == modes.end()) ? cSceneClip_invalid : it->second;
+}
+

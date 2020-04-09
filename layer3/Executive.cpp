@@ -247,10 +247,9 @@ static int ExecutiveSetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
                                      double *matrix);
 static int ExecutiveGetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
                                      double **matrix, int incl_ttt);
-static
-int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int state,
-                                       const char *s1, int log, float *matrix, int homogenous,
-                                       int global);
+static pymol::Result<> ExecutiveTransformObjectSelection2(
+    PyMOLGlobals* G, CObject* obj, int state, const char* s1, int log,
+    const float* matrix, int homogenous, int global);
 
 /*
  * ObjectIterator methods
@@ -396,7 +395,7 @@ int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, const float *ttt, 
   return result;
 }
 
-int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, float *v, int store)
+int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, const float *v, int store)
 {
   CExecutive *I = G->Executive;
   int result = true;
@@ -1395,7 +1394,7 @@ pymol::Result<> ExecutivePseudoatom(PyMOLGlobals* G, pymol::zstring_view object_
     obj = new ObjectMolecule(G, false);
     ObjectSetName(obj, object_name);
   }
-  
+
 #ifndef _PYMOL_NO_UNDO
 #endif
     if(ObjectMoleculeAddPseudoatom(obj, sele_index, name, resn, resi, chain,
@@ -3479,14 +3478,13 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals* G, std::string& name, int create_ne
   return result;
 }
 
-int ExecutiveFixChemistry(PyMOLGlobals * G, const char *s1, const char *s2, int invalidate, int quiet)
+pymol::Result<> ExecutiveFixChemistry(PyMOLGlobals * G, const char *s1, const char *s2, int invalidate, int quiet)
 {
   SelectorTmp tmpsele1(G, s1);
   SelectorTmp tmpsele2(G, s2);
   int sele1 = tmpsele1.getIndex();
   int sele2 = tmpsele2.getIndex();
 
-  int ok = true;
   SpecRec *rec = NULL;
   CExecutive *I = G->Executive;
 
@@ -3499,20 +3497,19 @@ int ExecutiveFixChemistry(PyMOLGlobals * G, const char *s1, const char *s2, int 
         }
     }
   }
-  return ok;
+  return {};
 }
 
-int ExecutiveSetObjectColor(PyMOLGlobals * G, const char *name, const char *color, int quiet)
+pymol::Result<> ExecutiveSetObjectColor(PyMOLGlobals * G, const char *name, const char *color, int quiet)
 {
-  int result = false;
   int col_ind = ColorGetIndex(G, color);
-  CObject *obj = NULL;
-  obj = ExecutiveFindObjectByName(G, name);
+  auto obj = ExecutiveFindObjectByName(G, name);
   if(obj) {
     obj->Color = col_ind;
-    result = true;
+  } else {
+    return pymol::make_error("Object ", name, " not found.");
   }
-  return (result);
+  return {};
 }
 
 int ExecutiveGetObjectColorIndex(PyMOLGlobals * G, const char *name)
@@ -3684,7 +3681,8 @@ pymol::Result<> ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const c
  * object_props:        names of object properties to load
  * atom_props:          names of atom properties to load
  */
-int ExecutiveLoad(PyMOLGlobals * G,
+pymol::Result<>
+ExecutiveLoad(PyMOLGlobals * G,
                   const char *fname,
                   const char *content, int content_length,
                   cLoadType_t content_format,
@@ -3700,9 +3698,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
       content_format, object_name_proposed, state, zoom, discrete, finish,
       multiplex, quiet, plugin_arg, object_props, atom_props, mimic);
   if (!res) {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      " %s-Error: %s\n", __func__, res.error().what().c_str() ENDFB(G);
-    return false;
+    return pymol::make_error("%s-Error: %s", __func__, res.error().what());
   }
   return ExecutiveLoad(G, res.result());
 }
@@ -3875,7 +3871,7 @@ ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
   return args;
 }
 
-bool ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
+pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
 {
   CObject* origObj = nullptr;
   const char* fname = args.fname.c_str();
@@ -3971,36 +3967,25 @@ bool ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
       ObjectMoleculeLoadTRJFile(G, (ObjectMolecule *) origObj, fname, state,
           1, 1, 1, -1, -1, NULL, 1, NULL, quiet);
     } else {
-      PRINTFB(G, FB_CCmd, FB_Errors)
-        "CmdLoad-Error: must load object topology before loading trajectory!" ENDFB(G);
-      ok = false;
+      return pymol::Error("must load object topology before loading trajectory!");
     }
     break;
   case cLoadTypeCRD:
     if(origObj) {
       ObjectMoleculeLoadRSTFile(G, (ObjectMolecule *) origObj, fname, state, quiet, 1);
     } else {
-      PRINTFB(G, FB_CCmd, FB_Errors)
-        "CmdLoad-Error: must load object topology before loading coordinate file!"
-        ENDFB(G);
-      ok = false;
+      return pymol::Error("must load object topology before loading coordinate file!");
     }
     break;
   case cLoadTypeRST:
     if(origObj) {
       ObjectMoleculeLoadRSTFile(G, (ObjectMolecule *) origObj, fname, state, quiet, 0);
     } else {
-      PRINTFB(G, FB_CCmd, FB_Errors)
-        "CmdLoad-Error: must load object topology before loading restart file!"
-        ENDFB(G);
-      ok = false;
+      return pymol::Error("must load object topology before loading restart file!");
     }
     break;
   case cLoadTypePMO:
-    PRINTFB(G, FB_CCmd, FB_Errors)
-      "CmdLoad-Error: PMO format no longer supported\n" ENDFB(G);
-    ok = false;
-    break;
+    return pymol::Error("PMO format no longer supported.");
   case cLoadTypeDXMap:
     obj = (CObject *) ObjectMapLoadDXFile(G, (ObjectMap *) origObj, fname,
         state, quiet);
@@ -4087,10 +4072,8 @@ bool ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
       obj = PlugIOManagerLoad(G, origObj ? &origObj : NULL, fname, state, quiet,
           plugin, args.plugin_mask);
     } else {
-      PRINTFB(G, FB_Executive, FB_Errors)
-        "ExecutiveLoad-Error: unable to read that file type from C (%d, '%s')\n",
-        content_format, plugin ENDFB(G);
-      return false;
+        return pymol::make_error("Unable to read that file type from C (",
+            content_format, ", ", plugin, ")");
     }
   }
 
@@ -4119,8 +4102,7 @@ bool ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
 #ifndef _PYMOL_NO_UNDO
 #endif
 
-  return (ok);
-
+  return {};
 }
 
 /* ExecutiveGetExistingCompatible
@@ -4380,24 +4362,36 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
   return ok;
 }
 
-int ExecutiveAssignSS(PyMOLGlobals * G, const char *target, int state, const char *context,
-                      int preserve, ObjectMolecule * single_object, int quiet)
+pymol::Result<> ExecutiveAssignSS(PyMOLGlobals* G,
+    const char* target, int state, const char* context, int preserve,
+    ObjectMolecule* single_object, int quiet)
 {
+  SelectorTmp targetTmp;
+  SelectorTmp contextTmp;
   int sele0 = -1;
   int sele1 = -1;
   int ok = false;
   sele0 = SelectorIndexByName(G, target);
+  if (sele0 < 0) {
+    targetTmp = SelectorTmp(G, target);
+    sele0 = targetTmp.getIndex();
+  }
   if(sele0 >= 0) {
     if((!context) || (!context[0])) {
       sele1 = sele0;
     } else {
-      sele1 = SelectorIndexByName(G, context);
+      contextTmp = SelectorTmp(G, context);
+      sele1 = contextTmp.getIndex();
     }
     if(sele1 >= 0) {
       ok = SelectorAssignSS(G, sele0, sele1, state, preserve, single_object, quiet);
     }
   }
-  return (ok);
+  if(ok) {
+    return {};
+  } else {
+    return pymol::make_error("Error assigning SS...");
+  }
 }
 
 static int * getRepArrayFromBitmask(int visRep);
@@ -4657,50 +4651,52 @@ PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, const char * objName) {
 #endif
 }
 
-int ExecutiveSetVolumeRamp(PyMOLGlobals * G, const char * objName, std::vector<float>&& ramp_list) {
-  int result = false;
+pymol::Result<> ExecutiveSetVolumeRamp(PyMOLGlobals * G, const char * objName, std::vector<float> ramp_list) {
 
   auto obj = ExecutiveFindObject<ObjectVolume>(G, objName);
   if(obj) {
-    result = ObjectVolumeSetRamp(obj, std::move(ramp_list));
+    return ObjectVolumeSetRamp(obj, std::move(ramp_list));
   }
 
-  return result;
+  return pymol::make_error("Object ", objName, " not found");
 }
 
-int ExecutiveIsolevel(PyMOLGlobals * G, const char *name, float level, int state, int query,
-                      float *result, int quiet)
+pymol::Result<> ExecutiveIsolevel(
+    PyMOLGlobals* G, const char* name, float level, int state, int quiet)
 {
-  int ok = true;
-  CObject *obj;
-  obj = ExecutiveFindObjectByName(G, name);
+  auto obj = ExecutiveFindObjectByName(G, name);
   if(obj) {
     switch (obj->type) {
     case cObjectMesh:
-      if(!query) {
-        ObjectMeshSetLevel((ObjectMesh *) obj, level, state, quiet);
-        SceneChanged(G);
-      } else if(result) {
-        ok = ObjectMeshGetLevel((ObjectMesh *) obj, state, result);
-      }
-      break;
+      ObjectMeshSetLevel((ObjectMesh *) obj, level, state, quiet);
+      SceneChanged(G);
+      return {};
     case cObjectSurface:
-      if(!query) {
-        ObjectSurfaceSetLevel((ObjectSurface *) obj, level, state, quiet);
-        SceneChanged(G);
-      } else if(result) {
-        ok = ObjectSurfaceGetLevel((ObjectSurface *) obj, state, result);
-      }
-      break;
+      ObjectSurfaceSetLevel((ObjectSurface *) obj, level, state, quiet);
+      SceneChanged(G);
+      return {};
     default:
-      ok = false;
-      PRINTFB(G, FB_Executive, FB_Errors)
-        " Isolevel-Error: object \"%s\" is of wrong type.", name ENDFB(G);
-      break;
+      return pymol::make_error("Object ", name, " is of wrong type.");
     }
   }
-  return (ok);
+  return pymol::make_error("Object not found");
+}
 
+pymol::Result<float> ExecutiveGetIsolevel(
+    PyMOLGlobals* G, const char* name, int state)
+{
+  auto obj = ExecutiveFindObjectByName(G, name);
+  if (obj) {
+    switch (obj->type) {
+    case cObjectMesh:
+      return ObjectMeshGetLevel((ObjectMesh*) obj, state);
+    case cObjectSurface:
+      return ObjectSurfaceGetLevel((ObjectSurface*) obj, state);
+    default:
+      return pymol::make_error("Object ", name, " is of wrong type.");
+    }
+  }
+  return pymol::make_error("Object not found");
 }
 
 pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
@@ -4932,10 +4928,10 @@ int ExecutiveValidateObjectPtr(PyMOLGlobals * G, CObject * ptr, int object_type)
   return (ok);
 }
 
-int ExecutiveRampNew(PyMOLGlobals * G, const char *name, const char *src_name,
-                     float *range, float *color,
-                     int src_state, const char *sele, float beyond,
-                     float within, float sigma, int zero, int calc_mode, int quiet)
+pymol::Result<> ExecutiveRampNew(PyMOLGlobals* G, const char* name,
+    const char* src_name, pymol::vla<float> range, pymol::vla<float> color,
+    int src_state, const char* sele, float beyond, float within, float sigma,
+    int zero, int calc_mode, int quiet)
 {
   ObjectGadgetRamp *obj = NULL;
   ObjectGadgetRamp *origRamp = NULL;
@@ -4950,9 +4946,7 @@ int ExecutiveRampNew(PyMOLGlobals * G, const char *name, const char *src_name,
     origRamp = (ObjectGadgetRamp*)origObj;
     rampType = origRamp->RampType;
   } else if (!range || !(color || calc_mode)) {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      " ExecutiveRampNew-Error: missing 'range' or 'color' to create new ramp.\n" ENDFB(G);
-    return false;
+     return pymol::make_error("Missing 'range' or 'color' to create new ramp.");
   }
 
   if (src_name && src_name[0]) {
@@ -4969,15 +4963,10 @@ int ExecutiveRampNew(PyMOLGlobals * G, const char *name, const char *src_name,
             rampType = cRampMol;
             break;
           default:
-            PRINTFB(G, FB_Executive, FB_Errors)
-              "ExecutiveRampNew: Error: object '%s' is not a map or molecule.\n", src_name
-              ENDFB(G);
-            return false;
+            pymol::make_error(src_name, " is not a map or molecule.");
         }
       } else {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          " %s: Error: object '%s' not found.\n", __func__, src_name ENDFB(G);
-        return false;
+        return pymol::make_error(src_name, " not found.");
       }
     }
   }
@@ -4986,28 +4975,33 @@ int ExecutiveRampNew(PyMOLGlobals * G, const char *name, const char *src_name,
     case cRampMap:
       /* mapping this ramp from a selection */
       if(sele && sele[0]) {
+        SelectorTmp tmpsele(G, sele);
+        sele = tmpsele.getName();
+
+        if (!sele[0]) {
+          return pymol::make_error("invalid selection");
+        }
+
         vert_vla = ExecutiveGetVertexVLA(G, sele, src_state);
       }
       obj = ObjectGadgetRampMapNewAsDefined(G, origRamp, (ObjectMap *) src_obj,
-          range, color, src_state,
-          vert_vla, beyond, within,
-          sigma, zero, calc_mode);
+            std::move(range), std::move(color), src_state,
+            vert_vla, beyond, within,
+            sigma, zero, calc_mode);
       VLAFreeP(vert_vla);
       break;
     case cRampNone:
     case cRampMol:
       obj = ObjectGadgetRampMolNewAsDefined(G, origRamp, (ObjectMolecule *) src_obj,
-          range, color, src_state,
-          calc_mode);
+            std::move(range), std::move(color), src_state,
+            calc_mode);
       break;
     default:
-      PRINTFB(G, FB_Executive, FB_Errors)
-        " ExecutiveRampNew-Error: missing 'name' to create new ramp.\n" ENDFB(G);
-      return false;
+      return pymol::make_error("Missing 'name' to create new ramp.");
   }
 
   if (!obj)
-    return false;
+    return pymol::make_error("Object not found");
 
   if (obj != origRamp) {
     ExecutiveDelete(G, name);
@@ -5017,7 +5011,7 @@ int ExecutiveRampNew(PyMOLGlobals * G, const char *name, const char *src_name,
   }
 
   ExecutiveInvalidateRep(G, cKeywordAll, cRepAll, cRepInvColor);      /* recolor everything */
-  return true;
+  return {};
 }
 
 static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int version,
@@ -6760,12 +6754,13 @@ const char * ExecutiveMapGenerate(PyMOLGlobals * G, const char * name, const cha
 
 }
 
-int ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float *grid,
-                    const char *sele, float buffer,
-                    float *minCorner,
-                    float *maxCorner, int state, int have_corners,
-                    int quiet, int zoom, int normalize, float clamp_floor,
-                    float clamp_ceiling, float resolution)
+pymol::Result<>
+ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float grid_spacing,
+                const char *pre_sele, float buffer,
+                const float *minCorner,
+                const float *maxCorner, int state, int have_corners,
+                int quiet, int zoom, int normalize, float clamp_floor,
+                float clamp_ceiling, float resolution)
 {
   CObject *origObj = NULL;
   ObjectMap *objMap;
@@ -6773,8 +6768,9 @@ int ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float *grid,
   int a;
   float v[3];
   ObjectMapDesc _md, *md;
-  int ok = true;
-  int sele0 = SelectorIndexByName(G, sele);
+  SelectorTmp s1(G, pre_sele);
+  auto sele = s1.getName();
+  int sele0 = s1.getIndex();
   int isNew = true;
   int n_state;
   int valid_extent = false;
@@ -6785,6 +6781,11 @@ int ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float *grid,
   int clamp_flag = (clamp_floor <= clamp_ceiling);
 
   md = &_md;
+
+  if (sele0 < 0) {
+    return pymol::make_error("Invalid selection");
+  }
+  float grid[3] = {grid_spacing, grid_spacing, grid_spacing};
 
   if((state == -2) || (state == -3))    /* TO DO: support per-object states */
     state = SceneGetState(G);
@@ -6847,76 +6848,74 @@ int ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float *grid,
       if(md->Grid[a] <= R_SMALL8)
         md->Grid[a] = R_SMALL8;
 
-    if(ok) {
-      if(isNew)
-        objMap = new ObjectMap(G);
-      else
-        objMap = (ObjectMap *) origObj;
-      if(objMap) {
-        int once_flag = true;
-        n_state = SelectorCountStates(G, sele0);
-        if(valid_extent)
-          for(a = 0; a < n_state; a++) {
-            if(state == -5)
-              once_flag = false;        /* api: state=-4 = each state, separate map, shared extent */
-            if(state == -4)
-              state = -1;       /* api: state=-3 all states, but one map */
-            if(!once_flag)
-              state = a;
-            ms = ObjectMapNewStateFromDesc(G, objMap, md, state, quiet);
-            if(!ms)
-              ok = false;
-
-            if(ok && ms) {
-
-              switch (type) {
-              case 0:          /* vdw */
-                SelectorMapMaskVDW(G, sele0, ms, 0.0F, state);
-                break;
-              case 1:          /* coulomb */
-                SelectorMapCoulomb(G, sele0, ms, 0.0F, state, false, false, 1.0F);
-                break;
-              case 2:          /* gaussian */
-                SelectorMapGaussian(G, sele0, ms, 0.0F, state, normalize, false, quiet, resolution);
-                break;
-              case 3:          /* coulomb_neutral */
-                SelectorMapCoulomb(G, sele0, ms, 0.0F, state, true, false, 1.0F);
-                break;
-              case 4:          /* coulomb_local */
-                SelectorMapCoulomb(G, sele0, ms,
-                                   SettingGetGlobal_f(G, cSetting_coulomb_cutoff), state,
-                                   false, true, 2.0F);
-                break;
-              case 5:          /* gaussian_max */
-                SelectorMapGaussian(G, sele0, ms, 0.0F, state, normalize, true, quiet, resolution);
-                break;
-              }
-              if(!ms->Active)
-                ObjectMapStatePurge(G, ms);
-              else if(clamp_flag) {
-                ObjectMapStateClamp(ms, clamp_floor, clamp_ceiling);
-              }
-            }
-            if(once_flag)
-              break;
+    if(isNew)
+      objMap = new ObjectMap(G);
+    else
+      objMap = (ObjectMap *) origObj;
+    if(objMap) {
+      int once_flag = true;
+      n_state = SelectorCountStates(G, sele0);
+      if(valid_extent)
+        for(a = 0; a < n_state; a++) {
+          if(state == -5)
+            once_flag = false;        /* api: state=-4 = each state, separate map, shared extent */
+          if(state == -4)
+            state = -1;       /* api: state=-3 all states, but one map */
+          if(!once_flag)
+            state = a;
+          ms = ObjectMapNewStateFromDesc(G, objMap, md, state, quiet);
+          if(!ms) {
+            return pymol::make_error("Invalid state ", state);
           }
 
-        ObjectSetName((CObject *) objMap, name);
-        ObjectMapUpdateExtents(objMap);
-        if(isNew) {
-          ExecutiveManageObject(G, (CObject *) objMap, -1, quiet);
-        } else {
-          ExecutiveDoZoom(G, (CObject *) objMap, false, zoom, true);
+          switch (type) {
+          case 0:          /* vdw */
+            SelectorMapMaskVDW(G, sele0, ms, 0.0F, state);
+            break;
+          case 1:          /* coulomb */
+            SelectorMapCoulomb(G, sele0, ms, 0.0F, state, false, false, 1.0F);
+            break;
+          case 2:          /* gaussian */
+            SelectorMapGaussian(G, sele0, ms, 0.0F, state, normalize, false, quiet, resolution);
+            break;
+          case 3:          /* coulomb_neutral */
+            SelectorMapCoulomb(G, sele0, ms, 0.0F, state, true, false, 1.0F);
+            break;
+          case 4:          /* coulomb_local */
+            SelectorMapCoulomb(G, sele0, ms,
+                               SettingGetGlobal_f(G, cSetting_coulomb_cutoff), state,
+                               false, true, 2.0F);
+            break;
+          case 5:          /* gaussian_max */
+            SelectorMapGaussian(G, sele0, ms, 0.0F, state, normalize, true, quiet, resolution);
+            break;
+          }
+          if(!ms->Active)
+            ObjectMapStatePurge(G, ms);
+          else if(clamp_flag) {
+            ObjectMapStateClamp(ms, clamp_floor, clamp_ceiling);
+          }
+
+          if(once_flag)
+            break;
         }
-        isNew = false;
-        origObj = (CObject *) objMap;
+
+      ObjectSetName((CObject *) objMap, name);
+      ObjectMapUpdateExtents(objMap);
+      if(isNew) {
+        ExecutiveManageObject(G, (CObject *) objMap, -1, quiet);
+      } else {
+        ExecutiveDoZoom(G, (CObject *) objMap, false, zoom, true);
       }
-      SceneChanged(G);
+      isNew = false;
+      origObj = (CObject *) objMap;
     }
+    SceneChanged(G);
+
     if(st_once_flag)
       break;
   }
-  return (ok);
+  return {};
 }
 
 
@@ -7133,10 +7132,9 @@ int ExecutiveMapSetBorder(PyMOLGlobals * G, const char *name, float level, int s
   return result;
 }
 
-int ExecutiveMapDouble(PyMOLGlobals * G, const char *name, int state)
+pymol::Result<> ExecutiveMapDouble(PyMOLGlobals* G, const char* name, int state)
 {
   CExecutive *I = G->Executive;
-  int result = true;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
@@ -7148,9 +7146,11 @@ int ExecutiveMapDouble(PyMOLGlobals * G, const char *name, int state)
       case cExecObject:
         if(rec->obj->type == cObjectMap) {
           ObjectMap *obj = (ObjectMap *) rec->obj;
-          result = ObjectMapDouble(obj, state);
+          auto result = ObjectMapDouble(obj, state);
           if(result) {
             ExecutiveInvalidateMapDependents(G, obj->Name);
+          } else {
+            return result;
           }
           if(result && rec->visible)
             SceneChanged(G);
@@ -7162,13 +7162,13 @@ int ExecutiveMapDouble(PyMOLGlobals * G, const char *name, int state)
 
   TrackerDelList(I_Tracker, list_id);
   TrackerDelIter(I_Tracker, iter_id);
-  return result;
+  return {};
 }
 
-int ExecutiveMapHalve(PyMOLGlobals * G, const char *name, int state, int smooth)
+pymol::Result<> ExecutiveMapHalve(
+    PyMOLGlobals* G, const char* name, int state, int smooth)
 {
   CExecutive *I = G->Executive;
-  int result = true;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
@@ -7180,9 +7180,11 @@ int ExecutiveMapHalve(PyMOLGlobals * G, const char *name, int state, int smooth)
       case cExecObject:
         if(rec->obj->type == cObjectMap) {
           ObjectMap *obj = (ObjectMap *) rec->obj;
-          result = ObjectMapHalve(obj, state, smooth);
+          auto result = ObjectMapHalve(obj, state, smooth);
           if(result) {
             ExecutiveInvalidateMapDependents(G, obj->Name);
+          } else {
+            return result;
           }
           if(result && rec->visible)
             SceneChanged(G);
@@ -7194,7 +7196,7 @@ int ExecutiveMapHalve(PyMOLGlobals * G, const char *name, int state, int smooth)
 
   TrackerDelList(I_Tracker, list_id);
   TrackerDelIter(I_Tracker, iter_id);
-  return result;
+  return {};
 }
 
 int ExecutiveMapTrim(PyMOLGlobals * G, const char *name,
@@ -7371,41 +7373,32 @@ void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode)
   }
 }
 
-int ExecutiveTranslateAtom(PyMOLGlobals * G, const char *sele, float *v, int state, int mode,
-                           int log)
+pymol::Result<> ExecutiveTranslateAtom(
+    PyMOLGlobals* G, const char* sele, const float* v, int state, int mode, int log)
 {
-  int ok = true;
-  ObjectMolecule *obj0;
   SelectorTmp tmpsele1(G, sele);
   int sele0 = tmpsele1.getIndex();
-  int i0;
   if(sele0 < 0) {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      "Error: bad selection %s.\n", sele ENDFB(G);
-    ok = false;
+    return pymol::make_error("Bad selection");
   } else {
-    obj0 = SelectorGetSingleObjectMolecule(G, sele0);
+    auto obj0 = SelectorGetSingleObjectMolecule(G, sele0);
     if(!obj0) {
-      PRINTFB(G, FB_Executive, FB_Errors)
-        "Error: selection isn't a single atom.\n" ENDFB(G);
-      ok = false;
+      return pymol::make_error("Selection isn't a single atom.");
     } else {
-      i0 = ObjectMoleculeGetAtomIndex(obj0, sele0);
+      auto i0 = ObjectMoleculeGetAtomIndex(obj0, sele0);
       if(i0 < 0) {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          "Error: selection isn't a single atom.\n" ENDFB(G);
-        ok = false;
+        return pymol::make_error("Selection isn't a single atom.");
       } else {
         ObjectMoleculeMoveAtom(obj0, state, i0, v, mode, log);
       }
     }
   }
-  return (ok);
+  return {};
 }
 
-int ExecutiveCombineObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt, int reverse_order, int store)
+pymol::Result<> ExecutiveCombineObjectTTT(PyMOLGlobals* G,
+    const char* name, const float* ttt, int reverse_order, int store)
 {
-  int ok = true;
   CExecutive *I = G->Executive;
   if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
     SpecRec *rec = NULL;
@@ -7452,12 +7445,11 @@ int ExecutiveCombineObjectTTT(PyMOLGlobals * G, const char *name, const float *t
 
   }
   SceneInvalidate(G);
-  return ok;
+  return {};
 }
 
-int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, const char *name, float *trans, int store, int quiet)
+pymol::Result<> ExecutiveTranslateObjectTTT(PyMOLGlobals * G, const char *name, const float *trans, int store, int quiet)
 {
-  int ok = true;
   CExecutive *I = G->Executive;
   if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
     SpecRec *rec = NULL;
@@ -7502,12 +7494,11 @@ int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, const char *name, float *trans
     }
   }
   SceneInvalidate(G);
-  return ok;
+  return {};
 }
 
-int ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt, int state, int quiet, int store)
+pymol::Result<> ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt, int state, int quiet, int store)
 {
-  int ok = true;
   CExecutive *I = G->Executive;
   if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
     SpecRec *rec = NULL;
@@ -7553,7 +7544,7 @@ int ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt, 
     }
   }
   SceneInvalidate(G);
-  return ok;
+  return {};
 }
 
 int ExecutiveGetObjectTTT(PyMOLGlobals * G, const char *name, const float **ttt, int state, int quiet)
@@ -7571,41 +7562,28 @@ int ExecutiveGetObjectTTT(PyMOLGlobals * G, const char *name, const float **ttt,
   return (ok);
 }
 
-int ExecutiveTransformSelection(PyMOLGlobals * G, int state, const char *s1, int log,
-                                float *ttt, int homogenous)
+pymol::Result<> ExecutiveTransformSelection(PyMOLGlobals* G,
+    int state, const char* s1, int log, const float* ttt, int homogenous)
 {
-  ObjectMolecule *obj = NULL;
-  ObjectMolecule **vla = NULL;
-  int nObj;
-  int ok = true;
-  int a;
-
   SelectorTmp tmpsele1(G, s1);
   int sele = tmpsele1.getIndex();
 
   if(sele < 0)
-    ok = false;
-  if(ok) {
-    vla = SelectorGetObjectMoleculeVLA(G, sele);
-    if(!vla)
-      ok = false;
-  }
-  if(ok) {
-    nObj = VLAGetSize(vla);
-    for(a = 0; a < nObj; a++) {
-      obj = vla[a];
-      ObjectMoleculeTransformSelection(obj, state, sele, ttt, log,
-          tmpsele1.getName(), homogenous, true);
-    }
+    return pymol::make_error("Bad Selection");
+  auto vla = pymol::vla_take_ownership(SelectorGetObjectMoleculeVLA(G, sele));
+  if(!vla)
+    return pymol::make_error("Could not find selection");
+  for(auto obj : vla) {
+    ObjectMoleculeTransformSelection(obj, state, sele, ttt, log,
+        tmpsele1.getName(), homogenous, true);
   }
   SceneInvalidate(G);
-  VLAFreeP(vla);
-  return (ok);
+  return {};
 }
 
-int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int state,
-                                       const char *s1, int log, float *matrix,
-                                       int homogenous, int global)
+pymol::Result<> ExecutiveTransformObjectSelection2(PyMOLGlobals* G,
+    CObject* obj, int state, const char* s1, int log, const float* matrix,
+    int homogenous, int global)
 {
   int ok = true;
 
@@ -7621,8 +7599,7 @@ int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int stat
           ok = false;
       }
       if(!ok) {
-        PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-          "Error: selection object %s not found.\n", s1 ENDFB(G);
+        return pymol::make_error("Selection object ", s1, " not found.");
       } else {
         ObjectMoleculeTransformSelection(objMol, state, sele, matrix, log, s1, homogenous,
                                          global);
@@ -7644,21 +7621,19 @@ int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int stat
     }
     break;
   }
-  return (ok);
+  return {};
 }
 
-int ExecutiveTransformObjectSelection(PyMOLGlobals * G, const char *name, int state,
-                                      const char *s1, int log, float *matrix,
-                                      int homogenous, int global)
+pymol::Result<> ExecutiveTransformObjectSelection(PyMOLGlobals* G,
+    const char* name, int state, const char* s1, int log, const float* matrix,
+    int homogenous, int global)
 {
-  int ok = true;
-
   CObject *obj = ExecutiveFindObjectByName(G, name);
   if(obj) {
     return ExecutiveTransformObjectSelection2(G, obj, state, s1, log, matrix, homogenous,
                                               global);
   }
-  return ok;
+  return {};
 }
 
 int ExecutiveValidName(PyMOLGlobals * G, const char *name)
@@ -7863,7 +7838,7 @@ ExecutivePairIndices(PyMOLGlobals * G, const char *s1, const char *s2, int state
   return (result);
 }
 
-int ExecutiveCartoon(PyMOLGlobals * G, int type, const char *s1)
+pymol::Result<int> ExecutiveCartoon(PyMOLGlobals* G, int type, const char* s1)
 {
   SelectorTmp tmpsele1(G, s1);
   int sele1 = tmpsele1.getIndex();
@@ -7885,7 +7860,7 @@ int ExecutiveCartoon(PyMOLGlobals * G, int type, const char *s1)
         ExecutiveObjMolSeleOp(G, sele1, &op1);
     }
   } else {
-    ErrMessage(G, "Cartoon", "Invalid selection.");
+    return pymol::make_error("Invalid selection.");
   }
   return (op1.i2);
 }
@@ -8039,19 +8014,20 @@ int ExecutiveSaveUndo(PyMOLGlobals * G, const char *s1, int state)
 
 
 /*========================================================================*/
-int ExecutiveSetTitle(PyMOLGlobals * G, const char *name, int state, const char *text)
+pymol::Result<> ExecutiveSetTitle(PyMOLGlobals * G, const char *name, int state, const char *text)
 {
-  int result = false;
   ObjectMolecule *obj;
   obj = ExecutiveFindObjectMoleculeByName(G, name);
   if(!obj) {
-    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-      "Error: object %s not found.\n", name ENDFB(G);
+    return pymol::make_error("Object ", name, " not found.");
   } else {
-    result = ObjectMoleculeSetStateTitle(obj, state, text);
+    auto res = ObjectMoleculeSetStateTitle(obj, state, text);
+    if(!res){
+      return res;
+    }
   }
   SceneDirty(G);
-  return (result);
+  return {};
 }
 
 
@@ -8644,8 +8620,9 @@ pymol::Result<float> ExecutiveGetDihe(PyMOLGlobals* G, const char* s0,
 
 
 /*========================================================================*/
-pymol::Result<> ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
-                     float value, int state, int quiet)
+pymol::Result<> ExecutiveSetDihe(PyMOLGlobals* G, const char* s0,
+    const char* s1, const char* s2, const char* s3, float value, int state,
+    int quiet)
 {
   SelectorTmp tmpsele0(G, s0);
   SelectorTmp tmpsele1(G, s1);
@@ -8653,9 +8630,6 @@ pymol::Result<> ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s
   SelectorTmp tmpsele3(G, s3);
 
   int sele0 = -1, sele1 = -1, sele2 = -1, sele3 = -1;
-  int save_state;
-  float current;
-  float change;
 
   if((sele0 = tmpsele0.getIndex()) < 0)
     return pymol::make_error("Selection 1 invalid.");
@@ -8681,10 +8655,10 @@ pymol::Result<> ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s
   if(!result3) {
     return pymol::make_error("Selection 4 doesn't contain a single atom/vertex.");
   }
-  current = rad_to_deg(get_dihedral3f(result0.result().data(),
+  float current = rad_to_deg(get_dihedral3f(result0.result().data(),
       result1.result().data(), result2.result().data(), result3.result().data()));
-  change = value - current;
-  save_state = SceneGetState(G);
+  float change = value - current;
+  auto save_state = SceneGetState(G);
   SceneSetFrame(G, -1, state);        /* KLUDGE ALERT!
                                        * necessary because the editor 
                                        * can only work on the current state...this
@@ -8692,7 +8666,7 @@ pymol::Result<> ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s
   EditorSelect(G,
       tmpsele2.getName(),
       tmpsele1.getName(),
-      NULL, NULL, false, true, true);
+      "", "", false, true, true);
   EditorTorsion(G, change);
   SceneSetFrame(G, -1, save_state);
   if(!quiet) {
@@ -8984,8 +8958,8 @@ void ExecutiveRenameObjectAtoms(PyMOLGlobals * G, const char *s, int force, int 
 
 
 /*========================================================================*/
-void ExecutiveFuse(PyMOLGlobals * G, const char *s0, const char *s1, int mode,
-                   int recolor, int move_flag)
+pymol::Result<> ExecutiveFuse(PyMOLGlobals* G, const char* s0, const char* s1,
+    int mode, int recolor, int move_flag)
 {
   int i0 = -1;
   int i1 = -1;
@@ -9001,7 +8975,7 @@ void ExecutiveFuse(PyMOLGlobals * G, const char *s0, const char *s1, int mode,
   sele1 = tmpsele1.getIndex();
 
   if(sele0 < 0 || sele1 < 0) {
-    ErrMessage(G, "Fuse", "Need two selections");
+    return pymol::make_error("Need two selections");
   } else {
 #ifndef _PYMOL_NO_UNDO
 #endif
@@ -9041,7 +9015,7 @@ void ExecutiveFuse(PyMOLGlobals * G, const char *s0, const char *s1, int mode,
           else if((obj0->AtomInfo[i0].protons != 1) && (obj1->AtomInfo[i1].protons != 1))
             ok &= ObjectMoleculeFuse(obj1, i1, obj0, i0, 1, move_flag);
           else
-            ErrMessage(G, "Fuse", "Can't fuse between a hydrogen and a non-hydrogen");
+            return pymol::make_error("Can't fuse between a hydrogen and a non-hydrogen");
           break;
         case 3:
           ok &= ObjectMoleculeFuse(obj1, i1, obj0, i0, 3, false);
@@ -9050,39 +9024,42 @@ void ExecutiveFuse(PyMOLGlobals * G, const char *s0, const char *s1, int mode,
       }
     }
   }
+  if(!ok) {
+    return pymol::make_error("Could not fuse.");
+  }
+  return {};
 }
 
 
 /*========================================================================*/
-void ExecutiveSpheroid(PyMOLGlobals * G, const char *name, int average)
+pymol::Result<> ExecutiveSpheroid(PyMOLGlobals * G, const char *name, int average)
 {                               /* EXPERIMENTAL */
   CExecutive *I = G->Executive;
   CObject *os = NULL;
-  ObjectMolecule *obj;
-  SpecRec *rec = NULL;
 
   if(strlen(name)) {
     os = ExecutiveFindObjectByName(G, name);
     if(!os)
-      ErrMessage(G, " Executive", "object not found.");
+      return pymol::make_error("Object not found.");
     else if(os->type != cObjectMolecule) {
-      ErrMessage(G, " Executive", "bad object type.");
-      os = NULL;
+      return pymol::make_error("Bad object type.");
     }
   }
 
   if(os || (!strlen(name))) {   /* sort one or all */
+    SpecRec* rec = nullptr;
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->type == cExecObject)
         if(rec->obj->type == cObjectMolecule)
           if((!os) || (rec->obj == os)) {
-            obj = (ObjectMolecule *) rec->obj;
+            auto obj = (ObjectMolecule *) rec->obj;
             ObjectMoleculeCreateSpheroid(obj, average);
             obj->invalidate(cRepAll, cRepInvRep, -1);
           }
     }
     SceneChanged(G);
   }
+  return {};
 }
 
 
@@ -9166,7 +9143,7 @@ void ExecutiveUndo(PyMOLGlobals * G, int dir)
 
 
 /*========================================================================*/
-void ExecutiveSort(PyMOLGlobals * G, const char *name)
+pymol::Result<> ExecutiveSort(PyMOLGlobals* G, const char* name)
 {
   CExecutive *I = G->Executive;
   ObjectMolecule *obj;
@@ -9243,20 +9220,24 @@ void ExecutiveSort(PyMOLGlobals * G, const char *name)
     if(changed)
       SceneChanged(G);
   }
+  return {};
 }
 
 
 /*========================================================================*/
-void ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet)
+pymol::Result<> ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet)
 {
-  int sele;
+  SelectorTmp tmpsele1(G, s1);
+  int sele = tmpsele1.getIndex();
+
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   ObjectMoleculeOpRec op;
 
-  sele = SelectorIndexByName(G, s1);
   if(sele >= 0) {
+#ifndef _PYMOL_NO_UNDO
+#endif
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->type == cExecObject) {
         if(rec->obj->type == cObjectMolecule) {
@@ -9283,11 +9264,13 @@ void ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet)
       }
     }
   }
+  return {};
 }
 
 
 /*========================================================================*/
-void ExecutiveAddHydrogens(PyMOLGlobals * G, const char *s1, int quiet, int state, bool legacy)
+pymol::Result<> ExecutiveAddHydrogens(
+    PyMOLGlobals* G, const char* s1, int quiet, int state, bool legacy)
 {
   ObjectMoleculeOpRec op;
 
@@ -9299,11 +9282,15 @@ void ExecutiveAddHydrogens(PyMOLGlobals * G, const char *s1, int quiet, int stat
   {
     SelectorTmp tmpsele1(G, s1);
     int sele1 = tmpsele1.getIndex();
+    if (sele1 < 0) {
+      return pymol::make_error("Invalid selection.");
+    }
     ObjectMoleculeOpRecInit(&op);
     op.code = OMOP_AddHydrogens;
     op.i1 = state;
     ExecutiveObjMolSeleOp(G, sele1, &op);
   }
+  return {};
 }
 
 
@@ -9435,7 +9422,8 @@ void ExecutiveProtect(PyMOLGlobals * G, const char *s1, int mode, int quiet)
 
 
 /*========================================================================*/
-void ExecutiveMask(PyMOLGlobals * G, const char *s1, int mode, int quiet)
+pymol::Result<> ExecutiveMask(
+    PyMOLGlobals* G, const char* s1, int mode, int quiet)
 {
   ObjectMoleculeOpRec op;
 
@@ -9464,7 +9452,10 @@ void ExecutiveMask(PyMOLGlobals * G, const char *s1, int mode, int quiet)
     op.i1 = cRepsAtomMask;
     op.i2 = cRepInvPick;
     ExecutiveObjMolSeleOp(G, sele1, &op);
+  } else {
+    return pymol::make_error("Invalid selection.");
   }
+  return {};
 }
 
 
@@ -9518,11 +9509,11 @@ pymol::Result<> ExecutiveStereo(PyMOLGlobals * G, int flag)
 
 
 /*========================================================================*/
-int ExecutiveRevalence(PyMOLGlobals * G, const char *s1, const char *s2, const char *src,
-                       int target_state, int source_state, int reset, int quiet)
+pymol::Result<> ExecutiveRevalence(PyMOLGlobals* G, const char* s1,
+    const char* s2, const char* src, int target_state, int source_state,
+    int reset, int quiet)
 {
   /*  register CExecutive *I=G->Executive; */
-  int ok = true;
 
   SelectorTmp tmpsele1(G, s1);
   SelectorTmp tmpsele2(G, s2);
@@ -9537,10 +9528,7 @@ int ExecutiveRevalence(PyMOLGlobals * G, const char *s1, const char *s2, const c
       if(sele3 >= 0) {
         ObjectMolecule *obj3 = SelectorGetSingleObjectMolecule(G, sele3);
         if(!obj3) {
-          ok = false;
-          PRINTFB(G, FB_Editor, FB_Errors)
-            "Editor-Warning: revalence can only source a single object at a time."
-            ENDFB(G);
+          return pymol::make_error("Revalence can only source a single object at a time.");
         } else {
           ObjectMoleculeOpRec op;
 
@@ -9580,26 +9568,23 @@ int ExecutiveRevalence(PyMOLGlobals * G, const char *s1, const char *s2, const c
 
     }
   }
-  return ok;
+  return {};
 }
 
 
 /*========================================================================*/
-int ExecutiveBond(PyMOLGlobals * G, const char *s1, const char *s2, int order, int mode, int quiet)
+pymol::Result<> ExecutiveBond(PyMOLGlobals * G, const char *s1, const char *s2, int order, int mode, int quiet)
 {
-  int ok = false;
-  int sele1, sele2;
   int cnt;
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   int flag = false;
-  OrthoLineType sname1 = "", sname2 = "";
 
-  ok_assert(1, SelectorGetTmp(G, s1, sname1) >= 0);
-  ok_assert(1, SelectorGetTmp(G, s2, sname2) >= 0);
+  SelectorTmp s1Tmp(G, s1);
+  SelectorTmp s2Tmp(G, s2);
 
-  sele1 = SelectorIndexByName(G, sname1);
-  sele2 = SelectorIndexByName(G, sname2);
+  int sele1 = s1Tmp.getIndex();
+  int sele2 = s2Tmp.getIndex();
 
   if((sele1 >= 0) && (sele2 >= 0)) {
     ObjectMolecule *obj1 = SelectorGetSingleObjectMolecule(G, sele1);
@@ -9673,19 +9658,12 @@ int ExecutiveBond(PyMOLGlobals * G, const char *s1, const char *s2, int order, i
         }
       }
     }
-
-    ok = true;
   } else if(sele1 < 0) {
-    ok = ErrMessage(G, __func__, "The first selection contains no atoms.");
+    return pymol::make_error("The first selection contains no atoms.");
   } else if(sele2 < 0) {
-    ok = ErrMessage(G, __func__, "The second selection contains no atoms.");
+    return pymol::make_error("The second selection contains no atoms.");
   }
-
-ok_except1:
-  SelectorFreeTmp(G, sname1);
-  SelectorFreeTmp(G, sname2);
-
-  return ok;
+  return {};
 }
 
 
@@ -9873,9 +9851,9 @@ char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals * G, const char *name, int stat
 
 
 /*========================================================================*/
-int ExecutiveSeleToObject(PyMOLGlobals * G, const char *name, const char *s1,
-                          int source, int target,
-                          int discrete, int zoom, int quiet, int singletons, int copy_properties)
+pymol::Result<> ExecutiveSeleToObject(PyMOLGlobals* G, const char* name,
+    const char* s1, int source, int target, int discrete, int zoom, int quiet,
+    int singletons, int copy_properties)
 {
   SelectorTmp tmpsele1(G, s1);
   int sele1 = tmpsele1.getIndex();
@@ -9916,17 +9894,21 @@ int ExecutiveSeleToObject(PyMOLGlobals * G, const char *name, const char *s1,
       }
     }
   }
-  return ok;
+  if(ok){
+    return {};
+  } else {
+    return pymol::make_error("Failed to Create Object");
+  }
 }
 
 
 /*========================================================================*/
-void ExecutiveCopy(PyMOLGlobals * G, const char *src, const char *dst, int zoom)
+pymol::Result<> ExecutiveCopy(
+    PyMOLGlobals* G, const char* src, const char* dst, int zoom)
 {
   const CObject *os = ExecutiveFindObjectByName(G, src);
   if(!os) {
-    ErrMessage(G, " Executive", "object not found.");
-    return;
+    return pymol::make_error("Object not found.");
   }
 
   CObject *oDst = nullptr;
@@ -9943,13 +9925,11 @@ void ExecutiveCopy(PyMOLGlobals * G, const char *src, const char *dst, int zoom)
     oDst = oDstMap;
     break;
   default:
-    ErrMessage(G, " Executive", "bad object type.");
-    return;
+    return pymol::make_error("Bad object type.");
   }
 
   if(!oDst) {
-    ErrMessage(G, __func__, "failed to create copy");
-    return;
+    return pymol::make_error("Failed to create copy");
   }
 
   strcpy(oDst->Name, dst);
@@ -9958,11 +9938,12 @@ void ExecutiveCopy(PyMOLGlobals * G, const char *src, const char *dst, int zoom)
   PRINTFB(G, FB_Executive, FB_Actions)
     " Executive: object %s created.\n", oDst->Name ENDFB(G);
   SceneChanged(G);
+  return {};
 }
 
 
 /*========================================================================*/
-void ExecutiveOrient(PyMOLGlobals * G, const char *sele, double *mi,
+pymol::Result<> ExecutiveOrient(PyMOLGlobals * G, const char *sele,
                      int state, float animate, int complete, float buffer, int quiet)
 {
   double egval[3], egvali[3];
@@ -9971,6 +9952,15 @@ void ExecutiveOrient(PyMOLGlobals * G, const char *sele, double *mi,
   float t[3];
   const float _0 = 0.0F;
   int a, b;
+
+  double mi[16];
+
+  SelectorTmp tmpsele(G, sele);
+  sele = tmpsele.getName();
+
+  if(!ExecutiveGetMoment(G, sele, mi, state)) {
+    return {};
+  }
 
   if(!MatrixEigensolveC33d(G, mi, egval, egvali, (double *) (void *) evect)) {
 
@@ -10069,17 +10059,19 @@ void ExecutiveOrient(PyMOLGlobals * G, const char *sele, double *mi,
       SceneLoadAnimation(G, animate, 0);
 
   }
+  return {};
 }
 
 
 /*========================================================================*/
-int ExecutiveLabel(PyMOLGlobals * G, const char *s1, const char *expr, int quiet, int eval_mode)
+pymol::Result<> ExecutiveLabel(PyMOLGlobals * G, const char *str1, const char *expr, int quiet, int eval_mode)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
   int cnt;
 
-  sele1 = SelectorIndexByName(G, s1);
+  SelectorTmp s1(G, str1);
+  sele1 = s1.getIndex();
   if(sele1 >= 0) {
     ObjectMoleculeOpRecInit(&op1);
     op1.code = OMOP_LABL;
@@ -10108,17 +10100,16 @@ int ExecutiveLabel(PyMOLGlobals * G, const char *s1, const char *expr, int quiet
       }
     }
   } else {
-    PRINTFB(G, FB_Executive, FB_Warnings)
-      " Label: no atoms selected.\n" ENDFB(G);
+    return pymol::make_error("No atoms selected");
   }
-  return 1;
+  return {};
 }
 
 
 /*========================================================================*/
 #ifdef _WEBGL
 #else
-int ExecutiveIterate(PyMOLGlobals * G, const char *str1, const char *expr, int read_only, int quiet,
+pymol::Result<int> ExecutiveIterate(PyMOLGlobals * G, const char *str1, const char *expr, int read_only, int quiet,
                      PyObject * space)
 #endif
 {
@@ -10359,15 +10350,16 @@ int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,
 
 
 /*========================================================================*/
-int ExecutiveIterateList(PyMOLGlobals * G, const char *name,
+pymol::Result<int> ExecutiveIterateList(PyMOLGlobals* G, const char* str1,
                          PyObject * list, int read_only, int quiet, PyObject * space)
 {
 #ifdef _PYMOL_NOPY
-  return -1;
+  return pymol::make_error("Iterate List not available.");
 #else
   int ok = true;
   int n_eval = 0;
-  int sele0 = SelectorIndexByName(G, name);
+  SelectorTmp s1(G, str1);
+  int sele0 = s1.getIndex();
   PyObject *entry = NULL;
   ObjectMolecule *obj = NULL;
   if(sele0 >= 0)
@@ -10415,8 +10407,7 @@ int ExecutiveIterateList(PyMOLGlobals * G, const char *name,
       }
     }
   } else {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      " AlterList-Error: selection cannot span more than one object.\n" ENDFB(G);
+    return pymol::make_error("Selection cannot span more than one object.");
   }
   if(ok) {
     if(!quiet) {
@@ -10428,14 +10419,12 @@ int ExecutiveIterateList(PyMOLGlobals * G, const char *name,
           " IterateList: iterated over %i atoms.\n", n_eval ENDFB(G);
       }
     }
-  } else {
-    if(!quiet) {
-      PRINTFB(G, FB_Executive, FB_Warnings)
-        "ExecutiveIterateList: An error occurred.\n" ENDFB(G);
+    if (!read_only) {
+      SeqChanged(G);
     }
   }
   if(!ok)
-    return -1;
+    return pymol::make_error("An error occurred.");
   else
     return n_eval;
 #endif
@@ -10445,8 +10434,9 @@ int ExecutiveIterateList(PyMOLGlobals * G, const char *name,
 /*========================================================================*/
 #ifdef _WEBGL
 #else
-int ExecutiveIterateState(PyMOLGlobals * G, int state, const char *str1, const char *expr,
-                           int read_only, int atomic_props, int quiet, PyObject * space)
+pymol::Result<int> ExecutiveIterateState(PyMOLGlobals* G, int state,
+    const char* str1, const char* expr, int read_only, int atomic_props,
+    int quiet, PyObject* space)
 #endif
 {
 #ifdef _WEBGL
@@ -10490,6 +10480,7 @@ int ExecutiveIterateState(PyMOLGlobals * G, int state, const char *str1, const c
 #endif
       // for dynamic_measures
       ExecutiveUpdateCoordDepends(G, NULL);
+      SeqChanged(G);
     }
     if(!quiet) {
       if(!read_only) {
@@ -13288,13 +13279,13 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals * G, const char *name, float *po
 
 
 /*========================================================================*/
-int ExecutiveWindowZoom(PyMOLGlobals * G, const char *name, float buffer,
-                        int state, int inclusive, float animate, int quiet)
+pymol::Result<> ExecutiveWindowZoom(PyMOLGlobals* G,
+    const char* name, float buffer, int state, int inclusive, float animate,
+    int quiet)
 {
   float center[3], radius;
   float mn[3], mx[3], df[3];
   int sele0;
-  int ok = true;
 
   PRINTFD(G, FB_Executive)
     " ExecutiveWindowZoom-DEBUG: entered\n" ENDFD;
@@ -13361,22 +13352,20 @@ int ExecutiveWindowZoom(PyMOLGlobals * G, const char *name, float buffer,
       SceneSetDefaultView(G);
       SceneInvalidate(G);
     } else {
-      ErrMessage(G, __func__, "selection or object unknown.");
-      ok = false;
+      return pymol::make_error( __func__, "selection or object unknown.");
     }
   }
-  return (ok);
+  return {};
 }
 
 
 /*========================================================================*/
-int ExecutiveCenter(PyMOLGlobals * G, const char *name, int state,
-                    int origin, float animate, float *pos, int quiet)
+pymol::Result<> ExecutiveCenter(PyMOLGlobals* G, const char* name,
+    int state, int origin, float animate, float* pos, int quiet)
 {
   float center[3];
   float mn[3], mx[3];
   int sele0;
-  int ok = true;
   int have_center = false;
 
   if(name && ExecutiveGetExtent(G, name, mn, mx, true, state, true)) {
@@ -13421,11 +13410,10 @@ int ExecutiveCenter(PyMOLGlobals * G, const char *name, int state,
       SceneSetDefaultView(G);
       SceneInvalidate(G);
     } else {
-      ErrMessage(G, __func__, "selection or object unknown.");
-      ok = false;
+      return pymol::make_error("Selection or object unknown.");
     }
   }
-  return (ok);
+  return {};
 }
 
 
@@ -13534,7 +13522,8 @@ int ExecutiveGetMoment(PyMOLGlobals * G, const char *name, double *mi, int state
 
 
 /*========================================================================*/
-int ExecutiveSetObjVisib(PyMOLGlobals * G, const char *name, int onoff, int parents)
+pymol::Result<>
+ExecutiveSetObjVisib(PyMOLGlobals * G, pymol::zstring_view name, int onoff, int parents)
 {
   CExecutive *I = G->Executive;
   PRINTFD(G, FB_Executive)
@@ -13542,7 +13531,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, const char *name, int onoff, int pare
   {
     CTracker *I_Tracker = I->Tracker;
     SpecRec *rec;
-    int list_id = ExecutiveGetNamesListFromPattern(G, name, true, false);
+    int list_id = ExecutiveGetNamesListFromPattern(G, name.data(), true, false);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     int suppress_hidden = SettingGetGlobal_b(G, cSetting_suppress_hidden);
     int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
@@ -13628,7 +13617,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, const char *name, int onoff, int pare
   }
   PRINTFD(G, FB_Executive)
     " ExecutiveSetObjVisib: leaving...\n" ENDFD;
-  return 1;
+  return {};
 }
 
 
@@ -13724,9 +13713,9 @@ void fInvalidateRepMask(CObject * obj, int repmask, int state=-1) {
 
 
 /*========================================================================*/
-int ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep)
+pymol::Result<>
+ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep)
 {
-  int ok = true;
   int sele = -1;
   SpecRec *tRec;
   ObjectMoleculeOpRec op;
@@ -13742,8 +13731,7 @@ int ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep)
     if(tRec) {
       ExecutiveSetObjVisib(G, name, !tRec->visible, 0);
     } else {
-      PRINTFB(G, FB_Executive, FB_Errors)
-        " %s-Error: '%s' not found\n", __func__, name ENDFB(G);
+      return pymol::make_error(name, " not found.");
     }
   } else if(tRec && tRec->type == cExecObject &&
       tRec->obj->type != cObjectMolecule) {
@@ -13775,18 +13763,20 @@ int ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep)
   }
   PRINTFD(G, FB_Executive)
     " ExecutiveToggleRepVisib: leaving...\n" ENDFD;
-  return (ok);
+  return {};
 }
 
 
 /*========================================================================*/
-void ExecutiveSetRepVisib(PyMOLGlobals * G, const char *name, int rep, int state)
+pymol::Result<>
+ExecutiveSetRepVisib(PyMOLGlobals * G, pymol::zstring_view name, int rep, int state)
 {
   int repmask = (rep == cRepAll) ? cRepBitmask : (1 << rep);
-  ExecutiveSetRepVisMask(G, name, repmask, state);
+  return ExecutiveSetRepVisMask(G, name, repmask, state);
 }
 
-void ExecutiveSetRepVisMask(PyMOLGlobals * G, const char *name, int repmask, int state)
+pymol::Result<>
+ExecutiveSetRepVisMask(PyMOLGlobals * G, pymol::zstring_view name, int repmask, int state)
 {
   PRINTFD(G, FB_Executive)
     " ExecutiveSetRepVisib: entered.\n" ENDFD;
@@ -13795,7 +13785,7 @@ void ExecutiveSetRepVisMask(PyMOLGlobals * G, const char *name, int repmask, int
     CExecutive *I = G->Executive;
     CTracker *I_Tracker = I->Tracker;
     SpecRec *rec = NULL;
-    int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
+    int list_id = ExecutiveGetNamesListFromPattern(G, name.data(), true, true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
       if(rec) {
@@ -13845,23 +13835,26 @@ void ExecutiveSetRepVisMask(PyMOLGlobals * G, const char *name, int repmask, int
   }
   PRINTFD(G, FB_Executive)
     " ExecutiveSetRepVisib: leaving...\n" ENDFD;
-
+  return {};
 }
 
 
 /*========================================================================*/
-int ExecutiveSetOnOffBySele(PyMOLGlobals * G, const char *name, int onoff)
+pymol::Result<>
+ExecutiveSetOnOffBySele(PyMOLGlobals * G, pymol::zstring_view sname, int onoff)
 {
+  SelectorTmp2 tmp{G, sname.data()};
+  const char* name = tmp.getName();
   int sele;
   SpecRec *tRec;
   ObjectMoleculeOpRec op;
 
   tRec = ExecutiveFindSpec(G, name);
-  if((!tRec) && (!strcmp(name, cKeywordAll))) {
+  if((!tRec) && (!strcmp(sname.data(), cKeywordAll))) {
     ExecutiveSetObjVisib(G, name, onoff, false);
   }
   if(tRec) {
-    sele = SelectorIndexByName(G, name);
+    sele = tmp.getIndex();
     if(sele >= 0) {
       ObjectMoleculeOpRecInit(&op);
 
@@ -13870,7 +13863,8 @@ int ExecutiveSetOnOffBySele(PyMOLGlobals * G, const char *name, int onoff)
       ExecutiveObjMolSeleOp(G, sele, &op);
     }
   }
-  return 1;
+
+  return {};
 }
 
 
@@ -13924,11 +13918,22 @@ static void ExecutiveSetAllRepVisMask(PyMOLGlobals * G, int repmask, int state)
 
 
 /*========================================================================*/
-void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int level)
+pymol::Result<> ExecutiveInvalidateRep(
+    PyMOLGlobals* G, const char* str1, int rep, int level)
 {
   CExecutive *I = G->Executive;
   ObjectMoleculeOpRec op;
   SpecRec *rec = NULL;
+  const char* name = "";
+
+  SelectorTmp2 s1;
+  if(str1 && !WordMatchExact(G, str1, "all", true)) {
+    s1 = SelectorTmp2(G, str1);
+    name = s1.getName();
+  } else {
+    name = str1;
+  }
+
   if((!name) || (!name[0]))
     name = cKeywordAll;
   {
@@ -13969,6 +13974,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int lev
     TrackerDelList(I_Tracker, list_id);
     TrackerDelIter(I_Tracker, iter_id);
   }
+  return {};
 }
 
 int ExecutiveCheckGroupMembership(PyMOLGlobals * G, int list_id, CObject * obj)
@@ -16303,14 +16309,14 @@ void CExecutive::reshape(int width, int height)
 
 
 /*========================================================================*/
-int ExecutiveReinitialize(PyMOLGlobals * G, int what, const char *pattern)
+pymol::Result<> ExecutiveReinitialize(PyMOLGlobals * G, int what, pymol::zstring_view inPattern)
 {
   CExecutive *I = G->Executive;
-  int ok = true;
 #ifndef _PYMOL_NOPY
   int blocked = false;
 #endif
   /* reinitialize PyMOL */
+  const char* pattern = inPattern.data();
   if(what == 2)
     pattern = NULL;
 
@@ -16398,7 +16404,8 @@ int ExecutiveReinitialize(PyMOLGlobals * G, int what, const char *pattern)
 
     /* to do */
   }
-  return (ok);
+
+  return {};
 }
 
 
@@ -16666,6 +16673,10 @@ ok_except1:
   return cs;
 }
 
+#ifdef _PYMOL_IP_PROPERTIES
+#endif // _PYMOL_IP_PROPERTIES
+
+
 void ExecutiveUniqueIDAtomDictInvalidate(PyMOLGlobals * G) {
   CExecutive *I = G->Executive;
   if (I->m_eoo) {
@@ -16685,6 +16696,107 @@ const ExecutiveObjectOffset * ExecutiveUniqueIDAtomDictGet(PyMOLGlobals * G, int
     return NULL;
 
   return I->m_eoo + offset.word;
+}
+
+pymol::Result<> ExecutiveSetFeedbackMask(
+    PyMOLGlobals* G, int action, unsigned int sysmod, unsigned char mask)
+{
+  switch (action) {
+  case 0:
+    G->Feedback->setMask(sysmod, mask);
+    break;
+  case 1:
+    G->Feedback->enable(sysmod, mask);
+    break;
+  case 2:
+    G->Feedback->disable(sysmod, mask);
+    break;
+  case 3:
+    G->Feedback->push();
+    break;
+  case 4:
+    G->Feedback->pop();
+    break;
+  }
+  return {};
+}
+
+pymol::Result<> ExecutiveSliceNew(PyMOLGlobals* G, const char* slice_name,
+    const char* map_name, int state, int map_state)
+{
+  int multi = false;
+  CObject *obj = NULL, *mObj, *origObj;
+  ObjectMap *mapObj;
+  ObjectMapState *ms;
+
+  origObj = ExecutiveFindObjectByName(G, slice_name);
+  if(origObj) {
+    if(origObj->type != cObjectSlice) {
+      return pymol::make_error("Object ", slice_name, " is not an ObjectSlice.");
+    }
+  }
+
+  mObj = ExecutiveFindObjectByName(G, map_name);
+  if(mObj) {
+    if(mObj->type != cObjectMap)
+      mObj = NULL;
+  }
+  if(mObj) {
+    mapObj = (ObjectMap *) mObj;
+    if(state == -1) {
+      multi = true;
+      state = 0;
+      map_state = 0;
+    } else if(state == -2) {
+      state = SceneGetState(G);
+      if(map_state < 0)
+        map_state = state;
+    } else if(state == -3) {    /* append mode */
+      state = 0;
+      if(origObj)
+        state = origObj->getNFrame();
+    } else {
+      if(map_state == -1) {
+        map_state = 0;
+        multi = true;
+      } else {
+        multi = false;
+      }
+    }
+    while(1) {
+      if(map_state == -2)
+        map_state = SceneGetState(G);
+      if(map_state == -3)
+        map_state = mapObj->getNFrame() - 1;
+      ms = ObjectMapStateGetActive(mapObj, map_state);
+      if(ms) {
+        obj = (CObject *) ObjectSliceFromMap(G, (ObjectSlice *) origObj, mapObj,
+                                             state, map_state);
+
+        if(!origObj) {
+          ObjectSetName(obj, slice_name);
+          ExecutiveManageObject(G, (CObject *) obj, -1, false);
+        }
+        PRINTFB(G, FB_ObjectMesh, FB_Actions)
+          " SliceMap: created \"%s\".\n", slice_name ENDFB(G);
+
+      } else if(!multi) {
+        return pymol::make_error("State ", map_state + 1, " not present in map ", map_name);
+      }
+      if(multi) {
+        origObj = obj;
+        map_state++;
+        state++;
+        if(map_state >= mapObj->State.size())
+          break;
+      } else {
+        break;
+      }
+    }
+  } else {
+    return pymol::make_error("Map or brick object ", map_name, " not found.");
+  }
+  return {};
 }
 
 /**

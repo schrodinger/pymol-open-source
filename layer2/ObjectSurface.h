@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_gl.h"
 #include"ObjectMap.h"
+#include"Result.h"
 #include"CGO.h"
 
 struct ObjectSurfaceState : public CObjectState
@@ -63,6 +64,7 @@ struct ObjectSurface : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(int rep, int level, int state) override;
   int getNFrame() const override;
+  CObject* clone() const override;
 };
 
 ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
@@ -75,7 +77,7 @@ int ObjectSurfaceNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                ObjectSurface ** result);
 PyObject *ObjectSurfaceAsPyList(ObjectSurface * I);
 int ObjectSurfaceSetLevel(ObjectSurface * I, float level, int state, int quiet);
-int ObjectSurfaceGetLevel(ObjectSurface * I, int state, float *result);
+pymol::Result<float> ObjectSurfaceGetLevel(ObjectSurface * I, int state);
 int ObjectSurfaceInvalidateMapName(ObjectSurface * I, const char *name, const char * new_name);
 
 #endif

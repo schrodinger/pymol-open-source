@@ -131,6 +131,11 @@ public:
    */
 
   ResultT& result() { return m_result; }
+
+  /**
+   * Retrieves the value of the expected object
+   */
+
   const ResultT& result() const { return m_result; }
 
 private:
@@ -138,5 +143,6 @@ private:
   Error m_error;
   bool m_valid{true};
 };
+
 } // namespace pymol
 

@@ -17,6 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Executive
 #define _H_Executive
 
+#include <string>
+#include "pymol/zstring_view.h"
 #include"os_python.h"
 
 #include"PyMOLGlobals.h"
@@ -24,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"Field.h"
 
+#include"Tracker.h"
 #include"Ortho.h"
 #include"Word.h"
 #include "PyMOL.h"
@@ -31,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include "Scene.h"
 #include "Result.h"
 #include "vla.h"
+#include "TrackerList.h"
 
 enum cLoadType_t : int {
   cLoadTypeUnknown = -1,
@@ -123,10 +127,10 @@ enum cLoadType_t : int {
    ExecutiveLoad
 */
 
-typedef struct {
+struct ExecutiveObjectOffset{
   ObjectMolecule *obj;
   int atm;
-} ExecutiveObjectOffset;
+};
 
 class SpecRec;
 
@@ -180,8 +184,8 @@ void ExecutiveUpdateSceneMembers(PyMOLGlobals*);
 
 int *ExecutiveGetG3d(PyMOLGlobals * G);
 int ExecutiveOrder(PyMOLGlobals * G, const char *s1, int sort, int location);
-int ExecutiveFixChemistry(PyMOLGlobals * G, const char *s1, const char *s2, int invalidate,
-                          int quiet);
+pymol::Result<> ExecutiveFixChemistry(
+    PyMOLGlobals* G, const char* s1, const char* s2, int invalidate, int quiet);
 pymol::Result<std::array<float, 3>> ExecutiveGetAtomVertex(PyMOLGlobals * G, const char *s1, int state, int index);
 int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
                             const char *fname, const char *buffer, const char *oname,
@@ -192,7 +196,8 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
 const ExecutiveObjectOffset * ExecutiveUniqueIDAtomDictGet(PyMOLGlobals * G, int i);
 void ExecutiveUniqueIDAtomDictInvalidate(PyMOLGlobals * G);
 
-int ExecutiveLoad(PyMOLGlobals * G,
+pymol::Result<> ExecutiveLoad(
+                  PyMOLGlobals * G,
                   const char *fname,
                   const char *content, int content_length,
                   cLoadType_t content_format,
@@ -240,18 +245,20 @@ pymol::Result<float> ExecutiveDistance(PyMOLGlobals* G, const char* nam,
     const char* s1, const char* s2, int mode, float cutoff, int labels,
     int quiet, int reset, int state, int zoom, int state1 = -4,
     int state2 = -4);
-int ExecutiveBond(PyMOLGlobals * G, const char *s1, const char *s2, int order, int mode, int quiet);
-int ExecutiveRevalence(PyMOLGlobals * G, const char *s1, const char *s2, const char *src,
-                       int target_state, int source_state, int reset, int quiet);
+pymol::Result<> ExecutiveBond(PyMOLGlobals* G, const char* s1,
+    const char* s2, int order, int mode, int quiet);
+pymol::Result<> ExecutiveRevalence(PyMOLGlobals* G, const char* s1,
+    const char* s2, const char* src, int target_state, int source_state,
+    int reset, int quiet);
 int ExecutiveVdwFit(PyMOLGlobals * G, const char *s1, int state1, const char *s2, int state2,
                     float buffer, int quiet);
 #ifdef _WEBGL
 #else
-int ExecutiveIterate(PyMOLGlobals * G, const char *str1, const char *expr, int read_only, int quiet,
+pymol::Result<int> ExecutiveIterate(PyMOLGlobals * G, const char *str1, const char *expr, int read_only, int quiet,
                      PyObject * space);
 #endif
-int ExecutiveIterateList(PyMOLGlobals * G, const char *s1, PyObject * list, int read_only,
-                         int quiet, PyObject * space);
+pymol::Result<int> ExecutiveIterateList(PyMOLGlobals* G, const char* s1,
+    PyObject* list, int read_only, int quiet, PyObject* space);
 
 pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const char* sname,
     const char* sele, int enable, int quiet, int merge, int state,
@@ -264,13 +271,14 @@ int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,
 #define cExecutiveLabelEvalOn     1
 #define cExecutiveLabelEvalAlt    2
 
-int ExecutiveLabel(PyMOLGlobals * G, const char *s1, const char *expr, int quiet, int eval_mode);
+pymol::Result<> ExecutiveLabel(PyMOLGlobals * G, const char *s1, const char *expr, int quiet, int eval_mode);
 
 int ExecutiveCountMotions(PyMOLGlobals * G);
 #ifdef _WEBGL
 #else
-int ExecutiveIterateState(PyMOLGlobals * G, int state, const char *str1, const char *expr, int read_only,
-                           int atomic_props, int quiet, PyObject * space);
+pymol::Result<int> ExecutiveIterateState(PyMOLGlobals* G, int state,
+    const char* str1, const char* expr, int read_only, int atomic_props,
+    int quiet, PyObject* space);
 #endif
 int ExecutiveColor(PyMOLGlobals * G, const char *name, const char *color, int flags, int quiet);
 int ExecutiveInit(PyMOLGlobals * G);
@@ -299,7 +307,7 @@ CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType);
 int ExecutiveIterateObject(PyMOLGlobals * G, CObject ** obj, void **hidden);
 void ExecutiveDelete(PyMOLGlobals * G, const char *name);
 void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj, int state, int quiet);
-void ExecutiveSort(PyMOLGlobals * G, const char *name);
+pymol::Result<> ExecutiveSort(PyMOLGlobals * G, const char *name);
 PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index, 
 				  char *s1, const char *s2, int state, int quiet, int updates);
 int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
@@ -330,8 +338,9 @@ pymol::Result<float> ExecutiveGetAngle(
     PyMOLGlobals* G, const char* s0, const char* s1, const char* s2, int state);
 pymol::Result<float> ExecutiveGetDihe(PyMOLGlobals* G, const char* s0,
     const char* s1, const char* s2, const char* s3, int state);
-pymol::Result<> ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
-                     float value, int state=0, int quiet=1);
+pymol::Result<> ExecutiveSetDihe(PyMOLGlobals* G, const char* s0,
+    const char* s1, const char* s2, const char* s3, float value, int state = 0,
+    int quiet = 1);
 int ExecutiveRMS(PyMOLGlobals * G, const char *sele1, const char *sele2, int mode, float refine,
                  int max_cyc, int quiet, const char *oname, int state1, int state2,
                  int ordered_selections, int matchmaker, ExecutiveRMSInfo * rms_info);
@@ -349,31 +358,33 @@ pymol::Result<> ExecutiveResetMatrix(
 void ExecutiveDrawNow(PyMOLGlobals * G);
 int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
                      int entire_window, int quiet);
-int ExecutiveCartoon(PyMOLGlobals * G, int type, const char *sele);
-void ExecutiveSetRepVisib(PyMOLGlobals * G, const char *name, int rep, int state);
-void ExecutiveSetRepVisMask(PyMOLGlobals * G, const char *name, int repmask, int state);
-int ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep);
+pymol::Result<int> ExecutiveCartoon(PyMOLGlobals* G, int type, const char* s1);
+pymol::Result<> ExecutiveSetRepVisib(PyMOLGlobals * G, pymol::zstring_view name, int rep, int state);
+pymol::Result<> ExecutiveSetRepVisMask(PyMOLGlobals * G, pymol::zstring_view name, int repmask, int state);
+pymol::Result<> ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep);
 
-int ExecutiveSetObjVisib(PyMOLGlobals * G, const char *name, int onoff, int parents);
+pymol::Result<> ExecutiveSetObjVisib(PyMOLGlobals * G, pymol::zstring_view name, int onoff, int parents);
 
 int ExecutiveOrigin(PyMOLGlobals * G, const char *name, int preserve, const char *oname, float *pos,
                     int state);
-int ExecutiveCenter(PyMOLGlobals * G, const char *name, int state, int inclusive, float animate,
-                    float *pos, int quiet);
+pymol::Result<> ExecutiveCenter(PyMOLGlobals* G, const char* name, int state,
+    int inclusive, float animate, float* pos, int quiet);
 void ExecutiveDoZoom(PyMOLGlobals * G, CObject * obj, int is_new, int zoom, int quiet);
-int ExecutiveWindowZoom(PyMOLGlobals * G, const char *name, float buffer,
-                        int state, int inclusive, float animate, int quiet);
+pymol::Result<> ExecutiveWindowZoom(PyMOLGlobals* G,
+    const char* name, float buffer, int state, int inclusive, float animate,
+    int quiet);
 int ExecutiveGetMoment(PyMOLGlobals * G, const char *name, double *mi, int state);
 
 pymol::Result<std::vector<const char*>> ExecutiveGetChains(PyMOLGlobals* G, const char* sele, int state);
 
-void ExecutiveOrient(PyMOLGlobals * G, const char *sele, double *mi,
-                     int state, float animate, int complete, float buffer, int quiet);
+pymol::Result<> ExecutiveOrient(PyMOLGlobals* G, const char* sele,
+    int state, float animate, int complete, float buffer, int quiet);
 char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals * G, const char *name, int state, int format,
                                     int quiet);
 
 pymol::Result<> ExecutiveStereo(PyMOLGlobals * G, int flag);
-void ExecutiveCopy(PyMOLGlobals * G, const char *src, const char *dst, int zoom);
+pymol::Result<> ExecutiveCopy(
+    PyMOLGlobals* G, const char* src, const char* dst, int zoom);
 float ExecutiveOverlap(PyMOLGlobals * G, const char *s1, int state1, const char *s2, int state2,
                        float adjust);
 int ExecutiveCountStates(PyMOLGlobals * G, const char *s1);
@@ -383,21 +394,26 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
                        int transformed, int state, int weighted);
 int ExecutiveGetCameraExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
                              int transformed, int state);
-int ExecutiveSeleToObject(PyMOLGlobals * G, const char *name, const char *s1, int source, int target,
-                          int discrete, int zoom, int quiet, int singletons, int copy_properties=0);
+pymol::Result<> ExecutiveSeleToObject(PyMOLGlobals* G, const char* name,
+    const char* s1, int source, int target, int discrete, int zoom, int quiet,
+    int singletons, int copy_properties = 0);
+
 PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals * G, const char *s1, int state,
                                      const char *ref_object, int ref_state);
-void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int level);
+pymol::Result<> ExecutiveInvalidateRep(
+    PyMOLGlobals* G, const char* name, int rep, int level);
 void ExecutiveFlag(PyMOLGlobals * G, int flag, const char *s1, int action, int quiet);
-void ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet);
+pymol::Result<> ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet);
 void ExecutiveProtect(PyMOLGlobals * G, const char *s1, int mode, int quiet);
-void ExecutiveMask(PyMOLGlobals * G, const char *s1, int mode=1, int quiet=1);
+pymol::Result<> ExecutiveMask(
+    PyMOLGlobals* G, const char* s1, int mode = 1, int quiet = 1);
 void ExecutiveRebuildAll(PyMOLGlobals * G);
-void ExecutiveSpheroid(PyMOLGlobals * G, const char *name, int average);
-void ExecutiveAddHydrogens(PyMOLGlobals * G, const char *s1="(all)", int quiet=1, int state=-1, bool legacy=false);
+pymol::Result<> ExecutiveSpheroid(PyMOLGlobals * G, const char *name, int average);
+pymol::Result<> ExecutiveAddHydrogens(PyMOLGlobals* G, const char* s1 = "(all)",
+    int quiet = 1, int state = -1, bool legacy = false);
 void ExecutiveFixHydrogens(PyMOLGlobals * G, const char *s1, int quiet);
-void ExecutiveFuse(PyMOLGlobals * G, const char *s0="(pk1)", const char *s1="(pk2)", int mode=0, int recolor=1,
-                   int move_flag=1);
+pymol::Result<> ExecutiveFuse(PyMOLGlobals* G, const char* s0 = "(pk1)",
+    const char* s1 = "(pk2)", int mode = 0, int recolor = 1, int move_flag = 1);
 void ExecutiveRenameObjectAtoms(PyMOLGlobals * G, const char *name, int force, int quiet);
 
 pymol::Result<std::vector<const char*>> ExecutiveGetNames(PyMOLGlobals*, int, int, const char*);
@@ -408,7 +424,7 @@ void ExecutiveInvalidateSelectionIndicators(PyMOLGlobals *G);
 void ExecutiveInvalidateSelectionIndicatorsCGO(PyMOLGlobals *G);
 void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInfo *grid);
 void ExecutiveHideSelections(PyMOLGlobals * G);
-int ExecutiveSetTitle(PyMOLGlobals * G, const char *name, int state, const char *text);
+pymol::Result<> ExecutiveSetTitle(PyMOLGlobals * G, const char *name, int state, const char *text);
 const char *ExecutiveGetTitle(PyMOLGlobals * G, const char *name, int state);
 void ExecutiveSetLastObjectEdited(PyMOLGlobals * G, CObject * o);
 CObject *ExecutiveGetLastObjectEdited(PyMOLGlobals * G);
@@ -434,27 +450,30 @@ void ExecutiveMakeUnusedName(PyMOLGlobals * G, char * prefix, int length, bool a
 std::string ExecutiveGetUnusedName(PyMOLGlobals * G, const char * prefix="tmp", bool alwaysnumber=true);
 int ExecutiveProcessObjectName(PyMOLGlobals * G, const char *proposed, char *actual);
 
-int ExecutiveIsolevel(PyMOLGlobals * G, const char *name, float level, int state, int query,
-                      float *result, int quiet);
-int ExecutiveTransformObjectSelection(PyMOLGlobals * G, const char *name, int state, const char *s1,
-                                      int log, float *matrix, int homogenous, int global);
-int ExecutiveTransformSelection(PyMOLGlobals * G, int state, const char *s1, int log,
-                                float *ttt, int homogenous);
-int ExecutiveTranslateAtom(PyMOLGlobals * G, const char *sele, float *v, int state, int mode,
-                           int log);
+pymol::Result<> ExecutiveIsolevel(PyMOLGlobals* G, const char* name, float level, int state, int quiet);
+pymol::Result<float> ExecutiveGetIsolevel(PyMOLGlobals* G, const char* name, int state);
+pymol::Result<> ExecutiveTransformObjectSelection(PyMOLGlobals* G,
+    const char* name, int state, const char* s1, int log, const float* matrix,
+    int homogenous, int global);
+pymol::Result<> ExecutiveTransformSelection(PyMOLGlobals* G,
+    int state, const char* s1, int log, const float* ttt, int homogenous);
+pymol::Result<> ExecutiveTranslateAtom(
+    PyMOLGlobals* G, const char* sele, const float* v, int state, int mode, int log);
 void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode);
 int ExecutiveMapSetBorder(PyMOLGlobals * G, const char *name, float level, int state);
 int ExecutiveMapTrim(PyMOLGlobals * G, const char *name, const char *sele,
                      float buffer, int map_state, int sele_state, int quiet);
-int ExecutiveMapDouble(PyMOLGlobals * G, const char *name, int state);
-int ExecutiveMapHalve(PyMOLGlobals * G, const char *name, int state, int smooth);
+pymol::Result<> ExecutiveMapDouble(PyMOLGlobals * G, const char *name, int state);
+pymol::Result<> ExecutiveMapHalve(PyMOLGlobals * G, const char *name, int state, int smooth);
 
 int ExecutiveIdentifyObjects(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
                              ObjectMolecule *** objVLA);
-int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, const char *name, float *trans, int store, int quiet);
-int ExecutiveCombineObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt,
-                              int reverse_order, int store);
-int ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt, int state, int quiet, int store);
+pymol::Result<> ExecutiveTranslateObjectTTT(PyMOLGlobals* G,
+    const char* name, const float* trans, int store, int quiet);
+pymol::Result<> ExecutiveCombineObjectTTT(PyMOLGlobals* G,
+    const char* name, const float* ttt, int reverse_order, int store);
+pymol::Result<> ExecutiveSetObjectTTT(PyMOLGlobals* G,
+    const char* name, const float* ttt, int state, int quiet, int store);
 int ExecutiveGetObjectTTT(PyMOLGlobals * G, const char *name, const float **ttt, int state,
                           int quiet);
 int ExecutiveGetObjectMatrix(PyMOLGlobals * G, const char *name, int state, double **matrix,
@@ -470,10 +489,10 @@ int ExecutiveSculptDeactivate(PyMOLGlobals * G, const char *name);
 int ExecutiveSculptActivate(PyMOLGlobals * G, const char *name, int state=-1, int match_state=-2,
                             int match_by_segment=0);
 float ExecutiveSculptIterate(PyMOLGlobals * G, const char *name, int state=-1, int n_cycle=10);
-int ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float *grid, const char *sele,
-                    float buffer, float *minCorner, float *maxCorner,
-                    int state, int have_corners, int quiet, int zoom, int normalize,
-                    float clamp_floor, float clamp_ceiling, float resolution);
+pymol::Result<> ExecutiveMapNew(PyMOLGlobals* G, const char* name, int type,
+    float grid_spacing, const char* sele, float buffer, const float* minCorner,
+    const float* maxCorner, int state, int have_corners, int quiet, int zoom,
+    int normalize, float clamp_floor, float clamp_ceiling, float resolution);
 
 int ***ExecutiveGetBondPrint(PyMOLGlobals * G, const char *name, int max_bond, int max_type,
                              int *dim);
@@ -495,13 +514,14 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session, int partial_restor
 int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
                           int state, int quiet, int updates);
 
-int ExecutiveAssignSS(PyMOLGlobals * G, const char *target, int state, const char *context,
-                      int preserve, ObjectMolecule * single_object, int quiet);
+pymol::Result<> ExecutiveAssignSS(PyMOLGlobals* G,
+    const char* target, int state, const char* context, int preserve,
+    ObjectMolecule* single_object, int quiet);
 
-int ExecutiveRampNew(PyMOLGlobals * G, const char *name, const char *src_name, float *range,
-                     float *color, int src_state, const char *sele,
-                     float beyond, float within, float sigma, int zero, int calc_mode,
-                     int quiet);
+pymol::Result<> ExecutiveRampNew(PyMOLGlobals* G, const char* name,
+    const char* src_name, pymol::vla<float> range, pymol::vla<float> color,
+    int src_state, const char* sele, float beyond, float within, float sigma,
+    int zero, int calc_mode, int quiet);
 
 int ExecutiveValidateObjectPtr(PyMOLGlobals * G, CObject * ptr, int object_type);
 
@@ -524,12 +544,12 @@ pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
     const char* s1, const char* expr, float min, float max, int first, int last,
     const char* prefix, int digits, int byres, int quiet);
 
-int ExecutiveReinitialize(PyMOLGlobals * G, int what, const char *pattern);
+pymol::Result<> ExecutiveReinitialize(PyMOLGlobals * G, int what, pymol::zstring_view pattern);
 const char *ExecutiveFindBestNameMatch(PyMOLGlobals * G, const char *name);
 int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict);
 PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G);
 CField   *ExecutiveGetVolumeField(PyMOLGlobals * G, const char * objName, int state);
-int       ExecutiveSetVolumeRamp(PyMOLGlobals * G, const char * objName, std::vector<float>&& ramp_list);
+pymol::Result<> ExecutiveSetVolumeRamp(PyMOLGlobals * G, const char * objName, std::vector<float> ramp_list);
 PyObject *ExecutiveGetVolumeRamp(PyMOLGlobals * G, const char * objName);
 
 pymol::Result<std::vector<float>>
@@ -538,9 +558,9 @@ ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points,
 
 int ExecutiveIterateObjectMolecule(PyMOLGlobals * G, ObjectMolecule ** obj,
                                    void **hidden);
-int ExecutiveSetObjectColor(PyMOLGlobals * G, const char *name, const char *color, int quiet);
+pymol::Result<> ExecutiveSetObjectColor(PyMOLGlobals * G, const char *name, const char *color, int quiet);
 int ExecutiveGetObjectColorIndex(PyMOLGlobals * G, const char *name);
-int ExecutiveSetOnOffBySele(PyMOLGlobals * G, const char *name, int onoff);
+pymol::Result<> ExecutiveSetOnOffBySele(PyMOLGlobals * G, pymol::zstring_view sname, int onoff);
 pymol::Result<> ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_name);
 int ExecutiveSetDrag(PyMOLGlobals * G, const char *name, int quiet,int mode);
 int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int log);
@@ -564,11 +584,9 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
                          int source_state, int target_state,
                          int target_undo, int log, int quiet);
 
-int ExecutiveMatrixCopy(PyMOLGlobals * G,
-                        const char *source_name, const char *target_name,
-                        int source_mode, int target_mode,
-                        int source_state, int target_state,
-                        int target_undo, int log, int quiet);
+int ExecutiveMatrixCopy(PyMOLGlobals* G, const char* source_name,
+    const char* target_name, int source_mode, int target_mode, int source_state,
+    int target_state, int target_undo, int log, int quiet);
 
 void ExecutiveMemoryDump(PyMOLGlobals * G);
 void ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op);
@@ -608,7 +626,7 @@ int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,
                          int simple, float linear, int wrap,
                          int hand, int window, int cycles, int state, int quiet);
 int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, const float *ttt, int reverse_order, int store);
-int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, float *v, int store);
+int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, const float *v, int store);
 void ExecutiveMotionClick(PyMOLGlobals * G, BlockRect *rect, int mode, int expected, int x, int y, int nearest);
 void ExecutiveMotionTrim(PyMOLGlobals * G);
 void ExecutiveMotionExtend(PyMOLGlobals * G, int freeze);
@@ -626,6 +644,13 @@ int ExecutiveAssignAtomTypes(PyMOLGlobals * G, const char *s1, int format, int s
 
 PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB, int lenA, int lenB,
 			    float d0, float d1, int windowSize, int gapMax);
+
+pymol::Result<> ExecutiveSetFeedbackMask(
+    PyMOLGlobals* G, int action, unsigned int sysmod, unsigned char mask);
+pymol::Result<> ExecutiveClip(PyMOLGlobals* G, pymol::zstring_view clipStr);
+
+pymol::Result<> ExecutiveSliceNew(PyMOLGlobals* G, const char* slice_name,
+    const char* map_name, int state, int map_state);
 
 #ifdef _PYMOL_LIB
 int *ExecutiveGetRepsInSceneForObject(PyMOLGlobals *G, const char *name);

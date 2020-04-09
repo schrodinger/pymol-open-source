@@ -47,14 +47,9 @@ USAGE
     average = number of states to average for each resulting spheroid state
 
     '''
-        r = DEFAULT_ERROR
-        try:
-            print("Warning: 'spheroid' is experimental, incomplete, and unstable.")
-            _self.lock(_self)
+        print("Warning: 'spheroid' is experimental, incomplete, and unstable.")
+        with _self.lockcm:
             r = _cmd.spheroid(_self._COb,str(object),int(average))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def mem(_self=cmd):

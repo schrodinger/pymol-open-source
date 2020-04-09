@@ -924,7 +924,7 @@ void ObjectCombineTTT(CObject * I, const float *ttt, int reverse_order, int stor
   }
 }
 /*========================================================================*/
-void ObjectTranslateTTT(CObject * I, float *v, int store)
+void ObjectTranslateTTT(CObject * I, const float *v, int store)
 {
   if(I->type == cObjectGroup) {
     ExecutiveGroupTranslateTTT(I->G, I, v, store);

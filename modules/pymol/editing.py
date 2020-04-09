@@ -1407,6 +1407,7 @@ DESCRIPTION
     
         '''
         #
+        r = DEFAULT_ERROR
         if space is None:
             space = _self._pymol.__dict__
         try:
@@ -2472,18 +2473,12 @@ DESCRIPTION
     "fix chemistry" is an unsupported feature.
 
 '''
-        r = DEFAULT_ERROR
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
-        try:
-            _self.lock(_self)
-            r = _cmd.fix_chemistry(_self._COb,"("+str(selection1)+")",
-				   "("+str(selection2)+")",int(invalidate),
+        with _self.lockcm:
+            return _cmd.fix_chemistry(_self._COb,str(selection1),
+				   str(selection2),int(invalidate),
 				   int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
 
     def set_object_color(name, color, quiet=1, _self=cmd):
         r = DEFAULT_ERROR

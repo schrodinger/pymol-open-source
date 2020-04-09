@@ -236,13 +236,9 @@ SEE ALSO
             selection = selector.process(selection)
         else:
             selection = ''
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.clip(_self._COb,str(mode),float(distance),
                           str(selection),int(state)-1)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
         return r
 
     def origin(selection="(all)", object=None, position=None, state=0, _self=cmd):

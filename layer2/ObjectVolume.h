@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"Symmetry.h"
 #include"Util2.h"
+#include"Result.h"
 
 struct ObjectVolumeState : public CObjectState {
   ObjectNameType MapName;
@@ -62,6 +63,7 @@ struct ObjectVolume : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(int rep, int level, int state) override;
   int getNFrame() const override;
+  CObject* clone() const override;
 };
 
 ObjectVolume *ObjectVolumeFromBox(PyMOLGlobals * G, ObjectVolume * obj, ObjectMap * map,
@@ -83,7 +85,7 @@ int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name, const char
 
 CField   * ObjectVolumeGetField(ObjectVolume* I);
 PyObject * ObjectVolumeGetRamp(ObjectVolume* I);
-int        ObjectVolumeSetRamp(ObjectVolume* I, std::vector<float>&& ramp_list);
+pymol::Result<>  ObjectVolumeSetRamp(ObjectVolume* I, std::vector<float>&& ramp_list);
 
 ObjectMapState * ObjectVolumeGetMapState(ObjectVolume * I);
 

@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"SceneDef.h"
 #include"SceneRender.h"
 #include"ShaderMgr.h"
+#include"pymol/zstring_view.h"
 
 #define SDOF_NORMAL_MODE 0
 #define SDOF_CLIP_MODE 1
@@ -40,6 +41,17 @@ Z* -------------------------------------------------------------------
 
 #define cSceneViewSize 25
 typedef float SceneViewType[cSceneViewSize];
+
+enum cSceneClip {
+  cSceneClip_invalid = -1,
+  cSceneClip_near = 0,
+  cSceneClip_far = 1,
+  cSceneClip_move = 2,
+  cSceneClip_slab = 3,
+  cSceneClip_atoms = 4,
+};
+
+cSceneClip SceneClipGetEnum(pymol::zstring_view mode);
 
 float SceneGetDynamicLineWidth(RenderInfo * info, float line_width);
 void SceneInvalidateStencil(PyMOLGlobals * G);
@@ -129,7 +141,7 @@ void SceneDontCopyNext(PyMOLGlobals * G);
 void SceneGetViewNormal(PyMOLGlobals * G, float *v);
 void SceneClipSet(PyMOLGlobals * G, float front, float back);
 void SceneGetView(PyMOLGlobals * G, SceneViewType view);
-void SceneSetView(PyMOLGlobals * G, SceneViewType view,
+void SceneSetView(PyMOLGlobals * G, const SceneViewType view,
                   int quiet, float animate, int hand);
 void SceneRestartSweepTimer(PyMOLGlobals * G);
 int SceneViewEqual(SceneViewType left, SceneViewType right);

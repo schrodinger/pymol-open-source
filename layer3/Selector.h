@@ -71,7 +71,7 @@ void SelectorFreeTmp(PyMOLGlobals * G, const char *name);
 int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet=false);
 int SelectorGetTmp(PyMOLGlobals * G, const char *input, char *store, bool quiet=false);
 int SelectorCheckTmp(PyMOLGlobals * G, const char *name);
-int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state);
+pymol::Result<> SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state);
 PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state);
 float SelectorSumVDWOverlap(PyMOLGlobals * G, int sele1, int state1,
                             int sele2, int state2, float adjust);
@@ -207,6 +207,7 @@ int SelectorIsMember(PyMOLGlobals * G, int start, int sele);
  * Temporary named selection gets deleted when instance gets out of scope.
  */
 class SelectorTmp {
+protected:
   PyMOLGlobals* m_G = nullptr;
   char m_name[1024]{}; // OrthoLineType
   int m_count = -1;
@@ -229,6 +230,15 @@ public:
   int getAtomCount() { return m_count; }
   int getIndex() {
     return m_name[0] ? SelectorIndexByName(m_G, m_name, false) : -1;
+  }
+};
+
+struct SelectorTmp2 : SelectorTmp {
+  SelectorTmp2() = default;
+  SelectorTmp2(PyMOLGlobals* G, const char* sele)
+  {
+    m_G = G;
+    m_count = SelectorGetTmp2(m_G, sele, m_name);
   }
 };
 

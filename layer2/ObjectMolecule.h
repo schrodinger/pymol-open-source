@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include "Executive_pre.h"
 #include "vla.h"
 #include "Result.h"
+
 #include "Sculpt.h"
 #include <memory>
 
@@ -116,6 +117,7 @@ struct ObjectMolecule : public CObject {
   void describeElement(int index, char* buffer) const override;
   char* getCaption(char* ch, int len) const override;
   CSetting **getSettingHandle(int state) override;
+  CObject* clone() const override;
   CSymmetry const* getSymmetry(int state = 0) const override
   {
     return Symmetry;
@@ -301,7 +303,7 @@ void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec * op);
 int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                 ObjectMolecule ** result);
 PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I);
-int ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const char *text);
+pymol::Result<> ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const char *text);
 const char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state);
 int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int state);
 
@@ -315,6 +317,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
 
 int ObjectMoleculeSort(ObjectMolecule * I);
 ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj);
+void ObjectMoleculeCopyNoAlloc(const ObjectMolecule * src, ObjectMolecule * dst);
 void ObjectMoleculeFixChemistry(ObjectMolecule * I, int sele1, int sele2, int invalidate);
 
 ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals * G, ObjectMolecule * obj,
@@ -363,7 +366,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 			int aic_mask, int invalidate);
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I);
 int ObjectMoleculeUpdateNeighbors(ObjectMolecule * I);
-int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, float *v, int mode,
+int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, const float *v, int mode,
                            int log);
 int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float *v, int log, float *diff);
 int ObjectMoleculeGetAtomVertex(ObjectMolecule * I, int state, int index, float *v);

@@ -359,23 +359,21 @@ void ObjectMesh::invalidate(int rep, int level, int state)
   }
 }
 
-int ObjectMeshGetLevel(ObjectMesh * I, int state, float *result)
+pymol::Result<float> ObjectMeshGetLevel(ObjectMesh * I, int state)
 {
-  int ok = true;
-  ObjectMeshState *ms;
   if(state >= I->NState) {
-    ok = false;
+    return pymol::make_error("Invalid Mesh state");
   } else {
     if(state < 0) {
       state = 0;
     }
-    ms = I->State + state;
-    if(ms->Active && result) {
-      *result = ms->Level;
-    } else
-      ok = false;
+    auto ms = I->State + state;
+    if(ms->Active) {
+      return ms->Level;
+    } else {
+      return pymol::make_error("Invalid Mesh state");
+    }
   }
-  return (ok);
 }
 
 int ObjectMeshSetLevel(ObjectMesh * I, float level, int state, int quiet)
@@ -1332,3 +1330,9 @@ void ObjectMeshRecomputeExtent(ObjectMesh * I)
     }
   }
 }
+
+CObject* ObjectMesh::clone() const
+{
+  return new ObjectMesh(*this);
+}
+

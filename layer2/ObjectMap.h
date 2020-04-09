@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Symmetry.h"
 #include"Isosurf.h"
 #include"vla.h"
+#include"Result.h"
 
 #define cMapSourceUndefined 0
 
@@ -89,6 +90,7 @@ struct ObjectMap : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(int rep, int level, int state) override;
   int getNFrame() const override;
+  CObject* clone() const override;
   CSymmetry const* getSymmetry(int state = 0) const override;
   bool setSymmetry(CSymmetry const& symmetry, int state = 0) override;
 
@@ -145,8 +147,8 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * 
                                     int state, int discrete, int quiet);
 ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Map,
                                   int state, int discrete, int quiet);
-int ObjectMapDouble(ObjectMap * I, int state);
-int ObjectMapHalve(ObjectMap * I, int state, int smooth);
+pymol::Result<> ObjectMapDouble(ObjectMap * I, int state);
+pymol::Result<> ObjectMapHalve(ObjectMap * I, int state, int smooth);
 int ObjectMapTrim(ObjectMap * I, int state, float *mn, float *mx, int quiet);
 int ObjectMapSetBorder(ObjectMap * I, float level, int state);
 int ObjectMapStateSetBorder(ObjectMapState * I, float level);

@@ -1224,3 +1224,8 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
   SceneCountFrames(G);
   return (I);
 }
+
+CObject* ObjectAlignment::clone() const
+{
+  return new ObjectAlignment(*this);
+}

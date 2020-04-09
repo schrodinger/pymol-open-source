@@ -5926,10 +5926,10 @@ PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state)
  * PyMOL> coords = iter(coords)
  * PyMOL> cmd.alter_state(state, sele, '(x,y,z) = coords.next()')
  */
-int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
+pymol::Result<> SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
 {
 #ifdef _PYMOL_NOPY
-  return false;
+  return pymol::Error("Python unavailable.");
 #else
 
   double matrix[16];
@@ -5943,8 +5943,7 @@ int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
   void * ptr;
 
   if(!PySequence_Check(coords)) {
-    ErrMessage(G, "LoadCoords", "passed argument is not a sequence");
-    ok_raise(1);
+    return pymol::Error("Passed argument is not a sequence");
   }
 
   // atom count in selection
@@ -5953,19 +5952,17 @@ int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
 
   // sequence length must match atom count
   if(nAtom != PySequence_Size(coords)) {
-    ErrMessage(G, "LoadCoords", "atom count mismatch");
-    return false;
+    return pymol::Error("Atom count mismatch");
   }
 
   // detect numpy arrays, allows faster data access (see below)
 #ifdef _PYMOL_NUMPY
-  import_array1(false);
+  import_array1(pymol::Error());
 
   if(PyArray_Check(coords)) {
     if(PyArray_NDIM((PyArrayObject *)coords) != 2 ||
         PyArray_DIM((PyArrayObject *)coords, 1) != 3) {
-      ErrMessage(G, "LoadCoords", "numpy array shape mismatch");
-      return false;
+      return pymol::Error("Numpy array shape mismatch");
     }
     itemsize = PyArray_ITEMSIZE((PyArrayObject *)coords);
     switch(itemsize) {
@@ -6013,7 +6010,10 @@ int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
       Py_DECREF(v);
     }
 
-    ok_assert(2, !PyErr_Occurred());
+    if(PyErr_Occurred()) {
+      return pymol::Error("Load Coords error occurred.");
+    }
+
 
     // coord set specific stuff
     if(mat_cs != iter.cs) {
@@ -6034,15 +6034,8 @@ int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
     copy3f(v_xyz, iter.getCoord());
   }
 
-  return true;
-
-  // error handling
-ok_except2:
-  PyErr_Print();
-ok_except1:
-  ErrMessage(G, "LoadCoords", "failed");
-  return false;
 #endif
+  return {};
 }
 
 /*========================================================================*/
