@@ -247,6 +247,8 @@ pymol::Result<float> ExecutiveDistance(PyMOLGlobals* G, const char* nam,
     int state2 = -4);
 pymol::Result<> ExecutiveBond(PyMOLGlobals* G, const char* s1,
     const char* s2, int order, int mode, int quiet);
+pymol::Result<> ExecutiveAddBondByIndices(PyMOLGlobals* G, pymol::zstring_view oname,
+    unsigned int atm1, unsigned int atm2, int order);
 pymol::Result<> ExecutiveRevalence(PyMOLGlobals* G, const char* s1,
     const char* s2, const char* src, int target_state, int source_state,
     int reset, int quiet);
@@ -348,8 +350,8 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *sele1, const char *sele2, int mod
 void ExecutiveUpdateCmd(PyMOLGlobals * G, const char *sele1, const char *sele2, int sta1, int sta2,
                         int method, int quiet);
 float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode, bool quiet);
-float *ExecutiveRMSStates(PyMOLGlobals * G, const char *s1, int target, int mode, int quiet,
-                          int mix);
+pymol::Result<pymol::vla<float>> ExecutiveRMSStates(
+    PyMOLGlobals * G, const char *s1, int target, int mode, int quiet, int mix);
 int ExecutiveIndex(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
                    ObjectMolecule *** objVLA);
 pymol::Result<> ExecutiveReset(PyMOLGlobals*, pymol::zstring_view);
@@ -414,7 +416,8 @@ pymol::Result<> ExecutiveAddHydrogens(PyMOLGlobals* G, const char* s1 = "(all)",
 void ExecutiveFixHydrogens(PyMOLGlobals * G, const char *s1, int quiet);
 pymol::Result<> ExecutiveFuse(PyMOLGlobals* G, const char* s0 = "(pk1)",
     const char* s1 = "(pk2)", int mode = 0, int recolor = 1, int move_flag = 1);
-void ExecutiveRenameObjectAtoms(PyMOLGlobals * G, const char *name, int force, int quiet);
+pymol::Result<> ExecutiveRenameObjectAtoms(
+    PyMOLGlobals* G, const char* name, int force, int quiet);
 
 pymol::Result<std::vector<const char*>> ExecutiveGetNames(PyMOLGlobals*, int, int, const char*);
 bool ExecutiveIsMoleculeOrSelection(PyMOLGlobals * G, const char *name);
@@ -651,6 +654,11 @@ pymol::Result<> ExecutiveClip(PyMOLGlobals* G, pymol::zstring_view clipStr);
 
 pymol::Result<> ExecutiveSliceNew(PyMOLGlobals* G, const char* slice_name,
     const char* map_name, int state, int map_state);
+
+pymol::Result<ExecutiveRMSInfo> ExecutiveFit(PyMOLGlobals* G,
+    pymol::zstring_view str1, pymol::zstring_view str2, int mode, int cutoff,
+    int cycles, int quiet, pymol::zstring_view object, int state1, int state2,
+    int matchmaker);
 
 #ifdef _PYMOL_LIB
 int *ExecutiveGetRepsInSceneForObject(PyMOLGlobals *G, const char *name);

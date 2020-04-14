@@ -4392,27 +4392,15 @@ static PyObject *CmdIntraFit(PyObject * self, PyObject * args)
   int mode;
   int quiet;
   int mix;
-  float *fVLA = NULL;
-  PyObject *result = Py_None;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Osiiii", &self, &str1, &state, &mode, &quiet, &mix);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    if(state < 0)
-      state = 0;
-    if((ok = APIEnterNotModal(G))) {
-      fVLA = ExecutiveRMSStates(G, str1, state, mode, quiet, mix);
-      APIExit(G);
-    }
-    if(fVLA) {
-      result = PConvFloatVLAToPyList(fVLA);
-      VLAFreeP(fVLA);
-    }
+  API_SETUP_ARGS(G, self, args, "Osiiii", &self, &str1, &state, &mode, &quiet, &mix);
+  API_ASSERT(APIEnterNotModal(G));
+  if(state < 0)
+    state = 0;
+  auto fVLA = ExecutiveRMSStates(G, str1, state, mode, quiet, mix);
+  APIExit(G);
+  PyObject* result = nullptr;
+  if(fVLA) {
+    result = PConvFloatVLAToPyList(fVLA.result().data());
   }
   return APIAutoNone(result);
 }
@@ -4442,38 +4430,20 @@ static PyObject *CmdFit(PyObject * self, PyObject * args)
   char *str1, *str2;
   int mode;
   int quiet;
-  OrthoLineType s1, s2;
-  PyObject *result;
   float cutoff;
   int state1, state2;
-  int ok = false;
   int matchmaker, cycles;
   char *object;
-  ExecutiveRMSInfo rms_info;
-  ok = PyArg_ParseTuple(args, "Ossiiiiifis", &self, &str1, &str2, &mode,
-                        &state1, &state2, &quiet, &matchmaker, &cutoff, &cycles, &object);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
+  API_SETUP_ARGS(G, self, args, "Ossiiiiifis", &self, &str1, &str2, &mode,
+      &state1, &state2, &quiet, &matchmaker, &cutoff, &cycles, &object);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveFit(G, str1, str2, mode, cutoff, cycles, quiet, object, state1, state2, matchmaker);
+  APIExit(G);
+  if(result) {
+    return PConvToPyObject(result.result().final_rms);
   } else {
-    API_HANDLE_ERROR;
+    return APIFailure(G, result.error());
   }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ((SelectorGetTmp(G, str1, s1) >= 0) && (SelectorGetTmp(G, str2, s2) >= 0));
-    if(ok)
-      ok = ExecutiveRMS(G, s1, s2, mode,
-                        cutoff, cycles, quiet, object, state1, state2,
-                        false, matchmaker, &rms_info);
-    SelectorFreeTmp(G, s1);
-    SelectorFreeTmp(G, s2);
-    APIExit(G);
-  }
-  if(ok) {
-    result = Py_BuildValue("f", rms_info.final_rms);
-  } else {
-    result = Py_BuildValue("f", -1.0F);
-  }
-  return result;
 }
 
 static PyObject *CmdUpdate(PyObject * self, PyObject * args)
@@ -6634,23 +6604,12 @@ static PyObject *CmdRename(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *str1;
   int int1, int2;
-  OrthoLineType s1;
 
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Osii", &self, &str1, &int1, &int2);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
-    ExecutiveRenameObjectAtoms(G, s1, int1, int2);      /* TODO STATUS */
-    SelectorFreeTmp(G, s1);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Osii", &self, &str1, &int1, &int2);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveRenameObjectAtoms(G, str1, int1, int2);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdOrder(PyObject * self, PyObject * args)

@@ -8934,11 +8934,11 @@ void ExecutiveUpdateCmd(PyMOLGlobals * G, const char *s0, const char *s1, int st
 
 
 /*========================================================================*/
-void ExecutiveRenameObjectAtoms(PyMOLGlobals * G, const char *s, int force, int quiet)
+pymol::Result<> ExecutiveRenameObjectAtoms(
+    PyMOLGlobals* G, const char* selection, int force, int quiet)
 {
-  int sele;
-
-  sele = SelectorIndexByName(G, s);
+  SelectorTmp s1(G, selection);
+  auto sele = s1.getIndex();
   if(sele >= 0) {
     ObjectMoleculeOpRec op;
     ObjectMoleculeOpRecInit(&op);
@@ -8952,8 +8952,9 @@ void ExecutiveRenameObjectAtoms(PyMOLGlobals * G, const char *s, int force, int 
         " Rename: renamed %d atoms.\n", op.i1 ENDFB(G);
     }
   } else {
-    ErrMessage(G, " Executive", "invalid selection.");
+    return pymol::make_error("Invalid selection.");
   }
+  return {};
 }
 
 
@@ -11235,8 +11236,8 @@ int ExecutiveIndex(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
  * @param mode 2=intra_fit, 1=intra_rms, 0=intra_rms_cur
  * @param mix intra_fit only, average the prior target coordinates
  */
-float *ExecutiveRMSStates(PyMOLGlobals * G, const char *s1, int target, int mode, int quiet,
-                          int mix)
+pymol::Result<pymol::vla<float>> ExecutiveRMSStates(
+    PyMOLGlobals * G, const char *s1, int target, int mode, int quiet, int mix)
 {
   SelectorTmp tmpsele1(G, s1);
   int sele1 = tmpsele1.getIndex();
@@ -11258,10 +11259,7 @@ float *ExecutiveRMSStates(PyMOLGlobals * G, const char *s1, int target, int mode
       PRINTFB(G, FB_Executive, FB_Warnings)
         "Executive-Warning: Mobile selection spans more than one object.\n" ENDFB(G);
     } else {
-      PRINTFB(G, FB_Executive, FB_Errors)
-        "Executive-Error: Mobile selection spans more than one object. Aborting.\n\n"
-        ENDFB(G);
-      ok = false;
+      return pymol::make_error("Mobile selection spans more than one object.");
     }
   }
 
@@ -11294,7 +11292,7 @@ float *ExecutiveRMSStates(PyMOLGlobals * G, const char *s1, int target, int mode
       ExecutiveUpdateCoordDepends(G, obj);
     }
   }
-  return (result);
+  return pymol::vla_take_ownership(result);
 }
 
 
@@ -16824,3 +16822,27 @@ pymol::Result<> ExecutiveRebond(PyMOLGlobals* G, const char* oname, int state)
 
   return {};
 }
+
+pymol::Result<> ExecutiveAddBondByIndices(PyMOLGlobals* G,
+    pymol::zstring_view oname, unsigned int atm1, unsigned int atm2, int order)
+{
+  auto obj = ExecutiveFindObject<ObjectMolecule>(G, oname.c_str());
+  if (!obj) {
+    return pymol::make_error("Cannot find object ", oname);
+  }
+  return ObjectMoleculeAddBondByIndices(obj, atm1, atm2, order);
+}
+
+pymol::Result<ExecutiveRMSInfo> ExecutiveFit(PyMOLGlobals* G,
+    pymol::zstring_view str1, pymol::zstring_view str2, int mode, int cutoff,
+    int cycles, int quiet, pymol::zstring_view object, int state1, int state2,
+    int matchmaker)
+{
+  SelectorTmp s1(G, str1.c_str());
+  SelectorTmp s2(G, str2.c_str());
+  ExecutiveRMSInfo rmsinfo;
+  ExecutiveRMS(G, s1.getName(), s2.getName(), mode, cutoff, cycles, quiet,
+      object.c_str(), state1, state2, false, matchmaker, &rmsinfo);
+  return rmsinfo;
+}
+
