@@ -119,6 +119,7 @@ class TestCreating(testing.PyMOLTestCase):
             self.assertEqual(cmd.get_state(), 2)
             self.assertImageHasColor(meshcolor)
 
+    @testing.requires("multi_undo")
     def testUndoIsosurface(self):
         cmd.fragment('gly', 'm1')
         cmd.set('gaussian_b_floor', 30)

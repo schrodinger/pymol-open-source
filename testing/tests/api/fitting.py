@@ -37,6 +37,23 @@ class TestFitting(testing.PyMOLTestCase):
         rms = cmd.rms_cur("m1", "m2")
         self.assertEqual(rms, 0.0)
 
+    @testing.requires("multi_undo")
+    def testUndoFit(self):
+        cmd.fragment("gly", "m1")
+        cmd.create("m2", "m1")
+        cmd.rotate("y", "90", "m2")
+        rms = cmd.rms_cur("m1", "m2")
+        self.assertNotAlmostEqual(rms, 0.0)
+        cmd.fit("m1", "m2")
+        rms = cmd.rms_cur("m1", "m2")
+        self.assertAlmostEqual(rms, 0.0)
+        cmd.undo2()
+        rms = cmd.rms_cur("m1", "m2")
+        self.assertNotAlmostEqual(rms, 0.0)
+        cmd.redo2()
+        rms = cmd.rms_cur("m1", "m2")
+        self.assertAlmostEqual(rms, 0.0)
+
     def testIntraFit(self):
         cmd.fragment("gly", "m1")
         cmd.create("m1", "m1", 1, 2)
