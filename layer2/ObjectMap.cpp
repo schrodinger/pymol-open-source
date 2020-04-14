@@ -358,6 +358,11 @@ int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
   return cnt;
 }
 
+/**
+ * @see ObjectMapStateInterpolate for parameter description
+ * @param state Object state (can be -2 for current state)
+ * @return True if the map state exists and `result` has been written to
+ */
 int ObjectMapInterpolate(ObjectMap * I, int state, const float *array, float *result, int *flag,
                          int n)
 {
@@ -386,6 +391,7 @@ int ObjectMapInterpolate(ObjectMap * I, int state, const float *array, float *re
     }
 
     ok = ObjectMapStateInterpolate(ms, array, result, flag, n);
+    ok = true;
   }
 
   if(txf != txf_buffer)
@@ -1004,6 +1010,14 @@ int ObjectMapStateContainsPoint(ObjectMapState * ms, float *point)
   return (result);
 }
 
+/**
+ * @param array Coordinate array of length `3*n`
+ * @param[out] result Array of length `n` which will be populated with map
+ * values at coorinate positions (linear interpolated between grid points)
+ * @param[out] flag Array of length `n` which will be populated with booleans
+ * indicating if points were within map bounds (optional, can be NULL)
+ * @return False if any coordinate was out of bounds
+ */
 int ObjectMapStateInterpolate(ObjectMapState * ms, const float *array, float *result, int *flag,
                               int n)
 {

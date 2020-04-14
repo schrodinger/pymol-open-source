@@ -6542,7 +6542,7 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
             if(rec->type == cExecObject) {
               if(rec->obj->type == cObjectMap) {
                 ObjectMap *obj = (ObjectMap *) rec->obj;
-                ObjectMapInterpolate(obj, src_state, pnt, r_value, inside, n_pnt);
+                if (ObjectMapInterpolate(obj, src_state, pnt, r_value, inside, n_pnt))
                 {
                   int a;
                   float *rv = r_value;
