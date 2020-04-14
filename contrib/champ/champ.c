@@ -4467,7 +4467,7 @@ void ChampDetectChirality(CChamp *I,int index)
   
   void ChampAtomDump(CChamp *I,int index)
 {
-  char buf[3];
+  char buf[4];
   ChampAtomToString(I,index,buf);
   printf("%s",buf);
 }
