@@ -239,6 +239,15 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load_raw(open(self.datafile("sampletrajectory.pdb")).read(), "pdb")
         self.assertEqual(115, cmd.count_atoms())
 
+    @testing.requires("multi_undo")
+    def testUndoLoadRaw(self):
+        cmd.load_raw(open(self.datafile("sampletrajectory.pdb")).read(), "pdb")
+        self.assertEqual(115, cmd.count_atoms())
+        cmd.undo2()
+        self.assertEqual(0, cmd.count_atoms())
+        cmd.redo2()
+        self.assertEqual(115, cmd.count_atoms())
+
     @testing.requires_version('2.3.3')
     def testLoadRawMMTF(self):
         import gzip
