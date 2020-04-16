@@ -127,6 +127,15 @@ public:
   const Error& error() const noexcept { return m_error; }
 
   /**
+   * Rvalue reference to the underlying error object
+   */
+  Error&& error_move() noexcept
+  {
+    assert(!m_valid);
+    return std::move(m_error);
+  }
+
+  /**
    * Retrieves the value of the expected object
    */
 
@@ -138,6 +147,16 @@ public:
 
   const ResultT& result() const { return m_result; }
 
+  /**
+   * Pointer to the expected object. Never NULL. Call is invalid if this
+   * instance is in error state.
+   */
+  ResultT* operator->()
+  {
+    assert(m_valid);
+    return &m_result;
+  }
+
 private:
   ResultT m_result;
   Error m_error;
@@ -146,3 +165,14 @@ private:
 
 } // namespace pymol
 
+/**
+ * If `res` is in error state, return from the calling scope with `res.error()`.
+ * @param res Expression of type pymol::Result
+ * @note Inspired by `g_return_val_if_fail` from glib
+ */
+#define p_return_if_error(res)                                                 \
+  {                                                                            \
+    auto&& _res_evaluated_ = res;                                              \
+    if (!_res_evaluated_)                                                      \
+      return _res_evaluated_.error_move();                                     \
+  }

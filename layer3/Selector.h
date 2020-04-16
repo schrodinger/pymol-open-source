@@ -28,32 +28,38 @@ Z* -------------------------------------------------------------------
 #include"OVOneToAny.h"
 #include"Match.h"
 
+#include "Result.h"
+
 #define cSelectionAll 0
 #define cSelectionNone 1
 
 int SelectorInit(PyMOLGlobals * G);
 int SelectorInitImpl(PyMOLGlobals * G, CSelector **I, short init2);
-int SelectorCreate(PyMOLGlobals * G, const char *name, const char *sele, ObjectMolecule * obj,
+
+/// return type of all SelectorCreate related functions
+typedef pymol::Result<int> SelectorCreateResult_t;
+
+SelectorCreateResult_t SelectorCreate(PyMOLGlobals * G, const char *name, const char *sele, ObjectMolecule * obj,
                    int quiet, Multipick * mp);
-int SelectorCreateWithStateDomain(PyMOLGlobals * G, const char *name, const char *sele,
+SelectorCreateResult_t SelectorCreateWithStateDomain(PyMOLGlobals * G, const char *name, const char *sele,
                                   ObjectMolecule * obj, int quiet, Multipick * mp,
                                   int state, const char *domain);
-int SelectorCreateSimple(PyMOLGlobals * G, const char *name, const char *sele);
-int SelectorCreateFromObjectIndices(PyMOLGlobals * G, const char *sname, ObjectMolecule * obj,
+SelectorCreateResult_t SelectorCreateSimple(PyMOLGlobals * G, const char *name, const char *sele);
+SelectorCreateResult_t SelectorCreateFromObjectIndices(PyMOLGlobals * G, const char *sname, ObjectMolecule * obj,
                                     int *idx, int n_idx);
-int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals * G, const char *sname,
+SelectorCreateResult_t SelectorCreateOrderedFromObjectIndices(PyMOLGlobals * G, const char *sname,
                                            ObjectMolecule * obj, int *idx, int n_idx);
-int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals * G, const char *sname,
+SelectorCreateResult_t SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals * G, const char *sname,
                                                ObjectMolecule ** obj, int **pri_idx,
                                                int *n_idx, int n_obj);
 
-int SelectorCreateFromTagDict(PyMOLGlobals * G, const char *sname, const std::unordered_map<int, int>& id2tag,
+SelectorCreateResult_t SelectorCreateFromTagDict(PyMOLGlobals * G, const char *sname, const std::unordered_map<int, int>& id2tag,
                               int exec_managed);
 
 
 /* if n_idx is negative, then looks for negative *idx as the sentinel */
 int SelectorMoveMember(PyMOLGlobals * G, int s, int sele_old, int sele_new);
-int SelectorCreateEmpty(PyMOLGlobals * G, const char *name, int exec_managed);
+SelectorCreateResult_t SelectorCreateEmpty(PyMOLGlobals * G, const char *name, int exec_managed);
 
 int SelectorUpdateTable(PyMOLGlobals * G, int req_state, int domain);
 int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int domain);
@@ -70,6 +76,10 @@ void SelectorDelete(PyMOLGlobals * G, const char *sele);
 void SelectorFreeTmp(PyMOLGlobals * G, const char *name);
 int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet=false);
 int SelectorGetTmp(PyMOLGlobals * G, const char *input, char *store, bool quiet=false);
+
+pymol::Result<int> SelectorGetTmp2Result(PyMOLGlobals * G, const char *input, char *store, bool quiet=false);
+pymol::Result<int> SelectorGetTmpResult(PyMOLGlobals * G, const char *input, char *store, bool quiet=false);
+
 int SelectorCheckTmp(PyMOLGlobals * G, const char *name);
 pymol::Result<> SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state);
 PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state);
@@ -217,6 +227,7 @@ public:
   SelectorTmp(PyMOLGlobals * G, const char * sele) : m_G(G) {
     m_count = SelectorGetTmp(m_G, sele, m_name);
   }
+  SelectorTmp(SelectorTmp&& other);
   SelectorTmp& operator=(SelectorTmp&& other) {
     std::swap(m_G, other.m_G);
     std::swap(m_count, other.m_count);
@@ -231,6 +242,8 @@ public:
   int getIndex() {
     return m_name[0] ? SelectorIndexByName(m_G, m_name, false) : -1;
   }
+  //! Factory which propagages errors
+  static pymol::Result<SelectorTmp> make(PyMOLGlobals* G, const char* sele);
 };
 
 struct SelectorTmp2 : SelectorTmp {
@@ -240,6 +253,8 @@ struct SelectorTmp2 : SelectorTmp {
     m_G = G;
     m_count = SelectorGetTmp2(m_G, sele, m_name);
   }
+  //! Factory which propagages errors
+  static pymol::Result<SelectorTmp2> make(PyMOLGlobals* G, const char* sele);
 };
 
 #endif

@@ -916,7 +916,6 @@ pymol::Result<> ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
                            int quiet, int surf_mode)
 {
   int c;
-  OrthoLineType s1;
   ObjectSurface *obj = nullptr, *origObj = nullptr;
   ObjectMap *mapObj;
   float mn[3] = { 0, 0, 0 };
@@ -959,16 +958,17 @@ pymol::Result<> ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
           carve = 0.0F;
           break;
         case 1:                /* using selection to get extents */
-          if (SelectorGetTmp2(G, sele, s1) < 0) {
-            return pymol::Error("Invalid selection");
+          {
+            auto tmpsele = SelectorTmp2::make(G, sele);
+            p_return_if_error(tmpsele);
+            auto s1 = tmpsele->getName();
+            ExecutiveGetExtent(G, s1, mn, mx, false, -1, false);  /* TODO state */
+            if(carve != 0.0F) {
+              vert_vla = ExecutiveGetVertexVLA(G, s1, state);
+              if(fbuf <= R_SMALL4)
+                fbuf = fabs(carve);
+            }
           }
-          ExecutiveGetExtent(G, s1, mn, mx, false, -1, false);  /* TODO state */
-          if(carve != 0.0F) {
-            vert_vla = ExecutiveGetVertexVLA(G, s1, state);
-            if(fbuf <= R_SMALL4)
-              fbuf = fabs(carve);
-          }
-          SelectorFreeTmp(G, s1);
           for(c = 0; c < 3; c++) {
             mn[c] -= fbuf;
             mx[c] += fbuf;
@@ -1027,7 +1027,6 @@ pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
   float *vert_vla = NULL;
   int multi = false;
   ObjectMapState *ms;
-  OrthoLineType s1;
   ObjectMolecule *sele_obj = NULL;
   CSymmetry *symm;
 
@@ -1069,22 +1068,20 @@ pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
           break;
         case 1:                /* just do area around selection */
 	  /* determine the selected object */
-          if (SelectorGetTmp2(G, sele, s1) < 0) {
-            return pymol::Error("Invalid selection");
-          }
           {
-            int sele1 = SelectorIndexByName(G, s1);
+            auto tmpsele = SelectorTmp2::make(G, sele);
+            p_return_if_error(tmpsele);
+            int sele1 = tmpsele->getIndex();
             if(sele1 >= 0)
               sele_obj = SelectorGetSingleObjectMolecule(G, sele1);
+            auto s1 = tmpsele->getName();
+            ExecutiveGetExtent(G, s1, mn, mx, false, -1, false);  /* TODO state */
+            if(carve != 0.0) {
+              vert_vla = ExecutiveGetVertexVLA(G, s1, state);
+              if(fbuf <= R_SMALL4)
+                fbuf = fabs(carve);
+            }
           }
-
-          ExecutiveGetExtent(G, s1, mn, mx, false, -1, false);  /* TODO state */
-          if(carve != 0.0) {
-            vert_vla = ExecutiveGetVertexVLA(G, s1, state);
-            if(fbuf <= R_SMALL4)
-              fbuf = fabs(carve);
-          }
-          SelectorFreeTmp(G, s1);
           {
             int c;
             for(c = 0; c < 3; c++) {
@@ -1175,7 +1172,6 @@ ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
   float *vert_vla = NULL;
   int multi = false;
   ObjectMapState *ms;
-  OrthoLineType s1;
   ObjectMolecule *sele_obj = NULL;
   CSymmetry *symm;
 
@@ -1248,22 +1244,20 @@ ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
           carve = -0.0;         /* impossible */
           break;
         case 1:                /* just do area around selection */
-          if (SelectorGetTmp2(G, sele, s1) < 0) {
-            return pymol::Error("Invalid selection");
-          }
           {
-            int sele1 = SelectorIndexByName(G, s1);
+            auto tmpsele = SelectorTmp2::make(G, sele);
+            p_return_if_error(tmpsele);
+            int sele1 = tmpsele->getIndex();
             if(sele1 >= 0)
               sele_obj = SelectorGetSingleObjectMolecule(G, sele1);
+            auto const s1 = tmpsele->getName();
+            ExecutiveGetExtent(G, s1, mn, mx, false, -1, false);  /* TODO state */
+            if(carve != 0.0) {
+              vert_vla = ExecutiveGetVertexVLA(G, s1, state);
+              if(fbuf <= R_SMALL4)
+                fbuf = fabs(carve);
+            }
           }
-
-          ExecutiveGetExtent(G, s1, mn, mx, false, -1, false);  /* TODO state */
-          if(carve != 0.0) {
-            vert_vla = ExecutiveGetVertexVLA(G, s1, state);
-            if(fbuf <= R_SMALL4)
-              fbuf = fabs(carve);
-          }
-          SelectorFreeTmp(G, s1);
           {
             int c;
             for(c = 0; c < 3; c++) {
@@ -1355,13 +1349,12 @@ std::string ExecutivePreparePseudoatomName(
 }
 
 pymol::Result<> ExecutivePseudoatom(PyMOLGlobals* G, pymol::zstring_view object_name_view,
-    const char* presele, const char* name, const char* resn, const char* resi,
+    const char* sele, const char* name, const char* resn, const char* resi,
     const char* chain, const char* segi, const char* elem, float vdw,
     int hetatm, float b, float q, const char* label, const float* pos, int color,
     int state, int mode, int quiet)
 {
-  SelectorTmp s1(G, presele);
-  auto sele = s1.getName();
+  pymol::Result<SelectorTmp> s1;
 
   auto object_name = object_name_view.c_str();
   auto obj = ExecutiveFindObject<ObjectMolecule>(G, object_name);
@@ -1372,20 +1365,16 @@ pymol::Result<> ExecutivePseudoatom(PyMOLGlobals* G, pymol::zstring_view object_
 
   if(sele && sele[0]) {
     if(WordMatchExact(G, cKeywordCenter, sele, true)) {
-      sele = NULL;
       SceneGetCenter(G, local_pos);
       pos = local_pos;
     } else if(WordMatchExact(G, cKeywordOrigin, sele, true)) {
-      sele = NULL;
       SceneOriginGet(G, local_pos);
       pos = local_pos;
-    }
-  }
-
-  if(sele && sele[0]) {
-    sele_index = s1.getIndex();
-    if(sele_index < 0) {
-      return pymol::make_error("Invalid selection");
+    } else {
+      s1 = SelectorTmp::make(G, sele);
+      p_return_if_error(s1);
+      sele_index = s1->getIndex();
+      assert(sele_index >= 0);
     }
   }
   if(!obj) {
@@ -3480,10 +3469,13 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals* G, std::string& name, int create_ne
 
 pymol::Result<> ExecutiveFixChemistry(PyMOLGlobals * G, const char *s1, const char *s2, int invalidate, int quiet)
 {
-  SelectorTmp tmpsele1(G, s1);
-  SelectorTmp tmpsele2(G, s2);
-  int sele1 = tmpsele1.getIndex();
-  int sele2 = tmpsele2.getIndex();
+  auto tmpsele1 = SelectorTmp::make(G, s1);
+  p_return_if_error(tmpsele1);
+  auto tmpsele2 = SelectorTmp::make(G, s2);
+  p_return_if_error(tmpsele2);
+
+  int sele1 = tmpsele1->getIndex();
+  int sele2 = tmpsele2->getIndex();
 
   SpecRec *rec = NULL;
   CExecutive *I = G->Executive;
@@ -4366,32 +4358,30 @@ pymol::Result<> ExecutiveAssignSS(PyMOLGlobals* G,
     const char* target, int state, const char* context, int preserve,
     ObjectMolecule* single_object, int quiet)
 {
-  SelectorTmp targetTmp;
-  SelectorTmp contextTmp;
+  if (!target[0]) {
+    return pymol::make_error("selection must not be empty");
+  }
+  pymol::Result<SelectorTmp> targetTmp;
+  pymol::Result<SelectorTmp> contextTmp;
   int sele0 = -1;
   int sele1 = -1;
-  int ok = false;
   sele0 = SelectorIndexByName(G, target);
   if (sele0 < 0) {
-    targetTmp = SelectorTmp(G, target);
-    sele0 = targetTmp.getIndex();
+    targetTmp = SelectorTmp::make(G, target);
+    p_return_if_error(targetTmp);
+    sele0 = targetTmp->getIndex();
+    assert(sele0 >= 0);
   }
-  if(sele0 >= 0) {
-    if((!context) || (!context[0])) {
-      sele1 = sele0;
-    } else {
-      contextTmp = SelectorTmp(G, context);
-      sele1 = contextTmp.getIndex();
-    }
-    if(sele1 >= 0) {
-      ok = SelectorAssignSS(G, sele0, sele1, state, preserve, single_object, quiet);
-    }
-  }
-  if(ok) {
-    return {};
+  if (!context || !context[0]) {
+    sele1 = sele0;
   } else {
-    return pymol::make_error("Error assigning SS...");
+    contextTmp = SelectorTmp::make(G, context);
+    p_return_if_error(contextTmp);
+    sele1 = contextTmp->getIndex();
+    assert(sele1 >= 0);
   }
+  SelectorAssignSS(G, sele0, sele1, state, preserve, single_object, quiet);
+  return {};
 }
 
 static int * getRepArrayFromBitmask(int visRep);
@@ -4715,8 +4705,9 @@ pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
   char *at;
   float range;
 
-  SelectorTmp tmpsele1(G, s1);
-  int sele1 = tmpsele1.getIndex();
+  auto tmpsele1 = SelectorTmp::make(G, s1);
+  p_return_if_error(tmpsele1);
+  int sele1 = tmpsele1->getIndex();
 
   if(sele1 >= 0) {
 
@@ -4884,8 +4875,9 @@ pymol::Result<std::vector<const char*>> ExecutiveGetChains(
   int c = 0;
   ObjectMoleculeOpRec op;
 
-  SelectorTmp tmpsele1(G, sele);
-  int sele1 = tmpsele1.getIndex();
+  auto tmpsele1 = SelectorTmp::make(G, sele);
+  p_return_if_error(tmpsele1);
+  int sele1 = tmpsele1->getIndex();
 
   if(sele1 >= 0) {
 
@@ -4975,12 +4967,10 @@ pymol::Result<> ExecutiveRampNew(PyMOLGlobals* G, const char* name,
     case cRampMap:
       /* mapping this ramp from a selection */
       if(sele && sele[0]) {
-        SelectorTmp tmpsele(G, sele);
-        sele = tmpsele.getName();
-
-        if (!sele[0]) {
-          return pymol::make_error("invalid selection");
-        }
+        auto tmpsele = SelectorTmp::make(G, sele);
+        p_return_if_error(tmpsele);
+        sele = tmpsele->getName();
+        assert(sele[0]);
 
         vert_vla = ExecutiveGetVertexVLA(G, sele, src_state);
       }
@@ -5945,8 +5935,9 @@ ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a, fl
 
   // odd feature: accept atom selections to select single object
   if (!obj) {
-    SelectorTmp tmpsele1(G, sele);
-    obj = SelectorGetSingleObjectMolecule(G, tmpsele1.getIndex());
+    auto tmpsele1 = SelectorTmp::make(G, sele);
+    p_return_if_error(tmpsele1);
+    obj = SelectorGetSingleObjectMolecule(G, tmpsele1->getIndex());
     if (!obj) {
       return pymol::make_error("selection must refer to exactly one object");
     }
@@ -6050,9 +6041,10 @@ pymol::Result<> ExecutiveSymmetryCopy(PyMOLGlobals* G, const char* source_name,
 pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* selection,
     int cycles, int window, int first, int last, int ends, int quiet)
 {
-  SelectorTmp tmpsele1(G, selection);
-  int sele = tmpsele1.getIndex();
-  const char *name = tmpsele1.getName();
+  auto tmpsele1 = SelectorTmp::make(G, selection);
+  p_return_if_error(tmpsele1);
+  int sele = tmpsele1->getIndex();
+  const char *name = tmpsele1->getName();
 
   ObjectMoleculeOpRec op;
   int state;
@@ -6768,9 +6760,10 @@ ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float grid_spacing
   int a;
   float v[3];
   ObjectMapDesc _md, *md;
-  SelectorTmp s1(G, pre_sele);
-  auto sele = s1.getName();
-  int sele0 = s1.getIndex();
+  auto s1 = SelectorTmp::make(G, pre_sele);
+  p_return_if_error(s1);
+  auto sele = s1->getName();
+  int sele0 = s1->getIndex();
   int isNew = true;
   int n_state;
   int valid_extent = false;
@@ -10210,13 +10203,10 @@ pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const char* name,
     sele = selebuf.c_str();
   }
 
-  auto count = SelectorCreateWithStateDomain(
+  auto res = SelectorCreateWithStateDomain(
       G, name, sele, nullptr, quiet, nullptr, state, domain);
 
-  if (count < 0) {
-    // TODO
-    return pymol::make_error("should raise from SelectorCreateWithStateDomain");
-  }
+  p_return_if_error(res);
 
   if (enable == 1) {
     ExecutiveSetObjVisib(G, name, 1, 0);
@@ -10227,7 +10217,7 @@ pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const char* name,
   SceneInvalidate(G);
   SeqDirty(G);
 
-  return count;
+  return res.result();
 }
 
 /*========================================================================*/
@@ -10255,7 +10245,7 @@ int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,
           }
           if(ok)
             n_sele =
-              SelectorCreateOrderedFromObjectIndices(G, sele_name, obj, list, list_len);
+              SelectorCreateOrderedFromObjectIndices(G, sele_name, obj, list, list_len).result();
           break;
         case 1:                /* atom identifier */
         case 2:                /* rank */
@@ -10319,7 +10309,7 @@ int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,
             if(ok)
               n_sele =
                 SelectorCreateOrderedFromObjectIndices(G, sele_name, obj, idx_list,
-                                                       n_idx);
+                                                       n_idx).result();
             OVOneToAny_DEL_AUTO_NULL(o2a);
             VLAFreeP(idx_list);
           }

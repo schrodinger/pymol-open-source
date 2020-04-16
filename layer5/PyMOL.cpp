@@ -930,7 +930,11 @@ PyMOLreturn_status PyMOL_CmdLabel(CPyMOL * I, const char *selection, const char 
 PyMOLreturn_status PyMOL_CmdSelect(CPyMOL * I, const char *name, const char *selection, int quiet)
 {
   int ret = -1;
-  PYMOL_API_LOCK ret = SelectorCreate(I->G, name, selection, NULL, quiet, NULL);
+  PYMOL_API_LOCK
+
+  auto res = SelectorCreate(I->G, name, selection, NULL, quiet, NULL);
+  ret = res ? res.result() : -1;
+
   PYMOL_API_UNLOCK return return_status_ok(ret >= 0); // if ret is negative it should fail
 }
 

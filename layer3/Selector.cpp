@@ -142,18 +142,19 @@ typedef struct {
   int frag;
 } WalkDepthRec;
 
-static sele_array_t SelectorSelect(PyMOLGlobals * G, const char *sele, int state, int domain, int quiet);
+static pymol::Result<sele_array_t> SelectorSelect(
+    PyMOLGlobals* G, const char* sele, int state, int domain, int quiet);
 static std::vector<int> SelectorGetInterstateVLA(PyMOLGlobals* G, int sele1,
     int state1, int sele2, int state2, float cutoff);
 
 static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state);
 static int SelectorSelect0(PyMOLGlobals * G, EvalElem * base);
-static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet);
 static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base, int state);
 static int SelectorLogic1(PyMOLGlobals * G, EvalElem * base, int state);
 static int SelectorLogic2(PyMOLGlobals * G, EvalElem * base);
 static int SelectorOperator22(PyMOLGlobals * G, EvalElem * base, int state);
-static sele_array_t SelectorEvaluate(PyMOLGlobals* G, std::vector<std::string>& word, int state, int quiet);
+static pymol::Result<sele_array_t> SelectorEvaluate(
+    PyMOLGlobals* G, std::vector<std::string>& word, int state, int quiet);
 static std::vector<std::string> SelectorParse(PyMOLGlobals * G, const char *s);
 static void SelectorPurgeMembers(PyMOLGlobals * G, int sele);
 static int SelectorEmbedSelection(PyMOLGlobals * G, const int *atom, pymol::zstring_view name,
@@ -6659,7 +6660,18 @@ std::string SelectorGetUniqueTmpName(PyMOLGlobals * G)
  */
 int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet)
 {
-  int count = 0;
+  auto res = SelectorGetTmp2Result(G, input, store, quiet);
+  if (res) {
+    return res.result();
+  }
+  PRINTFB(G, FB_Selector, FB_Errors)
+    " Selector-Error: %s\n", res.error().what().c_str() ENDFB(G);
+  return -1;
+}
+
+pymol::Result<int>
+SelectorGetTmp2Result(PyMOLGlobals * G, const char *input, char *store, bool quiet)
+{
   /* ASSUMES that store is at least as big as an OrthoLineType */
   auto I = G->SelectorMgr;
   PRINTFD(G, FB_Selector)
@@ -6735,20 +6747,19 @@ int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet
                                    parsing the input as an atom selection */
       WordType name;
       sprintf(name, "%s%d", cSelectorTmpPrefix, I->TmpCounter++);
-      count = SelectorCreate(G, name, input, NULL, quiet, NULL);
-      if(count >= 0) {
+      auto res = SelectorCreate(G, name, input, NULL, quiet, NULL);
+      if(res) {
         strcpy(store, name);
       } else {
         store[0] = 0;
       }
+      return res;
     } else {                    /* otherwise, just parse the input as a space-separated list of names */
       /* not a selection */
       strcpy(store, input);
     }
   }
-  PRINTFD(G, FB_Selector)
-    " %s-Debug: leaving with \"%s\".\n", __func__, store ENDFD;
-  return count;
+  return 0;
 
 }
 
@@ -6760,13 +6771,25 @@ int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet
  */
 int SelectorGetTmp(PyMOLGlobals * G, const char *input, char *store, bool quiet)
 {
-  int count = 0;
+  auto res = SelectorGetTmpResult(G, input, store, quiet);
+  if (res) {
+    return res.result();
+  }
+  PRINTFB(G, FB_Selector, FB_Errors)
+    " Selector-Error: %s\n", res.error().what().c_str() ENDFB(G);
+  return -1;
+}
+
+pymol::Result<int>
+SelectorGetTmpResult(PyMOLGlobals * G, const char *input, char *store, bool quiet)
+{
   auto I = G->SelectorMgr;
 
   store[0] = 0;
 
   // trivial (but valid) case: empty selection string
-  ok_assert(1, input[0]);
+  if (!input[0])
+    return 0;
 
   // if object molecule or named selection, then don't create a temp selection
   if (ExecutiveIsMoleculeOrSelection(G, input)
@@ -6777,12 +6800,13 @@ int SelectorGetTmp(PyMOLGlobals * G, const char *input, char *store, bool quiet)
 
   // evaluate expression and create a temp selection
   sprintf(store, "%s%d", cSelectorTmpPrefix, I->TmpCounter++);
-  count = SelectorCreate(G, store, input, NULL, quiet, NULL);
-  if(count < 0)
-    store[0] = 0;
+  auto res = SelectorCreate(G, store, input, NULL, quiet, NULL);
 
-ok_except1:
-  return count;
+  if(!res) {
+    store[0] = 0;
+  }
+
+  return res;
 }
 
 int SelectorCheckTmp(PyMOLGlobals * G, const char *name)
@@ -6964,7 +6988,8 @@ static sele_array_t SelectorSelectFromTagDict(PyMOLGlobals * G, const std::unord
 
 /*========================================================================*/
 
-static int _SelectorCreate(PyMOLGlobals * G, pymol::zstring_view sname, const char *sele,
+static SelectorCreateResult_t
+_SelectorCreate(PyMOLGlobals * G, pymol::zstring_view sname, const char *sele,
                            ObjectMolecule ** obj, int quiet, Multipick * mp,
                            CSeqRow * rowVLA, int nRow, int **obj_idx, int *n_idx,
                            int n_obj, const std::unordered_map<int, int>* id2tag, int executive_manage,
@@ -6972,13 +6997,9 @@ static int _SelectorCreate(PyMOLGlobals * G, pymol::zstring_view sname, const ch
 {
   sele_array_t atom{};
   std::string name;
-  int ok = true;
   int c = 0;
   int ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
   ObjectMolecule *embed_obj = NULL;
-
-  PRINTFD(G, FB_Selector)
-    "SelectorCreate-Debug: entered...\n" ENDFD;
 
   /* copy sname into name and check if it's a keyword; abort on 
    * the selection name == keyword: eg. "select all, none" */
@@ -6992,14 +7013,14 @@ static int _SelectorCreate(PyMOLGlobals * G, pymol::zstring_view sname, const ch
   name = UtilCleanStdStr(name);
   /* name was invalid, output error msg to user */
   if(!name[0]) {
-      PRINTFB(G, FB_Selector, FB_Errors)
-	"Selector-Error: Invalid selection name \"%s\".\n", sname.c_str() ENDFB(G);
+    return pymol::make_error("Invalid selection name '", sname.c_str(), "'");
   }
-  if(ok) {
+
+  {
     if(sele) {
-      atom = SelectorSelect(G, sele, state, domain, quiet);
-      if(!atom)
-        ok = false;
+      auto res = SelectorSelect(G, sele, state, domain, quiet);
+      p_return_if_error(res);
+      atom = std::move(res.result());
     } else if(id2tag) {
       atom = SelectorSelectFromTagDict(G, *id2tag);
     } else if(obj && obj[0]) {  /* optimized full-object selection */
@@ -7019,73 +7040,61 @@ static int _SelectorCreate(PyMOLGlobals * G, pymol::zstring_view sname, const ch
       }
     } else if(mp) {
       atom = SelectorApplyMultipick(G, mp);
-#if 0
-    } else if(rowVLA) {
-      atom = SelectorApplySeqRowVLA(G, rowVLA, nRow);
-#endif
-    } else
-      ok = false;
+    } else {
+      return pymol::make_error(__func__, " insufficient arguments");
+    }
   }
-  if(ok)
-    c = SelectorEmbedSelection(G, atom.get(), name, embed_obj, false, executive_manage);
+
+  c = SelectorEmbedSelection(G, atom.get(), name, embed_obj, false, executive_manage);
   atom.reset();
   SelectorClean(G);
   /* ignore reporting on quiet */
   if(!quiet) {
     /* ignore reporting on internal/private names */
     if(name[0] != '_') {
-      if(ok) {
         PRINTFB(G, FB_Selector, FB_Actions)
           " Selector: selection \"%s\" defined with %d atoms.\n", name.c_str(), c ENDFB(G);
-      }
     }
   }
-  if(ok) {
-    PRINTFD(G, FB_Selector)
-      " %s: \"%s\" created with %d atoms.\n", __func__, name.c_str(), c ENDFD;
-  } else {
-    PRINTFD(G, FB_Selector)
-      " %s: \"%s\" not created due to error\n", __func__, name.c_str() ENDFD;
-  }
-  if(!ok)
-    c = -1;
+
+  PyMOL_NeedRedisplay(G->PyMOL);
   return (c);
 }
 
-int SelectorCreateFromTagDict(PyMOLGlobals * G, const char *sname, const std::unordered_map<int, int>& id2tag,
+SelectorCreateResult_t SelectorCreateFromTagDict(PyMOLGlobals * G, const char *sname, const std::unordered_map<int, int>& id2tag,
                               int exec_managed)
 {
   return _SelectorCreate(G, sname, NULL, NULL, true, NULL, NULL, 0, NULL, NULL, 0, &id2tag,
                          exec_managed, -1, -1);
 }
 
-int SelectorCreateEmpty(PyMOLGlobals * G, const char *name, int exec_managed)
+SelectorCreateResult_t SelectorCreateEmpty(PyMOLGlobals * G, const char *name, int exec_managed)
 {
   return _SelectorCreate(G, name, "none", NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL,
                          exec_managed, -1, -1);
 }
 
-int SelectorCreateSimple(PyMOLGlobals * G, const char *name, const char *sele)
+SelectorCreateResult_t SelectorCreateSimple(PyMOLGlobals * G, const char *name, const char *sele)
 {
   return _SelectorCreate(G, name, sele, NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL, -1, -1,
                          -1);
 }
 
-int SelectorCreateFromObjectIndices(PyMOLGlobals * G, const char *sname, ObjectMolecule * obj,
+SelectorCreateResult_t SelectorCreateFromObjectIndices(PyMOLGlobals * G, const char *sname, ObjectMolecule * obj,
                                     int *idx, int n_idx)
 {
   return _SelectorCreate(G, sname, NULL, &obj, true, NULL, NULL, 0, &idx, &n_idx, -1, NULL, -1, -1, -1); 
   /* n_obj = -1 disables numbered tags */
 }
 
-int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals * G, const char *sname,
+SelectorCreateResult_t SelectorCreateOrderedFromObjectIndices(PyMOLGlobals * G, const char *sname,
                                            ObjectMolecule * obj, int *idx, int n_idx)
 {
   return _SelectorCreate(G, sname, NULL, &obj, true, NULL, NULL, 0, &idx, &n_idx, 0, NULL, -1, -1, -1);
   /* assigned numbered tags */
 }
 
-int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals * G, const char *sname,
+SelectorCreateResult_t SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals * G, const char *sname,
                                                ObjectMolecule ** obj,
                                                int **idx_tag, int *n_idx, int n_obj)
 {
@@ -7093,14 +7102,14 @@ int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals * G, const char *sna
                          NULL, -1, -1, -1);
 }
 
-int SelectorCreate(PyMOLGlobals * G, const char *sname, const char *sele, ObjectMolecule * obj,
+SelectorCreateResult_t SelectorCreate(PyMOLGlobals * G, const char *sname, const char *sele, ObjectMolecule * obj,
                    int quiet, Multipick * mp)
 {
   return _SelectorCreate(G, sname, sele, &obj, quiet, mp, NULL, 0, NULL, 0, 0, NULL, -1,
                          -1, -1);
 }
 
-int SelectorCreateWithStateDomain(PyMOLGlobals * G, const char *sname, const char *sele,
+SelectorCreateResult_t SelectorCreateWithStateDomain(PyMOLGlobals * G, const char *sname, const char *sele,
                                   ObjectMolecule * obj, int quiet, Multipick * mp,
                                   int state, const char *domain)
 {
@@ -7464,10 +7473,9 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
 
 
 /*========================================================================*/
-static sele_array_t SelectorSelect(PyMOLGlobals * G, const char *sele, int state, int domain, int quiet)
+static pymol::Result<sele_array_t> SelectorSelect(
+    PyMOLGlobals* G, const char* sele, int state, int domain, int quiet)
 {
-  PRINTFD(G, FB_Selector)
-    "SelectorSelect-DEBUG: sele = \"%s\"\n", sele ENDFD;
   SelectorUpdateTable(G, state, domain);
   auto parsed = SelectorParse(G, sele);
   if (!parsed.empty()) {
@@ -7927,7 +7935,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
 
 
 /*========================================================================*/
-static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
+static pymol::Result<> SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
 {
   CSelector *I = G->Selector;
   auto IM = I->mgr;
@@ -7941,7 +7949,6 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
 
   int model, s, col_idx;
   int flag;
-  int ok = true;
   int index, state;
   int rep_mask;
   const char *wildcard = SettingGetGlobal_s(G, cSetting_wildcard);
@@ -8327,10 +8334,8 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     obj = NULL;
 
     if (state < 0 && state != cSelectorUpdateTableCurrentState) {
-      PRINTFB(G, FB_Selector, FB_Errors)
-        " Selector-Error: state %d unsupported (must be -1 (current) or >=1)\n",
-        state + 1 ENDFB(G);
-      ok = false;
+      return pymol::make_error(
+          "state ", state + 1, " unsupported (must be -1 (current) or >=1)");
     } else {
       for(a = cNDummyAtoms; a < I_NAtom; a++) {
         base[0].sele[a] = false;
@@ -8566,9 +8571,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
             for(a = cNDummyAtoms; a < I_NAtom; a++)
               base[0].sele[a] = false;
           } else {
-	      PRINTFB(G, FB_Selector, FB_Errors)
-		"Selector-Error: Invalid selection name \"%s\".\n", word ENDFB(G);
-            ok = false;
+            return pymol::make_error("Invalid selection name \"", word, "\".");
           }
         }
       }
@@ -8664,9 +8667,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
             }
           }
         } else {
-          PRINTFB(G, FB_Selector, FB_Errors)
-            " Selector-Error: invalid model \"%s\".\n", base[1].text() ENDFB(G);
-          ok = false;
+          return pymol::make_error("invalid model \"", base[1].text(), "\"");
         }
       }
     }
@@ -8674,7 +8675,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
   }
   PRINTFD(G, FB_Selector)
     " %s:  %d atoms selected.\n", __func__, c ENDFD;
-  return (ok);
+  return {};
 }
 
 
@@ -9844,8 +9845,40 @@ static void remove_quotes(std::string& str)
   e->type = (e->code & 0xF); \
 }
 
+/**
+ * Indicates at wich token the parsing stopped
+ * @param tokens token list
+ * @param pos token index
+ * @return " ".join(tokens[:pos + 1]) + "<--"
+ */
+static std::string indicate_last_token(
+    const std::vector<std::string>& tokens, int pos)
+{
+  std::string msg;
+  for (int i = 0, i_end = std::min<int>(pos + 1, tokens.size()); //
+       i < i_end; ++i) {
+    if (i && tokens[i][0]) {
+      msg += " ";
+    }
+    msg += tokens[i];
+  }
+  msg += "<--";
+  return msg;
+}
+
+#define return_error_with_tokens(msg)                                          \
+  return pymol::make_error(msg, "\n", indicate_last_token(word, c))
+
+#define return_on_error_with_tokens(expr)                                      \
+  {                                                                            \
+    auto _temp_result = (expr);                                                \
+    if (!_temp_result) {                                                       \
+      return_error_with_tokens(_temp_result.error().what());                   \
+    }                                                                          \
+  }
+
 /*========================================================================*/
-sele_array_t SelectorEvaluate(PyMOLGlobals* G,
+pymol::Result<sele_array_t> SelectorEvaluate(PyMOLGlobals* G,
     std::vector<std::string>& word,
     int state, int quiet)
 {
@@ -9879,18 +9912,18 @@ sele_array_t SelectorEvaluate(PyMOLGlobals* G,
     case '(':
       /* increase stack depth on open parens: (selection ((and token) blah)) */
       if(valueFlag)
-        ok = ErrMessage(G, "Selector", "Misplaced (.");
+        return_error_with_tokens("Misplaced (.");
       if(ok)
         level++;
       break;
     case ')':
       /* decrease stack depth */
       if(valueFlag)
-        ok = ErrMessage(G, "Selector", "Misplaced ).");
+        return_error_with_tokens("Misplaced ).");
       if(ok) {
         level--;
         if(level < 0)
-          ok = ErrMessage(G, "Selector", "Syntax error.");
+          return_error_with_tokens("Syntax error.");
         else
           imp_op_level = level;
       }
@@ -9965,8 +9998,7 @@ sele_array_t SelectorEvaluate(PyMOLGlobals* G,
           if((a = std::count(word[c].begin(), word[c].end(),
                   '/'))) { /* handle slash notation */
             if(a > 5) {
-              ok = ErrMessage(G, "Selector", "too many slashes in macro");
-              break;
+              return_error_with_tokens("too many slashes in selection macro");
             }
 
             // macro codes (some special cases apply! see code below)
@@ -10053,7 +10085,7 @@ sele_array_t SelectorEvaluate(PyMOLGlobals* G,
       c++;                      /* go onto next word */
   }
   if(level > 0){
-      ok = ErrMessage(G, "Selector", "Malformed selection.");
+    return_error_with_tokens("Malformed selection.");
   }
   if(ok) {                      /* this is the main operation loop */
     totDepth = depth;
@@ -10094,7 +10126,8 @@ sele_array_t SelectorEvaluate(PyMOLGlobals* G,
                    && (Stack[depth].type == STYP_VALU)) {
                   /* 1 argument selection operator */
                   opFlag = true;
-                  ok = SelectorSelect1(G, &Stack[depth - 1], quiet);
+                  return_on_error_with_tokens(
+                      SelectorSelect1(G, &Stack[depth - 1], quiet));
                   for(a = depth + 1; a <= totDepth; a++)
                     Stack[a - 1] = std::move(Stack[a]);
                   totDepth--;
@@ -10222,24 +10255,20 @@ sele_array_t SelectorEvaluate(PyMOLGlobals* G,
       }
     depth = totDepth;
   }
-  if(ok) {
-    if(depth != 1) {
-	ok = ErrMessage(G, "Selector", "Malformed selection.");
-    } else if(Stack[depth].type != STYP_LIST)
-	ok = ErrMessage(G, "Selector", "Invalid selection.");
-    else
-      return std::move(Stack[totDepth].sele); /* return the selection list */
+
+  if (!ok) {
+    return pymol::Error(indicate_last_token(word, c));
   }
-  if(!ok) {
-    for (a = 0; a <= c && a < word.size(); a++) {
-      const char* space = (a && word[a][0]) ? " " : "";
-      PRINTFB(G, FB_Selector, FB_Errors)
-        "%s%s", space, word[a].c_str() ENDFB(G);
-    }
-    PRINTFB(G, FB_Selector, FB_Errors)
-      "<--\n" ENDFB(G);
+
+  if (depth != 1) {
+    return pymol::Error("Malformed selection.");
   }
-  return {};
+
+  if (Stack[depth].type != STYP_LIST) {
+    return pymol::Error("Invalid selection.");
+  }
+
+  return std::move(Stack[totDepth].sele); /* return the selection list */
 }
 
 

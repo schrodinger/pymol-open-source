@@ -4318,12 +4318,17 @@ static PyObject *CmdGetAtomCoords(PyObject * self, PyObject * args)
   int quiet;
   API_SETUP_ARGS(G, self, args, "Osii", &self, &str1, &state, &quiet);
   APIEnter(G);
-  SelectorTmp s1(G, str1);
   pymol::Result<std::array<float, 3>> result;
-  if(s1.getAtomCount() > 0) {
-    result = ExecutiveGetAtomVertex(G, s1.getName(), state, quiet);
-  } else {
-    result = pymol::Error("Empty Selection");
+  {
+    auto s1 = SelectorTmp::make(G, str1);
+    if (!s1) {
+      result = s1.error_move();
+    } else if(s1->getAtomCount() == 0) {
+      result = pymol::Error("Empty Selection");
+    } else {
+      assert(s1->getAtomCount() > 0);
+      result = ExecutiveGetAtomVertex(G, s1->getName(), state, quiet);
+    }
   }
   APIExit(G);
   return APIResult(G, result);
@@ -5698,12 +5703,17 @@ static PyObject *CmdShowHide(PyObject * self, PyObject * args)
     sname = cKeywordAll;
     rep = cRepBitmask;
   }
+  pymol::Result<> res;
   {
-    SelectorTmp2 sele{G, sname};
-    ExecutiveSetRepVisMask(G, sele.getName(), rep, state);
+    auto tmpsele1 = SelectorTmp2::make(G, sname);
+    if (tmpsele1) {
+      ExecutiveSetRepVisMask(G, tmpsele1->getName(), rep, state);
+    } else {
+      res = tmpsele1.error_move();
+    }
   }
   APIExit(G);
-  return APISuccess();
+  return APIResult(G, res);
 }
 
 static PyObject *CmdOnOffBySele(PyObject * self, PyObject * args)
@@ -6199,12 +6209,17 @@ static PyObject *CmdCenter(PyObject * self, PyObject * args)
   int quiet = false;            /* TODO */
   API_SETUP_ARGS(G, self, args, "Osiif", &self, &str1, &state, &origin, &animate);
   API_ASSERT(APIEnterNotModal(G));
+  pymol::Result<> res;
   {
-    SelectorTmp2 tmpsele1(G, str1);
-    ExecutiveCenter(G, tmpsele1.getName(), state, origin, animate, nullptr, quiet);
+    auto tmpsele1 = SelectorTmp2::make(G, str1);
+    if (tmpsele1) {
+      ExecutiveCenter(G, tmpsele1->getName(), state, origin, animate, nullptr, quiet);
+    } else {
+      res = tmpsele1.error_move();
+    }
   }
   APIExit(G);
-  return APISuccess();
+  return APIResult(G, res);
 }
 
 static PyObject *CmdReference(PyObject * self, PyObject * args)

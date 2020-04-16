@@ -1003,7 +1003,7 @@ void EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet)
 
           if(hydrogen) {
             sprintf(buf, "((neighbor %s) and hydro)", cEditorSele1);
-            h_flag = SelectorCreate(G, cEditorRemoveSele, buf, NULL, false, NULL);
+            h_flag = SelectorCreate(G, cEditorRemoveSele, buf, NULL, false, NULL).result();
           }
 
           if(SelectorGetFastSingleAtomObjectIndex(G, sele0, &i0)) {
@@ -1016,7 +1016,7 @@ void EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet)
 
           if(hydrogen) {
             sprintf(buf, "((neighbor %s) and hydro)", cEditorSet);
-            h_flag = SelectorCreate(G, cEditorRemoveSele, buf, NULL, false, NULL);
+            h_flag = SelectorCreate(G, cEditorRemoveSele, buf, NULL, false, NULL).result();
           }
           ExecutiveRemoveAtoms(G, cEditorSet, quiet);
         }
