@@ -3,6 +3,16 @@ from pymol import cmd, testing, stored
 
 class TestSelecting(testing.PyMOLTestCase):
 
+    @testing.requires_version('2.4')
+    def test_error_propagation(self):
+        try:
+            cmd.center("(all) and no_such_name")
+        except Exception as e:
+            self.assertTrue("Invalid selection name" in e.message)
+            self.assertTrue("no_such_name" in e.message)
+            return
+        self.fail("did not raise")
+
     def testDeselect(self):
         cmd.load(self.datafile("1oky.pdb.gz"), "m1")
         cmd.select("all")
