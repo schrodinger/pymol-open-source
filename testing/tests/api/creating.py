@@ -546,7 +546,19 @@ class TestCreating(testing.PyMOLTestCase):
         self.assertEqual(cmd.index('m1 & aln'), index_m1)
         self.assertEqual(cmd.index('m2 & aln'), index_m2)
 
-    @unittest.skip("Not yet implemented.")
+    @testing.requires("multi_undo")
     def testUndoSetRawAlignment(self):
-        pass
+        cmd.fab('ACDEF', 'm1')
+        cmd.fab('CDE', 'm2')
+        index_m1 = [('m1', 12), ('m1', 23), ('m1', 35)]
+        index_m2 = [('m2',  2), ('m2', 13), ('m2', 25)]
+        raw = [list(t) for t in zip(index_m1, index_m2)]
+        cmd.set_raw_alignment('aln', raw)
+        self.assertEqual(cmd.index('m1 & aln'), index_m1)
+        self.assertEqual(cmd.index('m2 & aln'), index_m2)
+        cmd.undo2()
+        self.assertTrue('aln' not in cmd.get_names())
+        cmd.redo2()
+        self.assertEqual(cmd.index('m1 & aln'), index_m1)
+        self.assertEqual(cmd.index('m2 & aln'), index_m2)
 

@@ -325,6 +325,44 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual([0.,0.,1.], cmd.get_atom_coords('m1`1'))
         self.assertEqual([1.,1.,1.], cmd.get_atom_coords('m1`2'))
 
+    @testing.requires("multi_undo")
+    def test_undo_protect(self):
+        cmd.pseudoatom('m1', pos=[0.,0.,0.])
+        cmd.pseudoatom('m1', pos=[1.,0.,0.])
+
+        cmd.protect('m1`1')
+        cmd.undo2()
+        cmd.translate([0.,0.,1.])
+        self.assertEqual([0.,0.,1.], cmd.get_atom_coords('m1`1'))
+        self.assertEqual([1.,0.,1.], cmd.get_atom_coords('m1`2'))
+
+        cmd.protect('m1`1')
+        cmd.undo2()
+        cmd.redo2()
+        cmd.translate([0.,1.,0.])
+        self.assertEqual([0.,0.,1.], cmd.get_atom_coords('m1`1'))
+        self.assertEqual([1.,1.,1.], cmd.get_atom_coords('m1`2'))
+
+    @testing.requires("multi_undo")
+    def test_undo_deprotect(self):
+        cmd.pseudoatom('m1', pos=[0.,0.,0.])
+        cmd.pseudoatom('m1', pos=[1.,0.,0.])
+
+        cmd.protect('m1`1')
+        cmd.deprotect()
+        cmd.undo2()
+        cmd.translate([0.,0.,1.])
+        self.assertEqual([0.,0.,0.], cmd.get_atom_coords('m1`1'))
+        self.assertEqual([1.,0.,1.], cmd.get_atom_coords('m1`2'))
+
+        cmd.protect('m1`1')
+        cmd.deprotect()
+        cmd.undo2()
+        cmd.redo2()
+        cmd.translate([0.,1.,0.])
+        self.assertEqual([0.,1.,0.], cmd.get_atom_coords('m1`1'))
+        self.assertEqual([1.,1.,1.], cmd.get_atom_coords('m1`2'))
+
     def test_push_undo(self):
         cmd.push_undo
         self.skipTest("TODO")
@@ -654,26 +692,12 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertArrayNotEqual(cs2, cs('m2', 3))
 
         cmd.undo2()
-        self.assertArrayEqual(cs1, cs('m2', 3))
-        self.assertArrayNotEqual(cs2, cs('m2', 3))
+        self.assertArrayNotEqual(cs1, cs('m2', 3))
+        self.assertArrayEqual(cs2, cs('m2', 3))
 
         cmd.redo2()
         self.assertArrayEqual(cs1, cs('m2', 3))
         self.assertArrayNotEqual(cs2, cs('m2', 3))
-
-        # these haven't changed
-        self.assertArrayEqual(cs2, cs('m2', 1))
-        self.assertArrayEqual(cs2, cs('m2', 2))
-
-        # reset m2/3
-        cmd.load_coordset(cs2, 'm2', 3)
-        self.assertArrayEqual(cs2, cs('m2', 3))
-
-        # update all states
-        cmd.update('m2', 'm1', 0, 0)
-        self.assertArrayEqual(cs1, cs('m2', 1))
-        self.assertArrayEqual(cs1, cs('m2', 2))
-        self.assertArrayEqual(cs1, cs('m2', 3))
 
     def test_valence(self):
         cmd.fragment('gly')
