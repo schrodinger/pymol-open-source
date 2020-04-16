@@ -347,8 +347,8 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *sele1, const char *sele2, int mod
                  int max_cyc, int quiet, const char *oname, int state1, int state2,
                  int ordered_selections, int matchmaker, ExecutiveRMSInfo * rms_info);
 
-void ExecutiveUpdateCmd(PyMOLGlobals * G, const char *sele1, const char *sele2, int sta1, int sta2,
-                        int method, int quiet);
+pymol::Result<> ExecutiveUpdateCmd(PyMOLGlobals* G, const char* sele1,
+    const char* sele2, int sta1, int sta2, int method, int quiet);
 float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode, bool quiet);
 pymol::Result<pymol::vla<float>> ExecutiveRMSStates(
     PyMOLGlobals * G, const char *s1, int target, int mode, int quiet, int mix);
@@ -406,7 +406,7 @@ pymol::Result<> ExecutiveInvalidateRep(
     PyMOLGlobals* G, const char* name, int rep, int level);
 void ExecutiveFlag(PyMOLGlobals * G, int flag, const char *s1, int action, int quiet);
 pymol::Result<> ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet);
-void ExecutiveProtect(PyMOLGlobals * G, const char *s1, int mode, int quiet);
+pymol::Result<> ExecutiveProtect(PyMOLGlobals * G, const char *s1, int mode, int quiet);
 pymol::Result<> ExecutiveMask(
     PyMOLGlobals* G, const char* s1, int mode = 1, int quiet = 1);
 void ExecutiveRebuildAll(PyMOLGlobals * G);

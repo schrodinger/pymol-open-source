@@ -8917,8 +8917,8 @@ int ExecutiveGetType(PyMOLGlobals * G, const char *name, WordType type)
 
 
 /*========================================================================*/
-void ExecutiveUpdateCmd(PyMOLGlobals * G, const char *s0, const char *s1, int sta0, int sta1,
-                        int method, int quiet)
+pymol::Result<> ExecutiveUpdateCmd(PyMOLGlobals* G, const char* s0,
+    const char* s1, int sta0, int sta1, int method, int quiet)
 {
   SelectorTmp tmpsele0(G, s0);
   SelectorTmp tmpsele1(G, s1);
@@ -8926,9 +8926,9 @@ void ExecutiveUpdateCmd(PyMOLGlobals * G, const char *s0, const char *s1, int st
   int sele1 = tmpsele1.getIndex();
 
   if((sele0 < 0) || (sele1 < 0)) {
-    ErrMessage(G, "Update", "One or more invalid input selections.");
+    return pymol::make_error("One or more invalid input selections.");
   } else {
-    SelectorUpdateCmd(G, sele0, sele1, sta0, sta1, method, quiet);
+    return SelectorUpdateCmd(G, sele0, sele1, sta0, sta1, method, quiet);
   }
 }
 
@@ -9394,7 +9394,7 @@ float ExecutiveOverlap(PyMOLGlobals * G, const char *s1, int state1, const char 
 
 
 /*========================================================================*/
-void ExecutiveProtect(PyMOLGlobals * G, const char *s1, int mode, int quiet)
+pymol::Result<> ExecutiveProtect(PyMOLGlobals * G, const char *s1, int mode, int quiet)
 {
   ObjectMoleculeOpRec op;
 
@@ -9419,6 +9419,7 @@ void ExecutiveProtect(PyMOLGlobals * G, const char *s1, int mode, int quiet)
       }
     }
   }
+  return {};
 }
 
 

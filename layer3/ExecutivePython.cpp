@@ -1,4 +1,5 @@
 #include "ExecutivePython.h"
+#include "ObjectAlignment.h"
 #include "ObjectCGO.h"
 #include "ObjectCallback.h"
 #include "ObjectMap.h"
@@ -150,3 +151,86 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
   }
   return {};
 }
+
+pymol::Result<> ExecutiveSetRawAlignment(PyMOLGlobals* G,
+    pymol::zstring_view alnname, PyObject* raw, pymol::zstring_view guidename,
+    int state, int quiet)
+{
+
+  ObjectMolecule* guide = nullptr;
+  if (!guidename.empty()) {
+    guide = ExecutiveFindObject<ObjectMolecule>(G, guidename.c_str());
+  }
+
+  if(!PyList_Check(raw)) {
+    return pymol::make_error("alignment must be list");
+  }
+
+  auto n_cols = PyList_Size(raw);
+
+  pymol::vla<int> align_vla(n_cols * 3);
+  size_t vla_offset = 0;
+
+  for(size_t c = 0; c < n_cols; ++c) {
+    PyObject * col = PyList_GetItem(raw, c);
+
+    if(!PyList_Check(col)) {
+      return pymol::make_error("columns must be list");
+    }
+
+    auto n_idx = PyList_Size(col);
+
+    for(size_t i = 0; i < n_idx; ++i) {
+      const char * model;
+      int index;
+
+      PyObject * idx = PyList_GetItem(col, i);
+
+      if(!PyArg_ParseTuple(idx, "si", &model, &index)) {
+        return pymol::make_error("indices must be (str, int)");
+      }
+
+      auto mol = ExecutiveFindObject<ObjectMolecule>(G, model);
+
+      if(!mol) {
+        return pymol::make_error("object ", model, " not found");
+      }
+
+      if (!guide) {
+        guide = mol;
+      }
+
+      if (index < 1 || mol->NAtom < index) {
+        return pymol::make_error("index ('", model, ", ", index, ") out of range");
+      }
+
+      auto uid = AtomInfoCheckUniqueID(G, mol->AtomInfo + index - 1);
+      *(align_vla.check(vla_offset++)) = uid;
+    }
+
+    *(align_vla.check(vla_offset++)) = 0;
+  }
+
+  align_vla.resize(vla_offset);
+
+  // does alignment object already exist?
+  auto cobj = ExecutiveFindObjectByName(G, alnname.c_str());
+  if (cobj && cobj->type != cObjectAlignment) {
+    ExecutiveDelete(G, cobj->Name);
+    cobj = nullptr;
+  }
+
+  // create alignment object
+  cobj = (CObject*) ObjectAlignmentDefine(G, (ObjectAlignment*) cobj,
+      align_vla, state, true, guide, nullptr);
+
+  // manage alignment object
+  ObjectSetName(cobj, alnname.c_str());
+  ExecutiveManageObject(G, cobj, 0, quiet);
+  SceneInvalidate(G);
+
+  // make available as selection FIXME find better solution
+  cobj->update();
+  return {};
+}
+

@@ -9,4 +9,8 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
     const char* oname, PyObject* model, int frame, int type, int finish,
     int discrete, int quiet, int zoom);
 
+pymol::Result<> ExecutiveSetRawAlignment(PyMOLGlobals* G,
+    pymol::zstring_view alnname, PyObject* raw, pymol::zstring_view guidename,
+    int state, int quiet);
+
 #endif //_PYMOL_NO_PY

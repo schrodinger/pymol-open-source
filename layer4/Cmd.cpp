@@ -700,100 +700,14 @@ static PyObject *CmdSetRawAlignment(PyObject * self, PyObject * args)
   const char *guidename;
   PyObject *raw;
   int state = 0, quiet = 1;
-  ObjectMolecule *guide = nullptr;
 
-  if(!PyArg_ParseTuple(args, "sOsii" "O",
+  API_SETUP_ARGS(G, self, args, "sOsii" "O",
         &alnname, &raw, &guidename, &state, &quiet,
-        &self)) {
-    return nullptr;
-  }
-
-  API_SETUP_PYMOL_GLOBALS;
-  if(G == nullptr) {
-    PyErr_BadInternalCall();
-    return nullptr;
-  }
-
-  if (guidename[0]) {
-    guide = ExecutiveFindObjectMoleculeByName(G, guidename);
-  }
-
-  if(!PyList_Check(raw)) {
-    PyErr_SetString(PyExc_TypeError, "alignment must be list");
-    return nullptr;
-  }
-
-  auto n_cols = PyList_Size(raw);
-
-  pymol::vla<int> align_vla(n_cols * 3);
-  size_t vla_offset = 0;
-
-  for(size_t c = 0; c < n_cols; ++c) {
-    PyObject * col = PyList_GetItem(raw, c);
-
-    if(!PyList_Check(col)) {
-      PyErr_SetString(PyExc_TypeError, "columns must be list");
-      return nullptr;
-    }
-
-    auto n_idx = PyList_Size(col);
-
-    for(size_t i = 0; i < n_idx; ++i) {
-      const char * model;
-      int index;
-
-      PyObject * idx = PyList_GetItem(col, i);
-
-      if(!PyArg_ParseTuple(idx, "si", &model, &index)) {
-        PyErr_SetString(PyExc_TypeError, "indices must be (str, int)");
-        return nullptr;
-      }
-
-      ObjectMolecule * mol = ExecutiveFindObjectMoleculeByName(G, model);
-
-      if(!mol) {
-        PyErr_Format(PyExc_KeyError, "object '%s' not found", model);
-        return nullptr;
-      }
-
-      if (!guide) {
-        guide = mol;
-      }
-
-      if (index < 1 || mol->NAtom < index) {
-        PyErr_Format(PyExc_IndexError, "index ('%s', %d) out of range", model, index);
-        return nullptr;
-      }
-
-      auto uid = AtomInfoCheckUniqueID(G, mol->AtomInfo + index - 1);
-      *(align_vla.check(vla_offset++)) = uid;
-    }
-
-    *(align_vla.check(vla_offset++)) = 0;
-  }
-
-  align_vla.resize(vla_offset);
-
-  // does alignment object already exist?
-  auto cobj = ExecutiveFindObjectByName(G, alnname);
-  if (cobj && cobj->type != cObjectAlignment) {
-    ExecutiveDelete(G, cobj->Name);
-    cobj = nullptr;
-  }
-
-  // create alignment object
-  cobj = (CObject*) ObjectAlignmentDefine(G, (ObjectAlignment*) cobj,
-      align_vla, state, true, guide, nullptr);
-
-  // manage alignment object
-  ObjectSetName(cobj, alnname);
-  ExecutiveManageObject(G, cobj, 0, quiet);
-  SceneInvalidate(G);
-
-  // make available as selection FIXME find better solution
-  cobj->update();
-
-  return APISuccess();
+        &self);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveSetRawAlignment(G, alnname, raw, guidename, state, quiet);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject* GetRawAlignment(PyMOLGlobals* G,
@@ -2713,20 +2627,11 @@ static PyObject *CmdProtect(PyObject * self, PyObject * args)
   char *str1;
   int int1, int2;
 
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Osii", &self, &str1, &int1, &int2);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ExecutiveProtect(G, str1, int1, int2);        /* TODO STATUS */
-    APIExit(G);
-
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Osii", &self, &str1, &int1, &int2);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveProtect(G, str1, int1, int2);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdButton(PyObject * self, PyObject * args)
@@ -4451,22 +4356,13 @@ static PyObject *CmdUpdate(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *str1, *str2;
   int int1, int2;
-  int ok = false;
   int matchmaker, quiet;
-  ok =
-    PyArg_ParseTuple(args, "Ossiiii", &self, &str1, &str2, &int1, &int2, &matchmaker,
-                     &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ExecutiveUpdateCmd(G, str1, str2, int1, int2, matchmaker, quiet);       /* TODO STATUS */
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Ossiiii", &self, &str1, &str2, &int1, &int2,
+      &matchmaker, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveUpdateCmd(G, str1, str2, int1, int2, matchmaker, quiet); 
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdDirty(PyObject * self, PyObject * args)

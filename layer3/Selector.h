@@ -105,8 +105,8 @@ int SelectorRenameObjectAtoms(PyMOLGlobals * G, ObjectMolecule * obj, int sele, 
                               int update_table);
 void SelectorUpdateObjectSele(PyMOLGlobals * G, ObjectMolecule * obj);
 void SelectorDeletePrefixSet(PyMOLGlobals * G, const char *pref);
-void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta1,
-                       int method, int quiet);
+pymol::Result<> SelectorUpdateCmd(PyMOLGlobals* G, int sele0, int sele1,
+    int sta0, int sta1, int method, int quiet);
 pymol::Result<std::array<float, 3>> SelectorGetSingleAtomVertex(PyMOLGlobals * G, int sele, int state);
 pymol::Result<std::pair<ObjectMolecule*, int>> SelectorGetSingleAtomObjectIndex(PyMOLGlobals * G, int sele);
 int *SelectorGetResidueVLA(PyMOLGlobals * G, int sele0, int ca_only,

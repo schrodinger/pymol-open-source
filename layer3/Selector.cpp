@@ -6039,14 +6039,12 @@ pymol::Result<> SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele
 }
 
 /*========================================================================*/
-void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta1,
-                       int matchmaker, int quiet)
+pymol::Result<> SelectorUpdateCmd(PyMOLGlobals* G, int sele0, int sele1,
+    int sta0, int sta1, int matchmaker, int quiet)
 {
   CSelector *I = G->Selector;
   int a, b;
   int at0 = 0, at1;
-  int *vla0 = NULL;
-  int *vla1 = NULL;
   int c0 = 0, c1 = 0;
   int i0 = 0, i1;
   ObjectMolecule *obj0 = NULL, *obj1;
@@ -6077,8 +6075,8 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
     SelectorUpdateTable(G, sta0, -1);
   }
 
-  vla0 = SelectorGetIndexVLA(G, sele0);
-  vla1 = SelectorGetIndexVLA(G, sele1);
+  auto vla0 = pymol::vla_take_ownership(SelectorGetIndexVLA(G, sele0));
+  auto vla1 = pymol::vla_take_ownership(SelectorGetIndexVLA(G, sele1));
 
   if (vla0 && vla1) {
     c0 = VLAGetSize(vla0);
@@ -6086,7 +6084,7 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
   }
 
   if (c0 < 1 || c1 < 1)
-    ErrMessage(G, "Update", "no coordinates updated.");
+    return pymol::make_error("No coordinates updated.");
   else {
 
     b = 0;
@@ -6249,8 +6247,7 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
 
     }
   }
-  VLAFreeP(vla0);
-  VLAFreeP(vla1);
+  return {};
 }
 
 
