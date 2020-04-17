@@ -181,8 +181,11 @@ class CleanJob:
                 # we can't call warn because this is the not the tcl-tk gui thread
                 if result is not None:
                     if len(result)>1:
+                        errormsg = result[1]
+                        if sys.version_info[0] > 2:
+                            errormsg = errormsg.decode(errors='replace')
                         print("\n=== mengine errors below === ")
-                        print(result[1].replace("\n\n","\n"), end=' ')
+                        print(errormsg.strip())
                         print("=== mengine errors above ===\n")
                 failed_file = "cleanup_failed.sdf"
                 print("Clean-Error: Structure cleanup failed.  Invalid input or software malfuction?")
