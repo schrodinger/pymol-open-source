@@ -3889,7 +3889,7 @@ ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals * G, int sele,
     if(!got_it) {               /* fallback onto slow approach */
       auto res = SelectorGetSingleAtomObjectIndex(G, sele);
       if(res) {
-        std::tie(result, sele) = res.result();
+        std::tie(result, *index) = res.result();
       } else {
         result = nullptr;
       }
