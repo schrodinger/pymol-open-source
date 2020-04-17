@@ -8467,6 +8467,7 @@ static pymol::Result<> SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int qu
       if(word[0] == '?') {
         word++;
         if(word[0] == '?') {
+          ExecutiveGetActiveSeleName(G, activeselename, false, false);
           enabled_only = true;
           word++;
         }
@@ -8481,9 +8482,7 @@ static pymol::Result<> SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int qu
         auto& list = I->mgr->Name;
         for(int idx = 0; idx < list.size() && !list[idx].empty(); idx++) {
           if(WordMatcherMatchAlpha(matcher, list[idx].c_str())) {
-            if((idx >= 0) &&
-               ((!enabled_only) ||
-                ExecutiveGetActiveSeleName(G, list[idx], false, false))) {
+            if (!enabled_only || activeselename == list[idx]) {
               int sele = I->mgr->Info[idx].ID;
               for(a = cNDummyAtoms; a < I_NAtom; a++) {
                 s = I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].selEntry;
@@ -8525,16 +8524,8 @@ static pymol::Result<> SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int qu
           ExecutiveFreeGroupList(G, group_list_id);
         }
 
-      } else if((!enabled_only) || ExecutiveGetActiveSeleName(G, activeselename, false, false)) {
-        if (activeselename[0]) {
-          // TODO not sure if this is intentional. If the active selection is
-          // "foo", then the expression "??bar" will evaluate to "foo". I assume
-          // the intention was to evaluate to the empty selection if "bar" is
-          // not active, and to "bar" in case it's active.
-          // Used with cmd.select(..., merge=2)
-          base[1].m_text = activeselename;
-          word = base[1].text();
-        }
+      } else if (!enabled_only ||
+                 WordMatchExact(G, activeselename, word, ignore_case)) {
         int sele = SelectGetNameOffset(G, word, 1, ignore_case);
         if(sele >= 0) {
           sele = IM->Info[sele].ID;
