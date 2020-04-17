@@ -98,7 +98,6 @@ from .querying import \
       dist,               \
       dihedral,           \
       distance,           \
-      export_dots,        \
       find_pairs,         \
       get_angle,          \
       get_area,           \
@@ -166,7 +165,6 @@ from . import exporting
 from .exporting import \
       copy_image,         \
       cache,              \
-      export_coords,      \
       get_str,            \
       get_bytes,          \
       get_pdbstr,         \
@@ -438,7 +436,6 @@ from .experimenting import \
       dump,               \
       get_bond_print,     \
       fast_minimize,      \
-      import_coords,      \
       mem,                \
       minimize,           \
       spheroid,           \

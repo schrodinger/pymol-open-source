@@ -80,7 +80,6 @@ def get_command_keywords(self_cmd=cmd):
         'extra_fit'     : [ self_cmd.extra_fit         , 0 , 0 , ''  , parsing.STRICT ],
         'extract'       : [ self_cmd.extract           , 0 , 0 , ''  , parsing.STRICT ],
         'exec'          : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-        'export_dots'   : [ self_cmd.export_dots       , 0 , 0 , ''  , parsing.STRICT ],
         'fab'           : [ self_cmd.fab               , 0 , 0 , ''  , parsing.STRICT ],
         'feedback'      : [ self_cmd.feedback          , 0,  0 , ''  , parsing.STRICT ],
         'fetch'         : [ self_cmd.fetch             , 0,  0 , ''  , parsing.STRICT ],

@@ -70,7 +70,6 @@ Z* -------------------------------------------------------------------
 #include"SceneRay.h"
 #include"Setting.h"
 #include"Movie.h"
-#include"Export.h"
 #include"P.h"
 #include"PConv.h"
 #include"Control.h"
@@ -2323,57 +2322,6 @@ static PyObject *CmdGetTitle(PyObject * self, PyObject * args)
     if(str2)
       result = PyString_FromString(str2);
   return (APIAutoNone(result));
-}
-
-static PyObject *CmdExportCoords(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  void *result;
-  char *str1;
-  int int1;
-  PyObject *py_result = Py_None;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Osi", &self, &str1, &int1);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    result = ExportCoordsExport(G, str1, int1, 0);
-    APIExit(G);
-    if(result)
-      py_result = PyCObject_FromVoidPtr(result, (void (*)(void *)) ExportCoordsFree);
-  }
-  return (APIAutoNone(py_result));
-}
-
-static PyObject *CmdImportCoords(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  char *str1;
-  int int1;
-  PyObject *cObj;
-  void *mmdat = NULL;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "OsiO", &self, &str1, &int1, &cObj);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    if(PyCObject_Check(cObj))
-      mmdat = PyCObject_AsVoidPtr(cObj);
-    if((ok = APIEnterNotModal(G))) {
-      if(mmdat)
-        ok = ExportCoordsImport(G, str1, int1, (ExportCoords*) mmdat, 0);
-      APIExit(G);
-    }
-  }
-  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetArea(PyObject * self, PyObject * args)
@@ -4692,37 +4640,6 @@ static PyObject *CmdGetSettingOfType(PyObject * self, PyObject * args)
   return result;
 }
 
-static PyObject *CmdExportDots(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  PyObject *result = NULL;
-  PyObject *cObj;
-  ExportDotsObj *obj;
-  char *str1;
-  int int1;
-
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Osi", &self, &str1, &int1);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    obj = ExportDots(G, str1, int1);
-    APIExit(G);
-    if(obj) {
-      cObj = PyCObject_FromVoidPtr(obj, (void (*)(void *)) ExportDeleteMDebug);
-      if(cObj) {
-        result = Py_BuildValue("O", cObj);      /* I think this */
-        Py_DECREF(cObj);        /* transformation is unnecc. */
-      }
-    }
-  }
-  return APIAutoNone(result);
-}
-
 static PyObject *CmdSetFrame(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -6913,8 +6830,6 @@ static PyMethodDef Cmd_methods[] = {
   {"dump", CmdDump, METH_VARARGS},
   {"edit", CmdEdit, METH_VARARGS},
   {"torsion", CmdTorsion, METH_VARARGS},
-  {"export_dots", CmdExportDots, METH_VARARGS},
-  {"export_coords", CmdExportCoords, METH_VARARGS},
   {"feedback", CmdFeedback, METH_VARARGS},
   {"find_pairs", CmdFindPairs, METH_VARARGS},
   {"find_molfile_plugin", CmdFindMolfilePlugin, METH_VARARGS},
@@ -7001,7 +6916,6 @@ static PyMethodDef Cmd_methods[] = {
   {"h_fill", CmdHFill, METH_VARARGS},
   {"h_fix", CmdHFix, METH_VARARGS},
   {"identify", CmdIdentify, METH_VARARGS},
-  {"import_coords", CmdImportCoords, METH_VARARGS},
   {"index", CmdIndex, METH_VARARGS},
   {"intrafit", CmdIntraFit, METH_VARARGS},
   {"invert", CmdInvert, METH_VARARGS},

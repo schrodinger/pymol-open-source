@@ -566,16 +566,6 @@ PYMOL API
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def export_coords(obj,state,_self=cmd): # experimental
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.export_coords(_self._COb,str(obj),int(state)-1)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
-
     def multisave(filename, pattern="all", state=-1,
                   append=0, format='', quiet=1, _self=cmd):
         '''

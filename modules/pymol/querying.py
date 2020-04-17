@@ -781,19 +781,6 @@ SEE ALSO
             if not quiet: print(" cmd.count_frames: %d frames"%r)
         return r
 
-    def export_dots(object,state,_self=cmd):
-        '''
-DESCRIPTION
-
-    "export_dots" is an old unsupported command that may have
-    something to do with returning the coordinates of the dot
-    representation back to the Python layer.
-
-    '''
-        with _self.lockcm:
-            r = _cmd.export_dots(_self._COb,object,int(state)-1)
-        return r
-
     def overlap(selection1, selection2, state1=1, state2=1, adjust=0.0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
