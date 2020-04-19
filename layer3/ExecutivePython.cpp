@@ -1,4 +1,5 @@
 #include "ExecutivePython.h"
+#ifndef _PYMOL_NOPY
 #include "ObjectAlignment.h"
 #include "ObjectCGO.h"
 #include "ObjectCallback.h"
@@ -234,3 +235,4 @@ pymol::Result<> ExecutiveSetRawAlignment(PyMOLGlobals* G,
   return {};
 }
 
+#endif
