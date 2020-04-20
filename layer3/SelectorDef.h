@@ -26,24 +26,30 @@ struct TableRec {
 };
 
 struct SelectionInfoRec {
-  int ID = 0;
-  bool justOneObjectFlag = false;
+  SelectorID_t ID = 0;
+  std::string name;
+
   ObjectMolecule* theOneObject = nullptr;
-  bool justOneAtomFlag = false;
-  int theOneAtom = 0;
+  int theOneAtom = -1;
+
+  bool justOneObject() const { return theOneObject != nullptr; }
+  bool justOneAtom() const { return justOneObject() && theOneAtom >= 0; }
+
   SelectionInfoRec() = default;
-  SelectionInfoRec(int id) : ID(id) {}
+  SelectionInfoRec(SelectorID_t id, std::string name_)
+      : ID(id)
+      , name(std::move(name_))
+  {
+  }
 };
 
 
 struct CSelectorManager
 {
   std::vector<MemberType> Member;
-  int FreeMember = 0;
-  std::vector<std::string> Name;
+  SelectorMemberOffset_t FreeMember = 0;
   std::vector<SelectionInfoRec> Info;
-  static int TmpCounter;
-  int NSelection = 0;
+  SelectorID_t NSelection = 0;
   std::unordered_map<std::string, int> Key;
   CSelectorManager();
 };

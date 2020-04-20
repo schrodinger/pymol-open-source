@@ -64,18 +64,26 @@ Z* -------------------------------------------------------------------
 
 #include "SelectorDef.h"
 
-#define cSelectorTmpPrefix "_sel_tmp_"
-#define cSelectorTmpPrefixLen 9 /* strlen(cSelectorTmpPrefix) */
-#define cSelectorTmpPattern "_sel_tmp_*"
+using SelectorInfoIter_t = decltype(CSelectorManager::Info)::iterator;
+
+/**
+ * Prefix for temporary selections.
+ *
+ * Must be a valid name for the selection language, so it can't contain any
+ * characters which are selection operators (e.g. "_!" is not valid).
+ *
+ * Ideally a prefix which can't be used by the user. This is currently
+ * only true if the `validate_object_names` setting is off (default).
+ */
+#define cSelectorTmpPrefix "_#"
 
 #define cDummyOrigin 0
 #define cDummyCenter 1
 
 
 /* special selections, unknown to executive */
+#define cSelectorSecretsPrefix "_!"
 #define cColorectionFormat "_!c_%s_%d"
-
-int CSelectorManager::TmpCounter = 0;
 
 static WordKeyValue rep_names[] = {
   {"spheres", cRepSphereBit},
@@ -143,7 +151,7 @@ typedef struct {
 } WalkDepthRec;
 
 static pymol::Result<sele_array_t> SelectorSelect(
-    PyMOLGlobals* G, const char* sele, int state, int domain, int quiet);
+    PyMOLGlobals* G, const char* sele, int state, SelectorID_t domain, int quiet);
 static std::vector<int> SelectorGetInterstateVLA(PyMOLGlobals* G, int sele1,
     int state1, int sele2, int state2, float cutoff);
 
@@ -156,10 +164,10 @@ static int SelectorOperator22(PyMOLGlobals * G, EvalElem * base, int state);
 static pymol::Result<sele_array_t> SelectorEvaluate(
     PyMOLGlobals* G, std::vector<std::string>& word, int state, int quiet);
 static std::vector<std::string> SelectorParse(PyMOLGlobals * G, const char *s);
-static void SelectorPurgeMembers(PyMOLGlobals * G, int sele);
+static void SelectorPurgeMembers(PyMOLGlobals * G, SelectorID_t sele);
 static int SelectorEmbedSelection(PyMOLGlobals * G, const int *atom, pymol::zstring_view name,
                                   ObjectMolecule * obj, int no_dummies, int exec_manage);
-static int *SelectorGetIndexVLA(PyMOLGlobals * G, int sele);
+static int *SelectorGetIndexVLA(PyMOLGlobals * G, SelectorID_t sele);
 static int *SelectorGetIndexVLAImpl(PyMOLGlobals * G, CSelector *I, int sele);
 static void SelectorClean(PyMOLGlobals * G);
 static void SelectorCleanImpl(PyMOLGlobals * G, CSelector *I);
@@ -230,6 +238,18 @@ static void SelectorManagerInsertMember(
   self.Member[m].tag = tag;
   self.Member[m].next = ai.selEntry;
   ai.selEntry = m;
+}
+
+/*========================================================================*/
+static void SelectorGetUniqueTmpName(PyMOLGlobals* G, char* out)
+{
+  sprintf(out, "%s%d", cSelectorTmpPrefix, G->SelectorMgr->NSelection);
+}
+
+static bool SelectorIsTmp(pymol::zstring_view name)
+{
+  assert(name);
+  return name.starts_with(cSelectorTmpPrefix);
 }
 
 /*========================================================================*/
@@ -721,8 +741,8 @@ static short fcmp(float a, float b, int oper) {
 
 #define cINTER_ENTRIES 11
 
-int SelectorRenameObjectAtoms(PyMOLGlobals * G, ObjectMolecule * obj, int sele, int force,
-                              int update_table)
+int SelectorRenameObjectAtoms(PyMOLGlobals* G, ObjectMolecule* obj,
+    SelectorID_t sele, bool force, bool update_table)
 {
   int result = 0;
   int obj_nAtom = obj->NAtom;
@@ -1023,7 +1043,8 @@ bool SelectorNameIsKeyword(PyMOLGlobals * G, const char *name)
 
 
 /*========================================================================*/
-static bool SelectorIsSelectionDiscrete(PyMOLGlobals * G, int sele, int update_table)
+static bool SelectorIsSelectionDiscrete(
+    PyMOLGlobals* G, SelectorID_t sele, bool update_table)
 {
   CSelector *I = G->Selector;
 
@@ -1506,28 +1527,26 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int stat
   return (result);
 }
 
-static int SelectGetNameOffset(PyMOLGlobals * G, const char *name, ov_size minMatch,
-                                   int ignCase)
+static SelectorInfoIter_t SelectGetInfoIter(
+    PyMOLGlobals* G, const char* name, ov_size minMatch, int ignCase)
 {
-  auto I = G->SelectorMgr;
-  int result = -1;
+  auto& Info = G->SelectorMgr->Info;
+  auto end_offset = Info.end();
+
   while(name[0] == '?')
     name++;
-  {
-    auto it = std::find(I->Name.begin(), I->Name.end(), name);
-    if(it != I->Name.end())
-    {
-      return std::distance(I->Name.begin(), it);
+
+  for (auto offset = Info.begin(); offset != end_offset; ++offset) {
+    if (offset->name == name) {
+      return offset;
     }
   }
   /* not found, so try partial/ignored-case match */
-  int offset, wm, best_match, best_offset;
-  offset = 0;
-  best_offset = -1;
-  best_match = -1;
+  int best_match = -1;
+  auto best_offset = end_offset;
 
-  while(offset < I->Name.size()) {
-    wm = WordMatch(G, name, I->Name[offset].c_str(), ignCase);
+  for (auto offset = Info.begin(); offset != end_offset; ++offset) {
+    int wm = WordMatch(G, name, offset->name.c_str(), ignCase);
     if(wm < 0) {              /* exact match is always good */
       best_offset = offset;
       best_match = wm;
@@ -1538,14 +1557,14 @@ static int SelectGetNameOffset(PyMOLGlobals * G, const char *name, ov_size minMa
         best_match = wm;
         best_offset = offset;
       } else if(best_match == wm) {   /* uh oh -- ambiguous match */
-        best_offset = -1;
+        best_offset = end_offset;
       }
     }
-    offset++;
   }
   if((best_match < 0) || (best_match > (int) minMatch))
-    result = best_offset;
-  return result;
+    return best_offset;
+
+  return end_offset;
 }
 
 /**
@@ -1591,39 +1610,34 @@ void SelectorDefragment(PyMOLGlobals * G)
 
 typedef struct {
   int color;
-  int sele;
+  SelectorID_t sele;
 } ColorectionRec;
 
-static void SelectorDeleteSeleAtOffset(PyMOLGlobals * G, int n)
+static void SelectorDeleteSeleAtIter(PyMOLGlobals* G, SelectorInfoIter_t it)
 {
-  auto I = G->SelectorMgr;
-  int id = I->Info[n].ID;
-  SelectorPurgeMembers(G, id);
-
-  I->Name.erase(I->Name.begin() + n);
-  I->Info.erase(I->Info.begin() + n);
+  SelectorPurgeMembers(G, it->ID);
+  G->SelectorMgr->Info.erase(it);
 }
 
-const char *SelectorGetNameFromIndex(PyMOLGlobals * G, int index)
+const char *SelectorGetNameFromIndex(PyMOLGlobals * G, SelectorID_t index)
 {
   auto I = G->SelectorMgr;
-  for(int a = 1; a < I->Name.size(); a++) {
+  for(int a = 1; a < I->Info.size(); a++) {
     if(I->Info[a].ID == index) {
-      return I->Name[a].c_str();
+      return I->Info[a].name.c_str();
     }
   }
   return nullptr;
 }
 
 #ifndef _PYMOL_NOPY
-static void SelectorDeleteIndex(PyMOLGlobals * G, int index)
+static void SelectorDeleteIndex(PyMOLGlobals * G, SelectorID_t index)
 {
   auto I = G->SelectorMgr;
   auto it = std::find_if(I->Info.begin() + 1, I->Info.end(),
       [index](const SelectionInfoRec& rec) { return rec.ID == index; });
   if (it != I->Info.end()) {
-    auto n = std::distance(I->Info.begin(), it);
-    SelectorDeleteSeleAtOffset(G, n);
+    SelectorDeleteSeleAtIter(G, it);
   }
 }
 #endif
@@ -2797,10 +2811,10 @@ PyObject *SelectorColorectionGet(PyMOLGlobals * G, const char *prefix)
   for(a = 0; a < n_used; a++) {
     /* create selections */
 
-    int sele = IM->NSelection++;
+    SelectorID_t sele = IM->NSelection++;
     used[a].sele = sele;
-    IM->Name.emplace_back(pymol::string_format(cColorectionFormat, prefix, used[a].color));
-    IM->Info.emplace_back(SelectionInfoRec(sele));
+    IM->Info.emplace_back(SelectionInfoRec(
+        sele, pymol::string_format(cColorectionFormat, prefix, used[a].color)));
   }
 
   for(a = cNDummyAtoms; a < I->Table.size(); a++) {
@@ -2957,15 +2971,17 @@ PyObject *SelectorSecretsAsPyList(PyMOLGlobals * G)
 {
   auto I = G->SelectorMgr;
 
-  auto n_secret = std::count_if(I->Name.begin(), I->Name.end(),
-      [](const std::string& str) { return pymol::starts_with(str, "_!"); });
+  auto n_secret = std::count_if(I->Info.begin(), I->Info.end(), //
+      [](const SelectionInfoRec& rec) {
+        return pymol::starts_with(rec.name, cSelectorSecretsPrefix);
+      });
   auto result = PyList_New(n_secret);
   n_secret = 0;
   SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
-  for(int a = 0; a < I->Name.size(); a++) {
-    if(pymol::starts_with(I->Name[a], "_!")) {
+  for(int a = 0; a < I->Info.size(); a++) {
+    if(pymol::starts_with(I->Info[a].name, cSelectorSecretsPrefix)) {
       auto list = PyList_New(2);
-      PyList_SetItem(list, 0, PyString_FromString(I->Name[a].c_str()));
+      PyList_SetItem(list, 0, PyString_FromString(I->Info[a].name.c_str()));
       PyList_SetItem(list, 1, SelectorAsPyList(G, I->Info[a].ID));
       PyList_SetItem(result, n_secret, list);
       n_secret++;
@@ -3020,7 +3036,7 @@ typedef struct {
   int tag;
 } SelAtomTag;
 
-PyObject *SelectorAsPyList(PyMOLGlobals * G, int sele1)
+PyObject *SelectorAsPyList(PyMOLGlobals * G, SelectorID_t sele1)
 {                               /* assumes SelectorUpdateTable has been called */
   CSelector *I = G->Selector;
   int a, b;
@@ -3121,9 +3137,8 @@ int SelectorFromPyList(PyMOLGlobals * G, const char *name, PyObject * list)
   /* get rid of existing selection */
   SelectorDelete(G, name);
 
-  I->Name.emplace_back(name);
   int sele = I->NSelection++;
-  I->Info.emplace_back(SelectionInfoRec(sele));
+  I->Info.emplace_back(SelectionInfoRec(sele, name));
   if(ok) {
     for(a = 0; a < n_obj; a++) {
       ll = 0;
@@ -3186,10 +3201,8 @@ int SelectorFromPyList(PyMOLGlobals * G, const char *name, PyObject * list)
     {                           /* make note of single atom/object selections */
       auto& info = I->Info.back();
       if(singleObjectFlag && singleObject) {
-        info.justOneObjectFlag = true;
         info.theOneObject = singleObject;
         if(singleAtomFlag && (singleAtom >= 0)) {
-          info.justOneAtomFlag = true;
           info.theOneAtom = singleAtom;
         }
       }
@@ -3607,7 +3620,7 @@ void SelectorSetDeleteFlagOnSelectionInObject(PyMOLGlobals * G, int sele, Object
 }
 
 /*========================================================================*/
-int *SelectorGetResidueVLA(PyMOLGlobals * G, int sele, int ca_only,
+int *SelectorGetResidueVLA(PyMOLGlobals * G, SelectorID_t sele, int ca_only,
                            ObjectMolecule * exclude)
 {
   /* returns a VLA containing atom indices followed by residue integers
@@ -3669,11 +3682,11 @@ int *SelectorGetResidueVLA(PyMOLGlobals * G, int sele, int ca_only,
 /*========================================================================*/
 /* bad to make this non-static? */
 /* static int *SelectorGetIndexVLA(PyMOLGlobals * G, int sele) */
-static int *SelectorGetIndexVLA(PyMOLGlobals * G, int sele)
+static int *SelectorGetIndexVLA(PyMOLGlobals * G, SelectorID_t sele)
 {
   return (SelectorGetIndexVLAImpl(G, G->Selector, sele));
 }
-static int *SelectorGetIndexVLAImpl(PyMOLGlobals * G, CSelector *I, int sele)
+static int *SelectorGetIndexVLAImpl(PyMOLGlobals * G, CSelector *I, SelectorID_t sele)
 {                               /* assumes updated tables */
   int a, c = 0;
   int *result = NULL;
@@ -3804,7 +3817,7 @@ void SelectorLogSele(PyMOLGlobals * G, const char *name)
  * s:    AtomInfoType.selEntry
  * sele: selection index or 0 for "all"
  */
-int SelectorIsMember(PyMOLGlobals * G, int s, int sele)
+int SelectorIsMember(PyMOLGlobals * G, SelectorMemberOffset_t s, SelectorID_t sele)
 {
   if(sele > 1) {
     const MemberType *mem, *member = G->SelectorMgr->Member.data();
@@ -3820,7 +3833,7 @@ int SelectorIsMember(PyMOLGlobals * G, int s, int sele)
 
 
 /*========================================================================*/
-int SelectorMoveMember(PyMOLGlobals * G, int s, int sele_old, int sele_new)
+bool SelectorMoveMember(PyMOLGlobals * G, SelectorMemberOffset_t s, SelectorID_t sele_old, SelectorID_t sele_new)
 {
   auto I = G->SelectorMgr;
   int result = false;
@@ -3836,24 +3849,15 @@ int SelectorMoveMember(PyMOLGlobals * G, int s, int sele_old, int sele_new)
 
 
 /*========================================================================*/
-static int SelectorIndexByID(PyMOLGlobals * G, int id)
-{
-  auto I = G->SelectorMgr;
-  auto it = std::find_if(I->Info.begin(), I->Info.end(),
-      [id](const SelectionInfoRec& rec) { return rec.ID == id; });
-  return it == I->Info.end() ? -1 : std::distance(I->Info.begin(), it);
-}
-
-
-/*========================================================================*/
-ObjectMolecule *SelectorGetFastSingleObjectMolecule(PyMOLGlobals * G, int sele)
+ObjectMolecule *SelectorGetFastSingleObjectMolecule(PyMOLGlobals * G, SelectorID_t sele)
 {
   auto I = G->SelectorMgr;
   ObjectMolecule *result = NULL;
-  int sele_idx = SelectorIndexByID(G, sele);
-  if((sele_idx >= 0) && (sele_idx < I->Name.size())) {
-    auto& info = I->Info[sele_idx];
-    if(info.justOneObjectFlag) {
+  auto it = std::find_if(I->Info.begin(), I->Info.end(),
+      [sele](const SelectionInfoRec& rec) { return rec.ID == sele; });
+  if (it != I->Info.end()) {
+    auto& info = *it;
+    if (info.justOneObject()) {
       if(ExecutiveValidateObjectPtr(G, (CObject *) info.theOneObject, cObjectMolecule))
         result = info.theOneObject;
     } else {
@@ -3865,33 +3869,30 @@ ObjectMolecule *SelectorGetFastSingleObjectMolecule(PyMOLGlobals * G, int sele)
 
 
 /*========================================================================*/
-ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals * G, int sele,
+ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals * G, SelectorID_t sele,
                                                      int *index)
 {
   auto I = G->SelectorMgr;
   ObjectMolecule *result = NULL;
-  int got_it = false;
-  int sele_idx = SelectorIndexByID(G, sele);
-
-  if((sele_idx >= 0) && (sele_idx < I->Name.size())) {
-    auto& info = I->Info[sele_idx];
-    if(info.justOneObjectFlag && info.justOneAtomFlag) {
+  auto it = std::find_if(I->Info.begin(), I->Info.end(),
+      [sele](const SelectionInfoRec& rec) { return rec.ID == sele; });
+  if (it != I->Info.end()) {
+    auto& info = *it;
+    if (info.justOneAtom()) {
       ObjectMolecule *obj = info.theOneObject;
       int at = info.theOneAtom;
       if(ExecutiveValidateObjectPtr(G, (CObject *) obj, cObjectMolecule)) {
         if((at < obj->NAtom) && SelectorIsMember(G, obj->AtomInfo[at].selEntry, sele)) {
-          result = obj;
           *index = at;
-          got_it = true;
+          return obj;
         }
       }
     }
-    if(!got_it) {               /* fallback onto slow approach */
+    /* fallback onto slow approach */
+    {
       auto res = SelectorGetSingleAtomObjectIndex(G, sele);
       if(res) {
         std::tie(result, *index) = res.result();
-      } else {
-        result = nullptr;
       }
     }
   }
@@ -3907,7 +3908,7 @@ ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals * G, int sele,
  * RETURNS
  *   (ptr) pts to the ObjectMolecule or NULL if not found
  */
-ObjectMolecule *SelectorGetSingleObjectMolecule(PyMOLGlobals * G, int sele)
+ObjectMolecule *SelectorGetSingleObjectMolecule(PyMOLGlobals * G, SelectorID_t sele)
 {
   /* slow way */
 
@@ -3937,7 +3938,7 @@ ObjectMolecule *SelectorGetSingleObjectMolecule(PyMOLGlobals * G, int sele)
 
 
 /*========================================================================*/
-ObjectMolecule *SelectorGetFirstObjectMolecule(PyMOLGlobals * G, int sele)
+ObjectMolecule *SelectorGetFirstObjectMolecule(PyMOLGlobals * G, SelectorID_t sele)
 {
   /* slow way */
 
@@ -3961,7 +3962,7 @@ ObjectMolecule *SelectorGetFirstObjectMolecule(PyMOLGlobals * G, int sele)
 
 
 /*========================================================================*/
-ObjectMolecule **SelectorGetObjectMoleculeVLA(PyMOLGlobals * G, int sele)
+ObjectMolecule **SelectorGetObjectMoleculeVLA(PyMOLGlobals * G, SelectorID_t sele)
 {
   int a;
   ObjectMolecule *last = NULL;
@@ -3991,7 +3992,7 @@ ObjectMolecule **SelectorGetObjectMoleculeVLA(PyMOLGlobals * G, int sele)
 
 /*========================================================================*/
 pymol::Result<std::pair<ObjectMolecule*, int>> SelectorGetSingleAtomObjectIndex(
-    PyMOLGlobals* G, int sele)
+    PyMOLGlobals* G, SelectorID_t sele)
 {
   /* slow way */
 
@@ -4048,13 +4049,14 @@ void SelectorDeletePrefixSet(PyMOLGlobals * G, const char *pref)
   int ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
 
   while(1) {
-    auto a = SelectGetNameOffset(G, pref, strlen(pref), ignore_case);
-    if(a > 0) {
-      auto name_copy = I->Name[a];
-      ExecutiveDelete(G, name_copy.c_str());    /* import to use a copy, otherwise 
-                                         * you'll delete all objects  */
-    } else
+    auto it = SelectGetInfoIter(G, pref, strlen(pref), ignore_case);
+    if (it == I->Info.end()) {
       break;
+    }
+
+    // important to use a copy, otherwise you'll delete all objects
+    auto name_copy = it->name;
+    ExecutiveDelete(G, name_copy.c_str());
   }
 }
 
@@ -4332,8 +4334,13 @@ static void update_min_walk_depth(WalkDepthRec * minWD,
 
 
 /*========================================================================*/
-int SelectorSubdivide(PyMOLGlobals * G, const char *pref, int sele1, int sele2,
-                      int sele3, int sele4, const char *fragPref, const char *compName, int *bondMode)
+int SelectorSubdivide(PyMOLGlobals* G, //
+    const char* pref,                  //
+    SelectorID_t sele1,                //
+    SelectorID_t sele2,                //
+    SelectorID_t sele3,                //
+    SelectorID_t sele4,                //
+    const char* fragPref, const char* compName, int* bondMode)
 {
   CSelector *I = G->Selector;
   int a0 = 0, a1 = 0, a2;
@@ -4769,7 +4776,7 @@ int SelectorSubdivide(PyMOLGlobals * G, const char *pref, int sele1, int sele2,
 
 
 /*========================================================================*/
-int SelectorGetSeleNCSet(PyMOLGlobals * G, int sele)
+int SelectorGetSeleNCSet(PyMOLGlobals * G, SelectorID_t sele)
 {
   CSelector *I = G->Selector;
 
@@ -6040,7 +6047,9 @@ pymol::Result<> SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele
 }
 
 /*========================================================================*/
-pymol::Result<> SelectorUpdateCmd(PyMOLGlobals* G, int sele0, int sele1,
+pymol::Result<> SelectorUpdateCmd(PyMOLGlobals* G, //
+    SelectorID_t sele0,                            //
+    SelectorID_t sele1,                            //
     int sta0, int sta1, int matchmaker, int quiet)
 {
   CSelector *I = G->Selector;
@@ -6254,7 +6263,7 @@ pymol::Result<> SelectorUpdateCmd(PyMOLGlobals* G, int sele0, int sele1,
 
 /*========================================================================*/
 
-int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
+int SelectorCreateObjectMolecule(PyMOLGlobals * G, SelectorID_t sele, const char *name,
                                  int target, int source, int discrete,
                                  int zoom, int quiet, int singletons, int copy_properties)
 {
@@ -6512,9 +6521,9 @@ int SelectorSetName(PyMOLGlobals * G, const char *new_name, const char *old_name
   auto I = G->SelectorMgr;
   int ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
 
-  auto i = SelectGetNameOffset(G, old_name, 1, ignore_case);
-  if(i >= 0) {
-    I->Name[i] = new_name;
+  auto it = SelectGetInfoIter(G, old_name, 1, ignore_case);
+  if (it != I->Info.end()) {
+    it->name = new_name;
     return true;
   } else {
     return false;
@@ -6529,10 +6538,9 @@ int SelectorSetName(PyMOLGlobals * G, const char *new_name, const char *old_name
  * RETURNS
  *   (int) index #, or -1 if not found
  */
-int SelectorIndexByName(PyMOLGlobals * G, const char *sname, int ignore_case)
+SelectorID_t SelectorIndexByName(PyMOLGlobals * G, const char *sname, int ignore_case)
 {
   auto I = G->SelectorMgr;
-  int i = -1;
 
   if(sname) {
     if (ignore_case < 0)
@@ -6540,24 +6548,27 @@ int SelectorIndexByName(PyMOLGlobals * G, const char *sname, int ignore_case)
 
     while((sname[0] == '%') || (sname[0] == '?'))
       sname++;
-    i = SelectGetNameOffset(G, sname, 1, ignore_case);
 
-    if((i >= 0) && (sname[0] != '_')) {  /* don't do checking on internal selections */
+    auto it = SelectGetInfoIter(G, sname, 1, ignore_case);
+    if (it == I->Info.end())
+      return cSelectionInvalid;
+
+    if (sname[0] != '_') { /* don't do checking on internal selections */
       const char *best;
       best = ExecutiveFindBestNameMatch(G, sname);      /* suppress spurious matches
                                                            of selections with non-selections */
-      if((best != sname) && (best != I->Name[i]))
-        i = -1;
+      if (best != sname && best != it->name)
+        return cSelectionInvalid;
     }
-    if(i >= 0)
-      i = I->Info[i].ID;
+
+    return it->ID;
   }
-  return (i);
+  return cSelectionInvalid;
 }
 
 
 /*========================================================================*/
-static void SelectorPurgeMembers(PyMOLGlobals * G, int sele)
+static void SelectorPurgeMembers(PyMOLGlobals * G, SelectorID_t sele)
 {
   auto I = G->SelectorMgr;
   void *iterator = NULL;
@@ -6637,18 +6648,25 @@ void SelectorDelete(PyMOLGlobals * G, const char *sele)
 
    (i.e., temporary on-the-fly selection) */
 {
-  auto n = SelectGetNameOffset(G, sele, 999, SettingGetGlobal_b(G, cSetting_ignore_case));   /* already exist? */
-  if(n >= 0) {                  /* get rid of existing selection -- but never selection 0 (all) */
-    SelectorDeleteSeleAtOffset(G, n);
-  }
+  auto& Info = G->SelectorMgr->Info;
+  auto it = SelectGetInfoIter(G, sele, 999,
+      SettingGetGlobal_b(G, cSetting_ignore_case));
+
+  // Does it exist?
+  if (it == Info.end())
+    return;
+
+  // Never delete the "all" selection
+  if (it->ID == cSelectionAll)
+    return;
+
+  assert(!SelectorIsTmp(sele) ||
+         sele == pymol::string_format("%s%d", cSelectorTmpPrefix, it->ID));
+
+  // get rid of existing selection
+  SelectorDeleteSeleAtIter(G, it);
 }
 
-
-/*========================================================================*/
-std::string SelectorGetUniqueTmpName(PyMOLGlobals * G)
-{
-  return pymol::join_to_string(cSelectorTmpPrefix, G->SelectorMgr->TmpCounter++);
-}
 
 /*========================================================================*/
 /*
@@ -6705,6 +6723,11 @@ SelectorGetTmp2Result(PyMOLGlobals * G, const char *input, char *store, bool qui
     // make selection if "input" doesn't fit into "store"
     int is_selection = strlen(input) >= OrthoLineLength;
 
+    // can't pass through temp selections (current SelectorFreeTmp limitation)
+    if (!is_selection) {
+      is_selection = SelectorIsTmp(input);
+    }
+
     const char *p = input;
     OrthoLineType word;
 
@@ -6745,12 +6768,9 @@ SelectorGetTmp2Result(PyMOLGlobals * G, const char *input, char *store, bool qui
     }
     if(is_selection) {          /* incur the computational expense of 
                                    parsing the input as an atom selection */
-      WordType name;
-      sprintf(name, "%s%d", cSelectorTmpPrefix, I->TmpCounter++);
-      auto res = SelectorCreate(G, name, input, NULL, quiet, NULL);
-      if(res) {
-        strcpy(store, name);
-      } else {
+      SelectorGetUniqueTmpName(G, store);
+      auto res = SelectorCreate(G, store, input, NULL, quiet, NULL);
+      if (!res) {
         store[0] = 0;
       }
       return res;
@@ -6783,8 +6803,6 @@ int SelectorGetTmp(PyMOLGlobals * G, const char *input, char *store, bool quiet)
 pymol::Result<int>
 SelectorGetTmpResult(PyMOLGlobals * G, const char *input, char *store, bool quiet)
 {
-  auto I = G->SelectorMgr;
-
   store[0] = 0;
 
   // trivial (but valid) case: empty selection string
@@ -6792,14 +6810,13 @@ SelectorGetTmpResult(PyMOLGlobals * G, const char *input, char *store, bool quie
     return 0;
 
   // if object molecule or named selection, then don't create a temp selection
-  if (ExecutiveIsMoleculeOrSelection(G, input)
-      && strncmp(input, cSelectorTmpPrefix, cSelectorTmpPrefixLen) != 0) {
+  if (ExecutiveIsMoleculeOrSelection(G, input) && !SelectorIsTmp(input)) {
     strcpy(store, input);
     return 0;
   }
 
   // evaluate expression and create a temp selection
-  sprintf(store, "%s%d", cSelectorTmpPrefix, I->TmpCounter++);
+  SelectorGetUniqueTmpName(G, store);
   auto res = SelectorCreate(G, store, input, NULL, quiet, NULL);
 
   if(!res) {
@@ -6809,23 +6826,12 @@ SelectorGetTmpResult(PyMOLGlobals * G, const char *input, char *store, bool quie
   return res;
 }
 
-int SelectorCheckTmp(PyMOLGlobals * G, const char *name)
-{
-  if(WordMatch(G, cSelectorTmpPattern, name, false) + 1 ==
-     - cSelectorTmpPrefixLen)
-    return true;
-  else
-    return false;
-}
-
 
 /*========================================================================*/
 void SelectorFreeTmp(PyMOLGlobals * G, const char *name)
 {                               /* remove temporary selections */
-  if(name && name[0]) {
-    if(strncmp(name, cSelectorTmpPrefix, cSelectorTmpPrefixLen) == 0) {
-      ExecutiveDelete(G, name);
-    }
+  if (name && SelectorIsTmp(name)) {
+    ExecutiveDelete(G, name);
   }
 }
 
@@ -6857,17 +6863,27 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, const int *atom, pymol::zstr
       exec_managed = false;
   }
 
-  auto n = SelectGetNameOffset(G, name.c_str(), 999, SettingGetGlobal_b(G, cSetting_ignore_case));   /* already exist? */
-  if(n == 0)                    /* don't allow redefinition of "all" */
-    return 0;
-  if(n > 0) {                   /* get rid of existing selection */
-    SelectorDeleteSeleAtOffset(G, n);
+  // already exist?
+  auto it = SelectGetInfoIter(G, name.c_str(), 999,
+      SettingGetGlobal_b(G, cSetting_ignore_case));
+  if (it != IM->Info.end()) {
+    assert(!SelectorIsTmp(name));
+
+    // don't allow redefinition of "all"
+    if (it->ID == cSelectionAll)
+      return 0;
+
+    // get rid of existing selection
+    SelectorDeleteSeleAtIter(G, it);
     newFlag = false;
   }
 
-  IM->Name.emplace_back(name.c_str());
   sele = IM->NSelection++;
-  IM->Info.emplace_back(SelectionInfoRec(sele));
+  IM->Info.emplace_back(SelectionInfoRec(sele, name.c_str()));
+
+  assert(!SelectorIsTmp(name) ||
+         name == pymol::string_format(
+                     "%s%d", cSelectorTmpPrefix, IM->Info.back().ID));
 
   if(no_dummies) {
     start = 0;
@@ -6924,10 +6940,9 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, const int *atom, pymol::zstr
   if(c) {                       
     auto& info = IM->Info.back();
     if(singleObjectFlag) {
-      info.justOneObjectFlag = true;
       info.theOneObject = singleObject;
       if(singleAtomFlag) {
-        info.justOneAtomFlag = true;
+        assert(singleAtom >= 0);
         info.theOneAtom = singleAtom;
       }
     }
@@ -6993,7 +7008,7 @@ _SelectorCreate(PyMOLGlobals * G, pymol::zstring_view sname, const char *sele,
                            ObjectMolecule ** obj, int quiet, Multipick * mp,
                            CSeqRow * rowVLA, int nRow, int **obj_idx, int *n_idx,
                            int n_obj, const std::unordered_map<int, int>* id2tag, int executive_manage,
-                           int state, int domain)
+                           int state, SelectorID_t domain)
 {
   sele_array_t atom{};
   std::string name;
@@ -7001,19 +7016,21 @@ _SelectorCreate(PyMOLGlobals * G, pymol::zstring_view sname, const char *sele,
   int ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
   ObjectMolecule *embed_obj = NULL;
 
-  /* copy sname into name and check if it's a keyword; abort on 
-   * the selection name == keyword: eg. "select all, none" */
-  if(sname[0] == '%')
-    name = std::string(sname.begin() + 1, sname.end());
-  else
-    name = sname.c_str();
-  if(WordMatchExact(G, cKeywordAll, name.c_str(), ignore_case)) {
-    name.clear();                /* force error */
-  }
-  name = UtilCleanStdStr(name);
-  /* name was invalid, output error msg to user */
-  if(!name[0]) {
-    return pymol::make_error("Invalid selection name '", sname.c_str(), "'");
+  if (!SelectorIsTmp(sname)) {
+    if (sname.starts_with('%')) {
+      sname.remove_prefix(1);
+    }
+
+    if (!WordMatchExact(G, cKeywordAll, sname.c_str(), ignore_case)) {
+      name = UtilCleanStdStr(sname.c_str());
+    }
+
+    if (name.empty()) {
+      assert(executive_manage);
+      return pymol::make_error("Invalid selection name '", sname.c_str(), "'");
+    }
+
+    sname = name;
   }
 
   {
@@ -7045,15 +7062,15 @@ _SelectorCreate(PyMOLGlobals * G, pymol::zstring_view sname, const char *sele,
     }
   }
 
-  c = SelectorEmbedSelection(G, atom.get(), name, embed_obj, false, executive_manage);
+  c = SelectorEmbedSelection(G, atom.get(), sname, embed_obj, false, executive_manage);
   atom.reset();
   SelectorClean(G);
   /* ignore reporting on quiet */
   if(!quiet) {
     /* ignore reporting on internal/private names */
-    if(name[0] != '_') {
+    if(!sname.starts_with('_')) {
         PRINTFB(G, FB_Selector, FB_Actions)
-          " Selector: selection \"%s\" defined with %d atoms.\n", name.c_str(), c ENDFB(G);
+          " Selector: selection \"%s\" defined with %d atoms.\n", sname.c_str(), c ENDFB(G);
     }
   }
 
@@ -7113,7 +7130,7 @@ SelectorCreateResult_t SelectorCreateWithStateDomain(PyMOLGlobals * G, const cha
                                   ObjectMolecule * obj, int quiet, Multipick * mp,
                                   int state, const char *domain)
 {
-  int domain_sele = -1;
+  SelectorID_t domain_sele = cSelectionInvalid;
   ObjectNameType valid_name;
 
   UtilNCopy(valid_name, sname, sizeof(valid_name));
@@ -7281,12 +7298,12 @@ static sele_array_t SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMole
 
 
 /*========================================================================*/
-int SelectorUpdateTable(PyMOLGlobals * G, int req_state, int domain)
+int SelectorUpdateTable(PyMOLGlobals * G, int req_state, SelectorID_t domain)
 {
   return (SelectorUpdateTableImpl(G, G->Selector, req_state, domain));
 }
 
-int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int domain)
+int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, SelectorID_t domain)
 {
   int a = 0;
   ov_size c = 0;
@@ -7474,7 +7491,7 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
 
 /*========================================================================*/
 static pymol::Result<sele_array_t> SelectorSelect(
-    PyMOLGlobals* G, const char* sele, int state, int domain, int quiet)
+    PyMOLGlobals* G, const char* sele, int state, SelectorID_t domain, int quiet)
 {
   SelectorUpdateTable(G, state, domain);
   auto parsed = SelectorParse(G, sele);
@@ -8479,15 +8496,20 @@ static pymol::Result<> SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int qu
         for(a = 0; a < I_NAtom; a++)    /* zero out first before iterating through selections */
           base[0].sele[a] = false;
 
-        auto& list = I->mgr->Name;
-        for(int idx = 0; idx < list.size() && !list[idx].empty(); idx++) {
-          if(WordMatcherMatchAlpha(matcher, list[idx].c_str())) {
-            if (!enabled_only || activeselename == list[idx]) {
-              int sele = I->mgr->Info[idx].ID;
+        for (const auto& rec : I->mgr->Info) {
+          if (rec.name.empty()) {
+            // TODO Can this happen? Why?
+            PRINTFB(G, FB_Selector, FB_Warnings)
+            " Selector-Unexpected: Empty selection name (ID:%d)\n",
+                rec.ID ENDFB(G);
+            break;
+          }
+          if (WordMatcherMatchAlpha(matcher, rec.name.c_str())) {
+            if (!enabled_only || activeselename == rec.name) {
               for(a = cNDummyAtoms; a < I_NAtom; a++) {
                 s = I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].selEntry;
                 while(s) {
-                  if(I->mgr->Member[s].selection == sele) {
+                  if (I->mgr->Member[s].selection == rec.ID) {
                     if(!base[0].sele[a]) {
                       base[0].sele[a] = I->mgr->Member[s].tag;
                       c++;
@@ -8526,14 +8548,13 @@ static pymol::Result<> SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int qu
 
       } else if (!enabled_only ||
                  WordMatchExact(G, activeselename, word, ignore_case)) {
-        int sele = SelectGetNameOffset(G, word, 1, ignore_case);
-        if(sele >= 0) {
-          sele = IM->Info[sele].ID;
+        auto it = SelectGetInfoIter(G, word, 1, ignore_case);
+        if (it != IM->Info.end()) {
           for(a = cNDummyAtoms; a < I_NAtom; a++) {
             base[0].sele[a] = false;
             s = I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].selEntry;
             while(s) {
-              if(IM->Member[s].selection == sele) {
+              if (IM->Member[s].selection == it->ID) {
                 base[0].sele[a] = IM->Member[s].tag;
                 c++;
               }
@@ -10366,8 +10387,7 @@ void SelectorMemoryDump(PyMOLGlobals * G)
 {
   auto I = G->SelectorMgr;
   printf(" SelectorMemory: NSelection %d\n", I->NSelection);
-  printf(" SelectorMemory: NActive %zu\n", I->Name.size());
-  printf(" SelectorMemory: TmpCounter %d\n", I->TmpCounter);
+  printf(" SelectorMemory: NActive %zu\n", I->Info.size());
   printf(" SelectorMemory: NMember %d\n", int(I->Member.size()) - 1);
 }
 
@@ -10380,10 +10400,12 @@ CSelectorManager::CSelectorManager()
 
   /* create placeholder "all" selection, which is selection 0
      and "none" selection, which is selection 1 */
-  I->Name.emplace_back(cKeywordAll);
-  I->Info.emplace_back(I->NSelection++);
-  I->Name.emplace_back(cKeywordNone);
-  I->Info.emplace_back(I->NSelection++);
+  I->Info.emplace_back(I->NSelection++, cKeywordAll);
+  I->Info.emplace_back(I->NSelection++, cKeywordNone);
+
+  assert(I->Info[0].ID == cSelectionAll);
+  assert(I->Info[1].ID == cSelectionNone);
+
   for (auto kw : Keyword) {
     if (!kw.word[0]) {
       break;
