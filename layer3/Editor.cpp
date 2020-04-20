@@ -1714,6 +1714,11 @@ void EditorInactivate(PyMOLGlobals * G)
   PRINTFD(G, FB_Editor)
     " EditorInactivate-Debug: callend.\n" ENDFD;
 
+  if (I->Active) {
+    // force refresh of the object menu panel (PYMOL-3411)
+    OrthoInvalidateDoDraw(G);
+  }
+
   I->DihedObject = NULL;
   I->DragObject = NULL;
   I->BondMode = false;
