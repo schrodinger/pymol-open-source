@@ -370,6 +370,7 @@ class DemoInfo:
 
     def elec(self,cleanup=0):
         if not cleanup:
+            self.cmd.config_mouse('three_button_viewing')
             self.cmd.disable()
             self.cmd.delete("pept")
             self.cmd.delete("e_pot")
