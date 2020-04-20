@@ -21,15 +21,6 @@ class TestExporting(testing.PyMOLTestCase):
         cmd.copy_image
         self.skipTest("TODO")
 
-    def testExportCoords(self):
-        if sys.version_info.major > 2:
-            self.skipTest("not Python3 compatible")
-        cmd.fragment('ala')
-        c = cmd.export_coords('ala', 1)
-        self.assertTrue(bool(c))
-        # TODO: pymol.experimenting.load_coords is crude and buggy, for
-        # example the state is decremented twice.
-
     def testGetFastastr(self):
         seq, name = 'ACD', 'm1'
         cmd.fab(seq, name)

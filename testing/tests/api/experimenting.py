@@ -29,10 +29,6 @@ class TestExperimenting(testing.PyMOLTestCase):
         cmd.dump
         self.skipTest("TODO")
 
-    def testImportCoords(self):
-        cmd.import_coords
-        self.skipTest("TODO")
-
     @testing.requires('incentive')
     @testing.requires('no_edu') # ray
     def testFocalblur(self):
