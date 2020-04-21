@@ -293,6 +293,52 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(3, cmd.count_states())
         cmd.delete('*')
 
+    @testing.foreach(
+            ['.pdb', '.dcd'],
+            ['.pdb', '.crd'],
+            ['.gro', '.xtc'],
+            )
+    @testing.requires("multi_undo")
+    def testUndoLoadTraj(self, topext, trjext):
+        pdbfile = self.datafile("sampletrajectory" + topext)
+        dcdfile = self.datafile("sampletrajectory" + trjext)
+
+        cmd.load(pdbfile)
+        cmd.load_traj(dcdfile)
+        self.assertEqual(11, cmd.count_states())
+        cmd.undo2()
+        self.assertEqual(1, cmd.count_states())
+        cmd.redo2()
+        self.assertEqual(11, cmd.count_states())
+        cmd.delete('*')
+
+        cmd.load(pdbfile)
+        cmd.load_traj(dcdfile, state=1, interval=2, max=3)
+        self.assertEqual(3, cmd.count_states())
+        cmd.undo2()
+        self.assertEqual(1, cmd.count_states())
+        cmd.redo2()
+        self.assertEqual(3, cmd.count_states())
+        cmd.delete('*')
+
+        cmd.load(pdbfile)
+        cmd.load_traj(dcdfile, state=1, start=3, stop=5)
+        self.assertEqual(3, cmd.count_states())
+        cmd.undo2()
+        self.assertEqual(1, cmd.count_states())
+        cmd.redo2()
+        self.assertEqual(3, cmd.count_states())
+        cmd.delete('*')
+
+        cmd.load(pdbfile)
+        cmd.load_traj(dcdfile, state=1, stop=9, average=3)
+        self.assertEqual(3, cmd.count_states())
+        cmd.undo2()
+        self.assertEqual(1, cmd.count_states())
+        cmd.redo2()
+        self.assertEqual(3, cmd.count_states())
+        cmd.delete('*')
+
     # via ObjectMoleculeLoadTRJFile
     def testLoadTraj_selection_trj(self):
         base = self.datafile("sampletrajectory")
