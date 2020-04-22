@@ -168,11 +168,33 @@ private:
 /**
  * If `res` is in error state, return from the calling scope with `res.error()`.
  * @param res Expression of type pymol::Result
- * @note Inspired by `g_return_val_if_fail` from glib
+ * @note Inspired by `g_return_val_if_fail` from glib, except that the check
+ * will always be performed, there is nothing like `G_DISABLE_CHECKS`.
  */
 #define p_return_if_error(res)                                                 \
   {                                                                            \
     auto&& _res_evaluated_ = res;                                              \
     if (!_res_evaluated_)                                                      \
       return _res_evaluated_.error_move();                                     \
+  }
+
+/**
+ * Like p_return_if_error but add a prefix to the error message.
+ */
+#define p_return_if_error_prefixed(res, prefix)                                \
+  {                                                                            \
+    auto&& _res_evaluated_ = res;                                              \
+    if (!_res_evaluated_)                                                      \
+      return pymol::make_error(prefix, _res_evaluated_.error().what());        \
+  }
+
+/**
+ * If `expr` evaluates to false, return from the calling scope with `val`.
+ * @note Inspired by `g_return_val_if_fail` from glib, except that the check
+ * will always be performed, there is nothing like `G_DISABLE_CHECKS`.
+ */
+#define p_return_val_if_fail(expr, val)                                        \
+  {                                                                            \
+    if (!(expr))                                                               \
+      return val;                                                              \
   }

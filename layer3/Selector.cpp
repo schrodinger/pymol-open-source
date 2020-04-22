@@ -4027,7 +4027,8 @@ pymol::Result<std::pair<ObjectMolecule*, int>> SelectorGetSingleAtomObjectIndex(
 pymol::Result<std::array<float, 3>> SelectorGetSingleAtomVertex(PyMOLGlobals * G, int sele, int state)
 {
   auto atom_index_result = SelectorGetSingleAtomObjectIndex(G, sele);
-  if(atom_index_result) {
+  p_return_if_error(atom_index_result);
+  {
     auto obj_idx = atom_index_result.result();
     std::array<float, 3> v;
     auto found_it = ObjectMoleculeGetAtomTxfVertex(obj_idx.first, state, obj_idx.second, v.data());
@@ -4036,8 +4037,6 @@ pymol::Result<std::array<float, 3>> SelectorGetSingleAtomVertex(PyMOLGlobals * G
     } else {
       return pymol::Error("Invalid Atom");
     }
-  } else {
-    return std::move(atom_index_result.error());
   }
 }
 

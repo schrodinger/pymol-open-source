@@ -245,8 +245,9 @@ public:
   SelectorID_t getIndex() const {
     return m_name[0] ? SelectorIndexByName(m_G, m_name, false) : cSelectionInvalid;
   }
-  //! Factory which propagages errors
-  static pymol::Result<SelectorTmp> make(PyMOLGlobals* G, const char* sele);
+  // Factory which propagages errors
+  static pymol::Result<SelectorTmp> make(
+      PyMOLGlobals* G, const char* sele, bool empty_is_error = true);
 };
 
 struct SelectorTmp2 : SelectorTmp {
@@ -256,8 +257,9 @@ struct SelectorTmp2 : SelectorTmp {
     m_G = G;
     m_count = SelectorGetTmp2(m_G, sele, m_name);
   }
-  //! Factory which propagages errors
-  static pymol::Result<SelectorTmp2> make(PyMOLGlobals* G, const char* sele);
+  // Factory which propagages errors
+  static pymol::Result<SelectorTmp2> make(
+      PyMOLGlobals* G, const char* sele, bool empty_is_error = false);
 };
 
 #endif

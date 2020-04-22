@@ -4266,18 +4266,7 @@ static PyObject *CmdGetAtomCoords(PyObject * self, PyObject * args)
   int quiet;
   API_SETUP_ARGS(G, self, args, "Osii", &self, &str1, &state, &quiet);
   APIEnter(G);
-  pymol::Result<std::array<float, 3>> result;
-  {
-    auto s1 = SelectorTmp::make(G, str1);
-    if (!s1) {
-      result = s1.error_move();
-    } else if(s1->getAtomCount() == 0) {
-      result = pymol::Error("Empty Selection");
-    } else {
-      assert(s1->getAtomCount() > 0);
-      result = ExecutiveGetAtomVertex(G, s1->getName(), state, quiet);
-    }
-  }
+  auto result = ExecutiveGetAtomVertex(G, str1, state, quiet);
   APIExit(G);
   return APIResult(G, result);
 }

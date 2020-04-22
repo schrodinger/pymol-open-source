@@ -1684,14 +1684,8 @@ NOTES
         selection = selector.process(selection)
         #
         type = cartoon_dict[cartoon_sc.auto_err(str(type),'type')];
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.cartoon(_self._COb,"("+str(selection)+")",int(type))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        with _self.lockcm:
+            return _cmd.cartoon(_self._COb, selection, int(type))
 
     def _ray(width,height,antialias,angle,shift,renderer,quiet,_self=cmd):
         r = DEFAULT_ERROR
