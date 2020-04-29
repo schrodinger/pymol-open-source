@@ -9617,14 +9617,18 @@ pymol::Result<float> ExecutiveDihedral(PyMOLGlobals* G, const char* nam,
   return rad_to_deg(result);
 }
 
-/*
+/**
  * Create a distance measurement object
  *
- * result: output pointer for measured distance in Angstrom
- * nam: name of measurement object to create or add to
- * s1: selection expression
- * s2: selection expression or "same" keyword (shortcut for s1 = s2)
- * mode: 0 (any), 1 (bonds), 2 (hbonds), 3 (distance_exclusion), 4 (centroids)
+ * @param nam: name of measurement object to create or add to
+ * @param s1: selection expression
+ * @param s2: selection expression or "same" keyword (shortcut for s1 = s2)
+ * @param mode: 0 (any), 1 (bonds), 2 (hbonds), 3 (distance_exclusion),
+ * 4 (centroids), 5 (pi-*), 6 (pi-pi), 7 (pi-cat), 8 (vdw-dist-ratio)
+ * @param cutoff: Distance cutoff in Angstrom, or vdw-distance ratio cutoff (mode 8)
+ * @param labels: Boolean flag to show distance labels
+ * @param reset: Boolean flag to clear a distance object if it already exists
+ * @return average of measured distances in Angstrom
  */
 pymol::Result<float> ExecutiveDistance(PyMOLGlobals* G, const char* nam,
     const char* s1, const char* s2, int mode, float cutoff, int labels,
@@ -9649,6 +9653,18 @@ pymol::Result<float> ExecutiveDistance(PyMOLGlobals* G, const char* nam,
   assert(obj);
 
   if (need_manage) {
+    switch (mode) {
+    case 6: // pi-pi
+      SettingSet(cSetting_dash_color, "0x06c5ff" /* light blue */, obj);
+      break;
+    case 7: // pi-cat
+      SettingSet(cSetting_dash_color, "0x468c00" /* dark green */, obj);
+      break;
+    case 8: // "clashes"
+      SettingSet(cSetting_dash_color, "0xff8800" /* light red */, obj);
+      break;
+    }
+
       ObjectSetName(obj, nam);
       ExecutiveManageObject(G, (CObject *) obj, zoom, quiet);
       if(!labels)
