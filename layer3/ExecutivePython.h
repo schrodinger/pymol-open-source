@@ -13,4 +13,7 @@ pymol::Result<> ExecutiveSetRawAlignment(PyMOLGlobals* G,
     pymol::zstring_view alnname, PyObject* raw, pymol::zstring_view guidename,
     int state, int quiet);
 
+pymol::Result<float> ExecutiveFitPairs(
+    PyMOLGlobals* G, PyObject* list, int quiet);
+
 #endif //_PYMOL_NO_PY

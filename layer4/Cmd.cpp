@@ -4191,50 +4191,12 @@ static PyObject *CmdFitPairs(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   PyObject *list;
-  WordType *word = NULL;
-  int ln = 0;
-  int a;
-  PyObject *result = NULL;
-  float valu = -1.0F;
-  int ok = false;
   int quiet = 0;
-  ok = PyArg_ParseTuple(args, "OOi", &self, &list, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    ln = PyObject_Length(list);
-    if(ln) {
-      if(ln & 0x1)
-        ok = ErrMessage(G, "FitPairs", "must supply an even number of selections.");
-    } else
-      ok = false;
-
-    if(ok) {
-      word = pymol::malloc<WordType>(ln);
-
-      a = 0;
-      while(a < ln) {
-        PyObject * item = PySequence_GetItem(list, a);
-        SelectorGetTmp(G, PyString_AsString(item), word[a]);
-        Py_DECREF(item);
-        a++;
-      }
-      if((ok = APIEnterNotModal(G))) {
-        valu = ExecutiveRMSPairs(G, word, ln / 2, 2, quiet);
-        APIExit(G);
-      }
-      result = Py_BuildValue("f", valu);
-      for(a = 0; a < ln; a++)
-        SelectorFreeTmp(G, word[a]);
-      FreeP(word);
-    }
-    APIExitBlocked(G);
-  }
-  return APIAutoNone(result);
+  API_SETUP_ARGS(G, self, args, "OOi", &self, &list, &quiet);
+  API_ASSERT(APIEnterBlockedNotModal(G));
+  auto result = ExecutiveFitPairs(G, list, quiet);
+  APIExitBlocked(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdIntraFit(PyObject * self, PyObject * args)
@@ -4633,19 +4595,11 @@ static PyObject *CmdSetFrame(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int mode, frm;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Oii", &self, &mode, &frm);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    SceneSetFrame(G, mode, frm);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Oii", &self, &mode, &frm);
+  API_ASSERT(APIEnterNotModal(G));
+  SceneSetFrame(G, mode, frm);
+  APIExit(G);
+  return APISuccess();
 }
 
 static PyObject *CmdFrame(PyObject * self, PyObject * args)
@@ -5067,22 +5021,13 @@ static PyObject *CmdMModify(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *object;
-  int ok = false;
   int action,index,count,target,freeze,quiet;
-  ok = PyArg_ParseTuple(args, "Oiiiisii",  &self, &action, &index,
-                        &count, &target, &object, &freeze, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ExecutiveMotionViewModify(G,action,index,count,target,object,freeze,quiet);
-    SceneCountFrames(G);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Oiiiisii", &self, &action, &index, &count,
+      &target, &object, &freeze, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveMotionViewModify(G,action,index,count,target,object,freeze,quiet);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdMView(PyObject * self, PyObject * args)
@@ -5185,22 +5130,11 @@ static PyObject *CmdFlag(PyObject * self, PyObject * args)
   int flag;
   int action;
   int quiet;
-  OrthoLineType s1;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Oisii", &self, &flag, &str1, &action, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    ExecutiveFlag(G, flag, s1, action, quiet);
-    SelectorFreeTmp(G, s1);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Oisii", &self, &flag, &str1, &action, &quiet);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveFlag(G, flag, str1, action, quiet);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdColor(PyObject * self, PyObject * args)

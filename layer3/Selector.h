@@ -240,7 +240,7 @@ public:
   ~SelectorTmp() {
     SelectorFreeTmp(m_G, m_name);
   }
-  const char * getName() { return m_name; }
+  const char * getName() const { return m_name; }
   int getAtomCount() { return m_count; }
   SelectorID_t getIndex() const {
     return m_name[0] ? SelectorIndexByName(m_G, m_name, false) : cSelectionInvalid;

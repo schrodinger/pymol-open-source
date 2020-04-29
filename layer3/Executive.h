@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include "Result.h"
 #include "vla.h"
 #include "TrackerList.h"
+#include "Selector.h"
 
 enum cLoadType_t : int {
   cLoadTypeUnknown = -1,
@@ -349,7 +350,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *sele1, const char *sele2, int mod
 
 pymol::Result<> ExecutiveUpdateCmd(PyMOLGlobals* G, const char* sele1,
     const char* sele2, int sta1, int sta2, int method, int quiet);
-float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode, bool quiet);
+float ExecutiveRMSPairs(PyMOLGlobals* G, const std::vector<SelectorTmp>& sele, int mode, bool quiet);
 pymol::Result<pymol::vla<float>> ExecutiveRMSStates(
     PyMOLGlobals * G, const char *s1, int target, int mode, int quiet, int mix);
 int ExecutiveIndex(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
@@ -404,7 +405,7 @@ PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals * G, const char *s1, int state
                                      const char *ref_object, int ref_state);
 pymol::Result<> ExecutiveInvalidateRep(
     PyMOLGlobals* G, const char* name, int rep, int level);
-void ExecutiveFlag(PyMOLGlobals * G, int flag, const char *s1, int action, int quiet);
+pymol::Result<> ExecutiveFlag(PyMOLGlobals * G, int flag, const char *sele, int action, int quiet);
 pymol::Result<> ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet);
 pymol::Result<> ExecutiveProtect(PyMOLGlobals * G, const char *s1, int mode, int quiet);
 pymol::Result<> ExecutiveMask(
@@ -423,6 +424,7 @@ pymol::Result<std::vector<const char*>> ExecutiveGetNames(PyMOLGlobals*, int, in
 bool ExecutiveIsMoleculeOrSelection(PyMOLGlobals * G, const char *name);
 int ExecutiveGetType(PyMOLGlobals * G, const char *name, WordType type);
 float ExecutiveGetArea(PyMOLGlobals * G, const char *s0, int sta0, int load_b);
+void ExecutiveInvalidateSceneMembers(PyMOLGlobals * G);
 void ExecutiveInvalidateSelectionIndicators(PyMOLGlobals *G);
 void ExecutiveInvalidateSelectionIndicatorsCGO(PyMOLGlobals *G);
 void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInfo *grid);
@@ -617,8 +619,8 @@ void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected ORTHOCG
 
 void ExecutiveMotionReinterpolate(PyMOLGlobals * G);
 
-void ExecutiveMotionViewModify(PyMOLGlobals *G, int action, 
-                               int index, int count, int target, const char *name, int freeze, int quiet);
+pymol::Result<> ExecutiveMotionViewModify(PyMOLGlobals* G, int action,
+    int index, int count, int target, const char* name, int freeze, int quiet);
 
 void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected,int passive, 
                                  int x, int y, int same);

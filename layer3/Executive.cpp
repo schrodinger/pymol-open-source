@@ -545,11 +545,8 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
   return ok;
 }
 
-
-
-void ExecutiveMotionViewModify(PyMOLGlobals *G, int action, 
-                               int index, int count, int target, const char *name,
-                               int freeze,int quiet)
+pymol::Result<> ExecutiveMotionViewModify(PyMOLGlobals* G, int action,
+    int index, int count, int target, const char* name, int freeze, int quiet)
 {
   CExecutive *I = G->Executive;
   if((!name)||(!name[0])||
@@ -600,6 +597,8 @@ void ExecutiveMotionViewModify(PyMOLGlobals *G, int action,
     TrackerDelIter(I_Tracker, iter_id);
   }
   ExecutiveCountMotions(G);
+  SceneCountFrames(G);
+  return {};
 }
 
 void ExecutiveMotionReinterpolate(PyMOLGlobals * G)
@@ -1611,7 +1610,7 @@ static void ExecutiveUpdatePanelList(PyMOLGlobals * G)
   }
 }
 
-static void ExecutiveInvalidateSceneMembers(PyMOLGlobals * G)
+void ExecutiveInvalidateSceneMembers(PyMOLGlobals * G)
 {
   CExecutive *I = G->Executive;
   I->ValidSceneMembers = false;
@@ -9211,62 +9210,60 @@ void ExecutiveFixHydrogens(PyMOLGlobals * G, const char *s1, int quiet)
 
 
 /*========================================================================*/
-void ExecutiveFlag(PyMOLGlobals * G, int flag, const char *s1, int action, int quiet)
+pymol::Result<> ExecutiveFlag(PyMOLGlobals * G, int flag, const char* sele, int action, int quiet)
 {
-  int sele1;
-  OrthoLineType buffer;
+  auto s1 = SelectorTmp::make(G, sele);
+  p_return_if_error(s1);
   ObjectMoleculeOpRec op;
 
-  sele1 = SelectorIndexByName(G, s1);
-  if(sele1 >= 0) {
-    ObjectMoleculeOpRecInit(&op);
-    switch (action) {
-    case 0:
-      op.code = OMOP_Flag;
-      break;
-    case 1:
-      op.code = OMOP_FlagSet;
-      break;
-    case 2:
-      op.code = OMOP_FlagClear;
-      break;
-    default:
-      op.code = OMOP_Flag;
-      break;
-    }
-    op.i1 = (((unsigned int) 1) << flag);
-    op.i2 = ((unsigned int) 0xFFFFFFFF - (((unsigned int) 1) << flag));
-    op.i3 = 0;
-    op.i4 = 0;
-    ExecutiveObjMolSeleOp(G, sele1, &op);
-    if(Feedback(G, FB_Executive, FB_Actions)) {
-      if(!quiet) {
-        switch (action) {
-        case 0:
-          if(op.i3) {
-            PRINTF " Flag: flag %d is set in %d of %d atoms.\n", flag, op.i3,
-              op.i4 ENDF(G);
-          } else {
-            PRINTF " Flag: flag %d cleared on all atoms.\n", flag ENDF(G);
-          }
-          break;
-        case 1:
-          PRINTF " Flag: flag %d set on %d atoms.\n", flag, op.i3 ENDF(G);
-          break;
-        case 2:
-          PRINTF " Flag: flag %d cleared on %d atoms.\n", flag, op.i3 ENDF(G);
-          break;
+  int sele1 = s1->getIndex();
+  ObjectMoleculeOpRecInit(&op);
+  switch (action) {
+  case 0:
+    op.code = OMOP_Flag;
+    break;
+  case 1:
+    op.code = OMOP_FlagSet;
+    break;
+  case 2:
+    op.code = OMOP_FlagClear;
+    break;
+  default:
+    op.code = OMOP_Flag;
+    break;
+  }
+  op.i1 = (((unsigned int) 1) << flag);
+  op.i2 = ((unsigned int) 0xFFFFFFFF - (((unsigned int) 1) << flag));
+  op.i3 = 0;
+  op.i4 = 0;
+  ExecutiveObjMolSeleOp(G, sele1, &op);
+  if(Feedback(G, FB_Executive, FB_Actions)) {
+    if(!quiet) {
+      switch (action) {
+      case 0:
+        if(op.i3) {
+          PRINTF " Flag: flag %d is set in %d of %d atoms.\n", flag, op.i3,
+            op.i4 ENDF(G);
+        } else {
+          PRINTF " Flag: flag %d cleared on all atoms.\n", flag ENDF(G);
         }
+        break;
+      case 1:
+        PRINTF " Flag: flag %d set on %d atoms.\n", flag, op.i3 ENDF(G);
+        break;
+      case 2:
+        PRINTF " Flag: flag %d cleared on %d atoms.\n", flag, op.i3 ENDF(G);
+        break;
       }
     }
-    if(SettingGetGlobal_b(G, cSetting_auto_indicate_flags)) {
-      sprintf(buffer, "(flag %d)", flag);
-      SelectorCreate(G, cIndicateSele, buffer, NULL, true, NULL);
-      ExecutiveSetObjVisib(G, cIndicateSele, true, false);
-      SceneInvalidate(G);
-    }
   }
-
+  if(SettingGetGlobal_b(G, cSetting_auto_indicate_flags)) {
+    auto buffer = pymol::string_format("(flag %d)", flag);
+    SelectorCreate(G, cIndicateSele, buffer.c_str(), NULL, true, NULL);
+    ExecutiveSetObjVisib(G, cIndicateSele, true, false);
+    SceneInvalidate(G);
+  }
+  return {};
 }
 
 
@@ -11156,8 +11153,8 @@ pymol::Result<pymol::vla<float>> ExecutiveRMSStates(
 
 
 /*========================================================================*/
-float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode,
-    bool quiet)
+float ExecutiveRMSPairs(PyMOLGlobals* G, const std::vector<SelectorTmp>& sele,
+    int mode, bool quiet)
 {
   int sele1, sele2;
   int a, c;
@@ -11182,15 +11179,16 @@ float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode,
 
   strcpy(combi, "(");
   c = 0;
+  auto pairs = sele.size() / 2;
   for(a = 0; a < pairs; a++) {
-    sele1 = SelectorIndexByName(G, sele[c]);
+    sele1 = sele[c].getIndex();
     if(sele1 >= 0)
       ExecutiveObjMolSeleOp(G, sele1, &op1);
-    strcat(combi, sele[c]);
+    strcat(combi, sele[c].getName());
     if(a < (pairs - 1))
       strcat(combi, " or ");
     c++;
-    sele2 = SelectorIndexByName(G, sele[c]);
+    sele2 = sele[c].getIndex();
     if(sele2 >= 0)
       ExecutiveObjMolSeleOp(G, sele2, &op2);
     c++;

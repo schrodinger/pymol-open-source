@@ -235,4 +235,29 @@ pymol::Result<> ExecutiveSetRawAlignment(PyMOLGlobals* G,
   return {};
 }
 
+pymol::Result<float> ExecutiveFitPairs(
+    PyMOLGlobals* G, PyObject* list, int quiet)
+{
+  auto ln = PyObject_Length(list);
+  if (!ln) {
+    return pymol::make_error("No selections provided");
+  }
+  if (ln & 0x1) {
+    return pymol::make_error(
+        G, "FitPairs", "must supply an even number of selections.");
+  }
+
+  std::vector<SelectorTmp> word(ln);
+
+  int a = 0;
+  while (a < ln) {
+    unique_PyObject_ptr item(PySequence_GetItem(list, a));
+    auto tmp = SelectorTmp::make(G, PyString_AsString(item.get()));
+    p_return_if_error(tmp);
+    word[a] = std::move(tmp.result());
+    a++;
+  }
+  return ExecutiveRMSPairs(G, word, 2, quiet);
+}
+
 #endif
