@@ -337,17 +337,10 @@ SEE ALSO
 
     zoom, origin, reset
         '''
-        r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
-        #
-        try:
-            _self.lock(_self)
-            r = _cmd.orient(_self._COb,"("+selection+")",int(state)-1,float(animate))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        with _self.lockcm:
+            return _cmd.orient(_self._COb,"("+selection+")",int(state)-1,float(animate))
 
     def move(axis, distance, _self=cmd):
         '''
@@ -372,14 +365,8 @@ SEE ALSO
 
     turn, rotate, translate, zoom, center, clip
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.move(_self._COb,str(axis),float(distance))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        with _self.lockcm:
+            return _cmd.move(_self._COb,str(axis),float(distance))
 
     def enable(name='all', parents=0, _self=cmd):
         '''

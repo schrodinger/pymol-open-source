@@ -6338,12 +6338,12 @@ int ***ExecutiveGetBondPrint(PyMOLGlobals * G, const char *name, int max_bond, i
 #define cMapOperatorCopy     5
 #define cMapOperatorUnique   6
 
-int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const char *operands,
-                    int target_state, int source_state, int zoom, int quiet)
+pymol::Result<> ExecutiveMapSet(PyMOLGlobals* G, const char* name,
+    int operator_, const char* operands, int target_state, int source_state,
+    int zoom, int quiet)
 {
   CExecutive *I = G->Executive;
   CTracker *I_Tracker = I->Tracker;
-  int ok = true;
   int isNew = false;
   ObjectMap *target = ExecutiveFindObjectMapByName(G, name);
   ObjectMap *first_operand = NULL;
@@ -6535,201 +6535,198 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
   }
 
   if(!target) {
-    ok = false;
-    PRINTFB(G, FB_Executive, FB_Errors)
-      "Executive-Error: cannot find or construct target map.\n" ENDFB(G);
+    return pymol::make_error("Cannot find or construct target map.");
   }
 
   /* now do the actual operation */
 
-  if(ok && target) {
-    int src_state;
-    for(src_state = src_state_start; src_state < src_state_stop; src_state++) {
-      int trg_state = src_state + target_state;
-      ObjectMapState *ms;
-      VecCheckEmplace(target->State, trg_state, G);
+  int src_state;
+  for(src_state = src_state_start; src_state < src_state_stop; src_state++) {
+    int trg_state = src_state + target_state;
+    ObjectMapState *ms;
+    VecCheckEmplace(target->State, trg_state, G);
 
-      ms = &target->State[target_state];
-      if(ms->Active) {
-        int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-        int n_pnt = (ms->Field->points->size() / ms->Field->points->base_size) / 3;
-        float *pnt = (float *) ms->Field->points->data.data();
-        float *r_value = pymol::malloc<float>(n_pnt);
-        float *l_value = pymol::calloc<float>(n_pnt);
-        int *present = pymol::calloc<int>(n_pnt);
-        int *inside = pymol::malloc<int>(n_pnt);
-        SpecRec *rec;
+    ms = &target->State[target_state];
+    if(ms->Active) {
+      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+      int n_pnt = (ms->Field->points->size() / ms->Field->points->base_size) / 3;
+      float *pnt = (float *) ms->Field->points->data.data();
+      float *r_value = pymol::malloc<float>(n_pnt);
+      float *l_value = pymol::calloc<float>(n_pnt);
+      int *present = pymol::calloc<int>(n_pnt);
+      int *inside = pymol::malloc<int>(n_pnt);
+      SpecRec *rec;
 
-        while(TrackerIterNextCandInList(I_Tracker, iter_id,
-                                        (TrackerRef **) (void *) &rec)) {
-          if(rec) {
-            if(rec->type == cExecObject) {
-              if(rec->obj->type == cObjectMap) {
-                ObjectMap *obj = (ObjectMap *) rec->obj;
-                if (ObjectMapInterpolate(obj, src_state, pnt, r_value, inside, n_pnt))
-                {
-                  int a;
-                  float *rv = r_value;
-                  float *lv = l_value;
-                  int *flg = inside;
-                  int *pre = present;
+      while(TrackerIterNextCandInList(I_Tracker, iter_id,
+                                      (TrackerRef **) (void *) &rec)) {
+        if(rec) {
+          if(rec->type == cExecObject) {
+            if(rec->obj->type == cObjectMap) {
+              ObjectMap *obj = (ObjectMap *) rec->obj;
+              if (ObjectMapInterpolate(obj, src_state, pnt, r_value, inside, n_pnt))
+              {
+                int a;
+                float *rv = r_value;
+                float *lv = l_value;
+                int *flg = inside;
+                int *pre = present;
 
-                  switch (operator_) {
-                  case cMapOperatorCopy:
-                    for(a = 0; a < n_pnt; a++) {
-                      if(flg) {
+                switch (operator_) {
+                case cMapOperatorCopy:
+                  for(a = 0; a < n_pnt; a++) {
+                    if(flg) {
+                      *lv = *rv;
+                    }
+                    rv++;
+                    lv++;
+                    flg++;
+                  }
+                  break;
+                case cMapOperatorMinimum:
+                  for(a = 0; a < n_pnt; a++) {
+                    if(flg) {
+                      if(*pre) {
+                        if(*lv > *rv)
+                          *lv = *rv;
+                      } else {        /* first map */
+                        *pre = 1;
                         *lv = *rv;
                       }
-                      rv++;
-                      lv++;
-                      flg++;
-                    }
-                    break;
-                  case cMapOperatorMinimum:
-                    for(a = 0; a < n_pnt; a++) {
-                      if(flg) {
-                        if(*pre) {
-                          if(*lv > *rv)
-                            *lv = *rv;
-                        } else {        /* first map */
-                          *pre = 1;
-                          *lv = *rv;
-                        }
 
-                      }
-                      rv++;
-                      lv++;
-                      flg++;
-                      pre++;
                     }
-                    break;
-                  case cMapOperatorMaximum:
-                    for(a = 0; a < n_pnt; a++) {
-                      if(flg) {
-                        if(*pre) {
-                          if(*lv < *rv)
-                            *lv = *rv;
-                        } else {        /* first map */
-                          *pre = 1;
-                          *lv = *rv;
-                        }
-                      }
-                      rv++;
-                      lv++;
-                      flg++;
-                      pre++;
-                    }
-                    break;
-                  case cMapOperatorSum:
-                    for(a = 0; a < n_pnt; a++) {
-                      if(flg) {
-                        *lv += *rv;
-                      }
-                      rv++;
-                      lv++;
-                      flg++;
-                    }
-                    break;
-                  case cMapOperatorAverage:
-                    for(a = 0; a < n_pnt; a++) {
-                      if(flg) {
-                        *lv += *rv;
-                      }
-                      (*pre)++;
-                      rv++;
-                      lv++;
-                      flg++;
-                      pre++;
-                    }
-                    break;
-                  case cMapOperatorDifference:
-                    if(obj != first_operand) {
-                      for(a = 0; a < n_pnt; a++) {
-                        if(flg) {
-                          *lv -= *rv;
-                        }
-                        rv++;
-                        lv++;
-                        flg++;
-                      }
-                    } else {
-                      for(a = 0; a < n_pnt; a++) {
-                        if(flg) {
-                          *lv += *rv;
-                        }
-                        rv++;
-                        lv++;
-                        flg++;
-                      }
-                    }
-                    break;
-                  case cMapOperatorUnique:
-                    if(obj != first_operand) {
-                      for(a = 0; a < n_pnt; a++) {
-                        if(flg) {
-                          *lv -= *rv;
-                        }
-                        rv++;
-                        lv++;
-                        flg++;
-                      }
-                    } else {
-                      for(a = 0; a < n_pnt; a++) {
-                        if(flg) {
-                          *lv += *rv;
-                        }
-                        rv++;
-                        lv++;
-                        flg++;
-                      }
-                    }
-
-                    break;
+                    rv++;
+                    lv++;
+                    flg++;
+                    pre++;
                   }
+                  break;
+                case cMapOperatorMaximum:
+                  for(a = 0; a < n_pnt; a++) {
+                    if(flg) {
+                      if(*pre) {
+                        if(*lv < *rv)
+                          *lv = *rv;
+                      } else {        /* first map */
+                        *pre = 1;
+                        *lv = *rv;
+                      }
+                    }
+                    rv++;
+                    lv++;
+                    flg++;
+                    pre++;
+                  }
+                  break;
+                case cMapOperatorSum:
+                  for(a = 0; a < n_pnt; a++) {
+                    if(flg) {
+                      *lv += *rv;
+                    }
+                    rv++;
+                    lv++;
+                    flg++;
+                  }
+                  break;
+                case cMapOperatorAverage:
+                  for(a = 0; a < n_pnt; a++) {
+                    if(flg) {
+                      *lv += *rv;
+                    }
+                    (*pre)++;
+                    rv++;
+                    lv++;
+                    flg++;
+                    pre++;
+                  }
+                  break;
+                case cMapOperatorDifference:
+                  if(obj != first_operand) {
+                    for(a = 0; a < n_pnt; a++) {
+                      if(flg) {
+                        *lv -= *rv;
+                      }
+                      rv++;
+                      lv++;
+                      flg++;
+                    }
+                  } else {
+                    for(a = 0; a < n_pnt; a++) {
+                      if(flg) {
+                        *lv += *rv;
+                      }
+                      rv++;
+                      lv++;
+                      flg++;
+                    }
+                  }
+                  break;
+                case cMapOperatorUnique:
+                  if(obj != first_operand) {
+                    for(a = 0; a < n_pnt; a++) {
+                      if(flg) {
+                        *lv -= *rv;
+                      }
+                      rv++;
+                      lv++;
+                      flg++;
+                    }
+                  } else {
+                    for(a = 0; a < n_pnt; a++) {
+                      if(flg) {
+                        *lv += *rv;
+                      }
+                      rv++;
+                      lv++;
+                      flg++;
+                    }
+                  }
+
+                  break;
                 }
               }
             }
           }
         }
+      }
 
-        {
-          int a;
-          float *lv = l_value;
-          int *pre = present;
+      {
+        int a;
+        float *lv = l_value;
+        int *pre = present;
 
-          switch (operator_) {
-          case cMapOperatorUnique:
-            lv = l_value;
-            for(a = 0; a < n_pnt; a++) {
-              if(*lv < 0.0F)
-                *lv = 0.0F;
-              lv++;
-            }
-            break;
-          case cMapOperatorAverage:
-            lv = l_value;
-            pre = present;
-            for(a = 0; a < n_pnt; a++) {
-              if(*pre)
-                *lv /= *pre;
-              lv++;
-              pre++;
-            }
+        switch (operator_) {
+        case cMapOperatorUnique:
+          lv = l_value;
+          for(a = 0; a < n_pnt; a++) {
+            if(*lv < 0.0F)
+              *lv = 0.0F;
+            lv++;
+          }
+          break;
+        case cMapOperatorAverage:
+          lv = l_value;
+          pre = present;
+          for(a = 0; a < n_pnt; a++) {
+            if(*pre)
+              *lv /= *pre;
+            lv++;
+            pre++;
           }
         }
-
-        /* copy after calculation so that operand can include target */
-
-        memcpy(ms->Field->data->data.data(), l_value, n_pnt * sizeof(float));
-
-        FreeP(present);
-        FreeP(l_value);
-        FreeP(r_value);
-        FreeP(inside);
-        TrackerDelIter(I_Tracker, iter_id);
       }
+
+      /* copy after calculation so that operand can include target */
+
+      memcpy(ms->Field->data->data.data(), l_value, n_pnt * sizeof(float));
+
+      FreeP(present);
+      FreeP(l_value);
+      FreeP(r_value);
+      FreeP(inside);
+      TrackerDelIter(I_Tracker, iter_id);
     }
   }
+  
 
   /* and finally, update */
 
@@ -6744,7 +6741,7 @@ int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int operator_, const cha
   }
   TrackerDelList(I_Tracker, list_id);
 
-  return ok;
+  return {};
 }
 
 
@@ -7216,13 +7213,13 @@ pymol::Result<> ExecutiveMapHalve(
   return {};
 }
 
-int ExecutiveMapTrim(PyMOLGlobals * G, const char *name,
-                     const char *sele, float buffer, int map_state, int sele_state, int quiet)
+pymol::Result<> ExecutiveMapTrim(PyMOLGlobals* G, const char* name,
+    const char* sele, float buffer, int map_state, int sele_state, int quiet)
 {
+  auto s1 = SelectorTmp2::make(G, sele);
   CExecutive *I = G->Executive;
-  int result = true;
   float mn[3], mx[3];
-  if(ExecutiveGetExtent(G, sele, mn, mx, true, sele_state, false)) {
+  if(ExecutiveGetExtent(G, s1->getName(), mn, mx, true, sele_state, false)) {
     CTracker *I_Tracker = I->Tracker;
     int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
@@ -7247,9 +7244,12 @@ int ExecutiveMapTrim(PyMOLGlobals * G, const char *name,
         case cExecObject:
           if(rec->obj->type == cObjectMap) {
             ObjectMap *obj = (ObjectMap *) rec->obj;
-            result = result && ObjectMapTrim(obj, map_state, mn, mx, quiet);
-            if(result)
+            auto result = ObjectMapTrim(obj, map_state, mn, mx, quiet);
+            if(result) {
               ExecutiveInvalidateMapDependents(G, obj->Name);
+            } else {
+              return result;
+            }
             if(result && rec->visible)
               SceneChanged(G);
           }
@@ -7260,7 +7260,7 @@ int ExecutiveMapTrim(PyMOLGlobals * G, const char *name,
     TrackerDelList(I_Tracker, list_id);
     TrackerDelIter(I_Tracker, iter_id);
   }
-  return result;
+  return {};
 }
 
 void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode)
@@ -9922,6 +9922,24 @@ pymol::Result<> ExecutiveOrient(PyMOLGlobals * G, const char *sele,
   return {};
 }
 
+pymol::Result<> ExecutiveMove(
+    PyMOLGlobals* G, pymol::zstring_view axis, float dist)
+{
+  switch (std::tolower(axis[0])) {
+  case 'x':
+    SceneTranslate(G, dist, 0.0, 0.0);
+    break;
+  case 'y':
+    SceneTranslate(G, 0.0, dist, 0.0);
+    break;
+  case 'z':
+    SceneTranslate(G, 0.0, 0.0, dist);
+    break;
+  default:
+    return pymol::make_error("Axis must be x, y, or z");
+  }
+  return {};
+}
 
 /*========================================================================*/
 pymol::Result<> ExecutiveLabel(PyMOLGlobals * G, const char *str1, const char *expr, int quiet, int eval_mode)
@@ -12517,7 +12535,16 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
 
 
 /*========================================================================*/
-int ExecutiveColor(PyMOLGlobals * G, const char *name, const char *color, int flags, int quiet)
+pymol::Result<> ExecutiveColorFromSele(
+    PyMOLGlobals* G, const char* sele, const char* color, int flags, int quiet)
+{
+  auto s1 = SelectorTmp2::make(G, sele);
+  p_return_if_error(s1);
+  return ExecutiveColor(G, s1->getName(), color, flags, quiet);
+}
+
+pymol::Result<> ExecutiveColor(
+    PyMOLGlobals* G, const char* name, const char* color, int flags, int quiet)
 {
   /* flags: 
      0x1 -- ignore or suppress selection name matches
@@ -12530,7 +12557,7 @@ int ExecutiveColor(PyMOLGlobals * G, const char *name, const char *color, int fl
   if((!name) || (!name[0]))
     name = cKeywordAll;
   if(col_ind == -1) {
-    ErrMessage(G, "Color", "Unknown color.");
+    return pymol::Error("Unknown color.");
   } else {
     CTracker *I_Tracker = I->Tracker;
     SpecRec *rec = NULL;
@@ -12619,7 +12646,7 @@ int ExecutiveColor(PyMOLGlobals * G, const char *name, const char *color, int fl
       }
     }
   }
-  return (ok);
+  return {};
 }
 
 
@@ -13273,49 +13300,51 @@ pymol::Result<> ExecutiveCenter(PyMOLGlobals* G, const char* name,
 
 
 /*========================================================================*/
-int ExecutiveOrigin(PyMOLGlobals * G, const char *name, int preserve, const char *oname, float *pos,
-                    int state)
+pymol::Result<> ExecutiveOrigin(PyMOLGlobals* G, const char* sele, int preserve,
+    const char* oname, float* pos, int state)
 {
+
   float center[3];
   float mn[3], mx[3];
-  int ok = true;
   CObject *obj = NULL;
   int have_center = false;
   if(oname && oname[0]) {
     obj = ExecutiveFindObjectByName(G, oname);
     if(!obj)
-      ok = false;
+      return pymol::make_error("Object ", oname, " not found.");
   }
-  if(ok) {
-    if(name && name[0]) {
-      ok = ExecutiveGetExtent(G, name, mn, mx, true, state, true);
-      if(ok) {
-        average3f(mn, mx, center);
-        have_center = true;
-      }
-    } else if(pos) {
-      copy3f(pos, center);
-      have_center = true;
+  if(sele && sele[0]) {
+    auto s1 = SelectorTmp2::make(G, sele);
+    auto has_extent = ExecutiveGetExtent(G, s1->getName(), mn, mx, true, state, true);
+    if(!has_extent) {
+      return pymol::make_error("Could not determine extent of selection.");
     }
+    average3f(mn, mx, center);
+    have_center = true;
+  } else if(pos) {
+    copy3f(pos, center);
+    have_center = true;
   }
-  if(ok && have_center) {
-    if(obj) {
-      ObjectSetTTTOrigin(obj, center);
-      PRINTFB(G, FB_Executive, FB_Blather)
-        " %s: origin for %s set to %8.3f %8.3f %8.3f\n", __func__,
-        oname, center[0], center[1], center[2]
-        ENDFB(G);
-    } else {
-      PRINTFB(G, FB_Executive, FB_Blather)
-        " %s: scene origin set to %8.3f %8.3f %8.3f\n", __func__,
-        center[0], center[1], center[2]
-        ENDFB(G);
-      SceneOriginSet(G, center, preserve);
-    }
-    SceneInvalidate(G);
-  } else
-    ok = false;
-  return (ok);
+
+  if(!have_center) {
+    return pymol::make_error("Center could not be determined.");
+  }
+
+  if(obj) {
+    ObjectSetTTTOrigin(obj, center);
+    PRINTFB(G, FB_Executive, FB_Blather)
+      " %s: origin for %s set to %8.3f %8.3f %8.3f\n", __func__,
+      oname, center[0], center[1], center[2]
+      ENDFB(G);
+  } else {
+    PRINTFB(G, FB_Executive, FB_Blather)
+      " %s: scene origin set to %8.3f %8.3f %8.3f\n", __func__,
+      center[0], center[1], center[2]
+      ENDFB(G);
+    SceneOriginSet(G, center, preserve);
+  }
+  SceneInvalidate(G);
+  return {};
 }
 
 

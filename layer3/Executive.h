@@ -228,8 +228,9 @@ pymol::Result<> ExecutivePseudoatom(PyMOLGlobals* G, pymol::zstring_view object_
     int hetatm, float b, float q, const char* label, const float* pos, int color,
     int state, int mode, int quiet);
 
-int ExecutiveMapSet(PyMOLGlobals * G, const char *name, int, const char *operands,
-                    int target_state, int source_state, int zoom, int quiet);
+pymol::Result<> ExecutiveMapSet(PyMOLGlobals* G, const char* name, int,
+    const char* operands, int target_state, int source_state, int zoom,
+    int quiet);
 
 int ExecutiveAlign(PyMOLGlobals * G, const char *s1, const char *s2, const char *mat_file,
                    float gap, float extend,
@@ -283,7 +284,10 @@ pymol::Result<int> ExecutiveIterateState(PyMOLGlobals* G, int state,
     const char* str1, const char* expr, int read_only, int atomic_props,
     int quiet, PyObject* space);
 #endif
-int ExecutiveColor(PyMOLGlobals * G, const char *name, const char *color, int flags, int quiet);
+pymol::Result<> ExecutiveColor(
+    PyMOLGlobals* G, const char* name, const char* color, int flags, int quiet);
+pymol::Result<> ExecutiveColorFromSele(
+    PyMOLGlobals* G, const char* sele, const char* color, int flags, int quiet);
 int ExecutiveInit(PyMOLGlobals * G);
 void ExecutiveFree(PyMOLGlobals * G);
 int ExecutivePop(PyMOLGlobals * G, const char *target, const char *source, int quiet);
@@ -368,8 +372,19 @@ pymol::Result<> ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int 
 
 pymol::Result<> ExecutiveSetObjVisib(PyMOLGlobals * G, pymol::zstring_view name, int onoff, int parents);
 
-int ExecutiveOrigin(PyMOLGlobals * G, const char *name, int preserve, const char *oname, float *pos,
-                    int state);
+
+/**
+ * Sets the rotation center for the scene or object around a selection's center (or provided coords)
+ * @param sele (null-safe) selection expression used to calculate rotation center
+ * @param preserve preserves the current viewing location
+ * @param oname (null-safe) object name
+ * @param pos optional explicit coordinates for rotation center
+ * @param state state(s) considered to calculate rotation center
+ * Note: Either seletion or explicit center position must be provided
+ * Note: selection's center is preferred over explicit pos if both are provided
+ */
+pymol::Result<> ExecutiveOrigin(PyMOLGlobals* G, const char* sele, int preserve,
+    const char* oname, float* pos, int state);
 pymol::Result<> ExecutiveCenter(PyMOLGlobals* G, const char* name, int state,
     int inclusive, float animate, float* pos, int quiet);
 void ExecutiveDoZoom(PyMOLGlobals * G, CObject * obj, int is_new, int zoom, int quiet);
@@ -382,6 +397,8 @@ pymol::Result<std::vector<const char*>> ExecutiveGetChains(PyMOLGlobals* G, cons
 
 pymol::Result<> ExecutiveOrient(PyMOLGlobals* G, const char* sele,
     int state, float animate, int complete, float buffer, int quiet);
+pymol::Result<> ExecutiveMove(
+    PyMOLGlobals* G, pymol::zstring_view axis, float dist);
 char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals * G, const char *name, int state, int format,
                                     int quiet);
 
@@ -466,8 +483,8 @@ pymol::Result<> ExecutiveTranslateAtom(
     PyMOLGlobals* G, const char* sele, const float* v, int state, int mode, int log);
 void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode);
 int ExecutiveMapSetBorder(PyMOLGlobals * G, const char *name, float level, int state);
-int ExecutiveMapTrim(PyMOLGlobals * G, const char *name, const char *sele,
-                     float buffer, int map_state, int sele_state, int quiet);
+pymol::Result<> ExecutiveMapTrim(PyMOLGlobals* G, const char* name,
+    const char* sele, float buffer, int map_state, int sele_state, int quiet);
 pymol::Result<> ExecutiveMapDouble(PyMOLGlobals * G, const char *name, int state);
 pymol::Result<> ExecutiveMapHalve(PyMOLGlobals * G, const char *name, int state, int smooth);
 

@@ -149,7 +149,7 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
                                   int state, int discrete, int quiet);
 pymol::Result<> ObjectMapDouble(ObjectMap * I, int state);
 pymol::Result<> ObjectMapHalve(ObjectMap * I, int state, int smooth);
-int ObjectMapTrim(ObjectMap * I, int state, float *mn, float *mx, int quiet);
+pymol::Result<> ObjectMapTrim(ObjectMap * I, int state, float *mn, float *mx, int quiet);
 int ObjectMapSetBorder(ObjectMap * I, float level, int state);
 int ObjectMapStateSetBorder(ObjectMapState * I, float level);
 void ObjectMapStatePurge(PyMOLGlobals * G, ObjectMapState * I);

@@ -66,7 +66,7 @@ pymol::Result<> EditorReplace(PyMOLGlobals* G, const char* elem, int geom,
     int valence, const char* name = "", int quiet = 1);
 pymol::Result<> EditorAttach(PyMOLGlobals* G, const char* elem, int geom,
     int valence, const char* name, int quiet);
-void EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet);
+pymol::Result<> EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet);
 pymol::Result<> EditorHFill(PyMOLGlobals * G, int quiet=1);
 pymol::Result<> EditorHFix(PyMOLGlobals * G, const char *sele, int quiet);
 pymol::Result<> EditorCycleValence(PyMOLGlobals * G, int quiet=1);

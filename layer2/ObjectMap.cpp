@@ -400,7 +400,7 @@ int ObjectMapInterpolate(ObjectMap * I, int state, const float *array, float *re
   return (ok);
 }
 
-static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
+static void ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
                               float *mn, float *mx, int quiet)
 {
   int div[3];
@@ -412,7 +412,6 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
   float v[3];
   float grid[3];
   Isofield *field;
-  int result = true;
   float orig_size = 1.0F;
   float new_size = 1.0F;
 
@@ -534,7 +533,6 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
           }
         }
       }
-      result = true;
     }
   } else {                      /* not a crystal map */
     int hit_flag = false;
@@ -629,15 +627,13 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
           }
         }
       }
-      result = true;
     }
   }
-  if(result && (!quiet)) {
+  if(!quiet) {
     PRINTFB(G, FB_ObjectMap, FB_Actions)
       " ObjectMap: Map volume reduced by %2.0f%%.\n",
       (100 * (orig_size - new_size)) / orig_size ENDFB(G);
   }
-  return result;
 }
 
 static void ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
@@ -899,33 +895,28 @@ static void ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smoot
   }
 }
 
-int ObjectMapTrim(ObjectMap * I, int state, float *mn, float *mx, int quiet)
+pymol::Result<> ObjectMapTrim(
+    ObjectMap* I, int state, float* mn, float* mx, int quiet)
 {
-  int a;
-  int result = true;
   int update = false;
 
   /* TO DO: convert mn and mx into map local coordinates if map itself is transformed...  */
 
   if(state < 0) {
-    for(a = 0; a < I->State.size(); a++) {
-      if(I->State[a].Active) {
-        if(ObjectMapStateTrim(I->G, &I->State[a], mn, mx, quiet))
+    for(auto& ms : I->State) {
+      if(ms.Active) {
+        ObjectMapStateTrim(I->G, &ms, mn, mx, quiet);
           update = true;
-        else
-          result = false;
       }
     }
   } else if((state >= 0) && (state < I->State.size()) && (I->State[state].Active)) {
-    update = result = ObjectMapStateTrim(I->G, &I->State[state], mn, mx, quiet);
+    ObjectMapStateTrim(I->G, &I->State[state], mn, mx, quiet);
   } else {
-    PRINTFB(I->G, FB_ObjectMap, FB_Errors)
-      " ObjectMap-Error: invalidate state.\n" ENDFB(I->G);
-    result = false;
+    return pymol::make_error("Invalid state.");
   }
   if(update)
     ObjectMapUpdateExtents(I);
-  return (result);
+  return {};
 }
 
 pymol::Result<> ObjectMapDouble(ObjectMap* I, int state)

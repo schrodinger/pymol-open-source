@@ -853,11 +853,10 @@ PyMOLreturn_status PyMOL_CmdCenter(CPyMOL * I, const char *selection, int state,
 PyMOLreturn_status PyMOL_CmdOrigin(CPyMOL * I, const char *selection, int state, int quiet)
 {
   int ok = true;
-  PYMOL_API_LOCK OrthoLineType s1;
+  PYMOL_API_LOCK
   float v[3] = { 0.0F, 0.0F, 0.0F };
-  SelectorGetTmp2(I->G, selection, s1);
-  ok = ExecutiveOrigin(I->G, s1, true, "", v, state - 1);       /* TODO STATUS */
-  SelectorFreeTmp(I->G, s1);
+  auto result = ExecutiveOrigin(I->G, selection, true, "", v, state - 1);
+  ok = static_cast<bool>(result);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
@@ -868,7 +867,8 @@ PyMOLreturn_status PyMOL_CmdOriginAt(CPyMOL * I, float x, float y, float z, int 
   v[0] = x;
   v[1] = y;
   v[2] = z;
-  ok = ExecutiveOrigin(I->G, "", true, "", v, 0);       /* TODO STATUS */
+  auto result = ExecutiveOrigin(I->G, "", true, "", v, 0);
+  ok = static_cast<bool>(ok);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
@@ -1146,11 +1146,9 @@ PyMOLreturn_status PyMOL_CmdColor(CPyMOL * I, const char *color, const char *sel
                                   int quiet)
 {
   int ok = true;
-  PYMOL_API_LOCK OrthoLineType s1 = "";
-
-  SelectorGetTmp2(I->G, selection, s1);
-  ok = ExecutiveColor(I->G, s1, color, flags, quiet);
-  SelectorFreeTmp(I->G, s1);
+  PYMOL_API_LOCK
+  auto result = ExecutiveColor(I->G, selection, color, flags, quiet);
+  ok = static_cast<bool>(result);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 

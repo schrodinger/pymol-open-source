@@ -976,60 +976,62 @@ pymol::Result<> EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int v
 
 
 /*========================================================================*/
-void EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet)
+pymol::Result<> EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet)
 {
 #define cEditorRemoveSele "_EditorRemove"
 
-  if(EditorActive(G)) {
-    OrthoLineType buf;
+  if(!EditorActive(G)) {
+    return pymol::make_error("Editor not active");
+  }
 
-    CEditor *I = G->Editor;
-    int sele0 = SelectorIndexByName(G, cEditorSele1);
-    ObjectMolecule *obj0 = SelectorGetFastSingleObjectMolecule(G, sele0);
-    ObjectMoleculeVerifyChemistry(obj0, -1);    /* remember chemistry for later */
-    if((sele0 >= 0) && obj0) {
-      int sele1 = SelectorIndexByName(G, cEditorSele2);
-      ObjectMolecule *obj1 = SelectorGetFastSingleObjectMolecule(G, sele1);
-      if((sele1 >= 0) && (obj0 == obj1) && I->BondMode) {
-        /* bond mode */
-        ObjectMoleculeRemoveBonds(obj0, sele0, sele1);
-        EditorInactivate(G);
-      } else {
-        int h_flag = false;
+  CEditor *I = G->Editor;
+  int sele0 = SelectorIndexByName(G, cEditorSele1);
+  ObjectMolecule *obj0 = SelectorGetFastSingleObjectMolecule(G, sele0);
+  ObjectMoleculeVerifyChemistry(obj0, -1);    /* remember chemistry for later */
+  if(!((sele0 >= 0) && obj0)) {
+    return pymol::make_error("Invalid pk selection");
+  }
+  int sele1 = SelectorIndexByName(G, cEditorSele2);
+  ObjectMolecule *obj1 = SelectorGetFastSingleObjectMolecule(G, sele1);
+  if((sele1 >= 0) && (obj0 == obj1) && I->BondMode) {
+    /* bond mode */
+    ObjectMoleculeRemoveBonds(obj0, sele0, sele1);
+    EditorInactivate(G);
+  } else {
+    int h_flag = false;
 
-        if(SelectorIndexByName(G, cEditorSet) < 0) {
-          int i0 = 0;
-          /* only one atom picked */
+    if(SelectorIndexByName(G, cEditorSet) < 0) {
+      int i0 = 0;
+      /* only one atom picked */
 
-          if(hydrogen) {
-            sprintf(buf, "((neighbor %s) and hydro)", cEditorSele1);
-            h_flag = SelectorCreate(G, cEditorRemoveSele, buf, NULL, false, NULL).result();
-          }
+      if(hydrogen) {
+        auto buf = pymol::string_format("((neighbor %s) and hydro)", cEditorSele1);
+        h_flag = SelectorCreate(G, cEditorRemoveSele, buf.c_str(), NULL, false, NULL).result();
+      }
 
-          if(SelectorGetFastSingleAtomObjectIndex(G, sele0, &i0)) {
-            /* atom mode */
-            if(i0 >= 0) {
-              ExecutiveRemoveAtoms(G, cEditorSele1, quiet);
-            }
-          }
-        } else {                /* multiple atoms picked */
-
-          if(hydrogen) {
-            sprintf(buf, "((neighbor %s) and hydro)", cEditorSet);
-            h_flag = SelectorCreate(G, cEditorRemoveSele, buf, NULL, false, NULL).result();
-          }
-          ExecutiveRemoveAtoms(G, cEditorSet, quiet);
-        }
-
-        EditorInactivate(G);
-        if(h_flag) {
-          ExecutiveRemoveAtoms(G, cEditorRemoveSele, quiet);
-          SelectorDelete(G, cEditorRemoveSele);
+      if(SelectorGetFastSingleAtomObjectIndex(G, sele0, &i0)) {
+        /* atom mode */
+        if(i0 >= 0) {
+          ExecutiveRemoveAtoms(G, cEditorSele1, quiet);
         }
       }
+    } else {                /* multiple atoms picked */
+
+      if(hydrogen) {
+        auto buf = pymol::string_format("((neighbor %s) and hydro)", cEditorSet);
+        h_flag = SelectorCreate(G, cEditorRemoveSele, buf.c_str(), NULL, false, NULL).result();
+      }
+      ExecutiveRemoveAtoms(G, cEditorSet, quiet);
+    }
+
+    EditorInactivate(G);
+    if(h_flag) {
+      ExecutiveRemoveAtoms(G, cEditorRemoveSele, quiet);
+      SelectorDelete(G, cEditorRemoveSele);
     }
   }
 #undef cEditorRemoveSele
+  return {};
 }
 
 
