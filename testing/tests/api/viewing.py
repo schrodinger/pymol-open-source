@@ -137,6 +137,41 @@ class TestViewing(testing.PyMOLTestCase):
         d = cpv.distance(*coords)
         self.assertAlmostEqual(d, 2 * 2**0.5)
 
+    @testing.requires("multi_undo")
+    def testUndoOrigin(self):
+        from chempy import cpv
+        cmd.pseudoatom('m1')
+        cmd.pseudoatom('m2')
+        cmd.pseudoatom('m3', pos=[1,0,0])
+        # by selection
+        cmd.origin('m3')
+        cmd.rotate('y', 90, 'm1')
+        # by position
+        cmd.origin(position=[-1,0,0])
+        cmd.undo2()
+        cmd.rotate('y', 90, 'm2')
+        coords = []
+        cmd.iterate_state(1, 'm1 m2', 'coords.append([x,y,z])', space=locals())
+        d = cpv.distance(*coords)
+        self.assertAlmostEqual(d, 0)
+
+        cmd.delete("*")
+        cmd.pseudoatom('m1')
+        cmd.pseudoatom('m2')
+        cmd.pseudoatom('m3', pos=[1,0,0])
+        # by selection
+        cmd.origin('m3')
+        cmd.rotate('y', 90, 'm1')
+        # by position
+        cmd.origin(position=[-1,0,0])
+        cmd.undo2()
+        cmd.redo2()
+        cmd.rotate('y', 90, 'm2')
+        coords = []
+        cmd.iterate_state(1, 'm1 m2', 'coords.append([x,y,z])', space=locals())
+        d = cpv.distance(*coords)
+        self.assertAlmostEqual(d, 2 * 2**0.5)
+
     def testMove(self):
         for a in "xyz":
             cmd.turn(a, random.random() * 10 - 5)
