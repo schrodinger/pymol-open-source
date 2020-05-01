@@ -57,7 +57,7 @@ struct ObjectSliceState {
   int n_strips = 0;
   pymol::vla<int> strips;
 
-  CGO *shaderCGO = nullptr;
+  pymol::cache_ptr<CGO, CGODeleter> shaderCGO;
   float Corner[24];
 
   float outline_points[36];
@@ -65,13 +65,11 @@ struct ObjectSliceState {
   float outline_zaxis[3];
   ObjectSliceState(PyMOLGlobals* G)
       : G(G){};
-  ~ObjectSliceState();
 };
 
 struct ObjectSlice : public CObject {
-  pymol::vla<ObjectSliceState> State;
+  std::vector<ObjectSliceState> State;
   PickContext context{};
-  int NState = 0;
   ObjectSlice(PyMOLGlobals* G);
 
   // virtual methods
@@ -79,6 +77,7 @@ struct ObjectSlice : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(int rep, int level, int state) override;
   int getNFrame() const override;
+  CObject* clone() const override;
 };
 
 ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap * map,
