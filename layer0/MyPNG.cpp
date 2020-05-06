@@ -140,10 +140,8 @@ void read_data_from_buffer(png_structp png_ptr,
 static void write_data_to_buffer(png_structp png_ptr,
                                  png_bytep data,
                                  png_size_t length) {
-#if 0
-  auto io_ptr = (std::vector<unsigned char>*) png_get_io_ptr(png_ptr);
+  auto io_ptr = reinterpret_cast<png_outbuf_t*>(png_get_io_ptr(png_ptr));
   io_ptr->insert(io_ptr->end(), data, data + length);
-#endif
 }
 
 /**
@@ -173,7 +171,7 @@ static void write_data_to_file(
 
 int MyPNGWrite(const char* file_name, const pymol::Image& img, const float dpi,
     const int format, const int quiet, const float screen_gamma,
-    const float file_gamma, void* io_ptr)
+    const float file_gamma, png_outbuf_t* io_ptr)
 {
   const unsigned char* data_ptr = img.bits();
   int width = img.getWidth();

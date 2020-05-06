@@ -1980,7 +1980,7 @@ int SceneCopyExternal(PyMOLGlobals * G, int width, int height,
 }
 
 bool ScenePNG(PyMOLGlobals * G, const char *png, float dpi, int quiet,
-             int prior_only, int format)
+             int prior_only, int format, png_outbuf_t* outbuf)
 {
   CScene *I = G->Scene;
   SceneImagePrepare(G, prior_only);
@@ -1996,7 +1996,7 @@ bool ScenePNG(PyMOLGlobals * G, const char *png, float dpi, int quiet,
       dpi = SettingGetGlobal_f(G, cSetting_image_dots_per_inch);
     auto screen_gamma = SettingGetGlobal_f(G, cSetting_png_screen_gamma);
     auto file_gamma = SettingGetGlobal_f(G, cSetting_png_file_gamma);
-    if(MyPNGWrite(png, *saveImage, dpi, format, quiet, screen_gamma, file_gamma)) {
+    if(MyPNGWrite(png, *saveImage, dpi, format, quiet, screen_gamma, file_gamma, outbuf)) {
       if(!quiet) {
         PRINTFB(G, FB_Scene, FB_Actions)
           " %s: wrote %dx%d pixel image to file \"%s\".\n", __func__,

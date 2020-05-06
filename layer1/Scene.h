@@ -29,6 +29,8 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"pymol/zstring_view.h"
 
+#include <vector>
+
 #define SDOF_NORMAL_MODE 0
 #define SDOF_CLIP_MODE 1
 #define SDOF_DRAG_MODE 2
@@ -98,8 +100,8 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
     int width=0, int height=0);
 int SceneValidateImageMode(PyMOLGlobals * G, int mode, bool defaultdraw);
 
-bool ScenePNG(PyMOLGlobals * G, const char *png, float dpi, int quiet,
-             int prior_only, int format);
+bool ScenePNG(PyMOLGlobals* G, const char* png, float dpi, int quiet,
+    int prior_only, int format, std::vector<unsigned char>* outbuf = nullptr);
 int SceneCopyExternal(PyMOLGlobals * G, int width, int height, int rowbytes,
                       unsigned char *dest, int mode);
 

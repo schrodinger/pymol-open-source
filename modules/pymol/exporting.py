@@ -551,9 +551,9 @@ PYMOL API
 
         if prior:
             # fetch the prior image, without doing any work (fast-path / non-GLUT thread-safe)
-            r = _self._png(str(filename),0,0,float(dpi),0,int(quiet),1,
+            r = _self._png(filename, 0, 0, float(dpi), 0, int(quiet), 1,
                            int(format))
-            if r != 1: # no prior image available -- revert to default behavior
+            if not r: # no prior image available -- revert to default behavior
                 if prior < 0: # default is to fall back to actual rendering
                     prior = 0
         if not prior:
@@ -564,13 +564,15 @@ PYMOL API
             height = _unit2px(height, dpi)
 
             if _self.is_gui_thread():
-                r = _self._png(str(filename),int(width),int(height),float(dpi),
+                r = _self._png(filename, int(width), int(height), float(dpi),
                                int(ray),int(quiet),0,int(format))
+            elif filename is None:
+                raise pymol.CmdException(
+                    "deferred image rendering not supported without filename")
             else:
                 r = _self._do("cmd._png('''%s''',%d,%d,%1.6f,%d,%d,%d,%d)"%
                               (filename,width,height,dpi,
                                ray,int(quiet),0,int(format)),_self=_self)
-        if _self._raising(r): raise QuietException
         return r
 
     def multisave(filename, pattern="all", state=-1,

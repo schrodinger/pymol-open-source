@@ -516,9 +516,8 @@ def _ctsh(k,_self=cmd):
 def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,prior=0,format=-1,_self=cmd):
     # INTERNAL - can only be safely called by GLUT thread (unless prior == 1)
     # WARNING: internal routine, subject to change
-    try:
-        _self.lock(_self)
-        fname = a
+    fname = a
+    if fname is not None:
         if re.search("\.ppm$",fname):
             if format<0:
                 format = 1 # PPM
@@ -528,11 +527,10 @@ def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,prior=0,format=-1,_self=cmd):
         if format<0:
             format = 0 # PNG
         fname = cmd.exp_path(fname)
-        r = _cmd.png(_self._COb,str(fname),int(width),int(height),
+
+    with _self.lockcm:
+        return _cmd.png(_self._COb, fname, int(width), int(height),
                      float(dpi),int(ray),int(quiet),int(prior),int(format))
-    finally:
-        _self.unlock(-1,_self)
-    return r
 
 # quitting (thread-specific)
 

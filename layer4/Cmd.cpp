@@ -4728,23 +4728,21 @@ static PyObject *CmdRefreshNow(PyObject * self, PyObject * args)
 static PyObject *CmdPNG(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  char *str1;
-  int ok = false;
+  char* filename = nullptr;
   int quiet;
   int result = 0;
   int width, height, ray;
   int prior, format;
   float dpi;
-  ok =
-    PyArg_ParseTuple(args, "Osiifiiii", &self, &str1, &width, &height, &dpi, &ray, &quiet,
-                     &prior, &format);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
+
+  API_SETUP_ARGS(G, self, args, "Oziifiiii", &self, &filename, &width, &height,
+      &dpi, &ray, &quiet, &prior, &format);
+  API_ASSERT(APIEnterNotModal(G));
+
+  // if `filename` is None, then return a PNG buffer
+  std::vector<unsigned char> pngbuf;
+
+  {
     // with prior=1 other arguments (width, height, ray) are ignored
 
     if(!prior) {
@@ -4752,7 +4750,14 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
         prior = SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
                  NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
       } else if(width || height) {
-        SceneDeferImage(G, width, height, str1, -1, dpi, quiet, format);
+        if (!filename) {
+          APIExit(G);
+          return APIFailure(
+              G, "deferred image rendering not supported without filename");
+        }
+
+        SceneDeferImage(
+            G, width, height, filename, -1, dpi, quiet, format);
         result = 1;
       } else if(!SceneGetCopyType(G)) {
         ExecutiveDrawNow(G);      /* TODO STATUS */
@@ -4761,14 +4766,23 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
 
     if(!result) {
       PyMOL_PushValidContext(G->PyMOL); // PyQt hack?
-      if(ScenePNG(G, str1, dpi, quiet, prior, format))
+      if (ScenePNG(G, filename, dpi, quiet, prior, format,
+              filename ? nullptr : &pngbuf))
         result = 1;             /* signal success by returning 1 instead of 0, or -1 for error  */
       PyMOL_PopValidContext(G->PyMOL);
     }
     APIExit(G);
   }
-  if(!ok)
-    result = -1;
+
+  if (!filename) {
+    if (pngbuf.empty()) {
+      return APIFailure(G, "getting png buffer failed");
+    }
+
+    return PyBytes_FromStringAndSize(
+        reinterpret_cast<const char*>(pngbuf.data()), pngbuf.size());
+  }
+
   return APIResultCode(result);
 }
 
