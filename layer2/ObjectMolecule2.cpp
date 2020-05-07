@@ -43,6 +43,12 @@
 
 #include"AtomInfoHistory.h"
 #include"BondTypeHistory.h"
+
+#ifdef _PYMOL_IP_PROPERTIES
+#include"Property.h"
+#endif
+
+#include <functional>
 #include <iostream>
 #include <map>
 
@@ -3202,6 +3208,78 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
   return (ok);
 }
 
+/**
+ * Extract an atom property "column" as a Python list.
+ *
+ * As an optimization, trailing None values are removed, so the returned list
+ * may be shorter than the atom array or even be empty.
+ *
+ * @param mol Object molecule which provides the atom array
+ * @param func Function which extracts a property from an atom
+ * @return List of properties
+ */
+static PyObject* AtomColumnAsPyList(const ObjectMolecule& mol,
+    std::function<PyObject*(const AtomInfoType&)> func)
+{
+  auto list = PyList_New(mol.NAtom);
+  PyObject* prev = Py_None;
+  int pruned_size = 0;
+
+  for (int i = 0; i < mol.NAtom; ++i) {
+    PyObject* value = func(mol.AtomInfo[i]);
+
+#ifndef PICKLETOOLS
+    // Simple optimization: Repeated property lists will reference the same
+    // Python object
+    if (prev != value && PyObject_RichCompareBool(prev, value, Py_EQ)) {
+      Py_INCREF(prev);
+      Py_DECREF(value);
+      value = prev;
+    } else {
+      prev = value;
+    }
+
+    if (value != Py_None) {
+      pruned_size = i + 1;
+    }
+#endif
+
+    PyList_SetItem(list, i, value);
+  }
+
+#ifndef PICKLETOOLS
+  assert(pruned_size <= mol.NAtom);
+
+  // Simple optimization: Prune "None" tail
+  PyList_SetSlice(list, pruned_size, mol.NAtom, nullptr);
+
+  assert(PyList_Size(list) == pruned_size);
+#endif
+
+  return list;
+}
+
+/**
+ * Restore an atom property "column" from a Python list.
+ * @param mol Object molecule to update atoms in
+ * @param list Property list (may be shorter than atom array)
+ * @param func Function which sets a property for an atom
+ */
+static void AtomColumnFromPyList(ObjectMolecule& mol, PyObject* list,
+    std::function<void(AtomInfoType&, PyObject*)> func)
+{
+  if (!list || !PyList_Check(list)) {
+    return;
+  }
+
+  int size = PyList_Size(list);
+  assert(size <= mol.NAtom);
+
+  for (int i = 0; i < size; ++i) {
+    func(mol.AtomInfo[i], PyList_GetItem(list, i));
+  }
+}
+
 static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
 {
   PyMOLGlobals *G = I->G;
@@ -3260,10 +3338,30 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
     auto blob = converter.allocCopy(version, I->AtomInfo);
     auto blobsize = VLAGetByteSize(blob);
 
-    result = PyList_New(3);
+    // PyMOL versions up to 2.3.5 can only restore list size 3
+    size_t result_size = 3;
+
+    // Atom properties (not binary)
+    PyObject* prop_list = nullptr;
+#ifdef _PYMOL_IP_PROPERTIES
+    if (pse_export_version > 2399) {
+      prop_list = AtomColumnAsPyList(*I, [G](const AtomInfoType& atom) {
+        return PConvAutoNone(
+            atom.prop_id ? PropertyAsPyList(G, atom.prop_id, true) : nullptr);
+      });
+
+      result_size = 4;
+    }
+#endif
+
+    result = PyList_New(result_size);
     PyList_SetItem(result, 0, PyInt_FromLong(version));
     PyList_SetItem(result, 1, PyBytes_FromStringAndSize(reinterpret_cast<const char*>(blob), blobsize));
     PyList_SetItem(result, 2, PyBytes_FromStringAndSize(reinterpret_cast<const char*>(strinfo), strinfolen));
+
+    if (result_size > 3) {
+      PyList_SetItem(result, 3, PConvAutoNone(prop_list));
+    }
 
     VLAFreeP(blob);
     FreeP(strinfo);
@@ -3351,6 +3449,18 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     CPythonVal_Free(verobj);
     CPythonVal_Free(strobj);
     CPythonVal_Free(strlookupobj);
+
+#ifdef _PYMOL_IP_PROPERTIES
+    if (ll > 3) {
+      // Restore atom properties
+      AtomColumnFromPyList(*I, PyList_GetItem(list, 3), //
+          [G](AtomInfoType& atom, PyObject* value) {
+            assert(atom.prop_id == 0);
+            atom.prop_id = PropertyFromPyList(G, value);
+          });
+    }
+#endif
+
   } else {
     // The old slow way of loading in AtomInfo, using python lists
     if (ok)
