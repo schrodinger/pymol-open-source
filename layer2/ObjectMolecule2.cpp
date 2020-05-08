@@ -3134,7 +3134,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
 
   bool pse_binary_dump = false;
 
-  if (ll == 2){
+  if (ll >= 2) {
     // checking if from pse_binary_dump
     // pse_binary_dump saves 2 values: bondInfo_version, BondType binary
     CPythonVal *val1 = CPythonVal_PyList_GetItem(G, list, 1);
@@ -3293,7 +3293,7 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
 
   bool pse_binary_dump = false;
 
-  if (ll == 3){
+  if (ll >= 3) {
     // checking if from pse_binary_dump
     // pse_binary_dump saves 3 values: atomInfo_version, AtomInfo binary, and strings array
     CPythonVal *val1 = CPythonVal_PyList_GetItem(G, list, 1);
