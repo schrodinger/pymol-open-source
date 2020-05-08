@@ -71,7 +71,8 @@ class TestAtomProperties(testing.PyMOLTestCase):
                     self.assertEqual(val, stored.prop_lookup[idx][prop])
                 idx += 1
 
-    def testMAEsaveLoadSessionsWithAtomProperties(self):
+    def testMAEsaveLoadSessionsWithAtomProperties(self, binary_dump=False):
+        cmd.set('pse_binary_dump', binary_dump)
         cmd.load(self.datafile('1molecule.mae'), '1molecule', atom_props='*')
         allpropdata = {}
         objs = cmd.get_object_list()
@@ -89,6 +90,11 @@ class TestAtomProperties(testing.PyMOLTestCase):
             cmd.iterate(obj, "stored.prop_lookup['%s'][index-1] = properties.all" % obj)
         #test to make sure the properties are exactly the same from the saved session as the loaded session
         self.assertEqual(prop_lookup, stored.prop_lookup)
+
+    @testing.requires_version('2.4')
+    def testMAEsaveLoadSessionsWithAtomPropertiesBinaryDump(self):
+        cmd.set('pse_export_version', 2.4)
+        self.testMAEsaveLoadSessionsWithAtomProperties(True)
 
     @testing.requires_version('1.8.0.7')
     def testDel(self):
