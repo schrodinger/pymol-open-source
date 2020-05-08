@@ -9925,7 +9925,7 @@ pymol::Result<> ExecutiveOrient(PyMOLGlobals * G, const char *sele,
 pymol::Result<> ExecutiveMove(
     PyMOLGlobals* G, pymol::zstring_view axis, float dist)
 {
-  switch (std::tolower(axis[0])) {
+  switch (axis[0]) {
   case 'x':
     SceneTranslate(G, dist, 0.0, 0.0);
     break;
