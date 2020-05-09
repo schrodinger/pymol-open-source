@@ -1004,7 +1004,7 @@ PyMOLreturn_status PyMOL_CmdEnable(CPyMOL * I, const char *name, int quiet)
     ok = static_cast<bool>(ok);
   }
   auto result2 = ExecutiveSetObjVisib(I->G, name, true, false);   /* TO DO: parents */
-  ok &= static_cast<bool>(result2);
+  ok = static_cast<bool>(result2);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
