@@ -3711,7 +3711,6 @@ static int *SelectorGetIndexVLAImpl(PyMOLGlobals * G, CSelector *I, SelectorID_t
 void SelectorUpdateObjectSele(PyMOLGlobals * G, ObjectMolecule * obj)
 {
   if(obj->Name[0]) {
-    SelectorDelete(G, obj->Name);
     SelectorCreate(G, obj->Name, NULL, obj, true, NULL);    
     /* create a selection with same name */
     if(SettingGetGlobal_b(G, cSetting_auto_classify_atoms))
