@@ -1031,7 +1031,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def extract(*arg,**kw):
+    def extract(name, selection, *arg,**kw):
         '''
 DESCRIPTION
 
@@ -1050,7 +1050,7 @@ SEE ALSO
     '''
 
         kw['extract'] = 1
-        return create(*arg, **kw)
+        return create(name, selection, *arg, **kw)
 
     pseudoatom_mode_dict = {
         "unit" : 0, # radius 0.5
