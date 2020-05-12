@@ -11,9 +11,20 @@ Supported ways to launch PyMOL:
 
     shell> python /path/to/pymol/__init__.py [args]
 
+  If the 'pymol' module is in PYTHONPATH
+
+    shell> python -m pymol [args]
+
   From a python main thread:
 
+    >>> # blocks the interpreter
+    >>> import pymol
+    >>> pymol.launch()
+
+  From a python main thread, spawning a new thread:
+
     >>> # with GUI
+    >>> # THIS IS NOT SUPPORTED ON macOS
     >>> import pymol
     >>> pymol.finish_launching()
 
@@ -443,6 +454,8 @@ def launch(args=None, block_input_hook=0):
 def finish_launching(args=None):
     '''
     Start the PyMOL process in a thread
+
+    THIS IS NOT SUPPORTED ON macOS
     '''
     global glutThreadObject
 
