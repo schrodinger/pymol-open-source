@@ -41,7 +41,7 @@ def undoablemethod(sele):
 
 class ActionWizard(Wizard):
 
-    def __init__(self,_self):
+    def __init__(self, _self=pymol.cmd):
         Wizard.__init__(self,_self)
         self.actionHash = str(self.__class__)
 
@@ -91,7 +91,7 @@ class ActionWizard(Wizard):
 
 class CleanWizard(ActionWizard):
 
-    def __init__(self,_self):
+    def __init__(self, _self=pymol.cmd):
         self.clean_obj = None
         ActionWizard.__init__(self,_self)
 
@@ -136,7 +136,7 @@ class CleanWizard(ActionWizard):
 
 class SculptWizard(ActionWizard):
 
-    def __init__(self,_self):
+    def __init__(self, _self=pymol.cmd):
         ActionWizard.__init__(self,_self)
         self.sculpt_object = None
 
@@ -230,7 +230,7 @@ class SculptWizard(ActionWizard):
 
 class RepeatableActionWizard(ActionWizard):
 
-    def __init__(self,_self):
+    def __init__(self, _self=pymol.cmd):
         ActionWizard.__init__(self,_self)
         self.repeating = 0
 
@@ -304,7 +304,7 @@ class ReplaceWizard(RepeatableActionWizard):
 
 class AttachWizard(RepeatableActionWizard):
 
-    def __init__(self,_self):
+    def __init__(self, _self=pymol.cmd):
         RepeatableActionWizard.__init__(self,_self)
         self.mode = 0
 
@@ -375,7 +375,7 @@ class AttachWizard(RepeatableActionWizard):
 
 class AminoAcidWizard(RepeatableActionWizard):
 
-    def __init__(self, _self, ss=-1):
+    def __init__(self, _self=pymol.cmd, ss=-1):
         RepeatableActionWizard.__init__(self,_self)
         self.mode = 0
         self.setSecondaryStructure(ss)
