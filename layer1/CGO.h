@@ -681,6 +681,9 @@ namespace cgo {
 
 class CGO {
 public:
+  CGO(PyMOLGlobals* G, int size = 0);
+  ~CGO();
+
   PyMOLGlobals *G { nullptr };
   float *op { nullptr };
   size_t c = 0;
@@ -692,8 +695,10 @@ public:
   unsigned int current_pick_color_index { 0 };
   int current_pick_color_bond { cPickableNoPick };
   float current_accessibility { 1.f };
-  float normal[3], color[3], texture[2];
-  uchar pickColor[4];
+  float normal[3]{0.f, 0.f, 1.f};
+  float color[3]{};
+  float texture[2];
+  uchar pickColor[4]{0, 0, 0, 0xff};
   bool has_begin_end { false };
   bool has_draw_buffers { false }, has_draw_cylinder_buffers { false }, has_draw_sphere_buffers { false };
   bool use_shader { false }, cgo_shader_ub_color { false }, cgo_shader_ub_normal { false };
@@ -851,7 +856,7 @@ private:
 
 int CGORendererInit(PyMOLGlobals * G);
 void CGORendererFree(PyMOLGlobals * G);
-CGO *CGONew(PyMOLGlobals * G, int size=0);
+#define CGONew new CGO
 #define CGONewSized CGONew
 int CGOGetExtent(const CGO * I, float *mn, float *mx);
 int CGOHasNormals(const CGO * I);
@@ -869,7 +874,6 @@ bool CGOCombineBeginEnd(CGO ** I, bool do_not_split_lines = false);
 CGO *CGOCombineBeginEnd(const CGO * I, int est, bool do_not_split_lines = false);
 
 void CGOFreeVBOs(CGO *I);
-void CGOFreeStruct(CGO * I, bool freevbos = true);
 
 CGO *CGOOptimizeToVBOIndexed(CGO * I, int est=0, const float *color=NULL, bool addshaders=true, bool embedTransparencyInfo=false);
 #define CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(I, est, color, addshaders) CGOOptimizeToVBOIndexed(I, est, color, addshaders, true)
@@ -1108,6 +1112,9 @@ CGO *CGOConvertShaderCylindersToCylinderShader(const CGO *I, CGO *addTo);
 void AssignNewPickColor(CGO* cgo, PickColorManager*, unsigned char* color,
     const PickContext* context, unsigned int index, int bond);
 
+/**
+ * @deprecated use std::default_delete<CGO>
+ */
 struct CGODeleter {
   void operator()(CGO* cgo) { CGOFree(cgo); }
 };

@@ -496,23 +496,12 @@ CGO *CGONewFromPyList(PyMOLGlobals * G, PyObject * list, int version, bool shoul
   }
 }
 
-CGO *CGONew(PyMOLGlobals * G, int size)
+CGO::CGO(PyMOLGlobals* G, int size)
+    : G(G)
 {
-  auto I = new CGO();
-  I->G = G;
-  I->op = VLACalloc(float, size + 32);
-#ifdef _PYMOL_IOS
-  if (!I->op){
-    delete I;
-    return NULL;
-  }
-#endif
-  I->normal[0] = 0.f; I->normal[1] = 0.f; I->normal[2] = 1.f;
-  I->color[0] = 0.f; I->color[1] = 0.f; I->color[2] = 1.f;
-  I->pickColor[0] = 0; I->pickColor[1] = 0; I->pickColor[2] = 0; I->pickColor[3] = 255;
-  I->cgo_shader_ub_color = SettingGetGlobal_i(G, cSetting_cgo_shader_ub_color);
-  I->cgo_shader_ub_normal = SettingGetGlobal_i(G, cSetting_cgo_shader_ub_normal);
-  return (I);
+  op = VLACalloc(float, size + 32);
+  cgo_shader_ub_color = SettingGet<bool>(G, cSetting_cgo_shader_ub_color);
+  cgo_shader_ub_normal = SettingGet<bool>(G, cSetting_cgo_shader_ub_normal);
 }
 
 void CGOSetUseShader(CGO *I, int use_shader){
@@ -542,17 +531,20 @@ void CGOReset(CGO * I)
 void CGOFree(CGO * &I, bool withVBOs)
 {
   if(I) {
-    if (withVBOs && I->has_draw_buffers){
-      CGOFreeStruct(I, true);
-    } else {
-      CGOFreeStruct(I, false);
+    if (!withVBOs) {
+      I->has_draw_buffers = false;
     }
-    if(I->i_start) {
-      FreeP(I->i_start);
-    }
-    VLAFreeP(I->op);
     DeleteP(I);
   }
+}
+
+CGO::~CGO()
+{
+  if (has_draw_buffers) {
+    CGOFreeVBOs(this);
+  }
+  FreeP(i_start);
+  VLAFreeP(op);
 }
 
 static float *CGO_add(CGO * I, unsigned c)
@@ -1865,10 +1857,12 @@ CGO *CGOCombineBeginEnd(const CGO * I, int est, bool do_not_split_lines)
   return (cgo);
 }
 
+/**
+ * Release all shader resources from this CGO
+ */
 void CGOFreeVBOs(CGO * I) {
-  CGOFreeStruct(I, true);
-}
-void CGOFreeStruct(CGO *I, bool freevbos){
+  constexpr bool freevbos = true;
+
   for (auto it = I->begin(); !it.is_stop(); ++it) {
     const auto op = it.op_code();
 
