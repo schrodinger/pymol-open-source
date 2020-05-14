@@ -9,7 +9,7 @@
 <h3>The PyMOL HTTP Server Daemon (PyMOLHTTPd)</h3>
 
 <p>The PyMOL HTTP server is a "pure" python module based off of the
-<A HREF="http://docs.python.org/library/basehttpserver.html" TARGET=_blank>BaseHTTPServer</A> module
+<A HREF="https://docs.python.org/library/http.server.html" TARGET=_blank>BaseHTTPServer</A> module
  from the Python Standard Library.</p>
 
 <p>For security reasons, PyMOL's HTTP server is currently restricted
@@ -72,7 +72,7 @@ httpd.expose("my_func", my_func)</pre>
 <p>will make it possible for your "my_func" method to be called via an
 HTTP request such as:</p>
 
-<pre>http://localhost:8080/apply/my_func?arg1=Hello&arg2=there</pre>
+<pre>http://localhost:8080/apply/my_func?arg1=Hello&amp;arg2=there</pre>
 
 <p>which would print</p>
 <pre>Hello there World!</pre>

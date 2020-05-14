@@ -25,7 +25,7 @@ web-page.</p>
 
 <p>Normally, the first time a user clicks to download a .pwg file, a
 standard popup appears asking the which application should be
-associated with this file type.  On some platforms (Windows & Mac)
+associated with this file type.  On some platforms (Windows &amp; Mac)
 .pwg files should pre-associated with PyMOL, and thus, the user may
 simply need to confirm this choice (or perhaps choose which copy of
 PyMOL to open).  Once the association has been made, subsequent PWG
@@ -71,10 +71,21 @@ responsible for sending requests to the PyMOL server (and thus, will
 not be subject to the browser's multi-origin security
 restrictions).</p>
 
-<p>We are considering adding some additional tags into the PWG files
-for purpose of configuring PyMOL's window location and size at the
-time of launch, and for perhaps selectively hiding the various user
-interface elements (when they are not needed).</p>
+<h4>Commands</h4>
+
+<table>
+<tr><td><code>port &lt;number&gt;</td><td>Web server port</td>
+<tr><td><code>root &lt;directory&gt;</td><td>Web server document root</td>
+<tr><td><code>header add &lt;key&gt; &lt;value&gt;</td><td>Add a HTTP response header (e.g.: <code>Access-Control-Allow-Origin *</code>)
+    <i>New in PyMOL 2.4</i></td>
+<tr><td><code>options &lt;pymol-launch-options&gt;</td><td>PyMOL launch options (e.g.: <code>-q -W 250</code>)</td>
+<tr><td><code>browser</td><td>Open a web browser for <code>http://localhost:port</code></td>
+<tr><td><code>launch &lt;module&gt;</td><td>Import Python module and call <code>module.__launch__(cmd)</code></td>
+<tr><td><code>report &lt;url&gt;</td><td>Make a request to <code>url + port</code></td>
+<tr><td><code>delete</td><td>Delete the PWG file after processing</td>
+<tr><td><code>logging &lt;0/1&gt;</td><td>Can suppress <code>BaseHTTPRequestHandler.log_message</code></td>
+<tr><td><code>wrap_native_return_types</td><td>Return <code>result</code> instead of <code>{'status': status, 'result': result}</code></td>
+</table>
 
 </body>
 </html>
