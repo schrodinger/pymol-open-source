@@ -57,7 +57,7 @@ struct ObjectSliceState {
   int n_strips = 0;
   pymol::vla<int> strips;
 
-  pymol::cache_ptr<CGO, CGODeleter> shaderCGO;
+  pymol::cache_ptr<CGO> shaderCGO;
   float Corner[24];
 
   float outline_points[36];

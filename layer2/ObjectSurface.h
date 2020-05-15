@@ -49,9 +49,9 @@ struct ObjectSurfaceState : public CObjectState
   float CarveBuffer;
   int Mode;                     /* 0 dots, 1 lines, 2 triangles */
   int DotFlag;
-  pymol::cache_ptr<CGO, CGODeleter> UnitCellCGO;
+  pymol::cache_ptr<CGO> UnitCellCGO;
   int Side = 0;
-  pymol::cache_ptr<CGO, CGODeleter> shaderCGO;
+  pymol::cache_ptr<CGO> shaderCGO;
   ObjectSurfaceState(PyMOLGlobals* G);
 };
 

@@ -30,8 +30,8 @@ struct ObjectAlignmentState {
   /* not stored */
   int valid;
   std::unordered_map<int, int> id2tag;
-  pymol::cache_ptr<CGO, CGODeleter> primitiveCGO;
-  pymol::cache_ptr<CGO, CGODeleter> renderCGO;
+  pymol::cache_ptr<CGO> primitiveCGO;
+  pymol::cache_ptr<CGO> renderCGO;
   bool renderCGO_has_cylinders;
   bool renderCGO_has_trilines;
 };

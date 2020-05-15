@@ -59,7 +59,7 @@ struct ObjectMapState : public CObjectState {
   std::vector<float> Grid;                  /* Spacing for non-xtal maps */
   float ExtentMin[3], ExtentMax[3];
   float Mean, SD; /* -- JV for vol */
-  pymol::cache_ptr<CGO, CGODeleter> shaderCGO;
+  pymol::cache_ptr<CGO> shaderCGO;
   /* below not stored */
 
   int have_range = false;

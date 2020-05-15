@@ -352,10 +352,10 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
 
     CGO *allCylinders = NULL;
     CGO *allSpheres = NULL;
-    std::unique_ptr<CGO, CGODeleter> preOpt;
+    std::unique_ptr<CGO> preOpt;
 
     {
-      std::unique_ptr<CGO, CGODeleter> inputWithLighting;
+      std::unique_ptr<CGO> inputWithLighting;
       const CGO* inputCGO = sobj->origCGO;
 
       if (cgo_lighting){

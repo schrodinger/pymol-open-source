@@ -46,13 +46,13 @@ struct ObjectMeshState : public CObjectState {
   int CarveFlag = false;
   float CarveBuffer = 0.0f;
   int MeshMode;
-  pymol::cache_ptr<CGO, CGODeleter> UnitCellCGO;
+  pymol::cache_ptr<CGO> UnitCellCGO;
   WordType caption{};
   float AltLevel;
   pymol::copyable_ptr<Isofield> Field;
   /* not stored */
-  pymol::cache_ptr<CGO, CGODeleter> shaderCGO;
-  pymol::cache_ptr<CGO, CGODeleter> shaderUnitCellCGO;
+  pymol::cache_ptr<CGO> shaderCGO;
+  pymol::cache_ptr<CGO> shaderUnitCellCGO;
   ObjectMeshState(PyMOLGlobals* G);
 };
 

@@ -4090,7 +4090,7 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
     sphere_quality = SettingGet_i(I->G, NULL, NULL, cSetting_cgo_sphere_quality);
   }
 
-  std::unique_ptr<CGO, CGODeleter> cgo_managed(CGONew(G, I->c + est));
+  std::unique_ptr<CGO> cgo_managed(CGONew(G, I->c + est));
   auto* const cgo = cgo_managed.get();
   RETURN_VAL_IF_FAIL(cgo, nullptr);
 
@@ -9050,7 +9050,7 @@ CGO *CGOConvertLinesToShaderCylinders(const CGO * I, int est){
 CGO *CGOSplitUpLinesForPicking(const CGO * I){
   auto G = I->G;
 
-  std::unique_ptr<CGO, CGODeleter> cgo_managed(CGONew(G));
+  std::unique_ptr<CGO> cgo_managed(new CGO(G));
   CGO* cgo = cgo_managed.get();
   int tot_nverts = 0;
 
@@ -9271,7 +9271,7 @@ CGO *CGOOptimizeScreenTexturesAndPolygons(CGO * I, int est)
   if (num_total_indices <= 0)
     return nullptr;
 
-  std::unique_ptr<CGO, CGODeleter> cgo_managed(CGONew(G));
+  std::unique_ptr<CGO> cgo_managed(new CGO(G));
   auto* const cgo = cgo_managed.get();
 
   {
@@ -10279,7 +10279,7 @@ CGO *CGOConvertLinesToTrilines(const CGO * I, bool addshaders){
   std::vector<float> buffer_start(buff_size);
   float *buffer = buffer_start.data();
 
-  std::unique_ptr<CGO, CGODeleter> cgo(CGONew(G));
+  std::unique_ptr<CGO> cgo(new CGO(G));
 
   for (auto it = I->begin(); !it.is_stop(); ++it) {
     const auto op = it.op_code();

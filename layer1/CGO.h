@@ -1112,11 +1112,4 @@ CGO *CGOConvertShaderCylindersToCylinderShader(const CGO *I, CGO *addTo);
 void AssignNewPickColor(CGO* cgo, PickColorManager*, unsigned char* color,
     const PickContext* context, unsigned int index, int bond);
 
-/**
- * @deprecated use std::default_delete<CGO>
- */
-struct CGODeleter {
-  void operator()(CGO* cgo) { CGOFree(cgo); }
-};
-
 #endif
