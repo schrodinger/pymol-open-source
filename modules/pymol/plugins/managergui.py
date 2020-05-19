@@ -8,12 +8,8 @@ License: BSD-2-Clause
 
 import sys
 import Pmw
-if sys.version_info[0] == 2:
-    import Tkinter
-    import tkSimpleDialog
-else:
-    import tkinter as Tkinter
-    import tkinter.simpledialog as tkSimpleDialog
+import tkinter as Tkinter
+import tkinter.simpledialog as tkSimpleDialog
 from .legacysupport import tkMessageBox, tkFileDialog
 from . import pref_get
 

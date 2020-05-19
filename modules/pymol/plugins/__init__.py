@@ -244,8 +244,7 @@ class PluginInfo(object):
             if cmd.is_string(s):
                 return s
         except SyntaxError as e:
-            if sys.version_info[0] > 2:
-                return 'WARNING: Plugin not Python 3.x compatible: ' + str(e)
+            return 'WARNING: Plugin not Python 3.x compatible: ' + str(e)
         except:
             pass
 
@@ -275,10 +274,7 @@ class PluginInfo(object):
 
             # do not use self.loaded here
             if force and self.module is not None:
-                if sys.version_info[0] > 2:
-                    from importlib import reload
-                else:
-                    from __builtin__ import reload
+                from importlib import reload
                 reload(self.module)
             else:
                 __import__(self.mod_name, level=0)

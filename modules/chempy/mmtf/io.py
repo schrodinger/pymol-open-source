@@ -17,13 +17,7 @@ try:
 except ImportError:
     import umsgpack as msgpack
 
-if sys.version_info[0] < 3:
-    from urllib import urlopen
-    izip = itertools.izip
-    izip_longest = itertools.izip_longest
-    as_msgpack_key = lambda k: k
-else:
-    # python3
+if True:
     from urllib.request import urlopen
     izip = zip
     izip_longest = itertools.zip_longest

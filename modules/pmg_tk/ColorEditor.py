@@ -19,12 +19,8 @@
 from __future__ import print_function
 
 import sys
-if sys.version_info[0] == 2:
-    from Tkinter import *
-    import tkColorChooser
-else:
-    from tkinter import *
-    import tkinter.colorchooser as tkColorChooser
+from tkinter import *
+import tkinter.colorchooser as tkColorChooser
 
 import Pmw
 

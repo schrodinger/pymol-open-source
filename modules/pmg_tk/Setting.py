@@ -18,10 +18,7 @@
 # PyMOL
 
 import sys
-if sys.version_info[0] == 2:
-    import Tkinter
-    from Tkinter import IntVar
-else:
+if True:
     import tkinter as Tkinter
     from tkinter import IntVar
 import time

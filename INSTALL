@@ -8,7 +8,7 @@ See also: http://pymolwiki.org/index.php/Linux_Install
 REQUIREMENTS
 
     - C++11 compiler (e.g. gcc 4.7+)
-    - Python 2.7+
+    - Python 3.6+
     - Pmw (Python Megawidgets) (optional, for legacy GUI/plugins)
       https://github.com/schrodinger/pmw-patched
     - OpenGL

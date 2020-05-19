@@ -1068,7 +1068,7 @@ SEE ALSO
     unquote_re = re.compile(r"r?('.*'|\".*\")$")
 
     def unquote(s):
-        if sys.version_info[0] > 2 and isinstance(s, bytes):
+        if isinstance(s, bytes):
             s = s.decode('utf-8', 'replace')
 
         s = str(s)

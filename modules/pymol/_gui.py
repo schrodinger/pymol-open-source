@@ -1007,10 +1007,6 @@ class PyMOLDesktopGUI(object):
             self._recent_filenames_db = False
             return False
 
-        # PYMOL-2992
-        if sys.version_info[0] < 3:
-            db.text_factory = lambda b: unicode(b, errors='replace')
-
         return True
 
     @property

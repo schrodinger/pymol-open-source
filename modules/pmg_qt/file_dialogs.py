@@ -8,10 +8,7 @@ from pymol.Qt import QtGui, QtCore, QtWidgets
 from pymol.Qt.utils import getSaveFileNameWithExt, AsyncFunc
 from pymol.Qt.utils import PopupOnException
 
-if sys.version_info[0] < 3:
-    import urllib
-else:
-    import urllib.request as urllib
+import urllib.request as urllib
 
 
 def load_dialog(parent, fname, **kwargs):

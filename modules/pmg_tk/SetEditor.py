@@ -15,9 +15,7 @@
 # (includes filter)
 
 import sys
-if sys.version_info[0] == 2:
-    from Tkinter import *
-else:
+if True:
     from tkinter import *
 
 # nItem defines the number of label/entry widgets displayed on screen

@@ -891,12 +891,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
     # GUI callbacks
     #################
 
-    if sys.version_info[0] < 3:
-        def command_get(self):
-            return self.lineedit.text().encode('utf-8')
-    else:
-        def command_get(self):
-            return self.lineedit.text()
+    def command_get(self):
+        return self.lineedit.text()
 
     def command_set(self, v):
         return self.lineedit.setText(v)

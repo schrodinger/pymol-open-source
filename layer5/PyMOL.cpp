@@ -1783,49 +1783,6 @@ CPyMOLOptions *PyMOLOptions_New(void)
   return result;
 }
 
-#ifndef _PYMOL_NOPY
-void init_cmd(void);
-
-static void init_python(int argc, char *argv[])
-{
-  Py_Initialize();
-  if(argv) {
-#if PY_MAJOR_VERSION < 3
-    PySys_SetArgv(argc, argv);
-#endif
-  }
-
-  PyEval_InitThreads();
-
-  PyRun_SimpleString("import sys");
-  PyRun_SimpleString("import os");
-  PyRun_SimpleString("sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')");
-
-  /* initialize our embedded C modules */
-  init_cmd();
-
-  PyRun_SimpleString("import pymol");
-
-  /* parse arguments */
-  PyRun_SimpleString("pymol.invocation.parse_args(sys.argv)");
-}
-
-
-/* WARNING: the routine below only works with the global singleton
-   model -- not Python-enabled PyMOL instances */
-
-CPyMOLOptions *PyMOLOptions_NewWithPython(int argc, char *argv[])
-{
-  CPyMOLOptions *result = PyMOLOptions_New();
-
-  /* use Python to parse options based on the command line */
-
-  init_python(argc, argv);
-  PGetOptions(result);
-  return result;
-}
-#endif
-
 void PyMOLOptions_Free(CPyMOLOptions * options)
 {
   FreeP(options);

@@ -150,10 +150,7 @@ EXAMPLE
     if _guiupdate and name in _volume_windows:
         from pymol import gui
         def func():
-            if sys.version_info[0] == 2:
-                import Tkinter
-            else:
-                import tkinter as Tkinter
+            import tkinter as Tkinter
             try:
                 panel = _volume_windows[name].panel
                 panel.set_flat(ramplist)
@@ -207,10 +204,7 @@ ARGUMENTS
 
     # Tk fallback
     from pmg_tk import volume
-    if sys.version_info[0] == 2:
-        import Tkinter
-    else:
-        import tkinter as Tkinter
+    import tkinter as Tkinter
 
     def func():
         try:

@@ -14,10 +14,7 @@ def tkinter_init():
     if hasattr(_BaseWidget_setup, '_super'):
         raise RuntimeError('tkinter init failed')
 
-    if sys.version_info[0] < 3:
-        import Tkinter as tkinter
-    else:
-        import tkinter
+    import tkinter
 
     _BaseWidget_setup._super = tkinter.BaseWidget._setup
     tkinter.BaseWidget._setup = _BaseWidget_setup

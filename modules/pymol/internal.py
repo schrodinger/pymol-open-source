@@ -8,12 +8,8 @@ from pymol import _cmd
 import threading
 import traceback
 
-if sys.version_info[0] == 2:
-    import thread
-    import urllib2
-else:
-    import _thread as thread
-    import urllib.request as urllib2
+import _thread as thread
+import urllib.request as urllib2
 
 import re
 import time

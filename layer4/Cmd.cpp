@@ -6910,19 +6910,11 @@ static PyMethodDef Cmd_methods[] = {
 extern "C" {
 #endif
 
+// TODO can this be removed? Called by CMOL (AxPyMOL?)
 void init_cmd(void)
 {
-#if PY_MAJOR_VERSION < 3
-  PyUnicode_SetDefaultEncoding("utf-8");
-  Py_InitModule4("pymol._cmd",
-                 Cmd_methods,
-                 "PyMOL _cmd internal API -- PRIVATE: DO NOT USE!",
-                 PyCObject_FromVoidPtr((void *) &SingletonPyMOLGlobals, NULL),
-                 PYTHON_API_VERSION);
-#endif
 }
 
-#if PY_MAJOR_VERSION >= 3
 PyObject * PyInit__cmd(void)
 {
   static struct PyModuleDef moduledef = {
@@ -6933,7 +6925,6 @@ PyObject * PyInit__cmd(void)
     Cmd_methods };
   return PyModule_Create(&moduledef);
 }
-#endif
 
 #ifdef __cplusplus
 }

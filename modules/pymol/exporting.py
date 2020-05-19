@@ -17,10 +17,7 @@ from __future__ import print_function, absolute_import
 if True:
     import os
     import sys
-    if sys.version_info[0] == 2:
-        import thread
-    else:
-        import _thread as thread
+    import _thread as thread
     from . import selector
     import re
     import copy
@@ -394,7 +391,7 @@ NOTES
         pse_export_version = round(_self.get_setting_float('pse_export_version'), 4)
         legacyscenes = (0 < pse_export_version < 1.76) and _self.get_scene_list()
 
-        if sys.version_info[0] > 2:
+        if True:
             legacypickle = (0 < pse_export_version < 1.9)
             if legacypickle:
                 print(' Warning: pse_export_version with Python 3 is experimental')
@@ -672,9 +669,6 @@ ARGUMENTS
             return _cmd.get_str(_self._COb, str(format), str(selection),
                     int(state) - 1, str(ref), int(ref_state),
                     int(multi), int(quiet))
-
-    if sys.version_info[0] == 2:
-        get_str = get_bytes
 
     def multifilesave(filename, selection='*', state=-1, format='', ref='',
              ref_state=-1, quiet=1, _self=cmd):

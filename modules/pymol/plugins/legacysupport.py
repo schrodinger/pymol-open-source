@@ -127,10 +127,7 @@ def createlegacypmgapp():
     app.execute = lambda c: eval(c) if isinstance(c, str) else c()
 
     def starttk():
-        if sys.version_info[0] == 2:
-            import Tkinter
-        else:
-            import tkinter as Tkinter
+        import tkinter as Tkinter
         app.root = Tkinter.Tk()
         app.root.withdraw()
         app.root.mainloop()

@@ -17,10 +17,7 @@ from __future__ import print_function, absolute_import
 if True:
 
     import sys
-    if sys.version_info[0] == 2:
-        import thread
-    else:
-        import _thread as thread
+    import _thread as thread
 
     import threading
     import traceback

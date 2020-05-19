@@ -34,7 +34,6 @@ typedef int PyObject;
 
 #include <string.h>
 
-#if PY_MAJOR_VERSION >= 3
 # define PyInt_Check            PyLong_Check
 # define PyInt_FromLong         PyLong_FromLong
 # define PyInt_AsLong           PyLong_AsLong
@@ -59,9 +58,6 @@ typedef int PyObject;
 # define PyCObject_Check                PyCapsule_CheckExact
 
 # define PyEval_EvalCode(o, ...)        PyEval_EvalCode((PyObject*)o, __VA_ARGS__)
-
-# define Py_TPFLAGS_HAVE_ITER   0
-#endif
 
 /*
  * For compatibility with the pickletools, this type represents

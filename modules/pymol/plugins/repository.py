@@ -11,14 +11,10 @@ License: BSD-2-Clause
 from __future__ import print_function
 
 import sys
-if sys.version_info[0] > 2:
+if True:
     import urllib.request as urllib2
     from urllib.parse import urlparse
     from urllib.error import URLError, HTTPError
-else:
-    import urllib2
-    from urlparse import urlparse
-    from urllib2 import URLError
 
 from .installation import supported_extensions
 
@@ -45,7 +41,7 @@ def urlreadstr(url, encoding='iso-8859-1'):
     handle = urlopen(url)
     content = handle.read()
 
-    if encoding and sys.version_info[0] > 2:
+    if encoding:
         charset = handle.headers.get_content_charset() or encoding
         content = content.decode(charset, errors='ignore')
 

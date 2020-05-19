@@ -111,8 +111,6 @@ typedef struct _CPyMOLOptions CPyMOLOptions;
 CPyMOLOptions *PyMOLOptions_New(void);
 void PyMOLOptions_Free(CPyMOLOptions * option);
 
-CPyMOLOptions *PyMOLOptions_NewWithPython(int argc, char *argv[]);
-
 /* PyMOL instance type */
 
 #ifndef CPyMOL_DEFINED

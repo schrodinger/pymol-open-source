@@ -17,10 +17,7 @@ from __future__ import print_function, absolute_import
 if True:
 
     import sys
-    if sys.version_info[0] == 2:
-        import thread
-        import urllib2
-    else:
+    if True:
         import _thread as thread
         import urllib.request as urllib2
         from io import FileIO as file

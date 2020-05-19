@@ -30,13 +30,7 @@ Z* -------------------------------------------------------------------
 
 #include <vector>
 
-#if PY_MAJOR_VERSION >= 3
 #define pickle_mod_name "pickle"
-#else
-#define pickle_mod_name "cPickle"
-// support loading Python 3 pickles with Python 2
-#define PyString_Check(o) (PyBytes_CheckExact(o) || PyUnicode_Check(o))
-#endif
 
 /* Return value: New reference.
  * Load a pickle from the given string
@@ -264,11 +258,9 @@ int PConvPyStrToStr(PyObject * obj, char *ptr, int size)
   int ok = true;
   if(!obj) {
     ok = false;
-#if PY_MAJOR_VERSION >= 3
   } else if(PyBytes_Check(obj)) {
     auto strval = PyBytes_AsSomeString(obj);
     UtilNCopy(ptr, strval.c_str(), size);
-#endif
   } else if(!PyString_Check(obj)) {
     ok = false;
     if(size)
@@ -399,11 +391,9 @@ int PConvPyObjectToStrMaxLen(PyObject * object, char *value, int ln)
   int result = true;
   if(!object) {
     result = false;
-#if PY_MAJOR_VERSION >= 3
   } else if(PyBytes_Check(object)) {
     auto strval = PyBytes_AsSomeString(object);
     strncpy(value, strval.c_str(), ln);
-#endif
   } else if(PyString_Check(object)) {
     auto strval = PyString_AsSomeString(object);
     strncpy(value, strval.c_str(), ln);

@@ -14,18 +14,11 @@ from __future__ import absolute_import
 
 import sys
 
-_PY3 = sys.version_info[0] > 2
-
-if _PY3:
+if True:
     import http.server as BaseHTTPServer
     import io as StringIO
     import urllib.parse as urlparse
     from urllib.request import urlopen
-else:
-    import BaseHTTPServer
-    import StringIO
-    import urlparse
-    from urllib import urlopen
 
 import cgi
 import socket
@@ -60,7 +53,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     # if we need to, then we'll change this
 
     def wfile_write(self, s):
-        if _PY3 and not isinstance(s, bytes):
+        if not isinstance(s, bytes):
             s = s.encode('utf-8')
         self.wfile.write(s)
 

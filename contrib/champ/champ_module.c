@@ -55,20 +55,14 @@ static PyObject *RetInt(int ok,int result) /* status/integer return */
 
 typedef void(*CObjectDestruct)(void*) ;
 
-#if PY_MAJOR_VERSION >= 3
 static void ChampCapsuleFree(PyObject * capsule) {
   ChampFree(PyCapsule_GetPointer(capsule, NULL));
 }
-#endif
 
 static PyObject *_new(PyObject *self,      PyObject *args)
 {
-#if PY_MAJOR_VERSION >= 3
   void * I = ChampNew();
   return PyCapsule_New(I, NULL, ChampCapsuleFree);
-#else
-  return(PyCObject_FromVoidPtr((void*)ChampNew(),(CObjectDestruct)ChampFree));
-#endif
 }
 
 static PyObject *_memory_dump(PyObject *self,      PyObject *args)
@@ -1059,7 +1053,6 @@ static PyMethodDef champ_methods[] = {
   {NULL,		                    NULL}     /* sentinel */        
 };
 
-#if PY_MAJOR_VERSION >= 3
 PyObject * PyInit__champ(void)
 {
   static struct PyModuleDef moduledef = {
@@ -1067,11 +1060,3 @@ PyObject * PyInit__champ(void)
     "_champ", NULL, -1, champ_methods };
   return PyModule_Create(&moduledef);
 }
-#else
-void init_champ(void);
-void init_champ(void)
-{
-  Py_InitModule("_champ", champ_methods);
-}
-#endif
-

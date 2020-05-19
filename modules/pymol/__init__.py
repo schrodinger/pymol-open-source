@@ -78,16 +78,11 @@ if __name__ == '__main__':
     # this should never be reached because PyMOL will exit the process
     raise SystemExit
 
-IS_PY2 = sys.version_info[0] == 2
-IS_PY3 = sys.version_info[0] == 3
 IS_WINDOWS = sys.platform.startswith('win')
 IS_MACOS = sys.platform.startswith('darwin')
 IS_LINUX = sys.platform.startswith('linux')
 
-if IS_PY3:
-    import _thread as thread
-else:
-    import thread
+import _thread as thread
 
 import copy
 import threading
@@ -612,7 +607,7 @@ sys.meta_path.insert(0, _NoCmdFinder())
 
 ########## LEGACY PRINT STATEMENT FOR PYMOL COMMAND LINE ###################
 
-if IS_PY3:
+if True:
     def _print_statement(*args, **_):
         '''Legacy Python-2-like print statement for the PyMOL command line'''
         kw = {}

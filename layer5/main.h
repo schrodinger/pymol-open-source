@@ -44,7 +44,6 @@ void MainCheckWindowFit(PyMOLGlobals * G);
 
 #define PYMOL_MAX_OPT_STR  1025
 
-int main_exec(int, char **);
 int main_shared(int);
 
 #endif /* _H_main header */

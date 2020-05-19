@@ -9,13 +9,7 @@ import threading
 import os
 import time
 
-if sys.version_info[0] == 2:
-    from Tkinter import *
-    import tkFileDialog
-    import tkMessageBox
-    import tkFont
-    _next_method_name = 'next'
-else:
+if True:
     from tkinter import *
     import tkinter.filedialog as tkFileDialog
     import tkinter.messagebox as tkMessageBox
@@ -40,23 +34,7 @@ import traceback
 root = None
 
 def encode(s):
-    '''If `s` is unicode, attempt to encode it. On faiure, return the
-    unicode input.
-
-    Our C file I/O implementations can't handle unicode. For some file
-    types we support reading the file in Python (supports unicode) and
-    passing the content to the underlying C routine.
-    '''
-    if sys.version_info[0] >= 3:
-        return s
-    if not isinstance(s, bytes):
-        for enc in [sys.getfilesystemencoding(), 'latin1']:
-            try:
-                e = s.encode(enc)
-                if os.path.exists(e):
-                    return e
-            except UnicodeEncodeError:
-                pass
+    # obsolete since removal of py2 
     return s
 
 def split_tk_file_list(pattern):

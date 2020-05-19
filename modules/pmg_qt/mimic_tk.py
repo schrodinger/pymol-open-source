@@ -10,42 +10,6 @@ import sys
 from pymol.Qt import QtWidgets
 
 
-class _qtSimpleDialog:
-    _NAME = 'tkSimpleDialog'
-    _tkSimpleDialog = None
-
-    @property
-    def Dialog(self):
-        cls = self.__class__
-        if cls._tkSimpleDialog is None:
-            del sys.modules[cls._NAME]
-            __import__(cls._NAME)
-            cls._tkSimpleDialog = sys.modules[cls._NAME]
-            sys.modules[cls._NAME] = self
-        return cls._tkSimpleDialog.Dialog
-
-    def askinteger(_, title, prompt, **kw):
-        r = QtWidgets.QInputDialog.getInt(None, title, prompt,
-                kw.get('initialvalue', 0),
-                kw.get('minvalue', -0x7fffffff),
-                kw.get('maxvalue', 0x7fffffff))
-        return r[0] if r[1] else None
-
-    def askfloat(_, title, prompt, **kw):
-        r = QtWidgets.QInputDialog.getDouble(None, title, prompt,
-                float(kw.get('initialvalue', 0)),
-                float(kw.get('minvalue', -0x7fffffff)),
-                float(kw.get('maxvalue', 0x7fffffff)))
-        return r[0] if r[1] else None
-
-    def askstring(_, title, prompt, **kw):
-        QLE = QtWidgets.QLineEdit
-        r = QtWidgets.QInputDialog.getText(None, title, prompt,
-                QLE.Password if kw.get('show') else QLE.Normal,
-                kw.get('initialvalue', ''))
-        return r[0] if r[1] else None
-
-
 class _qtMessageBox:
     def __getattr__(self, name):
         QMB = QtWidgets.QMessageBox
@@ -135,9 +99,7 @@ qtFileDialog = _qtFileDialog()
 sys.modules['tkMessageBox'] = qtMessageBox
 sys.modules['tkFileDialog'] = qtFileDialog
 
-if sys.version_info[0] < 3:
-    sys.modules['tkSimpleDialog'] = _qtSimpleDialog()
-else:
+if True:
     # injecting 'X.Y' into sys.modules without assigning the attribute
     # (import X;X.Y = ...) doesn't work. Use a meta_path solution instead.
 

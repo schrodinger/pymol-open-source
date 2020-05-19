@@ -4,11 +4,8 @@ from __future__ import absolute_import as _
 import re
 import sys
 
-IS_PY3 = sys.version_info[0] > 2
-
-if IS_PY3:
-    # unicode can't be memoryviewed, so just slice
-    buffer = lambda s, i=0: s[i:]
+# unicode can't be memoryviewed, so just slice
+buffer = lambda s, i=0: s[i:]
 
 from pymol import cmd, parsing
 
@@ -74,9 +71,6 @@ def findnewline(s):
 
 
 def parse_pml(text):
-    if not (IS_PY3 or isinstance(text, bytes)):
-        text = text.encode('ascii', 'ignore')
-
     i = 0
     L = len(text)
 

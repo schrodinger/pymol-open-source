@@ -1445,20 +1445,7 @@ static void launch(CPyMOLOptions * options, int own_the_options)
 
 /*========================================================================*/
 
-static int main_common(void);
 static int decoy_input_hook(void) { return 0; }
-
-int main_exec(int argc, char **argv)
-{
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-
-  fflush(stdout);
-  PSetupEmbedded(G, argc, argv);
-
-  return PyRun_SimpleString(
-      "import pymol\n"
-      "pymol.launch()\n");
-}
 
 int main_shared(int block_input_hook)
 {
@@ -1469,11 +1456,6 @@ int main_shared(int block_input_hook)
   dlopen("libGL.so.1", RTLD_LAZY | RTLD_GLOBAL);
 #endif
 
-  return main_common();
-}
-
-static int main_common(void)
-{
   {                             /* no matter how PyMOL was built, we always come through here... */
 
     CPyMOLOptions *options = PyMOLOptions_New();

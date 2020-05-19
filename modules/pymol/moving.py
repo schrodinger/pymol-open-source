@@ -15,10 +15,7 @@
 if True:
 
     import sys
-    if sys.version_info[0] == 2:
-        import thread
-    else:
-        import _thread as thread
+    import _thread as thread
 
     from . import selector
     import pymol

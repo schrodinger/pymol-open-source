@@ -131,17 +131,13 @@ class CleanJob:
                 input_model = self_cmd.get_model(obj_name,state=state)
                 (fit_flag, sdf_list) = model_to_sdf_list(self_cmd,input_model)
                 input_sdf = ''.join(sdf_list)
-
-                if sys.version_info[0] > 2:
-                    input_sdf = input_sdf.encode()
+                input_sdf = input_sdf.encode()
 
                 result = mengine.run(input_sdf)
                 if result is not None:
                     if len(result):
                         clean_sdf = result[0]
-
-                        if sys.version_info[0] > 2:
-                            clean_sdf = clean_sdf.decode()
+                        clean_sdf = clean_sdf.decode()
 
                         clean_rec = clean_sdf.split("$$$$")[0]
                         clean_name = ""
@@ -182,8 +178,7 @@ class CleanJob:
                 if result is not None:
                     if len(result)>1:
                         errormsg = result[1]
-                        if sys.version_info[0] > 2:
-                            errormsg = errormsg.decode(errors='replace')
+                        errormsg = errormsg.decode(errors='replace')
                         print("\n=== mengine errors below === ")
                         print(errormsg.strip())
                         print("=== mengine errors above ===\n")

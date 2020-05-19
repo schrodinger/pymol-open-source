@@ -18,10 +18,7 @@ import threading
 import socket
 import socket # For gethostbyaddr()
 import sys
-if sys.version_info[0] == 2:
-    import cPickle
-    import SocketServer
-else:
+if True:
     import pickle as cPickle
     import socketserver as SocketServer
 import traceback
