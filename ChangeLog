@@ -2,6 +2,39 @@
 CHANGE LOG
 =========================================================================
 
+2020-05-20 Thomas Holder, Jarrett Johnson
+
+	* 2.4.0
+
+	* load_traj
+	  - support netcdf format
+	  - support `selection` argument with all file formats
+
+	* CCP4/MRC Map Support
+	  - Distinguish .ccp4 and .mrc extensions (regarding origin)
+	  - .map extension: auto-detect the format
+
+	* New distance mode 8
+
+	* MMTF export: Consider `pdb_retain_ids` setting
+
+	* GLTF export (based on collada2gltf)
+
+	* New `internal_gui_name_color_mode` setting
+
+	* MPEG4 Movie export: Apply `movie_fps` setting to exported file
+
+	* Python API
+	  - Improved error handling with exceptions
+	  - New: cmd.rebond()
+	  - New: cmd.get_capabilities()
+	  - Fix: cmd.get_bonds() state off by one
+	  - cmd.fit() et al.: raise on error
+
+	* Launch Options
+	  - Restore `-V` launch argument for external GUI height
+	  - macOS: `open` event opens new window
+
 2019-02-11 Thomas Holder, Jarrett Johnson
 
 	* 2.3.0
