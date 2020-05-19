@@ -2897,7 +2897,8 @@ static void RayHashSpawn(CRayHashThreadInfo * Thread, int n_thread, int n_total)
     info_list = PyList_New(n_thread);
     for(a = 0; a < n_thread; a++) {
       if((c + a) < n_total) {
-        PyList_SetItem(info_list, a, PyCObject_FromVoidPtr(Thread + c + a, NULL));
+        PyList_SetItem(
+            info_list, a, PyCapsule_New(Thread + c + a, nullptr, nullptr));
       } else {
         PyList_SetItem(info_list, a, PConvAutoNone(NULL));
       }
@@ -2926,7 +2927,7 @@ static void RayAntiSpawn(CRayAntiThreadInfo * Thread, int n_thread)
     " Ray: antialiasing with %d threads...\n", n_thread ENDFB(I->G);
   info_list = PyList_New(n_thread);
   for(a = 0; a < n_thread; a++) {
-    PyList_SetItem(info_list, a, PyCObject_FromVoidPtr(Thread + a, NULL));
+    PyList_SetItem(info_list, a, PyCapsule_New(Thread + a, nullptr, nullptr));
   }
   PXDecRef(PYOBJECT_CALLMETHOD
            (G->P_inst->cmd, "_ray_anti_spawn", "OO", info_list, G->P_inst->cmd));
@@ -2969,7 +2970,7 @@ static void RayTraceSpawn(CRayThreadInfo * Thread, int n_thread)
     " Ray: rendering with %d threads...\n", n_thread ENDFB(I->G);
   info_list = PyList_New(n_thread);
   for(a = 0; a < n_thread; a++) {
-    PyList_SetItem(info_list, a, PyCObject_FromVoidPtr(Thread + a, NULL));
+    PyList_SetItem(info_list, a, PyCapsule_New(Thread + a, nullptr, nullptr));
   }
   PXDecRef(PYOBJECT_CALLMETHOD
            (G->P_inst->cmd, "_ray_spawn", "OO", info_list, G->P_inst->cmd));

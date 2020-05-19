@@ -157,8 +157,9 @@ static PyMOLGlobals * _api_get_pymol_globals(PyObject * self) {
 #endif
   }
 
-  if(self && PyCObject_Check(self)) { \
-    PyMOLGlobals **G_handle = (PyMOLGlobals**)PyCObject_AsVoidPtr(self); \
+  if (self && PyCapsule_CheckExact(self)) {
+    auto G_handle =
+        reinterpret_cast<PyMOLGlobals**>(PyCapsule_GetPointer(self, nullptr));
     if(G_handle) { \
       return *G_handle;
     } \
@@ -460,132 +461,86 @@ static PyObject *CmdFixChemistry(PyObject * self, PyObject * args)
 static PyObject *CmdRayAntiThread(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
   PyObject *py_thread_info;
+  API_SETUP_ARGS(G, self, args, "OO", &self, &py_thread_info);
 
-  CRayAntiThreadInfo *thread_info = NULL;
+  auto thread_info = reinterpret_cast<CRayAntiThreadInfo*>(
+      PyCapsule_GetPointer(py_thread_info, nullptr));
+  API_ASSERT(thread_info);
 
-  ok = PyArg_ParseTuple(args, "OO", &self, &py_thread_info);
-  if(ok)
-    ok = PyCObject_Check(py_thread_info);
-  if(ok)
-    ok = ((thread_info = (CRayAntiThreadInfo *) PyCObject_AsVoidPtr(py_thread_info)) != NULL);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    PUnblock(G);
-    RayAntiThread(thread_info);
-    PBlock(G);
-  }
-  return APIResultOk(ok);
+  PUnblock(G);
+  RayAntiThread(thread_info);
+  PBlock(G);
+
+  return APISuccess();
 }
 
 static PyObject *CmdRayHashThread(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
   PyObject *py_thread_info;
+  API_SETUP_ARGS(G, self, args, "OO", &self, &py_thread_info);
 
-  CRayHashThreadInfo *thread_info = NULL;
+  auto thread_info = reinterpret_cast<CRayHashThreadInfo*>(
+      PyCapsule_GetPointer(py_thread_info, nullptr));
+  API_ASSERT(thread_info);
 
-  ok = PyArg_ParseTuple(args, "OO", &self, &py_thread_info);
-  if(ok)
-    ok = PyCObject_Check(py_thread_info);
-  if(ok)
-    ok = ((thread_info = (CRayHashThreadInfo*) PyCObject_AsVoidPtr(py_thread_info)) != NULL);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  }
-  if(ok) {
-    PUnblock(G);
-    RayHashThread(thread_info);
-    PBlock(G);
-  }
-  return APIResultOk(ok);
+  PUnblock(G);
+  RayHashThread(thread_info);
+  PBlock(G);
+
+  return APISuccess();
 }
 
 static PyObject *CmdRayTraceThread(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
   PyObject *py_thread_info;
+  API_SETUP_ARGS(G, self, args, "OO", &self, &py_thread_info);
 
-  CRayThreadInfo *thread_info = NULL;
+  auto thread_info = reinterpret_cast<CRayThreadInfo*>(
+      PyCapsule_GetPointer(py_thread_info, nullptr));
+  API_ASSERT(thread_info);
 
-  ok = PyArg_ParseTuple(args, "OO", &self, &py_thread_info);
-  if(ok)
-    ok = PyCObject_Check(py_thread_info);
-  if(ok)
-    ok = ((thread_info = (CRayThreadInfo*) PyCObject_AsVoidPtr(py_thread_info)) != NULL);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    PUnblock(G);
-    RayTraceThread(thread_info);
-    PBlock(G);
-  }
-  return APIResultOk(ok);
+  PUnblock(G);
+  RayTraceThread(thread_info);
+  PBlock(G);
+
+  return APISuccess();
 }
 
 static PyObject *CmdCoordSetUpdateThread(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
   PyObject *py_thread_info;
+  API_SETUP_ARGS(G, self, args, "OO", &self, &py_thread_info);
 
-  CCoordSetUpdateThreadInfo *thread_info = NULL;
+  auto thread_info = reinterpret_cast<CCoordSetUpdateThreadInfo*>(
+      PyCapsule_GetPointer(py_thread_info, nullptr));
+  API_ASSERT(thread_info);
 
-  ok = PyArg_ParseTuple(args, "OO", &self, &py_thread_info);
-  if(ok)
-    ok = PyCObject_Check(py_thread_info);
-  if(ok)
-    ok = ((thread_info = (CCoordSetUpdateThreadInfo*) PyCObject_AsVoidPtr(py_thread_info)) != NULL);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  }
-  if(ok) {
-    PUnblock(G);
-    CoordSetUpdateThread(thread_info);
-    PBlock(G);
-  }
-  return APIResultOk(ok);
+  PUnblock(G);
+  CoordSetUpdateThread(thread_info);
+  PBlock(G);
+
+  return APISuccess();
 }
 
 static PyObject *CmdObjectUpdateThread(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
   PyObject *py_thread_info;
+  API_SETUP_ARGS(G, self, args, "OO", &self, &py_thread_info);
 
-  CObjectUpdateThreadInfo *thread_info = NULL;
+  auto thread_info = reinterpret_cast<CObjectUpdateThreadInfo*>(
+      PyCapsule_GetPointer(py_thread_info, nullptr));
+  API_ASSERT(thread_info);
 
-  ok = PyArg_ParseTuple(args, "OO", &self, &py_thread_info);
-  if(ok)
-    ok = PyCObject_Check(py_thread_info);
-  if(ok)
-    ok = ((thread_info = (CObjectUpdateThreadInfo*) PyCObject_AsVoidPtr(py_thread_info)) != NULL);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    PUnblock(G);
-    SceneObjectUpdateThread(thread_info);
-    PBlock(G);
-  }
-  return APIResultOk(ok);
+  PUnblock(G);
+  SceneObjectUpdateThread(thread_info);
+  PBlock(G);
+
+  return APISuccess();
 }
 
 static PyObject *CmdGetMovieLocked(PyObject * self, PyObject * args)
@@ -3568,7 +3523,7 @@ static PyObject *CmdMem(PyObject * self, PyObject * args)
 
 static PyObject *Cmd_GetGlobalCObject(PyObject * self, PyObject * args)
 {
-  return PyCObject_FromVoidPtr((void *) &SingletonPyMOLGlobals, NULL);
+  return PyCapsule_New(&SingletonPyMOLGlobals, nullptr, nullptr);
 }
 
 /*
@@ -3615,7 +3570,7 @@ static PyObject *Cmd_New(PyObject * self, PyObject * args)
           Py_DECREF(G->P_inst->dict); // borrow reference
           {
             /* store the PyMOL struct as a CObject */
-            PyObject *tmp = PyCObject_FromVoidPtr(I, NULL);
+            PyObject* tmp = PyCapsule_New(I, nullptr, nullptr);
             PyObject_SetAttrString(pymol, "__pymol__", tmp);
             Py_DECREF(tmp);
           }
@@ -3626,7 +3581,7 @@ static PyObject *Cmd_New(PyObject * self, PyObject * args)
               (str++)->id = -1;
             }
           }
-          result = PyCObject_FromVoidPtr((void *) PyMOL_GetGlobalsHandle(I), NULL);
+          result = PyCapsule_New(PyMOL_GetGlobalsHandle(I), nullptr, nullptr);
         }
       }
     }
@@ -6412,14 +6367,6 @@ static PyObject *CmdCopyImage(PyObject * self, PyObject * args)
   return APIResultOk(ok);
 }
 
-static PyObject *CmdGetCThreadingAPI(PyObject * self, PyObject * args)
-{
-  PyObject *result = PyList_New(2);
-  PyList_SetItem(result, 0, PyCObject_FromVoidPtr((void *) PBlock, NULL));
-  PyList_SetItem(result, 1, PyCObject_FromVoidPtr((void *) PUnblock, NULL));
-  return result;
-}
-
 static PyObject *CmdCEAlign(PyObject *self, PyObject *args)
 {
   PyMOLGlobals * G = NULL;
@@ -6617,7 +6564,6 @@ ok_except1:
 }
 
 static PyMethodDef Cmd_methods[] = {
-  {"_get_c_threading_api", CmdGetCThreadingAPI, METH_VARARGS},
   {"_del", Cmd_Del, METH_VARARGS},
   {"_get_global_C_object", Cmd_GetGlobalCObject, METH_VARARGS},
   {"glViewport", Cmd_glViewport, METH_VARARGS},

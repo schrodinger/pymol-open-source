@@ -203,15 +203,19 @@ int PConvAttrToPtr(PyObject * obj, const char *attr, void **cobj)
   return (ok);
 }
 
+/**
+ * Used via `chempy.map` with
+ * https://github.com/cctbx/cctbx_project/blob/master/cctbx/maptbx/boost_python/pymol_interface.cpp
+ */
 int PConvCObjectToPtr(PyObject * obj, void **ptr)
 {
   int ok = true;
   if(!obj) {
     ok = false;
-  } else if(!PyCObject_Check(obj))
+  } else if(!PyCapsule_CheckExact(obj))
     ok = false;
   else
-    (*ptr) = PyCObject_AsVoidPtr(obj);
+    (*ptr) = PyCapsule_GetPointer(obj, nullptr);
   return (ok);
 }
 

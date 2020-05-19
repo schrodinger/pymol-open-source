@@ -6455,7 +6455,7 @@ static void SceneObjectUpdateSpawn(PyMOLGlobals * G, CObjectUpdateThreadInfo * T
       " Scene: updating objects with %d threads...\n", n_thread ENDFB(G);
     info_list = PyList_New(n_total);
     for(a = 0; a < n_total; a++) {
-      PyList_SetItem(info_list, a, PyCObject_FromVoidPtr(Thread + a, NULL));
+      PyList_SetItem(info_list, a, PyCapsule_New(Thread + a, nullptr, nullptr));
       n++;
     }
     PXDecRef(PYOBJECT_CALLMETHOD

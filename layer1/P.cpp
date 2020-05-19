@@ -1366,7 +1366,7 @@ int PAlterAtomState(PyMOLGlobals * G, PyCodeObject *expr_co, int read_only,
   wobj->read_only = read_only;
   wobj->state = state + 1;
 
-  PXDecRef(PyEval_EvalCode(expr_co, space, (PyObject*)wobj));
+  PXDecRef(PyEval_EvalCode((PyObject*) expr_co, space, (PyObject*) wobj));
   WrapperObjectReset(wobj);
 
   if(PyErr_Occurred()) {
@@ -1428,7 +1428,8 @@ int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject
     wobj->state = 0;
   }
 
-  resultPyObject = PyEval_EvalCode(expr_co, P_inst_dict, (PyObject*)wobj);
+  resultPyObject =
+      PyEval_EvalCode((PyObject*) expr_co, P_inst_dict, (PyObject*) wobj);
   WrapperObjectReset(wobj);
 
   if(PyErr_Occurred()) {
@@ -1817,8 +1818,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     if(global_instance) {
       /* implies global singleton pymol, so set up the global handle */
       PyObject_SetAttrString(P_cmd, "_COb",
-                             PyCObject_FromVoidPtr((void *) &SingletonPyMOLGlobals,
-                                                   NULL));
+          PyCapsule_New(&SingletonPyMOLGlobals, nullptr, nullptr));
 
       /* cmd module is itself the api for the global PyMOL instance */
       G->P_inst->cmd = P_cmd;

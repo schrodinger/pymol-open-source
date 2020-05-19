@@ -50,15 +50,6 @@ typedef int PyObject;
 # define PyString_AsString              PyUnicode_AsUTF8
 # define PyString_AS_STRING             PyUnicode_AsUTF8
 
-# define PyCObject_AsVoidPtr(capsule)   PyCapsule_GetPointer(capsule, "name")
-// Warning: PyCObject_FromVoidPtr destructor takes `void* p` argument,
-// but PyCapsule_New destructor takes `PyObject* capsule` argument!
-// The "capsulethunk.h" documentation is wrong about using the same destructor.
-# define PyCObject_FromVoidPtr(p, d)    PyCapsule_New(p, "name", NULL)
-# define PyCObject_Check                PyCapsule_CheckExact
-
-# define PyEval_EvalCode(o, ...)        PyEval_EvalCode((PyObject*)o, __VA_ARGS__)
-
 /*
  * For compatibility with the pickletools, this type represents
  * an optionally owned C string and has to be returned by value.
@@ -92,7 +83,7 @@ namespace pymol {
  * Destruction policy for unique_ptr<PyObject, pymol::pyobject_delete>
  */
 struct pyobject_delete {
-  void operator()(PyObject* o) const { Py_XDECREF(o); }
+  void operator()(PyObject* o) const { Py_DECREF(o); }
 };
 } // namespace pymol
 
@@ -100,7 +91,7 @@ struct pyobject_delete {
 
 #endif
 
-#define PYOBJECT_CALLMETHOD(o, m, ...) PyObject_CallMethod(o, (char*)m, (char*)__VA_ARGS__)
-#define PYOBJECT_CALLFUNCTION(o, ...) PyObject_CallFunction(o, (char*)__VA_ARGS__)
+#define PYOBJECT_CALLMETHOD PyObject_CallMethod
+#define PYOBJECT_CALLFUNCTION PyObject_CallFunction
 
 #endif
