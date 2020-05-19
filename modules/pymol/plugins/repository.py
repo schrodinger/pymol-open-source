@@ -39,13 +39,17 @@ def urlopen(url):
 def urlreadstr(url, encoding='iso-8859-1'):
     '''
     Download helper to obtain 'str' content with Python 3.
+
+    If `encoding` is None, then return `bytes`.
     '''
     handle = urlopen(url)
     content = handle.read()
 
-    if sys.version_info[0] > 2:
+    if encoding and sys.version_info[0] > 2:
         charset = handle.headers.get_content_charset() or encoding
         content = content.decode(charset, errors='ignore')
+
+    handle.close()
 
     return content
 
@@ -322,7 +326,7 @@ ARGUMENTS
 
         # get page content
         try:
-            content = urlreadstr(url)
+            content = urlreadstr(url, None if rawscript else 'utf-8')
         except IOError as e:
             raise CmdException(e, "Plugin-Error")
 
@@ -355,9 +359,11 @@ ARGUMENTS
 
             content = chunks[0]
 
-        handle = open(filename, 'w')
-        handle.write(content)
-        handle.close()
+            with open(filename, 'w') as handle:
+                handle.write(content)
+        else:
+            with open(filename, 'wb') as handle:
+                handle.write(content)
 
     if int(run):
         cmd.do("run " + filename, echo=not quiet)
