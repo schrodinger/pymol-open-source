@@ -1,1 +1,0 @@
-from OpenGL.GL import *
