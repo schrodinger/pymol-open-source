@@ -14,9 +14,7 @@
 
 from chempy import Storage
 
-try:
-    import cPickle
-except ImportError:
+if True:
     import pickle
 
     # Python 3: Unpickle printable ASCII strings in [TAB, DEL) to unicode,

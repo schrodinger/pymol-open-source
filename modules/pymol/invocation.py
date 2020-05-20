@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function, absolute_import
-
 # invocation.py
 #
 # This module unifies argument handling for embedded and modular PyMOL
@@ -202,10 +200,7 @@ if True:
     def get_personal_folder():
         if sys.platform.startswith('win'):
             try:
-                try:
-                    import _winreg as winreg
-                except ImportError:
-                    import winreg
+                import winreg
                 with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
                         r'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders') as key:
                     return winreg.QueryValueEx(key, "Personal")[0]

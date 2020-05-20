@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 if True:
 
     cmd = __import__("sys").modules["pymol.cmd"]

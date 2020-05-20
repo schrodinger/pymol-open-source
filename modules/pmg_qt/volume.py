@@ -2,19 +2,12 @@
 Volume Color Map Editor Panel.
 """
 
-from __future__ import print_function
-
 import itertools, math
 
 import pymol
 
 from pymol.Qt import QtGui, QtCore
 from pymol.Qt import QtWidgets
-
-try:
-    xrange
-except NameError:
-    xrange = range
 
 Qt = QtCore.Qt
 
@@ -118,7 +111,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         num_lines = 10
         pen.setStyle(Qt.DashLine)
         painter.setPen(pen)
-        for line in xrange(1, num_lines):
+        for line in range(1, num_lines):
             y = y0 + h * (1.0 - self.alphaToY(line / float(num_lines)))
             painter.drawLine(x0, y, x1, y)
 
@@ -160,7 +153,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             dnorm = norm_max-norm_min
             iwidth = 1.0 / (rect.width())
             painter_path = QtGui.QPainterPath()
-            for i in xrange(rect.width()):
+            for i in range(rect.width()):
                 pos = (i * iwidth * dnorm + norm_min) * len(self.path)
                 ipos = int(pos)
                 if pos < 0 or ipos >= len(self.path) - 1:
@@ -721,7 +714,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         if self.ignore_set_colors:
             return
         self.points = []
-        for p in xrange(0, len(colors), 5):
+        for p in range(0, len(colors), 5):
             v = colors[p]
             r = colors[p + 1]
             g = colors[p + 2]

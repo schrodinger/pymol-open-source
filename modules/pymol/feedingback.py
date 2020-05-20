@@ -1,6 +1,3 @@
-
-from __future__ import print_function
-
 import sys
 cmd = __import__("sys").modules["pymol.cmd"]
 from .cmd import Shortcut, is_string, QuietException

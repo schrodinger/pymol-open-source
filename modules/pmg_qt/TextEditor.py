@@ -2,9 +2,6 @@
 Simple Text Editor
 '''
 
-from __future__ import print_function as _
-from __future__ import absolute_import as _
-
 import os
 import sys
 import importlib

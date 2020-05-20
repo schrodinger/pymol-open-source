@@ -12,9 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import division
-from __future__ import print_function
-
 # xray.py
 # This section contains python code for supporting
 # x-ray crystallography functions

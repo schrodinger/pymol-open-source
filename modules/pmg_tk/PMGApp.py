@@ -12,8 +12,6 @@
 #-* based on code written by Doug Hellmann. 
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 import sys
 import os
 from glob import glob

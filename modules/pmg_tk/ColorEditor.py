@@ -16,8 +16,6 @@
 # correspond to Menu-displayed settings are kept synchronized with
 # PyMOL
 
-from __future__ import print_function
-
 import sys
 from tkinter import *
 import tkinter.colorchooser as tkColorChooser

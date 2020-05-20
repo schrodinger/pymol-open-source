@@ -8,8 +8,6 @@ PyQt5/PyQt4 differences:
 http://pyqt.sourceforge.net/Docs/PyQt5/pyqt4_differences.html
 """
 
-from __future__ import absolute_import as _
-
 DEBUG = False
 
 PYQT_NAME = None

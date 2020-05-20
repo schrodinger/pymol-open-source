@@ -2,8 +2,6 @@
 Module for translating Qt key codes to PyMOL key and "special" codes
 '''
 
-from __future__ import absolute_import
-
 from pymol.Qt import QtCore
 Qt = QtCore.Qt
 

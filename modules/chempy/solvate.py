@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 from chempy.models import Indexed
 from chempy import water_amber,water_residues
 from chempy import hetatm,path,io

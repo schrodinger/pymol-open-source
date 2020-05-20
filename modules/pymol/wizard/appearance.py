@@ -1,7 +1,5 @@
 # Warren L. DeLano
 
-from __future__ import print_function
-
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol

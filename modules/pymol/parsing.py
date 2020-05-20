@@ -59,10 +59,6 @@
 # None. However, function must have real arguments for error checking.
 #
 
-from __future__ import absolute_import
-
-# Don't import __future__.print_function
-
 if True:
 
     import re

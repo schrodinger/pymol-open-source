@@ -11,8 +11,6 @@ License: BSD-2-Clause
 
 '''
 
-from __future__ import print_function, absolute_import
-
 import sys
 import os
 import pymol

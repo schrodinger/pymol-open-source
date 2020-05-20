@@ -1,9 +1,4 @@
-from __future__ import print_function
-
-try:
-    import cStringIO
-except ImportError:
-    import io as cStringIO
+import io as cStringIO
 
 import sys, os
 import time

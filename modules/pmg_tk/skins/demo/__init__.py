@@ -4,12 +4,8 @@
 
 import os
 
-try:
-    from Tkinter import *
-    from tkFileDialog import *
-except ImportError:
-    from tkinter import *
-    from tkinter.filedialog import *
+from tkinter import *
+from tkinter.filedialog import *
 
 import Pmw
 

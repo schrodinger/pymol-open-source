@@ -1,6 +1,3 @@
-
-from __future__ import print_function
-
 # filter wizard
 # no-frills tool for quickly filtering docked compounds, etc.
 

@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function, absolute_import
-
 import sys
 cmd_module = __import__("sys").modules["pymol.cmd"]
 from .cmd import _cmd, lock, unlock, Shortcut, \

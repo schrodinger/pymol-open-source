@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 if __name__=='pymol.shortcut':
     from . import parsing
     from .checking import is_string, is_list

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import re
 import pymol
 cmd = __import__("sys").modules["pymol.cmd"]

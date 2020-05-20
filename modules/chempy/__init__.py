@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 import os
 import copy
 import functools
@@ -187,10 +185,7 @@ class Storage:
 
     def my_open(self,fname,mode='r'):
         if 'r' in mode and '://' in fname:
-            try:
-                import urllib.request as urllib
-            except ImportError:
-                import urllib
+            import urllib.request as urllib
             return urllib.urlopen(fname)
         elif fname.endswith(".gz") or fname.endswith(".pze") or fname.endswith("pzw"):
             import gzip

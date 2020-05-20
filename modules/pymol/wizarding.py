@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 if True:
 
     import pymol
@@ -23,10 +21,7 @@ if True:
           _feedback,fb_module,fb_mask, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
-    try:
-        import cPickle
-    except ImportError:
-        import pickle as cPickle
+    import pickle as cPickle
     import traceback
 
     class WizardError(Exception):

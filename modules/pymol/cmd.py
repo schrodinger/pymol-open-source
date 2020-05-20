@@ -64,8 +64,6 @@
 # In rare cases, certain nonserious error or warning output should
 # also be suppressed.  Set "quiet" to 2 for this behavior.
 
-from __future__ import print_function
-
 def _deferred_init_pymol_internals(_pymol):
     # set up some global session tasks
 

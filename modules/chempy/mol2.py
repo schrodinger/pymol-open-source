@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 from chempy import Storage
 
 # see layer2/AtomInfo.h

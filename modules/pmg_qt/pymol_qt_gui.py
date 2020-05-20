@@ -3,8 +3,6 @@ Contains main class for PyMOL QT GUI
 """
 
 
-from __future__ import absolute_import
-from __future__ import print_function
 from collections import defaultdict
 import os
 import re

@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 import re
 import copy
 
@@ -143,10 +141,7 @@ class SDF:
             self.file = fname
         elif mode[0:1] == 'r' and '://' in fname:
             # does this look like a URL? (but not a DOS path)
-            try:
-                from urllib import urlopen
-            except ImportError:
-                from urllib.request import urlopen
+            from urllib.request import urlopen
             self.file = urlopen(fname)
         else:
             self.file = open(fname,mode)

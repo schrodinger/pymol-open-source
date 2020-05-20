@@ -16,8 +16,6 @@
 #
 #
 
-from __future__ import print_function
-
 from . import bond_amber
 from . import protein_residues
 from . import protein_amber

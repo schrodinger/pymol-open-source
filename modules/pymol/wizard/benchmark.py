@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import threading
 from pymol.wizard import Wizard
 from pymol import cmd

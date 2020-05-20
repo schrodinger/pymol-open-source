@@ -2,8 +2,6 @@
 Volume color ramp utilities
 '''
 
-from __future__ import print_function
-
 import sys
 cmd = sys.modules["pymol.cmd"]
 

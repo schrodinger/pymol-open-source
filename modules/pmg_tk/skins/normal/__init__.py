@@ -1,6 +1,3 @@
-
-from __future__ import print_function
-
 DEBUG = False
 
 import sys

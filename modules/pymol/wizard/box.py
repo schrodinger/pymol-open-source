@@ -1,8 +1,6 @@
 # This wizard contributed by Ezequiel "Zac" Panepucci 011114
 # modified by Warren L. DeLano
 
-from __future__ import print_function
-
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol

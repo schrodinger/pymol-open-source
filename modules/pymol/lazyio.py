@@ -4,9 +4,6 @@ Support for some less common file formats for PyMOL.
 Copyright (c) Schrodinger, LLC.
 '''
 
-from __future__ import print_function as _
-from __future__ import absolute_import as _
-
 import os
 
 import pymol

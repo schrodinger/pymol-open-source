@@ -2,8 +2,6 @@
 Mimic the pmg_tk API for plugin legacy support
 '''
 
-from __future__ import absolute_import
-
 import sys
 
 tkinter = None

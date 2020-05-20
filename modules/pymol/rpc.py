@@ -14,8 +14,6 @@
   Modified 2013-04-17 Thomas Holder, Schrodinger, Inc.
 """
 
-from __future__ import print_function
-
 import sys
 import xmlrpc.server as SimpleXMLRPCServer
 import threading,os,tempfile

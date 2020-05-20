@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import sys
 from pymol2 import SingletonPyMOL as PyMOL
 

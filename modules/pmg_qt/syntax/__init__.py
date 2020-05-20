@@ -1,6 +1,3 @@
-from __future__ import print_function as _
-from __future__ import absolute_import as _
-
 from pymol.Qt import QtGui
 
 

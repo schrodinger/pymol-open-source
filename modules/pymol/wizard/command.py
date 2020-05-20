@@ -1,9 +1,4 @@
-from __future__ import print_function
-
-try:
-    from itertools import izip_longest
-except ImportError:
-    from itertools import zip_longest as izip_longest
+from itertools import zip_longest as izip_longest
 
 from pymol import cmd, stored, wizard
 

@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 if True:
 
     import os
@@ -29,10 +27,7 @@ if True:
           _feedback,fb_module,fb_mask, exp_path, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
-    try:
-        from os import getcwdu
-    except ImportError:
-        from os import getcwd as getcwdu
+    from os import getcwd as getcwdu
 
     def cd(dir="~",complain=1,quiet=1):
         '''

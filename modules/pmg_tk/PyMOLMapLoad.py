@@ -3,8 +3,6 @@
 # * make the final viewing step a function
 # *   setup_map(name,levels=,colors=,reps=)
 
-from __future__ import print_function
-
 import pymol
 from pymol import headering
 import Pmw
@@ -345,16 +343,3 @@ select an amplitude column name from the file and try again.
             self.quit()
         elif action=="Help":
             self.show_help()
-
-
-        
-if __name__=="__main__":
-    try:
-        import Tkinter as TK
-    except ImportError:
-        import tkinter as TK
-
-    a = TK.Tk()
-    t = PyMOLMapLoad(a,None)
-    t.pack_and_show()
-    a.mainloop()

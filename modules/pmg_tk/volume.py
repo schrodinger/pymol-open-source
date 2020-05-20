@@ -7,10 +7,7 @@ import math
 import colorsys
 import itertools
 
-try:
-    import Tkinter
-except ImportError:
-    import tkinter as Tkinter
+import tkinter as Tkinter
 
 try:
     from pymol import cmd

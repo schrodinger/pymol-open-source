@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 tmp_sele1 = "assign_tmp1"
 tmp_sele2 = "assign_tmp2"
 

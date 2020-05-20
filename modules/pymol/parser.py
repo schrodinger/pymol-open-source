@@ -16,11 +16,6 @@
 # Python parser module for PyMol
 #
 
-from __future__ import absolute_import
-
-# Don't import __future__.print_function
-
-
 class SecurityException(Exception):
     pass
 

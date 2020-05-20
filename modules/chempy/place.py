@@ -15,8 +15,6 @@
 #
 #
 
-from __future__ import print_function
-
 from . import bond_amber
 
 from chempy.cpv import *

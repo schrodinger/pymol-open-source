@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 from chempy import cpv
 #import popen2
 import os
@@ -166,10 +164,7 @@ def from_r3d(fname):
     result = DEFAULT_ERROR
     input = None
     if '://' in fname:
-        try:
-            from urllib import urlopen
-        except ImportError:
-            from urllib.request import urlopen
+        from urllib.request import urlopen
         input = urlopen(fname)
     elif os.path.exists(fname):
         input = open(fname)

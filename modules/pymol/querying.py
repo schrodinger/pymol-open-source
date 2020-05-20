@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 from .constants import CURRENT_STATE, ALL_STATES
 
 if True:

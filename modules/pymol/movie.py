@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 import sys
 cmd = sys.modules["pymol.cmd"]
 import math

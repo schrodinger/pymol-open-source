@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 # must match layer1/Setting.h
 cSetting_tuple = -1
 cSetting_blank = 0

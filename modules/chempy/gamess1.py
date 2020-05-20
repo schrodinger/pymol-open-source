@@ -17,8 +17,6 @@
 
 # by the way, most of the below is untested...
 
-from __future__ import print_function
-
 import os
 import shutil
 import glob

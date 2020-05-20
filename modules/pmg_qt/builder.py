@@ -1,6 +1,4 @@
 
-from __future__ import print_function
-
 import itertools, os
 from glob import glob
 

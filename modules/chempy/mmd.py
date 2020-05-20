@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from __future__ import print_function
-
 from chempy.models import Indexed,Connected
 from chempy import Storage,Atom,Bond
 
