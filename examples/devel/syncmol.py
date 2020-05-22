@@ -195,7 +195,7 @@ if __name__=='pymol':
             _stdin_reader_thread.setDaemon(1)
             _stdin_reader_thread.start()
         elif tok == 'send':
-            addr = string.split(sys.argv.pop(),':')
+            addr = sys.argv.pop().split(':')
             if len(addr)==1:
                 host = 'localhost'
                 port = int(addr[0])

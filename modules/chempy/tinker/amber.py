@@ -16,7 +16,6 @@ from __future__ import print_function
 
 from chempy import feedback
 
-import string
 import copy
 
 default_extra = { # atomic number, and normal valency (for tinker)
@@ -126,33 +125,33 @@ class Parameters:
         self.type = []
         self.mw = {}
         while 1:
-            l = string.strip(f.readline())
+            l = f.readline().strip()
             if not len(l): break
-            a2 = string.strip(l[0:2])
+            a2 = l[0:2].strip()
             self.type.append(a2)
-            self.mw[a2] = [float(l[3:13]),string.strip(l[34:])]
+            self.mw[a2] = [float(l[3:13]),l[34:].strip()]
         # skip 1
         l = f.readline()
         # read bonds
         self.bond = {}
         while 1:
-            l = string.strip(f.readline())
+            l = f.readline().strip()
             if not len(l): break
             a5 = l[0:5]
             self.bond[a5] = [float(l[5:12]),float(l[12:22]),
-                                  string.strip(l[22:])]
+                                  l[22:].strip()]
         # read angles
         self.angle = {}
         while 1:
-            l = string.strip(f.readline())
+            l = f.readline().strip()
             if not len(l): break
             a5 = l[0:8]
             self.angle[a5] = [float(l[8:16]),float(l[16:28]),
-                                  string.strip(l[28:])]
+                                  l[28:].strip()]
         # read torsion
         self.torsion = {}
         while 1:
-            l = string.strip(f.readline())
+            l = f.readline().strip()
             if not len(l): break
             a5 = l[0:11]
             if a5 in self.torsion:
@@ -161,49 +160,49 @@ class Parameters:
                      float(l[15:27]),
                      float(l[27:36]),
                      abs(int(float(l[40:52]))),
-                     string.strip(l[52:])])
+                     l[52:].strip()])
             else:
                 self.torsion[a5] = [int(l[11:15]),
                                           float(l[15:27]),
                                           float(l[27:36]),
                                           abs(int(float(l[40:52]))),
-                                          string.strip(l[52:])]
+                                          l[52:].strip()]
         # read impropers
         self.improper = {}
         while 1:
-            l = string.strip(f.readline())
+            l = f.readline().strip()
             if not len(l): break
             a5 = l[0:11]
             self.improper[a5] = [float(l[15:27]),
                                         float(l[27:40]),
                                         abs(int(float(l[40:51]))),
-                                        string.strip(l[51:])]
+                                        l[51:].strip()]
         # skip
         while 1:
-            l = string.strip(f.readline())
+            l = f.readline().strip()
             if not len(l): break
         # read vdw equivalents
         self.vdw_eq = {}
         while 1:
-            l = string.strip(f.readline())
+            l = f.readline().strip()
             if not len(l): break
-            a4 = string.strip(l[0:4])
+            a4 = l[0:4].strip()
             l = l[4:]
             while len(l):
-                self.vdw_eq[string.strip(l[0:4])] = a4
+                self.vdw_eq[l[0:4].strip()] = a4
                 l = l[4:]
         # skip
-        l = string.strip(f.readline())
+        l = f.readline().strip()
         # read vdw parameters
         self.vdw = {}
         while 1:
-            l = string.strip(f.readline())
+            l = f.readline().strip()
             if not len(l): break
             l = '  ' + l
-            a4 = string.strip(l[0:4])
+            a4 = l[0:4].strip()
             self.vdw[a4] =  [float(l[4:20]),
                                   float(l[20:37]),
-                                  string.strip(l[37:])]
+                                  l[37:].strip()]
 
         # read extra tinker information if present
         self.extra = {}
@@ -211,7 +210,7 @@ class Parameters:
             l = f.readline()
             if not l: break
             if l[0:6] == 'TINKER':
-                self.extra[string.strip(l[6:12])]  = [
+                self.extra[l[6:12].strip()]  = [
                     int(l[12:18]),
                     int(l[18:24])]
         if not self.extra:
@@ -757,7 +756,7 @@ dielectric              1.0
         # bonds
         bond = {}
         for a in list(self.bond.keys()):
-            kee = (map[string.strip(a[0:2])],map[string.strip(a[3:5])])
+            kee = (map[a[0:2].strip()],map[a[3:5].strip()])
             bond[kee] = a
         kees = list(bond.keys())
         kees.sort()
@@ -768,9 +767,9 @@ dielectric              1.0
         # angles
         angle = {}
         for a in list(self.angle.keys()):
-            kee = (map[string.strip(a[0:2])],
-                     map[string.strip(a[3:5])],
-                     map[string.strip(a[6:8])],
+            kee = (map[a[0:2].strip()],
+                     map[a[3:5].strip()],
+                     map[a[6:8].strip()],
                      )
             angle[kee] = a
         kees = list(angle.keys())
@@ -783,10 +782,10 @@ dielectric              1.0
         if not smooth:
             improper = {}
             for a in self.improper.keys():
-                kee = (map[string.strip(a[0:2])],
-                         map[string.strip(a[3:5])],
-                         map[string.strip(a[6:8])],
-                         map[string.strip(a[9:11])],
+                kee = (map[a[0:2].strip()],
+                         map[a[3:5].strip()],
+                         map[a[6:8].strip()],
+                         map[a[9:11].strip()],
                          )
                 improper[kee] = a
             kees = list(improper.keys())
@@ -799,10 +798,10 @@ dielectric              1.0
         else:
             improper = {}
             for a in self.improper.keys():
-                kee = (map[string.strip(a[0:2])],
-                         map[string.strip(a[3:5])],
-                         map[string.strip(a[6:8])],
-                         map[string.strip(a[9:11])],
+                kee = (map[a[0:2].strip()],
+                         map[a[3:5].strip()],
+                         map[a[6:8].strip()],
+                         map[a[9:11].strip()],
                          )
                 improper[kee] = a
             kees = list(improper.keys())
@@ -814,10 +813,10 @@ dielectric              1.0
         # torsions
         torsion = {}
         for a in self.torsion.keys():
-            kee = (map[string.strip(a[0:2])],
-                     map[string.strip(a[3:5])],
-                     map[string.strip(a[6:8])],
-                     map[string.strip(a[9:11])],
+            kee = (map[a[0:2].strip()],
+                     map[a[3:5].strip()],
+                     map[a[6:8].strip()],
+                     map[a[9:11].strip()],
                      )
             torsion[kee] = a
         kees = list(torsion.keys())
@@ -834,7 +833,7 @@ dielectric              1.0
                     lst[0]/div,lst[1],lst[2])
                 lst = lst[5:]
             while len(st)>79:
-                st = string.replace(st,'  ',' ')
+                st = st.replace('  ',' ')
             f.write(st+"\n")
         # null charge records
         for c in range(len(self.present)):
@@ -876,7 +875,7 @@ dielectric              1.0
         bnd_list = []
         bond = {}
         for a in list(self.bond.keys()):
-            kee = (map[string.strip(a[0:2])],map[string.strip(a[3:5])])
+            kee = (map[a[0:2].strip()],map[a[3:5].strip()])
             bond[kee] = a
         kees = list(bond.keys())
         kees.sort()
@@ -888,9 +887,9 @@ dielectric              1.0
         ang_list = []
         angle = {}
         for a in self.angle.keys():
-            kee = (map[string.strip(a[0:2])],
-                     map[string.strip(a[3:5])],
-                     map[string.strip(a[6:8])],
+            kee = (map[a[0:2].strip()],
+                     map[a[3:5].strip()],
+                     map[a[6:8].strip()],
                      )
             angle[kee] = a
         kees = list(angle.keys())
@@ -903,10 +902,10 @@ dielectric              1.0
         imp_list = []
         improper = {}
         for a in self.improper.keys():
-            kee = (map[string.strip(a[0:2])],
-                     map[string.strip(a[3:5])],
-                     map[string.strip(a[6:8])],
-                     map[string.strip(a[9:11])],
+            kee = (map[a[0:2].strip()],
+                     map[a[3:5].strip()],
+                     map[a[6:8].strip()],
+                     map[a[9:11].strip()],
                      )
             improper[kee] = a
         kees = list(improper.keys())
@@ -920,10 +919,10 @@ dielectric              1.0
         tor_list = []
         torsion = {}
         for a in self.torsion.keys():
-            kee = (map[string.strip(a[0:2])],
-                     map[string.strip(a[3:5])],
-                     map[string.strip(a[6:8])],
-                     map[string.strip(a[9:11])],
+            kee = (map[a[0:2].strip()],
+                     map[a[3:5].strip()],
+                     map[a[6:8].strip()],
+                     map[a[9:11].strip()],
                      )
             torsion[kee] = a
         kees = list(torsion.keys())

@@ -14,7 +14,6 @@
 
 from chempy import Storage,Atom
 from chempy.models import Indexed
-import string
 
 class PDB(Storage):
 
@@ -31,11 +30,11 @@ class PDB(Storage):
                 at = Atom()
                 if rec[0]=='A': at.hetatm=0  # default is 1
                 at.index = cnt
-                at.name = string.strip(rec[12:16])
-                at.alt = string.strip(rec[16:17])
-                at.resn = string.strip(rec[17:20])
-                at.chain = string.strip(rec[21:22])
-                at.resi = string.strip(rec[22:27]) # note: insertion is part of resi
+                at.name = rec[12:16].strip()
+                at.alt = rec[16:17].strip()
+                at.resn = rec[17:20].strip()
+                at.chain = rec[21:22].strip()
+                at.resi = rec[22:27].strip() # note: insertion is part of resi
                 at.resi_number = int(rec[22:26])
                 at.coord = [float(rec[30:38]),
                                 float(rec[38:46]),
@@ -48,8 +47,8 @@ class PDB(Storage):
                     at.b = float(rec[60:66])
                 except ValueError:
                     at.b = 0.0
-                at.segi = string.strip(rec[72:76])
-                at.symbol = string.strip(rec[76:78])
+                at.segi = rec[72:76].strip()
+                at.symbol = rec[76:78].strip()
                 if not len(at.symbol):
                     at.symbol = at.name[0:1]
                     if at.symbol in '012345678':

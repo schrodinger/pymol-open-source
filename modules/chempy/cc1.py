@@ -15,8 +15,6 @@
 from chempy.models import Indexed
 from chempy import Storage,Atom,Bond
 
-import string
-
 class CC1(Storage): # ChemDraw3D 5.0 std., cartesian coordinates
 
     def fromList(self,molList):
@@ -33,12 +31,12 @@ class CC1(Storage): # ChemDraw3D 5.0 std., cartesian coordinates
         for a in range(nAtom):
             at = Atom()
             at.index = cnt
-            id_dict[string.strip(molList[irec][3:8])] = at.index
+            id_dict[molList[irec][3:8].strip()] = at.index
             at.coord = [float(molList[irec][8:20]),
                 float(molList[irec][20:32]),float(molList[irec][32:44])]
-            at.symbol = string.strip(molList[irec][0:3])
+            at.symbol = molList[irec][0:3].strip()
             at.numeric_type = int(molList[irec][44:49])
-            lst = string.split(string.strip(molList[irec][49:]))
+            lst = molList[irec][49:].split()
             at.bonds = lst
             irec = irec + 1
             cnt = cnt + 1

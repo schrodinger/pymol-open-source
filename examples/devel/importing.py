@@ -12,13 +12,12 @@
 # sleep a second after importing.
 
 
-import string
 import __main__
 
 # note that passing in a "-z" option would keep the window hidden
 # until you called pymol.cmd.window("show").
 
-__main__.pymol_argv= string.split("pymol -qxiF  -X 300 -Y 100 -H 400 -W 400")
+__main__.pymol_argv= "pymol -qxiF  -X 300 -Y 100 -H 400 -W 400".split()
 import pymol
 
 # give PyMOL enough time to initialize (we need to find a safe and

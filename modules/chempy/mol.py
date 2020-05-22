@@ -20,7 +20,6 @@ try:
 except ImportError:
     CmdException = Exception
 
-import string
 
 class MOL(Storage):
 
@@ -29,9 +28,9 @@ class MOL(Storage):
         model = Indexed()
 
         # read header information
-        model.molecule.title = string.strip(molList[0])
-        model.molecule.dim_code = string.strip(molList[1][20:22])
-        model.molecule.comments = string.strip(molList[2])
+        model.molecule.title = molList[0].strip()
+        model.molecule.dim_code = molList[1][20:22].strip()
+        model.molecule.comments = molList[2].strip()
         try:
             model.molecule.chiral = int(molList[3][12:15])
         except:
@@ -48,7 +47,7 @@ class MOL(Storage):
             at.index = cnt
             at.coord = [float(molList[irec][0:10]),
                 float(molList[irec][10:20]),float(molList[irec][20:30])]
-            at.symbol = string.strip(molList[irec][31:33])
+            at.symbol = molList[irec][31:33].strip()
             try:
                 at.stereo = int(molList[irec][39:42])
             except:
@@ -75,7 +74,7 @@ class MOL(Storage):
             # obtain formal charges from M  CHG record
         while molList[irec][0:6]!='M  END':
             if molList[irec][0:6]=='M  CHG':
-                cl = string.split(string.strip(molList[irec][6:]))
+                cl = molList[irec][6:].split()
                 cll = int(cl[0])*2
                 a=1
                 while a<=cll:

@@ -17,7 +17,6 @@ from __future__ import print_function
 from chempy import tinker,io,feedback
 from chempy.tinker import keyword
 import copy
-import string
 
 class State:
 
@@ -81,15 +80,15 @@ class State:
                 if not flag:
                     if lin[0:25]==' Total Potential Energy :':
                         self.summary.append([
-                            string.strip(lin[0:23]),
+                            lin[0:23].strip(),
                             float(lin[25:49])])
                         flag = 1
                 else:
-                    tok = string.split(string.strip(lin))
+                    tok = lin.split()
                     if len(tok):
                         if(tok[0]!='Energy'):
                             self.summary.append([
-                                string.strip(lin[0:23]),
+                                lin[0:23].strip(),
                                 float(lin[25:49]),
                                 int(lin[49:64])])
             f.close()
@@ -150,7 +149,7 @@ class State:
                                 float(lin[41:51]),
                                 float(lin[51:60]),
                                 int(lin[60:67]),
-                                string.strip(lin[67:])])
+                                lin[67:].strip()])
                     except ValueError:
                         pass
             f.close()

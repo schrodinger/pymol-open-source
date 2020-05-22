@@ -17,7 +17,6 @@ from __future__ import print_function
 from chempy.models import Indexed,Connected
 from chempy import Storage,Atom,Bond
 
-import string
 import copy
 
 class MMD(Storage):
@@ -29,7 +28,7 @@ class MMD(Storage):
 
 # get header information
         nAtom = int(MMODList[0][1:6])
-        model.molecule.title = string.strip(MMODList[0][8:])
+        model.molecule.title = MMODList[0][8:].strip()
         irec = 1
 
 # loop through atoms
@@ -42,7 +41,7 @@ class MMD(Storage):
             at.numeric_type = int(MMODList[irec][1:4])
 
 # extract connectivity information
-            tokens = string.splitfields(MMODList[irec][5:52])
+            tokens = MMODList[irec][5:52].split()
             at.neighbor = []
             at.bondorder = []
 
@@ -61,20 +60,20 @@ class MMD(Storage):
 # extract other information
             at.coord = [float(MMODList[irec][53:64]),
                 float(MMODList[irec][65:76]), float(MMODList[irec][77:88])]
-            at.resi = string.strip(MMODList[irec][89:94])
+            at.resi = MMODList[irec][89:94].strip()
             at.resi_number = int(at.resi)
-            resn_code = string.strip(MMODList[irec][94:95])
+            resn_code = MMODList[irec][94:95].strip()
             if len(resn_code): at.resn_code = resn_code
-            color_code = string.strip(MMODList[irec][96:100])
+            color_code = MMODList[irec][96:100].strip()
             if color_code!='':
                 at.color_code = int(color_code)
             else:
                 at.color_code = 0
-            chain = string.strip(MMODList[irec][95:96])
+            chain = MMODList[irec][95:96].strip()
             if len(chain): at.chain = chain
             at.partial_charge = float(MMODList[irec][100:109])
             at.resn = MMODList[irec][119:123]
-            name = string.strip(MMODList[irec][124:128])
+            name = MMODList[irec][124:128].strip()
             if len(name): at.name = name
             model.atom.append(at)
             irec = irec + 1
