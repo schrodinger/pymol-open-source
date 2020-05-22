@@ -145,7 +145,6 @@ APBS_DEFAULT=True
 
 import tempfile
 import os,math,re
-import string
 import sys
 
 if sys.version_info[0] < 3:
@@ -269,7 +268,7 @@ def get_default_location(name):
     searchDirs.append(os.path.join("/sw", "share", "apbs-mpi-lammpi", "tools", "manip"))
     searchDirs.append(os.path.join("/usr", "local", "share", "tools", "manip"))
 
-    searchDirs.extend(string.split(os.environ["PATH"], ":"))
+    searchDirs.extend(os.environ["PATH"].split(":"))
     searchDirs.append(os.path.join("/usr", "local", "bin"))
     searchDirs.append(os.path.join("/opt", "local", "bin"))
     searchDirs.append(os.path.join("/sw", "bin"))
