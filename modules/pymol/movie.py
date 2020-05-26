@@ -722,14 +722,14 @@ def _encode(filename,first,last,preserve,
 
     if done and ok and (encoder == 'mpeg_encode'):
         try:
-            from freemol import mpeg_encode
+            from pymol import mpeg_encode
         except:
             ok = 0
-            print("produce-error: Unable to import module freemol.mpeg_encode.")
+            print("produce-error: Unable to import module pymol.mpeg_encode.")
         if ok:
             if not mpeg_encode.validate():
                 ok = 0
-                print("produce-error: Unable to validate freemol.mpeg_encode.")
+                print("produce-error: Unable to validate pymol.mpeg_encode.")
         if not ok:
             print("produce-error: Unable to create mpeg file.")
         else:
@@ -822,22 +822,21 @@ def find_exe(exe):
     Excludes C:\Windows\System32\convert.exe
     Tests .exe extension on Unix (e.g. for legacy "mpeg_encode.exe" name).
     '''
-    from distutils.spawn import find_executable
-
-    path = os.getenv('PATH', '')
+    from shutil import which
 
     if exe.startswith('convert') and sys.platform == 'win32':
         # filter out C:\Windows\System32
         path = os.pathsep.join(p
-                for p in path.split(os.pathsep)
+                for p in os.getenv('PATH', '').split(os.pathsep)
                 if r'\windows\system32' not in p.lower())
+        return which(exe, path=path)
 
-    e = find_executable(exe, path)
+    if exe == 'mpeg_encode':
+        legacy = which(exe + '.exe')
+        if legacy:
+            return legacy
 
-    if not e and sys.platform != 'win32':
-        e = find_executable(exe + '.exe', path)
-
-    return e
+    return which(exe)
 
 
 def produce(filename, mode='', first=0, last=0, preserve=0,
@@ -847,8 +846,6 @@ def produce(filename, mode='', first=0, last=0, preserve=0,
 DESCRIPTION
 
     Export a movie to an MPEG file.
-
-    Requires FREEMOL.
 
 ARGUMENTS
 
@@ -912,11 +909,6 @@ ARGUMENTS
     # check encoder
     if encoder == 'mpeg_encode':
         img_ext = '.ppm'
-        try:
-            from freemol import mpeg_encode
-        except ImportError:
-            print(" Error: This PyMOL build is not set up with FREEMOL (freemol.mpeg_encode import failed)")
-            return _self.DEFAULT_ERROR
     elif encoder not in ('ffmpeg', 'convert'):
         raise CmdException('unknown encoder "%s"' % encoder)
     elif not has_exe(encoder):

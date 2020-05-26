@@ -212,20 +212,6 @@ def setup_environ():
         os.environ['PYMOL_SCRIPTS'] = os.path.join(os.environ['PYMOL_PATH'], 'scripts')
     os.environ['TUT'] = os.path.join(os.environ['PYMOL_DATA'], 'tut')
 
-    # auto-detect bundled FREEMOL (if present)
-    if 'FREEMOL' not in os.environ:
-        for test_path in ['ext', 'freemol']:
-            test_path = os.path.join(os.environ['PYMOL_PATH'], test_path)
-            if os.path.isdir(test_path):
-                os.environ['FREEMOL'] = test_path
-                break
-
-    # include FREEMOL's libpy in sys.path (if present)
-    if 'FREEMOL' in os.environ:
-        freemol_libpy = os.path.join(os.environ['FREEMOL'], "libpy")
-        if os.path.isdir(freemol_libpy) and freemol_libpy not in sys.path:
-            sys.path.append(freemol_libpy)
-
     # set Tcl/Tk environment if we ship it in ext/lib
     pymol_path = os.environ['PYMOL_PATH']
     for varname, dirname in [

@@ -673,9 +673,8 @@ PYMOL API
     cmd.get_gltf()
 
         '''
-
-        from distutils.spawn import find_executable
-        exe = find_executable('collada2gltf')
+        import shutil
+        exe = shutil.which('collada2gltf')
         if exe is None:
             raise pymol.CmdException('could not find collada2gltf')
 

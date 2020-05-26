@@ -258,8 +258,6 @@ elif 'PYMOL_DATA' in os.environ:
     path = os.environ['PYMOL_DATA'] + '/chempy/'
 elif 'PYMOL_PATH' in os.environ:
     path = os.environ['PYMOL_PATH'] + '/data/chempy/'
-elif 'FREEMOL_MODULES' in os.environ:
-    path = os.environ['FREEMOL_MODULES'] + '/chempy/'
 else:
     path = ''
 

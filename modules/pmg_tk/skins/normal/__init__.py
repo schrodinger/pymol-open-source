@@ -929,9 +929,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
     def file_save_mpeg(self):
         try:
-            from freemol import mpeg_encode
+            from pymol import mpeg_encode
             if not mpeg_encode.validate():
-                print("produce-error: Unable to validate freemol.mpeg_encode")
+                print("produce-error: Unable to validate pymol.mpeg_encode")
                 raise
         except:
             tkMessageBox.showerror("Error",
