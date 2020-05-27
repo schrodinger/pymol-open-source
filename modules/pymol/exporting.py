@@ -392,7 +392,7 @@ NOTES
         if True:
             legacypickle = (0 < pse_export_version < 1.9)
             if legacypickle:
-                print(' Warning: pse_export_version with Python 3 is experimental')
+                print(' Using Python 2 compatible legacy pickler')
             cPickle.configure_legacy_dump(legacypickle)
 
         if legacyscenes:
