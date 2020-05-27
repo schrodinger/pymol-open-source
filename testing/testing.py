@@ -70,7 +70,17 @@ else:
     from pymol import cmd
     from pymol.invocation import options
 
+    def tupleize_version(strversion):
+        r = []
+        for x in strversion.split('.'):
+            try:
+                r.append(int(x))
+            except ValueError:
+                break
+        return tuple(r)
+
     PYMOL_VERSION = cmd.get_version()
+    PYMOL_VERSION_TUPLE = tupleize_version(PYMOL_VERSION[0])
     PYMOL_EDU = 'Edu' in PYMOL_VERSION[0]
     is_win64bit = "Windows" in platform.system() and sys.maxsize > 2**32
 
@@ -106,22 +116,13 @@ else:
         def __init__(self, version):
             self.version = version
 
-        def _tupleize(self, strversion):
-            r = []
-            for x in strversion.split('.'):
-                try:
-                    r.append(int(x))
-                except ValueError:
-                    break
-            return tuple(r)
-
         def __call__(self, func):
             if isinstance(self.version, int):
                 test = self.version <= PYMOL_VERSION[2]
             elif isinstance(self.version, float):
                 test = self.version <= PYMOL_VERSION[1]
             else:
-                test = self._tupleize(self.version) <= self._tupleize(PYMOL_VERSION[0])
+                test = tupleize_version(self.version) <= PYMOL_VERSION_TUPLE
 
             if not test:
                 return unittest.skip('version %s' % (self.version))(func)
@@ -186,8 +187,11 @@ else:
             if hasflag('properties') and not options.incentive_product:
                 return unittest.skip('no pymol.properties')(func)
 
-            if hasflag('freemol') and (not options.incentive_product or PYMOL_EDU):
-                return unittest.skip('no freemol')(func)
+            if hasflag('freemol'):
+                if PYMOL_VERSION_TUPLE >= (2, 5):
+                    return unittest.skip('freemol not used anymore')(func)
+                if not options.incentive_product:
+                    return unittest.skip('no freemol')(func)
 
             if hasflag('no_win64bit') and is_win64bit:
                 return unittest.skip('skip 64bit')(func)
