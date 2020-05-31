@@ -4864,6 +4864,13 @@ static int is_number(char *p)
 static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
                                int quiet)
 {
+  auto G = I->G;
+
+  enum {
+    ASCII_NUMERIC,
+    BINARY_DOUBLE,
+    BINARY_FLOAT,
+  } data_type = ASCII_NUMERIC;
 
   int n_items = 0;
 
@@ -5012,10 +5019,25 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
     p = ParseNCopy(cc, p, 6);
     if(strcmp(cc, "object") == 0) {
       p = ParseWordCopy(cc, p, 20);
-      if (1 == sscanf(p, " class array type %*s rank %*s items %s", cc)) {
+      char cc_type[8] = "";
+      char cc_binary[8] = "";
+      if (2 <= sscanf(p, " class array type %7s rank %*s items %s %7s", cc_type,
+                   cc, cc_binary)) {
         if(sscanf(cc, "%d", &n_items) == 1) {
           if(n_items == ms->FDim[0] * ms->FDim[1] * ms->FDim[2])
             stage = 4;
+        }
+
+        if (strcmp(cc_binary, "binary") == 0) {
+          if (strcmp(cc_type, "double") == 0) {
+            data_type = BINARY_DOUBLE;
+          } else if (strcmp(cc_type, "float") == 0) {
+            data_type = BINARY_FLOAT;
+          } else {
+            PRINTFB(G, FB_ObjectMap, FB_Errors)
+            " %s: type '%s' not supported\n", __func__, cc_type ENDFB(G);
+            return false;
+          }
         }
       }
     } else if(is_number(cc)) {
@@ -5047,20 +5069,35 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
       for(b = 0; b < ms->FDim[1]; b++) {
         for(c = 0; c < ms->FDim[2]; c++) {
 
-          p = ParseWordCopy(cc, p, 20);
-          if(!cc[0]) {
-            p = ParseNextLine(p);
+          switch (data_type) {
+          case BINARY_DOUBLE:
+            dens = *reinterpret_cast<double const*>(p);
+            p += sizeof(double);
+            break;
+          case BINARY_FLOAT:
+            dens = *reinterpret_cast<float const*>(p);
+            p += sizeof(float);
+            break;
+          case ASCII_NUMERIC:
             p = ParseWordCopy(cc, p, 20);
+            if(!cc[0]) {
+              p = ParseNextLine(p);
+              p = ParseWordCopy(cc, p, 20);
+            }
+            if (sscanf(cc, "%f", &dens) != 1) {
+              ok = false;
+              continue;
+            }
+            break;
+          default:
+            assert(false);
           }
-          if(sscanf(cc, "%f", &dens) == 1) {
-            if(maxd < dens)
-              maxd = dens;
-            if(mind > dens)
-              mind = dens;
-            F3(ms->Field->data, a, b, c) = dens;
-          } else {
-            ok = false;
-          }
+
+          if(maxd < dens)
+            maxd = dens;
+          if(mind > dens)
+            mind = dens;
+          F3(ms->Field->data, a, b, c) = dens;
         }
       }
 

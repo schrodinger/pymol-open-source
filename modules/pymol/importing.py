@@ -92,6 +92,8 @@ if True:
             format = 'pdb'
         elif re.match(r'xyz_\d+$', ext):
             format = 'xyz'
+        elif ext in ('dxbin',):
+            format = 'dx'
         else:
             format = ext
 
