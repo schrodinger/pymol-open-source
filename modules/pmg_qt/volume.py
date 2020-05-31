@@ -679,6 +679,12 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         if self.vmin == self.vmax:
             self.vmin -= 1.0
             self.vmax += 1.0
+        elif math.isnan(self.vmin) or math.isnan(self.vmax):
+            print('Warning: setHistogram vmin={} vmax={}'.format(
+                self.vmin, self.vmax))
+            self.vmin = self.original_vmin
+            self.vmax = self.original_vmax
+            return
 
         self.original_vmin = self.vmin
         self.original_vmax = self.vmax
@@ -723,6 +729,11 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             a = colors[p + 4]
             x = v
             y = a
+
+            if math.isnan(x):
+                print('Warning: setColors x={}'.format(x))
+                return
+
             self.points.append((x, y, r, g, b))
 
         self.update()
