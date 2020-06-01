@@ -287,3 +287,26 @@ class TestSettings(testing.PyMOLTestCase):
 
     def testSurfaceTransparency(self):
         self._testTransparency('surface', 'transparency')
+
+    @testing.requires_version('2.5')
+    def testIsomeshTransparency(self):
+        self.ambientOnly()
+        cmd.set('opaque_background')
+        cmd.set('gaussian_b_floor', 30)
+        cmd.set('mesh_width', 5)
+        cmd.fragment('gly', 'm1')
+        cmd.hide('everything')
+        cmd.map_new('map1', 'gaussian', 0.5, 'm1')
+        cmd.isomesh('mesh1', 'map1')
+
+        # global
+        cmd.set('transparency', 0.75)
+        img = self.get_imagearray(width=100, height=100)
+        self.assertImageHasColor('0x3F3F3F', img)
+        self.assertImageHasNotColor('0xFFFFFF', img)
+
+        # object-level
+        cmd.set('transparency', 0.25, 'mesh1')
+        img = self.get_imagearray(width=100, height=100)
+        self.assertImageHasColor('0xBFBFBF', img)
+        self.assertImageHasNotColor('0xFFFFFF', img)
