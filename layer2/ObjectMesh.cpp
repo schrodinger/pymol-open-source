@@ -798,6 +798,9 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
     if(!ms->Active || !ms->V || !ms->N)
       continue;
 
+    auto transparency =
+        SettingGet<float>(G, I->Setting, nullptr, cSetting_transparency);
+
     {
         v = ms->V.data();
         n = ms->N.data();
@@ -831,6 +834,9 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
             ColorGetEncoded(G, ms->OneColor, cc);
             vc = ms->VC.data();
             rc = ms->RC.data();
+
+            ray->transparentf(transparency);
+
             if(ms->MeshMode == 1) {
               ray->color3fv(cc);
               while(ok && *n) {
@@ -909,6 +915,8 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		}
 		shaderCGO->use_shader = true;
 	      }
+
+              CGOAlpha(shaderCGO, 1.f - transparency);
 
 	      if(ms->UnitCellCGO && (I->visRep & cRepCellBit)) {
 		const float *color = ColorGet(I->G, I->Color);
