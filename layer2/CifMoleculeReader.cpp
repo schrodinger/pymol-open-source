@@ -370,10 +370,31 @@ static bool read_chem_comp_bond_dict(const cif_data * data, bond_dict_t &bond_di
       (arr_id_1 = data->get_arr("_chem_comp_atom.atom_id")) &&
       (arr_id_2 = data->get_arr("_chem_comp_atom.alt_atom_id"))) {
     nrows = arr_id_1->size();
+
+    // set of all non-alt ids
+    std::set<pymol::zstring_view> atom_ids;
+    for (int i = 0; i < nrows; ++i) {
+      atom_ids.insert(arr_id_1->as_s(i));
+    }
+
     for (int i = 0; i < nrows; ++i) {
       resn = arr_comp_id->as_s(i);
       name1 = arr_id_1->as_s(i);
       name2 = arr_id_2->as_s(i);
+
+      // skip identity mapping
+      if (strcmp(name1, name2) == 0) {
+        continue;
+      }
+
+      // alt id must not also be a non-alt id (PYMOL-3470)
+      if (atom_ids.count(name2)) {
+        fprintf(stderr,
+            "Warning: _chem_comp_atom.alt_atom_id %s/%s ignored for bonding\n",
+            resn, name2);
+        continue;
+      }
+
       bond_dict[resn].add_alt_name(name1, name2);
     }
   }
