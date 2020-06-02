@@ -650,6 +650,7 @@ class TestImporting(testing.PyMOLTestCase):
     def testCifAltAtomId(self):
         cmd.load(self.datafile('sia-alt-id.cif'), 'm1')
         self.assertEqual(cmd.count_atoms('bound_to name C1'), 3)
+        self.assertEqual(cmd.count_atoms('(bound_to name C1) and name C3'), 0)
 
     @testing.foreach.product((0, 1), (0, 1))
     @testing.requires_version('2.3')

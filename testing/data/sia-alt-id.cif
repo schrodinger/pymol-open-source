@@ -37,6 +37,12 @@ _chem_comp_atom.atom_id
 _chem_comp_atom.alt_atom_id
 SIA  O11   O1A
 SIA  O12   O1B
+# <<< conflicting old<>new nomenclature, must be ignored
+# (note: there might be better ways to solve this - this example
+#  isn't even real because it mixes old and new nomenclature)
+SIA  C2    C3
+SIA  C3    C2
+# >>>
 
 # bonds with new nomenclature
 loop_
