@@ -3919,7 +3919,7 @@ ObjectMolecule *SelectorGetSingleObjectMolecule(PyMOLGlobals * G, SelectorID_t s
   int at1;
   SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
 
-  for(a = 0; a < I->Table.size(); a++) {
+  for (a = cNDummyAtoms; a < I->Table.size(); a++) {
     obj = I->Obj[I->Table[a].model];
     at1 = I->Table[a].atom;
     if(SelectorIsMember(G, obj->AtomInfo[at1].selEntry, sele)) {
@@ -3949,7 +3949,7 @@ ObjectMolecule *SelectorGetFirstObjectMolecule(PyMOLGlobals * G, SelectorID_t se
   int at1;
   SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
 
-  for(a = 0; a < I->Table.size(); a++) {
+  for (a = cNDummyAtoms; a < I->Table.size(); a++) {
     obj = I->Obj[I->Table[a].model];
     at1 = I->Table[a].atom;
     if(SelectorIsMember(G, obj->AtomInfo[at1].selEntry, sele)) {
