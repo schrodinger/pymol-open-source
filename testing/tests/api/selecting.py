@@ -505,3 +505,32 @@ class TestSelecting(testing.PyMOLTestCase):
         self.assertEqual(23, cmd.count_atoms('name C+N*'))
         self.assertEqual(60, cmd.count_atoms('name C*+N'))
         self.assertEqual(63, cmd.count_atoms('name C*+N*'))
+
+    @testing.foreach('origin', 'center')
+    def test_dummy_selectors(self, op):
+        self.assertEqual(cmd.count_atoms('all'), 0)
+        self.assertEqual(cmd.count_atoms(op), 0)
+        self.assertEqual(cmd.count_atoms(op + ' around 2'), 0)
+        cmd.fragment('arg')
+        self.assertEqual(cmd.count_atoms('all'), 24)
+        self.assertEqual(cmd.count_atoms(op), 0)
+        self.assertEqual(cmd.count_atoms(op + ' around 2'), 8)
+        self.assertEqual(cmd.count_atoms(op + ' expand 2'), 8)
+        self.assertEqual(cmd.count_atoms(op + ' within 2 of arg'), 0)
+        self.assertEqual(cmd.count_atoms('arg within 2 of ' + op), 8)
+        self.assertEqual(cmd.count_atoms('arg near_to 2 of ' + op), 8)
+        self.assertEqual(cmd.count_atoms('arg beyond 3 of ' + op), 13)
+        self.assertEqual(cmd.count_atoms(op + ' gap 3'), 5)
+
+    def test_offcenter_origin_selector(self):
+        cmd.fragment('arg')
+        cmd.origin('elem O')
+        self.assertEqual(cmd.count_atoms('origin around 2'), 2)
+        self.assertEqual(cmd.count_atoms('origin expand 2'), 2)
+        self.assertEqual(cmd.count_atoms('arg within 2 of origin'), 2)
+        self.assertEqual(cmd.count_atoms('arg near_to 2 of origin'), 2)
+        self.assertEqual(cmd.count_atoms('arg beyond 3 of origin'), 19)
+        self.assertEqual(cmd.count_atoms('origin gap 3'), 14)
+        # TODO Also test 'center' selector here. I'd expect that it gives the
+        # same result as the test_dummy_selectors test, but numbers are
+        # different!
