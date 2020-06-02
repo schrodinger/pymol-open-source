@@ -557,6 +557,10 @@ SEE ALSO
 '''
         # preprocess selection
         selection = selector.process(selection)
+        if selection and selection not in ('center', 'origin'):
+            # force molecular selection, otherwise "all" or name patterns can
+            # expand to non-molecular objects (like the map itself).
+            selection = "(" + selection + ")"
         #
         if carve is None:
             carve=0.0
