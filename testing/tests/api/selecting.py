@@ -534,3 +534,21 @@ class TestSelecting(testing.PyMOLTestCase):
         # TODO Also test 'center' selector here. I'd expect that it gives the
         # same result as the test_dummy_selectors test, but numbers are
         # different!
+
+    # don't select center/origin with "all" keyword
+    def test_no_all_dummy_selection(self):
+        cmd.pseudoatom('p1', pos=(-1, 0, 0))
+        cmd.pseudoatom('p2', pos=(1, 0, 0))
+        self.assertEqual(cmd.count_atoms('center around 1.5'), 2)
+        self.assertEqual(cmd.count_atoms('(p1|center) around 1.5'), 1)
+        self.assertEqual(cmd.count_atoms('all within 1.5 of center'), 2)
+        self.assertEqual(cmd.count_atoms('all within 1.5 of (all within 1.5 of p1)'), 1)
+        self.assertEqual(cmd.count_atoms('all within 1.5 of (center within 1.5 of p1)'), 2)
+        self.assertEqual(cmd.count_atoms('all near_to 1.5 of center'), 2)
+        self.assertEqual(cmd.count_atoms('all near_to 1.5 of (all near_to 1.5 of p1)'), 0)
+        self.assertEqual(cmd.count_atoms('all near_to 1.5 of (center near_to 1.5 of p1)'), 2)
+        self._test_no_implicit_dummy_selection()
+
+    @testing.requires_version('2.5')
+    def _test_no_implicit_dummy_selection(self):
+        self.assertEqual(cmd.count_atoms('(p1 around 1.5) around 1.5'), 0)
