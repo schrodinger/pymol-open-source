@@ -7545,7 +7545,8 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
           auto* coords = pymol::reshape<3>(coords_flat.data());
           auto Flag1 = std::vector<MapFlag_t>(table_size, 0);
 
-          for(a = 0; a < I->Table.size(); a++) {
+          // Potential atoms to be selected (exclude dummies)
+          for (a = cNDummyAtoms; a < I->Table.size(); a++) {
             at = I->Table[a].atom;
             obj = I->Obj[I->Table[a].model];
             if(d < obj->NCSet)
@@ -7567,6 +7568,7 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
               nCSet = SelectorGetArrayNCSet(G, base[1].sele, false);
               for(e = 0; ok && e < nCSet; e++) {
                 if((state < 0) || (e == state)) {
+                  // Input selection (include dummies)
                   for(a = 0; ok && a < I->Table.size(); a++) {
                     if(base[1].sele[a]) {
                       at = I->Table[a].atom;
