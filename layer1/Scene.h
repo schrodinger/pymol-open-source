@@ -109,7 +109,8 @@ void SceneRestartFrameTimer(PyMOLGlobals * G);
 
 void SceneGetEyeNormal(PyMOLGlobals * G, float *v1, float *normal);
 
-void SceneRotate(PyMOLGlobals * G, float angle, float x, float y, float z);
+void SceneRotate(
+    PyMOLGlobals* G, float angle, float x, float y, float z, bool dirty = true);
 void SceneTranslate(PyMOLGlobals * G, float x, float y, float z);
 
 void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_mode);

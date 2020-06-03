@@ -124,8 +124,7 @@ static void SceneDoRoving(PyMOLGlobals * G, float old_front,
 #define SceneGetExactScreenVertexScale SceneGetScreenVertexScale
 
 static void SceneRestartPerfTimer(PyMOLGlobals * G);
-static void SceneRotateWithDirty(PyMOLGlobals * G, float angle, float x, float y, float z,
-                                 int dirty);
+#define SceneRotateWithDirty SceneRotate
 static void SceneClipSetWithDirty(PyMOLGlobals * G, float front, float back, int dirty);
 
 int SceneViewEqual(SceneViewType left, SceneViewType right)
@@ -7142,8 +7141,15 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
 
 
 /*========================================================================*/
-static void SceneRotateWithDirty(PyMOLGlobals * G, float angle, float x, float y, float z,
-                                 int dirty)
+/**
+ * Update the scene rotation matrix (m_view.m_rotMatrix)
+ *
+ * @param angle Angle in degrees
+ * @param x,y,z Axis
+ * @param dirty Call SceneInvalidate()
+ */
+void SceneRotate(
+    PyMOLGlobals* G, float angle, float x, float y, float z, bool dirty)
 {
   CScene *I = G->Scene;
   float temp[16];
@@ -7157,21 +7163,7 @@ static void SceneRotateWithDirty(PyMOLGlobals * G, float angle, float x, float y
   SceneUpdateInvMatrix(G);
   if(dirty) {
     SceneInvalidate(G);
-  } else {
-    SceneInvalidateCopy(G, false);
   }
-  PyMOL_NeedRedisplay(G->PyMOL);
-  /*  glPushMatrix();
-     glLoadIdentity();
-     glRotatef(angle,x,y,z);
-     glMultMatrixf(I->m_view.m_rotMatrix);
-     glGetFloatv(GL_MODELVIEW_MATRIX,I->m_view.m_rotMatrix);
-     glPopMatrix(); */
-}
-
-void SceneRotate(PyMOLGlobals * G, float angle, float x, float y, float z)
-{
-  SceneRotateWithDirty(G, angle, x, y, z, true);
 }
 
 
