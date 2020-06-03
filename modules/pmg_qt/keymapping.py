@@ -95,3 +95,41 @@ def keyPressEventToPyMOLButtonArgs(ev):
             return
 
     return (k, state, 0, 0, pymolmod)
+
+
+def get_wheel_delta(ev):
+    '''
+    Get mouse wheel delta from event.
+    Ignores horizontal scrolling (returns zero).
+    '''
+    try:
+        # Qt4
+        return ev.delta()
+    except AttributeError:
+        pass
+
+    # Qt5
+    angledelta = ev.angleDelta()
+    delta_x = angledelta.x()
+    delta_y = angledelta.y()
+
+    if abs(delta_y) < abs(delta_x):
+        # Shift+Wheel emulates horizontal scrolling
+        if not (ev.modifiers() & Qt.ShiftModifier):
+            return 0
+        return delta_x
+
+    return delta_y
+
+
+def get_wheel_button(ev):
+    '''
+    Get mouse wheel button index (3 or 4) from event, or 0 if no vertial
+    scrolling was detected.
+    '''
+    delta = get_wheel_delta(ev)
+    if delta > 0:
+        return 3
+    if delta < 0:
+        return 4
+    return 0
