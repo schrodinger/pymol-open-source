@@ -252,28 +252,28 @@ SEE ALSO
                 '''
 DESCRIPTION
 
-        "super" performs a residue-based pairwise alignment followed by a
-        structural superposition, and then carries out zero or more cycles
-        of refinement in order to reject outliers.
+    "super" performs a residue-based pairwise alignment followed by a
+    structural superposition, and then carries out zero or more cycles
+    of refinement in order to reject outliers.
 
 USAGE 
 
-        super mobile, target [, object=name ]
+    super mobile, target [, object=name ]
 
 NOTES
 
-        By adjusting various parameters, the nature of the initial
-        alignment can be modified to include or exclude various factors
-        including sequence similarity, main chain path, secondary &
-        tertiary structure, and current coordinates.
+    By adjusting various parameters, the nature of the initial
+    alignment can be modified to include or exclude various factors
+    including sequence similarity, main chain path, secondary &
+    tertiary structure, and current coordinates.
 
 EXAMPLE
 
-        super protA////CA, protB////CA, object=supeAB
+    super protA////CA, protB////CA, object=supeAB
 
 SEE ALSO
 
-        align, pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur
+    align, pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur
         '''
                 r = DEFAULT_ERROR
                 mobile = selector.process(mobile)
@@ -399,36 +399,36 @@ SEE ALSO
                 '''
 DESCRIPTION
 
-        "intra_fit" fits all states of an object to an atom selection
-        in the specified state.  It returns the rms values to python
-        as an array.
+    "intra_fit" fits all states of an object to an atom selection
+    in the specified state.  It returns the rms values to python
+    as an array.
 
 USAGE 
 
-        intra_fit selection [, state]
+    intra_fit selection [, state]
 
 ARGUMENTS
 
-        selection = string: atoms to fit
+    selection = string: atoms to fit
 
-        state = integer: target state
+    state = integer: target state
 
 PYMOL API
 
-        cmd.intra_fit( string selection, int state )
+    cmd.intra_fit( string selection, int state )
 
 EXAMPLES
 
-        intra_fit ( name CA )
+    intra_fit ( name CA )
 
 PYTHON EXAMPLE
 
-        from pymol import cmd
-        rms = cmd.intra_fit("(name CA)",1)
+    from pymol import cmd
+    rms = cmd.intra_fit("(name CA)",1)
 
 SEE ALSO
 
-        fit, rms, rms_cur, intra_rms, intra_rms_cur, pair_fit
+    fit, rms, rms_cur, intra_rms, intra_rms_cur, pair_fit
                 '''
                 # preprocess selection
                 selection = selector.process(selection)
@@ -459,24 +459,24 @@ SEE ALSO
                 '''
 DESCRIPTION
 
-        "intra_rms" calculates rms fit values for all states of an object
-        over an atom selection relative to the indicated state.
-        Coordinates are left unchanged.  The rms values are returned as a
-        python array.
+    "intra_rms" calculates rms fit values for all states of an object
+    over an atom selection relative to the indicated state.
+    Coordinates are left unchanged.  The rms values are returned as a
+    python array.
 
 EXAMPLE
 
-        from pymol import cmd
-        rms = cmd.intra_rms("(name CA)",1)
-        print rms
+    from pymol import cmd
+    rms = cmd.intra_rms("(name CA)",1)
+    print rms
 
 PYMOL API
 
-        cmd.intra_rms(string selection, int state)
+    cmd.intra_rms(string selection, int state)
 
 SEE ALSO
 
-        fit, rms, rms_cur, intra_fit, intra_rms_cur, pair_fit
+    fit, rms, rms_cur, intra_fit, intra_rms_cur, pair_fit
                 '''
                 # preprocess selection
                 selection = selector.process(selection)
@@ -503,23 +503,23 @@ SEE ALSO
                 '''
 DESCRIPTION
 
-        "intra_rms_cur" calculates rms values for all states of an object
-        over an atom selection relative to the indicated state without
-        performing any fitting.  The rms values are returned
-        as a python array.
+    "intra_rms_cur" calculates rms values for all states of an object
+    over an atom selection relative to the indicated state without
+    performing any fitting.  The rms values are returned
+    as a python array.
 
 PYMOL API
 
-        cmd.intra_rms_cur( string selection, int state)
+    cmd.intra_rms_cur( string selection, int state)
 
 PYTHON EXAMPLE
 
-        from pymol import cmd
-        rms = cmd.intra_rms_cur("(name CA)",1)
+    from pymol import cmd
+    rms = cmd.intra_rms_cur("(name CA)",1)
 
 SEE ALSO
 
-        fit, rms, rms_cur, intra_fit, intra_rms, pair_fit
+    fit, rms, rms_cur, intra_fit, intra_rms, pair_fit
                 '''
                 # preprocess selection
                 selection = selector.process(selection)
@@ -624,20 +624,20 @@ SEE ALSO
             '''
 DESCRIPTION
 
-	"rms" computes a RMS fit between two atom selections, but does not
-	tranform the models after performing the fit.
+    "rms" computes a RMS fit between two atom selections, but does not
+    tranform the models after performing the fit.
 
 USAGE
 
-	rms (selection), (target-selection)
+    rms (selection), (target-selection)
 
 EXAMPLES
 
-	fit ( mutant and name CA ), ( wildtype and name CA )
+    fit ( mutant and name CA ), ( wildtype and name CA )
 
 SEE ALSO
 
-	fit, rms_cur, intra_fit, intra_rms, intra_rms_cur, pair_fit	  
+    fit, rms_cur, intra_fit, intra_rms, intra_rms_cur, pair_fit
             '''
             r = DEFAULT_ERROR
             a=str(mobile)
@@ -672,16 +672,16 @@ SEE ALSO
             '''
 DESCRIPTION
 
-	"rms_cur" computes the RMS difference between two atom
-	selections without performing any fitting.
+    "rms_cur" computes the RMS difference between two atom
+    selections without performing any fitting.
 
 USAGE
 
-	rms_cur (selection), (selection)
+    rms_cur (selection), (selection)
 
 SEE ALSO
 
-	fit, rms, intra_fit, intra_rms, intra_rms_cur, pair_fit	  
+    fit, rms, intra_fit, intra_rms, intra_rms_cur, pair_fit
             '''
             r = DEFAULT_ERROR
             a=str(mobile)
@@ -713,34 +713,34 @@ SEE ALSO
             '''
 DESCRIPTION
 
-	"pair_fit" fits matched sets of atom pairs between two objects.
+    "pair_fit" fits matched sets of atom pairs between two objects.
 
 USAGE
 
-	pair_fit selection, selection, [ selection, selection [ ... ]]
+    pair_fit selection, selection, [ selection, selection [ ... ]]
 
 EXAMPLES
 
-	# superimpose protA residues 10-25 and 33-46 to protB residues 22-37 and 41-54:
-	
-	pair_fit protA/10-25+33-46/CA, protB/22-37+41-54/CA
+    # superimpose protA residues 10-25 and 33-46 to protB residues 22-37 and 41-54:
 
-	# superimpose ligA atoms C1, C2, and C4 to ligB atoms C8, C4, and C10, respectively:
-	
-	pair_fit ligA////C1, ligB////C8, ligA////C2, ligB////C4, ligA////C3, ligB////C10
-	
+    pair_fit protA/10-25+33-46/CA, protB/22-37+41-54/CA
+
+    # superimpose ligA atoms C1, C2, and C4 to ligB atoms C8, C4, and C10, respectively:
+
+    pair_fit ligA////C1, ligB////C8, ligA////C2, ligB////C4, ligA////C3, ligB////C10
+
 NOTES
 
-	So long as the atoms are stored in PyMOL with the same order
-	internally, you can provide just two selections.  Otherwise, you
-	may need to specify each pair of atoms separately, two by two, as
-	additional arguments to pair_fit.
-	
-	Script files are usually recommended when using this command.
+    So long as the atoms are stored in PyMOL with the same order
+    internally, you can provide just two selections.  Otherwise, you
+    may need to specify each pair of atoms separately, two by two, as
+    additional arguments to pair_fit.
+
+    Script files are usually recommended when using this command.
 
 SEE ALSO
 
-	fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
+    fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
             '''
             _self = kw.pop('_self',cmd)
             quiet = int(kw.pop('quiet', 0))
