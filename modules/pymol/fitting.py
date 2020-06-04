@@ -202,29 +202,35 @@ SEE ALSO
                 """
 DESCRIPTION
 
-        "alignto" aligns all other loaded objects to the target
-        using the specified alignment algorithm.
+    "alignto" aligns all other loaded objects to the target
+    using the specified alignment algorithm.
+
+    This is a wrapper for "extra_fit".
 
 USAGE
 
-        alignto target [, method [, quiet ]]
+    alignto [ target [, method [, selection [, quiet ]]]]
 
-NOTES
+ARGUMENTS
 
-        Available alignment methods are "align", "super" and "cealign".
+    target = str: reference object name {default: first object in selection}
+
+    method = str: (see "extra_fit") {default: cealign}
+
+    selection = str: (see "extra_fit") {default: public objects}
 
 EXAMPLE
 
-        # fetch some calmodulins
-        fetch 1cll 1sra 1ggz 1k95, async=0
+    # fetch some calmodulins
+    fetch 1cll 1sra 1ggz 1k95, async=0
 
-        # align them to 1cll using cealign
-        alignto 1cll, method=cealign
-        alignto 1cll, object=all_to_1cll
+    # align them to 1cll using cealign
+    alignto 1cll, method=cealign
+    alignto 1cll, object=all_to_1cll
 
 SEE ALSO
 
-        extra_fit, align, super, cealign, fit, rms, rms_cur, intra_fit
+    extra_fit, align, super, cealign, fit, rms, rms_cur, intra_fit
                 """
                 if not selection:
                     names = _self.get_names("public_objects", 1)
