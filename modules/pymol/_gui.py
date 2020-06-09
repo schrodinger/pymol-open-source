@@ -132,13 +132,6 @@ class PyMOLDesktopGUI(object):
             ('menu', 'Edit', [
                 ('command', 'Undo [Ctrl-Z]', cmd.undo),
                 ('command', 'Redo [Ctrl-Y]', cmd.redo),
-                ('menu', 'Max Atom Count for Undo/Redo', [
-                    ('check', 'Disable Undo', 'suspend_undo', 1),
-                    ('separator',),
-                ] + [
-                    ('radio', 'Unlimited' if not i else str(i), 'suspend_undo_atom_count', i)
-                    for i in (1000, 10000, 100000, 0)
-                ]),
             ]),
             ('menu', 'Build', [
                 ('menu', 'Fragment', [
