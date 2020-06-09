@@ -3521,11 +3521,6 @@ static PyObject *CmdMem(PyObject * self, PyObject * args)
   return APISuccess();
 }
 
-static PyObject *Cmd_GetGlobalCObject(PyObject * self, PyObject * args)
-{
-  return PyCapsule_New(&SingletonPyMOLGlobals, nullptr, nullptr);
-}
-
 /*
  * Simple `glViewport` wrapper to call from Python without depending on
  * the heavy PyOpenGL module.
@@ -6565,7 +6560,6 @@ ok_except1:
 
 static PyMethodDef Cmd_methods[] = {
   {"_del", Cmd_Del, METH_VARARGS},
-  {"_get_global_C_object", Cmd_GetGlobalCObject, METH_VARARGS},
   {"glViewport", Cmd_glViewport, METH_VARARGS},
   {"_new", Cmd_New, METH_VARARGS},
   {"_start", Cmd_Start, METH_VARARGS},

@@ -427,7 +427,7 @@ def launch(args=None, block_input_hook=0):
             invocation.options.gui = 'pmg_tk'
 
     prime_pymol()
-    _cmd.runpymol(_cmd._get_global_C_object(), block_input_hook)
+    _cmd.runpymol(None, block_input_hook)
 
 def finish_launching(args=None):
     '''
