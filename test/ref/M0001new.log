@@ -1,5 +1,0 @@
-PyMOL>from pymol2 import PyMOL
-PyMOL>a = PyMOL()
-PyMOL>print a != None
-True
-PyMOL>del a

@@ -1,6 +1,0 @@
-PyMOL>f=open("dat/pept.pdb","rb")
-PyMOL>l=f.read()
-PyMOL>f.close()
-PyMOL>cmd.read_pdbstr(l,"test")
-PyMOL>print cmd.count_atoms()
-107

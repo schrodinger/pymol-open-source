@@ -1,8 +1,0 @@
-PyMOL>load dat/pept.pdb
- CmdLoad: "dat/pept.pdb" loaded as "pept".
-PyMOL>print cmd.get_names()
-['pept']
-PyMOL>print cmd.select("(all)")
-107
-PyMOL>save cmp/C0020pdb.pdb
- Save: wrote "cmp/C0020pdb.pdb".

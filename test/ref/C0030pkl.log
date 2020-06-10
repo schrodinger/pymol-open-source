@@ -1,8 +1,0 @@
-PyMOL>load dat/pept.pkl
- Executive: object "pept" created.
-PyMOL>print cmd.get_names()
-['pept']
-PyMOL>print cmd.select("(all)")
-198
-PyMOL>save cmp/C0030pkl.pdb
- Save: wrote "cmp/C0030pkl.pdb".
