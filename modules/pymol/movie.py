@@ -51,19 +51,13 @@ def pause(pause=15,cycles=1,_self=cmd):
     movie_string = " ".join(movie_list)
     _self.mset(movie_string)
 
-def load(*args,**kw):
-    _self = kw.get('_self',cmd)
-    nam = "mov"
-    if len(args)>1:
-        nam = args[1]
-    fils = glob.glob(args[0])
-    fils.sort()
-    if not len(fils):
+def load(pattern, nam = "mov", _self=cmd, **kw):
+    fils = glob.glob(pattern)
+    if not fils:
         print("Error: no matching files")
-    else:
-        for a in fils:
-            _self.load(*(a,nam), **kw)
-#         _self.load(a,nam)
+        return
+    for a in sorted(fils):
+        _self.load(a, nam, **kw)
 
 def rock(first=1,last=-1,angle=30,phase=0,loop=1,axis='y',_self=cmd):
     first=int(first)

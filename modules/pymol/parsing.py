@@ -559,7 +559,7 @@ SEE ALSO
         t.setDaemon(1)
         t.start()
 
-    def split(*arg,**kw): # custom split-and-trim
+    def split(str, tok, mx=0):
         '''
     split(string,token[,count]) -> list of strings
 
@@ -570,12 +570,6 @@ SEE ALSO
     USAGE OF THIS FUNCTION IS DISCOURAGED - THE GOAL IS TO
     MAKE IT UNNECESSARY BY IMPROVING THE BUILT-IN PARSER
     '''
-        str = arg[0]
-        tok = arg[1]
-        if len(arg)>2:
-            mx=arg[2]
-        else:
-            mx=0
         pair = { '(':')','[':']','{':'}',"'":"'",'"':'"' }
         plst = list(pair.keys())
         stack = []

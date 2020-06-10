@@ -202,8 +202,7 @@ PYMOL API
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def load_brick(*arg,**kw):
-        _self = kw.get('_self',cmd)
+    def load_brick(*arg, _self=cmd, **kw):
         '''
     Temporary routine for GAMESS-UK project.
     '''
@@ -211,8 +210,7 @@ PYMOL API
         lst.extend(list(arg))
         return _self.load_object(*lst, **kw)
 
-    def load_map(*arg,**kw):
-        _self = kw.get('_self',cmd)
+    def load_map(*arg, _self=cmd, **kw):
         '''
     Temporary routine for the Phenix project.
     '''
@@ -303,7 +301,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def load_callback(*arg,**kw):
+    def load_callback(*arg, _self=cmd):
         '''
 DESCRIPTION
 
@@ -316,12 +314,11 @@ PYMOL API
     cmd.load_callback(object,name,state,finish,discrete)
 
     '''
-        _self = kw.get('_self',cmd)
         lst = [loadable.callback]
         lst.extend(list(arg))
         return _self.load_object(*lst)
 
-    def load_cgo(*arg,**kw):
+    def load_cgo(*arg, _self=cmd, **kw):
         '''
 DESCRIPTION
 
@@ -334,14 +331,13 @@ PYMOL API
     cmd.load_cgo(object,name,state,finish,discrete)
 
     '''
-        _self = kw.get('_self',cmd)
         lst = [loadable.cgo]
         lst.extend(list(arg))
         if not is_list(lst[1]):
            lst[1] = list(lst[1])
         return _self.load_object(*lst, **kw)
 
-    def load_model(*arg,**kw):
+    def load_model(*arg, _self=cmd, **kw):
         '''
 DESCRIPTION
 
@@ -351,7 +347,6 @@ PYMOL API
 
     cmd.load_model(model, object [,state [,finish [,discrete ]]])
         '''
-        _self = kw.get('_self',cmd)
         lst = [loadable.model]
         lst.extend(list(arg))
         return _self.load_object(*lst, **kw)

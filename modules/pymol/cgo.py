@@ -66,18 +66,7 @@ CONE               = 27.0
 
 LIGHTING           = float(0x0B50)
 
-def molauto(*arg,**kw):
-    _self = kw.get('_self',cmd)
-    name = "mols"
-    sele = "(all)"
-    marg = "-nice"
-    la = len(arg)
-    if la:
-        name = arg[0]
-    if la>1:
-        sele = arg[1]
-    if la>2:
-        marg = arg[2]
+def molauto(name="mols", sele="(all)", marg="-nice", _self=cmd):
     _self.save("molauto.pdb",sele)
     print("molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg)
     os.system("molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg)

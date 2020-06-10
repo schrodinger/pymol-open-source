@@ -56,7 +56,7 @@ if True:
                 print("Error: Sorry, couldn't import the '"+name+"' wizard.")
         return r
 
-    def wizard(name=None,*arg,**kwd):
+    def wizard(name=None, *arg, _self=cmd, **kwd):
         '''
 DESCRIPTION
 
@@ -76,7 +76,6 @@ EXAMPLE
 
     wizard distance  # launches the distance measurement wizard
     '''
-        _self = kwd.get('_self',cmd)
         r = DEFAULT_ERROR
         if name is None:
             _self.set_wizard()
@@ -89,14 +88,13 @@ EXAMPLE
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def replace_wizard(name=None,*arg,**kwd):
+    def replace_wizard(name=None, *arg, _self=cmd, **kwd):
         '''
 DESCRIPTION
 
     "replace_wizard" is an unsupported internal command.
     
     '''
-        _self = kwd.get('_self',cmd)
         r = DEFAULT_ERROR
         if name is None:
             _self.set_wizard()

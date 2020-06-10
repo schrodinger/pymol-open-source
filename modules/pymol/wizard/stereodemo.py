@@ -27,21 +27,17 @@ class Stereodemo(Wizard):
             self.last = None
         saved['last']=self.last
 
-    def __init__(self,*arg,**kw):
-        _self=kw.get('_self',cmd)
+    def __init__(self, name="cartoon", mono=None, _self=cmd):
         Wizard.__init__(self,_self)
         self.message = []
         self.last = None
         cmd.full_screen("off")
-        if not  ("mono" in list(kw.keys())):
+        if not mono:
             cmd.stereo("on")
         cmd.set("sphere_mode","5")
         if 'last' in saved:
             self.last = saved['last']
-        if len(arg):
-            self.launch(arg[0])
-        else:
-            self.launch("cartoon")
+        self.launch(name)
 
     def get_prompt(self):
         saved['last']=self.last

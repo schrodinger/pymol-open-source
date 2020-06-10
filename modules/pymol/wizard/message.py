@@ -8,8 +8,7 @@ _nuke_color_re = re.compile(r"\\[0-9][0-9][0-9]")
 
 class Message(Wizard):
 
-    def __init__(self,*arg,**kw):
-        _self = kw.get('_self',cmd)
+    def __init__(self, *arg, dismiss=1, _self=cmd):
         Wizard.__init__(self,_self)
         self.message = []
         for a in arg:
@@ -19,7 +18,7 @@ class Message(Wizard):
                 self.message.extend(a)
         for a in self.message:
             print(" " + _nuke_color_re.sub('',a))
-        self.dismiss = int(kw.get("dismiss",1))
+        self.dismiss = int(dismiss)
 
     def get_prompt(self):
         self.prompt = self.message

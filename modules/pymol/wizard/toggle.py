@@ -5,8 +5,7 @@ import types
 
 class Toggle(Wizard):
 
-    def __init__(self,*arg,**kw):
-        _self = kw.get('_self',cmd)
+    def __init__(self, *arg, _self=cmd):
         self.message = []
         for a in arg:
             if not isinstance(a,list):
