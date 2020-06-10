@@ -95,11 +95,11 @@ class Cmd:
         # determine whether `v` is a callable and has a `_self` argument or
         # a keywords dictionary
         try:
-            argspec = inspect.getargspec(v)
+            argspec = inspect.getfullargspec(v)
             try:
                 i = argspec.args.index('_self')
             except ValueError:
-                if argspec.keywords is None:
+                if argspec.varkw is None:
                     raise TypeError
                 i = -1
         except TypeError:

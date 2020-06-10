@@ -825,7 +825,7 @@ SEE ALSO
             # generic forwarding to format specific save functions
             func = savefunctions[format]
             func = _eval_func(func)
-            kw = {
+            kw_all = {
                 'filename': filename,
                 'selection': selection,
                 'name': selection,      # alt (get_ccp4str)
@@ -839,17 +839,24 @@ SEE ALSO
             }
 
             import inspect
-            spec = inspect.getargspec(func)
+            sig = inspect.signature(func, follow_wrapped=False)
+            kw = {}
 
-            if spec.varargs:
-                print('FIXME: savefunctions[%s]: *args' % (format))
+            for n, param in sig.parameters.items():
+                if param.kind == inspect.Parameter.VAR_KEYWORD:
+                    kw = kw_all
+                    break
 
-            if not spec.keywords:
-                kw = dict((n, kw[n]) for n in spec.args if n in kw)
+                if param.kind == inspect.Parameter.VAR_POSITIONAL:
+                    print('FIXME: savefunctions[%s]: *args' % (format))
+                elif param.kind == inspect.Parameter.POSITIONAL_ONLY:
+                    raise Exception('positional-only arguments not supported')
+                elif n in kw_all:
+                    kw[n] = kw_all[n]
 
             contents = func(**kw)
 
-            if 'filename' in spec.args:
+            if 'filename' in sig.parameters:
                 # assume function wrote directly to file and returned a status
                 return contents
 

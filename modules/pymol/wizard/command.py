@@ -21,7 +21,7 @@ class Command(wizard.Wizard):
 
         self.command = command
         self.func = _self.keyword[command][0]
-        spec = inspect.getargspec(self.func)
+        sig = inspect.signature(self.func, follow_wrapped=False)
         self.args = []
         self.current = {}
         self.shortcut = {}
@@ -30,7 +30,11 @@ class Command(wizard.Wizard):
         setattr(stored, self.stored_name, self)
         self.varname = 'stored.' + self.stored_name
 
-        for arg, aa in izip_longest(spec.args, _self.auto_arg):
+        for param, aa in izip_longest(sig.parameters.values(), _self.auto_arg):
+            if param.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD:
+                break
+
+            arg = param.name
             if arg.startswith('_') or arg in self.ignored_args:
                 continue
             self.args.append(arg)
@@ -44,9 +48,13 @@ class Command(wizard.Wizard):
             except:
                 pass
 
-        for (arg, value) in zip(reversed(spec.args), reversed(spec.defaults)):
+        for param in sig.parameters.values():
+            if param.default == inspect.Parameter.empty:
+                continue
+
+            arg = param.name
             if not (arg in self.ignored_args or arg.startswith('_')):
-                self.current[arg] = value
+                self.current[arg] = param.default
 
     def set_menu_values(self, arg, values, first=1, last=-2):
         self.menu[arg][first:last] = [

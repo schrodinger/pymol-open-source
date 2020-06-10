@@ -811,7 +811,7 @@ SEE ALSO
             # generic forwarding to format specific load functions
             func = loadfunctions.get(format, pymol.internal._load)
             func = _eval_func(func)
-            kw = {
+            kw_all = {
                 'filename': filename,
                 'fname': filename, # alt
                 'object': object,
@@ -837,15 +837,22 @@ SEE ALSO
             }
 
             import inspect
-            spec = inspect.getargspec(func)
+            sig = inspect.signature(func, follow_wrapped=False)
+            kw = {}
 
-            if spec.varargs:
-                print('FIXME: loadfunctions[%s]: *args' % (format))
+            for n, param in sig.parameters.items():
+                if param.kind == inspect.Parameter.VAR_KEYWORD:
+                    kw = kw_all
+                    break
 
-            if not spec.keywords:
-                kw = dict((n, kw[n]) for n in spec.args if n in kw)
+                if param.kind == inspect.Parameter.VAR_POSITIONAL:
+                    print('FIXME: loadfunctions[%s]: *args' % (format))
+                elif param.kind == inspect.Parameter.POSITIONAL_ONLY:
+                    raise Exception('positional-only arguments not supported')
+                elif n in kw_all:
+                    kw[n] = kw_all[n]
 
-            if 'contents' in spec.args:
+            if 'contents' in sig.parameters:
                 kw['contents'] = _self.file_read(filename)
 
             return func(**kw)
