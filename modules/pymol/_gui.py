@@ -38,16 +38,17 @@ class PyMOLDesktopGUI(object):
     show_about = None
 
     def new_window(self, extra_argv=()):
-        import subprocess, pymol
+        import pymol
 
         python = sys.executable
         if os.path.isfile(python + 'w'):
             # fixes menu focus on macOS
             python += 'w'
 
-        subprocess.Popen(
-            [python, pymol.__file__, '-N', pymol.invocation.options.gui] +
-            list(extra_argv))
+        args = [python, pymol.__file__, '-N', pymol.invocation.options.gui
+                ] + list(extra_argv)
+
+        os.spawnv(os.P_NOWAITO, args[0], args)
 
     def get_menudata(self, cmd=None):
         '''Get the top level application menu as a list data structure'''
