@@ -50,7 +50,7 @@
       maxed by a multiple of sphere_point_max_size (set it below 1 to see it influence, 3*pixel_scale max)
    3) same as 2 but with circles
    4) no longer available
-   5) Uses the fast ARB Shader that approximates spheres as circles
+   5) no longer available (was ARB impostor shader)
    6-8) same as 1-3 but with normals computed from close atoms to mimic nice lighting
    9) GLSL Shader Spheres (only when shaders are available)
 
@@ -70,9 +70,6 @@ void RepSphereFree(RepSphere * I)
   RepPurge(&I->R);
   OOFreeP(I);
 }
-
-/* MULTI-INSTSANCE TODO:  isn't this a conflict? */
-CShaderPrg *sphereARBShaderPrg = NULL;
 
 void RenderSphereComputeFog(PyMOLGlobals *G, RenderInfo *info, float *fog_info)
 {
@@ -114,23 +111,8 @@ static int RepSphereRenderRay(PyMOLGlobals *G, RepSphere * I, RenderInfo * info)
 
 static void RepSphereRenderPick(RepSphere * I, RenderInfo * info, int sphere_mode)
 {
-  PyMOLGlobals *G = I->R.G;
+  assert(I->renderCGO);
 
-  if (!I->renderCGO){
-    // only for sphere_mode 5, where we don't use a renderCGO (yet) ARB: immediate mode GL_QUADS
-    short use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) &&
-      SettingGetGlobal_b(G, cSetting_use_shaders);
-    CGO *convertcgo = CGOSimplify(I->primitiveCGO, 0, 0);
-    CGO *convertcgo2 = CGOCombineBeginEnd(convertcgo, 0);
-    if (use_shader){
-      I->renderCGO = CGOOptimizeToVBONotIndexed(convertcgo2, 0);
-      CGOFree(convertcgo2);
-    } else {
-      I->renderCGO = convertcgo2;
-    }
-    I->renderCGO->use_shader = use_shader;
-    CGOFree(convertcgo);
-  }
   CGORenderGLPicking(I->renderCGO, info, &I->R.context, I->R.cs->Setting, I->R.obj->Setting);
 }
 
@@ -138,35 +120,26 @@ static int RepGetSphereMode(PyMOLGlobals *G, RepSphere * I, bool use_shader){
   int sphere_mode = SettingGet_i(G, I->R.cs->Setting,
 				 I->R.obj->Setting,
 				 cSetting_sphere_mode);
-  if (sphere_mode == 4) // sphere_mode 4 no longer exists, use default
-    sphere_mode = -1;
-    switch (sphere_mode) {
-    case 5:
-#ifdef _PYMOL_ARB_SHADERS
-      if (!sphereARBShaderPrg && G->HaveGUI && G->ValidContext) {
-      sphereARBShaderPrg = CShaderPrg::NewARB(G, "sphere_arb",
-                                              G->ShaderMgr->GetShaderSource("sphere_arb_vs.vs"),
-                                              G->ShaderMgr->GetShaderSource("sphere_arb_fs.fs"));
-      }
-      if (!sphereARBShaderPrg)
-#endif
-      {
+  switch (sphere_mode) {
+  case 5:
+    // no longer exists, use default
+    {
+      static bool warn_once = true;
+      if (warn_once) {
         PRINTFB(G, FB_ShaderMgr, FB_Warnings)
-          " Warning: ARB shaders (sphere_mode=5) not supported.\n" ENDFB(G);
-        if (!use_shader || !G->ShaderMgr->ShaderPrgExists("sphere")) {
-        sphere_mode = 9;
-        } else {
-          sphere_mode = 0;
-        }
-      }
-      break;
-    case -1:
-      sphere_mode = 9;
-    case 9:
-    if (!use_shader || !G->ShaderMgr->ShaderPrgExists("sphere")) {
-        sphere_mode = 0;
+          " Warning: sphere_mode=5 was removed, use sphere_mode=9.\n" ENDFB(G);
+        warn_once = false;
       }
     }
+  case 4:
+    // no longer exists, use default
+  case -1:
+    sphere_mode = 9;
+  case 9:
+    if (!use_shader || !G->ShaderMgr->ShaderPrgExists("sphere")) {
+      sphere_mode = 0;
+    }
+  }
   return sphere_mode;
 }
 
@@ -194,15 +167,6 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
         return;
       }
 
-#ifdef _PYMOL_ARB_SHADERS
-      if (sphere_mode == 5){
-        // we need to check sphere_mode 5 here until
-        // we implement the CGO ARB operation, since 
-        // picking uses the I->renderCGO
-        RepSphere_Generate_ARB_Spheres(G, I, info);
-        return; // sphere_mode 5 does not use I->renderCGO yet
-      }
-#endif
       if (I->renderCGO){
         if (I->renderCGO->use_shader != use_shader){
           CGOFree(I->renderCGO);

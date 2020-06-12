@@ -1152,28 +1152,6 @@ CShaderPrg *CShaderMgr::Enable_DefaultSphereShader(int pass) {
   return (shaderPrg);
 }
 
-#ifdef _PYMOL_ARB_SHADERS
-CShaderPrg *CShaderMgr::Enable_SphereShaderARB(){
-  CShaderPrg *shaderPrg = nullptr;
-  /* load the vertex program */
-  Disable_Current_Shader();
-  shaderPrg = GetShaderPrg("sphere_arb");
-  glBindProgramARB(GL_VERTEX_PROGRAM_ARB, shaderPrg->vid);
-  
-  /* load the fragment program */
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shaderPrg->fid);
-  
-  /* load some safe initial values  */
-  glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 0, 0.0F, 0.0F, 1.0F, 0.0F);
-  glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, 0.5F, 2.0F, 0.0F, 0.0F);
-
-  glEnable(GL_VERTEX_PROGRAM_ARB);
-  glEnable(GL_FRAGMENT_PROGRAM_ARB);
-
-  return shaderPrg;
-}
-#endif
-
 CShaderPrg *CShaderMgr::Get_ConnectorShader(int pass){
   return GetShaderPrg("connector", 1, pass);
 }

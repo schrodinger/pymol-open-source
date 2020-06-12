@@ -22,84 +22,6 @@ Z* -------------------------------------------------------------------
 
 #ifndef PURE_OPENGL_ES_2
 
-extern CShaderPrg *sphereARBShaderPrg;
-
-#ifdef _PYMOL_ARB_SHADERS
-static void RepSphereRenderOneSphere_ARB(PyMOLGlobals *G, RenderInfo *info,
-                                         const float *color,
-                                         float *last_radius,
-                                         float *cur_radius,
-                                         const float *fog_info,
-                                         const float *v) {
-  static const float _00[2] = {0.0F, 0.0F};
-  static const float _01[2] = {0.0F, 1.0F};
-  static const float _11[2] = {1.0F, 1.0F};
-  static const float _10[2] = {1.0F, 0.0F};
-
-  float v3 = v[3];
-  if ((*last_radius) != ((*cur_radius) = v3)) {
-    glEnd();
-    glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 0, 0.0F, 0.0F, v3, 0.0F);
-    glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, fog_info[0],
-                               fog_info[1], 0.0F, 0.0F);
-    glBegin(GL_QUADS);
-    (*last_radius) = (*cur_radius);
-  }
-  glColor3fv(color);
-  glTexCoord2fv(_00);
-  glVertex3fv(v);
-  glTexCoord2fv(_10);
-  glVertex3fv(v);
-  glTexCoord2fv(_11);
-  glVertex3fv(v);
-  glTexCoord2fv(_01);
-  glVertex3fv(v);
-}
-
-static
-void RenderSphereMode_Immediate_5(PyMOLGlobals *G, RenderInfo *info,
-                                  CoordSet *cs, ObjectMolecule *obj,
-                                  int *repActive, float sphere_scale) {
-  if (!sphereARBShaderPrg) {
-    sphereARBShaderPrg = CShaderPrg::NewARB(
-        G, "sphere_arb", G->ShaderMgr->GetShaderSource("sphere_arb_vs.vs"),
-        G->ShaderMgr->GetShaderSource("sphere_arb_fs.fs"));
-  }
-  if (sphereARBShaderPrg) {
-    float fog_info[3];
-
-    RenderSphereComputeFog(G, info, fog_info);
-
-    G->ShaderMgr->Enable_SphereShaderARB();
-
-    glNormal3fv(info->view_normal);
-    glBegin(GL_QUADS);
-    {
-      float last_radius = -1.0F, cur_radius;
-      int a;
-      int nIndex = cs->NIndex;
-      const AtomInfoType *atomInfo = obj->AtomInfo.data();
-      const int *i2a = cs->IdxToAtm.data();
-      const float *v = cs->Coord.data();
-      for (a = 0; a < nIndex; a++) {
-        const AtomInfoType *ai = atomInfo + *(i2a++);
-        if (GET_BIT(ai->visRep, cRepSphere)) {
-          float vr[4];
-          copy3f(v, vr);
-          vr[3] = ai->vdw * sphere_scale;
-          (*repActive) = true;
-          RepSphereRenderOneSphere_ARB(G, info, ColorGet(G, ai->color),
-                                       &last_radius, &cur_radius, fog_info, vr);
-        }
-        v += 3;
-      }
-      glEnd();
-    }
-    sphereARBShaderPrg->DisableARB();
-  }
-}
-#endif
-
 static void RenderSphereMode_Immediate_Triangles(PyMOLGlobals *G, CoordSet *cs,
                                                  ObjectMolecule *obj,
                                                  int *repActive,
@@ -283,12 +205,9 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info) {
       RenderImmediate_DoPreGL(G, sphere_mode, &pixel_scale, cs, obj,
                               sphere_scale);
       switch (sphere_mode) {
-#ifdef _PYMOL_ARB_SHADERS
         case 5:
-          RenderSphereMode_Immediate_5(G, info, cs, obj, &repActive,
-                                       sphere_scale);
+          // removed (was ARB shader)
           break;
-#endif
         case 4:
           // sphere_mode 4 taken out: many points per sphere to make them look
           // good, one specular light

@@ -17,10 +17,8 @@ Z* -------------------------------------------------------------------
 #include "os_gl.h"
 #include "os_python.h"
 #include <string.h>
-#include <iostream>
 #include "ShaderMgr.h"
 #include "OOMac.h"
-#include "ListMacros.h"
 #include "PyMOLOptions.h"
 #include "Feedback.h"
 #include "MemoryDebug.h"
@@ -28,115 +26,13 @@ Z* -------------------------------------------------------------------
 #include "Scene.h"
 #include "Color.h"
 #include "Vector.h"
-#include "Util.h"
-#include "Util2.h"
 #include "Texture.h"
-#include "File.h"
 #include "Matrix.h"
-#include "Scene.h"
-#include "Parse.h"
 #ifdef _WEBGL
-#include "Matrix.h"
 #include "WebPyMOLLibrary.h"
 #endif
-#define MAX_LOG_LEN 1024
-
-#include <sstream>
-#include <stack>
-#include <vector>
-
-#define SCENEGETIMAGESIZE SceneGetWidthHeight
-
-using namespace std;
 
 const float mat3identity[] = { 1., 0., 0., 0., 1., 0., 0., 0., 1. };
-
-#ifdef _PYMOL_ARB_SHADERS
-static
-GLboolean ProgramStringIsNative(PyMOLGlobals * G,
-                                       GLenum target, GLenum format,
-                                       const string& shaderstr)
-{
-  GLint errorPos, isNative;
-  glProgramStringARB(target, format, shaderstr.length(), shaderstr.c_str());
-  glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
-  glGetProgramivARB(target, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
-  if((errorPos == -1) && (isNative == 1))
-    return GL_TRUE;
-  else if(errorPos >= 0) {
-    if(Feedback(G, FB_OpenGL, FB_Errors)) {
-      printf("OpenGL-Error: ARB shader error at char %d\n---->%s\n", errorPos,
-             ((char *) shaderstr.c_str()) + errorPos);
-    }
-  }
-  return GL_FALSE;
-}
-
-CShaderPrg *CShaderPrg::NewARB(PyMOLGlobals * G, const char * name, const string& vert, const string& frag) {
-  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef WIN32
-  if(!(glGenProgramsARB && glBindProgramARB &&
-       glDeleteProgramsARB && glProgramStringARB && glProgramEnvParameter4fARB)) {
-    glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
-    glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
-    glDeleteProgramsARB =
-      (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
-    glProgramStringARB =
-      (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
-    glProgramEnvParameter4fARB =
-      (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
-    glGetProgramivARB = (PFNGLGETPROGRAMIVARBPROC) wglGetProcAddress("glGetProgramivARB");
-  }
-
-  if(glGenProgramsARB && glBindProgramARB &&
-     glDeleteProgramsARB && glProgramStringARB && glProgramEnvParameter4fARB)
-#endif
-  {
-    /* END PROPRIETARY CODE SEGMENT */
-
-    int ok = true;
-    GLuint programs[2];
-    glGenProgramsARB(2, programs);
-    
-    /* load the vertex program */
-    glBindProgramARB(GL_VERTEX_PROGRAM_ARB, programs[0]);
-    
-    ok = ok && (ProgramStringIsNative(G, GL_VERTEX_PROGRAM_ARB,
-				      GL_PROGRAM_FORMAT_ASCII_ARB, vert));
-    
-    if(Feedback(G, FB_OpenGL, FB_Debugging))
-      PyMOLCheckOpenGLErr("loading vertex program");
-    
-    /* load the fragment program */
-    glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, programs[1]);
-    
-    ok = ok && (ProgramStringIsNative(G, GL_FRAGMENT_PROGRAM_ARB,
-				      GL_PROGRAM_FORMAT_ASCII_ARB, frag));
-    
-    if(Feedback(G, FB_OpenGL, FB_Debugging))
-      PyMOLCheckOpenGLErr("loading fragment program");
-    if(ok) {
-      CShaderPrg * I = new CShaderPrg(G, name, "", "");
-      I->G = G;
-      I->vid = programs[0];
-      I->fid = programs[1];
-      G->ShaderMgr->AddShaderPrg(I);
-      return I;
-    } else {
-      glDeleteProgramsARB(2, programs);
-    }
-  }
-  return nullptr;
-}
-
-int CShaderPrg::DisableARB() {
-  G->ShaderMgr->current_shader = nullptr;
-  glDisable(GL_FRAGMENT_PROGRAM_ARB);
-  glDisable(GL_VERTEX_PROGRAM_ARB);
-  return 1;
-}
-#endif
-
 
 // -----------------------------------------------------------------------------
 // Uniforms and Attributes

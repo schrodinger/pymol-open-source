@@ -10207,57 +10207,6 @@ CGO* CGOConvertSpheresToPoints(const CGO* I)
   return (cgo);
 }
 
-#ifdef _PYMOL_ARB_SHADERS
-void CGORenderSpheresARB(RenderInfo* info, const CGO* I, const float* fog_info)
-{
-  static const float _00[2] = { 0.0F, 0.0F };
-  static const float _01[2] = { 0.0F, 1.0F };
-  static const float _11[2] = { 1.0F, 1.0F };
-  static const float _10[2] = { 1.0F, 0.0F };
-  if(I->c) {
-    float last_radius;
-    last_radius = -1.f;
-    glNormal3fv(info->view_normal);
-    glBegin(GL_QUADS);
-
-    for (auto it = I->begin(); !it.is_stop(); ++it) {
-      const auto pc = it.data();
-      const auto op = it.op_code();
-
-      switch (op) {
-      case CGO_SPHERE:
-        {
-          float sphereCenter[] = { *(pc), *(pc+1), *(pc+2) };
-          float sphereRadius = *(pc+3);
-          if(last_radius != sphereRadius) {
-            glEnd();
-            glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
-                                       0, 0.0F, 0.0F, sphereRadius, 0.0F);
-            glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
-                                       0, fog_info[0], fog_info[1], 0.0F, 0.0F);
-            glBegin(GL_QUADS);
-            last_radius = sphereRadius;
-          }
-          glTexCoord2fv(_00);
-          glVertex3fv(sphereCenter);
-          glTexCoord2fv(_10);
-          glVertex3fv(sphereCenter);
-          glTexCoord2fv(_11);
-          glVertex3fv(sphereCenter);
-          glTexCoord2fv(_01);
-          glVertex3fv(sphereCenter);
-        }
-        break;
-      case CGO_COLOR:
-        glColor3f(*pc, *(pc + 1), *(pc + 2));
-        break;
-      }
-    }
-    glEnd();
-  }
-}
-#endif
-
 // Will create an interleaved VBO with { vertex, otherVertex, uv, and texcoord info }
 // Currently, this function does not support/parse lines inside CGODrawArrays, i.e.,
 // a CGO that CGOCombineBeginEnd was used on

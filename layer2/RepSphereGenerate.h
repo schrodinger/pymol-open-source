@@ -20,10 +20,6 @@ void RepSphere_Generate_Triangles(PyMOLGlobals *G, RepSphere *I,
                                   RenderInfo *info);
 void RepSphere_Generate_Impostor_Spheres(PyMOLGlobals *G, RepSphere *I,
                                          RenderInfo *info);
-#ifdef _PYMOL_ARB_SHADERS
-void RepSphere_Generate_ARB_Spheres(PyMOLGlobals *G, RepSphere *I,
-                                    RenderInfo *info);
-#endif
 void RepSphere_Generate_Point_Sprites(PyMOLGlobals *G, RepSphere *I,
                                       RenderInfo *info, int sphere_mode);
 

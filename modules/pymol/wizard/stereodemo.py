@@ -34,7 +34,6 @@ class Stereodemo(Wizard):
         cmd.full_screen("off")
         if not mono:
             cmd.stereo("on")
-        cmd.set("sphere_mode","5")
         if 'last' in saved:
             self.last = saved['last']
         self.launch(name)
@@ -150,7 +149,6 @@ class DemoInfo:
             cmd.rock(1)
             cmd.set("sweep_mode",3)
             cmd.set("sweep_angle",10)
-            cmd.set("sphere_mode",5)
             cmd.do("replace_wizard toggle, Molecular Animation")
         else:
             cmd.set("mesh_width",1)
@@ -384,7 +382,6 @@ class DemoInfo:
             cmd.set("suspend_updates",1,quiet=1)
             cmd.disable()
             cmd.delete("ray")
-            cmd.set("sphere_mode",5)
             cmd.set("sphere_scale",1.0)
             cmd.load("$PYMOL_DATA/demo/il2.pdb","ray")
             cmd.remove("(ray and hydro)")
@@ -410,7 +407,6 @@ class DemoInfo:
             cmd.disable()
             cmd.delete("sculpt")
             cmd.set("sphere_scale","1.0")
-            cmd.set("sphere_mode",5)
             cmd.load("$PYMOL_DATA/demo/pept.pdb","sculpt")
             cmd.hide("lines","sculpt")
 #            cmd.show("sticks","sculpt")

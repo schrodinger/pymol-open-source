@@ -44,10 +44,6 @@ Z* -------------------------------------------------------------------
 #define LOCK_GUARD_MUTEX(name, var)
 #endif
 
-#ifndef GL_FRAGMENT_PROGRAM_ARB
-#define GL_FRAGMENT_PROGRAM_ARB                         0x8804
-#endif
-
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #if 0
 PFNGLTEXIMAGE3DPROC getTexImage3D();
@@ -100,11 +96,6 @@ public:
     copy->derivative = variable;
     return copy;
   }
-
-#ifdef _PYMOL_ARB_SHADERS
-  static CShaderPrg *NewARB(PyMOLGlobals * G, const char * name, const std::string& vert, const std::string& frag);
-  int DisableARB();
-#endif
 
 /* Enable */
   int Enable();
@@ -234,9 +225,6 @@ public:
   CShaderPrg *Enable_CylinderShader(const char *, int pass);
   CShaderPrg *Enable_CylinderShader(int pass);
   CShaderPrg *Enable_DefaultSphereShader(int pass);
-#ifdef _PYMOL_ARB_SHADERS
-  CShaderPrg *Enable_SphereShaderARB();
-#endif
   CShaderPrg *Enable_RampShader();
   CShaderPrg *Enable_ConnectorShader(int pass);
   CShaderPrg *Enable_TriLinesShader();

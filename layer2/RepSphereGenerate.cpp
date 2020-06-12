@@ -20,8 +20,6 @@ Z* -------------------------------------------------------------------
 #include "ShaderMgr.h"
 #include "Err.h"
 
-extern CShaderPrg *sphereARBShaderPrg;
-
 void RepSphere_Generate_Triangles(PyMOLGlobals *G, RepSphere *I,
                                   RenderInfo *info) {
   short use_shader;
@@ -71,21 +69,6 @@ void RepSphere_Generate_Impostor_Spheres(PyMOLGlobals *G, RepSphere *I,
     }
   }
 }
-
-#ifdef _PYMOL_ARB_SHADERS
-void RepSphere_Generate_ARB_Spheres(PyMOLGlobals *G, RepSphere *I,
-                                    RenderInfo *info) {
-  float fog_info[3];
-  RenderSphereComputeFog(G, info, fog_info);
-
-  if (Feedback(G, FB_OpenGL, FB_Debugging))
-    PyMOLCheckOpenGLErr("before shader");
-  G->ShaderMgr->Enable_SphereShaderARB();
-  CGORenderSpheresARB(info, I->primitiveCGO, fog_info);
-  sphereARBShaderPrg->DisableARB();
-  if (Feedback(G, FB_OpenGL, FB_Debugging)) PyMOLCheckOpenGLErr("after shader");
-}
-#endif
 
 /* simple, default point width points -- modes 1 or 6 */
 void RepSphere_Generate_Point_Sprites(PyMOLGlobals *G, RepSphere *I,

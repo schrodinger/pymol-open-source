@@ -1092,10 +1092,6 @@ int CGOUniform3f(CGO *I, int uniform_id, const float *value);
 
 CGO *CGOConvertSpheresToPoints(const CGO *I);
 
-#ifdef _PYMOL_ARB_SHADERS
-void CGORenderSpheresARB(RenderInfo *info, const CGO *I, const float *fog_info);
-#endif
-
 CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &pickData, int mode, const VertexBuffer::buffer_layout layout=VertexBuffer::INTERLEAVED, bool check_attr_for_data=true, int *idx_array=NULL, int nindicesperfrag=0, int nfragspergroup = 1);
 
 bool CGOCheckSplitLineInterpolationIsSame(const CGO *I, bool &interp_value);

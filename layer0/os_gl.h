@@ -11,10 +11,6 @@
   #define _PYMOL_NO_AA_SHADERS
 #endif
 
-#ifndef PURE_OPENGL_ES_2
-  #define _PYMOL_ARB_SHADERS
-#endif
-
 #if !defined(GL_GLEXT_PROTOTYPES) && !defined(_WIN32)
 #define GL_GLEXT_PROTOTYPES
 #endif
@@ -56,10 +52,6 @@ int PyMOLCheckOpenGLErr(const char *pos);
 #define GL_C_INT_TYPE uint
 #define GL_C_INT_ENUM GL_UNSIGNED_INT
 #define SceneGLClearColor(red,green,blue,alpha) glClearColor(red,green,blue,alpha);
-#endif
-
-#ifndef GL_FRAGMENT_PROGRAM_ARB
-#define GL_FRAGMENT_PROGRAM_ARB                         0x8804
 #endif
 
 #ifndef GLAPIENTRY
