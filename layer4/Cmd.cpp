@@ -2261,13 +2261,9 @@ static PyObject *CmdGetArea(PyObject * self, PyObject * args)
   int int1, int2;
   API_SETUP_ARGS(G, self, args, "Osii", &self, &str1, &int1, &int2);
   APIEnter(G);
-  float result = ExecutiveGetArea(G, str1, int1, int2);
+  auto res = ExecutiveGetArea(G, str1, int1, int2);
   APIExit(G);
-  if (result < 0.0f) {
-    return APIFailure(G);
-  }
-  return (Py_BuildValue("f", result));
-
+  return APIResult(G, res);
 }
 
 static PyObject *CmdPushUndo(PyObject * self, PyObject * args)

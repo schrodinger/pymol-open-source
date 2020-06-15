@@ -20,8 +20,10 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-#define cRepDotNormal 0
-#define cRepDotAreaType 1
+enum cRepDot_t {
+  cRepDotNormal = 0,
+  cRepDotAreaType = 1,
+};
 
 typedef struct RepDot {
   Rep R;
@@ -40,6 +42,6 @@ typedef struct RepDot {
 } RepDot;
 
 Rep *RepDotNew(CoordSet * cset, int state);
-Rep *RepDotDoNew(CoordSet * cs, int mode, int state);
+Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state);
 
 #endif

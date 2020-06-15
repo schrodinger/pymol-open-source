@@ -33,6 +33,8 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"CGO.h"
 
+#include "pymol/algorithm.h"
+
 static void RepDotRender(RepDot * I, RenderInfo * info);
 
 static
@@ -261,88 +263,65 @@ Rep *RepDotNew(CoordSet * cs, int state)
   return (RepDotDoNew(cs, cRepDotNormal, state));
 }
 
-Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
+/**
+ * This routine does double duty - generating the dot representation, but also
+ * acting as our surface area computation routine.
+ *
+ * @param mode cRepDotNormal for dot representation, or cRepDotAreaType for
+ * `cmd.get_area()` computation.
+ * @param state Object state for ramped coloring
+ */
+Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
 {
-
-  /* this routine does double duty - generating the dot representation,
-     but also acting as our surface area computation routine.
-     Modes: cRepDotNormal,cRepDotAreaType
-   */
   PyMOLGlobals *G = cs->G;
-  ObjectMolecule *obj;
-  int a, b, flag, h, k, l, i, j, c1;
   float *v, *vn;
-  const float *vc;
   float *aa = NULL;
   int *tp = NULL;
   int *tf = NULL;
   float *countPtr = NULL;
-  int colorCnt, lastColor;
-  Vector3f v1;
-  MapType *map = NULL;
-  SphereRec *sp = G->Sphere->Sphere[0];
-  int ds;
-  float max_vdw = MAX_VDW;
-  float solv_rad = 0.0;
-  int inclH = true;
-  int cullByFlag = false;
-  int visFlag;
-  int atm, *ati = NULL;
-  AtomInfoType *ai1, *ai2;
-  int dot_color;
-  int ok = true;
-  OOAlloc(G, RepDot);
-  CHECKOK(ok, I);
-  if (ok)
-    obj = cs->Obj;
+  int* ati = nullptr;
+  auto obj = cs->Obj;
 
-  if (ok){
-    if(mode == cRepDotAreaType) { /* assume all atoms "visible" for area comp. */
-      visFlag = true;
-    } else {
-      visFlag = cs->hasRep(cRepDotBit);
-    }
-  }
-  if(!ok || !visFlag) {
-    OOFreeP(I);
-    return (NULL);              /* skip if no dots are visible */
+  // skip if no dots are visible (assume all atoms "visible" for area comp.)
+  if (mode != cRepDotAreaType && !cs->hasRep(cRepDotBit)) {
+    return nullptr;
   }
 
-  RepInit(G, &I->R);
+  // are we using flags 24 & 25
+  auto cullByFlag =
+      SettingGet<bool>(G, cs->Setting, obj->Setting, cSetting_trim_dots);
 
-  I->dotSize = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_radius);
+  auto dot_color =
+      SettingGet_color(G, cs->Setting, obj->Setting, cSetting_dot_color);
 
-  I->A = NULL;
-  I->T = NULL;
-  I->F = NULL;
-  I->V = NULL;
-  I->VC = NULL;
-  I->VN = NULL;
-  I->Atom = NULL;
-  I->R.fRecolor = NULL;
-  I->shaderCGO = 0;
+  // are we ignoring hydrogens?
+  auto inclH =
+      SettingGet<bool>(G, cs->Setting, obj->Setting, cSetting_dot_hydrogens);
 
-  I->Width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_width);
-  cullByFlag = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_trim_dots);      /* are we using flags 24 & 25 */
-
-  dot_color = SettingGet_color(G, cs->Setting, obj->Setting, cSetting_dot_color);   /* are we using flags 24 & 25 */
-  inclH = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_dot_hydrogens);       /* are we ignoring hydrogens? */
+  float solv_rad = 0.f;
   if(SettingGet_b(G, cs->Setting, obj->Setting, cSetting_dot_solvent)) {    /* are we generating a solvent surface? */
     solv_rad = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_solvent_radius); /* if so, get solvent radius */
   }
 
-  /* get current dot sampling */
-  ds = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_dot_density);
+  std::unique_ptr<MapType> map(
+      MapNew(G, MAX_VDW + solv_rad, cs->Coord, cs->NIndex, nullptr));
+  if (!map) {
+    return nullptr;
+  }
 
-  max_vdw += solv_rad;
+  // get current dot sampling
+  // Note: significantly affects the accuracy of our area comp.
+  auto ds = SettingGet<int>(G, cs->Setting, obj->Setting, cSetting_dot_density);
+  SphereRec const* sp = G->Sphere->Sphere[pymol::clamp(ds, 0, 4)];
 
+  int lastColor = cColorDefault;
+  int colorCnt = 0;
 
-/* Note: significantly affects the accuracy of our area comp. */
-  if(ds < 0)
-    ds = 0;
-  if(ds > 4)
-    ds = 4;
-  sp = G->Sphere->Sphere[ds];
+  OOCalloc(G, RepDot);
+  RepInit(G, &I->R);
+
+  I->dotSize = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_radius);
+  I->Width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_width);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepDotRender;
   I->R.fFree = (void (*)(struct Rep *)) RepDotFree;
@@ -350,161 +329,166 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
   I->R.cs = cs;
 
   I->V = pymol::malloc<float>(cs->NIndex * sp->nDot * 10);
-  CHECKOK(ok, I->V);
-
-  if(ok && mode == cRepDotAreaType) { /* in area mode, we need to export save addl. info 
-                                 * such as the normal vectors, the partial area, 
-                                 * the originating atom, etc. */
-    I->A = pymol::malloc<float>(cs->NIndex * sp->nDot);
-    CHECKOK(ok, I->A);
-    if (ok)
-      I->T = pymol::malloc<int>(cs->NIndex * sp->nDot);
-    CHECKOK(ok, I->T);
-    if (ok)
-      I->F = pymol::malloc<int>(cs->NIndex * sp->nDot);
-    CHECKOK(ok, I->F);
-    if (ok)
-      I->VN = pymol::malloc<float>(cs->NIndex * sp->nDot * 3);
-    CHECKOK(ok, I->VN);
-    if (ok)
-      I->Atom = pymol::malloc<int>(cs->NIndex * sp->nDot);
-    CHECKOK(ok, I->Atom);
-    if (ok){
-      aa = I->A;
-      tp = I->T;
-      tf = I->F;
-      ati = I->Atom;
-      inclH = true;
-      cullByFlag = true;
-    }
-  }
-  vn = I->VN;
-  I->N = 0;
-  lastColor = -1;
-  colorCnt = 0;
-  if (ok)
-    map = MapNew(G, max_vdw, cs->Coord, cs->NIndex, NULL);
-  CHECKOK(ok, map);
+  ok_assert(1, I->V);
   v = I->V;
-  if(ok && map) {
-    ok &= MapSetupExpress(map);
-    for(a = 0; ok && a < cs->NIndex; a++) {
-      atm = cs->IdxToAtm[a];
-      ai1 = obj->AtomInfo + atm;
-      if((ai1->visRep & cRepDotBit) || mode == cRepDotAreaType)
-        if((inclH || (!ai1->isHydrogen())) &&
-           ((!cullByFlag) || (!(ai1->flags & cAtomFlag_exfoliate)))) {
-          c1 = AtomSettingGetWD(G, ai1, cSetting_dot_color, dot_color);
 
-          /* If we are culling, flag 24 controls which atoms 
-             will have dot surfaces generated for them.
-           */
-          if(c1 == -1) {
-            c1 = ai1->color;
-          }
-          const float* v0 = cs->coordPtr(a);
-          const float vdw = ai1->vdw + solv_rad;
-          for(b = 0; b < sp->nDot; b++) {
-            v1[0] = v0[0] + vdw * sp->dot[b][0];
-            v1[1] = v0[1] + vdw * sp->dot[b][1];
-            v1[2] = v0[2] + vdw * sp->dot[b][2];
+  // in area mode, we need to save additional info such as the normal vectors,
+  // the partial area, the originating atom, etc.
+  if (mode == cRepDotAreaType) {
+    I->A = pymol::malloc<float>(cs->NIndex * sp->nDot);
+    ok_assert(1, I->A);
+    I->T = pymol::malloc<int>(cs->NIndex * sp->nDot);
+    ok_assert(1, I->T);
+    I->F = pymol::malloc<int>(cs->NIndex * sp->nDot);
+    ok_assert(1, I->F);
+    I->VN = pymol::malloc<float>(cs->NIndex * sp->nDot * 3);
+    ok_assert(1, I->VN);
+    I->Atom = pymol::malloc<int>(cs->NIndex * sp->nDot);
+    ok_assert(1, I->Atom);
 
-            MapLocus(map, v1, &h, &k, &l);
+    aa = I->A;
+    tp = I->T;
+    tf = I->F;
+    vn = I->VN;
+    ati = I->Atom;
+    inclH = true;
+    cullByFlag = true;
+  }
 
-            flag = true;
+  for (int a = 0; a < cs->NIndex; ++a) {
+    auto const atm = cs->IdxToAtm[a];
+    auto const& ai1 = obj->AtomInfo[atm];
 
-            i = *(MapEStart(map, h, k, l));
-            if(i) {
-              j = map->EList[i++];
-              while(j >= 0) {
-                ai2 = obj->AtomInfo + cs->IdxToAtm[j];
-                if((inclH || (!(ai2->isHydrogen()))) &&
-                   ((!cullByFlag) || (!(ai2->flags & cAtomFlag_ignore))))
-                  /* If we are cullilng, flag 25 controls which atoms 
-                     are considered "present" in the surface area 
-                     calculation (i.e. able to occlude surface) */
-                  if(j != a)
-                    if(within3f(cs->coordPtr(j), v1, ai2->vdw + solv_rad)) {
-                      flag = false;
-                      break;
-                    }
-                j = map->EList[i++];
-              }
-            }
-            if(flag) {
-              switch (mode) {
-              case cRepDotNormal:
-
-                if((lastColor != c1) || ColorCheckRamped(G, c1)) {      /* new color */
-                  if(countPtr)  /* after first pass */
-                    *countPtr = (float) colorCnt;       /* save count */
-                  colorCnt = 1;
-                  countPtr = v++;
-                  vc = ColorGet(G, c1); /* save new color */
-                  lastColor = c1;
-                  if(ColorCheckRamped(G, c1)) {
-                    ColorGetRamped(G, c1, v1, v, state);
-                    v += 3;
-                  } else {
-                    *(v++) = *(vc++);
-                    *(v++) = *(vc++);
-                    *(v++) = *(vc++);
-                  }
-                } else
-                  colorCnt++;
-                *(v++) = sp->dot[b][0];
-                *(v++) = sp->dot[b][1];
-                *(v++) = sp->dot[b][2];
-                *(v++) = v1[0];
-                *(v++) = v1[1];
-                *(v++) = v1[2];
-                I->N++;
-                break;
-              case cRepDotAreaType:
-                *(v++) = v1[0];
-                *(v++) = v1[1];
-                *(v++) = v1[2];
-                *(aa++) = vdw * vdw * sp->area[b];      /* area */
-                *(tp++) = ai1->customType;      /* numeric type */
-                *(tf++) = ai1->flags;   /* flags */
-                *(vn++) = sp->dot[b][0];
-                *(vn++) = sp->dot[b][1];
-                *(vn++) = sp->dot[b][2];
-                *(ati++) = atm;
-                I->N++;
-                break;
-              }
-            }
-          }
-        }
-      ok &= !G->Interrupt;
+    if (mode != cRepDotAreaType && !(ai1.visRep & cRepDotBit)) {
+      continue;
     }
-    if(countPtr)
-      *countPtr = (float) colorCnt;     /* save count */
-    MapFree(map);
+
+    if (!inclH && ai1.isHydrogen()) {
+      continue;
+    }
+
+    // If we are culling, flags control which atoms will have dot surfaces
+    // generated for them.
+    if (cullByFlag && (ai1.flags & cAtomFlag_exfoliate)) {
+      continue;
+    }
+
+    auto c1 = AtomSettingGetWD(G, &ai1, cSetting_dot_color, dot_color);
+
+    if (c1 == cColorDefault) {
+      c1 = ai1.color;
+    }
+
+    const float* v0 = cs->coordPtr(a);
+    const float vdw = ai1.vdw + solv_rad;
+    for (int b = 0; b < sp->nDot; b++) {
+      const float v1[] = {
+          v0[0] + vdw * sp->dot[b][0],
+          v0[1] + vdw * sp->dot[b][1],
+          v0[2] + vdw * sp->dot[b][2],
+      };
+
+      bool flag = true;
+
+      for (int j : MapEIter(*map, v1, false)) {
+        if (j == a) {
+          continue;
+        }
+
+        auto const& ai2 = obj->AtomInfo[cs->IdxToAtm[j]];
+        if (!inclH && ai2.isHydrogen()) {
+          continue;
+        }
+
+        // If we are cullilng, flag 25 controls which atoms are considered
+        // "present" in the surface area calculation (i.e. able to occlude
+        // surface)
+        if (cullByFlag && (ai2.flags & cAtomFlag_ignore)) {
+          continue;
+        }
+
+        if (within3f(cs->coordPtr(j), v1, ai2.vdw + solv_rad)) {
+          flag = false;
+          break;
+        }
+      }
+
+      if (!flag) {
+        continue;
+      }
+
+      switch (mode) {
+      case cRepDotNormal:
+        if (c1 == lastColor && !ColorCheckRamped(G, c1)) {
+          colorCnt++;
+        } else {
+          /* new color */
+          if (countPtr)                   /* after first pass */
+            *countPtr = (float) colorCnt; /* save count */
+          colorCnt = 1;
+          countPtr = v++;
+          lastColor = c1;
+          // save new color
+          if (ColorCheckRamped(G, c1)) {
+            ColorGetRamped(G, c1, v1, v, state);
+          } else {
+            copy3(ColorGet(G, c1), v);
+          }
+          v += 3;
+        }
+        *(v++) = sp->dot[b][0];
+        *(v++) = sp->dot[b][1];
+        *(v++) = sp->dot[b][2];
+        *(v++) = v1[0];
+        *(v++) = v1[1];
+        *(v++) = v1[2];
+        I->N++;
+        break;
+      case cRepDotAreaType:
+        *(v++) = v1[0];
+        *(v++) = v1[1];
+        *(v++) = v1[2];
+        *(aa++) = vdw * vdw * sp->area[b]; /* area */
+        *(tp++) = ai1.customType;         /* numeric type */
+        *(tf++) = ai1.flags;              /* flags */
+        *(vn++) = sp->dot[b][0];
+        *(vn++) = sp->dot[b][1];
+        *(vn++) = sp->dot[b][2];
+        *(ati++) = atm;
+        I->N++;
+        break;
+
+      default:
+        assert(false);
+      }
+    }
+
+    ok_assert(1, !G->Interrupt);
   }
-  if (ok)
-    I->V = ReallocForSure(I->V, float, (v - I->V));
-  CHECKOK(ok, I->V);
-  if(ok && mode == cRepDotAreaType) {
+
+  // save count
+  if (countPtr)
+    *countPtr = (float) colorCnt;
+
+  I->V = ReallocForSure(I->V, float, (v - I->V));
+  ok_assert(1, I->V);
+
+  if (mode == cRepDotAreaType) {
     I->A = ReallocForSure(I->A, float, (aa - I->A));
-    CHECKOK(ok, I->A);
-    if (ok)
-      I->T = ReallocForSure(I->T, int, (tp - I->T));
-    CHECKOK(ok, I->T);
-    if (ok)
-      I->F = ReallocForSure(I->F, int, (tf - I->F));
-    CHECKOK(ok, I->F);
-    if (ok)
-      I->VN = ReallocForSure(I->VN, float, (vn - I->VN));
-    CHECKOK(ok, I->VN);
-    if (ok)
-      I->Atom = ReallocForSure(I->Atom, int, (ati - I->Atom));
-    CHECKOK(ok, I->Atom);
+    ok_assert(1, I->A);
+    I->T = ReallocForSure(I->T, int, (tp - I->T));
+    ok_assert(1, I->T);
+    I->F = ReallocForSure(I->F, int, (tf - I->F));
+    ok_assert(1, I->F);
+    I->VN = ReallocForSure(I->VN, float, (vn - I->VN));
+    ok_assert(1, I->VN);
+    I->Atom = ReallocForSure(I->Atom, int, (ati - I->Atom));
+    ok_assert(1, I->Atom);
   }
-  if (!ok){
-    RepDotFree(I);
-    I = NULL;
-  }
-  return (Rep *) I;
+
+  return (Rep*) I;
+
+ok_except1:
+  RepDotFree(I);
+  return nullptr;
 }

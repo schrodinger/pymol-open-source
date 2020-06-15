@@ -8579,82 +8579,61 @@ pymol::Result<> ExecutiveSetDihe(PyMOLGlobals* G, const char* s1,
 
 
 /*========================================================================*/
-float ExecutiveGetArea(PyMOLGlobals * G, const char *s0, int sta0, int load_b)
+pymol::Result<float> ExecutiveGetArea(
+    PyMOLGlobals* G, const char* sele, int state, bool load_b)
 {
-  ObjectMolecule *obj0;
-  RepDot *rep;
-  float result = -1.0F;
-  int a, sele0;
+  SETUP_SELE(sele, tmpsele0, sele0);
+
+  auto obj0 = SelectorGetSingleObjectMolecule(G, sele0);
+  if (!obj0) {
+    if (SelectorCountAtoms(G, sele0, state) > 0)
+      return pymol::Error("Selection must be within a single object");
+    return 0.f;
+  }
+
+  auto cs = obj0->getCoordSet(state);
+  if (!cs)
+    return pymol::Error("Invalid state");
+
+  auto rep = (RepDot*) RepDotDoNew(cs, cRepDotAreaType, state);
+  if (!rep)
+    return pymol::Error("Can't get dot representation.");
+
+  if (load_b) {
+    /* zero out B-values within selection */
+    ObjectMoleculeOpRec op;
+    ObjectMoleculeOpRecInit(&op);
+    op.code = OMOP_SetB;
+    op.f1 = 0.0;
+    op.i1 = 0;
+    ExecutiveObjMolSeleOp(G, sele0, &op);
+  }
+
+  float const* const area = rep->A;
+  int const* const ati = rep->Atom;
+
+  AtomInfoType* ai = nullptr;
   int known_member = -1;
-  int is_member;
-  int *ati;
-  float *area;
-  AtomInfoType *ai = NULL;
-  ObjectMoleculeOpRec op;
+  bool is_member = false;
+  float result = 0.f;
 
-  SelectorTmp tmpsele0(G, s0);
-  sele0 = tmpsele0.getIndex();
+  for (int a = 0; a < rep->N; ++a) {
+    if (known_member != ati[a]) {
+      known_member = ati[a];
+      ai = obj0->AtomInfo + known_member;
+      is_member = SelectorIsMember(G, ai->selEntry, sele0);
+    }
 
-  if(sele0 < 0) {
-    ErrMessage(G, "Area", "Invalid selection.");
-  } else {
-    obj0 = SelectorGetSingleObjectMolecule(G, sele0);
-    if(!(obj0)) {
-      if(SelectorCountAtoms(G, sele0, sta0) > 0)
-        ErrMessage(G, "Area", "Selection must be within a single object.");
-      else
-        result = 0.0F;
-    } else {
-      auto cs = obj0->getCoordSet(sta0);
-      if(!cs)
-        ErrMessage(G, "Area", "Invalid state.");
-      else {
-        rep = (RepDot *) RepDotDoNew(cs, cRepDotAreaType, sta0);
-        if(!rep)
-          ErrMessage(G, "Area", "Can't get dot representation.");
-        else {
-
-          if(load_b) {
-            /* zero out B-values within selection */
-            ObjectMoleculeOpRecInit(&op);
-            op.code = OMOP_SetB;
-            op.f1 = 0.0;
-            op.i1 = 0;
-            ExecutiveObjMolSeleOp(G, sele0, &op);
-          }
-
-          result = 0.0;
-
-          area = rep->A;
-          ati = rep->Atom;
-
-          is_member = false;
-
-          for(a = 0; a < rep->N; a++) {
-
-            if(known_member != (*ati)) {
-              known_member = (*ati);
-              ai = obj0->AtomInfo + known_member;
-              is_member = SelectorIsMember(G, ai->selEntry, sele0);
-            }
-
-            if(is_member) {
-              result += (*area);
-              if(load_b)
-                ai->b += (*area);
-            }
-            area++;
-            ati++;
-          }
-
-          rep->R.fFree((Rep *) rep);    /* free the representation */
-        }
-      }
+    if (is_member) {
+      result += area[a];
+      if (load_b)
+        ai->b += area[a];
     }
   }
-  return (result);
-}
 
+  rep->R.fFree((Rep*) rep); /* free the representation */
+  return result;
+}
 
 /*========================================================================*/
 /**
