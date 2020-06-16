@@ -787,7 +787,8 @@ static PyObject * CmdFindMolfilePlugin(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   } else {
     API_SETUP_PYMOL_GLOBALS;
-    if (G && APIEnterNotModal(G)) {
+    if (G) {
+      APIEnter(G);
       const char * plugin = PlugIOManagerFindPluginByExt(G, ext, mask);
       PyObject * result = PyString_FromString(plugin ? plugin : "");
       APIExit(G);
@@ -808,7 +809,8 @@ static PyObject * CmdGetCCP4Str(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   } else {
     API_SETUP_PYMOL_GLOBALS;
-    if (G && APIEnterNotModal(G)) {
+    if (G) {
+      APIEnter(G);
       auto v = ObjectMapGetCCP4Str(G, name, state, quiet, format);
       PyObject * result = v.empty() ? NULL :
         PyBytes_FromStringAndSize(&v.front(), v.size());
@@ -991,7 +993,8 @@ static PyObject *CmdMDump(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  if(ok) {
+    APIEnter(G);
     MovieDump(G);
     APIExit(G);
   }
@@ -1281,7 +1284,8 @@ static PyObject *CmdGetSceneOrder(PyObject * self, PyObject * args)
   }
 
   API_SETUP_PYMOL_GLOBALS;
-  ok_assert(2, G && APIEnterBlockedNotModal(G));
+  ok_assert(2, G);
+  APIEnterBlocked(G);
 
   result = PConvToPyObject(MovieSceneGetOrder(G));
 
@@ -2108,7 +2112,8 @@ static PyObject *CmdGetView(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  if(ok) {
+    APIEnter(G);
     SceneGetView(G, view);
     APIExit(G);
     return (Py_BuildValue
@@ -2138,7 +2143,8 @@ static PyObject *CmdGetViewPort(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  if(ok) {
+    APIEnter(G);
     SceneGetWidthHeight(G, &width, &height);
     APIExit(G);
     return (Py_BuildValue
@@ -2321,7 +2327,8 @@ static PyObject *CmdGetObjectSettings(PyObject * self, PyObject * args)
   }
 
   API_SETUP_PYMOL_GLOBALS;
-  ok_assert(1, G && APIEnterNotModal(G));
+  ok_assert(1, G);
+  APIEnter(G);
 
   obj = ExecutiveFindObjectByName(G, oname);
 
@@ -4000,7 +4007,8 @@ static PyObject *CmdGetSeqAlignStr(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  if(ok) {
+    APIEnter(G);
     seq = ExecutiveNameToSeqAlignStrVLA(G, str1, state, format, quiet);
     APIExit(G);
     if(seq)
@@ -4478,7 +4486,8 @@ static PyObject *CmdGetMoment(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  if(ok) {
+    APIEnter(G);
     ExecutiveGetMoment(G, str1, moment, state);
     APIExit(G);
   }
@@ -4556,6 +4565,7 @@ static PyObject *CmdReset(PyObject * self, PyObject * args)
   return APIResult(G, result);
 }
 
+#if 0
 static PyObject *CmdSetMatrix(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -4577,6 +4587,7 @@ static PyObject *CmdSetMatrix(PyObject * self, PyObject * args)
   }
   return APIResultOk(ok);
 }
+#endif
 
 static PyObject *CmdGetMinMax(PyObject * self, PyObject * args)
 {
@@ -4601,6 +4612,7 @@ static PyObject *CmdGetMinMax(PyObject * self, PyObject * args)
   return Py_BuildValue("[[fff],[fff]]", -0.5, -0.5, -0.5, 0.5, 0.5, 0.5);
 }
 
+#if 0
 static PyObject *CmdGetMatrix(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -4625,6 +4637,7 @@ static PyObject *CmdGetMatrix(PyObject * self, PyObject * args)
   }
   return APIAutoNone(result);
 }
+#endif
 
 static PyObject *CmdGetObjectMatrix(PyObject * self, PyObject * args)
 {
@@ -4643,7 +4656,8 @@ static PyObject *CmdGetObjectMatrix(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  if(ok) {
+    APIEnter(G);
     found = ExecutiveGetObjectMatrix(G, name, state, &history, incl_ttt);
     APIExit(G);
     if(found) {
@@ -4678,7 +4692,8 @@ static PyObject *CmdGetObjectTTT(PyObject * self, PyObject * args)
   }
 
   API_SETUP_PYMOL_GLOBALS;
-  ok_assert(1, G && APIEnterNotModal(G));
+  ok_assert(1, G);
+  APIEnter(G);
 
   ExecutiveGetObjectTTT(G, name, &ttt, state, quiet);
   if (ttt)
@@ -5383,7 +5398,8 @@ static PyObject *CmdGetBond(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  if(ok) {
+    APIEnter(G);
     s1[0] = 0;
     s2[0] = 0;
     ok = (SelectorGetTmp(G, str3, s1) >= 0);
@@ -5994,12 +6010,13 @@ static PyObject *CmdIsolevel(PyObject * self, PyObject * args)
   char *name;
   int query, quiet;
   API_SETUP_ARGS(G, self, args, "Osfiii", &self, &name, &level, &state, &query, &quiet);
-  API_ASSERT(APIEnterNotModal(G));
   if(!query) {
+    API_ASSERT(APIEnterNotModal(G));
     auto result = ExecutiveIsolevel(G, name, level, state, quiet);
     APIExit(G);
     return APIResult(G, result);
   } else {
+    APIEnter(G);
     auto result = ExecutiveGetIsolevel(G, name, state);
     APIExit(G);
     return APIResult(G, result);
@@ -6517,7 +6534,8 @@ static PyObject *CmdCifGetArray(PyObject * self, PyObject * args)
 
   ok_assert(1, PyArg_ParseTuple(args, "Oss|s", &self, &name, &key, &dtype));
   API_SETUP_PYMOL_GLOBALS;
-  ok_assert(1, G && APIEnterBlockedNotModal(G));
+  ok_assert(1, G);
+  APIEnterBlocked(G);
 
   obj = ExecutiveFindObjectMoleculeByName(G, name);
 
@@ -6643,7 +6661,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_feedback", CmdGetFeedback, METH_VARARGS},
   {"get_idtf", CmdGetIdtf, METH_VARARGS},
   {"get_legal_name", CmdGetLegalName, METH_VARARGS},
-  {"get_matrix", CmdGetMatrix, METH_VARARGS},
+//  {"get_matrix", CmdGetMatrix, METH_VARARGS},
   {"get_min_max", CmdGetMinMax, METH_VARARGS},
   {"get_mtl_obj", CmdGetMtlObj, METH_VARARGS},
   {"get_model", CmdGetModel, METH_VARARGS},
@@ -6794,7 +6812,7 @@ static PyMethodDef Cmd_methods[] = {
   {"set_frame", CmdSetFrame, METH_VARARGS},
   {"set_name", CmdSetName, METH_VARARGS},
   {"set_geometry", CmdSetGeometry, METH_VARARGS},
-  {"set_matrix", CmdSetMatrix, METH_VARARGS},
+//  {"set_matrix", CmdSetMatrix, METH_VARARGS},
   {"set_object_ttt", CmdSetObjectTTT, METH_VARARGS},
   {"set_object_color", CmdSetObjectColor, METH_VARARGS},
   {"set_session", CmdSetSession, METH_VARARGS},
