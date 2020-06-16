@@ -105,6 +105,23 @@ class TestQuerying(testing.PyMOLTestCase):
         cmd.set("dot_density", 4)
         self.assertAlmostEqual(cmd.get_area(), 200.888, delta=1e-2)
 
+    @testing.requires_version('2.5')
+    def testGetArea_flags(self):
+        cmd.fragment("gly")
+        area_not_O = cmd.get_area('not elem O')
+        self.assertTrue(cmd.get_area() > area_not_O)
+        cmd.flag('exfoliate', 'elem O')
+        self.assertEqual(cmd.get_area(), area_not_O)
+        cmd.flag('ignore', 'elem N')
+        area_ignore_N = cmd.get_area()
+        self.assertNotEqual(area_ignore_N, area_not_O)
+        self.assertEqual(cmd.count_atoms(), 7)
+        cmd.remove('elem N')
+        self.assertEqual(cmd.count_atoms(), 6)
+        self.assertEqual(cmd.get_area(), area_ignore_N)
+        cmd.flag('ignore', 'all')
+        self.assertEqual(cmd.get_area(), 0.0)
+
     def testGetAtomCoords(self):
         cmd.fragment("gly")
         coords = cmd.get_atom_coords("elem O")
