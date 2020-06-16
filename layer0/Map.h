@@ -75,9 +75,6 @@ int MapSetupExpressPerp(MapType * I, const float *vert, float front, int nVertHi
 void MapLocus(MapType * map, const float *v, int *a, int *b, int *c);
 int *MapLocusEStart(MapType * map, const float *v);
 
-int MapExclLocus(MapType * map, const float *v, int *a, int *b, int *c);
-int MapExclLocusEStart(MapType* map, const float* v);
-
 #define MapCache(m,a) {(m)->Cache[a]=1;(m)->CacheLink[a]=(m)->CacheStart;(m)->CacheStart=a;}
 #define MapCached(m,a) ((m)->Cache[a])
 
@@ -91,8 +88,6 @@ float MapGetDiv(MapType * I);
 
 
 /* special routines for raytracing */
-
-int MapInside(MapType * I, const float *v, int *a, int *b, int *c);
 
 int MapInsideXY(MapType * I, const float *v, int *a, int *b, int *c);
 int MapSetupExpressXY(MapType * I, int n_vert, int negative_start);
@@ -115,18 +110,7 @@ public:
    * @param v 3D query point
    * @param excl If true, exclude `v` if it's outside the grid
    */
-  MapEIter(MapType& map, const float* v, bool excl = true)
-  {
-    if (!map.EList) {
-      MapSetupExpress(&map);
-    }
-    m_elist = map.EList;
-    if (excl) {
-      m_i = MapExclLocusEStart(&map, v);
-    } else {
-      m_i = *MapLocusEStart(&map, v);
-    }
-  }
+  MapEIter(MapType& map, const float* v, bool excl = true);
 
   bool operator!=(MapEIter const& other) const { return m_i != other.m_i; }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 
 namespace pymol
 {
@@ -10,6 +11,7 @@ namespace pymol
  */
 template<typename T>
 const T& clamp(const T& value, const T& low, const T& high){
+  assert(low <= high);
   return std::max(low, std::min(value, high));
 }
 
