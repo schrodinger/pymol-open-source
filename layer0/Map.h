@@ -113,14 +113,19 @@ public:
   /**
    * @param map Map to query
    * @param v 3D query point
+   * @param excl If true, exclude `v` if it's outside the grid
    */
-  MapEIter(MapType& map, const float* v)
+  MapEIter(MapType& map, const float* v, bool excl = true)
   {
     if (!map.EList) {
       MapSetupExpress(&map);
     }
     m_elist = map.EList;
-    m_i = MapExclLocusEStart(&map, v);
+    if (excl) {
+      m_i = MapExclLocusEStart(&map, v);
+    } else {
+      m_i = *MapLocusEStart(&map, v);
+    }
   }
 
   bool operator!=(MapEIter const& other) const { return m_i != other.m_i; }

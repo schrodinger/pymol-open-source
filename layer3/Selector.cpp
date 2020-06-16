@@ -7581,7 +7581,7 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
                         idx = cs->atmToIdx(at);
                         if(idx >= 0) {
                           v2 = cs->coordPtr(idx);
-                          for (const auto j : MapEIter(*map, v2)) {
+                          for (const auto j : MapEIter(*map, v2, false)) {
                             if (!base[0].sele[j] &&
                                 (!base[1].sele[j] ||
                                     base[1].code == SELE_EXP_)) {
@@ -7691,7 +7691,7 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
 
                         if(idx >= 0) {
                           v2 = cs->coordPtr(idx);
-                          for (const auto j : MapEIter(*map, v2)) {
+                          for (const auto j : MapEIter(*map, v2, false)) {
                               if((base[0].sele[j]) && (!base[1].sele[j])) {     /*exclude current selection */
                                 if(within3f(Vertex.data() + 3 * j, v2, dist +       /* eliminate atoms w/o gap */
                                             I->Table[a].f1 + I->Table[j].f1)) {
@@ -9469,7 +9469,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
                               probe_i[1] = (int) floor(probe[1]);
                               probe_i[2] = (int) floor(probe[2]);
 
-                            for (const auto j : MapEIter(*map, probe)) {
+                            for (const auto j : MapEIter(*map, probe, false)) {
                                 if(!base[0].sele[j]) {
                                   float *tst = Vertex.data() + 3 * j;
                                   base[0].sele[j] = ((probe_i[0] == (int) floor(tst[0]))
@@ -9740,7 +9740,7 @@ int SelectorOperator22(PyMOLGlobals * G, EvalElem * base, int state)
                         idx = cs->atmToIdx(at);
                         if(idx >= 0) {
                           const float* v2 = cs->coordPtr(idx);
-                          for (const auto j : MapEIter(*map, v2)) {
+                          for (const auto j : MapEIter(*map, v2, false)) {
                             if (!base[0].sele[j] && Flag2[j] &&
                                 within3f(coords[j], v2, dist) &&
                                 (code != SELE_NTO_ || !base[4].sele[j])) {
