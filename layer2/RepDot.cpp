@@ -369,7 +369,7 @@ Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
 
     // If we are culling, flags control which atoms will have dot surfaces
     // generated for them.
-    if (cullByFlag && (ai1.flags & cAtomFlag_exfoliate)) {
+    if (cullByFlag && (ai1.flags & (cAtomFlag_exfoliate | cAtomFlag_ignore))) {
       continue;
     }
 
