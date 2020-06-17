@@ -15119,11 +15119,9 @@ int ExecutiveAssignAtomTypes(PyMOLGlobals * G, const char *s1, int format, int s
   if(state < 0)
     state = 0;
   {
-    int unblock = PAutoBlock(G);        /*   PBlock(G);    PBlockAndUnlockAPI(); */
     if(sele1 >= 0) {
       result = SelectorAssignAtomTypes(G, sele1, state, quiet, format);
     }
-    PAutoUnblock(G, unblock);   /*    PUnblock(G);  PLockAPIAndUnblock(); */
   }
   return (result);
 }

@@ -24,22 +24,18 @@ if True:
 
     import pymol
     cmd = sys.modules["pymol.cmd"]
-    from .cmd import _cmd,lock,unlock,Shortcut,QuietException
+    from .cmd import _cmd,Shortcut,QuietException
     from chempy import io
     from chempy.pkl import cPickle
-    from chempy.sdf import SDF,SDFRec
     from .cmd import _feedback,fb_module,fb_mask, \
-                     DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
+                     DEFAULT_ERROR, DEFAULT_SUCCESS, is_error, \
                      is_list, is_dict, is_tuple, loadable
 
-    def copy_image(quiet=1,_self=cmd): # incentive feature / proprietary
-        r = DEFAULT_ERROR
+    def copy_image(quiet=1, *, _self=cmd): # incentive feature / proprietary
         if _self.is_gui_thread():
-            r = _self._copy_image(_self,int(quiet))
+            _self._copy_image(_self, int(quiet))
         else:
-            r = _self.do('cmd._copy_image(quiet=%d)'%int(quiet))
-        if _self._raising(r,_self): raise QuietException
-        return r
+            _self.do('cmd._copy_image(quiet=%d)' % int(quiet))
 
     cache_action_dict = {
         'enable'      : 0,
@@ -51,7 +47,7 @@ if True:
 
     cache_action_sc = Shortcut(cache_action_dict.keys())
 
-    def cache(action='optimize', scenes='',state=-1, quiet=1, _self=cmd):
+    def cache(action='optimize', scenes='',state=-1, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -88,22 +84,20 @@ PYMOL API
 
     '''
 
-        r = DEFAULT_ERROR
         action = cache_action_dict[cache_action_sc.auto_err(str(action),'action')]
         quiet = int(quiet)
         if action == 0: # enable
-            r = _self.set('cache_mode',2,quiet=quiet)
-        elif action == 1: # disable
-            r =_self.set('cache_mode',0,quiet=quiet)
-        elif action == 2: # read_only
-            r =_self.set('cache_mode',1,quiet=quiet)
+            _self.set('cache_mode', 2, quiet=quiet)
+        elif action == 1:  # disable
+            _self.set('cache_mode', 0, quiet=quiet)
+        elif action == 2:  # read_only
+            _self.set('cache_mode', 1, quiet=quiet)
         elif action == 3: # clear
-            r =_self._cache_clear(_self=_self)
+            _self._cache_clear()
         elif action == 4: # optimize
-            r = DEFAULT_SUCCESS
-            _self._cache_mark(_self=_self)
+            _self._cache_mark()
             cur_scene = _self.get('scene_current_name')
-            cache_max = int(_self.get('cache_max'))
+            cache_max = _self.get_setting_int('cache_max')
             if cache_max>0:
                 # allow double memory for an optimized cache
                 _self.set('cache_max',cache_max*2)
@@ -131,7 +125,7 @@ PYMOL API
                         print(" cache: no scenes defined -- optimizing current display.")
                     _self.rebuild()
                     _self.refresh()
-            usage = _self._cache_purge(-1,_self=_self)
+            usage = _self._cache_purge(-1)
             if cache_mode:
                 _self.set('cache_mode',cache_mode)
             else:
@@ -139,12 +133,8 @@ PYMOL API
             _self.set('cache_max',cache_max) # restore previous limits
             if not quiet:
                 print(" cache: optimization complete (~%0.1f MB)."%(usage*4/1000000.0))
-        try:
-            _self.lock(_self)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        else:
+            raise ValueError('action')
 
     _resn_to_aa =  {
             'ALA' : 'A',
@@ -179,7 +169,7 @@ PYMOL API
             'DC'  : 'C',
             }
 
-    def get_fastastr(selection="all", state=-1, quiet=1, key='', _self=cmd):
+    def get_fastastr(selection="all", state=-1, quiet=1, key='', *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -231,7 +221,7 @@ ARGUMENTS
             lines.append('')  # final newline
         return '\n'.join(lines)
 
-    def get_pdbstr(selection="all", state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
+    def get_pdbstr(selection="all", state=-1, ref='', ref_state=-1, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -252,7 +242,7 @@ NOTES
     if state is 0, then all states are saved.
     
     '''
-        return get_str('pdb', selection, state, ref, ref_state, -1, quiet, _self)
+        return _self.get_str('pdb', selection, state, ref, ref_state, -1, quiet)
 
     def _get_dump_str(obj):
         if is_list(obj):
@@ -393,7 +383,6 @@ NOTES
         :param version: {default: pse_export_version}
         '''
         session = {}
-        r = DEFAULT_SUCCESS
         cache = int(cache)
         compress = int(compress)
         partial = int(partial)
@@ -434,8 +423,8 @@ NOTES
                 _self.cache('optimize')
 
         with _self.lockcm:
-            r = _cmd.get_session(_self._COb, session, str(names), int(partial),
-                                 int(quiet), binary, pse_export_version)
+            _cmd.get_session(_self._COb, session, str(names), int(partial),
+                             int(quiet), binary, pse_export_version)
 
         if True:
                 try:
@@ -446,14 +435,19 @@ NOTES
                     colorprinting.print_exc()
 
         for a in _self._pymol._session_save_tasks:
-                assert a is not None
-                try:
-                    if is_error(a(session, _self=_self)):
-                        r = DEFAULT_ERROR
-                except:
-                    colorprinting.print_exc()
-                    print("Error: An error occurred when trying to generate session.")
-                    print("Error: The resulting session file may be incomplete.")
+            assert a is not None
+            error = False
+            try:
+                # TODO _session_restore_tasks use `not <return-value>`
+                # instead of `is_error(<return-value>)`
+                error = is_error(a(session, _self=_self))
+            except:
+                colorprinting.print_exc()
+                error = True
+            if error:
+                colorprinting.warning(
+                    f'Error: session-save-task "{a.__name__}" failed.\n'
+                    'Error: The resulting session file may be incomplete.')
 
         if legacyscenes:
             del session['moviescenes']
@@ -462,7 +456,7 @@ NOTES
             pymol.viewing._legacy_scene('*', 'clear', _self=_self)
             del _self.pymol._scene_dict
 
-        if is_ok(r):
+        if True:
             if pse_export_version > 0.0:
                 try:
                     _session_convert_legacy(session, pse_export_version, _self)
@@ -479,9 +473,6 @@ NOTES
                 import zlib
                 session = zlib.compress(cPickle.dumps(session, 1))
             return session
-        elif _self._raising(r,_self):
-            raise QuietException
-        return r
 
     def _unit2px(value, dpi, unit=''):
         '''API only. Returns pixel units given a string representation in other units'''
@@ -505,7 +496,7 @@ NOTES
         return float(value) * dpi / upi[unit] + 0.5
 
     def png(filename, width=0, height=0, dpi=-1.0, ray=0,
-            quiet=1, prior=0, format=0, _self=cmd):
+            quiet=1, prior=0, format=0, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -558,7 +549,7 @@ PYMOL API
         if prior:
             # fetch the prior image, without doing any work (fast-path / non-GLUT thread-safe)
             r = _self._png(str(filename),0,0,float(dpi),0,int(quiet),1,
-                           int(format),_self)
+                           int(format))
             if r != 1: # no prior image available -- revert to default behavior
                 if prior < 0: # default is to fall back to actual rendering
                     prior = 0
@@ -571,16 +562,16 @@ PYMOL API
 
             if _self.is_gui_thread():
                 r = _self._png(str(filename),int(width),int(height),float(dpi),
-                               int(ray),int(quiet),0,int(format),_self)
+                               int(ray),int(quiet),0,int(format))
             else:
                 r = _self._do("cmd._png('''%s''',%d,%d,%1.6f,%d,%d,%d,%d)"%
                               (filename,width,height,dpi,
                                ray,int(quiet),0,int(format)),_self=_self)
-        if _self._raising(r,_self): raise QuietException
+        if _self._raising(r): raise QuietException
         return r
 
     def multisave(filename, pattern="all", state=-1,
-                  append=0, format='', quiet=1, _self=cmd):
+                  append=0, format='', quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -622,7 +613,7 @@ ARGUMENTS
         if format not in ('pdb', 'cif'):
             raise pymol.CmdException(format + ' format not supported with multisave')
 
-        s = get_str(format, pattern, state, '', -1, 1, quiet, _self)
+        s = _self.get_str(format, pattern, state, '', -1, 1, quiet)
 
         if s is None:
             if _self._raising(): raise QuietException
@@ -635,31 +626,28 @@ ARGUMENTS
 
         return DEFAULT_SUCCESS
 
-    def assign_atom_types( selection, format = "mol2", state=1, quiet=1, _self=cmd):
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+    def assign_atom_types( selection, format = "mol2", state=1, quiet=1, *, _self=cmd):
+        fmt = {'mol2': 1, 'mmd': 2}[format]
+        with _self.lockcm:
             # format : mol2/sybyl = 1, macromodel/mmd = 2, global setting atom_type_format = 0
-            r = _cmd.assign_atom_types(_self._COb, selection, int(1), int(state-1), quiet)
-        finally:
-            _self.unlock(r,_self)
-        return r
+            _cmd.assign_atom_types(_self._COb, selection, fmt, int(state - 1),
+                                   quiet)
 
     def get_str(format, selection='(all)', state=-1, ref='',
-             ref_state=-1, multi=-1, quiet=1, _self=cmd):
+             ref_state=-1, multi=-1, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
     Like "get_bytes" but return a unicode string.
         '''
         assert format not in ('mmtf',), 'binary format, use get_bytes'
-        b = get_bytes(format, selection, state, ref, ref_state, multi, quiet, _self)
+        b = _self.get_bytes(format, selection, state, ref, ref_state, multi, quiet)
         if b is None:
             return None
         return b.decode('utf-8')
 
     def get_bytes(format, selection='(all)', state=-1, ref='',
-             ref_state=-1, multi=-1, quiet=1, _self=cmd):
+             ref_state=-1, multi=-1, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -687,7 +675,7 @@ ARGUMENTS
                     int(multi), int(quiet))
 
     def multifilesave(filename, selection='*', state=-1, format='', ref='',
-             ref_state=-1, quiet=1, _self=cmd):
+             ref_state=-1, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -763,7 +751,7 @@ EXAMPLES
 
 
     def save(filename, selection='(all)', state=-1, format='', ref='',
-             ref_state=-1, quiet=1, partial=0,_self=cmd):
+             ref_state=-1, quiet=1, partial=0, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -905,7 +893,7 @@ SEE ALSO
                 handle.write(contents)
             r = DEFAULT_SUCCESS
 
-        if _self._raising(r,_self): raise QuietException
+        if _self._raising(r): raise QuietException
 
         if not quiet:
             if r == DEFAULT_SUCCESS:
@@ -915,7 +903,7 @@ SEE ALSO
 
         return r
 
-    def get_cifstr(selection="all", state=-1, quiet=1, _self=cmd):
+    def get_cifstr(selection="all", state=-1, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -925,29 +913,29 @@ SEE ALSO
 
     get_pdbstr
         '''
-        return get_str('cif', selection, state, '', -1, -1, quiet, _self)
+        return _self.get_str('cif', selection, state, '', -1, -1, quiet)
 
-    def get_xyzstr(selection, state=-1, quiet=1, _self=cmd):
-        return get_str('xyz', selection, state, '', -1, -1, quiet, _self)
+    def get_xyzstr(selection, state=-1, quiet=1, *, _self=cmd):
+        return _self.get_str('xyz', selection, state, '', -1, -1, quiet)
 
-    def get_sdfstr(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
-        return get_str('sdf', selection, state, ref, ref_state, -1, quiet, _self)
+    def get_sdfstr(selection, state=-1, ref='', ref_state=-1, quiet=1, *, _self=cmd):
+        return _self.get_str('sdf', selection, state, ref, ref_state, -1, quiet)
 
-    def get_mol2str(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
-        return get_str('mol2', selection, state, ref, ref_state, -1, quiet, _self)
+    def get_mol2str(selection, state=-1, ref='', ref_state=-1, quiet=1, *, _self=cmd):
+        return _self.get_str('mol2', selection, state, ref, ref_state, -1, quiet)
 
-    def get_alnstr(selection, state=-1, quiet=1, _self=cmd):
+    def get_alnstr(selection, state=-1, quiet=1, *, _self=cmd):
         with _self.lockcm:
             return _cmd.get_seq_align_str(_self._COb, str(selection),
                     int(state)-1, 0, int(quiet))
 
-    def get_pqrstr(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
-        return get_str('pqr', selection, state, ref, ref_state, -1, quiet, _self)
+    def get_pqrstr(selection, state=-1, ref='', ref_state=-1, quiet=1, *, _self=cmd):
+        return _self.get_str('pqr', selection, state, ref, ref_state, -1, quiet)
 
-    def get_maestr(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
-        return get_str('mae', selection, state, ref, ref_state, -1, quiet, _self)
+    def get_maestr(selection, state=-1, ref='', ref_state=-1, quiet=1, *, _self=cmd):
+        return _self.get_str('mae', selection, state, ref, ref_state, -1, quiet)
 
-    def get_ccp4str(name, state=1, quiet=1, format='ccp4', _self=cmd):
+    def get_ccp4str(name, state=1, quiet=1, format='ccp4', *, _self=cmd):
         ftype = getattr(loadable, format, -1)
         with _self.lockcm:
             return _cmd.get_ccp4str(_self._COb, str(name),

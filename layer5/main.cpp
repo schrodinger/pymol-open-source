@@ -1277,7 +1277,7 @@ static void launch(CPyMOLOptions * options, int own_the_options)
 #endif
 
     int myArgc = 0;
-    char *myArgv[8] = {"pymol"};
+    char* myArgv[8] = {strdup("pymol")};
     p_glutInit(&myArgc, myArgv);
 
     {

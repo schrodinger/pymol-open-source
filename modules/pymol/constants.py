@@ -129,7 +129,14 @@ stereo_dict = {'on':-2,'off':0,'0':0,'1':-2,'swap':-1,
 
 stereo_sc = Shortcut(stereo_dict.keys())
 
-space_sc = Shortcut(['cmyk','rgb','pymol'])
+space_dict = {
+    'cmyk': "$PYMOL_DATA/pymol/cmyk.png",
+    'pymol': 'pymol',
+    'rgb': 'rgb',
+    'greyscale': 'greyscale',
+}
+
+space_sc = Shortcut(space_dict)
 
 window_dict = { 'show' : 1, 'hide' : 0, 'position' : 2, 'size' : 3,
                 'box' : 4, 'maximize' : 5, 'fit' : 6, 'focus' : 7,

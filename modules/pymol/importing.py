@@ -18,14 +18,13 @@ if True:
     import os
     import sys
     import copy
-    import traceback
     import pymol
     cmd = sys.modules["pymol.cmd"]
     from . import selector
     from . import colorprinting
     from .cmd import _cmd, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
-          is_list, space_sc, safe_list_eval, is_string, loadable
+          DEFAULT_ERROR, DEFAULT_SUCCESS, is_error, \
+          is_list, safe_list_eval, is_string, loadable
     from .constants import _loadable
     from pymol.creating import unquote
 
@@ -35,7 +34,7 @@ if True:
 
     from chempy import io
 
-    def filename_to_objectname(fname, _self=cmd):
+    def filename_to_objectname(fname, *, _self=cmd):
         oname, _, _, _ = filename_to_format(fname)
         return _self.get_legal_name(oname)
 
@@ -122,13 +121,13 @@ if True:
             return onames[-1]
         return candidate
 
-    def auto_zoom(zoom, selection, state=0, _self=cmd):
+    def auto_zoom(zoom, selection, state=0, *, _self=cmd):
         if zoom > 0 or zoom < 0 and _self.get_setting_int("auto_zoom"):
             _self.zoom(selection, state=state)
 
-    def set_session(session,partial=0,quiet=1,cache=1,steal=-1,_self=cmd):
-        r = DEFAULT_SUCCESS
-        if is_string(session): # string implies compressed session data
+    def set_session(session,partial=0,quiet=1,cache=1,steal=-1, *, _self=cmd):
+        # string implies compressed session data
+        if isinstance(session, bytes):
             import zlib
             session = io.pkl.fromString(zlib.decompress(session))
             if steal<0:
@@ -137,44 +136,44 @@ if True:
             steal = 0
         # use the pymol instance to store state, not the code module
         _pymol = _self._pymol
-        if True:
-                try:
-                    _self.lock(_self)
-                    r = _cmd.set_session(_self._COb,session,int(partial),int(quiet))
-                finally:
-                    _self.unlock(r,_self)
-                try:
-                    if 'session' in session:
-                        if steal:
-                            _pymol.session = session['session']
-                            del session['session']
-                        else:
-                            _pymol.session = copy.deepcopy(session['session'])
-                    else:
-                        _pymol.session = pymol.Session_Storage()
-                    if cache:
-                        if 'cache' in session:
-                            cache = session['cache']
-                            if len(cache):
-                                if steal:
-                                    _pymol._cache = session['cache']
-                                    del session['cache']
-                                else:
-                                    _pymol._cache = copy.deepcopy(session['cache'])
-                except:
-                    traceback.print_exc()
 
-        for a in _pymol._session_restore_tasks:
+        with _self.lockcm:
+            _cmd.set_session(_self._COb, session, int(partial), int(quiet))
+
+        try:
+            if 'session' not in session:
+                _pymol.session = pymol.Session_Storage()
+            elif steal:
+                _pymol.session = session.pop('session')
+            else:
+                _pymol.session = copy.deepcopy(session['session'])
+
+            if cache and session.get('cache'):
+                if steal:
+                    _pymol._cache = session.pop('cache')
+                else:
+                    _pymol._cache = copy.deepcopy(session['cache'])
+
+            error = None
+
+            for a in _pymol._session_restore_tasks:
                 assert a is not None
-                if not a(session, _self=_self): # don't stop on errors...try to complete anyway
-                    r = DEFAULT_ERROR
-        if _self.get_movie_locked()>0: # if the movie contains commands...activate security
-            _self.wizard("security")
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+                # don't stop on errors...try to complete anyway
+                # TODO _session_save_tasks use `is_error(<return-value>)`
+                # instead of `not <return-value>`
+                if not a(session, _self=_self):
+                    error = f'session-restore-task "{a.__name__}" failed'
+
+        finally:
+            # if the movie contains commands...activate security
+            if _self.get_movie_locked() > 0:
+                _self.wizard("security")
+
+        if error:
+            raise pymol.CmdException(error)
 
     def load_object(type,object,name,state=0,finish=1,discrete=0,
-                         quiet=1,zoom=-1,_self=cmd):
+                         quiet=1,zoom=-1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -192,15 +191,10 @@ PYMOL API
     discrete = treat each state as an independent, unrelated set of atoms
     quiet = suppress chatter (default is yes)
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.load_object(_self._COb,str(name),object,int(state)-1,
                                         int(type),int(finish),int(discrete),
                                         int(quiet),int(zoom))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def load_brick(*arg, _self=cmd, **kw):
@@ -220,7 +214,7 @@ PYMOL API
         lst.extend(list(arg))
         return _self.load_object(*lst, **kw)
 
-    def space(space="", gamma=1.0, quiet=0, _self=cmd):
+    def space(space="", gamma=1.0, quiet=0, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -273,34 +267,16 @@ SEE ALSO
     color
     
     '''
-        r = DEFAULT_ERROR
-
-        tables = { 'cmyk' : "$PYMOL_DATA/pymol/cmyk.png",
-                   'pymol' : 'pymol',
-                   'rgb' : 'rgb',
-                   'greyscale': 'greyscale' }
-
-        space_auto = space_sc.interpret(space)
-        if (space_auto is not None) and not is_list(space_auto):
-            space = space_auto
-
-        if space=="":
+        if space == "":
             filename = ""
         else:
-            filename = tables.get(space.lower(),"")
-            if filename == "":
-                print("Error: unknown color space '%s'."%space)
-                filename = None
-        if filename is not None:
-            try:
-                if filename!="":
-                    filename = _self.exp_path(filename)
-                _self.lock(_self)
-                r = _cmd.load_color_table(_self._COb,str(filename),float(gamma),int(quiet))
-            finally:
-                _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+            space = pymol.constants.space_sc.auto_err(space.lower(), 'space')
+            filename = pymol.constants.space_dict[space]
+            filename = _self.exp_path(filename)
+
+        with _self.lockcm:
+            return _cmd.load_color_table(_self._COb, filename, float(gamma),
+                                         int(quiet))
 
     def load_callback(*arg, _self=cmd):
         '''
@@ -354,7 +330,7 @@ PYMOL API
 
     def load_traj(filename,object='',state=0,format='',interval=1,
                       average=1,start=1,stop=-1,max=-1,selection='all',image=1,
-                      shift="[0.0,0.0,0.0]",plugin="",_self=cmd):
+                      shift="[0.0,0.0,0.0]",plugin="", *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -422,9 +398,7 @@ SEE ALSO
 
     load
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             ftype = -1
             state = int(state)
             interval = int(interval)
@@ -470,21 +444,17 @@ SEE ALSO
                 if not len(oname): # safety
                     oname = 'obj01'
 
-            if ftype>=0 or plugin:
-                r = _cmd.load_traj(_self._COb,str(oname),fname,int(state)-1,int(ftype),
+            if ftype < 0 and not plugin:
+                raise pymol.CmdException("unknown format '%s'" % format)
+
+            return _cmd.load_traj(_self._COb, str(oname), fname, int(state) - 1, int(ftype),
                                          int(interval),int(average),int(start),
                                          int(stop),int(max),str(selection),
                                          int(image),
                                          float(shift[0]),float(shift[1]),
                                          float(shift[2]),str(plugin))
-            else:
-                raise pymol.CmdException("unknown format '%s'" % format)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
 
-    def _processALN(fname,quiet=1,_self=cmd):
+    def _processALN(fname,quiet=1, *, _self=cmd):
         legal_dict = {}
         seq_dict = {}
         seq_order = []
@@ -508,7 +478,7 @@ SEE ALSO
             raw_seq = seq_dict[key].replace('-','')
             _self.fab(raw_seq, key, quiet=quiet)
 
-    def _processFASTA(fname, oname, quiet=1, _self=cmd):
+    def _processFASTA(fname, oname, quiet=1, *, _self=cmd):
         legal_dict = {}
         seq_dict = {}
         seq_order = []
@@ -536,7 +506,7 @@ SEE ALSO
             raw_seq = seq_dict[key].replace('-','')
             _self.fab(raw_seq, key, quiet=quiet)
 
-    def _processPWG(fname,_self=cmd):
+    def _processPWG(fname, *, _self=cmd):
         r = DEFAULT_ERROR
 
         import urllib.request as urllib
@@ -598,7 +568,7 @@ SEE ALSO
                                         mod.__launch__(_self)
                                         r = DEFAULT_SUCCESS
                                 except:
-                                    traceback.print_exc()
+                                    colorprinting.print_exc()
                                     print("Error: unable to launch web application'%s'."%mode_name)
                         elif keyword == 'report':
                             if len(input)>1:
@@ -631,7 +601,7 @@ SEE ALSO
                     except:
                         print(" Report attempt may have failed.")
         except ImportError:
-            traceback.print_exc()
+            colorprinting.print_exc()
 
         if is_error(r):
             print("Error: unable to handle PWG file")
@@ -665,7 +635,7 @@ SEE ALSO
 
     def load(filename, object='', state=0, format='', finish=1,
              discrete=-1, quiet=1, multiplex=None, zoom=-1, partial=0,
-             mimic=1, object_props=None, atom_props=None, _self=cmd):
+             mimic=1, object_props=None, atom_props=None, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -729,11 +699,9 @@ SEE ALSO
 
     save, load_traj, fetch
         '''
-        r = DEFAULT_ERROR
         if object_props or atom_props:
             print(' Warning: properties are not supported in Open-Source PyMOL')
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             plugin = ''
             state = int(state)
             finish = int(finish)
@@ -852,12 +820,8 @@ SEE ALSO
                 kw['contents'] = _self.file_read(filename)
 
             return func(**kw)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
 
-    def load_pse(filename, partial=0, quiet=1, format='pse', _self=cmd):
+    def load_pse(filename, partial=0, quiet=1, format='pse', *, _self=cmd):
         try:
             contents = _self.file_read(filename)
             session = io.pkl.fromString(contents)
@@ -886,7 +850,7 @@ SEE ALSO
 
     def load_embedded(key=None, name=None, state=0, finish=1, discrete=1,
                       quiet=1, zoom=-1, multiplex=-2, object_props=None,
-                      atom_props=None, _self=cmd):
+                      atom_props=None, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -929,7 +893,7 @@ NOTES
                 finish, discrete, quiet, multiplex, zoom)
 
     def load_raw(content, format, object='', state=0, finish=1,
-                 discrete=-1, quiet=1, multiplex=None, zoom=-1,_self=cmd):
+                 discrete=-1, quiet=1, multiplex=None, zoom=-1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -952,7 +916,7 @@ EXAMPLE
                                   int(quiet),int(multiplex),int(zoom))
 
     def read_sdfstr(sdfstr,name,state=0,finish=1,discrete=1,quiet=1,
-                    zoom=-1,multiplex=-2,object_props=None,_self=cmd):
+                    zoom=-1,multiplex=-2,object_props=None, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -983,7 +947,7 @@ NOTES
                               int(quiet),int(multiplex),int(zoom))
 
     def read_molstr(molstr,name,state=0,finish=1,discrete=1,quiet=1,
-                         zoom=-1,_self=cmd):
+                         zoom=-1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1026,7 +990,7 @@ DESCRIPTION
                     int(zoom))
 
     def read_pdbstr(contents, oname, state=0, finish=1, discrete=0, quiet=1,
-            zoom=-1, multiplex=-2, object_props=None, _self=cmd):
+            zoom=-1, multiplex=-2, object_props=None, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1059,7 +1023,7 @@ NOTES
         return r
 
     def read_mol2str(mol2,name,state=0,finish=1,discrete=0,
-                          quiet=1,zoom=-1,multiplex=-2,_self=cmd):
+                          quiet=1,zoom=-1,multiplex=-2, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1092,7 +1056,7 @@ NOTES
 
 
     def read_xplorstr(xplor,name,state=0,finish=1,discrete=0,
-                            quiet=1,zoom=-1,_self=cmd):
+                            quiet=1,zoom=-1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1116,7 +1080,7 @@ NOTES
                               int(finish),int(discrete),int(quiet),
                               0,int(zoom))
 
-    def finish_object(name,_self=cmd):
+    def finish_object(name, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1131,13 +1095,8 @@ PYMOL API
 
     "name" should be the name of the object
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.finish_object(_self._COb,name)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     fetchHosts = {
@@ -1417,13 +1376,13 @@ NOTES
             _self.async_(_multifetch, *args, **kwargs)
         else:
             try:
-                _self.block_flush(_self)
+                _self.block_flush()
                 r = _multifetch(*args)
             finally:
-                _self.unblock_flush(_self)
+                _self.unblock_flush()
         return r
 
-    def load_coordset(coords, object, state=0, quiet=1, _self=cmd):
+    def load_coordset(coords, object, state=0, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1443,16 +1402,11 @@ SEE ALSO
 
     cmd.load_coords
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
+        with _self.lockcm:
             r = _cmd.load_coordset(_self._COb, object, coords, int(state)-1)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def load_coords(coords, selection, state=1, quiet=1, _self=cmd):
+    def load_coords(coords, selection, state=1, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1474,7 +1428,7 @@ ARGUMENTS
             r = _cmd.load_coords(_self._COb, selection, coords, int(state)-1)
         return r
 
-    def load_idx(filename, object, state=0, quiet=1, zoom=-1, _self=cmd):
+    def load_idx(filename, object, state=0, quiet=1, zoom=-1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1503,7 +1457,7 @@ DESCRIPTION
         return r
 
     def load_mtz(filename, prefix='', amplitudes='', phases='', weights='None',
-            reso_low=0, reso_high=0, quiet=1, _self=cmd):
+            reso_low=0, reso_high=0, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1562,11 +1516,11 @@ EXAMPLE
                 print(' Warning: group and object arguments given')
                 members = [kwargs['object']]
             else:
-                members = map(filename_to_objectname, filenames)
+                members = map(_self.filename_to_objectname, filenames)
             _self.group(group, ' '.join(members))
 
 
-    def load_mmtf(filename, object='', discrete=0, multiplex=0, zoom=-1, quiet=1, _self=cmd):
+    def load_mmtf(filename, object='', discrete=0, multiplex=0, zoom=-1, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1575,7 +1529,7 @@ DESCRIPTION
         from chempy.mmtf import MmtfReader
 
         if not object:
-            object = filename_to_objectname(filename)
+            object = _self.filename_to_objectname(filename)
 
         data = MmtfReader.from_url(filename)
         models = data.to_chempy(_self.get_setting_int('cif_use_auth'))
@@ -1624,19 +1578,19 @@ DESCRIPTION
                 _self.create(object, tmp, 1, -1, discrete=discrete, zoom=zoom)
                 _self.delete(tmp)
 
-    def load_ply(filename, object, state=0, zoom=-1, _self=cmd):
+    def load_ply(filename, object, state=0, zoom=-1, *, _self=cmd):
         from . import cgo
         obj = cgo.from_plystr(_self.file_read(filename))
         r = _self.load_cgo(obj, object, state, zoom=zoom)
         _self.set('cgo_lighting', 1, object)
         return r
 
-    def load_r3d(filename, object, state=0, zoom=-1, _self=cmd):
+    def load_r3d(filename, object, state=0, zoom=-1, *, _self=cmd):
         from . import cgo
         obj = cgo.from_r3d(filename)
         return _self.load_cgo(obj, object, state, zoom=zoom)
 
-    def load_cc1(filename, object, state=0, _self=cmd):
+    def load_cc1(filename, object, state=0, *, _self=cmd):
         obj = io.cc1.fromFile(filename)
         return _self.load_model(obj, object, state)
 

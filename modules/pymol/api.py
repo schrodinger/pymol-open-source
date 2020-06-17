@@ -2,6 +2,7 @@
 
 #--------------------------------------------------------------------
 from .importing import \
+      filename_to_objectname, \
       finish_object,      \
       load,               \
       loadall,            \

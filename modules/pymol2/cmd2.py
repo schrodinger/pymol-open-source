@@ -94,14 +94,15 @@ class Cmd:
         v = getattr(global_cmd, key)
         # determine whether `v` is a callable and has a `_self` argument or
         # a keywords dictionary
+        i = -1
         try:
             argspec = inspect.getfullargspec(v)
-            try:
-                i = argspec.args.index('_self')
-            except ValueError:
-                if argspec.varkw is None:
-                    raise TypeError
-                i = -1
+            if '_self' not in argspec.kwonlyargs:
+                try:
+                    i = argspec.args.index('_self')
+                except ValueError:
+                    if argspec.varkw is None:
+                        raise TypeError
         except TypeError:
             setattr(self, key, v)
             return v

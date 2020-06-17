@@ -46,7 +46,7 @@ enum {
 /* WARNING: don't change these -- you'll break sessions!
    (you can add to them however, I think) */
 
-enum {
+enum cRep_t {
   cRepCyl,             // 0
   cRepSphere,          // 1
   cRepSurface,         // 2
@@ -71,6 +71,8 @@ enum {
   // rep count
   cRepCnt
 };
+
+using cRepBitmask_t = int;
 
 #define cRepCylBit             (1 << 0)
 #define cRepSphereBit          (1 << 1)
@@ -104,12 +106,12 @@ enum {
 #define cRepBitmask        ((1 << cRepCnt) - 1)
 
 // all reps which can be shown for atoms
-const int cRepsAtomMask = (cRepCylBit | cRepSphereBit | cRepSurfaceBit | \
+constexpr cRepBitmask_t cRepsAtomMask = (cRepCylBit | cRepSphereBit | cRepSurfaceBit |
     cRepLabelBit | cRepNonbondedSphereBit | cRepCartoonBit | cRepRibbonBit | \
     cRepLineBit | cRepMeshBit | cRepDotBit | cRepNonbondedBit | cRepEllipsoidBit);
 
 // all reps which can be shown for objects
-const int cRepsObjectMask = (cRepSurfaceBit | cRepMeshBit | cRepDotBit | \
+constexpr cRepBitmask_t cRepsObjectMask = (cRepSurfaceBit | cRepMeshBit | cRepDotBit |
     cRepCellBit | cRepCGOBit | cRepCallbackBit | cRepExtentBit | cRepSliceBit | \
     cRepAngleBit | cRepDihedralBit | cRepVolumeBit | cRepDashBit);
 
@@ -121,50 +123,52 @@ const int cRepsObjectMask = (cRepSurfaceBit | cRepMeshBit | cRepDotBit | \
 
 /* invalite display (list) */
 
-#define cRepInvDisplay 1
+enum cRepInv_t {
+  cRepInvDisplay = 1,
 
 /* precomputed extents (can change if matrix changes) */
-#define cRepInvExtents 5
+  cRepInvExtents = 5,
 
 /* invalidate pickable atoms */
-#define cRepInvPick  9
+  cRepInvPick = 9,
 
 /* invalidate external atom colors */
-#define cRepInvExtColor  10
+  cRepInvExtColor = 10,
 
 /* invalidate atom colors */
-#define cRepInvColor  15
+  cRepInvColor = 15,
 
 /* invalidate label text */
-#define cRepInvText   16
+  cRepInvText = 16,
 
 /* invalidate visible atoms */
-#define cRepInvVisib  20
-#define cRepInvVisib2 21
+  cRepInvVisib = 20,
+  cRepInvVisib2 = 21,
 
 /* invalidate atomic properties */
-#define cRepInvProp   22
+  cRepInvProp = 22,
 
 /* invalidate coordinates */
-#define cRepInvCoord  30
+  cRepInvCoord = 30,
 
 /* invalidate graphic representation */
-#define cRepInvRep    35
+  cRepInvRep = 35,
 
 /* don't call ObjectMoleculeUpdateNonbonded */
-#define cRepInvBondsNoNonbonded 38
+  cRepInvBondsNoNonbonded = 38,
 
 /* invalidate bond structure */
-#define cRepInvBonds  40
+  cRepInvBonds = 40,
 
 /* invalidate atomic structure */
-#define cRepInvAtoms  50
+  cRepInvAtoms = 50,
 
 /* invalidate everything about a structure */
-#define cRepInvAll    100
+  cRepInvAll = 100,
 
 /* invalidate and furthermore, purge existing representations */
-#define cRepInvPurge  110
+  cRepInvPurge = 110,
+};
 
 struct CoordSet;
 struct Object;
@@ -192,7 +196,7 @@ void RepInit(PyMOLGlobals * G, Rep * I);
 void RepPurge(Rep * I);
 void RepInvalidate(struct Rep *I, struct CoordSet *cs, int level);
 
-int RepGetAutoShowMask(PyMOLGlobals * G);
+cRepBitmask_t RepGetAutoShowMask(PyMOLGlobals * G);
 
 class RepIterator {
   int end;

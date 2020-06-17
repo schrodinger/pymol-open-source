@@ -123,9 +123,9 @@ void RepInvalidate(struct Rep *I, struct CoordSet *cs, int level)
 /*
  * Get the visRep mask according to auto_show_* settings
  */
-int RepGetAutoShowMask(PyMOLGlobals * G)
+cRepBitmask_t RepGetAutoShowMask(PyMOLGlobals * G)
 {
-  int mask = 0;
+  cRepBitmask_t mask = 0;
   if (SettingGetGlobal_b(G, cSetting_auto_show_lines))     mask |= cRepLineBit;
   if (SettingGetGlobal_b(G, cSetting_auto_show_spheres))   mask |= cRepSphereBit;
   if (SettingGetGlobal_b(G, cSetting_auto_show_nonbonded)) mask |= cRepNonbondedBit;
