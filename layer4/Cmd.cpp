@@ -1102,22 +1102,38 @@ static PyObject *CmdSmooth(PyObject * self, PyObject * args)
 static PyObject *CmdGetSession(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
   PyObject *dict;
   int partial, quiet;
-  char *names;
-  ok = PyArg_ParseTuple(args, "OOsii", &self, &dict, &names, &partial, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
+  const char* names;
+  int binary = -1;
+  float version = -1.f;
+
+  API_SETUP_ARGS(G, self, args, "OOsii|if", &self, &dict, &names, &partial,
+      &quiet, &binary, &version);
+  API_ASSERT(-1 <= binary && binary <= 1);
+
+  APIEnterBlocked(G);
+
+  const auto binary_orig = SettingGet<bool>(G, cSetting_pse_binary_dump);
+  if (binary != -1)
+    SettingSet(G, cSetting_pse_binary_dump, bool(binary));
+
+  const auto version_orig = SettingGet<float>(G, cSetting_pse_export_version);
+  if (version >= 0.f)
+    SettingSet(G, cSetting_pse_export_version, version);
+
+  ExecutiveGetSession(G, dict, names, partial, quiet);
+
+  SettingSet(G, cSetting_pse_binary_dump, binary_orig);
+  SettingSet(G, cSetting_pse_export_version, version_orig);
+
+  APIExitBlocked(G);
+
+  if (PyErr_Occurred()) {
+    return nullptr;
   }
-  if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    ok = ExecutiveGetSession(G, dict, names, partial, quiet);
-    APIExitBlocked(G);
-  }
-  return APIResultOk(ok);
+
+  return APISuccess();
 }
 
 static PyObject *CmdSetSession(PyObject * self, PyObject * args)

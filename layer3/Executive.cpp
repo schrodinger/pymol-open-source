@@ -5413,7 +5413,6 @@ static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals * G, int list_id, int par
 int ExecutiveGetSession(PyMOLGlobals * G, PyObject * dict, const char *names, int partial,
                         int quiet)
 {
-  int ok = true;
   int list_id = 0;
   SceneViewType sv;
   PyObject *tmp;
@@ -5485,16 +5484,7 @@ int ExecutiveGetSession(PyMOLGlobals * G, PyObject * dict, const char *names, in
 
   }
 
-  if(Feedback(G, FB_Executive, FB_Errors)) {
-    if(PyErr_Occurred()) {
-      PRINTF
-        " ExecutiveGetSession: a Python error occured during creation of the session object:\n"
-        ENDF(G);
-      PyErr_Print();
-    }
-  }
-
-  return (ok);
+  return true;
 }
 
 static void ExecutiveMigrateSession(PyMOLGlobals * G, int session_version)

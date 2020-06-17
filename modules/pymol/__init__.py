@@ -116,10 +116,9 @@ def _init_internals(_pymol):
     _pymol._ext_gui = None
 
     # lists of functions to call when saving and restoring pymol session objects
-    # The entry 'None' represents the PyMOL C-API function call
 
-    _pymol._session_save_tasks = [ None ]
-    _pymol._session_restore_tasks = [ None ]
+    _pymol._session_save_tasks = []
+    _pymol._session_restore_tasks = []
 
     # cached results (as a list):
     # [ [size, (hash1, hash2, ... ), (inp1, inp2, ...), output],

@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from . import colorprinting
+
 if True:
     import os
     import sys
@@ -29,7 +31,6 @@ if True:
     from .cmd import _feedback,fb_module,fb_mask, \
                      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
                      is_list, is_dict, is_tuple, loadable
-    import traceback
 
     def copy_image(quiet=1,_self=cmd): # incentive feature / proprietary
         r = DEFAULT_ERROR
@@ -379,14 +380,28 @@ NOTES
                             # std and ray CGO
                             state.append(state[0])
 
-    def get_session(names='', partial=0, quiet=1, compress=-1, cache=-1, _self=cmd):
+    def get_session(names='', partial=0, quiet=1, compress=-1, cache=-1,
+                    binary=-1, version=-1,
+                    *, _self=cmd):
+        '''
+        :param names: Names of objects to export, or the empty string to export all objects.
+        :param partial: If true, do not store selections, settings, view, movie.
+        :param compress: DEPRECATED Pickle the dictionary to a string and
+        compress that with zlib {default: session_compression}
+        :param cache: ?
+        :param binary: Use efficient binary format {default: pse_binary_dump}
+        :param version: {default: pse_export_version}
+        '''
         session = {}
         r = DEFAULT_SUCCESS
         cache = int(cache)
         compress = int(compress)
         partial = int(partial)
 
-        pse_export_version = round(_self.get_setting_float('pse_export_version'), 4)
+        if version < 0:
+            version = _self.get_setting_float('pse_export_version')
+
+        pse_export_version = round(float(version), 4)
         legacyscenes = (0 < pse_export_version < 1.76) and _self.get_scene_list()
 
         if True:
@@ -413,31 +428,30 @@ NOTES
             _self.set('scene_current_name', scene_current_name)
 
         if cache:
-            cache_opt = int(_self.get('session_cache_optimize'))
-            if cache != 0:
-                cache_mode = int(_self.get('cache_mode'))
-                if ((cache_mode > 0) and (cache_opt != 0)) or (cache_opt==1):
-                    _self.cache('optimize')
-        for a in _self._pymol._session_save_tasks:
-            if a is None:
-                try:
-                    _self.lock(_self)
-                    r = _cmd.get_session(_self._COb,session,str(names),
-                                         int(partial),int(quiet))
-                finally:
-                    _self.unlock(r,_self)
+            cache_opt = _self.get_setting_int('session_cache_optimize')
+            if cache_opt == 1 or (cache_opt != 0
+                                  and _self.get_setting_int('cache_mode')):
+                _self.cache('optimize')
+
+        with _self.lockcm:
+            r = _cmd.get_session(_self._COb, session, str(names), int(partial),
+                                 int(quiet), binary, pse_export_version)
+
+        if True:
                 try:
                     session['session'] = copy.deepcopy(_self._pymol.session)
                     if cache and hasattr(_self._pymol,'_cache'):
                         session['cache'] = _self._pymol._cache
                 except:
-                    traceback.print_exc()
-            else:
+                    colorprinting.print_exc()
+
+        for a in _self._pymol._session_save_tasks:
+                assert a is not None
                 try:
-                    if is_error(a(*(session,), **{'_self':_self})):
+                    if is_error(a(session, _self=_self)):
                         r = DEFAULT_ERROR
                 except:
-                    traceback.print_exc()
+                    colorprinting.print_exc()
                     print("Error: An error occurred when trying to generate session.")
                     print("Error: The resulting session file may be incomplete.")
 
@@ -458,6 +472,10 @@ NOTES
             if(compress<0):
                 compress = _self.get_setting_boolean('session_compression')
             if(compress):
+                colorprinting.warning(
+                    ' Warning: `session_compression` is deprecated. Save '
+                    'to ".pze" or ".pse.gz" files instead, and/or use '
+                    '`pse_binary_dump`')
                 import zlib
                 session = zlib.compress(cPickle.dumps(session, 1))
             return session

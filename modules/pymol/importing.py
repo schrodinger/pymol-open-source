@@ -137,8 +137,7 @@ if True:
             steal = 0
         # use the pymol instance to store state, not the code module
         _pymol = _self._pymol
-        for a in _pymol._session_restore_tasks:
-            if a is None:
+        if True:
                 try:
                     _self.lock(_self)
                     r = _cmd.set_session(_self._COb,session,int(partial),int(quiet))
@@ -164,7 +163,9 @@ if True:
                                     _pymol._cache = copy.deepcopy(session['cache'])
                 except:
                     traceback.print_exc()
-            else:
+
+        for a in _pymol._session_restore_tasks:
+                assert a is not None
                 if not a(session, _self=_self): # don't stop on errors...try to complete anyway
                     r = DEFAULT_ERROR
         if _self.get_movie_locked()>0: # if the movie contains commands...activate security
