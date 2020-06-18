@@ -47,6 +47,23 @@ class TestExporting(testing.PyMOLTestCase):
         self.assertEqual(['ala'], cmd.get_names())
         self.assertEqual(x, cmd.count_atoms())
 
+    @testing.requires_version('2.5')
+    def testGetSession25(self):
+        cmd.set('pse_binary_dump', 0)
+        cmd.set('pse_export_version', 0)
+        s = cmd.get_session(binary=-1, version=-1)
+        self.assertEqual(cmd.get_setting_int('pse_binary_dump'), 0)
+        self.assertEqual(cmd.get_setting_float('pse_export_version'), 0.0)
+        cmd.set_session(s)
+        self.assertEqual(cmd.get_setting_int('pse_binary_dump'), 0)
+        self.assertEqual(cmd.get_setting_float('pse_export_version'), 0.0)
+        s = cmd.get_session(binary=True, version=1.2)
+        self.assertEqual(cmd.get_setting_int('pse_binary_dump'), 0)
+        self.assertEqual(cmd.get_setting_float('pse_export_version'), 0.0)
+        cmd.set_session(s)
+        self.assertEqual(cmd.get_setting_int('pse_binary_dump'), 1)
+        self.assertEqual(cmd.get_setting_float('pse_export_version'), 1.2)
+
     def testMultisave(self):
         names = ['ala', 'gly', 'his', 'arg']
 
@@ -374,3 +391,16 @@ class TestExporting(testing.PyMOLTestCase):
         self.assertEqual(lines[1].split(), [])
         self.assertEqual(lines[2].split(), ['m1', 'TUAUA--UAUAUAA'])
         self.assertEqual(lines[3].split(), ['m2', 'UUAUA?AUAUAUAA'])
+
+    @testing.requires_version('2.0')
+    def testAssingAtomTypes(self):
+        cmd.fragment('his')
+        cmd.alter('all', 'text_type = "none"')
+        mytypes = {}
+        cmd.iterate('all', 'mytypes[name] = text_type', space=locals())
+        self.assertEqual(mytypes['NE2'], 'none')
+        pymol.exporting.assign_atom_types('all', 'mol2')
+        cmd.iterate('all', 'mytypes[name] = text_type', space=locals())
+        self.assertEqual(mytypes['NE2'], 'N.pl3')
+        self.assertEqual(mytypes['N'], 'N.3')
+        self.assertEqual(mytypes['CG'], 'C.2')

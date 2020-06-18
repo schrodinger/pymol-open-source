@@ -1,5 +1,6 @@
 import os
 import sys
+import pymol
 from pymol import cmd, testing, stored
 
 pdbstr = '''ATOM      1  N   GLY    22      -1.195   0.201  -0.206  1.00  0.00           N  
@@ -68,7 +69,6 @@ class TestImporting(testing.PyMOLTestCase):
             import urlparse
 
         # PyMOL 1.8.6 adds full URLs, remove them
-        import pymol
         pdbpaths = pymol.importing.hostPaths['pdb']
         pdbpaths[:] = [p for p in pdbpaths if '://' not in p]
 
@@ -92,8 +92,16 @@ class TestImporting(testing.PyMOLTestCase):
             self.assertItemsEqual(cmd.get_names(), names)
 
     def testFinishObject(self):
-        cmd.finish_object
-        self.skipTest("TODO")
+        # Disclaimer: I don't know the relevance of load(..., finish=0) and
+        # finish_object(), but it does call ObjectMoleculeUpdateIDNumbers
+        # so I'll just test that.
+        cmd.load(self.datafile("1ehz-5.pdb"), "m1", finish=0)
+        cmd.alter('all', 'ID = -1')
+        self.assertEqual(cmd.identify('last all'), [-1])
+        cmd.finish_object('m1')
+        self.assertEqual(cmd.identify('last all'), [224])
+        # non-existing object name should throw
+        self.assertRaises(pymol.CmdException, lambda: cmd.finish_object('m2'))
 
     def testLoad(self):
         cmd.load
@@ -448,6 +456,14 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.space('pymol', 0.5)
         cmd.space('cmyk', 0.7)
         cmd.space('rgb')
+        # CmdException before 2.5, now QuietException (from Shortcut)
+        self.assertRaises(Exception, lambda: cmd.space('no-such-space'))
+        pymol_data = os.environ['PYMOL_DATA']
+        os.environ['PYMOL_DATA'] = '/no/such/dir'
+        try:
+            self.assertRaises(pymol.CmdException, lambda: cmd.space('cmyk'))
+        finally:
+            os.environ['PYMOL_DATA'] = pymol_data
 
     @testing.requires_version('1.7.3.0')
     def testLoadCoords(self):
