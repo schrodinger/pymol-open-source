@@ -20,6 +20,8 @@ Z* -------------------------------------------------------------------
 
 #include "os_predef.h"
 
+#include <memory>
+
 #ifdef _PYMOL_NOPY
 typedef int PyObject;
 #undef _PYMOL_NUMPY
@@ -81,13 +83,45 @@ inline SomeString PyBytes_AsSomeString(PyObject * o) {
 namespace pymol {
 /**
  * Destruction policy for unique_ptr<PyObject, pymol::pyobject_delete>
+ *
+ * Must only be used if the GIL is guaranteed when operator() is called.
  */
 struct pyobject_delete {
   void operator()(PyObject* o) const { Py_DECREF(o); }
 };
+
+/**
+ * RAII helper to ensure the Python GIL
+ */
+class GIL_Ensure
+{
+  PyGILState_STATE state;
+
+public:
+  GIL_Ensure();
+  ~GIL_Ensure();
+};
 } // namespace pymol
 
-#define unique_PyObject_ptr std::unique_ptr<PyObject, pymol::pyobject_delete>
+namespace std
+{
+/**
+ * Destruction policy which ensures the GIL before operator() is called.
+ */
+template <> struct default_delete<PyObject> {
+  void operator()(PyObject* o) const
+  {
+    pymol::GIL_Ensure gil;
+    Py_DECREF(o);
+  }
+};
+} // namespace std
+
+/**
+ * Unique pointer which must only be used if the GIL is guaranteed when it goes
+ * out of scope or is reset.
+ */
+using unique_PyObject_ptr = std::unique_ptr<PyObject, pymol::pyobject_delete>;
 
 #endif
 

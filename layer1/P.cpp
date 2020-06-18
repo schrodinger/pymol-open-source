@@ -2442,4 +2442,16 @@ void PCatchInit(void)
     Py_DECREF(pcatch);
   }
 }
+
+namespace pymol
+{
+GIL_Ensure::GIL_Ensure() {
+  state = PyGILState_Ensure();
+}
+GIL_Ensure::~GIL_Ensure()
+{
+  PyGILState_Release(state);
+}
+} // namespace pymol
+
 #endif

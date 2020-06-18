@@ -272,7 +272,6 @@ struct _CP_inst {
   SavedThreadRec savedThread[MAX_SAVED_THREAD];
 };
 
-
 /* PyObject *GetBondsDict(void); */
 
 
