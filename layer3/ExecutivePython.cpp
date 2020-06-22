@@ -31,16 +31,12 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
       }
     }
     PBlock(G); /*PBlockAndUnlockAPI(); */
-#ifndef _PYMOL_NO_UNDO
-#endif
     obj = (CObject*) ObjectMoleculeLoadChemPyModel(
         G, (ObjectMolecule*) origObj, model, frame, discrete);
     PUnblock(G); /*PLockAPIAndUnblock(); */
     if (!origObj) {
       if (obj) {
         ObjectSetName(obj, valid_name);
-#ifndef _PYMOL_NO_UNDO
-#endif
         ExecutiveManageObject(G, obj, zoom, quiet);
         if (frame < 0)
           frame = ((ObjectMolecule*) obj)->NCSet - 1;

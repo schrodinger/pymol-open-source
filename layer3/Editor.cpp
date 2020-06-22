@@ -630,7 +630,6 @@ EditorInvert(PyMOLGlobals * G, int quiet)
     } else if(!(obj0 && (obj0 == obj1) && (obj0 = obj2))) {
       return pymol::Error("Must pick three atoms in the same object");
     } else {
-
       state = SceneGetState(G);
       ObjectMoleculeSaveUndo(obj0, state, false);
 
@@ -931,8 +930,6 @@ pymol::Result<> EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int v
       auto sele1 = SelectorIndexByName(G, cEditorSele2);
       auto obj0 = SelectorGetFastSingleObjectMolecule(G, sele0);
       auto obj1 = SelectorGetFastSingleObjectMolecule(G, sele1);
-#ifndef _PYMOL_NO_UNDO
-#endif
       if(obj0) {
         if(obj0->DiscreteFlag) {
           return pymol::make_error("Can't attach atoms onto discrete objects.");
@@ -965,8 +962,6 @@ pymol::Result<> EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int v
       } else {
         return pymol::make_error("Invalid object.");
       }
-#ifndef _PYMOL_NO_UNDO
-#endif
     } else {
       return pymol::make_error("Invalid pk1 selection.");
     }
@@ -1058,6 +1053,7 @@ pymol::Result<> EditorHFill(PyMOLGlobals * G, int quiet)
           s2 = cEditorSele1;
           s1 = pymol::string_format("(neighbor (%s)) & hydro", s2);
 	}
+	
 	ExecutiveRemoveAtoms(G, s1.c_str(), quiet);
 	i0 = ObjectMoleculeGetAtomIndex(obj0, sele0);
 	obj0->AtomInfo[i0].chemFlag = false;
@@ -1085,7 +1081,6 @@ pymol::Result<> EditorHFix(PyMOLGlobals * G, const char *sele, int quiet)
 {
   int sele0, sele1;
   ObjectMolecule *obj0, *obj1;
-
   if((!sele) || (!sele[0])) {   /* if selection is empty, then apply to picked atoms */
     if(EditorActive(G)) {
       sele0 = SelectorIndexByName(G, cEditorSele1);

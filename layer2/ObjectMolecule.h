@@ -88,9 +88,6 @@ struct ObjectMolecule : public CObject {
   int RepVisCacheValid = 0;
   int RepVisCache = 0;     /* for transient storage during updates */
 
-#ifndef _PYMOL_NO_UNDO
-#endif
-
   // for reporting available assembly ids after mmCIF loading - SUBJECT TO CHANGE
   std::shared_ptr<pymol::cif_file> m_ciffile;
   const pymol::cif_data * m_cifdata = nullptr;
@@ -493,11 +490,6 @@ int ObjectMoleculeUpdateAtomTypeInfoForState(PyMOLGlobals * G, ObjectMolecule * 
 
 #ifdef _PYMOL_IP_EXTRAS
 int ObjectMoleculeUpdateMMStereoInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize=1);
-#endif
-
-#ifndef _PYMOL_NO_UNDO
-void ObjectMoleculeSetAtomBondInfoTypeOldId(PyMOLGlobals * G, ObjectMolecule * obj);
-void ObjectMoleculeSetAtomBondInfoTypeOldIdToNegOne(PyMOLGlobals * G, ObjectMolecule * obj);
 #endif
 
 void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAtom);

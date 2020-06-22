@@ -1753,10 +1753,6 @@ static PyObject* CmdGetCapabilities(PyObject*, PyObject*)
 #ifdef _PYMOL_INCENTIVE
     // Incentive PyMOL
     PySet_Add(caps, PConvToPyObject("incentive"));
-#ifndef _PYMOL_NO_UNDO
-    // improved editing undo, incentive feature since PyMOL 1.5
-    PySet_Add(caps, PConvToPyObject("undo1"));
-#endif
 #endif // _PYMOL_INCENTIVE
   }
 

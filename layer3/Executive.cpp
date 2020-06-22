@@ -1423,24 +1423,16 @@ pymol::Result<> ExecutivePseudoatom(PyMOLGlobals* G, pymol::zstring_view object_
     ObjectSetName(obj, object_name);
   }
 
-#ifndef _PYMOL_NO_UNDO
-#endif
     if(ObjectMoleculeAddPseudoatom(obj, sele_index, name, resn, resi, chain,
                                    segi, elem, vdw, hetatm, b, q, label, pos, color,
                                    state, mode, quiet)) {
       if(is_new) {
         ExecutiveDelete(G, object_name);        /* just in case */
         ExecutiveManageObject(G, obj, false, true);
-#ifndef _PYMOL_NO_UNDO
-#endif
       } else {
         ExecutiveUpdateObjectSelection(G, obj);
-#ifndef _PYMOL_NO_UNDO
-#endif
       }
     }
-#ifndef _PYMOL_NO_UNDO
-#endif
   return {};
 }
 
@@ -3647,8 +3639,6 @@ pymol::Result<> ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const c
                ExecutiveUpdateObjectSelection(G,rec->obj);
              */
             SelectorSetName(G, name, old_name);
-#ifndef _PYMOL_NO_UNDO
-#endif
             SceneChanged(G);
             SeqChanged(G);
           }
@@ -3927,9 +3917,6 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
     origObj = ExecutiveGetExistingCompatible(G, object_name, content_format);
   }
 
-#ifndef _PYMOL_NO_UNDO
-#endif
-
   // file type dependent multiplex and discrete default
   if(discrete < 0) {
     if(multiplex == 1) {
@@ -4131,9 +4118,6 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
     PRINTFB(G, FB_Executive, FB_Actions)
       "%s", buf ENDFB(G);
   }
-
-#ifndef _PYMOL_NO_UNDO
-#endif
 
   return {};
 }
@@ -8881,8 +8865,6 @@ pymol::Result<> ExecutiveFuse(PyMOLGlobals* G, const char* s0, const char* s1,
   SETUP_SELE_DEFAULT_PREFIXED(1, cSelectionInvalid);
 
   {
-#ifndef _PYMOL_NO_UNDO
-#endif
     {
       EditorInactivate(G);
       obj0 = SelectorGetSingleObjectMolecule(G, sele0);
@@ -9139,8 +9121,6 @@ pymol::Result<> ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet
   ObjectMoleculeOpRec op;
 
   {
-#ifndef _PYMOL_NO_UNDO
-#endif
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->type == cExecObject) {
         if(rec->obj->type == cObjectMolecule) {
@@ -10020,8 +10000,6 @@ pymol::Result<int> ExecutiveIterate(PyMOLGlobals * G, const char *str1, const ch
     if (!read_only) {
       SeqChanged(G);
     }
-#ifndef _PYMOL_NO_UNDO
-#endif
   } else {
     if(!quiet) {
       PRINTFB(G, FB_Executive, FB_Warnings)
@@ -10351,8 +10329,6 @@ pymol::Result<int> ExecutiveIterateState(PyMOLGlobals* G, int state,
       ExecutiveObjMolSeleOp(G, sele1, &op1);
     }
     if(!read_only) {
-#ifndef _PYMOL_NO_UNDO
-#endif
       // for dynamic_measures
       ExecutiveUpdateCoordDepends(G, NULL);
       SeqChanged(G);

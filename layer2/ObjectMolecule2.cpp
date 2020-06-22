@@ -246,10 +246,6 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
   pymol::vla<AtomInfoType> atInfo(1);
   AtomInfoType* ai = atInfo.data();
 
-#ifdef _PYMOL_IP_EXTRAS
-  ai->oldid = -1;
-#endif
-
   // FIXME this should be -2
   if (state == -1) {
     state = I->getCurrentState();

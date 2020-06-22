@@ -159,9 +159,6 @@ int AtomInfoCheckUniqueBondID(PyMOLGlobals * G, BondType * bi)
 }
 
 void BondTypeInit(BondType *bt){
-#ifdef _PYMOL_IP_EXTRAS
-  bt->oldid = -1;
-#endif
   bt->unique_id = 0;
   bt->has_setting = 0;
 }

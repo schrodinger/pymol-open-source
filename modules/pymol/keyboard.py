@@ -53,13 +53,8 @@ class _PersistentEditing:
 
         self.set_sel(sel)
 
-        suspend_undo = self._cmd.get("suspend_undo")
         # in case something goes wrong, try & finally
         try:
-            if extract:
-                self._cmd.push_undo(self._sel, just_coordinates=0, finish_undo=0)
-            self._cmd.set("suspend_undo", 1, updates=0)
-
             if self._init == 2:
                 self.clean_obj()
 
@@ -75,9 +70,6 @@ class _PersistentEditing:
 
         finally:
             self._cmd.set("suspend_updates", 0)
-            self._cmd.set("suspend_undo", suspend_undo, updates=0)
-            if extract:
-                self._cmd.push_undo("", just_coordinates=0, finish_undo=1)
 
 # in pymol2 this needs to be abstracted better
 # by making _persistent a member of Cmd so we can

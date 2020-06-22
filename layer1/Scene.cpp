@@ -2170,17 +2170,8 @@ void SceneSetFrame(PyMOLGlobals * G, int mode, int frame)
       ExecutiveInvalidateSelectionIndicatorsCGO(G);
       SceneInvalidatePicking(G);
       if(movieCommand) {
-#ifndef _PYMOL_NO_UNDO
-	int suspend_undo = SettingGetGlobal_b(G, cSetting_suspend_undo);
-	if (!suspend_undo){
-	  SettingSetGlobal_i(G, cSetting_suspend_undo, 1);
-	}
-#endif
 	MovieDoFrameCommand(G, newFrame);
 	MovieFlushCommands(G);
-#ifndef _PYMOL_NO_UNDO
-	SettingSetGlobal_i(G, cSetting_suspend_undo, suspend_undo);
-#endif
       }
       if(SettingGetGlobal_b(G, cSetting_cache_frames))
 	I->MovieFrameFlag = true;

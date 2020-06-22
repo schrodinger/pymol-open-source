@@ -348,7 +348,6 @@ static PyObject *P_povray = NULL;
 static PyObject *P_traceback = NULL;
 static PyObject *P_parser = NULL;
 
-static PyObject *P_main = NULL;
 static PyObject *P_vfont = NULL;
 
 /* module import helper */

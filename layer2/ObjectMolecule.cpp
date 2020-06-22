@@ -802,8 +802,6 @@ static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int stat
   int a;
   int seleFlag = false;
   const AtomInfoType *ai0;
-#ifndef _PYMOL_NO_UNDO
-#endif
   int ok = true;
 
   ai0 = I->AtomInfo;
@@ -830,9 +828,6 @@ static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int stat
               auto cs = I->CSet[iter.state];
               if (!cs)
                 continue;
-
-#ifndef _PYMOL_NO_UNDO
-#endif
 
               seleFlag |= ObjectMoleculeSetMissingNeighborCoords(I, cs, a, true);
             }
@@ -4184,9 +4179,6 @@ int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai,
     LexAssign(I->G, ai->resn, ai0->resn);
     ai->visRep = ai0->visRep;
     ai->id = -1;
-#ifdef _PYMOL_IP_EXTRAS
-    ai->oldid = -1;
-#endif
     ai->rank = -1;
 
     AtomInfoAssignParameters(I->G, ai);
@@ -11412,9 +11404,6 @@ ObjectMolecule::ObjectMolecule(PyMOLGlobals * G, int discreteFlag) : CObject(G)
     I->UndoState[a] = -1;
   }
   I->UndoIter = 0;
-
-#ifndef _PYMOL_NO_UNDO
-#endif
 }
 
 
@@ -11923,9 +11912,6 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
 }
 
 #ifdef _PYMOL_IP_EXTRAS
-#endif
-
-#ifndef _PYMOL_NO_UNDO
 #endif
 
 void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAtom){

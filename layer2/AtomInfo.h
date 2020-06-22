@@ -222,9 +222,6 @@ typedef struct BondType {
   int index[2];
   int id;
   int unique_id;
-#ifdef _PYMOL_IP_EXTRAS
-  int oldid;
-#endif
   signed char order;    // 0-4
   signed char temp1;    // bool? where used?
   signed char stereo;   // 0-6 Only for SDF (MOL) format in/out
@@ -256,8 +253,8 @@ typedef struct AtomInfoType {
   float elec_radius;            /* radius for PB calculations */
   int rank;
   int visRep;                   /* bitmask for all reps */
+
 #ifdef _PYMOL_IP_EXTRAS
-  int oldid;                    // for undo
   int prop_id;
 #endif
 
