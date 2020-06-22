@@ -42,6 +42,7 @@ Z* -------------------------------------------------------------------
  */
 
 #ifndef _PYMOL_NOPY
+#define PY_SSIZE_T_CLEAN
 #include"os_python.h"
 #include"PyMOLGlobals.h"
 #include"PyMOLOptions.h"
@@ -5576,7 +5577,7 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
   int quiet;
   int multiplex;
   int zoom;
-  int bytes;
+  Py_ssize_t bytes;
   int mimic;
   const char* contents;
 
