@@ -191,6 +191,9 @@ def guess_pymol_path():
 
         # /usr/share/pymol
         os.path.join(sys.prefix, 'share', 'pymol'),
+
+        # venv --system-site-packages (experimental)
+        os.path.join(sys.base_prefix, 'share', 'pymol'),
     ]
 
     for pymol_path in pymol_path_candidates:
