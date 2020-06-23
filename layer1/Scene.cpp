@@ -4268,6 +4268,24 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
       if(SceneDoXYPick(G, x, y, click_side)) {
         obj = (CObject *) I->LastPicked.context.object;
 
+        assert(I->LastPicked.src.bond != cPickableNoPick);
+
+        if (mode == cButModeSimpleClick) {
+          float pos_store[3];
+          const float* pos = nullptr;
+          int const index = I->LastPicked.src.index; /* 1-based */
+          int const state = I->LastPicked.context.state;
+          auto objmol = dynamic_cast<ObjectMolecule const*>(obj);
+
+          if (objmol &&
+              ObjectMoleculeGetAtomTxfVertex(objmol, state, index, pos_store))
+            pos = pos_store;
+
+          PyMOL_SetClickReady(G->PyMOL, obj->Name, index, button, mod,
+              I->LastWinX, I->Height - (I->LastWinY + 1), pos,
+              state + 1 /* 1-based */, I->LastPicked.src.bond);
+        }
+
         switch (obj->type) {
         case cObjectMolecule:
           if(Feedback(G, FB_Scene, FB_Results)) {
@@ -4363,18 +4381,6 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
           }
           switch (mode) {
           case cButModeSimpleClick:
-	    {
-	      float pos_store[3], *pos = pos_store;
-	      int index = I->LastPicked.src.index; /* 1-based */
-	      int state = I->LastPicked.context.state;
-	      if(!( (obj->type == cObjectMolecule) &&
-		    (I->LastPicked.src.bond != cPickableNoPick ) &&
-		    ObjectMoleculeGetAtomTxfVertex((ObjectMolecule *)obj,-1,index, pos)))
-		pos = NULL;
-	      PyMOL_SetClickReady(G->PyMOL, obj->Name, I->LastPicked.src.index,
-				  button, mod, I->LastWinX, I->Height - (I->LastWinY + 1),
-				  pos, state + 1); /* send a 1-based state index */
-	    }
             break;
           case cButModeLB:
           case cButModeMB:

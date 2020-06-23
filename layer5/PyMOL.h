@@ -243,7 +243,7 @@ void PyMOL_NeedFakeDrag(CPyMOL * I);
 void PyMOL_NeedRedisplay(CPyMOL * I);
 void PyMOL_NeedSwap(CPyMOL * I);
 void PyMOL_SetClickReady(CPyMOL * I, const char *name, int index, int button, int mod, int x,
-                         int y, const float *pos, int state);
+                         int y, const float *pos, int state, int bond = -1);
 void PyMOL_SetPassive(CPyMOL * I, int onOff);
 void PyMOL_NeedReshape(CPyMOL * I, int mode, int x, int y, int width, int height);
 

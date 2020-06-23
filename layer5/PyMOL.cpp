@@ -110,6 +110,7 @@ typedef struct _CPyMOL {
   int DrawnFlag;
   ObjectNameType ClickedObject;
   int ClickedIndex, ClickedButton, ClickedModifiers, ClickedX, ClickedY, ClickedHavePos, ClickedPosState;
+  int ClickedBondIndex;
   float ClickedPos[3];
   int ImageRequestedFlag, ImageReadyFlag;
   int DraggedFlag;
@@ -2572,34 +2573,23 @@ void PyMOL_SetPassive(CPyMOL * I, int onOff)
 }
 
 void PyMOL_SetClickReady(CPyMOL * I, const char *name, int index, int button, int mod, int x,
-                         int y, const float *pos, int state)
+                         int y, const float *pos, int state, int bond)
 {
+  I->ClickReadyFlag = true;
+  I->ClickedIndex = index;
+  I->ClickedBondIndex = bond;
+  I->ClickedButton = button;
+  I->ClickedModifiers = mod;
+  I->ClickedX = x;
+  I->ClickedY = y;
+  I->ClickedPosState = state;
 
-  if(name && name[0] && (index >= 0)) {
-    I->ClickReadyFlag = true;
-    strcpy(I->ClickedObject, name);
-    I->ClickedIndex = index;
-    I->ClickedButton = button;
-    I->ClickedModifiers = mod;
-    I->ClickedX = x;
-    I->ClickedY = y;
-  } else {
-    I->ClickedObject[0] = 0;
-    I->ClickReadyFlag = true;
-    I->ClickedX = x;
-    I->ClickedY = y;
-    I->ClickedIndex = index;
-    I->ClickedButton = button;
-    I->ClickedModifiers = mod;
-  }
-  if(pos) {
-    I->ClickedHavePos = true;
+  strcpy(I->ClickedObject, name ? name : "");
+
+  if ((I->ClickedHavePos = bool(pos))) {
     copy3f(pos, I->ClickedPos);
-    I->ClickedPosState = state; 
   } else {
-    I->ClickedHavePos = false;
     zero3f(I->ClickedPos);
-    I->ClickedPosState = 0;
   }
 }
 
@@ -2619,61 +2609,80 @@ char *PyMOL_GetClickString(CPyMOL * I, int reset)
   if(reset)
     I->ClickReadyFlag = false;
   if(ready) {
-    result = pymol::malloc<char>(OrthoLineLength + 1);
+    size_t result_size = OrthoLineLength + 1;
+    result = pymol::malloc<char>(result_size);
     if(result) {
-      WordType butstr = "left", modstr = "", posstr = "";
-      result[0] = 0;
+      const char* butstr = "left";
       switch (I->ClickedButton) {
       case P_GLUT_SINGLE_LEFT:
-        strcpy(butstr, "single_left");
+        butstr = "single_left";
         break;
       case P_GLUT_SINGLE_MIDDLE:
-        strcpy(butstr, "single_middle");
+        butstr = "single_middle";
         break;
       case P_GLUT_SINGLE_RIGHT:
-        strcpy(butstr, "single_right");
+        butstr = "single_right";
         break;
       case P_GLUT_DOUBLE_LEFT:
-        strcpy(butstr, "double_left");
+        butstr = "double_left";
         break;
       case P_GLUT_DOUBLE_MIDDLE:
-        strcpy(butstr, "double_middle");
+        butstr = "double_middle";
         break;
       case P_GLUT_DOUBLE_RIGHT:
-        strcpy(butstr, "double_right");
+        butstr = "double_right";
         break;
       }
+
+      WordType modstr = "";
       if(cOrthoCTRL & I->ClickedModifiers) {
-        if(modstr[0])
-          strcat(modstr, " ");
-        strcat(modstr, "ctrl");
+        strcat(modstr, " ctrl");
       }
       if(cOrthoALT & I->ClickedModifiers) {
-        if(modstr[0])
-          strcat(modstr, " ");
-        strcat(modstr, "alt");
+        strcat(modstr, " alt");
       }
       if(cOrthoSHIFT & I->ClickedModifiers) {
-        if(modstr[0])
-          strcat(modstr, " ");
-        strcat(modstr, "shift");
+        strcat(modstr, " shift");
       }
-      if(I->ClickedHavePos) {
-	sprintf(posstr,"px=%.7g\npy=%.7g\npz=%.7g\nstate=%d",I->ClickedPos[0],I->ClickedPos[1],I->ClickedPos[2],I->ClickedPosState);
-      }
+
+      result[0] = 0;
       if(!I->ClickedObject[0]) {
-        sprintf(result,
-                "type=none\nclick=%s\nmod_keys=%s\nx=%d\ny=%d\n%s",
-                butstr, modstr, I->ClickedX, I->ClickedY,posstr);
-      } else {
-        ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(I->G, I->ClickedObject);
+        strcat(result, "type=none\n");
+      } else if (auto cobj =
+                     ExecutiveFindObjectByName(I->G, I->ClickedObject)) {
+        switch (cobj->type) {
+        case cObjectMolecule:
+          strcat(result, "type=object:molecule\n");
+          break;
+        case cObjectCGO:
+          strcat(result, "type=object:cgo\n");
+          break;
+        default:
+          strcat(result, "type=object\n");
+          break;
+        }
+
+        snprintf(result + strlen(result), result_size - strlen(result),
+            "object=%s\n"
+            "index=%d\n"
+            "bond=%d\n",
+            I->ClickedObject, //
+            I->ClickedIndex + 1 /* 1-based */,
+            I->ClickedBondIndex /* 0-based or cPickable_t */);
+
+        auto obj = dynamic_cast<ObjectMolecule const*>(cobj);
         if(obj && (I->ClickedIndex < obj->NAtom)) {
-          AtomInfoType *ai = obj->AtomInfo + I->ClickedIndex;
+          const AtomInfoType* ai = obj->AtomInfo + I->ClickedIndex;
           char inscode_str[2] = { ai->inscode, '\0' };
-          sprintf(result,
-                  "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%d%s\nname=%s\nalt=%s\nclick=%s\nmod_keys=%s\nx=%d\ny=%d\n%s",
-                  I->ClickedObject,
-                  I->ClickedIndex + 1,
+          snprintf(result + strlen(result), result_size - strlen(result),
+              "rank=%d\n"
+              "id=%d\n"
+              "segi=%s\n"
+              "chain=%s\n"
+              "resn=%s\n"
+              "resi=%d%s\n"
+              "name=%s\n"
+              "alt=%s\n",
                   ai->rank,
                   ai->id,
                   LexStr(I->G, ai->segi),
@@ -2681,9 +2690,31 @@ char *PyMOL_GetClickString(CPyMOL * I, int reset)
                   LexStr(I->G, ai->resn),
                   ai->resv, inscode_str,
                   LexStr(I->G, ai->name),
-                  ai->alt, butstr, modstr, I->ClickedX, I->ClickedY, posstr);
+                  ai->alt);
         }
       }
+
+      snprintf(result + strlen(result), result_size - strlen(result),
+          "click=%s\n"
+          "mod_keys=%s\n"
+          "x=%d\n"
+          "y=%d\n",
+          butstr, modstr + (modstr[0] == ' ' ? 1 : 0), I->ClickedX,
+          I->ClickedY);
+
+      if (I->ClickedHavePos) {
+        snprintf(result + strlen(result), result_size - strlen(result),
+            "px=%.7g\n"
+            "py=%.7g\n"
+            "pz=%.7g\n"
+            "state=%d\n",
+            I->ClickedPos[0], I->ClickedPos[1], I->ClickedPos[2],
+            I->ClickedPosState);
+      }
+
+      // strip trailing newline
+      assert(pymol::zstring_view(result).ends_with('\n'));
+      result[strlen(result) - 1] = '\0';
     }
   }
   PYMOL_API_UNLOCK return (result);

@@ -1425,6 +1425,24 @@ static PyObject *CmdGetChains(PyObject * self, PyObject * args)
   return APIResult(G, res);
 }
 
+static PyObject *CmdGetClickString(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = nullptr;
+  int reset = 0;
+  API_SETUP_ARGS(G, self, args, "O|i", &self, &reset);
+  APIEnter(G);
+  char* clickstr = PyMOL_GetClickString(G->PyMOL, reset);
+  APIExit(G);
+
+  if (!clickstr) {
+    return APIFailure(G, "not click-ready");
+  }
+
+  PyObject* result = PyUnicode_FromString(clickstr);
+  pymol::free(clickstr);
+  return result;
+}
+
 static PyObject *CmdRampNew(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -6437,6 +6455,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_bond_print", CmdGetBondPrint, METH_VARARGS},
   {"get_busy", CmdGetBusy, METH_VARARGS},
   {"get_chains", CmdGetChains, METH_VARARGS},
+  {"get_click_string", CmdGetClickString, METH_VARARGS},
   {"get_collada", CmdGetCOLLADA, METH_VARARGS},
   {"get_color", CmdGetColor, METH_VARARGS},
   {"get_colorection", CmdGetColorection, METH_VARARGS},

@@ -93,6 +93,7 @@ if True:
         '-box' : 33 ,
 
         'mvsz' : 34 ,
+        'clik' : 35 ,
         'dgrt' : 36 ,
         'dgmv' : 37 ,
         'dgmz' : 38 ,
