@@ -243,7 +243,9 @@ typedef struct AtomInfoType {
   int customType;
   int priority;
   float b, q, vdw, partialCharge;
-  int selEntry;
+
+  SelectorMemberOffset_t selEntry;
+
   int color;
   int id;                       // PDB ID
   unsigned int flags;

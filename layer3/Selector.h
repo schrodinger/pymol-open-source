@@ -30,9 +30,6 @@ Z* -------------------------------------------------------------------
 
 #include "Result.h"
 
-using SelectorID_t = int;
-using SelectorMemberOffset_t = int;
-
 constexpr SelectorID_t cSelectionInvalid = -1;
 constexpr SelectorID_t cSelectionAll = 0;
 constexpr SelectorID_t cSelectionNone = 1;

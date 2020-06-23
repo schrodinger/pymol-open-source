@@ -301,7 +301,7 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                 ObjectMolecule ** result);
 PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I);
 pymol::Result<> ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const char *text);
-const char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state);
+const char *ObjectMoleculeGetStateTitle(const ObjectMolecule*, int state);
 int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int state);
 
 int ObjectMoleculeSetStateOrder(ObjectMolecule * I, int * order, int len);
@@ -366,9 +366,9 @@ int ObjectMoleculeUpdateNeighbors(ObjectMolecule * I);
 int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, const float *v, int mode,
                            int log);
 int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float *v, int log, float *diff);
-int ObjectMoleculeGetAtomVertex(ObjectMolecule * I, int state, int index, float *v);
-int ObjectMoleculeGetAtomTxfVertex(ObjectMolecule * I, int state, int index, float *v);
-int ObjectMoleculeGetAtomIndex(ObjectMolecule * I, int sele);
+int ObjectMoleculeGetAtomVertex(const ObjectMolecule *, int state, int index, float *v);
+int ObjectMoleculeGetAtomTxfVertex(const ObjectMolecule*, int state, int index, float *v);
+int ObjectMoleculeGetAtomIndex(const ObjectMolecule*, SelectorID_t sele);
 int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
                                      int sele, const float *TTT, int log,
                                      const char *sname, int homogenous, int global);

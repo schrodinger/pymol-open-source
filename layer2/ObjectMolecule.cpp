@@ -77,7 +77,7 @@ static
 void ObjectMoleculeTransformTTTf(ObjectMolecule * I, float *ttt, int state);
 
 static
-int ObjectMoleculeGetAtomGeometry(ObjectMolecule * I, int state, int at);
+int ObjectMoleculeGetAtomGeometry(const ObjectMolecule * I, int state, int at);
 
 static
 void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I);
@@ -2745,7 +2745,7 @@ pymol::Result<> ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const
 
 
 /*========================================================================*/
-const char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state)
+const char *ObjectMoleculeGetStateTitle(const ObjectMolecule * I, int state)
 {
   auto cs = I->getCoordSet(state);
   if (!cs) {
@@ -4691,7 +4691,10 @@ void ObjectMoleculePurge(ObjectMolecule * I)
 
 
 /*========================================================================*/
-int ObjectMoleculeGetAtomGeometry(ObjectMolecule * I, int state, int at)
+/**
+ * @pre ObjectMoleculeUpdateNeighbors
+ */
+int ObjectMoleculeGetAtomGeometry(const ObjectMolecule* I, int state, int at)
 {
   /* this determines hybridization from coordinates in those few cases
    * where it is unambiguous */
@@ -6531,13 +6534,13 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
 
 
 /*========================================================================*/
-int ObjectMoleculeGetAtomIndex(ObjectMolecule * I, int sele)
+int ObjectMoleculeGetAtomIndex(const ObjectMolecule* I, SelectorID_t sele)
 {
-  int a, s;
   if(sele < 0)
     return (-1);
-  for(a = 0; a < I->NAtom; a++) {
-    s = I->AtomInfo[a].selEntry;
+
+  for (int a = 0; a < I->NAtom; a++) {
+    auto const s = I->AtomInfo[a].selEntry;
     if(SelectorIsMember(I->G, s, sele))
       return (a);
   }
@@ -11173,7 +11176,7 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule * I, int atom,
 
 
 /*========================================================================*/
-int ObjectMoleculeGetAtomVertex(ObjectMolecule * I, int state, int index, float *v)
+int ObjectMoleculeGetAtomVertex(const ObjectMolecule * I, int state, int index, float *v)
 {
   int result = 0;
   if(state < 0)
@@ -11194,10 +11197,10 @@ int ObjectMoleculeGetAtomVertex(ObjectMolecule * I, int state, int index, float 
 
 
 /*========================================================================*/
-int ObjectMoleculeGetAtomTxfVertex(ObjectMolecule * I, int state, int index, float *v)
+int ObjectMoleculeGetAtomTxfVertex(const ObjectMolecule * I, int state, int index, float *v)
 {
   int result = 0;
-  CoordSet *cs = NULL;
+  const CoordSet* cs = nullptr;
   if (I->DiscreteFlag){
     cs = I->DiscreteCSet[index];
   }
