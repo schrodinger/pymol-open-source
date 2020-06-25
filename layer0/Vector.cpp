@@ -92,7 +92,7 @@ unsigned int optimizer_workaround1u(unsigned int value)
 
 float get_random0to1f()
 {
-  return (rand() / (_1 + RAND_MAX));
+  return rand() / (1.0 + RAND_MAX);
 }
 
 int pymol_roundf(float f)
@@ -199,9 +199,9 @@ int equal3f(const float *v1, const float *v2)
 
 void get_random3f(float *x)
 {                               /* this needs to be fixed as in Tinker */
-  x[0] = 0.5F - (rand() / (_1 + RAND_MAX));
-  x[1] = 0.5F - (rand() / (_1 + RAND_MAX));
-  x[2] = 0.5F - (rand() / (_1 + RAND_MAX));
+  x[0] = 0.5F - get_random0to1f();
+  x[1] = 0.5F - get_random0to1f();
+  x[2] = 0.5F - get_random0to1f();
   normalize3f(x);
 }
 
