@@ -8744,45 +8744,53 @@ bool ExecutiveIsMoleculeOrSelection(PyMOLGlobals * G, const char *name)
 
 
 /*========================================================================*/
-int ExecutiveGetType(PyMOLGlobals * G, const char *name, WordType type)
+/**
+ * @param name Name of the object or selection
+ * @return Type label like "object:molecule" or "selection"
+ */
+pymol::Result<char const*> ExecutiveGetType(PyMOLGlobals* G, const char* name)
 {
-  SpecRec *rec = NULL;
-  int ok = true;
-  rec = ExecutiveFindSpec(G, name);
-  if(!rec) {
-    ok = false;
-  } else {
-    if(rec->type == cExecObject) {
-      strcpy(type, "object:");
-      if(rec->obj->type == cObjectMolecule)
-        strcat(type, "molecule");
-      else if(rec->obj->type == cObjectMap)
-        strcat(type, "map");
-      else if(rec->obj->type == cObjectMesh)
-        strcat(type, "mesh");
-      else if(rec->obj->type == cObjectSlice)
-        strcat(type, "slice");
-      else if(rec->obj->type == cObjectSurface)
-        strcat(type, "surface");
-      else if(rec->obj->type == cObjectMeasurement)
-        strcat(type, "measurement");
-      else if(rec->obj->type == cObjectCGO)
-        strcat(type, "cgo");
-      else if(rec->obj->type == cObjectGroup)
-        strcat(type, "group");
-      else if(rec->obj->type == cObjectVolume)
-	strcat(type, "volume");
-      else if(rec->obj->type == cObjectAlignment)
-       strcat(type, "alignment");
-      else if(rec->obj->type == cObjectGadget)
-       strcat(type, "ramp");
-    } else if(rec->type == cExecSelection) {
-      strcpy(type, "selection");
-    }
-  }
-  return (ok);
-}
+  auto rec = ExecutiveFindSpec(G, name);
 
+  if (!rec) {
+    return pymol::Error("object not found");
+  }
+
+  if (rec->type == cExecSelection) {
+    return "selection";
+  }
+
+  if (rec->type != cExecObject) {
+    return "";
+  }
+
+  switch (rec->obj->type) {
+  case cObjectMolecule:
+    return "object:molecule";
+  case cObjectMap:
+    return "object:map";
+  case cObjectMesh:
+    return "object:mesh";
+  case cObjectSlice:
+    return "object:slice";
+  case cObjectSurface:
+    return "object:surface";
+  case cObjectMeasurement:
+    return "object:measurement";
+  case cObjectCGO:
+    return "object:cgo";
+  case cObjectGroup:
+    return "object:group";
+  case cObjectVolume:
+    return "object:volume";
+  case cObjectAlignment:
+    return "object:alignment";
+  case cObjectGadget:
+    return "object:ramp";
+  default:
+    return "object:";
+  }
+}
 
 /*========================================================================*/
 pymol::Result<> ExecutiveUpdateCmd(PyMOLGlobals* G, const char* s0,

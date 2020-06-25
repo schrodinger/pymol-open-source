@@ -439,7 +439,7 @@ pymol::Result<> ExecutiveRenameObjectAtoms(
 
 pymol::Result<std::vector<const char*>> ExecutiveGetNames(PyMOLGlobals*, int, int, const char*);
 bool ExecutiveIsMoleculeOrSelection(PyMOLGlobals * G, const char *name);
-int ExecutiveGetType(PyMOLGlobals * G, const char *name, WordType type);
+pymol::Result<char const*> ExecutiveGetType(PyMOLGlobals* G, const char* name);
 
 pymol::Result<float> ExecutiveGetArea(
     PyMOLGlobals*, const char* sele, int state, bool load_b);

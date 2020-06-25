@@ -1200,7 +1200,7 @@ SEE ALSO
 DESCRIPTION
 
     "get_type" returns a string describing the named object or
-     selection or the string "nonexistent" if the name in unknown.
+     selection.
 
 PYMOL API
 

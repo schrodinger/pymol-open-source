@@ -2215,15 +2215,11 @@ static PyObject *CmdGetType(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *str1;
-  WordType type = "";
-  int ok = false;
   API_SETUP_ARGS(G, self, args, "Os", &self, &str1);
   APIEnter(G);
-    ok = ExecutiveGetType(G, str1, type);
-    APIExit(G);
-  if(ok)
-    return (Py_BuildValue("s", type));
-  return APIFailure(G);
+  auto res = ExecutiveGetType(G, str1);
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdGetObjectSettings(PyObject * self, PyObject * args)
