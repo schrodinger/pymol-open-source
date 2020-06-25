@@ -44,9 +44,13 @@
 /* For debugging output. */
 #define COLLADA_DEBUG 0
 
-/* Total number of `collada_geometry_mode` settings implemented. */
-#define COLLADA_GEOM_MODE_COUNT 2
+enum {
+  COLLADA_GEOM_MODE_DEFAULT = 0,
+  COLLADA_GEOM_MODE_BLENDER = 1,
 
+  /* Total number of `collada_geometry_mode` settings implemented. */
+  COLLADA_GEOM_MODE_COUNT
+};
 
 /* Returns a standard XML-formatted timestamp */
 static char *GetTimestamp(){
@@ -95,7 +99,7 @@ static int ReachedXmlNodeSizeLimit(int pos_str_cc, int norm_str_cc,
 
 
 /* Writes global <asset> element with file meta information. */
-static void ColladaWriteAssetElement(xmlTextWriterPtr w)
+static void ColladaWriteAssetElement(xmlTextWriterPtr w, int geom_mode)
 {
   xmlTextWriterStartElement(w, BAD_CAST "asset");
   xmlTextWriterStartElement(w, BAD_CAST "contributor");
@@ -116,10 +120,13 @@ static void ColladaWriteAssetElement(xmlTextWriterPtr w)
   xmlTextWriterWriteElement(w, BAD_CAST "modified", BAD_CAST ts);
   free(ts);
 
-  xmlTextWriterStartElement(w, BAD_CAST "unit");
-  xmlTextWriterWriteAttribute(w, BAD_CAST "meter", BAD_CAST "1e-10");
-  xmlTextWriterWriteAttribute(w, BAD_CAST "name", BAD_CAST "Angstrom");
-  xmlTextWriterEndElement(w);  // unit
+  if (geom_mode != COLLADA_GEOM_MODE_BLENDER) {
+    xmlTextWriterStartElement(w, BAD_CAST "unit");
+    xmlTextWriterWriteAttribute(w, BAD_CAST "meter", BAD_CAST "1e-10");
+    xmlTextWriterWriteAttribute(w, BAD_CAST "name", BAD_CAST "Angstrom");
+    xmlTextWriterEndElement(w);  // unit
+  }
+
   xmlTextWriterWriteElement(w, BAD_CAST "up_axis", BAD_CAST "Y_UP");
   xmlTextWriterEndElement(w);  // asset
 }
@@ -542,16 +549,18 @@ static void ColladaWritePrimitiveElement(xmlTextWriterPtr w, char *p_str)
 
 /* Writes a <triangles> element with the current primitive (<p>) string. */
 static void ColladaWriteTrianglesElement(xmlTextWriterPtr w, int geom, int tri,
-    char *p_str, int mode=0)
+    char *p_str, int mode = COLLADA_GEOM_MODE_DEFAULT)
 {
-  xmlTextWriterStartElement(w, BAD_CAST (mode == 1 ? "polylist" : "triangles"));
+  xmlTextWriterStartElement(w,
+      BAD_CAST(mode == COLLADA_GEOM_MODE_BLENDER ? "polylist" : "triangles"));
+
   xmlTextWriterWriteFormatAttribute(w, BAD_CAST "count", "%i", tri);
   xmlTextWriterWriteFormatAttribute(w, BAD_CAST "material",
       "geom%i-material", geom);
 
   ColladaWriteVNCInputs(w, geom);
 
-  if (mode == 1) {
+  if (mode == COLLADA_GEOM_MODE_BLENDER) {
     ColladaWriteTrianglesVCountElement(w, tri);
   }
 
@@ -565,7 +574,7 @@ static void ColladaWriteTrianglesElement(xmlTextWriterPtr w, int geom, int tri,
 static void ColladaWriteTrianglesPolylistElement(xmlTextWriterPtr w, int geom, int tri,
     char *p_str)
 {
-  ColladaWriteTrianglesElement(w, geom, tri, p_str, 1);
+  ColladaWriteTrianglesElement(w, geom, tri, p_str, COLLADA_GEOM_MODE_BLENDER);
 }
 
 
@@ -711,7 +720,7 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
    */
   int geom_mode = SettingGetGlobal_i(I->G, cSetting_collada_geometry_mode);
   if (geom_mode >= COLLADA_GEOM_MODE_COUNT || geom_mode < 0) {
-    geom_mode = 0;
+    geom_mode = COLLADA_GEOM_MODE_DEFAULT;
   }
 
   /*
@@ -767,7 +776,7 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
   xmlTextWriterWriteAttribute(w, BAD_CAST "version", BAD_CAST "1.4.1");
 
   /* Asset */
-  ColladaWriteAssetElement(w);
+  ColladaWriteAssetElement(w, geom_mode);
 
   /* Cameras */
   if (!identity) {
@@ -1114,7 +1123,7 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
             int vert_ct;
             vert_ct = 0;
 
-            if (geom_mode == 1) {
+            if (geom_mode == COLLADA_GEOM_MODE_BLENDER) {
 
               /* polylists */
               int tri = 0;
