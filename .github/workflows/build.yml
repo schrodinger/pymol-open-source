@@ -1,0 +1,57 @@
+name: Basic CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy biopython Pillow
+
+    - name: Install system dependencies
+      run: >
+        sudo apt-get update;
+        sudo apt-get install
+        libfreetype6-dev
+        libglew-dev
+        libglm-dev
+        libmsgpack-dev
+        libnetcdf-dev
+        libpng-dev
+        libxml2-dev
+
+    - name: Install collada2gltf
+      run: |
+        wget -nv https://anaconda.org/schrodinger/collada2gltf/2.1.4/download/linux-64/collada2gltf-2.1.4-h6bb024c_0.tar.bz2
+        sudo tar xf collada2gltf-*.tar.bz2 -C / bin/collada2gltf
+
+    - name: Get additional sources
+      run: |
+        git clone --depth 1 https://github.com/schrodinger/pymol-testing.git
+        git clone --depth 1 https://github.com/rcsb/mmtf-cpp.git
+        cp -R mmtf-cpp/include/mmtf* include/
+        mkdir -p include/catch2
+        (cd include/catch2; wget -nv https://github.com/catchorg/Catch2/releases/download/v2.12.2/catch.hpp)
+
+    - name: Build
+      run: |
+        python setup.py --testing install --prefix=install-prefix
+
+    - name: Test
+      run: |
+        ./install-prefix/bin/pymol -ckqy pymol-testing/testing.py --run all
