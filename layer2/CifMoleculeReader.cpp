@@ -607,12 +607,10 @@ typedef std::vector<std::vector<std::string> > oper_collection_t;
  * Parse operation expressions like (1,2)(3-6)
  */
 static oper_collection_t parse_oper_expression(const std::string &expr) {
-  using namespace std;
-
   oper_collection_t collection;
 
   // first step to split parenthesized chunks
-  vector<string> a_vec = strsplit(expr, ')');
+  std::vector<std::string> a_vec = strsplit(expr, ')');
 
   // loop over chunks (still include leading '(')
   for (auto& a_item : a_vec) {
@@ -630,12 +628,12 @@ static oper_collection_t parse_oper_expression(const std::string &expr) {
     oper_collection_t::reference ids = collection.back();
 
     // split chunk by commas
-    vector<string> b_vec = strsplit(a_chunk, ',');
+    std::vector<std::string> b_vec = strsplit(a_chunk, ',');
 
     // look for ranges
     for (auto& b_item : b_vec) {
       // "c_d" will have either one (no range) or two items
-      vector<string> c_d = strsplit(b_item, '-');
+      std::vector<std::string> c_d = strsplit(b_item, '-');
 
       ids.push_back(c_d[0]);
 
