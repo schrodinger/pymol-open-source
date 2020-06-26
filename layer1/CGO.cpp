@@ -82,8 +82,6 @@ Z* -------------------------------------------------------------------
 #include <iostream>
 #include <algorithm>
 
-using namespace std;
-
 #define MAX_INDICES_FOR_IOS 65536
 
 const float g_ones4f[4] = {1.f, 1.f, 1.f, 1.f};
@@ -10374,8 +10372,8 @@ CGO *CGOConvertLinesToTrilines(const CGO * I, bool addshaders){
  *
  */
 static
-void copyAttributeForOp(bool isInterleaved, int &nvert, AttribOp *attribOp, int vertexDataSize, vector<void*> &dataPtrs,
-                        vector<int> &attrOffset, const float *pcarg, float *pick_data, int &has_pick_colorBS, int pstride){
+void copyAttributeForOp(bool isInterleaved, int &nvert, AttribOp *attribOp, int vertexDataSize, std::vector<void*> &dataPtrs,
+                        std::vector<int> &attrOffset, const float *pcarg, float *pick_data, int &has_pick_colorBS, int pstride){
   auto attrDesc = attribOp->desc;
   int ord = attrDesc->order;
   int copyord = -1;
@@ -10562,7 +10560,7 @@ void copyAttributeForOp(bool isInterleaved, int &nvert, AttribOp *attribOp, int 
  */
 static
 void copyAttributeForVertex(bool isInterleaved, int &nvert, AttribDesc &attribDesc,
-                            const int vertexDataSize, vector<void*> &dataPtrs, vector<int> &attrOffset){
+                            const int vertexDataSize, std::vector<void*> &dataPtrs, std::vector<int> &attrOffset){
   int ord = attribDesc.order;
   void *dataPtr = dataPtrs[ord];
   unsigned char *pc = NULL;
@@ -10678,7 +10676,7 @@ void CheckAttributesForUsage(const CGO *I, AttribDataDesc &attrData, AttribDataD
               cgo->add<cgo::draw::vertex_attribute_3f>(attr_lookup_idx, attrData[idx].default_value);
               break;
             default:
-              std::cerr << "\tNOT IMPLEMENTED: attrData[idx].type_size=" << attrData[idx].type_size << " attrData[idx].type_dim=" << attrData[idx].type_dim << endl;
+              std::cerr << "\tNOT IMPLEMENTED: attrData[idx].type_size=" << attrData[idx].type_size << " attrData[idx].type_dim=" << attrData[idx].type_dim << std::endl;
             }
             break;
           case GL_UNSIGNED_BYTE:
@@ -10699,7 +10697,7 @@ void CheckAttributesForUsage(const CGO *I, AttribDataDesc &attrData, AttribDataD
               cgo->add<cgo::draw::vertex_attribute_4ub>(attr_lookup_idx, attrData[idx].default_value);
               break;
             default:
-              std::cerr << "\tNOT IMPLEMENTED: attrData[idx].type_size=" << attrData[idx].type_size << " attrData[idx].type_dim=" << attrData[idx].type_dim << endl;
+              std::cerr << "\tNOT IMPLEMENTED: attrData[idx].type_size=" << attrData[idx].type_size << " attrData[idx].type_dim=" << attrData[idx].type_dim << std::endl;
             }
           }
         }
@@ -10804,7 +10802,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
   int ok = true;
   bool isInterleaved = (layout == VertexBuffer::INTERLEAVED);
   bool has_picking = true;
-  std::map<string, AttribDesc*> attrToDesc;
+  std::map<std::string, AttribDesc*> attrToDesc;
 
   cgo = CGONew(I->G);
   cgo->use_shader = true;
@@ -10831,8 +10829,8 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
 
   // Populate these variables used for accumulating and setting VBO data arrays
   int vertexDataSize = 0;
-  vector<int> attrSizes;
-  vector<int> attrOffset; // for interleaved
+  std::vector<int> attrSizes;
+  std::vector<int> attrOffset; // for interleaved
   int curoffset = 0;      // for interleaved
   size_t attrIdx = 0;
   for (auto &attrDesc : attrData){
@@ -10943,8 +10941,8 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
   // pick_data is interleaved if more than one attribute
   float * pick_data = cgo->add<cgo::draw::custom>(mode, ntotalverts, vbo->get_hash_id(), pickvbohash, vertsperpickinfo, pickDataSize, iboid, num_total_indexes);
   void *allData = malloc(ntotalverts * vertexDataSize);
-  vector<void*> dataPtrs;
-  vector<int> repeat_attr_idx;
+  std::vector<void*> dataPtrs;
+  std::vector<int> repeat_attr_idx;
   int allAttrBS = 0;
 
   // Initialize first entry in array(s) with default values and populate dataPtrs
@@ -11025,7 +11023,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
         if (ord >= 0)  // picking is negative, has_pick_colorBS is used instead
           attrBS |= (1 << ord);
         else
-          cout << "   ord=%d\n" << ord << endl;
+          std::cout << "   ord=%d\n" << ord << std::endl;
         if (attribOp->incr_vertices){
           if (has_pick_colorBS!=allPickAttrBS){
             // copy pick colors that haven't been set from previous vertex

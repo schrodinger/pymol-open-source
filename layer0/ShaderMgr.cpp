@@ -72,8 +72,6 @@ Z* -------------------------------------------------------------------
 
  */
 
-using namespace std;
-
 #ifndef _DEAD_CODE_DIE
 #define SUPPRESS_GEOMETRY_SHADER_ERRORS
 #endif
@@ -91,7 +89,7 @@ using namespace std;
   } \
 }
 
-static void glShaderSource1String(GLuint shad, const string &strobj){
+static void glShaderSource1String(GLuint shad, const std::string &strobj){
   const GLchar *str = (const GLchar *)strobj.c_str();
   glShaderSource(shad, 1, (const GLchar **)&str, nullptr);
 }
@@ -102,7 +100,7 @@ bool CShaderPrg::reload(){
   if (is_valid || vertfile.empty())
     return true;
 
-  string gs, vs, fs;
+  std::string gs, vs, fs;
   CShaderMgr *I = G->ShaderMgr;
   GLint status;
 
@@ -270,13 +268,13 @@ static void disableGeometryShaders(PyMOLGlobals * G) {
  *                 array like {from1, to1, from2, to2, ..., ""}
  * returns: new string
  */
-static string stringReplaceAll(const string &src, const string * replaceStrings) {
-  string dest = src;
+static std::string stringReplaceAll(const std::string &src, const std::string * replaceStrings) {
+  std::string dest = src;
   for (int i = 0; !replaceStrings[i].empty(); i += 2) {
     int slen1 = replaceStrings[i].length();
     int slen2 = replaceStrings[i + 1].length();
     for (size_t pl = 0;
-        (pl = dest.find(replaceStrings[i], pl)) != string::npos;
+        (pl = dest.find(replaceStrings[i], pl)) != std::string::npos;
         pl += slen2) {
       dest.replace(pl, slen1, replaceStrings[i + 1]);
     }
@@ -301,11 +299,11 @@ void CShaderMgr::Reload_CallComputeColorForLight(){
 
   int light_count = SettingGetGlobal_i(G, cSetting_light_count);
   int spec_count = SettingGetGlobal_i(G, cSetting_spec_count);
-  ostringstream accstr;
+  std::ostringstream accstr;
 
-  string rawtemplate = GetShaderSource("call_compute_color_for_light.fs");
+  std::string rawtemplate = GetShaderSource("call_compute_color_for_light.fs");
 
-  string lightstrings[] = {
+  std::string lightstrings[] = {
     "`light`", "0",
     "`postfix`", "_0",
     ""
@@ -324,7 +322,7 @@ void CShaderMgr::Reload_CallComputeColorForLight(){
   lightstrings[3] = "";
 
   for (int i=1; i<light_count; i++){
-    ostringstream lstr;
+    std::ostringstream lstr;
     lstr << i;
     lightstrings[1] = lstr.str(); // std::to_string(i)
 
@@ -368,10 +366,10 @@ void CShaderMgr::Reload_All_Shaders(){
 #define LOOKUP  32   // #ifdef or #ifndef or #include
 
 // preprocessor directive (like '#ifdef') -> bitmask
-static map<string, short> preprocmap;
+static std::map<std::string, short> preprocmap;
 
 // filename -> contents (static filesystem)
-static map<string, const char *> shader_cache_raw;
+static std::map<std::string, const char *> shader_cache_raw;
 
 // preproc variable -> NULL terminated list of filenames ("used by")
 std::map<std::string, const char **> ifdef_deps;
@@ -430,7 +428,7 @@ switch2:
  * Function arguments:
  * filename: file name of the shader file inside $PYMOL_DATA/shaders
  */
-string CShaderMgr::GetShaderSource(const string &filename)
+std::string CShaderMgr::GetShaderSource(const std::string &filename)
 {
   // processed cache
   auto it = shader_cache_processed.find(filename);
@@ -454,7 +452,7 @@ string CShaderMgr::GetShaderSource(const string &filename)
     const char * pymol_data = getenv("PYMOL_DATA");
 
     if (pymol_data && pymol_data[0]) {
-      string path(pymol_data);
+      std::string path(pymol_data);
       path.append(PATH_SEP).append("shaders").append(PATH_SEP).append(filename);
 
       try {
@@ -491,10 +489,10 @@ string CShaderMgr::GetShaderSource(const string &filename)
       tpl = nextwhitespace(pl);
 
       // copy of first word
-      string tmp_str(pl, tpl - pl);
+      std::string tmp_str(pl, tpl - pl);
 
       // lookup word in preprocmap
-      map<string, short>::const_iterator
+      std::map<std::string, short>::const_iterator
         preprocit = preprocmap.find(tmp_str);
       if (preprocit != preprocmap.end()) {
         preproc = preprocit->second;
@@ -503,7 +501,7 @@ string CShaderMgr::GetShaderSource(const string &filename)
           if (if_depth == true_depth) {
             // copy of second word
             tpl++;
-            tmp_str = string(tpl, nextwhitespace(tpl) - tpl);
+            tmp_str = std::string(tpl, nextwhitespace(tpl) - tpl);
 
             if (preproc & IFDEF) { // #ifdef or #ifndef
               bool if_value = false;
@@ -520,7 +518,7 @@ string CShaderMgr::GetShaderSource(const string &filename)
                 true_depth++;
 
             } else if (preproc & INCLUDE) { //#include
-              tmp_str = string(tpl, nextwhitespace(tpl) - tpl);
+              tmp_str = std::string(tpl, nextwhitespace(tpl) - tpl);
               newbuffer << GetShaderSource(tmp_str);
             }
           }
@@ -548,7 +546,7 @@ string CShaderMgr::GetShaderSource(const string &filename)
     }
   }
 
-  string result = newbuffer.str();
+  std::string result = newbuffer.str();
   shader_cache_processed[filename] = result;
   return result;
 }
@@ -660,7 +658,7 @@ void CShaderPrg::ErrorMsgWithShaderInfoLog(const GLuint sid, const char * msg) {
 
   GLint infoLogLength = 0;
   glGetShaderiv(sid, GL_INFO_LOG_LENGTH, &infoLogLength);
-  vector<GLchar> infoLog(infoLogLength);
+  std::vector<GLchar> infoLog(infoLogLength);
   glGetShaderInfoLog(sid, infoLogLength, nullptr, infoLog.data());
 
   PRINTFB(G, FB_ShaderPrg, FB_Errors) " ShaderPrg-Error: %s; name='%s'\n",
@@ -920,7 +918,7 @@ CShaderMgr::~CShaderMgr() {
 int CShaderMgr::AddShaderPrg(CShaderPrg * s) {
   if (!s)
     return 0;
-  const string& name = s->name;
+  const std::string& name = s->name;
   if (programs.find(name)!=programs.end()){
     delete programs[name];
   }
@@ -928,7 +926,7 @@ int CShaderMgr::AddShaderPrg(CShaderPrg * s) {
   return 1;
 }
 
-int CShaderMgr::RemoveShaderPrg(const string& name) {
+int CShaderMgr::RemoveShaderPrg(const std::string& name) {
   if (programs.find(name) != programs.end()){
     delete programs[name];
   }
