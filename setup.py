@@ -153,6 +153,9 @@ class install_pymol(install):
 
     def finalize_options(self):
         install.finalize_options(self)
+
+        self.pymol_path_is_default = self.pymol_path is None
+
         if self.pymol_path is None:
             self.pymol_path = os.path.join(self.install_libbase, 'pymol', 'pymol_path')
         elif self.root is not None:
@@ -220,12 +223,14 @@ class install_pymol(install):
                 except ValueError:
                     pymol_file = os.path.abspath(pymol_file)
 
-                # out.write('set PYMOL_PATH=' + pymol_path + os.linesep)
+                if not self.pymol_path_is_default:
+                    out.write(f'set PYMOL_PATH={pymol_path}' + os.linesep)
                 out.write('"%s" "%s"' % (python_exe, pymol_file))
                 out.write(' %*' + os.linesep)
             else:
                 out.write('#!/bin/sh' + os.linesep)
-                out.write('export PYMOL_PATH="%s"' % pymol_path + os.linesep)
+                if not self.pymol_path_is_default:
+                    out.write(f'export PYMOL_PATH="{pymol_path}"' + os.linesep)
                 out.write('exec "%s" "%s" "$@"' % (python_exe, pymol_file) + os.linesep)
 
         os.chmod(launch_script, 0o755)
