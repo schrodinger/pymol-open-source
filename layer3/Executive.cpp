@@ -4802,6 +4802,9 @@ pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
               case cPType_int_custom_type:
                 value[a] = *reinterpret_cast<const int*>(raw_ptr);
                 continue;
+              case cPType_uint32:
+                value[a] = *reinterpret_cast<const uint32_t*>(raw_ptr);
+                continue;
               case cPType_schar:
                 value[a] = *reinterpret_cast<const signed char*>(raw_ptr);
                 continue;

@@ -597,7 +597,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_ATOM_PROP(color, 24, cPType_int, offsetof(AtomInfoType,color));
   LEX_ATOM_PROP(ID, 25, cPType_int, offsetof(AtomInfoType,id));
   LEX_ATOM_PROP(rank, 26, cPType_int, offsetof(AtomInfoType,rank));
-  LEX_ATOM_PROP(flags, 27, cPType_int, offsetof(AtomInfoType,flags));
+  LEX_ATOM_PROP(flags, 27, cPType_uint32, offsetof(AtomInfoType,flags));
   LEX_ATOM_PROP(geom, 28, cPType_schar, offsetof(AtomInfoType,geom));
   LEX_ATOM_PROP(valence, 29, cPType_schar, offsetof(AtomInfoType,valence));
   LEX_ATOM_PROP(x, 30, cPType_xyz_float, 0);

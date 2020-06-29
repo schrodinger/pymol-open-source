@@ -651,6 +651,10 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
       ret =
           PyLong_FromLong(*get_member_pointer<int>(wobj->atomInfo, ap->offset));
       break;
+    case cPType_uint32:
+      ret = PyLong_FromUnsignedLong(
+          *get_member_pointer<uint32_t>(wobj->atomInfo, ap->offset));
+      break;
     case cPType_int_as_string:
       ret = PyUnicode_FromString(LexStr(wobj->G,
           *get_member_pointer<lexborrow_t>(wobj->atomInfo, ap->offset)));
@@ -804,6 +808,13 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
       if (valint == -1 && PyErr_Occurred())
         return -1;
       *get_member_pointer<int>(wobj->atomInfo, ap->offset) = valint;
+      changed = true;
+    } break;
+    case cPType_uint32: {
+      auto valint = PyLong_AsUnsignedLong(val);
+      if (valint == -1 && PyErr_Occurred())
+        return -1;
+      *get_member_pointer<uint32_t>(wobj->atomInfo, ap->offset) = valint;
       changed = true;
     } break;
     case cPType_int_as_string: {

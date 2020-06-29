@@ -46,6 +46,7 @@ Z* -------------------------------------------------------------------
 #define cPType_properties     12
 #define cPType_state          13
 #define cPType_schar          14
+#define cPType_uint32         15
 
 #define NUM_ATOM_PROPERTIES    41
 

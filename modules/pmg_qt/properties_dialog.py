@@ -4,6 +4,13 @@ from pymol.Qt import QtGui, QtCore, QtWidgets
 from pymol.Qt.utils import UpdateLock, PopupOnException
 import pymol
 
+# Functions to convert atom property values to strings for display in the GUI
+strfunctions = {
+    'color': lambda c: hex(c) if (c >= 0x40000000) else str(c),
+    'reps': bin,
+    'flags': bin,
+}
+
 class UneditableDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         return None
@@ -78,12 +85,16 @@ def props_dialog(parent):  #noqa
     item_astate_settings = make_cat(item_astate, "Settings")
 
     keys_atom_identifiers = ['model', 'index', 'segi', 'chain', 'resi',
-                             'resn', 'name', 'alt', 'ID', 'rank']
+                             'resn',
+                             'oneletter',  # read-only
+                             'name', 'alt', 'ID', 'rank']
     keys_atom_builtins = ['elem', 'q', 'b', 'type', 'formal_charge',
                           'partial_charge', 'numeric_type', 'text_type',
                           # avoid stereo auto-assignment errors
                           # 'stereo',
                           'vdw', 'ss', 'color', 'reps',
+                          'flags',
+                          'label', 'cartoon',
                           'protons', 'geom', 'valence', 'elec_radius']
     keys_astate_builtins = ['state', 'x', 'y', 'z']
 
@@ -98,6 +109,7 @@ def props_dialog(parent):  #noqa
     items['model'].setDisabled(True)
     items['index'].setDisabled(True)
     items['state'].setDisabled(True)
+    items['oneletter'].setDisabled(True)
 
     def item_changed(item, column):
         """
@@ -205,7 +217,7 @@ def props_dialog(parent):  #noqa
                 value = ns[key]
             except Exception as e:
                 value = 'ERROR: ' + str(e)
-            items[key].setText(1, str(value))
+            items[key].setText(1, strfunctions.get(key, str)(value))
         update_atom_settings(ns['s'], item_atom_settings)
 
     def update_astate_fields(ns):
