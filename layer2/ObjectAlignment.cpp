@@ -1065,7 +1065,7 @@ void ObjectAlignment::render(RenderInfo * info)
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  int pass = info->pass;
+  const RenderPass pass = info->pass;
   ObjectAlignmentState *sobj = NULL;
   const float *color;
 
@@ -1076,7 +1076,7 @@ void ObjectAlignment::render(RenderInfo * info)
   if (pick)
     return;
 
-  if(pass>0 || ray) {
+  if(pass == RenderPass::Opaque || ray) {
     if((I->visRep & cRepCGOBit)) {
 
       for(StateIterator iter(G, I->Setting, state, I->getNFrame()); iter.next();) {

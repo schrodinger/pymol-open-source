@@ -67,11 +67,11 @@ void ObjectCallback::render(RenderInfo * info)
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  int pass = info->pass;
+  const RenderPass pass = info->pass;
   PyMOLGlobals *G = I->G;
   ObjectCallbackState *sobj = NULL;
 
-  if(pass != 1) /* for now, the callback should be called during the first pass (opaque), so 
+  if(pass != RenderPass::Opaque) /* for now, the callback should be called during the first pass (opaque), so
 		  that it is possible to set positions for any object that is rendered in the 
 		  opaque pass.  This is still a kludge, since the callback should probably 
 		  happen in a pass before this (should we add a new pass 2?  this will probably

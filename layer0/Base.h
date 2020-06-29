@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include "os_limits.h"
 #include "os_types.h"
 #include "Picking.h"
+#include "RenderPass.h"
 #include <vector>
 
 #ifndef PI
@@ -79,24 +80,30 @@ class CGO;
 #endif
 
 struct RenderInfo {
-  int state;
-  CRay *ray;
-  CGO *alpha_cgo;
+  int state = 0;
+  CRay* ray = nullptr;
+  CGO* alpha_cgo = nullptr;
   PickColorManager* pick = nullptr;
-  int pass;
-  int width_scale_flag;
-  float front, back, stereo_front;
-  float fog_start, fog_end;
-  float view_normal[3];
-  float width_scale;
-  float vertex_scale;           /* how large is a screen pixel in model space at the origin */
-  int sampling;                 /* are we supersampling? */
-  int ortho;                    /* orthoscopic projection? */
-  int line_lighting;            /* line lighting */
-  int dynamic_width;
-  float dynamic_width_factor, dynamic_width_min, dynamic_width_max;
-  int texture_font_size;
-  int use_shaders;
+  RenderPass pass = RenderPass::Antialias;
+  int width_scale_flag = 0;
+  float front = 0.f;
+  float back = 0.f;
+  float stereo_front = 0.f;
+  float fog_start = 0.f;
+  float fog_end = 0.f;
+  float view_normal[3] = {};
+  float width_scale = 0.f;
+  float vertex_scale =
+      0.f; ///< how large is a screen pixel in model space at the origin
+  int sampling = 0;      ///< are we supersampling?
+  int ortho = 0;         ///< orthoscopic projection?
+  int line_lighting = 0; ///< line lighting
+  int dynamic_width = 0;
+  float dynamic_width_factor = 0.f;
+  float dynamic_width_min = 0.f;
+  float dynamic_width_max = 0.f;
+  int texture_font_size = 0;
+  int use_shaders = 0;
 };
 
 #define MAXLINELEN 1024

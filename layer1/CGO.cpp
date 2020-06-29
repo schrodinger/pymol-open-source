@@ -6239,7 +6239,7 @@ static void CGO_gl_draw_sphere_buffers(CCGORenderer * I, CGO_op_data pc) {
   CShaderPrg *shaderPrg;
   int pickable = 0;
 
-  shaderPrg = I->G->ShaderMgr->Get_DefaultSphereShader(I->info ? I->info->pass : 0);
+  shaderPrg = I->G->ShaderMgr->Get_DefaultSphereShader(I->info ? I->info->pass : RenderPass::Antialias);
   if (!shaderPrg){
     return;
   }
@@ -6277,7 +6277,7 @@ static void CGO_gl_draw_cylinder_buffers(CCGORenderer * I, CGO_op_data pc) {
   IndexBuffer * ibo = I->G->ShaderMgr->getGPUBuffer<IndexBuffer>(sp->iboid);
   VertexBuffer * pickvbo = I->G->ShaderMgr->getGPUBuffer<VertexBuffer>(sp->pickvboid);
 
-  shaderPrg = I->G->ShaderMgr->Get_CylinderShader(I->info ? I->info->pass : 0);
+  shaderPrg = I->G->ShaderMgr->Get_CylinderShader(I->info ? I->info->pass : RenderPass::Antialias);
 
   if (!shaderPrg){
     return;
@@ -6334,11 +6334,11 @@ static void CGO_gl_draw_labels(CCGORenderer * I, CGO_op_data pc) {
   CShaderPrg * shaderPrg;
   int t_mode = SettingGetGlobal_i(I->G, cSetting_transparency_mode);
 
-  if (t_mode==3 && I->info && !(I->info->pass<0)){
+  if (t_mode==3 && I->info && I->info->pass != RenderPass::Transparent){
     // in transparency_mode=3, labels are drawn in the transparency pass=-1
     return;
   }
-  shaderPrg = I->G->ShaderMgr->Get_LabelShader(I->info ? I->info->pass : 0);
+  shaderPrg = I->G->ShaderMgr->Get_LabelShader(I->info ? I->info->pass : RenderPass::Antialias);
   if (I->rep){
     float label_size;
     CSetting * set1 = NULL, * set2 = NULL;
@@ -6438,7 +6438,7 @@ static void CGO_gl_draw_textures(CCGORenderer * I, CGO_op_data pc) {
   VertexBuffer * vbo = I->G->ShaderMgr->getGPUBuffer<VertexBuffer>(sp->vboid);
   CShaderPrg * shaderPrg;
   int attr_pickcolor = 0;
-  shaderPrg = I->G->ShaderMgr->Get_LabelShader(I->info ? I->info->pass : 0);
+  shaderPrg = I->G->ShaderMgr->Get_LabelShader(I->info ? I->info->pass : RenderPass::Antialias);
   if (!shaderPrg){
     return;
   }
@@ -7016,34 +7016,34 @@ static void CGO_gl_enable(CCGORenderer * I, CGO_op_data pc)
         }
         break;
       case GL_DEFAULT_SHADER:
-        shaderMgr->Enable_DefaultShader(I->info ? I->info->pass : 0);
+        shaderMgr->Enable_DefaultShader(I->info ? I->info->pass : RenderPass::Antialias);
         break;
       case GL_LINE_SHADER:
-        shaderMgr->Enable_LineShader(I->info ? I->info->pass : 0);
+        shaderMgr->Enable_LineShader(I->info ? I->info->pass : RenderPass::Antialias);
         break;
       case GL_SURFACE_SHADER:
-        shaderMgr->Enable_SurfaceShader(I->info ? I->info->pass : 0);
+        shaderMgr->Enable_SurfaceShader(I->info ? I->info->pass : RenderPass::Antialias);
         break;
       case GL_CYLINDER_SHADER:
-        shaderMgr->Enable_CylinderShader(I->info ? I->info->pass : 0);
+        shaderMgr->Enable_CylinderShader(I->info ? I->info->pass : RenderPass::Antialias);
         break;
       case GL_SPHERE_SHADER:
-        shaderMgr->Enable_DefaultSphereShader(I->info ? I->info->pass : 0);
+        shaderMgr->Enable_DefaultSphereShader(I->info ? I->info->pass : RenderPass::Antialias);
         break;
       case GL_RAMP_SHADER:
         shaderMgr->Enable_RampShader();
         break;
       case GL_DEFAULT_SHADER_WITH_SETTINGS:
-        shaderMgr->Enable_DefaultShaderWithSettings(I->set1, I->set2, I->info ? I->info->pass : 0);
+        shaderMgr->Enable_DefaultShaderWithSettings(I->set1, I->set2, I->info ? I->info->pass : RenderPass::Antialias);
         break;
       case GL_BACKGROUND_SHADER:
         shaderMgr->Enable_BackgroundShader();
         break;
       case GL_LABEL_SHADER:
-        shaderMgr->Enable_LabelShader(I->info ? I->info->pass : 0);
+        shaderMgr->Enable_LabelShader(I->info ? I->info->pass : RenderPass::Antialias);
         break;
       case GL_CONNECTOR_SHADER:
-        shaderMgr->Enable_ConnectorShader(I->info ? I->info->pass : 0);
+        shaderMgr->Enable_ConnectorShader(I->info ? I->info->pass : RenderPass::Antialias);
         break;
       case GL_SCREEN_SHADER:
         shaderMgr->Enable_ScreenShader();

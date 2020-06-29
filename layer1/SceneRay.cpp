@@ -256,7 +256,6 @@ bool SceneRay(PyMOLGlobals * G,
         int *slot_vla = I->SlotVLA;
         int state = SceneGetState(G);
         RenderInfo info;
-        UtilZeroMem(&info, sizeof(RenderInfo));
         info.ray = ray;
         info.ortho = ortho;
         info.vertex_scale = SceneGetScreenVertexScale(G, NULL);

@@ -938,8 +938,8 @@ int CShaderMgr::RemoveShaderPrg(const std::string& name) {
  * shader manager. If `pass` is provided and is less than zero, and we are
  * in transparency_mode 3, then look up the NO_ORDER_TRANSP derivative.h
  */
-CShaderPrg * CShaderMgr::GetShaderPrg(std::string name, short set_current_shader, short pass) {
-  if (pass < 0 && SettingGetGlobal_i(G, cSetting_transparency_mode) == 3) {
+CShaderPrg * CShaderMgr::GetShaderPrg(std::string name, short set_current_shader, RenderPass pass) {
+  if (pass == RenderPass::Transparent && SettingGetGlobal_i(G, cSetting_transparency_mode) == 3) {
     name += "_t";
   }
 
@@ -1009,27 +1009,27 @@ void CShaderMgr::AddVBOToFree(GLuint vboid){
 
 CShaderPrg *CShaderMgr::Enable_DefaultShaderWithSettings(
     const CSetting *set1,
-    const CSetting *set2, int pass) {
+    const CSetting *set2, RenderPass pass) {
   CShaderPrg * shaderPrg = Get_DefaultShader(pass);
   return Setup_DefaultShader(shaderPrg, set1, set2);
 }
 
-CShaderPrg *CShaderMgr::Enable_DefaultShader(int pass){
+CShaderPrg *CShaderMgr::Enable_DefaultShader(RenderPass pass){
   CShaderPrg * shaderPrg = Get_DefaultShader(pass);
   return Setup_DefaultShader(shaderPrg, nullptr, nullptr);
 }
 
-CShaderPrg *CShaderMgr::Enable_LineShader(int pass){
+CShaderPrg *CShaderMgr::Enable_LineShader(RenderPass pass){
   CShaderPrg * shaderPrg = Get_LineShader(pass);
   return Setup_DefaultShader(shaderPrg, nullptr, nullptr);
 }
 
-CShaderPrg *CShaderMgr::Enable_SurfaceShader(int pass){
+CShaderPrg *CShaderMgr::Enable_SurfaceShader(RenderPass pass){
   CShaderPrg * shaderPrg = Get_SurfaceShader(pass);
   return Setup_DefaultShader(shaderPrg, nullptr, nullptr);
 }
 
-CShaderPrg *CShaderMgr::Enable_ConnectorShader(int pass){
+CShaderPrg *CShaderMgr::Enable_ConnectorShader(RenderPass pass){
   CShaderPrg * shaderPrg = Get_ConnectorShader(pass);
   if (!shaderPrg)
     return nullptr;
@@ -1091,11 +1091,11 @@ CShaderPrg *CShaderMgr::Setup_DefaultShader(CShaderPrg * shaderPrg,
   shaderPrg->Set_Matrices();
   return (shaderPrg);
 }
-CShaderPrg *CShaderMgr::Enable_CylinderShader(int pass){
+CShaderPrg *CShaderMgr::Enable_CylinderShader(RenderPass pass){
   return Enable_CylinderShader("cylinder", pass);
 }
 
-CShaderPrg *CShaderMgr::Enable_CylinderShader(const char *shader_name, int pass){
+CShaderPrg *CShaderMgr::Enable_CylinderShader(const char *shader_name, RenderPass pass){
   int width, height;
   CShaderPrg *shaderPrg;
 
@@ -1128,12 +1128,12 @@ CShaderPrg *CShaderMgr::Enable_CylinderShader(const char *shader_name, int pass)
   return shaderPrg;
 }
 
-CShaderPrg *CShaderMgr::Get_DefaultSphereShader(int pass){
+CShaderPrg *CShaderMgr::Get_DefaultSphereShader(RenderPass pass){
   return GetShaderPrg("sphere", 1, pass);
 }
 
 
-CShaderPrg *CShaderMgr::Enable_DefaultSphereShader(int pass) {
+CShaderPrg *CShaderMgr::Enable_DefaultSphereShader(RenderPass pass) {
   CShaderPrg *shaderPrg = Get_DefaultSphereShader(pass);
   if (!shaderPrg) return nullptr;
   shaderPrg->Enable();
@@ -1150,27 +1150,27 @@ CShaderPrg *CShaderMgr::Enable_DefaultSphereShader(int pass) {
   return (shaderPrg);
 }
 
-CShaderPrg *CShaderMgr::Get_ConnectorShader(int pass){
+CShaderPrg *CShaderMgr::Get_ConnectorShader(RenderPass pass){
   return GetShaderPrg("connector", 1, pass);
 }
 
-CShaderPrg *CShaderMgr::Get_DefaultShader(int pass){
+CShaderPrg *CShaderMgr::Get_DefaultShader(RenderPass pass){
   return GetShaderPrg("default", 1, pass);
 }
 
-CShaderPrg *CShaderMgr::Get_LineShader(int pass){
+CShaderPrg *CShaderMgr::Get_LineShader(RenderPass pass){
   return GetShaderPrg("line", 1, pass);
 }
 
-CShaderPrg *CShaderMgr::Get_SurfaceShader(int pass){
+CShaderPrg *CShaderMgr::Get_SurfaceShader(RenderPass pass){
   return GetShaderPrg("surface", 1, pass);
 }
 
-CShaderPrg *CShaderMgr::Get_CylinderShader(int pass, short set_current_shader) {
+CShaderPrg *CShaderMgr::Get_CylinderShader(RenderPass pass, short set_current_shader) {
   return GetShaderPrg("cylinder", set_current_shader, pass);
 }
 
-CShaderPrg *CShaderMgr::Get_CylinderNewShader(int pass, short set_current_shader) {
+CShaderPrg *CShaderMgr::Get_CylinderNewShader(RenderPass pass, short set_current_shader) {
   return GetShaderPrg("cylinder_new", set_current_shader, pass);
 }
 
@@ -1258,7 +1258,7 @@ CShaderPrg *CShaderMgr::Enable_OITCopyShader() {
   return shaderPrg;
 }
 
-CShaderPrg *CShaderMgr::Enable_LabelShader(int pass){
+CShaderPrg *CShaderMgr::Enable_LabelShader(RenderPass pass){
   CShaderPrg *shaderPrg;
   shaderPrg = Get_LabelShader(pass);  
   if (!shaderPrg)
@@ -1324,7 +1324,7 @@ CShaderPrg *CShaderMgr::Setup_LabelShader(CShaderPrg *shaderPrg) {
   return shaderPrg;
 }
 
-CShaderPrg *CShaderMgr::Get_LabelShader(int pass){
+CShaderPrg *CShaderMgr::Get_LabelShader(RenderPass pass){
   return GetShaderPrg("label", 1, pass);
 }
 

@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #define _H_SceneRender
 
 #include "Picking.h"
+#include "RenderPass.h"
 
 #include <vector>
 
@@ -27,7 +28,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
                  int click_side, int force_copy);
 void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
                     float *normal, PickColorManager*,
-                    int pass, int fat, float width_scale,
+                    RenderPass pass, int fat, float width_scale,
                     GridInfo * grid, int dynamic_pass, short which_objects);
 
 void SceneInitializeViewport(PyMOLGlobals * G, int offscreen);

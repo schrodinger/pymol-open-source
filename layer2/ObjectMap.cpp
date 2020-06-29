@@ -1752,10 +1752,10 @@ void ObjectMap::render(RenderInfo * info)
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  int pass = info->pass;
+  const RenderPass pass = info->pass;
   ObjectMapState *ms = NULL;
 
-  if(pass)
+  if(pass != RenderPass::Antialias)
     return;
 
   for(StateIterator iter(G, I->Setting, state, I->State.size());

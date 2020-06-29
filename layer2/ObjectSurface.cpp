@@ -899,7 +899,7 @@ void ObjectSurface::render(RenderInfo * info)
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  int pass = info->pass;
+  const RenderPass pass = info->pass;
   const float *col;
   ObjectSurfaceState *ms = NULL;
   float alpha;
@@ -923,15 +923,15 @@ void ObjectSurface::render(RenderInfo * info)
             SettingGetGlobal_b(G, cSetting_use_shaders);
 
           if(info && info->alpha_cgo) {
-            render_now = (pass == 1);
+            render_now = (pass == RenderPass::Opaque);
             use_shader = false;
           } else if(alpha < 1.0F) {
-            render_now = (pass == -1);
+            render_now = (pass == RenderPass::Transparent);
           } else {
-            render_now = (pass == 1);
+            render_now = (pass == RenderPass::Opaque);
           }
 
-          if((I->visRep & cRepCellBit) && ms->UnitCellCGO && (pass == 1)){
+          if((I->visRep & cRepCellBit) && ms->UnitCellCGO && (pass == RenderPass::Opaque)){
             ObjectSurfaceRenderCell(G, I, info, ms, use_shader);
           }
 

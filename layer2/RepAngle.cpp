@@ -229,7 +229,7 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
   dash_transparency = (dash_transparency < 0.f ? 0.f : (dash_transparency > 1.f ? 1.f : dash_transparency));
   dash_transparency_enabled = (dash_transparency > 0.f);
 
-  if (!(ray || pick) && (!info->pass || (info->pass > 0) == dash_transparency_enabled))
+  if (!(ray || pick) && (info->pass == RenderPass::Antialias || (info->pass == RenderPass::Opaque) == dash_transparency_enabled))
     return;
 
   if(ray) {

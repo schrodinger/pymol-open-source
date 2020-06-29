@@ -11253,13 +11253,13 @@ void ObjectMolecule::render(RenderInfo * info)
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  int pass = info->pass;
+  const RenderPass pass = info->pass;
   CoordSet *cs;
   int pop_matrix = false;
   int use_matrices = SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
   if(use_matrices<0) use_matrices = 0;
   PRINTFD(I->G, FB_ObjectMolecule)
-    " ObjectMolecule: rendering %s pass %d...\n", I->Name, pass ENDFD;
+    " ObjectMolecule: rendering %s pass %d...\n", I->Name, static_cast<int>(pass) ENDFD;
 
   ObjectPrepareContext(I, info);
 

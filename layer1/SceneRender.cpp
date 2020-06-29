@@ -740,9 +740,8 @@ void SceneRenderAllObject(PyMOLGlobals * G,
  *        2 - only non-gadgets
  *        3 - gadgets last
  */
-void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
-                    float *normal, PickColorManager* pickmgr,
-                    int pass, int fat, float width_scale,
+void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal, PickColorManager* pickmgr,
+                    RenderPass pass, int fat, float width_scale,
                     GridInfo * grid, int dynamic_pass, short which_objects)
 {
   CScene *I = G->Scene;
@@ -752,7 +751,6 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
   if (!OrthoEvalCheck(G))
     return;
 #endif
-  UtilZeroMem(&info, sizeof(RenderInfo));
   info.pick = pickmgr;
   info.pass = pass;
   info.vertex_scale = I->VertexScale;
@@ -795,7 +793,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
   info.back = I->m_view.m_clipSafe.m_back;
   SceneGetViewNormal(G, info.view_normal);
 
-  if(info.alpha_cgo && (pass == 1)) {
+  if(info.alpha_cgo && (pass == RenderPass::Opaque)) {
     CGOReset(info.alpha_cgo);
     CGOSetZVector(info.alpha_cgo, I->ModMatrix[2], I->ModMatrix[6], I->ModMatrix[10]);
   }
@@ -863,7 +861,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
   if(info.alpha_cgo) {
     CGOStop(info.alpha_cgo);
     /* this only works when all objects are rendered in the same frame of reference */
-    if(pass == -1) {
+    if(pass == RenderPass::Transparent) {
       CGORenderGLAlpha(info.alpha_cgo, &info, 0);
     }
   }
@@ -884,7 +882,7 @@ static
 void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, int times, 
                  int curState, float *normal, SceneUnitContext *context, 
                  float width_scale, short onlySelections, short excludeSelections){
-  int pass;
+  const RenderPass passes[] = { RenderPass::Opaque, RenderPass::Antialias, RenderPass::Transparent };
   bool use_shaders = (bool)SettingGetGlobal_b(G, cSetting_use_shaders);
   bool t_mode_3_os = use_shaders && SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
   bool t_mode_3 = !onlySelections && t_mode_3_os;
@@ -912,9 +910,12 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
     bool cont = true;
     bool t_first_pass = true;
     G->ShaderMgr->stereo_draw_buffer_pass = 0;
-    for(pass = 1; cont && pass > -2; pass--) {        /* render opaque, then antialiased, then transparent... */
+    for (auto pass : passes) {        /* render opaque, then antialiased, then transparent... */
+      if (!cont) {
+        break;
+      }
 #if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
-      if (t_mode_3 && pass == -1){
+      if (t_mode_3 && pass == RenderPass::Transparent){
         G->ShaderMgr->Disable_Current_Shader();
         int drawbuf = 1;
         if (TM3_IS_ONEBUF){
@@ -966,7 +967,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
         if (!onlySelections){
 #if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
           if (t_mode_3){
-            if (pass == 1){
+            if (pass == RenderPass::Opaque){
               EditorRender(G, curState);
             }
             // transparency-mode == 3 render all objects for this pass
@@ -976,18 +977,18 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
             {
 #endif
               // transparency-mode != 3 render all objects for each pass
-              for(pass = 1; pass > -2; pass--) {        /* render opaque, then antialiased, then transparent... */
-                SceneRenderAll(G, context, normal, NULL, pass, false, width_scale, grid,
+              for (const auto pass2 : passes) { /* render opaque, then antialiased, then transparent... */
+                SceneRenderAll(G, context, normal, NULL, pass2, false, width_scale, grid,
                                times, 3 /* gadgets last */);
               }
               cont = false;
             }
-          } else if (t_mode_3_os && pass > 0){  /* opaque pass*/
+          } else if (t_mode_3_os && pass == RenderPass::Opaque){
             // onlySelections and t_mode_3, render only gadgets
             glEnable(GL_BLEND);  // need to blend for the text onto the gadget background
             glBlendFunc_default();
 
-            SceneRenderAll(G, context, normal, NULL, -1 /* gadgets render in transp pass */, false, width_scale, grid,
+            SceneRenderAll(G, context, normal, NULL, RenderPass::Transparent /* gadgets render in transp pass */, false, width_scale, grid,
                            times, 1 /* only gadgets */);
             glDisable(GL_BLEND);
           }
@@ -1017,14 +1018,14 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
 #endif
         } // end slot loop
     if (TM3_IS_ONEBUF){
-      if (t_mode_3 && pass == -1 && t_first_pass){
-        pass++;
+      if (t_mode_3 && pass == RenderPass::Transparent && t_first_pass){
+        pass = RenderPass::Antialias;
         t_first_pass = false;
         continue;
       }
     }
 #if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
-      if (t_mode_3 && pass == -1){
+      if (t_mode_3 && pass == RenderPass::Transparent){
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFrameBuffer);
         glBindTexture(GL_TEXTURE_2D, 0);
         if(grid->active)
@@ -1050,7 +1051,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
 
         if ((currentFrameBuffer == G->ShaderMgr->default_framebuffer_id) && t_mode_3){
           // onlySelections and t_mode_3, render only gadgets
-          SceneRenderAll(G, context, normal, NULL, -1 /* gadgets render in transp pass */, false, width_scale, grid,
+          SceneRenderAll(G, context, normal, NULL, RenderPass::Transparent /* gadgets render in transp pass */, false, width_scale, grid,
                          times, 1 /* only gadgets */);
         }
 

@@ -246,7 +246,7 @@ int ObjectCGO::getNFrame() const
   return NState;
 }
 
-static void ObjectCGORenderState(PyMOLGlobals* G, int pass, CRay* ray,
+static void ObjectCGORenderState(PyMOLGlobals* G, RenderPass pass, CRay* ray,
     ObjectCGO* I, RenderInfo* info, ObjectCGOState* sobj, const float* color,
     ObjectGadgetRamp* ramp, int use_shader, bool cgo_lighting)
 {
@@ -261,10 +261,10 @@ static void ObjectCGORenderState(PyMOLGlobals* G, int pass, CRay* ray,
         CGOFree(cgo_copy);
       }
     }
-  } else if(G->HaveGUI && G->ValidContext && pass) {
+  } else if(G->HaveGUI && G->ValidContext && pass != RenderPass::Antialias) {
     if(info->pick) { // no picking yet
     } else {
-      bool pass_is_opaque = (pass > 0);
+      bool pass_is_opaque = pass == RenderPass::Opaque;
       if(sobj && ((sobj->hasTransparency ^ pass_is_opaque) || (sobj->hasOpaque == pass_is_opaque))){
 	{
 	  CShaderPrg *shaderPrg;
@@ -381,8 +381,8 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
       if (use_shader){
         bool t_mode_3 = SettingGetGlobal_i(G, cSetting_transparency_mode)==3;
         if ((t_mode_3 || !hasTransparency)
-            && G->ShaderMgr->Get_DefaultSphereShader(0)
-            && G->ShaderMgr->Get_CylinderShader(0))
+            && G->ShaderMgr->Get_DefaultSphereShader(RenderPass::Antialias)
+            && G->ShaderMgr->Get_CylinderShader(RenderPass::Antialias))
         {
           if (CGOHasCylinderOperations(convertcgo)){
             allCylinders = CGONew(G);
@@ -476,7 +476,7 @@ void ObjectCGO::render(RenderInfo * info)
   auto I = this;
   int state = info->state;
   CRay *ray = info->ray;
-  int pass = info->pass;
+  const RenderPass pass = info->pass;
   ObjectCGOState *sobj = NULL;
   const float *color = NULL;
   bool use_shader = false, cgo_lighting = false;
@@ -493,7 +493,7 @@ void ObjectCGO::render(RenderInfo * info)
   if(!I->State)
     return;
 
-  if(pass || info->ray) {
+  if(pass != RenderPass::Antialias || info->ray) {
     if((I->visRep & cRepCGOBit)) {
       for(StateIterator iter(G, I->Setting, state, I->NState); iter.next();) {
         sobj = I->State + iter.state;

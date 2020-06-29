@@ -277,7 +277,7 @@ void GadgetSet::update()
 void GadgetSet::render(RenderInfo * info)
 {
   GadgetSet * I = this;
-  int pass = info->pass;
+  const RenderPass pass = info->pass;
   CRay *ray = info->ray;
   auto pick = info->pick;
   const float *color;
@@ -288,7 +288,7 @@ void GadgetSet::render(RenderInfo * info)
 
   color = ColorGet(I->G, I->Obj->Color);
 
-  if(pass < 0 || ray || pick) {
+  if(pass == RenderPass::Transparent || ray || pick) {
     PyMOLGlobals *G = I->G;
 
     if(ray) {

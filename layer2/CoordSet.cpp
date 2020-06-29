@@ -1324,7 +1324,7 @@ void CoordSet::render(RenderInfo * info)
   if(!(info->ray || info->pick) &&
      (SettingGet_i(G, I->Setting, I->Obj->Setting,
                    cSetting_defer_builds_mode) == 5)) {
-    if(!info->pass) {
+    if(info->pass == RenderPass::Antialias) {
       ObjectUseColor((CObject *) I->Obj);
       if(I->Active[cRepLine])
         RepWireBondRenderImmediate(I, info);
@@ -1338,7 +1338,7 @@ void CoordSet::render(RenderInfo * info)
         RepRibbonRenderImmediate(I, info);
     }
   } else {
-    int pass = info->pass;
+    const RenderPass pass = info->pass;
     CRay *ray = info->ray;
     auto pick = info->pick;
     int a, aa, abit, aastart = 0, aaend = cRepCnt;
@@ -1346,7 +1346,7 @@ void CoordSet::render(RenderInfo * info)
     int sculpt_vdw_vis_mode = SettingGet_i(G, I->Setting,
 					   I->Obj->Setting,
 					   cSetting_sculpt_vdw_vis_mode);
-    if((!pass) && sculpt_vdw_vis_mode && 
+    if((pass == RenderPass::Antialias) && sculpt_vdw_vis_mode &&
        I->SculptCGO && (I->Obj->visRep & cRepCGOBit)) {
       if(ray) {
         int ok = CGORenderRay(I->SculptCGO, ray, info,
@@ -1439,7 +1439,7 @@ void CoordSet::render(RenderInfo * info)
             case cRepVolume:
               {
                 int t_mode = SettingGetGlobal_i(G, cSetting_transparency_mode);
-                if (t_mode == 3 && pass == -1){
+                if (t_mode == 3 && pass == RenderPass::Transparent){
                   r->fRender(r, info);
                 }
               }
@@ -1447,14 +1447,14 @@ void CoordSet::render(RenderInfo * info)
             case cRepLabel:
               {
                 int t_mode_3 = SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
-                if (pass == -1 || (t_mode_3 && pass == 1 /* TODO_OPENVR 0 */))
+                if (pass == RenderPass::Transparent || (t_mode_3 && pass == RenderPass::Opaque /* TODO_OPENVR 0 */))
                   r->fRender(r, info);
               }
               break;
             case cRepDot:
             case cRepCGO:
             case cRepCallback:
-              if(pass == 1)
+              if(pass == RenderPass::Opaque)
                 r->fRender(r, info);
               break;
             case cRepLine:
@@ -1462,7 +1462,7 @@ void CoordSet::render(RenderInfo * info)
             case cRepDash:
             case cRepCell:
             case cRepExtent:
-              if(!pass)
+              if(pass == RenderPass::Antialias)
                 r->fRender(r, info);
               break;
             case cRepNonbonded:
@@ -1477,7 +1477,7 @@ void CoordSet::render(RenderInfo * info)
               {
                 if (render_both){
                   // for transparency_mode 3, render both opaque and transparent pass
-                  if (pass != 0){
+                  if (pass != RenderPass::Antialias){
                     r->fRender(r, info);
                   }
                 } else {
@@ -1486,7 +1486,7 @@ void CoordSet::render(RenderInfo * info)
                   bool cont = true;
                   if (checkAlphaCGO){
                     if(info->alpha_cgo) {
-                      if(pass == 1){
+                      if(pass == RenderPass::Opaque){
                         r->fRender(r, info);
                       }
                       cont = false;
@@ -1495,10 +1495,10 @@ void CoordSet::render(RenderInfo * info)
                   if (cont){
                     if(check_setting && SettingGet_f(G, r->cs->Setting,
                                                      r->obj->Setting, check_setting) > 0.0001) {
-                      /* if object has transparency, only render in -1 pass */
-                      if(pass == -1)
+                      /* if object has transparency, only render in transparent pass */
+                      if(pass == RenderPass::Transparent)
                         r->fRender(r, info);
-                    } else if(pass == 1){
+                    } else if(pass == RenderPass::Opaque){
                       r->fRender(r, info);
                     }
                   }

@@ -908,7 +908,7 @@ void ObjectSlice::render(RenderInfo * info)
   int state = info->state;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  int pass = info->pass;
+  const RenderPass pass = info->pass;
   int cur_state = 0;
   float alpha;
   int track_camera = SettingGet_b(G, NULL, I->Setting, cSetting_slice_track_camera);
@@ -1137,9 +1137,9 @@ void ObjectSlice::render(RenderInfo * info)
           } else {  // !pick
             int render_now = false;
             if(alpha > 0.0001) {
-              render_now = (pass == -1);
+              render_now = (pass == RenderPass::Transparent);
             } else
-              render_now = (!pass);
+              render_now = pass == RenderPass::Antialias;
 
             if(render_now) {
 	      int already_rendered = false;

@@ -1185,7 +1185,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
                                  cSetting_label_size);
   int float_text = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting,
 				cSetting_float_labels);
-  if (!(ray || pick) && info->pass >= 0)
+  if (!(ray || pick) && info->pass != RenderPass::Transparent)
     return;
 
   if(I->R.MaxInvalid >= cRepInvRep){

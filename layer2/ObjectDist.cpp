@@ -273,7 +273,7 @@ void ObjectDist::render(RenderInfo * info)
 {
   auto I = this;
   int state = info->state;
-  int pass = info->pass;
+  const RenderPass pass = info->pass;
   CRay *ray = info->ray;
   auto pick = info->pick;
   bool shouldRender = false;
@@ -281,7 +281,8 @@ void ObjectDist::render(RenderInfo * info)
   if(ray || pick) {
     shouldRender = true;
   } else {
-    shouldRender = pass != 0;  // distance measurements should render 
+    shouldRender = pass != RenderPass::Antialias;
+                               // distance measurements should render
                                // both in opaque and transparency loop,
                                // the rep decides based on transparency
                                // whether it renders in that loop.

@@ -773,7 +773,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
   int state = 0;
   CRay *ray = 0;
   bool pick = false;
-  int pass = 0;
+  RenderPass pass = RenderPass::Antialias;
   int *n = NULL;
   int c;
   float line_width, mesh_width = SettingGet_f(I->G, I->Setting, NULL, cSetting_mesh_width);
@@ -890,7 +890,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
             }
           }
         } else if((G->HaveGUI && G->ValidContext) || returnCGO) {
-          if(!pick && !pass) {
+          if(!pick && pass == RenderPass::Antialias) {
 	      short use_shader;
 	      short mesh_as_cylinders ;
 	      CGO *shaderCGO = NULL;

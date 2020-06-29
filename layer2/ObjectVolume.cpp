@@ -717,7 +717,7 @@ void ObjectVolume::render(RenderInfo * info)
 #ifndef PURE_OPENGL_ES_2
   auto I = this;
   int state = info->state;
-  int pass = info->pass;
+  const RenderPass pass = info->pass;
   int a = 0;
   ObjectVolumeState *vs = NULL;
   float volume_layers =  SettingGet_f(I->G, I->Setting, NULL, cSetting_volume_layers);
@@ -739,7 +739,7 @@ void ObjectVolume::render(RenderInfo * info)
   CShaderPrg *shaderPrg;
   bool volume_t = 0;
 
-  if(info->pick || pass != -1)
+  if(info->pick || pass != RenderPass::Transparent)
     return;
 
   if(!G->HaveGUI || !G->ValidContext)
@@ -749,7 +749,7 @@ void ObjectVolume::render(RenderInfo * info)
   if (G && !(G->ShaderMgr->ShadersPresent()))
       return;
 
-  if (info->pass < 0){
+  if (info->pass == RenderPass::Transparent){
     volume_t = SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
   }
 
@@ -775,7 +775,7 @@ void ObjectVolume::render(RenderInfo * info)
 
     PRINTFB(I->G, FB_ObjectVolume, FB_Blather)
       "ObjectVolumeRender-Msg: state=%d, pass=%d, refresh=%d, recolor=%d.\n",
-      a, pass, vs->RefreshFlag, vs->RecolorFlag ENDFB(I->G); 
+      a, static_cast<int>(pass), vs->RefreshFlag, vs->RecolorFlag ENDFB(I->G);
 
     corner = vs->Corner;
 

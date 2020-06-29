@@ -450,8 +450,8 @@ void ObjectGadget::render(RenderInfo * info)
 {
   auto I = this;
   int state = info->state;
-  int pass = info->pass;
-  if(pass < 0 || info->ray || info->pick) {
+  const RenderPass pass = info->pass;
+  if(pass == RenderPass::Transparent || info->ray || info->pick) {
 
     ObjectPrepareContext(I, info);
     for(StateIterator iter(I->G, I->Setting, state, I->NGSet);
