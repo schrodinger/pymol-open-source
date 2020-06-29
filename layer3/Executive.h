@@ -281,7 +281,7 @@ int ExecutiveCountMotions(PyMOLGlobals * G);
 #ifdef _WEBGL
 #else
 pymol::Result<int> ExecutiveIterateState(PyMOLGlobals* G, int state,
-    const char* str1, const char* expr, int read_only, int atomic_props,
+    const char* str1, const char* expr, int read_only,
     int quiet, PyObject* space);
 #endif
 pymol::Result<> ExecutiveColor(
@@ -614,7 +614,7 @@ int ExecutiveMatrixCopy(PyMOLGlobals* G, const char* source_name,
     int target_state, int target_undo, int log, int quiet);
 
 void ExecutiveMemoryDump(PyMOLGlobals * G);
-void ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op);
+bool ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op);
 
 pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
                         const char *mesh_name, const char *map_name, float lvl,

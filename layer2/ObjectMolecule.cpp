@@ -9197,7 +9197,7 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule * I, float *ttt, int frame)
 
 
 /*========================================================================*/
-void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op)
+bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op)
 {
   float *coord;
   int a, b, s;
@@ -9217,7 +9217,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
   AtomInfoType *ai, *ai0;
   PyMOLGlobals *G = I->G;
 #ifndef _PYMOL_NOPY
-  PyCodeObject *expr_co = NULL;
+  PyObject* expr_co = nullptr;
   int compileType = Py_single_input;
 #endif
 #ifdef _WEBGL
@@ -9238,13 +9238,12 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 #endif
     case OMOP_ALTR:
     case OMOP_AlterState:
-      PBlock(G);
+      // assume blocked interpreter
+
       if (op->s1 && op->s1[0]){
 #ifndef _PYMOL_NOPY
-	expr_co = (PyCodeObject*)Py_CompileString(op->s1, "", compileType);
+	expr_co = Py_CompileString(op->s1, "", compileType);
 	if(expr_co == NULL) {
-	  if(PyErr_Occurred())
-	    PyErr_Print();
 	  ok = ErrMessage(G, errstr, "failed to compile expression");
 	}
 #else
@@ -10628,12 +10627,15 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
     case OMOP_ALTR:
     case OMOP_AlterState:
+#ifndef _PYMOL_NOPY
       Py_XDECREF(expr_co);
-      PUnblock(G);
+#endif
       break;
     }
     /* */
   }
+
+  return ok;
 }
 
 

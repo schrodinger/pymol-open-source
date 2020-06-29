@@ -320,6 +320,10 @@ static PyObject* APIFailure(PyMOLGlobals* G, const pymol::Error& error)
   if (G && !SettingGet<bool>(G, cSetting_raise_exceptions))
     return APIFailure();
 
+  if (PyErr_Occurred()) {
+    return nullptr;
+  }
+
   PyObject* exc_type;
   switch (error.code()) {
   case pymol::Error::QUIET:
@@ -3206,9 +3210,9 @@ static PyObject *CmdLabel(PyObject * self, PyObject * args)
   char *str1, *str2;
   int quiet;
   API_SETUP_ARGS(G, self, args, "Ossi", &self, &str1, &str2, &quiet);
-  API_ASSERT(APIEnterNotModal(G));
+  API_ASSERT(APIEnterBlockedNotModal(G));
   ExecutiveLabel(G, str1, str2, quiet, cExecutiveLabelEvalOn);
-  APIExit(G);
+  APIEnterBlockedNotModal(G);
   return APISuccess();
 }
 
@@ -3231,7 +3235,7 @@ static PyObject *CmdAlter(PyObject * self, PyObject * args)
   int read_only, quiet;
   PyObject *space;
   API_SETUP_ARGS(G, self, args, "OssiiO", &self, &str1, &str2, &read_only, &quiet, &space);
-  API_ASSERT(APIEnterNotModal(G));
+  API_ASSERT(APIEnterBlockedNotModal(G));
   pymol::Result<int> result{-1};
   if (read_only) {
     result = ExecutiveIterate(
@@ -3240,7 +3244,7 @@ static PyObject *CmdAlter(PyObject * self, PyObject * args)
     result = ExecutiveIterate(G, str1, str2,
         read_only, quiet, space);
   }
-  APIExit(G);
+  APIExitBlocked(G);
   return APIResult(G, result);
 }
 
@@ -3302,12 +3306,12 @@ static PyObject *CmdAlterState(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *str1, *str2;
-  int i1, i2, i3, quiet;
+  int state, read_only, quiet;
   PyObject *obj;
-  API_SETUP_ARGS(G, self, args, "OissiiiO", &self, &i1, &str1, &str2, &i2, &i3, &quiet, &obj);
-  API_ASSERT(APIEnterNotModal(G));
-  auto result = ExecutiveIterateState(G, i1, str1, str2, i2, i3, quiet, obj);
-  APIExit(G);
+  API_SETUP_ARGS(G, self, args, "OissiiO", &self, &state, &str1, &str2, &read_only, &quiet, &obj);
+  API_ASSERT(APIEnterBlockedNotModal(G));
+  auto result = ExecutiveIterateState(G, state, str1, str2, read_only,  quiet, obj);
+  APIExitBlocked(G);
   return APIResult(G, result);
 }
 

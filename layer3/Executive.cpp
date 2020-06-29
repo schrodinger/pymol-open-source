@@ -9913,7 +9913,11 @@ pymol::Result<> ExecutiveLabel(PyMOLGlobals * G, const char *str1, const char *e
     op1.s1 = expr;
     op1.i1 = 0;
     op1.i2 = eval_mode;
-    ExecutiveObjMolSeleOp(G, sele1, &op1);
+
+    if (!ExecutiveObjMolSeleOp(G, sele1, &op1)) {
+      return pymol::Error();
+    }
+
     cnt = op1.i1;
     op1.code = OMOP_VISI;
     op1.i1 = cRepLabelBit;
@@ -9964,7 +9968,11 @@ pymol::Result<int> ExecutiveIterate(PyMOLGlobals * G, const char *str1, const ch
     op1.s1 = expr;
     op1.py_ob1 = space;
 #endif
-    ExecutiveObjMolSeleOp(G, sele1, &op1);
+
+    if (!ExecutiveObjMolSeleOp(G, sele1, &op1)) {
+      return pymol::Error();
+    }
+
     if(!quiet) {
       if(!read_only) {
         PRINTFB(G, FB_Executive, FB_Actions)
@@ -10219,21 +10227,21 @@ pymol::Result<int> ExecutiveIterateList(PyMOLGlobals* G, const char* str1,
           ok = ((index <= n_atom) && (index > 0));
         if(ok)
         {
-          PyCodeObject *expr_co = (PyCodeObject *)Py_CompileString(expr, "", Py_single_input);
 	  CoordSet *cs = NULL;
 	  if(obj->DiscreteFlag && obj->DiscreteCSet) {
 	    cs = obj->DiscreteCSet[index - 1];
 	  } else if (obj->NCSet == 1){
 	    cs = obj->CSet[0];
 	  }
-          ok =
-            (expr_co != NULL) &&
-            PAlterAtom(G, obj, cs, expr_co, read_only, index - 1,
-                       space);
-          Py_XDECREF(expr_co);
+          auto expr_co =
+              unique_PyObject_ptr(Py_CompileString(expr, "", Py_single_input));
+          ok = expr_co && PAlterAtom(G, obj, cs, expr_co.get(), read_only,
+                              index - 1, space);
         }
         if(ok)
           n_eval++;
+        else
+          break;
       }
     }
   } else {
@@ -10265,7 +10273,7 @@ pymol::Result<int> ExecutiveIterateList(PyMOLGlobals* G, const char* str1,
 #ifdef _WEBGL
 #else
 pymol::Result<int> ExecutiveIterateState(PyMOLGlobals* G, int state,
-    const char* str1, const char* expr, int read_only, int atomic_props,
+    const char* str1, const char* expr, int read_only,
     int quiet, PyObject* space)
 #endif
 {
@@ -10302,8 +10310,9 @@ pymol::Result<int> ExecutiveIterateState(PyMOLGlobals* G, int state,
 #endif
       op1.i2 = state;
       op1.i3 = read_only;
-      op1.i4 = atomic_props;
-      ExecutiveObjMolSeleOp(G, sele1, &op1);
+      if (!ExecutiveObjMolSeleOp(G, sele1, &op1)) {
+        return pymol::Error();
+      }
     }
     if(!read_only) {
       // for dynamic_measures
@@ -12675,7 +12684,7 @@ static SpecRec *ExecutiveFindSpec(PyMOLGlobals * G, const char *name)
 
 
 /*========================================================================*/
-void ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op)
+bool ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op)
 {
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
@@ -12702,13 +12711,17 @@ void ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op)
             break;
           default:
 						/* all other cases, perform the operation on obj */
-            ObjectMoleculeSeleOp(obj, sele, op);
+            if (!ObjectMoleculeSeleOp(obj, sele, op)) {
+              return false;
+            }
             break;
           }
         }
       }
     }
   }
+
+  return true;
 }
 
 

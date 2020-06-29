@@ -814,8 +814,11 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
       changed = true;
     } break;
     case cPType_float:
-      changed = PConvPyObjectToFloat(
-          val, get_member_pointer<float>(wobj->atomInfo, ap->offset));
+      if (!PConvPyObjectToFloat(
+              val, get_member_pointer<float>(wobj->atomInfo, ap->offset))) {
+        return -1;
+      }
+      changed = true;
       break;
     case cPType_char_as_type: {
       const auto valobj = unique_PyObject_ptr(PyObject_Str(val));
@@ -841,7 +844,9 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
         return -1;
       } else {
         float* v = wobj->cs->coordPtr(wobj->idx) + ap->offset;
-        PConvPyObjectToFloat(val, v);
+        if (!PConvPyObjectToFloat(val, v)) {
+          return -1;
+        }
       }
       break;
     default:
@@ -1294,7 +1299,7 @@ WrapperObject * WrapperObjectNew() {
   return wobj;
 }
 
-int PAlterAtomState(PyMOLGlobals * G, PyCodeObject *expr_co, int read_only,
+int PAlterAtomState(PyMOLGlobals * G, PyObject *expr_co, int read_only,
                     ObjectMolecule *obj, CoordSet *cs, int atm, int idx,
                     int state, PyObject * space)
 
@@ -1316,15 +1321,13 @@ int PAlterAtomState(PyMOLGlobals * G, PyCodeObject *expr_co, int read_only,
   Py_DECREF(wobj);
 
   if(PyErr_Occurred()) {
-    PyErr_Print();
     result = false;
   }
   return result;
 }
 
-int PAlterAtom(PyMOLGlobals * G,
-               ObjectMolecule *obj, CoordSet *cs, PyCodeObject *expr_co, int read_only,
-               int atm, PyObject * space)
+int PAlterAtom(PyMOLGlobals* G, ObjectMolecule* obj, CoordSet* cs,
+    PyObject* expr_co, int read_only, int atm, PyObject* space)
 {
   int state = (obj->DiscreteFlag ? obj->AtomInfo[atm].discrete_state : 0) - 1;
   return PAlterAtomState(G, expr_co, read_only, obj, cs, atm, /* idx */ -1, state, space);
@@ -1345,11 +1348,10 @@ int PLabelPyObjectToStrMaxLen(PyMOLGlobals * G, PyObject * obj, char *buffer, in
   return PConvPyObjectToStrMaxLen(obj, buffer, maxlen);
 }
 
-int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject *expr_co, int atm)
+int PLabelAtom(PyMOLGlobals* G, ObjectMolecule* obj, CoordSet* cs,
+    PyObject* expr_co, int atm)
 {
-  int result = true;
   PyObject *P_inst_dict = G->P_inst->dict;
-  PyObject *resultPyObject;
   OrthoLineType label;
   AtomInfoType * ai = obj->AtomInfo + atm;
 
@@ -1374,30 +1376,24 @@ int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject
     wobj->state = 0;
   }
 
-  resultPyObject =
-      PyEval_EvalCode((PyObject*) expr_co, P_inst_dict, (PyObject*) wobj);
-  Py_DECREF(wobj);
+  auto resultPyObject =
+      unique_PyObject_ptr(PyEval_EvalCode(expr_co, P_inst_dict, wobj));
 
-  if(PyErr_Occurred()) {
-    PyErr_Print();
-    result = false;
-  } else {
-    result = true;
-    if(!PLabelPyObjectToStrMaxLen(G, resultPyObject,
-                                 label, sizeof(OrthoLineType) - 1))
-      result = false;
-    if(PyErr_Occurred()) {
-      PyErr_Print();
-      result = false;
-    }
-    if(result) {
-      LexAssign(G, ai->label, label);
-    } else {
+  if (PyErr_Occurred()) {
+    return false;
+  }
+
+  if (!PLabelPyObjectToStrMaxLen(
+          G, resultPyObject.get(), label, sizeof(OrthoLineType) - 1)) {
+    if (!PyErr_Occurred()) {
       ErrMessage(G, "Label", "Aborting on error. Labels may be incomplete.");
     }
+
+    return false;
   }
-  PXDecRef(resultPyObject);
-  return (result);
+
+  LexAssign(G, ai->label, label);
+  return true;
 }
 
 /**

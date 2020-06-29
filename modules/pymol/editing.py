@@ -1385,17 +1385,13 @@ SEE ALSO
 
         if space is None:
             space = _self._pymol.__dict__
-        r = DEFAULT_ERROR
+
         # preprocess selections
         selection = selector.process(selection)
-        #
-        try:
-            _self.lock(_self)
-            r = _cmd.alter(_self._COb,"("+str(selection)+")",str(expression),0,int(quiet),dict(space))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+
+        with _self.lockcm:
+            return _cmd.alter(_self._COb, selection, expression, False,
+                              int(quiet), dict(space))
 
     def alter_list(object, expr_list, quiet=1, space=None, _self=cmd):
         '''
@@ -1404,17 +1400,12 @@ DESCRIPTION
     "alter_list" is an unsupported feature.
     
         '''
-        #
-        r = DEFAULT_ERROR
         if space is None:
             space = _self._pymol.__dict__
-        try:
-            _self.lock(_self)
-            r = _cmd.alter_list(_self._COb,str(object),list(expr_list),int(quiet),dict(space))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+
+        with _self.lockcm:
+            return _cmd.alter_list(_self._COb, object, list(expr_list),
+                                   int(quiet), dict(space))
 
 
     def iterate(selection, expression, quiet=1, space=None, _self=cmd):
@@ -1454,17 +1445,13 @@ SEE ALSO
 
         if space is None:
             space = _self._pymol.__dict__
-        r = DEFAULT_ERROR
+
         # preprocess selection
         selection = selector.process(selection)
-        #
-        try:
-            _self.lock(_self)
-            r = _cmd.alter(_self._COb,"("+str(selection)+")",str(expression),1,int(quiet),dict(space))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+
+        with _self.lockcm:
+            return _cmd.alter(_self._COb, selection, expression, True,
+                              int(quiet), dict(space))
 
     def alter_state(state, selection, expression, quiet=1,
                     space=None, atomic=1, _self=cmd):
@@ -1502,21 +1489,16 @@ SEE ALSO
 
         if space is None:
             space = _self._pymol.__dict__
-        r = DEFAULT_ERROR
+
         # preprocess selection
         selection = selector.process(selection)
         #
         state = int(state)
-        try:
-            _self.lock(_self)
-            r = _cmd.alter_state(_self._COb,
-                                 int(state)-1,"("+str(selection)+")",
-                                 str(expression),
-                                 0,int(atomic),int(quiet),dict(space))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+
+        with _self.lockcm:
+            return _cmd.alter_state(_self._COb,
+                                    int(state) - 1, selection, expression,
+                                    False, int(quiet), dict(space))
 
     def iterate_state(state, selection, expression, quiet=1,
                       space=None, atomic=1, _self=cmd):
@@ -1543,22 +1525,16 @@ SEE ALSO
         if not expression:
             raise pymol.CmdException('missing expression')
 
-        r = DEFAULT_ERROR
         if space is None:
             space = _self._pymol.__dict__
+
         # preprocess selection
         selection = selector.process(selection)
-        state = int(state)
-        #
-        try:
-            _self.lock(_self)
-            r = _cmd.alter_state(_self._COb,int(state)-1,"("+str(selection)+")",
-                                        str(expression),1,int(atomic),
-                                        int(quiet),dict(space))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+
+        with _self.lockcm:
+            return _cmd.alter_state(_self._COb,
+                                    int(state) - 1, selection, expression,
+                                    True, int(quiet), dict(space))
 
     def translate(vector=[0.0,0.0,0.0], selection="all", state=-1,
                   camera=1, object=None, object_mode=0, _self=cmd):

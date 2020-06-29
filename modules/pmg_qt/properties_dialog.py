@@ -156,6 +156,8 @@ def props_dialog(parent):  #noqa
 
                 try:
                     # cast to old type (required for e.g. 'resv = "3"')
+                    if isinstance(old_value, int):
+                        return int(new_value, 0)
                     return type(old_value)(new_value)
                 except ValueError:
                     # return str and let PyMOL handle it (e.g. change
@@ -165,10 +167,11 @@ def props_dialog(parent):  #noqa
             alter_args = ('pk1', key + '= get_new_value(' + key + ')', 0,
                     {'get_new_value': get_new_value})
 
-            if is_state:
-                result = cmd.alter_state(state, *alter_args)
-            else:
-                result = cmd.alter(*alter_args)
+            with PopupOnException():
+                if is_state:
+                    result = cmd.alter_state(state, *alter_args)
+                else:
+                    result = cmd.alter(*alter_args)
 
         if not result:
             update_treewidget_model()

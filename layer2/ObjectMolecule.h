@@ -356,7 +356,7 @@ void ObjectMoleculeInvalidateAtomType(ObjectMolecule *I, int state);
 
 void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vis_only SELINDICATORARG);
 
-void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op);
+bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op);
 
 int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 			struct CoordSet *cs, int bondSearchFlag,

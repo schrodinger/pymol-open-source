@@ -138,10 +138,10 @@ void PExit(PyMOLGlobals * G, int code);
 void PParse(PyMOLGlobals * G, const char *str);       /* only accepts one command */
 void PDo(PyMOLGlobals * G, const char *str);  /* accepts multple commands seperated by newlines */
 
-int PAlterAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject *expr_co,
+int PAlterAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyObject *expr_co,
                int read_only, int atm, PyObject * space);
-int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject *expr_co, int atm);
-int PAlterAtomState(PyMOLGlobals * G, PyCodeObject *expr_co, int read_only,
+int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyObject *expr_co, int atm);
+int PAlterAtomState(PyMOLGlobals * G, PyObject *expr_co, int read_only,
                     ObjectMolecule *obj, CoordSet *cs, int atm, int idx,
                     int state, PyObject * space);
 
