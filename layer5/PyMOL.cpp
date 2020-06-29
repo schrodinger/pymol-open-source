@@ -1002,10 +1002,12 @@ PyMOLreturn_status PyMOL_CmdEnable(CPyMOL * I, const char *name, int quiet)
   int ok = false;
   PYMOL_API_LOCK if(name[0] == '(') {
     auto result1 = ExecutiveSetOnOffBySele(I->G, name, true);
-    ok = static_cast<bool>(ok);
+    ok = static_cast<bool>(result1);
+  } else {
+    auto result2 =
+        ExecutiveSetObjVisib(I->G, name, true, false); /* TO DO: parents */
+    ok = static_cast<bool>(result2);
   }
-  auto result2 = ExecutiveSetObjVisib(I->G, name, true, false);   /* TO DO: parents */
-  ok = static_cast<bool>(result2);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
@@ -1013,7 +1015,7 @@ PyMOLreturn_status PyMOL_CmdDisable(CPyMOL * I, const char *name, int quiet)
 {
   int ok = false;
   PYMOL_API_LOCK if(name[0] == '(') {
-    auto result = ExecutiveSetOnOffBySele(I->G, name, true);
+    auto result = ExecutiveSetOnOffBySele(I->G, name, false);
     ok = static_cast<bool>(result);
   } else {
     auto result = ExecutiveSetObjVisib(I->G, name, false, false);
