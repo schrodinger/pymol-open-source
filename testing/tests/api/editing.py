@@ -115,6 +115,17 @@ class TestEditing(testing.PyMOLTestCase):
         cmd.iterate('gly', 'name_list.append(name)', space=locals())
         self.assertEqual(name_list, ['X%d' % i for i in range(7)])
 
+    @testing.requires_version('2.5')
+    def test_alter_exceptions(self):
+        cmd.fragment('gly')
+        with self.assertRaisesRegex(Exception,
+                                    'Use alter/alter_state to modify values'):
+            cmd.iterate('all', 'b = "abc"')
+        with self.assertRaisesRegex(ValueError, 'float'):
+            cmd.alter('all', 'b = "abc"')
+        with self.assertRaises(IndexError):
+            cmd.iterate('all', 'name[100]')
+
     def test_attach(self):
         cmd.pseudoatom()
         cmd.edit('first all')
