@@ -180,6 +180,17 @@ int PFlush(PyMOLGlobals * G);
 int PFlushFast(PyMOLGlobals * G);
 void PXDecRef(PyObject * obj);
 PyObject *PXIncRef(PyObject * obj);
+
+/**
+ * Like `Py_INCREF` but returns the input argument for convenience.
+ * Does not accept NULL, unlike `PXIncRef`.
+ */
+inline PyObject* PIncRef(PyObject* obj)
+{
+  Py_INCREF(obj);
+  return obj;
+}
+
 void PDefineFloat(PyMOLGlobals * G, const char *name, float value);
 
 void PRunStringModule(PyMOLGlobals * G, const char *str);
@@ -206,8 +217,9 @@ typedef struct {
   PyThreadState *state;
 } SavedThreadRec;
 
-typedef struct {
-  PyObject_HEAD
+struct SettingPropertyWrapperObject;
+
+struct WrapperObject : PyObject {
   //  PyObject* dict;
   ObjectMolecule *obj;
   CoordSet *cs;
@@ -218,18 +230,15 @@ typedef struct {
   short read_only; // set for PLabelAtom
   PyMOLGlobals * G;
   PyObject *dict;
-  PyObject *settingWrapperObject;
-#ifdef _PYMOL_IP_EXTRAS
-  PyObject *propertyWrapperObject;
+  SettingPropertyWrapperObject* settingWrapperObject;
+#ifdef _PYMOL_IP_PROPERTIES
+  SettingPropertyWrapperObject* propertyWrapperObject;
 #endif
-} WrapperObject;
+};
 
-void WrapperObjectReset(WrapperObject *);
-
-typedef struct {
-  PyObject_HEAD
-  WrapperObject *wobj;
-} SettingPropertyWrapperObject;
+struct SettingPropertyWrapperObject : PyObject {
+  WrapperObject* wobj;
+};
 
 /* instance-specific Python object, containers, closures, and threads */
 

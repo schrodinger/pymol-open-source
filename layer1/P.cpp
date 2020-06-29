@@ -581,6 +581,21 @@ int PyObject_GenericSetAttrAsItem(PyObject *o, PyObject *key, PyObject *value) {
   return PyObject_SetItem(o, key, value);
 }
 
+/**
+ * Generic getter for member variable pointer at struct byte offset
+ */
+template <typename T, typename S>
+static T* get_member_pointer(S* instance, size_t offset)
+{
+  return reinterpret_cast<T*>(reinterpret_cast<char*>(instance) + offset);
+}
+template <typename T, typename S>
+static T const* get_member_pointer(S const* instance, size_t offset)
+{
+  return reinterpret_cast<T const*>(
+      reinterpret_cast<char const*>(instance) + offset);
+}
+
 /*
  * iterate-family namespace implementation: lookup
  *
@@ -593,27 +608,20 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
   static PyObject * pystr_ATOM          = PyString_InternFromString("ATOM");
   static PyObject * pystr_QuestionMark  = PyString_InternFromString("?");
 
-  WrapperObject *wobj = (WrapperObject*)obj;
+  auto wobj = static_cast<WrapperObject*>(obj);
 
   if (!check_wrapper_scope(wobj))
     return NULL;
 
-  PyMOLGlobals * G = wobj->G;
-  const char *aprop;
-  AtomPropertyInfo *ap;
-  PyObject *ret = NULL;
-  bool borrowed = false;
-  PyObject *keyobj = PyObject_Str(key);
-  aprop = PyString_AS_STRING(keyobj);
-  ap = PyMOL_GetAtomPropertyInfo(wobj->G->PyMOL, aprop);
-  Py_DECREF(keyobj);
-  if (ap){
-#ifdef _PYMOL_IP_EXTRAS
-#ifdef NO_MMLIBS
-    // static -> only show these warnings once
-    static bool warning_shown_text_type = false;
-#endif
+  PyMOLGlobals* G = wobj->G;
+  PyObject* ret = nullptr;
 
+  auto const keyobj = unique_PyObject_ptr(PyObject_Str(key));
+  auto const aprop = PyString_AS_STRING(keyobj.get());
+  auto const ap = PyMOL_GetAtomPropertyInfo(G->PyMOL, aprop);
+
+  if (ap) {
+#ifdef _PYMOL_IP_EXTRAS
     switch (ap->id) {
     case ATOM_PROP_STEREO:
       if (ObjectMoleculeUpdateMMStereoInfoForState(G, wobj->obj, wobj->state - 1) < 0) {
@@ -625,12 +633,6 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
     case ATOM_PROP_TEXT_TYPE:
 #ifndef NO_MMLIBS
       ObjectMoleculeUpdateAtomTypeInfoForState(G, wobj->obj, wobj->state - 1, 1, 0);
-#else
-      if (!warning_shown_text_type && !(wobj->cs && wobj->cs->validTextType)) {
-        warning_shown_text_type = true;
-        PRINTFB(G, FB_ObjectMolecule, FB_Warnings)
-          " Notice: Automatic 'text_type' assignment feature removed in PyMOL 2.0.\n" ENDFB(G);
-      }
 #endif
       break;
     }
@@ -638,109 +640,85 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
 
     switch (ap->Ptype){
     case cPType_string:
-      {
-	char *val = (char*)(((char*)wobj->atomInfo) + ap->offset);
-	ret = PyString_FromString(val);
-      }
+      ret = PyUnicode_FromString(
+          get_member_pointer<char>(wobj->atomInfo, ap->offset));
       break;
     case cPType_schar:
-      {
-	signed char val = *(signed char*)(((char*)wobj->atomInfo) + ap->offset);
-	ret = PyInt_FromLong((long)val);
-      }
+      ret = PyLong_FromLong(
+          *get_member_pointer<signed char>(wobj->atomInfo, ap->offset));
       break;
     case cPType_int:
-      {
-	int val = *(int*)(((char*)wobj->atomInfo) + ap->offset);
-	ret = PyInt_FromLong((long)val);
-      }
+      ret =
+          PyLong_FromLong(*get_member_pointer<int>(wobj->atomInfo, ap->offset));
       break;
     case cPType_int_as_string:
-      {
-        const char *st = LexStr(wobj->G,
-            *reinterpret_cast<lexidx_t*>
-            (((char*)wobj->atomInfo) + ap->offset));
-	ret = PyString_FromString(st);
-      }
+      ret = PyUnicode_FromString(LexStr(wobj->G,
+          *get_member_pointer<lexborrow_t>(wobj->atomInfo, ap->offset)));
       break;
     case cPType_float:
-      {
-	float val = *(float*)(((char*)wobj->atomInfo) + ap->offset);
-	ret = PyFloat_FromDouble(val);
-      }
+      ret = PyFloat_FromDouble(
+          *get_member_pointer<float>(wobj->atomInfo, ap->offset));
       break;
     case cPType_char_as_type:
-      {
-	ret = wobj->atomInfo->hetatm ? pystr_HETATM : pystr_ATOM;
-	borrowed = true;
-      }
+      ret = PIncRef(wobj->atomInfo->hetatm ? pystr_HETATM : pystr_ATOM);
       break;
     case cPType_model:
-      ret = PyString_FromString(wobj->obj->Name);
+      ret = PyUnicode_FromString(wobj->obj->Name);
       break;
     case cPType_index:
-      {
-	ret = PyInt_FromLong((long)wobj->atm + 1);
-      }
+      ret = PyLong_FromLong(wobj->atm + 1);
       break;
-    case cPType_int_custom_type:
-      {
-	int val = *(int*)(((char*)wobj->atomInfo) + ap->offset);
-	if(val != cAtomInfoNoType){
-	  ret = PyInt_FromLong((long)val);
-	} else {
-	  ret = pystr_QuestionMark;
-	  borrowed = true;
-	}
+    case cPType_int_custom_type: {
+      auto val = *get_member_pointer<int>(wobj->atomInfo, ap->offset);
+      if (val != cAtomInfoNoType) {
+        ret = PyLong_FromLong(val);
+      } else {
+        ret = PIncRef(pystr_QuestionMark);
       }
-      break;
+    } break;
     case cPType_xyz_float:
-      {
-	if (wobj->idx >= 0){
-	  ret = PyFloat_FromDouble(wobj->cs->coordPtr(wobj->idx)[ap->offset]);
-	} else {
-          PyErr_SetString(PyExc_NameError,
-              "x/y/z only available in iterate_state and alter_state");
-	}
+      if (wobj->idx < 0) {
+        PyErr_SetString(PyExc_NameError,
+            "x/y/z only available in iterate_state and alter_state");
+      } else {
+        ret = PyFloat_FromDouble(wobj->cs->coordPtr(wobj->idx)[ap->offset]);
       }
       break;
     case cPType_settings:
       if (!wobj->settingWrapperObject) {
-        wobj->settingWrapperObject = PyType_GenericNew(&settingWrapper_Type, Py_None, Py_None);
-        reinterpret_cast<SettingPropertyWrapperObject *>(wobj->settingWrapperObject)->wobj = wobj;
+        wobj->settingWrapperObject = static_cast<SettingPropertyWrapperObject*>(
+            PyType_GenericNew(&settingWrapper_Type, Py_None, Py_None));
+        wobj->settingWrapperObject->wobj = wobj;
       }
-      ret = wobj->settingWrapperObject;
-      borrowed = true;
+      ret = PIncRef(wobj->settingWrapperObject);
       break;
     case cPType_properties:
+#ifndef _PYMOL_IP_PROPERTIES
       PyErr_SetString(PyExc_NotImplementedError,
           "'properties/p' not supported in Open-Source PyMOL");
+#else
+      static_assert(false, "");
+#endif
       break;
     case cPType_state:
-      ret = PyInt_FromLong((long)wobj->state);
+      ret = PyLong_FromLong(wobj->state);
       break;
     default:
       switch (ap->id) {
-      case ATOM_PROP_RESI:
-        {
-          char resi[8];
-          AtomResiFromResv(resi, sizeof(resi), wobj->atomInfo);
-          ret = PyString_FromString(resi);
-        }
-        break;
-      case ATOM_PROP_STEREO:
-        {
-          auto mmstereotype = AtomInfoGetStereoAsStr(wobj->atomInfo);
-          ret = PyString_FromString(mmstereotype);
-        }
-        break;
-      case ATOM_PROP_ONELETTER:
-        {
-          const char * st = LexStr(G, wobj->atomInfo->resn);
-          char abbr[2] = {SeekerGetAbbr(G, st, 'O', 'X'), 0};
-          ret = PyString_FromString(abbr);
-        }
-        break;
+      case ATOM_PROP_RESI: {
+        char resi[8];
+        AtomResiFromResv(resi, sizeof(resi), wobj->atomInfo);
+        ret = PyUnicode_FromString(resi);
+      } break;
+      case ATOM_PROP_STEREO: {
+        auto mmstereotype = AtomInfoGetStereoAsStr(wobj->atomInfo);
+        ret = PyUnicode_FromString(mmstereotype);
+      } break;
+      case ATOM_PROP_ONELETTER: {
+        const char* st = LexStr(G, wobj->atomInfo->resn);
+        char abbr[2] = {SeekerGetAbbr(G, st, 'O', 'X'), 0};
+        ret = PyUnicode_FromString(abbr);
+      } break;
       default:
         PyErr_SetString(PyExc_SystemError, "unhandled atom property type");
       }
@@ -748,17 +726,15 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
   } else {
     /* if not an atom property, check if local variable in dict */
     if (wobj->dict) {
-      ret = PyDict_GetItem(wobj->dict, key);
+      ret = PyDict_GetItem(wobj->dict, key); // Borrowed reference
     }
     if (ret) {
-      borrowed = true;
+      Py_INCREF(ret);
     } else {
       PyErr_SetNone(PyExc_KeyError);
     }
   }
 
-  if (borrowed)
-    PXIncRef(ret);
   return ret;
 }
 
@@ -769,182 +745,152 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
  */
 static
 int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
-  WrapperObject *wobj = (WrapperObject*)obj;
+  auto wobj = static_cast<WrapperObject*>(obj);
 
   if (!check_wrapper_scope(wobj)) {
     return -1;
   }
-  {
-    char aprop[16];
-    PyObject *keyobj = PyObject_Str(key);
-    UtilNCopy(aprop, PyString_AS_STRING(keyobj), sizeof(aprop));
-    Py_DECREF(keyobj);
 
-    AtomPropertyInfo *ap = PyMOL_GetAtomPropertyInfo(wobj->G->PyMOL, aprop);
+  auto G = wobj->G;
 
-    if (ap){
+  const auto keyobj = unique_PyObject_ptr(PyObject_Str(key));
+  const char* const aprop = PyString_AS_STRING(keyobj.get());
+  const AtomPropertyInfo* ap = PyMOL_GetAtomPropertyInfo(G->PyMOL, aprop);
+
+  if (ap) {
+    if (wobj->read_only) {
+      PyErr_SetString(
+          PyExc_TypeError, "Use alter/alter_state to modify values");
+      return -1;
+    }
+
 #ifdef _PYMOL_IP_EXTRAS
-      if (wobj->cs) {
-        switch (ap->id) {
-        case ATOM_PROP_STEREO:
-          wobj->cs->validMMStereo = MMPYMOLX_PROP_STATE_USER;
-          break;
-        case ATOM_PROP_TEXT_TYPE:
-          wobj->cs->validTextType = MMPYMOLX_PROP_STATE_USER;
-          break;
-        }
+    if (wobj->cs) {
+      switch (ap->id) {
+      case ATOM_PROP_STEREO:
+        wobj->cs->validMMStereo = MMPYMOLX_PROP_STATE_USER;
+        break;
+      case ATOM_PROP_TEXT_TYPE:
+        wobj->cs->validTextType = MMPYMOLX_PROP_STATE_USER;
+        break;
       }
+    }
 #endif
 
-      short changed = false;
-      if (wobj->read_only){
-        PyErr_SetString(PyExc_TypeError,
-            "Use alter/alter_state to modify values");
-	return -1;
-      }
+    bool changed = false;
 
-      // alter_state: must be setting x/y/z or flags
-      if (wobj->idx >= 0) {
-        if (ap->Ptype == cPType_xyz_float) {
-          float * v = wobj->cs->coordPtr(wobj->idx) + ap->offset;
-          PConvPyObjectToFloat(val, v);
-          return 0;
-        }
+    switch (ap->Ptype) {
+    case cPType_string: {
+      PyObject* valobj = PyObject_Str(val);
+      const char* valstr = PyString_AS_STRING(valobj);
+      char* dest = get_member_pointer<char>(wobj->atomInfo, ap->offset);
+      if (strlen(valstr) > ap->maxlen) {
+        strncpy(dest, valstr, ap->maxlen);
+      } else {
+        strcpy(dest, valstr);
       }
-
-      switch (ap->Ptype){
-      case cPType_string:
-	{
-          PyObject *valobj = PyObject_Str(val);
-	  const char *valstr = PyString_AS_STRING(valobj);
-	  char *dest = (char*)(((char*)wobj->atomInfo) + ap->offset);
-	  if (strlen(valstr) > ap->maxlen){
-	    strncpy(dest, valstr, ap->maxlen);
-	  } else {
-	    strcpy(dest, valstr);
-	  }
-          Py_DECREF(valobj);
-	  changed = true;
-	}
-	break;
-      case cPType_schar:
-	{
-	  int valint = PyInt_AsLong(val);
-	  signed char *dest;
-	  if (valint == -1 && PyErr_Occurred())
-	    break;
-	  dest = (signed char*)(((char*)wobj->atomInfo) + ap->offset);
-	  *dest = valint;
-	  changed = true;
-	}
-        break;
-      case cPType_int:
-	{
-	  int valint = PyInt_AsLong(val);
-	  int *dest;
-	  if (valint == -1 && PyErr_Occurred())
-	    break;
-	  dest = (int*)(((char*)wobj->atomInfo) + ap->offset);
-	  *dest = valint;
-	  changed = true;
-	}
-	break;
-      case cPType_int_as_string:
-	{
-          auto dest = reinterpret_cast<lexidx_t*>
-            (((char*)wobj->atomInfo) + ap->offset);
-          PyObject *valobj = PyObject_Str(val);
-	  const char *valstr = PyString_AS_STRING(valobj);
-	  LexDec(wobj->G, *dest);
-	  *dest = LexIdx(wobj->G, valstr);
-          Py_DECREF(valobj);
-	  changed = true;
-	}
-	break;
-      case cPType_float:
-	{
-	  float *dest = (float*)(((char*)wobj->atomInfo) + ap->offset);
-	  changed = PConvPyObjectToFloat(val, dest);
-	}
-	break;	
-      case cPType_char_as_type:
-	{
-          PyObject *valobj = PyObject_Str(val);
-          const char *valstr = PyString_AS_STRING(valobj);
-          wobj->atomInfo->hetatm = ((valstr[0] == 'h') || (valstr[0] == 'H'));
-          Py_DECREF(valobj);
-	  changed = true;
-	}
-	break;
-      case cPType_int_custom_type:
-	{
-          PyObject *valobj = PyObject_Str(val);
-	  const char *valstr = PyString_AS_STRING(valobj);
-	  int *dest = (int*)(((char*)wobj->atomInfo) + ap->offset);
-	  if (valstr[0] == '?'){
-	    *dest = cAtomInfoNoType;
-	  } else {
-	    int valint = PyInt_AS_LONG(val);
-	    *dest = valint;
-	  }
-          Py_DECREF(valobj);
-	  changed = true;
-	}
-	break;
-      case cPType_xyz_float:
-        PyErr_SetString(PyExc_NameError,
-            "x/y/z only available in alter_state");
+      Py_DECREF(valobj);
+      changed = true;
+    } break;
+    case cPType_schar: {
+      int valint = PyInt_AsLong(val);
+      if (valint == -1 && PyErr_Occurred())
         return -1;
-      default:
-        switch (ap->id) {
-        case ATOM_PROP_RESI:
-          if (PConvPyIntToInt(val, &wobj->atomInfo->resv)) {
-            wobj->atomInfo->inscode = '\0';
-          } else {
-            PyObject *valobj = PyObject_Str(val);
-            wobj->atomInfo->setResi(PyString_AS_STRING(valobj));
-            Py_DECREF(valobj);
-          }
-          break;
-        case ATOM_PROP_STEREO:
-          {
-            PyObject *valobj = PyObject_Str(val);
-            const char *valstr = PyString_AS_STRING(valobj);
-            AtomInfoSetStereo(wobj->atomInfo, valstr);
-            Py_DECREF(valobj);
-          }
-          break;
-        default:
-          PyErr_Format(PyExc_TypeError, "'%s' is read-only", aprop);
-          return -1;
+      *get_member_pointer<signed char>(wobj->atomInfo, ap->offset) = valint;
+      changed = true;
+    } break;
+    case cPType_int: {
+      int valint = PyInt_AsLong(val);
+      if (valint == -1 && PyErr_Occurred())
+        return -1;
+      *get_member_pointer<int>(wobj->atomInfo, ap->offset) = valint;
+      changed = true;
+    } break;
+    case cPType_int_as_string: {
+      auto dest = get_member_pointer<lexidx_t>(wobj->atomInfo, ap->offset);
+      const auto valobj = unique_PyObject_ptr(PyObject_Str(val));
+      const char* valstr = PyString_AS_STRING(valobj.get());
+      LexAssign(G, *dest, valstr);
+      changed = true;
+    } break;
+    case cPType_float:
+      changed = PConvPyObjectToFloat(
+          val, get_member_pointer<float>(wobj->atomInfo, ap->offset));
+      break;
+    case cPType_char_as_type: {
+      const auto valobj = unique_PyObject_ptr(PyObject_Str(val));
+      const char* valstr = PyString_AS_STRING(valobj.get());
+      wobj->atomInfo->hetatm = ((valstr[0] == 'h') || (valstr[0] == 'H'));
+      changed = true;
+    } break;
+    case cPType_int_custom_type: {
+      const auto valobj = unique_PyObject_ptr(PyObject_Str(val));
+      const char* valstr = PyString_AS_STRING(valobj.get());
+      auto* dest = get_member_pointer<int>(wobj->atomInfo, ap->offset);
+      if (valstr[0] == '?') {
+        *dest = cAtomInfoNoType;
+      } else {
+        int valint = PyInt_AS_LONG(val);
+        *dest = valint;
+      }
+      changed = true;
+    } break;
+    case cPType_xyz_float:
+      if (wobj->idx < 0) {
+        PyErr_SetString(PyExc_NameError, "x/y/z only available in alter_state");
+        return -1;
+      } else {
+        float* v = wobj->cs->coordPtr(wobj->idx) + ap->offset;
+        PConvPyObjectToFloat(val, v);
+      }
+      break;
+    default:
+      switch (ap->id) {
+      case ATOM_PROP_RESI:
+        if (PConvPyIntToInt(val, &wobj->atomInfo->resv)) {
+          wobj->atomInfo->inscode = '\0';
+        } else {
+          const auto valobj = unique_PyObject_ptr(PyObject_Str(val));
+          wobj->atomInfo->setResi(PyString_AS_STRING(valobj.get()));
         }
+        break;
+      case ATOM_PROP_STEREO: {
+        const auto valobj = unique_PyObject_ptr(PyObject_Str(val));
+        const char* valstr = PyString_AS_STRING(valobj.get());
+        AtomInfoSetStereo(wobj->atomInfo, valstr);
+      } break;
+      default:
+        PyErr_Format(PyExc_TypeError, "'%s' is read-only", aprop);
+        return -1;
       }
-      if (changed){
-	switch (ap->id){
-	case ATOM_PROP_ELEM:
-	  wobj->atomInfo->protons = 0;
-	  wobj->atomInfo->vdw = 0;
-	  AtomInfoAssignParameters(wobj->G, wobj->atomInfo);
-	  break;
-	case ATOM_PROP_RESV:
-	  wobj->atomInfo->inscode = '\0';
-	  break;
-	case ATOM_PROP_SS:
-	  wobj->atomInfo->ssType[0] = toupper(wobj->atomInfo->ssType[0]);
-	  break;
-	case ATOM_PROP_FORMAL_CHARGE:
-	  wobj->atomInfo->chemFlag = false;
-	  break;
-	}
-      }
-    } else {
-      /* if not an atom property, then its a local variable, store it */
-      if (!wobj->dict) {
-        wobj->dict = PyDict_New();
-      }
-      PyDict_SetItem(wobj->dict, key, val);
     }
+
+    if (changed) {
+      switch (ap->id) {
+      case ATOM_PROP_ELEM:
+        wobj->atomInfo->protons = 0;
+        wobj->atomInfo->vdw = 0;
+        AtomInfoAssignParameters(wobj->G, wobj->atomInfo);
+        break;
+      case ATOM_PROP_RESV:
+        wobj->atomInfo->inscode = '\0';
+        break;
+      case ATOM_PROP_SS:
+        wobj->atomInfo->ssType[0] = toupper(wobj->atomInfo->ssType[0]);
+        break;
+      case ATOM_PROP_FORMAL_CHARGE:
+        wobj->atomInfo->chemFlag = false;
+        break;
+      }
+    }
+  } else {
+    /* if not an atom property, then its a local variable, store it */
+    if (!wobj->dict) {
+      wobj->dict = PyDict_New();
+    }
+    PyDict_SetItem(wobj->dict, key, val);
   }
+
   return 0; /* 0 success, -1 failure */
 }
 
@@ -1338,7 +1284,8 @@ void PDumpException()
 
 static
 WrapperObject * WrapperObjectNew() {
-  auto wobj = (WrapperObject *)PyType_GenericNew(&Wrapper_Type, Py_None, Py_None);
+  auto wobj = static_cast<WrapperObject*>(
+      PyType_GenericNew(&Wrapper_Type, Py_None, Py_None));
   wobj->dict = NULL;
   wobj->settingWrapperObject = NULL;
 #ifdef _PYMOL_IP_PROPERTIES
@@ -1366,7 +1313,7 @@ int PAlterAtomState(PyMOLGlobals * G, PyCodeObject *expr_co, int read_only,
   wobj->state = state + 1;
 
   PXDecRef(PyEval_EvalCode((PyObject*) expr_co, space, (PyObject*) wobj));
-  WrapperObjectReset(wobj);
+  Py_DECREF(wobj);
 
   if(PyErr_Occurred()) {
     PyErr_Print();
@@ -1429,7 +1376,7 @@ int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject
 
   resultPyObject =
       PyEval_EvalCode((PyObject*) expr_co, P_inst_dict, (PyObject*) wobj);
-  WrapperObjectReset(wobj);
+  Py_DECREF(wobj);
 
   if(PyErr_Occurred()) {
     PyErr_Print();
@@ -1731,19 +1678,15 @@ void PRunStringInstance(PyMOLGlobals * G, const char *str)
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->exec, "Os", G->P_inst->obj, str));
 }
 
-void WrapperObjectReset(WrapperObject *wo){
-  if (wo->settingWrapperObject) {
-    reinterpret_cast<SettingPropertyWrapperObject *>(wo->settingWrapperObject)->wobj = NULL;
-    Py_DECREF(wo->settingWrapperObject);
-  }
+static void WrapperObjectDealloc(PyObject* self)
+{
+  auto wo = static_cast<WrapperObject*>(self);
+  Py_XDECREF(wo->settingWrapperObject);
 #ifdef _PYMOL_IP_PROPERTIES
-  if (wo->propertyWrapperObject) {
-    reinterpret_cast<SettingPropertyWrapperObject *>(wo->propertyWrapperObject)->wobj = NULL;
-    Py_DECREF(wo->propertyWrapperObject);
-  }
+  Py_XDECREF(wo->propertyWrapperObject);
 #endif
   Py_XDECREF(wo->dict);
-  Py_DECREF(wo);
+  self->ob_type->tp_free(self);
 }
 
 void PInit(PyMOLGlobals * G, int global_instance)
@@ -1899,6 +1842,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
 
   if (!Wrapper_Type.tp_basicsize) {
     Wrapper_Type.tp_basicsize = sizeof(WrapperObject);
+    Wrapper_Type.tp_dealloc = &WrapperObjectDealloc;
     Wrapper_Type.tp_flags = Py_TPFLAGS_DEFAULT;
     wrapperMappingMethods.mp_length = NULL;
     wrapperMappingMethods.mp_subscript = &WrapperObjectSubScript;
