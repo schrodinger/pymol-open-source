@@ -674,7 +674,7 @@ PYMOL API
 
         '''
         import shutil
-        exe = shutil.which('collada2gltf')
+        exe = shutil.which('collada2gltf') or shutil.which('COLLADA2GLTF-bin')
         if exe is None:
             raise pymol.CmdException('could not find collada2gltf')
 
