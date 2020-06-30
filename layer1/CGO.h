@@ -902,12 +902,9 @@ int CGOEnd(CGO * I);
 
 int CGOSphere(CGO * I, const float *v1, float r);
 int CGOEllipsoid(CGO * I, const float *v1, float r, const float *n1, const float *n2, const float *n3);
-int CGOQuadric(CGO * I, const float *v1, float r, const float *p); /* NOT WORKING YET */
 int CGOVertex(CGO * I, float v1, float v2, float v3);
 int CGOVertexv(CGO * I, const float *v);
 int CGOVertexCrossv(CGO * I, const float *v);
-int CGOVertexBeginLineStripv(CGO * I, const float *v);
-int CGOInterpolated(CGO * I, const bool interp);
 int CGOAlpha(CGO * I, float alpha);
 int CGOColor(CGO * I, float v1, float v2, float v3);
 int CGOColorv(CGO * I, const float *v);
@@ -948,9 +945,7 @@ int CGOSpecialWithArg(CGO * I, int v, float arg);
 #define LINE_LIGHTING  2
 
 int CGODotwidth(CGO * I, float v);
-int CGOChar(CGO * I, char c);
 int CGOFontVertex(CGO * I, float x, float y, float z);
-int CGOFontVertexv(CGO * I, const float *v);
 int CGOFontScale(CGO * I, float v1, float v2);
 int CGOIndent(CGO * I, char c, float dir);
 int CGOWrite(CGO * I, const char *str);
@@ -966,7 +961,6 @@ int CGOBoundingBox(CGO *I, const float *min, const float *max);
 int CGOAccessibility(CGO * I, const float a);
 
 int CGODrawTexture(CGO *I, int texture_id, float *worldPos, float *screenMin, float *screenMax, float *textExtent);
-int CGODrawLabel(CGO *I, int texture_id, float *targetPos, float *worldPos, float *screenWorldOffset, float *screenMin, float *screenMax, float *textExtent, short relativeMode);
 int CGODrawConnector(CGO *I, float *targetPt3d, float *labelCenterPt3d, float text_width, float text_height, float *screenOffset, float *screenWorldOffset, float *connectorColor, short relativeMode, int draw_bkgrd, float bkgrd_transp, float *bkgrd_color, float rel_ext_length, float connectorWidth);
 CGO *CGOOptimizeLabels(const CGO * I, int est, bool addshaders=false);
 CGO *CGOOptimizeTextures(const CGO * I, int est);
@@ -989,9 +983,6 @@ int CGOEnable(CGO * I, int mode);
 int CGODisable(CGO * I, int mode);
 
 int CGOStop(CGO * I);
-
-int CGOConev(CGO * I, const float *p1, const float *p2, float r1, float r2, const float *c1, const float *c2,
-              float cap1, float cap2);
 
 int CGOAlphaTriangle(CGO * I,
 		     const float *v1, const float *v2, const float *v3,
@@ -1037,12 +1028,10 @@ bool CGOFilterOutCylinderOperationsInto(const CGO *I, CGO *cgo);
 bool CGOCheckWhetherToFree(PyMOLGlobals * G, CGO *I);
 
 CGO *CGOConvertLinesToShaderCylinders(const CGO * I, int est);
-CGO *CGOSplitUpLinesForPicking(const CGO * I);
 CGO *CGOConvertLinesToTrilines(const CGO * I, bool addshaders=true);
 CGO *CGOConvertToLabelShader(const CGO *I, CGO * addTo);
 
 void CGOChangeShadersTo(CGO *I, int frommode, int tomode);
-void CGOCountNumVerticesDEBUG(const CGO *I);
 CGO *CGOOptimizeScreenTexturesAndPolygons(CGO * I, int est);
 CGO *CGOColorByRamp(PyMOLGlobals * G, const CGO *I, ObjectGadgetRamp *ramp, int state, CSetting * set1);
 

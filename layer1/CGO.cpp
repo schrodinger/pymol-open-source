@@ -831,6 +831,7 @@ int CGODrawConnector(CGO *I, float *targetPt3d, float *labelCenterPt3d, float te
   return true;
 }
 
+#ifdef WITH_UNUSED_FUNCTIONS
 int CGODrawLabel(CGO *I, int texture_id, float *targetPos, float *worldPos, float *screenWorldOffset, float *screenMin, float *screenMax, float *textExtent, short relativeMode)
 {
   float *pc = CGO_add(I, CGO_DRAW_LABEL_SZ + 1);
@@ -859,7 +860,9 @@ int CGODrawLabel(CGO *I, int texture_id, float *targetPos, float *worldPos, floa
   *(pc++) = targetPos[2];
   return true;
 }
+#endif
 
+#ifdef WITH_UNUSED_FUNCTIONS
 int CGOConev(CGO * I,
     const float *p1,
     const float *p2, float r1, float r2,
@@ -889,6 +892,7 @@ int CGOConev(CGO * I,
   *(pc++) = cap2;
   return true;
 }
+#endif
 
 int CGOPickColor(CGO * I, unsigned int index, int bond)
 {
@@ -960,6 +964,7 @@ int CGOEllipsoid(CGO * I, const float *v1, float r,
   return true;
 }
 
+#ifdef WITH_UNUSED_FUNCTIONS
 int CGOQuadric(CGO * I, const float *v, float r, const float *q)
 {
   float *pc = CGO_add(I, CGO_QUADRIC_SZ + 1);
@@ -985,6 +990,7 @@ int CGOQuadric(CGO * I, const float *v, float r, const float *q)
   *(pc++) = *(q++);
   return true;
 }
+#endif
 
 void CGOSetZVector(CGO * I, float z0, float z1, float z2)
 {
@@ -1115,18 +1121,6 @@ int CGOVertexv(CGO * I, const float *v)
   return true;
 }
 
-int CGOVertexBeginLineStripv(CGO * I, const float *v)
-{
-  float *pc = CGO_add(I, CGO_VERTEX_BEGIN_LINE_STRIP_SZ + 1);
-  if (!pc)
-    return false;
-  CGO_write_int(pc, CGO_VERTEX_BEGIN_LINE_STRIP);
-  *(pc++) = *(v++);
-  *(pc++) = *(v++);
-  *(pc++) = *(v++);
-  return true;
-}
-
 int CGOVertexCrossv(CGO * I, const float *v)
 {
   float *pc = CGO_add(I, CGO_VERTEX_CROSS_SZ + 1);
@@ -1138,6 +1132,8 @@ int CGOVertexCrossv(CGO * I, const float *v)
   *(pc++) = *(v++);
   return true;
 }
+
+#ifdef WITH_UNUSED_FUNCTIONS
 int CGOInterpolated(CGO * I, const bool interp)
 {
   float *pc = CGO_add(I, CGO_INTERPOLATED_SZ + 1);
@@ -1148,6 +1144,7 @@ int CGOInterpolated(CGO * I, const bool interp)
   I->interpolated = interp;
   return true;
 }
+#endif
 
 int CGOColor(CGO * I, float v1, float v2, float v3)
 {
@@ -1207,6 +1204,7 @@ int CGOResetNormal(CGO * I, int mode)
   return true;
 }
 
+#ifdef WITH_UNUSED_FUNCTIONS
 int CGOFontVertexv(CGO * I, const float *v)
 {
   float *pc = CGO_add(I, CGO_FONT_VERTEX_SZ + 1);
@@ -1230,6 +1228,7 @@ int CGOFontVertex(CGO * I, float x, float y, float z)
   *(pc++) = z;
   return true;
 }
+#endif
 
 int CGOFontScale(CGO * I, float v1, float v2)
 {
@@ -1242,6 +1241,7 @@ int CGOFontScale(CGO * I, float v1, float v2)
   return true;
 }
 
+#ifdef WITH_UNUSED_FUNCTIONS
 int CGOChar(CGO * I, char c)
 {
   float *pc = CGO_add(I, CGO_CHAR_SZ + 1);
@@ -1322,6 +1322,7 @@ int CGOWriteIndent(CGO * I, const char *str, float indent)
   }
   return true;
 }
+#endif
 
 int CGONormalv(CGO * I, const float *v)
 {
@@ -1965,12 +1966,15 @@ static void CGOCountNumVertices(const CGO *I, int *num_total_vertices, int *num_
 			 int *num_total_vertices_lines, int *num_total_indexes_lines,
 			 int *num_total_vertices_points);
 
+#ifdef WITH_UNUSED_FUNCTIONS
 void CGOCountNumVerticesDEBUG(const CGO *I){
   int num_total_vertices=0, num_total_indexes=0, num_total_vertices_lines=0, num_total_indexes_lines=0, num_total_vertices_points=0;
   CGOCountNumVertices(I, &num_total_vertices, &num_total_indexes, &num_total_vertices_lines, &num_total_indexes_lines, &num_total_vertices_points);
   printf("CGOCountNumVerticesDEBUG: num_total_vertices=%d num_total_indexes=%d num_total_vertices_lines=%d num_total_indexes_lines=%d num_total_vertices_points=%d\n", num_total_vertices, num_total_indexes, num_total_vertices_lines, num_total_indexes_lines, num_total_vertices_points);
   
 }
+#endif
+
 static void CGOCountNumVertices(const CGO *I, int *num_total_vertices, int *num_total_indexes,
 			 int *num_total_vertices_lines, int *num_total_indexes_lines,
 			 int *num_total_vertices_points){
@@ -9040,6 +9044,8 @@ CGO *CGOConvertLinesToShaderCylinders(const CGO * I, int est){
     return NULL;
   }
 }
+
+#ifdef WITH_UNUSED_FUNCTIONS
 /* CGOSplitUpLinesForPicking: This operation goes through */
 /* a CGO and returns a new CGO that has the same lines but */
 /* a line that has two different pick colors will get split */
@@ -9179,6 +9185,7 @@ CGO *CGOSplitUpLinesForPicking(const CGO * I){
 
   return cgo_managed.release();
 }
+#endif
 
 static void trilinesBufferAddVertex(float * &buffer,
     const float * v1,           // vertex
