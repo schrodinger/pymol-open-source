@@ -38,11 +38,11 @@ class TestHeadering(testing.PyMOLTestCase):
         self.assertAlmostEqual(float(ds1['y']), 41.23)
         self.assertAlmostEqual(float(ds1['z']), 27.93)
 
-        self.assertEqual(header.getColumns(), [
+        self.assertEqual(sorted(header.getColumns()), [
             'HKL_base/HKL_base/H', 'HKL_base/HKL_base/K',
-            'HKL_base/HKL_base/L', 'cryst_1/data_1/FREE', 'cryst_1/data_1/FP',
-            'cryst_1/data_1/SIGFP', 'cryst_1/data_1/FC', 'cryst_1/data_1/PHIC',
-            'cryst_1/data_1/FOM'
+            'HKL_base/HKL_base/L', 'cryst_1/data_1/FC', 'cryst_1/data_1/FOM',
+            'cryst_1/data_1/FP', 'cryst_1/data_1/FREE', 'cryst_1/data_1/PHIC',
+            'cryst_1/data_1/SIGFP'
         ])
 
         self.assertEqual(header.getColumnsOfType("W"), ['cryst_1/data_1/FOM'])
