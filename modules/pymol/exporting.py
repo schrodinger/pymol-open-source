@@ -744,9 +744,10 @@ EXAMPLES
         filename = filename.replace('{num}', '{num:0%d}' % nwidth)
 
         for num, (oname, osele, ostate) in enumerate(odata, 1):
+            title = _self.get_title(oname, ostate) if multistate else ''
             fname = filename.format(oname, ostate,
                     name=oname, state=ostate, num=num,
-                    title=_self.get_title(oname, ostate))
+                    title=title)
             yield fname, osele, ostate
 
 
