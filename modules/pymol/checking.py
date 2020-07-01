@@ -8,7 +8,7 @@ except NameError:
 
 def _raising(code=-1,_self=cmd):
     # WARNING: internal routine, subject to change
-    return is_error(code) and _self.get_setting_boolean("raise_exceptions")
+    return is_error(code)
 
 def is_string(obj):
     return isinstance(obj, basestring)

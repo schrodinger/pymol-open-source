@@ -19,36 +19,6 @@
 # **This is the only module which should be/need be imported by
 # ** PyMol API Based Programs
 
-# NEW CALL RETURN CONVENTIONS for _cmd.so C-layer
-#
-
-# (1) Calls into C (_cmd) should return results/status and print
-#     errors and feedback (according to mask) BUT NEVER RAISE EXCEPTIONS
-#     from within the C code itself.
-
-# (2) Effective with version 0.99, standard Python return conventions
-# apply, but haven't yet been fully implemented.  In summary:
-
-#     Unless explicitly specified in the function:
-
-#     ==> Success with no information should return None
-
-#     ==> Failure should return a negative number as follows:
-#        -1 = a general, unspecified failure
-
-#     Upon an error, exceptions will be raised by the Python wrapper
-#     layer if the "raise_exceptions" setting is on.
-
-#     ==> Boolean queries should return 1 for true/yes and 0 for false/no.
-
-#     ==> Count queries should return 0 or a positive number
-
-# (3) If _cmd produces a specific return result, be sure to include an
-#     error result as one of the possibilities outside the range of the
-#     expected return value.  For example, a negative distance
-#
-# (4) cmd.py API wrappers can then raise exceptions and return values.
-#
 # NOTE: Output tweaking via the "quiet" parameter of API functions.
 #
 # Many PyMOL API functions have a "quiet" parameter which is used to

@@ -296,13 +296,10 @@ static PyObject *APIFailure(void)
 }
 
 /**
- * If `raise_exceptions` is false, return -1 (DEFAULT_ERROR).
- * Else raise CmdException(msg).
+ * Raise CmdException(msg).
  */
 static PyObject* APIFailure(PyMOLGlobals* G, const char* msg = nullptr)
 {
-  if (G && !SettingGet<bool>(G, cSetting_raise_exceptions))
-    return APIFailure();
   if (msg) {
     PyErr_SetString(P_CmdException, msg);
   } else {
@@ -312,14 +309,10 @@ static PyObject* APIFailure(PyMOLGlobals* G, const char* msg = nullptr)
 }
 
 /**
- * If `raise_exceptions` is false, return -1 (DEFAULT_ERROR).
- * Else raise `error` as an exception.
+ * Raise `error` as an exception.
  */
 static PyObject* APIFailure(PyMOLGlobals* G, const pymol::Error& error)
 {
-  if (G && !SettingGet<bool>(G, cSetting_raise_exceptions))
-    return APIFailure();
-
   if (PyErr_Occurred()) {
     return nullptr;
   }
@@ -361,7 +354,6 @@ static PyObject *APIResultOk(int ok)
 
 /**
  * If `ok` is true, return None (DEFAULT_SUCCESS).
- * Else If `raise_exceptions` is false, return -1 (DEFAULT_ERROR).
  * Else raise CmdException().
  */
 static PyObject* APIResultOk(PyMOLGlobals* G, bool ok)
@@ -373,7 +365,6 @@ static PyObject* APIResultOk(PyMOLGlobals* G, bool ok)
 
 /**
  * If `res` is true, return res.result().
- * Else if `raise_exceptions` is false, return -1 (DEFAULT_ERROR).
  * Else raise CmdException(res.error()).
  */
 template <typename T>

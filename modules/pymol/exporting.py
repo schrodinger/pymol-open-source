@@ -616,8 +616,7 @@ ARGUMENTS
         s = _self.get_str(format, pattern, state, '', -1, 1, quiet)
 
         if s is None:
-            if _self._raising(): raise QuietException
-            return DEFAULT_ERROR
+            raise QuietException
 
         filename = _self.exp_path(filename)
 

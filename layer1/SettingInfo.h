@@ -241,7 +241,7 @@ enum {
   REC_i( 156, two_sided_lighting                      , ostate    , -1 ),
   REC_i( 157, secondary_structure                     , global    , 2, 1, 4),
   REC_b( 158, auto_remove_hydrogens                   , global    , 0 ),
-  REC_b( 159, raise_exceptions                        , global    , 1 ),
+  REC_b( 159, raise_exceptions                        , unused    , 1 ),
   REC_b( 160, stop_on_exceptions                      , global    , 0 ),
   REC_b( 161, sculpting                               , ostate    , 0 ),
   REC_b( 162, auto_sculpt                             , global    , 0 ),
