@@ -307,7 +307,7 @@ extern const struct SettingLevelInfoType {
   unsigned char mask;
 } SettingLevelInfo[];
 
-const char * SettingLevelGetName(PyMOLGlobals * G, int index);
+const char * SettingLevelGetName(unsigned index);
 bool SettingLevelCheckMask(PyMOLGlobals * G, int index, unsigned char mask);
 bool SettingLevelCheck(PyMOLGlobals * G, int index, unsigned char level);
 

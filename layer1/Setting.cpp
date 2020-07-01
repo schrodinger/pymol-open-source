@@ -77,7 +77,7 @@ const SettingLevelInfoType SettingLevelInfo[] = {
 template <> const char * SettingGet<const char *>(int index, const CSetting * I);
 
 // get level name for setting index (for feedback)
-const char * SettingLevelGetName(PyMOLGlobals * G, int index) {
+const char * SettingLevelGetName(unsigned index) {
   return SettingLevelInfo[SettingInfo[index].level].name;
 }
 

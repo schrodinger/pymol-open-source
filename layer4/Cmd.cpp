@@ -182,7 +182,7 @@ static PyMOLGlobals * _api_get_pymol_globals(PyObject * self) {
 #define API_ASSERT(x)                                                          \
   if (!(x)) {                                                                  \
     if (!PyErr_Occurred())                                                     \
-      PyErr_SetString(P_CmdException, #x);                                     \
+      PyErr_SetString(P_CmdException ? P_CmdException : PyExc_Exception, #x);  \
     return nullptr;                                                            \
   }
 
@@ -4386,6 +4386,14 @@ static PyObject *CmdGetSettingType(PyObject *, PyObject * args)
   return PyInt_FromLong(type);
 }
 
+static PyObject* CmdGetSettingLevel(PyObject*, PyObject* args)
+{
+  unsigned index;
+  API_ASSERT(PyArg_ParseTuple(args, "I", &index));
+  API_ASSERT(index < cSetting_INIT);
+  return PyUnicode_FromString(SettingLevelGetName(index));
+}
+
 static PyObject *CmdGetSettingOfType(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -6495,6 +6503,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_session", CmdGetSession, METH_VARARGS},
   {"get_setting_of_type", CmdGetSettingOfType, METH_VARARGS},
   {"get_setting_type", CmdGetSettingType, METH_VARARGS},
+  {"get_setting_level", CmdGetSettingLevel, METH_VARARGS},
   {"get_setting_updates", CmdGetSettingUpdates, METH_VARARGS},
   {"get_setting_indices", CmdGetSettingIndices, METH_VARARGS},
   {"get_object_list", CmdGetObjectList, METH_VARARGS},

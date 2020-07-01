@@ -12051,7 +12051,7 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, const cha
         SettingGetName(G, index, name);
 
       PRINTFB(G, FB_Setting, FB_Warnings)
-        " Setting-Warning: '%s' is a %s-level setting\n", name, SettingLevelGetName(G, index)
+        " Setting-Warning: '%s' is a %s-level setting\n", name, SettingLevelGetName(index)
         ENDFB(G);
     }
   }
