@@ -232,9 +232,11 @@ class TestExporting(testing.PyMOLTestCase):
         n_N = cmd.count_atoms('elem N')
 
         with testing.mktemp('.' + format) as filename:
-            cmd.set('raise_exceptions', 0) # 1.7.6 save xyz doesn't set r=DEFAULT_SUCCESS
+            if testing.PYMOL_VERSION_TUPLE < (1, 8):
+                cmd.set('raise_exceptions', 0) # 1.7.6 save xyz doesn't set r=DEFAULT_SUCCESS
             cmd.save(filename, 'elem O+N')
-            cmd.set('raise_exceptions', 1)
+            if testing.PYMOL_VERSION_TUPLE < (1, 8):
+                cmd.set('raise_exceptions', 1)
 
             if format == 'mae' and not pymol.invocation.options.incentive_product:
                 format = 'cms'

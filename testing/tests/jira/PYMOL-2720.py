@@ -20,6 +20,4 @@ class TestPYMOL2720(testing.PyMOLTestCase):
         self.assertTrue( cmd.count_atoms('foo-bar-com////'))
 
         # test ambiguous prefix
-        # -1 on failure
-        cmd.set('raise_exceptions', 0)
-        self.assertEqual(cmd.count_atoms('/foo/'), -1)
+        self.assertRaises(CmdException, lambda: cmd.count_atoms('/foo/'))
