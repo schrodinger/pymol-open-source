@@ -57,6 +57,9 @@ class TestImporting(testing.PyMOLTestCase):
             self.assertItemsEqual(cmd.get_names(), names)
             self.assertEqual(cmd.count_states('1avy1'), 3)
 
+            if testing.PYMOL_VERSION_TUPLE < (2, 0):
+                self.skipTest('upstream download URL has changed')
+
             cmd.fetch('1avy', type='2fofc')
             names += ['1avy_2fofc']
             self.assertItemsEqual(cmd.get_names(), names)
@@ -70,7 +73,8 @@ class TestImporting(testing.PyMOLTestCase):
 
         # PyMOL 1.8.6 adds full URLs, remove them
         pdbpaths = pymol.importing.hostPaths['pdb']
-        pdbpaths[:] = [p for p in pdbpaths if '://' not in p]
+        if isinstance(pdbpaths, list):
+            pdbpaths[:] = [p for p in pdbpaths if '://' not in p]
 
         with testing.mkdtemp() as fetch_path:
             names = []
@@ -154,7 +158,8 @@ class TestImporting(testing.PyMOLTestCase):
 
         # mutiplex=0
         cmd.load(filename, discrete=discrete, multiplex=0)
-        self.assertEqual(cmd.count_discrete('*'), discrete)
+        if testing.PYMOL_VERSION_TUPLE >= (1, 7):
+            self.assertEqual(cmd.count_discrete('*'), discrete)
         self.assertEqual(cmd.count_states(), N)
         self.assertEqual(len(cmd.get_object_list()), 1)
 
@@ -164,7 +169,8 @@ class TestImporting(testing.PyMOLTestCase):
         # mutiplex=1
         cmd.delete('*')
         cmd.load(filename, discrete=discrete, multiplex=1)
-        self.assertEqual(cmd.count_discrete('*'), discrete * N)
+        if testing.PYMOL_VERSION_TUPLE >= (1, 7):
+            self.assertEqual(cmd.count_discrete('*'), discrete * N)
         self.assertEqual(cmd.count_states(), 1)
         self.assertEqual(len(cmd.get_object_list()), N)
 
@@ -348,6 +354,7 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.delete('*')
 
     # via ObjectMoleculeLoadTRJFile
+    @testing.requires_version('1.7')
     def testLoadTraj_selection_trj(self):
         base = self.datafile("sampletrajectory")
         cmd.load(base + ".pdb")
@@ -376,7 +383,7 @@ class TestImporting(testing.PyMOLTestCase):
         http://ambermd.org/tutorials/basic/tutorial2/section6.htm
         '''
         cmd.load(self.datafile("TRPcage.top"))
-        cmd.load_traj(self.datafile("heat1.crd"), "TRPcage")
+        cmd.load_traj(self.datafile("heat1.crd"), "TRPcage", format="trj")
         self.assertEqual(304, cmd.count_atoms())
         self.assertEqual(10, cmd.count_states())
 
@@ -413,6 +420,7 @@ class TestImporting(testing.PyMOLTestCase):
             [28.003,  25.573,  12.883],
             [34.238,  31.434,  17.835]], delta=1e-3)
 
+    @testing.requires_version('1.7')  # broken before
     def testReadMmodstr(self):
         cmd.read_mmodstr(mmodstr, 'm1')
         self.assertEqual(7, cmd.count_atoms())
@@ -457,13 +465,17 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.space('cmyk', 0.7)
         cmd.space('rgb')
         # CmdException before 2.5, now QuietException (from Shortcut)
-        self.assertRaises(Exception, lambda: cmd.space('no-such-space'))
+        self.assertRaises((pymol.CmdException, cmd.QuietException),
+                          lambda: cmd.space('no-such-space'))
         pymol_data = os.environ['PYMOL_DATA']
         os.environ['PYMOL_DATA'] = '/no/such/dir'
+        pymol_path = os.environ['PYMOL_PATH']  # PyMOL 1.x
+        os.environ['PYMOL_PATH'] = '/no/such/dir'  # PyMOL 1.x
         try:
             self.assertRaises(pymol.CmdException, lambda: cmd.space('cmyk'))
         finally:
             os.environ['PYMOL_DATA'] = pymol_data
+            os.environ['PYMOL_PATH'] = pymol_path  # PyMOL 1.x
 
     @testing.requires_version('1.7.3.0')
     def testLoadCoords(self):
