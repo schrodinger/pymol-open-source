@@ -678,8 +678,10 @@ PYMOL API
         if exe is None:
             raise pymol.CmdException('could not find collada2gltf')
 
-        COLLADA_VERSION = 2
-        r = _self.get_collada(COLLADA_VERSION)
+        # https://github.com/schrodinger/pymol-open-source/issues/107
+        _self.set('collada_geometry_mode', 1, quiet=quiet)
+
+        r = _self.get_collada()
 
         # write collada file
         with open(filename, 'w') as handle:
