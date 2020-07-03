@@ -2434,12 +2434,6 @@ static bool CGOProcessCGOtoArrays(const CGO* I, CGO* cgo, CGO* addtocgo,
 
     switch (op) {
     case CGO_BOUNDING_BOX:
-      {
-	const float *newpc = pc;
-	if (addtocgo)
-          addtocgo->add_to_cgo(op, newpc);
-      }
-      break;
     case CGO_DRAW_SPHERE_BUFFERS:
     case CGO_DRAW_LABELS:
     case CGO_DRAW_TEXTURES:
