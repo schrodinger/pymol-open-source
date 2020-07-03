@@ -9981,6 +9981,7 @@ CGO* CGOTurnLightingOnLinesOff(const CGO* I, bool use_shader)
           CGOEnable(cgo, CGO_GL_LIGHTING);
         }
       }
+      break;
     case CGO_END:
       {
         CGOEnd(cgo);
