@@ -241,6 +241,16 @@ DESCRIPTION
             "STL import not supported by this PyMOL build")
 
 
+def read_collada(contents: bytes, oname, state=0, zoom=-1, *, _self=cmd):
+    '''
+DESCRIPTION
+
+    Load COLLADA content as a CGO object
+    '''
+    raise pymol.IncentiveOnlyException(
+            "COLLADA import not supported by this PyMOL build")
+
+
 def get_mmtfstr(selection='all', state=1, _self=cmd):
     '''
 DESCRIPTION
