@@ -87,7 +87,7 @@ def get_prefix_path():
 
     if sys.platform == 'darwin':
         for prefix in ['/sw', '/opt/local', '/usr/local']:
-            if sys.executable.startswith(prefix):
+            if sys.base_prefix.startswith(prefix):
                 return [prefix] + X11
 
     if is_conda_env():
