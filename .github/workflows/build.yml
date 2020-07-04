@@ -1,4 +1,4 @@
-name: Basic CI
+name: CI
 
 on: [push]
 

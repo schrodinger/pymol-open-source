@@ -1,3 +1,5 @@
+![CI](https://github.com/schrodinger/pymol-open-source/workflows/CI/badge.svg)
+
 <img src="./data/pymol/icons/icon2.svg" height="100" align="right" />
 
 # Open-Source PyMOL
