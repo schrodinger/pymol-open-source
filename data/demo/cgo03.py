@@ -30,6 +30,7 @@ for a in range(0,63):
       for y in range(0,30):
          z[x][y]=(math.cos((aa)+x/2.0)+math.sin((aa)+(y/2.0)))
 
+   obj += [PICK_COLOR, 0, cPickableGadget]
    obj.extend( [ COLOR, 0.3, 0.3, 1.0 ] )
    
    for x in range(0,30):
@@ -46,14 +47,17 @@ for a in range(0,63):
 
    # add into this a couple circulating spheres
 
+   obj += [PICK_COLOR, 1, cPickableGadget]
    obj.extend( [ COLOR, 1.0, 0.2, 0.2 ] )
    obj.extend( [ SPHERE, 5*math.cos(ab)+15.0, 5*math.sin(ab)+15.0, 6.0, 1.0 ] )
 
+   obj += [PICK_COLOR, 2, cPickableGadget]
    obj.extend( [ COLOR, 1.0, 1.0, 0.2 ] )
    obj.extend( [ SPHERE, 5*math.cos(aa)+15.0, 5*math.sin(aa)+15.0, 3.0, 2.0 ] )
 
    # now add a colorful cylinder
 
+   obj += [PICK_COLOR, 3, cPickableGadget]
    obj.extend( [ CYLINDER,
                  5.0,  15+math.sin(aa)*10, -5.0,      # XYZ 1
                  25.0, 15+math.sin(aa)*10, -5.0,      # XYZ 2

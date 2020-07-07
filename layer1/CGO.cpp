@@ -339,6 +339,12 @@ static PyObject *CGOArrayAsPyList(const CGO * I)
       ++pc;
       --sz;
       break;
+    case CGO_PICK_COLOR:
+      assert(sz == 2);
+      flat.push_back(*reinterpret_cast<const int*>(pc++)); // atom index
+      flat.push_back(*reinterpret_cast<const int*>(pc++)); // bond index
+      sz -= 2;
+      break;
     case CGO_DRAW_ARRAYS:
       {
         auto sp = reinterpret_cast<const cgo::draw::arrays*>(pc);
@@ -414,6 +420,12 @@ static int CGOArrayFromPyListInPlace(PyObject * list, CGO * I)
       ok_assert(1, i < l);
       CGO_write_int(fdata, GET_INT(i++));
       sz--;
+      break;
+    case CGO_PICK_COLOR:
+      ok_assert(1, i + 1 < l);
+      CGO_write_int(fdata, GET_INT(i++)); // atom index
+      CGO_write_int(fdata, GET_INT(i++)); // bond index
+      sz -= 2;
       break;
     case CGO_DRAW_ARRAYS:
       {
@@ -626,6 +638,11 @@ int CGOFromFloatArray(CGO * I, const float *src, int len)
         tf = save_pc + 1;
         iarg = (int) *(tf);
         CGO_write_int(tf, iarg);
+        break;
+      case CGO_PICK_COLOR:
+        tf = save_pc + 1;
+        CGO_write_int(tf, int(save_pc[1])); // atom index
+        CGO_write_int(tf, int(save_pc[2])); // bond index
         break;
       }
       save_pc = pc;

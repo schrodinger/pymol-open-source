@@ -261,9 +261,13 @@ static void ObjectCGORenderState(PyMOLGlobals* G, RenderPass pass, CRay* ray,
         CGOFree(cgo_copy);
       }
     }
-  } else if(G->HaveGUI && G->ValidContext && pass != RenderPass::Antialias) {
-    if(info->pick) { // no picking yet
-    } else {
+  } else if (G->HaveGUI && G->ValidContext) {
+    if (info->pick) {
+      PickContext context;
+      context.object = I;
+      context.state = sobj - I->State;
+      CGORenderGLPicking(sobj->renderCGO, info, &context, I->Setting, nullptr);
+    } else if (pass != RenderPass::Antialias) {
       bool pass_is_opaque = pass == RenderPass::Opaque;
       if(sobj && ((sobj->hasTransparency ^ pass_is_opaque) || (sobj->hasOpaque == pass_is_opaque))){
 	{
@@ -373,6 +377,7 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
       }
 
       CGO* convertcgo = CGONew(G);
+      CGOPickColor(convertcgo, 0, cPickableGadget);
       CGOColorv(convertcgo, colorWithA);
       CGOAlpha(convertcgo, colorWithA[3]);
       CGOAppend(convertcgo, inputCGO);
@@ -431,14 +436,18 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
 	preOpt.reset(CGOCombineBeginEnd(preOpt.get(), 0));
       }
 
-      preOpt.reset(CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(
-          preOpt.get(), 0, colorWithA, false));
+      if (hasTransparency) {
+        preOpt.reset(CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(
+            preOpt.get(), 0, colorWithA, false));
 
-      if (someLinesWithoutNormals){
-        // if some lines without normals, turn lighting off on lines
-        CGO* convertcgo = preOpt.release();
-        preOpt.reset(CGOTurnLightingOnLinesOff(convertcgo, use_shader));
-        CGOFreeWithoutVBOs(convertcgo);
+        if (someLinesWithoutNormals){
+          // if some lines without normals, turn lighting off on lines
+          CGO* convertcgo = preOpt.release();
+          preOpt.reset(CGOTurnLightingOnLinesOff(convertcgo, use_shader));
+          CGOFreeWithoutVBOs(convertcgo);
+        }
+      } else {
+        preOpt.reset(CGOOptimizeToVBONotIndexed(preOpt.get(), 0));
       }
 
       if (allCylinders){
@@ -493,7 +502,7 @@ void ObjectCGO::render(RenderInfo * info)
   if(!I->State)
     return;
 
-  if(pass != RenderPass::Antialias || info->ray) {
+  if(pass != RenderPass::Antialias || info->ray || info->pick) {
     if((I->visRep & cRepCGOBit)) {
       for(StateIterator iter(G, I->Setting, state, I->NState); iter.next();) {
         sobj = I->State + iter.state;

@@ -64,7 +64,17 @@ ALPHA              = 25.0
 QUADRIC            = 26.0 # NOTE: Only works with ellipsoids and disks
 CONE               = 27.0
 
+PICK_COLOR         = 31.0 # 0x1F [PICK_COLOR, index, bond/cPickable_t]
+
 LIGHTING           = float(0x0B50)
+
+# enum cPickable_t:
+cPickableAtom = -1.0
+cPickableLabel = -2.0
+cPickableGadget = -3.0
+cPickableNoPick = -4.0
+cPickableThrough = -5.0
+
 
 def molauto(name="mols", sele="(all)", marg="-nice", _self=cmd):
     _self.save("molauto.pdb",sele)
