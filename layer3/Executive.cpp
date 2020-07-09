@@ -5702,6 +5702,7 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
   if(ok) {
     tmp = PyDict_GetItemString(session, "settings");
     if(tmp && !partial_restore) {
+      SettingInitGlobal(G, false, false, /* use_defaults */ true);
       SettingSetGlobalsFromPyList(G, tmp);
     }
 
