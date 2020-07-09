@@ -315,6 +315,15 @@ class TestSelecting(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_atoms('s1'), 3)
         self.assertEqual(cmd.count_atoms('s1 & elem C'), 3)
 
+        # empty list (use new selection names to verify that named selection
+        # was crated)
+        cmd.select_list('s2', 'm1', [], mode='index')
+        self.assertEqual(cmd.count_atoms('s2'), 0)
+        cmd.select_list('s3', 'm1', [], mode='rank')
+        self.assertEqual(cmd.count_atoms('s3'), 0)
+        cmd.select_list('s4', 'm1', [], mode='id')
+        self.assertEqual(cmd.count_atoms('s4'), 0)
+
     @testing.requires_version('2.4')
     def testSelectList_state(self):
         cmd.fragment('ala', 'm1')
@@ -323,6 +332,14 @@ class TestSelecting(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_atoms('s1'), 3)
         cmd.select_list('s1', 'm1', [100] * 100 + [2, 3, 4], state=2, mode='rank')
         self.assertEqual(cmd.count_atoms('s1'), 2)
+
+    # https://github.com/schrodinger/pymol-open-source/issues/109
+    @testing.foreach('index', 'rank', 'id')
+    @testing.requires_version('2.5')
+    def testSelectList_unmatched(self, mode):
+        cmd.fragment('ala', 'm1')
+        cmd.select_list('s1', 'm1', [100], mode=mode)
+        self.assertEqual(cmd.count_atoms('s1'), 0)
 
     def testMacros(self):
         '''
