@@ -321,7 +321,7 @@ template <typename Int,
 inline bool PConvFromPyObject(PyMOLGlobals*, PyObject* obj, Int& out)
 {
   out = PyInt_AsLong(obj);
-  return true;
+  return out != -1 || !PyErr_Occurred();
 }
 
 template <typename Float,
@@ -330,11 +330,21 @@ template <typename Float,
 inline bool PConvFromPyObject(PyMOLGlobals*, PyObject* obj, Float& out)
 {
   out = PyFloat_AsDouble(obj);
-  return true;
+  return out != -1.0 || !PyErr_Occurred();
 }
 
 inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, std::string &out) {
+#ifdef _PYMOL_NOPY
+  // this would also work with real Python but without error handling (could
+  // segfault if `obj` is not of type `str`)
   out = PyString_AsSomeString(obj);
+#else
+  const char* buffer = PyUnicode_AsUTF8(obj);
+  if (!buffer) {
+    return false;
+  }
+  out = buffer;
+#endif
   return true;
 }
 
