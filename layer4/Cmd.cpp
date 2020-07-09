@@ -3257,40 +3257,21 @@ static PyObject *CmdSelectList(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *str1, *sele_name;
-  OrthoLineType s1;
   int quiet;
-  int result = 0;
-  int ok = false;
   int mode;
   int state;
   PyObject *list;
-  ok =
-    PyArg_ParseTuple(args, "OssOiii", &self, &sele_name, &str1, &list, &state, &mode,
-                     &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    int *int_array = NULL;
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    if(ok)
-      ok = PyList_Check(list);
-    if(ok)
-      ok = PConvPyListToIntArray(list, &int_array);
-    if(ok) {
-      int list_len = PyList_Size(list);
-      result =
-        ExecutiveSelectList(G, sele_name, s1, int_array, list_len, state, mode, quiet);
-      SceneInvalidate(G);
-      SeqDirty(G);
-    }
-    FreeP(int_array);
-    APIExitBlocked(G);
-  }
-  return Py_BuildValue("i", result);
+  API_SETUP_ARGS(G, self, args, "OssO!iii", &self, &sele_name, &str1,
+      &PyList_Type, &list, &state, &mode, &quiet);
+  std::vector<int> int_array;
+  API_ASSERT(PConvFromPyObject(G, list, int_array));
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveSelectList(G, sele_name, str1, int_array.data(),
+      int_array.size(), state, mode, quiet);
+  SceneInvalidate(G);
+  SeqDirty(G);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdAlterState(PyObject * self, PyObject * args)

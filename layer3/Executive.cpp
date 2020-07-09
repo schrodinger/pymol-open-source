@@ -10070,123 +10070,49 @@ pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const char* name,
 }
 
 /*========================================================================*/
-int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,
-                        int *list, int list_len, int state, int mode, int quiet)
-{                               /* assumes a blocked Python interpreter */
-  int ok = true;
-  int n_eval = 0;
-  int sele0 = SelectorIndexByName(G, s1);
-  int n_sele = 0;
-  ObjectMolecule *obj = NULL;
-  if(sele0 >= 0)
-    obj = SelectorGetSingleObjectMolecule(G, sele0);
-  if(obj) {
-    int a;
-    int index = 0;
-    CoordSet* cs = obj->getCoordSet(state);
+pymol::Result<int> ExecutiveSelectList(PyMOLGlobals* G, const char* sele_name,
+    const char* oname, const int* list, size_t list_len, int state, int mode,
+    int quiet)
+{
+  enum {
+    MODE_INDEX = 0,
+    MODE_ID = 1,
+    MODE_RANK = 2,
+  };
 
-    if(ok && list) {
-      if(list_len) {
-        switch (mode) {
-        case 0:                /* object indices */
-          for(a = 0; a < list_len; a++) {
-            list[a]--;          /* convert 1-based indices to 0-based array offsets */
-          }
-          if(ok)
-            n_sele =
-              SelectorCreateOrderedFromObjectIndices(G, sele_name, obj, list, list_len).result();
-          break;
-        case 1:                /* atom identifier */
-        case 2:                /* rank */
+  auto obj = ExecutiveFindObject<ObjectMolecule>(G, oname);
+  if (!obj) {
+    return pymol::Error("object not found");
+  }
 
-          {
-            OVOneToAny *o2a = OVOneToAny_New(G->Context->heap);
-            AtomInfoType *ai;
-            OVstatus res;
-            OVreturn_word ret;
-            int n_idx = 0;
-            int *idx_list = VLAlloc(int, list_len);
-            ai = obj->AtomInfo.data();
+  std::vector<int> idx_list;
+  idx_list.reserve(list_len);
 
-            for(a = 0; a < obj->NAtom; a++) {
-              ai->temp1 = -1;
-              ai++;
-            }
+  if (mode == MODE_INDEX) {
+    for (size_t i = 0; i != list_len; ++i) {
+      // convert 1-based indices to 0-based array offsets
+      idx_list.push_back(list[i] - 1);
+    }
+  } else if (mode == MODE_ID || mode == MODE_RANK) {
+    CoordSet const* cs = obj->getCoordSet(state);
+    std::set<int> const list_set(list, list + list_len);
 
-            /* create linked list using temp1 as "next" field */
+    for (int atm = 0; atm < obj->NAtom; ++atm) {
+      auto const& ai = obj->AtomInfo[atm];
+      int const index = (mode == MODE_ID) ? ai.id : ai.rank;
 
-            ai = obj->AtomInfo.data();
-            for(a = 0; a < obj->NAtom; a++) {
-              if(mode == 1) {   /* id */
-                index = ai[a].id;
-              } else            /* rank */
-                index = ai[a].rank;
-              if((OVreturn_IS_ERROR((res = OVOneToAny_SetKey(o2a, index, a))))) {
-                if((OVreturn_IS_ERROR((ret = OVOneToAny_GetKey(o2a, index))))) {
-                  ok = false;
-                } else {
-                  int cur = ret.word;
-                  while(1) {
-                    if(ai[cur].temp1 < 0) {
-                      ai[cur].temp1 = a;
-                      break;
-                    } else {
-                      cur = ai[cur].temp1;
-                    }
-                  }
-                }
-              }
-            }
-
-            {
-              int cur;
-              for(a = 0; a < list_len; a++) {
-                index = list[a];
-                if((OVreturn_IS_OK((ret = OVOneToAny_GetKey(o2a, index))))) {
-                  cur = ret.word;
-                  while(cur >= 0) {
-                    if (!cs || cs->atmToIdx(cur) >= 0) {
-                      VLACheck(idx_list, int, n_idx);
-                      idx_list[n_idx] = cur;
-                      n_idx++;
-                    }
-                    cur = ai[cur].temp1;
-                  }
-                }
-              }
-            }
-            if(ok)
-              n_sele =
-                SelectorCreateOrderedFromObjectIndices(G, sele_name, obj, idx_list,
-                                                       n_idx).result();
-            OVOneToAny_DEL_AUTO_NULL(o2a);
-            VLAFreeP(idx_list);
-          }
-          break;
-
+      if (list_set.count(index)) {
+        if (!cs || cs->atmToIdx(atm) >= 0) {
+          idx_list.push_back(atm);
         }
-      } else
-        SelectorCreateEmpty(G, sele_name, true);
+      }
     }
   } else {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      " SelectList-Error: selection cannot span more than one object.\n" ENDFB(G);
+    return pymol::Error("invalid mode");
   }
-  if(ok) {
-    if(!quiet) {
-      PRINTFB(G, FB_Executive, FB_Actions)
-        " SelectList: modified %i atoms.\n", n_eval ENDFB(G);
-    }
-  } else {
-    if(!quiet) {
-      PRINTFB(G, FB_Executive, FB_Warnings)
-        "ExecutiveIterateList: An error occurred.\n" ENDFB(G);
-    }
-  }
-  if(!ok)
-    return -1;
-  else
-    return n_sele;
+
+  return SelectorCreateOrderedFromObjectIndices(
+      G, sele_name, obj, idx_list.data(), idx_list.size());
 }
 
 

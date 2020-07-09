@@ -174,11 +174,11 @@ static void SelectorCleanImpl(PyMOLGlobals * G, CSelector *I);
 static int SelectorCheckNeighbors(PyMOLGlobals * G, int maxDepth, ObjectMolecule * obj,
                                   int at1, int at2, int *zero, int *scratch);
 
-static sele_array_t SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMolecule * obj,
-                                            int req_state,
-                                            int no_dummies, int *idx,
-                                            int n_idx, int numbered_tags);
+static void SelectorUpdateTableSingleObject(PyMOLGlobals* G,
+    ObjectMolecule* obj, int req_state, bool no_dummies = false);
 
+static sele_array_t SelectorGetSeleArrayForAtomIndices(CSelector* I,
+    ObjectMolecule* obj, const int* idx, int n_idx, bool numbered_tags);
 
 /*========================================================================*/
 /**
@@ -1099,7 +1099,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
 
   if(only_object) {
     SelectorUpdateTableSingleObject(G, only_object, cSelectorUpdateTableAllStates,
-                                    true, NULL, 0, false);
+                                    true);
     n_dummies = 0;
   } else {
     SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
@@ -1647,7 +1647,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
       SelectorUpdateTable(G, state_value, -1);
     }
   } else {
-    SelectorUpdateTableSingleObject(G, single_object, state_value, false, NULL, 0, 0);
+    SelectorUpdateTableSingleObject(G, single_object, state_value);
   }
 
   res = VLACalloc(SSResi, 1000);
@@ -6964,20 +6964,15 @@ _SelectorCreate(PyMOLGlobals * G, pymol::zstring_view sname, const char *sele,
     } else if(id2tag) {
       atom = SelectorSelectFromTagDict(G, *id2tag);
     } else if(obj && obj[0]) {  /* optimized full-object selection */
-      if(n_obj <= 0) {
-        embed_obj = *obj;
-        if(obj_idx && n_idx) {
-          atom =
-            SelectorUpdateTableSingleObject(G, embed_obj, cSelectorUpdateTableAllStates,
-                                            false, *obj_idx, *n_idx, (n_obj == 0));
-        } else {
-          atom =
-            SelectorUpdateTableSingleObject(G, embed_obj, cSelectorUpdateTableAllStates,
-                                            false, NULL, 0, (n_obj == 0));
-        }
-      } else {
-        // code removed because it was unused since 2006
-        assert(false);
+      assert(n_obj <= 0);
+      embed_obj = *obj;
+
+      SelectorUpdateTableSingleObject(
+          G, embed_obj, cSelectorUpdateTableAllStates);
+
+      if (obj_idx && n_idx) {
+        atom = SelectorGetSeleArrayForAtomIndices(
+            G->Selector, embed_obj, *obj_idx, *n_idx, (n_obj == 0));
       }
     } else if(mp) {
       atom = SelectorApplyMultipick(G, mp);
@@ -6987,7 +6982,6 @@ _SelectorCreate(PyMOLGlobals * G, pymol::zstring_view sname, const char *sele,
   }
 
   c = SelectorEmbedSelection(G, atom.get(), sname, embed_obj, false, executive_manage);
-  atom.reset();
   SelectorClean(G);
   /* ignore reporting on quiet */
   if(!quiet) {
@@ -7085,16 +7079,9 @@ static void SelectorClean(PyMOLGlobals* G)
 }
 
 /*========================================================================*/
-static sele_array_t SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMolecule * obj,
-                                            int req_state,
-                                            int no_dummies, int *idx,
-                                            int n_idx, int numbered_tags)
+static void SelectorUpdateTableSingleObject(
+    PyMOLGlobals* G, ObjectMolecule* obj, int req_state, bool no_dummies)
 {
-  int a = 0;
-  int c = 0;
-  int modelCnt;
-  sele_array_t result{};
-  int tag = true;
   int state = req_state;
   CSelector *I = G->Selector;
 
@@ -7128,90 +7115,86 @@ static sele_array_t SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMole
     break;
   }
 
-  I->NCSet = 0;
-  if(no_dummies) {
+  int modelCnt = cNDummyModels;
+  int c = cNDummyAtoms;
+
+  if (no_dummies) {
     modelCnt = 0;
     c = 0;
-  } else {
-    modelCnt = cNDummyModels;
-    c = cNDummyAtoms;
   }
-  c += obj->NAtom;
-  if(I->NCSet < obj->NCSet)
-    I->NCSet = obj->NCSet;
-  modelCnt++;
-  I->Table = std::vector<TableRec>(c);
-  I->Obj = std::vector<ObjectMolecule*>(modelCnt, nullptr);
-  if(no_dummies) {
-    modelCnt = 0;
-    c = 0;
-  } else {
-    c = cNDummyAtoms;
-    modelCnt = cNDummyModels;
-  }
+
+  I->NCSet = obj->NCSet;
+  I->Table = std::vector<TableRec>(c + obj->NAtom);
+  I->Obj = std::vector<ObjectMolecule*>(modelCnt + 1, nullptr);
   I->Obj[modelCnt] = obj;
 
   obj->SeleBase = c;
 
   if(state < 0) {
-    for(a = 0; a < obj->NAtom; a++) {
+    for (int atm = 0; atm < obj->NAtom; ++atm) {
       I->Table[c].model = modelCnt;
-      I->Table[c].atom = a;
+      I->Table[c].atom = atm;
       c++;
     }
   } else if(state < obj->NCSet) {
-    auto rec = I->Table.data() + c;
-    CoordSet *cs = obj->CSet[state];
+    const CoordSet* cs = obj->CSet[state];
     if(cs) {
-      for(a = 0; a < obj->NAtom; a++) {
-        int ix;
-        ix = cs->atmToIdx(a);
-        if(ix >= 0) {
-          rec->model = modelCnt;
-          rec->atom = a;
-          rec++;
+      for (int atm = 0; atm < obj->NAtom; ++atm) {
+        if (cs->atmToIdx(atm) >= 0) {
+          I->Table[c].model = modelCnt;
+          I->Table[c].atom = atm;
+          c++;
         }
       }
     }
-    c = rec - I->Table.data();
+    I->Table.resize(c);
   }
 
-  if(idx) {
-    sele_array_calloc(result, c);
-    if(n_idx >= 0) {
-      for(a = 0; a < n_idx; a++) {
-        int at = idx[a];
-        if(numbered_tags)
-          tag = a + SELECTOR_BASE_TAG;
-        if((at >= 0) && (at < obj->NAtom)) {
-          /* create an ordered selection based on the input order of the object indices */
-          result[obj->SeleBase + at] = tag;
-        }
-      }
-    } else {                    /* -1 terminated list */
-      int *at_idx = idx;
-      int at;
-      a = SELECTOR_BASE_TAG + 1;
-      while((at = *(at_idx++)) >= 0) {
-        if(numbered_tags) {
-          tag = a++;
-        }
-        if((at >= 0) && (at < obj->NAtom)) {
-          /* create an ordered selection based on the input order of the object indices */
-          result[obj->SeleBase + at] = tag;
-        }
-      }
-    }
-  }
-  I->Obj.resize(modelCnt);
-  I->Table.resize(c);
-
-  PRINTFD(G, FB_Selector)
-    "SelectorUpdateTableSingleObject-Debug: leaving...\n" ENDFD;
-
-  return (result);
+  assert(c == I->Table.size());
 }
 
+/**
+ * @param idx List of atom indices
+ * @param n_idx Size of atom indices list, or -1 for -1 terminated list
+ * @param numbered_tags Create ordered selection
+ * @pre SelectorUpdateTableSingleObject(cSelectorUpdateTableAllStates, no_dummies=false) was called
+ */
+static sele_array_t SelectorGetSeleArrayForAtomIndices(CSelector* I,
+    ObjectMolecule* obj, const int* idx, int n_idx, bool numbered_tags)
+{
+  assert(I->Obj.size() == cNDummyModels + 1);
+  assert(I->Table.size() == cNDummyAtoms + obj->NAtom);
+
+  sele_array_t result;
+  sele_array_calloc(result, I->Table.size());
+
+  if (n_idx == -1) {
+    // find end of -1 terminated list, used by SeekerBuildSeleFromAtomList
+    for (n_idx = 0; idx[n_idx] != -1;) {
+      ++n_idx;
+    }
+  }
+
+  assert(n_idx >= 0);
+
+  int tag = numbered_tags ? SELECTOR_BASE_TAG : 1;
+
+  for (int i = 0; i < n_idx; ++i) {
+    int const atm = idx[i];
+
+    if (atm >= 0 && atm < obj->NAtom) {
+      // create an ordered selection based on the input order of the atom
+      // indices
+      result[obj->SeleBase + atm] = tag;
+    }
+
+    if (numbered_tags) {
+      ++tag;
+    }
+  }
+
+  return result;
+}
 
 /*========================================================================*/
 int SelectorUpdateTable(PyMOLGlobals * G, int req_state, SelectorID_t domain)

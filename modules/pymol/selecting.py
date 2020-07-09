@@ -167,15 +167,10 @@ ARGUMENTS
     mode = id|index|rank: {default: id}
         '''
         #
-        r = DEFAULT_ERROR
         mode = id_type_dict[id_type_sc.auto_err(mode,'identifier type')]
-        try:
-            _self.lock(_self)
-            r = _cmd.select_list(_self._COb,str(name),str(object),list(id_list),int(state)-1,int(mode),int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+        with _self.lockcm:
+            return _cmd.select_list(_self._COb, name, object, id_list,
+                                    int(state) - 1, int(mode), int(quiet))
 
     def indicate(selection="(all)",_self=cmd):
         '''

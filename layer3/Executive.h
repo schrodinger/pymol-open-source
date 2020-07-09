@@ -268,8 +268,9 @@ pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const char* sname,
     const char* sele, int enable, int quiet, int merge, int state,
     const char* domain);
 
-int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1, int *list,
-                        int list_len, int state, int mode, int quiet);
+pymol::Result<int> ExecutiveSelectList(PyMOLGlobals* G, const char* sele_name,
+    const char* oname, const int* list, size_t list_len, int state, int mode,
+    int quiet);
 
 #define cExecutiveLabelEvalOff    0
 #define cExecutiveLabelEvalOn     1

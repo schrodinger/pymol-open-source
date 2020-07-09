@@ -945,9 +945,10 @@ PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL * I, const char *name, const char 
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK OVreturn_word mode_id;
   if(OVreturn_IS_OK((mode_id = get_select_list_mode(I, mode)))) {
-    result.status =
+    auto res =
       ExecutiveSelectList(I->G, name, object, list, list_len, state - 1, mode_id.word,
                           quiet);
+    result = return_status_ok(bool(res));
   }
   PYMOL_API_UNLOCK return result;
 }
