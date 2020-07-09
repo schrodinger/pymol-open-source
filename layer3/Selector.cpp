@@ -1065,81 +1065,6 @@ static bool SelectorIsSelectionDiscrete(
   return false;
 }
 
-static sele_array_t SelectorUpdateTableMultiObjectIdxTag(PyMOLGlobals * G,
-                                                 ObjectMolecule ** obj_list,
-                                                 int no_dummies,
-                                                 int **idx_list, int *n_idx_list,
-                                                 int n_obj)
-{
-  int c = 0;
-  int modelCnt;
-  sele_array_t result{};
-  CSelector *I = G->Selector;
-
-  PRINTFD(G, FB_Selector)
-    "SelectorUpdateTableMultiObject-Debug: entered ...\n" ENDFD;
-
-  SelectorClean(G);
-
-  I->SeleBaseOffsetsValid = true;       /* all states -> all atoms -> offsets valid */
-  I->NCSet = 0;
-  if(no_dummies) {
-    modelCnt = 0;
-    c = 0;
-  } else {
-    modelCnt = cNDummyModels;
-    c = cNDummyAtoms;
-  }
-  for(int b = 0; b < n_obj; b++) {
-    auto obj = obj_list[b];
-    c += obj->NAtom;
-    if(I->NCSet < obj->NCSet)
-      I->NCSet = obj->NCSet;
-    modelCnt++;
-  }
-  sele_array_calloc(result, c);
-  I->Table = std::vector<TableRec>(c);
-  I->Obj = std::vector<ObjectMolecule*>(modelCnt, nullptr);
-  if(no_dummies) {
-    modelCnt = 0;
-    c = 0;
-  } else {
-    c = cNDummyAtoms;
-    modelCnt = cNDummyModels;
-  }
-  for(int b = 0; b < n_obj; b++) {
-    auto obj = obj_list[b];
-    auto idx = idx_list[b];
-    auto n_idx = n_idx_list[b];
-
-    I->Obj[modelCnt] = obj;
-    obj->SeleBase = c;
-    for(int a = 0; a < obj->NAtom; a++) {
-      I->Table[c].model = modelCnt;
-      I->Table[c].atom = a;
-      c++;
-    }
-    if(idx && n_idx) {
-      if(n_idx > 0) {
-        for(int a = 0; a < n_idx; a++) {
-          int at = idx[2 * a];  /* index first */
-          int pri = idx[2 * a + 1];     /* then priority */
-          if((at >= 0) && (at < obj->NAtom)) {
-            result[obj->SeleBase + at] = pri;
-          }
-        }
-      }
-    }
-    modelCnt++;
-  }
-  I->Table.resize(c);
-
-  PRINTFD(G, FB_Selector)
-    "SelectorUpdateTableMultiObject-Debug: leaving...\n" ENDFD;
-
-  return (result);
-}
-
 int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
                           ObjectMolecule * only_object)
 {
@@ -7051,7 +6976,8 @@ _SelectorCreate(PyMOLGlobals * G, pymol::zstring_view sname, const char *sele,
                                             false, NULL, 0, (n_obj == 0));
         }
       } else {
-        atom = SelectorUpdateTableMultiObjectIdxTag(G, obj, false, obj_idx, n_idx, n_obj);
+        // code removed because it was unused since 2006
+        assert(false);
       }
     } else if(mp) {
       atom = SelectorApplyMultipick(G, mp);
@@ -7107,14 +7033,6 @@ SelectorCreateResult_t SelectorCreateOrderedFromObjectIndices(PyMOLGlobals * G, 
 {
   return _SelectorCreate(G, sname, NULL, &obj, true, NULL, NULL, 0, &idx, &n_idx, 0, NULL, -1, -1, -1);
   /* assigned numbered tags */
-}
-
-SelectorCreateResult_t SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals * G, const char *sname,
-                                               ObjectMolecule ** obj,
-                                               int **idx_tag, int *n_idx, int n_obj)
-{
-  return _SelectorCreate(G, sname, NULL, obj, true, NULL, NULL, 0, idx_tag, n_idx, n_obj,
-                         NULL, -1, -1, -1);
 }
 
 SelectorCreateResult_t SelectorCreate(PyMOLGlobals * G, const char *sname, const char *sele, ObjectMolecule * obj,

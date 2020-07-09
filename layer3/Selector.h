@@ -50,9 +50,6 @@ SelectorCreateResult_t SelectorCreateFromObjectIndices(PyMOLGlobals * G, const c
                                     int *idx, int n_idx);
 SelectorCreateResult_t SelectorCreateOrderedFromObjectIndices(PyMOLGlobals * G, const char *sname,
                                            ObjectMolecule * obj, int *idx, int n_idx);
-SelectorCreateResult_t SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals * G, const char *sname,
-                                               ObjectMolecule ** obj, int **pri_idx,
-                                               int *n_idx, int n_obj);
 
 SelectorCreateResult_t SelectorCreateFromTagDict(PyMOLGlobals * G, const char *sname, const std::unordered_map<int, int>& id2tag,
                               int exec_managed);
