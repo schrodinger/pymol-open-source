@@ -7258,9 +7258,9 @@ static sele_array_t SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMole
     c = rec - I->Table.data();
   }
 
-  if(idx && n_idx) {
+  if(idx) {
     sele_array_calloc(result, c);
-    if(n_idx > 0) {
+    if(n_idx >= 0) {
       for(a = 0; a < n_idx; a++) {
         int at = idx[a];
         if(numbered_tags)
