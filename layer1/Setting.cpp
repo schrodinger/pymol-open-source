@@ -768,6 +768,10 @@ int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_resto
                   case cSetting_boolean:
                     ok = PConvPyIntToInt(PyList_GetItem(entry_list, 2),
                                          &value_store.int_);
+                    if (setting_type == cSetting_color) {
+                      value_store.int_ =
+                          ColorConvertOldSessionIndex(G, value_store.int_);
+                    }
                     break;
                   case cSetting_float:
                     ok = PConvPyFloatToFloat(PyList_GetItem(entry_list, 2),

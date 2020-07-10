@@ -431,6 +431,8 @@ int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
   PyObject *rec;
   ExtRec *ext;
 
+  int const n_keep = partial_restore ? I->NExt : 0;
+
   if(partial_restore) {
     ext = I->Ext;
     for(a = 0; a < I->NExt; a++) {
@@ -468,7 +470,7 @@ int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
       if(ok) {
         WordType name;
         ok = PConvPyStrToStr(PyList_GetItem(rec, 0), name, sizeof(WordType));
-        ext->Name = reg_name(I->Idx, cColorExtCutoff - a, name);
+        ext->Name = reg_name(I->Idx, cColorExtCutoff - (a + n_keep), name);
       }
       if(ok)
         ok = PConvPyIntToInt(PyList_GetItem(rec, 1), &ext->Type);
