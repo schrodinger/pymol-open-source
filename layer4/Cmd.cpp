@@ -3203,7 +3203,7 @@ static PyObject *CmdLabel(PyObject * self, PyObject * args)
   API_SETUP_ARGS(G, self, args, "Ossi", &self, &str1, &str2, &quiet);
   API_ASSERT(APIEnterBlockedNotModal(G));
   ExecutiveLabel(G, str1, str2, quiet, cExecutiveLabelEvalOn);
-  APIEnterBlockedNotModal(G);
+  APIExitBlocked(G);
   return APISuccess();
 }
 
