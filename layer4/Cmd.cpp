@@ -4351,11 +4351,11 @@ static PyObject *CmdGetMoment(PyObject * self, PyObject * args)
 
 static PyObject *CmdGetSettingType(PyObject *, PyObject * args)
 {
-  int index, type = -1;
-  if (PyArg_ParseTuple(args, "i", &index)) {
-    type = SettingGetType(index);
+  int index;
+  if (!PyArg_ParseTuple(args, "i", &index)) {
+    return nullptr;
   }
-  return PyInt_FromLong(type);
+  return PyLong_FromLong(SettingGetType(index));
 }
 
 static PyObject* CmdGetSettingLevel(PyObject*, PyObject* args)
@@ -5077,35 +5077,21 @@ static PyObject *CmdUnset(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int index;
-  int tmpFlag = false;
   char *str3;
   int state;
   int quiet;
   int updates;
-  OrthoLineType s1;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Oisiii", &self, &index, &str3, &state, &quiet, &updates);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    s1[0] = 0;
-    if(!strcmp(str3, "all")) {
-      strcpy(s1, str3);
-    } else if(str3[0] != 0) {
-      tmpFlag = true;
-      ok = (SelectorGetTmp2(G, str3, s1) >= 0);
-    }
-    if(ok)
-      ok = ExecutiveUnsetSetting(G, index, s1, state, quiet, updates);
-    if(tmpFlag)
-      SelectorFreeTmp(G, s1);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Oisiii", &self, &index, &str3, &state, &quiet, &updates);
+  API_ASSERT(APIEnterNotModal(G));
+  // TODO move selection handling to Executive
+  auto res = [&]() -> pymol::Result<> {
+    auto tmpsele1 = SelectorTmp2::make(G, str3);
+    p_return_if_error(tmpsele1);
+    ExecutiveUnsetSetting(G, index, tmpsele1->getName(), state, quiet, updates);
+    return {};
+  }();
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdUnsetBond(PyObject * self, PyObject * args)
@@ -5116,29 +5102,21 @@ static PyObject *CmdUnsetBond(PyObject * self, PyObject * args)
   int state;
   int quiet;
   int updates;
-  OrthoLineType s1, s2;
-  int ok = false;
-  ok =
-    PyArg_ParseTuple(args, "Oissiii", &self, &index, &str3, &str4, &state, &quiet,
+  API_SETUP_ARGS(G, self, args, "Oissiii", &self, &index, &str3, &str4, &state, &quiet,
                      &updates);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    s1[0] = 0;
-    s2[0] = 0;
-    ok = (SelectorGetTmp(G, str3, s1) >= 0);
-    ok = (SelectorGetTmp(G, str4, s2) >= 0) && ok;
-    if(ok)
-      ok = ExecutiveUnsetBondSetting(G, index, s1, s2, state, quiet, updates);
-    SelectorFreeTmp(G, s1);
-    SelectorFreeTmp(G, s2);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_ASSERT(APIEnterNotModal(G));
+  // TODO move selection handling to Executive
+  auto res = [&]() -> pymol::Result<> {
+    auto tmpsele1 = SelectorTmp::make(G, str3);
+    p_return_if_error(tmpsele1);
+    auto tmpsele2 = SelectorTmp::make(G, str4);
+    p_return_if_error(tmpsele2);
+    ExecutiveUnsetBondSetting(G, index, tmpsele1->getName(),
+        tmpsele2->getName(), state, quiet, updates);
+    return {};
+  }();
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdSet(PyObject * self, PyObject * args)
@@ -5188,64 +5166,48 @@ static PyObject *CmdSetBond(PyObject * self, PyObject * args)
   int state;
   int quiet;
   int updates;
-  OrthoLineType s1, s2;
-  int ok = false;
-  ok =
-    PyArg_ParseTuple(args, "OiOssiii", &self, &index, &value, &str3, &str4, &state,
+  API_SETUP_ARGS(G, self, args, "OiOssiii", &self, &index, &value, &str3, &str4, &state,
                      &quiet, &updates);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    s1[0] = 0;
-    s2[0] = 0;
-    ok = (SelectorGetTmp(G, str3, s1) >= 0);
-    ok = (SelectorGetTmp(G, str4, s2) >= 0) && ok;
-    if(ok)
-      ok = ExecutiveSetBondSetting(G, index, value, s1, s2, state, quiet, updates);
-    SelectorFreeTmp(G, s1);
-    SelectorFreeTmp(G, s2);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_ASSERT(APIEnterNotModal(G));
+  // TODO move selection handling to Executive
+  auto res = [&]() -> pymol::Result<> {
+    auto tmpsele1 = SelectorTmp::make(G, str3);
+    p_return_if_error(tmpsele1);
+    auto tmpsele2 = SelectorTmp::make(G, str4);
+    p_return_if_error(tmpsele2);
+    if (!ExecutiveSetBondSetting(G, index, value, tmpsele1->getName(),
+            tmpsele2->getName(), state, quiet, updates)) {
+      return pymol::Error();
+    }
+    return {};
+  }();
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdGetBond(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  PyObject *result = Py_None;
   int index;
   char *str3, *str4;
   int state;
   int quiet;
   int updates;
-  OrthoLineType s1, s2;
-  int ok = false;
-  ok =
-    PyArg_ParseTuple(args, "Oissiii", &self, &index, &str3, &str4, &state,
+  API_SETUP_ARGS(G, self, args, "Oissiii", &self, &index, &str3, &str4, &state,
                      &quiet, &updates);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    APIEnter(G);
-    s1[0] = 0;
-    s2[0] = 0;
-    ok = (SelectorGetTmp(G, str3, s1) >= 0);
-    ok = (SelectorGetTmp(G, str4, s2) >= 0) && ok;
-    if(ok)
-      result = ExecutiveGetBondSetting(G, index, s1, s2, state, quiet, updates);
-    SelectorFreeTmp(G, s1);
-    SelectorFreeTmp(G, s2);
-    APIExit(G);
-  }
-  return APIAutoNone(result);
+  APIEnter(G);
+  // TODO move selection handling to Executive
+  auto res = [&]() -> pymol::Result<PyObject*> {
+    auto tmpsele1 = SelectorTmp::make(G, str3);
+    p_return_if_error(tmpsele1);
+    auto tmpsele2 = SelectorTmp::make(G, str4);
+    p_return_if_error(tmpsele2);
+    return ExecutiveGetBondSetting(G, index,
+        (/* TODO */ char*) tmpsele1->getName(), tmpsele2->getName(), state,
+        quiet, updates);
+  }();
+  APIExit(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdDelete(PyObject * self, PyObject * args)

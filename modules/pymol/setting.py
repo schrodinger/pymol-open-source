@@ -163,36 +163,20 @@ PYMOL API
                    int state, int updates, log=0, quiet=1)
 
        '''
-        r = DEFAULT_ERROR
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2) if selection2 else selection1
         index = _get_index(str(name))
+        type = _cmd.get_setting_type(index)
+        v = (type, _validate_value(type, value))
         if log:
             name = name_dict.get(index, name)
-            _self.log('', "cmd.set_bond('%s',%s,%s,%s,%s)\n" % (name, repr(value),
-                repr(selection1), repr(selection2), state))
-        if True:
-            try:
-                _self.lock(_self)
-                type = _cmd.get_setting_type(index)
-                if type < 0:
-                    print("Error: unable to get setting type.")
-                    raise QuietException
-                try:
-                    v = (type, _validate_value(type, value))
-                    r = _cmd.set_bond(_self._COb,int(index),v,
-                                 "("+selection1+")","("+selection2+")",
-                                 int(state)-1,int(quiet),
-                                 int(updates))
-                except QuietException:
-                    pass
-                except:
-                    if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
-                        traceback.print_exc()
-                    raise _self.pymol.CmdException("invalid value: %s" % repr(value))
-            finally:
-                _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
+            _self.log(
+                '',
+                f"cmd.set_bond({name!r},{value!r},{selection1!r},{selection2!r},{state})\n"
+            )
+        with _self.lockcm:
+            r = _cmd.set_bond(_self._COb, index, v, selection1, selection2,
+                              int(state) - 1, int(quiet), int(updates))
         return r
 
 
@@ -271,34 +255,17 @@ SEE ALSO
     get, set_bond
     
 '''
-        r = DEFAULT_ERROR
         selection = selector.process(selection)
         index = _get_index(name)
+        type = _cmd.get_setting_type(index)
+        v = (type, _validate_value(type, value))
         if log:
             name = name_dict.get(index, name)
-            _self.log('', "cmd.set('%s',%s,%s,%s)\n" % (name, repr(value), repr(selection), state))
-        if True:
-            try:
-                _self.lock(_self)
-                type = _cmd.get_setting_type(index)
-                if type < 0:
-                    print("Error: unable to get setting type.")
-                    raise QuietException
-                try:
-                    v = (type, _validate_value(type, value))
-                    r = _cmd.set(_self._COb,int(index),v,
-                                     selection,
-                                     int(state)-1,int(quiet),
-                                     int(updates))
-                except QuietException:
-                    pass
-                except:
-                    if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
-                        traceback.print_exc()
-                    raise _self.pymol.CmdException("invalid value: %s" % repr(value))
-            finally:
-                _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
+            _self.log('',
+                      f"cmd.set({name!r},{value!r},{selection!r},{state})\n")
+        with _self.lockcm:
+            r = _cmd.set(_self._COb, index, v, selection,
+                         int(state) - 1, int(quiet), int(updates))
         return r
 
     def unset(name, selection='', state=0, updates=1, log=0, quiet=1, _self=cmd):
@@ -337,26 +304,14 @@ SEE ALSO
     set, set_bond
     
         '''
-        r = DEFAULT_ERROR
         selection = selector.process(selection)
         index = _get_index(str(name))
         if log:
             name = name_dict.get(index, name)
-            _self.log('', "cmd.unset('%s',%s,%s)\n" % (name, repr(selection), state))
-        if True:
-                try:
-                    _self.lock(_self)
-                    try:
-                        r = _cmd.unset(_self._COb,int(index),selection,
-                                            int(state)-1,int(quiet),
-                                            int(updates))
-                    except:
-                        if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
-                            traceback.print_exc()
-                            raise QuietException
-                        print("Error: unable to unset setting value.")
-                finally:
-                    _self.unlock(r,_self)
+            _self.log('', f"cmd.unset({name!r},{selection!r},{state})\n")
+        with _self.lockcm:
+            r = _cmd.unset(_self._COb, index, selection,
+                           int(state) - 1, int(quiet), int(updates))
         return r
 
     def unset_bond(name,selection1,selection2=None,state=0,updates=1,log=0,quiet=1,_self=cmd):
@@ -370,29 +325,19 @@ USAGE
     unset name [,selection [, selection [,state ]]]
 
         '''
-        r = DEFAULT_ERROR
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2) if selection2 else selection1
         index = _get_index(str(name))
         if log:
             name = name_dict.get(index, name)
-            _self.log('', "cmd.unset_bond('%s',%s,%s,%s)\n" % (name,
-                repr(selection1), repr(selection2), state))
-        if True:
-            try:
-                _self.lock(_self)
-                try:
-                    r = _cmd.unset_bond(_self._COb,int(index),selection1,selection2,
+            _self.log(
+                '',
+                f"cmd.unset_bond({name!r},{selection1!r},{selection2!r},{state})\n"
+            )
+        with _self.lockcm:
+            r = _cmd.unset_bond(_self._COb,int(index),selection1,selection2,
                                    int(state)-1,int(quiet),
                                    int(updates))
-                except:
-                    if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
-                        traceback.print_exc()
-                        raise QuietException
-                    print("Error: unable to unset setting value.")
-            finally:
-                _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
         return r
 
     def get_setting(name,object='',state=0,_self=cmd): # INTERNAL
@@ -541,28 +486,14 @@ PYMOL API
 
        '''
         state, quiet = int(state), int(quiet)
-        r = DEFAULT_ERROR
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2) if selection2 else selection1
 
         index = _get_index(str(name))
-        if True:
-            try:
-                _self.lock(_self)
-                try:
-                    r = _cmd.get_bond(_self._COb,int(index),
-                                 "("+selection1+")","("+selection2+")",
-                                 int(state)-1,int(quiet),
-                                 int(updates))
-                except:
-                    traceback.print_exc()
-                    if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
-                        traceback.print_exc()
-                        print("Error: unable to get_bond info.")
-                    raise QuietException
-            finally:
-                _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
+        with _self.lockcm:
+            r = _cmd.get_bond(_self._COb, index, selection1, selection2,
+                              state - 1, quiet, int(updates))
+
         if not quiet:
             name = name_dict.get(index, name)
             suffix = ' state %d' % state if state > 0 else ''

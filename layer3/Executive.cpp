@@ -11694,6 +11694,9 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
 
 
 /*========================================================================*/
+/**
+ * @return Always true
+ */
 int ExecutiveUnsetBondSetting(PyMOLGlobals * G, int index, const char *s1, const char *s2,
                               int state, int quiet, int updates)
 {
@@ -12283,6 +12286,9 @@ int ExecutiveSetObjSettingFromString(PyMOLGlobals * G,
 
 
 /*========================================================================*/
+/**
+ * @return Always true
+ */
 int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
                           int state, int quiet, int updates)
 {
@@ -12332,9 +12338,7 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
             if(rec->type == cExecObject) {
               {
                 handle = rec->obj->getSettingHandle(state);
-                if(handle) {
-                  SettingCheckHandle(G, handle);
-                  ok = SettingUnset(*handle, index);
+                if (handle && *handle && SettingUnset(*handle, index)) {
                   nObj++;
                 }
               }
@@ -12390,10 +12394,7 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
         case cExecObject:
           {
             handle = rec->obj->getSettingHandle(state);
-            if(handle) {
-              SettingCheckHandle(G, handle);
-              ok = SettingUnset(*handle, index);
-              if(ok) {
+            if (handle && *handle && SettingUnset(*handle, index)) {
                 if(!quiet) {
                   if(state < 0) {       /* object-specific */
                     if(Feedback(G, FB_Setting, FB_Actions)) {
@@ -12409,7 +12410,6 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
                     }
                   }
                 }
-              }
             }
           }
           break;
