@@ -424,6 +424,15 @@ else:
 
                 self.assertTrue(False, msg + ' (%d) %s' % (noff, filename))
 
+        def assertImageNotEqual(self, img1, img2=None, delta=0, count=0, msg='images equal'):
+            import numpy
+            data1 = self.get_imagearray(img1)
+            data2 = self.get_imagearray(img2)
+            diff = abs(data1 - data2)
+            noff = numpy.sum(diff > delta)
+            if noff <= count * data1.shape[-1]:
+                raise self.failureException(msg)
+
         def _imageHasColor(self, color, img, delta=0):
             if isinstance(color, str):
                 color = [int(v*255) for v in cmd.get_color_tuple(color)]

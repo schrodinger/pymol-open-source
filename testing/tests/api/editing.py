@@ -519,6 +519,55 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual(v[-1], sym[-1])
         self.assertArrayEqual(v[:-1], sym[:-1], 1e-4)
 
+    @testing.requires_version('2.5')
+    def test_set_symmetry__state(self):
+        sym1 = [68.7, 126.8, 184.0, 90.0, 90.0, 90.0, 'P 21 21 21']
+        sym2 = [12, 34, 56, 90.0, 90.0, 90.0, 'P 1']
+        cmd.pseudoatom('m1')
+        cmd.create('m1', 'm1', 1, 2)
+        assert cmd.count_states('m1') == 2
+        cmd.set_symmetry('m1', *sym1, state=1)
+        cmd.set_symmetry('m1', *sym2, state=2)
+        for globalstate, state, sym in [
+            (2, 1, sym1),
+            (1, 2, sym2),
+            (1, -1, sym1),  # current state
+            (2, -1, sym2),  # current state
+        ]:
+            cmd.frame(globalstate)
+            v = cmd.get_symmetry('m1', state=state)
+            self.assertEqual(v[-1], sym[-1])
+            self.assertArrayEqual(v[:-1], sym[:-1], 1e-4)
+
+        cmd.pseudoatom('m2', state=1)
+        cmd.create('m2', 'm2', 1, 2)
+        assert cmd.count_states('m2') == 2
+        cmd.symmetry_copy('m1', 'm2', 1, 2)
+        cmd.symmetry_copy('m1', 'm2', 2, 1)
+        self.assertEqual(cmd.get_symmetry('m2', 1)[-1], sym2[-1])
+        self.assertEqual(cmd.get_symmetry('m2', 2)[-1], sym1[-1])
+
+        # rendering
+        self.ambientOnly()
+        cmd.disable('m2')
+        cmd.color('blue', 'm1')
+        cmd.set('cgo_line_width', 10)
+        cmd.show_as('cell', 'm1')
+        cmd.frame(1)
+        cmd.set_view ((
+            0.864273727,    0.052246489,   -0.500302136,
+            0.200916424,    0.875955939,    0.438560009,
+            0.461155534,   -0.479554355,    0.746567726,
+            0.000069976,    0.000004172, -809.162963867,
+            71.266143799,   17.057806015,   37.736812592,
+            560.533935547, 1097.791748047,  -20.0))
+        img1 = self.get_imagearray(width=100, height=100)
+        self.assertImageHasColor('blue', img1)
+        cmd.frame(2)
+        img2 = self.get_imagearray(width=100, height=100)
+        self.assertImageHasColor('blue', img2)
+        self.assertImageNotEqual(img1, img2)
+
     @testing.requires_version('1.7.3.0')
     def test_set_state_order(self):
         import numpy
