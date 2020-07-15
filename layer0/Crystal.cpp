@@ -29,7 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"PConv.h"
 
-PyObject *CrystalAsPyList(CCrystal * I)
+PyObject *CrystalAsPyList(const CCrystal * I)
 {
   PyObject *result = NULL;
 
@@ -145,7 +145,7 @@ void CrystalUpdate(CCrystal * I)
 
 }
 
-void CrystalDump(CCrystal * I)
+void CrystalDump(const CCrystal * I)
 {
   PyMOLGlobals *G = I->G;
   int i;
@@ -180,7 +180,7 @@ static int unitCellLineIndices[] = { 0, 1, 1, 2, 2, 3, 3, 0,   // bottom 4 lines
 				     4, 5, 5, 6, 6, 7, 7, 4,   // top 4 lines
 				     0, 4, 1, 5, 2, 6, 3, 7 }; // 4 connector lines
 
-CGO *CrystalGetUnitCellCGO(CCrystal * I)
+CGO *CrystalGetUnitCellCGO(const CCrystal * I)
 {
   PyMOLGlobals *G = I->G;
   float v[3];

@@ -1259,6 +1259,14 @@ void CoordSet::update(int state)
     if(!I->Rep[a])
       I->Active[a] = false;
 
+  // cell
+  if ((Obj->visRep & cRepCellBit) && !UnitCellCGO) {
+    CSymmetry const* sym = Symmetry ? Symmetry.get() : Obj->Symmetry;
+    if (sym) {
+      UnitCellCGO.reset(CrystalGetUnitCellCGO(&sym->Crystal));
+    }
+  }
+
   SceneInvalidate(G);
   OrthoBusyFast(G, 1, 1);
   if(Feedback(G, FB_CoordSet, FB_Blather)) {
@@ -1379,6 +1387,19 @@ void CoordSet::render(RenderInfo * info)
 			I->Setting, I->Obj->Setting, info, NULL);
 	  }
         }
+      }
+    }
+
+    // cell
+    if (UnitCellCGO && (Obj->visRep & cRepCellBit)) {
+      if (ray) {
+        CGORenderRay(UnitCellCGO.get(), ray, info, ColorGet(G, Obj->Color),
+            nullptr, Setting, Obj->Setting);
+      } else if (!pick && pass == RenderPass::Opaque && G->HaveGUI &&
+                 G->ValidContext) {
+        ObjectUseColor(Obj);
+        CGORenderGL(UnitCellCGO.get(), ColorGet(G, Obj->Color), Setting,
+            Obj->Setting, info, NULL);
       }
     }
 

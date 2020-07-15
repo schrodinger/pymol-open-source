@@ -80,7 +80,6 @@ struct ObjectMolecule : public CObject {
   int UndoState[cUndoMask + 1] {};
   int UndoNIndex[cUndoMask + 1] {};
   int UndoIter = 0;
-  CGO *UnitCellCGO = nullptr;
   int BondCounter = 0;
   int AtomCounter = 0;
   /* not stored */
@@ -115,10 +114,7 @@ struct ObjectMolecule : public CObject {
   char* getCaption(char* ch, int len) const override;
   CSetting **getSettingHandle(int state) override;
   CObject* clone() const override;
-  CSymmetry const* getSymmetry(int state = 0) const override
-  {
-    return Symmetry;
-  }
+  CSymmetry const* getSymmetry(int state = 0) const override;
   bool setSymmetry(CSymmetry const& symmetry, int state = 0) override;
 
 protected:

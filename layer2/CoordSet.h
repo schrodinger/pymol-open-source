@@ -25,6 +25,8 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"vla.h"
 
+#include "pymol/memory.h"
+
 #define COORD_SET_HAS_ANISOU 0x01
 
 enum mmpymolx_prop_state_t {
@@ -113,6 +115,8 @@ struct CoordSet : CObjectState {
 
   CGO *SculptCGO = nullptr;
   CGO *SculptShaderCGO = nullptr;
+  pymol::cache_ptr<CGO> UnitCellCGO;
+
   MapType *Coord2Idx = nullptr;
   float Coord2IdxReq = 0, Coord2IdxDiv = 0;
 

@@ -33,10 +33,10 @@ struct CCrystal {
   CCrystal(PyMOLGlobals* GParam);
 };
 
-void CrystalUpdate(CCrystal * I);
-void CrystalDump(CCrystal * I);
-CGO *CrystalGetUnitCellCGO(CCrystal * I);
-int CrystalFromPyList(CCrystal * I, PyObject * list);
-PyObject *CrystalAsPyList(CCrystal * I);
+void CrystalUpdate(CCrystal* I);
+void CrystalDump(const CCrystal* I);
+CGO* CrystalGetUnitCellCGO(const CCrystal* I);
+int CrystalFromPyList(CCrystal* I, PyObject* list);
+PyObject* CrystalAsPyList(const CCrystal* I);
 
 #endif

@@ -2724,12 +2724,41 @@ CSetting **ObjectMolecule::getSettingHandle(int state)
 }
 
 /*========================================================================*/
+CSymmetry const* ObjectMolecule::getSymmetry(int state) const
+{
+  auto cs = getCoordSet(state);
+  if (cs && cs->Symmetry) {
+    return cs->Symmetry.get();
+  }
+
+  return Symmetry;
+}
+
+/**
+ * @return False if state does not exist
+ */
 bool ObjectMolecule::setSymmetry(CSymmetry const& symmetry, int state)
 {
-  delete Symmetry;
-  Symmetry = new CSymmetry(symmetry);
-  CGOFree(UnitCellCGO);
-  return true;
+  bool const all_states = (state == cSelectorUpdateTableAllStates);
+  bool success = false;
+
+  if (all_states) {
+    delete Symmetry;
+    Symmetry = new CSymmetry(symmetry);
+    success = true;
+  }
+
+  for (StateIterator iter(G, Setting, state, NCSet); iter.next();) {
+    auto cs = CSet[iter.state];
+    if (cs) {
+      cs->Symmetry.reset(all_states ? nullptr : new CSymmetry(symmetry));
+      cs->UnitCellCGO.reset();
+      cs->invalidateRep(cRepCell, cRepInvRep);
+      success = true;
+    }
+  }
+
+  return success;
 }
 
 /*========================================================================*/
@@ -10828,13 +10857,6 @@ void ObjectMolecule::update()
         }
       }
     }
-    /* if the unit cell is shown, redraw it */
-    if((I->visRep & cRepCellBit)) {
-      if (I->Symmetry) {
-        CGOFree(I->UnitCellCGO);
-        I->UnitCellCGO = CrystalGetUnitCellCGO(&I->Symmetry->Crystal);
-      }
-    }
   } /* end block */
 
   PRINTFD(G, FB_ObjectMolecule)
@@ -11253,8 +11275,6 @@ void ObjectMolecule::render(RenderInfo * info)
 {
   auto I = this;
   int state = info->state;
-  CRay *ray = info->ray;
-  auto pick = info->pick;
   const RenderPass pass = info->pass;
   CoordSet *cs;
   int pop_matrix = false;
@@ -11264,25 +11284,6 @@ void ObjectMolecule::render(RenderInfo * info)
     " ObjectMolecule: rendering %s pass %d...\n", I->Name, static_cast<int>(pass) ENDFD;
 
   ObjectPrepareContext(I, info);
-
-  if(I->UnitCellCGO && (I->visRep & cRepCellBit)) {
-    if(ray) {
-      /* need to apply object state matrix here */
-      int ok = CGORenderRay(I->UnitCellCGO, ray, info, ColorGet(I->G, I->Color),
-			    NULL, I->Setting, NULL);
-      if (!ok){
-	CGOFree(I->UnitCellCGO);
-      }
-    } else if(G->HaveGUI && G->ValidContext) {
-      if(pick) {
-      } else {
-        /* need to apply object state matrix here */
-        ObjectUseColor(I);
-        CGORenderGL(I->UnitCellCGO, ColorGet(I->G, I->Color),
-                    I->Setting, NULL, info, NULL);
-      }
-    }
-  }
 
   for(StateIterator iter(G, I->Setting, state, I->NCSet); iter.next();) {
     cs = I->CSet[iter.state];
@@ -11424,7 +11425,6 @@ void ObjectMoleculeCopyNoAlloc(const ObjectMolecule* obj, ObjectMolecule* I)
   if (I->Symmetry != nullptr) {
     I->Symmetry = new CSymmetry(*I->Symmetry);
   }
-  I->UnitCellCGO = NULL;
   I->Neighbor = NULL;
   I->Sculpt = NULL;
   I->Setting = NULL;        /* TODO - make a copy */
@@ -11548,7 +11548,6 @@ ObjectMolecule::~ObjectMolecule()
     }
     VLAFreeP(I->Bond);
   }
-  CGOFree(I->UnitCellCGO);
   for(a = 0; a <= cUndoMask; a++)
     FreeP(I->UndoCoord[a]);
   if(I->Sculpt)

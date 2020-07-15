@@ -152,6 +152,9 @@ static molfile_plugin_t * find_plugin(CPlugIOManager * I, const char * plugin_ty
   return NULL;
 }
 
+static CSymmetry* SymmetryNewFromTimestep(
+    PyMOLGlobals* G, molfile_timestep_t* ts);
+
 int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                           const char *fname, int frame,
                           int interval, int average, int start,
@@ -297,6 +300,9 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                       " ObjectMolecule: average loaded into state %d...\n", frame + 1
                       ENDFB(G);
                   }
+
+                  // symmetry
+                  cs->Symmetry.reset(SymmetryNewFromTimestep(G, &timestep));
 
                   if((stop > 0 && cnt >= stop) || (max > 0 && ncnt >= max)) {
                     cs = NULL;
@@ -679,6 +685,9 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
     cs->NIndex = natoms;
     cs->enumIndices();
 
+    // symmetry
+    cs->Symmetry.reset(SymmetryNewFromTimestep(G, &timestep));
+
     // append to object
     VLACheck(I->CSet, CoordSet*, I->NCSet);
     I->CSet[I->NCSet++] = cs;
@@ -716,9 +725,6 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   } else if (I->NCSet) {
     ObjectMoleculeConnect(I, I->CSet[0]);
   }
-
-  // symmetry
-  I->Symmetry = SymmetryNewFromTimestep(G, &timestep);
 
   // finalize
   I->invalidate(cRepAll, cRepInvAll, -1);
