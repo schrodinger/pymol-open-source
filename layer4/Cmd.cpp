@@ -325,6 +325,9 @@ static PyObject* APIFailure(PyMOLGlobals* G, const pymol::Error& error)
   case pymol::Error::MEMORY:
     exc_type = PyExc_MemoryError;
     break;
+  case pymol::Error::INCENTIVE_ONLY:
+    exc_type = P_IncentiveOnlyException;
+    break;
   default:
     exc_type = P_CmdException;
   }

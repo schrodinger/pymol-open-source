@@ -381,6 +381,7 @@ PyObject *P_models = NULL;      /* okay as global */
 PyObject *P_setting = NULL;     /* okay as global -- just used for names */
 PyObject *P_CmdException = nullptr;
 PyObject *P_QuietException = nullptr;
+PyObject *P_IncentiveOnlyException = nullptr;
 
 static PyMappingMethods wrapperMappingMethods, settingMappingMethods;
 static PyTypeObject Wrapper_Type = {
@@ -698,7 +699,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
       break;
     case cPType_properties:
 #ifndef _PYMOL_IP_PROPERTIES
-      PyErr_SetString(PyExc_NotImplementedError,
+      PyErr_SetString(P_IncentiveOnlyException,
           "'properties/p' not supported in Open-Source PyMOL");
 #else
       static_assert(false, "");
@@ -1834,6 +1835,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     P_models = PImportModuleOrFatal("chempy.models");
     P_CmdException = PGetAttrOrFatal(P_pymol, "CmdException");
     P_QuietException = PGetAttrOrFatal(P_cmd, "QuietException");
+    P_IncentiveOnlyException = PGetAttrOrFatal(P_pymol, "IncentiveOnlyException");
 
     /* backwards compatibility */
 

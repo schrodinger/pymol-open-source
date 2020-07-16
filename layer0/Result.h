@@ -19,6 +19,7 @@ public:
     DEFAULT,
     QUIET,
     MEMORY,
+    INCENTIVE_ONLY,
   };
 
   Error() {}

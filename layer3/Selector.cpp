@@ -8839,16 +8839,21 @@ static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base, int state)
 }
 
 /*========================================================================*/
-static int SelectorSelect3(PyMOLGlobals * G, EvalElem * base, int state)
+static pymol::Result<> SelectorSelect3(
+    PyMOLGlobals* G, EvalElem* base, int state)
 {
   switch (base->code) {
   case SELE_PROP:
-    ErrMessage(G, "Selector", "properties (p.) not supported in Open-Source PyMOL");
-    return false;
+#ifndef _PYMOL_IP_PROPERTIES
+    return pymol::Error::make<pymol::Error::INCENTIVE_ONLY>(
+        "properties (p.) not supported in Open-Source PyMOL");
+#else
+    static_assert(false, "");
+#endif
+  default:
+    assert(false);
   }
-  return true;
-ok_except1:
-  return false;
+  return {};
 }
 
 /*========================================================================*/
@@ -10124,7 +10129,8 @@ pymol::Result<sele_array_t> SelectorEvaluate(PyMOLGlobals* G,
                    && (Stack[depth - 1].type == STYP_VALU)
                    && (Stack[depth - 2].type == STYP_VALU)) {
                   /* 2 argument logical operator */
-                  ok = SelectorSelect3(G, &Stack[depth-3], state);
+                  p_return_if_error(
+                      SelectorSelect3(G, &Stack[depth - 3], state));
                   opFlag = true;
                   for(a = depth + 1; a <= totDepth; a++)
                     Stack[a - 3] = std::move(Stack[a]);

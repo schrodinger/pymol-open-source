@@ -287,6 +287,7 @@ extern PyObject *P_setting;     /* used by Setting.c */
 extern PyTypeObject *P_wrapper;     /* used by P.c for lazy-loading settings/properties/attributes */
 extern PyObject *P_CmdException;    /* pymol.CmdException */
 extern PyObject *P_QuietException;  /* pymol.parsing.CmdException */
+extern PyObject *P_IncentiveOnlyException; /* pymol.IncentiveOnlyException */
 
 #endif
 #endif
