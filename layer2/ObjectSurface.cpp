@@ -358,7 +358,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
           ms->RC.resize(n_vert);
         }
         rc = ms->RC.data();
-        vc = ms->VC.data();
+        vc = ms->VC.empty() ? nullptr : ms->VC.data();
         v += 3;
         if(vc) {
           for(a = 0; a < n_vert; a++) {
@@ -405,7 +405,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
           ms->RC.resize(n_vert);
         }
         rc = ms->RC.data();
-        vc = ms->VC.data();
+        vc = ms->VC.empty() ? nullptr : ms->VC.data();
         if(vc) {
           for(a = 0; a < n_vert; a++) {
             if(a == base_n_vert) {
@@ -649,7 +649,7 @@ static void ObjectSurfaceRenderGlobalTransparency(PyMOLGlobals * G,
     RenderInfo * info, ObjectSurfaceState *ms, const float *col, float alpha)
 {
   auto v = ms->V.data();
-  auto vc = ms->VC.data();
+  const float* vc = ms->VC.empty() ? nullptr : ms->VC.data();
   auto n = ms->N.data();
   
   while(*n) {
@@ -691,7 +691,7 @@ static void ObjectSurfaceRenderGlobalTransparency(PyMOLGlobals * G,
 
 static void ObjectSurfaceRenderUnOptimizedTransparency(ObjectSurfaceState *ms, float alpha){
   auto v = ms->V.data();
-  auto vc = ms->VC.data();
+  const float* vc = ms->VC.empty() ? nullptr : ms->VC.data();
   auto n = ms->N.data();
 
   while(*n) {
@@ -716,7 +716,7 @@ static void ObjectSurfaceRenderOpaque(PyMOLGlobals * G, ObjectSurface * I, Objec
   auto v = ms->V.data();
   auto n = ms->N.data();
   CGOSpecial(ms->shaderCGO.get(), LINEWIDTH_DYNAMIC_MESH);
-  auto vc = ms->VC.data();
+  const float* vc = ms->VC.empty() ? nullptr : ms->VC.data();
 
   while(*n) {
     int c = *(n++);
@@ -771,8 +771,6 @@ static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
     RenderInfo * info, ObjectSurfaceState *ms)
 {
   float *v = ms->V.data();
-  float *vc = ms->VC.data();
-  int *rc;
   int c;
   int* n = ms->N.data();
   float alpha = 1.0F - SettingGet_f(G, NULL, I->Setting, cSetting_transparency);
@@ -800,9 +798,9 @@ static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
     float cc[3];
     float colA[3], colB[3], colC[3];
     ColorGetEncoded(G, ms->OneColor, cc);
-    vc = ms->VC.data();
+    float* vc = ms->VC.empty() ? nullptr : ms->VC.data();
     
-    rc = ms->RC.data();
+    const int* rc = ms->RC.empty() ? nullptr : ms->RC.data();
     while(*n) {
       c = *(n++);
       switch (ms->Mode) {
