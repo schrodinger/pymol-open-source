@@ -999,6 +999,12 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
       alt[1] = 0;
       chain = ai->chain;
     }
+    if (pymol::zstring_view(resn).find_first_not_of(' ') ==
+        pymol::zstring_view::npos) {
+      // APBS fails with empty residue names
+      assert(resn[0] == ' ');
+      resn[0] = '.';
+    }
     sprintf(x, "%8.3f", v[0]);
     if(x[0] != 32)
       sprintf(x, " %7.2f", v[0]);
