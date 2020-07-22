@@ -503,7 +503,10 @@ SEE ALSO
 
                     seq_dict[key] = seq_dict.get(key,'') + seq
         for key in seq_order:
-            raw_seq = seq_dict[key].replace('-','')
+            raw_seq = seq_dict.get(key, '').replace('-','')
+            if not raw_seq:
+                colorprinting.warning(f'Empty sequence for key "{key}"')
+                continue
             _self.fab(raw_seq, key, quiet=quiet)
 
     def _processPWG(fname, *, _self=cmd):

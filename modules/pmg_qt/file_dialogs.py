@@ -25,7 +25,7 @@ def load_dialog(parent, fname, **kwargs):
     if fname[-4:] in ['.dcd', '.dtr', '.xtc', '.trr']:
         load_traj_dialog(parent, fname)
     elif format in ('aln', 'fasta'):
-        load_aln_dialog(parent, fname)
+        load_aln_dialog(parent, fname, format)
     elif format == 'mae':
         load_mae_dialog(parent, fname)
     elif format == 'ccp4':
@@ -185,7 +185,7 @@ def load_mtz_dialog(parent, filename):
     form._dialog.show()
 
 
-def load_aln_dialog(parent, filename):
+def load_aln_dialog(parent, filename, format):
     _self = parent.cmd
 
     import numpy
@@ -193,9 +193,16 @@ def load_aln_dialog(parent, filename):
     import pymol.seqalign as seqalign
 
     try:
+        # for fasta format, this only succeeds if all sequences have the
+        # same length, raises ValueError otherwise
         alignment = seqalign.aln_magic_read(filename)
+
+        # a single sequence is not an aligment
+        if format == "fasta" and len(alignment) < 2:
+            raise ValueError
     except ValueError:
-        # fails for fasta files which don't contain alignments
+        # fasta files which don't contain alignments will be loaded as
+        # extended structures (fab command) instead
         _self.load(filename)
         return
 
@@ -243,9 +250,17 @@ def load_aln_dialog(parent, filename):
         seqalign.load_aln_multi(filename, mapping=mapping, _self=_self)
         form._dialog.close()
 
+    def cancel():
+        form._dialog.close()
+        if format == 'fasta' and QtWidgets.QMessageBox.question(
+                parent, "Load as structures?",
+                "Load sequences as extended structures instead?"
+        ) == QtWidgets.QMessageBox.Yes:
+            _self.load(filename)
+
     # hook up events
     form.button_ok.clicked.connect(run)
-    form.button_cancel.clicked.connect(form._dialog.close)
+    form.button_cancel.clicked.connect(cancel)
 
     form._dialog.setModal(True)
     form._dialog.show()
