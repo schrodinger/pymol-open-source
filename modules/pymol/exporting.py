@@ -386,6 +386,7 @@ NOTES
         cache = int(cache)
         compress = int(compress)
         partial = int(partial)
+        quiet = int(quiet)
 
         if version < 0:
             version = _self.get_setting_float('pse_export_version')
@@ -442,12 +443,14 @@ NOTES
                 # instead of `is_error(<return-value>)`
                 error = is_error(a(session, _self=_self))
             except:
-                colorprinting.print_exc()
+                if not quiet:
+                    colorprinting.print_exc([__file__])
                 error = True
             if error:
-                colorprinting.warning(
-                    f'Error: session-save-task "{a.__name__}" failed.\n'
-                    'Error: The resulting session file may be incomplete.')
+                msg = f'Warning: session-save-task "{a.__name__}" failed.'
+                if not quiet:
+                    msg += '\n         The resulting session file may be incomplete.'
+                colorprinting.warning(msg)
 
         if legacyscenes:
             del session['moviescenes']

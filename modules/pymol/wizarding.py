@@ -44,6 +44,9 @@ if True:
                     kwd['_self']=_self
                     try:
                         wiz = getattr(mod_obj,oname)(*arg, **kwd)
+                    except TypeError as e:
+                        # e.g. missing argument
+                        raise pymol.CmdException(str(e))
                     except WizardError as e:
                         from pymol.wizard.message import Message
                         wiz = Message("Error: %s" % str(e), _self=_self)
