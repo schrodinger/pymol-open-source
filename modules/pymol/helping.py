@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+import textwrap
+
 if True:
 
     cmd = __import__("sys").modules["pymol.cmd"]
@@ -80,7 +82,7 @@ USAGE
             print("Error: unrecognized command")
             return r
         if doc:
-            print("\n" + doc.strip() + "\n")
+            print("\n" + textwrap.dedent(doc).strip() + "\n")
         else:
             print("Error: sorry no help available on that command.")
         return r
