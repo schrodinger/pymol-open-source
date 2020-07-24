@@ -10101,9 +10101,6 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
             if(SelectorIsMember(G, s, sele)) {
               switch (op->code) {
               case OMOP_Flag:
-                ai->flags |= op->i1;    /* set flag */
-                op->i3++;
-                break;
               case OMOP_FlagSet:
                 ai->flags |= op->i1;    /* set flag */
                 op->i3++;
@@ -10119,12 +10116,12 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   I->visRep &= ~(op->i1); // cell
                   break;
                 case cVis_SHOW:
-                  ai->visRep |= op->i1;
-                  I->visRep |= op->i1; // cell
+                  ai->visRep |= op->i1 & cRepsAtomMask;
+                  I->visRep |= op->i1 & cRepsObjectMask; // cell
                   break;
                 case cVis_AS:
-                  ai->visRep = op->i1;
-                  I->visRep = op->i1; // cell
+                  ai->visRep = op->i1 & cRepsAtomMask;
+                  I->visRep = op->i1 & cRepsObjectMask; // cell
                   break;
                 }
                 break;
