@@ -70,6 +70,8 @@ USAGE
 
     help command
         '''
+        import textwrap
+
         r = DEFAULT_SUCCESS
         cmmd = _self.help_sc.auto_err(command,'topic')
         if cmmd in _self.keyword:
@@ -80,7 +82,7 @@ USAGE
             print("Error: unrecognized command")
             return r
         if doc:
-            print("\n" + doc.strip() + "\n")
+            print("\n" + textwrap.dedent(doc).strip() + "\n")
         else:
             print("Error: sorry no help available on that command.")
         return r
