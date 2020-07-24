@@ -12,8 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-import textwrap
-
 if True:
 
     cmd = __import__("sys").modules["pymol.cmd"]
@@ -72,6 +70,8 @@ USAGE
 
     help command
         '''
+        import textwrap
+
         r = DEFAULT_SUCCESS
         cmmd = _self.help_sc.auto_err(command,'topic')
         if cmmd in _self.keyword:
