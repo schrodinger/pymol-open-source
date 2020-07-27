@@ -81,3 +81,19 @@ class TestReps(testing.PyMOLTestCase):
         for cart in CARTOONS:
             cmd.cartoon(cart)
             self.assertImageHasColor('white', msg='cartoon missing: ' + cart)
+
+    @testing.requires_version('2.5')
+    def test_sphere_mode_10_11(self):
+        cmd.viewport(200, 100)
+        cmd.set('orthoscopic')
+        cmd.set('opaque_background')
+        cmd.pseudoatom('m1', pos=(1, 2, 3), vdw=1.3, color='blue')
+        cmd.pseudoatom('m1', pos=(5, 2, 3), vdw=2.5, color='red')
+        cmd.zoom()
+        cmd.turn('x', 45)
+        self.ambientOnly()
+        cmd.show_as('spheres')
+        cmd.set('sphere_mode', 10)  # cubes
+        self.assertImageEqual('ref/sphere_mode_10.png')
+        cmd.set('sphere_mode', 11)  # tetrahedra
+        self.assertImageEqual('ref/sphere_mode_11.png')
