@@ -84,6 +84,8 @@ struct RepSurface : Rep {
   CGO *shaderCGO = nullptr;
   CGO *pickingCGO = nullptr;
   bool dot_as_spheres = false;
+
+  int surface_mode = cRepSurface_by_flags;
 };
 
 static
@@ -2218,7 +2220,7 @@ Rep* RepSurface::recolor()
 
   obj = cs->Obj;
   ambient_occlusion_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ambient_occlusion_mode);
-  surface_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_mode);
+  surface_mode = I->surface_mode;
   ramp_above =
     SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_ramp_above_mode);
   surface_color =
@@ -4093,6 +4095,24 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       const int *idx_to_atm = cs->IdxToAtm.data();
       const AtomInfoType *obj_AtomInfo = obj->AtomInfo.data();
       int a, cs_NIndex = cs->NIndex;
+
+      // If all atoms have "flag ignore", then don't cull by flags
+      if (cullByFlag) {
+        bool all_ignore = true;
+
+        for (int idx = 0; idx < cs_NIndex; ++idx) {
+          if (!(obj_AtomInfo[idx_to_atm[idx]].flags & cAtomFlag_ignore)) {
+            all_ignore = false;
+            break;
+          }
+        }
+
+        if (all_ignore) {
+          cullByFlag = false;
+          surface_mode = cRepSurface_all;
+        }
+      }
+
       for(a = 0; a < cs_NIndex; a++) {
         const AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
         if((ai1->visRep & cRepSurfaceBit) &&
@@ -4108,6 +4128,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
     }
 
     auto I = new RepSurface(cs, state);
+    I->surface_mode = surface_mode;
 
     {
       int surface_flag = false;

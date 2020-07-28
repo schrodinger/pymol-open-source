@@ -143,6 +143,7 @@ def obj_motion(self_cmd, obj, frame="0"):
             ]
 
 def rep_action(self_cmd, sele, action) :
+    flag_ignore_action = "set" if action == "hide" else "clear"
     return [
         [ 1, 'wire'       , 'cmd.'+action+'("wire"      ,"'+sele+'")' ],
         [ 1, '  lines'    , 'cmd.'+action+'("lines"     ,"'+sele+'")' ],
@@ -163,6 +164,15 @@ def rep_action(self_cmd, sele, action) :
         [ 0, ''           , ''                               ],
         [ 1, 'mesh'       , 'cmd.'+action+'("mesh"      ,"'+sele+'")' ],
         [ 1, 'surface'    , 'cmd.'+action+'("surface"   ,"'+sele+'")' ],
+        [ 1, 'flag ignore', [
+            [ 2, 'flag ignore', ''],
+            [ 1, flag_ignore_action, f'cmd.flag("ignore",{sele!r},{flag_ignore_action!r});cmd.rebuild({sele!r})' ],
+            [ 0, '', '' ],
+            [ 2, '\\272Note:\\559 Atoms with the "ignore"', ''],
+            [ 2, '\\559flag are ignored during surface', ''],
+            [ 2, '\\559calculation. By default, all', ''],
+            [ 2, '\\559non-polymer atoms are ignored.', ''],
+        ]],
         ]
 
 def mol_as(self_cmd, sele):
