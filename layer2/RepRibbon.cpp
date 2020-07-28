@@ -142,7 +142,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
 {
   PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
-  int a, b, a1, a2, c1, c2, *i, *s, *at, *seg, nAt, *atp;
+  int a, b, a1, a2, *i, *s, *at, *seg, nAt, *atp;
   float *v, *v1, *v2, *v3;
   float *pv = NULL;
   float *dv = NULL;
@@ -437,28 +437,25 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     // This is required for immediate mode rendering
     CGOBegin(I->primitiveCGO, GL_LINES);
 
-    int atm1, atm2;
+    auto const get_color = [&](AtomInfoType const* ai) {
+      auto c = AtomSettingGetWD(G, ai, cSetting_ribbon_color, ribbon_color);
+      return (c != cColorDefault) ? c : ai->color;
+    };
+
     float origV1[14], origV2[14], *origV = origV2;
     bool origVis1 = false;
     for(a = 0; a < (nAt - 1); a++) {
-      atm1 = *atp;
-      atm2 = *(atp + 1);
-      int at1 = cs->IdxToAtm[atm1];
-      int at2 = cs->IdxToAtm[atm2];
-
-      PRINTFD(G, FB_RepRibbon)
-        " RepRibbon: seg %d *s %d , *(s+1) %d\n", a, *s, *(s + 1)
-        ENDFD;
-
       if(*s == *(s + 1)) {
-        AtomInfoType *ai1 = obj->AtomInfo + at1;
-        AtomInfoType *ai2 = obj->AtomInfo + at2;
+        int const atm[2] = {cs->IdxToAtm[atp[0]], cs->IdxToAtm[atp[1]]};
 
-        c1 = AtomSettingGetWD(G, ai1, cSetting_ribbon_color, ribbon_color);
-        c2 = AtomSettingGetWD(G, ai2, cSetting_ribbon_color, ribbon_color);
+        AtomInfoType const *ai1 = obj->AtomInfo + atm[0];
+        AtomInfoType const *ai2 = obj->AtomInfo + atm[1];
 
-        if (c1 < 0) c1 = ai1->color;
-        if (c2 < 0) c2 = ai2->color;
+        int const color[2] = {get_color(ai1), get_color(ai2)};
+        int const atmpk[2] = {
+            ai1->masked ? cPickableNoPick : cPickableAtom,
+            ai2->masked ? cPickableNoPick : cPickableAtom,
+        };
 
         dev = throw_ * (*d);
         for(b = 0; b < sampling; b++) { /* needs optimization */
@@ -468,6 +465,10 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
           } else {
             origV = origV2;
           }
+
+          size_t const i1 = (b + 0) * 2 < sampling ? 0 : 1;
+          size_t const i2 = (b + 1) * 2 > sampling ? 1 : 0;
+          assert(i1 <= i2);
 
           /* 
              14 floats per v:
@@ -495,8 +496,8 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
           origV[5] = f1 * v1[1] + f0 * v1[4] + f4 * (f3 * v2[1] - f2 * v2[4]);
           origV[6] = f1 * v1[2] + f0 * v1[5] + f4 * (f3 * v2[2] - f2 * v2[5]);
 
-          bool isRamped = false;
-          isRamped = ColorGetCheckRamped(G, c1, origV + 4, origV + 1, state);
+          bool isRamped =
+              ColorGetCheckRamped(G, color[i1], origV + 4, origV + 1, state);
 
           f0 = ((float) b + 1) / sampling;
           f0 = smooth(f0, power_a);
@@ -513,13 +514,14 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
           origV[12] = f1 * v1[1] + f0 * v1[4] + f4 * (f3 * v2[1] - f2 * v2[4]);
           origV[13] = f1 * v1[2] + f0 * v1[5] + f4 * (f3 * v2[2] - f2 * v2[5]);
 
-          isRamped = ColorGetCheckRamped(G, c2, origV + 11, origV + 8, state) || isRamped;
+          if (ColorGetCheckRamped(G, color[i2], origV + 11, origV + 8, state)) {
+            isRamped = true;
+          }
 
-          int atm1pk = ai1->masked ? cPickableNoPick : cPickableAtom;
-          int atm2pk = ai2->masked ? cPickableNoPick : cPickableAtom;
-          CGOPickColor(I->primitiveCGO, at1, atm1pk);
+          CGOPickColor(I->primitiveCGO, atm[i1], atmpk[i1]);
           CGOColorv(I->primitiveCGO, origV + 1);
-          I->primitiveCGO->add<cgo::draw::splitline>(origV + 4, origV + 11, origV + 8, at2, atm2pk, isRamped, false, false);
+          I->primitiveCGO->add<cgo::draw::splitline>(origV + 4, origV + 11,
+              origV + 8, atm[i2], atmpk[i2], isRamped, false, false);
         }
       }
       v1 += 3;
