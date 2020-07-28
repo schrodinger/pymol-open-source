@@ -297,6 +297,7 @@ bool cif_file::parse(char*&& p) {
   cif_data* current_frame = nullptr;
   std::vector<cif_data*> frame_stack;
   std::unique_ptr<cif_data> global_block;
+  decltype(m_datablocks) datablocksnew;
 
   // parse into dictionary
   for (unsigned int i = 0, n = tokens.size(); i < n; i++) {
@@ -367,8 +368,8 @@ bool cif_file::parse(char*&& p) {
       i--;
 
     } else if (strncasecmp("data_", tokens[i], 5) == 0) {
-      m_datablocks.emplace_back();
-      current_frame = &m_datablocks.back();
+      datablocksnew.emplace_back();
+      current_frame = &datablocksnew.back();
       current_frame->m_code = tokens[i] + 5;
       frame_stack = {current_frame};
 
@@ -404,6 +405,8 @@ bool cif_file::parse(char*&& p) {
       return false;
     }
   }
+
+  m_datablocks = std::move(datablocksnew);
 
   return true;
 }
