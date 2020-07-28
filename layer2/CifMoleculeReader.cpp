@@ -38,9 +38,18 @@
 #ifdef _PYMOL_IP_PROPERTIES
 #endif
 
-using pymol::cif_file;
 using pymol::cif_data;
 using pymol::cif_array;
+
+/**
+ * CIF parser which captures the last error message.
+ */
+class cif_file_with_error_capture : public pymol::cif_file
+{
+public:
+  std::string m_error_msg;
+  void error(const char* msg) override { m_error_msg = msg; }
+};
 
 // canonical amino acid three letter codes
 const char * aa_three_letter[] = {
@@ -416,7 +425,13 @@ static bond_dict_t * get_global_components_bond_dict(PyMOLGlobals * G) {
 
     std::string path(pymol_data);
     path.append(PATH_SEP).append("chem_comp_bond-top100.cif");
-    cif_file cif(path.c_str());
+    cif_file_with_error_capture cif;
+    if (!cif.parse_file(path.c_str())) {
+      PRINTFB(G, FB_Executive, FB_Warnings)
+        " Warning: Loading '%s' failed: %s\n", path.c_str(),
+        cif.m_error_msg.c_str() ENDFB(G);
+      return nullptr;
+    }
 
     for (const auto& datablock : cif.datablocks()) {
       read_chem_comp_bond_dict(&datablock, bond_dict);
@@ -2222,27 +2237,25 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
  * or multiplex=0, then return the object-molecule. Otherwise, create each
  * object - named by its data block name - and return NULL.
  */
-ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
+pymol::Result<ObjectMolecule*> ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
                                       const char *st, int frame,
                                       int discrete, int quiet, int multiplex,
                                       int zoom)
 {
   if (I) {
-    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-      " Error: loading mmCIF into existing object not supported, please use 'create'\n"
-      "        to append to an existing object.\n" ENDFB(G);
-    return nullptr;
+    return pymol::Error("loading mmCIF into existing object not supported, "
+                        "please use 'create' to append to an existing object.");
   }
 
   if (multiplex > 0) {
-    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-      " Error: loading mmCIF with multiplex=1 not supported, please use 'split_states'.\n"
-      "        after loading the object." ENDFB(G);
-    return nullptr;
+    return pymol::Error("loading mmCIF with multiplex=1 not supported, please "
+                        "use 'split_states' after loading the object.");
   }
 
-  const char * filename = nullptr;
-  auto cif = std::make_shared<cif_file>(filename, st);
+  auto cif = std::make_shared<cif_file_with_error_capture>();
+  if (!cif->parse_string(st)) {
+    return pymol::make_error("Parsing CIF file failed: ", cif->m_error_msg);
+  }
 
   for (const auto& datablock : cif->datablocks()) {
     ObjectMolecule * obj = ObjectMoleculeReadCifData(G, &datablock, discrete, quiet);
@@ -2288,29 +2301,32 @@ const bond_dict_t::mapped_type * bond_dict_t::get(PyMOLGlobals * G, const char *
 
 #ifndef _PYMOL_NOPY
   if (try_download) {
-    int blocked = PAutoBlock(G);
+    pymol::GIL_Ensure gil;
     bool downloaded = false;
 
     // call into Python
-    PyObject * pyfilename = PYOBJECT_CALLMETHOD(G->P_inst->cmd,
-        "download_chem_comp", "siO", resn,
-        !Feedback(G, FB_Executive, FB_Details),
-        G->P_inst->cmd);
+    unique_PyObject_ptr pyfilename(
+        PyObject_CallMethod(G->P_inst->cmd, "download_chem_comp", "siO", resn,
+            !Feedback(G, FB_Executive, FB_Details), G->P_inst->cmd));
 
     if (pyfilename) {
-      const char * filename = PyString_AsString(pyfilename);
+      const char* filename = PyString_AsString(pyfilename.get());
 
       // update
       if ((downloaded = (filename && filename[0]))) {
-        cif_file cif(filename);
+        cif_file_with_error_capture cif;
+        if (!cif.parse_file(filename)) {
+          PRINTFB(G, FB_Executive, FB_Warnings)
+            " Warning: Loading _chem_comp_bond CIF data for residue '%s' "
+            "failed: %s\n",
+            resn, cif.m_error_msg.c_str() ENDFB(G);
+          return nullptr;
+        }
+
         for (auto& item : cif.datablocks())
           read_chem_comp_bond_dict(&item, *this);
       }
-
-      Py_DECREF(pyfilename);
     }
-
-    PAutoUnblock(G, blocked);
 
     if (downloaded) {
       // second attempt to look up, from eventually updated dictionary

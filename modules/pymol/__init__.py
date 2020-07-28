@@ -89,6 +89,7 @@ import traceback
 import math
 
 from . import invocation
+from . import colorprinting
 
 def _init_internals(_pymol):
 
@@ -266,8 +267,9 @@ def exec_deferred(self):
                 else:
                     cmd.load(a, quiet=0)
     except CmdException as e:
-        print(e)
-        print(" Error: Argument processing aborted due to exception (above).")
+        colorprinting.error(str(e))
+        colorprinting.error(
+            " Error: Argument processing aborted due to exception (above).")
     except socket_error:
         # this (should) only happen if we're opening a PWG file on startup
         # and the port is busy.  For now, simply bail...

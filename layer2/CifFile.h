@@ -91,13 +91,14 @@ class cif_file {
    */
   bool parse(char*&&);
 
-protected:
+public:
   /// Parse CIF file
   bool parse_file(const char*);
 
   /// Parse CIF string
   bool parse_string(const char*);
 
+protected:
   /// Report a parsing error
   virtual void error(const char*);
 

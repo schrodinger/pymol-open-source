@@ -3958,10 +3958,13 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
         quiet, multiplex, zoom);
     break;
   case cLoadTypeCIF:
-  case cLoadTypeCIFStr:
-    obj = (CObject *) ObjectMoleculeReadCifStr(G, (ObjectMolecule *) origObj,
-        content, state, discrete, quiet, multiplex, zoom);
-    break;
+  case cLoadTypeCIFStr: {
+    auto res =
+        ObjectMoleculeReadCifStr(G, static_cast<ObjectMolecule*>(origObj),
+            content, state, discrete, quiet, multiplex, zoom);
+    p_return_if_error(res);
+    obj = res.result();
+  } break;
   case cLoadTypeMMTF:
   case cLoadTypeMMTFStr:
     obj = (CObject *) ObjectMoleculeReadMmtfStr(G, (ObjectMolecule *) origObj,
