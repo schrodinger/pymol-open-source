@@ -220,6 +220,10 @@ def ligand_sites(selection="(all)",_self=cmd):
             cmd.delete(polar_contacts)
 
         cmd.show("nb_spheres",lig+"|"+host+"|"+near_solvent)
+
+        # add lines because nb_spheres won't show solvent with hydrogens
+        cmd.show("lines", near_solvent)
+
         if cmd.count_atoms(lig):
             cmd.zoom(lig,3, animate=1)
         cmd.delete(host)
