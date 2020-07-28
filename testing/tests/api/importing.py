@@ -680,6 +680,15 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_atoms('bound_to name C1'), 3)
         self.assertEqual(cmd.count_atoms('(bound_to name C1) and name C3'), 0)
 
+    @testing.requires_version('2.5')
+    def testCifErrorHandling(self):
+        with self.assertRaisesRegex(pymol.CmdException,
+                                    'Parsing CIF file failed: expected key'):
+            cmd.load_raw('data_foo _k.a 1 2 3', 'cif', 'm1')
+        with self.assertRaisesRegex(pymol.CmdException,
+                                    'Parsing CIF file failed: truncated loop'):
+            cmd.load_raw('data_foo loop_ _k.a _k.b 1 2 3', 'cif', 'm2')
+
     @testing.foreach.product((0, 1), (0, 1))
     @testing.requires_version('2.3')
     @testing.requires('incentive')
