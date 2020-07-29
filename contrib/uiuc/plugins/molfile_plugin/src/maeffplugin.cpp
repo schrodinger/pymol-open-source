@@ -1824,9 +1824,11 @@ namespace {
       offset += ct.particles.size();
     }
     *nbonds = h->bond_from.size();
-    *from = &h->bond_from[0];
-    *to = &h->bond_to[0];
-    *order = &h->bond_order[0];
+    if (!h->bond_from.empty()) {
+      *from = &h->bond_from[0];
+      *to = &h->bond_to[0];
+      *order = &h->bond_order[0];
+    }
 #if vmdplugin_ABIVERSION > 14
     *bondtype = NULL;
     *nbondtypes = 0;
