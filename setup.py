@@ -268,6 +268,12 @@ def_macros = [
     ("_PYMOL_FREETYPE", None),
 ]
 
+if DEBUG and not WIN:
+    def_macros += [
+        # bounds checking in STL containers
+        ("_GLIBCXX_ASSERTIONS", None),
+    ]
+
 libs = ["png", "freetype"]
 lib_dirs = []
 ext_comp_args = [
