@@ -7286,7 +7286,7 @@ static sele_array_t SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMole
       }
     }
   }
-  I->Obj.resize(modelCnt);
+  assert(modelCnt + 1 == I->Obj.size());
   I->Table.resize(c);
 
   PRINTFD(G, FB_Selector)
