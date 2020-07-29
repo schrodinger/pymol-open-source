@@ -51,6 +51,8 @@ jobs:
     - name: Build
       run: |
         python setup.py --testing install --prefix=install-prefix
+      env:
+        DEBUG: 1
 
     - name: Test
       run: |
