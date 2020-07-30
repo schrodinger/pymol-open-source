@@ -849,7 +849,7 @@ enum {
   REC_i( 739, volume_mode                             , global    , 1 ),
   REC_b( 740, trilines                                , global    , 0 ),
   REC_i( 741, collada_export_lighting                 , global    , 0 ),
-  REC_i( 742, collada_geometry_mode                   , global    , 0 ),
+  REC_i( 742, collada_geometry_mode                   , global    , 1 ),
   REC_b( 743, precomputed_lighting                    , global    , 0 ),
   REC_i( 744, chromadepth                             , global    , 0 ),
   REC_f( 745, pse_export_version                      , global    , 0.f ),
