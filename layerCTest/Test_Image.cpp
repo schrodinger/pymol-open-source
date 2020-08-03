@@ -42,7 +42,7 @@ TEST_CASE("Image Ill-Informed Constructor", "[Image]")
   bool caught = false;
   try {
     Image img(100, -100);
-  } catch (const std::exception& e){
+  } catch (const std::exception&){
     caught = true;
   }
   REQUIRE(caught);

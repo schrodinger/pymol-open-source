@@ -141,12 +141,8 @@ void TextSetLabPos(PyMOLGlobals * G, const float *pos, const LabPosType * labpos
     TextSetPos(G, pos);
   else {
     CText *I = G->Text;
-    switch (labpos->mode) {
-    default:
-      copy3f(pos, I->Pos);
-      add3f(labpos->offset, I->Pos, I->Pos);
-      break;
-    }
+    copy3f(pos, I->Pos);
+    add3f(labpos->offset, I->Pos, I->Pos);
   }
 }
 

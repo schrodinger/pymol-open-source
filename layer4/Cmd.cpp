@@ -6089,8 +6089,8 @@ static PyObject *CmdWindow(PyObject * self, PyObject * args)
   API_ASSERT(G->HaveGUI);
   API_ASSERT(APIEnterNotModal(G));
   {
-    switch (int1) {
 #ifndef _PYMOL_NO_MAIN
+    switch (int1) {
     case 0:
     case 1:
       if(G->Main)
@@ -6124,8 +6124,8 @@ static PyObject *CmdWindow(PyObject * self, PyObject * args)
       if(G->Main)
         MainCheckWindowFit(G);
       break;
-#endif
     }
+#endif
 
     APIExit(G);
   }

@@ -48,11 +48,11 @@ Z* -------------------------------------------------------------------
 /*
  * ObjectMolecule's Bond Path (BP) Record
  */
-typedef struct ObjectMoleculeBPRec {
+struct ObjectMoleculeBPRec {
   int *dist;
   int *list;
   int n_atom;
-} ObjectMoleculeBPRec;
+};
 
 struct ObjectMolecule : public CObject {
 	/* array of pointers to coordinate sets; one set per state */
@@ -122,7 +122,7 @@ protected:
 };
 
 /* this is a record that holds information for specific types of Operatations on Molecules, eg. translation/rotation/etc */
-typedef struct ObjectMoleculeOpRec {
+struct ObjectMoleculeOpRec {
   unsigned int code;
   Vector3f v1, v2;
   int cs1, cs2;
@@ -140,21 +140,21 @@ typedef struct ObjectMoleculeOpRec {
   float ttt[16], *mat1;
   int nvv1, nvv2;
   int include_static_singletons;
-} ObjectMoleculeOpRec;
+};
 
-typedef struct {
+struct HBondCriteria{
   float maxAngle;
   float maxDistAtMaxAngle;
   float maxDistAtZero;
   float power_a, power_b;
   float factor_a, factor_b;     /* 0.5/(maxAngle^power_a), 0.5/(maxAngle^power_b)) */
   float cone_dangle;
-} HBondCriteria;
+};
 
-typedef struct {
+struct PDBScale{
   int flag[3];
   float matrix[16];
-} PDBScale;
+};
 
 enum {
   PDB_VARIANT_DEFAULT = 0,
@@ -163,7 +163,7 @@ enum {
   PDB_VARIANT_VDB,      /* VIPERdb */
 };
 
-typedef struct {
+struct PDBInfoRec{
   int variant;
   int pqr_workarounds;
   PDBScale scale;
@@ -174,7 +174,7 @@ typedef struct {
   inline bool is_pqr_file() const {
     return variant == PDB_VARIANT_PQR;
   }
-} PDBInfoRec;
+};
 
 
 /* these four letter code are left over from an 
