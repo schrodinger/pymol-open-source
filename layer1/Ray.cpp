@@ -3811,10 +3811,13 @@ int RayTraceThread(CRayThreadInfo * T)
                   RayReflectAndTexture(I, &r1, perspective);
 
                 dotgle = -r1.dotgle;
-                if((interior_color < 0) && (interior_color > cColorExtCutoff)) {
-                  copy3f(r1.prim->ic, fc);
-                } else {
+                if (interior_color >= 0 || interior_color <= cColorExtCutoff) {
                   copy3f(inter, fc);
+                } else if (interior_color == cColorAtomic) {
+                  // Affects spheres+cylinders, but not surfaces+cartoon.
+                  copy3f(r1.prim->c1, fc);
+                } else {
+                  copy3f(r1.prim->ic, fc);
                 }
               } else {
                 if(!perspective)
@@ -3945,10 +3948,14 @@ int RayTraceThread(CRayThreadInfo * T)
                     }
 
                     dotgle = -r1.dotgle;
-                    if((interior_color < 0) && (interior_color > cColorExtCutoff)) {
-                      copy3f(r1.prim->ic, fc);
-                    } else {
+                    if (interior_color >= 0 ||
+                        interior_color <= cColorExtCutoff) {
                       copy3f(inter, fc);
+                    } else if (interior_color == cColorAtomic) {
+                      // Affects surfaces+cartoon, but not spheres+cylinders.
+                      copy3f(r1.prim->c1, fc);
+                    } else {
+                      copy3f(r1.prim->ic, fc);
                     }
                   }
                 }
