@@ -135,17 +135,6 @@ void TextAdvance(PyMOLGlobals * G, float advance)
   G->Text->Pos[0] += advance;
 }
 
-void TextSetLabPos(PyMOLGlobals * G, const float *pos, const LabPosType * labpos, const char *text)
-{
-  if((!labpos) || (!labpos->mode))
-    TextSetPos(G, pos);
-  else {
-    CText *I = G->Text;
-    copy3f(pos, I->Pos);
-    add3f(labpos->offset, I->Pos, I->Pos);
-  }
-}
-
 void TextIndent(PyMOLGlobals * G, float x, float y)
 {
   CText *I = G->Text;

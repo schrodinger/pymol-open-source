@@ -73,7 +73,6 @@ Z* -------------------------------------------------------------------
 int TextInit(PyMOLGlobals * G);
 void TextFree(PyMOLGlobals * G);
 
-void TextSetLabPos(PyMOLGlobals * G, const float *pos, const LabPosType * labpos, const char *text);
 void TextSetColorFromUColor(PyMOLGlobals * G);
 
 void TextSetWorldPos(PyMOLGlobals * G, const float *pos);
