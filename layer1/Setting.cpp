@@ -2484,6 +2484,13 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     SceneChanged(G);
     break;
   case cSetting_sphere_mode:
+#ifndef _PYMOL_IP_EXTRAS
+    if (SettingGet<int>(G, cSetting_sphere_mode) > 9) {
+      PRINTFB(G, FB_Setting, FB_Warnings)
+        " Setting-Warning: sphere_mode > 9 is not supported in Open-Source "
+        "version of PyMOL\n" ENDFB(G);
+    }
+#endif
     ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
     SceneInvalidate(G);
     break;

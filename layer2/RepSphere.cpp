@@ -40,6 +40,11 @@
 #define SPHERE_NORMAL_RANGE 6.f
 #define SPHERE_NORMAL_RANGE2 (SPHERE_NORMAL_RANGE*SPHERE_NORMAL_RANGE)
 
+enum {
+  cSphereModeCube = 10,
+  cSphereModeTetrahedron = 11,
+};
+
 /* defer_builds_mode = 5 : Immediate mode for any sphere_mode
 
    sphere_mode :
@@ -179,6 +184,8 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
       // Generate renderCGO for sphere_mode
       switch (sphere_mode) {
       case 0:              /* memory-efficient sphere rendering */
+      case cSphereModeCube:
+      case cSphereModeTetrahedron:
         RepSphere_Generate_Triangles(G, I, info);
         break;
       case 9: // use GLSL impostor shader
@@ -263,7 +270,7 @@ static bool RepSphereDetermineAtomVisibility(PyMOLGlobals *G,
 static void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj,
     CoordSet * cs, int state, int a1, AtomInfoType *ati1, int a,
     float sphere_scale, int sphere_color, float transp,
-    int *variable_alpha, float sphere_add)
+    int *variable_alpha, float sphere_add, int const sphere_mode)
 {
   PyMOLGlobals *G = cs->G;
   float at_transp = transp;
@@ -502,12 +509,6 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     I->spheroidCGO = RepSphereGeneratespheroidCGO(obj, cs, GetSpheroidSphereRec(G), state);
 
   if (ok){
-    sphere_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sphere_mode);
-    if (!use_shader && (sphere_mode == 5 || sphere_mode == 9)){
-      sphere_mode = 0;
-    }
-  }
-  if (ok){
     sphere_color =
       SettingGet_color(G, cs->Setting, obj->Setting, cSetting_sphere_color);
     cartoon_side_chain_helper =
@@ -526,6 +527,8 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     I->R.cs = cs;
     I->R.context.object = obj;
     I->R.context.state = state;
+
+    sphere_mode = RepGetSphereMode(G, I, use_shader);
   }
   /* raytracing primitives */
 
@@ -572,7 +575,9 @@ Rep *RepSphereNew(CoordSet * cs, int state)
       if(marked[a1]) {
       ati1 = obj->AtomInfo + a1;
         RepSphereSetNormalForSphere(I, map, v_tmp, &v_tmp[a * 3], cut_mult, a, active, dot, n_dot);
-        RepSphereAddAtomVisInfoToStoredVC(I, obj, cs, state, a1, ati1, a, sphere_scale, sphere_color, transp, &variable_alpha, sphere_add);
+        RepSphereAddAtomVisInfoToStoredVC(I, obj, cs, state, a1, ati1, a,
+            sphere_scale, sphere_color, transp, &variable_alpha, sphere_add,
+            sphere_mode);
       }
 	ok &= !G->Interrupt;
       }
@@ -589,7 +594,9 @@ Rep *RepSphereNew(CoordSet * cs, int state)
                                          cartoon_side_chain_helper, ribbon_side_chain_helper);
       if(marked[a1]) {
         nspheres++;
-        RepSphereAddAtomVisInfoToStoredVC(I, obj, cs, state, a1, ati1, a, sphere_scale, sphere_color, transp, &variable_alpha, sphere_add);
+        RepSphereAddAtomVisInfoToStoredVC(I, obj, cs, state, a1, ati1, a,
+            sphere_scale, sphere_color, transp, &variable_alpha, sphere_add,
+            sphere_mode);
       }
       ok &= !G->Interrupt;
     }

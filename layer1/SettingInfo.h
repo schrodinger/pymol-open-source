@@ -513,7 +513,7 @@ enum {
   REC_b( 418, validate_object_names                   , global    , 1 ),
   REC_b( 419, unused_boolean_def_true                 , unused    , 1 ),
   REC_b( 420, auto_show_spheres                       , global    , 0 ),
-  REC_i( 421, sphere_mode                             , ostate    , 9, -1, 9 ),
+  REC_i( 421, sphere_mode                             , ostate    , 9, -1, 11 ),
   REC_f( 422, sphere_point_max_size                   , ostate    , 18.0f ),
   REC_f( 423, sphere_point_size                       , global    , 1.0f ),
   REC_b( 424, pdb_honor_model_number                  , global    , false ),
