@@ -207,8 +207,39 @@ class TestEditing(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def test_flag(self):
-        cmd.flag
-        self.skipTest("TODO")
+        cmd.fab("ACE")
+        natoms = cmd.count_atoms()
+        natoms_cys = cmd.count_atoms('resn CYS')
+        assert natoms == 36
+        assert natoms_cys == 11
+        cmd.alter("all", "flags = 0")
+        for flag in range(32):
+            sele = "flag {}".format(flag)
+            self.assertEqual(cmd.count_atoms(sele), 0)
+            cmd.flag(flag, "index 1-{}".format(flag + 1), "set")
+            self.assertEqual(cmd.count_atoms(sele), flag + 1)
+            cmd.flag(flag, "index {}-{}".format(flag + 1, flag + 2), "reset")
+            self.assertEqual(cmd.count_atoms(sele), 2)
+            cmd.flag(flag, "index 1-{}".format(flag + 1), "clear")
+            self.assertEqual(cmd.count_atoms(sele), 1)
+            cmd.flag(flag, "last all", "set")
+            self.assertEqual(cmd.count_atoms(sele), 2)
+        cmd.alter("all", "flags = 0")
+        for flag, flagname in [
+            (0, 'focus'),
+            (1, 'free'),
+            (2, 'restrain'),
+            (3, 'fix'),
+            (4, 'exclude'),
+            (5, 'study'),
+            (24, 'exfoliate'),  # deprecated
+            (25, 'ignore'),
+            (26, 'no_smooth'),
+        ]:
+            sele = "flag {}".format(flag)
+            self.assertEqual(cmd.count_atoms(sele), 0)
+            cmd.flag(flagname, 'resn CYS')
+            self.assertEqual(cmd.count_atoms(sele), natoms_cys)
 
     def test_fuse(self):
         cmd.fragment('ala')
