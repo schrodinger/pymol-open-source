@@ -9176,35 +9176,53 @@ void ExecutiveFixHydrogens(PyMOLGlobals * G, const char *s1, int quiet)
 /*========================================================================*/
 pymol::Result<> ExecutiveFlag(PyMOLGlobals * G, int flag, const char* sele, int action, int quiet)
 {
-  auto s1 = SelectorTmp::make(G, sele);
-  p_return_if_error(s1);
-  ObjectMoleculeOpRec op;
+  enum {
+    cFlagActionReset = 0,
+    cFlagActionSet = 1,
+    cFlagActionClear = 2,
+  };
 
-  int sele1 = s1->getIndex();
+  if (flag < 0 || flag > 31) {
+    return pymol::make_error("flag ", flag, " out of range [0, 31]");
+  }
+
+  ObjectMoleculeOpRec op;
   ObjectMoleculeOpRecInit(&op);
   switch (action) {
-  case 0:
+  case cFlagActionReset:
     op.code = OMOP_Flag;
     break;
-  case 1:
+  case cFlagActionSet:
     op.code = OMOP_FlagSet;
     break;
-  case 2:
+  case cFlagActionClear:
     op.code = OMOP_FlagClear;
     break;
   default:
-    op.code = OMOP_Flag;
-    break;
+    return pymol::make_error("invalid action ", action);
   }
-  op.i1 = (((unsigned int) 1) << flag);
-  op.i2 = ((unsigned int) 0xFFFFFFFF - (((unsigned int) 1) << flag));
+
+  op.i1 = 1u << flag;
+  op.i2 = ~op.i1;
   op.i3 = 0;
   op.i4 = 0;
+
+  if ((op.i1 & cAtomFlag_exfoliate) && action != cFlagActionClear) {
+    PRINTFB(G, FB_Executive, FB_Warnings)
+    "The 'exfoliate' flag is deprecated. "
+    "Use 'hide surface, (%s)' instead.\n",
+        sele ENDFB(G);
+  }
+
+  auto s1 = SelectorTmp::make(G, sele);
+  p_return_if_error(s1);
+  int sele1 = s1->getIndex();
+
   ExecutiveObjMolSeleOp(G, sele1, &op);
   if(Feedback(G, FB_Executive, FB_Actions)) {
     if(!quiet) {
       switch (action) {
-      case 0:
+      case cFlagActionReset:
         if(op.i3) {
           PRINTF " Flag: flag %d is set in %d of %d atoms.\n", flag, op.i3,
             op.i4 ENDF(G);
@@ -9212,10 +9230,10 @@ pymol::Result<> ExecutiveFlag(PyMOLGlobals * G, int flag, const char* sele, int 
           PRINTF " Flag: flag %d cleared on all atoms.\n", flag ENDF(G);
         }
         break;
-      case 1:
+      case cFlagActionSet:
         PRINTF " Flag: flag %d set on %d atoms.\n", flag, op.i3 ENDF(G);
         break;
-      case 2:
+      case cFlagActionClear:
         PRINTF " Flag: flag %d cleared on %d atoms.\n", flag, op.i3 ENDF(G);
         break;
       }

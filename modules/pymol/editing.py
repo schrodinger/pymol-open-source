@@ -2477,6 +2477,10 @@ USAGE
 
 ARGUMENTS
 
+    flag = str or int: Flag name or number
+
+    selection = str: atom selection
+
     action = reset: {default} set flag for atoms in selection and clear it for all others
 
     action = set: set the flag for atoms in selection, leaving other atoms unchanged
@@ -2519,7 +2523,7 @@ NOTES
 
     * Flags 24-31 are reserved for PyMOL internal usage
 
-        exfoliate 24 = Remove surface from atoms when surfacing \\
+        exfoliate 24 = DEPRECATED: Use "hide surface, sele" instead \\
         ignore    25 = Ignore atoms altogether when surfacing \\
         no_smooth 26 = Do not smooth atom position
 
@@ -2529,26 +2533,17 @@ PYMOL API
              int indicate=0)
 
         '''
-        r = DEFAULT_ERROR
-        # preprocess selection
-        new_flag = flag_sc.interpret(str(flag))
-        if new_flag:
-            if _self.is_string(new_flag):
-                flag = flag_dict[new_flag]
-            else:
-                flag_sc.auto_err(flag,'flag')
+        if isinstance(flag, str) and not flag.isdigit():
+            flag = flag_dict[flag_sc.auto_err(flag, "flag")]
+        else:
+            flag = int(flag)
+
         # preprocess selection
         selection = selector.process(selection)
         action = flag_action_dict[flag_action_sc.auto_err(action,'action')]
-        #
-        try:
-            _self.lock(_self)
-            r = _cmd.flag(_self._COb,int(flag),"("+str(selection)+")",
-                              int(action),int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+
+        with _self.lockcm:
+            return _cmd.flag(_self._COb, flag, selection, action, int(quiet))
 
     def vdw_fit(selection1, selection2, state1=1,state2=1,buffer=0.24,quiet=1,_self=cmd):
         '''

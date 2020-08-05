@@ -79,6 +79,8 @@ Z* -------------------------------------------------------------------
 
 
 /* FLAG 24 - don't surface these atoms (waters, ligands, etc.) */
+// DEPRECATED (PYMOL-3500): Instead of `flag exfoliate, sele`, use `hide
+// surface, sele` or some equivalent command.
 #define cAtomFlag_exfoliate     0x01000000
 
 
