@@ -82,6 +82,7 @@ class TestReps(testing.PyMOLTestCase):
             cmd.cartoon(cart)
             self.assertImageHasColor('white', msg='cartoon missing: ' + cart)
 
+    @testing.requires('incentive')
     @testing.requires_version('2.5')
     def test_sphere_mode_10_11(self):
         cmd.viewport(200, 100)
