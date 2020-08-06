@@ -70,10 +70,7 @@ if __name__ == '__main__':
 
     # standard launch (consume main thread)
     import pymol
-    pymol.launch(args)
-
-    # this should never be reached because PyMOL will exit the process
-    raise SystemExit
+    sys.exit(pymol.launch(args))
 
 IS_WINDOWS = sys.platform.startswith('win')
 IS_MACOS = sys.platform.startswith('darwin')
@@ -425,7 +422,7 @@ def launch(args=None, block_input_hook=0):
 
         try:
             from pmg_qt import pymol_qt_gui
-            sys.exit(pymol_qt_gui.execapp())
+            return pymol_qt_gui.execapp()
         except ImportError:
             print('Qt not available, using GLUT/Tk interface')
             invocation.options.gui = 'pmg_tk'
