@@ -3,6 +3,7 @@ Testing: pymol.editing
 '''
 
 from pymol import cmd, testing, stored
+from pymol import CmdException
 
 def get_coord_list(selection, state=1):
     return cmd.get_model(selection, state).get_coord_list()
@@ -240,6 +241,26 @@ class TestEditing(testing.PyMOLTestCase):
             self.assertEqual(cmd.count_atoms(sele), 0)
             cmd.flag(flagname, 'resn CYS')
             self.assertEqual(cmd.count_atoms(sele), natoms_cys)
+
+        cmd.alter("all", "flags = 1 << 25")
+        self.assertEqual(cmd.count_atoms("flag 25"), natoms)
+        # number as string
+        cmd.flag("25", "index 11-15")  # reset
+        self.assertEqual(cmd.count_atoms("flag 25"), 5)
+        # abbreviated action
+        cmd.flag("25", "index 15-20", "s")  # set
+        self.assertEqual(cmd.count_atoms("flag 25"), 10)
+
+    @testing.requires_version('2.5')
+    def test_flag_error_handling(self):
+        with self.assertRaisesRegex(CmdException, "out of range"):
+            cmd.flag(-1, "all")
+        with self.assertRaisesRegex(CmdException, "out of range"):
+            cmd.flag(32, "all")
+        with self.assertRaisesRegex(cmd.QuietException, "unknown action"):
+            cmd.flag(1, "all", "foo")
+        with self.assertRaisesRegex(CmdException, "Invalid selection name"):
+            cmd.flag(1, "foo")
 
     def test_fuse(self):
         cmd.fragment('ala')
