@@ -151,29 +151,23 @@ if True:
             result = None
             if kee not in self.shortcut:
                 if descrip is not None:
-                    print("Error: unknown %s: '%s'." % (descrip, kee), end=' ')
+                    msg = "Error: unknown %s: '%s'." % (descrip, kee)
                     lst = self.interpret('')
                     if is_list(lst):
                         if len(lst)<100:
                             lst.sort()
-                            print("Choices:")
                             lst = parsing.list_to_str_list(lst)
-                            for a in lst: print(a)
-                        else:
-                            print()
-                    else:
-                        print()
-                    raise parsing.QuietException
+                            msg += " Choices:\n"
+                            msg += "\n".join(lst)
+                    raise parsing.QuietException(msg)
 
             else:
                 result = self.interpret(kee)
                 if not is_string(result):
                     if descrip is not None:
-                        print("Error: ambiguous %s:"%descrip)
                         lst = parsing.list_to_str_list(result)
-                        for a in lst:
-                            print(a)
-                        raise parsing.QuietException
+                        msg = "Error: ambiguous %s:\n%s" % (descrip, '\n'.join(lst))
+                        raise parsing.QuietException(msg)
             return result
 
 if __name__=='__main__':
