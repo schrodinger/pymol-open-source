@@ -9939,6 +9939,10 @@ pymol::Result<> ExecutiveLabel(PyMOLGlobals * G, const char *str1, const char *e
     op1.i1 = 0;
     op1.i2 = eval_mode;
 
+#ifndef _PYMOL_NOPY
+    pymol::pautoblock gil(G);
+#endif
+
     if (!ExecutiveObjMolSeleOp(G, sele1, &op1)) {
       return pymol::Error();
     }
@@ -11803,7 +11807,6 @@ pymol::Result<> ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tupl
   CSetting **handle = NULL;
   SettingName name = "";
   int nObj = 0;
-  int unblock;
   const char* sele = preSele.c_str();
   int ok = true;
 
@@ -11823,7 +11826,8 @@ pymol::Result<> ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tupl
     SettingGetName(G, index, name);
   }
 
-  unblock = PAutoBlock(G);
+  pymol::pautoblock unblock(G);
+
   if((!sele) || (sele[0] == 0)) {       /* global setting */
     ok = SettingSetFromTuple(G, NULL, index, tuple);
     if(ok) {
@@ -12023,7 +12027,6 @@ pymol::Result<> ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tupl
     }
   }
 
-  PAutoUnblock(G, unblock);
   if (!ok) {
     return pymol::make_error("Error");
   }
@@ -12340,7 +12343,6 @@ pymol::Result<> ExecutiveUnsetSetting(PyMOLGlobals * G, int index, pymol::zstrin
   CSetting **handle = NULL;
   const char * name = SettingGetName(index);
   int nObj = 0;
-  int unblock;
   int ok = true;
   const char* sele = preSele.c_str();
 
@@ -12352,9 +12354,6 @@ pymol::Result<> ExecutiveUnsetSetting(PyMOLGlobals * G, int index, pymol::zstrin
     sele = s1->getName();
   }
 
-  PRINTFD(G, FB_Executive)
-    " %s: entered. sele \"%s\"\n", __func__, sele ENDFD;
-  unblock = PAutoBlock(G);
   if(sele[0] == 0) {
     // Set global setting to an "off" value.
     // NOTE: It would be nice if this would restore the default setting, but
@@ -12470,7 +12469,6 @@ pymol::Result<> ExecutiveUnsetSetting(PyMOLGlobals * G, int index, pymol::zstrin
   }
   if(updates)
     SettingGenerateSideEffects(G, index, sele, state, quiet);
-  PAutoUnblock(G, unblock);
   if (!ok) {
     return pymol::make_error("Error");
   }

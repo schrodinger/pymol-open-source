@@ -272,6 +272,34 @@ struct _CP_inst {
   SavedThreadRec savedThread[MAX_SAVED_THREAD];
 };
 
+namespace pymol
+{
+
+/**
+ * Handy RAII applications for acquiring the GIL
+ */
+
+class pblock
+{
+  PyMOLGlobals* m_G{nullptr};
+
+public:
+  pblock(PyMOLGlobals* G) : m_G(G) { PBlock(m_G); }
+  ~pblock() { PUnblock(m_G); }
+};
+
+class pautoblock
+{
+  PyMOLGlobals* m_G;
+  int m_blocked{};
+
+public:
+  pautoblock(PyMOLGlobals* G) : m_G(G), m_blocked(PAutoBlock(m_G)) {}
+  ~pautoblock() { PAutoUnblock(m_G, m_blocked); }
+};
+
+} // namespace pymol
+
 /* PyObject *GetBondsDict(void); */
 
 
