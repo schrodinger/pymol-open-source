@@ -941,7 +941,7 @@ std::unique_ptr<int[]> LoadTrajSeleHelper(
 ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                                           const char *fname, int frame, int interval,
                                           int average, int start, int stop, int max,
-                                          const char *sele, int image, float *shift, int quiet)
+                                          const char *sele, int image, const float *shift, int quiet)
 {
   FILE *f;
   char *buffer;

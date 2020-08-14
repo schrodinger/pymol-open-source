@@ -697,4 +697,9 @@ int ExecutiveSaveUndo(PyMOLGlobals * G, const char *s1, int state);
 
 pymol::Result<> ExecutiveRebond(PyMOLGlobals* G, const char* oname, int state);
 
+pymol::Result<> ExecutiveLoadTraj(PyMOLGlobals* G, pymol::zstring_view oname,
+    pymol::zstring_view fname, int frame, int type, int interval, int average,
+    int start, int stop, int max, pymol::zstring_view str1, int image,
+    const float* shift, pymol::zstring_view plugin, int quiet);
+
 #endif

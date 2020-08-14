@@ -5565,75 +5565,20 @@ static PyObject *CmdLoadTraj(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *fname, *oname;
-  CObject *origObj = NULL;
-  OrthoLineType buf;
   int frame, type;
   int interval, average, start, stop, max, image;
-  OrthoLineType s1;
   char *str1;
-  int ok = false;
   float shift[3];
-  int quiet = 0;                /* TODO */
   char *plugin = NULL;
-  ok = PyArg_ParseTuple(args, "Ossiiiiiiisifffs", &self, &oname, &fname, &frame, &type,
-                        &interval, &average, &start, &stop, &max, &str1,
-                        &image, &shift[0], &shift[1], &shift[2], &plugin);
-
-  buf[0] = 0;
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    if(str1[0])
-      ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    else
-      s1[0] = 0;                /* no selection */
-    origObj = ExecutiveFindObjectByName(G, oname);
-    /* check for existing object of right type, delete if not */
-    if(origObj) {
-      if(origObj->type != cObjectMolecule) {
-        ExecutiveDelete(G, origObj->Name);
-        origObj = NULL;
-      }
-    }
-    if((type == cLoadTypeTRJ) && (plugin[0]))
-      type = cLoadTypeTRJ2;
-    /*printf("plugin %s %d\n",plugin,type); */
-    if(origObj) {
-      switch (type) {
-      case cLoadTypeTRJ:       /* this is the ascii AMBER trajectory format... */
-        PRINTFD(G, FB_CCmd) " CmdLoadTraj-DEBUG: loading TRJ\n" ENDFD;
-        ObjectMoleculeLoadTRJFile(G, (ObjectMolecule *) origObj, fname, frame,
-                                  interval, average, start, stop, max, s1, image, shift,
-                                  quiet);
-        /* if(finish)
-           ExecutiveUpdateObjectSelection(G,origObj); unnecc */
-        sprintf(buf,
-                " CmdLoadTraj: \"%s\" appended into object \"%s\".\n CmdLoadTraj: %d total states in the object.\n",
-                fname, oname, ((ObjectMolecule *) origObj)->NCSet);
-        break;
-      default:
-        ok = PlugIOManagerLoadTraj(G, (ObjectMolecule *) origObj, fname, frame,
-                              interval, average, start, stop, max, s1, image, shift,
-                              quiet, plugin);
-      }
-    } else {
-      PRINTFB(G, FB_CCmd, FB_Errors)
-        "CmdLoadTraj-Error: must load object topology before loading trajectory.\n"
-        ENDFB(G);
-    }
-    if(origObj) {
-      PRINTFB(G, FB_Executive, FB_Actions)
-        "%s", buf ENDFB(G);
-      OrthoRestorePrompt(G);
-    }
-    SelectorFreeTmp(G, s1);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  int quiet = 0;                /* TODO */
+  API_SETUP_ARGS(G, self, args, "Ossiiiiiiisifffs", &self, &oname, &fname,
+      &frame, &type, &interval, &average, &start, &stop, &max, &str1, &image,
+      &shift[0], &shift[1], &shift[2], &plugin);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveLoadTraj(G, oname, fname, frame, type,
+      interval, average, start, stop, max, str1, image, shift, plugin, quiet);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdOrigin(PyObject * self, PyObject * args)

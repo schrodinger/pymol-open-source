@@ -159,7 +159,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                           const char *fname, int frame,
                           int interval, int average, int start,
                           int stop, int max, const char *sele, int image,
-                          float *shift, int quiet, const char *plugin_type)
+                          const float *shift, int quiet, const char *plugin_type)
 {
   CPlugIOManager *I = G->PlugIOManager;
   molfile_plugin_t *plugin = NULL;

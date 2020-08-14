@@ -16634,6 +16634,45 @@ pymol::Result<> ExecutiveAddBondByIndices(PyMOLGlobals* G,
   return ObjectMoleculeAddBondByIndices(obj, atm1, atm2, order);
 }
 
+pymol::Result<> ExecutiveLoadTraj(PyMOLGlobals* G, pymol::zstring_view oname,
+    pymol::zstring_view fname, int frame, int type, int interval, int average,
+    int start, int stop, int max, pymol::zstring_view str1, int image,
+    const float* shift, pymol::zstring_view plugin, int quiet)
+{
+  auto  s1 = SelectorTmp::make(G, str1.c_str());
+  p_return_if_error(s1);
+  bool ok = true;
+  auto origObj = ExecutiveFindObjectByName(G, oname.c_str());
+  if (!origObj) {
+    return pymol::make_error("Must load object topology before loading trajectory.");
+  }
+  if (origObj->type != cObjectMolecule) {
+    return pymol::make_error("Object '", oname, "' is not a molecular object.");
+  }
+  if ((type == cLoadTypeTRJ) && (!plugin.empty()))
+    type = cLoadTypeTRJ2;
+  switch (type) {
+  case cLoadTypeTRJ: /* this is the ascii AMBER trajectory format... */
+    PRINTFD(G, FB_CCmd) " ExecutiveLoadTraj-DEBUG: loading TRJ\n" ENDFD;
+    ObjectMoleculeLoadTRJFile(G, (ObjectMolecule*) origObj, fname.c_str(), frame,
+        interval, average, start, stop, max, s1->getName(), image, shift, quiet);
+    PRINTFB(G, FB_Executive, FB_Actions)
+        " ExecutiveLoadTraj: \"%s\" appended into object \"%s\".\n"
+        " ExecutiveLoadTraj: %d total states in the object.\n",
+        fname.c_str(), oname.c_str(), ((ObjectMolecule*) origObj)->NCSet ENDFB(G);
+    break;
+  default:
+    ok = PlugIOManagerLoadTraj(G, (ObjectMolecule*) origObj, fname.c_str(), frame,
+        interval, average, start, stop, max, s1->getName(), image, shift, quiet,
+        plugin.c_str());
+  }
+  if(ok) {
+    return {};
+  } else {
+    return pymol::make_error("Could not load trajectory");
+  }
+}
+
 pymol::Result<ExecutiveRMSInfo> ExecutiveFit(PyMOLGlobals* G,
     pymol::zstring_view str1, pymol::zstring_view str2, int mode, int cutoff,
     int cycles, int quiet, pymol::zstring_view object, int state1, int state2,

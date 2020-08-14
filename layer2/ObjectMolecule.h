@@ -321,7 +321,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G, ObjectMolecule *
 ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * obj,
                                           const char *fname, int frame, int interval,
                                           int average, int start, int stop, int max,
-                                          const char *sele, int image, float *shift, int quiet);
+                                          const char *sele, int image, const float *shift, int quiet);
 
 ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * obj,
                                           const char *fname, int frame, int quiet, char mode);
