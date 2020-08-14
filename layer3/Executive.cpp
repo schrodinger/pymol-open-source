@@ -11781,11 +11781,11 @@ int ExecutiveUnsetBondSetting(PyMOLGlobals * G, int index, const char *s1, const
 
 
 /*========================================================================*/
-int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, const char *sele,
-                        int state, int quiet, int updates)
+pymol::Result<> ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple,
+                        pymol::zstring_view preSele, int state, int quiet, int updates)
 {
 #ifdef _PYMOL_NOPY
-  return 0;
+  return pymol::make_error("Python not available.");
 #else
 
   CExecutive *I = G->Executive;
@@ -11798,7 +11798,17 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, const cha
   SettingName name = "";
   int nObj = 0;
   int unblock;
+  const char* sele = preSele.c_str();
   int ok = true;
+
+  pymol::Result<SelectorTmp2> s1;
+
+  if (!preSele.empty())
+  {
+    s1 = SelectorTmp2::make(G, preSele.c_str());
+    p_return_if_error(s1);
+    sele = s1->getName();
+  }
 
   PRINTFD(G, FB_Executive)
     " %s: entered. sele \"%s\" updates=%d index=%d\n", __func__, sele, updates, index ENDFD;
@@ -12008,7 +12018,10 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, const cha
   }
 
   PAutoUnblock(G, unblock);
-  return (ok);
+  if (!ok) {
+    return pymol::make_error("Error");
+  }
+  return {};
 #endif
 }
 
@@ -12310,7 +12323,7 @@ int ExecutiveSetObjSettingFromString(PyMOLGlobals * G,
 /**
  * @return Always true
  */
-int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
+pymol::Result<> ExecutiveUnsetSetting(PyMOLGlobals * G, int index, pymol::zstring_view preSele,
                           int state, int quiet, int updates)
 {
   CExecutive *I = G->Executive;
@@ -12323,6 +12336,15 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
   int nObj = 0;
   int unblock;
   int ok = true;
+  const char* sele = preSele.c_str();
+
+  pymol::Result<SelectorTmp2> s1;
+
+  if (!preSele.empty()) {
+    s1 = SelectorTmp2::make(G, preSele.c_str());
+    p_return_if_error(s1);
+    sele = s1->getName();
+  }
 
   PRINTFD(G, FB_Executive)
     " %s: entered. sele \"%s\"\n", __func__, sele ENDFD;
@@ -12443,7 +12465,10 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
   if(updates)
     SettingGenerateSideEffects(G, index, sele, state, quiet);
   PAutoUnblock(G, unblock);
-  return (ok);
+  if (!ok) {
+    return pymol::make_error("Error");
+  }
+  return {};
 }
 
 

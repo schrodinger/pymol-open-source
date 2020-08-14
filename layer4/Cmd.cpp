@@ -5068,21 +5068,15 @@ static PyObject *CmdUnset(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int index;
-  char *str3;
+  char *str;
   int state;
   int quiet;
   int updates;
-  API_SETUP_ARGS(G, self, args, "Oisiii", &self, &index, &str3, &state, &quiet, &updates);
+  API_SETUP_ARGS(G, self, args, "Oisiii", &self, &index, &str, &state, &quiet, &updates);
   API_ASSERT(APIEnterNotModal(G));
-  // TODO move selection handling to Executive
-  auto res = [&]() -> pymol::Result<> {
-    auto tmpsele1 = SelectorTmp2::make(G, str3);
-    p_return_if_error(tmpsele1);
-    ExecutiveUnsetSetting(G, index, tmpsele1->getName(), state, quiet, updates);
-    return {};
-  }();
+  auto result = ExecutiveUnsetSetting(G, index, str, state, quiet, updates);
   APIExit(G);
-  return APIResult(G, res);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdUnsetBond(PyObject * self, PyObject * args)
@@ -5114,38 +5108,17 @@ static PyObject *CmdSet(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int index;
-  int tmpFlag = false;
   PyObject *value;
-  char *str3;
+  char *str;
   int state;
   int quiet;
   int updates;
-  OrthoLineType s1;
-  int ok = false;
-  ok =
-    PyArg_ParseTuple(args, "OiOsiii", &self, &index, &value, &str3, &state, &quiet,
-                     &updates);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    s1[0] = 0;
-    if(!strcmp(str3, "all")) {
-      strcpy(s1, str3);
-    } else if(str3[0] != 0) {
-      tmpFlag = true;
-      ok = (SelectorGetTmp2(G, str3, s1) >= 0);
-    }
-    if(ok)
-      ok = ExecutiveSetSetting(G, index, value, s1, state, quiet, updates);
-    if(tmpFlag)
-      SelectorFreeTmp(G, s1);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "OiOsiii", &self, &index, &value, &str, &state, &quiet,
+                 &updates);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveSetSetting(G, index, value, str, state, quiet, updates);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdSetBond(PyObject * self, PyObject * args)

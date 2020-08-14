@@ -328,8 +328,8 @@ int ExecutiveSetBondSettingFromString(PyMOLGlobals * G,
 int ExecutiveUnsetBondSetting(PyMOLGlobals * G, int index, const char *s1, const char *s2,
                               int state, int quiet, int updates);
 
-int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple,
-                        const char *sele, int state, int quiet, int updates);
+pymol::Result<> ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple,
+                        pymol::zstring_view preSele, int state, int quiet, int updates);
 int ExecutiveGetSettingFromString(PyMOLGlobals * G, PyMOLreturn_value *result, 
                                   int index, const char *sele,
                                   int state, int quiet);
@@ -537,7 +537,7 @@ int ExecutiveGetSession(PyMOLGlobals * G, PyObject * dict, const char *names, in
 int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session, int partial_restore,
                         int quiet);
 
-int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
+pymol::Result<> ExecutiveUnsetSetting(PyMOLGlobals * G, int index, pymol::zstring_view preSele,
                           int state, int quiet, int updates);
 
 pymol::Result<> ExecutiveAssignSS(PyMOLGlobals* G,
