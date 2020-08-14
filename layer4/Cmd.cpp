@@ -5059,20 +5059,8 @@ static PyObject *CmdTurn(PyObject * self, PyObject * args)
   float angle;
   API_SETUP_ARGS(G, self, args, "Osf", &self, &sname, &angle);
   API_ASSERT(APIEnterNotModal(G));
-  {
-    switch (sname[0]) {         /* TODO STATUS */
-    case 'x':
-      SceneRotate(G, angle, 1.0, 0.0, 0.0);
-      break;
-    case 'y':
-      SceneRotate(G, angle, 0.0, 1.0, 0.0);
-      break;
-    case 'z':
-      SceneRotate(G, angle, 0.0, 0.0, 1.0);
-      break;
-    }
-    APIExit(G);
-  }
+  SceneRotateAxis(G, angle, sname[0]);
+  APIExit(G);
   return APISuccess();
 }
 

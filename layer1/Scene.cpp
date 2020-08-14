@@ -7163,6 +7163,20 @@ void SceneRotate(
   }
 }
 
+void SceneRotateAxis(PyMOLGlobals* G, float angle, char axis)
+{
+  switch (axis) {
+  case 'x':
+    SceneRotate(G, angle, 1.0f, 0.0f, 0.0f);
+    break;
+  case 'y':
+    SceneRotate(G, angle, 0.0f, 1.0f, 0.0f);
+    break;
+  case 'z':
+    SceneRotate(G, angle, 0.0f, 0.0f, 1.0f);
+    break;
+  }
+}
 
 /*========================================================================*/
 void SceneApplyMatrix(PyMOLGlobals * G, float *m)
