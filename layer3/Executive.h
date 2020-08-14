@@ -264,8 +264,16 @@ pymol::Result<int> ExecutiveIterate(PyMOLGlobals * G, const char *str1, const ch
 pymol::Result<int> ExecutiveIterateList(PyMOLGlobals* G, const char* s1,
     PyObject* list, int read_only, int quiet, PyObject* space);
 
-pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const char* sname,
-    const char* sele, int enable, int quiet, int merge, int state,
+struct SelectArgs
+{
+  std::string sname;
+  std::string sele;
+};
+
+SelectArgs ExecutiveSelectPrepareArgs(PyMOLGlobals* G, pymol::zstring_view sname, pymol::zstring_view sele);
+
+pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const SelectArgs& sargs,
+    int enable, int quiet, int merge, int state,
     const char* domain);
 
 pymol::Result<int> ExecutiveSelectList(PyMOLGlobals* G, const char* sele_name,

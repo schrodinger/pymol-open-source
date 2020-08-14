@@ -5328,8 +5328,9 @@ static PyObject *CmdSelect(PyObject * self, PyObject * args)
       &state, &domain, &enable, &merge);
   API_ASSERT(APIEnterNotModal(G));
 
+  auto seleargs = ExecutiveSelectPrepareArgs(G, sname, sele);
   auto res =
-      ExecutiveSelect(G, sname, sele, enable, quiet, merge, state, domain);
+      ExecutiveSelect(G, seleargs, enable, quiet, merge, state, domain);
 
   APIExit(G);
   return APIResult(G, res);

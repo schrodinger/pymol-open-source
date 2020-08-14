@@ -10019,6 +10019,26 @@ pymol::Result<int> ExecutiveIterate(PyMOLGlobals * G, const char *str1, const ch
   return (op1.i1);
 }
 
+SelectArgs ExecutiveSelectPrepareArgs(PyMOLGlobals* G, pymol::zstring_view sname, pymol::zstring_view sele)
+{
+  SelectArgs args;
+  args.sname = sname.c_str();
+  args.sele = sele.c_str();
+
+  // selection in first argument (cmd.select("expr"))
+  if (args.sele.empty()) {
+    args.sele = sname.c_str();
+    args.sname = SettingGet<bool>(G, cSetting_auto_number_selections) ? "" : "sele";
+  }
+
+  if (args.sname.empty()) {
+    auto sel_num = SettingGet<int>(G, cSetting_sel_counter) + 1;
+    SettingSet<int>(G, cSetting_sel_counter, sel_num);
+    args.sname = pymol::string_format("sel%02u", static_cast<unsigned>(sel_num));
+  }
+  return args;
+}
+
 /**
  * cmd.select() implementation
  *
@@ -10036,26 +10056,12 @@ pymol::Result<int> ExecutiveIterate(PyMOLGlobals * G, const char *str1, const ch
  * @param domain Existing selection name, same as selecting `(sele) and (domain)`
  * @return Number of selected atoms
  */
-pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const char* name,
-    const char* sele, int enable, int quiet, int merge, int state,
+pymol::Result<int> ExecutiveSelect(PyMOLGlobals* G, const SelectArgs& sargs,
+    int enable, int quiet, int merge, int state,
     const char* domain)
 {
-  // selection in first argument (cmd.select("expr"))
-  if (!sele[0]) {
-    sele = name;
-    name = SettingGet<bool>(G, cSetting_auto_number_selections) ? "" : "sele";
-  }
-
-  // auto name (cmd.select("", "expr"))
-  char namebuf[16];
-  if (!name[0]) {
-    auto sel_num = SettingGet<int>(G, cSetting_sel_counter) + 1;
-    SettingSet<int>(G, cSetting_sel_counter, sel_num);
-    snprintf(
-        namebuf, sizeof(namebuf), "sel%02u", static_cast<unsigned>(sel_num));
-    name = namebuf;
-  }
-
+  const char* name = sargs.sname.c_str();
+  const char* sele = sargs.sele.c_str();
   // bail if name not available
   if (ExecutiveFindObjectByName(G, name)) {
     return pymol::make_error("name conflicts with an object");
