@@ -38,9 +38,16 @@ Z* -------------------------------------------------------------------
 
 */
 
-#define cCylCapNone 0
-#define cCylCapFlat 1
-#define cCylCapRound 2
+enum class cCylCap {
+  None = 0,
+  Flat = 1,
+  Round = 2,
+};
+
+// legacy names
+constexpr auto cCylCapNone = cCylCap::None;
+constexpr auto cCylCapFlat = cCylCap::Flat;
+constexpr auto cCylCapRound = cCylCap::Round;
 
 #define cCylShaderCap1Flat 0x01
 #define cCylShaderCap2Flat 0x02
@@ -63,7 +70,9 @@ typedef struct {
   float r1, r2, l1;
   float trans;
   int char_id;
-  char type, cap1, cap2, cull;
+  char type;
+  cCylCap cap1, cap2;
+  int cull;
   char wobble, ramped, no_lighting;
   /* float wobble_param[3] eliminated to save space */
 } CPrimitive;                   /* currently 172 bytes -> appoximately 6.5 million primitives per gigabyte */

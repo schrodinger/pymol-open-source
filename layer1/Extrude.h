@@ -64,17 +64,20 @@ void ExtrudeBuildNormals1f(CExtrude * I);
 void ExtrudeBuildNormals2f(CExtrude * I);
 int ExtrudeComputeTangents(CExtrude * I);
 int ExtrudeCylindersToCGO(CExtrude * I, CGO *cgo, float tube_radius);
-int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, const float *color_override, bool use_spheres, int dash=0);
-int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap);
+int ExtrudeCGOSurfaceTube(const CExtrude* I, CGO* cgo, cCylCap cap,
+    const float* color_override, bool use_spheres, int dash = 0);
+int ExtrudeCGOSurfaceVariableTube(const CExtrude * I, CGO * cgo, cCylCap cap);
 
-int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, const float *color_override);
-int ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo,
+int ExtrudeCGOSurfacePolygon(const CExtrude * I, CGO * cgo, cCylCap cap, const float *color_override);
+int ExtrudeCGOSurfacePolygonTaper(const CExtrude * I, CGO * cgo,
                                    int sampling, const float *color_override);
-int ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling,
+int ExtrudeCGOSurfaceStrand(const CExtrude * I, CGO * cgo, int sampling,
                              const float *color_override);
+#if 0
 void ExtrudeCGOTraceFrame(CExtrude * I, CGO * cgo);
 void ExtrudeCGOTrace(CExtrude * I, CGO * cgo);
 void ExtrudeCGOTraceAxes(CExtrude * I, CGO * cgo);
+#endif
 int ExtrudeDumbbell1(CExtrude * I, float width, float length, int mode);
 int ExtrudeDumbbell2(CExtrude * I, int n, int sign, float length, float size);
 void ExtrudeDumbbellEdge(CExtrude * I, int samp, int sign, float length);

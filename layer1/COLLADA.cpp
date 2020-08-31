@@ -1243,7 +1243,7 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
             bool stick_round_nub = SettingGetGlobal_i(I->G, cSetting_stick_round_nub);
             const int j_arr[] = {2, 3, 2};
             int nCapTri = 0;
-            int captype[2] = {prim->cap1, prim->cap2};
+            cCylCap captype[2] = {prim->cap1, prim->cap2};
             CGO *cgocap[2] = {NULL, NULL};
 
             if(prim->type == cPrimSausage) {

@@ -2708,8 +2708,8 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   }
 
   for(a = 0; a < I->NPrimitive; a++) {
-    char cap1 = cCylCapRound;
-    char cap2 = cCylCapRound;
+    auto cap1 = cCylCap::Round;
+    auto cap2 = cCylCap::Round;
     prim = I->Primitive + a;
     vert = base->Vertex + 3 * (prim->vert);
     if(prim->type == cPrimTriangle) {
@@ -6956,29 +6956,31 @@ int CRay::cylinder3fv(const float *v1, const float *v2, float r, const float *c1
 /*========================================================================*/
 int CRay::customCylinder3fv(const cgo::draw::custom_cylinder& cyl, const float alpha1, const float alpha2){
   return customCylinder3fv(cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1,
-                        cyl.color2, cyl.cap1, cyl.cap2, alpha1, alpha2);
+                        cyl.color2, cyl.get_cap1(), cyl.get_cap2(), alpha1, alpha2);
 }
 
 int CRay::customCylinder3fv(const cgo::draw::custom_cylinder& cyl){
   return customCylinder3fv(cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1,
-                        cyl.color2, cyl.cap1, cyl.cap2, 1.f - Trans, 1.f - Trans);
+                        cyl.color2, cyl.get_cap1(), cyl.get_cap2(), 1.f - Trans, 1.f - Trans);
 }
 
 int CRay::customCylinderAlpha3fv(const cgo::draw::custom_cylinder_alpha& cyl){
   return customCylinder3fv(cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1,
-                        cyl.color2, cyl.cap1, cyl.cap2, cyl.color1[3], cyl.color2[3]);
+                        cyl.color2, cyl.get_cap1(), cyl.get_cap2(), cyl.color1[3], cyl.color2[3]);
 }
 
 int CRay::customCylinder3fv(const float* v1, const float* v2, float r,
-    const float* c1, const float* c2, const int cap1, const int cap2)
+    const float* c1, const float* c2, const cCylCap cap1, const cCylCap cap2)
 {
   return customCylinder3fv(
       v1, v2, r, c1, c2, cap1, cap2, 1.f - Trans, 1.f - Trans);
 }
 
 int CRay::customCylinder3fv(const float *v1, const float *v2, float r,
-                            const float *c1, const float *c2, const int cap1,
-                            const int cap2, const float alpha1, const float alpha2)
+                            const float *c1, const float *c2,
+                            const cCylCap cap1,
+                            const cCylCap cap2,
+                            const float alpha1, const float alpha2)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -7051,7 +7053,7 @@ int CRay::customCylinder3fv(const float *v1, const float *v2, float r,
 }
 
 int CRay::cone3fv(const float *v1, const float *v2, float r1, float r2,
-	       const float *c1, const float *c2, int cap1, int cap2)
+	       const float *c1, const float *c2, cCylCap cap1, cCylCap cap2)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -7060,21 +7062,10 @@ int CRay::cone3fv(const float *v1, const float *v2, float r1, float r2,
   int ok = true;
 
   if(r2 > r1) {                 /* make sure r1 is always larger */
-    float t;
-    const float *tp;
-    int ti;
-    t = r2;
-    r2 = r1;
-    r1 = t;
-    tp = c2;
-    c2 = c1;
-    c1 = tp;
-    tp = v2;
-    v2 = v1;
-    v1 = tp;
-    ti = cap2;
-    cap2 = cap1;
-    cap1 = ti;
+    std::swap(r1, r2);
+    std::swap(c1, c2);
+    std::swap(v1, v2);
+    std::swap(cap1, cap2);
   }
 
   VLACacheCheck(I->G, I->Primitive, CPrimitive, I->NPrimitive, 0, cCache_ray_primitive);

@@ -731,7 +731,8 @@ void TubeCapFlat(const CExtrude * I, CGO * cgo, int index, bool inv_dir, const f
  * use_spheres: do round caps with spheres instead of triangles
  * dash: if > 0, skip every segment which is a multiple of `dash`
  */
-int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, const float *color_override, bool use_spheres, int dash)
+int ExtrudeCGOSurfaceTube(const CExtrude* I, CGO* cgo, cCylCap cap,
+    const float* color_override, bool use_spheres, int dash)
 {
   int a, b;
   unsigned int *i;
@@ -845,7 +846,7 @@ int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, const float *color_o
 	  ok &= CGOPickColor(cgo, -1, cPickableNoPick);
       }
 
-      if (cap == 1) {
+      if (cap == cCylCap::Flat) {
         TubeCapFlat(I, cgo, a_start, true, color_override);
         TubeCapFlat(I, cgo, a_end - 1, false, color_override);
       }
@@ -853,7 +854,7 @@ int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, const float *color_o
 
     if (ok){
     switch (cap) {
-    case 2:
+    case cCylCap::Round:
       {
 	float p0[3], p1[3], p2[3], z1, z2, normal[3], vertex1[3];
 	float c, d, prev, x, y, *v1, nEdge = I->Ns, nEdgeH = 2.f * floor(I->Ns/2.f);
@@ -1098,7 +1099,7 @@ int ExtrudeCylindersToCGO(CExtrude * I, CGO * cgo, float tube_radius){
   return ok;
 }
 
-int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
+int ExtrudeCGOSurfaceVariableTube(const CExtrude* I, CGO* cgo, cCylCap cap)
 {
   int a, b;
   unsigned int *i;
@@ -1295,7 +1296,7 @@ int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
       }
     }
 
-    if(ok && cap) {
+    if(ok && cap != cCylCap::None) {
 
       n = I->n;
       v = I->p;
@@ -1372,7 +1373,7 @@ int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
   return ok;
 }
 
-int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, const float *color_override)
+int ExtrudeCGOSurfacePolygon(const CExtrude * I, CGO * cgo, cCylCap cap, const float *color_override)
 {
   int a, b;
   unsigned int *i;
@@ -1476,7 +1477,7 @@ int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, const float *colo
 	ok &= CGOPickColor(cgo, -1, cPickableNoPick);
     }
 
-    if(ok && cap) {
+    if(ok && cap != cCylCap::None) {
 
       if(color_override)
         ok &= CGOColorv(cgo, color_override);
@@ -1567,7 +1568,7 @@ int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, const float *colo
   return ok;
 }
 
-int ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo, int sampling,
+int ExtrudeCGOSurfacePolygonTaper(const CExtrude * I, CGO * cgo, int sampling,
 				  const float *color_override)
 {
   int a, b;
@@ -1710,7 +1711,7 @@ int ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo, int sampling,
   return ok;
 }
 
-int ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, const float *color_override)
+int ExtrudeCGOSurfaceStrand(const CExtrude * I, CGO * cgo, int sampling, const float *color_override)
 {
   int a, b;
   unsigned int *i;

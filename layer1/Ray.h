@@ -109,13 +109,13 @@ struct _CRay {
   int customCylinder3fv(const cgo::draw::custom_cylinder &cyl, const float alpha1, const float alpha2);
   int customCylinder3fv(const cgo::draw::custom_cylinder &cyl);
   int customCylinder3fv(const float *v1, const float *v2, float r, const float *c1,
-                        const float *c2, const int cap1, const int cap2,
+                        const float *c2, const cCylCap cap1, const cCylCap cap2,
                         const float alpha1, const float alpha2);
   int customCylinder3fv(const float *v1, const float *v2, float r, const float *c1,
-                        const float *c2, const int cap1, const int cap2);
+                        const float *c2, const cCylCap cap1, const cCylCap cap2);
   int customCylinderAlpha3fv(const cgo::draw::custom_cylinder_alpha &cyl);
   int cone3fv(const float *v1, const float *v2, float r1, float r2, const float *c1,
-		   const float *c2, int cap1, int cap2);
+		   const float *c2, cCylCap cap1, cCylCap cap2);
   int sausage3fv(const float *v1, const float *v2, float r, const float *c1, const float *c2);
   void color3fv(const float *c);
   int triangle3fv(

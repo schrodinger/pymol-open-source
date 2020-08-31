@@ -298,6 +298,13 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 
 #define MAX_RING_ATOM 10
 
+enum class ss_t {
+  NONE = 0,
+  HELIX = 1,
+  SHEET = 2,
+  NUCLEIC = 3,
+};
+
 typedef struct nuc_acid_data {
   int na_mode;
   int *nuc_flag;   // whether atom is part of nucleotide
@@ -308,7 +315,7 @@ typedef struct nuc_acid_data {
   int *iptr;
   CCInOut * cc;
   int nAt;
-  int *ss;
+  ss_t *ss;
   int putty_flag;
   int *fp;
   float *vptr, *voptr;
@@ -1391,7 +1398,7 @@ static void nuc_acid(PyMOLGlobals * G, nuc_acid_data *ndata, int a, int a1,
   cur_car = ai->cartoon;
   if(cur_car == cCartoon_auto)
     cur_car = cCartoon_tube;
-  (*ndata->ss) = 3;                      /* DNA/RNA */
+  (*ndata->ss) = ss_t::NUCLEIC;          /* DNA/RNA */
 
   if(cur_car == cCartoon_putty)
     ndata->putty_flag = true;
@@ -1813,12 +1820,12 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
             add3f(t3, t2, t2);
             if(hasAtomLevelTrans){
               cgo->add<cgo::draw::custom_cylinder_alpha>(t1, t2, helix_radius, ex->c + (b * 3),
-                                     ex->c + (b + 1) * 3, ex->alpha[b], ex->alpha[b + 1], (float) (b ? 0 : cCylCapFlat),
-                                     (float) (b == n_pm2 ? cCylCapFlat : 0));
+                                     ex->c + (b + 1) * 3, ex->alpha[b], ex->alpha[b + 1], (float) (b ? cCylCap::None : cCylCap::Flat),
+                                     (float) (b == n_pm2 ? cCylCap::Flat : cCylCap::None));
            } else {
               cgo->add<cgo::draw::custom_cylinder>(t1, t2, helix_radius, ex->c + (b * 3),
-                                     ex->c + (b + 1) * 3, (float) (b ? 0 : cCylCapFlat),
-                                     (float) (b == n_pm2 ? cCylCapFlat : 0));
+                                     ex->c + (b + 1) * 3, (float) (b ? cCylCap::None : cCylCap::Flat),
+                                     (float) (b == n_pm2 ? cCylCap::Flat : cCylCap::None));
 
            }
           }
@@ -2208,7 +2215,7 @@ void CartoonGenerateRefine(int refine, int sampling, float *v, float *vn, float 
 }
 
 static
-int CartoonExtrudeTube(short use_cylinders_for_strands, CExtrude *ex, CGO *cgo, float tube_radius, int tube_quality, int tube_cap){
+int CartoonExtrudeTube(short use_cylinders_for_strands, CExtrude *ex, CGO *cgo, float tube_radius, int tube_quality, cCylCap tube_cap){
   int ok = true;
   if (use_cylinders_for_strands){
     ok &= ExtrudeCylindersToCGO(ex, cgo, tube_radius);
@@ -2239,12 +2246,12 @@ int CartoonExtrudePutty(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet *cs, CGO 
                                           SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_putty_scale_max),
                                           sampling / 2);
   if (ok)
-    ok &= ExtrudeCGOSurfaceVariableTube(ex, cgo, 1);
+    ok &= ExtrudeCGOSurfaceVariableTube(ex, cgo, cCylCap::Flat);
   return ok;
 }
 
 static
-int CartoonExtrudeCircle(CExtrude *ex, CGO *cgo, short use_cylinders_for_strands, int loop_quality, float loop_radius, int loop_cap,
+int CartoonExtrudeCircle(CExtrude *ex, CGO *cgo, short use_cylinders_for_strands, int loop_quality, float loop_radius, cCylCap loop_cap,
     int dash=0) {
   int ok;
   ok = ExtrudeCircle(ex, loop_quality, loop_radius);
@@ -2263,19 +2270,19 @@ int CartoonExtrudeRect(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, float width, flo
     if (ok)
       ExtrudeBuildNormals2f(ex);
     if (ok)
-      ok &= ExtrudeCGOSurfacePolygon(ex, cgo, 1, NULL);
+      ok &= ExtrudeCGOSurfacePolygon(ex, cgo, cCylCap::Flat, NULL);
   } else {
     ok = ExtrudeRectangle(ex, width, length, 1);
     if (ok)
       ExtrudeBuildNormals2f(ex);
     if (ok)
-      ok &= ExtrudeCGOSurfacePolygon(ex, cgo, 0, NULL);
+      ok &= ExtrudeCGOSurfacePolygon(ex, cgo, cCylCap::None, NULL);
     if (ok){
       ok &= ExtrudeRectangle(ex, width, length, 2);
       if (ok)
         ExtrudeBuildNormals2f(ex);
       if (ok)
-        ok &= ExtrudeCGOSurfacePolygon(ex, cgo, 1, ColorGet(G, highlight_color));
+        ok &= ExtrudeCGOSurfacePolygon(ex, cgo, cCylCap::Flat, ColorGet(G, highlight_color));
     }
   }
   return ok;
@@ -2289,9 +2296,9 @@ int CartoonExtrudeOval(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, short use_cylind
     ExtrudeBuildNormals2f(ex);
   if (ok){
     if(highlight_color < 0)
-      ok &= ExtrudeCGOSurfaceTube(ex, cgo, 1, NULL, use_cylinders_for_strands);
+      ok &= ExtrudeCGOSurfaceTube(ex, cgo, cCylCap::Flat, NULL, use_cylinders_for_strands);
     else
-      ok &= ExtrudeCGOSurfaceTube(ex, cgo, 1, ColorGet(G, highlight_color), use_cylinders_for_strands);
+      ok &= ExtrudeCGOSurfaceTube(ex, cgo, cCylCap::Flat, ColorGet(G, highlight_color), use_cylinders_for_strands);
   }
   return ok;
 }
@@ -2357,7 +2364,7 @@ int CartoonExtrudeDumbbell(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, int sampling
     ExtrudeBuildNormals1f(ex1);
   
   if (ok)
-    ok &= ExtrudeCGOSurfaceTube(ex1, cgo, 1, NULL, use_cylinders_for_strands);
+    ok &= ExtrudeCGOSurfaceTube(ex1, cgo, cCylCap::Flat, NULL, use_cylinders_for_strands);
   if (ok){
     ExtrudeFree(ex1);
     ex1 = ExtrudeCopyPointsNormalsColors(ex);
@@ -2371,7 +2378,7 @@ int CartoonExtrudeDumbbell(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, int sampling
     if (ok)
       ExtrudeBuildNormals1f(ex1);
     if (ok)
-      ok &= ExtrudeCGOSurfaceTube(ex1, cgo, 1, NULL, use_cylinders_for_strands);
+      ok &= ExtrudeCGOSurfaceTube(ex1, cgo, cCylCap::Flat, NULL, use_cylinders_for_strands);
   }
   if (ex1)
     ExtrudeFree(ex1);
@@ -2432,7 +2439,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   float tube_radius;
   float putty_radius;
   int cartoon_debug, cylindrical_helices, cartoon_color, highlight_color, 
-    discrete_colors, loop_quality, oval_quality, tube_quality, putty_quality, loop_cap, tube_cap;
+    discrete_colors, loop_quality, oval_quality, tube_quality, putty_quality;
   float length, width;
   float oval_width, oval_length;
   float dumbbell_radius, dumbbell_width, dumbbell_length;
@@ -2471,8 +2478,8 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   if(dumbbell_radius < 0.01F)
     dumbbell_radius = 0.01F;
 
-  tube_cap = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_tube_cap);
-  loop_cap = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_loop_cap);
+  auto tube_cap = static_cast<cCylCap>(SettingGet<int>(G, cs->Setting, obj->Setting, cSetting_cartoon_tube_cap));
+  auto loop_cap = static_cast<cCylCap>(SettingGet<int>(G, cs->Setting, obj->Setting, cSetting_cartoon_loop_cap));
 
   tube_radius =
     SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_tube_radius);
@@ -2909,7 +2916,7 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
           cur_car = cylindrical_helices ? cCartoon_skip_helix :
             fancy_helices ? cCartoon_dumbbell : cCartoon_oval;
         }
-        (*ndata->ss) = 1;          /* helix */
+        (*ndata->ss) = ss_t::HELIX;
         parity = 0;
         break;
       case 'S':
@@ -2917,7 +2924,7 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
         if(cur_car == cCartoon_auto) {
           cur_car = fancy_sheets ? cCartoon_arrow : cCartoon_rect;
         }
-        (*ndata->ss) = 2;         /* sheet */
+        (*ndata->ss) = ss_t::SHEET;
         parity = !parity;
         break;
       default:           /* 'L', 'T', 0, etc. */
@@ -2925,7 +2932,7 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
           cur_car = cCartoon_loop;
         }
         parity = 0;
-        (*ndata->ss) = 0;
+        (*ndata->ss) = ss_t::NONE;
         break;
       }
 
@@ -3176,14 +3183,13 @@ void RepCartoonComputeTangents(int nAt, int *seg, float *nv, float *tv){
 }
 
 static
-void RepCartoonComputeRoundHelices(nuc_acid_data *ndata, int nAt, int *seg, int *sstype, float *tv, float *pv){
-  float *v0, *v1 = NULL, *v2 = NULL, *v3 = NULL, *v4 = NULL, *v5 = NULL, *vptr;
-  int last, *sptr, *ss, a;
+void RepCartoonComputeRoundHelices(nuc_acid_data *ndata, const int nAt,
+    const int* sptr, const ss_t* ss, const float* v0, const float* vptr)
+{
+  const float *v1 = nullptr, *v2 = nullptr, *v3 = nullptr, *v4 = nullptr,
+              *v5 = nullptr;
+  int last, a;
   float t0[3], t1[3], t2[3];
-  sptr = seg;
-  vptr = pv;
-  ss = sstype;
-  v0 = tv;
   last = 0;
   if(nAt > 1) {
     for(a = 0; a < nAt; a++) {
@@ -3201,7 +3207,7 @@ void RepCartoonComputeRoundHelices(nuc_acid_data *ndata, int nAt, int *seg, int 
       v4 = v3;
       v3 = v2;
       v2 = v1;
-      if(*ss == 1)          /* helix */
+      if(*ss == ss_t::HELIX)
         v1 = vptr;
       else {                /* early termination ? */
         if(last < 2) {
@@ -3287,8 +3293,15 @@ void RepCartoonComputeRoundHelices(nuc_acid_data *ndata, int nAt, int *seg, int 
 
 static
 void RepCartoonRefineNormals(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj, CoordSet * cs,
-                             nuc_acid_data *ndata, int nAt, int *seg, float *tv, float *pvo, 
-                             float *pva, int *sstype, float *nv){
+                             nuc_acid_data *ndata,
+                             const int nAt,
+                             const int* seg,
+                             const float* tv,
+                             float *pvo,
+                             float *pva,
+                             const ss_t* ss,
+                             const float* nv)
+{
   int refine_normals =
     SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_refine_normals);
   if(refine_normals < 0) {
@@ -3306,13 +3319,13 @@ void RepCartoonRefineNormals(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
   
   if(refine_normals) {
     /* first, make sure orientiation vectors are orthogonal to the tangent */
-    float *v0, *v1, *vptr, *va, max_dot;
-    int *sptr, a, *ss;
+    float *va, max_dot;
+    int a;
     float t0[3], t1[3], t2[3], t3[3], o0[12], o1[12];
     float dp;
-    v1 = tv + 3;
+    const float *v0, *v1 = tv + 3;
     ndata->voptr = pvo + 3;
-    sptr = seg + 1;
+    const int* sptr = seg + 1;
     for(a = 1; a < (nAt - 1); a++) {
       if((*sptr == *(sptr - 1)) && (*sptr == *(sptr + 1))) {
         /* only operate on vectors within the cartoon itself --
@@ -3328,14 +3341,13 @@ void RepCartoonRefineNormals(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
     /* now generate alternative inverted orientation vectors */
     va = pva;
     ndata->voptr = pvo;
-    ss = sstype;
     for(a = 0; a < nAt; a++) {
       /* original */
       copy3f(ndata->voptr, va);
       va += 3;
       /* inverse */
       copy3f(ndata->voptr, va);
-      if(*ss != 1) {
+      if(*ss != ss_t::HELIX) {
         invert3f(va);
         /* for helix, don't allow inversion of normals, since that
            would confuse the inside & outside of the helix  */
@@ -3348,7 +3360,7 @@ void RepCartoonRefineNormals(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
     /* now iterate forward through pairs */
     ndata->voptr = pvo + 3;
     va = pva + 6;
-    vptr = nv + 3;             /* normals in direction of chain */
+    auto vptr = nv + 3;             /* normals in direction of chain */
     sptr = seg + 1;
     for(a = 1; a < (nAt - 1); a++) {
       if((*sptr == *(sptr + 1)) && (*sptr == *(sptr - 1))) {    /* only operate within a segment */
@@ -3430,7 +3442,7 @@ void RepCartoonFlattenSheets(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs
                              const CCInOut * cc,
                              float *pv,
                              float *pvo,
-                             const int *ss,
+                             const ss_t* ss,
                              const float *v0,
                              float *tmp,
                              const int *flag_tmp){
@@ -3449,7 +3461,7 @@ void RepCartoonFlattenSheets(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs
       if(a) {
         if(*sptr != *(sptr - 1)) {
           end_flag = true;
-        } else if(*ss != 2) {
+        } else if(*ss != ss_t::SHEET) {
           end_flag = true;
         }
         if(a == (nAt - 1)) {
@@ -3495,7 +3507,7 @@ void RepCartoonFlattenSheets(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs
         last = -1;
         end_flag = false;
       }
-      if(*ss == 2) {
+      if(*ss == ss_t::SHEET) {
         if(first < 0)
           first = a;
         cur_car = *cc;
@@ -3511,18 +3523,19 @@ void RepCartoonFlattenSheets(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs
 
 static
 void RepCartoonFlattenSheetsRefineTips(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs,
-                                       int nAt, int *seg, int *sstype, float *tv){
-  int *sptr, *ss, a;
+                                       int nAt, int *seg, const ss_t* ss, float *tv)
+{
+  int *sptr, a;
   float *v2;
   float refine_tips;
   float t0[3];
   refine_tips =
     SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_refine_tips);
   sptr = seg + 1;
-  ss = sstype + 1;
+  ++ss;
   v2 = tv + 3;            /* normal */
   for(a = 1; a < (nAt - 1); a++) {
-    if((*ss == 2) && (*sptr == *(sptr + 1)) && (*sptr == *(sptr - 1))) {      /* sheet in same segment */
+    if((*ss == ss_t::SHEET) && (*sptr == *(sptr + 1)) && (*sptr == *(sptr - 1))) {      /* sheet in same segment */
       if((*ss == *(ss + 1)) && (*ss != *(ss - 1))) {      /* start, bias forwards */
         scale3f(v2 + 3, refine_tips, t0);
         add3f(t0, v2, v2);
@@ -3540,8 +3553,12 @@ void RepCartoonFlattenSheetsRefineTips(PyMOLGlobals *G, ObjectMolecule *obj, Coo
 }
 
 static
-void RepCartoonSmoothLoops(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs, nuc_acid_data *ndata, int nAt, int *seg, float *pv, int *sstype, float *pvo, float *tv, float *tmp, int *flag_tmp){
-  int *sptr, *ss, last, first, end_flag, a, b, c, e, f;
+void RepCartoonSmoothLoops(PyMOLGlobals* G, ObjectMolecule* obj,
+    CoordSet* cs, nuc_acid_data* ndata, const int nAt, const int* seg,
+    float* pv, const ss_t* ss, float* pvo, const float* /* tv */, float* tmp,
+    const int* flag_tmp)
+{
+  int last, first, end_flag, a, b, c, e, f;
   float t0[3];
   int smooth_first, smooth_last, smooth_cycles;
   smooth_first =
@@ -3551,8 +3568,7 @@ void RepCartoonSmoothLoops(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs, 
   smooth_cycles =
     SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_smooth_cycles);
 
-  sptr = seg;
-  ss = sstype;
+  auto* sptr = seg;
   last = 0;
   first = -1;
   end_flag = false;
@@ -3561,7 +3577,7 @@ void RepCartoonSmoothLoops(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs, 
       if(a) {
         if(*sptr != *(sptr - 1)) {
           end_flag = true;
-        } else if(*ss != 0) {
+        } else if(*ss != ss_t::NONE) {
           end_flag = true;
         }
         if(a == (nAt - 1))
@@ -3610,7 +3626,7 @@ void RepCartoonSmoothLoops(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs, 
         last = -1;
         end_flag = false;
       }
-      if(*ss == 0) {
+      if(*ss == ss_t::NONE) {
         if(first < 0)
           first = a;
         last = a;
@@ -3625,7 +3641,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 {
   PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj;
-  int *i, *sptr, *at, *seg, nAt, *sstype;
+  int *i, *sptr, *at, *seg, nAt;
   CCInOut *car, *cc;
   float *pv = NULL;
   float *pvo = NULL, *pva = NULL;
@@ -3634,7 +3650,6 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   float *tv = NULL;
   float *tmp = NULL;
   float *dl = NULL;
-  int *ss;
 
   int ladder_mode;
   int round_helices;
@@ -3698,7 +3713,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   pva = pymol::malloc<float>(cs->NAtIndex * 6); /* alternative orientation vectors, two per atom */
   seg = pymol::malloc<int>(cs->NAtIndex);
   car = pymol::calloc<CCInOut>(cs->NAtIndex);       /* cartoon type for each atom */
-  sstype = pymol::malloc<int>(cs->NAtIndex);
+  auto sstype = pymol::malloc<ss_t>(cs->NAtIndex);
   flag_tmp = pymol::calloc<int>(cs->NAtIndex);
   nuc_flag = pymol::calloc<int>(cs->NAtIndex);
 
@@ -3720,7 +3735,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   i = at;
   sptr = seg;
   cc = car;
-  ss = sstype;
+  auto* ss = sstype;
   nAt = 0;
 
   ndata.na_mode = na_mode;

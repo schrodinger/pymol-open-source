@@ -338,7 +338,7 @@ static int FrontToInteriorSphere(float *front,
 /*========================================================================*/
 static int ZLineToSphereCapped(float *base, float *point,
                                float *dir, float radius, float maxial,
-                               float *sphere, float *asum, int cap1, int cap2, float *pre)
+                               float *sphere, float *asum, cCylCap cap1, cCylCap cap2, float *pre)
 {
   /* Strategy - find an imaginary sphere that lies at the correct point on
      the line segment, then treat as a sphere reflection */
@@ -560,7 +560,7 @@ static int ZLineToSphereCapped(float *base, float *point,
 
 static int LineToSphereCapped(float *base, float *ray,
                               float *point, float *dir, float radius, float maxial,
-                              float *sphere, float *asum, int cap1, int cap2)
+                              float *sphere, float *asum, cCylCap cap1, cCylCap cap2)
 {
   /* Strategy - find an imaginary sphere that lies at the correct point on
      the line segment, then treat as a sphere reflection */
@@ -782,7 +782,7 @@ static int ConeLineToSphereCapped(float *base, float *ray,
                                   float *point, float *dir, float radius,
                                   float small_radius, float maxial, float *sphere,
                                   float *asum, float *sph_rad, float *sph_rad_sq,
-                                  int cap1, int cap2)
+                                  cCylCap cap1, cCylCap cap2)
 {
   /* Strategy - find an imaginary sphere that lies at the correct point on
      the line segment, then treat as a sphere reflection */
@@ -1060,7 +1060,8 @@ static int FrontToInteriorSphereCapped(float *front,
                                        float *point,
                                        float *dir,
                                        float radius,
-                                       float radius2, float maxial, int cap1, int cap2)
+                                       float radius2, float maxial,
+                                       cCylCap cap1, cCylCap cap2)
 {
   float intra_p[3];
   float axial;
@@ -2608,7 +2609,7 @@ int BasisHitShadow(BasisCallRec * BC)
                 if(ConeLineToSphereCapped(r->base, minusZ, BI->Vertex + i * 3,
                                           BI->Normal + BI->Vert2Normal[i] * 3,
                                           BI->Radius[i], prm->r2, prm->l1, sph, &tri1,
-                                          &sph_rad, &sph_rad_sq, 1, 1)) {
+                                          &sph_rad, &sph_rad_sq, cCylCap::Flat, cCylCap::Flat)) {
 
                   oppSq = ZLineClipPoint(r->base, sph, &dist, sph_rad);
                   if(oppSq <= sph_rad_sq) {

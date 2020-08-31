@@ -93,6 +93,29 @@ inline T CLAMPVALUE(T val, T minimum, T maximum) {
     (val > maximum) ? maximum : val;
 }
 
+inline cCylCap cap1_from_cyl_shader_bits(const unsigned char bits)
+{
+  return (bits & 1)
+             ? ((bits & cCylShaderCap1RoundBit) ? cCylCap::Round : cCylCap::Flat)
+             : cCylCap::None;
+}
+inline cCylCap cap2_from_cyl_shader_bits(const unsigned char bits)
+{
+  return (bits & 2)
+             ? ((bits & cCylShaderCap2RoundBit) ? cCylCap::Round : cCylCap::Flat)
+             : cCylCap::None;
+}
+inline unsigned char cyl_shader_bits_from_caps(
+    const cCylCap cap1, const cCylCap cap2)
+{
+  return ((cap1 == cCylCap::Flat)
+                 ? cCylShaderCap1Flat
+                 : ((cap1 == cCylCap::Round) ? cCylShaderCap1Round : 0)) |
+         ((cap2 == cCylCap::Flat)
+                 ? cCylShaderCap2Flat
+                 : ((cap2 == cCylCap::Round) ? cCylShaderCap2Round : 0));
+}
+
 #if defined(_PYMOL_IOS) && !defined(_WEBGL) 
 extern "C" void firePyMOLLimitationWarning();
 #define CHECK_GL_ERROR_OK(printstr)			\
@@ -297,17 +320,21 @@ typedef CGO_op *CGO_op_fn;
 static float *CGO_add(CGO * I, unsigned c);
 static float *CGO_size(CGO * I, int sz);
 static int CGOSimpleCylinder(CGO * I, const float *v1, const float *v2, const float tube_size, const float *c1,
-                             const float *c2, float a1, const float a2, const bool interp, const int cap1, const int cap2,
+                             const float *c2, float a1, const float a2, const bool interp,
+                             const cCylCap cap1,
+                             const cCylCap cap2,
                              const Pickable *pickcolor2 = nullptr, const bool stick_round_nub = false);
 template<typename CylinderT>
-static int CGOSimpleCylinder(CGO * I, const CylinderT &cyl, const float a1, const float a2, const bool interp, const int cap1,
-                             const int cap2, const Pickable *pickcolor2 = nullptr, const bool stick_round_nub = false);
+static int CGOSimpleCylinder(CGO * I, const CylinderT &cyl, const float a1, const float a2, const bool interp,
+                             const cCylCap cap1,
+                             const cCylCap cap2,
+                             const Pickable *pickcolor2 = nullptr, const bool stick_round_nub = false);
 static int CGOSimpleEllipsoid(CGO * I, const float *v, float vdw, const float *n0, const float *n1,
 			      const float *n2);
 static int CGOSimpleQuadric(CGO * I, const float *v, float vdw, const float *q);
 static int CGOSimpleSphere(CGO * I, const float *v, float vdw, short sphere_quality);
 static int CGOSimpleCone(CGO * I, const float *v1, const float *v2, float r1, float r2, const float *c1,
-			 const float *c2, int cap1, int cap2);
+			 const float *c2, cCylCap cap1, cCylCap cap2);
 
 
 /*
@@ -4123,8 +4150,8 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
       {
 	float v2[3];
         int cap = CGO_get_int(pc + 7);
-        int fcap = (cap & 1) ? ((cap & cCylShaderCap1RoundBit) ? 2 : 1) : 0;
-        int bcap = (cap & 2) ? ((cap & cCylShaderCap2RoundBit) ? 2 : 1) : 0;
+        cCylCap fcap = cap1_from_cyl_shader_bits(cap);
+        cCylCap bcap = cap2_from_cyl_shader_bits(cap);
 	add3f(pc, pc + 3, v2);
         ok &= CGOSimpleCylinder(cgo, pc, v2, *(pc + 6), 0, 0, cgo->alpha, cgo->alpha, (cap & cCylShaderInterpColor),
                                 fcap, bcap, nullptr, stick_round_nub);
@@ -4135,8 +4162,8 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
         auto cyl = it.cast<cgo::draw::shadercylinder2ndcolor>();
 	float v1[3];
         int cap = cyl->cap;
-        int fcap = (cap & 1) ? ((cap & cCylShaderCap1RoundBit) ? 2 : 1) : 0;
-        int bcap = (cap & 2) ? ((cap & cCylShaderCap2RoundBit) ? 2 : 1) : 0;
+        cCylCap fcap = cap1_from_cyl_shader_bits(cap);
+        cCylCap bcap = cap2_from_cyl_shader_bits(cap);
         Pickable pickcolor2 = { cyl->pick_color_index, cyl->pick_color_bond };
         float color1[3] = { cgo->color[0], cgo->color[1], cgo->color[2] };
 	add3f(pc, pc + 3, v1);
@@ -4148,36 +4175,39 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
           ok &= CGOSimpleCylinder(cgo, cyl->origin, v1, cyl->tube_size, color1, cyl->color2, cgo->alpha, alpha2, true, bcap, fcap, &pickcolor2, stick_round_nub);
         } else {
           ok &= CGOColorv(cgo, color1);
-          ok &= CGOSimpleCylinder(cgo, cyl->origin, mid, cyl->tube_size, color1, NULL, cgo->alpha, alpha2, false, fcap, 0, nullptr, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, cyl->origin, mid, cyl->tube_size, color1, NULL, cgo->alpha, alpha2, false, fcap, cCylCap::None, nullptr, stick_round_nub);
           ok &= CGOColorv(cgo, cyl->color2);
           ok &= CGOPickColor(cgo, pickcolor2.index, pickcolor2.bond);
-          ok &= CGOSimpleCylinder(cgo, mid, v1, cyl->tube_size, cyl->color2, NULL, cgo->alpha, alpha2, false, 0, bcap, nullptr, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, mid, v1, cyl->tube_size, cyl->color2, NULL, cgo->alpha, alpha2, false, cCylCap::None, bcap, nullptr, stick_round_nub);
         }
       }
       break;
     case CGO_CYLINDER:
       {
         auto cyl = it.cast<cgo::draw::cylinder>();
-        ok &= CGOSimpleCylinder(cgo, *cyl, cgo->alpha, cgo->alpha, true, 1, 1, nullptr, stick_round_nub);
+        ok &= CGOSimpleCylinder(cgo, *cyl, cgo->alpha, cgo->alpha, true, cCylCap::Flat, cCylCap::Flat, nullptr, stick_round_nub);
       }
       break;
     case CGO_CONE:
       ok &= CGOSimpleCone(cgo, pc, pc + 3, *(pc + 6), *(pc + 7), pc + 8, pc + 11,
-                    (int) *(pc + 14), (int) *(pc + 15));
+          static_cast<cCylCap>(pc[14]),
+          static_cast<cCylCap>(pc[15]));
       break;
     case CGO_SAUSAGE:
-      ok &= CGOSimpleCylinder(cgo, pc, pc + 3, *(pc + 6), pc + 7, pc + 10, cgo->alpha, cgo->alpha, true, 2, 2, nullptr, stick_round_nub);
+      ok &= CGOSimpleCylinder(cgo, pc, pc + 3, *(pc + 6), pc + 7, pc + 10, cgo->alpha, cgo->alpha, true, cCylCap::Round, cCylCap::Round, nullptr, stick_round_nub);
       break;
     case CGO_CUSTOM_CYLINDER:
       {
         auto cyl = it.cast<cgo::draw::custom_cylinder>();
-        ok &= CGOSimpleCylinder(cgo, *cyl, cgo->alpha, cgo->alpha, true, cyl->cap1, cyl->cap2, nullptr, stick_round_nub);
+        ok &= CGOSimpleCylinder(cgo, *cyl, cgo->alpha, cgo->alpha, true,
+            cyl->get_cap1(), cyl->get_cap2(), nullptr, stick_round_nub);
       }
       break;
     case CGO_CUSTOM_CYLINDER_ALPHA:
       {
         auto cyl = it.cast<cgo::draw::custom_cylinder_alpha>();
-        ok &= CGOSimpleCylinder(cgo, *cyl, cyl->color1[3], cyl->color2[3], true, cyl->cap1, cyl->cap2, nullptr, stick_round_nub);
+        ok &= CGOSimpleCylinder(cgo, *cyl, cyl->color1[3], cyl->color2[3], true,
+            cyl->get_cap1(), cyl->get_cap2(), nullptr, stick_round_nub);
       }
       break;
     case CGO_SPHERE:
@@ -4414,8 +4444,8 @@ CGO *CGOSimplifyNoCompress(const CGO * I, int est, short sphere_quality, bool st
       {
 	float v2[3];
         int cap = CGO_get_int(pc + 7);
-        int fcap = (cap & 1) ? ((cap & cCylShaderCap1RoundBit) ? 2 : 1) : 0;
-        int bcap = (cap & 2) ? ((cap & cCylShaderCap2RoundBit) ? 2 : 1) : 0;
+        cCylCap fcap = cap1_from_cyl_shader_bits(cap);
+        cCylCap bcap = cap2_from_cyl_shader_bits(cap);
 	add3f(pc, pc + 3, v2);
         ok &= CGOSimpleCylinder(cgo, pc, v2, *(pc + 6), 0, 0, cgo->alpha, cgo->alpha, (cap & cCylShaderInterpColor),
                                 fcap, bcap, nullptr, stick_round_nub);
@@ -4426,8 +4456,8 @@ CGO *CGOSimplifyNoCompress(const CGO * I, int est, short sphere_quality, bool st
         auto cyl = it.cast<cgo::draw::shadercylinder2ndcolor>();
 	float v1[3];
         int cap = cyl->cap;
-        int fcap = (cap & 1) ? ((cap & cCylShaderCap1RoundBit) ? 2 : 1) : 0;
-        int bcap = (cap & 2) ? ((cap & cCylShaderCap2RoundBit) ? 2 : 1) : 0;
+        cCylCap fcap = cap1_from_cyl_shader_bits(cap);
+        cCylCap bcap = cap2_from_cyl_shader_bits(cap);
         Pickable pickcolor2 = { cyl->pick_color_index, cyl->pick_color_bond };
         float color1[3] = { cgo->color[0], cgo->color[1], cgo->color[2] };
 	add3f(cyl->origin, cyl->axis, v1);
@@ -4439,36 +4469,39 @@ CGO *CGOSimplifyNoCompress(const CGO * I, int est, short sphere_quality, bool st
           ok &= CGOSimpleCylinder(cgo, cyl->origin, v1, cyl->tube_size, color1, cyl->color2, cgo->alpha, alpha2, true, bcap, fcap, &pickcolor2, stick_round_nub);
         } else {
           ok &= CGOColorv(cgo, color1);
-          ok &= CGOSimpleCylinder(cgo, cyl->origin, mid, cyl->tube_size, color1, NULL, cgo->alpha, alpha2, false, fcap, 0, NULL, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, cyl->origin, mid, cyl->tube_size, color1, nullptr, cgo->alpha, alpha2, false, fcap, cCylCap::None, nullptr, stick_round_nub);
           ok &= CGOColorv(cgo, cyl->color2);
           ok &= CGOPickColor(cgo, pickcolor2.index, pickcolor2.bond);
-          ok &= CGOSimpleCylinder(cgo, mid, v1, cyl->tube_size, cyl->color2, NULL, cgo->alpha, alpha2, false, 0, bcap, NULL, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, mid, v1, cyl->tube_size, cyl->color2, nullptr, cgo->alpha, alpha2, false, cCylCap::None, bcap, nullptr, stick_round_nub);
         }
       }
       break;
     case CGO_CYLINDER:
       {
         auto cyl = it.cast<cgo::draw::cylinder>();
-        ok &= CGOSimpleCylinder(cgo, *cyl, cgo->alpha, cgo->alpha, true, 1, 1, nullptr, stick_round_nub);
+        ok &= CGOSimpleCylinder(cgo, *cyl, cgo->alpha, cgo->alpha, true, cCylCap::Flat, cCylCap::Flat, nullptr, stick_round_nub);
       }
       break;
     case CGO_CONE:
       ok &= CGOSimpleCone(cgo, pc, pc + 3, *(pc + 6), *(pc + 7), pc + 8, pc + 11,
-                    (int) *(pc + 14), (int) *(pc + 15));
+          static_cast<cCylCap>(pc[14]),
+          static_cast<cCylCap>(pc[15]));
       break;
     case CGO_SAUSAGE:
-      ok &= CGOSimpleCylinder(cgo, pc, pc + 3, *(pc + 6), pc + 7, pc + 10, cgo->alpha, cgo->alpha, true, 2, 2, nullptr, stick_round_nub);
+      ok &= CGOSimpleCylinder(cgo, pc, pc + 3, *(pc + 6), pc + 7, pc + 10, cgo->alpha, cgo->alpha, true, cCylCap::Round, cCylCap::Round, nullptr, stick_round_nub);
       break;
     case CGO_CUSTOM_CYLINDER:
       {
         auto cyl = it.cast<cgo::draw::custom_cylinder>();
-        ok &= CGOSimpleCylinder(cgo, *cyl, cgo->alpha, cgo->alpha, true, cyl->cap1, cyl->cap2, nullptr, stick_round_nub);
+        ok &= CGOSimpleCylinder(cgo, *cyl, cgo->alpha, cgo->alpha, true,
+            cyl->get_cap1(), cyl->get_cap2(), nullptr, stick_round_nub);
       }
       break;
     case CGO_CUSTOM_CYLINDER_ALPHA:
       {
         auto cyl = it.cast<cgo::draw::custom_cylinder_alpha>();
-        ok &= CGOSimpleCylinder(cgo, *cyl, cyl->color1[3], cyl->color2[3], true, cyl->cap1, cyl->cap2, nullptr, stick_round_nub);
+        ok &= CGOSimpleCylinder(cgo, *cyl, cyl->color1[3], cyl->color2[3], true,
+            cyl->get_cap1(), cyl->get_cap2(), nullptr, stick_round_nub);
       }
       break;
     case CGO_SPHERE:
@@ -5466,9 +5499,9 @@ int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, Obj
           add3f(splitline->vertex1, splitline->vertex2, mid);
           mult3f(mid, .5f, mid);
           ok &= ray->customCylinder3fv(splitline->vertex1, mid, 
-                                       lineradius, c0, c0, 2, 0);
+                                       lineradius, c0, c0, cCylCap::Round, cCylCap::None);
           ok &= ray->customCylinder3fv(mid, splitline->vertex2, 
-                                       lineradius, color2, color2, 0, 2);
+                                       lineradius, color2, color2, cCylCap::None, cCylCap::Round);
         }
       }
       break;
@@ -5608,7 +5641,8 @@ int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, Obj
       break;
     case CGO_CONE:
       ok &= ray->cone3fv(pc, pc + 3, *(pc + 6), *(pc + 7), pc + 8, pc + 11,
-			  (int) *(pc + 14), (int) *(pc + 15));
+          static_cast<cCylCap>(pc[14]),
+          static_cast<cCylCap>(pc[15]));
       break;
     case CGO_CUSTOM_CYLINDER:
       {
@@ -5626,8 +5660,8 @@ int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, Obj
       {
         float p2[3];
         int cap = CGO_get_int(pc + 7);
-        int cap1 = cap & 1 ? ( (cap & cCylShaderCap1RoundBit) ? 2 : 1 ) : 0;
-        int cap2 = cap & 2 ? ( (cap & cCylShaderCap2RoundBit) ? 2 : 1 ) : 0;
+        const cCylCap cap1 = cap1_from_cyl_shader_bits(cap);
+        const cCylCap cap2 = cap2_from_cyl_shader_bits(cap);
         add3f(pc, pc + 3, p2);
         ok &= ray->customCylinder3fv(pc, p2, *(pc + 6), ray->CurColor, ray->CurColor,
                                      cap1, cap2);
@@ -5638,8 +5672,8 @@ int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, Obj
         auto cyl = reinterpret_cast<cgo::draw::shadercylinder2ndcolor*>(pc);
         float v1[3];
         int cap = cyl->cap;
-        int fcap = (cap & 1) ? ((cap & cCylShaderCap1RoundBit) ? 2 : 1) : 0;
-        int bcap = (cap & 2) ? ((cap & cCylShaderCap2RoundBit) ? 2 : 1) : 0;
+        const cCylCap fcap = cap1_from_cyl_shader_bits(cap);
+        const cCylCap bcap = cap2_from_cyl_shader_bits(cap);
         int colorinterp = cap & cCylShaderInterpColor;
         const float *color1 = c0;
         const float *color2 = cyl->color2;
@@ -5654,9 +5688,9 @@ int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, Obj
           add3f(cyl->origin, mid, mid);
 
           ray->color3fv(c0);
-          ok &= ray->customCylinder3fv(cyl->origin, mid, cyl->tube_size, color1, color1, fcap, 0, alpha1, alpha2);
+          ok &= ray->customCylinder3fv(cyl->origin, mid, cyl->tube_size, color1, color1, fcap, cCylCap::None, alpha1, alpha2);
           ray->color3fv(cyl->color2);
-          ok &= ray->customCylinder3fv(mid, v1, cyl->tube_size, color2, color2, 0, bcap, alpha1, alpha2);
+          ok &= ray->customCylinder3fv(mid, v1, cyl->tube_size, color2, color2, cCylCap::None, bcap, alpha1, alpha2);
         }
       }
       break;
@@ -8277,7 +8311,7 @@ void CGORoundNub(CGO * I,
 
 static int CGOSimpleCylinder(CGO * I, const float *v1, const float *v2, const float tube_size,
                              const float *c1, const float *c2, const float alpha1,
-                             const float alpha2, const bool interp, const int cap1, const int cap2,
+                             const float alpha2, const bool interp, const cCylCap cap1, const cCylCap cap2,
                              const Pickable *pickcolor2, const bool stick_round_nub)
 {
 #define MAX_EDGE 50
@@ -8433,7 +8467,7 @@ static int CGOSimpleCylinder(CGO * I, const float *v1, const float *v2, const fl
       ok &= CGOEnd(I);
   }
 
-  if(ok && cap1) {
+  if(ok && cap1 != cCylCap::None) {
     if(ok && colorFlag && c1){
       ok &= CGOColorv(I, c1);
       ok &= CGOAlpha(I, alpha1);
@@ -8481,7 +8515,7 @@ static int CGOSimpleCylinder(CGO * I, const float *v1, const float *v2, const fl
     }
   }
 
-  if(ok && cap2) {
+  if(ok && cap2 != cCylCap::None) {
     if(ok && colorFlag && c2){
       ok &= CGOColorv(I, c2);
       ok &= CGOAlpha(I, alpha2);
@@ -8532,7 +8566,7 @@ static int CGOSimpleCylinder(CGO * I, const float *v1, const float *v2, const fl
 
 template <typename CylinderT>
 static int CGOSimpleCylinder(CGO* I, const CylinderT& cyl, const float a1,
-    const float a2, const bool interp, const int cap1, const int cap2,
+    const float a2, const bool interp, const cCylCap cap1, const cCylCap cap2,
     const Pickable* pickcolor2, const bool stick_round_nub)
 {
   return CGOSimpleCylinder(I, cyl.vertex1, cyl.vertex2, cyl.radius, cyl.color1,
@@ -8540,7 +8574,7 @@ static int CGOSimpleCylinder(CGO* I, const CylinderT& cyl, const float a1,
 }
 
 static int CGOSimpleCone(CGO* I, const float* v1, const float* v2, float r1,
-    float r2, const float* c1, const float* c2, int cap1, int cap2)
+    float r2, const float* c1, const float* c2, cCylCap cap1, cCylCap cap2)
 {
 #define MAX_EDGE 50
 
@@ -8647,7 +8681,7 @@ static int CGOSimpleCone(CGO* I, const float* v1, const float* v2, float r1,
   if (ok)
     ok &= CGOEnd(I);
 
-  if(ok && cap1) {
+  if(ok && cap1 != cCylCap::None) {
     v[0] = -p0[0];
     v[1] = -p0[1];
     v[2] = -p0[2];
@@ -8685,7 +8719,7 @@ static int CGOSimpleCone(CGO* I, const float* v1, const float* v2, float r1,
       ok &= CGOEnd(I);
   }
 
-  if(ok && cap2) {
+  if(ok && cap2 != cCylCap::None) {
 
     v[0] = p0[0];
     v[1] = p0[1];
@@ -10499,10 +10533,10 @@ void copyAttributeForOp(bool isInterleaved, int &nvert, AttribOp *attribOp, int 
     {
       unsigned char *dataPtrUB = (unsigned char *)dataPtr;
       float *pcf = (float*)pc;
-      int pci[] = { (int)pcf[0], (int)pcf[1] };
-      dataPtrUB[0] = (((pci[0]) == 1) ? cCylShaderCap1Flat : (((pci[0]) == 2) ? cCylShaderCap1Round : cCylCapNone)) |
-                     (((pci[1]) == 1) ? cCylShaderCap2Flat : (((pci[1]) == 2) ? cCylShaderCap2Round : cCylCapNone)) | 
-                     cCylShaderInterpColor;
+      const cCylCap cap1 = static_cast<cCylCap>(pcf[0]);
+      const cCylCap cap2 = static_cast<cCylCap>(pcf[1]);
+      dataPtrUB[0] =
+          cyl_shader_bits_from_caps(cap1, cap2) | cCylShaderInterpColor;
     }
     break;
   case UB1_TO_INTERP:
@@ -11243,21 +11277,19 @@ bool CGOCheckShaderCylinderCapInfoIsSame(const CGO *I, unsigned char &cap_value)
     case cgo::draw::custom_cylinder::op_code:
       {
         auto cc = it.cast<cgo::draw::custom_cylinder>();
-        int cap1 = (int) cc->cap1;
-        int cap2 = (int) cc->cap2;
-        cap_value = ((cap1 == 1) ? cCylShaderCap1Flat : (cap1 == 2) ? cCylShaderCap1Round : cCylCapNone) |
-                    ((cap2 == 1) ? cCylShaderCap2Flat : (cap2 == 2) ? cCylShaderCap2Round : cCylCapNone) |
-                    cCylShaderInterpColor;
+        const cCylCap cap1 = cc->get_cap1();
+        const cCylCap cap2 = cc->get_cap2();
+        cap_value =
+            cyl_shader_bits_from_caps(cap1, cap2) | cCylShaderInterpColor;
       }
       break;
     case cgo::draw::custom_cylinder_alpha::op_code:
       {
         auto cc = it.cast<cgo::draw::custom_cylinder_alpha>();
-        int cap1 = (int) cc->cap1;
-        int cap2 = (int) cc->cap2;
-        cap_value = ((cap1 == 1) ? cCylShaderCap1Flat : (cap1 == 2) ? cCylShaderCap1Round : cCylCapNone) |
-                    ((cap2 == 1) ? cCylShaderCap2Flat : (cap2 == 2) ? cCylShaderCap2Round : cCylCapNone) |
-                    cCylShaderInterpColor;
+        const cCylCap cap1 = cc->get_cap1();
+        const cCylCap cap2 = cc->get_cap2();
+        cap_value =
+            cyl_shader_bits_from_caps(cap1, cap2) | cCylShaderInterpColor;
       }
       break;
     default:
