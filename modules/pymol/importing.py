@@ -1289,15 +1289,13 @@ PYMOL API
                     obj_name = 'emd_' + obj_code
 
             chain = None
-            if len(obj_code) in (5,6,7) and type in ('pdb', 'cif', 'mmtf'):
-                obj_code = (
-                    obj_code
-                        .replace('.', '')
-                        .replace('_', '')
-                        .replace('-', '')
-                        .replace(':', '')
-                    )
+            if (len(obj_code) > 4 and type in ('pdb', 'cif', 'mmtf') and
+                    # "Extended PDB accession codes" have 8 characters,
+                    # try to distinguish by leading non-zero digit
+                    '1' <= obj_code[0] <= '9'):
                 obj_code, chain = obj_code[:4], obj_code[4:]
+                if chain[0] in ('.', '_', '-', ':'):
+                    chain = chain[1:]
 
             obj_name = _self.get_legal_name(obj_name)
 
