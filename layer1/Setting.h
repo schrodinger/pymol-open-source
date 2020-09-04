@@ -165,6 +165,7 @@ void SettingPurgeDefault(PyMOLGlobals * G);
 void SettingFreeGlobal(PyMOLGlobals * G);
 
 CSetting *SettingNew(PyMOLGlobals * G);
+CSetting* SettingCopyAll(PyMOLGlobals* G, const CSetting* src, CSetting* dst);
 void SettingFreeP(CSetting * I);
 void SettingInit(PyMOLGlobals * G, CSetting * I);
 void SettingPurge(CSetting * I);

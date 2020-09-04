@@ -11424,7 +11424,7 @@ void ObjectMoleculeCopyNoAlloc(const ObjectMolecule* obj, ObjectMolecule* I)
   }
   I->Neighbor = NULL;
   I->Sculpt = NULL;
-  I->Setting = NULL;        /* TODO - make a copy */
+  I->Setting = SettingCopyAll(G, obj->Setting, nullptr);
 
   I->ViewElem = NULL;
   I->gridSlotSelIndicatorsCGO = NULL;

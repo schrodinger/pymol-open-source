@@ -94,7 +94,7 @@ bool SettingLevelCheck(PyMOLGlobals * G, int index, unsigned char level) {
 
 /* ================================================================== */
 
-static CSetting *SettingCopyAll(PyMOLGlobals * G, const CSetting * src, CSetting * dst)
+CSetting *SettingCopyAll(PyMOLGlobals * G, const CSetting * src, CSetting * dst)
 {
   if(!dst) {
     dst = pymol::calloc<CSetting>(1);
