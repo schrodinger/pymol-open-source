@@ -1006,383 +1006,70 @@ void ColorReset(PyMOLGlobals * G)
   /* BLUE->CYAN->GREEN->YELLOW->RED s182 to s909 */
   /* BLUE->WHITE->RED w00 to */
 
-  color->Name = reg_name(I->Idx, n_color, "white");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
+#define reg_named_color(name, R, G, B)                                         \
+  {                                                                            \
+    color->Name = reg_name(I->Idx, n_color, name);                             \
+    color->Color[0] = R;                                                       \
+    color->Color[1] = G;                                                       \
+    color->Color[2] = B;                                                       \
+    n_color++;                                                                 \
+    color++;                                                                   \
+  }
 
-  color->Name = reg_name(I->Idx, n_color, "black");
-  color->Color[0] = 0.0F;
-  color->Color[1] = 0.0F;
-  color->Color[2] = 0.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "blue");
-  color->Color[0] = 0.0F;
-  color->Color[1] = 0.0F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "green");
-  color->Color[0] = 0.0F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 0.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "red");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.0F;
-  color->Color[2] = 0.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "cyan");
-  color->Color[0] = 0.0F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "yellow");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 0.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "dash");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 0.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "magenta");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.0F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "salmon");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.6F;       /* was 0.5 */
-  color->Color[2] = 0.6F;       /* wat 0.5 */
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "lime");
-  color->Color[0] = 0.5F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 0.5F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "slate");
-  color->Color[0] = 0.5F;
-  color->Color[1] = 0.5F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "hotpink");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.0F;
-  color->Color[2] = 0.5F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "orange");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.5F;
-  color->Color[2] = 0.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "chartreuse");        /* AKA puke green */
-  color->Color[0] = 0.5F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 0.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "limegreen");
-  color->Color[0] = 0.0F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 0.5F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "purpleblue");        /* legacy name */
-  color->Color[0] = 0.5F;
-  color->Color[1] = 0.0F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "marine");
-  color->Color[0] = 0.0F;
-  color->Color[1] = 0.5F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "olive");
-  color->Color[0] = 0.77F;
-  color->Color[1] = 0.70F;
-  color->Color[2] = 0.00F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "purple");
-  color->Color[0] = 0.75F;
-  color->Color[1] = 0.00F;
-  color->Color[2] = 0.75F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "teal");
-  color->Color[0] = 0.00F;
-  color->Color[1] = 0.75F;
-  color->Color[2] = 0.75F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "ruby");
-  color->Color[0] = 0.6F;
-  color->Color[1] = 0.2F;
-  color->Color[2] = 0.2F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "forest");
-  color->Color[0] = 0.2F;
-  color->Color[1] = 0.6F;
-  color->Color[2] = 0.2F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "deepblue");  /* was "deep" */
-  color->Color[0] = 0.25F;
-  color->Color[1] = 0.25F;
-  color->Color[2] = 0.65F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "grey");      /* english spelling */
-  color->Color[0] = 0.5F;
-  color->Color[1] = 0.5F;
-  color->Color[2] = 0.5F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "gray");      /* american spelling */
-  color->Color[0] = 0.5F;
-  color->Color[1] = 0.5F;
-  color->Color[2] = 0.5F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "carbon");
-  color->Color[0] = 0.2F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 0.2F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "nitrogen");
-  color->Color[0] = 0.2F;
-  color->Color[1] = 0.2F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "oxygen");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.3F;
-  color->Color[2] = 0.3F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "hydrogen");
-  color->Color[0] = 0.9F;
-  color->Color[1] = 0.9F;
-  color->Color[2] = 0.9F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "brightorange");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.7F;
-  color->Color[2] = 0.2F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "sulfur");
-  color->Color[0] = 0.9F;       /* needs to be far enough from "yellow" */
-  color->Color[1] = 0.775F;     /* to be resolved, while still slightly on */
-  color->Color[2] = 0.25F;      /* the yellow side of yelloworange */
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "tv_red");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.2F;
-  color->Color[2] = 0.2F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "tv_green");
-  color->Color[0] = 0.2F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 0.2F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "tv_blue");
-  color->Color[0] = 0.3F;
-  color->Color[1] = 0.3F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "tv_yellow");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 0.2F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "yelloworange");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.87F;
-  color->Color[2] = 0.37F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "tv_orange");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.55F;
-  color->Color[2] = 0.15F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "br0");
-  color->Color[0] = 0.1F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "br1");
-  color->Color[0] = 0.2F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 0.9F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "br2");
-  color->Color[0] = 0.3F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 0.8F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "br3");
-  color->Color[0] = 0.4F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 0.7F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "br4");
-  color->Color[0] = 0.5F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 0.6F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "br5");
-  color->Color[0] = 0.6F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 0.5F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "br6");
-  color->Color[0] = 0.7F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 0.4F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "br7");
-  color->Color[0] = 0.8F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 0.3F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "br8");
-  color->Color[0] = 0.9F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 0.2F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "br9");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 0.1F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "pink");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.65F;
-  color->Color[2] = 0.85F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "firebrick");
-  color->Color[0] = 0.698F;
-  color->Color[1] = 0.13F;
-  color->Color[2] = 0.13F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "chocolate");
-  color->Color[0] = 0.555F;
-  color->Color[1] = 0.222F;
-  color->Color[2] = 0.111F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "brown");
-  color->Color[0] = 0.65F;
-  color->Color[1] = 0.32F;
-  color->Color[2] = 0.17F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "wheat");
-  color->Color[0] = 0.99F;
-  color->Color[1] = 0.82F;
-  color->Color[2] = 0.65F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "violet");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.5F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
+  reg_named_color("white", 1.F, 1.F, 1.F);
+  reg_named_color("black", 0.F, 0.F, 0.F);
+  reg_named_color("blue", 0.F, 0.F, 1.F);
+  reg_named_color("green", 0.F, 1.F, 0.F);
+  reg_named_color("red", 1.F, 0.F, 0.F);
+  reg_named_color("cyan", 0.F, 1.F, 1.F);
+  reg_named_color("yellow", 1.F, 1.F, 0.F);
+  reg_named_color("dash", 1.F, 1.F, 0.F);
+  reg_named_color("magenta", 1.F, 0.F, 1.F);
+  reg_named_color("salmon", 1.F, 0.6F, 0.6F);
+  reg_named_color("lime", 0.5F, 1.F, 0.5F);
+  reg_named_color("slate", 0.5F, 0.5F, 1.F);
+  reg_named_color("hotpink", 1.F, 0.F, 0.5F);
+  reg_named_color("orange", 1.F, 0.5F, 0.F);
+  reg_named_color("chartreuse", 0.5F, 1.F, 0.F); /* AKA puke green */
+  reg_named_color("limegreen", 0.F, 1.F, 0.5F);
+  reg_named_color("purpleblue", 0.5F, 0.F, 1.F); /* legacy name */
+  reg_named_color("marine", 0.F, 0.5F, 1.F);
+  reg_named_color("olive", 0.77F, 0.7F, 0.F);
+  reg_named_color("purple", 0.75F, 0.F, 0.75F);
+  reg_named_color("teal", 0.F, 0.75F, 0.75F);
+  reg_named_color("ruby", 0.6F, 0.2F, 0.2F);
+  reg_named_color("forest", 0.2F, 0.6F, 0.2F);
+  reg_named_color("deepblue", 0.25F, 0.25F, 0.65F); /* was "deep" */
+  reg_named_color("grey", 0.5F, 0.5F, 0.5F); /* english spelling */
+  reg_named_color("gray", 0.5F, 0.5F, 0.5F); /* american spelling */
+  reg_named_color("carbon", 0.2F, 1.F, 0.2F);
+  reg_named_color("nitrogen", 0.2F, 0.2F, 1.F);
+  reg_named_color("oxygen", 1.F, 0.3F, 0.3F);
+  reg_named_color("hydrogen", 0.9F, 0.9F, 0.9F);
+  reg_named_color("brightorange", 1.F, 0.7F, 0.2F);
+  reg_named_color("sulfur", 0.9F, 0.775F, 0.25F);
+  reg_named_color("tv_red", 1.F, 0.2F, 0.2F);
+  reg_named_color("tv_green", 0.2F, 1.F, 0.2F);
+  reg_named_color("tv_blue", 0.3F, 0.3F, 1.F);
+  reg_named_color("tv_yellow", 1.F, 1.F, 0.2F);
+  reg_named_color("yelloworange", 1.F, 0.87F, 0.37F);
+  reg_named_color("tv_orange", 1.F, 0.55F, 0.15F);
+  reg_named_color("br0", 0.1F, 0.1F, 1.F);
+  reg_named_color("br1", 0.2F, 0.1F, 0.9F);
+  reg_named_color("br2", 0.3F, 0.1F, 0.8F);
+  reg_named_color("br3", 0.4F, 0.1F, 0.7F);
+  reg_named_color("br4", 0.5F, 0.1F, 0.6F);
+  reg_named_color("br5", 0.6F, 0.1F, 0.5F);
+  reg_named_color("br6", 0.7F, 0.1F, 0.4F);
+  reg_named_color("br7", 0.8F, 0.1F, 0.3F);
+  reg_named_color("br8", 0.9F, 0.1F, 0.2F);
+  reg_named_color("br9", 1.F, 0.1F, 0.1F);
+  reg_named_color("pink", 1.F, 0.65F, 0.85F);
+  reg_named_color("firebrick", 0.698F, 0.13F, 0.13F);
+  reg_named_color("chocolate", 0.555F, 0.222F, 0.111F);
+  reg_named_color("brown", 0.65F, 0.32F, 0.17F);
+  reg_named_color("wheat", 0.99F, 0.82F, 0.65F);
+  reg_named_color("violet", 1.F, 0.5F, 1.F);
 
   /* greybow */
 
@@ -1391,20 +1078,10 @@ void ColorReset(PyMOLGlobals * G)
     name[5] = (a % 10) + '0';
     name[4] = ((a % 100) / 10) + '0';
     /* sprintf(color->Name,"grey%02d",a); */
-    color->Name = reg_name(I->Idx, n_color, name);
-    color->Color[0] = a / 99.0F;
-    color->Color[1] = a / 99.0F;
-    color->Color[2] = a / 99.0F;
-    n_color++;
-    color++;
+    reg_named_color(name, a / 99.F, a / 99.F, a / 99.F);
   }
 
-  color->Name = reg_name(I->Idx, n_color, "lightmagenta");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.2F;
-  color->Color[2] = 0.8F;
-  n_color++;
-  color++;
+  reg_named_color("lightmagenta", 1.F, 0.2F, 0.8F);
 
 #define A_DIV 83.333333333F
 
@@ -1418,12 +1095,10 @@ void ColorReset(PyMOLGlobals * G)
     name[1] = ((a % 1000) / 100) + '0';
     /* sprintf(color->Name,"s%03d",a); */
     f = 1.0F - (a - (set1 * A_DIV)) / A_DIV;
-    color->Name = reg_name(I->Idx, n_color, name);
-    color->Color[0] = f * spectrumS[set1][0] + (1.0F - f) * spectrumS[set1 + 1][0];
-    color->Color[1] = f * spectrumS[set1][1] + (1.0F - f) * spectrumS[set1 + 1][1];
-    color->Color[2] = f * spectrumS[set1][2] + (1.0F - f) * spectrumS[set1 + 1][2];
-    n_color++;
-    color++;
+    reg_named_color(name,
+        f * spectrumS[set1][0] + (1.F - f) * spectrumS[set1 + 1][0],
+        f * spectrumS[set1][1] + (1.F - f) * spectrumS[set1 + 1][1],
+        f * spectrumS[set1][2] + (1.F - f) * spectrumS[set1 + 1][2]);
   }
 
   /* offset & reversed full spectrum (r000-r999) */
@@ -1436,12 +1111,10 @@ void ColorReset(PyMOLGlobals * G)
     name[2] = ((a % 100) / 10) + '0';
     name[1] = ((a % 1000) / 100) + '0';
     f = 1.0F - (a - (set1 * A_DIV)) / A_DIV;
-    color->Name = reg_name(I->Idx, n_color, name);
-    color->Color[0] = f * spectrumR[set1][0] + (1.0F - f) * spectrumR[set1 + 1][0];
-    color->Color[1] = f * spectrumR[set1][1] + (1.0F - f) * spectrumR[set1 + 1][1];
-    color->Color[2] = f * spectrumR[set1][2] + (1.0F - f) * spectrumR[set1 + 1][2];
-    n_color++;
-    color++;
+    reg_named_color(name,
+        f * spectrumR[set1][0] + (1.F - f) * spectrumR[set1 + 1][0],
+        f * spectrumR[set1][1] + (1.F - f) * spectrumR[set1 + 1][1],
+        f * spectrumR[set1][2] + (1.F - f) * spectrumR[set1 + 1][2]);
   }
 
   /* complementary spectra (c000-c999) */
@@ -1454,12 +1127,10 @@ void ColorReset(PyMOLGlobals * G)
     name[2] = ((a % 100) / 10) + '0';
     name[1] = ((a % 1000) / 100) + '0';
     f = 1.0F - (a - (set1 * A_DIV)) / A_DIV;
-    color->Name = reg_name(I->Idx, n_color, name);
-    color->Color[0] = f * spectrumC[set1][0] + (1.0F - f) * spectrumC[set1 + 1][0];
-    color->Color[1] = f * spectrumC[set1][1] + (1.0F - f) * spectrumC[set1 + 1][1];
-    color->Color[2] = f * spectrumC[set1][2] + (1.0F - f) * spectrumC[set1 + 1][2];
-    n_color++;
-    color++;
+    reg_named_color(name,
+        f * spectrumC[set1][0] + (1.F - f) * spectrumC[set1 + 1][0],
+        f * spectrumC[set1][1] + (1.F - f) * spectrumC[set1 + 1][1],
+        f * spectrumC[set1][2] + (1.F - f) * spectrumC[set1 + 1][2]);
   }
 
 #define W_DIV 41.666666667F
@@ -1474,32 +1145,20 @@ void ColorReset(PyMOLGlobals * G)
     name[2] = ((a % 100) / 10) + '0';
     name[1] = ((a % 1000) / 100) + '0';
     f = 1.0F - (a - (set1 * W_DIV)) / W_DIV;
-    color->Name = reg_name(I->Idx, n_color, name);
-    color->Color[0] = f * spectrumW[set1][0] + (1.0F - f) * spectrumW[set1 + 1][0];
-    color->Color[1] = f * spectrumW[set1][1] + (1.0F - f) * spectrumW[set1 + 1][1];
-    color->Color[2] = f * spectrumW[set1][2] + (1.0F - f) * spectrumW[set1 + 1][2];
-    n_color++;
-    color++;
+    reg_named_color(name,
+        f * spectrumW[set1][0] + (1.F - f) * spectrumW[set1 + 1][0],
+        f * spectrumW[set1][1] + (1.F - f) * spectrumW[set1 + 1][1],
+        f * spectrumW[set1][2] + (1.F - f) * spectrumW[set1 + 1][2]);
   }
 
-  color->Name = reg_name(I->Idx, n_color, "density");
-  color->Color[0] = 0.1F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 0.6F;
-  n_color++;
-  color++;
+  reg_named_color("density", 0.1F, 0.1F, 0.6F);
 
   strcpy(name, "gray00");       /* american */
   for(a = 0; a < 100; a = a + 1) {
     name[5] = (a % 10) + '0';
     name[4] = ((a % 100) / 10) + '0';
     /* sprintf(color->Name,"gray%02d",a); */
-    color->Name = reg_name(I->Idx, n_color, name);
-    color->Color[0] = a / 99.0F;
-    color->Color[1] = a / 99.0F;
-    color->Color[2] = a / 99.0F;
-    n_color++;
-    color++;
+    reg_named_color(name, a / 99.F, a / 99.F, a / 99.F);
   }
 
   /* original full spectrum, with extra blue and red at the ends (o000-o999) */
@@ -1514,937 +1173,144 @@ void ColorReset(PyMOLGlobals * G)
     name[1] = ((a % 1000) / 100) + '0';
     /* sprintf(color->Name,"o%03d",a); */
     f = 1.0F - (a - (set1 * B_DIV)) / B_DIV;
-    color->Name = reg_name(I->Idx, n_color, name);
-    color->Color[0] = f * spectrumO[set1][0] + (1.0F - f) * spectrumO[set1 + 1][0];
-    color->Color[1] = f * spectrumO[set1][1] + (1.0F - f) * spectrumO[set1 + 1][1];
-    color->Color[2] = f * spectrumO[set1][2] + (1.0F - f) * spectrumO[set1 + 1][2];
-    n_color++;
-    color++;
+    reg_named_color(name,
+        f * spectrumO[set1][0] + (1.F - f) * spectrumO[set1 + 1][0],
+        f * spectrumO[set1][1] + (1.F - f) * spectrumO[set1 + 1][1],
+        f * spectrumO[set1][2] + (1.F - f) * spectrumO[set1 + 1][2]);
   }
 
-  color->Name = reg_name(I->Idx, n_color, "paleyellow");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 0.5F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "aquamarine");
-  color->Color[0] = 0.5F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "deepsalmon");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.5F;
-  color->Color[2] = 0.5F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "palegreen");
-  color->Color[0] = 0.65F;
-  color->Color[1] = 0.9F;
-  color->Color[2] = 0.65F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "deepolive");
-  color->Color[0] = 0.6F;
-  color->Color[1] = 0.6F;
-  color->Color[2] = 0.1F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "deeppurple");
-  color->Color[0] = 0.6F;
-  color->Color[1] = 0.1F;
-  color->Color[2] = 0.6F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "deepteal");
-  color->Color[0] = 0.1F;
-  color->Color[1] = 0.6F;
-  color->Color[2] = 0.6F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "lightblue");
-  color->Color[0] = 0.75F;
-  color->Color[1] = 0.75;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "lightorange");
-  color->Color[0] = 1.0F;
-  color->Color[1] = 0.8F;
-  color->Color[2] = 0.5F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "palecyan");
-  color->Color[0] = 0.8F;
-  color->Color[1] = 1.0F;
-  color->Color[2] = 1.0F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "lightteal");
-  color->Color[0] = 0.4F;
-  color->Color[1] = 0.7F;
-  color->Color[2] = 0.7F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "splitpea");
-  color->Color[0] = 0.52F;
-  color->Color[1] = 0.75F;
-  color->Color[2] = 0.00F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "raspberry");
-  color->Color[0] = 0.70F;
-  color->Color[1] = 0.30F;
-  color->Color[2] = 0.40F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "sand");
-  color->Color[0] = 0.72F;
-  color->Color[1] = 0.55F;
-  color->Color[2] = 0.30F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "smudge");
-  color->Color[0] = 0.55F;
-  color->Color[1] = 0.70F;
-  color->Color[2] = 0.40F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "violetpurple");
-  color->Color[0] = 0.55F;
-  color->Color[1] = 0.25F;
-  color->Color[2] = 0.60F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "dirtyviolet");
-  color->Color[0] = 0.70F;
-  color->Color[1] = 0.50F;
-  color->Color[2] = 0.50F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "deepsalmon");
-  color->Color[0] = 1.00F;
-  color->Color[1] = 0.42F;
-  color->Color[2] = 0.42F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "lightpink");
-  color->Color[0] = 1.00F;
-  color->Color[1] = 0.75F;
-  color->Color[2] = 0.87F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "greencyan");
-  color->Color[0] = 0.25F;
-  color->Color[1] = 1.00F;
-  color->Color[2] = 0.75F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "limon");
-  color->Color[0] = 0.75F;
-  color->Color[1] = 1.00F;
-  color->Color[2] = 0.25F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "skyblue");
-  color->Color[0] = 0.20F;
-  color->Color[1] = 0.50F;
-  color->Color[2] = 0.80F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "bluewhite");
-  color->Color[0] = 0.85F;
-  color->Color[1] = 0.85F;
-  color->Color[2] = 1.00F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "warmpink");
-  color->Color[0] = 0.85F;
-  color->Color[1] = 0.20F;
-  color->Color[2] = 0.50F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "darksalmon");
-  color->Color[0] = 0.73F;
-  color->Color[1] = 0.55F;
-  color->Color[2] = 0.52F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "helium");
-  color->Color[0] = 0.850980392F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "lithium");
-  color->Color[0] = 0.800000000F;
-  color->Color[1] = 0.501960784F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "beryllium");
-  color->Color[0] = 0.760784314F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "boron");
-  color->Color[0] = 1.000000000F;
-  color->Color[1] = 0.709803922F;
-  color->Color[2] = 0.709803922F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "fluorine");
-  color->Color[0] = 0.701960784F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "neon");
-  color->Color[0] = 0.701960784F;
-  color->Color[1] = 0.890196078F;
-  color->Color[2] = 0.960784314F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "sodium");
-  color->Color[0] = 0.670588235F;
-  color->Color[1] = 0.360784314F;
-  color->Color[2] = 0.949019608F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "magnesium");
-  color->Color[0] = 0.541176471F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "aluminum");
-  color->Color[0] = 0.749019608F;
-  color->Color[1] = 0.650980392F;
-  color->Color[2] = 0.650980392F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "silicon");
-  color->Color[0] = 0.941176471F;
-  color->Color[1] = 0.784313725F;
-  color->Color[2] = 0.627450980F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "phosphorus");
-  color->Color[0] = 1.000000000F;
-  color->Color[1] = 0.501960784F;
-  color->Color[2] = 0.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "chlorine");
-  color->Color[0] = 0.121568627F;
-  color->Color[1] = 0.941176471F;
-  color->Color[2] = 0.121568627F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "argon");
-  color->Color[0] = 0.501960784F;
-  color->Color[1] = 0.819607843F;
-  color->Color[2] = 0.890196078F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "potassium");
-  color->Color[0] = 0.560784314F;
-  color->Color[1] = 0.250980392F;
-  color->Color[2] = 0.831372549F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "calcium");
-  color->Color[0] = 0.239215686F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "scandium");
-  color->Color[0] = 0.901960784F;
-  color->Color[1] = 0.901960784F;
-  color->Color[2] = 0.901960784F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "titanium");
-  color->Color[0] = 0.749019608F;
-  color->Color[1] = 0.760784314F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "vanadium");
-  color->Color[0] = 0.650980392F;
-  color->Color[1] = 0.650980392F;
-  color->Color[2] = 0.670588235F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "chromium");
-  color->Color[0] = 0.541176471F;
-  color->Color[1] = 0.600000000F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "manganese");
-  color->Color[0] = 0.611764706F;
-  color->Color[1] = 0.478431373F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "iron");
-  color->Color[0] = 0.878431373F;
-  color->Color[1] = 0.400000000F;
-  color->Color[2] = 0.200000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "cobalt");
-  color->Color[0] = 0.941176471F;
-  color->Color[1] = 0.564705882F;
-  color->Color[2] = 0.627450980F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "nickel");
-  color->Color[0] = 0.313725490F;
-  color->Color[1] = 0.815686275F;
-  color->Color[2] = 0.313725490F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "copper");
-  color->Color[0] = 0.784313725F;
-  color->Color[1] = 0.501960784F;
-  color->Color[2] = 0.200000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "zinc");
-  color->Color[0] = 0.490196078F;
-  color->Color[1] = 0.501960784F;
-  color->Color[2] = 0.690196078F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "gallium");
-  color->Color[0] = 0.760784314F;
-  color->Color[1] = 0.560784314F;
-  color->Color[2] = 0.560784314F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "germanium");
-  color->Color[0] = 0.400000000F;
-  color->Color[1] = 0.560784314F;
-  color->Color[2] = 0.560784314F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "arsenic");
-  color->Color[0] = 0.741176471F;
-  color->Color[1] = 0.501960784F;
-  color->Color[2] = 0.890196078F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "selenium");
-  color->Color[0] = 1.000000000F;
-  color->Color[1] = 0.631372549F;
-  color->Color[2] = 0.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "bromine");
-  color->Color[0] = 0.650980392F;
-  color->Color[1] = 0.160784314F;
-  color->Color[2] = 0.160784314F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "krypton");
-  color->Color[0] = 0.360784314F;
-  color->Color[1] = 0.721568627F;
-  color->Color[2] = 0.819607843F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "rubidium");
-  color->Color[0] = 0.439215686F;
-  color->Color[1] = 0.180392157F;
-  color->Color[2] = 0.690196078F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "strontium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "yttrium");
-  color->Color[0] = 0.580392157F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "zirconium");
-  color->Color[0] = 0.580392157F;
-  color->Color[1] = 0.878431373F;
-  color->Color[2] = 0.878431373F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "niobium");
-  color->Color[0] = 0.450980392F;
-  color->Color[1] = 0.760784314F;
-  color->Color[2] = 0.788235294F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "molybdenum");
-  color->Color[0] = 0.329411765F;
-  color->Color[1] = 0.709803922F;
-  color->Color[2] = 0.709803922F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "technetium");
-  color->Color[0] = 0.231372549F;
-  color->Color[1] = 0.619607843F;
-  color->Color[2] = 0.619607843F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "ruthenium");
-  color->Color[0] = 0.141176471F;
-  color->Color[1] = 0.560784314F;
-  color->Color[2] = 0.560784314F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "rhodium");
-  color->Color[0] = 0.039215686F;
-  color->Color[1] = 0.490196078F;
-  color->Color[2] = 0.549019608F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "palladium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.411764706F;
-  color->Color[2] = 0.521568627F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "silver");
-  color->Color[0] = 0.752941176F;
-  color->Color[1] = 0.752941176F;
-  color->Color[2] = 0.752941176F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "cadmium");
-  color->Color[0] = 1.000000000F;
-  color->Color[1] = 0.850980392F;
-  color->Color[2] = 0.560784314F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "indium");
-  color->Color[0] = 0.650980392F;
-  color->Color[1] = 0.458823529F;
-  color->Color[2] = 0.450980392F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "tin");
-  color->Color[0] = 0.400000000F;
-  color->Color[1] = 0.501960784F;
-  color->Color[2] = 0.501960784F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "antimony");
-  color->Color[0] = 0.619607843F;
-  color->Color[1] = 0.388235294F;
-  color->Color[2] = 0.709803922F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "tellurium");
-  color->Color[0] = 0.831372549F;
-  color->Color[1] = 0.478431373F;
-  color->Color[2] = 0.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "iodine");
-  color->Color[0] = 0.580392157F;
-  color->Color[1] = 0.000000000F;
-  color->Color[2] = 0.580392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "xenon");
-  color->Color[0] = 0.258823529F;
-  color->Color[1] = 0.619607843F;
-  color->Color[2] = 0.690196078F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "cesium");
-  color->Color[0] = 0.341176471F;
-  color->Color[1] = 0.090196078F;
-  color->Color[2] = 0.560784314F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "barium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.788235294F;
-  color->Color[2] = 0.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "lanthanum");
-  color->Color[0] = 0.439215686F;
-  color->Color[1] = 0.831372549F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "cerium");
-  color->Color[0] = 1.000000000F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "praseodymium");
-  color->Color[0] = 0.850980392F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "neodymium");
-  color->Color[0] = 0.780392157F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "promethium");
-  color->Color[0] = 0.639215686F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "samarium");
-  color->Color[0] = 0.560784314F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "europium");
-  color->Color[0] = 0.380392157F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "gadolinium");
-  color->Color[0] = 0.270588235F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "terbium");
-  color->Color[0] = 0.188235294F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "dysprosium");
-  color->Color[0] = 0.121568627F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.780392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "holmium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 1.000000000F;
-  color->Color[2] = 0.611764706F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "erbium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.901960784F;
-  color->Color[2] = 0.458823529F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "thulium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.831372549F;
-  color->Color[2] = 0.321568627F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "ytterbium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.749019608F;
-  color->Color[2] = 0.219607843F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "lutetium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.670588235F;
-  color->Color[2] = 0.141176471F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "hafnium");
-  color->Color[0] = 0.301960784F;
-  color->Color[1] = 0.760784314F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "tantalum");
-  color->Color[0] = 0.301960784F;
-  color->Color[1] = 0.650980392F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "tungsten");
-  color->Color[0] = 0.129411765F;
-  color->Color[1] = 0.580392157F;
-  color->Color[2] = 0.839215686F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "rhenium");
-  color->Color[0] = 0.149019608F;
-  color->Color[1] = 0.490196078F;
-  color->Color[2] = 0.670588235F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "osmium");
-  color->Color[0] = 0.149019608F;
-  color->Color[1] = 0.400000000F;
-  color->Color[2] = 0.588235294F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "iridium");
-  color->Color[0] = 0.090196078F;
-  color->Color[1] = 0.329411765F;
-  color->Color[2] = 0.529411765F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "platinum");
-  color->Color[0] = 0.815686275F;
-  color->Color[1] = 0.815686275F;
-  color->Color[2] = 0.878431373F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "gold");
-  color->Color[0] = 1.000000000F;
-  color->Color[1] = 0.819607843F;
-  color->Color[2] = 0.137254902F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "mercury");
-  color->Color[0] = 0.721568627F;
-  color->Color[1] = 0.721568627F;
-  color->Color[2] = 0.815686275F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "thallium");
-  color->Color[0] = 0.650980392F;
-  color->Color[1] = 0.329411765F;
-  color->Color[2] = 0.301960784F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "lead");
-  color->Color[0] = 0.341176471F;
-  color->Color[1] = 0.349019608F;
-  color->Color[2] = 0.380392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "bismuth");
-  color->Color[0] = 0.619607843F;
-  color->Color[1] = 0.309803922F;
-  color->Color[2] = 0.709803922F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "polonium");
-  color->Color[0] = 0.670588235F;
-  color->Color[1] = 0.360784314F;
-  color->Color[2] = 0.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "astatine");
-  color->Color[0] = 0.458823529F;
-  color->Color[1] = 0.309803922F;
-  color->Color[2] = 0.270588235F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "radon");
-  color->Color[0] = 0.258823529F;
-  color->Color[1] = 0.509803922F;
-  color->Color[2] = 0.588235294F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "francium");
-  color->Color[0] = 0.258823529F;
-  color->Color[1] = 0.000000000F;
-  color->Color[2] = 0.400000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "radium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.490196078F;
-  color->Color[2] = 0.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "actinium");
-  color->Color[0] = 0.439215686F;
-  color->Color[1] = 0.670588235F;
-  color->Color[2] = 0.980392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "thorium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.729411765F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "protactinium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.631372549F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "uranium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.560784314F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "neptunium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.501960784F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "plutonium");
-  color->Color[0] = 0.000000000F;
-  color->Color[1] = 0.419607843F;
-  color->Color[2] = 1.000000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "americium");
-  color->Color[0] = 0.329411765F;
-  color->Color[1] = 0.360784314F;
-  color->Color[2] = 0.949019608F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "curium");
-  color->Color[0] = 0.470588235F;
-  color->Color[1] = 0.360784314F;
-  color->Color[2] = 0.890196078F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "berkelium");
-  color->Color[0] = 0.541176471F;
-  color->Color[1] = 0.309803922F;
-  color->Color[2] = 0.890196078F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "californium");
-  color->Color[0] = 0.631372549F;
-  color->Color[1] = 0.211764706F;
-  color->Color[2] = 0.831372549F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "einsteinium");
-  color->Color[0] = 0.701960784F;
-  color->Color[1] = 0.121568627F;
-  color->Color[2] = 0.831372549F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "fermium");
-  color->Color[0] = 0.701960784F;
-  color->Color[1] = 0.121568627F;
-  color->Color[2] = 0.729411765F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "mendelevium");
-  color->Color[0] = 0.701960784F;
-  color->Color[1] = 0.050980392F;
-  color->Color[2] = 0.650980392F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "nobelium");
-  color->Color[0] = 0.741176471F;
-  color->Color[1] = 0.050980392F;
-  color->Color[2] = 0.529411765F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "lawrencium");
-  color->Color[0] = 0.780392157F;
-  color->Color[1] = 0.000000000F;
-  color->Color[2] = 0.400000000F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "rutherfordium");
-  color->Color[0] = 0.800000000F;
-  color->Color[1] = 0.000000000F;
-  color->Color[2] = 0.349019608F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "dubnium");
-  color->Color[0] = 0.819607843F;
-  color->Color[1] = 0.000000000F;
-  color->Color[2] = 0.309803922F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "seaborgium");
-  color->Color[0] = 0.850980392F;
-  color->Color[1] = 0.000000000F;
-  color->Color[2] = 0.270588235F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "bohrium");
-  color->Color[0] = 0.878431373F;
-  color->Color[1] = 0.000000000F;
-  color->Color[2] = 0.219607843F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "hassium");
-  color->Color[0] = 0.901960784F;
-  color->Color[1] = 0.000000000F;
-  color->Color[2] = 0.180392157F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "meitnerium");
-  color->Color[0] = 0.921568627F;
-  color->Color[1] = 0.000000000F;
-  color->Color[2] = 0.149019608F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "deuterium");
-  color->Color[0] = 0.9F;
-  color->Color[1] = 0.9F;
-  color->Color[2] = 0.9F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "lonepair");
-  color->Color[0] = 0.5F;
-  color->Color[1] = 0.5F;
-  color->Color[2] = 0.5F;
-  n_color++;
-  color++;
-
-  color->Name = reg_name(I->Idx, n_color, "pseudoatom");
-  color->Color[0] = 0.9F;
-  color->Color[1] = 0.9F;
-  color->Color[2] = 0.9F;
-  n_color++;
-  color++;
+  reg_named_color("paleyellow", 1.F, 1.F, 0.5F);
+  reg_named_color("aquamarine", 0.5F, 1.F, 1.F);
+  reg_named_color("deepsalmon", 1.F, 0.5F, 0.5F);
+  reg_named_color("palegreen", 0.65F, 0.9F, 0.65F);
+  reg_named_color("deepolive", 0.6F, 0.6F, 0.1F);
+  reg_named_color("deeppurple", 0.6F, 0.1F, 0.6F);
+  reg_named_color("deepteal", 0.1F, 0.6F, 0.6F);
+  reg_named_color("lightblue", 0.75F, 0.75F, 1.F);
+  reg_named_color("lightorange", 1.F, 0.8F, 0.5F);
+  reg_named_color("palecyan", 0.8F, 1.F, 1.F);
+  reg_named_color("lightteal", 0.4F, 0.7F, 0.7F);
+  reg_named_color("splitpea", 0.52F, 0.75F, 0.F);
+  reg_named_color("raspberry", 0.7F, 0.3F, 0.4F);
+  reg_named_color("sand", 0.72F, 0.55F, 0.3F);
+  reg_named_color("smudge", 0.55F, 0.7F, 0.4F);
+  reg_named_color("violetpurple", 0.55F, 0.25F, 0.6F);
+  reg_named_color("dirtyviolet", 0.7F, 0.5F, 0.5F);
+  reg_named_color("deepsalmon", 1.F, 0.42F, 0.42F);
+  reg_named_color("lightpink", 1.F, 0.75F, 0.87F);
+  reg_named_color("greencyan", 0.25F, 1.F, 0.75F);
+  reg_named_color("limon", 0.75F, 1.F, 0.25F);
+  reg_named_color("skyblue", 0.2F, 0.5F, 0.8F);
+  reg_named_color("bluewhite", 0.85F, 0.85F, 1.F);
+  reg_named_color("warmpink", 0.85F, 0.2F, 0.5F);
+  reg_named_color("darksalmon", 0.73F, 0.55F, 0.52F);
+  reg_named_color("helium", 0.850980392F, 1.F, 1.F);
+  reg_named_color("lithium", 0.8F, 0.501960784F, 1.F);
+  reg_named_color("beryllium", 0.760784314F, 1.F, 0.F);
+  reg_named_color("boron", 1.F, 0.709803922F, 0.709803922F);
+  reg_named_color("fluorine", 0.701960784F, 1.F, 1.F);
+  reg_named_color("neon", 0.701960784F, 0.890196078F, 0.960784314F);
+  reg_named_color("sodium", 0.670588235F, 0.360784314F, 0.949019608F);
+  reg_named_color("magnesium", 0.541176471F, 1.F, 0.F);
+  reg_named_color("aluminum", 0.749019608F, 0.650980392F, 0.650980392F);
+  reg_named_color("silicon", 0.941176471F, 0.784313725F, 0.62745098F);
+  reg_named_color("phosphorus", 1.F, 0.501960784F, 0.F);
+  reg_named_color("chlorine", 0.121568627F, 0.941176471F, 0.121568627F);
+  reg_named_color("argon", 0.501960784F, 0.819607843F, 0.890196078F);
+  reg_named_color("potassium", 0.560784314F, 0.250980392F, 0.831372549F);
+  reg_named_color("calcium", 0.239215686F, 1.F, 0.F);
+  reg_named_color("scandium", 0.901960784F, 0.901960784F, 0.901960784F);
+  reg_named_color("titanium", 0.749019608F, 0.760784314F, 0.780392157F);
+  reg_named_color("vanadium", 0.650980392F, 0.650980392F, 0.670588235F);
+  reg_named_color("chromium", 0.541176471F, 0.6F, 0.780392157F);
+  reg_named_color("manganese", 0.611764706F, 0.478431373F, 0.780392157F);
+  reg_named_color("iron", 0.878431373F, 0.4F, 0.2F);
+  reg_named_color("cobalt", 0.941176471F, 0.564705882F, 0.62745098F);
+  reg_named_color("nickel", 0.31372549F, 0.815686275F, 0.31372549F);
+  reg_named_color("copper", 0.784313725F, 0.501960784F, 0.2F);
+  reg_named_color("zinc", 0.490196078F, 0.501960784F, 0.690196078F);
+  reg_named_color("gallium", 0.760784314F, 0.560784314F, 0.560784314F);
+  reg_named_color("germanium", 0.4F, 0.560784314F, 0.560784314F);
+  reg_named_color("arsenic", 0.741176471F, 0.501960784F, 0.890196078F);
+  reg_named_color("selenium", 1.F, 0.631372549F, 0.F);
+  reg_named_color("bromine", 0.650980392F, 0.160784314F, 0.160784314F);
+  reg_named_color("krypton", 0.360784314F, 0.721568627F, 0.819607843F);
+  reg_named_color("rubidium", 0.439215686F, 0.180392157F, 0.690196078F);
+  reg_named_color("strontium", 0.F, 1.F, 0.F);
+  reg_named_color("yttrium", 0.580392157F, 1.F, 1.F);
+  reg_named_color("zirconium", 0.580392157F, 0.878431373F, 0.878431373F);
+  reg_named_color("niobium", 0.450980392F, 0.760784314F, 0.788235294F);
+  reg_named_color("molybdenum", 0.329411765F, 0.709803922F, 0.709803922F);
+  reg_named_color("technetium", 0.231372549F, 0.619607843F, 0.619607843F);
+  reg_named_color("ruthenium", 0.141176471F, 0.560784314F, 0.560784314F);
+  reg_named_color("rhodium", 0.039215686F, 0.490196078F, 0.549019608F);
+  reg_named_color("palladium", 0.F, 0.411764706F, 0.521568627F);
+  reg_named_color("silver", 0.752941176F, 0.752941176F, 0.752941176F);
+  reg_named_color("cadmium", 1.F, 0.850980392F, 0.560784314F);
+  reg_named_color("indium", 0.650980392F, 0.458823529F, 0.450980392F);
+  reg_named_color("tin", 0.4F, 0.501960784F, 0.501960784F);
+  reg_named_color("antimony", 0.619607843F, 0.388235294F, 0.709803922F);
+  reg_named_color("tellurium", 0.831372549F, 0.478431373F, 0.F);
+  reg_named_color("iodine", 0.580392157F, 0.F, 0.580392157F);
+  reg_named_color("xenon", 0.258823529F, 0.619607843F, 0.690196078F);
+  reg_named_color("cesium", 0.341176471F, 0.090196078F, 0.560784314F);
+  reg_named_color("barium", 0.F, 0.788235294F, 0.F);
+  reg_named_color("lanthanum", 0.439215686F, 0.831372549F, 1.F);
+  reg_named_color("cerium", 1.F, 1.F, 0.780392157F);
+  reg_named_color("praseodymium", 0.850980392F, 1.F, 0.780392157F);
+  reg_named_color("neodymium", 0.780392157F, 1.F, 0.780392157F);
+  reg_named_color("promethium", 0.639215686F, 1.F, 0.780392157F);
+  reg_named_color("samarium", 0.560784314F, 1.F, 0.780392157F);
+  reg_named_color("europium", 0.380392157F, 1.F, 0.780392157F);
+  reg_named_color("gadolinium", 0.270588235F, 1.F, 0.780392157F);
+  reg_named_color("terbium", 0.188235294F, 1.F, 0.780392157F);
+  reg_named_color("dysprosium", 0.121568627F, 1.F, 0.780392157F);
+  reg_named_color("holmium", 0.F, 1.F, 0.611764706F);
+  reg_named_color("erbium", 0.F, 0.901960784F, 0.458823529F);
+  reg_named_color("thulium", 0.F, 0.831372549F, 0.321568627F);
+  reg_named_color("ytterbium", 0.F, 0.749019608F, 0.219607843F);
+  reg_named_color("lutetium", 0.F, 0.670588235F, 0.141176471F);
+  reg_named_color("hafnium", 0.301960784F, 0.760784314F, 1.F);
+  reg_named_color("tantalum", 0.301960784F, 0.650980392F, 1.F);
+  reg_named_color("tungsten", 0.129411765F, 0.580392157F, 0.839215686F);
+  reg_named_color("rhenium", 0.149019608F, 0.490196078F, 0.670588235F);
+  reg_named_color("osmium", 0.149019608F, 0.4F, 0.588235294F);
+  reg_named_color("iridium", 0.090196078F, 0.329411765F, 0.529411765F);
+  reg_named_color("platinum", 0.815686275F, 0.815686275F, 0.878431373F);
+  reg_named_color("gold", 1.F, 0.819607843F, 0.137254902F);
+  reg_named_color("mercury", 0.721568627F, 0.721568627F, 0.815686275F);
+  reg_named_color("thallium", 0.650980392F, 0.329411765F, 0.301960784F);
+  reg_named_color("lead", 0.341176471F, 0.349019608F, 0.380392157F);
+  reg_named_color("bismuth", 0.619607843F, 0.309803922F, 0.709803922F);
+  reg_named_color("polonium", 0.670588235F, 0.360784314F, 0.F);
+  reg_named_color("astatine", 0.458823529F, 0.309803922F, 0.270588235F);
+  reg_named_color("radon", 0.258823529F, 0.509803922F, 0.588235294F);
+  reg_named_color("francium", 0.258823529F, 0.F, 0.4F);
+  reg_named_color("radium", 0.F, 0.490196078F, 0.F);
+  reg_named_color("actinium", 0.439215686F, 0.670588235F, 0.980392157F);
+  reg_named_color("thorium", 0.F, 0.729411765F, 1.F);
+  reg_named_color("protactinium", 0.F, 0.631372549F, 1.F);
+  reg_named_color("uranium", 0.F, 0.560784314F, 1.F);
+  reg_named_color("neptunium", 0.F, 0.501960784F, 1.F);
+  reg_named_color("plutonium", 0.F, 0.419607843F, 1.F);
+  reg_named_color("americium", 0.329411765F, 0.360784314F, 0.949019608F);
+  reg_named_color("curium", 0.470588235F, 0.360784314F, 0.890196078F);
+  reg_named_color("berkelium", 0.541176471F, 0.309803922F, 0.890196078F);
+  reg_named_color("californium", 0.631372549F, 0.211764706F, 0.831372549F);
+  reg_named_color("einsteinium", 0.701960784F, 0.121568627F, 0.831372549F);
+  reg_named_color("fermium", 0.701960784F, 0.121568627F, 0.729411765F);
+  reg_named_color("mendelevium", 0.701960784F, 0.050980392F, 0.650980392F);
+  reg_named_color("nobelium", 0.741176471F, 0.050980392F, 0.529411765F);
+  reg_named_color("lawrencium", 0.780392157F, 0.F, 0.4F);
+  reg_named_color("rutherfordium", 0.8F, 0.F, 0.349019608F);
+  reg_named_color("dubnium", 0.819607843F, 0.F, 0.309803922F);
+  reg_named_color("seaborgium", 0.850980392F, 0.F, 0.270588235F);
+  reg_named_color("bohrium", 0.878431373F, 0.F, 0.219607843F);
+  reg_named_color("hassium", 0.901960784F, 0.F, 0.180392157F);
+  reg_named_color("meitnerium", 0.921568627F, 0.F, 0.149019608F);
+  reg_named_color("deuterium", 0.9F, 0.9F, 0.9F);
+  reg_named_color("lonepair", 0.5F, 0.5F, 0.5F);
+  reg_named_color("pseudoatom", 0.9F, 0.9F, 0.9F);
 
   color = I->Color;
   for(a = 0; a < n_color; a++) {
