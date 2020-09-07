@@ -659,8 +659,8 @@ namespace cgo {
       float vertex1[3], vertex2[3], radius, color1[3], color2[3];
       float cap1, cap2;
 
-      cCylCap get_cap1() const { return static_cast<cCylCap>(cap1); }
-      cCylCap get_cap2() const { return static_cast<cCylCap>(cap2); }
+      cCylCap get_cap1() const { return static_cast<cCylCap>(int(cap1)); }
+      cCylCap get_cap2() const { return static_cast<cCylCap>(int(cap2)); }
     };
 
     struct custom_cylinder_alpha {
@@ -679,8 +679,8 @@ namespace cgo {
       float vertex1[3], vertex2[3], radius, color1[4], color2[4];
       float cap1, cap2;
 
-      cCylCap get_cap1() const { return static_cast<cCylCap>(cap1); }
-      cCylCap get_cap2() const { return static_cast<cCylCap>(cap2); }
+      cCylCap get_cap1() const { return static_cast<cCylCap>(int(cap1)); }
+      cCylCap get_cap2() const { return static_cast<cCylCap>(int(cap2)); }
     };
   };
 };

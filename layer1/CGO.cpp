@@ -4190,8 +4190,8 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
       break;
     case CGO_CONE:
       ok &= CGOSimpleCone(cgo, pc, pc + 3, *(pc + 6), *(pc + 7), pc + 8, pc + 11,
-          static_cast<cCylCap>(pc[14]),
-          static_cast<cCylCap>(pc[15]));
+          static_cast<cCylCap>(int(pc[14])),
+          static_cast<cCylCap>(int(pc[15])));
       break;
     case CGO_SAUSAGE:
       ok &= CGOSimpleCylinder(cgo, pc, pc + 3, *(pc + 6), pc + 7, pc + 10, cgo->alpha, cgo->alpha, true, cCylCap::Round, cCylCap::Round, nullptr, stick_round_nub);
@@ -4484,8 +4484,8 @@ CGO *CGOSimplifyNoCompress(const CGO * I, int est, short sphere_quality, bool st
       break;
     case CGO_CONE:
       ok &= CGOSimpleCone(cgo, pc, pc + 3, *(pc + 6), *(pc + 7), pc + 8, pc + 11,
-          static_cast<cCylCap>(pc[14]),
-          static_cast<cCylCap>(pc[15]));
+          static_cast<cCylCap>(int(pc[14])),
+          static_cast<cCylCap>(int(pc[15])));
       break;
     case CGO_SAUSAGE:
       ok &= CGOSimpleCylinder(cgo, pc, pc + 3, *(pc + 6), pc + 7, pc + 10, cgo->alpha, cgo->alpha, true, cCylCap::Round, cCylCap::Round, nullptr, stick_round_nub);
@@ -5641,8 +5641,8 @@ int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, Obj
       break;
     case CGO_CONE:
       ok &= ray->cone3fv(pc, pc + 3, *(pc + 6), *(pc + 7), pc + 8, pc + 11,
-          static_cast<cCylCap>(pc[14]),
-          static_cast<cCylCap>(pc[15]));
+          static_cast<cCylCap>(int(pc[14])),
+          static_cast<cCylCap>(int(pc[15])));
       break;
     case CGO_CUSTOM_CYLINDER:
       {
@@ -10533,8 +10533,8 @@ void copyAttributeForOp(bool isInterleaved, int &nvert, AttribOp *attribOp, int 
     {
       unsigned char *dataPtrUB = (unsigned char *)dataPtr;
       float *pcf = (float*)pc;
-      const cCylCap cap1 = static_cast<cCylCap>(pcf[0]);
-      const cCylCap cap2 = static_cast<cCylCap>(pcf[1]);
+      const cCylCap cap1 = static_cast<cCylCap>(int(pcf[0]));
+      const cCylCap cap2 = static_cast<cCylCap>(int(pcf[1]));
       dataPtrUB[0] =
           cyl_shader_bits_from_caps(cap1, cap2) | cCylShaderInterpColor;
     }
