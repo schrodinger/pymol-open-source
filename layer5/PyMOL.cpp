@@ -1151,7 +1151,7 @@ PyMOLreturn_status PyMOL_CmdColor(CPyMOL * I, const char *color, const char *sel
 {
   int ok = true;
   PYMOL_API_LOCK
-  auto result = ExecutiveColor(I->G, selection, color, flags, quiet);
+  auto result = ExecutiveColorFromSele(I->G, selection, color, flags, quiet);
   ok = static_cast<bool>(result);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
