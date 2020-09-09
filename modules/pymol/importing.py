@@ -1104,8 +1104,8 @@ PYMOL API
 
     fetchHosts = {
         "pdb"  : "http://ftp.wwpdb.org/pub/pdb",
-        "pdbe" : "ftp://ftp.ebi.ac.uk/pub/databases/pdb",
-        "pdbj" : "ftp://ftp.pdbj.org/pub/pdb",
+        "pdbe" : "http://ftp.ebi.ac.uk/pub/databases/pdb",
+        "pdbj" : "http://ftp.pdbj.org/pub/pdb",
     }
 
     hostPaths = {
@@ -1129,10 +1129,10 @@ PYMOL API
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=3DSaveSDF",
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=SaveSDF",
         ],
-        "emd": "ftp://ftp.wwpdb.org/pub/emdb/structures/EMD-{code}/map/emd_{code}.map.gz",
+        "emd": "/../emdb/structures/EMD-{code}/map/emd_{code}.map.gz",
         "cc": [
             "http://files.rcsb.org/ligands/download/{code}.cif",
-            "ftp://ftp.ebi.ac.uk/pub/databases/msd/pdbechem/files/mmcif/{code}.cif",
+            "http://ftp.ebi.ac.uk/pub/databases/msd/pdbechem_v2/{code:.1}/{code}/{code}.cif",
         ],
     }
 
