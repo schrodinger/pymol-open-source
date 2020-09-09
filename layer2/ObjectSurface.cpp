@@ -1112,7 +1112,7 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
 
 pymol::Result<float> ObjectSurfaceGetLevel(ObjectSurface * I, int state)
 {
-  if(state >= I->State.size()) {
+  if(state >= int(I->State.size())) {
     return pymol::make_error("Invalid surface state");
   } else {
     if(state < 0) {
@@ -1131,7 +1131,7 @@ int ObjectSurfaceSetLevel(ObjectSurface * I, float level, int state, int quiet)
 {
   int ok = true;
   int once_flag = true;
-  if(state >= I->State.size()) {
+  if(state >= int(I->State.size())) {
     ok = false;
   } else {
     for(int a = 0; a < I->State.size(); a++) {
