@@ -68,7 +68,9 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
   short use_shader = SettingGetGlobal_b(G, cSetting_ribbon_use_shader) &&
                      SettingGetGlobal_b(G, cSetting_use_shaders);
   bool ribbon_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
-                             SettingGetGlobal_b(G, cSetting_ribbon_as_cylinders);
+                             SettingGet<bool>(G, I->R.cs->Setting,
+                                                 I->R.obj->Setting,
+                                                 cSetting_ribbon_as_cylinders);
 
   if(ray) {
 #ifndef _PYMOL_NO_RAY

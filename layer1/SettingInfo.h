@@ -777,7 +777,7 @@ enum {
   REC_b( 677, stick_as_cylinders                      , global    , 1 ),
   REC_b( 678, mesh_as_cylinders                       , global    , 0 ),
   REC_b( 679, line_as_cylinders                       , global    , 0 ),
-  REC_b( 680, ribbon_as_cylinders                     , global    , 0 ),
+  REC_b( 680, ribbon_as_cylinders                     , ostate    , 0 ),
   REC_b( 681, ribbon_use_shader                       , global    , 1 ),
   REC_b( 682, excl_display_lists_shaders              , unused    , 0 ),
   REC_b( 683, dash_use_shader                         , global    , 1 ),
