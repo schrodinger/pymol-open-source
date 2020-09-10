@@ -2106,7 +2106,7 @@ static void CGOCountNumVertices(const CGO *I, int *num_total_vertices, int *num_
 }
 
 /**
- * @param I Primitive CGO
+ * @param[in] I Primitive CGO
  * @return number of vertices, or -1 on error
  */
 static int CGOCountNumVerticesForScreen(const CGO* I)
@@ -3863,244 +3863,268 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
   return (cgo);
 }
 
+struct OptimizeSphereData
+{
+  std::vector<float> vert;
+  std::vector<unsigned char> color;
+  std::vector<int> pickColor;
+  std::vector<unsigned char> rightUpFlagsUB;
+  std::vector<float> rightUpFlags;
+  float min[3] = { FLT_MAX, FLT_MAX, FLT_MAX };
+  float max[3] = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+  int total_vert = 0;
+  int total_spheres = 0;
+};
+
+/**
+ * @param[in] I input CGO
+ * @param[out] cgo output CGO
+ * @param[in] num_total_spheres Number of spheres to optimize
+ * @param[out] leftOverCGO CGO data not relevant to spheres.
+ * @pre cgo must not be NULL
+ *
+ * Note: To use leftOverCGO, it must already be preallocated.
+ */
+
+static OptimizeSphereData GetOptimizeSphereData(const CGO* I, CGO*& cgo, int num_total_spheres, CGO* leftOverCGO)
+{
+  OptimizeSphereData sphereData;
+  const int tot = VERTICES_PER_SPHERE * 4 * num_total_spheres;
+#if defined(PURE_OPENGL_ES_2)
+  int rightup_flags[6] = { 0, 1, 3, 3, 2, 0 };
+#else
+  int rightup_flags[4] = { 0, 1, 3, 2 };
+#endif
+
+  auto cgo_shader_ub_flags = SettingGet<bool>(cgo->G, cSetting_cgo_shader_ub_flags);
+
+  sphereData.vert.resize(tot);
+  auto vertVals = sphereData.vert.data();
+
+  sphereData.color.resize(tot);
+  auto colorValsUB = sphereData.color.data();
+
+  unsigned char* rightUpFlagValsUB = nullptr;
+  float* rightUpFlagVals = nullptr;
+  if (cgo_shader_ub_flags){
+    sphereData.rightUpFlagsUB.resize(VALUES_PER_IMPOSTER_SPACE_COORD * VERTICES_PER_SPHERE * num_total_spheres);
+    rightUpFlagValsUB = sphereData.rightUpFlagsUB.data();
+  } else {
+    sphereData.rightUpFlags.resize(VALUES_PER_IMPOSTER_SPACE_COORD * VERTICES_PER_SPHERE * num_total_spheres);
+    rightUpFlagVals = sphereData.rightUpFlags.data();
+  }
+
+  bool has_picking = CGOHasOperationsOfType(I, CGO_PICK_COLOR);
+  int* pickcolorVals = nullptr;
+  if (has_picking){
+    // atom/bond info for picking, 2 ints for each sphere
+    sphereData.pickColor.resize(num_total_spheres * 2 * 4);
+    pickcolorVals = sphereData.pickColor.data();
+  }
+
+  cgo->alpha = 1.f;
+  float min_alpha = 1.f;
+  bool copyNormalToLeftOver = false;
+  bool copyColorToLeftOver = false;
+  bool copyPickColorToLeftOver = false;
+  bool copyAlphaToLeftOver = false;
+  bool ok = true;
+
+  for (auto it = I->begin(); ok && !it.is_stop(); ++it) {
+    const auto op = it.op_code();
+    const auto pc = it.data();
+
+    switch (op) {
+    case CGO_NORMAL:
+      cgo->normal[0] = *pc; cgo->normal[1] = *(pc + 1); cgo->normal[2] = *(pc + 2);
+      copyNormalToLeftOver = true;
+    break;
+    case CGO_COLOR:
+      cgo->color[0] = *pc; cgo->color[1] = *(pc + 1); cgo->color[2] = *(pc + 2);
+      copyColorToLeftOver = true;
+    break;
+    case CGO_ALPHA:
+      cgo->alpha = *pc;
+      if (cgo->alpha < min_alpha) min_alpha = cgo->alpha;
+      copyAlphaToLeftOver = true;
+      break;
+    case CGO_PICK_COLOR:
+      cgo->current_pick_color_index = CGO_get_uint(pc);
+      cgo->current_pick_color_bond = CGO_get_int(pc + 1);
+      copyPickColorToLeftOver = true;
+      break;
+    case CGO_SPHERE:
+      for (int vv=0; vv<VERTICES_PER_SPHERE; vv++) { // generate eight vertices of a bounding box for each cylinder
+        vertVals[0] = *(pc);
+        vertVals[1] = *(pc+1);
+        vertVals[2] = *(pc+2);
+        vertVals[3] = *(pc+3);
+        set_min_max(sphereData.min, sphereData.max, vertVals);
+        if (cgo_shader_ub_flags){
+          rightUpFlagValsUB[0] = rightup_flags[vv];
+          rightUpFlagValsUB++;
+        } else {
+          rightUpFlagVals[0] = rightup_flags[vv];
+          rightUpFlagVals++;
+        }
+        colorValsUB[0] = CLIP_COLOR_VALUE(cgo->color[0]);
+        colorValsUB[1] = CLIP_COLOR_VALUE(cgo->color[1]);
+        colorValsUB[2] = CLIP_COLOR_VALUE(cgo->color[2]);
+        colorValsUB[3] = CLIP_COLOR_VALUE(cgo->alpha);
+        colorValsUB += 4;
+        vertVals += 4;
+        sphereData.total_vert++;
+      }
+      if (has_picking){
+        *(pickcolorVals++) = cgo->current_pick_color_index;
+        *(pickcolorVals++) = cgo->current_pick_color_bond;
+      }
+      sphereData.total_spheres++;
+      break;
+    case CGO_DRAW_BUFFERS_INDEXED:
+    case CGO_DRAW_BUFFERS_NOT_INDEXED:
+      PRINTFB(I->G, FB_CGO, FB_Warnings) "WARNING: CGOOptimizeSpheresToVBONonIndexed() CGO_DRAW_BUFFERS_INDEXED or CGO_DRAW_BUFFERS_INDEXED encountered op=%d\n", op ENDFB(I->G);
+      break;
+    case CGO_DRAW_SCREEN_TEXTURES_AND_POLYGONS:
+      PRINTFB(I->G, FB_CGO, FB_Warnings) "WARNING: CGOOptimizeCylindersToVBO() CGO_DRAW_SCREEN_TEXTURES_AND_POLYGONS encountered op=0x%X\n", op ENDFB(I->G);
+      break;
+    case CGO_DRAW_LABELS:
+      PRINTFB(I->G, FB_CGO, FB_Warnings) "WARNING: CGOOptimizeCylindersToVBO() CGO_DRAW_LABELS encountered op=0x%X\n", op ENDFB(I->G);
+      break;
+    case CGO_DRAW_TEXTURES:
+      PRINTFB(I->G, FB_CGO, FB_Warnings) "WARNING: CGOOptimizeCylindersToVBO() CGO_DRAW_TEXTURES encountered op=0x%X\n", op ENDFB(I->G);
+      break;
+    case CGO_DRAW_ARRAYS:
+    default:
+      if (!leftOverCGO)
+        break;
+      if (copyAlphaToLeftOver){
+        copyAlphaToLeftOver = false;
+        CGOAlpha(leftOverCGO, cgo->alpha);
+      }
+      if (copyColorToLeftOver){
+        copyColorToLeftOver = false;
+        CGOColor(leftOverCGO, cgo->color[0],  cgo->color[1],  cgo->color[2] );
+      }
+      if (copyNormalToLeftOver){
+        CGONormalv(leftOverCGO, cgo->normal );
+      }
+      if (copyPickColorToLeftOver){
+        copyPickColorToLeftOver = false;
+        CGOPickColor(leftOverCGO, cgo->current_pick_color_index, cgo->current_pick_color_bond);
+      }
+      leftOverCGO->add_to_cgo(op, pc);
+    }
+#ifndef _WEBGL
+    ok &= !I->G->Interrupt;
+#endif
+  }
+  return sphereData;
+}
+
+/**
+ * Creates and fills OpenGL buffers with optimized sphere Data
+ * @param[in] I input CGO
+ * @param[out] cgo output optimized CGO
+ * @param[in] addshaders adds shader call to CGO
+ * @param[in] num_total_spheres number of total spheres to optimize
+ * @param[in] sphereData Optimized Sphere Data
+ * @pre cgo must not be NULL
+ */
+
+static bool PopulateGLBufferOptimizedSphereData(const CGO* I, CGO* cgo, bool addshaders, int num_total_spheres, const OptimizeSphereData& sphereData)
+{
+  bool ok = true;
+  GLenum rtp = GL_FLOAT;
+  short rsz  = sizeof(float);
+  const void* radiusptr = sphereData.rightUpFlags.data();
+  auto cgo_shader_ub_flags = SettingGet<bool>(cgo->G, cSetting_cgo_shader_ub_flags);
+  if (cgo_shader_ub_flags) {
+    rtp = GL_UNSIGNED_BYTE;
+    rsz = sizeof(GLubyte);
+    radiusptr = sphereData.rightUpFlagsUB.data();
+  }
+
+  VertexBuffer * vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
+  ok &= vbo->bufferData({
+      BufferDesc( "a_vertex_radius", GL_FLOAT, 4, sizeof(float) * sphereData.total_vert * 4, sphereData.vert.data(), GL_FALSE ),
+      BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * sphereData.total_vert, sphereData.color.data(), GL_TRUE ),
+      BufferDesc( "a_rightUpFlags", rtp, VALUES_PER_IMPOSTER_SPACE_COORD, rsz * sphereData.total_vert * VALUES_PER_IMPOSTER_SPACE_COORD, radiusptr, GL_FALSE )
+    });
+  size_t vboid = vbo->get_hash_id();
+
+  VertexBuffer * pickvbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL, GL_DYNAMIC_DRAW);
+  ok &= pickvbo->bufferData({
+      BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, 0, GL_TRUE ),
+      BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * sphereData.total_vert, GL_TRUE )
+    }, 0, sizeof(float) * sphereData.total_vert * 2, 0);
+  size_t pickvboid = pickvbo->get_hash_id();
+
+  cgo->has_draw_buffers = true;
+  cgo->has_draw_sphere_buffers = true;
+
+  auto freebuffers = [vboid, pickvboid, I]() {
+    I->G->ShaderMgr->freeGPUBuffer(vboid);
+    I->G->ShaderMgr->freeGPUBuffer(pickvboid);
+  };
+  if (ok){
+    if (addshaders)
+      CGOEnable(cgo, GL_SPHERE_SHADER);
+    auto pickcolor_data = (int*)cgo->add<cgo::draw::sphere_buffers>(sphereData.total_spheres, (cgo_shader_ub_flags ? 3 : 1), vboid, pickvboid); // always cgo_shader_ub_color
+    CHECKOK(ok, pickcolor_data);
+    if (ok && !sphereData.pickColor.empty()){
+      memcpy(pickcolor_data, sphereData.pickColor.data(), num_total_spheres * 2 * 4);
+    }
+    if (ok && addshaders)
+      ok &= CGODisable(cgo, GL_SPHERE_SHADER);
+    if (!ok){
+      freebuffers();
+    }
+  } else {
+    freebuffers();
+  }
+  return ok;
+}
+
+/**
+ * Optimizes Sphere CGO and populates data into GPU buffers
+ * @param[in] I input CGO
+ * @param[in] est estimated size of output CGO
+ * @param[in] addshaders adds shader call to CGO
+ * @param[out] leftOverCGO CGO data not relevant to spheres.
+ * @return optimized CGO
+ *
+ * Note: If estimated size is unknown beforehand, provide 0 to est.
+ * Note: To use leftOverCGO, it must already be preallocated.
+ */
+
 CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est, bool addshaders, CGO *leftOverCGO)
 {
-  CGO *cgo = NULL;
+  bool ok = true;
+  int num_total_spheres = CGOCountNumberOfOperationsOfType(I, CGO_SPHERE);
 
-  int rightup_flags[4] = { 0, 1, 3, 2 };
-  int num_total_spheres = 0;
-  short has_draw_buffer = false;
-  float min[3] = { FLT_MAX, FLT_MAX, FLT_MAX }, max[3] = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
-  int vv, total_vert = 0, total_spheres = 0;
-  int ok = true;
+  if (num_total_spheres <= 0) {
+    return nullptr;
+  }
+  auto cgo = CGONewSized(I->G, I->c + est);
+  auto sphereData = GetOptimizeSphereData(I, cgo, num_total_spheres, leftOverCGO);
 
-  num_total_spheres = CGOCountNumberOfOperationsOfType(I, CGO_SPHERE);
-  if (num_total_spheres>0) {
-    float *vertVals = 0;
-    GLubyte *rightUpFlagValsUB = 0;
-    float *rightUpFlagVals = 0;
-    GLubyte *colorValsUB = 0;
-    int tot = VERTICES_PER_SPHERE * 4 * num_total_spheres;
-    float *org_vertVals = NULL;
-    GLubyte *org_colorValsUB = NULL;
-    int *org_pickcolorVals = NULL, *pickcolorVals = NULL;
-    GLubyte *org_rightUpFlagValsUB = NULL;
-    float *org_rightUpFlagVals = NULL;
-    float min_alpha;
-    short cgo_shader_ub_flags;
-    bool copyNormalToLeftOver, copyColorToLeftOver, copyPickColorToLeftOver, copyAlphaToLeftOver ;
-    bool has_picking = CGOHasOperationsOfType(I, CGO_PICK_COLOR);
+  if (ok && sphereData.total_spheres > 0) {
+    ok = PopulateGLBufferOptimizedSphereData(I, cgo, addshaders, num_total_spheres, sphereData);
+  }
 
-    cgo = CGONewSized(I->G, I->c + est);
+  if (ok && num_total_spheres>0) {
+    ok &= CGOBoundingBox(cgo, sphereData.min, sphereData.max);
+  }
 
-    cgo_shader_ub_flags = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_flags);
-  
-    org_vertVals = vertVals = pymol::malloc<float>(tot);
-    if (!org_vertVals){
-      PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeSpheresToVBONonIndexed() org_vertVals could not be allocated\n" ENDFB(I->G);	
-      CGOFree(cgo);
-      return (NULL);
-    }
+  if (ok)
+    ok &= CGOStop(cgo);
 
-    org_colorValsUB = colorValsUB = pymol::malloc<GLubyte>(tot);
-    if (!org_colorValsUB){
-      PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeSpheresToVBONonIndexed() org_colorValsUB could not be allocated\n" ENDFB(I->G);	
-      FreeP(org_vertVals);
-      CGOFree(cgo);
-      return (NULL);
-    }
-
-    if (cgo_shader_ub_flags){
-      org_rightUpFlagValsUB = rightUpFlagValsUB = pymol::malloc<GLubyte>(VALUES_PER_IMPOSTER_SPACE_COORD * VERTICES_PER_SPHERE * num_total_spheres);
-      if (!org_rightUpFlagValsUB){
-	PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeSpheresToVBONonIndexed() org_rightUpFlagValsUB could not be allocated\n" ENDFB(I->G);	
-	FreeP(org_colorValsUB);	FreeP(org_vertVals);
-	CGOFree(cgo);
-	return (NULL);
-      }
-    } else {
-      org_rightUpFlagVals = rightUpFlagVals = pymol::malloc<float>(VALUES_PER_IMPOSTER_SPACE_COORD * VERTICES_PER_SPHERE * num_total_spheres);
-      if (!org_rightUpFlagVals){
-	PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeSpheresToVBONonIndexed() org_rightUpFlagVals could not be allocated\n" ENDFB(I->G);	
-	FreeP(org_colorValsUB);	FreeP(org_vertVals);
-	CGOFree(cgo);
-	return (NULL);
-      }
-    }
-    if (has_picking){
-      // atom/bond info for picking, 2 ints for each sphere
-      org_pickcolorVals = pickcolorVals = pymol::malloc<int>(num_total_spheres * 2 * 4);
-    }
-
-    cgo->alpha = 1.f;
-    min_alpha = 1.f;
-    copyNormalToLeftOver = copyColorToLeftOver = copyPickColorToLeftOver = copyAlphaToLeftOver = 0;
-
-    for (auto it = I->begin(); ok && !it.is_stop(); ++it) {
-      const auto op = it.op_code();
-      const auto pc = it.data();
-
-      switch (op) {
-      case CGO_NORMAL:
-        cgo->normal[0] = *pc; cgo->normal[1] = *(pc + 1); cgo->normal[2] = *(pc + 2);
-	copyNormalToLeftOver = true;
-      break;
-      case CGO_COLOR:
-        cgo->color[0] = *pc; cgo->color[1] = *(pc + 1); cgo->color[2] = *(pc + 2);
-	copyColorToLeftOver = true;
-      break;
-      case CGO_ALPHA:
-        cgo->alpha = *pc;
-        if (cgo->alpha < min_alpha) min_alpha = cgo->alpha;
-	copyAlphaToLeftOver = true;
-	break;
-      case CGO_PICK_COLOR:
-	cgo->current_pick_color_index = CGO_get_uint(pc);
-	cgo->current_pick_color_bond = CGO_get_int(pc + 1);
-	copyPickColorToLeftOver = true;
-	break;
-      case CGO_SPHERE:
-	for (vv=0; vv<VERTICES_PER_SPHERE; vv++) { // generate eight vertices of a bounding box for each cylinder
-	  vertVals[0] = *(pc);
-	  vertVals[1] = *(pc+1);
-	  vertVals[2] = *(pc+2);
-	  vertVals[3] = *(pc+3);
-	  set_min_max(min, max, vertVals);
-	  if (cgo_shader_ub_flags){
-	    rightUpFlagValsUB[0] = rightup_flags[vv];
-	    rightUpFlagValsUB++;
-	  } else {
-	    rightUpFlagVals[0] = rightup_flags[vv];
-	    rightUpFlagVals++;
-	  }
-          colorValsUB[0] = CLIP_COLOR_VALUE(cgo->color[0]);
-          colorValsUB[1] = CLIP_COLOR_VALUE(cgo->color[1]);
-          colorValsUB[2] = CLIP_COLOR_VALUE(cgo->color[2]);
-          colorValsUB[3] = CLIP_COLOR_VALUE(cgo->alpha);
-          colorValsUB += 4;
-	  vertVals += 4;
-	  total_vert++;
-	}
-        if (has_picking){
-          *(pickcolorVals++) = cgo->current_pick_color_index;
-          *(pickcolorVals++) = cgo->current_pick_color_bond;
-        }
-	total_spheres++;
-	break;
-      case CGO_DRAW_BUFFERS_INDEXED:
-      case CGO_DRAW_BUFFERS_NOT_INDEXED:
-	PRINTFB(I->G, FB_CGO, FB_Warnings) "WARNING: CGOOptimizeSpheresToVBONonIndexed() CGO_DRAW_BUFFERS_INDEXED or CGO_DRAW_BUFFERS_INDEXED encountered op=%d\n", op ENDFB(I->G);	
-	break;
-      case CGO_DRAW_SCREEN_TEXTURES_AND_POLYGONS:
-	PRINTFB(I->G, FB_CGO, FB_Warnings) "WARNING: CGOOptimizeCylindersToVBO() CGO_DRAW_SCREEN_TEXTURES_AND_POLYGONS encountered op=0x%X\n", op ENDFB(I->G);	
-	break;
-      case CGO_DRAW_LABELS:
-	PRINTFB(I->G, FB_CGO, FB_Warnings) "WARNING: CGOOptimizeCylindersToVBO() CGO_DRAW_LABELS encountered op=0x%X\n", op ENDFB(I->G);	
-	break;
-      case CGO_DRAW_TEXTURES:
-	PRINTFB(I->G, FB_CGO, FB_Warnings) "WARNING: CGOOptimizeCylindersToVBO() CGO_DRAW_TEXTURES encountered op=0x%X\n", op ENDFB(I->G);	
-	break;
-      case CGO_DRAW_ARRAYS:
-      default:
-        if (!leftOverCGO)
-          break;
-	if (copyAlphaToLeftOver){
-          copyAlphaToLeftOver = false;
-	  CGOAlpha(leftOverCGO, cgo->alpha);
-	}
-	if (copyColorToLeftOver){
-          copyColorToLeftOver = false;
-	  CGOColor(leftOverCGO, cgo->color[0],  cgo->color[1],  cgo->color[2] );
-	}
-	if (copyNormalToLeftOver){
-	  CGONormalv(leftOverCGO, cgo->normal );
-	}
-	if (copyPickColorToLeftOver){
-          copyPickColorToLeftOver = false;
-	  CGOPickColor(leftOverCGO, cgo->current_pick_color_index, cgo->current_pick_color_bond);
-	}
-        leftOverCGO->add_to_cgo(op, pc);
-      }
-#ifndef _WEBGL
-      ok &= !I->G->Interrupt;
-#endif
-    }
-    if (ok && total_spheres > 0) {
-      GLenum rtp = GL_FLOAT;
-      short rsz  = sizeof(float);
-      void * radiusptr = (void *)org_rightUpFlagVals;
-      if (cgo_shader_ub_flags) {
-        rtp = GL_UNSIGNED_BYTE;
-        rsz = sizeof(GLubyte);
-        radiusptr = (void *)org_rightUpFlagValsUB;
-      }
-
-      VertexBuffer * vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
-      ok &= vbo->bufferData({
-          BufferDesc( "a_vertex_radius", GL_FLOAT, 4, sizeof(float) * total_vert * 4, org_vertVals, GL_FALSE ),
-          BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * total_vert, org_colorValsUB, GL_TRUE ),
-          BufferDesc( "a_rightUpFlags", rtp, VALUES_PER_IMPOSTER_SPACE_COORD, rsz * total_vert * VALUES_PER_IMPOSTER_SPACE_COORD, radiusptr, GL_FALSE )
-        });
-      size_t vboid = vbo->get_hash_id();
-
-      VertexBuffer * pickvbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL, GL_DYNAMIC_DRAW);
-      ok &= pickvbo->bufferData({
-          BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, 0, GL_TRUE ),
-          BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * total_vert, GL_TRUE )
-        }, 0, sizeof(float) * total_vert * 2, 0);
-      size_t pickvboid = pickvbo->get_hash_id();
-
-      has_draw_buffer = true;
-
-      auto freebuffers = [vboid, pickvboid, I]() {
-        I->G->ShaderMgr->freeGPUBuffer(vboid);
-        I->G->ShaderMgr->freeGPUBuffer(pickvboid);
-      };
-      if (ok){
-        int *pickcolor_data;
-	if (addshaders)
-	  CGOEnable(cgo, GL_SPHERE_SHADER);
-	pickcolor_data = (int*)cgo->add<cgo::draw::sphere_buffers>(total_spheres, (cgo_shader_ub_flags ? 3 : 1), vboid, pickvboid); // always cgo_shader_ub_color
-        CHECKOK(ok, pickcolor_data);
-        if (ok && has_picking){
-          memcpy(pickcolor_data, org_pickcolorVals, num_total_spheres * 2 * 4);
-        }
-	if (ok && addshaders)
-	  ok &= CGODisable(cgo, GL_SPHERE_SHADER);
-	if (!ok){
-	  freebuffers();
-	}
-      } else {
-        freebuffers();
-      }
-    }
-
-    FreeP(org_pickcolorVals);
-    FreeP(org_vertVals);
-    FreeP(org_colorValsUB);
-    if (cgo_shader_ub_flags){
-      FreeP(org_rightUpFlagValsUB);
-    } else {
-      FreeP(org_rightUpFlagVals);
-    }
-
-    if (ok && num_total_spheres>0){
-      ok &= CGOBoundingBox(cgo, min, max);
-    }
-    
-    if (ok)
-      ok &= CGOStop(cgo);
-
-    if (ok){
-      if (has_draw_buffer){
-	cgo->has_draw_buffers = true;
-	cgo->has_draw_sphere_buffers = true;
-      }
-      cgo->use_shader = I->use_shader;
-      if (cgo->use_shader){
-	cgo->cgo_shader_ub_color = true;
-	cgo->cgo_shader_ub_normal = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_normal);
-      }
+  if (ok){
+    cgo->use_shader = I->use_shader;
+    if (cgo->use_shader){
+      cgo->cgo_shader_ub_color = true;
+      cgo->cgo_shader_ub_normal = SettingGet<bool>(cgo->G, cSetting_cgo_shader_ub_normal);
     }
   }
   if (!ok){
