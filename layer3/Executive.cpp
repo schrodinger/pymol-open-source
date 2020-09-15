@@ -12331,6 +12331,12 @@ int ExecutiveSetObjSettingFromString(PyMOLGlobals * G,
 
 /*========================================================================*/
 /**
+ * Restore setting to default value.
+ *
+ * The effective value will be the value at the next higher level (e.g. unset
+ * state-level -> use object-level) or the value stored in `G->Default` for
+ * global settings.
+ *
  * @return Always true
  */
 pymol::Result<> ExecutiveUnsetSetting(PyMOLGlobals * G, int index, pymol::zstring_view preSele,
@@ -12356,21 +12362,11 @@ pymol::Result<> ExecutiveUnsetSetting(PyMOLGlobals * G, int index, pymol::zstrin
   }
 
   if(sele[0] == 0) {
-    // Set global setting to an "off" value.
-    // NOTE: It would be nice if this would restore the default setting, but
-    //       that's not how Warren implemented it and we don't want to break
-    //       legacy PyMOL behavior.
-    if (!SettingIsDefaultZero(index)) {
-      PRINTFB(G, FB_Executive, FB_Warnings)
-        " Warning: The behavior of \"unset\" for global numeric settings will change.\n"
-        " Use \"set %s, 0\" to ensure consistent behavior in future PyMOL versions.",
-        name ENDFB(G);
-      SettingSetGlobal_i(G, index, 0);
-    } else {
-      SettingRestoreDefault(G->Setting, index, G->Default);
-      if (!quiet)
-      PRINTFB(G, FB_Executive, FB_Actions)
-        " Setting: %s restored to default\n", name ENDFB(G);
+    SettingRestoreDefault(G->Setting, index, G->Default);
+    if (!quiet && Feedback(G, FB_Executive, FB_Actions)) {
+      OrthoLineType value = "";
+      SettingGetTextValue(G, nullptr, nullptr, index, value);
+      PRINTF " Setting: %s restored to default (%s)\n", name, value ENDF(G);
     }
   }
   else {

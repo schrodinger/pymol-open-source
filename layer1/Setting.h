@@ -186,8 +186,6 @@ int SettingUnset(CSetting * I, int index);
 
 void SettingRestoreDefault(CSetting * I, int index, const CSetting * src=NULL);
 
-bool SettingIsDefaultZero(int index);
-
 int SettingGetType(int index);
 inline int SettingGetType(PyMOLGlobals *, int index) {
   return SettingGetType(index);

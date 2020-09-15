@@ -1520,25 +1520,6 @@ void SettingInit(PyMOLGlobals * G, CSetting * I)
 
 /*========================================================================*/
 /*
- * Return false if type is numeric and default value is non-zero.
- */
-bool SettingIsDefaultZero(int index)
-{
-  switch (SettingInfo[index].type) {
-    case cSetting_boolean:
-    case cSetting_int:
-    case cSetting_float:
-      if (SettingInfo[index].value.i[0] == 0)
-        return true;
-      return false;
-  }
-
-  return true;
-}
-
-
-/*========================================================================*/
-/*
  * Restore the default value from `src` or `SettingInfo`
  */
 void SettingRestoreDefault(CSetting * I, int index, const CSetting * src)
