@@ -29,6 +29,8 @@ Z* -------------------------------------------------------------------
 #include"OVLexicon.h"
 #include"OVOneToOne.h"
 
+struct ObjectGadgetRamp;
+
 #define cColorGadgetRamp  1
 
 #define cColorDefault     -1
@@ -44,29 +46,38 @@ Z* -------------------------------------------------------------------
 #define cColor_TRGB_Bits  0x40000000
 #define cColor_TRGB_Mask  0xC0000000
 
-typedef struct {
-  const char* Name;
-  Vector3f Color, LutColor;
-  char LutColorFlag;
-  char Custom, Fixed;
-  /* not saved */
-  int old_session_index;
-} ColorRec;
+struct ColorRec {
+  ColorRec() = delete;
+  ColorRec(const char* name)
+      : Name(name)
+  {
+  }
 
-typedef struct {
-  const char* Name;
-  void *Ptr;
-  int Type;
+  const char* Name = nullptr;
+  Vector3f Color;
+  Vector3f LutColor;
+  bool LutColorFlag = false;
+  bool Custom = false;
+  bool Fixed = false;
+
+  /* not saved */
+  int old_session_index = 0;
+};
+
+struct ExtRec {
+  const char* Name = nullptr;
+  ObjectGadgetRamp* Ptr = nullptr;
   /* not saved */
   int old_session_index;
-} ExtRec;
+};
 
 struct CColor {
   using ColorIdx = int;
-  ColorRec *Color{};
-  int NColor{};
-  ExtRec *Ext{};
-  int NExt{};
+
+  std::vector<ColorRec> Color;
+
+  std::vector<ExtRec> Ext;
+
   int LUTActive{};
   std::vector<unsigned int> ColorTable{};
   float Gamma = 1.0f;
@@ -75,8 +86,8 @@ struct CColor {
   float RGBColor[3]{};            /* save global float for returning (float*) */
   char RGBName[11]{}; // "0xTTRRGGBB"
   /* not stored */
-  int HaveOldSessionColors{};
-  int HaveOldSessionExtColors{};
+  bool HaveOldSessionColors = false;
+  bool HaveOldSessionExtColors = false;
   float Front[3] { 1.0f, 1.0f, 1.0f };
   float Back[3]{};
 };
@@ -108,7 +119,7 @@ bool ColorGetCheckRamped(PyMOLGlobals * G, int index, const float *vertex, float
 
 struct ObjectGadgetRamp *ColorGetRamp(PyMOLGlobals * G, int index);
 
-void ColorRegisterExt(PyMOLGlobals * G, const char *name, void *extPtr, int type);
+void ColorRegisterExt(PyMOLGlobals* G, const char* name, ObjectGadgetRamp*);
 void ColorForgetExt(PyMOLGlobals * G, const char *name);
 
 PyObject *ColorAsPyList(PyMOLGlobals * G);

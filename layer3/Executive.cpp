@@ -5023,7 +5023,7 @@ pymol::Result<> ExecutiveRampNew(PyMOLGlobals* G, const char* name,
   if (obj != origRamp) {
     ExecutiveDelete(G, name);
     ObjectSetName((CObject *) obj, name);
-    ColorRegisterExt(G, ((CObject *) obj)->Name, (void *) obj, cColorGadgetRamp);
+    ColorRegisterExt(G, obj->Name, obj);
     ExecutiveManageObject(G, (CObject *) obj, false, quiet);
   }
 

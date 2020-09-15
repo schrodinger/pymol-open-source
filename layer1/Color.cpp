@@ -175,41 +175,25 @@ int ColorCheckRamped(PyMOLGlobals * G, int index)
 ObjectGadgetRamp *ColorGetRamp(PyMOLGlobals * G, int index)
 {
   CColor *I = G->Color;
-  ObjectGadgetRamp *result = NULL;
   if(index <= cColorExtCutoff) {
     index = cColorExtCutoff - index;
-    if(index < I->NExt) {
-      if(!I->Ext[index].Ptr) {
-        if(I->Ext[index].Name) {
-          const char *name = I->Ext[index].Name;
-          I->Ext[index].Ptr = (void *) ExecutiveFindObjectByName(G, name);
-        }
+    if (index < I->Ext.size()) {
+      auto& ext = I->Ext[index];
+      if (!ext.Ptr && ext.Name) {
+        ext.Ptr = ExecutiveFindObject<ObjectGadgetRamp>(G, ext.Name);
       }
-      if(I->Ext[index].Ptr)
-        result = (ObjectGadgetRamp *) I->Ext[index].Ptr;
+      return ext.Ptr;
     }
   }
-  return result;
+  return nullptr;
 }
 
 int ColorGetRamped(PyMOLGlobals * G, int index, const float *vertex, float *color, int state)
 {
   CColor *I = G->Color;
   int ok = false;
-  if(index <= cColorExtCutoff) {
-    index = cColorExtCutoff - index;
-    if(index < I->NExt) {
-      if(!I->Ext[index].Ptr) {
-        if(I->Ext[index].Name) {
-          const char *name = I->Ext[index].Name;
-          I->Ext[index].Ptr = (void *) ExecutiveFindObjectByName(G, name);
-        }
-      }
-      if(I->Ext[index].Ptr)
-        ok = ObjectGadgetRampInterVertex((ObjectGadgetRamp *) I->Ext[index].Ptr,
-                                         vertex, color, state);
-    }
-
+  if (auto* ptr = ColorGetRamp(G, index)) {
+    ok = ObjectGadgetRampInterVertex(ptr, vertex, color, state);
   }
   if(!ok) {
     color[0] = 1.0;
@@ -221,21 +205,19 @@ int ColorGetRamped(PyMOLGlobals * G, int index, const float *vertex, float *colo
   return (ok);
 }
 
-/* Color::ColorGetCheckRamped -- This function gets a color as 3 floats from an index and writes it into
+/**
+ * Gets a color as 3 floats from an index and writes it into
  * the color argument.  If the index is a ramp, then it uses the vertex and state arguments to lookup the
  * color value in the ramp.
  * NOTES: does not support index values cColorObject(-5) or cColorAtomic(-4) color since the object
  *        or atom color is not passed in.
  *
- * PARAMS
+ * @param index - color index value
+ * @param vertex - x/y/z used for ramp lookup (if color index is a ramp)
+ * @param[out] color - output color array of 3 floats
+ * @param state - state lookup if ramp
  *
- * index - color index value
- * vertex - x/y/z used for ramp lookup (if color index is a ramp)
- * color - output color array of 3 floats
- * state - state lookup if ramp
- *
- * RETURN VALUE: returns whether the color index is dependent on a ramp.
- *
+ * @return whether the color index is dependent on a ramp.
  */
 bool ColorGetCheckRamped(PyMOLGlobals * G, int index, const float *vertex, float *color, int state)
 {
@@ -249,108 +231,181 @@ bool ColorGetCheckRamped(PyMOLGlobals * G, int index, const float *vertex, float
   return isRamped;
 }
 
-static int ColorFindExtByName(PyMOLGlobals * G, const char *name, int null_okay, int *best)
+/**
+ * Find a record by case-insensitive name
+ *
+ * @param seq Indexable container (Color or Ext)
+ * @param name Color name
+ * @return seq index or -1 if not found
+ */
+template <typename Sequence>
+static int findByCaseInsensitiveName(
+    PyMOLGlobals* G, const Sequence& seq, const char* name)
 {
-  CColor *I = G->Color;
-  int result = -1;
-  int wm;
-  int a;
-  int mybest;
-  if(!best)
-    best = &mybest;
-  *best = 0;
-  for(a = 0; a < I->NExt; a++) {
-    const char *color_name = I->Ext[a].Name;
-    if(color_name) {
-      wm = WordMatch(G, name, color_name, true);
-      if(wm < 0) {
-        if(null_okay || (I->Ext[a].Ptr)) {
-          result = a;
-          *best = 0;
-          break;
-        }
-      } else if((wm > 0) && ((*best) < wm)) {
-        if(null_okay || (I->Ext[a].Ptr)) {
-          result = a;
-          *best = wm;
-        }
+  for (int a = 0; a < seq.size(); ++a) {
+    auto* color_name = seq[a].Name;
+    if (color_name) {
+      int wm = WordMatch(G, name, color_name, true);
+      if (wm < 0) {
+        return a;
       }
     }
   }
-  return (result);
+
+  return -1;
+}
+
+/**
+ * Find a record by case-insensitive and/or partial name
+ *
+ * @param seq Indexable container (Color or Ext)
+ * @param name Color name
+ * @param[in,out] best Word match score (0 for perfect match), must not be
+ * negative
+ * @return seq index or -1 if not found
+ */
+template <typename Sequence>
+static int findByCaseInsensitivePrefix(
+    PyMOLGlobals* G, const Sequence& seq, const char* name, int& best)
+{
+  int best_a = -1;
+  assert(best >= 0);
+
+  // search for an imperfect match
+  for (int a = 0; a < seq.size(); ++a) {
+    auto* color_name = seq[a].Name;
+    if (color_name) {
+      auto wm = WordMatch(G, name, color_name, true);
+      if (wm < 0) {
+        // perfect case-insensitive match
+        best = 0;
+        return a;
+      }
+
+      if (best < wm) {
+        // prefix match
+        best = wm;
+        best_a = a;
+      }
+    }
+  }
+
+  return best_a;
+}
+
+/**
+ * Find a color ramp by case-insensitive name
+ *
+ * @param name Color name (ramp name)
+ * @return Ext index or -1 if not found
+ */
+static int ColorFindExtByName(PyMOLGlobals* G, const char* name)
+{
+  return findByCaseInsensitiveName(G, G->Color->Ext, name);
 }
 
 /**
  * Map name to index (idx[name] = index)
  *
+ * If the name is already in use and the index can't be reused, then clear the
+ * name on the existing color or ext record.
+ *
+ * @param index Color index
+ * @param name Color name
+ * @param reuse If the name already exists, reuse the existing index if possible
+ * (not possible to reuse a ramp index for a color or vice versa)
+ *
  * @return pointer to stored name string
  */
-static const char* reg_name(
-    std::unordered_map<std::string, CColor::ColorIdx>& idx, int index,
-    const char* name)
+static const char* reg_name(CColor* const I, CColor::ColorIdx const index,
+    const char* name, bool reuse = false)
 {
-  auto handle = idx.emplace(name, index);
+  auto handle = I->Idx.emplace(name, index);
+  auto& handle_name = handle.first->first;
+  auto& handle_index = handle.first->second;
 
-  if (!handle.second) {
-    handle.first->second = index;
+  if (handle_index != index &&
+      (!reuse || bool(cColorExtCutoff < handle_index) !=
+                     bool(cColorExtCutoff < index))) {
+    assert(!handle.second);
+
+    // if we're stealing a name to a new index, clear the name on the old record
+    if (handle_index <= cColorExtCutoff) {
+      auto& ext = I->Ext[cColorExtCutoff - handle_index];
+      assert(ext.Name == handle_name.c_str());
+      ext.Name = nullptr;
+    } else if (handle_index >= 0) {
+      auto& col = I->Color[handle_index];
+      assert(col.Name == handle_name.c_str());
+      col.Name = nullptr;
+    }
+
+    handle_index = index;
   }
 
-  return handle.first->first.c_str();
+  return handle_name.c_str();
 }
 
-void ColorRegisterExt(PyMOLGlobals * G, const char *name, void *ptr, int type)
+void ColorRegisterExt(PyMOLGlobals* G, const char* name, ObjectGadgetRamp* ptr)
 {
   CColor *I = G->Color;
   int a;
 
-  a = ColorFindExtByName(G, name, true, NULL);
+  a = ColorFindExtByName(G, name);
   if(a < 0) {
-    VLACheck(I->Ext, ExtRec, I->NExt);
-    a = I->NExt;
-    I->NExt++;
-    I->Ext[a].Name = reg_name(I->Idx, cColorExtCutoff - a, name);
+    a = I->Ext.size();
+
+    I->Ext.emplace_back();
+    auto& ext = I->Ext.back();
+
+    ext.Name = reg_name(I, cColorExtCutoff - a, name);
+    assert(I->Idx[ext.Name] == cColorExtCutoff - a);
   }
   if(a >= 0) {
     I->Ext[a].Ptr = ptr;
-    I->Ext[a].Type = type;
   }
 }
 
 void ColorForgetExt(PyMOLGlobals * G, const char *name)
 {
   CColor *I = G->Color;
-  int a;
-  a = ColorFindExtByName(G, name, true, NULL);
+  auto a = ColorFindExtByName(G, name);
 
-  if(a >= 0) {                  /* currently leaks memory in I->Ext array -- TODO fix */
-    if(I->Ext[a].Name) {
-      I->Idx.erase(I->Ext[a].Name);
-    }
-    I->Ext[a].Name = 0;
-    I->Ext[a].Ptr = NULL;
+  if (a < 0)
+    return;
+
+  // currently leaks memory in I->Ext array
+  auto& ext = I->Ext[a];
+  ext.Ptr = nullptr;
+
+  if (ext.Name) {
+    I->Idx.erase(ext.Name);
+    ext.Name = nullptr;
   }
 }
 
 PyObject *ColorExtAsPyList(PyMOLGlobals * G)
 {
   CColor *I = G->Color;
-  PyObject *result, *list;
-  ExtRec *ext;
-  int a;
 
-  result = PyList_New(I->NExt);
-  ext = I->Ext;
-  for(a = 0; a < I->NExt; a++) {
-    list = PyList_New(2);
-    {
-      const char *name = ext->Name ? ext->Name : "";
-      PyList_SetItem(list, 0, PyString_FromString(name));
-    }
-    PyList_SetItem(list, 1, PyInt_FromLong(ext->Type));
-    PyList_SetItem(result, a, list);
-    ext++;
+  auto* result = PyList_New(I->Ext.size());
+
+  size_t a = 0;
+
+  for (const auto& ext : I->Ext) {
+    auto* list = PyList_New(2);
+    const char* name = ext.Name ? ext.Name : "";
+    PyList_SetItem(list, 0, PyString_FromString(name));
+
+    // obsolete since PyMOL 2.5, store for backwards compatibility
+    PyList_SetItem(list, 1, PyInt_FromLong(cColorGadgetRamp));
+
+    PyList_SetItem(result, a++, list);
   }
-  return (result);
+
+  assert(a == I->Ext.size());
+
+  return result;
 }
 
 
@@ -358,38 +413,37 @@ PyObject *ColorExtAsPyList(PyMOLGlobals * G)
 PyObject *ColorAsPyList(PyMOLGlobals * G)
 {
   CColor *I = G->Color;
-  PyObject *result, *list;
-  ColorRec *color;
-  int n_custom = 0;
-  int a, c;
-  color = I->Color;
-  for(a = 0; a < I->NColor; a++) {
-    if(color->Custom || color->LutColorFlag)
+
+  size_t n_custom = 0;
+  for (const auto& color : I->Color) {
+    if (color.Custom || color.LutColorFlag) {
       n_custom++;
-    color++;
-  }
-  result = PyList_New(n_custom);
-  c = 0;
-  color = I->Color;
-  for(a = 0; a < I->NColor; a++) {
-    if(color->Custom || color->LutColorFlag) {
-      list = PyList_New(7);
-      {
-        const char *name = color->Name;
-        PyList_SetItem(list, 0, PyString_FromString(name));
-      }
-      PyList_SetItem(list, 1, PyInt_FromLong(a));
-      PyList_SetItem(list, 2, PConvFloatArrayToPyList(color->Color, 3));
-      PyList_SetItem(list, 3, PyInt_FromLong((int) color->Custom));
-      PyList_SetItem(list, 4, PyInt_FromLong((int) color->LutColorFlag));
-      PyList_SetItem(list, 5, PConvFloatArrayToPyList(color->LutColor, 3));
-      PyList_SetItem(list, 6, PyInt_FromLong((int) color->Fixed));
-      PyList_SetItem(result, c, list);
-      c++;
     }
-    color++;
   }
-  return (result);
+
+  auto* result = PyList_New(n_custom);
+
+  size_t a = 0;
+  size_t c = 0;
+
+  for (const auto& color : I->Color) {
+    if (color.Custom || color.LutColorFlag) {
+      auto* list = PyList_New(7);
+      PyList_SetItem(list, 0, PyString_FromString(color.Name));
+      PyList_SetItem(list, 1, PyInt_FromLong(a));
+      PyList_SetItem(list, 2, PConvFloatArrayToPyList(color.Color, 3));
+      PyList_SetItem(list, 3, PyInt_FromLong(color.Custom));
+      PyList_SetItem(list, 4, PyInt_FromLong(color.LutColorFlag));
+      PyList_SetItem(list, 5, PConvFloatArrayToPyList(color.LutColor, 3));
+      PyList_SetItem(list, 6, PyInt_FromLong(color.Fixed));
+      PyList_SetItem(result, c++, list);
+    }
+    ++a;
+  }
+
+  assert(c == n_custom);
+
+  return result;
 }
 
 /*========================================================================*/
@@ -398,178 +452,151 @@ int ColorConvertOldSessionIndex(PyMOLGlobals * G, int index)
   CColor *I = G->Color;
   if(index > cColorExtCutoff) {
     if(I->HaveOldSessionColors) {
-      ColorRec *col = I->Color + (I->NColor - 1);
-      int a;
-      for(a = I->NColor - 1; a >= 0; a--) {
-        if(index == col->old_session_index) {
-          index = a;
-          break;
+      for (int a = int(I->Color.size()) - 1; a >= 0; --a) {
+        if (index == I->Color[a].old_session_index) {
+          return a;
         }
-        col--;
       }
     }
   } else if(I->HaveOldSessionExtColors) {
-    ExtRec *ext = I->Ext + (I->NExt - 1);
-    int a;
-    for(a = I->NExt - 1; a >= 0; a--) {
-      if(index == ext->old_session_index) {
-        index = cColorExtCutoff - a;
-        break;
+    for (int a = int(I->Ext.size()) - 1; a >= 0; --a) {
+      if (index == I->Ext[a].old_session_index) {
+        return cColorExtCutoff - a;
       }
-      ext--;
     }
   }
   return index;                 /* failsafe */
 }
 
+#define return_error_if_fail(e) p_return_val_if_fail((e), false);
+
 int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 {
-  int n_ext = 0;
-  int a;
-  int ok = true;
   CColor *I = G->Color;
-  PyObject *rec;
-  ExtRec *ext;
+  size_t n_ext = 0;
 
-  int const n_keep = partial_restore ? I->NExt : 0;
-
-  if(partial_restore) {
-    ext = I->Ext;
-    for(a = 0; a < I->NExt; a++) {
-      ext->old_session_index = 0;
-      ext++;
-    }
-    I->HaveOldSessionExtColors = true;
-  } else {
-    I->HaveOldSessionExtColors = false;
+  if (list && PyList_Check(list)) {
+    n_ext = PyList_Size(list);
   }
-
-  if(ok)
-    ok = (list != NULL);
-  if(ok)
-    ok = PyList_Check(list);
 
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
 
-  if(ok) {
-    n_ext = PyList_Size(list);
-    if(partial_restore) {
-      VLACheck(I->Ext, ExtRec, n_ext + I->NExt);
-      ext = I->Ext + I->NExt;
-    } else {
-      VLACheck(I->Ext, ExtRec, n_ext);
-      ext = I->Ext;
-    }
-    for(a = 0; a < n_ext; a++) {
-      rec = PyList_GetItem(list, a);
-      if(ok)
-        ok = (rec != NULL);
-      if(ok)
-        ok = PyList_Check(rec);
-      if(ok) {
-        WordType name;
-        ok = PConvPyStrToStr(PyList_GetItem(rec, 0), name, sizeof(WordType));
-        ext->Name = reg_name(I->Idx, cColorExtCutoff - (a + n_keep), name);
-      }
-      if(ok)
-        ok = PConvPyIntToInt(PyList_GetItem(rec, 1), &ext->Type);
-      ext->old_session_index = cColorExtCutoff - a;
-      ext++;
-    }
-    if(ok)
-      I->NExt = (ext - I->Ext);
+  if (partial_restore) {
+    I->HaveOldSessionExtColors = I->Ext.size() > 0;
 
+    for (auto& ext : I->Ext) {
+      ext.old_session_index = 0;
+    }
+  } else {
+    I->Ext.clear();
   }
-  return (ok);
+
+  for (int a = 0; a < n_ext; ++a) {
+    auto* rec = PyList_GetItem(list, a);
+
+    return_error_if_fail(rec != nullptr);
+    return_error_if_fail(PyList_Check(rec));
+
+    std::string name;
+    return_error_if_fail(PConvFromPyListItem(G, rec, 0, name));
+
+    char const* name_ptr =
+        reg_name(I, cColorExtCutoff - I->Ext.size(), name.c_str(), true);
+    int const a_new = cColorExtCutoff - I->Idx[name];
+
+    assert(a_new >= 0);
+    assert(a_new <= I->Ext.size());
+    assert(a_new == a || partial_restore);
+
+    if (a_new == I->Ext.size()) {
+      I->Ext.emplace_back();
+    } else {
+      assert(partial_restore);
+    }
+
+    auto& ext = I->Ext[a_new];
+    ext.Name = name_ptr;
+    ext.old_session_index = cColorExtCutoff - a;
+
+    CPythonVal_Free(rec);
+  }
+
+  return true;
 }
 
 
 /*========================================================================*/
 int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 {
-  int n_custom = 0;
-  int a;
-  int index = 0, old_session_index = 0;
-  int ok = true;
-  int ll = 0;
-  CColor *I = G->Color;
-  PyObject *rec;
-  ColorRec *color = NULL;
+  CColor* I = G->Color;
 
-  if(partial_restore) {
-    color = I->Color;
-    for(a = 0; a < I->NColor; a++) {
-      color->old_session_index = 0;
-      color++;
+  if (partial_restore) {
+    for (auto& color : I->Color) {
+      color.old_session_index = 0;
     }
   }
-  I->HaveOldSessionColors = false;
 
-  if(ok)
-    ok = (list != NULL);
-  if(ok)
-    ok = PyList_Check(list);
-  if(ok) {
-    n_custom = PyList_Size(list);
-    for(a = 0; a < n_custom; a++) {
-      rec = PyList_GetItem(list, a);
-      if(ok)
-        ok = (rec != NULL);
-      if(ok)
-        ok = PyList_Check(rec);
-      if(ok)
-        ll = PyList_Size(rec);
-      /* TO SUPPORT BACKWARDS COMPATIBILITY...
-         Always check ll when adding new PyList_GetItem's */
-      if(ok)
-        ok = PConvPyIntToInt(PyList_GetItem(rec, 1), &index);
-      if(ok) {
-        old_session_index = index;
-        if(partial_restore) {
-          if(I->NColor > index) {       /* conflicts with an existing color... */
-            I->HaveOldSessionColors = true;
-            index = I->NColor;
-          }
-        }
-        if(index >= I->NColor) {
-          VLACheck(I->Color, ColorRec, index);  /* auto-zeros */
-          I->NColor = index + 1;
-        }
-        color = I->Color + index;
-        color->old_session_index = old_session_index;
-        if(ok) {
-          WordType name;
-          ok = PConvPyStrToStr(PyList_GetItem(rec, 0), name, sizeof(WordType));
-          color->Name = reg_name(I->Idx, index, name);
-        }
-        if(ok)
-          ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(rec, 2), color->Color, 3);
-        if(PyList_Size(rec) >= 6) {
-          if(ok)
-            ok = PConvPyIntToChar(PyList_GetItem(rec, 3), &color->Custom);
-          if(ok)
-            ok = PConvPyIntToChar(PyList_GetItem(rec, 4), &color->LutColorFlag);
-          if(ok)
-            ok =
-              PConvPyListToFloatArrayInPlace(PyList_GetItem(rec, 5), color->LutColor, 3);
-        } else {
-          if(ok) {
-            color->Custom = true;
-          }
-        }
-      }
-      if(ok && (ll > 6)) {
-        if(ok)
-          ok = PConvPyIntToChar(PyList_GetItem(rec, 6), &color->Fixed);
-      } else if(ok && color) {
-        color->Fixed = false;
-      }
-      if(!ok)
-        break;
+  return_error_if_fail(list != nullptr );
+  return_error_if_fail(PyList_Check(list));
+
+  int const n_custom = PyList_Size(list);
+
+  for (int a = 0; a < n_custom; ++a) {
+    auto rec = PyList_GetItem(list, a);
+
+    return_error_if_fail(rec && PyList_Check(rec));
+
+    auto const ll = PyList_Size(rec);
+    /* TO SUPPORT BACKWARDS COMPATIBILITY...
+       Always check ll when adding new PyList_GetItem's */
+
+    int index = 0;
+    return_error_if_fail(PConvFromPyListItem(G, rec, 1, index));
+
+    std::string name;
+    return_error_if_fail(PConvFromPyListItem(G, rec, 0, name));
+
+    int const old_session_index = index;
+    if (partial_restore && I->Color.size() > index) {
+      // conflicts with an existing color
+      index = I->Color.size();
+      I->HaveOldSessionColors = true;
     }
+
+    if (index >= I->Color.size()) {
+      assert(I->Color.size() == index);
+      I->Color.emplace_back(reg_name(I, index, name.c_str()));
+    }
+
+    auto& color = I->Color[index];
+    color.old_session_index = old_session_index;
+
+    assert(name == color.Name);
+    assert(index == I->Idx[name]);
+
+    return_error_if_fail(CPythonVal_PConvPyListToFloatArrayInPlace_From_List(
+        G, rec, 2, color.Color, 3));
+
+    if (PyList_Size(rec) >= 6) {
+      return_error_if_fail(PConvFromPyListItem(G, rec, 3, color.Custom));
+      return_error_if_fail(PConvFromPyListItem(G, rec, 4, color.LutColorFlag));
+      return_error_if_fail(CPythonVal_PConvPyListToFloatArrayInPlace_From_List(
+          G, rec, 5, color.LutColor, 3));
+    } else {
+      color.Custom = true;
+    }
+
+    if (ll > 6) {
+      PConvFromPyListItem(G, rec, 6, color.Fixed);
+    } else {
+      color.Fixed = false;
+    }
+
+    CPythonVal_Free(rec);
   }
-  return (ok);
+
+  return true;
 }
 
 /*========================================================================*/
@@ -577,39 +604,28 @@ void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int 
 {
   CColor *I = G->Color;
   int color = -1;
-  int a;
-  int wm;
 
+  // Search for a perfect case-sensitive match
   {
-      auto it = I->Idx.find(name);
-      if(it != I->Idx.end()){
-        color = it->second;
-      }
-  }
-
-  if(color < 0) {
-    for(a = 0; a < I->NColor; a++) {
-      auto* color_name = I->Color[a].Name;
-      if(color_name) {
-        wm = WordMatch(G, name, color_name, true);
-        if(wm < 0) {
-          color = a;
-          break;
-        }
-      }
+    auto it = I->Idx.find(name);
+    if (it != I->Idx.end()) {
+      color = it->second;
     }
   }
 
-  if(color < 0) {
-    color = I->NColor;
-    VLACheck(I->Color, ColorRec, I->NColor);
-    I->NColor++;
-    I->Color[color].Name = reg_name(I->Idx, color, name);
+  if (color < 0) {
+    // Not found or ramp index -> do slow search
+    color = findByCaseInsensitiveName(G, I->Color, name);
+
+    if (color < 0) {
+      // Not found -> new entry
+      color = I->Color.size();
+      I->Color.emplace_back(reg_name(I, color, name));
+      assert(I->Idx[name] == color);
+    }
   }
 
-  I->Color[color].Color[0] = v[0];
-  I->Color[color].Color[1] = v[1];
-  I->Color[color].Color[2] = v[2];
+  copy3f(v, I->Color[color].Color);
 
   switch (mode) {
   case 1:
@@ -639,14 +655,8 @@ void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int 
 int ColorGetIndex(PyMOLGlobals * G, const char *name)
 {
   CColor *I = G->Color;
-  int color = -1;               /* default for unknown is white */
-  int ext_color;
-  int a;
   int i;
-  int wm, best = 0;
-  int ext_best = 0;
   int is_numeric = true;
-  int found = false;
 
   {
     const char *c;
@@ -662,7 +672,7 @@ int ColorGetIndex(PyMOLGlobals * G, const char *name)
 
   if(is_numeric) {
     if(sscanf(name, "%d", &i)) {
-      if((i < I->NColor) && (i >= 0))
+      if((i < I->Color.size()) && (i >= 0))
         return (i);
       else if(i == cColorNewAuto)
         return (ColorGetNext(G));
@@ -676,8 +686,8 @@ int ColorGetIndex(PyMOLGlobals * G, const char *name)
         return cColorFront;
       else if(i == cColorBack)
         return cColorBack;
-      else if(i == -1)
-        return -1;
+      else if(i == cColorDefault)
+        return cColorDefault;
       if (i & cColor_TRGB_Bits)
         return i;
     }
@@ -690,53 +700,45 @@ int ColorGetIndex(PyMOLGlobals * G, const char *name)
       return tmp_color;
     }
   }
-  if(WordMatch(G, name, "default", true))
-    return (-1);
-  if(WordMatch(G, name, "auto", true))
+
+  // the following block used to allow prefix matches (before PyMOL 2.5)
+  if(WordMatch(G, name, "default", true) < 0)
+    return cColorDefault;
+  if(WordMatch(G, name, "auto", true) < 0)
     return (ColorGetNext(G));
-  if(WordMatch(G, name, "current", true))
+  if(WordMatch(G, name, "current", true) < 0)
     return (ColorGetCurrent(G));
-  if(WordMatch(G, name, "atomic", true))
+  if(WordMatch(G, name, "atomic", true) < 0)
     return (cColorAtomic);
-  if(WordMatch(G, name, "object", true))
+  if(WordMatch(G, name, "object", true) < 0)
     return (cColorObject);
-  if(WordMatch(G, name, "front", true))
+  if(WordMatch(G, name, "front", true) < 0)
     return (cColorFront);
-  if(WordMatch(G, name, "back", true))
+  if(WordMatch(G, name, "back", true) < 0)
     return (cColorBack);
 
-  {                  /* search for a perfect match (fast!) */
-      auto it = I->Idx.find(name);
-      if(it != I->Idx.end()){
-        found = true;
-        color = it->second;
-      }
-  }
-  if(!found) {                  /* search for an imperfect match */
-    for(a = 0; a < I->NColor; a++) {
-      auto* color_name = I->Color[a].Name;
-      if(color_name) {
-        wm = WordMatch(G, name, color_name, true);
-        if(wm < 0) {
-          color = a;
-          best = 0;
-          break;
-        } else if((wm > 0) && (best < wm)) {
-          color = a;
-          best = wm;
-        }
-      }
-    }
-    if(best || (color < 0)) {
-      ext_color = ColorFindExtByName(G, name, true, &ext_best);
-      if(ext_color >= 0) {
-        ext_color = cColorExtCutoff - ext_color;    /* indicates external */
-        if((!ext_best) || (ext_best > best))    /* perfect or better match? */
-          color = ext_color;
-      }
+  // search for a perfect case-sensitive match (fast!)
+  {
+    auto it = I->Idx.find(name);
+    if (it != I->Idx.end()) {
+      return it->second;
     }
   }
-  return (color);
+
+  // search for case-insensitive or partial match
+  // TODO does this even make sense? What's the use case? Should this be
+  // restricted to non-ambiguous matches? Note that the Python cmd.color()
+  // function does its own prefix lookup and rejects ambiguous matches.
+  int best = 0;
+  int color = findByCaseInsensitivePrefix(G, I->Color, name, best);
+  if (best != 0 || color < 0) {
+    int const ext_color = findByCaseInsensitivePrefix(G, I->Ext, name, best);
+    if (ext_color >= 0) {
+      color = cColorExtCutoff - ext_color;
+    }
+  }
+
+  return color;
 }
 
 
@@ -751,7 +753,7 @@ const float *ColorGetNamed(PyMOLGlobals * G, const char *name)
 const char *ColorGetName(PyMOLGlobals * G, int index)
 {
   CColor *I = G->Color;
-  if((index >= 0) && (index < I->NColor)) {
+  if((index >= 0) && (index < I->Color.size())) {
     return I->Color[index].Name;
   } else if((index & cColor_TRGB_Mask) == cColor_TRGB_Bits) {
     index = (((index & 0xFFFFFF) | ((index << 2) & 0xFC000000) |        /* convert 6 bits of trans into 8 */
@@ -763,7 +765,7 @@ const char *ColorGetName(PyMOLGlobals * G, int index)
     return I->RGBName;
   } else if(index <= cColorExtCutoff) {
     int a = cColorExtCutoff - index;
-    if(a < I->NExt) {
+    if (a < I->Ext.size()) {
       return I->Ext[a].Name;
     } else
       return NULL;
@@ -779,7 +781,7 @@ int ColorGetStatus(PyMOLGlobals * G, int index)
   /* return 0 if color is invalid, -1 if hidden; 
      1 otherwise */
   int result = 0;
-  if((index >= 0) && (index < I->NColor)) {
+  if((index >= 0) && (index < I->Color.size())) {
     auto* color_name = I->Color[index].Name;
     if(color_name) {
       const char* c = color_name;
@@ -801,17 +803,14 @@ int ColorGetStatus(PyMOLGlobals * G, int index)
 int ColorGetNColor(PyMOLGlobals * G)
 {
   CColor *I = G->Color;
-  return (I->NColor);
+  return (I->Color.size());
 }
 
 
 /*========================================================================*/
 void ColorFree(PyMOLGlobals * G)
 {
-  CColor *I = G->Color;
-  VLAFreeP(I->Color);
-  VLAFreeP(I->Ext);
-  DeleteP(I);
+  DeleteP(G->Color);
 }
 
 
@@ -860,8 +859,13 @@ void ColorReset(PyMOLGlobals * G)
 */
 
   CColor *I = G->Color;
-  ColorRec *color = I->Color;
-  int n_color = 0;
+
+  I->Idx.clear();
+  I->Ext.clear();
+
+  auto& Color = I->Color;
+  Color.clear();
+  Color.reserve(5500);
 
   char name[10];
   int a;
@@ -1000,20 +1004,15 @@ void ColorReset(PyMOLGlobals * G)
     {1.0, 0.0, 1.0},            /* violet */
   };
 
-  I->Idx.clear();
-
   /* BLUE->VIOLET->RED r546 to r909 */
   /* BLUE->CYAN->GREEN->YELLOW->RED s182 to s909 */
   /* BLUE->WHITE->RED w00 to */
 
 #define reg_named_color(name, R, G, B)                                         \
   {                                                                            \
-    color->Name = reg_name(I->Idx, n_color, name);                             \
-    color->Color[0] = R;                                                       \
-    color->Color[1] = G;                                                       \
-    color->Color[2] = B;                                                       \
-    n_color++;                                                                 \
-    color++;                                                                   \
+    Color.emplace_back(reg_name(I, Color.size(), name));                       \
+    set3f(Color.back().Color, R, G, B);                                        \
+    assert(I->Idx[name] == Color.size() - 1);                                  \
   }
 
   reg_named_color("white", 1.F, 1.F, 1.F);
@@ -1196,7 +1195,10 @@ void ColorReset(PyMOLGlobals * G)
   reg_named_color("smudge", 0.55F, 0.7F, 0.4F);
   reg_named_color("violetpurple", 0.55F, 0.25F, 0.6F);
   reg_named_color("dirtyviolet", 0.7F, 0.5F, 0.5F);
-  reg_named_color("deepsalmon", 1.F, 0.42F, 0.42F);
+
+  // was deepsalmon (duplicated name!)
+  reg_named_color("_deepsalmon", 1.F, 0.42F, 0.42F);
+
   reg_named_color("lightpink", 1.F, 0.75F, 0.87F);
   reg_named_color("greencyan", 0.25F, 1.F, 0.75F);
   reg_named_color("limon", 0.75F, 1.F, 0.25F);
@@ -1311,15 +1313,6 @@ void ColorReset(PyMOLGlobals * G)
   reg_named_color("deuterium", 0.9F, 0.9F, 0.9F);
   reg_named_color("lonepair", 0.5F, 0.5F, 0.5F);
   reg_named_color("pseudoatom", 0.9F, 0.9F, 0.9F);
-
-  color = I->Color;
-  for(a = 0; a < n_color; a++) {
-    /* mark all current colors non-custom so that they don't get saved in session files */
-    color[a].Custom = false;
-  }
-
-  I->NColor = n_color;
-  I->NExt = 0;
 }
 
 int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
@@ -1691,11 +1684,11 @@ void ColorUpdateFromLut(PyMOLGlobals * G, int index)
   if(index >= 0) {
     once = true;
   }
-  for(i = 0; i < I->NColor; i++) {
+  for(i = 0; i < I->Color.size(); i++) {
     if(!once)
       index = i;
 
-    if(index < I->NColor) {
+    if(index < I->Color.size()) {
       if(!I->LUTActive) {
         I->Color[index].LutColorFlag = false;
       } else if(!I->Color[index].Fixed) {
@@ -1744,9 +1737,6 @@ int ColorInit(PyMOLGlobals * G)
     test = 0xFF000000;
     testPtr = (unsigned char *) &test;
     I->BigEndian = (*testPtr) & 0x01;
-
-    I->Color = VLACalloc(ColorRec, 5500);
-    I->Ext = VLACalloc(ExtRec, 2);
 
     ColorReset(G);              /* will alloc I->Idx and I->Lex */
     return 1;
@@ -1807,7 +1797,7 @@ const float *ColorGet(PyMOLGlobals * G, int index)
 {
   CColor *I = G->Color;
   const float *ptr;
-  if((index >= 0) && (index < I->NColor)) {
+  if((index >= 0) && (index < I->Color.size())) {
     if(I->Color[index].LutColorFlag && SettingGetGlobal_b(G, cSetting_clamp_colors))
       ptr = I->Color[index].LutColor;
     else
@@ -1834,7 +1824,7 @@ const float *ColorGetRaw(PyMOLGlobals * G, int index)
 {
   CColor *I = G->Color;
   const float *ptr;
-  if((index >= 0) && (index < I->NColor)) {
+  if((index >= 0) && (index < I->Color.size())) {
     ptr = I->Color[index].Color;
     return (ptr);
   } else if((index & cColor_TRGB_Mask) == cColor_TRGB_Bits) {   /* a 24-bit RGB color */
@@ -1852,7 +1842,7 @@ int ColorGetEncoded(PyMOLGlobals * G, int index, float *color)
 {
   CColor *I = G->Color;
   float *ptr;
-  if((index >= 0) && (index < I->NColor)) {
+  if((index >= 0) && (index < I->Color.size())) {
     if(I->Color[index].LutColorFlag && SettingGetGlobal_b(G, cSetting_clamp_colors))
       ptr = I->Color[index].LutColor;
     else
