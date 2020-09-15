@@ -5584,9 +5584,6 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
   int have_active = false;
   int partial_session = false;
 
-  G->Color->HaveOldSessionColors = false;
-  G->Color->HaveOldSessionExtColors = false;
-
   if(!partial_restore) {        /* if user has requested partial restore */
     ExecutiveDelete(G, "all");
     ColorReset(G);
@@ -5932,6 +5929,10 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
   ExecutiveInvalidateSelectionIndicatorsCGO(G);
   OrthoInvalidateDoDraw(G);
   SceneChanged(G);
+
+  G->Color->HaveOldSessionColors = false;
+  G->Color->HaveOldSessionExtColors = false;
+
   return (ok);
 }
 

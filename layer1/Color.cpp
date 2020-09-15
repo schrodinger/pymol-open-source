@@ -378,7 +378,11 @@ void ColorForgetExt(PyMOLGlobals * G, const char *name)
   auto& ext = I->Ext[a];
   ext.Ptr = nullptr;
 
-  if (ext.Name) {
+  // HaveOldSessionExtColors should only be true while we're loading a partial
+  // session, and ColorForgetExt probably means that we're replacing the ramp
+  // object with a another one, so we don't want to lose the name+index
+  // relationship.
+  if (ext.Name && !I->HaveOldSessionExtColors) {
     I->Idx.erase(ext.Name);
     ext.Name = nullptr;
   }
@@ -475,6 +479,8 @@ int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
   CColor *I = G->Color;
   size_t n_ext = 0;
 
+  assert(!I->HaveOldSessionExtColors);
+
   if (list && PyList_Check(list)) {
     n_ext = PyList_Size(list);
   }
@@ -530,6 +536,8 @@ int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 {
   CColor* I = G->Color;
+
+  assert(!I->HaveOldSessionColors);
 
   if (partial_restore) {
     for (auto& color : I->Color) {
