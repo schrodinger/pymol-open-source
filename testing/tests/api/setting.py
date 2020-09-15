@@ -125,7 +125,7 @@ class TestSetting(testing.PyMOLTestCase):
             self.assertEqual(n, 1)
             self.assertEqual(stored.v, defaultvalue)
 
-    @testing.requires_version('1.5')
+    @testing.requires_version('1.8.4')
     def testSetBond(self):
         value = 2.3
         cmd.fragment('ala')
@@ -134,14 +134,29 @@ class TestSetting(testing.PyMOLTestCase):
         self.assertAlmostEqual(v_list[0][1][0][2], value)
 
         # unset
-        # TODO get_bond reports [0,0,0] after unset_bond
-        # cmd.unset_bond('stick_radius', '*', '*')
-        # v_list = cmd.get_bond('stick_radius', 'first *', '*')
-        # self.assertEqual(v_list, [])
+        # before 1.8.4, get_bond reported [0,0,0] after unset_bond
+        cmd.unset_bond('stick_radius', '*', '*')
+        v_list = cmd.get_bond('stick_radius', 'first *', '*')
+        self.assertEqual(v_list[0][1][0][2], None)
 
+    @testing.requires_version('2.5')
     def testUnset(self):
-        # see testSet
-        pass
+        # unset with selection: see testSet
+
+        # unset global settings since PyMOL 2.5:
+        for name, value in [
+            ('light_count', 5),  # int, non-zero-default
+            ('sphere_scale', 2.0),  # float, non-zero default
+            ('ray_shadow', 'off'),  # bool, non-zero-default
+            ('orthoscopic', 'on'),  # bool, zero-default
+            ('cartoon_highlight_color', 'blue'),  # color
+            ('fetch_path', '/some/path'),  # string
+        ]:
+            old_value = cmd.get(name)
+            cmd.set(name, value)
+            assert old_value != cmd.get(name)
+            cmd.unset(name)
+            self.assertEqual(old_value, cmd.get(name))
 
     def testUnsetBond(self):
         # see testSetBond
