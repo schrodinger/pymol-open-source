@@ -281,6 +281,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
 
+  setPickingCGO(I, nullptr);
   setShaderCGO(I, CGONew(G));
 
   if (!I->shaderCGO)
@@ -1301,15 +1302,6 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
   if (ok) ok &= CGOStop(I->shaderCGO);
   if (I->Type != 2){
     CGOCombineBeginEnd(&I->shaderCGO);
-    if (I->Type == 1){
-      /* Only needed to simplify spheres in surface_type=1 */
-      CGO *simple = CGOSimplify(I->shaderCGO, 0);
-      CGOCombineBeginEnd(&simple, 0);
-      CHECKOK(ok, simple);
-      setPickingCGO(I, simple);
-    } else {
-      setPickingCGO(I, I->shaderCGO);
-    }
   }
   if(I->Type == 1){
     if (dot_as_spheres) {
@@ -1332,11 +1324,9 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
     if (ok)
       convertcgo->use_shader = true;
   } else if (I->Type == 2) {
-    CGO *convertcgo2, *simple = NULL;
-
     CGO *tmpCGO = CGONew(G);
     CHECKOK(ok, tmpCGO);
-    convertcgo2 = CGOConvertLinesToShaderCylinders(I->shaderCGO, 0);
+    auto convertcgo2 = CGOConvertLinesToShaderCylinders(I->shaderCGO, 0);
     CHECKOK(ok, convertcgo2);
     CGOEnable(tmpCGO, GL_CYLINDER_SHADER);
     CGOSpecial(tmpCGO, MESH_WIDTH_FOR_SURFACES);
@@ -1347,14 +1337,6 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
     CGOStop(tmpCGO);
     convertcgo = tmpCGO;
     convertcgo->use_shader = true;
-
-    if (ok)
-      simple = CGOSimplify(convertcgo2, 0);
-    CHECKOK(ok, simple);
-    if (ok)
-      setPickingCGO(I, CGOCombineBeginEnd(simple, 0));
-    CHECKOK(ok, I->pickingCGO);
-    CGOFree(simple);
     CGOFree(convertcgo2);
   } else {
     if((alpha != 1.0) || va) { // semi-transparent
@@ -1404,19 +1386,10 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
     setShaderCGO(I, convertcgo);
     convertcgo = NULL;
   }
-  {
-    CGO *simple = NULL;
-    if (ok)
-      simple = CGOOptimizeToVBONotIndexed(I->pickingCGO, 0);
-    CHECKOK(ok, simple);
-    if (ok){
-      CGOChangeShadersTo(simple, GL_DEFAULT_SHADER, GL_SURFACE_SHADER);
-    }
-    if (ok){
-      setPickingCGO(I, simple);
-      I->pickingCGO->use_shader = true;
-      I->pickingCGO->no_pick = !pick_surface;
-    }
+
+  if (I->shaderCGO) {
+    I->shaderCGO->no_pick = !pick_surface;
+    setPickingCGO(I, I->shaderCGO);
   }
 
   return ok;
