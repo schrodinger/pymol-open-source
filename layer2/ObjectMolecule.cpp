@@ -10669,6 +10669,7 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 void ObjectMoleculeGetAtomSele(const ObjectMolecule * I, int index, char *buffer)
 {
   PyMOLGlobals * G = I->G;
+  assert(index < I->NAtom);
   auto* ai = I->AtomInfo + index;
   char inscode_str[2] = { ai->inscode, '\0' };
 

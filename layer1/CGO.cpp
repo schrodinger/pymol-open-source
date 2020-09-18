@@ -73,6 +73,12 @@ Z* -------------------------------------------------------------------
 #define NUM_TOTAL_VERTICES_PER_CYLINDER 36
 #endif
 
+constexpr unsigned VERTEX_PICKCOLOR_RGBA_SIZE = 1;  // 4 unsigned bytes
+constexpr unsigned VERTEX_PICKCOLOR_INDEX_SIZE = 2; // index + bond
+constexpr unsigned VERTEX_PICKCOLOR_SIZE = VERTEX_PICKCOLOR_RGBA_SIZE + //
+                                           VERTEX_PICKCOLOR_INDEX_SIZE;
+constexpr unsigned VERTEX_ACCESSIBILITY_SIZE = 1;
+
 #ifdef PURE_OPENGL_ES_2
 #define glVertexAttrib4ubv(loc, data) glVertexAttrib4f(loc, \
     (data)[0] / 255.f, (data)[1] / 255.f, (data)[2] / 255.f, (data)[3] / 255.f);
@@ -1721,9 +1727,10 @@ CGO *CGOCombineBeginEnd(const CGO * I, int est, bool do_not_split_lines)
 	}
 	if (nverts>0 && !err){
 	  int pl = 0, plc = 0, pla = 0;
-	  float *vertexVals;
-	  float *normalVals = 0, *colorVals = 0, *nxtVals = 0, *pickColorVals = 0, *accessibilityVals = 0;
-	  short notHaveValue = 0, nxtn = 3;
+          float *vertexVals = nullptr, *normalVals = nullptr,
+                *colorVals = nullptr, *pickColorVals = nullptr,
+                *accessibilityVals = nullptr;
+
 	  if (hasFirstAlpha || hasFirstColor){
 	    if (hasFirstAlpha){
 	      CGOAlpha(cgo, firstAlpha);
@@ -1732,29 +1739,37 @@ CGO *CGOCombineBeginEnd(const CGO * I, int est, bool do_not_split_lines)
 	      CGOColorv(cgo, firstColor);
 	    }
 	  }
-	  nxtVals = vertexVals = cgo->add<cgo::draw::arrays>(mode, damode, nverts);
-	  ok &= vertexVals ? true : false;
+
+          float* nxtVals = cgo->add<cgo::draw::arrays>(mode, damode, nverts);
+	  ok &= nxtVals ? true : false;
 	  if (!ok)
 	    continue;
-	  if (damode & CGO_NORMAL_ARRAY){
-	    nxtVals = normalVals = vertexVals + (nxtn*nverts);
-	    nxtn = 3;
+
+          assert(damode & CGO_VERTEX_ARRAY);
+          vertexVals = nxtVals;
+          nxtVals += VERTEX_POS_SIZE * nverts;
+
+          if (damode & CGO_NORMAL_ARRAY){
+            normalVals = nxtVals;
+            nxtVals += nverts * VERTEX_NORMAL_SIZE;
 	  }
+
 	  if (damode & CGO_COLOR_ARRAY){
-	    nxtVals = colorVals = nxtVals + (nxtn*nverts);
-	    nxtn = 4;
+            colorVals = nxtVals;
+            nxtVals += nverts * VERTEX_COLOR_SIZE;
 	  }
+
 	  if (damode & CGO_PICK_COLOR_ARRAY){
-	    nxtVals = nxtVals + (nxtn*nverts);
-	    pickColorVals = nxtVals + nverts;
-	    nxtn = 3;
+            pickColorVals = nxtVals + VERTEX_PICKCOLOR_RGBA_SIZE * nverts;
+            nxtVals += nverts * VERTEX_PICKCOLOR_SIZE;
 	  }
+
 	  if (damode & CGO_ACCESSIBILITY_ARRAY){
-	    nxtVals = nxtVals + (nxtn*nverts);
 	    accessibilityVals = nxtVals;
-	    nxtn = 1;
+            nxtVals += nverts * VERTEX_ACCESSIBILITY_SIZE;
 	  }
-	  notHaveValue = damode;
+
+	  auto notHaveValue = damode;
 
           // second iteration (with copy of iterator, doesn't consume 'it')
           for (; ok && it2 != CGO_END; ++it2) {
@@ -2170,12 +2185,16 @@ static int CGOCountNumVerticesForScreen(const CGO* I)
 
 static
 void SetVertexValuesForVBO(PyMOLGlobals * G, CGO *cgo, int pl, int plc, int cnt, int incr,
-                           float *vertexValsDA, float *normalValsDA,
-                           float *colorValsDA, float *pickColorValsDA, 
+                           const float *vertexValsDA,
+                           const float *normalValsDA,
+                           const float *colorValsDA,
+                           const float *pickColorValsDA,
 			   float *vertexVals, uchar *normalValsC,
                            float *normalVals, uchar *colorValsUC, float *colorVals,
                            float *pickColorVals, 
-                           float *accessibilityVals=NULL, float *accessibilityValsDA=NULL){
+                           float *accessibilityVals=NULL,
+                           const float *accessibilityValsDA=nullptr)
+{
   int pl2 = pl + 1, pl3 = pl + 2;
   int pln1 = VAR_FOR_NORMAL, pln2 = VAR_FOR_NORMAL + 1, pln3 = VAR_FOR_NORMAL + 2;
   int plc2 = plc + 1, plc3 = plc + 2, plc4 = plc + 3;
@@ -2233,9 +2252,10 @@ void SetVertexValuesForVBO(PyMOLGlobals * G, CGO *cgo, int pl, int plc, int cnt,
 }
 
 static int OptimizePointsToVBO(const CGO *I, CGO *cgo, int num_total_vertices_points, float *min, float *max, short *has_draw_buffer, bool addshaders){
+  auto G = I->G;
   float *vertexVals = 0, *colorVals = 0, *normalVals = 0;
   float *pickColorVals;
-  int pl = 0, plc = 0, idxpl = 0, vpl = 0, tot, nxtn;
+  int pl = 0, plc = 0, idxpl = 0, vpl = 0, nxtn;
   uchar *colorValsUC = 0;
   uchar *normalValsC = 0;
   bool has_normals = false, has_colors = false;
@@ -2243,15 +2263,18 @@ static int OptimizePointsToVBO(const CGO *I, CGO *cgo, int num_total_vertices_po
   
   cgo->alpha = 1.f;
   cgo->color[0] = 1.f; cgo->color[1] = 1.f; cgo->color[2] = 1.f;
-  
-  tot = num_total_vertices_points * (3 * 5) ;
-  //    tot = num_total_indexes * (3 * 3 + 2) ;
-  /* NOTE/TODO: Not sure why 3*5 needs to be used, but 3*3+2, which is the 
-     correct length, crashes in glBufferData */
+
+  unsigned mul = VERTEX_POS_SIZE + VERTEX_PICKCOLOR_SIZE;
+  mul += SettingGet<bool>(G, cSetting_cgo_shader_ub_normal) ? 1 : VERTEX_NORMAL_SIZE;
+  mul += SettingGet<bool>(G, cSetting_cgo_shader_ub_color) ? 1 : VERTEX_COLOR_SIZE;
+  auto const tot = size_t(num_total_vertices_points) * mul;
+
   vertexVals = pymol::malloc<float>(tot);
   CHECKOK(ok, vertexVals);
   if (!ok){
-    PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: OptimizePointsToVBO() vertexVals could not be allocated\n" ENDFB(I->G);	
+    PRINTFB(G, FB_CGO, FB_Errors)
+    "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
+        __LINE__, tot ENDFB(G);
     return 0;
   }
   normalVals = vertexVals + 3 * num_total_vertices_points;
@@ -2315,7 +2338,7 @@ static int OptimizePointsToVBO(const CGO *I, CGO *cgo, int num_total_vertices_po
 	  narrays -= 1;
 	  }*/
 	if (shouldCompress){	
-	  int cnt, nxtn = 3 ,incr=0;
+	  int cnt, nxtn = VERTEX_POS_SIZE, incr = 0;
 	  float *vertexValsDA = NULL, *nxtVals = NULL, *colorValsDA = NULL, *normalValsDA = NULL;
 	  float *pickColorValsDA = NULL, *pickColorValsTMP;
 
@@ -2331,12 +2354,12 @@ static int OptimizePointsToVBO(const CGO *I, CGO *cgo, int num_total_vertices_po
 	  if (sp->arraybits & CGO_COLOR_ARRAY){
 	    has_colors = true;
 	    nxtVals = colorValsDA = nxtVals + (nxtn*sp->nverts);
-	    nxtn = 4;
+	    nxtn = VERTEX_COLOR_SIZE;
 	  }
 	  if (sp->arraybits & CGO_PICK_COLOR_ARRAY){
 	    nxtVals = nxtVals + (nxtn*sp->nverts);
 	    pickColorValsDA = nxtVals + sp->nverts;
-	    nxtn = 3;
+	    nxtn = VERTEX_PICKCOLOR_SIZE;
 	  }
 	  pickColorValsTMP = pickColorVals + (idxpl * 2);
 	  switch (sp->mode){
@@ -2523,30 +2546,36 @@ static bool CGOProcessCGOtoArrays(const CGO* I, CGO* cgo, CGO* addtocgo,
 	  break;
 	}
 	if (shouldCompress){
-	  int cnt, nxtn = 3,incr=0;
-	  float *vertexValsDA = NULL, *nxtVals = NULL, *colorValsDA = NULL, *normalValsDA = NULL, *accessibilityValsDA = NULL;
-	  float *pickColorValsDA = NULL, *pickColorValsTMP;
-	  nxtVals = vertexValsDA = sp->floatdata;
+          int cnt, incr = 0;
+          const float* nxtVals = sp->floatdata;
+          const float *vertexValsDA = nullptr, *colorValsDA = nullptr,
+                      *normalValsDA = nullptr, *pickColorValsDA = nullptr,
+                      *accessibilityValsDA = nullptr;
+
+          assert(sp->arraybits & CGO_VERTEX_ARRAY);
+          vertexValsDA = nxtVals;
+          nxtVals += sp->nverts * VERTEX_POS_SIZE;
 
 	  for (cnt=0; cnt<sp->nverts*3; cnt+=3){
 	    set_min_max(min, max, &vertexValsDA[cnt]);
 	  }
 	  if (sp->arraybits & CGO_NORMAL_ARRAY){
-	    nxtVals = normalValsDA = vertexValsDA + (nxtn*sp->nverts);
             has_normals = true;
+	    normalValsDA = nxtVals;
+            nxtVals += sp->nverts * VERTEX_NORMAL_SIZE;
 	  }
 
 	  if (sp->arraybits & CGO_COLOR_ARRAY){
-	    nxtVals = colorValsDA = nxtVals + (nxtn*sp->nverts);
-	    nxtn = 4;
             has_colors = true;
+	    colorValsDA = nxtVals;
+            nxtVals += sp->nverts * VERTEX_COLOR_SIZE;
 	  }
 	  if (sp->arraybits & CGO_PICK_COLOR_ARRAY){
-	    nxtVals = nxtVals + (nxtn*sp->nverts);
-	    pickColorValsDA = nxtVals + sp->nverts;
-	    nxtn = 3;
+            nxtVals += VERTEX_PICKCOLOR_RGBA_SIZE * sp->nverts;
+            pickColorValsDA = nxtVals;
+            nxtVals += VERTEX_PICKCOLOR_INDEX_SIZE * sp->nverts;
 	  }
-	  pickColorValsTMP = pickColorVals + (idxpl * 2);
+          float* pickColorValsTMP = pickColorVals + (idxpl * 2);
 	  if (sp->arraybits & CGO_ACCESSIBILITY_ARRAY){
 	    if (!(*ambient_occlusion) && incr){
 	      for (cnt=0; cnt<incr;cnt++){
@@ -2555,7 +2584,8 @@ static bool CGOProcessCGOtoArrays(const CGO* I, CGO* cgo, CGO* addtocgo,
 	      }
 	    }
 	    (*ambient_occlusion) = 1;
-	    accessibilityValsDA = nxtVals + nxtn*sp->nverts;
+	    accessibilityValsDA = nxtVals;
+	    nxtVals += VERTEX_ACCESSIBILITY_SIZE * sp->nverts;
             has_accessibility = true;
 	  } else {
 	    if (*ambient_occlusion){
@@ -2810,6 +2840,7 @@ bool CGOOptimizeToVBONotIndexed(CGO ** I) {
 
 CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float **returnedData)
 {
+  auto G = I->G;
   CGO *cgo;
   int num_total_vertices = 0, num_total_indexes = 0, num_total_vertices_lines = 0, num_total_indexes_lines = 0,
     num_total_vertices_points = 0;
@@ -2831,27 +2862,27 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
   if (num_total_indexes>0){
     float *vertexVals = 0, *colorVals = 0, *normalVals;
     float *pickColorVals, *accessibilityVals = 0;
-    int tot, nxtn;
     uchar *colorValsUC = 0;
     uchar *normalValsC = 0;
 
     cgo->alpha = 1.f;
     cgo->color[0] = 1.f; cgo->color[1] = 1.f; cgo->color[2] = 1.f;
 
-    tot = num_total_indexes * (3 * 6) ;
-    //    tot = num_total_indexes * (3 * 3 + 2) ;
-    /* NOTE/TODO: Not sure why 3*5 needs to be used, but 3*3+2, which is the 
-       correct length, crashes in glBufferData */
-    /* before allocating anything, we should check to make sure that we have enough memory on IOS,
-       otherwise we should just fail */
+    unsigned mul = VERTEX_POS_SIZE + VERTEX_PICKCOLOR_SIZE + VERTEX_ACCESSIBILITY_SIZE;
+    mul += SettingGet<bool>(G, cSetting_cgo_shader_ub_normal) ? 1 : VERTEX_NORMAL_SIZE;
+    mul += SettingGet<bool>(G, cSetting_cgo_shader_ub_color) ? 1 : VERTEX_COLOR_SIZE;
+    auto const tot = size_t(num_total_indexes) * mul;
+
     vertexVals = pymol::malloc<float>(tot);
     if (!vertexVals){
-      PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBONotIndexed() vertexVals could not be allocated\n" ENDFB(I->G);	
+      PRINTFB(G, FB_CGO, FB_Errors)
+      "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
+          __LINE__, tot ENDFB(G);
       CGOFree(cgo);
       return (NULL);
     }
     normalVals = vertexVals + 3 * num_total_indexes;
-    nxtn = 3;
+    unsigned nxtn = VERTEX_NORMAL_SIZE;
     if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
       normalValsC = (uchar*) normalVals;
       nxtn = 1;
@@ -2960,20 +2991,23 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
     bool has_color = false, has_normals = false;
     float *vertexVals = 0, *colorVals = 0, *normalVals;
     float *pickColorVals;
-    int pl = 0, plc = 0, idxpl = 0, vpl = 0, tot, nxtn;
+    int pl = 0, plc = 0, idxpl = 0, vpl = 0, nxtn;
     uchar *colorValsUC = 0;
     uchar *normalValsC = 0;
 
     cgo->alpha = 1.f;
     cgo->color[0] = 1.f; cgo->color[1] = 1.f; cgo->color[2] = 1.f;
 
-    tot = num_total_indexes_lines * (3 * 5) ;
-    //    tot = num_total_indexes * (3 * 3 + 2) ;
-    /* NOTE/TODO: Not sure why 3*5 needs to be used, but 3*3+2, which is the 
-       correct length, crashes in glBufferData */
+    unsigned mul = VERTEX_POS_SIZE + VERTEX_PICKCOLOR_SIZE;
+    mul += SettingGet<bool>(G, cSetting_cgo_shader_ub_normal) ? 1 : VERTEX_NORMAL_SIZE;
+    mul += SettingGet<bool>(G, cSetting_cgo_shader_ub_color) ? 1 : VERTEX_COLOR_SIZE;
+    auto const tot = size_t(num_total_indexes_lines) * mul;
+
     vertexVals = pymol::malloc<float>(tot);
     if (!vertexVals){
-      PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBONotIndexed() vertexVals could not be allocated\n" ENDFB(I->G);	
+      PRINTFB(G, FB_CGO, FB_Errors)
+      "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
+          __LINE__, tot ENDFB(G);
       CGOFree(cgo);
       return (NULL);
     }
@@ -3037,31 +3071,35 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
 	}
 
 	if (shouldCompress){
-	  int cnt, nxtn = 3, incr = 0;
-	  float *vertexValsDA = NULL, *nxtVals = NULL, *colorValsDA = NULL, *normalValsDA = NULL;
-	  float *pickColorValsDA = NULL, *pickColorValsTMP;
+          int cnt, incr = 0;
+          const float* nxtVals = sp->floatdata;
+          const float *vertexValsDA = nullptr, *colorValsDA = nullptr,
+                      *normalValsDA = nullptr, *pickColorValsDA = nullptr;
 
-	  nxtVals = vertexValsDA = sp->floatdata;
+          assert(sp->arraybits & CGO_VERTEX_ARRAY);
+          vertexValsDA = nxtVals;
+          nxtVals += sp->nverts * VERTEX_POS_SIZE;
 
 	  for (cnt=0; cnt<sp->nverts*3; cnt+=3){
 	    set_min_max(min, max, &vertexValsDA[cnt]);
 	  }
 	  if (sp->arraybits & CGO_NORMAL_ARRAY){
             has_normals = true;
-	    nxtVals = normalValsDA = vertexValsDA + (nxtn*sp->nverts);
+            normalValsDA = nxtVals;
+            nxtVals += sp->nverts * VERTEX_NORMAL_SIZE;
 	  }
 
 	  if (sp->arraybits & CGO_COLOR_ARRAY){
             has_color = true;
-	    nxtVals = colorValsDA = nxtVals + (nxtn*sp->nverts);
-	    nxtn = 4;
+            colorValsDA = nxtVals;
+            nxtVals += sp->nverts * VERTEX_COLOR_SIZE;
 	  }
 	  if (sp->arraybits & CGO_PICK_COLOR_ARRAY){
-	    nxtVals = nxtVals + (nxtn*sp->nverts);
-	    pickColorValsDA = nxtVals + sp->nverts;
-	    nxtn = 3;
+            nxtVals += VERTEX_PICKCOLOR_RGBA_SIZE * sp->nverts;
+            pickColorValsDA = nxtVals;
+            nxtVals += VERTEX_PICKCOLOR_INDEX_SIZE * sp->nverts;
 	  }
-	  pickColorValsTMP = pickColorVals + (idxpl * 2);
+          float* pickColorValsTMP = pickColorVals + (idxpl * 2);
 	  switch (sp->mode){
 	  case GL_LINES:
 	    for (cnt = 0; cnt < sp->nverts; cnt++){
@@ -3226,6 +3264,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
 CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
     const float *color, bool addshaders, bool embedTransparencyInfo)
 {
+  auto G = I->G;
   CGO *cgo;
 
   int num_total_vertices = 0, num_total_indexes = 0, num_total_vertices_lines = 0, num_total_indexes_lines = 0,
@@ -3272,7 +3311,7 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
     float *pickColorVals;
     GL_C_INT_TYPE *vertexIndices; 
     short vertexIndicesAllocated = 0;
-    int pl = 0, plc = 0, idxpl = 0, vpl = 0, tot, nxtn;
+    int pl = 0, plc = 0, idxpl = 0, vpl = 0, nxtn;
     uchar *colorValsUC = 0;
     uchar *normalValsC = 0;
     short ambient_occlusion = 0;
@@ -3294,13 +3333,17 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
       CGOFree(cgo);
       return (NULL);
     }
-    tot = num_total_vertices * (3 * 6) ;
-    //    tot = num_total_vertices * (3 * 3 + 2) ;
-    /* NOTE/TODO: Not sure why 3*5 needs to be used, but 3*3+2, which is the 
-       correct length, crashes in glBufferData */
+
+    unsigned mul = VERTEX_POS_SIZE + VERTEX_PICKCOLOR_SIZE + VERTEX_ACCESSIBILITY_SIZE;
+    mul += SettingGet<bool>(G, cSetting_cgo_shader_ub_normal) ? 1 : VERTEX_NORMAL_SIZE;
+    mul += SettingGet<bool>(G, cSetting_cgo_shader_ub_color) ? 1 : VERTEX_COLOR_SIZE;
+    auto const tot = size_t(num_total_vertices) * mul;
+
     vertexVals = pymol::malloc<float>(tot);
     if (!vertexVals){
-      PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBOIndexed() vertexVals could not be allocated\n" ENDFB(I->G);	
+      PRINTFB(G, FB_CGO, FB_Errors)
+      "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
+          __LINE__, tot ENDFB(G);
       CGOFree(cgo);
       return (NULL);
     }
@@ -3400,7 +3443,7 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
 		colorValsUC[plc + cnt + 2] = CLIP_COLOR_VALUE(colorValsDA[cnt+2]);
 		colorValsUC[plc + cnt + 3] = CLIP_COLOR_VALUE(colorValsDA[cnt+3]);
 	      }
-	      nxtn = 4;
+	      nxtn = VERTEX_COLOR_SIZE;
 	    } else {
 	      uchar col[4] = { CLIP_COLOR_VALUE(cgo->color[0]), CLIP_COLOR_VALUE(cgo->color[1]), CLIP_COLOR_VALUE(cgo->color[2]), CLIP_COLOR_VALUE(cgo->alpha) };
 	      for (cnt=0; cnt<sp->nverts*4; cnt++){
@@ -3416,7 +3459,7 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
 		colorVals[plc + cnt + 2] = colorValsDA[cnt+2];
 		colorVals[plc + cnt + 3] = colorValsDA[cnt+3];
 	      }
-	      nxtn = 4;
+	      nxtn = VERTEX_COLOR_SIZE;
 	    } else {
 	      float col[4] = { cgo->color[0], cgo->color[1], cgo->color[2], cgo->alpha };
 	      for (cnt=0; cnt<sp->nverts*4; cnt++){
@@ -3432,7 +3475,7 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
 	      CGO_put_int(pickColorValsTMP++, CGO_get_int(pickColorValsDA++));
 	      CGO_put_int(pickColorValsTMP++, CGO_get_int(pickColorValsDA++));
 	    }
-	    nxtn = 3;
+	    nxtn = VERTEX_PICKCOLOR_SIZE;
 	  } else {
 	    pickColorValsTMP = pickColorVals + (vpl * 2);
 	    for (cnt=0; cnt<sp->nverts; cnt++){
@@ -3595,7 +3638,7 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
     GL_C_INT_TYPE *vertexIndexes; 
     uchar *colorValsUC = 0;
     uchar *normalValsC = 0;
-    int pl = 0, plc = 0, idxpl = 0, vpl = 0, tot, sz;
+    int pl = 0, plc = 0, idxpl = 0, vpl = 0, sz;
     bool hasNormals = 0;
 
     hasNormals = !CGOHasAnyLineVerticesWithoutNormals(I);
@@ -3605,33 +3648,45 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
       CGOFree(cgo);
       return (NULL);
     }
-    tot = num_total_vertices_lines * (3 * 5) ;
-    //    tot = num_total_vertices * (3 * 3 + 2) ;
-    /* NOTE/TODO: Not sure why 3*5 needs to be used, but 3*3+2, which is the 
-       correct length, crashes in glBufferData */
+
+    unsigned mul = VERTEX_POS_SIZE + VERTEX_PICKCOLOR_SIZE;
+    if (hasNormals) {
+      mul += SettingGet<bool>(G, cSetting_cgo_shader_ub_normal) ? 1 : VERTEX_NORMAL_SIZE;
+    }
+    mul += SettingGet<bool>(G, cSetting_cgo_shader_ub_color) ? 1 : VERTEX_COLOR_SIZE;
+    auto const tot = size_t(num_total_vertices_lines) * mul;
+
     vertexVals = pymol::malloc<float>(tot);
     if (!vertexVals){
-      PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBOIndexed() vertexVals could not be allocated\n" ENDFB(I->G);	
+      PRINTFB(G, FB_CGO, FB_Errors)
+      "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
+          __LINE__, tot ENDFB(G);
       CGOFree(cgo);
       return (NULL);
     }
-    nxtVals = vertexVals + 3 * num_total_vertices_lines;
-    sz = 3;
+    nxtVals = vertexVals + VERTEX_POS_SIZE * num_total_vertices_lines;
+
     if (hasNormals){
       normalVals = nxtVals;
       if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	normalValsC = (uchar*) normalVals;
 	sz = 1;
+      } else {
+        sz = VERTEX_NORMAL_SIZE;
       }
+      nxtVals += sz * num_total_vertices_lines;
     }
-    colorVals = nxtVals + sz * num_total_vertices_lines;
+
+    colorVals = nxtVals;
     if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
       colorValsUC = (uchar*) colorVals;
       sz = 1;
     } else {
-      sz = 4;
+      sz = VERTEX_COLOR_SIZE;
     }
-    pickColorVals = (colorVals + sz * num_total_vertices_lines);
+    nxtVals += sz * num_total_vertices_lines;
+
+    pickColorVals = nxtVals;
 
     for (auto it = I->begin(); ok && !it.is_stop(); ++it) {
       const auto pc = it.data();
@@ -3728,7 +3783,7 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
 	      CGO_put_int(pickColorValsTMP++, CGO_get_int(pickColorValsDA++));
 	      CGO_put_int(pickColorValsTMP++, CGO_get_int(pickColorValsDA++));
 	    }
-	    nxtn = 3;
+	    nxtn = VERTEX_PICKCOLOR_SIZE;
 	  } else {
 	    pickColorValsTMP = pickColorVals + (vpl * 2);
 	    for (cnt=0; cnt<sp->nverts; cnt++){
@@ -3773,14 +3828,14 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est,
       ok &= !I->G->Interrupt;
     }
     if (ok) {
-      short nsz = VERTEX_NORMAL_SIZE * 4;
+      short nsz = VERTEX_NORMAL_SIZE * sizeof(float);
       GLenum ntp = GL_FLOAT;
       if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
         nsz = VERTEX_NORMAL_SIZE;
         ntp = GL_BYTE;
       }
 
-      short csz = 4;
+      short csz = VERTEX_COLOR_SIZE;
       GLenum ctp = GL_FLOAT;
       if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
         csz = 1;
@@ -4333,12 +4388,12 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
 	  }
 	  if (damode & CGO_COLOR_ARRAY){
 	    nxtVals = colorVals = nxtVals + (nxtn*nverts);
-	    nxtn = 4;
+	    nxtn = VERTEX_COLOR_SIZE;
 	  }
 	  if (damode & CGO_PICK_COLOR_ARRAY){
 	    nxtVals = nxtVals + (nxtn*nverts);
 	    pickColorVals = nxtVals + nverts;
-	    nxtn = 3;
+	    nxtn = VERTEX_PICKCOLOR_SIZE;
 	  }
 	  if (damode & CGO_ACCESSIBILITY_ARRAY){
 	    nxtVals = nxtVals + (nxtn*nverts);
@@ -5215,22 +5270,7 @@ int CGOGetExtent(const CGO * I, float *mn, float *mx)
 	if (sp->arraybits & CGO_VERTEX_ARRAY){
 	  for (pl = 0; pl < sp->nverts; pl++){
 	    check_extent(pct, 0);
-	    pct += 3;
-	  }
-	}
-	if (sp->arraybits & CGO_NORMAL_ARRAY){
-	  for (pl = 0; pl < sp->nverts; pl++){
-	    pct += 3;
-	  }
-	}
-	if (sp->arraybits & CGO_COLOR_ARRAY){
-	  for (pl = 0; pl < sp->nverts; pl++){
-	    pct += 4;
-	  }
-	}
-	if (sp->arraybits & CGO_PICK_COLOR_ARRAY){
-	  for (pl = 0; pl < sp->nverts; pl++){
-	    pct += 3;
+	    pct += VERTEX_POS_SIZE;
 	  }
 	}
       }
@@ -5734,28 +5774,24 @@ int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, Obj
     case CGO_DRAW_ARRAYS:
       {
         cgo::draw::arrays * sp = reinterpret_cast<decltype(sp)>(pc);
-	int mode = sp->mode, arrays = sp->arraybits, narrays = sp->narrays, nverts = sp->nverts, v, pl, plc;
+	int const mode = sp->mode, arrays = sp->arraybits, nverts = sp->nverts;
 	float *vertexVals = sp->floatdata;
 	float *normalVals = 0, *colorVals = 0;
         int offset = 0;
-	(void)narrays;
 	if (arrays & CGO_VERTEX_ARRAY){
 	  vertexVals = sp->floatdata;
-          offset += nverts * 3;
+          offset += nverts * VERTEX_POS_SIZE;
 	}
 	if (arrays & CGO_NORMAL_ARRAY){
 	  normalVals = sp->floatdata + offset;
-          offset += nverts * 3;
+          offset += nverts * VERTEX_NORMAL_SIZE;
 	}
 	if (arrays & CGO_COLOR_ARRAY){
 	  colorVals = sp->floatdata + offset;
-          offset += nverts * 4;
-	}
-	if (arrays & CGO_PICK_COLOR_ARRAY){
-          offset += nverts * 3;
+          offset += nverts * VERTEX_COLOR_SIZE;
 	}
 	vc = 0;
-	for (v=0, pl=0, plc=0; ok && v<nverts; v++, pl+=3, plc+=4){
+	for (int v=0, pl=0, plc=0; ok && v<nverts; v++, pl+=3, plc+=4){
 	  if (normalVals){
 	    n0 = &normalVals[pl];
 	  }
@@ -6001,18 +6037,18 @@ static void CGO_gl_draw_arrays(CCGORenderer * I, CGO_op_data pc){
 #else
     glVertexAttribPointer(VERTEX_POS, VERTEX_POS_SIZE, GL_FLOAT, GL_FALSE, 0, data);
 #endif
-    data += nverts*3;
+    data += nverts * VERTEX_POS_SIZE;
   }
   if (arrays & CGO_NORMAL_ARRAY){
 #ifdef _WEBGL
 #else
     glVertexAttribPointer(VERTEX_NORMAL, VERTEX_NORMAL_SIZE, GL_FLOAT, GL_FALSE, 0, data);
 #endif
-    data += nverts*3;
+    data += nverts * VERTEX_NORMAL_SIZE;
   }
   if (I->isPicking){
     if (arrays & CGO_COLOR_ARRAY){
-      data += nverts*4;
+      data += nverts * VERTEX_COLOR_SIZE;
     }
     if (arrays & CGO_PICK_COLOR_ARRAY){
 #ifdef _WEBGL
@@ -6022,7 +6058,7 @@ static void CGO_gl_draw_arrays(CCGORenderer * I, CGO_op_data pc){
 #else
       glVertexAttribPointer(VERTEX_COLOR, VERTEX_COLOR_SIZE, GL_UNSIGNED_BYTE, GL_FALSE, 0, data);     
 #endif
-      data += nverts*3;
+      data += nverts * VERTEX_PICKCOLOR_SIZE;
     }
   } else {
     if (arrays & CGO_COLOR_ARRAY){
@@ -6030,10 +6066,10 @@ static void CGO_gl_draw_arrays(CCGORenderer * I, CGO_op_data pc){
 #else
       glVertexAttribPointer(VERTEX_COLOR, VERTEX_COLOR_SIZE, GL_FLOAT, GL_FALSE, 0, data);
 #endif
-      data += nverts*4;
+      data += nverts * VERTEX_COLOR_SIZE;
     }
     if (arrays & CGO_PICK_COLOR_ARRAY){
-      data += nverts*3;
+      data += nverts * VERTEX_PICKCOLOR_SIZE;
     }
   }
   if (I->debug){
@@ -6062,20 +6098,20 @@ static void CGO_gl_draw_arrays(CCGORenderer * I, CGO_op_data pc){
     float alpha = I->alpha;
     if (arrays & CGO_VERTEX_ARRAY){
       vertexVals = data;
-      data += nverts*3;
+      data += nverts * VERTEX_POS_SIZE;
     }
     if (arrays & CGO_NORMAL_ARRAY){
       normalVals = data;
-      data += nverts*3;
+      data += nverts * VERTEX_NORMAL_SIZE;
     }
     if (I->isPicking){
       alpha = 1.f;
       if (arrays & CGO_COLOR_ARRAY){
-	data += nverts*4;
+        data += nverts * VERTEX_COLOR_SIZE;
       }
       if (arrays & CGO_PICK_COLOR_ARRAY){
 	pickColorVals = (uchar*)data;
-	data += nverts*3;
+        data += nverts * VERTEX_PICKCOLOR_SIZE;
       }
     } else {
       if (arrays & CGO_COLOR_ARRAY){
@@ -6083,10 +6119,12 @@ static void CGO_gl_draw_arrays(CCGORenderer * I, CGO_op_data pc){
 	data += nverts*4;
       }
       if (arrays & CGO_PICK_COLOR_ARRAY){
-	data += nverts*3;
+        data += nverts * VERTEX_PICKCOLOR_SIZE;
       }
     }
-    if (arrays & CGO_ACCESSIBILITY_ARRAY) data += nverts;
+    if (arrays & CGO_ACCESSIBILITY_ARRAY) {
+      data += nverts * VERTEX_ACCESSIBILITY_SIZE;
+    }
 
     if (I->debug){
       mode = CGOConvertDebugMode(I->debug, mode);
@@ -7505,12 +7543,12 @@ void CGORenderGLPicking(CGO * I, RenderInfo *info, PickContext * context, CSetti
             int nverts = sp->nverts, v, idx = -1, bnd = -1;
             float *pca = sp->floatdata;
 
-            if (arrays & CGO_VERTEX_ARRAY){ pca += nverts * 3; }
-            if (arrays & CGO_NORMAL_ARRAY){ pca += nverts * 3; }
-            if (arrays & CGO_COLOR_ARRAY){ pca += nverts * 4; }
+            if (arrays & CGO_VERTEX_ARRAY) { pca += nverts * VERTEX_POS_SIZE; }
+            if (arrays & CGO_NORMAL_ARRAY) { pca += nverts * VERTEX_NORMAL_SIZE; }
+            if (arrays & CGO_COLOR_ARRAY) { pca += nverts * VERTEX_COLOR_SIZE; }
 
             auto pickColorValsUC = (uchar*)pca;
-            auto pickColorVals = (int*)(pca + nverts);
+            auto pickColorVals = (int*)(pca + nverts * VERTEX_PICKCOLOR_RGBA_SIZE);
 
             for (v=0;v<nverts; v++) {
               bnd = pickable ? pickColorVals[v * 2 + 1] : cPickableNoPick;
@@ -9551,26 +9589,29 @@ CGO *CGOConvertTrianglesToAlpha(const CGO * I){
     case CGO_DRAW_ARRAYS:
       {
         const cgo::draw::arrays * sp = reinterpret_cast<decltype(sp)>(pc);
-        int mode = sp->mode, arrays = sp->arraybits, nverts = sp->nverts;
-        int nxtn = 3;
-        float *vertexValsDA = 0, *nxtVals = 0, *colorValsDA = 0, *normalValsDA = 0;
-        float *vertexVals0, *normalVals0, *colorVals0;
-        
-        nxtVals = vertexValsDA = sp->floatdata;
+        const int mode = sp->mode, arrays = sp->arraybits, nverts = sp->nverts;
+        const float* nxtVals = sp->floatdata;
+
+        assert(arrays & CGO_VERTEX_ARRAY);
+        const float* vertexValsDA = nxtVals;
+        nxtVals += VERTEX_POS_SIZE * nverts;
+
+        const float* normalValsDA = nullptr;
         if (arrays & CGO_NORMAL_ARRAY){
-          nxtVals = normalValsDA = vertexValsDA + (nxtn*nverts);
+          normalValsDA = nxtVals;
+          nxtVals += VERTEX_NORMAL_SIZE * nverts;
         }
+
+        const float* colorValsDA = nullptr;
         if (arrays & CGO_COLOR_ARRAY){
-          nxtVals = colorValsDA = nxtVals + (nxtn*nverts);
-          nxtn = 4;
+          colorValsDA = nxtVals;
+          nxtVals += VERTEX_COLOR_SIZE * nverts;
         }
-        if (arrays & CGO_PICK_COLOR_ARRAY){
-          nxtVals = nxtVals + (nxtn*nverts);
-          nxtn = 3;
-        }
-        vertexVals0 = vertexValsDA;
-        normalVals0 = normalValsDA;
-        colorVals0 = colorValsDA;
+
+        const float* const vertexVals0 = vertexValsDA;
+        const float* const normalVals0 = normalValsDA;
+        const float* const colorVals0 = colorValsDA;
+
         switch (mode){
         case GL_TRIANGLES:
           {
