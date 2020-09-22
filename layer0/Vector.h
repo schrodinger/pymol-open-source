@@ -524,6 +524,12 @@ inline int inline_within3fret(const float *v1, const float *v2, float cutoff,
   return 1;
 }
 
+/**
+ * Same as:
+ *
+ *     project3f(v1, unit, result);
+ *     subtract3f(v1, result, result);
+ */
 inline void inline_remove_component3f(const float *v1, const float *unit, float *result)
 {
   float dot;
@@ -534,6 +540,13 @@ inline void inline_remove_component3f(const float *v1, const float *unit, float 
   result[2] = v1[2] - unit[2] * dot;
 }
 
+/**
+ * Get the shortest position vector for a plane with position v1 and normal vector v2.
+ * @param v1 Point on plane
+ * @param v2 Normal vector of plane
+ * @param[out] proj Point on plane, collinear with v2
+ * @return Length of proj
+ */
 inline float inline_project3f(const float *v1, const float *v2, float *proj)
 {
   float dot;

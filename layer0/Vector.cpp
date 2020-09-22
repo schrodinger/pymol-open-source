@@ -1489,8 +1489,15 @@ void transform_normalTTT44f3f(const float *m1, const float *m2, float *m3)
   m3[2] = m1[8] * m2r0 + m1[9] * m2r1 + m1[10] * m2r2;
 }
 
+/**
+ * Multiplies two row-major 3x3 matrices:
+ *
+ *     m3 = m1 * m2;
+ *
+ * m2 and m3 can be the same matrix (same memory buffer)
+ */
 void multiply33f33f(const float *m1, const float *m2, float *m3)
-{                               /* m2 and m3 can be the same matrix */
+{
   int a;
   float m2r0, m2r1, m2r2;
   for(a = 0; a < 3; a++) {

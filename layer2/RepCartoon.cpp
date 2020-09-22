@@ -36,6 +36,11 @@ Z* -------------------------------------------------------------------
 
 #include "AtomIterators.h"
 
+enum {
+  CARTOON_CYLINDRICAL_HELICES_CURVED = 1,
+  CARTOON_CYLINDRICAL_HELICES_STRAIGHT = 2
+};
+
 class CCInOut {
   signed char cc_in { cCartoon_auto /* 0 */ };
   signed char cc_out { 0 };
@@ -2262,6 +2267,23 @@ int CartoonExtrudeCircle(CExtrude *ex, CGO *cgo, short use_cylinders_for_strands
   return ok;
 }
 
+/**
+ * Modify `ex` to approximate a curved helix axis and render it as a tube.
+ *
+ * @param[in,out] ex Helix trace which will be converted to helix center trace
+ * @param[in,out] cgo CGO to render to
+ * @param quality Number of circular sampling points
+ * @param radius Cylindrical helix radius
+ * @param sampling Samples per residue
+ */
+static void CartoonExtrudeCurvedCylindricalHelix(
+    CExtrude* ex, CGO* cgo, int quality, float radius, int sampling)
+{
+  ExtrudeShiftToAxis(ex, radius, sampling);
+  ExtrudeCircle(ex, quality, radius);
+  ExtrudeCGOSurfaceTube(ex, cgo, cCylCap::Flat, nullptr, false);
+}
+
 static
 int CartoonExtrudeRect(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, float width, float length, int highlight_color){
   int ok;
@@ -2524,6 +2546,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
 
   cylindrical_helices =
     SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_cylindrical_helices);
+  int const sampling_cylindrical_helices = sampling / 8 + 1;
 
   sampling_tmp = pymol::malloc<float>(sampling * 3);
   cartoon_debug = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_debug);
@@ -2546,7 +2569,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
       ok &= ExtrudeAllocPointsNormalsColors(ex, cs->NIndex * (3 * sampling + 3));
   }
   /* process cylindrical helices first */
-  if(ok && (nAt > 1) && cylindrical_helices) {
+  if(ok && (nAt > 1) && cylindrical_helices == CARTOON_CYLINDRICAL_HELICES_STRAIGHT) {
     ok = GenerateRepCartoonProcessCylindricalHelices(G, obj, cs, cgo, ex, nAt, seg, pv, tv,
                                                      pvo, car, at, dl, cartoon_color, discrete_colors, loop_radius, alpha);
   }
@@ -2564,6 +2587,9 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
     cur_car = cCartoon_skip;
     extrudeFlag = false;
     contigFlag = false;
+
+    const auto helix_radius = SettingGet<float>(
+        G, cs->Setting, obj->Setting, cSetting_cartoon_helix_radius);
 
     while(contFlag) {
       if (CheckExtrudeContigFlags(nAt, n_p, a, &cur_car, cc, segptr, &contigFlag, &extrudeFlag)){
@@ -2583,12 +2609,19 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
 
           ComputeCartoonAtomColors(G, obj, cs, nuc_flag, atom_index1, atom_index2, &c1, &c2, atp, cc, cur_car, cartoon_color, alpha1, alpha2, nucleic_color, discrete_colors, n_p, contigFlag);
           dev = throw_ * (*d);
-          CartoonGenerateSample(G, sampling, &n_p, dev, vo, v1, v2, c1, c2, alpha1, alpha2,
-                                ai1->masked ? -1 : atom_index1, ai2->masked ? -1 : atom_index2, power_a, power_b, &vc, &valpha, &vi, &v, &vn);
+
+          auto const cur_sampling = (cur_car == cCartoon_cylinder)
+                                        ? sampling_cylindrical_helices
+                                        : sampling;
+
+          CartoonGenerateSample(G, cur_sampling, &n_p, dev, vo, v1, v2, c1, c2,
+              alpha1, alpha2, ai1->masked ? -1 : atom_index1,
+              ai2->masked ? -1 : atom_index2, power_a, power_b, &vc, &valpha,
+              &vi, &v, &vn);
 
           /* now do a smoothing pass along orientation 
              vector to smooth helices, etc... */
-          CartoonGenerateRefine(refine, sampling, v, vn, vo, sampling_tmp);
+          CartoonGenerateRefine(refine, cur_sampling, v, vn, vo, sampling_tmp);
         }
         v1 += 3;
         v2 += 3;
@@ -2649,6 +2682,10 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
             break;
           case cCartoon_dumbbell:
             ok = CartoonExtrudeDumbbell(G, ex, cgo, sampling, dumbbell_width, dumbbell_length, highlight_color, loop_quality, dumbbell_radius, use_cylinders_for_strands);
+            break;
+          case cCartoon_cylinder:
+            CartoonExtrudeCurvedCylindricalHelix(ex, cgo, loop_quality * 2,
+                helix_radius, sampling_cylindrical_helices);
             break;
           }
           if (!ok)
@@ -2913,8 +2950,15 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
       case 'H':
       case 'h':
         if(cur_car == cCartoon_auto) {
-          cur_car = cylindrical_helices ? cCartoon_skip_helix :
-            fancy_helices ? cCartoon_dumbbell : cCartoon_oval;
+          if (cylindrical_helices == CARTOON_CYLINDRICAL_HELICES_STRAIGHT) {
+            cur_car = cCartoon_skip_helix;
+          } else if (cylindrical_helices == CARTOON_CYLINDRICAL_HELICES_CURVED) {
+            cur_car = cCartoon_cylinder;
+          } else if (fancy_helices) {
+            cur_car = cCartoon_dumbbell;
+          } else {
+            cur_car = cCartoon_oval;
+          }
         }
         (*ndata->ss) = ss_t::HELIX;
         parity = 0;

@@ -262,7 +262,7 @@ enum {
   REC_b( 177, legacy_vdw_radii                        , unused    , 0 ),
   REC_b( 178, sculpt_memory                           , ostate    , 1 ),
   REC_i( 179, connect_mode                            , global    , 0 ),
-  REC_b( 180, cartoon_cylindrical_helices             , ostate    , 0 ),
+  REC_i( 180, cartoon_cylindrical_helices             , ostate    , 0, 0, 2 ),
   REC_f( 181, cartoon_helix_radius                    , ostate    , 2.25F ),
   REC_f( 182, connect_cutoff                          , global    , 0.35F ),
   REC_b( 183, save_pdb_ss                             , unused    , 0 ),

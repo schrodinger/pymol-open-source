@@ -25,6 +25,8 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Feedback.h"
 
+#include "pymol/algorithm.h"
+
 static
 void ExtrudeInit(PyMOLGlobals * G, CExtrude * I);
 
@@ -526,6 +528,133 @@ void ExtrudeBuildNormals2f(CExtrude * I)
   PRINTFD(I->G, FB_Extrude)
     " ExtrudeBuildNormals2f-DEBUG: entering...\n" ENDFD;
 
+}
+
+/**
+ * Approximate a helix center trace.
+ *
+ * - shifts points to the helix center
+ * - smoothes the points curve (low-pass filter)
+ *
+ * @pre I has helix geometry
+ * @post I has linear geometry along helix axis
+ * @post I has normals
+ *
+ * @param[in,out] I data structure to modify in-place.
+ * @param radius Cylindrical helix radius (for optimizing end points)
+ * @param sampling Samples per residue
+ */
+void ExtrudeShiftToAxis(CExtrude* I, float radius, int sampling)
+{
+  assert(I->N > 1);
+
+  constexpr float loop_radius = 0.2f;
+  constexpr int smooth_cycles = 3;
+
+  float p_start[3];
+  float p_end[3];
+
+  // original start and end points
+  copy3(I->p, p_start);
+  copy3(I->p + (I->N - 1) * 3, p_end);
+
+  ExtrudeBuildNormals2f(I);
+
+  // Because segments have open ends, we don't have ideal helix normals for the
+  // first and last position. We can reconstruct the desired normals from the
+  // next position by an ideal rotation.
+  if (I->N > 2) {
+#if 0
+    // dump residue rotations to figure out ideal rotation
+    for (int a = 1; a + 2 < I->N; ++a) {
+      const float* base0 = I->n + (a + 0) * 9;
+      const float* base1 = I->n + (a + 1) * 9;
+
+      float base0_inv[9];
+      float residue_rotation[9];
+
+      assert(fabs(determinant33f(base0) - 1.0) < 1e-3);
+      transpose33f33f(base0, base0_inv);
+      multiply33f33f(base1, base0_inv, residue_rotation);
+
+      printf("========= a %d\n", a);
+      dump33f(residue_rotation, "rotation");
+    }
+#endif
+
+    // ideal rotation from one alpha helix residue to the next
+    static float const residue_rotation[9] = {
+        0.224, -0.809, -0.544, 0.809, -0.157, 0.567, -0.544, -0.567, 0.619};
+    static float const residue_rotation_inv[9] = {
+        0.224, 0.809, -0.544, -0.809, -0.157, -0.567, -0.544, 0.567, 0.619};
+
+    multiply33f33f(residue_rotation_inv, //
+        I->n + 9 * sampling, I->n);
+    multiply33f33f(residue_rotation, //
+        I->n + 9 * (I->N - 1 - sampling), I->n + 9 * (I->N - 1));
+  }
+
+  // move points to helix axes
+  for (int a = 0; a < I->N; ++a) {
+    float* point = I->p + a * 3;
+    const float* normal = I->n + a * 9 + 3;
+
+    // distance to move point (distance between C-alpha atom and helix axis)
+    float factor = 2.3;
+
+    // keep end points close enough to adjacent segments so they overlap
+    if (a == 0 || a + 1 == I->N) {
+      factor = std::min(factor, radius - loop_radius);
+    }
+
+    float tmp[3];
+    scale3f(normal, -factor, tmp);
+    add3f(point, tmp, point);
+  }
+
+  // window averaging of point positions
+  if (I->N > 2) {
+    // window of +/-2 residues
+    int const w2 = sampling * 2;
+
+    for (int i = 0; i < smooth_cycles; ++i) {
+      std::vector<float> smoothed((I->N - 2) * 3);
+
+      for (int a = 1; a + 1 < I->N; ++a) {
+        float* avg = smoothed.data() + (a - 1) * 3;
+
+        for (int j = -w2; j <= w2; ++j) {
+          int const k = pymol::clamp(a + j, 0, I->N - 1);
+          add3f(I->p + k * 3, avg, avg);
+        }
+
+        scale3f(avg, 1. / (2 * w2 + 1), avg);
+      }
+
+      std::copy(smoothed.begin(), smoothed.end(), I->p + 3);
+    }
+  }
+
+  ExtrudeComputeTangents(I);
+  ExtrudeBuildNormals1f(I);
+
+  // extend tips for better geometry overlap with adjacent segments
+  auto const push_out_tip = [&](int index, float const* pos_orig,
+                                int direction) {
+    float const protrusion = loop_radius * 2;
+    float const* normal = I->n + index * 9;
+    float* pos = I->p + index * 3;
+    float offset[3];
+    subtract3f(pos_orig, pos, offset);
+    float const len = project3f(offset, normal, offset) * direction;
+    if (len > -protrusion) {
+      scale3f(normal, (len + protrusion) * direction, offset);
+      add3f(pos, offset, pos);
+    }
+  };
+
+  push_out_tip(0, p_start, -1);
+  push_out_tip(I->N - 1, p_end, 1);
 }
 
 #if 0

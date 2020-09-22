@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #define cCartoon_dumbbell 6
 #define cCartoon_putty 7
 #define cCartoon_dash 8
+#define cCartoon_cylinder 9
 
 #define cCartoon_skip_helix -2
 #define cRepAll       -1

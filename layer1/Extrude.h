@@ -50,6 +50,7 @@ void ExtrudeTruncate(CExtrude * I, int n);
 
 void ExtrudeFree(CExtrude * I);
 
+void ExtrudeShiftToAxis(CExtrude*, float radius, int sampling);
 int ExtrudeCircle(CExtrude * I, int n, float size);
 int ExtrudeRectangle(CExtrude * I, float width, float length, int mode);
 int ExtrudeOval(CExtrude * I, int n, float width, float length);
