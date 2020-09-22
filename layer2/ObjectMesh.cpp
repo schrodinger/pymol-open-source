@@ -914,9 +914,8 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  break;
 		}
 		shaderCGO->use_shader = true;
+                CGOAlpha(shaderCGO, 1.f - transparency);
 	      }
-
-              CGOAlpha(shaderCGO, 1.f - transparency);
 
 	      if(ms->UnitCellCGO && (I->visRep & cRepCellBit)) {
 		const float *color = ColorGet(I->G, I->Color);
