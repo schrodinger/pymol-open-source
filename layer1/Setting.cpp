@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 
 #include"Base.h"
-#include"OOMac.h"
+#include"Err.h"
 #include"MemoryDebug.h"
 #include"Ortho.h"
 #include"Setting.h"
@@ -94,34 +94,38 @@ bool SettingLevelCheck(PyMOLGlobals * G, int index, unsigned char level) {
 
 /* ================================================================== */
 
+static void SettingRecCopy(
+    int const index, SettingRec const& src, SettingRec& dst)
+{
+  switch (SettingInfo[index].type) {
+  case cSetting_string:
+    dst.set_s(src.str_ ? src.str_->c_str() : nullptr);
+    break;
+  case cSetting_float3:
+    dst.set_3f(src.float3_);
+    break;
+  default:
+    dst.set_i(src.int_);
+    break;
+  }
+  dst.defined = src.defined;
+}
+
 CSetting *SettingCopyAll(PyMOLGlobals * G, const CSetting * src, CSetting * dst)
 {
-  if(!dst) {
-    dst = pymol::calloc<CSetting>(1);
-  } else {
-    SettingPurge(dst);
+  if (!src) {
+    delete dst;
+    return nullptr;
   }
 
-  SettingInit(G, dst);
-
-  if(dst && src) {
-
-    /* simply overwriting existing data (if any) ... in the future we
-       may need to release references etc. before doing this */
-
-    unsigned int size = VLAGetSize(src->info);
-    VLACheck(dst->info, SettingRec, size - 1);
-    UtilCopyMem(dst->info, src->info, sizeof(SettingRec) * size);
-    dst->size = src->size;
-
-    // need to properly copy strings
-    for (int index = 0; index < cSetting_INIT; ++index) {
-      if (SettingInfo[index].type == cSetting_string
-          && src->info[index].str_) {
-        dst->info[index].str_ = new std::string(*src->info[index].str_);
-      }
-    }
+  if (!dst) {
+    dst = SettingNew(G);
   }
+
+  for (int index = 0; index < cSetting_INIT; ++index) {
+    SettingRecCopy(index, src->info[index], dst->info[index]);
+  }
+
   return dst;
 }
 
@@ -132,11 +136,7 @@ void SettingStoreDefault(PyMOLGlobals * G)
 
 void SettingPurgeDefault(PyMOLGlobals * G)
 {
-  if(G->Default) {
-    SettingPurge(G->Default);
-    FreeP(G->Default);
-    G->Default = NULL;
-  }
+  DeleteP(G->Default);
 }
 
 void SettingUniqueDetachChain(PyMOLGlobals * G, int unique_id)
@@ -1134,7 +1134,7 @@ std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char * name, int s
       return result;
   }
 
-  n = VLAGetSize(I->info);
+  n = cSetting_INIT;
   for(a = 0; a < n; a++) {
     if(I->info[a].changed) {
       I->info[a].changed = false;
@@ -1477,25 +1477,18 @@ PyObject *SettingGetTuple(PyMOLGlobals * G, const CSetting * set1, const CSettin
 /*========================================================================*/
 CSetting *SettingNew(PyMOLGlobals * G)
 {
-  OOAlloc(G, CSetting);
-  SettingInit(G, I);
-  return (I);
+  return new CSetting(G);
 }
 
 
 /*========================================================================*/
-void SettingPurge(CSetting * I)
+CSetting::~CSetting()
 {
-  if(I) {
-    // need to free strings
-    for(int index = 0; index < cSetting_INIT; ++index) {
-      if (SettingInfo[index].type == cSetting_string) {
-        I->info[index].delete_s();
-      }
+  // need to free strings
+  for (int index = 0; index < cSetting_INIT; ++index) {
+    if (SettingInfo[index].type == cSetting_string) {
+      info[index].delete_s();
     }
-
-    VLAFreeP(I->info);
-    I->size = 0;
   }
 }
 
@@ -1503,18 +1496,14 @@ void SettingPurge(CSetting * I)
 /*========================================================================*/
 void SettingFreeP(CSetting * I)
 {
-  if(I)
-    SettingPurge(I);
-  OOFreeP(I);
+  delete I;
 }
 
 
 /*========================================================================*/
-void SettingInit(PyMOLGlobals * G, CSetting * I)
+CSetting::CSetting(PyMOLGlobals* G)
+    : G(G)
 {
-  I->G = G;
-  I->size = sizeof(int);        /* insures offset is never zero, except when undef */
-  I->info = (SettingRec*) VLAMalloc(cSetting_INIT, sizeof(SettingRec), 5, 1); /* auto-zero */
 }
 
 
@@ -1526,13 +1515,7 @@ void SettingRestoreDefault(CSetting * I, int index, const CSetting * src)
 {
   // 1) from stored default if provided
   if (src) {
-    UtilCopyMem(I->info + index, src->info + index, sizeof(SettingRec));
-
-    // need to properly copy strings
-    if (SettingInfo[index].type == cSetting_string && src->info[index].str_) {
-      I->info[index].str_ = new std::string(*src->info[index].str_);
-    }
-
+    SettingRecCopy(index, src->info[index], I->info[index]);
     return;
   }
 
@@ -1571,12 +1554,12 @@ void SettingRestoreDefault(CSetting * I, int index, const CSetting * src)
 int SettingUnset(CSetting * I, int index)
 {
   if(I) {
-    SettingRec *sr = I->info + index;
-    if (!sr->defined) {
+    SettingRec& sr = I->info[index];
+    if (!sr.defined) {
       return false;
     }
-    sr->defined = false;
-    sr->changed = true;
+    sr.defined = false;
+    sr.changed = true;
   }
   return true;
 }
@@ -2978,14 +2961,9 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
 /*========================================================================*/
 void SettingFreeGlobal(PyMOLGlobals * G)
 {
-  CSetting *I = G->Setting;
   SettingUniqueFree(G);
-  SettingPurge(I);
-  if(G->Default) {
-    SettingPurge(G->Default);
-    FreeP(G->Default);
-  }
-  FreeP(G->Setting);
+  DeleteP(G->Setting);
+  DeleteP(G->Default);
 }
 
 
@@ -3001,9 +2979,8 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
   int (*set_b) (CSetting * I, int index, int value) = SettingSet_b;
 
   if(alloc || !I) {
-    I = (G->Setting = pymol::calloc<CSetting>(1));
+    I = G->Setting = SettingNew(G);
     SettingUniqueInit(G);
-    SettingInit(G, I);
   }
 
   if(G->Default && use_default) {

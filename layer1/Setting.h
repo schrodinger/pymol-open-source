@@ -39,7 +39,7 @@ typedef struct {
   int next;                     /* for per-atom setting lists & memory management */
 } SettingUniqueEntry;
 
-struct _CSettingUnique {
+struct CSettingUnique {
   OVOneToOne *id2offset;
   OVOneToOne *old2new;
   SettingUniqueEntry *entry;
@@ -89,7 +89,9 @@ public:
   }
 
   void set_s(const char * value) {
-    if (!str_) {
+    if (!value) {
+      delete_s();
+    } else if (!str_) {
       str_ = new std::string(value);
     } else {
       str_->assign(value);
@@ -103,12 +105,6 @@ public:
       str_ = NULL;
     }
   }
-};
-
-struct _CSetting {
-  PyMOLGlobals *G;
-  ov_size size;
-  SettingRec *info;
 };
 
 #define cSetting_tuple      -1 // for get_setting_tuple
@@ -167,8 +163,6 @@ void SettingFreeGlobal(PyMOLGlobals * G);
 CSetting *SettingNew(PyMOLGlobals * G);
 CSetting* SettingCopyAll(PyMOLGlobals* G, const CSetting* src, CSetting* dst);
 void SettingFreeP(CSetting * I);
-void SettingInit(PyMOLGlobals * G, CSetting * I);
-void SettingPurge(CSetting * I);
 void SettingCheckHandle(PyMOLGlobals * G, CSetting ** handle);
 
 #define SettingSet_b SettingSet_i
@@ -258,6 +252,14 @@ int SettingCheckFontID(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int f
 #define cStereo_dynamic             11  /* dynamic polarization */
 #define cStereo_clone_dynamic       12
 #define cStereo_openvr              13
+
+struct CSetting {
+  PyMOLGlobals* G;
+  SettingRec info[cSetting_INIT]{};
+
+  CSetting(PyMOLGlobals*);
+  ~CSetting();
+};
 
 /*
  * State index iterator which iterates either over a single state (state >= 0),
