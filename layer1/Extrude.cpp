@@ -549,7 +549,10 @@ void ExtrudeShiftToAxis(CExtrude* I, float radius, int sampling)
   assert(I->N > 1);
 
   constexpr float loop_radius = 0.2f;
-  constexpr int smooth_cycles = 3;
+  const int smooth_cycles =
+      SettingGet<int>(I->G, cSetting_cartoon_smooth_cylinder_cycles);
+  const int smooth_window =
+      SettingGet<int>(I->G, cSetting_cartoon_smooth_cylinder_window);
 
   float p_start[3];
   float p_end[3];
@@ -613,9 +616,8 @@ void ExtrudeShiftToAxis(CExtrude* I, float radius, int sampling)
   }
 
   // window averaging of point positions
-  if (I->N > 2) {
-    // window of +/-2 residues
-    int const w2 = sampling * 2;
+  if (I->N > 2 && smooth_window > 0) {
+    int const w2 = sampling * smooth_window;
 
     for (int i = 0; i < smooth_cycles; ++i) {
       std::vector<float> smoothed((I->N - 2) * 3);

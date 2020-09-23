@@ -2641,6 +2641,8 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_cartoon_round_helices:
   case cSetting_cartoon_flat_sheets:
   case cSetting_cartoon_refine_normals:
+  case cSetting_cartoon_smooth_cylinder_cycles:
+  case cSetting_cartoon_smooth_cylinder_window:
   case cSetting_cartoon_smooth_loops:
   case cSetting_cartoon_dumbbell_width:
   case cSetting_cartoon_dumbbell_length:

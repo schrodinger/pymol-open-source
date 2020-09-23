@@ -892,6 +892,8 @@ enum {
   REC_b( 782, openvr_cut_laser                        , global    , false ), // turn on to enable tu cut laser for molecule picker
   REC_f( 783, openvr_laser_width                      , global    , 3.0f ), // increase to make laser ray wider
   REC_f( 784, openvr_gui_distance                     , global    , 1.5f ),
+  REC_i( 785, cartoon_smooth_cylinder_cycles          , global    , 3 ),
+  REC_i( 786, cartoon_smooth_cylinder_window          , global    , 2 ),
 
 
 #ifdef SETTINGINFO_IMPLEMENTATION
