@@ -44,32 +44,34 @@ Z* -------------------------------------------------------------------
 #undef NT
 #endif
 
-typedef struct RepSurface {
-  Rep R;
+struct RepSurface : Rep {
+  ~RepSurface() override;
+
   int N;
   int NT;
   int proximity;
   float *V, *VN, *VC, *VA, *VAO; /* VAO - Ambient Occlusion per vertex */
   int *RC;
   int *Vis;
-  int *T, *S, *AT;                   /* T=vertices, S=strips, AT=closest atom for vertices */
+  int *T, *S, *AT = nullptr;    /* T=vertices, S=strips, AT=closest atom for vertices */
   int solidFlag;
   int oneColorFlag, oneColor;
   int allVisibleFlag;
   char *LastVisib;
   int *LastColor;
-  int ColorInvalidated;
+  bool ColorInvalidated = false;
   int Type;
   float max_vdw;
 
   /* These variables are for using the shader.  All of them */
   /* are allocated/set when generate_shader_cgo to minimize */
   /* allocation during the rendering loop. */
-  CGO *shaderCGO, *pickingCGO;
+  CGO *shaderCGO = nullptr;
+  CGO *pickingCGO = nullptr;
   short dot_as_spheres;
 #ifdef _PYMOL_IOS
 #endif
-} RepSurface;
+};
 
 static
 void RepSurfaceSmoothEdges(RepSurface * I);
@@ -88,9 +90,9 @@ static void setPickingCGO(RepSurface * I, CGO * cgo) {
   I->pickingCGO = cgo;
 }
 
-static
-void RepSurfaceFree(RepSurface * I)
+RepSurface::~RepSurface()
 {
+  auto I = this;
   VLAFreeP(I->V);
   VLAFreeP(I->VN);
   setPickingCGO(I, NULL);
@@ -110,8 +112,6 @@ void RepSurfaceFree(RepSurface * I)
   VLAFreeP(I->T);
   VLAFreeP(I->S);
   VLAFreeP(I->AT);
-  RepPurge(&I->R);              /* unnecessary, but a good idea */
-  OOFreeP(I);
 }
 
 typedef struct {
@@ -4068,16 +4068,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
   int ok = true;
   PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj = cs->Obj;
-  OOCalloc(G, RepSurface);
-  CHECKOK(ok, I);
-  if (!ok)
-    return NULL;
-  I->pickingCGO = I->shaderCGO = 0;
-#ifdef _PYMOL_IOS
-#endif
-  I->AT = 0;
-  I->ColorInvalidated = false;
-  {
+
     int surface_mode =
       SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_mode);
     int cullByFlag = (surface_mode == cRepSurface_by_flags);
@@ -4102,9 +4093,10 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       }
     }
     if(!visFlag) {
-      OOFreeP(I);
       return (NULL);            /* skip if no thing visible */
     }
+
+    OOCalloc(G, RepSurface);
 
     {
       int surface_flag = false;
@@ -4136,7 +4128,6 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       I->R.context.object = obj;
       I->R.context.state = state;
       I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepSurfaceRender;
-      I->R.fFree = (void (*)(struct Rep *)) RepSurfaceFree;
       I->R.fRecolor = (void (*)(struct Rep *, struct CoordSet *)) RepSurfaceColor;
       I->R.fSameVis = (int (*)(struct Rep *, struct CoordSet *)) RepSurfaceSameVis;
       I->R.fSameColor = (int (*)(struct Rep *, struct CoordSet *)) RepSurfaceSameColor;
@@ -4328,9 +4319,9 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       VLAFreeP(present_vla);
       OrthoBusyFast(G, 4, 4);
     }
-  }
+
   if(!ok) {
-    RepSurfaceFree(I);
+    delete I;
     I = NULL;
   }
   return (Rep *) I;

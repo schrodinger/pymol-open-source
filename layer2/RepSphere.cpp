@@ -61,9 +61,9 @@ enum {
 
  */
 
-static
-void RepSphereFree(RepSphere * I)
+RepSphere::~RepSphere()
 {
+  auto I = this;
   if (I->primitiveCGO == I->renderCGO) {
     I->primitiveCGO = 0;
   }
@@ -72,8 +72,6 @@ void RepSphereFree(RepSphere * I)
   CGOFree(I->spheroidCGO);
   FreeP(I->LastColor);
   FreeP(I->LastVisib);
-  RepPurge(&I->R);
-  OOFreeP(I);
 }
 
 void RenderSphereComputeFog(PyMOLGlobals *G, RenderInfo *info, float *fog_info)
@@ -493,16 +491,13 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   if(!cs->hasRep(cRepSphereBit))
     return NULL;
 
-  OOCalloc(G, RepSphere);
-  CHECKOK(ok, I);
-  if (!ok)
-    return NULL;
   obj = cs->Obj;
-
   marked = pymol::calloc<bool>(obj->NAtom);
-  CHECKOK(ok, marked);
-  if (ok)
-    RepInit(G, &I->R);
+  if (!marked)
+    return NULL;
+
+  OOCalloc(G, RepSphere);
+  RepInit(G, &I->R);
   I->renderCGO = NULL;
   I->primitiveCGO = NULL;
   if (!cs->Spheroid.empty())
@@ -521,7 +516,6 @@ Rep *RepSphereNew(CoordSet * cs, int state)
 
   if (ok){
     I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepSphereRender;
-    I->R.fFree = (void (*)(struct Rep *)) RepSphereFree;
     I->R.fSameVis = (int (*)(struct Rep *, struct CoordSet *)) RepSphereSameVis;
     I->R.obj = (CObject *) obj;
     I->R.cs = cs;
@@ -632,7 +626,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
 
   FreeP(marked);
   if(nspheres == 0 || !ok) {
-    RepSphereFree(I);
+    delete I;
     I = NULL;
   }
   return (Rep *) I;

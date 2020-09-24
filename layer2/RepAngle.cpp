@@ -32,28 +32,27 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"CoordSet.h"
 
-typedef struct RepAngle {
-  Rep R;
+struct RepAngle : Rep {
+  ~RepAngle() override;
+
   float *V;
   int N;
   CObject *Obj;
   DistSet *ds;
   float linewidth, radius;
   CGO *shaderCGO;
-} RepAngle;
+};
 
 #include"ObjectDist.h"
 
-static
-void RepAngleFree(RepAngle * I)
+RepAngle::~RepAngle()
 {
+  auto I = this;
   if (I->shaderCGO){
     CGOFree(I->shaderCGO);
     I->shaderCGO = 0;
   }
   VLAFreeP(I->V);
-  RepPurge(&I->R);
-  OOFreeP(I);
 }
 
 static int RepAngleCGOGenerate(RepAngle * I, RenderInfo * info)
@@ -299,7 +298,7 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
   if (!ok){
     CGOFree(I->shaderCGO);
     I->ds->Rep[cRepAngle] = NULL;
-    RepAngleFree(I);
+    delete I;
   }
 }
 
@@ -317,20 +316,16 @@ Rep *RepAngleNew(DistSet * ds, int state)
     SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dash_transparency);
   dash_transparency = (dash_transparency < 0.f ? 0.f : (dash_transparency > 1.f ? 1.f : dash_transparency));
 
-  OOAlloc(G, RepAngle);
-  CHECKOK(ok, I);
-  
   PRINTFD(G, FB_RepAngle)
     "RepAngleNew: entered.\n" ENDFD;
   if(!ok || !ds->NAngleIndex) {
-    OOFreeP(I);
     return (NULL);
   }
 
+  OOAlloc(G, RepAngle);
   RepInit(G, &I->R);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepAngleRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepAngleFree;
   I->R.fRecolor = NULL;
   I->R.obj = ds->Obj;
 
@@ -469,7 +464,7 @@ Rep *RepAngleNew(DistSet * ds, int state)
       I->N = n;
   }
   if (!ok){
-    RepAngleFree(I);
+    delete I;
     I = NULL;
   }
   return (Rep *) I;

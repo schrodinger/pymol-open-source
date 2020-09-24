@@ -33,30 +33,22 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include "Lex.h"
 
-typedef struct RepRibbon {
-  Rep R;
+struct RepRibbon : Rep {
+  ~RepRibbon() override;
+
   float ribbon_width;
   float radius;
   CGO *shaderCGO;
   CGO *primitiveCGO;
   bool shaderCGO_has_cylinders;
-} RepRibbon;
+};
 
 #include"ObjectMolecule.h"
 
-static
-void RepRibbonFree(RepRibbon * I)
+RepRibbon::~RepRibbon()
 {
-  if (I->primitiveCGO){
-    CGOFree(I->primitiveCGO);
-    I->primitiveCGO = 0;
-  }
-  if (I->shaderCGO){
-    CGOFree(I->shaderCGO);
-    I->shaderCGO = 0;
-  }
-  RepPurge(&I->R);
-  OOFreeP(I);
+  CGOFree(primitiveCGO);
+  CGOFree(shaderCGO);
 }
 
 static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
@@ -192,7 +184,6 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     sampling = 1;
   I->radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_radius);
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepRibbonRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepRibbonFree;
   I->R.fRecolor = NULL;
   I->R.obj = (CObject *) obj;
   I->R.cs = cs;
@@ -542,7 +533,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     FreeP(tv);
     FreeP(nv);
   } else {
-    RepRibbonFree(I);
+    delete I;
     I = NULL;
   }
 

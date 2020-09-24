@@ -174,27 +174,32 @@ enum cRepInv_t {
 struct CoordSet;
 struct Object;
 
-typedef struct Rep {
+struct Rep {
+  Rep& R; // TODO TEMP
   PyMOLGlobals *G;
   void (*fRender) (struct Rep * I, RenderInfo * info);
   struct Rep *(*fUpdate) (struct Rep * I, struct CoordSet * cs, int state, int rep);
   void (*fInvalidate) (struct Rep * I, struct CoordSet * cs, int level);
-  void (*fFree) (struct Rep * I);
-  int MaxInvalid, Active;
-  CObject *obj;
-  struct CoordSet *cs;
-  Pickable *P;
-  PickContext context;
+  void fFree(struct Rep* I);
+
+  Rep() : R(*this) {} // TODO TEMP
+  virtual ~Rep();
+
+  int MaxInvalid = 0;
+  int Active = 0;
+  CObject* obj = 0;
+  struct CoordSet* cs = nullptr;
+  Pickable* P = nullptr;
+  PickContext context{};
   /* private */
-  void (*fRecolor) (struct Rep * I, struct CoordSet * cs);
-  int (*fSameVis) (struct Rep * I, struct CoordSet * cs);
-  int (*fSameColor) (struct Rep * I, struct CoordSet * cs);
+  void (*fRecolor) (struct Rep * I, struct CoordSet * cs) = nullptr;
+  int (*fSameVis) (struct Rep * I, struct CoordSet * cs) = nullptr;
+  int (*fSameColor) (struct Rep * I, struct CoordSet * cs) = nullptr;
   struct Rep *(*fRebuild) (struct Rep * I, struct CoordSet * cs, int state, int rep);
-  struct Rep *(*fNew) (struct CoordSet * cs, int state);
-} Rep;
+  struct Rep *(*fNew) (struct CoordSet * cs, int state) = nullptr;
+};
 
 void RepInit(PyMOLGlobals * G, Rep * I);
-void RepPurge(Rep * I);
 void RepInvalidate(struct Rep *I, struct CoordSet *cs, int level);
 
 cRepBitmask_t RepGetAutoShowMask(PyMOLGlobals * G);

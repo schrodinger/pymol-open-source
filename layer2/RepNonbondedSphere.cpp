@@ -31,26 +31,18 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"CGO.h"
 
-typedef struct RepNonbondedSphere {
-  Rep R;
+struct RepNonbondedSphere : Rep {
+  ~RepNonbondedSphere() override;
+
   CGO *shaderCGO, *primitiveCGO;
-} RepNonbondedSphere;
+};
 
 #include"ObjectMolecule.h"
 
-static
-void RepNonbondedSphereFree(RepNonbondedSphere * I)
+RepNonbondedSphere::~RepNonbondedSphere()
 {
-  if (I->shaderCGO){
-    CGOFree(I->shaderCGO);
-    I->shaderCGO = 0;
-  }
-  if (I->primitiveCGO){
-    CGOFree(I->primitiveCGO);
-    I->primitiveCGO = 0;
-  }
-  RepPurge(&I->R);
-  OOFreeP(I);
+  CGOFree(shaderCGO);
+  CGOFree(primitiveCGO);
 }
 
 static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
@@ -118,9 +110,6 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
     1.f - SettingGet_f(G, cs->Setting, obj->Setting, cSetting_nonbonded_transparency);
   int ok = true;
 
-  OOAlloc(G, RepNonbondedSphere);
-  CHECKOK(ok, I);
-
   if (ok)
     active = pymol::malloc<unsigned char>(cs->NIndex);
   CHECKOK(ok, active);
@@ -134,16 +123,15 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
     }
   }
   if(!nSphere) {
-    OOFreeP(I);
     FreeP(active);
     return (NULL);
   }
   float nb_spheres_size =
     SettingGet_f(G, cs->Setting, obj->Setting, cSetting_nb_spheres_size);
 
+  OOAlloc(G, RepNonbondedSphere);
   RepInit(G, &I->R);
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepNonbondedSphereRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepNonbondedSphereFree;
   I->R.fRecolor = NULL;
   I->R.obj = (CObject *) (cs->Obj);
   I->R.cs = cs;
@@ -194,7 +182,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   }
   FreeP(active);
   if (!ok){
-    RepNonbondedSphereFree(I);
+    delete I;
     I = NULL;
   }
   return (Rep *) I;

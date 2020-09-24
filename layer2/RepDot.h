@@ -25,8 +25,9 @@ enum cRepDot_t {
   cRepDotAreaType = 1,
 };
 
-typedef struct RepDot {
-  Rep R;
+struct RepDot : Rep {
+  ~RepDot() override;
+
   float dotSize;
   float *V;
   float *VC;
@@ -39,7 +40,7 @@ typedef struct RepDot {
   float Width;
   CGO *shaderCGO;
   short shaderCGO_as_spheres;
-} RepDot;
+};
 
 Rep *RepDotNew(CoordSet * cset, int state);
 Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state);

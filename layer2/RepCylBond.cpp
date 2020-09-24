@@ -40,11 +40,12 @@
 extern "C" void fireMemoryWarning();
 #endif
 
-typedef struct RepCylBond {
-  Rep R;
+struct RepCylBond : Rep {
+  ~RepCylBond() override;
+
   CGO *primitiveCGO;
   CGO *renderCGO;
-} RepCylBond;
+};
 
 /* RepCylinder -- This function is a helper function that generates a cylinder for RepCylBond.
  *   Depending on the s1 and s2 arguments, it will either draw a bond or a half bond.  Half bonds
@@ -103,13 +104,11 @@ int RepCylinder(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, float *v2,
   return ok;
 }
 
-static
-void RepCylBondFree(RepCylBond * I)
+RepCylBond::~RepCylBond()
 {
+  auto I = this;
   CGOFree(I->primitiveCGO);
   CGOFree(I->renderCGO);
-  RepPurge(&I->R);
-  OOFreeP(I);
 }
 
 static int RepCylBondCGOGenerate(RepCylBond * I, RenderInfo * info)
@@ -571,11 +570,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   short shader_mode = 0;
   int ok = true;
 
-  OOAlloc(G, RepCylBond);
-  CHECKOK(ok, I);
-  if (!ok){
-    return NULL;
-  }
   PRINTFD(G, FB_RepCylBond)
     " RepCylBondNew-Debug: entered.\n" ENDFD;
   obj = cs->Obj;
@@ -593,7 +587,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       b++;
     }
   if(!visFlag) {
-    OOFreeP(I);
     return (NULL);              /* skip if no sticks are visible */
   }
 
@@ -601,7 +594,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   marked = pymol::calloc<bool>(obj->NAtom);
   CHECKOK(ok, marked);
   if (!ok){
-    RepCylBondFree(I);
     return NULL;
   }
 
@@ -666,9 +658,9 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   auto valence_zero_mode =
     SettingGet_i(G, cs->Setting, obj->Setting, cSetting_valence_zero_mode);
 
+  OOAlloc(G, RepCylBond);
   RepInit(G, &I->R);
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepCylBondRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepCylBondFree;
   I->R.obj = (CObject *) obj;
   I->R.cs = cs;
   I->R.context.object = obj;
@@ -930,7 +922,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 
   CGOStop(I->primitiveCGO);
   if (!ok){
-    RepCylBondFree(I);
+    delete I;
     I = NULL;
   }
 

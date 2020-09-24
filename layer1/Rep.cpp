@@ -172,7 +172,6 @@ static void RepRenderBox(struct Rep *this_, RenderInfo * info)
 /*========================================================================*/
 void RepInit(PyMOLGlobals * G, Rep * I)
 {
-  UtilZeroMem(I, sizeof(Rep));
   I->G = G;
   I->fInvalidate = RepInvalidate;
   I->fUpdate = RepUpdate;
@@ -182,9 +181,15 @@ void RepInit(PyMOLGlobals * G, Rep * I)
 
 
 /*========================================================================*/
-void RepPurge(Rep * I)
+void Rep::fFree(Rep* I)
 {
-  FreeP(I->P);
+  assert(I == this);
+  delete I;
+}
+
+Rep::~Rep()
+{
+  FreeP(P);
 }
 
 RepIterator::RepIterator(PyMOLGlobals * G, int rep_) {

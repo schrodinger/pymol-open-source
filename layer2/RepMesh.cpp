@@ -35,8 +35,9 @@ Z* -------------------------------------------------------------------
 #include"Selector.h"
 #include "ShaderMgr.h"
 
-typedef struct RepMesh {
-  Rep R;
+struct RepMesh : Rep {
+  ~RepMesh() override;
+
   pymol::vla<int> N;
   int NTot;
   pymol::vla<float> V;
@@ -51,21 +52,17 @@ typedef struct RepMesh {
   float max_vdw;
   int mesh_type;
   CGO *shaderCGO;
-} RepMesh;
+};
 
 #include"ObjectMolecule.h"
 
-static
-void RepMeshFree(RepMesh * I)
+RepMesh::~RepMesh()
 {
-  if (I->shaderCGO){
-    CGOFree(I->shaderCGO);
-    I->shaderCGO = 0;
-  }
+  auto I = this;
+  CGOFree(I->shaderCGO);
   FreeP(I->VC);
   FreeP(I->LastColor);
   FreeP(I->LastVisib);
-  OOFreeP(I);
 }
 
 static
@@ -731,14 +728,10 @@ Rep *RepMeshNew(CoordSet * cs, int state)
 
   AtomInfoType *ai1;
 
-  OOAlloc(G, RepMesh);
-  CHECKOK (ok, I);
   PRINTFD(G, FB_RepMesh)
   " RepMeshNew-DEBUG: entered with coord-set %p\n", (void *) cs ENDFD;
   if (ok){
     obj = cs->Obj;
-    I->R.context.object = obj;
-    I->R.context.state = state;
   }
   if (ok){
     probe_radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_solvent_radius);
@@ -764,10 +757,10 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     }
   }
   if(!ok || !visFlag) {
-    OOFreeP(I);
     return (NULL);              /* skip if no dots are visible */
   }
 
+  OOAlloc(G, RepMesh);
   I->max_vdw = ObjectMoleculeGetMaxVDW(obj) + solv_acc * probe_radius;
 
   RepInit(G, &I->R);
@@ -781,7 +774,6 @@ Rep *RepMeshNew(CoordSet * cs, int state)
   I->NDot = 0;
   I->Dot = NULL;
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepMeshRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepMeshFree;
   I->R.obj = (CObject *) cs->Obj;
   I->R.cs = cs;
   I->R.fRecolor = (void (*)(struct Rep *, struct CoordSet *)) RepMeshColor;
@@ -1183,7 +1175,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
   }
   OrthoBusyFast(G, 4, 4);
   if(!ok) {
-    RepMeshFree(I);
+    delete I;
     I = NULL;
   }
   return (Rep *) I;

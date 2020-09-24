@@ -69,8 +69,9 @@ struct VItemType {
   float connector_ext_len;  // 27: label_connector_ext_length
 };
 
-typedef struct RepLabel {
-  Rep R;
+struct RepLabel : Rep {
+  ~RepLabel() override;
+
   // VItemType *V;
   float *V;
   lexidx_t *L;
@@ -78,7 +79,7 @@ typedef struct RepLabel {
   int OutlineColor;
   CGO *shaderCGO;
   int texture_font_size;
-} RepLabel;
+};
 
 #define SHADERCGO I->shaderCGO
 
@@ -90,16 +91,12 @@ static void RepLabelInit(RepLabel *I)
   I->texture_font_size = 0;
 }
 
-static
-void RepLabelFree(RepLabel * I)
+RepLabel::~RepLabel()
 {
-  RepPurge(&I->R);
+  auto I = this;
   FreeP(I->V);
   FreeP(I->L);
-  if (I->shaderCGO){
-    CGOFree(I->shaderCGO);
-  }
-  OOFreeP(I);
+  CGOFree(I->shaderCGO);
 }
 
 #define MAX_LABEL_TEXTURE_SIZE 256
@@ -1525,7 +1522,6 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   RepInit(G, &I->R);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepLabelRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepLabelFree;
   I->R.fRecolor = NULL;
   I->R.obj = (CObject *) obj;
   I->R.cs = cs;

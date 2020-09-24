@@ -29,21 +29,20 @@
 #include"Matrix.h"
 #include"CGO.h"
 
-typedef struct RepEllipsoid {
-  Rep R;                        /* must be first! */
+struct RepEllipsoid : Rep {
+  ~RepEllipsoid() override;
+
   CGO *ray, *std, *shaderCGO;
-} RepEllipsoid;
+};
 
 #include"ObjectMolecule.h"
 
-static
-void RepEllipsoidFree(RepEllipsoid * I)
+RepEllipsoid::~RepEllipsoid()
 {
+  auto I = this;
   CGOFree(I->ray);
   CGOFree(I->std);
   CGOFree(I->shaderCGO);
-  RepPurge(&I->R);
-  OOFreeP(I);
 }
 
 static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
@@ -162,7 +161,6 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
   RepInit(G, &I->R);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepEllipsoidRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepEllipsoidFree;
   I->R.cs = cs;
   I->R.obj = (CObject *) obj;
   I->R.context.object = obj;
@@ -340,7 +338,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
     }
   }
   if (!ok){
-    RepEllipsoidFree(I);
+    delete I;
     I = NULL;
   }
   return (Rep *) I;

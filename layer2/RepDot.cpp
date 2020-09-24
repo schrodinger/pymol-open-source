@@ -37,9 +37,9 @@ Z* -------------------------------------------------------------------
 
 static void RepDotRender(RepDot * I, RenderInfo * info);
 
-static
-void RepDotFree(RepDot * I)
+RepDot::~RepDot()
 {
+  auto I = this;
   if (I->shaderCGO){
     CGOFree(I->shaderCGO);
     I->shaderCGO = 0;
@@ -51,7 +51,6 @@ void RepDotFree(RepDot * I)
   FreeP(I->VN);
   FreeP(I->A);
   FreeP(I->Atom);
-  OOFreeP(I);
 }
 
 static int RepDotCGOGenerate(RepDot * I, RenderInfo * info)
@@ -324,7 +323,6 @@ Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
   I->Width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_width);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepDotRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepDotFree;
   I->R.obj = (CObject *) obj;
   I->R.cs = cs;
 
@@ -489,6 +487,6 @@ Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
   return (Rep*) I;
 
 ok_except1:
-  RepDotFree(I);
+  delete I;
   return nullptr;
 }

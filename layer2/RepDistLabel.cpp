@@ -38,8 +38,9 @@ Z* -------------------------------------------------------------------
 
 typedef char DistLabel[12];
 
-typedef struct RepDistLabel {
-  Rep R;
+struct RepDistLabel : Rep {
+  ~RepDistLabel() override;
+
   float *V;
   int N;
   DistLabel *L;
@@ -48,22 +49,20 @@ typedef struct RepDistLabel {
   int OutlineColor;
   CGO *shaderCGO;
   int texture_font_size;
-} RepDistLabel;
+};
 
 #define SHADERCGO I->shaderCGO
 
 #include"ObjectDist.h"
 
-static
-void RepDistLabelFree(RepDistLabel * I)
+RepDistLabel::~RepDistLabel()
 {
+  auto I = this;
   if (I->shaderCGO){
     CGOFree(I->shaderCGO);
   }
   VLAFreeP(I->V);
   VLAFreeP(I->L);
-  RepPurge(&I->R);
-  OOFreeP(I);
 }
 
 static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
@@ -224,7 +223,7 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
   if (!ok){
     CGOFree(I->shaderCGO);
     I->ds->Rep[cRepLabel] = NULL;
-    RepDistLabelFree(I);
+    delete I;
   }
 }
 
@@ -242,14 +241,10 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   Pickable *rp = NULL;
   int ok = true;
 
-  OOAlloc(G, RepDistLabel);
-  CHECKOK(ok, I);
-
   if(!ok || !(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex)) {
     ds->NLabel = 0;
     VLAFreeP(ds->LabCoord);
     VLAFreeP(ds->LabPos);
-    OOFreeP(I);
     return (NULL);
   }
 
@@ -258,10 +253,10 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   if(default_digits > 10)
     default_digits = 10;
 
+  OOAlloc(G, RepDistLabel);
   RepInit(G, &I->R);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepDistLabelRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepDistLabelFree;
   I->R.fRecolor = NULL;
 
   I->N = 0;
@@ -558,7 +553,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
     I->R.P[0].index = I->N;     /* unnec? */
   }
   if (!ok){
-    RepDistLabelFree(I);
+    delete I;
     I = NULL;
   }
   return (Rep *) I;

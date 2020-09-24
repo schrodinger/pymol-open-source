@@ -32,28 +32,27 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"CoordSet.h"
 
-typedef struct RepDihedral {
-  Rep R;
+struct RepDihedral : Rep {
+  ~RepDihedral() override;
+
   float *V;
   int N;
   CObject *Obj;
   DistSet *ds;
   float linewidth, radius;
   CGO *shaderCGO;
-} RepDihedral;
+};
 
 #include"ObjectDist.h"
 
-static
-void RepDihedralFree(RepDihedral * I)
+RepDihedral::~RepDihedral()
 {
+  auto I = this;
   if (I->shaderCGO){
     CGOFree(I->shaderCGO);
     I->shaderCGO = 0;
   }
   VLAFreeP(I->V);
-  RepPurge(&I->R);
-  OOFreeP(I);
 }
 
 static int RepDihedralCGOGenerate(RepDihedral * I, RenderInfo * info)
@@ -308,7 +307,7 @@ static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
   if (!ok){
     CGOFree(I->shaderCGO);
     I->ds->Rep[cRepDihedral] = NULL;
-    RepDihedralFree(I);
+    delete I;
   }
 }
 
@@ -321,18 +320,14 @@ Rep *RepDihedralNew(DistSet * ds, int state)
   float dash_len, dash_gap, dash_sum;
   int ok = true;
 
-  OOAlloc(G, RepDihedral);
-  CHECKOK(ok, I);
-
   if(!ok || !ds->NDihedralIndex) {
-    OOFreeP(I);
     return (NULL);
   }
 
+  OOAlloc(G, RepDihedral);
   RepInit(G, &I->R);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepDihedralRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepDihedralFree;
   I->R.fRecolor = NULL;
   I->R.obj = ds->Obj;
   I->R.cs = NULL;
@@ -543,7 +538,7 @@ Rep *RepDihedralNew(DistSet * ds, int state)
     I->N = n;
   }
   if (!ok){
-    RepDihedralFree(I);
+    delete I;
     I = NULL;
   }
   return (Rep *) I;

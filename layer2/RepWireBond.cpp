@@ -28,12 +28,13 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"CGO.h"
 
-typedef struct RepWireBond {
-  Rep R;
-  CGO *shaderCGO;
-  CGO *primitiveCGO;
-  bool shaderCGO_has_cylinders;
-} RepWireBond;
+struct RepWireBond : Rep {
+  ~RepWireBond() override;
+
+  CGO *shaderCGO = nullptr;
+  CGO *primitiveCGO = nullptr;
+  bool shaderCGO_has_cylinders = false;
+};
 
 #include"ObjectMolecule.h"
 
@@ -244,13 +245,10 @@ static void RepAromatic(CGO *cgo, bool s1, bool s2, bool isRamped,
   }
 }
 
-static
-void RepWireBondFree(RepWireBond * I)
+RepWireBond::~RepWireBond()
 {
-    CGOFree(I->shaderCGO);
-  CGOFree(I->primitiveCGO);
-  RepPurge(&I->R);
-  OOFreeP(I);
+  CGOFree(shaderCGO);
+  CGOFree(primitiveCGO);
 }
 
 
@@ -607,8 +605,6 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   const float _0p9 = 0.9F;
   int ok = true;
   unsigned int line_counter = 0;
-  OOAlloc(G, RepWireBond);
-  CHECKOK(ok, I);
   PRINTFD(G, FB_RepWireBond)
     " RepWireBondNew-Debug: entered.\n" ENDFD;
 
@@ -627,13 +623,11 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     }
   }
   if(!visFlag) {
-    OOFreeP(I);
     return (NULL);              /* skip if no dots are visible */
   }
   marked = pymol::calloc<bool>(obj->NAtom);
   CHECKOK(ok, marked);
   if (!ok){
-    OOFreeP(I);
     return (NULL);
   }
   
@@ -684,13 +678,11 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     b++;
   }
 
+  auto I = new RepWireBond();
   RepInit(G, &I->R);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepWireBondRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepWireBondFree;
 
-  I->shaderCGO = 0;
-  I->shaderCGO_has_cylinders = 0;
   I->R.P = NULL;
   I->R.fRecolor = NULL;
   I->R.context.object = obj;
@@ -854,7 +846,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   FreeP(marked);
   FreeP(other);
   if (!ok || !line_counter){
-    RepWireBondFree(I);
+    delete I;
     I = NULL;
   }
   return (Rep *) I;

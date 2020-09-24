@@ -29,22 +29,20 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"CGO.h"
 
-typedef struct RepNonbonded {
-  Rep R;
+struct RepNonbonded : Rep {
+  ~RepNonbonded() override;
+
   CGO *primitiveCGO;
   CGO *shaderCGO;
   bool shaderCGO_has_cylinders;
-} RepNonbonded;
+};
 
 #include"ObjectMolecule.h"
 
-static
-void RepNonbondedFree(RepNonbonded * I)
+RepNonbonded::~RepNonbonded()
 {
-  CGOFree(I->primitiveCGO);
-  CGOFree(I->shaderCGO);
-  RepPurge(&I->R);
-  OOFreeP(I);
+  CGOFree(primitiveCGO);
+  CGOFree(shaderCGO);
 }
 
 void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
@@ -243,7 +241,6 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
 {
   PyMOLGlobals *G = cs->G;
   bool hasNonbondedAtoms = false;
-  OOAlloc(G, RepNonbonded);
 
   ObjectMolecule *obj = cs->Obj;
 
@@ -257,14 +254,13 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
     }
   }
   if(!hasNonbondedAtoms) {
-    OOFreeP(I);
     return (NULL);              /* skip if no dots are visible */
   }
 
+  OOAlloc(G, RepNonbonded);
   RepInit(G, &I->R);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepNonbondedRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepNonbondedFree;
   I->R.fRecolor = NULL;
   I->shaderCGO = NULL;
 

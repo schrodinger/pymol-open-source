@@ -35,8 +35,9 @@ Z* -------------------------------------------------------------------
 #include "WebPyMOLLibrary.h"
 #endif
 
-typedef struct RepDistDash {
-  Rep R;
+struct RepDistDash : Rep {
+  ~RepDistDash() override;
+
   float *V;
   int N;
   CObject *Obj;
@@ -44,20 +45,14 @@ typedef struct RepDistDash {
   float linewidth, radius;
   CGO *shaderCGO;
   bool shaderCGO_has_cylinders, shaderCGO_has_trilines;
-} RepDistDash;
+};
 
 #include"ObjectDist.h"
 
-static
-void RepDistDashFree(RepDistDash * I)
+RepDistDash::~RepDistDash()
 {
-  if (I->shaderCGO){
-    CGOFree(I->shaderCGO);
-    I->shaderCGO = 0;
-  }
-  VLAFreeP(I->V);
-  RepPurge(&I->R);
-  OOFreeP(I);
+  CGOFree(shaderCGO);
+  VLAFreeP(V);
 }
 
 /* Has no prototype */
@@ -325,7 +320,7 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
   if (!ok){
     CGOFree(I->shaderCGO);
     I->ds->Rep[cRepDash] = NULL;
-    RepDistDashFree(I);
+    delete I;
   }
 }
 
@@ -339,18 +334,14 @@ Rep *RepDistDashNew(DistSet * ds, int state)
   float dash_len, dash_gap, dash_sum;
   int ok = true;
 
-  OOAlloc(G, RepDistDash);
-  CHECKOK(ok, I);
-
   if(!ok || !ds->NIndex) {
-    OOFreeP(I);
     return (NULL);
   }
 
+  OOAlloc(G, RepDistDash);
   RepInit(G, &I->R);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepDistDashRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepDistDashFree;
   I->R.fRecolor = NULL;
   I->R.obj = ds->Obj;
   I->R.context.state = state;
@@ -439,7 +430,7 @@ Rep *RepDistDashNew(DistSet * ds, int state)
       I->N = n;
   }
   if (!ok){
-    RepDistDashFree(I);
+    delete I;
     I = NULL;
   }
   return (Rep *) I;

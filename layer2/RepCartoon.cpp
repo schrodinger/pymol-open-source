@@ -57,8 +57,9 @@ public:
   bool operator== (const CCInOut &other) const { return cc_in == other.cc_in; }
 };
 
-typedef struct RepCartoon {
-  Rep R;                        /* must be first! */
+struct RepCartoon : Rep {
+  ~RepCartoon() override;
+
   CGO *ray, *std, *preshader;
 
   /**
@@ -74,22 +75,20 @@ typedef struct RepCartoon {
   }
 
   char *LastVisib;
-} RepCartoon;
+};
 
 #include"ObjectMolecule.h"
 
 #define ESCAPE_MAX 500
 
-static
-void RepCartoonFree(RepCartoon * I)
+RepCartoon::~RepCartoon()
 {
+  auto I = this;
   assert(I->ray != I->preshader);
   CGOFree(I->preshader);
   CGOFree(I->ray);
   CGOFree(I->std);
   FreeP(I->LastVisib);
-  RepPurge(&I->R);
-  OOFreeP(I);
 }
 
 /*
@@ -3737,7 +3736,6 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepCartoonRender;
   I->R.fSameVis = (int (*)(struct Rep *, struct CoordSet *)) RepCartoonSameVis;
-  I->R.fFree = (void (*)(struct Rep *)) RepCartoonFree;
   I->R.fInvalidate = RepCartoonInvalidate;
   I->R.fRecolor = NULL;
   I->R.obj = obj;
@@ -3878,7 +3876,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   ok &= !G->Interrupt;
   if (!ok || !CGOHasOperations(I->preshader)) {
     /* cannot generate RepCartoon */
-    RepCartoonFree(I);
+    delete I;
     I = NULL;
   }
   FreeP(dv);
