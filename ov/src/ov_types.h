@@ -11,6 +11,8 @@
 #ifndef _H_ov_types
 #define _H_ov_types
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
