@@ -430,7 +430,7 @@ pymol::Result<> ExecutiveSeleToObject(PyMOLGlobals* G, const char* name,
 PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals * G, const char *s1, int state,
                                      const char *ref_object, int ref_state);
 pymol::Result<> ExecutiveInvalidateRep(
-    PyMOLGlobals* G, const char* name, int rep, int level);
+    PyMOLGlobals* G, const char* name, cRep_t rep, cRepInv_t level);
 pymol::Result<> ExecutiveFlag(PyMOLGlobals * G, int flag, const char *sele, int action, int quiet);
 pymol::Result<> ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet);
 pymol::Result<> ExecutiveProtect(PyMOLGlobals * G, const char *s1, int mode, int quiet);

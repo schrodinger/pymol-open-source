@@ -29,7 +29,12 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 
 struct RepWireBond : Rep {
+  using Rep::Rep;
+
   ~RepWireBond() override;
+
+  cRep_t type() const override { return cRepLine; }
+  void render(RenderInfo* info) override;
 
   CGO *shaderCGO = nullptr;
   CGO *primitiveCGO = nullptr;
@@ -352,7 +357,7 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
 
 static int RepWireBondCGOGenerate(RepWireBond * I, RenderInfo * info)
 {
-  PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->G;
   CGO *convertcgo = NULL;
   int ok = true;
   short line_as_cylinders = 0;
@@ -402,23 +407,23 @@ static int RepWireBondCGOGenerate(RepWireBond * I, RenderInfo * info)
   return ok;
 }
 	  
-static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
+void RepWireBond::render(RenderInfo* info)
 {
-  PyMOLGlobals *G = I->R.G;
+  auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
   int ok = true;
 
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->R.cs->Setting, I->R.cs->Obj->Setting);
+    CGORenderRay(primitiveCGO, ray, info, NULL, NULL, cs->Setting, cs->Obj->Setting);
     ray->transparentf(0.0);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     bool use_shader = SettingGetGlobal_b(G, cSetting_line_use_shader) &&
                       SettingGetGlobal_b(G, cSetting_use_shaders);
     if(pick) {
-      CGORenderGLPicking(use_shader ? I->shaderCGO : I->primitiveCGO, info, &I->R.context, NULL, NULL, &I->R);
+      CGORenderGLPicking(use_shader ? I->shaderCGO : I->primitiveCGO, info, &I->context, NULL, NULL, I);
     } else { /* else not pick i.e., when rendering */
       short line_as_cylinders ;
       line_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_line_as_cylinders);
@@ -430,17 +435,17 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
         if (use_shader) {
           if (!I->shaderCGO)
             ok &= RepWireBondCGOGenerate(I, info);
-          CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+          CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
 	    } else {
-          CGORenderGL(I->primitiveCGO, NULL, NULL, NULL, info, &I->R);
+          CGORenderGL(I->primitiveCGO, NULL, NULL, NULL, info, I);
 	}
       }
     }
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
-    I->R.cs->Active[cRepLine] = false;
+    I->invalidate(cRepInvPurge);
+    I->cs->Active[cRepLine] = false;
   }
 }
 
@@ -678,16 +683,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     b++;
   }
 
-  auto I = new RepWireBond();
-  RepInit(G, &I->R);
-
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepWireBondRender;
-
-  I->R.P = NULL;
-  I->R.fRecolor = NULL;
-  I->R.context.object = obj;
-  I->R.context.state = state;
-  I->R.cs = cs;
+  auto I = new RepWireBond(cs, state);
 
   I->primitiveCGO = CGONew(G);
 

@@ -266,7 +266,7 @@ void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state, int quie
   }
 }
 
-void ObjectSurface::invalidate(int rep, int level, int state)
+void ObjectSurface::invalidate(cRep_t rep, cRepInv_t level, int state)
 {
   auto I = this;
   int once_flag = true;

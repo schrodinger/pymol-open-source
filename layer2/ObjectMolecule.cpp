@@ -9230,7 +9230,7 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 {
   float *coord;
   int a, b, s;
-  int c, d, t_i;
+  int c, t_i;
   int a1 = 0, ind;
   float rms;
   float v1[3], v2, *vv1, *vv2, *vt, *vt1, *vt2;
@@ -10559,9 +10559,9 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   /* shouldn't this be calling the object invalidation routine instead? */
                   if(inv_flag) {
                     cs->objMolOpInvalidated = true;
-                    for(d = 0; d < cRepCnt; d++) {
+                    for (auto d = cRep_t(0); d < cRepCnt; ++d) {
                       if ((1 << d) & op->i1) {
-                        cs->invalidateRep(d, op->i2);
+                        cs->invalidateRep(d, cRepInv_t(op->i2));
                       }
                     }
                   }
@@ -10593,12 +10593,12 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         break;
       case OMOP_AlterState:    /* overly coarse - doing all states, could do just 1 */
         if(!op->i3) {           /* not read_only? */
-          I->invalidate(-1, cRepInvRep, -1);
+          I->invalidate(cRepAll, cRepInvRep, -1);
           SceneChanged(G);
         }
         break;
       case OMOP_CSetIdxSetFlagged:
-        I->invalidate(-1, cRepInvRep, -1);
+        I->invalidate(cRepAll, cRepInvRep, -1);
         SceneChanged(G);
         break;
       case OMOP_SaveUndo:
@@ -10862,7 +10862,7 @@ void ObjectMolecule::update()
 }
 
 /*========================================================================*/
-void ObjectMolecule::invalidate(int rep, int level, int state)
+void ObjectMolecule::invalidate(cRep_t rep, cRepInv_t level, int state)
 {
   auto I = this;
   int a;

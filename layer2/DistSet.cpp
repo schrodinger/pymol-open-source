@@ -141,7 +141,7 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
   }
 
   if (rVal)
-    I->invalidateRep(-1, cRepInvCoord);
+    I->invalidateRep(cRepAll, cRepInvCoord);
 
   PRINTFD(G, FB_DistSet)
     " DistSet: done updating distance set's vertex\n" ENDFD;
@@ -360,7 +360,7 @@ int DistSetGetExtent(DistSet * I, float *mn, float *mx)
  * type: rep enum, e.g. cRepDash
  * level: e.g. cRepInvColor
  */
-void DistSet::invalidateRep(int type, int level)
+void DistSet::invalidateRep(cRep_t type, cRepInv_t level)
 {
   int a = 0, a_stop = getNRep();
   bool changed = false;
@@ -377,7 +377,7 @@ void DistSet::invalidateRep(int type, int level)
   for(; a < a_stop; a++) {
     if(Rep[a]) {
       changed = true;
-      Rep[a]->fFree(Rep[a]);
+      delete Rep[a];
       Rep[a] = NULL;
     }
   }
@@ -428,7 +428,6 @@ void DistSet::render(RenderInfo * info)
   DistSet * I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  ::Rep *r;
   for (int a = 0; a < I->getNRep(); a++) {
     if(!GET_BIT(I->Obj->visRep, a))
       continue;
@@ -450,16 +449,12 @@ void DistSet::render(RenderInfo * info)
     }
     if(I->Rep[a])
       {
-        r = I->Rep[a];
-        if(ray || pick) {
-          if(ray)
+        if(ray) {
             ray->color3fv(ColorGet(G, I->Obj->Color));
-          r->fRender(r, info);
-        } else {
+        } else if (!pick) {
           ObjectUseColor((CObject *) I->Obj);
-          // now all filtering for passes happen in ObjectDistRender
-          r->fRender(r, info);
         }
+        Rep[a]->render(info);
       }
   }
 }
@@ -476,6 +471,6 @@ DistSet::~DistSet()
 {
   for (int a = 0; a < getNRep(); ++a) {
     if (Rep[a])
-      Rep[a]->fFree(Rep[a]);
+      delete Rep[a];
   }
 }

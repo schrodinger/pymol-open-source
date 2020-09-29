@@ -30,9 +30,16 @@
 #include"CGO.h"
 
 struct RepEllipsoid : Rep {
+  using Rep::Rep;
+
   ~RepEllipsoid() override;
 
-  CGO *ray, *std, *shaderCGO;
+  cRep_t type() const override { return cRepEllipsoid; }
+  void render(RenderInfo* info) override;
+
+  CGO* ray = nullptr;
+  CGO* std = nullptr;
+  CGO* shaderCGO = nullptr;
 };
 
 #include"ObjectMolecule.h"
@@ -45,20 +52,21 @@ RepEllipsoid::~RepEllipsoid()
   CGOFree(I->shaderCGO);
 }
 
-static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
+void RepEllipsoid::render(RenderInfo* info)
 {
+  auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
   int ok = true;
 
-  PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->G;
   if(ray) {
     int try_std = false;
     PRINTFD(G, FB_RepEllipsoid)
       " RepEllipsoidRender: rendering ray...\n" ENDFD;
 
     if(I->ray){
-      int rayok = CGORenderRay(I->ray, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
+      int rayok = CGORenderRay(I->ray, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
       if (!rayok){
 	CGOFree(I->ray);
 	try_std = true;
@@ -67,7 +75,7 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
       try_std = true;
     }
     if(try_std && I->std){
-      ok &= CGORenderRay(I->std, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
+      ok &= CGORenderRay(I->std, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
       if (!ok){
 	CGOFree(I->std);
       }
@@ -77,11 +85,11 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
 
     if(pick) {
       if(I->shaderCGO) {
-        CGORenderGLPicking(I->shaderCGO, info, &I->R.context,
-                           I->R.cs->Setting, I->R.obj->Setting);
+        CGORenderGLPicking(I->shaderCGO, info, &I->context,
+                           I->cs->Setting, I->obj->Setting);
       } else if(I->std) {
-        CGORenderGLPicking(I->std, info, &I->R.context,
-                           I->R.cs->Setting, I->R.obj->Setting);
+        CGORenderGLPicking(I->std, info, &I->context,
+                           I->cs->Setting, I->obj->Setting);
       }
     } else {
       int use_shaders;
@@ -102,9 +110,9 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
 	  CGOFree(I->shaderCGO);	  
 	}
 	if (I->shaderCGO){
-          CGORenderGL(I->shaderCGO, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+          CGORenderGL(I->shaderCGO, NULL, I->cs->Setting, I->obj->Setting, info, I);
 	} else if(I->std){
-          CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+          CGORenderGL(I->std, NULL, I->cs->Setting, I->obj->Setting, info, I);
 	}
     }
   }
@@ -151,22 +159,12 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
   if(!cs->hasRep(cRepEllipsoidBit))
     return NULL;
 
-  OOCalloc(G, RepEllipsoid);    /* allocates & sets I */
+  auto I = new RepEllipsoid(cs, state);
   CHECKOK(ok, I);
   if (!ok)
     return NULL;
 
   obj = cs->Obj;
-
-  RepInit(G, &I->R);
-
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepEllipsoidRender;
-  I->R.cs = cs;
-  I->R.obj = (CObject *) obj;
-  I->R.context.object = obj;
-  I->R.context.state = state;
-
-  /*  I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepEllipsoidSameVis; */
 
   {
     int ellipsoid_color = SettingGet_color(G, cs->Setting, obj->Setting,

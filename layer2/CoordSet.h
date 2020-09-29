@@ -51,7 +51,7 @@ struct CoordSet : CObjectState {
   void enumIndices();
   void appendIndices(int offset);
   int extendIndices(int nAtom);
-  void invalidateRep(int type, int level);
+  void invalidateRep(cRep_t type, cRepInv_t level);
   int atmToIdx(int atm) const;
 
   // read/write pointer to coordinate
@@ -66,6 +66,10 @@ struct CoordSet : CObjectState {
 
   AtomInfoType * getAtomInfo(int idx) {
     return Obj->AtomInfo + IdxToAtm[idx];
+  }
+
+  const AtomInfoType* getAtomInfo(int idx) const {
+    return const_cast<CoordSet*>(this)->getAtomInfo(idx);
   }
 
   // true if any atom in this coord set has any of the reps in "bitmask" shown
@@ -140,8 +144,6 @@ struct CoordSet : CObjectState {
   CoordSet(const CoordSet &cs);
   ~CoordSet();
 };
-
-typedef void (*fUpdateFn) (CoordSet *, int);
 
 int BondInOrder(BondType * a, int b1, int b2);
 int BondCompare(BondType * a, BondType * b);

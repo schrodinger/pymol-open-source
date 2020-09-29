@@ -43,7 +43,7 @@ struct DistSet : CObjectState {
   // methods
   void update(int state);
   void render(RenderInfo *);
-  void invalidateRep(int type, int level);
+  void invalidateRep(cRep_t type, cRepInv_t level);
 
   ObjectDist *Obj = nullptr;
 

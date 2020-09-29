@@ -39,16 +39,20 @@ Z* -------------------------------------------------------------------
 typedef char DistLabel[12];
 
 struct RepDistLabel : Rep {
+  using Rep::Rep;
+
   ~RepDistLabel() override;
 
-  float *V;
-  int N;
+  cRep_t type() const override { return cRepLabel; }
+  void render(RenderInfo* info) override;
+
+  float* V = nullptr;
+  int N = 0;
   DistLabel *L;
-  CObject *Obj;
   DistSet *ds;
   int OutlineColor;
-  CGO *shaderCGO;
-  int texture_font_size;
+  CGO* shaderCGO = nullptr;
+  int texture_font_size = 0;
 };
 
 #define SHADERCGO I->shaderCGO
@@ -65,24 +69,24 @@ RepDistLabel::~RepDistLabel()
   VLAFreeP(I->L);
 }
 
-static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
+void RepDistLabel::render(RenderInfo* info)
 {
+  auto I = this;
+  auto* obj = getObj();
   CRay *ray = info->ray;
   auto pick = info->pick;
-  PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   int c = I->N;
   DistLabel *l = I->L;
   int n = 0;
-  int color;
-  int font_id = SettingGet_i(G, NULL, I->Obj->Setting, cSetting_label_font_id);
-  float font_size = SettingGet_f(G, NULL, I->Obj->Setting, cSetting_label_size);
-  int float_text = SettingGet_i(G, NULL, I->Obj->Setting, cSetting_float_labels);
+  int font_id = SettingGet_i(G, NULL, obj->Setting, cSetting_label_font_id);
+  float font_size = SettingGet_f(G, NULL, obj->Setting, cSetting_label_size);
+  int float_text = SettingGet_i(G, NULL, obj->Setting, cSetting_float_labels);
   int ok = true;
   short use_shader = SettingGetGlobal_b(G, cSetting_use_shaders);
-  if (I->R.MaxInvalid >= cRepInvRep)
+  if (I->MaxInvalid >= cRepInvRep)
     return;
-  font_id = SettingCheckFontID(G, NULL, I->Obj->Setting, font_id);
+  font_id = SettingCheckFontID(G, NULL, obj->Setting, font_id);
 
   if (I->shaderCGO && font_size < 0.f){
     int size;
@@ -92,14 +96,16 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
     }
   }
 
+  auto color = SettingGet_color(G, nullptr, obj->Setting, cSetting_label_color);
+  if (color < 0               //
+      && color != cColorFront //
+      && color != cColorBack) {
+    color = obj->Color;
+  }
+
   if(ray) {
     TextSetOutlineColor(G, I->OutlineColor);
-    color = SettingGet_color(G, NULL, I->Obj->Setting, cSetting_label_color);
-
-    if((color >= 0) || (color == cColorFront) || (color == cColorBack))
       TextSetColor(G, ColorGet(G, color));
-    else
-      TextSetColor(G, ColorGet(G, I->Obj->Color));
 
     while(c--) {
       TextSetPos(G, v);
@@ -112,12 +118,12 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
       if (I->shaderCGO){
         if(float_text)
           glDisable(GL_DEPTH_TEST);
-	CGORenderGLPicking(I->shaderCGO, info, &I->R.context, NULL, NULL);
+	CGORenderGLPicking(I->shaderCGO, info, &I->context, NULL, NULL);
         if(float_text)
           glEnable(GL_DEPTH_TEST);
 	return;
     } else {
-	Pickable *p = I->R.P;
+	Pickable *p = I->P;
         TextSetIsPicking(G, true);
 	SceneSetupGLPicking(G);
 	if(c) {
@@ -129,7 +135,7 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
 	      TextSetPos(G, v);
               p++;
               AssignNewPickColor(nullptr, pick, TextGetColorUChar4uv(G),
-                  &I->R.context, p->index, p->bond);
+                  &I->context, p->index, p->bond);
               TextSetColorFromUColor(G);
 	      TextSetLabelBkgrdInfo(G, 1.f, 1.2f, NULL);
 	      TextSetLabelPosIsSet(G, 0);
@@ -147,7 +153,7 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
         TextSetIsPicking(G, false);
       }
     } else {
-	Pickable *p = I->R.P;
+	Pickable *p = I->P;
 	
         if (use_shader){
 	if (!I->shaderCGO){
@@ -158,7 +164,7 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
 	  }
 	} else {
 	    info->texture_font_size = I->texture_font_size;
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	    CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
 	  return;
 	}
 	} else if (I->shaderCGO){
@@ -168,12 +174,7 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
 	}
 
       TextSetOutlineColor(G, I->OutlineColor);
-      color = SettingGet_color(G, NULL, I->Obj->Setting, cSetting_label_color);
-
-      if((color >= 0) || (color == cColorFront) || (color == cColorBack))
         TextSetColor(G, ColorGet(G, color));
-      else
-        TextSetColor(G, ColorGet(G, I->Obj->Color));
       while(c--) {
 	p++;
 	if (ok && I->shaderCGO)
@@ -212,7 +213,7 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
 	}
 	if (ok && I->shaderCGO){
 	  I->shaderCGO->use_shader = true;
-	  RepDistLabelRender(I, info);
+	  I->render(info); // recursion !?
 	  return;
 	}
       }
@@ -253,26 +254,12 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   if(default_digits > 10)
     default_digits = 10;
 
-  OOAlloc(G, RepDistLabel);
-  RepInit(G, &I->R);
+  auto I = new RepDistLabel(ds->Obj, state);
 
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepDistLabelRender;
-  I->R.fRecolor = NULL;
-
-  I->N = 0;
-  I->V = NULL;
-  I->R.P = NULL;
-  I->Obj = (CObject *) ds->Obj;
-  I->R.obj = I->Obj;
   I->ds = ds;
-  I->R.context.object = ds->Obj;
-  I->R.context.state = state;
-
-  I->shaderCGO = NULL;
-  I->texture_font_size = 0;
 
   I->OutlineColor =
-    SettingGet_i(G, NULL, I->Obj->Setting, cSetting_label_outline_color);
+    SettingGet_i(G, NULL, ds->Obj->Setting, cSetting_label_outline_color);
 
   if(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex) {
     ds->NLabel = (ds->NIndex / 2 + ds->NAngleIndex / 5 + ds->NDihedralIndex / 6);
@@ -285,10 +272,10 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
     }
 
     if(ok && SettingGet_b(G, NULL, ds->Obj->Setting, cSetting_pickable)) {
-      I->R.P = pymol::malloc<Pickable>(ds->NLabel + 1);
-      CHECKOK(ok, I->R.P);
+      I->P = pymol::malloc<Pickable>(ds->NLabel + 1);
+      CHECKOK(ok, I->P);
       if (ok)
-	rp = I->R.P + 1;          /* skip first record! */
+	rp = I->P + 1;          /* skip first record! */
     }
 
     if (ok)
@@ -548,9 +535,9 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   I->N = n;
 
   if(ok && rp) {
-    I->R.P = ReallocForSure(I->R.P, Pickable, (rp - I->R.P));
-    CHECKOK(ok, I->R.P);
-    I->R.P[0].index = I->N;     /* unnec? */
+    I->P = ReallocForSure(I->P, Pickable, (rp - I->P));
+    CHECKOK(ok, I->P);
+    I->P[0].index = I->N;     /* unnec? */
   }
   if (!ok){
     delete I;

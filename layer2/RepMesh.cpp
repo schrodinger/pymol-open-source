@@ -36,7 +36,14 @@ Z* -------------------------------------------------------------------
 #include "ShaderMgr.h"
 
 struct RepMesh : Rep {
+  using Rep::Rep;
+
   ~RepMesh() override;
+
+  cRep_t type() const override { return cRepMesh; }
+  void render(RenderInfo* info) override;
+  Rep* recolor() override;
+  bool sameVis() const override;
 
   pymol::vla<int> N;
   int NTot;
@@ -71,7 +78,7 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
 
 static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 {
-  PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->G;
   float *v = I->V.data();
   float *vc = I->VC;
   int *n = I->N.data();
@@ -79,7 +86,7 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
   short use_shader;
   short mesh_as_cylinders;
   int c;
-  short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
+  short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_dot_as_spheres);
   use_shader = SettingGetGlobal_b(G, cSetting_mesh_use_shader) & 
     SettingGetGlobal_b(G, cSetting_use_shaders);
   mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && I->mesh_type!=1;
@@ -88,7 +95,7 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 
 #ifndef PURE_OPENGL_ES_2
   int lighting =
-    SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
+    SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_mesh_lighting);
   if(!lighting) {
     if(!use_shader && !info->line_lighting){
       CGODisable(I->shaderCGO, GL_LIGHTING);
@@ -190,7 +197,7 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
     /* TODO */
 #else
     glPointSize(SettingGet_f
-		(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width));
+		(G, I->cs->Setting, I->obj->Setting, cSetting_dot_width));
 #endif
     if(ok && n) {
       if(I->oneColorFlag) {
@@ -292,19 +299,18 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
   return ok;
 }
 
-
-static void RepMeshRender(RepMesh * I, RenderInfo * info)
+void RepMesh::render(RenderInfo* info)
 {
+  auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  PyMOLGlobals *G = I->R.G;
   float *v = I->V.data();
   float *vc = I->VC;
   int *n = I->N.data();
   int c;
   const float *col = NULL;
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
-  short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
+  short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_dot_as_spheres);
   int ok = true;
 
   if(ray) {
@@ -324,7 +330,7 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 
       if(I->oneColorFlag)
         col = ColorGet(G, I->oneColor);
-      ray->color3fv(ColorGet(G, I->R.obj->Color));
+      ray->color3fv(ColorGet(G, I->obj->Color));
       switch (I->mesh_type) {
       case 0:
         while(ok && *n) {
@@ -397,7 +403,7 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	    I->shaderCGO->use_shader = true;
 	  generate_shader_cgo = 1;
 	} else if (ok) {
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
 	  return;
 	}
       }
@@ -409,7 +415,7 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
       }
 
       int lighting =
-        SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
+        SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_mesh_lighting);
       if(!lighting) {
         if(!info->line_lighting){
 	  if (!use_shader && !generate_shader_cgo){
@@ -428,11 +434,11 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	case 1:
 	  if(info->width_scale_flag)
 	    glPointSize(SettingGet_f
-			(G, I->R.cs->Setting, I->R.obj->Setting,
+			(G, I->cs->Setting, I->obj->Setting,
 			 cSetting_dot_width) * info->width_scale);
 	  else
 	    glPointSize(SettingGet_f
-			(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width));
+			(G, I->cs->Setting, I->obj->Setting, cSetting_dot_width));
 	  break;
 	}
       }
@@ -476,7 +482,7 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	break;
       case 1:
 	glPointSize(SettingGet_f
-		    (G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width));
+		    (G, I->cs->Setting, I->obj->Setting, cSetting_dot_width));
 	if(ok && n) {
 	  if (!generate_shader_cgo){
 	    if(I->oneColorFlag) {
@@ -513,8 +519,8 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	if (ok){
 	  {
 	    const float *color;
-	    color = ColorGet(G, I->R.obj->Color);
-	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
+	    color = ColorGet(G, I->obj->Color);
+	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, I);
 	  }
 	}
       }
@@ -527,37 +533,28 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
-    I->R.cs->Active[cRepMesh] = false;
+    I->invalidate(cRepInvPurge);
+    I->cs->Active[cRepMesh] = false;
   }
 }
 
-static
-int RepMeshSameVis(RepMesh * I, CoordSet * cs)
+bool RepMesh::sameVis() const
 {
-  int *lv, *lc;
-  int a;
-  AtomInfoType *ai;
-
-  lv = I->LastVisib;
-  lc = I->LastColor;
-
-  for(a = 0; a < cs->NIndex; a++) {
-    ai = cs->getAtomInfo(a);
-    if(*(lv++) != GET_BIT(ai->visRep, cRepMesh)) {
+  for (int idx = 0; idx < cs->NIndex; idx++) {
+    const auto* ai = cs->getAtomInfo(idx);
+    if(LastVisib[idx] != GET_BIT(ai->visRep, cRepMesh)) {
       return false;
     }
-    if(*(lc++) != ai->color) {
+    if(LastColor[idx] != ai->color) {
       return false;
     }
   }
   return true;
 }
 
-static
-void RepMeshColor(RepMesh * I, CoordSet * cs)
+Rep* RepMesh::recolor()
 {
-  PyMOLGlobals *G = cs->G;
+  auto const I = this;
   MapType *map;
   int a, i0, i, j, h, k, l, c1;
   float *v0, *vc;
@@ -572,7 +569,8 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
   int mesh_mode;
   int mesh_color;
   AtomInfoType *ai2;
-  int state = I->R.context.state;
+
+  int state = getState();
 
   obj = cs->Obj;
 
@@ -693,6 +691,7 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
      }
    */
 
+  return this;
 }
 
 Rep *RepMeshNew(CoordSet * cs, int state)
@@ -760,10 +759,9 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     return (NULL);              /* skip if no dots are visible */
   }
 
-  OOAlloc(G, RepMesh);
+  auto I = new RepMesh(cs, state);
   I->max_vdw = ObjectMoleculeGetMaxVDW(obj) + solv_acc * probe_radius;
 
-  RepInit(G, &I->R);
 
   min_spacing = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_min_mesh_spacing);
 
@@ -773,11 +771,6 @@ Rep *RepMeshNew(CoordSet * cs, int state)
   I->VC = NULL;
   I->NDot = 0;
   I->Dot = NULL;
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepMeshRender;
-  I->R.obj = (CObject *) cs->Obj;
-  I->R.cs = cs;
-  I->R.fRecolor = (void (*)(struct Rep *, struct CoordSet *)) RepMeshColor;
-  I->R.fSameVis = (int (*)(struct Rep *, struct CoordSet *)) RepMeshSameVis;
   I->LastVisib = NULL;
   I->LastColor = NULL;
   I->mesh_type = mesh_type;
@@ -1169,7 +1162,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     if (ok){
       while(*n)
 	I->NTot += *(n++);
-      RepMeshColor(I, cs);
+      I->recolor();
     }
     OrthoBusyFast(G, 3, 4);
   }

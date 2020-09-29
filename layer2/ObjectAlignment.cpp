@@ -1154,7 +1154,7 @@ void ObjectAlignment::render(RenderInfo * info)
   }
 }
 
-void ObjectAlignment::invalidate(int rep, int level, int state)
+void ObjectAlignment::invalidate(cRep_t rep, cRepInv_t level, int state)
 {
   if((rep == cRepAll) || (rep == cRepCGO)) {
     for(StateIterator iter(G, Setting, state, getNFrame()); iter.next();) {

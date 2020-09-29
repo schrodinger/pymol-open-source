@@ -8629,7 +8629,7 @@ pymol::Result<float> ExecutiveGetArea(
     }
   }
 
-  rep->R.fFree((Rep*) rep); /* free the representation */
+  delete rep;
   return result;
 }
 
@@ -13531,8 +13531,8 @@ void ExecutiveFullScreen(PyMOLGlobals * G, int flag)
 
 /*========================================================================*/
 static
-void fInvalidateRepMask(CObject * obj, int repmask, int state=-1) {
-    for(int a = 0; a < cRepCnt; a++) {
+void fInvalidateRepMask(CObject * obj, cRepBitmask_t repmask, int state=-1) {
+    for (auto a = cRep_t(0); a < cRepCnt; ++a) {
       if ((1 << a) & repmask)
         obj->invalidate(a, cRepInvVisib, state);
     }
@@ -13746,7 +13746,7 @@ static void ExecutiveSetAllRepVisMask(PyMOLGlobals * G, int repmask, int state)
 
 /*========================================================================*/
 pymol::Result<> ExecutiveInvalidateRep(
-    PyMOLGlobals* G, const char* str1, int rep, int level)
+    PyMOLGlobals* G, const char* str1, cRep_t rep, cRepInv_t level)
 {
   CExecutive *I = G->Executive;
   ObjectMoleculeOpRec op;

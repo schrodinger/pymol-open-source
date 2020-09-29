@@ -203,7 +203,7 @@ PyObject *ObjectSliceAsPyList(ObjectSlice * I)
   return (PConvAutoNone(result));
 }
 
-void ObjectSlice::invalidate(int rep, int level, int state)
+void ObjectSlice::invalidate(cRep_t rep, cRepInv_t level, int state)
 {
   int a;
   int once_flag = true;
@@ -711,7 +711,7 @@ void ObjectSliceDrag(ObjectSlice * I, int state, int mode, float *pt, float *mov
 
         multiply33f33f(mat, oss->system, oss->system);
 
-        I->invalidate(cRepSlice, cRepAll, state);
+        I->invalidate(cRepSlice, cRepInvAll, state);
         SceneInvalidate(I->G);
 
       }
@@ -728,7 +728,7 @@ void ObjectSliceDrag(ObjectSlice * I, int state, int mode, float *pt, float *mov
 
         project3f(mov, up, v1);
         add3f(v1, oss->origin, oss->origin);
-        I->invalidate(cRepSlice, cRepAll, state);
+        I->invalidate(cRepSlice, cRepInvAll, state);
         SceneInvalidate(I->G);
       }
       break;

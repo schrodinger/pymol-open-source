@@ -62,7 +62,7 @@ struct ObjectSurface : public CObject {
   // virtual methods
   void update() override;
   void render(RenderInfo* info) override;
-  void invalidate(int rep, int level, int state) override;
+  void invalidate(cRep_t rep, cRepInv_t level, int state) override;
   int getNFrame() const override;
   CObject* clone() const override;
 };
@@ -74,7 +74,7 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
 void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state, int quiet);
 
 int ObjectSurfaceNewFromPyList(PyMOLGlobals * G, PyObject * list,
-                               ObjectSurface ** result);
+				   ObjectSurface ** result);
 PyObject *ObjectSurfaceAsPyList(ObjectSurface * I);
 int ObjectSurfaceSetLevel(ObjectSurface * I, float level, int state, int quiet);
 pymol::Result<float> ObjectSurfaceGetLevel(ObjectSurface * I, int state);

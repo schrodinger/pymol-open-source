@@ -24,7 +24,7 @@ void RepSphere_Generate_Triangles(PyMOLGlobals *G, RepSphere *I,
                                   RenderInfo *info) {
   short use_shader;
   int ok = true;
-  int sphere_quality = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting,
+  int sphere_quality = SettingGet_i(G, I->cs->Setting, I->obj->Setting,
                                     cSetting_sphere_quality);
 
   use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) &&
@@ -51,8 +51,8 @@ void RepSphere_Generate_Triangles(PyMOLGlobals *G, RepSphere *I,
 
   if (!ok) {
     CGOFree(I->renderCGO);
-    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
-    I->R.cs->Active[cRepSphere] = false;
+    I->invalidate(cRepInvPurge);
+    I->cs->Active[cRepSphere] = false;
   } else {
     I->renderCGO->sphere_quality = sphere_quality;
   }

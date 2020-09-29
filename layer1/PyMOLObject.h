@@ -101,7 +101,7 @@ public:
 
   virtual void update() {}
   virtual void render(RenderInfo* info);
-  virtual void invalidate(int rep, int level, int state) {}
+  virtual void invalidate(cRep_t rep, cRepInv_t level, int state) {}
   virtual int getNFrame() const { return 1; }
   virtual void describeElement(int index, char* buffer) const;
   virtual char* getCaption(char* ch, int len) const { return nullptr; };

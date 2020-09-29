@@ -331,7 +331,7 @@ void ObjectMeshDump(ObjectMesh * I, const char *fname, int state, int quiet)
   }
 }
 
-void ObjectMesh::invalidate(int rep, int level, int state)
+void ObjectMesh::invalidate(cRep_t rep, cRepInv_t level, int state)
 {
   auto I = this;
   if(level >= cRepInvExtents) {

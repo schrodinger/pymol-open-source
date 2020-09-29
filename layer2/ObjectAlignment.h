@@ -45,7 +45,7 @@ struct ObjectAlignment : public CObject {
   // virtual methods
   void update() override;
   void render(RenderInfo* info) override;
-  void invalidate(int rep, int level, int state) override;
+  void invalidate(cRep_t rep, cRepInv_t level, int state) override;
   int getNFrame() const override;
   CObject* clone() const override;
 };
@@ -62,7 +62,7 @@ void ObjectAlignmentRecomputeExtent(ObjectAlignment * I);
 PyObject *ObjectAlignmentAsPyList(ObjectAlignment * I);
 
 int ObjectAlignmentNewFromPyList(PyMOLGlobals * G, PyObject * list,
-                                 ObjectAlignment ** result, int version);
+				     ObjectAlignment ** result, int version);
 
 int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, int format,
                             char **str_vla);

@@ -34,7 +34,7 @@ struct ObjectDist : public CObject {
   // virtual methods
   void update() override;
   void render(RenderInfo* info) override;
-  void invalidate(int rep, int level, int state) override;
+  void invalidate(cRep_t rep, cRepInv_t level, int state) override;
   int getNFrame() const override;
 };
 
@@ -57,7 +57,7 @@ int ObjectDistGetLabelTxfVertex(ObjectDist * I, int state, int index, float *v);
 int ObjectDistMoveLabel(ObjectDist * I, int state, int index, float *v, int mode,
                         int log);
 
-void ObjectDistInvalidateRep(ObjectDist * I, int rep);
+void ObjectDistInvalidateRep(ObjectDist * I, cRep_t rep);
 PyObject *ObjectDistAsPyList(ObjectDist * I);
 int ObjectDistNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectDist ** result);
 

@@ -21,7 +21,7 @@
 #include"os_gl.h"
 
 #include"Base.h"
-#include"OOMac.h"
+#include"Err.h"
 #include"Vector.h"
 #include"ObjectMolecule.h"
 #include"RepCylBond.h"
@@ -41,10 +41,15 @@ extern "C" void fireMemoryWarning();
 #endif
 
 struct RepCylBond : Rep {
+  using Rep::Rep;
+
   ~RepCylBond() override;
 
-  CGO *primitiveCGO;
-  CGO *renderCGO;
+  cRep_t type() const override { return cRepCyl; }
+  void render(RenderInfo* info) override;
+
+  CGO* primitiveCGO = nullptr;
+  CGO* renderCGO = nullptr;
 };
 
 /* RepCylinder -- This function is a helper function that generates a cylinder for RepCylBond.
@@ -113,7 +118,7 @@ RepCylBond::~RepCylBond()
 
 static int RepCylBondCGOGenerate(RepCylBond * I, RenderInfo * info)
 {
-  PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->G;
   int ok = true;
 
   if (ok && I->primitiveCGO){
@@ -174,23 +179,24 @@ static int RepCylBondCGOGenerate(RepCylBond * I, RenderInfo * info)
   return ok;
 }
 
-static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
+void RepCylBond::render(RenderInfo * info)
 {
+  auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
   float alpha;
-  PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->G;
   int width, height;
   int ok = true;
 
   SceneGetWidthHeight(G, &width, &height); 
 
-  alpha = 1.f - SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_stick_transparency);
+  alpha = 1.f - SettingGet_f(G, I->cs->Setting, I->obj->Setting, cSetting_stick_transparency);
   if(fabs(alpha - 1.f) < R_SMALL4)
     alpha = 1.f;
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
     ray->transparentf(0.0);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
@@ -207,7 +213,7 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
         " RepCylBondRender: rendering pickable...\n" ENDFD;
 
       if (I->renderCGO){
-        CGORenderGLPicking(I->renderCGO, info, &I->R.context, I->R.cs->Setting, I->R.obj->Setting);
+        CGORenderGLPicking(I->renderCGO, info, &I->context, I->cs->Setting, I->obj->Setting);
       }
     } else { /* else not pick, i.e., when rendering */
       if (!I->renderCGO){
@@ -218,9 +224,9 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
         }
         ok &= RepCylBondCGOGenerate(I, info);
       }
-      const float *color = ColorGet(G, I->R.obj->Color);
+      const float *color = ColorGet(G, I->obj->Color);
       I->renderCGO->debug = SettingGetGlobal_i(G, cSetting_stick_debug);
-      CGORenderGL(I->renderCGO, color, NULL, NULL, info, &I->R);
+      CGORenderGL(I->renderCGO, color, NULL, NULL, info, I);
     }
   }
 }
@@ -658,15 +664,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   auto valence_zero_mode =
     SettingGet_i(G, cs->Setting, obj->Setting, cSetting_valence_zero_mode);
 
-  OOAlloc(G, RepCylBond);
-  RepInit(G, &I->R);
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepCylBondRender;
-  I->R.obj = (CObject *) obj;
-  I->R.cs = cs;
-  I->R.context.object = obj;
-  I->R.context.state = state;
-
-  I->renderCGO = 0;
+  auto I = new RepCylBond(cs, state);
 
   I->primitiveCGO = CGONew(G);
   if (!variable_alpha){

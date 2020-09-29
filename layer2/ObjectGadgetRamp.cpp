@@ -1031,7 +1031,7 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals * G,
   return (I);
 }
 
-void ObjectGadgetRamp::invalidate(int rep, int level,
+void ObjectGadgetRamp::invalidate(cRep_t rep, cRepInv_t level,
                                        int state)
 {
 }

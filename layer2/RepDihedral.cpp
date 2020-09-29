@@ -33,14 +33,18 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 
 struct RepDihedral : Rep {
+  using Rep::Rep;
+
   ~RepDihedral() override;
 
-  float *V;
-  int N;
-  CObject *Obj;
+  cRep_t type() const override { return cRepDihedral; }
+  void render(RenderInfo* info) override;
+
+  float* V = nullptr;
+  int N = 0;
   DistSet *ds;
   float linewidth, radius;
-  CGO *shaderCGO;
+  CGO* shaderCGO = nullptr;
 };
 
 #include"ObjectDist.h"
@@ -57,7 +61,7 @@ RepDihedral::~RepDihedral()
 
 static int RepDihedralCGOGenerate(RepDihedral * I, RenderInfo * info)
 {
-  PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->G;
   float *v = I->V;
   int c = I->N;
   float line_width;
@@ -82,10 +86,11 @@ static int RepDihedralCGOGenerate(RepDihedral * I, RenderInfo * info)
 
 
   if (ok){
+    if (color < 0) {
+      color = I->getObj()->Color;
+    }
     if(color >= 0){
       ok &= CGOColorv(I->shaderCGO, ColorGet(G, color));
-    } else if (I->Obj && I->Obj->Color >= 0){
-      ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->Obj->Color));
     }
   }
   v = I->V;
@@ -160,11 +165,11 @@ static int RepDihedralCGOGenerate(RepDihedral * I, RenderInfo * info)
   return ok;
 }
 
-static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
+void RepDihedral::render(RenderInfo * info)
 {
+  auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   int c = I->N;
   const float *vc;
@@ -179,7 +184,7 @@ static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
     SettingGet_i(G, NULL, I->ds->Obj->Setting, cSetting_transparency_mode) == 3;
   short dash_transparency_enabled;
   if(color < 0)
-    color = I->Obj->Color;
+    color = getObj()->Color;
   dash_transparency = (dash_transparency < 0.f ? 0.f : (dash_transparency > 1.f ? 1.f : dash_transparency));
   dash_transparency_enabled = (dash_transparency > 0.f);
 
@@ -248,7 +253,7 @@ static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
 	  }
 	  ok &= RepDihedralCGOGenerate(I, info);
 	} else {
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
 	  return;
 	}
       }
@@ -268,11 +273,6 @@ static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
 	  } else {
 	    glColor3fv(ColorGet(G, color));
 	  }
-	} else if (dash_transparency_enabled){
-	  float col[4];
-	  copy3f(ColorGet(I->Obj->G, I->Obj->Color), col);
-	  col[3] = 1.f-dash_transparency;
-	  glColor4fv(col);
 	}
         v = I->V;
         c = I->N;
@@ -299,7 +299,7 @@ static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
       if (use_shader) {
 	
 	if (ok) {
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
 	}
       }
     }
@@ -324,15 +324,10 @@ Rep *RepDihedralNew(DistSet * ds, int state)
     return (NULL);
   }
 
-  OOAlloc(G, RepDihedral);
-  RepInit(G, &I->R);
+  auto I = new RepDihedral(ds->Obj, state);
 
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepDihedralRender;
-  I->R.fRecolor = NULL;
-  I->R.obj = ds->Obj;
-  I->R.cs = NULL;
   if (ds && ds->getNRep() > cRepDihedral && ds->Rep[cRepDihedral])
-    I->R.cs = ds->Rep[cRepDihedral]->cs;
+    I->cs = ds->Rep[cRepDihedral]->cs;
 
   dash_len = SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dash_length);
   dash_gap = SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dash_gap);
@@ -340,11 +335,6 @@ Rep *RepDihedralNew(DistSet * ds, int state)
   if(dash_sum < R_SMALL4)
     dash_sum = 0.5;
 
-  I->shaderCGO = 0;
-  I->N = 0;
-  I->V = NULL;
-  I->R.P = NULL;
-  I->Obj = (CObject *) ds->Obj;
   I->ds = ds;
 
   n = 0;

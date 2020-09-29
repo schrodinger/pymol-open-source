@@ -45,20 +45,35 @@ Z* -------------------------------------------------------------------
 #endif
 
 struct RepSurface : Rep {
+  using Rep::Rep;
+
   ~RepSurface() override;
 
-  int N;
-  int NT;
-  int proximity;
-  float *V, *VN, *VC, *VA, *VAO; /* VAO - Ambient Occlusion per vertex */
-  int *RC;
-  int *Vis;
-  int *T, *S, *AT = nullptr;    /* T=vertices, S=strips, AT=closest atom for vertices */
-  int solidFlag;
-  int oneColorFlag, oneColor;
-  int allVisibleFlag;
-  char *LastVisib;
-  int *LastColor;
+  cRep_t type() const override { return cRepSurface; }
+  void render(RenderInfo* info) override;
+  void invalidate(cRepInv_t level) override;
+  Rep* recolor() override;
+  bool sameVis() const override;
+  bool sameColor() const override;
+
+  int N = 0;
+  int NT = 0; //!< number of triangles (?)
+  bool proximity = false; //!< cSetting_surface_proximity
+  float* V = nullptr;
+  float* VN = nullptr;  //!< Normals
+  float* VC = nullptr;  //!< Colors
+  float* VA = nullptr;  //!< Alpha
+  float* VAO = nullptr; //!< Ambient Occlusion per vertex
+  int* RC = nullptr;
+  int* Vis = nullptr;
+  int* T = nullptr;  //!< vertices (of triangles?)
+  int* S = nullptr;  //!< strips
+  int* AT = nullptr; //!< closest atom for vertices
+  bool oneColorFlag = false;
+  int oneColor;
+  bool allVisibleFlag = false;
+  char* LastVisib = nullptr;
+  int* LastColor = nullptr;
   bool ColorInvalidated = false;
   int Type;
   float max_vdw;
@@ -68,9 +83,7 @@ struct RepSurface : Rep {
   /* allocation during the rendering loop. */
   CGO *shaderCGO = nullptr;
   CGO *pickingCGO = nullptr;
-  short dot_as_spheres;
-#ifdef _PYMOL_IOS
-#endif
+  bool dot_as_spheres = false;
 };
 
 static
@@ -97,8 +110,6 @@ RepSurface::~RepSurface()
   VLAFreeP(I->VN);
   setPickingCGO(I, NULL);
   setShaderCGO(I, NULL);
-#ifdef _PYMOL_IOS
-#endif
   FreeP(I->VC);
   FreeP(I->VA);
   if (I->VAO){
@@ -260,7 +271,7 @@ static int AtomInfoIsMasked(ObjectMolecule *obj, int atm){
 
 static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 {
-  PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->G;
   float *v = I->V;
   float *vn = I->VN;
   float *vc = I->VC;
@@ -274,9 +285,13 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
   float alpha;
   int t_mode;
   CGO *convertcgo = NULL;
-  bool pick_surface = SettingGet_b(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_pick_surface);
-  short dot_as_spheres = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
-  alpha = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_transparency);
+
+  auto* const cs = I->cs;
+  auto* const obj = I->cs->Obj;
+
+  bool pick_surface = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_pick_surface);
+  short dot_as_spheres = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_dot_as_spheres);
+  alpha = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
@@ -293,7 +308,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
   if (I->Type == 1) {
     /* no triangle information, so we're rendering dots only */
     int normals =
-      SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_normals);
+        SettingGet<int>(G, cs->Setting, obj->Setting, cSetting_dot_normals);
     if(!normals){
       CGOResetNormal(I->shaderCGO, true);
     }
@@ -314,7 +329,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 	      if(ok && normals)
 		ok &= CGONormalv(I->shaderCGO, vn);
 	      if (ok && pick_surface)
-		ok &= CGOPickColor(I->shaderCGO, *at, AtomInfoIsMasked((ObjectMolecule*)I->R.obj, *at));
+		ok &= CGOPickColor(I->shaderCGO, *at, AtomInfoIsMasked(obj, *at));
 
 	      if (ok)
 		ok &= CGOSphere(I->shaderCGO, v, 1.f);
@@ -328,7 +343,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 	}
       } else {
 	ok &= CGODotwidth(I->shaderCGO, SettingGet_f
-			  (G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width));
+			  (G, cs->Setting, obj->Setting, cSetting_dot_width));
 	if(ok && c) {
 	  ok &= CGOColor(I->shaderCGO, 1.0, 0.0, 0.0);
 	  ok &= CGOBegin(I->shaderCGO, GL_POINTS);
@@ -345,7 +360,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 		CGONormalv(I->shaderCGO, vn);
 	      }
 	      if (ok && pick_surface)
-		ok &= CGOPickColor(I->shaderCGO, *at, AtomInfoIsMasked((ObjectMolecule*)I->R.obj, *at));
+		ok &= CGOPickColor(I->shaderCGO, *at, AtomInfoIsMasked(obj, *at));
 	      if (ok)
 		ok &= CGOVertexv(I->shaderCGO, v);
 	    }
@@ -361,13 +376,13 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
       }
       } else if(I->Type == 2) { /* rendering triangle mesh */
         int normals =
-          SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_normals);
+      SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_normals);
         if(ok && !normals){
 	    ok &= CGOResetNormal(I->shaderCGO, true);
 	}
 	if (ok) {
           float line_width =
-            SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_width);
+	SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_width);
           line_width = SceneGetDynamicLineWidth(info, line_width);
 
 	ok &= CGOSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_MESH);
@@ -385,7 +400,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 
@@ -393,7 +408,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
@@ -401,7 +416,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
@@ -409,7 +424,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
@@ -421,24 +436,24 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 
 			idx = (*(t + 2));
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			idx = *t;
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
-			if (ok)
-			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
-			t++;
-			idx = *t;
-		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
 			idx = *t;
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
+			t++;
+			idx = *t;
+		  if (ok && pick_surface)
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
@@ -461,7 +476,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			
@@ -471,7 +486,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
@@ -481,7 +496,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
@@ -491,7 +506,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
@@ -505,7 +520,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 
@@ -513,7 +528,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
@@ -521,7 +536,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
@@ -529,7 +544,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok)
 			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
 		  if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 			if (ok)
 			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
@@ -548,7 +563,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
         if((alpha != 1.0) || va) {
 
           t_mode =
-            SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting,
+	SettingGet_i(G, cs->Setting, obj->Setting,
                          cSetting_transparency_mode);
 
           if(info && info->alpha_cgo) {
@@ -668,7 +683,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 		    ok &= CGONormalv(I->shaderCGO, *(tb++));
 		  idx = ((*tb - v)/3);
 		if (ok && pick_surface)
-		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 		    if (ok && I->VAO){
 		      ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
@@ -678,7 +693,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 		      ok &= CGONormalv(I->shaderCGO, *(tb++));
 		    idx = ((*tb - v)/3);
 		if (ok && pick_surface)
-		      ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 		    if (ok && I->VAO){
 		      ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
@@ -688,7 +703,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 		      ok &= CGONormalv(I->shaderCGO, *(tb++));
 		    idx = ((*tb - v)/3);
 		if (ok && pick_surface)
-		      ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 		    if (ok && I->VAO){
 		    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
@@ -713,7 +728,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 		    if (ok) ok &= CGONormalv(I->shaderCGO, *(tb++));
 		    idx = ((*tb - v)/3);
 	      if (ok && pick_surface)
-		      ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 		    if (ok && I->VAO){
 		      ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
@@ -726,7 +741,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 		    if (ok) ok &= CGONormalv(I->shaderCGO, *(tb++));
 		    idx = ((*tb - v)/3);
 	      if (ok && pick_surface)
-		      ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 		    if (ok && I->VAO){
 		      ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
@@ -739,7 +754,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 		    if (ok) ok &= CGONormalv(I->shaderCGO, *(tb++));
 		    idx = ((*tb - v)/3);
 	      if (ok && pick_surface)
-		      ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked(obj, I->AT[idx]));
 		    if (ok && I->VAO){
 		      ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
@@ -874,7 +889,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
                   if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
 			if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
@@ -882,7 +897,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
                   if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
 			while(ok && c--) {
@@ -891,7 +906,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
                     if (ok && pick_surface)
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		      ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
 			}
@@ -916,7 +931,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
                   if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
 			col = vc + (*s) * 3;
@@ -932,7 +947,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
                   if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
 			while(ok && c--) {
@@ -949,7 +964,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
                     if (ok && pick_surface)
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		      ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
 			}
@@ -974,7 +989,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
                       if (ok && pick_surface)
-				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			      if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
@@ -982,7 +997,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
                       if (ok && pick_surface)
-				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			      if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
@@ -990,7 +1005,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
                       if (ok && pick_surface)
-				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			    } else
@@ -1014,7 +1029,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
                       if (ok && pick_surface)
-				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			      col = vc + (*t) * 3;
@@ -1029,7 +1044,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
                       if (ok && pick_surface)
-				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			      col = vc + (*t) * 3;
@@ -1044,7 +1059,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
                       if (ok && pick_surface)
-				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			    } else
@@ -1068,7 +1083,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			if (ok) ok &= CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
 			if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
                 if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			if (ok && I->VAO){
 			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
@@ -1076,7 +1091,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			s++;
 			if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
                 if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			if (ok && I->VAO){
 			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
@@ -1088,7 +1103,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
                   if (ok && pick_surface)
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
 			}
@@ -1107,7 +1122,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
                 if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
 			if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*s) * 3);
@@ -1116,7 +1131,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
                 if (ok && pick_surface)
-			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
 			while(ok && c--) {
@@ -1126,7 +1141,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
 		  if (ok && pick_surface)
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked(obj, I->AT[*s]));
 			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
 			}
@@ -1148,7 +1163,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
 		  if (ok && pick_surface)
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
 			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
@@ -1156,7 +1171,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
 		  if (ok && pick_surface)
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
 			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
@@ -1164,7 +1179,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
 		  if (ok && pick_surface)
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
 			} else
@@ -1179,7 +1194,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
 		  if (ok && pick_surface)
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
 			  if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*t) * 3);
@@ -1188,7 +1203,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
 		  if (ok && pick_surface)
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
 			  if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*t) * 3);
@@ -1197,7 +1212,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
 		  if (ok && pick_surface)
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
 			} else
@@ -1225,7 +1240,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 		    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 		  }
 	    if (ok && pick_surface)
-		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+	      ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
 		  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
@@ -1233,7 +1248,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 		    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 		  }
 	    if (ok && pick_surface)
-		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+	      ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
 		  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
@@ -1241,7 +1256,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 		    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 		  }
 	    if (ok && pick_surface)
-		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+	      ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
 		} else {
@@ -1262,17 +1277,17 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
               || visibility_test(I->proximity, vi, t)) {
 		  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
 	    if (ok && pick_surface)
-		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+	      ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
 		  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
 	    if (ok && pick_surface)
-		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+	      ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
 		  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
 	    if (ok && pick_surface)
-		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+	      ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked(obj, I->AT[*t]));
 		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
 		} else {
@@ -1395,11 +1410,11 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
   return ok;
 }
 
-static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
+void RepSurface::render(RenderInfo* info)
 {
+  auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   float *vn = I->VN;
   float *vc = I->VC;
@@ -1413,10 +1428,10 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
   float alpha;
   int t_mode;
   float ambient_occlusion_scale = 0.f;
-  int ambient_occlusion_mode = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_ambient_occlusion_mode);
+  int ambient_occlusion_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ambient_occlusion_mode);
   int ambient_occlusion_mode_div_4 = 0;
   if (ambient_occlusion_mode){
-    ambient_occlusion_scale = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_ambient_occlusion_scale);
+    ambient_occlusion_scale = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ambient_occlusion_scale);
     ambient_occlusion_mode_div_4 = ambient_occlusion_mode / 4;
   }
 
@@ -1424,7 +1439,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
     return;
   }
 
-  alpha = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_transparency);
+  alpha = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
@@ -1434,10 +1449,9 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
     if(I->Type == 1) {
       /* dot surface */
       float radius;
-      radius = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_radius);
+      radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_radius);
       if(radius == 0.0F) {
-        radius = ray->PixelRadius * SettingGet_f(G, I->R.cs->Setting,
-                                                 I->R.obj->Setting,
+        radius = ray->PixelRadius * SettingGet_f(G, cs->Setting, obj->Setting,
                                                  cSetting_dot_width) / 1.4142F;
       }
 
@@ -1564,11 +1578,11 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       int *cache = pymol::calloc<int>(spacing * (I->N + 1));
       CHECKOK(ok, cache);
 
-      radius = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_radius);
+      radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_radius);
 
       if(ok && radius == 0.0F) {
         float line_width =
-          SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_width);
+          SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_width);
         line_width = SceneGetDynamicLineWidth(info, line_width);
 
         radius = ray->PixelRadius * line_width / 2.0F;
@@ -1616,7 +1630,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       // unpickable surfaces to write the depth buffer and prevent
       // through-picking.
       if (I->pickingCGO && !(I->pickingCGO->no_pick && alpha < 1.F)) {
-	CGORenderGLPicking(I->pickingCGO, info, &I->R.context, I->R.cs->Setting, I->R.obj->Setting);
+	CGORenderGLPicking(I->pickingCGO, info, &I->context, cs->Setting, obj->Setting);
       }
     } else {
 
@@ -1627,7 +1641,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       if (use_shader && !info->alpha_cgo)
 #endif
       {
-        bool dot_as_spheres = SettingGet_b(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
+        bool dot_as_spheres = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_dot_as_spheres);
 
         if (!I->shaderCGO || CGOCheckWhetherToFree(G, I->shaderCGO) ||
             (I->Type == 1 && I->dot_as_spheres != dot_as_spheres)) {
@@ -1635,8 +1649,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
         }
 
         if (ok && I->shaderCGO) {
-          const float *color = ColorGet(G, I->R.obj->Color);
-          CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
+          const float *color = ColorGet(G, obj->Color);
+          CGORenderGL(I->shaderCGO, color, NULL, NULL, info, I);
           return;
         }
 
@@ -1648,7 +1662,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 
 #ifndef PURE_OPENGL_ES_2
       bool two_sided_lighting =
-        SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting,
+        SettingGet_i(G, cs->Setting, obj->Setting,
             cSetting_two_sided_lighting) > 0;
       if (two_sided_lighting){
         glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
@@ -1658,9 +1672,9 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
         /* no triangle information, so we're rendering dots only */
         {
           int normals =
-            SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_normals);
+            SettingGet_i(G, cs->Setting, obj->Setting, cSetting_dot_normals);
           int lighting = info->line_lighting ||
-            SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_lighting);
+            SettingGet_i(G, cs->Setting, obj->Setting, cSetting_dot_lighting);
 
           if(!normals){
             SceneResetNormal(G, true);
@@ -1671,7 +1685,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
             glDisable(GL_LIGHTING);
 
           glPointSize(SettingGet_f
-              (G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width));
+              (G, cs->Setting, obj->Setting, cSetting_dot_width));
           if(c) {
             glBegin(GL_POINTS);
             if(I->oneColorFlag) {
@@ -1694,9 +1708,9 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
           c = I->NT;
           if(ok && c) {
               int normals =
-                SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_normals);
+                SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_normals);
               int lighting = info->line_lighting ||
-                SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
+                SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_lighting);
 
               if(!normals){
                 SceneResetNormal(G, true);
@@ -1707,7 +1721,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                 glDisable(GL_LIGHTING);
 
               float line_width =
-                SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_width);
+                SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_width);
               glLineWidth(SceneGetDynamicLineWidth(info, line_width));
 
               if(I->oneColorFlag) {
@@ -1734,7 +1748,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
         if((alpha != 1.0) || va) {
 
           t_mode =
-            SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting,
+            SettingGet_i(G, cs->Setting, obj->Setting,
                          cSetting_transparency_mode);
 
           if(info && info->alpha_cgo) {
@@ -2105,64 +2119,54 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
     }
   }
   if (!ok){
-    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
-    I->R.cs->Active[cRepSurface] = false;
+    I->invalidate(cRepInvPurge);
+    I->cs->Active[cRepSurface] = false;
   }
 }
 
-static
-int RepSurfaceSameVis(RepSurface * I, CoordSet * cs)
+bool RepSurface::sameVis() const
 {
-  int same = true;
-  char *lv;
-  int a;
-  const AtomInfoType *ai;
-
-  ai = cs->Obj->AtomInfo;
-  lv = I->LastVisib;
-
-  for(a = 0; a < cs->NIndex; a++) {
-    if(*(lv++) != GET_BIT((ai + cs->IdxToAtm[a])->visRep,cRepSurface)) {
-      same = false;
-      break;
+  for (int idx = 0; idx < cs->NIndex; ++idx) {
+    auto* ai = cs->getAtomInfo(idx);
+    if (LastVisib[idx] != GET_BIT(ai->visRep, cRepSurface)) {
+      return false;
     }
   }
-  return (same);
+
+  return true;
 }
 
-static void RepSurfaceInvalidate(struct Rep *I, struct CoordSet *cs, int level){
-  RepInvalidate(I, cs, level);
-  if (level >= cRepInvColor)
-    ((RepSurface*)I)->ColorInvalidated = true;
-}
-
-static int RepSurfaceSameColor(RepSurface * I, CoordSet * cs)
+void RepSurface::invalidate(cRepInv_t level)
 {
-  int *lc;
-  int a;
-  AtomInfoType *ai;
+  Rep::invalidate(level);
 
-  if(I->ColorInvalidated)
+  if (level >= cRepInvColor)
+    ColorInvalidated = true;
+}
+
+bool RepSurface::sameColor() const
+{
+  if (ColorInvalidated)
     return false;
 
-  {
-    lc = I->LastColor;
-    for(a = 0; a < cs->NIndex; a++) {
-      ai = cs->getAtomInfo(a);
+  const auto* lc = LastColor;
+  for (int idx = 0; idx < cs->NIndex; idx++) {
+    auto* ai = cs->getAtomInfo(idx);
       if(ai->visRep & cRepSurfaceBit) {
         if(*(lc++) != ai->color) {
           return false;
         }
       }
     }
-  }
+
   return true;
 }
 
-static
-void RepSurfaceColor(RepSurface * I, CoordSet * cs)
+Rep* RepSurface::recolor()
 {
-  PyMOLGlobals *G = cs->G;
+  auto const I = this;
+  assert(cs == this->cs);
+
   MapType *map = NULL, *ambient_occlusion_map = NULL;
   int a, i0, i, j, c1;
   float *v0, *vc, *va;
@@ -2200,7 +2204,9 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
   float clear_cutoff;
   const char *clear_selection = NULL;
   float *clear_vla = NULL;
-  int state = I->R.context.state;
+
+  int state = getState();
+
   float transp;
   int variable_alpha = false;
 
@@ -2476,7 +2482,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 	  float d[3], *vn0, pt[3], v0mod[3];
 	  
 	  if (a%1000==0){
-	    PRINTFB(I->R.G, FB_RepSurface, FB_Debugging) "RepSurfaceColor():  Ambient Occlusion computing mode=%d #vertices=%d done=%d\n", ambient_occlusion_mode, I->N, a ENDFB(I->R.G);      
+	    PRINTFB(G, FB_RepSurface, FB_Debugging) "RepSurfaceColor():  Ambient Occlusion computing mode=%d #vertices=%d done=%d\n", ambient_occlusion_mode, I->N, a ENDFB(G);
 	  }
 	  v0 = I->V + 3 * a;
 	  vn0 = I->VN + 3 * a;
@@ -2538,7 +2544,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 	    maxDistA=0.f;
 	  }
 	}
-	PRINTFB(I->R.G, FB_RepSurface, FB_Debugging) "RepSurfaceColor():  #vertices=%d Ambient Occlusion average #atoms looked at per vertex = %f\n", I->N, (natomsL/I->N) ENDFB(I->R.G);
+	PRINTFB(G, FB_RepSurface, FB_Debugging) "RepSurfaceColor():  #vertices=%d Ambient Occlusion average #atoms looked at per vertex = %f\n", I->N, (natomsL/I->N) ENDFB(G);
       }
       {
 	int ambient_occlusion_smooth = 
@@ -2603,7 +2609,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
       MapFree(ambient_occlusion_map);
       cur_time = UtilGetSeconds(G);
 
-      PRINTFB(I->R.G, FB_RepSurface, FB_Debugging) "RepSurfaceColor():  Ambient Occlusion computed #atoms=%d #vertices=%d time=%lf seconds\n", cs->NIndex, I->N, (cur_time-start_time) ENDFB(I->R.G);      
+      PRINTFB(G, FB_RepSurface, FB_Debugging) "RepSurfaceColor():  Ambient Occlusion computed #atoms=%d #vertices=%d time=%lf seconds\n", cs->NIndex, I->N, (cur_time-start_time) ENDFB(G);
       ambient_occlusion_map = NULL;
 
     }; // update_VAO
@@ -2829,9 +2835,6 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 
   if(G->HaveGUI) {
     setShaderCGO(I, NULL);
-
-#ifdef _PYMOL_IOS
-#endif
   }
 
   if(I->VA && (!variable_alpha)) {
@@ -2850,6 +2853,8 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
     FreeP(I->RC);
   I->ColorInvalidated = false;
   FreeP(present);
+
+  return this;
 }
 
 typedef struct {
@@ -4096,7 +4101,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       return (NULL);            /* skip if no thing visible */
     }
 
-    OOCalloc(G, RepSurface);
+    auto I = new RepSurface(cs, state);
 
     {
       int surface_flag = false;
@@ -4124,16 +4129,6 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 
       RepSurfaceSetSettings(G, cs, obj, surface_quality, surface_type, &point_sep, &sphere_idx, &solv_sph_idx, &circumscribe);
 
-      RepInit(G, &I->R);
-      I->R.context.object = obj;
-      I->R.context.state = state;
-      I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepSurfaceRender;
-      I->R.fRecolor = (void (*)(struct Rep *, struct CoordSet *)) RepSurfaceColor;
-      I->R.fSameVis = (int (*)(struct Rep *, struct CoordSet *)) RepSurfaceSameVis;
-      I->R.fSameColor = (int (*)(struct Rep *, struct CoordSet *)) RepSurfaceSameColor;
-      I->R.fInvalidate = (void (*)(struct Rep *, struct CoordSet *, int)) RepSurfaceInvalidate;
-      I->R.obj = (CObject *) (cs->Obj);
-      I->R.cs = cs;
       I->allVisibleFlag = true;
       obj = cs->Obj;
 
@@ -4308,7 +4303,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 
 	ok &= !G->Interrupt;
         if(ok)
-          RepSurfaceColor(I, cs);
+          I->recolor();
 
         if (ok && smooth_edges)
           RepSurfaceSmoothEdges(I);

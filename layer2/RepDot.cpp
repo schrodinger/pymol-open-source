@@ -35,8 +35,6 @@ Z* -------------------------------------------------------------------
 
 #include "pymol/algorithm.h"
 
-static void RepDotRender(RepDot * I, RenderInfo * info);
-
 RepDot::~RepDot()
 {
   auto I = this;
@@ -53,9 +51,9 @@ RepDot::~RepDot()
   FreeP(I->Atom);
 }
 
-static int RepDotCGOGenerate(RepDot * I, RenderInfo * info)
+static int RepDotCGOGenerate(RepDot * I)
 {
-  PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->G;
   float *v = I->V;
   int c = I->N;
   int cc = 0;
@@ -63,8 +61,9 @@ static int RepDotCGOGenerate(RepDot * I, RenderInfo * info)
   CGO *cgo = NULL;
 
   int normals =
-    SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_normals);
-  short dot_as_spheres = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
+    SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_dot_normals);
+  bool const dot_as_spheres = SettingGet<bool>(
+      G, I->cs->Setting, I->obj->Setting, cSetting_dot_as_spheres);
 
   cgo = CGONew(G);
   CHECKOK(ok, cgo);
@@ -144,19 +143,15 @@ static int RepDotCGOGenerate(RepDot * I, RenderInfo * info)
   }
   CGOFree(cgo);
 
-  /* now that the shaderCGO is created, we can just call RepDotRender to render it */
-  if (ok)
-    RepDotRender(I, info);
-      
   return ok;
 
 }
 
-static void RepDotRender(RepDot * I, RenderInfo * info)
+void RepDot::render(RenderInfo * info)
 {
+  auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   int c = I->N;
   int cc = 0;
@@ -187,13 +182,13 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else { /* else not pick, i.e., when rendering */
-      short use_shader, generate_shader_cgo = 0;
       int normals =
-        SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_normals);
-      short dot_as_spheres = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
+        SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_dot_normals);
+      bool const dot_as_spheres = SettingGet<bool>(
+          G, cs->Setting, obj->Setting, cSetting_dot_as_spheres);
 
-      use_shader = SettingGetGlobal_b(G, cSetting_dot_use_shader) & 
-                   SettingGetGlobal_b(G, cSetting_use_shaders);
+      bool const use_shader = SettingGet<bool>(G, cSetting_dot_use_shader) &&
+                              SettingGet<bool>(G, cSetting_use_shaders);
 
       if (I->shaderCGO && ((!use_shader || CGOCheckWhetherToFree(G, I->shaderCGO)) ||
 			   I->shaderCGO_as_spheres!= dot_as_spheres)){
@@ -203,22 +198,21 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 
       if (use_shader){
 	if (!I->shaderCGO){
-	  generate_shader_cgo = 1;
-	  ok &= RepDotCGOGenerate(I, info);
-	} else {
+	  ok &= RepDotCGOGenerate(I);
+	}
+
+	if (ok) {
 	  const float *color;
-	  color = ColorGet(G, I->R.obj->Color);
-	  CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
+	  color = ColorGet(G, I->obj->Color);
+	  CGORenderGL(I->shaderCGO, color, NULL, NULL, info, I);
 	  return; /* should not do any other rendering after shaderCGO has
 		    been rendered */
 	}
-      }
-
-      if (!generate_shader_cgo) {
+      } else {
 	if(!normals)
 	  SceneResetNormal(G, true);
         int lighting =
-          SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_lighting);
+          SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_dot_lighting);
 	if(!lighting) {
 	  if(!info->line_lighting)
 	    glDisable(GL_LIGHTING);
@@ -252,8 +246,8 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
-    I->R.cs->Active[cRepDot] = false;
+    I->invalidate(cRepInvPurge);
+    I->cs->Active[cRepDot] = false;
   }
 }
 
@@ -316,15 +310,10 @@ Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
   int lastColor = cColorDefault;
   int colorCnt = 0;
 
-  OOCalloc(G, RepDot);
-  RepInit(G, &I->R);
+  auto I = new RepDot(cs, state);
 
   I->dotSize = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_radius);
   I->Width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_width);
-
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepDotRender;
-  I->R.obj = (CObject *) obj;
-  I->R.cs = cs;
 
   I->V = pymol::malloc<float>(cs->NIndex * sp->nDot * 10);
   ok_assert(1, I->V);

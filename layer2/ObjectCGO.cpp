@@ -208,7 +208,7 @@ void ObjectCGORecomputeExtent(ObjectCGO * I)
 
 
 /*========================================================================*/
-void ObjectCGO::invalidate(int rep, int level, int state)
+void ObjectCGO::invalidate(cRep_t rep, cRepInv_t level, int state)
 {
   auto I = this;
   ObjectCGOState *sobj = NULL;

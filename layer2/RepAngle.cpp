@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
-#include"OOMac.h"
+#include"Err.h"
 #include"RepAngle.h"
 #include"Color.h"
 #include"Scene.h"
@@ -33,33 +33,31 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 
 struct RepAngle : Rep {
+  using Rep::Rep;
+
   ~RepAngle() override;
 
-  float *V;
-  int N;
-  CObject *Obj;
+  cRep_t type() const override { return cRepAngle; }
+  void render(RenderInfo* info) override;
+
+  pymol::vla<float> V;
+  int N = 0;
+
   DistSet *ds;
   float linewidth, radius;
-  CGO *shaderCGO;
+  CGO* shaderCGO = nullptr;
 };
 
 #include"ObjectDist.h"
 
 RepAngle::~RepAngle()
 {
-  auto I = this;
-  if (I->shaderCGO){
-    CGOFree(I->shaderCGO);
-    I->shaderCGO = 0;
-  }
-  VLAFreeP(I->V);
+  CGOFree(shaderCGO);
 }
 
 static int RepAngleCGOGenerate(RepAngle * I, RenderInfo * info)
 {
-  PyMOLGlobals *G = I->R.G;
-  float *v = I->V;
-  int c = I->N;
+  PyMOLGlobals *G = I->G;
   float line_width;
   int ok = true;
   CGO *convertcgo = NULL;
@@ -75,18 +73,19 @@ static int RepAngleCGOGenerate(RepAngle * I, RenderInfo * info)
   if (ok)
     ok &= CGOResetNormal(I->shaderCGO, true);
   if (ok){
+    if (color < 0) {
+      color = I->getObj()->Color;
+    }
     if(color >= 0){
       ok &= CGOColorv(I->shaderCGO, ColorGet(G, color));
-    } else if (I->Obj && I->Obj->Color >= 0){
-      ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->Obj->Color));
     }
   }
-  v = I->V;
-  c = I->N;
+  const float* v = I->V.data();
+  int c = I->N;
   if (dash_as_cylinders){
-    float *origin = NULL, axis[3];
+    float axis[3];
     while(ok && c > 0) {
-      origin = v;
+      const float* origin = v;
       v += 3;
       axis[0] = v[0] - origin[0];
       axis[1] = v[1] - origin[1];
@@ -157,8 +156,8 @@ static void RepAngleRenderImmediate(RepAngle * I, RenderInfo * info, int color,
                                     short dash_transparency_enabled, float dash_transparency)
 {
 #ifndef PURE_OPENGL_ES_2
-  PyMOLGlobals *G = I->R.G;
-  float *v = I->V;
+  PyMOLGlobals *G = I->G;
+  const float* v = I->V.data();
   int c = I->N;
   float line_width;
   bool t_mode_3 =
@@ -199,12 +198,12 @@ static void RepAngleRenderImmediate(RepAngle * I, RenderInfo * info, int color,
 #endif
 }
 
-static void RepAngleRender(RepAngle * I, RenderInfo * info)
+void RepAngle::render(RenderInfo* info)
 {
+  auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  PyMOLGlobals *G = I->R.G;
-  float *v = I->V;
+  const float* v = I->V.data();
   int c = I->N;
   const float *vc;
   int round_ends;
@@ -215,7 +214,7 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
   int color =
     SettingGet_color(G, NULL, I->ds->Obj->Setting, cSetting_angle_color);
   if(color < 0)
-    color = I->Obj->Color;
+    color = getObj()->Color;
   I->linewidth = line_width = 
     SettingGet_f(G, NULL, I->ds->Obj->Setting, cSetting_dash_width);
   I->radius =
@@ -245,7 +244,7 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
     }
 
     vc = ColorGet(G, color);
-    v = I->V;
+    v = I->V.data();
     c = I->N;
 
     while(ok && c > 0) {
@@ -283,7 +282,7 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
           }
 	  ok &= RepAngleCGOGenerate(I, info);
    	} else {
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
 	  return;
 	}
       }
@@ -291,7 +290,7 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
       if (!generate_shader_cgo) {
 	RepAngleRenderImmediate(I, info, color, dash_transparency_enabled, dash_transparency);
       } else {
-	CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
       }
     }
   }
@@ -322,12 +321,7 @@ Rep *RepAngleNew(DistSet * ds, int state)
     return (NULL);
   }
 
-  OOAlloc(G, RepAngle);
-  RepInit(G, &I->R);
-
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepAngleRender;
-  I->R.fRecolor = NULL;
-  I->R.obj = ds->Obj;
+  auto I = new RepAngle(ds->Obj, state);
 
   dash_len = SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dash_length);
   dash_gap = SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dash_gap);
@@ -335,16 +329,11 @@ Rep *RepAngleNew(DistSet * ds, int state)
   if(dash_sum < R_SMALL4)
     dash_sum = 0.1F;
 
-  I->shaderCGO = 0;
-  I->N = 0;
-  I->V = NULL;
-  I->R.P = NULL;
-  I->Obj = (CObject *) ds->Obj;
   I->ds = ds;
 
   n = 0;
   if(ds->NAngleIndex) {
-    I->V = VLAlloc(float, ds->NAngleIndex * 10);
+    I->V.resize(ds->NAngleIndex * 10);
     CHECKOK(ok, I->V);
     for(a = 0; ok && a < ds->NAngleIndex; a = a + 5) {
       v1 = ds->AngleCoord + 3 * a;
@@ -381,7 +370,7 @@ Rep *RepAngleNew(DistSet * ds, int state)
       scale3f(n3, radius, y);
 
       if(v4[0] != 0.0F) {       /* line 1 flag */
-        VLACheck(I->V, float, (n * 3) + 5);
+        I->V.check((n * 3) + 5);
 	CHECKOK(ok, I->V);
 	if (ok){
 	  v = I->V + n * 3;
@@ -393,7 +382,7 @@ Rep *RepAngleNew(DistSet * ds, int state)
       }
       
       if(ok && v4[1] != 0.0F) {       /* line 2 flag */
-	VLACheck(I->V, float, (n * 3) + 5);
+	I->V.check((n * 3) + 5);
 	CHECKOK(ok, I->V);
 	if (ok){
 	  v = I->V + n * 3;
@@ -422,7 +411,7 @@ Rep *RepAngleNew(DistSet * ds, int state)
 
         while(ok && pos < length) {
 
-          VLACheck(I->V, float, (n * 3) + 5);
+          I->V.check((n * 3) + 5);
 	  CHECKOK(ok, I->V);
 
 	  if (!ok)
@@ -458,7 +447,7 @@ Rep *RepAngleNew(DistSet * ds, int state)
       }
     }
     if (ok)
-      VLASize(I->V, float, n * 3);
+      I->V.resize(n * 3);
     CHECKOK(ok, I->V);
     if (ok)
       I->N = n;

@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"Ray.h"
 
+#define cCartoon_skip_helix -2
 #define cCartoon_skip -1
 #define cCartoon_auto 0
 #define cCartoon_loop 1
@@ -31,10 +32,6 @@ Z* -------------------------------------------------------------------
 #define cCartoon_putty 7
 #define cCartoon_dash 8
 #define cCartoon_cylinder 9
-
-#define cCartoon_skip_helix -2
-#define cRepAll       -1
-#define cRepNone      -2
 
 // show/hide/... codes
 enum {
@@ -48,7 +45,9 @@ enum {
    (you can add to them however, I think) */
 
 enum cRep_t {
-  cRepCyl,             // 0
+  cRepNone = -2,
+  cRepAll = -1,
+  cRepCyl = 0,         // 0
   cRepSphere,          // 1
   cRepSurface,         // 2
   cRepLabel,           // 3
@@ -72,6 +71,12 @@ enum cRep_t {
   // rep count
   cRepCnt
 };
+
+inline cRep_t& operator++(cRep_t& rep)
+{
+  assert(0 <= rep && rep < cRepCnt);
+  return (rep = cRep_t(rep + 1));
+}
 
 using cRepBitmask_t = int;
 
@@ -125,6 +130,7 @@ constexpr cRepBitmask_t cRepsObjectMask = (cRepSurfaceBit | cRepMeshBit | cRepDo
 /* invalite display (list) */
 
 enum cRepInv_t {
+  cRepInvNone = 0,
   cRepInvDisplay = 1,
 
 /* precomputed extents (can change if matrix changes) */
@@ -175,32 +181,45 @@ struct CoordSet;
 struct Object;
 
 struct Rep {
-  Rep& R; // TODO TEMP
   PyMOLGlobals *G;
-  void (*fRender) (struct Rep * I, RenderInfo * info);
-  struct Rep *(*fUpdate) (struct Rep * I, struct CoordSet * cs, int state, int rep);
-  void (*fInvalidate) (struct Rep * I, struct CoordSet * cs, int level);
-  void fFree(struct Rep* I);
 
-  Rep() : R(*this) {} // TODO TEMP
+  virtual cRep_t type() const = 0;
+  virtual void render(RenderInfo* info);
+  virtual void invalidate(cRepInv_t level);
+
   virtual ~Rep();
 
-  int MaxInvalid = 0;
-  int Active = 0;
-  CObject* obj = 0;
-  struct CoordSet* cs = nullptr;
-  Pickable* P = nullptr;
-  PickContext context{};
-  /* private */
-  void (*fRecolor) (struct Rep * I, struct CoordSet * cs) = nullptr;
-  int (*fSameVis) (struct Rep * I, struct CoordSet * cs) = nullptr;
-  int (*fSameColor) (struct Rep * I, struct CoordSet * cs) = nullptr;
-  struct Rep *(*fRebuild) (struct Rep * I, struct CoordSet * cs, int state, int rep);
-  struct Rep *(*fNew) (struct CoordSet * cs, int state) = nullptr;
-};
+  CObject* obj = nullptr; // TODO redundant, use getObj()
+  CoordSet* cs = nullptr;
 
-void RepInit(PyMOLGlobals * G, Rep * I);
-void RepInvalidate(struct Rep *I, struct CoordSet *cs, int level);
+  Pickable* P = nullptr; //!< only used by labels
+  PickContext context{};
+
+  //! Object state (>=0, 0-indexed) for picking and ramp colors
+  int getState() const { return context.state; }
+  CObject* getObj() const { return context.object; }
+
+protected:
+  cRepInv_t MaxInvalid = cRepInvNone;
+
+private:
+  Rep* rebuild();
+  virtual Rep* recolor() { return rebuild(); }
+  virtual bool sameVis() const { return false; }
+  virtual bool sameColor() const { return false; }
+
+public:
+  Rep* update();
+
+  /** Pointer to static factory function (Only used with molecular
+   * representations, DistSet e.g. doesn't use it)
+   * @param state Object state for picking and ramp colors
+   */
+  Rep* (*fNew)(CoordSet* cs, int state) = nullptr;
+
+  Rep(CObject*, int state);
+  Rep(CoordSet*, int state);
+};
 
 cRepBitmask_t RepGetAutoShowMask(PyMOLGlobals * G);
 

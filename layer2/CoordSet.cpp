@@ -1116,7 +1116,7 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
 
 
 /*========================================================================*/
-void CoordSet::invalidateRep(int type, int level)
+void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
 {
   CoordSet * I = this;
   int a;
@@ -1168,7 +1168,7 @@ void CoordSet::invalidateRep(int type, int level)
 
   /* invalidate basd on one representation, 'type' */
   for (RepIterator iter(G, type); iter.next(); ){
-    int eff_level = level;
+    auto eff_level = level;
     a = iter.rep;
     if(level == cRepInvPick) {
       switch (a) {
@@ -1186,10 +1186,10 @@ void CoordSet::invalidateRep(int type, int level)
     if(eff_level >= cRepInvVisib)     /* make active if visibility has changed */
       I->Active[a] = true;
     if(I->Rep[a]) {
-      if(I->Rep[a]->fInvalidate && (eff_level < cRepInvPurge))
-        I->Rep[a]->fInvalidate(I->Rep[a], I, eff_level);
-      else if(eff_level >= cRepInvExtColor) {
-        I->Rep[a]->fFree(I->Rep[a]);
+      if(eff_level < cRepInvPurge)
+        I->Rep[a]->invalidate(eff_level);
+      else {
+        delete I->Rep[a];
         I->Rep[a] = NULL;
       }
     }
@@ -1218,23 +1218,26 @@ void CoordSet::invalidateRep(int type, int level)
 
 /*========================================================================*/
 
-#define RepUpdateMacro(I,rep,new_fn,state) {\
-  if(I->Active[rep]&&(!G->Interrupt)) {\
-    if(!I->Rep[rep]) {\
-      I->Rep[rep]=new_fn(I,state);\
-      if(I->Rep[rep]){ \
-         I->Rep[rep]->fNew=(struct Rep *(*)(struct CoordSet *,int state))new_fn;\
-         SceneInvalidatePicking(G);\
-      } else {  \
-	I->Active[rep] = false;			\
-      }         \
-    } else {\
-      if(I->Rep[rep]->fUpdate)\
-         I->Rep[rep] = I->Rep[rep]->fUpdate(I->Rep[rep],I,state,rep);\
-    }\
-  }\
-OrthoBusyFast(G,rep,cRepCnt);\
-}
+#define RepUpdateMacro(I, rep, new_fn, state)                                  \
+  {                                                                            \
+    assert(I == this);                                                         \
+    if (Active[rep] && !G->Interrupt) {                                        \
+      if (Rep[rep]) {                                                          \
+        assert(Rep[rep]->cs == this);                                          \
+        assert(Rep[rep]->getState() == state);                                 \
+        Rep[rep] = Rep[rep]->update();                                         \
+      } else {                                                                 \
+        Rep[rep] = new_fn(this, state);                                        \
+        if (Rep[rep]) {                                                        \
+          Rep[rep]->fNew = new_fn;                                             \
+          SceneInvalidatePicking(G);                                           \
+        } else {                                                               \
+          Active[rep] = false;                                                 \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
+    OrthoBusyFast(G, rep, cRepCnt);                                            \
+  }
 
 /*========================================================================*/
 void CoordSet::update(int state)
@@ -1451,12 +1454,12 @@ void CoordSet::render(RenderInfo * info)
           ray->color3fv(ColorGet(G, I->Obj->Color));
         }
 
-        if(r->fRender) {        /* do OpenGL rendering in three passes */
+        {        /* do OpenGL rendering in three passes */
           if(ray || pick) {
 
             /* here we need to iterate through and apply coordinate set matrices */
 
-            r->fRender(r, info);
+            r->render(info);
           } else {
             bool t_mode_3 = SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
             bool render_both = t_mode_3;  // render both opaque (1) and transparent (-1) pass if t_mode_3
@@ -1467,7 +1470,7 @@ void CoordSet::render(RenderInfo * info)
               {
                 int t_mode = SettingGetGlobal_i(G, cSetting_transparency_mode);
                 if (t_mode == 3 && pass == RenderPass::Transparent){
-                  r->fRender(r, info);
+                  r->render(info);
                 }
               }
               break;
@@ -1475,14 +1478,14 @@ void CoordSet::render(RenderInfo * info)
               {
                 int t_mode_3 = SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
                 if (pass == RenderPass::Transparent || (t_mode_3 && pass == RenderPass::Opaque /* TODO_OPENVR 0 */))
-                  r->fRender(r, info);
+                  r->render(info);
               }
               break;
             case cRepDot:
             case cRepCGO:
             case cRepCallback:
               if(pass == RenderPass::Opaque)
-                r->fRender(r, info);
+                r->render(info);
               break;
             case cRepLine:
             case cRepMesh:
@@ -1490,7 +1493,7 @@ void CoordSet::render(RenderInfo * info)
             case cRepCell:
             case cRepExtent:
               if(pass == RenderPass::Antialias)
-                r->fRender(r, info);
+                r->render(info);
               break;
             case cRepNonbonded:
             case cRepRibbon:
@@ -1505,7 +1508,7 @@ void CoordSet::render(RenderInfo * info)
                 if (render_both){
                   // for transparency_mode 3, render both opaque and transparent pass
                   if (pass != RenderPass::Antialias){
-                    r->fRender(r, info);
+                    r->render(info);
                   }
                 } else {
                   bool checkAlphaCGO = abit & (cRepSurfaceBit);
@@ -1514,7 +1517,7 @@ void CoordSet::render(RenderInfo * info)
                   if (checkAlphaCGO){
                     if(info->alpha_cgo) {
                       if(pass == RenderPass::Opaque){
-                        r->fRender(r, info);
+                        r->render(info);
                       }
                       cont = false;
                     }
@@ -1524,9 +1527,9 @@ void CoordSet::render(RenderInfo * info)
                                                      r->obj->Setting, check_setting) > 0.0001) {
                       /* if object has transparency, only render in transparent pass */
                       if(pass == RenderPass::Transparent)
-                        r->fRender(r, info);
+                        r->render(info);
                     } else if(pass == RenderPass::Opaque){
-                      r->fRender(r, info);
+                      r->render(info);
                     }
                   }
                 }
@@ -1711,7 +1714,7 @@ CoordSet::~CoordSet()
     }
     for(a = 0; a < cRepCnt; a++)
       if(I->Rep[a])
-        I->Rep[a]->fFree(I->Rep[a]);
+        delete I->Rep[a];
     obj = I->Obj;
     if(obj)
       if(obj->DiscreteFlag)     /* remove references to the atoms in discrete objects */

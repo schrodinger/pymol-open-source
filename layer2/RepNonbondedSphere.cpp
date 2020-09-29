@@ -32,7 +32,12 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 
 struct RepNonbondedSphere : Rep {
+  using Rep::Rep;
+
   ~RepNonbondedSphere() override;
+
+  cRep_t type() const override { return cRepNonbondedSphere; }
+  void render(RenderInfo* info) override;
 
   CGO *shaderCGO, *primitiveCGO;
 };
@@ -45,22 +50,22 @@ RepNonbondedSphere::~RepNonbondedSphere()
   CGOFree(primitiveCGO);
 }
 
-static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
+void RepNonbondedSphere::render(RenderInfo* info)
 {
+  auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  PyMOLGlobals *G = I->R.G;
 
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
       if (I->shaderCGO){
-	CGORenderGLPicking(I->shaderCGO, info, &I->R.context, I->R.cs->Setting, I->R.obj->Setting);
+	CGORenderGLPicking(I->shaderCGO, info, &I->context, I->cs->Setting, I->obj->Setting);
       } else if (I->primitiveCGO){
-	CGORenderGLPicking(I->primitiveCGO, info, &I->R.context, I->R.cs->Setting, I->R.obj->Setting);
+	CGORenderGLPicking(I->primitiveCGO, info, &I->context, I->cs->Setting, I->obj->Setting);
       }
     } else { /* rendering */
       short use_shader, use_sphere_shader;
@@ -80,23 +85,23 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
           if (use_sphere_shader){
             I->shaderCGO = CGOOptimizeSpheresToVBONonIndexed(I->primitiveCGO, 0, true);
           } else {
-            ok_assert(1, I->shaderCGO = CGOSimplify(I->primitiveCGO, 0, SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_nb_spheres_quality)));
+            ok_assert(1, I->shaderCGO = CGOSimplify(I->primitiveCGO, 0, SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_nb_spheres_quality)));
             ok_assert(1, CGOCombineBeginEnd(&I->shaderCGO));
             ok_assert(1, CGOOptimizeToVBONotIndexed(&I->shaderCGO));
           }
           I->shaderCGO->use_shader = true;
         }
-        CGORenderGL(I->shaderCGO, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+        CGORenderGL(I->shaderCGO, NULL, I->cs->Setting, I->obj->Setting, info, I);
       } else {
-        CGORenderGL(I->primitiveCGO, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+        CGORenderGL(I->primitiveCGO, NULL, I->cs->Setting, I->obj->Setting, info, I);
       }
     }
   }
   return;
 ok_except1:
   CGOFree(I->shaderCGO);
-  I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
-  I->R.cs->Active[cRepNonbondedSphere] = false;
+  I->invalidate(cRepInvPurge);
+  I->cs->Active[cRepNonbondedSphere] = false;
 }
 
 Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
@@ -129,12 +134,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   float nb_spheres_size =
     SettingGet_f(G, cs->Setting, obj->Setting, cSetting_nb_spheres_size);
 
-  OOAlloc(G, RepNonbondedSphere);
-  RepInit(G, &I->R);
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepNonbondedSphereRender;
-  I->R.fRecolor = NULL;
-  I->R.obj = (CObject *) (cs->Obj);
-  I->R.cs = cs;
+  auto I = new RepNonbondedSphere(cs, state);
   I->shaderCGO = NULL;
   I->primitiveCGO = NULL;
 
@@ -176,10 +176,6 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   }
   CGOStop(I->primitiveCGO);
   I->primitiveCGO->sphere_quality = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_nb_spheres_quality);
-  if (ok){
-    I->R.context.object = obj;
-    I->R.context.state = state;
-  }
   FreeP(active);
   if (!ok){
     delete I;

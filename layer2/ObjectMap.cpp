@@ -1661,7 +1661,7 @@ void ObjectMap::update()
   }
 }
 
-void ObjectMap::invalidate(int rep, int level, int state)
+void ObjectMap::invalidate(cRep_t rep, cRepInv_t level, int state)
 {
   auto I = this;
   if(level >= cRepInvExtents) {

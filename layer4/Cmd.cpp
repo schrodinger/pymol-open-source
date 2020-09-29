@@ -3306,10 +3306,8 @@ static PyObject *CmdRecolor(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *str1;
-  int rep = -1;
+  cRep_t rep;
   API_SETUP_ARGS(G, self, args, "Osi", &self, &str1, &rep);
-  PRINTFD(G, FB_CCmd)
-    " CmdRecolor: called with %s.\n", str1 ENDFD;
   API_ASSERT(APIEnterNotModal(G));
   auto result = ExecutiveInvalidateRep(G, str1, rep, cRepInvColor);
   APIExit(G);
@@ -3320,7 +3318,7 @@ static PyObject *CmdRebuild(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   const char* str1;
-  int rep = -1;
+  cRep_t rep;
   API_SETUP_ARGS(G, self, args, "Osi", &self, &str1, &rep);
   API_ASSERT(APIEnterNotModal(G));
 

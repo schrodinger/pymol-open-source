@@ -27,7 +27,7 @@ typedef struct GadgetSet {
   // methods
   void update();
   void render(RenderInfo * info);
-  void invalidateRep(int type, int level);
+  void invalidateRep(cRep_t type, cRepInv_t level);
 
   PyMOLGlobals *G;
   struct ObjectGadget *Obj;     /* NOT pickled -- restore manually */

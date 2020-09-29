@@ -30,7 +30,12 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 
 struct RepNonbonded : Rep {
+  using Rep::Rep;
+
   ~RepNonbonded() override;
+
+  cRep_t type() const override { return cRepNonbonded; }
+  void render(RenderInfo* info) override;
 
   CGO *primitiveCGO;
   CGO *shaderCGO;
@@ -112,21 +117,21 @@ void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
 
 static int RepNonbondedCGOGenerate(RepNonbonded * I, RenderInfo * info)
 {
-  PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->G;
   float alpha;
   int ok = true;
   CGO *convertcgo = NULL;
   short nonbonded_as_cylinders ;
   short use_shader;
   float nonbonded_size =
-    SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_nonbonded_size);
+    SettingGet_f(G, I->cs->Setting, I->obj->Setting, cSetting_nonbonded_size);
 
   nonbonded_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_nonbonded_as_cylinders);
   use_shader = SettingGetGlobal_b(G, cSetting_nonbonded_use_shader) & 
     SettingGetGlobal_b(G, cSetting_use_shaders);
 
   alpha =
-    SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_nonbonded_transparency);
+    SettingGet_f(G, I->cs->Setting, I->obj->Setting, cSetting_nonbonded_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
@@ -187,41 +192,41 @@ static int RepNonbondedCGOGenerate(RepNonbonded * I, RenderInfo * info)
   return ok;
 }
 
-static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
+void RepNonbonded::render(RenderInfo* info)
 {
+  auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  PyMOLGlobals *G = I->R.G;
   int ok = true;
   float alpha =
-    SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_nonbonded_transparency);
+    SettingGet_f(G, I->cs->Setting, I->obj->Setting, cSetting_nonbonded_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->R.cs->Setting, I->R.cs->Obj->Setting);
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting, I->cs->Obj->Setting);
     ray->transparentf(0.0);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
-      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->R.context, I->R.cs->Setting, I->R.obj->Setting);
+      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting, I->obj->Setting);
     } else {
       /* not pick, but render */
       bool use_shader = SettingGetGlobal_b(G, cSetting_nonbonded_use_shader) && SettingGetGlobal_b(G, cSetting_use_shaders);
       if (!use_shader){
-        CGORenderGL(I->primitiveCGO, NULL, NULL, NULL, info, &I->R);
+        CGORenderGL(I->primitiveCGO, NULL, NULL, NULL, info, I);
         return;
       }
       bool nonbonded_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_nonbonded_as_cylinders);
       if (I->shaderCGO && use_shader != I->shaderCGO->use_shader){
-        CGOFree(I->shaderCGO);
-        I->shaderCGO = 0;
+	CGOFree(I->shaderCGO);
+	I->shaderCGO = 0;
       }
 
       if (I->shaderCGO && (nonbonded_as_cylinders ^ I->shaderCGO_has_cylinders)){
-        CGOFree(I->shaderCGO);
-        I->shaderCGO = 0;
+	CGOFree(I->shaderCGO);
+	I->shaderCGO = 0;
       }
 
       if (!I->shaderCGO){
@@ -232,7 +237,7 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
         }
         ok &= RepNonbondedCGOGenerate(I, info);
       }
-      CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+      CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
     }
   }
 }
@@ -257,16 +262,9 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
     return (NULL);              /* skip if no dots are visible */
   }
 
-  OOAlloc(G, RepNonbonded);
-  RepInit(G, &I->R);
+  auto I = new RepNonbonded(cs, state);
 
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepNonbondedRender;
-  I->R.fRecolor = NULL;
   I->shaderCGO = NULL;
-
-  I->R.P = NULL;
-  I->R.obj = (CObject *) (cs->Obj);
-  I->R.cs = cs;
 
   I->primitiveCGO = CGONew(G);
 
@@ -293,7 +291,5 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
   }
   CGOEnd(I->primitiveCGO); // for immediate mode
   CGOSpecialWithArg(I->primitiveCGO, LINE_LIGHTING, 1.f);
-  I->R.context.object = obj;
-  I->R.context.state = state;
   return (Rep *) I;
 }

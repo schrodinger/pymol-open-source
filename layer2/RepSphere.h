@@ -21,13 +21,19 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 
 struct RepSphere : Rep {
+  using Rep::Rep;
+
   ~RepSphere() override;
 
-  bool *LastVisib;
-  int *LastColor;
-  CGO *renderCGO;
-  CGO *primitiveCGO;
-  CGO *spheroidCGO;
+  cRep_t type() const override { return cRepSphere; }
+  void render(RenderInfo* info) override;
+  bool sameVis() const override;
+
+  bool* LastVisib = nullptr;
+  int* LastColor = nullptr;
+  CGO* renderCGO = nullptr;
+  CGO* primitiveCGO = nullptr;
+  CGO* spheroidCGO = nullptr;
 };
 
 Rep *RepSphereNew(CoordSet * cset, int state);

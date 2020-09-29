@@ -216,43 +216,8 @@ int GadgetSetGetExtent(GadgetSet * I, float *mn, float *mx)
 
 
 /*========================================================================*/
-void GadgetSet::invalidateRep(int type, int level)
+void GadgetSet::invalidateRep(cRep_t type, cRepInv_t level)
 {
-#if TO_DO
-  GadgetSet * I = this;
-  int a;
-  PRINTFD(I->G, FB_GadgetSet)
-    " GadgetSetInvalidateRep: entered.\n" ENDFD;
-  if(type >= 0) {
-    if(type < I->NRep) {
-      SceneChanged(I->G);
-      if(I->Rep[type]) {
-        I->Rep[type]->fFree(I->Rep[type]);
-        I->Rep[type] = NULL;
-      }
-    }
-  } else {
-    for(a = 0; a < I->NRep; a++) {
-      SceneChanged(I->G);
-      if(I->Rep[a]) {
-        switch (level) {
-        case cRepInvColor:
-          if(I->Rep[a]->fRecolor) {
-            I->Rep[a]->fInvalidate(I->Rep[a], (struct CoordSet *) I, level);
-          } else {
-            I->Rep[a]->fFree(I->Rep[a]);
-            I->Rep[a] = NULL;
-          }
-          break;
-        default:
-          I->Rep[a]->fFree(I->Rep[a]);
-          I->Rep[a] = NULL;
-          break;
-        }
-      }
-    }
-  }
-#endif
 }
 
 

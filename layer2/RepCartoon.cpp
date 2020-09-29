@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 
 #include"Base.h"
-#include"OOMac.h"
+#include"Err.h"
 #include"RepCartoon.h"
 #include"Color.h"
 #include"Setting.h"
@@ -58,9 +58,18 @@ public:
 };
 
 struct RepCartoon : Rep {
+  using Rep::Rep;
+
   ~RepCartoon() override;
 
-  CGO *ray, *std, *preshader;
+  cRep_t type() const override { return cRepCartoon; }
+  void render(RenderInfo* info) override;
+  void invalidate(cRepInv_t level) override;
+  bool sameVis() const override;
+
+  CGO* ray = nullptr;
+  CGO* std = nullptr;
+  CGO* preshader = nullptr;
 
   /**
    * Free the preshader CGO or move to another owner.
@@ -74,7 +83,7 @@ struct RepCartoon : Rep {
     }
   }
 
-  char *LastVisib;
+  char* LastVisib = nullptr;
 };
 
 #include"ObjectMolecule.h"
@@ -116,16 +125,16 @@ CGO *CGOAddTwoSidedBackfaceSpecialOps(PyMOLGlobals *G, CGO *cgo){
 
 static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
 {
-  PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->G;
   int ok = true;
 
   int use_shaders, has_cylinders_to_optimize;
-  float alpha = 1.0F - SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_cartoon_transparency);
+  float alpha = 1.0F - SettingGet_f(G, I->cs->Setting, I->obj->Setting, cSetting_cartoon_transparency);
 
   auto hasAtomLevelAlpha = [](RepCartoon * I){
-    for(CoordSetAtomIterator iter(I->R.cs); iter.next();){
+    for(CoordSetAtomIterator iter(I->cs); iter.next();){
       auto ai = iter.getAtomInfo();
-      if(AtomSettingGetWD(I->R.G, ai, cSetting_cartoon_transparency, 0.0f)){
+      if(AtomSettingGetWD(I->G, ai, cSetting_cartoon_transparency, 0.0f)){
         return true;
       }
     }
@@ -151,7 +160,7 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
       convertcgo = CGOCombineBeginEnd(convertcgo2, 0);
       CGOFree(convertcgo2);
       CHECKOK(ok, convertcgo);
-      color = ColorGet(G, I->R.obj->Color);
+      color = ColorGet(G, I->obj->Color);
       copy3f(color, colorWithA);
       colorWithA[3] = alpha;
       tmpCGO = CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(convertcgo, 0, NULL, true);
@@ -252,16 +261,16 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
   return ok;
 }
 
-static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
+void RepCartoon::render(RenderInfo* info)
 {
-  PyMOLGlobals *G = I->R.G;
+  auto I = this;
 
   if (info->ray) {
 #ifndef _PYMOL_NO_RAY
     CGO* raycgo = I->ray ? I->ray : I->preshader;
 
     if (raycgo && !CGORenderRay(raycgo, info->ray, info, nullptr, nullptr,
-                      I->R.cs->Setting, I->R.obj->Setting)) {
+                      I->cs->Setting, I->obj->Setting)) {
       PRINTFB(G, FB_RepCartoon, FB_Warnings)
         " %s-Warning: ray rendering failed\n", __func__ ENDFB(G);
       CGOFree(I->ray);
@@ -278,8 +287,8 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 
       if (!ok) {
         I->disposePreshaderCGO();
-        I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
-        I->R.cs->Active[cRepCartoon] = false;
+        I->invalidate(cRepInvPurge);
+        I->cs->Active[cRepCartoon] = false;
       }
     }
 
@@ -287,10 +296,10 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
       assert(!I->preshader);
 
       if (info->pick) {
-        CGORenderGLPicking(I->std, info, &I->R.context,
-                           I->R.cs->Setting, I->R.obj->Setting);
+        CGORenderGLPicking(I->std, info, &I->context,
+                           I->cs->Setting, I->obj->Setting);
       } else {
-        CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+        CGORenderGL(I->std, NULL, I->cs->Setting, I->obj->Setting, info, I);
       }
     }
   }
@@ -2729,37 +2738,27 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   return (cgo);
 }
 
-static
-int RepCartoonSameVis(RepCartoon * I, CoordSet * cs)
+bool RepCartoon::sameVis() const
 {
-  int same = true;
-  const char *lv;
-  int a;
-  const AtomInfoType *ai;
-
-  if (!I->LastVisib)
+  if (!LastVisib)
     return false;
-  ai = cs->Obj->AtomInfo;
-  lv = I->LastVisib;
 
-  for(a = 0; a < cs->NIndex; a++) {
-    if(*(lv++) != GET_BIT((ai + cs->IdxToAtm[a])->visRep, cRepCartoon)) {
-      same = false;
-      break;
+  for (int idx = 0; idx < cs->NIndex; idx++) {
+    const auto* ai = cs->getAtomInfo(idx);
+    if (LastVisib[idx] != GET_BIT(ai->visRep, cRepCartoon)) {
+      return false;
     }
   }
-  return (same);
+
+  return true;
 }
 
-static
-void RepCartoonInvalidate(struct Rep *I, struct CoordSet *cs, int level)
+void RepCartoon::invalidate(cRepInv_t level)
 {
   if (level >= cRepInvColor){
-    RepCartoon *rc = (RepCartoon*)I;
-    FreeP(rc->LastVisib);
-    rc->LastVisib = NULL;
+    FreeP(LastVisib);
   }
-  RepInvalidate(I, cs, level);
+  Rep::invalidate(level);
 }
 
 /*
@@ -3716,14 +3715,13 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
 
-  OOCalloc(G, RepCartoon);
+  auto I = new RepCartoon(cs, state);
 
   PRINTFD(G, FB_RepCartoon)
     " RepCartoonNew-Debug: entered.\n" ENDFD;
 
   obj = cs->Obj;
 
-  RepInit(G, &I->R);
 
   alpha =
     1.0F - SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_transparency);
@@ -3733,18 +3731,6 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_nucleic_acid_mode);
   ladder_mode =
     SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_ladder_mode);
-
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepCartoonRender;
-  I->R.fSameVis = (int (*)(struct Rep *, struct CoordSet *)) RepCartoonSameVis;
-  I->R.fInvalidate = RepCartoonInvalidate;
-  I->R.fRecolor = NULL;
-  I->R.obj = obj;
-  I->R.cs = cs;
-  I->ray = NULL;
-  I->std = NULL;
-  I->preshader = NULL;
-  I->R.context.object = obj;
-  I->R.context.state = state;
 
   /* find all of the CA points */
 

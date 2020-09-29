@@ -26,20 +26,25 @@ enum cRepDot_t {
 };
 
 struct RepDot : Rep {
+  using Rep::Rep;
+
   ~RepDot() override;
 
+  cRep_t type() const override { return cRepDot; }
+  void render(RenderInfo* info) override;
+
   float dotSize;
-  float *V;
-  float *VC;
-  float *A;                     /* area */
-  float *VN;                    /* vector normal */
-  int *T;                       /* custom type */
-  int *F;                       /* flags */
-  int N, NC;
-  int *Atom;                    /* atom */
+  float *V = nullptr;
+  float *VC = nullptr;
+  float *A = nullptr;                     //!< area
+  float *VN = nullptr;                    //!< vector normal
+  int *T = nullptr;                       //!< custom type
+  int *F = nullptr;                       //!< flags
+  int N = 0;
+  int *Atom = nullptr;                    //!< atom
   float Width;
-  CGO *shaderCGO;
-  short shaderCGO_as_spheres;
+  CGO* shaderCGO = nullptr;
+  bool shaderCGO_as_spheres = false;
 };
 
 Rep *RepDotNew(CoordSet * cset, int state);

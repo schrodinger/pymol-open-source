@@ -30,91 +30,97 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 
 /*========================================================================*/
-static
-struct Rep *RepRebuild(struct Rep *I, struct CoordSet *cs, int state, int rep)
+/**
+ * Delete this instance and return a newly created instance.
+ *
+ * If creating the new instance fails (e.g. empty rep):
+ * - Don't delete this instance
+ * - Set cs->Active[rep] to false
+ *
+ * @todo Use move semantics instead? Return false on failure?
+ */
+Rep* Rep::rebuild()
 {
-  Rep *tmp = NULL;
-
-  PRINTFD(I->G, FB_Rep)
-    " RepRebuild-Debug: entered: rep %d I->fNew %p\n", rep, (void *) I->fNew ENDFD;
-
-  if(I->fNew) {
-    tmp = I->fNew(cs, state);
-    if(tmp) {
-      tmp->fNew = I->fNew;
-      I->fFree(I);
-    } else {                    /* nothing returned -- visibility is zero... */
-      cs->Active[rep] = false;  /* keep the old object around, but inactive */
-      tmp = I;
-    }
-  } else
-    I->fFree(I);
-  return (tmp);
-}
-
-
-/*========================================================================*/
-static
-struct Rep *RepUpdate(struct Rep *I, struct CoordSet *cs, int state, int rep)
-{
-
-  PRINTFD(I->G, FB_Rep)
-    " RepUpdate-Debug: entered: rep %d I->MaxInvalid %d\n", rep, I->MaxInvalid ENDFD;
-
-  if(I->MaxInvalid) {
-    if(I->MaxInvalid == cRepInvPick) {
-      if((rep == cRepLine) ||
-         (rep == cRepCyl) || (rep == cRepRibbon) || (rep == cRepNonbonded))
-        I->MaxInvalid = cRepInvRep;
-    }
-
-    if(I->MaxInvalid < cRepInvColor) {
-    } else if(I->MaxInvalid == cRepInvColor) {
-      if(I->fRecolor) {
-        I->fRecolor(I, cs);
-      } else {
-        I = I->fRebuild(I, cs, state, rep);
-      }
-    } else if(I->MaxInvalid <= cRepInvVisib) {
-      int rebuilt = false;
-      if(I->fSameVis) {
-        if(!I->fSameVis(I, cs)){
-          I = I->fRebuild(I, cs, state, rep);
-          rebuilt = true;
-        }
-      }
-      if(I->fSameColor) {
-        if (!rebuilt){
-          if(!I->fSameColor(I, cs)){
-            I->fRecolor(I, cs);
-          }
-        }
-      }
-      if (!I->fSameVis && !I->fSameColor)
-        I = I->fRebuild(I, cs, state, rep);
-    } else if(I->MaxInvalid >= cRepInvCoord) {
-      I = I->fRebuild(I, cs, state, rep);
-      if(!cs->Active[rep]) {
-        I->fFree(I);
-        I = NULL;
-      }
-      /*      if(I->fNew) {
-         tmp = I->fNew(cs);
-         if(I->fFree) I->fFree(I);
-         I=tmp;
-       */
-    } else {
-      I = I->fRebuild(I, cs, state, rep);
-    }
-    if(I)
-      I->MaxInvalid = 0;
+  assert(cs);
+  assert(fNew);
+  Rep* tmp = fNew(cs, getState());
+  if (tmp) {
+    tmp->fNew = fNew;
+    delete this;
+    return tmp;
   }
-  return (I);
+
+  // nothing returned -- visibility is zero...
+  // keep the old object around, but inactive (TODO why?)
+  cs->Active[type()] = false;
+  return this;
 }
 
 /*========================================================================*/
-void RepInvalidate(struct Rep *I, struct CoordSet *cs, int level)
+/**
+ * Rebuild if necessary (according to invalidation status). Returns either this
+ * instance, or deletes this instance and returns a new one, or NULL if the rep
+ * became empty/inactive.
+ */
+Rep* Rep::update()
 {
+  assert(cs);
+
+  if (MaxInvalid == cRepInvNone) {
+    return this;
+  }
+
+  auto I = this;
+  auto const rep = type();
+  auto const* cs_ = cs;
+
+  assert(cs_->Active[rep]);
+
+  if (MaxInvalid == cRepInvPick) {
+    switch (rep) {
+    case cRepLine:
+    case cRepCyl:
+    case cRepRibbon:
+    case cRepNonbonded:
+      // TODO Is this needed? How about other pickable reps, like:
+      // - cartoon
+      // - spheres
+      // - surface with pick_surface=on
+      MaxInvalid = cRepInvRep;
+    }
+  }
+
+  if (MaxInvalid < cRepInvColor) {
+    // nothing to do
+  } else if (MaxInvalid == cRepInvColor) {
+    I = recolor();
+  } else if (MaxInvalid > cRepInvVisib || !sameVis()) {
+    I = rebuild();
+  } else if (!sameColor()) {
+    I = recolor();
+  }
+
+  if (!cs_->Active[rep]) {
+    delete I;
+    return nullptr;
+  }
+
+  if (I) {
+    I->MaxInvalid = cRepInvNone;
+  }
+
+  return I;
+}
+
+/*========================================================================*/
+/**
+ * Request that the rep gets updated. Update happens on next scene redraw.
+ *
+ * @param level Invalidate to at least this level
+ */
+void Rep::invalidate(cRepInv_t level)
+{
+  auto I = this;
   SceneInvalidatePicking(I->G); // for now, if anything invalidated, then invalidate picking
   if(level > I->MaxInvalid)
     I->MaxInvalid = level;
@@ -133,9 +139,13 @@ cRepBitmask_t RepGetAutoShowMask(PyMOLGlobals * G)
 }
 
 /*========================================================================*/
-static void RepRenderBox(struct Rep *this_, RenderInfo * info)
+/**
+ * Derived classes should overrride this method.
+ *
+ * TODO: What is this default implementation useful for? Debugging?
+ */
+void Rep::render(RenderInfo* info)
 {
-  PyMOLGlobals *G = this_->G;
   if(G->HaveGUI && G->ValidContext) {
 #ifdef PURE_OPENGL_ES_2
     /* TODO */
@@ -170,21 +180,18 @@ static void RepRenderBox(struct Rep *this_, RenderInfo * info)
 
 
 /*========================================================================*/
-void RepInit(PyMOLGlobals * G, Rep * I)
+Rep::Rep(CObject* obj_, int state)
+    : G(obj_->G)
+    , obj(obj_)
 {
-  I->G = G;
-  I->fInvalidate = RepInvalidate;
-  I->fUpdate = RepUpdate;
-  I->fRender = RepRenderBox;
-  I->fRebuild = RepRebuild;
+  context.object = obj_;
+  context.state = state;
 }
 
-
-/*========================================================================*/
-void Rep::fFree(Rep* I)
+Rep::Rep(CoordSet* cs_, int state)
+    : Rep(cs_->Obj, state)
 {
-  assert(I == this);
-  delete I;
+  cs = cs_;
 }
 
 Rep::~Rep()

@@ -64,7 +64,7 @@ struct ObjectGadgetRamp : public ObjectGadget {
 
   // virtual methods
   void update() override;
-  void invalidate(int rep, int level, int state) override;
+  void invalidate(cRep_t rep, cRepInv_t level, int state) override;
 };
 
 #define cRAMP_TRADITIONAL 1
@@ -98,7 +98,7 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
 
 PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I);
 int ObjectGadgetRampNewFromPyList(PyMOLGlobals * G, PyObject * list,
-                                  ObjectGadgetRamp ** result, int version);
+				      ObjectGadgetRamp ** result, int version);
 
 void ObjectGadgetRampFree(ObjectGadgetRamp * I);
 #endif

@@ -255,7 +255,7 @@ void ObjectDist::update()
 
 
 /*========================================================================*/
-void ObjectDistInvalidateRep(ObjectDist * I, int rep)
+void ObjectDistInvalidateRep(ObjectDist * I, cRep_t rep)
 {
   int a;
   PRINTFD(I->G, FB_ObjectDist)
@@ -311,7 +311,7 @@ static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
 }
 #endif
 
-void ObjectDist::invalidate(int rep, int level, int state){
+void ObjectDist::invalidate(cRep_t rep, cRepInv_t level, int state){
   auto I = this;
   for(StateIterator iter(I->G, I->Setting, state, I->NDSet);
       iter.next();) {

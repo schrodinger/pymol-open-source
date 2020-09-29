@@ -324,7 +324,7 @@ int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name, const char
   return result;
 }
 
-void ObjectVolume::invalidate(int rep, int level, int state)
+void ObjectVolume::invalidate(cRep_t rep, cRepInv_t level, int state)
 {
   auto I = this;
   int a;

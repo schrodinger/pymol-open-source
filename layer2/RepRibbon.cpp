@@ -34,7 +34,12 @@ Z* -------------------------------------------------------------------
 #include "Lex.h"
 
 struct RepRibbon : Rep {
+  using Rep::Rep;
+
   ~RepRibbon() override;
+
+  cRep_t type() const override { return cRepRibbon; }
+  void render(RenderInfo* info) override;
 
   float ribbon_width;
   float radius;
@@ -51,26 +56,26 @@ RepRibbon::~RepRibbon()
   CGOFree(shaderCGO);
 }
 
-static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
+void RepRibbon::render(RenderInfo* info)
 {
+  auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  PyMOLGlobals *G = I->R.G;
   int ok = true;
   short use_shader = SettingGetGlobal_b(G, cSetting_ribbon_use_shader) &&
                      SettingGetGlobal_b(G, cSetting_use_shaders);
   bool ribbon_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
-                             SettingGet<bool>(G, I->R.cs->Setting,
-                                                 I->R.obj->Setting,
+                             SettingGet<bool>(G, I->cs->Setting,
+                                                 I->obj->Setting,
                                                  cSetting_ribbon_as_cylinders);
 
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
-      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->R.context, I->R.cs->Setting, I->R.obj->Setting, &I->R);
+      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting, I->obj->Setting, I);
     } else {
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);
@@ -117,18 +122,18 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
           CGOFreeWithoutVBOs(convertcgo);
           I->shaderCGO->use_shader = true;
         }
-        CGORenderGL(I->shaderCGO, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+        CGORenderGL(I->shaderCGO, NULL, I->cs->Setting, I->obj->Setting, info, I);
         return;
       } else {
-        CGORenderGL(I->primitiveCGO, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+        CGORenderGL(I->primitiveCGO, NULL, I->cs->Setting, I->obj->Setting, info, I);
         return;
       }
     }
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
-    I->R.cs->Active[cRepRibbon] = false;
+    I->invalidate(cRepInvPurge);
+    I->cs->Active[cRepRibbon] = false;
   }
 }
 
@@ -163,11 +168,10 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   if(!cs->hasRep(cRepRibbonBit))
     return NULL;
 
-  OOAlloc(G, RepRibbon);
+  auto I = new RepRibbon(cs, state);
 
   obj = cs->Obj;
 
-  RepInit(G, &I->R);
   power_a = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_power);
   power_b = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_power_b);
   throw_ = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_throw);
@@ -183,13 +187,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   if(sampling < 1)
     sampling = 1;
   I->radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_radius);
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepRibbonRender;
-  I->R.fRecolor = NULL;
-  I->R.obj = (CObject *) obj;
-  I->R.cs = cs;
   I->ribbon_width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_width);
-  I->R.context.object = obj;
-  I->R.context.state = state;
 
   /* find all of the CA points */
 
@@ -421,7 +419,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     I->primitiveCGO = CGONew(G);
     CGOSpecialWithArg(I->primitiveCGO, LINE_LIGHTING, 0.f);
 
-    float alpha = 1.f - SettingGet_f(G, NULL, I->R.obj->Setting, cSetting_ribbon_transparency);
+    float alpha = 1.f - SettingGet_f(G, NULL, I->obj->Setting, cSetting_ribbon_transparency);
     if(fabs(alpha-1.0) < R_SMALL4)
       alpha = 1.0F;
     CGOAlpha(I->primitiveCGO, alpha);  // would be good to set these at render time instead
