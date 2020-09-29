@@ -11,12 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-
-#ifdef __linux__
-#include <malloc.h>
-#else
 #include <stddef.h>
-#endif
 
 #include "ov_defines.h"
 #include "ov_status.h"
