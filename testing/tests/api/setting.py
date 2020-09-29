@@ -105,6 +105,44 @@ class TestSetting(testing.PyMOLTestCase):
         v = cmd.get_setting_updates()
         self.assertEqual(v, [23])
 
+    def _testGetSettingUpdates_reinitialize(self, store):
+        SEQ_VIEW_INDEX = 353
+
+        cmd.reinitialize("purge_defaults")
+        cmd.reinitialize("original_settings")
+
+        if store:
+            cmd.reinitialize("store")
+
+        cmd.get_setting_updates() # consume whatever
+        self.assertTrue(SEQ_VIEW_INDEX not in cmd.get_setting_updates())
+
+        cmd.set("seq_view")
+        self.assertTrue(SEQ_VIEW_INDEX in cmd.get_setting_updates())
+        self.assertTrue(SEQ_VIEW_INDEX not in cmd.get_setting_updates())
+
+        cmd.reinitialize()
+        self.assertTrue(SEQ_VIEW_INDEX in cmd.get_setting_updates())
+        self.assertTrue(SEQ_VIEW_INDEX not in cmd.get_setting_updates())
+
+        cmd.set("seq_view")
+        cmd.get_setting_updates() # consume whatever
+
+        cmd.reinitialize("settings")
+        self.assertTrue(SEQ_VIEW_INDEX in cmd.get_setting_updates())
+        self.assertTrue(SEQ_VIEW_INDEX not in cmd.get_setting_updates())
+
+        cmd.set("seq_view")
+        cmd.get_setting_updates() # consume whatever
+
+        cmd.reinitialize("original_settings")
+        self.assertTrue(SEQ_VIEW_INDEX in cmd.get_setting_updates())
+        self.assertTrue(SEQ_VIEW_INDEX not in cmd.get_setting_updates())
+
+    def testGetSettingUpdates_reinitialize(self):
+        self._testGetSettingUpdates_reinitialize(False)
+        self._testGetSettingUpdates_reinitialize(True)
+
     @testing.foreach.product(
             ('', 'ala', '(elem O)'),
             ('sphere_scale',),
