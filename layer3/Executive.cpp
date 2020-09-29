@@ -3720,9 +3720,7 @@ ExecutiveLoad(PyMOLGlobals * G,
   auto res = ExecutiveLoadPrepareArgs(G, fname, content, content_length,
       content_format, object_name_proposed, state, zoom, discrete, finish,
       multiplex, quiet, plugin_arg, object_props, atom_props, mimic);
-  if (!res) {
-    return pymol::make_error("%s-Error: %s", __func__, res.error().what());
-  }
+  p_return_if_error(res);
   return ExecutiveLoad(G, res.result());
 }
 
