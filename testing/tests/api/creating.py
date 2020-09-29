@@ -259,6 +259,22 @@ class TestCreating(testing.PyMOLTestCase):
                 cmd.count_atoms('m1'),
                 cmd.count_atoms('m2'))
 
+    @testing.requires_version("2.5")
+    def testCopy_molecule_settings(self):
+        cmd.pseudoatom("m1")
+        cmd.pseudoatom("m2")
+        self.assertEqual(cmd.get("surface_color", "m1"), "default")
+        self.assertEqual(cmd.get("surface_color", "m2"), "default")
+
+        cmd.set("surface_color", "blue", "m1")
+        self.assertEqual(cmd.get("surface_color", "m1"), "blue")
+        self.assertEqual(cmd.get("surface_color", "m2"), "default")
+
+        cmd.copy("m3", "m1")
+        cmd.copy("m4", "m2")
+        self.assertEqual(cmd.get("surface_color", "m3"), "blue")
+        self.assertEqual(cmd.get("surface_color", "m4"), "default")
+
     @testing.requires("multi_undo")
     def testUndoCopy(self):
         cmd.fragment('ala', 'm1')
