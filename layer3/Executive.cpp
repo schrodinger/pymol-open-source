@@ -3899,8 +3899,10 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
   const char* content = args.content.data();
   int size = args.content.size();
   const char* object_name = args.object_name.c_str();
+#ifdef _PYMOL_IP_PROPERTIES
   const char* object_props = args.object_props.c_str();
   const char* atom_props = args.atom_props.c_str();
+#endif
   const char* plugin = args.plugin.c_str();
   auto content_format = args.content_format;
   auto state = args.state;
@@ -3909,7 +3911,6 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
   auto finish = args.finish;
   auto multiplex = args.multiplex;
   auto quiet = args.quiet;
-  auto mimic = args.mimic;
 
   if (multiplex != 1) {
     origObj = ExecutiveGetExistingCompatible(G, object_name, content_format);
@@ -3926,6 +3927,8 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
           discrete = -1;        /* content-dependent behavior... */
         case cLoadTypeSDF2:     /* SDF files currently default to discrete */
         case cLoadTypeSDF2Str:
+        case cLoadTypeMAE:      /* Let MAE handle itself */
+        case cLoadTypeMAEStr:
           break;
         default:
           discrete = 0;
@@ -3970,10 +3973,12 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
     break;
   case cLoadTypeMAE:
   case cLoadTypeMAEStr:
-    PRINTFB(G, FB_CCmd, FB_Errors)
-      " Incentive-Only-Error: 'mae' format not supported by this PyMOL build\n"
-      ENDFB(G);
-    ok = false;
+#ifndef _PYMOL_IP_EXTRAS
+    return pymol::Error::make<pymol::Error::INCENTIVE_ONLY>(
+        "'mae' format not supported by this PyMOL build");
+#else
+#error ""
+#endif
     break;
   case cLoadTypeTOP:
     if(origObj) {
