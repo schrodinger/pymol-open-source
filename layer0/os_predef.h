@@ -82,11 +82,7 @@ Z* -------------------------------------------------------------------
 
 /* END PROPRIETARY CODE SEGMENT */
 
-#ifdef __linux__
-#include <malloc.h>
-#else
 #include <stddef.h>
-#endif
 
 #if defined(_MSC_VER)
 // conversion from '...' to '...', possible loss of data
