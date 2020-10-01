@@ -911,7 +911,21 @@ EXAMPLE
             multiplex=-2
         ftype = getattr(loadable, format, None)
         if ftype is None:
-            raise pymol.CmdException("unknown raw format '{}'".format(format))
+            assert format not in ('cif', 'mmtf', 'pdb')
+
+            if not isinstance(content, bytes):
+                content = content.encode("utf-8")
+
+            import tempfile
+            fd, filename = tempfile.mkstemp()
+            try:
+                os.write(fd, content)
+                os.close(fd)
+                return _self.load(filename, object, state, format, finish,
+                                  discrete, quiet, multiplex, zoom)
+            finally:
+                os.unlink(filename)
+
         with _self.lockcm:
             return _cmd.load(_self._COb, str(object), None, content,
                     int(state) - 1, cmd._load2str.get(ftype, ftype),
