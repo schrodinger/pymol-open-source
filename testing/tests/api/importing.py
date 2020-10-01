@@ -269,6 +269,11 @@ class TestImporting(testing.PyMOLTestCase):
             cmd.load_raw(handle.read(), "mmtf")
         self.assertEqual(169, cmd.count_atoms())
 
+    @testing.requires_version('2.5')
+    def testLoadRawGRO(self):
+        cmd.load_raw(open(self.datafile("sampletrajectory.gro")).read(), "gro")
+        self.assertEqual(115, cmd.count_atoms())
+
     @testing.requires_version('2.4')
     def testLoadMMTFStr(self):
         # deprecated
