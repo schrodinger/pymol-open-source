@@ -219,16 +219,14 @@ ok_except1:
   return PConvAutoNone(result);
 }
 
-int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
+DistSet* DistSetFromPyList(PyMOLGlobals * G, PyObject * list)
 {
   DistSet *I = NULL;
   int ll = 0;
   CPythonVal *val;
 
-  DeleteP(*cs);
-
   if(CPythonVal_IsNone(list)) {         /* allow None for CSet */
-    return true;
+    return nullptr;
   }
 
   ok_assert(1, list && PyList_Check(list));
@@ -269,11 +267,11 @@ int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
   CPythonVal_Free(val);
 
 ok_except2:
-  *cs = I;
-  return true;
+  return I;
 ok_except1:
   delete I;
-  return false;
+  return nullptr;
+
 }
 
 PyObject *DistSetAsPyList(DistSet * I)
@@ -377,8 +375,7 @@ void DistSet::invalidateRep(cRep_t type, cRepInv_t level)
   for(; a < a_stop; a++) {
     if(Rep[a]) {
       changed = true;
-      delete Rep[a];
-      Rep[a] = NULL;
+      Rep[a].reset();
     }
   }
 
@@ -396,25 +393,25 @@ void DistSet::update(int state)
   if(!I->Rep[cRepDash]) {
     /* query the dist set looking for the selected atoms for this distance,
      * then update the *coords */
-    I->Rep[cRepDash] = RepDistDashNew(I,state);
+    I->Rep[cRepDash].reset(RepDistDashNew(I,state));
     SceneInvalidate(G);
   }
   if(!I->Rep[cRepLabel]) {
     /* query the dist set looking for the selected atoms for this distance,
      * then update the *coords */
-    I->Rep[cRepLabel] = RepDistLabelNew(I, state);
+    I->Rep[cRepLabel].reset(RepDistLabelNew(I, state));
     SceneInvalidate(G);
   }
   if(!I->Rep[cRepAngle]) {
     /* query the angle set looking for the selected atoms for this distance,
      * then update the *coords */
-    I->Rep[cRepAngle] = RepAngleNew(I, state);
+    I->Rep[cRepAngle].reset(RepAngleNew(I, state));
     SceneInvalidate(G);
   }
   if(!I->Rep[cRepDihedral]) {
     /* query the dihedral set looking for the selected atoms for this distance,
      * then update the *coords */
-    I->Rep[cRepDihedral] = RepDihedralNew(I, state);
+    I->Rep[cRepDihedral].reset(RepDihedralNew(I, state));
     SceneInvalidate(G);
   }
   /* status bar 100% */
@@ -434,16 +431,16 @@ void DistSet::render(RenderInfo * info)
     if(!I->Rep[a]) {
       switch(a) {
       case cRepDash:
-        I->Rep[a] = RepDistDashNew(I, -1);
+        I->Rep[a].reset(RepDistDashNew(I, -1));
         break;
       case cRepLabel:
-        I->Rep[a] = RepDistLabelNew(I, -1);
+        I->Rep[a].reset(RepDistLabelNew(I, -1));
         break;
       case cRepAngle:
-        I->Rep[a] = RepAngleNew(I, -1);
+        I->Rep[a].reset(RepAngleNew(I, -1));
         break;
       case cRepDihedral:
-        I->Rep[a] = RepDihedralNew(I, -1);
+        I->Rep[a].reset(RepDihedralNew(I, -1));
         break;
       }
     }
@@ -466,11 +463,3 @@ DistSet::DistSet(PyMOLGlobals* G)
 {
 }
 
-/*========================================================================*/
-DistSet::~DistSet()
-{
-  for (int a = 0; a < getNRep(); ++a) {
-    if (Rep[a])
-      delete Rep[a];
-  }
-}

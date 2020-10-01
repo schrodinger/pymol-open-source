@@ -38,7 +38,6 @@ struct CMeasureInfo {
 
 struct DistSet : CObjectState {
   DistSet(PyMOLGlobals *);
-  ~DistSet();
 
   // methods
   void update(int state);
@@ -50,7 +49,8 @@ struct DistSet : CObjectState {
   pymol::vla<float> Coord;
   int NIndex = 0;
 
-  ::Rep* Rep[cRepCnt] = {nullptr}; /* an array of pointers to representations */
+  /* an array of pointers to representations */
+  std::array<pymol::cache_ptr<::Rep>, cRepCnt> Rep;
   static int getNRep() { return cRepCnt; }
 
   pymol::vla<float> LabCoord;
@@ -68,7 +68,7 @@ struct DistSet : CObjectState {
 
 #define DistSetNew(G) (new DistSet(G))
 PyObject *DistSetAsPyList(DistSet * I);
-int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs);
+DistSet* DistSetFromPyList(PyMOLGlobals * G, PyObject * list);
 int DistSetGetExtent(DistSet * I, float *mn, float *mx);
 int DistSetMoveLabel(DistSet * I, int at, float *v, int mode);
 int DistSetGetLabelVertex(DistSet * I, int at, float *v);
