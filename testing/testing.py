@@ -70,6 +70,11 @@ else:
     from pymol import cmd
     from pymol.invocation import options
 
+    try:
+        from pymol.undo import UndoMode
+    except ImportError:
+        pass
+
     def tupleize_version(strversion):
         r = []
         for x in strversion.split('.'):
@@ -196,8 +201,11 @@ else:
             if hasflag('no_win64bit') and is_win64bit:
                 return unittest.skip('skip 64bit')(func)
 
-            if hasflag('multi_undo') and not 'multi_undo' in get_capabilities():
-                return unittest.skip('skip multiundo')(func)
+            if hasflag('multi_undo'):
+                if not 'multi_undo' in get_capabilities():
+                    return unittest.skip('skip multiundo')(func)
+                else:
+                    cmd.undo_mode(UndoMode.Enable)
 
             if flags:
                 raise ValueError('unknown flags: ' + ', '.join(flags)
@@ -560,7 +568,11 @@ else:
             '''
             Save image to filename, with antialias=0.
             '''
-            cmd.set('antialias', 0)
+            if 'multi_undo' in pymol.get_capabilities():
+                with cmd.UndoPauseCM():
+                    cmd.set('antialias', 0)
+            else:
+                cmd.set('antialias', 0)
             cmd.png(filename, *args, **kwargs)
             cmd.draw()
 
