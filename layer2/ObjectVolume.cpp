@@ -926,6 +926,7 @@ void ObjectVolume::render(RenderInfo * info)
 	return;
       shaderPrg->Enable();
       shaderPrg->Set_Stereo_And_AnaglyphMode();
+      shaderPrg->Set_Matrices();
       shaderPrg->Set1i("volumeTex", 0);
       shaderPrg->Set1i("colorTex1D", 1);
       shaderPrg->Set1i("colorTex2D", 1);
