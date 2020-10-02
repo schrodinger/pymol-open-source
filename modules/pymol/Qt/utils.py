@@ -285,7 +285,7 @@ def loadUi(uifile, widget):
         source += b'\n' + b' ' * 8 + b'pass'
     else:
         import io
-        stream = io.StringIO()
+        stream = io.BytesIO() if (str is bytes) else io.StringIO()
         pysideuic.compileUi(uifile, stream)
         source = stream.getvalue()
 
