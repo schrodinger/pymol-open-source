@@ -433,9 +433,6 @@ if True:
             dirs.extend(filter(os.path.isdir, [os.path.join(prefix, *s) for s in suffixes]))
 
 if True:
-    if sys.platform.startswith("freebsd"):
-        libs += ["execinfo"]
-
     # optimization currently causes a clang segfault on OS X 10.9 when
     # compiling layer2/RepCylBond.cpp
     if sys.platform == 'darwin':

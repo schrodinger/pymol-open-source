@@ -1,7 +1,4 @@
 #include <stdlib.h>
-#if !defined(_WIN32) && !defined(_WEBGL)
-#include <execinfo.h>
-#endif
 #ifdef _WEBGL
 #endif
 #include <iostream>
@@ -9,26 +6,11 @@
 // -----------------------------------------------------------------------------
 // UTIL
 namespace {
-  const int stack_frames = 12;
-
   // Prints a backtrace during runtime of the last ^ stack frames
   void print_trace() {
-#if !defined(_WIN32) && !defined(_WEBGL)
-    void *array[stack_frames];
-    size_t size;
-    char **strings;
-
-    size = backtrace (array, stack_frames);
-    strings = backtrace_symbols (array, size);
-
-    printf ("Obtained %zd stack frames.\n", size);
-
-    for (size_t i = 1; i < size; i++)
-      printf ("%s\n", strings[i]);
-
-    free (strings);
-#endif
 #ifdef _WEBGL
+#else
+    printf("Use debugger with `b %s` to get a backtrace\n", __func__);
 #endif
   }
 };
