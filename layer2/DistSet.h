@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include "Rep.h"
 #include "vla.h"
 
+#include <array>
 #include <forward_list>
 
 struct ObjectDist;
