@@ -322,7 +322,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
 {
   int one_color_flag = true;
   int cur_color =
-    SettingGet_color(I->G, I->Setting, NULL, cSetting_surface_color);
+    SettingGet_color(I->G, I->Setting.get(), NULL, cSetting_surface_color);
 
   if(cur_color == -1)
     cur_color = I->Color;
@@ -363,7 +363,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
         if(vc) {
           for(a = 0; a < n_vert; a++) {
             if(a == base_n_vert) {
-              int new_color = SettingGet_color(I->G, I->Setting,
+              int new_color = SettingGet_color(I->G, I->Setting.get(),
                                                NULL, cSetting_surface_negative_color);
               if(new_color == -1)
                 new_color = cur_color;
@@ -409,7 +409,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
         if(vc) {
           for(a = 0; a < n_vert; a++) {
             if(a == base_n_vert) {
-              int new_color = SettingGet_color(I->G, I->Setting,
+              int new_color = SettingGet_color(I->G, I->Setting.get(),
                                                NULL, cSetting_surface_negative_color);
               if(new_color == -1)
                 new_color = cur_color;
@@ -440,7 +440,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
       ms->RC.clear();
     } else if((!ramped_flag)
               ||
-              (!SettingGet_b(I->G, NULL, I->Setting, cSetting_ray_color_ramps))) {
+              (!SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_ray_color_ramps))) {
       ms->RC.clear();
     }
   }
@@ -534,7 +534,7 @@ void ObjectSurface::update()
                                    voxelmap, ms->AtomVertex, ms->CarveBuffer, ms->Side);
 
             if(!SettingGet_b
-               (I->G, I->Setting, NULL, cSetting_surface_negative_visible)) {
+               (I->G, I->Setting.get(), NULL, cSetting_surface_negative_visible)) {
               ms->base_n_V = VLAGetSize(ms->V);
             } else {
               /* do we want the negative surface too? */
@@ -773,7 +773,7 @@ static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
   float *v = ms->V.data();
   int c;
   int* n = ms->N.data();
-  float alpha = 1.0F - SettingGet_f(G, NULL, I->Setting, cSetting_transparency);
+  float alpha = 1.0F - SettingGet_f(G, NULL, I->Setting.get(), cSetting_transparency);
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
 
@@ -781,17 +781,17 @@ static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
   CRay *ray = info->ray;
   if(ms->UnitCellCGO && (I->visRep & cRepCellBit)){
     int rayok = CGORenderRay(ms->UnitCellCGO.get(), ray, info, ColorGet(G, I->Color),
-                             NULL, I->Setting, NULL);
+                             NULL, I->Setting.get(), NULL);
     if (!rayok){
       ms->UnitCellCGO.reset();
     }
   }
   
   ray->transparentf(1.0F - alpha);
-  ms->Radius = SettingGet_f(G, I->Setting, NULL, cSetting_mesh_radius);
+  ms->Radius = SettingGet_f(G, I->Setting.get(), NULL, cSetting_mesh_radius);
   if(ms->Radius == 0.0F) {
     ms->Radius = ray->PixelRadius *
-      SettingGet_f(I->G, I->Setting, NULL, cSetting_mesh_width) / 2.0F;
+      SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_mesh_width) / 2.0F;
   }
   
   if(n && v && (I->visRep & cRepSurfaceBit)) {
@@ -888,7 +888,7 @@ static void ObjectSurfaceRenderCell(PyMOLGlobals *G, ObjectSurface * I,
     }
   }
   CGORenderGL(ms->UnitCellCGO.get(), color,
-              I->Setting, NULL, info, NULL);
+              I->Setting.get(), NULL, info, NULL);
 }
 
 void ObjectSurface::render(RenderInfo * info)
@@ -903,11 +903,11 @@ void ObjectSurface::render(RenderInfo * info)
   float alpha;
   ObjectPrepareContext(I, info);
 
-  alpha = 1.0F - SettingGet_f(G, NULL, I->Setting, cSetting_transparency);
+  alpha = 1.0F - SettingGet_f(G, NULL, I->Setting.get(), cSetting_transparency);
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
 
-  StateIterator iter(G, I->Setting, state, I->State.size());
+  StateIterator iter(G, I->Setting.get(), state, I->State.size());
   while(iter.next()) {
     ms = &I->State[iter.state];
     if(ms && ms->Active && ms->V && ms->N) {

@@ -68,7 +68,7 @@ static void RepDistDashCGOGenerate(RepDistDash * I)
   float *v = I->V;
   int c = I->N;
   int color =
-    SettingGet_color(G, NULL, I->ds->Obj->Setting, cSetting_dash_color);
+    SettingGet_color(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_color);
   short dash_as_cylinders = 0;
 
   dash_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_dash_as_cylinders);
@@ -125,13 +125,13 @@ void RepDistDash::render(RenderInfo* info)
   int round_ends;
   int ok = true;
   int color =
-    SettingGet_color(G, NULL, I->ds->Obj->Setting, cSetting_dash_color);
+    SettingGet_color(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_color);
   float line_width =
-    SettingGet_f(G, NULL, I->ds->Obj->Setting, cSetting_dash_width);
+    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_width);
   float dash_transparency =
-    SettingGet_f(G, NULL, I->ds->Obj->Setting, cSetting_dash_transparency);
+    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_transparency);
   bool t_mode_3 =
-    SettingGet_i(G, NULL, I->ds->Obj->Setting, cSetting_transparency_mode) == 3;
+    SettingGet_i(G, NULL, I->ds->Obj->Setting.get(), cSetting_transparency_mode) == 3;
   short dash_transparency_enabled;
   dash_transparency = (dash_transparency < 0.f ? 0.f : (dash_transparency > 1.f ? 1.f : dash_transparency));
   dash_transparency_enabled = (dash_transparency > 0.f);
@@ -143,9 +143,9 @@ void RepDistDash::render(RenderInfo* info)
     color = getObj()->Color;
 
   I->radius =
-    SettingGet_f(G, NULL, I->ds->Obj->Setting, cSetting_dash_radius);
+    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_radius);
   round_ends =
-    SettingGet_b(G, NULL, I->ds->Obj->Setting, cSetting_dash_round_ends);
+    SettingGet_b(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_round_ends);
   line_width = SceneGetDynamicLineWidth(info, line_width);
 
   if(ray) {
@@ -341,8 +341,8 @@ Rep *RepDistDashNew(DistSet * ds, int state)
 
   auto I = new RepDistDash(ds->Obj, state);
 
-  dash_len = SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dash_length);
-  dash_gap = SettingGet_f(G, NULL, ds->Obj->Setting, cSetting_dash_gap);
+  dash_len = SettingGet_f(G, NULL, ds->Obj->Setting.get(), cSetting_dash_length);
+  dash_gap = SettingGet_f(G, NULL, ds->Obj->Setting.get(), cSetting_dash_gap);
   dash_sum = dash_len + dash_gap;
   if(dash_sum < R_SMALL4)
     dash_sum = 0.5;

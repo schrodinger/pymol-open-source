@@ -60,9 +60,9 @@ void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
     int active = false;
     ObjectMolecule *obj = cs->Obj;
     float line_width =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_line_width);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_line_width);
     float nonbonded_size =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_nonbonded_size);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_nonbonded_size);
 
     if(info->width_scale_flag)
       glLineWidth(line_width * info->width_scale);
@@ -124,14 +124,14 @@ static int RepNonbondedCGOGenerate(RepNonbonded * I, RenderInfo * info)
   short nonbonded_as_cylinders ;
   short use_shader;
   float nonbonded_size =
-    SettingGet_f(G, I->cs->Setting, I->obj->Setting, cSetting_nonbonded_size);
+    SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_nonbonded_size);
 
   nonbonded_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_nonbonded_as_cylinders);
   use_shader = SettingGetGlobal_b(G, cSetting_nonbonded_use_shader) & 
     SettingGetGlobal_b(G, cSetting_use_shaders);
 
   alpha =
-    SettingGet_f(G, I->cs->Setting, I->obj->Setting, cSetting_nonbonded_transparency);
+    SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_nonbonded_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
@@ -199,18 +199,18 @@ void RepNonbonded::render(RenderInfo* info)
   auto pick = info->pick;
   int ok = true;
   float alpha =
-    SettingGet_f(G, I->cs->Setting, I->obj->Setting, cSetting_nonbonded_transparency);
+    SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_nonbonded_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting, I->cs->Obj->Setting);
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->cs->Obj->Setting.get());
     ray->transparentf(0.0);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
-      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting, I->obj->Setting);
+      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
     } else {
       /* not pick, but render */
       bool use_shader = SettingGetGlobal_b(G, cSetting_nonbonded_use_shader) && SettingGetGlobal_b(G, cSetting_use_shaders);

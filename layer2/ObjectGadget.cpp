@@ -454,7 +454,7 @@ void ObjectGadget::render(RenderInfo * info)
   if(pass == RenderPass::Transparent || info->ray || info->pick) {
 
     ObjectPrepareContext(I, info);
-    for(StateIterator iter(I->G, I->Setting, state, I->NGSet);
+    for(StateIterator iter(I->G, I->Setting.get(), state, I->NGSet);
         iter.next();) {
       GadgetSet * gs = I->GSet[iter.state];
       gs->render(info);

@@ -310,7 +310,7 @@ static int EditorGetEffectiveState(PyMOLGlobals * G, CObject * obj, int state)
     
     if(objMol) {
       if((objMol->NCSet == 1) && (state > 0))
-        if(SettingGet_i(G, NULL, objMol->Setting, cSetting_static_singletons))
+        if(SettingGet_i(G, NULL, objMol->Setting.get(), cSetting_static_singletons))
           return 0;
     }
   }
@@ -1634,7 +1634,7 @@ void EditorRender(PyMOLGlobals * G, int state)
 
         if(obj1) {
 	  /* if the user froze a state, use it instead of the global */
-	  if((frozen = SettingGetIfDefined_i(obj1->G, obj1->Setting, cSetting_state, &st))) {
+	  if((frozen = SettingGetIfDefined_i(obj1->G, obj1->Setting.get(), cSetting_state, &st))) {
 	    state = st-1;
 	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj1, state, index1, vv)) {
@@ -1644,7 +1644,7 @@ void EditorRender(PyMOLGlobals * G, int state)
         }
 
         if(obj2) {
-	  if((frozen = SettingGetIfDefined_i(obj2->G, obj2->Setting, cSetting_state, &st))) {
+	  if((frozen = SettingGetIfDefined_i(obj2->G, obj2->Setting.get(), cSetting_state, &st))) {
 	    state = st-1;
 	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj2, state, index2, vv)) {
@@ -1654,7 +1654,7 @@ void EditorRender(PyMOLGlobals * G, int state)
         }
 
         if(obj3) {
-	  if((frozen = SettingGetIfDefined_i(obj3->G, obj3->Setting, cSetting_state, &st))) {
+	  if((frozen = SettingGetIfDefined_i(obj3->G, obj3->Setting.get(), cSetting_state, &st))) {
 	    state = st-1;
 	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj3, state, index3, vv)) {
@@ -1664,7 +1664,7 @@ void EditorRender(PyMOLGlobals * G, int state)
         }
 
         if(obj4) {
-	  if((frozen = SettingGetIfDefined_i(obj4->G, obj4->Setting, cSetting_state, &st))) {
+	  if((frozen = SettingGetIfDefined_i(obj4->G, obj4->Setting.get(), cSetting_state, &st))) {
 	    state = st-1;
 	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj4, state, index4, vv)) {
@@ -1834,7 +1834,7 @@ void EditorSetDrag(PyMOLGlobals * G, CObject * obj, int sele, int quiet, int sta
   if(obj->type == cObjectMolecule) {
     ObjectMolecule *objMol = (ObjectMolecule*)(void*)obj;
     if(ObjectMoleculeCheckFullStateSelection(objMol, sele, state)) {
-      int matrix_mode = SettingGet_i(G, obj->Setting, NULL, cSetting_matrix_mode);
+      int matrix_mode = SettingGet_i(G, obj->Setting.get(), NULL, cSetting_matrix_mode);
       if(matrix_mode>=1) {
         /* force / coerce object matrix drags? */
         sele = -1;
@@ -2167,7 +2167,7 @@ void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
 
     if((index == I->DragIndex) && (obj == I->DragObject)) {
       if(!EditorActive(G)) {
-        int matrix_mode = SettingGet_i(G, I->DragObject->Setting,
+        int matrix_mode = SettingGet_i(G, I->DragObject->Setting.get(),
                                        NULL, cSetting_matrix_mode);
         if(matrix_mode<0)
           matrix_mode = EditorDraggingObjectMatrix(G) ? 1 : 0;

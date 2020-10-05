@@ -427,7 +427,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
 
     cs = obj->CSet[state];
 
-    use_cache = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sculpt_memory);
+    use_cache = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_memory);
     if(obj->NBond) {
       const int *neighbor = obj->Neighbor;
       int n_atom = obj->NAtom;
@@ -651,10 +651,10 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
         }
         atl.coord = cs->Coord;
         atl.neighbor = neighbor;
-        atl.min = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sculpt_tri_min);
-        atl.max = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sculpt_tri_max);
+        atl.min = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_tri_min);
+        atl.max = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_tri_max);
         atl.mode =
-          SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sculpt_tri_mode);
+          SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_tri_mode);
 
         for(a = 0; a < n_atom; a++) {
 
@@ -682,13 +682,13 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
         int n_site = 0;
         if(cs2) {
           float minim_min =
-            SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_min_min);
+            SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_min_min);
           float minim_max =
-            SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_min_max);
+            SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_min_max);
           float maxim_min =
-            SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_max_min);
+            SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_max_min);
           float maxim_max =
-            SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_max_max);
+            SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_max_max);
 
           int *site = pymol::calloc<int>(n_atom);
           float *weight = pymol::calloc<float>(n_atom);
@@ -1323,9 +1323,9 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
         /* longer-range exclusions (1-5,1-6,1-7,1-8,1-9) -- only locate & store when needed */
 
         int mask =
-          SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sculpt_field_mask);
+          SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_field_mask);
         int max_excl =
-          SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sculpt_avd_excl);
+          SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_avd_excl);
         if(max_excl > 9)
           max_excl = 9;
 
@@ -1683,43 +1683,43 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
 
     cs_coord = cs->Coord.data();
 
-    vdw = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_vdw_scale);
-    vdw14 = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_vdw_scale14);
-    vdw_wt = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_vdw_weight);
+    vdw = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_vdw_scale);
+    vdw14 = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_vdw_scale14);
+    vdw_wt = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_vdw_weight);
     vdw_wt14 =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_vdw_weight14);
-    bond_wt = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_bond_weight);
-    angl_wt = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_angl_weight);
-    pyra_wt = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_pyra_weight);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_vdw_weight14);
+    bond_wt = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_bond_weight);
+    angl_wt = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_angl_weight);
+    pyra_wt = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_pyra_weight);
     pyra_inv_wt =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_pyra_inv_weight);
-    plan_wt = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_plan_weight);
-    line_wt = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_line_weight);
-    tri_wt = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_tri_weight);
-    tri_sc = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_tri_scale);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_pyra_inv_weight);
+    plan_wt = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_plan_weight);
+    line_wt = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_line_weight);
+    tri_wt = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_tri_weight);
+    tri_sc = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_tri_scale);
 
-    min_wt = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_min_weight);
-    min_sc = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_min_scale);
-    max_wt = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_max_weight);
-    max_sc = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_max_scale);
+    min_wt = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_min_weight);
+    min_sc = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_min_scale);
+    max_wt = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_max_weight);
+    max_sc = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_max_scale);
 
-    mask = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sculpt_field_mask);
+    mask = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_field_mask);
     hb_overlap =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_hb_overlap);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_hb_overlap);
     hb_overlap_base =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_hb_overlap_base);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_hb_overlap_base);
     tors_tole =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_tors_tolerance);
-    tors_wt = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_tors_weight);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_tors_tolerance);
+    tors_wt = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_tors_weight);
     vdw_vis_mode =
-      SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sculpt_vdw_vis_mode);
+      SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_vdw_vis_mode);
     solvent_radius =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_solvent_radius);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_solvent_radius);
 
-    avd_wt = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_avd_weight);
-    avd_gp = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_avd_gap);
-    avd_rg = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_avd_range);
-    avd_ex = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sculpt_avd_excl);
+    avd_wt = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_avd_weight);
+    avd_gp = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_avd_gap);
+    avd_rg = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_avd_range);
+    avd_ex = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_avd_excl);
     if(avd_gp < 0.0F)
       avd_gp = 1.5F * solvent_radius;
     if(avd_rg < 0.0F)
@@ -1727,11 +1727,11 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
 
     if(vdw_vis_mode) {
       vdw_vis_min =
-        SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_vdw_vis_min);
+        SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_vdw_vis_min);
       vdw_vis_mid =
-        SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_vdw_vis_mid);
+        SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_vdw_vis_mid);
       vdw_vis_max =
-        SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sculpt_vdw_vis_max);
+        SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_vdw_vis_max);
 
       if(!cs->SculptCGO)
         cs->SculptCGO = CGONew(G);
@@ -1742,7 +1742,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
     }
     cgo = cs->SculptCGO;
 
-    nb_skip = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sculpt_nb_interval);
+    nb_skip = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_nb_interval);
     if(nb_skip > n_cycle)
       nb_skip = n_cycle;
     if(nb_skip < 0)

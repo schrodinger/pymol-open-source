@@ -1587,11 +1587,11 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
   int found_wildcard = false;
 
   {
-    const char *tmp = SettingGet_s(G, NULL, I->Setting, cSetting_atom_name_wildcard);
+    const char *tmp = SettingGet_s(G, NULL, I->Setting.get(), cSetting_atom_name_wildcard);
     if(tmp && tmp[0]) {
       wildcard = *tmp;
     } else {
-      tmp = SettingGet_s(G, NULL, I->Setting, cSetting_wildcard);
+      tmp = SettingGet_s(G, NULL, I->Setting.get(), cSetting_wildcard);
       if(tmp) {
         wildcard = *tmp;
       }
@@ -3977,12 +3977,12 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
       
       if(pdb_conect_all) {
 	int dummy;
-	if(!SettingGetIfDefined_b(G, I->Setting, cSetting_pdb_conect_all, &dummy)) {
+	if(!SettingGetIfDefined_b(G, I->Setting.get(), cSetting_pdb_conect_all, &dummy)) {
           {
-            CSetting** handle = I->getSettingHandle(-1);
+            auto handle = I->getSettingHandle(-1);
             if(handle) {
-	      SettingCheckHandle(G, handle);
-	      SettingSet_b(*handle, cSetting_pdb_conect_all, true);
+	      SettingCheckHandle(G, *handle);
+	      SettingSet_b(handle->get(), cSetting_pdb_conect_all, true);
 	    }
 	  }
 	}

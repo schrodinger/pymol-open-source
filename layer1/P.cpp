@@ -472,8 +472,8 @@ PyObject *SettingWrapperObjectSubScript(PyObject *obj, PyObject *key){
     if (!ret) {
       // object-state, object, or global
       ret = SettingGetPyObject(G,
-          wobj->cs ? wobj->cs->Setting : NULL,
-          wobj->obj->Setting, setting_id);
+          wobj->cs ? wobj->cs->Setting.get() : NULL,
+          wobj->obj->Setting.get(), setting_id);
     }
   }
   return PConvAutoNone(ret);

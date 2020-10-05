@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 #include"PyMOLGlobals.h"
 #include"OVOneToOne.h"
+#include"pymol/memory.h"
 
 typedef char SettingName[255];
 
@@ -163,7 +164,7 @@ void SettingFreeGlobal(PyMOLGlobals * G);
 CSetting *SettingNew(PyMOLGlobals * G);
 CSetting* SettingCopyAll(PyMOLGlobals* G, const CSetting* src, CSetting* dst);
 void SettingFreeP(CSetting * I);
-void SettingCheckHandle(PyMOLGlobals * G, CSetting ** handle);
+void SettingCheckHandle(PyMOLGlobals * G, pymol::copyable_ptr<CSetting>& handle);
 
 #define SettingSet_b SettingSet_i
 int SettingSet_i(CSetting * I, int index, int value);
@@ -258,6 +259,8 @@ struct CSetting {
   SettingRec info[cSetting_INIT]{};
 
   CSetting(PyMOLGlobals*);
+  CSetting(const CSetting&);
+  CSetting& operator=(const CSetting&);
   ~CSetting();
 };
 
@@ -331,9 +334,9 @@ void SettingUniqueSet(PyMOLGlobals * G, int uid, int index, V value) {
   SettingUniqueSetTypedValue(G, uid, index, SettingGetType<V>(), &value);
 }
 
-template <typename V> void SettingSet(PyMOLGlobals * G, CSetting ** handle, int index, V value) {
+template <typename V> void SettingSet(PyMOLGlobals * G, pymol::copyable_ptr<CSetting>& handle, int index, V value) {
   SettingCheckHandle(G, handle);
-  SettingSet(*handle, index, value);
+  SettingSet(handle.get(), index, value);
 }
 
 // global setting

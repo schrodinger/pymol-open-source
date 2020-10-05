@@ -96,7 +96,7 @@ struct CoordSet : CObjectState {
   WordType Name = {0};
   std::vector<float> Spheroid;
   std::vector<float> SpheroidNormal;
-  CSetting *Setting = nullptr;
+  pymol::copyable_ptr<CSetting> Setting;
   /* for periodic MD boxes -- may be merge into symmetry lattice later... */
   std::unique_ptr<CCrystal> PeriodicBox;
   int PeriodicBoxType = NoPeriodicity;
@@ -230,7 +230,7 @@ template <typename V> void SettingSet(int index, V value, CoordSet *cs, int idx)
 
 // object-state level setting
 template <typename V> void SettingSet(int index, V value, CoordSet *cs) {
-  SettingSet(cs->G, &cs->Setting, index, value);
+  SettingSet(cs->G, cs->Setting, index, value);
 }
 
 // Rotates the ANISOU vector

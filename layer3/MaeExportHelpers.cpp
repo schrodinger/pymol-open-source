@@ -20,7 +20,7 @@
  */
 template <typename V>
 V SettingGet(PyMOLGlobals * G, const SeleCoordIterator& iter, int index) {
-  V value = SettingGet<V>(G, iter.cs->Setting, iter.obj->Setting, index);
+  V value = SettingGet<V>(G, iter.cs->Setting.get(), iter.obj->Setting.get(), index);
   return AtomSettingGetWD(G, iter.getAtomInfo(), index, value);
 }
 

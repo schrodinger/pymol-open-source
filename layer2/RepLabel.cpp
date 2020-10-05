@@ -718,7 +718,7 @@ static void RepLabelRenderRayBackground(RepLabel * I, RenderInfo * info, float *
   lineSeg_t labelTop, labelBottom, labelLeft, labelRight;
   short label_con_flat = 128 & (int)*(v + 21);
   short label_connector_mode = (draw_var & 8) ? 1 : (draw_var & 16) ? 2 : (draw_var & 32) ? 3 : (draw_var & 64) ? 4 : 0;
-  float font_size = SettingGet_f(G, I->cs->Setting, I->obj->Setting,
+  float font_size = SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(),
                                  cSetting_label_size);
   float tCenter[4], sCenter[4], sTarget[4];
   short relativeMode = ((short)*(v + 15));
@@ -1112,9 +1112,9 @@ void RepLabelRenderRay(RepLabel * I, RenderInfo * info){
   int c = I->N;
   float *v = I->V;
   lexidx_t *l = I->L;
-  int font_id = SettingGet_i(G, I->cs->Setting, I->obj->Setting,
+  int font_id = SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(),
                              cSetting_label_font_id);
-  float font_size = SettingGet_f(G, I->cs->Setting, I->obj->Setting,
+  float font_size = SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(),
                                  cSetting_label_size);
   if(c) {
     const char *st;
@@ -1175,11 +1175,11 @@ void RepLabel::render(RenderInfo* info)
   float *v = I->V;
   int c = I->N;
   lexidx_t *l = I->L;
-  int font_id = SettingGet_i(G, I->cs->Setting, I->obj->Setting,
+  int font_id = SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(),
                              cSetting_label_font_id);
-  float font_size = SettingGet_f(G, I->cs->Setting, I->obj->Setting,
+  float font_size = SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(),
                                  cSetting_label_size);
-  int float_text = SettingGet_i(G, I->cs->Setting, I->obj->Setting,
+  int float_text = SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(),
 				cSetting_float_labels);
   if (!(ray || pick) && info->pass != RenderPass::Transparent)
     return;
@@ -1187,7 +1187,7 @@ void RepLabel::render(RenderInfo* info)
   if(I->MaxInvalid >= cRepInvRep){
     return;
   }
-  font_id = SettingCheckFontID(G, I->cs->Setting, I->obj->Setting, font_id);
+  font_id = SettingCheckFontID(G, I->cs->Setting.get(), I->obj->Setting.get(), font_id);
 
   if (I->shaderCGO && font_size < 0.f){
     int size;
@@ -1200,13 +1200,13 @@ void RepLabel::render(RenderInfo* info)
     RepLabelRenderRay(I, info);
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
-      int pick_labels = SettingGet_b(G, I->cs->Setting, I->obj->Setting, cSetting_pick_labels);
+      int pick_labels = SettingGet_b(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_pick_labels);
       if (!pick_labels)
 	return;
       if (I->shaderCGO){
         if(float_text)
           glDisable(GL_DEPTH_TEST);
-	CGORenderGLPicking(I->shaderCGO, info, &I->context, I->cs->Setting, I->obj->Setting);
+	CGORenderGLPicking(I->shaderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
         if(float_text)
           glEnable(GL_DEPTH_TEST);
 	return;
@@ -1516,7 +1516,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   auto I = new RepLabel(cs, state);
   obj = cs->Obj;
 
-  label_color = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_label_color);
+  label_color = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_label_color);
 
   /* raytracing primitives */
 
@@ -1526,9 +1526,9 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   ErrChkPtr(G, I->V);
 
   I->OutlineColor =
-    SettingGet_color(G, cs->Setting, obj->Setting, cSetting_label_outline_color);
+    SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_label_outline_color);
 
-  if(SettingGet_b(G, cs->Setting, obj->Setting, cSetting_pickable)) {
+  if(SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_pickable)) {
     I->P = pymol::malloc<Pickable>(cs->NIndex + 1);
     ErrChkPtr(G, I->P);
     rp = I->P + 1;            /* skip first record! */

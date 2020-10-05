@@ -44,7 +44,7 @@ int ObjectDistGetLabelTxfVertex(ObjectDist * I, int state, int index, float *v)
   int result = 0;
   if(!I->DSet.empty()) {
     if(state < 0)
-      state = SettingGet_i(I->G, NULL, I->Setting, cSetting_state) - 1;
+      state = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_state) - 1;
     if(state < 0)
       state = SceneGetState(I->G);
     if(I->DSet.size() == 1)
@@ -52,7 +52,7 @@ int ObjectDistGetLabelTxfVertex(ObjectDist * I, int state, int index, float *v)
     state = state % I->DSet.size();
     {
       DistSet *ds = I->DSet[state].get();
-      if((!ds) && (SettingGet_b(I->G, I->Setting, NULL, cSetting_all_states))) {
+      if((!ds) && (SettingGet_b(I->G, I->Setting.get(), NULL, cSetting_all_states))) {
         state = 0;
         ds = I->DSet[state].get();
       }
@@ -74,7 +74,7 @@ int ObjectDistMoveLabel(ObjectDist * I, int state, int index, float *v, int mode
     state = 0;
   state = state % I->DSet.size();
   if((!I->DSet[state])
-     && (SettingGet_b(I->G, I->Setting, NULL, cSetting_all_states)))
+     && (SettingGet_b(I->G, I->Setting.get(), NULL, cSetting_all_states)))
     state = 0;
   /* find the corresponding distance set, for this state */
   auto ds = I->DSet[state].get();
@@ -285,7 +285,7 @@ void ObjectDist::render(RenderInfo * info)
 
   ObjectPrepareContext(I, info);
   
-  for(StateIterator iter(I->G, I->Setting, state, I->DSet.size());
+  for(StateIterator iter(I->G, I->Setting.get(), state, I->DSet.size());
       iter.next();) {
     DistSet * ds = I->DSet[iter.state].get();
     if(ds)
@@ -297,7 +297,7 @@ void ObjectDist::render(RenderInfo * info)
 static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
 {
   if(state < 0) {
-    return (&I->Setting);
+    return (&I->Setting.get());
   } else {
     return (NULL);
   }
@@ -306,7 +306,7 @@ static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
 
 void ObjectDist::invalidate(cRep_t rep, cRepInv_t level, int state){
   auto I = this;
-  for(StateIterator iter(I->G, I->Setting, state, I->DSet.size());
+  for(StateIterator iter(I->G, I->Setting.get(), state, I->DSet.size());
       iter.next();) {
     DistSet * ds = I->DSet[iter.state].get();
     if(ds)
@@ -360,7 +360,7 @@ static bool checkFrozenState(PyMOLGlobals * G, int sele, int &state) {
 
   auto obj = (const CObject*) SelectorGetSingleObjectMolecule(G, sele);
   if(!obj ||
-      !SettingGetIfDefined_i(G, obj->Setting, cSetting_state, &state))
+      !SettingGetIfDefined_i(G, obj->Setting.get(), cSetting_state, &state))
     return false;
 
   --state;

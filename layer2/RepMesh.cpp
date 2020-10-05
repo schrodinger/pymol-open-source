@@ -86,7 +86,7 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
   short use_shader;
   short mesh_as_cylinders;
   int c;
-  short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_dot_as_spheres);
+  short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_as_spheres);
   use_shader = SettingGetGlobal_b(G, cSetting_mesh_use_shader) & 
     SettingGetGlobal_b(G, cSetting_use_shaders);
   mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && I->mesh_type!=1;
@@ -95,7 +95,7 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 
 #ifndef PURE_OPENGL_ES_2
   int lighting =
-    SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_mesh_lighting);
+    SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_mesh_lighting);
   if(!lighting) {
     if(!use_shader && !info->line_lighting){
       CGODisable(I->shaderCGO, GL_LIGHTING);
@@ -197,7 +197,7 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
     /* TODO */
 #else
     glPointSize(SettingGet_f
-		(G, I->cs->Setting, I->obj->Setting, cSetting_dot_width));
+		(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_width));
 #endif
     if(ok && n) {
       if(I->oneColorFlag) {
@@ -310,7 +310,7 @@ void RepMesh::render(RenderInfo* info)
   int c;
   const float *col = NULL;
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
-  short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_dot_as_spheres);
+  short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_as_spheres);
   int ok = true;
 
   if(ray) {
@@ -415,7 +415,7 @@ void RepMesh::render(RenderInfo* info)
       }
 
       int lighting =
-        SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_mesh_lighting);
+        SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_mesh_lighting);
       if(!lighting) {
         if(!info->line_lighting){
 	  if (!use_shader && !generate_shader_cgo){
@@ -434,11 +434,11 @@ void RepMesh::render(RenderInfo* info)
 	case 1:
 	  if(info->width_scale_flag)
 	    glPointSize(SettingGet_f
-			(G, I->cs->Setting, I->obj->Setting,
+			(G, I->cs->Setting.get(), I->obj->Setting.get(),
 			 cSetting_dot_width) * info->width_scale);
 	  else
 	    glPointSize(SettingGet_f
-			(G, I->cs->Setting, I->obj->Setting, cSetting_dot_width));
+			(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_width));
 	  break;
 	}
       }
@@ -482,7 +482,7 @@ void RepMesh::render(RenderInfo* info)
 	break;
       case 1:
 	glPointSize(SettingGet_f
-		    (G, I->cs->Setting, I->obj->Setting, cSetting_dot_width));
+		    (G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_width));
 	if(ok && n) {
 	  if (!generate_shader_cgo){
 	    if(I->oneColorFlag) {
@@ -574,9 +574,9 @@ Rep* RepMesh::recolor()
 
   obj = cs->Obj;
 
-  probe_radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_solvent_radius);
-  mesh_color = SettingGet_color(G, cs->Setting, obj->Setting, cSetting_mesh_color);
-  mesh_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_mode);
+  probe_radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_solvent_radius);
+  mesh_color = SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_color);
+  mesh_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_mode);
   cullByFlag = (mesh_mode == cRepMesh_by_flags);
   inclH = !(mesh_mode == cRepMesh_heavy_atoms);
 
@@ -593,11 +593,11 @@ Rep* RepMesh::recolor()
   }
 
   if(I->mesh_type != 1) {
-    I->Width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_width);
-    I->Radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_radius);
+    I->Width = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_width);
+    I->Radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_radius);
   } else {
-    I->Width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_width);
-    I->Radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_radius);
+    I->Width = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_width);
+    I->Radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_radius);
   }
 
   if(I->NTot) {
@@ -733,13 +733,13 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     obj = cs->Obj;
   }
   if (ok){
-    probe_radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_solvent_radius);
+    probe_radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_solvent_radius);
     probe_radius2 = probe_radius * probe_radius;
-    solv_acc = (SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_solvent));
-    mesh_type = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_type);
-    mesh_skip = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_skip);
+    solv_acc = (SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_solvent));
+    mesh_type = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_type);
+    mesh_skip = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_skip);
     
-    mesh_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_mode);
+    mesh_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_mode);
     cullByFlag = (mesh_mode == cRepMesh_by_flags);
     inclH = !(mesh_mode == cRepMesh_heavy_atoms);
   }
@@ -763,7 +763,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
   I->max_vdw = ObjectMoleculeGetMaxVDW(obj) + solv_acc * probe_radius;
 
 
-  min_spacing = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_min_mesh_spacing);
+  min_spacing = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_min_mesh_spacing);
 
   I->N = NULL;
   I->NTot = 0;
@@ -774,14 +774,14 @@ Rep *RepMeshNew(CoordSet * cs, int state)
   I->LastVisib = NULL;
   I->LastColor = NULL;
   I->mesh_type = mesh_type;
-  I->Radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_radius);
+  I->Radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_radius);
   I->shaderCGO = 0;
 
   meshFlag = true;
 
   if(meshFlag) {
     float trim_cutoff =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_cutoff);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_cutoff);
     int trim_flag = false;
     float *trim_vla = NULL;
     MapType *trim_map = NULL;
@@ -789,7 +789,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     int carve_state = 0;
     int carve_flag = false;
     float carve_cutoff =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_carve_cutoff);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_carve_cutoff);
     const char *carve_selection = NULL;
     float *carve_vla = NULL;
     MapType *carve_map = NULL;
@@ -797,12 +797,12 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     int clear_state = 0;
     int clear_flag = false;
     float clear_cutoff =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_clear_cutoff);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_clear_cutoff);
     const char *clear_selection = NULL;
     float *clear_vla = NULL;
     MapType *clear_map = NULL;
 
-    int mesh_max = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_grid_max);
+    int mesh_max = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_grid_max);
     if(mesh_max < 1)
       mesh_max = 1;
 
@@ -844,9 +844,9 @@ Rep *RepMeshNew(CoordSet * cs, int state)
 
     if(ok && carve_cutoff > 0.0F) {
       carve_state =
-        SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_carve_state) - 1;
+        SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_carve_state) - 1;
       carve_selection =
-        SettingGet_s(G, cs->Setting, obj->Setting, cSetting_mesh_carve_selection);
+        SettingGet_s(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_carve_selection);
       if(carve_selection)
         carve_map = SelectorGetSpacialMapFromSeleCoord(G,
                                                        SelectorIndexByName(G,
@@ -860,9 +860,9 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     }
     if(ok && clear_cutoff > 0.0F) {
       clear_state =
-        SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_clear_state) - 1;
+        SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_clear_state) - 1;
       clear_selection =
-        SettingGet_s(G, cs->Setting, obj->Setting, cSetting_mesh_clear_selection);
+        SettingGet_s(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_clear_selection);
       if(clear_selection)
         clear_map = SelectorGetSpacialMapFromSeleCoord(G,
                                                        SelectorIndexByName(G,
@@ -1191,7 +1191,7 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
   int cnt;
   int inclH, mesh_mode, cullByFlag;
   AtomInfoType *ai1, *ai2;
-  int ds = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_quality);
+  int ds = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_quality);
 
   if(ds < 0)
     ds = 0;
@@ -1199,9 +1199,9 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
     ds = 4;
   sp = G->Sphere->Sphere[ds];
 
-  cavity_cull = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cavity_cull);
+  cavity_cull = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cavity_cull);
 
-  mesh_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_mode);
+  mesh_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_mode);
   cullByFlag = (mesh_mode == cRepMesh_by_flags);
   inclH = !(mesh_mode == cRepMesh_heavy_atoms);
 

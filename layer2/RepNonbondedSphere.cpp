@@ -58,14 +58,14 @@ void RepNonbondedSphere::render(RenderInfo* info)
 
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
       if (I->shaderCGO){
-	CGORenderGLPicking(I->shaderCGO, info, &I->context, I->cs->Setting, I->obj->Setting);
+	CGORenderGLPicking(I->shaderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
       } else if (I->primitiveCGO){
-	CGORenderGLPicking(I->primitiveCGO, info, &I->context, I->cs->Setting, I->obj->Setting);
+	CGORenderGLPicking(I->primitiveCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
       }
     } else { /* rendering */
       short use_shader, use_sphere_shader;
@@ -85,15 +85,15 @@ void RepNonbondedSphere::render(RenderInfo* info)
           if (use_sphere_shader){
             I->shaderCGO = CGOOptimizeSpheresToVBONonIndexed(I->primitiveCGO, 0, true);
           } else {
-            ok_assert(1, I->shaderCGO = CGOSimplify(I->primitiveCGO, 0, SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_nb_spheres_quality)));
+            ok_assert(1, I->shaderCGO = CGOSimplify(I->primitiveCGO, 0, SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_nb_spheres_quality)));
             ok_assert(1, CGOCombineBeginEnd(&I->shaderCGO));
             ok_assert(1, CGOOptimizeToVBONotIndexed(&I->shaderCGO));
           }
           I->shaderCGO->use_shader = true;
         }
-        CGORenderGL(I->shaderCGO, NULL, I->cs->Setting, I->obj->Setting, info, I);
+        CGORenderGL(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
       } else {
-        CGORenderGL(I->primitiveCGO, NULL, I->cs->Setting, I->obj->Setting, info, I);
+        CGORenderGL(I->primitiveCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
       }
     }
   }
@@ -112,7 +112,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   unsigned char *active = NULL;
   int nSphere = 0;
   float transp =
-    1.f - SettingGet_f(G, cs->Setting, obj->Setting, cSetting_nonbonded_transparency);
+    1.f - SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_nonbonded_transparency);
   int ok = true;
 
   if (ok)
@@ -132,7 +132,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
     return (NULL);
   }
   float nb_spheres_size =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_nb_spheres_size);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_nb_spheres_size);
 
   auto I = new RepNonbondedSphere(cs, state);
   I->shaderCGO = NULL;
@@ -175,7 +175,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
     ok &= !G->Interrupt;
   }
   CGOStop(I->primitiveCGO);
-  I->primitiveCGO->sphere_quality = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_nb_spheres_quality);
+  I->primitiveCGO->sphere_quality = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_nb_spheres_quality);
   FreeP(active);
   if (!ok){
     delete I;

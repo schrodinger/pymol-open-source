@@ -289,9 +289,9 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
   auto* const cs = I->cs;
   auto* const obj = I->cs->Obj;
 
-  bool pick_surface = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_pick_surface);
-  short dot_as_spheres = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_dot_as_spheres);
-  alpha = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_transparency);
+  bool pick_surface = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_pick_surface);
+  short dot_as_spheres = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_as_spheres);
+  alpha = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
@@ -308,7 +308,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
   if (I->Type == 1) {
     /* no triangle information, so we're rendering dots only */
     int normals =
-        SettingGet<int>(G, cs->Setting, obj->Setting, cSetting_dot_normals);
+        SettingGet<int>(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_normals);
     if(!normals){
       CGOResetNormal(I->shaderCGO, true);
     }
@@ -343,7 +343,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 	}
       } else {
 	ok &= CGODotwidth(I->shaderCGO, SettingGet_f
-			  (G, cs->Setting, obj->Setting, cSetting_dot_width));
+			  (G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_width));
 	if(ok && c) {
 	  ok &= CGOColor(I->shaderCGO, 1.0, 0.0, 0.0);
 	  ok &= CGOBegin(I->shaderCGO, GL_POINTS);
@@ -374,15 +374,15 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 	    ok &= CGOEnd(I->shaderCGO);
 	}
       }
-      } else if(I->Type == 2) { /* rendering triangle mesh */
-        int normals =
-      SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_normals);
-        if(ok && !normals){
-	    ok &= CGOResetNormal(I->shaderCGO, true);
-	}
-	if (ok) {
-          float line_width =
-	SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_width);
+  } else if (I->Type == 2) { /* rendering triangle mesh */
+    int normals =
+      SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_normals);
+    if(ok && !normals){
+	ok &= CGOResetNormal(I->shaderCGO, true);
+    }
+    if (ok) {
+      float line_width =
+	SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_width);
           line_width = SceneGetDynamicLineWidth(info, line_width);
 
 	ok &= CGOSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_MESH);
@@ -557,13 +557,11 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
           }
       }
     }
-      } else {
-        /* we're rendering triangles */
-
-        if((alpha != 1.0) || va) {
-
-          t_mode =
-	SettingGet_i(G, cs->Setting, obj->Setting,
+  } else {
+    /* we're rendering triangles */
+    if((alpha != 1.0) || va) {
+      t_mode =
+	SettingGet_i(G, cs->Setting.get(), obj->Setting.get(),
                          cSetting_transparency_mode);
 
           if(info && info->alpha_cgo) {
@@ -1428,10 +1426,10 @@ void RepSurface::render(RenderInfo* info)
   float alpha;
   int t_mode;
   float ambient_occlusion_scale = 0.f;
-  int ambient_occlusion_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ambient_occlusion_mode);
+  int ambient_occlusion_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ambient_occlusion_mode);
   int ambient_occlusion_mode_div_4 = 0;
   if (ambient_occlusion_mode){
-    ambient_occlusion_scale = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ambient_occlusion_scale);
+    ambient_occlusion_scale = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_ambient_occlusion_scale);
     ambient_occlusion_mode_div_4 = ambient_occlusion_mode / 4;
   }
 
@@ -1439,7 +1437,7 @@ void RepSurface::render(RenderInfo* info)
     return;
   }
 
-  alpha = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_transparency);
+  alpha = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
@@ -1449,9 +1447,9 @@ void RepSurface::render(RenderInfo* info)
     if(I->Type == 1) {
       /* dot surface */
       float radius;
-      radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_radius);
+      radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_radius);
       if(radius == 0.0F) {
-        radius = ray->PixelRadius * SettingGet_f(G, cs->Setting, obj->Setting,
+        radius = ray->PixelRadius * SettingGet_f(G, cs->Setting.get(), obj->Setting.get(),
                                                  cSetting_dot_width) / 1.4142F;
       }
 
@@ -1578,11 +1576,11 @@ void RepSurface::render(RenderInfo* info)
       int *cache = pymol::calloc<int>(spacing * (I->N + 1));
       CHECKOK(ok, cache);
 
-      radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_radius);
+      radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_radius);
 
       if(ok && radius == 0.0F) {
         float line_width =
-          SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_width);
+          SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_width);
         line_width = SceneGetDynamicLineWidth(info, line_width);
 
         radius = ray->PixelRadius * line_width / 2.0F;
@@ -1630,7 +1628,7 @@ void RepSurface::render(RenderInfo* info)
       // unpickable surfaces to write the depth buffer and prevent
       // through-picking.
       if (I->pickingCGO && !(I->pickingCGO->no_pick && alpha < 1.F)) {
-	CGORenderGLPicking(I->pickingCGO, info, &I->context, cs->Setting, obj->Setting);
+	CGORenderGLPicking(I->pickingCGO, info, &I->context, cs->Setting.get(), obj->Setting.get());
       }
     } else {
 
@@ -1641,7 +1639,7 @@ void RepSurface::render(RenderInfo* info)
       if (use_shader && !info->alpha_cgo)
 #endif
       {
-        bool dot_as_spheres = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_dot_as_spheres);
+        bool dot_as_spheres = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_as_spheres);
 
         if (!I->shaderCGO || CGOCheckWhetherToFree(G, I->shaderCGO) ||
             (I->Type == 1 && I->dot_as_spheres != dot_as_spheres)) {
@@ -1662,7 +1660,7 @@ void RepSurface::render(RenderInfo* info)
 
 #ifndef PURE_OPENGL_ES_2
       bool two_sided_lighting =
-        SettingGet_i(G, cs->Setting, obj->Setting,
+        SettingGet_i(G, cs->Setting.get(), obj->Setting.get(),
             cSetting_two_sided_lighting) > 0;
       if (two_sided_lighting){
         glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
@@ -1672,9 +1670,9 @@ void RepSurface::render(RenderInfo* info)
         /* no triangle information, so we're rendering dots only */
         {
           int normals =
-            SettingGet_i(G, cs->Setting, obj->Setting, cSetting_dot_normals);
+            SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_normals);
           int lighting = info->line_lighting ||
-            SettingGet_i(G, cs->Setting, obj->Setting, cSetting_dot_lighting);
+            SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_lighting);
 
           if(!normals){
             SceneResetNormal(G, true);
@@ -1685,7 +1683,7 @@ void RepSurface::render(RenderInfo* info)
             glDisable(GL_LIGHTING);
 
           glPointSize(SettingGet_f
-              (G, cs->Setting, obj->Setting, cSetting_dot_width));
+              (G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_width));
           if(c) {
             glBegin(GL_POINTS);
             if(I->oneColorFlag) {
@@ -1708,9 +1706,9 @@ void RepSurface::render(RenderInfo* info)
           c = I->NT;
           if(ok && c) {
               int normals =
-                SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_normals);
+                SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_normals);
               int lighting = info->line_lighting ||
-                SettingGet_i(G, cs->Setting, obj->Setting, cSetting_mesh_lighting);
+                SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_lighting);
 
               if(!normals){
                 SceneResetNormal(G, true);
@@ -1721,7 +1719,7 @@ void RepSurface::render(RenderInfo* info)
                 glDisable(GL_LIGHTING);
 
               float line_width =
-                SettingGet_f(G, cs->Setting, obj->Setting, cSetting_mesh_width);
+                SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_width);
               glLineWidth(SceneGetDynamicLineWidth(info, line_width));
 
               if(I->oneColorFlag) {
@@ -1748,7 +1746,7 @@ void RepSurface::render(RenderInfo* info)
         if((alpha != 1.0) || va) {
 
           t_mode =
-            SettingGet_i(G, cs->Setting, obj->Setting,
+            SettingGet_i(G, cs->Setting.get(), obj->Setting.get(),
                          cSetting_transparency_mode);
 
           if(info && info->alpha_cgo) {
@@ -2215,27 +2213,27 @@ Rep* RepSurface::recolor()
   AtomInfoType *ai2 = NULL, *ai1;
 
   obj = cs->Obj;
-  ambient_occlusion_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ambient_occlusion_mode);
-  surface_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_mode);
+  ambient_occlusion_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ambient_occlusion_mode);
+  surface_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_mode);
   ramp_above =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_ramp_above_mode);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_ramp_above_mode);
   surface_color =
-    SettingGet_color(G, cs->Setting, obj->Setting, cSetting_surface_color);
+    SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_color);
   cullByFlag = (surface_mode == cRepSurface_by_flags);
   inclH = !((surface_mode == cRepSurface_heavy_atoms)
             || (surface_mode == cRepSurface_vis_heavy_only));
   inclInvis = !((surface_mode == cRepSurface_vis_only)
                 || (surface_mode == cRepSurface_vis_heavy_only));
-  probe_radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_solvent_radius);
+  probe_radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_solvent_radius);
   I->proximity =
-    SettingGet_b(G, cs->Setting, obj->Setting, cSetting_surface_proximity);
+    SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_proximity);
   carve_cutoff =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_carve_cutoff);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_carve_cutoff);
   clear_cutoff =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_clear_cutoff);
-  transp = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_transparency);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_clear_cutoff);
+  transp = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_transparency);
   carve_normal_cutoff =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_carve_normal_cutoff);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_carve_normal_cutoff);
   carve_normal_flag = carve_normal_cutoff > (-1.0F);
 
   cutoff = I->max_vdw + 2 * probe_radius;
@@ -2255,9 +2253,9 @@ Rep* RepSurface::recolor()
   if(I->N) {
     if(carve_cutoff > 0.0F) {
       carve_state =
-        SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_carve_state) - 1;
+        SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_carve_state) - 1;
       carve_selection =
-        SettingGet_s(G, cs->Setting, obj->Setting, cSetting_surface_carve_selection);
+        SettingGet_s(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_carve_selection);
       if(carve_selection)
         carve_map = SelectorGetSpacialMapFromSeleCoord(G,
                                                        SelectorIndexByName(G,
@@ -2271,9 +2269,9 @@ Rep* RepSurface::recolor()
 
     if(clear_cutoff > 0.0F) {
       clear_state =
-        SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_clear_state) - 1;
+        SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_clear_state) - 1;
       clear_selection =
-        SettingGet_s(G, cs->Setting, obj->Setting, cSetting_surface_clear_selection);
+        SettingGet_s(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_clear_selection);
       if(clear_selection)
         clear_map = SelectorGetSpacialMapFromSeleCoord(G,
                                                        SelectorIndexByName(G,
@@ -2548,9 +2546,9 @@ Rep* RepSurface::recolor()
       }
       {
 	int ambient_occlusion_smooth = 
-	  SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ambient_occlusion_smooth);
+	  SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ambient_occlusion_smooth);
 	int surface_quality = 
-	  SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_quality);
+	  SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_quality);
 	float min_max_diff = level_max - level_min;
 	if (surface_quality>0)
 	  ambient_occlusion_smooth *= surface_quality;
@@ -2849,7 +2847,7 @@ Rep* RepSurface::recolor()
     MapFree(clear_map);
   VLAFreeP(clear_vla);
   if((!ramped_flag)
-     || (!SettingGet_b(G, cs->Setting, obj->Setting, cSetting_ray_color_ramps)))
+     || (!SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_ray_color_ramps)))
     FreeP(I->RC);
   I->ColorInvalidated = false;
   FreeP(present);
@@ -3809,7 +3807,7 @@ static void RepSurfaceSetSettings(PyMOLGlobals * G, CoordSet * cs,
     int *sphere_idx, int *solv_sph_idx, int *circumscribe)
 {
   if(surface_quality >= 4) {        /* totally impractical */
-    *point_sep = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_best) / 4.f;
+    *point_sep = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_best) / 4.f;
     *sphere_idx = 4;
     *solv_sph_idx = 4;
     if(*circumscribe < 0)
@@ -3817,7 +3815,7 @@ static void RepSurfaceSetSettings(PyMOLGlobals * G, CoordSet * cs,
   } else {
     switch (surface_quality) {
     case 3:                /* nearly impractical */
-      *point_sep = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_best) / 3.f;
+      *point_sep = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_best) / 3.f;
       *sphere_idx = 4;
       *solv_sph_idx = 3;
       if(*circumscribe < 0)
@@ -3825,7 +3823,7 @@ static void RepSurfaceSetSettings(PyMOLGlobals * G, CoordSet * cs,
       break;
     case 2:
       /* nearly perfect */
-      *point_sep = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_best) / 2.f;
+      *point_sep = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_best) / 2.f;
       *sphere_idx = 3;
       *solv_sph_idx = 3;
       if(*circumscribe < 0)
@@ -3833,7 +3831,7 @@ static void RepSurfaceSetSettings(PyMOLGlobals * G, CoordSet * cs,
       break;
     case 1:
       /* good */
-      *point_sep = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_best);
+      *point_sep = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_best);
       *sphere_idx = 2;
       *solv_sph_idx = 3;
       if((*circumscribe < 0) && (surface_type == 6))
@@ -3841,7 +3839,7 @@ static void RepSurfaceSetSettings(PyMOLGlobals * G, CoordSet * cs,
       break;
     case 0:
       /* 0 - normal */
-      *point_sep = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_normal);
+      *point_sep = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_normal);
       *sphere_idx = 1;
       *solv_sph_idx = 2;
       if((*circumscribe < 0) && (surface_type == 6))
@@ -3849,7 +3847,7 @@ static void RepSurfaceSetSettings(PyMOLGlobals * G, CoordSet * cs,
       break;
     case -1:
       /* -1 */
-      *point_sep = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_poor);
+      *point_sep = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_poor);
       *sphere_idx = 1;
       *solv_sph_idx = 2;
       if((*circumscribe < 0) && (surface_type == 6))
@@ -3857,25 +3855,25 @@ static void RepSurfaceSetSettings(PyMOLGlobals * G, CoordSet * cs,
       break;
     case -2:
       /* -2 god awful */
-      *point_sep = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_poor) * 1.5F;
+      *point_sep = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_poor) * 1.5F;
       *sphere_idx = 1;
       *solv_sph_idx = 1;
       break;
     case -3:
       /* -3 miserable */
-      *point_sep = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_miserable);
+      *point_sep = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_miserable);
       *sphere_idx = 1;
       *solv_sph_idx = 1;
       break;
     default:
-      *point_sep = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_miserable) * 1.18F;
+      *point_sep = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_miserable) * 1.18F;
       *sphere_idx = 0;
       *solv_sph_idx = 1;
     }
   }
   /* Fixed problem with surface holes when surface_quality>2, it seems like circumscribe can only be
      used with surface_solvent */
-  if((*circumscribe < 0) || (!SettingGet_b(G, cs->Setting, obj->Setting, cSetting_surface_solvent)))
+  if((*circumscribe < 0) || (!SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_solvent)))
     *circumscribe = 0;
 }
 
@@ -3937,19 +3935,19 @@ static int RepSurfacePrepareSurfaceJob(PyMOLGlobals * G, SurfaceJob *surf_job,
     surf_job->probeRadius = probe_radius;
     surf_job->pointSep = point_sep;
     
-    surf_job->trimCutoff = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_trim_cutoff);
-    surf_job->trimFactor = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_trim_factor);
+    surf_job->trimCutoff = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_trim_cutoff);
+    surf_job->trimFactor = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_trim_factor);
     
-    surf_job->cavityMode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_cavity_mode);
-    surf_job->cavityRadius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_cavity_radius);
-    surf_job->cavityCutoff = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_cavity_cutoff);
+    surf_job->cavityMode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_cavity_mode);
+    surf_job->cavityRadius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_cavity_radius);
+    surf_job->cavityCutoff = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_cavity_cutoff);
     if(carve_vla)
       surf_job->carveVla = VLACopy(carve_vla, float);
     surf_job->carveCutoff = carve_cutoff;
-    surf_job->surfaceMode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_mode);
-    surf_job->surfaceSolvent = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_surface_solvent);
-    surf_job->cavityCull = SettingGet_i(G, cs->Setting,
-					obj->Setting, cSetting_cavity_cull);
+    surf_job->surfaceMode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_mode);
+    surf_job->surfaceSolvent = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_solvent);
+    surf_job->cavityCull = SettingGet_i(G, cs->Setting.get(),
+					obj->Setting.get(), cSetting_cavity_cull);
   }
   return ok;
 }
@@ -3957,7 +3955,7 @@ static int RepSurfacePrepareSurfaceJob(PyMOLGlobals * G, SurfaceJob *surf_job,
 #ifndef _PYMOL_NOPY
 static
 void RepSurfaceConvertSurfaceJobToPyObject(PyMOLGlobals *G, SurfaceJob *surf_job, CoordSet *cs, ObjectMolecule *obj, PyObject **entry, PyObject **input, PyObject **output, int *found){
-  int cache_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cache_mode);
+  int cache_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cache_mode);
   
   if(cache_mode > 0) {
     int blocked = PAutoBlock(G);
@@ -4075,7 +4073,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
   ObjectMolecule *obj = cs->Obj;
 
     int surface_mode =
-      SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_mode);
+      SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_mode);
     int cullByFlag = (surface_mode == cRepSurface_by_flags);
     int inclH = !((surface_mode == cRepSurface_heavy_atoms)
                   || (surface_mode == cRepSurface_vis_heavy_only));
@@ -4105,11 +4103,11 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 
     {
       int surface_flag = false;
-      int surface_type = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_type);        
-      int surface_quality = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_quality);
-      float probe_radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_solvent_radius);
-      int optimize = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_optimize_subsets);
-      int circumscribe = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_surface_circumscribe);
+      int surface_type = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_type);        
+      int surface_quality = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_quality);
+      float probe_radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_solvent_radius);
+      int optimize = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_optimize_subsets);
+      int circumscribe = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_circumscribe);
       int sphere_idx = 0, solv_sph_idx = 0;
       MapType *map = NULL;
       float point_sep;
@@ -4121,7 +4119,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       const char *carve_selection = NULL;
       float *carve_vla = NULL;
       MapType *carve_map = NULL;
-      bool smooth_edges = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_surface_smooth_edges);
+      bool smooth_edges = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_smooth_edges);
 
       I->Type = surface_type;
 
@@ -4174,15 +4172,15 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 	if (ok){
 	  n_present = cs->NIndex;
 	  carve_selection =
-	    SettingGet_s(G, cs->Setting, obj->Setting,
+	    SettingGet_s(G, cs->Setting.get(), obj->Setting.get(),
 			 cSetting_surface_carve_selection);
 	  carve_cutoff =
-	    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_surface_carve_cutoff);
+	    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_carve_cutoff);
 	  if((!carve_selection) || (!carve_selection[0]))
 	    carve_cutoff = 0.0F;
 	  if(carve_cutoff > 0.0F) {
 	    carve_state =
-	      SettingGet_i(G, cs->Setting, obj->Setting,
+	      SettingGet_i(G, cs->Setting.get(), obj->Setting.get(),
 			   cSetting_surface_carve_state) - 1;
 	    carve_cutoff += 2 * I->max_vdw + probe_radius;
 	    
@@ -4252,7 +4250,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
             PyObject *entry = NULL;
             PyObject *output = NULL;
             PyObject *input = NULL;
-	    int cache_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cache_mode);
+	    int cache_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cache_mode);
 	    RepSurfaceConvertSurfaceJobToPyObject(G, surf_job, cs, obj, &entry, &input, &output, &found);
 #endif
             if(ok && !found) {

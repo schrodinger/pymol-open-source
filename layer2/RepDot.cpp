@@ -61,9 +61,9 @@ static int RepDotCGOGenerate(RepDot * I)
   CGO *cgo = NULL;
 
   int normals =
-    SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_dot_normals);
+    SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_normals);
   bool const dot_as_spheres = SettingGet<bool>(
-      G, I->cs->Setting, I->obj->Setting, cSetting_dot_as_spheres);
+      G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_as_spheres);
 
   cgo = CGONew(G);
   CHECKOK(ok, cgo);
@@ -183,9 +183,9 @@ void RepDot::render(RenderInfo * info)
     if(pick) {
     } else { /* else not pick, i.e., when rendering */
       int normals =
-        SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_dot_normals);
+        SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_normals);
       bool const dot_as_spheres = SettingGet<bool>(
-          G, cs->Setting, obj->Setting, cSetting_dot_as_spheres);
+          G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_as_spheres);
 
       bool const use_shader = SettingGet<bool>(G, cSetting_dot_use_shader) &&
                               SettingGet<bool>(G, cSetting_use_shaders);
@@ -212,7 +212,7 @@ void RepDot::render(RenderInfo * info)
 	if(!normals)
 	  SceneResetNormal(G, true);
         int lighting =
-          SettingGet_i(G, I->cs->Setting, I->obj->Setting, cSetting_dot_lighting);
+          SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_lighting);
 	if(!lighting) {
 	  if(!info->line_lighting)
 	    glDisable(GL_LIGHTING);
@@ -282,18 +282,18 @@ Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
 
   // are we using flags 24 & 25
   auto cullByFlag =
-      SettingGet<bool>(G, cs->Setting, obj->Setting, cSetting_trim_dots);
+      SettingGet<bool>(G, cs->Setting.get(), obj->Setting.get(), cSetting_trim_dots);
 
   auto dot_color =
-      SettingGet_color(G, cs->Setting, obj->Setting, cSetting_dot_color);
+      SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_color);
 
   // are we ignoring hydrogens?
   auto inclH =
-      SettingGet<bool>(G, cs->Setting, obj->Setting, cSetting_dot_hydrogens);
+      SettingGet<bool>(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_hydrogens);
 
   float solv_rad = 0.f;
-  if(SettingGet_b(G, cs->Setting, obj->Setting, cSetting_dot_solvent)) {    /* are we generating a solvent surface? */
-    solv_rad = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_solvent_radius); /* if so, get solvent radius */
+  if(SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_solvent)) {    /* are we generating a solvent surface? */
+    solv_rad = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_solvent_radius); /* if so, get solvent radius */
   }
 
   std::unique_ptr<MapType> map(
@@ -304,7 +304,7 @@ Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
 
   // get current dot sampling
   // Note: significantly affects the accuracy of our area comp.
-  auto ds = SettingGet<int>(G, cs->Setting, obj->Setting, cSetting_dot_density);
+  auto ds = SettingGet<int>(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_density);
   SphereRec const* sp = G->Sphere->Sphere[pymol::clamp(ds, 0, 4)];
 
   int lastColor = cColorDefault;
@@ -312,8 +312,8 @@ Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
 
   auto I = new RepDot(cs, state);
 
-  I->dotSize = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_radius);
-  I->Width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_dot_width);
+  I->dotSize = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_radius);
+  I->Width = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_width);
 
   I->V = pymol::malloc<float>(cs->NIndex * sp->nDot * 10);
   ok_assert(1, I->V);

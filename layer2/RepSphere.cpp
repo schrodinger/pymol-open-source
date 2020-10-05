@@ -98,14 +98,14 @@ static int RepSphereRenderRay(PyMOLGlobals *G, RepSphere * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
   float alpha = 1.0F - 
-    SettingGet_f(G, I->cs->Setting, I->obj->Setting, cSetting_sphere_transparency);
+    SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_sphere_transparency);
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
   ray->transparentf(1.0 - alpha);
   if (I->spheroidCGO){
-    CGORenderRay(I->spheroidCGO, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
+    CGORenderRay(I->spheroidCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
   } else {
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
   }
   ray->transparentf(0.0);
   return true;
@@ -116,12 +116,12 @@ static void RepSphereRenderPick(RepSphere * I, RenderInfo * info, int sphere_mod
 {
   assert(I->renderCGO);
 
-  CGORenderGLPicking(I->renderCGO, info, &I->context, I->cs->Setting, I->obj->Setting);
+  CGORenderGLPicking(I->renderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
 }
 
 static int RepGetSphereMode(PyMOLGlobals *G, RepSphere * I, bool use_shader){
-  int sphere_mode = SettingGet_i(G, I->cs->Setting,
-				 I->obj->Setting,
+  int sphere_mode = SettingGet_i(G, I->cs->Setting.get(),
+				 I->obj->Setting.get(),
 				 cSetting_sphere_mode);
   switch (sphere_mode) {
   case 5:
@@ -276,7 +276,7 @@ static void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj,
     *variable_alpha = true;
 
   int trans_pick_mode = SettingGet<int>(
-      G, cs->Setting, obj->Setting, cSetting_transparency_picking_mode);
+      G, cs->Setting.get(), obj->Setting.get(), cSetting_transparency_picking_mode);
 
   int pickmode = cPickableAtom;
   if (trans_pick_mode != cTransparencyPickingModePickable &&
@@ -362,10 +362,10 @@ CGO *RepSphereGeneratespheroidCGO(ObjectMolecule * I, CoordSet *cs, SphereRec *s
   int *q, *s;
   bool ok = true;
   float spheroid_scale =
-    SettingGet_f(I->G, cs->Setting, I->Setting, cSetting_spheroid_scale);
+    SettingGet_f(I->G, cs->Setting.get(), I->Setting.get(), cSetting_spheroid_scale);
   int sphere_color =
-    SettingGet_color(I->G, cs->Setting, I->Setting, cSetting_sphere_color);
-  float transp = SettingGet_f(I->G, cs->Setting, I->Setting, cSetting_sphere_transparency);
+    SettingGet_color(I->G, cs->Setting.get(), I->Setting.get(), cSetting_sphere_color);
+  float transp = SettingGet_f(I->G, cs->Setting.get(), I->Setting.get(), cSetting_sphere_transparency);
 
   CGO *cgo = CGONew(I->G);
   for(idx = 0; idx < cs->NIndex; idx++) {
@@ -495,13 +495,13 @@ Rep *RepSphereNew(CoordSet * cs, int state)
 
   if (ok){
     sphere_color =
-      SettingGet_color(G, cs->Setting, obj->Setting, cSetting_sphere_color);
+      SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_sphere_color);
     cartoon_side_chain_helper =
-      SettingGet_b(G, cs->Setting, obj->Setting, cSetting_cartoon_side_chain_helper);
+      SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_side_chain_helper);
     ribbon_side_chain_helper =
-      SettingGet_b(G, cs->Setting, obj->Setting, cSetting_ribbon_side_chain_helper);
-    transp = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sphere_transparency);
-    sphere_scale = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sphere_scale);
+      SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_side_chain_helper);
+    transp = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sphere_transparency);
+    sphere_scale = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sphere_scale);
   }
 
   if (ok){
@@ -510,8 +510,8 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   /* raytracing primitives */
 
   if (ok){
-    if(SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sphere_solvent)) { /* are we generating a solvent surface? */
-      sphere_add = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_solvent_radius);       /* if so, get solvent radius */
+    if(SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sphere_solvent)) { /* are we generating a solvent surface? */
+      sphere_add = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_solvent_radius);       /* if so, get solvent radius */
     }
   }
   I->primitiveCGO = CGONew(G);

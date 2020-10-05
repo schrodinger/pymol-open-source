@@ -129,7 +129,7 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
   int ok = true;
 
   int use_shaders, has_cylinders_to_optimize;
-  float alpha = 1.0F - SettingGet_f(G, I->cs->Setting, I->obj->Setting, cSetting_cartoon_transparency);
+  float alpha = 1.0F - SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_cartoon_transparency);
 
   auto hasAtomLevelAlpha = [](RepCartoon * I){
     for(CoordSetAtomIterator iter(I->cs); iter.next();){
@@ -270,7 +270,7 @@ void RepCartoon::render(RenderInfo* info)
     CGO* raycgo = I->ray ? I->ray : I->preshader;
 
     if (raycgo && !CGORenderRay(raycgo, info->ray, info, nullptr, nullptr,
-                      I->cs->Setting, I->obj->Setting)) {
+                      I->cs->Setting.get(), I->obj->Setting.get())) {
       PRINTFB(G, FB_RepCartoon, FB_Warnings)
         " %s-Warning: ray rendering failed\n", __func__ ENDFB(G);
       CGOFree(I->ray);
@@ -297,9 +297,9 @@ void RepCartoon::render(RenderInfo* info)
 
       if (info->pick) {
         CGORenderGLPicking(I->std, info, &I->context,
-                           I->cs->Setting, I->obj->Setting);
+                           I->cs->Setting.get(), I->obj->Setting.get());
       } else {
-        CGORenderGL(I->std, NULL, I->cs->Setting, I->obj->Setting, info, I);
+        CGORenderGL(I->std, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
       }
     }
   }
@@ -1626,7 +1626,7 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
   float helix_radius;
   CGOPickColor(cgo, 0, cPickableNoPick);
   helix_radius =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_helix_radius);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_helix_radius);
 
     /* this is confusing because we're borrowing Extrude's arrays 
      * for convenient storage, but not actually calling Extrude */
@@ -1877,25 +1877,25 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
   int cartoon_side_chain_helper;
   float ring_alpha;
   ring_alpha =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_ring_transparency);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_ring_transparency);
   if(ring_alpha < 0.0F)
     ring_alpha = alpha;
   else
     ring_alpha = 1.0F - ring_alpha;
   cartoon_side_chain_helper =
-    SettingGet_b(G, cs->Setting, obj->Setting, cSetting_cartoon_side_chain_helper);
+    SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_side_chain_helper);
   ladder_mode =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_ladder_mode);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_ladder_mode);
   ladder_radius =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_ladder_radius);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_ladder_radius);
   ladder_color =
-    SettingGet_color(G, cs->Setting, obj->Setting, cSetting_cartoon_ladder_color);
+    SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_ladder_color);
   ring_radius =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_ring_radius);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_ring_radius);
   if(ladder_color == -1)
     ladder_color = cartoon_color;
   ring_color =
-    SettingGet_color(G, cs->Setting, obj->Setting, cSetting_cartoon_ring_color);
+    SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_ring_color);
   if(ring_color == -1)
     ring_color = cartoon_color;
 
@@ -2251,12 +2251,12 @@ int CartoonExtrudePutty(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet *cs, CGO 
     ExtrudeBuildNormals1f(ex);
   if (ok)
     ok &= ExtrudeComputePuttyScaleFactors(ex, obj,
-                                          SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_putty_transform),
+                                          SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_putty_transform),
                                           putty_vals[0], putty_vals[1], putty_vals[2], putty_vals[3],
-                                          SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_putty_scale_power),
-                                          SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_putty_range),
-                                          SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_putty_scale_min),
-                                          SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_putty_scale_max),
+                                          SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_putty_scale_power),
+                                          SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_putty_range),
+                                          SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_putty_scale_min),
+                                          SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_putty_scale_max),
                                           sampling / 2);
   if (ok)
     ok &= ExtrudeCGOSurfaceVariableTube(ex, cgo, cCylCap::Flat);
@@ -2419,7 +2419,7 @@ int CartoonExtrudeDumbbell(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, int sampling
  * Get cartoon quality setting, adapt to number of atoms if -1
  */
 static int GetCartoonQuality(CoordSet * cs, int setting, int v1, int v2, int v3, int v4, int min_=3) {
-  int quality = SettingGet<int>(cs->G, cs->Setting, cs->Obj->Setting, setting);
+  int quality = SettingGet<int>(cs->G, cs->Setting.get(), cs->Obj->Setting.get(), setting);
 
   if (quality == -1) {
     int natom = cs->NIndex;
@@ -2486,37 +2486,37 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   };
 
   cartoon_color =
-    SettingGet_color(G, cs->Setting, obj->Setting, cSetting_cartoon_color);
+    SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_color);
   ring_width =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_ring_width);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_ring_width);
   if(ring_width < 0.0F) {
     ring_width =
-      fabs(SettingGet_f(G, cs->Setting, obj->Setting, cSetting_stick_radius)) * 0.5F;
+      fabs(SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_radius)) * 0.5F;
   }
-  length = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_rect_length);
-  width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_rect_width);
+  length = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_rect_length);
+  width = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_rect_width);
   oval_length =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_oval_length);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_oval_length);
   dumbbell_length =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_dumbbell_length);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_dumbbell_length);
   oval_width =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_oval_width);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_oval_width);
   dumbbell_width =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_dumbbell_width);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_dumbbell_width);
   dumbbell_radius =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_dumbbell_radius);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_dumbbell_radius);
   if(dumbbell_radius < 0.01F)
     dumbbell_radius = 0.01F;
 
-  auto tube_cap = static_cast<cCylCap>(SettingGet<int>(G, cs->Setting, obj->Setting, cSetting_cartoon_tube_cap));
-  auto loop_cap = static_cast<cCylCap>(SettingGet<int>(G, cs->Setting, obj->Setting, cSetting_cartoon_loop_cap));
+  auto tube_cap = static_cast<cCylCap>(SettingGet<int>(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_tube_cap));
+  auto loop_cap = static_cast<cCylCap>(SettingGet<int>(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_loop_cap));
 
   tube_radius =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_tube_radius);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_tube_radius);
   if(tube_radius < 0.01F)
     tube_radius = 0.01F;
   putty_radius =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_putty_radius);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_putty_radius);
   /* WLD removed: if(putty_radius<0.01F) putty_radius=0.01F; --
      should not constrain what is effectively a scale factor */
 
@@ -2534,30 +2534,30 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   if(SettingGetGlobal_i(G, cSetting_ray_trace_mode) > 0)
     if(loop_quality < 12)
       loop_quality *= 2;
-  refine = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_refine);
-  power_a = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_power);
-  power_b = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_power_b);
-  throw_ = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_throw);
+  refine = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_refine);
+  power_a = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_power);
+  power_b = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_power_b);
+  throw_ = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_throw);
   loop_radius =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_loop_radius);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_loop_radius);
   if(loop_radius < 0.01F)
     loop_radius = 0.01F;
   discrete_colors =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_discrete_colors);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_discrete_colors);
   nucleic_color =
-    SettingGet_color(G, cs->Setting, obj->Setting,
+    SettingGet_color(G, cs->Setting.get(), obj->Setting.get(),
                      cSetting_cartoon_nucleic_acid_color);
   if(nucleic_color == -1)
     nucleic_color = cartoon_color;
   highlight_color =
-    SettingGet_color(G, cs->Setting, obj->Setting, cSetting_cartoon_highlight_color);
+    SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_highlight_color);
 
   cylindrical_helices =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_cylindrical_helices);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_cylindrical_helices);
   int const sampling_cylindrical_helices = sampling / 8 + 1;
 
   sampling_tmp = pymol::malloc<float>(sampling * 3);
-  cartoon_debug = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_debug);
+  cartoon_debug = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_debug);
 
   cgo = CGONew(G);
   if(alpha != 1.0F)
@@ -2597,7 +2597,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
     contigFlag = false;
 
     const auto helix_radius = SettingGet<float>(
-        G, cs->Setting, obj->Setting, cSetting_cartoon_helix_radius);
+        G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_helix_radius);
 
     while(contFlag) {
       if (CheckExtrudeContigFlags(nAt, n_p, a, &cur_car, cc, segptr, &contigFlag, &extrudeFlag)){
@@ -2830,19 +2830,19 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
 
   // settings
   fancy_sheets =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_fancy_sheets);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_fancy_sheets);
   fancy_helices =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_fancy_helices);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_fancy_helices);
   cylindrical_helices =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_cylindrical_helices);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_cylindrical_helices);
   cartoon_side_chain_helper =
-    SettingGet_b(G, cs->Setting, obj->Setting, cSetting_cartoon_side_chain_helper);
+    SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_side_chain_helper);
   int trace_ostate =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_trace_atoms);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_trace_atoms);
   trace_mode =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_trace_atoms_mode);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_trace_atoms_mode);
   auto gap_cutoff =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_gap_cutoff);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_gap_cutoff);
 
   // iterate over (sorted) atoms
   for(CoordSetAtomIterator iter(cs); iter.next();) {
@@ -3345,7 +3345,7 @@ void RepCartoonRefineNormals(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
                              const float* nv)
 {
   int refine_normals =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_refine_normals);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_refine_normals);
   if(refine_normals < 0) {
     if(obj->NCSet > 1) {
       int i, n_set = 0;
@@ -3492,7 +3492,7 @@ void RepCartoonFlattenSheets(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs
   int flat_cycles;
   float t0[3];
   flat_cycles =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_flat_cycles);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_flat_cycles);
 
   last = 0;
   first = -1;
@@ -3572,7 +3572,7 @@ void RepCartoonFlattenSheetsRefineTips(PyMOLGlobals *G, ObjectMolecule *obj, Coo
   float refine_tips;
   float t0[3];
   refine_tips =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_refine_tips);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_refine_tips);
   sptr = seg + 1;
   ++ss;
   v2 = tv + 3;            /* normal */
@@ -3604,11 +3604,11 @@ void RepCartoonSmoothLoops(PyMOLGlobals* G, ObjectMolecule* obj,
   float t0[3];
   int smooth_first, smooth_last, smooth_cycles;
   smooth_first =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_smooth_first);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_smooth_first);
   smooth_last =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_smooth_last);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_smooth_last);
   smooth_cycles =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_smooth_cycles);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_smooth_cycles);
 
   auto* sptr = seg;
   last = 0;
@@ -3724,13 +3724,13 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
 
   alpha =
-    1.0F - SettingGet_f(G, cs->Setting, obj->Setting, cSetting_cartoon_transparency);
+    1.0F - SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_transparency);
   round_helices =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_round_helices);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_round_helices);
   na_mode =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_nucleic_acid_mode);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_nucleic_acid_mode);
   ladder_mode =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_ladder_mode);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_ladder_mode);
 
   /* find all of the CA points */
 
@@ -3748,7 +3748,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   I->LastVisib = pymol::calloc<char>(cs->NAtIndex);
   
   auto cartoon_all_alt =
-    SettingGet_b(G, cs->Setting, obj->Setting, cSetting_cartoon_all_alt);
+    SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_all_alt);
 
   ndata.next_alt = 0;
 
@@ -3780,9 +3780,9 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   ndata.fp = flag_tmp;
   ndata.vptr = pv;
   ndata.voptr = pvo;
-  ndata.ring_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_ring_mode);
+  ndata.ring_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_ring_mode);
   ndata.ring_finder =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_ring_finder);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_ring_finder);
   ndata.ring_finder_eff = ndata.ring_finder;
   if((!ndata.ring_mode) || (ndata.ring_finder == 2))
     ndata.ring_finder_eff = 1;
@@ -3822,8 +3822,8 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     RepCartoonRefineNormals(G, I, obj, cs, &ndata, nAt, seg, tv, pvo, pva, sstype, nv);
 
     {
-      int smooth_loops = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_smooth_loops);
-      bool cartoon_flat_sheets = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_cartoon_flat_sheets);
+      int smooth_loops = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_smooth_loops);
+      bool cartoon_flat_sheets = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_flat_sheets);
       if(smooth_loops || cartoon_flat_sheets) {
         if(cartoon_flat_sheets) {
           RepCartoonFlattenSheets(G, obj, cs, &ndata, nAt, seg, car, pv, pvo, sstype, tv, tmp, flag_tmp);

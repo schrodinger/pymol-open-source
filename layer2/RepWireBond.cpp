@@ -283,7 +283,7 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
     int active = false;
     ObjectMolecule *obj = cs->Obj;
     float line_width, line_width_setting =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_line_width);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_line_width);
     line_width = SceneGetDynamicLineWidth(info, line_width_setting);
 
     if(info->width_scale_flag)
@@ -416,7 +416,7 @@ void RepWireBond::render(RenderInfo* info)
 
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(primitiveCGO, ray, info, NULL, NULL, cs->Setting, cs->Obj->Setting);
+    CGORenderRay(primitiveCGO, ray, info, NULL, NULL, cs->Setting.get(), cs->Obj->Setting.get());
     ray->transparentf(0.0);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
@@ -636,29 +636,29 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     return (NULL);
   }
   
-  valence_flag = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_valence);
-  valence = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_valence_size);
-  cartoon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Setting,
+  valence_flag = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_valence);
+  valence = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_valence_size);
+  cartoon_side_chain_helper = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(),
 					   cSetting_cartoon_side_chain_helper);
-  ribbon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Setting,
+  ribbon_side_chain_helper = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(),
 					  cSetting_ribbon_side_chain_helper);
-  line_stick_helper = SettingGet_b(G, cs->Setting, obj->Setting,
+  line_stick_helper = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(),
 				   cSetting_line_stick_helper);
-  line_color = SettingGet_color(G, cs->Setting, obj->Setting, cSetting_line_color);
-  line_width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_line_width);
+  line_color = SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_line_color);
+  line_width = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_line_width);
   
-  if(line_stick_helper && (SettingGet_f(G, cs->Setting, obj->Setting,
+  if(line_stick_helper && (SettingGet_f(G, cs->Setting.get(), obj->Setting.get(),
 					cSetting_stick_transparency) > R_SMALL4))
     line_stick_helper = false;
-  half_bonds = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_half_bonds);
-  hide_long = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_hide_long_bonds);
+  half_bonds = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_half_bonds);
+  hide_long = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_hide_long_bonds);
   na_mode =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_nucleic_acid_mode);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_nucleic_acid_mode);
   int na_mode_ribbon =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_nucleic_acid_mode);
-  fancy = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_valence_mode) == 1;
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_nucleic_acid_mode);
+  fancy = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_valence_mode) == 1;
   auto valence_zero_mode =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_valence_zero_mode);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_valence_zero_mode);
   
   b = obj->Bond;
   

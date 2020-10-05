@@ -517,7 +517,7 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
 	if (I->Mol->NCSet==1) // if only one state, then set state to 0
 	  state = 0;
         if(SettingGet_b
-           (I->G, I->Setting, NULL,
+           (I->G, I->Setting.get(), NULL,
             cSetting_ramp_blend_nearby_colors)) {
           float atomic[3];
           int index =

@@ -250,12 +250,12 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
   int min[2] = { 0, 0 }, max[2] = {
   0, 0};                        /* limits of the rectangle */
   int need_normals = false;
-  int track_camera = SettingGet_b(I->G, NULL, I->Setting, cSetting_slice_track_camera);
-  float grid = SettingGet_f(I->G, NULL, I->Setting, cSetting_slice_grid);
+  int track_camera = SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_slice_track_camera);
+  float grid = SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_slice_grid);
   int min_expand = 1;
 
-  if(SettingGet_b(I->G, NULL, I->Setting, cSetting_slice_dynamic_grid)) {
-    float resol = SettingGet_f(I->G, NULL, I->Setting,
+  if(SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_slice_dynamic_grid)) {
+    float resol = SettingGet_f(I->G, NULL, I->Setting.get(),
                                cSetting_slice_dynamic_grid_resolution);
     float scale = SceneGetScreenVertexScale(I->G, oss->origin);
     oss->last_scale = scale;
@@ -422,9 +422,9 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
 
   if(ok) {
 
-    if(SettingGet_b(I->G, NULL, I->Setting, cSetting_slice_height_map)) {
+    if(SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_slice_height_map)) {
       float height_scale =
-        SettingGet_f(I->G, NULL, I->Setting, cSetting_slice_height_scale);
+        SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_slice_height_scale);
       float *value = oss->values.data();
       float up[3], scaled[3], factor;
       int x, y;
@@ -911,10 +911,10 @@ void ObjectSlice::render(RenderInfo * info)
   const RenderPass pass = info->pass;
   int cur_state = 0;
   float alpha;
-  int track_camera = SettingGet_b(G, NULL, I->Setting, cSetting_slice_track_camera);
-  int dynamic_grid = SettingGet_b(G, NULL, I->Setting, cSetting_slice_dynamic_grid);
+  int track_camera = SettingGet_b(G, NULL, I->Setting.get(), cSetting_slice_track_camera);
+  int dynamic_grid = SettingGet_b(G, NULL, I->Setting.get(), cSetting_slice_dynamic_grid);
   ObjectSliceState *oss = NULL;
-  int use_shaders = !track_camera && SettingGet_b(G, NULL, I->Setting, cSetting_use_shaders);
+  int use_shaders = !track_camera && SettingGet_b(G, NULL, I->Setting.get(), cSetting_use_shaders);
   // just in case, since slice uses immediate mode, but this should never happen
   G->ShaderMgr->Disable_Current_Shader();
 
@@ -972,7 +972,7 @@ void ObjectSlice::render(RenderInfo * info)
   }
 
   ObjectPrepareContext(I, info);
-  alpha = SettingGet_f(G, NULL, I->Setting, cSetting_transparency);
+  alpha = SettingGet_f(G, NULL, I->Setting.get(), cSetting_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
@@ -1067,7 +1067,7 @@ void ObjectSlice::render(RenderInfo * info)
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
             if (oss->shaderCGO && (I->visRep & cRepSliceBit)){
-              CGORenderGLPicking(oss->shaderCGO.get(), info, &I->context, I->Setting, NULL);
+              CGORenderGLPicking(oss->shaderCGO.get(), info, &I->context, I->Setting.get(), NULL);
             } else {
 #ifndef PURE_OPENGL_ES_2
             Picking p;
@@ -1145,7 +1145,7 @@ void ObjectSlice::render(RenderInfo * info)
 	      int already_rendered = false;
 
               if (oss->shaderCGO){
-                CGORenderGL(oss->shaderCGO.get(), NULL, NULL, I->Setting, info, NULL);
+                CGORenderGL(oss->shaderCGO.get(), NULL, NULL, I->Setting.get(), info, NULL);
                 already_rendered = true;
               } else {
                 oss->shaderCGO.reset(CGONew(G));
@@ -1214,7 +1214,7 @@ void ObjectSlice::render(RenderInfo * info)
                   oss->shaderCGO->use_shader = true;
                   CGOFree(convertcgo);
                 }
-                CGORenderGL(oss->shaderCGO.get(), NULL, NULL, I->Setting, info, NULL);
+                CGORenderGL(oss->shaderCGO.get(), NULL, NULL, I->Setting.get(), info, NULL);
                 SceneInvalidatePicking(G);  // any time cgo is re-generated, needs to invalidate so
                 // pick colors can be re-assigned
               }

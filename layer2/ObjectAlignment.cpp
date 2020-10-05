@@ -1079,14 +1079,14 @@ void ObjectAlignment::render(RenderInfo * info)
   if(pass == RenderPass::Opaque || ray) {
     if((I->visRep & cRepCGOBit)) {
 
-      for(StateIterator iter(G, I->Setting, state, I->getNFrame()); iter.next();) {
+      for(StateIterator iter(G, I->Setting.get(), state, I->getNFrame()); iter.next();) {
         sobj = I->State.data() + iter.state;
 
         if (!sobj->primitiveCGO)
           continue;
 
 	if(ray) {
-	    CGORenderRay(sobj->primitiveCGO.get(), ray, info, color, NULL, I->Setting, NULL);
+	    CGORenderRay(sobj->primitiveCGO.get(), ray, info, color, NULL, I->Setting.get(), NULL);
 	} else if(G->HaveGUI && G->ValidContext) {
 #ifndef PURE_OPENGL_ES_2
 	  if(!info->line_lighting)
@@ -1142,7 +1142,7 @@ void ObjectAlignment::render(RenderInfo * info)
           }
 
           if (cgo) {
-            CGORenderGL(cgo, color, I->Setting, NULL, info, NULL);
+            CGORenderGL(cgo, color, I->Setting.get(), NULL, info, NULL);
           }
 
 #ifndef PURE_OPENGL_ES_2
@@ -1157,7 +1157,7 @@ void ObjectAlignment::render(RenderInfo * info)
 void ObjectAlignment::invalidate(cRep_t rep, cRepInv_t level, int state)
 {
   if((rep == cRepAll) || (rep == cRepCGO)) {
-    for(StateIterator iter(G, Setting, state, getNFrame()); iter.next();) {
+    for(StateIterator iter(G, Setting.get(), state, getNFrame()); iter.next();) {
       ObjectAlignmentState& sobj = State[iter.state];
       sobj.valid = false;
       sobj.renderCGO.reset();

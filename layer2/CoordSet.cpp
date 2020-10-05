@@ -168,7 +168,7 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
     }
     if(ok && (ll > 7)){
       CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 7);
-      I->Setting = SettingNewFromPyList(G, val);
+      I->Setting.reset(SettingNewFromPyList(G, val));
       CPythonVal_Free(val);
     }
     if(ok && (ll > 8)){
@@ -297,7 +297,7 @@ PyObject *CoordSetAsPyList(CoordSet * I)
       PyList_SetItem(result, 4, PConvAutoNone(NULL));
     PyList_SetItem(result, 5, PyString_FromString(I->Name));
     PyList_SetItem(result, 6, ObjectStateAsPyList(I));
-    PyList_SetItem(result, 7, SettingAsPyList(I->Setting));
+    PyList_SetItem(result, 7, SettingAsPyList(I->Setting.get()));
     PyList_SetItem(result, 8, PConvLabPosVLAToPyList(I->LabPos, I->NIndex));
 
     PyList_SetItem(result, 9,
@@ -702,7 +702,7 @@ int CoordSetGetAtomTxfVertex(const CoordSet * I, int at, float *v)
   copy3f(I->coordPtr(a1), v);
 
   /* apply state transformation */
-  if (!I->Matrix.empty() && SettingGet<int>(I->G, obj->Setting, I->Setting,
+  if (!I->Matrix.empty() && SettingGet<int>(I->G, obj->Setting.get(), I->Setting.get(),
                                 cSetting_matrix_mode) > 0) {
     transform44d3f(I->Matrix.data(), v, v);
   }
@@ -1127,7 +1127,7 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
   /* graphical representations need redrawing */
   if(level == cRepInvVisib) {
     /* cartoon_side_chain_helper */
-    if(SettingGet<bool>(G, I->Setting, I->Obj->Setting,
+    if(SettingGet<bool>(G, I->Setting.get(), I->Obj->Setting.get(),
                     cSetting_cartoon_side_chain_helper)) {
       if((type == cRepCyl) || (type == cRepLine) || (type == cRepSphere))
         invalidateRep(cRepCartoon, cRepInvVisib2);
@@ -1138,7 +1138,7 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
       }
     }
     /* ribbon_side_chain_helper */
-    if(SettingGet<bool>(G, I->Setting, I->Obj->Setting,
+    if(SettingGet<bool>(G, I->Setting.get(), I->Obj->Setting.get(),
                     cSetting_ribbon_side_chain_helper)) {
       if((type == cRepCyl) || (type == cRepLine) || (type == cRepSphere))
         invalidateRep(cRepRibbon, cRepInvVisib2);
@@ -1149,7 +1149,7 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
       }
     }
     /* line_stick helper  */
-    if(SettingGet<bool>(G, I->Setting, I->Obj->Setting,
+    if(SettingGet<bool>(G, I->Setting.get(), I->Obj->Setting.get(),
                     cSetting_line_stick_helper)) {
       if(type == cRepCyl)
         invalidateRep(cRepLine, cRepInvVisib2);
@@ -1339,7 +1339,7 @@ void CoordSet::render(RenderInfo * info)
     " CoordSetRender: entered (%p).\n", (void *) I ENDFD;
 
   if(!(info->ray || info->pick) &&
-     (SettingGet_i(G, I->Setting, I->Obj->Setting,
+     (SettingGet_i(G, I->Setting.get(), I->Obj->Setting.get(),
                    cSetting_defer_builds_mode) == 5)) {
     if(info->pass == RenderPass::Antialias) {
       ObjectUseColor((CObject *) I->Obj);
@@ -1360,14 +1360,14 @@ void CoordSet::render(RenderInfo * info)
     auto pick = info->pick;
     int a, aa, abit, aastart = 0, aaend = cRepCnt;
     ::Rep *r;
-    int sculpt_vdw_vis_mode = SettingGet_i(G, I->Setting,
-					   I->Obj->Setting,
+    int sculpt_vdw_vis_mode = SettingGet_i(G, I->Setting.get(),
+					   I->Obj->Setting.get(),
 					   cSetting_sculpt_vdw_vis_mode);
     if((pass == RenderPass::Antialias) && sculpt_vdw_vis_mode &&
        I->SculptCGO && (I->Obj->visRep & cRepCGOBit)) {
       if(ray) {
         int ok = CGORenderRay(I->SculptCGO, ray, info,
-			      ColorGet(G, I->Obj->Color), NULL, I->Setting, I->Obj->Setting);
+			      ColorGet(G, I->Obj->Color), NULL, I->Setting.get(), I->Obj->Setting.get());
 	if (!ok){
 	  CGOFree(I->SculptCGO);
 	  CGOFree(I->SculptShaderCGO);
@@ -1390,10 +1390,10 @@ void CoordSet::render(RenderInfo * info)
 	  }
 	  if (I->SculptShaderCGO){
 	    CGORenderGL(I->SculptShaderCGO, NULL,
-			I->Setting, I->Obj->Setting, info, NULL);
+			I->Setting.get(), I->Obj->Setting.get(), info, NULL);
 	  } else {
 	    CGORenderGL(I->SculptCGO, NULL,
-			I->Setting, I->Obj->Setting, info, NULL);
+			I->Setting.get(), I->Obj->Setting.get(), info, NULL);
 	  }
         }
       }
@@ -1403,18 +1403,18 @@ void CoordSet::render(RenderInfo * info)
     if (UnitCellCGO && (Obj->visRep & cRepCellBit)) {
       if (ray) {
         CGORenderRay(UnitCellCGO.get(), ray, info, ColorGet(G, Obj->Color),
-            nullptr, Setting, Obj->Setting);
+            nullptr, Setting.get(), Obj->Setting.get());
       } else if (!pick && pass == RenderPass::Opaque && G->HaveGUI &&
                  G->ValidContext) {
         ObjectUseColor(Obj);
-        CGORenderGL(UnitCellCGO.get(), ColorGet(G, Obj->Color), Setting,
-            Obj->Setting, info, NULL);
+        CGORenderGL(UnitCellCGO.get(), ColorGet(G, Obj->Color), Setting.get(),
+            Obj->Setting.get(), info, NULL);
       }
     }
 
     if (pick){
-      int pick_labels = SettingGet_i(G, I->Setting,
-				     I->Obj->Setting,
+      int pick_labels = SettingGet_i(G, I->Setting.get(),
+				     I->Obj->Setting.get(),
 				     cSetting_pick_labels);
       if (pick_labels == 2){ // only pick labels
 	aastart = cRepLabel;
@@ -1439,17 +1439,17 @@ void CoordSet::render(RenderInfo * info)
         } else {
           if(I->Obj)
             ray->wobble(
-                         SettingGet_i(G, I->Setting,
-                                      I->Obj->Setting,
+                         SettingGet_i(G, I->Setting.get(),
+                                      I->Obj->Setting.get(),
                                       cSetting_ray_texture),
-                         SettingGet_3fv(G, I->Setting,
-                                        I->Obj->Setting,
+                         SettingGet_3fv(G, I->Setting.get(),
+                                        I->Obj->Setting.get(),
                                         cSetting_ray_texture_settings));
           else
             ray->wobble(
-                         SettingGet_i(G, I->Setting,
+                         SettingGet_i(G, I->Setting.get(),
                                       NULL, cSetting_ray_texture),
-                         SettingGet_3fv(G, I->Setting, NULL,
+                         SettingGet_3fv(G, I->Setting.get(), NULL,
                                         cSetting_ray_texture_settings));
           ray->color3fv(ColorGet(G, I->Obj->Color));
         }
@@ -1523,8 +1523,8 @@ void CoordSet::render(RenderInfo * info)
                     }
                   }
                   if (cont){
-                    if(check_setting && SettingGet_f(G, r->cs->Setting,
-                                                     r->obj->Setting, check_setting) > 0.0001) {
+                    if(check_setting && SettingGet_f(G, r->cs->Setting.get(),
+                                                     r->obj->Setting.get(), check_setting) > 0.0001) {
                       /* if object has transparency, only render in transparent pass */
                       if(pass == RenderPass::Transparent)
                         r->render(info);
@@ -1723,7 +1723,6 @@ CoordSet::~CoordSet()
           obj->DiscreteCSet[I->IdxToAtm[a]] = NULL;
         }
     MapFree(I->Coord2Idx);
-    SettingFreeP(I->Setting);
     CGOFree(I->SculptCGO);
   }
 }
@@ -1801,7 +1800,7 @@ void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, V * out) {
   if (AtomSettingGetIfDefined(G, ai, setting_id, out))
     return;
 
-  *out = SettingGet<V>(G, cs->Setting, obj->Setting, setting_id);
+  *out = SettingGet<V>(G, cs->Setting.get(), obj->Setting.get(), setting_id);
 }
 
 template void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, int * out);

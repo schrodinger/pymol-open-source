@@ -1758,7 +1758,7 @@ void ObjectMap::render(RenderInfo * info)
   if(pass != RenderPass::Antialias)
     return;
 
-  for(StateIterator iter(G, I->Setting, state, I->State.size());
+  for(StateIterator iter(G, I->Setting.get(), state, I->State.size());
       iter.next();) {
     state = iter.state;
     if(I->State[state].Active)
@@ -1883,7 +1883,7 @@ void ObjectMap::render(RenderInfo * info)
             ms->have_range = true;
           }
         }
-        if(ms->have_range && SettingGet_b(G, NULL, I->Setting, cSetting_dot_normals)) {
+        if(ms->have_range && SettingGet_b(G, NULL, I->Setting.get(), cSetting_dot_normals)) {
           IsofieldComputeGradients(G, ms->Field.get());
         }
         if(ms->have_range) {
@@ -1893,7 +1893,7 @@ void ObjectMap::render(RenderInfo * info)
           CField *points = ms->Field->points.get();
           CField *gradients = NULL;
 
-          if(SettingGet_b(G, NULL, I->Setting, cSetting_dot_normals)) {
+          if(SettingGet_b(G, NULL, I->Setting.get(), cSetting_dot_normals)) {
             gradients = ms->Field->gradients.get();
           }
           if(data && points) {
@@ -1911,7 +1911,7 @@ void ObjectMap::render(RenderInfo * info)
             float *raw_gradient = NULL;
             float high_cut = ms->high_cutoff, low_cut = ms->low_cutoff;
             float width =
-              SettingGet_f(G, NULL, I->Setting, cSetting_dot_width);
+              SettingGet_f(G, NULL, I->Setting.get(), cSetting_dot_width);
 
             if(ray) {
               float radius = ray->PixelRadius * width / 1.4142F;
@@ -2039,7 +2039,7 @@ bool ObjectMap::setSymmetry(CSymmetry const& symmetry, int state)
 {
   bool success = false;
 
-  for (StateIterator iter(G, Setting, state, State.size()); iter.next();) {
+  for (StateIterator iter(G, Setting.get(), state, State.size()); iter.next();) {
     auto& oms = State[iter.state];
     if (oms.Active) {
       oms.Symmetry.reset(new CSymmetry(symmetry));

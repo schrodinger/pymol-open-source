@@ -65,7 +65,7 @@ int DistSetMoveLabel(DistSet * I, int at, float *v, int mode)
       result = 1;
       lp = I->LabPos + a1;
       if(!lp->mode) {
-        const float *lab_pos = SettingGet_3fv(obj->G, NULL, obj->Setting,
+        const float *lab_pos = SettingGet_3fv(obj->G, NULL, obj->Setting.get(),
                                         cSetting_label_position);
         copy3f(lab_pos, lp->pos);
       }

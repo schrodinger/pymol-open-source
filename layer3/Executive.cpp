@@ -495,11 +495,11 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
         switch(rec->type) {
         case cExecObject:
           if(autogen) {
-            power  = SettingGet_f(G, NULL, rec->obj->Setting, cSetting_motion_power);
-            bias   = SettingGet_f(G, NULL, rec->obj->Setting, cSetting_motion_bias);
-            simple = SettingGet_i(G, NULL, rec->obj->Setting, cSetting_motion_simple);
-            linear = SettingGet_f(G, NULL, rec->obj->Setting, cSetting_motion_linear);
-            hand   = SettingGet_i(G, NULL, rec->obj->Setting, cSetting_motion_hand);
+            power  = SettingGet_f(G, NULL, rec->obj->Setting.get(), cSetting_motion_power);
+            bias   = SettingGet_f(G, NULL, rec->obj->Setting.get(), cSetting_motion_bias);
+            simple = SettingGet_i(G, NULL, rec->obj->Setting.get(), cSetting_motion_simple);
+            linear = SettingGet_f(G, NULL, rec->obj->Setting.get(), cSetting_motion_linear);
+            hand   = SettingGet_i(G, NULL, rec->obj->Setting.get(), cSetting_motion_hand);
           }
           if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
             ok = ObjectMotion(rec->obj, action, first, last, power, bias,
@@ -521,11 +521,11 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
         switch (rec->type) {
         case cExecObject: 
           if(autogen) {
-            power  = SettingGet_f(G, NULL, rec->obj->Setting, cSetting_motion_power);
-            bias   = SettingGet_f(G, NULL, rec->obj->Setting, cSetting_motion_bias);
-            simple = SettingGet_i(G, NULL, rec->obj->Setting, cSetting_motion_simple);
-            linear = SettingGet_f(G, NULL, rec->obj->Setting, cSetting_motion_linear);
-            hand   = SettingGet_i(G, NULL, rec->obj->Setting, cSetting_motion_hand);
+            power  = SettingGet_f(G, NULL, rec->obj->Setting.get(), cSetting_motion_power);
+            bias   = SettingGet_f(G, NULL, rec->obj->Setting.get(), cSetting_motion_bias);
+            simple = SettingGet_i(G, NULL, rec->obj->Setting.get(), cSetting_motion_simple);
+            linear = SettingGet_f(G, NULL, rec->obj->Setting.get(), cSetting_motion_linear);
+            hand   = SettingGet_i(G, NULL, rec->obj->Setting.get(), cSetting_motion_hand);
           }
           
           ok = ObjectMotion(rec->obj, action, first, last, power, bias,
@@ -1135,11 +1135,11 @@ pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
 
         symm = NULL;
         if(sele_obj &&  ObjectMapValidXtal(mapObj, state)) {
-          if(SettingGet_b(G, NULL, sele_obj->Setting, cSetting_map_auto_expand_sym)
+          if(SettingGet_b(G, NULL, sele_obj->Setting.get(), cSetting_map_auto_expand_sym)
               && (sele_obj->Symmetry)) {
             // legacy default: take symmetry from molecular object
             symm = sele_obj->Symmetry;
-          } else if(SettingGet_b(G, NULL, mapObj->Setting, cSetting_map_auto_expand_sym)) {
+          } else if(SettingGet_b(G, NULL, mapObj->Setting.get(), cSetting_map_auto_expand_sym)) {
             // fallback: take symmetry from map state
             symm = ms->Symmetry.get();
           }
@@ -1311,11 +1311,11 @@ ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
 
         symm = NULL;
         if(sele_obj && ObjectMapValidXtal(mapObj, state)) {
-          if(SettingGet_b(G, NULL, sele_obj->Setting, cSetting_map_auto_expand_sym)
+          if(SettingGet_b(G, NULL, sele_obj->Setting.get(), cSetting_map_auto_expand_sym)
               && (sele_obj->Symmetry)) {
             // legacy default: take symmetry from molecular object
             symm = sele_obj->Symmetry;
-          } else if(SettingGet_b(G, NULL, mapObj->Setting, cSetting_map_auto_expand_sym)) {
+          } else if(SettingGet_b(G, NULL, mapObj->Setting.get(), cSetting_map_auto_expand_sym)) {
             // fallback: take symmetry from map state
             symm = ms->Symmetry.get();
           }
@@ -1517,7 +1517,7 @@ static void ExecutiveUpdateGridSlots(PyMOLGlobals * G, int force)
       SpecRec *rec = NULL;
       while(ListIterate(I->Spec, rec, next)) {
         if(rec->type == cExecObject) {
-          int obj_slot = SettingGet_i(G, rec->obj->Setting, NULL, cSetting_grid_slot);
+          int obj_slot = SettingGet_i(G, rec->obj->Setting.get(), NULL, cSetting_grid_slot);
           if(obj_slot == -1) {
             rec->obj->grid_slot = rec->grid_slot;
           } else
@@ -1988,7 +1988,7 @@ void ExecutiveUpdateCoordDepends(PyMOLGlobals * G, ObjectMolecule * mol)
   SpecRec *rec = NULL;
   ObjectGadget *gadget;
   int done_inv_all = false;
-  int dynamic_measures = SettingGet_b(G, mol ? mol->Setting : NULL, NULL,
+  int dynamic_measures = SettingGet_b(G, mol ? mol->Setting.get() : NULL, NULL,
       cSetting_dynamic_measures);
 
   while(ListIterate(I->Spec, rec, next)) {
@@ -4642,7 +4642,7 @@ ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points, floa
 
   if(oms) {
     auto hist = std::vector<float>(n_points + 4);
-    float range = SettingGet_f(G, obj->Setting, NULL, cSetting_volume_data_range);
+    float range = SettingGet_f(G, obj->Setting.get(), NULL, cSetting_volume_data_range);
     ObjectMapStateGetHistogram(
         G, oms, n_points, range, hist.data(), min_val, max_val);
     return hist;
@@ -6942,10 +6942,10 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
       if(rec->type == cExecObject) {
         if(rec->obj->type == cObjectMolecule) {
           objMol = (ObjectMolecule *) rec->obj;
-          if(SettingGet_b(G, NULL, objMol->Setting, cSetting_sculpting)) {
+          if(SettingGet_b(G, NULL, objMol->Setting.get(), cSetting_sculpting)) {
             constexpr int state = -2; // current state
             ObjectMoleculeSculptIterate(objMol, state,
-                                        SettingGet_i(G, NULL, objMol->Setting,
+                                        SettingGet_i(G, NULL, objMol->Setting.get(),
                                                      cSetting_sculpting_cycles), center);
             active = true;
           }
@@ -7887,7 +7887,8 @@ PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
   /* Assumes blocked Python interpreter */
   PyObject *result = NULL;
   CObject *obj = NULL;
-  CSetting **handle = NULL, *set_ptr1 = NULL, *set_ptr2 = NULL;
+  CSetting *set_ptr1 = NULL, *set_ptr2 = NULL;
+  pymol::copyable_ptr<CSetting>* handle = nullptr;
 
   if(object && object[0]) {
       obj = ExecutiveFindObjectByName(G, object);
@@ -7895,11 +7896,11 @@ PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
         return PyErr_Format(P_CmdException, "object \"%s\" not found", object);
     handle = obj->getSettingHandle(-1);
     if(handle)
-      set_ptr1 = *handle;
+      set_ptr1 = handle->get();
     if(state >= 0) {
       handle = obj->getSettingHandle(state);
       if(handle)
-        set_ptr2 = *handle;
+        set_ptr2 = handle->get();
       else {
         return PyErr_Format(
             P_CmdException, "object \"%s\" lacks state %d", object, state + 1);
@@ -11808,7 +11809,7 @@ pymol::Result<> ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tupl
   int sele1;
   ObjectMoleculeOpRec op;
   OrthoLineType value;
-  CSetting **handle = NULL;
+  pymol::copyable_ptr<CSetting>* handle = nullptr;
   SettingName name = "";
   int nObj = 0;
   const char* sele = preSele.c_str();
@@ -11864,8 +11865,8 @@ pymol::Result<> ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tupl
               {
                 handle = rec->obj->getSettingHandle(state);
                 if(handle) {
-                  SettingCheckHandle(G, handle);
-                  ok = SettingSetFromTuple(G, *handle, index, tuple);
+                  SettingCheckHandle(G, *handle);
+                  ok = SettingSetFromTuple(G, handle->get(), index, tuple);
                   if(updates)
                     side_effects = true;
                   nObj++;
@@ -11875,7 +11876,7 @@ pymol::Result<> ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tupl
           }
           if(Feedback(G, FB_Setting, FB_Actions)) {
             if(nObj && handle) {
-              SettingGetTextValue(G, *handle, NULL, index, value);
+              SettingGetTextValue(G, handle->get(), NULL, index, value);
               if(!quiet) {
                 if(state < 0) {
                   PRINTF
@@ -11986,22 +11987,22 @@ pymol::Result<> ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tupl
           {
             handle = rec->obj->getSettingHandle(state);
             if(handle) {
-              SettingCheckHandle(G, handle);
-              ok = SettingSetFromTuple(G, *handle, index, tuple);
+              SettingCheckHandle(G, *handle);
+              ok = SettingSetFromTuple(G, handle->get(), index, tuple);
               if(ok) {
                 if(updates)
                   side_effects = true;
                 if(!quiet) {
                   if(state < 0) {       /* object-specific */
                     if(Feedback(G, FB_Setting, FB_Actions)) {
-                      SettingGetTextValue(G, *handle, NULL, index, value);
+                      SettingGetTextValue(G, handle->get(), NULL, index, value);
                       PRINTF
                         " Setting: %s set to %s in object \"%s\".\n",
                         name, value, rec->obj->Name ENDF(G);
                     }
                   } else {      /* state-specific */
                     if(Feedback(G, FB_Setting, FB_Actions)) {
-                      SettingGetTextValue(G, *handle, NULL, index, value);
+                      SettingGetTextValue(G, handle->get(), NULL, index, value);
                       PRINTF
                         " Setting: %s set to %s in object \"%s\", state %d.\n",
                         name, value, rec->obj->Name, state + 1 ENDF(G);
@@ -12043,7 +12044,8 @@ int ExecutiveGetSettingFromString(PyMOLGlobals * G, PyMOLreturn_value *result,
                                   int state, int quiet)
 {
   CObject *obj = NULL;
-  CSetting **handle = NULL, *set_ptr1 = NULL, *set_ptr2 = NULL;
+  CSetting *set_ptr1 = NULL, *set_ptr2 = NULL;
+  pymol::copyable_ptr<CSetting>* handle = nullptr;
   int ok = true;
   int type;
   type = SettingGetType(G, index);
@@ -12060,11 +12062,11 @@ int ExecutiveGetSettingFromString(PyMOLGlobals * G, PyMOLreturn_value *result,
   } else if(obj) {
     handle = obj->getSettingHandle(-1);
     if(handle)
-      set_ptr1 = *handle;
+      set_ptr1 = handle->get();
     if(state >= 0) {
       handle = obj->getSettingHandle(state);
       if(handle)
-        set_ptr2 = *handle;
+        set_ptr2 = handle->get();
       else {
         PRINTFB(G, FB_Executive, FB_Errors)
           " %s-Error: sele \"%s\" lacks state %d.\n", __func__, sele, state + 1
@@ -12136,7 +12138,7 @@ int ExecutiveSetSettingFromString(PyMOLGlobals * G,
   int sele1;
   ObjectMoleculeOpRec op;
   OrthoLineType value2;
-  CSetting **handle = NULL;
+  pymol::copyable_ptr<CSetting>* handle = nullptr;
   SettingName name;
   int nObj = 0;
   int ok = true;
@@ -12171,8 +12173,8 @@ int ExecutiveSetSettingFromString(PyMOLGlobals * G,
               {
                 handle = rec->obj->getSettingHandle(state);
                 if(handle) {
-                  SettingCheckHandle(G, handle);
-                  ok = SettingSetFromString(G, *handle, index, value);
+                  SettingCheckHandle(G, *handle);
+                  ok = SettingSetFromString(G, handle->get(), index, value);
                   if(updates)
                     SettingGenerateSideEffects(G, index, rec->name, state, quiet);
                   nObj++;
@@ -12182,7 +12184,7 @@ int ExecutiveSetSettingFromString(PyMOLGlobals * G,
           }
           if(Feedback(G, FB_Setting, FB_Actions)) {
             if(nObj && handle) {
-              SettingGetTextValue(G, *handle, NULL, index, value2);
+              SettingGetTextValue(G, handle->get(), NULL, index, value2);
               SettingGetName(G, index, name);
               if(!quiet) {
                 if(state < 0) {
@@ -12235,15 +12237,15 @@ int ExecutiveSetSettingFromString(PyMOLGlobals * G,
           {
             handle = rec->obj->getSettingHandle(state);
             if(handle) {
-              SettingCheckHandle(G, handle);
-              ok = SettingSetFromString(G, *handle, index, value);
+              SettingCheckHandle(G, *handle);
+              ok = SettingSetFromString(G, handle->get(), index, value);
               if(ok) {
                 if(updates)
                   SettingGenerateSideEffects(G, index, sele, state, quiet);
                 if(!quiet) {
                   if(state < 0) {       /* object-specific */
                     if(Feedback(G, FB_Setting, FB_Actions)) {
-                      SettingGetTextValue(G, *handle, NULL, index, value2);
+                      SettingGetTextValue(G, handle->get(), NULL, index, value2);
                       SettingGetName(G, index, name);
                       PRINTF
                         " Setting: %s set to %s in object \"%s\".\n",
@@ -12251,7 +12253,7 @@ int ExecutiveSetSettingFromString(PyMOLGlobals * G,
                     }
                   } else {      /* state-specific */
                     if(Feedback(G, FB_Setting, FB_Actions)) {
-                      SettingGetTextValue(G, *handle, NULL, index, value2);
+                      SettingGetTextValue(G, handle->get(), NULL, index, value2);
                       SettingGetName(G, index, name);
                       PRINTF
                         " Setting: %s set to %s in object \"%s\", state %d.\n",
@@ -12277,7 +12279,7 @@ int ExecutiveSetObjSettingFromString(PyMOLGlobals * G,
                                      int state, int quiet, int updates)
 {
   OrthoLineType value2;
-  CSetting **handle = NULL;
+  pymol::copyable_ptr<CSetting>* handle = nullptr;
   SettingName name;
   int ok = true;
 
@@ -12300,15 +12302,15 @@ int ExecutiveSetObjSettingFromString(PyMOLGlobals * G,
     {
       handle = obj->getSettingHandle(state);
       if(handle) {
-        SettingCheckHandle(G, handle);
-        ok = SettingSetFromString(G, *handle, index, value);
+        SettingCheckHandle(G, *handle);
+        ok = SettingSetFromString(G, handle->get(), index, value);
         if(ok) {
           if(updates)
             SettingGenerateSideEffects(G, index, obj->Name, state, quiet);
           if(!quiet) {
             if(state < 0) {     /* object-specific */
               if(Feedback(G, FB_Setting, FB_Actions)) {
-                SettingGetTextValue(G, *handle, NULL, index, value2);
+                SettingGetTextValue(G, handle->get(), NULL, index, value2);
                 SettingGetName(G, index, name);
                 PRINTF
                   " Setting: %s set to %s in object \"%s\".\n",
@@ -12316,7 +12318,7 @@ int ExecutiveSetObjSettingFromString(PyMOLGlobals * G,
               }
             } else {            /* state-specific */
               if(Feedback(G, FB_Setting, FB_Actions)) {
-                SettingGetTextValue(G, *handle, NULL, index, value2);
+                SettingGetTextValue(G, handle->get(), NULL, index, value2);
                 SettingGetName(G, index, name);
                 PRINTF
                   " Setting: %s set to %s in object \"%s\", state %d.\n",
@@ -12350,7 +12352,7 @@ pymol::Result<> ExecutiveUnsetSetting(PyMOLGlobals * G, int index, pymol::zstrin
   ObjectMolecule *obj = NULL;
   int sele1;
   ObjectMoleculeOpRec op;
-  CSetting **handle = NULL;
+  pymol::copyable_ptr<CSetting>* handle = nullptr;
   const char * name = SettingGetName(index);
   int nObj = 0;
   int ok = true;
@@ -12386,7 +12388,7 @@ pymol::Result<> ExecutiveUnsetSetting(PyMOLGlobals * G, int index, pymol::zstrin
             if(rec->type == cExecObject) {
               {
                 handle = rec->obj->getSettingHandle(state);
-                if (handle && *handle && SettingUnset(*handle, index)) {
+                if (handle && *handle && SettingUnset(handle->get(), index)) {
                   nObj++;
                 }
               }
@@ -12442,7 +12444,7 @@ pymol::Result<> ExecutiveUnsetSetting(PyMOLGlobals * G, int index, pymol::zstrin
         case cExecObject:
           {
             handle = rec->obj->getSettingHandle(state);
-            if (handle && *handle && SettingUnset(*handle, index)) {
+            if (handle && *handle && SettingUnset(handle->get(), index)) {
                 if(!quiet) {
                   if(state < 0) {       /* object-specific */
                     if(Feedback(G, FB_Setting, FB_Actions)) {
@@ -16215,7 +16217,7 @@ pymol::Result<> ExecutiveReinitialize(PyMOLGlobals * G, int what, pymol::zstring
             switch (what) {
             case 0:
             case 1:
-              if(rec->obj->Setting) {
+              if(rec->obj->Setting.get()) {
                 ObjectPurgeSettings(rec->obj);
                 rec->obj->invalidate(cRepAll, cRepInvAll, -1);
                 SceneInvalidate(G);

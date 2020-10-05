@@ -96,7 +96,7 @@ void ObjectCallback::render(RenderInfo * info)
 
   if((I->visRep & cRepCallbackBit)) {
     int blocked = PAutoBlock(G);
-    for(StateIterator iter(G, I->Setting, state, I->NState); iter.next();) {
+    for(StateIterator iter(G, I->Setting.get(), state, I->NState); iter.next();) {
       sobj = I->State + iter.state;
       if(!sobj->is_callable)
         continue;

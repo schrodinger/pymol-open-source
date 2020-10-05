@@ -2252,7 +2252,7 @@ static PyObject *CmdGetObjectSettings(PyObject * self, PyObject * args)
     }
 
     if (handle) {
-      result = SettingAsPyList(*handle, true);
+      result = SettingAsPyList(handle->get(), true);
     }
   }
 

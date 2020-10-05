@@ -191,12 +191,12 @@ void RepCylBond::render(RenderInfo * info)
 
   SceneGetWidthHeight(G, &width, &height); 
 
-  alpha = 1.f - SettingGet_f(G, I->cs->Setting, I->obj->Setting, cSetting_stick_transparency);
+  alpha = 1.f - SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_stick_transparency);
   if(fabs(alpha - 1.f) < R_SMALL4)
     alpha = 1.f;
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
     ray->transparentf(0.0);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
@@ -213,7 +213,7 @@ void RepCylBond::render(RenderInfo * info)
         " RepCylBondRender: rendering pickable...\n" ENDFD;
 
       if (I->renderCGO){
-        CGORenderGLPicking(I->renderCGO, info, &I->context, I->cs->Setting, I->obj->Setting);
+        CGORenderGLPicking(I->renderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
       }
     } else { /* else not pick, i.e., when rendering */
       if (!I->renderCGO){
@@ -603,23 +603,23 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     return NULL;
   }
 
-  valence = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_valence);
+  valence = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_valence);
   valence_flag = (valence != 0.0F);
 
   alpha =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_stick_transparency);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
 
-  stick_color = SettingGet_color(G, cs->Setting, obj->Setting, cSetting_stick_color);
-  cartoon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Setting,
+  stick_color = SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_color);
+  cartoon_side_chain_helper = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(),
                                            cSetting_cartoon_side_chain_helper);
-  ribbon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Setting,
+  ribbon_side_chain_helper = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(),
                                           cSetting_ribbon_side_chain_helper);
 
-  transp = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_stick_transparency);
-  hide_long = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_hide_long_bonds);
+  transp = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_transparency);
+  hide_long = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_hide_long_bonds);
 
   std::set<int> all_zero_order_bond_atoms;
   b = obj->Bond;
@@ -652,17 +652,17 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     b++;
     ok &= !G->Interrupt;
   }
-  radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_stick_radius);
-  half_bonds = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_half_bonds);
+  radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_radius);
+  half_bonds = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_half_bonds);
   na_mode =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_cartoon_nucleic_acid_mode);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_nucleic_acid_mode);
   int na_mode_ribbon =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_nucleic_acid_mode);
-  h_scale = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_stick_h_scale);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_nucleic_acid_mode);
+  h_scale = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_h_scale);
   auto valence_zero_scale =
-    SettingGet_f(G, cs->Setting, obj->Setting, cSetting_valence_zero_scale);
+    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_valence_zero_scale);
   auto valence_zero_mode =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_valence_zero_mode);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_valence_zero_mode);
 
   auto I = new RepCylBond(cs, state);
 
@@ -671,7 +671,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     CGOAlpha(I->primitiveCGO, alpha);
   }
   if(ok && obj->NBond) {
-    stick_ball = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_stick_ball);
+    stick_ball = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_ball);
 
     shader_mode = SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_stick_as_cylinders) 
       && SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_stick_use_shader);
@@ -686,14 +686,14 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       other = ObjectMoleculeGetPrioritizedOtherIndexList(obj, cs);
       CHECKOK(ok, other);
       if (ok){
-        fixed_radius = SettingGet_b(G, cs->Setting, obj->Setting, cSetting_stick_fixed_radius);
-        scale_r = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_stick_valence_scale);
+        fixed_radius = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_fixed_radius);
+        scale_r = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_valence_scale);
       }
     }
 
     /* spheres for stick & balls */
-    stick_ball_ratio = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_stick_ball_ratio);
-    stick_ball_color = SettingGet_color(G, cs->Setting, obj->Setting, cSetting_stick_ball_color);
+    stick_ball_ratio = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_ball_ratio);
+    stick_ball_color = SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_ball_color);
 
     b = obj->Bond;
     for(a = 0; ok && a < obj->NBond; ++a, ++b) {
@@ -1106,12 +1106,12 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
   else {
     int active = false;
     ObjectMolecule *obj = cs->Obj;
-    int nEdge = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_stick_quality);
+    int nEdge = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_quality);
     float radius =
-      fabs(SettingGet_f(G, cs->Setting, obj->Setting, cSetting_stick_radius));
+      fabs(SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_radius));
     float overlap =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_stick_overlap);
-    float nub = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_stick_nub);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_overlap);
+    float nub = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_nub);
     float overlap_r = radius * overlap;
     float nub_r = radius * nub;
 

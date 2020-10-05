@@ -279,7 +279,7 @@ bool SceneRay(PyMOLGlobals * G,
               ray->color3fv(color);
 
               auto icx = SettingGetWD<int>(
-                  obj->Setting, cSetting_ray_interior_color, cColorDefault);
+                  obj->Setting.get(), cSetting_ray_interior_color, cColorDefault);
 
               if (icx == cColorDefault) {
                 ray->interiorColor3fv(color, true);

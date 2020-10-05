@@ -28,7 +28,7 @@ static void RenderSphereMode_Immediate_Triangles(PyMOLGlobals *G, CoordSet *cs,
                                                  float sphere_scale) {
   /* triangle-based spheres */
   int ds =
-      SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sphere_quality);
+      SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sphere_quality);
   if (ds < 0) ds = 0;
   if (ds > 4) ds = 4;
   SphereRec *sp = G->Sphere->Sphere[ds];
@@ -86,7 +86,7 @@ static void RenderSphereMode_Immediate_1_2_3(PyMOLGlobals *G, RenderInfo *info,
                                              int *repActive, float pixel_scale,
                                              int sphere_mode) {
   /* sphere_mode is 1, 2, or 3 */
-  float max_radius = SettingGet_f(G, cs->Setting, obj->Setting,
+  float max_radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(),
                                   cSetting_sphere_point_max_size) *
                      3 * pixel_scale;
   int clamp_size_flag = (max_radius >= 0.0F);
@@ -180,7 +180,7 @@ void RenderImmediate_DoPreGL(PyMOLGlobals *G, int sphere_mode,
       glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
       glDisable(GL_POINT_SMOOTH);
       glDisable(GL_ALPHA_TEST);
-      glPointSize(SettingGet_f(G, cs->Setting, obj->Setting,
+      glPointSize(SettingGet_f(G, cs->Setting.get(), obj->Setting.get(),
                                cSetting_sphere_point_size));
       break;
   }
@@ -196,9 +196,9 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info) {
     int repActive = false;
     ObjectMolecule *obj = cs->Obj;
     int sphere_mode =
-        SettingGet_i(G, cs->Setting, obj->Setting, cSetting_sphere_mode);
+        SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sphere_mode);
     float sphere_scale =
-        SettingGet_f(G, cs->Setting, obj->Setting, cSetting_sphere_scale);
+        SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_sphere_scale);
 
     if (sphere_mode > 0) { /* point-based modees */
       float pixel_scale = 1.0F / info->vertex_scale;

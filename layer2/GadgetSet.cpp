@@ -265,7 +265,7 @@ void GadgetSet::render(RenderInfo * info)
 	RayPushTTT(ray);
 	RaySetTTT(ray, true, mat);  /* Used to set the ray-tracing matrix,
 				       this works, but is there another way to do this? */
-	CGORenderRay(I->ShapeCGO, ray, info, color, NULL, I->Obj->Setting, NULL);
+	CGORenderRay(I->ShapeCGO, ray, info, color, NULL, I->Obj->Setting.get(), NULL);
 	RayPopTTT(ray);
       }
     } else if(G->HaveGUI && G->ValidContext) {
@@ -300,12 +300,12 @@ void GadgetSet::render(RenderInfo * info)
 	}
         if(I->PickCGO) {
 	  if (use_shader){
-	    CGORenderGLPicking(I->PickCGO, info, &context, I->Obj->Setting, NULL);
+	    CGORenderGLPicking(I->PickCGO, info, &context, I->Obj->Setting.get(), NULL);
 #ifndef PURE_OPENGL_ES_2
 	  } else {
 	    glDisable(GL_DEPTH_TEST);
 	    glTranslatef(I->Coord[0],I->Coord[1],I->Coord[2]);
-	    CGORenderGLPicking(I->PickShapeCGO, info, &context, I->Obj->Setting, NULL);
+	    CGORenderGLPicking(I->PickShapeCGO, info, &context, I->Obj->Setting.get(), NULL);
 	    glTranslatef(-I->Coord[0],-I->Coord[1],-I->Coord[2]);
 	    glEnable(GL_DEPTH_TEST);
 #endif
@@ -342,12 +342,12 @@ void GadgetSet::render(RenderInfo * info)
         if(I->StdCGO) {
 	  if (use_shader){
 	    if (color)
-              CGORenderGL(I->StdCGO, NULL, I->Obj->Setting, NULL, info, NULL);
+              CGORenderGL(I->StdCGO, NULL, I->Obj->Setting.get(), NULL, info, NULL);
 #ifndef PURE_OPENGL_ES_2
 	  } else {
 	    glDisable(GL_DEPTH_TEST);
 	    glTranslatef(I->Coord[0],I->Coord[1],I->Coord[2]);
-	    CGORenderGL(I->ShapeCGO, NULL, I->Obj->Setting, NULL, info, NULL);
+	    CGORenderGL(I->ShapeCGO, NULL, I->Obj->Setting.get(), NULL, info, NULL);
 	    glTranslatef(-I->Coord[0],-I->Coord[1],-I->Coord[2]);
 	    glEnable(GL_DEPTH_TEST);
 #endif

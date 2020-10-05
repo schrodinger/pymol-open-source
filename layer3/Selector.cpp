@@ -6147,8 +6147,8 @@ pymol::Result<> SelectorUpdateCmd(PyMOLGlobals* G, //
       if(matched_flag) {        /* atom matched, so copy coordinates */
         ccc++;
 
-        StateIterator iter0(G, obj0->Setting, sta0, obj0->NCSet);
-        StateIterator iter1(G, obj1->Setting, sta1, obj1->NCSet);
+        StateIterator iter0(G, obj0->Setting.get(), sta0, obj0->NCSet);
+        StateIterator iter1(G, obj1->Setting.get(), sta1, obj1->NCSet);
 
         while (iter0.next() && iter1.next()) {
           cs0 = obj0->CSet[iter0.state];
@@ -8021,7 +8021,7 @@ static pymol::Result<> SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int qu
              for handling nucleic acid structures that use "*" in atom names */
 
           const char *atom_name_wildcard =
-            SettingGet_s(G, obj->Setting, NULL, cSetting_atom_name_wildcard);
+            SettingGet_s(G, obj->Setting.get(), NULL, cSetting_atom_name_wildcard);
 
           if(!atom_name_wildcard[0])
             atom_name_wildcard = wildcard;

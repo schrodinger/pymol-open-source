@@ -423,7 +423,7 @@ void ObjectVolume::update()
       }
 
       // data min/max/mean/stdev
-      range = SettingGet_f(I->G, I->Setting, NULL, cSetting_volume_data_range);
+      range = SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_volume_data_range);
       ObjectMapStateGetHistogram(I->G, oms, 0, range, vs->min_max_mean_stdev, 0.f, 0.f);
     }
 
@@ -720,7 +720,7 @@ void ObjectVolume::render(RenderInfo * info)
   const RenderPass pass = info->pass;
   int a = 0;
   ObjectVolumeState *vs = NULL;
-  float volume_layers =  SettingGet_f(I->G, I->Setting, NULL, cSetting_volume_layers);
+  float volume_layers =  SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_volume_layers);
 #ifdef _PYMOL_IP_EXTRAS
   short volume_mode = SettingGetGlobal_i(G, cSetting_volume_mode);
   short ortho = SettingGetGlobal_i(G, cSetting_ortho);
@@ -827,7 +827,7 @@ void ObjectVolume::render(RenderInfo * info)
         return;
       }
 
-      int volume_bit_val = SettingGet_i(G, I->Setting, NULL, cSetting_volume_bit_depth);
+      int volume_bit_val = SettingGet_i(G, I->Setting.get(), NULL, cSetting_volume_bit_depth);
       volume_bit_depth = (volume_bit_val < 17) ? tex::data_type::HALF_FLOAT : tex::data_type::FLOAT;
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */

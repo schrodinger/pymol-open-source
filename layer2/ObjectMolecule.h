@@ -112,7 +112,7 @@ struct ObjectMolecule : public CObject {
   int getNFrame() const override;
   void describeElement(int index, char* buffer) const override;
   char* getCaption(char* ch, int len) const override;
-  CSetting **getSettingHandle(int state) override;
+  pymol::copyable_ptr<CSetting>* getSettingHandle(int state) override;
   CObject* clone() const override;
   CSymmetry const* getSymmetry(int state = 0) const override;
   bool setSymmetry(CSymmetry const& symmetry, int state = 0) override;

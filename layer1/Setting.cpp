@@ -1117,7 +1117,8 @@ int SettingFromPyList(CSetting * I, PyObject * list)
  */
 std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char * name, int state)
 {
-  CSetting **handle, *I = G->Setting;
+  CSetting* I = G->Setting;
+  pymol::copyable_ptr<CSetting>* handle;
   int a;
   int n;
   std::vector<int> result;
@@ -1129,7 +1130,7 @@ std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char * name, int s
 
     if (!obj ||
         !(handle = obj->getSettingHandle(state)) ||
-        !(I = *handle))
+        !(I = handle->get()))
       // not found -> empty list
       return result;
   }
@@ -1147,10 +1148,10 @@ std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char * name, int s
 
 
 /*========================================================================*/
-void SettingCheckHandle(PyMOLGlobals * G, CSetting ** handle)
+void SettingCheckHandle(PyMOLGlobals * G, pymol::copyable_ptr<CSetting>& handle)
 {
-  if(!*handle)
-    *handle = SettingNew(G);
+  if(!handle)
+    handle.reset(SettingNew(G));
 }
 
 
@@ -1480,6 +1481,18 @@ CSetting *SettingNew(PyMOLGlobals * G)
   return new CSetting(G);
 }
 
+CSetting::CSetting(const CSetting& other)
+{
+  *this = other;
+}
+
+CSetting& CSetting::operator=(const CSetting& other)
+{
+  for (int index = 0; index < cSetting_INIT; ++index) {
+    SettingRecCopy(index, other.info[index], this->info[index]);
+  }
+  return *this;
+}
 
 /*========================================================================*/
 CSetting::~CSetting()
@@ -3135,7 +3148,7 @@ StateIterator::StateIterator(PyMOLGlobals * G, CSetting * set, int state_, int n
 }
 
 StateIterator::StateIterator(CObject* obj, int state_)
-    : StateIterator(obj->G, obj->Setting, state_, obj->getNFrame())
+    : StateIterator(obj->G, obj->Setting.get(), state_, obj->getNFrame())
 {
 }
 

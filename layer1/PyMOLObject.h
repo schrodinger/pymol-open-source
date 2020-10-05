@@ -71,7 +71,7 @@ struct CObject {
   float ExtentMin[3]{}, ExtentMax[3]{};
   int ExtentFlag = false, TTTFlag = false;
   float TTT[16]{};                /* translate, transform, translate matrix (to apply when rendering) */
-  CSetting *Setting = nullptr;
+  pymol::copyable_ptr<CSetting> Setting;
   int Enabled = 0;                  /* read-only... maintained by Scene */
   int Context = 0;                  /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
   pymol::vla<CViewElem> ViewElem;          /* for animating objects via the TTT */
@@ -105,7 +105,7 @@ public:
   virtual int getNFrame() const { return 1; }
   virtual void describeElement(int index, char* buffer) const;
   virtual char* getCaption(char* ch, int len) const { return nullptr; };
-  virtual CSetting **getSettingHandle(int state);
+  virtual pymol::copyable_ptr<CSetting>* getSettingHandle(int state);
   virtual CObject* clone() const { return nullptr; };
   virtual CSymmetry const* getSymmetry(int state = 0) const { return nullptr; }
   virtual bool setSymmetry(CSymmetry const&, int state = 0) { return false; }
@@ -175,7 +175,7 @@ typedef struct _CObjectUpdateThreadInfo CObjectUpdateThreadInfo;
 template <typename V> void SettingSet(int index, V value, CObject * obj, int state=-1) {
     auto handle = obj->getSettingHandle(state);
     if (handle)
-      SettingSet(obj->G, handle, index, value);
+      SettingSet(obj->G, *handle, index, value);
 }
 
 #endif

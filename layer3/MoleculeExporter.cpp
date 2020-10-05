@@ -542,7 +542,7 @@ struct MoleculeExporterPDB : public MoleculeExporter {
   void beginObject() override {
     MoleculeExporter::beginObject();
 
-    m_conect_all = SettingGet_b(G, m_iter.obj->Setting, nullptr, cSetting_pdb_conect_all);
+    m_conect_all = SettingGet_b(G, m_iter.obj->Setting.get(), nullptr, cSetting_pdb_conect_all);
 
     if (m_multi == cMolExportByObject) {
       m_offset += VLAprintf(m_buffer, m_offset, "HEADER    %.40s\n", m_iter.obj->Name);

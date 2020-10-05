@@ -6602,11 +6602,11 @@ void SceneUpdate(PyMOLGlobals * G, int force)
         for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
           if ((*it)->type != cObjectMolecule || force || defer_builds_mode != 5) {
             int static_singletons =
-              SettingGet_b(G, (*it)->Setting, NULL, cSetting_static_singletons);
+              SettingGet_b(G, (*it)->Setting.get(), NULL, cSetting_static_singletons);
             int async_builds =
-              SettingGet_b(G, (*it)->Setting, NULL, cSetting_async_builds);
+              SettingGet_b(G, (*it)->Setting.get(), NULL, cSetting_async_builds);
             int max_threads =
-              SettingGet_i(G, (*it)->Setting, NULL, cSetting_max_threads);
+              SettingGet_i(G, (*it)->Setting.get(), NULL, cSetting_max_threads);
             int nFrame = 0;
             nFrame = (*it)->getNFrame();
             if((nFrame > 1) || (!static_singletons)) {

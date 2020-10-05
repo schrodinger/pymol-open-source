@@ -202,8 +202,8 @@ void ObjectCGORecomputeExtent(ObjectCGO * I)
     }
   }
   I->ExtentFlag = extent_flag;
-  SettingCheckHandle(I->G, &I->Setting);
-  SettingSet_i(I->Setting, cSetting_cgo_lighting, has_normals);
+  SettingCheckHandle(I->G, I->Setting);
+  SettingSet_i(I->Setting.get(), cSetting_cgo_lighting, has_normals);
 }
 
 
@@ -257,7 +257,7 @@ static void ObjectCGORenderState(PyMOLGlobals* G, RenderPass pass, CRay* ray,
         if (cgo_lighting && CGOHasAnyTriangleVerticesWithoutNormals(cgo)) {
           cgo = cgo_copy = CGOGenerateNormalsForTriangles(cgo);
         }
-        CGORenderRay(cgo, ray, info, color, ramp, I->Setting, NULL);
+        CGORenderRay(cgo, ray, info, color, ramp, I->Setting.get(), NULL);
         CGOFree(cgo_copy);
       }
     }
@@ -266,14 +266,14 @@ static void ObjectCGORenderState(PyMOLGlobals* G, RenderPass pass, CRay* ray,
       PickContext context;
       context.object = I;
       context.state = sobj - I->State;
-      CGORenderGLPicking(sobj->renderCGO, info, &context, I->Setting, nullptr);
+      CGORenderGLPicking(sobj->renderCGO, info, &context, I->Setting.get(), nullptr);
     } else if (pass != RenderPass::Antialias) {
       bool pass_is_opaque = pass == RenderPass::Opaque;
       if(sobj && ((sobj->hasTransparency ^ pass_is_opaque) || (sobj->hasOpaque == pass_is_opaque))){
 	{
 	  CShaderPrg *shaderPrg;
-	  int two_sided_lighting = SettingGet_i(G, I->Setting, NULL, cSetting_two_sided_lighting);
-          bool backface_cull = SettingGet_i(G, I->Setting, NULL, cSetting_backface_cull);
+	  int two_sided_lighting = SettingGet_i(G, I->Setting.get(), NULL, cSetting_two_sided_lighting);
+          bool backface_cull = SettingGet_i(G, I->Setting.get(), NULL, cSetting_backface_cull);
 	  if (two_sided_lighting<0){
 	    two_sided_lighting = !cgo_lighting;
 	  }
@@ -306,12 +306,12 @@ static void ObjectCGORenderState(PyMOLGlobals* G, RenderPass pass, CRay* ray,
 	    shaderPrg->Set1i("two_sided_lighting_enabled", two_sided_lighting);
 	    sobj->renderCGO->use_shader = use_shader;
 	    sobj->renderCGO->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
-	    CGORenderGL(sobj->renderCGO, color, I->Setting, NULL, info, NULL);
+	    CGORenderGL(sobj->renderCGO, color, I->Setting.get(), NULL, info, NULL);
 	    shaderPrg->Disable();
 	  } else {
 	    sobj->renderCGO->use_shader = use_shader;
 	    sobj->renderCGO->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
-	    CGORenderGL(sobj->renderCGO, color, I->Setting, NULL, info, NULL);
+	    CGORenderGL(sobj->renderCGO, color, I->Setting.get(), NULL, info, NULL);
 	  }
 
 	    if (backface_cull){
@@ -349,7 +349,7 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
     } else {
       colorWithA[0] = 1.f; colorWithA[1] = 1.f; colorWithA[2] = 1.f;
     }
-    colorWithA[3] = 1.f - SettingGet_f(G, I->Setting, NULL, cSetting_cgo_transparency);
+    colorWithA[3] = 1.f - SettingGet_f(G, I->Setting.get(), NULL, cSetting_cgo_transparency);
 
     bool hasTransparency = (colorWithA[3] < 1.f || CGOHasTransparency(sobj->origCGO));
     bool hasOpaque = (colorWithA[3] == 1.f || CGOHasOpaque(sobj->origCGO));
@@ -425,7 +425,7 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
     }
 
     if (ramp){
-      preOpt.reset(CGOColorByRamp(G, preOpt.get(), ramp, state, I->Setting));
+      preOpt.reset(CGOColorByRamp(G, preOpt.get(), ramp, state, I->Setting.get()));
     }
 
     sobj->hasTransparency = hasTransparency;
@@ -493,7 +493,7 @@ void ObjectCGO::render(RenderInfo * info)
   
   use_shader = SettingGetGlobal_b(G, cSetting_cgo_use_shader) &
     SettingGetGlobal_b(G, cSetting_use_shaders);
-  cgo_lighting = SettingGet_i(G, I->Setting, NULL, cSetting_cgo_lighting);
+  cgo_lighting = SettingGet_i(G, I->Setting.get(), NULL, cSetting_cgo_lighting);
 
   ObjectPrepareContext(I, info);
   ramp = ColorGetRamp(G, I->Color);
@@ -504,7 +504,7 @@ void ObjectCGO::render(RenderInfo * info)
 
   if(pass != RenderPass::Antialias || info->ray || info->pick) {
     if((I->visRep & cRepCGOBit)) {
-      for(StateIterator iter(G, I->Setting, state, I->NState); iter.next();) {
+      for(StateIterator iter(G, I->Setting.get(), state, I->NState); iter.next();) {
         sobj = I->State + iter.state;
         if (!sobj->origCGO)
           continue;

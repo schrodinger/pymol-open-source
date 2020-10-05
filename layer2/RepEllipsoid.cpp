@@ -66,7 +66,7 @@ void RepEllipsoid::render(RenderInfo* info)
       " RepEllipsoidRender: rendering ray...\n" ENDFD;
 
     if(I->ray){
-      int rayok = CGORenderRay(I->ray, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
+      int rayok = CGORenderRay(I->ray, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
       if (!rayok){
 	CGOFree(I->ray);
 	try_std = true;
@@ -75,7 +75,7 @@ void RepEllipsoid::render(RenderInfo* info)
       try_std = true;
     }
     if(try_std && I->std){
-      ok &= CGORenderRay(I->std, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
+      ok &= CGORenderRay(I->std, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
       if (!ok){
 	CGOFree(I->std);
       }
@@ -86,10 +86,10 @@ void RepEllipsoid::render(RenderInfo* info)
     if(pick) {
       if(I->shaderCGO) {
         CGORenderGLPicking(I->shaderCGO, info, &I->context,
-                           I->cs->Setting, I->obj->Setting);
+                           I->cs->Setting.get(), I->obj->Setting.get());
       } else if(I->std) {
         CGORenderGLPicking(I->std, info, &I->context,
-                           I->cs->Setting, I->obj->Setting);
+                           I->cs->Setting.get(), I->obj->Setting.get());
       }
     } else {
       int use_shaders;
@@ -110,9 +110,9 @@ void RepEllipsoid::render(RenderInfo* info)
 	  CGOFree(I->shaderCGO);	  
 	}
 	if (I->shaderCGO){
-          CGORenderGL(I->shaderCGO, NULL, I->cs->Setting, I->obj->Setting, info, I);
+          CGORenderGL(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
 	} else if(I->std){
-          CGORenderGL(I->std, NULL, I->cs->Setting, I->obj->Setting, info, I);
+          CGORenderGL(I->std, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
 	}
     }
   }
@@ -167,25 +167,25 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
   obj = cs->Obj;
 
   {
-    int ellipsoid_color = SettingGet_color(G, cs->Setting, obj->Setting,
+    int ellipsoid_color = SettingGet_color(G, cs->Setting.get(), obj->Setting.get(),
                                            cSetting_ellipsoid_color);
 
-    int cartoon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Setting,
+    int cartoon_side_chain_helper = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(),
                                                  cSetting_cartoon_side_chain_helper);
 
-    int ribbon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Setting,
+    int ribbon_side_chain_helper = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(),
                                                 cSetting_ribbon_side_chain_helper);
 
-    float ellipsoid_scale = SettingGet_f(G, cs->Setting, obj->Setting,
+    float ellipsoid_scale = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(),
                                          cSetting_ellipsoid_scale);
 
-    float transp = SettingGet_f(G, cs->Setting, obj->Setting,
+    float transp = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(),
                                 cSetting_ellipsoid_transparency);
 
-    int pickable = SettingGet_b(G, cs->Setting, obj->Setting,
+    int pickable = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(),
                                 cSetting_pickable);
 
-    float prob = SettingGet_f(G, cs->Setting, obj->Setting,
+    float prob = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(),
                               cSetting_ellipsoid_probability);
     double matrix_factor = 0.0F;
     float pradius = 0.0F;
@@ -207,7 +207,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
       AtomInfoType *ai;
       float last_alpha = 1.0F;
 
-      double *csmatrix = SettingGet_i(G, cs->Setting, obj->Setting,
+      double *csmatrix = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(),
             cSetting_matrix_mode) > 0 ? NULL : cs->Matrix.data();
 
       for(a = 0; a < cs->NIndex; a++) {

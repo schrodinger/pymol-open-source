@@ -401,9 +401,9 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
   int cur_color = -1;
 
   if(ms->MeshMode == 0) {
-    cur_color = SettingGet_color(I->G, I->Setting, NULL, cSetting_mesh_color);
+    cur_color = SettingGet_color(I->G, I->Setting.get(), NULL, cSetting_mesh_color);
   } else if(ms->MeshMode == 1) {
-    cur_color = SettingGet_color(I->G, I->Setting, NULL, cSetting_dot_color);
+    cur_color = SettingGet_color(I->G, I->Setting.get(), NULL, cSetting_dot_color);
   }
 
   if(cur_color == -1)
@@ -440,7 +440,7 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
     if(vc) {
       for(a = 0; a < n_vert; a++) {
         if(a == base_n_vert) {
-          int new_color = SettingGet_color(I->G, I->Setting,
+          int new_color = SettingGet_color(I->G, I->Setting.get(),
                                            NULL, cSetting_mesh_negative_color);
           if(new_color == -1)
             new_color = cur_color;
@@ -468,7 +468,7 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
       ms->RC.clear();
     } else if((!ramped_flag)
               ||
-              (!SettingGet_b(I->G, NULL, I->Setting, cSetting_ray_color_ramps))) {
+              (!SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_ray_color_ramps))) {
       ms->RC.clear();
     }
   }
@@ -494,7 +494,7 @@ void ObjectMesh::update()
   int last_flag = 0;
   int h, k, l;
   int i, j;
-  int mesh_skip = SettingGet_i(G, I->Setting, NULL, cSetting_mesh_skip);
+  int mesh_skip = SettingGet_i(G, I->Setting.get(), NULL, cSetting_mesh_skip);
 
   MapType *voxelmap;            /* this has nothing to do with isosurfaces... */
   for(a = 0; a < I->NState; a++) {
@@ -569,14 +569,14 @@ void ObjectMesh::update()
                ms->Range[3],
                ms->Range[4],
                ms->Range[5]); */
-            IsosurfVolume(I->G, I->Setting, NULL,
+            IsosurfVolume(I->G, I->Setting.get(), NULL,
                           field,
                           ms->Level,
                           ms->N, ms->V,
                           ms->Range, ms->MeshMode, mesh_skip, ms->AltLevel);
 
             if(!SettingGet_b
-               (I->G, I->Setting, NULL, cSetting_mesh_negative_visible)) {
+               (I->G, I->Setting.get(), NULL, cSetting_mesh_negative_visible)) {
               ms->base_n_V = VLAGetSize(ms->V);
             } else if(ms->MeshMode != 3) {
               /* do we want the negative surface too? */
@@ -584,7 +584,7 @@ void ObjectMesh::update()
               pymol::vla<int> N2(10000);
               pymol::vla<float> V2(10000);
 
-              IsosurfVolume(I->G, I->Setting, NULL,
+              IsosurfVolume(I->G, I->Setting.get(), NULL,
                             field,
                             -ms->Level,
                             N2, V2, ms->Range, ms->MeshMode, mesh_skip, ms->AltLevel);
@@ -776,7 +776,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
   RenderPass pass = RenderPass::Antialias;
   int *n = NULL;
   int c;
-  float line_width, mesh_width = SettingGet_f(I->G, I->Setting, NULL, cSetting_mesh_width);
+  float line_width, mesh_width = SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_mesh_width);
   ObjectMeshState *ms = NULL;
   int ok = true;
 
@@ -792,14 +792,14 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
   line_width = SceneGetDynamicLineWidth(info, mesh_width);
   ObjectPrepareContext(I, info);
 
-  for(StateIterator iter(I->G, I->Setting, state, I->NState); iter.next();) {
+  for(StateIterator iter(I->G, I->Setting.get(), state, I->NState); iter.next();) {
     ms = I->State + iter.state;
 
     if(!ms->Active || !ms->V || !ms->N)
       continue;
 
     auto transparency =
-        SettingGet<float>(G, I->Setting, nullptr, cSetting_transparency);
+        SettingGet<float>(G, I->Setting.get(), nullptr, cSetting_transparency);
 
     {
         v = ms->V.data();
@@ -807,23 +807,23 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
         if(ok && ray) {
           if(ms->UnitCellCGO && (I->visRep & cRepCellBit)){
             ok &= CGORenderRay(ms->UnitCellCGO.get(), ray, info, ColorGet(I->G, I->Color),
-			       NULL, I->Setting, NULL);
+			       NULL, I->Setting.get(), NULL);
 	    if (!ok){
 	      ms->UnitCellCGO.reset();
 	      break;
 	    }
 	  }
           if(ms->MeshMode != 1) {
-            radius = SettingGet_f(I->G, I->Setting, NULL, cSetting_mesh_radius);
+            radius = SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_mesh_radius);
 
             if(radius == 0.0F) {
               radius = ray->PixelRadius * line_width / 2.0F;
             }
           } else {
-            radius = SettingGet_f(I->G, I->Setting, NULL, cSetting_dot_radius);
+            radius = SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_dot_radius);
             if(radius == 0.0F) {
               radius =
-                ray->PixelRadius * SettingGet_f(I->G, I->Setting, NULL,
+                ray->PixelRadius * SettingGet_f(I->G, I->Setting.get(), NULL,
                                                 cSetting_dot_width) / 1.4142F;
             }
           }
@@ -920,7 +920,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      if(ms->UnitCellCGO && (I->visRep & cRepCellBit)) {
 		const float *color = ColorGet(I->G, I->Color);
 		if (!use_shader) {
-		  CGORenderGL(ms->UnitCellCGO.get(), color, I->Setting, NULL, info, NULL);
+		  CGORenderGL(ms->UnitCellCGO.get(), color, I->Setting.get(), NULL, info, NULL);
 		} else if(!ms->shaderUnitCellCGO) {
 		  CGO *newUnitCellCGO = CGONewSized(G, 0);
 		  CGOColorv(newUnitCellCGO, color);
@@ -955,7 +955,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  if (!mesh_as_cylinders){
 		    if(ms->MeshMode == 1){
 		      ok &= CGODotwidth(shaderCGO, SettingGet_f
-				  (I->G, I->Setting, NULL, cSetting_dot_width));
+				  (I->G, I->Setting.get(), NULL, cSetting_dot_width));
 		    } else {
 		      ok &= CGOSpecial(shaderCGO, LINEWIDTH_DYNAMIC_MESH); 
 		    }
@@ -1023,7 +1023,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		    glColor3fv(ColorGet(I->G, ms->OneColor));
 		  if(ms->MeshMode == 1){
 		    glPointSize(SettingGet_f
-				(I->G, I->Setting, NULL, cSetting_dot_width));
+				(I->G, I->Setting.get(), NULL, cSetting_dot_width));
 		  } else {
 		    glLineWidth(line_width);
 		  }

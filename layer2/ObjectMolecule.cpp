@@ -392,8 +392,8 @@ char *ObjectMolecule::getCaption(char * ch, int len) const
   const char *frozen_str = "";
 
   int state = ObjectGetCurrentState((CObject *) I, false);
-  int counter_mode = SettingGet_i(I->G, I->Setting, NULL, cSetting_state_counter_mode);
-  int frozen = SettingGetIfDefined_i(I->G, I->Setting, cSetting_state, &objState);
+  int counter_mode = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_state_counter_mode);
+  int frozen = SettingGetIfDefined_i(I->G, I->Setting.get(), cSetting_state, &objState);
 
   /* if frozen print (blue) STATE / NSTATES
    * if not frozen, print STATE/NSTATES
@@ -758,7 +758,7 @@ void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, const float 
   int a;
   float tmp_matrix[16];
   CoordSet *cs;
-  int use_matrices = SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
+  int use_matrices = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_matrix_mode);
   if(use_matrices<0) use_matrices = 0;
   if(!use_matrices) {
     ObjectMoleculeTransformSelection(I, state, -1, matrix, log_trans, I->Name,
@@ -788,7 +788,7 @@ void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, const float 
         ObjectStateLeftCombineMatrixR44d(cs, dbl_matrix);
     } else if(I->NCSet == 1) {  /* static singleton state */
       cs = I->CSet[0];
-      if(cs && SettingGet_b(I->G, I->Setting, NULL, cSetting_static_singletons)) {
+      if(cs && SettingGet_b(I->G, I->Setting.get(), NULL, cSetting_static_singletons)) {
         ObjectStateLeftCombineMatrixR44d(cs, dbl_matrix);
       }
     }
@@ -823,7 +823,7 @@ static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int stat
       for(a = 0; a < I->NAtom; a++) {
         if(!ai0->isHydrogen()) {    /* only do heavies */
           if(SelectorIsMember(I->G, ai0->selEntry, sele)) {
-            for(StateIterator iter(I->G, I->Setting, state, I->NCSet);
+            for(StateIterator iter(I->G, I->Setting.get(), state, I->NCSet);
                 iter.next();) {
               auto cs = I->CSet[iter.state];
               if (!cs)
@@ -2702,7 +2702,7 @@ CObjectState* ObjectMolecule::_getObjectState(int state)
 
 
 /*========================================================================*/
-CSetting **ObjectMolecule::getSettingHandle(int state)
+pymol::copyable_ptr<CSetting>* ObjectMolecule::getSettingHandle(int state)
 {
   auto I = this;
 
@@ -2748,7 +2748,7 @@ bool ObjectMolecule::setSymmetry(CSymmetry const& symmetry, int state)
     success = true;
   }
 
-  for (StateIterator iter(G, Setting, state, NCSet); iter.next();) {
+  for (StateIterator iter(G, Setting.get(), state, NCSet); iter.next();) {
     auto cs = CSet[iter.state];
     if (cs) {
       cs->Symmetry.reset(all_states ? nullptr : new CSymmetry(symmetry));
@@ -2800,20 +2800,20 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
   int visRep;
   float tmp_matrix[16], v_tmp[3], *matrix = NULL;
   int use_matrices =
-    SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
+    SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_matrix_mode);
 
   if(use_matrices<0) use_matrices = 0;
 
-  if (SettingGetIfDefined_i(G, I->Setting, cSetting_all_states, &a)) {
-    curState = a ? -1 : SettingGet_i(G, I->Setting, NULL, cSetting_state);
-  } else if (SettingGetIfDefined_i(G, I->Setting, cSetting_state, &a)) {
+  if (SettingGetIfDefined_i(G, I->Setting.get(), cSetting_all_states, &a)) {
+    curState = a ? -1 : SettingGet_i(G, I->Setting.get(), NULL, cSetting_state);
+  } else if (SettingGetIfDefined_i(G, I->Setting.get(), cSetting_state, &a)) {
     curState = a - 1;
   }
 
   if(G->HaveGUI && G->ValidContext) {
     const AtomInfoType *atInfo = I->AtomInfo.data();
 
-    for(StateIterator iter(G, I->Setting, curState, I->NCSet);
+    for(StateIterator iter(G, I->Setting.get(), curState, I->NCSet);
         iter.next();) {
       if((cs = I->CSet[iter.state])) {
 	    idx2atm = cs->IdxToAtm;
@@ -4500,7 +4500,7 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode
         cnt++;
         switch (mode) {
         case 0:                /* cycle */
-          switch(SettingGet_i(I->G, I->Setting, NULL, cSetting_editor_bond_cycle_mode)) {
+          switch(SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_editor_bond_cycle_mode)) {
           case 1: /* 1 arom 2 3 */
             switch(b0->order) {
             case 1:
@@ -6431,7 +6431,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
     if(state < I->NCSet) {
       cs = I->CSet[state];
       if(cs) {
-        int use_matrices = SettingGet_i(G, I->Setting,
+        int use_matrices = SettingGet_i(G, I->Setting.get(),
                                         NULL, cSetting_matrix_mode);
         if(use_matrices<0) use_matrices = 0;
 
@@ -9440,7 +9440,7 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         }
         if(op_i2) {
           use_matrices =
-            SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
+            SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_matrix_mode);
           if(use_matrices<0) use_matrices = 0;
         }
         for(a = 0; a < I->NAtom; a++) {
@@ -9920,7 +9920,7 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         CoordSet* const* i_CSet = I->CSet.data();
         if(op_i2) {
           use_matrices =
-            SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
+            SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_matrix_mode);
           if(use_matrices<0) use_matrices = 0;
         }
         ai = I->AtomInfo.data();
@@ -9980,7 +9980,7 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         CoordSet* const* i_CSet = I->CSet.data();
         if(op_i2) {
           use_matrices =
-            SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
+            SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_matrix_mode);
           if(use_matrices<0) use_matrices = 0;
         }
         ai = I->AtomInfo.data();
@@ -10058,7 +10058,7 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
           }
           break;
         }
-        use_matrices = SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
+        use_matrices = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_matrix_mode);
         if(use_matrices<0) use_matrices = 0;
         ai = I->AtomInfo.data();
 
@@ -10260,7 +10260,7 @@ bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
               cs = I->CSet[op->cs1];
             } else if(op->include_static_singletons) {
               if((I->NCSet == 1)
-                 && (SettingGet_b(G, NULL, I->Setting, cSetting_static_singletons))) {
+                 && (SettingGet_b(G, NULL, I->Setting.get(), cSetting_static_singletons))) {
                 cs = I->CSet[0];        /*treat static singletons as present in each state */
               }
             }
@@ -10800,7 +10800,7 @@ void ObjectMolecule::update()
     /* set start and stop given an object */
     ObjectAdjustStateRebuildRange(I, &start, &stop);
     if((I->NCSet == 1)
-       && (SettingGet_b(G, I->Setting, NULL, cSetting_static_singletons))) {
+       && (SettingGet_b(G, I->Setting.get(), NULL, cSetting_static_singletons))) {
       start = 0;
       stop = 1;
     }
@@ -10956,7 +10956,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, const float
     if(I->NCSet == 1)
       state = 0;
     state = state % I->NCSet;
-    if((!I->CSet[state]) && (SettingGet_b(G, I->Setting, NULL, cSetting_all_states)))
+    if((!I->CSet[state]) && (SettingGet_b(G, I->Setting.get(), NULL, cSetting_all_states)))
       state = 0;
     cs = I->CSet[state];
     if(cs) {
@@ -10990,7 +10990,7 @@ int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float 
       state = 0;
     state = state % I->NCSet;
     if((!I->CSet[state])
-       && (SettingGet_b(I->G, I->Setting, NULL, cSetting_all_states)))
+       && (SettingGet_b(I->G, I->Setting.get(), NULL, cSetting_all_states)))
       state = 0;
     cs = I->CSet[state];
     if(cs) {
@@ -11202,14 +11202,14 @@ int ObjectMoleculeGetAtomVertex(const ObjectMolecule * I, int state, int index, 
 {
   int result = 0;
   if(state < 0)
-    state = SettingGet_i(I->G, NULL, I->Setting, cSetting_state) - 1;
+    state = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_state) - 1;
   if(state < 0)
     state = SceneGetState(I->G);
   if(I->NCSet == 1)
     state = 0;                  /* static singletons always active here it seems */
   state = state % I->NCSet;
   if((!I->CSet[state])
-     && (SettingGet_b(I->G, I->Setting, NULL, cSetting_all_states)))
+     && (SettingGet_b(I->G, I->Setting.get(), NULL, cSetting_all_states)))
     state = 0;
   if(I->CSet[state])
     result = CoordSetGetAtomVertex(I->CSet[state], index, v);
@@ -11227,7 +11227,7 @@ int ObjectMoleculeGetAtomTxfVertex(const ObjectMolecule * I, int state, int inde
     cs = I->DiscreteCSet[index];
   }
   if(state < 0){
-    state = SettingGet_i(I->G, NULL, I->Setting, cSetting_state) - 1;
+    state = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_state) - 1;
   }
   if(state < 0)
     state = SceneGetState(I->G);
@@ -11237,7 +11237,7 @@ int ObjectMoleculeGetAtomTxfVertex(const ObjectMolecule * I, int state, int inde
   {
     if (!cs)
       cs = I->CSet[state];
-    if((!cs) && (SettingGet_b(I->G, I->Setting, NULL, cSetting_all_states))) {
+    if((!cs) && (SettingGet_b(I->G, I->Setting.get(), NULL, cSetting_all_states))) {
       state = 0;
       cs = I->CSet[state];
     }
@@ -11253,14 +11253,14 @@ int ObjectMoleculeSetAtomVertex(ObjectMolecule * I, int state, int index, float 
 {
   int result = 0;
   if(state < 0)
-    state = SettingGet_i(I->G, NULL, I->Setting, cSetting_state) - 1;
+    state = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_state) - 1;
   if(state < 0)
     state = SceneGetState(I->G);
   if(I->NCSet == 1)
     state = 0;
   state = state % I->NCSet;
   if((!I->CSet[state])
-     && (SettingGet_b(I->G, I->Setting, NULL, cSetting_all_states)))
+     && (SettingGet_b(I->G, I->Setting.get(), NULL, cSetting_all_states)))
     state = 0;
   if(I->CSet[state])
     result = CoordSetSetAtomVertex(I->CSet[state], index, v);
@@ -11276,14 +11276,14 @@ void ObjectMolecule::render(RenderInfo * info)
   const RenderPass pass = info->pass;
   CoordSet *cs;
   int pop_matrix = false;
-  int use_matrices = SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
+  int use_matrices = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_matrix_mode);
   if(use_matrices<0) use_matrices = 0;
   PRINTFD(I->G, FB_ObjectMolecule)
     " ObjectMolecule: rendering %s pass %d...\n", I->Name, static_cast<int>(pass) ENDFD;
 
   ObjectPrepareContext(I, info);
 
-  for(StateIterator iter(G, I->Setting, state, I->NCSet); iter.next();) {
+  for(StateIterator iter(G, I->Setting.get(), state, I->NCSet); iter.next();) {
     cs = I->CSet[iter.state];
     if(cs) {
       if(use_matrices)
@@ -11425,7 +11425,7 @@ void ObjectMoleculeCopyNoAlloc(const ObjectMolecule* obj, ObjectMolecule* I)
   }
   I->Neighbor = NULL;
   I->Sculpt = NULL;
-  I->Setting = SettingCopyAll(G, obj->Setting, nullptr);
+  I->Setting.reset(SettingCopyAll(G, obj->Setting.get(), nullptr));
 
   I->ViewElem = NULL;
   I->gridSlotSelIndicatorsCGO = NULL;
@@ -11929,6 +11929,9 @@ void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAto
   }   
 }
 
+#ifdef _PYMOL_IP_PROPERTIES
+#endif
+
 void AtomInfoSettingGenerateSideEffects(PyMOLGlobals * G, ObjectMolecule *obj, int index, int id){
   switch(index){
   case cSetting_label_position:
@@ -11974,7 +11977,7 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals * G,
       index[a] = a;
   } else {
     if(obj)
-      setting = obj->Setting;
+      setting = obj->Setting.get();
 
     UtilSortIndexGlobals(G, n, rec, index, (UtilOrderFnGlobals *) (
         SettingGet_b(G, setting, NULL, cSetting_retain_order) ?

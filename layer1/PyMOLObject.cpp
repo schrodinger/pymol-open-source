@@ -41,8 +41,7 @@ Z* -------------------------------------------------------------------
 
 void ObjectPurgeSettings(CObject * I)
 {
-  SettingFreeP(I->Setting);
-  I->Setting = NULL;
+  I->Setting.reset();
 }
 
 void ObjectMotionTrim(CObject *I, int n_frame)
@@ -62,11 +61,11 @@ int ObjectMotionGetLength(CObject *I)
 
 void ObjectMotionReinterpolate(CObject *I)
 {
-  float power  = SettingGet_f(I->G, NULL, I->Setting, cSetting_motion_power);
-  float bias   = SettingGet_f(I->G, NULL, I->Setting, cSetting_motion_bias);
-  int simple   = SettingGet_i(I->G, NULL, I->Setting, cSetting_motion_simple);
-  float linear = SettingGet_f(I->G, NULL, I->Setting, cSetting_motion_linear);
-  int hand     = SettingGet_i(I->G, NULL, I->Setting, cSetting_motion_hand);
+  float power  = SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_motion_power);
+  float bias   = SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_motion_bias);
+  int simple   = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_motion_simple);
+  float linear = SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_motion_linear);
+  int hand     = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_motion_hand);
 
   /* 
      int ObjectMotion(CObject * I, int action, int first,
@@ -240,7 +239,7 @@ int ObjectMotion(CObject * I, int action, int first,
     int nFrame = MovieGetLength(I->G);
 
     if(wrap<0) {
-      wrap = SettingGet_b(I->G,NULL, I->Setting, cSetting_movie_loop);
+      wrap = SettingGet_b(I->G,NULL, I->Setting.get(), cSetting_movie_loop);
     }
 
     if(nFrame < 0)
@@ -298,7 +297,7 @@ int ObjectMotion(CObject * I, int action, int first,
             ViewElemSmooth(I->ViewElem + first, I->ViewElem + last, window, wrap);
           }
       }
-      if(SettingGet_b(I->G, NULL, I->Setting, cSetting_movie_auto_interpolate)){
+      if(SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_movie_auto_interpolate)){
         action = 3; /* reinterpolate */
         last = save_last;
       }
@@ -325,7 +324,7 @@ int ObjectMotion(CObject * I, int action, int first,
           if(state>=0) {
             state_tmp = state;
             state_flag = true;
-          } else if(SettingGetIfDefined_i(G, I->Setting, cSetting_state, &state_tmp)) {
+          } else if(SettingGetIfDefined_i(G, I->Setting.get(), cSetting_state, &state_tmp)) {
             state_flag = true;
             state_tmp--;
           }
@@ -549,10 +548,10 @@ void ObjectAdjustStateRebuildRange(CObject * I, int *start, int *stop)
 {
   /* on entry, start and stop should hold the valid range for the object */
   int defer_builds_mode =
-    SettingGet_i(I->G, NULL, I->Setting, cSetting_defer_builds_mode);
-  int async_builds = SettingGet_b(I->G, NULL, I->Setting, cSetting_async_builds);
-  int max_threads = SettingGet_i(I->G, NULL, I->Setting, cSetting_max_threads);
-  int all_states = SettingGet_i(I->G, NULL, I->Setting, cSetting_all_states);
+    SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_defer_builds_mode);
+  int async_builds = SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_async_builds);
+  int max_threads = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_max_threads);
+  int all_states = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_all_states);
   int dummy;
   if (all_states)
     return;
@@ -563,7 +562,7 @@ void ObjectAdjustStateRebuildRange(CObject * I, int *start, int *stop)
   switch (defer_builds_mode) {
   case 1:                      /* defer geometry builds until needed */
   case 2:                      /* defer and destroy continuously for increase memory conservation */
-    if(SettingGetIfDefined_i(I->G, I->Setting, cSetting_state, &dummy)) {  
+    if(SettingGetIfDefined_i(I->G, I->Setting.get(), cSetting_state, &dummy)) {
       /* decoupled...so always build all states.  Otherwise, geometry
       may not be there when we need it... unfortunately, this defeats
       the purpose of defer_builds_mode! */
@@ -739,9 +738,9 @@ CObjectState* CObject::getObjectState(int state)
 int CObject::getCurrentState() const
 {
   if (getNFrame() == 1 &&
-      SettingGet<bool>(G, Setting, nullptr, cSetting_static_singletons))
+      SettingGet<bool>(G, Setting.get(), nullptr, cSetting_static_singletons))
     return 0;
-  return SettingGet<int>(G, Setting, nullptr, cSetting_state) - 1;
+  return SettingGet<int>(G, Setting.get(), nullptr, cSetting_state) - 1;
 }
 
 /**
@@ -764,7 +763,7 @@ int ObjectGetCurrentState(CObject * I, int ignore_all_states)
   // object-level state=0 (all states)
 
   if (!ignore_all_states &&
-      SettingGet_b(I->G, I->Setting, NULL, cSetting_all_states))
+      SettingGet_b(I->G, I->Setting.get(), NULL, cSetting_all_states))
     return -1;
 
   return std::max(-1, I->getCurrentState());
@@ -782,7 +781,7 @@ PyObject *ObjectAsPyList(CObject * I)
   PyList_SetItem(result, 5, PConvFloatArrayToPyList(I->ExtentMax, 3));
   PyList_SetItem(result, 6, PyInt_FromLong(I->ExtentFlag));
   PyList_SetItem(result, 7, PyInt_FromLong(I->TTTFlag));
-  PyList_SetItem(result, 8, SettingAsPyList(I->Setting));
+  PyList_SetItem(result, 8, SettingAsPyList(I->Setting.get()));
 
   PyList_SetItem(result, 9, PyInt_FromLong(I->Enabled));
   PyList_SetItem(result, 10, PyInt_FromLong(I->Context));
@@ -834,8 +833,11 @@ int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, CObject * I)
     ok = PConvPyIntToInt(PyList_GetItem(list, 6), &I->ExtentFlag);
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 7), &I->TTTFlag);
-  if(ok)
-    I->Setting = SettingNewFromPyList(G, PyList_GetItem(list, 8));
+  if(ok){
+    CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 8);
+    I->Setting.reset(SettingNewFromPyList(G, val));
+    CPythonVal_Free(val);
+  }
   if(ok && (ll > 9))
     ok = PConvPyIntToInt(PyList_GetItem(list, 9), &I->Enabled);
   if(ok && (ll > 10))
@@ -875,7 +877,7 @@ int ObjectCopyHeader(CObject * I, const CObject * src)
 
   I->ExtentFlag = src->ExtentFlag;
   I->TTTFlag = src->TTTFlag;
-  I->Setting = NULL;            /* to do */
+  I->Setting = src->Setting;
   I->Enabled = src->Enabled;
   I->Context = src->Context;
   {
@@ -908,7 +910,7 @@ void ObjectCombineTTT(CObject * I, const float *ttt, int reverse_order, int stor
       combineTTT44f44f(ttt, cpy, I->TTT);
     }
     if(store<0) 
-      store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
+      store = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_movie_auto_store);
     if(store && MovieDefined(I->G)) {
       if(!I->ViewElem)  
         I->ViewElem = pymol::vla<CViewElem>(0);
@@ -939,7 +941,7 @@ void ObjectTranslateTTT(CObject * I, const float *v, int store)
       I->TTT[11] += v[2];
     }
     if(store<0) 
-      store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
+      store = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_movie_auto_store);
     if(store && MovieDefined(I->G)) {
       if(!I->ViewElem)  
         I->ViewElem = pymol::vla<CViewElem>(0);
@@ -968,7 +970,7 @@ void ObjectSetTTT(CObject * I, const float *ttt, int state, int store)
       return;
     }
     if(store<0) 
-      store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
+      store = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_movie_auto_store);
     if(store && MovieDefined(I->G)) {
       if(!I->ViewElem)  
         I->ViewElem = pymol::vla<CViewElem>(0);
@@ -1009,7 +1011,7 @@ void ObjectResetTTT(CObject * I,int store)
   
   I->TTTFlag = false;
   if(store<0) 
-    store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
+    store = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_movie_auto_store);
   if(store && MovieDefined(I->G)) {
     if(!I->ViewElem)  
       I->ViewElem = pymol::vla<CViewElem>(0);
@@ -1046,7 +1048,7 @@ int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
 
   if (!history) {
     history =
-        SettingGet<int>(I->G, I->Setting, nullptr, cSetting_matrix_mode) > 0;
+        SettingGet<int>(I->G, I->Setting.get(), nullptr, cSetting_matrix_mode) > 0;
   }
 
   if (history) {
@@ -1088,12 +1090,12 @@ void ObjectPrepareContext(CObject * I, RenderInfo * info)
           I->TTTFlag = true;
         }
         if(I->ViewElem[frame].state_flag) {
-          SettingCheckHandle(I->G,&I->Setting);
+          SettingCheckHandle(I->G, I->Setting);
           if(I->Setting) {
             /* note: this assumes that the state has already been
                calculated and can thus be displayed.  How can we
                guarantee this to be true? */
-            SettingSet_i(I->Setting,cSetting_state,I->ViewElem[frame].state + 1);
+            SettingSet_i(I->Setting.get(),cSetting_state,I->ViewElem[frame].state + 1);
           }
         }
       }
@@ -1174,7 +1176,7 @@ void ObjectSetTTTOrigin(CObject * I, float *origin)
 
 
 /*========================================================================*/
-CSetting **CObject::getSettingHandle(int state)
+pymol::copyable_ptr<CSetting>* CObject::getSettingHandle(int state)
 {
   return &Setting;
 }
@@ -1230,7 +1232,6 @@ void ObjectSetName(CObject * I, const char *name)
 CObject::~CObject()
 {
   SceneObjectDel(this->G, this, false);
-  SettingFreeP(this->Setting);
 }
 
 

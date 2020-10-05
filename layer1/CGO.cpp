@@ -5926,8 +5926,8 @@ static void CGO_gl_vertex_cross(CCGORenderer * I, CGO_op_data v){
 #ifndef PURE_OPENGL_ES_2
   } else {
     CSetting * set1 = NULL, * set2 = NULL;
-    if (I->rep&&I->rep->cs) set1 = I->rep->cs->Setting;
-    if (I->rep&&I->rep->obj) set2 = I->rep->obj->Setting;
+    if (I->rep&&I->rep->cs) set1 = I->rep->cs->Setting.get();
+    if (I->rep&&I->rep->obj) set2 = I->rep->obj->Setting.get();
     float nonbonded_size =
       SettingGet_f(I->G, set1, set2, cSetting_nonbonded_size);
     float pt[3];
@@ -6204,8 +6204,8 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer * I, CGO_op_data pc){
     int *sort_mem = ix + n_tri;
     int t_mode;
     CSetting * set1 = NULL, * set2 = NULL;
-    if (I->rep&&I->rep->cs) set1 = I->rep->cs->Setting;
-    if (I->rep&&I->rep->obj) set2 = I->rep->obj->Setting;
+    if (I->rep&&I->rep->cs) set1 = I->rep->cs->Setting.get();
+    if (I->rep&&I->rep->obj) set2 = I->rep->obj->Setting.get();
     t_mode = SettingGet_i(I->G, set1, set2, cSetting_transparency_mode);
     if (t_mode!=3){
       GL_C_INT_TYPE *vertexIndicesOriginalTI = (GL_C_INT_TYPE *)(sort_mem + n_tri + 256);
@@ -6453,8 +6453,8 @@ static void CGO_gl_draw_labels(CCGORenderer * I, CGO_op_data pc) {
   if (I->rep){
     float label_size;
     CSetting * set1 = NULL, * set2 = NULL;
-    if (I->rep->cs) set1 = I->rep->cs->Setting;
-    if (I->rep->obj) set2 = I->rep->obj->Setting;
+    if (I->rep->cs) set1 = I->rep->cs->Setting.get();
+    if (I->rep->obj) set2 = I->rep->obj->Setting.get();
     label_size = SettingGet_f(I->G, set1, set2, cSetting_label_size);
     shaderPrg->Set1f("scaleByVertexScale", label_size < 0.f ? 1.f : 0.f);
     if (label_size<0.f){
@@ -6513,8 +6513,8 @@ static void CGO_gl_draw_connectors(CCGORenderer * I, CGO_op_data pc) {
     float label_size;
     CSetting * set1 = NULL, * set2 = NULL;
     float v_scale = SceneGetScreenVertexScale(I->G, NULL);
-    if (I->rep->cs) set1 = I->rep->cs->Setting;
-    if (I->rep->obj) set2 = I->rep->obj->Setting;
+    if (I->rep->cs) set1 = I->rep->cs->Setting.get();
+    if (I->rep->obj) set2 = I->rep->obj->Setting.get();
     label_size = SettingGet_f(I->G, set1, set2, cSetting_label_size);
     shaderPrg->Set1f("scaleByVertexScale", label_size < 0.f ? 1.f : 0.f);
     lineWidth = SettingGet_f(I->G, set1, set2, cSetting_label_connector_width);
@@ -6676,10 +6676,10 @@ static void CGO_gl_special(CCGORenderer * I, CGO_op_data pc)
   CSetting *csSetting = NULL, *objSetting = NULL;
   auto shaderPrg = I->G->ShaderMgr->Get_Current_Shader();
   if (I->rep && I->rep->cs){
-    csSetting = I->rep->cs->Setting;
+    csSetting = I->rep->cs->Setting.get();
   }
   if (I->rep && I->rep->obj){
-    objSetting = I->rep->obj->Setting;
+    objSetting = I->rep->obj->Setting.get();
   }
   switch (mode){
   case LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON:
@@ -6725,7 +6725,7 @@ static void CGO_gl_special(CCGORenderer * I, CGO_op_data pc)
     {
       float line_width;
       if (I->rep){
-        line_width = SettingGet_f(I->G, I->rep->cs->Setting, I->rep->obj->Setting, cSetting_mesh_width);
+        line_width = SettingGet_f(I->G, I->rep->cs->Setting.get(), I->rep->obj->Setting.get(), cSetting_mesh_width);
       } else {
         line_width = SettingGet_f(I->G, NULL, NULL, cSetting_mesh_width);
       }
@@ -6753,7 +6753,7 @@ static void CGO_gl_special(CCGORenderer * I, CGO_op_data pc)
       CSetting *setting = NULL;
       float mesh_width;
       if (I && I->rep && I->rep->obj){
-        setting = I->rep->obj->Setting;
+        setting = I->rep->obj->Setting.get();
       }
       mesh_width = SettingGet_f(I->G, setting, NULL, cSetting_mesh_width);
       if (shaderPrg) {
@@ -6956,8 +6956,8 @@ static void CGO_gl_special(CCGORenderer * I, CGO_op_data pc)
     if (I->rep){
       float label_size;
       CSetting * set1 = NULL, * set2 = NULL;
-      if (I->rep->cs) set1 = I->rep->cs->Setting;
-      if (I->rep->obj) set2 = I->rep->obj->Setting;
+      if (I->rep->cs) set1 = I->rep->cs->Setting.get();
+      if (I->rep->obj) set2 = I->rep->obj->Setting.get();
       label_size = SettingGet_f(I->G, set1, set2, cSetting_label_size);
       shaderPrg->Set1f("scaleByVertexScale", label_size < 0.f ? 1.f : 0.f);
       if (label_size<0.f){

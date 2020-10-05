@@ -65,17 +65,17 @@ void RepRibbon::render(RenderInfo* info)
   short use_shader = SettingGetGlobal_b(G, cSetting_ribbon_use_shader) &&
                      SettingGetGlobal_b(G, cSetting_use_shaders);
   bool ribbon_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
-                             SettingGet<bool>(G, I->cs->Setting,
-                                                 I->obj->Setting,
+                             SettingGet<bool>(G, I->cs->Setting.get(),
+                                                 I->obj->Setting.get(),
                                                  cSetting_ribbon_as_cylinders);
 
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting, I->obj->Setting);
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
-      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting, I->obj->Setting, I);
+      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get(), I);
     } else {
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);
@@ -122,10 +122,10 @@ void RepRibbon::render(RenderInfo* info)
           CGOFreeWithoutVBOs(convertcgo);
           I->shaderCGO->use_shader = true;
         }
-        CGORenderGL(I->shaderCGO, NULL, I->cs->Setting, I->obj->Setting, info, I);
+        CGORenderGL(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
         return;
       } else {
-        CGORenderGL(I->primitiveCGO, NULL, I->cs->Setting, I->obj->Setting, info, I);
+        CGORenderGL(I->primitiveCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
         return;
       }
     }
@@ -172,22 +172,22 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
 
   obj = cs->Obj;
 
-  power_a = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_power);
-  power_b = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_power_b);
-  throw_ = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_throw);
-  int trace_ostate = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_trace_atoms);
-  trace_mode = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_trace_atoms_mode);
+  power_a = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_power);
+  power_b = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_power_b);
+  throw_ = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_throw);
+  int trace_ostate = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_trace_atoms);
+  trace_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_trace_atoms_mode);
   na_mode =
-    SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_nucleic_acid_mode);
+    SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_nucleic_acid_mode);
 
   ribbon_color =
-    SettingGet_color(G, cs->Setting, obj->Setting, cSetting_ribbon_color);
+    SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_color);
 
-  sampling = SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_sampling);
+  sampling = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_sampling);
   if(sampling < 1)
     sampling = 1;
-  I->radius = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_radius);
-  I->ribbon_width = SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_width);
+  I->radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_radius);
+  I->ribbon_width = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_width);
 
   /* find all of the CA points */
 
@@ -419,7 +419,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     I->primitiveCGO = CGONew(G);
     CGOSpecialWithArg(I->primitiveCGO, LINE_LIGHTING, 0.f);
 
-    float alpha = 1.f - SettingGet_f(G, NULL, I->obj->Setting, cSetting_ribbon_transparency);
+    float alpha = 1.f - SettingGet_f(G, NULL, I->obj->Setting.get(), cSetting_ribbon_transparency);
     if(fabs(alpha-1.0) < R_SMALL4)
       alpha = 1.0F;
     CGOAlpha(I->primitiveCGO, alpha);  // would be good to set these at render time instead
@@ -557,13 +557,13 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
     const AtomInfoType *obj_AtomInfo = obj->AtomInfo.data();
     const AtomInfoType *ai, *last_ai = NULL;
     int trace, trace_ostate =
-      SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_trace_atoms);
+      SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_trace_atoms);
     int trace_mode =
-      SettingGet_i(G, cs->Setting, obj->Setting, cSetting_trace_atoms_mode);
+      SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_trace_atoms_mode);
     int na_mode =
-      SettingGet_i(G, cs->Setting, obj->Setting, cSetting_ribbon_nucleic_acid_mode);
+      SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_nucleic_acid_mode);
     float ribbon_width =
-      SettingGet_f(G, cs->Setting, obj->Setting, cSetting_ribbon_width);
+      SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_width);
     int a1, a2 = -1;
     int color, last_color = -9;
 
