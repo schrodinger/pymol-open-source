@@ -26,7 +26,7 @@ if True:
 
         def cealign(target, mobile, target_state=1, mobile_state=1, quiet=1,
                     guide=1, d0=3.0, d1=4.0, window=8, gap_max=30, transform=1,
-                    object=None, _self=cmd):
+                    object=None, *, _self=cmd):
                 '''
 DESCRIPTION
 
@@ -135,7 +135,7 @@ SEE ALSO
                 return ( {"alignment_length": aliLen, "RMSD" : RMSD, "rotation_matrix" : rotMat } )
 
         def extra_fit(selection='(all)', reference='', method='align', zoom=1,
-                quiet=0, _self=cmd, **kwargs):
+                quiet=0, *, _self=cmd, **kwargs):
             '''
 DESCRIPTION
 
@@ -196,7 +196,7 @@ SEE ALSO
             _self.delete(sele_name)
 
 
-        def alignto(target='', method="cealign", selection='', quiet=1, _self=cmd, **kwargs):
+        def alignto(target='', method="cealign", selection='', quiet=1, *, _self=cmd, **kwargs):
                 """
 DESCRIPTION
 
@@ -235,7 +235,7 @@ SEE ALSO
                     if not names:
                         raise pymol.CmdException('no public objects')
                     selection = '%' + ' %'.join(names)
-                return extra_fit(selection, target, method, 0, quiet, _self, **kwargs)
+                return extra_fit(selection, target, method, 0, quiet, _self=_self, **kwargs)
 
 
 
@@ -245,7 +245,7 @@ SEE ALSO
                           quiet=1, max_skip=0, transform=1, reset=0,
                           seq=0.0, radius=12.0, scale=17.0, base=0.65,
                           coord=0.0, expect=6.0, window=3, ante=-1.0,
-                          _self=cmd):
+                          *, _self=cmd):
 
                 '''
 DESCRIPTION
@@ -306,7 +306,7 @@ SEE ALSO
         def align(mobile, target, cutoff=2.0, cycles=5, gap=-10.0,
                           extend=-0.5, max_gap=50, object=None,
                           matrix="BLOSUM62", mobile_state=0, target_state=0,
-                          quiet=1, max_skip=0, transform=1, reset=0, _self=cmd):
+                          quiet=1, max_skip=0, transform=1, reset=0, *, _self=cmd):
 
                 '''
 DESCRIPTION
@@ -393,7 +393,7 @@ SEE ALSO
                 if _self._raising(r,_self): raise pymol.CmdException
                 return r
 
-        def intra_fit(selection, state=1, quiet=1, mix=0, _self=cmd):
+        def intra_fit(selection, state=1, quiet=1, mix=0, *, _self=cmd):
                 '''
 DESCRIPTION
 
@@ -453,7 +453,7 @@ SEE ALSO
                 if _self._raising(r,_self): raise pymol.CmdException
                 return r
 
-        def intra_rms(selection, state=0, quiet=1, _self=cmd):
+        def intra_rms(selection, state=0, quiet=1, *, _self=cmd):
                 '''
 DESCRIPTION
 
@@ -497,7 +497,7 @@ SEE ALSO
                 if _self._raising(r,_self): raise pymol.CmdException
                 return r
 
-        def intra_rms_cur(selection, state=0, quiet=1, _self=cmd):
+        def intra_rms_cur(selection, state=0, quiet=1, *, _self=cmd):
                 '''
 DESCRIPTION
 
@@ -541,7 +541,7 @@ SEE ALSO
                 return r
 
         def fit(mobile, target, mobile_state=0, target_state=0,
-		quiet=1, matchmaker=0, cutoff=2.0, cycles=0, object=None, _self=cmd):
+		quiet=1, matchmaker=0, cutoff=2.0, cycles=0, object=None, *, _self=cmd):
             '''
 DESCRIPTION
 
@@ -618,7 +618,7 @@ SEE ALSO
             return r
 
         def rms(mobile, target, mobile_state=0, target_state=0, quiet=1,
-			  matchmaker=0, cutoff=2.0, cycles=0, object=None, _self=cmd):
+			  matchmaker=0, cutoff=2.0, cycles=0, object=None, *, _self=cmd):
             '''
 DESCRIPTION
 
@@ -665,7 +665,7 @@ SEE ALSO
 
         def rms_cur(mobile, target, mobile_state=0, target_state=0,
 				quiet=1, matchmaker=0, cutoff=2.0, cycles=0,
-				object=None, _self=cmd):
+				object=None, *, _self=cmd):
 
             '''
 DESCRIPTION

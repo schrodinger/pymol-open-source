@@ -24,7 +24,7 @@ if True:
           _feedback,fb_module,fb_mask,is_list, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
-    def auto_measure(_self=cmd):
+    def auto_measure(*, _self=cmd):
         lst = _self.get_names("selections")
         if "pk1" in lst:
             if "pk2" in lst:
@@ -37,7 +37,7 @@ if True:
                     _self.distance()
         _self.unpick()
 
-    def get_volume_field(objName, state=1, copy=1, _self=cmd):
+    def get_volume_field(objName, state=1, copy=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -59,7 +59,7 @@ ARGUMENTS
             r = _self._cmd.get_volume_field(_self._COb, objName, int(state) - 1, int(copy))
         return r
 
-    def get_volume_histogram(objName, bins=64, range=None, _self=cmd):
+    def get_volume_histogram(objName, bins=64, range=None, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -71,22 +71,22 @@ DESCRIPTION
                     int(bins), range or (0., 0.))
         return r
 
-    def get_unused_name(prefix="tmp",alwaysnumber=1,_self=cmd):
+    def get_unused_name(prefix="tmp", alwaysnumber=1, *, _self=cmd):
         with _self.lockcm:
             r = _cmd.get_unused_name(_self._COb, prefix, alwaysnumber)
         return r
 
-    def get_modal_draw(_self=cmd,quiet=1):
+    def get_modal_draw(*, _self=cmd, quiet=1):
         with _self.lockcm:
             r = _cmd.get_modal_draw(_self._COb)
         return r
 
-    def get_drag_object_name(_self=cmd):
+    def get_drag_object_name(*, _self=cmd):
         with _self.lockcm:
             r = _cmd.get_drag_object_name(_self._COb)
         return r
 
-    def get_object_matrix(object,state=1, incl_ttt=1, _self=cmd):
+    def get_object_matrix(object,state=1, incl_ttt=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -99,7 +99,7 @@ DESCRIPTION
             r = _cmd.get_object_matrix(_self._COb,str(object), int(state)-1, int(incl_ttt))
         return r
 
-    def get_object_ttt(object, quiet=1, _self=cmd):
+    def get_object_ttt(object, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -118,7 +118,7 @@ DESCRIPTION
                     print('TTT %8.2f %8.2f %8.2f | %8.2f' % tuple(r[i * 4:i * 4 + 4]))
         return r
 
-    def get_object_settings(object, state=ALL_STATES, quiet=1, _self=cmd):
+    def get_object_settings(object, state=ALL_STATES, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -128,7 +128,7 @@ DESCRIPTION
             r = _cmd.get_object_settings(_self._COb, str(object), int(state) - 1)
         return r
 
-    def get_object_list(selection="(all)", quiet=1, _self=cmd):
+    def get_object_list(selection="(all)", quiet=1, *, _self=cmd):
         '''
         
 DESCRIPTION
@@ -144,7 +144,7 @@ DESCRIPTION
                     print(" get_object_list: ",str(r))
         return r
 
-    def get_symmetry(selection="(all)",state=CURRENT_STATE,quiet=1,_self=cmd):
+    def get_symmetry(selection="(all)", state=CURRENT_STATE, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -173,7 +173,7 @@ PYMOL API
                         print(" get_symmetry: No symmetry defined.")
         return r
 
-    def get_title(object, state, quiet=1, _self=cmd):
+    def get_title(object, state, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -199,8 +199,8 @@ PYMOL API
 
     def angle(name=None, selection1="(pk1)", selection2="(pk2)",
 	      selection3="(pk3)", mode=None, label=1, reset=0,
-	      zoom=0, state=ALL_STATES, quiet=1, _self=cmd,
-              state1=-3, state2=-3, state3=-3):
+	      zoom=0, state=ALL_STATES, quiet=1, *,
+              state1=-3, state2=-3, state3=-3, _self=cmd):
 
         '''
 DESCRIPTION
@@ -286,7 +286,7 @@ SEE ALSO
 
     def dihedral(name=None, selection1="(pk1)", selection2="(pk2)",
 		 selection3="(pk3)", selection4="(pk4)", mode=None,
-		 label=1, reset=0, zoom=0, state=ALL_STATES, quiet=1, _self=cmd):
+		 label=1, reset=0, zoom=0, state=ALL_STATES, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -380,7 +380,7 @@ SEE ALSO
     def distance(name=None, selection1="(pk1)", selection2="(pk2)",
 		 cutoff=None, mode=None, zoom=0, width=None, length=None,
                  gap=None, label=1, quiet=1, reset=0, state=ALL_STATES,
-                 state1=-3, state2=-3, _self=cmd):
+                 state1=-3, state2=-3, *, _self=cmd):
 
         '''
 DESCRIPTION
@@ -530,7 +530,7 @@ PYMOL API
                         state2=-3,
                         quiet=1,
                         reset=0,
-                        _self=cmd):
+                        *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -544,7 +544,7 @@ SEE ALSO
         '''
         raise pymol.IncentiveOnlyException()
 
-    def get_povray(_self=cmd):
+    def get_povray(*, _self=cmd):
         '''
 DESCRIPTION
 
@@ -560,7 +560,7 @@ PYMOL API
             r = _cmd.get_povray(_self._COb)
         return r
 
-    def get_idtf(quiet=1, _self=cmd):
+    def get_idtf(quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -582,7 +582,7 @@ PYMOL API
 
         return r
 
-    def get_mtl_obj(_self=cmd):
+    def get_mtl_obj(*, _self=cmd):
         '''
 DESCRIPTION
 
@@ -600,7 +600,7 @@ PYMOL API
             r = _cmd.get_mtl_obj(_self._COb)
         return r
 
-    def get_version(quiet=1,_self=cmd):
+    def get_version(quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
  
@@ -629,7 +629,7 @@ PYMOL API
                         print(' git sha:', r[4])
         return r
 
-    def get_vrml(version=2,_self=cmd):
+    def get_vrml(version=2, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -645,7 +645,7 @@ PYMOL API
             r = _cmd.get_vrml(_self._COb,int(version))
         return r
 
-    def get_collada(version=2, _self=cmd):
+    def get_collada(version=2, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -661,7 +661,7 @@ PYMOL API
             r = _cmd.get_collada(_self._COb,int(version))
         return r
 
-    def get_gltf(filename, quiet=1, _self=cmd):
+    def get_gltf(filename, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -700,7 +700,7 @@ PYMOL API
 
         return result
 
-    def count_states(selection="(all)", quiet=1, _self=cmd):
+    def count_states(selection="(all)", quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -727,7 +727,7 @@ SEE ALSO
                 print(" cmd.count_states: %d states."%r)
         return r
 
-    def get_movie_length(quiet=1, images=-1, _self=cmd):
+    def get_movie_length(quiet=1, images=-1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -756,7 +756,7 @@ SEE ALSO
                 print(" cmd.get_movie_length: %d frames"%r)
         return r
 
-    def count_frames(quiet=1, _self=cmd):
+    def count_frames(quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -780,7 +780,7 @@ SEE ALSO
             if not quiet: print(" cmd.count_frames: %d frames"%r)
         return r
 
-    def overlap(selection1, selection2, state1=1, state2=1, adjust=0.0, quiet=1, _self=cmd):
+    def overlap(selection1, selection2, state1=1, state2=1, adjust=0.0, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -811,18 +811,18 @@ NOTES
             if not quiet: print(" cmd.overlap: %5.3f Angstroms."%r)
         return r
 
-    def get_movie_locked(_self=cmd):
+    def get_movie_locked(*, _self=cmd):
         with _self.lockcm:
             r = _cmd.get_movie_locked(_self._COb)
         return r
 
-    def get_object_color_index(name,_self=cmd):
+    def get_object_color_index(name, *, _self=cmd):
         name = str(name)
         with _self.lockcm:
             r = _cmd.get_object_color_index(_self._COb,name)
         return r
 
-    def get_color_tuple(name,mode=0,_self=cmd):
+    def get_color_tuple(name, mode=0, *, _self=cmd):
         '''Get the RGB color tuple for a color (range 0.0 to 1.0)
         :param name: color name or index
         :param mode: don't use (mode 4 returns negative R for special colors)
@@ -840,7 +840,7 @@ NOTES
                     print("cmd-Error: Unknown color '%s'."%name)
         return r
 
-    def get_color_indices(all=0,_self=cmd):
+    def get_color_indices(all=0, *, _self=cmd):
         with _self.lockcm:
             if all:
                 r = _cmd.get_color(_self._COb,'',2)
@@ -848,12 +848,12 @@ NOTES
                 r = _cmd.get_color(_self._COb,'',1)
         return r
 
-    def get_color_index(color,_self=cmd):
+    def get_color_index(color,*, _self=cmd):
         with _self.lockcm:
             r = _cmd.get_color(_self._COb,str(color),3)
         return r
 
-    def get_renderer(quiet=1, _self=cmd):
+    def get_renderer(quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -870,7 +870,7 @@ DESCRIPTION
 
         return r
 
-    def get_phipsi(selection="(name CA)",state=CURRENT_STATE,_self=cmd):
+    def get_phipsi(selection="(name CA)", state=CURRENT_STATE, *, _self=cmd):
         # preprocess selections
         selection = selector.process(selection)
         #
@@ -878,7 +878,7 @@ DESCRIPTION
             r = _cmd.get_phipsi(_self._COb,"("+str(selection)+")",int(state)-1)
         return r
 
-    def get_atom_coords(selection, state=ALL_STATES,quiet=1,_self=cmd):
+    def get_atom_coords(selection, state=ALL_STATES, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -894,7 +894,7 @@ DESCRIPTION
                 print(" cmd.get_atom_coords: [%8.3f,%8.3f,%8.3f]"%(a))
         return r
 
-    def get_coords(selection='all', state=1, quiet=1, _self=cmd):
+    def get_coords(selection='all', state=1, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -911,7 +911,7 @@ ARGUMENTS
             r = _cmd.get_coords(_self._COb, selection, int(state) - 1)
             return r
 
-    def get_coordset(name, state=1, copy=1, quiet=1, _self=cmd):
+    def get_coordset(name, state=1, copy=1, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -933,7 +933,7 @@ ARGUMENTS
             return r
 
 
-    def get_position(quiet=1, _self=cmd):
+    def get_position(quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -948,7 +948,7 @@ DESCRIPTION
             print(" cmd.get_position: [%8.3f,%8.3f,%8.3f]"%(r[0],r[1],r[2]))
         return r
 
-    def get_distance(atom1="pk1",atom2="pk2",state=CURRENT_STATE,quiet=1,_self=cmd):
+    def get_distance(atom1="pk1", atom2="pk2", state=CURRENT_STATE, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -980,7 +980,7 @@ PYMOL API
             print(" cmd.get_distance: %5.3f Angstroms."%r)
         return r
 
-    def get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=CURRENT_STATE,quiet=1,_self=cmd):
+    def get_angle(atom1="pk1", atom2="pk2", atom3="pk3", state=CURRENT_STATE, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1013,7 +1013,7 @@ PYMOL API
             print(" cmd.get_angle: %5.3f degrees."%r)
         return r
 
-    def get_dihedral(atom1="pk1",atom2="pk2",atom3="pk3",atom4="pk4",state=CURRENT_STATE,quiet=1,_self=cmd):
+    def get_dihedral(atom1="pk1", atom2="pk2", atom3="pk3", atom4="pk4", state=CURRENT_STATE, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1050,7 +1050,7 @@ PYMOL API
             print(" cmd.get_dihedral: %5.3f degrees."%r)
         return r
 
-    def get_model(selection="(all)",state=1,ref='',ref_state=0,_self=cmd):
+    def get_model(selection="(all)", state=1, ref='', ref_state=0, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1068,7 +1068,7 @@ PYMOL API
             r = _cmd.get_model(_self._COb,"("+str(selection)+")",int(state)-1,str(ref),int(ref_state)-1)
         return r
 
-    def get_bonds(selection="(all)", state=CURRENT_STATE, _self=cmd):
+    def get_bonds(selection="(all)", state=CURRENT_STATE, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1089,7 +1089,7 @@ SEE ALSO
         with _self.lockcm:
             return _cmd.get_bonds(_self._COb, selection, int(state) - 1)
 
-    def get_area(selection="(all)",state=1,load_b=0,quiet=1,_self=cmd):
+    def get_area(selection="(all)", state=1, load_b=0, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1118,7 +1118,7 @@ SEE ALSO
             print(" cmd.get_area: %5.3f Angstroms^2."%r)
         return r
 
-    def get_chains(selection="(all)",state=ALL_STATES,quiet=1,_self=cmd):
+    def get_chains(selection="(all)", state=ALL_STATES, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1145,8 +1145,7 @@ ARGUMENTS
             print(" cmd.get_chains: ",str(r))
         return r
 
-
-    def get_names(type='public_objects',enabled_only=0,selection="",_self=cmd):
+    def get_names(type='public_objects', enabled_only=0, selection="", *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1192,12 +1191,12 @@ SEE ALSO
             r = _cmd.get_names(_self._COb,int(mode),int(enabled_only),str(selection))
         return r
 
-    def get_legal_name(name,_self=cmd):
+    def get_legal_name(name, *, _self=cmd):
         with _self.lockcm:
             r = _cmd.get_legal_name(_self._COb,str(name))
         return r
 
-    def get_type(name,quiet=1,_self=cmd):
+    def get_type(name, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1233,7 +1232,7 @@ SEE ALSO
             print(r)
         return r
 
-    def id_atom(selection,mode=0,quiet=1,_self=cmd):
+    def id_atom(selection, mode=0, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1267,7 +1266,7 @@ PYMOL API
         if _raising(r,_self): raise pymol.CmdException
         return r
 
-    def identify(selection="(all)",mode=0,quiet=1,_self=cmd):
+    def identify(selection="(all)", mode=0, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1300,7 +1299,7 @@ NOTES
                             print(" cmd.identify: (id %d)"%a)
         return r
 
-    def index(selection="(all)",quiet=1,_self=cmd):
+    def index(selection="(all)", quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1330,7 +1329,7 @@ NOTE
                         print(" cmd.index: (%s`%d)"%(a[0],a[1]))
         return r
 
-    def find_pairs(selection1,selection2,state1=1,state2=1,cutoff=3.5,mode=0,angle=45,_self=cmd):
+    def find_pairs(selection1, selection2, state1=1, state2=1, cutoff=3.5, mode=0, angle=45, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1369,7 +1368,7 @@ NOTE
                                       int(mode),float(cutoff),float(angle))
         return r
 
-    def get_extent(selection="(all)",state=ALL_STATES,quiet=1,_self=cmd):
+    def get_extent(selection="(all)", state=ALL_STATES, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1392,7 +1391,7 @@ PYMOL API
             print(" cmd.extent: max: [%8.3f,%8.3f,%8.3f]"%(r[1][0],r[1][1],r[1][2]))
         return r
 
-    def phi_psi(selection="(byres pk1)", quiet=1, _self=cmd):
+    def phi_psi(selection="(byres pk1)", quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1410,8 +1409,7 @@ USAGE
                                 "'%(resn+'-'+resi+':'))")
         return r
 
-
-    def count_atoms(selection="(all)",quiet=1,state=ALL_STATES,domain='',_self=cmd):
+    def count_atoms(selection="(all)", quiet=1, state=ALL_STATES, domain='', *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1435,7 +1433,7 @@ USAGE
         if _raising(r,_self): raise pymol.CmdException
         return r
 
-    def count_discrete(selection, quiet=1, _self=cmd):
+    def count_discrete(selection, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1451,7 +1449,7 @@ USAGE
                 print(' count_discrete: %d' % r)
             return r
 
-    def get_names_of_type(type,public=1,_self=cmd):
+    def get_names_of_type(type, public=1, *, _self=cmd):
         """
 DESCRIPTION
 
@@ -1479,8 +1477,7 @@ DESCRIPTION
                 lst.append(a[0])
         return lst
 
-
-    def get_raw_alignment(name='',active_only=0,_self=cmd):
+    def get_raw_alignment(name='', active_only=0, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1496,7 +1493,7 @@ PYMOL API
             r = _cmd.get_raw_alignment(_self._COb,str(name),int(active_only))
         return r
 
-    def get_object_state(name, _self=cmd):
+    def get_object_state(name, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1512,7 +1509,7 @@ DESCRIPTION
             raise pymol.CmdException('Invalid state %d for object %s' % (state, name))
         return state
 
-    def get_selection_state(selection, _self=cmd):
+    def get_selection_state(selection, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1527,7 +1524,7 @@ DESCRIPTION
             raise pymol.CmdException('Selection spans multiple object states')
         return state_set.pop()
 
-    def centerofmass(selection='(all)', state=CURRENT_STATE, quiet=1, _self=cmd):
+    def centerofmass(selection='(all)', state=CURRENT_STATE, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1577,7 +1574,7 @@ SEE ALSO
             print(' Center of Mass: [%8.3f,%8.3f,%8.3f]' % tuple(com))
         return com
 
-    def cif_get_array(name, key, dtype="s", quiet=1, _self=cmd):
+    def cif_get_array(name, key, dtype="s", quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1599,7 +1596,7 @@ ARGUMENTS
             print(" %s:" % (key), ', '.join(map(str, r_print)))
         return r
 
-    def get_assembly_ids(name, quiet=1, _self=cmd):
+    def get_assembly_ids(name, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 

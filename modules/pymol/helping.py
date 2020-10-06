@@ -20,14 +20,14 @@ if True:
 
     from .cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
-    def show_help(cmmd,_self=cmd): # INTERNAL
+    def show_help(cmmd, *, _self=cmd):  # INTERNAL
         print("PyMOL>help %s" % cmmd)
         help(cmmd)
         if _self.get_setting_int("internal_feedback") > 0:
             print("(Hit ESC to hide)")
 
 
-    def python_help(string, _self=cmd):
+    def python_help(string, *, _self=cmd):
             r'''
 DESCRIPTION
 
@@ -59,8 +59,7 @@ SEE ALSO
             '''
             return python(string, _self=_self)
 
-
-    def help(command = "commands",_self=cmd):
+    def help(command= "commands", *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -87,7 +86,7 @@ USAGE
             print("Error: sorry no help available on that command.")
         return r
 
-    def help_setting(name, quiet=1, _self=cmd):
+    def help_setting(name, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -145,7 +144,7 @@ Try "help <command-name>".  Also see the following extra topics:
     '''
         _self.help('commands')
 
-    def editing(_self=cmd):
+    def editing(*, _self=cmd):
         '''
 SUMMARY
 
@@ -178,7 +177,7 @@ so long as one of these representation is present underneath.
     '''
         _self.help('editing')
 
-    def release(_self=cmd):
+    def release(*, _self=cmd):
         '''
 RELEASE NOTES
 
@@ -211,7 +210,7 @@ Jason Vertrees (3/7/2011), jason.vertrees@schrodinger.com (update)
     '''
         _self.help('release')
 
-    def edit_keys(_self=cmd):
+    def edit_keys(*, _self=cmd):
         '''
 EDITING KEYS 
 
@@ -256,7 +255,7 @@ UNDO and REDO of conformational changes (not atom changes!)
         _self.help('edit_keys')
 
 
-    def at_sign(_self=cmd):
+    def at_sign(*, _self=cmd):
         '''
 DESCRIPTION
 
@@ -275,7 +274,7 @@ PYMOL API
         _self.help(at_sign)
 
 
-    def api(name, _self=cmd):
+    def api(name, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -311,7 +310,7 @@ NOTES
         print(' FILE:', sys.modules[func.__module__].__file__)
         return func
 
-    def keyboard(_self=cmd):
+    def keyboard(*, _self=cmd):
         '''
 KEYBOARD COMMANDS and MODIFIERS
 
@@ -351,7 +350,7 @@ EDITING
         '''
         _self.help('keyboard')
 
-    def transparency(_self=cmd):
+    def transparency(*, _self=cmd):
         '''
 TRANSPARENCY
 
@@ -415,7 +414,7 @@ MOUSE CONTROLS
     '''
         _self.help('mouse')
 
-    def examples(_self=cmd):
+    def examples(*, _self=cmd):
         '''
 EXAMPLE ATOM SELECTIONS
 
@@ -437,7 +436,7 @@ EXAMPLE ATOM SELECTIONS
         '''
         _self.help('examples')
 
-    def launching(_self=cmd):
+    def launching(*, _self=cmd):
         '''
 PyMOL COMMAND LINE OPTIONS 
 
@@ -489,7 +488,7 @@ PyMOL COMMAND LINE OPTIONS
         '''
         _self.help('launching')
 
-    def movies(_self=cmd):
+    def movies(*, _self=cmd):
         '''
 MOVIES
 
@@ -528,7 +527,7 @@ NOTE
         _self.help('movies')
 
     ### -------------------------------------------------------------------
-    def selections(_self=cmd):
+    def selections(*, _self=cmd):
         '''
 DESCRIPTION
 
@@ -570,7 +569,7 @@ DESCRIPTION
         '''
         _self.help('selections')
 
-    def povray(_self=cmd):
+    def povray(*, _self=cmd):
         '''
 DESCRIPTION
 
@@ -599,7 +598,7 @@ DESCRIPTION
         _self.help('povray')
 
 
-    def stereochemistry(_self=cmd):
+    def stereochemistry(*, _self=cmd):
         """
 PYMOL STEREOCHEMISTRY
 
@@ -638,7 +637,7 @@ SEE ALSO
         help('stereochemistry')
 
 
-    def text_type(_self=cmd):
+    def text_type(*, _self=cmd):
         """
 PYMOL ATOM TYPING
 
@@ -674,7 +673,7 @@ SEE ALSO
         """
         help('text_type')
 
-    def faster(_self=cmd):
+    def faster(*, _self=cmd):
         '''
 RAY TRACING OPTIMIZATION
 
@@ -705,7 +704,7 @@ RAY TRACING OPTIMIZATION
 
         help('faster')
 
-    def abort(_self=cmd):
+    def abort(*, _self=cmd):
         '''
 DESCRIPTION
 
@@ -718,7 +717,7 @@ SEE ALSO
     '''
         return None
 
-    def skip(_self=cmd):
+    def skip(*, _self=cmd):
         '''
 DESCRIPTION
 
@@ -747,7 +746,7 @@ SEE ALSO
     '''
         return None
 
-    def python(string, _self=cmd):
+    def python(string, *, _self=cmd):
         '''
 DESCRIPTION
 
@@ -777,7 +776,7 @@ SEE ALSO
         pymol_names = _self._pymol.__dict__
         exec(string, pymol_names, pymol_names)
 
-    def embed(_self=cmd):
+    def embed(*, _self=cmd):
         '''
 DESCRIPTION
 
