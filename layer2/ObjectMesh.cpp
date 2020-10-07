@@ -64,7 +64,7 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState * I)
   } else {
     PyList_SetItem(result, 12, PConvAutoNone(NULL));
   }
-  PyList_SetItem(result, 13, PyInt_FromLong(I->MeshMode));
+  PyList_SetItem(result, 13, PyInt_FromLong(static_cast<int>(I->MeshMode)));
   PyList_SetItem(result, 14, PyFloat_FromDouble(I->AltLevel));
   PyList_SetItem(result, 15, PyInt_FromLong(I->quiet));
   if(I->Field) {
@@ -162,7 +162,7 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals * G, ObjectMeshState * I,
           ok = PConvPyListToFloatVLA(tmp, &I->AtomVertex);
       }
       if(ok)
-        ok = PConvPyIntToInt(PyList_GetItem(list, 13), &I->MeshMode);
+        ok = PConvFromPyListItem(G, list, 13, I->MeshMode);
       if(ok) {
         I->RefreshFlag = true;
         I->ResurfaceFlag = true;
@@ -314,7 +314,7 @@ void ObjectMeshDump(ObjectMesh * I, const char *fname, int state, int quiet)
       if(n && v)
         while(*n) {
           c = *(n++);
-          if(!I->State[state].MeshMode) {
+          if(I->State[state].MeshMode == cIsomeshMode::isomesh) {
             fprintf(f, "\n");
           }
           while(c--) {
@@ -400,9 +400,9 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
   int one_color_flag = true;
   int cur_color = -1;
 
-  if(ms->MeshMode == 0) {
+  if(ms->MeshMode == cIsomeshMode::isomesh) {
     cur_color = SettingGet_color(I->G, I->Setting.get(), NULL, cSetting_mesh_color);
-  } else if(ms->MeshMode == 1) {
+  } else if(ms->MeshMode == cIsomeshMode::isodot) {
     cur_color = SettingGet_color(I->G, I->Setting.get(), NULL, cSetting_dot_color);
   }
 
@@ -578,7 +578,7 @@ void ObjectMesh::update()
             if(!SettingGet_b
                (I->G, I->Setting.get(), NULL, cSetting_mesh_negative_visible)) {
               ms->base_n_V = VLAGetSize(ms->V);
-            } else if(ms->MeshMode != 3) {
+            } else if(ms->MeshMode != cIsomeshMode::gradient) {
               /* do we want the negative surface too? */
 
               pymol::vla<int> N2(10000);
@@ -813,7 +813,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      break;
 	    }
 	  }
-          if(ms->MeshMode != 1) {
+          if(ms->MeshMode != cIsomeshMode::isodot) {
             radius = SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_mesh_radius);
 
             if(radius == 0.0F) {
@@ -837,7 +837,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 
             ray->transparentf(transparency);
 
-            if(ms->MeshMode == 1) {
+            if(ms->MeshMode == cIsomeshMode::isodot) {
               ray->color3fv(cc);
               while(ok && *n) {
                 c = *(n++);
@@ -895,7 +895,10 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      short mesh_as_cylinders ;
 	      CGO *shaderCGO = NULL;
 	      use_shader = ( SettingGetGlobal_b(G, cSetting_mesh_use_shader) & SettingGetGlobal_b(G, cSetting_use_shaders)) | returnCGO;
-	      mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && ms->MeshMode != 1;
+              mesh_as_cylinders =
+                  SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
+                  SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) &&
+                  ms->MeshMode != cIsomeshMode::isodot;
 
 	      if (ms->shaderCGO && (!use_shader || (mesh_as_cylinders ^ ms->shaderCGO->has_draw_cylinder_buffers))){
             ms->shaderCGO.reset();
@@ -953,7 +956,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		    ok &= CGOColorv(shaderCGO, ColorGet(I->G, ms->OneColor));
 
 		  if (!mesh_as_cylinders){
-		    if(ms->MeshMode == 1){
+		    if(ms->MeshMode == cIsomeshMode::isodot){
 		      ok &= CGODotwidth(shaderCGO, SettingGet_f
 				  (I->G, I->Setting.get(), NULL, cSetting_dot_width));
 		    } else {
@@ -988,7 +991,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  } else {
 		    while(ok && *n) {
 		      c = *(n++);
-		      if(ms->MeshMode == 1)
+		      if(ms->MeshMode == cIsomeshMode::isodot)
 			ok &= CGOBegin(shaderCGO, GL_POINTS);
 		      else {
 			if (c < 2){
@@ -1021,7 +1024,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 
 		  if(!vc)
 		    glColor3fv(ColorGet(I->G, ms->OneColor));
-		  if(ms->MeshMode == 1){
+		  if(ms->MeshMode == cIsomeshMode::isodot){
 		    glPointSize(SettingGet_f
 				(I->G, I->Setting.get(), NULL, cSetting_dot_width));
 		  } else {
@@ -1029,7 +1032,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  }
 		  while(*n) {
 		    c = *(n++);
-		    if(ms->MeshMode == 1)
+		    if(ms->MeshMode == cIsomeshMode::isodot)
 		      glBegin(GL_POINTS);
 		    else
 		      glBegin(GL_LINE_STRIP);
@@ -1135,13 +1138,12 @@ ObjectMeshState::ObjectMeshState(PyMOLGlobals* G)
   N = pymol::vla<int>(10000);
 }
 
-
 /*========================================================================*/
 ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * map,
                                   CSymmetry * sym,
                                   int map_state,
                                   int state, float *mn, float *mx,
-                                  float level, int meshMode,
+                                  float level, cIsomeshMode meshMode,
                                   float carve, float *vert_vla,
                                   float alt_level, int quiet)
 {
@@ -1185,7 +1187,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
     ms->quiet = quiet;
   }
   if(ok && oms) {
-    if((meshMode == 3) && (ms->AltLevel < ms->Level)) {
+    if((meshMode == cIsomeshMode::gradient) && (ms->AltLevel < ms->Level)) {
       /* gradient object -- need to auto-set range */
       if(!ObjectMapStateGetDataRange(G, oms, &ms->Level, &ms->AltLevel)) {
         ms->Level = -1.0F;
@@ -1292,7 +1294,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
 ObjectMesh *ObjectMeshFromBox(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * map,
                               int map_state,
                               int state, float *mn, float *mx,
-                              float level, int meshMode,
+                              float level, cIsomeshMode meshMode,
                               float carve, float *vert_vla, float alt_level, int quiet)
 {
   return ObjectMeshFromXtalSym(G, obj, map, NULL, map_state, state, mn, mx,

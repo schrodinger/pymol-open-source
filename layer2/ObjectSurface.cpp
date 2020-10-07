@@ -67,8 +67,8 @@ static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState * I)
     PyList_SetItem(result, 12, PConvAutoNone(NULL));
   }
   PyList_SetItem(result, 13, PyInt_FromLong(I->DotFlag));
-  PyList_SetItem(result, 14, PyInt_FromLong(I->Mode));
-  PyList_SetItem(result, 15, PyInt_FromLong(I->Side));
+  PyList_SetItem(result, 14, PyInt_FromLong(static_cast<int>(I->Mode)));
+  PyList_SetItem(result, 15, PyInt_FromLong(static_cast<int>(I->Side)));
   PyList_SetItem(result, 16, PyInt_FromLong(I->quiet));
 
   return (PConvAutoNone(result));
@@ -139,11 +139,13 @@ static int ObjectSurfaceStateFromPyList(PyMOLGlobals * G, ObjectSurfaceState * I
       }
       if(ok)
         ok = PConvPyIntToInt(PyList_GetItem(list, 13), &I->DotFlag);
+
       if(ok)
-        ok = PConvPyIntToInt(PyList_GetItem(list, 14), &I->Mode);
+        PConvFromPyListItem(G, list, 14, I->Mode);
 
       if(ok && (ll > 15))
-        PConvPyIntToInt(PyList_GetItem(list, 15), &I->Side);
+        PConvFromPyListItem(G, list, 15, I->Side);
+
       if(ok && (ll > 16))
         PConvPyIntToInt(PyList_GetItem(list, 16), &I->quiet);
 
@@ -340,8 +342,8 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
     int state = std::distance(I->State.data(), ms);
     int base_n_vert = ms->base_n_V;
     switch (ms->Mode) {
-    case 3:
-    case 2:
+    case cIsosurfaceMode::triangles_grad_normals:
+    case cIsosurfaceMode::triangles_tri_normals:
       {
         int n_vert = VLAGetSize(ms->V) / 6;
         base_n_vert /= 6;
@@ -387,8 +389,6 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
         }
       }
       break;
-    case 1:
-    case 0:
     default:
       {
         int n_vert = VLAGetSize(ms->V) / 3;
@@ -593,8 +593,8 @@ void ObjectSurface::update()
                 while(*n) {
                   int c = *(n++);
                   switch (ms->Mode) {
-                  case 3:
-                  case 2:
+                  case cIsosurfaceMode::triangles_grad_normals:
+                  case cIsosurfaceMode::triangles_tri_normals:
                     transform44d3fas33d3f(matrix, v, v);
                     transform44d3f(matrix, v + 3, v + 3);
                     transform44d3fas33d3f(matrix, v + 6, v + 6);
@@ -608,7 +608,7 @@ void ObjectSurface::update()
                       c -= 2;
                     }
                     break;
-                  case 1:
+                  case cIsosurfaceMode::lines:
                     transform44d3f(matrix, v, v);
                     c--;
                     v += 3;
@@ -618,7 +618,7 @@ void ObjectSurface::update()
                       c--;
                     }
                     break;
-                  case 0:
+                  case cIsosurfaceMode::dots:
                   default:
                     while(c > 0) {
                       transform44d3f(matrix, v, v);
@@ -721,8 +721,8 @@ static void ObjectSurfaceRenderOpaque(PyMOLGlobals * G, ObjectSurface * I, Objec
   while(*n) {
     int c = *(n++);
     switch (ms->Mode) {
-    case 3:
-    case 2:
+    case cIsosurfaceMode::triangles_grad_normals:
+    case cIsosurfaceMode::triangles_tri_normals:
       CGOBegin(ms->shaderCGO.get(), GL_TRIANGLE_STRIP);
       while(c > 0) {
         CGONormalv(ms->shaderCGO.get(), v);
@@ -737,7 +737,7 @@ static void ObjectSurfaceRenderOpaque(PyMOLGlobals * G, ObjectSurface * I, Objec
       }
       CGOEnd(ms->shaderCGO.get());
       break;
-    case 1:
+    case cIsosurfaceMode::lines:
       CGOBegin(ms->shaderCGO.get(), GL_LINES);
       while(c > 0) {
         if(vc) {
@@ -750,7 +750,7 @@ static void ObjectSurfaceRenderOpaque(PyMOLGlobals * G, ObjectSurface * I, Objec
       }
       CGOEnd(ms->shaderCGO.get());
       break;
-    case 0:
+    case cIsosurfaceMode::dots:
     default:
       CGOBegin(ms->shaderCGO.get(), GL_POINTS);
       while(c > 0) {
@@ -804,8 +804,8 @@ static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
     while(*n) {
       c = *(n++);
       switch (ms->Mode) {
-      case 3:
-      case 2:
+      case cIsosurfaceMode::triangles_grad_normals:
+      case cIsosurfaceMode::triangles_tri_normals:
         v += 12;
         if(vc)
           vc += 6;
@@ -833,7 +833,7 @@ static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
           c -= 2;
         }
         break;
-      case 1:
+      case cIsosurfaceMode::lines:
         c--;
         v += 3;
         if(vc)
@@ -856,7 +856,7 @@ static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
           c--;
         }
         break;
-      case 0:
+      case cIsosurfaceMode::dots:
       default:
         while(c > 0) {
           if(vc) {
@@ -956,13 +956,14 @@ void ObjectSurface::render(RenderInfo * info)
             CGOColorv(ms->shaderCGO.get(), col);
             
             if(I->visRep & cRepSurfaceBit) {
-              if((ms->Mode > 1) && (alpha != 1.0)) {        /* transparent */
+              if (static_cast<int>(ms->Mode) > 1 &&
+                  alpha != 1.0) {         /* transparent triangles */
                 if(info->alpha_cgo) {     /* global transparency */
                   ObjectSurfaceRenderGlobalTransparency(G, info, ms, col, alpha);
                 } else {  /* cgo transparency with sorting if needed */
                   ObjectSurfaceRenderUnOptimizedTransparency(ms, alpha);
                 }
-              } else {      /* opaque, triangles */
+              } else { /* opaque, triangles */
                 ObjectSurfaceRenderOpaque(G, I, ms);
               }
             }
@@ -1023,8 +1024,8 @@ ObjectSurfaceState::ObjectSurfaceState(PyMOLGlobals* G)
 /*========================================================================*/
 ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
                                     ObjectMap * map, int map_state, int state, float *mn,
-                                    float *mx, float level, int mode, float carve,
-                                    float *vert_vla, int side, int quiet)
+                                    float *mx, float level, cIsosurfaceMode mode, float carve,
+                                    pymol::vla<float>&& vert_vla, cIsosurfaceSide side, int quiet)
 {
   ObjectSurface *I;
   ObjectSurfaceState *ms;
@@ -1084,7 +1085,7 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
   if(carve != 0.0) {
     ms->CarveFlag = true;
     ms->CarveBuffer = carve;
-    ms->AtomVertex = pymol::vla_take_ownership(vert_vla);
+    ms->AtomVertex = std::move(vert_vla);
 
     double *matrix = ObjectStateGetInvMatrix(ms);
 

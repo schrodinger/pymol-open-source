@@ -45,7 +45,7 @@ struct ObjectMeshState : public CObjectState {
   pymol::vla<float> AtomVertex;
   int CarveFlag = false;
   float CarveBuffer = 0.0f;
-  int MeshMode;
+  cIsomeshMode MeshMode;
   pymol::cache_ptr<CGO> UnitCellCGO;
   WordType caption{};
   float AltLevel;
@@ -72,13 +72,13 @@ struct ObjectMesh : public CObject {
 ObjectMesh *ObjectMeshFromBox(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * map,
                               int map_state,
                               int state, float *mn, float *mx,
-                              float level, int meshMode,
+                              float level, cIsomeshMode,
                               float carve, float *vert_vla, float alt_level, int quiet);
 ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * map,
                                   CSymmetry * sym,
                                   int map_state,
                                   int state, float *mn, float *mx,
-                                  float level, int meshMode,
+                                  float level, cIsomeshMode,
                                   float carve, float *vert_vla,
                                   float alt_level, int quiet);
 void ObjectMeshDump(ObjectMesh * I, const char *fname, int state, int quiet);

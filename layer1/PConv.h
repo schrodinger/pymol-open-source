@@ -317,13 +317,14 @@ inline PyObject* PConvToPyObject(const pymol::Void&)
  * PConvFromPyObject: Templated conversion of a python object to a
  * standart type (primitives and c++ std library).
  */
-
 template <typename Int,
-    typename std::enable_if<std::is_integral<Int>::value>::type* = nullptr>
+    typename std::enable_if<std::is_integral<Int>::value ||
+                            std::is_enum<Int>::value>::type* = nullptr>
 inline bool PConvFromPyObject(PyMOLGlobals*, PyObject* obj, Int& out)
 {
-  out = PyInt_AsLong(obj);
-  return out != -1 || !PyErr_Occurred();
+  auto const value = PyInt_AsLong(obj);
+  out = static_cast<Int>(value);
+  return value != -1 || !PyErr_Occurred();
 }
 
 template <typename Float,

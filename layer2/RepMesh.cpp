@@ -57,7 +57,7 @@ struct RepMesh : Rep {
   int *LastVisib;
   int *LastColor;
   float max_vdw;
-  int mesh_type;
+  cIsomeshMode mesh_type;
   CGO *shaderCGO;
 };
 
@@ -84,12 +84,15 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
   int *n = I->N.data();
   int ok = true;
   short use_shader;
-  short mesh_as_cylinders;
   int c;
-  short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_as_spheres);
+  bool const dot_as_spheres = I->mesh_type == cIsomeshMode::isodot &&
+                              SettingGet<bool>(*I->cs, cSetting_dot_as_spheres);
   use_shader = SettingGetGlobal_b(G, cSetting_mesh_use_shader) & 
     SettingGetGlobal_b(G, cSetting_use_shaders);
-  mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && I->mesh_type!=1;
+  bool const mesh_as_cylinders =
+      SettingGet<bool>(G, cSetting_render_as_cylinders) &&
+      SettingGet<bool>(G, cSetting_mesh_as_cylinders) &&
+      I->mesh_type != cIsomeshMode::isodot;
 
   ok &= CGOResetNormal(I->shaderCGO, true);
 
@@ -104,10 +107,10 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 #endif
   if (ok){
     switch (I->mesh_type) {
-    case 0:
+    case cIsomeshMode::isomesh:
       ok &= CGOSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_MESH);
       break;
-    case 1:
+    case cIsomeshMode::isodot:
       ok &= CGOSpecial(I->shaderCGO, POINTSIZE_DYNAMIC_DOT_WIDTH);
       break;
     }
@@ -116,7 +119,7 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
   ok &= CGOResetNormal(I->shaderCGO, false);
   
   switch (I->mesh_type) {
-  case 0:
+  case cIsomeshMode::isomesh:
     if(n) {
       if (ok){
 	if(I->oneColorFlag) {
@@ -192,7 +195,7 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
       }
     }
     break;
-  case 1:
+  case cIsomeshMode::isodot:
 #ifdef PURE_OPENGL_ES_2
     /* TODO */
 #else
@@ -310,7 +313,8 @@ void RepMesh::render(RenderInfo* info)
   int c;
   const float *col = NULL;
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
-  short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_as_spheres);
+  bool const dot_as_spheres = I->mesh_type == cIsomeshMode::isodot &&
+                              SettingGet<bool>(*cs, cSetting_dot_as_spheres);
   int ok = true;
 
   if(ray) {
@@ -332,7 +336,7 @@ void RepMesh::render(RenderInfo* info)
         col = ColorGet(G, I->oneColor);
       ray->color3fv(ColorGet(G, I->obj->Color));
       switch (I->mesh_type) {
-      case 0:
+      case cIsomeshMode::isomesh:
         while(ok && *n) {
           c = *(n++);
           if(c--) {
@@ -353,7 +357,7 @@ void RepMesh::render(RenderInfo* info)
             }
           }
         }
-      case 1:
+      case cIsomeshMode::isodot:
         while(ok && *n) {
           c = *(n++);
           if(I->oneColorFlag) {
@@ -380,10 +384,12 @@ void RepMesh::render(RenderInfo* info)
       /* no picking meshes */
     } else {
       short use_shader, generate_shader_cgo = 0;
-      short mesh_as_cylinders ;
       use_shader = SettingGetGlobal_b(G, cSetting_mesh_use_shader) &
                    SettingGetGlobal_b(G, cSetting_use_shaders);
-      mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && I->mesh_type!=1;
+      bool const mesh_as_cylinders =
+          SettingGet<bool>(G, cSetting_render_as_cylinders) &&
+          SettingGet<bool>(G, cSetting_mesh_as_cylinders) &&
+          I->mesh_type != cIsomeshMode::isodot;
 
       if (I->shaderCGO && !use_shader){
 	CGOFree(I->shaderCGO);
@@ -425,13 +431,13 @@ void RepMesh::render(RenderInfo* info)
       }
       if (!generate_shader_cgo){
 	switch (I->mesh_type) {
-	case 0:
+	case cIsomeshMode::isomesh:
 	  if(info->width_scale_flag)
 	    glLineWidth(line_width * info->width_scale);
 	  else
 	    glLineWidth(line_width);
 	  break;
-	case 1:
+        case cIsomeshMode::isodot:
 	  if(info->width_scale_flag)
 	    glPointSize(SettingGet_f
 			(G, I->cs->Setting.get(), I->obj->Setting.get(),
@@ -450,7 +456,7 @@ void RepMesh::render(RenderInfo* info)
       }
 
       switch (I->mesh_type) {
-      case 0:
+      case cIsomeshMode::isomesh:
 	if(n) {
 	  if (!generate_shader_cgo){
 	    if(I->oneColorFlag) {
@@ -480,7 +486,7 @@ void RepMesh::render(RenderInfo* info)
 	  }
 	}
 	break;
-      case 1:
+      case cIsomeshMode::isodot:
 	glPointSize(SettingGet_f
 		    (G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_width));
 	if(ok && n) {
@@ -592,7 +598,7 @@ Rep* RepMesh::recolor()
     *(lc++) = ai2->color;
   }
 
-  if(I->mesh_type != 1) {
+  if(I->mesh_type != cIsomeshMode::isodot) {
     I->Width = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_width);
     I->Radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_radius);
   } else {
@@ -721,7 +727,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
   int cullByFlag;
   int inclH;
   int solv_acc;
-  int mesh_type;
+  cIsomeshMode mesh_type;
   int mesh_skip;
   int ok = true;
 
@@ -736,7 +742,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     probe_radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_solvent_radius);
     probe_radius2 = probe_radius * probe_radius;
     solv_acc = (SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_solvent));
-    mesh_type = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_type);
+    mesh_type = SettingGet<cIsomeshMode>(*cs, cSetting_mesh_type);
     mesh_skip = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_skip);
     
     mesh_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_mode);
@@ -1047,7 +1053,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     DeleteP(field);
     if(ok && (I->N.data() && I->V.data() && (carve_flag || clear_flag || trim_flag))) {
       int cur_size = VLAGetSize(I->N);
-      if((mesh_type == 0) && cur_size) {
+      if (mesh_type == cIsomeshMode::isomesh && cur_size) {
         int *n = I->N.data();
         int *new_n = VLACalloc(int, cur_size);
         int new_size = 0;

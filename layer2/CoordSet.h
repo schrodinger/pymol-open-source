@@ -27,6 +27,8 @@ Z* -------------------------------------------------------------------
 
 #include "pymol/memory.h"
 
+#include <type_traits>
+
 #define COORD_SET_HAS_ANISOU 0x01
 
 enum mmpymolx_prop_state_t {
@@ -231,6 +233,15 @@ template <typename V> void SettingSet(int index, V value, CoordSet *cs, int idx)
 // object-state level setting
 template <typename V> void SettingSet(int index, V value, CoordSet *cs) {
   SettingSet(cs->G, cs->Setting, index, value);
+}
+
+//! Get object-state level setting
+template <typename V>
+V SettingGet(const CoordSet& cs, int index)
+{
+  using T = typename std::conditional<std::is_enum<V>::value, int, V>::type;
+  return static_cast<V>(
+      SettingGet<T>(cs.G, cs.Setting.get(), cs.Obj->Setting.get(), index));
 }
 
 // Rotates the ANISOU vector

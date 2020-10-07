@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMap.h"
 #include"Result.h"
 #include"CGO.h"
+#include"PyMOLEnums.h"
 
 struct ObjectSurfaceState : public CObjectState
 {
@@ -47,10 +48,10 @@ struct ObjectSurfaceState : public CObjectState
   pymol::vla<float> AtomVertex;
   int CarveFlag = false;
   float CarveBuffer;
-  int Mode;                     /* 0 dots, 1 lines, 2 triangles */
+  cIsosurfaceMode Mode;
   int DotFlag;
   pymol::cache_ptr<CGO> UnitCellCGO;
-  int Side = 0;
+  cIsosurfaceSide Side = cIsosurfaceSide::front;
   pymol::cache_ptr<CGO> shaderCGO;
   ObjectSurfaceState(PyMOLGlobals* G);
 };
@@ -69,8 +70,8 @@ struct ObjectSurface : public CObject {
 
 ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
                                     ObjectMap * map, int map_state, int state, float *mn,
-                                    float *mx, float level, int mode, float carve,
-                                    float *vert_vla, int side, int quiet);
+                                    float *mx, float level, cIsosurfaceMode, float carve,
+                                    pymol::vla<float>&& vert_vla, cIsosurfaceSide, int quiet);
 void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state, int quiet);
 
 int ObjectSurfaceNewFromPyList(PyMOLGlobals * G, PyObject * list,

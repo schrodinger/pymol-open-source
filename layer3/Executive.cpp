@@ -959,7 +959,7 @@ pymol::Result<> ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
   ObjectMap *mapObj;
   float mn[3] = { 0, 0, 0 };
   float mx[3] = { 15, 15, 15 };
-  float *vert_vla = NULL;
+  pymol::vla<float> vert_vla;
   ObjectMapState *ms;
   int multi = false;
 
@@ -1003,7 +1003,8 @@ pymol::Result<> ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
             auto s1 = tmpsele->getName();
             ExecutiveGetExtent(G, s1, mn, mx, false, -1, false);  /* TODO state */
             if(carve != 0.0F) {
-              vert_vla = ExecutiveGetVertexVLA(G, s1, state);
+              vert_vla = pymol::vla_take_ownership(
+                  ExecutiveGetVertexVLA(G, s1, state));
               if(fbuf <= R_SMALL4)
                 fbuf = fabs(carve);
             }
@@ -1018,8 +1019,11 @@ pymol::Result<> ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
           " Isosurface: buffer %8.3f carve %8.3f\n", fbuf, carve ENDFB(G);
         obj =
           ObjectSurfaceFromBox(G, origObj, mapObj,
-                                           map_state, state, mn, mx, lvl, surf_mode,
-                                           carve, vert_vla, side, quiet);
+                                           map_state, state, mn, mx, lvl,
+                                           static_cast<cIsosurfaceMode>(surf_mode),
+                                           carve, std::move(vert_vla),
+                                           static_cast<cIsosurfaceSide>(side),
+                                           quiet);
         /* copy the map's TTT */
         ExecutiveMatrixCopy2(G, mapObj, obj, 1, 1, -1, -1, false, 0, quiet);
 
@@ -1057,8 +1061,9 @@ pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
                         const char *mesh_name, const char *map_name, float lvl,
                         const char *sele, float fbuf, int state,
                         float carve, int map_state, int quiet,
-                        int mesh_mode, float alt_lvl)
+                        int mesh_mode_, float alt_lvl)
 {
+  auto const mesh_mode = static_cast<cIsomeshMode>(mesh_mode_);
   ObjectMesh *obj = nullptr, *origObj = nullptr;
   ObjectMap *mapObj;
   float mn[3] = { 0, 0, 0 };
@@ -1171,7 +1176,7 @@ pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
           if(obj)
             ObjectGotoState(obj, state);
         if(!quiet) {
-          if(mesh_mode != 3) {
+          if (mesh_mode != cIsomeshMode::gradient) {
             PRINTFB(G, FB_ObjectMesh, FB_Actions)
               " Isomesh: created \"%s\", setting level to %5.3f\n", mesh_name, lvl
               ENDFB(G);

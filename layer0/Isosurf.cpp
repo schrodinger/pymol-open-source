@@ -796,7 +796,7 @@ int IsosurfGetRange(PyMOLGlobals * G, Isofield * field,
 /*===========================================================================*/
 int IsosurfVolume(PyMOLGlobals* G, CSetting* set1, CSetting* set2,
     Isofield* field, float level, pymol::vla<int>& num, pymol::vla<float>& vert,
-    int* range, int mode, int skip, float alt_level)
+    int* range, cIsomeshMode mode, int skip, float alt_level)
 {
   int ok = true;
   CIsosurf *I;
@@ -844,7 +844,7 @@ int IsosurfVolume(PyMOLGlobals* G, CSetting* set1, CSetting* set2,
 
     if(ok) {
       switch (mode) {
-      case 3:
+      case cIsomeshMode::gradient:
         ok = IsosurfGradients(G, set1, set2, I, field, range, level, alt_level);
         IsosurfPurge(I);
         break;
@@ -878,14 +878,11 @@ int IsosurfVolume(PyMOLGlobals* G, CSetting* set1, CSetting* set2,
 
                 if(ok)
                   switch (mode) {
-                  case 0:      /* standard mode - want lines */
+                  case cIsomeshMode::isomesh:      /* standard mode - want lines */
                     ok = IsosurfCurrent(I);
                     break;
-                  case 1:      /* point mode - just want points on the isosurface */
+                  case cIsomeshMode::isodot:      /* point mode - just want points on the isosurface */
                     ok = IsosurfPoints(I);
-                    break;
-                  case 2:
-                    /* reserved */
                     break;
                   }
                 if(G->Interrupt) {
@@ -900,7 +897,7 @@ int IsosurfVolume(PyMOLGlobals* G, CSetting* set1, CSetting* set2,
       }
     }
 
-    if(mode) {
+    if(mode != cIsomeshMode::isomesh) {
       PRINTFB(G, FB_Isomesh, FB_Blather)
         " IsosurfVolume: Surface generated using %d dots.\n", I->NLine ENDFB(G);
     } else {

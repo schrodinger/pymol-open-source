@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Field.h"
 #include"os_python.h"
 #include"PyMOLGlobals.h"
+#include"PyMOLEnums.h"
 #include"Setting.h"
 
 struct Isofield {
@@ -44,7 +45,7 @@ struct Isofield {
 
 int IsosurfVolume(PyMOLGlobals* G, CSetting* set1, CSetting* set2,
     Isofield* field, float level, pymol::vla<int>& num, pymol::vla<float>& vert,
-    int* range, int mode, int skip, float alt_level);
+    int* range, cIsomeshMode, int skip, float alt_level);
 
 int IsosurfGetRange(PyMOLGlobals * G, Isofield * field, CCrystal * cryst,
                     float *mn, float *mx, int *range, int clamp);
