@@ -260,6 +260,22 @@ class TestExporting(testing.PyMOLTestCase):
         self.assertEqual(n_N, cmd.count_atoms('elem N'))
         self.assertEqual(n_O + n_N, cmd.count_atoms())
 
+    @testing.foreach('pdb', 'cif', 'mmtf')
+    @testing.requires_version('2.5')
+    def testSave_symmetry(self, format):
+        sym1 = (1.2, 3.4, 5.6, 60.0, 70.0, 80.0, "P 3")
+        cmd.fragment("gly", "m1")
+        cmd.set_symmetry("m1", *sym1)
+
+        with testing.mktemp('.' + format) as filename:
+            cmd.save(filename)
+            cmd.delete('*')
+            cmd.load(filename, "m2")
+
+        sym = cmd.get_symmetry("m2")
+        self.assertArrayEqual(sym[:6], sym1[:6], delta=1e-4)
+        self.assertEqual(sym[6], sym1[6])
+
     # cmp_atom : compares all fields in Atom (see chempy/__init__.py)
     #            except the id (which is unique to the instance)
     def cmp_atom(self, selfobj,other):
