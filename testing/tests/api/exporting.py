@@ -293,7 +293,6 @@ class TestExporting(testing.PyMOLTestCase):
             idx = idx + 1
 
     @testing.requires_version('1.7.6')
-    @unittest.skipIf(sys.version_info[0] > 2, 'pse_binary_dump not py3k ready')
     def testPSEBulkImport(self):
         cmd.load(self.datafile('1rx1_1766_bulk.pse.gz'))
         m1 = cmd.get_model()
