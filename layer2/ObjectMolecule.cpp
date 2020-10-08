@@ -11659,7 +11659,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(ok && cset->Symmetry) {
         SymmetryFree(I->Symmetry);
         I->Symmetry = new CSymmetry(*cset->Symmetry);
-        SymmetryUpdate(I->Symmetry);
       }
       if (I->Symmetry) {
           /* check scale records */

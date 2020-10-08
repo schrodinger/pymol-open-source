@@ -2233,6 +2233,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           ErrMessage(G, "PDBStrToCoordSet", "Error reading CRYST1 record\n");
           SymmetryFree(symmetry);
           symmetry = NULL;
+        } else {
+          SymmetryUpdate(symmetry);
         }
       }
     } else if(strstartswith(p, "SCALE") && (!*restart_model) && info) { /* SCALEn */
