@@ -44,9 +44,6 @@ struct CoordSet : CObjectState {
     Octahedral = 2,
   };
 
-  // methods (not fully refactored yet)
-  void fFree();
-
   // methods
   void update(int state);
   void render(RenderInfo * info);

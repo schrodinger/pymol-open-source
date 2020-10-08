@@ -402,7 +402,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
     }
   }
 
-  cset->fFree();
+  delete cset;
 
   if(ai_merged) {
     if (ok)
@@ -2754,7 +2754,7 @@ pqr_done:
   }
   if (!ok){
     if (cset){
-      cset->fFree();
+      delete cset;
       cset = NULL;
     } else {
       VLAFreeP(coord);

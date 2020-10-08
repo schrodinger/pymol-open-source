@@ -1241,8 +1241,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                   VLACheck(I->CSet, CoordSet *, frame);
                   if(I->NCSet <= frame)
                     I->NCSet = frame + 1;
-                  if(I->CSet[frame])
-                    I->CSet[frame]->fFree();
+                  delete I->CSet[frame];
                   I->CSet[frame] = cs;
                   ncnt++;
 
@@ -1281,8 +1280,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
     }
     mfree(buffer);
   }
-  if(cs)
-    cs->fFree();
+  delete cs;
   SceneChanged(G);
   SceneCountFrames(G);
   if(zoom_flag)
@@ -1384,8 +1382,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
 	    if (ok){
 	      if(I->NCSet <= frame)
 		I->NCSet = frame + 1;
-	      if(I->CSet[frame])
-		I->CSet[frame]->fFree();
+	      delete I->CSet[frame];
 	      I->CSet[frame] = cs;
 	    }
             PRINTFB(G, FB_ObjectMolecule, FB_Details)
@@ -1409,8 +1406,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
     }
     mfree(buffer);
   }
-  if(cs)
-    cs->fFree();
+  delete cs;
 
   SceneChanged(G);
   SceneCountFrames(G);
@@ -2330,8 +2326,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
     cset->NTmpBond = nBond;
   } else {
 ok_except1:
-    if(cset)
-      cset->fFree();
+    delete cset;
     cset = NULL;
     ErrMessage(G, __func__, "failed");
   }
@@ -2413,8 +2408,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
         SymmetryUpdate(I->Symmetry);
     }
 
-    if(I->CSTmpl)
-      I->CSTmpl->fFree();
+    delete I->CSTmpl;
     I->CSTmpl = cset;           /* save template coordinate set */
 
     SceneCountFrames(G);
@@ -3491,8 +3485,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
       }
     }
   }
-  if(cs)
-    cs->fFree();
+  delete cs;
   FreeP(backup);
   return ok;
 }
@@ -3595,7 +3588,7 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index,
 
   ok = true;
 ok_except1:
-  cs->fFree();
+  delete cs;
   return ok;
 }
 
@@ -3670,7 +3663,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 	    ok &= CoordSetMerge(I, I->CSet[a], cs);
         }
       }
-      cs->fFree();
+      delete cs;
       result++;
       flag = true;
     }
@@ -4143,10 +4136,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
       }
 
       for(b = first + 1; b < last; b++) {
-        cs = I->CSet[b];
-        if(cs) {
-          cs->fFree();
-        }
+        delete I->CSet[b];
         I->CSet[b] = NULL;
       }
 
@@ -7549,8 +7539,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
     VLACheck(I->CSet, CoordSet *, frame);
     if(I->NCSet <= frame)
       I->NCSet = frame + 1;
-    if(I->CSet[frame])
-      I->CSet[frame]->fFree();
+    delete I->CSet[frame];
     I->CSet[frame] = cset;
     if (fractional && cset->Symmetry) {
       CrystalUpdate(&cset->Symmetry->Crystal);
@@ -7639,7 +7628,7 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
   // error handling
 ok_except1:
   if(is_new && cset)
-    cset->fFree();
+    delete cset;
   ErrMessage(G, "LoadCoords", "failed");
   return NULL;
 }
@@ -7745,7 +7734,7 @@ ok_except2:
   PyErr_Print();
 ok_except1:
   if(is_new && cset)
-    cset->fFree();
+    delete cset;
   ErrMessage(G, "LoadCoords", "failed");
   return NULL;
 #endif
@@ -8873,8 +8862,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       VLACheck(I->CSet, CoordSet *, frame);
       if(I->NCSet <= frame)
         I->NCSet = frame + 1;
-      if(I->CSet[frame])
-        I->CSet[frame]->fFree();
+      delete I->CSet[frame];
       I->CSet[frame] = cset;
 
       if(ok && isNew)
@@ -11361,8 +11349,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
     if (ok){
       if(I->NCSet <= frame)
 	I->NCSet = frame + 1;
-      if(I->CSet[frame])
-	I->CSet[frame]->fFree();
+      delete I->CSet[frame];
       I->CSet[frame] = cset;
       
       I->NBond = 0;
@@ -11514,7 +11501,7 @@ ObjectMolecule::~ObjectMolecule()
   SelectorPurgeObjectMembers(I->G, I);
   for(a = 0; a < I->NCSet; a++){
     if(I->CSet[a]) {
-      I->CSet[a]->fFree();
+      delete I->CSet[a];
       I->CSet[a] = NULL;
     }
   }
@@ -11550,8 +11537,7 @@ ObjectMolecule::~ObjectMolecule()
     FreeP(I->UndoCoord[a]);
   if(I->Sculpt)
     DeleteP(I->Sculpt);
-  if(I->CSTmpl)
-    I->CSTmpl->fFree();
+  delete I->CSTmpl;
 }
 
 /*========================================================================*/
@@ -11650,8 +11636,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(ok){
 	if(I->NCSet <= state)
 	  I->NCSet = state + 1;
-	if(I->CSet[state])
-	  I->CSet[state]->fFree();
+	delete I->CSet[state];
 	I->CSet[state] = cset;
       }
       if(ok && isNew)

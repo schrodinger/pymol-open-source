@@ -6405,14 +6405,12 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, SelectorID_t sele, const char
       VLACheck(targ->CSet, CoordSet *, ts);
       if(targ->NCSet <= ts)
         targ->NCSet = ts + 1;
-      if(targ->CSet[ts])
-        targ->CSet[ts]->fFree();
+      delete targ->CSet[ts];
       targ->CSet[ts] = cs2;
       cs2->Obj = targ;
     }
   }
-  if(cs)
-    cs->fFree();
+  delete cs;
 
   }; // end body
 

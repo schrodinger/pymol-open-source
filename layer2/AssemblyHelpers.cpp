@@ -58,8 +58,7 @@ void ObjectMoleculeSetAssemblyCSets(
 
   // remove asymetric unit coordinate sets
   for (int i = 0; i < I->NCSet; ++i)
-    if (I->CSet[i])
-      I->CSet[i]->fFree();
+    delete I->CSet[i];
 
   VLAFreeP(I->CSet);
 

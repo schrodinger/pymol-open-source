@@ -830,7 +830,7 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp * I)
 
   // was a memory leak in < 1.8.3.1
   for (int i = 0; i < og->NGSet; ++i) {
-    og->GSet[i]->fFree();
+    delete og->GSet[i];
     og->GSet[i] = NULL;
   }
 

@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Scene.h"
 #include"GadgetSet.h"
+#include"ObjectGadget.h"
 #include"Color.h"
 #include"PConv.h"
 #include"main.h"
@@ -92,7 +93,7 @@ int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int 
   PyObject *tmp = NULL;
 
   if(*gs) {
-    (*gs)->fFree();
+    delete *gs;
     *gs = NULL;
   }
 
@@ -143,7 +144,7 @@ int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int 
 
     if(!ok) {
       if(I)
-        I->fFree();
+        delete I;
     } else {
       *gs = I;
     }
@@ -364,26 +365,12 @@ GadgetSet *GadgetSetNew(PyMOLGlobals * G)
 {
   OOAlloc(G, GadgetSet);
   I->G = G;
-  I->NCoord = 0;
-  I->NColor = 0;
-  I->NNormal = 0;
-  I->Coord = NULL;
-  I->Normal = NULL;
-  I->Color = NULL;
-  I->Setting = NULL;
-  I->PickCGO = NULL;
-  I->StdCGO = NULL;
-  I->ShapeCGO = NULL;
-  I->PickShapeCGO = NULL;
-  I->offsetPtOP = 0;
-  I->offsetPtOPick = 0;
-
   return (I);
 }
 
 
 /*========================================================================*/
-void GadgetSet::fFree()
+GadgetSet::~GadgetSet()
 {
   GadgetSet * I = this;
   if(I) {
@@ -391,11 +378,8 @@ void GadgetSet::fFree()
     CGOFree(I->PickShapeCGO);
     CGOFree(I->StdCGO);
     CGOFree(I->ShapeCGO);
-    I->offsetPtOP = 0;
-    I->offsetPtOPick = 0;
     VLAFreeP(I->Coord);
     VLAFreeP(I->Normal);
     VLAFreeP(I->Color);
-    OOFreeP(I);
   }
 }

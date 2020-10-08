@@ -131,7 +131,7 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
   int ll = 0;
 
   if(*cs) {
-    (*cs)->fFree();
+    delete *cs;
     *cs = NULL;
   }
 
@@ -226,8 +226,7 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
       }
     }
     if(!ok) {
-      if(I)
-        I->fFree();
+      delete I;
       *cs = NULL;
     } else {
       *cs = I;
@@ -1725,10 +1724,6 @@ CoordSet::~CoordSet()
     MapFree(I->Coord2Idx);
     CGOFree(I->SculptCGO);
   }
-}
-void CoordSet::fFree()
-{
-  delete this;
 }
 void LabPosTypeCopy(const LabPosType * src, LabPosType * dst){
   dst->mode = src->mode;

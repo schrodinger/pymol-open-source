@@ -407,7 +407,7 @@ ObjectGadget::~ObjectGadget()
   auto I = this;
   for(int a = 0; a < I->NGSet; a++)
     if(I->GSet[a]) {
-      I->GSet[a]->fFree();
+      delete I->GSet[a];
       I->GSet[a] = NULL;
     }
 }

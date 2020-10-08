@@ -19,11 +19,10 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
-#include"PyMOLObject.h"
+#include "ObjectGadget.h"
 
-#include"GadgetSet.h"
-#include"ObjectMap.h"
-#include"ObjectMolecule.h"
+struct ObjectMap;
+struct ObjectMolecule;
 
 #define cRampNone 0
 #define cRampMap 1

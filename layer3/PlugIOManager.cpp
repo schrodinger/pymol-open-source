@@ -284,8 +284,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
 		  /* bump the object's state count */
                   if(obj->NCSet <= frame) obj->NCSet = frame + 1;
 		  /* if there's data in this state's coordset, emtpy it */
-                  if(obj->CSet[frame])
-                    obj->CSet[frame]->fFree();
+                  delete obj->CSet[frame];
 		  /* set this state's coordset to cs */
                   obj->CSet[frame] = cs;
                   ncnt++;
@@ -322,8 +321,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
           } /* end while */
         }
         plugin->close_file_read(file_handle);
-        if(cs)
-          cs->fFree();
+        delete cs;
         SceneChanged(G);
         SceneCountFrames(G);
         if(zoom_flag)
@@ -677,7 +675,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
     timestep.velocities = NULL;
 
     if (plugin->read_next_timestep(file_handle, natoms, &timestep) != MOLFILE_SUCCESS) {
-      cs->fFree();
+      delete cs;
       break;
     }
 
