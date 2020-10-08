@@ -31,21 +31,11 @@ Z* -------------------------------------------------------------------
 
 #define Trace_OFF
 
-#define O3(field,P1,P2,P3,offs) Ffloat3(field,P1+offs[0],P2+offs[1],P3+offs[2])
+#define O3(field,P1,P2,P3,offs) ((field)->get<float>(P1+offs[0],P2+offs[1],P3+offs[2]))
 
-#define O3Ptr(field,P1,P2,P3,offs) Ffloat3p(field,P1+offs[0],P2+offs[1],P3+offs[2])
+#define O4Ptr(field,P1,P2,P3,P4,offs) ((field)->ptr<float>(P1+offs[0],P2+offs[1],P3+offs[2],P4))
 
-#define O4(field,P1,P2,P3,P4,offs) Ffloat4(field,P1+offs[0],P2+offs[1],P3+offs[2],P4)
-
-#define O4Ptr(field,P1,P2,P3,P4,offs) Ffloat4p(field,P1+offs[0],P2+offs[1],P3+offs[2],P4)
-
-#define I3(field,P1,P2,P3) Fint3(field,P1,P2,P3)
-
-#define I3Ptr(field,P1,P2,P3) Fint3p(field,P1,P2,P3)
-
-#define I4(field,P1,P2,P3,P4) Fint4(field,P1,P2,P3,P4)
-
-#define I4Ptr(field,P1,P2,P3,P4) Fint4p(field,P1,P2,P3,P4)
+#define I3(field,P1,P2,P3) ((field)->get<int>(P1,P2,P3))
 
 typedef struct {
   float Point[3];
@@ -65,9 +55,7 @@ typedef struct {
   int tri;
 } PointLinkType;
 
-#define EdgePtPtr(field,P2,P3,P4,P5) ((PointType*)Fvoid4p(field,P2,P3,P4,P5))
-
-#define EdgePt(field,P2,P3,P4,P5) (*((PointType*)Fvoid4p(field,P2,P3,P4,P5)))
+#define EdgePtPtr(field,P2,P3,P4,P5) ((field)->ptr<PointType>(P2,P3,P4,P5))
 
 struct _CTetsurf {
   PyMOLGlobals *G;

@@ -531,7 +531,7 @@ void ObjectVolume::update()
                 }
 
                 // 0xFF (masked) or 0 (not masked), will be 1.0 or 0.0 in shader
-                *((GLubyte*)F3p(vs->carvemask.get(), x, y, z)) = flag ? 0x0 : 0xFF;
+                vs->carvemask->get<GLubyte>(x, y, z) = flag ? 0x0 : 0xFF;
               }
             }
           }

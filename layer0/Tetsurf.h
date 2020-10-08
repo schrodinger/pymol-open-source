@@ -25,12 +25,6 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 #include"PyMOLEnums.h"
 
-#define F3(field,P1,P2,P3) Ffloat3(field,P1,P2,P3)
-#define F3Ptr(field,P1,P2,P3) Ffloat3p(field,P1,P2,P3)
-
-#define F4(field,P1,P2,P3,P4) Ffloat4(field,P1,P2,P3,P4)
-#define F4Ptr(field,P1,P2,P3,P4) Ffloat4p(field,P1,P2,P3,P4)
-
 int TetsurfVolume(PyMOLGlobals * G, Isofield * field, float level, int **num,
                   float **vert, int *range, cIsosurfaceMode,
                   MapType * voxelmap, const float* a_vert, float carvebuffer, cIsosurfaceSide);

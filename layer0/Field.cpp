@@ -141,7 +141,7 @@ CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list)
   if(ok)
     ok = PyList_Check(list);
   if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 0), &I->type);
+    ok = PConvFromPyListItem(G, list, 0, I->type);
   if(ok)
     ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 1, &n_dim);
   if(ok)
@@ -404,7 +404,7 @@ void FieldZero(CField * I)
 }
 
 CField::CField(
-    PyMOLGlobals* G, const int* const dim, int n_dim, unsigned int base_size, int type)
+    PyMOLGlobals* G, const int* const dim, int n_dim, unsigned int base_size, cField_t type)
     : type(type)
     , base_size(base_size)
 {

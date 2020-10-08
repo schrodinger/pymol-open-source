@@ -37,12 +37,6 @@ struct Isofield {
   Isofield(PyMOLGlobals * G, const int * const dims);
 };
 
-#define F3(field,P1,P2,P3) Ffloat3(field,P1,P2,P3)
-#define F3Ptr(field,P1,P2,P3) Ffloat3p(field,P1,P2,P3)
-
-#define F4(field,P1,P2,P3,P4) Ffloat4(field,P1,P2,P3,P4)
-#define F4Ptr(field,P1,P2,P3,P4) Ffloat4p(field,P1,P2,P3,P4)
-
 int IsosurfVolume(PyMOLGlobals* G, CSetting* set1, CSetting* set2,
     Isofield* field, float level, pymol::vla<int>& num, pymol::vla<float>& vert,
     int* range, cIsomeshMode, int skip, float alt_level);

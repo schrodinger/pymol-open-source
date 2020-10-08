@@ -34,21 +34,15 @@ Z* -------------------------------------------------------------------
 
 #define Trace_OFF
 
-#define O3(field,P1,P2,P3,offs) Ffloat3(field,(P1)+offs[0],(P2)+offs[1],(P3)+offs[2])
+#define O3(field,P1,P2,P3,offs) ((field)->get<float>((P1)+offs[0],(P2)+offs[1],(P3)+offs[2]))
 
-#define O3Ptr(field,P1,P2,P3,offs) Ffloat3p(field,(P1)+offs[0],(P2)+offs[1],(P3)+offs[2])
+#define O3Ptr(field,P1,P2,P3,offs) ((field)->ptr<float>((P1)+offs[0],(P2)+offs[1],(P3)+offs[2]))
 
-#define O4(field,P1,P2,P3,P4,offs) Ffloat4(field,(P1)+offs[0],(P2)+offs[1],(P3)+offs[2],P4)
+#define O4Ptr(field,P1,P2,P3,P4,offs) ((field)->ptr<float>((P1)+offs[0],(P2)+offs[1],(P3)+offs[2],P4))
 
-#define O4Ptr(field,P1,P2,P3,P4,offs) Ffloat4p(field,(P1)+offs[0],(P2)+offs[1],(P3)+offs[2],P4)
+#define I3(field,P1,P2,P3) ((field)->get<int>(P1,P2,P3))
 
-#define I3(field,P1,P2,P3) Fint3(field,P1,P2,P3)
-
-#define I3Ptr(field,P1,P2,P3) Fint3p(field,P1,P2,P3)
-
-#define I4(field,P1,P2,P3,P4) Fint4(field,P1,P2,P3,P4)
-
-#define I4Ptr(field,P1,P2,P3,P4) Fint4p(field,P1,P2,P3,P4)
+#define I4(field,P1,P2,P3,P4) ((field)->get<int>(P1,P2,P3,P4))
 
 typedef struct PointType {
   float Point[3];
@@ -56,15 +50,15 @@ typedef struct PointType {
   struct PointType* Link[4];
 } PointType;
 
-#define EdgePtPtr(field,P2,P3,P4,P5) ((PointType*)Fvoid4p(field,P2,P3,P4,P5))
+#define EdgePtPtr(field,P2,P3,P4,P5) ((field)->ptr(P2,P3,P4,P5))
 
-#define EdgePt(field,P2,P3,P4,P5) (*((PointType*)Fvoid4p(field,P2,P3,P4,P5)))
+#define EdgePt(field,P2,P3,P4,P5) ((field)->get(P2,P3,P4,P5))
 
 struct CIsosurf {
   PyMOLGlobals *G;
-  CField *VertexCodes;
-  CField *ActiveEdges;
-  CField *Point;
+  CFieldTyped<int> *VertexCodes;
+  CFieldTyped<int> *ActiveEdges;
+  CFieldTyped<PointType> *Point;
   int NLine;
   int Skip;
   int AbsDim[3], CurDim[3], CurOff[3];
@@ -171,7 +165,7 @@ Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list)
       for(a = 0; a < 3; a++)
         dim4[a] = result->dimensions[a];
       dim4[3] = 3;
-      result->points.reset(CField::make<float>(G, dim4, 4));
+      result->points.reset(new CFieldTyped<float>(dim4, 4));
       ok = result->points != nullptr;
     }
   }
@@ -195,7 +189,7 @@ void IsofieldComputeGradients(PyMOLGlobals * G, Isofield * field)
     for(a = 0; a < 3; a++)
       dim[a] = field->dimensions[a];
     dim[3] = 3;
-    field->gradients.reset(CField::make<float>(G, dim, 4));
+    field->gradients.reset(new CFieldTyped<float>(dim, 4));
     auto gradients = field->gradients.get();
     dim[3] = 3;
 
@@ -349,8 +343,8 @@ Isofield::Isofield(PyMOLGlobals * G, const int * const dims)
 
   /* Warning: ...FromPyList also allocs and inits from the heap */
 
-  data.reset(CField::make<float>(G, dims, 3));
-  points.reset(CField::make<float>(G, dim4, 4));
+  data.reset(new CFieldTyped<float>(dims, 3));
+  points.reset(new CFieldTyped<float>(dim4, 4));
   std::copy_n(dims, 3, dimensions);
 }
 
@@ -935,9 +929,9 @@ static int IsosurfAlloc(PyMOLGlobals * G, CIsosurf * II)
     dim4[a] = I->CurDim[a];
   dim4[3] = 3;
 
-  I->VertexCodes = CField::make<int>(G, I->CurDim, 3);
-  I->ActiveEdges = CField::make<int>(G, dim4, 4);
-  I->Point = CField::make<PointType>(G, dim4, 4);
+  I->VertexCodes = new CFieldTyped<int>(I->CurDim, 3);
+  I->ActiveEdges = new CFieldTyped<int>(dim4, 4);
+  I->Point = new CFieldTyped<PointType>(dim4, 4);
   if(!(I->VertexCodes && I->ActiveEdges && I->Point)) {
     IsosurfPurge(I);
     ok = false;
