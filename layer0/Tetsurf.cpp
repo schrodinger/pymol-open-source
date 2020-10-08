@@ -79,9 +79,9 @@ static int TetsurfAlloc(CTetsurf * II);
 static void TetsurfPurge(CTetsurf * II);
 static int TetsurfCodeVertices(CTetsurf * II);
 
-static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode, int *n_strip, int n_vert,
-                                  int **strip_l, float **vert,
-                                  MapType * voxelmap, const float* a_vert,
+static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode, int& n_strip, int n_vert,
+                                  pymol::vla<int>& strip_l, pymol::vla<float>& vert,
+                                  const MapType* voxelmap, const float* a_vert,
                                   float carvebuffer, cIsosurfaceSide);
 
 #define TetsurfSubSize		50
@@ -395,8 +395,14 @@ void TetsurfFree(PyMOLGlobals * G)
 
 
 /*===========================================================================*/
+/**
+ * @param mn Minimum point in real space (3f)
+ * @param mx Maximum point in real space (3f)
+ * @param[out] range Minimum and maximum field indices (6i)
+ */
 void TetsurfGetRange(PyMOLGlobals * G,
-                     Isofield * field, CCrystal * cryst, float *mn, float *mx, int *range)
+    const Isofield* field,
+    const CCrystal* cryst, const float* mn, const float* mx, int* range)
 {
   float rmn[3], rmx[3];
   float imn[3], imx[3];
@@ -509,10 +515,11 @@ void TetsurfGetRange(PyMOLGlobals * G,
  * @param[in,out] field     Map data (field->gradients will be generated if
  *                          missing for cIsosurfaceMode::triangles_grad_normals)
  * @param[in] level         Contour level
- * @param[out] num          Number of vertices per strip (e.g. triangle strip)
- * @param[out] vert         Vertices (all modes) and normals (triangle modes
- *                          only) for strips according to `num`
- * @param[in] range         Min and max corners of box (6 floats - can be NULL,
+ * @param[out] num          Number of vertices + normals per strip (e.g. 6 for
+ *                          triangle strip with a single triangle)
+ * @param[out] vert         Normals (triangle modes only) and vertices for
+ *                          strips according to `num`
+ * @param[in] range         Min and max indices of box (6i - can be NULL,
  *                          then use entire field)
  * @param[in] mode          Geometry mode (points, lines, triangles)
  * @param[in] voxelmap      Atom proximity map for carving (optional)
@@ -522,10 +529,15 @@ void TetsurfGetRange(PyMOLGlobals * G,
  *                          normal)
  * @return Number of primitives
  */
-int TetsurfVolume(PyMOLGlobals * G, Isofield * field, float level, int **num,
-                  float **vert, int *range, cIsosurfaceMode mode,
-                  MapType* voxelmap, const float* a_vert,
-                  float carvebuffer, cIsosurfaceSide side)
+int TetsurfVolume(PyMOLGlobals* G, Isofield* field, float level,
+    pymol::vla<int>& num,    //
+    pymol::vla<float>& vert, //
+    const int* range,        //
+    cIsosurfaceMode mode,    //
+    const MapType* voxelmap, //
+    const float* a_vert,     //
+    float carvebuffer,       //
+    cIsosurfaceSide side)
 {
 
   CTetsurf *I;
@@ -557,8 +569,8 @@ int TetsurfVolume(PyMOLGlobals * G, Isofield * field, float level, int **num,
     } else {
       range = range_store;
       for(c = 0; c < 3; c++) {
-        range[c] = 0;
-        range[3 + c] = field->dimensions[c];
+        range_store[c] = 0;
+        range_store[3 + c] = field->dimensions[c];
         I->AbsDim[c] = field->dimensions[c];
         I->CurDim[c] = TetsurfSubSize + 1;
         Steps[c] = 1 + (I->AbsDim[c] - 1) / TetsurfSubSize;
@@ -600,7 +612,7 @@ int TetsurfVolume(PyMOLGlobals * G, Isofield * field, float level, int **num,
 
             if(ok) {
               if(TetsurfCodeVertices(I))
-                n_vert = TetsurfFindActiveBoxes(I, mode, &n_strip, n_vert, num, vert,
+                n_vert = TetsurfFindActiveBoxes(I, mode, n_strip, n_vert, num, vert,
                                                 voxelmap, a_vert, carvebuffer, side);
             }
           }
@@ -617,14 +629,12 @@ int TetsurfVolume(PyMOLGlobals * G, Isofield * field, float level, int **num,
 
     /* sentinel strip (0 length) */
 
-    VLACheck(*num, int, n_strip);
-    (*num)[n_strip] = 0;
-    (n_strip)++;
+    num.resize(++n_strip);
+    num[n_strip - 1] = 0;
 
     /* shrinks sizes for more efficient RAM usage */
 
-    VLASize(*vert, float, n_vert * 3);
-    VLASize(*num, int, n_strip);
+    vert.resize(n_vert * 3);
 
     tot_prim = I->TotPrim;
 
@@ -747,11 +757,12 @@ static void TetsurfInterpolate8(float *pt, float *v0, float l0, float *v1, float
 
 
 /*===========================================================================*/
-static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode mode, int *n_strip, int n_vert,
-                                  int **strip_l, float **vert,
-                                  MapType * voxelmap, const float *a_vert,
+static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode mode, int &n_strip, int n_vert,
+                                  pymol::vla<int>& strip_l, pymol::vla<float>& vert_,
+                                  const MapType* voxelmap, const float *a_vert,
                                   float carvebuffer, cIsosurfaceSide side)
 {
+  float** const vert = &vert_;
   CTetsurf *I = II;
   int a, b, c, i, j, k, h, l;
 #ifdef Trace
@@ -1446,9 +1457,7 @@ static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode mode, int *n_st
         }
       }
       if(n_vert > n_start) {
-        VLACheck(*strip_l, int, *n_strip);
-        (*strip_l)[*n_strip] = n_vert - n_start;
-        (*n_strip)++;
+        *strip_l.check(n_strip++) = n_vert - n_start;
       }
     }
     I->TotPrim += n_tri;
@@ -1458,9 +1467,7 @@ static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode mode, int *n_st
     /* Need to move the points now, right? */
 
     if(n_vert > n_start) {
-      VLACheck(*strip_l, int, *n_strip);
-      (*strip_l)[*n_strip] = n_vert - n_start;
-      (*n_strip)++;
+      *strip_l.check(n_strip++) = n_vert - n_start;
     }
     break;
   case cIsosurfaceMode::dots:
@@ -1469,18 +1476,10 @@ static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode mode, int *n_st
     /* Need to move the points now, right? */
 
     if(n_vert > n_start) {
-      VLACheck(*strip_l, int, *n_strip);
-      (*strip_l)[*n_strip] = n_vert - n_start;
-      (*n_strip)++;
+      *strip_l.check(n_strip++) = n_vert - n_start;
     }
     break;
   }
-  /*
-     printf("n_strip %d\n",*n_strip);
-     printf("n_active %d\n",n_active);
-     printf("n_vert %d\n",n_vert);
-     printf("mode %d\n",mode);
-   */
   return (n_vert);
 }
 

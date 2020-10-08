@@ -528,7 +528,7 @@ void ObjectSurface::update()
 
             ms->nT = TetsurfVolume(I->G, oms->Field.get(),
                                    ms->Level,
-                                   &ms->N, &ms->V,
+                                   ms->N, ms->V,
                                    ms->Range,
                                    ms->Mode,
                                    voxelmap, ms->AtomVertex, ms->CarveBuffer, ms->Side);
@@ -540,12 +540,12 @@ void ObjectSurface::update()
               /* do we want the negative surface too? */
 
               int nT2;
-              int *N2 = VLAlloc(int, 10000);
-              float *V2 = VLAlloc(float, 10000);
+              pymol::vla<int> N2(10000);
+              pymol::vla<float> V2(10000);
 
               nT2 = TetsurfVolume(I->G, oms->Field.get(),
                                   -ms->Level,
-                                  &N2, &V2,
+                                  N2, V2,
                                   ms->Range,
                                   ms->Mode,
                                   voxelmap, ms->AtomVertex.data(), ms->CarveBuffer, ms->Side);
@@ -564,19 +564,14 @@ void ObjectSurface::update()
                 VLASize(ms->V, float, base_n_V + addl_n_V);
 
                 /* copy vertex data */
-
-                memcpy(((char *) ms->V.data()) + (sizeof(float) * base_n_V),
-                       V2, sizeof(float) * addl_n_V);
+                std::copy_n(V2.data(), addl_n_V, ms->V.data() + base_n_V);
 
                 /* copy strip counts */
+                std::copy_n(N2.data(), addl_n_N, ms->N.data() + base_n_N - 1);
 
-                memcpy(((char *) ms->N.data()) + (sizeof(int) * (base_n_N - 1)),
-                       N2, sizeof(int) * addl_n_N);
                 ms->N[base_n_N + addl_n_N - 1] = 0;
 
                 ms->nT += nT2;
-                VLAFreeP(N2);
-                VLAFreeP(V2);
               }
             }
 

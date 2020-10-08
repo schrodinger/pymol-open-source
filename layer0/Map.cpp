@@ -605,7 +605,7 @@ int MapSetupExpress(MapType * I)
  * @param v 3D query point
  * @param[out] a,b,c
  */
-void MapLocus(MapType * I, const float *v, int *a, int *b, int *c)
+void MapLocus(const MapType * I, const float *v, int *a, int *b, int *c)
 {
   int at, bt, ct;
   float invDiv = I->recipDiv;

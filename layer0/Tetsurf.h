@@ -18,18 +18,26 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Tetsurf
 #define _H_Tetsurf
 
-#include"Map.h"
-#include"MemoryDebug.h"
-#include"Crystal.h"
-#include"Field.h"
 #include"PyMOLGlobals.h"
 #include"PyMOLEnums.h"
+#include"vla.h"
 
-int TetsurfVolume(PyMOLGlobals * G, Isofield * field, float level, int **num,
-                  float **vert, int *range, cIsosurfaceMode,
-                  MapType * voxelmap, const float* a_vert, float carvebuffer, cIsosurfaceSide);
-void TetsurfGetRange(PyMOLGlobals * G, Isofield * field, CCrystal * cryst, float *mn,
-                     float *mx, int *range);
+struct CCrystal;
+struct Isofield;
+struct MapType;
+
+int TetsurfVolume(PyMOLGlobals* G, Isofield* field, float level,
+    pymol::vla<int>& num,    //
+    pymol::vla<float>& vert, //
+    const int* range,        //
+    cIsosurfaceMode mode,    //
+    const MapType* voxelmap, //
+    const float* a_vert,     //
+    float carvebuffer,       //
+    cIsosurfaceSide side);
+
+void TetsurfGetRange(PyMOLGlobals* G, const Isofield* field,
+    const CCrystal* cryst, const float* mn, const float* mx, int* range);
 
 int TetsurfInit(PyMOLGlobals * G);
 void TetsurfFree(PyMOLGlobals * G);

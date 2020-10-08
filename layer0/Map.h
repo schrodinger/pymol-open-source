@@ -72,7 +72,7 @@ int MapSetupExpressPerp(MapType * I, const float *vert, float front, int nVertHi
 #define MapEStart(m,a,b,c) (m->EHead + ((a) * m->D1D2) + ((b)*m->Dim[2]) + (c))
 
 #define MapNext(m,a) (*(m->Link+(a)))
-void MapLocus(MapType * map, const float *v, int *a, int *b, int *c);
+void MapLocus(const MapType * map, const float *v, int *a, int *b, int *c);
 int *MapLocusEStart(MapType * map, const float *v);
 
 #define MapCache(m,a) {(m)->Cache[a]=1;(m)->CacheLink[a]=(m)->CacheStart;(m)->CacheStart=a;}
