@@ -83,6 +83,12 @@ struct CoordSet : CObjectState {
     return false;
   }
 
+  //! Get symmetry if defined, otherwise get it from parent object.
+  CSymmetry const* getSymmetry() const
+  {
+    return Symmetry ? Symmetry.get() : Obj ? Obj->Symmetry : nullptr;
+  }
+
   ObjectMolecule *Obj = nullptr;
   pymol::vla<float> Coord;
   pymol::vla<int> IdxToAtm;

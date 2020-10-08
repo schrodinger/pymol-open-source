@@ -435,6 +435,7 @@ struct MoleculeExporterPDB : public MoleculeExporter {
   bool m_conect_all = false;
   bool m_conect_nodup;
   bool m_mdl_written = false;
+  bool m_cryst1_written = false;
   bool m_use_ter_records;
   const AtomInfoType * m_pre_ter = nullptr;
   PDBInfoRec m_pdb_info;
@@ -527,7 +528,11 @@ struct MoleculeExporterPDB : public MoleculeExporter {
   }
 
   void writeCryst1() {
-    const auto& sym = m_iter.cs->Symmetry ? m_iter.cs->Symmetry.get(): m_iter.obj->Symmetry;
+    if (m_cryst1_written) {
+      return;
+    }
+
+    const auto* sym = m_iter.cs->getSymmetry();
 
     if (sym) {
       const auto& dim   = sym->Crystal.Dim;
@@ -536,6 +541,7 @@ struct MoleculeExporterPDB : public MoleculeExporter {
           "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %-11s%4d\n",
           dim[0], dim[1], dim[2], angle[0], angle[1], angle[2],
           sym->SpaceGroup, sym->PDBZValue);
+      m_cryst1_written = true;
     }
   }
 
@@ -546,7 +552,7 @@ struct MoleculeExporterPDB : public MoleculeExporter {
 
     if (m_multi == cMolExportByObject) {
       m_offset += VLAprintf(m_buffer, m_offset, "HEADER    %.40s\n", m_iter.obj->Name);
-      writeCryst1();
+      m_cryst1_written = false;
     }
   }
 
@@ -555,8 +561,10 @@ struct MoleculeExporterPDB : public MoleculeExporter {
 
     if (m_multi == cMolExportByCoordSet) {
       m_offset += VLAprintf(m_buffer, m_offset, "HEADER    %.40s\n", getTitleOrName());
-      writeCryst1();
+      m_cryst1_written = false;
     }
+
+    writeCryst1();
 
     if (m_iter.isMultistate()
         && (m_iter.isPerObject() || m_iter.state != m_last_state)) {
@@ -630,7 +638,7 @@ struct MoleculeExporterCIF : public MoleculeExporter {
   }
 
   void writeCellSymmetry() {
-    const auto& sym = m_iter.cs->Symmetry.get() ? m_iter.cs->Symmetry.get() : m_iter.obj->Symmetry;
+    const auto* sym = m_iter.cs->getSymmetry();
 
     if (sym) {
       const auto& dim   = sym->Crystal.Dim;
@@ -1452,9 +1460,26 @@ public:
     return cMolExportGlobal;
   }
 
+  void writeCellSymmetry() {
+    if (!m_raw.unitCell.empty()) {
+      return;
+    }
+
+    const auto* sym = m_iter.cs->getSymmetry();
+
+    if (sym) {
+      const auto& dim = sym->Crystal.Dim;
+      const auto& angle = sym->Crystal.Angle;
+      m_raw.unitCell = {dim[0], dim[1], dim[2], angle[0], angle[1], angle[2]};
+      m_raw.spaceGroup = sym->SpaceGroup;
+    }
+  }
+
   void beginCoordSet() override {
     m_raw.chainsPerModel.emplace_back(0);
     m_last_ai = nullptr;
+
+    writeCellSymmetry();
   }
 
   void writeAtom() override {
