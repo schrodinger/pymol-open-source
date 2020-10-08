@@ -599,6 +599,10 @@ else:
 
             filename = os.getenv("PYMOLTESTTIMINGS",
                     os.path.join(pymol_test_dir, "timings.tab"))
+
+            if filename in ("", "none"):
+                return
+
             with open(filename, "a") as handle:
                 for i, (m, t) in enumerate(test.timings):
                     version = cmd.get_version()
