@@ -64,11 +64,19 @@ class TestExporting(testing.PyMOLTestCase):
         self.assertEqual(cmd.get_setting_int('pse_binary_dump'), 1)
         self.assertEqual(cmd.get_setting_float('pse_export_version'), 1.2)
 
+    @testing.requires_version('1.8.4')
     def testMultisave(self):
         names = ['ala', 'gly', 'his', 'arg']
 
         for name in names:
             cmd.fragment(name)
+
+        sym1 = (1.2, 3.4, 5.6, 60.0, 70.0, 80.0)
+        sym2 = (2.3, 4.5, 6.7, 90.0, 90.0, 90.0)
+        sym3 = (3.4, 5.6, 7.8, 70.0, 70.0, 70.0)
+        cmd.set_symmetry("gly", *sym1)
+        cmd.set_symmetry("his", *sym2)
+        cmd.set_symmetry("arg", *sym3)
 
         with testing.mktemp('.pdb') as filename:
             cmd.multisave(filename, names[0])                       # new
@@ -78,6 +86,10 @@ class TestExporting(testing.PyMOLTestCase):
             cmd.load(filename)
 
         self.assertEqual(cmd.get_object_list(), names[1:])
+
+        self.assertArrayEqual(cmd.get_symmetry("gly")[:6], sym1, delta=1e-4)
+        self.assertArrayEqual(cmd.get_symmetry("his")[:6], sym2, delta=1e-4)
+        self.assertArrayEqual(cmd.get_symmetry("arg")[:6], sym3, delta=1e-4)
 
     @testing.requires_version('2.1')
     def testMultifilesave(self):
