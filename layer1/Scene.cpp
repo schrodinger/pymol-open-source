@@ -2503,7 +2503,7 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
   MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, v0, I->m_view.m_pos); /* convert to view-space */
 
   if (I->Height > I->Width && I->Height && I->Width)
-    dist *= I->Height / I->Width;
+    dist *= (float)I->Height / (float)I->Width;
 
 #ifdef _PYMOL_OPENVR
   /*lift up molecule to the user's head*/
