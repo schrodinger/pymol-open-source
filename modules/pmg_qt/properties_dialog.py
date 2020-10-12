@@ -163,7 +163,7 @@ def props_dialog(parent):  #noqa
                 is_state = True
 
             def get_new_value(old_value):
-                if isinstance(old_value, (tuple, list)):
+                if isinstance(old_value, (tuple, list, bool)):
                     return cmd.safe_eval(new_value)
 
                 try:
@@ -174,7 +174,7 @@ def props_dialog(parent):  #noqa
                 except ValueError:
                     # return str and let PyMOL handle it (e.g. change
                     # type of user property)
-                    return new_value.encode('ascii')
+                    return new_value.encode('utf-8')
 
             alter_args = ('pk1', key + '= get_new_value(' + key + ')', 0,
                     {'get_new_value': get_new_value})
