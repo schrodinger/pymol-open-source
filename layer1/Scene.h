@@ -42,6 +42,10 @@ Z* -------------------------------------------------------------------
 #define cSceneViewSize 25
 typedef float SceneViewType[cSceneViewSize];
 
+#define SceneScrollBarMargin DIP2PIXEL(1)
+#define SceneScrollBarWidth DIP2PIXEL(13)
+#define SceneGetExactScreenVertexScale SceneGetScreenVertexScale
+
 enum cSceneClip {
   cSceneClip_invalid = -1,
   cSceneClip_near = 0,
@@ -64,7 +68,6 @@ void SceneSetFogUniforms(PyMOLGlobals * G, CShaderPrg *);
 void SceneSetFrame(PyMOLGlobals * G, int mode, int frame);
 int SceneGetFrame(PyMOLGlobals * G);
 int SceneGetState(PyMOLGlobals * G);
-int SceneGetButtonMargin(PyMOLGlobals * G);
 
 void SceneDirty(PyMOLGlobals * G);      /* scene dirty, but leave the overlay if one exists */
 void SceneInvalidate(PyMOLGlobals * G); /* scene dirty and remove the overlay */
@@ -269,6 +272,15 @@ void ScenePickAtomInWorld(PyMOLGlobals * G, int x, int y, float *atomWorldPos);
 void SceneInvalidatePicking(PyMOLGlobals * G);
 
 pymol::Image* SceneImagePrepare(PyMOLGlobals * G, bool prior_only);
+
+void SceneDoRoving(PyMOLGlobals * G, float old_front,
+                   float old_back, float old_origin,
+                   int adjust_flag, int zoom_flag);
+void UpdateFrontBackSafe(CScene *I);
+int stereo_via_adjacent_array(int stereo_mode);
+int SceneDeferredClick(DeferredMouse * dm);
+int SceneDeferredDrag(DeferredMouse * dm);
+int SceneDeferredRelease(DeferredMouse * dm);
 
 #endif
 

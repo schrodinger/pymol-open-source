@@ -423,6 +423,7 @@ void ObjectMoleculeGetAtomSele(const ObjectMolecule * I, int index, char *buffer
  */
 std::string ObjectMoleculeGetAtomSeleFast(const ObjectMolecule * I, int index);
 
+std::string ObjectMoleculeGetAtomSeleLog(const ObjectMolecule* I, int index, int quote);
 void ObjectMoleculeGetAtomSeleLog(const ObjectMolecule * I, int index, char *buffer, int quote);
 
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I);

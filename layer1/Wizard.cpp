@@ -137,7 +137,7 @@ void WizardPurgeStack(PyMOLGlobals * G)
 #endif
 }
 
-int WizardDoSelect(PyMOLGlobals * G, char *name, int state)
+int WizardDoSelect(PyMOLGlobals * G, const char* name, int state)
 {
 /**
  * Run when user selects something with the mouse, in a wizard

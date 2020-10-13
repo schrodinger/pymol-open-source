@@ -10682,6 +10682,14 @@ void ObjectMolecule::describeElement(int index, char *buffer) const
 
 
 /*========================================================================*/
+
+std::string ObjectMoleculeGetAtomSeleLog(const ObjectMolecule* I, int index, int quote)
+{
+  OrthoLineType buffer;
+  ObjectMoleculeGetAtomSeleLog(I, index, buffer, quote);
+  return buffer;
+}
+
 void ObjectMoleculeGetAtomSeleLog(const ObjectMolecule * I, int index, char *buffer, int quote)
 {
   char *p = quote ? buffer + 1 : buffer;

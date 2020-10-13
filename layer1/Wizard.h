@@ -27,7 +27,7 @@ void WizardFree(PyMOLGlobals * G);
 Block *WizardGetBlock(PyMOLGlobals * G);
 void WizardRefresh(PyMOLGlobals * G);
 int WizardDoPick(PyMOLGlobals * G, int bondFlag, int state=0);
-int WizardDoSelect(PyMOLGlobals * G, char *name, int state=0);
+int WizardDoSelect(PyMOLGlobals * G, const char* name, int state=0);
 void WizardPurgeStack(PyMOLGlobals * G);
 PyObject *WizardGetStack(PyMOLGlobals * G);
 int WizardSetStack(PyMOLGlobals * G, PyObject * wiz);
