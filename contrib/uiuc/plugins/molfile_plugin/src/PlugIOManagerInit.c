@@ -2,7 +2,7 @@
 
 #include "vmdplugin.h"
 
-typedef struct _PyMOLGlobals PyMOLGlobals;
+struct PyMOLGlobals;
 /* prototypes */
 int molfile_abinitplugin_init(void);
 int molfile_abinitplugin_register(void *,vmdplugin_register_cb);
@@ -198,11 +198,11 @@ int molfile_xyzplugin_register(void *,vmdplugin_register_cb);
 int molfile_xyzplugin_fini(void);
 
 
-    int PlugIOManagerRegister(PyMOLGlobals *G, vmdplugin_t *);
+    int PlugIOManagerRegister(struct PyMOLGlobals *G, vmdplugin_t *);
 
-    int PlugIOManagerInitAll(PyMOLGlobals *G);
+    int PlugIOManagerInitAll(struct PyMOLGlobals *G);
 
-    int PlugIOManagerInitAll(PyMOLGlobals *G)
+    int PlugIOManagerInitAll(struct PyMOLGlobals *G)
     {
        int ok=1;
 if(ok) ok = ok && (molfile_abinitplugin_init() == VMDPLUGIN_SUCCESS);

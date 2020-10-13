@@ -120,8 +120,7 @@ class CGO;
 #define cPyMOLGlobals_LaunchStatus_StereoFailed 0x1
 #define cPyMOLGlobals_LaunchStatus_MultisampleFailed 0x2
 
-typedef struct _PyMOLGlobals PyMOLGlobals;
-struct _PyMOLGlobals {
+struct PyMOLGlobals {
 
   /* singleton objects */
 

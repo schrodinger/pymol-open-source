@@ -2069,12 +2069,12 @@ void PyMOL_Free(CPyMOL * I)
 #endif
 }
 
-struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL * I)
+struct PyMOLGlobals* PyMOL_GetGlobals(CPyMOL * I)
 {
   return I->G;
 }
 
-struct _PyMOLGlobals **PyMOL_GetGlobalsHandle(CPyMOL * I)
+struct PyMOLGlobals** PyMOL_GetGlobalsHandle(CPyMOL * I)
 {
   return &(I->G);
 }

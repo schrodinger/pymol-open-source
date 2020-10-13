@@ -334,8 +334,8 @@ void PyMOL_SetModalDraw(CPyMOL * I, PyMOLModalDrawFn * fn);     /* for internal 
 
 /* developer/transient privates */
 
-struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL * I);
-struct _PyMOLGlobals **PyMOL_GetGlobalsHandle(CPyMOL * I);
+struct PyMOLGlobals* PyMOL_GetGlobals(CPyMOL * I);
+struct PyMOLGlobals** PyMOL_GetGlobalsHandle(CPyMOL * I);
 
 void PyMOL_RunTest(CPyMOL * I, int group, int test);
 

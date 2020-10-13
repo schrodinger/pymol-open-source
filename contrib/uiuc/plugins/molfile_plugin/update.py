@@ -66,7 +66,7 @@ for in_file in sorted(os.listdir(molfile_src_path)):
 with open("src/PlugIOManagerInit.c", 'w') as g:
     g.write("/* MACHINE GENERATED FILE, DO NOT EDIT! */\n\n")
     g.write('#include "vmdplugin.h"\n\n')
-    g.write('typedef struct _PyMOLGlobals PyMOLGlobals;\n');
+    g.write('struct PyMOLGlobals;\n');
     g.write('/* prototypes */\n')
     for pref in src_list:
         g.write("int molfile_%s_init(void);\n"%pref)
@@ -74,11 +74,11 @@ with open("src/PlugIOManagerInit.c", 'w') as g:
         g.write("int molfile_%s_fini(void);\n"%pref)
     g.write('''
 
-    int PlugIOManagerRegister(PyMOLGlobals *G, vmdplugin_t *);
+    int PlugIOManagerRegister(struct PyMOLGlobals *G, vmdplugin_t *);
 
-    int PlugIOManagerInitAll(PyMOLGlobals *G);
+    int PlugIOManagerInitAll(struct PyMOLGlobals *G);
 
-    int PlugIOManagerInitAll(PyMOLGlobals *G)
+    int PlugIOManagerInitAll(struct PyMOLGlobals *G)
     {
        int ok=1;
 ''')
