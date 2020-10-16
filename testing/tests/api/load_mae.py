@@ -107,3 +107,32 @@ class TestLoadMAE(testing.PyMOLTestCase):
         cmd.load(self.datafile('userlabels2.mae'), 'm')
         cmd.iterate('rank 1', 'stored.label = label')
         self.assertEqual(stored.label, '1.31 TRP')
+
+    @testing.requires_version('2.5')
+    def testLabel(self):
+        cmd.load(self.datafile('labels.mae'), 'm')
+        labels = []
+        cmd.iterate('all', 'labels.append(label)', space={'labels': labels})
+        self.assertEqual(labels, [
+            'N +1 (-1.2, 0.2, -0.2) 0.290 0.75 18.50 GLY 1 D N 1 1',
+            'C  (0.2, 0.3, -0.5) -0.010 0.75 24.17 GLY 1 D CA 2 2',
+            'C  (1.1, -0.4, 0.5) 0.620 0.75 11.07 GLY 1 D C 3 3',
+            'O  (0.5, -1.0, 1.5) -0.570 0.75 31.09 GLY 1 D O 4 4',
+            'H  (0.4, -0.1, -1.5) 0.090 0.75 24.17 GLY 1 D HA 9 16',
+            'H  (0.5, 1.4, -0.5) 0.090 0.75 24.17 GLY 1 D HA3 8 15',
+            'H  (-1.5, 1.0, 0.4) 0.160 0.75 18.50 GLY 1 D H1 7 14',
+            'H  (-1.7, 0.2, -1.1) 0.160 0.75 18.50 GLY 1 D H2 5 12',
+            'H  (-1.4, -0.7, 0.3) 0.160 0.75 18.50 GLY 1 D H3 6 13',
+            'N  (2.3, -0.4, 0.4) -0.380 1.00 48.64 CYS 2 D N 10 5',
+            'C  (3.1, -1.1, 1.4) -0.160 1.00 41.94 CYS 2 D CA 11 6',
+            'C  (4.6, -0.9, 1.1) 0.750 1.00 0.21 CYS 2 D C 12 7',
+            'O  (5.0, -0.3, 0.1) -0.800 1.00 3.55 CYS 2 D O 13 8',
+            'C  (2.7, -2.5, 1.5) -0.200 1.00 38.71 CYS 2 D CB 14 9',
+            'S  (3.5, -3.4, 2.9) -0.310 1.00 18.13 CYS 2 D SG 15 10',
+            'O -1 (5.6, -1.6, 2.0) -0.800 1.00 0.21 CYS 2 D OXT 16 11',
+            'H  (2.8, 0.1, -0.3) 0.270 1.00 48.64 CYS 2 D H 21 21',
+            'H  (3.0, -0.6, 2.4) 0.140 1.00 41.94 CYS 2 D HA 17 17',
+            'H  (2.9, -3.0, 0.6) 0.140 1.00 38.71 CYS 2 D HB2 18 18',
+            'H  (1.6, -2.6, 1.7) 0.140 1.00 38.71 CYS 2 D HB3 19 19',
+            'H  (3.8, -4.6, 2.5) 0.210 1.00 18.13 CYS 2 D HG 20 20',
+        ])

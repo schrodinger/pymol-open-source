@@ -1,0 +1,101 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ i_m_ct_format
+ :::
+ foo_e_chg 
+  1 
+  gc.1 
+  /tmp 
+  gc.mae 
+  1
+  2
+ m_atom[21] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  s_m_chain_name
+  i_m_color
+  r_m_charge1
+  s_m_pdb_residue_name
+  s_m_pdb_atom_name
+  i_m_atomic_number
+  i_m_formal_charge
+  s_m_color_rgb
+  s_m_atom_name
+  i_m_secondary_structure
+  s_m_label_format
+  i_m_label_color
+  s_m_label_user_text
+  r_m_pdb_occupancy
+  r_m_pdb_tfactor
+  i_pdb_PDB_serial
+  :::
+  1 32 -1.195000 0.201000 -0.206000 1 D 38 0.29000 "GLY " " N  " 7 1 3333FF  N1  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  0.75 18.5 1
+  2 3 0.230000 0.318000 -0.502000 1 D 137 -0.01000 "GLY " " CA " 6 0 33FF33  C2  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  0.75 24.17 2
+  3 2 1.059000 -0.390000 0.542000 1 D 137 0.62000 "GLY " " C  " 6 0 33FF33  C3  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  0.75 11.07 3
+  4 15 0.545000 -0.975000 1.499000 1 D 74 -0.57000 "GLY " " O  " 8 0 FF4C4C  O4  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  0.75 31.09 4
+  5 48 -1.720000 0.216000 -1.069000 1 D 104 0.16000 "GLY " " H2 " 1 0 E5E5E5  H5  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  0.75 18.5 12
+  6 48 -1.369000 -0.668000 0.278000 1 D 104 0.16000 "GLY " " H3 " 1 0 E5E5E5  H6  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  0.75 18.5 13
+  7 48 -1.483000 0.974000 0.376000 1 D 104 0.16000 "GLY " " H1 " 1 0 E5E5E5  H7  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  0.75 18.5 14
+  8 48 0.499000 1.374000 -0.501000 1 D 104 0.09000 "GLY " " HA3" 1 0 E5E5E5  H8  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  0.75 24.17 15
+  9 48 0.430000 -0.125000 -1.478000 1 D 104 0.09000 "GLY " " HA " 1 0 E5E5E5  H9  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  0.75 24.17 16
+  10 25 2.345000 -0.383000 0.430000 2 D 38 -0.38000 "CYS " " N  " 7 0 3333FF  N10  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 48.64 5
+  11 3 3.147000 -1.068000 1.440000 2 D 137 -0.16000 "CYS " " CA " 6 0 33FF33  C11  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 41.94 6
+  12 2 4.621000 -0.946000 1.133000 2 D 137 0.75000 "CYS " " C  " 6 0 33FF33  C12  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 0.21 7
+  13 15 5.037000 -0.333000 0.139000 2 D 74 -0.80000 "CYS " " O  " 8 0 FF4C4C  O13  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 3.55 8
+  14 3 2.682000 -2.534000 1.523000 2 D 137 -0.20000 "CYS " " CB " 6 0 33FF33  C14  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 38.71 9
+  15 52 3.512000 -3.392000 2.881000 2 D 25 -0.31000 "CYS " " SG " 16 0 E5C53F  S15  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 18.13 10
+  16 18 5.566000 -1.556000 2.016000 2 D 74 -0.80000 "CYS " " OXT" 8 -1 FF4C4C  O16  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 0.21 11
+  17 48 3.002000 -0.602000 2.415000 2 D 104 0.14000 "CYS " " HA " 1 0 E5E5E5  H17  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 41.94 17
+  18 48 2.933000 -3.034000 0.588000 2 D 104 0.14000 "CYS " " HB2" 1 0 E5E5E5  H18  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 38.71 18
+  19 48 1.605000 -2.560000 1.688000 2 D 104 0.14000 "CYS " " HB3" 1 0 E5E5E5  H19  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 38.71 19
+  20 48 3.830000 -4.636000 2.497000 2 D 104 0.21000 "CYS " " HG " 1 0 E5E5E5  H20  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 18.13 20
+  21 48 2.790000 0.089000 -0.344000 2 D 104 0.27000 "CYS " " H  " 1 0 E5E5E5  H21  0 %EL%FC%XY0.1%C10.3%OC%BF%RT%RN%CH%PA%NU%UA:i_pdb_PDB_serial:  2 ""  1 48.64 21
+  :::
+ } 
+ m_bond[20] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  i_m_from_rep
+  i_m_to_rep
+  :::
+  1 1 2 1 2 2
+  2 1 5 1 2 2
+  3 1 6 1 2 2
+  4 1 7 1 2 2
+  5 2 3 1 2 2
+  6 2 8 1 2 2
+  7 2 9 1 2 2
+  8 3 4 2 2 2
+  9 3 10 1 2 2
+  10 10 11 1 2 2
+  11 10 21 1 2 2
+  12 11 12 1 2 2
+  13 11 14 1 2 2
+  14 11 17 1 2 2
+  15 12 13 2 2 2
+  16 12 16 1 2 2
+  17 14 15 1 2 2
+  18 14 18 1 2 2
+  19 14 19 1 2 2
+  20 15 20 1 2 2
+  :::
+ } 
+} 
+
