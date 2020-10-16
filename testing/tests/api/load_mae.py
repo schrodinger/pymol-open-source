@@ -75,3 +75,35 @@ class TestLoadMAE(testing.PyMOLTestCase):
         self._assertCountEqual('b > 0.5', 'resn PHE')
         self.assertTrue(cmd.get_setting_float('stick_ball_ratio', 'm2') > 1.1)
         self.assertEqual(g_labels[0], testlabel)
+
+    @testing.foreach.product((0, 1), (0, 1))
+    @testing.requires_version('2.3')
+    def testLoadMae(self, multiplex, discrete):
+        cmd.load(self.datafile('multimae.maegz'), 'm',
+                multiplex=multiplex, discrete=discrete)
+
+        nstate = 4
+        natoms = 79
+        nmodel = 1
+        ndiscrete = discrete
+
+        if multiplex:
+            natoms *= nstate
+            ndiscrete *= nstate
+            nmodel = nstate
+            nstate = 1
+        elif discrete:
+            self.assertEqual(cmd.count_atoms(state=1), natoms)
+            natoms *= nstate
+
+        self.assertEqual(cmd.count_states(), nstate)
+        self.assertEqual(cmd.count_discrete('*'), ndiscrete)
+        self.assertEqual(cmd.count_atoms(), natoms)
+        self.assertEqual(len(cmd.get_object_list()), nmodel)
+
+    @testing.requires_version('2.3')
+    def testLoadMaeUserLabel(self):
+        from pymol import stored
+        cmd.load(self.datafile('userlabels2.mae'), 'm')
+        cmd.iterate('rank 1', 'stored.label = label')
+        self.assertEqual(stored.label, '1.31 TRP')

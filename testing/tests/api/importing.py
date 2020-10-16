@@ -693,36 +693,3 @@ class TestImporting(testing.PyMOLTestCase):
         with self.assertRaisesRegex(pymol.CmdException,
                                     'Parsing CIF file failed: truncated loop'):
             cmd.load_raw('data_foo loop_ _k.a _k.b 1 2 3', 'cif', 'm2')
-
-    @testing.foreach.product((0, 1), (0, 1))
-    @testing.requires_version('2.3')
-    @testing.requires('incentive')
-    def testLoadMae(self, multiplex, discrete):
-        cmd.load(self.datafile('multimae.maegz'), 'm',
-                multiplex=multiplex, discrete=discrete)
-
-        nstate = 4
-        natoms = 79
-        nmodel = 1
-        ndiscrete = discrete
-
-        if multiplex:
-            natoms *= nstate
-            ndiscrete *= nstate
-            nmodel = nstate
-            nstate = 1
-        elif discrete:
-            self.assertEqual(cmd.count_atoms(state=1), natoms)
-            natoms *= nstate
-
-        self.assertEqual(cmd.count_states(), nstate)
-        self.assertEqual(cmd.count_discrete('*'), ndiscrete)
-        self.assertEqual(cmd.count_atoms(), natoms)
-        self.assertEqual(len(cmd.get_object_list()), nmodel)
-
-    @testing.requires_version('2.3')
-    @testing.requires('incentive')
-    def testLoadMaeUserLabel(self):
-        cmd.load(self.datafile('userlabels2.mae'), 'm')
-        cmd.iterate('rank 1', 'stored.label = label')
-        self.assertEqual(stored.label, '1.31 TRP')
