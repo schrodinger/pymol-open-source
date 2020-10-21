@@ -30,5 +30,6 @@ public:
       std::size_t n_vertices);
 
   bool is_excluded(const float* v0) const;
+  bool is_excluded(const float* v0, const float* v1) const;
   bool is_excluded(const float* v0, const float* v1, const float* v2) const;
 };

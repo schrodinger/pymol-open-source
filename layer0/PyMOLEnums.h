@@ -23,3 +23,8 @@ enum class cIsosurfaceSide {
   front = 1,
   back = -1,
 };
+
+enum class cIsosurfaceAlgorithm {
+  MARCHING_CUBES_VTKM = 0,
+  MARCHING_TETRAHEDRA = 1,
+};

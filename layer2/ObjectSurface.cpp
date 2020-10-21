@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Parse.h"
 #include"Tetsurf.h"
 #include"CarveHelper.h"
+#include"ContourSurf.h"
 #include"Vector.h"
 #include"Color.h"
 #include"main.h"
@@ -519,7 +520,7 @@ void ObjectSurface::update()
                   ms->AtomVertex, ms->AtomVertex.size() / 3));
             }
 
-            ms->nT = TetsurfVolume(I->G, oms->Field.get(),
+            ms->nT = ContourSurfVolume(I->G, oms->Field.get(),
                                    ms->Level,
                                    ms->N, ms->V,
                                    ms->Range,
@@ -537,7 +538,7 @@ void ObjectSurface::update()
               pymol::vla<int> N2(10000);
               pymol::vla<float> V2(10000);
 
-              nT2 = TetsurfVolume(I->G, oms->Field.get(),
+              nT2 = ContourSurfVolume(I->G, oms->Field.get(),
                                   -ms->Level,
                                   N2, V2,
                                   ms->Range,

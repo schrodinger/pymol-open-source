@@ -894,6 +894,7 @@ enum {
   REC_f( 784, openvr_gui_distance                     , global    , 1.5f ),
   REC_i( 785, cartoon_smooth_cylinder_cycles          , global    , 3 ),
   REC_i( 786, cartoon_smooth_cylinder_window          , global    , 2 ),
+  REC_i( 787, isosurface_algorithm                    , global    , 0, 0, 1 ),
 
 
 #ifdef SETTINGINFO_IMPLEMENTATION

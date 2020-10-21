@@ -29,6 +29,7 @@ class options:
     testing = False
     openvr = False
     use_openmp = 'no' if MAC else 'yes'
+    use_vtkm = '1.5.x'
     vmd_plugins = True
 
 try:
@@ -45,6 +46,8 @@ try:
             help="skip libxml2 dependency, disables COLLADA export")
     parser.add_argument('--use-openmp', choices=('yes', 'no'),
             help="Use OpenMP")
+    parser.add_argument('--use-vtkm', choices=('1.5.x', 'master', 'no'),
+            help="Use VTK-m for isosurface generation")
     parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'guess', 'no'),
             help="c++11: use msgpack-c header-only library; c: link against "
             "shared library; no: disable fast MMTF load support")
@@ -415,6 +418,31 @@ if not (MAC or WIN):
         ] + (not options.no_glut) * [
             "glut",
         ]
+
+if options.use_vtkm != "no":
+    for prefix in prefix_path:
+        vtkm_inc_dir = os.path.join(prefix, "include", "vtkm-1.5")
+        if os.path.exists(vtkm_inc_dir):
+            break
+    else:
+        raise LookupError('VTK-m headers not found.'
+                          f' PREFIX_PATH={":".join(prefix_path)}')
+    def_macros += [
+        ("_PYMOL_VTKM", None),
+    ]
+    inc_dirs += [
+        vtkm_inc_dir,
+        vtkm_inc_dir + "/vtkm/thirdparty/diy/vtkmdiy/include",
+        vtkm_inc_dir + "/vtkm/thirdparty/lcl/vtkmlcl",
+    ] + (options.use_vtkm != "master") * [
+        vtkm_inc_dir + "/vtkm/thirdparty/diy",
+        vtkm_inc_dir + "/vtkm/thirdparty/taotuple",
+    ]
+    libs += [
+        "vtkm_cont-1.5",
+        "vtkm_filter_contour-1.5"
+        if options.use_vtkm == "master" else "vtkm_filter-1.5",
+    ]
 
 if options.vmd_plugins:
     libs += [

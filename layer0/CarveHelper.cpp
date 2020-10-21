@@ -55,6 +55,15 @@ bool CarveHelper::is_excluded(
 }
 
 /**
+ * True if the given line should be excluded
+ */
+bool CarveHelper::is_excluded(const float* v0, const float* v1) const
+{
+  bool within = is_within(v0) && is_within(v1);
+  return m_avoid_flag ? within : !within;
+}
+
+/**
  * True if the given vertex should be excluded
  */
 bool CarveHelper::is_excluded(const float* v0) const

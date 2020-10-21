@@ -2615,6 +2615,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_surface_use_shader:
     SceneChanged(G);
     break;
+  case cSetting_isosurface_algorithm:
   case cSetting_surface_negative_visible:
     ExecutiveInvalidateRep(G, inv_sele, cRepSurface, cRepInvRep);
     SceneChanged(G);
