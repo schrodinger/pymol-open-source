@@ -29,11 +29,11 @@ class TestComputing(testing.PyMOLTestCase):
         # coords have changed
         self.assertNotEqual(xyz1, xyz2)
 
-        cmd.undo2()
+        cmd.undo()
         xyz2 = cmd.get_model('his').get_coord_list()
         self.assertEqual(xyz1, xyz2)
 
-        cmd.redo2()
+        cmd.redo()
         xyz2 = cmd.get_model('his').get_coord_list()
         self.assertNotEqual(xyz1, xyz2)
 

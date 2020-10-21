@@ -148,7 +148,7 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.rotate('y', 90, 'm1')
         # by position
         cmd.origin(position=[-1,0,0])
-        cmd.undo2()
+        cmd.undo()
         cmd.rotate('y', 90, 'm2')
         coords = []
         cmd.iterate_state(1, 'm1 m2', 'coords.append([x,y,z])', space=locals())
@@ -164,8 +164,8 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.rotate('y', 90, 'm1')
         # by position
         cmd.origin(position=[-1,0,0])
-        cmd.undo2()
-        cmd.redo2()
+        cmd.undo()
+        cmd.redo()
         cmd.rotate('y', 90, 'm2')
         coords = []
         cmd.iterate_state(1, 'm1 m2', 'coords.append([x,y,z])', space=locals())

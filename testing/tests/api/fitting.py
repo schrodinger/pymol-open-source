@@ -47,10 +47,10 @@ class TestFitting(testing.PyMOLTestCase):
         cmd.fit("m1", "m2")
         rms = cmd.rms_cur("m1", "m2")
         self.assertAlmostEqual(rms, 0.0)
-        cmd.undo2()
+        cmd.undo()
         rms = cmd.rms_cur("m1", "m2")
         self.assertNotAlmostEqual(rms, 0.0)
-        cmd.redo2()
+        cmd.redo()
         rms = cmd.rms_cur("m1", "m2")
         self.assertAlmostEqual(rms, 0.0)
 

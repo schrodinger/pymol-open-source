@@ -394,14 +394,14 @@ class TestEditing(testing.PyMOLTestCase):
         cmd.pseudoatom('m1', pos=[1.,0.,0.])
 
         cmd.protect('m1`1')
-        cmd.undo2()
+        cmd.undo()
         cmd.translate([0.,0.,1.])
         self.assertEqual([0.,0.,1.], cmd.get_atom_coords('m1`1'))
         self.assertEqual([1.,0.,1.], cmd.get_atom_coords('m1`2'))
 
         cmd.protect('m1`1')
-        cmd.undo2()
-        cmd.redo2()
+        cmd.undo()
+        cmd.redo()
         cmd.translate([0.,1.,0.])
         self.assertEqual([0.,0.,1.], cmd.get_atom_coords('m1`1'))
         self.assertEqual([1.,1.,1.], cmd.get_atom_coords('m1`2'))
@@ -413,15 +413,15 @@ class TestEditing(testing.PyMOLTestCase):
 
         cmd.protect('m1`1')
         cmd.deprotect()
-        cmd.undo2()
+        cmd.undo()
         cmd.translate([0.,0.,1.])
         self.assertEqual([0.,0.,0.], cmd.get_atom_coords('m1`1'))
         self.assertEqual([1.,0.,1.], cmd.get_atom_coords('m1`2'))
 
         cmd.protect('m1`1')
         cmd.deprotect()
-        cmd.undo2()
-        cmd.redo2()
+        cmd.undo()
+        cmd.redo()
         cmd.translate([0.,1.,0.])
         self.assertEqual([0.,1.,0.], cmd.get_atom_coords('m1`1'))
         self.assertEqual([1.,1.,1.], cmd.get_atom_coords('m1`2'))
@@ -803,11 +803,11 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertArrayEqual(cs1, cs('m2', 3))
         self.assertArrayNotEqual(cs2, cs('m2', 3))
 
-        cmd.undo2()
+        cmd.undo()
         self.assertArrayNotEqual(cs1, cs('m2', 3))
         self.assertArrayEqual(cs2, cs('m2', 3))
 
-        cmd.redo2()
+        cmd.redo()
         self.assertArrayEqual(cs1, cs('m2', 3))
         self.assertArrayNotEqual(cs2, cs('m2', 3))
 
