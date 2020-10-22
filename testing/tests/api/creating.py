@@ -119,6 +119,37 @@ class TestCreating(testing.PyMOLTestCase):
             self.assertEqual(cmd.get_state(), 2)
             self.assertImageHasColor(meshcolor)
 
+    def testIsosurfaceCarve(self):
+        self.ambientOnly()
+
+        cmd.set('gaussian_b_floor', 30)
+        cmd.set('mesh_radius', 0.1)
+        cmd.set('dot_radius', 0.2)
+
+        cmd.fragment('gly', 'm1')
+        cmd.map_new('map')
+
+        cmd.color('white')
+        cmd.color('red', 'elem O')
+        cmd.color('blue', 'elem N')
+        cmd.ramp_new('m1prox', 'm1', [0, 3], 'object')
+        cmd.orient()
+
+        cmd.disable('*')
+
+        for func in [
+                cmd.isosurface,
+                cmd.isomesh,
+                cmd.isodot,
+        ]:
+            cmd.delete('surface')
+            func('surface', 'map', 1.0, 'elem N', carve=1.5)
+            cmd.color('m1prox', 'surface')
+
+            img = self.get_imagearray(width=100, height=100)
+            self.assertImageHasColor("blue", img)
+            self.assertImageHasNotColor("red", img)
+
     @testing.requires("multi_undo")
     def testUndoIsosurface(self):
         cmd.fragment('gly', 'm1')
