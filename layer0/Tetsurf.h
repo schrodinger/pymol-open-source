@@ -24,16 +24,14 @@ Z* -------------------------------------------------------------------
 
 struct CCrystal;
 struct Isofield;
-struct MapType;
+class CarveHelper;
 
 int TetsurfVolume(PyMOLGlobals* G, Isofield* field, float level,
     pymol::vla<int>& num,    //
     pymol::vla<float>& vert, //
     const int* range,        //
     cIsosurfaceMode mode,    //
-    const MapType* voxelmap, //
-    const float* a_vert,     //
-    float carvebuffer,       //
+    const CarveHelper*,      //
     cIsosurfaceSide side);
 
 void TetsurfGetRange(PyMOLGlobals* G, const Isofield* field,

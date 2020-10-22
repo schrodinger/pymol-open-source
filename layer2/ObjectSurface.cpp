@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Map.h"
 #include"Parse.h"
 #include"Tetsurf.h"
+#include"CarveHelper.h"
 #include"Vector.h"
 #include"Color.h"
 #include"main.h"
@@ -449,12 +450,10 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
 void ObjectSurface::update()
 {
   auto I = this;
-  float carve_buffer;
   for(auto& msref : I->State) {
     ObjectSurfaceState *ms = &msref;
     ObjectMapState *oms = NULL;
     ObjectMap *map = NULL;
-    MapType *voxelmap = NULL;     /* this has nothing to do with isosurfaces... */
 
     if(ms->Active) {
       map = ExecutiveFindObjectMapByName(I->G, ms->MapName);
@@ -514,16 +513,10 @@ void ObjectSurface::update()
                               min_ext, max_ext, ms->Range);
             }
 
+            std::unique_ptr<CarveHelper> carvehelper;
             if(ms->CarveFlag && ms->AtomVertex) {
-              carve_buffer = ms->CarveBuffer;
-              if(carve_buffer < 0.0F) {
-                carve_buffer = -carve_buffer;
-              }
-
-              voxelmap = MapNew(I->G, -carve_buffer, ms->AtomVertex,
-                                VLAGetSize(ms->AtomVertex) / 3, NULL);
-              if(voxelmap)
-                MapSetupExpress(voxelmap);
+              carvehelper.reset(new CarveHelper(G, ms->CarveBuffer,
+                  ms->AtomVertex, ms->AtomVertex.size() / 3));
             }
 
             ms->nT = TetsurfVolume(I->G, oms->Field.get(),
@@ -531,7 +524,8 @@ void ObjectSurface::update()
                                    ms->N, ms->V,
                                    ms->Range,
                                    ms->Mode,
-                                   voxelmap, ms->AtomVertex, ms->CarveBuffer, ms->Side);
+                                   carvehelper.get(),
+                                   ms->Side);
 
             if(!SettingGet_b
                (I->G, I->Setting.get(), NULL, cSetting_surface_negative_visible)) {
@@ -548,7 +542,8 @@ void ObjectSurface::update()
                                   N2, V2,
                                   ms->Range,
                                   ms->Mode,
-                                  voxelmap, ms->AtomVertex.data(), ms->CarveBuffer, ms->Side);
+                                  carvehelper.get(),
+                                  ms->Side);
               if(N2 && V2) {
 
                 int base_n_N = VLAGetSize(ms->N);
@@ -574,9 +569,6 @@ void ObjectSurface::update()
                 ms->nT += nT2;
               }
             }
-
-            if(voxelmap)
-              MapFree(voxelmap);
 
             if(!ms->Matrix.empty()) {      /* in we're in a different reference frame... */
               double *matrix = ms->Matrix.data();

@@ -24,7 +24,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMesh.h"
 #include"Base.h"
 #include"MemoryDebug.h"
-#include"Map.h"
+#include"CarveHelper.h"
 #include"Parse.h"
 #include"Isosurf.h"
 #include"Vector.h"
@@ -485,18 +485,13 @@ void ObjectMesh::update()
 
   int *n;
   float *v;
-  float carve_buffer;
-  int avoid_flag = false;
   int n_cur;
   int n_seg;
   int n_line;
   int flag;
   int last_flag = 0;
-  int h, k, l;
-  int i, j;
   int mesh_skip = SettingGet_i(G, I->Setting.get(), NULL, cSetting_mesh_skip);
 
-  MapType *voxelmap;            /* this has nothing to do with isosurfaces... */
   for(a = 0; a < I->NState; a++) {
     ms = I->State + a;
     if(ms->Active) {
@@ -633,20 +628,10 @@ void ObjectMesh::update()
 
           }
           if(ms->CarveFlag && ms->AtomVertex && VLAGetSize(ms->N) && VLAGetSize(ms->V)) {
-            carve_buffer = ms->CarveBuffer;
-            if(ms->CarveBuffer < 0.0F) {
-              avoid_flag = true;
-              carve_buffer = -carve_buffer;
-            }
-
             /* cull my friend, cull */
-            voxelmap = MapNew(I->G,
-                              -carve_buffer, ms->AtomVertex,
-                              VLAGetSize(ms->AtomVertex) / 3, NULL);
-            if(voxelmap) {
-
-              MapSetupExpress(voxelmap);
-
+            auto carvehelper = CarveHelper(G, ms->CarveBuffer, ms->AtomVertex,
+                VLAGetSize(ms->AtomVertex) / 3);
+            {
               pymol::vla<int> old_n = std::move(ms->N);
               pymol::vla<float> old_v = std::move(ms->V);
               ms->N = pymol::vla<int>(old_n.size());
@@ -661,21 +646,7 @@ void ObjectMesh::update()
                 last_flag = false;
                 c = *(n++);
                 while(c--) {
-                  flag = false;
-                  MapLocus(voxelmap, v, &h, &k, &l);
-                  i = *(MapEStart(voxelmap, h, k, l));
-                  if(i) {
-                    j = voxelmap->EList[i++];
-                    while(j >= 0) {
-                      if(within3f(ms->AtomVertex + 3 * j, v, carve_buffer)) {
-                        flag = true;
-                        break;
-                      }
-                      j = voxelmap->EList[i++];
-                    }
-                  }
-                  if(avoid_flag)
-                    flag = !flag;
+                  flag = !carvehelper.is_excluded(v);
                   if(flag && (!last_flag)) {
                     VLACheck(ms->V, float, 3 * (n_line + 1));
                     copy3f(v, ms->V + n_line * 3);
@@ -706,7 +677,6 @@ void ObjectMesh::update()
               }
               VLACheck(ms->N, int, n_seg);
               ms->N[n_seg] = 0;
-              MapFree(voxelmap);
             }
           }
         }

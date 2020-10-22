@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"os_std.h"
 
+#include"CarveHelper.h"
 #include"Isosurf.h"
 #include"Tetsurf.h"
 #include"MemoryDebug.h"
@@ -81,8 +82,7 @@ static int TetsurfCodeVertices(CTetsurf * II);
 
 static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode, int& n_strip, int n_vert,
                                   pymol::vla<int>& strip_l, pymol::vla<float>& vert,
-                                  const MapType* voxelmap, const float* a_vert,
-                                  float carvebuffer, cIsosurfaceSide);
+                                  const CarveHelper*, cIsosurfaceSide);
 
 #define TetsurfSubSize		50
 
@@ -534,9 +534,7 @@ int TetsurfVolume(PyMOLGlobals* G, Isofield* field, float level,
     pymol::vla<float>& vert, //
     const int* range,        //
     cIsosurfaceMode mode,    //
-    const MapType* voxelmap, //
-    const float* a_vert,     //
-    float carvebuffer,       //
+    const CarveHelper* carvehelper, //
     cIsosurfaceSide side)
 {
 
@@ -613,7 +611,7 @@ int TetsurfVolume(PyMOLGlobals* G, Isofield* field, float level,
             if(ok) {
               if(TetsurfCodeVertices(I))
                 n_vert = TetsurfFindActiveBoxes(I, mode, n_strip, n_vert, num, vert,
-                                                voxelmap, a_vert, carvebuffer, side);
+                                                carvehelper, side);
             }
           }
       TetsurfPurge(I);
@@ -759,12 +757,11 @@ static void TetsurfInterpolate8(float *pt, float *v0, float l0, float *v1, float
 /*===========================================================================*/
 static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode mode, int &n_strip, int n_vert,
                                   pymol::vla<int>& strip_l, pymol::vla<float>& vert_,
-                                  const MapType* voxelmap, const float *a_vert,
-                                  float carvebuffer, cIsosurfaceSide side)
+                                  const CarveHelper* carvehelper, cIsosurfaceSide side)
 {
   float** const vert = &vert_;
   CTetsurf *I = II;
-  int a, b, c, i, j, k, h, l;
+  int a, b, i, j, k;
 #ifdef Trace
   int ECount = 0;
 #endif
@@ -784,12 +781,6 @@ static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode mode, int &n_st
   TriangleType *tt;
   int n_tri = 0;
   int n_link = 1;
-
-  int avoid_flag = false;
-  if(carvebuffer < 0.0F) {
-    avoid_flag = true;
-    carvebuffer = -carvebuffer;
-  }
 
   FieldZero(I->Point);          /* sets initial links to zero */
   FieldZero(I->ActiveEdges);
@@ -1322,32 +1313,14 @@ static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode mode, int &n_st
     /* Need to move the points now, right? */
 
     /* if we are carving, then exclude triangles outside region */
-    if(voxelmap) {
+    if (carvehelper) {
       for(a = 0; a < n_tri; a++) {
-        float *v;
         tt = I->Tri + a;
-        c = 0;
-        for(b = 0; b < 3; b++) {
-          v = tt->p[b]->Point;
-          MapLocus(voxelmap, v, &h, &k, &l);
-          i = *(MapEStart(voxelmap, h, k, l));
-          if(i) {
-            j = voxelmap->EList[i++];
-            while(j >= 0) {
-              if(within3f(a_vert + 3 * j, v, carvebuffer)) {
-                c++;
-                break;
-              }
-              j = voxelmap->EList[i++];
-            }
-          }
-        }
-        if(avoid_flag) {
-          if(c >= 3)
-            tt->done = true;    /* exclude this triangle from the surface */
-        } else {
-          if(c < 3)             /* exclude this triangle from the surface */
-            tt->done = true;
+        if (carvehelper->is_excluded( //
+                tt->p[0]->Point,      //
+                tt->p[1]->Point,      //
+                tt->p[2]->Point)) {
+          tt->done = true;    /* exclude this triangle from the surface */
         }
       }
     }
