@@ -70,6 +70,8 @@ else:
     from pymol import cmd
     from pymol.invocation import options
 
+    get_capabilities = getattr(pymol, 'get_capabilities', lambda: ())
+
     try:
         from pymol.undo import UndoMode
     except ImportError:
@@ -152,11 +154,6 @@ else:
 
             flags = dict.fromkeys(self.flags, True)
             flags_known = []
-
-            if hasattr(pymol, "get_capabilities"):
-                get_capabilities = pymol.get_capabilities
-            else:
-                get_capabilities = lambda: ()
 
             def hasflag(flag):
                 flags_known.append(flag)
@@ -568,7 +565,7 @@ else:
             '''
             Save image to filename, with antialias=0.
             '''
-            if 'multi_undo' in pymol.get_capabilities():
+            if 'multi_undo' in get_capabilities():
                 with cmd.UndoPauseCM():
                     cmd.set('antialias', 0)
             else:
