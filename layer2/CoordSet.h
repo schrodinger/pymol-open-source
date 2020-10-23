@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"vla.h"
 
+#include "pymol/math_defines.h"
 #include "pymol/memory.h"
 
 #include <type_traits>
@@ -148,6 +149,9 @@ struct CoordSet : CObjectState {
   CoordSet(PyMOLGlobals * G);
   CoordSet(const CoordSet &cs);
   ~CoordSet();
+
+  pymol::Result<pymol::Vec3> getAtomLabelOffset(int atm) const;
+  pymol::Result<> setAtomLabelOffset(int atm, const float* offset);
 };
 
 int BondInOrder(BondType * a, int b1, int b2);

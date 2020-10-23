@@ -1949,9 +1949,9 @@ void PExit(PyMOLGlobals * G, int code)
 /**
  * Add `str` to the command queue
  */
-void PParse(PyMOLGlobals * G, const char *str)
+void PParse(PyMOLGlobals * G, pymol::zstring_view str_view)
 {
-  OrthoCommandIn(G, str);
+  OrthoCommandIn(G, str_view.c_str());
 }
 
 /**
@@ -1980,12 +1980,13 @@ void PDo(PyMOLGlobals * G, const char *str)
  *
  * See also equivalent Python impelemtation: cmd.log()
  */
-void PLog(PyMOLGlobals * G, const char *str, int format)
+void PLog(PyMOLGlobals * G, pymol::zstring_view str_view, int format)
 {
   int mode;
   int a = sizeof(OrthoLineType) - 15;
   int blocked;
   PyObject *log;
+  auto str = str_view.c_str();
   OrthoLineType buffer = "";
   mode = SettingGetGlobal_i(G, cSetting_logging);
   if(mode) {

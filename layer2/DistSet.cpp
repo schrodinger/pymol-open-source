@@ -48,6 +48,53 @@ int DistSetGetLabelVertex(DistSet * I, int at, float *v)
   return false;
 }
 
+/**
+ * Retrieves label offset for given distance set
+ * @param atm atom index
+ */
+
+pymol::Result<pymol::Vec3> DistSet::getLabelOffset(int atm) const
+{
+  std::array<float, 3> result;
+  if (atm < 0 || atm >= this->NLabel) {
+    return pymol::make_error("Invalid index");
+  }
+
+  if (this->LabPos) {
+    auto lp = &this->LabPos[atm];
+    if (lp->mode) {
+      std::copy_n(lp->offset, result.size(), result.data());
+      return result;
+    }
+  }
+
+  auto obj = this->Obj;
+  auto G = obj->G;
+  auto lab_pos =
+      SettingGet_3fv(G, nullptr, obj->Setting.get(), cSetting_label_position);
+  std::copy_n(lab_pos, result.size(), result.data());
+  return result;
+}
+
+/**
+ * Retrieves label offset for given distance set
+ * @param atm atom index
+ * @param pos offset to set the label at
+ */
+
+pymol::Result<> DistSet::setLabelOffset(int atm, const float* pos)
+{
+  if (atm < 0 || atm >= this->NLabel) {
+    return pymol::make_error("Invalid index");
+  }
+  if (!this->LabPos)
+    this->LabPos.resize(this->NLabel);
+  auto lp = &this->LabPos[atm];
+  lp->mode = 1;
+  copy3f(pos, lp->offset);
+  return {};
+}
+
 int DistSetMoveLabel(DistSet * I, int at, float *v, int mode)
 {
   ObjectDist *obj;

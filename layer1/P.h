@@ -23,6 +23,8 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 #include"PyMOLGlobals.h"
 
+#include "pymol/zstring_view.h"
+
 #define cLockAPI 1
 #define cLockInbox 2
 #define cLockOutbox 3
@@ -136,7 +138,7 @@ void PGetOptions(CPyMOLOptions * rec);
 
 void PFree(PyMOLGlobals * G);
 void PExit(PyMOLGlobals * G, int code);
-void PParse(PyMOLGlobals * G, const char *str);       /* only accepts one command */
+void PParse(PyMOLGlobals * G, pymol::zstring_view str_view);       /* only accepts one command */
 void PDo(PyMOLGlobals * G, const char *str);  /* accepts multple commands seperated by newlines */
 
 int PAlterAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyObject *expr_co,
@@ -146,7 +148,7 @@ int PAlterAtomState(PyMOLGlobals * G, PyObject *expr_co, int read_only,
                     ObjectMolecule *obj, CoordSet *cs, int atm, int idx,
                     int state, PyObject * space);
 
-void PLog(PyMOLGlobals * G, const char *str, int lf);
+void PLog(PyMOLGlobals * G, pymol::zstring_view str, int lf);
 void PLogFlush(PyMOLGlobals * G);
 
 void PSleep(PyMOLGlobals * G, int usec);

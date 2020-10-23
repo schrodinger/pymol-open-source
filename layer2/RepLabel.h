@@ -20,6 +20,15 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
+struct cLabelRelativeMode
+{
+  enum  {
+    Default = 0,
+    ScreenRelative = 1,
+    ScreenPixelSpace = 2,
+  };
+};
+
 Rep *RepLabelNew(CoordSet * cset, int state);
 
 short InvalidateShaderCGOIfTextureNeedsUpdate(PyMOLGlobals *G, float font_size, int texture_font_size, int *sizeArg);

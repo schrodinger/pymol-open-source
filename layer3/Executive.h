@@ -304,14 +304,14 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int allow_zoom, int 
 void ExecutiveUpdateObjectSelection(PyMOLGlobals * G, CObject * obj);
 void ExecutiveManageSelection(PyMOLGlobals * G, const char *name);
 Block *ExecutiveGetBlock(PyMOLGlobals * G);
-CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, const char *name);
+CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, pymol::zstring_view name);
 
 /**
  * Typed version of `ExecutiveFindObjectByName`
  * @param name Object name
  * @return NULL if object can't be found or has the wrong type
  */
-template <typename T> T* ExecutiveFindObject(PyMOLGlobals* G, const char* name)
+template <typename T> T* ExecutiveFindObject(PyMOLGlobals* G, pymol::zstring_view name)
 {
   return dynamic_cast<T*>(ExecutiveFindObjectByName(G, name));
 }
@@ -493,7 +493,7 @@ pymol::Result<> ExecutiveTransformSelection(PyMOLGlobals* G,
     int state, const char* s1, int log, const float* ttt, int homogenous);
 pymol::Result<> ExecutiveTranslateAtom(
     PyMOLGlobals* G, const char* sele, const float* v, int state, int mode, int log);
-void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode);
+pymol::Result<int> ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode);
 int ExecutiveMapSetBorder(PyMOLGlobals * G, const char *name, float level, int state);
 pymol::Result<> ExecutiveMapTrim(PyMOLGlobals* G, const char* name,
     const char* sele, float buffer, int map_state, int sele_state, int quiet);

@@ -36,7 +36,7 @@ Z* -------------------------------------------------------------------
 
 CGO *ObjectGadgetPyListFloatToCGO(PyObject * list);
 
-int ObjectGadgetGetVertex(ObjectGadget * I, int index, int base, float *v)
+int ObjectGadgetGetVertex(const ObjectGadget * I, int index, int base, float *v)
 {
   GadgetSet *gs;
   int ok = false;
@@ -49,7 +49,7 @@ int ObjectGadgetGetVertex(ObjectGadget * I, int index, int base, float *v)
   return (ok);
 }
 
-int ObjectGadgetSetVertex(ObjectGadget * I, int index, int base, float *v)
+int ObjectGadgetSetVertex(ObjectGadget * I, int index, int base, const float *v)
 {
   GadgetSet *gs;
   int ok = false;

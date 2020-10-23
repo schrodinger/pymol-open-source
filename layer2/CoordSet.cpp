@@ -628,6 +628,73 @@ int CoordSetMoveAtom(CoordSet * I, int at, const float *v, int mode)
 
 
 /*========================================================================*/
+
+/**
+ * Retrieve the label offset for a given atom
+ * @param I target Coordset
+ * @param atm atom index
+ */
+
+pymol::Result<pymol::Vec3> CoordSet::getAtomLabelOffset(int atm) const
+{
+  int idx = this->atmToIdx(atm);
+  if (idx < 0) {
+    return pymol::make_error("Invalid atom Idx");
+  }
+  auto G = this->G;
+  auto obj = this->Obj;
+  pymol::Vec3 result{};
+  const float* at_offset_ptr;
+  auto ai = &obj->AtomInfo[atm];
+  int at_label_relative_mode = 0;
+  AtomStateGetSetting_i(G, obj, this, idx, ai, cSetting_label_relative_mode,
+      &at_label_relative_mode);
+  switch (at_label_relative_mode) {
+  case cLabelRelativeMode::Default:
+    AtomStateGetSetting(
+        G, obj, this, idx, ai, cSetting_label_placement_offset, &at_offset_ptr);
+    break;
+  case cLabelRelativeMode::ScreenRelative:
+  case cLabelRelativeMode::ScreenPixelSpace:
+    AtomStateGetSetting(
+        G, obj, this, idx, ai, cSetting_label_screen_point, &at_offset_ptr);
+    break;
+  }
+  std::copy_n(at_offset_ptr, result.size(), result.data());
+  return result;
+}
+
+/**
+ * Retrieve the label offset for a given atom
+ * @param I target Coordset
+ * @param atm atom index
+ * @param offset offset to be set at
+ */
+
+pymol::Result<> CoordSet::setAtomLabelOffset(
+    int atm, const float* offset)
+{
+  int idx = this->atmToIdx(atm);
+  if (idx < 0) {
+    return pymol::make_error("Invalid atom Idx");
+  }
+  auto G = this->G;
+  auto obj = this->Obj;
+  auto ai = &obj->AtomInfo[atm];
+  int at_label_relative_mode = 0;
+  AtomStateGetSetting_i(G, obj, this, idx, ai, cSetting_label_relative_mode,
+      &at_label_relative_mode);
+  switch (at_label_relative_mode) {
+  case cLabelRelativeMode::Default:
+    SettingSet(cSetting_label_placement_offset, offset, this, idx);
+  case cLabelRelativeMode::ScreenRelative:
+  case cLabelRelativeMode::ScreenPixelSpace:
+    SettingSet(cSetting_label_screen_point, offset, this, idx);
+    break;
+  }
+  return {};
+}
+
 int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, const float *diff)
 {
   auto G = I->G;
@@ -645,13 +712,13 @@ int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, const float *dif
 
     AtomStateGetSetting_i(G, obj, I, a1, ai, cSetting_label_relative_mode, &at_label_relative_mode);
     switch (at_label_relative_mode){
-    case 0:
+    case cLabelRelativeMode::Default:
       AtomStateGetSetting(G, obj, I, a1, ai, cSetting_label_placement_offset, &at_offset_ptr);
       add3f(v, at_offset_ptr, at_offset);
       SettingSet(cSetting_label_placement_offset, at_offset, I, a1);
       break;
-    case 1: // screen relative
-    case 2: // screen pixel space
+    case cLabelRelativeMode::ScreenRelative: // screen relative
+    case cLabelRelativeMode::ScreenPixelSpace: // screen pixel space
       {
 	float voff[3];
 	int width, height;

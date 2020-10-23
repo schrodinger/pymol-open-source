@@ -1183,11 +1183,10 @@ pymol::copyable_ptr<CSetting>* CObject::getSettingHandle(int state)
 
 
 /*========================================================================*/
-void CObject::describeElement(int index, char* buffer) const
+std::string CObject::describeElement(int index) const
 {
-  buffer[0] = 0;
+  return {};
 }
-
 
 /*========================================================================*/
 void ObjectToggleRepVis(CObject * I, int rep)

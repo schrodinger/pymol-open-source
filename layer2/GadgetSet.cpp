@@ -33,7 +33,7 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"Ray.h"
 
-int GadgetSetGetVertex(GadgetSet * I, int index, int base, float *v)
+int GadgetSetGetVertex(const GadgetSet * I, int index, int base, float *v)
 {
   int ok = true;
   float *v0, *v1;
@@ -57,7 +57,7 @@ int GadgetSetGetVertex(GadgetSet * I, int index, int base, float *v)
   return (ok);
 }
 
-int GadgetSetSetVertex(GadgetSet * I, int index, int base, float *v)
+int GadgetSetSetVertex(GadgetSet * I, int index, int base, const float *v)
 {
   int ok = true;
   float *v0, *v1;
@@ -382,4 +382,17 @@ GadgetSet::~GadgetSet()
     VLAFreeP(I->Normal);
     VLAFreeP(I->Color);
   }
+}
+
+/**
+ * Retrieve coordinate buffer of Gadget set
+ * @param I target Gadget set
+ */
+
+std::vector<float> GadgetSetGetCoord(const GadgetSet* I)
+{
+  std::vector<float> result;
+  result.resize(VLAGetSize(I->Coord));
+  std::copy_n(I->Coord, result.size(), result.data());
+  return result;
 }

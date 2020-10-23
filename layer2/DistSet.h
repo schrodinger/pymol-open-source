@@ -17,8 +17,10 @@ Z* -------------------------------------------------------------------
 #define _H_DistSet
 
 #include "Base.h"
+#include "pymol/math_defines.h"
 #include "PyMOLObject.h"
 #include "Rep.h"
+#include "Result.h"
 #include "vla.h"
 
 #include <array>
@@ -65,6 +67,9 @@ struct DistSet : CObjectState {
   int NDihedralIndex = 0;
 
   std::forward_list<CMeasureInfo> MeasureInfo;
+
+  pymol::Result<pymol::Vec3> getLabelOffset(int atm) const;
+  pymol::Result<> setLabelOffset(int atm, const float* pos);
 };
 
 #define DistSetNew(G) (new DistSet(G))

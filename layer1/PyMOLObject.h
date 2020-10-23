@@ -30,6 +30,8 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"vla.h"
 
+#include <string>
+
 typedef char ObjectNameType[WordLength];
 
 enum cObject_t : int {
@@ -103,7 +105,7 @@ public:
   virtual void render(RenderInfo* info);
   virtual void invalidate(cRep_t rep, cRepInv_t level, int state) {}
   virtual int getNFrame() const { return 1; }
-  virtual void describeElement(int index, char* buffer) const;
+  virtual std::string describeElement(int index) const;
   virtual char* getCaption(char* ch, int len) const { return nullptr; };
   virtual pymol::copyable_ptr<CSetting>* getSettingHandle(int state);
   virtual CObject* clone() const { return nullptr; };

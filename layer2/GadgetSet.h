@@ -19,6 +19,8 @@ Z* -------------------------------------------------------------------
 
 #include"Rep.h"
 
+#include <vector>
+
 struct ObjectGadget;
 
 struct GadgetSet {
@@ -51,6 +53,7 @@ GadgetSet *GadgetSetNew(PyMOLGlobals * G);
 PyObject *GadgetSetAsPyList(GadgetSet * I, bool incl_cgos);
 int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** cs, int version);
 int GadgetSetGetExtent(GadgetSet * I, float *mn, float *mx);
-int GadgetSetGetVertex(GadgetSet * I, int index, int base, float *v);
-int GadgetSetSetVertex(GadgetSet * I, int index, int base, float *v);
+int GadgetSetGetVertex(const GadgetSet * I, int index, int base, float *v);
+int GadgetSetSetVertex(GadgetSet * I, int index, int base, const float *v);
+std::vector<float> GadgetSetGetCoord(const GadgetSet* I);
 #endif

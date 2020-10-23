@@ -10668,16 +10668,43 @@ void ObjectMoleculeGetAtomSele(const ObjectMolecule * I, int index, char *buffer
       LexStr(G, ai->name), ai->alt);
 }
 
+/**
+ * Get Atom selection string
+ * @param I target Object Molecule
+ * @param index atom index of I
+ */
+
+static std::string ObjectMoleculeGetAtomSele(const ObjectMolecule * I, int index)
+{
+  PyMOLGlobals * G = I->G;
+  assert(index < I->NAtom);
+  auto* ai = I->AtomInfo + index;
+  char inscode_str[2] = { ai->inscode, '\0' };
+  std::string buffer = pymol::string_format("/%s/%s/%s/%s`%d%s/%s`%s", I->Name,
+      LexStr(G, ai->segi),
+      LexStr(G, ai->chain),
+      LexStr(G, ai->resn), ai->resv, inscode_str,
+      LexStr(G, ai->name), ai->alt);
+  return buffer;
+}
 
 /*========================================================================*/
-void ObjectMolecule::describeElement(int index, char *buffer) const
+
+/**
+ * Get Atom selection string
+ * @param I target Object Molecule
+ * @param index atom index of I
+ */
+
+std::string ObjectMolecule::describeElement(int index) const
 {
   auto I = this;
-  ObjectMoleculeGetAtomSele(I, index, buffer);
+  auto buffer = ObjectMoleculeGetAtomSele(I, index);
   if(!I->AtomInfo[index].alt[0]) {
     // don't include the trailing backtick
-    buffer[strlen(buffer) - 1] = 0;
+    buffer.pop_back();
   }
+  return buffer;
 }
 
 

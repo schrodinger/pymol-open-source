@@ -110,7 +110,7 @@ struct ObjectMolecule : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(cRep_t rep, cRepInv_t level, int state) override;
   int getNFrame() const override;
-  void describeElement(int index, char* buffer) const override;
+  std::string describeElement(int index) const override;
   char* getCaption(char* ch, int len) const override;
   pymol::copyable_ptr<CSetting>* getSettingHandle(int state) override;
   CObject* clone() const override;

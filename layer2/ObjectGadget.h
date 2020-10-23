@@ -51,8 +51,8 @@ int ObjectGadgetInitFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget *
                                int version);
 
 ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G);
-int ObjectGadgetGetVertex(ObjectGadget * I, int index, int base, float *v);     /* in current state */
-int ObjectGadgetSetVertex(ObjectGadget * I, int index, int base, float *v);     /* in current state */
+int ObjectGadgetGetVertex(const ObjectGadget * I, int index, int base, float *v);     /* in current state */
+int ObjectGadgetSetVertex(ObjectGadget * I, int index, int base, const float *v);     /* in current state */
 void ObjectGadgetUpdateExtents(ObjectGadget * I);
 void ObjectGadgetUpdateStates(ObjectGadget * I);
 
