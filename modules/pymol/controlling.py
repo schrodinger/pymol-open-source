@@ -765,7 +765,7 @@ SEE ALSO
         '''
         if fn is None:
             def decorator(func):
-                set_key(key, func, arg, kw, _self)
+                set_key(key, func, arg, kw, _self=_self)
                 return func
             return decorator
 
