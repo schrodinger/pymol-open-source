@@ -5,15 +5,14 @@
 #include "GraphicsUtil.h"
 // -----------------------------------------------------------------------------
 // UTIL
-namespace {
   // Prints a backtrace during runtime of the last ^ stack frames
+  void print_trace();
   void print_trace() {
 #ifdef _WEBGL
 #else
     printf("Use debugger with `b %s` to get a backtrace\n", __func__);
 #endif
   }
-};
 
 bool glCheckOkay() {
   int err = 0;
