@@ -1107,6 +1107,10 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, const cif_data * data,
   const cif_array * arr_color = data->get_arr("_atom_site.pymol_color");
   const cif_array * arr_reps  = data->get_arr("_atom_site.pymol_reps");
   const cif_array * arr_ss    = data->get_opt("_atom_site.pymol_ss");
+  const cif_array * arr_label = data->get_opt("_atom_site.pymol_label");
+  const cif_array * arr_vdw   = data->get_opt("_atom_site.pymol_vdw");
+  const cif_array * arr_elec_radius = data->get_opt("_atom_site.pymol_elec_radius");
+  const cif_array * arr_partial_charge = data->get_opt("_atom_site.pymol_partial_charge");
   const cif_array * arr_formal_charge = data->get_opt("_atom_site.pdbx_formal_charge");
 
   if (!arr_chain)
@@ -1231,6 +1235,10 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, const cif_data * data,
 
     ai->ssType[0] = arr_ss->as_s(i)[0];
     ai->formalCharge = arr_formal_charge->as_i(i);
+    ai->partialCharge = arr_partial_charge->as_d(i);
+    ai->elec_radius = arr_elec_radius->as_d(i);
+    ai->vdw = arr_vdw->as_d(i);
+    ai->label = LexIdx(G, arr_label->as_s(i));
 
     AtomInfoAssignParameters(G, ai);
 
