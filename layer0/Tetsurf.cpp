@@ -522,9 +522,7 @@ void TetsurfGetRange(PyMOLGlobals * G,
  * @param[in] range         Min and max indices of box (6i - can be NULL,
  *                          then use entire field)
  * @param[in] mode          Geometry mode (points, lines, triangles)
- * @param[in] voxelmap      Atom proximity map for carving (optional)
- * @param[in] a_vert        Atom positions (required if voxelmap not NULL)
- * @param[in] carvebuffer   Radius for carving (if voxelmap not NULL)
+ * @param[in] carvehelper   For carving (optional)
  * @param[in] side          Front or back face (triangle winding order and
  *                          normal)
  * @return Number of primitives
