@@ -328,7 +328,9 @@ ObjectDist::ObjectDist(const ObjectDist& other)
  , DSet(other.DSet)
 {
   for (auto& d : DSet) {
-    d->Obj = this;
+    if (d) {
+      d->Obj = this;
+    }
   }
 }
 
@@ -337,7 +339,9 @@ ObjectDist& ObjectDist::operator=(const ObjectDist& other)
   CObject::operator=(other);
   DSet = other.DSet;
   for (auto& d : DSet) {
-    d->Obj = this;
+    if (d) {
+      d->Obj = this;
+    }
   }
   return *this;
 }
