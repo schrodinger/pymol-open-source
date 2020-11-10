@@ -402,14 +402,16 @@ def _get_assemblies(pdbid):
 
 def _get_chains(pdbid):
     # TODO move to another module
-    url = "http://www.rcsb.org/pdb/rest/describeMol?structureId=" + pdbid
+    import json
+    pdbid = pdbid.lower()
+    url = "https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/" + pdbid
     try:
-        from lxml import etree
-    except ImportError:
-        from xml.etree import ElementTree as etree
-    try:
-        data = etree.parse(urllib.urlopen(url))
-        return [e.get('id') for e in data.findall('./*/polymer/chain')]
+        data = json.load(urllib.urlopen(url))
+        return [
+            chain['chain_id']
+            for molecule in data[pdbid]['molecules']
+            for chain in molecule['chains']
+        ]
     except Exception as e:
         print('_get_chains failed')
         print(e)
