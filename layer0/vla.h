@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <type_traits>
 #if 0
 #include <vector>
 #endif
@@ -36,6 +37,8 @@ namespace pymol
  */
 template <typename T> class vla
 {
+  static_assert(std::is_trivially_copyable<T>::value, "");
+
   T* m_vla = nullptr;
 
   void swap(vla<T>& other) noexcept { std::swap(m_vla, other.m_vla); }

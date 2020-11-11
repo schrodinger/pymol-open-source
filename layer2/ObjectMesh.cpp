@@ -84,7 +84,7 @@ int ObjectMeshAllMapsInStatesExist(ObjectMesh * I)
   int a;
   for(a = 0; a < I->NState; a++) {
     if(I->State[a].Active) {
-      if (!ObjectMeshStateMapExists(I, I->State + a)){
+      if (!ObjectMeshStateMapExists(I, &I->State[a])){
 	return 0;
       }
     }
@@ -100,7 +100,7 @@ static PyObject *ObjectMeshAllStatesAsPyList(ObjectMesh * I)
   result = PyList_New(I->NState);
   for(a = 0; a < I->NState; a++) {
     if(I->State[a].Active) {
-      PyList_SetItem(result, a, ObjectMeshStateAsPyList(I->State + a));
+      PyList_SetItem(result, a, ObjectMeshStateAsPyList(&I->State[a]));
     } else {
       PyList_SetItem(result, a, PConvAutoNone(NULL));
     }
@@ -197,13 +197,13 @@ static int ObjectMeshAllStatesFromPyList(ObjectMesh * I, PyObject * list)
 
   int ok = true;
   int a;
-  VLACheck(I->State, ObjectMeshState, I->NState);
+  VecCheckEmplace(I->State, I->NState, I->G);
   if(ok)
     ok = PyList_Check(list);
   if(ok) {
     for(a = 0; a < I->NState; a++) {
       auto *el = PyList_GetItem(list, a);
-      ok = ObjectMeshStateFromPyList(I->G, I->State + a, el);
+      ok = ObjectMeshStateFromPyList(I->G, &I->State[a], el);
       if(!ok)
         break;
     }
@@ -284,7 +284,7 @@ int ObjectMeshInvalidateMapName(ObjectMesh * I, const char *name, const char * n
   ObjectMeshState *ms;
   int result = false;
   for(a = 0; a < I->NState; a++) {
-    ms = I->State + a;
+    ms = &I->State[a];
     if(ms->Active) {
       if(strcmp(ms->MapName, name) == 0) {
         if (new_name)
@@ -340,7 +340,7 @@ void ObjectMesh::invalidate(cRep_t rep, cRepInv_t level, int state)
   if((rep == cRepMesh) || (rep == cRepAll) || (rep == cRepCell)) {
 
     for(StateIterator iter(I->G, NULL, state, I->NState); iter.next();) {
-      ObjectMeshState *ms = I->State + iter.state;
+      ObjectMeshState *ms = &I->State[iter.state];
 
       ms->shaderCGO.reset();
       ms->shaderUnitCellCGO.reset();
@@ -367,7 +367,7 @@ pymol::Result<float> ObjectMeshGetLevel(ObjectMesh * I, int state)
     if(state < 0) {
       state = 0;
     }
-    auto ms = I->State + state;
+    auto ms = &I->State[state];
     if(ms->Active) {
       return ms->Level;
     } else {
@@ -383,7 +383,7 @@ int ObjectMeshSetLevel(ObjectMesh * I, float level, int state, int quiet)
     ok = false;
   } else {
     for(StateIterator iter(I->G, NULL, state, I->NState); iter.next();) {
-      ObjectMeshState *ms = I->State + iter.state;
+      ObjectMeshState *ms = &I->State[iter.state];
       if(ms->Active) {
         ms->ResurfaceFlag = true;
         ms->RefreshFlag = true;
@@ -419,7 +419,7 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
     float *vc;
     int *rc;
     int a;
-    int state = ms - I->State;
+    int state = ms - I->State.data();
     int n_vert = VLAGetSize(ms->V) / 3;
     int base_n_vert = ms->base_n_V / 3;
 
@@ -493,7 +493,7 @@ void ObjectMesh::update()
   int mesh_skip = SettingGet_i(G, I->Setting.get(), NULL, cSetting_mesh_skip);
 
   for(a = 0; a < I->NState; a++) {
-    ms = I->State + a;
+    ms = &I->State[a];
     if(ms->Active) {
 
       map = ExecutiveFindObjectMapByName(I->G, ms->MapName);
@@ -763,7 +763,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
   ObjectPrepareContext(I, info);
 
   for(StateIterator iter(I->G, I->Setting.get(), state, I->NState); iter.next();) {
-    ms = I->State + iter.state;
+    ms = &I->State[iter.state];
 
     if(!ms->Active || !ms->V || !ms->N)
       continue;
@@ -1094,7 +1094,6 @@ int ObjectMesh::getNFrame() const
 ObjectMesh::ObjectMesh(PyMOLGlobals * G) : CObject(G)
 {
   auto I = this;
-  I->State = pymol::vla<ObjectMeshState>(10);   /* autozero important */
   I->type = cObjectMesh;
 }
 
@@ -1134,15 +1133,14 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
     if(state < 0)
       state = I->NState;
     if(I->NState <= state) {
-      VLACheck(I->State, ObjectMeshState, state);
-      CHECKOK(ok, I->State);
+      VecCheckEmplace(I->State, state, G);
       if (ok)
 	I->NState = state + 1;
     }
   }
 
   if (ok){
-    ms = I->State + state;
+    ms = &I->State[state];
     *ms = ObjectMeshState(G);
   }
 
@@ -1281,7 +1279,7 @@ void ObjectMeshRecomputeExtent(ObjectMesh * I)
   ObjectMeshState *ms;
 
   for(a = 0; a < I->NState; a++) {
-    ms = I->State + a;
+    ms = &I->State[a];
     if(ms->Active) {
       if(ms->ExtentFlag) {
         if(!extent_flag) {

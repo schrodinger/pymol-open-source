@@ -57,7 +57,7 @@ struct ObjectMeshState : public CObjectState {
 };
 
 struct ObjectMesh : public CObject {
-  pymol::vla<ObjectMeshState> State;
+  std::vector<ObjectMeshState> State;
   int NState = 0;
   ObjectMesh(PyMOLGlobals* G);
 
