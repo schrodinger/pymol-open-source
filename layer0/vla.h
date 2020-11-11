@@ -10,9 +10,6 @@
 #include <cassert>
 #include <cstddef>
 #include <type_traits>
-#if 0
-#include <vector>
-#endif
 
 namespace pymol
 {
@@ -66,20 +63,6 @@ public:
    */
   explicit vla(std::size_t size) { m_vla = VLACalloc(T, size); }
 
-  /**
-   * Constructs the container with @a size copies of elements with value @a
-   * value.
-   * @param size the size of the container
-   * @param value the value to initialize elements of the container with
-   */
-  vla(std::size_t size, T value)
-  {
-    m_vla = VLAlloc(T, size);
-    for (size_t i = 0; i < size; ++i) {
-      new (m_vla + i) T(value);
-    }
-  }
-
   // constructor with initializer list
   // Empty list constructs a NULL VLA to be consistent with default constructor
   vla(std::initializer_list<T> init)
@@ -89,14 +72,6 @@ public:
     resize(init.size());
     std::copy(init.begin(), init.end(), this->begin());
   }
-
-#if 0
-  // constructor from std::vector
-  explicit vla(const std::vector<T>& vec) : vla(vec.size())
-  {
-    std::copy(vec.begin(), vec.end(), this->begin());
-  }
-#endif
 
   // copy constructor
   vla(const vla<T>& other) { m_vla = VLACopy2<T>(other.m_vla); }
@@ -206,18 +181,9 @@ public:
   void freeP()
   {
     if (m_vla != nullptr) {
-      pymol::destroy(begin(), end());
       VLAFreeP(m_vla);
     }
   }
-
-#if 0
-  // Util functions
-  std::vector<T> toStdVector() const
-  {
-    return std::vector<T>(m_vla, m_vla + size());
-  }
-#endif
 
   T* begin() { return m_vla; }
   T* end() { return m_vla + size(); }
