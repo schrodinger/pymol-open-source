@@ -1249,6 +1249,11 @@ static void launch(CPyMOLOptions * options, int own_the_options)
   PyMOLInstance = PyMOL_NewWithOptions(options);
   G = PyMOL_GetGlobals(PyMOLInstance);
 
+  G->HaveGUI = options->pmgui;
+
+  assert(!SingletonPyMOLGlobals);
+  SingletonPyMOLGlobals = G;
+
   if(G->Option->multisample)
     multisample_mask = P_GLUT_MULTISAMPLE;
 

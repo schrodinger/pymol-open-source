@@ -135,11 +135,13 @@ static PyObject* CmdTest2(PyObject*, PyObject*)
  */
 static void launch_library_singleton() {
   PyRun_SimpleString(
-      "print(' PyMOL not running, entering library mode (experimental)')\n"
       "import pymol.invocation, pymol2\n"
       "pymol.invocation.parse_args(['pymol', '-cqk'])\n"
       "pymol2.SingletonPyMOL().start()");
 }
+
+/// Creating non-singleton instances disables auto-library mode
+static bool auto_library_mode_disabled = false;
 
 /*
  * Get the PyMOLGlobals pointer from the `self` object (_self._COb in Python).
@@ -148,14 +150,13 @@ static void launch_library_singleton() {
  */
 static PyMOLGlobals * _api_get_pymol_globals(PyObject * self) {
   if(self == Py_None) {
-#if 0
-    // can be useful to debug the pymol2 API
-    PyErr_SetString(PyExc_RuntimeError, __func__);
-    return nullptr;
-#else
+    if (auto_library_mode_disabled) {
+      PyErr_SetString(PyExc_RuntimeError, "Missing PyMOL instance");
+      return nullptr;
+    }
+
     launch_library_singleton();
     return SingletonPyMOLGlobals;
-#endif
   }
 
   if (self && PyCapsule_CheckExact(self)) {
@@ -3400,69 +3401,78 @@ static PyObject *Cmd_glViewport(PyObject * self, PyObject * args)
   return APIIncRef(Py_None);
 }
 
-static PyObject *Cmd_New(PyObject * self, PyObject * args)
+static void PyMOLGlobalsCapsuleDestructor(PyObject* self)
 {
-  PyObject *result = NULL;
-  PyObject *pymol = NULL;       /* pymol object instance */
-  CPyMOLOptions *options = PyMOLOptions_New();
-
-  if(options) {
-    {
-      int ok = true;
-      PyObject *pyoptions = NULL;
-      ok = PyArg_ParseTuple(args, "OO", &pymol, &pyoptions);
-      if(!pyoptions) {
-        options->show_splash = false;
-      } else {
-        PConvertOptions(options, pyoptions);
-      }
-      {
-        CPyMOL *I = PyMOL_NewWithOptions(options);
-        PyMOLGlobals *G = PyMOL_GetGlobals(I);
-        if(I) {
-
-          G->P_inst = pymol::calloc<CP_inst>(1);
-          G->P_inst->obj = pymol;
-          G->P_inst->dict = PyObject_GetAttrString(pymol, "__dict__");
-          Py_DECREF(G->P_inst->dict); // borrow reference
-          {
-            /* store the PyMOL struct as a CObject */
-            PyObject* tmp = PyCapsule_New(I, nullptr, nullptr);
-            PyObject_SetAttrString(pymol, "__pymol__", tmp);
-            Py_DECREF(tmp);
-          }
-          {
-            int a;
-            SavedThreadRec *str = G->P_inst->savedThread;
-            for(a = 0; a < MAX_SAVED_THREAD; a++) {
-              (str++)->id = -1;
-            }
-          }
-          result = PyCapsule_New(PyMOL_GetGlobalsHandle(I), nullptr, nullptr);
-        }
-      }
-    }
-    PyMOLOptions_Free(options);
-  }
-  return APIAutoNone(result);
+  assert(self != Py_None);
+  auto G = _api_get_pymol_globals(self);
+  assert(G);
+  PyMOL_Free(G->PyMOL);
 }
 
-static PyObject *Cmd_Del(PyObject * self, PyObject * args)
+/**
+ * Create a `_COb` instance.
+ *
+ * @param pymol The `pymol` module or a `pymol2.PyMOL` instance
+ * @param options Options like `pymol.invocation.options`
+ * @param singleton (bool) Whether this instance should be registered as
+ * the SingletonPyMOLGlobals (raises RuntimeError if it already exists)
+ */
+static PyObject *Cmd_New(PyObject * self, PyObject * args)
 {
-  PyMOLGlobals *G = NULL;
-  int ok = true;
-  ok = PyArg_ParseTuple(args, "O", &self);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
+  PyObject *pymol = NULL;       /* pymol object instance */
+  PyObject *pyoptions = Py_None;
+  int singleton = false;
+
+  if (!PyArg_ParseTuple(args, "O|Op", &pymol, &pyoptions, &singleton)) {
+    return nullptr;
+  }
+
+  if (singleton && SingletonPyMOLGlobals) {
+    PyErr_SetString(PyExc_RuntimeError, "Singleton already exists");
+    return nullptr;
+  }
+
+  CPyMOLOptions* options = PyMOLOptions_New();
+  assert(options);
+
+  if (pyoptions != Py_None) {
+    PConvertOptions(options, pyoptions);
+  }
+
+  CPyMOL* I = PyMOL_NewWithOptions(options);
+  PyMOLOptions_Free(options);
+
+  if (!I) {
+    PyErr_SetString(PyExc_Exception, "PyMOL_NewWithOptions failed");
+    return nullptr;
+  }
+
+  PyMOLGlobals* G = PyMOL_GetGlobals(I);
+  assert(G);
+
+  if (singleton) {
+    assert(!SingletonPyMOLGlobals);
+    SingletonPyMOLGlobals = G;
   } else {
-    API_HANDLE_ERROR;
+    // Creating a non-singleton instance disables auto-library mode
+    auto_library_mode_disabled = true;
   }
-  if(ok) {
-    /* leaking Px */
-    PyMOL_Free(G->PyMOL);
+
+  G->P_inst = pymol::calloc<CP_inst>(1);
+  G->P_inst->obj = pymol;
+  G->P_inst->dict = PyObject_GetAttrString(pymol, "__dict__");
+  Py_DECREF(G->P_inst->dict); // borrow reference
+
+  PyObject* tmp = PyCapsule_New(I, nullptr, nullptr);
+  PyObject_SetAttrString(pymol, "__pymol__", tmp);
+  Py_DECREF(tmp);
+
+  for (int a = 0; a < MAX_SAVED_THREAD; ++a) {
+    G->P_inst->savedThread[a].id = -1;
   }
-  return APIResultOk(ok);
+
+  return PyCapsule_New(
+      PyMOL_GetGlobalsHandle(I), nullptr, PyMOLGlobalsCapsuleDestructor);
 }
 
 static PyObject *Cmd_Start(PyObject * self, PyObject * args)
@@ -6227,7 +6237,6 @@ ok_except1:
 }
 
 static PyMethodDef Cmd_methods[] = {
-  {"_del", Cmd_Del, METH_VARARGS},
   {"glViewport", Cmd_glViewport, METH_VARARGS},
   {"_new", Cmd_New, METH_VARARGS},
   {"_start", Cmd_Start, METH_VARARGS},

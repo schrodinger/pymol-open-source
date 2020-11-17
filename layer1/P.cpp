@@ -1766,6 +1766,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     P_cmd = PImportModuleOrFatal("pymol.cmd");
 
     if(global_instance) {
+      assert(SingletonPyMOLGlobals);
       /* implies global singleton pymol, so set up the global handle */
       PyObject_SetAttrString(P_cmd, "_COb",
           PyCapsule_New(&SingletonPyMOLGlobals, nullptr, nullptr));
@@ -2147,16 +2148,6 @@ int PFlushFast(PyMOLGlobals * G)
     OrthoCommandNest(G, -1);
   }
   return did_work;
-}
-
-void PBlockLegacy()
-{
-  PBlock(SingletonPyMOLGlobals);
-}
-
-void PUnblockLegacy()
-{
-  PUnblock(SingletonPyMOLGlobals);
 }
 
 /**

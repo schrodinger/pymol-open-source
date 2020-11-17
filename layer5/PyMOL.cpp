@@ -1835,74 +1835,38 @@ int PyMOL_GetProgressChanged(CPyMOL * I, int reset)
   return result;
 }
 
-static CPyMOL *_PyMOL_New(void)
-{
-  CPyMOL *result = NULL;
-
-  /* allocate global container */
-
-  if((result = pymol::calloc<CPyMOL>(1))) {    /* all values initialized to zero */
-
-    if((result->G = pymol::calloc<PyMOLGlobals>(1))) {
-
-      result->G->PyMOL = result;        /* store the instance pointer */
-
-      result->BusyFlag = false;
-      result->InterruptFlag = false;
-      PyMOL_ResetProgress(result);
-
-#ifndef _PYMOL_NOPY
-
-      /* for the time being, the first PyMOL object created becomes
-         the singleton object -- this is failsafe behavior designed to
-         carry us through the transition to fully objectified PyMOL
-         (PS note race in assignment covered by pymol2.pymol2_lock) */
-
-      if(!SingletonPyMOLGlobals) {
-        SingletonPyMOLGlobals = result->G;
-      }
-#endif
-
-      /* continue initialization */
-
-    } else {
-      FreeP(result);
-    }
-  }
-  return result;
-}
-
-static void _PyMOL_Config(CPyMOL * I)
-{
-#ifndef _PYMOL_NO_MAIN
-  // also assign in PyMOL_DrawWithoutLock
-  I->G->HaveGUI = I->G->Option->pmgui;
-#endif
-  I->G->Security = I->G->Option->security;
-}
-
 CPyMOL *PyMOL_New(void)
 {
-  CPyMOL *result = _PyMOL_New();
-  if(result && result->G) {
-    result->G->Option = pymol::calloc<CPyMOLOptions>(1);
-    if(result->G->Option)
-      (*result->G->Option) = Defaults;
-    _PyMOL_Config(result);
-  }
-  return result;
+  assert(!Defaults.stereo_capable);
+  return PyMOL_NewWithOptions(&Defaults);
 }
 
 CPyMOL *PyMOL_NewWithOptions(const CPyMOLOptions * option)
 {
-  CPyMOL *result = _PyMOL_New();
-  if(result && result->G) {
-    result->G->Option = pymol::calloc<CPyMOLOptions>(1);
-    if(result->G->Option)
-      *(result->G->Option) = *option;
-    _PyMOL_Config(result);
+  auto result = pymol::calloc<CPyMOL>(1);
+  assert(result);
+
+  auto G = pymol::calloc<PyMOLGlobals>(1);
+  assert(G);
+
+  result->G = G;
+  G->PyMOL = result;
+
+  PyMOL_ResetProgress(result);
+
+  G->Option = pymol::calloc<CPyMOLOptions>(1);
+  assert(G->Option);
+
+  if (!option) {
+    assert(!Defaults.stereo_capable);
+    option = &Defaults;
   }
-  result->G->StereoCapable = option->stereo_capable;
+
+  *(G->Option) = *option;
+
+  G->Security = option->security;
+  G->StereoCapable = option->stereo_capable;
+
   return result;
 }
 

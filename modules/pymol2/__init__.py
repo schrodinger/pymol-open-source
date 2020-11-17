@@ -55,7 +55,7 @@ class SingletonPyMOL:
             raise RuntimeError('can only start SingletonPyMOL once')
 
         with pymol2_lock:
-            cmd._COb = _cmd._new(pymol, pymol.invocation.options)
+            cmd._COb = _cmd._new(pymol, pymol.invocation.options, True)
             _cmd._start(cmd._COb, cmd)
 
         # this instance tracking is redundant with the "cmd" module itself
@@ -65,7 +65,6 @@ class SingletonPyMOL:
     def stop(self):
         with pymol2_lock:
             _cmd._stop(self._COb)
-            _cmd._del(self._COb)
 
         pymol.cmd._COb = None
 
@@ -125,7 +124,6 @@ class PyMOL(SingletonPyMOL):
             self.glutThread = None
 
     def __del__(self):
-        _cmd._del(self._COb)
         self.cmd.__dict__.clear()
 
     def start(self):

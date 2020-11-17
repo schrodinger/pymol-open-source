@@ -73,9 +73,6 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, const char *model, const 
 #define PBlock(G)
 #define PUnblock(G)
 
-#define PBlockLegacy()
-#define PUnblockLegacy()
-
 #define PLockAPIAsGlut(G,block_if_busy)
 #define PUnlockAPIAsGlut(G)
 #define PUnlockAPIAsGlutNoFlush(G)
@@ -168,9 +165,6 @@ void PUnlockStatus(PyMOLGlobals * G);
 
 void PBlock(PyMOLGlobals * G);
 void PUnblock(PyMOLGlobals * G);
-
-void PBlockLegacy(void);
-void PUnblockLegacy(void);
 
 int PAutoBlock(PyMOLGlobals * G);
 void PAutoUnblock(PyMOLGlobals * G, int flag);
