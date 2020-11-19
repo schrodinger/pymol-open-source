@@ -2165,3 +2165,20 @@ PYMOL API
     set_colour = set_color
     bg_colour = bg_color
     recolour = recolor
+
+
+def ipython_image(*args, _self=cmd, **kwargs):
+    """Render the scene and return the image as an IPython.display.Image.
+
+    All arguments are forwarded to cmd.png().
+
+    @rtype IPython.display.Image
+    """
+    import os, tempfile
+    from IPython.display import Image
+    filename = tempfile.mktemp(".png")
+    _self.png(filename, *args, **kwargs)
+    try:
+        return Image(filename)
+    finally:
+        os.unlink(filename)
