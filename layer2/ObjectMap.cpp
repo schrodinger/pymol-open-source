@@ -4861,10 +4861,12 @@ static int is_number(char *p)
   return result;
 }
 
-static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
-                               int quiet)
+static pymol::Result<std::unique_ptr<ObjectMapState>> ObjectMapDXStrToMap(
+    PyMOLGlobals* G, const char* DXStr, int bytes, bool quiet)
 {
-  auto G = I->G;
+  if (DXStr[0] == '\x1f' && DXStr[1] == '\x8b') {
+    return pymol::Error("gzipped data not supported");
+  }
 
   enum {
     ASCII_NUMERIC,
@@ -4874,25 +4876,17 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
 
   int n_items = 0;
 
-  char *p, *pp;
+  const char *p, *pp;
   float dens;
   int a, b, c, d, e;
   float v[3], maxd, mind;
-  int ok = true;
   /* DX named from their docs */
 
   int stage = 0;
 
-  ObjectMapState *ms;
-
   char cc[MAXLINELEN];
 
-  if(state < 0)
-    state = I->State.size();
-  if(I->State.size() <= state) {
-    VecCheckEmplace(I->State, state, I->G);
-  }
-  ms = &I->State[state];
+  auto ms = pymol::make_unique<ObjectMapState>(G);
 
   ms->Origin = std::vector<float>(3);
   ms->Grid = std::vector<float>(3);
@@ -4905,7 +4899,7 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
 
   ms->FDim[3] = 3;
 
-  while(ok && (*p) && (stage == 0)) {
+  while ((*p) && stage == 0) {
     pp = p;
     p = ParseNCopy(cc, p, 35);
     if((strcmp(cc, "object 1 class gridpositions counts") == 0) || is_number(cc)) {
@@ -4925,15 +4919,19 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
     p = ParseNextLine(p);
   }
 
-  if(ok && (stage == 1)) {
-    PRINTFB(I->G, FB_ObjectMap, FB_Details)
+  if (stage != 1) {
+    return pymol::Error("missing 'object 1 class gridpositions count' line");
+  }
+
+  {
+    PRINTFB(G, FB_ObjectMap, FB_Details)
       " DXStrToMap: Dimensions: %d %d %d\n", ms->FDim[0], ms->FDim[1], ms->FDim[2]
-      ENDFB(I->G);
+      ENDFB(G);
   }
 
   /* get the origin */
 
-  while(ok && (*p) && (stage == 1)) {
+  while ((*p) && stage == 1) {
     pp = p;
     p = ParseNCopy(cc, p, 6);
     if((strcmp(cc, "origin") == 0) || is_number(cc)) {
@@ -4953,17 +4951,21 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
     p = ParseNextLine(p);
   }
 
-  if(ok && (stage == 2)) {
-    PRINTFB(I->G, FB_ObjectMap, FB_Details)
+  if (stage != 2) {
+    return pymol::Error("missing 'origin'");
+  }
+
+  {
+    PRINTFB(G, FB_ObjectMap, FB_Details)
       " DXStrToMap: Origin %8.3f %8.3f %8.3f\n", ms->Origin[0], ms->Origin[1],
       ms->Origin[2]
-      ENDFB(I->G);
+      ENDFB(G);
   }
 
   float delta[9];
   int delta_i = 0;
 
-  while(ok && (*p) && (stage == 2)) {
+  while ((*p) && stage == 2) {
     pp = p;
     p = ParseNCopy(cc, p, 5);
 
@@ -4980,8 +4982,7 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
           delta + delta_i,
           delta + delta_i + 1,
           delta + delta_i + 2)) {
-      // error
-      break;
+      return pymol::Error("expected 3 floats");
     }
 
     p = ParseNextLine(p);
@@ -5009,13 +5010,17 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
     }
   }
 
-  if(ok && (stage == 3)) {
-    PRINTFB(I->G, FB_ObjectMap, FB_Details)
-      " DXStrToMap: Grid %8.3f %8.3f %8.3f\n", ms->Grid[0], ms->Grid[1], ms->Grid[2]
-      ENDFB(I->G);
+  if (stage != 3) {
+    return pymol::Error("missing 'delta'");
   }
 
-  while(ok && (*p) && (stage == 3)) {
+  {
+    PRINTFB(G, FB_ObjectMap, FB_Details)
+      " DXStrToMap: Grid %8.3f %8.3f %8.3f\n", ms->Grid[0], ms->Grid[1], ms->Grid[2]
+      ENDFB(G);
+  }
+
+  while((*p) && stage == 3) {
     p = ParseNCopy(cc, p, 6);
     if(strcmp(cc, "object") == 0) {
       p = ParseWordCopy(cc, p, 20);
@@ -5034,9 +5039,8 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
           } else if (strcmp(cc_type, "float") == 0) {
             data_type = BINARY_FLOAT;
           } else {
-            PRINTFB(G, FB_ObjectMap, FB_Errors)
-            " %s: type '%s' not supported\n", __func__, cc_type ENDFB(G);
-            return false;
+            return pymol::Error(
+                pymol::string_format("type '%s' not supported", cc_type));
           }
         }
       }
@@ -5048,14 +5052,18 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
     p = ParseNextLine(p);
   }
 
-  if(stage == 4) {
+  if (stage != 4) {
+    return pymol::Error("missing 'object . class array'");
+  }
 
-    if(ok && (stage == 4)) {
-      PRINTFB(I->G, FB_ObjectMap, FB_Details)
-        " DXStrToMap: %d data points.\n", n_items ENDFB(I->G);
-    }
+  PRINTFB(G, FB_ObjectMap, FB_Details)
+    " DXStrToMap: %d data points.\n", n_items ENDFB(G);
 
-    ms->Field.reset(new Isofield(I->G, ms->FDim));
+  unsigned malformed_ascii_floats_count = 0;
+
+  {
+
+    ms->Field.reset(new Isofield(G, ms->FDim));
     ms->MapSource = cMapSourceGeneralPurpose;
     ms->Field->save_points = false;
 
@@ -5085,7 +5093,7 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
               p = ParseWordCopy(cc, p, 20);
             }
             if (sscanf(cc, "%f", &dens) != 1) {
-              ok = false;
+              ++malformed_ascii_floats_count;
               continue;
             }
             break;
@@ -5135,24 +5143,21 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
         }
       }
     }
-    if(ok)
-      stage = 5;
-  }
 
-  if(stage != 5)
-    ok = false;
-
-  if(!ok) {
-    ErrMessage(I->G, "ObjectMap", "Error reading map");
-  } else {
-    ms->Active = true;
-    ObjectMapUpdateExtents(I);
     if(!quiet) {
-      PRINTFB(I->G, FB_ObjectMap, FB_Results)
-        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->G);
+      PRINTFB(G, FB_ObjectMap, FB_Results)
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(G);
     }
   }
-  return (ok);
+
+  if (malformed_ascii_floats_count > 0) {
+    PRINTFB(G, FB_ObjectMap, FB_Warnings)
+    " %s-Warning: Failed to parse %u values\n", __func__,
+        malformed_ascii_floats_count ENDFB(G);
+  }
+
+  ms->Active = true;
+  return std::move(ms);
 }
 
 
@@ -5160,24 +5165,31 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
 static ObjectMap *ObjectMapReadDXStr(PyMOLGlobals * G, ObjectMap * I,
                                      char *MapStr, int bytes, int state, int quiet)
 {
-  int ok = true;
-  int isNew = true;
-
-  if(!I)
-    isNew = true;
-  else
-    isNew = false;
-  if(ok) {
-    if(isNew) {
-      I = (ObjectMap *) new ObjectMap(G);
-      isNew = true;
-    } else {
-      isNew = false;
-    }
-    ObjectMapDXStrToMap(I, MapStr, bytes, state, quiet);
-    SceneChanged(G);
-    SceneCountFrames(G);
+  auto mapstateresult = ObjectMapDXStrToMap(G, MapStr, bytes, quiet);
+  if (!mapstateresult) {
+    ErrMessage(G, __func__, mapstateresult.error().what().c_str());
+    return nullptr;
   }
+
+  assert(mapstateresult.result());
+  assert(mapstateresult.result()->Active);
+
+  if (!I) {
+    I = new ObjectMap(G);
+  }
+
+  if (state < 0) {
+    state = I->State.size();
+  }
+
+  VecCheckEmplace(I->State, state, G);
+
+  I->State[state] = std::move(*mapstateresult.result());
+
+  ObjectMapUpdateExtents(I);
+  SceneChanged(G);
+  SceneCountFrames(G);
+
   return (I);
 }
 
@@ -5189,7 +5201,6 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, const char *fn
   ObjectMap *I = NULL;
   long size;
   char *buffer;
-  float mat[9];
 
   buffer = FileGetContents(fname, &size);
 
@@ -5205,15 +5216,6 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, const char *fn
     I = ObjectMapReadDXStr(G, obj, buffer, size, state, quiet);
 
     mfree(buffer);
-    if(state < 0)
-      state = I->State.size() - 1;
-    if(state < I->State.size()) {
-      ObjectMapState *ms;
-      ms = &I->State[state];
-      if(ms->Active) {
-        multiply33f33f(ms->Symmetry->Crystal.FracToReal, ms->Symmetry->Crystal.RealToFrac, mat);
-      }
-    }
   }
   return (I);
 
