@@ -30,6 +30,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#ifndef _PYMOL_NOPY
 #include "os_python.h"
 #include "os_std.h"
 
@@ -44,6 +45,7 @@
 
 
 // tranpose of a matrix
+static
 TA2<double> transpose(const TA2<double>& v);
 
 
@@ -645,3 +647,4 @@ TA2<double> transpose(const TA2<double>& v)
 		
   return rVal;
 }
+#endif
