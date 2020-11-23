@@ -1931,17 +1931,10 @@ void rotation_to_matrix(Matrix53f rot, const float *axis, float angle)
 
 static void find_axis(Matrix33d a, float *axis)
 {
-  doublereal at[3][3], v[3][3], vt[3][3], fv1[3][3];
-  integer iv1[3];
-  integer ierr;
-  integer nm, n, matz;
-  doublereal wr[3], wi[3];
+  double at[3][3], v[3][3], vt[3][3];
+  double wr[3], wi[3];
   /*p[3][3]; */
   int x, y;
-
-  nm = 3;
-  n = 3;
-  matz = 1;
 
   recondition33d(&a[0][0]);     /* IMPORTANT! */
 
@@ -1951,7 +1944,11 @@ static void find_axis(Matrix33d a, float *axis)
     }
   }
 
-  pymol_rg_(&nm, &n, &at[0][0], wr, wi, &matz, &vt[0][0], iv1, &fv1[0][0], &ierr);
+  MatrixEigensolveC33d(nullptr,
+      &at[0][0],  // input matrix
+      wr,         // out: real component of eigenvalues
+      wi,         // out: imag component of eigenvalues
+      &vt[0][0]); // out: eigenvectors
 
   for(x = 0; x < 3; x++) {
     for(y = 0; y < 3; y++) {
@@ -1964,8 +1961,8 @@ static void find_axis(Matrix33d a, float *axis)
   axis[2] = 0.0F;
 
   {
-    doublereal max_real = 0.0F, test_real;
-    doublereal min_imag = 1.0F, test_imag;
+    double max_real = 0.0F, test_real;
+    double min_imag = 1.0F, test_imag;
     float test_inp[3], test_out[3];
 
     for(x = 0; x < 3; x++) {    /* looking for an eigvalue of (1,0) */

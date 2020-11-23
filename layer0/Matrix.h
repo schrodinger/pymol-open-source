@@ -90,7 +90,6 @@ void MatrixInvTransformC44fAs33f3f(const float *m, const float *q, float *p);
 
 void MatrixTransformC44fAs33f3f(const float *p, const float *m, float *q);
 int MatrixEigensolveC33d(PyMOLGlobals * G, const double *a, double *wr, double *wi, double *v);
-int MatrixEigensolveC44d(PyMOLGlobals * G, const double *a, double *wr, double *wi, double *v);
 
 void MatrixTranslateC44f(float *m, float x, float y, float z);
 void MatrixRotateC44f(float *m, float angle, float x, float y, float z);
@@ -101,7 +100,6 @@ float MatrixFitRMSTTTf(PyMOLGlobals * G, int n, const float *v1, const float *v2
                        float *ttt);
 
 float MatrixGetRMS(PyMOLGlobals * G, int n, const float *v1, const float *v2, float *wt);
-int *MatrixFilter(float cutoff, int window, int n_pass, int nv, const float *v1, const float *v2);
 
 void MatrixTransformR44fN3f(unsigned int n, float *q, const float *m, const float *p);
 
@@ -113,13 +111,6 @@ int MatrixTransformExtentsR44d3f(const double *matrix,
                                  float *new_min, float *new_max);
 
 int MatrixInvertC44f(const float *m, float *out);
-
-typedef long int integer;
-typedef double doublereal;
-
-int pymol_rg_(integer * nm, integer * n, doublereal * a, doublereal * wr,
-              doublereal * wi, integer * matz, doublereal * z__, integer * iv1,
-              doublereal * fv1, integer * ierr);
 
 int xx_matrix_invert(double *result, const double *input, int size);
 int xx_matrix_jacobi_solve(double *e_vec, double *e_val, int *n_rot,
