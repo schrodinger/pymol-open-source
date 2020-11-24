@@ -55,7 +55,6 @@ def _deferred_init_pymol_internals(_pymol):
     # take care of some deferred initialization
 
     _pymol._view_dict_sc = Shortcut({})
-    _pymol._scene_dict_sc = Shortcut({})
 
     #
 if True:

@@ -73,6 +73,7 @@ def get_auto_arg_list(self_cmd=cmd):
     aa_ramp_c = [ lambda:
             cmd.Shortcut(self_cmd.get_names_of_type('object:ramp')),
             'ramp', '' ]
+    aa_scene_e = [lambda: cmd.Shortcut(cmd.get_scene_list()), 'scene', '']
 
     return [
 # 1st
@@ -157,7 +158,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'reference'      : [ self_cmd.editing.ref_action_sc  , 'action'          , ', ' ],
         'remove'         : aa_sel_e,
         'reinitialize'   : [ self_cmd.commanding.reinit_sc   , 'option'          , ''   ],
-        'scene'          : [ self_cmd._pymol._scene_dict_sc  , 'scene'           , ''   ],
+        'scene'          : aa_scene_e,
         'sculpt_activate': aa_obj_e,
         'set'            : aa_set_c,
         'set_bond'       : aa_set_c,
@@ -198,7 +199,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'as'             : aa_sel_e,
         'bond'           : aa_sel_e,
         'button'         : [ self_cmd.controlling.but_mod_sc , 'modifier'        , ', ' ],
-        'cache'          : [ self_cmd._pymol._scene_dict_sc  , 'scene'           , ''   ],
+        'cache'          : aa_scene_e,
         'cealign'        : aa_sel_e,
         'clean'          : aa_sel_e,
         'color'          : aa_sel_e,

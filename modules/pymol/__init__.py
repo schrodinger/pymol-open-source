@@ -136,8 +136,6 @@ def _init_internals(_pymol):
 
     # stored scenes
 
-    _pymol._scene_dict_sc = None
-    _pymol._scene_counter = 1
     _pymol._scene_quit_on_action = ''
 
     # get us a private invocation pseudo-module

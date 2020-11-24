@@ -1072,10 +1072,6 @@ SEE ALSO
                     int(color), int(active), int(rep), int(frame),
                     float(animate), new_key, int(hand), sele)
 
-        # autocomplete
-        if action in ('store', 'delete') or action.startswith('insert_'):
-            _self._pymol._scene_dict_sc.rebuild(_self.get_scene_list())
-
         # for presentation auto quit
         pymol._scene_quit_on_action = action
 
@@ -1178,8 +1174,6 @@ SEE ALSO
 
         if 'scene_order' in session:
             _self.scene_order(' '.join(session['scene_order']))
-
-        _self._pymol._scene_dict_sc.rebuild(_self.get_scene_list())
 
         return 1
 

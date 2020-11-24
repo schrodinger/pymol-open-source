@@ -468,7 +468,7 @@ def _special(k,x,y,m=0,_self=cmd): # INTERNAL (invoked when special key is press
     # check for scenes and views
 
     for (fn, sc) in [
-            (_self.scene, pymol._scene_dict_sc),
+            (_self.scene, Shortcut(_self.get_scene_list())),
             (_self.view,  pymol._view_dict_sc),
             ]:
         if key in sc.keywords:
