@@ -374,8 +374,8 @@ void TextGetOutlineColor(PyMOLGlobals * G,
   *alpha = I->OutlineColor[3];
 }
 
-const char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
-    const char *st, float size, float *rpos,
+const char *TextRenderOpenGL(PyMOLGlobals * G, const RenderInfo * info, int text_id,
+    const char *st, float size, const float *rpos,
     short needSize, short relativeMode, short shouldRender,
     CGO *shaderCGO)
 {
@@ -422,7 +422,7 @@ void TextDrawChar(PyMOLGlobals * G, char ch ORTHOCGOARG)
 }
 
 const char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,
-    const char *st, float size, float *rpos, short needSize, short relativeMode)
+    const char *st, float size, const float *rpos, short needSize, short relativeMode)
 {
   CText *I = G->Text;
 

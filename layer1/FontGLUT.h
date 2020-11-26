@@ -69,14 +69,14 @@ struct CFontGLUT : public CFont {
   /* save fields */
   int swapbytes, lsbfirst, rowlength;
   int skiprows, skippixels, alignment;
-  const char* RenderOpenGL(RenderInfo* info, const char* text,
-      float size, float* rpos, bool needSize, short relativeMode,
+  const char* RenderOpenGL(const RenderInfo* info, const char* text,
+      float size, const float* rpos, bool needSize, short relativeMode,
       bool shouldRender, CGO* shaderCGO) override;
-  const char* RenderOpenGLFlat(RenderInfo* info, const char* text,
-      float size, float* rpos, bool needSize, short relativeMode,
+  const char* RenderOpenGLFlat(const RenderInfo* info, const char* text,
+      float size, const float* rpos, bool needSize, short relativeMode,
       bool shouldRender, CGO* shaderCGO) override;
   const char* RenderRay(CRay* ray, const char* text, float size,
-      float* rpos, bool needSize, short relativeMode) override;
+      const float* rpos, bool needSize, short relativeMode) override;
   CFontGLUT(PyMOLGlobals* G, const FontGLUTBitmapFontRec*);
 };
 

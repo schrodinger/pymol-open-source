@@ -24,13 +24,13 @@ Z* -------------------------------------------------------------------
 struct CFontType : public CFont {
   CTypeFace* TypeFace;
   CFontType(PyMOLGlobals* G, unsigned char* dat, unsigned int len);
-  const char* RenderOpenGL(RenderInfo* info, const char* text, float size,
-      float* rpos, bool needSize, short relativeMode, bool shouldRender,
+  const char* RenderOpenGL(const RenderInfo* info, const char* text, float size,
+      const float* rpos, bool needSize, short relativeMode, bool shouldRender,
       CGO* shaderCGO) override;
-  const char* RenderOpenGLFlat(RenderInfo* info, const char* text, float size,
-      float* rpos, bool needSize, short relativeMode, bool shouldRender,
+  const char* RenderOpenGLFlat(const RenderInfo* info, const char* text, float size,
+      const float* rpos, bool needSize, short relativeMode, bool shouldRender,
       CGO* shaderCGO) override;
-  const char* RenderRay(CRay* ray, const char* text, float size, float* rpos,
+  const char* RenderRay(CRay* ray, const char* text, float size, const float* rpos,
       bool needSize, short relativeMode) override;
 };
 

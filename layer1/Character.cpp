@@ -201,7 +201,7 @@ float CharacterGetAdvance(PyMOLGlobals * G, int sampling, int id)
   return rec->Advance / sampling;
 }
 
-void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info)
+void CharacterRenderOpenGLPrime(PyMOLGlobals * G, const RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
     if ((info && !info->use_shaders) || (!info && !SettingGetGlobal_b(G, cSetting_use_shaders))){
@@ -213,7 +213,7 @@ void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info)
   }
 }
 
-void CharacterRenderOpenGLDone(PyMOLGlobals * G, RenderInfo * info)
+void CharacterRenderOpenGLDone(PyMOLGlobals * G, const RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
     if ((info && !info->use_shaders) || (!info && !SettingGetGlobal_b(G, cSetting_use_shaders))){
@@ -223,7 +223,7 @@ void CharacterRenderOpenGLDone(PyMOLGlobals * G, RenderInfo * info)
   }
 }
 
-short CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short isworldlabel, short relativeMode SHADERCGOARG)
+short CharacterRenderOpenGL(PyMOLGlobals * G, const RenderInfo * info, int id, short isworldlabel, short relativeMode SHADERCGOARG)
 
 /* need orientation matrix */
 {

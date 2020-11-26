@@ -41,20 +41,20 @@ Z* -------------------------------------------------------------------
 struct CFont {
   PyMOLGlobals* G = nullptr;
   int TextID = 0;
-  virtual const char* RenderOpenGL(RenderInfo* info, const char* text,
-      float size, float* rpos, bool needSize, short relativeMode,
+  virtual const char* RenderOpenGL(const RenderInfo* info, const char* text,
+      float size, const float* rpos, bool needSize, short relativeMode,
       bool shouldRender, CGO* shaderCGO)
   {
     return nullptr;
   }
-  virtual const char* RenderOpenGLFlat(RenderInfo* info, const char* text,
-      float size, float* rpos, bool needSize, short relativeMode,
+  virtual const char* RenderOpenGLFlat(const RenderInfo* info, const char* text,
+      float size, const float* rpos, bool needSize, short relativeMode,
       bool shouldRender, CGO* shaderCGO)
   {
     return nullptr;
   }
   virtual const char* RenderRay(CRay* ray, const char* text, float size,
-      float* rpos, bool needSize, short relativeMode)
+      const float* rpos, bool needSize, short relativeMode)
   {
     return nullptr;
   }

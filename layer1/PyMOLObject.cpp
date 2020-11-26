@@ -1307,7 +1307,7 @@ void ObjectStatePurge(CObjectState * I)
 {
 }
 
-int ObjectStateSetMatrix(CObjectState * I, double *matrix)
+int ObjectStateSetMatrix(CObjectState * I, const double *matrix)
 {
   int ok = true;
   if(matrix) {
@@ -1320,7 +1320,7 @@ int ObjectStateSetMatrix(CObjectState * I, double *matrix)
   return ok;
 }
 
-void ObjectStateRightCombineMatrixR44d(CObjectState * I, double *matrix)
+void ObjectStateRightCombineMatrixR44d(CObjectState * I, const double *matrix)
 {
   if(matrix) {
     if(I->Matrix.empty()) {
@@ -1333,7 +1333,7 @@ void ObjectStateRightCombineMatrixR44d(CObjectState * I, double *matrix)
   I->InvMatrix.clear();
 }
 
-void ObjectStateLeftCombineMatrixR44d(CObjectState * I, double *matrix)
+void ObjectStateLeftCombineMatrixR44d(CObjectState * I, const double *matrix)
 {
   if(matrix) {
     if(I->Matrix.empty()) {
@@ -1346,7 +1346,7 @@ void ObjectStateLeftCombineMatrixR44d(CObjectState * I, double *matrix)
   I->InvMatrix.clear();
 }
 
-void ObjectStateCombineMatrixTTT(CObjectState * I, float *matrix)
+void ObjectStateCombineMatrixTTT(CObjectState * I, const float *matrix)
 {
 
   if(matrix) {
@@ -1382,7 +1382,7 @@ double *ObjectStateGetInvMatrix(CObjectState * I)
   return I->InvMatrix.data();
 }
 
-void ObjectStateTransformMatrix(CObjectState * I, double *matrix)
+void ObjectStateTransformMatrix(CObjectState * I, const double *matrix)
 {
   if(I->Matrix.empty()) {
     I->Matrix = std::vector<double>(16);

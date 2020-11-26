@@ -95,7 +95,7 @@ struct RenderInfo {
   float width_scale = 0.f;
   float vertex_scale =
       0.f; ///< how large is a screen pixel in model space at the origin
-  int sampling = 0;      ///< are we supersampling?
+  int sampling = 1;      ///< are we supersampling?
   int ortho = 0;         ///< orthoscopic projection?
   int line_lighting = 0; ///< line lighting
   int dynamic_width = 0;

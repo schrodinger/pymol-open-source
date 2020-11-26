@@ -71,9 +71,10 @@ struct RepCylBond : Rep {
  * RETURN VALUE: returns ok (whether adding operation(s) were successful
  *
  */
-static
-int RepCylinder(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, float *v2,
-                bool frontCap, bool endCap, float tube_size, float *v2color=NULL, Pickable *v2pickcolor=NULL )
+static int RepCylinder(CGO* cgo, bool s1, bool s2, bool isRamped,
+    float const* v1, float const* v2, bool frontCap, bool endCap,
+    float tube_size, float const* v2color = nullptr,
+    Pickable* v2pickcolor = nullptr)
 {
   float axis[3];
   int ok = true;
@@ -231,9 +232,10 @@ void RepCylBond::render(RenderInfo * info)
   }
 }
 
-static int RepZeroOrderBond(RepCylBond *I, CGO *cgo, bool s1, bool s2, float *vv1, float *vv2,
-                            float zradius, float *rgb1, float *rgb2,
-                            unsigned int b1, unsigned int b2, int a, bool b1masked, bool b2masked)
+static int RepZeroOrderBond(RepCylBond* I, CGO* cgo, bool s1, bool s2,
+    const float* vv1, const float* vv2, float zradius, const float* rgb1,
+    const float* rgb2, unsigned int b1, unsigned int b2, int a, bool b1masked,
+    bool b2masked)
 {
   float axis[3], naxis[3];
   subtract3f(vv2, vv1, axis);
@@ -316,9 +318,9 @@ static int RepZeroOrderBond(RepCylBond *I, CGO *cgo, bool s1, bool s2, float *vv
 }
 
 static int RepValence(RepCylBond *I, CGO *cgo, bool s1, bool s2, bool isRamped,
-		      float *v1, float *v2, int *other,
+		      const float *v1, const float *v2, const int *other,
 		      int a1, int a2, const float *coord,
-		      float *color1, float *color2, int ord,
+		      const float *color1, const float *color2, int ord,
 		      float tube_size,
 		      bool fixed_r, float scale_r,
 		      Pickable pickdata[] = NULL)
@@ -797,7 +799,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 
           /* This means that if stick_ball gets changed, the RepCylBond needs to be completely invalidated */
 
-        auto stick_ball_impl = [&](AtomInfoType * ati1, int b1, int c1, float * vv1) {
+        auto stick_ball_impl = [&](AtomInfoType * ati1, int b1, int c1, float const* vv1) {
           int stick_ball_1 = AtomSettingGetWD(G, ati1, cSetting_stick_ball, stick_ball);
           if(stick_ball_1) {
             float vdw = stick_ball_ratio * ((ati1->protons == cAN_H) ? bd_radius : bd_radius_full);

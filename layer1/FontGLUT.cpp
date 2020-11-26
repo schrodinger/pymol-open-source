@@ -108,8 +108,8 @@ static unsigned int next_utf8_character(const char * &st, bool &error) {
   return c;
 }
 
-const char* CFontGLUT::RenderOpenGL(RenderInfo* info, const char* st,
-    float size, float* rpos, bool needSize, short relativeMode,
+const char* CFontGLUT::RenderOpenGL(const RenderInfo* info, const char* st,
+    float size, const float* rpos, bool needSize, short relativeMode,
     bool shouldRender, CGO* shaderCGO)
 {
   auto I = this;
@@ -307,8 +307,8 @@ const char* CFontGLUT::RenderOpenGL(RenderInfo* info, const char* st,
   return st;
 }
 
-const char* CFontGLUT::RenderOpenGLFlat(RenderInfo* info, const char* st,
-    float size, float* rpos, bool needSize, short relativeMode,
+const char* CFontGLUT::RenderOpenGLFlat(const RenderInfo* info, const char* st,
+    float size, const float* rpos, bool needSize, short relativeMode,
     bool shouldRender, CGO* shaderCGO)
 {
   return RenderOpenGL(
@@ -316,7 +316,7 @@ const char* CFontGLUT::RenderOpenGLFlat(RenderInfo* info, const char* st,
 }
 
 const char* CFontGLUT::RenderRay(CRay* ray, const char* st, float size,
-    float* rpos, bool needSize, short relativeMode)
+    const float* rpos, bool needSize, short relativeMode)
 {
   auto I = this;
   PyMOLGlobals *G = I->G;

@@ -69,8 +69,8 @@ static void GenerateCharFngrprnt(PyMOLGlobals *G, CharFngrprnt *fprnt, unsigned 
   fprnt->u.i.flat = flat;
 }
 
-static const char* FontTypeRenderOpenGLImpl(RenderInfo* info, CFontType* I,
-    const char* st, float size, int flat, float* rpos, bool needSize,
+static const char* FontTypeRenderOpenGLImpl(const RenderInfo* info, CFontType* I,
+    const char* st, float size, int flat, const float* rpos, bool needSize,
     short relativeMode, bool shouldRender, CGO* shaderCGO)
 {
   PyMOLGlobals *G = I->G;
@@ -299,16 +299,16 @@ static const char* FontTypeRenderOpenGLImpl(RenderInfo* info, CFontType* I,
   return st;
 }
 
-const char* CFontType::RenderOpenGL(RenderInfo* info, const char* st,
-    float size, float* rpos, bool needSize, short relativeMode,
+const char* CFontType::RenderOpenGL(const RenderInfo* info, const char* st,
+    float size, const float* rpos, bool needSize, short relativeMode,
     bool shouldRender, CGO* shaderCGO)
 {
   return FontTypeRenderOpenGLImpl(info, this, st, size, false, rpos, needSize,
       relativeMode, shouldRender, shaderCGO);
 }
 
-const char* CFontType::RenderOpenGLFlat(RenderInfo* info, const char* st,
-    float size, float* rpos, bool needSize, short relativeMode,
+const char* CFontType::RenderOpenGLFlat(const RenderInfo* info, const char* st,
+    float size, const float* rpos, bool needSize, short relativeMode,
     bool shouldRender, CGO* shaderCGO)
 {
   return FontTypeRenderOpenGLImpl(info, this, st, size, true, rpos, needSize,
@@ -316,7 +316,7 @@ const char* CFontType::RenderOpenGLFlat(RenderInfo* info, const char* st,
 }
 
 const char* CFontType::RenderRay(CRay* ray, const char* st, float size,
-    float* rpos, bool needSize, short relativeMode)
+    const float* rpos, bool needSize, short relativeMode)
 {
   auto I = this;
   PyMOLGlobals *G = I->G;

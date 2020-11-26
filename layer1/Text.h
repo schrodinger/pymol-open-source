@@ -107,10 +107,10 @@ float *TextGetPos(PyMOLGlobals * G);
 void TextGetColorUChar(PyMOLGlobals * G, unsigned char *red,
                        unsigned char *green, unsigned char *blue, unsigned char *alpha);
 unsigned char *TextGetColorUChar4uv(PyMOLGlobals * G);
-const char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id, const char *st,
-                       float size, float *rpos, short needSize, short relativeMode, short shouldRender, CGO *shaderCGO);
+const char *TextRenderOpenGL(PyMOLGlobals * G, const RenderInfo * info, int text_id, const char *st,
+                       float size, const float *rpos, short needSize, short relativeMode, short shouldRender, CGO *shaderCGO);
 const char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id, const char *st, float size,
-                    float *rpos, short needSize, short relativeMode);
+                    const float *rpos, short needSize, short relativeMode);
 
 void TextDrawStrAt(PyMOLGlobals * G, const char *st, int x, int y ORTHOCGOARG);
 void TextDrawStr(PyMOLGlobals * G, const char *st ORTHOCGOARG);
