@@ -894,7 +894,7 @@ struct MoleculeExporterMOL : public MoleculeExporter {
     // write bonds
     for (auto& bond : m_bonds) {
       m_offset += VLAprintf(m_buffer, m_offset, "%3d%3d%3d%3d  0  0  0\n",
-          bond.id1, bond.id2, bond.ref->order, (int) bond.ref->stereo);
+          bond.id1, bond.id2, bond.ref->order, 0);
     }
 
     m_bonds.clear();
@@ -1835,8 +1835,6 @@ protected:
       int index[] = { bond.id1 - 1, bond.id2 - 1 };
       PConvInt2ToPyObjAttr(bnd, "index", index);
       PConvIntToPyObjAttr(bnd, "order",     bond.ref->order);
-      PConvIntToPyObjAttr(bnd, "id",        bond.ref->id);
-      PConvIntToPyObjAttr(bnd, "stereo",    bond.ref->stereo);
       PyList_SetItem(bond_list, b, bnd);    /* steals bnd reference */
     }
 

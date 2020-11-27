@@ -22,6 +22,8 @@ Z* -------------------------------------------------------------------
 #include <algorithm>
 #include <cassert>
 #include <set>
+#include <unordered_map>
+#include <vector>
 
 #include"Base.h"
 #include"Parse.h"
@@ -490,6 +492,14 @@ typedef struct {
   BondType *bi_b;
   int *nbr_a, *nbr_b;
   int *matched;
+
+  // values: -1 .. 2
+  using mark_type = signed char;
+
+  std::vector<mark_type> atom_mark_a;
+  std::vector<mark_type> atom_mark_b;
+  std::vector<mark_type> bond_mark_a;
+  std::vector<mark_type> bond_mark_b;
 } match_info;
 
 #define recmat3(x,y,z) \
@@ -506,20 +516,16 @@ typedef struct {
 static void undo_match(int *start, match_info * mi)
 {
   /* remove the matched atom set */
-  AtomInfoType *ai_a = mi->ai_a;
-  AtomInfoType *ai_b = mi->ai_b;
-  BondType *bi_a = mi->bi_a;
-  BondType *bi_b = mi->bi_b;
   int *match = mi->matched;
   while(match > start) {
     int a = match[-4];
     int b = match[-3];
     int aa = match[-2];
     int bb = match[-1];
-    ai_a[a].temp1 = false;
-    ai_b[b].temp1 = false;
-    bi_a[aa].temp1 = false;
-    bi_b[bb].temp1 = false;
+    mi->atom_mark_a[a] = false;
+    mi->atom_mark_b[b] = false;
+    mi->bond_mark_a[aa] = false;
+    mi->bond_mark_b[bb] = false;
     match -= 4;
   }
   mi->matched = start;
@@ -527,13 +533,13 @@ static void undo_match(int *start, match_info * mi)
 
 static int recursive_match(int a, int b, int aa, int bb, match_info * mi)
 {
-  if(mi->ai_a[a].temp1 && mi->ai_b[b].temp1) {
-    if((aa >= 0) && (bb >= 0) && !(mi->bi_a[aa].temp1 || mi->bi_b[bb].temp1)) {
+  if (mi->atom_mark_a[a] && mi->atom_mark_b[b]) {
+    if (aa >= 0 && bb >= 0 && !(mi->bond_mark_a[aa] || mi->bond_mark_b[bb])) {
       /* note bond */
-      mi->ai_a[a].temp1 = true;
-      mi->ai_b[b].temp1 = true;
-      mi->bi_a[aa].temp1 = true;
-      mi->bi_b[bb].temp1 = true;
+      mi->atom_mark_a[a] = true;
+      mi->atom_mark_b[b] = true;
+      mi->bond_mark_a[aa] = true;
+      mi->bond_mark_b[bb] = true;
       mi->matched[0] = a;       /* atoms */
       mi->matched[1] = b;
       mi->matched[2] = aa;      /* bonds */
@@ -541,7 +547,7 @@ static int recursive_match(int a, int b, int aa, int bb, match_info * mi)
       mi->matched += 4;
     }
     return true;
-  } else if(mi->ai_a[a].temp1 != mi->ai_b[b].temp1)
+  } else if (mi->atom_mark_a[a] != mi->atom_mark_b[b])
     return false;
   else if(mi->ai_a[a].protons != mi->ai_b[b].protons)
     return false;
@@ -559,10 +565,10 @@ static int recursive_match(int a, int b, int aa, int bb, match_info * mi)
       int n_u_a = 0;
       int n_u_b = 0;
       int *before = mi->matched;
-      mi->ai_a[a].temp1 = true;
-      mi->ai_b[b].temp1 = true;
-      mi->bi_a[aa].temp1 = true;
-      mi->bi_b[bb].temp1 = true;
+      mi->atom_mark_a[a] = true;
+      mi->atom_mark_b[b] = true;
+      mi->bond_mark_a[aa] = true;
+      mi->bond_mark_b[bb] = true;
       mi->matched[0] = a;       /* atoms */
       mi->matched[1] = b;
       mi->matched[2] = aa;      /* bonds */
@@ -573,7 +579,7 @@ static int recursive_match(int a, int b, int aa, int bb, match_info * mi)
 
       while(num_a--) {
         int i_a = mi->nbr_a[ni_a + 1];
-        if(!mi->bi_a[i_a].temp1) {      /* bond not yet visited */
+        if(!mi->bond_mark_a[i_a]) {      /* bond not yet visited */
           u_a[n_u_a] = mi->nbr_a[ni_a]; /* atom index */
           x_a[n_u_a++] = i_a;
         }
@@ -582,7 +588,7 @@ static int recursive_match(int a, int b, int aa, int bb, match_info * mi)
 
       while(num_b--) {
         int i_b = mi->nbr_b[ni_b + 1];
-        if(!mi->bi_b[i_b].temp1) {
+        if(!mi->bond_mark_b[i_b]) {
           u_b[n_u_b] = mi->nbr_b[ni_b];
           x_b[n_u_b++] = i_b;
         }
@@ -666,34 +672,19 @@ int ObjectMoleculeXferValences(ObjectMolecule * Ia, int sele1, int sele2,
     int a, b;
     AtomInfoType *ai_a = Ia->AtomInfo.data();
     AtomInfoType *ai_b = Ib->AtomInfo.data();
-    for(a = 0; a < Ia->NAtom; a++) {
-      (ai_a++)->temp1 = false;
-    }
-    for(b = 0; b < Ib->NAtom; b++) {
-      (ai_b++)->temp1 = false;
-    }
-  }
-
-  {
-    int a, b;
-    BondType *bi_a = Ia->Bond.data();
-    BondType *bi_b = Ib->Bond.data();
-    for(a = 0; a < Ia->NBond; a++) {
-      (bi_a++)->temp1 = false;
-    }
-    for(b = 0; b < Ib->NBond; b++) {
-      (bi_b++)->temp1 = false;
-    }
-  }
-
-  {
-    int a, b;
-    AtomInfoType *ai_a = Ia->AtomInfo.data();
-    AtomInfoType *ai_b = Ib->AtomInfo.data();
     BondType *bi_a = Ia->Bond.data();
     BondType *bi_b = Ib->Bond.data();
 
     match_info mi;
+
+    mi.atom_mark_a.resize(Ia->NAtom);
+    mi.atom_mark_b.resize(Ib->NAtom);
+    mi.bond_mark_a.resize(Ia->NBond);
+    mi.bond_mark_b.resize(Ib->NBond);
+
+    // confirm zero-initialization
+    assert(std::none_of(mi.atom_mark_a.begin(), mi.atom_mark_a.end(),
+        [](bool m) { return m; }));
 
     mi.ai_a = ai_a;
     mi.ai_b = ai_b;
@@ -703,7 +694,7 @@ int ObjectMoleculeXferValences(ObjectMolecule * Ia, int sele1, int sele2,
     mi.nbr_b = Ib->Neighbor;
     mi.matched = matched;
     for(a = 0; a < Ia->NAtom; a++) {
-      if(!ai_a[a].temp1) {
+      if(!mi.atom_mark_a[a]) {
         int a_entry = ai_a[a].selEntry;
         if(SelectorIsMember(G, a_entry, sele1) || SelectorIsMember(G, a_entry, sele2)) {
           for(b = 0; b < Ib->NAtom; b++) {
@@ -735,9 +726,9 @@ int ObjectMoleculeXferValences(ObjectMolecule * Ia, int sele1, int sele2,
                       ai_a[at_a].chemFlag = false;
                     }
                   }
-                  ai_b[at_b].temp1 = false;     /* release source for future matching */
+                  mi.atom_mark_b[at_b] = false;     /* release source for future matching */
                   if(bd_b >= 0)
-                    bi_b[bd_b].temp1 = false;
+                    mi.bond_mark_b[bd_b] = false;
                   match -= 4;
                 }
                 break;
@@ -1973,8 +1964,6 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
         bd->index[0] = (abs(i2) / 3);
         bd->index[1] = (abs(i1) / 3);
         bd->order = 1;
-        bd->stereo = 0;
-        bd->id = bi + 1;
         bi++;
       }
       if((++b) == col) {
@@ -2015,8 +2004,6 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
         bd->index[0] = (abs(i2) / 3);
         bd->index[1] = (abs(i1) / 3);
         bd->order = 1; // PYMOL-2707
-        bd->stereo = 0;
-        bd->id = bi + 1;
         bi++;
       }
       if((++b) == col) {
@@ -2491,7 +2478,6 @@ void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I)
   int a;
   int max;
   AtomInfoType *ai;
-  BondType *b;
 
   if(I->AtomCounter < 0) {
     max = -1;
@@ -2508,23 +2494,6 @@ void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I)
     if(ai->id < 0)
       ai->id = I->AtomCounter++;
     ai++;
-  }
-
-  if(I->BondCounter < 0) {
-    max = -1;
-    b = I->Bond.data();
-    for(a = 0; a < I->NBond; a++) {
-      if(b->id > max)
-        max = b->id;
-      b++;
-    }
-    I->BondCounter = max + 1;
-  }
-  b = I->Bond.data();
-  for(a = 0; a < I->NBond; a++) {
-    if(!b->id)
-      b->id = I->BondCounter++;
-    b++;
   }
 }
 
@@ -3085,8 +3054,6 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
           ii->index[0] = b1;
           ii->index[1] = b2 - 1;
           ii->order = 1;        /* missing bond order information */
-          ii->stereo = 0;
-          ii->id = -1;          /* no serial number */
           ii++;
         }
       }
@@ -4440,7 +4407,6 @@ pymol::Result<> ObjectMoleculeAddBondByIndices(
 
   auto& bnd = I->Bond[I->NBond++];
   BondTypeInit2(&bnd, atm1, atm2, order);
-  bnd.stereo = 0;
 
   I->AtomInfo[atm1].chemFlag = false;
   I->AtomInfo[atm2].chemFlag = false;
@@ -7334,36 +7300,6 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
           Py_XDECREF(tmp);
         }
 
-        if(ok) {
-          int stereo;
-          tmp = PyObject_GetAttrString(bnd, "stereo");
-          if(tmp)
-            ok = PConvPyObjectToInt(tmp, &stereo);
-          else
-            ii->stereo = 0;
-          if(!ok)
-            ii->stereo = 0;
-          else
-            ii->stereo = stereo;
-          Py_XDECREF(tmp);
-        }
-
-        ii->id = a;
-        if(!ignore_ids) {
-          if(ok) {              /* get unique chempy bond id if present */
-            if(PTruthCallStr(bnd, "has", "id")) {
-              tmp = PyObject_GetAttrString(bnd, "id");
-              if(tmp)
-                ok = PConvPyObjectToInt(tmp, &ii->id);
-              if(!ok)
-                ErrMessage(G, __func__,
-                           "can't read bond identifier");
-              Py_XDECREF(tmp);
-            } else {
-              ii->id = -1;
-            }
-          }
-        }
         Py_XDECREF(index);
         ii++;
       }
@@ -7902,12 +7838,8 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, const char *buf
         ii->order = order;
       }
       if(ok) {
-        int stereo;
         p = ncopy(cc, p, 3);
-        if(sscanf(cc, "%d", &stereo) != 1)
-          ii->stereo = 0;
-        else
-          ii->stereo = stereo;
+        // stereo
       }
       ii++;
       if(!ok)
@@ -8377,8 +8309,6 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
           for(a = 0; a < nBond; a++) {
             if(ok) {
               p = ParseWordCopy(cc, p, 20);
-              if(sscanf(cc, "%d", &ii->id) != 1)
-                ok = ErrMessage(G, "ReadMOL2File", "bad atom id");
             }
 
             if(ok) {
@@ -8423,7 +8353,6 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
               } else
                 ok = ErrMessage(G, "ReadMOL2File", "bad bond type");
             }
-            ii->stereo = 0;
             ii++;
             if(!ok)
               break;
@@ -8453,25 +8382,13 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
           int id, dict_type, root, resv;
           int end_line, seg_flag, subst_flag, resi_flag;
           int chain_flag, resn_flag;
-          OVOneToOne *o2o = OVOneToOne_New(G->Context->heap);
+          std::unordered_map<int, std::vector<int>> resv_map;
 
           {
-            /* create linked list of atoms for each residue id */
-            OVreturn_word result;
             int b;
             AtomInfoType *ai = atInfo;
             for(b = 0; b < nAtom; b++) {
-              ai->temp1 = -1;
-              ai++;
-            }
-            ai = atInfo;
-            for(b = 0; b < nAtom; b++) {
-              if(OVreturn_IS_OK((result = OVOneToOne_GetForward(o2o, ai->resv)))) {
-                atInfo[b].temp1 = atInfo[result.word].temp1;
-                atInfo[result.word].temp1 = b;
-              } else {
-                OVOneToOne_Set(o2o, ai->resv, b);
-              }
+              resv_map[ai->resv].push_back(b);
               ai++;
             }
           }
@@ -8655,12 +8572,11 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
 
               if(ok) {
                 if(resi_flag || chain_flag || resn_flag || seg_flag) {
-                  OVreturn_word result;
+                  auto it = resv_map.find(id);
+                  if (it != resv_map.end()) {
+                    for (auto b : it->second) {
+                      assert(b >= 0 && b < nAtom);
                   {
-                    if(OVreturn_IS_OK((result = OVOneToOne_GetForward(o2o, id)))) {
-                      /* traverse linked list for resi */
-                      int b = result.word;
-                      while((b >= 0) && (b < nAtom)) {
                         AtomInfoType *ai = atInfo + b;
                         if(resi_flag)
                           ai->setResi(resi);
@@ -8672,7 +8588,6 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
                         if(seg_flag)
                           LexAssign(G, ai->segi, segment);
                         ai->hetatm = hetatm;
-                        b = ai->temp1;
                       }
                     }
                   }
@@ -8684,7 +8599,6 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
             p = ParseNextLine(p);
           }
           LexDec(G, chain);
-          OVOneToOne_DEL_AUTO_NULL(o2o);
         }
       } else
         p = ParseNextLine(p);
@@ -11843,8 +11757,6 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
               ii->index[0] = a;
               ii->index[1] = bPart - 1;
               ii->order = bOrder;
-              ii->stereo = 0;
-              ii->id = -1;
               ii++;
             }
           }

@@ -15,9 +15,7 @@ void Copy_BondType(const fromVersion *src,  toVersion *dest){
   COPY_ATTR(index[0]);
   COPY_ATTR(index[1]);
   COPY_ATTR(order);
-  COPY_ATTR(id);
   COPY_ATTR(unique_id);
-  COPY_ATTR(stereo);
   COPY_ATTR(has_setting);
 }
 

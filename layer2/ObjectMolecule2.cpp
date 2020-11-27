@@ -2289,12 +2289,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 		  bond[nBond].index[0] = b1;      /* temporarily store the atom indexes */
 		  bond[nBond].index[1] = b2;
 		  bond[nBond].order = 1;
-		  bond[nBond].stereo = 0;
 		} else {
 		  bond[nBond].index[0] = b2;
 		  bond[nBond].index[1] = b1;
 		  bond[nBond].order = 1;
-		  bond[nBond].stereo = 0;
 		}
 		nBond++;
 	      }
@@ -2622,7 +2620,6 @@ pqr_done:
             ii1->index[0] = ii2->index[0];
             ii1->index[1] = ii2->index[1];
             ii1->order = ii2->order;
-            ii1->stereo = ii2->stereo;
             nReal++;
           }
           ii2++;
@@ -3111,8 +3108,8 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
     PyList_SetItem(bond_list, 0, PyInt_FromLong(bond->index[0]));
     PyList_SetItem(bond_list, 1, PyInt_FromLong(bond->index[1]));
     PyList_SetItem(bond_list, 2, PyInt_FromLong(bond->order));
-    PyList_SetItem(bond_list, 3, PyInt_FromLong(bond->id));
-    PyList_SetItem(bond_list, 4, PyInt_FromLong(bond->stereo));
+    PyList_SetItem(bond_list, 3, PyInt_FromLong(-1)); // id
+    PyList_SetItem(bond_list, 4, PyInt_FromLong(0));  // stereo
     PyList_SetItem(bond_list, 5, PyInt_FromLong(bond->unique_id));
     PyList_SetItem(bond_list, 6, PyInt_FromLong(bond->has_setting));
     PyList_SetItem(result, a, bond_list);
@@ -3179,12 +3176,6 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
     if(ok)
       if((ok = CPythonVal_PConvPyIntToInt_From_List(I->G, bond_list, 2, &stereo)))
         bond->order = stereo;
-    if(ok)
-      ok = PConvPyIntToInt(PyList_GetItem(bond_list, 3), &bond->id);
-    if(ok)
-      ok = PConvPyIntToInt(PyList_GetItem(bond_list, 4), &stereo);
-    if(ok)
-      bond->stereo = (short int) stereo;
     if(ok && (ll > 5)) {
       int has_setting;
       if(ok)

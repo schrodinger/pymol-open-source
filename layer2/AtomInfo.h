@@ -222,11 +222,8 @@ extern const int ElementTableSize;
 
 typedef struct BondType {
   int index[2];
-  int id;
   int unique_id;
   signed char order;    // 0-4
-  signed char temp1;    // bool? where used?
-  signed char stereo;   // 0-6 Only for SDF (MOL) format in/out
   bool has_setting;     /* setting based on unique_id */
 } BondType;
 
@@ -391,7 +388,6 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals * G, const AtomInfoType * at);
 int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * at, PyObject * list);
 
 int AtomInfoMatch(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2, bool, bool);
-int AtomInfoCompareAll(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
 int AtomInfoCompare(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
 int AtomInfoCompareIgnoreRank(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
 int AtomInfoCompareIgnoreHet(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
@@ -460,8 +456,6 @@ typedef struct {
   unsigned char type;
   int next;
 } SSEntry;
-
-int BondTypeCompare(PyMOLGlobals * G, const BondType * bt1, const BondType * bt2);
 
 void atomicnumber2elem(char * dst, int protons);
 
