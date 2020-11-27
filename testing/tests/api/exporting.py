@@ -295,7 +295,7 @@ class TestExporting(testing.PyMOLTestCase):
         cmp = lambda a, b: a != b # py3k
         return \
                 cmp(selfobj.order, other.order) or \
-                cmp(selfobj.stereo, other.stereo)
+                cmp(selfobj.index, other.index)
 
     def assertModelsAreSame(self, m1, m2):
         self.assertTrue(len(m1.atom) == len(m2.atom))
