@@ -1168,6 +1168,14 @@ struct MoleculeExporterMAE : public MoleculeExporter {
       keys.emplace_back("s_m_subgroupid");
     }
 
+    const auto* sym = m_iter.cs->getSymmetry();
+    if (sym) {
+      keys.insert(keys.end(),
+          {"r_pdb_PDB_CRYST1_a", "r_pdb_PDB_CRYST1_b", "r_pdb_PDB_CRYST1_c",
+              "r_pdb_PDB_CRYST1_alpha", "r_pdb_PDB_CRYST1_beta",
+              "r_pdb_PDB_CRYST1_gamma", "s_pdb_PDB_CRYST1_Space_Group"});
+    }
+
 #ifdef _PYMOL_MAE_PROP_EXPORT
 #endif
 
@@ -1182,6 +1190,13 @@ struct MoleculeExporterMAE : public MoleculeExporter {
 
     if (!groupid.empty()) {
       m_offset += VLAprintf(m_buffer, m_offset, "\"%s\"\n", groupid.c_str());
+    }
+
+    if (sym) {
+      m_offset += VLAprintf(m_buffer, m_offset, "%f %f %f %f %f %f %s\n",
+          sym->Crystal.Dim[0], sym->Crystal.Dim[1], sym->Crystal.Dim[2],
+          sym->Crystal.Angle[0], sym->Crystal.Angle[1], sym->Crystal.Angle[2],
+          MaeExportStrRepr(sym->SpaceGroup).c_str());
     }
 
 #ifdef _PYMOL_MAE_PROP_EXPORT
