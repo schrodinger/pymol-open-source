@@ -328,10 +328,12 @@ class TestCreating(testing.PyMOLTestCase):
         self.assertEqual(cmd.get_symmetry('map1'), cmd.get_symmetry('map2'))
         self.assertArrayEqual(cmd.get_volume_field('map1'), cmd.get_volume_field('map2'))
 
-    def testSymexp(self):
+    @testing.foreach((0, 0), (1, 1))
+    def testSymexp(self, matrix_mode, segi):
+        cmd.set("matrix_mode", matrix_mode)
         cmd.load(self.datafile('1oky.pdb.gz'), 'm1')
         n = cmd.count_atoms()
-        cmd.symexp('s', 'm1', '%m1 & resi 283', 20.0)
+        cmd.symexp('s', 'm1', '%m1 & resi 283', 20.0, segi=segi)
         x = cmd.get_object_list()
         self.assertEqual(x, [
             'm1',
@@ -340,6 +342,15 @@ class TestCreating(testing.PyMOLTestCase):
             's04000000',
             ])
         self.assertEqual(n * 4, cmd.count_atoms())
+        self.assertArrayEqual(
+            cmd.get_extent(),
+            [[40.8978, -8.901, -47.0803], [162.085, 108.416, 31.309]],
+            delta=1e-2)
+        segis = dict((name, set()) for name in x)
+        cmd.iterate("all", "segis[model].add(segi)", space=locals())
+        self.assertEqual(segis["s01000000"], set(["B000" if segi else ""]))
+        self.assertEqual(segis["s03000000"], set(["D000" if segi else ""]))
+        self.assertEqual(segis["s04000000"], set(["E000" if segi else ""]))
 
     @unittest.skip("Not yet implemented.")
     def testUndoSymexp(self):
