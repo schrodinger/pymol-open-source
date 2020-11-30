@@ -128,4 +128,7 @@ public:
   MapEIter end() const { return {}; }
 };
 
+bool MapAnyWithin(
+    MapType& map, const float* v_map, const float* v_query, float cutoff);
+
 #endif

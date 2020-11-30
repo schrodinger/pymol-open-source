@@ -994,3 +994,22 @@ MapEIter::MapEIter(MapType& map, const float* v, bool excl)
     m_i = *MapLocusEStart(&map, v);
   }
 }
+
+/**
+ * True if `v_query` is within `cutoff` of any point in the map.
+ *
+ * @param map A hash map
+ * @param v_map The points used to build the map
+ * @param v_query A query point
+ * @param cutoff The distance cutoff
+ */
+bool MapAnyWithin(
+    MapType& map, const float* v_map, const float* v_query, float cutoff)
+{
+  for (const auto j : MapEIter(map, v_query)) {
+    if (within3f(v_map + 3 * j, v_query, cutoff)) {
+      return true;
+    }
+  }
+  return false;
+}

@@ -102,6 +102,9 @@
 #include "ce_types.h"
 #endif
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #ifdef WIN32
 #define mkstemp _mktemp_s
 #endif
@@ -13957,251 +13960,238 @@ Block *ExecutiveGetBlock(PyMOLGlobals * G)
 }
 
 
+/**
+ * Makes a custom symmetry operation label.
+ *
+ * TODO: Would be nicer to use CIF-style symop labels ("1_555" etc.), e.g.:
+ * pymol::string_format("%d_%d%d%d", a + 1, x + 5, y + 5, z + 5);
+ */
+static std::string make_symexp_segi_label(int a, int x, int y, int z)
+{
+  SegIdent seg = "_000";
+
+  if (a > 61) {
+    // beyond what can be encoded with a single alphanumeric
+    // character (PYMOL-2475)
+  } else if (a > 35) {
+    seg[0] = 'a' + (a - 36);
+  } else if (a > 25) {
+    seg[0] = '0' + (a - 26);
+  } else {
+    seg[0] = 'A' + a;
+  }
+
+  if (x > 0) {
+    seg[1] = 'A' + x - 1;
+  } else if (x < 0) {
+    seg[1] = 'Z' + x + 1;
+  }
+
+  if (y > 0) {
+    seg[2] = 'A' + y - 1;
+  } else if (y < 0) {
+    seg[2] = 'Z' + y + 1;
+  }
+
+  if (z > 0) {
+    seg[3] = 'A' + z - 1;
+  } else if (z < 0) {
+    seg[3] = 'Z' + z + 1;
+  }
+
+  return seg;
+}
+
 /*========================================================================*/
+/**
+ * Generates symmetry mates of object @a name as new objects, with all states.
+ *
+ * Only includes mates within @a cutoff of selection @a s1, and only in a range
+ * of +/-1 unit cells. The cutoff applies across states, so a symmetry atom will
+ * be included if it's within any atom of @a s1 in any state.
+ *
+ * @param name Prefix for new objects
+ * @param oname Object to replicate
+ * @param s1 Atom selection (for cutoff)
+ * @param cutoff Distance cutoff from selection
+ * @param segi (bool) If true, write symmetry operation code to segment
+ * identifier
+ */
 void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
                      const char *oname, const char *s1, float cutoff, int segi, int quiet)
 {                               /* TODO state */
-  CObject *ob;
-  ObjectMolecule *obj = NULL;
-  ObjectMolecule *new_obj = NULL;
-  ObjectMoleculeOpRec op;
-  MapType *map;
-  int x, y, z, b, c, i, j, h, k, l, n;
-  ov_size a;
-  CoordSet *cs, *os;
-  int keepFlag, sele, tt[3];
-  const float *v1, *v2;
-  float m[16], tc[3], ts[3];
-  OrthoLineType new_name;
-  float auto_save;
-
-  PRINTFD(G, FB_Executive)
-    " ExecutiveSymExp: entered.\n" ENDFD;
-
-  /* controls whether we zoom in on newly created objects or not */
-	auto_save = SettingGetGlobal_i(G, cSetting_auto_zoom);
-  SettingSetGlobal_i(G, cSetting_auto_zoom, 0);
-
   SelectorTmp tmpsele1(G, s1);
-  sele = tmpsele1.getIndex();
+  auto sele = tmpsele1.getIndex();
 
 	/* object to expand */
-  ob = ExecutiveFindObjectByName(G, oname);
-	/* make sure it's a "molecule" type and that it had valid symmetry info */
-  if(ob->type == cObjectMolecule)
-    obj = (ObjectMolecule *) ob;
+  auto const* const obj = ExecutiveFindObject<ObjectMolecule>(G, oname);
+
   if(!(obj && sele)) {
     ErrMessage(G, __func__, "Invalid object");
+    return;
   } else if(!obj->Symmetry) {
     ErrMessage(G, __func__, "No symmetry loaded!");
+    return;
   } else if(!SymmetryAttemptGeneration(obj->Symmetry)) {
-    // unknown space group
+    ErrMessage(G, __func__, "unknown space group");
+    return;
   } else if(obj->Symmetry->getNSymMat() < 1) {
     ErrMessage(G, __func__, "No symmetry matrices!");
+    return;
   } else {
     if(!quiet) {
       PRINTFB(G, FB_Executive, FB_Actions)
         " ExecutiveSymExp: Generating symmetry mates...\n" ENDFB(G);
     }
+  }
 
-		/* 1.  Get the center of mass for this object/selection */
-		/* the object and selection are valid, so initialize the NEW object */
-    ObjectMoleculeOpRecInit(&op);
-    op.code = OMOP_SUMC;
-    op.i1 = 0;
-    op.i2 = 0;
-    op.v1[0] = 0.0;
-    op.v1[1] = 0.0;
-    op.v1[2] = 0.0;
-    ExecutiveObjMolSeleOp(G, sele, &op);
-		/* op.v1 is now the complete sum over all coordinates in this selection */
-    tc[0] = op.v1[0];
-    tc[1] = op.v1[1];
-    tc[2] = op.v1[2];
-		/* calculate center of mass.  op.i1 is the number of atoms we counter over in the
-		 * previous ExecutiveObjMolSeleOp, so this is the average coordinate or center of mass */
-    if(op.i1) {
-      tc[0] /= op.i1;
-      tc[1] /= op.i1;
-      tc[2] /= op.i1;
+  bool const matrix_mode = SettingGet<int>(G, cSetting_matrix_mode) > 0;
+
+  // Get the center of mass for this object/selection (over all states!)
+  ObjectMoleculeOpRec op;
+  ObjectMoleculeOpRecInit(&op);
+  op.code = OMOP_SUMC;
+  ExecutiveObjMolSeleOp(G, sele, &op);
+  auto tc_vec = glm::make_vec3(op.v1) / float(std::max(1, op.i1));
+  auto tc = glm::value_ptr(tc_vec);
+
+  const CSymmetry* sym = obj->Symmetry;
+  assert(sym);
+
+  /* Transformation: RealToFrac (3x3) * tc (3x1) = (3x1) */
+  transform33f3f(sym->Crystal.RealToFrac, tc, tc);
+
+  /* 2.  Copy the coordinates for the atoms in this selection into op */
+  op.code = OMOP_VERT;
+  op.nvv1 = 0;
+  op.vv1 = VLAlloc(float, 10000);
+  ExecutiveObjMolSeleOp(G, sele, &op);
+  auto const vv1 = pymol::vla_take_ownership(op.vv1);
+
+  /* op.nvv1 is the number of atom coordinates we copied in the previous step */
+  if (!op.nvv1) {
+    ErrMessage(G, __func__, "No atoms indicated!");
+    return;
+  }
+
+  auto map =
+      std::unique_ptr<MapType>(MapNew(G, -cutoff, vv1.data(), op.nvv1, NULL));
+  if (!map) {
+    ErrMessage(G, __func__, "map is NULL");
+    return;
+  }
+
+  std::vector<glm::vec3> cs_centers(obj->NCSet);
+  for (int b = 0; b < obj->NCSet; ++b) {
+    if (auto const* cs = obj->CSet[b]) {
+      CoordSetGetAverage(cs, glm::value_ptr(cs_centers[b]));
     }
-		/* Transformation: RealToFrac (3x3) * tc (3x1) = (3x1) */
-    transform33f3f(obj->Symmetry->Crystal.RealToFrac, tc, tc);
+  }
 
-		/* 2.  Copy the coordinates for the atoms in this selection into op */
-    op.code = OMOP_VERT;
-    op.nvv1 = 0;
-    op.vv1 = VLAlloc(float, 10000);
-    ExecutiveObjMolSeleOp(G, sele, &op);
+  int const nsymmat = sym->getNSymMat();
 
-		/* op.nvv1 is the number of atom coordinates we copied in the previous step */
-    if(!op.nvv1) {
-      ErrMessage(G, __func__, "No atoms indicated!");
-    } else {
-      int nsymmat = obj->Symmetry->getNSymMat();
-      map = MapNew(G, -cutoff, op.vv1, op.nvv1, NULL);
-      if(map) {
-        MapSetupExpress(map);
-        /* go out no more than one lattice step in each direction: -1, 0, +1 */
-        for(x = -1; x < 2; x++)
-          for(y = -1; y < 2; y++)
-            for(z = -1; z < 2; z++)
-              for(a = 0; a < nsymmat; a++) {
-								/* make a copy of the original */
-                new_obj = ObjectMoleculeCopy(obj);
+  /* go out no more than one lattice step in each direction: -1, 0, +1 */
+  for (int x = -1; x < 2; ++x) {
+    for (int y = -1; y < 2; ++y) {
+      for (int z = -1; z < 2; ++z) {
+        for (int a = 0; a < nsymmat; a++) {
+          /* make a copy of the original */
+          auto new_obj = ObjectMoleculeCopy(obj);
+          bool keepFlag = false;
 
-                keepFlag = false;
-                for(b = 0; b < new_obj->NCSet; b++)
-                  if(new_obj->CSet[b]) {
-										/* get the new and original coordinate sets for this state */
-                    cs = new_obj->CSet[b];
-                    os = obj->CSet[b];
-										/* convert coordinates into fractional, based on unit cell */
-                    CoordSetRealToFrac(cs, &obj->Symmetry->Crystal);
-                    CoordSetTransform44f(cs, obj->Symmetry->getSymMat(a));
-                    CoordSetGetAverage(cs, ts);
-                    identity44f(m);
-                    /* compute the effective translation resulting
-                       from application of the symmetry operator so
-                       that we can shift it into the cell of the
-                       target selection */
-                    for(c = 0; c < 3; c++) {    /* manual rounding - rint broken */
-											/* here, we subtract the center of mass of the selection from tc */
-                      ts[c] = tc[c] - ts[c];
-                      if(ts[c] < 0)
-                        ts[c] -= 0.5;
-                      else
-                        ts[c] += 0.5;
-                      tt[c] = (int) ts[c];
-                    }
-										/* translate the coordinate set by adding Tx, Ty, Tz from the symmetry matrix */
-										/* Now we're at the center of mass and can make an non-affine rotation */
-                    m[3] = (float) tt[0] + x;
-                    m[7] = (float) tt[1] + y;
-                    m[11] = (float) tt[2] + z;
-										/* cs = m x cs, for rotation matrix, m and coordinate set cs */
-                    CoordSetTransform44f(cs, m);
-										
-										/* this steps through the coordinate list until it finds a vertex close enough */
-                    CoordSetFracToReal(cs, &obj->Symmetry->Crystal);
-                    if(!keepFlag) {
-											/* for each coordinate in this coordinate set */
-                      v2 = cs->Coord;
-                      n = cs->NIndex;
-                      while(n--) {
-                        MapLocus(map, v2, &h, &k, &l);
-                        i = *(MapEStart(map, h, k, l));
-                        if(i) {
-                          j = map->EList[i++];
-                          while(j >= 0) {
-														/* if op.vv1+3*j (a vertex) is within cutoff angstroms of v2, keep it and break */
-                            if(within3f(op.vv1 + 3 * j, v2, cutoff)) {
-                              keepFlag = true;
-                              break;
-                            }
-                            j = map->EList[i++];
-                          }
-                        }
-                        v2 += 3;
-                        if(keepFlag)
-                          break;
-                      }
-                    }
-                    if(keepFlag) {
-                      /* make sure that we aren't simply duplicating the template coordinates */
-                      keepFlag = false;
-                      v1 = os->Coord;
-                      v2 = cs->Coord;
-                      n = cs->NIndex;
-                      while(n--) {
-                        if(diffsq3f(v1, v2) > R_SMALL8) {
-                          keepFlag = true;
-                          break;
-                        }
-                        v1++;
-                        v2++;
-                      }
-                    }
-                  }
-                if(keepFlag) {  /* we need to create new object */
+          for (int b = 0; b < new_obj->NCSet; ++b) {
+            auto* cs = new_obj->CSet[b];
+            if (!cs) {
+              continue;
+            }
 
-                  /* TODO: should also transform the U tensor at this point... */
+            float mat[16];
+            copy33f44f(sym->Crystal.RealToFrac, mat);
+            left_multiply44f44f(sym->getSymMat(a), mat);
 
-									/* make and manage the new object; update the scene for the new object */
+            float ts[3];
+            transform44f3f(mat, glm::value_ptr(cs_centers[b]), ts);
 
-                  PRINTFB(G, FB_Executive, FB_Blather)
-                    "new_name before: %s\n", new_name ENDFB(G);
-                  sprintf(new_name, "%s%02d%02d%02d%02d", name, (int)a, x, y, z);
-                  PRINTFB(G, FB_Executive, FB_Blather)
-                    "Making new object: %s from name=%s, a=%d, x=%d, y=%d, z=%d\n",
-                    new_name, name, (int)a, x, y, z ENDFB(G);
+            /* compute the effective translation resulting
+               from application of the symmetry operator so
+               that we can shift it into the cell of the
+               target selection */
+            for (int c = 0; c < 3; c++) {
+              ts[c] = std::round(tc[c] - ts[c]);
+            }
+            float m[16];
+            identity44f(m);
+            m[3] = ts[0] + x;
+            m[7] = ts[1] + y;
+            m[11] = ts[2] + z;
 
-                  ObjectSetName((CObject *) new_obj, new_name);
-                  ExecutiveDelete(G, new_obj->Name);
-                  ExecutiveManageObject(G, (CObject *) new_obj, -1, quiet);
-                  SceneChanged(G);
-									
-                  if(segi == 1) {
-                    SegIdent seg;
-										/* a == index of this symmetryMatrix */
-                    if(a > 61) {
-                      // beyond what can be encoded with a single alphanumeric
-                      // character (PYMOL-2475)
-                      seg[0] = '_';
-                    } else
-                    if(a > 35) {
-                      seg[0] = 'a' + (a - 36);
-                    } else if(a > 25) {
-                      seg[0] = '0' + (a - 26);
-                    } else {
-                      seg[0] = 'A' + a;
-                    }
-                    if(x > 0) {
-                      seg[1] = 'A' + x - 1;
-                    } else if(x < 0) {
-                      seg[1] = 'Z' + x + 1;
-                    } else {
-                      seg[1] = '0';
-                    }
-                    if(y > 0) {
-                      seg[2] = 'A' + y - 1;
-                    } else if(y < 0) {
-                      seg[2] = 'Z' + y + 1;
-                    } else {
-                      seg[2] = '0';
-                    }
-                    if(z > 0) {
-                      seg[3] = 'A' + z - 1;
-                    } else if(z < 0) {
-                      seg[3] = 'Z' + z + 1;
-                    } else {
-                      seg[3] = '0';
-                    }
-                    seg[4] = 0;
-                    {
-                      lexidx_t segi = LexIdx(G, seg);
-                      int a;
-                      AtomInfoType *ai = new_obj->AtomInfo.data();
-                      for(a = 0; a < new_obj->NAtom; a++) {
-                        LexAssign(G, ai->segi, segi);
-                        ai++;
-                      }
+            left_multiply44f44f(const_cast<float const*>(m), mat);
+            copy33f44f(sym->Crystal.FracToReal, m);
+            left_multiply44f44f(const_cast<float const*>(m), mat);
 
-                      LexDec(G, segi);
-                    }
-                  }
-                } else {
-                  DeleteP(new_obj);
-                }
+            if (is_identityf(4, mat)) {
+              continue;
+            }
+
+            double mat_d[16];
+            copy44f44d(mat, mat_d);
+            ObjectStateLeftCombineMatrixR44d(cs, mat_d);
+
+            if (!matrix_mode) {
+              CoordSetTransform44f(cs, mat);
+            }
+
+            if (keepFlag) {
+              continue;
+            }
+
+            /* for each coordinate in this coordinate set */
+            for (unsigned idx = 0; idx < cs->NIndex; ++idx) {
+              const auto* v2 = cs->coordPtr(idx);
+
+              if (matrix_mode) {
+                transform44f3f(mat, v2, ts);
+                v2 = ts;
               }
-        MapFree(map);
+
+              if (MapAnyWithin(*map, vv1.data(), v2, cutoff)) {
+                keepFlag = true;
+                break;
+              }
+            }
+          }
+
+          if (!keepFlag) {
+            DeleteP(new_obj);
+            continue;
+          }
+
+          if (segi) {
+            // TODO should really use (a, ts + xyz)
+            auto seg = make_symexp_segi_label(a, x, y, z);
+            lexidx_t segi = LexIdx(G, seg.c_str());
+            for (unsigned atm = 0; atm < new_obj->NAtom; ++atm) {
+              LexAssign(G, new_obj->AtomInfo[atm].segi, segi);
+            }
+            LexDec(G, segi);
+          }
+
+          // manage the new object
+
+          auto const new_name =
+              pymol::string_format("%s%02d%02d%02d%02d", name, a, x, y, z);
+
+          PRINTFB(G, FB_Executive, FB_Blather)
+          "Making new object: %s from name=%s, a=%d, x=%d, y=%d, z=%d\n",
+              new_name.c_str(), name, a, x, y, z ENDFB(G);
+
+          ObjectSetName(new_obj, new_name.c_str());
+          ExecutiveDelete(G, new_obj->Name);
+          ExecutiveManageObject(G, new_obj, false, quiet);
+        }
       }
     }
-    VLAFreeP(op.vv1);
   }
-  PRINTFD(G, FB_Executive)
-    " ExecutiveSymExp: leaving...\n" ENDFD;
-  SettingSetGlobal_i(G, cSetting_auto_zoom, auto_save);
 }
 
 static void ExecutivePurgeSpec(PyMOLGlobals * G, SpecRec * rec)
