@@ -14029,13 +14029,27 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
   if(!(obj && sele)) {
     ErrMessage(G, __func__, "Invalid object");
     return;
-  } else if(!obj->Symmetry) {
+  }
+
+  // Get symmetry from first coordset
+  const CSymmetry* sym = nullptr;
+  for (int b = 0; b < obj->NCSet && !sym; ++b) {
+    if (auto const* cs = obj->CSet[b]) {
+      sym = cs->getSymmetry();
+    }
+  }
+
+  if (!sym) {
     ErrMessage(G, __func__, "No symmetry loaded!");
     return;
-  } else if(!SymmetryAttemptGeneration(obj->Symmetry)) {
+  }
+
+  if (!SymmetryAttemptGeneration(const_cast<CSymmetry*>(sym))) {
     ErrMessage(G, __func__, "unknown space group");
     return;
-  } else if(obj->Symmetry->getNSymMat() < 1) {
+  }
+
+  if (sym->getNSymMat() < 1) {
     ErrMessage(G, __func__, "No symmetry matrices!");
     return;
   } else {
@@ -14054,9 +14068,6 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
   ExecutiveObjMolSeleOp(G, sele, &op);
   auto tc_vec = glm::make_vec3(op.v1) / float(std::max(1, op.i1));
   auto tc = glm::value_ptr(tc_vec);
-
-  const CSymmetry* sym = obj->Symmetry;
-  assert(sym);
 
   /* Transformation: RealToFrac (3x3) * tc (3x1) = (3x1) */
   transform33f3f(sym->Crystal.RealToFrac, tc, tc);
