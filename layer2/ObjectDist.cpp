@@ -168,7 +168,7 @@ static int ObjectDistDSetFromPyList(ObjectDist * I, PyObject * list)
         I->DSet[a].reset(DistSetFromPyList(I->G, val));
 	CPythonVal_Free(val);
       }
-      if(ok)
+      if(ok && I->DSet[a])
         I->DSet[a]->Obj = I;
     }
   }
@@ -509,11 +509,7 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
 
   /* figure out the total number of states */
 
-  mn = n_state1;
-  if(n_state2 > mn)
-    mn = n_state2;
-  if(n_state3 > mn)
-    mn = n_state3;
+  mn = std::max({n_state1, n_state2, n_state3});
 
   /* updated state handling */
   frozen1 = checkFrozenState(G, sele1, state1);
@@ -546,7 +542,7 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
       if(!frozen3)
 	state3 = (n_state3>1) ? a : 0;
 
-      VecCheck(I->DSet, a+1);
+      VecCheck(I->DSet, a);
       I->DSet[a].reset(SelectorGetAngleSet(G, I->DSet[a].release(), sele1, state1, sele2,
                                        state2, sele3, state3, mode, &angle_sum,
                                        &angle_cnt));
