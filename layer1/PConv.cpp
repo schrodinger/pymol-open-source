@@ -1157,61 +1157,51 @@ int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr)
   return (vla && 1);
 }
 
-int PConvPyListToLabPosVLA(PyObject * obj, LabPosType ** vla_ptr)
+pymol::Result<std::vector<LabPosType>> PConvPyListToLabPosVec(PyObject* obj)
 {
-  int a, l;
-  int ok = true;
-  LabPosType *vla = NULL, *q;
-  PyObject *i;
+  std::vector<LabPosType> result;
   if(obj)
     if(PyList_Check(obj)) {
-      l = PyList_Size(obj);
-      vla = VLACalloc(LabPosType, l);
-      q = vla;
-      for(a = 0; a < l; a++) {
-        i = PyList_GetItem(obj, a);
+      auto l = PyList_Size(obj);
+      result.resize(l);
+      for(int a = 0; a < l; a++) {
+        auto i = PyList_GetItem(obj, a);
+        auto q = &result[a];
         if(PyList_Check(i) && (PyList_Size(i) == 7)) {
-          ok = ok && PConvPyIntToInt(PyList_GetItem(i, 0), &q->mode) &&
+          auto ok = PConvPyIntToInt(PyList_GetItem(i, 0), &q->mode) &&
             PConvPyFloatToFloat(PyList_GetItem(i, 1), q->pos) &&
             PConvPyFloatToFloat(PyList_GetItem(i, 2), q->pos + 1) &&
             PConvPyFloatToFloat(PyList_GetItem(i, 3), q->pos + 2) &&
             PConvPyFloatToFloat(PyList_GetItem(i, 4), q->offset) &&
             PConvPyFloatToFloat(PyList_GetItem(i, 5), q->offset + 1) &&
             PConvPyFloatToFloat(PyList_GetItem(i, 6), q->offset + 2);
+          if (!ok) {
+            return pymol::make_error("Invalid subitem.");
+          }
         } else {
-          VLAFreeP(vla);        /* just in case... */
-          vla = NULL;
-          break;
+          return pymol::make_error("Invalid sublist.");
         }
-        q++;
       }
     }
-  if(!ok && (!vla)) {
-    VLAFreeP(vla);
-  }
-  (*vla_ptr) = vla;
-  return (ok);
+  return result;
 }
 
-PyObject *PConvLabPosVLAToPyList(const LabPosType * vla, int l)
+PyObject* PConvLabPosVecToPyList(const std::vector<LabPosType>& vec)
 {                               /* TO DO error handling */
-  int a;
-  const LabPosType *p = vla;
-  PyObject *result = NULL;
-  if(p) {
-    PyObject *item;
-    result = PyList_New(l);
-    for(a = 0; a < l; a++) {
-      item = PyList_New(7);
-        PyList_SetItem(item, 0, PyInt_FromLong(p->mode));
-        PyList_SetItem(item, 1, PyFloat_FromDouble((double) p->pos[0]));
-        PyList_SetItem(item, 2, PyFloat_FromDouble((double) p->pos[1]));
-        PyList_SetItem(item, 3, PyFloat_FromDouble((double) p->pos[2]));
-        PyList_SetItem(item, 4, PyFloat_FromDouble((double) p->offset[0]));
-        PyList_SetItem(item, 5, PyFloat_FromDouble((double) p->offset[1]));
-        PyList_SetItem(item, 6, PyFloat_FromDouble((double) p->offset[2]));
-        PyList_SetItem(result, a, item);
-      p++;
+  PyObject* result = nullptr;
+  if(!vec.empty()) {
+    result = PyList_New(vec.size());
+    for (int a = 0; a < vec.size(); a++) {
+      const auto& p = vec[a];
+      auto item = PyList_New(7);
+      PyList_SetItem(item, 0, PyInt_FromLong(p.mode));
+      PyList_SetItem(item, 1, PyFloat_FromDouble((double) p.pos[0]));
+      PyList_SetItem(item, 2, PyFloat_FromDouble((double) p.pos[1]));
+      PyList_SetItem(item, 3, PyFloat_FromDouble((double) p.pos[2]));
+      PyList_SetItem(item, 4, PyFloat_FromDouble((double) p.offset[0]));
+      PyList_SetItem(item, 5, PyFloat_FromDouble((double) p.offset[1]));
+      PyList_SetItem(item, 6, PyFloat_FromDouble((double) p.offset[2]));
+      PyList_SetItem(result, a, item);
     }
   }
   return (PConvAutoNone(result));

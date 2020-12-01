@@ -240,19 +240,14 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   int default_digits =
     SettingGet_i(G, NULL, ds->Obj->Setting.get(), cSetting_label_digits);
   Pickable *rp = NULL;
-  int ok = true;
 
-  if(!ok || !(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex)) {
-    ds->NLabel = 0;
-    VLAFreeP(ds->LabCoord);
-    VLAFreeP(ds->LabPos);
-    return (NULL);
+  if(!(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex)) {
+    ds->LabCoord.clear();
+    ds->LabPos.clear();
+    return nullptr;
   }
 
-  if(default_digits < 0)
-    default_digits = 0;
-  if(default_digits > 10)
-    default_digits = 10;
+  default_digits = pymol::clamp(default_digits, 0, 10);
 
   auto I = new RepDistLabel(ds->Obj, state);
 
@@ -261,18 +256,16 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   I->OutlineColor =
     SettingGet_i(G, NULL, ds->Obj->Setting.get(), cSetting_label_outline_color);
 
+  int nLabel = 0;
+  int ok = true;
   if(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex) {
-    ds->NLabel = (ds->NIndex / 2 + ds->NAngleIndex / 5 + ds->NDihedralIndex / 6);
+    nLabel = (ds->NIndex / 2 + ds->NAngleIndex / 5 + ds->NDihedralIndex / 6);
 
-    ds->LabCoord.reserve(3 * ds->NLabel);
-      
-    if(ok && ds->LabPos) {            /* make sure this VLA covers all labels */
-      VLACheck(ds->LabPos, LabPosType, ds->NLabel);
-      CHECKOK(ok, ds->LabPos);
-    }
+    ds->LabCoord.resize(nLabel);
+    ds->LabPos.resize(nLabel);
 
-    if(ok && SettingGet_b(G, NULL, ds->Obj->Setting.get(), cSetting_pickable)) {
-      I->P = pymol::malloc<Pickable>(ds->NLabel + 1);
+    if(SettingGet_b(G, NULL, ds->Obj->Setting.get(), cSetting_pickable)) {
+      I->P = pymol::malloc<Pickable>(nLabel + 1);
       CHECKOK(ok, I->P);
       if (ok)
 	rp = I->P + 1;          /* skip first record! */
@@ -315,14 +308,13 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
         v = I->V + 6 * n;
         UtilNCopy(I->L[n], buffer, sizeof(DistLabel));
         copy3f(d, v);
-        *(lc++) = v[0];
-        *(lc++) = v[1];
-        *(lc++) = v[2];
-        if(ds->LabPos) {
-          LabPosType *lp = ds->LabPos + n;
-          switch (lp->mode) {
+        std::copy_n(v, 3, lc->data());
+        lc++;
+        if(!ds->LabPos.empty()) {
+          const auto& lp = ds->LabPos[n];
+          switch (lp.mode) {
           case 1:
-            add3f(lp->offset, v, v);
+            add3f(lp.offset, v, v);
             copy3f(lab_pos, v + 3);
             break;
           default:
@@ -404,14 +396,13 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
         v = I->V + 6 * n;
         UtilNCopy(I->L[n], buffer, sizeof(DistLabel));
         copy3f(avg, v);
-        *(lc++) = v[0];
-        *(lc++) = v[1];
-        *(lc++) = v[2];
-        if(ds->LabPos) {
-          LabPosType *lp = ds->LabPos + n;
-          switch (lp->mode) {
+        std::copy_n(v, 3, lc->data());
+        lc++;
+        if(!ds->LabPos.empty()) {
+          const auto& lp = ds->LabPos[n];
+          switch (lp.mode) {
           case 1:
-            add3f(lp->offset, v, v);
+            add3f(lp.offset, v, v);
             copy3f(lab_pos, v + 3);
             break;
           default:
@@ -503,14 +494,13 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
         v = I->V + 6 * n;
         UtilNCopy(I->L[n], buffer, sizeof(DistLabel));
         copy3f(avg, v);
-        *(lc++) = v[0];
-        *(lc++) = v[1];
-        *(lc++) = v[2];
-        if(ds->LabPos) {
-          LabPosType *lp = ds->LabPos + n;
-          switch (lp->mode) {
+        std::copy_n(v, 3, lc->data());
+        lc++;
+        if(!ds->LabPos.empty()) {
+          const auto& lp = ds->LabPos[n];
+          switch (lp.mode) {
           case 1:
-            add3f(lp->offset, v, v);
+            add3f(lp.offset, v, v);
             copy3f(lab_pos, v + 3);
             break;
           default:

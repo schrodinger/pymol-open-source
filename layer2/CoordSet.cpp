@@ -176,7 +176,11 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
     }
     if(ok && (ll > 8)){
       CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 8);
-      ok = CPythonVal_PConvPyListToLabPosVLA(G, val, &I->LabPos);
+      auto res = CPythonVal_PConvPyListToLabPosVec(G, val);
+      ok = static_cast<bool>(res);
+      if (res) {
+        I->LabPos = std::move(*res);
+      }
       CPythonVal_Free(val);
     }
 
@@ -218,9 +222,8 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
 	CPythonVal_Free(val);
       } else {
 	// check I->LabPos.offset to see if its set
-	if (I->LabPos){
-	  int a;
-	  for (a=0; a<I->NIndex; a++){
+	if (!I->LabPos.empty()){
+	  for (int a = 0; a < I->NIndex; a++){
 	    if(length3f(I->LabPos[a].offset) > R_SMALL4) {
 	      SettingSet(cSetting_label_placement_offset, I->LabPos[a].offset, I, a);
 	    }
@@ -307,7 +310,7 @@ PyObject *CoordSetAsPyList(CoordSet * I)
     PyList_SetItem(result, 5, PyString_FromString(I->Name));
     PyList_SetItem(result, 6, ObjectStateAsPyList(I));
     PyList_SetItem(result, 7, SettingAsPyList(I->Setting.get()));
-    PyList_SetItem(result, 8, PConvLabPosVLAToPyList(I->LabPos, I->NIndex));
+    PyList_SetItem(result, 8, PConvLabPosVecToPyList(I->LabPos));
 
     PyList_SetItem(result, 9,
 #ifdef _PYMOL_IP_PROPERTIES
@@ -411,21 +414,19 @@ CoordSet* CoordSetCopy(const CoordSet* src)
 
 
 /*========================================================================*/
-int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs)
+int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, const CoordSet * cs)
 {                               /* must be non-overlapping */
-  int nIndex;
-  int a, i0;
   int ok = true;
   /* calculate new size and make room for new data */
-  nIndex = I->NIndex + cs->NIndex;
+  int nIndex = I->NIndex + cs->NIndex;
   VLASize(I->IdxToAtm, int, nIndex);
   CHECKOK(ok, I->IdxToAtm);
   if (ok)
     VLACheck(I->Coord, float, nIndex * 3);
   CHECKOK(ok, I->Coord);
   if (ok){
-    for(a = 0; a < cs->NIndex; a++) {
-      i0 = a + I->NIndex;
+    for (int a = 0; a < cs->NIndex; a++) {
+      int i0 = a + I->NIndex;
       I->IdxToAtm[i0] = cs->IdxToAtm[a];
       if (OM->DiscreteFlag){
 	int idx = cs->IdxToAtm[a];
@@ -438,16 +439,11 @@ int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs)
     }
   }
   if (ok){
-    if(cs->LabPos) {
-      if(!I->LabPos)
-	I->LabPos = pymol::vla<LabPosType>(nIndex);
-      else
-	VLACheck(I->LabPos, LabPosType, nIndex);
-      if(I->LabPos) {
-	UtilCopyMem(I->LabPos + I->NIndex, cs->LabPos, sizeof(LabPosType) * cs->NIndex);
-      }
-    } else if(I->LabPos) {
-      VLACheck(I->LabPos, LabPosType, nIndex);
+    if(!cs->LabPos.empty()) {
+      I->LabPos.reserve(nIndex);
+      I->LabPos.insert(I->LabPos.end(), cs->LabPos.begin(), cs->LabPos.end());
+    } else if(!I->LabPos.empty()) {
+      I->LabPos.resize(nIndex);
     }
   }
   if (ok){
@@ -556,9 +552,7 @@ void CoordSetPurge(CoordSet * I)
        re-adjust the array sizes */
     I->NIndex += offset;
     VLASize(I->Coord, float, I->NIndex * 3);
-    if(I->LabPos) {
-      VLASize(I->LabPos, LabPosType, I->NIndex);
-    }
+    I->LabPos.resize(I->NIndex);
     if(I->RefPos) {
       VLASize(I->RefPos, RefPosType, I->NIndex);
     }

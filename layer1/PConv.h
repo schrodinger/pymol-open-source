@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 #include"Base.h"
 #include"OVLexicon.h"
+#include "Result.h"
 
 #include <array>
 #include <map>
@@ -67,7 +68,7 @@ Z* -------------------------------------------------------------------
 #define CPythonVal_PConvPyListToFloatArrayInPlace_From_List(G, list, i, ...) \
                    PConvPyListToFloatArrayInPlace(PyList_GetItem(list, i), __VA_ARGS__)
 #define CPythonVal_PConvPyListToFloatVLANoneOkay_From_List(G, list, i, f)       PConvPyListToFloatVLANoneOkay(PyList_GetItem(list, i), f)
-#define CPythonVal_PConvPyListToLabPosVLA(G, obj, vla_ptr)                      PConvPyListToLabPosVLA(obj, vla_ptr)
+#define CPythonVal_PConvPyListToLabPosVec(G, obj)                               PConvPyListToLabPosVec(obj)
 #define CPythonVal_PConvPyStrToStr_From_List(G, list, i, ptr, l)                PConvPyStrToStr(PyList_GetItem(list, i), ptr, l)
 
 #define CPythonVal_Free(obj)
@@ -115,7 +116,7 @@ int PConvPyFloatToFloat(PyObject * obj, float *ptr);
 int PConvPyIntToChar(PyObject * obj, char *ptr);
 int PConvPyIntToInt(PyObject * obj, int *ptr);
 int PConvPyBoolToInt(PyObject * obj, int *ptr);
-int PConvPyListToLabPosVLA(PyObject * obj, LabPosType ** vla_ptr);
+pymol::Result<std::vector<LabPosType>> PConvPyListToLabPosVec(PyObject* obj);
 
 
 /* Jenarix conventions -- returns before args */
@@ -136,7 +137,7 @@ PyObject *PConvIntVLAToPyTuple(int *vla);
 PyObject *PConvIntArrayToPyList(const int *f, int l, bool dump_binary=false);
 PyObject *PConvSIntArrayToPyList(const short int *f, int l);
 PyObject *PConvSCharArrayToPyList(const signed char *f, int l);
-PyObject *PConvLabPosVLAToPyList(const LabPosType * vla, int l);
+PyObject *PConvLabPosVecToPyList(const std::vector<LabPosType>& vec);
 
 void PConvFloat3ToPyObjAttr(PyObject * obj, const char *attr, const float *v);
 void PConvFloatToPyObjAttr(PyObject * obj, const char *attr, float f);

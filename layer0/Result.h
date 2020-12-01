@@ -158,6 +158,16 @@ public:
     return &m_result;
   }
 
+  /**
+   * Reference to the expected object. Behavior is undefined if this
+   * instance is in error state.
+   */
+  ResultT& operator*()
+  {
+    assert(m_valid);
+    return m_result;
+  }
+
 private:
   ResultT m_result;
   Error m_error;

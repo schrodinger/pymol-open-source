@@ -40,9 +40,9 @@ Z* -------------------------------------------------------------------
 
 int DistSetGetLabelVertex(DistSet * I, int at, float *v)
 {
-  if((at >= 0) && (at < I->NLabel) && I->LabCoord) {
-    float *vv = I->LabCoord + 3 * at;
-    copy3f(vv, v);
+  if (at >= 0 && at < I->LabCoord.size()) {
+    const auto& vv = I->LabCoord[at];
+    copy3f(vv.data(), v);
     return true;
   }
   return false;
@@ -56,16 +56,14 @@ int DistSetGetLabelVertex(DistSet * I, int at, float *v)
 pymol::Result<pymol::Vec3> DistSet::getLabelOffset(int atm) const
 {
   std::array<float, 3> result;
-  if (atm < 0 || atm >= this->NLabel) {
+  if (atm < 0 || atm >= this->LabPos.size()) {
     return pymol::make_error("Invalid index");
   }
 
-  if (this->LabPos) {
-    auto lp = &this->LabPos[atm];
-    if (lp->mode) {
-      std::copy_n(lp->offset, result.size(), result.data());
-      return result;
-    }
+  auto lp = &this->LabPos[atm];
+  if (lp->mode) {
+    std::copy_n(lp->offset, result.size(), result.data());
+    return result;
   }
 
   auto obj = this->Obj;
@@ -84,48 +82,38 @@ pymol::Result<pymol::Vec3> DistSet::getLabelOffset(int atm) const
 
 pymol::Result<> DistSet::setLabelOffset(int atm, const float* pos)
 {
-  if (atm < 0 || atm >= this->NLabel) {
+  if (atm < 0) {
     return pymol::make_error("Invalid index");
   }
-  if (!this->LabPos)
-    this->LabPos.resize(this->NLabel);
-  auto lp = &this->LabPos[atm];
-  lp->mode = 1;
-  copy3f(pos, lp->offset);
+  VecCheck(this->LabPos, atm);
+  auto& lp = this->LabPos[atm];
+  lp.mode = 1;
+  copy3f(pos, lp.offset);
   return {};
 }
 
-int DistSetMoveLabel(DistSet * I, int at, float *v, int mode)
+int DistSetMoveLabel(DistSet * I, int a1, float *v, int mode)
 {
-  ObjectDist *obj;
-  int a1 = at;
-  int result = 0;
-  LabPosType *lp;
-
-  obj = I->Obj;
-
-  if(a1 >= 0) {
-
-    if(!I->LabPos)
-      I->LabPos.resize(I->NLabel);
-    if(I->LabPos) {
-      result = 1;
-      lp = I->LabPos + a1;
-      if(!lp->mode) {
-        const float *lab_pos = SettingGet_3fv(obj->G, NULL, obj->Setting.get(),
-                                        cSetting_label_position);
-        copy3f(lab_pos, lp->pos);
-      }
-      lp->mode = 1;
-      if(mode) {
-        add3f(v, lp->offset, lp->offset);
-      } else {
-        copy3f(v, lp->offset);
-      }
-    }
+  if(a1 < 0) {
+    return 0;
   }
 
-  return (result);
+  VecCheck(I->LabPos, a1);
+  auto& lp = I->LabPos[a1];
+  if(!lp.mode) {
+    auto obj = I->Obj;
+    const float *lab_pos = SettingGet_3fv(obj->G, NULL, obj->Setting.get(),
+                                    cSetting_label_position);
+    copy3f(lab_pos, lp.pos);
+  }
+  lp.mode = 1;
+  if(mode) {
+    add3f(v, lp.offset, lp.offset);
+  } else {
+    copy3f(v, lp.offset);
+  }
+
+  return 1;
 }
 
 
@@ -288,7 +276,6 @@ DistSet* DistSetFromPyList(PyMOLGlobals * G, PyObject * list)
 
   ok_assert(2, ll > 2);
 
-  I->LabCoord = NULL; // will be calculated in RepDistLabelNew
   ok_assert(1, CPythonVal_PConvPyIntToInt_From_List(G, list, 3, &I->NAngleIndex));
   ok_assert(1, CPythonVal_PConvPyListToFloatVLANoneOkay_From_List(G, list, 4, &I->AngleCoord));
   ok_assert(1, CPythonVal_PConvPyIntToInt_From_List(G, list, 5, &I->NDihedralIndex));
@@ -304,7 +291,11 @@ DistSet* DistSetFromPyList(PyMOLGlobals * G, PyObject * list)
   ok_assert(2, ll > 8);
 
   val = CPythonVal_PyList_GetItem(G, list, 8);
-  ok_assert(1, CPythonVal_PConvPyListToLabPosVLA(G, val, &I->LabPos));
+  {
+    auto labPosRes = CPythonVal_PConvPyListToLabPosVec(G, val);
+    ok_assert(1, (bool)labPosRes);
+    I->LabPos = std::move(*labPosRes);
+  }
   CPythonVal_Free(val);
 
   ok_assert(2, ll > 9);
@@ -340,8 +331,8 @@ PyObject *DistSetAsPyList(DistSet * I)
                                                    I->NDihedralIndex * 3));
     // DistSet->Setting never gets set (removed BB 11/14), was state settings?
     PyList_SetItem(result, 7, PConvAutoNone(NULL) /* SettingAsPyList(I->Setting) */);
-    if(I->LabPos) {
-      PyList_SetItem(result, 8, PConvLabPosVLAToPyList(I->LabPos, VLAGetSize(I->LabPos)));
+    if(!I->LabPos.empty()) {
+      PyList_SetItem(result, 8, PConvLabPosVecToPyList(I->LabPos));
     } else {
       PyList_SetItem(result, 8, PConvAutoNone(NULL));
     }

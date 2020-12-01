@@ -108,7 +108,7 @@ struct CoordSet : CObjectState {
   int PeriodicBoxType = NoPeriodicity;
   int tmp_index = 0;                /* for saving */
 
-  pymol::vla<LabPosType> LabPos;
+  std::vector<LabPosType> LabPos;
 
   /* not saved in state */
 
@@ -196,7 +196,7 @@ int CoordSetValidateRefPos(CoordSet * I);
 
 void CoordSetPurge(CoordSet * I);
 void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom);
-int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs);        /* must be non-overlapping */
+int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, const CoordSet * cs);        /* must be non-overlapping */
 void CoordSetRecordTxfApplied(CoordSet * I, const float *TTT, int homogenous);
 void CoordSetUpdateCoord2IdxMap(CoordSet * I, float cutoff);
 

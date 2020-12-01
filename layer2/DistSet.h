@@ -56,9 +56,8 @@ struct DistSet : CObjectState {
   std::array<pymol::cache_ptr<::Rep>, cRepCnt> Rep;
   static int getNRep() { return cRepCnt; }
 
-  pymol::vla<float> LabCoord;
-  pymol::vla<LabPosType> LabPos;
-  int NLabel = 0;
+  std::vector<pymol::Vec3> LabCoord;
+  std::vector<LabPosType> LabPos;
 
   pymol::vla<float> AngleCoord;
   int NAngleIndex = 0;
