@@ -47,6 +47,7 @@ Z* -------------------------------------------------------------------
 #include"RepNonbonded.h"
 #include"RepNonbondedSphere.h"
 #include"RepEllipsoid.h"
+#include"Symmetry.h"
 
 #include"PyMOLGlobals.h"
 #include"PyMOLObject.h"
@@ -68,6 +69,8 @@ int CoordSet::atmToIdx(int atm) const {
       return Obj->DiscreteAtmToIdx[atm];
     return -1;
   }
+  assert(AtmToIdx);
+  assert(atm < NAtIndex);
   return AtmToIdx[atm];
 }
 
@@ -225,6 +228,13 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
 	}
       }
     }
+
+    if (ll > 12) {
+      CPythonVal* val = CPythonVal_PyList_GetItem(G, list, 12);
+      I->Symmetry.reset(SymmetryNewFromPyList(G, val));
+      CPythonVal_Free(val);
+    }
+
     if(!ok) {
       delete I;
       *cs = NULL;
@@ -284,7 +294,7 @@ PyObject *CoordSetAsPyList(CoordSet * I)
     auto G = I->G;
     int pse_export_version = SettingGet<float>(G, cSetting_pse_export_version) * 1000;
     bool dump_binary = SettingGet<bool>(G, cSetting_pse_binary_dump) && (!pse_export_version || pse_export_version >= 1765);
-    result = PyList_New(12);
+    result = PyList_New(13);
     PyList_SetItem(result, 0, PyInt_FromLong(I->NIndex));
     PyList_SetItem(result, 1, PyInt_FromLong(I->NAtIndex));
     PyList_SetItem(result, 2, PConvFloatArrayToPyList(I->Coord, I->NIndex * 3, dump_binary));
@@ -324,7 +334,8 @@ PyObject *CoordSetAsPyList(CoordSet * I)
     } else {
       PyList_SetItem(result, 11, PConvAutoNone(NULL));
     }
-    /* TODO symmetry, spheroid, periodic box ... */
+    PyList_SetItem(result, 12, SymmetryAsPyList(I->Symmetry.get()));
+    /* TODO spheroid, periodic box ... */
   }
   return (PConvAutoNone(result));
 }
