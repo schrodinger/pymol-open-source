@@ -373,7 +373,7 @@ int ObjectMapInterpolate(ObjectMap * I, int state, const float *array, float *re
   ObjectMapState *ms = ObjectMapGetState(I, state);
 
   if(ms) {
-    double *matrix = ObjectStateGetInvMatrix(ms);
+    const double *matrix = ObjectStateGetInvMatrix(ms);
 
     if(matrix) {
       /* we have to back-transform points */

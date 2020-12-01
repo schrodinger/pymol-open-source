@@ -529,11 +529,10 @@ int IsosurfExpand(Isofield * field1, Isofield * field2, CCrystal * cryst,
 
   /* compute coordinate points for second field */
 
-  if (SymmetryAttemptGeneration(sym)) {
+  if (int nMat = sym->getNSymMat()) {
     int i, j, k;
     int i_stop, j_stop, k_stop;
     float frac[3];
-    int nMat = sym->getNSymMat();
 
     i_stop = field2->dimensions[0];
     j_stop = field2->dimensions[1];

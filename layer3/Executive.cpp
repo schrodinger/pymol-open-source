@@ -14044,19 +14044,16 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
     return;
   }
 
-  if (!SymmetryAttemptGeneration(const_cast<CSymmetry*>(sym))) {
+  int const nsymmat = sym->getNSymMat();
+
+  if (nsymmat < 1) {
     ErrMessage(G, __func__, "unknown space group");
     return;
   }
 
-  if (sym->getNSymMat() < 1) {
-    ErrMessage(G, __func__, "No symmetry matrices!");
-    return;
-  } else {
-    if(!quiet) {
+  if (!quiet) {
       PRINTFB(G, FB_Executive, FB_Actions)
         " ExecutiveSymExp: Generating symmetry mates...\n" ENDFB(G);
-    }
   }
 
   bool const matrix_mode = SettingGet<int>(G, cSetting_matrix_mode) > 0;
@@ -14098,8 +14095,6 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
       CoordSetGetAverage(cs, glm::value_ptr(cs_centers[b]));
     }
   }
-
-  int const nsymmat = sym->getNSymMat();
 
   /* go out no more than one lattice step in each direction: -1, 0, +1 */
   for (int x = -1; x < 2; ++x) {

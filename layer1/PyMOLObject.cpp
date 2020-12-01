@@ -1370,16 +1370,27 @@ double *ObjectStateGetMatrix(CObjectState * I)
   return nullptr;
 }
 
+const double* ObjectStateGetMatrix(const CObjectState* I)
+{
+  return I->Matrix.empty() ? nullptr : I->Matrix.data();
+}
+
 /*
  * Get the Matrix inverse
  */
-double *ObjectStateGetInvMatrix(CObjectState * I)
+const double *ObjectStateGetInvMatrix(const CObjectState * self)
 {
-  if(!I->Matrix.empty() && I->InvMatrix.empty()) {
+  if (self->Matrix.empty()) {
+    return nullptr;
+  }
+
+  if (self->InvMatrix.empty()) {
+    auto I = const_cast<CObjectState*>(self);
     I->InvMatrix = std::vector<double>(16);
     xx_matrix_invert(I->InvMatrix.data(), I->Matrix.data(), 4);
   }
-  return I->InvMatrix.data();
+
+  return self->InvMatrix.data();
 }
 
 void ObjectStateTransformMatrix(CObjectState * I, const double *matrix)

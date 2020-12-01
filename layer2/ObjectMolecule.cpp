@@ -485,7 +485,7 @@ char *ObjectMolecule::getCaption(char * ch, int len) const
 
 /* find sets of atoms with identical skeletons */
 
-typedef struct {
+struct match_info {
   AtomInfoType *ai_a;
   AtomInfoType *ai_b;
   BondType *bi_a;
@@ -500,7 +500,7 @@ typedef struct {
   std::vector<mark_type> atom_mark_b;
   std::vector<mark_type> bond_mark_a;
   std::vector<mark_type> bond_mark_b;
-} match_info;
+};
 
 #define recmat3(x,y,z) \
   (recursive_match(u_a[0],u_b[x],x_a[0],x_b[x],mi) &&   \

@@ -42,7 +42,6 @@ struct CSymmetry {
   CSymmetry(PyMOLGlobals* G) : G(G), Crystal(G){};
 };
 
-int SymmetryAttemptGeneration(CSymmetry * I, int quiet=false);
 void SymmetryFree(CSymmetry * I);
 void SymmetryClear(CSymmetry * I);
 void SymmetryUpdate(CSymmetry * I);

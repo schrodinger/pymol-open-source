@@ -1074,7 +1074,7 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
     ms->CarveBuffer = carve;
     ms->AtomVertex = std::move(vert_vla);
 
-    double *matrix = ObjectStateGetInvMatrix(ms);
+    const double *matrix = ObjectStateGetInvMatrix(ms);
 
     if(matrix) {
       int n = VLAGetSize(ms->AtomVertex) / 3;

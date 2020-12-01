@@ -118,7 +118,7 @@ static void SymmetryDump44f(PyMOLGlobals * G, const float *m, const char *prefix
  *
  * Return false if space group unknown.
  */
-int SymmetryAttemptGeneration(CSymmetry * I, int quiet)
+static bool SymmetryAttemptGeneration(CSymmetry* I, bool quiet = true)
 {
   if (I->SymMatVLA) {
     // don't re-run unless SymmetryUpdate() was called
@@ -194,6 +194,8 @@ void SymmetryDump(CSymmetry * I)
  * Get the number of symmetry matrices
  */
 int CSymmetry::getNSymMat() const {
+  if (!SymmetryAttemptGeneration(const_cast<CSymmetry*>(this)))
+    return 0;
   if (!SymMatVLA)
     return 0;
   return VLAGetSize(SymMatVLA) / 16;
