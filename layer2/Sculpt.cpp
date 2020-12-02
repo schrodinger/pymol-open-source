@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Word.h"
 #include"Editor.h"
+#include"Executive.h"
 #include "Lex.h"
 #include "ObjectMolecule.h"
 #include "CoordSet.h"
@@ -2375,6 +2376,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
     }
 
     EditorDihedralInvalid(G, obj);
+    ExecutiveUpdateCoordDepends(G, obj);
   }
 
   PRINTFD(G, FB_Sculpt)

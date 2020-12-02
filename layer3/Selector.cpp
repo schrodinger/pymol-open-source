@@ -6170,6 +6170,7 @@ pymol::Result<> SelectorUpdateCmd(PyMOLGlobals* G, //
       int sz = VLAGetSize(objs);
       for(b = 0; b < sz; b++) {
 	objs[b]->invalidate(cRepAll, cRepInvCoord, -1);
+        ExecutiveUpdateCoordDepends(G, objs[b]);
       }
       VLAFree(objs);
     }
