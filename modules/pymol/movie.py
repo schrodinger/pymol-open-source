@@ -765,7 +765,10 @@ def _encode(filename,first,last,preserve,
                 '-framerate', '{:.3f}'.format(fps),
                 '-i', prefix + '%04d' + img_ext,
             ]
-            if not fn_rel.endswith('.gif'):
+            if fn_rel.endswith('.webm'):
+                args_crf = ['-crf', '{:.0f}'.format(65 - (quality / 2))]
+                args += ['-c:v', 'libvpx-vp9', '-b:v', '0'] + args_crf
+            elif not fn_rel.endswith('.gif'):
                 args += [
                 '-crf', '10' if quality > 90 else '15' if quality > 80 else '20',
                 '-pix_fmt', 'yuv420p', # needed for Mac support
@@ -839,11 +842,14 @@ def produce(filename, mode='', first=0, last=0, preserve=0,
     '''
 DESCRIPTION
 
-    Export a movie to an MPEG file.
+    Export a movie to an MPEG, WEBM, or GIF file.
+
+    Which video formats and codecs are available depends on the availability
+    and feature set of your ffmpeg and ImageMagick installations.
 
 ARGUMENTS
 
-    filename = str: filename of MPEG file to produce
+    filename = str: filename of movie file to produce
 
     mode = draw or ray: {default: check "ray_trace_frames" setting}
 
@@ -853,7 +859,18 @@ ARGUMENTS
 
     preserve = 0 or 1: don't delete temporary files {default: 0}
 
+    encoder = ffmpeg|convert|mpeg_encode: Tool used for video encoding
+
     quality = 0-100: encoding quality {default: 90 (movie_quality setting)}
+
+    width = int: Width in pixels {default: from viewport}
+
+    height = int: Height in pixels {default: from viewport}
+
+EXAMPLE
+
+    movie.produce video.mp4, height=1080
+    movie.produce video.webm, height=720
     '''
     from pymol import CmdException
 
@@ -912,7 +929,7 @@ ARGUMENTS
         _self.set('opaque_background', quiet=quiet)
 
     # MP4 needs dimensions divisible by 2
-    if splitext[1] in ('.mp4', '.mov'):
+    if splitext[1] in ('.mp4', '.mov', '.webm'):
         if width < 1 or height < 1:
             w, h = _self.get_viewport()
             if width > 0:
