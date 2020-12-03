@@ -87,6 +87,8 @@ if True:
             format = 'pml'
         elif ext in ('xml',):
             format = 'pdbml'
+        elif ext in ('mmcif',):
+            format = 'cif'
         elif re.match(r'pdb\d+$', ext):
             format = 'pdb'
         elif re.match(r'xyz_\d+$', ext):
