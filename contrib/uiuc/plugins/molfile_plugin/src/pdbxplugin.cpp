@@ -1447,7 +1447,7 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
   plugin.majorv = 0;
   plugin.minorv = 9;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
-  plugin.filename_extension = "cif";
+  plugin.filename_extension = "cif,mmcif";
   plugin.open_file_read = open_pdbx_read;
   plugin.read_structure = read_pdbx_structure;
   plugin.read_next_timestep = read_pdbx_timestep;
