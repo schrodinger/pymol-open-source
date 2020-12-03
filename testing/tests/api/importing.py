@@ -45,7 +45,7 @@ mmodstr = '''     7  gly
 
 class TestImporting(testing.PyMOLTestCase):
 
-    @testing.requires('network', 'no_run_all')
+    @testing.requires('network')
     def testFetch(self):
         with testing.mkdtemp() as fetch_path:
             names = []
@@ -590,6 +590,9 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(truth, 'pdb_header' in (cmd.get_property_list('m1') or ()))
 
     @testing.requires_version('2.4')
+    @testing.requires(
+        'network'
+    )  # doesn't use external network, but is very slow while being connected to VPN
     def testLoadPWG(self):
         if sys.version_info[0] < 3:
             import urllib2
