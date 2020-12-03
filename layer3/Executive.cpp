@@ -11537,6 +11537,9 @@ int ExecutiveSetBondSettingFromString(PyMOLGlobals * G,
   return (ok);
 }
 /*========================================================================*/
+/**
+ * @pre GIL
+ */
 PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index, 
 				  char *s1, const char *s2, int state, int quiet, int updates)
 {
@@ -11548,14 +11551,8 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
   ObjectMolecule *obj = NULL;
   int sele1, sele2;
   SettingName name;
-  int unblock;
-  //  int *value_ptr;
-  //  int value_type = 0;
   PyObject *result = PyList_New(0);
 
-  PRINTFD(G, FB_Executive)
-    " %s: entered. '%s' '%s'\n", __func__, s1, s2 ENDFD;
-  unblock = PAutoBlock(G);
   sele1 = SelectorIndexByName(G, s1);
   sele2 = SelectorIndexByName(G, s2);
 
@@ -11611,9 +11608,6 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
       }
     }
   }
-  PRINTFD(G, FB_Executive)
-    " %s: end. '%s' '%s'\n", __func__, s1, s2 ENDFD;
-  PAutoUnblock(G, unblock);
   return result;
 #endif
 }

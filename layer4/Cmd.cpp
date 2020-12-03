@@ -5167,7 +5167,7 @@ static PyObject *CmdGetBond(PyObject * self, PyObject * args)
   int updates;
   API_SETUP_ARGS(G, self, args, "Oissiii", &self, &index, &str3, &str4, &state,
                      &quiet, &updates);
-  APIEnter(G);
+  APIEnterBlocked(G);
   // TODO move selection handling to Executive
   auto res = [&]() -> pymol::Result<PyObject*> {
     auto tmpsele1 = SelectorTmp::make(G, str3);
@@ -5178,7 +5178,7 @@ static PyObject *CmdGetBond(PyObject * self, PyObject * args)
         (/* TODO */ char*) tmpsele1->getName(), tmpsele2->getName(), state,
         quiet, updates);
   }();
-  APIExit(G);
+  APIExitBlocked(G);
   return APIResult(G, res);
 }
 
