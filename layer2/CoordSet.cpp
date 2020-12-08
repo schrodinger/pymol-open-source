@@ -773,8 +773,7 @@ int CoordSetGetAtomTxfVertex(const CoordSet * I, int at, float *v)
   copy3f(I->coordPtr(a1), v);
 
   /* apply state transformation */
-  if (!I->Matrix.empty() && SettingGet<int>(I->G, obj->Setting.get(), I->Setting.get(),
-                                cSetting_matrix_mode) > 0) {
+  if (!I->Matrix.empty() && SettingGet<int>(*I, cSetting_matrix_mode) > 0) {
     transform44d3f(I->Matrix.data(), v, v);
   }
 
@@ -888,7 +887,7 @@ bool CoordSetInsureOrthogonal(PyMOLGlobals * G,
     const CCrystal *cryst,
     bool quiet)
 {
-  if (!SettingGetGlobal_b(G, cSetting_pdb_insure_orthogonal))
+  if (!SettingGet<bool>(G, cSetting_pdb_insure_orthogonal))
     return false;
 
   if (!cryst)
@@ -994,14 +993,14 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
   lexidx_t chain;
 
   char formalCharge[4];
-  int ignore_pdb_segi = SettingGetGlobal_b(G, cSetting_ignore_pdb_segi);
+  bool const ignore_pdb_segi = SettingGet<bool>(G, cSetting_ignore_pdb_segi);
   WordType x, y, z;
 
   AtomInfoGetAlignedPDBResidueName(G, ai, resn);
   AtomInfoGetAlignedPDBAtomName(G, ai, resn, name);
 
   formalCharge[0] = 0;
-  if(SettingGetGlobal_b(G, cSetting_pdb_formal_charges)) {
+  if (SettingGet<bool>(G, cSetting_pdb_formal_charges)) {
     if((ai->formalCharge > 0) && (ai->formalCharge < 10)) {
       sprintf(formalCharge, "%d+", ai->formalCharge);
     } else if((ai->formalCharge < 0) && (ai->formalCharge > -10)) {
@@ -1018,7 +1017,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
 
   VLACheck(*charVLA, char, (*c) + 1000);
 
-  if(SettingGetGlobal_b(G, cSetting_pdb_retain_ids)) {
+  if (SettingGet<bool>(G, cSetting_pdb_retain_ids)) {
     cnt = ai->id - 1;
   }
   if(cnt > 99998)
@@ -1189,17 +1188,14 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
 /*========================================================================*/
 void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
 {
-  CoordSet * I = this;
-  int a;
   if(level >= cRepInvVisib) {
-    if (I->Obj)
-      I->Obj->RepVisCacheValid = false;
+    if (Obj)
+      Obj->RepVisCacheValid = false;
   }
   /* graphical representations need redrawing */
   if(level == cRepInvVisib) {
     /* cartoon_side_chain_helper */
-    if(SettingGet<bool>(G, I->Setting.get(), I->Obj->Setting.get(),
-                    cSetting_cartoon_side_chain_helper)) {
+    if (SettingGet<bool>(*this, cSetting_cartoon_side_chain_helper)) {
       if((type == cRepCyl) || (type == cRepLine) || (type == cRepSphere))
         invalidateRep(cRepCartoon, cRepInvVisib2);
       else if(type == cRepCartoon) {
@@ -1209,8 +1205,7 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
       }
     }
     /* ribbon_side_chain_helper */
-    if(SettingGet<bool>(G, I->Setting.get(), I->Obj->Setting.get(),
-                    cSetting_ribbon_side_chain_helper)) {
+    if (SettingGet<bool>(*this, cSetting_ribbon_side_chain_helper)) {
       if((type == cRepCyl) || (type == cRepLine) || (type == cRepSphere))
         invalidateRep(cRepRibbon, cRepInvVisib2);
       else if(type == cRepRibbon) {
@@ -1220,8 +1215,7 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
       }
     }
     /* line_stick helper  */
-    if(SettingGet<bool>(G, I->Setting.get(), I->Obj->Setting.get(),
-                    cSetting_line_stick_helper)) {
+    if (SettingGet<bool>(*this, cSetting_line_stick_helper)) {
       if(type == cRepCyl)
         invalidateRep(cRepLine, cRepInvVisib2);
       else if(type == cRepLine) {
@@ -1230,17 +1224,16 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
     }
   }
 
-  if(!I->Spheroid.empty())
-    if (I->Spheroid.size() !=
-        I->NAtIndex * GetSpheroidSphereRec(G)->nDot) {
-      I->Spheroid.clear();
-      I->SpheroidNormal.clear();
-    }
+  if (!Spheroid.empty() &&
+      Spheroid.size() != NAtIndex * GetSpheroidSphereRec(G)->nDot) {
+    Spheroid.clear();
+    SpheroidNormal.clear();
+  }
 
   /* invalidate basd on one representation, 'type' */
   for (RepIterator iter(G, type); iter.next(); ){
     auto eff_level = level;
-    a = iter.rep;
+    auto const a = iter.rep;
     if(level == cRepInvPick) {
       switch (a) {
       case cRepSurface:
@@ -1255,20 +1248,20 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
       }
     }
     if(eff_level >= cRepInvVisib)     /* make active if visibility has changed */
-      I->Active[a] = true;
-    if(I->Rep[a]) {
-      if(eff_level < cRepInvPurge)
-        I->Rep[a]->invalidate(eff_level);
-      else {
-        delete I->Rep[a];
-        I->Rep[a] = NULL;
+      Active[a] = true;
+    if (Rep[a]) {
+      if (eff_level < cRepInvPurge) {
+        Rep[a]->invalidate(eff_level);
+      } else {
+        delete Rep[a];
+        Rep[a] = nullptr;
       }
     }
   }
 
   if(level >= cRepInvCoord) {   /* if coordinates change, then this map becomes invalid */
-    MapFree(I->Coord2Idx);
-    I->Coord2Idx = NULL;
+    MapFree(Coord2Idx);
+    Coord2Idx = nullptr;
     ExecutiveInvalidateSelectionIndicatorsCGO(G);
     SceneInvalidatePicking(G);
     /* invalidate distances */
@@ -1289,9 +1282,8 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
 
 /*========================================================================*/
 
-#define RepUpdateMacro(I, rep, new_fn, state)                                  \
+#define RepUpdateMacro(rep, new_fn, state)                                     \
   {                                                                            \
-    assert(I == this);                                                         \
     if (Active[rep] && !G->Interrupt) {                                        \
       if (Rep[rep]) {                                                          \
         assert(Rep[rep]->cs == this);                                          \
@@ -1313,46 +1305,36 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
 /*========================================================================*/
 void CoordSet::update(int state)
 {
-  CoordSet * I = this;
-  int a;
-  assert(G == I->Obj->G);
-
-  PRINTFB(G, FB_CoordSet, FB_Blather) " CoordSetUpdate-Entered: object %s state %d cset %p\n",
-    I->Obj->Name, state, (void *) I
-    ENDFB(G);
+  assert(G == Obj->G);
 
   OrthoBusyFast(G, 0, cRepCnt);
-  RepUpdateMacro(I, cRepLine, RepWireBondNew, state);
-  RepUpdateMacro(I, cRepCyl, RepCylBondNew, state);
-  RepUpdateMacro(I, cRepDot, RepDotNew, state);
-  RepUpdateMacro(I, cRepMesh, RepMeshNew, state);
-  RepUpdateMacro(I, cRepSphere, RepSphereNew, state);
-  RepUpdateMacro(I, cRepRibbon, RepRibbonNew, state);
-  RepUpdateMacro(I, cRepCartoon, RepCartoonNew, state);
-  RepUpdateMacro(I, cRepSurface, RepSurfaceNew, state);
-  RepUpdateMacro(I, cRepLabel, RepLabelNew, state);
-  RepUpdateMacro(I, cRepNonbonded, RepNonbondedNew, state);
-  RepUpdateMacro(I, cRepNonbondedSphere, RepNonbondedSphereNew, state);
-  RepUpdateMacro(I, cRepEllipsoid, RepEllipsoidNew, state);
+  RepUpdateMacro(cRepLine, RepWireBondNew, state);
+  RepUpdateMacro(cRepCyl, RepCylBondNew, state);
+  RepUpdateMacro(cRepDot, RepDotNew, state);
+  RepUpdateMacro(cRepMesh, RepMeshNew, state);
+  RepUpdateMacro(cRepSphere, RepSphereNew, state);
+  RepUpdateMacro(cRepRibbon, RepRibbonNew, state);
+  RepUpdateMacro(cRepCartoon, RepCartoonNew, state);
+  RepUpdateMacro(cRepSurface, RepSurfaceNew, state);
+  RepUpdateMacro(cRepLabel, RepLabelNew, state);
+  RepUpdateMacro(cRepNonbonded, RepNonbondedNew, state);
+  RepUpdateMacro(cRepNonbondedSphere, RepNonbondedSphereNew, state);
+  RepUpdateMacro(cRepEllipsoid, RepEllipsoidNew, state);
 
-  for(a = 0; a < cRepCnt; a++)
-    if(!I->Rep[a])
-      I->Active[a] = false;
+  for (int a = 0; a < cRepCnt; ++a) {
+    if (!Rep[a])
+      Active[a] = false;
+  }
 
   // cell
   if ((Obj->visRep & cRepCellBit) && !UnitCellCGO) {
-    CSymmetry const* sym = Symmetry ? Symmetry.get() : Obj->Symmetry;
-    if (sym) {
+    if (auto const* sym = getSymmetry()) {
       UnitCellCGO.reset(CrystalGetUnitCellCGO(&sym->Crystal));
     }
   }
 
   SceneInvalidate(G);
   OrthoBusyFast(G, 1, 1);
-  if(Feedback(G, FB_CoordSet, FB_Blather)) {
-    printf(" CoordSetUpdate-Leaving: object %s state %d cset %p\n",
-           I->Obj->Name, state, (void *) I);
-  }
 }
 
 
@@ -1382,217 +1364,162 @@ void CoordSetUpdateCoord2IdxMap(CoordSet * I, float cutoff)
 /*========================================================================*/
 void CoordSet::render(RenderInfo * info)
 {
-  CoordSet * I = this;
-  PRINTFD(G, FB_CoordSet)
-    " CoordSetRender: entered (%p).\n", (void *) I ENDFD;
+  const auto pass = info->pass;
+  const auto pick = bool(info->pick);
+  auto* ray = info->ray;
 
-  if(!(info->ray || info->pick) &&
-     (SettingGet_i(G, I->Setting.get(), I->Obj->Setting.get(),
-                   cSetting_defer_builds_mode) == 5)) {
-    if(info->pass == RenderPass::Antialias) {
-      ObjectUseColor((CObject *) I->Obj);
-      if(I->Active[cRepLine])
-        RepWireBondRenderImmediate(I, info);
-      if(I->Active[cRepNonbonded])
-        RepNonbondedRenderImmediate(I, info);
-      if(I->Active[cRepSphere])
-        RepSphereRenderImmediate(I, info);
-      if(I->Active[cRepCyl])
-        RepCylBondRenderImmediate(I, info);
-      if(I->Active[cRepRibbon])
-        RepRibbonRenderImmediate(I, info);
+  if (!(ray || pick) &&
+      (SettingGet<int>(*this, cSetting_defer_builds_mode) == 5)) {
+    if (pass == RenderPass::Antialias) {
+      ObjectUseColor((CObject*) Obj);
+      if (Active[cRepLine])
+        RepWireBondRenderImmediate(this, info);
+      if (Active[cRepNonbonded])
+        RepNonbondedRenderImmediate(this, info);
+      if (Active[cRepSphere])
+        RepSphereRenderImmediate(this, info);
+      if (Active[cRepCyl])
+        RepCylBondRenderImmediate(this, info);
+      if (Active[cRepRibbon])
+        RepRibbonRenderImmediate(this, info);
     }
-  } else {
-    const RenderPass pass = info->pass;
-    CRay *ray = info->ray;
-    auto pick = info->pick;
-    int a, aa, abit, aastart = 0, aaend = cRepCnt;
-    ::Rep *r;
-    int sculpt_vdw_vis_mode = SettingGet_i(G, I->Setting.get(),
-					   I->Obj->Setting.get(),
-					   cSetting_sculpt_vdw_vis_mode);
-    if((pass == RenderPass::Antialias) && sculpt_vdw_vis_mode &&
-       I->SculptCGO && (I->Obj->visRep & cRepCGOBit)) {
-      if(ray) {
-        int ok = CGORenderRay(I->SculptCGO, ray, info,
-			      ColorGet(G, I->Obj->Color), NULL, I->Setting.get(), I->Obj->Setting.get());
-	if (!ok){
-	  CGOFree(I->SculptCGO);
-	  CGOFree(I->SculptShaderCGO);
-	}
-      } else if(G->HaveGUI && G->ValidContext) {
-        if(!pick) {
-	  int use_shader = SettingGetGlobal_b(G, cSetting_use_shaders);
-	  if (use_shader){
-	    if (!I->SculptShaderCGO){
-	      CGO *convertcgo = NULL;
-	      convertcgo = CGOCombineBeginEnd(I->SculptCGO, 0);
-	      if (convertcgo){
-		I->SculptShaderCGO = CGOOptimizeToVBONotIndexed(convertcgo, 0);
-		I->SculptShaderCGO->use_shader = true;
-		CGOFree(convertcgo);
-	      }
-	    }
-	  } else {
-	    CGOFree(I->SculptShaderCGO);
-	  }
-	  if (I->SculptShaderCGO){
-	    CGORenderGL(I->SculptShaderCGO, NULL,
-			I->Setting.get(), I->Obj->Setting.get(), info, NULL);
-	  } else {
-	    CGORenderGL(I->SculptCGO, NULL,
-			I->Setting.get(), I->Obj->Setting.get(), info, NULL);
-	  }
+
+    return;
+  }
+
+  const auto sculpt_vdw_vis_mode =
+      SettingGet<int>(*this, cSetting_sculpt_vdw_vis_mode);
+
+  if (pass == RenderPass::Antialias && sculpt_vdw_vis_mode && SculptCGO &&
+      (Obj->visRep & cRepCGOBit)) {
+    if (ray) {
+      CGORenderRay(SculptCGO, ray, info, ColorGet(G, Obj->Color), nullptr,
+          Setting.get(), Obj->Setting.get());
+    } else if (G->HaveGUI && G->ValidContext && !pick) {
+      if (!info->use_shaders) {
+        CGOFree(SculptShaderCGO);
+      } else if (!SculptShaderCGO) {
+        SculptShaderCGO = CGOCombineBeginEnd(SculptCGO, 0);
+        if (SculptShaderCGO) {
+          CGOOptimizeToVBONotIndexed(&SculptShaderCGO);
+          SculptShaderCGO->use_shader = true;
         }
       }
-    }
 
-    // cell
-    if (UnitCellCGO && (Obj->visRep & cRepCellBit)) {
-      if (ray) {
-        CGORenderRay(UnitCellCGO.get(), ray, info, ColorGet(G, Obj->Color),
-            nullptr, Setting.get(), Obj->Setting.get());
-      } else if (!pick && pass == RenderPass::Opaque && G->HaveGUI &&
-                 G->ValidContext) {
-        ObjectUseColor(Obj);
-        CGORenderGL(UnitCellCGO.get(), ColorGet(G, Obj->Color), Setting.get(),
-            Obj->Setting.get(), info, NULL);
-      }
-    }
-
-    if (pick){
-      int pick_labels = SettingGet_i(G, I->Setting.get(),
-				     I->Obj->Setting.get(),
-				     cSetting_pick_labels);
-      if (pick_labels == 2){ // only pick labels
-	aastart = cRepLabel;
-	aaend = aastart + 1;
-      }
-    }
-    for(aa = aastart; aa < aaend; aa++) {
-      if(aa == cRepSurface) {   /* reorder */
-        a = cRepCell;
-      } else if(aa == cRepCell) {
-        a = cRepSurface;
-      } else {
-        a = aa;
-      }
-
-      abit = (1 << a);
-
-      if(I->Active[a] && I->Rep[a]) {
-        r = I->Rep[a];
-        if(!ray) {
-          ObjectUseColor((CObject *) I->Obj);
-        } else {
-          if(I->Obj)
-            ray->wobble(
-                         SettingGet_i(G, I->Setting.get(),
-                                      I->Obj->Setting.get(),
-                                      cSetting_ray_texture),
-                         SettingGet_3fv(G, I->Setting.get(),
-                                        I->Obj->Setting.get(),
-                                        cSetting_ray_texture_settings));
-          else
-            ray->wobble(
-                         SettingGet_i(G, I->Setting.get(),
-                                      NULL, cSetting_ray_texture),
-                         SettingGet_3fv(G, I->Setting.get(), NULL,
-                                        cSetting_ray_texture_settings));
-          ray->color3fv(ColorGet(G, I->Obj->Color));
-        }
-
-        {        /* do OpenGL rendering in three passes */
-          if(ray || pick) {
-
-            /* here we need to iterate through and apply coordinate set matrices */
-
-            r->render(info);
-          } else {
-            bool t_mode_3 = SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
-            bool render_both = t_mode_3;  // render both opaque (1) and transparent (-1) pass if t_mode_3
-            /* here we need to iterate through and apply coordinate set matrices */
-
-            switch (a) {
-            case cRepVolume:
-              {
-                int t_mode = SettingGetGlobal_i(G, cSetting_transparency_mode);
-                if (t_mode == 3 && pass == RenderPass::Transparent){
-                  r->render(info);
-                }
-              }
-              break;
-            case cRepLabel:
-              {
-                int t_mode_3 = SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
-                if (pass == RenderPass::Transparent || (t_mode_3 && pass == RenderPass::Opaque /* TODO_OPENVR 0 */))
-                  r->render(info);
-              }
-              break;
-            case cRepDot:
-            case cRepCGO:
-            case cRepCallback:
-              if(pass == RenderPass::Opaque)
-                r->render(info);
-              break;
-            case cRepLine:
-            case cRepMesh:
-            case cRepDash:
-            case cRepCell:
-            case cRepExtent:
-              if(pass == RenderPass::Antialias)
-                r->render(info);
-              break;
-            case cRepNonbonded:
-            case cRepRibbon:
-              render_both = false; // cartoon and nonbonded do not have atom-level transparency
-            case cRepNonbondedSphere:
-            case cRepSurface:
-            case cRepEllipsoid:
-            case cRepCyl:
-            case cRepCartoon:
-            case cRepSphere:
-              {
-                if (render_both){
-                  // for transparency_mode 3, render both opaque and transparent pass
-                  if (pass != RenderPass::Antialias){
-                    r->render(info);
-                  }
-                } else {
-                  bool checkAlphaCGO = abit & (cRepSurfaceBit);
-                  bool cont = true;
-                  if (checkAlphaCGO){
-                    if(info->alpha_cgo) {
-                      if(pass == RenderPass::Opaque){
-                        r->render(info);
-                      }
-                      cont = false;
-                    }
-                  }
-                  if (cont){
-                    if (r->hasTransparency()) {
-                      /* if object has transparency, only render in transparent pass */
-                      if(pass == RenderPass::Transparent)
-                        r->render(info);
-                    } else if(pass == RenderPass::Opaque){
-                      r->render(info);
-                    }
-                  }
-                }
-              }
-              break;
-            }
-          }
-        }
-        /*          if(ray)
-           ray->fWobble(ray,0,NULL); */
-      }
+      auto* cgo = SculptShaderCGO ? SculptShaderCGO : SculptCGO;
+      CGORenderGL(
+          cgo, nullptr, Setting.get(), Obj->Setting.get(), info, nullptr);
     }
   }
-  PRINTFD(G, FB_CoordSet)
-    " CoordSetRender: leaving...\n" ENDFD;
-}
 
+  // cell
+  if (UnitCellCGO && (Obj->visRep & cRepCellBit)) {
+    if (ray) {
+      CGORenderRay(UnitCellCGO.get(), ray, info, ColorGet(G, Obj->Color),
+          nullptr, Setting.get(), Obj->Setting.get());
+    } else if (!pick && pass == RenderPass::Opaque && G->HaveGUI &&
+               G->ValidContext) {
+      ObjectUseColor(Obj);
+      CGORenderGL(UnitCellCGO.get(), ColorGet(G, Obj->Color), Setting.get(),
+          Obj->Setting.get(), info, nullptr);
+    }
+  }
+
+  auto aastart = cRep_t(0), aaend = cRepCnt;
+
+  if (pick) {
+    int pick_labels = SettingGet<int>(*this, cSetting_pick_labels);
+    if (pick_labels == 2) { // only pick labels
+      aastart = cRepLabel;
+      aaend = cRep_t(aastart + 1);
+    }
+  }
+
+  for (auto a = aastart; a != aaend; ++a) {
+    auto* const r = Rep[a];
+
+    if (!(r && Active[a])) {
+      continue;
+    }
+
+    if (!ray) {
+      ObjectUseColor(Obj);
+    } else {
+      ray->wobble(SettingGet<int>(*this, cSetting_ray_texture),
+          SettingGet<const float*>(*this, cSetting_ray_texture_settings));
+      ray->color3fv(ColorGet(G, Obj->Color));
+    }
+
+    if (ray || pick) {
+      r->render(info);
+      continue;
+    }
+
+    // OIT transparency mode
+    bool const t_mode_3 = (3 == SettingGet<int>(G, cSetting_transparency_mode));
+
+    // render both opaque and transparent pass
+    bool render_both = t_mode_3;
+
+    switch (a) {
+    case cRepVolume: {
+      if (t_mode_3 && pass == RenderPass::Transparent) {
+        r->render(info);
+      }
+    } break;
+    case cRepLabel:
+      if (pass == RenderPass::Transparent ||
+          (t_mode_3 && pass == RenderPass::Opaque /* TODO_OPENVR 0 */)) {
+        r->render(info);
+      }
+      break;
+    case cRepDot:
+    case cRepCGO:
+    case cRepCallback:
+      if (pass == RenderPass::Opaque) {
+        r->render(info);
+      }
+      break;
+    case cRepCell:
+      // not implemented
+      assert(false);
+    case cRepLine:
+    case cRepMesh:
+    case cRepDash:
+    case cRepExtent:
+      if (pass == RenderPass::Antialias) {
+        r->render(info);
+      }
+      break;
+    case cRepNonbonded:
+    case cRepRibbon:
+      render_both = false; // cartoon and nonbonded do not have atom-level
+                           // transparency
+    case cRepNonbondedSphere:
+    case cRepSurface:
+    case cRepEllipsoid:
+    case cRepCyl:
+    case cRepCartoon:
+    case cRepSphere:
+      if (render_both) {
+        if (pass != RenderPass::Antialias) {
+          r->render(info);
+        }
+      } else if (info->alpha_cgo && a == cRepSurface) {
+        if (pass == RenderPass::Opaque) {
+          r->render(info);
+        }
+      } else if (r->hasTransparency()) {
+        if (pass == RenderPass::Transparent) {
+          r->render(info);
+        }
+      } else if (pass == RenderPass::Opaque) {
+        r->render(info);
+      }
+      break;
+    }
+  }
+}
 
 /*========================================================================*/
 CoordSet::CoordSet(PyMOLGlobals* G)
@@ -1645,138 +1572,121 @@ CoordSet::CoordSet(const CoordSet& cs)
 /*========================================================================*/
 int CoordSet::extendIndices(int nAtom)
 {
-  CoordSet * I = this;
-  int a, b;
-  ObjectMolecule *obj = I->Obj;
-  int ok = true;
-  if(obj->DiscreteFlag) {
-    ok = obj->setNDiscrete(nAtom);
+  bool ok = true;
+  if (Obj->DiscreteFlag) {
+    ok = Obj->setNDiscrete(nAtom);
 
-    if(I->AtmToIdx) {           /* convert to discrete if necessary */
-      I->AtmToIdx.freeP();
-      if (ok){
-	for(a = 0; a < I->NIndex; a++) {
-	  b = I->IdxToAtm[a];
-	  obj->DiscreteAtmToIdx[b] = a;
-	  obj->DiscreteCSet[b] = I;
-	}
+    if (AtmToIdx) { /* convert to discrete if necessary */
+      AtmToIdx.freeP();
+      if (ok) {
+        for (int a = 0; a < NIndex; a++) {
+          auto const b = IdxToAtm[a];
+          Obj->DiscreteAtmToIdx[b] = a;
+          Obj->DiscreteCSet[b] = this;
+        }
       }
     }
   }
-  if(ok && I->NAtIndex < nAtom) {
-    if(I->AtmToIdx) {
-      VLASize(I->AtmToIdx, int, nAtom);
-      CHECKOK(ok, I->AtmToIdx);
-      if(ok && nAtom) {
-        for(a = I->NAtIndex; a < nAtom; a++)
-          I->AtmToIdx[a] = -1;
+  if (ok && NAtIndex < nAtom) {
+    if (AtmToIdx) {
+      AtmToIdx.resize(nAtom);
+      CHECKOK(ok, AtmToIdx);
+      if (ok && nAtom) {
+        for (int a = NAtIndex; a < nAtom; a++)
+          AtmToIdx[a] = -1;
       }
-      I->NAtIndex = nAtom;
-    } else if(!obj->DiscreteFlag) {
-      I->AtmToIdx = pymol::vla<int>(nAtom);
-      CHECKOK(ok, I->AtmToIdx);
-      if (ok){
-	for(a = 0; a < nAtom; a++)
-	  I->AtmToIdx[a] = -1;
-	I->NAtIndex = nAtom;
+      NAtIndex = nAtom;
+    } else if (!Obj->DiscreteFlag) {
+      AtmToIdx = pymol::vla<int>(nAtom);
+      CHECKOK(ok, AtmToIdx);
+      if (ok) {
+        for (int a = 0; a < nAtom; a++)
+          AtmToIdx[a] = -1;
+        NAtIndex = nAtom;
       }
     }
   }
   return ok;
 }
 
-
 /*========================================================================*/
 void CoordSet::appendIndices(int offset)
 {
-  CoordSet * I = this;
-  int a, b;
-  ObjectMolecule *obj = I->Obj;
-
-  I->IdxToAtm = pymol::vla<int>(I->NIndex);
-  if(I->NIndex) {
-    ErrChkPtr(G, I->IdxToAtm);
-    for(a = 0; a < I->NIndex; a++)
-      I->IdxToAtm[a] = a + offset;
+  IdxToAtm = pymol::vla<int>(NIndex);
+  if (NIndex) {
+    ErrChkPtr(G, IdxToAtm);
+    for (int a = 0; a < NIndex; ++a)
+      IdxToAtm[a] = a + offset;
   }
-  if(obj->DiscreteFlag) {
-    VLACheck(obj->DiscreteAtmToIdx, int, I->NIndex + offset);
-    VLACheck(obj->DiscreteCSet, CoordSet *, I->NIndex + offset);
-    for(a = 0; a < I->NIndex; a++) {
-      b = a + offset;
-      obj->DiscreteAtmToIdx[b] = a;
-      obj->DiscreteCSet[b] = I;
+  if (Obj->DiscreteFlag) {
+    VLACheck(Obj->DiscreteAtmToIdx, int, NIndex + offset);
+    VLACheck(Obj->DiscreteCSet, CoordSet*, NIndex + offset);
+    for (int a = 0; a < NIndex; ++a) {
+      auto const b = a + offset;
+      Obj->DiscreteAtmToIdx[b] = a;
+      Obj->DiscreteCSet[b] = this;
     }
   } else {
-    I->AtmToIdx = pymol::vla<int>(I->NIndex + offset);
-    if(I->NIndex + offset) {
-      ErrChkPtr(G, I->AtmToIdx);
-      for(a = 0; a < offset; a++)
-        I->AtmToIdx[a] = -1;
-      for(a = 0; a < I->NIndex; a++)
-        I->AtmToIdx[a + offset] = a;
+    AtmToIdx = pymol::vla<int>(NIndex + offset);
+    if (NIndex + offset) {
+      ErrChkPtr(G, AtmToIdx);
+      for (int a = 0; a < offset; ++a)
+        AtmToIdx[a] = -1;
+      for (int a = 0; a < NIndex; ++a)
+        AtmToIdx[a + offset] = a;
     }
   }
-  I->NAtIndex = I->NIndex + offset;
+  NAtIndex = NIndex + offset;
 }
-
 
 /*========================================================================*/
+/**
+ * Set up for simple case where 1 = 1, etc.
+ */
 void CoordSet::enumIndices()
 {
-  CoordSet * I = this;
-  /* set up for simple case where 1 = 1, etc. */
-  int a;
-  I->AtmToIdx = pymol::vla<int>(I->NIndex);
-  I->IdxToAtm = pymol::vla<int>(I->NIndex);
-  if(I->NIndex) {
-    ErrChkPtr(G, I->AtmToIdx);
-    ErrChkPtr(G, I->IdxToAtm);
-    for(a = 0; a < I->NIndex; a++) {
-      I->AtmToIdx[a] = a;
-      I->IdxToAtm[a] = a;
+  AtmToIdx = pymol::vla<int>(NIndex);
+  IdxToAtm = pymol::vla<int>(NIndex);
+  if (NIndex) {
+    ErrChkPtr(G, AtmToIdx);
+    ErrChkPtr(G, IdxToAtm);
+    for (int a = 0; a < NIndex; ++a) {
+      AtmToIdx[a] = a;
+      IdxToAtm[a] = a;
     }
   }
-  I->NAtIndex = I->NIndex;
+  NAtIndex = NIndex;
 }
-
 
 /*========================================================================*/
 CoordSet::~CoordSet()
 {
-  CoordSet * I = this;
-  int a;
-  ObjectMolecule *obj;
-  if(I) {
 #ifdef _PYMOL_IP_PROPERTIES
 #endif
 
-    if (I->has_atom_state_settings){
-      for(a = 0; a < I->NIndex; a++){
-        if (I->has_atom_state_settings[a]){
-          SettingUniqueDetachChain(G, I->atom_state_setting_id[a]);
-        }
+  if (has_atom_state_settings) {
+    for (int a = 0; a < NIndex; ++a) {
+      if (has_atom_state_settings[a]) {
+        SettingUniqueDetachChain(G, atom_state_setting_id[a]);
       }
     }
-    for(a = 0; a < cRepCnt; a++)
-      if(I->Rep[a])
-        delete I->Rep[a];
-    obj = I->Obj;
-    if(obj)
-      if(obj->DiscreteFlag)     /* remove references to the atoms in discrete objects */
-        for(a = 0; a < I->NIndex; a++) {
-          obj->DiscreteAtmToIdx[I->IdxToAtm[a]] = -1;
-          obj->DiscreteCSet[I->IdxToAtm[a]] = NULL;
-        }
-    MapFree(I->Coord2Idx);
-    CGOFree(I->SculptCGO);
   }
+
+  for (int a = 0; a < cRepCnt; ++a) {
+    delete Rep[a];
+  }
+
+  MapFree(Coord2Idx);
+  CGOFree(SculptCGO);
+  CGOFree(SculptShaderCGO);
 }
+
 void LabPosTypeCopy(const LabPosType * src, LabPosType * dst){
   dst->mode = src->mode;
   copy3f(src->pos, dst->pos);
   copy3f(src->offset, dst->offset);
 }
+
 void RefPosTypeCopy(const RefPosType * src, RefPosType * dst){
   copy3f(src->coord, dst->coord);
   dst->specified = src->specified;
@@ -1803,13 +1713,9 @@ int CoordSetSetSettingFromPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int s
 int CoordSetCheckSetting(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id){
   if(!cs->has_atom_state_settings || !cs->has_atom_state_settings[at]) {
     return 0;
-  } else {
-    if(!SettingUniqueCheck(G, cs->atom_state_setting_id[at], setting_id)) {
-      return 0;
-    } else {
-      return 1;
-    }
   }
+
+  return SettingUniqueCheck(G, cs->atom_state_setting_id[at], setting_id);
 }
 
 PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id){
@@ -1842,7 +1748,7 @@ void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, V * out) {
   if (AtomSettingGetIfDefined(G, ai, setting_id, out))
     return;
 
-  *out = SettingGet<V>(G, cs->Setting.get(), obj->Setting.get(), setting_id);
+  *out = SettingGet<V>(*cs, setting_id);
 }
 
 template void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, int * out);
