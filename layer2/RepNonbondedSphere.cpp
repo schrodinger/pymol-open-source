@@ -111,8 +111,11 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
 
   unsigned char *active = NULL;
   int nSphere = 0;
-  float transp =
-    1.f - SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_nonbonded_transparency);
+
+  float prev_transp = -1;
+  float const transp = SettingGet<float>(G, cs->Setting.get(),
+      obj->Setting.get(), cSetting_nonbonded_transparency);
+
   int ok = true;
 
   if (ok)
@@ -139,11 +142,8 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   I->primitiveCGO = NULL;
 
   /* Generate primitiveCGO */
-  float at_transp;
   int NP = 0;
-  bool alpha_set = false;
   I->primitiveCGO = CGONew(G);
-  CGOAlpha(I->primitiveCGO, transp);
   for(int a = 0; ok && a < cs->NIndex; a++){
     if(active[a]) {
       int a1 = cs->IdxToAtm[a];
@@ -160,14 +160,16 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
         vc = ColorGet(G, c1);
       }
       CGOPickColor(I->primitiveCGO, a1, (ai->masked ? cPickableNoPick : cPickableAtom));
-      if(AtomSettingGetIfDefined(G, ai, cSetting_nonbonded_transparency, &at_transp)){
+
+      auto const at_transp =
+          AtomSettingGetWD(G, ai, cSetting_nonbonded_transparency, transp);
+
+      if (prev_transp != at_transp) {
         CGOAlpha(I->primitiveCGO, 1.f - at_transp);
-        alpha_set = true;
-      } else if (alpha_set){
-        /* if atom level transparency is set, and this atom doesn't have transparency,
-           then set back to object-level transparency */
-        CGOAlpha(I->primitiveCGO, transp);
-        alpha_set = false;
+
+        if (at_transp > 0) {
+          I->setHasTransparency();
+        }
       }
       CGOColorv(I->primitiveCGO, vc);
       CGOSphere(I->primitiveCGO, v1, nb_spheres_size);

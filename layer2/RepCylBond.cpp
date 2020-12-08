@@ -185,16 +185,9 @@ void RepCylBond::render(RenderInfo * info)
   auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  float alpha;
   PyMOLGlobals *G = I->G;
-  int width, height;
   int ok = true;
 
-  SceneGetWidthHeight(G, &width, &height); 
-
-  alpha = 1.f - SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_stick_transparency);
-  if(fabs(alpha - 1.f) < R_SMALL4)
-    alpha = 1.f;
   if(ray) {
 #ifndef _PYMOL_NO_RAY
     CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
@@ -570,11 +563,10 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   bool *marked = NULL;
   float *capdrawn = NULL;
   float scale_r = 1.0F;
-  int variable_alpha = false;
   float transp, h_scale;
+  float prev_transp = -1;
   int valence_found = false;
   const float _0p9 = 0.9F;
-  float alpha;
   short shader_mode = 0;
   int ok = true;
 
@@ -608,12 +600,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   valence = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_valence);
   valence_flag = (valence != 0.0F);
 
-  alpha =
-    SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_transparency);
-  alpha = 1.0F - alpha;
-  if(fabs(alpha - 1.0) < R_SMALL4)
-    alpha = 1.0F;
-
   stick_color = SettingGet_color(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_color);
   cartoon_side_chain_helper = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(),
                                            cSetting_cartoon_side_chain_helper);
@@ -639,9 +625,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       s2 = GET_BIT(ati2->visRep, cRepCyl);
 
       if (s1 && s2){
-        if((!variable_alpha) && AtomInfoCheckBondSetting(G, b, cSetting_stick_transparency))
-          variable_alpha = true;
-
         if (!valence_found)
           valence_found = BondSettingGetWD(G, b, cSetting_valence, valence_flag);
         
@@ -669,9 +652,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   auto I = new RepCylBond(cs, state);
 
   I->primitiveCGO = CGONew(G);
-  if (!variable_alpha){
-    CGOAlpha(I->primitiveCGO, alpha);
-  }
   if(ok && obj->NBond) {
     stick_ball = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_stick_ball);
 
@@ -713,16 +693,9 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         AtomInfoType *ati1 = obj->AtomInfo + b1;
         AtomInfoType *ati2 = obj->AtomInfo + b2;
         float bd_radius_full;
-	float bd_alpha;
 
         auto bd_stick_color = BondSettingGetWD(G, b, cSetting_stick_color, stick_color);
         auto bd_radius = BondSettingGetWD(G, b, cSetting_stick_radius, radius);
-
-        if(variable_alpha){
-          auto bd_transp = BondSettingGetWD(G, b, cSetting_stick_transparency, transp);
-	  bd_alpha = (1.0F - bd_transp);
-          CGOAlpha(I->primitiveCGO, bd_alpha);
-	}
 
         // version <=1.8.2 used negative stick_radius to turn on
         // stick_h_scale, which had a default of 0.4 (now: 1.0)
@@ -759,15 +732,16 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         s1 = GET_BIT(ati1->visRep, cRepCyl);
         s2 = GET_BIT(ati2->visRep, cRepCyl);
 
-        if(!(s1 && s2))
-          if(!half_bonds) {
-            s1 = 0;
-            s2 = 0;
-          }
+        if (!(s1 || s2)) {
+          continue;
+        }
+
+        if (!(s1 && s2) && !half_bonds) {
+          continue;
+        }
 
         if(hide_long && (s1 || s2)) {
           float cutoff = (ati1->vdw + ati2->vdw) * _0p9;
-          ai1 = obj->AtomInfo + b1;
           if(!within3f(vv1, vv2, cutoff))       /* atoms separated by more than 90% of the sum of their vdw radii */
             s1 = s2 = 0;
         }
@@ -821,28 +795,22 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
           }
         };
 
-        if (s1) stick_ball_impl(ati1, b1, c1, vv1);
-        if (s2) stick_ball_impl(ati2, b2, c2, vv2);
-
-	{
-	  float alp;
-	  if((alpha == 1.0) && (!variable_alpha)) {
-	    alp = 1.0F;
-	  } else if(variable_alpha) {
-	    alp = bd_alpha;
-	  } else {
-	    alp = alpha;
-	  }
-          ok &= CGOAlpha(I->primitiveCGO, alp);
-	}
-
-        if(hide_long && (s1 || s2)) {
-          float cutoff = (ati1->vdw + ati2->vdw) * _0p9;
-          ai1 = obj->AtomInfo + b1;
-          if(!within3f(vv1, vv2, cutoff))       /* atoms separated by more than 90% of the sum of their vdw radii */
-            s1 = s2 = 0;
-        }
         if(s1 || s2) {
+          auto const bd_transp =
+              BondSettingGetWD(G, b, cSetting_stick_transparency, transp);
+
+          if (prev_transp != bd_transp) {
+            prev_transp = bd_transp;
+            CGOAlpha(I->primitiveCGO, 1.0F - bd_transp);
+
+            if (bd_transp > 0) {
+              I->setHasTransparency();
+            }
+          }
+
+          if (s1) stick_ball_impl(ati1, b1, c1, vv1);
+          if (s2) stick_ball_impl(ati2, b2, c2, vv2);
+
           float rgb1[3], rgb2[3];
           bool isRamped = false;
           isRamped = ColorGetCheckRamped(G, c1, vv1, rgb1, state);

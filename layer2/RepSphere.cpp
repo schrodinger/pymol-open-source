@@ -304,6 +304,11 @@ static void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj,
   CGOAlpha(I->primitiveCGO, alpha);
   CGOColorv(I->primitiveCGO, vcptr);
   float radius = obj->AtomInfo[a1].vdw * at_sphere_scale + sphere_add;
+
+  if (alpha < 1) {
+    I->setHasTransparency();
+  }
+
   CGOSphere(I->primitiveCGO, v0, radius);
 }
 

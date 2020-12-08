@@ -131,15 +131,19 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
   int use_shaders, has_cylinders_to_optimize;
   float alpha = 1.0F - SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_cartoon_transparency);
 
-  auto hasAtomLevelAlpha = [](RepCartoon * I){
+  bool const hasAlpha = alpha < 1 || [](RepCartoon * I){
     for(CoordSetAtomIterator iter(I->cs); iter.next();){
       auto ai = iter.getAtomInfo();
-      if(AtomSettingGetWD(I->G, ai, cSetting_cartoon_transparency, 0.0f)){
+      if ((ai->visRep & cRepCartoonBit) &&
+          AtomSettingGetWD(I->G, ai, cSetting_cartoon_transparency, 0.0f) > 0) {
         return true;
       }
     }
     return false;
   }(I);
+
+  I->setHasTransparency(hasAlpha);
+
   use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_cartoon_use_shader);
   has_cylinders_to_optimize = G->ShaderMgr->Get_CylinderShader(info->pass, 0) && 
                               SettingGetGlobal_i(G, cSetting_cartoon_nucleic_acid_as_cylinders) && 
@@ -150,7 +154,7 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
 
   if (use_shaders){
     CGO *convertcgo = NULL, *tmpCGO = NULL, *tmp2CGO = NULL;
-    if (((alpha < 1.f) || hasAtomLevelAlpha) && 
+    if (hasAlpha &&
         (SettingGetGlobal_i(G, cSetting_transparency_mode) != 3)){
       // some transparency
       const float *color;
@@ -240,7 +244,7 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
   } else {
     if (ok){
       auto simplifiedCGO = CGOSimplify(I->preshader, 0);
-      if (alpha < 1.f || hasAtomLevelAlpha){
+      if (hasAlpha){
         auto convertedCGO = CGOConvertTrianglesToAlpha(simplifiedCGO);
         CGOFree(simplifiedCGO);
         I->std = convertedCGO;

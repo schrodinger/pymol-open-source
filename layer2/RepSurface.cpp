@@ -305,6 +305,10 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
   I->shaderCGO->use_shader = true;
   I->dot_as_spheres = dot_as_spheres;
 
+  if (alpha < 1) {
+    I->setHasTransparency();
+  }
+
   if (I->Type == 1) {
     /* no triangle information, so we're rendering dots only */
     int normals =
@@ -2808,6 +2812,10 @@ Rep* RepSurface::recolor()
         if(at_transp != transp)
           variable_alpha = true;
         *(va++) = 1.0F - at_transp;
+
+        if (at_transp > 0) {
+          I->setHasTransparency();
+        }
 
         if(!*vi)
           I->allVisibleFlag = false;

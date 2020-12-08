@@ -1379,29 +1379,6 @@ void CoordSetUpdateCoord2IdxMap(CoordSet * I, float cutoff)
   }
 }
 
-/*
- * RepToTransparencySetting: maps rep to transparency setting 
- */
-static int RepToTransparencySetting(const int rep_id){
-  switch(rep_id){
-    // based on the rep, 
-    // transparency is set with different settings
-  case cRepCyl:
-    return cSetting_stick_transparency;
-  case cRepSurface:
-    return cSetting_transparency;
-  case cRepSphere:
-    return cSetting_sphere_transparency;
-  case cRepEllipsoid:
-    return cSetting_ellipsoid_transparency;
-  case cRepCartoon:
-    return cSetting_cartoon_transparency;
-  case cRepRibbon:
-    return cSetting_ribbon_transparency;
-  }
-  return 0;
-}
-
 /*========================================================================*/
 void CoordSet::render(RenderInfo * info)
 {
@@ -1583,7 +1560,6 @@ void CoordSet::render(RenderInfo * info)
                   }
                 } else {
                   bool checkAlphaCGO = abit & (cRepSurfaceBit);
-                  int check_setting = RepToTransparencySetting(a);
                   bool cont = true;
                   if (checkAlphaCGO){
                     if(info->alpha_cgo) {
@@ -1594,8 +1570,7 @@ void CoordSet::render(RenderInfo * info)
                     }
                   }
                   if (cont){
-                    if(check_setting && SettingGet_f(G, r->cs->Setting.get(),
-                                                     r->obj->Setting.get(), check_setting) > 0.0001) {
+                    if (r->hasTransparency()) {
                       /* if object has transparency, only render in transparent pass */
                       if(pass == RenderPass::Transparent)
                         r->render(info);

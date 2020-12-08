@@ -425,6 +425,10 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     CGOAlpha(I->primitiveCGO, alpha);  // would be good to set these at render time instead
     CGOSpecial(I->primitiveCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON);
 
+    if (alpha < 1) {
+      I->setHasTransparency();
+    }
+
     // This is required for immediate mode rendering
     CGOBegin(I->primitiveCGO, GL_LINES);
 

@@ -318,6 +318,10 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
                 if(alpha != last_alpha) {
                   ok &= CGOAlpha(I->ray, alpha);
                   last_alpha = alpha;
+
+                  if (at_transp > 0) {
+                    I->setHasTransparency();
+                  }
                 }
               }
               if(ok && pickable && (!ai->masked))

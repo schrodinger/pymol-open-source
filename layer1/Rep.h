@@ -199,6 +199,12 @@ struct Rep {
   int getState() const { return context.state; }
   CObject* getObj() const { return context.object; }
 
+  //! True if this rep should be rendered in RenderPass::Transparent. Default is
+  //! false, change the flag with setHasTransparency().
+  bool hasTransparency() const { return m_has_transparency; }
+  //! Sets the hasTransparency() flag.
+  void setHasTransparency(bool has = true) { m_has_transparency = has; }
+
 protected:
   cRepInv_t MaxInvalid = cRepInvNone;
 
@@ -207,6 +213,8 @@ private:
   virtual Rep* recolor() { return rebuild(); }
   virtual bool sameVis() const { return false; }
   virtual bool sameColor() const { return false; }
+
+  bool m_has_transparency = false;
 
 public:
   Rep* update();
