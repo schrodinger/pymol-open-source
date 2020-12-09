@@ -432,10 +432,6 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
     sobj->hasOpaque = hasOpaque;
 
     if (use_shader){
-      if(preOpt && preOpt->has_begin_end){
-	preOpt.reset(CGOCombineBeginEnd(preOpt.get(), 0));
-      }
-
       if (hasTransparency) {
         preOpt.reset(CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(
             preOpt.get(), 0, colorWithA, false));

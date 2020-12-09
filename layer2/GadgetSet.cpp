@@ -314,31 +314,22 @@ void GadgetSet::render(RenderInfo * info)
         }
       } else {
 	if (!I->StdCGO && I->ShapeCGO){
-	  CGO *convertcgo;
-	  int ok = true;
-	  convertcgo = CGOCombineBeginEnd(I->ShapeCGO, 0);
-	  CHECKOK(ok, convertcgo);
-	  if (ok){
-	    if (use_shader){
-	      CGO *tmpCGO;
-	      tmpCGO = CGOOptimizeToVBONotIndexedNoShader(convertcgo, 0);
-	      I->StdCGO = CGONew(G);
-	      CGODisable(I->StdCGO, GL_DEPTH_TEST);
-	      CGOEnable(I->StdCGO, GL_RAMP_SHADER);
-	      I->offsetPtOP = CGOUniform3f(I->StdCGO, RAMP_OFFSETPT,  (const float*)I->Coord);
-	      CGOAppendNoStop(I->StdCGO, tmpCGO);
-	      CGOFreeWithoutVBOs(tmpCGO);
-	      CGODisable(I->StdCGO, GL_RAMP_SHADER);
-	      CGOEnable(I->StdCGO, GL_DEPTH_TEST);
-	      CGOStop(I->StdCGO);
-	      I->StdCGO->use_shader = true;
-	      CGOFree(convertcgo);
-	    } else {
-	      I->StdCGO = convertcgo;
-	    }
-	  } else {
-	    CGOFree(convertcgo);
-	  }
+          if (!use_shader) {
+            I->StdCGO = CGOCombineBeginEnd(I->ShapeCGO);
+            assert(!I->StdCGO->has_begin_end);
+          } else {
+            I->StdCGO = CGONew(G);
+            CGODisable(I->StdCGO, GL_DEPTH_TEST);
+            CGOEnable(I->StdCGO, GL_RAMP_SHADER);
+            I->offsetPtOP = CGOUniform3f(I->StdCGO, RAMP_OFFSETPT, I->Coord);
+            I->StdCGO->free_append(
+                CGOOptimizeToVBONotIndexedNoShader(I->ShapeCGO));
+            CGODisable(I->StdCGO, GL_RAMP_SHADER);
+            CGOEnable(I->StdCGO, GL_DEPTH_TEST);
+            CGOStop(I->StdCGO);
+            assert(I->StdCGO->use_shader);
+            assert(!I->StdCGO->has_begin_end);
+          }
 	}
         if(I->StdCGO) {
 	  if (use_shader){

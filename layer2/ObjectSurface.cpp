@@ -869,7 +869,7 @@ static void ObjectSurfaceRenderCell(PyMOLGlobals *G, ObjectSurface * I,
     if (use_shader){
       CGO *convertcgo = CGOOptimizeToVBONotIndexed(ms->UnitCellCGO.get(), 0);
       ms->UnitCellCGO.reset(convertcgo);
-      ms->UnitCellCGO->use_shader = true;
+      assert(ms->UnitCellCGO->use_shader);
     } else {
       ms->UnitCellCGO.reset(CrystalGetUnitCellCGO(&ms->Crystal));
     }
@@ -957,9 +957,8 @@ void ObjectSurface::render(RenderInfo * info)
             CGOStop(ms->shaderCGO.get());
 
             if (use_shader){
-              auto convertcgo = CGOCombineBeginEnd(ms->shaderCGO.get(), 0);
-              ms->shaderCGO.reset(convertcgo);
-              convertcgo = CGOOptimizeToVBOIndexed(ms->shaderCGO.get(), 0, NULL, true, (alpha != 1.0) /* embedTransparency */);
+              auto convertcgo = CGOOptimizeToVBOIndexed(ms->shaderCGO.get(), 0,
+                  nullptr, true, (alpha != 1.0) /* embedTransparency */);
               if (convertcgo){
                 ms->shaderCGO.reset(convertcgo);
               }

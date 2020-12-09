@@ -147,7 +147,7 @@ static int RepDihedralCGOGenerate(RepDihedral * I, RenderInfo * info)
       CGO *tmpCGO = CGONew(G);
       if (ok) ok &= CGOEnable(tmpCGO, GL_DEFAULT_SHADER);
       if (ok) ok &= CGODisable(tmpCGO, CGO_GL_LIGHTING);
-      convertcgo = CGOOptimizeToVBONotIndexedNoShader(I->shaderCGO, 0);
+      convertcgo = CGOOptimizeToVBONotIndexedNoShader(I->shaderCGO);
       if (ok) ok &= CGOEnable(tmpCGO, GL_DASH_TRANSPARENCY_DEPTH_TEST);
       if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
       if (ok) ok &= CGODisable(tmpCGO, GL_DASH_TRANSPARENCY_DEPTH_TEST);

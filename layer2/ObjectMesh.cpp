@@ -898,8 +898,9 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  CGO *newUnitCellCGO = CGONewSized(G, 0);
 		  CGOColorv(newUnitCellCGO, color);
 		  CGOAppend(newUnitCellCGO, ms->UnitCellCGO.get());
-		  ms->shaderUnitCellCGO.reset(CGOOptimizeToVBONotIndexedNoShader(newUnitCellCGO, 0));
-		  CGOFree(newUnitCellCGO);
+                  ms->shaderUnitCellCGO.reset(
+                      CGOOptimizeToVBONotIndexedNoShader(newUnitCellCGO));
+                  CGOFree(newUnitCellCGO);
 		  ms->shaderUnitCellCGO->use_shader = true;
 		}
 	      }

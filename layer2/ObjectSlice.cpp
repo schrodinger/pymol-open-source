@@ -1208,11 +1208,8 @@ void ObjectSlice::render(RenderInfo * info)
 		
                 CGOStop(oss->shaderCGO.get());
                 if (use_shaders){
-                  CGO *convertcgo = oss->shaderCGO.get();
-                  convertcgo = CGOCombineBeginEnd(oss->shaderCGO.get(), 0);
-                  oss->shaderCGO.reset(CGOOptimizeToVBONotIndexed(convertcgo, 0));
-                  oss->shaderCGO->use_shader = true;
-                  CGOFree(convertcgo);
+                  oss->shaderCGO.reset(CGOOptimizeToVBONotIndexed(oss->shaderCGO.get()));
+                  assert(oss->shaderCGO->use_shader);
                 }
                 CGORenderGL(oss->shaderCGO.get(), NULL, NULL, I->Setting.get(), info, NULL);
                 SceneInvalidatePicking(G);  // any time cgo is re-generated, needs to invalidate so

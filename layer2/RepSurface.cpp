@@ -1335,7 +1335,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
       CGOStop(tmpCGO);
       convertcgo = tmpCGO;
     } else {
-      convertcgo = CGOOptimizeToVBONotIndexedNoShader(I->shaderCGO, 0);
+      convertcgo = CGOOptimizeToVBONotIndexedNoShader(I->shaderCGO);
     }
     CHECKOK(ok, convertcgo);
     if (ok)

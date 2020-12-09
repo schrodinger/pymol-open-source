@@ -106,32 +106,25 @@ static int RepDotCGOGenerate(RepDot * I)
     ok &= CGOStop(cgo);
   if (ok) {
     if (dot_as_spheres){
-      CGO *tmpCGO = CGONew(G), *tmp2CGO = NULL;
+      CGO *tmpCGO = CGONew(G);
       if (ok) ok &= CGOEnable(tmpCGO, GL_SPHERE_SHADER);
       if (ok) ok &= CGOEnable(tmpCGO, GL_DOT_LIGHTING);
       if (ok) ok &= CGOSpecial(tmpCGO, DOT_WIDTH_FOR_DOT_SPHERES);
-      tmp2CGO = CGOOptimizeSpheresToVBONonIndexedNoShader(cgo,
-          CGO_BOUNDING_BOX_SZ + fsizeof<cgo::draw::sphere_buffers>() + 2);
-      if (ok)
-	ok &= CGOAppendNoStop(tmpCGO, tmp2CGO);
-      CGOFreeWithoutVBOs(tmp2CGO);
+      if (ok) {
+        tmpCGO->free_append(CGOOptimizeSpheresToVBONonIndexedNoShader(cgo,
+            CGO_BOUNDING_BOX_SZ + fsizeof<cgo::draw::sphere_buffers>() + 2));
+      }
       if (ok) ok &= CGODisable(tmpCGO, GL_SPHERE_SHADER);
       if (ok) ok &= CGOStop(tmpCGO);
       I->shaderCGO = tmpCGO;
     } else {
-      CGO *convertcgo = CGOCombineBeginEnd(cgo, 0), *tmp2CGO = NULL;
       CGO *tmpCGO = CGONew(G);
       if (ok) ok &= CGOEnable(tmpCGO, GL_DEFAULT_SHADER);
       if (ok) ok &= CGOEnable(tmpCGO, GL_DOT_LIGHTING);
       if (ok) ok &= CGOSpecial(tmpCGO, DOT_WIDTH_FOR_DOTS);
-      CHECKOK(ok, convertcgo);
-      if (ok)
-	tmp2CGO = CGOOptimizeToVBONotIndexedNoShader(convertcgo, CGO_BOUNDING_BOX_SZ + I->N * 3 + 7);
-      CHECKOK(ok, tmp2CGO);
-      if (ok)
-	ok &= CGOAppendNoStop(tmpCGO, tmp2CGO);
-      CGOFreeWithoutVBOs(tmp2CGO);
-      CGOFree(convertcgo);
+      if (ok) {
+        tmpCGO->free_append(CGOOptimizeToVBONotIndexedNoShader(cgo));
+      }
       if (ok) ok &= CGODisable(tmpCGO, GL_DEFAULT_SHADER);
       if (ok) ok &= CGOStop(tmpCGO);
       I->shaderCGO = tmpCGO;

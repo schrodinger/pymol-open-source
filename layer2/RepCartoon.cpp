@@ -107,19 +107,18 @@ RepCartoon::~RepCartoon()
  * (i.e., the CGOSpecial operations, see below)
  *
  */
-static
-CGO *CGOAddTwoSidedBackfaceSpecialOps(PyMOLGlobals *G, CGO *cgo){
+static CGO* CGOAddTwoSidedBackfaceSpecialOps(CGO* cgo)
+{
   if (!CGOHasOperations(cgo)) {
     return cgo;
   }
 
+  auto G = cgo->G;
   CGO *tmpCGO = CGONew(G);
   CGOSpecial(tmpCGO, ENABLE_BACK_FACES_IF_NOT_TWO_SIDED);
-  CGOAppendNoStop(tmpCGO, cgo);
+  tmpCGO->free_append(cgo);
   CGOSpecial(tmpCGO, DISABLE_BACK_FACES_IF_NOT_TWO_SIDED);
   CGOStop(tmpCGO);
-  tmpCGO->render_alpha = cgo->render_alpha;
-  CGOFreeWithoutVBOs(cgo);
   return tmpCGO;
 }
 
@@ -153,92 +152,65 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
   assert(!I->std);
 
   if (use_shaders){
-    CGO *convertcgo = NULL, *tmpCGO = NULL, *tmp2CGO = NULL;
     if (hasAlpha &&
         (SettingGetGlobal_i(G, cSetting_transparency_mode) != 3)){
       // some transparency
-      const float *color;
-      float colorWithA[4];
-      CGO *convertcgo2;
-      convertcgo2 = CGOSimplify(I->preshader, 0) ;
-      convertcgo = CGOCombineBeginEnd(convertcgo2, 0);
-      CGOFree(convertcgo2);
-      CHECKOK(ok, convertcgo);
-      color = ColorGet(G, I->obj->Color);
-      copy3f(color, colorWithA);
-      colorWithA[3] = alpha;
-      tmpCGO = CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(convertcgo, 0, NULL, true);
-      CGOStop(tmpCGO);
-      CGOFree(convertcgo);
+      std::unique_ptr<CGO> simplified(CGOSimplify(I->preshader));
+      std::unique_ptr<CGO> optimized(
+          CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(
+              simplified.get(), 0, nullptr, true));
 
-      tmp2CGO = CGONew(G);
+      CGO* tmp2CGO = CGONew(G);
       CGOEnable(tmp2CGO, GL_BACK_FACE_CULLING);
-      CGOAppendNoStop(tmp2CGO, tmpCGO);
+      tmp2CGO->move_append(std::move(*optimized));
       CGODisable(tmp2CGO, GL_BACK_FACE_CULLING);
       CGOStop(tmp2CGO);
-      CGOFreeWithoutVBOs(tmpCGO);
 
       I->std = tmp2CGO;
     } else {
-      CGO *leftOverCGO = NULL;
+      CGO* leftOverCGOBorrowed = nullptr;
+      std::unique_ptr<CGO> leftOverCGOManaged;
+      std::unique_ptr<CGO> convertcgo(CGONew(G));
+
       if (has_cylinders_to_optimize && G->ShaderMgr->Get_CylinderShader(info->pass, 0)){
         /* Optimize Cylinders into Shader operation */
-        CGO *tmpCGO = CGONew(G);
-        leftOverCGO = CGONew(G);
-        CGOEnable(tmpCGO, GL_CYLINDER_SHADER);
-        CGOFilterOutCylinderOperationsInto(I->preshader, leftOverCGO);
-        convertcgo = CGOConvertShaderCylindersToCylinderShader(I->preshader, tmpCGO);
-        CGOAppendNoStop(tmpCGO, convertcgo);
-        CGODisable(tmpCGO, GL_CYLINDER_SHADER);
-        CGOStop(tmpCGO);
-        CGOFreeWithoutVBOs(convertcgo);
-        convertcgo = tmpCGO;
-        convertcgo->use_shader = true;
-      }
-      if (!leftOverCGO){
-        leftOverCGO = I->preshader;
-        convertcgo = CGONew(G);
+        leftOverCGOManaged.reset(CGONew(G));
+        leftOverCGOBorrowed = leftOverCGOManaged.get();
+        CGOEnable(convertcgo.get(), GL_CYLINDER_SHADER);
+        CGOFilterOutCylinderOperationsInto(I->preshader, leftOverCGOBorrowed);
+        convertcgo->free_append(CGOConvertShaderCylindersToCylinderShader(
+            I->preshader, convertcgo.get()));
+        CGODisable(convertcgo.get(), GL_CYLINDER_SHADER);
+        CGOStop(convertcgo.get());
+        assert(convertcgo->use_shader);
+      } else {
+        leftOverCGOBorrowed = I->preshader;
       }
 
-      bool has_spheres_to_optimize = CGOHasSphereOperations(leftOverCGO);
+      bool has_spheres_to_optimize = CGOHasSphereOperations(leftOverCGOBorrowed);
       if (has_spheres_to_optimize){
         /* Optimize spheres and putting them into convertcgo as a shader CGO operation */
-        CGO *sphereVBOs = NULL, *leftOverAfterSpheresCGO = NULL;
-        leftOverAfterSpheresCGO = CGONew(G);
-        sphereVBOs = CGOOptimizeSpheresToVBONonIndexed(leftOverCGO, 0, true, leftOverAfterSpheresCGO);
-        if (sphereVBOs){
-          ok &= CGOAppendNoStop(convertcgo, sphereVBOs);
-          CGOFreeWithoutVBOs(sphereVBOs);
-        } else {
-          CGOFree(leftOverAfterSpheresCGO);
+        std::unique_ptr<CGO> leftOverAfterSpheresCGO(CGONew(G));
+        std::unique_ptr<CGO> sphereVBOs(CGOOptimizeSpheresToVBONonIndexed(
+            leftOverCGOBorrowed, 0, true, leftOverAfterSpheresCGO.get()));
+        if (sphereVBOs) {
+          convertcgo->move_append(std::move(*sphereVBOs));
+          leftOverCGOManaged = std::move(leftOverAfterSpheresCGO);
+          leftOverCGOBorrowed = leftOverCGOManaged.get();
         }
-        if (leftOverCGO != I->preshader) {
-          CGOFree(leftOverCGO);
-        }
-        if (leftOverAfterSpheresCGO)
-          leftOverCGO = leftOverAfterSpheresCGO;
       }
 
       /* For the rest of the primitives that exist, simplify them into Geometry
        * (should probably be no more, but do this anyway) */
-      CGO *leftOverCGOSimplified = NULL, *leftOverCGOCombined;
-      leftOverCGOSimplified = CGOSimplify(leftOverCGO, 0);
-      CHECKOK(ok, leftOverCGOSimplified);
-      leftOverCGOCombined = CGOCombineBeginEnd(leftOverCGOSimplified, 0);
-      CGOFree(leftOverCGOSimplified);
-      if (leftOverCGO != I->preshader) {
-        CGOFree(leftOverCGO);
+      std::unique_ptr<CGO> leftOverCGOSimplified(CGOSimplify(leftOverCGOBorrowed));
+      if (leftOverCGOSimplified) {
+        std::unique_ptr<CGO> optimized(
+            CGOOptimizeToVBONotIndexed(leftOverCGOSimplified.get()));
+        if (optimized) {
+          convertcgo->move_append(std::move(*optimized));
+        }
       }
-      // Convert all DrawArrays and Geometry to VBOs 
-      if (ok)
-        tmpCGO = CGOOptimizeToVBONotIndexed(leftOverCGOCombined, 0);
-      CHECKOK(ok, tmpCGO);
-      CGOFree(leftOverCGOCombined);
-      if (ok)
-        ok &= CGOAppend(convertcgo, tmpCGO);
-      CGOFreeWithoutVBOs(tmpCGO);
-      tmpCGO = NULL;
-      I->std = CGOAddTwoSidedBackfaceSpecialOps(G, convertcgo);
+      I->std = CGOAddTwoSidedBackfaceSpecialOps(convertcgo.release());
     }
     I->std->use_shader = true;
   } else {
@@ -256,7 +228,7 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
         CHECKOK(ok, I->std);
       }
       if(I->std) {
-        I->std = CGOAddTwoSidedBackfaceSpecialOps(G, I->std);
+        I->std = CGOAddTwoSidedBackfaceSpecialOps(I->std);
       }
     }
   }

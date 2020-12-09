@@ -1347,7 +1347,8 @@ void bg_grad(PyMOLGlobals * G) {
 
   {
     if (!I->bgCGO) {
-      CGO *cgo = CGONew(G), *cgo2 = NULL;
+      CGO cgo_value(G);
+      CGO* cgo = &cgo_value;
       ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
       if (ok)
 	ok &= CGOVertex(cgo, -1.f, -1.f, 0.98f);
@@ -1359,21 +1360,15 @@ void bg_grad(PyMOLGlobals * G) {
 	ok &= CGOVertex(cgo, 1.f, 1.f, 0.98f);
       if (ok)
 	ok &= CGOEnd(cgo);
+      assert(cgo->has_begin_end);
       if (ok)
-	ok &= CGOStop(cgo);
-      if (ok)
-	cgo2 = CGOCombineBeginEnd(cgo, 0);
-      CHECKOK(ok, cgo2);
-      CGOFree(cgo);
-      if (ok)
-	I->bgCGO = CGOOptimizeToVBONotIndexed(cgo2, 0);
+	I->bgCGO = CGOOptimizeToVBONotIndexed(cgo, 0);
       if (ok){
 	CGOChangeShadersTo(I->bgCGO, GL_DEFAULT_SHADER_WITH_SETTINGS, GL_BACKGROUND_SHADER);
 	I->bgCGO->use_shader = true;
       } else {
 	CGOFree(I->bgCGO);
       }
-      CGOFree(cgo2);
     }
     if (ok && !bg_is_solid && (I->bgData && (!I->bg_texture_id || I->bg_texture_needs_update))){
       short is_new = !I->bg_texture_id;

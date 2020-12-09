@@ -1399,11 +1399,7 @@ void CoordSet::render(RenderInfo * info)
       if (!info->use_shaders) {
         CGOFree(SculptShaderCGO);
       } else if (!SculptShaderCGO) {
-        SculptShaderCGO = CGOCombineBeginEnd(SculptCGO, 0);
-        if (SculptShaderCGO) {
-          CGOOptimizeToVBONotIndexed(&SculptShaderCGO);
-          SculptShaderCGO->use_shader = true;
-        }
+        SculptShaderCGO = CGOOptimizeToVBONotIndexed(SculptCGO);
       }
 
       auto* cgo = SculptShaderCGO ? SculptShaderCGO : SculptCGO;

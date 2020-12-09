@@ -290,7 +290,7 @@ void RepDistDash::render(RenderInfo* info)
                   if (ok) ok &= CGOSpecial(tmpCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_DASH);
                   convertcgo = CGOConvertLinesToTrilines(I->shaderCGO, false);
 		} else {
-		  convertcgo = CGOOptimizeToVBONotIndexedNoShader(I->shaderCGO, 0);
+                  convertcgo = CGOOptimizeToVBONotIndexedNoShader(I->shaderCGO);
 		}
                 I->shaderCGO_has_trilines = trilines;
 		if (ok) ok &= CGOEnable(tmpCGO, GL_DASH_TRANSPARENCY_DEPTH_TEST);

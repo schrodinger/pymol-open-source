@@ -120,64 +120,53 @@ RepCylBond::~RepCylBond()
 static int RepCylBondCGOGenerate(RepCylBond * I, RenderInfo * info)
 {
   PyMOLGlobals *G = I->G;
-  int ok = true;
 
-  if (ok && I->primitiveCGO){
-    ok &= CGOAppendNoStop(I->renderCGO, I->primitiveCGO);
-  }
-  if (ok){
-    CGO *convertcgo = NULL;
-    bool use_shader, shader_mode;
-    ok &= CGOStop(I->renderCGO);
-    use_shader = SettingGetGlobal_b(G, cSetting_stick_use_shader)
-                 && SettingGetGlobal_b(G, cSetting_use_shaders);
-    shader_mode = use_shader && SettingGetGlobal_b(G, cSetting_stick_as_cylinders) 
-      && SettingGetGlobal_b(G, cSetting_render_as_cylinders);
-    if (ok && shader_mode && G->ShaderMgr->ShaderPrgExists("cylinder")) { //GLSL
-      CGO *newCGO = NULL;
-      if (ok){
-        CGO *convertcgo2 = CGOOptimizeSpheresToVBONonIndexed(I->renderCGO, 0, true);
-        if (ok){
-          newCGO = CGONew(G);
-          CHECKOK(ok, newCGO);
-          ok &= CGOEnable(newCGO, GL_CYLINDER_SHADER);
-          convertcgo = CGOConvertShaderCylindersToCylinderShader(I->renderCGO,  newCGO);
-          ok &= CGOAppendNoStop(newCGO, convertcgo);
-          if (ok) ok &= CGODisable(newCGO, GL_CYLINDER_SHADER);
-          if (convertcgo2){
-            ok &= CGOAppendNoStop(newCGO, convertcgo2);
-          }
-          ok &= CGOStop(newCGO);
-        }
-        CGOFreeWithoutVBOs(convertcgo2);
-      }
-      CGOFreeWithoutVBOs(convertcgo);
-      convertcgo = newCGO;
+  const CGO* input = I->primitiveCGO;
+  assert(input);
+
+  bool const use_shader = info->use_shaders && //
+                          SettingGet<bool>(*I->cs, cSetting_stick_use_shader);
+  bool const as_cylinders =
+      use_shader && //
+      SettingGet<bool>(*I->cs, cSetting_stick_as_cylinders) &&
+      SettingGet<bool>(*I->cs, cSetting_render_as_cylinders) &&
+      G->ShaderMgr->ShaderPrgExists("cylinder");
+
+  std::unique_ptr<CGO> convertcgo;
+
+  if (as_cylinders) {
+    convertcgo.reset(CGONew(G));
+
+    CGOEnable(convertcgo.get(), GL_CYLINDER_SHADER);
+    std::unique_ptr<CGO> cylindercgo(
+        CGOConvertShaderCylindersToCylinderShader(input, convertcgo.get()));
+    convertcgo->move_append(std::move(*cylindercgo));
+    CGODisable(convertcgo.get(), GL_CYLINDER_SHADER);
+
+    std::unique_ptr<CGO> spherescgo(
+        CGOOptimizeSpheresToVBONonIndexed(input, 0, true));
+    if (spherescgo) {
+      convertcgo->move_append(std::move(*spherescgo));
+    }
+  } else {
+    std::unique_ptr<CGO> simplified(CGOSimplify(input, 0, //
+        SettingGet<int>(G, cSetting_cgo_sphere_quality),
+        SettingGet<int>(G, cSetting_stick_round_nub)));
+    p_return_val_if_fail(simplified, false);
+    if (use_shader) {
+      convertcgo.reset(CGOOptimizeToVBONotIndexed(simplified.get()));
     } else {
-      CGO *convertcgo2 = CGOSimplify(I->renderCGO, 0, SettingGet_i(G, NULL, NULL, cSetting_cgo_sphere_quality), SettingGetGlobal_i(G, cSetting_stick_round_nub));
-      CHECKOK(ok, convertcgo2);
-      if (ok){
-        convertcgo = CGOCombineBeginEnd(convertcgo2, 0);
-        CHECKOK(ok, convertcgo);
-      }
-      CGOFree(convertcgo2);
-      if (ok && use_shader){
-        convertcgo2 = convertcgo;
-        if (ok){
-          convertcgo = CGOOptimizeToVBONotIndexed(convertcgo2, 0);
-          CHECKOK(ok, convertcgo);
-        }
-        CGOFree(convertcgo2);
-      }
-    }
-    if (convertcgo!=NULL){
-      CGOFree(I->renderCGO);
-      I->renderCGO = convertcgo;
-      convertcgo = NULL;
-      CGOSetUseShader(I->renderCGO, use_shader);
+      convertcgo.reset(CGOCombineBeginEnd(simplified.get()));
     }
   }
-  return ok;
+
+  p_return_val_if_fail(convertcgo, false);
+
+  assert(!I->renderCGO);
+  I->renderCGO = convertcgo.release();
+  CGOSetUseShader(I->renderCGO, use_shader);
+
+  return true;
 }
 
 void RepCylBond::render(RenderInfo * info)
@@ -211,12 +200,8 @@ void RepCylBond::render(RenderInfo * info)
       }
     } else { /* else not pick, i.e., when rendering */
       if (!I->renderCGO){
-        I->renderCGO = CGONew(G);
-        CHECKOK(ok, I->renderCGO);
-        if (ok){
-          CGOSetUseShader(I->renderCGO, use_shader);
-        }
         ok &= RepCylBondCGOGenerate(I, info);
+        assert(I->renderCGO);
       }
       const float *color = ColorGet(G, I->obj->Color);
       I->renderCGO->debug = SettingGetGlobal_i(G, cSetting_stick_debug);

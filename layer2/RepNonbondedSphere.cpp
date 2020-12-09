@@ -86,7 +86,6 @@ void RepNonbondedSphere::render(RenderInfo* info)
             I->shaderCGO = CGOOptimizeSpheresToVBONonIndexed(I->primitiveCGO, 0, true);
           } else {
             ok_assert(1, I->shaderCGO = CGOSimplify(I->primitiveCGO, 0, SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_nb_spheres_quality)));
-            ok_assert(1, CGOCombineBeginEnd(&I->shaderCGO));
             ok_assert(1, CGOOptimizeToVBONotIndexed(&I->shaderCGO));
           }
           I->shaderCGO->use_shader = true;

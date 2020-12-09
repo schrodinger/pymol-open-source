@@ -8421,7 +8421,6 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
 			    ObjectMoleculeRenderSele((ObjectMolecule *) rec1->obj, curState, sele,
 						     vis_only, NULL);
 			  } else {
-			    CGO *drawArrayCGO = NULL;
 			    rec1->gridSlotSelIndicatorsCGO = CGONew(G);
 			    CGODotwidth(rec1->gridSlotSelIndicatorsCGO, gl_width);
 			    CGOBegin(rec1->gridSlotSelIndicatorsCGO, GL_POINTS);
@@ -8429,12 +8428,12 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
 						     vis_only, rec1->gridSlotSelIndicatorsCGO);
 			    CGOEnd(rec1->gridSlotSelIndicatorsCGO);
 			    CGOStop(rec1->gridSlotSelIndicatorsCGO);
-			    drawArrayCGO = CGOCombineBeginEnd(rec1->gridSlotSelIndicatorsCGO, 0);
-			    CGOFree(rec1->gridSlotSelIndicatorsCGO);
-			    rec1->gridSlotSelIndicatorsCGO = CGOOptimizeToVBONotIndexedNoShader(drawArrayCGO, 0);
-			    CGOFree(drawArrayCGO);
-			    rec1->gridSlotSelIndicatorsCGO->use_shader = true;
-			    ExecutiveRenderIndicatorCGO(G, rec1->gridSlotSelIndicatorsCGO);
+                            CGO* optimized = CGOOptimizeToVBONotIndexedNoShader(
+                                rec1->gridSlotSelIndicatorsCGO);
+                            CGOFree(rec1->gridSlotSelIndicatorsCGO);
+                            rec1->gridSlotSelIndicatorsCGO = optimized;
+                            assert(rec1->gridSlotSelIndicatorsCGO->use_shader);
+                            ExecutiveRenderIndicatorCGO(G, rec1->gridSlotSelIndicatorsCGO);
 			  }
 			}
 		      } else {
@@ -8445,18 +8444,16 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
 		}
 		if (use_shader){
 		  if (!slot){
-		    CGO *drawArrayCGO = NULL;
 		    CGOEnd(I->selIndicatorsCGO);
 		    CGOStop(I->selIndicatorsCGO);
-		    drawArrayCGO = CGOCombineBeginEnd(I->selIndicatorsCGO, 0);
-		    CGOFree(I->selIndicatorsCGO);
-		    I->selIndicatorsCGO = CGOOptimizeToVBONotIndexedNoShader(drawArrayCGO, 0);
-		    CGOFree(drawArrayCGO);
-		    if (I->selIndicatorsCGO){
-		      I->selIndicatorsCGO->use_shader = true;
-		      return ExecutiveRenderSelections(G, curState, slot, grid);
-		    } else
-		      return;
+                    CGO* optimized =
+                        CGOOptimizeToVBONotIndexedNoShader(I->selIndicatorsCGO);
+                    CGOFree(I->selIndicatorsCGO);
+                    if (I->selIndicatorsCGO = optimized) {
+                      assert(I->selIndicatorsCGO->use_shader);
+                      ExecutiveRenderSelections(G, curState, slot, grid);
+                    }
+                    return;
 		  }
 		} else {
 		  glEnd();

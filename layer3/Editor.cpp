@@ -1675,26 +1675,20 @@ void EditorRender(PyMOLGlobals * G, int state)
       }
     }
     if (shaderCGO){
-      CGO *convertcgo = NULL;
       int ok = true;
       CGOStop(shaderCGO);
       CHECKOK(ok, shaderCGO);
-      convertcgo = CGOCombineBeginEnd(shaderCGO, 0);
-      CHECKOK(ok, convertcgo);
-      CGOFree(shaderCGO);
       if (ok){
-	CGO *tmpCGO = CGONew(G), *convertcgo2 = NULL;
-	if (ok) ok &= CGOEnable(tmpCGO, GL_DEFAULT_SHADER);
+        CGO* tmpCGO = CGONew(G);
+        if (ok) ok &= CGOEnable(tmpCGO, GL_DEFAULT_SHADER);
 	if (ok) ok &= CGODisable(tmpCGO, GL_TWO_SIDED_LIGHTING);
-	convertcgo2 = CGOOptimizeToVBONotIndexedNoShader(convertcgo, 0);
-	if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo2);
-	if (ok) ok &= CGODisable(tmpCGO, GL_DEFAULT_SHADER);
+        tmpCGO->free_append(CGOOptimizeToVBONotIndexedNoShader(shaderCGO));
+        if (ok) ok &= CGODisable(tmpCGO, GL_DEFAULT_SHADER);
 	if (ok) ok &= CGOStop(tmpCGO);
-	CGOFreeWithoutVBOs(convertcgo2);
 	I->shaderCGO = tmpCGO;
 	I->shaderCGO->use_shader = true;
       }
-      CGOFree(convertcgo);
+      CGOFree(shaderCGO);
       if (ok){
 	CGORenderGL(I->shaderCGO, NULL, NULL, NULL, NULL, NULL);
       }

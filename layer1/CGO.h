@@ -690,6 +690,8 @@ public:
   CGO(PyMOLGlobals* G, int size = 0);
   ~CGO();
 
+  CGO(CGO const& other) = delete;
+
   PyMOLGlobals *G { nullptr };
   float *op { nullptr };
   size_t c = 0;
@@ -798,8 +800,9 @@ public:
   }
 
   // Appends the source CGO onto this CGO
-  int append(const CGO * source, bool stopAtEnd);
-  void move_append(CGO * source);
+  bool append(const CGO& source, bool stopAtEnd = false);
+  void move_append(CGO&& source);
+  void free_append(CGO * &&source);
   void free_append(CGO * &source);
 
   // Allocates in our CGO data pool
@@ -872,25 +875,27 @@ void CGOFree(CGO * &I, bool withVBOs=true);
 
 CGO *CGODrawText(const CGO * I, int est, float *camera);
 
-CGO *CGOSimplify(const CGO * I, int est, short sphere_quality = -1, bool stick_round_nub = true);
+CGO* CGOSimplify(const CGO* I, int est = 0, short sphere_quality = -1,
+    bool stick_round_nub = true);
 CGO *CGOSimplifyNoCompress(const CGO * I, int est, short sphere_quality = -1, bool stick_round_nub = true);
 
 // -1 - no lines, 0 - some no interpolation, 1 - all interpolation, 2 - all no interpolation
 bool CGOCombineBeginEnd(CGO ** I, bool do_not_split_lines = false);
-CGO *CGOCombineBeginEnd(const CGO * I, int est, bool do_not_split_lines = false);
+CGO* CGOCombineBeginEnd(const CGO* I, int est = 0, bool do_not_split_lines = false);
 
 void CGOFreeVBOs(CGO *I);
 
-CGO *CGOOptimizeToVBOIndexed(CGO * I, int est=0, const float *color=NULL, bool addshaders=true, bool embedTransparencyInfo=false);
+CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est=0, const float *color=NULL, bool addshaders=true, bool embedTransparencyInfo=false);
 #define CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(I, est, color, addshaders) CGOOptimizeToVBOIndexed(I, est, color, addshaders, true)
 #define CGOOptimizeToVBOIndexedWithColor CGOOptimizeToVBOIndexed
 #define CGOOptimizeToVBOIndexedNoShader(I, est) CGOOptimizeToVBOIndexed(I, est, NULL, false)
 
 bool CGOOptimizeToVBONotIndexed(CGO ** I);
-CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders=true, float **returnedData=NULL);
+CGO* CGOOptimizeToVBONotIndexed(const CGO* I, int est = 0,
+    bool addshaders = true, float** returnedData = nullptr);
 
 #define CGOOptimizeToVBONotIndexedWithReturnedData CGOOptimizeToVBONotIndexed
-#define CGOOptimizeToVBONotIndexedNoShader(I, est) CGOOptimizeToVBONotIndexed(I, est, false)
+#define CGOOptimizeToVBONotIndexedNoShader(I) CGOOptimizeToVBONotIndexed(I, 0, false)
 
 
 CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est=0, bool addshaders=false, CGO *leftOverCGO=NULL);

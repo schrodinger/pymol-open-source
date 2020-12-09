@@ -100,11 +100,8 @@ void RepEllipsoid::render(RenderInfo* info)
 
 	if (use_shaders){
 	  if (!I->shaderCGO){
-	    CGO *convertcgo = NULL;
-	    convertcgo = CGOCombineBeginEnd(I->std, 0);	    
-	    I->shaderCGO = CGOOptimizeToVBONotIndexed(convertcgo, 0);
-	    I->shaderCGO->use_shader = true;
-	    CGOFree(convertcgo);
+            I->shaderCGO = CGOOptimizeToVBONotIndexed(I->std, 0);
+            assert(I->shaderCGO->use_shader);
 	  }
 	} else {
 	  CGOFree(I->shaderCGO);	  

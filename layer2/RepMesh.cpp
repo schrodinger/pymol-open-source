@@ -281,8 +281,8 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 	  } else {
 	    CGO *tmpCGO = CGONew(G);
 	    if (ok) ok &= CGOEnable(tmpCGO, GL_DEFAULT_SHADER);
-	    convertcgo = CGOOptimizeToVBONotIndexedNoShader(I->shaderCGO, 0);
-	    if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
+            convertcgo = CGOOptimizeToVBONotIndexedNoShader(I->shaderCGO);
+            if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
 	    if (ok) ok &= CGODisable(tmpCGO, GL_DEFAULT_SHADER);
 	    if (ok) ok &= CGOStop(tmpCGO);
 	    CGOFreeWithoutVBOs(convertcgo);

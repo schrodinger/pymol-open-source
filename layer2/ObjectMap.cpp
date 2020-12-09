@@ -1681,9 +1681,8 @@ void ObjectMap::invalidate(cRep_t rep, cRepInv_t level, int state)
 /* Has no prototype */
 static CGO* ObjectMapCGOGenerate(PyMOLGlobals *G, float* corner)
 {
-  int ok = true;
-  CGO *convertCGO = NULL;
-  CGO *shaderCGO = CGONewSized(G, 0);
+  CGO cgo_value(G);
+  CGO* const shaderCGO = &cgo_value;
   CGOBegin(shaderCGO, GL_LINES);
 
   CGOVertexv(shaderCGO, corner + 3 * 0);
@@ -1726,24 +1725,7 @@ static CGO* ObjectMapCGOGenerate(PyMOLGlobals *G, float* corner)
 
   CGOStop(shaderCGO);
 
-  convertCGO = CGOCombineBeginEnd(shaderCGO, 0);
-  CHECKOK(ok, convertCGO);
-  CGOFree(shaderCGO);
-  
-  shaderCGO = convertCGO;
-  if (ok)
-    convertCGO = CGOOptimizeToVBONotIndexedWithReturnedData(shaderCGO, 0, 0, NULL);
-  else
-    return NULL;
-  CHECKOK(ok, convertCGO);
-  if (!ok)
-    return NULL;
-  CGOFree(shaderCGO);
-  shaderCGO = convertCGO;
-
-  shaderCGO->use_shader = true;
-
-  return shaderCGO;
+  return CGOOptimizeToVBONotIndexedWithReturnedData(shaderCGO, 0, false);
 }
 
 void ObjectMap::render(RenderInfo * info)

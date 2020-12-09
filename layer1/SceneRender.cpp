@@ -1659,29 +1659,15 @@ void SceneDrawStencilInBuffer(PyMOLGlobals * G, CScene *I, int stereo_mode){
 #endif
 }
 
-CGO *GenerateUnitScreenCGO(PyMOLGlobals * G){
-  int ok = true;
-  CGO *cgo2 = NULL, *ret = NULL;
-  CGO *cgo = CGONew(G);
-  ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
-  if (ok)
-    ok &= CGOVertex(cgo, -1.f, -1.f, 0.98f);
-  if (ok)
-    ok &= CGOVertex(cgo, 1.f, -1.f, 0.98f);
-  if (ok)
-    ok &= CGOVertex(cgo, -1.f, 1.f, 0.98f);
-  if (ok)
-    ok &= CGOVertex(cgo, 1.f, 1.f, 0.98f);
-  if (ok)
-    ok &= CGOEnd(cgo);
-  if (ok)
-    ok &= CGOStop(cgo);
-  if (ok)
-    cgo2 = CGOCombineBeginEnd(cgo, 0);
-  CHECKOK(ok, cgo2);
-  CGOFree(cgo);
-  if (ok)
-    ret = CGOOptimizeToVBONotIndexed(cgo2, 0);
-  CGOFree(cgo2);
-  return ret;
+CGO* GenerateUnitScreenCGO(PyMOLGlobals* G)
+{
+  CGO cgo(G);
+  CGOBegin(&cgo, GL_TRIANGLE_STRIP);
+  CGOVertex(&cgo, -1.f, -1.f, 0.98f);
+  CGOVertex(&cgo, 1.f, -1.f, 0.98f);
+  CGOVertex(&cgo, -1.f, 1.f, 0.98f);
+  CGOVertex(&cgo, 1.f, 1.f, 0.98f);
+  CGOEnd(&cgo);
+  assert(cgo.has_begin_end);
+  return CGOOptimizeToVBONotIndexed(&cgo, 0);
 }
