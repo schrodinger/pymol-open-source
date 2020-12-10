@@ -4,6 +4,17 @@ from pymol import testing, invocation
 
 class TestPyMOL2(testing.PyMOLTestCase):
 
+    @testing.requires_version('2.2')
+    def testDo(self):
+        import pymol
+        import pymol2
+        p3 = pymol # singleton
+        with pymol2.PyMOL() as p1:
+            p3.cmd.do("viewport 100, 200")
+            p1.cmd.do("viewport 300, 400")
+            self.assertEqual(p3.cmd.get_viewport(), (100, 200))  # singleton
+            self.assertEqual(p1.cmd.get_viewport(), (300, 400))
+
     @testing.requires_version('1.8.5')
     def testMultiInstance(self):
         import pymol
