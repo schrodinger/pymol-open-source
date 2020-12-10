@@ -422,8 +422,8 @@ void TetsurfGetRange(PyMOLGlobals * G,
 
   /* get min/max extents of map in fractional space */
 
-  transform33f3f(cryst->RealToFrac, rmn, imn);
-  transform33f3f(cryst->RealToFrac, rmx, imx);
+  transform33f3f(cryst->realToFrac(), rmn, imn);
+  transform33f3f(cryst->realToFrac(), rmx, imx);
 
   mix[0] = mn[0];
   mix[1] = mn[1];
@@ -460,7 +460,7 @@ void TetsurfGetRange(PyMOLGlobals * G,
   /* compute min/max of query in fractional space */
 
   for(b = 0; b < 8; b++) {
-    transform33f3f(cryst->RealToFrac, mix + 3 * b, imix + 3 * b);
+    transform33f3f(cryst->realToFrac(), mix + 3 * b, imix + 3 * b);
   }
 
   for(a = 0; a < 3; a++) {

@@ -1909,7 +1909,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   int *idx;
   int nBond = 0;
   int b1, b2, nReal, maxAt;
-  CSymmetry *symmetry = NULL;
+  std::unique_ptr<CSymmetry> symmetry;
   int auto_show = RepGetAutoShowMask(G);
   int reformat_names = SettingGetGlobal_i(G, cSetting_pdb_reformat_names_mode);
   int truncate_resn = SettingGetGlobal_b(G, cSetting_pdb_truncate_residue_name);
@@ -2196,7 +2196,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       }
     } else if(strstartswith(p, "CRYST1") && (!*restart_model)) {
       if(!symmetry){
-        symmetry = new CSymmetry(G);
+        symmetry.reset(new CSymmetry(G));
 	CHECKOK(ok, symmetry);
       }
       if(symmetry) {
@@ -2205,36 +2205,41 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           " PDBStrToCoordSet: Attempting to read symmetry information\n" ENDFB(G);
         p = nskip(p, 6);
         symFlag = true;
+        float cellparams[3];
         p = ncopy(cc, p, 9);
-        if(sscanf(cc, "%f", &symmetry->Crystal.Dim[0]) != 1)
-          symFlag = false;
-        p = ncopy(cc, p, 9);
-        if(sscanf(cc, "%f", &symmetry->Crystal.Dim[1]) != 1)
+        if(sscanf(cc, "%f", cellparams + 0) != 1)
           symFlag = false;
         p = ncopy(cc, p, 9);
-        if(sscanf(cc, "%f", &symmetry->Crystal.Dim[2]) != 1)
+        if(sscanf(cc, "%f", cellparams + 1) != 1)
+          symFlag = false;
+        p = ncopy(cc, p, 9);
+        if(sscanf(cc, "%f", cellparams + 2) != 1)
+          symFlag = false;
+
+        symmetry->Crystal.setDims(cellparams);
+
+        p = ncopy(cc, p, 7);
+        if(sscanf(cc, "%f", cellparams + 0) != 1)
           symFlag = false;
         p = ncopy(cc, p, 7);
-        if(sscanf(cc, "%f", &symmetry->Crystal.Angle[0]) != 1)
+        if(sscanf(cc, "%f", cellparams + 1) != 1)
           symFlag = false;
         p = ncopy(cc, p, 7);
-        if(sscanf(cc, "%f", &symmetry->Crystal.Angle[1]) != 1)
+        if(sscanf(cc, "%f", cellparams + 2) != 1)
           symFlag = false;
-        p = ncopy(cc, p, 7);
-        if(sscanf(cc, "%f", &symmetry->Crystal.Angle[2]) != 1)
-          symFlag = false;
+
+        symmetry->Crystal.setAngles(cellparams);
+
         p = nskip(p, 1);
-        p = ncopy(symmetry->SpaceGroup, p, 11);
-        UtilCleanStr(symmetry->SpaceGroup);
+        p = ncopy(cc, p, 11);
+        UtilCleanStr(cc);
+        symmetry->setSpaceGroup(cc);
         p = ncopy(cc, p, 3);
         if(sscanf(cc, "%d", &symmetry->PDBZValue) != 1)
           symmetry->PDBZValue = 1;
         if(!symFlag) {
           ErrMessage(G, "PDBStrToCoordSet", "Error reading CRYST1 record\n");
-          SymmetryFree(symmetry);
-          symmetry = NULL;
-        } else {
-          SymmetryUpdate(symmetry);
+          symmetry.reset();
         }
       }
     } else if(strstartswith(p, "SCALE") && (!*restart_model) && info) { /* SCALEn */
@@ -2724,8 +2729,7 @@ pqr_done:
     cset->Coord = pymol::vla_take_ownership(coord);
     cset->TmpBond = pymol::vla_take_ownership(bond);
     cset->NTmpBond = nBond;
-    if(symmetry)
-      cset->Symmetry = std::unique_ptr<CSymmetry>(symmetry);
+    cset->Symmetry = std::move(symmetry);
     if(atInfoPtr)
       *atInfoPtr = atInfo;
     
@@ -3520,7 +3524,7 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     I->NAtom = 0;
   if(ok){
     CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 10);
-    I->Symmetry = SymmetryNewFromPyList(G, val);
+    I->Symmetry.reset(SymmetryNewFromPyList(G, val));
     CPythonVal_Free(val);
   }
   /* 11 was CurCSet */
@@ -3563,7 +3567,7 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
   PyList_SetItem(result, 7, ObjectMoleculeAtomAsPyList(I));
   PyList_SetItem(result, 8, PyInt_FromLong(I->DiscreteFlag));
   PyList_SetItem(result, 9, PyInt_FromLong(I->DiscreteFlag ? I->NAtom : 0 /* NDiscrete */));
-  PyList_SetItem(result, 10, SymmetryAsPyList(I->Symmetry));
+  PyList_SetItem(result, 10, SymmetryAsPyList(I->Symmetry.get()));
   PyList_SetItem(result, 11, PyInt_FromLong(0 /* CurCSet */));
   PyList_SetItem(result, 12, PyInt_FromLong(I->BondCounter));
   PyList_SetItem(result, 13, PyInt_FromLong(I->AtomCounter));

@@ -535,12 +535,12 @@ struct MoleculeExporterPDB : public MoleculeExporter {
     const auto* sym = m_iter.cs->getSymmetry();
 
     if (sym) {
-      const auto& dim   = sym->Crystal.Dim;
-      const auto& angle = sym->Crystal.Angle;
+      const auto* dim = sym->Crystal.dims();
+      const auto* angle = sym->Crystal.angles();
       m_offset += VLAprintf(m_buffer, m_offset,
           "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %-11s%4d\n",
           dim[0], dim[1], dim[2], angle[0], angle[1], angle[2],
-          sym->SpaceGroup, sym->PDBZValue);
+          sym->spaceGroup(), sym->PDBZValue);
       m_cryst1_written = true;
     }
   }
@@ -641,8 +641,8 @@ struct MoleculeExporterCIF : public MoleculeExporter {
     const auto* sym = m_iter.cs->getSymmetry();
 
     if (sym) {
-      const auto& dim   = sym->Crystal.Dim;
-      const auto& angle = sym->Crystal.Angle;
+      const auto* dim = sym->Crystal.dims();
+      const auto* angle = sym->Crystal.angles();
       m_offset += VLAprintf(m_buffer, m_offset, "#\n"
           "_cell.entry_id %s\n"
           "_cell.length_a %.3f\n"
@@ -656,7 +656,7 @@ struct MoleculeExporterCIF : public MoleculeExporter {
           cifrepr(m_molecule_name),
           dim[0], dim[1], dim[2], angle[0], angle[1], angle[2],
           cifrepr(m_molecule_name),
-          cifrepr(sym->SpaceGroup));
+          cifrepr(sym->spaceGroup()));
     }
   }
 
@@ -1193,10 +1193,11 @@ struct MoleculeExporterMAE : public MoleculeExporter {
     }
 
     if (sym) {
+      const auto* dim = sym->Crystal.dims();
+      const auto* angle = sym->Crystal.angles();
       m_offset += VLAprintf(m_buffer, m_offset, "%f %f %f %f %f %f %s\n",
-          sym->Crystal.Dim[0], sym->Crystal.Dim[1], sym->Crystal.Dim[2],
-          sym->Crystal.Angle[0], sym->Crystal.Angle[1], sym->Crystal.Angle[2],
-          MaeExportStrRepr(sym->SpaceGroup).c_str());
+          dim[0], dim[1], dim[2], angle[0], angle[1], angle[2],
+          MaeExportStrRepr(sym->spaceGroup()).c_str());
     }
 
 #ifdef _PYMOL_MAE_PROP_EXPORT
@@ -1483,10 +1484,10 @@ public:
     const auto* sym = m_iter.cs->getSymmetry();
 
     if (sym) {
-      const auto& dim = sym->Crystal.Dim;
-      const auto& angle = sym->Crystal.Angle;
+      const auto* dim = sym->Crystal.dims();
+      const auto* angle = sym->Crystal.angles();
       m_raw.unitCell = {dim[0], dim[1], dim[2], angle[0], angle[1], angle[2]};
-      m_raw.spaceGroup = sym->SpaceGroup;
+      m_raw.spaceGroup = sym->spaceGroup();
     }
   }
 

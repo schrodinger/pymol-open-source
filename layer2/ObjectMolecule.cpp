@@ -1088,18 +1088,11 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
               if(sscanf(cc, "%f", &angle[2]) != 1)
                 angles = false;
               if(periodic) {
-                if(!cs->PeriodicBox)
-                  cs->PeriodicBox = pymol::make_unique<CCrystal>(G);
-                cs->PeriodicBox->Dim[0] = box[0];
-                cs->PeriodicBox->Dim[1] = box[1];
-                cs->PeriodicBox->Dim[2] = box[2];
+                cs->Symmetry = pymol::make_unique<CSymmetry>(G);
+                cs->Symmetry->Crystal.setDims(box);
                 if(angles) {
-                  cs->PeriodicBox->Angle[0] = angle[0];
-                  cs->PeriodicBox->Angle[1] = angle[1];
-                  cs->PeriodicBox->Angle[2] = angle[2];
+                  cs->Symmetry->Crystal.setAngles(angle);
                 }
-                CrystalUpdate(cs->PeriodicBox.get());
-                /*                    CrystalDump(cs->PeriodicBox); */
                 p = nextline(p);
                 b = 0;
               }
@@ -1200,14 +1193,15 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                           r_cent[0] /= r_cnt;
                           r_cent[1] /= r_cnt;
                           r_cent[2] /= r_cnt;
-                          transform33f3f(cs->PeriodicBox->RealToFrac, r_cent, r_cent);
+                          const auto& periodicbox = cs->getSymmetry()->Crystal;
+                          transform33f3f(periodicbox.realToFrac(), r_cent, r_cent);
                           r_trans[0] = fmodf(1000.0F + shift[0] + r_cent[0], 1.0F);
                           r_trans[1] = fmodf(1000.0F + shift[1] + r_cent[1], 1.0F);
                           r_trans[2] = fmodf(1000.0F + shift[2] + r_cent[2], 1.0F);
                           r_trans[0] -= r_cent[0];
                           r_trans[1] -= r_cent[1];
                           r_trans[2] -= r_cent[2];
-                          transform33f3f(cs->PeriodicBox->FracToReal, r_trans, r_trans);
+                          transform33f3f(periodicbox.fracToReal(), r_trans, r_trans);
                           fp = r_fp_start;
                           while(fp < r_fp_stop) {
                             *(fp++) += r_trans[0];
@@ -2149,30 +2143,22 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
       ok = ok && (sscanf(cc, "%f", &BOX3) == 1);
 
       if(ok) {
-        if(!cset->PeriodicBox)
-          cset->PeriodicBox = pymol::make_unique<CCrystal>(G);
-        cset->PeriodicBox->Dim[0] = BOX1;
-        cset->PeriodicBox->Dim[1] = BOX2;
-        cset->PeriodicBox->Dim[2] = BOX3;
+        float angle[3] = {90.f, BETA, 90.f};
+
         if((BETA > 109.47) && (BETA < 109.48)) {
           cset->PeriodicBoxType = CoordSet::Octahedral;
-          cset->PeriodicBox->Angle[0] =
-            (float) (2.0 * acos(1.0 / sqrt(3.0)) * 180.0 / PI);
-          cset->PeriodicBox->Angle[1] =
-            (float) (2.0 * acos(1.0 / sqrt(3.0)) * 180.0 / PI);
-          cset->PeriodicBox->Angle[2] =
-            (float) (2.0 * acos(1.0 / sqrt(3.0)) * 180.0 / PI);
+          angle[0] = 109.47122;
+          angle[1] = 109.47122;
+          angle[2] = 109.47122;
         } else if(BETA == 60.0) {
-          cset->PeriodicBox->Angle[0] = 60.0;   /* rhombic dodecahedron (from ptraj.c) */
-          cset->PeriodicBox->Angle[1] = 90.0;
-          cset->PeriodicBox->Angle[2] = 60.0;
-        } else {
-          cset->PeriodicBox->Angle[0] = 90.0;
-          cset->PeriodicBox->Angle[1] = BETA;
-          cset->PeriodicBox->Angle[2] = 90.0;
+          angle[0] = 60.0;   /* rhombic dodecahedron (from ptraj.c) */
+          angle[1] = 90.0;
+          angle[2] = 60.0;
         }
-        CrystalUpdate(cset->PeriodicBox.get());
-        /*        CrystalDump(cset->PeriodicBox); */
+
+        cset->Symmetry = pymol::make_unique<CSymmetry>(G);
+        cset->Symmetry->Crystal.setDims(BOX1, BOX2, BOX3);
+        cset->Symmetry->Crystal.setAngles(angle);
       }
       /* skip periodic box */
 
@@ -2389,10 +2375,8 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
     if(ok && isNew)
       ok &= ObjectMoleculeConnect(I, cset, false);
     if(cset->Symmetry && (!I->Symmetry)) {
-      I->Symmetry = new CSymmetry(*cset->Symmetry);
+      I->Symmetry.reset(new CSymmetry(*cset->Symmetry));
       CHECKOK(ok, I->Symmetry);
-      if (ok)
-        SymmetryUpdate(I->Symmetry);
     }
 
     delete I->CSTmpl;
@@ -2694,7 +2678,7 @@ CSymmetry const* ObjectMolecule::getSymmetry(int state) const
     return cs->Symmetry.get();
   }
 
-  return Symmetry;
+  return Symmetry.get();
 }
 
 /**
@@ -2706,8 +2690,7 @@ bool ObjectMolecule::setSymmetry(CSymmetry const& symmetry, int state)
   bool success = false;
 
   if (all_states) {
-    delete Symmetry;
-    Symmetry = new CSymmetry(symmetry);
+    Symmetry.reset(new CSymmetry(symmetry));
     success = true;
   }
 
@@ -7408,7 +7391,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
           if(tmp) {
             const char *tmp_str = NULL;
             if(PConvPyStrToStrPtr(tmp, &tmp_str)) {
-              UtilNCopy(symmetry->SpaceGroup, tmp_str, sizeof(WordType));
+              symmetry->setSpaceGroup(tmp_str);
             }
             Py_DECREF(tmp);
           }
@@ -7416,8 +7399,8 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
           if(tmp) {
             float cell[6];
             if(PConvPyListToFloatArrayInPlace(tmp, cell, 6)) {
-              copy3f(cell, symmetry->Crystal.Dim);
-              copy3f(cell + 3, symmetry->Crystal.Angle);
+              symmetry->Crystal.setDims(cell);
+              symmetry->Crystal.setAngles(cell + 3);
             }
             Py_DECREF(tmp);
           }
@@ -7478,14 +7461,12 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
     delete I->CSet[frame];
     I->CSet[frame] = cset;
     if (fractional && cset->Symmetry) {
-      CrystalUpdate(&cset->Symmetry->Crystal);
       CoordSetFracToReal(cset, &cset->Symmetry->Crystal);
     }
     if(ok && isNew)
       ok &= ObjectMoleculeConnect(I, cset, auto_bond, connect_mode);
     if(cset->Symmetry && (!I->Symmetry)) {
-      I->Symmetry = new CSymmetry(*cset->Symmetry);
-      SymmetryUpdate(I->Symmetry);
+      I->Symmetry.reset(new CSymmetry(*cset->Symmetry));
     }
     SceneCountFrames(G);
     if (ok)
@@ -11356,9 +11337,6 @@ void ObjectMoleculeCopyNoAlloc(const ObjectMolecule* obj, ObjectMolecule* I)
   BondType *i0;
   const BondType *i1;
   (*I) = (*obj);
-  if (I->Symmetry != nullptr) {
-    I->Symmetry = new CSymmetry(*I->Symmetry);
-  }
   I->Neighbor = NULL;
   I->Sculpt = NULL;
   I->Setting.reset(SettingCopyAll(G, obj->Setting.get(), nullptr));
@@ -11454,8 +11432,6 @@ ObjectMolecule::~ObjectMolecule()
       I->CSet[a] = NULL;
     }
   }
-  if(I->Symmetry)
-    SymmetryFree(I->Symmetry);
   VLAFreeP(I->Neighbor);
   VLAFreeP(I->DiscreteAtmToIdx);
   VLAFreeP(I->DiscreteCSet);
@@ -11591,8 +11567,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(ok && isNew)
         ok &= ObjectMoleculeConnect(I, cset);
       if(ok && cset->Symmetry) {
-        SymmetryFree(I->Symmetry);
-        I->Symmetry = new CSymmetry(*cset->Symmetry);
+        I->Symmetry.reset(new CSymmetry(*cset->Symmetry));
       }
       if (I->Symmetry) {
           /* check scale records */

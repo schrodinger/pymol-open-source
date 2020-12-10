@@ -6265,7 +6265,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, SelectorID_t sele, const char
   }
   if(isNew && info_src) {       /* copy symmetry information, etc. */
     if (targ->Symmetry == nullptr && info_src->Symmetry != nullptr) {
-      targ->Symmetry = new CSymmetry(*info_src->Symmetry);
+      targ->Symmetry.reset(new CSymmetry(*info_src->Symmetry));
     }
   }
 
@@ -9326,14 +9326,12 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
             else
               cs = NULL;
             if(cs) {
-              CCrystal *cryst = cs->PeriodicBox.get();
-              if((!cryst) && (obj->Symmetry))
-                cryst = &obj->Symmetry->Crystal;
-              if(cryst) {
+              const auto* sym = cs->getSymmetry();
+              if (sym) {
                 int idx;
                 idx = cs->atmToIdx(at);
                 if(idx >= 0) {
-                  transform33f3f(cryst->RealToFrac, cs->coordPtr(idx),
+                  transform33f3f(sym->Crystal.realToFrac(), cs->coordPtr(idx),
                                  Vertex.data() + 3 * a);
                   Flag1[a] = true;
                   n1++;
@@ -9358,16 +9356,14 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
                       else
                         cs = NULL;
                       if(cs) {
-                        CCrystal *cryst = cs->PeriodicBox.get();
-                        if((!cryst) && (obj->Symmetry))
-                          cryst = &obj->Symmetry->Crystal;
-                        if(cryst) {
+                        const auto* sym = cs->getSymmetry();
+                        if (sym) {
                           int idx;
                           idx = cs->atmToIdx(at);
                           if(idx >= 0) {
                             float probe[3], probe_i[3];
 
-                            transform33f3f(cryst->RealToFrac, cs->coordPtr(idx),
+                            transform33f3f(sym->Crystal.realToFrac(), cs->coordPtr(idx),
                                            probe);
                               probe_i[0] = (int) floor(probe[0]);
                               probe_i[1] = (int) floor(probe[1]);

@@ -1146,7 +1146,7 @@ pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
           if(SettingGet_b(G, NULL, sele_obj->Setting.get(), cSetting_map_auto_expand_sym)
               && (sele_obj->Symmetry)) {
             // legacy default: take symmetry from molecular object
-            symm = sele_obj->Symmetry;
+            symm = sele_obj->Symmetry.get();
           } else if(SettingGet_b(G, NULL, mapObj->Setting.get(), cSetting_map_auto_expand_sym)) {
             // fallback: take symmetry from map state
             symm = ms->Symmetry.get();
@@ -1322,7 +1322,7 @@ ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
           if(SettingGet_b(G, NULL, sele_obj->Setting.get(), cSetting_map_auto_expand_sym)
               && (sele_obj->Symmetry)) {
             // legacy default: take symmetry from molecular object
-            symm = sele_obj->Symmetry;
+            symm = sele_obj->Symmetry.get();
           } else if(SettingGet_b(G, NULL, mapObj->Setting.get(), cSetting_map_auto_expand_sym)) {
             // fallback: take symmetry from map state
             symm = ms->Symmetry.get();
@@ -5976,13 +5976,13 @@ ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a, fl
   CSymmetry const* symm = obj->getSymmetry(state);
 
   if(symm) {
-    *a = symm->Crystal.Dim[0];
-    *b = symm->Crystal.Dim[1];
-    *c = symm->Crystal.Dim[2];
-    *alpha = symm->Crystal.Angle[0];
-    *beta = symm->Crystal.Angle[1];
-    *gamma = symm->Crystal.Angle[2];
-    UtilNCopy(sgroup, symm->SpaceGroup, sizeof(WordType));
+    *a = symm->Crystal.dims()[0];
+    *b = symm->Crystal.dims()[1];
+    *c = symm->Crystal.dims()[2];
+    *alpha = symm->Crystal.angles()[0];
+    *beta = symm->Crystal.angles()[1];
+    *gamma = symm->Crystal.angles()[2];
+    UtilNCopy(sgroup, symm->spaceGroup(), sizeof(WordType));
     return true;
   }
 
@@ -6026,14 +6026,9 @@ pymol::Result<> ExecutiveSetSymmetry(PyMOLGlobals* G, const char* sele,
 {
   /* create a new symmetry object for copying */
   CSymmetry symmetry(G);
-  symmetry.Crystal.Dim[0] = a;
-  symmetry.Crystal.Dim[1] = b;
-  symmetry.Crystal.Dim[2] = c;
-  symmetry.Crystal.Angle[0] = alpha;
-  symmetry.Crystal.Angle[1] = beta;
-  symmetry.Crystal.Angle[2] = gamma;
-  UtilNCopy(symmetry.SpaceGroup, sgroup, sizeof(WordType));
-  SymmetryUpdate(&symmetry);
+  symmetry.Crystal.setDims(a, b, c);
+  symmetry.Crystal.setAngles(alpha, beta, gamma);
+  symmetry.setSpaceGroup(sgroup);
 
   if (!ExecutiveSetSymmetry(G, sele, state, symmetry, quiet)) {
     return pymol::Error("no object selected");
@@ -8449,7 +8444,7 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
                     CGO* optimized =
                         CGOOptimizeToVBONotIndexedNoShader(I->selIndicatorsCGO);
                     CGOFree(I->selIndicatorsCGO);
-                    if (I->selIndicatorsCGO = optimized) {
+                    if ((I->selIndicatorsCGO = optimized)) {
                       assert(I->selIndicatorsCGO->use_shader);
                       ExecutiveRenderSelections(G, curState, slot, grid);
                     }
@@ -14058,7 +14053,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
   auto tc = glm::value_ptr(tc_vec);
 
   /* Transformation: RealToFrac (3x3) * tc (3x1) = (3x1) */
-  transform33f3f(sym->Crystal.RealToFrac, tc, tc);
+  transform33f3f(sym->Crystal.realToFrac(), tc, tc);
 
   /* 2.  Copy the coordinates for the atoms in this selection into op */
   op.code = OMOP_VERT;
@@ -14103,7 +14098,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
             }
 
             float mat[16];
-            copy33f44f(sym->Crystal.RealToFrac, mat);
+            copy33f44f(sym->Crystal.realToFrac(), mat);
             left_multiply44f44f(sym->getSymMat(a), mat);
 
             float ts[3];
@@ -14123,7 +14118,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
             m[11] = ts[2] + z;
 
             left_multiply44f44f(const_cast<float const*>(m), mat);
-            copy33f44f(sym->Crystal.FracToReal, m);
+            copy33f44f(sym->Crystal.fracToReal(), m);
             left_multiply44f44f(const_cast<float const*>(m), mat);
 
             if (is_identityf(4, mat)) {

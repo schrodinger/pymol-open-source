@@ -802,12 +802,7 @@ int CoordSetSetAtomVertex(CoordSet * I, int at, const float *v)
 /*========================================================================*/
 void CoordSetRealToFrac(CoordSet * I, const CCrystal * cryst)
 {
-  int a;
-  float* v = I->Coord.data();
-  for(a = 0; a < I->NIndex; a++) {
-    transform33f3f(cryst->RealToFrac, v, v);
-    v += 3;
-  }
+  CoordSetTransform33f(I, cryst->realToFrac());
 }
 
 
@@ -861,12 +856,7 @@ void CoordSetGetAverage(const CoordSet * I, float *v0)
 /*========================================================================*/
 void CoordSetFracToReal(CoordSet * I, const CCrystal * cryst)
 {
-  int a;
-  float* v = I->Coord.data();
-  for(a = 0; a < I->NIndex; a++) {
-    transform33f3f(cryst->FracToReal, v, v);
-    v += 3;
-  }
+  CoordSetTransform33f(I, cryst->fracToReal());
 }
 
 /*
@@ -893,7 +883,7 @@ bool CoordSetInsureOrthogonal(PyMOLGlobals * G,
   if (!cryst)
     cryst = &cset->Symmetry->Crystal;
 
-  const float * r2f = cryst->RealToFrac;
+  auto const r2f = cryst->realToFrac();
 
   // are the matrices sufficiently close to be the same?
   if (!sca[3] && !sca[7] && !sca[11] &&
@@ -1541,9 +1531,6 @@ CoordSet::CoordSet(const CoordSet& cs)
   /* deep copy & return ptr to new symmetry */
   if(cs.Symmetry) {
     this->Symmetry = pymol::make_unique<CSymmetry>(*cs.Symmetry);
-  }
-  if(cs.PeriodicBox) {
-    this->PeriodicBox = pymol::make_unique<CCrystal>(*cs.PeriodicBox);
   }
   std::copy(std::begin(cs.Name), std::end(cs.Name), std::begin(this->Name));
   this->PeriodicBoxType = cs.PeriodicBoxType;

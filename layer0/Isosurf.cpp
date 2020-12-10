@@ -516,8 +516,8 @@ int IsosurfExpand(Isofield * field1, Isofield * field2, CCrystal * cryst,
 
   /* get min/max extents of map1 in fractional space */
 
-  transform33f3f(cryst->RealToFrac, rmn, imn);
-  transform33f3f(cryst->RealToFrac, rmx, imx);
+  transform33f3f(cryst->realToFrac(), rmn, imn);
+  transform33f3f(cryst->realToFrac(), rmx, imx);
 
   /* compute step size */
 
@@ -551,7 +551,7 @@ int IsosurfExpand(Isofield * field1, Isofield * field2, CCrystal * cryst,
 
           float *ptr = F4Ptr(field2->points, i, j, k, 0);
           frac[2] = imn[2] + fstep[2] * (k + range[2]);
-          transform33f3f(cryst->FracToReal, frac, ptr);
+          transform33f3f(cryst->fracToReal(), frac, ptr);
 
           /* then compute the value at the coordinate */
 
@@ -687,8 +687,8 @@ int IsosurfGetRange(PyMOLGlobals * G, Isofield * field,
 
   /* get min/max extents of map in fractional space */
 
-  transform33f3f(cryst->RealToFrac, rmn, imn);
-  transform33f3f(cryst->RealToFrac, rmx, imx);
+  transform33f3f(cryst->realToFrac(), rmn, imn);
+  transform33f3f(cryst->realToFrac(), rmx, imx);
 
   mix[0] = mn[0];
   mix[1] = mn[1];
@@ -725,7 +725,7 @@ int IsosurfGetRange(PyMOLGlobals * G, Isofield * field,
   /* compute min/max of query in fractional space */
 
   for(b = 0; b < 8; b++) {
-    transform33f3f(cryst->RealToFrac, mix + 3 * b, imix + 3 * b);
+    transform33f3f(cryst->realToFrac(), mix + 3 * b, imix + 3 * b);
   }
 
   for(a = 0; a < 3; a++) {

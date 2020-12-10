@@ -427,7 +427,7 @@ static void ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
       tst[0] = (a & 0x1) ? mn[0] : mx[0];
       tst[1] = (a & 0x2) ? mn[1] : mx[1];
       tst[2] = (a & 0x4) ? mn[2] : mx[2];
-      transform33f3f(ms->Symmetry->Crystal.RealToFrac, tst, frac_tst);
+      transform33f3f(ms->Symmetry->Crystal.realToFrac(), tst, frac_tst);
       if(!a) {
         copy3f(frac_tst, frac_mn);
         copy3f(frac_tst, frac_mx);
@@ -508,13 +508,15 @@ static void ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
       v[1] = (ms->Min[1]) / ((float) ms->Div[1]);
       v[0] = (ms->Min[0]) / ((float) ms->Div[0]);
 
-      transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMin);
+      auto const& cryst = ms->Symmetry->Crystal;
+
+      transform33f3f(cryst.fracToReal(), v, ms->ExtentMin);
 
       v[2] = ((ms->FDim[2] - 1) + ms->Min[2]) / ((float) ms->Div[2]);
       v[1] = ((ms->FDim[1] - 1) + ms->Min[1]) / ((float) ms->Div[1]);
       v[0] = ((ms->FDim[0] - 1) + ms->Min[0]) / ((float) ms->Div[0]);
 
-      transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMax);
+      transform33f3f(cryst.fracToReal(), v, ms->ExtentMax);
 
       /* new corner */
       {
@@ -526,7 +528,7 @@ static void ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
             v[1] = (b + ms->Min[1]) / ((float) ms->Div[1]);
             for(a = 0; a < ms->FDim[0]; a += (ms->FDim[0] - 1)) {
               v[0] = (a + ms->Min[0]) / ((float) ms->Div[0]);
-              transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vv);
+              transform33f3f(cryst.fracToReal(), v, vv);
               copy3f(vv, ms->Corner + 3 * d);
               d++;
             }
@@ -668,7 +670,7 @@ static void ObjectMapStateDouble(PyMOLGlobals * G, ObjectMapState * ms)
         y = (b & 0x1) ? 0.5F : 0.0F;
         for(a = 0; a < fdim[0]; a++) {
           v[0] = (a + min[0]) / ((float) div[0]);
-          transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+          transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
           x = (a & 0x1) ? 0.5F : 0.0F;
           vt = F4Ptr(field->points, a, b, c, 0);
           copy3f(vr, vt);
@@ -809,7 +811,7 @@ static void ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smoot
             a_2 = old_max[0] - 1;
             x = (v[0] - ((a_2 + old_min[0]) / (float) old_div[0])) * old_div[0];
           }
-          transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+          transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
           vt = F4Ptr(field->points, a, b, c, 0);
           copy3f(vr, vt);
           F3(field->data, a, b, c) = FieldInterpolatef(ms->Field->data.get(),
@@ -831,13 +833,13 @@ static void ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smoot
     v[1] = (ms->Min[1]) / ((float) ms->Div[1]);
     v[0] = (ms->Min[0]) / ((float) ms->Div[0]);
 
-    transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMin);
+    transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMin);
 
     v[2] = ((ms->FDim[2] - 1) + ms->Min[2]) / ((float) ms->Div[2]);
     v[1] = ((ms->FDim[1] - 1) + ms->Min[1]) / ((float) ms->Div[1]);
     v[0] = ((ms->FDim[0] - 1) + ms->Min[0]) / ((float) ms->Div[0]);
 
-    transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMax);
+    transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMax);
 
     /* new corner */
     {
@@ -850,7 +852,7 @@ static void ObjectMapStateHalve(PyMOLGlobals * G, ObjectMapState * ms, int smoot
           v[1] = (b + ms->Min[1]) / ((float) ms->Div[1]);
           for(a = 0; a < ms->FDim[0]; a += (ms->FDim[0] - 1)) {
             v[0] = (a + ms->Min[0]) / ((float) ms->Div[0]);
-            transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vv);
+            transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vv);
             copy3f(vv, ms->Corner + 3 * d);
             d++;
           }
@@ -961,7 +963,7 @@ int ObjectMapStateContainsPoint(ObjectMapState * ms, float *point)
   if(ObjectMapStateValidXtal(ms)) {
     float frac[3];
 
-    transform33f3f(ms->Symmetry->Crystal.RealToFrac, point, frac);
+    transform33f3f(ms->Symmetry->Crystal.realToFrac(), point, frac);
 
     x = (ms->Div[0] * frac[0]);
     y = (ms->Div[1] * frac[1]);
@@ -1023,7 +1025,7 @@ int ObjectMapStateInterpolate(ObjectMapState * ms, const float *array, float *re
 
     while(n--) {
       /* get the fractional coordinate */
-      transform33f3f(ms->Symmetry->Crystal.RealToFrac, inp, frac);
+      transform33f3f(ms->Symmetry->Crystal.realToFrac(), inp, frac);
 
       inp += 3;
 
@@ -1201,7 +1203,7 @@ void ObjectMapStateRegeneratePoints(ObjectMapState * ms)
         v[1] = (b + ms->Min[1]) / ((float) ms->Div[1]);
         for(a = 0; a < ms->FDim[0]; a++) {
           v[0] = (a + ms->Min[0]) / ((float) ms->Div[0]);
-          transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+          transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
           for(e = 0; e < 3; e++)
             F4(ms->Field->points, a, b, c, e) = vr[e];
         }
@@ -2557,16 +2559,11 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     }
   }
 
-  ms->Symmetry->Crystal.Dim[0] = xlen;
-  ms->Symmetry->Crystal.Dim[1] = ylen;
-  ms->Symmetry->Crystal.Dim[2] = zlen;
-
-  ms->Symmetry->Crystal.Angle[0] = alpha;
-  ms->Symmetry->Crystal.Angle[1] = beta;
-  ms->Symmetry->Crystal.Angle[2] = gamma;
+  ms->Symmetry->Crystal.setDims(xlen, ylen, zlen);
+  ms->Symmetry->Crystal.setAngles(alpha, beta, gamma);
 
   if(ispg < n_space_group_numbers) {
-    UtilNCopy(ms->Symmetry->SpaceGroup, space_group_numbers[ispg], WordLength);
+    ms->Symmetry->setSpaceGroup(space_group_numbers[ispg]);
   }
 
   /* -- JV; for vol 
@@ -2580,8 +2577,6 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   if(!(ms->FDim[0] && ms->FDim[1] && ms->FDim[2]))
     ok = false;
   else {
-    SymmetryUpdate(ms->Symmetry.get());
-    /*    CrystalDump(ms->Crystal); */
     ms->Field.reset(new Isofield(I->G, ms->FDim));
     ms->MapSource = cMapSourceCCP4;
     ms->Field->save_points = false;
@@ -2607,7 +2602,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
             maxd = dens;
           if(mind > dens)
             mind = dens;
-          transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+          transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
           for(e = 0; e < 3; e++)
             F4(ms->Field->points, cc[0], cc[1], cc[2], e) = vr[e];
         }
@@ -2622,7 +2617,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
         v[1] = (b * (ms->FDim[1] - 1) + ms->Min[1]) / ((float) ms->Div[1]);
         for(a = 0; a < 2; a++) {
           v[0] = (a * (ms->FDim[0] - 1) + ms->Min[0]) / ((float) ms->Div[0]);
-          transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+          transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
           copy3f(vr, ms->Corner + 3 * d);
           d++;
         }
@@ -2656,13 +2651,13 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     v[1] = (ms->Min[1]) / ((float) ms->Div[1]);
     v[0] = (ms->Min[0]) / ((float) ms->Div[0]);
 
-    transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMin);
+    transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMin);
 
     v[2] = ((ms->FDim[2] - 1) + ms->Min[2]) / ((float) ms->Div[2]);
     v[1] = ((ms->FDim[1] - 1) + ms->Min[1]) / ((float) ms->Div[1]);
     v[0] = ((ms->FDim[0] - 1) + ms->Min[0]) / ((float) ms->Div[0]);
 
-    transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMax);
+    transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMax);
   }
 #ifdef _UNDEFINED
   printf("%d %d %d %d %d %d %d %d %d\n",
@@ -2765,16 +2760,17 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet, 
 
   // Cell
   if (ms->Symmetry) {
-    auto crystal = ms->Symmetry->Crystal;
-    buffer_f[10] = crystal.Dim[0];     // X length / CELL A
-    buffer_f[11] = crystal.Dim[1];     // Y length
-    buffer_f[12] = crystal.Dim[2];     // Z length
-    buffer_f[13] = crystal.Angle[0];   // Alpha    / CELL B
-    buffer_f[14] = crystal.Angle[1];   // Beta
-    buffer_f[15] = crystal.Angle[2];   // Gamma
+    auto const* dim = ms->Symmetry->Crystal.dims();
+    auto const* angle = ms->Symmetry->Crystal.angles();
+    buffer_f[10] = dim[0];     // X length / CELL A
+    buffer_f[11] = dim[1];     // Y length
+    buffer_f[12] = dim[2];     // Z length
+    buffer_f[13] = angle[0];   // Alpha    / CELL B
+    buffer_f[14] = angle[1];   // Beta
+    buffer_f[15] = angle[2];   // Gamma
 
     // check for 1x1x1 dummy cell
-    cell_fallback = fabs(lengthsq3f(crystal.Dim) - 3.f) < R_SMALL4;
+    cell_fallback = fabs(lengthsq3f(dim) - 3.f) < R_SMALL4;
   }
 
   if (cell_fallback) {
@@ -2795,7 +2791,7 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet, 
   // Space group number
   if (ms->Symmetry) {
     for (int ispg = 0; ispg < n_space_group_numbers; ++ispg) {
-      if (strcmp(ms->Symmetry->SpaceGroup, space_group_numbers[ispg]) == 0) {
+      if (strcmp(ms->Symmetry->spaceGroup(), space_group_numbers[ispg]) == 0) {
         buffer_i[22] = ispg; // ISPG
         break;
       }
@@ -2874,7 +2870,7 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet, 
 
     // data origin in Angstrom
     float n_start_real[3];
-    transform33f3f(ms->Symmetry->Crystal.FracToReal, n_start_frac,
+    transform33f3f(ms->Symmetry->Crystal.fracToReal(), n_start_frac,
                    n_start_real);
 
     // add to MRC origin
@@ -3266,23 +3262,32 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
       ok = false;
     p = ParseNextLine(p);
     p = ParseNCopy(cc, p, 12);
-    if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Dim[0]) != 1)
+
+    float cellparams[3];
+
+    if(sscanf(cc, "%f", &cellparams[0]) != 1)
       ok = false;
     p = ParseNCopy(cc, p, 12);
-    if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Dim[1]) != 1)
+    if(sscanf(cc, "%f", &cellparams[1]) != 1)
       ok = false;
     p = ParseNCopy(cc, p, 12);
-    if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Dim[2]) != 1)
+    if(sscanf(cc, "%f", &cellparams[2]) != 1)
+      ok = false;
+
+    ms->Symmetry->Crystal.setDims(cellparams);
+
+    p = ParseNCopy(cc, p, 12);
+    if(sscanf(cc, "%f", &cellparams[0]) != 1)
       ok = false;
     p = ParseNCopy(cc, p, 12);
-    if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Angle[0]) != 1)
+    if(sscanf(cc, "%f", &cellparams[1]) != 1)
       ok = false;
     p = ParseNCopy(cc, p, 12);
-    if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Angle[1]) != 1)
+    if(sscanf(cc, "%f", &cellparams[2]) != 1)
       ok = false;
-    p = ParseNCopy(cc, p, 12);
-    if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Angle[2]) != 1)
-      ok = false;
+
+    ms->Symmetry->Crystal.setAngles(cellparams);
+
     p = ParseNextLine(p);
     p = ParseNCopy(cc, p, 3);
     if(strcmp(cc, "ZYX"))
@@ -3301,7 +3306,6 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
     if(!(ms->FDim[0] && ms->FDim[1] && ms->FDim[2]))
       ok = false;
     else {
-      SymmetryUpdate(ms->Symmetry.get());
       ms->Field.reset(new Isofield(I->G, ms->FDim));
       ms->MapSource = cMapSourceCrystallographic;
       ms->Field->save_points = false;
@@ -3326,7 +3330,7 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
               if(mind > dens)
                 mind = dens;
             }
-            transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+            transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
             for(e = 0; e < 3; e++) {
               F4(ms->Field->points, a, b, c, e) = vr[e];
             }
@@ -3342,7 +3346,7 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
             v[1] = (b + ms->Min[1]) / ((float) ms->Div[1]);
             for(a = 0; a < ms->FDim[0]; a += (ms->FDim[0] - 1)) {
               v[0] = (a + ms->Min[0]) / ((float) ms->Div[0]);
-              transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+              transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
               copy3f(vr, ms->Corner + 3 * d);
               d++;
             }
@@ -3357,13 +3361,13 @@ static int ObjectMapXPLORStrToMap(ObjectMap * I, char *XPLORStr, int state, int 
     v[1] = (ms->Min[1]) / ((float) ms->Div[1]);
     v[0] = (ms->Min[0]) / ((float) ms->Div[0]);
 
-    transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMin);
+    transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMin);
 
     v[2] = ((ms->FDim[2] - 1) + ms->Min[2]) / ((float) ms->Div[2]);
     v[1] = ((ms->FDim[1] - 1) + ms->Min[1]) / ((float) ms->Div[1]);
     v[0] = ((ms->FDim[0] - 1) + ms->Min[0]) / ((float) ms->Div[0]);
 
-    transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMax);
+    transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMax);
 
   }
 #ifdef _UNDEFINED
@@ -3828,25 +3832,21 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
       if(!got_cell) {
         pp = ParseWordCopy(cc, p, 4);
         if(WordMatch(I->G, "cell", cc, true) < 0) {
-          p = ParseWordCopy(cc, pp, 50);
+          p = pp;
+          got_cell = true;
+          float cellparams[6];
 
-          if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Dim[0]) == 1) {
+          for (int i = 0; i != 6; ++i) {
             p = ParseWordCopy(cc, p, 50);
-            if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Dim[1]) == 1) {
-              p = ParseWordCopy(cc, p, 50);
-              if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Dim[2]) == 1) {
-                p = ParseWordCopy(cc, p, 50);
-                if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Angle[0]) == 1) {
-                  p = ParseWordCopy(cc, p, 50);
-                  if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Angle[1]) == 1) {
-                    p = ParseWordCopy(cc, p, 50);
-                    if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Angle[2]) == 1) {
-                      got_cell = true;
-                    }
-                  }
-                }
-              }
+            if (sscanf(cc, "%f", cellparams + i) != 1) {
+              got_cell = false;
+              break;
             }
+          }
+
+          if (got_cell) {
+            ms->Symmetry->Crystal.setDims(cellparams);
+            ms->Symmetry->Crystal.setAngles(cellparams + 3);
           }
         }
       }
@@ -3946,12 +3946,14 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
       ms->Div[2] = *(shint_ptr++);
       got_grid = true;
 
-      ms->Symmetry->Crystal.Dim[0] = (float) (*(shint_ptr++));
-      ms->Symmetry->Crystal.Dim[1] = (float) (*(shint_ptr++));
-      ms->Symmetry->Crystal.Dim[2] = (float) (*(shint_ptr++));
-      ms->Symmetry->Crystal.Angle[0] = (float) (*(shint_ptr++));
-      ms->Symmetry->Crystal.Angle[1] = (float) (*(shint_ptr++));
-      ms->Symmetry->Crystal.Angle[2] = (float) (*(shint_ptr++));
+      float cellparams[6] = {
+          float(*(shint_ptr++)),
+          float(*(shint_ptr++)),
+          float(*(shint_ptr++)),
+          float(*(shint_ptr++)),
+          float(*(shint_ptr++)),
+          float(*(shint_ptr++)),
+      };
       got_cell = true;
 
       prod = (float) (*(shint_ptr++)) / 100.0F;
@@ -3962,10 +3964,11 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
 
       scale_factor = (float) (*(shint_ptr++));
 
-      for(a = 0; a < 3; a++) {
-        ms->Symmetry->Crystal.Dim[a] /= scale_factor;
-        ms->Symmetry->Crystal.Angle[a] /= scale_factor;
+      for(a = 0; a < 6; ++a) {
+        cellparams[a] /= scale_factor;
       }
+      ms->Symmetry->Crystal.setDims(cellparams);
+      ms->Symmetry->Crystal.setAngles(cellparams + 3);
     }
   }
 
@@ -3981,7 +3984,6 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
     if(!(ms->FDim[0] && ms->FDim[1] && ms->FDim[2]))
       ok = false;
     else {
-      SymmetryUpdate(ms->Symmetry.get());
       ms->Field.reset(new Isofield(I->G, ms->FDim));
       ms->MapSource = cMapSourceBRIX;
       ms->Field->save_points = false;
@@ -4026,7 +4028,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
                         maxd = dens;
                       if(mind > dens)
                         mind = dens;
-                      transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+                      transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
                       for(e = 0; e < 3; e++) {
                         F4(ms->Field->points, xa, xb, xc, e) = vr[e];
                       }
@@ -4054,7 +4056,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
             v[1] = (b + ms->Min[1]) / ((float) ms->Div[1]);
             for(a = 0; a < ms->FDim[0]; a += (ms->FDim[0] - 1)) {
               v[0] = (a + ms->Min[0]) / ((float) ms->Div[0]);
-              transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+              transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
               copy3f(vr, ms->Corner + 3 * d);
               d++;
             }
@@ -4080,13 +4082,13 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
       v[1] = (ms->Min[1]) / ((float) ms->Div[1]);
       v[0] = (ms->Min[0]) / ((float) ms->Div[0]);
 
-      transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMin);
+      transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMin);
 
       v[2] = ((ms->FDim[2] - 1) + ms->Min[2]) / ((float) ms->Div[2]);
       v[1] = ((ms->FDim[1] - 1) + ms->Min[1]) / ((float) ms->Div[1]);
       v[0] = ((ms->FDim[0] - 1) + ms->Min[0]) / ((float) ms->Div[0]);
 
-      transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMax);
+      transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMax);
 
       PRINTFB(I->G, FB_ObjectMap, FB_Details)
         " BRIXStrToMap: Map Size %d x %d x %d\n", ms->FDim[0], ms->FDim[1], ms->FDim[2]
@@ -4112,6 +4114,9 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
       ms->Active = true;
       ObjectMapUpdateExtents(I);
 
+      if (!quiet) {
+        CrystalDump(&ms->Symmetry->Crystal);
+      }
     }
   } else {
     PRINTFB(I->G, FB_ObjectMap, FB_Errors)
@@ -4318,19 +4323,21 @@ end d
   /* read unit cell */
 
   if(ok) {
+    float cellparams[6];
+
     if(ascii) {
       p = ParseWordCopy(cc, p, 50);
-      if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Dim[0]) == 1) {
+      if(sscanf(cc, "%f", &cellparams[0]) == 1) {
         p = ParseWordCopy(cc, p, 50);
-        if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Dim[1]) == 1) {
+        if(sscanf(cc, "%f", &cellparams[1]) == 1) {
           p = ParseWordCopy(cc, p, 50);
-          if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Dim[2]) == 1) {
+          if(sscanf(cc, "%f", &cellparams[2]) == 1) {
             p = ParseWordCopy(cc, p, 50);
-            if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Angle[0]) == 1) {
+            if(sscanf(cc, "%f", &cellparams[3]) == 1) {
               p = ParseWordCopy(cc, p, 50);
-              if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Angle[1]) == 1) {
+              if(sscanf(cc, "%f", &cellparams[4]) == 1) {
                 p = ParseWordCopy(cc, p, 50);
-                if(sscanf(cc, "%f", &ms->Symmetry->Crystal.Angle[2]) == 1) {
+                if(sscanf(cc, "%f", &cellparams[5]) == 1) {
                   got_cell = true;
                 }
               }
@@ -4340,14 +4347,17 @@ end d
       }
       ok = got_cell;
     } else {
-      ms->Symmetry->Crystal.Dim[0] = *(f++);     /* x-extent */
-      ms->Symmetry->Crystal.Dim[1] = *(f++);     /* y-extent */
-      ms->Symmetry->Crystal.Dim[2] = *(f++);     /* z-extent */
-      ms->Symmetry->Crystal.Angle[0] = (*f++);   /* xang */
-      ms->Symmetry->Crystal.Angle[1] = (*f++);   /* yang */
-      ms->Symmetry->Crystal.Angle[2] = (*f++);   /* zang */
+      cellparams[0] = *(f++);   /* x-extent */
+      cellparams[1] = *(f++);   /* y-extent */
+      cellparams[2] = *(f++);   /* z-extent */
+      cellparams[3] = *(f++);   /* xang */
+      cellparams[4] = *(f++);   /* yang */
+      cellparams[5] = *(f++);   /* zang */
       got_cell = 1;
     }
+
+    ms->Symmetry->Crystal.setDims(cellparams);
+    ms->Symmetry->Crystal.setAngles(cellparams + 3);
   }
 
   if(ascii)
@@ -4465,7 +4475,6 @@ end d
       dump3i(ms->FDim, "ms->FDim");
     }
 
-    SymmetryUpdate(ms->Symmetry.get());
     ms->Field.reset(new Isofield(I->G, ms->FDim));
     ms->MapSource = cMapSourceGRD;
     ms->Field->save_points = false;
@@ -4504,7 +4513,7 @@ end d
               if(mind > dens)
                 mind = dens;
             }
-            transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+            transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
             for(e = 0; e < 3; e++) {
               F4(ms->Field->points, a, b, c, e) = vr[e];
             }
@@ -4549,7 +4558,7 @@ end d
         v[1] = (b + ms->Min[1]) / ((float) ms->Div[1]);
         for(a = 0; a < ms->FDim[0]; a += (ms->FDim[0] - 1)) {
           v[0] = (a + ms->Min[0]) / ((float) ms->Div[0]);
-          transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+          transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
           copy3f(vr, ms->Corner + 3 * d);
           d++;
         }
@@ -4560,13 +4569,13 @@ end d
     v[1] = (ms->Min[1]) / ((float) ms->Div[1]);
     v[0] = (ms->Min[0]) / ((float) ms->Div[0]);
 
-    transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMin);
+    transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMin);
 
     v[2] = ((ms->FDim[2] - 1) + ms->Min[2]) / ((float) ms->Div[2]);
     v[1] = ((ms->FDim[1] - 1) + ms->Min[1]) / ((float) ms->Div[1]);
     v[0] = ((ms->FDim[0] - 1) + ms->Min[0]) / ((float) ms->Div[0]);
 
-    transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMax);
+    transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMax);
 
     PRINTFB(I->G, FB_ObjectMap, FB_Details)
       " GRDXStrToMap: Map Size %d x %d x %d\n", ms->FDim[0], ms->FDim[1], ms->FDim[2]
@@ -4577,6 +4586,8 @@ end d
     if(!quiet) {
       PRINTFB(I->G, FB_ObjectMap, FB_Results)
         " ObjectMap: Map read.  Range: %5.3f to %5.3f\n", mind, maxd ENDFB(I->G);
+
+      CrystalDump(&ms->Symmetry->Crystal);
     }
   } else {
     PRINTFB(I->G, FB_ObjectMap, FB_Errors)
@@ -5403,7 +5414,6 @@ ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, const char *
   ObjectMap *I = NULL;
   long size;
   char *buffer;
-  float mat[9];
   
   buffer = FileGetContents(fname, &size);
 
@@ -5419,15 +5429,6 @@ ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, const char *
     I = ObjectMapReadACNTStr(G, obj, buffer, size, state, quiet);
 
     mfree(buffer);
-    if(state < 0)
-      state = I->State.size() - 1;
-    if(state < I->State.size()) {
-      ObjectMapState *ms;
-      ms = &I->State[state];
-      if(ms->Active) {
-        multiply33f33f(ms->Symmetry->Crystal.FracToReal, ms->Symmetry->Crystal.RealToFrac, mat);
-      }
-    }
   }
   return (I);
 
@@ -5441,7 +5442,6 @@ ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, const char *f
   ObjectMap *I = NULL;
   long size;
   char *buffer;
-  float mat[9];
 
   buffer = FileGetContents(fname, &size);
 
@@ -5455,15 +5455,6 @@ ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, const char *f
     I = ObjectMapReadFLDStr(G, obj, buffer, size, state, quiet);
 
     mfree(buffer);
-    if(state < 0)
-      state = I->State.size() - 1;
-    if(state < I->State.size()) {
-      ObjectMapState *ms;
-      ms = &I->State[state];
-      if(ms->Active) {
-        multiply33f33f(ms->Symmetry->Crystal.FracToReal, ms->Symmetry->Crystal.RealToFrac, mat);
-      }
-    }
   }
   return (I);
 
@@ -5477,7 +5468,6 @@ ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, const char *
   ObjectMap *I = NULL;
   long size;
   char *buffer;
-  float mat[9];
 
   buffer = FileGetContents(fname, &size);
 
@@ -5491,16 +5481,6 @@ ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, const char *
     I = ObjectMapReadBRIXStr(G, obj, buffer, size, state, quiet);
 
     mfree(buffer);
-    if(state < 0)
-      state = I->State.size() - 1;
-    if(state < I->State.size()) {
-      ObjectMapState *ms;
-      ms = &I->State[state];
-      if(ms->Active) {
-        CrystalDump(&ms->Symmetry->Crystal);
-        multiply33f33f(ms->Symmetry->Crystal.FracToReal, ms->Symmetry->Crystal.RealToFrac, mat);
-      }
-    }
   }
   return (I);
 
@@ -5514,7 +5494,6 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, const char *f
   ObjectMap *I = NULL;
   long size;
   char *buffer;
-  float mat[9];
 
   buffer = FileGetContents(fname, &size);
 
@@ -5528,16 +5507,6 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, const char *f
     I = ObjectMapReadGRDStr(G, obj, buffer, size, state, quiet);
 
     mfree(buffer);
-    if(state < 0)
-      state = I->State.size() - 1;
-    if(state < I->State.size()) {
-      ObjectMapState *ms;
-      ms = &I->State[state];
-      if(ms->Active) {
-        CrystalDump(&ms->Symmetry->Crystal);
-        multiply33f33f(ms->Symmetry->Crystal.FracToReal, ms->Symmetry->Crystal.RealToFrac, mat);
-      }
-    }
   }
   return (I);
 
@@ -5836,11 +5805,13 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
     }
     ms = &I->State[state];
 
+    float dim[3], angle[3];
+
     if(!PConvAttrToStrMaxLen(Map, "format", format, sizeof(WordType) - 1))
       ok = ErrMessage(G, "LoadChemPyMap", "bad 'format' parameter.");
-    else if(!PConvAttrToFloatArrayInPlace(Map, "cell_dim", ms->Symmetry->Crystal.Dim, 3))
+    else if(!PConvAttrToFloatArrayInPlace(Map, "cell_dim", dim, 3))
       ok = ErrMessage(G, "LoadChemPyMap", "bad 'cell_dim' parameter.");
-    else if(!PConvAttrToFloatArrayInPlace(Map, "cell_ang", ms->Symmetry->Crystal.Angle, 3))
+    else if(!PConvAttrToFloatArrayInPlace(Map, "cell_ang", angle, 3))
       ok = ErrMessage(G, "LoadChemPyMap", "bad 'cell_ang' parameter.");
     else if(!PConvAttrToIntArrayInPlace(Map, "cell_div", ms->Div, 3))
       ok = ErrMessage(G, "LoadChemPyMap", "bad 'cell_div' parameter.");
@@ -5848,6 +5819,9 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
       ok = ErrMessage(G, "LoadChemPyMap", "bad 'first' parameter.");
     else if(!PConvAttrToIntArrayInPlace(Map, "last", ms->Max, 3))
       ok = ErrMessage(G, "LoadChemPyMap", "bad 'last' parameter.");
+
+    ms->Symmetry->Crystal.setDims(dim);
+    ms->Symmetry->Crystal.setAngles(angle);
 
     if(ok) {
       if(strcmp(format, "CObjectZYXfloat") == 0) {
@@ -5874,7 +5848,6 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
         if(!(ms->FDim[0] && ms->FDim[1] && ms->FDim[2]))
           ok = false;
         else {
-          SymmetryUpdate(ms->Symmetry.get());
           ms->Field.reset(new Isofield(G, ms->FDim));
           for(c = 0; c < ms->FDim[2]; c++) {
             v[2] = (c + ms->Min[2]) / ((float) ms->Div[2]);
@@ -5890,7 +5863,7 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
                   maxd = dens;
                 if(mind > dens)
                   mind = dens;
-                transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+                transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
                 for(e = 0; e < 3; e++)
                   F4(ms->Field->points, a, b, c, e) = vr[e];
               }
@@ -5905,7 +5878,7 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
                 v[1] = (b + ms->Min[1]) / ((float) ms->Div[1]);
                 for(a = 0; a < ms->FDim[0]; a += (ms->FDim[0] - 1)) {
                   v[0] = (a + ms->Min[0]) / ((float) ms->Div[0]);
-                  transform33f3f(ms->Symmetry->Crystal.FracToReal, v, vr);
+                  transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, vr);
                   copy3f(vr, ms->Corner + 3 * d);
                   d++;
                 }
@@ -5923,13 +5896,13 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
       v[1] = (ms->Min[1]) / ((float) ms->Div[1]);
       v[0] = (ms->Min[0]) / ((float) ms->Div[0]);
 
-      transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMin);
+      transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMin);
 
       v[2] = ((ms->FDim[2] - 1) + ms->Min[2]) / ((float) ms->Div[2]);
       v[1] = ((ms->FDim[1] - 1) + ms->Min[1]) / ((float) ms->Div[1]);
       v[0] = ((ms->FDim[0] - 1) + ms->Min[0]) / ((float) ms->Div[0]);
 
-      transform33f3f(ms->Symmetry->Crystal.FracToReal, v, ms->ExtentMax);
+      transform33f3f(ms->Symmetry->Crystal.fracToReal(), v, ms->ExtentMax);
 
     }
 

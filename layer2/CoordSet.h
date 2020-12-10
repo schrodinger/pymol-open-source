@@ -84,7 +84,7 @@ struct CoordSet : CObjectState {
   //! Get symmetry if defined, otherwise get it from parent object.
   CSymmetry const* getSymmetry() const
   {
-    return Symmetry ? Symmetry.get() : Obj ? Obj->Symmetry : nullptr;
+    return Symmetry ? Symmetry.get() : Obj ? Obj->Symmetry.get() : nullptr;
   }
 
   ObjectMolecule *Obj = nullptr;
@@ -103,8 +103,6 @@ struct CoordSet : CObjectState {
   std::vector<float> Spheroid;
   std::vector<float> SpheroidNormal;
   pymol::copyable_ptr<CSetting> Setting;
-  /* for periodic MD boxes -- may be merge into symmetry lattice later... */
-  std::unique_ptr<CCrystal> PeriodicBox;
   int PeriodicBoxType = NoPeriodicity;
   int tmp_index = 0;                /* for saving */
 

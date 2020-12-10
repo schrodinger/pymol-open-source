@@ -562,14 +562,9 @@ static CSymmetry * SymmetryNewFromTimestep(PyMOLGlobals * G, molfile_timestep_t 
       ts->A > 0.f && ts->B > 0.f && ts->C > 0.f &&
       ts->alpha > 0.f && ts->beta > 0.f && ts->gamma > 0.f);
   ok_assert(1, symm = new CSymmetry(G));
-  symm->Crystal.Dim[0] = ts->A;
-  symm->Crystal.Dim[1] = ts->B;
-  symm->Crystal.Dim[2] = ts->C;
-  symm->Crystal.Angle[0] = ts->alpha;
-  symm->Crystal.Angle[1] = ts->beta;
-  symm->Crystal.Angle[2] = ts->gamma;
-  strcpy(symm->SpaceGroup, "P1");
-  SymmetryUpdate(symm);
+  symm->Crystal.setDims(ts->A, ts->B, ts->C);
+  symm->Crystal.setAngles(ts->alpha, ts->beta, ts->gamma);
+  symm->setSpaceGroup("P1");
 ok_except1:
   return symm;
 }

@@ -18,16 +18,15 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 #include"os_predef.h"
 #include"os_std.h"
-#include"os_gl.h"
-#include"MemoryDebug.h"
+#include"Matrix.h"
 #include"CGO.h"
 #include"Err.h"
-#include"Base.h"
-#include"OOMac.h"
 #include"Crystal.h"
 #include"Feedback.h"
-#include"Util.h"
 #include"PConv.h"
+#include"Vector.h"
+
+#include <algorithm>
 
 PyObject *CrystalAsPyList(const CCrystal * I)
 {
@@ -56,8 +55,6 @@ int CrystalFromPyList(CCrystal * I, PyObject * list)
     ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list, 0), I->Dim, 3);
   if(ok && (ll > 1))
     ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list, 1), I->Angle, 3);
-  if(ok)
-    CrystalUpdate(I);
 
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
@@ -67,82 +64,6 @@ int CrystalFromPyList(CCrystal * I, PyObject * list)
 
 CCrystal::CCrystal(PyMOLGlobals* GParam) : G(GParam)
 {
-  identity33f(RealToFrac);
-  identity33f(FracToReal);
-
-}
-
-
-void CrystalUpdate(CCrystal * I)
-{
-  float cabg[3]; /* Cosine of axis angle */
-  float sabg[3]; /* Singe of axis angle */
-  float cabgs[3];
-  float sabgs1;
-  int i;
-
-  /* if we just cleared out the memory, but didn't init
-   * then init the crystal and return */
-  if (!I->Dim[0] || !I->Dim[1] || !I->Dim[2]) {
-    *I = CCrystal(I->G);
-    return;
-  }
-
-  if (!I->Angle[0] || !I->Angle[1] || !I->Angle[2]) {
-    I->Angle[0] = I->Angle[1] = I->Angle[2] = 90.0F;
-  }
-
-  for(i = 0; i < 9; i++) {
-    I->RealToFrac[i] = 0.0;
-    I->FracToReal[i] = 0.0;
-  }
-
-  for(i = 0; i < 3; i++) {
-    cabg[i] = (float) cos(I->Angle[i] * PI / 180.0);
-    sabg[i] = (float) sin(I->Angle[i] * PI / 180.0);
-  }
-
-  cabgs[0] = (cabg[1] * cabg[2] - cabg[0]) / (sabg[1] * sabg[2]);
-  cabgs[1] = (cabg[2] * cabg[0] - cabg[1]) / (sabg[2] * sabg[0]);
-  cabgs[2] = (cabg[0] * cabg[1] - cabg[2]) / (sabg[0] * sabg[1]);
-
-  I->UnitCellVolume = (float) (I->Dim[0] * I->Dim[1] * I->Dim[2] *
-                               sqrt1d(1.0 + (double) 2.0 * cabg[0] * cabg[1] * cabg[2] -
-                                      (double) (cabg[0] * cabg[0] +
-                                                (double) cabg[1] * cabg[1] +
-                                                (double) cabg[2] * cabg[2])));
-
-  I->RecipDim[0] = I->Dim[1] * I->Dim[2] * sabg[0] / I->UnitCellVolume;
-  I->RecipDim[1] = I->Dim[0] * I->Dim[2] * sabg[1] / I->UnitCellVolume;
-  I->RecipDim[2] = I->Dim[0] * I->Dim[1] * sabg[2] / I->UnitCellVolume;
-
-  sabgs1 = (float) sqrt1d(1.0 - cabgs[0] * cabgs[0]);
-
-  I->RealToFrac[0] = 1.0F / I->Dim[0];
-  I->RealToFrac[1] = -cabg[2] / (sabg[2] * I->Dim[0]);
-  I->RealToFrac[2] = -(cabg[2] * sabg[1] * cabgs[0] + cabg[1] * sabg[2]) /
-    (sabg[1] * sabgs1 * sabg[2] * I->Dim[0]);
-  I->RealToFrac[4] = 1.0F / (sabg[2] * I->Dim[1]);
-  I->RealToFrac[5] = cabgs[0] / (sabgs1 * sabg[2] * I->Dim[1]);
-  I->RealToFrac[8] = 1.0F / (sabg[1] * sabgs1 * I->Dim[2]);
-
-  I->FracToReal[0] = I->Dim[0];
-  I->FracToReal[1] = cabg[2] * I->Dim[1];
-  I->FracToReal[2] = cabg[1] * I->Dim[2];
-  I->FracToReal[4] = sabg[2] * I->Dim[1];
-  I->FracToReal[5] = -sabg[1] * cabgs[0] * I->Dim[2];
-  I->FracToReal[8] = sabg[1] * sabgs1 * I->Dim[2];
-
-  I->Norm[0] = (float) sqrt1d(I->RealToFrac[0] * I->RealToFrac[0] +
-                              I->RealToFrac[1] * I->RealToFrac[1] +
-                              I->RealToFrac[2] * I->RealToFrac[2]);
-  I->Norm[1] = (float) sqrt1d(I->RealToFrac[3] * I->RealToFrac[3] +
-                              I->RealToFrac[4] * I->RealToFrac[4] +
-                              I->RealToFrac[5] * I->RealToFrac[5]);
-  I->Norm[2] = (float) sqrt1d(I->RealToFrac[6] * I->RealToFrac[6] +
-                              I->RealToFrac[7] * I->RealToFrac[7] +
-                              I->RealToFrac[8] * I->RealToFrac[8]);
-
 }
 
 void CrystalDump(const CCrystal * I)
@@ -160,17 +81,17 @@ void CrystalDump(const CCrystal * I)
   PRINTF " Crystal: RealToFrac Matrix\n" ENDF(G);
   for(i = 0; i < 3; i++) {
     PRINTF " Crystal: %9.4f %9.4f %9.4f\n",
-      I->RealToFrac[i * 3], I->RealToFrac[i * 3 + 1], I->RealToFrac[i * 3 + 2]
+      I->realToFrac()[i * 3], I->realToFrac()[i * 3 + 1], I->realToFrac()[i * 3 + 2]
       ENDF(G);
   }
   PRINTF " Crystal: FracToReal Matrix\n" ENDF(G);
   for(i = 0; i < 3; i++) {
     PRINTF
       " Crystal: %9.4f %9.4f %9.4f\n",
-      I->FracToReal[i * 3], I->FracToReal[i * 3 + 1], I->FracToReal[i * 3 + 2]
+      I->fracToReal()[i * 3], I->fracToReal()[i * 3 + 1], I->fracToReal()[i * 3 + 2]
       ENDF(G);
   }
-  PRINTF " Crystal: Unit Cell Volume %8.0f.\n", I->UnitCellVolume ENDF(G);
+  PRINTF " Crystal: Unit Cell Volume %8.0f.\n", I->unitCellVolume() ENDF(G);
 
 }
 
@@ -191,7 +112,7 @@ CGO *CrystalGetUnitCellCGO(const CCrystal * I)
 
     float *vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, 24);
     for (int pl = 0; pl < 24 ; pl++){
-      transform33f3f(I->FracToReal, unitCellVertices[unitCellLineIndices[pl]], v);
+      transform33f3f(I->fracToReal(), unitCellVertices[unitCellLineIndices[pl]], v);
       copy3f(v, &vertexVals[pl*3]);
     }
 
@@ -199,4 +120,111 @@ CGO *CrystalGetUnitCellCGO(const CCrystal * I)
     CGOStop(cgo);
   }
   return (cgo);
+}
+
+float CCrystal::unitCellVolume() const
+{
+  float a_cross_b[3];
+  cross_product3f(fracToReal(), fracToReal() + 3, a_cross_b);
+  return dot_product3f(a_cross_b, fracToReal() + 6);
+}
+
+void CCrystal::setDims(const float* dims)
+{
+  setDims(dims[0], dims[1], dims[2]);
+}
+
+void CCrystal::setDims(float a, float b, float c)
+{
+  invalidateMatrices();
+
+  Dim[0] = a;
+  Dim[1] = b;
+  Dim[2] = c;
+}
+
+void CCrystal::setAngles(const float* angles)
+{
+  setAngles(angles[0], angles[1], angles[2]);
+}
+
+void CCrystal::setAngles(float alpha, float beta, float gamma)
+{
+  invalidateMatrices();
+
+  Angle[0] = alpha ? alpha : 90;
+  Angle[1] = beta ? beta : 90;
+  Angle[2] = gamma ? gamma : 90;
+}
+
+const float* CCrystal::realToFrac() const
+{
+  if (!m_RealToFracValid) {
+    double f2r[9], r2f[9];
+    std::copy_n(fracToReal(), 9, f2r);
+    xx_matrix_invert(r2f, f2r, 3);
+
+    auto this_mutable = const_cast<CCrystal*>(this);
+    this_mutable->m_RealToFracValid = true;
+    std::copy_n(r2f, 9, this_mutable->RealToFrac);
+  }
+
+  return RealToFrac;
+}
+
+const float* CCrystal::fracToReal() const
+{
+  if (!m_FracToRealValid) {
+    auto this_mutable = const_cast<CCrystal*>(this);
+    this_mutable->m_FracToRealValid = true;
+    auto* f2r = this_mutable->FracToReal;
+
+    identity33f(f2r);
+
+    if (Dim[0] && Dim[1] && Dim[2] && Angle[0] && Angle[1] && Angle[2]) {
+      float cabg[3]; // Cosine of axis angle
+      float sabg[3]; // Singe of axis angle
+
+      for (int i = 0; i < 3; ++i) {
+        cabg[i] = cos(Angle[i] * PI / 180.0);
+        sabg[i] = sin(Angle[i] * PI / 180.0);
+      }
+
+      float const cabgs[3] = {
+          (cabg[1] * cabg[2] - cabg[0]) / (sabg[1] * sabg[2]),
+          (cabg[2] * cabg[0] - cabg[1]) / (sabg[2] * sabg[0]),
+          (cabg[0] * cabg[1] - cabg[2]) / (sabg[0] * sabg[1]),
+      };
+
+      auto const sabgs1 = sqrt1d(1.0 - cabgs[0] * cabgs[0]);
+
+      f2r[0] = Dim[0];
+      f2r[1] = cabg[2] * Dim[1];
+      f2r[2] = cabg[1] * Dim[2];
+      f2r[4] = sabg[2] * Dim[1];
+      f2r[5] = -sabg[1] * cabgs[0] * Dim[2];
+      f2r[8] = sabg[1] * sabgs1 * Dim[2];
+    }
+  }
+
+  return FracToReal;
+}
+
+void CCrystal::setFracToReal(const float* f2c)
+{
+  m_FracToRealValid = true;
+  m_RealToFracValid = false;
+
+  std::copy_n(f2c, 9, FracToReal);
+
+  float f2c_t[9];
+  transpose33f33f(f2c, f2c_t);
+
+  Dim[0] = length3f(f2c_t + 0);
+  Dim[1] = length3f(f2c_t + 3);
+  Dim[2] = length3f(f2c_t + 6);
+
+  Angle[0] = rad_to_deg(get_angle3f(f2c_t + 3, f2c_t + 6));
+  Angle[1] = rad_to_deg(get_angle3f(f2c_t + 0, f2c_t + 6));
+  Angle[2] = rad_to_deg(get_angle3f(f2c_t + 0, f2c_t + 3));
 }

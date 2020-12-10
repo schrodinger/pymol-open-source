@@ -74,7 +74,7 @@ struct ObjectMolecule : public CObject {
   /* proposed, for storing uniform trajectory data more efficiently:
      int *UniformAtmToIdx, *UniformIdxToAtm;  */
   int SeleBase = 0;                 /* for internal usage by  selector & only valid during selection process */
-  CSymmetry *Symmetry = 0;
+  pymol::copyable_ptr<CSymmetry> Symmetry;
   int *Neighbor = 0;
   float *UndoCoord[cUndoMask + 1] {};
   int UndoState[cUndoMask + 1] {};

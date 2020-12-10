@@ -884,15 +884,16 @@ static CSymmetry * read_symmetry(PyMOLGlobals * G, const cif_data * data) {
   if (!symmetry)
     return nullptr;
 
-  for (int i = 0; i < 3; i++) {
-    symmetry->Crystal.Dim[i] = cell[i]->as_d();
-    symmetry->Crystal.Angle[i] = cell[i + 3]->as_d();
+  float cellparams[6];
+  for (int i = 0; i < 6; ++i) {
+    cellparams[i] = cell[i]->as_d();
   }
 
-  strncpy(symmetry->SpaceGroup,
+  symmetry->Crystal.setDims(cellparams);
+  symmetry->Crystal.setAngles(cellparams + 3);
+  symmetry->setSpaceGroup(
       data->get_opt("_symmetry?space_group_name_h-m",
-                    "_space_group?name_h-m_alt")->as_s(),
-      WordLength - 1);
+                    "_space_group?name_h-m_alt")->as_s());
 
   symmetry->PDBZValue = data->get_opt("_cell.z_pdb")->as_i(0, 1);
 
@@ -905,7 +906,7 @@ static CSymmetry * read_symmetry(PyMOLGlobals * G, const cif_data * data) {
     for (unsigned i = 0, n = arr_as_xyz->size(); i < n; ++i) {
       sym_op.push_back(arr_as_xyz->as_s(i));
     }
-    SymmetrySpaceGroupRegister(G, symmetry->SpaceGroup, sym_op);
+    SymmetrySpaceGroupRegister(G, symmetry->spaceGroup(), sym_op);
   }
 
   return symmetry;
@@ -2123,13 +2124,9 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
   I->updateAtmToIdx();
 
   // handle symmetry and update fractional -> cartesian
-  I->Symmetry = read_symmetry(G, datablock);
+  I->Symmetry.reset(read_symmetry(G, datablock));
   if (I->Symmetry) {
-    SymmetryUpdate(I->Symmetry);
-
     float sca[16];
-
-    CrystalUpdate(&I->Symmetry->Crystal);
 
     if (info.fractional) {
       for (int i = 0; i < ncsets; i++) {
