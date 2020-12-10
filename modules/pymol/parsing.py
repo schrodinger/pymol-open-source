@@ -326,109 +326,97 @@ if True:
             ac = ac + 1
         print(st + " " + "]"*pc)
 
-    def prepare_call(fn,lst,mode=STRICT,name=None,_self=None): # returns tuple of arg,kw or excepts if error
+    def prepare_call(fn, lst, mode=STRICT, name=None, _self=None):
+        """
+        Validates the command arguments. Handles legacy syntax
+        (set name=value) and the "?" usage argument.
+
+        @param fn Function
+        @param lst Argument list with (key, value) items, key may be None for positional arguments
+        @param mode Argument parsing mode
+        @param name Name of the command (only for error reporting)
+        @return Tuple of (args: list, kwargs: dict)
+        @raises QuietException on error
+        """
         if name is None:
-            name=fn.__name__
-        result = (None,None)
+            name = fn.__name__
+
         arg = []
         kw = {}
         co = fn.__code__
-        if (co.co_flags & 0xC): # disable error checking for *arg or **kw functions
-            mode = NO_CHECK
-        offset = 1 if inspect.ismethod(fn) else 0
-        arg_nam = co.co_varnames[offset:co.co_argcount]
-        narg = len(arg_nam)
-        if fn.__defaults__:
-            ndef = len(fn.__defaults__)
-        else:
-            ndef = 0
-        nreq = narg-ndef
-        if len(lst)==1:
-            if lst[0]==(None,'?'):
-                dump_arg(name,arg_nam,nreq)
-                raise QuietException
 
-        if mode==NO_CHECK:
+        # disable error checking for *arg or **kw functions
+        if (co.co_flags & 0xC):
+            mode = NO_CHECK
+
+        offset = 1 if inspect.ismethod(fn) else 0
+        arg_nam = co.co_varnames[offset:co.co_argcount + co.co_kwonlyargcount]
+        npositional = co.co_argcount - offset
+        nreq = max(0, npositional - len(fn.__defaults__ or ()))
+
+        # co_posonlyargcount is new in Python 3.8
+        nposonly = max(0, getattr(co, 'co_posonlyargcount', 0) - offset)
+
+        assert nposonly <= npositional
+
+        if lst == [(None, '?')]:
+            dump_arg(name, arg_nam, nreq)
+            raise QuietException
+
+        if mode == NO_CHECK:
             # no error checking
-            for a in lst:
-                if a[0] is None:
-                    arg.append(a[1])
+            for (key, value) in lst:
+                if key is None:
+                    arg.append(value)
                 else:
-                    kw[a[0]]=a[1]
-            # set feedback argument (quiet), if extant, results enabled, and not overridden
-            if "quiet" in arg_nam:
-                if "quiet" not in kw:
-                    if __name__!='__main__':
-                        if _self._feedback(_self.fb_module.cmd, _self.fb_mask.results):
-                            kw["quiet"] = 0
-            if "_self" not in kw: # always send _self in the dictionary
-                kw["_self"]=_self
+                    kw[key] = value
+
+            # always send _self in the dictionary
+            if "_self" not in kw:
+                kw["_self"] = _self
         else:
             # error checking enabled
 
-            # build name dictionary, with required flag
-            arg_dct={}
-            c = 0
-            for a in arg_nam:
-                arg_dct[a]=c<nreq
-                c = c + 1
-            if mode==LEGACY:
-                # handle legacy string=value transformation
+            # handle legacy string=value transformation
+            if mode == LEGACY:
                 tmp_lst = []
                 for a in lst:
-                    if(a[0] is not None):
-                        if a[0] not in arg_dct:
-                            tmp_lst.extend([(None,a[0]),(None,a[1])])
-                        else:
-                            tmp_lst.append(a)
+                    if a[0] is not None and a[0] not in arg_nam:
+                        tmp_lst.append((None, a[0]))
+                        tmp_lst.append((None, a[1]))
                     else:
                         tmp_lst.append(a)
                 lst = tmp_lst
-            # make sure we don't have too many arguments
-            if len(lst)>narg:
-                if not narg:
-                    colorprinting.error("Error: too many arguments for %s; None expected."%(name))
-                elif narg==nreq:
-                    colorprinting.error("Error: too many arguments for %s; %d expected, %d found."%(
-                        name,nreq,len(lst)))
-                    dump_arg(name,arg_nam,nreq)
-                else:
-                    colorprinting.error("Error: too many arguments for %s; %d to %d expected, %d found."%(
-                        name,nreq,narg,len(lst)))
-                    dump_arg(name,arg_nam,nreq)
-                raise QuietException
+
             # match names to unnamed arguments to create argument dictionary
-            ac = 0
-            val_dct = {}
-            for a in lst:
-                if a[0] is None:
-                    if ac>=narg:
-                        raise QuietException("Parsing-Error: ambiguous argument: '"+str(a[1])+"'")
-                    else:
-                        val_dct[arg_nam[ac]]=a[1]
-                else:
-                    val_dct[a[0]]=a[1]
-                ac = ac + 1
+            for ac, (key, value) in enumerate(lst):
+                if key is None:
+                    if ac < nposonly:
+                        arg.append(value)
+                        continue
+
+                    if ac >= npositional:
+                        dump_arg(name, arg_nam, nreq)
+                        raise QuietException(
+                            f"Error: too many positional arguments for {name}")
+                    key = arg_nam[ac]
+                kw[key] = value
+
             # now check to make sure we don't have any missing arguments
-            for a in arg_nam:
-                if arg_dct[a]:
-                    if a not in val_dct:
-                        raise QuietException("Parsing-Error: missing required argument in function %s : %s" % (name, a))
-            # return all arguments as keyword arguments
-            kw = val_dct
-            # set feedback argument (quiet), if extant, results enabled, and not overridden
-            if "quiet" in arg_dct:
-                if "quiet" not in kw:
-                    if _self._feedback(_self.fb_module.cmd, _self.fb_mask.results):
-                        kw["quiet"] = 0
+            for key in set(arg_nam[nposonly:nreq]).difference(kw):
+                raise QuietException("Parsing-Error: missing required "
+                                     f"argument in function {name} : {key}")
+
             # make sure command knows which PyMOL instance to message
-            if "_self" in arg_nam:
-                if "_self" not in kw:
-                    kw["_self"]=_self
-        if __name__!='__main__':
-            if _self._feedback(_self.fb_module.parser, _self.fb_mask.debugging):
-                _self.fb_debug.write(" parsing-DEBUG: kw: "+str(kw)+"\n")
-        return (arg,kw)
+            if "_self" not in kw and "_self" in arg_nam:
+                kw["_self"] = _self
+
+        # set feedback argument (quiet), if extant, results enabled, and not overridden
+        if "quiet" not in kw and "quiet" in arg_nam and _self._feedback(
+                _self.fb_module.cmd, _self.fb_mask.results):
+            kw["quiet"] = 0
+
+        return arg, kw
 
 
     # launching routines
