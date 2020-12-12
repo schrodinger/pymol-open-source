@@ -12,11 +12,58 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+import pymol
 from .constants import CURRENT_STATE, ALL_STATES
+
+
+class _AtomProxy:
+    """
+    Proxy for the "iterate" atom namespace
+    """
+
+    def __init__(self, ns):
+        self.__dict__['_ns'] = ns
+
+    def __getattr__(self, key):
+        return self._ns[key]
+
+    def __setattr__(self, key, value):
+        self._ns[key] = value
+
+    def __repr__(self):
+        if self.state != 0:
+            tail = f' ({self.x:.2f}, {self.y:.2f}, {self.z:.2f}) state={self.state}'
+        else:
+            tail = ''
+        return (
+            f'<{self.__class__.__name__} '
+            f'/{self.model}/{self.segi}/{self.chain}/{self.resn}`{self.resi}/{self.name}`{self.alt}{tail}>'
+        )
+
+    def __dir__(self):
+        from .completing import expr_sc
+        return [k.split(".")[0] for k in expr_sc.keywords]
+
+def _iterate_prepare_args(expression, space, _self):
+    if not expression:
+        raise pymol.CmdException('missing expression')
+
+    if not isinstance(expression, str):
+        assert callable(expression)
+        assert space is None
+        space = {
+            "_callback": (lambda ns, f=expression, p=_AtomProxy: f(p(ns))),
+            "locals": locals
+        }
+        expression = "_callback(locals())"
+    elif space is None:
+        space = _self._pymol.__dict__
+
+    return expression, space
+
 
 if True:
 
-    import pymol
     import math
     from . import selector
     cmd = __import__("sys").modules["pymol.cmd"]
@@ -1380,11 +1427,7 @@ SEE ALSO
 
     alter_state, iterate, iterate_state, sort
         '''
-        if not expression:
-            raise pymol.CmdException('missing expression')
-
-        if space is None:
-            space = _self._pymol.__dict__
+        expression, space = _iterate_prepare_args(expression, space, _self)
 
         # preprocess selections
         selection = selector.process(selection)
@@ -1424,27 +1467,27 @@ EXAMPLES
 
     stored.net_charge = 0
     iterate all, stored.net_charge = stored.net_charge + partial_charge
-    print stored.net_charge
+    print(stored.net_charge)
     
     stored.names = []
     iterate all, stored.names.append(name)
-    print stored.names
+    print(stored.names)
     
+    # Using a Python callback (new in PyMOL 2.5)
+    names = []
+    cmd.iterate("all", lambda atom: names.append(atom.name))
+    print(names)
+
 NOTES
 
     Unlike with the "alter" command, atomic properties cannot be
-    altered.  For this reason, "iterate" is more efficient than
-    "alter".
+    altered.  Other than that, the commands are identical.
 
 SEE ALSO
 
     iterate_state, alter, alter_state
         '''
-        if not expression:
-            raise pymol.CmdException('missing expression')
-
-        if space is None:
-            space = _self._pymol.__dict__
+        expression, space = _iterate_prepare_args(expression, space, _self)
 
         # preprocess selection
         selection = selector.process(selection)
@@ -1484,11 +1527,7 @@ SEE ALSO
 
     iterate_state, alter, iterate
         '''
-        if not expression:
-            raise pymol.CmdException('missing expression')
-
-        if space is None:
-            space = _self._pymol.__dict__
+        expression, space = _iterate_prepare_args(expression, space, _self)
 
         # preprocess selection
         selection = selector.process(selection)
@@ -1516,17 +1555,13 @@ EXAMPLES
 
     stored.sum_x = 0.0
     iterate_state 1, all, stored.sum_x = stored.sum_x + x
-    print stored.sum_x
+    print(stored.sum_x)
     
 SEE ALSO
 
     iterate, alter, alter_state
         '''
-        if not expression:
-            raise pymol.CmdException('missing expression')
-
-        if space is None:
-            space = _self._pymol.__dict__
+        expression, space = _iterate_prepare_args(expression, space, _self)
 
         # preprocess selection
         selection = selector.process(selection)
