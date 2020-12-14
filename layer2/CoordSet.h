@@ -53,6 +53,7 @@ struct CoordSet : CObjectState {
   int extendIndices(int nAtom);
   void invalidateRep(cRep_t type, cRepInv_t level);
   int atmToIdx(int atm) const;
+  void setNIndex(unsigned nindex);
 
   // read/write pointer to coordinate
   float * coordPtr(int idx) {
@@ -105,8 +106,6 @@ struct CoordSet : CObjectState {
   pymol::copyable_ptr<CSetting> Setting;
   int PeriodicBoxType = NoPeriodicity;
   int tmp_index = 0;                /* for saving */
-
-  std::vector<LabPosType> LabPos;
 
   /* not saved in state */
 

@@ -25,9 +25,8 @@ void AppendAtomVertex(CoordSet* cs, unsigned atm, const float* v)
 {
   assert(cs->atmToIdx(atm) == -1);
 
-  int idx = cs->NIndex++;
-  VLACheck(cs->Coord, float, idx * 3 + 2);
-  VLACheck(cs->IdxToAtm, int, idx);
+  int const idx = cs->NIndex;
+  cs->setNIndex(idx + 1);
 
   cs->IdxToAtm[idx] = atm;
 

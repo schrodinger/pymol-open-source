@@ -174,15 +174,6 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
       I->Setting.reset(SettingNewFromPyList(G, val));
       CPythonVal_Free(val);
     }
-    if(ok && (ll > 8)){
-      CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 8);
-      auto res = CPythonVal_PConvPyListToLabPosVec(G, val);
-      ok = static_cast<bool>(res);
-      if (res) {
-        I->LabPos = std::move(*res);
-      }
-      CPythonVal_Free(val);
-    }
 
 #ifdef _PYMOL_IP_PROPERTIES
 #endif
@@ -221,14 +212,19 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
 	}
 	CPythonVal_Free(val);
       } else {
-	// check I->LabPos.offset to see if its set
-	if (!I->LabPos.empty()){
-	  for (int a = 0; a < I->NIndex; a++){
-	    if(length3f(I->LabPos[a].offset) > R_SMALL4) {
-	      SettingSet(cSetting_label_placement_offset, I->LabPos[a].offset, I, a);
-	    }
-	  }
-	}
+        // translate legacy LabPos to label_placement_offset
+        auto val = CPythonVal_PyList_GetItem(G, list, 8);
+        auto res = CPythonVal_PConvPyListToLabPosVec(G, val);
+        if (res && !res->empty()) {
+          auto const& LabPos = *res;
+          for (int a = 0; a < I->NIndex; ++a) {
+            if (length3f(LabPos[a].offset) > R_SMALL4) {
+              SettingSet(
+                  cSetting_label_placement_offset, LabPos[a].offset, I, a);
+            }
+          }
+        }
+        CPythonVal_Free(val);
       }
     }
 
@@ -310,7 +306,7 @@ PyObject *CoordSetAsPyList(CoordSet * I)
     PyList_SetItem(result, 5, PyString_FromString(I->Name));
     PyList_SetItem(result, 6, ObjectStateAsPyList(I));
     PyList_SetItem(result, 7, SettingAsPyList(I->Setting.get()));
-    PyList_SetItem(result, 8, PConvLabPosVecToPyList(I->LabPos));
+    PyList_SetItem(result, 8, PConvAutoNone(nullptr) /* LabPos */);
 
     PyList_SetItem(result, 9,
 #ifdef _PYMOL_IP_PROPERTIES
@@ -439,14 +435,6 @@ int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, const CoordSet * cs)
     }
   }
   if (ok){
-    if(!cs->LabPos.empty()) {
-      I->LabPos.reserve(nIndex);
-      I->LabPos.insert(I->LabPos.end(), cs->LabPos.begin(), cs->LabPos.end());
-    } else if(!I->LabPos.empty()) {
-      I->LabPos.resize(nIndex);
-    }
-  }
-  if (ok){
     if(cs->RefPos) {
       if(!I->RefPos)
 	I->RefPos = pymol::vla<RefPosType>(nIndex);
@@ -477,7 +465,6 @@ void CoordSetPurge(CoordSet * I)
   AtomInfoType *ai;
   ObjectMolecule *obj;
   float *c0, *c1;
-  LabPosType *l0, *l1;
   RefPosType *r0, *r1;
   int *atom_state0, *atom_state1;
   char *has_atom_state0, *has_atom_state1;
@@ -488,7 +475,6 @@ void CoordSetPurge(CoordSet * I)
 
   c0 = c1 = I->Coord.data();
   r0 = r1 = I->RefPos.data();
-  l0 = l1 = I->LabPos.data();
   atom_state0 = atom_state1 = I->atom_state_setting_id.data();
   has_atom_state0 = has_atom_state1 = I->has_atom_state_settings.data();
 
@@ -500,8 +486,6 @@ void CoordSetPurge(CoordSet * I)
     if(ai->deleteFlag) {
       offset--;
       c0 += 3;
-      if(l0)
-        l0++;
       if(r0)
         r0++;
       if (has_atom_state0){
@@ -515,9 +499,6 @@ void CoordSetPurge(CoordSet * I)
       *(c1++) = *(c0++);
       if(r1) {
         *(r1++) = *(r0++);
-      }
-      if(l0) {
-        *(l1++) = *(l0++);
       }
       if (has_atom_state0){
 	*(atom_state1++) = *(atom_state0++);
@@ -537,10 +518,6 @@ void CoordSetPurge(CoordSet * I)
         r0++;
         r1++;
       }
-      if(l0) {
-        l0++;
-        l1++;
-      }
       if (has_atom_state0){
 	atom_state0++; atom_state1++;
 	has_atom_state0++; has_atom_state1++;
@@ -552,7 +529,6 @@ void CoordSetPurge(CoordSet * I)
        re-adjust the array sizes */
     I->NIndex += offset;
     VLASize(I->Coord, float, I->NIndex * 3);
-    I->LabPos.resize(I->NIndex);
     if(I->RefPos) {
       VLASize(I->RefPos, RefPosType, I->NIndex);
     }
@@ -1540,7 +1516,6 @@ CoordSet::CoordSet(const CoordSet& cs)
   this->objMolOpInvalidated = cs.objMolOpInvalidated;
 
   // copy VLAs
-  this->LabPos     = cs.LabPos;
   this->RefPos     = cs.RefPos;
   this->AtmToIdx   = cs.AtmToIdx;
 
@@ -1553,6 +1528,48 @@ CoordSet::CoordSet(const CoordSet& cs)
 
 
 /*========================================================================*/
+/**
+ * Sets the number of atoms with coordinates.
+ *
+ * @post NIndex updated
+ * @post All relevant arrays resized
+ */
+void CoordSet::setNIndex(unsigned nindex)
+{
+  NIndex = nindex;
+
+  if (nindex == 0) {
+    return;
+  }
+
+  auto const idx = nindex - 1;
+
+  Coord.check(idx * 3 + 2);
+  IdxToAtm.check(idx);
+
+  if (has_atom_state_settings) {
+    has_atom_state_settings.check(idx);
+    atom_state_setting_id.check(idx);
+  }
+
+  if (RefPos) {
+    RefPos.check(idx);
+  }
+}
+
+/**
+ * Sets the number of atoms.
+ *
+ * For non-discrete objects:
+ *   - Extends AtmToIdx (appends -1s)
+ *   - Sets NAtIndex
+ *
+ * For discrete objects:
+ *   - Converts this coordset to discrete if necessary
+ *   - Calls ObjectMolecule::setNDiscrete()
+ *
+ * @pre NIndex and IdxToAtm are valid
+ */
 int CoordSet::extendIndices(int nAtom)
 {
   bool ok = true;
