@@ -544,9 +544,6 @@ void CoordSetPurge(CoordSet * I)
   PRINTFD(G, FB_CoordSet)
     " CoordSetPurge-Debug: leaving NAtIndex %d NIndex %d...\n",
     I->NAtIndex, I->NIndex ENDFD;
-
-#ifdef _PYMOL_IP_PROPERTIES
-#endif
 }
 
 
