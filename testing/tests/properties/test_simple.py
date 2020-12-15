@@ -147,4 +147,13 @@ class TestProperties(testing.PyMOLTestCase):
         self.assertEqual(cid, cmd.get_property('PUBCHEM_COMPOUND_CID', 'm2'))
         self.assertEqual(None, cmd.get_property('PUBCHEM_EFFECTIVE_ROTOR_COUNT', 'm2'))
 
+    @testing.requires_version('2.5')
+    def testRemoveAtoms(self):
+        # Removing atoms must not remove object properties PYMOL-3583
+        cmd.fragment("ala")
+        cmd.set_property("foo", 123, "ala")
+        self.assertEqual(cmd.get_property("foo", "ala"), 123)
+        cmd.remove("hydro")
+        self.assertEqual(cmd.get_property("foo", "ala"), 123)
+
 # vi:nowrap
