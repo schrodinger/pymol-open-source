@@ -156,4 +156,17 @@ class TestProperties(testing.PyMOLTestCase):
         cmd.remove("hydro")
         self.assertEqual(cmd.get_property("foo", "ala"), 123)
 
+    def testRemoveAtomsPreserveAtomProperties(self):
+        # Removing atoms must preserve atom properties
+        cmd.fab("ACD")
+        cmd.alter("all", "p.foo = ID = index")
+        # force new sorting
+        cmd.alter("resi 2", "resv=4")
+        cmd.sort()
+        # remove some atoms
+        cmd.remove("elem C")
+        checklist = []
+        cmd.iterate("all", "checklist.append((p.foo == ID))", space=locals())
+        self.assertTrue(all(checklist))
+
 # vi:nowrap
