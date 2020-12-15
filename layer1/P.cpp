@@ -743,6 +743,30 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
   return ret;
 }
 
+/**
+ * Make IPython happy, which may call f_locals.get("__tracebackhide__", 0) and
+ * crash if there is no get() method (the wrapper object is f_locals).
+ */
+static PyObject* WrapperObject_get(PyObject* self, PyObject* args)
+{
+  auto nargs = PyTuple_Size(args);
+  assert(0 < nargs && nargs < 3);
+
+  // Could call WrapperObjectSubScript here, but we don't really need that. To
+  // fix the IPython issue, it's sufficient to return default or None.
+
+  if (nargs == 2) {
+    return PIncRef(PyTuple_GET_ITEM(args, 1));
+  }
+
+  Py_RETURN_NONE;
+}
+
+static PyMethodDef wrapperMethods[] = {
+    {"get", WrapperObject_get, METH_VARARGS, nullptr},
+    {nullptr},
+};
+
 /*
  * iterate-family namespace implementation: assignment
  *
@@ -1858,6 +1882,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     wrapperMappingMethods.mp_subscript = &WrapperObjectSubScript;
     wrapperMappingMethods.mp_ass_subscript = &WrapperObjectAssignSubScript;
     Wrapper_Type.tp_as_mapping = &wrapperMappingMethods;
+    Wrapper_Type.tp_methods = wrapperMethods;
     
     settingWrapper_Type.tp_basicsize = sizeof(SettingPropertyWrapperObject);
     settingWrapper_Type.tp_flags = Py_TPFLAGS_DEFAULT;
