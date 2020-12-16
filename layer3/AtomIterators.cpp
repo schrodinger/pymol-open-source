@@ -12,7 +12,7 @@
 
 /*========================================================================*/
 bool CoordSetAtomIterator::next() {
-  for (atm++; atm < cs->NAtIndex; atm++) {
+  for (++atm; atm < obj->NAtom; ++atm) {
     idx = cs->atmToIdx(atm);
 
     if(idx < 0)

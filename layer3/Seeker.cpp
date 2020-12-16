@@ -1281,7 +1281,7 @@ void SeekerUpdate(PyMOLGlobals * G)
           }
         }
 
-        atom_in_state = (cs && a < cs->NAtIndex && cs->AtmToIdx[a] >= 0);
+        atom_in_state = (cs && cs->atmToIdx(a) >= 0);
 
         int gapsNeeded{0};
 

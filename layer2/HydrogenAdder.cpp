@@ -335,12 +335,7 @@ int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int st
   }
 
   // grow index arrays
-  for (StateIterator iter(G, nullptr, cSelectorUpdateTableAllStates, I->NCSet);
-      iter.next();) {
-    CoordSet* cs = I->CSet[iter.state];
-    if (cs)
-      cs->extendIndices(I->NAtom);
-  }
+  ObjectMoleculeExtendIndices(I, cSelectorUpdateTableAllStates);
 
   I->invalidate(cRepAll, cRepInvBonds, state);
   ObjectMoleculeUpdateNeighbors(I);

@@ -191,9 +191,10 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
 
   /* find all of the CA points */
 
-  at = pymol::malloc<int>(cs->NAtIndex * 2);
-  pv = pymol::malloc<float>(cs->NAtIndex * 6);
-  seg = pymol::malloc<int>(cs->NAtIndex * 2);
+  auto const nAtIndex = cs->getNIndex(); // was NAtIndex
+  at = pymol::malloc<int>(nAtIndex * 2);
+  pv = pymol::malloc<float>(nAtIndex * 6);
+  seg = pymol::malloc<int>(nAtIndex * 2);
 
   i = at;
   v = pv;
@@ -202,7 +203,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   nAt = 0;
   nSeg = 0;
   a2 = -1;
-  for(a1 = 0; a1 < cs->NAtIndex; a1++) {
+  for(a1 = 0; a1 < obj->NAtom; ++a1) {
     a = cs->atmToIdx(a1);
     if(a >= 0) {
       ai = obj->AtomInfo + a1;
@@ -557,7 +558,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
   else {
     ObjectMolecule *obj = cs->Obj;
     int active = false;
-    int nAtIndex = cs->NAtIndex;
+    int nAtIndex = obj->NAtom;
     const AtomInfoType *obj_AtomInfo = obj->AtomInfo.data();
     const AtomInfoType *ai, *last_ai = NULL;
     int trace, trace_ostate =

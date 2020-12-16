@@ -60,7 +60,7 @@ Z* -------------------------------------------------------------------
 
 
 /*========================================================================*/
-/*
+/**
  * Get coordinate index for given atom index
  */
 int CoordSet::atmToIdx(int atm) const {
@@ -69,9 +69,20 @@ int CoordSet::atmToIdx(int atm) const {
       return Obj->DiscreteAtmToIdx[atm];
     return -1;
   }
-  assert(AtmToIdx);
-  assert(atm < NAtIndex);
+  assert(atm < AtmToIdx.size());
   return AtmToIdx[atm];
+}
+
+void CoordSet::updateNonDiscreteAtmToIdx(unsigned natom)
+{
+  assert(!Obj || natom == Obj->NAtom);
+  AtmToIdx.resize(natom);
+  std::fill_n(AtmToIdx.data(), natom, -1);
+  for (unsigned idx = 0, idx_end = getNIndex(); idx != idx_end; ++idx) {
+    auto const atm = IdxToAtm[idx];
+    assert(atm < natom);
+    AtmToIdx[atm] = idx;
+  }
 }
 
 /*========================================================================*/
@@ -157,11 +168,10 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
     if(ok)
       ok = PConvPyIntToInt(PyList_GetItem(list, 0), &I->NIndex);
     if(ok)
-      ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->NAtIndex);
-    if(ok)
       ok = PConvPyListToFloatVLA(PyList_GetItem(list, 2), &I->Coord);
-    if(ok)
-      ok = PConvPyListToIntVLA(PyList_GetItem(list, 3), &I->IdxToAtm);
+    if(ok){
+      PConvFromPyListItem(G, list, 3, I->IdxToAtm);
+    }
     if(ok && (ll > 5))
       ok = CPythonVal_PConvPyStrToStr_From_List(G, list, 5, I->Name, sizeof(WordType));
     if(ok && (ll > 6)){
@@ -194,12 +204,10 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
 	if (!CPythonVal_IsNone(val)){
 	  int a;
 	  I->atom_state_setting_id = pymol::vla<int>(I->NIndex);
-	  I->has_atom_state_settings = pymol::vla<char>(I->NIndex);
 	  for (a=0; a<I->NIndex; a++){
 	    CPythonVal *val2 = CPythonVal_PyList_GetItem(G, val, a);
 	    if (!CPythonVal_IsNone(val2)){
 	      CPythonVal_PConvPyIntToInt(val2, &I->atom_state_setting_id[a]);
-	      I->has_atom_state_settings[a] = (I->atom_state_setting_id[a]) ? 1 : 0;
 	      if (I->atom_state_setting_id[a]) {
 	        I->atom_state_setting_id[a] = SettingUniqueConvertOldSessionID(G, I->atom_state_setting_id[a]);
 	      }
@@ -208,7 +216,6 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
 	  }
 	} else {
 	  I->atom_state_setting_id = NULL;
-	  I->has_atom_state_settings = NULL;
 	}
 	CPythonVal_Free(val);
       } else {
@@ -295,12 +302,13 @@ PyObject *CoordSetAsPyList(CoordSet * I)
     bool dump_binary = SettingGet<bool>(G, cSetting_pse_binary_dump) && (!pse_export_version || pse_export_version >= 1765);
     result = PyList_New(13);
     PyList_SetItem(result, 0, PyInt_FromLong(I->NIndex));
-    PyList_SetItem(result, 1, PyInt_FromLong(I->NAtIndex));
+    int const NAtIndex = I->AtmToIdx.size();
+    PyList_SetItem(result, 1, PyInt_FromLong(NAtIndex ? NAtIndex : I->Obj->NAtom)); // legacy
     PyList_SetItem(result, 2, PConvFloatArrayToPyList(I->Coord, I->NIndex * 3, dump_binary));
-    PyList_SetItem(result, 3, PConvIntArrayToPyList(I->IdxToAtm, I->NIndex, dump_binary));
-    if(I->AtmToIdx
+    PyList_SetItem(result, 3, PConvIntArrayToPyList(I->IdxToAtm.data(), I->NIndex, dump_binary));
+    if (!I->AtmToIdx.empty()
         && pse_export_version < 1770)
-      PyList_SetItem(result, 4, PConvIntArrayToPyList(I->AtmToIdx, I->NAtIndex, dump_binary));
+      PyList_SetItem(result, 4, PConvIntArrayToPyList(I->AtmToIdx.data(), NAtIndex, dump_binary));
     else
       PyList_SetItem(result, 4, PConvAutoNone(NULL));
     PyList_SetItem(result, 5, PyString_FromString(I->Name));
@@ -318,12 +326,12 @@ PyObject *CoordSetAsPyList(CoordSet * I)
     } else {
       PyList_SetItem(result, 10, PConvAutoNone(NULL));
     }
-    if (I->has_atom_state_settings){
+    if (I->has_any_atom_state_settings()) {
       int a;
       PyObject *settings_list = NULL;
       settings_list = PyList_New(I->NIndex);
       for (a=0; a<I->NIndex; a++){
-	if (I->has_atom_state_settings[a]){
+        if (I->has_atom_state_settings(a)) {
 	  PyList_SetItem(settings_list, a, PyInt_FromLong(I->atom_state_setting_id[a]));
 	} else {
 	  PyList_SetItem(settings_list, a, PConvAutoNone(NULL));
@@ -339,65 +347,53 @@ PyObject *CoordSetAsPyList(CoordSet * I)
   return (PConvAutoNone(result));
 }
 
-void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom)
-
-/* performs second half of removal */
+/**
+ * Updates IdxToAtm and adjusts all NIndex sized arrays.
+ *
+ * @param lookup atm_old to atm_new index mapping.
+ * Deleted atoms have `atm_new = -1`.
+ *
+ * @pre `lookup[a] <= a`
+ */
+void CoordSetAdjustAtmIdx(CoordSet* I, const int* lookup)
 {
-  /* NOTE: only works in a compressive mode, where lookup[a]<=a  */
-  int a, a0, atm;
-  char *new_has_atom_state_settings_by_atom = NULL;
-  int *new_atom_state_setting_id_by_atom = NULL;
-  int nIndex = I->NIndex;
+  auto G = I->G;
+  int offset = 0;
 
-  if (I->has_atom_state_settings){
-    new_has_atom_state_settings_by_atom = VLACalloc(char, nIndex);
-    new_atom_state_setting_id_by_atom = VLACalloc(int, nIndex);
-  }
+  for (int idx = 0; idx < I->getNIndex(); ++idx) {
+    auto const idx_new = idx + offset;
+    auto const atm_new = lookup[I->IdxToAtm[idx]];
 
-  for(a = 0; a < nIndex; a++) {
-    atm = I->IdxToAtm[a];
-    a0 = lookup[atm];
-    if (a0 < 0){
-      if (I->has_atom_state_settings){
-	if (I->has_atom_state_settings[a]){
-	  SettingUniqueDetachChain(I->G, I->atom_state_setting_id[a]);
-	  I->has_atom_state_settings[a] = 0;
-	  I->atom_state_setting_id[a] = 0;
-	}
+    assert(I->IdxToAtm[idx] >= atm_new);
+    I->IdxToAtm[idx_new] = atm_new;
+
+    if (atm_new == -1) {
+      --offset;
+
+      if (I->has_atom_state_settings(idx)) {
+        SettingUniqueDetachChain(G, I->atom_state_setting_id[idx]);
+        I->atom_state_setting_id[idx] = 0;
       }
-    } else if (new_has_atom_state_settings_by_atom){
-      new_has_atom_state_settings_by_atom[a0] = I->has_atom_state_settings[a];
-      new_atom_state_setting_id_by_atom[a0] = I->atom_state_setting_id[a];
-    }
-  }
+    } else if (offset) {
+      copy3f(I->coordPtr(idx), I->coordPtr(idx_new));
 
-  if (I->AtmToIdx){
-    for(a = 0; a < I->NAtIndex; a++) {
-      a0 = lookup[a];
-      if(a0 >= 0) {
-	I->AtmToIdx[a0] = I->AtmToIdx[a];
+      if (I->RefPos) {
+        I->RefPos[idx_new] = std::move(I->RefPos[idx]);
+      }
+
+      if (I->has_atom_state_settings(idx)) {
+        I->atom_state_setting_id[idx_new] = std::move(I->atom_state_setting_id[idx]);
+        I->atom_state_setting_id[idx] = 0;
       }
     }
   }
-  I->NAtIndex = nAtom;
-  if (I->AtmToIdx){
-    VLASize(I->AtmToIdx, int, nAtom);
-  }
-  for(a = 0; a < I->NIndex; a++) {
-    atm = I->IdxToAtm[a] = lookup[I->IdxToAtm[a]];
-    if (new_has_atom_state_settings_by_atom){
-      I->has_atom_state_settings[a] = new_has_atom_state_settings_by_atom[atm];
-      I->atom_state_setting_id[a] = new_atom_state_setting_id_by_atom[atm];
-    }
-  }
-  if (new_has_atom_state_settings_by_atom){
-    VLAFreeP(new_has_atom_state_settings_by_atom);
-    VLAFreeP(new_atom_state_setting_id_by_atom);
-  }
-  PRINTFD(I->G, FB_CoordSet)
-    " CoordSetAdjustAtmIdx-Debug: leaving... NAtIndex: %d NIndex %d\n",
-    I->NAtIndex, I->NIndex ENDFD;
 
+  assert(offset <= 0);
+
+  if (offset < 0) {
+    I->setNIndex(I->getNIndex() + offset);
+    I->invalidateRep(cRepAll, cRepInvAtoms); /* this will free Color */
+  }
 }
 
 CoordSet* CoordSetCopy(const CoordSet* src)
@@ -410,140 +406,41 @@ CoordSet* CoordSetCopy(const CoordSet* src)
 
 
 /*========================================================================*/
+/**
+ * Append cs to I.
+ *
+ * @pre I and cs are non-overlapping
+ */
 int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, const CoordSet * cs)
-{                               /* must be non-overlapping */
-  int ok = true;
-  /* calculate new size and make room for new data */
-  int nIndex = I->NIndex + cs->NIndex;
-  VLASize(I->IdxToAtm, int, nIndex);
-  CHECKOK(ok, I->IdxToAtm);
-  if (ok)
-    VLACheck(I->Coord, float, nIndex * 3);
-  CHECKOK(ok, I->Coord);
-  if (ok){
-    for (int a = 0; a < cs->NIndex; a++) {
-      int i0 = a + I->NIndex;
-      I->IdxToAtm[i0] = cs->IdxToAtm[a];
-      if (OM->DiscreteFlag){
-	int idx = cs->IdxToAtm[a];
-	OM->DiscreteAtmToIdx[idx] = i0;
-	OM->DiscreteCSet[idx] = I;
-      } else {
-	I->AtmToIdx[cs->IdxToAtm[a]] = i0;
-      }
-      copy3f(cs->coordPtr(a), I->coordPtr(i0));
-    }
-  }
-  if (ok){
-    if(cs->RefPos) {
-      if(!I->RefPos)
-	I->RefPos = pymol::vla<RefPosType>(nIndex);
-      else
-	VLACheck(I->RefPos, RefPosType, nIndex);
-      if(I->RefPos) {
-	UtilCopyMem(I->RefPos + I->NIndex, cs->RefPos, sizeof(RefPosType) * cs->NIndex);
-      }
-    } else if(I->RefPos) {
-      VLACheck(I->RefPos, RefPosType, nIndex);
-    }
-    I->invalidateRep(cRepAll, cRepInvAll);
-  }
-  I->NIndex = nIndex;
-
-  return ok;
-}
-
-
-/*========================================================================*/
-void CoordSetPurge(CoordSet * I)
-
-/* performs first half of removal  */
 {
-  auto G = I->G;
-  int offset = 0;
-  int a, a1, ao;
-  AtomInfoType *ai;
-  ObjectMolecule *obj;
-  float *c0, *c1;
-  RefPosType *r0, *r1;
-  int *atom_state0, *atom_state1;
-  char *has_atom_state0, *has_atom_state1;
-  obj = I->Obj;
+  assert(OM == I->Obj);
 
-  PRINTFD(G, FB_CoordSet)
-    " CoordSetPurge-Debug: entering..." ENDFD;
+  auto const nIndexOld = I->getNIndex();
+  I->setNIndex(I->getNIndex() + cs->getNIndex());
 
-  c0 = c1 = I->Coord.data();
-  r0 = r1 = I->RefPos.data();
-  atom_state0 = atom_state1 = I->atom_state_setting_id.data();
-  has_atom_state0 = has_atom_state1 = I->has_atom_state_settings.data();
-
-  /* This loop slides down the atoms that are not deleted (deleteFlag)
-     it moves the Coord, RefPos, and LabPos */
-  for(a = 0; a < I->NIndex; a++) {
-    a1 = I->IdxToAtm[a];
-    ai = obj->AtomInfo + a1;
-    if(ai->deleteFlag) {
-      offset--;
-      c0 += 3;
-      if(r0)
-        r0++;
-      if (has_atom_state0){
-	atom_state0++;
-	has_atom_state0++;
-      }
-    } else if(offset) {
-      ao = a + offset;
-      *(c1++) = *(c0++);
-      *(c1++) = *(c0++);
-      *(c1++) = *(c0++);
-      if(r1) {
-        *(r1++) = *(r0++);
-      }
-      if (has_atom_state0){
-	*(atom_state1++) = *(atom_state0++);
-	*(has_atom_state1++) = *(has_atom_state0++);
-      }
-      if (I->AtmToIdx)
-	I->AtmToIdx[a1] = ao;
-      I->IdxToAtm[ao] = a1;     /* no adjustment of these indexes yet... */
-      if (I->Obj->DiscreteFlag){
-	I->Obj->DiscreteAtmToIdx[a1] = ao;
-	I->Obj->DiscreteCSet[a1] = I;
-      }
+  for (int idx_src = 0; idx_src < cs->getNIndex(); ++idx_src) {
+    int const idx = idx_src + nIndexOld;
+    int const atm = cs->IdxToAtm[idx_src];
+    I->IdxToAtm[idx] = cs->IdxToAtm[idx_src];
+    if (OM->DiscreteFlag) {
+      OM->DiscreteAtmToIdx[atm] = idx;
+      OM->DiscreteCSet[atm] = I;
     } else {
-      c0 += 3;
-      c1 += 3;
-      if(r1) {
-        r0++;
-        r1++;
-      }
-      if (has_atom_state0){
-	atom_state0++; atom_state1++;
-	has_atom_state0++; has_atom_state1++;
-      }
+      I->AtmToIdx[atm] = idx;
     }
+    copy3f(cs->coordPtr(idx_src), I->coordPtr(idx));
   }
-  if(offset) {
-    /* If there were deleted atoms, (offset < 0), then
-       re-adjust the array sizes */
-    I->NIndex += offset;
-    VLASize(I->Coord, float, I->NIndex * 3);
-    if(I->RefPos) {
-      VLASize(I->RefPos, RefPosType, I->NIndex);
-    }
-    if(I->has_atom_state_settings) {
-      VLASize(I->has_atom_state_settings, char, I->NIndex);
-      VLASize(I->atom_state_setting_id, int, I->NIndex);
-    }
-    VLASize(I->IdxToAtm, int, I->NIndex);
-    PRINTFD(G, FB_CoordSet)
-      " CoordSetPurge-Debug: I->IdxToAtm shrunk to %d\n", I->NIndex ENDFD;
-    I->invalidateRep(cRepAll, cRepInvAtoms);      /* this will free Color */
+
+  if (cs->RefPos) {
+    I->RefPos.resize(I->getNIndex());
+    std::copy_n(cs->RefPos.data(), cs->getNIndex(), I->RefPos.data() + nIndexOld);
   }
-  PRINTFD(G, FB_CoordSet)
-    " CoordSetPurge-Debug: leaving NAtIndex %d NIndex %d...\n",
-    I->NAtIndex, I->NIndex ENDFD;
+
+  // TODO copy or move atom_state_setting_id here?
+
+  I->invalidateRep(cRepAll, cRepInvAll);
+
+  return true;
 }
 
 
@@ -1187,12 +1084,6 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
     }
   }
 
-  if (!Spheroid.empty() &&
-      Spheroid.size() != NAtIndex * GetSpheroidSphereRec(G)->nDot) {
-    Spheroid.clear();
-    SpheroidNormal.clear();
-  }
-
   /* invalidate basd on one representation, 'type' */
   for (RepIterator iter(G, type); iter.next(); ){
     auto eff_level = level;
@@ -1494,9 +1385,6 @@ CoordSet::CoordSet(const CoordSet& cs)
   this->Coord = cs.Coord;
   this->IdxToAtm = cs.IdxToAtm;
   this->NIndex = cs.NIndex;
-  this->NAtIndex = cs.NAtIndex;
-  this->prevNIndex = cs.prevNIndex;
-  this->prevNAtIndex = cs.prevNAtIndex;
   std::copy(std::begin(cs.Rep), std::end(cs.Rep), std::begin(this->Rep));
   std::copy(std::begin(cs.Active), std::end(cs.Active), std::begin(this->Active));
   this->NTmpBond = cs.NTmpBond;
@@ -1534,6 +1422,7 @@ CoordSet::CoordSet(const CoordSet& cs)
 void CoordSet::setNIndex(unsigned nindex)
 {
   NIndex = nindex;
+  IdxToAtm.resize(nindex);
 
   if (nindex == 0) {
     return;
@@ -1541,11 +1430,9 @@ void CoordSet::setNIndex(unsigned nindex)
 
   auto const idx = nindex - 1;
 
-  Coord.check(idx * 3 + 2);
-  IdxToAtm.check(idx);
+  Coord.reserve(nindex * 3);
 
-  if (has_atom_state_settings) {
-    has_atom_state_settings.check(idx);
+  if (has_any_atom_state_settings()) {
     atom_state_setting_id.check(idx);
   }
 
@@ -1559,7 +1446,6 @@ void CoordSet::setNIndex(unsigned nindex)
  *
  * For non-discrete objects:
  *   - Extends AtmToIdx (appends -1s)
- *   - Sets NAtIndex
  *
  * For discrete objects:
  *   - Converts this coordset to discrete if necessary
@@ -1573,8 +1459,9 @@ int CoordSet::extendIndices(int nAtom)
   if (Obj->DiscreteFlag) {
     ok = Obj->setNDiscrete(nAtom);
 
-    if (AtmToIdx) { /* convert to discrete if necessary */
-      AtmToIdx.freeP();
+    // convert to discrete if necessary
+    if (!AtmToIdx.empty()) {
+      AtmToIdx.clear();
       if (ok) {
         for (int a = 0; a < NIndex; a++) {
           auto const b = IdxToAtm[a];
@@ -1583,57 +1470,18 @@ int CoordSet::extendIndices(int nAtom)
         }
       }
     }
-  }
-  if (ok && NAtIndex < nAtom) {
-    if (AtmToIdx) {
+  } else {
+    const auto NAtIndex = AtmToIdx.size();
+    assert(NAtIndex <= nAtom);
+    if (NAtIndex < nAtom) {
       AtmToIdx.resize(nAtom);
-      CHECKOK(ok, AtmToIdx);
       if (ok && nAtom) {
         for (int a = NAtIndex; a < nAtom; a++)
           AtmToIdx[a] = -1;
       }
-      NAtIndex = nAtom;
-    } else if (!Obj->DiscreteFlag) {
-      AtmToIdx = pymol::vla<int>(nAtom);
-      CHECKOK(ok, AtmToIdx);
-      if (ok) {
-        for (int a = 0; a < nAtom; a++)
-          AtmToIdx[a] = -1;
-        NAtIndex = nAtom;
-      }
     }
   }
   return ok;
-}
-
-/*========================================================================*/
-void CoordSet::appendIndices(int offset)
-{
-  IdxToAtm = pymol::vla<int>(NIndex);
-  if (NIndex) {
-    ErrChkPtr(G, IdxToAtm);
-    for (int a = 0; a < NIndex; ++a)
-      IdxToAtm[a] = a + offset;
-  }
-  if (Obj->DiscreteFlag) {
-    VLACheck(Obj->DiscreteAtmToIdx, int, NIndex + offset);
-    VLACheck(Obj->DiscreteCSet, CoordSet*, NIndex + offset);
-    for (int a = 0; a < NIndex; ++a) {
-      auto const b = a + offset;
-      Obj->DiscreteAtmToIdx[b] = a;
-      Obj->DiscreteCSet[b] = this;
-    }
-  } else {
-    AtmToIdx = pymol::vla<int>(NIndex + offset);
-    if (NIndex + offset) {
-      ErrChkPtr(G, AtmToIdx);
-      for (int a = 0; a < offset; ++a)
-        AtmToIdx[a] = -1;
-      for (int a = 0; a < NIndex; ++a)
-        AtmToIdx[a + offset] = a;
-    }
-  }
-  NAtIndex = NIndex + offset;
 }
 
 /*========================================================================*/
@@ -1642,17 +1490,14 @@ void CoordSet::appendIndices(int offset)
  */
 void CoordSet::enumIndices()
 {
-  AtmToIdx = pymol::vla<int>(NIndex);
-  IdxToAtm = pymol::vla<int>(NIndex);
+  AtmToIdx.resize(NIndex);
+  IdxToAtm.resize(NIndex);
   if (NIndex) {
-    ErrChkPtr(G, AtmToIdx);
-    ErrChkPtr(G, IdxToAtm);
     for (int a = 0; a < NIndex; ++a) {
       AtmToIdx[a] = a;
       IdxToAtm[a] = a;
     }
   }
-  NAtIndex = NIndex;
 }
 
 /*========================================================================*/
@@ -1661,9 +1506,9 @@ CoordSet::~CoordSet()
 #ifdef _PYMOL_IP_PROPERTIES
 #endif
 
-  if (has_atom_state_settings) {
+  if (has_any_atom_state_settings()) {
     for (int a = 0; a < NIndex; ++a) {
-      if (has_atom_state_settings[a]) {
+      if (has_atom_state_settings(a)) {
         SettingUniqueDetachChain(G, atom_state_setting_id[a]);
       }
     }
@@ -1694,21 +1539,18 @@ int CoordSetSetSettingFromPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int s
   if (val == Py_None)
     val = NULL;
 
-  if (!val) {
-    if (!cs->has_atom_state_settings ||
-        !cs->has_atom_state_settings[at])
-      return true;
+  if (!val && !cs->has_atom_state_settings(at)) {
+    return true;
   }
 
   CoordSetCheckUniqueID(G, cs, at);
-  cs->has_atom_state_settings[at] = true;
 
   return SettingUniqueSetPyObject(G, cs->atom_state_setting_id[at], setting_id, val);
 }
 #endif
 
 int CoordSetCheckSetting(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id){
-  if(!cs->has_atom_state_settings || !cs->has_atom_state_settings[at]) {
+  if (!cs->has_atom_state_settings(at)) {
     return 0;
   }
 
@@ -1716,7 +1558,7 @@ int CoordSetCheckSetting(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id)
 }
 
 PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id){
-  if(cs->has_atom_state_settings && cs->has_atom_state_settings[at]){
+  if (cs->has_atom_state_settings(at)) {
     return SettingUniqueGetPyObject(G, cs->atom_state_setting_id[at], setting_id);
   }
   return NULL;
@@ -1726,9 +1568,6 @@ int CoordSetCheckUniqueID(PyMOLGlobals * G, CoordSet *I, int at){
   if (!I->atom_state_setting_id){
     I->atom_state_setting_id = pymol::vla<int>(I->NIndex);
   }
-  if (!I->has_atom_state_settings){
-    I->has_atom_state_settings = pymol::vla<char>(I->NIndex);
-  }
   if (!I->atom_state_setting_id[at]){
     I->atom_state_setting_id[at] = AtomInfoGetNewUniqueID(G);
   }
@@ -1737,8 +1576,7 @@ int CoordSetCheckUniqueID(PyMOLGlobals * G, CoordSet *I, int at){
 
 template <typename V>
 void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, V * out) {
-  if (cs->has_atom_state_settings &&
-      cs->has_atom_state_settings[idx] &&
+  if (cs->has_atom_state_settings(idx) &&
       SettingUniqueGetIfDefined(G, cs->atom_state_setting_id[idx], setting_id, out))
     return;
 

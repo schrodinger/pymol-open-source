@@ -182,8 +182,8 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
     int modelChainCount = container->chainsPerModel[modelIndex];
 
     CoordSet * cset = CoordSetNew(G);
-    cset->Coord = pymol::vla<float>(3 * nindexEstimate);
-    cset->IdxToAtm = pymol::vla<int>(nindexEstimate);
+    cset->Coord.reserve(3 * nindexEstimate);
+    cset->IdxToAtm.reserve(nindexEstimate);
     cset->Obj = I;
     I->CSet[modelIndex] = cset;
 
@@ -261,11 +261,10 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
             ai->color = container->pymolColorList[atomIndex];
           }
 
-          VLACheck(cset->IdxToAtm, int, cset->NIndex);
-          VLACheck(cset->Coord, float, 3 * cset->NIndex + 2);
-          cset->IdxToAtm[cset->NIndex] = atomIndex;
-          float * coord = cset->coordPtr(cset->NIndex);
-          cset->NIndex++;
+          auto const idx = cset->getNIndex();
+          cset->setNIndex(idx + 1);
+          cset->IdxToAtm[idx] = atomIndex;
+          float* coord = cset->coordPtr(idx);
 
           coord[0] = container->xCoordList[atomIndex];
           coord[1] = container->yCoordList[atomIndex];
@@ -274,8 +273,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
       }
     }
 
-    VLASize(cset->Coord, float, 3 * cset->NIndex);
-    VLASize(cset->IdxToAtm, int, cset->NIndex);
+    assert(cset->IdxToAtm.size() == cset->getNIndex());
   }
 
   if (atomIndex != I->NAtom) {

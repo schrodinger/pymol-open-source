@@ -283,14 +283,14 @@ int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete
 
       I->AtomInfo[an].discrete_state = state + 1; // 1-based :-(
       I->DiscreteCSet[an] = cs;
-      I->DiscreteAtmToIdx[an] = cs->AtmToIdx[ao];
+      I->DiscreteAtmToIdx[an] = idx;
 
       // mapping (for bonds): (atom_old, state) -> atom_new
       aostate2an[ao] = an;
     }
 
     // unused in discrete coordsets
-    VLAFreeP(cs->AtmToIdx);
+    cs->AtmToIdx.clear();
 
     // for all old bonds
     for (idx = 0; idx < I->NBond; idx++) {
@@ -331,9 +331,6 @@ int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete
   // update N* count fields
   I->NAtom = natom;
   I->NBond = nbond;
-  for (state = 0; state < I->NCSet; state++)
-    if ((cs = I->CSet[state]))
-      cs->NAtIndex = natom;
 
   // trim VLAs memory to actual size
   if (I->NBond)
@@ -2739,7 +2736,6 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
   PyMOLGlobals *G = I->G;
   CoordSet *cs;
   int a, nIndex;
-  const int* idx2atm;
   const float *coord, *v;
   int flag = true;
   int all_vis = !vis_only;
@@ -2762,7 +2758,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
     for(StateIterator iter(G, I->Setting.get(), curState, I->NCSet);
         iter.next();) {
       if((cs = I->CSet[iter.state])) {
-	    idx2atm = cs->IdxToAtm;
+	    const auto* idx2atm = cs->IdxToAtm.data();
 	    nIndex = cs->NIndex;
 	    coord = cs->Coord;
 	    if(use_matrices && !cs->Matrix.empty()) {
@@ -3134,11 +3130,13 @@ int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force)
 
 
 /*========================================================================*/
-static int AddCoordinateIntoCoordSet(ObjectMolecule * I, int a, CoordSet *tcs,
-    const int *AtmToIdx, CoordSet *cs, float *backup, int mode, int at0,
-			       int index0, int move_flag, float *va1, float *vh1, 
-			       float *x1, float *y1, float *z1, float d, int ca0){
-  float *f0, *f1;
+static int AddCoordinateIntoCoordSet(ObjectMolecule* I, int a, CoordSet* tcs,
+    CoordSet* cs, const float* backup, int mode, int at0, int index0,
+    int move_flag, const float* va1, const float* x1, const float* y1,
+    const float* z1, float d)
+{
+  const float *f0;
+  float *f1;
   int b;
   int ch0;
   float vh0[3];
@@ -3158,9 +3156,10 @@ static int AddCoordinateIntoCoordSet(ObjectMolecule * I, int a, CoordSet *tcs,
       f0 += 3;
       f1 += 3;
     } else {
+      auto ca0 = tcs->atmToIdx(at0);   /* anchor */
       switch (mode) {
       case 0:
-	ch0 = AtmToIdx[index0];        /* hydrogen */
+	ch0 = tcs->atmToIdx(index0);   /* hydrogen */
 	if((ca0 >= 0) && (ch0 >= 0)) {
 	  copy3f(tcs->coordPtr(ca0), va0);
 	  copy3f(tcs->coordPtr(ch0), vh0);
@@ -3227,7 +3226,6 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
   float vh1[3];
   float x1[3], y1[3], z1[3];
   float d;
-  int ca0;
   int ok = true;
 
   ok &= ObjectMoleculeUpdateNeighbors(I);
@@ -3380,33 +3378,22 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
       ok &= ObjectMoleculeMerge(I, std::move(nai), cs, false, cAIC_AllMask, true);
     /* will free nai, cs->TmpBond and cs->TmpLinkBond  */
     if (ok){
-      if (I->DiscreteFlag){
-	for(a = 0; a < I->NCSet; a++) {
-	  CoordSet *qcs = I->CSet[a];
-	  if(qcs) {
-	    qcs->tmp_index = a;
-	  }
-	}
-	if (ok)
-	  ok &= ObjectMoleculeExtendIndices(I, I->DiscreteCSet[at0]->tmp_index);
-      } else if (ok) {
-	ok &= ObjectMoleculeExtendIndices(I, -1);
-      }
+      int const state = I->DiscreteFlag ? (I->AtomInfo[at0].discrete_state - 1)
+                                        : cSelectorUpdateTableAllStates;
+      ok &= ObjectMoleculeExtendIndices(I, state);
     }
     if (ok)
       ok &= ObjectMoleculeUpdateNeighbors(I);
     if (ok){
       if (I->DiscreteFlag){
 	tcs = I->DiscreteCSet[at0];
-	ca0 = I->DiscreteAtmToIdx[at0];   /* anchor */
 	if (ok)
-	  ok &= AddCoordinateIntoCoordSet(I, a, tcs, I->DiscreteAtmToIdx, cs, backup, mode, at0, index0, move_flag, va1, vh1, x1, y1, z1, d, ca0);
+	  ok &= AddCoordinateIntoCoordSet(I, a, tcs, cs, backup, mode, at0, index0, move_flag, va1, x1, y1, z1, d);
       } else {
 	for(a = 0; a < I->NCSet; a++) {     /* add coordinate into the coordinate set */
 	  tcs = I->CSet[a];
-	  ca0 = tcs->AtmToIdx[at0];   /* anchor */
 	  if (ok)
-	    ok &= AddCoordinateIntoCoordSet(I, a, tcs, tcs->AtmToIdx, cs, backup, mode, at0, index0, move_flag, va1, vh1, x1, y1, z1, d, ca0);
+	    ok &= AddCoordinateIntoCoordSet(I, a, tcs, cs, backup, mode, at0, index0, move_flag, va1, x1, y1, z1, d);
 	}
       }
     }
@@ -4560,72 +4547,49 @@ int ObjectMoleculeRemoveBonds(ObjectMolecule * I, int sele0, int sele1)
 void ObjectMoleculePurge(ObjectMolecule * I)
 {
   PyMOLGlobals *G = I->G;
-  int a, a0, a1;
-  int *oldToNew = NULL;
   int offset = 0;
-  BondType *b0, *b1;
-  AtomInfoType *ai0, *ai1;
 
-  PRINTFD(I->G, FB_ObjectMolecule)
-    " ObjMolPurge-Debug: step 1, delete object selection\n" ENDFD;
+  // remove the object selection and free up any selection entries.
+  // note that we don't delete atom selection members -- those may be needed in the new object.
+  SelectorDelete(G, I->Name);
 
-  SelectorDelete(G, I->Name);       /* remove the object selection and free up any selection entries */
-  /* note that we don't delete atom selection members -- those may be needed in the new object */
-
-  PRINTFD(G, FB_ObjectMolecule)
-    " ObjMolPurge-Debug: step 2, purge coordinate sets\n" ENDFD;
-
-  for(a = 0; a < I->NCSet; a++)
-    if(I->CSet[a])
-      CoordSetPurge(I->CSet[a]);
-  if(I->CSTmpl) {
-    CoordSetPurge(I->CSTmpl);
-  }
-  PRINTFD(I->G, FB_ObjectMolecule)
-    " ObjMolPurge-Debug: step 3, old-to-new mapping\n" ENDFD;
-
-  oldToNew = pymol::malloc<int>(I->NAtom);
-  ai0 = I->AtomInfo.data();
-  ai1 = I->AtomInfo.data();
-  for(a = 0; a < I->NAtom; a++) {
-    if(ai0->deleteFlag) {
-      AtomInfoPurge(G, ai0);
+  // old-to-new mapping
+  auto oldToNew = std::vector<int>(size_t(I->NAtom), -1);
+  for (int atm = 0; atm < I->NAtom; ++atm) {
+    auto &ai0 = I->AtomInfo[atm];
+    if(ai0.deleteFlag) {
+      AtomInfoPurge(G, &ai0);
       offset--;
-      ai0++;
-      oldToNew[a] = -1;
+      assert(oldToNew[atm] == -1);
     } else {
       if(offset) {
-	*(ai1) = *(ai0);
+        I->AtomInfo[atm + offset] = std::move(ai0);
       }
-      oldToNew[a] = a + offset;
-      ai0++;
-      ai1++;
+      oldToNew[atm] = atm + offset;
     }
   }
   if(offset) {
     I->NAtom += offset;
-    VLASize(I->AtomInfo, AtomInfoType, I->NAtom);
-    if (I->DiscreteFlag){
-      ObjectMoleculeAdjustDiscreteAtmIdx(I, oldToNew, I->NAtom-offset); /* need to include previous atoms */
-      I->setNDiscrete(I->NAtom);
+    I->AtomInfo.resize(I->NAtom);
+    for (int a = 0; a < I->NCSet; ++a) {
+      if (auto cs = I->CSet[a])
+        CoordSetAdjustAtmIdx(cs, oldToNew.data());
     }
-    for(a = 0; a < I->NCSet; a++)
-      if(I->CSet[a])
-	CoordSetAdjustAtmIdx(I->CSet[a], oldToNew, I->NAtom);
     if (I->CSTmpl) {
-      CoordSetAdjustAtmIdx(I->CSTmpl, oldToNew, I->NAtom);
+      CoordSetAdjustAtmIdx(I->CSTmpl, oldToNew.data());
     }
   }
 
-  PRINTFD(I->G, FB_ObjectMolecule)
-    " ObjMolPurge-Debug: step 4, bonds\n" ENDFD;
+  I->updateAtmToIdx();
+
+  // step 4, bonds
 
   offset = 0;
-  b0 = I->Bond.data();
-  b1 = I->Bond.data();
-  for(a = 0; a < I->NBond; a++) {
-    a0 = b0->index[0];
-    a1 = b0->index[1];
+  auto b0 = I->Bond.data();
+  auto b1 = I->Bond.data();
+  for (int b = 0; b < I->NBond; ++b) {
+    auto a0 = b0->index[0];
+    auto a1 = b0->index[1];
     if(a0 < 0 || a1 < 0 || (oldToNew[a0] < 0) || (oldToNew[a1] < 0)) {
       /* deleting bond */
       AtomInfoPurgeBond(I->G, b0);
@@ -4645,16 +4609,8 @@ void ObjectMoleculePurge(ObjectMolecule * I)
     I->NBond += offset;
     VLASize(I->Bond, BondType, I->NBond);
   }
-  FreeP(oldToNew);
-
-  PRINTFD(I->G, FB_ObjectMolecule)
-    " ObjMolPurge-Debug: step 5, invalidate...\n" ENDFD;
 
   I->invalidate(cRepAll, cRepInvAtoms, -1);
-
-  PRINTFD(I->G, FB_ObjectMolecule)
-    " ObjMolPurge-Debug: leaving...\n" ENDFD;
-
 }
 
 
@@ -4957,15 +4913,11 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
         {
           int mem[9];
           int nbr[7];
-          const int* atmToIdx = nullptr;
           const int ESCAPE_MAX = 500;
 
-          int escape_count;
+          const int* atmToIdx = I->DiscreteFlag ? nullptr : cs->AtmToIdx.data();
 
-          if(!I->DiscreteFlag)
-            atmToIdx = cs->AtmToIdx;
-
-          escape_count = ESCAPE_MAX;    /* don't get bogged down with structures 
+          int escape_count = ESCAPE_MAX;    /* don't get bogged down with structures 
                                            that have unreasonable connectivity */
           mem[0] = a;
           nbr[0] = neighbor[mem[0]] + 1;
@@ -5498,15 +5450,11 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
 
           int mem[9];
           int nbr[7];
-          const int* atmToIdx = nullptr;
           const int ESCAPE_MAX = 500;
 
-          int escape_count;
+          const int* atmToIdx = I->DiscreteFlag ? nullptr : cs->AtmToIdx.data();
 
-          if(!I->DiscreteFlag)
-            atmToIdx = cs->AtmToIdx;
-
-          escape_count = ESCAPE_MAX;    /* don't get bogged down with structures 
+          int escape_count = ESCAPE_MAX;    /* don't get bogged down with structures 
                                            that have unreasonable connectivity */
           mem[0] = a;
           nbr[0] = neighbor[mem[0]] + 1;
@@ -8813,34 +8761,28 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 			CoordSet * cs, int bondSearchFlag, int aic_mask, int invalidate)
 {
   PyMOLGlobals *G = I->G;
-  int *index, *outdex, *a2i = NULL, *i2a = NULL;
+  int *index, *outdex;
   int a, b, lb = 0, ac;
   int c, nb, a1, a2;
   int found;
   int nAt, nBd, nBond;
   int expansionFlag = false;
-  int oldNAtom, oldNBond;
   int ok = true;
 
-  oldNAtom = I->NAtom;
-  oldNBond = I->NBond;
+  const auto n_index = cs->getNIndex();
+  const auto oldNAtom = I->NAtom;
+  const auto oldNBond = I->NBond;
 
   /* first, sort the coodinate set */
 
-  index = AtomInfoGetSortedIndex(G, I, ai, cs->NIndex, &outdex);
+  index = AtomInfoGetSortedIndex(G, I, ai, n_index, &outdex);
   CHECKOK(ok, index);
   if (!ok)
     return false;
-  for(b = 0; b < cs->NIndex; b++)
-    cs->IdxToAtm[b] = outdex[cs->IdxToAtm[b]];
-  for(b = 0; b < cs->NIndex; b++)
-    cs->AtmToIdx[b] = -1;
-  for(b = 0; b < cs->NIndex; b++)
-    cs->AtmToIdx[cs->IdxToAtm[b]] = b;
 
-  auto ai2 = pymol::vla<AtomInfoType>(cs->NIndex);
+  auto ai2 = pymol::vla<AtomInfoType>(n_index);
   if (ok){
-    for(a = 0; a < cs->NIndex; a++)
+    for(a = 0; a < n_index; a++)
       ai2[a] = std::move(ai[index[a]]);      /* creates a sorted list of atom info records */
   }
   ai = std::move(ai2);
@@ -8848,16 +8790,14 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
   /* now, match it up with the current object's atomic information */
 
   if (ok){
-    for(a = 0; a < cs->NIndex; a++) {
+    for(a = 0; a < n_index; a++) {
       index[a] = -1;
-      outdex[a] = -1;
     }
   }
 
   if (ok) {
-    int n_index = cs->NIndex;
-    int n_atom = I->NAtom;
-    const AtomInfoType *atInfo = I->AtomInfo.data(), *ai_a;
+    const auto n_atom = I->NAtom;
+    const AtomInfoType* const atInfo = I->AtomInfo.data();
     CompareFn *fCompare;
 
     if(SettingGetGlobal_b(G, cSetting_pdb_hetatm_sort)) {
@@ -8872,7 +8812,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 
     for(a = 0; a < n_index; a++) {
       int reverse = false;
-      ai_a = ai + a;
+      const auto* const ai_a = ai + a;
       found = false;
       if(!I->DiscreteFlag) {    /* don't even try matching for discrete objects */
         while(b < n_atom) {
@@ -8943,22 +8883,11 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
     }
   }
 
-  /* allocate our new x-ref tables */
   if (ok){
-    if(nAt < I->NAtom)
-      nAt = I->NAtom;
-    a2i = VLACalloc(int, nAt);
-    CHECKOK(ok, a2i);
-    if (ok)
-      i2a = VLACalloc(int, cs->NIndex);
-    CHECKOK(ok, i2a);
-  }
-
-  if (ok){
-    for(a = 0; a < cs->NIndex; a++) {     /* a is in original file space */
-      a1 = cs->IdxToAtm[a];       /* a1 is in sorted atom info space */
+    for(a = 0; a < n_index; a++) {     /* a is in original file space */
+      a1 = outdex[cs->IdxToAtm[a]];    /* a1 is in sorted atom info space */
       a2 = index[a1];
-      i2a[a] = a2;                /* a2 is in object space */
+      cs->IdxToAtm[a] = a2;       /* a2 is in object space */
       if(a2 < oldNAtom)
         AtomInfoCombine(G, I->AtomInfo + a2, std::move(ai[a1]), aic_mask);
       else
@@ -8970,19 +8899,10 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
     ok = I->setNDiscrete(nAt);
   }
 
-  cs->NAtIndex = nAt;
   I->NAtom = nAt;
 
-  VLAFreeP(cs->AtmToIdx);
-  VLAFreeP(cs->IdxToAtm);
-  cs->IdxToAtm = pymol::vla_take_ownership(i2a);
-
   if (ok){
-      cs->AtmToIdx = pymol::vla_take_ownership(a2i);
-      for(a = 0; a < cs->NAtIndex; a++)
-	cs->AtmToIdx[a] = -1;
-      for(a = 0; a < cs->NIndex; a++)
-	cs->AtmToIdx[cs->IdxToAtm[a]] = a;
+    cs->updateNonDiscreteAtmToIdx(nAt);
   }
 
   VLAFreeP(ai);                 /* note that we're trusting AtomInfoCombine to have 
@@ -11233,71 +11153,18 @@ void ObjectMoleculeDummyUpdate(ObjectMolecule * I, int mode)
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
 {
-  ObjectMolecule *I = NULL;
+  auto I = new ObjectMolecule(G, false);
+  I->AtomInfo.resize(I->NAtom = 1);
 
-  int nAtom;
-  int frame = -1;
-  int ok = true;
-
-  I = new ObjectMolecule(G, false);
-  CHECKOK(ok, I);
-  if (!ok)
-    return NULL;
-
-  nAtom = 1;
-  float *coord = VLAlloc(float, 3 * nAtom);
-  CHECKOK(ok, coord);
-  if (!ok){
-    DeleteP(I);
-    return NULL;
-  }
-  zero3f(coord);
-
-  CoordSet *cset = CoordSetNew(G);
-  CHECKOK(ok, cset);
-  if (!ok){
-    VLAFreeP(coord);
-    DeleteP(I);
-    return NULL;
-  }
-  cset->NIndex = nAtom;
-  cset->Coord = pymol::vla_take_ownership(coord);
-  cset->TmpBond = NULL;
-  cset->NTmpBond = 0;
-  strcpy(cset->Name, "_origin");
-
+  auto* cset = new CoordSet(G);
   cset->Obj = I;
+  cset->setNIndex(1);
   cset->enumIndices();
 
-  pymol::vla<AtomInfoType> atInfo(nAtom);
-  ok &= ObjectMoleculeMerge(I, std::move(atInfo), cset, false, cAIC_IDMask, true);
-  if (ok){
-    if(frame < 0)
-      frame = I->NCSet;
-    VLACheck(I->CSet, CoordSet *, frame);
-    CHECKOK(ok, I->CSet);
-    if (ok){
-      if(I->NCSet <= frame)
-	I->NCSet = frame + 1;
-      delete I->CSet[frame];
-      I->CSet[frame] = cset;
-      
-      I->NBond = 0;
-      I->Bond = NULL;
-    }
-  }
-  if (ok)
-    ok &= ObjectMoleculeExtendIndices(I, frame);
-  if (ok)
-    ok &= ObjectMoleculeSort(I);
-  if (ok){
-    ObjectMoleculeUpdateIDNumbers(I);
-    ObjectMoleculeUpdateNonbonded(I);
-  }
-  if (!ok){
-    DeleteP(I);
-  }
-  return (I);
+  I->CSet.resize(I->NCSet = 1);
+  I->CSet[0] = cset;
+
+  return I;
 }
 
 
@@ -11822,19 +11689,6 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
 #ifdef _PYMOL_IP_EXTRAS
 #endif
 
-void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAtom){
-  int a, a0;
-  if (I->DiscreteAtmToIdx){
-    for(a=0; a<nAtom; a++){
-      a0 = lookup[a];
-      if (a0!=a && a0>=0){
-	I->DiscreteAtmToIdx[a0] = I->DiscreteAtmToIdx[a];
-	I->DiscreteCSet[a0] = I->DiscreteCSet[a];
-      }
-    }
-  }   
-}
-
 #ifdef _PYMOL_IP_PROPERTIES
 #endif
 
@@ -11943,30 +11797,16 @@ bool ObjectMolecule::updateAtmToIdx() {
       continue;
 
     if (!DiscreteFlag) {
-      if (!cset->AtmToIdx) {
-        cset->AtmToIdx = pymol::vla<int>(NAtom);
-      } else {
-        VLASize(cset->AtmToIdx, int, NAtom);
-      }
-
-      ok_assert(1, cset->AtmToIdx);
-
-      std::fill_n(cset->AtmToIdx.data(), NAtom, -1);
-    }
-
-    for (int idx = 0; idx < cset->NIndex; ++idx) {
-      int atm = cset->IdxToAtm[idx];
-
-      if (DiscreteFlag) {
+      cset->updateNonDiscreteAtmToIdx(NAtom);
+    } else {
+      for (int idx = 0; idx < cset->NIndex; ++idx) {
+        int atm = cset->IdxToAtm[idx];
+        assert(atm < NAtom);
         DiscreteAtmToIdx[atm] = idx;
         DiscreteCSet[atm] = cset;
         AtomInfo[atm].discrete_state = i + 1;
-      } else {
-        cset->AtmToIdx[atm] = idx;
       }
     }
-
-    cset->NAtIndex = NAtom;
   }
 
   return true;

@@ -489,7 +489,8 @@ int ObjectMoleculeUpdateAtomTypeInfoForState(PyMOLGlobals * G, ObjectMolecule * 
 int ObjectMoleculeUpdateMMStereoInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize=1);
 #endif
 
-void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAtom);
+#ifdef _PYMOL_IP_PROPERTIES
+#endif
 
 void AtomInfoSettingGenerateSideEffects(PyMOLGlobals * G, ObjectMolecule *obj, int index, int id);
 

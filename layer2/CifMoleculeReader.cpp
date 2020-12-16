@@ -1147,8 +1147,8 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, const cif_data * data,
   CoordSet ** csets = VLACalloc(CoordSet*, ncsets);
   for (auto it = atoms_per_model.begin(); it != atoms_per_model.end(); ++it) {
     csets[it->first] = cset = CoordSetNew(G);
-    cset->Coord = pymol::vla<float> (3 * it->second);
-    cset->IdxToAtm = pymol::vla<int>(it->second);
+    cset->Coord.resize(3 * it->second);
+    cset->IdxToAtm.resize(it->second);
   }
 
   // mm_atom_site_label -> atom index (1-indexed)
@@ -2112,7 +2112,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
   for (int i = 0; i < ncsets; i++) {
     if (csets[i]) {
       csets[i]->Obj = I;
-      if (!csets[i]->IdxToAtm)
+      if (csets[i]->IdxToAtm.empty())
         csets[i]->enumIndices();
     }
   }

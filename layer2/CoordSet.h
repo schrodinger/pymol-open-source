@@ -49,11 +49,18 @@ struct CoordSet : CObjectState {
   void update(int state);
   void render(RenderInfo * info);
   void enumIndices();
-  void appendIndices(int offset);
   int extendIndices(int nAtom);
   void invalidateRep(cRep_t type, cRepInv_t level);
   int atmToIdx(int atm) const;
   void setNIndex(unsigned nindex);
+  void updateNonDiscreteAtmToIdx(unsigned);
+
+  /// Number of atoms with coordinates in this coordset
+  int getNIndex() const
+  {
+    // TODO If possible, eliminate NIndex, use IdxToAtm.size()
+    return NIndex;
+  }
 
   // read/write pointer to coordinate
   float * coordPtr(int idx) {
@@ -90,9 +97,9 @@ struct CoordSet : CObjectState {
 
   ObjectMolecule *Obj = nullptr;
   pymol::vla<float> Coord;
-  pymol::vla<int> IdxToAtm;
-  pymol::vla<int> AtmToIdx;
-  int NIndex = 0, NAtIndex = 0, prevNIndex = 0, prevNAtIndex = 0;
+  std::vector<int> IdxToAtm;
+  std::vector<int> AtmToIdx;
+  int NIndex = 0;
   ::Rep *Rep[cRepCnt] = {0};            /* an array of pointers to representations */
   int Active[cRepCnt] = {0};          /* active flags */
   int NTmpBond = 0;                 /* optional, temporary (for coord set transfers) */
@@ -140,7 +147,15 @@ struct CoordSet : CObjectState {
 
   /* Atom-state Settings */
   pymol::vla<int> atom_state_setting_id;
-  pymol::vla<char> has_atom_state_settings;
+
+  /// True if any atom might have state level settings
+  bool has_any_atom_state_settings() const { return atom_state_setting_id; }
+
+  /// True if atom `idx` has state level settings
+  bool has_atom_state_settings(int idx) const
+  {
+    return atom_state_setting_id && atom_state_setting_id[idx] != 0;
+  }
 
   // special member functions
   CoordSet(PyMOLGlobals * G);
@@ -191,8 +206,7 @@ int CoordSetTransformAtomR44f(CoordSet * I, int at, const float *matrix);
 
 int CoordSetValidateRefPos(CoordSet * I);
 
-void CoordSetPurge(CoordSet * I);
-void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom);
+void CoordSetAdjustAtmIdx(CoordSet*, const int*);
 int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, const CoordSet * cs);        /* must be non-overlapping */
 void CoordSetRecordTxfApplied(CoordSet * I, const float *TTT, int homogenous);
 void CoordSetUpdateCoord2IdxMap(CoordSet * I, float cutoff);
@@ -230,7 +244,6 @@ template <typename V> void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, V * out)
 template <typename V> void SettingSet(int index, V value, CoordSet *cs, int idx) {
   auto& G = cs->G;
   CoordSetCheckUniqueID(G, cs, idx);
-  cs->has_atom_state_settings[idx] = true;
   SettingUniqueSet(G, cs->atom_state_setting_id[idx], index, value);
 }
 

@@ -1847,7 +1847,6 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
   int ring_color;
   int ok = true;
   int escape_count;
-  const int* atmToIdx = nullptr;
   int ladder_mode, ladder_color;
   float ladder_radius, ring_radius;
   int cartoon_side_chain_helper;
@@ -1875,8 +1874,7 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
   if(ring_color == -1)
     ring_color = cartoon_color;
 
-  if(!obj->DiscreteFlag)
-    atmToIdx = cs->AtmToIdx;
+  const int* atmToIdx = obj->DiscreteFlag ? nullptr : cs->AtmToIdx.data();
   
   ok &= ObjectMoleculeUpdateNeighbors(obj);
   neighbor = obj->Neighbor;
@@ -2970,7 +2968,7 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
       *(ndata->iptr++) = a;
 
       if (trace) {
-        if (a1 == 0 || a1 + 1 == cs->NAtIndex ||
+        if (a1 == 0 || a1 + 1 == obj->NAtom ||
             (a3 = cs->atmToIdx(a1 - 1)) == -1 ||
             (a4 = cs->atmToIdx(a1 + 1)) == -1) {
           zero3f(ndata->voptr);
@@ -3710,18 +3708,19 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
   /* find all of the CA points */
 
-  at = pymol::malloc<int>(cs->NAtIndex);        /* cs index pointers */
-  pv = pymol::malloc<float>(cs->NAtIndex * 3);
-  tmp = pymol::malloc<float>(cs->NAtIndex * 3);
-  pvo = pymol::malloc<float>(cs->NAtIndex * 3); /* orientation vector */
-  pva = pymol::malloc<float>(cs->NAtIndex * 6); /* alternative orientation vectors, two per atom */
-  seg = pymol::malloc<int>(cs->NAtIndex);
-  car = pymol::calloc<CCInOut>(cs->NAtIndex);       /* cartoon type for each atom */
-  auto sstype = pymol::malloc<ss_t>(cs->NAtIndex);
-  flag_tmp = pymol::calloc<int>(cs->NAtIndex);
-  nuc_flag = pymol::calloc<int>(cs->NAtIndex);
+  auto const nAtIndex = cs->getNIndex(); // was NAtIndex
+  at = pymol::malloc<int>(nAtIndex);        /* cs index pointers */
+  pv = pymol::malloc<float>(nAtIndex * 3);
+  tmp = pymol::malloc<float>(nAtIndex * 3);
+  pvo = pymol::malloc<float>(nAtIndex * 3); /* orientation vector */
+  pva = pymol::malloc<float>(nAtIndex * 6); /* alternative orientation vectors, two per atom */
+  seg = pymol::malloc<int>(nAtIndex);
+  car = pymol::calloc<CCInOut>(nAtIndex);       /* cartoon type for each atom */
+  auto sstype = pymol::malloc<ss_t>(nAtIndex);
+  flag_tmp = pymol::calloc<int>(nAtIndex);
+  nuc_flag = pymol::calloc<int>(nAtIndex);
 
-  I->LastVisib = pymol::calloc<char>(cs->NAtIndex);
+  I->LastVisib = pymol::calloc<char>(nAtIndex);
   
   auto cartoon_all_alt =
     SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_all_alt);
@@ -3731,10 +3730,10 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   do {
     ndata.alt = ndata.next_alt;
     ndata.next_alt = 0;
-    memset(car,      0, sizeof(*car)      * cs->NAtIndex);
-    memset(sstype,   0, sizeof(*sstype)   * cs->NAtIndex);
-    memset(flag_tmp, 0, sizeof(*flag_tmp) * cs->NAtIndex);
-    memset(nuc_flag, 0, sizeof(*nuc_flag) * cs->NAtIndex);
+    memset(car,      0, sizeof(*car)      * nAtIndex);
+    memset(sstype,   0, sizeof(*sstype)   * nAtIndex);
+    memset(flag_tmp, 0, sizeof(*flag_tmp) * nAtIndex);
+    memset(nuc_flag, 0, sizeof(*nuc_flag) * nAtIndex);
 
   i = at;
   sptr = seg;
@@ -3763,7 +3762,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   if((!ndata.ring_mode) || (ndata.ring_finder == 2))
     ndata.ring_finder_eff = 1;
   if(ndata.ring_mode || ladder_mode) {
-    ring_anchor = VLAlloc(int, cs->NAtIndex / 10 + 1);
+    ring_anchor = VLAlloc(int, nAtIndex / 10 + 1);
   }
   ndata.ring_anchor = ring_anchor;
   ndata.n_ring = 0;

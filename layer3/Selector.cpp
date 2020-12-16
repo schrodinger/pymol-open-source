@@ -3185,8 +3185,8 @@ int SelectorVdwFit(PyMOLGlobals * G, int sele1, int state1, int sele2, int state
           ai1 = obj1->AtomInfo + at1;
           ai2 = obj2->AtomInfo + at2;
 
-          idx1 = cs1->AtmToIdx[at1];    /* these are also pre-validated */
-          idx2 = cs2->AtmToIdx[at2];
+          idx1 = cs1->atmToIdx(at1);
+          idx2 = cs2->atmToIdx(at2);
 
           sumVDW = ai1->vdw + ai2->vdw;
           dist = (float) diff3f(cs1->coordPtr(idx1), cs2->coordPtr(idx2));
@@ -4816,8 +4816,8 @@ float SelectorSumVDWOverlap(PyMOLGlobals * G, int sele1, int state1, int sele2,
         ai1 = obj1->AtomInfo + at1;
         ai2 = obj2->AtomInfo + at2;
 
-        idx1 = cs1->AtmToIdx[at1];      /* these are also pre-validated */
-        idx2 = cs2->AtmToIdx[at2];
+        idx1 = cs1->atmToIdx(at1);
+        idx2 = cs2->atmToIdx(at2);
 
         sumVDW = ai1->vdw + ai2->vdw + adjust;
         dist = (float) diff3f(cs1->coordPtr(idx1), cs2->coordPtr(idx2));
@@ -6371,9 +6371,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, SelectorID_t sele, const char
     {
       cs2 = CoordSetNew(G);
       c = 0;
-      cs2->Coord = pymol::vla<float>(3 * nAtom);
-      cs2->NAtIndex = targ->NAtom;
-      cs2->IdxToAtm = pymol::vla<int>(nAtom);
+      cs2->setNIndex(nAtom);
       for(a = cNDummyAtoms; a < I->Table.size(); a++)  /* any selected atoms in this state? */
         if(I->Table[a].index >= 0) {
           at = I->Table[a].atom;
@@ -6395,9 +6393,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, SelectorID_t sele, const char
             }
           }
         }
-      VLASize(cs2->IdxToAtm, int, c);
-      VLASize(cs2->Coord, float, c * 3);
-      cs2->NIndex = c;
+      cs2->setNIndex(c);
       if(target >= 0) {
         ts = target++;
       } else {

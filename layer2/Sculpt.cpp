@@ -647,7 +647,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
           atl.atm2idx = obj->DiscreteAtmToIdx;
           atl.discCSet = obj->DiscreteCSet;
         } else {
-          atl.atm2idx = cs->AtmToIdx;
+          atl.atm2idx = cs->AtmToIdx.data();
           atl.discCSet = NULL;
         }
         atl.coord = cs->Coord;
@@ -698,8 +698,8 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
 
           cnt.ai = obj_atomInfo;
           cnt.neighbor = neighbor;
-          cnt.atm2idx1 = cs->AtmToIdx;
-          cnt.atm2idx2 = cs2->AtmToIdx;
+          cnt.atm2idx1 = cs->AtmToIdx.data();
+          cnt.atm2idx2 = cs2->AtmToIdx.data();
 
           {
             int aa;

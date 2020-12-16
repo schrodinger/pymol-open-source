@@ -4058,15 +4058,19 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
 
 
 /*========================================================================*/
+/**
+ * Sort the ObjectMolecule::AtomInfo and ObjectMolecule::Bond arrays and adjust
+ * IdxToAtm/AtmToIdx in all coordiante sets.
+ *
+ * This function has no effect on discrete objects.
+ */
 int ObjectMoleculeSort(ObjectMolecule * I)
 {                               /* sorts atoms and bonds */
   int *index;
   int *outdex = NULL;
   int a, b;
-  CoordSet *cs;
   int ok = true;
   if(!I->DiscreteFlag) {        /* currently, discrete objects are never sorted */
-    int n_bytes = sizeof(int) * I->NAtom;
     int already_in_order = true;
     int i_NAtom = I->NAtom;
     index = AtomInfoGetSortedIndex(I->G, I, I->AtomInfo, i_NAtom, &outdex);
@@ -4087,40 +4091,27 @@ int ObjectMoleculeSort(ObjectMolecule * I)
       }
 
       for(a = -1; a < I->NCSet; a++) {  /* coordinate set mapping */
-        if(a < 0) {
-          cs = I->CSTmpl;
-        } else {
-          cs = I->CSet[a];
-        }
+        auto* cs = (a < 0) ? I->CSTmpl : I->CSet[a];
 
         if(cs) {
           int cs_NIndex = cs->NIndex;
           int *cs_IdxToAtm = cs->IdxToAtm.data();
-          int *cs_AtmToIdx = cs->AtmToIdx.data();
           for(b = 0; b < cs_NIndex; b++)
             cs_IdxToAtm[b] = outdex[cs_IdxToAtm[b]];
-          if(cs_AtmToIdx) {
-            memset(cs_AtmToIdx, -1, n_bytes);
-            /*          for(b=0;b<i_NAtom;b++)
-               cs_AtmToIdx[b]=-1; */
-            for(b = 0; b < cs_NIndex; b++) {
-              cs_AtmToIdx[cs_IdxToAtm[b]] = b;
-            }
-          }
         }
       }
+
+      I->updateAtmToIdx();
 
       ExecutiveUniqueIDAtomDictInvalidate(I->G);
 
       pymol::vla<AtomInfoType> atInfo(i_NAtom);
       CHECKOK(ok, atInfo);
       if (ok){
-	/* autozero here is important */
 	for(a = 0; a < i_NAtom; a++)
 	  atInfo[a] = std::move(I->AtomInfo[index[a]]);
+        I->AtomInfo = std::move(atInfo);
       }
-      VLAFreeP(I->AtomInfo);
-      std::swap(I->AtomInfo, atInfo);
     }
     AtomInfoFreeSortedIndexes(I->G, &index, &outdex);
     if (ok){

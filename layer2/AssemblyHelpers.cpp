@@ -28,9 +28,7 @@ CoordSet * CoordSetCopyFilterChains(
 
   CoordSet* cset = new CoordSet(other->G);
 
-  cset->NIndex = idxmap.size();
-  cset->Coord = pymol::vla<float>(cset->NIndex * 3);
-  cset->IdxToAtm = pymol::vla<int>(cset->NIndex);
+  cset->setNIndex(idxmap.size());
   cset->Obj = other->Obj;
 
   for (int idx = 0; idx < cset->NIndex; ++idx) {
