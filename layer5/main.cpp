@@ -783,6 +783,9 @@ void MainReshape(int width, int height)
 
 
 /*========================================================================*/
+/**
+ * only called from CmdViewport(), and only with !_PYMOL_NO_MAIN
+ */
 void MainDoReshape(int width, int height)
 {                               /* called internally */
   int internal_feedback;

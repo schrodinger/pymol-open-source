@@ -17,7 +17,7 @@ public:
    * @param idx Index of rendertarget to bind
    * @param textureUnit offset of texture unit to assign (0 for GL_TEXTURE0, 1
    * for GL_TEXTURE1, etc...)
-   * @Note indices should preferably be passed in as an enum for clarity
+   * @note indices should preferably be passed in as an enum for clarity
    * Usage: Use render target from previous render pass as an input to
    * sample from (e.g. sample from normal map created in previous pass for
    * lighting in current pass.
@@ -29,7 +29,7 @@ public:
    * @param idx Index of texture to bind
    * @param textureUnit offset of texture unit to assign (0 for GL_TEXTURE0, 1
    * for GL_TEXTURE1, etc...)
-   * @Note indices should preferably be passed in as an enum for clarity
+   * @note indices should preferably be passed in as an enum for clarity
    * Usage: Use textures created/imported offline to sample from (e.g. Sample
    * from static image for background)
    */

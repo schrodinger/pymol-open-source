@@ -8,7 +8,7 @@
 #include "CifDataValueFormatter.h"
 #include "strcasecmp.h"
 
-/*
+/**
  * Simplified whitespace test. Returns true if string `s` contains any character
  * between 0x01 and 0x20 (this range contains all whitespace characters and
  * no printable characters)
@@ -21,7 +21,7 @@ bool has_whitespace(const char * s) {
   return false;
 }
 
-/*
+/**
  * Return true if `s` contains the given quote character followed by white space
  */
 static
@@ -32,7 +32,7 @@ bool has_quotespace(const char * s, char quote) {
   return false;
 }
 
-/*
+/**
  * Return true if `s` is a "simple data value" according to the CIF
  * syntax specification
  */

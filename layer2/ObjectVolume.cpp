@@ -357,7 +357,7 @@ void ObjectVolume::invalidate(cRep_t rep, cRepInv_t level, int state)
   }
 }
 
-/*
+/**
  * Get the field either from the associated map, or from vs->Field in case
  * this is a reduced or symmetry expanded volume.
  */
@@ -373,7 +373,7 @@ CField * ObjectVolumeGetField(ObjectVolume * I) {
   return ObjectVolumeStateGetField(ObjectVolumeGetActiveState(I));
 }
 
-/*
+/**
  * Get a 4x4 (incl. translation) FracToReal from corner array
  */
 static void get44FracToRealFromCorner(const float * corner, float * frac2real)
@@ -554,7 +554,7 @@ int ObjectVolumeAddSlicePoint(float *p0, float *p1, float *zaxis, float d, float
 static
 void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float *zaxis);
 
-/*
+/**
  * Converting Ramp to `count * 4` sized interpolated RGBA color
  * array. Returns allocated memory.
  * Assigns data minimum and range covered by ramp to `ramp_min` and `ramp_range`.
@@ -608,7 +608,7 @@ ok_except1:
   return NULL;
 }
 
-/*
+/**
  * Adjust alpha values in the given RGBA array (in place) by:
  *   alpha_new = 1 - exp(-alpha * factor)
  */
@@ -619,7 +619,7 @@ static void ColorsAdjustAlpha(float * colors, int count, float factor) {
   }
 }
 
-/*
+/**
  * Render bounding box
  * TODO: duplicate in other reps?
  */

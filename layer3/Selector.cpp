@@ -3735,11 +3735,11 @@ void SelectorLogSele(PyMOLGlobals * G, const char *name)
 
 
 /*========================================================================*/
-/*
+/**
  * This is the most heavily called routine in interactive PyMOL
  *
- * s:    AtomInfoType.selEntry
- * sele: selection index or 0 for "all"
+ * @param s    AtomInfoType.selEntry
+ * @param sele selection index or 0 for "all"
  */
 int SelectorIsMember(PyMOLGlobals * G, SelectorMemberOffset_t s, SelectorID_t sele)
 {
@@ -5780,12 +5780,12 @@ int SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int quiet, in
 }
 
 /*========================================================================*/
-/*
+/**
  * Get selection coordinates as Nx3 numpy array. Equivalent to
  *
- * PyMOL> coords = []
- * PyMOL> cmd.iterate_state(state, sele, 'coords.append([x,y,z])')
- * PyMOL> coords = numpy.array(coords)
+ *     PyMOL> coords = []
+ *     PyMOL> cmd.iterate_state(state, sele, 'coords.append([x,y,z])')
+ *     PyMOL> coords = numpy.array(coords)
  */
 PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state)
 {
@@ -5850,7 +5850,7 @@ PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state)
 }
 
 /*========================================================================*/
-/*
+/**
  * Load coordinates from a Nx3 sequence into the given selection.
  * Most efficiant with numpy arrays. Equivalent to
  *
@@ -6587,7 +6587,7 @@ void SelectorDelete(PyMOLGlobals * G, const char *sele)
 
 
 /*========================================================================*/
-/*
+/**
  * If `input` is already a name of an object or a valid position keyword
  * (center, origin, all, ...), then simply copy it to `store`. Otherwise
  * process the selection expression and create a temporary named selection.
@@ -6702,7 +6702,7 @@ SelectorGetTmp2Result(PyMOLGlobals * G, const char *input, char *store, bool qui
 }
 
 /*========================================================================*/
-/*
+/**
  * Like SelectorGetTmp2, but doesn't accept names from any non-molecular
  * entities like groups or map objects (those will be processed as selection
  * expressions).
@@ -8853,7 +8853,7 @@ static pymol::Result<> SelectorSelect3(
 
 /*========================================================================*/
 
-/*
+/**
  * Ring finder subroutine
  * Modifies base[0].sele
  */

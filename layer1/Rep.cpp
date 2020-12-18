@@ -126,7 +126,7 @@ void Rep::invalidate(cRepInv_t level)
     I->MaxInvalid = level;
 }
 
-/*
+/**
  * Get the visRep mask according to auto_show_* settings
  */
 cRepBitmask_t RepGetAutoShowMask(PyMOLGlobals * G)

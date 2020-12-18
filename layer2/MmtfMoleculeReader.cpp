@@ -36,7 +36,7 @@ const char ss_map[] = {
     0
 };
 
-/*
+/**
  * Get the assembly coordinate sets
  *
  * See also: read_pdbx_struct_assembly (CifMoleculeReader.cpp)

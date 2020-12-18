@@ -242,7 +242,7 @@ PFNGLTEXIMAGE3DPROC getTexImage3D(){
 }
 #endif
 
-/*
+/**
  * Use this to turn off shaders if the renderer cannot use them.
  */
 void disableShaders(PyMOLGlobals * G) {
@@ -260,7 +260,7 @@ static void disableGeometryShaders(PyMOLGlobals * G) {
       " Geometry shaders not available\n" ENDFB(G);
 }
 
-/*
+/**
  * Replace strings from a list of pairs.
  *
  * src: string to modify
@@ -282,7 +282,7 @@ static std::string stringReplaceAll(const std::string &src, const std::string * 
   return dest;
 }
 
-/*
+/**
  * Reload "CallComputeColorForLight" shader replacement string
  */
 void CShaderMgr::Reload_CallComputeColorForLight(){
@@ -377,7 +377,7 @@ std::map<std::string, const char **> ifdef_deps;
 // filename -> NULL terminated list of filenames ("included by")
 std::map<std::string, const char **> include_deps;
 
-/*
+/**
  * Return a pointer to the next whitespace character or to the end of the string
  */
 static const char * nextwhitespace(const char * p) {
@@ -389,7 +389,7 @@ static const char * nextwhitespace(const char * p) {
   }
 }
 
-/*
+/**
  * Return a pointer to the next line beginning or to the end of the string.
  * Skips blank lines.
  */
@@ -411,22 +411,23 @@ switch2:
   }
 }
 
-/*
- * Get the processed shader file contents with all #ifdef and #include
+/**
+ * Get the processed shader file contents with all `#ifdef` and `#include`
  * preprocessors processed.
  *
  * Note: There must be a single whitespace character between preprocessor
  * directive and argument.
  *
  * Valid:
- * #ifdef foo
+ *
+ *     #ifdef foo
  *
  * Invalid:
- * # ifdef foo
- * #ifdef  foo
  *
- * Function arguments:
- * filename: file name of the shader file inside $PYMOL_DATA/shaders
+ *     # ifdef foo
+ *     #ifdef  foo
+ *
+ * @param filename file name of the shader file inside `$PYMOL_DATA/shaders`
  */
 std::string CShaderMgr::GetShaderSource(const std::string &filename)
 {
@@ -649,7 +650,7 @@ bool ShaderMgrInit(PyMOLGlobals * G) {
   return true;
 }
 
-/*
+/**
  * Print the given message as ShaderMgr-Error, followed by the shader info log.
  */
 void CShaderPrg::ErrorMsgWithShaderInfoLog(const GLuint sid, const char * msg) {
@@ -933,7 +934,7 @@ int CShaderMgr::RemoveShaderPrg(const std::string& name) {
   return 1;
 }
 
-/*
+/**
  * Lookup a shader program by name and set it as the `current_shader` of the
  * shader manager. If `pass` is provided and is less than zero, and we are
  * in transparency_mode 3, then look up the NO_ORDER_TRANSP derivative.h
@@ -965,7 +966,7 @@ int CShaderMgr::GeometryShadersPresent() {
   return shaders_present & MASK_SHADERS_PRESENT_GEOMETRY;
 }
 
-/*
+/**
  * glDeleteBuffers for vbos_to_free
  */
 void CShaderMgr::FreeAllVBOs() {
@@ -991,7 +992,7 @@ void CShaderMgr::AddVBOsToFree(GLuint *vboid, int nvbos){
   }
 }
 
-/*
+/**
  * thread-safe deferred glDeleteBuffers(1, &vboid)
  */
 void CShaderMgr::AddVBOToFree(GLuint vboid){
@@ -1389,7 +1390,7 @@ int light_setting_indices[] = {
   cSetting_light9
 };
 
-/*
+/**
  * Generate and upload a precomputed vec2(ambient, specular) lighting texture.
  *
  * Must be equivalent to "ComputeLighting" in "compute_color_for_light.fs"
@@ -1562,7 +1563,7 @@ GLfloat *CShaderMgr::GetLineWidthRange() {
 #ifndef _PYMOL_NO_AA_SHADERS
 #endif
 
-/*
+/**
  * Register filename -> shader dependencies for `shader`
  */
 void CShaderMgr::RegisterDependantFileNames(CShaderPrg * shader) {
@@ -1572,7 +1573,7 @@ void CShaderMgr::RegisterDependantFileNames(CShaderPrg * shader) {
     shader_deps[shader->geomfile].push_back(shader->name);
 }
 
-/*
+/**
  * Recursive function to insert `filename` and all the files where
  * `filename` is included into the given output vector.
  */
@@ -1588,7 +1589,7 @@ void CShaderMgr::CollectDependantFileNames(const std::string &filename,
   filenames.push_back(filename);
 }
 
-/*
+/**
  * Make derived shaders for all shaders that depend on `variable`
  */
 void CShaderMgr::MakeDerivatives(const std::string &suffix, const std::string &variable) {
@@ -1619,7 +1620,7 @@ void CShaderMgr::MakeDerivatives(const std::string &suffix, const std::string &v
   }
 }
 
-/*
+/**
  * Reload the derivative shaders for `variable`
  */
 void CShaderMgr::Reload_Derivatives(const std::string &variable, bool value) {
@@ -1633,7 +1634,7 @@ void CShaderMgr::Reload_Derivatives(const std::string &variable, bool value) {
   SetPreprocVar(variable, !value, false);
 }
 
-/*
+/**
  * Removes `filename` and all it's parents from the shader source cache,
  * and if `invshaders` is true, also clear the `is_valid` flag for all
  * shader infos that depend on `filename`.
@@ -1663,8 +1664,8 @@ void CShaderMgr::ShaderSourceInvalidate(const char * filename, bool invshaders) 
   }
 }
 
-/*
- * Set the value for the #ifdef variable `key` and if the value has changed,
+/**
+ * Set the value for the `#ifdef` variable `key` and if the value has changed,
  * then invalidate all its dependant shader source files.
  */
 void CShaderMgr::SetPreprocVar(const std::string &key, bool value, bool invshaders) {
@@ -1678,7 +1679,7 @@ void CShaderMgr::SetPreprocVar(const std::string &key, bool value, bool invshade
   }
 }
 
-/*
+/**
  * Insert `filename` -> `contents` (processed source) into the shader source
  * cache and invalidate its parents
  */

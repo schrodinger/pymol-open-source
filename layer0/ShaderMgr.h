@@ -345,7 +345,7 @@ public:
    * Activates/Binds offscreen render target.
    * @param textureIdx offset of texture unit to assign (0 for GL_TEXTURE0, 1
    * for GL_TEXTURE1, etc...)
-   * @Note: indices should preferably be passed in as enum or named variable for
+   * @note: indices should preferably be passed in as enum or named variable for
    * clarity
    */
   void activateOffscreenTexture(GLuint textureIdx);

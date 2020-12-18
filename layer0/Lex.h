@@ -15,14 +15,14 @@
 #define LexInc(G, i) OVLexicon_IncRef(G->Lexicon, i)
 #define LexNumeric(i) (i)
 
-/*
+/**
  * Get the pointer to the internal string storage for reference `i`.
  */
 inline const char * LexStr(PyMOLGlobals * G, const lexidx_t & i) {
   return (i) ? OVLexicon_FetchCString(G->Lexicon, i) : "";
 }
 
-/*
+/**
  * Lookup or insert new string `s` into the global lexicon and return
  * it's numerical reference. Will always return 0 for the empty string.
  */
@@ -30,7 +30,7 @@ inline lexidx_t LexIdx(PyMOLGlobals * G, pymol::zstring_view s) {
   return s && !s.empty() ? OVLexicon_GetFromCString(G->Lexicon, s.c_str()).word : 0;
 }
 
-/*
+/**
  * Assignment (i = j) with reference count update for old and new value.
  */
 inline void LexAssign(PyMOLGlobals * G, lexidx_t& i, const lexidx_t& j) {
@@ -48,7 +48,7 @@ inline void LexAssign(PyMOLGlobals * G, lexidx_t& i, const char * s) {
 
 #define LEX_BORROW_NOTFOUND -1
 
-/*
+/**
  * Lookup string `s` without inserting or incrementing the ref count. If
  * `s` is not in the lexicon, return -1.
  */

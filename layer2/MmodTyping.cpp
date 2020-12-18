@@ -7,7 +7,7 @@
 #include "MmodTyping.h"
 #include "AtomInfo.h"
 
-/*
+/**
  * Get the MacroModel atom type.
  *
  * Pre-condition: ObjectMoleculeVerifyChemistry

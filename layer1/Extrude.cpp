@@ -809,7 +809,7 @@ void ExtrudeCGOTraceFrame(CExtrude * I, CGO * cgo)
 }
 #endif
 
-/*
+/**
  * Draw flat cap on a tube cartoon (loop, oval, etc.)
  *
  * I: tube instance
@@ -854,7 +854,7 @@ void TubeCapFlat(const CExtrude * I, CGO * cgo, int index, bool inv_dir, const f
   CGOPickColor(cgo, -1, cPickableNoPick);
 }
 
-/*
+/**
  * I: tube instance
  * cgo: CGO to add to
  * cap: 0: no caps, 1: flat caps, 2: round caps

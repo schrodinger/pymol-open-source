@@ -135,7 +135,7 @@ struct ExecutiveObjectOffset{
 
 class SpecRec;
 
-/*
+/**
  * Iterator over objects (uses SpecRec list)
  */
 class ObjectIterator {

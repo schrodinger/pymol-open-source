@@ -154,7 +154,7 @@ struct CifContentInfo {
     use_auth(use_auth) {}
 };
 
-/*
+/**
  * Make a string key that represents the collection of alt id, asym id,
  * atom id, comp id and seq id components of the label for a macromolecular
  * atom site.
@@ -204,7 +204,7 @@ static void strncpy_alpha(char* dest, const char* src, size_t n)
   }
 }
 
-/*
+/**
  * Get first non-NULL element
  */
 template <typename T>
@@ -216,7 +216,7 @@ static T VLAGetFirstNonNULL(T * vla) {
   return NULL;
 }
 
-/*
+/**
  * Lookup one key in a map, return true if found and
  * assign output reference `value1`
  */
@@ -229,7 +229,7 @@ inline bool find1(Map& dict, T& value1, const Key& key1) {
   return true;
 }
 
-/*
+/**
  * Lookup two keys in a map, return true if both found and
  * assign output references `value1` and `value2`.
  */
@@ -252,7 +252,7 @@ static void AtomInfoSetEntityId(PyMOLGlobals * G, AtomInfoType * ai, const char 
 #endif
 }
 
-/*
+/**
  * Add one bond without checking if it already exists
  */
 static void ObjectMoleculeAddBond2(ObjectMolecule * I, int i1, int i2, int order) {
@@ -261,7 +261,7 @@ static void ObjectMoleculeAddBond2(ObjectMolecule * I, int i1, int i2, int order
   I->NBond++;
 }
 
-/*
+/**
  * Distance based connectivity for discrete objects
  */
 static void ObjectMoleculeConnectDiscrete(ObjectMolecule * I) {
@@ -288,7 +288,7 @@ static void ObjectMoleculeConnectDiscrete(ObjectMolecule * I) {
   }
 }
 
-/*
+/**
  * Get the distance between two atoms in ObjectMolecule
  */
 static float GetDistance(ObjectMolecule * I, int i1, int i2) {
@@ -323,7 +323,7 @@ static float GetDistance(ObjectMolecule * I, int i1, int i2) {
   return length3f(v);
 }
 
-/*
+/**
  * Bond order string to int
  */
 static int bondOrderLookup(const char * order) {
@@ -339,7 +339,7 @@ static int bondOrderLookup(const char * order) {
   return 1;
 }
 
-/*
+/**
  * Read bonds from CHEM_COMP_BOND in `bond_dict` dictionary
  */
 static bool read_chem_comp_bond_dict(const cif_data * data, bond_dict_t &bond_dict) {
@@ -411,7 +411,7 @@ static bool read_chem_comp_bond_dict(const cif_data * data, bond_dict_t &bond_di
   return true;
 }
 
-/*
+/**
  * parse $PYMOL_DATA/chem_comp_bond-top100.cif (subset of components.cif) into
  * a static (global) dictionary.
  */
@@ -441,7 +441,7 @@ static bond_dict_t * get_global_components_bond_dict(PyMOLGlobals * G) {
   return &bond_dict;
 }
 
-/*
+/**
  * True for N-H1 and N-H3, those are not in the chemical components dictionary.
  */
 static bool is_N_H1_or_H3(PyMOLGlobals * G,
@@ -456,7 +456,7 @@ static bool is_N_H1_or_H3(PyMOLGlobals * G,
   return (a2->name == G->lex_const.H1 || a2->name == G->lex_const.H3);
 }
 
-/*
+/**
  * Add bonds for one residue, with atoms spanning from i_start to i_end-1,
  * based on components.cif
  */
@@ -509,7 +509,7 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
   }
 }
 
-/*
+/**
  * Add intra residue bonds based on components.cif, and common polymer
  * connecting bonds (C->N, O3*->P)
  */
@@ -577,7 +577,7 @@ static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
   return true;
 }
 
-/*
+/**
  * secondary structure hash
  */
 class sshashkey {
@@ -618,7 +618,7 @@ typedef std::map<std::string, std::array<float, 16> > oper_list_t;
 // type for parsed PDBX_STRUCT_OPER_LIST
 typedef std::vector<std::vector<std::string> > oper_collection_t;
 
-/*
+/**
  * Parse operation expressions like (1,2)(3-6)
  */
 static oper_collection_t parse_oper_expression(const std::string &expr) {
@@ -666,7 +666,7 @@ static oper_collection_t parse_oper_expression(const std::string &expr) {
   return collection;
 }
 
-/*
+/**
  * Get chains which are part of the assembly
  *
  * assembly_chains: output set
@@ -697,7 +697,7 @@ static bool get_assembly_chains(PyMOLGlobals * G,
   return !assembly_chains.empty();
 }
 
-/*
+/**
  * Read assembly
  *
  * atInfo: atom info array to use for chain check
@@ -825,7 +825,7 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
   return csets;
 }
 
-/*
+/**
  * Set ribbon_trace_atoms and cartoon_trace_atoms for CA/P only models
  */
 static bool read_pdbx_coordinate_model(PyMOLGlobals * G, const cif_data * data, ObjectMolecule * mol) {
@@ -863,7 +863,7 @@ static bool read_pdbx_coordinate_model(PyMOLGlobals * G, const cif_data * data, 
   return true;
 }
 
-/*
+/**
  * Read CELL and SYMMETRY
  */
 static CSymmetry * read_symmetry(PyMOLGlobals * G, const cif_data * data) {
@@ -912,7 +912,7 @@ static CSymmetry * read_symmetry(PyMOLGlobals * G, const cif_data * data) {
   return symmetry;
 }
 
-/*
+/**
  * Read CHEM_COMP_ATOM
  */
 static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, const cif_data * data,
@@ -1012,7 +1012,7 @@ static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, const cif_data * 
   return csets;
 }
 
-/*
+/**
  * Map model number to state (1-based)
  */
 class ModelStateMapper {
@@ -1036,7 +1036,7 @@ public:
   }
 };
 
-/*
+/**
  * Read ATOM_SITE
  *
  * atInfoPtr: atom info array to fill
@@ -1261,7 +1261,7 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, const cif_data * data,
   return csets;
 }
 
-/*
+/**
  * Update `info` with entity polymer information
  */
 static bool read_entity_poly(PyMOLGlobals * G, const cif_data * data, CifContentInfo &info) {
@@ -1320,7 +1320,7 @@ static bool read_entity_poly(PyMOLGlobals * G, const cif_data * data, CifContent
   return true;
 }
 
-/*
+/**
  * Sub-routine for `add_missing_ca`
  *
  * @param i_ref Atom index of the next observed residue if `!at_terminus`,
@@ -1379,7 +1379,7 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
   }
 }
 
-/*
+/**
  * Read missing residues / full sequence
  *
  * This function relies on the label_seq_id numbering which must be available
@@ -1449,7 +1449,7 @@ static bool add_missing_ca(PyMOLGlobals * G,
   return true;
 }
 
-/*
+/**
  * Read secondary structure from STRUCT_CONF or STRUCT_SHEET_RANGE
  */
 static bool read_ss_(PyMOLGlobals * G, const cif_data * data, char ss,
@@ -1509,7 +1509,7 @@ static bool read_ss_(PyMOLGlobals * G, const cif_data * data, char ss,
   return true;
 }
 
-/*
+/**
  * Read secondary structure
  */
 static bool read_ss(PyMOLGlobals * G, const cif_data * datablock,
@@ -1556,7 +1556,7 @@ static bool read_ss(PyMOLGlobals * G, const cif_data * datablock,
   return true;
 }
 
-/*
+/**
  * Read the SCALEn matrix into 4x4 `matrix`
  */
 static bool read_atom_site_fract_transf(PyMOLGlobals * G, const cif_data * data, float * matrix) {
@@ -1586,7 +1586,7 @@ static bool read_atom_site_fract_transf(PyMOLGlobals * G, const cif_data * data,
   return true;
 }
 
-/*
+/**
  * Read anisotropic temperature factors from ATOM_SITE or ATOM_SITE_ANISOTROP
  */
 static bool read_atom_site_aniso(PyMOLGlobals * G, const cif_data * data,
@@ -1670,7 +1670,7 @@ static bool read_atom_site_aniso(PyMOLGlobals * G, const cif_data * data,
   return true;
 }
 
-/*
+/**
  * Read GEOM_BOND
  *
  * return: BondType VLA
@@ -1736,7 +1736,7 @@ static pymol::vla<BondType> read_geom_bond(PyMOLGlobals * G, const cif_data * da
   return bondvla;
 }
 
-/*
+/**
  * Read CHEMICAL_CONN_BOND
  *
  * return: BondType VLA
@@ -1782,7 +1782,7 @@ static pymol::vla<BondType> read_chemical_conn_bond(PyMOLGlobals * G, const cif_
   return bondvla;
 }
 
-/*
+/**
  * Read bonds from STRUCT_CONN
  *
  * Output:
@@ -1938,7 +1938,7 @@ next_row:;
   return true;
 }
 
-/*
+/**
  * Read bonds from CHEM_COMP_BOND
  *
  * return: BondType VLA
@@ -2004,7 +2004,7 @@ static pymol::vla<BondType> read_chem_comp_bond(PyMOLGlobals * G, const cif_data
   return bondvla;
 }
 
-/*
+/**
  * Read bonds from _pymol_bond (non-standard extension)
  *
  * return: BondType VLA
@@ -2050,7 +2050,7 @@ static pymol::vla<BondType> read_pymol_bond(PyMOLGlobals * G, const cif_data * d
   return bondvla;
 }
 
-/*
+/**
  * Create a new (multi-state) object-molecule from datablock
  */
 static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
@@ -2237,7 +2237,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
   return I;
 }
 
-/*
+/**
  * Read one or multiple object-molecules from a CIF file. If there is only one
  * or multiplex=0, then return the object-molecule. Otherwise, create each
  * object - named by its data block name - and return NULL.
@@ -2291,7 +2291,7 @@ pymol::Result<ObjectMolecule*> ObjectMoleculeReadCifStr(PyMOLGlobals * G, Object
   return nullptr;
 }
 
-/*
+/**
  * Bond dictionary getter, with on-demand download of residue dictionaries
  */
 const bond_dict_t::mapped_type * bond_dict_t::get(PyMOLGlobals * G, const char * resn, bool try_download) {

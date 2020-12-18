@@ -182,7 +182,7 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int stat
  * Determines whether a string is a reserved keyword
  * @param str string candidate
  * @return true if the string is a reserved keyword
- * @Note: case-insensitive
+ * @note: case-insensitive
  */
 bool SelectorNameIsKeyword(PyMOLGlobals * G, const char *name);
 
@@ -208,7 +208,7 @@ typedef struct {
 
 int SelectorIsMember(PyMOLGlobals * G, SelectorMemberOffset_t, SelectorID_t);
 
-/*
+/**
  * Wrapper around SelectorGetTmp/SelectorFreeTmp/SelectorIndexByName.
  *
  * Temporary named selection gets deleted when instance gets out of scope.

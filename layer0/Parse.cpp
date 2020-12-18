@@ -81,11 +81,12 @@ const char *ParseSkipEquals(const char *p)
   return p;
 }
 
-/*
+/**
  * Skip all characters in `chars`
  *
  * Example to skip all whitespace:
- * p = ParseSkipChars(p, " \t\r\n");
+ *
+ *     p = ParseSkipChars(p, " \t\r\n");
  */
 static const char *ParseSkipChars(const char *p, const char *chars) {
   while (*p && strchr(chars, *p)) { ++p; }

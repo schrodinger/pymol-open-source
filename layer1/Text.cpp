@@ -497,7 +497,7 @@ float *TextGetLabelBuffer(PyMOLGlobals * G)
   return I->LabelBuf;
 }
 
-/*
+/**
  * GUI elements like internal menus or the wizard prompt can handle text
  * color markup in the form "\\RGB" where RGB are three digits (0-9) or
  * "---" to reset the color.
@@ -520,7 +520,7 @@ bool TextStartsWithColorCode(const char *p)
       ('0' <= p[3] && p[3] <= '9'));
 }
 
-/*
+/**
  * Set text color from "\\RGB" code.
  *
  * "\\---" -> defaultcolor

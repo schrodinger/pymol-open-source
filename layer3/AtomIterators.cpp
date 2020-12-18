@@ -51,7 +51,7 @@ void SeleAtomIterator::reset() {
   a = cNDummyAtoms - 1;
 }
 
-/*
+/**
  * advance the internal state to the next atom, return false if there is no
  * next atom
  */
@@ -119,7 +119,7 @@ void SeleCoordIterator::reset() {
   }
 }
 
-/*
+/**
  * advance the internal state to the next atom, return false if there is no
  * next atom
  */

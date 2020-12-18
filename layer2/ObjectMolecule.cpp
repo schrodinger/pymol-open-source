@@ -84,7 +84,7 @@ int ObjectMoleculeGetAtomGeometry(const ObjectMolecule * I, int state, int at);
 static
 void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I);
 
-/*
+/**
  * Order function for sorting bonds by atom indices (ignores other properties
  * like bond order).
  *
@@ -97,7 +97,7 @@ int BondTypeInOrder(PyMOLGlobals * G, const BondType * bonds, int i1, int i2) {
   return lhs[0] < rhs[0] || (lhs[0] == rhs[0] && lhs[1] < rhs[1]);
 }
 
-/*
+/**
  * Remove duplicated bonds. Disregards if two atoms would be bonded by two
  * bonds of different bond order (only one will be kept).
  */
@@ -154,7 +154,7 @@ void ObjectMoleculeRemoveDuplicateBonds(PyMOLGlobals * G, ObjectMolecule * I) {
   VLASize(I->Bond, BondType, I->NBond);
 }
 
-/*
+/**
  * Convert a discrete object to non-discrete. Will merge atoms from states
  * by identifiers. Atom level properties like color, b, q, etc. are lost
  * on the merged atoms.
@@ -219,8 +219,8 @@ bool ObjectMoleculeSetNotDiscrete(PyMOLGlobals * G, ObjectMolecule * I) {
   return true;
 }
 
-/*
- * Make a non-discrete object discrete (the reverse is not supported).
+/**
+ * Make a non-discrete object discrete, or vice versa.
  */
 int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete)
 {
@@ -2446,11 +2446,9 @@ float ObjectMoleculeSculptIterate(ObjectMolecule * I, int state, int n_cycle,
     return 0.0F;
 }
 
-/*
+/**
  * - Assigns new id to all atoms with AtomInfoType.id == -1
- * - Assigns new id to all bonds with BondType.id == -1
  * - Assigns ObjectMolecule.AtomCounter if -1
- * - Assigns ObjectMolecule.BondCounter if -1
  *
  * Cost: O(NAtom + NBond)
  */
@@ -6465,7 +6463,7 @@ int ObjectMoleculeGetAtomIndex(const ObjectMolecule* I, SelectorID_t sele)
 
 
 /*========================================================================*/
-/*
+/**
  * Update all AtomInfoType.bonded
  *
  * Cost: O(NAtom + NBond)
@@ -6510,16 +6508,16 @@ int ObjectMoleculeGetTotalAtomValence(ObjectMolecule * I, int atom)
 }
 
 
-/*
+/**
  * Generate I->Neighbor from I->Bond, but only if I->Neighbor is not NULL.
  *
  * Changed in PyMOL 2.1.1: Ignore zero-order bonds (PYMOL-3025)
  *
  * To force the update, call ObjectMoleculeInvalidate(level=cRepInvBonds) first.
  *
+ * @return False if memory allocation failed
  */
-/*========================================================================*/
-int ObjectMoleculeUpdateNeighbors(ObjectMolecule * I)
+bool ObjectMoleculeUpdateNeighbors(const ObjectMolecule* I)
 {
   /* neighbor storage structure: VERY COMPLICATED...
 
@@ -6563,75 +6561,66 @@ int ObjectMoleculeUpdateNeighbors(ObjectMolecule * I)
 
    */
 
-  int size;
-  int a, b, c, d, l0, l1, *l;
-  const BondType *bnd;
-  int ok = true;
-
   /* If no neighbors have been calculated, fill in the table */
   if(!I->Neighbor) {
 
     /* Create/check the VLA */
-    size = (I->NAtom * 3) + (I->NBond * 4);
-    if(I->Neighbor) {
-      VLACheck(I->Neighbor, int, size);
-    } else {
-      I->Neighbor = VLAlloc(int, size);
-    }
-    CHECKOK(ok, I->Neighbor);
-    if (!ok)
-      return ok;
+    auto const size = (I->NAtom * 3) + (I->NBond * 4);
+    auto* const neighbor = const_cast<ObjectMolecule*>(I)->Neighbor =
+        VLAlloc(int, size);
+
+    p_return_val_if_fail(neighbor, false);
+
     /* initialize; zero out neighbors */
-    l = I->Neighbor;
-    for(a = 0; a < I->NAtom; a++)
-      (*l++) = 0;
+    std::fill_n(neighbor, I->NAtom, 0);
 
     /* count neighbors for each atom */
-    bnd = I->Bond;
-    for(b = 0; b < I->NBond; b++) {
+    const auto* bnd = I->Bond.data();
+    for(int b = 0; b < I->NBond; b++) {
       if (bnd->order) {
-        I->Neighbor[bnd->index[0]]++;
-        I->Neighbor[bnd->index[1]]++;
+        neighbor[bnd->index[0]]++;
+        neighbor[bnd->index[1]]++;
       }
       bnd++;
     }
 
     /* set up offsets and list terminators */
-    c = I->NAtom;
-    for(a = 0; a < I->NAtom; a++) {
-      d = I->Neighbor[a];       /* get number of neighbors */
-      I->Neighbor[c] = d;       /* store neighbor count */
-      I->Neighbor[a] = c + d + d + 1;   /* set initial position to end of list, we'll fill backwards */
-      I->Neighbor[I->Neighbor[a]] = -1; /* store terminator */
+    auto c = I->NAtom;
+    for (int a = 0; a < I->NAtom; a++) {
+      auto const d = neighbor[a];       /* get number of neighbors */
+      neighbor[c] = d;       /* store neighbor count */
+      neighbor[a] = c + d + d + 1;   /* set initial position to end of list, we'll fill backwards */
+      neighbor[neighbor[a]] = -1; /* store terminator */
       c += d + d + 2;
     }
 
     /* now load neighbors in a sequential list for each atom (reverse order) */
-    bnd = I->Bond;
-    for(b = 0; b < I->NBond; b++, ++bnd) {
-      l0 = bnd->index[0];
-      l1 = bnd->index[1];
+    bnd = I->Bond.data();
+    for(int b = 0; b < I->NBond; b++, ++bnd) {
+      auto const l0 = bnd->index[0];
+      auto const l1 = bnd->index[1];
 
       if (!bnd->order)
         continue;
 
-      I->Neighbor[l0]--;
-      I->Neighbor[I->Neighbor[l0]] = b; /* store bond indices (for I->Bond) */
-      I->Neighbor[l0]--;
-      I->Neighbor[I->Neighbor[l0]] = l1;        /* store neighbor references (I->AtomInfo, etc.) */
+      neighbor[l0]--;
+      neighbor[neighbor[l0]] = b; /* store bond indices (for I->Bond) */
+      neighbor[l0]--;
+      neighbor[neighbor[l0]] = l1;        /* store neighbor references (I->AtomInfo, etc.) */
 
-      I->Neighbor[l1]--;
-      I->Neighbor[I->Neighbor[l1]] = b; /* store bond indices (for I->Bond) */
-      I->Neighbor[l1]--;
-      I->Neighbor[I->Neighbor[l1]] = l0;        /* store neighbor references (I->AtomInfo, etc.) */
+      neighbor[l1]--;
+      neighbor[neighbor[l1]] = b; /* store bond indices (for I->Bond) */
+      neighbor[l1]--;
+      neighbor[neighbor[l1]] = l0;        /* store neighbor references (I->AtomInfo, etc.) */
     }
-    for(a = 0; a < I->NAtom; a++) {     /* adjust down to point to the count, not the first entry */
-      if(I->Neighbor[a] >= 0)
-        I->Neighbor[a]--;
+
+    // adjust down to point to the count, not the first entry
+    for (int a = 0; a < I->NAtom; a++) {
+      if (neighbor[a] >= 0)
+        --neighbor[a];
     }
-    l = I->Neighbor;
   }
-  return ok;
+  return true;
 }
 
 
@@ -7432,7 +7421,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
 
 
 /*========================================================================*/
-/*
+/**
  * Update coordinates of an exisiting coordset or insert/append a new
  * coordset.
  *
@@ -7861,7 +7850,7 @@ static CoordSet *ObjectMoleculeSDF2Str2CoordSet(PyMOLGlobals * G, const char *bu
   return result;
 }
 
-/*
+/**
  * Get the sum of bond orders for every atom. For this purpose, aromatic
  * bonds will be considered either single or double bond, based on
  * the entire system (heuristic method, room for improvement).
@@ -7924,7 +7913,7 @@ std::vector<signed char> get_bond_order_sums(ObjectMolecule * obj) {
   return valences;
 }
 
-/*
+/**
  * For each atom, set `formalCharge` based on mol2 `textType`
  *
  * See also: getMOL2Type() in layer2/Mol2Typing.cpp
@@ -8562,7 +8551,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
   return (cset);
 }
 
-/*
+/**
  * Read one molecule in MOL2, MOL, SDF, MMD or XYZ format from the string pointed
  * to by (*next_entry). All these formats (except MOL) support multiple
  * concatenated entries in one file. If multiplex=1, then read only one
@@ -11176,8 +11165,6 @@ ObjectMolecule::ObjectMolecule(PyMOLGlobals * G, int discreteFlag) : CObject(G)
   int a;
   I->type = cObjectMolecule;
   I->CSet = pymol::vla<CoordSet*>(10); /* auto-zero */
-  I->AtomCounter = -1;
-  I->BondCounter = -1;
   I->DiscreteFlag = discreteFlag;
   if(I->DiscreteFlag) {         /* discrete objects don't share atoms between states */
     I->DiscreteAtmToIdx = pymol::vla<int>(0);
@@ -11258,7 +11245,7 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
 }
 
 /*========================================================================*/
-/*
+/**
  * Set the order of coordinate sets with an index array
  */
 int ObjectMoleculeSetStateOrder(ObjectMolecule * I, int * order, int len) {
@@ -11757,7 +11744,7 @@ ok_except1:
   return NULL;
 }
 
-/*
+/**
  * Set the size of the DiscreteAtmToIdx and DiscreteCSet VLAs and pad
  * them with -1/NULL if necessary.
  */
@@ -11781,7 +11768,7 @@ bool ObjectMolecule::setNDiscrete(int natom) {
   return true;
 }
 
-/*
+/**
  * Update the AtmToIdx or DiscreteAtmToIdx/DiscreteCSet VLAs from the
  * IdxToAtm arrays
  */

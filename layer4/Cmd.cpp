@@ -125,7 +125,7 @@ static PyObject* CmdTest2(PyObject*, PyObject*)
 }
 #endif
 
-/*
+/**
  * Start a headless singleton instance in the current thread.
  *
  * Unlike when calling `pymol.finish_launching()`, there is no event loop,
@@ -143,7 +143,7 @@ static void launch_library_singleton() {
 /// Creating non-singleton instances disables auto-library mode
 static bool auto_library_mode_disabled = false;
 
-/*
+/**
  * Get the PyMOLGlobals pointer from the `self` object (_self._COb in Python).
  *
  * If _COb is None, launch a headless singleton ("library mode").
@@ -2644,7 +2644,7 @@ static PyObject *CmdGetVRML(PyObject * self, PyObject * args)
   return (APIAutoNone(result));
 }
 
-/*
+/**
  * Return a COLLADA string or None on failure
  */
 static PyObject *CmdGetCOLLADA(PyObject * self, PyObject * args)
@@ -3384,7 +3384,7 @@ static PyObject *CmdMem(PyObject * self, PyObject * args)
   return APISuccess();
 }
 
-/*
+/**
  * Simple `glViewport` wrapper to call from Python without depending on
  * the heavy PyOpenGL module.
  */
@@ -6190,7 +6190,7 @@ ok_except2:
   return Py_BuildValue("i", discrete);
 }
 
-/*
+/**
  * Experimental - SUBJECT TO CHANGE
  */
 static PyObject *CmdCifGetArray(PyObject * self, PyObject * args)

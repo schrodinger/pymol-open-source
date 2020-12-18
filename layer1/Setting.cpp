@@ -48,15 +48,15 @@ Z* -------------------------------------------------------------------
 #include"OpenVRMode.h"
 #endif
 
-/*
+/**
  * Setting level info table
  *
  * Levels are not hierarchical at the atom/bond level, that's why a simple
  * sorted enumeration is not sufficient.
  *
- * global < object < object-state
- *                   object-state < atom < atom-state
- *                   object-state < bond < bond-state
+ *     global < object < object-state
+ *                       object-state < atom < atom-state
+ *                       object-state < bond < bond-state
  */
 const SettingLevelInfoType SettingLevelInfo[] = {
   {"unused"        , 0x00}, // 0b00000000
@@ -202,7 +202,7 @@ int SettingUniqueCheck(PyMOLGlobals * G, int unique_id, int setting_id)
   return SettingFindSettingUniqueEntry(G, unique_id, setting_id) != NULL;
 }
 
-/*
+/**
  * Return true for convertible types and set int-compatible types to int
  */
 inline bool type_upcast(int &type) {
@@ -248,7 +248,7 @@ bool SettingUniqueGetTypedValuePtr(PyMOLGlobals * G, int unique_id, int setting_
   return true;
 }
 
-/*
+/**
  * Warning: Returns colors as (fff) tuple instead of color index
  */
 PyObject *SettingUniqueGetPyObject(PyMOLGlobals * G, int unique_id, int index)
@@ -328,7 +328,7 @@ static void SettingUniqueEntry_Set(SettingUniqueEntry *entry, int value_type, co
   }
 }
 
-/*
+/**
  * Return false if setting was not set (nothing changed)
  */
 bool SettingUniqueUnset(PyMOLGlobals * G, int unique_id, int setting_id)
@@ -614,7 +614,7 @@ static void SettingUniqueFree(PyMOLGlobals * G)
   FreeP(I);
 }
 
-/*
+/**
  * For unique_id remapping during partial session loading
  */
 int SettingUniqueConvertOldSessionID(PyMOLGlobals * G, int old_unique_id)
@@ -635,7 +635,7 @@ int SettingUniqueConvertOldSessionID(PyMOLGlobals * G, int old_unique_id)
   return unique_id;
 }
 
-/*
+/**
  * Return true if the given setting index should not be stored to PSE.
  *
  * Blacklisted are unused and system-dependent settings.
@@ -1060,7 +1060,7 @@ ok_except1:
 }
 
 /*========================================================================*/
-/*
+/**
  * Used to set object and object-state level settings from PSEs
  */
 CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list)
@@ -1106,21 +1106,17 @@ int SettingFromPyList(CSetting * I, PyObject * list)
 }
 
 /*========================================================================*/
-/*
+/**
  * Get the indices of all settings that have changed since last calling
  * this function. Resets the "changed" flag.
  *
- * NOTE: assumes blocked interpreter
- *
- * name: object name or NULL/"" for global settings
- * state: object state
+ * @param name object name or NULL/"" for global settings
+ * @param state object state
  */
 std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char * name, int state)
 {
   CSetting* I = G->Setting;
   pymol::copyable_ptr<CSetting>* handle;
-  int a;
-  int n;
   std::vector<int> result;
 
   if (name && name[0]) {
@@ -1135,8 +1131,7 @@ std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char * name, int s
       return result;
   }
 
-  n = cSetting_INIT;
-  for(a = 0; a < n; a++) {
+  for (int a = 0; a < cSetting_INIT; ++a) {
     if(I->info[a].changed) {
       I->info[a].changed = false;
       result.push_back(a);
@@ -1176,7 +1171,7 @@ int SettingGetTextValue(PyMOLGlobals * G, const CSetting * set1, const CSetting 
 }
 
 /*========================================================================*/
-/*
+/**
  * Returns a pointer to the internal string representation if available,
  * or it formats the value into buffer and returns a pointer to buffer.
  */
@@ -1401,7 +1396,7 @@ int SettingSetFromString(PyMOLGlobals * G, CSetting * I, int index, const char *
 
 /*========================================================================*/
 #ifndef _PYMOL_NOPY
-/*
+/**
  * Warning: Returns colors as (fff) tuple instead of color index
  */
 PyObject *SettingGetPyObject(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2, int index)
@@ -1521,7 +1516,7 @@ CSetting::CSetting(PyMOLGlobals* G)
 
 
 /*========================================================================*/
-/*
+/**
  * Restore the default value from `src` or `SettingInfo`
  */
 void SettingRestoreDefault(CSetting * I, int index, const CSetting * src)
@@ -3118,7 +3113,7 @@ int SettingCheckFontID(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int f
   return ret;
 }
 
-/*
+/**
  * State index iterator constructor, see Setting.h for documentation.
  */
 StateIterator::StateIterator(PyMOLGlobals * G, CSetting * set, int state_, int nstate) {
@@ -3152,7 +3147,7 @@ StateIterator::StateIterator(CObject* obj, int state_)
 {
 }
 
-/*
+/**
  * Helper function to init CPyMOL.Setting, a (name: index) dictionary.
  * Called in PyMOL_InitAPI
  */
@@ -3174,7 +3169,7 @@ bool CPyMOLInitSetting(OVLexicon * Lex, OVOneToOne * Setting) {
 }
 
 #ifndef _PYMOL_NOPY
-/*
+/**
  * Export the settings names to Python a as (name: index) dictionary.
  * Replacement for pymol.settings.SettingIndex
  */
@@ -3197,7 +3192,7 @@ PyObject * SettingGetSettingIndices() {
   return dict;
 }
 
-/*
+/**
  * Return a list of all setting indices for the given unique id
  */
 PyObject * SettingUniqueGetIndicesAsPyList(PyMOLGlobals * G, int unique_id)

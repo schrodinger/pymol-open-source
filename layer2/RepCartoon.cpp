@@ -100,7 +100,7 @@ RepCartoon::~RepCartoon()
   FreeP(I->LastVisib);
 }
 
-/*
+/**
  * CGOAddTwoSidedBackfaceSpecialOps: this function takes in a CGO,
  * and outputs a CGO with that CGO wrapped with the two operations:
  * enabling and disabling back faces if two_sided_lighting is not set
@@ -315,7 +315,7 @@ typedef struct nuc_acid_data {
   char next_alt;
 } nuc_acid_data;
 
-/*
+/**
  * Return true if a connector between the two atoms should be drawn.
  *
  * TODO: should RepSphere and side_chain_helper check really be part of this?
@@ -338,7 +338,7 @@ bool ring_connector_visible(PyMOLGlobals * G,
       AtomSettingGetWD(G, ai2, cSetting_cartoon_side_chain_helper, sc_helper));
 }
 
-/*
+/**
  * depth-first neighbor search for nucleic acid atom
  *
  * nuc_flag:    NAtom-length boolean nucleic acid flags array
@@ -1361,7 +1361,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
   }
 }
 
-/*
+/**
  * for nucleic acid polymers, fill "ndata" with:
  * - cartoon type and secondary structure
  * - check if single nucleotide or actual polymer
@@ -1979,7 +1979,7 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
 }
 
 
-/*
+/**
  * skip > dash > loop
  */
 inline int prioritize(int a, int b) {
@@ -2389,7 +2389,7 @@ int CartoonExtrudeDumbbell(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, int sampling
   return ok;
 }
 
-/*
+/**
  * Get cartoon quality setting, adapt to number of atoms if -1
  */
 static int GetCartoonQuality(CoordSet * cs, int setting, int v1, int v2, int v3, int v4, int min_=3) {
@@ -2735,7 +2735,7 @@ void RepCartoon::invalidate(cRepInv_t level)
   Rep::invalidate(level);
 }
 
-/*
+/**
  * nucleic acid cap
  */
 class nuc_acid_cap {
@@ -2778,7 +2778,7 @@ public:
   }
 };
 
-/*
+/**
  * compute and fill "ndata" with:
  * - cartoon trace and segments
  * - cartoon types and secondary structure

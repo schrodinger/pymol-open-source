@@ -45,7 +45,7 @@ Z* -------------------------------------------------------------------
 
 #define cUndoMask 0xF
 
-/*
+/**
  * ObjectMolecule's Bond Path (BP) Record
  */
 struct ObjectMoleculeBPRec {
@@ -76,12 +76,14 @@ struct ObjectMolecule : public CObject {
   int SeleBase = 0;                 /* for internal usage by  selector & only valid during selection process */
   pymol::copyable_ptr<CSymmetry> Symmetry;
   int *Neighbor = 0;
+#if 1
+  // legacy undo
   float *UndoCoord[cUndoMask + 1] {};
   int UndoState[cUndoMask + 1] {};
   int UndoNIndex[cUndoMask + 1] {};
   int UndoIter = 0;
-  int BondCounter = 0;
-  int AtomCounter = 0;
+#endif
+  int AtomCounter = -1;
   /* not stored */
   struct CSculpt *Sculpt =  nullptr;
   int RepVisCacheValid = 0;
@@ -358,7 +360,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 			struct CoordSet *cs, int bondSearchFlag,
 			int aic_mask, int invalidate);
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I);
-int ObjectMoleculeUpdateNeighbors(ObjectMolecule * I);
+bool ObjectMoleculeUpdateNeighbors(const ObjectMolecule* I);
 int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, const float *v, int mode,
                            int log);
 int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float *v, int log, float *diff);

@@ -21,7 +21,7 @@
 
 #include "pymol/zstring_view.h"
 
-/*
+/**
  * Get the size from the current file pointer to the end of the file
  */
 static long fgetsize(FILE *fp) {
@@ -32,7 +32,7 @@ static long fgetsize(FILE *fp) {
   return filesize;
 }
 
-/*
+/**
  * Allocate memory and read the entire file from the given file pointer.
  * The file size is stored into the size pointer if not NULL.
  */
@@ -75,7 +75,7 @@ FILE * pymol_fopen(const char * filename, const char * mode) {
 }
 #endif
 
-/*
+/**
  * Allocate memory and read the entire file for the given filename.
  * The file size is stored into the size pointer if not NULL.
  */

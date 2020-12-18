@@ -102,7 +102,7 @@ inline size_t VLAGetByteSize(const void *ptr) {
   return vla->size * vla->unit_size;
 }
 
-/*
+/**
  * Templated version of the `VLACopy` macro
  */
 template <typename T>
@@ -110,7 +110,7 @@ T * VLACopy2(const T * vla) {
   return VLACopy((void*)vla, T);
 }
 
-/*
+/**
  * @brief std::vector version of VLACheck. Checks to see if index i is valid for insertion.
  *        If not, a resize will be attempted.
  * @param vec: vector whose size will be check for valid insertion at index i

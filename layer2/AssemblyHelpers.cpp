@@ -11,7 +11,7 @@
 #include "AssemblyHelpers.h"
 #include "MemoryDebug.h"
 
-/*
+/**
  * Create a coordset for a segi (chain) selection
  */
 CoordSet * CoordSetCopyFilterChains(
@@ -39,7 +39,7 @@ CoordSet * CoordSetCopyFilterChains(
   return cset;
 }
 
-/*
+/**
  * Replace coordinate sets and set all_states
  */
 void ObjectMoleculeSetAssemblyCSets(

@@ -232,7 +232,7 @@ std::string UtilCleanStdStr(const std::string& s)
   return ret;
 }
 
-/*
+/**
  * Remove ANSI Escape sequences in-place
  */
 void UtilStripANSIEscapes(char *s)

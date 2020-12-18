@@ -15,7 +15,7 @@
 #include "Executive.h"
 #include "SpecRec.h"
 
-/*
+/**
  * Setting getter
  */
 template <typename V>
@@ -55,7 +55,7 @@ enum MM_CTRibbonStyle {
   MMCT_RIBBON_STYLE_CATUBE    = 7,  // ribbon, ribbon_as_cylinders=1
 };
 
-/*
+/**
  * Get the MM_CTAtomStyle for the current atom of the iterator
  */
 int MaeExportGetAtomStyle(PyMOLGlobals * G,
@@ -77,7 +77,7 @@ int MaeExportGetAtomStyle(PyMOLGlobals * G,
   return MMCT_ATOM_NOSTYLE;
 }
 
-/*
+/**
  * Get the MM_CTBondStyle for the bond between two atoms
  */
 int MaeExportGetBondStyle(const AtomInfoType * ai1, const AtomInfoType * ai2) {
@@ -92,7 +92,7 @@ int MaeExportGetBondStyle(const AtomInfoType * ai1, const AtomInfoType * ai2) {
   return MMCT_BOND_NOSTYLE;
 }
 
-/*
+/**
  * Get the MM_CTRibbonStyle for an atom
  */
 int MaeExportGetRibbonStyle(const AtomInfoType * ai) {
@@ -115,7 +115,7 @@ int MaeExportGetRibbonStyle(const AtomInfoType * ai) {
   return MMCT_RIBBON_STYLE_NONE;
 }
 
-/*
+/**
  * Get the MAE ribbon color index and the hex formatted RGB ribbon color for
  * the current atom of the iterator
  */
@@ -148,7 +148,7 @@ void MaeExportGetRibbonColor(PyMOLGlobals * G,
   }
 }
 
-/*
+/**
  * Get the MAE label user text for an atom.
  *
  * Quotes and backslashes are escaped.
@@ -170,7 +170,7 @@ std::string MaeExportGetLabelUserText(PyMOLGlobals * G,
   return label_user_text;
 }
 
-/*
+/**
  * Get the MAE group title/id
  */
 std::string MaeExportGetSubGroupId(PyMOLGlobals * G,
@@ -198,7 +198,7 @@ std::string MaeExportGetSubGroupId(PyMOLGlobals * G,
   return subgroupid;
 }
 
-/*
+/**
  * Get parsable string representation, with quotes and escaped
  * quotes/backslashes if needed.
  */

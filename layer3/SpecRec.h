@@ -3,7 +3,7 @@
 #include"PyMOLObject.h"
 #include"CGO.h"
 
-/*
+/**
  * Specification record (a row in the object menu panel)
  */
 class SpecRec {

@@ -54,7 +54,7 @@ static void FontGLUTRestore(CFontGLUT * I)
   glPixelStorei(GL_UNPACK_ALIGNMENT, I->alignment);
 }
 
-/*
+/**
  * check if masked `c` equals `value`
  */
 static inline bool masked_byte_equals(char c, char mask, char value) {
@@ -67,7 +67,7 @@ static inline bool byte_check_10xxxxxx(char c) {
       0x80 /* value 0b10000000 */);
 }
 
-/*
+/**
  * Read the next unicode point from a UTF-8 string and advance the string
  * pointer. If decoding fails, set `error` to true. If `error` is already
  * true, don't attempt to decode and return the next byte value as-is.

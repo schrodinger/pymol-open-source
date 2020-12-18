@@ -833,7 +833,7 @@ int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule * I, int index, int sele)
   return result;
 }
 
-/*
+/**
  * Based on PDB nomenclature (resn, name), do:
  *
  * 1) If `ai1` or `ai2` is a known charged PDB atom, assign `formalCharge`
@@ -1575,7 +1575,7 @@ static int get_multi_object_status(const char *p)
   return -1;
 }
 
-/*
+/**
  * If any atom in I->AtomInfo contains the wildcard character (from
  * "atom_name_wildcard" or "wildcard" setting), then set the object-level
  * "atom_name_wildcard" setting to " " (disables wildcard matching).
@@ -1696,14 +1696,14 @@ static void ObjectMoleculePDBStr2CoordSetPASS1(PyMOLGlobals * G, int *ok,
   }
 }
 
-/*
+/**
  * Datastructure for efficient array-based secondary structure lookup.
  */
-typedef struct {
+struct SSHash {
   int n_ss;         // number of ss_list items
   int* ss[256];     // one array for each chain identifier
   SSEntry *ss_list; // VLA
-} SSHash;
+};
 
 static void sshash_free(SSHash *hash) {
   int a;
@@ -1727,7 +1727,7 @@ ok_except1:
   return NULL;
 }
 
-/*
+/**
  * Insert a secondary structure record into the hash table.
  */
 static int sshash_register_rec(SSHash * hash,
@@ -1787,7 +1787,7 @@ ok_except1:
   return false;
 }
 
-/*
+/**
  * Assign ai->ssType
  */
 static void sshash_lookup(SSHash *hash, AtomInfoType *ai, unsigned char ss_chain1) {
@@ -1813,7 +1813,7 @@ static void sshash_lookup(SSHash *hash, AtomInfoType *ai, unsigned char ss_chain
   }
 }
 
-/*
+/**
  * PQR atom line parsing
  *
  * Try to parse columns white space delimited (10 columns with optional
@@ -3528,8 +3528,7 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     CPythonVal_Free(val);
   }
   /* 11 was CurCSet */
-  if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 12), &I->BondCounter);
+  /* 12 was BondCounter */
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 13), &I->AtomCounter);
 
@@ -3569,7 +3568,7 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
   PyList_SetItem(result, 9, PyInt_FromLong(I->DiscreteFlag ? I->NAtom : 0 /* NDiscrete */));
   PyList_SetItem(result, 10, SymmetryAsPyList(I->Symmetry.get()));
   PyList_SetItem(result, 11, PyInt_FromLong(0 /* CurCSet */));
-  PyList_SetItem(result, 12, PyInt_FromLong(I->BondCounter));
+  PyList_SetItem(result, 12, PyInt_FromLong(-1 /* BondCounter */));
   PyList_SetItem(result, 13, PyInt_FromLong(I->AtomCounter));
 
   float pse_export_version = SettingGetGlobal_f(I->G, cSetting_pse_export_version);
@@ -3627,7 +3626,7 @@ float connect_cutoff_adjustment(
   return 0.f;
 }
 
-/*
+/**
  * True if two atoms should be bonded
  */
 static

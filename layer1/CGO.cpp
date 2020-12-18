@@ -343,7 +343,7 @@ static int CGOSimpleCone(CGO * I, const float *v1, const float *v2, float r1, fl
 			 const float *c2, cCylCap cap1, cCylCap cap2);
 
 
-/*
+/**
  * Inverse function of CGOArrayFromPyListInPlace
  *
  * I: (input) Primitive CGO (may contain CGO_DRAW_ARRAYS)
@@ -415,7 +415,7 @@ static float CPythonVal_PyFloat_AsDouble_From_List(void * G, PyObject * list, si
   return out;
 }
 
-/*
+/**
  * Inverse function of CGOArrayAsPyList
  *
  * list: (input) All-float Python list primitive CGO (may contain CGO_DRAW_ARRAYS)
@@ -742,7 +742,7 @@ int CGOLinewidth(CGO * I, float v)
   return true;
 }
 
-/*
+/**
  * implements special-case operations inside a CGO
  *
  * v: lookup value defined for each special operation (see CGO.h)
@@ -757,7 +757,7 @@ int CGOSpecial(CGO * I, int v)
   return true;
 }
 
-/*
+/**
  * implements special-case operations with an argument
  * inside a CGO
  *
@@ -1386,7 +1386,7 @@ int CGONormalv(CGO * I, const float *v)
   return true;
 }
 
-/*
+/**
  * Add a null terminator to the CGO buffer, but don't increment
  * the size variable (CGO::c).
  */
@@ -4235,7 +4235,7 @@ CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est, bool addshaders, 
   return (cgo);
 }
 
-/*
+/**
  * converts a CGO that has primitives into pure geometry,
  *    and converts CGO_BEGIN/CGO_END blocks into CGO_DRAW_ARRAYS
  *    operations, similar to what CGOCombineBeginEnd() does.
@@ -4541,7 +4541,7 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
   return cgo_managed.release();
 }
 
-/*
+/**
  * converts a CGO that has primitives into pure geomtry, just like CGOSimplify
  *    but without converting the CGO_BEGIN/CGO_END blocks.
  *
@@ -6697,7 +6697,7 @@ static void CGO_gl_linewidth(CCGORenderer * I, CGO_op_data pc)
 #endif
 }
 
-/*
+/**
  * call glLineWidth and set the "line_width" uniform
  */
 static void glLineWidthAndUniform(float line_width,
@@ -8360,7 +8360,7 @@ static int CGOSimpleEllipsoid(CGO* I, const float* v, float vdw,
   return ok;
 }
 
-/*
+/**
  * Triangulated round cap (half-globe)
  */
 void CGORoundNub(CGO * I,
@@ -8899,7 +8899,7 @@ bool CGO::append(const CGO& source_, bool stopAtEnd)
   return ok;
 }
 
-/*
+/**
  * Appends `src` to the end of this CGO. Takes ownership of data
  * (incl. VBOs) and leaves `src` as a valid but empty CGO.
  */
@@ -8937,7 +8937,7 @@ void CGO::move_append(CGO&& src_)
   src->has_draw_buffers = false;
 }
 
-/*
+/**
  * Appends `src` to the end of this CGO and then free's `src`
  * and sets the pointer to NULL.
  */
@@ -9415,9 +9415,13 @@ void CGOTrilines_GetCurrentColor(const float*& current_color,
 
 /**
  * Changes
- *   CGO_ENABLE <frommode>
+ *
+ *     CGO_ENABLE <frommode>
+ *
  * to
- *   CGO_ENABLE <tomode>
+ *
+ *     CGO_ENABLE <tomode>
+ *
  * in place.
  */
 void CGOChangeShadersTo(CGO *I, int frommode, int tomode){
@@ -9951,7 +9955,7 @@ CGO *CGOConvertTrianglesToAlpha(const CGO * I){
   }
 }
 
-/*
+/**
  * Converts TRIANGLE(_STRIP|_FAN) to TRIANGLES and generates
  * normals for all triangles. Discards any existing normals for
  * triangles.
@@ -10250,7 +10254,7 @@ bool CGOHasAnyTriangleVerticesWithoutNormals(const CGO *I, bool checkTriangles){
   return 0;
 }
 
-/*
+/**
  * CGOReorderIndicesWithTransparentInfo : This function
  * takes the triangle index array ix (result from TransparentInfoSortIX)
  * and sets the vertices (vertexIndices) for each triangle from the original
@@ -10531,7 +10535,7 @@ CGO *CGOConvertLinesToTrilines(const CGO * I, bool addshaders){
   return cgo.release();
 }
 
-/*
+/**
  * copies data for a particular attribute operation into the array used to load the VBO.
  * this takes into account whether it is interleaved or not.
  * 
@@ -10720,7 +10724,7 @@ void copyAttributeForOp(bool isInterleaved, int &nvert, AttribOp *attribOp, int 
   }
 }
 
-/*
+/**
  * copies data for a particular attribute into the array used to load the VBO.
  * this takes into account whether it is interleaved or not, and if an attribute
  * has repeat values
@@ -10755,7 +10759,7 @@ void copyAttributeForVertex(bool isInterleaved, int &nvert, AttribDesc &attribDe
     memcpy(dataPtr, pc, attrSize);
   }
 }
-/*
+/**
  * check all attributes (pick and non-pick) to see if they are specified in the CGO (I)
  * also checks to see if any picking is specified and sets has_picking argument
  * if any of the attributes are not specified and if a default_value is set (in the 
@@ -10884,7 +10888,7 @@ void CheckAttributesForUsage(const CGO *I, AttribDataDesc &attrData, AttribDataD
   }
 }
 
-/*
+/**
  * Populates two structures and sets vertsperpickinfo
  * opToCntPer           : CGO op to how many vertices are generated for each op.
  * opToOrderedAttribOps : CGO op to an ordered map of AttribOps that define how we operate on
@@ -10944,7 +10948,7 @@ void PopulateOpsIntoStructuresForConversion(std::map<int,int> &opToCntPer,
   }
 }
 
-/*
+/**
  * converts a "primitive" CGO into a CGO that renders a custom operation
  *
  * I:                   primitive CGO that is processed
@@ -11813,7 +11817,7 @@ static void SetVertexFromOriginAxisForCylinder(void *varData, const float * pc, 
   add3f(pc, pc + 3, varDataF); // adding origin and axis for both shadercylinder and shadercylinder2ndcolor
 }
 
-/*
+/**
  * converts all cylinders in the input CGO to a CGO custom operation, which includes picking information (if it exists)
  * 
  * I     - input CGO (includes cylinders)

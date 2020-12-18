@@ -26,7 +26,7 @@ bool glCheckOkay() {
   return true;
 }
 
-/*
+/**
  * GL debugging callback - enable with "pymol --gldebug"
  *
  * glDebugMessageCallback(gl_debug_proc, NULL);

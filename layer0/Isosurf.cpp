@@ -2089,7 +2089,7 @@ static int IsosurfCodeVertices(CIsosurf * II)
   return (VCount);
 }
 
-/*
+/**
  * corner: output buffer of size 8 * 3
  */
 void IsofieldGetCorners(PyMOLGlobals * G, Isofield * field, float * corner) {

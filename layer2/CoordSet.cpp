@@ -251,7 +251,7 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
   return (ok);
 }
 
-/*
+/**
  * Coord set as numpy array
  */
 PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy)
@@ -729,7 +729,7 @@ void CoordSetFracToReal(CoordSet * I, const CCrystal * cryst)
   CoordSetTransform33f(I, cryst->fracToReal());
 }
 
-/*
+/**
  * Apply the `sca` (SCALEn) transformation to transform to fractional space,
  * and then the crystals `FracToReal` transformation to transform back to
  * cartesian space.
@@ -836,16 +836,16 @@ bool RotateU(const double *matrix, float *anisou)
 }
 
 /*========================================================================*/
+/**
+ * @param v 3x1 vertex in final output space
+ * @param matrix 4x4 homogenous transformation matrix from model space to output
+ *         space (view matrix * state matrix). Used for ANISOU.
+ */
 void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
                              const AtomInfoType * ai,
                              const float *v, int cnt,
                              const PDBInfoRec * pdb_info,
                              const double *matrix)
-/*
- * v: 3x1 vertex in final output space
- * matrix: 4x4 homogenous transformation matrix from model space to output
- *         space (view matrix * state matrix). Used for ANISOU.
- */
 {
   char *aType;
   AtomName name;

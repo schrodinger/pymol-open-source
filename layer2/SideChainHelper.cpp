@@ -10,7 +10,7 @@
 #include "SideChainHelper.h"
 #include "Lex.h"
 
-/*
+/**
  * Mark side_chain_helper atoms that are bonded to atoms without a visible
  * cartoon or ribbon
  */
@@ -73,7 +73,7 @@ inline bool is_C45prime(const char * p) {
     (p[2] == '*' || p[2] == '\'') && !p[3];
 }
 
-/*
+/**
  * Return true if bond is hidden with side_chain_helper.
  * c1/c2 are in-out variables for color transfer.
  */

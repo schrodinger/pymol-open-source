@@ -13,7 +13,7 @@
 
 #include "Util2.h"
 
-/*
+/**
  * strsplit: split string `s` by character `delim`
  *
  * If `delim` is null, then do whitespace split.
@@ -36,7 +36,7 @@ std::vector<std::string> strsplit(const std::string &s, char delim) {
   return elems;
 }
 
-/*
+/**
  * Natural string compare: F1 < F2 < F10
  *
  * Return true if a < b
@@ -72,14 +72,14 @@ bool cstrlessnat(const char * a, const char * b) {
   return cstrlessnat(a + na, b + nb);
 }
 
-/*
+/**
  * Natural string compare: F1 < F2 < F10
  */
 bool strlessnat(const std::string& a, const std::string& b) {
   return cstrlessnat(a.c_str(), b.c_str());
 }
 
-/*
+/**
  * Return true if s starts with the specified prefix, false otherwise.
  */
 bool p_strstartswith(const char * s, const char * prefix) {
@@ -89,7 +89,7 @@ bool p_strstartswith(const char * s, const char * prefix) {
   return true;
 }
 
-/*
+/**
  * case-insensitive version of p_strstartswith
  */
 bool p_strcasestartswith(const char * s, const char * prefix) {

@@ -10,7 +10,7 @@
 #include "AtomInfo.h"
 #include "ObjectMolecule.h"
 
-/*
+/**
  * atm: Atom index of a carbon atom with geom=3
  *
  * Return: True if atm has 3 neighbors which are all nitrogens with geom=3
@@ -31,7 +31,7 @@ static bool isGuanidiniumCarbon(ObjectMolecule * obj, int atm) {
   return neighbor_count == 3 && charge > 0;
 }
 
-/*
+/**
  * TODO: bond order 4 seems to be no guarantee for a ring, which is
  * required for aromaticity
  *
@@ -51,7 +51,7 @@ static bool isAromaticAtom(ObjectMolecule * obj, int atm) {
   return false;
 }
 
-/*
+/**
  * atm: Atom index of an oxygen atom
  *
  * Return: True if atom is part of a carboxylate or phosphate group
@@ -92,7 +92,7 @@ static bool isCarboxylateOrPhosphateOxygen(ObjectMolecule * obj, int atm) {
   return (o_count == 4 && other_count == 0);
 }
 
-/*
+/**
  * atm: Atom index of a sulfur atom
  *
  * Return: Number of bound Oxygens if bound to two non-Oxygen atoms. Otherwise 0.
@@ -112,7 +112,7 @@ static int sulfurCountOxygenNeighbors(ObjectMolecule * obj, int atm) {
   return (other_count == 2) ? o_count : 0;
 }
 
-/*
+/**
  * Get the Tripos Mol2 atom type
  *
  * Pre-condition: ObjectMoleculeVerifyChemistry

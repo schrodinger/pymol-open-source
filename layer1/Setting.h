@@ -27,10 +27,10 @@ Z* -------------------------------------------------------------------
 
 typedef char SettingName[255];
 
-/*
+/**
  * Setting record for atom/astate/bond/bstate level settings
  */
-typedef struct {
+struct SettingUniqueEntry {
   int setting_id;
   union {
     int int_;
@@ -38,7 +38,7 @@ typedef struct {
     float float3_[3];
   } value;
   int next;                     /* for per-atom setting lists & memory management */
-} SettingUniqueEntry;
+};
 
 struct CSettingUnique {
   OVOneToOne *id2offset;
@@ -47,7 +47,7 @@ struct CSettingUnique {
   int n_alloc, next_free;
 };
 
-/*
+/**
  * Setting record for global/object/ostate level settings
  */
 struct SettingRec {
@@ -264,15 +264,15 @@ struct CSetting {
   ~CSetting();
 };
 
-/*
+/**
  * State index iterator which iterates either over a single state (state >= 0),
  * the current state (state == -2), or all states (state == -1). Takes
  * static singletons into account. Zero iterations if state >= nstate.
  *
- * StateIterator iter(G, I->Setting, state, I->NState);
- * while(iter.next()) {
- *   printf("in state %d\n", iter.state);
- * }
+ *     StateIterator iter(G, I->Setting, state, I->NState);
+ *     while (iter.next()) {
+ *         printf("in state %d\n", iter.state);
+ *     }
  */
 class StateIterator {
   int end;
@@ -367,7 +367,7 @@ template <typename V> V SettingGet(PyMOLGlobals * G, int index) {
   return SettingGet<V>(index, G->Setting);
 }
 
-/*
+/**
  * Get setting value if it's defined in the given set, and assign value to
  * `out` variable and return true. Otherwise return false and leave `out`
  * untouched.
@@ -428,8 +428,8 @@ bool SettingUniqueGetTypedValuePtr(PyMOLGlobals * G, int unique_id, int index,
   return r;
 }
 
-/*
- * `SettingGetIfDefined` equivalent for unique settings.
+/**
+ * SettingGetIfDefined() equivalent for unique settings.
  */
 template <typename V>
 bool SettingUniqueGetIfDefined(PyMOLGlobals * G, int unique_id, int index, V * out) {

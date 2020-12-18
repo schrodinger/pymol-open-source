@@ -102,7 +102,7 @@ int CShaderPrg::Link() {
   return 1;      
 }
 
-/*
+/**
  * Get a uniform location id by name. Caches ids for faster lookup (avoiding
  * expensive `glGetUniformLocation` calls).
  */
@@ -148,7 +148,7 @@ int CShaderPrg::Set2f(const char * name, float f1, float f2)
   return 1;
 }
 
-/*
+/**
  * Set column major 3x3 matrix
  */
 int CShaderPrg::SetMat3fc(const char * name, const GLfloat * m){
@@ -159,7 +159,7 @@ int CShaderPrg::SetMat3fc(const char * name, const GLfloat * m){
   return 1;
 }
 
-/*
+/**
  * Set column major 4x4 matrix
  */
 int CShaderPrg::SetMat4fc(const char * name, const GLfloat * m){

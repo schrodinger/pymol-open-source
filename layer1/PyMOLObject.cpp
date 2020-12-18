@@ -1375,7 +1375,7 @@ const double* ObjectStateGetMatrix(const CObjectState* I)
   return I->Matrix.empty() ? nullptr : I->Matrix.data();
 }
 
-/*
+/**
  * Get the Matrix inverse
  */
 const double *ObjectStateGetInvMatrix(const CObjectState * self)

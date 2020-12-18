@@ -293,7 +293,7 @@ static pymol::Result<> ExecutiveTransformObjectSelection2(
     PyMOLGlobals* G, CObject* obj, int state, const char* s1, int log,
     const float* matrix, int homogenous, int global);
 
-/*
+/**
  * ObjectIterator methods
  */
 void ObjectIterator::reset() {
@@ -336,7 +336,7 @@ ObjectT* ExecutiveFindOrDeleteObject(PyMOLGlobals* G, pymol::zstring_view name)
   return obj;
 }
 
-/*
+/**
  * True if `rec` and all its parent groups are enabled
  */
 static bool SpecRecIsEnabled(const SpecRec * rec) {
@@ -1896,7 +1896,7 @@ static SpecRec *ExecutiveAnyCaseNameMatch(PyMOLGlobals * G, const char *name)
   return (result);
 }
 
-/*
+/**
  * Scroll the i'th match in the object menu panel to the top.
  * Scroll to last match if i < 0 and to first match if i > #-1.
  * Open groups if hit is inside.
@@ -3407,7 +3407,7 @@ int ExecutivePop(PyMOLGlobals * G, const char *target, const char *source, int q
     return result;
 }
 
-/*
+/**
  * Return the selector index of the "active" alignment.
  */
 int ExecutiveGetActiveAlignmentSele(PyMOLGlobals * G)
@@ -3419,7 +3419,7 @@ int ExecutiveGetActiveAlignmentSele(PyMOLGlobals * G)
   return -1;
 }
 
-/*
+/**
  * Return the name of the "active" alignment. That is:
  *
  * 1) The "seq_view_alignment" setting if it's set
@@ -3695,7 +3695,7 @@ pymol::Result<> ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const c
 }
 
 
-/*
+/**
  * Load any file type which is implemented in C.
  *
  * fname:       File name, can be empty if content is provided
@@ -4469,7 +4469,7 @@ static int * getRepArrayFromBitmask(int visRep) {
 }
 
 #ifdef _PYMOL_LIB
-/*
+/**
  * Returns a list (VLA) of enabled atom representations (AtomInfoType.visRep)
  * in selection (e.g. {cRepLine, cRepNonbonded})
  */
@@ -4484,7 +4484,7 @@ int *ExecutiveGetRepsInSceneForObject(PyMOLGlobals *G, const char *name){
   return getRepArrayFromBitmask(visRep);
 }
 
-/*
+/**
  * Returns a list (VLA) of enabled object representations (rec->obj->visRep)
  * (e.g. {cRepCell, cRepExtent})
  */
@@ -4600,7 +4600,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
 #endif
 }
 
-/*
+/**
  * returns a pointer to the data in a volume or map object
  */
 CField * ExecutiveGetVolumeField(PyMOLGlobals * G, const char * objName, int state) {
@@ -4623,7 +4623,7 @@ ok_except1:
   return NULL;
 }
 
-/*
+/**
  * returns allocated memory
  */
 pymol::Result<std::vector<float>>
@@ -4907,7 +4907,7 @@ static int fStrOrderFn(const char * const* array, int l, int r) {
   return strcmp(array[l], array[r]) < 0;
 }
 
-/*
+/**
  * Returns an VLA with pointers into G->Lexicon
  */
 pymol::Result<std::vector<const char*>> ExecutiveGetChains(
@@ -8736,7 +8736,7 @@ pymol::Result<std::vector<const char*>> ExecutiveGetNames(
 
 
 /*========================================================================*/
-/*
+/**
  * Return true if `name` is the name of an object molecule or a named selection
  */
 bool ExecutiveIsMoleculeOrSelection(PyMOLGlobals * G, const char *name)
@@ -13447,14 +13447,14 @@ ExecutiveSetObjVisib(PyMOLGlobals * G, pymol::zstring_view name, int onoff, int 
 
 
 /*========================================================================*/
-/*
+/**
  * Full screen state fallback in case we can't get get the state from
  * the window manager.
  */
 static bool _is_full_screen = false;
 
 /*========================================================================*/
-/*
+/**
  * Get the fullscreen state from the window manager or return -1 if
  * not available.
  */
@@ -13694,9 +13694,9 @@ ExecutiveSetOnOffBySele(PyMOLGlobals * G, pymol::zstring_view sname, int onoff)
 
 
 /*========================================================================*/
-/*
- * repmask: rep bit mask
- * state: 0 (hide), 1 (show), 2 (as)
+/**
+ * @param repmask rep bit mask
+ * @param state 0 (hide), 1 (show), 2 (as)
  */
 static void ExecutiveSetAllRepVisMask(PyMOLGlobals * G, int repmask, int state)
 {
@@ -16472,7 +16472,7 @@ char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, const char *name, int 
   return (res);
 }
 
-/*
+/**
  * Get the coord set for the given object name and state index. If "omp" is
  * not NULL, then also store a pointer to the object molecule.
  */

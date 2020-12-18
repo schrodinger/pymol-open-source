@@ -52,7 +52,7 @@ typedef int PyObject;
 # define PyString_AsString              PyUnicode_AsUTF8
 # define PyString_AS_STRING             PyUnicode_AsUTF8
 
-/*
+/**
  * For compatibility with the pickletools, this type represents
  * an optionally owned C string and has to be returned by value.
  */

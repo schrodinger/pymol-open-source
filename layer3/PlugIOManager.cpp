@@ -876,7 +876,7 @@ ok_except1:
   return I;
 }
 
-/*
+/**
  * Load any object type with the given plugin. If obj_ptr's object type
  * doesn't match the plugin, the object will be deleted and a new one created
  * (not for trajectories).
@@ -969,11 +969,11 @@ ok_except1:
 
 #endif
 
-/*
+/**
  * Find a plugin by filename extension
  *
- * ext: File extension
- * mask: plugin needs to read any content (0), structure (1), trajectory (2) or map (4)
+ * @param ext File extension
+ * @param mask plugin needs to read any content (0), structure (1), trajectory (2) or map (4)
  */
 const char * PlugIOManagerFindPluginByExt(PyMOLGlobals * G, const char * ext, int mask) {
 #ifdef _PYMOL_VMD_PLUGINS

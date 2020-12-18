@@ -127,7 +127,7 @@ const double problevel[50] = { 0.4299, 0.5479, 0.6334, 0.7035, 0.7644,
   2.5997, 2.7216, 2.8829, 3.1365, 6.0000
 };
 
-/*
+/**
  * Return true if backbone atom that should be hidden with side_chain_helper
  */
 static bool is_sidechainhelper_hidden(PyMOLGlobals * G, const AtomInfoType * ai) {

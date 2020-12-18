@@ -395,7 +395,10 @@ static PyTypeObject settingWrapper_Type = {
   0,                            /* tp_basicsize */
 };
 
-/*
+#ifdef _PYMOL_IP_PROPERTIES
+#endif
+
+/**
  * If `wob` is not in a valid state (outside iterate-family context), raise
  * an error and return false.
  */
@@ -409,7 +412,7 @@ static bool check_wrapper_scope(WrapperObject * wobj) {
   return false;
 }
 
-/*
+/**
  * key: Python int (setting index) or str (setting name)
  *
  * Return the setting index or -1 for unknown `key`
@@ -435,7 +438,7 @@ static int get_and_check_setting_index(PyMOLGlobals * G, PyObject * key) {
   return setting_id;
 }
 
-/*
+/**
  * Access a setting with iterate et. al.
  *
  * s[key]
@@ -479,7 +482,7 @@ PyObject *SettingWrapperObjectSubScript(PyObject *obj, PyObject *key){
   return PConvAutoNone(ret);
 }
 
-/*
+/**
  * Set an atom or atom-state level setting with alter or alter_state.
  *
  * s[key] = val
@@ -533,7 +536,10 @@ int SettingWrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *
   return 0; // success
 }
 
-/*
+#ifdef _PYMOL_IP_PROPERTIES
+#endif
+
+/**
  * Python iterator over atom or atom-state setting indices
  */
 static PyObject* SettingWrapperObjectIter(PyObject *self)
@@ -559,7 +565,10 @@ static PyObject* SettingWrapperObjectIter(PyObject *self)
   return iter;
 }
 
-/*
+#ifdef _PYMOL_IP_PROPERTIES
+#endif
+
+/**
  * Allows attribute-like syntax for item lookups
  *
  * o.key -> o[key] if `key` is not an attribute of `o`
@@ -572,7 +581,7 @@ static PyObject* PyObject_GenericGetAttrOrItem(PyObject *o, PyObject *key) {
   return PyObject_GetItem(o, key);
 }
 
-/*
+/**
  * Allows attribute-like syntax for item assignment
  *
  * `o.key = value` -> `o[key] = value`
@@ -597,7 +606,7 @@ static T const* get_member_pointer(S const* instance, size_t offset)
       reinterpret_cast<char const*>(instance) + offset);
 }
 
-/*
+/**
  * iterate-family namespace implementation: lookup
  *
  * Raise NameError if state attributes are accessed outside of iterate_state
@@ -767,7 +776,7 @@ static PyMethodDef wrapperMethods[] = {
     {nullptr},
 };
 
-/*
+/**
  * iterate-family namespace implementation: assignment
  *
  * Raise TypeError for read-only variables
@@ -1369,7 +1378,7 @@ int PAlterAtom(PyMOLGlobals* G, ObjectMolecule* obj, CoordSet* cs,
   return PAlterAtomState(G, expr_co, read_only, obj, cs, atm, /* idx */ -1, state, space);
 }
 
-/*
+/**
  * String conversion which takes "label_digits" setting into account.
  */
 static
@@ -1995,7 +2004,7 @@ void PDo(PyMOLGlobals * G, const char *str)
   PAutoUnblock(G, blocked);
 }
 
-/*
+/**
  * Write `str` to the log file (if one is open).
  *
  * str: command or expression to log

@@ -117,13 +117,10 @@ int DistSetMoveLabel(DistSet * I, int a1, float *v, int mode)
 }
 
 
-/* -- JV, refactored by TH */
-/*
- * PARAMS
- *   I:   measurement set, must not be NULL
- *   obj: object molecule, can be NULL so then all items in I will be updated
- * RETURNS
- *   number of updated coordinates
+/**
+ * @param I   measurement set, must not be NULL
+ * @param obj object molecule, can be NULL so then all items in I will be updated
+ * @return  number of updated coordinates
  */
 int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
 {
@@ -390,7 +387,7 @@ int DistSetGetExtent(DistSet * I, float *mn, float *mx)
 
 
 /*========================================================================*/
-/*
+/**
  * Invalidate reps
  *
  * type: rep enum, e.g. cRepDash

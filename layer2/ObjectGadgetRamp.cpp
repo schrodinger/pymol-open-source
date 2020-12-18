@@ -109,7 +109,7 @@ static void ObjectGadgetRampCalculate(ObjectGadgetRamp * I, float v, float *resu
   clamp3f(result);
 }
 
-/*
+/**
  * Get the "Level" array, eventually spaced out to match number of colors.
  */
 static const float * ObjectGadgetRampGetLevel(ObjectGadgetRamp * I) {
@@ -132,7 +132,7 @@ static const float * ObjectGadgetRampGetLevel(ObjectGadgetRamp * I) {
   return I->LevelTmp;
 }
 
-/*
+/**
  * We support storing special color indices as negative R in the RGB color
  */
 inline int GetSpecial(const float * rgb) {

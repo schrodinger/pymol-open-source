@@ -255,7 +255,7 @@ PyObject * PConvToPyObject(const std::array<T, N> &arr) {
   return o;
 }
 
-/*
+/**
  * Convert a set to a Python list
  */
 template <class T>
@@ -270,10 +270,10 @@ PyObject * PConvToPyObject(const std::set<T> &v) {
   return o;
 }
 
-/*
+/**
  * Convert a map to a flat Python list
  *
- * {k1: v1, k2: v2, ...} -> [k1, v1, k2, v2, ...]
+ *     {k1: v1, k2: v2, ...} -> [k1, v1, k2, v2, ...]
  */
 template <class K, class V>
 PyObject * PConvToPyObject(const std::map<K, V> &v) {
@@ -288,7 +288,7 @@ PyObject * PConvToPyObject(const std::map<K, V> &v) {
   return o;
 }
 
-/*
+/**
  * Convert a pair to a Python tuple
  */
 template <class T1, class T2>
@@ -314,7 +314,7 @@ inline PyObject* PConvToPyObject(const pymol::Void&)
 }
 
 /* ============================================================ */
-/*
+/**
  * PConvFromPyObject: Templated conversion of a python object to a
  * standart type (primitives and c++ std library).
  */
@@ -394,7 +394,7 @@ bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, std::vector<T> &out) {
   return true;
 }
 
-/*
+/**
  * Convert a Python list to a set
  */
 template <class T>
@@ -419,11 +419,11 @@ bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, std::set<T> &out) {
   return true;
 }
 
-/*
+/**
  * Convert a flat Python list to a map, even indices are keys and odd
  * indices are values.
  *
- * [a, b, c, d, ...] -> {a: b, c: d, ...}
+ *     [a, b, c, d, ...] -> {a: b, c: d, ...}
  */
 template <class K, class V>
 bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, std::map<K, V> &out) {

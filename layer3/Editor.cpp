@@ -1740,7 +1740,7 @@ void EditorInactivate(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-/*
+/**
  * Create a transient distance, angle, or dihedral measurement between
  * the pk1 - pk4 atoms.
  *

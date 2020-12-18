@@ -22,7 +22,7 @@
 #include "Lex.h"
 #include "strcasecmp.h"
 
-/*
+/**
  * Read a MOL/SDF V3000 line into the `out` buffer, stripping the leading
  * "M  V30 " and taking line continuation (trailing hyphen) into account.
  *
@@ -61,7 +61,7 @@ bool MOLV3000ReadLine(const char * &p, std::string &out) {
   return true;
 }
 
-/*
+/**
  * Parse the next keyword=value pair from `p` and advance `p`.
  */
 static
@@ -98,7 +98,7 @@ bool MOLV3000ReadKeyValue(const char *& p,
   return true;
 }
 
-/*
+/**
  * Parse the "Extended Connection Table" (V3000) from a MOL/SDF file.
  *
  * Returns a pointer to the end of the parsed content on success, or NULL on

@@ -27,7 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include "Setting.h"
 
-/*
+/**
  * Get a field as NumPy array. If copy is false, then return an array wrapper
  * around the internal data of field. USE WITH CAUTION, the data pointer will
  * be invalid if the field is freed (e.g. its map object is deleted). If copy

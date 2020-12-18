@@ -1457,8 +1457,8 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL * I, const char *name, const char *ma
   PYMOL_API_UNLOCK return result;
 }
 
-/*
- * Supported file formats and they internal codes
+/**
+ * Supported file formats and their internal codes
  */
 struct {
   const char * name;
@@ -1487,7 +1487,7 @@ struct {
   {NULL,            cLoadTypeUnknown,   cLoadTypeUnknown}
 };
 
-/*
+/**
  * Proxy for "ExecutiveLoad" with string "content_format" (and "content_type")
  * argument.
  *
@@ -2841,7 +2841,7 @@ void PyMOL_Drag(CPyMOL * I, int x, int y, int modifiers)
   I->DraggedFlag = true;
 PYMOL_API_UNLOCK}
 
-/*
+/**
  * Mouse button and keyboard press handler
  *
  * button: mouse button or key code

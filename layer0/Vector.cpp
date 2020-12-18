@@ -22,6 +22,8 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Matrix.h"
 
+#include <cassert>
+
 #define MASK_01010101 (((unsigned long)(-1))/3)
 #define MASK_00110011 (((unsigned long)(-1))/5)
 #define MASK_00001111 (((unsigned long)(-1))/17)
@@ -343,7 +345,7 @@ void identity44d(double *m1)
     m1[a] = _d1;
 }
 
-/*
+/**
  * Check a nxn matrix for identity
  */
 bool is_identityf(int n, const float *m, float threshold)
@@ -357,7 +359,7 @@ bool is_identityf(int n, const float *m, float threshold)
   return true;
 }
 
-/*
+/**
  * Check if two matrices are the same. The two matrices may have different
  * number of rows and columns, in that case only the overlaying upper left
  * (nrow x min(ncol1, ncol2)) submatrix is compared.
@@ -377,7 +379,7 @@ bool is_allclosef(int nrow,
   return true;
 }
 
-/*
+/**
  * Check a nxm matrix is a diagonal matrix (non-diagonal elements are zero)
  */
 bool is_diagonalf(int nrow,
@@ -394,7 +396,7 @@ bool is_diagonalf(int nrow,
   return true;
 }
 
-/*
+/**
  * Determinant of the upper left 3x3 submatrix.
  */
 double determinant33f(const float *m, int ncol)
@@ -628,6 +630,8 @@ void transform33f3f(const float *m1, const float *m2, float *m3)
 
 void transpose33f33f(const float *m1, float *m2)
 {
+  assert(m1 != m2);
+
   m2[0] = m1[0];
   m2[1] = m1[3];
   m2[2] = m1[6];
@@ -641,6 +645,8 @@ void transpose33f33f(const float *m1, float *m2)
 
 void transpose33d33d(const double *m1, double *m2)
 {
+  assert(m1 != m2);
+
   m2[0] = m1[0];
   m2[1] = m1[3];
   m2[2] = m1[6];
@@ -654,6 +660,8 @@ void transpose33d33d(const double *m1, double *m2)
 
 void transpose44f44f(const float *m1, float *m2)
 {
+  assert(m1 != m2);
+
   m2[0] = m1[0];
   m2[1] = m1[4];
   m2[2] = m1[8];
@@ -677,6 +685,8 @@ void transpose44f44f(const float *m1, float *m2)
 
 void transpose44d44d(const double *m1, double *m2)
 {
+  assert(m1 != m2);
+
   m2[0] = m1[0];
   m2[1] = m1[4];
   m2[2] = m1[8];
@@ -1269,6 +1279,8 @@ void invert_special44d44d(const double *orig, double *inv)
 
 void invert_special44f44f(const float *orig, float *inv)
 {
+  assert(orig != inv);
+
   /* inverse of the rotation matrix */
 
   inv[0] = orig[0];
@@ -2124,7 +2136,7 @@ int countchrs(const char *str, char ch){
   return cnt;
 }
 
-/*
+/**
  * sigmoid smoothstep function with
  * smooth(0) = 0
  * smooth(1) = 1
@@ -2144,7 +2156,9 @@ float smooth(float x, float power)
   return 1.0F - (0.5F * powf(2.0F * (1.0F - x), power));
 }
 
-/* Divides the unit circle radially into n segments with n >= 3. */
+/**
+ * Divides the unit circle radially into n segments with n >= 3.
+ */
 void subdivide(int n, float *x, float *y)
 {
   int a;

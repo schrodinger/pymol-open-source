@@ -115,12 +115,12 @@ typedef struct {
   unsigned char *h; // for freeing
 } uchar2p;
 
-/*
+#ifdef _PYMOL_LIBPNG
+/**
  * Use with png_set_read_fn, for reading a PNG file from memory.
  * This simply copies from the memory pointer to outBytes while
  * incrementing the memory pointer.
  */
-#ifdef _PYMOL_LIBPNG
 void read_data_from_buffer(png_structp png_ptr,
                            png_bytep outBytes,
                            png_size_t byteCountToRead) {
@@ -134,7 +134,7 @@ void read_data_from_buffer(png_structp png_ptr,
   }
 }
 
-/*
+/**
  * Use with png_set_write_fn, for writing a PNG file to memory.
  */
 static void write_data_to_buffer(png_structp png_ptr,
@@ -146,7 +146,7 @@ static void write_data_to_buffer(png_structp png_ptr,
 #endif
 }
 
-/*
+/**
  * Use with png_set_read_fn instead of png_init_io, allows mixing of
  * Visual Studio versions
  */
@@ -158,7 +158,7 @@ static void read_data_from_file(
   fread(buffer, 1, count, fp);
 }
 
-/*
+/**
  * Use with png_set_write_fn instead of png_init_io, allows mixing of
  * Visual Studio versions
  */

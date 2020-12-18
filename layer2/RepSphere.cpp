@@ -327,7 +327,7 @@ static float SphereComputeCutMultiplier(SphereRec *sr){
   return cut_mult;
 }
 
-/*
+/**
  * for the spheroid implementation, this function sets color
  * and pickcolor in the CGO given the atom idx
  *
@@ -405,7 +405,7 @@ CGO *RepSphereGeneratespheroidCGO(ObjectMolecule * I, CoordSet *cs, SphereRec *s
   return cgo;
 }
 
-/*
+/**
  * when normals are needed (sphere_mode 6-8), 
  * this function computes the normal for an atom
  * and pickcolor in the CGO given the atom idx

@@ -120,14 +120,14 @@ static int AlignmentFindTag(PyMOLGlobals * G, AtomInfoType * ai, int sele,
   return result;
 }
 
-/*
+/**
  * Get single letter abbreviation for CLUSTAL output.
  *
  * See also:
  * pymol.exporting._resn_to_aa
- * AtomInfoKnownNucleicResName
- * AtomInfoKnownProteinResName
- * SeekerGetAbbr
+ * AtomInfoKnownNucleicResName()
+ * AtomInfoKnownProteinResName()
+ * SeekerGetAbbr()
  */
 static char get_abbr(PyMOLGlobals * G, const AtomInfoType * ai) {
   const char * resn = LexStr(G, ai->resn);

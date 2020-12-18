@@ -61,14 +61,14 @@ struct Block {
   /**
    * Draws this block
    * @param orthoCGO CGO to append to
-   * @Note: Implementation no longer recursive.
+   * @note: Implementation no longer recursive.
    */
   void recursiveDraw(CGO *orthoCGO);
 
   /**
    * Draws this block (uses overridden fastDraw implementation)
    * @param orthoCGO CGO to append to
-   * @Note: Implementation no longer recursive.
+   * @note: Implementation no longer recursive.
    */
   bool recursiveFastDraw(CGO *orthoCGO);
 

@@ -99,7 +99,7 @@ struct AttribOpFuncData {
 
 using AttribOpFuncDataDesc = std::vector< AttribOpFuncData >;
 
-/*
+/**
  * defines an operation that copies and (optionally) creates new vertices in 
  * a VBO operation for a particular CGO operation (op).
  *
@@ -132,7 +132,7 @@ struct AttribOp {
 };
 using AttribDataOp = std::vector< AttribOp >;
 
-/*
+/**
  * defines an attribute that is used in a shader.  this description has all of the necessary information
  * for our "optimize" function to generate either an array for input into the VBO or a call to the
  * related glVertexAttrib() call when this attribute has the same value throughout the CGO.
@@ -432,7 +432,7 @@ protected:
   BufferDataDesc     m_desc;
 };
 
-/*
+/**
  * Vertex buffer specialization
  */
 class VertexBuffer : public GenericBuffer<GL_ARRAY_BUFFER> {
@@ -507,7 +507,7 @@ private:
   std::vector<GLint> m_attribmask;
 };
 
-/*
+/**
  * Index buffer specialization
  */
 class IndexBuffer : public GenericBuffer<GL_ELEMENT_ARRAY_BUFFER> {

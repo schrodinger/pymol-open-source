@@ -6,8 +6,8 @@
 struct AtomInfoType;
 struct ObjectMolecule;
 
-/*
- * Ring finder subroutine
+/**
+ * Ring finder
  */
 class AbstractRingFinder
 {

@@ -33,7 +33,7 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"CGO.h"
 
-/*
+/**
  * Memory layout of the RepLabel::V array
  */
 struct VItemType {
