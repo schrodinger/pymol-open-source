@@ -451,29 +451,17 @@ void RepWireBond::render(RenderInfo* info)
 
 static
 bool IsBondTerminal(ObjectMolecule *obj, int b1, int b2){
-  const int *neighbor = obj->Neighbor;
-  if(neighbor) {
-    int mem, nbr;
-    int heavy1 = 0, heavy2 = 0;
-    const AtomInfoType *atomInfo = obj->AtomInfo.data();
-    nbr = neighbor[b1] + 1;
-    while(((mem = neighbor[nbr]) >= 0)) {
-      if(atomInfo[mem].protons > 1) {
-        heavy1++;
+  auto const has_heavy_neighbors = [obj](int atm, int atm_other) {
+    for (auto const& neighbor : AtomNeighbors(obj, atm)) {
+      if (neighbor.atm != atm_other &&
+          obj->AtomInfo[neighbor.atm].protons > 1) {
+        return true;
       }
-      nbr += 2;
     }
-    nbr = neighbor[b2] + 1;
-    while(((mem = neighbor[nbr]) >= 0)) {
-      if(atomInfo[mem].protons > 1) {
-        heavy2++;
-      }
-      nbr += 2;
-    }
-    if((heavy1 < 2) || (heavy2 < 2))
-      return true;
-  }
-  return false;
+    return false;
+  };
+
+  return !has_heavy_neighbors(b1, b2) || !has_heavy_neighbors(b2, b1);
 }
 
 static int RepWireZeroOrderBond(CGO *cgo, bool s1, bool s2,

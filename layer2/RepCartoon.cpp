@@ -341,24 +341,25 @@ bool ring_connector_visible(PyMOLGlobals * G,
 /**
  * depth-first neighbor search for nucleic acid atom
  *
- * nuc_flag:    NAtom-length boolean nucleic acid flags array
- * neighbor:    Neighbor data structure
- * atm:         atom index
- * max_depth:   maximum search depth
- * seen:        set of visited atom indices (read/write)
+ * @param nuc_flag    NAtom-length boolean nucleic acid flags array
+ * @param obj         Molecule
+ * @param atm         atom index
+ * @param max_depth   maximum search depth
+ * @param seen        set of visited atom indices (read/write)
  *
- * Return: true if any nucleic acid atom found within max_depth radius
+ * @return True if any nucleic acid atom found within max_depth radius
  */
 static
 bool has_nuc_neighbor(
     const int * nuc_flag,
-    const int * neighbor,
+    const ObjectMolecule* obj,
     const int atm,
     const int max_depth,
     std::set<int> &seen)
 {
-  int atm_neighbor, tmp;
-  ITERNEIGHBORATOMS(neighbor, atm, atm_neighbor, tmp) {
+  for (auto const& neighbor : AtomNeighbors(obj, atm)) {
+    auto const atm_neighbor = neighbor.atm;
+
     if (nuc_flag[atm_neighbor])
       return true;
 
@@ -368,7 +369,7 @@ bool has_nuc_neighbor(
     seen.insert(atm_neighbor);
 
     if (max_depth > 1 &&
-        has_nuc_neighbor(nuc_flag, neighbor, atm_neighbor, max_depth - 1, seen))
+        has_nuc_neighbor(nuc_flag, obj, atm_neighbor, max_depth - 1, seen))
       return true;
   }
 
@@ -1017,7 +1018,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
       if(sugar_at >= 0) {
         if(!nf) {
           auto seen = std::set<int>();
-          nf = has_nuc_neighbor(nuc_flag, obj->Neighbor, sugar_at, 5, seen);
+          nf = has_nuc_neighbor(nuc_flag, obj, sugar_at, 5, seen);
         }
 
         if(nf) {
@@ -1133,7 +1134,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
         mem0 = -1;
       if(mem0 >= 1) {
         auto seen = std::set<int>();
-        nf = has_nuc_neighbor(nuc_flag, obj->Neighbor, mem0, 9, seen);
+        nf = has_nuc_neighbor(nuc_flag, obj, mem0, 9, seen);
       }
     }
     if(n_atom) {                /* store center of ring */

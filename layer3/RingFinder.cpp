@@ -3,15 +3,14 @@
 
 void AbstractRingFinder::recursion(int atm, int depth)
 {
-  int atm_neighbor, j;
-
   m_indices[depth] = atm;
 
-  ITERNEIGHBORATOMS(m_obj->Neighbor, atm, atm_neighbor, j)
-  {
+  for (auto const& neighbor : AtomNeighbors(m_obj, atm)) {
     // check bond order
-    if (m_obj->Bond[m_obj->Neighbor[j + 1]].order < 1)
+    if (m_obj->Bond[neighbor.bond].order < 1)
       continue;
+
+    const auto atm_neighbor = neighbor.atm;
 
     // check atom filter
     if (atomIsExcluded(m_obj->AtomInfo[atm_neighbor]))

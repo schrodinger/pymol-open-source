@@ -850,20 +850,18 @@ void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec * op)
   UtilZeroMem((char *) op, sizeof(ObjectMoleculeOpRec));
 }
 
+/**
+ * Returns the most proton-rich element with the lowest priority value (OG1
+ * before OG2, CG, HB1)
+ */
 int ObjectMoleculeGetTopNeighbor(PyMOLGlobals * G,
                                  ObjectMolecule * I, int start, int excluded)
 {
-  /* returns the most proton-rich element with the lowest priority value
-     (OG1 before OG2, CG, HB1) */
-
-  int n0, at;
-  AtomInfoType *ai;
   int highest_at = -1, highest_prot = 0, lowest_pri = 9999;
 
-  ObjectMoleculeUpdateNeighbors(I);
-  n0 = I->Neighbor[start] + 1;
-  while(I->Neighbor[n0] >= 0) {
-    ai = I->AtomInfo + (at = I->Neighbor[n0]);
+  for (auto const& neighbor : AtomNeighbors(I, start)) {
+    auto const at = neighbor.atm;
+    auto const *ai = I->AtomInfo.data() + at;
     if((highest_at < 0) && (at != excluded)) {
       highest_prot = ai->protons;
       lowest_pri = ai->priority;
@@ -875,7 +873,6 @@ int ObjectMoleculeGetTopNeighbor(PyMOLGlobals * G,
       highest_at = at;
       lowest_pri = ai->priority;
     }
-    n0 += 2;
   }
   return highest_at;
 }
@@ -2485,7 +2482,6 @@ int ObjectMoleculeGetPhiPsi(ObjectMolecule * I, int ca, float *phi, float *psi, 
   int n = -1;
   int result = false;
   const AtomInfoType *ai;
-  int n0, at;
   float v_ca[3];
   float v_n[3];
   float v_c[3];
@@ -2496,53 +2492,39 @@ int ObjectMoleculeGetPhiPsi(ObjectMolecule * I, int ca, float *phi, float *psi, 
   ai = I->AtomInfo;
 
   if(ai[ca].name == G->lex_const.CA) {
-    ObjectMoleculeUpdateNeighbors(I);
-
     /* find C */
-    n0 = I->Neighbor[ca] + 1;
-    while(I->Neighbor[n0] >= 0) {
-      at = I->Neighbor[n0];
-      if(ai[at].name == G->lex_const.C) {
-        c = at;
+    for (auto const& neighbor : AtomNeighbors(I, ca)) {
+      if (ai[neighbor.atm].name == G->lex_const.C) {
+        c = neighbor.atm;
         break;
       }
-      n0 += 2;
     }
 
     /* find N */
-    n0 = I->Neighbor[ca] + 1;
-    while(I->Neighbor[n0] >= 0) {
-      at = I->Neighbor[n0];
-      if(ai[at].name == G->lex_const.N) {
-        n = at;
+    for (auto const& neighbor : AtomNeighbors(I, ca)) {
+      if (ai[neighbor.atm].name == G->lex_const.N) {
+        n = neighbor.atm;
         break;
       }
-      n0 += 2;
     }
 
     /* find NP */
     if(c >= 0) {
-      n0 = I->Neighbor[c] + 1;
-      while(I->Neighbor[n0] >= 0) {
-        at = I->Neighbor[n0];
-        if(ai[at].name == G->lex_const.N) {
-          np = at;
+      for (auto const& neighbor : AtomNeighbors(I, c)) {
+        if (ai[neighbor.atm].name == G->lex_const.N) {
+          np = neighbor.atm;
           break;
         }
-        n0 += 2;
       }
     }
 
     /* find CM */
     if(n >= 0) {
-      n0 = I->Neighbor[n] + 1;
-      while(I->Neighbor[n0] >= 0) {
-        at = I->Neighbor[n0];
-        if(ai[at].name == G->lex_const.C) {
-          cm = at;
+      for (auto const& neighbor : AtomNeighbors(I, n)) {
+        if (ai[neighbor.atm].name == G->lex_const.C) {
+          cm = neighbor.atm;
           break;
         }
-        n0 += 2;
       }
     }
     if((ca >= 0) && (np >= 0) && (c >= 0) && (n >= 0) && (cm >= 0)) {
@@ -4144,19 +4126,14 @@ int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai,
     if((ai->elem[0] == ai0->elem[0]) && (ai->elem[1] == ai0->elem[1]))
       ai->color = ai0->color;
     else if((ai->elem[0] == 'C') && (ai->elem[1] == 0)) {
-      int n, index2;
       int found = false;
-      if (ok)
-	ok &= ObjectMoleculeUpdateNeighbors(I);
-      n = I->Neighbor[index] + 1;
-      while(ok && (index2 = I->Neighbor[n]) >= 0) {
-        AtomInfoType *ai1 = I->AtomInfo + index2;
+      for (auto const& neighbor : AtomNeighbors(I, index)) {
+        AtomInfoType const* ai1 = I->AtomInfo.data() + neighbor.atm;
         if(ai1->protons == cAN_C) {
           ai->color = ai1->color;
           found = true;
           break;
         }
-        n += 2;
       }
       if(ok && !found) {
         /* if no carbon nearby, then color according to the object color */
@@ -4173,9 +4150,6 @@ int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai,
 /*========================================================================*/
 int ObjectMoleculePreposReplAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
 {
-  int n;
-  int a1;
-  AtomInfoType *ai1;
   float v0[3], v1[3], v[3];
   float d0[3], d, n0[3];
   int cnt;
@@ -4192,16 +4166,12 @@ int ObjectMoleculePreposReplAtom(ObjectMolecule * I, int index, AtomInfoType * a
 	  ncycle = -1;
 	  while(ncycle) {
 	    cnt = 0;
-	    n = I->Neighbor[index];
-	    n++;                  /* skip count */
 	    zero3f(sum);
-	    while(1) {            /* look for an attached non-hydrogen as a base */
-	      a1 = I->Neighbor[n];
-	      n += 2;
-	      if(a1 < 0)
-		break;
-	      ai1 = I->AtomInfo + a1;
-	      if(ai1->protons != 1)
+            /* look for an attached non-hydrogen as a base */
+            for (auto const& neighbor : AtomNeighbors(I, index)) {
+	      auto const a1 = neighbor.atm;
+              auto const* ai1 = I->AtomInfo.data() + a1;
+              if(ai1->protons != 1)
 		if(ObjectMoleculeGetAtomVertex(I, a, a1, v1)) {
 		  d = AtomInfoGetBondLength(I->G, ai, ai1);
 		  subtract3f(v0, v1, n0);
@@ -4614,30 +4584,28 @@ void ObjectMoleculePurge(ObjectMolecule * I)
 
 /*========================================================================*/
 /**
- * @pre ObjectMoleculeUpdateNeighbors
+ * Determines hybridization from coordinates in those few cases where it is
+ * unambiguous.
  */
 int ObjectMoleculeGetAtomGeometry(const ObjectMolecule* I, int state, int at)
 {
-  /* this determines hybridization from coordinates in those few cases
-   * where it is unambiguous */
 
   int result = -1;
-  int n, nn;
   float v0[3], v1[3], v2[3], v3[3];
   float d1[3], d2[3], d3[3];
   float cp1[3], cp2[3], cp3[3];
   float avg;
   float dp;
-  n = I->Neighbor[at];
-  nn = I->Neighbor[n++];        /* get count */
+  auto const neighbors = AtomNeighbors(I, at);
+  auto const nn = neighbors.size();
   if(nn == 4)
     result = cAtomInfoTetrahedral;
   else if(nn == 3) {
     /* check cross products */
     ObjectMoleculeGetAtomVertex(I, state, at, v0);
-    ObjectMoleculeGetAtomVertex(I, state, I->Neighbor[n], v1);
-    ObjectMoleculeGetAtomVertex(I, state, I->Neighbor[n + 2], v2);
-    ObjectMoleculeGetAtomVertex(I, state, I->Neighbor[n + 4], v3);
+    ObjectMoleculeGetAtomVertex(I, state, neighbors[0].atm, v1);
+    ObjectMoleculeGetAtomVertex(I, state, neighbors[1].atm, v2);
+    ObjectMoleculeGetAtomVertex(I, state, neighbors[2].atm, v3);
     subtract3f(v1, v0, d1);
     subtract3f(v2, v0, d2);
     subtract3f(v3, v0, d3);
@@ -4655,8 +4623,8 @@ int ObjectMoleculeGetAtomGeometry(const ObjectMolecule* I, int state, int at)
       result = cAtomInfoTetrahedral;
   } else if(nn == 2) {
     ObjectMoleculeGetAtomVertex(I, state, at, v0);
-    ObjectMoleculeGetAtomVertex(I, state, I->Neighbor[n], v1);
-    ObjectMoleculeGetAtomVertex(I, state, I->Neighbor[n + 2], v2);
+    ObjectMoleculeGetAtomVertex(I, state, neighbors[0].atm, v1);
+    ObjectMoleculeGetAtomVertex(I, state, neighbors[1].atm, v2);
     subtract3f(v1, v0, d1);
     subtract3f(v2, v0, d2);
     normalize3f(d1);
@@ -5584,46 +5552,30 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule * I, int state)
    * already been assigned)
    */
 
-  int a, n, a0, a1, nn;
   int changedFlag = true;
-
-  AtomInfoType *ai, *ai0, *ai1 = NULL;
-
-  ObjectMoleculeUpdateNeighbors(I);
 
   /* first, try to find all amids and acids */
   while(changedFlag) {
     changedFlag = false;
-    for(a = 0; a < I->NAtom; a++) {
-      ai = I->AtomInfo + a;
+    for (int a = 0; a < I->NAtom; a++) {
+      auto const* const ai = I->AtomInfo.data() + a;
       if(ai->chemFlag) {
         if(ai->geom == cAtomInfoPlanar)
           if(ai->protons == cAN_C) {
-            n = I->Neighbor[a];
-            nn = I->Neighbor[n++];
-            if(nn > 1) {
-              a1 = -1;
-              while(1) {
-                a0 = I->Neighbor[n];
-                n += 2;
-                if(a0 < 0)
-                  break;
-                ai0 = I->AtomInfo + a0;
+            auto const neighbors = AtomNeighbors(I, a);
+            if (neighbors.size() > 1) {
+              AtomInfoType* ai1 = nullptr;
+              for (auto const& neighbor : neighbors) {
+                auto* const ai0 = I->AtomInfo.data() + neighbor.atm;
                 if((ai0->protons == cAN_O) && (!ai0->chemFlag)) {
-                  a1 = a0;
                   ai1 = ai0;    /* found candidate carbonyl */
                   break;
                 }
               }
-              if(a1 > 0) {
-                n = I->Neighbor[a] + 1;
-                while(1) {
-                  a0 = I->Neighbor[n];
-                  if(a0 < 0)
-                    break;
-                  n += 2;
-                  if(a0 != a1) {
-                    ai0 = I->AtomInfo + a0;
+              if (ai1) {
+                for (auto const& neighbor : neighbors) {
+                  auto* const ai0 = I->AtomInfo.data() + neighbor.atm;
+                  if (ai0 != ai1) {
                     if(ai0->protons == cAN_O) {
                       if(!ai0->chemFlag) {
                         ai0->chemFlag = true;   /* acid */
@@ -5666,20 +5618,14 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule * I, int state)
   changedFlag = true;
   while(changedFlag) {
     changedFlag = false;
-    for(a = 0; a < I->NAtom; a++) {
-      ai = I->AtomInfo + a;
+    for (int a = 0; a < I->NAtom; a++) {
+      auto* const ai = I->AtomInfo.data() + a;
       if(!ai->chemFlag) {
         if(ai->protons == cAN_C) {
-          n = I->Neighbor[a];
-          nn = I->Neighbor[n++];
-          if(nn > 1) {
-            a1 = -1;
-            while(1) {
-              a0 = I->Neighbor[n];
-              n += 2;
-              if(a0 < 0)
-                break;
-              ai0 = I->AtomInfo + a0;
+          auto const neighbors = AtomNeighbors(I, a);
+          if (neighbors.size() > 1) {
+            for (auto const& neighbor : neighbors) {
+              auto* const ai0 = I->AtomInfo.data() + neighbor.atm;
               if((ai0->protons == cAN_O) && (!ai0->chemFlag)) { /* =O */
                 ai->chemFlag = true;
                 ai->geom = cAtomInfoPlanar;
@@ -6224,13 +6170,8 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
           if(ai->formalCharge < 1)
             if(ai->geom == cAtomInfoTetrahedral) {
               /* search for uncharged tetrahedral nitrogen */
-              n = I->Neighbor[a] + 1;
-              while(1) {
-                a0 = I->Neighbor[n];
-                n += 2;
-                if(a0 < 0)
-                  break;
-                ai0 = I->AtomInfo + a0;
+              for (auto const& neighbor : AtomNeighbors(I, a)) {
+                auto const* ai0 = I->AtomInfo.data() + neighbor.atm;
                 if((ai0->chemFlag) && (ai0->geom == cAtomInfoPlanar) &&
                    ((ai0->protons == cAN_C) || (ai0->protons == cAN_N))) {
                   ai->geom = cAtomInfoPlanar;   /* found probable delocalization */
@@ -6257,13 +6198,8 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
           if(ai->formalCharge == -1)
             if((ai->geom == cAtomInfoTetrahedral) || (ai->geom == cAtomInfoSingle)) {
               /* search for anionic tetrahedral oxygen */
-              n = I->Neighbor[a] + 1;
-              while(1) {
-                a0 = I->Neighbor[n];
-                n += 2;
-                if(a0 < 0)
-                  break;
-                ai0 = I->AtomInfo + a0;
+              for (auto const& neighbor : AtomNeighbors(I, a)) {
+                auto const* ai0 = I->AtomInfo + neighbor.atm;
                 if((ai0->chemFlag) && (ai0->geom == cAtomInfoPlanar) &&
                    ((ai0->protons == cAN_C) || (ai0->protons == cAN_N))) {
                   ai->geom = cAtomInfoPlanar;   /* found probable delocalization */
@@ -6488,23 +6424,6 @@ void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I)
     ai[b->index[1]].bonded = true;
     b++;
   }
-}
-
-
-/*========================================================================*/
-int ObjectMoleculeGetTotalAtomValence(ObjectMolecule * I, int atom)
-{
-  int result = 0;
-  int b, i;
-  ObjectMoleculeUpdateNeighbors(I);
-  if(atom < I->NAtom) {
-    ITERNEIGHBORBONDS(I->Neighbor, atom, b, i) {
-      result += I->Bond[b].order;
-    }
-  } else {
-    result = -1;                /* error */
-  }
-  return result;
 }
 
 
@@ -10858,16 +10777,11 @@ int ObjectMoleculeGetBondPaths(ObjectMolecule * I, int atom,
   /* returns list of bond counts from atom to all others 
      dist and list must be vla array pointers or NULL */
 
-  int a, a1, a2, n;
-  int cur;
-  int n_cur;
   int b_cnt = 0;
-
-  ObjectMoleculeUpdateNeighbors(I);
 
   /* reinitialize dist array (if we've done at least one pass) */
 
-  for(a = 0; a < bp->n_atom; a++)
+  for (int a = 0; a < bp->n_atom; a++)
     bp->dist[bp->list[a]] = -1;
 
   bp->n_atom = 0;
@@ -10875,27 +10789,22 @@ int ObjectMoleculeGetBondPaths(ObjectMolecule * I, int atom,
   bp->list[bp->n_atom] = atom;
   bp->n_atom++;
 
-  cur = 0;
+  int cur = 0;
   while(1) {
     b_cnt++;
     if(b_cnt > max)
       break;
 
-    n_cur = bp->n_atom - cur;
+    unsigned n_cur = bp->n_atom - cur;
 
     /* iterate through all current atoms */
 
     if(!n_cur)
       break;
     while(n_cur--) {
-      a1 = bp->list[cur++];
-      n = I->Neighbor[a1];
-      n++;                      /* skip cnt */
-      while(1) {
-        a2 = I->Neighbor[n];
-        n += 2;
-        if(a2 < 0)
-          break;
+      int const a1 = bp->list[cur++];
+      for (auto const& neighbor : AtomNeighbors(I, a1)) {
+        auto const a2 = neighbor.atm;
         if(bp->dist[a2] < 0) {  /* for each atom not yet sampled... */
           bp->dist[a2] = b_cnt;
           bp->list[bp->n_atom] = a2;
@@ -10951,36 +10860,20 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule * I, int atom,
 /* computes average / optima hydrogen bonding vector for an atom */
 {
   float result = 0.0;
-  int a1, a2, n;
   int vec_cnt = 0;
   float v_atom[3], v_neigh[3], v_diff[3], v_acc[3] = { 0.0, 0.0, 0.0 };
   int sp2_flag = false;
   int order;
 
-  CoordSet *cs;
-
-  ObjectMoleculeUpdateNeighbors(I);
-
-  a1 = atom;
-  if(state < 0)
-    state = 0;
-  if(I->NCSet == 1)
-    state = 0;
-  state = state % I->NCSet;
-  cs = I->CSet[state];
+  auto const* cs = I->getCoordSet(state);
   if(cs) {
-    if(CoordSetGetAtomVertex(cs, a1, v_atom)) { /* atom exists in this C-set */
-      n = I->Neighbor[atom];
-      n++;
-      while(1) {
-        a2 = I->Neighbor[n];
-        if(a2 < 0)
-          break;
-        order = I->Bond[I->Neighbor[n + 1]].order;
+    if (CoordSetGetAtomVertex(cs, atom, v_atom)) { /* atom exists in this C-set */
+      for (auto const& neighbor : AtomNeighbors(I, atom)) {
+        auto const a2 = neighbor.atm;
+        order = I->Bond[neighbor.bond].order;
         if((order == 2) || (order == 4)) {
           sp2_flag = true;
         }
-        n += 2;
 
         if(I->AtomInfo[a2].protons != 1) {      /* ignore hydrogens */
           if(CoordSetGetAtomVertex(cs, a2, v_neigh)) {
@@ -11821,3 +11714,9 @@ CObject* ObjectMolecule::clone() const
   return ObjectMoleculeCopy(this);
 }
 
+AtomNeighbors::AtomNeighbors(const ObjectMolecule* I, int atm)
+{
+  ObjectMoleculeUpdateNeighbors(I);
+
+  m_neighbor = I->Neighbor + I->Neighbor[atm];
+}

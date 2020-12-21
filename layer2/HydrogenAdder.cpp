@@ -68,13 +68,12 @@ bool get_planer_normal_cs(
 
   const float* center_coord = cs->coordPtr(idx);
 
-  int neighbor_atm, tmp;
-  ITERNEIGHBORATOMS(I->Neighbor, atm, neighbor_atm, tmp) {
-    if (h_fix && I->AtomInfo[neighbor_atm].isHydrogen())
+  for (auto const& neighbor : AtomNeighbors(I, atm)) {
+    if (h_fix && I->AtomInfo[neighbor.atm].isHydrogen())
       continue;
 
     // get neighbor coordinate
-    int neighbor_idx = cs->atmToIdx(neighbor_atm);
+    int neighbor_idx = cs->atmToIdx(neighbor.atm);
     if (neighbor_idx == -1)
       continue;
 
@@ -143,16 +142,15 @@ int ObjectMoleculeSetMissingNeighborCoords(
 
   const float* center_coord = cs->coordPtr(idx);
 
-  int neighbor_atm, tmp;
-  ITERNEIGHBORATOMS(I->Neighbor, atm, neighbor_atm, tmp) {
+  for (auto const& neighbor : AtomNeighbors(I, atm)) {
     if (n_present == 4)
       break;
 
     // get neighbor coordinate
-    int neighbor_idx = cs->atmToIdx(neighbor_atm);
+    int neighbor_idx = cs->atmToIdx(neighbor.atm);
     if (neighbor_idx == -1 ||
-        (h_fix && I->AtomInfo[neighbor_atm].isHydrogen())) {
-      missing_atm[n_missing++] = neighbor_atm;
+        (h_fix && I->AtomInfo[neighbor.atm].isHydrogen())) {
+      missing_atm[n_missing++] = neighbor.atm;
       continue;
     }
 
@@ -163,7 +161,7 @@ int ObjectMoleculeSetMissingNeighborCoords(
     subtract3f(neighbor_coord, center_coord, vvec);
     normalize3f(vvec);
 
-    present_atm = neighbor_atm;
+    present_atm = neighbor.atm;
     ++n_present;
   }
 
@@ -299,8 +297,6 @@ int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int st
     return false;
   }
 
-  ObjectMoleculeUpdateNeighbors(I);
-
   // add hydrogens (without coordinates)
   for (unsigned atm = 0; atm < n_atom_old; ++atm) {
     const auto ai = I->AtomInfo + atm;
@@ -311,7 +307,7 @@ int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int st
     if (!SelectorIsMember(G, ai->selEntry, sele))
       continue;
 
-    int nneighbors = I->Neighbor[I->Neighbor[atm]];
+    int nneighbors = AtomNeighbors(I, atm).size();
     int nimplicit = ai->valence - nneighbors;
 
     if (nimplicit <= 0)

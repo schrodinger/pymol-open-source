@@ -651,9 +651,9 @@ EditorInvert(PyMOLGlobals * G, int quiet)
           sprintf(name, "%s%1d", cEditorFragPref, frg);
           sele2 = SelectorIndexByName(G, name);
 
-          if(ObjectMoleculeDoesAtomNeighborSele(obj0, i0, sele2) &&
-             (!ObjectMoleculeDoesAtomNeighborSele(obj0, ia0, sele2)) &&
-             (!ObjectMoleculeDoesAtomNeighborSele(obj0, ia1, sele2))) {
+          if (ObjectMoleculeIsAtomBondedToSele(obj0, i0, sele2) &&
+              (!ObjectMoleculeIsAtomBondedToSele(obj0, ia0, sele2)) &&
+              (!ObjectMoleculeIsAtomBondedToSele(obj0, ia1, sele2))) {
             found = true;
               ObjectMoleculeTransformSelection(obj0, state, sele2, m, false, NULL, false,
                                                false);

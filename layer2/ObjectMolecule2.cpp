@@ -109,58 +109,72 @@ typedef struct {
 static int populate_other(OtherRec * other, int at,
     const AtomInfoType* ai,
     const BondType* bd,
-    const int* neighbor)
+    const ObjectMolecule* obj)
 {
   int five_cycle = false;
   int six_cycle = false;
 
   {
-    int mem[9], nbr[7];
+    // don't get bogged down with structures that have unreasonable connectivity
     const int ESCAPE_MAX = 500;
-    int escape_count;
+    int escape_count = ESCAPE_MAX;
 
-    escape_count = ESCAPE_MAX;  /* don't get bogged down with structures 
-                                   that have unreasonable connectivity */
-    mem[0] = bd->index[0];
-    mem[1] = bd->index[1];
-    nbr[1] = neighbor[mem[1]] + 1;
-    while(((mem[2] = neighbor[nbr[1]]) >= 0)) {
-      if(mem[2] != mem[0]) {
-        nbr[2] = neighbor[mem[2]] + 1;
-        while(((mem[3] = neighbor[nbr[2]]) >= 0)) {
-          if(mem[3] != mem[1]) {
-            nbr[3] = neighbor[mem[3]] + 1;
-            while(((mem[4] = neighbor[nbr[3]]) >= 0)) {
-              if((mem[4] != mem[2]) && (mem[4] != mem[1]) && (mem[4] != mem[0])) {
-                nbr[4] = neighbor[mem[4]] + 1;
-                while(((mem[5] = neighbor[nbr[4]]) >= 0)) {
-                  if(!(escape_count--))
-                    goto escape;
-                  if((mem[5] != mem[3]) && (mem[5] != mem[2]) && (mem[5] != mem[1])) {
-                    if(mem[5] == mem[0]) {      /* five-cycle */
-                      five_cycle = true;
-                    }
-                    nbr[5] = neighbor[mem[5]] + 1;
-                    while(((mem[6] = neighbor[nbr[5]]) >= 0)) {
-                      if((mem[6] != mem[4]) && (mem[6] != mem[3]) && (mem[6] != mem[2])
-                         && (mem[6] != mem[1])) {
-                        if(mem[6] == mem[0]) {  /* six-cycle */
-                          six_cycle = true;
-                        }
-                      }
-                      nbr[5] += 2;
-                    }
-                  }
-                  nbr[4] += 2;
-                }
+    auto const mem0_atm = bd->index[0];
+    auto const mem1_atm = bd->index[1];
+
+    for (auto const& mem2 : AtomNeighbors(obj, mem1_atm)) {
+      if (mem2.atm == mem0_atm) {
+        continue;
+      }
+
+      for (auto const& mem3 : AtomNeighbors(obj, mem2.atm)) {
+        if (mem3.atm == mem1_atm) {
+          continue;
+        }
+
+        for (auto const& mem4 : AtomNeighbors(obj, mem3.atm)) {
+          if (mem4.atm == mem2.atm || mem4.atm == mem1_atm ||
+              mem4.atm == mem0_atm) {
+            continue;
+          }
+
+          for (auto const& mem5 : AtomNeighbors(obj, mem4.atm)) {
+            if (!(escape_count--)) {
+              goto escape;
+            }
+
+            if (mem5.atm == mem3.atm || mem5.atm == mem2.atm ||
+                mem5.atm == mem1_atm) {
+              continue;
+            }
+
+            if (mem5.atm == mem0_atm) { /* five-cycle */
+              five_cycle = true;
+
+              if (six_cycle) {
+                goto escape;
               }
-              nbr[3] += 2;
+            }
+
+            for (auto const& mem6 : AtomNeighbors(obj, mem5.atm)) {
+              if (mem6.atm == mem4.atm || mem6.atm == mem3.atm ||
+                  mem6.atm == mem2.atm || mem6.atm == mem1_atm) {
+                continue;
+              }
+
+              if (mem6.atm == mem0_atm) { /* six-cycle */
+                six_cycle = true;
+
+                if (five_cycle) {
+                  goto escape;
+                }
+
+                break;
+              }
             }
           }
-          nbr[2] += 2;
         }
       }
-      nbr[1] += 2;
     }
   }
 escape:
@@ -430,9 +444,6 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
 
   CHECKOK(ok, other);
 
-  if (ok){
-    ok &= ObjectMoleculeUpdateNeighbors(I);
-  }
   bd = I->Bond;
   for(a = 0; ok && a < I->NBond; a++) {
     b1 = bd->index[0];
@@ -440,8 +451,8 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
     a1 = cs->atmToIdx(b1);
     a2 = cs->atmToIdx(b2);
     if((a1 >= 0) && (a2 >= 0)) {
-      n_alloc += populate_other(other + a1, a2, I->AtomInfo + b2, bd, I->Neighbor);
-      n_alloc += populate_other(other + a2, a1, I->AtomInfo + b1, bd, I->Neighbor);
+      n_alloc += populate_other(other + a1, a2, I->AtomInfo + b2, bd, I);
+      n_alloc += populate_other(other + a2, a1, I->AtomInfo + b1, bd, I);
     }
     bd++;
     ok &= !I->G->Interrupt;
@@ -767,13 +778,12 @@ int ObjectMoleculeGetPrioritizedOther(const int *other, int a1, int a2, int *dou
  */
 int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, const char *name, int same_res)
 {
-  int a2, s;
   PyMOLGlobals * G = obj->G;
-  AtomInfoType *ai2, *ai0 = obj->AtomInfo + a0;
+  AtomInfoType const* const ai0 = obj->AtomInfo.data() + a0;
 
   if(a0 >= 0) {
-    ITERNEIGHBORATOMS(obj->Neighbor, a0, a2, s) {
-      ai2 = obj->AtomInfo + a2;
+    for (auto const& neighbor : AtomNeighbors(obj, a0)) {
+      auto const* const ai2 = obj->AtomInfo.data() + neighbor.atm;
       if(WordMatchExact(G, LexStr(G, ai2->name), name, true) &&
           (same_res < 0 || (same_res == AtomInfoSameResidue(G, ai0, ai2))))
         return true;
@@ -785,52 +795,27 @@ int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, const char *n
 int ObjectMoleculeAreAtomsBonded2(ObjectMolecule * obj0, int a0, ObjectMolecule * obj1,
                                   int a1)
 {
-  /* assumes neighbor list is current */
-
-  if(obj0 != obj1)
-    return false;
-  else {
-    int a2, s;
-
-    if(a0 >= 0) {
-      s = obj0->Neighbor[a0];
-      s++;                      /* skip count */
-      while(1) {
-        a2 = obj0->Neighbor[s];
-        if(a2 < 0)
-          break;
-        if(a1 == a2)
-          return true;
-        s += 2;
-      }
+  if (obj0 == obj1 && a0 >= 0) {
+    assert(a1 >= 0);
+    for (auto const& neighbor : AtomNeighbors(obj0, a0)) {
+      if (a1 == neighbor.atm)
+        return true;
     }
   }
   return false;
 }
 
-int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule * I, int index, int sele)
+bool ObjectMoleculeIsAtomBondedToSele(
+    const ObjectMolecule* I, int atm, SelectorID_t sele)
 {
-  int result = false;
-  ObjectMoleculeUpdateNeighbors(I);
-  if(index < I->NAtom) {
-    int a1;
-    int n;
-    AtomInfoType *ai;
-
-    n = I->Neighbor[index] + 1;
-    while(1) {                  /* look for an attached non-hydrogen as a base */
-      a1 = I->Neighbor[n];
-      n += 2;
-      if(a1 < 0)
-        break;
-      ai = I->AtomInfo + a1;
-      if(SelectorIsMember(I->G, ai->selEntry, sele)) {
-        result = true;
-        break;
+  if (atm < I->NAtom) {
+    for (auto const& neighbor : AtomNeighbors(I, atm)) {
+      if (SelectorIsMember(I->G, I->AtomInfo[neighbor.atm].selEntry, sele)) {
+        return true;
       }
     }
   }
-  return result;
+  return false;
 }
 
 /**
@@ -2869,12 +2854,8 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule * I,
 {
   int result = 0;
   CoordSet *cs;
-  int n, nn;
-  int a1;
   float cand[3], cand_dir[3];
   float best_dot = 0.0F, cand_dot;
-
-  ObjectMoleculeUpdateNeighbors(I);
 
   if((state >= 0) && (state < I->NCSet) && (cs = I->CSet[state]) && (atom < I->NAtom)) {
 
@@ -2886,18 +2867,8 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule * I,
 
       /*  do we need to add any new hydrogens? */
 
-      n = I->Neighbor[atom];
-      nn = I->Neighbor[n++];
-
-      /*      printf("nn %d valence %d %s\n",nn,
-         I->AtomInfo[atom].valence,I->AtomInfo[atom].name);
-         {
-         int i;
-         for(i=0;i<nn;i++) {
-         printf("%d \n",I->Neighbor[n+2*i]);
-         }
-         }
-       */
+      auto const neighbors = AtomNeighbors(I, atom);
+      int const nn = neighbors.size();
 
       if((nn < I->AtomInfo[atom].valence) || I->AtomInfo[atom].hb_donor) {      /* is there an implicit hydrogen? */
         if(ObjectMoleculeFindOpenValenceVector(I, state, atom, best, dir, -1)) {
@@ -2911,11 +2882,9 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule * I,
       /* iterate through real hydrogens looking for best match
          with desired direction */
 
-      while(1) {                /* look for an attached non-hydrogen as a base */
-        a1 = I->Neighbor[n];
-        n += 2;
-        if(a1 < 0)
-          break;
+      /* look for an attached non-hydrogen as a base */
+      for (int i = 0; i < nn; ++i) {
+        int const a1 = neighbors[i].atm;
         if(I->AtomInfo[a1].protons == 1) {      /* hydrogen */
           if(ObjectMoleculeGetAtomVertex(I, state, a1, cand)) { /* present */
 

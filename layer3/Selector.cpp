@@ -253,7 +253,8 @@ static bool SelectorIsTmp(pymol::zstring_view name)
 }
 
 /*========================================================================*/
-static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offset)
+static int SelectorGetObjAtmOffset(
+    CSelector* I, const ObjectMolecule* obj, int offset)
 {
   if(I->SeleBaseOffsetsValid) {
     return obj->SeleBase + offset;
@@ -3990,27 +3991,22 @@ void SelectorDeletePrefixSet(PyMOLGlobals * G, const char *pref)
 static int SelectorCheckNeighbors(PyMOLGlobals * G, int maxDist, ObjectMolecule * obj,
                                   int at1, int at2, int *zero, int *scratch)
 {
-  int s;
-  int a, a1;
   int stkDepth = 0;
   int si = 0;
   int stk[MAX_DEPTH];
-  int dist = 0;
 
-  zero[at1] = dist;
+  zero[at1] = 0;
   scratch[si++] = at1;
   stk[stkDepth] = at1;
   stkDepth++;
 
   while(stkDepth) {             /* this will explore a tree */
     stkDepth--;
-    a = stk[stkDepth];
-    dist = zero[a] + 1;
+    auto const a = stk[stkDepth];
+    auto const dist = zero[a] + 1;
 
-    s = obj->Neighbor[a];       /* add neighbors onto the stack */
-    s++;                        /* skip count */
-    while(1) {
-      a1 = obj->Neighbor[s];
+    for (auto const& neighbor : AtomNeighbors(obj, a)) {
+      auto const a1 = neighbor.atm;
       if(a1 == at2) {
         while(si--) {
           zero[scratch[si]] = 0;
@@ -4018,16 +4014,12 @@ static int SelectorCheckNeighbors(PyMOLGlobals * G, int maxDist, ObjectMolecule 
         /* EXIT POINT 1 */
         return 1;
       }
-      if(a1 >= 0) {
-        if((!zero[a1]) && (stkDepth < MAX_DEPTH) && (dist < maxDist)) {
-          zero[a1] = dist;
-          scratch[si++] = a1;
-          stk[stkDepth] = a1;
-          stkDepth++;
-        }
-      } else
-        break;
-      s += 2;
+      if((!zero[a1]) && (stkDepth < MAX_DEPTH) && (dist < maxDist)) {
+        zero[a1] = dist;
+        scratch[si++] = a1;
+        stk[stkDepth] = a1;
+        stkDepth++;
+      }
     }
   }
   while(si--) {
@@ -4044,44 +4036,30 @@ int SelectorWalkTree(PyMOLGlobals * G, int *atom, int *comp, int *toDo, int **st
                      int stkDepth, ObjectMolecule * obj,
                      int sele1, int sele2, int sele3, int sele4)
 {
-  int s;
   int c = 0;
-  int a, a1;
-  int seleFlag;
-  AtomInfoType *ai;
 
   while(stkDepth) {             /* this will explore a tree, stopping at protected atoms */
     stkDepth--;
-    a = (*stk)[stkDepth];
+    auto const a = (*stk)[stkDepth];
     toDo[a] = 0;
-    seleFlag = false;
-    ai = obj->AtomInfo + a;
-    s = ai->selEntry;
-    seleFlag = SelectorIsMember(G, s, sele1);
-    if(!seleFlag)
-      seleFlag = SelectorIsMember(G, s, sele2);
-    if(!seleFlag)
-      seleFlag = SelectorIsMember(G, s, sele3);
-    if(!seleFlag)
-      seleFlag = SelectorIsMember(G, s, sele4);
+    auto const* ai = obj->AtomInfo.data() + a;
+    auto const s = ai->selEntry;
+    bool const seleFlag =
+        SelectorIsMember(G, s, sele1) || SelectorIsMember(G, s, sele2) ||
+        SelectorIsMember(G, s, sele3) || SelectorIsMember(G, s, sele4);
     if(!seleFlag) {
       if(!(ai->protekted == 1)) {       /* if not explicitly protected... */
         atom[a] = 1;            /* mark this atom into the selection */
         comp[a] = 1;
       }
-      s = obj->Neighbor[a];     /* add neighbors onto the stack */
-      s++;                      /* skip count */
-      while(1) {
-        a1 = obj->Neighbor[s];
-        if(a1 >= 0) {
-          if(toDo[a1]) {
-            VLACheck((*stk), int, stkDepth);
-            (*stk)[stkDepth] = a1;
-            stkDepth++;
-          }
-        } else
-          break;
-        s += 2;
+
+      // add neighbors onto the stack
+      for (auto const& neighbor : AtomNeighbors(obj, a)) {
+        if (toDo[neighbor.atm]) {
+          VLACheck((*stk), int, stkDepth);
+          (*stk)[stkDepth] = neighbor.atm;
+          stkDepth++;
+        }
       }
       c++;
     }
@@ -4098,7 +4076,6 @@ static int SelectorWalkTreeDepth(PyMOLGlobals * G, int *atom, int *comp, int *to
 {
   int s;
   int c = 0;
-  int a, a1;
   int seleFlag;
   int depth;
   AtomInfoType *ai;
@@ -4112,7 +4089,7 @@ static int SelectorWalkTreeDepth(PyMOLGlobals * G, int *atom, int *comp, int *to
 
   while(stkDepth) {             /* this will explore a tree, stopping at protected atoms */
     stkDepth--;
-    a = (*stk)[stkDepth];
+    auto const a = (*stk)[stkDepth];
     depth = ((*extraStk)[stkDepth] + 1);
     seleFlag = false;
     ai = obj->AtomInfo + a;
@@ -4152,21 +4129,16 @@ static int SelectorWalkTreeDepth(PyMOLGlobals * G, int *atom, int *comp, int *to
         atom[a] = 1;            /* mark this atom into the selection */
         comp[a] = 1;
       }
-      s = obj->Neighbor[a];     /* add neighbors onto the stack */
-      s++;                      /* skip count */
-      while(1) {
-        a1 = obj->Neighbor[s];
-        if(a1 >= 0) {
-          if(toDo[a1]) {
-            VLACheck((*stk), int, stkDepth);
-            (*stk)[stkDepth] = a1;
-            VLACheck((*extraStk), int, stkDepth);
-            (*extraStk)[stkDepth] = depth;
-            stkDepth++;
-          }
-        } else
-          break;
-        s += 2;
+
+      /* add neighbors onto the stack */
+      for (auto const& neighbor : AtomNeighbors(obj, a)) {
+        if (toDo[neighbor.atm]) {
+          VLACheck((*stk), int, stkDepth);
+          (*stk)[stkDepth] = neighbor.atm;
+          VLACheck((*extraStk), int, stkDepth);
+          (*extraStk)[stkDepth] = depth;
+          stkDepth++;
+        }
       }
       c++;
     }
@@ -4177,31 +4149,12 @@ static int SelectorWalkTreeDepth(PyMOLGlobals * G, int *atom, int *comp, int *to
 
 /*========================================================================*/
 
-int SelectorIsAtomBondedToSele(PyMOLGlobals * G, ObjectMolecule * obj, int sele1atom,
-                               int sele2)
+int SelectorIsAtomBondedToSele(PyMOLGlobals* G, ObjectMolecule* obj,
+    SelectorID_t sele1atom, //
+    SelectorID_t sele2)
 {
-  int a0, a2, s, ss;
-  int bonded = false;
-  ObjectMoleculeUpdateNeighbors(obj);
-
-  a0 = ObjectMoleculeGetAtomIndex(obj, sele1atom);
-
-  if(a0 >= 0) {
-    s = obj->Neighbor[a0];
-    s++;                        /* skip count */
-    while(1) {
-      a2 = obj->Neighbor[s];
-      if(a2 < 0)
-        break;
-      ss = obj->AtomInfo[a2].selEntry;
-      if(SelectorIsMember(G, ss, sele2)) {
-        bonded = true;
-        break;
-      }
-      s += 2;
-    }
-  }
-  return bonded;
+  auto const atm = ObjectMoleculeGetAtomIndex(obj, sele1atom);
+  return (atm >= 0) && ObjectMoleculeIsAtomBondedToSele(obj, atm, sele2);
 }
 
 static void update_min_walk_depth(WalkDepthRec * minWD,
@@ -4273,9 +4226,8 @@ int SelectorSubdivide(PyMOLGlobals* G, //
   int *pkset = NULL;
   int set_cnt = 0;
   int nFrag = 0;
-  int *stk = NULL;
   int stkDepth;
-  int c, s;
+  int c;
   int cycFlag = false;
   std::string name, link_sele;
   ObjectMolecule *obj1 = NULL, *obj2 = NULL, *obj3 = NULL, *obj4 = NULL;
@@ -4349,7 +4301,7 @@ int SelectorSubdivide(PyMOLGlobals* G, //
       pkset4_base = pkset + obj4->SeleBase;
     }
 
-    stk = VLAlloc(int, 100);
+    auto stk = pymol::vla<int>(100);
 
     {
       int a;
@@ -4371,17 +4323,11 @@ int SelectorSubdivide(PyMOLGlobals* G, //
         a1 = index2;
 
         if((a0 >= 0) && (a1 >= 0)) {
-          s = obj1->Neighbor[a0];       /* add neighbors onto the stack */
-          s++;                  /* skip count */
-          while(1) {
-            a2 = obj1->Neighbor[s];
-            if(a2 < 0)
-              break;
-            if(a2 == a1) {
+          for (auto const& neighbor : AtomNeighbors(obj1, a0)) {
+            if (neighbor.atm == a1) {
               *bondMode = true;
               break;
             }
-            s += 2;
           }
         }
       }
@@ -4399,19 +4345,10 @@ int SelectorSubdivide(PyMOLGlobals* G, //
         a0 = index1;
         if(a0 >= 0) {
           stkDepth = 0;
-          s = obj1->Neighbor[a0];       /* add neighbors onto the stack */
-          s++;                  /* skip count */
-          while(1) {
-            a1 = obj1->Neighbor[s];
-            if(a1 >= 0) {
-              if(toDo1_base[a1]) {
-                VLACheck(stk, int, stkDepth);
-                stk[stkDepth] = a1;
-                stkDepth++;
-              }
-            } else
-              break;
-            s += 2;
+          for (auto const& neighbor : AtomNeighbors(obj1, a0)) {
+            if (toDo1_base[neighbor.atm]) {
+              *(stk.check(stkDepth++)) = neighbor.atm;
+            }
           }
           UtilZeroMem(atom, sizeof(int) * I->Table.size());
           atom1_base[a0] = 1;   /* create selection for this atom alone as fragment base atom */
@@ -4427,20 +4364,12 @@ int SelectorSubdivide(PyMOLGlobals* G, //
           cycFlag = false;
           a2 = index2;
           if(a2 >= 0) {
-            stkDepth = 0;
-            s = obj1->Neighbor[a2];     /* add neighbors onto the stack */
-            s++;                /* skip count */
-            while(1) {
-              a1 = obj1->Neighbor[s];
-              if(a1 < 0)
+            for (auto const& neighbor : AtomNeighbors(obj1, a2)) {
+              auto const a1 = neighbor.atm;
+              if (a1 != a0 && !toDo1_base[a1]) {
+                cycFlag = true; /* we have a cycle... */
                 break;
-              if((a1 >= 0) && (a1 != a0)) {
-                if(!toDo1_base[a1]) {
-                  cycFlag = true;       /* we have a cycle... */
-                  break;
-                }
               }
-              s += 2;
             }
           }
           if(cycFlag) {         /* cyclic situation is a bit complex... */
@@ -4448,19 +4377,10 @@ int SelectorSubdivide(PyMOLGlobals* G, //
             a0 = index2;
             if(a0 >= 0) {
               stkDepth = 0;
-              s = obj1->Neighbor[a0];   /* add neighbors onto the stack */
-              s++;              /* skip count */
-              while(1) {
-                a1 = obj1->Neighbor[s];
-                if(a1 >= 0) {
-                  if(toDo1_base[a1]) {
-                    VLACheck(stk, int, stkDepth);
-                    stk[stkDepth] = a1;
-                    stkDepth++;
-                  }
-                } else
-                  break;
-                s += 2;
+              for (auto const& neighbor : AtomNeighbors(obj1, a0)) {
+                if (toDo1_base[neighbor.atm]) {
+                  *(stk.check(stkDepth++)) = neighbor.atm;
+                }
               }
               atom1_base[a0] = 1;
               comp1_base[a0] = 1;
@@ -4477,19 +4397,10 @@ int SelectorSubdivide(PyMOLGlobals* G, //
           a0 = index2;
           if(a0 >= 0) {
             stkDepth = 0;
-            s = obj1->Neighbor[a0];     /* add neighbors onto the stack */
-            s++;                /* skip count */
-            while(1) {
-              a1 = obj1->Neighbor[s];
-              if(a1 >= 0) {
-                if(toDo1_base[a1]) {
-                  VLACheck(stk, int, stkDepth);
-                  stk[stkDepth] = a1;
-                  stkDepth++;
-                }
-              } else
-                break;
-              s += 2;
+            for (auto const& neighbor : AtomNeighbors(obj1, a0)) {
+              if (toDo1_base[neighbor.atm]) {
+                *(stk.check(stkDepth++)) = neighbor.atm;
+              }
             }
 
             UtilZeroMem(atom, sizeof(int) * I->Table.size());
@@ -4521,12 +4432,8 @@ int SelectorSubdivide(PyMOLGlobals* G, //
           set_cnt++;
           comp1_base[a0] = 1;
           stkDepth = 0;
-          s = obj1->Neighbor[a0];       /* add neighbors onto the stack */
-          s++;                  /* skip count */
-          while(1) {
-            a1 = obj1->Neighbor[s];
-            if(a1 < 0)
-              break;
+          for (auto const& neighbor : AtomNeighbors(obj1, a0)) {
+            auto const a1 = neighbor.atm;
             if(toDo1_base[a1]) {
               stkDepth = 1;
               stk[0] = a1;
@@ -4547,7 +4454,6 @@ int SelectorSubdivide(PyMOLGlobals* G, //
                                       nFrag, &curWalk, sele1, sele2, sele3, sele4);
               }
             }
-            s += 2;
           }
         }
       }
@@ -4559,12 +4465,8 @@ int SelectorSubdivide(PyMOLGlobals* G, //
           set_cnt++;
           comp2_base[a0] = 1;
           stkDepth = 0;
-          s = obj2->Neighbor[a0];       /* add neighbors onto the stack */
-          s++;                  /* skip count */
-          while(1) {
-            a1 = obj2->Neighbor[s];
-            if(a1 < 0)
-              break;
+          for (auto const& neighbor : AtomNeighbors(obj2, a0)) {
+            auto const a1 = neighbor.atm;
             if(toDo2_base[a1]) {
               stkDepth = 1;
               stk[0] = a1;
@@ -4585,7 +4487,6 @@ int SelectorSubdivide(PyMOLGlobals* G, //
                                       nFrag, &curWalk, sele1, sele2, sele3, sele4);
               }
             }
-            s += 2;
           }
         }
       }
@@ -4597,12 +4498,8 @@ int SelectorSubdivide(PyMOLGlobals* G, //
           set_cnt++;
           comp3_base[a0] = 1;
           stkDepth = 0;
-          s = obj3->Neighbor[a0];       /* add neighbors onto the stack */
-          s++;                  /* skip count */
-          while(1) {
-            a1 = obj3->Neighbor[s];
-            if(a1 < 0)
-              break;
+          for (auto const& neighbor : AtomNeighbors(obj3, a0)) {
+            auto const a1 = neighbor.atm;
             if(toDo3_base[a1]) {
               stkDepth = 1;
               stk[0] = a1;
@@ -4624,7 +4521,6 @@ int SelectorSubdivide(PyMOLGlobals* G, //
 
               }
             }
-            s += 2;
           }
         }
       }
@@ -4636,12 +4532,8 @@ int SelectorSubdivide(PyMOLGlobals* G, //
           set_cnt++;
           comp4_base[a0] = 1;
           stkDepth = 0;
-          s = obj4->Neighbor[a0];       /* add neighbors onto the stack */
-          s++;                  /* skip count */
-          while(1) {
-            a1 = obj4->Neighbor[s];
-            if(a1 < 0)
-              break;
+          for (auto const& neighbor : AtomNeighbors(obj4, a0)) {
+            auto const a1 = neighbor.atm;
             if(toDo4_base[a1]) {
               stkDepth = 1;
               stk[0] = a1;
@@ -4662,7 +4554,6 @@ int SelectorSubdivide(PyMOLGlobals* G, //
                                       nFrag, &curWalk, sele1, sele2, sele3, sele4);
               }
             }
-            s += 2;
           }
         }
       }
@@ -4688,7 +4579,6 @@ int SelectorSubdivide(PyMOLGlobals* G, //
     FreeP(atom);
     FreeP(comp);
     FreeP(pkset);
-    VLAFreeP(stk);
     SelectorClean(G);
   }
   PRINTFD(G, FB_Selector)
@@ -7502,27 +7392,18 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
     if(sscanf(base[2].text(), "%d", &nbond) != 1)
       ok = ErrMessage(G, "Selector", "Invalid bond count.");
     if(ok) {
-      ObjectMolecule *lastObj = NULL;
-      int a, n, a0, a1, a2;
       std::copy_n(base[1].sele_data(), I->Table.size(), base[0].sele_data());
       while((nbond--) > 0) {
         std::swap(base[1].sele, base[0].sele);
-        for(a = cNDummyAtoms; ok && a < I->Table.size(); a++) {
+        for (unsigned a = cNDummyAtoms; a < I->Table.size(); a++) {
           if(base[1].sele[a]) {
-            if(I->Obj[I->Table[a].model] != lastObj) {
-              lastObj = I->Obj[I->Table[a].model];
-              ObjectMoleculeUpdateNeighbors(lastObj);
-            }
-            a0 = I->Table[a].atom;
-            n = lastObj->Neighbor[a0];
-            n++;
-            while(1) {
-              a1 = lastObj->Neighbor[n];
-              if(a1 < 0)
-                break;
-              if((a2 = SelectorGetObjAtmOffset(I, lastObj, a1)) >= 0) {
+            auto const* lastObj = I->Obj[I->Table[a].model];
+            for (auto const& neighbor :
+                AtomNeighbors(lastObj, I->Table[a].atom)) {
+              auto const a2 = SelectorGetObjAtmOffset(I, lastObj, neighbor.atm);
+              assert(a2 >= 0);
+              if (a2 >= 0) {
                 base[0].sele[a2] = 1;
-                n += 2;
               }
             }
           }
@@ -8896,8 +8777,6 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
   AtomInfoType *at1, *at2;
   int n_atom = I->Table.size();
   int ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
-  int n;
-  int a0, a1, a2;
   ObjectMolecule *lastObj = NULL;
 
   base[0].sele = std::move(base[1].sele);
@@ -8935,22 +8814,13 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
     for(a = cNDummyAtoms; a < n_atom; a++) {
       auto& table_a = I->Table[a];
       if((tag = base[1].sele[a])) {
-        if(I->Obj[table_a.model] != lastObj) {
-          lastObj = I->Obj[table_a.model];
-          ObjectMoleculeUpdateNeighbors(lastObj);
-        }
-        a0 = table_a.atom;
-        n = lastObj->Neighbor[a0];
-        n++;
-        while(1) {
-          a1 = lastObj->Neighbor[n];
-          if(a1 < 0)
-            break;
-          if((a2 = SelectorGetObjAtmOffset(I, lastObj, a1)) >= 0) {
+        auto const* lastObj = I->Obj[table_a.model];
+        for (auto const& neighbor : AtomNeighbors(lastObj, table_a.atom)) {
+          auto const a2 = SelectorGetObjAtmOffset(I, lastObj, neighbor.atm);
+          if (a2 >= 0) {
             if(!base[1].sele[a2])
               base[0].sele[a2] = tag;
           }
-          n += 2;
         }
       }
     }
@@ -8962,21 +8832,12 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
     for(a = cNDummyAtoms; a < n_atom; a++) {
       auto& table_a = I->Table[a];
       if((tag = base[1].sele[a])) {
-        if(I->Obj[table_a.model] != lastObj) {
-          lastObj = I->Obj[table_a.model];
-          ObjectMoleculeUpdateNeighbors(lastObj);
-        }
-        a0 = table_a.atom;
-        n = lastObj->Neighbor[a0];
-        n++;
-        while(1) {
-          a1 = lastObj->Neighbor[n];
-          if(a1 < 0)
-            break;
-          if((a2 = SelectorGetObjAtmOffset(I, lastObj, a1)) >= 0) {
-            if(!base[0].sele[a2])
-              base[0].sele[a2] = 1;
-            n += 2;
+        auto const* lastObj = I->Obj[table_a.model];
+        for (auto const& neighbor : AtomNeighbors(lastObj, table_a.atom)) {
+          auto const a2 = SelectorGetObjAtmOffset(I, lastObj, neighbor.atm);
+          assert(a2 >= 0);
+          if (a2 >= 0 && !base[0].sele[a2]) {
+            base[0].sele[a2] = 1;
           }
         }
       }
@@ -9250,9 +9111,8 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
     break;
   case SELE_BYM1:
     {
-      int s;
       int c = 0;
-      int a, at, a1, aa;
+      int a, at, aa;
       ObjectMolecule *obj, *lastObj = NULL;
       int *stk;
       int stkDepth = 0;
@@ -9281,10 +9141,9 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
             at = I->Table[a].atom;       /* start walk from this location */
 
             /* add neighbors onto the stack */
-            ITERNEIGHBORATOMS(obj->Neighbor, at, a1, s) {
-              b = obj->Neighbor[s + 1];
-              if (obj->Bond[b].order > 0) {
-                if((aa = SelectorGetObjAtmOffset(I, obj, a1)) >= 0) {
+            for (auto const& neighbor : AtomNeighbors(obj, at)) {
+              if (obj->Bond[neighbor.bond].order > 0) {
+                if ((aa = SelectorGetObjAtmOffset(I, obj, neighbor.atm)) >= 0) {
                   if(!base[0].sele[aa]) {
                     VLACheck(stk, int, stkDepth);
                     stk[stkDepth] = aa; /* add index in selector space */

@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include "Executive_pre.h"
 #include "vla.h"
 #include "Result.h"
+#include "AtomNeighbors.h"
 
 #include "Sculpt.h"
 #include <memory>
@@ -260,23 +261,6 @@ typedef struct {
 void ObjMolPairwiseInit(ObjMolPairwise * pairwise);
 void ObjMolPairwisePurge(ObjMolPairwise * pairwise);
 
-/**
- * loop iterators for the ObjectMolecule::Neighbor array
- *
- * Arguments: (Neighbor array, const int atom-index, int neighbor-atom-or-bond-index, int used-internally)
- *
- * Example:
- * @verbatim
-   // iterate over neighbors of obj->AtomInfo[at]
-   int neighbor_at, tmp;
-   ITERNEIGHBORATOMS(obj->Neighbor, at, neighbor_at, tmp) {
-     // do something with obj->AtomInfo[neighbor_at]
-   }
-   @endverbatim
- */
-#define ITERNEIGHBORATOMS(N, a, n, i) for(i = N[a] + 1; (n = N[i]) > -1; i += 2)
-#define ITERNEIGHBORBONDS(N, a, b, i) for(i = N[a] + 1; (b = N[i + 1]), N[i] > -1; i += 2)
-
 int ObjectMoleculeGetTopNeighbor(PyMOLGlobals * G,
                                  ObjectMolecule * I, int start, int excluded);
 
@@ -370,7 +354,8 @@ int ObjectMoleculeGetAtomIndex(const ObjectMolecule*, SelectorID_t sele);
 int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
                                      int sele, const float *TTT, int log,
                                      const char *sname, int homogenous, int global);
-int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule * I, int index, int sele);
+bool ObjectMoleculeIsAtomBondedToSele(
+    const ObjectMolecule* I, int atm, SelectorID_t sele);
 void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule * I, int state);
 void ObjectMoleculeInferChemForProtein(ObjectMolecule * I, int state);
 void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state);
@@ -400,7 +385,6 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
                                         int index, float *v, float *seek,
                                         int ignore_index);
 int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index);
-int ObjectMoleculeGetTotalAtomValence(ObjectMolecule * I, int atom);
 int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode,
                               int order);
 int ObjectMoleculeAttach(ObjectMolecule * I, int index,

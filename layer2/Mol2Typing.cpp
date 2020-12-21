@@ -16,12 +16,11 @@
  * Return: True if atm has 3 neighbors which are all nitrogens with geom=3
  */
 static bool isGuanidiniumCarbon(ObjectMolecule * obj, int atm) {
-  int atm_neighbor, tmp, neighbor_count = 0;
+  int neighbor_count = 0;
   int charge = 0;
-  ObjectMoleculeUpdateNeighbors(obj);
 
-  ITERNEIGHBORATOMS(obj->Neighbor, atm, atm_neighbor, tmp) {
-    AtomInfoType * neighbor = obj->AtomInfo + atm_neighbor;
+  for (auto const& item : AtomNeighbors(obj, atm)) {
+    AtomInfoType const* neighbor = obj->AtomInfo.data() + item.atm;
     if (neighbor->protons != cAN_N || neighbor->geom != 3)
       return false;
     ++neighbor_count;
@@ -57,17 +56,16 @@ static bool isAromaticAtom(ObjectMolecule * obj, int atm) {
  * Return: True if atom is part of a carboxylate or phosphate group
  */
 static bool isCarboxylateOrPhosphateOxygen(ObjectMolecule * obj, int atm) {
-  int atm_neighbor, tmp, o_count = 0, other_count = 0;
-  ObjectMoleculeUpdateNeighbors(obj);
+  int o_count = 0, other_count = 0;
 
-  int offset = obj->Neighbor[atm];
+  auto const neighbors = AtomNeighbors(obj, atm);
 
   // must have only one neighbor
-  if (obj->Neighbor[offset] != 1)
+  if (neighbors.size() != 1)
     return false;
 
   // get that one neighbor as center of the acidic group
-  atm = obj->Neighbor[offset + 1];
+  atm = neighbors[0].atm;
 
   // check center atom
   AtomInfoType * ai = obj->AtomInfo + atm;
@@ -76,8 +74,8 @@ static bool isCarboxylateOrPhosphateOxygen(ObjectMolecule * obj, int atm) {
     return false;
 
   // iterate over neighbors of center atom
-  ITERNEIGHBORATOMS(obj->Neighbor, atm, atm_neighbor, tmp) {
-    AtomInfoType * neighbor = obj->AtomInfo + atm_neighbor;
+  for (auto const& item : AtomNeighbors(obj, atm)) {
+    AtomInfoType const* neighbor = obj->AtomInfo.data() + item.atm;
     if (neighbor->protons == cAN_O)
       ++o_count;
     else
@@ -98,11 +96,10 @@ static bool isCarboxylateOrPhosphateOxygen(ObjectMolecule * obj, int atm) {
  * Return: Number of bound Oxygens if bound to two non-Oxygen atoms. Otherwise 0.
  */
 static int sulfurCountOxygenNeighbors(ObjectMolecule * obj, int atm) {
-  int atm_neighbor, tmp, o_count = 0, other_count = 0;
-  ObjectMoleculeUpdateNeighbors(obj);
+  int o_count = 0, other_count = 0;
 
-  ITERNEIGHBORATOMS(obj->Neighbor, atm, atm_neighbor, tmp) {
-    AtomInfoType * neighbor = obj->AtomInfo + atm_neighbor;
+  for (auto const& item : AtomNeighbors(obj, atm)) {
+    AtomInfoType const* neighbor = obj->AtomInfo.data() + item.atm;
     if (neighbor->protons == cAN_O)
       ++o_count;
     else
