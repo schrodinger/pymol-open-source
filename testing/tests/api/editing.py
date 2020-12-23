@@ -262,11 +262,105 @@ class TestEditing(testing.PyMOLTestCase):
         with self.assertRaisesRegex(CmdException, "Invalid selection name"):
             cmd.flag(1, "foo")
 
+    # 2.1 for get_bonds
+    @testing.requires_version('2.1')
     def test_fuse(self):
         cmd.fragment('ala')
         cmd.fragment('gly')
+        # non-hydrogens (N has an open valence, O actually not)
         cmd.fuse("gly and elem N", "ala and elem O")
         self.assertEqual(17, cmd.count_atoms('ala'))
+        # hydrogens
+        cmd.fuse("/gly///GLY/3HA", "/ala///ALA/3HB")
+        self.assertEqual(22, cmd.count_atoms("ala"))
+        # mode 3: don't create a bond
+        cmd.fuse("gly", "ala", mode=3)
+        self.assertEqual(29, cmd.count_atoms("ala"))
+        # move=0
+        cmd.fuse("/gly///GLY/C", "/ala///GLY/C03", move=0)
+        self.assertEqual(36, cmd.count_atoms("ala"))
+        self.assertEqual(cmd.get_bonds("ala"), [
+            (0, 1, 1),
+            (0, 5, 1),
+            (1, 2, 1),
+            (1, 4, 1),
+            (1, 6, 1),
+            (2, 3, 2),
+            (3, 9, 1),
+            (4, 13, 1),
+            (4, 7, 1),
+            (4, 8, 1),
+            (9, 16, 1),
+            (9, 25, 1),
+            (10, 13, 1),
+            (10, 26, 1),
+            (11, 14, 1),
+            (11, 27, 1),
+            (12, 15, 1),
+            (12, 28, 1),
+            (13, 18, 1),
+            (13, 29, 1),
+            (14, 19, 1),
+            (14, 30, 1),
+            (14, 31, 1),
+            (15, 20, 1),
+            (15, 32, 1),
+            (15, 33, 1),
+            (16, 17, 1),
+            (16, 34, 1),
+            (16, 35, 1),
+            (17, 21, 2),
+            (18, 20, 1),
+            (18, 22, 2),
+            (19, 23, 2),
+            (20, 24, 2),
+        ])
+        self.assertArrayEqual(cmd.get_coordset("ala"), [
+            [-0.68, -1.23, -0.49],
+            [-0.0, 0.06, -0.49],
+            [-0.51, 0.86, 0.73],
+            [1.5, -0.11, -0.49],
+            [2.03, -1.23, -0.5],
+            [-1.6, 1.01, 0.69],
+            [-0.28, 0.34, 1.68],
+            [-0.13, -2.16, -0.49],
+            [-0.27, 0.6, -1.42],
+            [1.24, -2.38, -0.51],
+            [-0.1, -1.95, -0.91],
+            [-1.12, -2.31, 0.15],
+            [-0.8, -2.9, 1.19],
+            [1.42, -2.89, 0.42],
+            [-0.35, -2.43, -1.81],
+            [-0.11, -0.85, -1.02],
+            [1.55, 2.1, 1.1],
+            [0.13, 2.26, 0.81],
+            [-0.57, 3.06, 1.88],
+            [0.04, 3.5, 2.86],
+            [2.0, 2.52, 1.99],
+            [0.02, 2.8, -0.15],
+            [-1.19, 0.2, -0.21],
+            [0.23, 0.32, -0.5],
+            [1.06, -0.39, 0.54],
+            [0.55, -0.97, 1.5],
+            [-1.56, -0.33, 0.66],
+            [0.48, 1.34, -0.51],
+            [0.43, -0.16, -1.48],
+            [-1.19, 0.2, -0.21],
+            [0.23, 0.32, -0.5],
+            [1.06, -0.39, 0.54],
+            [0.55, -0.97, 1.5],
+            [-1.56, -0.33, 0.66],
+            [0.48, 1.34, -0.51],
+            [0.43, -0.16, -1.48],
+        ], 1e-2)
+        names = []
+        cmd.iterate("ala", "names.append(name)", space=locals())
+        self.assertEqual(names, [
+            'N', 'CA', 'C', 'O', 'CB', 'H', 'HA', '1HB', '2HB', 'N', 'N01',
+            'N02', 'N03', 'C02', 'C04', 'C06', 'CA', 'C', 'C03', 'C05', 'C07',
+            'O', 'O04', 'O06', 'O08', 'H', 'H05', 'H08', 'H11', 'H07', 'H09',
+            'H10', 'H12', 'H13', '3HA', 'HA'
+        ])
 
     def test_get_editor_scheme(self):
         cmd.get_editor_scheme
