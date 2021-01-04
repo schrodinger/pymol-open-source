@@ -2383,7 +2383,45 @@ void PDefineFloat(PyMOLGlobals * G, const char *name, float value)
   PUnblock(G);
 }
 
+/**
+ * If the error indicator is set (means: If a Python exception was raised),
+ * then clear it and print the traceback.
+ *
+ * Special case is CmdException, which will be printed without a traceback.
+ */
+void PErrPrintIfOccurred(PyMOLGlobals* G)
+{
+  PyObject *type = nullptr, *value = nullptr, *traceback = nullptr;
+  PyErr_Fetch(&type, &value, &traceback);
 
+  if (!type) {
+    return;
+  }
+
+  if (!value || !PyErr_GivenExceptionMatches(type, P_CmdException)) {
+    PyErr_Restore(type, value, traceback);
+    PyErr_Print();
+    return;
+  }
+
+  Py_XDECREF(traceback);
+
+  if (PyObject* strobj = PyObject_Str(value)) {
+    const char* str = PyUnicode_AsUTF8(strobj);
+    assert(str);
+
+    G->Feedback->addColored(str, FB_Errors);
+    G->Feedback->add("\n");
+
+    Py_DECREF(strobj);
+  } else {
+    assert(PyErr_Occurred());
+    PyErr_Print();
+  }
+
+  Py_DECREF(type);
+  Py_DECREF(value);
+}
 
 /* A static module */
 

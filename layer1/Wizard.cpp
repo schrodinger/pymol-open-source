@@ -161,13 +161,11 @@ int WizardDoSelect(PyMOLGlobals * G, const char* name, int state)
         PBlock(G);
         if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_pick_state")) {
           result = PTruthCallStr1i(I->Wiz[I->Stack], "do_pick_state", state + 1);
-          if(PyErr_Occurred())
-            PyErr_Print();
+          PErrPrintIfOccurred(G);
         }
         if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_select")) {
           result = PTruthCallStr(I->Wiz[I->Stack], "do_select", name);
-          if(PyErr_Occurred())
-            PyErr_Print();
+          PErrPrintIfOccurred(G);
         }
         PUnblock(G);
       }
@@ -196,8 +194,7 @@ void WizardRefresh(PyMOLGlobals * G)
       vla = NULL;
       if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_prompt")) {
         P_list = PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_prompt", "");
-        if(PyErr_Occurred())
-          PyErr_Print();
+        PErrPrintIfOccurred(G);
         if(P_list)
           PConvPyListToStringVLA(P_list, &vla);
         Py_XDECREF(P_list);
@@ -216,8 +213,7 @@ void WizardRefresh(PyMOLGlobals * G)
 
       if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_event_mask")) {
         i = PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_event_mask", "");
-        if(PyErr_Occurred())
-          PyErr_Print();
+        PErrPrintIfOccurred(G);
         if(!PConvPyIntToInt(i, &I->EventMask))
           I->EventMask = cWizEventPick + cWizEventSelect;
         Py_XDECREF(i);
@@ -225,8 +221,7 @@ void WizardRefresh(PyMOLGlobals * G)
 
       if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_panel")) {
         P_list = PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_panel", "");
-        if(PyErr_Occurred())
-          PyErr_Print();
+        PErrPrintIfOccurred(G);
         if(P_list) {
           if(PyList_Check(P_list)) {
             ll = PyList_Size(P_list);
@@ -286,8 +281,7 @@ void WizardSet(PyMOLGlobals * G, PyObject * wiz, int replace)
           /* then call cleanup, etc. */
           if(PyObject_HasAttrString(old_wiz, "cleanup")) {
             PXDecRef(PYOBJECT_CALLMETHOD(old_wiz, "cleanup", ""));
-            if(PyErr_Occurred())
-              PyErr_Print();
+            PErrPrintIfOccurred(G);
           }
           Py_DECREF(old_wiz);
         }
@@ -357,13 +351,11 @@ int WizardDoPick(PyMOLGlobals * G, int bondFlag, int state)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_pick_state")) {
               result = PTruthCallStr1i(I->Wiz[I->Stack], "do_pick_state", state + 1);
-              if(PyErr_Occurred())
-                PyErr_Print();
+              PErrPrintIfOccurred(G);
             }
             if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_pick")) {
               result = PTruthCallStr1i(I->Wiz[I->Stack], "do_pick", bondFlag);
-              if(PyErr_Occurred())
-                PyErr_Print();
+              PErrPrintIfOccurred(G);
             }
           }
         PUnblock(G);
@@ -390,8 +382,7 @@ int WizardDoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_key")) {
               result = PTruthCallStr4i(I->Wiz[I->Stack], "do_key", k, x, y, mod);
-              if(PyErr_Occurred())
-                PyErr_Print();
+              PErrPrintIfOccurred(G);
             }
           }
         PUnblock(G);
@@ -425,8 +416,7 @@ int WizardDoPosition(PyMOLGlobals * G, int force)
             if(I->Wiz[I->Stack]) {
               if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_position")) {
                 result = PTruthCallStr0(I->Wiz[I->Stack], "do_position");
-                if(PyErr_Occurred())
-                  PyErr_Print();
+                PErrPrintIfOccurred(G);
               }
             }
           PUnblock(G);
@@ -459,8 +449,7 @@ int WizardDoView(PyMOLGlobals * G, int force)
             if(I->Wiz[I->Stack]) {
               if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_view")) {
                 result = PTruthCallStr0(I->Wiz[I->Stack], "do_view");
-                if(PyErr_Occurred())
-                  PyErr_Print();
+                PErrPrintIfOccurred(G);
               }
             }
           PUnblock(G);
@@ -488,8 +477,7 @@ int WizardDoScene(PyMOLGlobals * G)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_scene")) {
               result = PTruthCallStr0(I->Wiz[I->Stack], "do_scene");
-              if(PyErr_Occurred())
-                PyErr_Print();
+              PErrPrintIfOccurred(G);
             }
           }
         PUnblock(G);
@@ -516,8 +504,7 @@ int WizardDoDirty(PyMOLGlobals * G)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_dirty")) {
               result = PTruthCallStr0(I->Wiz[I->Stack], "do_dirty");
-              if(PyErr_Occurred())
-                PyErr_Print();
+              PErrPrintIfOccurred(G);
             }
           }
         PUnblock(G);
@@ -545,8 +532,7 @@ int WizardDoState(PyMOLGlobals * G)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_state")) {
               result = PTruthCallStr1i(I->Wiz[I->Stack], "do_state", state);
-              if(PyErr_Occurred())
-                PyErr_Print();
+              PErrPrintIfOccurred(G);
             }
           }
         PUnblock(G);
@@ -574,8 +560,7 @@ int WizardDoFrame(PyMOLGlobals * G)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_frame")) {
               result = PTruthCallStr1i(I->Wiz[I->Stack], "do_frame", frame);
-              if(PyErr_Occurred())
-                PyErr_Print();
+              PErrPrintIfOccurred(G);
             }
           }
         PUnblock(G);
@@ -603,8 +588,7 @@ int WizardDoSpecial(PyMOLGlobals * G, int k, int x, int y, int mod)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_special")) {
               result = PTruthCallStr4i(I->Wiz[I->Stack], "do_special", k, x, y, mod);
-              if(PyErr_Occurred())
-                PyErr_Print();
+              PErrPrintIfOccurred(G);
             }
           }
         PUnblock(G);
@@ -641,13 +625,11 @@ int CWizard::click(int button, int x, int y, int mod)
           if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_menu")) {
             menuList =
               PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_menu", "s", I->Line[a].code);
-            if(PyErr_Occurred())
-              PyErr_Print();
+            PErrPrintIfOccurred(G);
           }
         }
 
-      if(PyErr_Occurred())
-        PyErr_Print();
+      PErrPrintIfOccurred(G);
       if(menuList && (menuList != Py_None)) {
         int my = rect.top - (cWizardTopMargin + a * LineHeight) - 2;
 

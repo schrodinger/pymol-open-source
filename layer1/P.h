@@ -190,6 +190,8 @@ inline PyObject* PIncRef(PyObject* obj)
 
 void PDefineFloat(PyMOLGlobals * G, const char *name, float value);
 
+void PErrPrintIfOccurred(PyMOLGlobals*);
+
 void PRunStringModule(PyMOLGlobals * G, const char *str);
 void PRunStringInstance(PyMOLGlobals * G, const char *str);
 
