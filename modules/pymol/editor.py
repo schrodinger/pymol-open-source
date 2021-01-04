@@ -35,40 +35,42 @@ class undocontext:
         # not implemented in open-source
         pass
 
-def attach_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
+def attach_fragment(selection,fragment,hydrogen,anchor,*,_self=cmd):
     '''
 ARGUMENTS
 
-    selection = str: must be "pk1"
+    selection = str: Name of a single-atom selection. If no such named
+    selection exists, then create a new object with name `fragment`.
 
     fragment = str: fragment name to load from fragment library
 
-    hydrogen = int: hydrogen atom ID in fragment to fuse
+    hydrogen = int: atom ID in fragment to fuse
 
-    anchor = int: none-hydrogen atom ID in fragment to fuse
+    anchor = int: (unused)
     '''
+    remove_hydrogens = _self.get_setting_boolean("auto_remove_hydrogens")
+
     if selection not in _self.get_names("selections"):
         if fragment in _self.get_names("objects"):
-            print(" Error: an object with than name already exists")
-            raise QuietException
-        else:
-            _self.fragment(fragment)
-            if _self.get_setting_boolean("auto_remove_hydrogens"):
-                _self.remove("(hydro and %s)"%fragment)
+            raise pymol.CmdException("an object with that name already exists")
+
+        _self.fragment(fragment)
+
+        if remove_hydrogens:
+            _self.remove(f"(hydro and {fragment})")
     else:
-        _self.fragment(fragment,tmp_editor, origin=0)
-        if _self.count_atoms("((%s) and elem H)"%selection,quiet=1):
-            _self.fuse("(%s and id %d)"%(tmp_editor,hydrogen),"(pk1)",1)
-            if _self.get_setting_boolean("auto_remove_hydrogens"):
-                _self.remove("(hydro and pkmol)")
-        else:
-            _self.remove("(%s and id %d)"%(tmp_editor,hydrogen))
-            _self.fuse("(%s and id %d)"%(tmp_editor,anchor),"(pk1)",1)
-            if _self.get_setting_boolean("auto_remove_hydrogens"):
+        fragment_label = _self.get_unused_name(_prefix + "_attach_fragment")
+        _self.fragment(fragment, fragment_label, origin=0)
+
+        try:
+            _self.fuse(f"{fragment_label} and id {hydrogen}", f"({selection})", 1)
+
+            if remove_hydrogens:
                 _self.remove("(hydro and pkmol)")
             elif _self.count_atoms('hydro and (neighbor pk2)'):
                 _self.h_fill()
-        _self.delete(tmp_editor)
+        finally:
+            _self.delete(fragment_label)
 
 def combine_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
     with undocontext(_self, selection):

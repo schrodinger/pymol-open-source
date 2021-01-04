@@ -211,6 +211,9 @@ int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, const CoordSet * cs);       
 void CoordSetRecordTxfApplied(CoordSet * I, const float *TTT, int homogenous);
 void CoordSetUpdateCoord2IdxMap(CoordSet * I, float cutoff);
 
+bool CoordSetFindOpenValenceVector(const CoordSet*, int atm, float* out,
+    const float* seek = nullptr, int ignore_atm = -1);
+
 typedef struct _CCoordSetUpdateThreadInfo CCoordSetUpdateThreadInfo;
 
 void CoordSetUpdateThread(CCoordSetUpdateThreadInfo * T);

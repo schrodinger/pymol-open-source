@@ -8846,7 +8846,6 @@ pymol::Result<> ExecutiveFuse(PyMOLGlobals* G, const char* s0, const char* s1,
   SelectorID_t sele2 = cSelectionInvalid;
   ObjectMolecule *obj0, *obj1;
   ObjectMoleculeOpRec op;
-  int ok = true;
 #define tmp_fuse_sele "tmp_fuse_sele"
 
   SETUP_SELE_DEFAULT_PREFIXED(0, cSelectionInvalid);
@@ -8880,26 +8879,10 @@ pymol::Result<> ExecutiveFuse(PyMOLGlobals* G, const char* s0, const char* s1,
         }
         SelectorDelete(G, tmp_fuse_sele);
 
-        switch (mode) {
-        case 0:
-        case 1:
-        case 2:
-          if((obj0->AtomInfo[i0].protons == 1) && (obj1->AtomInfo[i1].protons == 1))
-            ok &= ObjectMoleculeFuse(obj1, i1, obj0, i0, 0, move_flag);
-          else if((obj0->AtomInfo[i0].protons != 1) && (obj1->AtomInfo[i1].protons != 1))
-            ok &= ObjectMoleculeFuse(obj1, i1, obj0, i0, 1, move_flag);
-          else
-            return pymol::make_error("Can't fuse between a hydrogen and a non-hydrogen");
-          break;
-        case 3:
-          ok &= ObjectMoleculeFuse(obj1, i1, obj0, i0, 3, false);
-          break;
-        }
+        p_return_if_error(
+            ObjectMoleculeFuse(obj1, i1, obj0, i0, mode != 3, move_flag));
       }
     }
-  }
-  if(!ok) {
-    return pymol::make_error("Could not fuse.");
   }
   return {};
 }

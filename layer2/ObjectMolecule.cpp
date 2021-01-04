@@ -19,12 +19,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
-#include <algorithm>
-#include <cassert>
-#include <set>
-#include <unordered_map>
-#include <vector>
-
 #include"Base.h"
 #include"Parse.h"
 #include"OOMac.h"
@@ -66,6 +60,12 @@ Z* -------------------------------------------------------------------
 #define ncopy ParseNCopy
 #define nskip ParseNSkip
 
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <set>
+#include <unordered_map>
+#include <vector>
 
 #ifndef NO_MMLIBS
 #include "mmpymolx.h"
@@ -3110,303 +3110,327 @@ int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force)
 
 
 /*========================================================================*/
-static int AddCoordinateIntoCoordSet(ObjectMolecule* I, int a, CoordSet* tcs,
-    CoordSet* cs, const float* backup, int mode, int at0, int index0,
-    int move_flag, const float* va1, const float* x1, const float* y1,
-    const float* z1, float d)
+/**
+ * Transform coordinates of `cs` in place and then append it to `tcs`.
+ *
+ * @param coord_orig Original cs coordinates
+ * @param at0 Anchor atom index
+ * @param mat1_inv Source coordinate system
+ * @param valence_vec Valence vector. If NULL, don't move. If null-vector, don't merge.
+ */
+static bool AddCoordinateIntoCoordSet(CoordSet* tcs, CoordSet* cs,
+    const float* coord_orig, int at0, const float* mat1_inv,
+    const float* valence_vec)
 {
-  const float *f0;
-  float *f1;
-  int b;
-  int ch0;
-  float vh0[3];
-  float va0[3] = { 0.0F, 0.0F, 0.0F };
-  float x0[3], y0[3], z0[3];
-  float x[3], y[3], z[3];
-  float t[3], t2[3];
-  int ok = true;
-
-  if(tcs) {
-    if(mode == 3) {
-      f0 = backup;
-      f1 = cs->Coord.data();
-      for(b = 0; b < cs->NIndex; b++) {     /* brute force transformation */
-	copy3f(f0, f1);
-      }
-      f0 += 3;
-      f1 += 3;
-    } else {
-      auto ca0 = tcs->atmToIdx(at0);   /* anchor */
-      switch (mode) {
-      case 0:
-	ch0 = tcs->atmToIdx(index0);   /* hydrogen */
-	if((ca0 >= 0) && (ch0 >= 0)) {
-	  copy3f(tcs->coordPtr(ca0), va0);
-	  copy3f(tcs->coordPtr(ch0), vh0);
-	  subtract3f(vh0, va0, x0);
-	  get_system1f3f(x0, y0, z0);
-	}
-	break;
-      case 1:
-	if(ca0 >= 0) {
-	  ObjectMoleculeFindOpenValenceVector(I, a, at0, x0, NULL, -1);
-	  copy3f(tcs->coordPtr(ca0), va0);
-	  get_system1f3f(x0, y0, z0);
-	}
-	break;
-      }
-      scale3f(x0, d, t2);
-      add3f(va0, t2, t2);
-      
-      f0 = backup;
-      f1 = cs->Coord.data();
-      for(b = 0; b < cs->NIndex; b++) {     /* brute force transformation */
-	if(move_flag) {
-	  subtract3f(f0, va1, t);
-	  scale3f(x0, dot_product3f(t, x1), x);
-	  scale3f(y0, dot_product3f(t, y1), y);
-	  scale3f(z0, dot_product3f(t, z1), z);
-	  add3f(x, y, y);
-	  add3f(y, z, f1);
-	  add3f(t2, f1, f1);
-	} else {
-	  copy3f(f0, f1);
-	}
-	f0 += 3;
-	f1 += 3;
-      }
-    }
-    if (ok)
-      ok &= CoordSetMerge(I, tcs, cs);
+  if (!tcs) {
+    return true;
   }
-  return ok;
+
+  if (valence_vec) {
+    if (lengthsq3f(valence_vec) < 0.1) {
+      // null-vector
+      return true;
+    }
+
+    // anchor
+    auto idx0 = tcs->atmToIdx(at0);
+    assert(idx0 >= 0);
+    const float* va0 = tcs->coordPtr(idx0);
+
+    // Target coordinate system
+    float matT[16], mat[16];
+    identity44f(matT);
+    copy3f(valence_vec, matT);
+    get_system1f3f(matT, matT + 4, matT + 8);
+    copy3(va0, matT + 12);
+    transpose44f44f(matT, mat);
+
+    // combine with source coordinate system
+    right_multiply44f44f(mat, mat1_inv);
+
+    // transform coordset
+    for (int idx = 0; idx < cs->NIndex; idx++) {
+      transform44f3f(mat, &coord_orig[3 * idx], cs->coordPtr(idx));
+    }
+  }
+
+  return CoordSetMerge(tcs->Obj, tcs, cs);
+}
+
+/**
+ * @param at0 Atom index
+ * @param index0 If different from at0: Index of atom to replace (e.g. Hydrogen)
+ * @param[out] out (3x1) Normalized open valence vector
+ * @return True if valid open valence vector found
+ */
+static bool GetTargetValenceVector(
+    const CoordSet* tcs, int at0, int index0, float* out)
+{
+  if (!tcs) {
+    return false;
+  }
+
+  if (at0 != index0) {
+    // anchor
+    auto ca0 = tcs->atmToIdx(at0);
+    if (ca0 < 0) {
+      return false;
+    }
+
+    // hydrogen (or other replaced atom)
+    auto ch0 = tcs->atmToIdx(index0);
+    if (ch0 < 0) {
+      return false;
+    }
+
+    const float* vh0 = tcs->coordPtr(ch0);
+    const float* va0 = tcs->coordPtr(ca0);
+    subtract3f(vh0, va0, out);
+    return true;
+  }
+
+  return CoordSetFindOpenValenceVector(tcs, at0, out);
 }
 
 /*========================================================================*/
-int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
-                        int index1, int mode, int move_flag)
+/**
+ * Merge src into I.
+ *
+ * Optionally creates a bond between index0 and index1, or the atoms bound to
+ * index0 and index1 if they are "single geometry" atoms like hydrogens.
+ *
+ * @param index0 Atom index in I
+ * @param index1 Atom index in src
+ * @param create_bond If false, then don't create a bond, just combine the
+ * objects. Implies move_flag=false.
+ * @param move_flag If true, then transform the source coordinates to form a
+ * reasonable bond geometry.
+ */
+pymol::Result<> ObjectMoleculeFuse(ObjectMolecule* I, int const index0,
+    const ObjectMolecule* src, int const index1, bool create_bond,
+    bool move_flag)
 {
-  PyMOLGlobals *G = I->G;
-  int a;
-  const AtomInfoType *ai0, *ai1;
-  int n, nn;
-  int at0 = -1;
-  int at1 = -1;
-  int a0, a1;
-  int hydr1 = -1;
-  int anch1 = -1;
-  float *backup = NULL;
-  //  float d;
-  CoordSet *cs = NULL, *scs = NULL;
-  int state1 = 0;
-  CoordSet *tcs;
-  int edit = 1;
-  OrthoLineType sele1, sele2;
-  float va1[3] = { 0.0F, 0.0F, 0.0F };
-  float vh1[3];
-  float x1[3], y1[3], z1[3];
-  float d;
-  int ok = true;
+  constexpr int state1 = 0;
+  constexpr bool edit = true;
 
-  ok &= ObjectMoleculeUpdateNeighbors(I);
-  if (ok)
-    ok &= ObjectMoleculeUpdateNeighbors(src);
+  auto* G = I->G;
 
-  /* make sure each link point has only one neighbor */
-
-  ai0 = I->AtomInfo;
-  ai1 = src->AtomInfo;
-
-  //  printf("ObjectMoleculeFuse: mode=%d src->DiscreteFlag=%d\n", mode, src->DiscreteFlag);
-  switch (mode) {
-  case 0:                      /* fusing by replacing hydrogens */
-
-    n = I->Neighbor[index0];
-    nn = I->Neighbor[n++];
-    if(nn == 1)
-      at0 = I->Neighbor[n];
-
-    n = src->Neighbor[index1];
-    nn = src->Neighbor[n++];
-    if(nn == 1)
-      at1 = src->Neighbor[n];
-
-    if(src->NCSet) {
-      scs = src->CSet[state1];
-      anch1 = scs->atmToIdx(at1);
-      hydr1 = scs->atmToIdx(index1);
-    }
-    break;
-  case 1:                      /* fuse merely by drawing a bond */
-  case 3:                      /* don't actually fuse -- just combine into a single object */
-    at0 = index0;
-    at1 = index1;
-
-    if(src->NCSet) {
-      scs = src->CSet[state1];
-      anch1 = scs->atmToIdx(at1);
-    }
-
-    break;
+  if (!create_bond) {
+    move_flag = false;
   }
 
-  if((at0 >= 0) && (at1 >= 0) && scs && (anch1 >= 0)) { /* have anchors and source coordinate set */
+  auto const* scs = src->getCoordSet(state1);
+  if (!scs) {
+    return pymol::Error("no source coordset");
+  }
 
-    auto nai = pymol::vla<AtomInfoType>(src->NAtom);
-    /* copy atoms and atom info into a 1:1 direct mapping */
-    if (ok)
-      cs = CoordSetNew(I->G);
-    CHECKOK(ok, cs);
-    if (ok)
-      cs->Coord = pymol::vla<float>(scs->NIndex * 3);
-    CHECKOK(ok, cs->Coord);
-    if (ok)
-      cs->NIndex = scs->NIndex;
-    if (ok){
-      for(a = 0; a < scs->NIndex; a++) {
-	copy3f(scs->coordPtr(a), cs->coordPtr(a));
-	a1 = scs->IdxToAtm[a];
-	
-	AtomInfoCopy(G, ai1 + a1, nai + a);
-	/*      *(nai+a) = *(ai1+a1);  ** unsafe */
-	
-	if(a1 == at1) {
-	  (nai + a)->temp1 = 2;   /* clear marks */
-	} else {
-	  (nai + a)->temp1 = 0;   /* clear marks */
-	}
+  auto* ai0 = I->AtomInfo.data();
+  auto const* ai1 = src->AtomInfo.data();
+
+  /**
+   * If we want a bond and atm has cAtomInfoSingle geometry, then return the
+   * atom index of its (only) neighbor. Otherwise, return atm.
+   */
+  auto const get_anchor_atm = [create_bond](
+                                  const ObjectMolecule* obj, int atm) {
+    if (create_bond) {
+      if (obj->AtomInfo[atm].geom == cAtomInfoSingle) {
+        auto neighbors = AtomNeighbors(obj, atm);
+        if (neighbors.size() == 1) {
+          atm = neighbors[0].atm;
+        }
       }
     }
+    return atm;
+  };
 
-    /* copy internal bond information */
-    if (ok)
-      cs->TmpBond = pymol::vla<BondType>(src->NBond);
-    CHECKOK(ok, cs->TmpBond);
-    if (ok){
-      const BondType* b1 = src->Bond.data();
-      BondType* b0 = cs->TmpBond.data();
-      cs->NTmpBond = 0;
-      for(a = 0; a < src->NBond; a++) {
-	a0 = scs->atmToIdx(b1->index[0]);
-	a1 = scs->atmToIdx(b1->index[1]);
-	if((a0 >= 0) && (a1 >= 0)) {
-	  *b0 = *b1;
-	  b0->index[0] = a0;
-	  b0->index[1] = a1;
-	  b0++;
-	  cs->NTmpBond++;
-	}
-	b1++;
-      }
-    }
+  int const at0 = get_anchor_atm(I, index0);
+  int const at1 = get_anchor_atm(src, index1);
 
-    if (ok)
-      backup = pymol::malloc<float>(cs->NIndex * 3);      /* make untransformed copy of coordinate set */
-    CHECKOK(ok, backup);
-    if (ok){
-      for(a = 0; a < cs->NIndex; a++) {
-	copy3f(cs->coordPtr(a), backup + a * 3);
-      }
-    }
-    if (ok){
-      switch (mode) {
-      case 0:
-	nai[hydr1].deleteFlag = true;
-	I->AtomInfo[index0].deleteFlag = true;
-	copy3f(backup + 3 * anch1, va1);
-	copy3f(backup + 3 * hydr1, vh1);
-	subtract3f(va1, vh1, x1); /* note reverse dir from above */
-	get_system1f3f(x1, y1, z1);
-	break;
-      case 1:
-	copy3f(backup + 3 * anch1, va1);
-	ObjectMoleculeFindOpenValenceVector(src, state1, at1, x1, NULL, -1);
-	scale3f(x1, -1.0F, x1);
-	get_system1f3f(x1, y1, z1);
-	break;
-      }
-    }
+  assert(!(at0 < 0 || at1 < 0));
 
-    if(ok && mode != 3) {
-      /* set up the linking bond */
-      cs->TmpLinkBond = pymol::vla<BondType>(1);
-      CHECKOK(ok, cs->TmpLinkBond);
-      if (ok){
-	cs->NTmpLinkBond = 1;
-        auto* bond = cs->TmpLinkBond.data();
-        BondTypeInit2(bond, at0, anch1);
-      }
-    }
+  auto const anch1 = scs->atmToIdx(at1);
+  if (anch1 < 0) {
+    return pymol::Error("no coordinate for source anchor atom");
+  }
 
-    if(ok)
-      cs->enumIndices();
+  /* copy atoms and atom info into a 1:1 direct mapping */
+  auto cs = pymol::make_unique<CoordSet>(G);
+  cs->setNIndex(scs->NIndex);
+  cs->enumIndices();
 
-    if (ok){
-      d = AtomInfoGetBondLength(I->G, ai0 + at0, ai1 + at1);
-      AtomInfoUniquefyNames(I, nai.data(), cs->NIndex);
-    }
+  auto nai = pymol::vla<AtomInfoType>(scs->NIndex);
 
-    /* set up tags which will enable use to continue editing bond */
+  for (int idx = 0; idx < scs->NIndex; ++idx) {
+    copy3f(scs->coordPtr(idx), cs->coordPtr(idx));
+    auto atm1 = scs->IdxToAtm[idx];
 
-    if(ok && edit) {
-      for(a = 0; a < I->NAtom; a++) {
-        I->AtomInfo[a].temp1 = 0;
-      }
-      I->AtomInfo[at0].temp1 = 1;
-    }
-    if (ok)
-      ok &= ObjectMoleculeMerge(I, std::move(nai), cs, false, cAIC_AllMask, true);
-    /* will free nai, cs->TmpBond and cs->TmpLinkBond  */
-    if (ok){
-      int const state = I->DiscreteFlag ? (I->AtomInfo[at0].discrete_state - 1)
-                                        : cSelectorUpdateTableAllStates;
-      ok &= ObjectMoleculeExtendIndices(I, state);
-    }
-    if (ok)
-      ok &= ObjectMoleculeUpdateNeighbors(I);
-    if (ok){
-      if (I->DiscreteFlag){
-	tcs = I->DiscreteCSet[at0];
-	if (ok)
-	  ok &= AddCoordinateIntoCoordSet(I, a, tcs, cs, backup, mode, at0, index0, move_flag, va1, x1, y1, z1, d);
+    AtomInfoCopy(G, ai1 + atm1, nai + idx);
+
+    if (edit) {
+      if (atm1 == at1) {
+        nai[idx].temp1 = 2; /* clear marks */
       } else {
-	for(a = 0; a < I->NCSet; a++) {     /* add coordinate into the coordinate set */
-	  tcs = I->CSet[a];
-	  if (ok)
-	    ok &= AddCoordinateIntoCoordSet(I, a, tcs, cs, backup, mode, at0, index0, move_flag, va1, x1, y1, z1, d);
-	}
-      }
-    }
-    if (ok)
-      ok &= ObjectMoleculeSort(I);
-    if (ok)
-      ObjectMoleculeUpdateIDNumbers(I);
-    switch (mode) {
-    case 0:
-      ObjectMoleculePurge(I);
-      break;
-    }
-    if(edit) {                  /* edit the resulting bond */
-      at0 = -1;
-      at1 = -1;
-      for(a = 0; a < I->NAtom; a++) {
-        if(I->AtomInfo[a].temp1 == 1)
-          at0 = a;
-        if(I->AtomInfo[a].temp1 == 2)
-          at1 = a;
-      }
-      if((at0 >= 0) && (at1 >= 0)) {
-        sprintf(sele1, "%s`%d", I->Name, at1 + 1);  /* points outward... */
-        sprintf(sele2, "%s`%d", I->Name, at0 + 1);
-        EditorSelect(I->G, sele1, sele2, "", "", false, true, true);
+        nai[idx].temp1 = 0; /* clear marks */
       }
     }
   }
-  delete cs;
-  FreeP(backup);
-  return ok;
-}
 
+  /* copy internal bond information */
+  cs->TmpBond.reserve(src->NBond);
+  cs->NTmpBond = 0;
+  for (int b = 0; b != src->NBond; ++b) {
+    auto const& b1 = src->Bond[b];
+    auto a0 = scs->atmToIdx(b1.index[0]);
+    auto a1 = scs->atmToIdx(b1.index[1]);
+    if (a0 >= 0 && a1 >= 0) {
+      auto& b0 = cs->TmpBond[cs->NTmpBond++];
+      b0 = b1;
+      b0.index[0] = a0;
+      b0.index[1] = a1;
+    }
+  }
+
+  // source coordinate system
+  float mat1_inv[16];
+
+  if (create_bond) {
+    const float * va1 = scs->coordPtr(anch1);
+
+    if (at0 != index0) {
+      ai0[index0].deleteFlag = true;
+    }
+
+    identity44f(mat1_inv);
+
+    if (at1 != index1) {
+      auto const hydr1 = scs->atmToIdx(index1);
+      if (hydr1 == -1) {
+        return pymol::Error("no source attachment vector found");
+      }
+      nai[hydr1].deleteFlag = true;
+      const float* vh1 = scs->coordPtr(hydr1);
+      subtract3f(va1, vh1, mat1_inv);
+    } else {
+      auto found = CoordSetFindOpenValenceVector(scs, at1, mat1_inv);
+      if (!found) {
+        return pymol::Error("no source attachment vector found");
+      }
+      scale3f(mat1_inv, -1.0F, mat1_inv);
+    }
+
+    // bond length
+    float const d = AtomInfoGetBondLength(G, ai0 + at0, ai1 + at1);
+
+    // rotation matrix
+    get_system1f3f(mat1_inv, mat1_inv + 4, mat1_inv + 8);
+
+    // translation vector
+    float mat1_trans[16];
+    identity44f(mat1_trans);
+    mat1_trans[3] = (mat1_inv[0] * d - va1[0]);
+    mat1_trans[7] = (mat1_inv[1] * d - va1[1]);
+    mat1_trans[11] = (mat1_inv[2] * d - va1[2]);
+
+    right_multiply44f44f(mat1_inv, mat1_trans);
+
+    /* set up the linking bond */
+    cs->TmpLinkBond.resize(1);
+    cs->NTmpLinkBond = 1;
+    auto* bond = cs->TmpLinkBond.data();
+    BondTypeInit2(bond, at0, anch1);
+  }
+
+  AtomInfoUniquefyNames(I, nai.data(), cs->NIndex);
+
+  /* set up tags which will enable use to continue editing bond */
+
+  if (edit) {
+    for (int atm = 0; atm < I->NAtom; ++atm) {
+      ai0[atm].temp1 = 0;
+    }
+    ai0[at0].temp1 = 1;
+  }
+
+  int const state0 = I->DiscreteFlag ? (ai0[at0].discrete_state - 1)
+                                     : cSelectorUpdateTableAllStates;
+  assert(!I->DiscreteFlag || I->DiscreteCSet[at0] == I->CSet[state0]);
+
+  // Get target valence vectors for all relevant coordinate sets. Do this before
+  // merging atoms to not leave the object molecule in an half-done state in
+  // case we can't find valence vectors.
+  std::vector<std::array<float, 3>> target_vectors;
+  if (move_flag) {
+    bool found_any_target_vector = false;
+    target_vectors.resize(I->NCSet);
+
+    for (StateIterator iter(G, nullptr, state0, I->NCSet); iter.next();) {
+      float* vec = target_vectors[iter.state].data();
+      if (GetTargetValenceVector(I->CSet[iter.state], at0, index0, vec)) {
+        found_any_target_vector = true;
+      } else {
+        zero3(vec);
+      }
+    }
+
+    if (!found_any_target_vector) {
+      return pymol::Error("no target attachment vector found");
+    }
+  }
+
+  // will free nai, cs->TmpBond and cs->TmpLinkBond
+  // invalidates the ai0 pointer!
+  bool ok = ObjectMoleculeMerge(
+                I, std::move(nai), cs.get(), false, cAIC_AllMask, true) &&
+            ObjectMoleculeExtendIndices(I, state0) &&
+            ObjectMoleculeUpdateNeighbors(I);
+  p_return_val_if_fail(ok, pymol::Error::MEMORY);
+
+  // Get untransformed copy of source coordinates
+  pymol::vla<float> coord_orig;
+  if (move_flag) {
+    coord_orig = cs->Coord;
+    p_return_val_if_fail(coord_orig, pymol::Error::MEMORY);
+  }
+
+  // Add coordinates into the coordinate set(s)
+  for (StateIterator iter(G, nullptr, state0, I->NCSet); iter.next();) {
+    const float* const vec =
+        move_flag ? target_vectors[iter.state].data() : nullptr;
+    ok = AddCoordinateIntoCoordSet(I->CSet[iter.state], cs.get(),
+        coord_orig.data(), at0, mat1_inv, vec);
+    p_return_val_if_fail(ok, pymol::Error::MEMORY);
+  }
+
+  ok = ObjectMoleculeSort(I);
+  p_return_val_if_fail(ok, pymol::Error::MEMORY);
+
+  ObjectMoleculeUpdateIDNumbers(I);
+
+  if (at0 != index0 || at1 != index1) {
+    ObjectMoleculePurge(I);
+  }
+
+  // edit the resulting bond
+  if (edit) {
+    int atm_pk1 = -1;
+    int atm_pk2 = -1;
+    for (int atm = 0; atm < I->NAtom; ++atm) {
+      if (I->AtomInfo[atm].temp1 == 1) {
+        atm_pk2 = atm;
+      } else if (I->AtomInfo[atm].temp1 == 2) {
+        atm_pk1 = atm;
+      }
+    }
+    if (atm_pk2 >= 0 && atm_pk1 >= 0) {
+      auto sele1 = pymol::string_format("%s`%d", I->Name, atm_pk1 + 1);
+      auto sele2 = pymol::string_format("%s`%d", I->Name, atm_pk2 + 1);
+      EditorSelect(G, sele1.data(), sele2.data(), "", "", false, true, true);
+    }
+  }
+
+  return {};
+}
 
 /*========================================================================*/
 int ObjectMoleculeVerifyChemistry(ObjectMolecule * I, int state)
@@ -3491,9 +3515,9 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index,
   ok_assert(1, ObjectMoleculeUpdateNeighbors(I));
 
   for(a = 0; a < I->NCSet; a++) {       /* add atom to each coordinate set */
-    if(I->CSet[a]) {
-      ObjectMoleculeGetAtomVertex(I, a, index, v0);
-      ObjectMoleculeFindOpenValenceVector(I, a, index, v, NULL, -1);
+    if (const auto* cs_a = I->CSet[a]) {
+      CoordSetGetAtomVertex(cs_a, index, v0);
+      CoordSetFindOpenValenceVector(cs_a, index, v);
       scale3f(v, d, v);
       add3f(v0, v, cs->Coord.data());
       ok_assert(1, CoordSetMerge(I, I->CSet[a], cs));
@@ -3571,13 +3595,12 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
       if (ok)
 	ok &= ObjectMoleculeUpdateNeighbors(I);
       for(a = 0; ok &&  a < I->NCSet; a++) {   /* add atom to each coordinate set */
-        if(I->CSet[a]) {
-          ObjectMoleculeGetAtomVertex(I, a, index, v0);
-          ObjectMoleculeFindOpenValenceVector(I, a, index, v, NULL, -1);
+        if (auto* cs_a = I->CSet[a]) {
+          CoordSetGetAtomVertex(cs_a, index, v0);
+          CoordSetFindOpenValenceVector(cs_a, index, v);
           scale3f(v, d, v);
           add3f(v0, v, cs->Coord.data());
-	  if (ok)
-	    ok &= CoordSetMerge(I, I->CSet[a], cs);
+          ok &= CoordSetMerge(I, cs_a, cs);
         }
       }
       delete cs;
@@ -3593,24 +3616,26 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 
 
 /*========================================================================*/
-static int get_planer_normal(ObjectMolecule * I, int state, int index, float *normal)
-{                               /* NOTE assumes neighbors are defined */
+/**
+ * @param[out] normal (3x1) Normal vector of planar geometry at atom `atm`
+ *
+ * @return True if the atom has planar geometry and the normal could be computed
+ *
+ * @pre neighbors are defined
+ */
+static bool get_planer_normal(const CoordSet* cs, int const atm, float* normal)
+{
   int found = false;
   int nOcc = 0;
   float occ[MaxOcc * 3];
-  AtomInfoType *ai = I->AtomInfo + index;
-  int n, a1;
   float v0[3], v1[3], v2[3], n0[3];
 
-  if(ObjectMoleculeGetAtomVertex(I, state, index, v0)) {
-    n = I->Neighbor[index];
-    n++;                        /* skip count */
-    while(1) {                  /* look for an attached non-hydrogen as a base */
-      a1 = I->Neighbor[n];
-      n += 2;
-      if(a1 < 0)
-        break;
-      if(ObjectMoleculeGetAtomVertex(I, state, a1, v1)) {
+  if (CoordSetGetAtomVertex(cs, atm, v0)) {
+    const auto* I = cs->Obj;
+
+    // look for an attached non-hydrogen as a base
+    for (auto const& neighbor : AtomNeighbors(I, atm)) {
+      if (CoordSetGetAtomVertex(cs, neighbor.atm, v1)) {
         subtract3f(v1, v0, n0);
         normalize3f(n0);        /* n0's point away from center atom */
         copy3f(n0, occ + 3 * nOcc);
@@ -3619,7 +3644,7 @@ static int get_planer_normal(ObjectMolecule * I, int state, int index, float *no
           break;
       }
     }
-    switch (ai->geom) {
+    switch (I->AtomInfo[atm].geom) {
     case cAtomInfoPlanar:
       if(nOcc > 1) {
         cross_product3f(occ, occ + 3, normal);
@@ -3646,21 +3671,22 @@ static int get_planer_normal(ObjectMolecule * I, int state, int index, float *no
   return found;
 }
 
-
 /*========================================================================*/
-int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
-                                        int index, float *v, float *seek,
-                                        int ignore_index)
+/**
+ * @param atm Atom index
+ * @param[out] v (3x1) Normalized open valence vector
+ * @param seek (3x1) Primer for the direction, or NULL for random priming.
+ * @param ignore_index Atom index of neighbor to ignore
+ * @return True if valid open valence vector found
+ */
+bool CoordSetFindOpenValenceVector(
+    const CoordSet* cs, int atm, float* v, const float* seek, int ignore_index)
 {
-  CoordSet *cs;
   int nOcc = 0;
   float occ[MaxOcc * 3];
   int last_occ = -1;
-  int n;
-  int a1;
   float v0[3], v1[3], n0[3] = {0.0F,0.0F,0.0F}, t[3];
   int result = false;
-  AtomInfoType *ai;
   float y[3], z[3];
 
   /* default is +X */
@@ -3668,26 +3694,18 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
   v[1] = 0.0;
   v[2] = 0.0;
 
-  if(state < 0)
-    state = 0;
-  if(I->NCSet == 1)
-    state = 0;
-  state = state % I->NCSet;
-  cs = I->CSet[state];
   if(cs) {
-    if((index >= 0) && (index <= I->NAtom)) {
-      ai = I->AtomInfo + index;
-      if(ObjectMoleculeGetAtomVertex(I, state, index, v0)) {
-        ObjectMoleculeUpdateNeighbors(I);
-        n = I->Neighbor[index];
-        n++;                    /* skip count */
-        while(1) {              /* look for an attached non-hydrogen as a base */
-          a1 = I->Neighbor[n];
-          n += 2;
-          if(a1 < 0)
-            break;
+    const auto* I = cs->Obj;
+
+    if (atm >= 0 && atm <= I->NAtom) {
+      if (CoordSetGetAtomVertex(cs, atm, v0)) {
+        const auto* ai = I->AtomInfo.data() + atm;
+
+        // look for an attached non-hydrogen as a base
+        for (auto const& neighbor : AtomNeighbors(I, atm)) {
+          auto const a1 = neighbor.atm;
           if(a1 != ignore_index) {
-            if(ObjectMoleculeGetAtomVertex(I, state, a1, v1)) {
+            if (CoordSetGetAtomVertex(cs, a1, v1)) {
               last_occ = a1;
               subtract3f(v1, v0, n0);
               normalize3f(n0);  /* n0's point away from center atom */
@@ -3726,7 +3744,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
             case cAtomInfoPlanar:
               {
                 if(!seek) {
-                  if((last_occ >= 0) && get_planer_normal(I, state, last_occ, n0)) {
+                  if (last_occ >= 0 && get_planer_normal(cs, last_occ, n0)) {
                     copy3f(n0, y);
                     get_system2f3f(occ, y, z);
                   } else {
@@ -3754,7 +3772,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
                 get_random3f(v);
               else
                 copy3f(seek, v);
-              result = true;
+              result = false;
               break;
             }
             break;
@@ -3787,7 +3805,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
               } else
                 copy3f(seek, v);
               /* hypervalent */
-              result = true;
+              result = false;
               break;
             }
             break;
@@ -3809,7 +3827,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
               } else
                 copy3f(seek, v);
               /* hypervalent */
-              result = true;
+              result = false;
               break;
             }
             break;
@@ -3819,7 +3837,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
             else
               copy3f(seek, v);
             /* hypervalent */
-            result = true;
+            result = false;
             break;
           }
         }

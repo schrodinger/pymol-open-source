@@ -381,16 +381,13 @@ int ObjectMoleculePreposReplAtom(ObjectMolecule * I, int index, AtomInfoType * a
 void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average);
 int ObjectMoleculeSetAtomVertex(ObjectMolecule * I, int state, int index, float *v);
 int ObjectMoleculeVerifyChemistry(ObjectMolecule * I, int state);
-int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
-                                        int index, float *v, float *seek,
-                                        int ignore_index);
 int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index);
 int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode,
                               int order);
 int ObjectMoleculeAttach(ObjectMolecule * I, int index,
     pymol::vla<AtomInfoType>&& nai);
-int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src, int index1,
-                        int mode, int move_flag);
+pymol::Result<> ObjectMoleculeFuse(ObjectMolecule* I, int index0,
+    const ObjectMolecule* src, int index1, bool create_bond, bool move_flag);
 int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force);
 int ObjectMoleculeAreAtomsBonded(ObjectMolecule * I, int i0, int i1);
 void ObjectGotoState(CObject* I, int state);
