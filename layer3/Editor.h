@@ -94,5 +94,6 @@ int EditorGetScheme(PyMOLGlobals * G);
 void EditorDihedralInvalid(PyMOLGlobals * G, ObjectMolecule * obj);
 
 void EditorInvalidateShaderCGO(PyMOLGlobals * G);
+void EditorRemoveStale(PyMOLGlobals* G);
 
 #endif

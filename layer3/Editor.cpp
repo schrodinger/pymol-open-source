@@ -2384,6 +2384,26 @@ void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
 
 }
 
+void EditorRemoveStale(PyMOLGlobals* G)
+{
+  if (!EditorActive(G)) {
+    return;
+  }
+
+  for (const auto& sele :
+      {cEditorSele1, cEditorSele2, cEditorSele3, cEditorSele4}) {
+    auto tarSele = SelectorIndexByName(G, sele);
+    if (tarSele > 0) {
+      int at;
+      auto obj = SelectorGetFastSingleAtomObjectIndex(G, tarSele, &at);
+      if (!obj) {
+        ExecutiveDelete(G, sele);
+      }
+    }
+  }
+
+  EditorActivate(G, -1, true);
+}
 
 /*========================================================================*/
 int EditorInit(PyMOLGlobals * G)

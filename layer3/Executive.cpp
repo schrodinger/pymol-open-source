@@ -9118,6 +9118,7 @@ pymol::Result<> ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet
       }
     }
   }
+  EditorRemoveStale(G);
   return {};
 }
 
