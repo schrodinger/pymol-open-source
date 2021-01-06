@@ -603,7 +603,7 @@ enum {
   REC_f( 503, sculpt_avd_gap                          , ostate    , -1.0F ),
   REC_f( 504, sculpt_avd_range                        , ostate    , -1.0F ),
   REC_i( 505, sculpt_avd_excl                         , ostate    , 7 ),
-  REC_b( 506, async_builds                            , object    , 0 ),
+  REC_b( 506, async_builds                            , object    , 1 ),
   REC_s( 507, fetch_path                              , global    , "." ),
   REC_f( 508, cartoon_ring_radius                     , atom      , -1.0F ),
   REC_b( 509, ray_color_ramps                         , ostate    , 0 ),
