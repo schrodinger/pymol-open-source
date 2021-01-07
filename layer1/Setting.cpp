@@ -1212,7 +1212,7 @@ const char * SettingGetTextPtr(PyMOLGlobals * G, const CSetting * set1, const CS
         case cColorBack:
           strcpy(buffer, "back");
           break;
-        case -1:
+        case cColorDefault:
           strcpy(buffer, "default");
           break;
         default:
@@ -3115,15 +3115,18 @@ int SettingCheckFontID(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int f
 
 /**
  * State index iterator constructor, see Setting.h for documentation.
+ *
+ * @param set Optional object settings (can be NULL)
+ * @param nstate Maximum number of states
  */
-StateIterator::StateIterator(PyMOLGlobals * G, CSetting * set, int state_, int nstate) {
-  if(state_ == -2) {
-    // current state
+StateIterator::StateIterator(
+    PyMOLGlobals* G, CSetting* set, StateIndex_t state_, int nstate)
+{
+  if (state_ == cStateCurrent) {
     state_ = SettingGet_i(G, set, NULL, cSetting_state) - 1;
   }
 
-  if(state_ == -1) {
-    // all states
+  if (state_ == cStateAll) {
     state = 0;
     end = nstate;
   } else {
@@ -3142,7 +3145,10 @@ StateIterator::StateIterator(PyMOLGlobals * G, CSetting * set, int state_, int n
   state--;
 }
 
-StateIterator::StateIterator(CObject* obj, int state_)
+/**
+ * Take settings and number of states from given object.
+ */
+StateIterator::StateIterator(CObject* obj, StateIndex_t state_)
     : StateIterator(obj->G, obj->Setting.get(), state_, obj->getNFrame())
 {
 }

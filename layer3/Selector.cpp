@@ -1636,8 +1636,8 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
   if(!single_object) {
     if(state_value < 0) {
       switch (state_value) {
-      case -2:                 /* api: state=-1: current global state */
-      case -3:                 /* api: state=-2: effective object states TO DO! */
+      case cSelectorUpdateTableCurrentState:
+      case cSelectorUpdateTableEffectiveStates:
         SelectorUpdateTable(G, state_value, -1);
         break;
       default:
@@ -1661,8 +1661,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
     state_start = 0;
     state_stop = SelectorGetSeleNCSet(G, target);
 
-    if (state_value == -2) {
-      /* api: state=-1: current global state */
+    if (state_value == cStateCurrent) {
       StateIterator iter(G, NULL, state_value, state_stop);
       if (iter.next()) {
         state_start = iter.state;
@@ -5157,6 +5156,9 @@ int SelectorMapGaussian(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
   if(state >= cSelectorUpdateTableEffectiveStates) {
     SelectorUpdateTable(G, state, -1);
   } else {
+    PRINTFB(G, FB_ObjectMap, FB_Warnings)
+      " %s-Warning: state = %d\n", __func__, state ENDFB(G);
+    assert(false); // no mercy for debug build
     SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
   }
   for(a = 0; a < I->Table.size(); a++) {
@@ -7303,8 +7305,8 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
 
   if(state < 0) {
     switch (state) {
-    case -2:
-    case -3:
+    case cSelectorUpdateTableCurrentState:
+    case cSelectorUpdateTableEffectiveStates:
       state = SceneGetState(G);
       break;
     }
@@ -8505,8 +8507,8 @@ static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base, int state)
       CoordSet *cs;
       int at, idx, s, s0 = 0, sN = I->NCSet;
 
-      if(state != -1) {
-        s0 = (state < -1) ? SceneGetState(G) : state;
+      if (state != cStateAll) {
+        s0 = (state < cStateAll) ? SceneGetState(G) : state;
         sN = s0 + 1;
       }
 
@@ -9432,8 +9434,8 @@ int SelectorOperator22(PyMOLGlobals * G, EvalElem * base, int state)
 
   if(state < 0) {
     switch (state) {
-    case -2:
-    case -3:
+    case cSelectorUpdateTableCurrentState:
+    case cSelectorUpdateTableEffectiveStates:
       state = SceneGetState(G);
       break;
     }

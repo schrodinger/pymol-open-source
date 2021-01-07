@@ -74,27 +74,27 @@ public:
  */
 class SeleCoordIterator : public AbstractAtomIterator {
   PyMOLGlobals* G = nullptr;
-  int statearg; // state argument, can be -1 (all), -2 (current), -3 (effective)
-  int statemax; // largest state in selection
+  StateIndex_t statearg; // state argument, can be -1 (all), -2 (current), -3 (effective)
+  StateIndex_t statemax; // largest state in selection
   bool per_object;              // whether to iterate over object states or global states
   ObjectMolecule * prev_obj;    // for per_object=true
-  int sele = -1;
+  SelectorID_t sele = -1 /* cSelectionInvalid */;
 
 public:
   int a;        //!< index in selection
-  int state;    //!< current state
+  StateIndex_t state; //!< current state
 
   /// Undefined state until copy assigned from a valid state
   SeleCoordIterator() = default;
-  SeleCoordIterator(
-      PyMOLGlobals* G_, int sele_, int state_, bool update_table = true);
+  SeleCoordIterator(PyMOLGlobals*, SelectorID_t sele_, StateIndex_t state_,
+      bool update_table = true);
 
   void reset();
   bool next();
 
   /// Return true if iterating over all states
   bool isMultistate() const {
-    return statearg == -1;
+    return statearg == cStateAll;
   }
 
   /// Return true if iterating over all states of an object before advancing
@@ -132,18 +132,18 @@ private:
  */
 class SeleAtomIterator : public AbstractAtomIterator {
   PyMOLGlobals * G;
-  int sele;     // selection
-  char * stmp;  // temporary named selection
+  SelectorID_t sele; //!< selection
+  char* stmp = nullptr; //!< temporary named selection
 
 public:
   int a;        //!< index in selection
 
   /// Iterate over an existing atom selection
   /// @pre ::SelectorUpdateTable was called
-  SeleAtomIterator(PyMOLGlobals * G_, int sele_) {
-    G = G_;
-    sele = sele_;
-    stmp = NULL;
+  SeleAtomIterator(PyMOLGlobals* G_, SelectorID_t sele_)
+      : G(G_)
+      , sele(sele_)
+  {
     reset();
   };
 

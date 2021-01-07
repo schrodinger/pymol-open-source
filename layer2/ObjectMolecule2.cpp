@@ -260,8 +260,8 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
   pymol::vla<AtomInfoType> atInfo(1);
   AtomInfoType* ai = atInfo.data();
 
-  // FIXME this should be -2
-  if (state == -1) {
+  // FIXME this should be cStateCurrent
+  if (state == cStateAll) {
     state = I->getCurrentState();
   }
 
@@ -272,6 +272,11 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
     if(sele_index >= 0) {
       start_state = 0;
       stop_state = SelectorCountStates(G, sele_index);
+
+      // Here, -3 does not mean cSelectorUpdateTableEffectiveStates. It means
+      // all states present in `sele_index` AND `I`. State != -3 means all
+      // states in `sele_index`, so it would create new states in `I` if they
+      // don't exist yet.
       if(state == -3)
         extant_only = true;
     } else {

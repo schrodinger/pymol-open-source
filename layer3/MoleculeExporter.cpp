@@ -381,8 +381,8 @@ void MoleculeExporter::setRefObject(const char * ref_object, int ref_state) {
   if (!base)
     return;
 
-  if (ref_state == -1 /* all */) {
-    ref_state = -2; // current
+  if (ref_state == cStateAll) {
+    ref_state = cStateCurrent;
   }
 
   if(ObjectGetTotalMatrix(base, ref_state, true, matrix)) {
@@ -1622,12 +1622,12 @@ pymol::vla<char> MoleculeExporterGetStr(PyMOLGlobals * G,
 
   std::unique_ptr<MoleculeExporter> exporter;
 
-  if (ref_state < -1)
-   ref_state = state;
+  if (ref_state < cStateAll)
+    ref_state = state;
 
   // do "effective" current states
-  if (state == -2)
-    state = -3;
+  if (state == cStateCurrent)
+    state = cSelectorUpdateTableEffectiveStates;
 
   if (strcmp(format, "pdb") == 0) {
     exporter.reset(new MoleculeExporterPDB);
@@ -1874,10 +1874,10 @@ PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals * G,
     const char *s1, int state,
     const char *ref_object, int ref_state)
 {
-  if (state == -1)
+  if (state == cStateAll)
     state = 0; // no multi-state support
 
-  if (ref_state < -1)
+  if (ref_state < cStateAll)
     ref_state = state;
 
   int sele = SelectorIndexByName(G, s1);

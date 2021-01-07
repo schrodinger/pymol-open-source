@@ -84,9 +84,9 @@ struct CObject {
   int Grabbed = 0;
 
   // methods
-  int getCurrentState() const;
-  CObjectState* getObjectState(int state);
-  const CObjectState* getObjectState(int state) const
+  StateIndex_t getCurrentState() const;
+  CObjectState* getObjectState(StateIndex_t state);
+  const CObjectState* getObjectState(StateIndex_t state) const
   {
     return const_cast<CObject*>(this)->getObjectState(state);
   }
@@ -175,7 +175,10 @@ typedef struct _CObjectUpdateThreadInfo CObjectUpdateThreadInfo;
 /* Note: public objects are ones that do not start with "_" */
 
 // object and object-state level setting
-template <typename V> void SettingSet(int index, V value, CObject * obj, int state=-1) {
+template <typename V>
+void SettingSet(
+    int index, V value, CObject* obj, StateIndex_t state = cStateAll)
+{
     auto handle = obj->getSettingHandle(state);
     if (handle)
       SettingSet(obj->G, *handle, index, value);

@@ -41,6 +41,12 @@ typedef int lexborrow_t;
 using SelectorID_t = int;
 using SelectorMemberOffset_t = int;
 
+using StateIndex_t = int; ///< 0-based state index (C/C++/JavaScript)
+using StateIndexPython_t = int; ///< 1-based state index (Python/Settings)
+
+constexpr StateIndex_t cStateAll = -1;
+constexpr StateIndex_t cStateCurrent = -2;
+
 typedef struct _CMemoryCache CMemoryCache;
 struct CIsosurf;
 typedef struct _CTetsurf CTetsurf;

@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from .constants import CURRENT_STATE, ALL_STATES
+
 if True:
 
     import pymol
@@ -1079,7 +1081,7 @@ SEE ALSO
 
     def pseudoatom(object='', selection='', name='PS1', resn='PSD', resi='1', chain='P',
                    segi='PSDO', elem='PS', vdw=-1.0, hetatm=1, b=0.0, q=0.0, color='',
-                   label='', pos=None, state=0, mode='rms', quiet=1,_self=cmd):
+                   label='', pos=None, state=ALL_STATES, mode='rms', quiet=1,_self=cmd):
         '''
         
 DESCRIPTION

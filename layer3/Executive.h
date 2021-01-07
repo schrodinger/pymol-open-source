@@ -439,7 +439,7 @@ pymol::Result<> ExecutiveMask(
 void ExecutiveRebuildAll(PyMOLGlobals * G);
 pymol::Result<> ExecutiveSpheroid(PyMOLGlobals * G, const char *name, int average);
 pymol::Result<> ExecutiveAddHydrogens(PyMOLGlobals* G, const char* s1 = "(all)",
-    int quiet = 1, int state = -1, bool legacy = false);
+    int quiet = 1, int state = cStateAll, bool legacy = false);
 void ExecutiveFixHydrogens(PyMOLGlobals * G, const char *s1, int quiet);
 pymol::Result<> ExecutiveFuse(PyMOLGlobals* G, const char* s0 = "(pk1)",
     const char* s1 = "(pk2)", int mode = 0, int recolor = 1, int move_flag = 1);
@@ -520,9 +520,11 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G);
 pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* name, int cycles,
     int window, int first, int last, int ends, int quiet);
 int ExecutiveSculptDeactivate(PyMOLGlobals * G, const char *name);
-int ExecutiveSculptActivate(PyMOLGlobals * G, const char *name, int state=-1, int match_state=-2,
-                            int match_by_segment=0);
-float ExecutiveSculptIterate(PyMOLGlobals * G, const char *name, int state=-1, int n_cycle=10);
+int ExecutiveSculptActivate(PyMOLGlobals* G, const char* name,
+    int state = cStateAll, int match_state = cStateCurrent,
+    int match_by_segment = 0);
+float ExecutiveSculptIterate(
+    PyMOLGlobals* G, const char* name, int state = cStateAll, int n_cycle = 10);
 pymol::Result<> ExecutiveMapNew(PyMOLGlobals* G, const char* name, int type,
     float grid_spacing, const char* sele, float buffer, const float* minCorner,
     const float* maxCorner, int state, int have_corners, int quiet, int zoom,

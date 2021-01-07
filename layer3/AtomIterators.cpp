@@ -88,13 +88,13 @@ SeleCoordIterator::SeleCoordIterator(
   statearg = state_;
 
   // current state (use -3 for "effective" state)
-  if (statearg == -2) {
+  if (statearg == cStateCurrent) {
     statearg = SettingGetGlobal_i(G, cSetting_state) - 1;
   }
 
   // safety check
-  if (statearg < -1) {
-    statearg = -3;
+  if (statearg < cStateAll) {
+    statearg = cSelectorUpdateTableEffectiveStates;
   }
 
   if (update_table) {
@@ -142,7 +142,8 @@ bool SeleCoordIterator::next() {
       } else if(statemax < obj->NCSet) {
         statemax = obj->NCSet;
       }
-    } else if (statearg == -3 && obj != prev_obj) {
+    } else if (statearg == cSelectorUpdateTableEffectiveStates &&
+               obj != prev_obj) {
       // "effective" state (no support here for settings all_states=1 or state=0)
       state = std::max(0, obj->getCurrentState());
       prev_obj = obj;

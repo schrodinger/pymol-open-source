@@ -275,13 +275,13 @@ struct CSetting {
  *     }
  */
 class StateIterator {
-  int end;
+  StateIndex_t end;
 
 public:
-  int state;
+  StateIndex_t state;
 
-  StateIterator(PyMOLGlobals * G, CSetting * set, int state_, int nstate);
-  StateIterator(struct CObject* obj, int state_);
+  StateIterator(PyMOLGlobals*, CSetting*, StateIndex_t, int nstate);
+  StateIterator(struct CObject*, StateIndex_t);
 
   bool next() {
     return (++state < end);

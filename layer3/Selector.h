@@ -59,12 +59,16 @@ SelectorCreateResult_t SelectorCreateFromTagDict(PyMOLGlobals * G, const char *s
 bool SelectorMoveMember(PyMOLGlobals * G, SelectorMemberOffset_t s, SelectorID_t sele_old, SelectorID_t sele_new);
 SelectorCreateResult_t SelectorCreateEmpty(PyMOLGlobals * G, const char *name, int exec_managed);
 
-int SelectorUpdateTable(PyMOLGlobals * G, int req_state, SelectorID_t domain);
 int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, SelectorID_t domain);
 
-#define cSelectorUpdateTableAllStates -1
-#define cSelectorUpdateTableCurrentState -2
-#define cSelectorUpdateTableEffectiveStates -3
+constexpr StateIndex_t cSelectorUpdateTableAllStates = cStateAll;
+constexpr StateIndex_t cSelectorUpdateTableCurrentState = cStateCurrent;
+constexpr StateIndex_t cSelectorUpdateTableEffectiveStates =
+    -3; ///< deprecated, use cSelectorUpdateTableCurrentState instead
+
+int SelectorUpdateTable(PyMOLGlobals*,
+    StateIndex_t req_state = cSelectorUpdateTableAllStates,
+    SelectorID_t domain = cSelectionInvalid);
 
 SelectorID_t SelectorIndexByName(PyMOLGlobals * G, const char *sele, int ignore_case=-1);
 const char *SelectorGetNameFromIndex(PyMOLGlobals * G, SelectorID_t index);

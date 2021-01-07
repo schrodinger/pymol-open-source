@@ -250,7 +250,7 @@ typedef struct AtomInfoType {
   unsigned int flags;
   int temp1;                    /* kludge fields - to remove */
   int unique_id;                /* introduced in version 0.77 */
-  int discrete_state;           /* state+1 for atoms in discrete objects */
+  StateIndexPython_t discrete_state; ///< state+1 for atoms in discrete objects
   float elec_radius;            /* radius for PB calculations */
   int rank;
   int visRep;                   /* bitmask for all reps */
