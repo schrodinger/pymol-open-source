@@ -9741,22 +9741,7 @@ pymol::Result<> ExecutiveCopy(
     return pymol::make_error("Object not found.");
   }
 
-  CObject *oDst = nullptr;
-  ObjectMap *oDstMap = nullptr;
-
-  switch (os->type) {
-  case cObjectMolecule:
-    oDst = ObjectMoleculeCopy(static_cast<const ObjectMolecule *>(os));
-    break;
-  case cObjectMap:
-    ObjectMapNewCopy(G, static_cast<const ObjectMap *>(os), &oDstMap,
-                     /* source_state=all */ -1,
-                     /* target_state=(unused)*/ 0);
-    oDst = oDstMap;
-    break;
-  default:
-    return pymol::make_error("Bad object type.");
-  }
+  CObject* oDst = os->clone();
 
   if(!oDst) {
     return pymol::make_error("Failed to create copy");

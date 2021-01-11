@@ -93,8 +93,8 @@ public:
 
   cache_ptr() = default;
   // move
-  cache_ptr(cache_ptr&& other) : cache_ptr(other.release()) {}
-  cache_ptr& operator=(cache_ptr&& other)
+  cache_ptr(cache_ptr&& other) noexcept : cache_ptr(other.release()) {}
+  cache_ptr& operator=(cache_ptr&& other) noexcept
   {
     this->reset(other.release());
     return *this;
