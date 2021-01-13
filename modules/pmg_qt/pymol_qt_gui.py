@@ -476,7 +476,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         if toggle:
             self.menubar.hide()
-            self.ext_window.hide()
+            if not self.ext_window.isFloating():
+                self.ext_window.hide()
             self.showFullScreen()
             self.pymolwidget.setFocus()
         else:
