@@ -55,7 +55,10 @@ class TestPyMOLWin(testing.PyMOLTestCase):
             subprocess.call([bat_filename])
 
             # wait for spawned process
-            time.sleep(0.5)
+            for _ in range(10):
+                if os.path.exists(out_filename):
+                    break
+                time.sleep(0.5)
 
             cmd.load(out_filename)
             self.assertEqual(7, cmd.count_atoms())
