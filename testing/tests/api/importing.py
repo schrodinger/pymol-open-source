@@ -107,9 +107,42 @@ class TestImporting(testing.PyMOLTestCase):
         # non-existing object name should throw
         self.assertRaises(pymol.CmdException, lambda: cmd.finish_object('m2'))
 
-    def testLoad(self):
-        cmd.load
-        self.skipTest("TODO")
+    def testLoad_append_state(self):
+        filename = self.datafile("1ehz-5.pdb")
+        cmd.load(filename)
+        cmd.load(filename, format="pdb")
+        self.assertEqual(cmd.get_names(), ["1ehz-5"])
+        self.assertEqual(cmd.count_atoms(), 112)
+        self.assertEqual(cmd.count_states(), 2)
+
+    def testLoad_replace_state(self):
+        filename = self.datafile("1ehz-5.pdb")
+        cmd.load(filename)
+        cmd.load(filename, state=1)
+        self.assertEqual(cmd.get_names(), ["1ehz-5"])
+        self.assertEqual(cmd.count_atoms(), 112)
+        self.assertEqual(cmd.count_states(), 1)
+
+    def testLoad_state_skip(self):
+        filename = self.datafile("1ehz-5.pdb")
+        cmd.load(filename)
+        cmd.load(filename, state=3)
+        self.assertEqual(cmd.count_states(), 3)
+
+    def testLoad_no_zoom(self):
+        view = cmd.get_view()
+        cmd.load(self.datafile("1ehz-5.pdb"), zoom=0)
+        self.assertEqual(view, cmd.get_view())
+
+    @testing.requires('incentive')
+    def testLoad_mimic(self):
+        filename = self.datafile("repr.mae")
+        cmd.load(filename, "m0", mimic=0)
+        cmd.load(filename, "m1", mimic=1)
+        self.assertFalse(
+            cmd.get_setting_boolean("stick_ball", "m0.x_ballstick", state=1))
+        self.assertTrue(
+            cmd.get_setting_boolean("stick_ball", "m1.x_ballstick", state=1))
 
     @testing.requires_version('1.7.3.0')
     def testLoad_idx(self):
