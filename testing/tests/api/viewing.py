@@ -409,8 +409,23 @@ class TestViewing(testing.PyMOLTestCase):
         self.assertEqual(cmd.get_viewport(), v)
 
     def testCartoon(self):
-        cmd.cartoon
-        self.skipTest('TODO')
+        cmd.load(self.datafile("1t46-frag.pdb"))
+        cmd.cartoon("skip")
+        cmd.cartoon("rect", "resi 590-593")
+        cmd.cartoon("oval", "resi 595-598")
+        cmd.cartoon("tube", "resi 600-602")
+        cmd.cartoon("putty", "resi 606-620")
+        cmd.cartoon("dumbbell", "resi 623-625")
+        cmd.set("cartoon_highlight_color", "red")
+        cmd.color("yellow")
+        cmd.viewport(200, 100)
+        cmd.set_view(
+            (-0.102381177, 0.9807688, -0.16615206, -0.781365454, 0.024080699,
+             0.623609841, 0.615618646, 0.193670169, 0.763873398, -0.000125334,
+             -0.000184208, -65.135032654, 24.068731308, 26.194671631,
+             53.642494202, 40.266975403, 89.999656677, -20.))
+        self.ambientOnly()
+        self.assertImageEqual("viewing-ref/cartoon.png")
 
     def testCapture(self):
         cmd.capture
@@ -449,12 +464,38 @@ class TestViewing(testing.PyMOLTestCase):
         self.skipTest('TODO')
 
     def testRebuild(self):
-        cmd.rebuild
-        self.skipTest('TODO')
+        self.ambientOnly()
+        cmd.viewport(100, 100)
+        cmd.pseudoatom("m1", pos=(0, 0, 0), vdw=1)
+        cmd.pseudoatom("m2", pos=(0, 0, -4), vdw=1)
+        cmd.zoom()
+        cmd.show('spheres')
+        cmd.color("blue", "m1")
+        cmd.color("red", "m2")
+        self.assertImageHasNotColor('red')
+        cmd.alter("m2", "vdw=2")
+        self.assertImageHasNotColor('red')
+        cmd.rebuild()
+        self.assertImageHasColor('red')
 
-    def testRecolor(self):
-        cmd.recolor
-        self.skipTest('TODO')
+    @testing.foreach("spheres", "nb_spheres", "sticks", "lines", "nonbonded",
+                     "surface")
+    def testRecolor(self, rep):
+        self.ambientOnly()
+        cmd.viewport(100, 100)
+        cmd.fragment("gly")
+        if rep in ('nb_spheres', 'nonbonded'):
+            cmd.unbond("*", "*")
+        if rep in ('lines', 'nonbonded'):
+            cmd.set("line_width", 5)
+        cmd.zoom()
+        cmd.color("blue")
+        cmd.show_as(rep)
+        self.assertImageHasColor('blue')
+        cmd.alter("all", "color = 0x40FF0000")
+        self.assertImageHasColor('blue')
+        cmd.recolor()
+        self.assertImageHasColor('red')
 
     def testColor(self):
         cmd.fragment('ala')
