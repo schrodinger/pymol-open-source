@@ -13917,9 +13917,6 @@ Block *ExecutiveGetBlock(PyMOLGlobals * G)
 
 /**
  * Makes a custom symmetry operation label.
- *
- * TODO: Would be nicer to use CIF-style symop labels ("1_555" etc.), e.g.:
- * pymol::string_format("%d_%d%d%d", a + 1, x + 5, y + 5, z + 5);
  */
 static std::string make_symexp_segi_label(int a, int x, int y, int z)
 {
@@ -14080,11 +14077,12 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
             for (int c = 0; c < 3; c++) {
               ts[c] = std::round(tc[c] - ts[c]);
             }
+            float const shift[3] = {ts[0] + x, ts[1] + y, ts[2] + z};
             float m[16];
             identity44f(m);
-            m[3] = ts[0] + x;
-            m[7] = ts[1] + y;
-            m[11] = ts[2] + z;
+            m[3] = shift[0];
+            m[7] = shift[1];
+            m[11] = shift[2];
 
             left_multiply44f44f(const_cast<float const*>(m), mat);
             copy33f44f(sym->Crystal.fracToReal(), m);
@@ -14120,6 +14118,10 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
                 break;
               }
             }
+
+            // CIF-style symop label (e.g. "1_555")
+            cs->setTitle(pymol::string_format("%d_%.0f%.0f%.0f", a + 1,
+                shift[0] + 5, shift[1] + 5, shift[2] + 5));
           }
 
           if (!keepFlag) {
@@ -14128,7 +14130,6 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
           }
 
           if (segi) {
-            // TODO should really use (a, ts + xyz)
             auto seg = make_symexp_segi_label(a, x, y, z);
             lexidx_t segi = LexIdx(G, seg.c_str());
             for (unsigned atm = 0; atm < new_obj->NAtom; ++atm) {

@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 
 #include "pymol/math_defines.h"
 #include "pymol/memory.h"
+#include "pymol/zstring_view.h"
 
 #include <type_traits>
 
@@ -164,6 +165,8 @@ struct CoordSet : CObjectState {
 
   pymol::Result<pymol::Vec3> getAtomLabelOffset(int atm) const;
   pymol::Result<> setAtomLabelOffset(int atm, const float* offset);
+
+  void setTitle(pymol::zstring_view);
 };
 
 int BondInOrder(BondType * a, int b1, int b2);

@@ -570,6 +570,11 @@ pymol::Result<> CoordSet::setAtomLabelOffset(
   return {};
 }
 
+void CoordSet::setTitle(pymol::zstring_view title)
+{
+  UtilNCopy(Name, title.c_str(), sizeof(WordType));
+}
+
 int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, const float *diff)
 {
   auto G = I->G;

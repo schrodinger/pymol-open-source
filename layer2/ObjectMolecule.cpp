@@ -2691,7 +2691,7 @@ pymol::Result<> ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const
   if (!cs) {
     return pymol::make_error("Invalid state ", state + 1);
   }
-  UtilNCopy(cs->Name, text, sizeof(WordType));
+  cs->setTitle(text);
   return {};
 }
 
