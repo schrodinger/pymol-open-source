@@ -667,6 +667,10 @@ void ObjectMesh::update()
                   }
                   last_flag = flag;
                   v += 3;
+
+                  if (v - old_v.data() == ms->base_n_V) {
+                    ms->base_n_V = n_line * 3;
+                  }
                 }
                 if(last_flag) { /* terminate segment */
                   VLACheck(ms->N, int, n_seg);
