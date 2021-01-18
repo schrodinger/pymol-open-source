@@ -2587,8 +2587,6 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
       fog_start = SettingGetGlobal_f(I->G, cSetting_fog_start);
     if(fog_start > 1.0F)
       fog_start = 1.0F;
-    if(fog_start < 0.0F)
-      fog_start = 0.0F;
   }
 
   /* SETUP */
@@ -3408,9 +3406,7 @@ int RayTraceThread(CRayThreadInfo * T)
       fog_start = SettingGetGlobal_f(I->G, cSetting_fog_start);
     if(fog_start > 1.0F)
       fog_start = 1.0F;
-    if(fog_start < 0.0F)
-      fog_start = 0.0F;
-    if(fog_start > R_SMALL4) {
+    if(abs(fog_start) > R_SMALL4) {
       fogRangeFlag = true;
       if(fabs(fog_start - 1.0F) < R_SMALL4)     /* prevent div/0 */
         fogFlag = false;
@@ -6220,9 +6216,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
             fog_start = SettingGetGlobal_f(I->G, cSetting_fog_start);
           if(fog_start > 1.0F)
             fog_start = 1.0F;
-          if(fog_start < 0.0F)
-            fog_start = 0.0F;
-          if(fog_start > R_SMALL4) {
+          if(fabs(fog_start) > R_SMALL4) {
             fogRangeFlag = true;
             if(fabs(fog_start - 1.0F) < R_SMALL4)       /* prevent div/0 */
               fogFlag = false;
