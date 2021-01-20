@@ -161,6 +161,7 @@ int AtomInfoCheckUniqueBondID(PyMOLGlobals * G, BondType * bi)
 void BondTypeInit(BondType *bt){
   bt->unique_id = 0;
   bt->has_setting = 0;
+  bt->symop_2 = pymol::SymOp();
 }
 
 /**
@@ -2946,4 +2947,9 @@ void AtomInfoGetAlignedPDBAtomName(PyMOLGlobals * G,
   }
 
   name[4] = 0;
+}
+
+bool BondType::hasSymOp() const
+{
+  return symop_2;
 }

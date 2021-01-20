@@ -253,6 +253,34 @@ static void AtomInfoSetEntityId(PyMOLGlobals * G, AtomInfoType * ai, const char 
 }
 
 /**
+ * Initialize a bond. Only one of symmetry_1 or symmetry_2 must be non-default.
+ * If symmetry_2 is default and symmetry_1 is non-default, then swap the
+ * indices.
+ */
+static bool BondTypeInit3(PyMOLGlobals* G, BondType* bond, unsigned i1,
+    unsigned i2, const char* symmetry_1, const char* symmetry_2, int order = 1)
+{
+  auto symop_1 = pymol::SymOp(symmetry_1);
+  auto symop_2 = pymol::SymOp(symmetry_2);
+
+  if (symop_1) {
+    if (symop_2) {
+      PRINTFB(G, FB_Executive, FB_Warnings)
+      " Warning: Bonds with two symmetry operations not supported\n" ENDFB(G);
+      return false;
+    }
+
+    std::swap(i1, i2);
+    std::swap(symop_1, symop_2);
+  }
+
+  BondTypeInit2(bond, i1, i2, order);
+  bond->symop_2 = symop_2;
+
+  return true;
+}
+
+/**
  * Add one bond without checking if it already exists
  */
 static void ObjectMoleculeAddBond2(ObjectMolecule * I, int i1, int i2, int order) {
@@ -1693,7 +1721,6 @@ static pymol::vla<BondType> read_geom_bond(PyMOLGlobals * G, const cif_data * da
   int nBond = 0;
 
   auto bondvla = pymol::vla<BondType>(6 * nAtom);
-  auto bond = bondvla.data();
 
   // name -> atom index
   std::map<std::string, int> name_dict;
@@ -1706,20 +1733,17 @@ static pymol::vla<BondType> read_geom_bond(PyMOLGlobals * G, const cif_data * da
 
   // read table
   for (int i = 0; i < nrows; i++) {
-    if (strcmp(arr_symm_1->as_s(i),
-               arr_symm_2->as_s(i)))
-      // don't bond to symmetry mates
-      continue;
-
     std::string key1(arr_ID_1->as_s(i));
     std::string key2(arr_ID_2->as_s(i));
 
     int i1, i2;
     if (find2(name_dict, i1, key1, i2, key2)) {
-
-      nBond++;
-      BondTypeInit2(bond++, i1, i2, 1);
-
+      auto const bond = bondvla.check(nBond);
+      if (BondTypeInit3(G, bond, i1, i2, //
+              arr_symm_1->as_s(i),       //
+              arr_symm_2->as_s(i))) {
+        ++nBond;
+      }
     } else {
       PRINTFB(G, FB_Executive, FB_Details)
         " Executive-Detail: _geom_bond name lookup failed: %s %s\n",
@@ -1854,7 +1878,6 @@ static bool read_struct_conn_(PyMOLGlobals * G, const cif_data * data,
   int nBond = 0;
 
   cset->TmpBond = pymol::vla<BondType>(6 * nAtom);
-  auto bond = cset->TmpBond.data();
 
   // identifiers -> coord set index
   std::map<std::string, int> name_dict;
@@ -1878,10 +1901,6 @@ static bool read_struct_conn_(PyMOLGlobals * G, const cif_data * data,
 #endif
         strcasecmp(type_id, "disulf"))
       // ignore non-covalent bonds (saltbr, hydrog)
-      continue;
-    if (strcmp(col_symm[0]->as_s(i),
-               col_symm[1]->as_s(i)))
-      // don't bond to symmetry mates
       continue;
 
     std::string key[2];
@@ -1915,9 +1934,12 @@ static bool read_struct_conn_(PyMOLGlobals * G, const cif_data * data,
         order = bondOrderLookup(col_order->as_s(i));
       }
 
-      nBond++;
-      BondTypeInit2(bond++, i1, i2, order);
-
+      auto const bond = cset->TmpBond.check(nBond);
+      if (BondTypeInit3(G, bond, i1, i2, //
+              col_symm[0]->as_s(i),      //
+              col_symm[1]->as_s(i), order)) {
+        ++nBond;
+      }
     } else {
       PRINTFB(G, FB_Executive, FB_Details)
         " Executive-Detail: _struct_conn name lookup failed: %s %s\n",

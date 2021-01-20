@@ -565,7 +565,7 @@ SEE ALSO
 
     def valence(order, selection1=None, selection2=None, source='',
                 target_state=0, source_state=0, reset=1,
-                quiet=1, _self=cmd):
+                quiet=1, *, symop=None, _self=cmd):
         '''
 DESCRIPTION
 
@@ -604,7 +604,7 @@ SEE ALSO
         try:
             _self.lock(_self)
             if order>=0:
-                r = _cmd.bond(_self._COb, "("+selection1+")", "("+selection2+")", int(order), 2, int(quiet))
+                r = _cmd.bond(_self._COb, selection1, selection2, int(order), 2, int(quiet), symop)
             else:
                 r = _cmd.revalence(_self._COb,
                                    "("+selection1+")",
@@ -658,7 +658,7 @@ ARGUMENTS
         with _self.lockcm:
             return _cmd.rebond(_self._COb, oname, state - 1)
 
-    def bond(atom1="(pk1)", atom2="(pk2)", order=1, edit=1, quiet=1, _self=cmd):
+    def bond(atom1="pk1", atom2="pk2", order=1, *, quiet=1, symop=None, _self=cmd):
         '''
 DESCRIPTION
 
@@ -669,16 +669,19 @@ USAGE
 
     bond [atom1, atom2 [,order]]
 
+ARGUMENTS
+
+    atom1 = str: Atom selection of first atom {default: pk1}
+
+    atom2 = str: Atom selection of second atom {default: pk2}
+
+    order = int: Bond order {default: 1}
+
+    symop = str: Symmetry operation code for second atom (e.g. "1_555")
+
 NOTES
 
     The atoms must both be within the same object.
-
-    The default behavior is to create a bond between the (lb) and (rb)
-    selections.
-
-PYMOL API
-
-    cmd.bond(string atom1, string atom2)
 
 SEE ALSO
 
@@ -692,7 +695,7 @@ SEE ALSO
             _self.lock(_self)
             r = _cmd.bond(_self._COb,
                           atom1, atom2,
-                          int(order),1,int(quiet))
+                          int(order),1,int(quiet), symop)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException

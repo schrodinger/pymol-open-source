@@ -7,6 +7,18 @@ namespace pymol
 {
 
 /**
+ * C++20's std::erase_if
+ */
+template <class C, class Pred> void erase_if(C& c, Pred pred)
+{
+#if __cplusplus >= 202002L
+  std::erase_if(c, pred);
+#else
+  c.erase(std::remove_if(c.begin(), c.end(), pred), c.end());
+#endif
+}
+
+/**
  * @brief C++17's version of std::clamp
  */
 template<typename T>

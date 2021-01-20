@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 
 #include"Rep.h"
 #include"Setting.h"
+#include"SymOp.h"
 #include"Version.h"
 
 #if _PyMOL_VERSION_int < 1770
@@ -223,8 +224,17 @@ extern const int ElementTableSize;
 typedef struct BondType {
   int index[2];
   int unique_id;
+
+  /// Symmetry operation of the second atom. The implicit symmetry for the first
+  /// atom is 1_555. (We assume that there is no use case for `symop_1 != 1_555
+  /// && symop_2 != 1_555`).
+  pymol::SymOp symop_2;
+
   signed char order;    // 0-4
   bool has_setting;     /* setting based on unique_id */
+
+  /// True if this is a bond to a symmetry mate
+  bool hasSymOp() const;
 } BondType;
 
 typedef struct AtomInfoType {

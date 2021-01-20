@@ -3121,9 +3121,10 @@ static PyObject *CmdBond(PyObject * self, PyObject * args)
   char *str1, *str2;
   int order, mode;
   int quiet;
-  API_SETUP_ARGS(G, self, args, "Ossiii", &self, &str1, &str2, &order, &mode, &quiet);
+  const char* symop = nullptr;
+  API_SETUP_ARGS(G, self, args, "Ossiii|z", &self, &str1, &str2, &order, &mode, &quiet, &symop);
   API_ASSERT(APIEnterNotModal(G));
-  auto result = ExecutiveBond(G, str1, str2, order, mode, quiet);
+  auto result = ExecutiveBond(G, str1, str2, order, mode, quiet, symop);
   APIExit(G);
   return APIResult(G, result);
 }

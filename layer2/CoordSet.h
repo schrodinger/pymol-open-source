@@ -73,6 +73,9 @@ struct CoordSet : CObjectState {
     return Coord + idx * 3;
   }
 
+  float const* coordPtrSym(
+      int idx, pymol::SymOp const& symop, float* v_out, bool inv = false) const;
+
   AtomInfoType * getAtomInfo(int idx) {
     return Obj->AtomInfo + IdxToAtm[idx];
   }

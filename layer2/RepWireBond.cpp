@@ -725,11 +725,32 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
           }
         }
 
+        auto const s1_before_symop = s1;
+        auto const s2_before_symop = s2;
+        int symop_pass = 0;
+
+        pymol::SymOp symop[2] = {pymol::SymOp(), b->symop_2};
+        assert(!symop[0]);
+        float vv_buf[2][3];
+
+      inv_sym_bond:
+
+        v1 = cs->coordPtrSym(a1, symop[0], vv_buf[0], symop_pass);
+        v2 = cs->coordPtrSym(a2, symop[1], vv_buf[1], symop_pass);
+
+        if (!v1 || !v2) {
+          PRINTFB(G, FB_RepCylBond, FB_Warnings)
+          " %s-Warning: Failed to get symmetry coordiantes\n",
+              __func__ ENDFB(G);
+          continue;
+        }
+
+        // show half-bond for atom which connects to a symmetry mate
+        s1 = s1_before_symop && !symop[0];
+        s2 = s2_before_symop && !symop[1];
+
         if(hide_long && (s1 || s2)) {
           float cutoff = (ati1->vdw + ati2->vdw) * _0p9;
-          v1 = cs->coordPtr(a1);
-          v2 = cs->coordPtr(a2);
-          ai1 = obj->AtomInfo + b1;
           if(!within3f(v1, v2, cutoff)) /* atoms separated by more than 90% of the sum of their vdw radii */
             s1 = s2 = 0;
         }
@@ -765,9 +786,6 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
           } else {
             c1 = (c2 = bd_line_color);
           }
-
-          v1 = cs->coordPtr(a1);
-          v2 = cs->coordPtr(a2);
 
           if (line_stick_helper && (ati1->visRep & ati2->visRep & cRepCylBit)) {
             s1 = s2 = 0;
@@ -819,6 +837,14 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
             }
             line_counter++;
           }
+        }
+
+        // If this was a half-bond to a symmetry mate, do another pass and
+        // render the other half.
+        if (symop_pass == 0 && ati1 != ati2 && symop[1]) {
+          symop_pass = 1;
+          std::swap(symop[0], symop[1]);
+          goto inv_sym_bond;
         }
       }
       ok &= !G->Interrupt;

@@ -10,6 +10,45 @@
 #define COPY_ATTR_ARR_2(attr_name) dest->attr_name[0] = src->attr_name[0]; dest->attr_name[1] = src->attr_name[1]
 #define COPY_ATTR_N(attr_name, N) memcpy( dest->attr_name, src->attr_name, N)
 
+/**
+ * Use the legacy `stereo` attribute to distinguish between PyMOL 1.8.1 and
+ * PyMOL 2.5 PSE binary dump formats. This allows us to introduce the `symop_2`
+ * attribute without a backwards incompatible format change.
+ */
+namespace symop_stereo_magic_helper
+{
+constexpr signed char magic = 1 << 6;
+
+static void set(void*) {}
+template <typename toVersion, typename = decltype(&toVersion::stereo)>
+static void set(toVersion* dest)
+{
+  dest->stereo = magic;
+}
+
+static bool get(const void*)
+{
+  return true;
+}
+template <typename fromVersion, typename = decltype(&fromVersion::stereo)>
+static bool get(const fromVersion* src)
+{
+  return src->stereo == magic;
+}
+} // namespace symop_stereo_magic_helper
+
+static void Copy_Attr_SymOp2(const void*, void*) {}
+template <typename fromVersion, typename toVersion,
+    typename = decltype(&fromVersion::symop_2),
+    typename = decltype(&toVersion::symop_2)>
+static void Copy_Attr_SymOp2(const fromVersion* src, toVersion* dest)
+{
+  if (src->symop_2 && symop_stereo_magic_helper::get(src)) {
+    COPY_ATTR(symop_2);
+    symop_stereo_magic_helper::set(dest);
+  }
+}
+
 template <typename fromVersion, typename toVersion>
 void Copy_BondType(const fromVersion *src,  toVersion *dest){
   COPY_ATTR(index[0]);
@@ -17,6 +56,7 @@ void Copy_BondType(const fromVersion *src,  toVersion *dest){
   COPY_ATTR(order);
   COPY_ATTR(unique_id);
   COPY_ATTR(has_setting);
+  Copy_Attr_SymOp2(src, dest);
 }
 
 template <typename fromVersion, typename toVersion>

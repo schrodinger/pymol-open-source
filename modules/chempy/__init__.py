@@ -156,7 +156,9 @@ class Atom(object):
 class Bond:
 
     order   = 1
-    stereo  = 0
+    stereo  = 0  # deprecated
+
+    symmetry_2 = ""  # _geom_bond.site_symmetry_2
 
     def has(self,attr):
         return attr in self.__dict__

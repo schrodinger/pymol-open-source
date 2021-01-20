@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #define _H_BondTypeHistory
 
 #include"AtomInfo.h"
+#include"SymOp.h"
 
 typedef struct BondType_1_7_6 {
   int index[2];
@@ -47,12 +48,22 @@ typedef struct BondType_1_7_7 {
  */
 struct BondType_1_8_1 {
   int index[2];
-  int id;
+  union {
+    int id;
+    pymol::SymOp symop_2;
+  };
   int unique_id;
   signed char order;    // 0-4
   signed char stereo;   // 0-6 Only for SDF (MOL) format in/out
   bool has_setting;     /* setting based on unique_id */
 };
+
+static_assert(sizeof(pymol::SymOp) == 4,
+    "Changing SymOp layout requires a backwards "
+    "compatibility strategy for pse_binary_dump");
+
+static_assert(sizeof(BondType_1_8_1) == 20,
+    "pse_binary_dump not compatible with this platform");
 
 void Copy_Into_BondType_From_Version(const void *binstr, int bondInfo_version, BondType *Bond, int NBond);
 void *Copy_To_BondType_Version(int bondInfo_version, BondType *Bond, int NBond);

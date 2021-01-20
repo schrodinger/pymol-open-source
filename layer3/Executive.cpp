@@ -9433,7 +9433,8 @@ pymol::Result<> ExecutiveRevalence(PyMOLGlobals* G, const char* s1,
 
 
 /*========================================================================*/
-pymol::Result<> ExecutiveBond(PyMOLGlobals * G, const char *s1, const char *s2, int order, int mode, int quiet)
+pymol::Result<> ExecutiveBond(PyMOLGlobals* G, const char* s1, const char* s2,
+    int order, int mode, int quiet, const char* symop)
 {
   int cnt;
   CExecutive *I = G->Executive;
@@ -9458,7 +9459,7 @@ pymol::Result<> ExecutiveBond(PyMOLGlobals * G, const char *s1, const char *s2, 
         if(rec->obj->type == cObjectMolecule) {
           switch (mode) {
           case 1:              /* add */
-            cnt = ObjectMoleculeAddBond((ObjectMolecule *) rec->obj, sele1, sele2, order);
+            cnt = ObjectMoleculeAddBond((ObjectMolecule *) rec->obj, sele1, sele2, order, symop);
             if(cnt) {
               if(!quiet) {
                 PRINTFB(G, FB_Editor, FB_Actions)
@@ -9471,7 +9472,7 @@ pymol::Result<> ExecutiveBond(PyMOLGlobals * G, const char *s1, const char *s2, 
           case 2:              /* adjust */
             cnt =
               ObjectMoleculeAdjustBonds((ObjectMolecule *) rec->obj, sele1, sele2, 1,
-                                        order);
+                                        order, symop);
             if(cnt) {
               if(!quiet) {
                 PRINTFB(G, FB_Editor, FB_Actions)

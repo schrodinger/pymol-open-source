@@ -58,6 +58,70 @@ Z* -------------------------------------------------------------------
 #include "Property.h"
 #endif
 
+/**
+ * Get atom coordinates, taking symmetry operation into account.
+ *
+ * @param v_out Buffer for return value, may or may not be used.
+ * @param inv If true, apply the inverse of symop
+ * @return Coordinate pointer, or NULL if symmetry operation was invalid.
+ */
+float const* CoordSet::coordPtrSym(
+    int idx, pymol::SymOp const& symop, float* v_out, bool inv) const
+{
+  auto const* v_in = coordPtr(idx);
+
+  // default symop evaluates to false
+  if (!symop) {
+    return v_in;
+  }
+
+  auto* sym = getSymmetry();
+
+  if (!sym || (symop.index && symop.index >= sym->getNSymMat())) {
+    return nullptr;
+  }
+
+  copy3f(v_in, v_out);
+
+  double const* statemat = (SettingGet<int>(G, cSetting_matrix_mode) > 0)
+                               ? nullptr
+                               : ObjectStateGetMatrix(this);
+
+  if (statemat) {
+    transform44d3f(ObjectStateGetInvMatrix(this), v_out, v_out);
+  }
+
+  transform33f3f(sym->Crystal.realToFrac(), v_out, v_out);
+
+  if (inv) {
+    v_out[0] -= symop.x;
+    v_out[1] -= symop.y;
+    v_out[2] -= symop.z;
+  }
+
+  if (symop.index) {
+    auto mat = sym->getSymMat(symop.index);
+    if (inv) {
+      inverse_transform44f3f(mat, v_out, v_out);
+    } else {
+      transform44f3f(mat, v_out, v_out);
+    }
+  }
+
+  if (!inv) {
+    v_out[0] += symop.x;
+    v_out[1] += symop.y;
+    v_out[2] += symop.z;
+  }
+
+  transform33f3f(sym->Crystal.fracToReal(), v_out, v_out);
+
+  if (statemat) {
+    transform44d3f(statemat, v_out, v_out);
+  }
+
+  return v_out;
+}
 
 /*========================================================================*/
 /**
@@ -108,27 +172,30 @@ int CoordSetValidateRefPos(CoordSet * I)
   }
 }
 
+namespace
+{
+/// Return negative if lhs<rhs, zero if lhs==rhs, positive if lhs>rhs.
+inline int cmp(unsigned lhs, unsigned rhs)
+{
+  return lhs < rhs ? -1 : (lhs == rhs ? 0 : 1);
+}
+
+inline int cmp(pymol::SymOp const& lhs, pymol::SymOp const& rhs)
+{
+  return cmp( //
+      reinterpret_cast<unsigned const&>(lhs),
+      reinterpret_cast<unsigned const&>(rhs));
+}
+} // namespace
 
 /*========================================================================*/
 int BondCompare(BondType * a, BondType * b)
 {
-  int ai0 = a->index[0];
-  int bi0 = b->index[0];
-  if(ai0 == bi0) {
-    int ai1 = a->index[1];
-    int bi1 = b->index[1];
-    if(ai1 == bi1) {
-      return 0;
-    } else if(ai1 > bi1) {
-      return 1;
-    } else {
-      return -1;
-    }
-  } else if(ai0 > bi0) {
-    return 1;
-  } else {
-    return -1;
-  }
+  int c;
+  (c = cmp(a->index[0], b->index[0])) == 0 &&
+      (c = cmp(a->index[1], b->index[1])) == 0 &&
+      (c = cmp(a->symop_2, b->symop_2));
+  return c;
 }
 
 

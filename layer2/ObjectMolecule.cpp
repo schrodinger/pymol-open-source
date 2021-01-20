@@ -106,8 +106,9 @@ void ObjectMoleculeRemoveDuplicateBonds(PyMOLGlobals * G, ObjectMolecule * I) {
   // make sure index pairs are in order
   for (int i = 0; i < I->NBond; ++i) {
     auto& bond = I->Bond[i];
-    if (bond.index[0] > bond.index[1])
+    if (bond.index[0] > bond.index[1] && !bond.symop_2) {
       std::swap(bond.index[0], bond.index[1]);
+    }
   }
 
   // get sorted indices
@@ -4299,8 +4300,7 @@ void ObjectMoleculeUndo(ObjectMolecule * I, int dir)
 }
 
 
-/*========================================================================*/
-int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order)
+int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order, const char* symop)
 {
   int a1, a2;
   AtomInfoType *ai1, *ai2;
@@ -4324,6 +4324,12 @@ int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order)
           if(I->Bond) {
             BondType* bnd = I->Bond.check(I->NBond);
             BondTypeInit2(bnd, a1, a2, order);
+
+            assert(!bnd->symop_2);
+            if (symop) {
+              bnd->symop_2.reset(symop);
+            }
+
             I->NBond++;
             c++;
             I->AtomInfo[a1].chemFlag = false;
@@ -4376,13 +4382,13 @@ pymol::Result<> ObjectMoleculeAddBondByIndices(
 
 /*========================================================================*/
 int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode,
-                              int order)
+                              int order, const char* symop)
 {
+  auto const G = I->G;
   int a0, a1;
   int cnt = 0;
   BondType *b0;
   int both;
-  int s;
   int a;
 
   if(I->Bond) {
@@ -4392,20 +4398,15 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode
       a1 = b0->index[1];
 
       both = 0;
-      s = I->AtomInfo[a0].selEntry;
-      if(SelectorIsMember(I->G, s, sele0))
-        both++;
-      s = I->AtomInfo[a1].selEntry;
-      if(SelectorIsMember(I->G, s, sele1))
-        both++;
-      if(both < 2) {            /* reverse combo */
-        both = 0;
-        s = I->AtomInfo[a1].selEntry;
-        if(SelectorIsMember(I->G, s, sele0))
-          both++;
-        s = I->AtomInfo[a0].selEntry;
-        if(SelectorIsMember(I->G, s, sele1))
-          both++;
+
+      if (SelectorIsMember(G, I->AtomInfo[a0].selEntry, sele0) &&
+          SelectorIsMember(G, I->AtomInfo[a1].selEntry, sele1)) {
+        both = 2;
+      } else if ( //
+          SelectorIsMember(G, I->AtomInfo[a1].selEntry, sele0) &&
+          SelectorIsMember(G, I->AtomInfo[a0].selEntry, sele1)) {
+        std::swap(a0, a1);
+        both = 2;
       }
 
       if(both == 2) {
@@ -4448,6 +4449,10 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode
           I->AtomInfo[a0].chemFlag = false;
           I->AtomInfo[a1].chemFlag = false;
           break;
+        }
+
+        if (symop) {
+          b0->symop_2.reset(symop);
         }
       }
       b0++;
@@ -6514,7 +6519,7 @@ bool ObjectMoleculeUpdateNeighbors(const ObjectMolecule* I)
     /* count neighbors for each atom */
     const auto* bnd = I->Bond.data();
     for(int b = 0; b < I->NBond; b++) {
-      if (bnd->order) {
+      if (bnd->order && !bnd->hasSymOp()) {
         neighbor[bnd->index[0]]++;
         neighbor[bnd->index[1]]++;
       }
@@ -6537,7 +6542,7 @@ bool ObjectMoleculeUpdateNeighbors(const ObjectMolecule* I)
       auto const l0 = bnd->index[0];
       auto const l1 = bnd->index[1];
 
-      if (!bnd->order)
+      if (!bnd->order || bnd->hasSymOp())
         continue;
 
       neighbor[l0]--;
@@ -7135,6 +7140,21 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
           Py_XDECREF(tmp);
           ii->order = order;
         }
+
+        auto const set_symop = [&](const char* key) {
+          if (ok && PyObject_HasAttrString(bnd, key)) {
+            ok = false;
+            if (auto tmp = PyObject_GetAttrString(bnd, key)) {
+              if (auto const* code = PyUnicode_AsUTF8(tmp)) {
+                ii->symop_2.reset(code);
+                ok = true;
+              }
+              Py_DECREF(tmp);
+            }
+          }
+        };
+
+        set_symop("symmetry_2");
 
         if(ok && PyObject_HasAttrString(bnd, "stick_radius")) {
           tmp = PyObject_GetAttrString(bnd, "stick_radius");

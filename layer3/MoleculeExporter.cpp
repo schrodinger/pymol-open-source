@@ -251,6 +251,7 @@ protected:
   virtual int getMultiDefault() const = 0;
   virtual bool isExcludedBond(int atm1, int atm2);
   virtual bool isExcludedBond(const BondType * bond);
+  virtual bool excludeSymOpBonds() const { return true; }
   virtual void writeAtom() = 0;
   virtual void writeBonds() = 0;
   virtual void beginObject();
@@ -419,6 +420,9 @@ void MoleculeExporter::populateBondRefs() {
       continue;
 
     if (isExcludedBond(bond))
+      continue;
+
+    if (excludeSymOpBonds() && bond->hasSymOp())
       continue;
 
     if (id1 > id2)
@@ -1086,6 +1090,7 @@ struct MoleculeExporterMAE : public MoleculeExporter {
   int m_n_arom_bonds = 0;
   std::map<int, const AtomInfoType *> m_atoms;
   bool m_has_anisou;
+  bool m_has_pbc = false;
 
 #ifdef _PYMOL_MAE_PROP_EXPORT
 #endif
@@ -1169,7 +1174,13 @@ struct MoleculeExporterMAE : public MoleculeExporter {
     }
 
     const auto* sym = m_iter.cs->getSymmetry();
-    if (sym) {
+    m_has_pbc = sym && !sym->spaceGroup()[0];
+    if (m_has_pbc) {
+      keys.insert(keys.end(),
+          {"r_chorus_box_ax", "r_chorus_box_bx", "r_chorus_box_cx",
+              "r_chorus_box_ay", "r_chorus_box_by", "r_chorus_box_cy",
+              "r_chorus_box_az", "r_chorus_box_bz", "r_chorus_box_cz"});
+    } else if (sym) {
       keys.insert(keys.end(),
           {"r_pdb_PDB_CRYST1_a", "r_pdb_PDB_CRYST1_b", "r_pdb_PDB_CRYST1_c",
               "r_pdb_PDB_CRYST1_alpha", "r_pdb_PDB_CRYST1_beta",
@@ -1192,7 +1203,12 @@ struct MoleculeExporterMAE : public MoleculeExporter {
       m_offset += VLAprintf(m_buffer, m_offset, "\"%s\"\n", groupid.c_str());
     }
 
-    if (sym) {
+    if (m_has_pbc) {
+      const auto* f2r = sym->Crystal.fracToReal();
+      m_offset +=
+          VLAprintf(m_buffer, m_offset, "%f %f %f %f %f %f %f %f %f\n", f2r[0],
+              f2r[1], f2r[2], f2r[3], f2r[4], f2r[5], f2r[6], f2r[7], f2r[8]);
+    } else if (sym) {
       const auto* dim = sym->Crystal.dims();
       const auto* angle = sym->Crystal.angles();
       m_offset += VLAprintf(m_buffer, m_offset, "%f %f %f %f %f %f %s\n",
@@ -1358,6 +1374,8 @@ struct MoleculeExporterMAE : public MoleculeExporter {
 
     ++m_n_atoms;
   }
+
+  bool excludeSymOpBonds() const override { return !m_has_pbc; }
 
   void writeBonds() override {
     // atom count
@@ -1832,6 +1850,8 @@ protected:
 #endif
   }
 
+  bool excludeSymOpBonds() const override { return false; }
+
   void writeBonds() override {
     if (!m_model)
       return;
@@ -1851,6 +1871,13 @@ protected:
       int index[] = { bond.id1 - 1, bond.id2 - 1 };
       PConvInt2ToPyObjAttr(bnd, "index", index);
       PConvIntToPyObjAttr(bnd, "order",     bond.ref->order);
+
+      // symop
+      if (bond.ref->symop_2) {
+        PConvStringToPyObjAttr(
+            bnd, "symmetry_2", bond.ref->symop_2.to_string().c_str());
+      }
+
       PyList_SetItem(bond_list, b, bnd);    /* steals bnd reference */
     }
 

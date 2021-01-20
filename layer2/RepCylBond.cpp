@@ -711,8 +711,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         } else {
           c1 = (c2 = bd_stick_color);
         }
-        float *vv1 = cs->coordPtr(a1);
-        float *vv2 = cs->coordPtr(a2);
 
         s1 = GET_BIT(ati1->visRep, cRepCyl);
         s2 = GET_BIT(ati2->visRep, cRepCyl);
@@ -724,6 +722,31 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         if (!(s1 && s2) && !half_bonds) {
           continue;
         }
+
+        auto const s1_before_symop = s1;
+        auto const s2_before_symop = s2;
+        int symop_pass = 0;
+
+        pymol::SymOp symop[2] = {pymol::SymOp(), b->symop_2};
+        assert(!symop[0]);
+        float vv_buf[2][3];
+        float const *vv1, *vv2;
+
+      inv_sym_bond:
+
+        vv1 = cs->coordPtrSym(a1, symop[0], vv_buf[0], symop_pass);
+        vv2 = cs->coordPtrSym(a2, symop[1], vv_buf[1], symop_pass);
+
+        if (!vv1 || !vv2) {
+          PRINTFB(G, FB_RepCylBond, FB_Warnings)
+          " %s-Warning: Failed to get symmetry coordiantes\n",
+              __func__ ENDFB(G);
+          continue;
+        }
+
+        // show half-bond for atom which connects to a symmetry mate
+        s1 = s1_before_symop && !symop[0];
+        s2 = s2_before_symop && !symop[1];
 
         if(hide_long && (s1 || s2)) {
           float cutoff = (ati1->vdw + ati2->vdw) * _0p9;
@@ -831,8 +854,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
               if (ok){
                 Pickable pickdata = { b2, ati2->masked ? cPickableNoPick : a };
 
-                bool drawcap1 = bd_radius > capdrawn[b1];
-                bool drawcap2 = bd_radius > capdrawn[b2];
+                bool drawcap1 = bd_radius > capdrawn[b1] && s1;
+                bool drawcap2 = bd_radius > capdrawn[b2] && s2;
 
                 ok &= RepCylinder(I->primitiveCGO, s1, s2, isRamped, vv1, vv2,
                     drawcap1, drawcap2, bd_radius, rgb2, &pickdata);
@@ -845,6 +868,14 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
               }
             }
           }
+        }
+
+        // If this was a half-bond to a symmetry mate, do another pass and
+        // render the other half.
+        if (symop_pass == 0 && ati1 != ati2 && symop[1]) {
+          symop_pass = 1;
+          std::swap(symop[0], symop[1]);
+          goto inv_sym_bond;
         }
       }
     }

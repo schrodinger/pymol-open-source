@@ -34,6 +34,7 @@
 #include"Util2.h"
 #include"AtomInfo.h"
 #include"Selector.h"
+#include"SymOpPConv.h"
 #include"ObjectDist.h"
 #include"Executive.h"
 #include"P.h"
@@ -3082,7 +3083,8 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
   result = PyList_New(I->NBond);
   bond = I->Bond;
   for(a = 0; a < I->NBond; a++) {
-    bond_list = PyList_New(7);
+    size_t const list_size = bond->hasSymOp() ? 8 : 7;
+    bond_list = PyList_New(list_size);
     PyList_SetItem(bond_list, 0, PyInt_FromLong(bond->index[0]));
     PyList_SetItem(bond_list, 1, PyInt_FromLong(bond->index[1]));
     PyList_SetItem(bond_list, 2, PyInt_FromLong(bond->order));
@@ -3090,6 +3092,9 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
     PyList_SetItem(bond_list, 4, PyInt_FromLong(0));  // stereo
     PyList_SetItem(bond_list, 5, PyInt_FromLong(bond->unique_id));
     PyList_SetItem(bond_list, 6, PyInt_FromLong(bond->has_setting));
+    if (list_size > 7) {
+      PyList_SetItem(bond_list, 7, PConvToPyObject(bond->symop_2));
+    }
     PyList_SetItem(result, a, bond_list);
     bond++;
   }
@@ -3166,7 +3171,11 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
         bond->unique_id = SettingUniqueConvertOldSessionID(G, bond->unique_id);
       }
     }
+      if (ll > 7) {
+        PConvFromPyListItem(G, bond_list, 7, bond->symop_2);
+      }
     bond++;
+      CPythonVal_Free(bond_list);
   }
   }
   PRINTFB(G, FB_ObjectMolecule, FB_Debugging)
