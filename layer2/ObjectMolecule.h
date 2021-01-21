@@ -427,9 +427,10 @@ int ***ObjectMoleculeGetBondPrint(ObjectMolecule * I, int max_bond, int max_type
                                   int *dim);
 
 bool ObjectMoleculeConnect(ObjectMolecule* I, CoordSet* cs,
-    bool searchFlag = true, int connectModeOverride = -1);
+    bool searchFlag = true, int connectModeOverride = -1, bool pbc = false);
 bool ObjectMoleculeConnect(ObjectMolecule* I, int& nbond, pymol::vla<BondType>& bond,
-                          struct CoordSet *cs, int searchFlag, int connectModeOverride);
+                          struct CoordSet *cs, int searchFlag, int connectModeOverride,
+                          bool pbc = false);
 int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete);
 
 float ObjectMoleculeGetMaxVDW(ObjectMolecule * I);

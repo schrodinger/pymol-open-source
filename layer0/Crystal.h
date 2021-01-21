@@ -70,6 +70,9 @@ public:
   /// Unit cell volume in Angstrom^3
   float unitCellVolume() const;
 
+  /// True if this cell is an orthogonal 1x1x1 or is singular
+  bool isSuspicious() const;
+
   CCrystal(PyMOLGlobals* GParam);
 
   friend void CrystalDump(const CCrystal*);

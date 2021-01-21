@@ -3155,9 +3155,10 @@ static PyObject* CmdRebond(PyObject* self, PyObject* args)
   PyMOLGlobals* G = nullptr;
   const char* oname;
   int state;
-  API_SETUP_ARGS(G, self, args, "Osi", &self, &oname, &state);
+  int pbc = 0;
+  API_SETUP_ARGS(G, self, args, "Osi|i", &self, &oname, &state, &pbc);
   API_ASSERT(APIEnterNotModal(G));
-  auto res = ExecutiveRebond(G, oname, state);
+  auto res = ExecutiveRebond(G, oname, state, pbc);
   APIExit(G);
   return APIResult(G, res);
 }

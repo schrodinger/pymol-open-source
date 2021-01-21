@@ -172,8 +172,8 @@ struct CoordSet : CObjectState {
   void setTitle(pymol::zstring_view);
 };
 
-int BondInOrder(BondType * a, int b1, int b2);
-int BondCompare(BondType * a, BondType * b);
+int BondInOrder(BondType const* a, int b1, int b2);
+int BondCompare(BondType const* a, BondType const* b);
 
 PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy);
 PyObject *CoordSetAsPyList(CoordSet * I);

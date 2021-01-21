@@ -16,6 +16,10 @@
 */
 #include <utility>
 
+#ifdef PYMOL_OPENMP
+#include <omp.h>
+#endif
+
 #include"Version.h"
 #include"os_python.h"
 
@@ -3631,6 +3635,10 @@ bool is_distance_bonded(
     bool unbond_cations)
 {
   auto dst = (float) diff3f(v1, v2);
+
+  if (dst < R_SMALL4)
+    return false;
+
   dst -= (ai1->vdw + ai2->vdw) / 2;
 
   cutoff += connect_cutoff_adjustment(ai1, ai2);
@@ -3688,6 +3696,7 @@ bool is_distance_bonded(
  * @param bondSearchMode If false and `connect_mode` != 2, do not search for new
  * bonds (only use TmpBond/TmpLinkBond).
  * @param connectModeOverride Overrides `connect_mode` setting if not -1
+ * @param pbc Use periodic boundary conditions (find symop bonds)
  *
  * `connect_mode` options:
  * 0 = distance-based (excluding HETATM to HETATM) and CONECT records (default)
@@ -3697,49 +3706,32 @@ bool is_distance_bonded(
  * 4 = same as `connect_mode` = 0 (special meaning during mmCIF loading)
  */
 bool ObjectMoleculeConnect(ObjectMolecule* I, CoordSet* cs, bool bondSearchMode,
-    int connectModeOverride)
+    int connectModeOverride, bool pbc)
 {
   return ObjectMoleculeConnect(
-      I, I->NBond, I->Bond, cs, bondSearchMode, connectModeOverride);
+      I, I->NBond, I->Bond, cs, bondSearchMode, connectModeOverride, pbc);
 }
 
 /*========================================================================*/
 bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& bondvla,
                           struct CoordSet *cs, int bondSearchMode,
-                          int connectModeOverride)
+                          int connectModeOverride,
+                          bool pbc)
 {
-#define cMULT 1
   PyMOLGlobals *G = I->G;
-  int a, b, c, d, e, f, i, j;
-  int a1, a2;
-  float *v1, *v2;
-  int maxBond;
-  MapType *map;
-  BondType *ii1;
-  const BondType* ii2;
-  int flag;
-  int order;
   AtomInfoType* const ai = I->AtomInfo.data();
-  AtomInfoType *ai1, *ai2;
-  /* Sulfur cutoff */
-  float cutoff_s;
-  float cutoff_v;
-  float max_cutoff;
-  int repeat = true;
-  int discrete_chains = SettingGetGlobal_i(G, cSetting_pdb_discrete_chains);
-  int connect_bonded = SettingGetGlobal_b(G, cSetting_connect_bonded);
-  int connect_mode = SettingGetGlobal_i(G, cSetting_connect_mode);
-  int unbond_cations = SettingGetGlobal_i(G, cSetting_pdb_unbond_cations);
-  int ok = true;
-  cutoff_v = SettingGetGlobal_f(G, cSetting_connect_cutoff);
-  cutoff_s = cutoff_v + 0.2F;
-  max_cutoff = cutoff_s;
+  auto discrete_chains = SettingGet<int>(G, cSetting_pdb_discrete_chains);
+  auto const connect_bonded = SettingGet<bool>(G, cSetting_connect_bonded);
+  auto const unbond_cations = SettingGet<int>(G, cSetting_pdb_unbond_cations);
+  auto const cutoff_v = SettingGet<float>(G, cSetting_connect_cutoff);
+  auto const max_cutoff = cutoff_v + 0.2F; ///< Sulfur cutoff
+  auto connect_mode = (connectModeOverride >= 0)
+                          ? connectModeOverride
+                          : SettingGet<int>(G, cSetting_connect_mode);
 
-  if(connectModeOverride >= 0)
-    connect_mode = connectModeOverride;
-
-  if(connect_mode == 2) {       /* force use of distance-based connectivity,
-                                   ignoring that provided with file */
+  if (connect_mode == 2) {
+    // Force use of distance-based connectivity, ignoring that
+    // provided with file.
     bondSearchMode = true;
     cs->NTmpBond = 0;
     VLAFreeP(cs->TmpBond);
@@ -3748,162 +3740,159 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
     connect_mode = 0;
   }
 
-  /*  FeedbackMask[FB_ObjectMolecule]=0xFF; */
   nBond = 0;
-  maxBond = cs->NIndex * 8;
-  bondvla.resize(maxBond);
-  CHECKOK(ok, bool(bondvla));
-  while(ok && repeat) {
+  auto const maxBond = cs->NIndex * 8;
+  // Number of bonds is typically close to number of atoms
+  bondvla.reserve(cs->NIndex * 1.2);
+  p_return_val_if_fail(bondvla, false); // memory error
+
+  bool repeat = false;
+  switch (connect_mode) {
+  case 0: /* distance-based and explicit (not HETATM to HETATM) */
+  case 2: /* distance-based only */
+  case 3: /* distance-based and explicit (even HETATM to HETATM) */
+    repeat = bondSearchMode && cs->NIndex > 0;
+  }
+
+  // Distance-based bond location
+  while (repeat) {
     repeat = false;
+    nBond = 0;
 
-    /* 
-     * BOND SEARCH MODE
-     */
-    if(cs->NIndex && bondSearchMode) {  /* &&(!I->DiscreteFlag) WLD 010527 */
-      /* if there are atoms, and we need to search for bonds, instead of using
-       * (possibly) supplied CONECT records... */
+    // For monitoring excessive numbers of bonds
+    int violations = 0;
+    auto const max_violations = cs->NIndex >> 3; // 12%
+    auto const cnt = pymol::make_unique<signed char[]>(size_t(cs->NIndex));
+    p_return_val_if_fail(cnt, false); // memory error
 
-      PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-        " %s: Searching for bonds amongst %d coordinates.\n", __func__,
-        cs->NIndex ENDFB(G);
-      if(Feedback(G, FB_ObjectMolecule, FB_Debugging)) {
-        for(a = 0; a < cs->NIndex; a++)
-          printf(" %s: coord %d %8.3f %8.3f %8.3f\n", __func__,
-                 a, cs->Coord[a * 3], cs->Coord[a * 3 + 1], cs->Coord[a * 3 + 2]);
-      }
+    /* initialize each atom's (max) expected valence */
+    for (unsigned i = 0; i < cs->NIndex; ++i) {
+      auto valcnt = AtomInfoGetExpectedValence(G, ai + cs->IdxToAtm[i]);
+      cnt[i] = (valcnt < 0) ? 6 : valcnt;
+    }
 
-      switch (connect_mode) {
-	/* DISTANCE BASED CONNECTIONS */
-      case 0:                  /* distance-based and explicit (not HETATM to HETATM) */
-      case 3:                  /* distance-based and explicit (even HETATM to HETATM) */
-      case 2:                  /* distance-based only */  {
-          /* distance-based bond location  */
-          int violations = 0;
-          int *cnt = pymol::malloc<int>(cs->NIndex);
-          int valcnt;
+    // Search for symop bonds (periodic boundary conditions)?
+    int offset_begin = 0, offset_end = 1, symmat_end = 1;
+    if (pbc && cs->getSymmetry() && //
+        !cs->getSymmetry()->Crystal.isSuspicious()) {
+      offset_begin = -1;
+      offset_end = 2;
+      symmat_end = cs->getSymmetry()->getNSymMat();
+      assert(symmat_end > 0);
+    }
 
-	  CHECKOK(ok, cnt);
+    /* make a map of the local neighborhood in space */
+    auto const map = std::unique_ptr<MapType>(
+        MapNew(G, (max_cutoff + MAX_VDW) * (offset_begin ? -1 : 1), //
+            cs->Coord, cs->NIndex));
+    p_return_val_if_fail(map, false); // memory error
+    MapSetupExpress(map.get()); // Don't let MapEIter call this in omp parallel
 
-	  if (ok){
-	    /* initialize each atom's (max) expected valence */
-	    for(i = 0; i < cs->NIndex; i++) {
-	      valcnt = AtomInfoGetExpectedValence(G, ai + cs->IdxToAtm[i]);
-	      if(valcnt < 0)
-		valcnt = 6;
-	      cnt[i] = valcnt;
-	    }
-	  }
+    /// Return false on error
+    auto const find_bonds_for_atom = [&](unsigned i, float const* v1,
+                                         pymol::SymOp const& symop) -> bool {
+      auto const a1 = cs->IdxToAtm[i];
+      auto* const ai1 = ai + a1;
 
-	  /* make a map of the local neighborhood in space */
-	  if (ok)
-	    map = MapNew(G, max_cutoff + MAX_VDW, cs->Coord, cs->NIndex, NULL);
-	  CHECKOK(ok, map);
-          if(ok) {
-            int dim12 = map->D1D2;
-            int dim2 = map->Dim[2];
+      for (const auto j : MapEIter(*map, v1)) {
+        if (i <= j && !symop)
+          continue;
 
-            for(i = 0; ok && i < cs->NIndex; i++) {
-              if(nBond > maxBond)
-                break;
-	      /* atom i's position in space */
-              v1 = cs->coordPtr(i);
+        /* position in space for atom 2 */
+        auto const* const v2 = cs->coordPtr(j);
+        auto const a2 = cs->IdxToAtm[j];
+        auto* const ai2 = ai + a2;
 
-              a1 = cs->IdxToAtm[i];
-              ai1 = ai + a1;
+        if (!is_distance_bonded(G, cs, ai1, ai2, v1, v2, cutoff_v, connect_mode,
+                discrete_chains, connect_bonded, unbond_cations))
+          continue;
 
-              MapLocus(map, v1, &a, &b, &c);
-	      /* d = [a-1, a, a+1] */
-              for(d = a - 1; ok && d <= a + 1; d++) {
-                int *j_ptr1 = map->Head + d * dim12 + (b - 1) * dim2;
-		/* e = [b-1, b, b+1] */
-                for(e = b - 1; ok && e <= b + 1; e++) {
-                  int *j_ptr2 = j_ptr1 + c - 1;
-                  j_ptr1 += dim2;
-		  /* f = [c-1, c, c+1] */
-                  for(f = c - 1; ok && f <= c + 1; f++) {
-                    j = *(j_ptr2++);    /*  *MapFirst(map,d,e,f)); */
-                    while(ok && j >= 0) {
-                      if(i < j) {
-			/* position in space for atom 2 */
-                        v2 = cs->coordPtr(j);
-                        a2 = cs->IdxToAtm[j];
-                        ai2 = ai + a2;
+        /* we have a bond, now process it */
 
-                        flag = is_distance_bonded(G, cs, ai1, ai2, v1, v2,
-                            cutoff_v, connect_mode, discrete_chains,
-                            connect_bonded, unbond_cations);
-
-                        {
-
-			  /* we have a bond, now process it */
-                          if(flag) {
-                            auto bnd = bondvla.check(nBond);
-			    CHECKOK(ok, bool(bondvla));
-			    if (ok){
-                              BondTypeInit2(bnd, a1, a2);
-			      order = 1;
-			    }
-			    /* if we allow bonds between chains and it screws up the
-			     * bonding, disallow inter-chain bonds */
-                            if(ok && discrete_chains < 0) {   /* if we're allowing bonds between chains,
-								 then make sure things don't get out of hand */
-                              if(cnt[i] == -1)
-                                violations++;
-                              if(cnt[j] == -1)
-                                violations++;
-			      /* decrement free valences, since we have a bond */
-                              cnt[i]--;
-                              cnt[j]--;
-                              if(violations > (cs->NIndex >> 3)) {
-                                /* if more than 12% of the structure has excessive #'s of bonds... */
-                                PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-                                  " %s: Assuming chains are discrete...\n", __func__
-                                  ENDFB(G);
-                                discrete_chains = 1;
-                                repeat = true;
-                                goto do_it_again;
-                              }
-                            }
-
-                            if(!ai1->hetatm || ai1->resn == G->lex_const.MSE) {
-                              if(AtomInfoSameResidue(I->G, ai1, ai2)) {
-                                /* hookup standard disconnected PDB residue */
-                                assign_pdb_known_residue(G, ai1, ai2, &order);
-                              }
-                            }
-                            bnd->order = -order;      /* store tentative valence as negative */
-                            nBond++;
-                          }
-                        }
-                      }
-                      j = MapNext(map, j);
-                    }
-                  }
-                }
-              }
-            }
-          do_it_again:
-            MapFree(map);
-            FreeP(cnt);
+        int order = 1;
+        if (!ai1->hetatm || ai1->resn == G->lex_const.MSE) {
+          if (AtomInfoSameResidue(I->G, ai1, ai2)) {
+            /* hookup standard disconnected PDB residue */
+            assign_pdb_known_residue(G, ai1, ai2, &order);
           }
         }
-      case 1:                  /* only use explicit connectivity from file (don't do anything) */
-        break;
-      case 4:                  /* dictionary-based connectivity */
-        /* TODO */
-        break;
+
+#ifdef PYMOL_OPENMP
+#pragma omp critical
+#endif
+        {
+          auto const bnd = bondvla.check(nBond++);
+          BondTypeInit2(
+              bnd, a2, a1, -order /* store tentative valence as negative */);
+          bnd->symop_2 = symop;
+
+          /* if we allow bonds between chains and it screws up
+           * the bonding, disallow inter-chain bonds */
+          if (discrete_chains < 0) {
+            /* decrement free valences, since we have a bond */
+            if (--cnt[i] == -2)
+              violations++;
+            if (--cnt[j] == -2)
+              violations++;
+
+            if (violations > max_violations) {
+              PRINTFB(G, FB_ObjectMolecule, FB_Blather)
+              " %s: Assuming chains are discrete...\n", __func__ ENDFB(G);
+
+              discrete_chains = 1;
+              repeat = 1;
+            }
+          }
+        }
+
+        if (repeat) {
+          return false;
+        }
       }
-      PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-        " %s: Found %d bonds.\n", __func__, nBond ENDFB(G);
+
+      return true;
+    };
+
+    bool break_all = false;
+
+    // Do bond search in parallel for every atom
+#ifdef PYMOL_OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < cs->NIndex; ++i) {
+      float _v1_buf[3];
+      pymol::SymOp symop{};
+      for (symop.x = offset_begin; symop.x < offset_end; ++symop.x) {
+        for (symop.y = offset_begin; symop.y < offset_end; ++symop.y) {
+          for (symop.z = offset_begin; symop.z < offset_end; ++symop.z) {
+            for (symop.index = 0; symop.index != symmat_end; ++symop.index) {
+              auto const* const v1 = cs->coordPtrSym(i, symop, _v1_buf);
+              assert(v1);
+
+              if (break_all || !find_bonds_for_atom(i, v1, symop) ||
+                  nBond > maxBond) {
+                goto break_all_find_bonds_for_atom;
+              }
+            }
+          }
+        }
+      }
+
+      continue;
+    break_all_find_bonds_for_atom:
+      // can't "break" inside an omp parallel block
+      break_all = true;
     }
-    if(repeat) {
-      nBond = 0;
-    }
+
+    PRINTFB(G, FB_ObjectMolecule, FB_Blather)
+      " %s: Found %d bonds.\n", __func__, nBond ENDFB(G);
   }
+
   /* if we have explicit connectivity, determine if we need to set check_conect_all */
-  if(ok && cs->NTmpBond && cs->TmpBond) {
-    int check_conect_all = false;
-    int pdb_conect_all = false;
+  if (cs->NTmpBond && cs->TmpBond) {
+    bool check_conect_all = false;
+    bool pdb_conect_all = false;
+
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       " %s: incorporating explicit bonds. %d %d\n", __func__,
       nBond, cs->NTmpBond ENDFB(G);
@@ -3911,10 +3900,9 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
        bondSearchMode && (connect_mode == 0) && cs->NIndex) {
       /* if no bonds were found, and we have explicit connectivity,
        * try to determine if we need to set pdb_conect_mode */
-      for(i = 0; i < cs->NIndex; i++) {
-        a1 = cs->IdxToAtm[i];
-        ai1 = ai + a1;
-        if(ai1->bonded && (!ai1->hetatm)) {
+      for (unsigned i = 0; i < cs->NIndex; ++i) {
+        auto const& ai1 = ai[cs->IdxToAtm[i]];
+        if (ai1.bonded && !ai1.hetatm) {
           /* apparent PDB ATOM record with explicit bonding... */
           check_conect_all = true;
           break;
@@ -3923,17 +3911,15 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
     }
 
     bondvla.check(nBond + cs->NTmpBond);
-    CHECKOK(ok, bool(bondvla));
-    if (ok){
-      ii1 = bondvla.data() + nBond;
-      ii2 = cs->TmpBond;
-    }
-    if (ok) {
-      int n_atom = I->NAtom;
-      for(a = 0; a < cs->NTmpBond; a++) {
-        a1 = cs->IdxToAtm[ii2->index[0]];       /* convert bonds from index space */
-        a2 = cs->IdxToAtm[ii2->index[1]];       /* to atom space */
-        if((a1 >= 0) && (a2 >= 0) && (a1 < n_atom) && (a2 < n_atom)) {
+    p_return_val_if_fail(bondvla, false); // memory error
+
+    auto* ii1 = bondvla.data() + nBond;
+    auto* ii2 = cs->TmpBond.data();
+    int n_atom = I->NAtom;
+    for (unsigned a = 0; a < cs->NTmpBond; ++a) {
+      auto const a1 = cs->IdxToAtm[ii2->index[0]];
+      auto const a2 = cs->IdxToAtm[ii2->index[1]];
+      if((a1 >= 0) && (a2 >= 0) && (a1 < n_atom) && (a2 < n_atom)) {
           if(check_conect_all) {
             if((!ai[a1].hetatm) && (!ai[a2].hetatm)) {
               /* found bond between non-HETATMs -- so tell PyMOL to CONECT all ATOMs
@@ -3943,22 +3929,19 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
           }
           ai[a1].bonded = true;
           ai[a2].bonded = true;
-          (*ii1) = (*ii2);      /* note this copies owned ids and thus settings etc. */
+          *ii1 = std::move(*ii2);
           ii1->index[0] = a1;
           ii1->index[1] = a2;
           ii1++;
           ii2++;
-
-        }
+          nBond++;
       }
     }
 
-    if (ok){
-      nBond = nBond + cs->NTmpBond;
-      VLAFreeP(cs->TmpBond);
-      cs->NTmpBond = 0;
-      
-      if(pdb_conect_all) {
+    VLAFreeP(cs->TmpBond);
+    cs->NTmpBond = 0;
+
+    if(pdb_conect_all) {
 	int dummy;
 	if(!SettingGetIfDefined_b(G, I->Setting.get(), cSetting_pdb_conect_all, &dummy)) {
           {
@@ -3969,77 +3952,74 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
 	    }
 	  }
 	}
-      }
     }
   }
   
   /* Link b/t ligand and residue? */
-  if(ok && cs->NTmpLinkBond && cs->TmpLinkBond) {
+  if (cs->NTmpLinkBond && cs->TmpLinkBond) {
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       "%s: incorporating linkage bonds. %d %d\n", __func__,
       nBond, cs->NTmpLinkBond ENDFB(G);
+
     bondvla.check(nBond + cs->NTmpLinkBond);
-    CHECKOK(ok, bool(bondvla));
-    if (ok){
-      ii1 = bondvla.data() + nBond;
-      ii2 = cs->TmpLinkBond;
-      for(a = 0; a < cs->NTmpLinkBond; a++) {
-	a1 = ii2->index[0];       /* first atom is in object */
-	a2 = cs->IdxToAtm[ii2->index[1]]; /* second is in the cset */
-	ai[a1].bonded = true;
-	ai[a2].bonded = true;
-	(*ii1) = (*ii2);          /* note this copies owned ids and thus settings etc. */
-	ii1->index[0] = a1;
-	ii1->index[1] = a2;
-	ii1++;
-	ii2++;
-      }
-      nBond = nBond + cs->NTmpLinkBond;
+    p_return_val_if_fail(bondvla, false); // memory error
+
+    auto* ii1 = bondvla.data() + nBond;
+    auto* ii2 = cs->TmpLinkBond.data();
+    for (unsigned a = 0; a < cs->NTmpLinkBond; ++a) {
+      auto const a1 = ii2->index[0];               /* first atom is in object */
+      auto const a2 = cs->IdxToAtm[ii2->index[1]]; /* second is in the cset */
+      ai[a1].bonded = true;
+      ai[a2].bonded = true;
+      (*ii1) = std::move(*ii2);
+      ii1->index[0] = a1;
+      ii1->index[1] = a2;
+      ii1++;
+      ii2++;
     }
+    nBond += cs->NTmpLinkBond;
     VLAFreeP(cs->TmpLinkBond);
     cs->NTmpLinkBond = 0;
   }
 
-  PRINTFD(G, FB_ObjectMolecule)
-    " %s: elminating duplicates with %d bonds...\n", __func__, nBond ENDFD;
+  // Eliminate duplicates
+  // TODO do we expect any?
+  // TODO should we also check with swapped indices?
+  // TODO why not for discrete objects?
+  if (nBond > 1 && !I->DiscreteFlag) {
+    PRINTFD(G, FB_ObjectMolecule)
+      " %s: elminating duplicates with %d bonds...\n", __func__, nBond ENDFD;
 
-  if(ok && !I->DiscreteFlag) {
-    UtilSortInPlace(G, bondvla.data(), nBond, sizeof(BondType), (UtilOrderFn *) BondInOrder);
-    if(nBond) {                 /* eliminate duplicates */
-      ii1 = bondvla.data() + 1;
-      ii2 = bondvla.data() + 1;
-      a = nBond - 1;
-      nBond = 1;
-      if(a > 0)
-        while(a--) {
-          if((ii2->index[0] != (ii1 - 1)->index[0]) ||
-             (ii2->index[1] != (ii1 - 1)->index[1])) {
-            *(ii1++) = *(ii2++);        /* copy bond */
-            nBond++;
-          } else {
-            if((ii2->order > 0) && ((ii1 - 1)->order < 0))
-              (ii1 - 1)->order = ii2->order;    /* use most certain valence */
-            ii2++;              /* skip bond */
-          }
+    UtilSortInPlace(
+        G, bondvla.data(), nBond, sizeof(BondType), (UtilOrderFn*) BondInOrder);
+    auto* ii1 = bondvla.data();
+    auto* ii2 = bondvla.data() + 1;
+    for (int a = nBond; --a;) {
+      if (BondCompare(ii2, ii1) != 0) {
+        if (++ii1 != ii2) {
+          *ii1 = std::move(*ii2);
         }
-      bondvla.resize(nBond);
-      CHECKOK(ok, bool(bondvla));
+      } else if (ii2->order > 0 && ii1->order < 0) {
+        // use most certain valence
+        ii1->order = ii2->order;
+      }
+      ii2++;
     }
+    nBond = ii1 - bondvla.data() + 1;
   }
-  /* restore bond oder positivity */
 
-  if (ok){
-    ii1 = bondvla.data();
-    for(a = 0; a < nBond; a++) {
-      if(ii1->order < 0)
-	ii1->order = -ii1->order;
-      ii1++;
-    }
+  bondvla.resize(nBond);
+
+  // restore bond order positivity
+  for (auto bnd = bondvla.begin(), bnd_end = bnd + nBond; bnd != bnd_end;
+       ++bnd) {
+    if (bnd->order < 0)
+      bnd->order = -bnd->order;
   }
 
   PRINTFD(G, FB_ObjectMolecule)
     " %s: leaving with %d bonds...\n", __func__, nBond ENDFD;
-  return ok;
+  return true;
 }
 
 

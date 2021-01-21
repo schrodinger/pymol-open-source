@@ -54,7 +54,8 @@ typedef struct {
 
 #define MapBorder 2
 
-MapType *MapNew(PyMOLGlobals * G, float range, const float *vert, int nVert, const float *extent);
+MapType *MapNew(PyMOLGlobals * G, float range, const float *vert, int nVert,
+    const float* extent = nullptr);
 MapType *MapNewCached(PyMOLGlobals * G, float range, const float *vert, int nVert,
                       const float *extent, int group_id, int block_id);
 

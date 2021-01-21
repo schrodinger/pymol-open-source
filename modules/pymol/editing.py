@@ -643,7 +643,7 @@ SEE ALSO
         with _self.lockcm:
             return _cmd.add_bond(_self._COb, oname, index1 - 1, index2 - 1, order)
 
-    def rebond(oname, state=CURRENT_STATE, _self=cmd):
+    def rebond(oname, state=CURRENT_STATE, *, pbc=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -654,9 +654,12 @@ ARGUMENTS
     oname = str: object name
 
     state = int: object state {default: -1 (current state)}
+
+    pbc = 0/1: Use periodic boundary conditions (only if symmetry
+    is defined for the object) {default: 1}
         '''
         with _self.lockcm:
-            return _cmd.rebond(_self._COb, oname, state - 1)
+            return _cmd.rebond(_self._COb, oname, int(state) - 1, int(pbc))
 
     def bond(atom1="pk1", atom2="pk2", order=1, *, quiet=1, symop=None, _self=cmd):
         '''

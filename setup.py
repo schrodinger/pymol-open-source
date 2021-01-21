@@ -28,6 +28,7 @@ class options:
     help_distutils = False
     testing = False
     openvr = False
+    use_openmp = 'no' if MAC else 'yes'
     vmd_plugins = True
 
 try:
@@ -42,6 +43,8 @@ try:
             "(defaults to number of processors)")
     parser.add_argument('--no-libxml', action="store_true",
             help="skip libxml2 dependency, disables COLLADA export")
+    parser.add_argument('--use-openmp', choices=('yes', 'no'),
+            help="Use OpenMP")
     parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'guess', 'no'),
             help="c++11: use msgpack-c header-only library; c: link against "
             "shared library; no: disable fast MMTF load support")
@@ -284,11 +287,24 @@ ext_comp_args = [
     '-Wno-char-subscripts',
     # optimizations
     "-Og" if DEBUG else "-O3",
-]
+] if not WIN else []
 ext_link_args = []
 ext_objects = []
 data_files = []
 ext_modules = []
+
+if options.use_openmp == 'yes':
+    def_macros += [
+        ("PYMOL_OPENMP", None),
+    ]
+    if MAC:
+        ext_comp_args += ["-Xpreprocessor", "-fopenmp"]
+        libs += ["omp"]
+    elif WIN:
+        ext_comp_args += ["/openmp"]
+    else:
+        ext_comp_args += ["-fopenmp"]
+        ext_link_args += ["-fopenmp"]
 
 if options.vmd_plugins:
     # VMD plugin support
@@ -362,7 +378,6 @@ if MAC:
 if WIN:
         # clear
         libs = []
-        ext_comp_args = []
 
         def_macros += [
             ("WIN32", None),

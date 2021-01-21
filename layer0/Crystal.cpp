@@ -124,9 +124,7 @@ CGO *CrystalGetUnitCellCGO(const CCrystal * I)
 
 float CCrystal::unitCellVolume() const
 {
-  float a_cross_b[3];
-  cross_product3f(fracToReal(), fracToReal() + 3, a_cross_b);
-  return dot_product3f(a_cross_b, fracToReal() + 6);
+  return determinant33f(fracToReal());
 }
 
 void CCrystal::setDims(const float* dims)
@@ -227,4 +225,10 @@ void CCrystal::setFracToReal(const float* f2c)
   Angle[0] = rad_to_deg(get_angle3f(f2c_t + 3, f2c_t + 6));
   Angle[1] = rad_to_deg(get_angle3f(f2c_t + 0, f2c_t + 6));
   Angle[2] = rad_to_deg(get_angle3f(f2c_t + 0, f2c_t + 3));
+}
+
+bool CCrystal::isSuspicious() const
+{
+  return is_identityf(3, fracToReal(), R_SMALL4) || //
+         unitCellVolume() < R_SMALL4;
 }

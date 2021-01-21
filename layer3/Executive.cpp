@@ -16593,7 +16593,8 @@ pymol::Result<> ExecutiveSliceNew(PyMOLGlobals* G, const char* slice_name,
  * @param oname object name
  * @param state object state, negative values fall back to current state
  */
-pymol::Result<> ExecutiveRebond(PyMOLGlobals* G, const char* oname, int state)
+pymol::Result<> ExecutiveRebond(
+    PyMOLGlobals* G, const char* oname, int state, bool pbc)
 {
   auto obj = ExecutiveFindObjectMoleculeByName(G, oname);
   if (!obj) {
@@ -16606,7 +16607,7 @@ pymol::Result<> ExecutiveRebond(PyMOLGlobals* G, const char* oname, int state)
   }
 
   ObjectMoleculeRemoveBonds(obj, 0, 0);
-  ObjectMoleculeConnect(obj, cs, true, 3);
+  ObjectMoleculeConnect(obj, cs, true, 3, pbc);
   obj->invalidate(cRepAll, cRepInvAll, -1);
 
   return {};

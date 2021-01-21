@@ -189,7 +189,11 @@ inline int cmp(pymol::SymOp const& lhs, pymol::SymOp const& rhs)
 } // namespace
 
 /*========================================================================*/
-int BondCompare(BondType * a, BondType * b)
+/**
+ * Compare bonds by atom indices and symmetry operations. Swapped indices are
+ * not considered as equal. Bond order, ids and settings are not considered.
+ */
+int BondCompare(BondType const* a, BondType const* b)
 {
   int c;
   (c = cmp(a->index[0], b->index[0])) == 0 &&
@@ -200,7 +204,7 @@ int BondCompare(BondType * a, BondType * b)
 
 
 /*========================================================================*/
-int BondInOrder(BondType * a, int b1, int b2)
+int BondInOrder(BondType const* a, int b1, int b2)
 {
   return (BondCompare(a + b1, a + b2) <= 0);
 }
