@@ -48,6 +48,14 @@ class TestEditing(testing.PyMOLTestCase):
         func('all', 'foobar = model;stored.v = foobar')
         self.assertEqual(stored.v, 'm1')
 
+    @testing.requires_version("2.5")
+    def testIterateCallback(self):
+        cmd.fragment('gly')
+        atoms = []
+        cmd.iterate('not hydro', atoms.append)
+        self.assertEqual([a.name for a in atoms], ['N', 'CA', 'C', 'O'])
+        self.assertEqual([a.protons for a in atoms], [7, 6, 6, 8])
+
     def testIterateState(self):
         cmd.fragment('ala')
         cmd.create('ala', 'ala', 1, 2)
