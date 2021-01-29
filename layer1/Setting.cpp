@@ -250,9 +250,13 @@ bool SettingUniqueGetTypedValuePtr(PyMOLGlobals * G, int unique_id, int setting_
 
 /**
  * Warning: Returns colors as (fff) tuple instead of color index
+ *
+ * @pre GIL
  */
 PyObject *SettingUniqueGetPyObject(PyMOLGlobals * G, int unique_id, int index)
 {
+  assert(PyGILState_Check());
+
   int type = SettingGetType(G, index);
 
   union {
@@ -435,8 +439,13 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
 }
 
 #ifndef _PYMOL_NOPY
+/**
+ * @pre GIL
+ */
 bool SettingUniqueSetPyObject(PyMOLGlobals * G, int unique_id, int index, PyObject *value)
 {
+  assert(PyGILState_Check());
+
   if (!value)
     return SettingUniqueUnset(G, unique_id, index);
 
@@ -709,8 +718,13 @@ static bool is_session_blacklisted(int index) {
   return false;
 }
 
+/**
+ * @pre GIL
+ */
 int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 {
+  assert(PyGILState_Check());
+
   int ok = true;
   if(!partial_restore) {
     SettingUniqueResetAll(G);
@@ -799,8 +813,13 @@ int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_resto
   return ok;
 }
 
+/**
+ * @pre GIL
+ */
 PyObject *SettingUniqueAsPyList(PyMOLGlobals * G)
 {
+  assert(PyGILState_Check());
+
   PyObject *result = NULL;
   CSettingUnique *I = G->SettingUnique;
   {
@@ -899,8 +918,13 @@ int SettingSetSmart_i(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int in
   return SettingSetGlobal_i(G, index, value);
 }
 
+/**
+ * @pre GIL
+ */
 int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
 {
+  assert(PyGILState_Check());
+
   int ok = true;
 
   CSetting *I = G->Setting;
@@ -919,16 +943,26 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
   return (ok);
 }
 
+/**
+ * @pre GIL
+ */
 PyObject *SettingGetGlobalsAsPyList(PyMOLGlobals * G)
 {
+  assert(PyGILState_Check());
+
   PyObject *result = NULL;
   CSetting *I = G->Setting;
   result = SettingAsPyList(I);
   return (PConvAutoNone(result));
 }
 
+/**
+ * @pre GIL
+ */
 static PyObject *get_list(CSetting * I, int index, bool incl_blacklisted)
 {
+  assert(PyGILState_Check());
+
   PyObject *result = NULL, *value = NULL;
   int setting_type = SettingInfo[index].type;
 
@@ -964,8 +998,13 @@ static PyObject *get_list(CSetting * I, int index, bool incl_blacklisted)
   return result;
 }
 
+/**
+ * @pre GIL
+ */
 PyObject *SettingAsPyList(CSetting * I, bool incl_blacklisted)
 {
+  assert(PyGILState_Check());
+
   PyObject *result = NULL;
   int a;
 
@@ -1006,8 +1045,13 @@ static int SettingCheckUseShaders(CSetting * I, int quiet)
 }
 
 /*========================================================================*/
+/**
+ * @pre GIL
+ */
 static int set_list(CSetting * I, PyObject * list)
 {
+  assert(PyGILState_Check());
+
   int index = -1;
   int setting_type = -1;
 
@@ -1062,9 +1106,13 @@ ok_except1:
 /*========================================================================*/
 /**
  * Used to set object and object-state level settings from PSEs
+ *
+ * @pre GIL
  */
 CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list)
 {
+  assert(PyGILState_Check());
+
   int ok = true;
   ov_size size;
   ov_size a;
@@ -1085,8 +1133,13 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list)
 }
 
 /*========================================================================*/
+/**
+ * @pre GIL
+ */
 int SettingFromPyList(CSetting * I, PyObject * list)
 {
+  assert(PyGILState_Check());
+
   int ok = true;
   ov_size size;
   ov_size a;
@@ -1234,9 +1287,13 @@ const char * SettingGetTextPtr(PyMOLGlobals * G, const CSetting * set1, const CS
 
 #ifndef _PYMOL_NOPY
 /*========================================================================*/
+/**
+ * @pre GIL
+ */
 int SettingSetFromTuple(PyMOLGlobals * G, CSetting * I, int index, PyObject * tuple)
-/* must have interpret locked to make this call */
 {
+  assert(PyGILState_Check());
+
   PyObject *value;
   int type;
   int ok = true;
@@ -1390,9 +1447,13 @@ int SettingSetFromString(PyMOLGlobals * G, CSetting * I, int index, const char *
 #ifndef _PYMOL_NOPY
 /**
  * Warning: Returns colors as (fff) tuple instead of color index
+ *
+ * @pre GIL
  */
 PyObject *SettingGetPyObject(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2, int index)
-{                               /* assumes blocked python interpeter */
+{
+  assert(PyGILState_Check());
+
   PyObject *result = NULL;
   const float *ptr;
   int type = SettingGetType(G, index);
@@ -1429,8 +1490,13 @@ PyObject *SettingGetPyObject(PyMOLGlobals * G, const CSetting * set1, const CSet
   return result;
 }
 
+/**
+ * @pre GIL
+ */
 PyObject *SettingGetTuple(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2, int index)
-{                               /* assumes blocked python interpeter */
+{
+  assert(PyGILState_Check());
+
   PyObject *result = NULL;
   const float *ptr;
   int type = SettingGetType(G, index);

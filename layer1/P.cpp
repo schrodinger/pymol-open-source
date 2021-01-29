@@ -963,6 +963,8 @@ static void PLockAPIWhileBlocked(PyMOLGlobals * G);
  */
 void PLockStatus(PyMOLGlobals * G)
 {                               /* assumes we have the GIL */
+  assert(PyGILState_Check());
+
   PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->lock_api_status, "acquire", nullptr));
 }
 
@@ -973,6 +975,7 @@ void PLockStatus(PyMOLGlobals * G)
  */
 int PLockStatusAttempt(PyMOLGlobals * G)
 {                               /* assumes we have the GIL */
+  assert(PyGILState_Check());
 
   unique_PyObject_ptr got_lock(
       PYOBJECT_CALLMETHOD(G->P_inst->lock_api_status, "acquire", "i", 0));
@@ -988,6 +991,8 @@ int PLockStatusAttempt(PyMOLGlobals * G)
  */
 void PUnlockStatus(PyMOLGlobals * G)
 {                               /* assumes we have the GIL */
+  assert(PyGILState_Check());
+
   PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->lock_api_status, "release", nullptr));
 }
 
@@ -1031,6 +1036,8 @@ void PCatchInit(void);
 
 PyObject *PGetFontDict(PyMOLGlobals * G, float size, int face, int style)
 {                               /* assumes we have a valid interpreter lock */
+  assert(PyGILState_Check());
+
   PyObject *result = NULL;
 
   if(!P_vfont) {
@@ -1047,6 +1054,8 @@ PyObject *PGetFontDict(PyMOLGlobals * G, float size, int face, int style)
 
 int PComplete(PyMOLGlobals * G, char *str, int buf_size)
 {
+  assert(!PyGILState_Check());
+
   int ret = false;
   PyObject *result;
   const char *st2;
@@ -1068,6 +1077,8 @@ int PComplete(PyMOLGlobals * G, char *str, int buf_size)
 
 int PTruthCallStr0(PyObject * object, const char *method)
 {
+  assert(PyGILState_Check());
+
   int result = false;
   PyObject *tmp;
   tmp = PYOBJECT_CALLMETHOD(object, method, "");
@@ -1081,6 +1092,8 @@ int PTruthCallStr0(PyObject * object, const char *method)
 
 int PTruthCallStr(PyObject * object, const char *method, const char *argument)
 {
+  assert(PyGILState_Check());
+
   int result = false;
   PyObject *tmp;
   tmp = PYOBJECT_CALLMETHOD(object, method, "s", argument);
@@ -1094,6 +1107,8 @@ int PTruthCallStr(PyObject * object, const char *method, const char *argument)
 
 int PTruthCallStr1i(PyObject * object, const char *method, int argument)
 {
+  assert(PyGILState_Check());
+
   int result = false;
   PyObject *tmp;
   tmp = PYOBJECT_CALLMETHOD(object, method, "i", argument);
@@ -1107,6 +1122,8 @@ int PTruthCallStr1i(PyObject * object, const char *method, int argument)
 
 int PTruthCallStr1s(PyObject * object, const char *method, const char *argument)
 {
+  assert(PyGILState_Check());
+
   int result = false;
   PyObject *tmp;
   tmp = PYOBJECT_CALLMETHOD(object, method, "s", argument);
@@ -1120,6 +1137,8 @@ int PTruthCallStr1s(PyObject * object, const char *method, const char *argument)
 
 int PTruthCallStr4i(PyObject * object, const char *method, int a1, int a2, int a3, int a4)
 {
+  assert(PyGILState_Check());
+
   int result = false;
   PyObject *tmp;
   tmp = PYOBJECT_CALLMETHOD(object, method, "iiii", a1, a2, a3, a4);
@@ -1133,6 +1152,8 @@ int PTruthCallStr4i(PyObject * object, const char *method, int a1, int a2, int a
 
 PyObject *PXIncRef(PyObject * obj)
 {
+  assert(PyGILState_Check());
+
   if(!obj)
     obj = Py_None;
   Py_XINCREF(obj);
@@ -1141,11 +1162,15 @@ PyObject *PXIncRef(PyObject * obj)
 
 void PXDecRef(PyObject * obj)
 {
+  assert(PyGILState_Check());
+
   Py_XDECREF(obj);
 }
 
 static ov_status CacheCreateEntry(PyObject ** result, PyObject * input)
 {
+  assert(PyGILState_Check());
+
   ov_status status = OV_STATUS_FAILURE;
   if(input && PyTuple_Check(input)) {
     ov_size tuple_size = PyTuple_Size(input);
@@ -1192,6 +1217,8 @@ static ov_status CacheCreateEntry(PyObject ** result, PyObject * input)
 
 ov_status PCacheSet(PyMOLGlobals * G, PyObject * entry, PyObject * output)
 {
+  assert(PyGILState_Check());
+
   ov_status status = OV_STATUS_FAILURE;
   if(G->P_inst->cache && output) {
     ov_size tuple_size = PyTuple_Size(output);
@@ -1221,6 +1248,8 @@ ov_status PCacheSet(PyMOLGlobals * G, PyObject * entry, PyObject * output)
 ov_status PCacheGet(PyMOLGlobals * G,
                     PyObject ** result_output, PyObject ** result_entry, PyObject * input)
 {
+  assert(PyGILState_Check());
+
   ov_status status = OV_STATUS_NO;
   if(G->P_inst->cache) {
     PyObject *entry = NULL;
@@ -1252,6 +1281,8 @@ ov_status PCacheGet(PyMOLGlobals * G,
 
 void PSleepWhileBusy(PyMOLGlobals * G, int usec)
 {
+  assert(!PyGILState_Check());
+
 #ifndef WIN32
   struct timeval tv;
   PRINTFD(G, FB_Threads)
@@ -1272,6 +1303,8 @@ void PSleepWhileBusy(PyMOLGlobals * G, int usec)
 
 void PSleepUnlocked(PyMOLGlobals * G, int usec)
 {                               /* can only be called by the glut process */
+  assert(!PyGILState_Check());
+
 #ifndef WIN32
   struct timeval tv;
   PRINTFD(G, FB_Threads)
@@ -1292,6 +1325,8 @@ void PSleepUnlocked(PyMOLGlobals * G, int usec)
 
 void PSleep(PyMOLGlobals * G, int usec)
 {                               /* can only be called by the glut process */
+  assert(!PyGILState_Check());
+
 #ifndef WIN32
   struct timeval tv;
   PUnlockAPIAsGlut(G);
@@ -1324,11 +1359,15 @@ void my_interrupt(int a)
 
 void PDumpTraceback(PyObject * err)
 {
+  assert(PyGILState_Check());
+
   PYOBJECT_CALLMETHOD(P_traceback, "print_tb", "O", err);
 }
 
 void PDumpException()
 {
+  assert(PyGILState_Check());
+
   PYOBJECT_CALLMETHOD(P_traceback, "print_exc", "");
 }
 
@@ -1344,12 +1383,15 @@ WrapperObject * WrapperObjectNew() {
   return wobj;
 }
 
+/**
+ * @pre GIL
+ */
 int PAlterAtomState(PyMOLGlobals * G, PyObject *expr_co, int read_only,
                     ObjectMolecule *obj, CoordSet *cs, int atm, int idx,
                     int state, PyObject * space)
-
-/* assumes Blocked python interpreter */
 {
+  assert(PyGILState_Check());
+
   int result = true;
 
   auto wobj = WrapperObjectNew();
@@ -1384,6 +1426,8 @@ int PAlterAtom(PyMOLGlobals* G, ObjectMolecule* obj, CoordSet* cs,
 static
 int PLabelPyObjectToStrMaxLen(PyMOLGlobals * G, PyObject * obj, char *buffer, int maxlen)
 {
+  assert(PyGILState_Check());
+
   if (obj && PyFloat_Check(obj)) {
     snprintf(buffer, maxlen + 1, "%.*f",
         SettingGetGlobal_i(G, cSetting_label_digits),
@@ -1396,6 +1440,8 @@ int PLabelPyObjectToStrMaxLen(PyMOLGlobals * G, PyObject * obj, char *buffer, in
 int PLabelAtom(PyMOLGlobals* G, ObjectMolecule* obj, CoordSet* cs,
     PyObject* expr_co, int atm)
 {
+  assert(PyGILState_Check());
+
   PyObject *P_inst_dict = G->P_inst->dict;
   OrthoLineType label;
   AtomInfoType * ai = obj->AtomInfo + atm;
@@ -1449,6 +1495,8 @@ int PLabelAtom(PyMOLGlobals* G, ObjectMolecule* obj, CoordSet* cs,
  */
 void PUnlockAPIAsGlut(PyMOLGlobals * G)
 {                               /* must call with unblocked interpreter */
+  assert(!PyGILState_Check());
+
   PBlock(G);
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock, "iO", 0, G->P_inst->cmd));  /* NOTE this may flush the command buffer! */
   PLockStatus(G);
@@ -1466,6 +1514,8 @@ void PUnlockAPIAsGlut(PyMOLGlobals * G)
  */
 void PUnlockAPIAsGlutNoFlush(PyMOLGlobals * G)
 {                               /* must call with unblocked interpreter */
+  assert(!PyGILState_Check());
+
   PBlock(G);
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock, "iO", -1, G->P_inst->cmd)); /* prevents flushing of the buffer */
   PLockStatus(G);
@@ -1483,6 +1533,8 @@ void PUnlockAPIAsGlutNoFlush(PyMOLGlobals * G)
  */
 static int get_api_lock(PyMOLGlobals * G, int block_if_busy)
 {
+  assert(PyGILState_Check());
+
   if (!block_if_busy) {
     unique_PyObject_ptr got_lock(
         PYOBJECT_CALLFUNCTION(G->P_inst->lock_attempt, "O", G->P_inst->cmd));
@@ -1518,6 +1570,8 @@ static int get_api_lock(PyMOLGlobals * G, int block_if_busy)
  */
 int PLockAPIAsGlut(PyMOLGlobals * G, int block_if_busy)
 {
+  assert(!PyGILState_Check());
+
   PBlock(G);
 
   PLockGLUT(G);
@@ -1630,6 +1684,8 @@ void init_pyomm(void);
 
 void PConvertOptions(CPyMOLOptions * rec, PyObject * options)
 {
+  assert(PyGILState_Check());
+
   const char *load_str;
 
   rec->pmgui = !PyInt_AsLong(PyObject_GetAttrString(options, "no_gui"));
@@ -1689,6 +1745,8 @@ void PConvertOptions(CPyMOLOptions * rec, PyObject * options)
 
 void PGetOptions(CPyMOLOptions * rec)
 {
+  assert(PyGILState_Check());
+
   PyObject *pymol, *invocation, *options;
 
   pymol = PImportModuleOrFatal("pymol");
@@ -1707,6 +1765,8 @@ void PGetOptions(CPyMOLOptions * rec)
  */
 void PRunStringModule(PyMOLGlobals * G, const char *str)
 {
+  assert(PyGILState_Check());
+
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->exec, "Os", P_pymol, str));
 }
 
@@ -1716,6 +1776,8 @@ void PRunStringModule(PyMOLGlobals * G, const char *str)
  */
 void PRunStringInstance(PyMOLGlobals * G, const char *str)
 {
+  assert(PyGILState_Check());
+
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->exec, "Os", G->P_inst->obj, str));
 }
 
@@ -1732,6 +1794,8 @@ static void WrapperObjectDealloc(PyObject* self)
 
 void PInit(PyMOLGlobals * G, int global_instance)
 {
+  assert(PyGILState_Check());
+
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 #ifdef _PYMOL_MONOLITHIC
@@ -1930,6 +1994,8 @@ void PInit(PyMOLGlobals * G, int global_instance)
 int PPovrayRender(PyMOLGlobals * G, const char *header, const char *inp, const char *file, int width,
                   int height, int antialias)
 {
+  assert(!PyGILState_Check());
+
   PyObject *result;
   int ok;
   PBlock(G);
@@ -1944,6 +2010,8 @@ int PPovrayRender(PyMOLGlobals * G, const char *header, const char *inp, const c
 
 void PFree(PyMOLGlobals * G)
 {
+  assert(PyGILState_Check());
+
   PXDecRef(G->P_inst->parse);
   PXDecRef(G->P_inst->complete);
   PXDecRef(G->P_inst->colortype);
@@ -1954,6 +2022,8 @@ void PFree(PyMOLGlobals * G)
  */
 void PExit(PyMOLGlobals * G, int code)
 {
+  assert(!PyGILState_Check());
+
   ExecutiveDelete(G, "all");
   PBlock(G);
 
@@ -2162,6 +2232,8 @@ int PFlush(PyMOLGlobals * G)
  */
 int PFlushFast(PyMOLGlobals * G)
 {
+  assert(PyGILState_Check());
+
   /* NOTE: ASSUMES we currently have blocked Python threads and an unlocked API */
   int did_work = false;
   auto ortho = G->Ortho;
@@ -2191,15 +2263,19 @@ int PFlushFast(PyMOLGlobals * G)
  */
 void PBlock(PyMOLGlobals * G)
 {
+  assert(!PyGILState_Check());
 
   if(!PAutoBlock(G)) {
     ErrFatal(G, "PBlock", "Threading error detected.  Terminating...");
   }
+
+  assert(PyGILState_Check());
 }
 
 /**
  * Acquire the GIL.
  * Return false if the current thread already holds the GIL.
+ * @post GIL
  */
 int PAutoBlock(PyMOLGlobals * G)
 {
@@ -2210,14 +2286,19 @@ int PAutoBlock(PyMOLGlobals * G)
 
   for (auto a = MAX_SAVED_THREAD - 1; a; --a) {
     if (SavedThread[a].id == id) {
+      assert(!PyGILState_Check());
+
       // Aquire GIL
       PyEval_RestoreThread(SavedThread[a].state);
 
       SavedThread[a].id = -1;
 
+      assert(PyGILState_Check());
       return 1;
     }
   }
+
+  assert(PyGILState_Check());
   return 0;
 #else
   return 1;
@@ -2241,6 +2322,8 @@ int PIsGlutThread(void)
 void PUnblock(PyMOLGlobals * G)
 {
 #ifndef _PYMOL_EMBEDDED
+  assert(PyGILState_Check());
+
   SavedThreadRec *SavedThread = G->P_inst->savedThread;
   auto a = MAX_SAVED_THREAD - 1;
   /* NOTE: ASSUMES a locked API */
@@ -2255,6 +2338,8 @@ void PUnblock(PyMOLGlobals * G)
 
   // Release GIL
   SavedThread[a].state = PyEval_SaveThread();
+
+  assert(!PyGILState_Check());
 #endif
 }
 
@@ -2362,6 +2447,8 @@ int PTryLockAPIAndUnblock(PyMOLGlobals * G)
  */
 void PLockAPIAndUnblock(PyMOLGlobals * G)
 {
+  assert(PyGILState_Check());
+
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->lock, "O", G->P_inst->cmd));
   PUnblock(G);
 }
@@ -2376,6 +2463,8 @@ void PLockAPIAndUnblock(PyMOLGlobals * G)
  */
 void PDefineFloat(PyMOLGlobals * G, const char *name, float value)
 {
+  assert(!PyGILState_Check());
+
   char buffer[OrthoLineLength];
   sprintf(buffer, "%s = %f\n", name, value);
   PBlock(G);
@@ -2391,6 +2480,8 @@ void PDefineFloat(PyMOLGlobals * G, const char *name, float value)
  */
 void PErrPrintIfOccurred(PyMOLGlobals* G)
 {
+  assert(PyGILState_Check());
+
   PyObject *type = nullptr, *value = nullptr, *traceback = nullptr;
   PyErr_Fetch(&type, &value, &traceback);
 
@@ -2498,6 +2589,8 @@ static PyMethodDef PCatch_methods[] = {
 
 void PCatchInit(void)
 {
+  assert(PyGILState_Check());
+
   static struct PyModuleDef moduledef = { PyModuleDef_HEAD_INIT,
     "pcatch", NULL, -1, PCatch_methods };
   PyObject * pcatch = PyModule_Create(&moduledef);

@@ -4344,6 +4344,8 @@ static int * getRepArrayFromBitmask(int visRep);
 
 PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G)
 {
+  assert(PyGILState_Check());
+
   PyObject *result = NULL, *list;
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
@@ -4420,6 +4422,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
+  assert(PyGILState_Check());
 
   int ok = true;
   WordType name;
@@ -5351,6 +5354,8 @@ static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals * G, int list_id, int par
 int ExecutiveGetSession(PyMOLGlobals * G, PyObject * dict, const char *names, int partial,
                         int quiet)
 {
+  assert(PyGILState_Check());
+
   int list_id = 0;
   SceneViewType sv;
   PyObject *tmp;
@@ -5514,6 +5519,8 @@ int ExecutiveSetSessionNoMLock(PyMOLGlobals* G, PyObject* session)
 int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
                         int partial_restore, int quiet)
 {
+  assert(PyGILState_Check());
+
   int ok = true;
   int incomplete = false;
   PyObject *tmp;
@@ -7767,10 +7774,14 @@ float *ExecutiveGetVertexVLA(PyMOLGlobals * G, const char *s1, int state)
 
 /*========================================================================*/
 #ifndef _PYMOL_NOPY
+/**
+ * @pre GIL
+ */
 PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
                                     const char *object, int state, int type)
 {
-  /* Assumes blocked Python interpreter */
+  assert(PyGILState_Check());
+
   PyObject *result = NULL;
   pymol::CObject *obj = NULL;
   CSetting *set_ptr1 = NULL, *set_ptr2 = NULL;
@@ -10028,6 +10039,8 @@ pymol::Result<int> ExecutiveIterateList(PyMOLGlobals* G, const char* str1,
 #ifdef _PYMOL_NOPY
   return pymol::make_error("Iterate List not available.");
 #else
+  assert(PyGILState_Check());
+
   int ok = true;
   int n_eval = 0;
   SelectorTmp s1(G, str1);
@@ -11432,6 +11445,8 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
 #ifdef _PYMOL_NOPY
   return 0;
 #else
+  assert(PyGILState_Check());
+
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;

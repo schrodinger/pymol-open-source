@@ -635,8 +635,13 @@ ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals * G, const char *text, float *pos)
 
 /*========================================================================*/
 
+/**
+ * @pre GIL
+ */
 ObjectCGO *ObjectCGODefine(PyMOLGlobals * G, ObjectCGO * obj, PyObject * pycgo, int state)
-{                               /* assumes blocked interpreter */
+{
+  assert(PyGILState_Check());
+
   ObjectCGO *I = NULL;
 
   CGO *cgo, *font_cgo;

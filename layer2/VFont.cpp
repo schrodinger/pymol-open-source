@@ -173,8 +173,12 @@ int VFontIndent(PyMOLGlobals * G, int font_id, const char *text, float *pos, flo
 }
 
 #ifndef _PYMOL_NOPY
+/**
+ * @pre GIL
+ */
 static int VFontRecLoad(PyMOLGlobals * G, VFontRec * I, PyObject * dict)
-{                               /* assumes blocked Python interpreter */
+{
+  assert(PyGILState_Check());
 
   ov_diff used = 0;
   int ok = true;
