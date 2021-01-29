@@ -272,7 +272,12 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "unset" clear non-global settings and zeros out global settings.
+    "unset" clears a setting and restores its default value.
+
+    WARNING: The behavior for global settings changed in PyMOL 2.5.
+    Previously, "unset settingname" would set the global value of
+    "settingname" to zero/off instead of the default value.
+    To set a setting to zero, do "set settingname, 0".
 
 USAGE
 
@@ -289,7 +294,7 @@ EXAMPLE
 NOTES
 
     If selection is not provided, unset changes the named global
-    setting to a zero or off value.
+    setting to its default value.
 
     If a selection is provided, then "unset" undefines per-object,
     per-state, or per-atom settings.
@@ -301,7 +306,7 @@ PYMOL API
 
 SEE ALSO
 
-    set, set_bond
+    unset_deep, set, set_bond
     
         '''
         selection = selector.process(selection)
