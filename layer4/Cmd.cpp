@@ -2236,7 +2236,7 @@ static PyObject *CmdGetObjectSettings(PyObject * self, PyObject * args)
 
   API_SETUP_PYMOL_GLOBALS;
   ok_assert(1, G);
-  APIEnter(G);
+  APIEnterBlocked(G);
 
   obj = ExecutiveFindObjectByName(G, oname);
 
@@ -2257,7 +2257,7 @@ static PyObject *CmdGetObjectSettings(PyObject * self, PyObject * args)
     }
   }
 
-  APIExit(G);
+  APIExitBlocked(G);
 ok_except1:
   return APIAutoNone(result);
 }
