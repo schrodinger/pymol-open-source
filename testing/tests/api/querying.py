@@ -619,3 +619,23 @@ class TestQuerying(testing.PyMOLTestCase):
         cmd.distance('p3', '1rx1', 'same', mode=7)
         coords = cmd.get_session('p3', 1)['names'][0][5][2][0][1]
         self.assertArrayEqual(coords, coords_ref_pi_cat, delta=1e-2)
+
+    # incentive: 1.8.4, open-source: 2.1
+    @testing.requires_version('2.1')
+    def test_get_object_settings(self):
+        cmd.pseudoatom("m1")
+        # global (should have no influence)
+        cmd.set("half_bonds")
+        # object-level
+        cmd.set("cartoon_gap_cutoff", 5, "m1")
+        cmd.set("grid_slot", 3, "m1")
+        cmd.set("wildcard", "#", "m1")
+        # ostate-level
+        cmd.set("cartoon_gap_cutoff", 7, "m1", 1)
+        cmd.set("ribbon_sampling", 9, "m1", 1)
+        # object-level
+        s = cmd.get_object_settings("m1")
+        self.assertEqual(s, [[412, 6, '#'], [579, 2, 3], [750, 2, 5]])
+        # ostate-level
+        s = cmd.get_object_settings("m1", state=1)
+        self.assertEqual(s, [[19, 2, 9], [750, 2, 7]])
