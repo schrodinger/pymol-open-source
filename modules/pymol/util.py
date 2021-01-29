@@ -784,17 +784,18 @@ def cbc(selection='(all)',first_color=7,quiet=1,legacy=0,_self=cmd):
             print(" util.cbc: color %s, (chain %s)" % (color, a))
         _self.color(color, "(chain %s and (%s))" % (a, selection), quiet=quiet)
 
-def color_objs(selection='(all)',quiet=1,_self=cmd):
+def color_objs(selection='all', quiet=1, _self=cmd):
     cmd=_self
     '''
-    Color all chains a different color
+    Color all objects a different color
     '''
     c = 0
     for a in cmd.get_names('public_nongroup_objects',selection=selection):
         if (selection!='all') and (selection!='(all)'):
+            cmd.set_object_color(a, _color_cycle[c])
             cmd.color(_color_cycle[c],"(?%s and (%s))"%(a,selection),quiet=quiet)
         else:
-            cmd.color(_color_cycle[c],"(?%s)"%(a),quiet=quiet)
+            cmd.color(_color_cycle[c], a, quiet=quiet)
         c = (c + 1) % _color_cycle_len
 
 def color_deep(color, name='all', quiet=1, _self=cmd):
