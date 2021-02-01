@@ -170,7 +170,6 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, const int *atom, pymol::zstr
 static int *SelectorGetIndexVLA(PyMOLGlobals * G, SelectorID_t sele);
 static int *SelectorGetIndexVLAImpl(PyMOLGlobals * G, CSelector *I, int sele);
 static void SelectorClean(PyMOLGlobals * G);
-static void SelectorCleanImpl(PyMOLGlobals * G, CSelector *I);
 static int SelectorCheckNeighbors(PyMOLGlobals * G, int maxDepth, ObjectMolecule * obj,
                                   int at1, int at2, int *zero, int *scratch);
 

@@ -121,6 +121,7 @@ def strip_broken_isysroot(args, start=0):
 def customize_compiler(compiler):
     # remove problematic flags
     if sys.platform == 'linux' and (
+            'icpc' in os.getenv('CXX', '') or
             'clang' in os.getenv('CC', '') or
             'clang' in os.getenv('LD', '')):
         import re

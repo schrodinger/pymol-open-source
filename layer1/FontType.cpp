@@ -526,11 +526,11 @@ const char* CFontType::RenderRay(CRay* ray, const char* st, float size,
   return st;
 }
 
-static void FontTypeFree(CFont * font)
+CFontType::~CFontType()
 {
-  CFontType *I = (CFontType *) font;
-  TypeFaceFree(I->TypeFace);
-  OOFreeP(I);
+  if (TypeFace) {
+    TypeFaceFree(TypeFace);
+  }
 }
 
 CFontType::CFontType(PyMOLGlobals* G, unsigned char* dat, unsigned int len)

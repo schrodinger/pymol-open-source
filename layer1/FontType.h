@@ -23,6 +23,9 @@ Z* -------------------------------------------------------------------
 
 struct CFontType : public CFont {
   CTypeFace* TypeFace;
+
+  ~CFontType() override;
+
   CFontType(PyMOLGlobals* G, unsigned char* dat, unsigned int len);
   const char* RenderOpenGL(const RenderInfo* info, const char* text, float size,
       const float* rpos, bool needSize, short relativeMode, bool shouldRender,

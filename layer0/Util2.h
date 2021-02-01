@@ -66,18 +66,23 @@ std::string join_to_string(PrintableTs&&... ts)
 
 namespace string_format_detail
 {
-template <typename T,
-    enable_if_t<std::is_same<remove_cvref_t<T>, std::string>::value>* = nullptr>
-const char* fwdArgs(T&& t)
+template <typename T> const T& fwdArgs(const T& t)
+{
+#if defined(__clang__) || !defined(__GNUC__) || __GNUC__ >= 5
+  // Not available in GCC 4.8
+  static_assert(std::is_trivially_copyable<T>::value, "");
+#endif
+  return t;
+}
+
+inline const char* fwdArgs(const std::string& t)
 {
   return t.c_str();
 }
 
-template <typename T,
-    enable_if_t<!std::is_same<remove_cvref_t<T>, std::string>::value>* = nullptr>
-T&& fwdArgs(T&& t)
+inline const char* fwdArgs(const pymol::zstring_view& t)
 {
-  return std::forward<T>(t);
+  return t.c_str();
 }
 
 template <typename... FmtArgs>

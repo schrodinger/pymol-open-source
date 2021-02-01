@@ -557,6 +557,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     " SceneRender: leaving...\n" ENDFD;
 }
 
+#ifndef _PYMOL_NO_AA_SHADERS
 static
 void AppendCopyWithChangedShader(PyMOLGlobals * G, CGO *destCGO, CGO *srcCGO, int frommode, int tomode){
   CGO *cgo = CGONew(G);
@@ -565,6 +566,7 @@ void AppendCopyWithChangedShader(PyMOLGlobals * G, CGO *destCGO, CGO *srcCGO, in
   CGOAppendNoStop(destCGO, cgo);
   CGOFreeWithoutVBOs(cgo);
 }
+#endif
 
 /* SceneRenderAA: renders Anti-aliasing from the I->offscreen_texture texture,
                   depending on the antialias_shader setting, FXAA (1 stage)

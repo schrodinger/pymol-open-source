@@ -324,6 +324,7 @@ int StereoIsAdjacent(PyMOLGlobals * G){
   return stereo_via_adjacent_array(I->StereoMode);
 }
 
+#ifdef _PYMOL_IOS
 static int get_stereo_x(int x, int *last_x, int width, int *click_side)
 {
   int width_2 = width / 2;
@@ -353,6 +354,7 @@ static int get_stereo_x(int x, int *last_x, int width, int *click_side)
   }
   return x;
 }
+#endif
 
 void SceneAbortAnimation(PyMOLGlobals * G)
 {

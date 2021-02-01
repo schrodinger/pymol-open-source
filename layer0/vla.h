@@ -34,7 +34,10 @@ namespace pymol
  */
 template <typename T> class vla
 {
+#if defined(__clang__) || !defined(__GNUC__) || __GNUC__ >= 5
+  // Not available in GCC 4.8
   static_assert(std::is_trivially_copyable<T>::value, "");
+#endif
 
   T* m_vla = nullptr;
 

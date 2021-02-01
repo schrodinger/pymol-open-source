@@ -3175,6 +3175,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
   return (ok);
 }
 
+#ifdef _PYMOL_IP_PROPERTIES
 /**
  * Extract an atom property "column" as a Python list.
  *
@@ -3225,7 +3226,9 @@ static PyObject* AtomColumnAsPyList(const ObjectMolecule& mol,
 
   return list;
 }
+#endif
 
+#ifdef _PYMOL_IP_PROPERTIES
 /**
  * Restore an atom property "column" from a Python list.
  * @param mol Object molecule to update atoms in
@@ -3246,6 +3249,7 @@ static void AtomColumnFromPyList(ObjectMolecule& mol, PyObject* list,
     func(mol.AtomInfo[i], PyList_GetItem(list, i));
   }
 }
+#endif
 
 static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
 {
