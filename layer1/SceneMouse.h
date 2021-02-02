@@ -5,7 +5,11 @@
 
 struct DeferredMouse;
 struct PyMOLGlobals;
+
+namespace pymol
+{
 struct CObject;
+}
 
 struct NamedPickContext {
   std::string name;
@@ -18,10 +22,10 @@ struct NamedPicking {
   NamedPicking(const Picking& pick);
 };
 
-void SceneClickObject(PyMOLGlobals* G, CObject* obj, const NamedPicking& LastPicked,
+void SceneClickObject(PyMOLGlobals* G, pymol::CObject* obj, const NamedPicking& LastPicked,
     int mode, pymol::zstring_view sel_mode_kw);
 void SceneClickTransformObject(
-    PyMOLGlobals* G, CObject* obj, const NamedPicking& LastPicked, int mode, bool is_single_click);
+    PyMOLGlobals* G, pymol::CObject* obj, const NamedPicking& LastPicked, int mode, bool is_single_click);
 void SceneClickPickBond(PyMOLGlobals* G, int x, int y, int mode, const NamedPicking& LastPicked);
 int SceneDeferredRelease(DeferredMouse* dm);
 int SceneDeferredClick(DeferredMouse* dm);

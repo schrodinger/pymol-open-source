@@ -629,7 +629,7 @@ void SceneRenderAllObject(PyMOLGlobals * G,
     RenderInfo *info,
     float *normal,
     int state,
-    CObject *obj,
+    pymol::CObject *obj,
     GridInfo * grid,
     int *slot_vla,
     int fat)

@@ -2305,9 +2305,9 @@ pymol::Result<ObjectMolecule*> ObjectMoleculeReadCifStr(PyMOLGlobals * G, Object
       return obj;
 
     // multiplexing
-    ObjectSetName((CObject*) obj, datablock.code());
+    ObjectSetName(obj, datablock.code());
     ExecutiveDelete(G, obj->Name);
-    ExecutiveManageObject(G, (CObject*) obj, zoom, true);
+    ExecutiveManageObject(G, obj, zoom, true);
   }
 
   return nullptr;

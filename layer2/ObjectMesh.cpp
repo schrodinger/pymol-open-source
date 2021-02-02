@@ -1096,7 +1096,7 @@ int ObjectMesh::getNFrame() const
 
 
 /*========================================================================*/
-ObjectMesh::ObjectMesh(PyMOLGlobals * G) : CObject(G)
+ObjectMesh::ObjectMesh(PyMOLGlobals * G) : pymol::CObject(G)
 {
   auto I = this;
   I->type = cObjectMesh;
@@ -1313,7 +1313,7 @@ void ObjectMeshRecomputeExtent(ObjectMesh * I)
   }
 }
 
-CObject* ObjectMesh::clone() const
+pymol::CObject* ObjectMesh::clone() const
 {
   return new ObjectMesh(*this);
 }

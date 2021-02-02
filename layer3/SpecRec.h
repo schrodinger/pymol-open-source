@@ -11,7 +11,7 @@ public:
   /* NOTE: must zero-init with CALLOC */
   int type;
   WordType name;                /*only used for selections */
-  CObject *obj;
+  pymol::CObject* obj;
   SpecRec *next;
   int visible;            /* This is actually when object is "Enabled", not visible */
 

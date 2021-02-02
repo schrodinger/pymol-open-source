@@ -89,7 +89,7 @@ static int SceneLoopRelease(Block* block, int button, int x, int y, int mod)
   return 1;
 }
 
-void SceneClickButtonAddTo(PyMOLGlobals* G, CObject* obj,
+void SceneClickButtonAddTo(PyMOLGlobals* G, pymol::CObject* obj,
     pymol::zstring_view selName, pymol::zstring_view buffer,
     pymol::zstring_view sel_mode_kw)
 {
@@ -230,7 +230,7 @@ static int SceneClickSceneButton(
  * @param sel_mode_kw Current selection mode operator for the mouse
  *
  */
-void SceneClickObject(PyMOLGlobals* G, CObject* obj, const NamedPicking& LastPicked,
+void SceneClickObject(PyMOLGlobals* G, pymol::CObject* obj, const NamedPicking& LastPicked,
     int mode, pymol::zstring_view sel_mode_kw)
 {
   std::string selName;
@@ -373,7 +373,7 @@ void SceneClickObject(PyMOLGlobals* G, CObject* obj, const NamedPicking& LastPic
 }
 
 void SceneClickTransformObject(
-    PyMOLGlobals* G, CObject* obj, const NamedPicking& LastPicked, int mode, bool is_single_click)
+    PyMOLGlobals* G, pymol::CObject* obj, const NamedPicking& LastPicked, int mode, bool is_single_click)
 {
   auto I = G->Scene;
   switch (obj->type) {
@@ -874,7 +874,7 @@ static int SceneClick(
         x = get_stereo_x(x, NULL, I->Width, NULL);
 
       if (SceneDoXYPick(G, x, y, click_side)) {
-        auto obj = (CObject*) I->LastPicked.context.object;
+        auto obj = I->LastPicked.context.object;
         y = y - I->margin.bottom;
         x = x - I->margin.left;
         I->LastX = x;
@@ -936,7 +936,7 @@ static int SceneClick(
         x = get_stereo_x(x, NULL, I->Width, &click_side);
 
       if (SceneDoXYPick(G, x, y, click_side)) {
-        auto obj = (CObject*) I->LastPicked.context.object;
+        auto obj = I->LastPicked.context.object;
         y = y - I->margin.bottom;
         x = x - I->margin.left;
         I->LastX = x;
@@ -1039,7 +1039,7 @@ static int SceneClick(
         x = get_stereo_x(x, NULL, I->Width, &click_side);
 
       if (SceneDoXYPick(G, x, y, click_side)) {
-        auto obj = (CObject*) I->LastPicked.context.object;
+        auto obj = I->LastPicked.context.object;
 
         assert(I->LastPicked.src.bond != cPickableNoPick);
 
@@ -1234,7 +1234,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
   int adjust_flag;
   int drag_handled = false;
   int virtual_trackball;
-  CObject* obj;
+  pymol::CObject* obj;
 
   if (I->PossibleSingleClick) {
     double slowest_single_click_drag = 0.15;
@@ -1334,7 +1334,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
     SceneDontCopyNext(G);
     switch (mode) {
     case cButModePickAtom:
-      obj = (CObject*) I->LastPicked.context.object;
+      obj = I->LastPicked.context.object;
       if (obj)
         switch (obj->type) {
         case cObjectGadget: {
@@ -1526,7 +1526,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
     case cButModeMoveAtom:
     case cButModeMoveAtomZ:
     case cButModePkTorBnd:
-      obj = (CObject*) I->LastPicked.context.object;
+      obj = I->LastPicked.context.object;
       if (obj) {
         if (I->Threshold) {
           if ((abs(x - I->ThresholdX) > I->Threshold) ||

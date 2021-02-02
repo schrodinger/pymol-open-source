@@ -28,8 +28,7 @@ void MaeExportGetRibbonColor(PyMOLGlobals * G,
 std::string MaeExportGetLabelUserText(PyMOLGlobals * G,
     const AtomInfoType * ai);
 
-std::string MaeExportGetSubGroupId(PyMOLGlobals * G,
-    const CObject * obj);
+std::string MaeExportGetSubGroupId(PyMOLGlobals* G, const pymol::CObject* obj);
 
 std::string MaeExportStrRepr(const char * text);
 

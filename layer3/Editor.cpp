@@ -50,7 +50,7 @@ struct _CEditor {
   int PickMode;                 /* 1 = atom, 2 = bond, 3 = multiatom */
   int NextPickSele;
   int BondMode;
-  CObject *DragObject;
+  pymol::CObject *DragObject;
   int NFrag;
   float V0[3], V1[3], Axis[3], Center[3], DragBase[3];
   float *PosVLA;
@@ -295,7 +295,7 @@ void EditorUpdate(PyMOLGlobals * G)
   }
 }
 
-static int EditorGetEffectiveState(PyMOLGlobals * G, CObject * obj, int state)
+static int EditorGetEffectiveState(PyMOLGlobals * G, pymol::CObject * obj, int state)
 {
   if(obj && (obj->type == cObjectMolecule)) {
     ObjectMolecule *objMol = (ObjectMolecule*)(void*)obj;
@@ -451,7 +451,7 @@ int EditorActive(PyMOLGlobals * G)
   return (I->Active);
 }
 
-CObject *EditorDragObject(PyMOLGlobals * G)
+pymol::CObject *EditorDragObject(PyMOLGlobals * G)
 {
   CEditor *I = G->Editor;
   return I->DragObject;
@@ -1821,7 +1821,7 @@ void EditorActivate(PyMOLGlobals * G, int state, int enable_bond)
 
 
 /*========================================================================*/
-void EditorSetDrag(PyMOLGlobals * G, CObject * obj, int sele, int quiet, int state)
+void EditorSetDrag(PyMOLGlobals * G, pymol::CObject * obj, int sele, int quiet, int state)
 {
   EditorInactivate(G);
   state = EditorGetEffectiveState(G, obj, state);
@@ -1848,7 +1848,7 @@ void EditorReadyDrag(PyMOLGlobals * G, int state)
 
 
 /*========================================================================*/
-void EditorPrepareDrag(PyMOLGlobals * G, CObject * obj,
+void EditorPrepareDrag(PyMOLGlobals * G, pymol::CObject * obj,
                        int sele, int index, int state, int mode)
 {
   int frg;
@@ -2133,7 +2133,7 @@ int EditorDraggingObjectMatrix(PyMOLGlobals *G)
   return false;
 }
 
-void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
+void EditorDrag(PyMOLGlobals * G, pymol::CObject * obj, int index, int mode, int state,
                 float *pt, float *mov, float *z_dir)
 {
   CEditor *I = G->Editor;

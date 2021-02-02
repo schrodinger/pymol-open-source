@@ -1092,7 +1092,7 @@ int ObjectVolume::getNFrame() const
 }
 
 /*========================================================================*/
-ObjectVolume::ObjectVolume(PyMOLGlobals * G) : CObject(G)
+ObjectVolume::ObjectVolume(PyMOLGlobals * G) : pymol::CObject(G)
 {
   type = cObjectVolume;
 }
@@ -1295,7 +1295,7 @@ pymol::Result<> ObjectVolumeSetRamp(ObjectVolume * I, std::vector<float>&& ramp_
   return {};
 }
 
-CObject* ObjectVolume::clone() const
+pymol::CObject* ObjectVolume::clone() const
 {
   return new ObjectVolume(*this);
 }

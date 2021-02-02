@@ -11,7 +11,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
     int discrete, int quiet, int zoom)
 {
   ObjectNameType valid_name = "";
-  CObject *origObj = NULL, *obj;
+  pymol::CObject *origObj = NULL, *obj;
   OrthoLineType buf;
   buf[0] = 0;
   ExecutiveProcessObjectName(G, oname, valid_name);
@@ -31,7 +31,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
       }
     }
     PBlock(G); /*PBlockAndUnlockAPI(); */
-    obj = (CObject*) ObjectMoleculeLoadChemPyModel(
+    obj = ObjectMoleculeLoadChemPyModel(
         G, (ObjectMolecule*) origObj, model, frame, discrete);
     PUnblock(G); /*PLockAPIAndUnblock(); */
     if (!origObj) {
@@ -62,7 +62,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
         origObj = NULL;
       }
     PBlock(G); /*PBlockAndUnlockAPI(); */
-    obj = (CObject*) ObjectMapLoadChemPyBrick(
+    obj = ObjectMapLoadChemPyBrick(
         G, (ObjectMap*) origObj, model, frame, discrete, quiet);
     PUnblock(G); /*PLockAPIAndUnblock(); */
     if (!origObj) {
@@ -84,7 +84,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
         origObj = NULL;
       }
     PBlock(G); /*PBlockAndUnlockAPI(); */
-    obj = (CObject*) ObjectMapLoadChemPyMap(
+    obj = ObjectMapLoadChemPyMap(
         G, (ObjectMap*) origObj, model, frame, discrete, quiet);
     PUnblock(G); /*PLockAPIAndUnblock(); */
     if (!origObj) {
@@ -106,7 +106,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
         origObj = NULL;
       }
     PBlock(G); /*PBlockAndUnlockAPI(); */
-    obj = (CObject*) ObjectCallbackDefine(
+    obj = ObjectCallbackDefine(
         G, (ObjectCallback*) origObj, model, frame);
     PUnblock(G); /*PLockAPIAndUnblock(); */
     if (!origObj) {
@@ -128,7 +128,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
         origObj = NULL;
       }
     PBlock(G); /*PBlockAndUnlockAPI(); */
-    obj = (CObject*) ObjectCGODefine(G, (ObjectCGO*) origObj, model, frame);
+    obj = ObjectCGODefine(G, (ObjectCGO*) origObj, model, frame);
     PUnblock(G); /*PLockAPIAndUnblock(); */
     if (!origObj) {
       if (obj) {
@@ -218,7 +218,7 @@ pymol::Result<> ExecutiveSetRawAlignment(PyMOLGlobals* G,
   }
 
   // create alignment object
-  cobj = (CObject*) ObjectAlignmentDefine(G, (ObjectAlignment*) cobj,
+  cobj = ObjectAlignmentDefine(G, (ObjectAlignment*) cobj,
       align_vla, state, true, guide, nullptr);
 
   // manage alignment object

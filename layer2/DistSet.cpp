@@ -484,7 +484,7 @@ void DistSet::render(RenderInfo * info)
         if(ray) {
             ray->color3fv(ColorGet(G, I->Obj->Color));
         } else if (!pick) {
-          ObjectUseColor((CObject *) I->Obj);
+          ObjectUseColor(I->Obj);
         }
         Rep[a]->render(info);
       }

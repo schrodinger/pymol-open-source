@@ -3781,7 +3781,7 @@ ObjectMolecule *SelectorGetFastSingleObjectMolecule(PyMOLGlobals * G, SelectorID
   if (it != I->Info.end()) {
     auto& info = *it;
     if (info.justOneObject()) {
-      if(ExecutiveValidateObjectPtr(G, (CObject *) info.theOneObject, cObjectMolecule))
+      if(ExecutiveValidateObjectPtr(G, info.theOneObject, cObjectMolecule))
         result = info.theOneObject;
     } else {
       result = SelectorGetSingleObjectMolecule(G, sele);        /* fallback onto slow approach */
@@ -3804,7 +3804,7 @@ ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals * G, SelectorI
     if (info.justOneAtom()) {
       ObjectMolecule *obj = info.theOneObject;
       int at = info.theOneAtom;
-      if(ExecutiveValidateObjectPtr(G, (CObject *) obj, cObjectMolecule)) {
+      if(ExecutiveValidateObjectPtr(G, obj, cObjectMolecule)) {
         if((at < obj->NAtom) && SelectorIsMember(G, obj->AtomInfo[at].selEntry, sele)) {
           *index = at;
           return obj;
@@ -6092,7 +6092,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, SelectorID_t sele, const char
   CoordSet *cs = NULL;
   CoordSet *cs1, *cs2;
   ObjectMolecule *obj;
-  CObject *ob;
+  pymol::CObject *ob;
   ObjectMolecule *targ = NULL;
   ObjectMolecule *info_src = NULL;
   int static_singletons = SettingGetGlobal_b(G, cSetting_static_singletons);
@@ -6314,10 +6314,10 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, SelectorID_t sele, const char
   if (ok)
     ok &= ObjectMoleculeSort(targ);
   if(isNew) {
-    ObjectSetName((CObject *) targ, name);
-    ExecutiveManageObject(G, (CObject *) targ, zoom, quiet);
+    ObjectSetName(targ, name);
+    ExecutiveManageObject(G, targ, zoom, quiet);
   } else {
-    ExecutiveUpdateObjectSelection(G, (CObject *) targ);
+    ExecutiveUpdateObjectSelection(G, targ);
   }
   SceneChanged(G);
   return ok;
@@ -8313,7 +8313,7 @@ static pymol::Result<> SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int qu
                 last_obj = I->Obj[I->Table[a].model];
                 last_was_member = ExecutiveCheckGroupMembership(G,
                                                                 group_list_id,
-                                                                (CObject *) last_obj);
+                                                                last_obj);
               }
               if(last_was_member && !base[0].sele[a]) {
                 base[0].sele[a] = true;
@@ -8351,7 +8351,7 @@ static pymol::Result<> SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int qu
                 last_obj = I->Obj[I->Table[a].model];
                 last_was_member = ExecutiveCheckGroupMembership(G,
                                                                 group_list_id,
-                                                                (CObject *) last_obj);
+                                                                last_obj);
               }
               if((base[0].sele[a] = last_was_member))
                 c++;

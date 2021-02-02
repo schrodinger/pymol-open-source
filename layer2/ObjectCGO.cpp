@@ -496,13 +496,13 @@ void ObjectCGO::render(RenderInfo * info)
 /*========================================================================*/
 
 ObjectCGO::ObjectCGO(PyMOLGlobals* G)
-    : CObject(G)
+    : pymol::CObject(G)
 {
   type = cObjectCGO;
 }
 
 ObjectCGO::ObjectCGO(const ObjectCGO& other)
-    : CObject(other)
+    : pymol::CObject(other)
     , State(other.State)
 {
 }
@@ -746,7 +746,7 @@ ObjectCGO *ObjectCGOFromFloatArray(PyMOLGlobals * G, ObjectCGO * obj,
   return (I);
 }
 
-CObject* ObjectCGO::clone() const
+pymol::CObject* ObjectCGO::clone() const
 {
   return new ObjectCGO(*this);
 }

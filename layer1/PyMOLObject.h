@@ -64,23 +64,26 @@ struct CObjectState {
   CObjectState(PyMOLGlobals * G): G(G) {};
 };
 
+namespace pymol
+{
 struct CObject {
-  PyMOLGlobals *G = nullptr;
+  PyMOLGlobals* G = nullptr;
   cObject_t type;
-  ObjectNameType Name {};
+  ObjectNameType Name{};
   int Color = 0;
   int visRep = 0;
   float ExtentMin[3]{}, ExtentMax[3]{};
   int ExtentFlag = false, TTTFlag = false;
-  float TTT[16]{};                /* translate, transform, translate matrix (to apply when rendering) */
+  float TTT[16]{}; /* translate, transform, translate matrix (to apply when
+                      rendering) */
   pymol::copyable_ptr<CSetting> Setting;
-  int Enabled = 0;                  /* read-only... maintained by Scene */
-  int Context = 0;                  /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
-  pymol::vla<CViewElem> ViewElem;          /* for animating objects via the TTT */
+  int Enabled = 0; /* read-only... maintained by Scene */
+  int Context = 0; /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
+  pymol::vla<CViewElem> ViewElem; /* for animating objects via the TTT */
 
   /* not pickled */
   int grid_slot = 0;
-  CGO *gridSlotSelIndicatorsCGO = nullptr;
+  CGO* gridSlotSelIndicatorsCGO = nullptr;
   int Grabbed = 0;
 
   // methods
@@ -112,35 +115,35 @@ public:
   virtual CSymmetry const* getSymmetry(int state = 0) const { return nullptr; }
   virtual bool setSymmetry(CSymmetry const&, int state = 0) { return false; }
 };
-
-int ObjectCopyHeader(CObject * I, const CObject * src);
-void ObjectSetName(CObject * I, const char *name);
+} // namespace pymol
+int ObjectCopyHeader(pymol::CObject * I, const pymol::CObject * src);
+void ObjectSetName(pymol::CObject * I, const char *name);
 bool ObjectMakeValidName(char *name);
 void ObjectMakeValidName(PyMOLGlobals * G, char *name, bool quiet = false);
-void ObjectPurgeSettings(CObject * I);
-void ObjectUseColor(CObject * I);
-void ObjectUseColorCGO(CGO *cgo, CObject * I);
-void ObjectSetRepVisMask(CObject * I, int repmask, int value);
-void ObjectToggleRepVis(CObject * I, int rep);
-void ObjectPrepareContext(CObject * I, RenderInfo * info);
-void ObjectSetTTT(CObject * I, const float *ttt, int state,int store);
-int ObjectGetTTT(CObject * I, const float **ttt, int state);
-int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix);
-void ObjectCombineTTT(CObject * I, const float *ttt, int reverse_order, int store);
-void ObjectTranslateTTT(CObject * T, const float *v,int store);
-void ObjectSetTTTOrigin(CObject * I, float *origin);
-void ObjectResetTTT(CObject * I,int store);
-PyObject *ObjectAsPyList(CObject * I);
-int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, CObject * I);
-int ObjectGetCurrentState(CObject * I, int ignore_all_states);
-void ObjectAdjustStateRebuildRange(CObject * I, int *start, int *stop);
-int ObjectMotion(CObject * I, int action, int first,
+void ObjectPurgeSettings(pymol::CObject * I);
+void ObjectUseColor(pymol::CObject * I);
+void ObjectUseColorCGO(CGO *cgo, pymol::CObject * I);
+void ObjectSetRepVisMask(pymol::CObject * I, int repmask, int value);
+void ObjectToggleRepVis(pymol::CObject * I, int rep);
+void ObjectPrepareContext(pymol::CObject * I, RenderInfo * info);
+void ObjectSetTTT(pymol::CObject * I, const float *ttt, int state,int store);
+int ObjectGetTTT(pymol::CObject * I, const float **ttt, int state);
+int ObjectGetTotalMatrix(pymol::CObject * I, int state, int history, double *matrix);
+void ObjectCombineTTT(pymol::CObject * I, const float *ttt, int reverse_order, int store);
+void ObjectTranslateTTT(pymol::CObject * T, const float *v,int store);
+void ObjectSetTTTOrigin(pymol::CObject * I, float *origin);
+void ObjectResetTTT(pymol::CObject * I,int store);
+PyObject *ObjectAsPyList(pymol::CObject * I);
+int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, pymol::CObject * I);
+int ObjectGetCurrentState(const pymol::CObject * I, int ignore_all_states);
+void ObjectAdjustStateRebuildRange(pymol::CObject * I, int *start, int *stop);
+int ObjectMotion(pymol::CObject * I, int action, int first,
                  int last, float power, float bias,
                  int simple, float linear, int wrap,
                  int hand, int window, int cycles, int state, int quiet);
-int ObjectGetSpecLevel(CObject * I, int frame);
-void ObjectMotionTrim(CObject *I, int n_frame);
-void ObjectDrawViewElem(CObject *I, BlockRect *rect, int frames, CGO *orthoCGO);
+int ObjectGetSpecLevel(pymol::CObject * I, int frame);
+void ObjectMotionTrim(pymol::CObject *I, int n_frame);
+void ObjectDrawViewElem(pymol::CObject *I, BlockRect *rect, int frames, CGO *orthoCGO);
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I);
 void ObjectStatePurge(CObjectState * I);
 int ObjectStateSetMatrix(CObjectState * I, const double *matrix);
@@ -156,9 +159,9 @@ void ObjectStatePopMatrix(CObjectState * I, RenderInfo * info);
 void ObjectStateRightCombineMatrixR44d(CObjectState * I, const double *matrix);
 void ObjectStateLeftCombineMatrixR44d(CObjectState * I, const double *matrix);
 void ObjectStateCombineMatrixTTT(CObjectState * I, float *matrix);
-int ObjectMotionModify(CObject *I,int action, int index, int count,int target, int freeze, int localize);
-void ObjectMotionReinterpolate(CObject *I);
-int ObjectMotionGetLength(CObject *I);
+int ObjectMotionModify(pymol::CObject *I,int action, int index, int count,int target, int freeze, int localize);
+void ObjectMotionReinterpolate(pymol::CObject *I);
+int ObjectMotionGetLength(pymol::CObject *I);
 
 typedef struct _CObjectUpdateThreadInfo CObjectUpdateThreadInfo;
 
@@ -177,7 +180,7 @@ typedef struct _CObjectUpdateThreadInfo CObjectUpdateThreadInfo;
 // object and object-state level setting
 template <typename V>
 void SettingSet(
-    int index, V value, CObject* obj, StateIndex_t state = cStateAll)
+    int index, V value, pymol::CObject* obj, StateIndex_t state = cStateAll)
 {
     auto handle = obj->getSettingHandle(state);
     if (handle)

@@ -24,7 +24,7 @@ struct DistSet;
 
 /* NOTE: "Dist" names & symbols should be updated to "Measurement" */
 
-struct ObjectDist : public CObject {
+struct ObjectDist : public pymol::CObject {
     std::vector<pymol::copyable_ptr<DistSet>> DSet;
 
   ObjectDist(PyMOLGlobals* G);
@@ -36,7 +36,7 @@ struct ObjectDist : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(cRep_t rep, cRepInv_t level, int state) override;
   int getNFrame() const override;
-  CObject* clone() const override;
+  pymol::CObject* clone() const override;
 };
 
 ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,

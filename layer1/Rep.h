@@ -189,7 +189,7 @@ struct Rep {
 
   virtual ~Rep();
 
-  CObject* obj = nullptr; // TODO redundant, use getObj()
+  pymol::CObject* obj = nullptr; // TODO redundant, use getObj()
   CoordSet* cs = nullptr;
 
   Pickable* P = nullptr; //!< only used by labels
@@ -197,7 +197,7 @@ struct Rep {
 
   //! Object state (>=0, 0-indexed) for picking and ramp colors
   int getState() const { return context.state; }
-  CObject* getObj() const { return context.object; }
+  pymol::CObject* getObj() const { return context.object; }
 
   //! True if this rep should be rendered in RenderPass::Transparent. Default is
   //! false, change the flag with setHasTransparency().
@@ -225,7 +225,7 @@ public:
    */
   Rep* (*fNew)(CoordSet* cs, int state) = nullptr;
 
-  Rep(CObject*, int state);
+  Rep(pymol::CObject*, int state);
   Rep(CoordSet*, int state);
 };
 

@@ -2039,7 +2039,7 @@ bool ObjectMap::setSymmetry(CSymmetry const& symmetry, int state)
 }
 
 /*========================================================================*/
-ObjectMap::ObjectMap(PyMOLGlobals * G) : CObject(G)
+ObjectMap::ObjectMap(PyMOLGlobals * G) : pymol::CObject(G)
 {
   auto I = this;
   I->type = cObjectMap;
@@ -5827,7 +5827,7 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
       if(strcmp(format, "CObjectZYXfloat") == 0) {
         ok = PConvAttrToPtr(Map, "c_object", (void **) (void *) &cobj);
         if(!ok)
-          ErrMessage(G, "LoadChemPyMap", "CObject unreadable.");
+          ErrMessage(G, "LoadChemPyMap", "pymol::CObject unreadable.");
       } else {
         ok = ErrMessage(G, "LoadChemPyMap", "unsupported format.");
       }
@@ -5977,7 +5977,7 @@ void ObjectMapDump(const ObjectMap* om, const char* fname, int state, int quiet)
   }
 }
 
-CObject* ObjectMap::clone() const
+pymol::CObject* ObjectMap::clone() const
 {
   return new ObjectMap(*this);
 }

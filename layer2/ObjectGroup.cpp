@@ -82,7 +82,7 @@ ObjectGroup::~ObjectGroup()
 
 
 /*========================================================================*/
-ObjectGroup::ObjectGroup(PyMOLGlobals * G) : CObject(G)
+ObjectGroup::ObjectGroup(PyMOLGlobals * G) : pymol::CObject(G)
 {
   auto I = this;
   I->type = cObjectGroup;

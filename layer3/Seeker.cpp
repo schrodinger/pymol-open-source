@@ -257,7 +257,7 @@ static void SeekerSelectionUpdateCenter(PyMOLGlobals * G, CSeqRow * rowVLA, int 
   {
     CSeqRow *row;
     CSeqCol *col;
-    CObject *obj;
+    pymol::CObject *obj;
 
     int *atom_list;
     char prefix[3] = "";
@@ -1024,7 +1024,7 @@ static int SeekerFindTag(PyMOLGlobals * G, const AtomInfoType * ai, int sele, in
 
 void SeekerUpdate(PyMOLGlobals * G)
 {
-  /*  CObject *o = NULL;
+  /*  pymol::CObject *o = NULL;
      int s; */
 
   void *hidden = NULL;

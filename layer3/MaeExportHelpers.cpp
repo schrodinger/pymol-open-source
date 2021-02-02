@@ -174,7 +174,7 @@ std::string MaeExportGetLabelUserText(PyMOLGlobals * G,
  * Get the MAE group title/id
  */
 std::string MaeExportGetSubGroupId(PyMOLGlobals * G,
-    const CObject * obj)
+    const pymol::CObject * obj)
 {
   std::string subgroupid;
   const SpecRec * rec = nullptr;

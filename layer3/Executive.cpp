@@ -137,7 +137,7 @@ struct CExecutive : public Block {
   int ScrollBarActive { 0 };
   int NSkip { 0 };
   ScrollBar m_ScrollBar;
-  CObject *LastEdited { nullptr };
+  pymol::CObject *LastEdited { nullptr };
   int DragMode { 0 };
   int Pressed { -1 }, Over { -1 }, LastOver {}, OldVisibility {}, ToggleMode {}, PressedWhat {}, OverWhat {};
   SpecRec *LastChanged { nullptr }, *LastZoomed { nullptr }, *RecoverPressed { nullptr };
@@ -258,10 +258,10 @@ pymol::TrackerAdapter<SpecRec> ExecutiveGetSpecRecsFromPattern(PyMOLGlobals* G,
  * @param str pattern string provided by user
  * @return List of borrowed object pointers
  */
-static std::vector<CObject*> ExecutiveGetObjectsFromPattern(
+static std::vector<pymol::CObject*> ExecutiveGetObjectsFromPattern(
     PyMOLGlobals* G, pymol::zstring_view pattern)
 {
-  std::vector<CObject*> objects;
+  std::vector<pymol::CObject*> objects;
 
   for (auto& rec : ExecutiveGetSpecRecsFromPattern(G, pattern)) {
     switch (rec.type) {
@@ -285,12 +285,12 @@ static void ExecutiveSetAllRepVisMask(PyMOLGlobals * G, int repmask, int state);
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals * G, const char *name);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
                                        int new_vis, int mod, int parents);
-static int ExecutiveSetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
+static int ExecutiveSetObjectMatrix2(PyMOLGlobals * G, pymol::CObject * obj, int state,
                                      double *matrix);
-static int ExecutiveGetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
+static int ExecutiveGetObjectMatrix2(PyMOLGlobals * G, pymol::CObject * obj, int state,
                                      double **matrix, int incl_ttt);
 static pymol::Result<> ExecutiveTransformObjectSelection2(
-    PyMOLGlobals* G, CObject* obj, int state, const char* s1, int log,
+    PyMOLGlobals* G, pymol::CObject* obj, int state, const char* s1, int log,
     const float* matrix, int homogenous, int global);
 
 /**
@@ -314,7 +314,7 @@ bool ObjectIterator::next() {
   return true;
 }
 
-CObject * ObjectIterator::getObject() {
+pymol::CObject * ObjectIterator::getObject() {
   return rec->obj;
 }
 
@@ -361,7 +361,7 @@ static void ReportEnabledChange(PyMOLGlobals * G, SpecRec *rec){
   ExecutiveInvalidateSelectionIndicatorsCGO(G);
 }
 
-int ExecutiveGroupMotionModify(PyMOLGlobals *G, CObject *group, int action, 
+int ExecutiveGroupMotionModify(PyMOLGlobals *G, pymol::CObject *group, int action, 
                                 int index, int count, int target, int freeze)
 {
   CExecutive *I = G->Executive;
@@ -386,7 +386,7 @@ int ExecutiveGroupMotionModify(PyMOLGlobals *G, CObject *group, int action,
   return result;
 }
 
-int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,
+int ExecutiveGroupMotion(PyMOLGlobals *G, pymol::CObject *group,int action, int first,
                          int last, float power, float bias,
                          int simple, float linear, int wrap,
                          int hand, int window, int cycles, int state, int quiet)
@@ -413,7 +413,7 @@ int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,
   return result;
 }
 
-int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, const float *ttt, int reverse_order, int store)
+int ExecutiveGroupCombineTTT(PyMOLGlobals *G, pymol::CObject *group, const float *ttt, int reverse_order, int store)
 {
   CExecutive *I = G->Executive;
   int result = true;
@@ -437,7 +437,7 @@ int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, const float *ttt, 
   return result;
 }
 
-int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, const float *v, int store)
+int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, pymol::CObject *group, const float *v, int store)
 {
   CExecutive *I = G->Executive;
   int result = true;
@@ -1032,7 +1032,7 @@ pymol::Result<> ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
 
         if(!origObj) {
           ObjectSetName(obj, surf_name);
-          ExecutiveManageObject(G, (CObject *) obj, -1, quiet);
+          ExecutiveManageObject(G, obj, -1, quiet);
         }
         if(SettingGetGlobal_b(G, cSetting_isomesh_auto_state))
           if(obj)
@@ -1172,7 +1172,7 @@ pymol::Result<> ExecutiveIsomeshEtc(PyMOLGlobals * G,
 
         if(!origObj) {
           ObjectSetName(obj, mesh_name);
-          ExecutiveManageObject(G, (CObject *) obj, false, quiet);
+          ExecutiveManageObject(G, obj, false, quiet);
         }
 
         if(SettingGetGlobal_b(G, cSetting_isomesh_auto_state))
@@ -1350,7 +1350,7 @@ ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
 	 * manage the object in the UI */
         if(!origObj) {
           ObjectSetName(obj, volume_name);
-          ExecutiveManageObject(G, (CObject *) obj, false, quiet);
+          ExecutiveManageObject(G, obj, false, quiet);
         }
 
         if(SettingGetGlobal_b(G, cSetting_isomesh_auto_state))
@@ -2223,7 +2223,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
   UtilNCopy(valid_name, name, sizeof(ObjectNameType));
   ObjectMakeValidName(G, valid_name);
 
-  CObject *obj = ExecutiveFindObjectByName(G, valid_name);
+  pymol::CObject *obj = ExecutiveFindObjectByName(G, valid_name);
 
   if(obj && (obj->type != cObjectGroup)) {
       PRINTFB(G, FB_Executive, FB_Errors)
@@ -2231,7 +2231,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
       ok = false;
   } else {
     if((!obj) && (action == cExecutiveGroupAdd)) {
-      obj = (CObject *) new ObjectGroup(G);
+      obj = new ObjectGroup(G);
       if(obj) {
         ObjectSetName(obj, valid_name);
         ExecutiveManageObject(G, obj, false, true);
@@ -2443,7 +2443,7 @@ int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
 }
 
 int ExecutiveMatrixCopy2(PyMOLGlobals * G,
-                         CObject * source_obj, CObject * target_obj,
+                         pymol::CObject * source_obj, pymol::CObject * target_obj,
                          int source_mode, int target_mode,
                          int source_state, int target_state,
                          int target_undo, int log, int quiet)
@@ -2946,8 +2946,8 @@ pymol::Result<> ExecutiveResetMatrix(
   bool obj_found = false;
   while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
     if(rec && (rec->type == cExecObject)) {
-      /*  CObject *obj = ExecutiveFindObjectByName(G,name); */
-      CObject *obj = rec->obj;
+      /*  pymol::CObject *obj = ExecutiveFindObjectByName(G,name); */
+      pymol::CObject *obj = rec->obj;
       if(obj) {
         obj_found = true;
         switch (obj->type) {
@@ -2999,7 +2999,7 @@ pymol::Result<> ExecutiveResetMatrix(
 
 static double ret_mat[16];      /* UGH ..not thread-safe */
 
-static int ExecutiveGetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
+static int ExecutiveGetObjectMatrix2(PyMOLGlobals * G, pymol::CObject * obj, int state,
                                      double **matrix, int incl_ttt)
 {
   /* right now, this only makes sense for molecule objects -- but in
@@ -3036,14 +3036,14 @@ int ExecutiveGetObjectMatrix(PyMOLGlobals * G, const char *name, int state, doub
                              int incl_ttt)
 {
   int ok = false;
-  CObject *obj = ExecutiveFindObjectByName(G, name);
+  pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
   if(obj) {
     return ExecutiveGetObjectMatrix2(G, obj, state, matrix, incl_ttt);
   }
   return ok;
 }
 
-static int ExecutiveSetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
+static int ExecutiveSetObjectMatrix2(PyMOLGlobals * G, pymol::CObject * obj, int state,
                                      double *matrix)
 {
   /* -1 for the TTT matrix, 0 or greater for the state matrix */
@@ -3065,7 +3065,7 @@ static int ExecutiveSetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
 int ExecutiveSetObjectMatrix(PyMOLGlobals * G, const char *name, int state, double *matrix)
 {
   int ok = false;
-  CObject *obj = ExecutiveFindObjectByName(G, name);
+  pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
   if(obj) {
     return ExecutiveSetObjectMatrix2(G, obj, state, matrix);
   }
@@ -3316,7 +3316,7 @@ int ExecutiveSetDrag(PyMOLGlobals * G, const char *name, int quiet,int mode)
   int need_sele = true;
   int result = true;
   if(name[0]) {
-    CObject *obj = ExecutiveFindObjectByName(G, name);
+    pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
     if(obj) {
       EditorSetDrag(G, obj, -1, quiet, SceneGetState(G));
       set_flag = true;
@@ -3542,7 +3542,7 @@ pymol::Result<> ExecutiveSetObjectColor(PyMOLGlobals * G, const char *name, cons
 int ExecutiveGetObjectColorIndex(PyMOLGlobals * G, const char *name)
 {
   int result = -1;
-  CObject *obj = NULL;
+  pymol::CObject *obj = NULL;
   obj = ExecutiveFindObjectByName(G, name);
   if(obj) {
     result = obj->Color;
@@ -3902,7 +3902,7 @@ ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
 
 pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
 {
-  CObject* origObj = nullptr;
+  pymol::CObject* origObj = nullptr;
   const char* fname = args.fname.c_str();
   const char* content = args.content.data();
   int size = args.content.size();
@@ -3948,7 +3948,7 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
   int ok = true;
   OrthoLineType buf = "";
   int pdb_variant = PDB_VARIANT_DEFAULT;
-  CObject *obj = NULL;
+  pymol::CObject *obj = NULL;
 
   // downstream file type reading functions
   switch (content_format) {
@@ -3976,7 +3976,7 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
   } break;
   case cLoadTypeMMTF:
   case cLoadTypeMMTFStr:
-    obj = (CObject *) ObjectMoleculeReadMmtfStr(G, (ObjectMolecule *) origObj,
+    obj = ObjectMoleculeReadMmtfStr(G, (ObjectMolecule *) origObj,
         content, size, state, discrete, quiet, multiplex, zoom);
     break;
   case cLoadTypeMAE:
@@ -3994,7 +3994,7 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
       ExecutiveDelete(G, origObj->Name);
       origObj = NULL;
     }
-    obj = (CObject *) ObjectMoleculeLoadTOPFile(G, NULL, fname, state, discrete);
+    obj = ObjectMoleculeLoadTOPFile(G, NULL, fname, state, discrete);
     break;
   case cLoadTypeTRJ:
     if(origObj) {
@@ -4021,44 +4021,44 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
   case cLoadTypePMO:
     return pymol::Error("PMO format no longer supported.");
   case cLoadTypeDXMap:
-    obj = (CObject *) ObjectMapLoadDXFile(G, (ObjectMap *) origObj, fname,
+    obj = ObjectMapLoadDXFile(G, (ObjectMap *) origObj, fname,
         state, quiet);
     break;
   case cLoadTypeFLDMap:
-    obj = (CObject *) ObjectMapLoadFLDFile(G, (ObjectMap *) origObj, fname,
+    obj = ObjectMapLoadFLDFile(G, (ObjectMap *) origObj, fname,
         state, quiet);
     break;
   case cLoadTypeBRIXMap:
-    obj = (CObject *) ObjectMapLoadBRIXFile(G, (ObjectMap *) origObj, fname,
+    obj = ObjectMapLoadBRIXFile(G, (ObjectMap *) origObj, fname,
         state, quiet);
     break;
   case cLoadTypeGRDMap:
-    obj = (CObject *) ObjectMapLoadGRDFile(G, (ObjectMap *) origObj, fname,
+    obj = ObjectMapLoadGRDFile(G, (ObjectMap *) origObj, fname,
         state, quiet);
     break;
   case cLoadTypeACNTMap:
-    obj = (CObject *) ObjectMapLoadACNTFile(G, (ObjectMap *) origObj, fname,
+    obj = ObjectMapLoadACNTFile(G, (ObjectMap *) origObj, fname,
         state, quiet);
     break;
   case cLoadTypeXPLORMap:
   case cLoadTypeXPLORStr:
-    obj = (CObject *) ObjectMapLoadXPLOR(G, (ObjectMap *) origObj, content,
+    obj = ObjectMapLoadXPLOR(G, (ObjectMap *) origObj, content,
         state, false, quiet);
     break;
   case cLoadTypePHIMap:
   case cLoadTypePHIStr:
-    obj = (CObject *) ObjectMapLoadPHI(G, (ObjectMap *) origObj, content,
+    obj = ObjectMapLoadPHI(G, (ObjectMap *) origObj, content,
         state, true, size, quiet);
     break;
   case cLoadTypeCCP4Map:
   case cLoadTypeCCP4Str:
   case cLoadTypeCCP4Unspecified:
   case cLoadTypeMRC:
-    obj = (CObject *) ObjectMapLoadCCP4(G, (ObjectMap *) origObj, content,
+    obj = ObjectMapLoadCCP4(G, (ObjectMap *) origObj, content,
         state, true, size, quiet, content_format);
     break;
   case cLoadTypeCGO:
-    obj = (CObject *) ObjectCGOFromFloatArray(G, (ObjectCGO *) origObj,
+    obj = ObjectCGOFromFloatArray(G, (ObjectCGO *) origObj,
         (float *) content, size, state,
         quiet);
     break;
@@ -4082,7 +4082,7 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
       // (some of) these file types support multiple molecules per file,
       // and we support to load them into separate objects (multiplex).
       do {
-        obj = (CObject *) ObjectMoleculeReadStr(G, (ObjectMolecule *) origObj,
+        obj = ObjectMoleculeReadStr(G, (ObjectMolecule *) origObj,
             &next_entry, content_format,
             state, discrete,
             quiet, multiplex, new_name,
@@ -4143,15 +4143,15 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
  *  type  -- new object type
  *
  * RETURNS
- *  (CObject *) Base-class object ptr
+ *  Base-class object ptr
  *
  * SIDE EFFECTS
  *  If an object with the same name but different type already exists,
  *  then it is deleted.
  */
-CObject* ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char* oname, cLoadType_t type)
+pymol::CObject* ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char* oname, cLoadType_t type)
 {
-  CObject *origObj = NULL;
+  pymol::CObject *origObj = NULL;
   origObj = ExecutiveFindObjectByName(G, oname);
   /* check for existing object of right type, delete if not */
   if(origObj) {
@@ -4223,14 +4223,14 @@ CObject* ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char* oname, cLo
   return origObj;
 }
 
-int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
+int ExecutiveProcessPDBFile(PyMOLGlobals * G, pymol::CObject * origObj,
                             const char *fname, const char *buffer,
                             const char *oname, int frame, int discrete, int finish,
                             OrthoLineType buf, int variant, int quiet,
                             int multiplex, int zoom)
 {
   int ok = true;
-  CObject *obj;
+  pymol::CObject *obj;
   char pdb_name[WordLength] = "";
   char cur_name[WordLength] = "";
   const char *next_pdb = NULL;
@@ -4238,7 +4238,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
   int n_processed = 0;
   PDBInfoRec pdb_info_rec, *pdb_info = NULL;
   int model_number;
-  CObject *deferred_zoom_obj = NULL;
+  pymol::CObject *deferred_zoom_obj = NULL;
 
   UtilZeroMem(&pdb_info_rec, sizeof(PDBInfoRec));
   pdb_info = &pdb_info_rec;
@@ -4263,7 +4263,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
       is_new = true;
       pdb_name[0] = 0;
       model_number = 0;
-      obj = (CObject *) ObjectMoleculeReadPDBStr(G, (ObjectMolecule *) origObj,
+      obj = ObjectMoleculeReadPDBStr(G, (ObjectMolecule *) origObj,
                                                  start_at, eff_frame, discrete,
                                                  pdb_name,
                                                  &next_pdb, pdb_info, quiet,
@@ -4605,7 +4605,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
  */
 CField * ExecutiveGetVolumeField(PyMOLGlobals * G, const char * objName, int state) {
   ObjectMapState *oms;
-  CObject *obj;
+  pymol::CObject *obj;
 
   obj = ExecutiveFindObjectByName(G, objName);
   ok_assert(1, obj);
@@ -4628,7 +4628,7 @@ ok_except1:
  */
 pymol::Result<std::vector<float>>
 ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points, float min_val, float max_val) {
-  CObject *obj;
+  pymol::CObject *obj;
   ObjectMapState *oms = NULL;
 
   obj = ExecutiveFindObjectByName(G, objName);
@@ -4663,7 +4663,7 @@ PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, const char * objName) {
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
-  CObject *obj;
+  pymol::CObject *obj;
   PyObject* result = NULL;
 
   PRINTFD(G, FB_Executive) "Executive-GetVolumeRamp Entered.\n" ENDFD;
@@ -4937,7 +4937,7 @@ pymol::Result<std::vector<const char*>> ExecutiveGetChains(
   }
 }
 
-int ExecutiveValidateObjectPtr(PyMOLGlobals * G, CObject * ptr, int object_type)
+int ExecutiveValidateObjectPtr(PyMOLGlobals * G, pymol::CObject * ptr, int object_type)
 {
   /* this routine needs to be sped up significantly... */
 
@@ -4965,8 +4965,8 @@ pymol::Result<> ExecutiveRampNew(PyMOLGlobals* G, const char* name,
 {
   ObjectGadgetRamp *obj = NULL;
   ObjectGadgetRamp *origRamp = NULL;
-  CObject *src_obj = NULL;
-  CObject *origObj = ExecutiveFindObjectByName(G, name);
+  pymol::CObject *src_obj = NULL;
+  pymol::CObject *origObj = ExecutiveFindObjectByName(G, name);
   float *vert_vla = NULL;
   int rampType = -1;
 
@@ -5033,9 +5033,9 @@ pymol::Result<> ExecutiveRampNew(PyMOLGlobals* G, const char* name,
 
   if (obj != origRamp) {
     ExecutiveDelete(G, name);
-    ObjectSetName((CObject *) obj, name);
+    ObjectSetName(obj, name);
     ColorRegisterExt(G, obj->Name, obj);
-    ExecutiveManageObject(G, (CObject *) obj, false, quiet);
+    ExecutiveManageObject(G, obj, false, quiet);
   }
 
   ExecutiveInvalidateRep(G, cKeywordAll, cRepAll, cRepInvColor);      /* recolor everything */
@@ -5124,7 +5124,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int vers
         case cObjectGroup:
           if(part_rest) {
             // if group already exists, do not create new one
-            CObject *obj = ExecutiveFindObjectByName(G, rec->name);
+            pymol::CObject *obj = ExecutiveFindObjectByName(G, rec->name);
             if(obj && obj->type == cObjectGroup) {
               skip = 1;
               break;
@@ -6305,7 +6305,7 @@ int ***ExecutiveGetBondPrint(PyMOLGlobals * G, const char *name, int max_bond, i
                              int *dim)
 {
   int ***result = NULL;
-  CObject *obj;
+  pymol::CObject *obj;
   ObjectMolecule *objMol;
 
   obj = ExecutiveFindObjectByName(G, name);
@@ -6434,7 +6434,7 @@ pymol::Result<> ExecutiveMapSet(PyMOLGlobals* G, const char* name,
         ObjectMapDesc desc;
         target = new ObjectMap(G);
 
-        ObjectSetName((CObject *) target, name);
+        ObjectSetName(target, name);
         isNew = true;
 
         for(src_state = src_state_start; src_state < src_state_stop; src_state++) {
@@ -6513,7 +6513,7 @@ pymol::Result<> ExecutiveMapSet(PyMOLGlobals* G, const char* name,
         if(first_operand) {
           if(ObjectMapNewCopy(G, first_operand, &target, source_state, target_state)) {
             if(target) {
-              ObjectSetName((CObject *) target, name);
+              ObjectSetName(target, name);
               isNew = true;
             }
           }
@@ -6771,7 +6771,7 @@ ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float grid_spacing
                 int quiet, int zoom, int normalize, float clamp_floor,
                 float clamp_ceiling, float resolution)
 {
-  CObject *origObj = NULL;
+  pymol::CObject *origObj = NULL;
   ObjectMap *objMap;
   ObjectMapState *ms = NULL;
   int a;
@@ -6907,15 +6907,15 @@ ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float grid_spacing
             break;
         }
 
-      ObjectSetName((CObject *) objMap, name);
+      ObjectSetName(objMap, name);
       ObjectMapUpdateExtents(objMap);
       if(isNew) {
-        ExecutiveManageObject(G, (CObject *) objMap, -1, quiet);
+        ExecutiveManageObject(G, objMap, -1, quiet);
       } else {
-        ExecutiveDoZoom(G, (CObject *) objMap, false, zoom, true);
+        ExecutiveDoZoom(G, objMap, false, zoom, true);
       }
       isNew = false;
-      origObj = (CObject *) objMap;
+      origObj = objMap;
     }
     SceneChanged(G);
 
@@ -6977,7 +6977,7 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
 /*========================================================================*/
 float ExecutiveSculptIterate(PyMOLGlobals * G, const char *name, int state, int n_cycle)
 {
-  CObject *obj = ExecutiveFindObjectByName(G, name);
+  pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
@@ -7013,7 +7013,7 @@ float ExecutiveSculptIterate(PyMOLGlobals * G, const char *name, int state, int 
 int ExecutiveSculptActivate(PyMOLGlobals * G, const char *name, int state, int match_state,
                             int match_by_segment)
 {
-  CObject *obj = ExecutiveFindObjectByName(G, name);
+  pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
   CExecutive *I = G->Executive;
@@ -7049,7 +7049,7 @@ int ExecutiveSculptActivate(PyMOLGlobals * G, const char *name, int state, int m
 /*========================================================================*/
 int ExecutiveSculptDeactivate(PyMOLGlobals * G, const char *name)
 {
-  CObject *obj = ExecutiveFindObjectByName(G, name);
+  pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
   CExecutive *I = G->Executive;
@@ -7408,7 +7408,7 @@ pymol::Result<> ExecutiveCombineObjectTTT(PyMOLGlobals* G,
       switch(rec->type) {
       case cExecObject:
         {
-          CObject *obj = rec->obj;
+          pymol::CObject *obj = rec->obj;
           if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
             ObjectCombineTTT(obj, ttt, reverse_order, store);
             obj->invalidate(cRepNone, cRepInvExtents, -1);
@@ -7431,7 +7431,7 @@ pymol::Result<> ExecutiveCombineObjectTTT(PyMOLGlobals* G,
         switch (rec->type) {
         case cExecObject: 
           {
-            CObject *obj = rec->obj;
+            pymol::CObject *obj = rec->obj;
             ObjectCombineTTT(obj, ttt, reverse_order, store);
             obj->invalidate(cRepNone, cRepInvExtents, -1);
           }
@@ -7459,7 +7459,7 @@ pymol::Result<> ExecutiveTranslateObjectTTT(PyMOLGlobals * G, const char *name, 
       switch(rec->type) {
       case cExecObject:
         {
-          CObject *obj = rec->obj;
+          pymol::CObject *obj = rec->obj;
           if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
             ObjectTranslateTTT(obj, trans, store);
             obj->invalidate(cRepNone, cRepInvExtents, -1);
@@ -7481,7 +7481,7 @@ pymol::Result<> ExecutiveTranslateObjectTTT(PyMOLGlobals * G, const char *name, 
         switch (rec->type) {
         case cExecObject: 
           {
-            CObject *obj = rec->obj;
+            pymol::CObject *obj = rec->obj;
             ObjectTranslateTTT(obj, trans, store);
             obj->invalidate(cRepNone, cRepInvExtents, -1);
           }
@@ -7508,7 +7508,7 @@ pymol::Result<> ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, const 
       switch(rec->type) {
       case cExecObject:
         {
-          CObject *obj = rec->obj;
+          pymol::CObject *obj = rec->obj;
           if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
             ObjectSetTTT(obj, ttt, state, store);
             obj->invalidate(cRepNone, cRepInvExtents, -1);
@@ -7531,7 +7531,7 @@ pymol::Result<> ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, const 
         switch (rec->type) {
         case cExecObject: 
           {
-            CObject *obj = rec->obj;
+            pymol::CObject *obj = rec->obj;
              ObjectSetTTT(obj, ttt, state, store);
              obj->invalidate(cRepNone, cRepInvExtents, -1);
           }
@@ -7551,7 +7551,7 @@ pymol::Result<> ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, const 
 
 int ExecutiveGetObjectTTT(PyMOLGlobals * G, const char *name, const float **ttt, int state, int quiet)
 {
-  CObject *obj = ExecutiveFindObjectByName(G, name);
+  pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
   int ok = true;
 
   if(!obj) {
@@ -7581,7 +7581,7 @@ pymol::Result<> ExecutiveTransformSelection(PyMOLGlobals* G,
 }
 
 pymol::Result<> ExecutiveTransformObjectSelection2(PyMOLGlobals* G,
-    CObject* obj, int state, const char* s1, int log, const float* matrix,
+    pymol::CObject* obj, int state, const char* s1, int log, const float* matrix,
     int homogenous, int global)
 {
   int ok = true;
@@ -7627,7 +7627,7 @@ pymol::Result<> ExecutiveTransformObjectSelection(PyMOLGlobals* G,
     const char* name, int state, const char* s1, int log, const float* matrix,
     int homogenous, int global)
 {
-  CObject *obj = ExecutiveFindObjectByName(G, name);
+  pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
   if(obj) {
     return ExecutiveTransformObjectSelection2(G, obj, state, s1, log, matrix, homogenous,
                                               global);
@@ -7888,7 +7888,7 @@ PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
 {
   /* Assumes blocked Python interpreter */
   PyObject *result = NULL;
-  CObject *obj = NULL;
+  pymol::CObject *obj = NULL;
   CSetting *set_ptr1 = NULL, *set_ptr2 = NULL;
   pymol::copyable_ptr<CSetting>* handle = nullptr;
 
@@ -7967,7 +7967,7 @@ PyObject *ExecutiveGetSettingOfType(PyMOLGlobals * G, int index,
 
 
 /*========================================================================*/
-void ExecutiveSetLastObjectEdited(PyMOLGlobals * G, CObject * o)
+void ExecutiveSetLastObjectEdited(PyMOLGlobals * G, pymol::CObject * o)
 {
   CExecutive *I = G->Executive;
   I->LastEdited = o;
@@ -7975,7 +7975,7 @@ void ExecutiveSetLastObjectEdited(PyMOLGlobals * G, CObject * o)
 
 
 /*========================================================================*/
-CObject *ExecutiveGetLastObjectEdited(PyMOLGlobals * G)
+pymol::CObject *ExecutiveGetLastObjectEdited(PyMOLGlobals * G)
 {
   CExecutive *I = G->Executive;
   return (I->LastEdited);
@@ -8892,7 +8892,7 @@ pymol::Result<> ExecutiveFuse(PyMOLGlobals* G, const char* s0, const char* s1,
 pymol::Result<> ExecutiveSpheroid(PyMOLGlobals * G, const char *name, int average)
 {                               /* EXPERIMENTAL */
   CExecutive *I = G->Executive;
-  CObject *os = NULL;
+  pymol::CObject *os = NULL;
 
   if(strlen(name)) {
     os = ExecutiveFindObjectByName(G, name);
@@ -8972,11 +8972,10 @@ void ExecutiveRebuildAllObjectDist(PyMOLGlobals * G)
 void ExecutiveUndo(PyMOLGlobals * G, int dir)
 {
   CExecutive *I = G->Executive;
-  CObject *o;
   ObjectMolecule *obj = NULL, *compObj;
   SpecRec *rec = NULL;
 
-  o = ExecutiveGetLastObjectEdited(G);
+  auto o = ExecutiveGetLastObjectEdited(G);
   PRINTFB(G, FB_Executive, FB_Debugging)
   " ExecutiveUndo: last object %p\n", (void *) o ENDFB(G);
   if(o)
@@ -9544,8 +9543,8 @@ pymol::Result<float> ExecutiveAngle(PyMOLGlobals* G,
   assert(obj);
 
   if (need_manage) {
-        ObjectSetName((CObject *) obj, nam);
-        ExecutiveManageObject(G, (CObject *) obj, zoom, quiet);
+        ObjectSetName(obj, nam);
+        ExecutiveManageObject(G, obj, zoom, quiet);
         if(!labels)
           ExecutiveSetRepVisib(G, nam, cRepLabel, 0);
   }
@@ -9576,8 +9575,8 @@ pymol::Result<float> ExecutiveDihedral(PyMOLGlobals* G, const char* nam,
   assert(obj);
 
   if (need_manage) {
-        ObjectSetName((CObject *) obj, nam);
-        ExecutiveManageObject(G, (CObject *) obj, zoom, quiet);
+        ObjectSetName(obj, nam);
+        ExecutiveManageObject(G, obj, zoom, quiet);
         if(!labels)
           ExecutiveSetRepVisib(G, nam, cRepLabel, 0);
   }
@@ -9634,7 +9633,7 @@ pymol::Result<float> ExecutiveDistance(PyMOLGlobals* G, const char* nam,
     }
 
       ObjectSetName(obj, nam);
-      ExecutiveManageObject(G, (CObject *) obj, zoom, quiet);
+      ExecutiveManageObject(G, obj, zoom, quiet);
       if(!labels)
         ExecutiveSetRepVisib(G, nam, cRepLabel, 0);
   }
@@ -9667,7 +9666,7 @@ char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals * G, const char *name, int stat
   if(!name) {
     ErrMessage(G, " Executive", "invalid alignment object name.");
   } else {
-    CObject *obj = ExecutiveFindObjectByName(G, name);
+    pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
 
     if(!obj) {
       ErrMessage(G, " Executive", "alignment object not found.");
@@ -9720,7 +9719,10 @@ pymol::Result<> ExecutiveSeleToObject(PyMOLGlobals* G, const char* name,
           ExecutiveMatrixCopy(G, old_obj->Name, new_obj->Name, 2, 2,    /* Object state mode */
                               source, target, false, 0, quiet);
 
-          ExecutiveDoZoom(G, (CObject *) new_obj, !exists, zoom, true);
+#ifdef _PYMOL_IP_PROPERTIES
+#endif
+
+          ExecutiveDoZoom(G, new_obj, !exists, zoom, true);
         }
       }
     }
@@ -9737,19 +9739,19 @@ pymol::Result<> ExecutiveSeleToObject(PyMOLGlobals* G, const char* name,
 pymol::Result<> ExecutiveCopy(
     PyMOLGlobals* G, const char* src, const char* dst, int zoom)
 {
-  const CObject *os = ExecutiveFindObjectByName(G, src);
+  const pymol::CObject *os = ExecutiveFindObjectByName(G, src);
   if(!os) {
     return pymol::make_error("Object not found.");
   }
 
-  CObject* oDst = os->clone();
+  pymol::CObject* oDst = os->clone();
 
   if(!oDst) {
     return pymol::make_error("Failed to create copy");
   }
 
   strcpy(oDst->Name, dst);
-  ExecutiveManageObject(G, (CObject *) oDst, zoom, false);
+  ExecutiveManageObject(G, oDst, zoom, false);
 
   PRINTFB(G, FB_Executive, FB_Actions)
     " Executive: object %s created.\n", oDst->Name ENDFB(G);
@@ -10850,7 +10852,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
 
                 /* does object already exist? */
                 {
-                  CObject *execObj = ExecutiveFindObjectByName(G, oname);
+                  pymol::CObject *execObj = ExecutiveFindObjectByName(G, oname);
                   if(execObj && (execObj->type != cObjectAlignment))
                     ExecutiveDelete(G, oname);
                   else
@@ -10860,8 +10862,8 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
                   ObjectAlignmentDefine(G, obj, align_vla, align_state, true, trg_obj,
                                         mobile_obj);
                 obj->Color = ColorGetIndex(G, "yellow");
-                ObjectSetName((CObject *) obj, oname);
-                ExecutiveManageObject(G, (CObject *) obj, 0, quiet);
+                ObjectSetName(obj, oname);
+                ExecutiveManageObject(G, obj, 0, quiet);
                 align_to_update = obj;
                 SceneInvalidate(G);
               }
@@ -11162,7 +11164,7 @@ float ExecutiveRMSPairs(PyMOLGlobals* G, const std::vector<SelectorTmp>& sele,
 
 
 /*========================================================================*/
-void ExecutiveUpdateObjectSelection(PyMOLGlobals * G, CObject * obj)
+void ExecutiveUpdateObjectSelection(PyMOLGlobals * G, pymol::CObject * obj)
 {
   if(obj->type == cObjectMolecule) {
     SelectorUpdateObjectSele(G, (ObjectMolecule *) obj);
@@ -11197,7 +11199,7 @@ pymol::Result<> ExecutiveReset(PyMOLGlobals* G, pymol::zstring_view name)
    * @param any_spec_level If false, then filter for objects with spec level >= 0
    */
   auto reset_rec = [&](SpecRec& rec, bool any_spec_level = true) {
-    CObject* obj = rec.obj;
+    pymol::CObject* obj = rec.obj;
     if (rec.type == cExecObject &&
         (any_spec_level || ObjectGetSpecLevel(obj, 0) >= 0)) {
       ObjectResetTTT(obj, store);
@@ -12006,7 +12008,7 @@ int ExecutiveGetSettingFromString(PyMOLGlobals * G, PyMOLreturn_value *result,
                                   int index, const char *sele,
                                   int state, int quiet)
 {
-  CObject *obj = NULL;
+  pymol::CObject *obj = NULL;
   CSetting *set_ptr1 = NULL, *set_ptr2 = NULL;
   pymol::copyable_ptr<CSetting>* handle = nullptr;
   int ok = true;
@@ -12238,7 +12240,7 @@ int ExecutiveSetSettingFromString(PyMOLGlobals * G,
 }
 
 int ExecutiveSetObjSettingFromString(PyMOLGlobals * G,
-                                     int index, const char *value, CObject * obj,
+                                     int index, const char *value, pymol::CObject * obj,
                                      int state, int quiet, int updates)
 {
   OrthoLineType value2;
@@ -12728,7 +12730,7 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
   int sele;
   ObjectMoleculeOpRec op, op2;
   CExecutive *I = G->Executive;
-  CObject *obj;
+  pymol::CObject *obj;
   int result = false;
   float f1, f2, fmx;
   int a;
@@ -12953,7 +12955,7 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals * G, const char *name, float *po
   int sele;
   ObjectMoleculeOpRec op, op2;
   CExecutive *I = G->Executive;
-  CObject *obj;
+  pymol::CObject *obj;
   int flag = false;
   float f1, fmx = 0.0F;
 
@@ -13217,7 +13219,7 @@ pymol::Result<> ExecutiveOrigin(PyMOLGlobals* G, const char* sele, int preserve,
 
   float center[3];
   float mn[3], mx[3];
-  CObject *obj = NULL;
+  pymol::CObject *obj = NULL;
   int have_center = false;
   if(oname && oname[0]) {
     obj = ExecutiveFindObjectByName(G, oname);
@@ -13499,7 +13501,7 @@ void ExecutiveFullScreen(PyMOLGlobals * G, int flag)
 
 /*========================================================================*/
 static
-void fInvalidateRepMask(CObject * obj, cRepBitmask_t repmask, int state=-1) {
+void fInvalidateRepMask(pymol::CObject * obj, cRepBitmask_t repmask, int state=-1) {
     for (auto a = cRep_t(0); a < cRepCnt; ++a) {
       if ((1 << a) & repmask)
         obj->invalidate(a, cRepInvVisib, state);
@@ -13772,7 +13774,7 @@ pymol::Result<> ExecutiveInvalidateRep(
   return {};
 }
 
-int ExecutiveCheckGroupMembership(PyMOLGlobals * G, int list_id, CObject * obj)
+int ExecutiveCheckGroupMembership(PyMOLGlobals * G, int list_id, pymol::CObject * obj)
 {
   CExecutive *I = G->Executive;
   int result = false;
@@ -13869,9 +13871,9 @@ void ExecutiveFreeGroupList(PyMOLGlobals * G, int list_id)
 
 
 /*========================================================================*/
-CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, pymol::zstring_view name)
+pymol::CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, pymol::zstring_view name)
 {
-  CObject *obj = NULL;
+  pymol::CObject *obj = NULL;
   SpecRec *rec = ExecutiveFindSpec(G, name.c_str());
   if(rec && (rec->type == cExecObject)) {
     obj = rec->obj;
@@ -13881,11 +13883,11 @@ CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, pymol::zstring_view name)
 
 /*========================================================================*/
 /* returns NULL if none found */
-CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType) {
+pymol::CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType) {
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   int n = 0;
-  CObject** rVal = VLAlloc(CObject*, 1);
+  pymol::CObject** rVal = VLAlloc(pymol::CObject*, 1);
 
   /* loop over all known objects */
   while(ListIterate(I->Spec,rec,next)) {
@@ -13893,13 +13895,13 @@ CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType) {
     if (rec->obj && rec->type==cExecObject) {
       if(rec->obj->type==objType) {
 	/* this could be optimized */
-	VLACheck(rVal, CObject*, n);
+	VLACheck(rVal, pymol::CObject*, n);
 	*(rVal+n) = rec->obj;
 	n++;
       }
     }
   }
-  VLASize(rVal, CObject*, n);
+  VLASize(rVal, pymol::CObject*, n);
   if (n==0) {
 	VLAFree(rVal);
     return NULL;
@@ -14296,7 +14298,7 @@ void ExecutiveMemoryDump(PyMOLGlobals * G)
  *    5 = zoom `obj` if it is the only object
  *
  */
-void ExecutiveDoZoom(PyMOLGlobals * G, CObject * obj, int is_new, int zoom, int quiet)
+void ExecutiveDoZoom(PyMOLGlobals * G, pymol::CObject * obj, int is_new, int zoom, int quiet)
 {
   if (zoom) {
     if(zoom < 0) {
@@ -14394,7 +14396,7 @@ static void ExecutiveDoAutoGroup(PyMOLGlobals * G, SpecRec * rec)
  * @param obj Object to manage. Executive takes ownership.
  * @param zoom Zoom the camera, see ExecutiveDoZoom for valid values.
  */
-void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
+void ExecutiveManageObject(PyMOLGlobals * G, pymol::CObject * obj, int zoom, int quiet)
 {
   SpecRec *rec = NULL;
   CExecutive *I = G->Executive;
@@ -15610,7 +15612,7 @@ static void draw_button_char(PyMOLGlobals * G, int x2, int y2, char ch ORTHOCGOA
  * @return pointer to borrowed RGB array
  */
 static const float* getNameColor(
-    const CObject* obj, int mode, const float* bg_rgb, const float* default_rgb)
+    const pymol::CObject* obj, int mode, const float* bg_rgb, const float* default_rgb)
 {
   enum {
     cNameColorMode_default = 0,
@@ -16050,7 +16052,7 @@ void CExecutive::draw(CGO* orthoCGO)
 
 
 /*========================================================================*/
-int ExecutiveIterateObject(PyMOLGlobals * G, CObject ** obj, void **hidden)
+int ExecutiveIterateObject(PyMOLGlobals * G, pymol::CObject ** obj, void **hidden)
 {
   SpecRec **rec = (SpecRec **) hidden, *I_Spec = G->Executive->Spec;
   while(ListIterate(I_Spec, (*rec), next)) {
@@ -16512,7 +16514,7 @@ pymol::Result<> ExecutiveSliceNew(PyMOLGlobals* G, const char* slice_name,
     const char* map_name, int state, int map_state)
 {
   int multi = false;
-  CObject *obj = NULL, *mObj, *origObj;
+  pymol::CObject *obj = NULL, *mObj, *origObj;
   ObjectMap *mapObj;
   ObjectMapState *ms;
 
@@ -16557,12 +16559,12 @@ pymol::Result<> ExecutiveSliceNew(PyMOLGlobals* G, const char* slice_name,
         map_state = mapObj->getNFrame() - 1;
       ms = ObjectMapStateGetActive(mapObj, map_state);
       if(ms) {
-        obj = (CObject *) ObjectSliceFromMap(G, (ObjectSlice *) origObj, mapObj,
+        obj = ObjectSliceFromMap(G, (ObjectSlice *) origObj, mapObj,
                                              state, map_state);
 
         if(!origObj) {
           ObjectSetName(obj, slice_name);
-          ExecutiveManageObject(G, (CObject *) obj, -1, false);
+          ExecutiveManageObject(G, obj, -1, false);
         }
         PRINTFB(G, FB_ObjectMesh, FB_Actions)
           " SliceMap: created \"%s\".\n", slice_name ENDFB(G);

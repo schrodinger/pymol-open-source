@@ -315,7 +315,7 @@ void ObjectDist::invalidate(cRep_t rep, cRepInv_t level, int state){
 }
 
 /*========================================================================*/
-ObjectDist::ObjectDist(PyMOLGlobals * G) : CObject(G)
+ObjectDist::ObjectDist(PyMOLGlobals * G) : pymol::CObject(G)
 {
   auto I = this;
   I->type = cObjectMeasurement;
@@ -324,7 +324,7 @@ ObjectDist::ObjectDist(PyMOLGlobals * G) : CObject(G)
 }
 
 ObjectDist::ObjectDist(const ObjectDist& other)
- : CObject(other)
+ : pymol::CObject(other)
  , DSet(other.DSet)
 {
   for (auto& d : DSet) {
@@ -336,7 +336,7 @@ ObjectDist::ObjectDist(const ObjectDist& other)
 
 ObjectDist& ObjectDist::operator=(const ObjectDist& other)
 {
-  CObject::operator=(other);
+  pymol::CObject::operator=(other);
   DSet = other.DSet;
   for (auto& d : DSet) {
     if (d) {
@@ -362,7 +362,7 @@ static bool checkFrozenState(PyMOLGlobals * G, int sele, int &state) {
   if (sele < 0)
     return false;
 
-  auto obj = (const CObject*) SelectorGetSingleObjectMolecule(G, sele);
+  auto obj = (const pymol::CObject*) SelectorGetSingleObjectMolecule(G, sele);
   if(!obj ||
       !SettingGetIfDefined_i(G, obj->Setting.get(), cSetting_state, &state))
     return false;
@@ -663,7 +663,7 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
   return (I);
 }
 
-CObject* ObjectDist::clone() const
+pymol::CObject* ObjectDist::clone() const
 {
   return new ObjectDist(*this);
 }

@@ -277,7 +277,7 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
     for (SeleAtomIterator iter(G, sele); iter.next();) {
 
       // don't store atom data for disabled objects
-      if (!((CObject*)iter.obj)->Enabled && is_defaultstack)
+      if (!((pymol::CObject*)iter.obj)->Enabled && is_defaultstack)
         continue;
 
       AtomInfoType * ai = iter.getAtomInfo();
@@ -292,7 +292,7 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
   // objectdata
   for (ObjectIterator iter(G); iter.next();) {
     const SpecRec * rec = iter.getSpecRec();
-    CObject * obj = iter.getObject();
+    pymol::CObject * obj = iter.getObject();
     MovieSceneObject &sceneobj = scene.objectdata[obj->Name];
 
     sceneobj.color = obj->Color;
@@ -413,7 +413,7 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
   // keep track of changes
   // (obj -> repbitmask) stores the rep bits for all reps that changed,
   // a value of zero means just to invalidate color.
-  std::map<CObject*, int> objectstoinvalidate;
+  std::map<pymol::CObject*, int> objectstoinvalidate;
 
   // atomdata
   if (recall_color || recall_rep) {
@@ -429,7 +429,7 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
 
       if (recall_color) {
         if (ai->color != sceneatom.color)
-          objectstoinvalidate[(CObject*) iter.obj];
+          objectstoinvalidate[iter.obj];
 
         ai->color = sceneatom.color;
       }
@@ -437,7 +437,7 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
       if (recall_rep) {
         int changed = (ai->visRep ^ sceneatom.visRep) & cRepsAtomMask;
         if (changed)
-          objectstoinvalidate[(CObject*) iter.obj] |= changed;
+          objectstoinvalidate[iter.obj] |= changed;
 
         ai->visRep = sceneatom.visRep;
       }
@@ -452,7 +452,7 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
 
   // objectdata
   for (ObjectIterator iter(G); iter.next();) {
-    CObject * obj = iter.getObject();
+    pymol::CObject * obj = iter.getObject();
     auto it = scene.objectdata.find(obj->Name);
     if (it == scene.objectdata.end())
       continue;

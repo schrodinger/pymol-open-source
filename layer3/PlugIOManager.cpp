@@ -82,7 +82,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   return 0;
 }
 
-CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
+pymol::CObject * PlugIOManagerLoad(PyMOLGlobals * G, pymol::CObject ** obj_ptr,
     const char *fname, int state, int quiet, const char *plugin_type, int mask)
 {
   PRINTFB(G, FB_ObjectMolecule, FB_Errors)
@@ -863,7 +863,7 @@ ObjectCGO *PlugIOManagerLoadGraphics(PyMOLGlobals * G, ObjectCGO *origObj,
   ok_assert(1, I = ObjectCGOFromCGO(G, NULL, cgo, state));
 
   // default is cgo_lighting=0 when loading CGOs without normals
-  SettingSet(cSetting_cgo_lighting, 1, (CObject *)I);
+  SettingSet(cSetting_cgo_lighting, 1, (pymol::CObject *)I);
 
 ok_except1:
   // close
@@ -881,10 +881,10 @@ ok_except1:
  * doesn't match the plugin, the object will be deleted and a new one created
  * (not for trajectories).
  */
-CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
+pymol::CObject * PlugIOManagerLoad(PyMOLGlobals * G, pymol::CObject ** obj_ptr,
     const char *fname, int state, int quiet, const char *plugin_type, int mask)
 {
-  CObject *obj = obj_ptr ? *obj_ptr : NULL;
+  pymol::CObject *obj = obj_ptr ? *obj_ptr : NULL;
   CPlugIOManager *manager = G->PlugIOManager;
   molfile_plugin_t *plugin;
 
@@ -908,7 +908,7 @@ CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
       obj = *obj_ptr = NULL;
     }
 
-    return (CObject *) PlugIOManagerLoadVol(G, (ObjectMap *) obj,
+    return PlugIOManagerLoadVol(G, (ObjectMap *) obj,
         fname, state, quiet, plugin_type);
 
   } else if ((mask & cPlugIOManager_mol) && plugin->read_structure) {
@@ -925,7 +925,7 @@ CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
       obj = *obj_ptr = NULL;
     }
 
-    return (CObject *) PlugIOManagerLoadMol(G, (ObjectMolecule *) obj,
+    return PlugIOManagerLoadMol(G, (ObjectMolecule *) obj,
         fname, state, quiet, plugin_type);
 
   } else if ((mask & cPlugIOManager_traj) && plugin->read_next_timestep) {
@@ -952,7 +952,7 @@ CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
       obj = *obj_ptr = NULL;
     }
 
-    return (CObject *) PlugIOManagerLoadGraphics(G, (ObjectCGO *) obj,
+    return PlugIOManagerLoadGraphics(G, (ObjectCGO *) obj,
         fname, state, quiet, plugin_type);
   }
 

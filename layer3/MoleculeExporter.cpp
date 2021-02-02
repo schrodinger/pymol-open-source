@@ -394,7 +394,7 @@ void MoleculeExporter::setRefObject(const char * ref_object, int ref_state) {
 
 void MoleculeExporter::updateMatrix(matrix_t& matrix, bool history) {
   const auto& ref = m_mat_ref.ptr;
-  if (ObjectGetTotalMatrix(reinterpret_cast<CObject*>(m_iter.obj),
+  if (ObjectGetTotalMatrix(reinterpret_cast<pymol::CObject*>(m_iter.obj),
         m_iter.state, history, matrix.storage)) {
     if (ref) {
       left_multiply44d44d(ref, matrix.storage);
@@ -1159,7 +1159,7 @@ struct MoleculeExporterMAE : public MoleculeExporter {
   void beginMolecule() override {
     MoleculeExporter::beginMolecule();
 
-    std::string groupid = MaeExportGetSubGroupId(G, reinterpret_cast<CObject*>(m_iter.obj));
+    std::string groupid = MaeExportGetSubGroupId(G, reinterpret_cast<pymol::CObject*>(m_iter.obj));
 
     m_offset += VLAprintf(m_buffer, m_offset,
         "\nf_m_ct {\n"

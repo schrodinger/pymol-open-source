@@ -55,7 +55,7 @@ struct ObjectMoleculeBPRec {
   int n_atom;
 };
 
-struct ObjectMolecule : public CObject {
+struct ObjectMolecule : public pymol::CObject {
 	/* array of pointers to coordinate sets; one set per state */
   pymol::vla<CoordSet*> CSet;
 	/* number of coordinate sets */
@@ -116,7 +116,7 @@ struct ObjectMolecule : public CObject {
   std::string describeElement(int index) const override;
   char* getCaption(char* ch, int len) const override;
   pymol::copyable_ptr<CSetting>* getSettingHandle(int state) override;
-  CObject* clone() const override;
+  pymol::CObject* clone() const override;
   CSymmetry const* getSymmetry(int state = 0) const override;
   bool setSymmetry(CSymmetry const& symmetry, int state = 0) override;
 
@@ -391,7 +391,7 @@ pymol::Result<> ObjectMoleculeFuse(ObjectMolecule* I, int index0,
     const ObjectMolecule* src, int index1, bool create_bond, bool move_flag);
 int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force);
 int ObjectMoleculeAreAtomsBonded(ObjectMolecule * I, int i0, int i1);
-void ObjectGotoState(CObject* I, int state);
+void ObjectGotoState(pymol::CObject* I, int state);
 float ObjectMoleculeGetAvgHBondVector(ObjectMolecule * I, int atom, int state, float *v,
                                       float *incoming);
 int ObjectMoleculeCheckBondSep(ObjectMolecule * I, int a0, int a1, int dist);

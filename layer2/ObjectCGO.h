@@ -31,7 +31,7 @@ struct ObjectCGOState {
   ObjectCGOState(const ObjectCGOState& other);
 };
 
-struct ObjectCGO : public CObject {
+struct ObjectCGO : public pymol::CObject {
   std::vector<ObjectCGOState> State;
   ObjectCGO(PyMOLGlobals* G);
   ObjectCGO(const ObjectCGO& other);
@@ -40,7 +40,7 @@ struct ObjectCGO : public CObject {
   void update() override;
   void render(RenderInfo* info) override;
   void invalidate(cRep_t rep, cRepInv_t level, int state) override;
-  CObject* clone() const override;
+  pymol::CObject* clone() const override;
   int getNFrame() const override;
 };
 

@@ -464,7 +464,7 @@ void ObjectGadget::render(RenderInfo * info)
 
 
 /*========================================================================*/
-ObjectGadget::ObjectGadget(PyMOLGlobals * G) : CObject(G)
+ObjectGadget::ObjectGadget(PyMOLGlobals * G) : pymol::CObject(G)
 {
   type = cObjectGadget;
   GSet = pymol::vla<GadgetSet*>(10);        /* auto-zero */

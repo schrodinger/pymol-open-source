@@ -1451,7 +1451,7 @@ Block *MovieGetBlock(PyMOLGlobals * G)
 
 
 void MoviePrepareDrag(PyMOLGlobals *G, BlockRect * rect, 
-                      CObject * obj, int mode, int x, int y, int nearest)
+                      pymol::CObject * obj, int mode, int x, int y, int nearest)
 {
   CMovie *I = G->Movie;
   I->DragMode = mode;

@@ -119,7 +119,7 @@ int ObjectCallback::getNFrame() const
 
 
 /*========================================================================*/
-ObjectCallback::ObjectCallback(PyMOLGlobals * G) : CObject(G)
+ObjectCallback::ObjectCallback(PyMOLGlobals * G) : pymol::CObject(G)
 {
   State = VLACalloc(ObjectCallbackState, 10);       /* autozero */
   type = cObjectCallback;

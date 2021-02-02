@@ -264,6 +264,11 @@ struct CSetting {
   ~CSetting();
 };
 
+namespace pymol
+{
+struct CObject;
+}
+
 /**
  * State index iterator which iterates either over a single state (state >= 0),
  * the current state (state == -2), or all states (state == -1). Takes
@@ -281,7 +286,7 @@ public:
   StateIndex_t state;
 
   StateIterator(PyMOLGlobals*, CSetting*, StateIndex_t, int nstate);
-  StateIterator(struct CObject*, StateIndex_t);
+  StateIterator(pymol::CObject*, StateIndex_t);
 
   bool next() {
     return (++state < end);

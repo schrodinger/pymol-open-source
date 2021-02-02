@@ -2548,7 +2548,7 @@ void SceneOriginSet(PyMOLGlobals * G, const float *origin, int preserve)
 
 
 /*========================================================================*/
-int SceneObjectAdd(PyMOLGlobals * G, CObject * obj)
+int SceneObjectAdd(PyMOLGlobals * G, pymol::CObject * obj)
 {
   CScene *I = G->Scene;
   obj->Enabled = true;
@@ -2566,7 +2566,7 @@ int SceneObjectAdd(PyMOLGlobals * G, CObject * obj)
 
 
 /*========================================================================*/
-int SceneObjectIsActive(PyMOLGlobals * G, CObject * obj)
+int SceneObjectIsActive(PyMOLGlobals * G, pymol::CObject * obj)
 {
   int result = false;
   CScene *I = G->Scene;
@@ -2575,7 +2575,7 @@ int SceneObjectIsActive(PyMOLGlobals * G, CObject * obj)
   return result;
 }
 
-int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge)
+int SceneObjectDel(PyMOLGlobals * G, pymol::CObject * obj, int allow_purge)
 {
   CScene *I = G->Scene;
   int defer_builds_mode = SettingGetGlobal_i(G, cSetting_defer_builds_mode);
@@ -4491,7 +4491,7 @@ int SceneRovingCheckDirty(PyMOLGlobals * G)
 }
 
 struct _CObjectUpdateThreadInfo {
-  CObject *obj;
+  pymol::CObject *obj;
 };
 
 void SceneObjectUpdateThread(CObjectUpdateThreadInfo * T)
@@ -5481,7 +5481,7 @@ void SceneGetScaledAxesAtPoint(PyMOLGlobals * G, float *pt, float *xn, float *yn
   scale3f(yn0, v_scale, yn);
 }
 
-void SceneGetScaledAxes(PyMOLGlobals * G, CObject *obj, float *xn, float *yn)
+void SceneGetScaledAxes(PyMOLGlobals * G, pymol::CObject *obj, float *xn, float *yn)
 {
   CScene *I = G->Scene;
   float *v;
@@ -5602,7 +5602,7 @@ float SceneGetScale(PyMOLGlobals * G) {
 void ScenePickAtomInWorld(PyMOLGlobals * G, int x, int y, float *atomWorldPos) {
   CScene *I = G->Scene;
   if (SceneDoXYPick(G, x, y, 0)) {
-    CObject *obj = (CObject *) I->LastPicked.context.object;
+    pymol::CObject *obj = I->LastPicked.context.object;
     if (obj->type != cObjectMolecule) {
       return;
     }

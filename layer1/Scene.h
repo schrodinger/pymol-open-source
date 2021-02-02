@@ -131,9 +131,9 @@ void SceneResetNormalToViewVector(PyMOLGlobals * G, short use_shader);
 void SceneResetNormalUseShaderAttribute(PyMOLGlobals * G, int lines, short use_shader, int attr);
 void SceneGetResetNormal(PyMOLGlobals * G, float *normal, int lines);
 
-int SceneObjectAdd(PyMOLGlobals * G, CObject * obj);
-int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge);
-int SceneObjectIsActive(PyMOLGlobals * G, CObject * obj);
+int SceneObjectAdd(PyMOLGlobals* G, pymol::CObject* obj);
+int SceneObjectDel(PyMOLGlobals* G, pymol::CObject* obj, int allow_purge);
+int SceneObjectIsActive(PyMOLGlobals* G, pymol::CObject* obj);
 void SceneOriginSet(PyMOLGlobals * G, const float *origin, int preserve);
 void SceneOriginGet(PyMOLGlobals * G, float *origin);
 void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius);
@@ -231,7 +231,8 @@ int SceneIncrementTextureRefreshes(PyMOLGlobals * G);
 
 void SceneResetTextureRefreshes(PyMOLGlobals * G);
 
-void SceneGetScaledAxes(PyMOLGlobals * G, CObject *obj, float *xn, float *yn);
+void SceneGetScaledAxes(
+    PyMOLGlobals* G, pymol::CObject* obj, float* xn, float* yn);
 void SceneGetScaledAxesAtPoint(PyMOLGlobals * G, float *pt, float *xn, float *yn);
 
 int SceneGetCopyType(PyMOLGlobals * G);

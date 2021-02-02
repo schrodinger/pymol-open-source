@@ -39,19 +39,19 @@ Z* -------------------------------------------------------------------
 #include"Selector.h"
 #include"vla.h"
 
-void ObjectPurgeSettings(CObject * I)
+void ObjectPurgeSettings(pymol::CObject * I)
 {
   I->Setting.reset();
 }
 
-void ObjectMotionTrim(CObject *I, int n_frame)
+void ObjectMotionTrim(pymol::CObject *I, int n_frame)
 {
   if(I->ViewElem) {
     VLASize(I->ViewElem,CViewElem,n_frame);
   }
 }
 
-int ObjectMotionGetLength(CObject *I)
+int ObjectMotionGetLength(pymol::CObject *I)
 {
   if(I->ViewElem) {
     return VLAGetSize(I->ViewElem);
@@ -59,7 +59,7 @@ int ObjectMotionGetLength(CObject *I)
   return 0;
 }
 
-void ObjectMotionReinterpolate(CObject *I)
+void ObjectMotionReinterpolate(pymol::CObject *I)
 {
   float power  = SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_motion_power);
   float bias   = SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_motion_bias);
@@ -67,8 +67,8 @@ void ObjectMotionReinterpolate(CObject *I)
   float linear = SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_motion_linear);
   int hand     = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_motion_hand);
 
-  /* 
-     int ObjectMotion(CObject * I, int action, int first,
+  /*
+     int ObjectMotion(pymol::CObject * I, int action, int first,
                  int last, float power, float bias,
                  int simple, float linear, int wrap,
                  int hand, int window, int cycles, int state, int quiet);
@@ -78,7 +78,7 @@ void ObjectMotionReinterpolate(CObject *I)
                hand, 5, 1, -1, 1);
 }
 
-int ObjectMotionModify(CObject *I,int action, int index, int count,int target,int freeze,int localize)
+int ObjectMotionModify(pymol::CObject *I,int action, int index, int count,int target,int freeze,int localize)
 {
   int ok;
 
@@ -197,7 +197,7 @@ static void TTTFromViewElem(float *TTT, CViewElem * elem)
   fp[15] = 1.0F;
 }
 
-int ObjectGetSpecLevel(CObject * I, int frame)
+int ObjectGetSpecLevel(pymol::CObject * I, int frame)
 {
   if(I->ViewElem) {
     int size = VLAGetSize(I->ViewElem);
@@ -217,14 +217,14 @@ int ObjectGetSpecLevel(CObject * I, int frame)
   return -1;
 }
 
-void ObjectDrawViewElem(CObject *I, BlockRect *rect,int frames ORTHOCGOARG)
+void ObjectDrawViewElem(pymol::CObject *I, BlockRect *rect,int frames ORTHOCGOARG)
 {
   if(I->ViewElem) {
     ViewElemDraw(I->G,I->ViewElem,rect,frames,I->Name ORTHOCGOARGVAR);
   }
 }
 
-int ObjectMotion(CObject * I, int action, int first,
+int ObjectMotion(pymol::CObject * I, int action, int first,
                int last, float power, float bias,
                int simple, float linear, int wrap,
                int hand, int window, int cycles, int state, int quiet)
@@ -544,7 +544,7 @@ int ObjectMotion(CObject * I, int action, int first,
   return 1;
 }
 
-void ObjectAdjustStateRebuildRange(CObject * I, int *start, int *stop)
+void ObjectAdjustStateRebuildRange(pymol::CObject * I, int *start, int *stop)
 {
   /* on entry, start and stop should hold the valid range for the object */
   int defer_builds_mode =
@@ -718,7 +718,7 @@ void ObjectMakeValidName(PyMOLGlobals * G, char *name, bool quiet)
  * @param state State (0-indexed) or -2/-3 for current state
  * @return NULL if state is out of bounds or empty
  */
-CObjectState* CObject::getObjectState(int state)
+CObjectState* pymol::CObject::getObjectState(int state)
 {
   if (state == -2 /* cSelectorUpdateTableCurrentState */ ||
       state == -3 /* cSelectorUpdateTableEffectiveStates */) {
@@ -735,7 +735,7 @@ CObjectState* CObject::getObjectState(int state)
  * `static_singletons` settings. Will not validate the value of the `state`
  * setting, it could be `<0` or `>=getNFrame()`.
  */
-int CObject::getCurrentState() const
+int pymol::CObject::getCurrentState() const
 {
   if (getNFrame() == 1 &&
       SettingGet<bool>(G, Setting.get(), nullptr, cSetting_static_singletons))
@@ -744,7 +744,7 @@ int CObject::getCurrentState() const
 }
 
 /**
- * Like CObject::getCurrentState() but will return `-1` if the `all_states`
+ * Like pymol::CObject::getCurrentState() but will return `-1` if the `all_states`
  * setting is set.
  *
  * Note: Clamps negative values at `-1` (all states). The usefulness of this
@@ -752,12 +752,12 @@ int CObject::getCurrentState() const
  * is likely to discard all negative values, including -1.
  *
  * @param ignore_all_states Boolean flag, should be false. You most likely
- * should use CObject::getCurrentState() instead of setting `ignore_all_states`
+ * should use pymol::CObject::getCurrentState() instead of setting `ignore_all_states`
  * to true.
  */
-int ObjectGetCurrentState(CObject * I, int ignore_all_states)
+int ObjectGetCurrentState(const pymol::CObject * I, int ignore_all_states)
 {
-  assert("use CObject::getCurrentState()" && !ignore_all_states);
+  assert("use pymol::CObject::getCurrentState()" && !ignore_all_states);
 
   // the previous implementation (up to PyMOL 1.7.6) ignored
   // object-level state=0 (all states)
@@ -769,7 +769,7 @@ int ObjectGetCurrentState(CObject * I, int ignore_all_states)
   return std::max(-1, I->getCurrentState());
 }
 
-PyObject *ObjectAsPyList(CObject * I)
+PyObject *ObjectAsPyList(pymol::CObject * I)
 {
   PyObject *result = NULL;
   result = PyList_New(14);
@@ -797,7 +797,7 @@ PyObject *ObjectAsPyList(CObject * I)
   return (PConvAutoNone(result));
 }
 
-int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, CObject * I)
+int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, pymol::CObject * I)
 {
   int ok = true;
   int ll = 0;
@@ -863,7 +863,7 @@ int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, CObject * I)
   return (ok);
 }
 
-int ObjectCopyHeader(CObject * I, const CObject * src)
+int ObjectCopyHeader(pymol::CObject * I, const pymol::CObject * src)
 {
   int ok = true;
 
@@ -892,7 +892,7 @@ int ObjectCopyHeader(CObject * I, const CObject * src)
 
 
 /*========================================================================*/
-void ObjectCombineTTT(CObject * I, const float *ttt, int reverse_order, int store)
+void ObjectCombineTTT(pymol::CObject * I, const float *ttt, int reverse_order, int store)
 {
   if(I->type == cObjectGroup) {
     ExecutiveGroupCombineTTT(I->G, I, ttt, reverse_order,store);
@@ -926,7 +926,7 @@ void ObjectCombineTTT(CObject * I, const float *ttt, int reverse_order, int stor
   }
 }
 /*========================================================================*/
-void ObjectTranslateTTT(CObject * I, const float *v, int store)
+void ObjectTranslateTTT(pymol::CObject * I, const float *v, int store)
 {
   if(I->type == cObjectGroup) {
     ExecutiveGroupTranslateTTT(I->G, I, v, store);
@@ -959,7 +959,7 @@ void ObjectTranslateTTT(CObject * I, const float *v, int store)
 
 
 /*========================================================================*/
-void ObjectSetTTT(CObject * I, const float *ttt, int state, int store)
+void ObjectSetTTT(pymol::CObject * I, const float *ttt, int state, int store)
 {
   if(state < 0) {
     if(ttt) {
@@ -989,7 +989,7 @@ void ObjectSetTTT(CObject * I, const float *ttt, int state, int store)
 }
 
 /*========================================================================*/
-int ObjectGetTTT(CObject * I, const float **ttt, int state)
+int ObjectGetTTT(pymol::CObject * I, const float **ttt, int state)
 {
   if(state < 0) {
     if(I->TTTFlag) {
@@ -1006,7 +1006,7 @@ int ObjectGetTTT(CObject * I, const float **ttt, int state)
 
 
 /*========================================================================*/
-void ObjectResetTTT(CObject * I,int store)
+void ObjectResetTTT(pymol::CObject * I,int store)
 {
   
   I->TTTFlag = false;
@@ -1033,12 +1033,12 @@ void ObjectResetTTT(CObject * I,int store)
  * Get the combined transformation of TTT and state matrix. State matrix is
  * only included if `history=true` or `matrix_mode > 0`.
  *
- * @param state See CObject::getObjectState
+ * @param state See pymol::CObject::getObjectState
  * @param history Boolean flag
  * @param[out] matrix Homogeneous 4x4 matrix
  * @return True if `matrix` was populated
  */
-int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
+int ObjectGetTotalMatrix(pymol::CObject * I, int state, int history, double *matrix)
 {
   int result = false;
   if(I->TTTFlag) {
@@ -1072,7 +1072,7 @@ int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
 
 
 /*========================================================================*/
-void ObjectPrepareContext(CObject * I, RenderInfo * info)
+void ObjectPrepareContext(pymol::CObject * I, RenderInfo * info)
 {
   CRay * ray = info ? info->ray : NULL;
 
@@ -1144,7 +1144,7 @@ void ObjectPrepareContext(CObject * I, RenderInfo * info)
 
 
 /*========================================================================*/
-void ObjectSetTTTOrigin(CObject * I, float *origin)
+void ObjectSetTTTOrigin(pymol::CObject * I, float *origin)
 {
   float homo[16];
   float *dst;
@@ -1176,20 +1176,20 @@ void ObjectSetTTTOrigin(CObject * I, float *origin)
 
 
 /*========================================================================*/
-pymol::copyable_ptr<CSetting>* CObject::getSettingHandle(int state)
+pymol::copyable_ptr<CSetting>* pymol::CObject::getSettingHandle(int state)
 {
   return &Setting;
 }
 
 
 /*========================================================================*/
-std::string CObject::describeElement(int index) const
+std::string pymol::CObject::describeElement(int index) const
 {
   return {};
 }
 
 /*========================================================================*/
-void ObjectToggleRepVis(CObject * I, int rep)
+void ObjectToggleRepVis(pymol::CObject * I, int rep)
 {
   if((rep >= 0) && (rep < cRepCnt))
     I->visRep ^= (1 << rep);
@@ -1197,7 +1197,7 @@ void ObjectToggleRepVis(CObject * I, int rep)
 
 
 /*========================================================================*/
-void ObjectSetRepVisMask(CObject * I, int repmask, int value)
+void ObjectSetRepVisMask(pymol::CObject * I, int repmask, int value)
 {
   switch (value) {
     case cVis_HIDE:
@@ -1219,7 +1219,7 @@ void ObjectSetRepVisMask(CObject * I, int repmask, int value)
 
 
 /*========================================================================*/
-void ObjectSetName(CObject * I, const char *name)
+void ObjectSetName(pymol::CObject * I, const char *name)
 {
   UtilNCopy(I->Name, name, WordLength);
   if(SettingGetGlobal_b(I->G, cSetting_validate_object_names))
@@ -1228,14 +1228,14 @@ void ObjectSetName(CObject * I, const char *name)
 
 
 /*========================================================================*/
-CObject::~CObject()
+pymol::CObject::~CObject()
 {
   SceneObjectDel(this->G, this, false);
 }
 
 
 /*========================================================================*/
-void ObjectUseColor(CObject * I)
+void ObjectUseColor(pymol::CObject * I)
 {
   PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
@@ -1243,7 +1243,7 @@ void ObjectUseColor(CObject * I)
   }
 }
 
-void ObjectUseColorCGO(CGO *cgo, CObject * I)
+void ObjectUseColorCGO(CGO *cgo, pymol::CObject * I)
 {
   PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
@@ -1255,7 +1255,7 @@ void ObjectUseColorCGO(CGO *cgo, CObject * I)
 /**
  * Render a unit box (dummy representation)
  */
-void CObject::render(RenderInfo * info)
+void pymol::CObject::render(RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
 #ifdef PURE_OPENGL_ES_2
@@ -1290,7 +1290,7 @@ void CObject::render(RenderInfo * info)
 
 
 /*========================================================================*/
-CObject::CObject(PyMOLGlobals * G) : G(G)
+pymol::CObject::CObject(PyMOLGlobals * G) : G(G)
 {
   OrthoRemoveSplash(G);         /* HMM... this seems like an inappropriate sideeffect */
   visRep = cRepBitmask & ~(cRepCellBit | cRepExtentBit);

@@ -1167,7 +1167,7 @@ void ObjectAlignment::invalidate(cRep_t rep, cRepInv_t level, int state)
 
 
 /*========================================================================*/
-ObjectAlignment::ObjectAlignment(PyMOLGlobals * G) : CObject(G)
+ObjectAlignment::ObjectAlignment(PyMOLGlobals * G) : pymol::CObject(G)
 {
   type = cObjectAlignment;
 }
@@ -1225,7 +1225,7 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
   return (I);
 }
 
-CObject* ObjectAlignment::clone() const
+pymol::CObject* ObjectAlignment::clone() const
 {
   return new ObjectAlignment(*this);
 }

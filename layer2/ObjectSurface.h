@@ -56,7 +56,7 @@ struct ObjectSurfaceState : public CObjectState
   ObjectSurfaceState(PyMOLGlobals* G);
 };
 
-struct ObjectSurface : public CObject {
+struct ObjectSurface : public pymol::CObject {
   std::vector<ObjectSurfaceState> State;
   ObjectSurface(PyMOLGlobals* G);
 
@@ -65,7 +65,7 @@ struct ObjectSurface : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(cRep_t rep, cRepInv_t level, int state) override;
   int getNFrame() const override;
-  CObject* clone() const override;
+  pymol::CObject* clone() const override;
 };
 
 ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,

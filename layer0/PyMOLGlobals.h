@@ -110,9 +110,6 @@ typedef struct _OVOneToOne OVOneToOne;
 #define OVONETOONE_DEFINED
 #endif
 
-
-struct CObject;
-
 #ifndef CPyMOL_DEFINED
 typedef struct _CPyMOL CPyMOL;
 #define CPyMOL_DEFINED

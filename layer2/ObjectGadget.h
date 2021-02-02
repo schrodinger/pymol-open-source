@@ -24,7 +24,7 @@ Z* -------------------------------------------------------------------
 
 #include"GadgetSet.h"
 
-struct ObjectGadget : public CObject {
+struct ObjectGadget : public pymol::CObject {
   pymol::vla<GadgetSet*> GSet;
   int NGSet = 0;
   int CurGSet = 0;

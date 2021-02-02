@@ -1252,7 +1252,7 @@ ObjectSliceState *ObjectSliceStateGetActive(ObjectSlice * I, int state)
 
 
 /*========================================================================*/
-ObjectSlice::ObjectSlice(PyMOLGlobals * G) : CObject(G)
+ObjectSlice::ObjectSlice(PyMOLGlobals * G) : pymol::CObject(G)
 {
   auto I = this;
 
@@ -1262,7 +1262,7 @@ ObjectSlice::ObjectSlice(PyMOLGlobals * G) : CObject(G)
   I->context.state = 0;
 }
 
-CObject* ObjectSlice::clone() const
+pymol::CObject* ObjectSlice::clone() const
 {
   return new ObjectSlice(*this);
 }

@@ -47,7 +47,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
     const char *fname, int state, int quiet, const char *plugin_type);
 ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
     const char *fname, int state, int quiet, const char *plugin_type);
-CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
+pymol::CObject* PlugIOManagerLoad(PyMOLGlobals* G, pymol::CObject** obj_ptr,
     const char *fname, int state, int quiet, const char *plugin_type,
     int mask=0);
 

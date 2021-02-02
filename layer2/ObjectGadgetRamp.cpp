@@ -475,7 +475,7 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
   case cRampMap:
     if(!I->Map)
       I->Map = ExecutiveFindObjectMapByName(I->G, I->SrcName);
-    if(!ExecutiveValidateObjectPtr(I->G, (CObject *) I->Map, cObjectMap))
+    if(!ExecutiveValidateObjectPtr(I->G, I->Map, cObjectMap))
       ok = false;
     else {
       int src_state;
@@ -496,7 +496,7 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
   case cRampMol:
     if(!I->Mol)
       I->Mol = ExecutiveFindObjectMoleculeByName(I->G, I->SrcName);
-    if(!ExecutiveValidateObjectPtr(I->G, (CObject *) I->Mol, cObjectMolecule))
+    if(!ExecutiveValidateObjectPtr(I->G, I->Mol, cObjectMolecule))
       ok = false;
     else {
       float cutoff = 1.0F;

@@ -63,8 +63,8 @@ static int TestPyMOL_00_00(PyMOLGlobals * G)
     ms->Active = true;
   }
   if(obj) {
-    ObjectSetName((CObject *) obj, "00_00");
-    ExecutiveManageObject(G, (CObject *) obj, -1, false);
+    ObjectSetName(obj, "00_00");
+    ExecutiveManageObject(G, obj, -1, false);
   }
   return (obj != NULL);
 }
@@ -301,10 +301,10 @@ int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
       break;
     case 2:
       {
-        CObject *obj = NULL;
+        pymol::CObject *obj = NULL;
         float pos[3] = { 0.0, 0.0, 0.0 };
         PBlock(G);
-        obj = (CObject *) ObjectCGONewVFontTest(G, "hello", pos);
+        obj = ObjectCGONewVFontTest(G, "hello", pos);
         PUnblock(G);
         if(obj) {
           ObjectSetName(obj, "hello");
@@ -314,8 +314,8 @@ int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
       break;
     case 3:
       {
-        CObject *obj = NULL;
-        obj = (CObject *) ObjectGadgetTest(G);
+        pymol::CObject *obj = NULL;
+        obj = ObjectGadgetTest(G);
         if(obj) {
           ObjectSetName(obj, "gadget");
           ExecutiveManageObject(G, obj, -1, false);

@@ -69,7 +69,7 @@ struct ObjectMapState : public CObjectState {
   ObjectMapState& operator=(const ObjectMapState&);
 };
 
-struct ObjectMap : public CObject {
+struct ObjectMap : public pymol::CObject {
   using StateT = ObjectMapState;
 
   std::vector<ObjectMapState> State;
@@ -90,7 +90,7 @@ struct ObjectMap : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(cRep_t rep, cRepInv_t level, int state) override;
   int getNFrame() const override;
-  CObject* clone() const override;
+  pymol::CObject* clone() const override;
   CSymmetry const* getSymmetry(int state = 0) const override;
   bool setSymmetry(CSymmetry const& symmetry, int state = 0) override;
 

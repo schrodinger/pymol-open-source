@@ -56,7 +56,7 @@ struct ObjectMeshState : public CObjectState {
   ObjectMeshState(PyMOLGlobals* G);
 };
 
-struct ObjectMesh : public CObject {
+struct ObjectMesh : public pymol::CObject {
   std::vector<ObjectMeshState> State;
   int NState = 0;
   ObjectMesh(PyMOLGlobals* G);
@@ -66,7 +66,7 @@ struct ObjectMesh : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(cRep_t rep, cRepInv_t level, int state) override;
   int getNFrame() const override;
-  CObject* clone() const override;
+  pymol::CObject* clone() const override;
 };
 
 ObjectMesh *ObjectMeshFromBox(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * map,

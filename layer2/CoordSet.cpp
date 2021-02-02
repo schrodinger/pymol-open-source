@@ -1301,7 +1301,7 @@ void CoordSet::render(RenderInfo * info)
   if (!(ray || pick) &&
       (SettingGet<int>(*this, cSetting_defer_builds_mode) == 5)) {
     if (pass == RenderPass::Antialias) {
-      ObjectUseColor((CObject*) Obj);
+      ObjectUseColor(Obj);
       if (Active[cRepLine])
         RepWireBondRenderImmediate(this, info);
       if (Active[cRepNonbonded])

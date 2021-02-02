@@ -21,7 +21,7 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLObject.h"
 
-struct ObjectGroup : public CObject {
+struct ObjectGroup : public pymol::CObject {
   int OpenOrClosed = false;
   ObjectGroup(PyMOLGlobals* G);
   ~ObjectGroup();

@@ -992,7 +992,7 @@ int ObjectSurface::getNFrame() const
 
 /*========================================================================*/
 ObjectSurface::ObjectSurface(PyMOLGlobals* G)
-    : CObject(G)
+    : pymol::CObject(G)
 {
   type = cObjectSurface;
 }
@@ -1181,7 +1181,7 @@ void ObjectSurfaceRecomputeExtent(ObjectSurface * I)
 
 /*========================================================================*/
 
-CObject* ObjectSurface::clone() const
+pymol::CObject* ObjectSurface::clone() const
 {
   return new ObjectSurface(*this);
 }

@@ -1122,7 +1122,7 @@ std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char * name, int s
   if (name && name[0]) {
     // object-state settings
 
-    CObject *obj = ExecutiveFindObjectByName(G, name);
+    pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
 
     if (!obj ||
         !(handle = obj->getSettingHandle(state)) ||
@@ -3148,7 +3148,7 @@ StateIterator::StateIterator(
 /**
  * Take settings and number of states from given object.
  */
-StateIterator::StateIterator(CObject* obj, StateIndex_t state_)
+StateIterator::StateIterator(pymol::CObject* obj, StateIndex_t state_)
     : StateIterator(obj->G, obj->Setting.get(), state_, obj->getNFrame())
 {
 }

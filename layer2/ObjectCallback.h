@@ -26,7 +26,7 @@ typedef struct {
   bool is_callable;
 } ObjectCallbackState;
 
-struct ObjectCallback : public CObject {
+struct ObjectCallback : public pymol::CObject {
   ObjectCallbackState *State = nullptr;
   int NState = 0;
   ObjectCallback(PyMOLGlobals* G);

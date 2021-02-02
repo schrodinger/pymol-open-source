@@ -391,7 +391,7 @@ char *ObjectMolecule::getCaption(char * ch, int len) const
   int show_as_fraction = 0;
   const char *frozen_str = "";
 
-  int state = ObjectGetCurrentState((CObject *) I, false);
+  int state = ObjectGetCurrentState(I, false);
   int counter_mode = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_state_counter_mode);
   int frozen = SettingGetIfDefined_i(I->G, I->Setting.get(), cSetting_state, &objState);
 
@@ -2606,7 +2606,7 @@ int ObjectMoleculeCheckBondSep(ObjectMolecule * I, int a0, int a1, int dist)
 
 
 /*========================================================================*/
-void ObjectGotoState(CObject* I, int state)
+void ObjectGotoState(pymol::CObject* I, int state)
 {
   auto nstates = I->getNFrame();
   if (nstates > 1 || !SettingGet<bool>(I->G, cSetting_static_singletons)) {
@@ -4240,7 +4240,7 @@ void ObjectMoleculeSaveUndo(ObjectMolecule * I, int state, int log)
     I->UndoNIndex[I->UndoIter] = cs->NIndex;
   }
   I->UndoIter = cUndoMask & (I->UndoIter + 1);
-  ExecutiveSetLastObjectEdited(G, (CObject *) I);
+  ExecutiveSetLastObjectEdited(G, I);
   if(log) {
     OrthoLineType line;
     if(SettingGetGlobal_i(I->G, cSetting_logging)) {
@@ -7450,7 +7450,7 @@ ok_except1:
 ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, const char * name,
                                          const float * coords, int coords_len, int frame)
 {
-  CObject * cobj = ExecutiveFindObjectByName(G, name);
+  pymol::CObject * cobj = ExecutiveFindObjectByName(G, name);
 
   if(!cobj || cobj->type != cObjectMolecule) {
     ErrMessage(G, "LoadCoords", "named object molecule not found.");
@@ -11090,7 +11090,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
 
 /*========================================================================*/
 
-ObjectMolecule::ObjectMolecule(PyMOLGlobals * G, int discreteFlag) : CObject(G)
+ObjectMolecule::ObjectMolecule(PyMOLGlobals * G, int discreteFlag) : pymol::CObject(G)
 {
   auto I = this;
   int a;
@@ -11297,7 +11297,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
             pdb_info->variant == PDB_VARIANT_PQR) {
           // pqr files have no chain identifier by default
           // vdb files have same chain identifiers in all symmetry copies
-          SettingSet(cSetting_retain_order, 1, (CObject *) I);
+          SettingSet(cSetting_retain_order, 1, I);
         }
       }
       if (ok)
@@ -11747,7 +11747,7 @@ bool ObjectMolecule::atomHasAnyCoordinates(size_t atm) const
   return false;
 }
 
-CObject* ObjectMolecule::clone() const
+pymol::CObject* ObjectMolecule::clone() const
 {
   return ObjectMoleculeCopy(this);
 }

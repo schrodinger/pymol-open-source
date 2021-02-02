@@ -36,7 +36,7 @@ struct ObjectAlignmentState {
   bool renderCGO_has_trilines;
 };
 
-struct ObjectAlignment : public CObject {
+struct ObjectAlignment : public pymol::CObject {
   std::vector<ObjectAlignmentState> State;
   int SelectionState = -1;
   int ForceState = -1;
@@ -47,7 +47,7 @@ struct ObjectAlignment : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(cRep_t rep, cRepInv_t level, int state) override;
   int getNFrame() const override;
-  CObject* clone() const override;
+  pymol::CObject* clone() const override;
 };
 
 ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,

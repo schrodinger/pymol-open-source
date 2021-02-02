@@ -180,7 +180,7 @@ void Rep::render(RenderInfo* info)
 
 
 /*========================================================================*/
-Rep::Rep(CObject* obj_, int state)
+Rep::Rep(pymol::CObject* obj_, int state)
     : G(obj_->G)
     , obj(obj_)
 {

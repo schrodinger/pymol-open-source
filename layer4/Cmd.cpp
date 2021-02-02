@@ -682,7 +682,7 @@ static PyObject *CmdGetRawAlignment(PyObject * self, PyObject * args)
       name = ExecutiveGetActiveAlignment(G);
     }
     if (name && name[0]) {
-      CObject *obj = ExecutiveFindObjectByName(G, name);
+      pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
       if (obj && obj->type == cObjectAlignment) {
         result = GetRawAlignment(G, (ObjectAlignment*) obj, active_only, state);
       } else {
@@ -714,7 +714,7 @@ static PyObject *CmdGetOrigin(PyObject * self, PyObject * args)
     if((!object) || (!object[0])) {
       SceneOriginGet(G, origin);
     } else {
-      CObject *obj = ExecutiveFindObjectByName(G, object);
+      pymol::CObject *obj = ExecutiveFindObjectByName(G, object);
       if(!obj) {
         ok = false;
       } else {
@@ -2224,7 +2224,7 @@ static PyObject *CmdGetType(PyObject * self, PyObject * args)
 static PyObject *CmdGetObjectSettings(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  CObject *obj = NULL;
+  pymol::CObject *obj = NULL;
   PyObject *result = NULL;
   const char *oname;
   int state = -1;
@@ -2300,7 +2300,7 @@ static PyObject *CmdGetDragObjectName(PyObject * self, PyObject * args)
     char *name = NULL;
     APIEnter(G);
     {
-      CObject *obj = EditorDragObject(G);    
+      pymol::CObject *obj = EditorDragObject(G);    
       if(obj)
         name = obj->Name;
     }
@@ -2989,7 +2989,7 @@ static PyObject *CmdSymExp(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *str1, *str2, *str3;
   float cutoff;
-  CObject *mObj;
+  pymol::CObject *mObj;
   int segi;
   int quiet;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
@@ -5390,7 +5390,7 @@ static PyObject *CmdSetStateOrder(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *oname;
   PyObject *order;
-  CObject *obj = NULL;
+  pymol::CObject *obj = NULL;
   int *int_array = NULL;
   int ok = false;
 
@@ -5469,7 +5469,7 @@ static PyObject *CmdLoadCoordSet(PyObject * self, PyObject * args)
   const char* errormsg = nullptr;
   const char* oname;
   PyObject *model;
-  CObject *origObj = NULL;
+  pymol::CObject *origObj = NULL;
   ObjectMolecule *obj;
   int frame;
 

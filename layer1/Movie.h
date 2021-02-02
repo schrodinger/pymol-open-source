@@ -71,7 +71,7 @@ struct CMovie : public Block {
   ScrollBar m_ScrollBar;
   int DragMode {};
   int Dragging {};
-  CObject *DragObj {}; /* if not dragging all */
+  pymol::CObject* DragObj{}; /* if not dragging all */
   BlockRect DragRect {};
   int DragX {}, DragY {}, DragMenu {};
   int DragStartFrame {}, DragCurFrame {}, DragNearest {}, DragDraw {};
@@ -156,7 +156,8 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count, int target
 void MovieViewReinterpolate(PyMOLGlobals *G);
 void MovieViewTrim(PyMOLGlobals *G,int n_frame);
 
-void MoviePrepareDrag(PyMOLGlobals *G, BlockRect * rect, CObject * obj, int mode, int x, int y, int nearest);
+void MoviePrepareDrag(PyMOLGlobals* G, BlockRect* rect, pymol::CObject* obj,
+    int mode, int x, int y, int nearest);
 int MovieXtoFrame(PyMOLGlobals *G, BlockRect *rect, int frames, int x, int nearest);
 
 /*void MovieSave(char *fname);

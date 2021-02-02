@@ -48,11 +48,16 @@ struct Pickable {
   }
 };
 
+namespace pymol
+{
+struct CObject;
+}
+
 /**
  * Generic object state identifier
  */
 struct PickContext {
-  struct CObject* object = nullptr;
+  pymol::CObject* object = nullptr;
   int state;
 
   // comparison

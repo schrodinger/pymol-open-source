@@ -105,7 +105,7 @@ struct SceneView {
 
 class CScene : public Block {
  public:
-  std::list<CObject*> Obj, GadgetObjs, NonGadgetObjs;
+  std::list<pymol::CObject*> Obj, GadgetObjs, NonGadgetObjs;
   SceneView m_view{};
   float InvMatrix[16];          /* WARNING: column major, as per OpenGL spec */
   float PmvMatrix[16];
@@ -176,8 +176,8 @@ class CScene : public Block {
 
   int StencilValid, StencilParity;
   int ReinterpolateFlag;
-  CObject *ReinterpolateObj { nullptr };
-  CObject *MotionGrabbedObj { nullptr };
+  pymol::CObject* ReinterpolateObj{nullptr};
+  pymol::CObject* MotionGrabbedObj{nullptr};
 
   short prev_no_z_rotation1, prev_no_z_rotation2;
   int orig_x_rotation, orig_y_rotation;

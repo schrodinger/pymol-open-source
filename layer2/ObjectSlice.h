@@ -67,7 +67,7 @@ struct ObjectSliceState {
       : G(G){};
 };
 
-struct ObjectSlice : public CObject {
+struct ObjectSlice : public pymol::CObject {
   std::vector<ObjectSliceState> State;
   PickContext context{};
   ObjectSlice(PyMOLGlobals* G);
@@ -77,7 +77,7 @@ struct ObjectSlice : public CObject {
   void render(RenderInfo* info) override;
   void invalidate(cRep_t rep, cRepInv_t level, int state) override;
   int getNFrame() const override;
-  CObject* clone() const override;
+  pymol::CObject* clone() const override;
 };
 
 ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap * map,
