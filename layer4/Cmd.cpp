@@ -6529,11 +6529,6 @@ static PyMethodDef Cmd_methods[] = {
 extern "C" {
 #endif
 
-// TODO can this be removed? Called by CMOL (AxPyMOL?)
-void init_cmd(void)
-{
-}
-
 PyObject * PyInit__cmd(void)
 {
   static struct PyModuleDef moduledef = {
@@ -6543,6 +6538,16 @@ PyObject * PyInit__cmd(void)
     -1,
     Cmd_methods };
   return PyModule_Create(&moduledef);
+}
+
+// Required for AxPyMOL
+void init_cmd(void)
+{
+  auto _cmd = PyInit__cmd();
+  if (_cmd) {
+    PyDict_SetItemString(PyImport_GetModuleDict(), "pymol._cmd", _cmd);
+    Py_DECREF(_cmd);
+  }
 }
 
 #ifdef __cplusplus
