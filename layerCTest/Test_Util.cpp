@@ -20,8 +20,12 @@ TEST_CASE("string_format", "[Util]")
   auto str2 = pymol::string_format("%s %d!", std::string("Hello"), 42);
   REQUIRE(str2 == "Hello 42!");
 
+#if 0
+  // We have a static assert which won't allow empty string. Allowing empty
+  // string would produce a compiler warning with clang.
   auto str3 = pymol::string_format("");
   REQUIRE(str3 == "");
+#endif
 
   auto str4 = pymol::string_format("%s %d!", "ThisStringWillNotBeSmallStringOptimized", 42);
   REQUIRE(str4 == "ThisStringWillNotBeSmallStringOptimized 42!");

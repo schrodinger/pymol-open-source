@@ -109,7 +109,7 @@ std::string string_format_impl(const char* const fmt, FmtArgs&&... fmtargs)
 template <std::size_t N, typename... FmtArgs>
 std::string string_format(const char (&fmt)[N], FmtArgs&&... fmtargs)
 {
-  static_assert(N > 0, "Format string must not be empty");
+  static_assert(N > 1, "Format string must not be empty");
   return string_format_detail::string_format_impl(
       fmt, string_format_detail::fwdArgs(std::forward<FmtArgs>(fmtargs))...);
 }
