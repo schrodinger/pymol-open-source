@@ -2294,7 +2294,7 @@ int ExtrudeComputePuttyScaleFactors(CExtrude * I, ObjectMolecule * obj, int tran
       PRINTFB(I->G, FB_RepCartoon, FB_Warnings)
         " Extrude-Warning: invalid putty settings (division by zero)\n" ENDFB(I->G);
       for(a = 0; a < I->N; a++) {
-        *sf = 0.0F;
+        *sf = 0.5F;
         sf++;
       }
     }
