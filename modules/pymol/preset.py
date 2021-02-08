@@ -164,7 +164,7 @@ def ball_and_stick(selection="(all)",mode=1,_self=cmd):
 def b_factor_putty(selection="(name CA+P)",_self=cmd):
     cmd=_self
     s, selection = _prepare(selection, _self=cmd)[:2]
-    cmd.select(s,"(name CA+P) and ("+selection+")")
+    cmd.select(s,"(name CA+P) and ("+selection+") and present")
     cmd.show("cartoon",s)
     cmd.set("cartoon_flat_sheets",0,selection)
     cmd.cartoon("putty",s)
