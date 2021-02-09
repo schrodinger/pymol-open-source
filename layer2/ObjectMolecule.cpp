@@ -10653,6 +10653,11 @@ void ObjectMolecule::invalidate(cRep_t rep, cRepInv_t level, int state)
   PRINTFD(I->G, FB_ObjectMolecule)
     " %s: entered. rep: %d level: %d\n", __func__, rep, level ENDFD;
 
+  auto const level_actual = level;
+
+  // Remove the "purge" bit
+  level = static_cast<decltype(level)>(level & ~cRepInvPurgeMask);
+
   if(level >= cRepInvVisib) {
     I->RepVisCacheValid = false;
   }
@@ -10696,7 +10701,7 @@ void ObjectMolecule::invalidate(cRep_t rep, cRepInv_t level, int state)
       CoordSet *cset = 0;
       cset = I->CSet[a];
       if(cset) {
-        cset->invalidateRep(rep, level);
+        cset->invalidateRep(rep, level_actual);
       }
     }
   }

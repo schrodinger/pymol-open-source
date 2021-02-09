@@ -174,7 +174,12 @@ enum cRepInv_t {
   cRepInvAll = 100,
 
 /* invalidate and furthermore, purge existing representations */
-  cRepInvPurge = 110,
+  cRepInvPurgeMask = 0x80,
+  cRepInvPurgeRep = cRepInvRep | cRepInvPurgeMask,
+  cRepInvPurgeAll = cRepInvAll | cRepInvPurgeMask,
+
+/* (alias) */
+  cRepInvPurge = cRepInvPurgeRep,
 };
 
 struct CoordSet;

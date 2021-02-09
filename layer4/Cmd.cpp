@@ -3330,7 +3330,7 @@ static PyObject *CmdRebuild(PyObject * self, PyObject * args)
     ExecutiveRebuildAll(G);
   } else {
     const cRepInv_t level = SettingGet<bool>(G, cSetting_defer_builds_mode)
-                                ? cRepInvPurge
+                                ? cRepInvPurgeAll
                                 : cRepInvAll;
     res = ExecutiveInvalidateRep(G, str1, rep, level);
   }
