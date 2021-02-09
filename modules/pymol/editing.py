@@ -235,7 +235,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def sculpt_iterate(object, state=0, cycles=10, _self=cmd):
+    def sculpt_iterate(object, state=CURRENT_STATE, cycles=10, _self=cmd):
         '''
 DESCRIPTION
 
@@ -250,7 +250,8 @@ ARGUMENTS
 
     object = str: name of a single object or "all"
 
-    state = int: object state or 0 for current state {default: 0}
+    state = int: object state or -1 for current state, 0 for all states
+    {default: -1} (changed in PyMOL 2.5: 0 used to be "current state" as well)
 
     cycles = int: number of iterations {default: 10}
 

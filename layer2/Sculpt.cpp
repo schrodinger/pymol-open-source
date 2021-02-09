@@ -1608,7 +1608,7 @@ static int SculptDoAvoid(float avoid, float range, float actual, float *d,
 }
 
 float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
-                          int state, int n_cycle, float *center)
+                          int state, int const n_cycle_arg, float *center)
 {
   PyMOLGlobals *G = I->G;
   CShaker *shk;
@@ -1664,13 +1664,14 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
   int avd_ex;
 
   PRINTFD(G, FB_Sculpt)
-    " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n", state, n_cycle ENDFD;
-  if(!n_cycle)
-    n_cycle = -1;
+    " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n", state, n_cycle_arg ENDFD;
 
-  auto cs = obj->getCoordSet(state);
+  for (StateIterator iter(obj, state); iter.next();) {
+    auto cs = obj->getCoordSet(iter.state);
+    if (!cs)
+      continue;
 
-  if (cs) {
+    int n_cycle = n_cycle_arg ? n_cycle_arg : -1;
 
     disp = pymol::malloc<float>(3 * obj->NAtom);
     atm2idx = pymol::malloc<int>(obj->NAtom);
@@ -2374,10 +2375,10 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         }
       }
     }
-
-    EditorDihedralInvalid(G, obj);
-    ExecutiveUpdateCoordDepends(G, obj);
   }
+
+  EditorDihedralInvalid(G, obj);
+  ExecutiveUpdateCoordDepends(G, obj);
 
   PRINTFD(G, FB_Sculpt)
     " SculptIterateObject-Debug: leaving...\n" ENDFD;

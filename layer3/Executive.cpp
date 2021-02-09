@@ -6983,9 +6983,6 @@ float ExecutiveSculptIterate(PyMOLGlobals * G, const char *name, int state, int 
   ObjectMolecule *objMol;
   float total_strain = 0.0F;
 
-  if(state < 0)
-    state = SceneGetState(G);
-
   if(WordMatchExact(G, name, cKeywordAll, true)) {
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->type == cExecObject) {
