@@ -328,6 +328,15 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
           if(SettingGetGlobal_i(G, cSetting_auto_zoom)) {
             ExecutiveWindowZoom(G, obj->Name, 0.0, -1, 0, 0, quiet);        /* auto zoom (all states) */
           }
+
+        auto const defer_limit = SettingGet<int>(G, cSetting_auto_defer_builds);
+        if (defer_limit >= 0                   //
+            && obj->getNFrame() >= defer_limit //
+            && SettingGet<int>(G, cSetting_defer_builds_mode) <= 0) {
+          PRINTFB(G, FB_ObjectMolecule, FB_Details)
+          " ObjectMolecule-Details: Enabling defer_builds_mode\n" ENDFB(G);
+          SettingSet(G, cSetting_defer_builds_mode, 3);
+        }
   }
   return true;
 ok_except1:

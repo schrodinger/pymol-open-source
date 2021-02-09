@@ -14494,7 +14494,7 @@ void ExecutiveManageObject(PyMOLGlobals * G, pymol::CObject * obj, int zoom, int
     if((defer_limit >= 0) && (n_state >= defer_limit)) {
       int defer_builds = SettingGetGlobal_b(G, cSetting_defer_builds_mode);
       if(!defer_builds)
-        SettingSetGlobal_b(G, cSetting_defer_builds_mode, 1);
+        SettingSetGlobal_b(G, cSetting_defer_builds_mode, 3);
     }
   }
 
