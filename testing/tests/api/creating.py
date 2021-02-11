@@ -275,9 +275,38 @@ class TestCreating(testing.PyMOLTestCase):
         cmd.redo()
         self.assertImageHasNotColor(meshcolor)
 
-    @unittest.skip("Not yet implemented.")
     def testGradient(self):
-        pass
+        cmd.viewport(100,100)
+
+        cmd.fragment('gly','m1')
+        cmd.set('gaussian_b_floor', 30)
+        cmd.set("mesh_width", 5)
+        cmd.map_new('map')
+        cmd.delete('m1')
+
+        # make gradient
+        cmd.gradient('grad', 'map')
+        cmd.gradient('grad', 'map', source_state=1, state=-2)
+        
+        gradcolor = 'blue'
+        cmd.color(gradcolor,'grad')
+        self.ambientOnly()
+        self.assertImageHasColor(gradcolor)
+        cmd.frame(2)
+        self.assertEqual(cmd.get_state(), 2)
+        self.assertImageHasColor(gradcolor)
+
+        with testing.mktemp('.pse') as filename:
+            cmd.save(filename)
+
+            cmd.delete('*')
+            self.assertImageHasNotColor(gradcolor)
+
+            cmd.load(filename)
+            self.assertImageHasColor(gradcolor)
+            cmd.frame(2)
+            self.assertEquals(cmd.get_state(), 2)
+            self.assertImageHasColor(gradcolor)
 
     @unittest.skip("Not yet implemented. Depends on Isomesh")
     def testUndoGradient(self):
