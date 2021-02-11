@@ -774,8 +774,34 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual(cmd.get_title('m1', 4), "")
 
     def test_smooth(self):
-        cmd.smooth
-        self.skipTest("TODO")
+        pdbfile = self.datafile("sampletrajectory.pdb")
+        dcdfile = self.datafile("sampletrajectory.dcd")
+
+        cmd.load(pdbfile)
+        cmd.load_traj(dcdfile)
+
+        cmd.select('ref_atom','/sampletrajectory///LYS`244/NZ')
+
+        pre_1_xyz = []
+        pre_5_xyz = []
+        post_1_xyz = []
+        post_5_xyz = []
+
+        cmd.iterate_state(1, 'ref_atom', 'pre_1_xyz.append([x,y,z])', space=locals(), atomic=0)
+        cmd.iterate_state(5, 'ref_atom', 'pre_5_xyz.append([x,y,z])', space=locals(), atomic=0)
+
+        cmd.smooth('sampletrajectory',10,10)
+
+        cmd.iterate_state(1, 'ref_atom', 'post_1_xyz.append([x,y,z])', space=locals(), atomic=0)
+        cmd.iterate_state(5, 'ref_atom', 'post_5_xyz.append([x,y,z])', space=locals(), atomic=0)
+
+        self.assertArrayEqual(pre_1_xyz[0], post_1_xyz[0], delta=0.01)
+        self.assertArrayNotEqual(pre_5_xyz[0], post_5_xyz[0], delta=0.01)
+
+        ref_values_5 = [43.79, 50.05, 14.93]
+        self.assertArrayEqual(ref_values_5, post_5_xyz[0], delta=0.01)
+
+        self.assertEqual(cmd.count_states('sampletrajectory'),11)
 
     def test_sort(self):
         cmd.pseudoatom('m1', name='PS2')
