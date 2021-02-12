@@ -23,6 +23,13 @@
 #include <map>
 #include <cassert>
 #include <clocale>
+#include <vector>
+
+#include "pymol/type_traits.h"
+
+#ifdef PYMOL_OPENMP
+#include <omp.h>
+#endif
 
 #include"Version.h"
 #include"main.h"
@@ -6070,211 +6077,210 @@ pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* selection,
   const char *name = tmpsele1->getName();
 
   ObjectMoleculeOpRec op;
-  int state;
-  int n_state;
-  float *coord0 = NULL, *coord1 = NULL;
-  int *flag0 = NULL, *flag1 = NULL;
-  int a, b, c, d, st, cnt;
-  float i_cnt;
-  int n_atom;
-  int backward;
-  int forward;
   int range, offset;
   int end_skip = 0;
-  float *v0, *v1;
-  float sum[3];
-  int loop = false;
-  /*  WordType all = "_all"; */
+  bool loop = false;
 
   PRINTFD(G, FB_Executive)
     " %s: entered %s,%d,%d,%d,%d,%d\n", __func__, name, cycles, first, last, window,
     ends ENDFD;
 
-  {
-    /* count the number of states over which to smooth */
-    int max_state = ExecutiveCountStates(G, name) - 1;
-    if(last < 0)
-      last = max_state;
-    if(first < 0)
-      first = 0;
-    if(last < first) {
-      state = last;
-      last = first;
-      first = state;
-    }
-    if(last > max_state)
-      last = max_state;
+  /* count the number of states over which to smooth */
+  int max_state = ExecutiveCountStates(G, name) - 1;
+  if(last < 0)
+    last = max_state;
+  if(first < 0)
+    first = 0;
+  if(last < first) {
+    std::swap(last, first);
+  }
+  if(last > max_state)
+    last = max_state;
 
-    n_state = last - first + 1;
+  int const n_state = last - first + 1;
 
-    backward = window / 2;
-    forward = window / 2;
+  int const backward = window / 2;
+  int const forward = window / 2;
 
-    if((forward - backward) == (window + 1))
-      forward--;                /* even sizes window */
+  switch (ends) {
+  case 0:
+    end_skip = 1;
+    break;
+  case 1:
+    end_skip = 0;
+    break;
+  case 2:
+    end_skip = backward;
+    break;
+  case 3:                    /* cyclic averaging */
+    end_skip = 0;
+    loop = true;
+    break;
+  default:
+    end_skip = 0;
+    break;
+  }
 
-    switch (ends) {
-    case 0:
-      end_skip = 1;
-      break;
-    case 1:
-      end_skip = 0;
-      break;
-    case 2:
-      end_skip = backward;
-      break;
-    case 3:                    /* cyclic averaging */
-      end_skip = 0;
-      loop = true;
-      break;
-    default:
-      end_skip = 0;
-      break;
-    }
+  if(ends) {
+    range = (last - first) + 1;
+    offset = 0;
+  } else {
+    range = (last - end_skip) - (first + end_skip) + 1;
+    offset = end_skip;
+  }
 
-    if(ends) {
-      range = (last - first) + 1;
-      offset = 0;
-    } else {
-      range = (last - end_skip) - (first + end_skip) + 1;
-      offset = end_skip;
-    }
-
-    PRINTFD(G, FB_Executive)
+  PRINTFD(G, FB_Executive)
       " %s: first %d last %d n_state %d backward %d forward %d range %d\n", __func__,
       first, last, n_state, backward, forward, range ENDFD;
 
-    if(n_state >= window) {
+  auto const window_abs = std::abs(window);
+  if (window_abs < 2) {
+    return pymol::Error("window must be at least size 2");
+  }
 
-      /* determine storage req */
-      ObjectMoleculeOpRecInit(&op);
-      op.code = OMOP_CountAtoms;
-      op.i1 = 0;
-      ExecutiveObjMolSeleOp(G, sele, &op);
-      n_atom = op.i1;
-      if(n_atom) {
-        /* allocate storage */
-        coord0 = pymol::malloc<float>(3 * n_atom * n_state);
-        coord1 = pymol::malloc<float>(3 * n_atom * n_state);
-        flag0 = pymol::malloc<int>(n_atom * n_state);
-        flag1 = pymol::malloc<int>(n_atom * n_state);
+  if (n_state < window_abs) {
+    if (!quiet) {
+      PRINTFB(G, FB_Executive, FB_Warnings)
+        " %s: Window size (%d) larger than number of frames (%d)\n", __func__,
+        window_abs, n_state ENDFB(G);
+    }
+    return {};
+  }
 
-        /* clear the arrays */
+  /* determine storage req */
+  ObjectMoleculeOpRecInit(&op);
+  op.code = OMOP_CountAtoms;
+  op.i1 = 0;
+  ExecutiveObjMolSeleOp(G, sele, &op);
+  auto const n_atom = size_t(op.i1);
 
-        UtilZeroMem(coord0, sizeof(float) * 3 * n_atom * n_state);
-        UtilZeroMem(flag0, sizeof(int) * n_atom * n_state);
+  // TODO Could we call SelectorCountAtoms instead?
+  assert(n_atom == SelectorCountAtoms(G, sele, cStateAll));
 
-        /* get the data */
-        if(!quiet) {
-          PRINTFB(G, FB_Executive, FB_Actions)
-            " Smooth: copying coordinates to temporary arrays..\n" ENDFB(G);
-        }
-        op.code = OMOP_CSetIdxGetAndFlag;
-        op.i1 = n_atom;
-        op.i2 = 0;
-        op.cs1 = first;
-        op.cs2 = last;
-        op.vv1 = coord0;
-        op.ii1 = flag0;
-        op.nvv1 = 0;
-        ExecutiveObjMolSeleOp(G, sele, &op);
+  if (!n_atom) {
+    return {};
+  }
 
-        PRINTFD(G, FB_Executive)
+  auto const n_index = n_atom * n_state;
+  auto coord0 = std::vector<float>(3 * n_index);
+  auto flag0 = std::vector<int>(n_index);
+  auto flag1 = std::vector<int>(n_index);
+
+  /* get the data */
+  if(!quiet) {
+    PRINTFB(G, FB_Executive, FB_Actions)
+      " Smooth: copying coordinates to temporary arrays..\n" ENDFB(G);
+  }
+  op.code = OMOP_CSetIdxGetAndFlag;
+  op.i1 = n_atom;
+  op.i2 = 0;
+  op.cs1 = first;
+  op.cs2 = last;
+  op.vv1 = coord0.data();
+  op.ii1 = flag0.data();
+  op.nvv1 = 0;
+  ExecutiveObjMolSeleOp(G, sele, &op);
+
+  PRINTFD(G, FB_Executive)
           " %s: got %d %d\n", __func__, op.i2, op.nvv1 ENDFD;
 
-        UtilZeroMem(coord1, sizeof(float) * 3 * n_atom * n_state);
-        UtilZeroMem(flag1, sizeof(int) * n_atom * n_state);
+  // make a copy of the input coordinates
+  auto coord1 = coord0;
 
-        for(a = 0; a < cycles; a++) {
-          if(!quiet) {
-            PRINTFB(G, FB_Executive, FB_Actions)
-              " Smooth: smoothing (pass %d)...\n", a + 1 ENDFB(G);
-          }
-          for(b = 0; b < range; b++) {
-            for(c = 0; c < n_atom; c++) {
-              zero3f(sum);
-              cnt = 0;
-              for(d = -backward; d <= forward; d++) {
-                st = b + offset + d;
-                if(loop) {
-                  if(st < 0) {
-                    st = n_state + st;
-                  } else if(st >= n_state) {
-                    st = st - n_state;
-                  }
-                } else {
-                  if(st < 0) {
-                    st = 0;
-                  } else if(st >= n_state) {
-                    st = n_state - 1;
-                  }
-                }
+  for (int a = 0; a < cycles; ++a) {
+    if(!quiet) {
+      PRINTFB(G, FB_Executive, FB_Actions)
+        " Smooth: smoothing (pass %d)...\n", a + 1 ENDFB(G);
+    }
 
-                /*if(c==0) printf("averaging from slot %d\n",st); */
-                cnt += flag0[(n_atom * st) + c];
-                v0 = coord0 + 3 * (n_atom * st + c);
-		/* atom's avg position */
-                add3f(sum, v0, sum);
-              }
-              if(cnt) {
-                st = b + offset;
-                if((st >= end_skip) && (st < (n_state - end_skip))) {
-                  /* if(c==0) printf("dumping into slot %d\n",st); */
-                  flag1[(n_atom * st) + c] = flag0[(n_atom * st) + c];
-                  /* don't flag states that weren't originally flagged */
-                  i_cnt = 1.0F / cnt;
-                  v1 = coord1 + 3 * ((n_atom * st) + c);
-                  scale3f(sum, i_cnt, v1);
-                }
-              }
+    // use coordiantes from previous pass as input
+    std::swap(coord0, coord1);
+
+    // views for friendly indexing
+    auto const* coord0x3 = pymol::reshape<3>(coord0.data());
+    auto* const coord1x3 = pymol::reshape<3>(coord1.data());
+
+#ifdef PYMOL_OPENMP
+#pragma omp parallel for
+#endif
+    for (int b = 0; b < range; ++b) {
+      int const st_b = b + offset;
+
+      if (st_b < end_skip || st_b >= (n_state - end_skip)) {
+        continue;
+      }
+
+      for (int c = 0; c < n_atom; ++c) {
+        auto const index_c = n_atom * st_b + c;
+
+        if (!flag0[index_c]) {
+          continue;
+        }
+
+        float sum[3] = {};
+        int cnt = 0;
+        for (int d = -backward; d <= forward; ++d) {
+          int st = st_b + d;
+          if(loop) {
+            if(st < 0) {
+              st = n_state + st;
+            } else if(st >= n_state) {
+              st = st - n_state;
+            }
+          } else {
+            if(st < 0) {
+              st = 0;
+            } else if(st >= n_state) {
+              st = n_state - 1;
             }
           }
-          for(b = 0; b < range; b++) {
-            for(c = 0; c < n_atom; c++) {
-              st = b + offset;
-              if(flag1[(n_atom * st) + c]) {
-                v0 = coord0 + 3 * ((n_atom * st) + c);
-                v1 = coord1 + 3 * ((n_atom * st) + c);
-                copy3f(v1, v0);
-              }
-            }
+
+          auto const index = n_atom * st + c;
+          if (!flag0[index]) {
+            continue;
           }
+
+          float const* v0 = coord0x3[index];
+
+          /* atom's avg position */
+          add3f(sum, v0, sum);
+          ++cnt;
         }
-
-        if(!quiet) {
-          PRINTFB(G, FB_Executive, FB_Actions)
-            " Smooth: updating coordinates...\n" ENDFB(G);
+        if(cnt) {
+          flag1[index_c] = true;
+          scale3f(sum, 1.0F / cnt, coord1x3[index_c]);
         }
-
-        /* set the new coordinates */
-
-        op.code = OMOP_CSetIdxSetFlagged;
-        op.i1 = n_atom;
-        op.i2 = 0;
-        if(ends) {
-          op.cs1 = first;
-          op.cs2 = last;
-          op.vv1 = coord1;
-          op.ii1 = flag1;
-        } else {
-          op.cs1 = first + end_skip;
-          op.cs2 = last - end_skip;
-          op.vv1 = coord1 + (end_skip * 3 * n_atom);
-          op.ii1 = flag1 + (end_skip * n_atom);
-        }
-        op.nvv1 = 0;
-
-        ExecutiveObjMolSeleOp(G, sele, &op);
-        PRINTFD(G, FB_Executive)
-          " %s: put %d %d\n", __func__, op.i2, op.nvv1 ENDFD;
-
-        FreeP(coord0);
-        FreeP(coord1);
-        FreeP(flag0);
-        FreeP(flag1);
       }
     }
   }
+
+  if(!quiet) {
+    PRINTFB(G, FB_Executive, FB_Actions)
+      " Smooth: updating coordinates...\n" ENDFB(G);
+  }
+
+  /* set the new coordinates */
+
+  op.code = OMOP_CSetIdxSetFlagged;
+  op.i1 = n_atom;
+  op.i2 = 0;
+  if(ends) {
+    op.cs1 = first;
+    op.cs2 = last;
+    op.vv1 = coord1.data();
+    op.ii1 = flag1.data();
+  } else {
+    op.cs1 = first + end_skip;
+    op.cs2 = last - end_skip;
+    op.vv1 = coord1.data() + (end_skip * n_atom * 3);
+    op.ii1 = flag1.data() + (end_skip * n_atom);
+  }
+  op.nvv1 = 0;
+
+  ExecutiveObjMolSeleOp(G, sele, &op);
+  PRINTFD(G, FB_Executive)
+          " %s: put %d %d\n", __func__, op.i2, op.nvv1 ENDFD;
+
   return {};
 }
 
