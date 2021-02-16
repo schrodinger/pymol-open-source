@@ -250,6 +250,13 @@ class TestImporting(testing.PyMOLTestCase):
     def testLoad_dx_skewed(self):
         self._testLoad_dx('mapskewed.dx')
 
+    @testing.requires_version('2.5')
+    def testLoad_dxstr(self):
+        with open(self.datafile('mapaligned.dx'), 'rb') as handle:
+            cmd.load_raw(handle.read(), 'dx', 'map1')
+        extent = cmd.get_extent('map1')
+        self.assertArrayEqual(extent, [[1.0, 2.0, 3.0], [5.0, 7.0, 9.0]], delta=1e-2)
+
     def testLoadBrick(self):
         cmd.load_brick
         self.skipTest("TODO")
