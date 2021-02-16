@@ -132,6 +132,9 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, const char *fnam
 ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                             int is_string, int bytes, int quiet);
 
+ObjectMap* ObjectMapReadDXStr(PyMOLGlobals*, ObjectMap*, const char* MapStr,
+    int bytes, int state, bool quiet);
+
 ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                                int quiet);
 ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,

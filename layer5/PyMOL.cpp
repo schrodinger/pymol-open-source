@@ -1481,7 +1481,7 @@ struct {
   {"ccp4",          cLoadTypeCCP4Str,   cLoadTypeUnknown},
   {"xplor",         cLoadTypeXPLORStr,  cLoadTypeXPLORMap},
   {"phi",           cLoadTypePHIStr,    cLoadTypePHIMap},
-  {"dx",            cLoadTypeUnknown,   cLoadTypeDXMap},
+  {"dx",            cLoadTypeDXStr,     cLoadTypeDXMap},
   // special
   {"cgo",           cLoadTypeCGO,       cLoadTypeUnknown},
   {NULL,            cLoadTypeUnknown,   cLoadTypeUnknown}

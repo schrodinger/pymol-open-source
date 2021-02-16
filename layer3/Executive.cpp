@@ -3792,6 +3792,7 @@ ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
   case cLoadTypeMOL2Str:
   case cLoadTypeSDF2Str:
   case cLoadTypeXYZStr:
+  case cLoadTypeDXStr:
     if (!content) {
       return pymol::Error("content is NULL");
     }
@@ -3813,6 +3814,7 @@ ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
   case cLoadTypeMOL2:
   case cLoadTypeSDF2:
   case cLoadTypeXYZ:
+  case cLoadTypeDXMap:
     if (content) {
       fname_null_ok = true;
       break;
@@ -4027,6 +4029,10 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
     break;
   case cLoadTypePMO:
     return pymol::Error("PMO format no longer supported.");
+  case cLoadTypeDXStr:
+    obj = ObjectMapReadDXStr(
+        G, dynamic_cast<ObjectMap*>(origObj), content, size, state, quiet);
+    break;
   case cLoadTypeDXMap:
     obj = ObjectMapLoadDXFile(G, (ObjectMap *) origObj, fname,
         state, quiet);
@@ -4213,6 +4219,7 @@ pymol::CObject* ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char* ona
     case cLoadTypeBRIXMap:
     case cLoadTypeGRDMap:
     case cLoadTypeDXMap:
+    case cLoadTypeDXStr:
       new_type = cObjectMap;
       break;
     case cLoadTypeCallback:

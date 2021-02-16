@@ -120,6 +120,8 @@ enum cLoadType_t : int {
   // - cLoadTypeMRC                      : MRC format, ignore CCP4 features
   cLoadTypeCCP4Unspecified = 73,
   cLoadTypeMRC = 74,
+
+  cLoadTypeDXStr = 75,
 };
 
 /* NOTE: if you add new content/object type above, then be sure to add

@@ -5155,8 +5155,8 @@ static pymol::Result<std::unique_ptr<ObjectMapState>> ObjectMapDXStrToMap(
 
 
 /*========================================================================*/
-static ObjectMap *ObjectMapReadDXStr(PyMOLGlobals * G, ObjectMap * I,
-                                     char *MapStr, int bytes, int state, int quiet)
+ObjectMap* ObjectMapReadDXStr(PyMOLGlobals* G, ObjectMap* I, const char* MapStr,
+    int bytes, int state, bool quiet)
 {
   auto mapstateresult = ObjectMapDXStrToMap(G, MapStr, bytes, quiet);
   if (!mapstateresult) {
