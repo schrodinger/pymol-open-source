@@ -2786,7 +2786,7 @@ Rep* RepSurface::recolor()
           vc += 3;
           rc++;
         } else {
-          if (color_smoothing && distDiff < color_smoothing_threshold){
+          if (color_smoothing && distDiff < color_smoothing_threshold && pai2) {
             const float *c2;
             float weight, weight2;
             if (color_smoothing==1){
