@@ -6,76 +6,28 @@ from .cmd import DEFAULT_SUCCESS, DEFAULT_ERROR
 class _PersistentEditing:
 
     def __init__(self,self_cmd=cmd):
-
-        # private-like
-
         self._cmd = self_cmd
-
-        # init == 0 : uninitialized cmd and no data
-        # init == 1 : initialized cmd and no data
-        # init == 2 : initialized cmd and data
-        self._init = 0
-
-        # string name of the temporary persistent object
-
         self._obj = None
 
-        # last active selection
-
-        self._sel = None
-
-    def deferred_init(self):
-        # ecah of these methods will have to start with
-        # if not self.init ...
-        # because this is imported while 'cmd' is being created
-        # and we need cmd functionality; this should be resolved
-        # in pymol2
-        if self._init == 0:
-            self._obj = self._cmd.get_unused_name("_persistent_obj")
-            self._init = 1
-
-    def set_sel(self,sel):
-        self._sel = sel
-
-    def clean_obj(self):
-        self._cmd.delete(self._obj)
-        self._init = 1
+    def get_clipboard_object(self):
+        '''name of the temporary persistent object'''
+        return self._obj
 
     def create_tmp(self,sel,extract):
+        '''copy or cut selection to clipboard'''
+        if self._obj:
+            self._cmd.delete(self._obj)
+        else:
+            self._obj = self._cmd.get_unused_name("_persistent_obj")
 
-        if sel is None: return
+        auto_hide_sele = self._cmd.get_setting_boolean("auto_hide_selections")
+        self._cmd.set("auto_hide_selections", 0, updates=0)
 
-        # creates an invisible temporary persistent
-        # object for pasting; it is created via CTRL-C
-        # for copy or CTRL-X for cut, differing in the
-        # extract flag
-        self.deferred_init()
-
-        self.set_sel(sel)
-
-        # in case something goes wrong, try & finally
         try:
-            if self._init == 2:
-                self.clean_obj()
-
-            self._cmd.set("suspend_updates", 1)
-
-            self._cmd.create(self._obj, self._sel, extract=extract, zoom=0)
+            self._cmd.create(self._obj, sel, extract=extract, zoom=0)
             self._cmd.disable(self._obj)
-            self._cmd.enable(self._sel)
-
-            # success, now we have data
-
-            self._init = 2
-
         finally:
-            self._cmd.set("suspend_updates", 0)
-
-# in pymol2 this needs to be abstracted better
-# by making _persistent a member of Cmd so we can
-# call the cmd functions as necessary; for now, it's
-# global to this module
-_persistent = _PersistentEditing(cmd)
+            self._cmd.set("auto_hide_selections", auto_hide_sele, updates=0)
 
 # user commands via keyboard
 
@@ -83,73 +35,54 @@ _kCopy  = 0
 _kPaste = 1
 _kCut   = 2
 
-def editing_ring(action, space=_persistent, self_cmd=cmd):
+def editing_ring(action, *, _self=cmd):
+    """
+DESCRIPTION
 
-    sel = get_active_selection_name(self_cmd)
+    Helper function for copy/cut/paste of molecular selections.
 
-    space.set_sel(sel)
+ARGUMENTS
 
-    # COPY current selection into a new hidden object
-    if action==_kCopy:
-        if sel:
-            space.create_tmp(sel,extract=0)
+    action = cut/copy/paste/invert
+    """
 
-    # CUT current selection into a new hidden object
-    elif action==_kCut:
-        if sel:
-            space.create_tmp(sel,extract=1)
+    space = getattr(_self, "_editing_ring_space", None)
+    if space is None:
+        space = _PersistentEditing(_self)
+        _self._editing_ring_space = space
 
     # PASTE current hidden object into a new object
-    elif action==_kPaste:
+    if action in (_kPaste, "paste"):
+        clipobj = space.get_clipboard_object()
+        if not clipobj:
+            print("Nothing on clipboard")
+        else:
+            _self.copy(_self.get_unused_name("obj"), clipobj, zoom=0)
+        return
 
-        if space._init < 2: return
+    sels = _self.get_names("public_selections", enabled_only=1)
+    if not sels:
+        print("No active selection")
+        return
 
-        try:
-            self_cmd.set("suspend_updates", 1)
+    sel = sels[0]
+    assert sel
 
-            # copying or pasting; enable that object
-            # and create the duplicate
+    # COPY current selection into a new hidden object
+    if action in (_kCopy, "copy"):
+        space.create_tmp(sel, extract=0)
 
-            self_cmd.enable(space._obj)
+    # CUT current selection into a new hidden object
+    elif action in (_kCut, "cut"):
+        space.create_tmp(sel, extract=1)
 
-            self_cmd.copy(self_cmd.get_unused_name("obj"),space._obj,zoom=0)
+    # INVERT the current selection
+    elif action == "invert":
+        _self.select(sel, 'not ' + sel)
 
-            # re-hide the temporary
-
-            self_cmd.disable(space._obj)
-
-        finally:
-            self_cmd.set("suspend_updates", 0)
-
-
-#
-# collapse down to one function in a switch
-#
-def get_selection_copy_name(pfx,self_cmd=cmd):
-    # obj => obj_copy01
-    # obj_copy01 => obj_copy02
-    # obj_copy02 => obj_copy03
-
-    # WRONG -- get_unused_name doesn't work as expected
-
-    import re
-    if len(re.findall("_copy\d+$",pfx))!=0:
-        return self_cmd.get_unused_name(pfx)
     else:
-        return self_cmd.get_unused_name(pfx+"_copy")
+        raise AttributeError(action)
 
-def invert_active_selection(self_cmd=cmd):
-    sel = get_active_selection_name(self_cmd)
-    if sel:
-        self_cmd.select(sel, 'not %s' % sel)
-
-def get_active_selection_name(self_cmd=cmd):
-    # find the name of the active selection
-
-    for sel in self_cmd.get_names("public_selections", enabled_only=1):
-        return sel
-
-    return None
 
 def get_default_keys(_self=cmd):
     _self = _self._weakrefproxy
@@ -179,14 +112,14 @@ def get_default_keys(_self=cmd):
         'CTRL-end'      : 'scene new, store',
         'CTRL-insert'   : 'scene auto, store',
         'CTRL-A'        : 'select sele, all, 1',
-        'CTRL-C'        : ( editing_ring                , (),  {'action': _kCopy, 'space':_persistent,'self_cmd':_self}),
+        'CTRL-C'        : 'editing_ring copy',
         'CTRL-F'        : 'wizard find',
         'CTRL-H'        : 'help edit_keys',
-        'CTRL-I'        : ( invert_active_selection     , (),  emptydict ),
+        'CTRL-I'        : 'editing_ring invert',
         'CTRL-L'        : 'util.ligand_zoom()',
         'CTRL-T'        : 'bond;unpick',
-        'CTRL-V'        : ( editing_ring                , (),  {'action': _kPaste, 'space':_persistent,'self_cmd':_self}),
-        'CTRL-X'        : ( editing_ring                , (),  {'action': _kCut, 'space':_persistent,'self_cmd':_self}),
+        'CTRL-V'        : 'editing_ring paste',
+        'CTRL-X'        : 'editing_ring cut',
         'CTRL-Y'        : 'redo',
         'CTRL-Z'        : 'undo',
         'ALT-left'      : 'backward',

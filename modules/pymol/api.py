@@ -433,6 +433,10 @@ from .helping import \
       commands
 
 #--------------------------------------------------------------------
+from .keyboard import \
+      editing_ring
+
+#--------------------------------------------------------------------
 from .experimenting import \
       check,              \
       dump,               \

@@ -74,6 +74,7 @@ def get_command_keywords(self_cmd=cmd):
         'dump'          : [ self_cmd.dump              , 0 , 0 , ''  , parsing.STRICT ],
         'edit'          : [ self_cmd.edit              , 0 , 0 , ''  , parsing.STRICT ],
         'edit_mode'     : [ self_cmd.edit_mode         , 0 , 0 , ''  , parsing.STRICT ],
+        'editing_ring'  : [ self_cmd.editing_ring      , 0 , 0 , ''  , parsing.STRICT ],
         'embed'         : [ self_cmd.helping.embed     , 0 , 3 , ',' , parsing.EMBED  ],
         'enable'        : [ self_cmd.enable            , 0 , 0 , ''  , parsing.STRICT ],
         'ending'        : [ self_cmd.ending            , 0 , 0 , ''  , parsing.STRICT ],
