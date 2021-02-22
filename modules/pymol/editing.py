@@ -270,7 +270,7 @@ SEE ALSO
         return r
 
     def smooth(selection="all", passes=1, window=5, first=1,
-               last=0, ends=0, quiet=1, *, cutoff=-1, _self=cmd):
+               last=0, ends=0, quiet=1, *, cutoff=-1, pbc=1, _self=cmd):
 
         '''
 DESCRIPTION
@@ -288,17 +288,12 @@ ARGUMENTS
 
     cutoff = float: Distance cutoff for atom movement between two frames.
 
+    pbc = 0/1: Consider periodic boundary conditions {default: 1}
+
 NOTES
 
     This type of averaging is often used to suppress high-frequency
     vibrations in a molecular dynamics trajectory.
-
-    This function is not memory efficient.  For reasons of
-    flexibility, it uses two additional copies of every atomic
-    coordinate for the calculation.  If you are memory-constrained in
-    visualizing MD trajectories, then you may want to use an external
-    tool such as ptraj to perform smoothing before loading coordinates
-    into PyMOL.
 
 SEE ALSO
 
@@ -310,7 +305,45 @@ SEE ALSO
             return _cmd.smooth(_self._COb, selection, int(passes), int(window),
                                int(first) - 1,
                                int(last) - 1, int(ends), int(quiet),
-                               float(cutoff))
+                               float(cutoff), int(pbc))
+
+    def pbc_unwrap(oname, bymol=True, *, _self=cmd):
+        '''
+DESCRIPTION
+
+    Unwrap molecules or atoms from PBC box so that they don't jump
+    across periodic boundaries.
+
+ARGUMENTS
+
+    oname = str: object name
+
+    bymol = 0/1: Unwrap by molecule, not by atom {default: 1}
+        '''
+        with _self.lockcm:
+            return _cmd.pbc_unwrap(_self._COb, oname, int(bymol))
+
+    def pbc_wrap(oname, center=None, *, _self=cmd):
+        '''
+DESCRIPTION
+
+    Wrap molecules into PBC box.
+
+ARGUMENTS
+
+    oname = str: object name
+
+    center = list or None: Center position in model space, or None
+    to use average of first coordinate state.
+
+EXAMPLE
+
+    pbc_wrap trajectory, center=[0, 0, 0]
+        '''
+        if isinstance(center, str):
+            center = _self.safe_list_eval(center)
+        with _self.lockcm:
+            return _cmd.pbc_wrap(_self._COb, oname, center)
 
     def set_state_order(name, order, quiet=1, _self=cmd):
         '''

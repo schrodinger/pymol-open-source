@@ -83,9 +83,7 @@ float const* CoordSet::coordPtrSym(
 
   copy3f(v_in, v_out);
 
-  double const* statemat = (SettingGet<int>(G, cSetting_matrix_mode) > 0)
-                               ? nullptr
-                               : ObjectStateGetMatrix(this);
+  double const* const statemat = getPremultipliedMatrix();
 
   if (statemat) {
     transform44d3f(ObjectStateGetInvMatrix(this), v_out, v_out);
@@ -646,6 +644,17 @@ void CoordSet::setTitle(pymol::zstring_view title)
   UtilNCopy(Name, title.c_str(), sizeof(WordType));
 }
 
+/**
+ * Get the transformation matrix which is pre-multiplied to the coordiantes, or
+ * NULL if there is either no matrix set, or it's not pre-multiplied
+ * (matrix_mode=1).
+ */
+double const* CoordSet::getPremultipliedMatrix() const {
+  return (SettingGet<int>(*this, cSetting_matrix_mode) > 0)
+             ? nullptr
+             : ObjectStateGetMatrix(this);
+}
+
 int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, const float *diff)
 {
   auto G = I->G;
@@ -748,6 +757,12 @@ int CoordSetSetAtomVertex(CoordSet * I, int at, const float *v)
 /*========================================================================*/
 void CoordSetRealToFrac(CoordSet * I, const CCrystal * cryst)
 {
+  if (I->getPremultipliedMatrix()) {
+    float mat[16];
+    copy44d44f(ObjectStateGetInvMatrix(I), mat);
+    CoordSetTransform44f(I, mat);
+  }
+
   CoordSetTransform33f(I, cryst->realToFrac());
 }
 
@@ -803,6 +818,12 @@ void CoordSetGetAverage(const CoordSet * I, float *v0)
 void CoordSetFracToReal(CoordSet * I, const CCrystal * cryst)
 {
   CoordSetTransform33f(I, cryst->fracToReal());
+
+  if (double const* statemat = I->getPremultipliedMatrix()) {
+    float mat[16];
+    copy44d44f(statemat, mat);
+    CoordSetTransform44f(I, mat);
+  }
 }
 
 /**

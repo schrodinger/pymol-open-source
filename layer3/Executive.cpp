@@ -47,6 +47,7 @@
 #include"ObjectVolume.h"
 #include"ObjectCallback.h"
 #include"ObjectMap.h"
+#include"ObjectMolecule3.h"
 #include"ListMacros.h"
 #include"MyPNG.h"
 #include"Ortho.h"
@@ -6040,9 +6041,14 @@ pymol::Result<> ExecutiveSymmetryCopy(PyMOLGlobals* G, const char* source_name,
   return {};
 }
 
+/**
+ * Performs a window average of coordinate states (trajectories).
+ *
+ * @param pbc Consider periodic boundary conditions
+ */
 pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* selection,
     int cycles, int window, int first, int last, int ends, int quiet,
-    float dist_cutoff)
+    float dist_cutoff, bool pbc)
 {
   SETUP_SELE(selection, tmpsele1, sele);
   const char *name = tmpsele1->getName();
@@ -6133,6 +6139,11 @@ pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* selection,
 
   if (!n_atom) {
     return {};
+  }
+
+  auto pbc_obj = pbc ? SelectorGetFirstObjectMolecule(G, sele) : nullptr;
+  if (pbc_obj) {
+    ObjectMoleculePBCUnwrap(*pbc_obj);
   }
 
   auto const n_index = n_atom * n_state;
@@ -6271,6 +6282,10 @@ pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* selection,
   ExecutiveObjMolSeleOp(G, sele, &op);
   PRINTFD(G, FB_Executive)
           " %s: put %d %d\n", __func__, op.i2, op.nvv1 ENDFD;
+
+  if (pbc_obj) {
+    ObjectMoleculePBCWrap(*pbc_obj);
+  }
 
   return {};
 }
@@ -11002,9 +11017,11 @@ int ExecutiveIndex(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
  * @param target reference state
  * @param mode 2=intra_fit, 1=intra_rms, 0=intra_rms_cur
  * @param mix intra_fit only, average the prior target coordinates
+ * @param pbc Consider periodic boundary conditions
  */
 pymol::Result<pymol::vla<float>> ExecutiveRMSStates(
-    PyMOLGlobals * G, const char *s1, int target, int mode, int quiet, int mix)
+    PyMOLGlobals * G, const char *s1, int target, int mode, int quiet, int mix,
+    bool pbc)
 {
   SelectorTmp tmpsele1(G, s1);
   int sele1 = tmpsele1.getIndex();
@@ -11030,6 +11047,18 @@ pymol::Result<pymol::vla<float>> ExecutiveRMSStates(
     }
   }
 
+  if (target == cStateCurrent) {
+    target = obj ? obj->getCurrentState() : SceneGetState(G);
+  }
+
+  if (target < 0) {
+    target = 0;
+  }
+
+  if (mode != 2) {
+    pbc = false;
+  }
+
   if(ok && sele1 >= 0) {
     op1.code = OMOP_SVRT;
     op1.nvv1 = 0;
@@ -11037,6 +11066,10 @@ pymol::Result<pymol::vla<float>> ExecutiveRMSStates(
     op1.vv1 = (float *) VLAMalloc(1000, sizeof(float), 5, 0);
     op1.i1VLA = VLAlloc(int, 1000);
     ExecutiveObjMolSeleOp(G, sele1, &op1);
+
+    if (pbc) {
+      ObjectMoleculePBCUnwrap(*obj);
+    }
 
     op2.vv2 = op1.vv1;
     op2.nvv2 = op1.nvv1;
@@ -11051,9 +11084,16 @@ pymol::Result<pymol::vla<float>> ExecutiveRMSStates(
     op2.nvv1 = 0;
     ExecutiveObjMolSeleOp(G, sele1, &op2);
     result = op2.f1VLA;
-    VLAFreeP(op1.vv1);
     VLAFreeP(op1.i1VLA);
     VLAFreeP(op2.vv1);
+
+    if (pbc) {
+      float center[3];
+      pymol::meanNx3(op1.vv1, op1.nvv1, center);
+      ObjectMoleculePBCWrap(*obj, center);
+    }
+
+    VLAFreeP(op1.vv1);
 
     if (mode == 2) {
       ExecutiveUpdateCoordDepends(G, obj);

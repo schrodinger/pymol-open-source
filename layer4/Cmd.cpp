@@ -57,6 +57,7 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"Ortho.h"
 #include"ObjectMolecule.h"
+#include"ObjectMolecule3.h"
 #include"ObjectMesh.h"
 #include"ObjectMap.h"
 #include"ObjectCallback.h"
@@ -1034,11 +1035,12 @@ static PyObject *CmdSmooth(PyObject * self, PyObject * args)
   char *sele;
   int cycles, window, first, last, ends, quiet;
   float cutoff = -1;
-  API_SETUP_ARGS(G, self, args, "Osiiiiii|f", &self, &sele, &cycles, &window,
-      &first, &last, &ends, &quiet, &cutoff);
+  int pbc = true;
+  API_SETUP_ARGS(G, self, args, "Osiiiiii|fi", &self, &sele, &cycles, &window,
+      &first, &last, &ends, &quiet, &cutoff, &pbc);
   API_ASSERT(APIEnterNotModal(G));
   auto result = ExecutiveSmooth(
-      G, sele, cycles, window, first, last, ends, quiet, cutoff);
+      G, sele, cycles, window, first, last, ends, quiet, cutoff, pbc);
   APIExit(G);
   return APIResult(G, result);
 }
@@ -3184,6 +3186,52 @@ static PyObject *CmdRevalence(PyObject * self, PyObject * args)
   return APIResult(G, result);
 }
 
+static PyObject* CmdPBCUnwrap(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  const char* oname;
+  int bymol = true;
+  API_SETUP_ARGS(G, self, args, "Osi", &self, &oname, &bymol);
+  API_ASSERT(APIEnterNotModal(G));
+
+  auto obj = ExecutiveFindObjectMoleculeByName(G, oname);
+  if (!obj) {
+    APIExit(G);
+    return APIFailure(G, "cannot find object");
+  }
+
+  ObjectMoleculePBCUnwrap(*obj, bymol);
+
+  APIExit(G);
+  return APISuccess();
+}
+
+static PyObject* CmdPBCWrap(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  const char* oname;
+  PyObject* pycenter = nullptr;
+  API_SETUP_ARGS(G, self, args, "OsO", &self, &oname, &pycenter);
+
+  std::vector<float> center;
+  if (pycenter != Py_None) {
+    API_ASSERT(PConvFromPyObject(G, pycenter, center) && center.size() == 3);
+  }
+
+  API_ASSERT(APIEnterNotModal(G));
+
+  auto obj = ExecutiveFindObjectMoleculeByName(G, oname);
+  if (!obj) {
+    APIExit(G);
+    return APIFailure(G, "cannot find object");
+  }
+
+  ObjectMoleculePBCWrap(*obj, center.empty() ? nullptr : center.data());
+
+  APIExit(G);
+  return APISuccess();
+}
+
 static PyObject *CmdVdwFit(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -4020,11 +4068,10 @@ static PyObject *CmdIntraFit(PyObject * self, PyObject * args)
   int mode;
   int quiet;
   int mix;
-  API_SETUP_ARGS(G, self, args, "Osiiii", &self, &str1, &state, &mode, &quiet, &mix);
+  int pbc = true;
+  API_SETUP_ARGS(G, self, args, "Osiiii|i", &self, &str1, &state, &mode, &quiet, &mix, &pbc);
   API_ASSERT(APIEnterNotModal(G));
-  if(state < 0)
-    state = 0;
-  auto fVLA = ExecutiveRMSStates(G, str1, state, mode, quiet, mix);
+  auto fVLA = ExecutiveRMSStates(G, str1, state, mode, quiet, mix, pbc);
   APIExit(G);
   PyObject* result = nullptr;
   if(fVLA) {
@@ -6443,7 +6490,11 @@ static PyMethodDef Cmd_methods[] = {
   {"pop", CmdPop, METH_VARARGS},
   {"protect", CmdProtect, METH_VARARGS},
   {"pseudoatom", CmdPseudoatom, METH_VARARGS},
+#if 1
   {"push_undo", CmdPushUndo, METH_VARARGS},
+#endif
+  {"pbc_unwrap", CmdPBCUnwrap, METH_VARARGS},
+  {"pbc_wrap", CmdPBCWrap, METH_VARARGS},
   {"quit", CmdQuit, METH_VARARGS},
   {"ray_trace_thread", CmdRayTraceThread, METH_VARARGS},
   {"ray_hash_thread", CmdRayHashThread, METH_VARARGS},

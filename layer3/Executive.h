@@ -369,8 +369,8 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *sele1, const char *sele2, int mod
 pymol::Result<> ExecutiveUpdateCmd(PyMOLGlobals* G, const char* sele1,
     const char* sele2, int sta1, int sta2, int method, int quiet);
 float ExecutiveRMSPairs(PyMOLGlobals* G, const std::vector<SelectorTmp>& sele, int mode, bool quiet);
-pymol::Result<pymol::vla<float>> ExecutiveRMSStates(
-    PyMOLGlobals * G, const char *s1, int target, int mode, int quiet, int mix);
+pymol::Result<pymol::vla<float>> ExecutiveRMSStates(PyMOLGlobals* G,
+    const char* s1, int target, int mode, int quiet, int mix, bool pbc = true);
 int ExecutiveIndex(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
                    ObjectMolecule *** objVLA);
 pymol::Result<> ExecutiveReset(PyMOLGlobals*, pymol::zstring_view);
@@ -523,7 +523,8 @@ pymol::Result<> ExecutiveSetGeometry(
     PyMOLGlobals* G, const char* s1, int geom, int valence);
 int ExecutiveSculptIterateAll(PyMOLGlobals * G);
 pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* name, int cycles,
-    int window, int first, int last, int ends, int quiet, float dist_cutoff = -1);
+    int window, int first, int last, int ends, int quiet,
+    float dist_cutoff = -1, bool pbc = true);
 int ExecutiveSculptDeactivate(PyMOLGlobals * G, const char *name);
 int ExecutiveSculptActivate(PyMOLGlobals* G, const char* name,
     int state = cStateAll, int match_state = cStateCurrent,

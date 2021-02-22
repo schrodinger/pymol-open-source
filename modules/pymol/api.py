@@ -212,6 +212,8 @@ from .editing import \
       matrix_copy,        \
       matrix_reset,       \
       mse2met,            \
+      pbc_unwrap, \
+      pbc_wrap, \
       protect,            \
       push_undo,          \
       rebond,             \

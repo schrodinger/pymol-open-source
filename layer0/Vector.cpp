@@ -2092,3 +2092,19 @@ void subdivide(int n, float *x, float *y)
     y[a] = (float) sin(a * 2 * PI / n);
   }
 }
+
+namespace pymol {
+/**
+ * Compute the arithmetic mean of an Nx3 array along the first axis.
+ * @param data Flat array data with N*3 elements
+ * @param[out] out 3-element output vector
+ */
+void meanNx3(float const* data, size_t N, float* out)
+{
+  double accum[3] = {};
+  for (auto const data_end = data + N * 3; data != data_end; data += 3) {
+    pymol::add3(accum, data, accum);
+  }
+  pymol::scale3(accum, 1.0 / N, out);
+}
+}

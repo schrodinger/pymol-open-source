@@ -170,6 +170,8 @@ struct CoordSet : CObjectState {
   pymol::Result<> setAtomLabelOffset(int atm, const float* offset);
 
   void setTitle(pymol::zstring_view);
+
+  double const* getPremultipliedMatrix() const;
 };
 
 int BondInOrder(BondType const* a, int b1, int b2);

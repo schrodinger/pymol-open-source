@@ -148,6 +148,8 @@ def get_auto_arg_list(self_cmd=cmd):
         'orient'         : aa_sel_e,
         'origin'         : aa_sel_e,
         'pair_fit'       : aa_sel_c,
+        'pbc_unwrap'     : aa_obj_e,
+        'pbc_wrap'       : aa_obj_e,
         'protect'        : aa_sel_e,
         'pi_interactions': aa_obj_e,
         'pseudoatom'     : aa_obj_c,

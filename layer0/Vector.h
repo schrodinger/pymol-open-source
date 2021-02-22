@@ -443,6 +443,7 @@ T diff3(const U* const v1, const U* const v2)
   return sqrt1(diffsq3<T>(v1, v2));
 }
 
+void meanNx3(float const* data, size_t N, float* out);
 } // namespace pymol
 
 #define dot_product3f pymol::dot_product3<float>

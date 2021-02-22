@@ -191,6 +191,8 @@ def get_command_keywords(self_cmd=cmd):
         'overlap'       : [ self_cmd.overlap           , 0 , 0 , ''  , parsing.STRICT ],
         'pair_fit'      : [ self_cmd.pair_fit          , 0 , 0 , ''  , parsing.STRICT ],
         'pass'          : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
+        'pbc_unwrap'    : [ self_cmd.pbc_unwrap        , 0 , 0 , ''  , parsing.STRICT ],
+        'pbc_wrap'      : [ self_cmd.pbc_wrap          , 0 , 0 , ''  , parsing.STRICT ],
         'phi_psi'       : [ self_cmd.phi_psi           , 0 , 0 , ''  , parsing.STRICT ],
         'pi_interactions': [ self_cmd.pi_interactions  , 0,  0 , ''  , parsing.STRICT ],
         'pop'           : [ self_cmd.pop               , 0 , 0 , ''  , parsing.STRICT ],

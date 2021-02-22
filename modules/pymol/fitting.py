@@ -393,7 +393,7 @@ SEE ALSO
                 if _self._raising(r,_self): raise pymol.CmdException
                 return r
 
-        def intra_fit(selection, state=1, quiet=1, mix=0, *, _self=cmd):
+        def intra_fit(selection, state=1, quiet=1, mix=0, *, pbc=1, _self=cmd):
                 '''
 DESCRIPTION
 
@@ -410,6 +410,8 @@ ARGUMENTS
     selection = string: atoms to fit
 
     state = integer: target state
+
+    pbc = 0/1: Consider periodic boundary conditions {default: 1}
 
 PYMOL API
 
@@ -434,11 +436,9 @@ SEE ALSO
                 r = DEFAULT_ERROR
                 state = int(state)
                 mix = int(mix)
-                try:
-                        _self.lock(_self)
-                        r = _cmd.intrafit(_self._COb,"("+str(selection)+")",int(state)-1,2,int(quiet),int(mix))
-                finally:
-                        _self.unlock(r,_self)
+                with _self.lockcm:
+                    r = _cmd.intrafit(_self._COb, selection,
+                              int(state) - 1, 2, int(quiet), int(mix), int(pbc))
                 if not isinstance(r, list):
                         r = DEFAULT_ERROR
                 elif not quiet:
