@@ -1295,8 +1295,6 @@ int SettingStringToTypedValue(PyMOLGlobals * G, int index, const char *st, int *
       }
       if (newvalue != *value){
           *value = newvalue;
-      } else {
-          ok = false;
       }
     break;
   case cSetting_int:
@@ -1304,8 +1302,6 @@ int SettingStringToTypedValue(PyMOLGlobals * G, int index, const char *st, int *
         ok = false;
     } else if (newvalue!=*value){
         *value = newvalue;
-    } else {
-        ok = false;
     }
     break;
   case cSetting_float:
@@ -1313,8 +1309,6 @@ int SettingStringToTypedValue(PyMOLGlobals * G, int index, const char *st, int *
         ok = false;
     } else if (newfvalue != *((float *) value)){
         *(float*)value = newfvalue;
-    } else {
-        ok = false;
     }
     break;
   case cSetting_color:
@@ -1322,8 +1316,6 @@ int SettingStringToTypedValue(PyMOLGlobals * G, int index, const char *st, int *
       int color_index = ColorGetIndex(G, st);
       if (*(value) != color_index){
           *(value) = color_index;
-      } else {
-          ok = false;
       }
     }
     break;
