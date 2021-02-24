@@ -1567,15 +1567,9 @@ static PanelRec *PanelListGroup(PyMOLGlobals * G, PanelRec * panel, SpecRec * gr
   }
   while(ListIterate(I->Spec, rec, next)) {      /* add all members which belong to this group */
 
-    if((rec->name[0] != '_') || (!hide_underscore)) {   /* not hidden */
+    {
       if((rec->group == group) && (!rec->in_panel)) {
-        int group_name_len = strlen(rec->group_name);
-        if((!hide_underscore)
-           || !((strncmp(rec->name, rec->group_name, group_name_len) == 0) &&
-                /* named with proper group prefix */
-                (rec->name[group_name_len] == '.')
-                && (rec->name[group_name_len + 1] == '_'))) {
-          /* and not hidden inside group */
+        if (!rec->isHiddenNotRecursive(hide_underscore)) {
 
           PanelRec *new_panel = NULL;
           ListElemCalloc(G, new_panel, PanelRec);
@@ -1727,41 +1721,6 @@ void ExecutiveUpdateGroups(PyMOLGlobals * G, int force)
               if(!cycle) {
                 rec->group = group_rec;
                 TrackerLink(I_Tracker, rec->cand_id, group_rec->group_member_list_id, 1);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    {
-      int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
-      if(hide_underscore) {
-        SpecRec *rec = NULL;
-        while(ListIterate(I->Spec, rec, next)) {
-          rec->is_hidden = false;
-          if(rec->name[0] == '_')
-            rec->is_hidden = true;
-          else if(rec->group) {
-            int group_name_len = strlen(rec->group_name);
-            if(rec->group->is_hidden)
-              rec->is_hidden = true;
-            else if((strncmp(rec->name, rec->group_name, group_name_len) == 0) &&
-                    (rec->name[group_name_len] == '.') &&
-                    (rec->name[group_name_len + 1] == '_'))
-              rec->is_hidden = true;
-          }
-        }
-        {                       /* sub-optimal propagation of hidden status to group members */
-          int repeat_flag = true;
-          while(repeat_flag) {
-            repeat_flag = false;
-            while(ListIterate(I->Spec, rec, next)) {
-              if(rec->group && (!rec->is_hidden)) {
-                if(rec->group->is_hidden) {
-                  rec->is_hidden = true;
-                  repeat_flag = true;
-                }
               }
             }
           }
@@ -3144,7 +3103,11 @@ int ExecutiveOrder(PyMOLGlobals * G, const char *s1, int sort, int location)
          * fixes PYMOL-1382 (eventually).
          * I don't know if this is the best place for the fix, but it's my best guess.
          */
-        SpecRecListPopulate(list, I->Spec, "");
+#ifndef NDEBUG
+        auto const list_size =
+#endif
+            SpecRecListPopulate(list, I->Spec, "");
+        assert(list_size == n_names);
         /* unlink them */
         for(a = 0; a < n_names; a++) {
           list[a]->next = NULL;
@@ -13340,16 +13303,18 @@ ExecutiveSetObjVisib(PyMOLGlobals * G, pymol::zstring_view name, int onoff, int 
     SpecRec *rec;
     int list_id = ExecutiveGetNamesListFromPattern(G, name.data(), true, false);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-    int suppress_hidden = SettingGetGlobal_b(G, cSetting_suppress_hidden);
-    int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
-    if(suppress_hidden && hide_underscore)
-      ExecutiveUpdateGroups(G, false);
     while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
 
       if(rec) {
         switch (rec->type) {
         case cExecAll:
           {
+            bool const suppress_hidden =
+              SettingGet<bool>(G, cSetting_suppress_hidden);
+            bool const hide_underscore =
+              SettingGet<bool>(G, cSetting_hide_underscore_names);
+            if (suppress_hidden && hide_underscore)
+              ExecutiveUpdateGroups(G, false);
             SpecRec *tRec = NULL;
             while(ListIterate(I->Spec, tRec, next)) {
               if(onoff != tRec->visible) {
@@ -13360,7 +13325,7 @@ ExecutiveSetObjVisib(PyMOLGlobals * G, pymol::zstring_view name, int onoff, int 
                     tRec->visible = !tRec->visible;
 		    ReportEnabledChange(G, rec);
                   } else {
-                    if((!suppress_hidden) || (!hide_underscore) || (!tRec->is_hidden)) {
+                    if (!(suppress_hidden && tRec->isHidden(hide_underscore))) {
                       tRec->in_scene = SceneObjectAdd(G, tRec->obj);
                       ExecutiveInvalidateSceneMembers(G);
                       tRec->visible = !tRec->visible;
@@ -14590,7 +14555,9 @@ int CExecutive::click(int button, int x, int y, int mod)
   int pass = false;
   int skip;
   int ExecLineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
+#ifndef NDEBUG
   int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
+#endif
   int op_cnt = get_op_cnt(G);
 
   if(y < I->HowFarDown) {
@@ -14625,7 +14592,8 @@ int CExecutive::click(int button, int x, int y, int mod)
     while(ListIterate(I->Panel, panel, next)) {
       rec = panel->spec;
 
-      if((rec->name[0] != '_') || (!hide_underscore)) {
+      assert(rec->name[0] != '_' || !hide_underscore);
+      {
         if(skip) {
           skip--;
         } else {
@@ -15107,7 +15075,9 @@ int CExecutive::release(int button, int x, int y, int mod)
   int pass = false;
   int skip;
   int xx;
+#ifndef NDEBUG
   int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
+#endif
   if(y < I->HowFarDown) {
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 1)
       return SceneGetBlock(G)->release(button, x, y, mod);
@@ -15135,7 +15105,8 @@ int CExecutive::release(int button, int x, int y, int mod)
       while(ListIterate(I->Panel, panel, next)) {
         rec = panel->spec;
 
-        if((rec->name[0] != '_') || (!hide_underscore)) {
+        assert(rec->name[0] != '_' || !hide_underscore);
+        {
           if(skip) {
             skip--;
           } else {
@@ -15199,7 +15170,9 @@ int CExecutive::drag(int x, int y, int mod)
   CExecutive *I = G->Executive;
   int xx, t;
   int ExecLineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
+#ifndef NDEBUG
   int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
+#endif
   int op_cnt = get_op_cnt(G);
 
   ExecutiveUpdateGroups(G, false);
@@ -15240,7 +15213,8 @@ int CExecutive::drag(int x, int y, int mod)
         while(ListIterate(I->Panel, panel, next)) {
           rec = panel->spec;
 
-          if((rec->name[0] != '_') || (!hide_underscore)) {
+          assert(rec->name[0] != '_' || !hide_underscore);
+          {
             if(skip) {
               skip--;
             } else {
@@ -15269,7 +15243,8 @@ int CExecutive::drag(int x, int y, int mod)
           while(ListIterate(I->Panel, panel, next)) {
             rec = panel->spec;
 
-            if((rec->name[0] != '_') || (!hide_underscore)) {
+            assert(rec->name[0] != '_' || !hide_underscore);
+            {
               if(skip) {
                 skip--;
               } else {
@@ -15341,7 +15316,8 @@ int CExecutive::drag(int x, int y, int mod)
 
               while(ListIterate(I->Panel, panel, next)) {
                 rec = panel->spec;
-                if((rec->name[0] != '_') || (!hide_underscore)) {
+                assert(rec->name[0] != '_' || !hide_underscore);
+                {
                   {
                     if(skip) {
                       skip--;
@@ -15371,7 +15347,7 @@ int CExecutive::drag(int x, int y, int mod)
                   strcpy(mov_rec->group_name, mov_rec->group->group_name);
                   group_flag = true;
                 } else if(mov_rec && new_rec) {
-                  if(mov_rec == new_rec->group) {
+                  if (new_rec->isChildOf(mov_rec)) {
                     /* do nothing when a group is dragged over one of its members */
                   } else {
 
@@ -15460,7 +15436,8 @@ int CExecutive::drag(int x, int y, int mod)
           /* while(ListIterate(I->Spec,rec,next)) { */
           while(ListIterate(I->Panel, panel, next)) {
             rec = panel->spec;
-            if((rec->name[0] != '_') || (!hide_underscore)) {
+            assert(rec->name[0] != '_' || !hide_underscore);
+            {
               if(skip) {
                 skip--;
               } else {
@@ -15699,7 +15676,6 @@ void CExecutive::draw(CGO* orthoCGO)
   int row = -1;
   int ExecLineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
   int text_lift = (ExecLineHeight / 2) - DIP2PIXEL(5);
-  int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
   int op_cnt = get_op_cnt(G);
   int full_names = SettingGetGlobal_b(G, cSetting_group_full_member_names);
   int arrows = SettingGetGlobal_b(G, cSetting_group_arrow_prefix);
@@ -15718,7 +15694,8 @@ void CExecutive::draw(CGO* orthoCGO)
     n_ent = 0;
     while(ListIterate(I->Panel, panel, next)) {
       rec = panel->spec;
-      if(rec && ((rec->name[0] != '_') || (!hide_underscore)))
+      assert(rec && (rec->name[0] != '_' ||
+                        !SettingGet<bool>(G, cSetting_hide_underscore_names)));
         n_ent++;
     }
 

@@ -24,8 +24,13 @@ public:
   int cand_id;
   SpecRec *group;
   int group_member_list_id;
-  int in_scene, is_hidden;
+  int in_scene;
   int in_panel;
   int grid_slot;
   CGO *gridSlotSelIndicatorsCGO;
+
+  const char* baseName() const;
+  bool isHidden(bool hide_underscore_names) const;
+  bool isHiddenNotRecursive(bool hide_underscore_names) const;
+  bool isChildOf(SpecRec const*) const;
 };
