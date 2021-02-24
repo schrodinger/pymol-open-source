@@ -23,13 +23,20 @@ Z* -------------------------------------------------------------------
 
 #include <vector>
 
+enum class SceneRenderWhich {
+  AllObjects,
+  OnlyGadgets,
+  OnlyNonGadgets,
+  GadgetsLast
+};
+
 void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
                  Multipick * smp, int oversize_width, int oversize_height,
                  int click_side, int force_copy);
 void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
                     float *normal, PickColorManager*,
                     RenderPass pass, int fat, float width_scale,
-                    GridInfo * grid, int dynamic_pass, short which_objects);
+                    GridInfo * grid, int dynamic_pass, SceneRenderWhich which_objects);
 
 void SceneInitializeViewport(PyMOLGlobals * G, int offscreen);
 

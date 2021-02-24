@@ -737,14 +737,11 @@ void SceneRenderAllObject(PyMOLGlobals * G,
  * width_scale: specifies width_scale and sampling
  * grid: grid information
  * dynamic_pass: for specific stereo modes dynamic and clone_dynamic
- * which: 0 - all objects
- *        1 - only gadgets
- *        2 - only non-gadgets
- *        3 - gadgets last
+ * which: enum specifying which objects (AllObjects, OnlyGadgets, OnlyNonGadgets, GadgetsLast)
  */
 void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal, PickColorManager* pickmgr,
                     RenderPass pass, int fat, float width_scale,
-                    GridInfo * grid, int dynamic_pass, short which_objects)
+                    GridInfo * grid, int dynamic_pass, SceneRenderWhich which_objects)
 {
   CScene *I = G->Scene;
   int state = SceneGetState(G);
@@ -817,7 +814,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
   {
     int *slot_vla = I->SlotVLA;
     switch (which_objects) {
-    case 0:
+    case SceneRenderWhich::AllObjects:
       for (auto obj : I->Obj) {
         /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
         if (!rayVolume || obj->type == cObjectVolume) {
@@ -826,13 +823,13 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
         }
       }
       break;
-    case 1:
+    case SceneRenderWhich::OnlyGadgets:
       for (auto obj : I->GadgetObjs) {
           SceneRenderAllObject(
               G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
       }
       break;
-    case 2:
+    case SceneRenderWhich::OnlyNonGadgets:
       for (auto obj : I->NonGadgetObjs) {
         // ObjectGroup used to have fRender = NULL
         if (obj->type != cObjectGroup) {
@@ -841,7 +838,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
         }
       }
       break;
-    case 3:
+    case SceneRenderWhich::GadgetsLast:
       // Gadgets Last
       for (auto obj : I->NonGadgetObjs) {
         /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
@@ -973,7 +970,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
               EditorRender(G, curState);
             }
             // transparency-mode == 3 render all objects for this pass
-            SceneRenderAll(G, context, normal, NULL, pass, false, width_scale, grid, times, 2 /* non-gadgets */); // opaque
+            SceneRenderAll(G, context, normal, NULL, pass, false, width_scale, grid, times, SceneRenderWhich::OnlyNonGadgets); // opaque
           } else {
 #else
             {
@@ -981,7 +978,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
               // transparency-mode != 3 render all objects for each pass
               for (const auto pass2 : passes) { /* render opaque, then antialiased, then transparent... */
                 SceneRenderAll(G, context, normal, NULL, pass2, false, width_scale, grid,
-                               times, 3 /* gadgets last */);
+                               times, SceneRenderWhich::GadgetsLast);
               }
               cont = false;
             }
@@ -991,7 +988,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
             glBlendFunc_default();
 
             SceneRenderAll(G, context, normal, NULL, RenderPass::Transparent /* gadgets render in transp pass */, false, width_scale, grid,
-                           times, 1 /* only gadgets */);
+                           times, SceneRenderWhich::OnlyGadgets);
             glDisable(GL_BLEND);
           }
 #ifdef PURE_OPENGL_ES_2
@@ -1054,7 +1051,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
         if ((currentFrameBuffer == G->ShaderMgr->default_framebuffer_id) && t_mode_3){
           // onlySelections and t_mode_3, render only gadgets
           SceneRenderAll(G, context, normal, NULL, RenderPass::Transparent /* gadgets render in transp pass */, false, width_scale, grid,
-                         times, 1 /* only gadgets */);
+                         times, SceneRenderWhich::OnlyGadgets);
         }
 
         glDisable(GL_BLEND);
