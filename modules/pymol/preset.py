@@ -95,7 +95,7 @@ def simple_no_solv(selection="(all)",_self=cmd):
     cmd=_self
     simple(selection,_self=_self)
     s, selection = get_sname_oname_dname(selection, _self=_self)[:2]
-    cmd.hide("nonbonded","("+solv_sele+" and "+s+")")
+    cmd.hide("everything","("+solv_sele+" and "+s+")")
     cmd.delete(s)
 
 def ligands(selection="(all)",_self=cmd):
@@ -300,13 +300,18 @@ def technical(selection="(all)",_self=cmd):
     cmd.delete(s)
 
 def pretty_solv(selection="(all)",_self=cmd):
+    pretty(selection, solv=True, _self=_self)
+
+def pretty(selection="(all)", *, solv=False, _self=cmd):
     cmd=_self
     s, selection = _prepare(selection, _self=cmd)[:2]
     cmd.dss(s,preserve=1)
     cmd.cartoon("auto",s)
     cmd.show("cartoon",s)
-    cmd.show("sticks","("+lig_sele+" and ("+s+"))")
-    cmd.show("nb_spheres","(("+lig_sele+"|resn HOH+WAT+H2O) and ("+s+"))")
+    if solv:
+        cmd.show("licorice", f"({lig_sele}|{wat_sele}) and ?{s}")
+    else:
+        cmd.show("sticks", f"({lig_sele}) and ?{s}")
     util.cbc("("+lig_sele+" and ("+s+"))",_self=cmd)
     util.cbac("("+lig_sele+" and ("+s+") and not elem C)",_self=cmd)
     cmd.spectrum("count",selection="(elem C and ("+s+") and not "+lig_sele+")")
@@ -317,31 +322,20 @@ def pretty_solv(selection="(all)",_self=cmd):
     cmd.set("cartoon_side_chain_helper",0,selection)
     cmd.delete(s)
 
-def pretty(selection,_self=cmd):
-    cmd=_self
-    pretty_solv(selection,_self)
-    s, selection = get_sname_oname_dname(selection, _self=_self)[:2]
-    cmd.hide("nb_spheres","("+s+" and "+lig_sele+"|resn HOH+WAT+H2O)")
-    cmd.delete(s)
-
 pretty_no_solv = pretty
 
 def pub_solv(selection="(all)",_self=cmd):
+    publication(selection, solv=True, _self=_self)
+
+def publication(selection="(all)", *, solv=False, _self=cmd):
     cmd=_self
-    pretty_solv(selection,_self)
+    pretty(selection, solv=solv, _self=_self)
     s, selection = get_sname_oname_dname(selection, _self=_self)[:2]
     cmd.set("cartoon_smooth_loops",1,selection)
     cmd.set("cartoon_highlight_color","grey50",selection)
     cmd.set("cartoon_fancy_helices",1,selection)
     cmd.set("cartoon_flat_sheets",1,selection)
     cmd.set("cartoon_side_chain_helper",0,selection)
-    cmd.delete(s)
-
-def publication(selection="(all)",_self=cmd):
-    cmd=_self
-    pub_solv(selection,_self)
-    s, selection = get_sname_oname_dname(selection, _self=_self)[:2]
-    cmd.hide("nb_spheres","(("+lig_sele+"|resn HOH+WAT+H2O) and "+s+")")
     cmd.delete(s)
 
 pub_no_solv = publication
@@ -371,7 +365,7 @@ def interface(selection='*', _self=cmd):
 
     # interface atoms
     _self.select(s_interface, '?%s & (%s)' % (s, ' '.join(
-        '((chain %s) around 4.5) ' % (chain)
+        '((chain "%s") around 4.5) ' % (chain)
         for chain in _self.get_chains(s))), 0)
 
     # Color by chain, non-carbon by element
