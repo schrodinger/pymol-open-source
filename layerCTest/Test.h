@@ -63,10 +63,6 @@ template <typename T> static bool isRegular()
 template <typename T> static bool isNullptr(const T *ptr) {
   return ptr == nullptr;
 }
-struct PYMOL_TEST_API {
-  static PyObject *PYMOL_TEST_SUCCESS;
-  static PyObject *PYMOL_TEST_FAILURE;
-};
 
 class TmpFILE
 {
