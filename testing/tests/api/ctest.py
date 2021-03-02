@@ -9,4 +9,4 @@ class TestCTest(testing.PyMOLTestCase):
             status = pymol._cmd.test2()
         except NotImplementedError:
             self.skipTest("not compiled with --testing")
-        self.assertEqual(status, None)
+        self.assertTrue(status in (0, None))
