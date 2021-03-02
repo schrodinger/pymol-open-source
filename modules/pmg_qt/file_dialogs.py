@@ -28,7 +28,7 @@ def load_dialog(parent, fname, **kwargs):
         load_aln_dialog(parent, fname, format)
     elif format == 'mae':
         load_mae_dialog(parent, fname)
-    elif format == 'ccp4':
+    elif format in ('ccp4', 'map'):
         load_map_dialog(parent, fname, 'ccp4')
     elif format == 'brix':
         load_map_dialog(parent, fname, 'o')
