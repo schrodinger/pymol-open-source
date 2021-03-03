@@ -3210,6 +3210,9 @@ static PyObject *CmdLabel(PyObject * self, PyObject * args)
   API_ASSERT(APIEnterBlockedNotModal(G));
   ExecutiveLabel(G, str1, str2, quiet, cExecutiveLabelEvalOn);
   APIExitBlocked(G);
+  if (PyErr_Occurred()) {
+    return nullptr;
+  }
   return APISuccess();
 }
 

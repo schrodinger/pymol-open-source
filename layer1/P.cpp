@@ -635,7 +635,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
     switch (ap->id) {
     case ATOM_PROP_STEREO:
       if (ObjectMoleculeUpdateMMStereoInfoForState(G, wobj->obj, wobj->state - 1) < 0) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(P_CmdException,
             "please install rdkit or set SCHRODINGER variable");
         return NULL;
       }
