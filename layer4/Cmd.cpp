@@ -1199,13 +1199,18 @@ static PyObject *CmdSceneOrder(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   int ok = false;
 
-  const char *names, *location;
+  const char *location;
   unsigned char sort;
+  PyObject* pynames = nullptr;
 
-  API_SETUP_ARGS(G, self, args, "Osbs", &self, &names, &sort, &location);
+  API_SETUP_ARGS(G, self, args, "OObs", &self, &pynames, &sort, &location);
+
+  std::vector<std::string> names;
+  API_ASSERT(PConvFromPyObject(G, pynames, names));
+
   API_ASSERT(APIEnterBlockedNotModal(G));
 
-  ok = MovieSceneOrder(G, names, sort, location);
+  ok = MovieSceneOrder(G, std::move(names), sort, location);
 
   APIExitBlocked(G);
   return APIResultOk(G, ok);

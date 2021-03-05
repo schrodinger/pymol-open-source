@@ -941,9 +941,12 @@ EXAMPLES
     scene_order F6 F4 F3 
     scene_order 003 006 004, location=top
 
+    # if names have spaces
+    cmd.scene_order(["name 1", "name 2"])
+
 PYMOL API
 
-    cmd.scene_order(string names, string sort, string location)
+    cmd.scene_order(names: Union[list, str], sort: str, location: str)
 
 SEE ALSO
 
@@ -953,6 +956,9 @@ SEE ALSO
         location = location_sc.auto_err(location,'location')
         if is_string(sort):
             sort=boolean_dict[boolean_sc.auto_err(sort,'sort option')]
+
+        if isinstance(names, str):
+            names = names.split()
 
         with _self.lockcm:
             return _cmd.scene_order(_self._COb, names, sort, location)

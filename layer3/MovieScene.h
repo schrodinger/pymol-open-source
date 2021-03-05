@@ -48,6 +48,8 @@ bool MovieSceneDelete(PyMOLGlobals * G, const char * name,
 bool MovieSceneOrder(PyMOLGlobals * G, const char * names,
     bool sort = false,
     const char * location = NULL /* "current" */);
+bool MovieSceneOrder(PyMOLGlobals* G, std::vector<std::string> names,
+    bool sort = false, const char* location = nullptr);
 
 const std::vector<std::string> & MovieSceneGetOrder(PyMOLGlobals * G);
 

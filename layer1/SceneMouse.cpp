@@ -1301,10 +1301,10 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
               first = elem;
               second = pressed;
             }
-            buffer = pymol::string_format("cmd.scene_order('''%s %s''')", first->name,
+            buffer = pymol::string_format("cmd.scene_order(['''%s''','''%s'''])", first->name,
                 second->name);
           } else {
-            buffer = pymol::string_format("cmd.scene_order('''%s''',location='top')",
+            buffer = pymol::string_format("cmd.scene_order(['''%s'''],location='top')",
                 pressed->name);
           }
           PParse(G, buffer);

@@ -138,16 +138,19 @@ std::string CMovieScenes::getUniqueKey()
 bool MovieSceneOrder(PyMOLGlobals * G, const char * names, bool sort,
     const char * location)
 {
-  std::vector<std::string> names_list;
+  return MovieSceneOrder(G, strsplit(names), sort, location);
+}
+
+bool MovieSceneOrder(PyMOLGlobals* G, std::vector<std::string> names_list,
+    bool sort, const char* location)
+{
   std::vector<std::string> new_order;
   bool is_all = false;
 
-  if (strcmp("*", names) == 0) {
+  if (names_list.size() == 1 && names_list[0] == "*") {
     is_all = true;
     names_list = G->scenes->order;
   } else {
-    names_list = strsplit(names);
-
     // check that all given names are existing scenes
     for (auto& name : names_list) {
       if (G->scenes->dict.find(name) == G->scenes->dict.end()) {
@@ -167,7 +170,7 @@ bool MovieSceneOrder(PyMOLGlobals * G, const char * names, bool sort,
   }
 
   if (is_all) {
-    new_order = names_list;
+    new_order = std::move(names_list);
   } else {
     std::set<std::string> names_set(names_list.begin(), names_list.end());
 
@@ -204,7 +207,7 @@ bool MovieSceneOrder(PyMOLGlobals * G, const char * names, bool sort,
     }
   }
 
-  G->scenes->order = new_order;
+  G->scenes->order = std::move(new_order);
   SceneSetNames(G, G->scenes->order);
 
   return true;
@@ -658,11 +661,7 @@ static bool MovieSceneOrderBeforeAfter(PyMOLGlobals * G, const char * key, bool 
     }
   }
 
-  // order = key + ' ' + key2
-  std::string order(key);
-  order.append(" ").append(key2);
-
-  MovieSceneOrder(G, order.c_str(), false, location);
+  MovieSceneOrder(G, std::vector<std::string>{key, key2}, false, location);
   return true;
 }
 
