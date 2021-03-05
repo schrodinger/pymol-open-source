@@ -53,6 +53,8 @@
 #include"Property.h"
 #endif
 
+#include "pymol/zstring_view.h"
+
 #include <functional>
 #include <iostream>
 #include <map>
@@ -840,20 +842,19 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
                                      AtomInfoType * ai2, int *bond_order)
 {
   int order = *(bond_order);
-  const char *name1 = LexStr(G, ai1->name);
-  const char *name2 = LexStr(G, ai2->name);
-  const char *resn1 = LexStr(G, ai1->resn);
+  auto const name1 = pymol::zstring_view(LexStr(G, ai1->name));
+  auto const name2 = pymol::zstring_view(LexStr(G, ai2->name));
+  auto const resn1 = pymol::zstring_view(LexStr(G, ai1->resn));
 
   /* nasty high-speed hack to get bond valences and formal charges 
      for standard residues */
-  if(((!name1[1]) && (!name2[1])) &&
-     (((name1[0] == 'C') && (name2[0] == 'O')) ||
-      ((name1[0] == 'O') && (name2[0] == 'C')))) {
+  if ((name1 == "C" && name2 == "O") ||
+      (name2 == "C" && name1 == "O")) {
     order = 2;
-  } else if((!name2[1]) && (name2[0] == 'C') && (!strcmp(name1, "OXT"))) {
+  } else if(name2 == "C" && name1 == "OXT") {
     ai1->formalCharge = -1;
     ai1->chemFlag = false;
-  } else if((!name1[1]) && (name1[0] == 'C') && (!strcmp(name2, "OXT"))) {
+  } else if(name1 == "C" && name2 == "OXT") {
     ai2->formalCharge = -1;
     ai2->chemFlag = false;
   } else {
@@ -866,17 +867,17 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
           switch (resn1[3]) {
           case 0:
           case 'P':            /*  ARG, ARGP */
-            if(!strcmp(name1, "NH1")) {
+            if (name1 == "NH1") {
               ai1->formalCharge = 1;
               ai1->chemFlag = false;
-            } else if(!strcmp(name2, "NH1")) {
+            } else if (name2 == "NH1") {
               ai2->formalCharge = 1;
               ai2->chemFlag = false;
             }
             break;
           }
-          if(((!strcmp(name1, "CZ")) && (!strcmp(name2, "NH1"))) ||
-             ((!strcmp(name2, "CZ")) && (!strcmp(name1, "NH1"))))
+          if((name1 == "CZ" && name2 == "NH1") ||
+             (name2 == "CZ" && name1 == "NH1"))
             order = 2;
           break;
         }
@@ -887,80 +888,76 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
           switch (resn1[3]) {
           case 0:
           case 'M':            /* ASP, ASPM minus assumption */
-            if(!strcmp(name1, "OD2")) {
+            if (name1 == "OD2") {
               ai1->formalCharge = -1;
               ai1->chemFlag = false;
-            } else if(!strcmp(name2, "OD2")) {
+            } else if (name2 == "OD2") {
               ai2->formalCharge = -1;
               ai2->chemFlag = false;
             }
             break;
           }
-          if(((!strcmp(name1, "CG")) && (!strcmp(name2, "OD1"))) ||
-             ((!strcmp(name2, "CG")) && (!strcmp(name1, "OD1"))))
+          if((name1 == "CG" && name2 == "OD1") ||
+             (name2 == "CG" && name1 == "OD1"))
             order = 2;
           break;
         case 'N':              /* ASN  */
-          if(((!strcmp(name1, "CG")) && (!strcmp(name2, "OD1"))) ||
-             ((!strcmp(name2, "CG")) && (!strcmp(name1, "OD1"))))
+          if((name1 == "CG" && name2 == "OD1") ||
+             (name2 == "CG" && name1 == "OD1"))
             order = 2;
           break;
         }
         break;
       case 0:
-        if(((!strcmp(name1, "O2P")) || (!strcmp(name1, "OP2")))) {
+        if((name1 == "O2P" || name1 == "OP2")) {
           ai1->formalCharge = -1;
           ai1->chemFlag = false;
-        } else if(((!strcmp(name2, "O2P")) || (!strcmp(name2, "OP2")))) {
+        } else if((name2 == "O2P" || name2 == "OP2")) {
           ai2->formalCharge = -1;
           ai2->chemFlag = false;
         }
-        if(((!strcmp(name1, "C8")) && (!strcmp(name2, "N7"))) ||
-           ((!strcmp(name2, "C8")) && (!strcmp(name1, "N7"))))
+        if((name1 == "C8" && name2 == "N7") ||
+           (name2 == "C8" && name1 == "N7"))
           order = 2;
-        else if(((!strcmp(name1, "C4")) && (!strcmp(name2, "C5"))) ||
-                ((!strcmp(name2, "C4")) && (!strcmp(name1, "C5"))))
+        else if((name1 == "C4" && name2 == "C5") ||
+                (name2 == "C4" && name1 == "C5"))
           order = 2;
 
-        else if(((!strcmp(name1, "C6")) && (!strcmp(name2, "N1"))) ||
-                ((!strcmp(name2, "C6")) && (!strcmp(name1, "N1"))))
+        else if((name1 == "C6" && name2 == "N1") ||
+                (name2 == "C6" && name1 == "N1"))
           order = 2;
-        else if(((!strcmp(name1, "C2")) && (!strcmp(name2, "N3"))) ||
-                ((!strcmp(name2, "C2")) && (!strcmp(name1, "N3"))))
+        else if((name1 == "C2" && name2 == "N3") ||
+                (name2 == "C2" && name1 == "N3"))
           order = 2;
         else
-          if(((!strcmp(name1, "P"))
-              && (((!strcmp(name2, "O1P")) || (!strcmp(name2, "OP1")))))
-             || ((!strcmp(name2, "P"))
-                 && (((!strcmp(name1, "O1P")) || (!strcmp(name1, "OP1"))))))
+          if ((name1 == "P" && (name2 == "O1P" || name2 == "OP1")) ||
+              (name2 == "P" && (name1 == "O1P" || name1 == "OP1")))
           order = 2;
         break;
       }
       break;
     case 'C':
       if(resn1[1] == 0) {
-        if(((!strcmp(name1, "O2P")) || (!strcmp(name1, "OP2")))) {
+        if((name1 == "O2P" || name1 == "OP2")) {
           ai1->formalCharge = -1;
           ai1->chemFlag = false;
-        } else if(((!strcmp(name2, "O2P")) || (!strcmp(name2, "OP2")))) {
+        } else if((name2 == "O2P" || name2 == "OP2")) {
           ai2->formalCharge = -1;
           ai2->chemFlag = false;
         }
-        if(((!strcmp(name1, "C2")) && (!strcmp(name2, "O2"))) ||
-           ((!strcmp(name2, "C2")) && (!strcmp(name1, "O2"))))
+        if((name1 == "C2" && name2 == "O2") ||
+           (name2 == "C2" && name1 == "O2"))
           order = 2;
-        else if(((!strcmp(name1, "C4")) && (!strcmp(name2, "N3"))) ||
-                ((!strcmp(name2, "C4")) && (!strcmp(name1, "N3"))))
+        else if((name1 == "C4" && name2 == "N3") ||
+                (name2 == "C4" && name1 == "N3"))
           order = 2;
 
-        else if(((!strcmp(name1, "C5")) && (!strcmp(name2, "C6"))) ||
-                ((!strcmp(name2, "C5")) && (!strcmp(name1, "C6"))))
+        else if((name1 == "C5" && name2 == "C6") ||
+                (name2 == "C5" && name1 == "C6"))
           order = 2;
         else
-          if(((!strcmp(name1, "P"))
-              && (((!strcmp(name2, "O1P")) || (!strcmp(name2, "OP1")))))
-             || ((!strcmp(name2, "P"))
-                 && (((!strcmp(name1, "O1P")) || (!strcmp(name1, "OP1"))))))
+          if ((name1 == "P" && (name2 == "O1P" || name2 == "OP1")) ||
+              (name2 == "P" && (name1 == "O1P" || name1 == "OP1")))
           order = 2;
       }
       break;
@@ -968,140 +965,130 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
       switch (resn1[1]) {
       case 'A':
         if(resn1[2] == 0) {
-          if(((!strcmp(name1, "O2P")) || (!strcmp(name1, "OP2")))) {
+          if((name1 == "O2P" || name1 == "OP2")) {
             ai1->formalCharge = -1;
             ai1->chemFlag = false;
-          } else if(((!strcmp(name2, "O2P")) || (!strcmp(name2, "OP2")))) {
+          } else if((name2 == "O2P" || name2 == "OP2")) {
             ai2->formalCharge = -1;
             ai2->chemFlag = false;
           }
-          if(((!strcmp(name1, "C8")) && (!strcmp(name2, "N7"))) ||
-             ((!strcmp(name2, "C8")) && (!strcmp(name1, "N7"))))
+          if((name1 == "C8" && name2 == "N7") ||
+             (name2 == "C8" && name1 == "N7"))
             order = 2;
-          else if(((!strcmp(name1, "C4")) && (!strcmp(name2, "C5"))) ||
-                  ((!strcmp(name2, "C4")) && (!strcmp(name1, "C5"))))
+          else if((name1 == "C4" && name2 == "C5") ||
+                  (name2 == "C4" && name1 == "C5"))
             order = 2;
 
-          else if(((!strcmp(name1, "C6")) && (!strcmp(name2, "N1"))) ||
-                  ((!strcmp(name2, "C6")) && (!strcmp(name1, "N1"))))
+          else if((name1 == "C6" && name2 == "N1") ||
+                  (name2 == "C6" && name1 == "N1"))
             order = 2;
-          else if(((!strcmp(name1, "C2")) && (!strcmp(name2, "N3"))) ||
-                  ((!strcmp(name2, "C2")) && (!strcmp(name1, "N3"))))
+          else if((name1 == "C2" && name2 == "N3") ||
+                  (name2 == "C2" && name1 == "N3"))
             order = 2;
           else
-            if(((!strcmp(name1, "P"))
-                && (((!strcmp(name2, "O1P")) || (!strcmp(name2, "OP1")))))
-               || ((!strcmp(name2, "P"))
-                   && (((!strcmp(name1, "O1P")) || (!strcmp(name1, "OP1"))))))
+            if ((name1 == "P" && (name2 == "O1P" || name2 == "OP1")) ||
+                (name2 == "P" && (name1 == "O1P" || name1 == "OP1")))
             order = 2;
         }
         break;
       case 'C':
         if(resn1[2] == 0) {
-          if(((!strcmp(name1, "O2P")) || (!strcmp(name1, "OP2")))) {
+          if((name1 == "O2P" || name1 == "OP2")) {
             ai1->formalCharge = -1;
             ai1->chemFlag = false;
-          } else if(((!strcmp(name2, "O2P")) || (!strcmp(name2, "OP2")))) {
+          } else if((name2 == "O2P" || name2 == "OP2")) {
             ai2->formalCharge = -1;
             ai2->chemFlag = false;
           }
-          if(((!strcmp(name1, "C2")) && (!strcmp(name2, "O2"))) ||
-             ((!strcmp(name2, "C2")) && (!strcmp(name1, "O2"))))
+          if((name1 == "C2" && name2 == "O2") ||
+             (name2 == "C2" && name1 == "O2"))
             order = 2;
-          else if(((!strcmp(name1, "C4")) && (!strcmp(name2, "N3"))) ||
-                  ((!strcmp(name2, "C4")) && (!strcmp(name1, "N3"))))
+          else if((name1 == "C4" && name2 == "N3") ||
+                  (name2 == "C4" && name1 == "N3"))
             order = 2;
 
-          else if(((!strcmp(name1, "C5")) && (!strcmp(name2, "C6"))) ||
-                  ((!strcmp(name2, "C5")) && (!strcmp(name1, "C6"))))
+          else if((name1 == "C5" && name2 == "C6") ||
+                  (name2 == "C5" && name1 == "C6"))
             order = 2;
           else
-            if(((!strcmp(name1, "P"))
-                && (((!strcmp(name2, "O1P")) || (!strcmp(name2, "OP1")))))
-               || ((!strcmp(name2, "P"))
-                   && (((!strcmp(name1, "O1P")) || (!strcmp(name1, "OP1"))))))
+            if ((name1 == "P" && (name2 == "O1P" || name2 == "OP1")) ||
+                (name2 == "P" && (name1 == "O1P" || name1 == "OP1")))
             order = 2;
         }
         break;
       case 'T':
         if(resn1[2] == 0) {
-          if(((!strcmp(name1, "O2P")) || (!strcmp(name1, "OP2"))))
+          if((name1 == "O2P" || name1 == "OP2"))
             ai1->formalCharge = -1;
-          else if(((!strcmp(name2, "O2P")) || (!strcmp(name2, "OP2"))))
+          else if((name2 == "O2P" || name2 == "OP2"))
             ai2->formalCharge = -1;
 
-          if(((!strcmp(name1, "C2")) && (!strcmp(name2, "O2"))) ||
-             ((!strcmp(name2, "C2")) && (!strcmp(name1, "O2"))))
+          if((name1 == "C2" && name2 == "O2") ||
+             (name2 == "C2" && name1 == "O2"))
             order = 2;
-          else if(((!strcmp(name1, "C4")) && (!strcmp(name2, "O4"))) ||
-                  ((!strcmp(name2, "C4")) && (!strcmp(name1, "O4"))))
+          else if((name1 == "C4" && name2 == "O4") ||
+                  (name2 == "C4" && name1 == "O4"))
             order = 2;
 
-          else if(((!strcmp(name1, "C5")) && (!strcmp(name2, "C6"))) ||
-                  ((!strcmp(name2, "C5")) && (!strcmp(name1, "C6"))))
+          else if((name1 == "C5" && name2 == "C6") ||
+                  (name2 == "C5" && name1 == "C6"))
             order = 2;
           else
-            if(((!strcmp(name1, "P"))
-                && (((!strcmp(name2, "O1P")) || (!strcmp(name2, "OP1")))))
-               || ((!strcmp(name2, "P"))
-                   && (((!strcmp(name1, "O1P")) || (!strcmp(name1, "OP1"))))))
+            if ((name1 == "P" && (name2 == "O1P" || name2 == "OP1")) ||
+                (name2 == "P" && (name1 == "O1P" || name1 == "OP1")))
             order = 2;
         }
         break;
       case 'G':
         if(resn1[2] == 0) {
-          if(((!strcmp(name1, "O2P")) || (!strcmp(name1, "OP2")))) {
+          if((name1 == "O2P" || name1 == "OP2")) {
             ai1->formalCharge = -1;
             ai1->chemFlag = false;
-          } else if(((!strcmp(name2, "O2P")) || (!strcmp(name2, "OP2")))) {
+          } else if((name2 == "O2P" || name2 == "OP2")) {
             ai2->formalCharge = -1;
             ai2->chemFlag = false;
           }
-          if(((!strcmp(name1, "C6")) && (!strcmp(name2, "O6"))) ||
-             ((!strcmp(name2, "C6")) && (!strcmp(name1, "O6"))))
+          if((name1 == "C6" && name2 == "O6") ||
+             (name2 == "C6" && name1 == "O6"))
             order = 2;
-          else if(((!strcmp(name1, "C2")) && (!strcmp(name2, "N3"))) ||
-                  ((!strcmp(name2, "C2")) && (!strcmp(name1, "N3"))))
+          else if((name1 == "C2" && name2 == "N3") ||
+                  (name2 == "C2" && name1 == "N3"))
             order = 2;
-          else if(((!strcmp(name1, "C8")) && (!strcmp(name2, "N7"))) ||
-                  ((!strcmp(name2, "C8")) && (!strcmp(name1, "N7"))))
+          else if((name1 == "C8" && name2 == "N7") ||
+                  (name2 == "C8" && name1 == "N7"))
             order = 2;
-          else if(((!strcmp(name1, "C4")) && (!strcmp(name2, "C5"))) ||
-                  ((!strcmp(name2, "C4")) && (!strcmp(name1, "C5"))))
+          else if((name1 == "C4" && name2 == "C5") ||
+                  (name2 == "C4" && name1 == "C5"))
             order = 2;
           else
-            if(((!strcmp(name1, "P"))
-                && (((!strcmp(name2, "O1P")) || (!strcmp(name2, "OP1")))))
-               || ((!strcmp(name2, "P"))
-                   && (((!strcmp(name1, "O1P")) || (!strcmp(name1, "OP1"))))))
+            if ((name1 == "P" && (name2 == "O1P" || name2 == "OP1")) ||
+                (name2 == "P" && (name1 == "O1P" || name1 == "OP1")))
             order = 2;
         }
         break;
       case 'U':
         if(resn1[2] == 0) {
-          if(((!strcmp(name1, "O2P")) || (!strcmp(name1, "OP2")))) {
+          if((name1 == "O2P" || name1 == "OP2")) {
             ai1->formalCharge = -1;
             ai1->chemFlag = false;
-          } else if(((!strcmp(name2, "O2P")) || (!strcmp(name2, "OP2")))) {
+          } else if((name2 == "O2P" || name2 == "OP2")) {
             ai2->formalCharge = -1;
             ai2->chemFlag = false;
           }
 
-          if(((!strcmp(name1, "C2")) && (!strcmp(name2, "O2"))) ||
-             ((!strcmp(name2, "C2")) && (!strcmp(name1, "O2"))))
+          if((name1 == "C2" && name2 == "O2") ||
+             (name2 == "C2" && name1 == "O2"))
             order = 2;
-          else if(((!strcmp(name1, "C4")) && (!strcmp(name2, "O4"))) ||
-                  ((!strcmp(name2, "C4")) && (!strcmp(name1, "O4"))))
+          else if((name1 == "C4" && name2 == "O4") ||
+                  (name2 == "C4" && name1 == "O4"))
             order = 2;
 
-          else if(((!strcmp(name1, "C5")) && (!strcmp(name2, "C6"))) ||
-                  ((!strcmp(name2, "C5")) && (!strcmp(name1, "C6"))))
+          else if((name1 == "C5" && name2 == "C6") ||
+                  (name2 == "C5" && name1 == "C6"))
             order = 2;
           else
-            if(((!strcmp(name1, "P"))
-                && (((!strcmp(name2, "O1P")) || (!strcmp(name2, "OP1")))))
-               || ((!strcmp(name2, "P"))
-                   && (((!strcmp(name1, "O1P")) || (!strcmp(name1, "OP1"))))))
+            if ((name1 == "P" && (name2 == "O1P" || name2 == "OP1")) ||
+                (name2 == "P" && (name1 == "O1P" || name1 == "OP1")))
             order = 2;
         }
         break;
@@ -1115,52 +1102,52 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
           switch (resn1[3]) {
           case 0:
           case 'M':            /* minus */
-            if(!strcmp(name1, "OE2")) {
+            if (name1 == "OE2") {
               ai1->formalCharge = -1;
               ai1->chemFlag = false;
-            } else if(!strcmp(name2, "OE2")) {
+            } else if (name2 == "OE2") {
               ai2->formalCharge = -1;
               ai2->chemFlag = false;
             }
             break;
           }
-          if(((!strcmp(name1, "CD")) && (!strcmp(name2, "OE1"))) ||
-             ((!strcmp(name2, "CD")) && (!strcmp(name1, "OE1"))))
+          if((name1 == "CD" && name2 == "OE1") ||
+             (name2 == "CD" && name1 == "OE1"))
             order = 2;
           break;
         case 'N':              /* GLN or GLU */
-          if(((!strcmp(name1, "CD")) && (!strcmp(name2, "OE1"))) ||
-             ((!strcmp(name2, "CD")) && (!strcmp(name1, "OE1"))))
+          if((name1 == "CD" && name2 == "OE1") ||
+             (name2 == "CD" && name1 == "OE1"))
             order = 2;
           break;
         }
         break;
       case 0:
-        if(((!strcmp(name1, "O2P")) || (!strcmp(name1, "OP2")))) {
+        if((name1 == "O2P" || name1 == "OP2")) {
           ai1->formalCharge = -1;
           ai1->chemFlag = false;
-        } else if(((!strcmp(name2, "O2P")) || (!strcmp(name2, "OP2")))) {
+        } else if((name2 == "O2P" || name2 == "OP2")) {
           ai2->formalCharge = -1;
           ai2->chemFlag = false;
         }
 
-        if(((!strcmp(name1, "C6")) && (!strcmp(name2, "O6"))) ||
-           ((!strcmp(name2, "C6")) && (!strcmp(name1, "O6"))))
+        if((name1 == "C6" && name2 == "O6") ||
+           (name2 == "C6" && name1 == "O6"))
           order = 2;
-        else if(((!strcmp(name1, "C2")) && (!strcmp(name2, "N3"))) ||
-                ((!strcmp(name2, "C2")) && (!strcmp(name1, "N3"))))
+        else if((name1 == "C2" && name2 == "N3") ||
+                (name2 == "C2" && name1 == "N3"))
           order = 2;
-        else if(((!strcmp(name1, "C8")) && (!strcmp(name2, "N7"))) ||
-                ((!strcmp(name2, "C8")) && (!strcmp(name1, "N7"))))
+        else if((name1 == "C8" && name2 == "N7") ||
+                (name2 == "C8" && name1 == "N7"))
           order = 2;
-        else if(((!strcmp(name1, "C4")) && (!strcmp(name2, "C5"))) ||
-                ((!strcmp(name2, "C4")) && (!strcmp(name1, "C5"))))
+        else if((name1 == "C4" && name2 == "C5") ||
+                (name2 == "C4" && name1 == "C5"))
           order = 2;
         else
-          if(((!strcmp(name1, "P"))
-              && (((!strcmp(name2, "O1P")) || (!strcmp(name2, "OP1")))))
-             || ((!strcmp(name2, "P"))
-                 && (((!strcmp(name1, "O1P")) || (!strcmp(name1, "OP1"))))))
+          if((name1 == "P"
+              && (name2 == "O1P" || name2 == "OP1"))
+             || (name2 == "P"
+                 && (name1 == "O1P" || name1 == "OP1")))
           order = 2;
         break;
       }
@@ -1170,73 +1157,73 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
       case 'I':
         switch (resn1[2]) {
         case 'P':
-          if(!strcmp(name1, "ND1")) {
+          if (name1 == "ND1") {
             ai1->formalCharge = 1;
             ai1->chemFlag = false;
-          } else if(!strcmp(name2, "ND1")) {
+          } else if (name2 == "ND1") {
             ai2->formalCharge = 1;
             ai2->chemFlag = false;
           }
-          if(((!strcmp(name1, "CG")) && (!strcmp(name2, "CD2"))) ||
-             ((!strcmp(name2, "CG")) && (!strcmp(name1, "CD2"))))
+          if((name1 == "CG" && name2 == "CD2") ||
+             (name2 == "CG" && name1 == "CD2"))
             order = 2;
-          else if(((!strcmp(name1, "CE1")) && (!strcmp(name2, "ND1"))) ||
-                  ((!strcmp(name2, "CE1")) && (!strcmp(name1, "ND1"))))
+          else if((name1 == "CE1" && name2 == "ND1") ||
+                  (name2 == "CE1" && name1 == "ND1"))
             order = 2;
           break;
         case 'S':
           switch (resn1[3]) {
           case 'A':            /* HISA Gromacs */
           case 'D':            /* HISD Quanta */
-            if(((!strcmp(name1, "CG")) && (!strcmp(name2, "CD2"))) ||
-               ((!strcmp(name2, "CG")) && (!strcmp(name1, "CD2"))))
+            if((name1 == "CG" && name2 == "CD2") ||
+               (name2 == "CG" && name1 == "CD2"))
               order = 2;
-            else if(((!strcmp(name1, "CE1")) && (!strcmp(name2, "NE2"))) ||
-                    ((!strcmp(name2, "CE1")) && (!strcmp(name1, "NE2"))))
+            else if((name1 == "CE1" && name2 == "NE2") ||
+                    (name2 == "CE1" && name1 == "NE2"))
               order = 2;
             break;
           case 0:              /* plain HIS */
           case 'B':            /* HISB Gromacs */
           case 'E':            /* HISE Quanta */
-            if(((!strcmp(name1, "CG")) && (!strcmp(name2, "CD2"))) ||
-               ((!strcmp(name2, "CG")) && (!strcmp(name1, "CD2"))))
+            if((name1 == "CG" && name2 == "CD2") ||
+               (name2 == "CG" && name1 == "CD2"))
               order = 2;
-            else if(((!strcmp(name1, "CE1")) && (!strcmp(name2, "ND1"))) ||
-                    ((!strcmp(name2, "CE1")) && (!strcmp(name1, "ND1"))))
+            else if((name1 == "CE1" && name2 == "ND1") ||
+                    (name2 == "CE1" && name1 == "ND1"))
               order = 2;
             break;
           case 'H':            /* HISH Gromacs */
           case 'P':            /* HISP Quanta */
-            if(!strcmp(name1, "ND1")) {
+            if (name1 == "ND1") {
               ai1->formalCharge = 1;
               ai1->chemFlag = false;
-            } else if(!strcmp(name2, "ND1")) {
+            } else if (name2 == "ND1") {
               ai2->formalCharge = 1;
               ai2->chemFlag = false;
             }
-            if(((!strcmp(name1, "CG")) && (!strcmp(name2, "CD2"))) ||
-               ((!strcmp(name2, "CG")) && (!strcmp(name1, "CD2"))))
+            if((name1 == "CG" && name2 == "CD2") ||
+               (name2 == "CG" && name1 == "CD2"))
               order = 2;
-            else if(((!strcmp(name1, "CE1")) && (!strcmp(name2, "ND1"))) ||
-                    ((!strcmp(name2, "CE1")) && (!strcmp(name1, "ND1"))))
+            else if((name1 == "CE1" && name2 == "ND1") ||
+                    (name2 == "CE1" && name1 == "ND1"))
               order = 2;
             break;
           }
           break;
         case 'E':              /* HIE */
-          if(((!strcmp(name1, "CG")) && (!strcmp(name2, "CD2"))) ||
-             ((!strcmp(name2, "CG")) && (!strcmp(name1, "CD2"))))
+          if((name1 == "CG" && name2 == "CD2") ||
+             (name2 == "CG" && name1 == "CD2"))
             order = 2;
-          else if(((!strcmp(name1, "CE1")) && (!strcmp(name2, "ND1"))) ||
-                  ((!strcmp(name2, "CE1")) && (!strcmp(name1, "ND1"))))
+          else if((name1 == "CE1" && name2 == "ND1") ||
+                  (name2 == "CE1" && name1 == "ND1"))
             order = 2;
           break;
         case 'D':              /* HID */
-          if(((!strcmp(name1, "CG")) && (!strcmp(name2, "CD2"))) ||
-             ((!strcmp(name2, "CG")) && (!strcmp(name1, "CD2"))))
+          if((name1 == "CG" && name2 == "CD2") ||
+             (name2 == "CG" && name1 == "CD2"))
             order = 2;
-          else if(((!strcmp(name1, "CE1")) && (!strcmp(name2, "NE2"))) ||
-                  ((!strcmp(name2, "CE1")) && (!strcmp(name1, "NE2"))))
+          else if((name1 == "CE1" && name2 == "NE2") ||
+                  (name2 == "CE1" && name1 == "NE2"))
             order = 2;
           break;
         }
@@ -1245,31 +1232,31 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
       break;
     case 'I':
       if(resn1[1] == 0) {
-        if(((!strcmp(name1, "O2P")) || (!strcmp(name1, "OP2")))) {
+        if((name1 == "O2P" || name1 == "OP2")) {
           ai1->formalCharge = -1;
           ai1->chemFlag = false;
-        } else if(((!strcmp(name2, "O2P")) || (!strcmp(name2, "OP2")))) {
+        } else if((name2 == "O2P" || name2 == "OP2")) {
           ai2->formalCharge = -1;
           ai2->chemFlag = false;
         }
-        if(((!strcmp(name1, "C8")) && (!strcmp(name2, "N7"))) ||
-           ((!strcmp(name2, "C8")) && (!strcmp(name1, "N7"))))
+        if((name1 == "C8" && name2 == "N7") ||
+           (name2 == "C8" && name1 == "N7"))
           order = 2;
-        else if(((!strcmp(name1, "C4")) && (!strcmp(name2, "C5"))) ||
-                ((!strcmp(name2, "C4")) && (!strcmp(name1, "C5"))))
+        else if((name1 == "C4" && name2 == "C5") ||
+                (name2 == "C4" && name1 == "C5"))
           order = 2;
 
-        else if(((!strcmp(name1, "C6")) && (!strcmp(name2, "N1"))) ||
-                ((!strcmp(name2, "C6")) && (!strcmp(name1, "N1"))))
+        else if((name1 == "C6" && name2 == "N1") ||
+                (name2 == "C6" && name1 == "N1"))
           order = 2;
-        else if(((!strcmp(name1, "C2")) && (!strcmp(name2, "N3"))) ||
-                ((!strcmp(name2, "C2")) && (!strcmp(name1, "N3"))))
+        else if((name1 == "C2" && name2 == "N3") ||
+                (name2 == "C2" && name1 == "N3"))
           order = 2;
         else
-          if(((!strcmp(name1, "P"))
-              && (((!strcmp(name2, "O1P")) || (!strcmp(name2, "OP1")))))
-             || ((!strcmp(name2, "P"))
-                 && (((!strcmp(name1, "O1P")) || (!strcmp(name1, "OP1"))))))
+          if((name1 == "P"
+              && (name2 == "O1P" || name2 == "OP1"))
+             || (name2 == "P"
+                 && (name1 == "O1P" || name1 == "OP1")))
           order = 2;
       }
       break;
@@ -1277,15 +1264,15 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
       switch (resn1[1]) {
       case 'H':                /* PHE */
         if(resn1[2] == 'E') {
-          if(((!strcmp(name1, "CG")) && (!strcmp(name2, "CD1"))) ||
-             ((!strcmp(name2, "CG")) && (!strcmp(name1, "CD1"))))
+          if((name1 == "CG" && name2 == "CD1") ||
+             (name2 == "CG" && name1 == "CD1"))
             order = 2;
-          else if(((!strcmp(name1, "CZ")) && (!strcmp(name2, "CE1"))) ||
-                  ((!strcmp(name2, "CZ")) && (!strcmp(name1, "CE1"))))
+          else if((name1 == "CZ" && name2 == "CE1") ||
+                  (name2 == "CZ" && name1 == "CE1"))
             order = 2;
 
-          else if(((!strcmp(name1, "CE2")) && (!strcmp(name2, "CD2"))) ||
-                  ((!strcmp(name2, "CE2")) && (!strcmp(name1, "CD2"))))
+          else if((name1 == "CE2" && name2 == "CD2") ||
+                  (name2 == "CE2" && name1 == "CD2"))
             order = 2;
           break;
         }
@@ -1299,10 +1286,10 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
           switch (resn1[3]) {
           case 0:
           case 'P':            /* LYS, LYSP */
-            if(!strcmp(name1, "NZ")) {
+            if (name1 == "NZ") {
               ai1->formalCharge = 1;
               ai1->chemFlag = false;
-            } else if(!strcmp(name2, "NZ")) {
+            } else if (name2 == "NZ") {
               ai2->formalCharge = 1;
               ai2->chemFlag = false;
             }
@@ -1317,88 +1304,84 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
       switch (resn1[1]) {
       case 'Y':                /* TYR */
         if(resn1[2] == 'R') {
-          if(((!strcmp(name1, "CG")) && (!strcmp(name2, "CD1"))) ||
-             ((!strcmp(name2, "CG")) && (!strcmp(name1, "CD1"))))
+          if((name1 == "CG" && name2 == "CD1") ||
+             (name2 == "CG" && name1 == "CD1"))
             order = 2;
-          else if(((!strcmp(name1, "CZ")) && (!strcmp(name2, "CE1"))) ||
-                  ((!strcmp(name2, "CZ")) && (!strcmp(name1, "CE1"))))
+          else if((name1 == "CZ" && name2 == "CE1") ||
+                  (name2 == "CZ" && name1 == "CE1"))
             order = 2;
 
-          else if(((!strcmp(name1, "CE2")) && (!strcmp(name2, "CD2"))) ||
-                  ((!strcmp(name2, "CE2")) && (!strcmp(name1, "CD2"))))
+          else if((name1 == "CE2" && name2 == "CD2") ||
+                  (name2 == "CE2" && name1 == "CD2"))
             order = 2;
           break;
         }
         break;
       case 'R':
         if(resn1[2] == 'P') {
-          if(((!strcmp(name1, "CG")) && (!strcmp(name2, "CD1"))) ||
-             ((!strcmp(name2, "CG")) && (!strcmp(name1, "CD1"))))
+          if((name1 == "CG" && name2 == "CD1") ||
+             (name2 == "CG" && name1 == "CD1"))
             order = 2;
-          else if(((!strcmp(name1, "CZ3")) && (!strcmp(name2, "CE3"))) ||
-                  ((!strcmp(name2, "CZ3")) && (!strcmp(name1, "CE3"))))
+          else if((name1 == "CZ3" && name2 == "CE3") ||
+                  (name2 == "CZ3" && name1 == "CE3"))
             order = 2;
-          else if(((!strcmp(name1, "CZ2")) && (!strcmp(name2, "CH2"))) ||
-                  ((!strcmp(name2, "CZ2")) && (!strcmp(name1, "CH2"))))
+          else if((name1 == "CZ2" && name2 == "CH2") ||
+                  (name2 == "CZ2" && name1 == "CH2"))
             order = 2;
-          else if(((!strcmp(name1, "CE2")) && (!strcmp(name2, "CD2"))) ||
-                  ((!strcmp(name2, "CE2")) && (!strcmp(name1, "CD2"))))
+          else if((name1 == "CE2" && name2 == "CD2") ||
+                  (name2 == "CE2" && name1 == "CD2"))
             order = 2;
           break;
         }
         break;
       case 0:
-        if(((!strcmp(name1, "O2P")) || (!strcmp(name1, "OP2")))) {
+        if((name1 == "O2P" || name1 == "OP2")) {
           ai1->formalCharge = -1;
           ai1->chemFlag = false;
-        } else if(((!strcmp(name2, "O2P")) || (!strcmp(name2, "OP2")))) {
+        } else if((name2 == "O2P" || name2 == "OP2")) {
           ai2->formalCharge = -1;
           ai2->chemFlag = false;
         }
 
-        if(((!strcmp(name1, "C2")) && (!strcmp(name2, "O2"))) ||
-           ((!strcmp(name2, "C2")) && (!strcmp(name1, "O2"))))
+        if((name1 == "C2" && name2 == "O2") ||
+           (name2 == "C2" && name1 == "O2"))
           order = 2;
-        else if(((!strcmp(name1, "C4")) && (!strcmp(name2, "O4"))) ||
-                ((!strcmp(name2, "C4")) && (!strcmp(name1, "O4"))))
+        else if((name1 == "C4" && name2 == "O4") ||
+                (name2 == "C4" && name1 == "O4"))
           order = 2;
 
-        else if(((!strcmp(name1, "C5")) && (!strcmp(name2, "C6"))) ||
-                ((!strcmp(name2, "C5")) && (!strcmp(name1, "C6"))))
+        else if((name1 == "C5" && name2 == "C6") ||
+                (name2 == "C5" && name1 == "C6"))
           order = 2;
         else
-          if(((!strcmp(name1, "P"))
-              && (((!strcmp(name2, "O1P")) || (!strcmp(name2, "OP1")))))
-             || ((!strcmp(name2, "P"))
-                 && (((!strcmp(name1, "O1P")) || (!strcmp(name1, "OP1"))))))
+          if ((name1 == "P" && (name2 == "O1P" || name2 == "OP1")) ||
+              (name2 == "P" && (name1 == "O1P" || name1 == "OP1")))
           order = 2;
         break;
       }
       break;
     case 'U':
       if(resn1[1] == 0) {
-        if(((!strcmp(name1, "O2P")) || (!strcmp(name1, "OP2")))) {
+        if((name1 == "O2P" || name1 == "OP2")) {
           ai1->formalCharge = -1;
           ai1->chemFlag = false;
-        } else if(((!strcmp(name2, "O2P")) || (!strcmp(name2, "OP2")))) {
+        } else if((name2 == "O2P" || name2 == "OP2")) {
           ai2->formalCharge = -1;
           ai2->chemFlag = false;
         }
-        if(((!strcmp(name1, "C2")) && (!strcmp(name2, "O2"))) ||
-           ((!strcmp(name2, "C2")) && (!strcmp(name1, "O2"))))
+        if((name1 == "C2" && name2 == "O2") ||
+           (name2 == "C2" && name1 == "O2"))
           order = 2;
-        else if(((!strcmp(name1, "C4")) && (!strcmp(name2, "O4"))) ||
-                ((!strcmp(name2, "C4")) && (!strcmp(name1, "O4"))))
+        else if((name1 == "C4" && name2 == "O4") ||
+                (name2 == "C4" && name1 == "O4"))
           order = 2;
 
-        else if(((!strcmp(name1, "C5")) && (!strcmp(name2, "C6"))) ||
-                ((!strcmp(name2, "C5")) && (!strcmp(name1, "C6"))))
+        else if((name1 == "C5" && name2 == "C6") ||
+                (name2 == "C5" && name1 == "C6"))
           order = 2;
         else
-          if(((!strcmp(name1, "P"))
-              && (((!strcmp(name2, "O1P")) || (!strcmp(name2, "OP1")))))
-             || ((!strcmp(name2, "P"))
-                 && (((!strcmp(name1, "O1P")) || (!strcmp(name1, "OP1"))))))
+          if ((name1 == "P" && (name2 == "O1P" || name2 == "OP1")) ||
+              (name2 == "P" && (name1 == "O1P" || name1 == "OP1")))
           order = 2;
       }
       break;
