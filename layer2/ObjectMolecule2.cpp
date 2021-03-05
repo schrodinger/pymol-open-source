@@ -834,7 +834,7 @@ bool ObjectMoleculeIsAtomBondedToSele(
  * Based on PDB nomenclature (resn, name), do:
  *
  * 1) If `ai1` or `ai2` is a known charged PDB atom, assign `formalCharge`
- *    and seth `chemFlag` to false
+ *    and set `chemFlag` to false
  *
  * 2) If `ai1` and `ai2` are connected by a double bond, set (*bond_order) = 2
  */
@@ -848,8 +848,8 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
 
   /* nasty high-speed hack to get bond valences and formal charges 
      for standard residues */
-  if ((name1 == "C" && name2 == "O") ||
-      (name2 == "C" && name1 == "O")) {
+  if (((name1 == "C" && name2 == "O") || (name2 == "C" && name1 == "O")) &&
+      AtomInfoKnownProteinResName(resn1.c_str())) {
     order = 2;
   } else if(name2 == "C" && name1 == "OXT") {
     ai1->formalCharge = -1;
