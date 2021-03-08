@@ -335,6 +335,16 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.scene_order('F10 F1', location='bottom')
         self.assertEqual(cmd.get_scene_list(), ['F2', 'Z0', 'F10', 'F1'])
 
+    @testing.requires_version('2.5')
+    def testSceneOrderWithSpaces(self):
+        cmd.scene('Z0 1 2', 'store')
+        cmd.scene('F1 ABC', 'store')
+        cmd.scene('F10 XX', 'store')
+        cmd.scene_order('*', True)
+        self.assertEqual(cmd.get_scene_list(), ['F1 ABC', 'F10 XX', 'Z0 1 2'])
+        cmd.scene_order(['F10 XX', 'F1 ABC'])
+        self.assertEqual(cmd.get_scene_list(), ['F10 XX', 'F1 ABC', 'Z0 1 2'])
+
     @testing.requires('gui')
     def testStereo(self):
         for (k,v) in cmd.stereo_dict.items():
