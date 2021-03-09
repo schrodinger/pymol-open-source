@@ -330,7 +330,7 @@ PYMOL API
         lst.extend(list(arg))
         return _self.load_object(*lst, **kw)
 
-    def load_traj(filename,object='',state=0,format='',interval=1,
+    def load_traj(filename,object='',state=1,format='',interval=1,
                       average=1,start=1,stop=-1,max=-1,selection='all',image=1,
                       shift="[0.0,0.0,0.0]",plugin="", *, _self=cmd):
         '''
@@ -355,7 +355,7 @@ ARGUMENTS
     appended as states {default: guess from filename or last object in list}
 
     state = int: first object state to populate, or 0 to append after
-    last state {default: 0}
+    last state {default: 1}
 
     format = str: file format {default: guess from extension}
 
@@ -378,12 +378,6 @@ ARGUMENTS
 
     plugin = str: name of VMD plugin to use {default: guess from magic string
     of from format}
-
-PYMOL API
-
-    cmd.load_traj(filename,object='',state=0,format='',interval=1,
-                  average=1,start=1,stop=-1,max=-1,selection='all',image=1,
-                  shift="[0.0,0.0,0.0]")
 
 NOTES
 
@@ -1459,6 +1453,9 @@ DESCRIPTION
             for line in handle:
                 k, v = line.split('=', 1)
                 data[k.strip()] = v.strip()
+
+        if state == 0:
+            state = 1
 
         oname = object
         _self.delete(oname)
