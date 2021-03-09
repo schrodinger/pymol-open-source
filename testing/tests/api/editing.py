@@ -778,7 +778,7 @@ class TestEditing(testing.PyMOLTestCase):
         dcdfile = self.datafile("sampletrajectory.dcd")
 
         cmd.load(pdbfile)
-        cmd.load_traj(dcdfile)
+        cmd.load_traj(dcdfile, state=0)
 
         cmd.select('ref_atom','/sampletrajectory///LYS`244/NZ')
 

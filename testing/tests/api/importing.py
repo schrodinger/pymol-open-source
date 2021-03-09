@@ -146,8 +146,8 @@ class TestImporting(testing.PyMOLTestCase):
 
     @testing.requires_version('1.7.3.0')
     def testLoad_idx(self):
-        cmd.load(self.datafile('desmond/Bace_mapper_20143_3a51a59_e85111a_solvent_11_replica0-out.idx'))
-        self.assertEqual(cmd.count_states(), 210)
+        cmd.load(self.datafile('desmond/Bace_mapper_20143_3a51a59_e85111a_solvent_11_replica0-out.idx'), state=1)
+        self.assertEqual(cmd.count_states(), 209)
         self.assertEqual(cmd.count_atoms(), 2482)
 
     def testLoad_pqr(self):
@@ -333,7 +333,7 @@ class TestImporting(testing.PyMOLTestCase):
         dcdfile = self.datafile("sampletrajectory" + trjext)
 
         cmd.load(pdbfile)
-        cmd.load_traj(dcdfile)
+        cmd.load_traj(dcdfile, state=0)
         self.assertEqual(11, cmd.count_states())
         cmd.delete('*')
 
@@ -352,6 +352,13 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(3, cmd.count_states())
         cmd.delete('*')
 
+    # Changed in PyMOL 2.5: Default is now state=1 instead of state=0
+    @testing.requires_version('2.5')
+    def testLoadTraj_default_state_1(self):
+        cmd.load(self.datafile("sampletrajectory.pdb"))
+        cmd.load_traj(self.datafile("sampletrajectory.dcd"))
+        self.assertEqual(10, cmd.count_states())
+
     @testing.foreach(
             ['.pdb', '.dcd'],
             ['.pdb', '.crd'],
@@ -363,7 +370,7 @@ class TestImporting(testing.PyMOLTestCase):
         dcdfile = self.datafile("sampletrajectory" + trjext)
 
         cmd.load(pdbfile)
-        cmd.load_traj(dcdfile)
+        cmd.load_traj(dcdfile, state=0)
         self.assertEqual(11, cmd.count_states())
         cmd.undo()
         self.assertEqual(1, cmd.count_states())
@@ -403,7 +410,7 @@ class TestImporting(testing.PyMOLTestCase):
     def testLoadTraj_selection_trj(self):
         base = self.datafile("sampletrajectory")
         cmd.load(base + ".pdb")
-        cmd.load_traj(base + ".crd", selection="backbone", format="trj")
+        cmd.load_traj(base + ".crd", selection="backbone", format="trj", state=0)
         self.assertEqual(55, cmd.count_atoms('state 10'))
 
     # via PlugIOManager
@@ -411,7 +418,7 @@ class TestImporting(testing.PyMOLTestCase):
     def testLoadTraj_selection(self):
         base = self.datafile("sampletrajectory")
         cmd.load(base + ".gro")
-        cmd.load_traj(base + ".xtc", selection="backbone")
+        cmd.load_traj(base + ".xtc", selection="backbone", state=0)
         self.assertEqual(55, cmd.count_atoms('state 10'))
 
     @testing.requires_version('1.8.5')
@@ -428,7 +435,7 @@ class TestImporting(testing.PyMOLTestCase):
         http://ambermd.org/tutorials/basic/tutorial2/section6.htm
         '''
         cmd.load(self.datafile("TRPcage.top"))
-        cmd.load_traj(self.datafile("heat1.crd"), "TRPcage", format="trj")
+        cmd.load_traj(self.datafile("heat1.crd"), "TRPcage", format="trj", state=0)
         self.assertEqual(304, cmd.count_atoms())
         self.assertEqual(10, cmd.count_states())
 
