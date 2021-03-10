@@ -22,6 +22,8 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 #include<math.h>
 
+#include <cassert>
+
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
 
@@ -60,7 +62,6 @@ float deg_to_rad(float angle);
 float rad_to_deg(float angle);
 
 void normalize23f(const float *v1, float *v2);
-void normalize3d(double *v1);
 void normalize2f(float *v1);
 void normalize4f(float *v1);
 
@@ -78,12 +79,6 @@ void get_system3f(float *x, float *y, float *z);        /* make random system */
 void get_system1f3f(float *x, float *y, float *z);      /* make system in direction of x */
 void get_system2f3f(float *x, float *y, float *z);      /* make system in direction of x, perp to x,y */
 
-double dot_product3d(const double *v1, const double *v2);
-void remove_component3d(const double *v1, const double *unit, double *result);
-void cross_product3d(const double *v1, const double *v2, double *cross);
-void scale3d(const double *v1, const double v0, double *v2);
-void add3d(const double *v1, const double *v0, double *v2);
-
 double distance_line2point3f(const float *base, const float *normal, const float *point,
                              float *alongNormalSq);
 double distance_halfline2point3f(const float *base, const float *normal, const float *point,
@@ -95,7 +90,6 @@ int pymol_roundf(float f);
 
 float get_angle3f(const float *v1, const float *v2);
 float get_dihedral3f(const float *v0, const float *v1, const float *v2, const float *v3);
-double length3d(const double *v1);
 
 void min3f(const float *v1, const float *v2, float *v3);
 void max3f(const float *v1, const float *v2, float *v3);
@@ -271,24 +265,6 @@ void subdivide(int n, float *x, float *y);
 // (many of these were macros up to PyMOL 1.7.6)
 //-------------------------------------------------------------------------
 
-static const float _0f_inline = 0.0F;
-static const double _0d_inline = 0.0;
-static const float _1f_inline = 1.0F;
-static const double _1d_inline = 1.0;
-static const float R_SMALL_inline = 0.000000001F;
-static const double R_SMALLd_inline = 0.000000001;
-
-#define normalize3f inline_normalize3f
-#define sqrt1f inline_sqrt1f
-#define sqrt1d inline_sqrt1d
-#define diff3f inline_diff3f
-#define diffsq3f inline_diffsq3f
-#define within3f inline_within3f
-#define within3fsq inline_within3fsq
-#define within3fret inline_within3fret
-#define remove_component3f inline_remove_component3f
-#define project3f inline_project3f
-
 inline void set3f(float * v1, float x, float y, float z) {
   v1[0] = x;
   v1[1] = y;
@@ -312,16 +288,6 @@ inline void ones3f(float * v1) {
 }
 
 /**
- * Takes the dot product of two three-term vectors
- * @param v1 an array of three constant floats
- * @param v2 an array of three constant floats
- * @return the dot product
- */
-inline float dot_product3f(const float * v1, const float * v2) {
-  return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
-}
-
-/**
  * Sets the values of the second vector to the additive inverses of each
  * respective value of the first vector, leaving the first vector unchanged.
  * @param v1 an array of three constant floats
@@ -335,12 +301,6 @@ inline void invert3f3f(const float * v1, float * v2) {
 
 inline void invert3f(float * v) {
   invert3f3f(v, v);
-}
-
-inline void scale3f(const float * v1, float v0, float * v2) {
-  v2[0] = v1[0] * v0;
-  v2[1] = v1[1] * v0;
-  v2[2] = v1[2] * v0;
 }
 
 template <typename S, typename D>
@@ -375,21 +335,135 @@ void copy4(const S * src, D * dst) {
 #define copy3d copy3<double, double>
 #define copy4f copy4
 
-inline void add3f(const float * v1, const float * v2, float * v3) {
+namespace pymol
+{
+//! Dot product of two 3-dimensional vectors
+template <typename T> T dot_product3(const T* v1, const T* v2)
+{
+  return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+}
+
+//! Square root of v, or 0 for negative v.
+template <typename T> T sqrt1(T v)
+{
+  return (v > 0) ? sqrt(v) : 0;
+}
+
+//! v3 = v1 + v2
+template <typename S1, typename S2, typename D>
+void add3(const S1* v1, const S2* v2, D* v3)
+{
   v3[0] = v1[0] + v2[0];
   v3[1] = v1[1] + v2[1];
   v3[2] = v1[2] + v2[2];
 }
 
-inline void subtract3f(const float * v1, const float * v2, float * v3) {
+//! v3 = v1 - v2
+template <typename S1, typename S2, typename D>
+void subtract3(const S1* v1, const S2* v2, D* v3)
+{
   v3[0] = v1[0] - v2[0];
   v3[1] = v1[1] - v2[1];
   v3[2] = v1[2] - v2[2];
 }
 
-inline float lengthsq3f(const float * v1) {
+//! Squared length of a 3-dimensional vector
+template <typename T> T lengthsq3(const T* v1)
+{
   return (v1[0] * v1[0]) + (v1[1] * v1[1]) + (v1[2] * v1[2]);
 }
+
+//! Length of a 3-dimensional vector
+template <typename T> T length3(const T* v1)
+{
+  return sqrt1(lengthsq3(v1));
+}
+
+template <typename S, typename F, typename D>
+void scale3(const S* v1, F v0, D* v2)
+{
+  v2[0] = v1[0] * v0;
+  v2[1] = v1[1] * v0;
+  v2[2] = v1[2] * v0;
+}
+
+/**
+ * Scale v1 to length 1, unless it's a null pointer, then make it length 0.
+ */
+template <typename T> void normalize3(T* v1)
+{
+  auto const vlen = length3(v1);
+  if (vlen > 1e-8) {
+    scale3(v1, 1 / vlen, v1);
+  } else {
+    v1[0] = v1[1] = v1[2] = 0;
+  }
+}
+
+/**
+ * Cross product of two 3-dimensional vectors.
+ * @param[out] cross Result buffer, must not overlap with v1 or v2
+ */
+template <typename T> void cross_product3(const T* v1, const T* v2, T* cross)
+{
+  assert(v1 != cross);
+  assert(v2 != cross);
+  cross[0] = (v1[1] * v2[2]) - (v1[2] * v2[1]);
+  cross[1] = (v1[2] * v2[0]) - (v1[0] * v2[2]);
+  cross[2] = (v1[0] * v2[1]) - (v1[1] * v2[0]);
+}
+
+/**
+ * Same as:
+ *
+ *     project3f(v1, unit, result);
+ *     subtract3f(v1, result, result);
+ */
+template <typename T>
+void remove_component3(const T *v1, const T *unit, T *result)
+{
+  auto dot = v1[0] * unit[0] + v1[1] * unit[1] + v1[2] * unit[2];
+  result[0] = v1[0] - unit[0] * dot;
+  result[1] = v1[1] - unit[1] * dot;
+  result[2] = v1[2] - unit[2] * dot;
+}
+
+template <typename T = double, typename U>
+T diffsq3(const U* const v1, const U* const v2)
+{
+  auto const dx = T(v1[0]) - v2[0];
+  auto const dy = T(v1[1]) - v2[1];
+  auto const dz = T(v1[2]) - v2[2];
+  return dz * dz + dy * dy + dx * dx;
+}
+
+template <typename T = double, typename U>
+T diff3(const U* const v1, const U* const v2)
+{
+  return sqrt1(diffsq3<T>(v1, v2));
+}
+
+} // namespace pymol
+
+#define dot_product3f pymol::dot_product3<float>
+#define dot_product3d pymol::dot_product3<double>
+#define add3f pymol::add3<float, float, float>
+#define add3d pymol::add3<double, double, double>
+#define subtract3f pymol::subtract3<float, float, float>
+#define lengthsq3f pymol::lengthsq3<float>
+#define sqrt1f pymol::sqrt1<float>
+#define sqrt1d pymol::sqrt1<double>
+#define length3f pymol::length3<float>
+#define length3d pymol::length3<double>
+#define scale3f pymol::scale3<float, float, float>
+#define scale3d pymol::scale3<double, double, double>
+#define normalize3f pymol::normalize3<float>
+#define normalize3d pymol::normalize3<double>
+#define cross_product3f pymol::cross_product3<float>
+#define cross_product3d pymol::cross_product3<double>
+#define remove_component3f pymol::remove_component3<float>
+#define diffsq3f pymol::diffsq3<float, float>
+#define diff3f pymol::diff3<double, float>
 
 inline void average3f(const float * v1, const float * v2, float * avg) {
   (avg)[0] = ((v1)[0]+(v2)[0])/2;
@@ -397,70 +471,11 @@ inline void average3f(const float * v1, const float * v2, float * avg) {
   (avg)[2] = ((v1)[2]+(v2)[2])/2;
 }
 
-inline void cross_product3f(const float * v1, const float * v2, float * cross) {
-  cross[0] = (v1[1] * v2[2]) - (v1[2] * v2[1]);
-  cross[1] = (v1[2] * v2[0]) - (v1[0] * v2[2]);
-  cross[2] = (v1[0] * v2[1]) - (v1[1] * v2[0]);
-}
-
-inline double inline_sqrt1f(float f)
-{                               /* no good as a macro because f is used twice */
-  if(f > _0f_inline)
-    return (sqrt(f));
-  else
-    return (_0d_inline);
-}
-
-inline double inline_sqrt1d(double f)
-{                               /* no good as a macro because f is used twice */
-  if(f > _0d_inline)
-    return (sqrt(f));
-  else
-    return (_0d_inline);
-}
-
-inline float length3f(const float * v1) {
-  return sqrt1f(lengthsq3f(v1));
-}
-
 inline float length2f(const float * v1) {
   return sqrt1f((v1[0] * v1[0]) + (v1[1] * v1[1]));
 }
 
-inline void inline_normalize3f(float *v1)
-{
-  double vlen = length3f(v1);
-  if(vlen > R_SMALLd_inline) {
-    float inV = (float) (_1d_inline / vlen);
-    v1[0] *= inV;
-    v1[1] *= inV;
-    v1[2] *= inV;
-  } else {
-    v1[0] = v1[1] = v1[2] = _0f_inline;
-  }
-}
-
-inline double inline_diff3f(const float *v1, const float *v2)
-{
-  float dx, dy, dz;
-  dx = (v1[0] - v2[0]);
-  dy = (v1[1] - v2[1]);
-  dz = (v1[2] - v2[2]);
-  return (sqrt1d(dx * dx + dy * dy + dz * dz));
-}
-
-inline float inline_diffsq3f(const float *v1, const float *v2)
-{
-  float dx, dy, dz;
-  dx = (v1[0] - v2[0]);
-  dy = (v1[1] - v2[1]);
-  dx = dx * dx;
-  dz = (v1[2] - v2[2]);
-  dy = dy * dy;
-  return (dz * dz + (dx + dy));
-}
-
-inline int inline_within3f(const float *v1, const float *v2, float dist)
+inline bool within3f(const float *v1, const float *v2, float dist)
 {
   float dx, dy, dz, dist2;
   dx = (float) fabs(v1[0] - v2[0]);
@@ -478,32 +493,7 @@ inline int inline_within3f(const float *v1, const float *v2, float dist)
   return (((dx + dy) + dz * dz) <= dist2);
 }
 
-inline int inline_within3fsq(const float *v1, const float *v2, float dist, float dist2)
-{
-  /* manually optimized to take advantage of parallel execution units */
-  float dx, dy, dz;
-  dx = v1[0] - v2[0];
-  dy = v1[1] - v2[1];
-  dx = (float) fabs(dx);
-  dy = (float) fabs(dy);
-  if(dx > dist)
-    return (0);
-  dz = v1[2] - v2[2];
-  dx = dx * dx;
-  if(dy > dist)
-    return (0);
-  dz = (float) fabs(dz);
-  dy = dy * dy;
-  if(dz > dist)
-    return (0);
-  dx = dx + dy;
-  dz = dz * dz;
-  if(dx > dist2)
-    return (0);
-  return ((dx + dz) <= (dist2));
-}
-
-inline int inline_within3fret(const float *v1, const float *v2, float cutoff,
+inline bool within3fret(const float *v1, const float *v2, float cutoff,
                                          const float cutoff2, float *diff, float *dist)
 {
   float dx, dy, dz, dist2;
@@ -525,29 +515,13 @@ inline int inline_within3fret(const float *v1, const float *v2, float cutoff,
 }
 
 /**
- * Same as:
- *
- *     project3f(v1, unit, result);
- *     subtract3f(v1, result, result);
- */
-inline void inline_remove_component3f(const float *v1, const float *unit, float *result)
-{
-  float dot;
-
-  dot = v1[0] * unit[0] + v1[1] * unit[1] + v1[2] * unit[2];
-  result[0] = v1[0] - unit[0] * dot;
-  result[1] = v1[1] - unit[1] * dot;
-  result[2] = v1[2] - unit[2] * dot;
-}
-
-/**
  * Get the shortest position vector for a plane with position v1 and normal vector v2.
  * @param v1 Point on plane
  * @param v2 Normal vector of plane
  * @param[out] proj Point on plane, collinear with v2
  * @return Length of proj
  */
-inline float inline_project3f(const float *v1, const float *v2, float *proj)
+inline float project3f(const float *v1, const float *v2, float *proj)
 {
   float dot;
 

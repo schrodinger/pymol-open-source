@@ -64,8 +64,6 @@ short countBitsInt(int bits){
 #define R_MED 0.00001
 #endif
 
-#define cPI            3.14159265358979323846   /* pi */
-
 static const float _0 = 0.0F;
 static const float _1 = 1.0F;
 static const double _d0 = 0.0;
@@ -294,11 +292,6 @@ void max3f(const float *v1, const float *v2, float *v3)
   (v3)[0] = ((v1)[0] > (v2)[0] ? (v1)[0] : (v2)[0]);
   (v3)[1] = ((v1)[1] > (v2)[1] ? (v1)[1] : (v2)[1]);
   (v3)[2] = ((v1)[2] > (v2)[2] ? (v1)[2] : (v2)[2]);
-}
-
-double dot_product3d(const double *v1, const double *v2)
-{
-  return (v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]);
 }
 
 void identity33f(float *m)
@@ -1314,62 +1307,11 @@ static void normalize3dp(double *v1, double *v2, double *v3)
     v2[0] /= vlen;
     v3[0] /= vlen;
   } else {
+    // FIXME This looks wrong, should be all index 0!?
     v1[0] = _0;
     v2[1] = _0;
     v3[2] = _0;
   }
-}
-
-
-/* unused at present
-static void normalize3df( float *v1, float *v2, float *v3 )
-{
-  float vlen = (float)sqrt1f((v1[0]*v1[0]) + 
-                             (v2[0]*v2[0]) + 
-                             (v3[0]*v3[0]));
-  if(vlen>R_SMALL)
-    {
-      v1[0]/=vlen;
-      v2[0]/=vlen;
-      v3[0]/=vlen;
-    }
-  else
-    {
-      v1[0]=_0;
-      v2[1]=_0;
-      v3[2]=_0;
-    }
-} 
-*/
-void scale3d(const double *v1, const double v0, double *v2)
-{
-  v2[0] = v1[0] * v0;
-  v2[1] = v1[1] * v0;
-  v2[2] = v1[2] * v0;
-}
-
-void add3d(const double *v1, const double *v2, double *v3)
-{
-  v3[0] = v1[0] + v2[0];
-  v3[1] = v1[1] + v2[1];
-  v3[2] = v1[2] + v2[2];
-}
-
-void cross_product3d(const double *v1, const double *v2, double *cross)
-{
-  cross[0] = (v1[1] * v2[2]) - (v1[2] * v2[1]);
-  cross[1] = (v1[2] * v2[0]) - (v1[0] * v2[2]);
-  cross[2] = (v1[0] * v2[1]) - (v1[1] * v2[0]);
-}
-
-void remove_component3d(const double *v1, const double *unit, double *result)
-{
-  double dot;
-
-  dot = v1[0] * unit[0] + v1[1] * unit[1] + v1[2] * unit[2];
-  result[0] = v1[0] - unit[0] * dot;
-  result[1] = v1[1] - unit[1] * dot;
-  result[2] = v1[2] - unit[2] * dot;
 }
 
 void reorient44d(double *matrix)
@@ -1405,7 +1347,7 @@ void reorient44d(double *matrix)
   normalize3d(matrix + 8);
 
   copy3d(matrix, tmp);
-  remove_component3d(matrix + 4, tmp, tmp + 4);
+  pymol::remove_component3(matrix + 4, tmp, tmp + 4);
   cross_product3d(tmp, tmp + 4, tmp + 8);
   normalize3d(tmp + 4);
   normalize3d(tmp + 8);
@@ -1717,21 +1659,6 @@ void clamp3f(float *v1)
     v1[2] = _1;
 }
 
-void normalize3d(double *v1)
-{
-  double vlen;
-  vlen = length3d(v1);
-  if(vlen > R_SMALL) {
-    v1[0] /= vlen;
-    v1[1] /= vlen;
-    v1[2] /= vlen;
-  } else {
-    v1[0] = _0;
-    v1[1] = _0;
-    v1[2] = _0;
-  }
-}
-
 void normalize2f(float *v1)
 {
   double vlen;
@@ -1751,11 +1678,6 @@ void normalize4f(float *v1)
   v1[1] /= v1[3];
   v1[2] /= v1[3];
   v1[3] = 1.f;
-}
-
-double length3d(const double *v1)
-{
-  return (sqrt1d((v1[0] * v1[0]) + (v1[1] * v1[1]) + (v1[2] * v1[2])));
 }
 
 double distance_line2point3f(const float *base, const float *normal, const float *point,
