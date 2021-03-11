@@ -2920,15 +2920,15 @@ pymol::Result<> ExecutiveResetMatrix(
         case cObjectMolecule:
           switch (mode) {
           case 0:              /* transformations already applied to the coordinates */
-            {
+            for (StateIterator iter(rec->obj, state); iter.next();) {
               double *history = NULL;
-              int found = ExecutiveGetObjectMatrix(G, rec->name, state, &history, false);
+              bool found = ExecutiveGetObjectMatrix2(G, rec->obj, iter.state, &history, false);
               if(found && history) {
                 double temp_inverse[16];
                 float historyf[16];
                 invert_special44d44d(history, temp_inverse);
                 convert44d44f(temp_inverse, historyf);
-                ExecutiveTransformObjectSelection(G, rec->name, state, "",
+                ExecutiveTransformObjectSelection2(G, rec->obj, iter.state, "",
                                                   log, historyf, true, false);
               }
             }
