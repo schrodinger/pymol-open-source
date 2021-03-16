@@ -91,6 +91,9 @@
      </item>
      <item row="3" column="1">
       <widget class="QComboBox" name="input_multiplex">
+       <property name="toolTip">
+        <string>For same topology with different conformations, choose &quot;trajectory&quot;. For independent molecules, like a set of different ligands, choose &quot;separate objects&quot; or &quot;discrete states&quot;.</string>
+       </property>
        <item>
         <property name="text">
          <string notr="true">automatic handling</string>
@@ -98,7 +101,12 @@
        </item>
        <item>
         <property name="text">
-         <string notr="true">as one multi-state object</string>
+         <string notr="true">as one multi-state object (trajectory)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">as one multi-state object (discrete states)</string>
         </property>
        </item>
        <item>

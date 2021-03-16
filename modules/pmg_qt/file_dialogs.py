@@ -285,7 +285,14 @@ def load_mae_dialog(parent, filename):
                 ', \\\n    atom_props=%s' % (
                     form.input_object_props.text(),
                     form.input_atom_props.text()))
-        multiplex = [-2, 0, 1][form.input_multiplex.currentIndex()]
+        multiplex, discrete = [
+            (-2, -1),
+            (0, 0),
+            (0, 1),
+            (1, -1),
+        ][form.input_multiplex.currentIndex()]
+        if discrete != -1:
+            command += ', \\\n    discrete={}'.format(discrete)
         if multiplex != -2:
             command += ', \\\n    multiplex={}'.format(multiplex)
         return command
