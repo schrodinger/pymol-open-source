@@ -6294,6 +6294,19 @@ ok_except1:
   return APIAutoNone(NULL);
 }
 
+static PyObject* CmdM2ioFirstBlockProperties(PyObject* self, PyObject* args)
+{
+  const char* contents = nullptr;
+  Py_ssize_t length;
+  if (!PyArg_ParseTuple(args, "s#", &contents, &length))
+    return nullptr;
+#ifdef _PYMOL_IP_EXTRAS
+#else
+  PyErr_SetNone(P_IncentiveOnlyException);
+  return nullptr;
+#endif
+}
+
 static PyMethodDef Cmd_methods[] = {
   {"glViewport", Cmd_glViewport, METH_VARARGS},
   {"_new", Cmd_New, METH_VARARGS},
@@ -6386,6 +6399,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_feedback", CmdGetFeedback, METH_VARARGS},
   {"get_idtf", CmdGetIdtf, METH_VARARGS},
   {"get_legal_name", CmdGetLegalName, METH_VARARGS},
+  {"get_m2io_first_block_properties", CmdM2ioFirstBlockProperties, METH_VARARGS},
 //  {"get_matrix", CmdGetMatrix, METH_VARARGS},
   {"get_min_max", CmdGetMinMax, METH_VARARGS},
   {"get_mtl_obj", CmdGetMtlObj, METH_VARARGS},

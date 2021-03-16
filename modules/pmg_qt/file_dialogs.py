@@ -9,6 +9,27 @@ from pymol.Qt.utils import PopupOnException
 import urllib.request as urllib
 
 
+def _get_cms_traj_file(fname):
+    """For a .cms file, get the filename of the corresponding trajectory file.
+    Return None if no such trajecotry file is found.
+    """
+    candidates = []
+
+    # 2) By filename conventions
+    stem = fname[:-8] if fname.endswith("-out.cms") else fname[:-4]
+    candidates += [
+        (stem + '_trj', 'clickme.dtr'),
+        (stem + '.xtc',),
+    ]
+
+    for components in candidates:
+        traj = os.path.join(*components)
+        if os.path.exists(traj):
+            return traj
+
+    return None
+
+
 def load_dialog(parent, fname, **kwargs):
     '''
     Load a file into PyMOL. May show a file format specific options
@@ -48,15 +69,10 @@ def load_dialog(parent, fname, **kwargs):
             return
 
         # auto-load desmond trajectory
-        if fname.endswith('-out.cms'):
-            for suffix in [
-                ('_trj', 'clickme.dtr'),
-                ('.xtc',),
-            ]:
-                traj = os.path.join(fname[:-8] + suffix[0], *suffix[1:])
-                if os.path.exists(traj):
-                    load_traj_dialog(parent, traj)
-                    break
+        if fname.endswith('.cms'):
+            traj = _get_cms_traj_file(fname)
+            if traj:
+                load_traj_dialog(parent, traj)
 
     return True
 
