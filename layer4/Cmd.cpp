@@ -51,6 +51,7 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"Version.h"
 #include"MemoryDebug.h"
+#include"MemoryUsage.h"
 #include"Err.h"
 #include"Util.h"
 #include"Cmd.h"
@@ -1667,6 +1668,16 @@ static PyObject *CmdGetVersion(PyObject * self, PyObject * args)
       0, "", 0
 #endif
       );
+}
+
+static PyObject* CmdMemoryUsage(PyObject* self, PyObject* args)
+{
+  return PConvToPyObject(pymol::memory_usage());
+}
+
+static PyObject* CmdMemoryAvailable(PyObject* self, PyObject* args)
+{
+  return PConvToPyObject(pymol::memory_available());
 }
 
 static PyObject* CmdGetCapabilities(PyObject*, PyObject*)
@@ -6484,6 +6495,8 @@ static PyMethodDef Cmd_methods[] = {
   {"mdo", CmdMDo, METH_VARARGS},
   {"mdump", CmdMDump, METH_VARARGS},
   {"mem", CmdMem, METH_VARARGS},
+  {"memory_available", CmdMemoryAvailable, METH_VARARGS},
+  {"memory_usage", CmdMemoryUsage, METH_VARARGS},
   {"mmodify", CmdMModify, METH_VARARGS},
   {"move", CmdMove, METH_VARARGS},
   {"mset", CmdMSet, METH_VARARGS},

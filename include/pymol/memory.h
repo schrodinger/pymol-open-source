@@ -114,4 +114,17 @@ cache_ptr<T> make_cache(Args &&... args) {
   return cache_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
+/**
+ * Take ownership of a raw pointer with a custom delete function.
+ *
+ * Example:
+ *
+ *     auto s = unique_ptr_take_ownership(strdup("Hello"), free);
+ */
+template <typename T, typename Deleter>
+std::unique_ptr<T, Deleter> unique_ptr_take_ownership(T* ptr, Deleter func)
+{
+  return std::unique_ptr<T, Deleter>(ptr, func);
+}
+
 } // namespace pymol

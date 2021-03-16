@@ -207,6 +207,14 @@ inline PyObject * PConvToPyObject(int v) {
   return PyInt_FromLong(v);
 }
 
+inline PyObject * PConvToPyObject(std::size_t v) {
+#ifndef _PYMOL_NOPY
+  return PyLong_FromSize_t(v);
+#else
+  return PyInt_FromLong(v);
+#endif
+}
+
 inline PyObject * PConvToPyObject(float v) {
   return PyFloat_FromDouble(v);
 }
