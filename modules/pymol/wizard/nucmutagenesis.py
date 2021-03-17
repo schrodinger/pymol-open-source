@@ -66,7 +66,7 @@ class Nucmutagenesis(Wizard):
         "C3'", "C4'", "H4'", "C5'", "H3'", "O3'", "HO3'", "H5'", "H5''",
         "H5'1", "O5", "PA", "O1A", "O2A", "HOA2", "O3A", "PB", "O1B", "O2B",
         "O3B", "HOB2", "O1G", "PG", "03G", "HOG3", "O2G", "HOG2", "O5'", "O3G",
-        "P", "OP1", "OP2", "H1G", "H3G", "H1B", "H2A", "H5'2", "HB", "HA"
+        "P", "OP1", "OP2", "O1P", "O2P", "H1G", "H3G", "H1B", "H2A", "H5'2", "HB", "HA"
     ]
 
     _mode_labels = collections.OrderedDict([
