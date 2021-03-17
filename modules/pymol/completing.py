@@ -162,6 +162,8 @@ def get_auto_arg_list(self_cmd=cmd):
         'reinitialize'   : [ self_cmd.commanding.reinit_sc   , 'option'          , ''   ],
         'scene'          : aa_scene_e,
         'sculpt_activate': aa_obj_e,
+        'sculpt_deactivate': aa_obj_e,
+        'sculpt_iterate' : aa_obj_c,
         'set'            : aa_set_c,
         'set_bond'       : aa_set_c,
         'set_key'        : [ lambda: cmd.Shortcut(cmd.key_mappings), 'key'       , ', ' ],
