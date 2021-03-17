@@ -595,7 +595,7 @@ SEE ALSO
 
     def valence(order, selection1=None, selection2=None, source='',
                 target_state=0, source_state=0, reset=1,
-                quiet=1, *, symop=None, _self=cmd):
+                quiet=1, *, symop="", _self=cmd):
         '''
 DESCRIPTION
 
@@ -691,7 +691,7 @@ ARGUMENTS
         with _self.lockcm:
             return _cmd.rebond(_self._COb, oname, int(state) - 1, int(pbc))
 
-    def bond(atom1="pk1", atom2="pk2", order=1, *, quiet=1, symop=None, _self=cmd):
+    def bond(atom1="pk1", atom2="pk2", order=1, *, quiet=1, symop="", _self=cmd):
         '''
 DESCRIPTION
 

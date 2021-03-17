@@ -251,7 +251,7 @@ pymol::Result<float> ExecutiveDistance(PyMOLGlobals* G, const char* nam,
     int quiet, int reset, int state, int zoom, int state1 = -4,
     int state2 = -4);
 pymol::Result<> ExecutiveBond(PyMOLGlobals* G, const char* s1,
-    const char* s2, int order, int mode, int quiet, const char* symop = nullptr);
+    const char* s2, int order, int mode, int quiet, pymol::zstring_view symop = "");
 pymol::Result<> ExecutiveAddBondByIndices(PyMOLGlobals* G, pymol::zstring_view oname,
     unsigned int atm1, unsigned int atm2, int order);
 pymol::Result<> ExecutiveRevalence(PyMOLGlobals* G, const char* s1,

@@ -4221,6 +4221,8 @@ int ObjectMoleculePreposReplAtom(ObjectMolecule * I, int index, AtomInfoType * a
 
 
 /*========================================================================*/
+
+#if 1
 void ObjectMoleculeSaveUndo(ObjectMolecule * I, int state, int log)
 {
   CoordSet *cs;
@@ -4298,9 +4300,9 @@ void ObjectMoleculeUndo(ObjectMolecule * I, int dir)
     }
   }
 }
+#endif
 
-
-int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order, const char* symop)
+int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order, pymol::zstring_view symop)
 {
   int a1, a2;
   AtomInfoType *ai1, *ai2;
@@ -4326,8 +4328,8 @@ int ObjectMoleculeAddBond(ObjectMolecule * I, int sele0, int sele1, int order, c
             BondTypeInit2(bnd, a1, a2, order);
 
             assert(!bnd->symop_2);
-            if (symop) {
-              bnd->symop_2.reset(symop);
+            if (!symop.empty()) {
+              bnd->symop_2.reset(symop.c_str());
             }
 
             I->NBond++;
@@ -4382,7 +4384,7 @@ pymol::Result<> ObjectMoleculeAddBondByIndices(
 
 /*========================================================================*/
 int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode,
-                              int order, const char* symop)
+                              int order, pymol::zstring_view symop)
 {
   auto const G = I->G;
   int a0, a1;
@@ -4451,8 +4453,8 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode
           break;
         }
 
-        if (symop) {
-          b0->symop_2.reset(symop);
+        if (!symop.empty()) {
+          b0->symop_2.reset(symop.c_str());
         }
       }
       b0++;

@@ -9442,7 +9442,7 @@ pymol::Result<> ExecutiveRevalence(PyMOLGlobals* G, const char* s1,
 
 /*========================================================================*/
 pymol::Result<> ExecutiveBond(PyMOLGlobals* G, const char* s1, const char* s2,
-    int order, int mode, int quiet, const char* symop)
+    int order, int mode, int quiet, pymol::zstring_view symop)
 {
   int cnt;
   CExecutive *I = G->Executive;
