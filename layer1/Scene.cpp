@@ -4085,40 +4085,29 @@ int SceneInit(PyMOLGlobals * G)
   CScene *I = NULL;
   I = (G->Scene = new CScene(G));
   if(I) {
+    assert(!I->RovingDirtyFlag);
+    assert(I->DirtyFlag);
+
+    I->NScene = 0; // TODO remove for undo_2019 branch
 
     /* all defaults to zero, so only initialize non-zero elements */
     G->DebugCGO = CGONew(G);
-
-    I->TextColor[0] = 0.2F;
-    I->TextColor[1] = 1.0F;
-    I->TextColor[2] = 0.2F;
 
     I->LastClickTime = UtilGetSeconds(G);
 
     SceneSetDefaultView(G);
 
-    I->Scale = 1.0;
     I->active = true;
 
     OrthoAttach(G, I, cOrthoScene);
-
-    I->DirtyFlag = true;
 
     I->LastRender = UtilGetSeconds(G);
     I->LastFrameTime = UtilGetSeconds(G);
 
     I->LastSweepTime = UtilGetSeconds(G);
 
-    I->LastStateBuilt = -1;
-    I->CopyNextFlag = true;
-
     SceneRestartFrameTimer(G);
     SceneRestartPerfTimer(G);
-
-    I->Width = 640;             /* standard defaults */
-    I->Height = 480;
-
-    I->VertexScale = 0.01F;
 
     /* scene list */
 

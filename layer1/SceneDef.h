@@ -107,65 +107,65 @@ class CScene : public Block {
  public:
   std::list<pymol::CObject*> Obj, GadgetObjs, NonGadgetObjs;
   SceneView m_view{};
-  float InvMatrix[16];          /* WARNING: column major, as per OpenGL spec */
-  float PmvMatrix[16];
-  float Scale;
-  int Width, Height;
-  int Button;
-  int LastX, LastY;
-  int StartX, StartY;
-  int LastWinX, LastWinY;
-  double LastClickTime;
-  int LastButton, LastMod;
-  int PossibleSingleClick;
-  double LastReleaseTime;
-  double SingleClickDelay;
-  float ViewNormal[3], LinesNormal[3];
-  float H;
-  float TextColor[3];
-  double SweepTime;
-  int DirtyFlag;
-  int ChangedFlag;
-  int CopyType, CopyNextFlag, CopyForced;
+  float InvMatrix[16]{};          /* WARNING: column major, as per OpenGL spec */
+  float PmvMatrix[16]{};
+  float Scale{1.0F};
+  int Width{640}, Height{480};
+  int Button{};
+  int LastX{}, LastY{};
+  int StartX{}, StartY{};
+  int LastWinX{}, LastWinY{};
+  double LastClickTime{};
+  int LastButton{}, LastMod{};
+  int PossibleSingleClick{};
+  double LastReleaseTime{};
+  double SingleClickDelay{};
+  float ViewNormal[3]{}, LinesNormal[3]{};
+  float TextColor[3]{0.2F, 1.0F, 0.2F};
+  double SweepTime{};
+  bool DirtyFlag{true};
+  bool ChangedFlag{};
+  int CopyType{};
+  bool CopyNextFlag{true}, CopyForced{};
   int NFrame { 0 };
   int HasMovie { 0 };
   std::shared_ptr<pymol::Image> Image { nullptr };
-  int MovieFrameFlag;
-  double LastRender, RenderTime, LastFrameTime, LastFrameAdjust;
-  double LastSweep, LastSweepTime;
-  float LastSweepX, LastSweepY;
-  int RockFrame;
-  Picking LastPicked;
-  int StereoMode;
-  OrthoLineType vendor, renderer, version;
-  int SculptingFlag, SculptingSave;
-  int RovingDirtyFlag;
-  int RovingCleanupFlag;
-  double RovingLastUpdate;
-  int Threshold, ThresholdX, ThresholdY;
-  float LastPickVertex[3], LastClickVertex[3];
-  int LastPickVertexFlag;
-  int LoopFlag;
-  int LoopMod;
-  BlockRect LoopRect;
-  CViewElem ani_elem[MAX_ANI_ELEM + 1];
-  int cur_ani_elem, n_ani_elem;
-  int LastStateBuilt;
-  int AnimationStartFlag;
-  double AnimationStartTime;
-  double AnimationLagTime;
-  int AnimationStartFrame;
-  double ApproxRenderTime;
-  float VertexScale;
-  float FogStart;
-  float FogEnd;
+  bool MovieFrameFlag{};
+  double LastRender{}, RenderTime{}, LastFrameTime{}, LastFrameAdjust{};
+  double LastSweep{}, LastSweepTime{};
+  float LastSweepX{}, LastSweepY{};
+  int RockFrame{};
+  Picking LastPicked{};
+  int StereoMode{};
+  OrthoLineType vendor{}, renderer{}, version{};
+  bool SculptingFlag{};
+  int SculptingSave{};
+  bool RovingDirtyFlag{};
+  bool RovingCleanupFlag{};
+  double RovingLastUpdate{};
+  int Threshold{}, ThresholdX{}, ThresholdY{};
+  float LastPickVertex[3]{}, LastClickVertex[3]{};
+  bool LastPickVertexFlag{};
+  bool LoopFlag{};
+  int LoopMod{};
+  BlockRect LoopRect{};
+  CViewElem ani_elem[MAX_ANI_ELEM + 1]{};
+  int cur_ani_elem{}, n_ani_elem{};
+  int LastStateBuilt{-1};
+  bool AnimationStartFlag{};
+  double AnimationStartTime{};
+  double AnimationLagTime{};
+  int AnimationStartFrame{};
+  double ApproxRenderTime{};
+  float VertexScale{0.01F};
+  float FogStart{};
+  float FogEnd{};
 
   /* Scene Names */
-  int ButtonsShown, ButtonDrag, ButtonMargin, ButtonsValid;
-  int Over, Pressed, PressMode, HowFarDown, NSkip;
-  int ScrollBarActive;
-  int ReorderFlag;
-  OrthoLineType ReorderLog;
+  int ButtonsShown{}, ButtonDrag{}, ButtonMargin{}, ButtonsValid{};
+  int Over{-1}, Pressed{-1}, PressMode{}, HowFarDown{}, NSkip{};
+  int ScrollBarActive{};
+  OrthoLineType ReorderLog{};
   ScrollBar m_ScrollBar;
   char *SceneNameVLA { nullptr };
   SceneElem *SceneVLA { nullptr };
@@ -174,34 +174,34 @@ class CScene : public Block {
 
   int *SlotVLA { nullptr };
 
-  int StencilValid, StencilParity;
-  int ReinterpolateFlag;
+  int StencilValid{}, StencilParity{};
+  bool ReinterpolateFlag{};
   pymol::CObject* ReinterpolateObj{nullptr};
   pymol::CObject* MotionGrabbedObj{nullptr};
 
-  short prev_no_z_rotation1, prev_no_z_rotation2;
-  int orig_x_rotation, orig_y_rotation;
+  short prev_no_z_rotation1{}, prev_no_z_rotation2{};
+  int orig_x_rotation{}, orig_y_rotation{};
 
   std::vector<float> m_ModelViewMatrixStack;
   int m_ModelViewMatrixStackDepth { 0 };
 
   union {
-    float ModelViewMatrix[16];
+    float ModelViewMatrix[16]{};
     float ModMatrix[16];          // old alias, deprecated
   };
 
-  float ProjectionMatrix[16];
-  int background_color_already_set;
-  int do_not_clear;
-  GridInfo grid;
-  int last_grid_size;
+  float ProjectionMatrix[16]{};
+  int background_color_already_set{};
+  int do_not_clear{};
+  GridInfo grid{};
+  int last_grid_size{};
   int n_texture_refreshes { 0 };
   CGO *offscreenCGO { nullptr };
   CGO *offscreenOIT_CGO { nullptr };
   CGO *offscreenOIT_CGO_copy { nullptr };
-  void (*vp_prepareViewPortForStereo)(PyMOLGlobals *, CScene *, int, short, int, int, int, int, int);
-  int vp_times, vp_x, vp_y, vp_owidth, vp_oheight, vp_stereo_mode;
-  float vp_width_scale;
+  void (*vp_prepareViewPortForStereo)(PyMOLGlobals *, CScene *, int, short, int, int, int, int, int){};
+  int vp_times{}, vp_x{}, vp_y{}, vp_owidth{}, vp_oheight{}, vp_stereo_mode{};
+  float vp_width_scale{};
   PickColorManager pickmgr;
 
   CScene(PyMOLGlobals * G) : Block(G), m_ScrollBar(G, false) {}
@@ -212,12 +212,6 @@ class CScene : public Block {
   virtual void draw(CGO* orthoCGO) override;
   virtual void reshape(int width, int height) override;
 
-  // PYMOL-2561, PYMOL-2711 : This structure used to be calloc-ed, this replicates that
-  void *operator new(size_t size) {
-    void *mem = ::operator new(size);
-    memset(mem, 0, size);
-    return mem;
-  }
   SceneView getSceneView() const { return m_view; }
   void setSceneView(const SceneView& view) { m_view = view; }
 };
