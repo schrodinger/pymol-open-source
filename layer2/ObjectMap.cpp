@@ -2239,6 +2239,26 @@ static void swap_endian(char * p, int n, int width) {
   }
 }
 
+static bool validateCCP4LoadType(int& format)
+{
+  switch (format) {
+  case cLoadTypeCCP4Map:
+    format = cLoadTypeCCP4Str;
+  case cLoadTypeCCP4Str:
+  case cLoadTypeCCP4Unspecified:
+  case cLoadTypeMRC:
+    return true;
+  case cLoadTypeCCP4UnspecifiedStr:
+    format = cLoadTypeCCP4Unspecified;
+    return true;
+  case cLoadTypeMRCStr:
+    format = cLoadTypeMRC;
+    return true;
+  default:
+    return false;
+  }
+}
+
 static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int state,
                                  int quiet, int format)
 {
@@ -2269,14 +2289,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   ObjectMapState *ms;
   int expectation;
 
-  switch (format) {
-  case cLoadTypeCCP4Map:
-    format = cLoadTypeCCP4Str;
-  case cLoadTypeCCP4Str:
-  case cLoadTypeCCP4Unspecified:
-  case cLoadTypeMRC:
-    break;
-  default:
+  if (!validateCCP4LoadType(format)) {
     ErrMessage(G, __func__, "wrong format");
     return false;
   }
@@ -2721,14 +2734,7 @@ std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet, 
     return buffer; // empty
   }
 
-  switch (format) {
-  case cLoadTypeCCP4Map:
-    format = cLoadTypeCCP4Str;
-  case cLoadTypeCCP4Str:
-  case cLoadTypeCCP4Unspecified:
-  case cLoadTypeMRC:
-    break;
-  default:
+  if (!validateCCP4LoadType(format)) {
     ErrMessage(G, __func__, "wrong format");
     return {};
   }

@@ -1478,7 +1478,9 @@ struct {
   {"pqr",           cLoadTypeUnknown,   cLoadTypePQR},
   {"macromodel",    cLoadTypeMMDStr,    cLoadTypeMMD},
   // maps
-  {"ccp4",          cLoadTypeCCP4Str,   cLoadTypeUnknown},
+  {"ccp4",          cLoadTypeCCP4Str,   cLoadTypeCCP4Map},
+  {"mrc",           cLoadTypeMRCStr,    cLoadTypeMRC},
+  {"map",           cLoadTypeCCP4UnspecifiedStr, cLoadTypeCCP4Unspecified},
   {"xplor",         cLoadTypeXPLORStr,  cLoadTypeXPLORMap},
   {"phi",           cLoadTypePHIStr,    cLoadTypePHIMap},
   {"dx",            cLoadTypeDXStr,     cLoadTypeDXMap},

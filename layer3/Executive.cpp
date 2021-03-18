@@ -3750,6 +3750,8 @@ ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
   case cLoadTypeMAEStr:
   case cLoadTypeXPLORStr:
   case cLoadTypeCCP4Str:
+  case cLoadTypeCCP4UnspecifiedStr:
+  case cLoadTypeMRCStr:
   case cLoadTypePHIStr:
   case cLoadTypeMMDStr:
   case cLoadTypeMOLStr:
@@ -4030,7 +4032,9 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
   case cLoadTypeCCP4Map:
   case cLoadTypeCCP4Str:
   case cLoadTypeCCP4Unspecified:
+  case cLoadTypeCCP4UnspecifiedStr:
   case cLoadTypeMRC:
+  case cLoadTypeMRCStr:
     obj = ObjectMapLoadCCP4(G, (ObjectMap *) origObj, content,
         state, true, size, quiet, content_format);
     break;
@@ -4178,7 +4182,9 @@ pymol::CObject* ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char* ona
     case cLoadTypeCCP4Map:
     case cLoadTypeCCP4Str:
     case cLoadTypeCCP4Unspecified:
+    case cLoadTypeCCP4UnspecifiedStr:
     case cLoadTypeMRC:
+    case cLoadTypeMRCStr:
     case cLoadTypeFLDMap:
     case cLoadTypeBRIXMap:
     case cLoadTypeGRDMap:

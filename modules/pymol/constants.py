@@ -57,6 +57,8 @@ class _loadable:
     map = 73      # unspecified CCP4 or MRC map
     mrc = 74
     dxstr = 75    # DX file (APBS)
+    mapstr = 76   # unspecified CCP4 or MRC map
+    mrcstr = 77
 
 class loadable(_loadable):
     @classmethod
@@ -76,6 +78,8 @@ _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.mol2 : loadable.mol2str,
               loadable.mmod : loadable.mmodstr,
               loadable.ccp4 : loadable.ccp4str,
+              loadable.mrc : loadable.mrcstr,
+              loadable.map : loadable.mapstr,
               loadable.dx : loadable.dxstr,
               loadable.xyz  : loadable.xyzstr,
               loadable.sdf2 : loadable.sdf2str}
