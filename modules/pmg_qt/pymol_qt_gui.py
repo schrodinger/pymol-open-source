@@ -50,6 +50,10 @@ class PyMOLQtGUI(QtWidgets.QMainWindow, pymol._gui.PyMOLDesktopGUI):
         args = keymapping.keyPressEventToPyMOLButtonArgs(ev)
 
         if args is not None:
+            # Fixes depth-buffer issue with QOpenGLWidget
+            # https://github.com/schrodinger/pymol-open-source/issues/25
+            self.pymolwidget.makeCurrent()
+
             self.pymolwidget.pymol.button(*args)
 
     def closeEvent(self, event):
@@ -930,6 +934,10 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.feedback_timer.start(500)
 
     def doPrompt(self):
+        # Fixes depth-buffer issue with QOpenGLWidget
+        # https://github.com/schrodinger/pymol-open-source/issues/25
+        self.pymolwidget.makeCurrent()
+
         self.doTypedCommand(self.command_get())
         self.pymolwidget._pymolProcess()
         self.lineedit.clear()
