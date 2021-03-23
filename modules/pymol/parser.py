@@ -140,6 +140,14 @@ if True:
             self.cmd._pymol.__script__ = SCRIPT_TOPLEVEL
 
         def exec_python(self, s, secure=False, fallback=False):
+            """Execute a python expression.
+
+            :param s: Python expression
+            :param secure: Must be false, otherwise raise an exception.
+            :param fallback: True if this is a fallback attempt and s may or
+            may not be a valid Python expression (used for better error
+            reporting).
+            """
             if secure:
                 raise SecurityException('Python expressions disallowed in this file')
 
@@ -156,6 +164,14 @@ if True:
         # main parser routine
 
         def parse(self,s,secure=0):
+            """Parse (and execute) commands from a single line. Multiple
+            commands can be concatenated with semicolon, but line feeds are
+            ignored.
+
+            :param s: Line to parse
+            :param secure: If true, then Python code and nested "embed" are not
+            allowed and will raise an exception.
+            """
             try:
                 self.nest += 1
                 return self._parse(s, secure)
@@ -474,28 +490,33 @@ if True:
             layer = self.layer[self.nest]
             return os.path.splitext(os.path.basename(layer.sc_path))[0]
 
-        def stdin_reader(self): # dedicated thread for reading standard input
-            import sys
-            while 1:
-                try:
-                    l = sys.stdin.readline()
-                except IOError:
-                    continue
-                if l!="":
-                    if self.nest==0:
-                        # if we're reading embedded input on stdin
-                        # then bypass PyMOL C code altogether
-                        if self.layer[0].embed_sentinel is not None:
-                            self.parse(l)
-                        else:
-                            self.cmd.do(l, flush=True)
-                    else:
-                        self.cmd.do(l, flush=True)
-                elif not self.cmd._pymol.invocation.options.keep_thread_alive:
-                    self.cmd.quit()
+        def parse_stream(self, stream):
+            """Parse commands line-by-line from an input stream.
+            """
+            for line in stream:
+                # For embedded input on stdin bypass PyMOL C code altogether
+                if self.nest == 0 and self.layer[0].embed_sentinel is not None:
+                    self.parse(line)
                 else:
-                    import time
-                    time.sleep(.1)
+                    self.cmd.do(line, flush=True)
+
+        def stdin_reader(self):
+            """Parse commands line-by-line from standard input. Run this
+            function in a daemon thread, otherwise it would lock up the GUI.
+            """
+            import sys
+
+            if sys.stdin is None:
+                if "pythonw" in sys.executable:
+                    msg = "Cannot listen to STDIN with pythonw.exe, use python.exe instead."
+                else:
+                    msg = "Cannot listen to STDIN, sys.stdin is None."
+                raise RuntimeError(msg)
+
+            self.parse_stream(sys.stdin)
+
+            if not self.cmd._pymol.invocation.options.keep_thread_alive:
+                self.cmd.quit()
 
             self.cmd._pymol._stdin_reader_thread = None
 
