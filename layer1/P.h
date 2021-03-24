@@ -270,6 +270,8 @@ struct _CP_inst {
   SavedThreadRec savedThread[MAX_SAVED_THREAD];
 };
 
+using unique_PyObject_ptr_auto_gil = std::unique_ptr<PyObject, pymol::pyobject_delete_auto_gil>;
+
 namespace pymol
 {
 
@@ -296,7 +298,23 @@ public:
   ~pautoblock() { PAutoUnblock(m_G, m_blocked); }
 };
 
+/**
+ * Shares ownership of a managed Python object.
+ * @param obj Borrowed reference whose ownership will be transferred
+ * @return owning pointer to Python object
+ */
+
+unique_PyObject_ptr_auto_gil make_auto_gil(PyObject* obj);
+
 } // namespace pymol
+
+/**
+ * Makes Deep Copy of PyObject
+ * @param input source PyObject to be copied
+ * @return new PyObject
+ */
+
+unique_PyObject_ptr_auto_gil PDeepCopy(PyMOLGlobals* G, PyObject* input);
 
 /* PyObject *GetBondsDict(void); */
 

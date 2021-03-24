@@ -91,6 +91,21 @@ struct pyobject_delete {
 };
 
 /**
+ * Destruction policy for unique_ptr<PyObject, pymol::pyobject_delete_auto_gil>
+ * Does not require GIL to be held.
+ */
+struct pyobject_delete_auto_gil {
+  void operator()(PyObject* o) const
+  {
+    if (o) {
+      auto gstate = PyGILState_Ensure();
+      Py_DECREF(o);
+      PyGILState_Release(gstate);
+    }
+  }
+};
+
+/**
  * RAII helper to ensure the Python GIL
  */
 class GIL_Ensure

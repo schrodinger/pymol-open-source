@@ -35,6 +35,8 @@ Z* -------------------------------------------------------------------
 #include"Block.h"
 #include"Text.h"
 #include"CGO.h"
+#include"vla.h"
+#include"pymol/type_traits.h"
 
 #define cWizBlank      0
 #define cWizTypeText   1
@@ -52,17 +54,18 @@ Z* -------------------------------------------------------------------
 #define cWizEventView   256
 #define cWizEventPosition 512
 
-typedef struct {
+using cWizEvent_t = int;
+
+struct WizardLine {
   int type;
   WordType text;
   OrthoLineType code;
-} WizardLine;
+};
 
 struct CWizard : public Block {
-  PyObject **Wiz {};
-  WizardLine *Line {};
+  std::vector<unique_PyObject_ptr_auto_gil> Wiz {};
+  pymol::vla<WizardLine> Line {};
   ov_size NLine { 0 };
-  ov_diff Stack { -1 };
   int Pressed { -1 };
   int EventMask { 0 };
   int Dirty {};
@@ -77,6 +80,8 @@ struct CWizard : public Block {
   int drag(int x, int y, int mod) override;
   void draw(CGO* orthoCGO) override;
   int release(int button, int x, int y, int mod) override;
+
+  bool isEventType(cWizEvent_t eventType) const noexcept;
 };
 
 #define cWizardLeftMargin DIP2PIXEL(3)
@@ -126,15 +131,38 @@ int WizardUpdate(PyMOLGlobals * G)
 void WizardPurgeStack(PyMOLGlobals * G)
 {
 #ifndef _PYMOL_NOPY
-  int blocked;
-  ov_diff a;
-  CWizard *I = G->Wizard;
-  blocked = PAutoBlock(G);
-  for(a = I->Stack; a >= 0; a--)
-    Py_XDECREF(I->Wiz[a]);
-  I->Stack = -1;
-  PAutoUnblock(G, blocked);
+  pymol::pautoblock block(G);
+  G->Wizard->Wiz.clear();
 #endif
+}
+
+bool CWizard::isEventType(cWizEvent_t eventType) const noexcept
+{
+  return EventMask & eventType;
+}
+
+/**
+ * Calls wizard's method in python
+ *
+ * @param wiz wizard
+ * @param funcName wizard method name
+ * @param func C/C++ function pointer to call the method (see layer1/P.cpp)
+ * @param fargs function arguments for func
+ * @return result of func
+ */
+
+template<typename Func, typename... FuncArgs>
+auto WizardCallPython(PyMOLGlobals* G, PyObject* wiz, const char* funcName, Func&& func, FuncArgs&&... fargs)
+  -> pymol::result_of_t<Func(PyObject*, const char*, FuncArgs...)>
+{
+  using result_t = pymol::result_of_t<Func(PyObject*, const char*, FuncArgs...)>;
+  result_t result{};
+  assert(wiz != nullptr);
+  if (PyObject_HasAttrString(wiz, funcName)) {
+    result = func(wiz, funcName, std::forward<FuncArgs>(fargs)...);
+    PErrPrintIfOccurred(G);
+  }
+  return result;
 }
 
 int WizardDoSelect(PyMOLGlobals * G, const char* name, int state)
@@ -146,30 +174,23 @@ int WizardDoSelect(PyMOLGlobals * G, const char* name, int state)
   return 0;
 #else
   /* grab 'this' */
-  OrthoLineType buf;
   CWizard *I = G->Wizard;
-  int result = false;
 
   /* if the event is a selection and we're listening for selections */
-  if(I->EventMask & cWizEventSelect)
-    if(I->Stack >= 0)
-      if(I->Wiz[I->Stack]) {
-	/* log if necessary */
-        sprintf(buf, "cmd.get_wizard().do_select('''%s''')", name);
-        PLog(G, buf, cPLog_pym);
-	/* block and call (in Python) the wizard's do_select */
-        PBlock(G);
-        if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_pick_state")) {
-          result = PTruthCallStr1i(I->Wiz[I->Stack], "do_pick_state", state + 1);
-          PErrPrintIfOccurred(G);
-        }
-        if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_select")) {
-          result = PTruthCallStr(I->Wiz[I->Stack], "do_select", name);
-          PErrPrintIfOccurred(G);
-        }
-        PUnblock(G);
-      }
-  return result;
+  if (!I->isEventType(cWizEventSelect)) {
+    return false;
+  }
+  auto wiz = WizardGet(G);
+  if (!wiz) {
+    return false;
+  }
+  /* log if necessary */
+  auto buf = pymol::string_format("cmd.get_wizard().do_select('''%s''')", name);
+  PLog(G, buf, cPLog_pym);
+  /* block and call (in Python) the wizard's do_select */
+  pymol::pblock block(G);
+  WizardCallPython(G, wiz, "do_pick_state", PTruthCallStr1i, state + 1);
+  return WizardCallPython(G, wiz, "do_select", PTruthCallStr, name);
 #endif
 }
 
@@ -181,147 +202,108 @@ void WizardRefresh(PyMOLGlobals * G)
 #ifndef _PYMOL_NOPY
   CWizard *I = G->Wizard;
   char *vla = NULL;
-  PyObject *P_list;
-  ov_size ll;
-  PyObject *i;
-  ov_size a;
-  int blocked;
-  blocked = PAutoBlock(G);
+  pymol::pautoblock block(G);
 
   /* get the current prompt */
-  if(I->Stack >= 0)
-    if(I->Wiz[I->Stack]) {
-      vla = NULL;
-      if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_prompt")) {
-        P_list = PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_prompt", "");
-        PErrPrintIfOccurred(G);
-        if(P_list)
-          PConvPyListToStringVLA(P_list, &vla);
-        Py_XDECREF(P_list);
-      }
-    }
+  auto wiz = WizardGet(G);
+  if (wiz) {
+    auto P_list = WizardCallPython(G, wiz, "get_prompt", PyObject_CallMethod, "");
+    if(P_list)
+      PConvPyListToStringVLA(P_list, &vla);
+    Py_XDECREF(P_list);
+  }
 
   OrthoSetWizardPrompt(G, vla);
 
   /* get the current panel list */
 
   I->NLine = 0;
-  if(I->Stack >= 0)
-    if(I->Wiz[I->Stack]) {
+  if (wiz) {
 
-      I->EventMask = cWizEventPick + cWizEventSelect;
+    I->EventMask = cWizEventPick + cWizEventSelect;
 
-      if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_event_mask")) {
-        i = PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_event_mask", "");
-        PErrPrintIfOccurred(G);
-        if(!PConvPyIntToInt(i, &I->EventMask))
-          I->EventMask = cWizEventPick + cWizEventSelect;
-        Py_XDECREF(i);
-      }
-
-      if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_panel")) {
-        P_list = PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_panel", "");
-        PErrPrintIfOccurred(G);
-        if(P_list) {
-          if(PyList_Check(P_list)) {
-            ll = PyList_Size(P_list);
-            VLACheck(I->Line, WizardLine, ll);
-            for(a = 0; a < ll; a++) {
-              /* fallback defaults */
-
-              I->Line[a].text[0] = 0;
-              I->Line[a].code[0] = 0;
-              I->Line[a].type = 0;
-
-              i = PyList_GetItem(P_list, a);
-              if(PyList_Check(i))
-                if(PyList_Size(i) > 2) {
-                  PConvPyObjectToInt(PyList_GetItem(i, 0), &I->Line[a].type);
-                  PConvPyObjectToStrMaxLen(PyList_GetItem(i, 1),
-                                           I->Line[a].text, sizeof(WordType) - 1);
-                  PConvPyObjectToStrMaxLen(PyList_GetItem(i, 2),
-                                           I->Line[a].code, sizeof(OrthoLineType) - 1);
-                }
-            }
-            I->NLine = ll;
-          }
-        }
-        Py_XDECREF(P_list);
-      }
+    auto i = WizardCallPython(G, wiz, "get_event_mask", PyObject_CallMethod, "");
+    if (i) {
+      if(!PConvPyIntToInt(i, &I->EventMask))
+        I->EventMask = cWizEventPick + cWizEventSelect;
+      Py_XDECREF(i);
     }
+
+    auto P_list = WizardCallPython(G, wiz, "get_panel", PyObject_CallMethod, "");
+    if(P_list) {
+      if(PyList_Check(P_list)) {
+        std::size_t ll = PyList_Size(P_list);
+        I->Line.check(ll);
+        for(std::size_t a = 0u; a < ll; a++) {
+          /* fallback defaults */
+
+          I->Line[a].text[0] = 0;
+          I->Line[a].code[0] = 0;
+          I->Line[a].type = 0;
+
+          i = PyList_GetItem(P_list, a);
+          if(PyList_Check(i))
+            if(PyList_Size(i) > 2) {
+              PConvPyObjectToInt(PyList_GetItem(i, 0), &I->Line[a].type);
+              PConvPyObjectToStrMaxLen(PyList_GetItem(i, 1),
+                                       I->Line[a].text, sizeof(WordType) - 1);
+              PConvPyObjectToStrMaxLen(PyList_GetItem(i, 2),
+                                       I->Line[a].code, sizeof(OrthoLineType) - 1);
+            }
+        }
+        I->NLine = ll;
+      }
+      Py_XDECREF(P_list);
+    }
+  }
   if(I->NLine) {
     int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
     OrthoReshapeWizard(G, LineHeight * I->NLine + 4);
   } else {
     OrthoReshapeWizard(G, 0);
   }
-  PAutoUnblock(G, blocked);
 #endif
 }
 
 
 /*========================================================================*/
-void WizardSet(PyMOLGlobals * G, PyObject * wiz, int replace)
+pymol::Result<> WizardSet(PyMOLGlobals * G, PyObject * wiz, bool replace)
 {
 #ifndef _PYMOL_NOPY
   CWizard *I = G->Wizard;
-  int blocked;
-  blocked = PAutoBlock(G);
-  if(I->Wiz) {
-    if((!wiz) || (wiz == Py_None) || ((I->Stack >= 0) && replace)) {
-      if(I->Stack >= 0) {       /* pop */
-        PyObject *old_wiz = I->Wiz[I->Stack];
-
-        /* remove wizard from stack first */
-
-        I->Wiz[I->Stack] = NULL;
-        I->Stack--;
-
-        if(old_wiz) {
-          /* then call cleanup, etc. */
-          if(PyObject_HasAttrString(old_wiz, "cleanup")) {
-            PXDecRef(PYOBJECT_CALLMETHOD(old_wiz, "cleanup", ""));
-            PErrPrintIfOccurred(G);
-          }
-          Py_DECREF(old_wiz);
-        }
-      }
-    }
-    if(wiz && (wiz != Py_None)) {       /* push */
-      if(wiz) {
-        I->Stack++;
-        VLACheck(I->Wiz, PyObject *, I->Stack);
-        I->Wiz[I->Stack] = wiz;
-        if(I->Wiz[I->Stack])
-          Py_INCREF(I->Wiz[I->Stack]);
+  pymol::pautoblock block(G);
+  if ((!wiz) || (wiz == Py_None) || (!I->Wiz.empty() && replace)) {
+    /* remove wizard from stack first */
+    if (!I->Wiz.empty()) {
+      auto old_wiz = std::move(I->Wiz.back());
+      I->Wiz.pop_back();
+      if (old_wiz) {
+        /* then call cleanup, etc. */
+        auto result = WizardCallPython(G, old_wiz.get(), "cleanup", PyObject_CallMethod, "");
+        PXDecRef(result);
       }
     }
   }
+  if (wiz && (wiz != Py_None)) {       /* push */
+    I->Wiz.emplace_back(PIncRef(wiz));
+  }
   WizardRefresh(G);
-  PAutoUnblock(G, blocked);
 #endif
+  return {};
 }
 
 
 /*========================================================================*/
 int WizardActive(PyMOLGlobals * G)
 {
-  CWizard *I = G->Wizard;
-  if(!I->Wiz)
-    return (false);
-  if(I->Stack < 0)
-    return false;
-  return (I->Wiz[I->Stack] && 1);
+  return !G->Wizard->Wiz.empty();
 }
 
 
 /*========================================================================*/
 Block *WizardGetBlock(PyMOLGlobals * G)
 {
-  CWizard *I = G->Wizard;
-  {
-    return (I);
-  }
+  return G->Wizard;
 }
 
 
@@ -335,32 +317,23 @@ int WizardDoPick(PyMOLGlobals * G, int bondFlag, int state)
   return 0;
 #else
   CWizard *I = G->Wizard;
-  int result = false;
 
   /* process the pick if it happened and we're listening for it */
-  if(I->EventMask & cWizEventPick)
-    if(I->Stack >= 0)
-      if(I->Wiz[I->Stack]) {
-        if(bondFlag)
-          PLog(G, "cmd.get_wizard().do_pick(1)", cPLog_pym);
-        else
-          PLog(G, "cmd.get_wizard().do_pick(0)", cPLog_pym);
+  if (!I->isEventType(cWizEventPick)) {
+    return false;
+  }
+  auto wiz = WizardGet(G);
+  if (!wiz) {
+    return false;
+  }
+  if(bondFlag)
+    PLog(G, "cmd.get_wizard().do_pick(1)", cPLog_pym);
+  else
+    PLog(G, "cmd.get_wizard().do_pick(0)", cPLog_pym);
 
-        PBlock(G);
-        if(I->Stack >= 0)
-          if(I->Wiz[I->Stack]) {
-            if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_pick_state")) {
-              result = PTruthCallStr1i(I->Wiz[I->Stack], "do_pick_state", state + 1);
-              PErrPrintIfOccurred(G);
-            }
-            if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_pick")) {
-              result = PTruthCallStr1i(I->Wiz[I->Stack], "do_pick", bondFlag);
-              PErrPrintIfOccurred(G);
-            }
-          }
-        PUnblock(G);
-      }
-  return result;
+  pymol::pblock block(G);
+  WizardCallPython(G, wiz, "do_pick_state", PTruthCallStr1i, state + 1);
+  return WizardCallPython(G, wiz, "do_pick", PTruthCallStr1i, bondFlag);
 #endif
 }
 
@@ -370,24 +343,17 @@ int WizardDoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
   return 0;
 #else
   CWizard *I = G->Wizard;
-  int result = false;
-  if(I->EventMask & cWizEventKey)
-    if(I->Stack >= 0)
-      if(I->Wiz[I->Stack]) {
-        OrthoLineType buffer;
-        sprintf(buffer, "cmd.get_wizard().do_key(%d,%d,%d,%d)", k, x, y, mod);
-        PLog(G, buffer, cPLog_pym);
-        PBlock(G);
-        if(I->Stack >= 0)
-          if(I->Wiz[I->Stack]) {
-            if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_key")) {
-              result = PTruthCallStr4i(I->Wiz[I->Stack], "do_key", k, x, y, mod);
-              PErrPrintIfOccurred(G);
-            }
-          }
-        PUnblock(G);
-      }
-  return result;
+  if (!I->isEventType(cWizEventKey)) {
+    return false;
+  }
+  auto wiz = WizardGet(G);
+  if (!wiz) {
+    return false;
+  }
+  auto buffer = pymol::string_format("cmd.get_wizard().do_key(%d,%d,%d,%d)", k, x, y, mod);
+  PLog(G, buffer, cPLog_pym);
+  pymol::pblock block(G);
+  return WizardCallPython(G, wiz, "do_key", PTruthCallStr4i, k, x, y, mod);
 #endif
 }
 
@@ -398,30 +364,26 @@ int WizardDoPosition(PyMOLGlobals * G, int force)
 #else
   CWizard *I = G->Wizard;
   int result = false;
-  if(I->EventMask & cWizEventPosition)
-    if(I->Stack >= 0)
-      if(I->Wiz[I->Stack]) {
-        int changed = force;
-        if(!changed) {
-          float pos[3];
-          SceneGetCenter(G, pos);
-          changed = ((fabs(pos[0] - I->LastUpdatedPosition[0]) > R_SMALL4) ||
-                     (fabs(pos[1] - I->LastUpdatedPosition[1]) > R_SMALL4) ||
-                     (fabs(pos[2] - I->LastUpdatedPosition[2]) > R_SMALL4));
-        }
-        if(changed) {
-          SceneGetCenter(G, I->LastUpdatedPosition);
-          PBlock(G);
-          if(I->Stack >= 0)
-            if(I->Wiz[I->Stack]) {
-              if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_position")) {
-                result = PTruthCallStr0(I->Wiz[I->Stack], "do_position");
-                PErrPrintIfOccurred(G);
-              }
-            }
-          PUnblock(G);
-        }
-      }
+  if (!I->isEventType(cWizEventPosition)) {
+    return false;
+  }
+  auto wiz = WizardGet(G);
+  if (!wiz) {
+    return false;
+  }
+  int changed = force;
+  if(!changed) {
+    float pos[3];
+    SceneGetCenter(G, pos);
+    changed = ((fabs(pos[0] - I->LastUpdatedPosition[0]) > R_SMALL4) ||
+               (fabs(pos[1] - I->LastUpdatedPosition[1]) > R_SMALL4) ||
+               (fabs(pos[2] - I->LastUpdatedPosition[2]) > R_SMALL4));
+  }
+  if(changed) {
+    SceneGetCenter(G, I->LastUpdatedPosition);
+    pymol::pblock block(G);
+    result = WizardCallPython(G, wiz, "do_position", PTruthCallStr0);
+  }
   return result;
 #endif
 }
@@ -432,29 +394,25 @@ int WizardDoView(PyMOLGlobals * G, int force)
   return 0;
 #else
   CWizard *I = G->Wizard;
+  if (!I->isEventType(cWizEventView)) {
+    return false;
+  }
+  auto wiz = WizardGet(G);
+  if (!wiz) {
+    return false;
+  }
   int result = false;
-  if(I->EventMask & cWizEventView)
-    if(I->Stack >= 0)
-      if(I->Wiz[I->Stack]) {
-        int changed = force;
-        if(!changed) {
-          SceneViewType view;
-          SceneGetView(G, view);
-          changed = !SceneViewEqual(view, I->LastUpdatedView);
-        }
-        if(changed) {
-          SceneGetView(G, I->LastUpdatedView);
-          PBlock(G);
-          if(I->Stack >= 0)
-            if(I->Wiz[I->Stack]) {
-              if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_view")) {
-                result = PTruthCallStr0(I->Wiz[I->Stack], "do_view");
-                PErrPrintIfOccurred(G);
-              }
-            }
-          PUnblock(G);
-        }
-      }
+  int changed = force;
+  if(!changed) {
+    SceneViewType view;
+    SceneGetView(G, view);
+    changed = !SceneViewEqual(view, I->LastUpdatedView);
+  }
+  if(changed) {
+    SceneGetView(G, I->LastUpdatedView);
+    pymol::pblock block(G);
+    result = WizardCallPython(G, wiz, "do_view", PTruthCallStr0);
+  }
   return result;
 #endif
 }
@@ -465,24 +423,17 @@ int WizardDoScene(PyMOLGlobals * G)
   return 0;
 #else
   CWizard *I = G->Wizard;
-  int result = false;
-  if(I->EventMask & cWizEventScene)
-    if(I->Stack >= 0)
-      if(I->Wiz[I->Stack]) {
-        OrthoLineType buffer;
-        sprintf(buffer, "cmd.get_wizard().do_scene()");
-        PLog(G, buffer, cPLog_pym);
-        PBlock(G);
-        if(I->Stack >= 0)
-          if(I->Wiz[I->Stack]) {
-            if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_scene")) {
-              result = PTruthCallStr0(I->Wiz[I->Stack], "do_scene");
-              PErrPrintIfOccurred(G);
-            }
-          }
-        PUnblock(G);
-      }
-  return result;
+  if (!I->isEventType(cWizEventScene)) {
+    return false;
+  }
+  auto wiz = WizardGet(G);
+  if (!wiz) {
+    return false;
+  }
+  std::string buffer = "cmd.get_wizard().do_scene()";
+  PLog(G, buffer, cPLog_pym);
+  pymol::pblock block(G);
+  return WizardCallPython(G, wiz, "do_scene", PTruthCallStr0);
 #endif
 }
 
@@ -492,24 +443,17 @@ int WizardDoDirty(PyMOLGlobals * G)
   return 0;
 #else
   CWizard *I = G->Wizard;
-  int result = false;
-  if(I->EventMask & cWizEventDirty)
-    if(I->Stack >= 0)
-      if(I->Wiz[I->Stack]) {
-        OrthoLineType buffer;
-        sprintf(buffer, "cmd.get_wizard().do_dirty()");
-        PLog(G, buffer, cPLog_pym);
-        PBlock(G);
-        if(I->Stack >= 0)
-          if(I->Wiz[I->Stack]) {
-            if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_dirty")) {
-              result = PTruthCallStr0(I->Wiz[I->Stack], "do_dirty");
-              PErrPrintIfOccurred(G);
-            }
-          }
-        PUnblock(G);
-      }
-  return result;
+  if (!I->isEventType(cWizEventDirty)) {
+    return false;
+  }
+  auto wiz = WizardGet(G);
+  if (!wiz) {
+    return false;
+  }
+  std::string buffer = "cmd.get_wizard().do_dirty()";
+  PLog(G, buffer, cPLog_pym);
+  pymol::pblock block(G);
+  return WizardCallPython(G, wiz, "do_dirty", PTruthCallStr0);
 #endif
 }
 
@@ -519,25 +463,18 @@ int WizardDoState(PyMOLGlobals * G)
   return 0;
 #else
   CWizard *I = G->Wizard;
-  int result = false;
-  if(I->EventMask & cWizEventState)
-    if(I->Stack >= 0)
-      if(I->Wiz[I->Stack]) {
-        OrthoLineType buffer;
-        int state = SettingGetGlobal_i(G, cSetting_state);
-        sprintf(buffer, "cmd.get_wizard().do_state(%d)", state);
-        PLog(G, buffer, cPLog_pym);
-        PBlock(G);
-        if(I->Stack >= 0)
-          if(I->Wiz[I->Stack]) {
-            if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_state")) {
-              result = PTruthCallStr1i(I->Wiz[I->Stack], "do_state", state);
-              PErrPrintIfOccurred(G);
-            }
-          }
-        PUnblock(G);
-      }
-  return result;
+  if (!I->isEventType(cWizEventState)) {
+    return false;
+  }
+  auto wiz = WizardGet(G);
+  if (!wiz) {
+    return false;
+  }
+  int state = SettingGet<int>(G, cSetting_state);
+  auto buffer = pymol::string_format("cmd.get_wizard().do_state(%d)", state);
+  PLog(G, buffer, cPLog_pym);
+  pymol::pblock block(G);
+  return WizardCallPython(G, wiz, "do_state", PTruthCallStr1i, state);
 #endif
 }
 
@@ -547,25 +484,18 @@ int WizardDoFrame(PyMOLGlobals * G)
   return 0;
 #else
   CWizard *I = G->Wizard;
-  int result = false;
-  if(I->EventMask & cWizEventFrame)
-    if(I->Stack >= 0)
-      if(I->Wiz[I->Stack]) {
-        OrthoLineType buffer;
-        int frame = SettingGetGlobal_i(G, cSetting_frame) + 1;
-        sprintf(buffer, "cmd.get_wizard().do_frame(%d)", frame);
-        PLog(G, buffer, cPLog_pym);
-        PBlock(G);
-        if(I->Stack >= 0)
-          if(I->Wiz[I->Stack]) {
-            if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_frame")) {
-              result = PTruthCallStr1i(I->Wiz[I->Stack], "do_frame", frame);
-              PErrPrintIfOccurred(G);
-            }
-          }
-        PUnblock(G);
-      }
-  return result;
+  if (!I->isEventType(cWizEventFrame)) {
+    return false;
+  }
+  auto wiz = WizardGet(G);
+  if (!wiz) {
+    return false;
+  }
+  int frame = SettingGet<int>(G, cSetting_frame) + 1;
+  auto buffer = pymol::string_format("cmd.get_wizard().do_frame(%d)", frame);
+  PLog(G, buffer, cPLog_pym);
+  pymol::pblock block(G);
+  return WizardCallPython(G, wiz, "do_frame", PTruthCallStr1i, frame);
 #endif
 }
 
@@ -575,25 +505,18 @@ int WizardDoSpecial(PyMOLGlobals * G, int k, int x, int y, int mod)
   return 0;
 #else
   CWizard *I = G->Wizard;
-  int result = false;
 
-  if(I->EventMask & cWizEventSpecial)
-    if(I->Stack >= 0)
-      if(I->Wiz[I->Stack]) {
-        OrthoLineType buffer;
-        sprintf(buffer, "cmd.get_wizard().do_special(%d,%d,%d,%d)", k, x, y, mod);
-        PLog(G, buffer, cPLog_pym);
-        PBlock(G);
-        if(I->Stack >= 0)
-          if(I->Wiz[I->Stack]) {
-            if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_special")) {
-              result = PTruthCallStr4i(I->Wiz[I->Stack], "do_special", k, x, y, mod);
-              PErrPrintIfOccurred(G);
-            }
-          }
-        PUnblock(G);
-      }
-  return result;
+  if (!I->isEventType(cWizEventSpecial)) {
+    return false;
+  }
+  auto wiz = WizardGet(G);
+  if (!wiz) {
+    return false;
+  }
+  auto buffer = pymol::string_format("cmd.get_wizard().do_special(%d,%d,%d,%d)", k, x, y, mod);
+  PLog(G, buffer, cPLog_pym);
+  pymol::pblock block(G);
+  return WizardCallPython(G, wiz, "do_special", PTruthCallStr4i, k, x, y, mod);
 #endif
 }
 
@@ -606,11 +529,9 @@ int CWizard::click(int button, int x, int y, int mod)
 #else
   PyMOLGlobals *G = m_G;
   CWizard *I = G->Wizard;
-  int a;
-  PyObject *menuList = NULL;
-  int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
+  int LineHeight = DIP2PIXEL(SettingGet<int>(G, cSetting_internal_gui_control_size));
 
-  a = ((rect.top - (y + cWizardClickOffset)) - cWizardTopMargin) / LineHeight;
+  int a = ((rect.top - (y + cWizardClickOffset)) - cWizardTopMargin) / LineHeight;
   if((a >= 0) && ((ov_size) a < I->NLine)) {
     switch (I->Line[a].type) {
     case cWizTypeButton:
@@ -619,24 +540,21 @@ int CWizard::click(int button, int x, int y, int mod)
       OrthoDirty(G);
       break;
     case cWizTypePopUp:
-      PBlock(G);
-      if(I->Stack >= 0)
-        if(I->Wiz[I->Stack]) {
-          if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_menu")) {
-            menuList =
-              PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_menu", "s", I->Line[a].code);
-            PErrPrintIfOccurred(G);
-          }
+      {
+        pymol::pblock block(G);
+        auto wiz = WizardGet(G);
+        PyObject* menuList = NULL;
+        if (wiz) {
+          menuList = WizardCallPython(G, wiz, "get_menu", PyObject_CallMethod, "s", I->Line[a].code);
         }
 
-      PErrPrintIfOccurred(G);
-      if(menuList && (menuList != Py_None)) {
-        int my = rect.top - (cWizardTopMargin + a * LineHeight) - 2;
+        if(menuList && (menuList != Py_None)) {
+          int my = rect.top - (cWizardTopMargin + a * LineHeight) - 2;
 
-        PopUpNew(G, x, my, x, y, false, menuList, NULL);
+          PopUpNew(G, x, my, x, y, false, menuList, NULL);
+        }
+        Py_XDECREF(menuList);
       }
-      Py_XDECREF(menuList);
-      PUnblock(G);
       break;
     }
   }
@@ -703,12 +621,13 @@ int CWizard::release(int button, int x, int y, int mod)
   if((a >= 0) && ((ov_size) a < I->NLine)) {
     switch (I->Line[a].type) {
     case cWizTypeButton:
-      if(I->Stack >= 0)
-        if(I->Wiz[I->Stack]) {
+      {
+        if (auto wiz = WizardGet(G)) {
           PLog(G, I->Line[a].code, cPLog_pym);
           PParse(G, I->Line[a].code);
           PFlush(G);
         }
+      }
       break;
     }
   }
@@ -915,72 +834,51 @@ void CWizard::draw(CGO* orthoCGO)
 
 
 /*========================================================================*/
-PyObject *WizardGet(PyMOLGlobals * G)
+PyObject* WizardGet(PyMOLGlobals* G)
 {
-  CWizard *I = G->Wizard;
-  if(!I->Wiz)
-    return (NULL);
-  if(I->Stack < 0)
-    return (NULL);
-  return (I->Wiz[I->Stack]);
+  auto I = G->Wizard;
+  return I->Wiz.empty() ? nullptr : I->Wiz.back().get();
 }
 
-
 /*========================================================================*/
-PyObject *WizardGetStack(PyMOLGlobals * G)
+PyObject* WizardGetStack(PyMOLGlobals * G)
 {
 #ifdef _PYMOL_NOPY
-  return NULL;
+  return nullptr;
 #else
   CWizard *I = G->Wizard;
-  PyObject *result;
-
-  result = PyList_New(I->Stack - (-1));
-  if(I->Wiz) {
-    ov_diff a;
-    for(a = I->Stack; a >= 0; a--) {
-      Py_INCREF(I->Wiz[a]);
-      PyList_SetItem(result, a, I->Wiz[a]);     /* steals ref */
-    }
+  auto result = PyList_New(I->Wiz.size());
+  for (std::size_t i = 0; i < I->Wiz.size(); i++) {
+    auto wiz = I->Wiz[i].get();
+    Py_INCREF(wiz);
+    PyList_SetItem(result, i, wiz);     /* steals ref */
   }
-  return (result);
+  return result;
 #endif
 }
 
 
 /*========================================================================*/
-int WizardSetStack(PyMOLGlobals * G, PyObject * list)
+pymol::Result<> WizardSetStack(PyMOLGlobals * G, PyObject * list)
 {
 #ifdef _PYMOL_NOPY
-  return 0;
+  return pymol::make_error("Python not available.");
 #else
-
   CWizard *I = G->Wizard;
-  int ok = true;
 
-  if(I->Wiz) {
-    WizardPurgeStack(G);
-    if(ok)
-      ok = (list != NULL);
-    if(ok)
-      ok = PyList_Check(list);
-    if(ok) {
-      I->Stack = PyList_Size(list) - 1;
-      if(I->Stack >= 0) {
-        ov_diff a;
-        VLACheck(I->Wiz, PyObject *, I->Stack);
-        for(a = I->Stack; a >= 0; a--) {
-          I->Wiz[a] = PyList_GetItem(list, a);
-          Py_INCREF(I->Wiz[a]);
-        }
-      }
-    }
-    if(ok)
-      WizardRefresh(G);
-    if(ok)
-      OrthoDirty(G);
+  if (list == nullptr || !PyList_Check(list)) {
+    return pymol::make_error("Invalid list.");
   }
-  return (ok);
+  WizardPurgeStack(G);
+  auto size = PyList_Size(list);
+  pymol::pautoblock block(G);
+  for (int a = 0; a < size; a++) {
+    auto wiz = PyList_GetItem(list, a);
+    I->Wiz.emplace_back(PIncRef(wiz));
+  }
+  WizardRefresh(G);
+  OrthoDirty(G);
+  return {};
 #endif
 }
 
@@ -988,30 +886,50 @@ int WizardSetStack(PyMOLGlobals * G, PyObject * list)
 /*========================================================================*/
 int WizardInit(PyMOLGlobals * G)
 {
-  CWizard *I = NULL;
-  if((I = (G->Wizard = new CWizard(G)))) {
+  auto I = new CWizard(G);
+  G->Wizard = I;
+  I->active = true;
+  I->TextColor[0] = 0.2F;
+  I->TextColor[1] = 1.0F;
+  I->TextColor[2] = 0.2F;
 
-    I->active = true;
-    I->TextColor[0] = 0.2F;
-    I->TextColor[1] = 1.0F;
-    I->TextColor[2] = 0.2F;
+  OrthoAttach(G, I, cOrthoTool);
 
-    OrthoAttach(G, I, cOrthoTool);
-
-    I->Line = VLAlloc(WizardLine, 1);
-    I->Wiz = VLAlloc(PyObject *, 10);
-    return 1;
-  } else
-    return 0;
+  I->Line.resize(1);
+  return 1;
 }
 
 
 /*========================================================================*/
 void WizardFree(PyMOLGlobals * G)
 {
-  CWizard *I = G->Wizard;
   WizardPurgeStack(G);
-  VLAFreeP(I->Line);
-  VLAFreeP(I->Wiz);
   DeleteP(G->Wizard);
 }
+
+std::vector<unique_PyObject_ptr_auto_gil> WizardGetWizardCopies(PyMOLGlobals* G)
+{
+  auto I = G->Wizard;
+  std::vector<unique_PyObject_ptr_auto_gil> copies;
+  copies.reserve(I->Wiz.size());
+  pymol::pautoblock block(G);
+  for (std::size_t i = 0u; i < I->Wiz.size(); i++) {
+    copies.emplace_back(PIncRef(I->Wiz[i].get()));
+  }
+  return copies;
+}
+
+void WizardSetWizards(PyMOLGlobals* G, const std::vector<unique_PyObject_ptr_auto_gil>& wizs)
+{
+  auto I = G->Wizard;
+  WizardPurgeStack(G);
+  I->Wiz.reserve(wizs.size());
+  pymol::pautoblock block(G);
+  for (std::size_t i = 0u; i < wizs.size(); i++) {
+    I->Wiz.emplace_back(PIncRef(wizs[i].get()));
+  }
+  WizardRefresh(G);
+  WizardDirty(G);
+  OrthoDirty(G);
+}
+
