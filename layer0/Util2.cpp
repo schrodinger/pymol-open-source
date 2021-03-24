@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "Util2.h"
+#include "pymol/algorithm.h"
 
 /**
  * strsplit: split string `s` by character `delim`
@@ -115,6 +116,16 @@ double pretty_f2d(float f)
   int digits = std::ceil(std::log10(std::fabs(f)));
   auto factor = std::pow(10.0L, 7 - digits);
   return std::round(f * factor) / factor;
+}
+
+bool string_equal_case(
+    pymol::zstring_view str1, pymol::zstring_view str2, bool case_insensitive)
+{
+  return pymol::ranges::equal(str1, str2,
+      [case_insensitive](char c1, char c2) {
+        return case_insensitive ? std::tolower(c1) == std::tolower(c2)
+                                : c1 == c2;
+      });
 }
 
 } // namespace pymol

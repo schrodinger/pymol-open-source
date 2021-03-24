@@ -128,6 +128,17 @@ inline bool starts_with(pymol::zstring_view str, pymol::zstring_view pre)
 
 double pretty_f2d(float v);
 
+/**
+ * Compares two strings with consideration of case sensitivity
+ * @param str1 first string
+ * @param str2 second string
+ * @param case_insensitive determines whether the comparison should not consider
+ * case
+ */
+
+bool string_equal_case(pymol::zstring_view str1, pymol::zstring_view str2,
+    bool case_insensitive = true);
+
 template <typename T> struct cache_value {
   using value_type = T;
 
