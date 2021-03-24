@@ -6,6 +6,9 @@
 namespace pymol
 {
 
+template<typename T>
+using decay_t = typename std::decay<T>::type;
+
 template <bool B, typename T = void>
 using enable_if_t = typename std::enable_if<B, T>::type;
 
@@ -23,6 +26,9 @@ using remove_extent_t = typename std::remove_extent<T>::type;
 
 template <typename T, typename U>
 using common_type_t = typename std::common_type<T, U>::type;
+
+template <typename T>
+using result_of_t = typename std::result_of<T>::type;
 
 // Non-STL
 template <typename T, typename U>

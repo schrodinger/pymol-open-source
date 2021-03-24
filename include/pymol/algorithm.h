@@ -2,6 +2,11 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
+#include "pymol/type_traits.h"
+#include <cstdlib>
+
+#include "pymol/type_traits.h"
 
 namespace pymol
 {
@@ -42,4 +47,98 @@ bool equal(InIter1 first1, InIter1 last1, InIter2 first2)
   return true;
 }
 
+/**
+ * @brief Checks whether two floating point values are nearly equal
+ * @param first floating point number
+ * @param second floating point number
+ * @param epsilon rounding cutoff
+ * @tparam T first floating point type
+ * @tparam U second floating point type
+ */
+
+template <typename T, typename U, typename CommonT = pymol::common_type_t<T, U>>
+bool almost_equal(T a, U b, CommonT epsilon = 1e-6)
+{
+  return std::abs(a - b) <= epsilon;
+}
+
+namespace ranges
+{
+/**
+ * @brief Checks whether an element in a container satisfies a given predicate
+ * @param cont container to check.
+ * @param pred predicate to satisfy
+ * @tparam ContainerT type of container
+ * @tparam Pred type of predicate
+ */
+
+template <typename RangeT, typename ValueT>
+bool contains(const RangeT& cont, const ValueT& value)
+{
+  auto it = std::find(std::begin(cont), std::end(cont), value);
+  return it != std::end(cont);
+}
+
+/**
+ * @brief Checks whether an element in a container satisfies a given predicate
+ * @param cont container to check.
+ * @param pred predicate to satisfy
+ * @tparam ContainerT type of container
+ * @tparam Pred type of predicate
+ */
+
+template <typename RangeT, typename Pred>
+bool contains_if(const RangeT& cont, Pred pred)
+{
+  auto it = std::find_if(std::begin(cont), std::end(cont), pred);
+  return it != std::end(cont);
+}
+
+/**
+ * @brief checks to see if two ranges are equal
+ * @param first reference range
+ * @param second other range
+ * @tparam Range type
+ * @return true if both ranges are equal
+ */
+
+template <typename RangeT1, typename RangeT2>
+bool equal(const RangeT1& first, const RangeT2& second)
+{
+  auto range1Size = std::distance(std::begin(first), std::end(first));
+  auto range2Size = std::distance(std::begin(second), std::end(second));
+  if (range1Size != range2Size) {
+    return false;
+  }
+  return pymol::equal(std::begin(first), std::end(first), std::begin(second));
+}
+
+/**
+ * @brief checks to see if two ranges are equal
+ * @param first reference range
+ * @param second other range
+ * @tparam Range type
+ * @return true if both ranges are equal
+ */
+
+template <typename RangeT1, typename RangeT2, typename Pred>
+bool equal(const RangeT1& first, const RangeT2& second, Pred p)
+{
+  auto range1Size = std::distance(std::begin(first), std::end(first));
+  auto range2Size = std::distance(std::begin(second), std::end(second));
+  if (range1Size != range2Size) {
+    return false;
+  }
+  auto firstStart = std::begin(first);
+  auto firstEnd = std::end(first);
+  auto secondStart = std::begin(second);
+  for (; firstStart != firstEnd; ++firstStart, ++secondStart) {
+    if (!p(*firstStart, *secondStart)) {
+      return false;
+    }
+  }
+  return true;
+  //return pymol::equal(std::begin(first), std::end(first), std::begin(second));
+}
+} // namespace ranges
 } // namespace pymol
