@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 
 #include"MemoryDebug.h"
 #include"Err.h"
+#include"Result.h"
 
 #define ListInit(List) List = NULL
 
@@ -40,6 +41,29 @@ Z* -------------------------------------------------------------------
   else \
 	 (List) = Elem; \
   (Elem)->Link = NULL; \
+}
+
+/**
+ * @brief appends element to list
+ * @param list list to append element to
+ * @param ele element to append
+ * @tparam ElemType type of the element
+ */
+
+template<typename ElemType>
+void ListAppendT(ElemType*& list, ElemType* ele){
+  ElemType* current = list;
+  ElemType* previous = nullptr;
+  while(current){
+    previous = current;
+    current = current->next;
+  }
+  if(previous){
+    previous->next = ele;
+  } else{
+    list = ele;
+  }
+  ele->next = nullptr;
 }
 
 #define ListFree(List,Link,ElemType) \
@@ -79,6 +103,38 @@ Z* -------------------------------------------------------------------
 	 } \
 }
 
+/**
+ * @brief removes element from list
+ * @param list list to remove element from
+ * @param ele element to remove
+ * @tparam ElemType type of the element
+ * @return removed element
+ * @note Removed element should be same as ele input.
+ */
+
+template<typename ElemType>
+ElemType* ListDetachT(ElemType*& list, ElemType* ele){
+  ElemType* current = list;
+  ElemType* previous = nullptr;
+  while(current){
+    if(current == ele){
+      break;
+    }
+    previous = current;
+    current = current->next;
+  }
+  if(current){
+    if(previous){
+      previous->next = current->next;
+    }
+    else{
+      list = current->next;
+    }
+    ele->next = nullptr;
+  }
+  return ele;
+}
+
 #define ListDelete(List,Elem,Link,ElemType) \
 { \
    ElemType *copy = (Elem); \
@@ -111,5 +167,54 @@ Z* -------------------------------------------------------------------
 }
 
 #define ListElemFree(Elem) { mfree(Elem); Elem = NULL; }
+
+/**
+ * Retrives position of element in list
+ * @param ele target element
+ * @return position in list
+ */
+
+template<typename ElemType>
+pymol::Result<std::size_t> ListGetPosition(ElemType*& list, ElemType* ele)
+{
+  ElemType* current = list;
+  std::size_t i = 0;
+  for (; current; i++, current = current->next) {
+    if (current == ele) {
+      return i;
+    }
+  }
+  return pymol::make_error("Element not found");
+}
+
+/**
+ * Inserts an element at given position
+ * @param ele target element
+ * @param pos position in list
+ */
+
+template<typename ElemType>
+pymol::Result<> ListInsertAt(ElemType*& list, ElemType* ele, std::size_t pos)
+{
+  ElemType* current = list;
+  ElemType* previous = nullptr;
+  std::size_t i = 0;
+  while (current) {
+    if (i++ == pos) {
+      ele->next = current;
+      if (previous) {
+        previous->next = ele;
+      }
+      return {};
+    }
+    previous = current;
+    current = current->next;
+  }
+  if (i == pos) {
+    previous->next = ele;
+    return {};
+  }
+  return pymol::make_error("Invalid pos");
+}
 
 #endif /* _H_ListMacros */
