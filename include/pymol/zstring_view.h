@@ -35,6 +35,7 @@ public:
   typedef const CharT* const_iterator;
   typedef const CharT& const_reference;
   typedef size_t size_type;
+  typedef CharT value_type;
 
   enum : size_type { npos = size_type(-1) };
 
