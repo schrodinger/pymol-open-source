@@ -29,8 +29,10 @@ public:
   int grid_slot;
   CGO *gridSlotSelIndicatorsCGO;
 
+  void setEnabled(PyMOLGlobals* G, bool enabled);
   const char* baseName() const;
   bool isHidden(bool hide_underscore_names) const;
   bool isHiddenNotRecursive(bool hide_underscore_names) const;
   bool isChildOf(SpecRec const*) const;
 };
+

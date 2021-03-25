@@ -1103,7 +1103,10 @@ static PyObject *CmdSetName(PyObject * self, PyObject * args)
   API_ASSERT(APIEnterNotModal(G));
   auto result = ExecutiveSetName(G, str1, str2);
   APIExit(G);
-  return APIResult(G, result);
+  if (result) {
+    return APISuccess();
+  }
+  return APIFailure(G, result.error());
 }
 
 static PyObject *CmdGetBondPrint(PyObject * self, PyObject * args)
@@ -6026,19 +6029,11 @@ static PyObject *CmdOrder(PyObject * self, PyObject * args)
   char *str1;
   int int1, int2;
 
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Osii", &self, &str1, &int1, &int2);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveOrder(G, str1, int1, int2);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  API_SETUP_ARGS(G, self, args, "Osii", &self, &str1, &int1, &int2);
+  APIEnterNotModal(G);
+  auto result = ExecutiveOrder(G, str1, int1, int2);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdScrollTo(PyObject * self, PyObject * args)

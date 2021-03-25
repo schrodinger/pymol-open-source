@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"Field.h"
 
+#include"ExecutiveDef.h"
 #include"Tracker.h"
 #include"Ortho.h"
 #include"Word.h"
@@ -36,6 +37,7 @@ Z* -------------------------------------------------------------------
 #include "vla.h"
 #include "TrackerList.h"
 #include "Selector.h"
+#include "SpecRecSpecial.h"
 
 enum cLoadType_t : int {
   cLoadTypeUnknown = -1,
@@ -158,7 +160,6 @@ public:
   SpecRec * getSpecRec() { return rec; }
 };
 
-
 const char * ExecutiveMapGenerate(PyMOLGlobals * G, const char * name, const char * reflection_file, const char * tempFile,
 				  char * amplitudes, const char * phases, const char * weights, double reso_low,
 				  double reso_high, const char * space_group, double cell[6], int quiet, int zoom);
@@ -182,15 +183,22 @@ int ExecutiveCheckGroupMembership(
 #define cExecutiveGroupPurge 9
 #define cExecutiveGroupExcise 10
 
-int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int action, int quiet);
+enum ExecRec_t
+{
+  cExecObject = 0,
+  cExecSelection = 1,
+  cExecAll = 2
+};
+
+int ExecutiveGroup(PyMOLGlobals * G, pymol::zstring_view name, pymol::zstring_view members, int action, int quiet);
 int ExecutiveScrollTo(PyMOLGlobals * G, const char * name, int);
 
-void ExecutiveInvalidateGroups(PyMOLGlobals * G, int force);
-void ExecutiveUpdateGroups(PyMOLGlobals * G, int force);
+void ExecutiveInvalidateGroups(PyMOLGlobals * G, bool force);
+void ExecutiveUpdateGroups(PyMOLGlobals * G, bool force);
 void ExecutiveUpdateSceneMembers(PyMOLGlobals*);
 
 int *ExecutiveGetG3d(PyMOLGlobals * G);
-int ExecutiveOrder(PyMOLGlobals * G, const char *s1, int sort, int location);
+pymol::Result<> ExecutiveOrder(PyMOLGlobals * G, pymol::zstring_view s1, int sort, int location);
 pymol::Result<> ExecutiveFixChemistry(
     PyMOLGlobals* G, const char* s1, const char* s2, int invalidate, int quiet);
 pymol::Result<std::array<float, 3>> ExecutiveGetAtomVertex(PyMOLGlobals * G, const char *s1, int state, int index);
@@ -327,9 +335,25 @@ template <typename T> T* ExecutiveFindObject(PyMOLGlobals* G, pymol::zstring_vie
 #define ExecutiveFindObjectMoleculeByName ExecutiveFindObject<ObjectMolecule>
 #define ExecutiveFindObjectMapByName ExecutiveFindObject<ObjectMap>
 
-pymol::CObject** ExecutiveFindObjectsByType(PyMOLGlobals* G, int objType);
+pymol::CObject** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType);
 int ExecutiveIterateObject(PyMOLGlobals * G, pymol::CObject ** obj, void **hidden);
-void ExecutiveDelete(PyMOLGlobals * G, const char *name);
+pymol::Result<std::vector<DiscardedRec>> ExecutiveDelete(PyMOLGlobals * G, pymol::zstring_view nameView, bool save = false);
+
+/**
+ * @brief Unregisters the specification record from PyMOL
+ * @param rec specification record to be purged/removed
+ * @save if true, the rec's associated object/cgo will not be destroyed, and the caller is responsible for repurging w/o saving.
+ */
+
+void ExecutivePurgeSpec(PyMOLGlobals* G, SpecRec* rec, bool save = false);
+
+/**
+ * @brief Readds specs to Executive
+ * @param G pointer to global pymol singletons
+ * @param specs list of specs to be readded
+ */
+
+void ExecutiveReAddSpec(PyMOLGlobals* G, std::vector<DiscardedRec>& specs);
 void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj, int state, int quiet);
 pymol::Result<> ExecutiveSort(PyMOLGlobals * G, const char *name);
 PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index, 
@@ -385,9 +409,19 @@ int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
 pymol::Result<int> ExecutiveCartoon(PyMOLGlobals* G, int type, const char* s1);
 pymol::Result<> ExecutiveSetRepVisib(PyMOLGlobals * G, pymol::zstring_view name, int rep, int state);
 pymol::Result<> ExecutiveSetRepVisMask(PyMOLGlobals * G, pymol::zstring_view name, int repmask, int state);
+pymol::Result<> ExecutiveSetRepVisMaskFromSele(PyMOLGlobals* G, pymol::zstring_view sele, int repmask, int state);
 pymol::Result<> ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep);
 
-pymol::Result<> ExecutiveSetObjVisib(PyMOLGlobals * G, pymol::zstring_view name, int onoff, int parents);
+/**
+ * Sets the visibility of an object/selection
+ *
+ * @param name name pattern
+ * @param onoff to activate or deactivate recs referenced in name
+ * @param parents if true, also activate their parent rec
+ * @return true if any visibility has been changed.
+ */
+
+pymol::Result<bool> ExecutiveSetObjVisib(PyMOLGlobals * G, pymol::zstring_view name, int onoff, int parents);
 
 
 /**
@@ -401,14 +435,14 @@ pymol::Result<> ExecutiveSetObjVisib(PyMOLGlobals * G, pymol::zstring_view name,
  * Note: selection's center is preferred over explicit pos if both are provided
  */
 pymol::Result<> ExecutiveOrigin(PyMOLGlobals* G, const char* sele, int preserve,
-    const char* oname, float* pos, int state);
+    const char* oname, const float* pos, int state);
 pymol::Result<> ExecutiveCenter(PyMOLGlobals* G, const char* name, int state,
     int inclusive, float animate, float* pos, int quiet);
 void ExecutiveDoZoom(PyMOLGlobals * G, pymol::CObject * obj, int is_new, int zoom, int quiet);
 pymol::Result<> ExecutiveWindowZoom(PyMOLGlobals* G,
     const char* name, float buffer, int state, int inclusive, float animate,
     int quiet);
-int ExecutiveGetMoment(PyMOLGlobals * G, const char *name, double *mi, int state);
+int ExecutiveGetMoment(PyMOLGlobals* G, const char* name, double* mi, int state);
 
 pymol::Result<std::vector<const char*>> ExecutiveGetChains(PyMOLGlobals* G, const char* sele, int state);
 
@@ -419,9 +453,9 @@ pymol::Result<> ExecutiveMove(
 char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals * G, const char *name, int state, int format,
                                     int quiet);
 
-pymol::Result<> ExecutiveStereo(PyMOLGlobals * G, int flag);
 pymol::Result<> ExecutiveCopy(
     PyMOLGlobals* G, const char* src, const char* dst, int zoom);
+pymol::Result<> ExecutiveStereo(PyMOLGlobals * G, int flag);
 float ExecutiveOverlap(PyMOLGlobals * G, const char *s1, int state1, const char *s2, int state2,
                        float adjust);
 int ExecutiveCountStates(PyMOLGlobals * G, const char *s1);
@@ -501,7 +535,26 @@ pymol::Result<> ExecutiveTransformSelection(PyMOLGlobals* G,
     int state, const char* s1, int log, const float* ttt, int homogenous);
 pymol::Result<> ExecutiveTranslateAtom(
     PyMOLGlobals* G, const char* sele, const float* v, int state, int mode, int log);
-pymol::Result<int> ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode);
+
+/**
+ * Contains both the number of selected atoms returned by SelectorCreate
+ * and the change in selected atoms compared to before the call.
+ */
+
+struct NetSelect
+{
+  int currSelected = 0;
+  int netSelected = 0;
+};
+
+/**
+ * Selects atoms via screen-space 2D rect
+ * @param rect rectangle that encloses desired atoms
+ * @param mode button mode
+ * @return number of atoms selected in active selection and change in that selected
+ */
+
+pymol::Result<NetSelect> ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode);
 int ExecutiveMapSetBorder(PyMOLGlobals * G, const char *name, float level, int state);
 pymol::Result<> ExecutiveMapTrim(PyMOLGlobals* G, const char* name,
     const char* sele, float buffer, int map_state, int sele_state, int quiet);
@@ -511,11 +564,11 @@ pymol::Result<> ExecutiveMapHalve(PyMOLGlobals * G, const char *name, int state,
 int ExecutiveIdentifyObjects(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
                              ObjectMolecule *** objVLA);
 pymol::Result<> ExecutiveTranslateObjectTTT(PyMOLGlobals* G,
-    const char* name, const float* trans, int store, int quiet);
+    pymol::zstring_view name, const float* trans, int store, int quiet);
 pymol::Result<> ExecutiveCombineObjectTTT(PyMOLGlobals* G,
-    const char* name, const float* ttt, int reverse_order, int store);
+    pymol::zstring_view name, const float* ttt, int reverse_order, int store);
 pymol::Result<> ExecutiveSetObjectTTT(PyMOLGlobals* G,
-    const char* name, const float* ttt, int state, int quiet, int store);
+    pymol::zstring_view name, const float* ttt, int state, int quiet, int store);
 int ExecutiveGetObjectTTT(PyMOLGlobals * G, const char *name, const float **ttt, int state,
                           int quiet);
 int ExecutiveGetObjectMatrix(PyMOLGlobals * G, const char *name, int state, double **matrix,
@@ -555,6 +608,7 @@ int ExecutiveGetSession(PyMOLGlobals * G, PyObject * dict, const char *names, in
                         int quiet);
 int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session, int partial_restore,
                         int quiet);
+int ExecutiveSetSessionNoMLock(PyMOLGlobals* G, PyObject* session);
 
 pymol::Result<> ExecutiveUnsetSetting(PyMOLGlobals * G, int index, pymol::zstring_view preSele,
                           int state, int quiet, int updates);
@@ -587,8 +641,8 @@ int ExecutiveValidateObjectPtr(
  * @return pair of minimum and maximum of spectrum range
  */
 pymol::Result<std::pair<float, float>> ExecutiveSpectrum(PyMOLGlobals* G,
-    const char* s1, const char* expr, float min, float max, int first, int last,
-    const char* prefix, int digits, int byres, int quiet);
+    pymol::zstring_view s1, pymol::zstring_view expr, float min, float max, int first, int last,
+    pymol::zstring_view prefix, int digits, int byres, int quiet);
 
 pymol::Result<> ExecutiveReinitialize(PyMOLGlobals * G, int what, pymol::zstring_view pattern);
 const char *ExecutiveFindBestNameMatch(PyMOLGlobals * G, const char *name);
@@ -607,7 +661,20 @@ int ExecutiveIterateObjectMolecule(PyMOLGlobals * G, ObjectMolecule ** obj,
 pymol::Result<> ExecutiveSetObjectColor(PyMOLGlobals * G, const char *name, const char *color, int quiet);
 int ExecutiveGetObjectColorIndex(PyMOLGlobals * G, const char *name);
 pymol::Result<> ExecutiveSetOnOffBySele(PyMOLGlobals * G, pymol::zstring_view sname, int onoff);
-pymol::Result<> ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_name);
+
+/**
+ * Changes a rec's name to another.
+ *
+ * @param old_name target rec name
+ * @param new_name rec's new name
+ * @param save discarded recs will be saved
+ * @return discarded recs if saved
+ *
+ * Note: Caller is responsible for calling ExecutivePurgeSpec on discarded recs
+ */
+
+pymol::Result<std::vector<DiscardedRec>>ExecutiveSetName(
+        PyMOLGlobals * G, pymol::zstring_view old_name, pymol::zstring_view new_name, bool save = false);
 int ExecutiveSetDrag(PyMOLGlobals * G, const char *name, int quiet,int mode);
 int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int log);
 int ExecutiveGetActiveSeleName(PyMOLGlobals * G, std::string& name, int create_new, int log);
@@ -682,11 +749,6 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
                         int simple, float linear, const char *name, int wrap,
                         int hand, int window, int cycles,
                         const char *scene_name, float scene_cut, int state, int quiet, int autogen);
-int ExecutiveIsomeshEtc(PyMOLGlobals * G,
-                        const char *volume_name, const char *map_name, float lvl,
-                        const char *sele, float fbuf, int state,
-                        float carve, int map_state, int quiet,
-                        int mesh_mode, int box_mode, float alt_lvl);
 int ExecutiveAssignAtomTypes(PyMOLGlobals * G, const char *s1, int format, int state, int quiet);
 
 PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB, int lenA, int lenB,
@@ -709,9 +771,28 @@ int *ExecutiveGetRepsInSceneForObject(PyMOLGlobals *G, const char *name);
 int *ExecutiveGetRepsForObject(PyMOLGlobals *G, const char *name);
 #endif
 
+int ExecutiveGetNamesListFromPattern(PyMOLGlobals * G, const char *name,
+                                     int allow_partial, int expand_groups);
+
+/**
+ * Retrieves a list of candidates provided by a pattern. Similar to
+ * ExecutiveGetNamesListFromPattern but returns a managed tracker list.
+ *
+ * @param str pattern string provided by user
+ * @param allow_partial allows for partial name matching
+ * @param expand_groups members of the group candidate will be expanded onto the
+ * list.
+ * @return a managed list of candidate records
+ */
+pymol::TrackerAdapter<SpecRec> ExecutiveGetSpecRecsFromPattern(PyMOLGlobals* G,
+    pymol::zstring_view str, bool allow_partial = true,
+    bool expand_groups = true);
+
 char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, const char *name, int enabled_only, int *numstrs);
 
 CoordSet * ExecutiveGetCoordSet(PyMOLGlobals * G, const char * name, int state, ObjectMolecule ** omp=NULL);
+pymol::Result<> ExecutiveLoadCoordset(
+    PyMOLGlobals* G, pymol::zstring_view oname, PyObject* model, int frame);
 
 void ExecutiveUndo(PyMOLGlobals * G, int dir);
 int ExecutiveSaveUndo(PyMOLGlobals * G, const char *s1, int state);
@@ -719,9 +800,60 @@ int ExecutiveSaveUndo(PyMOLGlobals * G, const char *s1, int state);
 pymol::Result<> ExecutiveRebond(
     PyMOLGlobals* G, const char* oname, int state, bool pbc = false);
 
+/**
+ * Determines whether the given name is of the Executive type (Selection or Object) provided
+ * @param name name of object or selection
+ * @param execType type to check against
+ * @return true if name is of the type execType
+ */
+
+bool ExecutiveIsSpecRecType(PyMOLGlobals* G, pymol::zstring_view name, int execType);
+
+void ExecutiveInvalidateMapDependents(
+    PyMOLGlobals* G, const char* map_name, const char* new_name = nullptr);
 pymol::Result<> ExecutiveLoadTraj(PyMOLGlobals* G, pymol::zstring_view oname,
     pymol::zstring_view fname, int frame, int type, int interval, int average,
     int start, int stop, int max, pymol::zstring_view str1, int image,
     const float* shift, pymol::zstring_view plugin, int quiet);
 
+pymol::TrackerAdapter<SpecRec> ExecutiveGetSpecRecParents(
+    PyMOLGlobals* G, SpecRec& rec);
+SpecRec* ExecutiveFindSpec(PyMOLGlobals* G, pymol::zstring_view name_view);
+
+/**
+ * Retrives a list rec names a part of a group rec
+ * @param groupName group rec name
+ * @return space-delimited list of recs
+ */
+
+std::string ExecutiveGetGroupMemberNames(PyMOLGlobals* G, pymol::zstring_view groupName);
+
+/**
+ * Determines of the rec is of an object type
+ * @param rec target rec
+ * @param cObjectType object type enum
+ */
+
+bool ExecutiveIsObjectType(const SpecRec& rec, int cObjectType);
+
+/**
+ * Retrives order of Specification records in list
+ * @param nameList expression for recs
+ * @return rec names with their position in the Spec Rec list
+ */
+
+std::vector<OrderRec> ExecutiveGetOrderOf(PyMOLGlobals* G, pymol::zstring_view nameList);
+
+/**
+ * Sets recs in the Specification records in list at certain positions
+ * @param recs recs to be reordered in list
+ */
+
+void ExecutiveSetOrderOf(PyMOLGlobals* G, const std::vector<OrderRec>& recs);
+void ExecutiveInvalidatePanelList(PyMOLGlobals * G);
+void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
+                                int new_vis, int mod, int parents);
+
+void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
+                                int new_vis, int mod, int parents);
 #endif
