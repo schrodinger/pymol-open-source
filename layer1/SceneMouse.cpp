@@ -138,7 +138,7 @@ void SceneClickButtonAddTo(PyMOLGlobals* G, pymol::CObject* obj,
  * Check for Double click
  * @param x cursor X position
  * @param Y cursor Y position
- * @param mod Button modifier (Shift, ctrl, etc...)
+ * @param mod modifier key (Shift, ctrl, etc...)
  * @param when Time which this click happened
  * @return new button
  */
@@ -172,17 +172,16 @@ static int SceneClickCheckDoubleClick(
  * @param button which button pressed
  * @param x Cursor X position
  * @param Y Cursor Y position
- * @param mod Button modifier (Shift, ctrl, etc...)
+ * @param mod modifier key (Shift, ctrl, etc...)
  * @return true if click was handled (resolved with action)
  */
 static int SceneClickSceneButton(
     PyMOLGlobals* G, int button, int x, int y, int mod)
 {
   auto I = G->Scene;
-  for (int i = 0; i < I->NScene; i++) {
-    auto elem = &I->SceneVLA[i];
-    if (elem->drawn && (x >= elem->x1) && (y >= elem->y1) && (x < elem->x2) &&
-        (y < elem->y2)) {
+  for (std::size_t i = 0u; i < I->SceneVec.size(); i++) {
+    auto& elem = I->SceneVec[i];
+    if (elem.drawn && elem.rect.contains(x, y)) {
       switch (button) {
       case P_GLUT_LEFT_BUTTON: /* normal activate (with interpolation) */
         I->Pressed = i;
@@ -201,9 +200,9 @@ static int SceneClickSceneButton(
           int animate = -1;
           if (mod & cOrthoCTRL)
             animate = 0;
-          if (cur_name && elem->name && (strcmp(cur_name, elem->name))) {
+          if (cur_name && elem.name != cur_name) {
             auto buffer = pymol::string_format(
-                "cmd.scene('''%s''',animate=%d)", elem->name, animate);
+                "cmd.scene('''%s''',animate=%d)", elem.name, animate);
             PParse(G, buffer);
             PFlush(G);
             PLog(G, buffer, cPLog_pym);
@@ -325,7 +324,7 @@ void SceneClickObject(PyMOLGlobals* G, pymol::CObject* obj, const NamedPicking& 
             ObjectMoleculeGetAtomSeleLog(objMol, LastPicked.src.index, false);
         auto pLogBuffer = pymol::string_format("cmd.center(\"%s\",state=%d)",
             atomSele, LastPicked.context.state + 1);
-        PLog(G, pLogBuffer.c_str(), cPLog_pym);
+        PLog(G, pLogBuffer, cPLog_pym);
       }
       break;
     }
@@ -351,7 +350,7 @@ void SceneClickObject(PyMOLGlobals* G, pymol::CObject* obj, const NamedPicking& 
           auto pLogBuffer =
               pymol::string_format("cmd.select('%s',\"%s(%s)\",enable=1)",
                   selName, sel_mode_kw, buf1);
-          PLog(G, pLogBuffer.c_str(), cPLog_pym);
+          PLog(G, pLogBuffer, cPLog_pym);
         }
       }
       WizardDoSelect(G, selName.c_str(), LastPicked.context.state);
@@ -551,7 +550,7 @@ void SceneClickPickBond(PyMOLGlobals* G, int x, int y, int mode, const NamedPick
 /**
  * Handle logic for picking nothing
  * @param button which button pressed
- * @param mod Button modifier (Shift, ctrl, etc...)
+ * @param mod modifier key (Shift, ctrl, etc...)
  * @param mode mouse button mode
  */
 
@@ -649,10 +648,8 @@ static int SceneClick(
         }
       }
       if (!click_handled) {
-        for (int i = 0; i < I->NScene; i++) {
-          auto elem = &I->SceneVLA[i];
-          if (elem->drawn && (x >= elem->x1) && (y >= elem->y1) &&
-              (x < elem->x2) && (y < elem->y2)) {
+        for (const auto& elem : I->SceneVec) {
+          if (elem.drawn && elem.rect.contains(x, y)) {
             click_handled = true;
             break;
           }
@@ -1087,16 +1084,15 @@ static int SceneRelease(
     if (!release_handled) {
       int ungrab = true;
       if (I->PressMode) {
-        int i;
-        SceneElem* elem = I->SceneVLA;
         I->Over = -1;
-        for (i = 0; i < I->NScene; i++) {
-          if (elem->drawn && (x >= elem->x1) && (y >= elem->y1) &&
-              (x < elem->x2) && (y < elem->y2)) {
+        auto elem = &I->SceneVec.front();
+        for (std::size_t i = 0u; i < I->SceneVec.size(); i++) {
+          auto& elem_ = I->SceneVec[i];
+          if (elem_.drawn && elem_.rect.contains(x, y)) {
+            elem = &elem_;
             I->Over = i;
             break;
           }
-          elem++;
         }
         if (I->Over >= 0) {
           release_handled = true;
@@ -1112,7 +1108,7 @@ static int SceneRelease(
           case 2: {
             const char* cur_name =
                 SettingGetGlobal_s(G, cSetting_scene_current_name);
-            if (cur_name && elem->name && (strcmp(cur_name, elem->name))) {
+            if (cur_name && elem->name != cur_name) {
               auto buffer = pymol::string_format("cmd.scene('''%s''')", elem->name);
               PParse(G, buffer);
               PFlush(G);
@@ -1123,7 +1119,7 @@ static int SceneRelease(
             if (I->Pressed == I->Over) {
               Block* block = MenuActivate1Arg(G, I->LastWinX,
                   I->LastWinY + 20, /* scene menu */
-                  I->LastWinX, I->LastWinY, true, "scene_menu", elem->name);
+                  I->LastWinX, I->LastWinY, true, "scene_menu", elem->name.c_str());
               if (block)
                 block->drag(x, y, mod);
               ungrab = false;
@@ -1248,18 +1244,17 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
   }
   if (I->ButtonsShown && I->PressMode) {
     if (I->ButtonsValid) {
-      SceneElem* elem = I->SceneVLA;
-      int i;
       drag_handled = true;
       I->Over = -1;
-      for (i = 0; i < I->NScene; i++) {
-        if (elem->drawn && (x >= elem->x1) && (y >= elem->y1) &&
-            (x < elem->x2) && (y < elem->y2)) {
+      auto elem = &I->SceneVec.front();
+      for (std::size_t i = 0u; i < I->SceneVec.size(); i++) {
+        auto& elem_ = I->SceneVec[i];
+        if (elem_.drawn && elem_.rect.contains(x, y)) {
+          elem = &elem_;
           I->Over = i;
           OrthoDirty(G);
           break;
         }
-        elem++;
       }
       switch (I->PressMode) {
       case 2:
@@ -1267,7 +1262,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
           if (I->Pressed != I->Over) {
             const char* cur_name =
                 SettingGetGlobal_s(G, cSetting_scene_current_name);
-            if (cur_name && elem->name && (strcmp(cur_name, elem->name))) {
+            if (cur_name && elem->name != cur_name) {
               int animate = -1;
               if (mod & cOrthoCTRL)
                 animate = 0;
@@ -1291,7 +1286,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
       if (I->PressMode == 4) { /* dragging */
         if ((I->Over >= 0) && (I->Pressed != I->Over) && (I->Pressed >= 0)) {
 
-          SceneElem* pressed = I->SceneVLA + I->Pressed;
+          auto pressed = &I->SceneVec[I->Pressed];
           std::string buffer;
 
           if (I->Over > 0) { /* not over the first scene in list */

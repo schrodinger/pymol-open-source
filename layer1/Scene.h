@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 #include"Ortho.h"
 #include"View.h"
+#include"SceneView.h"
 #include"SceneDef.h"
 #include"SceneRender.h"
 #include"ShaderMgr.h"
@@ -38,9 +39,6 @@ Z* -------------------------------------------------------------------
 #define cSceneImage_Normal 0
 #define cSceneImage_Draw 1
 #define cSceneImage_Ray 2
-
-#define cSceneViewSize 25
-typedef float SceneViewType[cSceneViewSize];
 
 #define SceneScrollBarMargin DIP2PIXEL(1)
 #define SceneScrollBarWidth DIP2PIXEL(13)
@@ -131,8 +129,16 @@ void SceneResetNormalToViewVector(PyMOLGlobals * G, short use_shader);
 void SceneResetNormalUseShaderAttribute(PyMOLGlobals * G, int lines, short use_shader, int attr);
 void SceneGetResetNormal(PyMOLGlobals * G, float *normal, int lines);
 
-int SceneObjectAdd(PyMOLGlobals* G, pymol::CObject* obj);
-int SceneObjectDel(PyMOLGlobals* G, pymol::CObject* obj, int allow_purge);
+int SceneObjectAdd(PyMOLGlobals * G, pymol::CObject* obj);
+int SceneObjectDel(PyMOLGlobals * G, pymol::CObject* obj, int allow_purge);
+
+/**
+ * @brief removes object from Scene
+ * @param obj Object to be removed
+ * @return if Object removed--always true if obj==nullptr
+ */
+
+bool SceneObjectRemove(PyMOLGlobals* G, pymol::CObject* obj);
 int SceneObjectIsActive(PyMOLGlobals* G, pymol::CObject* obj);
 void SceneOriginSet(PyMOLGlobals * G, const float *origin, int preserve);
 void SceneOriginGet(PyMOLGlobals * G, float *origin);

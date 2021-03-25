@@ -22,9 +22,13 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"PyMOLObject.h"
 #include"Ortho.h"
+#include"Util.h"
 #include"View.h"
 #include"Image.h"
 #include"ScrollBar.h"
+#include"SceneElem.h"
+#include"SceneView.h"
+#include"Rect.h"
 #include<list>
 #include<vector>
 
@@ -67,12 +71,6 @@ struct DeferredRay : public CDeferred {
 };
 
 typedef struct {
-  int len;
-  const char *name;
-  int x1, y1, x2, y2, drawn;
-} SceneElem;
-
-typedef struct {
   float unit_left, unit_right, unit_top, unit_bottom, unit_front, unit_back;
 } SceneUnitContext;
 
@@ -91,17 +89,6 @@ typedef struct {
   SceneUnitContext context;     /* for whole-window display */
 } GridInfo;
 
-struct SceneView {
-  struct ClippingPlane {
-    float m_front;
-    float m_back;
-  };
-  float m_rotMatrix[16]; /*Column major--consistent with OpenGL spec*/
-  float m_pos[3];
-  float m_origin[3];
-  ClippingPlane m_clip;
-  ClippingPlane m_clipSafe;
-};
 
 class CScene : public Block {
  public:
@@ -167,9 +154,7 @@ class CScene : public Block {
   int ScrollBarActive{};
   OrthoLineType ReorderLog{};
   ScrollBar m_ScrollBar;
-  char *SceneNameVLA { nullptr };
-  SceneElem *SceneVLA { nullptr };
-  int NScene;
+  std::vector<SceneElem> SceneVec;
   CGO *AlphaCGO { nullptr };
 
   int *SlotVLA { nullptr };
@@ -213,7 +198,7 @@ class CScene : public Block {
   virtual void reshape(int width, int height) override;
 
   SceneView getSceneView() const { return m_view; }
-  void setSceneView(const SceneView& view) { m_view = view; }
+  void setSceneView(const SceneView& view);
 };
 
 #endif

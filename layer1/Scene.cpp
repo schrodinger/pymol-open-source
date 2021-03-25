@@ -2612,6 +2612,21 @@ int SceneObjectDel(PyMOLGlobals * G, pymol::CObject * obj, int allow_purge)
   return 0;
 }
 
+bool SceneObjectRemove(PyMOLGlobals* G, pymol::CObject* obj)
+{
+  if (obj == nullptr) {
+    return true;
+  }
+  CScene* I = G->Scene;
+  auto& obj_list =
+      (obj->type == cObjectGadget) ? I->GadgetObjs : I->NonGadgetObjs;
+  auto it = std::find(obj_list.begin(), obj_list.end(), obj);
+  if(it == obj_list.end()){
+    return false;
+  }
+  obj_list.erase(it, obj_list.end());
+  return true;
+}
 
 /*========================================================================*/
 int SceneLoadPNG(PyMOLGlobals * G, const char *fname, int movie_flag, int stereo, int quiet)
@@ -2767,15 +2782,11 @@ static void draw_button(int x2, int y2, int z, int w, int h, float *light, float
 void SceneSetNames(PyMOLGlobals * G, const std::vector<std::string> &list)
 {
   CScene *I = G->Scene;
-  I->NScene = (int)list.size();
-  VLACheck(I->SceneVLA, SceneElem, I->NScene);
-  SceneElem *elem = I->SceneVLA;
+  I->SceneVec.clear();
+  I->SceneVec.reserve(list.size());
 
-  for(int a = 0; a < I->NScene; ++a) {
-    elem->name = (char*) list[a].c_str();
-    elem->len = (int)list[a].length();
-    elem->drawn = false;
-    elem++;
+  for (const auto& name : list) {
+    I->SceneVec.emplace_back(name, false);
   }
 
   OrthoDirty(G);
@@ -2789,7 +2800,6 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
   PyMOLGlobals *G = block->m_G;
   CScene *I = G->Scene;
   int x, y, xx, x2;
-  const char *c = NULL;
   float enabledColor[3] = { 0.5F, 0.5F, 0.5F };
   float pressedColor[3] = { 0.7F, 0.7F, 0.7F };
   float disabledColor[3] = { 0.25F, 0.25F, 0.25F };
@@ -2805,13 +2815,13 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
   int op_cnt = 1;
 
   if(((G->HaveGUI && G->ValidContext) || (!draw_for_real)) &&
-     ((block->rect.right - block->rect.left) > 6) && (I->NScene)) {
+     ((block->rect.right - block->rect.left) > 6) && (!I->SceneVec.empty())) {
     int max_char;
     int nChar;
     I->ButtonsShown = true;
 
     /* do we have enough structures to warrant a scroll bar? */
-    n_ent = I->NScene;
+    n_ent = I->SceneVec.size();
 
     n_disp =
       (((I->rect.top - I->rect.bottom) - (SceneTopMargin)) / lineHeight) -
@@ -2820,9 +2830,8 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
       n_disp = 1;
 
     {
-      int i;
-      for(i = 0; i < I->NScene; i++)
-        I->SceneVLA[i].drawn = false;
+      for (auto& elem : I->SceneVec)
+        elem.drawn = false;
     }
     if(n_ent > n_disp) {
       int bar_maxed = I->m_ScrollBar.isMaxed();
@@ -2907,12 +2916,11 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
               TextSetPos2i(G, x + DIP2PIXEL(2), y + text_lift);
             }
             {
-              int len;
               const char *cur_name = SettingGetGlobal_s(G, cSetting_scene_current_name);
-              SceneElem *elem = I->SceneVLA + i;
+              auto elem = &I->SceneVec[i];
               int item = I->NSkip + row;
-              c = elem->name;
-              len = elem->len;
+              auto c = elem->name.c_str();
+              int len = static_cast<int>(elem->name.size());
 
               x2 = xx;
               if(len > max_char)
@@ -2923,10 +2931,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
 
               elem->drawn = true;
 
-              elem->x1 = x;
-              elem->y1 = y;
-              elem->x2 = x2;
-              elem->y2 = y + lineHeight;
+              elem->rect = pymol::Rect<int>(x, x2, y, y + lineHeight);
 
               if(I->ButtonMargin < x2)
                 I->ButtonMargin = x2;
@@ -2936,7 +2941,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
                 if((item == I->Pressed) && (item == I->Over)) {
                   draw_button(x, y, 0, (x2 - x) - 1, (lineHeight - 1), lightEdge,
                               darkEdge, pressedColor ORTHOCGOARGVAR);
-                } else if(cur_name && elem->name && (!strcmp(elem->name, cur_name))) {
+                } else if(cur_name && elem->name == cur_name) {
                   draw_button(x, y, 0, (x2 - x) - 1, (lineHeight - 1), lightEdge,
                               darkEdge, enabledColor ORTHOCGOARGVAR);
                 } else {
@@ -4017,8 +4022,6 @@ void SceneFree(PyMOLGlobals * G)
   CGOFree(I->offscreenCGO);
   CGOFree(I->offscreenOIT_CGO);
   CGOFree(I->offscreenOIT_CGO_copy);
-  VLAFreeP(I->SceneVLA);
-  VLAFreeP(I->SceneNameVLA);
   VLAFreeP(I->SlotVLA);
   I->Obj.clear();
   I->GadgetObjs.clear();
@@ -4074,7 +4077,7 @@ int SceneReinitialize(PyMOLGlobals * G)
   SceneCountFrames(G);
   SceneSetFrame(G, 0, 0);
   SceneInvalidate(G);
-  G->Scene->NScene = 0;
+  G->Scene->SceneVec.clear();
   return (ok);
 }
 
@@ -4087,8 +4090,6 @@ int SceneInit(PyMOLGlobals * G)
   if(I) {
     assert(!I->RovingDirtyFlag);
     assert(I->DirtyFlag);
-
-    I->NScene = 0; // TODO remove for undo_2019 branch
 
     /* all defaults to zero, so only initialize non-zero elements */
     G->DebugCGO = CGONew(G);
@@ -4113,9 +4114,6 @@ int SceneInit(PyMOLGlobals * G)
 
     I->Pressed = -1;
     I->Over = -1;
-
-    I->SceneNameVLA = VLAlloc(char, 10);
-    I->SceneVLA = VLAlloc(SceneElem, 10);
 
     return 1;
   } else
@@ -5615,5 +5613,15 @@ cSceneClip SceneClipGetEnum(pymol::zstring_view mode)
 
   auto it = modes.find(mode);
   return (it == modes.end()) ? cSceneClip_invalid : it->second;
+}
+
+void CScene::setSceneView(const SceneView& view) {
+  m_view = view;
+  SceneInvalidate(m_G);
+}
+SceneElem::SceneElem(std::string name_, bool drawn_)
+  : name(std::move(name_))
+  , drawn(drawn_)
+{
 }
 
