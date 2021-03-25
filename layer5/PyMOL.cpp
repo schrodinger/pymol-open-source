@@ -913,9 +913,8 @@ PyMOLreturn_status PyMOL_CmdClip(CPyMOL * I,
 {
   int ok = true;
   PYMOL_API_LOCK
-    cSceneClip clip_id = SceneClipGetEnum(mode);
     SelectorTmp2 s1(I->G, selection);
-    SceneClip(I->G, clip_id, amount, s1.getName(), state - 1);
+    SceneClipFromMode(I->G, mode, amount, s1.getName(), state - 1);
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 

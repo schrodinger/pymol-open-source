@@ -53,8 +53,6 @@ enum cSceneClip {
   cSceneClip_atoms = 4,
 };
 
-cSceneClip SceneClipGetEnum(pymol::zstring_view mode);
-
 float SceneGetDynamicLineWidth(RenderInfo * info, float line_width);
 void SceneInvalidateStencil(PyMOLGlobals * G);
 int SceneHasImage(PyMOLGlobals * G);
@@ -119,6 +117,8 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
 void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_mode);
 
 void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, int state);
+pymol::Result<> SceneClipFromMode(PyMOLGlobals* G, pymol::zstring_view mode, float movement,
+    pymol::zstring_view sele, int state);
 std::pair<int, int> SceneGetImageSize(PyMOLGlobals * G);
 float SceneGetGridAspectRatio(PyMOLGlobals * G);
 void SceneScale(PyMOLGlobals * G, float scale);

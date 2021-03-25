@@ -1360,6 +1360,32 @@ void SceneClipSet(PyMOLGlobals * G, float front, float back)
 
 
 /*========================================================================*/
+static cSceneClip SceneClipGetEnum(pymol::zstring_view mode)
+{
+  static const std::unordered_map<pymol::zstring_view, cSceneClip> modes{
+      {"near", cSceneClip_near},
+      {"far", cSceneClip_far},
+      {"move", cSceneClip_move},
+      {"slab", cSceneClip_slab},
+      {"atoms", cSceneClip_atoms},
+  };
+
+  auto it = modes.find(mode);
+  return (it == modes.end()) ? cSceneClip_invalid : it->second;
+}
+
+pymol::Result<> SceneClipFromMode(PyMOLGlobals* G, pymol::zstring_view mode, float movement,
+    pymol::zstring_view sele, int state)
+{
+  auto plane = SceneClipGetEnum(mode);
+  if (plane == cSceneClip_invalid) {
+    return pymol::Error("invalid clip mode");
+  }
+  SceneClip(G, plane, movement, sele.c_str(), state);
+  return {};
+}
+
+/*========================================================================*/
 void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, int state)
 {                               /* 0=front, 1=back */
   CScene *I = G->Scene;
@@ -5599,20 +5625,6 @@ void ScenePickAtomInWorld(PyMOLGlobals * G, int x, int y, float *atomWorldPos) {
     // muptiply by molecule world matrix
     MatrixTransformC44f3f(I->ModMatrix, atomPos, atomWorldPos);
   }
-}
-
-cSceneClip SceneClipGetEnum(pymol::zstring_view mode)
-{
-  static const std::unordered_map<pymol::zstring_view, cSceneClip> modes{
-      {"near", cSceneClip_near},
-      {"far", cSceneClip_far},
-      {"move", cSceneClip_move},
-      {"slab", cSceneClip_slab},
-      {"atoms", cSceneClip_atoms},
-  };
-
-  auto it = modes.find(mode);
-  return (it == modes.end()) ? cSceneClip_invalid : it->second;
 }
 
 void CScene::setSceneView(const SceneView& view) {

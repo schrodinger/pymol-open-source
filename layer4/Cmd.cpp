@@ -5082,36 +5082,10 @@ static PyObject *CmdClip(PyObject * self, PyObject * args)
   int state;
   API_SETUP_ARGS(G, self, args, "Osfsi", &self, &sname, &dist, &str1, &state);
   API_ASSERT(APIEnterNotModal(G));
-  OrthoLineType s1;
-  int ok = false;
-  {
-    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
-    switch (sname[0]) {         /* TODO STATUS */
-    case 'N':
-    case 'n':
-      SceneClip(G, 0, dist, s1, state);
-      break;
-    case 'f':
-    case 'F':
-      SceneClip(G, 1, dist, s1, state);
-      break;
-    case 'm':
-    case 'M':
-      SceneClip(G, 2, dist, s1, state);
-      break;
-    case 's':
-    case 'S':
-      SceneClip(G, 3, dist, s1, state);
-      break;
-    case 'a':
-    case 'A':
-      SceneClip(G, 4, dist, s1, state);
-      break;
-    }
-    SelectorFreeTmp(G, s1);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  SelectorTmp2 s1(G, str1);
+  auto result = SceneClipFromMode(G, sname, dist, s1.getName(), state);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdMove(PyObject * self, PyObject * args)
