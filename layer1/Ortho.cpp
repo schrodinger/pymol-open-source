@@ -2173,8 +2173,10 @@ static void OrthoLayoutPanel(PyMOLGlobals * G,
     /* The Wizard Block is shown when a wizard is loaded, it is the area between the
        Executive Block and the ButMode Block, and is used for Wizard-related info/buttons */
     block = WizardGetBlock(G);
-    block->setMargin(height - executiveBottom + 1, m_left, wizardBottom, m_right);
-    block->active = false;
+    if (block) {
+      block->setMargin(height - executiveBottom + 1, m_left, wizardBottom, m_right);
+      block->active = false;
+    }
 
     /* The ButMode block shows info about which Mouse Mode, Selecting Mode, State info,
        and other info like frame rate. It is located under the Wizard Block, and above
@@ -2198,8 +2200,10 @@ static void OrthoLayoutPanel(PyMOLGlobals * G,
     /* The Wizard Block is shown when a wizard is loaded, it is the area between the
        Executive Block and the ButMode Block, and is used for Wizard-related info/buttons */
     block = WizardGetBlock(G);
-    block->setMargin(m_right, m_bottom, m_right, m_bottom);
-    block->active = false;
+    if (block) {
+      block->setMargin(m_right, m_bottom, m_right, m_bottom);
+      block->active = false;
+    }
 
     /* The ButMode block shows info about which Mouse Mode, Selecting Mode, State info,
        and other info like frame rate. It is located under the Wizard Block, and above
@@ -2353,8 +2357,10 @@ void OrthoReshapeWizard(PyMOLGlobals * G, ov_size wizHeight)
     block = ExecutiveGetBlock(G);
     block->reshape(I->Width, I->Height);
     block = WizardGetBlock(G);
-    block->reshape(I->Width, I->Height);
-    block->active = wizHeight ? true : false;
+    if (block) {
+      block->reshape(I->Width, I->Height);
+      block->active = wizHeight ? true : false;
+    }
   }
 }
 

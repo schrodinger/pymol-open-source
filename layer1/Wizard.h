@@ -17,6 +17,21 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Wizard
 #define _H_Wizard
 
+#ifdef _PYMOL_NOPY
+#define WizardDoKey(...) false
+#define WizardDoPick(...) false
+#define WizardDoPosition(...) false
+#define WizardDoScene(...) false
+#define WizardDoSelect(...) false
+#define WizardDoSpecial(...) false
+#define WizardDoView(...) false
+#define WizardFree(...) false
+#define WizardGetBlock(...) nullptr
+#define WizardInit(...) false
+#define WizardRefresh(...)
+#define WizardUpdate(...) false
+#else
+
 #include"Ortho.h"
 #include "P.h"
 #include "Result.h"
@@ -49,4 +64,5 @@ int WizardUpdate(PyMOLGlobals * G);
 std::vector<unique_PyObject_ptr_auto_gil> WizardGetWizardCopies(PyMOLGlobals* G);
 void WizardSetWizards(PyMOLGlobals* G, const std::vector<unique_PyObject_ptr_auto_gil>& wizs);
 
+#endif
 #endif
