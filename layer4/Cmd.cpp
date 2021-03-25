@@ -1175,36 +1175,30 @@ static PyObject *CmdSculptPurge(PyObject * self, PyObject * args)
 
 static PyObject *CmdScene(PyObject * self, PyObject * args)
 {
-  PyMOLGlobals *G = NULL;
-  int ok = false;
+  PyMOLGlobals *G = nullptr;
 
+  MovieSceneFuncArgs margs;
   const char *key, *action, *message = NULL, *new_key = NULL;
-  unsigned char store_view = true,
-                store_color = true,
-                store_active = true,
-                store_rep = true,
-                store_frame = true,
-                hand = true;
-  float animate = -1.0;
   const char * sele = "all";
 
   API_SETUP_ARGS(G, self, args, "Oss|zbbbbbfzbs", &self, &key, &action,
-      &message, &store_view, &store_color, &store_active, &store_rep,
-      &store_frame, &animate, &new_key, &hand, &sele);
+      &message, &margs.store_view, &margs.store_color, &margs.store_active, &margs.store_rep,
+      &margs.store_frame, &margs.animate, &new_key, &margs.hand, &sele);
   API_ASSERT(APIEnterBlockedNotModal(G));
 
-  ok = MovieSceneFunc(G, key, action, message,
-      store_view, store_color, store_active, store_rep, store_frame,
-      animate, new_key, hand, sele);
-
+  margs.key = key;
+  margs.action = action;
+  margs.message = message ? message : "";
+  margs.new_key = new_key ? new_key : "";
+  margs.sele = sele;
+  auto res = MovieSceneFunc(G, margs);
   APIExitBlocked(G);
-  return APIResultOk(G, ok);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdSceneOrder(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
 
   const char *location;
   unsigned char sort;
@@ -1217,10 +1211,10 @@ static PyObject *CmdSceneOrder(PyObject * self, PyObject * args)
 
   API_ASSERT(APIEnterBlockedNotModal(G));
 
-  ok = MovieSceneOrder(G, std::move(names), sort, location);
+  auto result = MovieSceneOrder(G, std::move(names), sort, location);
 
   APIExitBlocked(G);
-  return APIResultOk(G, ok);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdGetSceneOrder(PyObject * self, PyObject * args)
