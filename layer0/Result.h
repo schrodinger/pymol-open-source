@@ -162,10 +162,32 @@ public:
    * Reference to the expected object. Behavior is undefined if this
    * instance is in error state.
    */
-  ResultT& operator*()
+  ResultT& operator*() &
   {
     assert(m_valid);
     return m_result;
+  }
+
+  ResultT&& operator*() &&
+  {
+    assert(m_valid);
+    return std::move(m_result);
+  }
+
+  /**
+   * Const reference to the expected object. Behavior is undefined if this
+   * instance is in error state.
+   */
+  const ResultT& operator*() const &
+  {
+    assert(m_valid);
+    return m_result;
+  }
+
+  const ResultT&& operator*() const &&
+  {
+    assert(m_valid);
+    return std::move(m_result);
   }
 
 private:
