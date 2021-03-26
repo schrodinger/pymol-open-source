@@ -1850,13 +1850,9 @@ static PyObject *CmdBackgroundColor(PyObject * self, PyObject * args)
   char *str1;
   API_SETUP_ARGS(G, self, args, "Os", &self, &str1);
   API_ASSERT(APIEnterNotModal(G));
-  int ok = false;
-  {
-    ok = SettingSet_color(G->Setting, cSetting_bg_rgb, str1);
-    SettingGenerateSideEffects(G, cSetting_bg_rgb, NULL, -1, 0);
-    APIExit(G);
-  }
-  return APIResultOk(G, ok);
+  ExecutiveBackgroundColor(G, str1);
+  APIExit(G);
+  return APISuccess();
 }
 
 static PyObject *CmdGetPosition(PyObject * self, PyObject * args)
@@ -2747,130 +2743,73 @@ static PyObject *CmdGetMtlObj(PyObject * self, PyObject * args)
 
 static PyObject *CmdGetWizard(PyObject * self, PyObject * args)
 {
-  PyMOLGlobals *G = NULL;
-  PyObject *result = NULL;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "O", &self);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    result = WizardGet(G);
-    APIExit(G);
-  }
-  if(!result)
-    result = Py_None;
-  return APIIncRef(result);
+  PyMOLGlobals* G = nullptr;
+  API_SETUP_ARGS(G, self, args, "O", &self);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = WizardGet(G);
+  APIExit(G);
+  PyObject* res = result ? result : Py_None;
+  return APIIncRef(res);
 }
 
 static PyObject *CmdGetWizardStack(PyObject * self, PyObject * args)
 {
-  PyMOLGlobals *G = NULL;
-  PyObject *result = NULL;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "O", &self);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    result = WizardGetStack(G);
-    APIExitBlocked(G);
-  }
-  if(!result)
-    result = Py_None;
-  return APIIncRef(result);
+  PyMOLGlobals* G = nullptr;
+  API_SETUP_ARGS(G, self, args, "O", &self);
+  API_ASSERT(APIEnterBlockedNotModal(G));
+  auto result = WizardGetStack(G);
+  APIExitBlocked(G);
+  return result;
 }
 
 static PyObject *CmdSetWizard(PyObject * self, PyObject * args)
 {
-  PyMOLGlobals *G = NULL;
-
-  PyObject *obj;
-  int ok = false;
+  PyMOLGlobals* G = nullptr;
+  PyObject* obj;
   int replace;
-  ok = PyArg_ParseTuple(args, "OOi", &self, &obj, &replace);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
+  API_SETUP_ARGS(G, self, args, "OOi", &self, &obj, &replace);
+  API_ASSERT(APIEnterNotModal(G));
+  if (!obj) {
+    return APIFailure(G, "Invalid wizard.");
   }
-  if(ok) {
-    if(!obj)
-      ok = false;
-    else if((ok = APIEnterNotModal(G))) {
-      WizardSet(G, obj, replace);       /* TODO STATUS */
-      APIExit(G);
-    }
-  }
-  return APIResultOk(ok);
+  auto result = WizardSet(G, obj, replace);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdSetWizardStack(PyObject * self, PyObject * args)
 {
-  PyMOLGlobals *G = NULL;
-
-  PyObject *obj;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "OO", &self, &obj);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
+  PyMOLGlobals* G = nullptr;
+  PyObject* obj;
+  API_SETUP_ARGS(G, self, args, "OO", &self, &obj);
+  API_ASSERT(APIEnterNotModal(G));
+  if(!obj) {
+    return APIFailure(G, "Invalid wizard.");
   }
-  if(ok) {
-    if(!obj)
-      ok = false;
-    else if((ok = APIEnterNotModal(G))) {
-      WizardSetStack(G, obj);   /* TODO STATUS */
-      APIExit(G);
-    }
-  }
-  return APIResultOk(ok);
+  auto result = WizardSetStack(G, obj);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdRefreshWizard(PyObject * self, PyObject * args)
 {
-  PyMOLGlobals *G = NULL;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "O", &self);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    WizardRefresh(G);
-    OrthoInvalidateDoDraw(G);
-    OrthoDirty(G);
-    APIExit(G);
-  }
+  PyMOLGlobals* G = nullptr;
+  API_SETUP_ARGS(G, self, args, "O", &self);
+  API_ASSERT(APIEnterNotModal(G));
+  WizardRefresh(G);
+  OrthoInvalidateDoDraw(G);
+  OrthoDirty(G);
+  APIExit(G);
   return APISuccess();
 }
 
 static PyObject *CmdDirtyWizard(PyObject * self, PyObject * args)
 {
-  PyMOLGlobals *G = NULL;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "O", &self);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    WizardDirty(G);
-    APIExit(G);
-  }
+  PyMOLGlobals* G = nullptr;
+  API_SETUP_ARGS(G, self, args, "O", &self);
+  API_ASSERT(APIEnterNotModal(G));
+  WizardDirty(G);
+  APIExit(G);
   return APISuccess();
 }
 
@@ -3154,13 +3093,7 @@ static PyObject* CmdAddBond(PyObject* self, PyObject* args)
   API_SETUP_ARGS(G, self, args, "Osiii", &self, &oname, &atm1, &atm2, &order);
   APIEnterBlocked(G);
 
-  auto obj = ExecutiveFindObjectMoleculeByName(G, oname);
-  if (!obj) {
-    APIExitBlocked(G);
-    return APIFailure(G, "cannot find object");
-  }
-
-  auto result = ObjectMoleculeAddBondByIndices(obj, atm1, atm2, order);
+  auto result = ExecutiveAddBondByIndices(G, oname, atm1, atm2, order);
 
   APIExitBlocked(G);
   return APIResult(G, result);
@@ -4873,18 +4806,7 @@ static PyObject *CmdMSet(PyObject * self, PyObject * args)
   char *str1;
   int start_from,freeze;
   API_SETUP_ARGS(G, self, args, "Osii", &self, &str1, &start_from,&freeze);
-  API_ASSERT(APIEnterNotModal(G));
-  {
-    MovieAppendSequence(G, str1, start_from,freeze);
-    SceneCountFrames(G);
-    APIExit(G);
-  }
-
-  // fix for PYMOL-1465
-  // force GUI update for movie panel
-  if(G->HaveGUI)
-  OrthoReshape(G, -1, -1, false);
-
+  MovieSet(G, str1, start_from, freeze);
   return APISuccess();
 }
 
@@ -5504,37 +5426,15 @@ static PyObject *CmdLoadCoords(PyObject * self, PyObject * args)
 static PyObject *CmdLoadCoordSet(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  const char* errormsg = nullptr;
   const char* oname;
   PyObject *model;
-  pymol::CObject *origObj = NULL;
-  ObjectMolecule *obj;
   int frame;
 
   API_SETUP_ARGS(G, self, args, "OsOi", &self, &oname, &model, &frame);
-  API_ASSERT(APIEnterBlockedNotModal(G));
-
-  origObj = ExecutiveFindObjectByName(G, oname);
-  if(!origObj || origObj->type != cObjectMolecule) {
-    errormsg = "named object molecule not found";
-    ok_raise(2);
-  }
-
-  obj = ObjectMoleculeLoadCoords(G, (ObjectMolecule *) origObj, model, frame);
-  ok_assert(2, obj);
-
-  if(frame < 0)
-    frame = obj->NCSet - 1;
-
-  PRINTFB(G, FB_Executive, FB_Actions)
-    " CmdLoad: Coordinates appended into object \"%s\", state %d.\n",
-    oname, frame + 1 ENDFB(G);
-
-  APIExitBlocked(G);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveLoadCoordset(G, oname, model, frame);
+  APIExit(G);
   return APISuccess();
-ok_except2:
-  APIExitBlocked(G);
-  return APIFailure(G, errormsg);
 }
 
 static PyObject *CmdLoad(PyObject * self, PyObject * args)
@@ -5727,22 +5627,16 @@ static PyObject *CmdZoom(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *str1;
-  OrthoLineType s1;
   float buffer;
   int state;
   int inclusive;
-  int ok = false;
   float animate;
   int quiet = false;            /* TODO */
   API_SETUP_ARGS(G, self, args, "Osfiif", &self, &str1, &buffer, &state, &inclusive, &animate);
   API_ASSERT(APIEnterNotModal(G));
-  {
-    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
-    if(ok)
-      ExecutiveWindowZoom(G, s1, buffer, state, inclusive, animate, quiet);
-    SelectorFreeTmp(G, s1);
-    APIExit(G);
-  }
+  SelectorTmp2 s1(G, str1);
+  ExecutiveWindowZoom(G, s1.getName(), buffer, state, inclusive, animate, quiet);
+  APIExit(G);
   return APISuccess();
 }
 
@@ -5834,27 +5728,22 @@ static PyObject *CmdHFill(PyObject * self, PyObject * args)
   int quiet;
   API_SETUP_ARGS(G, self, args, "Oi", &self, &quiet);
   API_ASSERT(APIEnterNotModal(G));
-    EditorHFill(G, quiet);      /* TODO STATUS */
+  auto result = EditorHFill(G, quiet);
   APIExit(G);
-  return APISuccess();
+  return APIResult(G, result);
 }
 
 static PyObject *CmdHFix(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = false;
   int quiet;
-  OrthoLineType s1;
   char *str1;
   API_SETUP_ARGS(G, self, args, "Osi", &self, &str1, &quiet);
   API_ASSERT(APIEnterNotModal(G));
-  {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    EditorHFix(G, s1, quiet);   /* TODO STATUS */
-    SelectorFreeTmp(G, s1);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
+  SelectorTmp2 s1(G, str1);
+  auto result = EditorHFix(G, s1.getName(), quiet);
+  APIExit(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdCycleValence(PyObject * self, PyObject * args)
@@ -5928,7 +5817,7 @@ static PyObject *CmdUnpick(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   API_SETUP_ARGS(G, self, args, "O", &self);
   API_ASSERT(APIEnterNotModal(G));
-    EditorInactivate(G);        /* TODO STATUS */
+  EditorInactivate(G);
   APIExit(G);
   return APISuccess();
 }

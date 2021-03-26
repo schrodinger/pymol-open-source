@@ -16640,7 +16640,7 @@ pymol::Result<> ExecutiveLoadCoordset(
     " CmdLoad: Coordinates appended into object \"%s\", state %d.\n",
     oname.c_str(), frame + 1 ENDFB(G);
 
-    return {};
+  return {};
 }
 
 /**
@@ -16794,3 +16794,9 @@ void ExecutiveSetOrderOf(PyMOLGlobals* G, const std::vector<OrderRec>& recs)
   }
 }
 
+pymol::Result<> ExecutiveBackgroundColor(PyMOLGlobals* G, pymol::zstring_view color)
+{
+  SettingSet_color(G->Setting, cSetting_bg_rgb, color.c_str());
+  SettingGenerateSideEffects(G, cSetting_bg_rgb, nullptr, -1, 0);
+  return {};
+}

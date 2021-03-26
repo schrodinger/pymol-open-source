@@ -870,7 +870,20 @@ int MoviePNG(PyMOLGlobals * G, const char* prefix, int save, int start,
 
 
 /*========================================================================*/
-void MovieAppendSequence(PyMOLGlobals * G, const char *str, int start_from,int freeze)
+void MovieSet(PyMOLGlobals* G, pymol::zstring_view specification,
+    int start_from, bool freeze)
+{
+  MovieAppendSequence(G, specification.c_str(), start_from, freeze);
+  SceneCountFrames(G);
+
+  // fix for PYMOL-1465
+  // force GUI update for movie panel
+  if(G->HaveGUI)
+  OrthoReshape(G, -1, -1, false);
+}
+
+/*========================================================================*/
+void MovieAppendSequence(PyMOLGlobals* G, const char* str, int start_from, bool freeze)
 {
   CMovie *I = G->Movie;
   int c = 0;

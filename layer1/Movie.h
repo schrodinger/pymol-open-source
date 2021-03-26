@@ -99,7 +99,7 @@ Block *MovieGetBlock(PyMOLGlobals * G);
 void MovieFree(PyMOLGlobals * G);
 void MovieReset(PyMOLGlobals * G);
 void MovieDump(PyMOLGlobals * G);
-void MovieAppendSequence(PyMOLGlobals * G, const char *seq, int start_from,int freeze);
+void MovieAppendSequence(PyMOLGlobals* G, const char* seq, int start_from, bool freeze);
 int MovieSeekScene(PyMOLGlobals * G, int loop);
 int MoviePNG(PyMOLGlobals * G, const char* prefix, int save, int start, int stop,
              int missing_only, int modal, int format, int mode, int quiet,
@@ -163,4 +163,12 @@ int MovieXtoFrame(PyMOLGlobals *G, BlockRect *rect, int frames, int x, int neare
 /*void MovieSave(char *fname);
   void MovieLoad(char *fname);*/
 
+/**
+ * Sets the relationship between molecular states and movie frames
+ * @param specification state sequence
+ * @param start_from starting frame
+ * @param freeze flag to determine interpolation
+ */
+void MovieSet(PyMOLGlobals* G, pymol::zstring_view specification,
+    int start_from, bool freeze);
 #endif

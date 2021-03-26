@@ -856,4 +856,10 @@ void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
 
 void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
                                 int new_vis, int mod, int parents);
+
+/**
+ * Sets background color
+ * @param color new bg color
+ */
+pymol::Result<> ExecutiveBackgroundColor(PyMOLGlobals* G, pymol::zstring_view color);
 #endif
