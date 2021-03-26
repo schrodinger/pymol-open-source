@@ -523,7 +523,7 @@ pymol::Result<> ExecutiveSetGeometry(
     PyMOLGlobals* G, const char* s1, int geom, int valence);
 int ExecutiveSculptIterateAll(PyMOLGlobals * G);
 pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* name, int cycles,
-    int window, int first, int last, int ends, int quiet);
+    int window, int first, int last, int ends, int quiet, float dist_cutoff = -1);
 int ExecutiveSculptDeactivate(PyMOLGlobals * G, const char *name);
 int ExecutiveSculptActivate(PyMOLGlobals* G, const char* name,
     int state = cStateAll, int match_state = cStateCurrent,

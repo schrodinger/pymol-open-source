@@ -6041,7 +6041,8 @@ pymol::Result<> ExecutiveSymmetryCopy(PyMOLGlobals* G, const char* source_name,
 }
 
 pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* selection,
-    int cycles, int window, int first, int last, int ends, int quiet)
+    int cycles, int window, int first, int last, int ends, int quiet,
+    float dist_cutoff)
 {
   SETUP_SELE(selection, tmpsele1, sele);
   const char *name = tmpsele1->getName();
@@ -6117,6 +6118,9 @@ pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* selection,
     return {};
   }
 
+  float const dist_cutoff_sq =
+      dist_cutoff > 0 ? (dist_cutoff * dist_cutoff) : -1;
+
   /* determine storage req */
   ObjectMoleculeOpRecInit(&op);
   op.code = OMOP_CountAtoms;
@@ -6189,6 +6193,7 @@ pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* selection,
 
         float sum[3] = {};
         int cnt = 0;
+        int st_prev = 0;
         for (int d = -backward; d <= forward; ++d) {
           int st = st_b + d;
           if(loop) {
@@ -6212,9 +6217,25 @@ pymol::Result<> ExecutiveSmooth(PyMOLGlobals* G, const char* selection,
 
           float const* v0 = coord0x3[index];
 
+          if (dist_cutoff_sq > 0 && cnt) {
+            auto const* v0_prev = coord0x3[n_atom * st_prev + c];
+            if (diffsq3f(v0, v0_prev) > dist_cutoff_sq) {
+              if (d <= 0) {
+                scale3f(v0, cnt, sum);
+              } else {
+                for (;d <= forward; ++d) {
+                  add3f(sum, v0_prev, sum);
+                  ++cnt;
+                }
+                break;
+              }
+            }
+          }
+
           /* atom's avg position */
           add3f(sum, v0, sum);
           ++cnt;
+          st_prev = st;
         }
         if(cnt) {
           flag1[index_c] = true;

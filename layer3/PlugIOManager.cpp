@@ -573,7 +573,6 @@ static CSymmetry * SymmetryNewFromTimestep(PyMOLGlobals * G, molfile_timestep_t 
   ok_assert(1, symm = new CSymmetry(G));
   symm->Crystal.setDims(ts->A, ts->B, ts->C);
   symm->Crystal.setAngles(ts->alpha, ts->beta, ts->gamma);
-  symm->setSpaceGroup("P1");
 ok_except1:
   return symm;
 }

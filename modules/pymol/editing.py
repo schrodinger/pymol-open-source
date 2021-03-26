@@ -270,7 +270,7 @@ SEE ALSO
         return r
 
     def smooth(selection="all", passes=1, window=5, first=1,
-               last=0, ends=0, quiet=1, _self=cmd):
+               last=0, ends=0, quiet=1, *, cutoff=-1, _self=cmd):
 
         '''
 DESCRIPTION
@@ -285,6 +285,8 @@ ARGUMENTS
 
     ends = 0 or 1: controls whether or not the end states are also smoothed
     using a weighted asymmetric window
+
+    cutoff = float: Distance cutoff for atom movement between two frames.
 
 NOTES
 
@@ -303,18 +305,12 @@ SEE ALSO
     load_traj
 
     '''
-
-        r = DEFAULT_ERROR
         selection = selector.process(selection)
-        try:
-            _self.lock(_self)
-            r = _cmd.smooth(_self._COb,str(selection),int(passes),int(window),
-                                 int(first)-1,int(last)-1,int(ends),int(quiet))
-
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+        with _self.lockcm:
+            return _cmd.smooth(_self._COb, selection, int(passes), int(window),
+                               int(first) - 1,
+                               int(last) - 1, int(ends), int(quiet),
+                               float(cutoff))
 
     def set_state_order(name, order, quiet=1, _self=cmd):
         '''

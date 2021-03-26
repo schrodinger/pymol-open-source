@@ -1033,11 +1033,12 @@ static PyObject *CmdSmooth(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *sele;
   int cycles, window, first, last, ends, quiet;
-  API_SETUP_ARGS(G, self, args, "Osiiiiii", &self, &sele, &cycles, &window,
-      &first, &last, &ends, &quiet);
+  float cutoff = -1;
+  API_SETUP_ARGS(G, self, args, "Osiiiiii|f", &self, &sele, &cycles, &window,
+      &first, &last, &ends, &quiet, &cutoff);
   API_ASSERT(APIEnterNotModal(G));
   auto result = ExecutiveSmooth(
-      G, sele, cycles, window, first, last, ends, quiet);
+      G, sele, cycles, window, first, last, ends, quiet, cutoff);
   APIExit(G);
   return APIResult(G, result);
 }
