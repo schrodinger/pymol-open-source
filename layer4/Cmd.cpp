@@ -4806,7 +4806,9 @@ static PyObject *CmdMSet(PyObject * self, PyObject * args)
   char *str1;
   int start_from,freeze;
   API_SETUP_ARGS(G, self, args, "Osii", &self, &str1, &start_from,&freeze);
+  API_ASSERT(APIEnterNotModal(G));
   MovieSet(G, str1, start_from, freeze);
+  APIExit(G);
   return APISuccess();
 }
 
