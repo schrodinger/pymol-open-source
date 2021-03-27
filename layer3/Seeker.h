@@ -20,6 +20,11 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"ObjectMolecule.h"
 
+#define cTempSeekerSele "_seeker"
+#define cTempCenterSele "_seeker_center"
+#define cTempSeekerSele2 "_seeker2"
+
+
 int SeekerInit(PyMOLGlobals * G);
 void SeekerFree(PyMOLGlobals * G);
 void SeekerUpdate(PyMOLGlobals * G);
@@ -32,5 +37,19 @@ enum {
     SINGLE    = 2
 };
 }//namespace GapMode
+
+struct SeekerDragInfo {
+  int start_col;
+  int last_col;
+  int row;
+  int dir;
+  int start_toggle;
+  int setting;
+  int button;
+};
+
+void SeekerSetDragInfo(PyMOLGlobals* G, const SeekerDragInfo& dragInfo);
+SeekerDragInfo SeekerGetDragInfo(PyMOLGlobals* G);
+void SeekerSelectionCenter(PyMOLGlobals * G, int action);
 
 #endif

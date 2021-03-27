@@ -73,7 +73,7 @@ typedef struct _CSculptCache CSculptCache;
 typedef struct _CVFont CVFont;
 typedef struct _CEditor CEditor;
 struct CExecutive;
-typedef struct _CSeeker CSeeker;
+struct CSeeker;
 struct CSelector;
 struct CSelectorManager;
 typedef struct _CTexture CTexture;

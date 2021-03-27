@@ -39,7 +39,7 @@ struct CSeq : public Block {
   bool ScrollBarActive { true };
   int NSkip {};
   ScrollBar m_ScrollBar;
-  CSeqRow *Row { nullptr };
+  std::vector<CSeqRow> Row;
   int NRow { 0 };
   int Size {};
   int VisSize {};
@@ -82,7 +82,7 @@ static int SeqFindRowCol(PyMOLGlobals * G, int x, int y, int *row_num_ptr,
   if((row_num >= 0) && (row_num < I->NRow)) {
     int char_num;
     CSeqRow *row;
-    row = I->Row + row_num;
+    row = I->Row.data() + row_num;
     char_num = (x - I->rect.left - DIP2PIXEL(I->CharMargin)) / DIP2PIXEL(I->CharWidth);
     if(row->nCol && !row->label_flag)
       if(char_num < I->VisSize) {
@@ -125,8 +125,7 @@ void SeqUpdate(PyMOLGlobals * G)
     OrthoReshape(G, -1, -1, false);     /* careful, this is recursive... */
   }
   if(I->Dirty) {
-    if(I->Handler->fRefresh)
-      I->Handler->fRefresh(G, I->Row);
+    I->Handler->refresh(G, I->Row);
     I->Dirty = false;
   }
 }
@@ -187,8 +186,7 @@ int CSeq::drag(int x, int y, int mod)
   if(!pass) {
     if(SeqFindRowCol(G, x, y, &row_num, &col_num, I->LastRow)) {
       if(I->Handler)
-        if(I->Handler->fDrag)
-          I->Handler->fDrag(G, I->Row, row_num, col_num, mod);
+        I->Handler->drag(G, I->Row, row_num, col_num, mod);
       OrthoDirty(G);
     }
   }
@@ -205,13 +203,11 @@ int CSeq::release(int button, int x, int y, int mod)
     int col_num;
     if(SeqFindRowCol(G, x, y, &row_num, &col_num, I->LastRow)) {
       if(I->Handler)
-        if(I->Handler->fRelease)
-          I->Handler->fRelease(G, I->Row, button, row_num, col_num, mod);
+        I->Handler->release(G, I->Row, button, row_num, col_num, mod);
       OrthoDirty(G);
     } else {
       if(I->Handler)
-        if(I->Handler->fRelease)
-          I->Handler->fRelease(G, I->Row, button, -1, -1, mod);
+        I->Handler->release(G, I->Row, button, -1, -1, mod);
       OrthoDirty(G);
     }
   }
@@ -265,8 +261,7 @@ int CSeq::click(int button, int x, int y, int mod)
   if(!pass) {
     if(SeqFindRowCol(G, x, y, &row_num, &col_num, -1)) {
       if(I->Handler)
-        if(I->Handler->fClick)
-          I->Handler->fClick(G, I->Row, button, row_num, col_num, mod, x, y);
+        I->Handler->click(G, I->Row, button, row_num, col_num, mod, x, y);
       I->DragFlag = true;
       I->LastRow = row_num;
       OrthoDirty(G);
@@ -282,8 +277,7 @@ int CSeq::click(int button, int x, int y, int mod)
         break;
       case P_GLUT_LEFT_BUTTON:
         if(I->Handler)
-          if(I->Handler->fClick)
-            I->Handler->fClick(G, I->Row, button, -1, -1, mod, x, y);
+          I->Handler->click(G, I->Row, button, -1, -1, mod, x, y);
         break;
       }
     }
@@ -382,8 +376,8 @@ void CSeq::draw(CGO* orthoCGO)
       /* measure titles */
 
       for(a = I->NRow - 1; a >= 0; a--) {
-        row = I->Row + a;
-        col = row->col;
+        row = I->Row.data() + a;
+        col = row->col.data();
         if(row->label_flag || row->column_label_flag) {
           row->title_width = col->offset + (col->stop - col->start);
           if(max_title_width < row->title_width)
@@ -396,9 +390,9 @@ void CSeq::draw(CGO* orthoCGO)
       cur_color = overlay_color;
       TextSetColor(G, cur_color);
       for(a = I->NRow - 1; a >= 0; a--) {
-        row = I->Row + a;
+        row = I->Row.data() + a;
         yy = y1 - 2;
-        col = row->col;
+        col = row->col.data();
         if((row->label_flag || row->column_label_flag) && row->nCol) {
           row->title_width = col->offset + (col->stop - col->start);
           xx =
@@ -416,7 +410,7 @@ void CSeq::draw(CGO* orthoCGO)
 
       y1 = y;
       for(a = I->NRow - 1; a >= 0; a--) {
-        row = I->Row + a;
+        row = I->Row.data() + a;
         cur_color = overlay_color;
 	if (orthoCGO){
 	  CGOColorv(orthoCGO, cur_color);
@@ -552,7 +546,7 @@ void CSeq::draw(CGO* orthoCGO)
             stop_col = start_col;
             start_col = tmp;
           }
-          row = I->Row + box_row;
+          row = I->Row.data() + box_row;
           if((start_col >= 0) && (start_col < row->nCol) &&
              (stop_col >= 0) && (stop_col < row->nCol)) {
             int xx2;
@@ -607,7 +601,7 @@ void CSeq::draw(CGO* orthoCGO)
         int last_color = -1;
         cur_color = blue;
         for(a = 0; a < I->NRow; a++) {
-          row = I->Row + a;
+          row = I->Row.data() + a;
           if(!row->label_flag) {
             top =
               rect.bottom + DIP2PIXEL(I->ScrollBarMargin) + (height * real_count) / n_real;
@@ -735,7 +729,7 @@ void CSeq::draw(CGO* orthoCGO)
 
 int SeqInit(PyMOLGlobals * G)
 {
-  CSeq *I = NULL;
+  CSeq *I = nullptr;
   if((I = (G->Seq = new CSeq(G)))) {
 
     I->active = true;
@@ -751,33 +745,18 @@ int SeqInit(PyMOLGlobals * G)
 
 static void SeqPurgeRowVLA(PyMOLGlobals * G)
 {
-  CSeq *I = G->Seq;
-  if(I->Row) {
-    int a;
-    CSeqRow *row;
-    for(a = 0; a < I->NRow; a++) {
-      row = I->Row + a;
-      VLAFreeP(row->txt);
-      VLAFreeP(row->col);
-      VLAFreeP(row->fill);
-      VLAFreeP(row->char2col);
-      VLAFreeP(row->atom_lists);
-    }
-    VLAFreeP(I->Row);
-  }
+  G->Seq->Row.clear();
 }
 
-void SeqSetRowVLA(PyMOLGlobals * G, CSeqRow * row, int nRow)
+void SeqSetRow(PyMOLGlobals * G, std::vector<CSeqRow>&& row, int nRow)
 {
   CSeq *I = G->Seq;
-  SeqPurgeRowVLA(G);
-  I->Row = row;
+  I->Row = std::move(row);
   I->NRow = nRow;
 }
 
 void SeqFree(PyMOLGlobals * G)
 {
-  SeqPurgeRowVLA(G);
   DeleteP(G->Seq);
 }
 

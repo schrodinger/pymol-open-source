@@ -10437,7 +10437,7 @@ void ObjectMoleculeGetAtomSele(const ObjectMolecule * I, int index, char *buffer
  * @param index atom index of I
  */
 
-static std::string ObjectMoleculeGetAtomSele(const ObjectMolecule * I, int index)
+std::string ObjectMoleculeGetAtomSele(const ObjectMolecule * I, int index)
 {
   PyMOLGlobals * G = I->G;
   assert(index < I->NAtom);

@@ -292,7 +292,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
               int a;
               for(a = 0; a < nRow; a++) {
                 row = row_vla + a;
-                row->txt = pymol::calloc<char>(nCol + 1);
+                row->txt = pymol::vla<char>(nCol + 1);
                 row->len = 0;
                 row->last_ai = NULL;
                 row->cCol = 0;
@@ -449,7 +449,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
             int a;
             for(a = 0; a < nRow; a++) {
               row = row_vla + a;
-              FreeP(row->txt);
+              row->txt.freeP();
             }
           }
           FreeP(cons_str);
