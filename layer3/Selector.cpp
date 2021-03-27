@@ -180,32 +180,6 @@ static sele_array_t SelectorGetSeleArrayForAtomIndices(CSelector* I,
     ObjectMolecule* obj, const int* idx, int n_idx, bool numbered_tags);
 
 /*========================================================================*/
-/**
- * Iterator over the selector table. If `SelectorUpdateTable(G,
- * cSelectorUpdateTableAllStates, -1)` was called, this would be all atoms.
- *
- * Does NOT provide coord or coordset access
- *
- * @pre Selector table is up-to-date
- */
-class SelectorAtomIterator : public AbstractAtomIterator {
-  CSelector * selector;
-
-public:
-  int a; //!< index in selector table
-
-  SelectorAtomIterator(CSelector* I)
-      : selector(I)
-  {
-    reset();
-  }
-
-  void reset() override {
-    a = cNDummyAtoms - 1;
-  }
-
-  bool next() override;
-};
 
 bool SelectorAtomIterator::next() {
   if ((++a) >= selector->Table.size())
@@ -3911,7 +3885,6 @@ ObjectMolecule **SelectorGetObjectMoleculeVLA(PyMOLGlobals * G, SelectorID_t sel
   VLASize(result, ObjectMolecule *, n);
   return (result);
 }
-
 
 /*========================================================================*/
 pymol::Result<std::pair<ObjectMolecule*, int>> SelectorGetSingleAtomObjectIndex(
@@ -11172,3 +11145,14 @@ force compute
 attrib b < 0 
 
 */
+
+bool SelectorSelectionExists(PyMOLGlobals* G, pymol::zstring_view sname)
+{
+  auto& info = G->SelectorMgr->Info;
+  bool ignore_case = SettingGet<bool>(G, cSetting_ignore_case);
+  return pymol::ranges::contains_if(
+      info, [G, sname, ignore_case](const SelectionInfoRec& rec) {
+        return WordMatchExact(G, rec.name.c_str(), sname.c_str(), ignore_case);
+      });
+}
+

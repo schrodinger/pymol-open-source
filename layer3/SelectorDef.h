@@ -9,6 +9,7 @@
 #include "os_std.h"
 #include "pymol/memory.h"
 
+#include "AtomIterators.h"
 #include "Selector.h"
 #include "ObjectMolecule.h"
 
@@ -59,13 +60,40 @@ struct CSelector {
   CSelectorManager* mgr = nullptr;
   std::vector<ObjectMolecule*> Obj;
   std::vector<TableRec> Table;
-  pymol::copyable_ptr<ObjectMolecule> Origin;
-  pymol::copyable_ptr<ObjectMolecule> Center;
+  pymol::cache_ptr<ObjectMolecule> Origin;
+  pymol::cache_ptr<ObjectMolecule> Center;
   int NCSet = 0; // Seems to hold the largest NCSet in Obj
   bool SeleBaseOffsetsValid = false;
   CSelector(PyMOLGlobals* G, CSelectorManager* mgr);
+  CSelector(const CSelector&) = default;
+  CSelector& operator=(const CSelector&) = default;
   CSelector(CSelector&&) = default;
   CSelector& operator=(CSelector&&) = default;
   ~CSelector();
 };
 
+/**
+ * Iterator over the selector table. If `SelectorUpdateTable(G,
+ * cSelectorUpdateTableAllStates, -1)` was called, this would be all atoms.
+ *
+ * Does NOT provide coord or coordset access
+ *
+ * @pre Selector table is up-to-date
+ */
+class SelectorAtomIterator : public AbstractAtomIterator
+{
+  CSelector* selector;
+
+public:
+  int a; //!< index in selector table
+
+  SelectorAtomIterator(CSelector* I)
+      : selector(I)
+  {
+    reset();
+  }
+
+  void reset() override { a = cNDummyAtoms - 1; }
+
+  bool next() override;
+};
