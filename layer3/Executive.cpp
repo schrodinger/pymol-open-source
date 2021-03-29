@@ -1472,68 +1472,58 @@ static void ExecutiveUpdateGridSlots(PyMOLGlobals * G, int force)
 void ExecutiveInvalidatePanelList(PyMOLGlobals * G)
 {
   CExecutive *I = G->Executive;
-  if(I->ValidPanel) {
-    if(I->Panel)
-      ListFree(I->Panel, next, PanelRec);
-    I->ValidPanel = false;
-  }
+  I->Panel.clear();
   ExecutiveInvalidateGridSlots(G);
 }
 
-static PanelRec *PanelListGroup(PyMOLGlobals * G, PanelRec * panel, SpecRec * group,
-                                int level, int hide_underscore)
+
+/**
+ * Add all members which belong to group
+ */
+static void PanelListGroup(
+    CExecutive* I, SpecRec const* group, unsigned level, bool hide_underscore)
 {
-  CExecutive *I = G->Executive;
-  PanelRec *result = NULL;
-  SpecRec *rec = NULL;
-  /* set up recursion prevention */
-  if(level == 0)
-  while(ListIterate(I->Spec, rec, next)) {
-    rec->in_panel = false;
-  }
-  while(ListIterate(I->Spec, rec, next)) {      /* add all members which belong to this group */
+  for (auto& rec : pymol::make_list_adapter(I->Spec)) {
+    if (rec.group != group) {
+      continue;
+    }
 
-    {
-      if((rec->group == group) && (!rec->in_panel)) {
-        if (!rec->isHiddenNotRecursive(hide_underscore)) {
+    assert(!rec.in_panel);
 
-          PanelRec *new_panel = NULL;
-          ListElemCalloc(G, new_panel, PanelRec);
-          if(panel)
-            panel->next = new_panel;
-          else
-            result = new_panel;
-          panel = new_panel;
-          panel->spec = rec;
-          panel->nest_level = level;
-          if(!level)
-            rec->group_name[0] = 0;     /* force open any cycles which have been created... */
-          rec->in_panel = true;
-          if((rec->type == cExecObject) && (rec->obj->type == cObjectGroup)) {
-            ObjectGroup *obj_group = (ObjectGroup *) rec->obj;
-            panel->is_group = true;
-            if(obj_group->OpenOrClosed) {
-              panel->is_open = true;
-              panel = PanelListGroup(G, panel, rec, level + 1, hide_underscore);
-            }
-          }
-        }
+    if (rec.isHiddenNotRecursive(hide_underscore)) {
+      continue;
+    }
+
+    if (!level) {
+      assert(!rec.group_name[0]);
+      rec.group_name[0] = 0;     /* force open any cycles which have been created... */
+    }
+
+    I->Panel.emplace_back(&rec, level);
+    rec.in_panel = true;
+
+    if (auto obj_group = dynamic_cast<ObjectGroup*>(rec.obj)) {
+      auto& panelitem = I->Panel.back();
+      panelitem.is_group = true;
+      if (obj_group->OpenOrClosed) {
+        panelitem.is_open = true;
+        PanelListGroup(I, &rec, level + 1, hide_underscore);
       }
     }
   }
-  if(!result)
-    result = panel;
-  return result;
 }
 
 static void ExecutiveUpdatePanelList(PyMOLGlobals * G)
 {
   CExecutive *I = G->Executive;
   int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
-  if(!I->ValidPanel) {
+  if (I->Panel.empty()) {
+    for (auto& rec : pymol::make_list_adapter(I->Spec)) {
+      rec.in_panel = false;
+    }
+
     /* brute-force & inefficient -- need to optimize algorithm */
-    I->Panel = PanelListGroup(G, NULL, NULL, 0, hide_underscore);
-    I->ValidPanel = true;
+    PanelListGroup(I, nullptr, 0, hide_underscore);
   }
 }
 
@@ -1796,7 +1786,6 @@ static SpecRec *ExecutiveAnyCaseNameMatch(PyMOLGlobals * G, const char *name)
  */
 int ExecutiveScrollTo(PyMOLGlobals * G, const char * name, int i) {
   CExecutive *I = G->Executive;
-  PanelRec *panel = NULL;
   int pos = 0, numhits = 0;
   ObjectGroup *group;
   SpecRec *tmp, *spec = NULL, *first = NULL;
@@ -1844,8 +1833,8 @@ int ExecutiveScrollTo(PyMOLGlobals * G, const char * name, int i) {
   ExecutiveUpdatePanelList(G);
 
   // scroll that record to the top
-  while(ListIterate(I->Panel, panel, next)) {
-    if(panel->spec == spec) {
+  for (auto const& panelitem : I->Panel) {
+    if (panelitem.spec == spec) {
       I->m_ScrollBar.setValueNoCheck(pos);
       return numhits;
     }
@@ -14585,7 +14574,6 @@ int CExecutive::click(int button, int x, int y, int mod)
   CExecutive *I = G->Executive;
   int n, a;
   SpecRec *rec = NULL;
-  PanelRec *panel = NULL;
   int t, xx;
   int pass = false;
   int skip;
@@ -14624,7 +14612,8 @@ int CExecutive::click(int button, int x, int y, int mod)
   if(!pass) {
     I->RecoverPressed = NULL;
     /* while(ListIterate(I->Spec,rec,next)) { */
-    while(ListIterate(I->Panel, panel, next)) {
+    for (auto& panelitem : I->Panel) {
+      auto* const panel = &panelitem;
       rec = panel->spec;
 
       assert(rec->name[0] != '_' || !hide_underscore);
@@ -15115,7 +15104,6 @@ int CExecutive::release(int button, int x, int y, int mod)
   PyMOLGlobals *G = m_G;
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
-  PanelRec *panel = NULL;
   int pass = false;
   int skip;
   int xx;
@@ -15146,7 +15134,8 @@ int CExecutive::release(int button, int x, int y, int mod)
     case ExecutiveDragMode::Visibility:
 
       /*while(ListIterate(I->Spec,rec,next)) { */
-      while(ListIterate(I->Panel, panel, next)) {
+      for (auto& panelitem : I->Panel) {
+        auto* const panel = &panelitem;
         rec = panel->spec;
 
         assert(rec->name[0] != '_' || !hide_underscore);
@@ -15251,10 +15240,10 @@ int CExecutive::drag(int x, int y, int mod)
 
       if(I->RecoverPressed) {
         SpecRec *rec = NULL;
-        PanelRec *panel = NULL;
         int skip = I->NSkip;
         int row = 0;
-        while(ListIterate(I->Panel, panel, next)) {
+        for (auto& panelitem : I->Panel) {
+          auto* const panel = &panelitem;
           rec = panel->spec;
 
           assert(rec->name[0] != '_' || !hide_underscore);
@@ -15277,14 +15266,13 @@ int CExecutive::drag(int x, int y, int mod)
       }
       if(I->Over >= 0) {
         SpecRec *rec = NULL;
-        PanelRec *panel = NULL;
         int skip = I->NSkip;
         int row = 0;
         switch (I->DragMode) {
           case ExecutiveDragMode::Visibility:
 
-          /*          while(ListIterate(I->Spec,rec,next)) { */
-          while(ListIterate(I->Panel, panel, next)) {
+          for (auto& panelitem : I->Panel) {
+            auto* const panel = &panelitem;
             rec = panel->spec;
 
             assert(rec->name[0] != '_' || !hide_underscore);
@@ -15356,10 +15344,9 @@ int CExecutive::drag(int x, int y, int mod)
             if((I->Over != I->Pressed) && (I->LastOver != I->Over)) {
               SpecRec *new_rec = NULL;
               SpecRec *mov_rec = NULL;
-              PanelRec *panel = NULL;
 
-              while(ListIterate(I->Panel, panel, next)) {
-                rec = panel->spec;
+              for (auto& panelitem : I->Panel) {
+                rec = panelitem.spec;
                 assert(rec->name[0] != '_' || !hide_underscore);
                 {
                   {
@@ -15477,9 +15464,8 @@ int CExecutive::drag(int x, int y, int mod)
           }
           break;
         case ExecutiveDragMode::VisibilityWithCamera:                /* middle button */
-          /* while(ListIterate(I->Spec,rec,next)) { */
-          while(ListIterate(I->Panel, panel, next)) {
-            rec = panel->spec;
+          for (auto& panelitem : I->Panel) {
+            rec = panelitem.spec;
             assert(rec->name[0] != '_' || !hide_underscore);
             {
               if(skip) {
@@ -15712,7 +15698,6 @@ void CExecutive::draw(CGO* orthoCGO)
 #endif
 
   SpecRec *rec = NULL;
-  PanelRec *panel = NULL;
   CExecutive *I = G->Executive;
   int n_ent;
   int n_disp;
@@ -15729,15 +15714,15 @@ void CExecutive::draw(CGO* orthoCGO)
   
   /* if we're running with a GUI and have a valid panel */
   if(G->HaveGUI && G->ValidContext && ((rect.right - rect.left) > 6)
-     && I->ValidPanel) {
+     && !I->Panel.empty()) {
     int max_char;
     int nChar;
 
     /* count entries
      * do we have enough structures to warrant a scroll bar? */
     n_ent = 0;
-    while(ListIterate(I->Panel, panel, next)) {
-      rec = panel->spec;
+    for (auto& panelitem : I->Panel) {
+      rec = panelitem.spec;
       assert(rec && (rec->name[0] != '_' ||
                         !SettingGet<bool>(G, cSetting_hide_underscore_names)));
         n_ent++;
@@ -15817,7 +15802,8 @@ void CExecutive::draw(CGO* orthoCGO)
     skip = I->NSkip;
 
     /* for each object in the Panel... */
-    while(ListIterate(I->Panel, panel, next)) {
+    for (auto& panelitem : I->Panel) {
+      auto* const panel = &panelitem;
       rec = panel->spec;
       {
         if(skip) {
@@ -16249,9 +16235,6 @@ int ExecutiveInit(PyMOLGlobals * G)
     I->oldHeight = 480;
 #endif
 
-    ListInit(I->Panel);
-    I->ValidPanel = false;
-
     I->Lex = OVLexicon_New(G->Context->heap);
     I->Key = OVOneToOne_New(G->Context->heap);
 
@@ -16286,7 +16269,6 @@ void ExecutiveFree(PyMOLGlobals * G)
       DeleteP(rec->obj);
   }
   ListFree(I->Spec, next, SpecRec);
-  ListFree(I->Panel, next, PanelRec);
   if(I->Tracker)
     TrackerFree(I->Tracker);
   OVLexicon_DEL_AUTO_NULL(I->Lex);

@@ -15,10 +15,15 @@ struct ExecutiveObjectOffset;
 
 struct PanelRec {
   SpecRec *spec;
-  int nest_level;
-  int is_group;
-  int is_open;
-  struct PanelRec *next;
+  unsigned nest_level;
+  bool is_group = false;
+  bool is_open = false;
+
+  PanelRec(SpecRec* spec_, unsigned nest_level_)
+      : spec(spec_)
+      , nest_level(nest_level_)
+  {
+  }
 };
 
 struct ListMember{
@@ -66,8 +71,9 @@ struct CExecutive : public Block {
   bool ValidGroups { false };
   bool ValidSceneMembers { false };
   int ValidGridSlots {};
-  PanelRec *Panel {};
-  bool ValidPanel { false };
+
+  std::vector<PanelRec> Panel{};
+
 #ifdef _WEBGL
 #endif
   int CaptureFlag {};
