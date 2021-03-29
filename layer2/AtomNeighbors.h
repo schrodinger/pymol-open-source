@@ -16,7 +16,7 @@ class AtomNeighbors
 public:
   struct value_type {
     // Member layout must match ObjectMolecule::Neighbor.
-    // The data layout is described in ObjectMoleculeUpdateNeighbors.
+    // The data layout is described in ObjectMolecule::getNeighborArray.
     int atm;  ///< Atom index
     int bond; ///< Bond index
   };

@@ -424,13 +424,12 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
     }
 
     ObjectMoleculeVerifyChemistry(obj, state);
-    ObjectMoleculeUpdateNeighbors(obj);
 
     cs = obj->CSet[state];
 
     use_cache = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_sculpt_memory);
     if(obj->NBond) {
-      const int *neighbor = obj->Neighbor;
+      const int* const neighbor = obj->getNeighborArray();
       int n_atom = obj->NAtom;
 
       planar = pymol::malloc<int>(n_atom);

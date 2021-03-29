@@ -76,7 +76,6 @@ struct ObjectMolecule : public pymol::CObject {
      int *UniformAtmToIdx, *UniformIdxToAtm;  */
   int SeleBase = 0;                 /* for internal usage by  selector & only valid during selection process */
   pymol::copyable_ptr<CSymmetry> Symmetry;
-  int *Neighbor = 0;
 #if 1
   // legacy undo
   float *UndoCoord[cUndoMask + 1] {};
@@ -84,6 +83,13 @@ struct ObjectMolecule : public pymol::CObject {
   int UndoNIndex[cUndoMask + 1] {};
   int UndoIter = 0;
 #endif
+
+private:
+  pymol::cache_ptr<int[]> Neighbor;
+
+public:
+  int const* getNeighborArray() const;
+
   int AtomCounter = -1;
   /* not stored */
   struct CSculpt *Sculpt =  nullptr;
@@ -344,7 +350,6 @@ int ObjectMoleculeMerge(ObjectMolecule * I, pymol::vla<AtomInfoType>&& ai,
 			struct CoordSet *cs, int bondSearchFlag,
 			int aic_mask, int invalidate);
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I);
-bool ObjectMoleculeUpdateNeighbors(const ObjectMolecule* I);
 int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, const float *v, int mode,
                            int log);
 int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float *v, int log, float *diff);

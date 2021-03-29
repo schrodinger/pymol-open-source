@@ -24,8 +24,7 @@ protected:
   }
 
   /**
-   * Optional object preparation. Note that `ObjectMoleculeUpdateNeighbors` is
-   * always called.
+   * Optional object preparation.
    */
   virtual void prepareObject(ObjectMolecule* obj) {}
 

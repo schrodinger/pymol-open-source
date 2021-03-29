@@ -334,7 +334,6 @@ int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule* I, int sele, int st
   ObjectMoleculeExtendIndices(I, cSelectorUpdateTableAllStates);
 
   I->invalidate(cRepAll, cRepInvBonds, state);
-  ObjectMoleculeUpdateNeighbors(I);
 
   AtomInfoUniquefyNames(G,
       I->AtomInfo, n_atom_old,

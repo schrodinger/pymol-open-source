@@ -798,9 +798,8 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
         obj = I->Obj[vla[0]];
         at_ca1 = vla[1];
         if(obj != last_obj) {
-          ObjectMoleculeUpdateNeighbors(obj);
           last_obj = obj;
-          neighbor = obj->Neighbor;
+          neighbor = obj->getNeighborArray();
           atomInfo = obj->AtomInfo;
         }
 
@@ -1043,7 +1042,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
                           ObjectMolecule * only_object)
 {
   CSelector *I = G->Selector;
-  ObjectMolecule *obj, *last_obj = NULL, *obj0, *obj1 = NULL;
+  ObjectMolecule *obj, *obj0, *obj1 = NULL;
   int a, aa, at, a0, a1;
   AtomInfoType *ai, *last_ai = NULL, *ai0, *ai1;
   unsigned int mask;
@@ -1144,10 +1143,6 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
         int found_c5star = false;
         int found_o5star = false;
         int found_p_bond = false;
-        if(obj != last_obj) {
-          ObjectMoleculeUpdateNeighbors(obj);
-          last_obj = obj;
-        }
 
         ai0 = obj->AtomInfo + I->Table[a0].atom;
         for(aa = a0; aa <= a1; aa++) {
@@ -1668,7 +1663,6 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
           if((ai->protons == cAN_C) && (WordMatchExact(G, G->lex_const.CA, ai->name, true))) {
 
             if(last_obj != obj) {
-              ObjectMoleculeUpdateNeighbors(obj);
               ObjectMoleculeVerifyChemistry(obj, state_value);
               last_obj = obj;
             }
@@ -4225,15 +4219,6 @@ int SelectorSubdivide(PyMOLGlobals* G, //
   obj4 = SelectorGetFastSingleAtomObjectIndex(G, sele4, &index4);
 
   if(obj1 || obj2 || obj3 || obj4) {
-
-    if(obj1)
-      ObjectMoleculeUpdateNeighbors(obj1);
-    if(obj2)
-      ObjectMoleculeUpdateNeighbors(obj2);
-    if(obj3)
-      ObjectMoleculeUpdateNeighbors(obj3);
-    if(obj4)
-      ObjectMoleculeUpdateNeighbors(obj4);
 
     SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
 
@@ -7505,7 +7490,6 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
       for(a = cNDummyAtoms; a < I->Table.size(); a++) {
         obj = I->Obj[I->Table[a].model];
         if(obj != lastObj) {
-          ObjectMoleculeUpdateNeighbors(obj);
           ObjectMoleculeVerifyChemistry(obj, -1);
           lastObj = obj;
         }
@@ -7673,7 +7657,6 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
           ai = obj->AtomInfo + I->Table[a].atom;
 
           if(last_obj != obj) {
-            ObjectMoleculeUpdateNeighbors(obj);
             ObjectMoleculeVerifyChemistry(obj, -1);
             last_obj = obj;
           }
@@ -9087,7 +9070,6 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
     {
       int c = 0;
       int a, at, aa;
-      ObjectMolecule *obj, *lastObj = NULL;
       int *stk;
       int stkDepth = 0;
       base[1].sele = std::move(base[0].sele);
@@ -9101,11 +9083,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
           stk[stkDepth] = a;
           stkDepth++;
 
-          obj = I->Obj[I->Table[a].model];
-          if(obj != lastObj) {
-            lastObj = obj;
-            ObjectMoleculeUpdateNeighbors(obj);
-          }
+          auto const obj = I->Obj[I->Table[a].model];
 
           while(stkDepth) {     /* this will explore a tree */
             stkDepth--;
@@ -10242,7 +10220,6 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
           max_n_atom = obj->NAtom;
 	/* if the current atom is in sele1 or sele2 then update it's object's neighbor table */
         if(SelectorIsMember(G, s, sele1) || SelectorIsMember(G, s, sele2)) {
-          ObjectMoleculeUpdateNeighbors(obj);
 	  /* if hbonds (so, more than just distance) */
           if(mode == 2)
             ObjectMoleculeVerifyChemistry(obj, -1);
@@ -10525,23 +10502,6 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
     }
   }
 
-  {                             /* fill in neighbor tables */
-    int a, s, at;
-    ObjectMolecule *obj, *lastObj = NULL;
-    for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-      at = I->Table[a].atom;
-      obj = I->Obj[I->Table[a].model];
-      s = obj->AtomInfo[at].selEntry;
-      if(obj != lastObj) {
-        if(SelectorIsMember(G, s, sele1) ||
-           SelectorIsMember(G, s, sele2) || SelectorIsMember(G, s, sele3)) {
-          ObjectMoleculeUpdateNeighbors(obj);
-          lastObj = obj;
-        }
-      }
-    }
-  }
-
   {
     int a, s, at;
     ObjectMolecule *obj;
@@ -10804,27 +10764,6 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
         else
           just_one_atom[3] = -2;
         coverage14[a] = coverage1;
-      }
-    }
-  }
-
-  if(just_one_object) {
-    ObjectMoleculeUpdateNeighbors(just_one_object);
-  } else {                      /* fill in neighbor tables */
-    int a, s, at;
-    ObjectMolecule *obj, *lastObj = NULL;
-    for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-      at = I->Table[a].atom;
-      obj = I->Obj[I->Table[a].model];
-      s = obj->AtomInfo[at].selEntry;
-      if(obj != lastObj) {
-        if(SelectorIsMember(G, s, sele1) ||
-           SelectorIsMember(G, s, sele2) ||
-           SelectorIsMember(G, s, sele3) || SelectorIsMember(G, s, sele4)
-          ) {
-          ObjectMoleculeUpdateNeighbors(obj);
-          lastObj = obj;
-        }
       }
     }
   }

@@ -38,11 +38,8 @@ static bool isGuanidiniumCarbon(ObjectMolecule * obj, int atm) {
  */
 static bool isAromaticAtom(ObjectMolecule * obj, int atm) {
 #if 0
-  int bnd, tmp;
-  ObjectMoleculeUpdateNeighbors(obj);
-
-  ITERNEIGHBORBONDS(obj->Neighbor, atm, bnd, tmp) {
-    if (obj->Bond[bnd].order == 4)
+  for (auto const& neighbor : AtomNeighbors(obj, atm)) {
+    if (obj->Bond[neighbor.bond].order == 4)
       return true;
   }
 #endif

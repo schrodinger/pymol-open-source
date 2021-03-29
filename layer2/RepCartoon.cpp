@@ -463,7 +463,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
       const AtomInfoType* ai2;
       const AtomInfoType* atomInfo = obj->AtomInfo.data();
       int mem0, mem1, mem2, mem3, mem4, mem5, mem6, mem7;
-      int *neighbor = obj->Neighbor;
+      auto* const neighbor = obj->getNeighborArray();
       int nbr[7];
       int sugar_at = -1, base_at = -1;
       int phos3_at = -1, phos5_at = -1;
@@ -1842,7 +1842,6 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
   int ring_i;
   int mem[8];
   int nbr[7];
-  int *neighbor;
   int *marked = pymol::calloc<int>(obj->NAtom);
   float *moved = pymol::calloc<float>(obj->NAtom * 3);
   int ring_color;
@@ -1876,10 +1875,8 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
     ring_color = cartoon_color;
 
   const int* atmToIdx = obj->DiscreteFlag ? nullptr : cs->AtmToIdx.data();
-  
-  ok &= ObjectMoleculeUpdateNeighbors(obj);
-  neighbor = obj->Neighbor;
-  
+  const auto* const neighbor = obj->getNeighborArray();
+
   escape_count = ESCAPE_MAX;  /* don't get bogged down with structures 
                                  that have unreasonable connectivity */
   for(ring_i = 0; ok && ring_i < ndata->n_ring; ring_i++) {

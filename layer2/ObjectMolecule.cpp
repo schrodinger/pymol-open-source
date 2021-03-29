@@ -488,7 +488,7 @@ struct match_info {
   AtomInfoType *ai_b;
   BondType *bi_a;
   BondType *bi_b;
-  int *nbr_a, *nbr_b;
+  const int *nbr_a, *nbr_b;
   int *matched;
 
   // values: -1 .. 2
@@ -656,9 +656,6 @@ int ObjectMoleculeXferValences(ObjectMolecule * Ia, int sele1, int sele2,
   if(Ia == Ib)
     return false;
 
-  ObjectMoleculeUpdateNeighbors(Ia);
-  ObjectMoleculeUpdateNeighbors(Ib);
-
   {
     int max_match = Ia->NAtom + Ia->NBond;
     if(max_match < (Ib->NAtom + Ib->NBond))
@@ -688,8 +685,8 @@ int ObjectMoleculeXferValences(ObjectMolecule * Ia, int sele1, int sele2,
     mi.ai_b = ai_b;
     mi.bi_a = bi_a;
     mi.bi_b = bi_b;
-    mi.nbr_a = Ia->Neighbor;
-    mi.nbr_b = Ib->Neighbor;
+    mi.nbr_a = Ia->getNeighborArray();
+    mi.nbr_b = Ib->getNeighborArray();
     mi.matched = matched;
     for(a = 0; a < Ia->NAtom; a++) {
       if(!mi.atom_mark_a[a]) {
@@ -806,8 +803,6 @@ static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int stat
     if(!ObjectMoleculeVerifyChemistry(I, state)) {
       ErrMessage(I->G, " AddHydrogens", "missing chemical geometry information.");
     } else {
-      if (ok)
-	ok &= ObjectMoleculeUpdateNeighbors(I);
       ai0 = I->AtomInfo;
       for(a = 0; a < I->NAtom; a++) {
         if(!ai0->isHydrogen()) {    /* only do heavies */
@@ -2558,28 +2553,14 @@ int ObjectMoleculeCheckBondSep(ObjectMolecule * I, int a0, int a1, int dist)
   if(dist > MAX_BOND_DIST)
     return false;
 
-  /* NOTE: undealtwith crash log: fix this!
+  auto* const Neighbor = I->getNeighborArray();
 
-     0   com.delsci.macpymol       0x00135590 ObjectMoleculeCheckBondSep + 304 (crt.c:355)
-     1   <<00000000>>      0x00000002 0 + 2
-     2   com.delsci.macpymol       0x001acb58 RepCartoonNew + 6936 (crt.c:355)
-     3   com.delsci.macpymol       0x001009f4 CoordSetUpdate + 1108 (crt.c:355)
-     4   com.delsci.macpymol       0x001f061c CmdCoordSetUpdateThread + 108 (crt.c:355)
-
-     presumably a race condition with UpdateNeighbors, which need to be mutexed somehow.
-
-   */
-
-  ObjectMoleculeUpdateNeighbors(I);
-
-  PRINTFD(I->G, FB_ObjectMolecule)
-    " CBS-Debug: %s %d %d %d\n", I->Name, a0, a1, dist ENDFD;
   depth = 1;
   history[depth] = a0;
-  stack[depth] = I->Neighbor[a0] + 1;   /* go to first neighbor */
+  stack[depth] = Neighbor[a0] + 1;   /* go to first neighbor */
   while(depth) {                /* keep going until we've traversed tree */
-    while(I->Neighbor[stack[depth]] >= 0) {     /* end of branches? go back up one bond */
-      n0 = I->Neighbor[stack[depth]];   /* get current neighbor index */
+    while(Neighbor[stack[depth]] >= 0) {     /* end of branches? go back up one bond */
+      n0 = Neighbor[stack[depth]];   /* get current neighbor index */
       stack[depth] += 2;        /* set up next neighbor */
       distinct = true;          /* check to see if current candidate is distinct from ancestors */
       for(a = 1; a < depth; a++) {
@@ -2590,7 +2571,7 @@ int ObjectMoleculeCheckBondSep(ObjectMolecule * I, int a0, int a1, int dist)
         if(depth < dist) {      /* are not yet at the proper distance? */
           if(distinct) {
             depth++;
-            stack[depth] = I->Neighbor[n0] + 1; /* then keep moving outward */
+            stack[depth] = Neighbor[n0] + 1; /* then keep moving outward */
             history[depth] = n0;
           }
         } else if(n0 == a1)     /* otherwise, see if we have a match */
@@ -2599,8 +2580,6 @@ int ObjectMoleculeCheckBondSep(ObjectMolecule * I, int a0, int a1, int dist)
     }
     depth--;
   }
-  PRINTFD(I->G, FB_ObjectMolecule)
-    " CBS-Debug: result %d\n", result ENDFD;
   return result;
 }
 
@@ -3383,8 +3362,7 @@ pymol::Result<> ObjectMoleculeFuse(ObjectMolecule* I, int const index0,
   // invalidates the ai0 pointer!
   bool ok = ObjectMoleculeMerge(
                 I, std::move(nai), cs.get(), false, cAIC_AllMask, true) &&
-            ObjectMoleculeExtendIndices(I, state0) &&
-            ObjectMoleculeUpdateNeighbors(I);
+            ObjectMoleculeExtendIndices(I, state0);
   p_return_val_if_fail(ok, pymol::Error::MEMORY);
 
   // Get untransformed copy of source coordinates
@@ -3492,8 +3470,6 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index,
   CoordSet *cs = NULL;
   int ok = false;
 
-  ok_assert(1, ObjectMoleculeUpdateNeighbors(I));
-
   ai = I->AtomInfo + index;
 
   ok_assert(1, cs = CoordSetNew(I->G));
@@ -3513,7 +3489,6 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index,
   ok_assert(1, ObjectMoleculeMerge(I, std::move(nai),
         cs, false, cAIC_AllMask, true)); // will free nai and cs->TmpLinkBond
   ok_assert(1, ObjectMoleculeExtendIndices(I, -1));
-  ok_assert(1, ObjectMoleculeUpdateNeighbors(I));
 
   for(a = 0; a < I->NCSet; a++) {       /* add atom to each coordinate set */
     if (const auto* cs_a = I->CSet[a]) {
@@ -3540,7 +3515,6 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 {
   int a;
   AtomInfoType *ai;
-  int n, nn;
   int result = 0;
   int flag = true;
   float v[3], v0[3], d;
@@ -3549,11 +3523,10 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 
   if((index >= 0) && (index <= I->NAtom)) {
     while(ok) {
-      if (ok)
-	ok &= ObjectMoleculeUpdateNeighbors(I);
       ai = I->AtomInfo + index;
-      n = I->Neighbor[index];
-      nn = I->Neighbor[n++];
+      auto const nn = AtomNeighbors(I, index).size();
+
+      assert(flag);
 
       if((nn >= ai->valence) || (!flag))
         break;
@@ -3593,8 +3566,6 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
       }
       if (ok)
 	ok &= ObjectMoleculeExtendIndices(I, -1);
-      if (ok)
-	ok &= ObjectMoleculeUpdateNeighbors(I);
       for(a = 0; ok &&  a < I->NCSet; a++) {   /* add atom to each coordinate set */
         if (auto* cs_a = I->CSet[a]) {
           CoordSetGetAtomVertex(cs_a, index, v0);
@@ -4176,7 +4147,6 @@ int ObjectMoleculePreposReplAtom(ObjectMolecule * I, int index, AtomInfoType * a
   int a;
   int ncycle;
   int ok = true;
-  ok &= ObjectMoleculeUpdateNeighbors(I);
   if (ok){
     for(a = 0; a < I->NCSet; a++) {
       if(I->CSet[a]) {
@@ -4709,9 +4679,9 @@ static float compute_avg_center_dot_cross_fn(ObjectMolecule * I, CoordSet * cs,
   return result;
 }
 
-static int verify_planer_bonds(ObjectMolecule * I, CoordSet * cs,
-                               int n_atom, int *atix, int *neighbor,
-                               float *dir, float cutoff)
+static int verify_planer_bonds(const ObjectMolecule* I, const CoordSet* cs,
+    int n_atom, const int* atix, const int* neighbor, const float* dir,
+    float cutoff)
 {
   int a, i;
   for(i = 0; i < n_atom; i++) {
@@ -4833,8 +4803,6 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
 
 /* end WORKAROUND */
 
-  ObjectMoleculeUpdateNeighbors(I);
-
   if((state >= 0) && (state < I->NCSet)) {
     cs = I->CSet[state];
   }
@@ -4892,7 +4860,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
   }
   if(cs && obs_bond && obs_atom && flag && flag1 && flag2) {
     int a;
-    int *neighbor = I->Neighbor;
+    int const* const neighbor = I->getNeighborArray();
     AtomInfoType *atomInfo = I->AtomInfo.data();
     BondType *bondInfo = I->Bond.data();
 
@@ -5691,7 +5659,7 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule * I, int state)
   /* infers chemical relations from neighbors and geometry 
    * NOTE: very limited in scope */
 
-  int a, n, a0, nn;
+  int a;
   int changedFlag = true;
   int geom;
   int carbonVal[10];
@@ -5702,7 +5670,6 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule * I, int state)
   carbonVal[cAtomInfoPlanar] = 3;
   carbonVal[cAtomInfoLinear] = 2;
 
-  ObjectMoleculeUpdateNeighbors(I);
   while(changedFlag) {
     changedFlag = false;
     for(a = 0; a < I->NAtom; a++) {
@@ -5723,16 +5690,15 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule * I, int state)
           ai->geom = cAtomInfoSingle;
           ai->valence = 1;
           break;
-        case cAN_O:
-          n = I->Neighbor[a];
-          nn = I->Neighbor[n++];
+        case cAN_O: {
+          auto const neighbors = AtomNeighbors(I, a);
+          auto const nn = neighbors.size();
           if(nn != 1) {         /* water, hydroxy, ether */
             ai->chemFlag = 1;
             ai->geom = cAtomInfoTetrahedral;
             ai->valence = 2;
           } else {              /* hydroxy or carbonyl? check carbon geometry */
-            a0 = I->Neighbor[n + 2];
-            ai2 = I->AtomInfo + a0;
+            ai2 = I->AtomInfo.data() + neighbors[0].atm;
             if(ai2->chemFlag) {
               if((ai2->geom == cAtomInfoTetrahedral) || (ai2->geom == cAtomInfoLinear)) {
                 ai->chemFlag = 1;       /* hydroxy */
@@ -5742,16 +5708,17 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule * I, int state)
             }
           }
           break;
+        }
         case cAN_C:
           if(geom >= 0) {
             ai->geom = geom;
             ai->valence = carbonVal[geom];
             ai->chemFlag = true;
           } else {
-            n = I->Neighbor[a];
-            nn = I->Neighbor[n++];
+            auto const neighbors = AtomNeighbors(I, a);
+            auto const nn = neighbors.size();
             if(nn == 1) {       /* only one neighbor */
-              ai2 = I->AtomInfo + I->Neighbor[n];
+              ai2 = I->AtomInfo.data() + neighbors[0].atm;
               if(ai2->chemFlag && (ai2->geom == cAtomInfoTetrahedral)) {
                 ai->chemFlag = true;    /* singleton carbon bonded to tetC must be tetC */
                 ai->geom = cAtomInfoTetrahedral;
@@ -5771,9 +5738,8 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule * I, int state)
             ai->valence = 4;
           }
           break;
-        case cAN_S:
-          n = I->Neighbor[a];
-          nn = I->Neighbor[n++];
+        case cAN_S: {
+          auto const nn = AtomNeighbors(I, a).size();
           if(nn == 4) {         /* sulfone */
             ai->chemFlag = true;
             ai->geom = cAtomInfoTetrahedral;
@@ -5788,6 +5754,7 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule * I, int state)
             ai->valence = 2;
           }
           break;
+        }
         case cAN_Cl:
           ai->chemFlag = 1;
           if(ai->formalCharge == 0) {
@@ -5818,17 +5785,15 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I)
   int a;
   AtomInfoType *ai;
   int a1;
-  int n, nn;
   int has_hydro;
   /* initialize accumulators on uncategorized atoms */
 
   const lexborrow_t lex_pseudo = LexBorrow(I->G, "pseudo");
 
-  ObjectMoleculeUpdateNeighbors(I);
   ai = I->AtomInfo.data();
   for(a = 0; a < I->NAtom; a++) {
-    n = I->Neighbor[a];
-    nn = I->Neighbor[n++];
+    auto const neighbors = AtomNeighbors(I, a);
+    int nn = neighbors.size();
     ai->hb_donor = false;
     ai->hb_acceptor = false;
 
@@ -5839,8 +5804,8 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I)
       switch (ai->protons) {
       case cAN_N:
       case cAN_O:
-        while((a1 = I->Neighbor[n]) >= 0) {
-          n += 2;
+        for (auto const& neighbor : neighbors) {
+          a1 = neighbor.atm;
           if(I->AtomInfo[a1].protons == 1) {
             has_hydro = true;
             break;
@@ -5877,7 +5842,7 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I)
         int neighbor_has_double_bond = false;
         int mem[3];
         int nbr[3];
-        int *neighbor = I->Neighbor;
+        int const* neighbor = I->getNeighborArray();
 
         mem[0] = a;
         nbr[0] = neighbor[mem[0]] + 1;
@@ -5927,7 +5892,7 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I)
         int neighbor_has_aromatic_bond = false;
         int mem[3];
         int nbr[3];
-        int *neighbor = I->Neighbor;
+        auto* const neighbor = I->getNeighborArray();
 
         mem[0] = a;
         nbr[0] = neighbor[mem[0]] + 1;
@@ -5977,11 +5942,9 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
   AtomInfoType *ai, *ai0, *ai1 = NULL;
   int a0, a1;
   int expect, order;
-  int n, nn;
   int changedFlag;
   /* initialize accumulators on uncategorized atoms */
 
-  ObjectMoleculeUpdateNeighbors(I);
   ai = I->AtomInfo.data();
   for(a = 0; a < I->NAtom; a++) {
     if(!ai->chemFlag) {
@@ -6100,8 +6063,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
   for(a = 0; a < I->NAtom; a++) {
     if(!ai->chemFlag) {
       expect = AtomInfoGetExpectedValence(I->G, ai);
-      n = I->Neighbor[a];
-      nn = I->Neighbor[n++];
+      int nn = AtomNeighbors(I, a).size();
 
       // don't count "pseudo" atom neighbors
       if (!pseudo_neighbor_count.empty()) {
@@ -6453,18 +6415,19 @@ void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I)
 
 
 /**
- * Generate I->Neighbor from I->Bond, but only if I->Neighbor is not NULL.
+ * Get the raw ObjectMolecule::Neighbor storage structure, which is generated
+ * from the ObjectMolecule::Bond array. This structure is cached, to clear the
+ * cache, call ObjectMolecule::invalidate(level=cRepInvBonds).
+ *
+ * Direct usage of this array should be avoided, use the AtomNeighbors() class
+ * instead which is a higher-level and more readable interface to the same
+ * data.
  *
  * Changed in PyMOL 2.1.1: Ignore zero-order bonds (PYMOL-3025)
  *
- * To force the update, call ObjectMoleculeInvalidate(level=cRepInvBonds) first.
+ * @return Pointer to cached array, or NULL if memory allocation failed
  *
- * @return False if memory allocation failed
- */
-bool ObjectMoleculeUpdateNeighbors(const ObjectMolecule* I)
-{
-  /* neighbor storage structure: VERY COMPLICATED...
-
+ * @verbatim
      0       list offset for atom 0 = n
      1       list offset for atom 1 = n + m + 1
      ...
@@ -6502,18 +6465,23 @@ bool ObjectMoleculeUpdateNeighbors(const ObjectMolecule* I)
      1, 4, 6, -1,
      1, 4, 7, -1,
      1, 4, 8, -1 }
+   @endverbatim
 
    */
+int const* ObjectMolecule::getNeighborArray() const
+{
+  auto const I = this;
 
   /* If no neighbors have been calculated, fill in the table */
   if(!I->Neighbor) {
 
     /* Create/check the VLA */
     auto const size = (I->NAtom * 3) + (I->NBond * 4);
-    auto* const neighbor = const_cast<ObjectMolecule*>(I)->Neighbor =
-        VLAlloc(int, size);
 
-    p_return_val_if_fail(neighbor, false);
+    const_cast<ObjectMolecule*>(this)->Neighbor.reset(new int[size]);
+    auto* const neighbor = this->Neighbor.get();
+
+    p_return_val_if_fail(neighbor, nullptr);
 
     /* initialize; zero out neighbors */
     std::fill_n(neighbor, I->NAtom, 0);
@@ -6564,7 +6532,7 @@ bool ObjectMoleculeUpdateNeighbors(const ObjectMolecule* I)
         --neighbor[a];
     }
   }
-  return true;
+  return this->Neighbor.get();
 }
 
 
@@ -10602,9 +10570,9 @@ void ObjectMolecule::update()
       if(multithread && (n_thread) && (stop - start) > 1) {
         int cnt = 0;
 
-        ObjectMoleculeUpdateNeighbors(I);
         /* must precalculate to avoid race-condition since this isn't
            mutexed yet and neighbors are needed by cartoons */
+        this->getNeighborArray();
 
         for(a = start; a < stop; a++)
           if((a<I->NCSet) && I->CSet[a])
@@ -10673,7 +10641,7 @@ void ObjectMolecule::invalidate(cRep_t rep, cRepInv_t level, int state)
   }
 
   if(level >= cRepInvBonds) {
-    VLAFreeP(I->Neighbor);      /* set I->Neighbor to NULL */
+    this->Neighbor.reset();
     if(I->Sculpt) {
       DeleteP(I->Sculpt);
     }
@@ -11129,7 +11097,6 @@ void ObjectMoleculeCopyNoAlloc(const ObjectMolecule* obj, ObjectMolecule* I)
   BondType *i0;
   const BondType *i1;
   (*I) = (*obj);
-  I->Neighbor = NULL;
   I->Sculpt = NULL;
   I->Setting.reset(SettingCopyAll(G, obj->Setting.get(), nullptr));
 
@@ -11224,7 +11191,6 @@ ObjectMolecule::~ObjectMolecule()
       I->CSet[a] = NULL;
     }
   }
-  VLAFreeP(I->Neighbor);
   VLAFreeP(I->DiscreteAtmToIdx);
   VLAFreeP(I->DiscreteCSet);
   VLAFreeP(I->CSet);
@@ -11761,7 +11727,7 @@ pymol::CObject* ObjectMolecule::clone() const
 
 AtomNeighbors::AtomNeighbors(const ObjectMolecule* I, int atm)
 {
-  ObjectMoleculeUpdateNeighbors(I);
+  auto* Neighbor = I->getNeighborArray();
 
-  m_neighbor = I->Neighbor + I->Neighbor[atm];
+  m_neighbor = Neighbor + Neighbor[atm];
 }

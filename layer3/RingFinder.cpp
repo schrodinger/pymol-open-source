@@ -37,7 +37,6 @@ void AbstractRingFinder::apply(ObjectMolecule* obj, int atm)
 {
   if (m_obj != obj) {
     m_obj = obj;
-    ObjectMoleculeUpdateNeighbors(m_obj);
     prepareObject(m_obj);
   }
 
