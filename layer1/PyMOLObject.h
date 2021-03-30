@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"vla.h"
 
 #include <string>
+#include <type_traits>
 
 typedef char ObjectNameType[WordLength];
 
@@ -185,6 +186,14 @@ void SettingSet(
     auto handle = obj->getSettingHandle(state);
     if (handle)
       SettingSet(obj->G, *handle, index, value);
+}
+
+template <typename V>
+V SettingGet(const pymol::CObject& obj, int index)
+{
+  using T = typename std::conditional<std::is_enum<V>::value, int, V>::type;
+  return static_cast<V>(
+      SettingGet<T>(obj.G, obj.Setting.get(), nullptr, index));
 }
 
 #endif

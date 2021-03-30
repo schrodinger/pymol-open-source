@@ -995,9 +995,9 @@ void SeekerUpdate(PyMOLGlobals * G)
 
   align_sele = ExecutiveGetActiveAlignmentSele(G);
 
-  while(ExecutiveIterateObjectMolecule(G, &obj, &hidden)) {
-    if(obj->Enabled && (SettingGet_b(G, obj->Setting.get(), NULL, cSetting_seq_view)) &&
-       (obj->Name[0] != '_')) {
+  while (ExecutiveIterateObjectMolecule(G, &obj, &hidden)) {
+    bool isHidden = (SettingGet<bool>(G, cSetting_hide_underscore_names) && (obj->Name[0] == '_'));
+    if (obj->Enabled && (SettingGet<bool>(*obj, cSetting_seq_view)) && !isHidden) {
       int a;
       const AtomInfoType *last = NULL, *last_segi = NULL, *last_chain = NULL;
       const CoordSet *last_disc = NULL;
