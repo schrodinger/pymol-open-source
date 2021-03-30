@@ -36,6 +36,7 @@ class PyMOLDesktopGUI(object):
     edit_colors_dialog = None
     cd_dialog = None
     show_about = None
+    shortcut_menu_edit_dialog = None
 
     def new_window(self, extra_argv=()):
         import pymol
@@ -489,6 +490,7 @@ class PyMOLDesktopGUI(object):
             ]),
             ('menu', 'Setting', [
                 ('command', 'Edit All...', self.settings_edit_all_dialog),
+                ('command', 'Keyboard Shortcuts...', self.shortcut_menu_edit_dialog),
                 ('command', 'Colors...', self.edit_colors_dialog),
                 ('separator',),
                 ('menu', 'Label', [

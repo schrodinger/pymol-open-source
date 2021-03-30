@@ -10,7 +10,7 @@ import sys
 
 import pymol
 import pymol._gui
-from pymol import colorprinting
+from pymol import colorprinting, save_shortcut
 
 from pymol.Qt import QtGui, QtCore, QtWidgets
 from pymol.Qt.utils import (getSaveFileNameWithExt, UpdateLock, WidgetMenu,
@@ -107,6 +107,7 @@ class PyMOLQtGUI(QtWidgets.QMainWindow, pymol._gui.PyMOLDesktopGUI):
         self.advanced_settings_dialog = None
         self.props_dialog = None
         self.builder = None
+        self.shortcut_menu_filter_dialog = None
 
         # setting index -> callable
         self.setting_callbacks = defaultdict(list)
@@ -414,6 +415,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         if style:
             self.setStyleSheet(style)
+
+        # Load saved shortcuts on launch
+        self.saved_shortcuts = pymol.save_shortcut.load_and_set(self.cmd)
 
     def lineeditKeyPressEventFilter(self, watched, event):
         key = event.key()
@@ -871,6 +875,12 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             self.advanced_settings_dialog = PyMOLAdvancedSettings(self,
                                                                   self.cmd)
         self.advanced_settings_dialog.show()
+
+    def shortcut_menu_edit_dialog(self):
+        from .shortcut_menu_gui import PyMOLShortcutMenu
+        if self.shortcut_menu_filter_dialog is None:
+            self.shortcut_menu_filter_dialog = PyMOLShortcutMenu(self, self.saved_shortcuts, self.cmd)
+        self.shortcut_menu_filter_dialog.show()
 
     def show_about(self):
         msg = [
