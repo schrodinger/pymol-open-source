@@ -2,12 +2,8 @@ from enum import IntEnum
 
 from pymol import setting
 from pymol import save_shortcut as shortcut_saver
-from pymol.Qt import QtGui, QtWidgets
-from pymol.Qt import QtCore, QtCoreModels
 from pymol.keyboard import get_default_keys
 from pymol.shortcut_dict import shortcut_dict_ref
-Qt = QtCore.Qt
-QSI = QtGui.QStandardItem
 
 class ShortcutIndex(IntEnum):
     COMMAND = 0
