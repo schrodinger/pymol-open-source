@@ -1,3 +1,4 @@
+import os
 import sys
 from pymol2 import SingletonPyMOL as PyMOL
 
@@ -17,7 +18,9 @@ from pymol._cmd import glViewport
 
 # QOpenGLWidget is supposed to supersede QGLWidget, but has issues (e.g.
 # no stereo support)
-USE_QOPENGLWIDGET = pymol.IS_MACOS and QtCore.QT_VERSION >= 0x50400
+USE_QOPENGLWIDGET = int(
+    os.getenv("PYMOL_USE_QOPENGLWIDGET") or
+    (pymol.IS_MACOS and QtCore.QT_VERSION >= 0x50400))
 
 if USE_QOPENGLWIDGET:
     BaseGLWidget = QtWidgets.QOpenGLWidget
