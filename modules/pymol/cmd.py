@@ -161,6 +161,8 @@ if True:
         _coordset_update_spawn = internal._coordset_update_spawn
         _coordset_update_thread = internal._coordset_update_thread
         _copy_image = internal._copy_image
+        _call_in_gui_thread = lambda func: func()
+        _call_with_opengl_context = _call_in_gui_thread
         _ctrl = internal._ctrl
         _ctsh = internal._ctsh
         _do = internal._do
@@ -174,7 +176,6 @@ if True:
         _mpng = internal._mpng
         _object_update_spawn = internal._object_update_spawn
         _object_update_thread = internal._object_update_thread
-        _png = internal._png
         _quit = internal._quit
         _ray_anti_spawn = internal._ray_anti_spawn
         _ray_hash_spawn = internal._ray_hash_spawn

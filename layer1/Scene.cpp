@@ -1847,7 +1847,7 @@ pymol::Image* SceneImagePrepare(PyMOLGlobals* G, bool prior_only)
       if(SceneMustDrawBoth(G) || save_stereo) {
         glReadBuffer(GL_BACK_LEFT);
       } else {
-        glReadBuffer(GL_BACK);
+        glReadBuffer(G->DRAW_BUFFER0); // GL_BACK
       }
 #endif
       PyMOLReadPixels(I->rect.left, I->rect.bottom, I->Width, I->Height,
@@ -3954,6 +3954,11 @@ static int SceneDeferredImage(DeferredImage * di)
   return 1;
 }
 
+/**
+ * If we have a current OpenGL context, render the image immediately. Otherwise, defer the rendering.
+ *
+ * @return 1 if rendering was deferred, 0 if it was rendered immediately.
+ */
 int SceneDeferImage(PyMOLGlobals * G, int width, int height,
                     const char *filename, int antialias, float dpi, int format, int quiet)
 {
@@ -3970,6 +3975,12 @@ int SceneDeferImage(PyMOLGlobals * G, int width, int height,
       di->filename = filename;
     }
   }
+
+  if (G->ValidContext) {
+    di->exec();
+    return 0;
+  }
+
   OrthoDefer(G, std::move(di));
   return 1;
 }

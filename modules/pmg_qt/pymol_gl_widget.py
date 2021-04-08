@@ -36,6 +36,8 @@ else:
 class PyMOLGLWidget(BaseGLWidget):
     '''
     PyMOL OpenGL Widget
+
+    Can be used as a context manager to make OpenGL context current.
     '''
 
     # mouse button map
@@ -44,6 +46,19 @@ class PyMOLGLWidget(BaseGLWidget):
         Qt.MidButton: 1,
         Qt.RightButton: 2,
     }
+
+    def __enter__(self):
+        '''
+        Context manager to make the OpenGL context "current".
+
+        Fixes depth-buffer issue with QOpenGLWidget
+        https://github.com/schrodinger/pymol-open-source/issues/25
+        '''
+        self.makeCurrent()
+        pymol._cmd._pushValidContext(self.cmd._COb)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pymol._cmd._popValidContext(self.cmd._COb)
 
     def __init__(self, parent):
         self.gui = parent

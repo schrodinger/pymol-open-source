@@ -14,6 +14,7 @@ from pymol import colorprinting, save_shortcut
 
 from pymol.Qt import QtGui, QtCore, QtWidgets
 from pymol.Qt.utils import (getSaveFileNameWithExt, UpdateLock, WidgetMenu,
+        MainThreadCaller,
         PopupOnException,
         connectFontContextMenu, getMonospaceFont)
 
@@ -50,10 +51,6 @@ class PyMOLQtGUI(QtWidgets.QMainWindow, pymol._gui.PyMOLDesktopGUI):
         args = keymapping.keyPressEventToPyMOLButtonArgs(ev)
 
         if args is not None:
-            # Fixes depth-buffer issue with QOpenGLWidget
-            # https://github.com/schrodinger/pymol-open-source/issues/25
-            self.pymolwidget.makeCurrent()
-
             self.pymolwidget.pymol.button(*args)
 
     def closeEvent(self, event):
@@ -944,10 +941,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.feedback_timer.start(500)
 
     def doPrompt(self):
-        # Fixes depth-buffer issue with QOpenGLWidget
-        # https://github.com/schrodinger/pymol-open-source/issues/25
-        self.pymolwidget.makeCurrent()
-
         self.doTypedCommand(self.command_get())
         self.pymolwidget._pymolProcess()
         self.lineedit.clear()
@@ -1227,6 +1220,16 @@ def execapp():
     pymol.gui.createlegacypmgapp = window.createlegacypmgapp
 
     pymol.cmd._copy_image = _copy_image
+    pymol.cmd._call_in_gui_thread = MainThreadCaller()
+
+    # Assume GUI thread, make OpenGL context current before calling func().
+    def _call_with_opengl_context_gui_thread(func):
+        with window.pymolwidget:
+            return func()
+
+    # Dispatch to GUI thread and make OpenGL context current before calling func().
+    pymol.cmd._call_with_opengl_context = lambda func: pymol.cmd._call_in_gui_thread(
+        lambda: _call_with_opengl_context_gui_thread(func))
 
     window.show()
     window.raise_()

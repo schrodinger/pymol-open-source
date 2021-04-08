@@ -160,6 +160,9 @@ class MainThreadCaller(QtCore.QObject):
     """
     mainthreadrequested = QtCore.Signal(object)
 
+    RESULT_RETURN = 0
+    RESULT_EXCEPTION = 1
+
     def __init__(self):
         super(MainThreadCaller, self).__init__()
         self.waitcondition = QtCore.QWaitCondition()
@@ -168,7 +171,10 @@ class MainThreadCaller(QtCore.QObject):
         self.mainthreadrequested.connect(self._mainThreadAction)
 
     def _mainThreadAction(self, func):
-        self.results[func] = func()
+        try:
+            self.results[func] = (self.RESULT_RETURN, func())
+        except Exception as ex:
+            self.results[func] = (self.RESULT_EXCEPTION, ex)
         self.waitcondition.wakeAll()
 
     def __call__(self, func):
@@ -187,7 +193,10 @@ class MainThreadCaller(QtCore.QObject):
             except KeyError:
                 print(type(self).__name__ + ': result was not ready')
 
-        return result
+        if result[0] == self.RESULT_EXCEPTION:
+            raise result[1]
+
+        return result[1]
 
 
 def connectFontContextMenu(widget):

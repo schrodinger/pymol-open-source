@@ -32,10 +32,7 @@ if True:
                      is_list, is_dict, is_tuple, loadable
 
     def copy_image(quiet=1, *, _self=cmd): # incentive feature / proprietary
-        if _self.is_gui_thread():
-            _self._copy_image(_self, int(quiet))
-        else:
-            _self.do('cmd._copy_image(quiet=%d)' % int(quiet))
+        _self._call_in_gui_thread(lambda: _self._copy_image(_self, int(quiet)))
 
     cache_action_dict = {
         'enable'      : 0,
@@ -543,37 +540,64 @@ PYMOL API
     cmd.png(string filename, int width, int height, float dpi,
             int ray, int quiet)
         '''
-        r = DEFAULT_ERROR
+        ray = int(ray)
+
+        PRIOR_TRY = -1
+        PRIOR_NO = 0
+        PRIOR_YES = 1
+
         prior = int(prior)
+        assert prior in (PRIOR_TRY, PRIOR_YES, PRIOR_NO)
+
+        FORMAT_GUESS = -1
+        FORMAT_PNG = 0
+        FORMAT_PPM = 1
 
         if format == 'png':
-            format = 0
+            format = FORMAT_PNG
+
+        assert format in (FORMAT_PNG, FORMAT_PPM, FORMAT_GUESS)
+
+        if format == FORMAT_GUESS:
+            if filename and filename.endswith(".ppm"):
+                format = FORMAT_PPM
+            else:
+                format = FORMAT_PNG
+
+        if filename and not filename.startswith('\x01'):
+            if format == FORMAT_PNG and not filename.endswith(".png"):
+                filename += ".png"
+
+            filename = cmd.exp_path(filename)
+
+        dpi = float(dpi)
+        if dpi < 0:
+            dpi = _self.get_setting_float('image_dots_per_inch')
+
+        width = _unit2px(width, dpi)
+        height = _unit2px(height, dpi)
+
+        def func():
+            with _self.lockcm:
+                return _cmd.png(_self._COb, filename, int(width), int(height),
+                                dpi, ray, int(quiet), prior, format)
 
         if prior:
             # fetch the prior image, without doing any work (fast-path / non-GLUT thread-safe)
-            r = _self._png(filename, 0, 0, float(dpi), 0, int(quiet), 1,
-                           int(format))
-            if not r: # no prior image available -- revert to default behavior
-                if prior < 0: # default is to fall back to actual rendering
-                    prior = 0
-        if not prior:
-            dpi = float(dpi)
-            if dpi < 0:
-                dpi = _self.get_setting_float('image_dots_per_inch')
-            width = _unit2px(width, dpi)
-            height = _unit2px(height, dpi)
+            r = func()
+            if r:
+                return r
 
-            if _self.is_gui_thread():
-                r = _self._png(filename, int(width), int(height), float(dpi),
-                               int(ray),int(quiet),0,int(format))
-            elif filename is None:
-                raise pymol.CmdException(
-                    "deferred image rendering not supported without filename")
-            else:
-                r = _self._do("cmd._png('''%s''',%d,%d,%1.6f,%d,%d,%d,%d)"%
-                              (filename,width,height,dpi,
-                               ray,int(quiet),0,int(format)),_self=_self)
-        return r
+            if prior != PRIOR_TRY:
+                raise pymol.CmdException("no prior image available")
+
+            print("no prior image available, fall back to rendering")
+            prior = PRIOR_NO
+
+        if ray:
+            return func()
+
+        return _self._call_with_opengl_context(func)
 
     def multisave(filename, pattern="all", state=-1,
                   append=0, format='', quiet=1, *, _self=cmd):

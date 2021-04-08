@@ -1602,14 +1602,16 @@ SEE ALSO
             _self.mstop()
         if _self.get_setting_boolean("sculpting"):
             _self.set("sculpting","off",quiet=1)
-        # make sure that there aren't any pending display events
-        # TODO breaks QOpenGLWidget
-        # _self.refresh()
         #
-        with _self.lockcm:
-            r = _cmd.draw(_self._COb,int(width),int(height),
+        def func():
+            with _self.lockcm:
+                # make sure that there aren't any pending display events
+                # TODO could this be fixed with PYMOL-3328 (SceneUpdate)?
+                _cmd.refresh_now(_self._COb)
+
+                return _cmd.draw(_self._COb,int(width),int(height),
                           int(antialias),int(quiet))
-        return r
+        return _self._call_with_opengl_context(func)
 
     def ray(width=0, height=0, antialias=-1, angle=0.0, shift=0.0,
             renderer=-1, quiet=1, async_=0, _self=cmd, **kwargs):
@@ -1718,9 +1720,9 @@ SEE ALSO
 
     rebuild
         '''
+        if _self.is_gui_thread():
+            return _self._refresh()
         with _self.lockcm:
-            if _self.is_gui_thread():
-                return _cmd.refresh_now(_self._COb)
             return _self._do("_ cmd._refresh()")
 
     def reset(object='', *, _self=cmd):

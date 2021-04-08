@@ -4725,6 +4725,24 @@ static PyObject *CmdRefreshNow(PyObject * self, PyObject * args)
   return APISuccess();
 }
 
+static PyObject* CmdPushValidContext(PyObject* self, PyObject* args)
+{
+  assert(PIsGlutThread());
+  PyMOLGlobals* G = nullptr;
+  API_SETUP_ARGS(G, self, args, "O", &self);
+  PyMOL_PushValidContext(G->PyMOL);
+  return APISuccess();
+}
+
+static PyObject* CmdPopValidContext(PyObject* self, PyObject* args)
+{
+  assert(PIsGlutThread());
+  PyMOLGlobals* G = nullptr;
+  API_SETUP_ARGS(G, self, args, "O", &self);
+  PyMOL_PopValidContext(G->PyMOL);
+  return APISuccess();
+}
+
 static PyObject *CmdPNG(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -4750,26 +4768,18 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
         prior = SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
                  NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
       } else if(width || height) {
-        if (!filename) {
-          APIExit(G);
-          return APIFailure(
-              G, "deferred image rendering not supported without filename");
-        }
-
-        SceneDeferImage(
+        prior = !SceneDeferImage(
             G, width, height, filename, -1, dpi, quiet, format);
-        result = 1;
+        result = bool(filename);
       } else if(!SceneGetCopyType(G)) {
         ExecutiveDrawNow(G);      /* TODO STATUS */
       }
     }
 
     if(!result) {
-      PyMOL_PushValidContext(G->PyMOL); // PyQt hack?
       if (ScenePNG(G, filename, dpi, quiet, prior, format,
               filename ? nullptr : &pngbuf))
         result = 1;             /* signal success by returning 1 instead of 0, or -1 for error  */
-      PyMOL_PopValidContext(G->PyMOL);
     }
     APIExit(G);
   }
@@ -4803,15 +4813,13 @@ static PyObject *CmdMPNG(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    PyMOL_PushValidContext(G->PyMOL); // PyQt hack?
     ok = MoviePNG(G, str1, SettingGetGlobal_b(G, cSetting_cache_frames),
                   int1, int2, int3, int4, format, mode, quiet,
                   width, height);
-    PyMOL_PopValidContext(G->PyMOL);
     /* TODO STATUS */
     APIExit(G);
   }
-  return APIResultOk(ok);
+  return APIResultOk(G, ok);
 }
 
 static PyObject *CmdMSet(PyObject * self, PyObject * args)
@@ -6192,6 +6200,8 @@ static PyMethodDef Cmd_methods[] = {
   {"_start", Cmd_Start, METH_VARARGS},
   {"_stop", Cmd_Stop, METH_VARARGS},
   {"_idle", Cmd_Idle, METH_VARARGS},
+  {"_popValidContext", CmdPopValidContext, METH_VARARGS},
+  {"_pushValidContext", CmdPushValidContext, METH_VARARGS},
   {"_reshape", Cmd_Reshape, METH_VARARGS},
   {"_getRedisplay", Cmd_GetRedisplay, METH_VARARGS},
   {"_draw", Cmd_Draw, METH_VARARGS},

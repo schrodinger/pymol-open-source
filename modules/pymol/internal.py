@@ -511,27 +511,6 @@ def _ctsh(k,_self=cmd):
     _invoke_key('CTSH-' + k, 0, _self)
 
 
-# writing PNG files (thread-unsafe)
-
-def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,prior=0,format=-1,_self=cmd):
-    # INTERNAL - can only be safely called by GLUT thread (unless prior == 1)
-    # WARNING: internal routine, subject to change
-    fname = a
-    if fname is not None:
-        if re.search("\.ppm$",fname):
-            if format<0:
-                format = 1 # PPM
-        elif not re.search("\.png$",fname):
-            if a[0:1] != chr(1): # not an encoded file descriptor (integer)
-                fname = fname +".png"
-        if format<0:
-            format = 0 # PNG
-        fname = cmd.exp_path(fname)
-
-    with _self.lockcm:
-        return _cmd.png(_self._COb, fname, int(width), int(height),
-                     float(dpi),int(ray),int(quiet),int(prior),int(format))
-
 # quitting (thread-specific)
 
 def _quit(code=0, _self=cmd):
@@ -565,17 +544,18 @@ def _quit(code=0, _self=cmd):
 def _refresh(swap_buffers=1,_self=cmd):  # Only call with GLUT thread!
     # WARNING: internal routine, subject to change
     r = None
-    try:
-        _self.lock(_self)
-        if _self.is_gui_thread():
+    if _self.is_gui_thread():
+        def func():
+            with _self.lockcm:
                 if swap_buffers:
                     r = _cmd.refresh_now(_self._COb)
                 else:
                     r = _cmd.refresh(_self._COb)
-        else:
+                return r
+        r = _self._call_with_opengl_context(func)
+    else:
+        with _self.lockcm:
             r = _cmd.refresh_later(_self._COb)
-    finally:
-        _self.unlock(-1,_self)
     return r
 
 # color alias interpretation

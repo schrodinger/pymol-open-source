@@ -420,17 +420,17 @@ SEE ALSO
     png, save
     
         '''
-        r = DEFAULT_ERROR
-        args = (prefix, int(first) - 1, int(last) - 1,
+        MODE_DEFAULT = -1
+        MODE_RAY = 2
+        mode = int(mode)
+        assert mode in (MODE_DEFAULT, 0, 1, MODE_RAY)
+        func = lambda: _self._mpng(prefix, int(first) - 1, int(last) - 1,
                 int(preserve), int(modal), -1, int(mode), int(quiet),
                 int(width), int(height))
-
-        if _self.is_gui_thread():
-            r = _self._mpng(*args)
-        else:
-            r = _self.do('cmd._mpng(*%s)' % repr(args), 0)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+        if mode == MODE_RAY or mode == MODE_DEFAULT and _self.get_setting_boolean(
+                "ray_trace_frames"):
+            return func()
+        return _self._call_with_opengl_context(func)
 
     def mclear(_self=cmd):
         '''
