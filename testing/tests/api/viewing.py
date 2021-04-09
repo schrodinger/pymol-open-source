@@ -428,6 +428,7 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.cartoon("dumbbell", "resi 623-625")
         cmd.set("cartoon_highlight_color", "red")
         cmd.color("yellow")
+        cmd.show_as("cartoon")
         cmd.viewport(200, 100)
         cmd.set_view(
             (-0.102381177, 0.9807688, -0.16615206, -0.781365454, 0.024080699,
@@ -435,7 +436,7 @@ class TestViewing(testing.PyMOLTestCase):
              -0.000184208, -65.135032654, 24.068731308, 26.194671631,
              53.642494202, 40.266975403, 89.999656677, -20.))
         self.ambientOnly()
-        self.assertImageEqual("viewing-ref/cartoon.png")
+        self.assertImageEqual("viewing-ref/cartoon.png", delta=1)
 
     def testCapture(self):
         cmd.capture
