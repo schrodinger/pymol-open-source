@@ -136,6 +136,24 @@ class TestExporting(testing.PyMOLTestCase):
             cmd.png(filename, w, h, dpi, ray=1)
             self.assertEqual(size, Image.open(filename).size)
 
+    @testing.requires_version('2.5')
+    def testPngNoFile(self):
+        self.ambientOnly()
+        cmd.fragment('gly')
+        cmd.show_as('spheres')
+        cmd.color('yellow')
+        cmd.zoom(complete=1)
+
+        cmd.refresh()  # TODO should not be necessary, see also PYMOL-3328
+
+        ncol, nrow = 120, 80
+        buf = cmd.png(None, ncol, nrow)
+        self.assertTrue(buf.startswith(b'\x89PNG'))
+        import io
+        img = self.get_imagearray(Image.open(io.BytesIO(buf)))
+        self.assertEqual(img.shape[:2], (nrow, ncol))
+        self.assertImageHasColor('yellow', img)
+
     # not supported in older versions: xyz (no ref)
     @testing.foreach('pdb', 'sdf', 'mol', 'mol2')
     def testSaveRef(self, format):
