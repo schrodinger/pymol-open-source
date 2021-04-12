@@ -46,6 +46,7 @@ class PyMOLShortcutMenu(QtWidgets.QWidget):
         '''
         self.create_new_form = parent.load_form("create_shortcut","floating")
         self.help_form = parent.load_form("help_shortcut","floating")
+        self.confirm_change = parent.load_form("change_confirm","floating")
 
         self.model = QtGui.QStandardItemModel(self)
         self.proxy_model = QtCoreModels.QSortFilterProxyModel(self)
@@ -255,6 +256,9 @@ class PyMOLShortcutMenu(QtWidgets.QWidget):
             raw_string = self.keyevent_to_string(event)
             processed_string = self.process_keyevent_string(raw_string)
 
+            if processed_string in self.shortcut_manager.reserved_keys:
+                return 0
+
             if processed_string:
                 self.create_new_form.keyEdit.setText(processed_string)
 
@@ -307,9 +311,26 @@ class PyMOLShortcutMenu(QtWidgets.QWidget):
         new_key = self.create_new_form.keyEdit.text()
         new_binding = self.create_new_form.commandEdit.text()
 
-        self.shortcut_manager.create_new_shortcut(new_key, new_binding)
+        if new_key == '':
+            pass
+        elif new_key in self.shortcut_manager.cmd.shortcut_dict:
+            hide_confirm_menu = self.confirm_change.doNotShowCheckBox.isChecked()
+            if not hide_confirm_menu:
+                self.confirm_change._dialog.show()
+                self.confirm_change.confirmButton.clicked.connect(
+                    lambda: self.shortcut_manager.create_new_shortcut(new_key, new_binding))
+                self.confirm_change.confirmButton.clicked.connect(
+                    lambda: self.confirm_change._dialog.hide())
+                self.confirm_change.cancelButton.clicked.connect(
+                    lambda: self.confirm_change._dialog.hide())
+            else:
+                self.shortcut_manager.create_new_shortcut(new_key, new_binding)
+
+        else:
+            self.shortcut_manager.create_new_shortcut(new_key, new_binding)
+            self.table.scrollToBottom()
+
         self.populateData()
-        self.table.scrollToBottom()
 
     def formatTable(self):
         '''

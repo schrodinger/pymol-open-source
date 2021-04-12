@@ -17,6 +17,9 @@ class ShortcutManager():
         self.default_bindings = get_default_keys(self.cmd)
         self.cmd.shortcut_dict = {key: list(value) for key,value in shortcut_dict_ref.items()}
 
+        # Tuple of keys that are reserved for the system
+        self.reserved_keys = ('CTRL-S','CTRL-E','CTRL-O','CTRL-M')
+
     def check_saved_dict(self):
         '''
         Checks if there is a saved file. Updates shortcut_dict if needed.
@@ -30,6 +33,10 @@ class ShortcutManager():
     def check_key_mappings(self):
         '''
         Corrects mismatched key mappings and adds missing keys.
+        There are three locations of shortcuts:
+        1) cmd.key_mappings: Current state of key mappings for PyMOL
+        2) cmd.default_bindings: Default values of key mappings
+        3) cmd.shortcut_dict: Belongs to this class instance, for table
         '''
         current_mappings = self.cmd.key_mappings
         missing_keys = []
@@ -44,7 +51,6 @@ class ShortcutManager():
                     mismatch_keys.append(key)
             else:
                 missing_keys.append(key)
-
         for key in mismatch_keys:
             self.cmd.shortcut_dict[key][ShortcutIndex.USER_DEF] = str(current_mappings[key])
         for key in missing_keys:
@@ -100,6 +106,7 @@ class ShortcutManager():
 
         for key in delete_keys:
             del self.cmd.shortcut_dict[key]
+            del self.cmd.key_mappings[key]
 
         print("Restored default keybindings")
 
@@ -107,10 +114,7 @@ class ShortcutManager():
         '''
         Creates a new shortcut after checking existing and reserved keys.
         '''
-        # Certain keys are already used at a higher level
-        reserved_keys = ('CTRL-S','CTRL-E','CTRL-O','CTRL-M')
-
-        if new_key not in self.cmd.shortcut_dict and new_key not in reserved_keys:
+        if new_key not in self.cmd.shortcut_dict and new_key not in self.reserved_keys:
             try:
                 self.cmd.set_key(new_key,new_binding)
                 print('Assigning ',new_key, ' to ',new_binding)
@@ -118,6 +122,13 @@ class ShortcutManager():
                 print("This cannot be bound.")
             else:
                 self.cmd.shortcut_dict.update({new_key:['','',new_binding]})
+        elif new_key in self.cmd.shortcut_dict:
+            try:
+                self.cmd.set_key(new_key,new_binding)
+                print('Assigning ',new_key, ' to ',new_binding)
+            except Exception:
+                print("This cannot be bound.")
+            else:
+                self.cmd.shortcut_dict[new_key][2] = new_binding
         else:
-            print("This key is already bound.")
-            print("If this key does not appear on the menu it is reserved and cannot be changed.")
+            print("This key is reserved.")
