@@ -102,7 +102,7 @@ class PyMOLQtGUI(QtWidgets.QMainWindow, pymol._gui.PyMOLDesktopGUI):
         # reusable dialogs
         self.dialog_png = None
         self.advanced_settings_dialog = None
-        self.props_dialog = None
+        self.props_panel = None
         self.builder = None
         self.shortcut_menu_filter_dialog = None
 
@@ -542,13 +542,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         form._dialog = dialog
         return form
 
-    def open_props_dialog(self):  #noqa
-        if not self.props_dialog:
-            self.props_dialog = properties_dialog.props_dialog(self)
-
-        self.props_dialog.show()
-        self.props_dialog.raise_()
-
     def edit_colors_dialog(self):
         form = self.load_form('colors')
         form.list_colors.setSortingEnabled(True)
@@ -626,6 +619,16 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         self.builder.show()
         self.builder.raise_()
+
+    def open_props_dialog(self):
+        from .properties_dialog import PropsDialog
+
+        if not self.props_panel:
+            self.props_panel = PropsDialog(self)
+            self.addDockWidget(Qt.TopDockWidgetArea, self.props_panel.get_dialog())
+
+        self.props_panel.get_dialog().show()
+        self.props_panel.get_dialog().raise_()
 
     def edit_pymolrc(self):
         from . import TextEditor
