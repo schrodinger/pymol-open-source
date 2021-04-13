@@ -1113,36 +1113,36 @@ PYMOL API
         return r
 
     fetchHosts = {
-        "pdb"  : "http://ftp.wwpdb.org/pub/pdb",
-        "pdbe" : "http://ftp.ebi.ac.uk/pub/databases/pdb",
+        "pdb"  : "https://ftp.wwpdb.org/pub/pdb",
+        "pdbe" : "https://ftp.ebi.ac.uk/pub/databases/pdb",
         "pdbj" : "http://ftp.pdbj.org/pub/pdb",
     }
 
     hostPaths = {
-        "mmtf" : "http://mmtf.rcsb.org/v1.0/full/{code}.mmtf.gz",
+        "mmtf" : "https://mmtf.rcsb.org/v1.0/full/{code}.mmtf.gz",
         "bio"  : [
-            "http://files.rcsb.org/download/{code}.{type}.gz",
+            "https://files.rcsb.org/download/{code}.{type}.gz",
             "/data/biounit/coordinates/divided/{mid}/{code}.{type}.gz",
         ],
         "pdb"  : [
-            "http://files.rcsb.org/download/{code}.{type}.gz",
+            "https://files.rcsb.org/download/{code}.{type}.gz",
             "/data/structures/divided/pdb/{mid}/pdb{code}.ent.gz",
         ],
         "cif"  : [
-            "http://files.rcsb.org/download/{code}.{type}.gz",
+            "https://files.rcsb.org/download/{code}.{type}.gz",
             "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
-            "http://ftp-versioned.wwpdb.org/pdb_versioned/views/latest/coordinates/mmcif/{mid}/pdb_{code:0>8}/pdb_{code:0>8}_xyz.cif.gz",
+            "https://ftp-versioned.wwpdb.org/pdb_versioned/views/latest/coordinates/mmcif/{mid}/pdb_{code:0>8}/pdb_{code:0>8}_xyz.cif.gz",
         ],
         "2fofc" : "https://www.ebi.ac.uk/pdbe/coordinates/files/{code}.ccp4",
         "fofc" : "https://www.ebi.ac.uk/pdbe/coordinates/files/{code}_diff.ccp4",
         "pubchem": [
-            "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=3DSaveSDF",
-            "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=SaveSDF",
+            "https://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=3DSaveSDF",
+            "https://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=SaveSDF",
         ],
         "emd": "/../emdb/structures/EMD-{code}/map/emd_{code}.map.gz",
         "cc": [
-            "http://files.rcsb.org/ligands/download/{code}.cif",
-            "http://ftp.ebi.ac.uk/pub/databases/msd/pdbechem_v2/{code:.1}/{code}/{code}.cif",
+            "https://files.rcsb.org/ligands/download/{code}.cif",
+            "https://ftp.ebi.ac.uk/pub/databases/msd/pdbechem_v2/{code:.1}/{code}/{code}.cif",
         ],
     }
 
