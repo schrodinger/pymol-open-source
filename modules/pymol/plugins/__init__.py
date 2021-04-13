@@ -136,8 +136,7 @@ DESCRIPTION
     if len(plugins) == 0:
         initialize(-2)
     if name not in plugins:
-        print(' Error: no such plugin')
-        return
+        raise pymol.CmdException('no such plugin')
     info = plugins[name]
     if info.loaded:
         if not int(quiet):
@@ -413,14 +412,6 @@ def initialize(pmgapp=-1):
     pmgapp == -1: Autoloading but no legacyinit
     else:         Autoloading and legacyinit
     '''
-
-    # check for obsolete development version of pymolplugins
-    if 'pymolplugins' in sys.modules:
-        from .legacysupport import tkMessageBox
-        tkMessageBox.showwarning('WARNING',
-                '"pymolplugins" now integrated into PyMOL as "pymol.plugins"! '
-                'Please remove the old pymolplugins module and delete ~/.pymolrc_plugins.py')
-
     if os.path.exists(PYMOLPLUGINSRC):
         from pymol import parsing
         try:

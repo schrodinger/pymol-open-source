@@ -124,23 +124,6 @@ def createlegacypmgapp():
     app.menuBar.addcascademenu = lambda *x, **y: None
     app.execute = lambda c: eval(c) if isinstance(c, str) else c()
 
-    def starttk():
-        import tkinter as Tkinter
-        app.root = Tkinter.Tk()
-        app.root.withdraw()
-        app.root.mainloop()
-
-    import threading
-    t = threading.Thread(target=starttk, args=())
-    t.setDaemon(1)
-    t.start()
-
-    import time
-    wait, maxwait = 0.01, 1.0
-    while app.root is None and maxwait > 0.0:
-        time.sleep(wait)
-        maxwait -= wait
-
     return app
 
 # wrappers for tkMessageBox and tkFileDialog that always use the current
