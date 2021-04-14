@@ -419,38 +419,5 @@ alpha-channel background.</string>
   <tabstop>button_back</tabstop>
  </tabstops>
  <resources/>
- <connections>
-  <connection>
-   <sender>input_units</sender>
-   <signal>currentIndexChanged(QString)</signal>
-   <receiver>input_height_units</receiver>
-   <slot>setSuffix(QString)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>102</x>
-     <y>119</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>237</x>
-     <y>57</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>input_units</sender>
-   <signal>currentIndexChanged(QString)</signal>
-   <receiver>input_width_units</receiver>
-   <slot>setSuffix(QString)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>102</x>
-     <y>119</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>237</x>
-     <y>30</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
