@@ -637,17 +637,14 @@ void SceneRenderAllObject(PyMOLGlobals * G,
   if (!SceneGetDrawFlag(grid, slot_vla, obj->grid_slot))
     return;
 
-  if (obj->Context == 2)
-    return;
-
   auto use_shader = info->use_shaders;
 
 #ifndef _WEBGL
   glLineWidth(fat ? 3.0 : 1.0);
 #endif
 
-    switch (obj->Context) {
-    case 1:              /* unit context */
+    switch (obj->getRenderContext()) {
+    case pymol::RenderContext::UnitWindow:
       // e.g. Gadgets/Ramps
       {
         float projSave[16];
@@ -699,7 +696,7 @@ void SceneRenderAllObject(PyMOLGlobals * G,
 #endif
       }
       break;
-    case 0:              /* context/grid 0 is all slots */
+    case pymol::RenderContext::Camera:              /* context/grid 0 is all slots */
     default:
       ScenePushModelViewMatrix(G);
 

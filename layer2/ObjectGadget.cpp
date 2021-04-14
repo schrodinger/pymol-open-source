@@ -228,7 +228,6 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
 
   I->GSet[0] = gs;
   I->NGSet = 1;
-  I->Context = 1;
   gs->update();
   ObjectGadgetUpdateExtents(I);
   return (I);
@@ -470,4 +469,8 @@ ObjectGadget::ObjectGadget(PyMOLGlobals * G) : pymol::CObject(G)
   GSet = pymol::vla<GadgetSet*>(10);        /* auto-zero */
 }
 
+pymol::RenderContext ObjectGadget::getRenderContext() const
+{
+  return pymol::RenderContext::UnitWindow;
+}
 

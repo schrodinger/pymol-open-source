@@ -127,12 +127,9 @@ static void RayTransformInverseNormals33(unsigned int n, float3 * q, const float
 static
 void RayProjectTriangle(CRay * I, RayInfo * r, float *light, float *v0, float *n0,
                         float scale);
-void RaySetContext(CRay * I, int context)
+void RaySetContext(CRay * I, pymol::RenderContext context)
 {
-  if(context >= 0)
-    I->Context = context;
-  else
-    I->Context = 0;
+  I->context = context;
 }
 
 float RayGetScreenVertexScale(CRay * I, float *v1)
@@ -156,8 +153,8 @@ float RayGetScreenVertexScale(CRay * I, float *v1)
 
 static void RayApplyContextToVertex(CRay * I, float *v)
 {
-  switch (I->Context) {
-  case 1:
+  switch (I->context) {
+  case pymol::RenderContext::UnitWindow:
     {
       float tw;
       float th;
@@ -199,8 +196,8 @@ static void RayApplyContextToVertex(CRay * I, float *v)
 
 static void RayApplyContextToNormal(CRay * I, float *v)
 {
-  switch (I->Context) {
-  case 1:
+  switch (I->context) {
+  case pymol::RenderContext::UnitWindow:
     RayTransformInverseNormals33(1, (float3 *) v, I->ModelView, (float3 *) v);
     break;
   }
@@ -6693,9 +6690,7 @@ int CRay::sphere3fv(const float *v, float r)
     transformTTT44f3f(I->TTT, p->v1, p->v1);
   }
 
-  if(I->Context) {
-    RayApplyContextToVertex(I, p->v1);
-  }
+  RayApplyContextToVertex(I, p->v1);
 
   I->NPrimitive++;
   return true;
@@ -6768,9 +6763,7 @@ int CRay::character(int char_id)
 
   v_scale = RayGetScreenVertexScale(I, p->v1) / I->Sampling;
 
-  if(I->Context) {
-    RayApplyContextToVertex(I, p->v1);
-  }
+  RayApplyContextToVertex(I, p->v1);
 
   {
     float xn[3] = { 1.0F, 0.0F, 0.0F };
@@ -6917,10 +6910,8 @@ int CRay::cylinder3fv(const float *v1, const float *v2, float r, const float *c1
     transformTTT44f3f(I->TTT, p->v2, p->v2);
   }
 
-  if(I->Context) {
-    RayApplyContextToVertex(I, p->v1);
-    RayApplyContextToVertex(I, p->v2);
-  }
+  RayApplyContextToVertex(I, p->v1);
+  RayApplyContextToVertex(I, p->v2);
 
   vv = p->c1;
   (*vv++) = (*c1++);
@@ -7015,10 +7006,8 @@ int CRay::customCylinder3fv(const float *v1, const float *v2, float r,
     transformTTT44f3f(I->TTT, p->v2, p->v2);
   }
 
-  if(I->Context) {
-    RayApplyContextToVertex(I, p->v1);
-    RayApplyContextToVertex(I, p->v2);
-  }
+  RayApplyContextToVertex(I, p->v1);
+  RayApplyContextToVertex(I, p->v2);
 
   vv = p->c1;
   (*vv++) = (*c1++);
@@ -7103,10 +7092,8 @@ int CRay::cone3fv(const float *v1, const float *v2, float r1, float r2,
     transformTTT44f3f(I->TTT, p->v2, p->v2);
   }
 
-  if(I->Context) {
-    RayApplyContextToVertex(I, p->v1);
-    RayApplyContextToVertex(I, p->v2);
-  }
+  RayApplyContextToVertex(I, p->v1);
+  RayApplyContextToVertex(I, p->v2);
 
   vv = p->c1;
   (*vv++) = (*c1++);
@@ -7172,10 +7159,8 @@ int CRay::sausage3fv(const float *v1, const float *v2, float r, const float *c1,
     transformTTT44f3f(I->TTT, p->v2, p->v2);
   }
 
-  if(I->Context) {
-    RayApplyContextToVertex(I, p->v1);
-    RayApplyContextToVertex(I, p->v2);
-  }
+  RayApplyContextToVertex(I, p->v1);
+  RayApplyContextToVertex(I, p->v2);
 
   vv = p->c1;
   (*vv++) = (*c1++);
@@ -7294,12 +7279,10 @@ int CRay::ellipsoid3fv(const float *v, float r, const float *n1, const float *n2
     transform_normalTTT44f3f(I->TTT, p->n3, p->n3);
   }
 
-  if(I->Context) {
-    RayApplyContextToVertex(I, p->v1);
-    RayApplyContextToNormal(I, p->n1);
-    RayApplyContextToNormal(I, p->n2);
-    RayApplyContextToNormal(I, p->n3);
-  }
+  RayApplyContextToVertex(I, p->v1);
+  RayApplyContextToNormal(I, p->n1);
+  RayApplyContextToNormal(I, p->n2);
+  RayApplyContextToNormal(I, p->n3);
 
   I->NPrimitive++;
   return true;
@@ -7475,15 +7458,13 @@ int CRay::triangle3fv(
     transform_normalTTT44f3f(I->TTT, p->n3, p->n3);
   }
 
-  if(I->Context) {
-    RayApplyContextToVertex(I, p->v1);
-    RayApplyContextToVertex(I, p->v2);
-    RayApplyContextToVertex(I, p->v3);
-    RayApplyContextToNormal(I, p->n0);
-    RayApplyContextToNormal(I, p->n1);
-    RayApplyContextToNormal(I, p->n2);
-    RayApplyContextToNormal(I, p->n3);
-  }
+  RayApplyContextToVertex(I, p->v1);
+  RayApplyContextToVertex(I, p->v2);
+  RayApplyContextToVertex(I, p->v3);
+  RayApplyContextToNormal(I, p->n0);
+  RayApplyContextToNormal(I, p->n1);
+  RayApplyContextToNormal(I, p->n2);
+  RayApplyContextToNormal(I, p->n3);
 
   I->NPrimitive++;
   return true;

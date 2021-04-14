@@ -38,6 +38,7 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"Selector.h"
 #include"vla.h"
+#include"pymol/type_traits.h"
 
 void ObjectPurgeSettings(pymol::CObject * I)
 {
@@ -784,7 +785,7 @@ PyObject *ObjectAsPyList(pymol::CObject * I)
   PyList_SetItem(result, 8, SettingAsPyList(I->Setting.get()));
 
   PyList_SetItem(result, 9, PyInt_FromLong(I->Enabled));
-  PyList_SetItem(result, 10, PyInt_FromLong(I->Context));
+  PyList_SetItem(result, 10, PyInt_FromLong(static_cast<long>(I->getRenderContext())));
   PyList_SetItem(result, 11, PConvFloatArrayToPyList(I->TTT, 16));
   if(I->ViewElem) {
     int nFrame = VLAGetSize(I->ViewElem);
@@ -839,9 +840,10 @@ int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, pymol::CObject * I)
     CPythonVal_Free(val);
   }
   if(ok && (ll > 9))
-    ok = PConvPyIntToInt(PyList_GetItem(list, 9), &I->Enabled);
-  if(ok && (ll > 10))
-    ok = PConvPyIntToInt(PyList_GetItem(list, 10), &I->Context);
+    ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 9, &I->Enabled);
+  if(ok && (ll > 10)) {
+    // I->Context removed.
+  }
   if(ok && (ll > 11))
     ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list, 11), I->TTT, 16);
   if(ok && (ll > 13)) {
@@ -879,7 +881,6 @@ int ObjectCopyHeader(pymol::CObject * I, const pymol::CObject * src)
   I->TTTFlag = src->TTTFlag;
   I->Setting = src->Setting;
   I->Enabled = src->Enabled;
-  I->Context = src->Context;
   {
     int a;
     for(a = 0; a < 16; a++)

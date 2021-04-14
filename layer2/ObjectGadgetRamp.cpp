@@ -836,7 +836,6 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp * I)
 
   og->GSet[0] = gs;
   og->NGSet = 1;
-  og->Context = 1;          /* unit window */
   gs->Obj = (ObjectGadget *) I;
   gs->State = 0;
 

@@ -37,6 +37,7 @@ struct ObjectGadget : public pymol::CObject {
   virtual void update() override;
   void render(RenderInfo* info) override;
   int getNFrame() const override;
+  pymol::RenderContext getRenderContext() const override;
 };
 
 #define cGadgetPlain 0

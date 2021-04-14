@@ -275,7 +275,7 @@ bool SceneRay(PyMOLGlobals * G,
             if(SceneGetDrawFlag(&I->grid, slot_vla, obj->grid_slot)) {
               float color[3];
               ColorGetEncoded(G, obj->Color, color);
-              RaySetContext(ray, obj->Context);
+              RaySetContext(ray, obj->getRenderContext());
               ray->color3fv(color);
 
               auto icx = SettingGetWD<int>(

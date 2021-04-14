@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"View.h"
 #include"Word.h"
 #include"vla.h"
+#include"RenderContext.h"
 
 #include <string>
 #include <type_traits>
@@ -79,7 +80,6 @@ struct CObject {
                       rendering) */
   pymol::copyable_ptr<CSetting> Setting;
   int Enabled = 0; /* read-only... maintained by Scene */
-  int Context = 0; /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
   pymol::vla<CViewElem> ViewElem; /* for animating objects via the TTT */
 
   /* not pickled */
@@ -115,6 +115,7 @@ public:
   virtual CObject* clone() const { return nullptr; };
   virtual CSymmetry const* getSymmetry(int state = 0) const { return nullptr; }
   virtual bool setSymmetry(CSymmetry const&, int state = 0) { return false; }
+  virtual pymol::RenderContext getRenderContext() const { return RenderContext::Camera; }
 };
 } // namespace pymol
 int ObjectCopyHeader(pymol::CObject * I, const pymol::CObject * src);

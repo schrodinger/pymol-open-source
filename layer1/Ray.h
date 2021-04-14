@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Basis.h"
 #include"PyMOLGlobals.h"
 #include"Image.h"
+#include"RenderContext.h"
 
 #define cRayMaxBasis 10
 
@@ -64,7 +65,7 @@ void RaySetTTT(CRay * I, int flag, float *ttt);
 void RayGetTTT(CRay * I, float *ttt);
 void RayPushTTT(CRay * I);
 void RayPopTTT(CRay * I);
-void RaySetContext(CRay * I, int context);
+void RaySetContext(CRay * I, pymol::RenderContext context);
 void RayRenderColorTable(CRay * I, int width, int height, int *image);
 int RayTraceThread(CRayThreadInfo * T);
 int RayGetNPrimitives(CRay * I);
@@ -155,7 +156,7 @@ struct _CRay {
   float TTT[16];
   float *TTTStackVLA;
   int TTTStackDepth;
-  int Context;
+  pymol::RenderContext context;
   int CheckInterior;
   float AspRatio;
   int Width, Height;

@@ -1344,8 +1344,8 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
           }
 
           /* transform into model coodinate space */
-          switch (obj->Context) {
-          case 1: {
+          switch (obj->getRenderContext()) {
+          case pymol::RenderContext::UnitWindow: {
             float divisor;
             divisor = (float) I->Width;
             if (I->Height < I->Width)
@@ -1355,7 +1355,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
             v2[2] = 0;
           } break;
           default:
-          case 0:
+          case pymol::RenderContext::Camera:
             v2[0] = (x - I->LastX) * vScale;
             v2[1] = (y - I->LastY) * vScale;
             v2[2] = 0;
@@ -1544,8 +1544,8 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
             }
 
             /* transform into model coodinate space */
-            switch (obj->Context) {
-            case 1: {
+            switch (obj->getRenderContext()) {
+            case pymol::RenderContext::UnitWindow: {
               float divisor;
               divisor = (float) I->Width;
               if (I->Height < I->Width)
@@ -1555,7 +1555,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
               v2[2] = 0;
             } break;
             default:
-            case 0:
+            case pymol::RenderContext::Camera:
               v2[0] = (x - I->LastX) * vScale;
               v2[1] = (y - I->LastY) * vScale;
               v2[2] = 0;
