@@ -392,8 +392,8 @@ int ContourSurfVolume(PyMOLGlobals* G, Isofield* field, float level,
     const CarveHelper* carvehelper, //
     cIsosurfaceSide side)
 {
-  auto type =
-      SettingGet<cIsosurfaceAlgorithm>(G, cSetting_isosurface_algorithm);
+  auto type = static_cast<cIsosurfaceAlgorithm>(
+      SettingGet<int>(G, cSetting_isosurface_algorithm));
   int n_tri = 0;
 
   switch (type) {
