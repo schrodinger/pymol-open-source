@@ -34,8 +34,18 @@ class Test3494(testing.PyMOLTestCase):
 
         cmd.set("ray_color_ramps", 0)
         img = self.get_imagearray(width=100, height=100, ray=1)
-        self.assertImageEqual("PYMOL-3494-ray_color_ramps-0.png", img, delta=1)
+
+        # Test is not compatible with different isosurface_algorithm settings
+        # self.assertImageEqual("PYMOL-3494-ray_color_ramps-0.png", img, delta=1)
+
+        # 258 colors observed in gradient
+        self.assertTrue(self.imageCountColors(img) > 250)
 
         cmd.set("ray_color_ramps", 1)
         img = self.get_imagearray(width=100, height=100, ray=1)
-        self.assertImageEqual("PYMOL-3494-ray_color_ramps-1.png", img, delta=1, count=312)
+
+        # Test is not compatible with different isosurface_algorithm settings
+        # self.assertImageEqual("PYMOL-3494-ray_color_ramps-1.png", img, delta=1, count=312)
+
+        # 2 discrete colors + 1 background color
+        self.assertEqual(self.imageCountColors(img), 3)

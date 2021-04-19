@@ -438,6 +438,14 @@ else:
             if noff <= count * data1.shape[-1]:
                 raise self.failureException(msg)
 
+        def imageCountColors(self, img, ignorealpha=False):
+            dim = img.shape[-1]
+            if dim == 4 and ignorealpha:
+                dim = 3
+                img = img[...,:dim]
+            colors = set(tuple(row) for row in img.reshape((-1, dim)).tolist())
+            return len(colors)
+
         def _imageHasColor(self, color, img, delta=0):
             if isinstance(color, str):
                 color = [int(v*255) for v in cmd.get_color_tuple(color)]
