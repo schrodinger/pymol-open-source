@@ -18,7 +18,7 @@ class ShortcutManager():
         self.cmd.shortcut_dict = {key: list(value) for key,value in shortcut_dict_ref.items()}
 
         # Tuple of keys that are reserved for the system
-        self.reserved_keys = ('CTRL-S','CTRL-E','CTRL-O','CTRL-M')
+        self.reserved_keys = ('CTRL-S','CTRL-E','CTRL-O','CTRL-M','up','down')
 
     def check_saved_dict(self):
         '''

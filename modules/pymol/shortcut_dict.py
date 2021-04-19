@@ -8,8 +8,8 @@
 #       truncated for this purpose.
 #============================================================================#
 shortcut_dict_ref = {
-'left': ('cmd._weakrefproxy.backward()',"previous movie frame",''),
-'right': ('cmd._weakrefproxy.forward()',"next movie frame",''),
+'left': ('_ backward',"previous movie frame",''),
+'right': ('_ forward',"next movie frame",''),
 'pgup': ('scene action=previous',"previous scene",''),
 'pgdn': ('scene action=next',"last scene",''),
 'home': ('zoom animate=-1',"zoom all",''),
@@ -24,8 +24,8 @@ shortcut_dict_ref = {
 'SHFT-insert': ('rock','',''),
 'CTRL-left': ('backward','',''),
 'CTRL-right': ('forward','',''),
-'CTRL-pgup': ("cmd._weakrefproxy.scene('', 'insert_before')",'insert scene before current',''),
-'CTRL-pgdn': ("cmd._weakrefproxy.scene('', 'insert_after')",'insert scene after current',''),
+'CTRL-pgup': ("_ scene new, insert_before",'insert scene before current',''),
+'CTRL-pgdn': ("_ scene new, insert_after",'insert scene after current',''),
 'CTRL-home': ('zoom animate=-1','zoom all',''),
 'CTRL-end': ('scene new, store','store new scene',''),
 'CTRL-insert': ('scene auto, store','store auto scene',''),
@@ -82,8 +82,8 @@ shortcut_dict_ref = {
 'ALT-Z': ("editor.attach_amino_acid('pk1', 'nme')",'attach nme',''),
 'CTSH-left': ('backward','',''),
 'CTSH-right': ('forward','',''),
-'CTSH-pgup': ("cmd._weakrefproxy.scene('', 'insert_before')",'insert scene before current',''),
-'CTSH-pgdn': ("cmd._weakrefproxy.scene('', 'insert_after')",'insert scene after current',''),
+'CTSH-pgup': ("scene new, insert_before",'insert scene before current',''),
+'CTSH-pgdn': ("scene new, insert_after",'insert scene after current',''),
 'CTSH-home': ('zoom animate=-1','zoom all',''),
 'CTSH-end': ('mtoggle','',''),
 'CTSH-insert': ('rock','',''),
