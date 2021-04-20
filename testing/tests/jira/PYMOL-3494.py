@@ -49,3 +49,9 @@ class Test3494(testing.PyMOLTestCase):
 
         # 2 discrete colors + 1 background color
         self.assertEqual(self.imageCountColors(img), 3)
+
+    @testing.foreach(1, 2)
+    @testing.requires_version('2.5')
+    def testIsosurfaceAlgorithm(self, isosurface_algorithm):
+        cmd.set("isosurface_algorithm", isosurface_algorithm)
+        self.test()
