@@ -10,6 +10,8 @@
 #include "Feedback.h"
 #include "Isosurf.h"
 #include "Tetsurf.h"
+#include "Util.h"
+#include "marching_cubes.h"
 
 static constexpr size_t vertices_per_tri = 3;
 static constexpr size_t floats_per_trivertex = 3 + 3; // xyz + normal
@@ -378,6 +380,118 @@ static int ContourSurfVolumeVtkm(PyMOLGlobals* G, Isofield* field, float level,
 
 #endif
 
+class PyMOLMcField : public mc::Field
+{
+  const Isofield* m_field = nullptr;
+  int m_offset[3]{};
+  int m_dim[3]{};
+
+public:
+  PyMOLMcField(const Isofield* field, const int* range)
+      : m_field(field)
+  {
+    if (!range) {
+      copy3(field->dimensions, m_dim);
+    } else {
+      copy3(range, m_offset);
+      m_dim[0] = range[3] - range[0];
+      m_dim[1] = range[4] - range[1];
+      m_dim[2] = range[5] - range[2];
+    }
+  }
+
+  size_t xDim() const override { return m_dim[0]; }
+  size_t yDim() const override { return m_dim[1]; }
+  size_t zDim() const override { return m_dim[2]; }
+
+  float get(size_t x, size_t y, size_t z) const override
+  {
+    return m_field->data->get<float>(
+        x + m_offset[0], y + m_offset[1], z + m_offset[2]);
+  }
+
+  mc::Point get_point(size_t x, size_t y, size_t z) const override
+  {
+    x += m_offset[0];
+    y += m_offset[1];
+    z += m_offset[2];
+    return {
+        m_field->points->get<float>(x, y, z, 0),
+        m_field->points->get<float>(x, y, z, 1),
+        m_field->points->get<float>(x, y, z, 2),
+    };
+  }
+};
+
+/**
+ * Isosurface using code based on
+ * https://github.com/ilastik/marching_cubes
+ */
+static int ContourSurfVolumeMcBasic(PyMOLGlobals* G, Isofield* field,
+    float level,
+    pymol::vla<int>& num,           //
+    pymol::vla<float>& vert,        //
+    const int* range,               //
+    cIsosurfaceMode mode,           //
+    const CarveHelper* carvehelper, //
+    cIsosurfaceSide side)
+{
+  switch (mode) {
+  case cIsosurfaceMode::triangles_grad_normals:
+  case cIsosurfaceMode::triangles_tri_normals:
+    break;
+  default:
+    PRINTFB(G, FB_Isosurface, FB_Warnings)
+    " %s: Mode not implemented: %d\n", __func__, int(mode) ENDFB(G);
+    return -1;
+  }
+
+  PyMOLMcField pmcfield(field, range);
+  auto mesh = mc::march(
+      pmcfield, level, mode == cIsosurfaceMode::triangles_grad_normals);
+
+  if (mode == cIsosurfaceMode::triangles_tri_normals) {
+    calculateNormals(mesh);
+  }
+
+  assert(mesh.normals);
+
+  side = get_adjusted_side(level, side);
+  const auto* indices_winding = get_winding_indices(side);
+  int const normal_dir = int(side);
+  assert(normal_dir == 1 || normal_dir == -1);
+
+  size_t vert_size = 0;
+  for (size_t i = 0; i < mesh.faceCount; ++i) {
+    vert.check(vert_size + 6 * 3 - 1);
+
+    for (size_t j = 0; j < 3; ++j) {
+      const int jj = indices_winding[j];
+
+      auto const& normal = mesh.normals[mesh.faces[i * 3 + jj]];
+      vert[vert_size++] = normal.x * normal_dir;
+      vert[vert_size++] = normal.y * normal_dir;
+      vert[vert_size++] = normal.z * normal_dir;
+
+      auto const& point = mesh.vertices[mesh.faces[i * 3 + jj]];
+      vert[vert_size++] = point.x;
+      vert[vert_size++] = point.y;
+      vert[vert_size++] = point.z;
+    }
+
+    if (carvehelper && carvehelper->is_excluded(
+                           &vert[vert_size - 3 - floats_per_trivertex * 0],
+                           &vert[vert_size - 3 - floats_per_trivertex * 1],
+                           &vert[vert_size - 3 - floats_per_trivertex * 2])) {
+      vert_size -= floats_per_tri;
+    }
+  }
+
+  vert.resize(vert_size);
+
+  return fill_num_array(num, vert.size(), mode);
+}
+
 /**
  * Generate an isosurface with VTK-m. If VTK-m is not available, fall back to
  * the legacy Marching Tetrahedra implementation.
@@ -407,6 +521,11 @@ int ContourSurfVolume(PyMOLGlobals* G, Isofield* field, float level,
     " %s: VTKm not available, falling back to internal implementation\n",
         __func__ ENDFB(G);
 #endif
+  case cIsosurfaceAlgorithm::MARCHING_CUBES_BASIC:
+    n_tri = ContourSurfVolumeMcBasic(
+        G, field, level, num, vert, range, mode, carvehelper, side);
+    if (n_tri >= 0)
+      break;
   case cIsosurfaceAlgorithm::MARCHING_TETRAHEDRA:
     n_tri = TetsurfVolume(
         G, field, level, num, vert, range, mode, carvehelper, side);
