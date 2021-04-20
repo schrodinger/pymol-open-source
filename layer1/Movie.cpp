@@ -853,7 +853,7 @@ int MoviePNG(PyMOLGlobals * G, const char* prefix, int save, int start,
     SettingSetGlobal_b(G, cSetting_seq_view, 0);
     // force viewport update
     SeqChanged(G);
-    OrthoDoDraw(G, 0);
+    OrthoDoDraw(G, OrthoRenderMode::Main);
   }
 
   M->modal = modal;

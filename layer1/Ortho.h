@@ -38,6 +38,13 @@ Z* -------------------------------------------------------------------
 #define cOrthoTool 2
 #define cOrthoHidden 3
 
+enum class OrthoRenderMode
+{
+  VR,
+  Main, // Also Geowall Left
+  GeoWallRight,
+};
+
 int OrthoInit(PyMOLGlobals * G, int showSplash);
 void OrthoFree(PyMOLGlobals * G);
 
@@ -47,7 +54,7 @@ void OrthoDetach(PyMOLGlobals * G, Block * block);
 void OrthoReshape(PyMOLGlobals * G, int width, int height, int force);
 int OrthoGetWidth(PyMOLGlobals * G);
 int OrthoGetHeight(PyMOLGlobals * G);
-void OrthoDoDraw(PyMOLGlobals * G, int render_mode);
+void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode);
 void OrthoDoViewportWhenReleased(PyMOLGlobals *G);
 void OrthoPushMatrix(PyMOLGlobals * G);
 void OrthoPopMatrix(PyMOLGlobals * G);
@@ -110,7 +117,7 @@ void OrthoDefer(PyMOLGlobals * G, std::unique_ptr<CDeferred> && D);
 void OrthoExecDeferred(PyMOLGlobals * G);
 int OrthoDeferredWaiting(PyMOLGlobals * G);
 
-int OrthoGetRenderMode(PyMOLGlobals * G);
+OrthoRenderMode OrthoGetRenderMode(PyMOLGlobals * G);
 void OrthoDrawBuffer(PyMOLGlobals * G, GLenum mode);
 int OrthoGetWrapClickSide(PyMOLGlobals * G);
 float *OrthoGetOverlayColor(PyMOLGlobals * G);

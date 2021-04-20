@@ -103,7 +103,7 @@ public:
   std::queue<std::string> feedback;
   int Pushed{};
   std::vector<std::unique_ptr<CDeferred>> deferred; //Ortho manages DeferredObjs
-  int RenderMode{};
+  OrthoRenderMode RenderMode = OrthoRenderMode::Main;
   GLint ViewPort[4]{};
   int WrapXFlag{};
   GLenum ActiveGLBuffer{};
@@ -234,10 +234,9 @@ int OrthoGetDirty(PyMOLGlobals * G)
   return I->DirtyFlag;
 }
 
-int OrthoGetRenderMode(PyMOLGlobals * G)
+OrthoRenderMode OrthoGetRenderMode(PyMOLGlobals * G)
 {
-  COrtho *I = G->Ortho;
-  return I->RenderMode;
+  return G->Ortho->RenderMode;
 }
 
 void OrthoSetLoopRect(PyMOLGlobals * G, int flag, BlockRect * rect)
@@ -1482,7 +1481,7 @@ void bg_grad(PyMOLGlobals * G) {
   glEnable(GL_DEPTH_TEST);
 }
 
-void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
+void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
 {
   COrtho *I = G->Ortho;
   CGO *orthoCGO = NULL;
@@ -1582,11 +1581,11 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
     if(text)
       overlay = 0;
 
-    if(overlay || (!text) || render_mode < 0)
+    if(overlay || (!text) || render_mode == OrthoRenderMode::VR)
       if(!SceneRenderCached(G))
         render = true;
 
-    if(render_mode < 0) {
+    if(render_mode == OrthoRenderMode::VR) {
 #ifdef _PYMOL_OPENVR
       times = 2;
       double_pump = false;
@@ -1595,7 +1594,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
       SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       openvr_text = SettingGetGlobal_i(G, cSetting_openvr_gui_text);
 #endif
-    } else if(render_mode < 2) {
+    } else if(render_mode != OrthoRenderMode::GeoWallRight) {
       if(SceneMustDrawBoth(G)) {
         OrthoDrawBuffer(G, GL_BACK_LEFT);
         SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -1619,7 +1618,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
     I->DrawTime += I->LastDraw;
     ButModeSetRate(G, (float) I->DrawTime);
 
-    if(render && (render_mode < 2))
+    if(render && (render_mode != OrthoRenderMode::GeoWallRight))
       SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0,
                   SettingGetGlobal_b(G, cSetting_image_copy_always));
     else if (text){
@@ -2584,7 +2583,6 @@ int OrthoInit(PyMOLGlobals * G, int showSplash)
     I->Pushed = 0;
     I->cmdActiveQueue = &(*I->cmdQueue.begin());
     I->cmdNestLevel = 0;
-    I->RenderMode = 0;
     I->WrapXFlag = false;
 
     I->WizardBackColor[0] = 0.2F;
@@ -2691,11 +2689,10 @@ void OrthoPushMatrix(PyMOLGlobals * G)
       glGetIntegerv(GL_VIEWPORT, I->ViewPort);
     }
     switch (I->RenderMode) {
-    case 2:
+    case OrthoRenderMode::GeoWallRight:
       glViewport(I->ViewPort[0] + I->ViewPort[2], I->ViewPort[1],
                  I->ViewPort[2], I->ViewPort[3]);
       break;
-    case 1:
     default:
       glViewport(I->ViewPort[0], I->ViewPort[1], I->ViewPort[2], I->ViewPort[3]);
     }

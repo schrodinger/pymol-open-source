@@ -3027,8 +3027,10 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
 	int stereo = SettingGetGlobal_i(G, cSetting_stereo);
 	if (stereo){
 	  switch (OrthoGetRenderMode(G)) {
-	  case cStereo_geowall:
+	  case OrthoRenderMode::GeoWallRight:
 	    data += I->Image->getSizeInBytes();
+	    break;
+	  default:
 	    break;
 	  }
 	}

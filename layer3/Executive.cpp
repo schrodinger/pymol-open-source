@@ -11187,8 +11187,8 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
 	  int width = G->Option->winX;
 	  int height = G->Option->winY;
 	  glViewport(0, 0, width / 2, height);
-	  OrthoDoDraw(G, 1);
-	  OrthoDoDraw(G, 2);
+	  OrthoDoDraw(G, OrthoRenderMode::Main);
+	  OrthoDoDraw(G, OrthoRenderMode::GeoWallRight);
 	  glViewport(0, 0, width, height);
 	}
 	break;
@@ -11202,7 +11202,7 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
           float matrix[16];
           SceneGetModel2WorldMatrix(G, matrix);
           OpenVRHandleInput(G, scene_block->rect.left, scene_block->rect.bottom, scene_width, scene_height, matrix);
-          OrthoDoDraw(G, -1);
+          OrthoDoDraw(G, OrthoRenderMode::VR);
           if (SettingGetGlobal_b(G, cSetting_openvr_cut_laser) && OpenVRIsScenePickerActive(G)) {
             int x = scene_block->rect.left + scene_width / 2;
             int y = scene_block->rect.bottom + scene_height / 2;
@@ -11216,11 +11216,11 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
         break;
 #endif
       default:
-	OrthoDoDraw(G, 0);
+	OrthoDoDraw(G, OrthoRenderMode::Main);
 	break;
       }
     } else {
-      OrthoDoDraw(G, 0);
+      OrthoDoDraw(G, OrthoRenderMode::Main);
     }
 
     if(G->HaveGUI && G->ValidContext) {
