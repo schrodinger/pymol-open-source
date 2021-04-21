@@ -514,7 +514,7 @@ Mesh march(const Field& volume, float isoLevel, bool gradient_normals)
   std::vector<isocheck_bool_t> isocheck(xDim * yDim * zDim);
 
 #pragma omp parallel for
-  for (size_t z = 0; z < zDim; ++z) {
+  for (int z = 0; z < zDim; ++z) {
     for (size_t y = 0; y < yDim; ++y) {
       auto const offset = xDim * y + xDim * yDim * z;
       for (size_t x = 0; x < xDim; ++x) {
@@ -547,7 +547,7 @@ Mesh march(const Field& volume, float isoLevel, bool gradient_normals)
 
 #pragma omp parallel for
 #endif
-  for (size_t z = 0; z < zEnd; ++z) {
+  for (int z = 0; z < zEnd; ++z) {
     auto& triangles = trianglesVec[omp_get_thread_num()];
 
     for (size_t y = 0; y < yEnd; ++y) {
@@ -678,12 +678,12 @@ void calculateNormals(Mesh& mesh)
   auto normals = mesh.normals.get();
 
 #pragma omp parallel for
-  for (size_t i = 0; i < vertexCount; ++i) {
+  for (int i = 0; i < vertexCount; ++i) {
     normals[i] = {0, 0, 0};
   }
 
 #pragma omp parallel for
-  for (size_t i = 0; i < triangleCount; ++i) {
+  for (int i = 0; i < triangleCount; ++i) {
     size_t const id0 = triangles[i * 3];
     size_t const id1 = triangles[i * 3 + 1];
     size_t const id2 = triangles[i * 3 + 2];
@@ -717,7 +717,7 @@ void calculateNormals(Mesh& mesh)
   }
 
 #pragma omp parallel for
-  for (size_t i = 0; i < vertexCount; ++i) {
+  for (int i = 0; i < vertexCount; ++i) {
     normals[i] = normalize(normals[i]);
   }
 }
