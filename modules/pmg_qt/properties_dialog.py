@@ -44,8 +44,7 @@ class PropsDialog(QtWidgets.QWidget):
     def __init__(self, parent):
         QtWidgets.QWidget.__init__(self)
         self.cmd = parent.cmd
-        self.form = parent.load_form('props', 'floating')
-        parent.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.form._dialog)
+        self.form = parent.load_form('props')
         self.setup_tree_widget()
         self.setup_behavior()
         self.item_changed_skip = False

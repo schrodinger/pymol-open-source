@@ -625,7 +625,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         if not self.props_panel:
             self.props_panel = PropsDialog(self)
-            self.addDockWidget(Qt.TopDockWidgetArea, self.props_panel.get_dialog())
 
         self.props_panel.get_dialog().show()
         self.props_panel.get_dialog().raise_()
