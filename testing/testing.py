@@ -202,8 +202,14 @@ else:
                 if not 'multi_undo' in get_capabilities():
                     return unittest.skip('skip multiundo')(func)
                 else:
-                    cmd.undo_mode(UndoMode.Enable)
-
+                    def reset_undo_decorator(func):
+                        def wrapper(*args, **kwargs):
+                            cmd.undo_mode(UndoMode.Disable) # force reset
+                            cmd.undo_mode(UndoMode.Enable)
+                            func(*args, **kwargs)
+                            cmd.undo_mode(UndoMode.Disable)
+                        return wrapper
+                    return reset_undo_decorator(func)
             if flags:
                 raise ValueError('unknown flags: ' + ', '.join(flags)
                         + '; choices: ' + ', '.join(sorted(flags_known)))
