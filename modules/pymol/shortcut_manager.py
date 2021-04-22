@@ -42,6 +42,7 @@ class ShortcutManager():
         missing_keys = []
         mismatch_keys = []
         empty_keys = []
+        manual_reset_keys = []
 
         for key in current_mappings:
             if not current_mappings[key]:
@@ -49,10 +50,14 @@ class ShortcutManager():
             if key in self.default_bindings:
                 if current_mappings[key] != self.default_bindings[key]:
                     mismatch_keys.append(key)
+                elif current_mappings[key] == self.default_bindings[key] and self.cmd.shortcut_dict[key][2]:
+                    manual_reset_keys.append(key)
             else:
                 missing_keys.append(key)
         for key in mismatch_keys:
             self.cmd.shortcut_dict[key][ShortcutIndex.USER_DEF] = str(current_mappings[key])
+        for key in manual_reset_keys:
+            self.cmd.shortcut_dict[key][ShortcutIndex.USER_DEF] = ''
         for key in missing_keys:
             if key in self.cmd.shortcut_dict:
                 self.cmd.shortcut_dict[key][ShortcutIndex.USER_DEF] = str(current_mappings[key])

@@ -384,7 +384,6 @@ class PyMOLShortcutMenu(QtWidgets.QWidget):
         '''
         hh = self.table.horizontalHeader()
         hh.setStretchLastSection(True)
-        hh.setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
         self.table.verticalHeader().setVisible(False)
         self.table.setFocus()
         self.table.hide()
