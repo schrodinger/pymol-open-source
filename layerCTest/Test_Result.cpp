@@ -34,7 +34,7 @@ TEST_CASE("Result template", "[Result]")
   static_assert(std::is_same<decltype(ans), pymol::Result<double>>::value,
       "Not correct result type");
   REQUIRE(ans);
-  REQUIRE(isAlmostEqual(ans.result(), 8.));
+  REQUIRE(pymol::almost_equal(ans.result(), 8.));
 }
 
 static

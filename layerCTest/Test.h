@@ -38,15 +38,6 @@ static bool isArrayEqual(const T *arr1, const T *arr2, const std::size_t len) {
   return pymol::equal(arr1, arr1 + len, arr2);
 }
 
-/**
- * Checks whether two floating point values are nearly equal
- */
-template <typename T, typename U, typename CommonT = pymol::common_type_t<T, U>>
-static bool isAlmostEqual(T a, U b, CommonT epsilon = 1e-6)
-{
-  return std::abs(a - b) <= epsilon;
-}
-
 // Checks whether type has all special member functions
 template <typename T> static bool isRegular()
 {

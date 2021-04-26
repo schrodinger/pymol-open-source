@@ -17,8 +17,10 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Seeker
 #define _H_Seeker
 
+#include <vector>
 #include"Ortho.h"
 #include"ObjectMolecule.h"
+#include "Seq.h"
 
 #define cTempSeekerSele "_seeker"
 #define cTempCenterSele "_seeker_center"
@@ -51,5 +53,7 @@ struct SeekerDragInfo {
 void SeekerSetDragInfo(PyMOLGlobals* G, const SeekerDragInfo& dragInfo);
 SeekerDragInfo SeekerGetDragInfo(PyMOLGlobals* G);
 void SeekerSelectionCenter(PyMOLGlobals * G, int action);
+void SeekerSelectionUpdateCenter(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA, int row_num,
+                                 int col_num, int start_over);
 
 #endif

@@ -5,6 +5,10 @@
 #include <cmath>
 #include "pymol/type_traits.h"
 #include <cstdlib>
+#include <functional>
+#if __cplusplus >= 201703L
+#include <numeric>
+#endif
 
 #include "pymol/type_traits.h"
 
@@ -140,5 +144,35 @@ bool equal(const RangeT1& first, const RangeT2& second, Pred p)
   return true;
   //return pymol::equal(std::begin(first), std::end(first), std::begin(second));
 }
+
+/**
+ * @brief Performs a left fold over a ranges
+ * @param range range to fold
+ * @param init initial accumulation value
+ * @param op binary operation to call per element in range
+ * @return result accmulated value over range
+ * @note modeled after C++23's proposed std::ranges::fold
+ */
+
+template<typename RangeT, typename T, typename BinaryOp>
+T left_fold(const RangeT& range, T init = T{}, BinaryOp op = std::plus<>())
+{
+#if __cplusplus >= 201703L
+  return std::accumulate(std::begin(range), std::end(range), init, op);
+#else
+  for(auto it = std::begin(range); it != std::end(range); ++it)
+  {
+    init += op(init, *it);
+  }
+  return init;
+#endif
+}
+
+template<typename RangeT, typename T = typename RangeT::value_type>
+T left_fold(const RangeT& range, T init = T{})
+{
+  return left_fold(range, init, std::plus<>());
+}
+
 } // namespace ranges
 } // namespace pymol

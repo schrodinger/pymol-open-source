@@ -244,39 +244,31 @@ static void SeekerSelectionToggle(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA
   }
 }
 
-static void SeekerSelectionUpdateCenter(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA, int row_num,
+void SeekerSelectionUpdateCenter(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA, int row_num,
                                         int col_num, int start_over)
 {
-
-  {
-    pymol::CObject *obj;
-
-    int *atom_list;
-    char prefix[3] = "";
-    int logging = SettingGetGlobal_i(G, cSetting_logging);
-
-    if(logging == cPLog_pml)
-      strcpy(prefix, "_ ");
-    if(row_num >= 0) {
-      auto row = &rowVLA[row_num];
-      auto col = &row->col[col_num];
-
-      if(!col->spacer)
-        if((obj = ExecutiveFindObjectByName(G, row->name))) {
-
-          if(col->state && obj)
-            SettingSetSmart_i(G, obj->Setting.get(), NULL, cSetting_state, col->state);
-
-          atom_list = row->atom_lists + col->atom_at;
-
-          SeekerBuildSeleFromAtomList(G, row->name, atom_list, cTempCenterSele,
-                                      start_over);
-          if(logging)
-            SelectorLogSele(G, cTempCenterSele);
-        }
-    }
+  if (row_num < 0) {
+     return;
   }
+  auto row = &rowVLA[row_num];
+  auto col = &row->col[col_num];
 
+  if(col->spacer) {
+    return;
+  }
+  if(auto obj = ExecutiveFindObjectByName(G, row->name)) {
+
+    if(col->state)
+      SettingSetSmart_i(G, obj->Setting.get(), nullptr, cSetting_state, col->state);
+
+    auto* atom_list = &row->atom_lists[col->atom_at];
+
+    SeekerBuildSeleFromAtomList(G, row->name, atom_list, cTempCenterSele,
+                                start_over);
+    auto logging = SettingGet<bool>(G, cSetting_logging);
+    if(logging)
+      SelectorLogSele(G, cTempCenterSele);
+  }
 }
 
 void SeekerSelectionCenter(PyMOLGlobals * G, int action)
