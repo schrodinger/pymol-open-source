@@ -29,3 +29,18 @@ enum class cIsosurfaceAlgorithm {
   MARCHING_CUBES_BASIC = 1,
   MARCHING_TETRAHEDRA = 2,
 };
+
+enum class InternalGUIMode
+{
+  Default,
+  BG,
+  Transparent,
+};
+
+enum class OrthoRenderMode
+{
+  VR,
+  Main,
+  GeoWallLeft = Main,
+  GeoWallRight,
+};

@@ -711,7 +711,7 @@ void CWizard::draw(CGO* orthoCGO)
 
   if(G->HaveGUI && G->ValidContext && ((rect.right - rect.left) > 6)) {
 
-    if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 0) {
+    if(SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting) == InternalGUIMode::Default) {
     if (orthoCGO)
       CGOColorv(orthoCGO, BackColor);
 #ifndef PURE_OPENGL_ES_2

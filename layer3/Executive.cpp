@@ -11187,7 +11187,7 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
 	  int width = G->Option->winX;
 	  int height = G->Option->winY;
 	  glViewport(0, 0, width / 2, height);
-	  OrthoDoDraw(G, OrthoRenderMode::Main);
+	  OrthoDoDraw(G, OrthoRenderMode::GeoWallLeft);
 	  OrthoDoDraw(G, OrthoRenderMode::GeoWallRight);
 	  glViewport(0, 0, width, height);
 	}
@@ -14599,7 +14599,7 @@ int CExecutive::click(int button, int x, int y, int mod)
   int op_cnt = get_op_cnt(G);
 
   if(y < I->HowFarDown) {
-    if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 1)
+    if(SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting) != InternalGUIMode::Default)
       return SceneGetBlock(G)->click(button, x, y, mod);
   }
 
@@ -15126,7 +15126,7 @@ int CExecutive::release(int button, int x, int y, int mod)
   int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
 #endif
   if(y < I->HowFarDown) {
-    if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 1)
+    if(SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting) != InternalGUIMode::Default)
       return SceneGetBlock(G)->release(button, x, y, mod);
   }
 
@@ -15226,7 +15226,7 @@ int CExecutive::drag(int x, int y, int mod)
   ExecutiveUpdateGroups(G, false);
   ExecutiveUpdatePanelList(G);
   if(y < I->HowFarDown) {
-    if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 1)
+    if(SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting) != InternalGUIMode::Default)
       return SceneGetBlock(G)->drag(x, y, mod);
   }
 
@@ -15782,7 +15782,7 @@ void CExecutive::draw(CGO* orthoCGO)
     max_char /= DIP2PIXEL(8);
 
     /* fill and outline the entire block */
-    if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 0) {
+    if(SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting) == InternalGUIMode::Default) {
       if (orthoCGO)
 	CGOColorv(orthoCGO, BackColor);
 #ifndef PURE_OPENGL_ES_2

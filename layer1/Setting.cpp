@@ -74,7 +74,7 @@ const SettingLevelInfoType SettingLevelInfo[] = {
 #define SETTINGINFO_IMPLEMENTATION
 #include "SettingInfo.h"
 
-template <> const char * SettingGet<const char *>(int index, const CSetting * I);
+template <> const char * _SettingGet<const char *>(int index, const CSetting * I);
 
 // get level name for setting index (for feedback)
 const char * SettingLevelGetName(unsigned index) {
@@ -1640,7 +1640,7 @@ int SettingGetType(int index)
 
 /*========================================================================*/
 template <>
-int SettingGet<int>(int index, const CSetting * I)
+int _SettingGet<int>(int index, const CSetting * I)
 {
   PyMOLGlobals *G = I->G;
   int result;
@@ -1665,7 +1665,7 @@ int SettingGet<int>(int index, const CSetting * I)
 
 /*========================================================================*/
 template <>
-bool SettingGet<bool>(int index, const CSetting * I)
+bool _SettingGet<bool>(int index, const CSetting * I)
 {
   PyMOLGlobals *G = I->G;
   switch (SettingInfo[index].type) {
@@ -1683,7 +1683,7 @@ bool SettingGet<bool>(int index, const CSetting * I)
 
 /*========================================================================*/
 template <>
-float SettingGet<float>(int index, const CSetting * I)
+float _SettingGet<float>(int index, const CSetting * I)
 {
   float result;
   PyMOLGlobals *G = I->G;
@@ -1709,7 +1709,7 @@ float SettingGet<float>(int index, const CSetting * I)
 
 /*========================================================================*/
 template <>
-const char * SettingGet<const char *>(int index, const CSetting * I)
+const char * _SettingGet<const char *>(int index, const CSetting * I)
 {
   const char *result;
   PyMOLGlobals *G = I->G;
@@ -1732,7 +1732,7 @@ const char * SettingGet<const char *>(int index, const CSetting * I)
 
 /*========================================================================*/
 template <>
-const float * SettingGet<const float *>(int index, const CSetting * I)
+const float * _SettingGet<const float *>(int index, const CSetting * I)
 {
   if (SettingInfo[index].type != cSetting_float3) {
     PyMOLGlobals *G = I->G;
@@ -2478,8 +2478,8 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     break;
   case cSetting_button_mode_name:
     {
-      int internal_gui_mode = SettingGetGlobal_i(G, cSetting_internal_gui_mode);
-      if (internal_gui_mode){
+      auto internal_gui_mode = SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting);
+      if (internal_gui_mode != InternalGUIMode::Default){
 	OrthoInvalidateDoDraw(G);
       }
     }

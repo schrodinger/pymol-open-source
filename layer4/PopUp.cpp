@@ -140,7 +140,7 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
   PyObject *elem;
   const char *str, *c;
   int blocked = PAutoBlock(G);
-  int ui_light_bg = SettingGetGlobal_b(G, cSetting_internal_gui_mode);
+  auto ui_light_bg = SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting);
   CPopUp *I = new CPopUp(G);
 
   I->reference = (void *) I;
@@ -153,7 +153,7 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
   I->BackColor[1] = 0.1F;
   I->BackColor[2] = 0.1F;
 
-  if(ui_light_bg) {
+  if(ui_light_bg != InternalGUIMode::Default) {
     I->TextColor[0] = 0.0F;
     I->TextColor[1] = 0.0F;
     I->TextColor[2] = 0.0F;
@@ -809,11 +809,13 @@ void CPopUp::draw(CGO* orthoCGO)
     }
     if(I->Code[0] == 2) {       /* menu name */
 
-      if(!SettingGetGlobal_i(G, cSetting_internal_gui_mode)) {
-	if (orthoCGO)
-	  CGOColor(orthoCGO, 0.3F, 0.3F, 0.6F);
-	else
-	  glColor3f(0.3F, 0.3F, 0.6F);
+      if (SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting) ==
+          InternalGUIMode::Default)
+      {
+        if (orthoCGO)
+          CGOColor(orthoCGO, 0.3F, 0.3F, 0.6F);
+        else
+          glColor3f(0.3F, 0.3F, 0.6F);
       } else {
 	if (orthoCGO)
 	  CGOColor(orthoCGO, 1.0F, 1.0F, 1.0F);

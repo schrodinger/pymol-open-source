@@ -199,7 +199,7 @@ void CButMode::draw(CGO* orthoCGO)
 #define BLANK_STR "     "
 
   if(m_G->HaveGUI && m_G->ValidContext && ((rect.right - rect.left) > 6)) {
-    if(SettingGetGlobal_b(m_G, cSetting_internal_gui_mode) == 0) {
+    if(SettingGet<InternalGUIMode>(m_G, cSetting_internal_gui_mode) == InternalGUIMode::Default) {
       if (orthoCGO)
 	CGOColorv(orthoCGO, BackColor);
 #ifndef PURE_OPENGL_ES_2

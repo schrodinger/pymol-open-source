@@ -33,17 +33,11 @@ Z* -------------------------------------------------------------------
 #include"Deferred.h"
 #include"Image.h"
 #include"pymol/memory.h"
+#include"PyMOLEnums.h"
 
 #define cOrthoScene 1
 #define cOrthoTool 2
 #define cOrthoHidden 3
-
-enum class OrthoRenderMode
-{
-  VR,
-  Main, // Also Geowall Left
-  GeoWallRight,
-};
 
 int OrthoInit(PyMOLGlobals * G, int showSplash);
 void OrthoFree(PyMOLGlobals * G);

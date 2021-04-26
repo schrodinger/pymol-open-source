@@ -1498,7 +1498,7 @@ void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
   const float *bg_color;
   int skip_prompt = 0;
   int render = false;
-  int internal_gui_mode = SettingGetGlobal_i(G, cSetting_internal_gui_mode);
+  auto internal_gui_mode = SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting);
 #ifdef _PYMOL_OPENVR
   bool offscreen_vr = false;
   int openvr_text = 0;
@@ -1545,8 +1545,8 @@ void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
       PyMOLCheckOpenGLErr("OrthoDoDraw checkpoint 0");
 
     if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
-      switch (SettingGetGlobal_i(G, cSetting_internal_gui_mode)) {
-      case 0:
+      switch (internal_gui_mode) {
+      case InternalGUIMode::Default:
         rightSceneMargin = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_width));
         break;
       default:
@@ -1697,7 +1697,7 @@ void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
         Block *block = SceneGetBlock(G);
         height = block->rect.bottom;
         switch (internal_gui_mode) {
-        case 0:
+        case InternalGUIMode::Default:
 	  if (generate_shader_cgo){
 	    CGOColor(orthoCGO, 0.f, 0.f, 0.f);
 	    CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
@@ -1716,7 +1716,7 @@ void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
 	    glEnd();
 	  }
           /* deliberate fall-through */
-        case 1:
+        case InternalGUIMode::BG:
 	  if (generate_shader_cgo){
 	    CGOColor(orthoCGO, 0.3f, 0.3f, 0.3f);
 	    CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
@@ -1741,7 +1741,7 @@ void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
 
       if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
         int internal_gui_width = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_width));
-        if(internal_gui_mode != 2) {
+        if(internal_gui_mode != InternalGUIMode::Transparent) {
 	  if (generate_shader_cgo){
 	    CGOColor(orthoCGO, 0.3f, 0.3f, 0.3f);
 	    CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
@@ -1792,7 +1792,7 @@ void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
           if(lcount == adjust_at)
             y += 4;
           str = I->Line[l & OrthoSaveLines];
-          if(internal_gui_mode) {
+          if(internal_gui_mode != InternalGUIMode::Default) {
             TextSetColor(G, I->OverlayColor);
           } else if(strncmp(str, I->Prompt, 6) == 0) {
             if(lcount < adjust_at)
@@ -2022,14 +2022,14 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G ORTHOCGOARG)
   int maxLen;
   BlockRect rect;
   int prompt_mode = SettingGetGlobal_i(G, cSetting_wizard_prompt_mode);
-  int gui_mode = SettingGetGlobal_b(G, cSetting_internal_gui_mode);
+  auto gui_mode = SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting);
   float *text_color = I->WizardTextColor;
   float black[3] = { 0.0F, 0.0F, 0.0F };
 
   if(I->WizardPromptVLA && prompt_mode) {
     vla = I->WizardPromptVLA;
 
-    if(gui_mode)
+    if(gui_mode != InternalGUIMode::Default)
       text_color = black;
     nLine = UtilCountStringVLA(vla);
     if(nLine) {
@@ -2082,7 +2082,7 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G ORTHOCGOARG)
 
       if(prompt_mode == 1) {
 	if (orthoCGO){
-	  if(SettingGetGlobal_b(G, cSetting_internal_gui_mode)) {
+	  if(gui_mode != InternalGUIMode::Default) {
 	    CGOColor(orthoCGO, 1.0, 1.0F, 1.0F);
 	  } else {
 	    CGOColorv(orthoCGO, I->WizardBackColor);
@@ -2094,7 +2094,7 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G ORTHOCGOARG)
 	  CGOVertex(orthoCGO, rect.left, rect.bottom, 0.f);
 	  CGOEnd(orthoCGO);
 	} else {
-	  if(SettingGetGlobal_b(G, cSetting_internal_gui_mode)) {
+	  if(gui_mode != InternalGUIMode::Default) {
 	    glColor3f(1.0, 1.0F, 1.0F);
 	  } else {
 	    glColor3fv(I->WizardBackColor);
@@ -2277,8 +2277,9 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
       internal_gui_width = 0;
       sceneRight = 0;
     } else {
-      switch (SettingGetGlobal_i(G, cSetting_internal_gui_mode)) {
-      case 2:
+      auto gui_mode = SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting);
+      switch (gui_mode) {
+      case InternalGUIMode::Transparent:
         sceneRight = 0;
         sceneBottom = 0;
         break;

@@ -362,7 +362,7 @@ const CSetting * _SettingGetFirstDefined(int index,
     const CSetting * set1,
     const CSetting * set2);
 
-template <typename V> V SettingGet(int index, const CSetting *);
+template <typename V> V _SettingGet(int index, const CSetting *);
 template <typename V> V SettingGet(PyMOLGlobals * G,
     const CSetting * set1,
     const CSetting * set2, int index) {
@@ -370,6 +370,12 @@ template <typename V> V SettingGet(PyMOLGlobals * G,
 }
 template <typename V> V SettingGet(PyMOLGlobals * G, int index) {
   return SettingGet<V>(index, G->Setting);
+}
+
+template <typename V> V SettingGet(int index, const CSetting* set)
+{
+  using T = typename std::conditional<std::is_enum<V>::value, int, V>::type;
+  return static_cast<V>(_SettingGet<T>(index, set));
 }
 
 /**
