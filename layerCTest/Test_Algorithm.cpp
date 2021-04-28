@@ -61,9 +61,9 @@ TEST_CASE("Left Fold", "[Algorithm]")
   std::array<int, 5> a{1, 2, 3, 4, 5};
   REQUIRE(pymol::ranges::left_fold(a) == 15u);
   REQUIRE(pymol::ranges::left_fold(a, 10) == 25u);
-  REQUIRE(pymol::ranges::left_fold(a, 1, std::multiplies<>()) == 120u);
+  REQUIRE(pymol::ranges::left_fold(a, 1, std::multiplies<int>()) == 120u);
 
-  struct S { std::size_t value = 5; };
+  struct S { std::size_t value; S(std::size_t v) : value{v}{} };
   std::array<S, 5> b{ S{ 1 }, S{ 2 }, S{ 3 }, S{ 4 }, S{ 5 }};
-  REQUIRE(pymol::ranges::left_fold(b, 1u, [](std::size_t acc, const auto& s){ return acc + s.value; }) == 16u);
+  REQUIRE(pymol::ranges::left_fold(b, 1u, [](std::size_t acc, const S& s){ return acc + s.value; }) == 16u);
 }

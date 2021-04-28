@@ -155,7 +155,7 @@ bool equal(const RangeT1& first, const RangeT2& second, Pred p)
  */
 
 template<typename RangeT, typename T, typename BinaryOp>
-T left_fold(const RangeT& range, T init = T{}, BinaryOp op = std::plus<>())
+T left_fold(const RangeT& range, T init = T{}, BinaryOp op = std::plus<T>())
 {
 #if __cplusplus >= 201703L
   return std::accumulate(std::begin(range), std::end(range), init, op);
@@ -171,7 +171,7 @@ T left_fold(const RangeT& range, T init = T{}, BinaryOp op = std::plus<>())
 template<typename RangeT, typename T = typename RangeT::value_type>
 T left_fold(const RangeT& range, T init = T{})
 {
-  return left_fold(range, init, std::plus<>());
+  return left_fold(range, init, std::plus<T>());
 }
 
 } // namespace ranges
