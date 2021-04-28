@@ -575,7 +575,7 @@ void CShaderMgr::Reload_Shader_Variables() {
     SetPreprocVar("bg_image_mode_2_or_3", (bg_image_mode == 2 || bg_image_mode == 3));
   }
 
-#ifndef PYMOL_EDU
+#ifdef _PYMOL_IP_EXTRAS
   SetPreprocVar("volume_mode", SettingGetGlobal_i(G, cSetting_volume_mode));
 #endif
 
