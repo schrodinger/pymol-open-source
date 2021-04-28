@@ -5028,8 +5028,11 @@ static PyObject *CmdClip(PyObject * self, PyObject * args)
   int state;
   API_SETUP_ARGS(G, self, args, "Osfsi", &self, &sname, &dist, &str1, &state);
   API_ASSERT(APIEnterNotModal(G));
-  SelectorTmp2 s1(G, str1);
-  auto result = SceneClipFromMode(G, sname, dist, s1.getName(), state);
+  pymol::Result<> result;
+  {
+    SelectorTmp2 s1(G, str1);
+    result = SceneClipFromMode(G, sname, dist, s1.getName(), state);
+  }
   APIExit(G);
   return APIResult(G, result);
 }
@@ -5658,8 +5661,10 @@ static PyObject *CmdZoom(PyObject * self, PyObject * args)
   int quiet = false;            /* TODO */
   API_SETUP_ARGS(G, self, args, "Osfiif", &self, &str1, &buffer, &state, &inclusive, &animate);
   API_ASSERT(APIEnterNotModal(G));
-  SelectorTmp2 s1(G, str1);
-  ExecutiveWindowZoom(G, s1.getName(), buffer, state, inclusive, animate, quiet);
+  {
+    SelectorTmp2 s1(G, str1);
+    ExecutiveWindowZoom(G, s1.getName(), buffer, state, inclusive, animate, quiet);
+  }
   APIExit(G);
   return APISuccess();
 }
@@ -5764,8 +5769,11 @@ static PyObject *CmdHFix(PyObject * self, PyObject * args)
   char *str1;
   API_SETUP_ARGS(G, self, args, "Osi", &self, &str1, &quiet);
   API_ASSERT(APIEnterNotModal(G));
-  SelectorTmp2 s1(G, str1);
-  auto result = EditorHFix(G, s1.getName(), quiet);
+  pymol::Result<> result;
+  {
+    SelectorTmp2 s1(G, str1);
+    result = EditorHFix(G, s1.getName(), quiet);
+  }
   APIExit(G);
   return APIResult(G, result);
 }
