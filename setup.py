@@ -29,7 +29,7 @@ class options:
     testing = False
     openvr = False
     use_openmp = 'no' if MAC else 'yes'
-    use_vtkm = '1.5.x'
+    use_vtkm = 'no'
     vmd_plugins = True
 
 try:
