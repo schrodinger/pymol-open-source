@@ -162,7 +162,7 @@ T left_fold(const RangeT& range, T init = T{}, BinaryOp op = std::plus<>())
 #else
   for(auto it = std::begin(range); it != std::end(range); ++it)
   {
-    init += op(init, *it);
+    init = op(init, *it);
   }
   return init;
 #endif
