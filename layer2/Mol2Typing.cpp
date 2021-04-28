@@ -163,8 +163,8 @@ const char * getMOL2Type(ObjectMolecule * obj, int atm) {
 
     case cAN_S:
       switch (sulfurCountOxygenNeighbors(obj, atm)) {
-        case 1: return "S.O";
-        case 2: return "S.O2";
+        case 1: return "S.o";
+        case 2: return "S.o2";
       }
       switch (ai->geom) {
         case cAtomInfoPlanar:       return "S.2";
