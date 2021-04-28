@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 #include"Ortho.h"
 #include"View.h"
+#include"Result.h"
 #include"SceneView.h"
 #include"SceneDef.h"
 #include"SceneRender.h"

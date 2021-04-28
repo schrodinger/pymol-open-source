@@ -69,7 +69,6 @@ struct CExecutive : public Block {
   PanelRec *Panel {};
   bool ValidPanel { false };
 #ifdef _WEBGL
-  int ValidJavascriptObjectTree {};
 #endif
   int CaptureFlag {};
   int LastMotionCount {};
