@@ -46,7 +46,7 @@ try:
             help="skip libxml2 dependency, disables COLLADA export")
     parser.add_argument('--use-openmp', choices=('yes', 'no'),
             help="Use OpenMP")
-    parser.add_argument('--use-vtkm', choices=('1.5.x', 'master', 'no'),
+    parser.add_argument('--use-vtkm', choices=('1.5', '1.6', 'no'),
             help="Use VTK-m for isosurface generation")
     parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'guess', 'no'),
             help="c++11: use msgpack-c header-only library; c: link against "
@@ -421,7 +421,7 @@ if not (MAC or WIN):
 
 if options.use_vtkm != "no":
     for prefix in prefix_path:
-        vtkm_inc_dir = os.path.join(prefix, "include", "vtkm-1.5")
+        vtkm_inc_dir = os.path.join(prefix, "include", f"vtkm-{options.use_vtkm}")
         if os.path.exists(vtkm_inc_dir):
             break
     else:
@@ -434,14 +434,14 @@ if options.use_vtkm != "no":
         vtkm_inc_dir,
         vtkm_inc_dir + "/vtkm/thirdparty/diy/vtkmdiy/include",
         vtkm_inc_dir + "/vtkm/thirdparty/lcl/vtkmlcl",
-    ] + (options.use_vtkm != "master") * [
+    ] + (options.use_vtkm == "1.5") * [
         vtkm_inc_dir + "/vtkm/thirdparty/diy",
         vtkm_inc_dir + "/vtkm/thirdparty/taotuple",
     ]
     libs += [
-        "vtkm_cont-1.5",
-        "vtkm_filter_contour-1.5"
-        if options.use_vtkm == "master" else "vtkm_filter-1.5",
+        f"vtkm_cont-{options.use_vtkm}",
+        f"vtkm_filter-{options.use_vtkm}" if options.use_vtkm == "1.5" else
+        f"vtkm_filter_contour-{options.use_vtkm}",
     ]
 
 if options.vmd_plugins:
