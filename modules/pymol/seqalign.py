@@ -21,7 +21,12 @@ DESCRIPTION
     '''
     from Bio import pairwise2
     from Bio.Align import MultipleSeqAlignment
-    from Bio.SubsMat.MatrixInfo import blosum62
+    try:
+        from Bio.Align import substitution_matrices
+    except ImportError:
+        from Bio.SubsMat.MatrixInfo import blosum62
+    else:
+        blosum62 = substitution_matrices.load("BLOSUM62")
 
     def match_callback(c1, c2):
         return blosum62.get((c1, c2), 1 if c1 == c2 else -4)
