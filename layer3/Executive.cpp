@@ -837,11 +837,12 @@ static pymol::Result<> EtcHelper(PyMOLGlobals* G,             //
     return pymol::make_error("Map object \"", map_name, "\" not found");
   }
 
-  // if object with same name but different type exists, overwrite it
+  // Fail if object with same name but different type exists
   auto anyOrigObj = ExecutiveFindObjectByName(G, obj_name);
   origObj = dynamic_cast<ObjectT*>(anyOrigObj);
   if (anyOrigObj && !origObj) {
-    ExecutiveDelete(G, obj_name);
+    return pymol::make_error("Object name ", obj_name,
+        " already exists as another type. Cannot overwrite.");
   }
 
   switch (obj_state) {
@@ -1157,7 +1158,7 @@ ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
   /* Goal: make a new volume map from the object or selection
    *
    * If the user specifies an VOLUME OBJECT NAME that already exists, then
-   * check to make sure it's a volume.  If it is, keep it, else delete it
+   * check to make sure it's a volume.  If it is, keep it, else abort
    * 
    * If the user specifies a MAP OBJECT NAME that already exists, then
    * make sure it's really a map.  Keep it if it is (to append the state)
