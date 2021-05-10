@@ -2,6 +2,43 @@
 CHANGE LOG
 =========================================================================
 
+2021-05-10 Jarrett Johnson, Thomas Holder, Thomas Stewart
+
+	* 2.5.0
+
+	* File Import/Export
+	  - DX binary map import (*dxbin)
+	  - PDB/MMTF export: symmetry information now added
+	  - Improved FASTA import
+	  - Support for map.gz and mrc.gz extensions
+
+	* Builder & Panels
+	  - Improved Fuse command (disallows hypervalent bonds, substitute monovalent atoms instead of attaching to them)
+	  - Customizable keyboard shortcut menu
+	  - Properties inspector now supports unsetting settings with “Delete” key
+
+	* Graphics & Visualization
+	  - Ray interior colors now match primitives with `set ray_interior_color, atomic`
+	  - Isomesh transparency support
+	  - `sphere_mode` 5 removed (9 as replacement)
+	  - Curved cartoon cylindrical helices
+	  - Isosurface generation via marching cubes with setting `isosurface_algorithm, (0, 1)` (0 requires VTKm)
+
+	* PBC Handling
+	  - Periodic boundary conditions supported in rebond, smooth, and intra_fit
+
+	* Python API
+	  - Python 2 support removed
+	  - pbc argument added to rebond, smooth, and intra_fit
+	  - png(None) returns bytes
+	  - scene_order() allows list for `names`
+	  - pbc_wrap() and pbc_unwrap added
+	  - matrix_reset() supports `state=0` for all states
+	  - editing_ring() added
+	  - unset now restores the default value for global settings
+	  - load_traj now uses state=1 by default
+	  - get_area command and dots representation: Exclude “flag ignore” atoms
+
 2020-05-20 Thomas Holder, Jarrett Johnson
 
 	* 2.4.0
