@@ -19,6 +19,8 @@ Z* -------------------------------------------------------------------
 
 #include <memory>
 #include <vector>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include"Base.h"
 #include"Basis.h"
@@ -140,7 +142,7 @@ struct _CRay {
   int NPrimitive;
   CBasis *Basis;
   int NBasis;
-  int *Vert2Prim;
+  std::vector<int> Vert2Prim;
   float CurColor[3], IntColor[3];
   float ModelView[16];
   float ProMatrix[16];
@@ -153,9 +155,8 @@ struct _CRay {
   float Trans;
   float Random[256];
   int TTTFlag;
-  float TTT[16];
-  float *TTTStackVLA;
-  int TTTStackDepth;
+  glm::mat4 TTT;
+  std::vector<glm::mat4> TTTStack;
   pymol::RenderContext context;
   int CheckInterior;
   float AspRatio;
