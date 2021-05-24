@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 
 #include<math.h>
 
-#include"OOMac.h"
+#include"Err.h"
 #include"ObjectVolume.h"
 #include"Base.h"
 #include"MemoryDebug.h"

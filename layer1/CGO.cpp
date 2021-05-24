@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"CGO.h"
 #include"Base.h"
-#include"OOMac.h"
+#include"Err.h"
 #include"Setting.h"
 #include"Sphere.h"
 #include"PConv.h"

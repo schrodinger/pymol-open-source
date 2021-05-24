@@ -20,7 +20,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 
 #include"Base.h"
-#include"OOMac.h"
 #include"MemoryDebug.h"
 #include"Err.h"
 #include"Scene.h"
@@ -354,7 +353,7 @@ void GadgetSet::render(RenderInfo * info)
 /*========================================================================*/
 GadgetSet *GadgetSetNew(PyMOLGlobals * G)
 {
-  OOAlloc(G, GadgetSet);
+  auto I = new GadgetSet();
   I->G = G;
   return (I);
 }

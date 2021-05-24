@@ -21,7 +21,6 @@ Z* -------------------------------------------------------------------
 #include "Base.h"
 #include "PyMOLGlobals.h"
 #include "Texture.h"
-#include "OOMac.h"
 
 #include "OVContext.h"
 #include "OVOneToOne.h"
@@ -42,12 +41,14 @@ typedef struct  {
   int id,dim;
 } texture_info;
 
-struct _CTexture {
-  OVOneToOne *ch2tex;
-  GLuint text_texture_id;
-  int xpos, ypos, maxypos;
-  int num_chars;
-  int text_texture_dim;
+struct CTexture {
+  OVOneToOne* ch2tex{};
+  GLuint text_texture_id{};
+  int xpos{};
+  int ypos{};
+  int maxypos{};
+  int num_chars{};
+  int text_texture_dim{};
 };
 
 GLuint TextureGetTextTextureID(PyMOLGlobals * G){
@@ -63,8 +64,7 @@ int TextureGetTextTextureSize(PyMOLGlobals * G){
 
 int TextureInit(PyMOLGlobals * G)
 {
-  OOAlloc(G, CTexture);
-
+  auto I = new CTexture();
   G->Texture = I;
 
   I->ch2tex = OVOneToOne_New(G->Context->heap);
@@ -274,5 +274,5 @@ void TextureFree(PyMOLGlobals * G)
   CTexture *I = G->Texture;
   /* TODO -- free all the resident textures */
   OVOneToOne_DEL_AUTO_NULL(I->ch2tex);
-  OOFreeP(I);
+  DeleteP(I);
 }

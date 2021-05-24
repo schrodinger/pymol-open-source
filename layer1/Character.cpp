@@ -22,7 +22,6 @@ Z* -------------------------------------------------------------------
 #include"Pixmap.h"
 #include"Util.h"
 #include"MemoryDebug.h"
-#include"OOMac.h"
 #include"Vector.h"
 #include"Text.h"
 #include"Texture.h"

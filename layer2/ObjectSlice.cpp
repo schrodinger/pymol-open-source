@@ -20,7 +20,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
-#include"OOMac.h"
 #include"ObjectSlice.h"
 #include"Base.h"
 #include"Matrix.h"

@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
-#include"OOMac.h"
+#include"Err.h"
 #include"RepDihedral.h"
 #include"Color.h"
 #include"Scene.h"

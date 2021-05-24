@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"os_gl.h"
 
-#include"OOMac.h"
+#include"Err.h"
 #include"RepWireBond.h"
 #include"SideChainHelper.h"
 #include"Color.h"

@@ -21,7 +21,7 @@ Z* -------------------------------------------------------------------
 
 #include"Base.h"
 #include"MemoryDebug.h"
-#include"OOMac.h"
+#include"Err.h"
 #include"RepSurface.h"
 #include"Map.h"
 #include"Scene.h"
@@ -127,12 +127,12 @@ RepSurface::~RepSurface()
   VLAFreeP(I->AT);
 }
 
-typedef struct {
-  int nDot;
-  float *dot;
-  float *dotNormal;
-  int *dotCode;
-} SolventDot;
+struct SolventDot {
+  int nDot{};
+  float* dot{};
+  float* dotNormal{};
+  int* dotCode{};
+};
 
 typedef struct {
   float vdw;
@@ -157,7 +157,7 @@ static void SolventDotFree(SolventDot * I)
     VLAFreeP(I->dotNormal);
     VLAFreeP(I->dotCode);
   }
-  OOFreeP(I);
+  DeleteP(I);
 }
 
 #ifndef PURE_OPENGL_ES_2
@@ -2865,41 +2865,45 @@ Rep* RepSurface::recolor()
   return this;
 }
 
-typedef struct {
+struct SurfaceJob {
   /* input */
-  float *coord;
-  SurfaceJobAtomInfo *atomInfo;
+  float* coord{};
+  SurfaceJobAtomInfo* atomInfo{};
 
-  float maxVdw;
-  int allVisibleFlag;
+  float maxVdw{};
+  int allVisibleFlag{};
 
-  int nPresent;
-  int *presentVla;
+  int nPresent{};
+  int* presentVla{};
 
-  int solventSphereIndex, sphereIndex;
+  int solventSphereIndex{};
+  int sphereIndex{};
 
-  int surfaceType;
-  int circumscribe;
-  float probeRadius;
-  float carveCutoff;
-  float *carveVla;
+  int surfaceType{};
+  int circumscribe{};
+  float probeRadius{};
+  float carveCutoff{};
+  float* carveVla{};
 
-  int surfaceMode;
-  int surfaceSolvent;
-  int cavityCull;
-  float pointSep;
-  float trimCutoff;
-  float trimFactor;
+  int surfaceMode{};
+  int surfaceSolvent{};
+  int cavityCull{};
+  float pointSep{};
+  float trimCutoff{};
+  float trimFactor{};
 
-  int cavityMode;
-  float cavityRadius;
-  float cavityCutoff;
+  int cavityMode{};
+  float cavityRadius{};
+  float cavityCutoff{};
 
   /* results */
-  float *V, *VN;
-  int N, *T, *S, NT;
-
-} SurfaceJob;
+  float* V{};
+  float* VN{};
+  int N{};
+  int* T{};
+  int* S{};
+  int NT{};
+};
 
 static void SurfaceJobPurgeResult(PyMOLGlobals * G, SurfaceJob * I)
 {
@@ -3040,8 +3044,7 @@ OV_INLINE ov_status SurfaceJobResultFromTuple(PyMOLGlobals * G,
 
 static SurfaceJob *SurfaceJobNew(PyMOLGlobals * G)
 {
-  OOCalloc(G, SurfaceJob);
-  return I;
+  return new SurfaceJob();
 }
 
 static void SurfaceJobFree(PyMOLGlobals * G, SurfaceJob * I)
@@ -3051,7 +3054,7 @@ static void SurfaceJobFree(PyMOLGlobals * G, SurfaceJob * I)
   VLAFreeP(I->presentVla);
   VLAFreeP(I->atomInfo);
   VLAFreeP(I->carveVla);
-  OOFreeP(I);
+  DeleteP(I);
 }
 
 static int SurfaceJobEliminateCloseDotsType3orMore(PyMOLGlobals * G,
@@ -4743,7 +4746,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
   int ok = true;
   int stopDot;
   int n_coord = VLAGetSize(atom_info);
-  OOCalloc(G, SolventDot);
+  auto I = new SolventDot();
   CHECKOK(ok, I);
   /*  printf("%p %p %p %f %p %p %p %d %d %d %d %d %f\n",
      G,

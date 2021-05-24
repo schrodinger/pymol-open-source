@@ -21,7 +21,6 @@ Z* -------------------------------------------------------------------
 
 #include"Base.h"
 #include"Parse.h"
-#include"OOMac.h"
 #include"Vector.h"
 #include"MemoryDebug.h"
 #include"Err.h"

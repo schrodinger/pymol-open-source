@@ -34,7 +34,6 @@
 #include"Version.h"
 #include"main.h"
 #include"Base.h"
-#include"OOMac.h"
 #include"Executive.h"
 #include"SpecRec.h"
 #include"ObjectMap.h"

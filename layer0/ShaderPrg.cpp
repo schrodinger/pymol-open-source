@@ -18,7 +18,6 @@ Z* -------------------------------------------------------------------
 #include "os_python.h"
 #include <string.h>
 #include "ShaderMgr.h"
-#include "OOMac.h"
 #include "PyMOLOptions.h"
 #include "Feedback.h"
 #include "MemoryDebug.h"

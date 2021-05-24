@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 
 #include"Base.h"
 #include"MemoryDebug.h"
-#include"OOMac.h"
+#include"Err.h"
 #include"RepMesh.h"
 #include"Map.h"
 #include"Isosurf.h"

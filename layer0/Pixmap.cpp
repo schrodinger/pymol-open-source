@@ -17,7 +17,7 @@ Z* -------------------------------------------------------------------
 */
 
 #include "Pixmap.h"
-#include "OOMac.h"
+#include "MemoryDebug.h"
 #include "Util.h"
 
 void PixmapInit(PyMOLGlobals * G, CPixmap * I, int width, int height)
@@ -33,7 +33,7 @@ void PixmapInit(PyMOLGlobals * G, CPixmap * I, int width, int height)
 
 CPixmap *PixmapNew(PyMOLGlobals * G, int width, int height)
 {
-  OOAlloc(G, CPixmap);
+  auto I = new CPixmap();
   PixmapInit(G, I, width, height);
   return I;
 }
@@ -231,5 +231,5 @@ void PixmapPurge(CPixmap * I)
 void PixmapFreeP(CPixmap * I)
 {
   PixmapPurge(I);
-  OOFreeP(I);
+  DeleteP(I);
 }

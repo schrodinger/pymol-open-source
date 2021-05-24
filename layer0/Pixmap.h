@@ -23,11 +23,12 @@ Z* -------------------------------------------------------------------
 
 /* for the sake of simplicity, all pixmaps are 32-bit RGBA */
 
-typedef struct {
-  PyMOLGlobals *G;
-  int height, width;
-  unsigned char *buffer;
-} CPixmap;
+struct CPixmap {
+  PyMOLGlobals* G{};
+  int height{};
+  int width{};
+  unsigned char* buffer{};
+};
 
 void PixmapInit(PyMOLGlobals * G, CPixmap * I, int width, int height);
 

@@ -20,7 +20,7 @@
 #include"os_gl.h"
 
 #include"Base.h"
-#include"OOMac.h"
+#include"Err.h"
 #include"RepSphere.h"
 #include"RepSphereImmediate.h"
 #include"RepSphereGenerate.h"

@@ -23,7 +23,6 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Err.h"
 #include"Vector.h"
-#include"OOMac.h"
 #include"Setting.h"
 #include"Ortho.h"
 #include"Util.h"
@@ -7503,7 +7502,7 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
   unsigned char *testPtr;
   int a;
 
-  OOCalloc(I->G, CRay);
+  auto I = new CRay();
   I->G = G;
   test = 0xFF000000;
   testPtr = (unsigned char *) &test;
@@ -7668,7 +7667,7 @@ void RayFree(CRay * I)
   RayRelease(I);
   CharacterSetRetention(I->G, false);
   CacheFreeP(I->G, I->Basis, 0, cCache_ray_basis, false);
-  OOFreeP(I);
+  DeleteP(I);
 }
 
 

@@ -22,7 +22,6 @@ Z* -------------------------------------------------------------------
 
 #include"Base.h"
 #include"MemoryDebug.h"
-#include"OOMac.h"
 #include"Match.h"
 #include"Util.h"
 #include"Feedback.h"
@@ -36,7 +35,7 @@ typedef int int2[2];
 CMatch *MatchNew(PyMOLGlobals * G, unsigned int na, unsigned int nb, int dist_mats)
 {
   unsigned int dim[2];
-  OOCalloc(G, CMatch);
+  auto I = new CMatch();
 
   I->na = na;
   I->nb = nb;
@@ -613,5 +612,5 @@ void MatchFree(CMatch * I)
   FreeP(I->mat);
   FreeP(I->smat);
   VLAFreeP(I->pair);
-  OOFreeP(I);
+  DeleteP(I);
 }

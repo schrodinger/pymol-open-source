@@ -20,7 +20,6 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 
 #include "MemoryDebug.h"
-#include "OOMac.h"
 #include "os_gl.h"
 #include "FontType.h"
 #include "Text.h"

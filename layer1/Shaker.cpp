@@ -20,7 +20,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 #include"Base.h"
-#include"OOMac.h"
 #include"CGO.h"
 
 #include"Map.h"

@@ -17,7 +17,6 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 #include"Base.h"
 #include"Block.h"
-#include"OOMac.h"
 #include"Ortho.h"
 #include"ScrollBar.h"
 #include"CGO.h"

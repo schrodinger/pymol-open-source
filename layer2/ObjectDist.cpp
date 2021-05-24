@@ -20,7 +20,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 
 #include"Base.h"
-#include"OOMac.h"
 #include"Vector.h"
 #include"MemoryDebug.h"
 #include"Err.h"
@@ -556,7 +555,7 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
   }
   /* else {
      VLAFreeP(I->DSet);
-     OOFreeP(I);
+     DeleteP(I);
      }
    */
   ObjectDistUpdateExtents(I);
@@ -650,7 +649,7 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
   }
   /* else {
      VLAFreeP(I->DSet);
-     OOFreeP(I);
+     DeleteP(I);
      }
    */
   ObjectDistUpdateExtents(I);

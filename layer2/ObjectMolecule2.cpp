@@ -29,7 +29,7 @@
 
 #include"Base.h"
 #include"Parse.h"
-#include"OOMac.h"
+#include"Err.h"
 #include"Vector.h"
 #include"PConv.h"
 #include"ObjectMolecule.h"

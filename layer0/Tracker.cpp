@@ -22,7 +22,6 @@ Z* -------------------------------------------------------------------
 
 #include"Base.h"
 #include"MemoryDebug.h"
-#include"OOMac.h"
 #include"Tracker.h"
 #include"Util.h"
 
@@ -81,7 +80,7 @@ struct CTracker {
 
 CTracker *TrackerNew(PyMOLGlobals * G)
 {
-  OOAlloc(G, CTracker);
+  auto I = new CTracker();
 
   UtilZeroMem(I, sizeof(CTracker));
   I->next_id = 1;
@@ -923,7 +922,7 @@ void TrackerFree(CTracker * I)
     OVOneToOne_Del(I->id2info);
   if(I->hash2member)
     OVOneToOne_Del(I->hash2member);
-  OOFreeP(I);
+  DeleteP(I);
 }
 
 #ifdef TRACKER_UNIT_TEST

@@ -30,11 +30,11 @@ typedef struct {
   int value;
 } WordKeyValue;
 
-typedef struct {
-  char *word;
-  char **start;
-  int n_word;
-} CWordList;
+struct CWordList {
+  char* word{};
+  char** start{};
+  int n_word{};
+};
 
 #define cWordMatchOptionNoRanges 0
 #define cWordMatchOptionNumericRanges 1
@@ -50,7 +50,7 @@ typedef struct {
   char wildcard;
 } CWordMatchOptions;
 
-typedef struct _CWordMatcher CWordMatcher;
+struct CWordMatcher;
 
 void WordMatchOptionsConfigInteger(CWordMatchOptions * I);
 void WordMatchOptionsConfigAlpha(CWordMatchOptions * I, char wildcard, int ignore_case);

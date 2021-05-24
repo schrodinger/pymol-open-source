@@ -19,7 +19,6 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 
 #include"Base.h"
-#include"OOMac.h"
 #include"main.h"
 #include"View.h"
 #include"Ray.h"
@@ -569,9 +568,8 @@ PyObject *ViewElemVLAAsPyList(PyMOLGlobals * G, const CViewElem * vla, int nFram
 
 CView *ViewNew(PyMOLGlobals * G)
 {
-  OOAlloc(G, CView);
+  auto I = new CView();
   I->G = G;
-  I->View = NULL;
   return I;
 }
 

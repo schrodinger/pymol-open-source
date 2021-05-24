@@ -21,7 +21,7 @@ Z* -------------------------------------------------------------------
 
 #include"Extrude.h"
 #include"Base.h"
-#include"OOMac.h"
+#include"Err.h"
 #include"Setting.h"
 #include"Feedback.h"
 
@@ -35,7 +35,7 @@ void ExtrudeInit(PyMOLGlobals * G, CExtrude * I);
 CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude * orig)
 {
   int ok = true;
-  OOAlloc(orig->G, CExtrude);
+  auto I = new CExtrude();
   CHECKOK(ok, I);
   if (ok)
     ExtrudeInit(orig->G, I);
@@ -479,11 +479,8 @@ int ExtrudeDumbbell2(CExtrude * I, int n, int sign, float length, float size)
 
 CExtrude *ExtrudeNew(PyMOLGlobals * G)
 {
-  int ok = true;
-  OOAlloc(G, CExtrude);
-  CHECKOK(ok, I);
-  if (ok)
-    ExtrudeInit(G, I);
+  auto I = new CExtrude();
+  ExtrudeInit(G, I);
   return (I);
 }
 
@@ -2403,5 +2400,5 @@ void ExtrudeFree(CExtrude * I)
   FreeP(I->sv);
   FreeP(I->i);
   FreeP(I->sf);
-  OOFreeP(I);
+  DeleteP(I);
 }

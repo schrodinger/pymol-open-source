@@ -20,7 +20,6 @@ Z* ------------------------------------------------------------------- */
 
 #include"MemoryDebug.h"
 #include"Err.h"
-#include"OOMac.h"
 #include"Map.h"
 #include"Setting.h"
 #include"Feedback.h"

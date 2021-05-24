@@ -21,7 +21,7 @@
 #include"os_gl.h"
 
 #include"Base.h"
-#include"OOMac.h"
+#include"Err.h"
 #include"RepEllipsoid.h"
 #include"Color.h"
 #include"Setting.h"

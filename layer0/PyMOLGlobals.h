@@ -76,7 +76,7 @@ struct CExecutive;
 struct CSeeker;
 struct CSelector;
 struct CSelectorManager;
-typedef struct _CTexture CTexture;
+struct CTexture;
 typedef struct _CType CType;
 typedef struct _CMain CMain;
 typedef struct _CPlugIOManager CPlugIOManager;

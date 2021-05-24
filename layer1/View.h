@@ -72,12 +72,11 @@ PyObject *ViewElemVLAAsPyList(PyMOLGlobals * G, const CViewElem * vla, int nFram
 void ViewElemArrayPurge(PyMOLGlobals * G, CViewElem * view, int nFrame);
 void ViewElemCopy(PyMOLGlobals * G, const CViewElem * src, CViewElem * dst);
 
-typedef struct CView {
-  PyMOLGlobals *G;
-  int NView;
-  CViewElem *View;
-
-} CView;
+struct CView {
+  PyMOLGlobals* G{};
+  int NView{};
+  CViewElem* View{};
+};
 
 typedef int CViewIterator;
 

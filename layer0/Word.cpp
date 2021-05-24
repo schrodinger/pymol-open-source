@@ -20,7 +20,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 
 #include"Base.h"
-#include"OOMac.h"
 #include"Word.h"
 #include"Parse.h"
 #include"PyMOLObject.h"
@@ -38,7 +37,7 @@ typedef struct {
   int has1, has2;
 } MatchNode;
 
-struct _CWordMatcher {
+struct CWordMatcher {
   PyMOLGlobals *G;
   MatchNode *node;
   int n_node;
@@ -206,7 +205,7 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals * G, const char *st, CWordMatchOptions
   if(needed) {                  /* if so, then convert the expression into a match tree */
     int n_char = 0;
     int n_node = 0;
-    OOCalloc(G, CWordMatcher);
+    auto I = new CWordMatcher();
     I->charVLA = VLACalloc(char, 10);   /* auto_zeroing... */
     I->node = VLACalloc(MatchNode, 10);
     I->ignore_case = option->ignore_case;
@@ -563,7 +562,7 @@ void WordMatcherFree(CWordMatcher * I)
     VLAFreeP(I->node);
     VLAFreeP(I->charVLA);
   }
-  OOFreeP(I);
+  DeleteP(I);
 }
 
 CWordList *WordListNew(PyMOLGlobals * G, const char *st)
@@ -571,7 +570,7 @@ CWordList *WordListNew(PyMOLGlobals * G, const char *st)
   int n_word = 0;
   const char *p;
   int len = 0;
-  OOCalloc(G, CWordList);
+  auto I = new CWordList();
 
   if(I) {
     p = st;
@@ -621,7 +620,7 @@ void WordListFreeP(CWordList * I)
   if(I) {
     FreeP(I->word);
     FreeP(I->start);
-    OOFreeP(I);
+    DeleteP(I);
   }
 }
 

@@ -18,7 +18,6 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"os_std.h"
 #include"os_gl.h"
-#include"OOMac.h"
 #include"Feedback.h"
 #include"Util.h"
 #include"Sculpt.h"

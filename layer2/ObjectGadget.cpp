@@ -20,7 +20,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
-#include"OOMac.h"
 #include"ObjectGadget.h"
 #include"ObjectGadgetRamp.h"
 #include"GadgetSet.h"

@@ -22,24 +22,25 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"CoordSet.h"
 
-typedef struct {
-  PyMOLGlobals *G;
-  int N;                        /* number of points in the extrusion segment */
+struct CExtrude {
+  PyMOLGlobals* G{};
+  int N{}; /* number of points in the extrusion segment */
 
-  float *p;                     /* points */
-  float *n;                     /* normals (3x3f) at each point */
-  float *c;                     /* colors */
-  float *alpha;                 /* alpha values*/
-  unsigned int *i;              /* atom indices */
+  float* p{};        /* points */
+  float* n{};        /* normals (3x3f) at each point */
+  float* c{};        /* colors */
+  float* alpha{};    /* alpha values*/
+  unsigned int* i{}; /* atom indices */
 
-  float r;
-  float *sf;                    /* scale factors for variable-width extrusions (single point) */
+  float r{};
+  float* sf{}; /* scale factors for variable-width extrusions (single point) */
 
-  float *sv, *tv;
-  float *sn, *tn;
+  float* sv{};
+  float* tv{};
+  float* sn{};
+  float* tn{};
   int Ns;
-
-} CExtrude;
+};
 
 CExtrude *ExtrudeNew(PyMOLGlobals * G);
 

@@ -19,7 +19,6 @@ Z* -------------------------------------------------------------------
 #include <string.h>
 #include <iostream>
 #include "ShaderMgr.h"
-#include "OOMac.h"
 #include "ListMacros.h"
 #include "PyMOLOptions.h"
 #include "Feedback.h"

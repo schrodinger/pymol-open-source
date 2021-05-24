@@ -21,7 +21,7 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 
 #include"Base.h"
-#include"OOMac.h"
+#include"Err.h"
 #include"RepRibbon.h"
 #include"Color.h"
 #include"Setting.h"

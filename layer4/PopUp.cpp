@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 
 
-#include "OOMac.h"
+#include "Err.h"
 
 #include "main.h"
 #include "Base.h"

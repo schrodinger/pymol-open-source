@@ -22,7 +22,6 @@ Z* -------------------------------------------------------------------
 #include <algorithm>
 
 #include"Base.h"
-#include"OOMac.h"
 #include"MemoryDebug.h"
 #include"Err.h"
 #include"Scene.h"

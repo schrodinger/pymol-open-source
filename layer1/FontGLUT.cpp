@@ -18,7 +18,6 @@ Z* -------------------------------------------------------------------
 
 #include "os_gl.h"
 #include "Base.h"
-#include "OOMac.h"
 #include "FontGLUT.h"
 #include "Text.h"
 #include "Ray.h"
