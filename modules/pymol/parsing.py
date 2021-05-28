@@ -343,6 +343,9 @@ if True:
 
         arg = []
         kw = {}
+
+        fn = inspect.unwrap(fn)
+
         co = fn.__code__
 
         # disable error checking for *arg or **kw functions
