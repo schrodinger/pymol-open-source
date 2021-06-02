@@ -721,7 +721,7 @@ DESCRIPTION
 
 USAGE
 
-    isosurface name, map, level [, selection [, buffer [, state [, carve ]]]]
+    isosurface name, map, [, level [, selection [, buffer [, state [, carve [, source_state [, side [, mode ]]]]]]]]
 
 ARGUMENTS
 
@@ -729,17 +729,26 @@ ARGUMENTS
 
     map = the name of the map object to use for computing the mesh.
 
-    level = the contour level.
+    level = the contour level. (default=1.0)
 
     selection = an atom selection about which to display the mesh with
-        an additional "buffer" (if provided).
+        an additional "buffer" (if provided). (default='')
+
+    buffer = buffer around selection to display mesh (default=0.0)
 
     state = the state into which the object should be loaded (default=1)
         (set state=0 to append new surface as a new state)
 
     carve = a radius about each atom in the selection for which to
         include density. If "carve= not provided, then the whole
-        brick is displayed.
+        brick is displayed. (default=None)
+
+    source_state = the state of the map from which the object should be loaded. (default=0)
+
+    side = Front or back face. Triangle-winding/normal direction. (default=1)
+
+    mode = surface geometry (0: dots; 1: lines; 2: triangle triangle-normals;
+        3: triangle gradient-normals) (default=3)
 
 NOTES
 
