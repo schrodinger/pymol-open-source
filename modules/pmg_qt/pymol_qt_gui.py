@@ -105,6 +105,7 @@ class PyMOLQtGUI(QtWidgets.QMainWindow, pymol._gui.PyMOLDesktopGUI):
         self.props_panel = None
         self.builder = None
         self.shortcut_menu_filter_dialog = None
+        self.scene_panel_dialog = None
 
         # setting index -> callable
         self.setting_callbacks = defaultdict(list)
@@ -880,6 +881,14 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         if self.shortcut_menu_filter_dialog is None:
             self.shortcut_menu_filter_dialog = PyMOLShortcutMenu(self, self.saved_shortcuts, self.cmd)
         self.shortcut_menu_filter_dialog.show()
+
+    def scene_panel_menu_dialog(self):
+        from .scene_bin_gui import ScenePanel
+
+        if self.scene_panel_dialog is None:
+            self.scene_panel_dialog = ScenePanel(self)
+
+        self.scene_panel_dialog.show()
 
     def show_about(self):
         msg = [
