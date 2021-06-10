@@ -1,4 +1,5 @@
 from enum import IntEnum
+from dataclasses import dataclass
 
 from pymol.Qt import QtGui, QtWidgets
 from pymol.Qt import QtCore
@@ -19,6 +20,12 @@ class SceneTableColumn(IntEnum):
     ACTIONS = 3
 
 
+@dataclass
+class SceneWithTablePosition:
+    name: str
+    position: int
+
+
 class ScenePanel(QtWidgets.QWidget):
     '''
     Scene Panel dialog for displaying and altering scenes in PyMOL.
@@ -33,6 +40,7 @@ class ScenePanel(QtWidgets.QWidget):
 
         self._build_table_elements(parent)
         self._populate_data()
+        self._set_button_connections()
 
         self.resize(365, 700)
 
@@ -45,14 +53,49 @@ class ScenePanel(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         self.setLayout(layout)
 
-        # Called mid because there will be others
+        top_layout = QtWidgets.QGridLayout()
+        layout.addLayout(top_layout)
         mid_layout = QtWidgets.QGridLayout()
         layout.addLayout(mid_layout)
+        low_layout = QtWidgets.QGridLayout()
+        layout.addLayout(low_layout)
+
+        # Top Elements
+        self.instructionLabel = QtWidgets.QLabel(self)
+        self.instructionLabel.setText(
+            'Double click selected thumbnail to \nload into Workspace.')
+        top_layout.addWidget(self.instructionLabel, 0, 0)
+
+        self.addSceneButton = QtWidgets.QPushButton(self)
+        self.addSceneButton.setText('Add Scene')
+        top_layout.addWidget(self.addSceneButton, 0, 1)
 
         # Mid Elements
         self.sceneTableWidget = QtWidgets.QTableWidget(self)
         mid_layout.addWidget(self.sceneTableWidget, 0, 0)
         self.sceneTableWidget.viewport().installEventFilter(self)
+
+        self.sceneTableWidget.itemChanged.connect(self._item_changed)
+        self.sceneTableWidget.selectionModel().selectionChanged.connect(
+            self._selection_changed)
+        self.sceneTableWidget.setSelectionBehavior(
+            QtWidgets.QAbstractItemView.SelectRows)
+
+        # Lower Buttom Elements
+        self.deleteButton = QtWidgets.QPushButton(self)
+        self.deleteButton.setText("Delete Scene")
+        low_layout.addWidget(self.deleteButton, 0, 1)
+        self.deleteButton.setEnabled(False)
+
+        self.updateButton = QtWidgets.QPushButton(self)
+        self.updateButton.setText("Update Scene")
+        low_layout.addWidget(self.updateButton, 0, 0)
+        self.updateButton.setEnabled(False)
+
+    def _set_button_connections(self):
+        self.addSceneButton.clicked.connect(self._add_scene)
+        self.deleteButton.clicked.connect(self._delete_scene)
+        self.updateButton.clicked.connect(self._update_scene)
 
     def eventFilter(self, source, event):
         '''
@@ -196,3 +239,117 @@ class ScenePanel(QtWidgets.QWidget):
         '''
         list_scenes = self.cmd.get_scene_list()
         return list_scenes
+
+    def _add_scene(self):
+        '''
+        Calls cmd.scene with append and repopulates the table.
+        Table is scrolled to the bottom to show new scene.
+        '''
+        self.cmd.scene('new', 'append', quiet=0)
+        self._populate_data()
+        self.sceneTableWidget.scrollToBottom()
+
+    def _update_scene(self):
+        '''
+        Calls cmd.scene with update, replacing the selected scene with
+        new scene. Image is not currently being updated but it should.
+        Button only active with selection.
+        '''
+        selection = self.sceneTableWidget.selectionModel().selectedIndexes()
+        if selection:
+            name = selection[0].data()
+            self.cmd.scene(name, 'update')
+            self.scene_dict[name][SceneDictIndex.QPIXMAP] = self._get_scene_png(
+                name)
+            self._update_table()
+
+    def _delete_scene(self):
+        '''
+        Calls cmd.scene with clear, removing the selected scene.
+        Button only active with selection.
+        '''
+        selection = self.sceneTableWidget.selectionModel().selectedIndexes()
+        name = selection[0].data()
+        self.cmd.scene(name, 'clear')
+        try:
+            self.scene_dict.pop(name)
+            self.scene_list.remove(name)
+        except Exception as e:
+            print("Item not found")
+            print(e)
+        self._update_table()
+
+    def _update_table(self):
+        '''
+        Currently pointless but scrolling/formatting will happen
+        here to make updating the table more seemless after
+        intially populating.
+        '''
+        self._populate_data()
+
+    def _compare_scene_lists(self, old_list, new_list):
+        '''
+        Compares current and new list of scenes.
+        Returns list of elements that differ ([old, new])
+        '''
+        diff_list = []
+        for i in range(min(len(old_list), len(new_list))):
+            if new_list[i] != old_list[i]:
+                diff_list.append([old_list[i], new_list[i]])
+        return diff_list
+
+    def _get_table_scene_list(self):
+        '''
+        Returns a sorted list of scene names based on the current
+        state of the table. This will be a critical part of reordering,
+        but also used for detecting renaming.
+        '''
+        scene_coor_list = []
+        for row_num in range(self.sceneTableWidget.rowCount()):
+            name = self.sceneTableWidget.model().data(
+                self.sceneTableWidget.model().index(row_num, 0))
+            position = int(
+                self.sceneTableWidget.rowViewportPosition(row_num)/100)
+
+            scene_coor_list.append(SceneWithTablePosition(name, position))
+
+        scene_coor_list.sort(key=lambda scene: scene.position)
+
+        return [scene_with_pos.name for scene_with_pos in scene_coor_list]
+
+    def _selection_changed(self):
+        '''
+        Enables buttons when selection is made.
+        '''
+        item_selected = bool(
+            self.sceneTableWidget.selectionModel().selectedIndexes())
+        self.deleteButton.setEnabled(item_selected)
+        self.updateButton.setEnabled(item_selected)
+
+    def _rename_scene(self, item):
+        '''
+        Takes in an item from _item_changed and checks conditions before
+        calling scene with 'rename'.
+        '''
+        if ' ' in item.text():
+            print("Scene names with spaces are not supported")
+            self._update_table()
+        elif not item.text():
+            print("Blank scene names are not allowed")
+            self._update_table()
+        else:
+            diff_list = self._compare_scene_lists(
+                self.cmd.get_scene_list(),
+                self._get_table_scene_list())
+            if diff_list:
+                for old_scene, new_scene in diff_list:
+                    self.cmd.scene(old_scene, 'rename', new_key=new_scene)
+
+    def _item_changed(self, item):
+        """
+        Called every time an item in the table is changed.
+        @param item: The item which has changed
+        @type  item: QStandardItem
+        """
+        if item.column() == SceneTableColumn.NAME:
+            self._rename_scene(item)
