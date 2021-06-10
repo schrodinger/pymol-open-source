@@ -80,6 +80,7 @@ class ScenePanel(QtWidgets.QWidget):
             self._selection_changed)
         self.sceneTableWidget.setSelectionBehavior(
             QtWidgets.QAbstractItemView.SelectRows)
+        self.sceneTableWidget.verticalHeader().setSectionsMovable(True)
 
         # Lower Buttom Elements
         self.deleteButton = QtWidgets.QPushButton(self)
@@ -96,13 +97,17 @@ class ScenePanel(QtWidgets.QWidget):
         self.addSceneButton.clicked.connect(self._add_scene)
         self.deleteButton.clicked.connect(self._delete_scene)
         self.updateButton.clicked.connect(self._update_scene)
+        self.sceneTableWidget.doubleClicked.connect(self._show_selected_scene)
 
     def eventFilter(self, source, event):
         '''
         Event filter for capturing and processing events.
         '''
         focus_event = 24  # This will be replaced with the event itself.
-        if event.type() == focus_event:
+        paint_event = 12
+        if event.type() == paint_event:
+            self._check_table_state()
+        elif event.type() == focus_event:
             self._populate_data()
 
         return super().eventFilter(source, event)
@@ -143,6 +148,8 @@ class ScenePanel(QtWidgets.QWidget):
                 QtWidgets.QTableWidgetItem(scene_actions))
 
         self._format_table()
+
+        self.sceneTableWidget.selectionModel().clearSelection()
 
     def _update_scene_dict(self):
         '''
@@ -228,8 +235,21 @@ class ScenePanel(QtWidgets.QWidget):
         self.sceneTableWidget.setFocus()
         self.sceneTableWidget.hide()
         self.sceneTableWidget.resizeColumnsToContents()
-        self.sceneTableWidget.verticalHeader().setVisible(False)
+        self._set_vertical_headers()
         self.sceneTableWidget.show()
+
+    def _set_vertical_headers(self):
+        # Get row count
+        row_count = self.sceneTableWidget.rowCount()
+
+        # Iterate in range, setting item
+        for ind in range(row_count):
+            # Create  arrows item
+            arrows = QtWidgets.QTableWidgetItem('\u2195')
+            arrows_font = arrows.font()
+            arrows_font.setPointSize(20)
+            arrows.setFont(arrows_font)
+            self.sceneTableWidget.setVerticalHeaderItem(ind, arrows)
 
     def _update_scene_list(self):
         '''
@@ -279,6 +299,15 @@ class ScenePanel(QtWidgets.QWidget):
             print(e)
         self._update_table()
 
+    def _show_selected_scene(self):
+        '''
+        Calls cmd.scene with recall, recalling scene to workspace.
+        '''
+        selection = self.sceneTableWidget.selectionModel().selectedIndexes()
+        if selection:
+            name = selection[0].data()
+            self.cmd.scene(name, 'recall')
+
     def _update_table(self):
         '''
         Currently pointless but scrolling/formatting will happen
@@ -317,6 +346,18 @@ class ScenePanel(QtWidgets.QWidget):
 
         return [scene_with_pos.name for scene_with_pos in scene_coor_list]
 
+    def _check_table_state(self):
+        '''
+        Checks the current state of the table for reordering.
+        '''
+        scene_ordered_list = self._get_table_scene_list()
+        self.scene_list = self.cmd.get_scene_list()
+        diff_list = self._compare_scene_lists(
+            self.scene_list, scene_ordered_list)
+        if len(diff_list) > 1:
+            # This is the reordering case since multiple have changed
+            self._reorder_scenes(scene_ordered_list)
+
     def _selection_changed(self):
         '''
         Enables buttons when selection is made.
@@ -344,6 +385,17 @@ class ScenePanel(QtWidgets.QWidget):
             if diff_list:
                 for old_scene, new_scene in diff_list:
                     self.cmd.scene(old_scene, 'rename', new_key=new_scene)
+
+    def _reorder_scenes(self, scene_ordered_list):
+        '''
+        Calls cmd.scene_order which requires a string of scene names.
+        This string is created using the ordered scene list generated
+        by _check_table_state.
+        '''
+        scene_order_string = ' '.join(
+            scene for scene in scene_ordered_list if scene in self.scene_list)
+        self.cmd.scene_order(scene_order_string)
+        self.scene_list = self._update_scene_list()
 
     def _item_changed(self, item):
         """
