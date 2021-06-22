@@ -21,6 +21,7 @@ DESCRIPTION
     '''
     from Bio import pairwise2
     from Bio.Align import MultipleSeqAlignment
+    from Bio.SeqRecord import SeqRecord
     try:
         from Bio.Align import substitution_matrices
     except ImportError:
@@ -36,8 +37,9 @@ DESCRIPTION
             one_alignment_only=True)
 
     a = MultipleSeqAlignment([])
-    a.add_sequence("s1", alns[0][0])
-    a.add_sequence("s2", alns[0][1])
+    s1 = SeqRecord(alns[0][0], id="s1")
+    s2 = SeqRecord(alns[0][1], id="s2")
+    a.extend([s1, s2])
     return a
 
 
