@@ -1431,8 +1431,9 @@ static void ExecutiveUpdateGridSlots(PyMOLGlobals * G, int force)
         OVreturn_word result;
         if(OVreturn_IS_OK
            ((result = OVLexicon_BorrowFromCString(I->Lex, rec->group_name)))) {
-          if(OVreturn_IS_OK((result = OVOneToOne_GetForward(I->Key, result.word)))) {
-            if(TrackerGetCandRef(I_Tracker, result.word,
+          auto keyRes = I->Key.find(result.word);
+          if (keyRes != I->Key.end()) {
+            if (TrackerGetCandRef(I_Tracker, keyRes->second,
                                  (TrackerRef **) (void *) &group_rec)) {
               int grid_slot_group_depth = grid_by_group;
               {
@@ -1610,9 +1611,10 @@ void ExecutiveUpdateGroups(PyMOLGlobals * G, bool force)
       OVreturn_word result;
       if(OVreturn_IS_OK
          ((result = OVLexicon_BorrowFromCString(I->Lex, rec.group_name)))) {
-        if(OVreturn_IS_OK((result = OVOneToOne_GetForward(I->Key, result.word)))) {
+        auto keyRes = I->Key.find(result.word);
+        if (keyRes != I->Key.end()) {
           SpecRec* group_rec = nullptr;
-          if(TrackerGetCandRef(I_Tracker, result.word,
+          if (TrackerGetCandRef(I_Tracker, keyRes->second,
                                  (TrackerRef **) (void *) &group_rec)) {
             int cycle = false;
             {                 /* don't close infinite loops */
@@ -1659,8 +1661,9 @@ static int ExecutiveGetObjectParentList(PyMOLGlobals * G, SpecRec * child)
       repeat_flag = false;
       if(OVreturn_IS_OK
          ((result = OVLexicon_BorrowFromCString(I->Lex, child->group_name)))) {
-        if(OVreturn_IS_OK((result = OVOneToOne_GetForward(I->Key, result.word)))) {
-          if(TrackerGetCandRef(I_Tracker, result.word,
+        auto keyRes = I->Key.find(result.word);
+        if (keyRes != I->Key.end()) {
+          if (TrackerGetCandRef(I_Tracker, keyRes->second,
                                (TrackerRef **) (void *) &group_rec)) {
             if(TrackerLink(I_Tracker, result.word, list_id, priority++)) {
               /* checking this prevents infinite loops */
@@ -1715,9 +1718,8 @@ static int ExecutiveAddKey(CExecutive * I, SpecRec * rec)
   int ok = false;
   OVreturn_word result;
   if(OVreturn_IS_OK((result = OVLexicon_GetFromCString(I->Lex, rec->name)))) {
-    if(OVreturn_IS_OK(OVOneToOne_Set(I->Key, result.word, rec->cand_id))) {
-      ok = true;
-    }
+    I->Key[result.word] = rec->cand_id;
+    ok = true;
   }
   return ok;
 }
@@ -1727,9 +1729,12 @@ static int ExecutiveDelKey(CExecutive * I, SpecRec * rec)
   int ok = false;
   OVreturn_word result;
   if(OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, rec->name)))) {
-    if(OVreturn_IS_OK(OVLexicon_DecRef(I->Lex, result.word)) &&
-       OVreturn_IS_OK(OVOneToOne_DelForward(I->Key, result.word))) {
-      ok = true;
+    if(OVreturn_IS_OK(OVLexicon_DecRef(I->Lex, result.word))) {
+      auto res = I->Key.find(result.word);
+      if (res != I->Key.end()) {
+        I->Key.erase(res);
+        ok = true;
+      }
     }
   }
   return ok;
@@ -2271,43 +2276,36 @@ int ExecutiveGroup(PyMOLGlobals * G, pymol::zstring_view nameView,
   return ok;
 }
 
-static int ExecutiveGetUniqueIDAtomVLADict(PyMOLGlobals * G,
-                                            ExecutiveObjectOffset ** return_vla,
-                                            OVOneToOne ** return_dict)
+static void ExecutiveGetUniqueIDAtomVLADict(PyMOLGlobals* G)
 {
-  CExecutive *I = G->Executive;
-  OVOneToOne *o2o = OVOneToOne_New(G->Context->heap);
-  ExecutiveObjectOffset *vla = VLAlloc(ExecutiveObjectOffset, 1000);
-  int n_oi = 0;
-  {
-    SpecRec *rec = NULL;
-    while(ListIterate(I->Spec, rec, next)) {
-      if(rec->type == cExecObject) {
-        if(rec->obj->type == cObjectMolecule) {
-          ObjectMolecule *obj = (ObjectMolecule *) rec->obj;
-          int a, id, n_atom = obj->NAtom;
-          const AtomInfoType *ai = obj->AtomInfo.data();
-          for(a = 0; a < n_atom; a++) {
-            if((id = ai->unique_id)) {
-              if(OVOneToOne_GetForward(o2o, id).status == OVstatus_NOT_FOUND) {
-                if(OVreturn_IS_OK(OVOneToOne_Set(o2o, id, n_oi))) {
-                  VLACheck(vla, ExecutiveObjectOffset, n_oi);
-                  vla[n_oi].obj = obj;
-                  vla[n_oi].atm = a;
-                  n_oi++;
-                }
-              }
-            }
-            ai++;
-          }
+  CExecutive* I = G->Executive;
+  I->m_eoo.clear();
+  I->m_eoo.reserve(1000);
+
+  std::size_t n_oi = 0;
+  auto recs = pymol::make_list_adapter(G->Executive->Spec);
+  for (auto& rec : recs) {
+    if (rec.type != cExecObject) {
+      continue;
+    }
+    if (rec.obj->type != cObjectMolecule) {
+      continue;
+    }
+    auto obj = static_cast<ObjectMolecule*>(rec.obj);
+    auto n_atom = obj->NAtom;
+    const AtomInfoType* ai = obj->AtomInfo.data();
+    for (int a = 0; a < n_atom; a++) {
+      auto id = ai->unique_id;
+      if (id != 0) {
+        auto o2oIt = I->m_id2eoo.find(id);
+        if (o2oIt == I->m_id2eoo.end()) {
+          I->m_id2eoo[id] = n_oi++;
+          I->m_eoo.push_back(ExecutiveObjectOffset{obj, a});
         }
       }
+      ai++;
     }
   }
-  *return_dict = o2o;
-  VLASize(vla, ExecutiveObjectOffset, n_oi);
-  *return_vla = vla;
-  return 1;
 }
 
 int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
@@ -12554,8 +12552,10 @@ SpecRec* ExecutiveFindSpec(PyMOLGlobals* G, pymol::zstring_view name_view)
   {                             /* first, try for perfect, case-specific match */
     OVreturn_word result;
     if(OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, name)))) {
-      if(OVreturn_IS_OK((result = OVOneToOne_GetForward(I->Key, result.word)))) {
-        if(!TrackerGetCandRef(I->Tracker, result.word, (TrackerRef **) (void *) &rec)) {
+      auto keyRes = I->Key.find(result.word);
+      if (keyRes != I->Key.end()) {
+        if (!TrackerGetCandRef(
+                I->Tracker, keyRes->second, (TrackerRef**) (void*) &rec)) {
           rec = NULL;
         }
       }
@@ -16251,7 +16251,6 @@ int ExecutiveInit(PyMOLGlobals * G)
 #endif
 
     I->Lex = OVLexicon_New(G->Context->heap);
-    I->Key = OVOneToOne_New(G->Context->heap);
 
     /* create "all" entry */
 
@@ -16287,7 +16286,6 @@ void ExecutiveFree(PyMOLGlobals * G)
   if(I->Tracker)
     TrackerFree(I->Tracker);
   OVLexicon_DEL_AUTO_NULL(I->Lex);
-  OVOneToOne_DEL_AUTO_NULL(I->Key);
 
   ExecutiveUniqueIDAtomDictInvalidate(G);
 
@@ -16496,23 +16494,21 @@ ok_except1:
 
 void ExecutiveUniqueIDAtomDictInvalidate(PyMOLGlobals * G) {
   CExecutive *I = G->Executive;
-  if (I->m_eoo) {
-    OVOneToOne_DEL_AUTO_NULL(I->m_id2eoo);
-    VLAFreeP(I->m_eoo);
-  }
+  I->m_id2eoo.clear();
+  I->m_eoo.clear();
 }
 
-const ExecutiveObjectOffset * ExecutiveUniqueIDAtomDictGet(PyMOLGlobals * G, int i) {
-  CExecutive *I = G->Executive;
-  OVreturn_word offset;
+const ExecutiveObjectOffset* ExecutiveUniqueIDAtomDictGet(
+    PyMOLGlobals* G, int i)
+{
+  CExecutive* I = G->Executive;
 
-  if (!I->m_eoo)
-    ExecutiveGetUniqueIDAtomVLADict(G, &I->m_eoo, &I->m_id2eoo);
+  if (I->m_eoo.empty()) {
+    ExecutiveGetUniqueIDAtomVLADict(G);
+  }
 
-  if(!OVreturn_IS_OK(offset = OVOneToOne_GetForward(I->m_id2eoo, i)))
-    return NULL;
-
-  return I->m_eoo + offset.word;
+  auto offsetIt = I->m_id2eoo.find(i);
+  return offsetIt == I->m_id2eoo.end() ? nullptr : &I->m_eoo[offsetIt->second];
 }
 
 pymol::Result<> ExecutiveSetFeedbackMask(

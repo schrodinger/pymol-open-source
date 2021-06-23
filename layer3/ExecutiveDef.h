@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "Ortho.h"
 #include "ScrollBar.h"
 
@@ -8,7 +10,6 @@ class CGO;
 struct _CObject;
 struct CTracker;
 struct _OVLexicon;
-struct _OVOneToOne;
 struct ExecutiveObjectOffset;
 
 
@@ -67,7 +68,7 @@ struct CExecutive : public Block {
 #endif
   int all_names_list_id {}, all_obj_list_id {}, all_sel_list_id {};
   OVLexicon *Lex {};
-  OVOneToOne *Key {};
+  std::unordered_map<ov_word, int> Key;
   bool ValidGroups { false };
   bool ValidSceneMembers { false };
   int ValidGridSlots {};
@@ -83,8 +84,8 @@ struct CExecutive : public Block {
   short selectorIsRound { 0 };
 
   // AtomInfoType::unique_id -> (object, atom-index)
-  ExecutiveObjectOffset *m_eoo {}; // VLA of (object, atom-index)
-  OVOneToOne *m_id2eoo {}; // unique_id -> m_eoo-index
+  std::vector<ExecutiveObjectOffset> m_eoo {}; // vector of (object, atom-index)
+  std::unordered_map<ov_word, std::size_t> m_id2eoo {}; // unique_id -> m_eoo-index
 
   CExecutive(PyMOLGlobals * G) : Block(G), m_ScrollBar(G, false) {};
 
