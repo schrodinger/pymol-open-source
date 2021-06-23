@@ -22,10 +22,6 @@ Z* -------------------------------------------------------------------
 #include "PyMOLGlobals.h"
 #include "Texture.h"
 
-#include "OVContext.h"
-#include "OVOneToOne.h"
-#include "OVHeapArray.h"
-
 #include "Setting.h"
 #include "Character.h"
 #include "Util.h"
@@ -42,7 +38,7 @@ typedef struct  {
 } texture_info;
 
 struct CTexture {
-  OVOneToOne* ch2tex{};
+  std::unordered_map<int, int> ch2tex;
   GLuint text_texture_id{};
   int xpos{};
   int ypos{};
@@ -67,9 +63,7 @@ int TextureInit(PyMOLGlobals * G)
   auto I = new CTexture();
   G->Texture = I;
 
-  I->ch2tex = OVOneToOne_New(G->Context->heap);
   I->text_texture_dim = INIT_TEXTURE_SIZE;
-  I->text_texture_id = 0;
   I->ypos = I->maxypos = I->num_chars = 0;
   I->xpos = POS_START;
   return (I ? 1 : 0);
@@ -84,7 +78,7 @@ void TextureInitTextTexture(PyMOLGlobals *G){
 void TextureInvalidateTextTexture(PyMOLGlobals * G){
   CTexture *I = G->Texture;
   if (I->text_texture_id){
-    OVOneToOne_Reset(I->ch2tex);
+    I->ch2tex.clear();
     I->num_chars = 0;
     glDeleteTextures(1, &I->text_texture_id);
     I->text_texture_id = 0;
@@ -130,18 +124,18 @@ void TextureInitTextTextureImpl(PyMOLGlobals *G, int textureSizeArg){
 #include "Rep.h"
 int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 {
-  OVreturn_word result;
   CTexture *I = G->Texture;
   int is_new = false;
   int tex_dim = I->text_texture_dim;
   short use_shader = (short) SettingGetGlobal_b(G, cSetting_use_shaders);
 
   if(G->HaveGUI && G->ValidContext) {
-    if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->ch2tex, char_id))) {
+    auto it = I->ch2tex.find(char_id);
+    if (it != I->ch2tex.end()) {
       if(glIsTexture(I->text_texture_id))
         return I->text_texture_id;
       else {
-        OVOneToOne_DelReverse(I->ch2tex, result.word);
+        I->ch2tex.erase(it);
       }
     }
     {
@@ -183,7 +177,7 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 	  if ((I->ypos + h) >= I->text_texture_dim){ // only need to check y since x gets reset above
 	    int nrefreshes;
 	    I->xpos = POS_START; I->ypos = 0; I->maxypos = POS_START;
-	    OVOneToOne_Reset(I->ch2tex);
+	    I->ch2tex.clear();
 	    I->num_chars = 0;
 	    /* Also need to reload the selection markers into the texture, since
 	       we are wiping everything out from the texture and starting from the origin */
@@ -215,8 +209,8 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
           glGenTextures(1, &I->text_texture_id);
 	}
 	texture_id = I->text_texture_id;
-	if(I->text_texture_id && OVreturn_IS_OK(OVOneToOne_Set(I->ch2tex, char_id, I->num_chars++))) {
-
+	if (I->text_texture_id) {
+	  I->ch2tex[char_id] = I->num_chars++;
 	  if (use_shader && G->ShaderMgr->ShadersPresent()){
 	    glActiveTexture(GL_TEXTURE3);
 	  }
@@ -271,8 +265,6 @@ void TextureGetPlacementForNewSubtexture(PyMOLGlobals * G, int new_texture_width
 
 void TextureFree(PyMOLGlobals * G)
 {
-  CTexture *I = G->Texture;
   /* TODO -- free all the resident textures */
-  OVOneToOne_DEL_AUTO_NULL(I->ch2tex);
-  DeleteP(I);
+  DeleteP(G->Texture);
 }
