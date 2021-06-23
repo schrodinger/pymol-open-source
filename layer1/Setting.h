@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #include"os_python.h"
 #include"PyMOLGlobals.h"
@@ -41,10 +42,11 @@ struct SettingUniqueEntry {
 };
 
 struct CSettingUnique {
-  OVOneToOne *id2offset;
-  OVOneToOne *old2new;
-  SettingUniqueEntry *entry;
-  int n_alloc, next_free;
+  std::unordered_map<int, int> id2offset;
+  std::unique_ptr<std::unordered_map<int, int>> old2new;
+  std::vector<SettingUniqueEntry> entry;
+  constexpr static int numInitEntries = 10;
+  int next_free{};
 };
 
 /**

@@ -5548,7 +5548,8 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
   }
 
   if (partial_restore) {
-    G->SettingUnique->old2new = OVOneToOne_New(G->Context->heap);
+    G->SettingUnique->old2new =
+        pymol::make_unique<std::unordered_map<int, int>>();
   }
 
   if(ok) {
@@ -5862,7 +5863,7 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
       ExecutiveSetObjVisib(G, active, true, false);
   }
 
-  OVOneToOne_DEL_AUTO_NULL(G->SettingUnique->old2new);
+  G->SettingUnique->old2new.reset();
 
   if(incomplete) {
     PRINTFB(G, FB_Executive, FB_Warnings)

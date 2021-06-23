@@ -139,28 +139,22 @@ void SettingPurgeDefault(PyMOLGlobals * G)
   DeleteP(G->Default);
 }
 
-void SettingUniqueDetachChain(PyMOLGlobals * G, int unique_id)
+void SettingUniqueDetachChain(PyMOLGlobals* G, int unique_id)
 {
-  CSettingUnique *I = G->SettingUnique;
-  OVreturn_word result;
-  if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset, unique_id))) {
-    int offset = result.word;
-    int next;
+  CSettingUnique* I = G->SettingUnique;
+  auto offsetIt = I->id2offset.find(unique_id);
+  if (offsetIt == I->id2offset.end()) {
+    return;
+  }
+  int offset = offsetIt->second;
+  I->id2offset.erase(offsetIt);
 
-    OVOneToOne_DelForward(I->id2offset, unique_id);
-
-    {
-      SettingUniqueEntry *entry;
-      while(offset) {
-        entry = I->entry + offset;
-        next = entry->next;
-        entry->next = I->next_free;
-        I->next_free = offset;
-        offset = next;
-      }
-    }
-  } else {
-    /* uncaught error */
+  while (offset) {
+    auto entry = &I->entry[offset];
+    auto next = entry->next;
+    entry->next = I->next_free;
+    I->next_free = offset;
+    offset = next;
   }
 }
 
@@ -169,14 +163,13 @@ static void SettingUniqueExpand(PyMOLGlobals * G)
   CSettingUnique *I = G->SettingUnique;
 
   if(!I->next_free) {
-    int new_n_alloc = (I->n_alloc * 3) / 2;
-    int a;
-    VLACheck(I->entry, SettingUniqueEntry, new_n_alloc);
-    for(a = I->n_alloc; a < new_n_alloc; a++) {
+    int new_n_alloc = (I->entry.size() * 3) / 2;
+    auto sizeBefore = I->entry.size();
+    I->entry.resize(sizeBefore + new_n_alloc, SettingUniqueEntry{});
+    for(int a = sizeBefore; a < new_n_alloc; a++) {
       I->entry[a].next = I->next_free;
       I->next_free = a;
     }
-    I->n_alloc = new_n_alloc;
   }
 }
 
@@ -184,11 +177,11 @@ static
 SettingUniqueEntry *SettingFindSettingUniqueEntry(PyMOLGlobals * G, int unique_id, int setting_id)
 {
   CSettingUnique *I = G->SettingUnique;
-  OVreturn_word result;
-  if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset, unique_id))) {
-    SettingUniqueEntry *entry;
-    for (int offset = result.word; offset; offset = entry->next) {
-      entry = I->entry + offset;
+  auto offsetIt = I->id2offset.find(unique_id);
+  if (offsetIt != I->id2offset.end()) {
+    SettingUniqueEntry* entry;
+    for (int offset = offsetIt->second; offset; offset = entry->next) {
+      entry = &I->entry[offset];
       if(entry->setting_id == setting_id) {
         return entry;
       }
@@ -338,18 +331,18 @@ static void SettingUniqueEntry_Set(SettingUniqueEntry *entry, int value_type, co
 bool SettingUniqueUnset(PyMOLGlobals * G, int unique_id, int setting_id)
 {
   auto I = G->SettingUnique;
-  auto result = OVOneToOne_GetForward(I->id2offset, unique_id);
+  auto offsetIt = I->id2offset.find(unique_id);
 
-  if (OVreturn_IS_OK(result)) {
-    for (int prev = 0, offset = result.word; offset;
+  if (offsetIt != I->id2offset.end()) {
+    for (int prev = 0, offset = offsetIt->second; offset;
         prev = offset, offset = I->entry[offset].next) {
       if (I->entry[offset].setting_id != setting_id)
         continue;
 
       if(!prev) {           /* if first entry in list */
-        OVOneToOne_DelForward(I->id2offset, unique_id);
+        I->id2offset.erase(offsetIt);
         if(I->entry[offset].next) {   /* set new list start */
-          OVOneToOne_Set(I->id2offset, unique_id, I->entry[offset].next);
+          I->id2offset[unique_id] = I->entry[offset].next;
         }
       } else {              /* otherwise excise from middle or end */
         I->entry[prev].next = I->entry[offset].next;
@@ -369,19 +362,19 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
 /* set value to NULL in order to delete setting */
 {
   CSettingUnique *I = G->SettingUnique;
-  OVreturn_word result;
   int isset = false;
 
   if (!value) {
     return SettingUniqueUnset(G, unique_id, setting_id);
   }
 
-  if(OVreturn_IS_OK((result = OVOneToOne_GetForward(I->id2offset, unique_id)))) {       /* setting list exists for atom */
-    int offset = result.word;
+  auto offsetIt = I->id2offset.find(unique_id);
+  if (offsetIt != I->id2offset.end()) {       /* setting list exists for atom */
+    int offset = offsetIt->second;
     int prev = 0;
     int found = false;
     while(offset) {
-      SettingUniqueEntry *entry = I->entry + offset;
+      auto entry = &I->entry[offset];
       if(entry->setting_id == setting_id) {
         found = true;           /* this setting is already defined */
 	  if (!SettingUniqueEntry_IsSame(entry, setting_type, value)){
@@ -399,7 +392,7 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
       if(I->next_free) {
         offset = I->next_free;
         {
-          SettingUniqueEntry *entry = I->entry + offset;
+          auto entry = &I->entry[offset];
           I->next_free = entry->next;
           entry->next = 0;
 
@@ -408,7 +401,8 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
             entry->setting_id = setting_id;
             SettingUniqueEntry_Set(entry, setting_type, value);
             isset = true;
-          } else if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, unique_id, offset))) {
+          } else {
+            I->id2offset[unique_id] = offset;
             /* create new list */
             entry->setting_id = setting_id;
             SettingUniqueEntry_Set(entry, setting_type, value);
@@ -417,20 +411,19 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
         }
       }
     }
-  } else if(value && (result.status == OVstatus_NOT_FOUND)) {   /* new setting list for atom */
+  } else if(value && offsetIt == I->id2offset.end()) {   /* new setting list for atom */
     if(!I->next_free)
       SettingUniqueExpand(G);
     if(I->next_free) {
       int offset = I->next_free;
-      SettingUniqueEntry *entry = I->entry + offset;
+      auto entry = &I->entry[offset];
 
-      if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, unique_id, offset))) {
-        I->next_free = entry->next;
-        entry->setting_id = setting_id;
-        entry->next = 0;
-        SettingUniqueEntry_Set(entry, setting_type, value);
-        isset = true;
-      }
+      I->id2offset[unique_id] = offset;
+      I->next_free = entry->next;
+      entry->setting_id = setting_id;
+      entry->next = 0;
+      SettingUniqueEntry_Set(entry, setting_type, value);
+      isset = true;
     }
   } else {
     /* unhandled error */
@@ -499,33 +492,28 @@ ok_except1:
 void SettingUniqueResetAll(PyMOLGlobals * G)
 {
   CSettingUnique *I = G->SettingUnique;
-
-  OVOneToOne_Reset(I->id2offset);
-  {
-    int a;
-    I->n_alloc = 10;
-    VLAFreeP(I->entry);
-    I->entry = VLACalloc(SettingUniqueEntry, I->n_alloc);
-    /* note: intentially skip index 0  */
-    for(a = 2; a < 10; a++) {
-      I->entry[a].next = a - 1;
-    }
-    I->next_free = I->n_alloc - 1;
+  I->id2offset.clear();
+  I->entry.clear();
+  I->entry.resize(CSettingUnique::numInitEntries, SettingUniqueEntry{});
+  /* note: intentially skip index 0  */
+  for (int a = 2; a < I->entry.size(); a++) {
+    I->entry[a].next = a - 1; /* 1-based linked list with 0 as sentinel */
   }
+  I->next_free = I->entry.size() - 1;
 }
 
 int SettingUniquePrintAll(PyMOLGlobals * G, int src_unique_id)
 {
   int ok = true;
   CSettingUnique *I = G->SettingUnique;
-  OVreturn_word src_result;
   printf("SettingUniquePrintAll: ");
-  if(OVreturn_IS_OK(src_result = OVOneToOne_GetForward(I->id2offset, src_unique_id))) {
-    int src_offset = src_result.word;
+  auto offsetIt = I->id2offset.find(src_unique_id);
+  if (offsetIt != I->id2offset.end()) {
+    int src_offset = offsetIt->second;
     SettingUniqueEntry *src_entry;
     while(ok && src_offset) {
       {
-	src_entry = I->entry + src_offset;
+	src_entry = &I->entry[src_offset];
 	{
 	  int setting_id = src_entry->setting_id;
 	  int setting_type = SettingInfo[setting_id].type;
@@ -561,23 +549,23 @@ int SettingUniqueCopyAll(PyMOLGlobals * G, int src_unique_id, int dst_unique_id)
 {
   int ok = true;
   CSettingUnique *I = G->SettingUnique;
-  OVreturn_word dst_result;
 
-  if(OVreturn_IS_OK((dst_result = OVOneToOne_GetForward(I->id2offset, dst_unique_id)))) {       /* setting list exists for atom */
+  auto dstOffsetIt = I->id2offset.find(dst_unique_id);
+  if (dstOffsetIt != I->id2offset.end()) {       /* setting list exists for atom */
     PRINTFB(G, FB_Setting, FB_Errors)
       " SettingUniqueCopyAll-Bug: merging settings not implemented\n"
       ENDFB(G);
     ok = false;
-  } else if(dst_result.status == OVstatus_NOT_FOUND) {  /* new setting list for atom */
-    OVreturn_word src_result;
-    if(OVreturn_IS_OK(src_result = OVOneToOne_GetForward(I->id2offset, src_unique_id))) {
+  } else if (dstOffsetIt == I->id2offset.end()) {  /* new setting list for atom */
+    auto srcOffsetIt = I->id2offset.find(src_unique_id);
+    if (srcOffsetIt != I->id2offset.end()) {
       int dst_offset = 0;
-      for (int src_offset = src_result.word; src_offset;
+      for (int src_offset = srcOffsetIt->second; src_offset;
           src_offset = I->entry[src_offset].next) {
         SettingUniqueExpand(G); // this may reallocate I->entry
 
         if (!dst_offset) {
-          OVOneToOne_Set(I->id2offset, dst_unique_id, I->next_free);
+          I->id2offset[dst_unique_id] = I->next_free;
         } else {
           I->entry[dst_offset].next = I->next_free;
         }
@@ -598,29 +586,13 @@ int SettingUniqueCopyAll(PyMOLGlobals * G, int src_unique_id, int dst_unique_id)
 
 static void SettingUniqueInit(PyMOLGlobals * G)
 {
-  CSettingUnique *I = G->SettingUnique;
-
-  if((I = (G->SettingUnique = pymol::calloc<CSettingUnique>(1)))) {
-    I->id2offset = OVOneToOne_New(G->Context->heap);
-    {
-      int a;
-      I->n_alloc = 10;
-      I->entry = VLACalloc(SettingUniqueEntry, I->n_alloc);
-      /* note: intentially skip index 0  */
-      for(a = 2; a < 10; a++) {
-        I->entry[a].next = a - 1;       /* 1-based linked list with 0 as sentinel */
-      }
-      I->next_free = I->n_alloc - 1;
-    }
-  }
+  G->SettingUnique = new CSettingUnique();
+  SettingUniqueResetAll(G);
 }
 
 static void SettingUniqueFree(PyMOLGlobals * G)
 {
-  CSettingUnique *I = G->SettingUnique;
-  VLAFreeP(I->entry);
-  OVOneToOne_Del(I->id2offset);
-  FreeP(I);
+  DeleteP(G->SettingUnique);
 }
 
 /**
@@ -630,13 +602,13 @@ int SettingUniqueConvertOldSessionID(PyMOLGlobals * G, int old_unique_id)
 {
   CSettingUnique *I = G->SettingUnique;
   int unique_id = old_unique_id;
-  if(I->old2new) {
-    OVreturn_word ret;
-    if(OVreturn_IS_OK(ret = OVOneToOne_GetForward(I->old2new, old_unique_id))) {
-      unique_id = ret.word;
+  if (I->old2new) {
+    auto oldIdIt = I->old2new->find(old_unique_id);
+    if (oldIdIt != I->old2new->end()) {
+      unique_id = oldIdIt->second;
     } else {
       unique_id = AtomInfoGetNewUniqueID(G);
-      OVOneToOne_Set(I->old2new, old_unique_id, unique_id);
+      I->old2new->emplace(old_unique_id, unique_id);
     }
   } else {
     AtomInfoReserveUniqueID(G, unique_id);
@@ -823,37 +795,22 @@ PyObject *SettingUniqueAsPyList(PyMOLGlobals * G)
   PyObject *result = NULL;
   CSettingUnique *I = G->SettingUnique;
   {
-    ov_word hidden = 0;
-    OVreturn_word ret;
-    int n_entry = 0;
-    while(1) {
-      ret = OVOneToOne_IterateForward(I->id2offset, &hidden);
-      if(ret.status != OVstatus_YES)
-        break;
-      n_entry++;
-    }
+    auto n_entry = I->id2offset.size();
     result = PyList_New(n_entry);
     if(result) {
-      hidden = 0;
       n_entry = 0;
-      while(1) {
+      for (auto id2offset : I->id2offset) {
         PyObject *setting_list = NULL;
-        int save_offset, unique_id;
-        ret = OVOneToOne_IterateForward(I->id2offset, &hidden);
-
-        if(ret.status != OVstatus_YES)
-          break;
-        unique_id = ret.word;
-        if(OVreturn_IS_OK(ret = OVOneToOne_GetForward(I->id2offset, unique_id))) {
-          int offset = ret.word;
+        auto unique_id = id2offset.first;
+        auto offset = id2offset.second;
+        {
           int n_set = 0;
 
           /* count number of settings for this unique_id */
 
-          SettingUniqueEntry *entry;
-          save_offset = offset;
+          auto save_offset = offset;
           while(offset) {
-            entry = I->entry + offset;
+            auto entry = &I->entry[offset];
             n_set++;
             offset = entry->next;
           }
@@ -865,7 +822,7 @@ PyObject *SettingUniqueAsPyList(PyMOLGlobals * G)
           offset = save_offset;
           while(offset) {
             PyObject *setting_entry = PyList_New(3);
-            entry = I->entry + offset;
+            auto entry = &I->entry[offset];
             int type = SettingInfo[entry->setting_id].type;
             PyList_SetItem(setting_entry, 0, PyInt_FromLong(entry->setting_id));
             PyList_SetItem(setting_entry, 1, PyInt_FromLong(type));
@@ -3264,12 +3221,12 @@ PyObject * SettingUniqueGetIndicesAsPyList(PyMOLGlobals * G, int unique_id)
 {
   CSettingUnique *I = G->SettingUnique;
   PyObject * list = PyList_New(0);
-  OVreturn_word result;
 
-  if(unique_id && OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset, unique_id))) {
-    SettingUniqueEntry *entry;
-    for (int offset = result.word; offset; offset = entry->next) {
-      entry = I->entry + offset;
+  auto offsetIt = I->id2offset.find(unique_id);
+  if (unique_id && offsetIt != I->id2offset.end()) {
+    SettingUniqueEntry* entry;
+    for (int offset = offsetIt->second; offset; offset = entry->next) {
+      entry = &I->entry[offset];
       PyObject *item = PyInt_FromLong(entry->setting_id);
       PyList_Append(list, item);
       Py_DECREF(item);
