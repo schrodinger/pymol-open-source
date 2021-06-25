@@ -4782,7 +4782,7 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
     if(!prior) {
       if(ray || (!G->HaveGUI && (!SceneGetCopyType(G) || width || height))) {
         prior = SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
-                 NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
+                 NULL, NULL, 0.0F, 0.0F, quiet, NULL, true, -1);
       } else if(width || height) {
         prior = !SceneDeferImage(
             G, width, height, filename, -1, dpi, format, quiet, nullptr);
