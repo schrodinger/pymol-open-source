@@ -15,7 +15,7 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include <set>
+#include <unordered_set>
 
 #include"os_python.h"
 
@@ -483,7 +483,7 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
 
       // get the set of non-guide objects in the new alignment, they need
       // to be flushed (removed) from the current alignment
-      std::set<const ObjectMolecule*> flushobjects;
+      std::unordered_set<const ObjectMolecule*> flushobjects;
       if (flush) {
         flushobjects.insert(flush);
       } else {
@@ -565,8 +565,8 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
       /* now combine the alignments */
 
       {
-        OVOneToAny *used = OVOneToAny_New(G->Context->heap);
-        OVOneToAny *active = OVOneToAny_New(G->Context->heap);
+        std::unordered_set<int> used;
+        std::unordered_set<int> active;
         int cur_start = 0;
         int new_start = 0;
 
@@ -596,15 +596,15 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
             int c, id;
             int overlapping = false;
 
-            OVOneToAny_Reset(active);
+            active.clear();
             c = cur_start;
             while((id = curVLA[c++])) { /* record active atoms */
-              OVOneToAny_SetKey(active, id, 1);
+              active.insert(id);
             }
 
             c = new_start;
             while((id = newVLA[c++])) { /* see if there are any matches */
-              if(OVreturn_IS_OK(OVOneToAny_GetKey(active, id))) {
+              if (active.find(id) != active.end()) {
                 overlapping = true;
                 break;
               }
@@ -657,12 +657,11 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
             case -1:           /* insert new */
               if(new_start < n_new) {
                 while((id = newVLA[new_start])) {
-                  if(OVOneToAny_GetKey(used, id).status == OVstatus_NOT_FOUND) {
-                    if(OVreturn_IS_OK(OVOneToAny_SetKey(used, id, 1))) {
-                      VLACheck(result, int, n_result);
-                      result[n_result] = id;
-                      n_result++;
-                    }
+                  if (used.find(id) == used.end()) {
+                    used.insert(id);
+                    VLACheck(result, int, n_result);
+                    result[n_result] = id;
+                    n_result++;
                   }
                   new_start++;
                 }
@@ -676,12 +675,11 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
             case 0:            /* merge, with cur going first */
               if(new_start < n_new) {
                 while((id = newVLA[new_start])) {
-                  if(OVOneToAny_GetKey(used, id).status == OVstatus_NOT_FOUND) {
-                    if(OVreturn_IS_OK(OVOneToAny_SetKey(used, id, 1))) {
-                      VLACheck(result, int, n_result);
-                      result[n_result] = id;
-                      n_result++;
-                    }
+                  if (used.find(id) == used.end()) {
+                    used.insert(id);
+                    VLACheck(result, int, n_result);
+                    result[n_result] = id;
+                    n_result++;
                   }
                   new_start++;
                 }
@@ -690,12 +688,11 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
               }
               if(cur_start < n_cur) {
                 while((id = curVLA[cur_start])) {
-                  if(OVOneToAny_GetKey(used, id).status == OVstatus_NOT_FOUND) {
-                    if(OVreturn_IS_OK(OVOneToAny_SetKey(used, id, 1))) {
-                      VLACheck(result, int, n_result);
-                      result[n_result] = id;
-                      n_result++;
-                    }
+                  if (used.find(id) == used.end()) {
+                    used.insert(id);
+                    VLACheck(result, int, n_result);
+                    result[n_result] = id;
+                    n_result++;
                   }
                   cur_start++;
                 }
@@ -709,12 +706,11 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
             case 1:            /* insert cur */
               if(cur_start < n_cur) {
                 while((id = curVLA[cur_start])) {
-                  if(OVOneToAny_GetKey(used, id).status == OVstatus_NOT_FOUND) {
-                    if(OVreturn_IS_OK(OVOneToAny_SetKey(used, id, 1))) {
-                      VLACheck(result, int, n_result);
-                      result[n_result] = id;
-                      n_result++;
-                    }
+                  if (used.find(id) == used.end()) {
+                    used.insert(id);
+                    VLACheck(result, int, n_result);
+                    result[n_result] = id;
+                    n_result++;
                   }
                   cur_start++;
                 }
@@ -728,8 +724,6 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
             }
           }
         }
-        OVOneToAny_DEL_AUTO_NULL(active);
-        OVOneToAny_DEL_AUTO_NULL(used);
       }
     }
   }

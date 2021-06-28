@@ -91,8 +91,6 @@
 
 #include"OVContext.h"
 #include"OVLexicon.h"
-#include"OVOneToOne.h"
-#include"OVOneToAny.h"
 
 #include"ShaderMgr.h"
 #include"File.h"

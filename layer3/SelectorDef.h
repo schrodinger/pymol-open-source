@@ -14,7 +14,6 @@
 #include "ObjectMolecule.h"
 
 #include "OVLexicon.h"
-#include "OVOneToAny.h"
 
 #define cNDummyModels 2
 #define cNDummyAtoms 2
