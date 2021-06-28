@@ -68,7 +68,7 @@ struct CSetting;
 struct CSettingUnique;
 struct CText;
 struct CWizard;
-typedef struct _CAtomInfo CAtomInfo;
+struct CAtomInfo;
 typedef struct _CSculptCache CSculptCache;
 typedef struct _CVFont CVFont;
 typedef struct _CEditor CEditor;

@@ -32,8 +32,6 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"PConv.h"
 #include"Ortho.h"
-#include"OVOneToAny.h"
-#include"OVContext.h"
 #include"PyMOLObject.h"
 #include"Setting.h"
 #include"Executive.h"
@@ -41,16 +39,17 @@ Z* -------------------------------------------------------------------
 #include "pymol/zstring_view.h"
 
 #include <map>
+#include <unordered_set>
 
-struct _CAtomInfo {
-  int NColor, CColor, DColor, HColor, OColor, SColor;
-  int BrColor, ClColor, FColor, IColor;
-  int PColor, MgColor, MnColor, NaColor, KColor, CaColor;
-  int CuColor, FeColor, ZnColor;
-  int SeColor;
-  int DefaultColor;
-  int NextUniqueID;
-  OVOneToAny *ActiveIDs;
+struct CAtomInfo {
+  int NColor{}, CColor{}, DColor{}, HColor{}, OColor{}, SColor{};
+  int BrColor{}, ClColor{}, FColor{}, IColor{};
+  int PColor{}, MgColor{}, MnColor{}, NaColor{}, KColor{}, CaColor{};
+  int CuColor{}, FeColor{}, ZnColor{};
+  int SeColor{};
+  int DefaultColor{};
+  int NextUniqueID = 1;
+  std::unordered_set<int> ActiveIDs;
 };
 
 void AtomInfoCleanAtomName(char *name)
@@ -93,50 +92,27 @@ PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, AtomInfoType * ai, int s
   return NULL;
 }
 
-static int AtomInfoPrimeUniqueIDs(PyMOLGlobals * G)
+int AtomInfoReserveUniqueID(PyMOLGlobals* G, int unique_id)
 {
-  CAtomInfo *I = G->AtomInfo;
-  if(!I->ActiveIDs) {
-    OVContext *C = G->Context;
-    I->ActiveIDs = OVOneToAny_New(C->heap);
-  }
-  return (I->ActiveIDs != NULL);
-}
-
-int AtomInfoReserveUniqueID(PyMOLGlobals * G, int unique_id)
-{
-  CAtomInfo *I = G->AtomInfo;
-  if(!I->ActiveIDs)
-    AtomInfoPrimeUniqueIDs(G);
-  if(I->ActiveIDs)
-    return (OVreturn_IS_OK(OVOneToAny_SetKey(I->ActiveIDs, unique_id, 1)));
+  G->AtomInfo->ActiveIDs.insert(unique_id);
   return 0;
 }
 
-int AtomInfoIsUniqueIDActive(PyMOLGlobals * G, int unique_id)
+int AtomInfoIsUniqueIDActive(PyMOLGlobals* G, int unique_id)
 {
-  CAtomInfo *I = G->AtomInfo;
-  if(!I->ActiveIDs)
-    return 0;
-  else
-    return (OVreturn_IS_OK(OVOneToAny_GetKey(I->ActiveIDs, unique_id)));
-  return 0;
+  return G->AtomInfo->ActiveIDs.find(unique_id) != G->AtomInfo->ActiveIDs.end();
 }
 
 int AtomInfoGetNewUniqueID(PyMOLGlobals * G)
 {
   CAtomInfo *I = G->AtomInfo;
   int result = 0;
-  AtomInfoPrimeUniqueIDs(G);
-  if(I->ActiveIDs) {
-    while(1) {
-      result = I->NextUniqueID++;
-      if(result) {              /* skip zero */
-        if(OVOneToAny_GetKey(I->ActiveIDs, result).status == OVstatus_NOT_FOUND) {
-          if(OVreturn_IS_ERROR(OVOneToAny_SetKey(I->ActiveIDs, result, 1)))
-            result = 0;
-          break;
-        }
+  while (true) {
+    result = I->NextUniqueID++;
+    if(result) {              /* skip zero */
+      if (I->ActiveIDs.find(result) == I->ActiveIDs.end()) {
+        I->ActiveIDs.insert(result);
+        break;
       }
     }
   }
@@ -177,20 +153,14 @@ void BondTypeInit2(BondType *bond, int i1, int i2, int order)
 
 int AtomInfoInit(PyMOLGlobals * G)
 {
-  CAtomInfo *I = NULL;
-  if((I = (G->AtomInfo = pymol::calloc<CAtomInfo>(1)))) {
-    AtomInfoPrimeColors(G);
-    I->NextUniqueID = 1;
-    return 1;
-  } else
-    return 0;
+  G->AtomInfo = new CAtomInfo();
+  AtomInfoPrimeColors(G);
+  return 1;
 }
 
 void AtomInfoFree(PyMOLGlobals * G)
 {
-  CAtomInfo *I = G->AtomInfo;
-  OVOneToAny_DEL_AUTO_NULL(I->ActiveIDs);
-  FreeP(G->AtomInfo);
+  DeleteP(G->AtomInfo);
 }
 
 
@@ -1072,8 +1042,8 @@ void AtomInfoPurgeBond(PyMOLGlobals * G, BondType * bi)
   if(bi->has_setting && bi->unique_id) {
     SettingUniqueDetachChain(G, bi->unique_id);
   }
-  if(bi->unique_id && I->ActiveIDs) {
-    OVOneToAny_DelKey(I->ActiveIDs, bi->unique_id);
+  if (bi->unique_id) {
+    I->ActiveIDs.erase(bi->unique_id);
     bi->unique_id = 0;
   }
 }
@@ -1095,8 +1065,7 @@ void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai)
   if(ai->unique_id) {
     ExecutiveUniqueIDAtomDictInvalidate(G);
 
-    if (I->ActiveIDs)
-      OVOneToAny_DelKey(I->ActiveIDs, ai->unique_id);
+    I->ActiveIDs.erase(ai->unique_id);
   }
 #ifdef _PYMOL_IP_EXTRAS
 #endif
