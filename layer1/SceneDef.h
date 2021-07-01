@@ -55,6 +55,7 @@ struct DeferredImage : public CDeferred {
   float dpi { 0.0f };
   int entire_window { 0 };
   int format { 0 };
+  png_outbuf_t* outbuf;
   DeferredImage(PyMOLGlobals * G) : CDeferred(G){}
 };
 

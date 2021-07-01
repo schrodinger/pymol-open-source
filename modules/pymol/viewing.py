@@ -891,6 +891,10 @@ PYMOL API
         with _self.lockcm:
             return _cmd.get_scene_order(_self._COb)
 
+    def get_scene_thumbnail(name, _self=cmd):
+        with _self.lockcm:
+            return _cmd.get_scene_thumbnail(_self._COb, name)
+
     def chain_session(_self=cmd):
         import os
         # assumes locked interpreter
@@ -1073,10 +1077,14 @@ SEE ALSO
                 _self.quit()
 
         # call C function
-        with _self.lockcm:
-            r = _cmd.scene(_self._COb, key, action, message, int(view),
-                    int(color), int(active), int(rep), int(frame),
-                    float(animate), new_key, int(hand), sele)
+        def func():
+            with _self.lockcm:
+                return _cmd.scene(_self._COb, key, action, message, int(view),
+                                    int(color),
+                                    int(active), int(rep), int(frame),
+                                    float(animate), new_key, int(hand), sele)
+
+        r = _self._call_with_opengl_context(func)
 
         # for presentation auto quit
         pymol._scene_quit_on_action = action

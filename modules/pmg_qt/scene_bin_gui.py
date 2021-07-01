@@ -185,20 +185,10 @@ class ScenePanel(QtWidgets.QWidget):
         Returns a QPixmap object that can be assigned to a label
         in order to display the scene thumbnail.
         This will be obsolete and removed in the future.
-
-        Note:
-        Currently, this function goes to the scene and then calls cmd.png to
-        generate the PNG buffer.
-        This functionality should be transferred to a
-        different function that is called when creating a
-        new scene from anywhere and the PNG buffer should be
-        stored with the scene information. There is a
-        subtask set up for this purpose.
         '''
         scene_pix_map = QtGui.QPixmap()
-        self.cmd.scene(scene_name, animate=0)
-        scene_pix_map.loadFromData(self.cmd.png(None, 200, 100), "PNG")
-        self.cmd.refresh()
+        png_buf = self.cmd.get_scene_thumbnail(scene_name)
+        scene_pix_map.loadFromData(png_buf, "PNG")
         return scene_pix_map
 
     def _get_scene_image_label(self, scene_pix_map):

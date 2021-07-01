@@ -34,7 +34,8 @@ enum {
   STORE_ACTIVE = (1 << 1),
   STORE_COLOR  = (1 << 2),
   STORE_REP    = (1 << 3),
-  STORE_FRAME  = (1 << 4)
+  STORE_FRAME  = (1 << 4),
+  STORE_THUMBNAIL = (1 << 5)
 };
 
 void SceneSetNames(PyMOLGlobals * G, const std::vector<std::string> &list);
@@ -44,6 +45,23 @@ void SceneSetNames(PyMOLGlobals * G, const std::vector<std::string> &list);
  */
 const std::vector<std::string> & MovieSceneGetOrder(PyMOLGlobals * G) {
   return G->scenes->order;
+}
+
+/**
+ * Get thumbnail of a scene based on name
+ */
+png_outbuf_t MovieSceneGetThumbnail(PyMOLGlobals* G, pymol::zstring_view name)
+{
+  auto scenes = G->scenes + cMovieSceneStackDefault;
+  auto it = scenes->dict.find(name.c_str());
+
+  if (it == scenes->dict.end()) {
+    return {};
+  }
+
+  png_outbuf_t out_buf = it->second.thumbnail.getVecData();
+
+  return out_buf;
 }
 
 /**
@@ -158,6 +176,7 @@ pymol::Result<> MovieSceneOrder(PyMOLGlobals* G, std::vector<std::string> names_
  * @param store_active    store enabled/disabled
  * @param store_rep       store reps
  * @param store_frame     store movie frame
+ * @param store_thumbnail store the thumbnail
  */
 pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
     const char * message,
@@ -166,6 +185,7 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
     bool store_active,
     bool store_rep,
     bool store_frame,
+    bool store_thumbnail,
     const char * sele,
     size_t stack)
 {
@@ -196,7 +216,8 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
       (store_active ? STORE_ACTIVE : 0) |
       (store_color ? STORE_COLOR : 0) |
       (store_rep ? STORE_REP : 0) |
-      (store_frame ? STORE_FRAME : 0));
+      (store_frame ? STORE_FRAME : 0) |
+      (store_thumbnail ? STORE_THUMBNAIL : 0));
 
   // message
   scene.message = message ? message : "";
@@ -206,6 +227,17 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
 
   // frame
   scene.frame = SceneGetFrame(G);
+
+  // thumbnail
+  int thumbnail_width = 200;
+  int thumbnail_height = 100;
+  scene.thumbnail = pymol::Image(thumbnail_width, thumbnail_height);
+  png_outbuf_t png_buf;
+  ExecutiveDrawNow(G);
+  SceneDeferImage(G, scene.thumbnail.getWidth(), scene.thumbnail.getHeight(),
+      nullptr, 0, -1, 0, 1, &png_buf);
+  scene.thumbnail.setVecData(png_buf);
+  SceneInvalidate(G); // Used to refresh the screen
 
   // atomdata
   if (store_color || store_rep) {
@@ -620,9 +652,9 @@ pymol::Result<> MovieSceneFunc(PyMOLGlobals* G, const MovieSceneFuncArgs& args)
 
   PRINTFB(G, FB_Scene, FB_Blather)
     " MovieScene: key=%s action=%s message=%s store_view=%d store_color=%d"
-    " store_active=%d store_rep=%d animate=%f new_key=%s hand=%d\n",
-    key.c_str(), action.c_str(), args.message.c_str(), args.store_view, args.store_color, args.store_active, args.store_rep,
-    args.animate, args.new_key.c_str(), args.hand
+    " store_active=%d store_rep=%d store_thumbnail=%d animate=%f new_key=%s hand=%d\n",
+    key.c_str(), action.c_str(), args.message.c_str(), args.store_view, args.store_color, args.store_active,
+    args.store_rep, args.store_thumbnail, args.animate, args.new_key.c_str(), args.hand
     ENDFB(G);
 
   // insert_before, insert_after
@@ -657,13 +689,15 @@ pymol::Result<> MovieSceneFunc(PyMOLGlobals* G, const MovieSceneFuncArgs& args)
       ExecutiveSetObjVisib(G, "*", false, false);
       MovieSceneRecallMessage(G, "");
     } else {
-      status = MovieSceneRecall(G, key.c_str(), args.animate, args.store_view, args.store_color,
-          args.store_active, args.store_rep, args.store_frame, args.sele.c_str(), args.stack);
+      status = MovieSceneRecall(G, key.c_str(), args.animate, args.store_view,
+      args.store_color, args.store_active, args.store_rep, args.store_frame,
+      args.sele.c_str(), args.stack);
     }
 
   } else if (action == "store") {
-    status = MovieSceneStore(G, key.c_str(), args.message.c_str(), args.store_view, args.store_color,
-        args.store_active, args.store_rep, args.store_frame, args.sele.c_str(), args.stack);
+    status = MovieSceneStore(G, key.c_str(), args.message.c_str(), args.store_view,
+    args.store_color, args.store_active, args.store_rep, args.store_frame, args.store_thumbnail,
+    args.sele.c_str(), args.stack);
 
     // insert_before, insert_after
     if (status && beforeafter)

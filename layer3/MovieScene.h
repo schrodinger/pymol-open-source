@@ -12,6 +12,7 @@
 #include "PyMOLGlobals.h"
 #include "Result.h"
 #include "SceneView.h"
+#include "Image.h"
 
 #include <vector>
 #include <string>
@@ -32,6 +33,7 @@ struct MovieSceneFuncArgs
   bool store_active = true;
   bool store_rep = true;
   bool store_frame = true;
+  bool store_thumbnail = true;
   float animate = -1.0f;
   std::string new_key;
   bool hand = true;
@@ -74,6 +76,9 @@ public:
   /// camera view
   SceneViewType view;
 
+  /// A png buffer storing a thumbnail of the scene
+  pymol::Image thumbnail;
+
   /// atom properties (color, rep, etc.)
   std::map<int, MovieSceneAtom> atomdata;
 
@@ -107,6 +112,7 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
     bool store_active,
     bool store_rep,
     bool store_frame,
+    bool store_thumbnail,
     const char * sele,
     std::size_t stack);
 
@@ -134,6 +140,8 @@ pymol::Result<> MovieSceneOrder(PyMOLGlobals* G, std::vector<std::string> names,
     bool sort = false, const char* location = nullptr);
 
 const std::vector<std::string> & MovieSceneGetOrder(PyMOLGlobals * G);
+std::vector<unsigned char> MovieSceneGetThumbnail(
+    PyMOLGlobals* G, pymol::zstring_view name);
 
 void MovieScenesInit(PyMOLGlobals * G);
 void MovieScenesFree(PyMOLGlobals * G);

@@ -366,6 +366,7 @@ from .viewing import \
       get_viewport,       \
       get_vis,            \
       get_scene_list,     \
+      get_scene_thumbnail,\
       hide,               \
       ipython_image,      \
       label,              \

@@ -6,6 +6,8 @@
 #include "pymol/algorithm.h"
 #include "pymol/type_traits.h"
 
+using png_outbuf_t = std::vector</* png_byte */ unsigned char>;
+
 namespace pymol
 {
 
@@ -231,6 +233,22 @@ public:
       dst = std::copy_n(src + offset, m_width, dst);
     }
     return newImg;
+  }
+
+  /*
+  * Return the entire vector stored in m_data
+  */
+  std::vector<unsigned char> getVecData() const
+  {
+    return m_data;
+  }
+
+  /*
+  * Store an entire vector in m_data
+  */
+  void setVecData(std::vector<unsigned char> VecData)
+  {
+    m_data = std::move(VecData);
   }
 
   bool m_needs_alpha_reset{}; /* needs alpha reset */

@@ -3939,8 +3939,8 @@ static int SceneDeferredImage(DeferredImage * di)
 {
   PyMOLGlobals *G = di->m_G;
   SceneMakeSizedImage(G, di->width, di->height, di->antialias);
-  if(!di->filename.empty()) {
-    ScenePNG(G, di->filename.c_str(), di->dpi, di->quiet, false, di->format);
+  if(!di->filename.empty() || di->outbuf) {
+    ScenePNG(G, di->filename.c_str(), di->dpi, di->quiet, false, di->format, di->outbuf);
   } else if(call_raw_image_callback(G)) {
   } else if(G->HaveGUI && SettingGetGlobal_b(G, cSetting_auto_copy_images)) {
 #ifdef _PYMOL_IP_EXTRAS
@@ -3962,7 +3962,8 @@ static int SceneDeferredImage(DeferredImage * di)
  * @return 1 if rendering was deferred, 0 if it was rendered immediately.
  */
 int SceneDeferImage(PyMOLGlobals * G, int width, int height,
-                    const char *filename, int antialias, float dpi, int format, int quiet)
+                    const char *filename, int antialias, float dpi, int format, int quiet,
+                    png_outbuf_t* outbuf)
 {
   auto di = pymol::make_unique<DeferredImage>(G);
   if(di) {
@@ -3973,6 +3974,7 @@ int SceneDeferImage(PyMOLGlobals * G, int width, int height,
     di->dpi = dpi;
     di->format = format;
     di->quiet = quiet;
+    di->outbuf = outbuf;
     if(filename){
       di->filename = filename;
     }

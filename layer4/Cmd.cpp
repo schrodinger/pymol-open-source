@@ -1231,6 +1231,22 @@ static PyObject *CmdGetSceneOrder(PyObject * self, PyObject * args)
   return (APIAutoNone(result));
 }
 
+static PyObject* CmdGetSceneThumbnail(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  const char* name;
+
+  API_SETUP_ARGS(G, self, args, "Os", &self, &name);
+  APIEnterBlocked(G);
+
+  png_outbuf_t pngbuf = MovieSceneGetThumbnail(G, name);
+
+  APIExitBlocked(G);
+
+  return PyBytes_FromStringAndSize(
+      reinterpret_cast<const char*>(pngbuf.data()), pngbuf.size());
+}
+
 static PyObject *CmdSculptDeactivate(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -4769,7 +4785,7 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
                  NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
       } else if(width || height) {
         prior = !SceneDeferImage(
-            G, width, height, filename, -1, dpi, quiet, format);
+            G, width, height, filename, -1, dpi, format, quiet, nullptr);
         result = bool(filename);
       } else if(!SceneGetCopyType(G)) {
         ExecutiveDrawNow(G);      /* TODO STATUS */
@@ -6441,6 +6457,7 @@ static PyMethodDef Cmd_methods[] = {
   {"scene", CmdScene, METH_VARARGS},
   {"scene_order", CmdSceneOrder, METH_VARARGS},
   {"get_scene_order", CmdGetSceneOrder, METH_VARARGS},
+  {"get_scene_thumbnail", CmdGetSceneThumbnail, METH_VARARGS},
   {"sculpt_deactivate", CmdSculptDeactivate, METH_VARARGS},
   {"sculpt_activate", CmdSculptActivate, METH_VARARGS},
   {"sculpt_iterate", CmdSculptIterate, METH_VARARGS},

@@ -28,8 +28,6 @@ Z* -------------------------------------------------------------------
 #define cMyPNG_FormatPNG 0
 #define cMyPNG_FormatPPM 1
 
-using png_outbuf_t = std::vector</* png_byte */ unsigned char>;
-
 int MyPNGWrite(const char* file_name, const pymol::Image& img, const float dpi,
     const int format, const int quiet, const float screen_gamma,
     const float file_gamma, png_outbuf_t* io_ptr = nullptr);

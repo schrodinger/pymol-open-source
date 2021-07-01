@@ -2324,7 +2324,7 @@ int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
       ExecutiveSetSettingFromString(G, cSetting_draw_mode, "-2", "", -1, true, true);
       SceneUpdate(G, false);
     }
-    SceneDeferImage(G, width, height, NULL, antialias, -1.0, cMyPNG_FormatPNG, quiet);
+    SceneDeferImage(G, width, height, NULL, antialias, -1.0, cMyPNG_FormatPNG, quiet, nullptr);
   }
   return 1;
 }
