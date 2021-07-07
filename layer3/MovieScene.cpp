@@ -233,7 +233,7 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
   int thumbnail_height = 100;
   scene.thumbnail = pymol::Image(thumbnail_width, thumbnail_height);
   png_outbuf_t png_buf;
-  ExecutiveDrawNow(G);
+  SceneUpdate(G, false); // Make sure scene is on screen
   SceneDeferImage(G, scene.thumbnail.getWidth(), scene.thumbnail.getHeight(),
       nullptr, 0, -1, 0, 1, &png_buf);
   scene.thumbnail.setVecData(png_buf);
