@@ -345,6 +345,14 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.scene_order(['F10 XX', 'F1 ABC'])
         self.assertEqual(cmd.get_scene_list(), ['F10 XX', 'F1 ABC', 'Z0 1 2'])
 
+    @testing.requires_version('2.6')
+    def testSceneMessage(self):
+        message = 'check'
+        name = 'TestM'
+        cmd.scene(name, 'store')
+        cmd.set_scene_message(name, message)
+        self.assertEqual(cmd.get_scene_message(name), message)
+
     @testing.requires('gui')
     def testStereo(self):
         for (k,v) in cmd.stereo_dict.items():
