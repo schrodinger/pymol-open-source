@@ -367,6 +367,8 @@ from .viewing import \
       get_vis,            \
       get_scene_list,     \
       get_scene_thumbnail,\
+      get_scene_message,  \
+      set_scene_message,  \
       hide,               \
       ipython_image,      \
       label,              \

@@ -142,7 +142,9 @@ pymol::Result<> MovieSceneOrder(PyMOLGlobals* G, std::vector<std::string> names,
 const std::vector<std::string> & MovieSceneGetOrder(PyMOLGlobals * G);
 std::vector<unsigned char> MovieSceneGetThumbnail(
     PyMOLGlobals* G, pymol::zstring_view name);
-
+std::string MovieSceneGetMessage(PyMOLGlobals* G, pymol::zstring_view name);
+pymol::Result<> MovieSceneSetMessage(
+    PyMOLGlobals* G, pymol::zstring_view name, pymol::zstring_view message);
 void MovieScenesInit(PyMOLGlobals * G);
 void MovieScenesFree(PyMOLGlobals * G);
 

@@ -895,6 +895,14 @@ PYMOL API
         with _self.lockcm:
             return _cmd.get_scene_thumbnail(_self._COb, name)
 
+    def get_scene_message(name, _self=cmd):
+        with _self.lockcm:
+            return _cmd.get_scene_message(_self._COb, name)
+
+    def set_scene_message(name, message, _self=cmd):
+        with _self.lockcm:
+            return _cmd.set_scene_message(_self._COb, name, message)
+
     def chain_session(_self=cmd):
         import os
         # assumes locked interpreter

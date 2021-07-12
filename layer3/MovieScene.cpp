@@ -296,6 +296,41 @@ static void MovieSceneRecallMessage(PyMOLGlobals * G, const std::string &message
 }
 
 /**
+ * Get message for a scene based on name
+ * @param name name of the scene
+ */
+std::string MovieSceneGetMessage(PyMOLGlobals* G, pymol::zstring_view name)
+{
+  auto scenes = G->scenes + cMovieSceneStackDefault;
+  auto it = scenes->dict.find(name.c_str());
+
+  if (it == scenes->dict.end()) {
+    return {};
+  }
+
+  return it->second.message;
+}
+
+/**
+ * Set message for a scene based on name
+ * @param name name of the scene
+ * @param message scene's message
+ */
+pymol::Result<> MovieSceneSetMessage(
+    PyMOLGlobals* G, pymol::zstring_view name, pymol::zstring_view message)
+{
+  auto scenes = G->scenes + cMovieSceneStackDefault;
+  auto it = scenes->dict.find(name.c_str());
+
+  if (it == scenes->dict.end()) {
+    return pymol::make_error(name, " could not be found.");
+  } else {
+    it->second.message = message.c_str();
+    return {};
+  }
+}
+
+/**
  * Set the frame or state, depending on whether a movie is defined and/or
  * playing, and depending on the scene_frame_mode setting.
  */

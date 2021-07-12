@@ -1247,6 +1247,42 @@ static PyObject* CmdGetSceneThumbnail(PyObject* self, PyObject* args)
       reinterpret_cast<const char*>(pngbuf.data()), pngbuf.size());
 }
 
+static PyObject* CmdGetSceneMessage(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  const char* name;
+
+  API_SETUP_ARGS(G, self, args, "Os", &self, &name);
+  APIEnterBlocked(G);
+
+  std::string message = MovieSceneGetMessage(G, name);
+
+  APIExitBlocked(G);
+
+  auto result = PyString_FromString(message.c_str());
+
+  return APIAutoNone(result);
+}
+
+static PyObject* CmdSetSceneMessage(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  const char* name;
+  const char* message;
+
+  API_SETUP_ARGS(G, self, args, "Oss", &self, &name, &message);
+  APIEnterBlocked(G);
+
+  // TODO : Needs to be processed by undo.
+  auto result = MovieSceneSetMessage(G, name, message);
+
+  APIExitBlocked(G);
+  if (result) {
+    return APISuccess();
+  }
+  return APIFailure(G, result.error());
+}
+
 static PyObject *CmdSculptDeactivate(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -6458,6 +6494,8 @@ static PyMethodDef Cmd_methods[] = {
   {"scene_order", CmdSceneOrder, METH_VARARGS},
   {"get_scene_order", CmdGetSceneOrder, METH_VARARGS},
   {"get_scene_thumbnail", CmdGetSceneThumbnail, METH_VARARGS},
+  {"get_scene_message", CmdGetSceneMessage, METH_VARARGS},
+  {"set_scene_message", CmdSetSceneMessage, METH_VARARGS},
   {"sculpt_deactivate", CmdSculptDeactivate, METH_VARARGS},
   {"sculpt_activate", CmdSculptActivate, METH_VARARGS},
   {"sculpt_iterate", CmdSculptIterate, METH_VARARGS},
