@@ -3939,8 +3939,10 @@ static int SceneDeferredImage(DeferredImage * di)
 {
   PyMOLGlobals *G = di->m_G;
   SceneMakeSizedImage(G, di->width, di->height, di->antialias);
-  if(!di->filename.empty() || di->outbuf) {
-    ScenePNG(G, di->filename.c_str(), di->dpi, di->quiet, false, di->format, di->outbuf);
+  if(!di->filename.empty() || di->out_img) {
+    std::vector<unsigned char> outbuf;
+    ScenePNG(G, di->filename.c_str(), di->dpi, di->quiet, false, di->format, &outbuf);
+    di->out_img->setVecData(outbuf);
   } else if(call_raw_image_callback(G)) {
   } else if(G->HaveGUI && SettingGetGlobal_b(G, cSetting_auto_copy_images)) {
 #ifdef _PYMOL_IP_EXTRAS
@@ -3963,7 +3965,7 @@ static int SceneDeferredImage(DeferredImage * di)
  */
 int SceneDeferImage(PyMOLGlobals * G, int width, int height,
                     const char *filename, int antialias, float dpi, int format, int quiet,
-                    png_outbuf_t* outbuf)
+                    pymol::Image* out_img)
 {
   auto di = pymol::make_unique<DeferredImage>(G);
   if(di) {
@@ -3974,7 +3976,7 @@ int SceneDeferImage(PyMOLGlobals * G, int width, int height,
     di->dpi = dpi;
     di->format = format;
     di->quiet = quiet;
-    di->outbuf = outbuf;
+    di->out_img = out_img;
     if(filename){
       di->filename = filename;
     }

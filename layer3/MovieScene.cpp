@@ -229,15 +229,15 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
   scene.frame = SceneGetFrame(G);
 
   // thumbnail
-  int thumbnail_width = 200;
-  int thumbnail_height = 100;
-  scene.thumbnail = pymol::Image(thumbnail_width, thumbnail_height);
-  png_outbuf_t png_buf;
-  SceneUpdate(G, false); // Make sure scene is on screen
-  SceneDeferImage(G, scene.thumbnail.getWidth(), scene.thumbnail.getHeight(),
-      nullptr, 0, -1, 0, 1, &png_buf);
-  scene.thumbnail.setVecData(png_buf);
-  SceneInvalidate(G); // Used to refresh the screen
+  if (store_thumbnail) {
+    int thumbnail_width = 200;
+    int thumbnail_height = 100;
+    scene.thumbnail = pymol::Image(thumbnail_width, thumbnail_height);
+    SceneUpdate(G, false); // Make sure scene is on screen
+    SceneDeferImage(G, scene.thumbnail.getWidth(), scene.thumbnail.getHeight(),
+        nullptr, 0, -1, 0, 1, &scene.thumbnail);
+    SceneInvalidate(G); // Used to refresh the screen
+  }
 
   // atomdata
   if (store_color || store_rep) {
