@@ -4043,6 +4043,8 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
       "%s", buf ENDFB(G);
   }
 
+  // Reshape movie in case multi-state.
+  OrthoReshape(G, -1, -1, false);
   return {};
 }
 
