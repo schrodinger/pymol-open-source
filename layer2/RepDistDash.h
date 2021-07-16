@@ -17,8 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepDistDash
 #define _H_RepDistDash
 
-#include"Rep.h"
-#include"DistSet.h"
+struct Rep;
+struct DistSet;
 
 Rep *RepDistDashNew(DistSet * ds, int state);
 

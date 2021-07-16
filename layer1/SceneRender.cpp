@@ -19,6 +19,7 @@
 #include"P.h"
 #include"Err.h"
 #include"Picking.h"
+#include "Feedback.h"
 
 #ifdef _PYMOL_OPENVR
 #include"OpenVRMode.h"

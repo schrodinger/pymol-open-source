@@ -45,6 +45,7 @@ Z* -------------------------------------------------------------------
 #include"File.h"
 #include"Executive.h"
 #include"Field.h"
+#include "Feedback.h"
 
 #define n_space_group_numbers 231
 static const char * space_group_numbers[] = {

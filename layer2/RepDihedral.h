@@ -17,8 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepDihedral
 #define _H_RepDihedral
 
-#include"Rep.h"
-#include"DistSet.h"
+struct Rep;
+struct DistSet;
 
 Rep *RepDihedralNew(DistSet * ds, int state);
 

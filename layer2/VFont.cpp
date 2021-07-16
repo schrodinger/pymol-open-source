@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"PConv.h"
 #include"VFont.h"
+#include "CGO.h"
 
 #define VFONT_MASK 0xFF
 

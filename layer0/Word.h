@@ -21,10 +21,6 @@ Z* -------------------------------------------------------------------
 #include "PyMOLGlobals.h"
 #include "Lex.h"
 
-#define WordLength 256
-
-typedef char WordType[WordLength];
-
 typedef struct {
   WordType word;
   int value;

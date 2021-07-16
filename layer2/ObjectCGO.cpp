@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"VFont.h"
 #include"ShaderMgr.h"
+#include "Feedback.h"
 
 static PyObject *ObjectCGOStateAsPyList(ObjectCGOState * I)
 {

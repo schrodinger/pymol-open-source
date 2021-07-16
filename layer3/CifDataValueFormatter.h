@@ -9,8 +9,6 @@
 #include <string>
 #include <vector>
 
-#include "os_std.h"
-
 /**
  * Callable class to format a CIF (STAR) data value. If the string is
  * a "simple data vlaue", then return it as-is. Otherwise return a quoted

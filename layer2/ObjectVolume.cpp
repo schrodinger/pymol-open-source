@@ -44,6 +44,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectGadgetRamp.h"
 #include"ShaderMgr.h"
 #include"Field.h"
+#include "Feedback.h"
 
 #define clamp(x,l,h) ((x) < (l) ? (l) : (x) > (h) ? (h) : (x))
 

@@ -19,6 +19,7 @@
 #include "Err.h"
 #include "SpecRec.h"
 #include "AtomIterators.h"
+#include "Feedback.h"
 
 #include <algorithm>
 #include <map>

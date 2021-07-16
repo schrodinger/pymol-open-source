@@ -9,13 +9,14 @@
 
 #include "os_python.h"
 #include "Base.h"
-#include "PyMOLGlobals.h"
 #include "Result.h"
 #include "SceneView.h"
 #include "Image.h"
 
 #include <vector>
 #include <string>
+
+struct PyMOLGlobals;
 
 enum {
   cMovieSceneStackDefault = 0,

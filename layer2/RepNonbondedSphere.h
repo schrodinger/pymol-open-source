@@ -17,8 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepNonbondedSphere
 #define _H_RepNonbondedSphere
 
-#include"Rep.h"
-#include"CoordSet.h"
+struct Rep;
+struct CoordSet;
 
 Rep *RepNonbondedSphereNew(CoordSet * cset, int state);
 

@@ -17,8 +17,9 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepRibbon
 #define _H_RepRibbon
 
-#include"Rep.h"
-#include"CoordSet.h"
+struct Rep;
+struct CoordSet;
+struct RenderInfo;
 
 Rep *RepRibbonNew(CoordSet * cset, int state);
 void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info);

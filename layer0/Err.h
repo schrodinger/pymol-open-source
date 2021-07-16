@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Err
 #define _H_Err
 
-#include "PyMOLGlobals.h"
+struct PyMOLGlobals;
 
 void ErrFatal(const PyMOLGlobals * G, const char *where, const char *what);
 void ErrPointer(const PyMOLGlobals * G, const char *file, int line);

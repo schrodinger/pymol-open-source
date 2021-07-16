@@ -17,8 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_VFont
 #define _H_VFont
 
-#include"os_python.h"
-#include"CGO.h"
+struct PyMOLGlobals;
+class CGO;
 
 int VFontInit(PyMOLGlobals * G);
 void VFontFree(PyMOLGlobals * G);

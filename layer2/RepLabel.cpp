@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"ShaderMgr.h"
 #include"CGO.h"
+#include"CoordSet.h"
 
 /**
  * Memory layout of the RepLabel::V array

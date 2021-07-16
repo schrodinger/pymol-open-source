@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 #include"Selector.h"
 #include "PyMOL.h"
 #include "Executive.h"
+#include "Feedback.h"
 
 int DistSetGetLabelVertex(DistSet * I, int at, float *v)
 {

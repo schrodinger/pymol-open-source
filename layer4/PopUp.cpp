@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include "Text.h"
 #include "PyMOL.h"
 #include "CGO.h"
+#include "BlockH.h"
 
 #define cPopUpLineHeight DIP2PIXEL(17)
 #define cPopUpTitleHeight DIP2PIXEL(19)

@@ -8,9 +8,10 @@
 #define _H_ATOMITERATORS
 
 #include "PyMOLGlobals.h"
-#include "ObjectMolecule.h"
-#include "CoordSet.h"
-#include "AtomInfo.h"
+
+struct CoordSet;
+struct ObjectMolecule;
+struct AtomInfoType;
 
 /**
  * Atom iterator base class
@@ -38,17 +39,11 @@ public:
   virtual bool next() = 0;
 
   /// Current atom
-  AtomInfoType * getAtomInfo() {
-    return obj->AtomInfo + atm;
-  };
-  const AtomInfoType * getAtomInfo() const {
-    return obj->AtomInfo + atm;
-  };
+  AtomInfoType * getAtomInfo();
+  const AtomInfoType * getAtomInfo() const;
 
   /// Current atom's coordinates
-  float * getCoord() {
-    return cs->coordPtr(idx);
-  };
+  float* getCoord();
 
   /// Current atom index in object molecule
   int getAtm() const {
@@ -109,13 +104,7 @@ public:
   }
 
 private:
-  bool nextStateInPrevObject() {
-    if (prev_obj && (++state) < prev_obj->NCSet) {
-      a = prev_obj->SeleBase - 1;
-      return true;
-    }
-    return false;
-  }
+  bool nextStateInPrevObject();
 };
 
 /**
@@ -167,11 +156,7 @@ public:
 class CoordSetAtomIterator : public AbstractAtomIterator {
 public:
 
-  CoordSetAtomIterator(CoordSet * cs_) {
-    cs = cs_;
-    obj = cs->Obj;
-    reset();
-  }
+  CoordSetAtomIterator(CoordSet * cs_);
 
   void reset() {
     atm = -1;

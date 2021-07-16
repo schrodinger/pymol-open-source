@@ -1,3 +1,4 @@
+#include "Executive.h"
 #include "ExecutivePython.h"
 #ifndef _PYMOL_NOPY
 #include "ObjectAlignment.h"
@@ -5,6 +6,7 @@
 #include "ObjectCallback.h"
 #include "ObjectMap.h"
 #include "P.h"
+#include "Feedback.h"
 
 pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
     const char* oname, PyObject* model, int frame, int type, int finish,

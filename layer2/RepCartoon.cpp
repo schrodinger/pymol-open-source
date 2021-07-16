@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Extrude.h"
 #include"ShaderMgr.h"
 #include "Lex.h"
+#include "CoordSet.h"
 
 #include "AtomIterators.h"
 

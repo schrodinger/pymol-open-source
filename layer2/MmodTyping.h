@@ -4,6 +4,6 @@
  * (c) Schrodinger, Inc.
  */
 
-#include "AtomInfo.h"
+struct AtomInfoType;
 
 int getMacroModelAtomType(const AtomInfoType * ai);

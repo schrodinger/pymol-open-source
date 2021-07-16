@@ -38,6 +38,13 @@ inline float DIP2PIXEL(float v) { return v * _gScaleFactor; }
 typedef int lexidx_t;
 typedef int lexborrow_t;
 
+
+constexpr unsigned int OrthoLineLength = 1024u;
+using OrthoLineType = char[OrthoLineLength];
+
+constexpr unsigned int WordLength = 256u;
+using WordType = char[WordLength];
+
 using SelectorID_t = int;
 using SelectorMemberOffset_t = int;
 

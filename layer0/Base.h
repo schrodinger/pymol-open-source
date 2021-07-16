@@ -20,9 +20,7 @@ Z* -------------------------------------------------------------------
 
 #include "os_limits.h"
 #include "os_types.h"
-#include "Picking.h"
 #include "RenderPass.h"
-#include <vector>
 
 #ifndef PI
 #define PI 3.14159265358979323846
@@ -78,6 +76,8 @@ typedef struct _CRay CRay;
 class CGO;
 #define CGO_DEFINED
 #endif
+
+class PickColorManager;
 
 struct RenderInfo {
   int state = 0;

@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"Scene.h"
 #include"CGO.h"
+#include "CoordSet.h"
 
 struct RepNonbondedSphere : Rep {
   using Rep::Rep;

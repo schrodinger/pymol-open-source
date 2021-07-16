@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Matrix
 #define _H_Matrix
 
-#include"PyMOLGlobals.h"
+struct PyMOLGlobals;
 
 
 /* WARNING: PYMOL's internal matrix handling is a partially-mitigated

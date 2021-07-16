@@ -16,6 +16,7 @@
 #include "Selector.h"
 #include "Seq.h"
 #include "Wizard.h"
+#include "Feedback.h"
 
 #include <glm/glm.hpp>
 

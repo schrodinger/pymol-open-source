@@ -10,6 +10,7 @@
 #include"P.h"
 #include "Err.h"
 #include "Picking.h"
+#include "Feedback.h"
 
 #define cRange 7
 

@@ -17,8 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepEllipsoid
 #define _H_RepEllipsoid
 
-#include"Rep.h"
-#include"CoordSet.h"
+struct Rep;
+struct CoordSet;
 
 Rep *RepEllipsoidNew(CoordSet * cset, int state);
 

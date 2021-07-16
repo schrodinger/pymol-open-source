@@ -10,10 +10,10 @@
 #include "pymol/memory.h"
 
 #include "AtomIterators.h"
-#include "Selector.h"
-#include "ObjectMolecule.h"
+#include <string>
+#include <unordered_map>
 
-#include "OVLexicon.h"
+#include <vector>
 
 #define cNDummyModels 2
 #define cNDummyAtoms 2
@@ -43,6 +43,12 @@ struct SelectionInfoRec {
   }
 };
 
+
+struct MemberType {
+  SelectorID_t selection;
+  int tag;                      /* must not be zero since it is also used as a boolean test for membership */
+  SelectorMemberOffset_t next;
+};
 
 struct CSelectorManager
 {

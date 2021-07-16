@@ -4,8 +4,6 @@
  * (c) Schrodinger, Inc.
  */
 
-#include "os_std.h"
-
 #include "Mol2Typing.h"
 #include "AtomInfo.h"
 #include "ObjectMolecule.h"

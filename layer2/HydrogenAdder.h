@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ObjectMolecule.h"
-#include "CoordSet.h"
+struct ObjectMolecule;
+struct CoordSet;
 
 int ObjectMoleculeAddSeleHydrogensRefactored(ObjectMolecule * I, int sele, int state);
 

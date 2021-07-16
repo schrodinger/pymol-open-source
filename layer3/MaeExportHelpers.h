@@ -6,10 +6,14 @@
 
 #include <string>
 
-#include "os_std.h"
+struct PyMOLGlobals;
+class SeleCoordIterator;
+struct AtomInfoType;
 
-#include "AtomInfo.h"
-#include "AtomIterators.h"
+namespace pymol
+{
+    struct CObject;
+}
 
 int MaeExportGetAtomStyle(PyMOLGlobals * G,
     const SeleCoordIterator& iter);

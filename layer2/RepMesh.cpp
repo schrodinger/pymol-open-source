@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 #include"Selector.h"
 #include "ShaderMgr.h"
+#include "Feedback.h"
 
 struct RepMesh : Rep {
   using Rep::Rep;

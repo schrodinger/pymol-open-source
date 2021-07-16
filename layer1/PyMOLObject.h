@@ -21,20 +21,20 @@ Z* -------------------------------------------------------------------
 /* literally a 3-D object...also an object object */
 
 #include"Base.h"
-#include"Ray.h"
 #include"Rep.h"
 #include"Setting.h"
 #include"Symmetry.h"
 #include"PyMOLGlobals.h"
 #include"View.h"
 #include"Word.h"
+#include"pymol/math_defines.h"
 #include"vla.h"
 #include"RenderContext.h"
 
 #include <string>
 #include <type_traits>
 
-typedef char ObjectNameType[WordLength];
+using ObjectNameType = char[WordLength];
 
 enum cObject_t : int {
   cObjectMolecule = 1,

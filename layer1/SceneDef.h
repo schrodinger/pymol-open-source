@@ -19,8 +19,6 @@ Z* -------------------------------------------------------------------
 #define _H_SceneDef
 
 #include"gl_def.h"
-#include"Base.h"
-#include"PyMOLObject.h"
 #include"Ortho.h"
 #include"Util.h"
 #include"View.h"
@@ -29,11 +27,17 @@ Z* -------------------------------------------------------------------
 #include"SceneElem.h"
 #include"SceneView.h"
 #include"Rect.h"
+#include "Deferred.h"
 #include<list>
 #include<vector>
 
 #define TRN_BKG 0x30
 #define MAX_ANI_ELEM 300
+
+namespace pymol
+{
+  struct CObject;
+}
 
 struct DeferredMouse : public CDeferred {
   Block *block { nullptr };

@@ -9,6 +9,10 @@
 #include "AtomIterators.h"
 #include "Selector.h"
 #include "SelectorDef.h"
+#include "ObjectMolecule.h"
+#include "CoordSet.h"
+#include "AtomInfo.h"
+
 
 /*========================================================================*/
 bool CoordSetAtomIterator::next() {
@@ -174,6 +178,36 @@ bool SeleCoordIterator::next() {
     }
   }
 
+  return false;
+}
+
+AtomInfoType* AbstractAtomIterator::getAtomInfo()
+{
+  return obj->AtomInfo + atm;
+};
+
+const AtomInfoType* AbstractAtomIterator::getAtomInfo() const
+{
+  return obj->AtomInfo + atm;
+};
+
+float* AbstractAtomIterator::getCoord()
+{
+  return cs->coordPtr(idx);
+};
+
+CoordSetAtomIterator::CoordSetAtomIterator(CoordSet* cs_)
+{
+  cs = cs_;
+  obj = cs->Obj;
+  reset();
+}
+
+bool SeleCoordIterator::nextStateInPrevObject() {
+  if (prev_obj && (++state) < prev_obj->NCSet) {
+    a = prev_obj->SeleBase - 1;
+    return true;
+  }
   return false;
 }
 

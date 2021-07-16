@@ -53,6 +53,7 @@ Z* -------------------------------------------------------------------
 #include "CGO.h"
 #include "MyPNG.h"
 #include "File.h"
+#include "Feedback.h"
 
 #ifdef _PYMOL_OPENVR
 #include "OpenVRMode.h"
@@ -2761,6 +2762,11 @@ void OrthoCommandIn(COrtho& ortho, const char* buffer)
   if (ortho.cmdActiveQueue) {
     ortho.cmdActiveQueue->emplace(buffer);
   }
+}
+
+void OrthoCommandIn(PyMOLGlobals* G, const char* buffer)
+{
+  OrthoCommandIn(*G->Ortho, buffer);
 }
 
 void OrthoCommandSetBusy(PyMOLGlobals * G, int busy){

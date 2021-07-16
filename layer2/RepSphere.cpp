@@ -36,6 +36,7 @@
 #include"CGO.h"
 #include"ObjectMolecule.h"
 #include "Lex.h"
+#include "CoordSet.h"
 
 #define SPHERE_NORMAL_RANGE 6.f
 #define SPHERE_NORMAL_RANGE2 (SPHERE_NORMAL_RANGE*SPHERE_NORMAL_RANGE)

@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"ShaderMgr.h"
 #include"CGO.h"
+#include"CoordSet.h"
 
 struct RepNonbonded : Rep {
   using Rep::Rep;

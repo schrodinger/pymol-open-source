@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"MyPNG.h"
 #include"CGO.h"
+#include "Feedback.h"
 
 #define SettingGetfv SettingGetGlobal_3fv
 

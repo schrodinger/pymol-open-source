@@ -38,6 +38,7 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"ShaderMgr.h"
 #include"ObjectCGO.h"
+#include "Feedback.h"
 
 static void ObjectMeshRecomputeExtent(ObjectMesh * I);
 

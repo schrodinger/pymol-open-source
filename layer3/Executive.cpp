@@ -88,6 +88,8 @@
 #include "Lex.h"
 #include "List.h"
 #include "AtomIterators.h"
+#include "ButMode.h"
+#include "Feedback.h"
 
 #include"OVContext.h"
 #include"OVLexicon.h"

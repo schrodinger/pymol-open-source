@@ -21,6 +21,8 @@
 #include "Rep.h"
 #include "Lex.h"
 #include "strcasecmp.h"
+#include "PyMOLGlobals.h"
+#include "AtomInfo.h"
 
 /**
  * Read a MOL/SDF V3000 line into the `out` buffer, stripping the leading

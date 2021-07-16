@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"P.h"
 #include"PyMOLObject.h"
+#include "Feedback.h"
 
 static void ObjectGadgetRampBuild(ObjectGadgetRamp *);
 static int ObjectGadgetRampHandleInputColors(ObjectGadgetRamp *);

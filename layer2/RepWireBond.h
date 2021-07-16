@@ -17,8 +17,9 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepWireBond
 #define _H_RepWireBond
 
-#include"Rep.h"
-#include"CoordSet.h"
+struct CoordSet;
+struct RenderInfo;
+struct Rep;
 
 Rep *RepWireBondNew(CoordSet * cset, int state);
 void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info);

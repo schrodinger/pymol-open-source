@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
-#include"Block.h"
+struct Block;
 
 Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
                 int passive, PyObject * list, Block * parent);

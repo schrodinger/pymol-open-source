@@ -17,8 +17,9 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepNonbonded
 #define _H_RepNonbonded
 
-#include"Rep.h"
-#include"CoordSet.h"
+struct Rep;
+struct CoordSet;
+struct RenderInfo;
 
 Rep *RepNonbondedNew(CoordSet * cset, int state);
 void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info);

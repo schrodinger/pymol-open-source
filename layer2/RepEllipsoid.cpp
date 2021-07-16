@@ -28,6 +28,7 @@
 #include"Feedback.h"
 #include"Matrix.h"
 #include"CGO.h"
+#include "CoordSet.h"
 
 struct RepEllipsoid : Rep {
   using Rep::Rep;

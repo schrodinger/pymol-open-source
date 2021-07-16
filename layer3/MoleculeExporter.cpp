@@ -34,6 +34,7 @@
 #include "PConv.h"
 #include "CifDataValueFormatter.h"
 #include "MaeExportHelpers.h"
+#include "Feedback.h"
 
 #ifdef _PYMOL_IP_PROPERTIES
 #include "Property.h"

@@ -24,6 +24,10 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Setting.h"
 #include"Feedback.h"
+#include "MemoryDebug.h"
+#include "CGO.h"
+#include "AtomInfo.h"
+#include "ObjectMolecule.h"
 
 #include "pymol/algorithm.h"
 

@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Movie.h"
 #include"View.h"
 #include"Err.h"
+#include "Feedback.h"
 
 #include"Executive.h"
 #include"CGO.h"

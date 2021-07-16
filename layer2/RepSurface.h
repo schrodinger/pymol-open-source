@@ -17,8 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepSurface
 #define _H_RepSurface
 
-#include"Rep.h"
-#include"CoordSet.h"
+struct Rep;
+struct CoordSet;
 
 Rep *RepSurfaceNew(CoordSet * cset, int state);
 

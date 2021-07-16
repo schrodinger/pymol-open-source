@@ -41,6 +41,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectGadgetRamp.h"
 #include"CGO.h"
 #include"ShaderMgr.h"
+#include "Feedback.h"
 
 #define START_STRIP -1
 #define STOP_STRIP -2

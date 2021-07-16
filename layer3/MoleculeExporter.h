@@ -5,7 +5,6 @@
  */
 
 #include "os_python.h"
-#include "os_std.h"
 #include "vla.h"
 
 #include "PyMOLGlobals.h"

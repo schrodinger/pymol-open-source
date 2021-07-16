@@ -42,6 +42,7 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"ShaderMgr.h"
 #include"CGO.h"
+#include "Feedback.h"
 
 static void ObjectSurfaceRecomputeExtent(ObjectSurface * I);
 

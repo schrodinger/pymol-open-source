@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"CGO.h"
 #include"CoordSet.h"
+#include "Feedback.h"
 
 struct RepAngle : Rep {
   using Rep::Rep;

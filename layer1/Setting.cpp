@@ -43,6 +43,7 @@ Z* -------------------------------------------------------------------
 #include"Sphere.h"
 #include"Selector.h"
 #include"Parse.h"
+#include "Feedback.h"
 
 #ifdef _PYMOL_OPENVR
 #include"OpenVRMode.h"

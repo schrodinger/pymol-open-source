@@ -16,6 +16,10 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepSphereGenerate
 #define _H_RepSphereGenerate
 
+struct PyMOLGlobals;
+struct RepSphere;
+struct RenderInfo;
+
 void RepSphere_Generate_Triangles(PyMOLGlobals *G, RepSphere *I,
                                   RenderInfo *info);
 void RepSphere_Generate_Impostor_Spheres(PyMOLGlobals *G, RepSphere *I,

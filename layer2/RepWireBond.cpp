@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"os_gl.h"
 
+#include"Rep.h"
 #include"Err.h"
 #include"RepWireBond.h"
 #include"SideChainHelper.h"
@@ -27,6 +28,8 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"ShaderMgr.h"
 #include"CGO.h"
+#include "Feedback.h"
+#include"CoordSet.h"
 
 struct RepWireBond : Rep {
   using Rep::Rep;

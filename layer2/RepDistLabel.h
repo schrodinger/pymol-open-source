@@ -17,8 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepDistLabel
 #define _H_RepDistLabel
 
-#include"Rep.h"
-#include"DistSet.h"
+struct Rep;
+struct DistSet;
 
 Rep *RepDistLabelNew(DistSet * ds, int state);
 

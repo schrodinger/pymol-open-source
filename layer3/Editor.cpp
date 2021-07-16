@@ -38,6 +38,8 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"CGO.h"
 #include "Lex.h"
+#include"ObjectMolecule.h"
+#include "Feedback.h"
 
 struct _CEditor {
   ObjectMolecule *DihedObject;

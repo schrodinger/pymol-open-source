@@ -61,6 +61,7 @@ the initialization functions for these libraries on startup.
 #include"PyMOL.h"
 #include "Lex.h"
 #include "Seeker.h"
+#include "Feedback.h"
 
 #ifdef _PYMOL_IP_PROPERTIES
 #include"Property.h"

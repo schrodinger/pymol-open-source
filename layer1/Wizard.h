@@ -32,7 +32,6 @@ Z* -------------------------------------------------------------------
 #define WizardUpdate(...) false
 #else
 
-#include"Ortho.h"
 #include "P.h"
 #include "Result.h"
 #include <vector>

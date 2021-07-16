@@ -48,6 +48,7 @@ Z* -------------------------------------------------------------------
 #include "Lex.h"
 #include "MolV3000.h"
 #include "HydrogenAdder.h"
+#include "Feedback.h"
 
 #ifdef _WEBGL
 #endif

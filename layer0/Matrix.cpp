@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Feedback.h"
 #include"Setting.h"
+#include "PyMOLGlobals.h"
 
 #include "tnt/jama_eig.h"
 

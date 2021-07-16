@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"RingFinder.h"
 #include"AtomIterators.h"
+#include "Feedback.h"
 
 #include"MemoryDebug.h"
 #include"Selector.h"
@@ -52,7 +53,6 @@ Z* -------------------------------------------------------------------
 
 #include"OVContext.h"
 #include"OVLexicon.h"
-#include"OVOneToAny.h"
 #include"Parse.h"
 
 #include"ListMacros.h"

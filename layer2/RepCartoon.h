@@ -17,8 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepCartoon
 #define _H_RepCartoon
 
-#include"Rep.h"
-#include"CoordSet.h"
+struct Rep;
+struct CoordSet;
 
 Rep *RepCartoonNew(CoordSet * cset, int state);
 

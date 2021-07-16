@@ -4,8 +4,9 @@
  * (c) Schrodinger, Inc.
  */
 
-#include "PyMOLGlobals.h"
-#include "AtomInfo.h"
+struct PyMOLGlobals;
+struct AtomInfoType;
+struct BondType;
 
 const char * MOLV3000Parse(PyMOLGlobals * G,
     const char * buffer,

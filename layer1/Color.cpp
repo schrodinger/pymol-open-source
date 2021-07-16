@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"OVContext.h"
 #include"OVreturns.h"
+#include "Feedback.h"
 
 static int AutoColor[] = {
   26,                           /* carbon */

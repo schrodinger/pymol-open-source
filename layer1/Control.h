@@ -17,8 +17,10 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Control
 #define _H_Control
 
-#include"Ortho.h"
 #include "Result.h"
+
+struct PyMOLGlobals;
+struct Block;
 
 int ControlInit(PyMOLGlobals * G);
 void ControlFree(PyMOLGlobals * G);

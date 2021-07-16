@@ -17,10 +17,11 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Extrude
 #define _H_Extrude
 
-#include"Ray.h"
-#include"CGO.h"
-#include"ObjectMolecule.h"
-#include"CoordSet.h"
+#include "Basis.h"
+
+struct PyMOLGlobals;
+struct ObjectMolecule;
+class CGO;
 
 struct CExtrude {
   PyMOLGlobals* G{};

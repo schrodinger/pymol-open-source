@@ -28,16 +28,23 @@ Z* -------------------------------------------------------------------
 #include <string>
 
 #include"os_gl.h"
-#include"Block.h"
-#include"Feedback.h"
-#include"Deferred.h"
-#include"Image.h"
 #include"pymol/memory.h"
 #include"PyMOLEnums.h"
 
 #define cOrthoScene 1
 #define cOrthoTool 2
 #define cOrthoHidden 3
+
+struct BlockRect;
+struct Block;
+struct CDeferred;
+struct PyMOLGlobals;
+class COrtho;
+class CGO;
+namespace pymol
+{
+    class Image;
+}
 
 int OrthoInit(PyMOLGlobals * G, int showSplash);
 void OrthoFree(PyMOLGlobals * G);
@@ -82,9 +89,7 @@ void OrthoBusyFast(PyMOLGlobals * G, int progress, int total);
 void OrthoBusyPrime(PyMOLGlobals * G);
 void OrthoCommandSetBusy(PyMOLGlobals * G, int busy);
 void OrthoCommandIn(COrtho&, const char *buffer);
-inline void OrthoCommandIn(PyMOLGlobals * G, const char *buffer){
-  OrthoCommandIn(*G->Ortho, buffer);
-}
+void OrthoCommandIn(PyMOLGlobals * G, const char *buffer);
 std::string OrthoCommandOut(COrtho& ortho);
 void OrthoCommandNest(PyMOLGlobals * G, int dir);
 bool OrthoCommandIsEmpty(COrtho& ortho);
@@ -132,8 +137,5 @@ std::pair<int, int> OrthoGetSize(const COrtho& ortho);
 
 void OrthoInvalidateDoDraw(PyMOLGlobals * G);
 void OrthoRenderCGO(PyMOLGlobals * G);
-
-#define OrthoLineLength 1024
-typedef char OrthoLineType[OrthoLineLength];
 
 #endif

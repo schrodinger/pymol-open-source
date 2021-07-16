@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Executive.h"
+#include "os_python.h"
 #include "Result.h"
+#include "pymol/zstring_view.h"
 
 #ifndef _PYMOL_NO_PY
 

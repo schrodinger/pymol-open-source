@@ -17,9 +17,15 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Editor
 #define _H_Editor
 
-#include"Ortho.h"
-#include"ButMode.h"
-#include"ObjectMolecule.h"
+#include "pymol/math_defines.h"
+#include "Result.h"
+#include "P.h"
+
+namespace pymol
+{
+    struct CObject;
+}
+struct ObjectMolecule;
 
 #define cEditorSele1 "pk1"
 #define cEditorSele2 "pk2"

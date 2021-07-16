@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include "Feedback.h"
 #include "ShaderMgr.h"
 #include "Err.h"
+#include "CoordSet.h"
 
 void RepSphere_Generate_Triangles(PyMOLGlobals *G, RepSphere *I,
                                   RenderInfo *info) {

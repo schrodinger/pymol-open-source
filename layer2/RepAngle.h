@@ -17,7 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepAngle
 #define _H_RepAngle
 
-#include"DistSet.h"
+struct Rep;
+struct DistSet;
 
 Rep *RepAngleNew(DistSet * ds, int state);
 

@@ -17,9 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepMesh
 #define _H_RepMesh
 
-#include"Rep.h"
-#include"CoordSet.h"
-#include"CGO.h"
+struct Rep;
+struct CoordSet;
 
 Rep *RepMeshNew(CoordSet * cset, int state);
 

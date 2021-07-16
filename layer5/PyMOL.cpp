@@ -63,6 +63,7 @@
 #include "MovieScene.h"
 #include "Lex.h"
 #include "SelectorDef.h"
+#include "ButMode.h"
 
 #ifdef _PYMOL_OPENVR
 #include "OpenVRMode.h"

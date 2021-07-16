@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"CGO.h"
 #include "Lex.h"
+#include "CoordSet.h"
 
 struct RepRibbon : Rep {
   using Rep::Rep;

@@ -204,12 +204,6 @@ int SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int quiet, in
 
 #define SELECTOR_BASE_TAG 0x10
 
-typedef struct {
-  SelectorID_t selection;
-  int tag;                      /* must not be zero since it is also used as a boolean test for membership */
-  SelectorMemberOffset_t next;
-} MemberType;
-
 int SelectorIsMember(PyMOLGlobals * G, SelectorMemberOffset_t, SelectorID_t);
 
 /**

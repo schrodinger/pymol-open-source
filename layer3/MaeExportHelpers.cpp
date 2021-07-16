@@ -8,6 +8,8 @@
 
 #include "os_std.h"
 
+#include "AtomInfo.h"
+#include "AtomIterators.h"
 #include "MaeExportHelpers.h"
 #include "Color.h"
 #include "Lex.h"

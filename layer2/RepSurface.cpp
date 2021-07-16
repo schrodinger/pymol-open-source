@@ -39,6 +39,8 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"Selector.h"
 #include"ShaderMgr.h"
+#include"Rep.h"
+#include"CoordSet.h"
 
 #ifdef NT
 #undef NT

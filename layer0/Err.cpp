@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"os_std.h"
 
+#include "PyMOLGlobals.h"
 #include"Err.h"
 #include"Ortho.h"
 #include"Feedback.h"

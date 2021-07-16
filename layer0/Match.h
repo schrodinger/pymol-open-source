@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Match
 #define _H_Match
 
-#include "PyMOLGlobals.h"
+struct PyMOLGlobals;
 
 struct CMatch {
   PyMOLGlobals* G{};

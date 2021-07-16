@@ -17,8 +17,9 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepCylBond
 #define _H_RepCylBond
 
-#include"Rep.h"
-#include"CoordSet.h"
+struct Rep;
+struct CoordSet;
+struct RenderInfo;
 
 Rep *RepCylBondNew(CoordSet * cset, int state);
 void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info);

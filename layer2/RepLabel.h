@@ -17,8 +17,9 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepLabel
 #define _H_RepLabel
 
-#include"Rep.h"
-#include"CoordSet.h"
+struct PyMOLGlobals;
+struct Rep;
+struct CoordSet;
 
 struct cLabelRelativeMode
 {

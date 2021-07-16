@@ -17,8 +17,9 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Rep
 #define _H_Rep
 
-#include"Base.h"
-#include"Ray.h"
+#include <cassert>
+
+#include "Picking.h"
 
 #define cCartoon_skip_helix -2
 #define cCartoon_skip -1
@@ -183,7 +184,12 @@ enum cRepInv_t {
 };
 
 struct CoordSet;
-struct Object;
+namespace pymol
+{
+  struct CObject;
+}
+struct PyMOLGlobals;
+struct RenderInfo;
 
 struct Rep {
   PyMOLGlobals *G;

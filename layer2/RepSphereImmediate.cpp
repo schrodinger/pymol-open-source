@@ -19,6 +19,8 @@ Z* -------------------------------------------------------------------
 #include "RepSphereImmediate.h"
 #include "ShaderMgr.h"
 #include "Sphere.h"
+#include "CoordSet.h"
+#include "ObjectMolecule.h"
 
 #ifndef PURE_OPENGL_ES_2
 

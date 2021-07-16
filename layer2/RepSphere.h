@@ -18,7 +18,11 @@ Z* -------------------------------------------------------------------
 #define _H_RepSphere
 
 #include"Rep.h"
-#include"CoordSet.h"
+
+struct PyMOLGlobals;
+struct CoordSet;
+struct RenderInfo;
+class CGO;
 
 struct RepSphere : Rep {
   using Rep::Rep;

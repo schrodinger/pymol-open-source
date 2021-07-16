@@ -58,6 +58,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"ScrollBar.h"
 #include "ShaderMgr.h"
+#include "Feedback.h"
 
 #ifdef _PYMOL_OPENVR
 #include"OpenVRMode.h"

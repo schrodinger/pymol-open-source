@@ -34,6 +34,7 @@
 #include "Lex.h"
 #include "strcasecmp.h"
 #include "pymol/zstring_view.h"
+#include "Feedback.h"
 
 #ifdef _PYMOL_IP_PROPERTIES
 #endif

@@ -17,9 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Menu
 #define _H_Menu
 
-#include"os_python.h"
-#include"PyMOLGlobals.h"
-#include"Block.h"
+struct PyMOLGlobals;
+struct Block;
 
 void MenuActivate(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
                   int passive, const char *name, const char *sele);

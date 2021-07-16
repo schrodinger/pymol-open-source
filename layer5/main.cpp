@@ -51,6 +51,7 @@
 #include "Control.h"
 #include "Movie.h"
 #include "Executive.h"
+#include "Feedback.h"
 
 int _gScaleFactor = 1;
 

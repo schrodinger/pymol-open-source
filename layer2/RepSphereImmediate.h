@@ -17,6 +17,9 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepSphereImmediate
 #define _H_RepSphereImmediate
 
+struct RenderInfo;
+struct CoordSet;
+
 void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info);
 
 #endif

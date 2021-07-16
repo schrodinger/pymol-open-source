@@ -28,6 +28,8 @@ Z* -------------------------------------------------------------------
 #include"Parse.h"
 #include"FileStream.h"
 
+#include "PyMOLGlobals.h"
+
 #ifndef int2
 typedef int int2[2];
 #endif
