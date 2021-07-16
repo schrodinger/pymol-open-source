@@ -910,7 +910,7 @@ void TrackerFree(CTracker * I)
 
 #ifdef TRACKER_UNIT_TEST
 
-#include"OVRandom.h"
+#include <random>
 
 #define N_ID 100
 
@@ -921,7 +921,8 @@ int TrackerUnitTest(PyMOLGlobals * G)
   int a;
   int tmp_int;
 
-  OVRandom *ov_rand = OVRandom_NewBySeed(G->Context->heap, 12345678);
+  std::mt19937 mt{12345678};
+  std::uniform_real_distribution dist{};
   CTracker *I = TrackerNew(G);
 
   for(a = 0; a < N_ID; a++) {
@@ -1010,8 +1011,8 @@ int TrackerUnitTest(PyMOLGlobals * G)
     int b;
 
     for(a = 0; a < (N_ID * N_ID); a++) {
-      cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
-      list_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      cand_idx = (int) (N_ID * dist(mt));
+      list_idx = (int) (N_ID * dist(mt));
 
       if(TrackerLink(I, cand_id[cand_idx], list_id[list_idx], 0))
         n_link++;
@@ -1023,8 +1024,8 @@ int TrackerUnitTest(PyMOLGlobals * G)
     }
 
     for(a = 0; a < (N_ID * N_ID); a++) {
-      cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
-      list_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      cand_idx = (int) (N_ID * dist(mt));
+      list_idx = (int) (N_ID * dist(mt));
 
       if(TrackerUnlink(I, cand_id[cand_idx], list_id[list_idx]))
         n_link--;
@@ -1057,8 +1058,8 @@ int TrackerUnitTest(PyMOLGlobals * G)
     int list_idx, cand_idx;
 
     for(a = 0; a < (N_ID * N_ID); a++) {
-      cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
-      list_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      cand_idx = (int) (N_ID * dist(mt));
+      list_idx = (int) (N_ID * dist(mt));
 
       if(TrackerLink(I, cand_id[cand_idx], list_id[list_idx], 0))
         n_link++;
@@ -1112,8 +1113,8 @@ int TrackerUnitTest(PyMOLGlobals * G)
     for(a = 0; a < N_ID; a++) {
 
       for(b = 0; b < N_ID; b++) {
-        cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
-        list_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+        cand_idx = (int) (N_ID * dist(mt));
+        list_idx = (int) (N_ID * dist(mt));
 
         if(!cand_id[cand_idx]) {
           cand_id[cand_idx] = TrackerNewCand(I, NULL);
@@ -1128,16 +1129,16 @@ int TrackerUnitTest(PyMOLGlobals * G)
         }
       }
 
-      cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
-      list_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      cand_idx = (int) (N_ID * dist(mt));
+      list_idx = (int) (N_ID * dist(mt));
 
       if(cand_id[cand_idx] && list_id[list_idx]) {
         if(TrackerUnlink(I, cand_id[cand_idx], list_id[list_idx]))
           n_link--;
       }
 
-      cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
-      list_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      cand_idx = (int) (N_ID * dist(mt));
+      list_idx = (int) (N_ID * dist(mt));
 
       if(cand_id[cand_idx]) {
         int len = TrackerGetNListForCand(I, cand_id[cand_idx]);
@@ -1222,8 +1223,8 @@ int TrackerUnitTest(PyMOLGlobals * G)
     int list_idx, cand_idx;
 
     for(a = 0; a < (N_ID * N_ID); a++) {
-      cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
-      list_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      cand_idx = (int) (N_ID * dist(mt));
+      list_idx = (int) (N_ID * dist(mt));
 
       if(TrackerLink(I, cand_id[cand_idx], list_id[list_idx], 0))
         n_link++;
@@ -1242,7 +1243,7 @@ int TrackerUnitTest(PyMOLGlobals * G)
     int list_idx, cand_idx;
 
     for(a = 0; a < N_ID; a++) {
-      cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      cand_idx = (int) (N_ID * dist(mt));
       if(!(iter_id[a] = TrackerNewIter(I, cand_id[cand_idx], 0))) {
         fprintf(stderr, "TRACKER_UNIT_TEST FAILED AT LINE %d; 0==%d\n",
                 __LINE__, iter_id[a]);
@@ -1264,7 +1265,7 @@ int TrackerUnitTest(PyMOLGlobals * G)
     }
 
     for(a = 0; a < N_ID; a++) {
-      list_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      list_idx = (int) (N_ID * dist(mt));
       if(!(iter_id[a] = TrackerNewIter(I, list_id[list_idx], 0))) {
         fprintf(stderr, "TRACKER_UNIT_TEST FAILED AT LINE %d; 0==%d\n",
                 __LINE__, iter_id[a]);
@@ -1292,7 +1293,7 @@ int TrackerUnitTest(PyMOLGlobals * G)
     int b;
 
     for(a = 0; a < N_ID; a++) {
-      cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      cand_idx = (int) (N_ID * dist(mt));
       if(!(iter_id[a] = TrackerNewIter(I, cand_id[cand_idx], 0))) {
         fprintf(stderr, "TRACKER_UNIT_TEST FAILED AT LINE %d; 0==%d\n",
                 __LINE__, iter_id[a]);
@@ -1301,13 +1302,13 @@ int TrackerUnitTest(PyMOLGlobals * G)
 
     {
       int cnt = 0;
-      const int expected_cnt = 5341;    /* THIS TEST IS FRAGILE -- result depends on 
+      const int expected_cnt = 6119;    /* THIS TEST IS FRAGILE -- result depends on
                                            N_ID, random seem, tests that have been run above and
                                            of course, the iterator recovery behavior */
 
       for(a = 0; a < N_ID; a++) {
-        cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
-        list_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+        cand_idx = (int) (N_ID * dist(mt));
+        list_idx = (int) (N_ID * dist(mt));
 
         if(cand_id[cand_idx]) {
           if(TrackerDelCand(I, cand_id[cand_idx]))
@@ -1367,8 +1368,8 @@ int TrackerUnitTest(PyMOLGlobals * G)
     int list_idx, cand_idx;
 
     for(a = 0; a < (N_ID * N_ID); a++) {
-      cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
-      list_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      cand_idx = (int) (N_ID * dist(mt));
+      list_idx = (int) (N_ID * dist(mt));
 
       if(TrackerLink(I, cand_id[cand_idx], list_id[list_idx], 0))
         n_link++;
@@ -1384,7 +1385,7 @@ int TrackerUnitTest(PyMOLGlobals * G)
     int diff;
 
     for(a = 0; a < N_ID; a++) {
-      cand_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      cand_idx = (int) (N_ID * dist(mt));
       iter_start[a] = cand_id[cand_idx];
       if(!(iter_id[a] = TrackerNewIter(I, cand_id[cand_idx], 0))) {
         fprintf(stderr, "TRACKER_UNIT_TEST FAILED AT LINE %d; 0==%d\n",
@@ -1394,7 +1395,7 @@ int TrackerUnitTest(PyMOLGlobals * G)
     }
 
     for(a = 0; a < N_ID; a++) {
-      list_idx = (int) (N_ID * OVRandom_Get_float64_exc1(ov_rand));
+      list_idx = (int) (N_ID * dist(mt));
       if(list_id[list_idx]) {
         if(TrackerDelList(I, list_id[list_idx]))
           list_id[list_idx] = 0;
@@ -1476,7 +1477,6 @@ int TrackerUnitTest(PyMOLGlobals * G)
               list_id[a]);
   }
 
-  OVRandom_Del(ov_rand);
   TrackerFree(I);
 
   if(!result) {

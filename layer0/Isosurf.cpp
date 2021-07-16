@@ -15,12 +15,12 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
+#include <random>
+
 #include"os_python.h"
 #include"os_predef.h"
 #include"os_std.h"
-
-#include"OVRandom.h"
-#include"OVContext.h"
 
 #include"Isosurf.h"
 #include"MemoryDebug.h"
@@ -1095,7 +1095,8 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
         /* generate randomized list of cell coordinates */
 
         /* always use same seed for same volume */
-        OVRandom *my_rand = OVRandom_NewBySeed(G->Context->heap, range_size);
+        std::mt19937 mt(range_size);
+        std::uniform_real_distribution dist{};
         {
           /* fill */
           int i, j, k, *p = order;
@@ -1114,8 +1115,8 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
           /* shuffle */
           int a;
           for(a = 0; a < range_size; a++) {
-            int *p = order + 3 * (int) (range_size * OVRandom_Get_float64_exc1(my_rand));
-            int *q = order + 3 * (int) (range_size * OVRandom_Get_float64_exc1(my_rand));
+            int *p = order + 3 * (int) (range_size * dist(mt));
+            int *q = order + 3 * (int) (range_size * dist(mt));
             int t0 = p[0], t1 = p[1], t2 = p[2];
             p[0] = q[0];
             p[1] = q[1];
@@ -1125,7 +1126,6 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
             q[2] = t2;
           }
         }
-        OVRandom_Del(my_rand);
       }
 
       {
