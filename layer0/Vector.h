@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include<math.h>
 
 #include <cassert>
+#include <algorithm>
 
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
