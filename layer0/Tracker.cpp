@@ -922,7 +922,7 @@ int TrackerUnitTest(PyMOLGlobals * G)
   int tmp_int;
 
   std::mt19937 mt{12345678};
-  std::uniform_real_distribution dist{};
+  std::uniform_real_distribution<float> dist{};
   CTracker *I = TrackerNew(G);
 
   for(a = 0; a < N_ID; a++) {

@@ -1096,7 +1096,7 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
 
         /* always use same seed for same volume */
         std::mt19937 mt(range_size);
-        std::uniform_real_distribution dist{};
+        std::uniform_real_distribution<float> dist{};
         {
           /* fill */
           int i, j, k, *p = order;
