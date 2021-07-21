@@ -1110,7 +1110,7 @@ static int gro_timestep(md_file *mf, md_ts *ts) {
 	long coord;
 	int i, n, boxItems;
   float x[3], y[3], z[3];
-  char xposc[12], yposc[12], zposc[12];
+  char xposc[12]{}, yposc[12]{}, zposc[12]{};
 
   if (!mf || !ts) 
     return mdio_seterror(MDIO_BADPARAMS);
