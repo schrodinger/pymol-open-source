@@ -15,6 +15,7 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#include <algorithm>
 #include <vector>
 
 #include"os_python.h"
@@ -32,6 +33,9 @@ Z* -------------------------------------------------------------------
 #include "CGO.h"
 #include "ObjectCGO.h"
 #include "Util.h"
+#include "PyMOLGlobals.h"
+#include "ObjectMolecule.h"
+#include "ObjectMap.h"
 
 #ifndef _PYMOL_VMD_PLUGINS
 int PlugIOManagerInit(PyMOLGlobals * G)
@@ -99,32 +103,24 @@ pymol::CObject * PlugIOManagerLoad(PyMOLGlobals * G, pymol::CObject ** obj_ptr,
 extern "C" {
 #endif
 
-struct _CPlugIOManager {
-  int NPlugin;
-  molfile_plugin_t **PluginVLA;
+struct CPlugIOManager {
+  std::vector<molfile_plugin_t*> Plugins;
 };
 
 int PlugIOManagerInitAll(PyMOLGlobals * G);     /* defined externally */
 
 int PlugIOManagerInit(PyMOLGlobals * G)
 {
-  CPlugIOManager *I = NULL;
-  if((I = (G->PlugIOManager = pymol::calloc<CPlugIOManager>(1)))) {
-    I->NPlugin = 0;
-    I->PluginVLA = VLAlloc(molfile_plugin_t *, 10);
-    return PlugIOManagerInitAll(G);
-  } else
-    return 0;
+  G->PlugIOManager = new CPlugIOManager();
+  return PlugIOManagerInitAll(G);
 }
 
 int PlugIOManagerFreeAll(void); /* defined externally */
 
 int PlugIOManagerFree(PyMOLGlobals * G)
 {
-  CPlugIOManager *I = G->PlugIOManager;
   PlugIOManagerFreeAll();
-  VLAFreeP(I->PluginVLA);
-  FreeP(G->PlugIOManager);
+  DeleteP(G->PlugIOManager);
   return 1;
 }
 
@@ -135,9 +131,7 @@ int PlugIOManagerRegister(PyMOLGlobals * G, vmdplugin_t * header)
   if(G && G->PlugIOManager) {
     if(!strcmp(header->type, MOLFILE_PLUGIN_TYPE)) {
       CPlugIOManager *I = G->PlugIOManager;
-      VLACheck(I->PluginVLA, molfile_plugin_t *, I->NPlugin);
-      I->PluginVLA[I->NPlugin] = (molfile_plugin_t *) header;
-      I->NPlugin++;
+      I->Plugins.push_back(reinterpret_cast<molfile_plugin_t*>(header));
       /*           printf("register %p %s\n",header,header->name); */
     }
     return VMDPLUGIN_SUCCESS;
@@ -145,11 +139,12 @@ int PlugIOManagerRegister(PyMOLGlobals * G, vmdplugin_t * header)
     return VMDPLUGIN_ERROR;
 }
 
-static molfile_plugin_t * find_plugin(CPlugIOManager * I, const char * plugin_type) {
-  for (int a = 0; a < I->NPlugin; a++)
-    if(!strcmp(plugin_type, I->PluginVLA[a]->name))
-      return I->PluginVLA[a];
-  return NULL;
+static molfile_plugin_t* find_plugin(
+    CPlugIOManager* I, pymol::zstring_view plugin_type)
+{
+  auto it = std::find_if(I->Plugins.begin(), I->Plugins.end(),
+      [plugin_type](const molfile_plugin_t* plg) { return plugin_type == plg->name; });
+  return it != I->Plugins.end() ? *it : nullptr;
 }
 
 static CSymmetry* SymmetryNewFromTimestep(
@@ -990,9 +985,7 @@ const char * PlugIOManagerFindPluginByExt(PyMOLGlobals * G, const char * ext, in
   if (!mask)
     mask = cPlugIOManager_any;
 
-  for (auto it = I->PluginVLA, it_end = it + I->NPlugin; it != it_end; ++it) {
-    const molfile_plugin_t * p = *it;
-
+  for (const auto p : I->Plugins) {
     if (WordMatchCommaExact(G, p->filename_extension, ext, true) >= 0)
       continue;
 

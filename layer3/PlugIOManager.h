@@ -18,9 +18,14 @@ Z* -------------------------------------------------------------------
 #ifndef _H_IOManager
 #define _H_IOManager
 
-#include "PyMOLGlobals.h"
-#include "ObjectMolecule.h"
-#include "ObjectMap.h"
+struct PyMOLGlobals;
+struct ObjectMolecule;
+struct ObjectMap;
+
+namespace pymol
+{
+struct CObject;
+}
 
 enum {
   cPlugIOManager_mol = 1,
