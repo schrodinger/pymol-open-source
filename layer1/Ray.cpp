@@ -142,7 +142,7 @@ float RayGetScreenVertexScale(CRay * I, float *v1)
 
   if(I->Ortho) {
     ratio =
-      2 * (float) (fabs(I->Pos[2]) * tan((I->Fov / 2.0) * cPI / 180.0)) / (I->Height);
+      2 * (float) (fabs(I->Pos.z) * tan((I->Fov / 2.0) * cPI / 180.0)) / (I->Height);
   } else {
     float front_size =
       2 * I->Volume[4] * ((float) tan((I->Fov / 2.0F) * PI / 180.0F)) / (I->Height);
@@ -1278,8 +1278,8 @@ void RayRenderVRML2(CRay * I, int width, int height,
      wid[1]  = (I->max_box[1] - I->min_box[1]);
      wid[2]  = (I->max_box[2] - I->min_box[2]);
    */
-
-  copy3f(I->Pos, mid);
+  auto Pos = glm::value_ptr(I->Pos);
+  copy3f(Pos, mid);
   UtilConcatVLA(&vla, &cc, "#VRML V2.0 utf8\n"  /* WLD: most VRML2 readers req. utf8 */
                 "\n");
   if(!identity) {
@@ -5548,7 +5548,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   float front = I->Volume[4];
   float back = I->Volume[5];
   float fov = I->Fov;
-  float *pos = I->Pos;
+  float *pos = glm::value_ptr(I->Pos);
   size_t width = I->Width;
   size_t height = I->Height;
   int ray_trace_mode;
@@ -6719,8 +6719,8 @@ void RayGetScaledAxes(CRay * I, float *xn, float *yn)
 
   v_scale = RayGetScreenVertexScale(I, vt) / I->Sampling;
 
-  RayApplyMatrixInverse33(1, (float3 *) xn0, I->Rotation, (float3 *) xn0);
-  RayApplyMatrixInverse33(1, (float3 *) yn0, I->Rotation, (float3 *) yn0);
+  RayApplyMatrixInverse33(1, (float3 *) xn0, glm::value_ptr(I->Rotation), (float3 *) xn0);
+  RayApplyMatrixInverse33(1, (float3 *) yn0, glm::value_ptr(I->Rotation), (float3 *) yn0);
 
   scale3f(xn0, v_scale, xn);
   scale3f(yn0, v_scale, yn);
@@ -6780,9 +6780,9 @@ int CRay::character(int char_id)
     int width_i, height_i;
     CPrimitive *pp = p + 1;
 
-    RayApplyMatrixInverse33(1, (float3 *) xn, I->Rotation, (float3 *) xn);
-    RayApplyMatrixInverse33(1, (float3 *) yn, I->Rotation, (float3 *) yn);
-    RayApplyMatrixInverse33(1, (float3 *) zn, I->Rotation, (float3 *) zn);
+    RayApplyMatrixInverse33(1, (float3 *) xn, glm::value_ptr(I->Rotation), (float3 *) xn);
+    RayApplyMatrixInverse33(1, (float3 *) yn, glm::value_ptr(I->Rotation), (float3 *) yn);
+    RayApplyMatrixInverse33(1, (float3 *) zn, glm::value_ptr(I->Rotation), (float3 *) zn);
 
     CharacterGetGeometry(I->G, char_id, &width_i, &height_i, &xorig, &yorig, &advance);
     width = (float) width_i;
@@ -7555,8 +7555,8 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
 
 void RayPrepare(CRay * I, float v0, float v1, float v2,
                 float v3, float v4, float v5,
-                float fov, float *pos,
-                float *mat, float *rotMat, float aspRat,
+                float fov, glm::vec3 pos,
+                float *mat, const glm::mat4& rotMat, float aspRat,
                 int width, int height, float pixel_scale, int ortho,
                 float pixel_ratio, float front_back_ratio, float magnified)
 
@@ -7601,9 +7601,7 @@ void RayPrepare(CRay * I, float v0, float v1, float v2,
     I->ProMatrix[14] = (-2.f * I->Volume[5] * I->Volume[4])/I->Range[2];
     I->ProMatrix[15] = 0.f;
   }
-  if(rotMat)
-    for(a = 0; a < 16; a++)
-      I->Rotation[a] = rotMat[a];
+  I->Rotation = rotMat;
   I->Ortho = ortho;
   if(ortho) {
     I->PixelRadius = (((float) I->Range[0]) / width) * pixel_scale;
@@ -7616,8 +7614,7 @@ void RayPrepare(CRay * I, float v0, float v1, float v2,
   I->PrimSizeCnt = 0;
   I->PrimSize = 0.0;
   I->Fov = fov;
-  copy3f(pos, I->Pos);
-
+  I->Pos = pos;
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef PYMOL_EVAL
@@ -7835,9 +7832,9 @@ float RayGetScaledAllAxesAtPoint(CRay * I, float *pt, float *xn, float *yn, floa
 
   v_scale = RayGetScreenVertexScale(I, pt) / I->Sampling;
 
-  RayApplyMatrixInverse33(1, (float3 *) xn0, I->Rotation, (float3 *) xn0);
-  RayApplyMatrixInverse33(1, (float3 *) yn0, I->Rotation, (float3 *) yn0);
-  RayApplyMatrixInverse33(1, (float3 *) zn0, I->Rotation, (float3 *) zn0);
+  RayApplyMatrixInverse33(1, (float3 *) xn0, glm::value_ptr(I->Rotation), (float3 *) xn0);
+  RayApplyMatrixInverse33(1, (float3 *) yn0, glm::value_ptr(I->Rotation), (float3 *) yn0);
+  RayApplyMatrixInverse33(1, (float3 *) zn0, glm::value_ptr(I->Rotation), (float3 *) zn0);
 
   scale3f(xn0, v_scale, xn);
   scale3f(yn0, v_scale, yn);

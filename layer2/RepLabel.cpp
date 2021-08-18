@@ -715,7 +715,7 @@ static void RepLabelRenderRayBackground(RepLabel * I, RenderInfo * info, float *
   short drawLine = true;
   float xn[3], yn[3], zn[3];
   float connector_width = *(v + 26);
-  float *RotMatrix = ray->Rotation;
+  float *RotMatrix = glm::value_ptr(ray->Rotation);
   lineSeg_t labelTop, labelBottom, labelLeft, labelRight;
   short label_con_flat = 128 & (int)*(v + 21);
   short label_connector_mode = (draw_var & 8) ? 1 : (draw_var & 16) ? 2 : (draw_var & 32) ? 3 : (draw_var & 64) ? 4 : 0;

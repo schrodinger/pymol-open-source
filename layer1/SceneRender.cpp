@@ -350,7 +350,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
                      stereo_mode == cStereo_openvr ? 0.1f : I->m_view.m_clipSafe.m_front,
                      I->m_view.m_clipSafe.m_back);
     } else {
-      height = std::max(R_SMALL4, -I->m_view.m_pos[2]) * GetFovWidth(G) / 2.f;
+      height = std::max(R_SMALL4, -I->m_view.pos().z) * GetFovWidth(G) / 2.f;
       width = height * aspRat;
       glOrtho44f(I->ProjectionMatrix, -width, width, -height, height, I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back);
     }
@@ -383,7 +383,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     /* 2. set the normals to reflect light back at the camera */
 
     float zAxis[4] = { 0.0, 0.0, 1.0, 0.0 };
-    MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, zAxis, normal);
+    MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), zAxis, normal);
     copy3f(normal, I->ViewNormal);
 
     if(SettingGetGlobal_b(G, cSetting_normal_workaround)) {
@@ -779,8 +779,8 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
     float stAng, stShift;
     stAng = SettingGetGlobal_f(G, cSetting_stereo_angle);
     stShift = SettingGetGlobal_f(G, cSetting_stereo_shift);
-    stShift = (float) (stShift * fabs(I->m_view.m_pos[2]) / 100.0);
-    stAng = (float) (stAng * atan(stShift / fabs(I->m_view.m_pos[2])) * 90.0 / cPI);
+    stShift = (float) (stShift * fabs(I->m_view.pos().z) / 100.0);
+    stAng = (float) (stAng * atan(stShift / fabs(I->m_view.pos().z)) * 90.0 / cPI);
     buffer = fabs(I->Width * I->VertexScale * tan(cPI * stAng / 180.0));
     info.stereo_front = I->m_view.m_clipSafe.m_front + buffer;
   } else {

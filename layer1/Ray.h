@@ -38,8 +38,8 @@ CRay *RayNew(PyMOLGlobals * G, int antialias);
 void RayFree(CRay * I);
 void RayPrepare(CRay * I, float v0, float v1, float v2,
                 float v3, float v4, float v5,
-                float fov, float *pos,
-                float *mat, float *rotMat,
+                float fov, glm::vec3 pos,
+                float *mat, const glm::mat4& rotMat,
                 float aspRat, int width, int height,
                 float pixel_scale, int ortho, float pixel_ratio,
                 float back_ratio, float magnified);
@@ -146,7 +146,7 @@ struct _CRay {
   float CurColor[3], IntColor[3];
   float ModelView[16];
   float ProMatrix[16];
-  float Rotation[16];
+  glm::mat4 Rotation;
   float Volume[6];
   float Range[3];
   int BigEndian;
@@ -171,7 +171,8 @@ struct _CRay {
   float FrontBackRatio;
   double PrimSize;
   int PrimSizeCnt;
-  float Fov, Pos[3];
+  float Fov;
+  glm::vec3 Pos;
   std::shared_ptr<pymol::Image> bkgrd_data;
 
 private:

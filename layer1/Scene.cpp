@@ -506,8 +506,9 @@ static const char SelModeKW[][20] = {
 
 static void SceneUpdateInvMatrix(PyMOLGlobals * G)
 {
+  // TODO: Test glm::inverse(I->m_view.rotMatrix())
   CScene *I = G->Scene;
-  float *rm = I->m_view.m_rotMatrix;
+  const auto rm = glm::value_ptr(I->m_view.rotMatrix());
   float *im = I->InvMatrix;
   im[0] = rm[0];
   im[1] = rm[4];
@@ -551,9 +552,10 @@ static float s_oldFov = -1.0f;
 
 void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
 {
-  float *fp;
   double *dp;
   CScene *I = G->Scene;
+  const auto& pos = I->m_view.pos();
+  const auto& ori = I->m_view.origin();
 
   float dY = 0, dZ = 0;
   float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
@@ -561,7 +563,7 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
 
 #ifdef _PYMOL_OPENVR
   if (I->StereoMode == cStereo_openvr) {
-    float dist = fabsf(I->m_view.m_pos[2]);
+    float dist = fabsf(pos.z);
     float fovVR = fov;
     fov = s_oldFov;
     dY = scale * 1.0f;
@@ -572,7 +574,7 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
   /* copy rotation matrix */
   elem->matrix_flag = true;
   dp = elem->matrix;
-  fp = I->m_view.m_rotMatrix;
+  auto fp = glm::value_ptr(I->m_view.rotMatrix());
   *(dp++) = (double) *(fp++);
   *(dp++) = (double) *(fp++);
   *(dp++) = (double) *(fp++);
@@ -596,18 +598,16 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
   /* copy position */
   elem->pre_flag = true;
   dp = elem->pre;
-  fp = I->m_view.m_pos;
-  *(dp++) = (double) *(fp++) * scale;
-  *(dp++) = (double) *(fp++) * scale - dY;
-  *(dp++) = (double) *(fp++) * scale - dZ;
+  *(dp++) = (double) pos.x * scale;
+  *(dp++) = (double) pos.y * scale - dY;
+  *(dp++) = (double) pos.z * scale - dZ;
 
   /* copy origin (negative) */
   elem->post_flag = true;
   dp = elem->post;
-  fp = I->m_view.m_origin;
-  *(dp++) = (double) (-*(fp++));
-  *(dp++) = (double) (-*(fp++));
-  *(dp++) = (double) (-*(fp++));
+  *(dp++) = (double) -ori.x;
+  *(dp++) = (double) -ori.y;
+  *(dp++) = (double) -ori.z;
 
   elem->clip_flag = true;
   elem->front = I->m_view.m_clip.m_front * scale + dZ;
@@ -638,7 +638,7 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
 #ifdef _OPENVR_STEREO_DEBUG_VIEWS
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf, IV: %11lf  ==>  EP: %11lf %11lf %11lf, EF/EB: %11lf %11lf, EV: %11lf\n",
     "SceneToViewElem",
-    I->m_view.m_pos[0], I->m_view.m_pos[1], I->m_view.m_pos[2],
+    pos.x, pos.y, pos.z,
     I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale,
     SettingGetGlobal_f(G, cSetting_field_of_view),
     elem->pre[0], elem->pre[1], elem->pre[2],
@@ -658,6 +658,9 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
   float dY = 0, dZ = 0;
   float fov = elem->ortho;
   float scale = I->Scale;
+  auto pos = I->m_view.pos();
+  auto ori = I->m_view.origin();
+  auto rot = I->m_view.rotMatrix();
 
 #ifdef _PYMOL_OPENVR
   if (I->StereoMode == cStereo_openvr) {
@@ -670,35 +673,14 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
 #endif
 
   if(elem->matrix_flag) {
-    dp = elem->matrix;
-    fp = I->m_view.m_rotMatrix;
-
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
+    rot = glm::make_mat4(elem->matrix);
     changed_flag = true;
     SceneUpdateInvMatrix(G);
   }
 
   if(elem->pre_flag) {
     dp = elem->pre;
-    fp = I->m_view.m_pos;
+    fp = glm::value_ptr(pos);
     *(fp++) = (float) *(dp++) * scale;
     *(fp++) = (float) *(dp++) * scale - dY;
     *(fp++) = (float) *(dp++) * scale - dZ;
@@ -707,7 +689,7 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
 
   if(elem->post_flag) {
     dp = elem->post;
-    fp = I->m_view.m_origin;
+    fp = glm::value_ptr(ori);
     *(fp++) = (float) (-*(dp++));
     *(fp++) = (float) (-*(dp++));
     *(fp++) = (float) (-*(dp++));
@@ -738,12 +720,15 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
     SceneRestartSweepTimer(G);
     I->RockFrame = 0;
     SceneRovingDirty(G);
+    I->m_view.setPos(pos);
+    I->m_view.setOrigin(ori);
+    I->m_view.setRotMatrix(rot);
   }
 
 #ifdef _OPENVR_STEREO_DEBUG_VIEWS
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf, IV: %11lf  <==  EP: %11lf %11lf %11lf, EF/EB: %11lf %11lf, EV: %11lf\n",
     "SceneFromViewElem",
-    I->m_view.m_pos[0], I->m_view.m_pos[1], I->m_view.m_pos[2],
+    pos.x, pos.y, pos.z,
     I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale,
     SettingGetGlobal_f(G, cSetting_field_of_view),
     elem->pre[0], elem->pre[1], elem->pre[2],
@@ -863,13 +848,15 @@ void SceneSuppressMovieFrame(PyMOLGlobals * G)
 void SceneGetCenter(PyMOLGlobals * G, float *pos)
 {
   CScene *I = G->Scene;
+  auto camPos = I->m_view.pos();
+  const auto& ori = I->m_view.origin();
 
-  MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, I->m_view.m_origin, pos);
+  MatrixTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), glm::value_ptr(ori), pos);
 
-  pos[0] -= I->m_view.m_pos[0];
-  pos[1] -= I->m_view.m_pos[1];
+  pos[0] -= camPos.x;
+  pos[1] -= camPos.y;
 
-  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, pos, pos);
+  MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), pos, pos);
 }
 
 /*========================================================================*/
@@ -899,13 +886,14 @@ int SceneGetNFrame(PyMOLGlobals * G, int *has_movie)
 void SceneGetView(PyMOLGlobals * G, SceneViewType view)
 {
   float *p;
-  int a;
   CScene *I = G->Scene;
   p = view;
 
   float dY = 0, dZ = 0;
   float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
   float scale = 1.0f / I->Scale;
+  const auto& pos = I->m_view.pos();
+  const auto& ori = I->m_view.origin();
 
 #ifdef _PYMOL_OPENVR
   if (I->StereoMode == cStereo_openvr) {
@@ -917,14 +905,14 @@ void SceneGetView(PyMOLGlobals * G, SceneViewType view)
   }
 #endif
 
-  for(a = 0; a < 16; a++)
-    *(p++) = I->m_view.m_rotMatrix[a];
-  *(p++) = I->m_view.m_pos[0] * scale;
-  *(p++) = I->m_view.m_pos[1] * scale - dY;
-  *(p++) = I->m_view.m_pos[2] * scale - dZ;
-  *(p++) = I->m_view.m_origin[0];
-  *(p++) = I->m_view.m_origin[1];
-  *(p++) = I->m_view.m_origin[2];
+  std::copy_n(glm::value_ptr(I->m_view.rotMatrix()), 16, p);
+  p += 16;
+  *(p++) = pos.x * scale;
+  *(p++) = pos.y * scale - dY;
+  *(p++) = pos.z * scale - dZ;
+  *(p++) = ori.x;
+  *(p++) = ori.y;
+  *(p++) = ori.z;
   *(p++) = I->m_view.m_clip.m_front * scale + dZ;
   *(p++) = I->m_view.m_clip.m_back * scale + dZ;
   *(p++) = SettingGetGlobal_b(G, cSetting_ortho) ? fov : -fov;
@@ -932,7 +920,7 @@ void SceneGetView(PyMOLGlobals * G, SceneViewType view)
 #ifdef _OPENVR_STEREO_DEBUG_VIEWS
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf, IV: %11lf  ==>  EP: %11lf %11lf %11lf, EF/EB: %11lf %11lf, EV: %11lf\n",
     "SceneGetView",
-    I->m_view.m_pos[0], I->m_view.m_pos[1], I->m_view.m_pos[2],
+    pos.x, pos.y, pos.z,
     I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale,
     SettingGetGlobal_f(G, cSetting_field_of_view),
     view[16], view[17], view[18],
@@ -947,7 +935,6 @@ void SceneSetView(PyMOLGlobals * G, const SceneViewType view,
                   int quiet, float animate, int hand)
 {
   const float *p;
-  int a;
   CScene *I = G->Scene;
 
   if(animate < 0.0F) {
@@ -977,15 +964,17 @@ void SceneSetView(PyMOLGlobals * G, const SceneViewType view,
 #endif
 
   p = view;
-  for(a = 0; a < 16; a++)
-    I->m_view.m_rotMatrix[a] = *(p++);
+  I->m_view.setRotMatrix(glm::make_mat4(p));
+  p += 16;
   SceneUpdateInvMatrix(G);
-  I->m_view.m_pos[0] = *(p++) * scale;
-  I->m_view.m_pos[1] = *(p++) * scale - dY;
-  I->m_view.m_pos[2] = *(p++) * scale - dZ;
-  I->m_view.m_origin[0] = *(p++);
-  I->m_view.m_origin[1] = *(p++);
-  I->m_view.m_origin[2] = *(p++);
+  auto newX = *(p++) * scale;
+  auto newY = *(p++) * scale - dY;
+  auto newZ = *(p++) * scale - dZ;
+  I->m_view.setPos(newX, newY, newZ);
+  auto newOriX = *(p++);
+  auto newOriY = *(p++);
+  auto newOriZ = *(p++);
+  I->m_view.setOrigin(newOriX, newOriY, newOriZ);
 
   I->LastSweep = 0.0F;
   I->LastSweepX = 0.0F;
@@ -1166,9 +1155,7 @@ void SceneSetStereo(PyMOLGlobals * G, bool flag)
 void SceneTranslate(PyMOLGlobals * G, float x, float y, float z)
 {
   CScene *I = G->Scene;
-  I->m_view.m_pos[0] += x;
-  I->m_view.m_pos[1] += y;
-  I->m_view.m_pos[2] += z;
+  I->m_view.translate(x, y, z);
   SceneClipSet(G, I->m_view.m_clip.m_front - z, I->m_view.m_clip.m_back - z);
 }
 
@@ -1182,15 +1169,14 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
     if((x != 0.0F) || (y != 0.0F)) {
       float vScale = SceneGetExactScreenVertexScale(G, NULL);
       float factor = vScale * (I->Height + I->Width) / 2;
-      I->m_view.m_pos[0] += x * factor;
-      I->m_view.m_pos[1] += y * factor;
+      I->m_view.translate(x * factor, y * factor, 0.0f);
       invalidate = true;
     }
     if(z != 0.0F) {
       float factor = ((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2);        /* average distance within visible space */
       if(factor > 0.0F) {
         factor *= z;
-        I->m_view.m_pos[2] += factor;
+        I->m_view.translate(0.0f, 0.0f, factor);
         I->m_view.m_clip.m_front -= factor;
         I->m_view.m_clip.m_back -= factor;
         UpdateFrontBackSafe(I);
@@ -1202,8 +1188,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
     if((x != 0.0F) || (y != 0.0F)) {
       float vScale = SceneGetExactScreenVertexScale(G, NULL);
       float factor = vScale * (I->Height + I->Width) / 2;
-      I->m_view.m_pos[0] += x * factor;
-      I->m_view.m_pos[1] += y * factor;
+      I->m_view.translate(x * factor, y * factor, 0.0f);
       invalidate = true;
     }
     if(z != 0.0F) {
@@ -1213,7 +1198,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
         {
           float old_front = I->m_view.m_clip.m_front;
           float old_back = I->m_view.m_clip.m_back;
-          float old_origin = -I->m_view.m_pos[2];
+          float old_origin = -I->m_view.pos().z;
           SceneClip(G, 7, factor, NULL, 0);
           SceneDoRoving(G, old_front, old_back, old_origin, true, true);
         }
@@ -1240,7 +1225,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
       v2[2] = z * scale;
 
       /* transform into model coodinate space */
-      MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
+      MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v2, v2);
 
       EditorDrag(G, NULL, -1, cButModeMovDrag,
                  SettingGetGlobal_i(G, cSetting_state) - 1, NULL, v2, NULL);
@@ -1312,7 +1297,7 @@ void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_
         v1[0] = cPI * (60 * angle / 180.0F) * scale;
 
         /* transform into model coodinate space */
-        MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, axis, v2);
+        MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), axis, v2);
 
         EditorDrag(G, NULL, -1, cButModeRotDrag,
                    SettingGetGlobal_i(G, cSetting_state) - 1, v1, v2, NULL);
@@ -1392,6 +1377,7 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
   CScene *I = G->Scene;
   float avg;
   float mn[3], mx[3], cent[3], v0[3], offset[3], origin[3];
+  const auto& pos = I->m_view.pos();
   switch (plane) {
   case 0:                      /* near */
     SceneClipSet(G, I->m_view.m_clip.m_front - movement, I->m_view.m_clip.m_back);
@@ -1408,8 +1394,8 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
         sele = NULL;
       else {
         average3f(mn, mx, cent);        /* get center of selection */
-        subtract3f(cent, I->m_view.m_origin, v0);        /* how far from origin? */
-        MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, v0, offset);   /* convert to view-space */
+        subtract3f(cent, glm::value_ptr(I->m_view.origin()), v0);        /* how far from origin? */
+        MatrixTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v0, offset);   /* convert to view-space */
       }
     } else {
       sele = NULL;
@@ -1417,7 +1403,7 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
     avg = (I->m_view.m_clip.m_front + I->m_view.m_clip.m_back) / 2.0F;
     movement /= 2.0F;
     if(sele) {
-      avg = -I->m_view.m_pos[2] - offset[2];
+      avg = -pos.z - offset[2];
     }
     SceneClipSet(G, avg - movement, avg + movement);
     break;
@@ -1428,20 +1414,20 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
       sele = cKeywordAll;
     }
     if(WordMatchExact(G, sele, cKeywordCenter, true)) {
-      MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, I->m_view.m_origin, origin);      /* convert to view-space */
+      MatrixTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), glm::value_ptr(I->m_view.origin()), origin);      /* convert to view-space */
       SceneClipSet(G, origin[2] - movement, origin[2] + movement);
     } else if(WordMatchExact(G, sele, cKeywordOrigin, true)) {
-      SceneClipSet(G, -I->m_view.m_pos[2] - movement, -I->m_view.m_pos[2] + movement);
+      SceneClipSet(G, -pos.z - movement, -pos.z + movement);
     } else {
       if(!ExecutiveGetCameraExtent(G, sele, mn, mx, true, state))
         sele = NULL;
       if(sele) {
         if(sele[0]) {
           average3f(mn, mx, cent);      /* get center of selection */
-          MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, I->m_view.m_origin, origin);  /* convert to view-space */
+          MatrixTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), glm::value_ptr(I->m_view.origin()), origin);  /* convert to view-space */
           subtract3f(mx, origin, mx);   /* how far from origin? */
           subtract3f(mn, origin, mn);   /* how far from origin? */
-          SceneClipSet(G, -I->m_view.m_pos[2] - mx[2] - movement, -I->m_view.m_pos[2] - mn[2] + movement);
+          SceneClipSet(G, -pos.z - mx[2] - movement, -pos.z - mn[2] + movement);
         } else {
           sele = NULL;
         }
@@ -1477,9 +1463,7 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
 void SceneSetMatrix(PyMOLGlobals * G, float *m)
 {
   CScene *I = G->Scene;
-  int a;
-  for(a = 0; a < 16; a++)
-    I->m_view.m_rotMatrix[a] = m[a];
+  I->m_view.setRotMatrix(glm::make_mat4(m));
   SceneUpdateInvMatrix(G);
 }
 
@@ -1502,8 +1486,7 @@ int SceneGetState(PyMOLGlobals * G)
 /*========================================================================*/
 float *SceneGetMatrix(PyMOLGlobals * G)
 {
-  CScene *I = G->Scene;
-  return (I->m_view.m_rotMatrix);
+  return const_cast<float*>(glm::value_ptr(G->Scene->m_view.rotMatrix()));
 }
 
 float *SceneGetPmvMatrix(PyMOLGlobals * G)
@@ -2449,11 +2432,12 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
 {
   CScene *I = G->Scene;
   float v0[3];
+  auto pos = I->m_view.pos();
 
 #ifdef _OPENVR_STEREO_DEBUG_VIEWS
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  ==>\n",
     "WindowSphere BEFORE",
-    I->m_view.m_pos[0], I->m_view.m_pos[1], I->m_view.m_pos[2],
+    pos.x, pos.y, pos.z
     I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale
   );
 #endif // _OPENVR_STEREO_DEBUG_VIEWS
@@ -2467,9 +2451,9 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
   float dist = 2.f * radius / GetFovWidth(G);
 
   /* find where this point is in relationship to the origin */
-  subtract3f(I->m_view.m_origin, location, v0);
+  subtract3f(glm::value_ptr(I->m_view.origin()), location, v0);
 
-  MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, v0, I->m_view.m_pos); /* convert to view-space */
+  MatrixTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v0, glm::value_ptr(pos)); /* convert to view-space */
 
   if (I->Height > I->Width && I->Height && I->Width)
     dist *= (float)I->Height / (float)I->Width;
@@ -2477,25 +2461,26 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
 #ifdef _PYMOL_OPENVR
   /*lift up molecule to the user's head*/
   if (I->StereoMode == cStereo_openvr) {
-    I->m_view.m_pos[0] *= I->Scale;
-    I->m_view.m_pos[1] = I->m_view.m_pos[1] * I->Scale + 1.0f; //FIXME make it smart
-    I->m_view.m_pos[2] *= I->Scale;
+    pos.x *= I->Scale;
+    pos.y = pos.y * I->Scale + 1.0f; //FIXME make it smart
+    pos.z *= I->Scale;
   }
 #endif
 
-  I->m_view.m_pos[2] -= dist;
-  I->m_view.m_clip.m_front = (-I->m_view.m_pos[2] - radius * 1.2F);
-  I->m_view.m_clip.m_back = (-I->m_view.m_pos[2] + radius * 1.2F);
+  pos.z -= dist;
+  I->m_view.m_clip.m_front = (-pos.z - radius * 1.2F);
+  I->m_view.m_clip.m_back = (-pos.z + radius * 1.2F);
   UpdateFrontBackSafe(I);
   SceneRovingDirty(G);
 
 #ifdef _OPENVR_STEREO_DEBUG_VIEWS
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  ==>\n",
     "WindowSphere AFTER",
-    I->m_view.m_pos[0], I->m_view.m_pos[1], I->m_view.m_pos[2],
+    pos.x, pos.y, pos.z
     I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale
   );
 #endif // _OPENVR_STEREO_DEBUG_VIEWS
+  I->m_view.setPos(pos);
 }
 
 
@@ -2504,31 +2489,32 @@ void SceneRelocate(PyMOLGlobals * G, const float *location)
 {
   CScene *I = G->Scene;
   float v0[3];
-  float slab_width;
-  float dist;
+  auto pos = I->m_view.pos();
 
-  slab_width = I->m_view.m_clip.m_back - I->m_view.m_clip.m_front;
+  auto slab_width = I->m_view.m_clip.m_back - I->m_view.m_clip.m_front;
 
   /* find out how far camera was from previous origin */
-  dist = I->m_view.m_pos[2];
+  auto dist = pos.z;
 
   // stay in front of camera, empirical value to show at least 1 bond
   if (dist > -5.f && I->StereoMode != cStereo_openvr)
     dist = -5.f;
 
   /* find where this point is in relationship to the origin */
-  subtract3f(I->m_view.m_origin, location, v0);
+  subtract3f(glm::value_ptr(I->m_view.origin()), location, v0);
 
   /*  printf("%8.3f %8.3f %8.3f\n",I->m_view.m_clip.m_front,I->m_view.m_pos[2],I->m_view.m_clip.m_back); */
 
-  MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, v0, I->m_view.m_pos); /* convert to view-space */
+  auto pos_ptr = glm::value_ptr(pos);
+  MatrixTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v0, pos_ptr); /* convert to view-space */
 
-  I->m_view.m_pos[2] = dist;
+  pos.z = dist;
   if (I->StereoMode == cStereo_openvr) {
-    I->m_view.m_pos[1] += 1.0f;
+    pos += glm::vec3(0.0f, 1.0f, 0.0f);
   }
-  I->m_view.m_clip.m_front = (-I->m_view.m_pos[2] - (slab_width * 0.50F));
-  I->m_view.m_clip.m_back = (-I->m_view.m_pos[2] + (slab_width * 0.50F));
+  I->m_view.m_clip.m_front = (-pos.z - (slab_width * 0.50F));
+  I->m_view.m_clip.m_back = (-pos.z + (slab_width * 0.50F));
+  I->m_view.setPos(pos);
   UpdateFrontBackSafe(I);
   SceneRovingDirty(G);
 
@@ -2545,7 +2531,7 @@ void SceneRelocate(PyMOLGlobals * G, const float *location)
 void SceneOriginGet(PyMOLGlobals * G, float *origin)
 {
   CScene *I = G->Scene;
-  copy3f(I->m_view.m_origin, origin);
+  copy3f(glm::value_ptr(I->m_view.origin()), origin);
 }
 
 
@@ -2560,16 +2546,15 @@ void SceneOriginGet(PyMOLGlobals * G, float *origin)
 void SceneOriginSet(PyMOLGlobals * G, const float *origin, int preserve)
 {
   CScene *I = G->Scene;
-  float v0[3], v1[3];
+  float v0[3];
+  glm::vec3 v1;
 
   if(preserve) {                /* preserve current viewing location */
-    subtract3f(origin, I->m_view.m_origin, v0);  /* model-space translation */
-    MatrixTransformC44fAs33f3f(I->m_view.m_rotMatrix, v0, v1);   /* convert to view-space */
-    add3f(I->m_view.m_pos, v1, I->m_view.m_pos);  /* offset view to compensate */
+    subtract3f(origin, glm::value_ptr(I->m_view.origin()), v0);  /* model-space translation */
+    MatrixTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v0, glm::value_ptr(v1));   /* convert to view-space */
+    I->m_view.translate(glm::make_vec3(v1));  /* offset view to compensate */
   }
-  I->m_view.m_origin[0] = origin[0];     /* move origin */
-  I->m_view.m_origin[1] = origin[1];
-  I->m_view.m_origin[2] = origin[2];
+  I->m_view.setOrigin(origin[0], origin[1], origin[2]); /* move origin */
   SceneInvalidate(G);
 }
 
@@ -3413,10 +3398,10 @@ void SceneDoRoving(PyMOLGlobals * G, float old_front,
       }
     }
 
-    old_pos2 = I->m_view.m_pos[2];
+    old_pos2 = I->m_view.pos().z;
 
-    MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);        /* transform offset into realspace */
-    subtract3f(I->m_view.m_origin, v2, v2);      /* calculate new origin location */
+    MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v2, v2);        /* transform offset into realspace */
+    subtract3f(glm::value_ptr(I->m_view.origin()), v2, v2);      /* calculate new origin location */
     SceneOriginSet(G, v2, true);        /* move origin, preserving camera location */
 
     if(SettingGetGlobal_b(G, cSetting_ortho) || zoom_flag) {
@@ -3424,8 +3409,8 @@ void SceneDoRoving(PyMOLGlobals * G, float old_front,
          to change.  Thus, we have to hold Pos[2] constant, and instead
          move the planes.
        */
-      float delta = old_pos2 - I->m_view.m_pos[2];
-      I->m_view.m_pos[2] += delta;
+      float delta = old_pos2 - I->m_view.pos().z;
+      I->m_view.translate(0, 0, delta);
       SceneClipSet(G, I->m_view.m_clip.m_front - delta, I->m_view.m_clip.m_back - delta);
     }
     slab_width = I->m_view.m_clip.m_back - I->m_view.m_clip.m_front;
@@ -3475,9 +3460,11 @@ void ScenePopRasterMatrix(PyMOLGlobals * G)
  */
 static void SceneComposeModelViewMatrix(CScene * I, float * modelView) {
   identity44f(modelView);
-  MatrixTranslateC44f(modelView, I->m_view.m_pos[0], I->m_view.m_pos[1], I->m_view.m_pos[2]);
-  MatrixMultiplyC44f(I->m_view.m_rotMatrix, modelView);
-  MatrixTranslateC44f(modelView, -I->m_view.m_origin[0], -I->m_view.m_origin[1], -I->m_view.m_origin[2]);
+  const auto& pos = I->m_view.pos();
+  const auto& ori = I->m_view.origin();
+  MatrixTranslateC44f(modelView, pos.x, pos.y, pos.z);
+  MatrixMultiplyC44f(glm::value_ptr(I->m_view.rotMatrix()), modelView);
+  MatrixTranslateC44f(modelView, -ori.x, -ori.y, -ori.z);
 }
 
 /*========================================================================*/
@@ -3494,7 +3481,7 @@ void SceneGetEyeNormal(PyMOLGlobals * G, float *v1, float *normal)
   MatrixTransformC44f4f(modelView, p1, p2);     /* modelview transformation */
   copy3f(p2, p1);
   normalize3f(p1);
-  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, p1, p2);
+  MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), p1, p2);
   invert3f3f(p2, normal);
 }
 
@@ -3520,7 +3507,7 @@ float SceneGetRawDepth(PyMOLGlobals * G, const float *v1)
   float modelView[16];
 
   if(!v1 || SettingGetGlobal_i(G, cSetting_ortho))
-    return -I->m_view.m_pos[2];
+    return -I->m_view.pos().z;
 
   SceneComposeModelViewMatrix(I, modelView);
 
@@ -4081,7 +4068,7 @@ void SceneFree(PyMOLGlobals * G)
 void SceneResetMatrix(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-  identity44f(I->m_view.m_rotMatrix);
+  I->m_view.setRotMatrix(glm::mat4(1.0f));
   SceneUpdateInvMatrix(G);
 }
 
@@ -4091,20 +4078,15 @@ void SceneSetDefaultView(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
 
-  identity44f(I->m_view.m_rotMatrix);
+  I->m_view.setRotMatrix(glm::mat4(1.0f));
   SceneUpdateInvMatrix(G);
 
   I->ViewNormal[0] = 0.0F;
   I->ViewNormal[1] = 0.0F;
   I->ViewNormal[2] = 1.0F;
 
-  I->m_view.m_pos[0] = 0.0F;
-  I->m_view.m_pos[1] = 0.0F;
-  I->m_view.m_pos[2] = -50.0F;
-
-  I->m_view.m_origin[0] = 0.0F;
-  I->m_view.m_origin[1] = 0.0F;
-  I->m_view.m_origin[2] = 0.0F;
+  I->m_view.setPos(0.0f, 0.0f, -50.0f);
+  I->m_view.setOrigin(0.0f, 0.0f, 0.0f);
 
   I->m_view.m_clip.m_front = 40.0F;
   I->m_view.m_clip.m_back = 100.0F;
@@ -4838,9 +4820,11 @@ void SceneGetModel2WorldMatrix(PyMOLGlobals * G, float *matrix) {
     return;
 
   identity44f(matrix);
-  MatrixTranslateC44f(matrix, I->m_view.m_pos[0], I->m_view.m_pos[1], I->m_view.m_pos[2]);
-  MatrixMultiplyC44f(I->m_view.m_rotMatrix, matrix);
-  MatrixTranslateC44f(matrix, -I->m_view.m_origin[0], -I->m_view.m_origin[1], -I->m_view.m_origin[2]);
+  const auto& pos = I->m_view.pos();
+  const auto& ori = I->m_view.origin();
+  MatrixTranslateC44f(matrix, pos.x, pos.y, pos.z);
+  MatrixMultiplyC44f(glm::value_ptr(I->m_view.rotMatrix()), matrix);
+  MatrixTranslateC44f(matrix, -ori.x, -ori.y, -ori.z);
 }
 
 void SceneSetModel2WorldMatrix(PyMOLGlobals * G, float const *matrix) {
@@ -4851,17 +4835,16 @@ void SceneSetModel2WorldMatrix(PyMOLGlobals * G, float const *matrix) {
   // build inverse origin translate
   float invOriginTranslate[16];  
   identity44f(invOriginTranslate);
-  MatrixTranslateC44f(invOriginTranslate, I->m_view.m_origin[0], I->m_view.m_origin[1], I->m_view.m_origin[2]);
+  const auto& ori = I->m_view.origin();
+  MatrixTranslateC44f(invOriginTranslate, ori.x, ori.y, ori.z);
   // get shiftRot from m2wNew
   float temp[16];
   memcpy(temp, matrix, sizeof(temp));  
   MatrixMultiplyC44f(invOriginTranslate, temp);
+  I->m_view.setPos(temp[12], temp[13], temp[14]);
   // decompose shiftRot
-  memcpy(I->m_view.m_rotMatrix, temp, sizeof(I->m_view.m_rotMatrix));
-  I->m_view.m_rotMatrix[12] = I->m_view.m_rotMatrix[13] = I->m_view.m_rotMatrix[14] = 0.0f;
-  I->m_view.m_pos[0] = temp[12];
-  I->m_view.m_pos[1] = temp[13];
-  I->m_view.m_pos[2] = temp[14];
+  temp[12] = temp[13] = temp[14] = 0.0f;
+  I->m_view.setRotMatrix(glm::make_mat4(temp));
 }
 
 /**
@@ -5136,6 +5119,8 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
   CScene *I = G->Scene;
 
   float stAng, stShift;
+  const auto& pos = I->m_view.pos();
+  const auto& ori = I->m_view.origin();
 
 #ifdef _PYMOL_OPENVR
   bool isOpenVR = (stereo_mode == cStereo_openvr) && OpenVRReady(G);
@@ -5178,16 +5163,16 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
     }
 
     /* move the camera to the location we are looking at */
-    glTranslatef(I->m_view.m_pos[0], I->m_view.m_pos[1], I->m_view.m_pos[2]);
+    glTranslatef(pos.x, pos.y, pos.z);
 
     /* scale molecule */
     glScalef(I->Scale, I->Scale, I->Scale);
 
     /* rotate about the origin (the the center of rotation) */
-    glMultMatrixf(I->m_view.m_rotMatrix);
+    glMultMatrixf(glm::value_ptr(I->m_view.rotMatrix()));
 
     /* move the origin to the center of rotation */
-    glTranslatef(-I->m_view.m_origin[0], -I->m_view.m_origin[1], -I->m_view.m_origin[2]);
+    glTranslatef(-ori.x, -ori.y, -ori.z);
 
     // TODO don't do the immediate mode detour
     glGetFloatv(GL_PROJECTION_MATRIX, I->ProjectionMatrix);
@@ -5204,8 +5189,8 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
       stAng = SettingGetGlobal_f(G, cSetting_stereo_angle);// * cPI / 180.f;
       stShift = SettingGetGlobal_f(G, cSetting_stereo_shift);
 
-      stShift = (float) (stShift * fabs(I->m_view.m_pos[2]) / 100.0);
-      stAng = (float) (-stAng * atan(stShift / fabs(I->m_view.m_pos[2])) / 2.f);
+      stShift = (float) (stShift * fabs(pos.z) / 100.0);
+      stAng = (float) (-stAng * atan(stShift / fabs(pos.z)) / 2.f);
 
       if(mode == 2) {             /* left hand */
 	stAng = -stAng;
@@ -5218,10 +5203,10 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
       identity44f(tmpMatrix);
       identity44f(I->ModelViewMatrix);
       MatrixRotateC44f(I->ModelViewMatrix, stAng, 0.f, 1.f, 0.f);
-      MatrixTranslateC44f(tmpMatrix, I->m_view.m_pos[0] + stShift, I->m_view.m_pos[1], I->m_view.m_pos[2]);
+      MatrixTranslateC44f(tmpMatrix, pos.x + stShift, pos.y, pos.z);
       MatrixMultiplyC44f(tmpMatrix, I->ModelViewMatrix);
-      MatrixMultiplyC44f(I->m_view.m_rotMatrix, I->ModelViewMatrix);
-      MatrixTranslateC44f(I->ModelViewMatrix, -I->m_view.m_origin[0], -I->m_view.m_origin[1], -I->m_view.m_origin[2]);
+      MatrixMultiplyC44f(glm::value_ptr(I->m_view.rotMatrix()), I->ModelViewMatrix);
+      MatrixTranslateC44f(I->ModelViewMatrix, -ori.x, -ori.y, -ori.z);
 
     }
   }
@@ -5247,13 +5232,11 @@ void SceneRotate(
 {
   CScene *I = G->Scene;
   float temp[16];
-  int a;
   angle = (float) (-PI * angle / 180.0);
   identity44f(temp);
   MatrixRotateC44f(temp, angle, x, y, z);
-  MatrixMultiplyC44f(I->m_view.m_rotMatrix, temp);
-  for(a = 0; a < 16; a++)
-    I->m_view.m_rotMatrix[a] = temp[a];
+  MatrixMultiplyC44f(glm::value_ptr(I->m_view.rotMatrix()), temp);
+  I->m_view.setRotMatrix(glm::make_mat4(temp));
   SceneUpdateInvMatrix(G);
   if(dirty) {
     SceneInvalidate(G);
@@ -5279,14 +5262,16 @@ void SceneRotateAxis(PyMOLGlobals* G, float angle, char axis)
 void SceneApplyMatrix(PyMOLGlobals * G, float *m)
 {
   CScene *I = G->Scene;
-  MatrixMultiplyC44f(m, I->m_view.m_rotMatrix);
+  glm::mat4 rot;
+  MatrixMultiplyC44f(m, glm::value_ptr(rot));
+  I->m_view.setRotMatrix(rot);
   SceneDirty(G);
 
   /*  glPushMatrix();
      glLoadIdentity();
      glMultMatrixf(m);
-     glMultMatrixf(I->m_view.m_rotMatrix);
-     glGetFloatv(GL_MODELVIEW_MATRIX,I->m_view.m_rotMatrix);
+     glMultMatrixf(glm::value_ptr(I->m_view.rotMatrix()));
+     glGetFloatv(GL_MODELVIEW_MATRIX,glm::value_ptr(I->m_view.rotMatrix()));
      glPopMatrix(); */
 }
 
@@ -5303,7 +5288,7 @@ void SceneZoom(PyMOLGlobals * G, float scale){
   CScene *I = G->Scene;
   float factor = -((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2) * 0.1 * scale;
   /*    SettingGetGlobal_f(G, cSetting_mouse_wheel_scale); */
-  I->m_view.m_pos[2] += factor;
+  I->m_view.translate(0.0f, 0.0f, factor);
   I->m_view.m_clip.m_front -= factor;
   I->m_view.m_clip.m_back -= factor;
   UpdateFrontBackSafe(I);
@@ -5442,7 +5427,7 @@ void SceneTranslateSceneXYWithScale(PyMOLGlobals * G, float x, float y){
   old_back = I->m_view.m_clip.m_back;
   old_origin = -I->m_view.m_pos[2];
 
-  vScale = SceneGetExactScreenVertexScale(G, I->m_view.m_origin);
+  vScale = SceneGetExactScreenVertexScale(G, glm::value_ptr(I->m_view.origin()));
   /*  if(stereo_via_adjacent_array(I->StereoMode)) {
     x = get_stereo_x(x, &I->LastX, I->Width, NULL);
     }*/
@@ -5506,8 +5491,8 @@ void SceneGetScaledAxesAtPoint(PyMOLGlobals * G, float *pt, float *xn, float *yn
 
   v_scale = SceneGetScreenVertexScale(G, pt);
 
-  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, xn0, xn0);
-  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, yn0, yn0);
+  MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), xn0, xn0);
+  MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), yn0, yn0);
   scale3f(xn0, v_scale, xn);
   scale3f(yn0, v_scale, yn);
 }
@@ -5531,8 +5516,8 @@ void SceneGetScaledAxes(PyMOLGlobals * G, pymol::CObject *obj, float *xn, float 
 
   v_scale = SceneGetScreenVertexScale(G, vt);
 
-  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, xn0, xn0);
-  MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, yn0, yn0);
+  MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), xn0, xn0);
+  MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), yn0, yn0);
   scale3f(xn0, v_scale, xn);
   scale3f(yn0, v_scale, yn);
 }
@@ -5550,7 +5535,7 @@ void SceneGenerateMatrixToAnotherZFromZ(PyMOLGlobals *G, float *convMatrix, floa
   MatrixSetScaleC44f(scaleMatrix, pscale);
   identity44f(convMatrix);
   MatrixSetScaleC44f(convMatrix, 1.f/cscale);
-  MatrixMultiplyC44f(I->m_view.m_rotMatrix, convMatrix);
+  MatrixMultiplyC44f(glm::value_ptr(I->m_view.rotMatrix()), convMatrix);
   MatrixTranslateC44f(convMatrix, pt[0]-curpt[0], pt[1]-curpt[1], pt[2]-curpt[2]);
   MatrixMultiplyC44f(I->InvMatrix, convMatrix);
   MatrixMultiplyC44f(scaleMatrix, convMatrix);

@@ -692,7 +692,7 @@ static int SceneClick(
     v[0] = -(I->Width / 2 - (x - I->rect.left)) * vScale;
     v[1] = -(I->Height / 2 - (y - I->rect.bottom)) * vScale;
     v[2] = 0;
-    MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v, v);
+    MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v, v);
     add3f(v, I->LastClickVertex, I->LastClickVertex);
   }
 
@@ -732,7 +732,7 @@ static int SceneClick(
       {
         float old_front = I->m_view.m_clip.m_front;
         float old_back = I->m_view.m_clip.m_back;
-        float old_origin = -I->m_view.m_pos[2];
+        float old_origin = -I->m_view.pos().z;
         SceneClip(G, 6,
             0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL, 0);
         SceneDoRoving(G, old_front, old_back, old_origin, true, false);
@@ -743,7 +743,7 @@ static int SceneClick(
       {
         float old_front = I->m_view.m_clip.m_front;
         float old_back = I->m_view.m_clip.m_back;
-        float old_origin = -I->m_view.m_pos[2];
+        float old_origin = -I->m_view.pos().z;
 
         SceneClip(G, 6,
             -0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL, 0);
@@ -758,7 +758,7 @@ static int SceneClick(
                 2) *
             0.1 * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale);
         if (factor <= 0.0F) {
-          I->m_view.m_pos[2] += factor;
+          I->m_view.translate(0.0f, 0.0f, factor);
           I->m_view.m_clip.m_front -= factor;
           I->m_view.m_clip.m_back -= factor;
           UpdateFrontBackSafe(I);
@@ -772,7 +772,7 @@ static int SceneClick(
             ((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2) *
             0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale);
         if (factor >= 0.0F) {
-          I->m_view.m_pos[2] += factor;
+          I->m_view.translate(0.0f, 0.0f, factor);
           I->m_view.m_clip.m_front -= factor;
           I->m_view.m_clip.m_back -= factor;
           UpdateFrontBackSafe(I);
@@ -784,7 +784,7 @@ static int SceneClick(
       {
         float old_front = I->m_view.m_clip.m_front;
         float old_back = I->m_view.m_clip.m_back;
-        float old_origin = -I->m_view.m_pos[2];
+        float old_origin = -I->m_view.pos().z;
         SceneClip(G, 6,
             0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL, 0);
         SceneDoRoving(G, old_front, old_back, old_origin, true, true);
@@ -795,7 +795,7 @@ static int SceneClick(
       {
         float old_front = I->m_view.m_clip.m_front;
         float old_back = I->m_view.m_clip.m_back;
-        float old_origin = -I->m_view.m_pos[2];
+        float old_origin = -I->m_view.pos().z;
         SceneClip(G, 6,
             -0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL, 0);
         SceneDoRoving(G, old_front, old_back, old_origin, true, true);
@@ -1360,7 +1360,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
             v2[0] = (x - I->LastX) * vScale;
             v2[1] = (y - I->LastY) * vScale;
             v2[2] = 0;
-            MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
+            MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v2, v2);
             break;
           }
           add3f(v1, v2, v2);
@@ -1462,7 +1462,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
       theta = theta / (1.0F + (float) fabs(axis[2]));
 
       /* transform into model coodinate space */
-      MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, axis, v2);
+      MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), axis, v2);
       v1[0] = (float) (cPI * theta / 180.0);
       EditorDrag(G, NULL, -1, mode, SettingGetGlobal_i(G, cSetting_state) - 1,
           v1, v2, v3);
@@ -1479,7 +1479,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
       }
       if (!I->Threshold) {
 
-        copy3f(I->m_view.m_origin, v1);
+        copy3f(glm::value_ptr(I->m_view.origin()), v1);
         vScale = SceneGetExactScreenVertexScale(G, v1);
         if (stereo_via_adjacent_array(I->StereoMode)) {
           x = get_stereo_x(x, &I->LastX, I->Width, NULL);
@@ -1500,8 +1500,8 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
         v3[2] = 1.0F;
 
         /* transform into model coodinate space */
-        MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
-        MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v3, v3);
+        MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v2, v2);
+        MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v3, v3);
 
         EditorDrag(G, NULL, -1, mode, SettingGetGlobal_i(G, cSetting_state) - 1,
             v1, v2, v3);
@@ -1560,7 +1560,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
               v2[0] = (x - I->LastX) * vScale;
               v2[1] = (y - I->LastY) * vScale;
               v2[2] = 0;
-              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
+              MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v2, v2);
               break;
             }
             add3f(v1, v2, v2);
@@ -1606,8 +1606,8 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
               v3[2] = 1.0F;
 
               /* transform into model coodinate space */
-              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
-              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v3, v3);
+              MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v2, v2);
+              MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v3, v3);
 
               if (I->LastPicked.src.bond >= cPickableAtom) {
                 if ((mode != cButModeMoveAtom) && (mode != cButModeMoveAtomZ)) {
@@ -1679,8 +1679,8 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
               v3[2] = 1.0F;
 
               /* transform into model coodinate space */
-              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
-              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v3, v3);
+              MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v2, v2);
+              MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v3, v3);
 
               ObjectSliceDrag(slice, state, mode, v1, v2, v3);
             }
@@ -1715,8 +1715,8 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
               v3[2] = 1.0F;
 
               /* transform into model coodinate space */
-              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v2, v2);
-              MatrixInvTransformC44fAs33f3f(I->m_view.m_rotMatrix, v3, v3);
+              MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v2, v2);
+              MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v3, v3);
 
               if (I->LastPicked.src.bond == cPickableLabel) {
                 int log_trans =
@@ -1739,7 +1739,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
 
       SceneNoteMouseInteraction(G);
 
-      vScale = SceneGetExactScreenVertexScale(G, I->m_view.m_origin);
+      vScale = SceneGetExactScreenVertexScale(G, glm::value_ptr(I->m_view.origin()));
       if (stereo_via_adjacent_array(I->StereoMode)) {
 
         x = get_stereo_x(x, &I->LastX, I->Width, NULL);
@@ -1751,13 +1751,13 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
 
       moved_flag = false;
       if (I->LastX != x) {
-        I->m_view.m_pos[0] += v2[0];
+        I->m_view.translate(v2[0], 0.0f, 0.0f);
         I->LastX = x;
         SceneInvalidate(G);
         moved_flag = true;
       }
       if (I->LastY != y) {
-        I->m_view.m_pos[1] += v2[1];
+        I->m_view.translate(0.0f, v2[1], 0.0f);
         I->LastY = y;
         SceneInvalidate(G);
         moved_flag = true;
@@ -1879,7 +1879,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
 
       old_front = I->m_view.m_clip.m_front;
       old_back = I->m_view.m_clip.m_back;
-      old_origin = -I->m_view.m_pos[2];
+      old_origin = -I->m_view.pos().z;
 
       moved_flag = false;
       adjust_flag = false;
@@ -1922,10 +1922,10 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
             // the 5.0 min depth below is an empirical value
             float factor = SettingGetGlobal_f(G, cSetting_mouse_z_scale) *
                            (y - I->LastY) / 400.0 *
-                           std::max(5.f, -I->m_view.m_pos[2]);
+                           std::max(5.f, -I->m_view.pos().z);
             if (!SettingGetGlobal_b(G, cSetting_legacy_mouse_zoom))
               factor = -factor;
-            I->m_view.m_pos[2] += factor;
+            I->m_view.translate(0.0f, 0.0f, factor);
             I->m_view.m_clip.m_front -= factor;
             I->m_view.m_clip.m_back -= factor;
             UpdateFrontBackSafe(I);
