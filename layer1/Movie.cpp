@@ -41,6 +41,7 @@ Z* -------------------------------------------------------------------
 #include"Seq.h"
 #include"CGO.h"
 #include"MovieScene.h"
+#include"Feedback.h"
 
 #define cMovieDragModeMoveKey   1
 #define cMovieDragModeInsDel    2
