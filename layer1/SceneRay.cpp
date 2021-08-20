@@ -76,7 +76,7 @@ static void SceneRaySetRayView(PyMOLGlobals * G, CScene *I, int stereo_hand,
   
   if(Feedback(G, FB_Scene, FB_Debugging)) {
     const auto& pos = I->m_view.pos();
-    const auto& rotMat = I->m_view.rotMatrix();
+    const auto rotMat = glm::value_ptr(I->m_view.rotMatrix());
     fprintf(stderr, "SceneRay: %8.3f %8.3f %8.3f\n", pos.x, pos.y, pos.z);
     fprintf(stderr, "SceneRay: %8.3f %8.3f %8.3f\n",
 	    camOri.x, camOri.y, camOri.z);
