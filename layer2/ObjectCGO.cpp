@@ -666,7 +666,7 @@ ObjectCGO *ObjectCGODefine(PyMOLGlobals * G, ObjectCGO * obj, PyObject * pycgo, 
     state = I->State.size();
   }
   if(I->State.size() <= state) {
-    I->State.resize(size_n + 1, ObjectCGOState(G));
+    I->State.resize(state + 1, ObjectCGOState(G));
   }
 
   I->State[state].origCGO = nullptr;
