@@ -2554,7 +2554,7 @@ void SceneOriginSet(PyMOLGlobals * G, const float *origin, int preserve)
   if(preserve) {                /* preserve current viewing location */
     subtract3f(origin, glm::value_ptr(I->m_view.origin()), v0);  /* model-space translation */
     MatrixTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v0, glm::value_ptr(v1));   /* convert to view-space */
-    I->m_view.translate(glm::make_vec3(v1));  /* offset view to compensate */
+    I->m_view.translate(v1);  /* offset view to compensate */
   }
   I->m_view.setOrigin(origin[0], origin[1], origin[2]); /* move origin */
   SceneInvalidate(G);

@@ -1,7 +1,7 @@
 #include "SceneView.h"
 
 // #include <glm/ext/matrix_relational.hpp> // Ubuntu 18.04 doesn't have this in its glm
-#include <glm/ext/vector_relational.hpp>
+#include <glm/vector_relational.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -12,7 +12,7 @@ namespace pymol
 /**
  * Temp surrogate for glm::all(glm::equal(glm::mat4, glm::mat4, epsilon))
  */
-bool glm_mat4_equal(const glm::mat4& matA, const glm::mat4& matB, float epsilon)
+static bool glm_mat4_equal(const glm::mat4& matA, const glm::mat4& matB, float epsilon)
 {
   const auto ptrA = glm::value_ptr(matA);
   const auto ptrB = glm::value_ptr(matB);
@@ -23,13 +23,29 @@ bool glm_mat4_equal(const glm::mat4& matA, const glm::mat4& matB, float epsilon)
   }
   return true;
 }
+
+/**
+ * Temp surrogate for glm::all(glm::equal(glm::vec3, glm::vec3, epsilon))
+ */
+static bool glm_vec3_equal(const glm::vec3& vecA, const glm::vec3& vecB, float epsilon)
+{
+  const auto ptrA = glm::value_ptr(vecA);
+  const auto ptrB = glm::value_ptr(vecB);
+  for (int i = 0; i < 3; i++) {
+    if (!pymol::almost_equal(ptrA[i], ptrB[i], epsilon)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 } // namespace pymol
 
 bool SceneView::operator==(const SceneView& other) const
 {
   return pymol::glm_mat4_equal(m_rotMatrix, other.m_rotMatrix, 1e-3f) &&
-         glm::all(glm::equal(m_pos, other.m_pos, 1e-3f)) &&
-         glm::all(glm::equal(m_origin, other.m_origin, 1e-3f)) &&
+         pymol::glm_vec3_equal(m_pos, other.m_pos, 1e-3f) &&
+         pymol::glm_vec3_equal(m_origin, other.m_origin, 1e-3f) &&
          pymol::almost_equal(m_clip.m_front, other.m_clip.m_front) &&
          pymol::almost_equal(m_clip.m_back, other.m_clip.m_back) &&
          pymol::almost_equal(m_clipSafe.m_front, other.m_clipSafe.m_front) &&
