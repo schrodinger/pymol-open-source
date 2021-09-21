@@ -106,4 +106,6 @@ void ViewElemDrawBox(PyMOLGlobals *G, BlockRect *rect,int first, int last,
 void ViewElemDrawLabel(
     PyMOLGlobals* G, const char* label, const BlockRect* rect, CGO* orthoCGO);
 
+void TTTToViewElem(float *TTT, CViewElem * elem);
+void TTTFromViewElem(float *TTT, CViewElem * elem);
 #endif

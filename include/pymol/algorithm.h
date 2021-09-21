@@ -66,6 +66,28 @@ bool almost_equal(T a, U b, CommonT epsilon = 1e-6)
   return std::abs(a - b) <= epsilon;
 }
 
+/**
+ * @brief Checks whether two floating point ranges are nearly equal
+ * @param first iterator to beginning of first f.p. range
+ * @param second iterator to beginning of first f.p. range
+ * @param epsilon rounding cutoff
+ * @tparam InIter1 first floating point iterator type
+ * @tparam InIter2 second floating point iterator type
+ * @return true if all elements in the range are almost equal
+ */
+
+template <typename InIter1, typename InIter2>
+bool almost_equal_n(
+    InIter1 first1, std::size_t n, InIter2 first2, float epsilon = 1e-6)
+{
+  for (std::size_t n_count{0u}; n_count != n; ++first1, ++first2, ++n_count) {
+    if (!almost_equal(*first1, *first2, epsilon)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 namespace ranges
 {
 /**
