@@ -342,17 +342,17 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     }
     if(!SettingGetGlobal_b(G, cSetting_ortho)) {
 	double xmin, xmax, ymin, ymax;
-	ymax = I->m_view.m_clipSafe.m_front * GetFovWidth(G) / 2.0;
+	ymax = I->m_view.m_clipSafe().m_front * GetFovWidth(G) / 2.0;
 	ymin = -ymax;
 	xmin = ymin * aspRat;
 	xmax = ymax * aspRat;
         glFrustum44f(I->ProjectionMatrix, xmin, xmax, ymin, ymax,
-                     stereo_mode == cStereo_openvr ? 0.1f : I->m_view.m_clipSafe.m_front,
-                     I->m_view.m_clipSafe.m_back);
+                     stereo_mode == cStereo_openvr ? 0.1f : I->m_view.m_clipSafe().m_front,
+                     I->m_view.m_clipSafe().m_back);
     } else {
       height = std::max(R_SMALL4, -I->m_view.pos().z) * GetFovWidth(G) / 2.f;
       width = height * aspRat;
-      glOrtho44f(I->ProjectionMatrix, -width, width, -height, height, I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back);
+      glOrtho44f(I->ProjectionMatrix, -width, width, -height, height, I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back);
     }
 
 #ifndef PURE_OPENGL_ES_2
@@ -753,7 +753,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
   info.vertex_scale = I->VertexScale;
   info.fog_start = I->FogStart;
   info.fog_end = I->FogEnd;
-  info.front = I->m_view.m_clipSafe.m_front;
+  info.front = I->m_view.m_clipSafe().m_front;
   info.use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
 #if defined(_PYMOL_IOS) && !defined(_WEBGL)
   /* For now, on IOS, just crank up the sampling for text, 
@@ -782,12 +782,12 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
     stShift = (float) (stShift * fabs(I->m_view.pos().z) / 100.0);
     stAng = (float) (stAng * atan(stShift / fabs(I->m_view.pos().z)) * 90.0 / cPI);
     buffer = fabs(I->Width * I->VertexScale * tan(cPI * stAng / 180.0));
-    info.stereo_front = I->m_view.m_clipSafe.m_front + buffer;
+    info.stereo_front = I->m_view.m_clipSafe().m_front + buffer;
   } else {
-    info.stereo_front = I->m_view.m_clipSafe.m_front;
+    info.stereo_front = I->m_view.m_clipSafe().m_front;
   }
 
-  info.back = I->m_view.m_clipSafe.m_back;
+  info.back = I->m_view.m_clipSafe().m_back;
   SceneGetViewNormal(G, info.view_normal);
 
   if(info.alpha_cgo && (pass == RenderPass::Opaque)) {

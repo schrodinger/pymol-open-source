@@ -469,8 +469,8 @@ void SceneLoadAnimation(PyMOLGlobals * G, double duration, int hand)
  */
 void UpdateFrontBackSafe(CScene *I)
 {
-  float front = I->m_view.m_clip.m_front;
-  float back = I->m_view.m_clip.m_back;
+  float front = I->m_view.m_clip().m_front;
+  float back = I->m_view.m_clip().m_back;
 
   // minimum slab
   if(back - front < cSliceMin) {
@@ -488,8 +488,8 @@ void UpdateFrontBackSafe(CScene *I)
       back = front + cSliceMin;
   }
 
-  I->m_view.m_clipSafe.m_front = front;
-  I->m_view.m_clipSafe.m_back = back;
+  I->m_view.m_clipSafe().m_front = front;
+  I->m_view.m_clipSafe().m_back = back;
 }
 
 #define SELE_MODE_MAX 7
@@ -610,8 +610,8 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
   *(dp++) = (double) -ori.z;
 
   elem->clip_flag = true;
-  elem->front = I->m_view.m_clip.m_front * scale + dZ;
-  elem->back = I->m_view.m_clip.m_back * scale + dZ;
+  elem->front = I->m_view.m_clip().m_front * scale + dZ;
+  elem->back = I->m_view.m_clip().m_back * scale + dZ;
 
   elem->ortho_flag = true;
   elem->ortho = SettingGetGlobal_b(G, cSetting_ortho) ? fov : -fov;
@@ -639,7 +639,7 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf, IV: %11lf  ==>  EP: %11lf %11lf %11lf, EF/EB: %11lf %11lf, EV: %11lf\n",
     "SceneToViewElem",
     pos.x, pos.y, pos.z,
-    I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale,
+    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale,
     SettingGetGlobal_f(G, cSetting_field_of_view),
     elem->pre[0], elem->pre[1], elem->pre[2],
     elem->front, elem->back,
@@ -729,7 +729,7 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf, IV: %11lf  <==  EP: %11lf %11lf %11lf, EF/EB: %11lf %11lf, EV: %11lf\n",
     "SceneFromViewElem",
     pos.x, pos.y, pos.z,
-    I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale,
+    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale,
     SettingGetGlobal_f(G, cSetting_field_of_view),
     elem->pre[0], elem->pre[1], elem->pre[2],
     elem->front, elem->back,
@@ -913,15 +913,15 @@ void SceneGetView(PyMOLGlobals * G, SceneViewType view)
   *(p++) = ori.x;
   *(p++) = ori.y;
   *(p++) = ori.z;
-  *(p++) = I->m_view.m_clip.m_front * scale + dZ;
-  *(p++) = I->m_view.m_clip.m_back * scale + dZ;
+  *(p++) = I->m_view.m_clip().m_front * scale + dZ;
+  *(p++) = I->m_view.m_clip().m_back * scale + dZ;
   *(p++) = SettingGetGlobal_b(G, cSetting_ortho) ? fov : -fov;
 
 #ifdef _OPENVR_STEREO_DEBUG_VIEWS
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf, IV: %11lf  ==>  EP: %11lf %11lf %11lf, EF/EB: %11lf %11lf, EV: %11lf\n",
     "SceneGetView",
     pos.x, pos.y, pos.z,
-    I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale,
+    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale,
     SettingGetGlobal_f(G, cSetting_field_of_view),
     view[16], view[17], view[18],
     view[22], view[23],
@@ -1006,7 +1006,7 @@ void SceneSetView(PyMOLGlobals * G, const SceneViewType view,
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf, IV: %11lf  <==  EP: %11lf %11lf %11lf, EF/EB: %11lf %11lf, EV: %11lf\n",
     "SceneSetView",
     pos.x, pos.y, pos.z,
-    I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale,
+    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale,
     SettingGetGlobal_f(G, cSetting_field_of_view),
     view[16], view[17], view[18],
     view[22], view[23],
@@ -1050,7 +1050,7 @@ void ResetFovWidth(PyMOLGlobals * G, bool enableOpenVR, float fovNew) {
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  ==>\n",
     "ResetFovWidth BEFORE",
     pos.x, pos.y, pos.z
-    I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale
+    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale
   );
 #endif // _OPENVR_STEREO_DEBUG_VIEWS
 
@@ -1071,14 +1071,14 @@ void ResetFovWidth(PyMOLGlobals * G, bool enableOpenVR, float fovNew) {
   auto newZ = pos.z * scale * tanOld / tanNew;
 
   const float dZ = fabsf(pos.z) - distOld * scale;
-  I->m_view.m_clip.m_front = I->m_view.m_clip.m_front * scale + dZ;
-  I->m_view.m_clip.m_back = I->m_view.m_clip.m_back * scale + dZ;
+  I->m_view.m_clip().m_front = I->m_view.m_clip().m_front * scale + dZ;
+  I->m_view.m_clip().m_back = I->m_view.m_clip().m_back * scale + dZ;
 
 #ifdef _OPENVR_STEREO_DEBUG_VIEWS
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  <==\n",
     "ResetFovWidth AFTER",
     pos.x, pos.y, pos.z,
-    I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale
+    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale
   );
 #endif // _OPENVR_STEREO_DEBUG_VIEWS
   I->m_view.setPos(pos);
@@ -1158,7 +1158,7 @@ void SceneTranslate(PyMOLGlobals * G, float x, float y, float z)
 {
   CScene *I = G->Scene;
   I->m_view.translate(x, y, z);
-  SceneClipSet(G, I->m_view.m_clip.m_front - z, I->m_view.m_clip.m_back - z);
+  SceneClipSet(G, I->m_view.m_clip().m_front - z, I->m_view.m_clip().m_back - z);
 }
 
 void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_mode)
@@ -1175,12 +1175,12 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
       invalidate = true;
     }
     if(z != 0.0F) {
-      float factor = ((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2);        /* average distance within visible space */
+      float factor = ((I->m_view.m_clipSafe().m_front + I->m_view.m_clipSafe().m_back) / 2);        /* average distance within visible space */
       if(factor > 0.0F) {
         factor *= z;
         I->m_view.translate(0.0f, 0.0f, factor);
-        I->m_view.m_clip.m_front -= factor;
-        I->m_view.m_clip.m_back -= factor;
+        I->m_view.m_clip().m_front -= factor;
+        I->m_view.m_clip().m_back -= factor;
         UpdateFrontBackSafe(I);
       }
       invalidate = true;
@@ -1194,12 +1194,12 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
       invalidate = true;
     }
     if(z != 0.0F) {
-      float factor = ((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2);        /* average distance within visible space */
+      float factor = ((I->m_view.m_clipSafe().m_front + I->m_view.m_clipSafe().m_back) / 2);        /* average distance within visible space */
       if(factor > 0.0F) {
         factor *= z;
         {
-          float old_front = I->m_view.m_clip.m_front;
-          float old_back = I->m_view.m_clip.m_back;
+          float old_front = I->m_view.m_clip().m_front;
+          float old_back = I->m_view.m_clip().m_back;
           float old_origin = -I->m_view.pos().z;
           SceneClip(G, 7, factor, NULL, 0);
           SceneDoRoving(G, old_front, old_back, old_origin, true, true);
@@ -1328,8 +1328,8 @@ static void SceneClipSetWithDirty(PyMOLGlobals * G, float front, float back, int
     front = avg - minSlab / 2.0;
   }
 
-  I->m_view.m_clip.m_front = front;
-  I->m_view.m_clip.m_back = back;
+  I->m_view.m_clip().m_front = front;
+  I->m_view.m_clip().m_back = back;
 
   UpdateFrontBackSafe(I);
 
@@ -1382,13 +1382,13 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
   const auto& pos = I->m_view.pos();
   switch (plane) {
   case 0:                      /* near */
-    SceneClipSet(G, I->m_view.m_clip.m_front - movement, I->m_view.m_clip.m_back);
+    SceneClipSet(G, I->m_view.m_clip().m_front - movement, I->m_view.m_clip().m_back);
     break;
   case 1:                      /* far */
-    SceneClipSet(G, I->m_view.m_clip.m_front, I->m_view.m_clip.m_back - movement);
+    SceneClipSet(G, I->m_view.m_clip().m_front, I->m_view.m_clip().m_back - movement);
     break;
   case 2:                      /* move */
-    SceneClipSet(G, I->m_view.m_clip.m_front - movement, I->m_view.m_clip.m_back - movement);
+    SceneClipSet(G, I->m_view.m_clip().m_front - movement, I->m_view.m_clip().m_back - movement);
     break;
   case 3:                      /* slab */
     if(sele[0]) {
@@ -1402,7 +1402,7 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
     } else {
       sele = NULL;
     }
-    avg = (I->m_view.m_clip.m_front + I->m_view.m_clip.m_back) / 2.0F;
+    avg = (I->m_view.m_clip().m_front + I->m_view.m_clip().m_back) / 2.0F;
     movement /= 2.0F;
     if(sele) {
       avg = -pos.z - offset[2];
@@ -1438,8 +1438,8 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
     break;
   case 5:                      /* scaling */
     {
-      double avg = (I->m_view.m_clip.m_front / 2.0) + (I->m_view.m_clip.m_back / 2.0);
-      double width_half = I->m_view.m_clip.m_back - avg;
+      double avg = (I->m_view.m_clip().m_front / 2.0) + (I->m_view.m_clip().m_back / 2.0);
+      double width_half = I->m_view.m_clip().m_back - avg;
       double new_w_half = std::min(movement * width_half,
           width_half + 1000.0); // prevent exploding of clipping planes
 
@@ -1448,13 +1448,13 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
     break;
   case 6:                      /* proportional movement */
     {
-      float shift = (I->m_view.m_clip.m_front - I->m_view.m_clip.m_back) * movement;
-      SceneClipSet(G, I->m_view.m_clip.m_front + shift, I->m_view.m_clip.m_back + shift);
+      float shift = (I->m_view.m_clip().m_front - I->m_view.m_clip().m_back) * movement;
+      SceneClipSet(G, I->m_view.m_clip().m_front + shift, I->m_view.m_clip().m_back + shift);
     }
     break;
   case 7:                      /* linear movement */
     {
-      SceneClipSet(G, I->m_view.m_clip.m_front + movement, I->m_view.m_clip.m_back + movement);
+      SceneClipSet(G, I->m_view.m_clip().m_front + movement, I->m_view.m_clip().m_back + movement);
     }
     break;
   }
@@ -2440,7 +2440,7 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  ==>\n",
     "WindowSphere BEFORE",
     pos.x, pos.y, pos.z
-    I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale
+    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale
   );
 #endif // _OPENVR_STEREO_DEBUG_VIEWS
 
@@ -2470,8 +2470,8 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
 #endif
 
   pos.z -= dist;
-  I->m_view.m_clip.m_front = (-pos.z - radius * 1.2F);
-  I->m_view.m_clip.m_back = (-pos.z + radius * 1.2F);
+  I->m_view.m_clip().m_front = (-pos.z - radius * 1.2F);
+  I->m_view.m_clip().m_back = (-pos.z + radius * 1.2F);
   UpdateFrontBackSafe(I);
   SceneRovingDirty(G);
 
@@ -2479,7 +2479,7 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  ==>\n",
     "WindowSphere AFTER",
     pos.x, pos.y, pos.z
-    I->m_view.m_clip.m_front, I->m_view.m_clip.m_back, I->Scale
+    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale
   );
 #endif // _OPENVR_STEREO_DEBUG_VIEWS
   I->m_view.setPos(pos);
@@ -2493,7 +2493,7 @@ void SceneRelocate(PyMOLGlobals * G, const float *location)
   float v0[3];
   auto pos = I->m_view.pos();
 
-  auto slab_width = I->m_view.m_clip.m_back - I->m_view.m_clip.m_front;
+  auto slab_width = I->m_view.m_clip().m_back - I->m_view.m_clip().m_front;
 
   /* find out how far camera was from previous origin */
   auto dist = pos.z;
@@ -2505,7 +2505,7 @@ void SceneRelocate(PyMOLGlobals * G, const float *location)
   /* find where this point is in relationship to the origin */
   subtract3f(glm::value_ptr(I->m_view.origin()), location, v0);
 
-  /*  printf("%8.3f %8.3f %8.3f\n",I->m_view.m_clip.m_front,pos.z,I->m_view.m_clip.m_back); */
+  /*  printf("%8.3f %8.3f %8.3f\n",I->m_view.m_clip().m_front,pos.z,I->m_view.m_clip().m_back); */
 
   auto pos_ptr = glm::value_ptr(pos);
   MatrixTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v0, pos_ptr); /* convert to view-space */
@@ -2514,8 +2514,8 @@ void SceneRelocate(PyMOLGlobals * G, const float *location)
   if (I->StereoMode == cStereo_openvr) {
     pos += glm::vec3(0.0f, 1.0f, 0.0f);
   }
-  I->m_view.m_clip.m_front = (-pos.z - (slab_width * 0.50F));
-  I->m_view.m_clip.m_back = (-pos.z + (slab_width * 0.50F));
+  I->m_view.m_clip().m_front = (-pos.z - (slab_width * 0.50F));
+  I->m_view.m_clip().m_back = (-pos.z + (slab_width * 0.50F));
   I->m_view.setPos(pos);
   UpdateFrontBackSafe(I);
   SceneRovingDirty(G);
@@ -3355,23 +3355,23 @@ void SceneDoRoving(PyMOLGlobals * G, float old_front,
 
     z_buffer = SettingGetGlobal_f(G, cSetting_roving_origin_z_cushion);
 
-    delta_front = I->m_view.m_clip.m_front - old_front;
-    delta_back = I->m_view.m_clip.m_back - old_back;
+    delta_front = I->m_view.m_clip().m_front - old_front;
+    delta_back = I->m_view.m_clip().m_back - old_back;
 
     zero3f(v2);
 
-    slab_width = I->m_view.m_clip.m_back - I->m_view.m_clip.m_front;
+    slab_width = I->m_view.m_clip().m_back - I->m_view.m_clip().m_front;
 
     /* first, check to make sure that the origin isn't too close to either plane */
     if((z_buffer * 2) > slab_width)
       z_buffer = slab_width * 0.5F;
 
-    if(old_origin < (I->m_view.m_clip.m_front + z_buffer)) {    /* old origin behind front plane */
+    if(old_origin < (I->m_view.m_clip().m_front + z_buffer)) {    /* old origin behind front plane */
       front_weight = 1.0F;
-      delta_front = (I->m_view.m_clip.m_front + z_buffer) - old_origin; /* move origin into allowed regioin */
-    } else if(old_origin > (I->m_view.m_clip.m_back - z_buffer)) {      /* old origin was behind back plane */
+      delta_front = (I->m_view.m_clip().m_front + z_buffer) - old_origin; /* move origin into allowed regioin */
+    } else if(old_origin > (I->m_view.m_clip().m_back - z_buffer)) {      /* old origin was behind back plane */
       front_weight = 0.0F;
-      delta_back = (I->m_view.m_clip.m_back - z_buffer) - old_origin;
+      delta_back = (I->m_view.m_clip().m_back - z_buffer) - old_origin;
 
     } else if(slab_width >= R_SMALL4) { /* otherwise, if slab exists */
       front_weight = (old_back - old_origin) / slab_width;      /* weight based on relative proximity */
@@ -3413,9 +3413,9 @@ void SceneDoRoving(PyMOLGlobals * G, float old_front,
        */
       float delta = old_pos2 - I->m_view.pos().z;
       I->m_view.translate(0, 0, delta);
-      SceneClipSet(G, I->m_view.m_clip.m_front - delta, I->m_view.m_clip.m_back - delta);
+      SceneClipSet(G, I->m_view.m_clip().m_front - delta, I->m_view.m_clip().m_back - delta);
     }
-    slab_width = I->m_view.m_clip.m_back - I->m_view.m_clip.m_front;
+    slab_width = I->m_view.m_clip().m_back - I->m_view.m_clip().m_front;
 
     /* first, check to make sure that the origin isn't too close to either plane */
     if((z_buffer * 2) > slab_width)
@@ -3494,7 +3494,7 @@ bool SceneGetVisible(PyMOLGlobals * G, const float *v1)
 {
   CScene *I = G->Scene;
   float depth = SceneGetRawDepth(G, v1);
-  return (I->m_view.m_clipSafe.m_back >= depth && depth >= I->m_view.m_clipSafe.m_front);
+  return (I->m_view.m_clipSafe().m_back >= depth && depth >= I->m_view.m_clipSafe().m_front);
 }
 
 /**
@@ -3527,7 +3527,7 @@ float SceneGetDepth(PyMOLGlobals * G, const float *v1)
 {
   CScene *I = G->Scene;
   float rawDepth = SceneGetRawDepth(G, v1);
-  return ((rawDepth - I->m_view.m_clipSafe.m_front)/(I->m_view.m_clipSafe.m_back-I->m_view.m_clipSafe.m_front));
+  return ((rawDepth - I->m_view.m_clipSafe().m_front)/(I->m_view.m_clipSafe().m_back-I->m_view.m_clipSafe().m_front));
 }
 
 /*========================================================================*/
@@ -4090,8 +4090,8 @@ void SceneSetDefaultView(PyMOLGlobals * G)
   I->m_view.setPos(0.0f, 0.0f, -50.0f);
   I->m_view.setOrigin(0.0f, 0.0f, 0.0f);
 
-  I->m_view.m_clip.m_front = 40.0F;
-  I->m_view.m_clip.m_back = 100.0F;
+  I->m_view.m_clip().m_front = 40.0F;
+  I->m_view.m_clip().m_back = 100.0F;
   UpdateFrontBackSafe(I);
 
   I->Scale = 1.0F;
@@ -5030,11 +5030,11 @@ int SceneSetFog(PyMOLGlobals *G){
   CScene *I = G->Scene;
   int fog_active = false;
   float fog_density = SettingGetGlobal_f(G, cSetting_fog);
-  I->FogStart = (I->m_view.m_clipSafe.m_back - I->m_view.m_clipSafe.m_front) * SettingGetGlobal_f(G, cSetting_fog_start) + I->m_view.m_clipSafe.m_front;
+  I->FogStart = (I->m_view.m_clipSafe().m_back - I->m_view.m_clipSafe().m_front) * SettingGetGlobal_f(G, cSetting_fog_start) + I->m_view.m_clipSafe().m_front;
   if((fog_density > R_SMALL8) && (fog_density != 1.0F)) {
-    I->FogEnd = I->FogStart + (I->m_view.m_clipSafe.m_back - I->FogStart) / fog_density;
+    I->FogEnd = I->FogStart + (I->m_view.m_clipSafe().m_back - I->FogStart) / fog_density;
   } else {
-    I->FogEnd = I->m_view.m_clipSafe.m_back;
+    I->FogEnd = I->m_view.m_clipSafe().m_back;
   }
   
   if(SettingGetGlobal_b(G, cSetting_depth_cue) && fog_density != 0.0F) {
@@ -5134,7 +5134,7 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
     if (!mode) {
       // average projection matrix for picking
       glMatrixMode(GL_PROJECTION);
-      OpenVRLoadPickingProjectionMatrix(G, I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back);
+      OpenVRLoadPickingProjectionMatrix(G, I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back);
 
       // mono matrix for picking
       glMatrixMode(GL_MODELVIEW);
@@ -5142,7 +5142,7 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
 
     } else {
       glMatrixMode(GL_PROJECTION);
-      OpenVRLoadProjectionMatrix(G, I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back);
+      OpenVRLoadProjectionMatrix(G, I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back);
 
       glMatrixMode(GL_MODELVIEW);
       OpenVRLoadWorld2EyeMatrix(G);
@@ -5154,8 +5154,8 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
       float const *mol2world = OpenVRGetMolecule2WorldMatrix(G, &scaler);
       // save old plane shifts
       float dist = fabsf(pos.z);
-      float frontShift = fabsf(dist - I->m_view.m_clip.m_front);
-      float backShift = fabsf(dist - I->m_view.m_clip.m_back);
+      float frontShift = fabsf(dist - I->m_view.m_clip().m_front);
+      float backShift = fabsf(dist - I->m_view.m_clip().m_back);
       // apply new transform to molecule
       SceneSetModel2WorldMatrix(G, mol2world);
       SceneScale(G, scaler);
@@ -5288,11 +5288,11 @@ void SceneScale(PyMOLGlobals * G, float scale)
 
 void SceneZoom(PyMOLGlobals * G, float scale){
   CScene *I = G->Scene;
-  float factor = -((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2) * 0.1 * scale;
+  float factor = -((I->m_view.m_clipSafe().m_front + I->m_view.m_clipSafe().m_back) / 2) * 0.1 * scale;
   /*    SettingGetGlobal_f(G, cSetting_mouse_wheel_scale); */
   I->m_view.translate(0.0f, 0.0f, factor);
-  I->m_view.m_clip.m_front -= factor;
-  I->m_view.m_clip.m_back -= factor;
+  I->m_view.m_clip().m_front -= factor;
+  I->m_view.m_clip().m_back -= factor;
   UpdateFrontBackSafe(I);
   SceneInvalidate(G);
 }
@@ -5426,8 +5426,8 @@ void SceneTranslateSceneXYWithScale(PyMOLGlobals * G, float x, float y){
   float old_front, old_back, old_origin;
   auto pos = I->m_view.pos();
 
-  old_front = I->m_view.m_clip.m_front;
-  old_back = I->m_view.m_clip.m_back;
+  old_front = I->m_view.m_clip().m_front;
+  old_back = I->m_view.m_clip().m_back;
   old_origin = -pos.z;
 
   vScale = SceneGetExactScreenVertexScale(G, glm::value_ptr(I->m_view.origin()));
@@ -5547,9 +5547,9 @@ void SceneGenerateMatrixToAnotherZFromZ(PyMOLGlobals *G, float *convMatrix, floa
 
 void SceneAdjustZtoScreenZ(PyMOLGlobals *G, float *pos, float zarg){
   CScene *I = G->Scene;
-  float clipRange = (I->m_view.m_clipSafe.m_back-I->m_view.m_clipSafe.m_front);
+  float clipRange = (I->m_view.m_clipSafe().m_back-I->m_view.m_clipSafe().m_front);
   float z = (zarg + 1.f) / 2.f;
-  float zInPreProj = -(z * clipRange + I->m_view.m_clipSafe.m_front);
+  float zInPreProj = -(z * clipRange + I->m_view.m_clipSafe().m_front);
   float pos4[4], tpos[4], npos[4];
   float InvModMatrix[16];
   copy3f(pos, pos4);
@@ -5594,11 +5594,11 @@ void SceneSetPointToWorldScreenRelative(PyMOLGlobals *G, float *pos, float *scre
 
 float SceneGetCurrentBackSafe(PyMOLGlobals *G){
   CScene *I = G->Scene;
-  return (I->m_view.m_clipSafe.m_back);
+  return (I->m_view.m_clipSafe().m_back);
 }
 float SceneGetCurrentFrontSafe(PyMOLGlobals *G){
   CScene *I = G->Scene;
-  return (I->m_view.m_clipSafe.m_front);
+  return (I->m_view.m_clipSafe().m_front);
 }
 
 /**
@@ -5635,7 +5635,7 @@ void ScenePickAtomInWorld(PyMOLGlobals * G, int x, int y, float *atomWorldPos) {
 }
 
 void CScene::setSceneView(const SceneView& view) {
-  m_view = view;
+  m_view.setView(view);
   SceneInvalidate(m_G);
 }
 SceneElem::SceneElem(std::string name_, bool drawn_)

@@ -226,8 +226,8 @@ bool SceneRay(PyMOLGlobals * G,
 
         if(ortho) {
           const float _1 = 1.0F;
-          RayPrepare(ray, -width, width, -height, height, I->m_view.m_clipSafe.m_front,
-                     I->m_view.m_clipSafe.m_back, fov, I->m_view.pos(), rayView, I->m_view.rotMatrix(),
+          RayPrepare(ray, -width, width, -height, height, I->m_view.m_clipSafe().m_front,
+                     I->m_view.m_clipSafe().m_back, fov, I->m_view.pos(), rayView, I->m_view.rotMatrix(),
                      aspRat, ray_width, ray_height, 
                      pixel_scale_value, ortho, _1, _1,      
                      ((float) ray_height) / I->Height);
@@ -238,23 +238,23 @@ bool SceneRay(PyMOLGlobals * G,
           float pos;
           pos = I->m_view.pos().z;
 
-          if((-pos) < I->m_view.m_clipSafe.m_front) {
-            pos = -I->m_view.m_clipSafe.m_front;
+          if((-pos) < I->m_view.m_clipSafe().m_front) {
+            pos = -I->m_view.m_clipSafe().m_front;
           }
 
-          back_ratio = -I->m_view.m_clipSafe.m_back / pos;
+          back_ratio = -I->m_view.m_clipSafe().m_back / pos;
           back_height = back_ratio * height;
           back_width = aspRat * back_height;
           RayPrepare(ray,
                      -back_width, back_width,
                      -back_height, back_height,
-                     I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back,
+                     I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back,
                      fov, I->m_view.pos(),
                      rayView, I->m_view.rotMatrix(), aspRat,
                      ray_width, ray_height,
                      pixel_scale_value, ortho,
                      height / back_height,
-                     I->m_view.m_clipSafe.m_front / I->m_view.m_clipSafe.m_back, ((float) ray_height) / I->Height);
+                     I->m_view.m_clipSafe().m_front / I->m_view.m_clipSafe().m_back, ((float) ray_height) / I->Height);
         }
       }
       {
@@ -383,7 +383,7 @@ bool SceneRay(PyMOLGlobals * G,
         charVLA = VLACalloc(char, 100000);
         headerVLA = VLACalloc(char, 2000);
         RayRenderPOV(ray, ray_width, ray_height, &headerVLA, &charVLA,
-                     I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back, fov, angle, antialias);
+                     I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov, angle, antialias);
         if(!(charVLA_ptr && headerVLA_ptr)) {   /* immediate mode */
           strcpy(prefix, SettingGet_s(G, NULL, NULL, cSetting_batch_prefix));
 #ifndef _PYMOL_NOPY
@@ -402,12 +402,12 @@ bool SceneRay(PyMOLGlobals * G,
         }
         break;
       case 2:                  /* mode 2 is for testing of geometries */
-        RayRenderTest(ray, ray_width, ray_height, I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back, fov);
+        RayRenderTest(ray, ray_width, ray_height, I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov);
         break;
       case 3:                  /* mode 3 is for Jmol */
         {
           G3dPrimitive *jp =
-            RayRenderG3d(ray, ray_width, ray_height, I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back, fov,
+            RayRenderG3d(ray, ray_width, ray_height, I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov,
                          quiet);
           if(0) {
             int cnt = VLAGetSize(jp);
@@ -442,7 +442,7 @@ bool SceneRay(PyMOLGlobals * G,
         {
           char *vla = VLACalloc(char, 100000);
           RayRenderVRML2(ray, ray_width, ray_height, &vla,
-                         I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back, fov, angle, I->m_view.pos().z);
+                         I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov, angle, I->m_view.pos().z);
           *charVLA_ptr = vla;
         }
         break;
@@ -451,7 +451,7 @@ bool SceneRay(PyMOLGlobals * G,
           char *objVLA = VLACalloc(char, 100000);
           char *mtlVLA = VLACalloc(char, 1000);
           RayRenderObjMtl(ray, ray_width, ray_height, &objVLA, &mtlVLA,
-                          I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back, fov, angle, I->m_view.pos().z);
+                          I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov, angle, I->m_view.pos().z);
           *headerVLA_ptr = objVLA;
           *charVLA_ptr = mtlVLA;
         }
@@ -460,7 +460,7 @@ bool SceneRay(PyMOLGlobals * G,
         {
           char *vla = VLACalloc(char, 100000);
           RayRenderVRML1(ray, ray_width, ray_height, &vla,
-                         I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back, fov, angle, I->m_view.pos().z);
+                         I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov, angle, I->m_view.pos().z);
           *charVLA_ptr = vla;
         }
         break;
@@ -475,7 +475,7 @@ bool SceneRay(PyMOLGlobals * G,
         {
           *charVLA_ptr = VLACalloc(char, 100000);
           RayRenderCOLLADA(ray, ray_width, ray_height, charVLA_ptr,
-                            I->m_view.m_clipSafe.m_front, I->m_view.m_clipSafe.m_back, fov);
+                            I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov);
         }
         break;
 

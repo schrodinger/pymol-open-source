@@ -730,8 +730,8 @@ static int SceneClick(
     case cButModeMoveSlabForward:
       SceneNoteMouseInteraction(G);
       {
-        float old_front = I->m_view.m_clip.m_front;
-        float old_back = I->m_view.m_clip.m_back;
+        float old_front = I->m_view.m_clip().m_front;
+        float old_back = I->m_view.m_clip().m_back;
         float old_origin = -I->m_view.pos().z;
         SceneClip(G, 6,
             0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL, 0);
@@ -741,8 +741,8 @@ static int SceneClick(
     case cButModeMoveSlabBackward:
       SceneNoteMouseInteraction(G);
       {
-        float old_front = I->m_view.m_clip.m_front;
-        float old_back = I->m_view.m_clip.m_back;
+        float old_front = I->m_view.m_clip().m_front;
+        float old_back = I->m_view.m_clip().m_back;
         float old_origin = -I->m_view.pos().z;
 
         SceneClip(G, 6,
@@ -754,13 +754,13 @@ static int SceneClick(
       SceneNoteMouseInteraction(G);
       {
         float factor =
-            -((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) /
+            -((I->m_view.m_clipSafe().m_front + I->m_view.m_clipSafe().m_back) /
                 2) *
             0.1 * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale);
         if (factor <= 0.0F) {
           I->m_view.translate(0.0f, 0.0f, factor);
-          I->m_view.m_clip.m_front -= factor;
-          I->m_view.m_clip.m_back -= factor;
+          I->m_view.m_clip().m_front -= factor;
+          I->m_view.m_clip().m_back -= factor;
           UpdateFrontBackSafe(I);
         }
       }
@@ -769,12 +769,12 @@ static int SceneClick(
       SceneNoteMouseInteraction(G);
       {
         float factor =
-            ((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) / 2) *
+            ((I->m_view.m_clipSafe().m_front + I->m_view.m_clipSafe().m_back) / 2) *
             0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale);
         if (factor >= 0.0F) {
           I->m_view.translate(0.0f, 0.0f, factor);
-          I->m_view.m_clip.m_front -= factor;
-          I->m_view.m_clip.m_back -= factor;
+          I->m_view.m_clip().m_front -= factor;
+          I->m_view.m_clip().m_back -= factor;
           UpdateFrontBackSafe(I);
         }
       }
@@ -782,8 +782,8 @@ static int SceneClick(
     case cButModeMoveSlabAndZoomForward:
       SceneNoteMouseInteraction(G);
       {
-        float old_front = I->m_view.m_clip.m_front;
-        float old_back = I->m_view.m_clip.m_back;
+        float old_front = I->m_view.m_clip().m_front;
+        float old_back = I->m_view.m_clip().m_back;
         float old_origin = -I->m_view.pos().z;
         SceneClip(G, 6,
             0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL, 0);
@@ -793,8 +793,8 @@ static int SceneClick(
     case cButModeMoveSlabAndZoomBackward:
       SceneNoteMouseInteraction(G);
       {
-        float old_front = I->m_view.m_clip.m_front;
-        float old_back = I->m_view.m_clip.m_back;
+        float old_front = I->m_view.m_clip().m_front;
+        float old_back = I->m_view.m_clip().m_back;
         float old_origin = -I->m_view.pos().z;
         SceneClip(G, 6,
             -0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL, 0);
@@ -1877,8 +1877,8 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
                    cPI);
       normalize23f(cp, axis2);
 
-      old_front = I->m_view.m_clip.m_front;
-      old_back = I->m_view.m_clip.m_back;
+      old_front = I->m_view.m_clip().m_front;
+      old_back = I->m_view.m_clip().m_back;
       old_origin = -I->m_view.pos().z;
 
       moved_flag = false;
@@ -1926,8 +1926,8 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
             if (!SettingGetGlobal_b(G, cSetting_legacy_mouse_zoom))
               factor = -factor;
             I->m_view.translate(0.0f, 0.0f, factor);
-            I->m_view.m_clip.m_front -= factor;
-            I->m_view.m_clip.m_back -= factor;
+            I->m_view.m_clip().m_front -= factor;
+            I->m_view.m_clip().m_back -= factor;
             UpdateFrontBackSafe(I);
           }
           I->LastY = y;
@@ -1937,34 +1937,34 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
         break;
       case cButModeClipNF:
         if (I->LastX != x) {
-          I->m_view.m_clip.m_back -= (((float) x) - I->LastX) / 10;
+          I->m_view.m_clip().m_back -= (((float) x) - I->LastX) / 10;
           I->LastX = x;
           moved_flag = true;
         }
         if (I->LastY != y) {
-          I->m_view.m_clip.m_front -= (((float) y) - I->LastY) / 10;
+          I->m_view.m_clip().m_front -= (((float) y) - I->LastY) / 10;
           I->LastY = y;
           moved_flag = true;
         }
         if (moved_flag) {
-          SceneClipSet(G, I->m_view.m_clip.m_front, I->m_view.m_clip.m_back);
+          SceneClipSet(G, I->m_view.m_clip().m_front, I->m_view.m_clip().m_back);
         }
         break;
       case cButModeClipN:
         if (I->LastX != x || I->LastY != y) {
-          I->m_view.m_clip.m_front -= (x - I->LastX + y - I->LastY) / 10.f;
+          I->m_view.m_clip().m_front -= (x - I->LastX + y - I->LastY) / 10.f;
           I->LastX = x;
           I->LastY = y;
-          SceneClipSet(G, I->m_view.m_clip.m_front, I->m_view.m_clip.m_back);
+          SceneClipSet(G, I->m_view.m_clip().m_front, I->m_view.m_clip().m_back);
           moved_flag = true;
         }
         break;
       case cButModeClipF:
         if (I->LastX != x || I->LastY != y) {
-          I->m_view.m_clip.m_back -= (x - I->LastX + y - I->LastY) / 10.f;
+          I->m_view.m_clip().m_back -= (x - I->LastX + y - I->LastY) / 10.f;
           I->LastX = x;
           I->LastY = y;
-          SceneClipSet(G, I->m_view.m_clip.m_front, I->m_view.m_clip.m_back);
+          SceneClipSet(G, I->m_view.m_clip().m_front, I->m_view.m_clip().m_back);
           moved_flag = true;
         }
         break;
@@ -2014,7 +2014,7 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
         if (I->LastY != y) {
           factor =
               400 /
-              ((I->m_view.m_clipSafe.m_front + I->m_view.m_clipSafe.m_back) /
+              ((I->m_view.m_clipSafe().m_front + I->m_view.m_clipSafe().m_back) /
                   2);
           if (factor >= 0.0F) {
             factor = SettingGetGlobal_f(G, cSetting_mouse_z_scale) *

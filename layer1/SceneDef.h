@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"SceneView.h"
 #include"Rect.h"
 #include "Deferred.h"
+#include "Camera.h"
 #include<list>
 #include<vector>
 
@@ -98,7 +99,7 @@ typedef struct {
 class CScene : public Block {
  public:
   std::list<pymol::CObject*> Obj, GadgetObjs, NonGadgetObjs;
-  SceneView m_view{};
+  pymol::Camera m_view{};
   float InvMatrix[16]{};          /* WARNING: column major, as per OpenGL spec */
   float PmvMatrix[16]{};
   float Scale{1.0F};
@@ -202,7 +203,7 @@ class CScene : public Block {
   virtual void draw(CGO* orthoCGO) override;
   virtual void reshape(int width, int height) override;
 
-  SceneView getSceneView() const { return m_view; }
+  SceneView getSceneView() const { return m_view.getView(); }
   void setSceneView(const SceneView& view);
 };
 
