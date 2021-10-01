@@ -93,19 +93,21 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
   MovieClearImages(G);
   if( (ok = ViewElemModify(G,&I->ViewElem, action, index, count, target)) ) {
     switch(action) {
-    case cViewElemModifyInsert: 
-      I->Sequence.insert(index, count);
-      I->Cmd.insert(I->Cmd.begin() + index, count, "");
-      I->NFrame = VLAGetSize(I->Sequence);
-      {
-        int frame = SceneGetFrame(G);
-        if(frame >= index) {
-          SceneSetFrame(G,0,frame + count);
+    case cViewElemModifyInsert:
+      if (index >= 0 && index < I->NFrame) {
+        I->Sequence.insert(index, count);
+        I->Cmd.insert(I->Cmd.begin() + index, count, "");
+        I->NFrame = VLAGetSize(I->Sequence);
+        {
+          int frame = SceneGetFrame(G);
+          if (frame >= index) {
+            SceneSetFrame(G, 0, frame + count);
+          }
         }
       }
       break;
     case cViewElemModifyDelete:
-      {
+      if (index >= 0 && index < I->NFrame) {
         I->Sequence.erase(index, count);
         int end_pos = std::min(index + count, static_cast<int>(I->Cmd.size()));
         I->Cmd.erase(I->Cmd.begin() + index, I->Cmd.begin() + end_pos);
