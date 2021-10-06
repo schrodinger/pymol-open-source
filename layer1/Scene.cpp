@@ -1049,7 +1049,7 @@ void ResetFovWidth(PyMOLGlobals * G, bool enableOpenVR, float fovNew) {
 #ifdef _OPENVR_STEREO_DEBUG_VIEWS
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  ==>\n",
     "ResetFovWidth BEFORE",
-    pos.x, pos.y, pos.z
+    pos.x, pos.y, pos.z,
     I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale
   );
 #endif // _OPENVR_STEREO_DEBUG_VIEWS
@@ -2439,7 +2439,7 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
 #ifdef _OPENVR_STEREO_DEBUG_VIEWS
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  ==>\n",
     "WindowSphere BEFORE",
-    pos.x, pos.y, pos.z
+    pos.x, pos.y, pos.z,
     I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale
   );
 #endif // _OPENVR_STEREO_DEBUG_VIEWS
@@ -2478,7 +2478,7 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
 #ifdef _OPENVR_STEREO_DEBUG_VIEWS
   printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  ==>\n",
     "WindowSphere AFTER",
-    pos.x, pos.y, pos.z
+    pos.x, pos.y, pos.z,
     I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale
   );
 #endif // _OPENVR_STEREO_DEBUG_VIEWS
