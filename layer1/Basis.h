@@ -38,6 +38,10 @@ Z* -------------------------------------------------------------------
 
 */
 
+#ifdef None
+#undef None
+#endif
+
 enum class cCylCap {
   None = 0,
   Flat = 1,
