@@ -153,7 +153,7 @@ bool CWizard::isEventType(cWizEvent_t eventType) const noexcept
 
 template<typename Func, typename... FuncArgs>
 auto WizardCallPython(PyMOLGlobals* G, PyObject* wiz, const char* funcName, Func&& func, FuncArgs&&... fargs)
-  -> pymol::result_of_t<Func(PyObject*, const char*, FuncArgs...)>
+  -> decltype(func(std::declval<PyObject*>(), std::declval<const char*>(), fargs...))
 {
   using result_t = decltype(func(std::declval<PyObject*>(), std::declval<const char*>(), fargs...));
   result_t result{};
