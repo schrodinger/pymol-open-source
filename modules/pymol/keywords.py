@@ -100,6 +100,7 @@ def get_command_keywords(self_cmd=cmd):
         'get_area'      : [ self_cmd.get_area          , 0 , 0 , ''  , parsing.STRICT ],
         'get_bond'      : [ self_cmd.get_bond          , 0 , 0 , ''  , parsing.STRICT ],
         'get_chains'    : [ self_cmd.get_chains        , 0 , 0 , ''  , parsing.STRICT ],
+        'get_clip'      : [ self_cmd.get_clip          , 0 , 0 , ''  , parsing.STRICT ],
         'get_dihedral'  : [ self_cmd.get_dihedral      , 0 , 0 , ''  , parsing.STRICT ],
         'get_distance'  : [ self_cmd.get_distance      , 0 , 0 , ''  , parsing.STRICT ],
         'get_extent'    : [ self_cmd.get_extent        , 0 , 0 , ''  , parsing.STRICT ],

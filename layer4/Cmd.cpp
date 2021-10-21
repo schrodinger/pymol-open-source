@@ -5074,6 +5074,16 @@ static PyObject *CmdClip(PyObject * self, PyObject * args)
   return APIResult(G, result);
 }
 
+static PyObject* CmdGetClip(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  API_SETUP_ARGS(G, self, args, "O", &self);
+  APIEnter(G);
+  auto result = SceneGetClip(G);
+  APIExit(G);
+  return APIResult(G, result);
+}
+
 static PyObject *CmdMove(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -6320,6 +6330,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_busy", CmdGetBusy, METH_VARARGS},
   {"get_chains", CmdGetChains, METH_VARARGS},
   {"get_click_string", CmdGetClickString, METH_VARARGS},
+  {"get_clip", CmdGetClip, METH_VARARGS},
   {"get_collada", CmdGetCOLLADA, METH_VARARGS},
   {"get_color", CmdGetColor, METH_VARARGS},
   {"get_colorection", CmdGetColorection, METH_VARARGS},

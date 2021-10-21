@@ -47,13 +47,18 @@ Z* -------------------------------------------------------------------
 #define SceneScrollBarWidth DIP2PIXEL(13)
 #define SceneGetExactScreenVertexScale SceneGetScreenVertexScale
 
-enum cSceneClip {
-  cSceneClip_invalid = -1,
-  cSceneClip_near = 0,
-  cSceneClip_far = 1,
-  cSceneClip_move = 2,
-  cSceneClip_slab = 3,
-  cSceneClip_atoms = 4,
+enum class SceneClipMode {
+  Invalid = -1,
+  Near = 0,
+  Far = 1,
+  Move = 2,
+  Slab = 3,
+  Atoms = 4,
+  Scaling = 5,
+  Proportional = 6,
+  Linear = 7,
+  Near_Set = 8,
+  Far_Set = 9,
 };
 
 float SceneGetDynamicLineWidth(RenderInfo * info, float line_width);
@@ -119,9 +124,10 @@ void SceneTranslate(PyMOLGlobals * G, float x, float y, float z);
 void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_mode);
 void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_mode);
 
-void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, int state);
+void SceneClip(PyMOLGlobals * G, SceneClipMode plane, float movement, const char *sele, int state);
 pymol::Result<> SceneClipFromMode(PyMOLGlobals* G, pymol::zstring_view mode, float movement,
     pymol::zstring_view sele, int state);
+pymol::Result<std::pair<float, float>> SceneGetClip(PyMOLGlobals* G);
 std::pair<int, int> SceneGetImageSize(PyMOLGlobals * G);
 float SceneGetGridAspectRatio(PyMOLGlobals * G);
 void SceneScale(PyMOLGlobals * G, float scale);

@@ -1201,7 +1201,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
           float old_front = I->m_view.m_clip().m_front;
           float old_back = I->m_view.m_clip().m_back;
           float old_origin = -I->m_view.pos().z;
-          SceneClip(G, 7, factor, NULL, 0);
+          SceneClip(G, SceneClipMode::Linear, factor, nullptr, 0);
           SceneDoRoving(G, old_front, old_back, old_origin, true, true);
         }
         invalidate = true;
@@ -1279,7 +1279,7 @@ void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_
       SceneRotate(G, 60 * angle, axis[0], axis[1], axis[2]);
     }
     if(axis[2] != rz) {
-      SceneClip(G, 5, 1.0F + rz, NULL, 0);
+      SceneClip(G, SceneClipMode::Scaling, 1.0F + rz, nullptr, 0);
     }
     break;
   case SDOF_DRAG_MODE:
@@ -1348,25 +1348,29 @@ void SceneClipSet(PyMOLGlobals * G, float front, float back)
 
 
 /*========================================================================*/
-static cSceneClip SceneClipGetEnum(pymol::zstring_view mode)
+static SceneClipMode SceneClipGetEnum(pymol::zstring_view mode)
 {
-  static const std::unordered_map<pymol::zstring_view, cSceneClip> modes{
-      {"near", cSceneClip_near},
-      {"far", cSceneClip_far},
-      {"move", cSceneClip_move},
-      {"slab", cSceneClip_slab},
-      {"atoms", cSceneClip_atoms},
+  static const std::unordered_map<pymol::zstring_view, SceneClipMode> modes{
+      {"near", SceneClipMode::Near},
+      {"far", SceneClipMode::Far},
+      {"move", SceneClipMode::Move},
+      {"slab", SceneClipMode::Slab},
+      {"atoms", SceneClipMode::Atoms},
+      {"scaling", SceneClipMode::Scaling},
+      {"linear", SceneClipMode::Linear},
+      {"near_set", SceneClipMode::Near_Set},
+      {"far_set", SceneClipMode::Far_Set},
   };
 
   auto it = modes.find(mode);
-  return (it == modes.end()) ? cSceneClip_invalid : it->second;
+  return (it == modes.end()) ? SceneClipMode::Invalid : it->second;
 }
 
 pymol::Result<> SceneClipFromMode(PyMOLGlobals* G, pymol::zstring_view mode, float movement,
     pymol::zstring_view sele, int state)
 {
   auto plane = SceneClipGetEnum(mode);
-  if (plane == cSceneClip_invalid) {
+  if (plane == SceneClipMode::Invalid) {
     return pymol::Error("invalid clip mode");
   }
   SceneClip(G, plane, movement, sele.c_str(), state);
@@ -1374,23 +1378,23 @@ pymol::Result<> SceneClipFromMode(PyMOLGlobals* G, pymol::zstring_view mode, flo
 }
 
 /*========================================================================*/
-void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, int state)
+void SceneClip(PyMOLGlobals * G, SceneClipMode mode, float movement, const char *sele, int state)
 {                               /* 0=front, 1=back */
   CScene *I = G->Scene;
   float avg;
   float mn[3], mx[3], cent[3], v0[3], offset[3], origin[3];
   const auto& pos = I->m_view.pos();
-  switch (plane) {
-  case 0:                      /* near */
+  switch (mode) {
+  case SceneClipMode::Near:
     SceneClipSet(G, I->m_view.m_clip().m_front - movement, I->m_view.m_clip().m_back);
     break;
-  case 1:                      /* far */
+  case SceneClipMode::Far:
     SceneClipSet(G, I->m_view.m_clip().m_front, I->m_view.m_clip().m_back - movement);
     break;
-  case 2:                      /* move */
+  case SceneClipMode::Move:
     SceneClipSet(G, I->m_view.m_clip().m_front - movement, I->m_view.m_clip().m_back - movement);
     break;
-  case 3:                      /* slab */
+  case SceneClipMode::Slab:
     if(sele[0]) {
       if(!ExecutiveGetExtent(G, sele, mn, mx, true, state, false))
         sele = NULL;
@@ -1409,7 +1413,7 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
     }
     SceneClipSet(G, avg - movement, avg + movement);
     break;
-  case 4:                      /* atoms */
+  case SceneClipMode::Atoms:
     if(!sele)
       sele = cKeywordAll;
     else if(!sele[0]) {
@@ -1436,7 +1440,7 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
       }
     }
     break;
-  case 5:                      /* scaling */
+  case SceneClipMode::Scaling:
     {
       double avg = (I->m_view.m_clip().m_front / 2.0) + (I->m_view.m_clip().m_back / 2.0);
       double width_half = I->m_view.m_clip().m_back - avg;
@@ -1446,20 +1450,41 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
       SceneClipSet(G, avg - new_w_half, avg + new_w_half);
     }
     break;
-  case 6:                      /* proportional movement */
+  case SceneClipMode::Proportional:
     {
       float shift = (I->m_view.m_clip().m_front - I->m_view.m_clip().m_back) * movement;
       SceneClipSet(G, I->m_view.m_clip().m_front + shift, I->m_view.m_clip().m_back + shift);
     }
     break;
-  case 7:                      /* linear movement */
+  case SceneClipMode::Linear:
     {
       SceneClipSet(G, I->m_view.m_clip().m_front + movement, I->m_view.m_clip().m_back + movement);
+    }
+    break;
+  case SceneClipMode::Near_Set:
+    {
+      SceneClipSet(G, movement, I->m_view.m_clip().m_back);
+    }
+    break;
+  case SceneClipMode::Far_Set:
+    {
+      SceneClipSet(G, I->m_view.m_clip().m_front, movement);
     }
     break;
   }
 }
 
+/**
+ * Retrieves clipping plane distances from camera
+ * @return near and far clipping plane distances
+ * @TODO: Needs camera param index when multiple cameras are implemented
+ * @TODO: Return error when camera idx found.
+ */
+pymol::Result<std::pair<float, float>> SceneGetClip(PyMOLGlobals* G)
+{
+  auto clip = G->Scene->getSceneView().m_clip;
+  return std::make_pair(clip.m_front, clip.m_back);
+}
 
 /*========================================================================*/
 void SceneSetMatrix(PyMOLGlobals * G, float *m)

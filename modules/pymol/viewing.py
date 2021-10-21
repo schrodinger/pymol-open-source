@@ -224,6 +224,34 @@ SEE ALSO
                           str(selection),int(state)-1)
         return r
 
+    def get_clip(quiet: int = 1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_clip" returns the positions of the clipping planes.
+
+USAGE
+
+    get_clip
+
+ARGUMENTS
+
+EXAMPLES
+
+PYMOL API
+
+    cmd.get_clip()
+
+SEE ALSO
+
+    clip
+        '''
+        with _self.lockcm:
+            r = _cmd.get_clip(_self._COb)
+            if not quiet:
+                print(r)
+            return r
+
     def origin(selection="(all)", object=None, position=None, state=0, *, _self=cmd):
         '''
 DESCRIPTION

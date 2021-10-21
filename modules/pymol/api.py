@@ -362,6 +362,7 @@ from .viewing import \
       enable,             \
       full_screen,        \
       get_colorection,    \
+      get_clip,           \
       get_view,           \
       get_viewport,       \
       get_vis,            \

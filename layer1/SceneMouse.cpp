@@ -717,15 +717,15 @@ static int SceneClick(
     switch (mode) {
     case cButModeScaleSlabExpand:
       SceneNoteMouseInteraction(G);
-      SceneClip(G, 5,
+      SceneClip(G, SceneClipMode::Scaling,
           1.0F + (0.2 * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale)),
-          NULL, 0);
+          nullptr, 0);
       break;
     case cButModeScaleSlabShrink:
       SceneNoteMouseInteraction(G);
-      SceneClip(G, 5,
+      SceneClip(G, SceneClipMode::Scaling,
           1.0F - (0.2 * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale)),
-          NULL, 0);
+          nullptr, 0);
       break;
     case cButModeMoveSlabForward:
       SceneNoteMouseInteraction(G);
@@ -733,8 +733,8 @@ static int SceneClick(
         float old_front = I->m_view.m_clip().m_front;
         float old_back = I->m_view.m_clip().m_back;
         float old_origin = -I->m_view.pos().z;
-        SceneClip(G, 6,
-            0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL, 0);
+        SceneClip(G, SceneClipMode::Proportional,
+            0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), nullptr, 0);
         SceneDoRoving(G, old_front, old_back, old_origin, true, false);
       }
       break;
@@ -745,8 +745,8 @@ static int SceneClick(
         float old_back = I->m_view.m_clip().m_back;
         float old_origin = -I->m_view.pos().z;
 
-        SceneClip(G, 6,
-            -0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL, 0);
+        SceneClip(G, SceneClipMode::Proportional,
+            -0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), nullptr, 0);
         SceneDoRoving(G, old_front, old_back, old_origin, true, false);
       }
       break;
@@ -785,8 +785,8 @@ static int SceneClick(
         float old_front = I->m_view.m_clip().m_front;
         float old_back = I->m_view.m_clip().m_back;
         float old_origin = -I->m_view.pos().z;
-        SceneClip(G, 6,
-            0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL, 0);
+        SceneClip(G, SceneClipMode::Proportional,
+            0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), nullptr, 0);
         SceneDoRoving(G, old_front, old_back, old_origin, true, true);
       }
       break;
@@ -796,8 +796,8 @@ static int SceneClick(
         float old_front = I->m_view.m_clip().m_front;
         float old_back = I->m_view.m_clip().m_back;
         float old_origin = -I->m_view.pos().z;
-        SceneClip(G, 6,
-            -0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), NULL, 0);
+        SceneClip(G, SceneClipMode::Proportional,
+            -0.1F * SettingGetGlobal_f(G, cSetting_mouse_wheel_scale), nullptr, 0);
         SceneDoRoving(G, old_front, old_back, old_origin, true, true);
       }
       break;
