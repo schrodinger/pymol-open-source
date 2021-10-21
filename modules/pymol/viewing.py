@@ -175,7 +175,7 @@ SEE ALSO
             r = _cmd.center(_self._COb,str(selection),int(state)-1,int(origin),float(animate))
         return r
 
-    clip_action_sc = Shortcut([ 'near','far','move','slab','atoms' ])
+    clip_action_sc = Shortcut([ 'near','far','move','slab','atoms', 'near_set', 'far_set' ])
 
     def clip(mode, distance, selection=None, state=0, *, _self=cmd):
         '''
