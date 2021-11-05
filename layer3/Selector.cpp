@@ -7602,7 +7602,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
   case SELE_GIDz:
     for(a = cNDummyAtoms; a < I->Table.size(); a++)
       base[0].sele[a] =
-        I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].flags & cAtomFlag_guide;
+        bool(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].flags & cAtomFlag_guide);
     break;
 
   case SELE_PREz:
