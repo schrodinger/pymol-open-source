@@ -2817,13 +2817,25 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
   auto gap_cutoff =
     SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cartoon_gap_cutoff);
 
+  /**
+   * JJ: I think this for loop is a bit ill conceived. Nuc_acid_data
+   * skips over consideration of invisible cartoons, which has historically
+   * worked since it's compensated for later, but this approach doesn't consider
+   * the difference between removed vs hidden residues which can have different
+   * representations. For now, use this flag to track hidden (but valid atoms) cartoons,
+   * which should be skipped and not dashed. Removed residues should be dashed.
+   * See PYMOL-3168
+   */
+  bool invisFound = false;
   // iterate over (sorted) atoms
   for(CoordSetAtomIterator iter(cs); iter.next();) {
     ai = iter.getAtomInfo();
 
     // cartoon rep for this atom?
-    if(!(*(lv++) = GET_BIT(ai->visRep, cRepCartoon)))
+    if(!(*(lv++) = GET_BIT(ai->visRep, cRepCartoon))) {
+      invisFound = true;
       continue;
+    }
 
     const char * ai_name = LexStr(G, ai->name);
 
@@ -2897,7 +2909,9 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
         if (delta < 1 || delta > gap_cutoff || !AtomInfoSameChainP(G, ai, last_ai)) {
           ndata->a2 = -1;
         } else {
-          (ndata->cc - 1)->setCCOut(cCartoon_dash);
+          auto gapRep = invisFound ? cCartoon_skip : cCartoon_dash;
+          (ndata->cc - 1)->setCCOut(gapRep);
+          invisFound = false;
         }
       }
 
