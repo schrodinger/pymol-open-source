@@ -1061,7 +1061,15 @@ DESCRIPTION
     _self.enable(name)
 
 
-def get_sasa_relative(selection='all', state=1, vis=-1, var='b', quiet=1, outfile='', _self=cmd):
+def get_sasa_relative(selection='all',
+                      state=1,
+                      vis=-1,
+                      var='b',
+                      quiet=1,
+                      outfile='',
+                      *,
+                      subsele='all',
+                      _self=cmd):
     '''
 DESCRIPTION
 
@@ -1092,10 +1100,18 @@ ARGUMENTS
 
     outfile = str: filename, write to file instead of log window {default: }
 
+    subsele = str: Sub-selection, e.g. "sidechain" {default: all}
+
 EXAMPLE
 
     fetch 1ubq, async=0
     get_sasa_relative polymer
+
+    # side-chain exposure, excluding C-alpha atom
+    get_sasa_relative polymer, subsele=sidechain
+
+    # side-chain exposure, including C-alpha atom
+    get_sasa_relative polymer, subsele=sidechain guide
 
 PYTHON API
 
@@ -1124,14 +1140,16 @@ SEE ALSO
             _self.get_area('?%s & ?%s' % (sele, model), state, load_b=1)
 
         resarea = collections.defaultdict(float)
-        _self.iterate(sele, 'resarea[model,segi,chain,resi] += b', space=locals())
+        _self.iterate(f"{sele} & ({subsele})",
+                      'resarea[model,segi,chain,resi] += b',
+                      space=locals())
 
         for key in resarea:
             _self.create(tripepname, 'byres (/%s/%s/%s/`%s extend 1)' % key, state, 1, zoom=0)
             _self.get_area(tripepname, 1, load_b=1)
 
             resarea_exposed = [0.0]
-            _self.iterate('/' + tripepname + '/%s/%s/`%s' % key[1:],
+            _self.iterate(f"/{tripepname}/{key[1]}/{key[2]}/`{key[3]} & ({subsele})",
                     'resarea_exposed[0] += b', space=locals())
             _self.delete(tripepname)
 
