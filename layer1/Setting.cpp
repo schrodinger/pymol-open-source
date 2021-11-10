@@ -639,6 +639,7 @@ static bool is_session_blacklisted(int index) {
   case cSetting_cylinder_shader_ff_workaround:
   case cSetting_defer_updates:
   case cSetting_fast_idle:
+  case cSetting_fetch_path:
   case cSetting_internal_feedback:
   case cSetting_internal_gui:
   case cSetting_internal_prompt:
