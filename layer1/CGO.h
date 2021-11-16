@@ -20,7 +20,6 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"Ray.h"
 #include"Setting.h"
-#include"os_gl.h"
 #include"os_gl_cgo.h"
 #include"Rep.h"
 #include"MemoryDebug.h"
@@ -270,6 +269,13 @@ inline uchar CLIP_NORMAL_VALUE(float cv){ return ((cv>1.f) ? 127 :
 
 extern int CGO_sz[];
 size_t CGO_sz_size();
+
+// I think CGO rendering functions should not modify CGO's, so the
+// data pointer should be const. Current exception: `pickcolorsset`
+#define CGO_OP_DATA_CONST const
+typedef CGO_OP_DATA_CONST float* const* CGO_op_data;
+typedef void CGO_op(CCGORenderer * I, CGO_op_data);
+typedef CGO_op *CGO_op_fn;
 
 // CGOs are floating point arrays so we need to work with sizes in terms of floats
 template <typename T>
@@ -863,8 +869,6 @@ private:
   std::vector<std::unique_ptr<float[]>> _data_heap;
 };
 
-int CGORendererInit(PyMOLGlobals * G);
-void CGORendererFree(PyMOLGlobals * G);
 #define CGONew new CGO
 #define CGONewSized CGONew
 int CGOGetExtent(const CGO * I, float *mn, float *mx);
@@ -1107,5 +1111,29 @@ CGO *CGOConvertShaderCylindersToCylinderShader(const CGO *I, CGO *addTo);
 
 void AssignNewPickColor(CGO* cgo, PickColorManager*, unsigned char* color,
     const PickContext* context, unsigned int index, int bond);
+
+constexpr int VerticesPerSphere() {
+#if defined(PURE_OPENGL_ES_2)
+  return 6;
+#else
+  return 4;
+#endif
+}
+
+constexpr int NumVerticesPerCylinder() {
+#if defined(_PYMOL_IOS) && !defined(_WEBGL)
+  return 4;
+#else
+  return 8;
+#endif
+}
+
+constexpr int NumTotalVerticesPerCylinder() {
+#if defined(_PYMOL_IOS) && !defined(_WEBGL)
+ return 6;
+#else
+ return 36;
+#endif
+}
 
 #endif

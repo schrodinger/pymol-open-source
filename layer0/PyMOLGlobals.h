@@ -66,7 +66,7 @@ struct CControl;
 struct CButMode;
 class COrtho;
 typedef struct _CWord CWord;
-typedef struct _CCGORenderer CCGORenderer;
+struct CCGORenderer;
 typedef struct _CCharacter CCharacter;
 struct CPop;
 class CScene;

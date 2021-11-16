@@ -64,6 +64,7 @@
 #include "Lex.h"
 #include "SelectorDef.h"
 #include "ButMode.h"
+#include "CGORenderer.h"
 
 #ifdef _PYMOL_OPENVR
 #include "OpenVRMode.h"

@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"View.h"
 #include"Image.h"
+#include "Picking.h"
 #include"ScrollBar.h"
 #include"SceneElem.h"
 #include"SceneView.h"
