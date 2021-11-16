@@ -8073,7 +8073,7 @@ static void ExecutiveRenderIndicatorCGO(PyMOLGlobals * G, CGO *selIndicatorsCGO)
   shaderPrg->Set4f("viewport", v[0], v[1], v[2], v[3]);
   if(no_depth)
     glDisable(GL_DEPTH_TEST);
-  CGORenderGL(selIndicatorsCGO, NULL, NULL, NULL, NULL, NULL);
+  CGORender(selIndicatorsCGO, NULL, NULL, NULL, NULL, NULL);
   if(no_depth)
     glEnable(GL_DEPTH_TEST);
   glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);

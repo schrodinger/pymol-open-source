@@ -248,7 +248,7 @@ static void ObjectCGORenderState(PyMOLGlobals* G, RenderPass pass, CRay* ray,
       PickContext context;
       context.object = I;
       context.state = sobj - I->State.data();
-      CGORenderGLPicking(sobj->renderCGO.get(), info, &context, I->Setting.get(), nullptr);
+      CGORenderPicking(sobj->renderCGO.get(), info, &context, I->Setting.get(), nullptr);
     } else if (pass != RenderPass::Antialias) {
       bool pass_is_opaque = pass == RenderPass::Opaque;
       if(sobj && ((sobj->hasTransparency ^ pass_is_opaque) || (sobj->hasOpaque == pass_is_opaque))){
@@ -288,12 +288,12 @@ static void ObjectCGORenderState(PyMOLGlobals* G, RenderPass pass, CRay* ray,
 	    shaderPrg->Set1i("two_sided_lighting_enabled", two_sided_lighting);
 	    sobj->renderCGO->use_shader = use_shader;
 	    sobj->renderCGO->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
-	    CGORenderGL(sobj->renderCGO.get(), color, I->Setting.get(), NULL, info, NULL);
+	    CGORender(sobj->renderCGO.get(), color, I->Setting.get(), NULL, info, NULL);
 	    shaderPrg->Disable();
 	  } else {
 	    sobj->renderCGO->use_shader = use_shader;
 	    sobj->renderCGO->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
-	    CGORenderGL(sobj->renderCGO.get(), color, I->Setting.get(), NULL, info, NULL);
+	    CGORender(sobj->renderCGO.get(), color, I->Setting.get(), NULL, info, NULL);
 	  }
 	    if (backface_cull){
 	      glDisable(GL_CULL_FACE);

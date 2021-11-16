@@ -253,7 +253,7 @@ void RepDihedral::render(RenderInfo * info)
 	  }
 	  ok &= RepDihedralCGOGenerate(I, info);
 	} else {
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
 	  return;
 	}
       }
@@ -299,7 +299,7 @@ void RepDihedral::render(RenderInfo * info)
       if (use_shader) {
 	
 	if (ok) {
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
 	}
       }
     }

@@ -1474,8 +1474,8 @@ void bg_grad(PyMOLGlobals * G) {
 		   tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)tmpImg.bits());
     }
     if (ok && I->bgCGO) {
-       	CGORenderGL(I->bgCGO, NULL, NULL, NULL, NULL, NULL);
-	glEnable(GL_DEPTH_TEST);
+      CGORender(I->bgCGO, NULL, NULL, NULL, NULL, NULL);
+      glEnable(GL_DEPTH_TEST);
     }
   }
 
@@ -2001,9 +2001,9 @@ void OrthoRenderCGO(PyMOLGlobals * G){
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     if (I->orthoCGO)
-      CGORenderGL(I->orthoCGO, NULL, NULL, NULL, NULL, NULL);
+      CGORender(I->orthoCGO, NULL, NULL, NULL, NULL, NULL);
     if (I->orthoFastCGO)
-      CGORenderGL(I->orthoFastCGO, NULL, NULL, NULL, NULL, NULL);
+      CGORender(I->orthoFastCGO, NULL, NULL, NULL, NULL, NULL);
     G->ShaderMgr->Disable_Current_Shader();
     glEnable(GL_DEPTH_TEST);
   }

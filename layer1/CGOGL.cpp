@@ -2082,7 +2082,7 @@ void CGORenderGLPicking(CGO* I, RenderInfo* info, PickContext* context,
             // not used anymore.
             PRINTFB(I->G, FB_CGO, FB_Errors)
             " FIXME: SUPPOSEDLY UNUSED CODE EXECUTED in "
-            "CGORenderGLPicking!\n" ENDFB(I->G);
+            "CGORenderPicking(!\n" ENDFB(I->G);
           } else {
             if (op == CGO_DRAW_CUSTOM) {
               ploffsetforbuf =
@@ -2153,7 +2153,7 @@ void CGORenderGL(CGO* I, const float* color, CSetting* set1, CSetting* set2,
     // for now, the render_alpha_only flag calls CGOSetZVector/CGORenderGLAlpha
     float* ModMatrix = SceneGetModMatrix(G);
     CGOSetZVector(I, ModMatrix[2], ModMatrix[6], ModMatrix[10]);
-    CGORenderGLAlpha(I, info, 1);
+    CGORenderAlpha(I, info, 1);
     if (I->render_alpha == 1) // right now, render_alpha 1: renders alpha only,
                               // 2: renders both alpha and rest
       return;

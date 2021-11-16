@@ -86,10 +86,10 @@ void RepEllipsoid::render(RenderInfo* info)
 
     if(pick) {
       if(I->shaderCGO) {
-        CGORenderGLPicking(I->shaderCGO, info, &I->context,
+        CGORenderPicking(I->shaderCGO, info, &I->context,
                            I->cs->Setting.get(), I->obj->Setting.get());
       } else if(I->std) {
-        CGORenderGLPicking(I->std, info, &I->context,
+        CGORenderPicking(I->std, info, &I->context,
                            I->cs->Setting.get(), I->obj->Setting.get());
       }
     } else {
@@ -108,9 +108,9 @@ void RepEllipsoid::render(RenderInfo* info)
 	  CGOFree(I->shaderCGO);	  
 	}
 	if (I->shaderCGO){
-          CGORenderGL(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+          CGORender(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
 	} else if(I->std){
-          CGORenderGL(I->std, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+          CGORender(I->std, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
 	}
     }
   }

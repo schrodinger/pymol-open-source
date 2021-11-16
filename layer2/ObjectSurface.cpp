@@ -876,7 +876,7 @@ static void ObjectSurfaceRenderCell(PyMOLGlobals *G, ObjectSurface * I,
       ms->UnitCellCGO.reset(CrystalGetUnitCellCGO(&ms->Crystal));
     }
   }
-  CGORenderGL(ms->UnitCellCGO.get(), color,
+  CGORender(ms->UnitCellCGO.get(), color,
               I->Setting.get(), NULL, info, NULL);
 }
 
@@ -928,7 +928,7 @@ void ObjectSurface::render(RenderInfo * info)
             }
 
             if (ms->shaderCGO){
-              CGORenderGL(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
+              CGORender(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
               continue;
             }
             
@@ -965,7 +965,7 @@ void ObjectSurface::render(RenderInfo * info)
                 ms->shaderCGO.reset(convertcgo);
               }
               ms->shaderCGO->use_shader = true;              
-              CGORenderGL(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
+              CGORender(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
             } else {
               if (alpha != 1.0){
                 // use_shader = 0
@@ -974,7 +974,7 @@ void ObjectSurface::render(RenderInfo * info)
                 ms->shaderCGO->render_alpha = 1;
               }
               ms->shaderCGO->use_shader = false;
-              CGORenderGL(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
+              CGORender(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
             }
           }
         }

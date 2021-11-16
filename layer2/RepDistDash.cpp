@@ -208,7 +208,7 @@ void RepDistDash::render(RenderInfo* info)
 	  }
 	  RepDistDashCGOGenerate(I);
 	} else if (ok) {
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
 	  return;
 	}
       }
@@ -313,7 +313,7 @@ void RepDistDash::render(RenderInfo* info)
 	}
 	
 	if (ok) {
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
 	}
       }
     }

@@ -1636,7 +1636,7 @@ void RepSurface::render(RenderInfo* info)
       // unpickable surfaces to write the depth buffer and prevent
       // through-picking.
       if (I->pickingCGO && !(I->pickingCGO->no_pick && alpha < 1.F)) {
-	CGORenderGLPicking(I->pickingCGO, info, &I->context, cs->Setting.get(), obj->Setting.get());
+	CGORenderPicking(I->pickingCGO, info, &I->context, cs->Setting.get(), obj->Setting.get());
       }
     } else {
 
@@ -1656,7 +1656,7 @@ void RepSurface::render(RenderInfo* info)
 
         if (ok && I->shaderCGO) {
           const float *color = ColorGet(G, obj->Color);
-          CGORenderGL(I->shaderCGO, color, NULL, NULL, info, I);
+          CGORender(I->shaderCGO, color, NULL, NULL, info, I);
           return;
         }
 

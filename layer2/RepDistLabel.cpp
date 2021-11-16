@@ -118,7 +118,7 @@ void RepDistLabel::render(RenderInfo* info)
       if (I->shaderCGO){
         if(float_text)
           glDisable(GL_DEPTH_TEST);
-	CGORenderGLPicking(I->shaderCGO, info, &I->context, NULL, NULL);
+	CGORenderPicking(I->shaderCGO, info, &I->context, NULL, NULL);
         if(float_text)
           glEnable(GL_DEPTH_TEST);
 	return;
@@ -164,9 +164,9 @@ void RepDistLabel::render(RenderInfo* info)
 	  }
 	} else {
 	    info->texture_font_size = I->texture_font_size;
-	    CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
-	  return;
-	}
+	    CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
+	    return;
+	  }
 	} else if (I->shaderCGO){
 	  CGOFree(I->shaderCGO);
 	  if(float_text)

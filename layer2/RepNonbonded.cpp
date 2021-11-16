@@ -211,12 +211,12 @@ void RepNonbonded::render(RenderInfo* info)
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
-      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
+      CGORenderPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
     } else {
       /* not pick, but render */
       bool use_shader = SettingGetGlobal_b(G, cSetting_nonbonded_use_shader) && SettingGetGlobal_b(G, cSetting_use_shaders);
       if (!use_shader){
-        CGORenderGL(I->primitiveCGO, NULL, NULL, NULL, info, I);
+        CGORender(I->primitiveCGO, NULL, NULL, NULL, info, I);
         return;
       }
       bool nonbonded_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_nonbonded_as_cylinders);
@@ -238,7 +238,7 @@ void RepNonbonded::render(RenderInfo* info)
         }
         ok &= RepNonbondedCGOGenerate(I, info);
       }
-      CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
+      CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
     }
   }
 }

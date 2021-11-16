@@ -410,7 +410,7 @@ void RepMesh::render(RenderInfo* info)
 	    I->shaderCGO->use_shader = true;
 	  generate_shader_cgo = 1;
 	} else if (ok) {
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
 	  return;
 	}
       }
@@ -527,7 +527,7 @@ void RepMesh::render(RenderInfo* info)
 	  {
 	    const float *color;
 	    color = ColorGet(G, I->obj->Color);
-	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, I);
+	    CGORender(I->shaderCGO, color, NULL, NULL, info, I);
 	  }
 	}
       }

@@ -283,7 +283,7 @@ void RepAngle::render(RenderInfo* info)
           }
 	  ok &= RepAngleCGOGenerate(I, info);
    	} else {
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
 	  return;
 	}
       }
@@ -291,7 +291,7 @@ void RepAngle::render(RenderInfo* info)
       if (!generate_shader_cgo) {
 	RepAngleRenderImmediate(I, info, color, dash_transparency_enabled, dash_transparency);
       } else {
-	CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
+	CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
       }
     }
   }

@@ -1596,7 +1596,7 @@ void EditorRender(PyMOLGlobals * G, int state)
       if (!I->shaderCGO){
 	shaderCGO = CGONew(G);
       } else {
-	CGORenderGL(I->shaderCGO, NULL, NULL, NULL, NULL, NULL);
+	CGORender(I->shaderCGO, NULL, NULL, NULL, NULL, NULL);
 	return;
       }
     } else {
@@ -1692,7 +1692,7 @@ void EditorRender(PyMOLGlobals * G, int state)
       }
       CGOFree(shaderCGO);
       if (ok){
-	CGORenderGL(I->shaderCGO, NULL, NULL, NULL, NULL, NULL);
+	CGORender(I->shaderCGO, NULL, NULL, NULL, NULL, NULL);
       }
     }
   }

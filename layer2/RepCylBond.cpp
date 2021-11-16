@@ -196,7 +196,7 @@ void RepCylBond::render(RenderInfo * info)
         " RepCylBondRender: rendering pickable...\n" ENDFD;
 
       if (I->renderCGO){
-        CGORenderGLPicking(I->renderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
+        CGORenderPicking(I->renderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
       }
     } else { /* else not pick, i.e., when rendering */
       if (!I->renderCGO){
@@ -205,7 +205,7 @@ void RepCylBond::render(RenderInfo * info)
       }
       const float *color = ColorGet(G, I->obj->Color);
       I->renderCGO->debug = SettingGetGlobal_i(G, cSetting_stick_debug);
-      CGORenderGL(I->renderCGO, color, NULL, NULL, info, I);
+      CGORender(I->renderCGO, color, NULL, NULL, info, I);
     }
   }
 }

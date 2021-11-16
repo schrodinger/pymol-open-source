@@ -1207,7 +1207,7 @@ void RepLabel::render(RenderInfo* info)
       if (I->shaderCGO){
         if(float_text)
           glDisable(GL_DEPTH_TEST);
-	CGORenderGLPicking(I->shaderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
+	CGORenderPicking(I->shaderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
         if(float_text)
           glEnable(GL_DEPTH_TEST);
 	return;
@@ -1303,7 +1303,7 @@ void RepLabel::render(RenderInfo* info)
 	    info->texture_font_size = I->texture_font_size;
 	    if(float_text)
 	      glDisable(GL_DEPTH_TEST);
-	    CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
+	    CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
 	    if(float_text)
 	      glEnable(GL_DEPTH_TEST);
 	    return;

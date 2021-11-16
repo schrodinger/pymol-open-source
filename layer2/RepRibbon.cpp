@@ -76,7 +76,7 @@ void RepRibbon::render(RenderInfo* info)
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
-      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get(), I);
+      CGORenderPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get(), I);
     } else {
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);
@@ -123,10 +123,10 @@ void RepRibbon::render(RenderInfo* info)
           CGOFreeWithoutVBOs(convertcgo);
           I->shaderCGO->use_shader = true;
         }
-        CGORenderGL(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+        CGORender(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
         return;
       } else {
-        CGORenderGL(I->primitiveCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+        CGORender(I->primitiveCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
         return;
       }
     }

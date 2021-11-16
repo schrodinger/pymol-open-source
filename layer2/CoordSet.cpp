@@ -1353,7 +1353,7 @@ void CoordSet::render(RenderInfo * info)
       }
 
       auto* cgo = SculptShaderCGO ? SculptShaderCGO : SculptCGO;
-      CGORenderGL(
+      CGORender(
           cgo, nullptr, Setting.get(), Obj->Setting.get(), info, nullptr);
     }
   }
@@ -1366,7 +1366,7 @@ void CoordSet::render(RenderInfo * info)
     } else if (!pick && pass == RenderPass::Opaque && G->HaveGUI &&
                G->ValidContext) {
       ObjectUseColor(Obj);
-      CGORenderGL(UnitCellCGO.get(), ColorGet(G, Obj->Color), Setting.get(),
+      CGORender(UnitCellCGO.get(), ColorGet(G, Obj->Color), Setting.get(),
           Obj->Setting.get(), info, nullptr);
     }
   }

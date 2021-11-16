@@ -9574,3 +9574,21 @@ CGO::const_iterator& CGO::const_iterator::operator++()
   m_pc += CGO_sz[op] + 1;
   return *this;
 }
+
+void CGORender(CGO* I, const float* color, CSetting* set1, CSetting* set2,
+    RenderInfo* info, Rep* rep)
+{
+  CGORenderGL(I, color, set1, set2, info, rep);
+}
+
+void CGORenderPicking(CGO* I, RenderInfo* info, PickContext* context,
+    CSetting* set1, CSetting* set2, Rep* rep)
+{
+  CGORenderGLPicking(I, info, context, set1, set2, rep);
+}
+
+void CGORenderAlpha(CGO* I, RenderInfo* info, bool calcDepth)
+{
+  CGORenderGLAlpha(I, info, calcDepth);
+}
+

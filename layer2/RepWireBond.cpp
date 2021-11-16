@@ -426,7 +426,7 @@ void RepWireBond::render(RenderInfo* info)
     bool use_shader = SettingGetGlobal_b(G, cSetting_line_use_shader) &&
                       SettingGetGlobal_b(G, cSetting_use_shaders);
     if(pick) {
-      CGORenderGLPicking(use_shader ? I->shaderCGO : I->primitiveCGO, info, &I->context, NULL, NULL, I);
+      CGORenderPicking(use_shader ? I->shaderCGO : I->primitiveCGO, info, &I->context, NULL, NULL, I);
     } else { /* else not pick i.e., when rendering */
       short line_as_cylinders ;
       line_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_line_as_cylinders);
@@ -438,10 +438,10 @@ void RepWireBond::render(RenderInfo* info)
         if (use_shader) {
           if (!I->shaderCGO)
             ok &= RepWireBondCGOGenerate(I, info);
-          CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, I);
-	    } else {
-          CGORenderGL(I->primitiveCGO, NULL, NULL, NULL, info, I);
-	}
+          CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
+        } else {
+          CGORender(I->primitiveCGO, NULL, NULL, NULL, info, I);
+        }
       }
     }
   }

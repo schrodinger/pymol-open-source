@@ -117,7 +117,7 @@ static void RepSphereRenderPick(RepSphere * I, RenderInfo * info, int sphere_mod
 {
   assert(I->renderCGO);
 
-  CGORenderGLPicking(I->renderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
+  CGORenderPicking(I->renderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
 }
 
 static int RepGetSphereMode(PyMOLGlobals *G, RepSphere * I, bool use_shader){
@@ -167,7 +167,7 @@ void RepSphere::render(RenderInfo* info)
       RepSphereRenderPick(I, info, sphere_mode);
     } else {                    /* not pick, render! */
       if (I->spheroidCGO) {
-        CGORenderGL(I->spheroidCGO, NULL, NULL, NULL, info, I);
+        CGORender(I->spheroidCGO, NULL, NULL, NULL, info, I);
         return;
       }
 
@@ -176,7 +176,7 @@ void RepSphere::render(RenderInfo* info)
           CGOFree(I->renderCGO);
           I->renderCGO = 0;
         } else {
-          CGORenderGL(I->renderCGO, NULL, NULL, NULL, info, I);
+          CGORender(I->renderCGO, NULL, NULL, NULL, info, I);
           return;
         }
       }
@@ -204,7 +204,7 @@ void RepSphere::render(RenderInfo* info)
       }
 
       if (I->renderCGO)
-        CGORenderGL(I->renderCGO, NULL, NULL, NULL, info, I);
+        CGORender(I->renderCGO, NULL, NULL, NULL, info, I);
     }
   }
 }

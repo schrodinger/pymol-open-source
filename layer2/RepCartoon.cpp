@@ -273,10 +273,10 @@ void RepCartoon::render(RenderInfo* info)
       assert(!I->preshader);
 
       if (info->pick) {
-        CGORenderGLPicking(I->std, info, &I->context,
+        CGORenderPicking(I->std, info, &I->context,
                            I->cs->Setting.get(), I->obj->Setting.get());
       } else {
-        CGORenderGL(I->std, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+        CGORender(I->std, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
       }
     }
   }

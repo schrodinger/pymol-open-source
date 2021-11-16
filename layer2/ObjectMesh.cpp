@@ -722,7 +722,7 @@ static short ObjectMeshStateRenderShader(ObjectMeshState *ms, ObjectMesh *I,
 		     SceneGetTwoSidedLighting(G));
   }
 
-  CGORenderGL(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
+  CGORender(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
 
   if (shaderPrg) {
     shaderPrg->Disable();
@@ -731,7 +731,7 @@ static short ObjectMeshStateRenderShader(ObjectMeshState *ms, ObjectMesh *I,
   if (ms->shaderUnitCellCGO){
     shaderPrg = G->ShaderMgr->Enable_DefaultShader(info->pass);
     shaderPrg->SetLightingEnabled(0);
-    CGORenderGL(ms->shaderUnitCellCGO.get(), NULL, NULL, NULL, info, NULL);
+    CGORender(ms->shaderUnitCellCGO.get(), NULL, NULL, NULL, info, NULL);
     shaderPrg->Disable();
   }
 
@@ -898,7 +898,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      if(ms->UnitCellCGO && (I->visRep & cRepCellBit)) {
 		const float *color = ColorGet(I->G, I->Color);
 		if (!use_shader) {
-		  CGORenderGL(ms->UnitCellCGO.get(), color, I->Setting.get(), NULL, info, NULL);
+		  CGORender(ms->UnitCellCGO.get(), color, I->Setting.get(), NULL, info, NULL);
 		} else if(!ms->shaderUnitCellCGO) {
 		  CGO *newUnitCellCGO = CGONewSized(G, 0);
 		  CGOColorv(newUnitCellCGO, color);

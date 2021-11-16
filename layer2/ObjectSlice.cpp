@@ -1067,7 +1067,7 @@ void ObjectSlice::render(RenderInfo * info)
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
             if (oss->shaderCGO && (I->visRep & cRepSliceBit)){
-              CGORenderGLPicking(oss->shaderCGO.get(), info, &I->context, I->Setting.get(), NULL);
+              CGORenderPicking(oss->shaderCGO.get(), info, &I->context, I->Setting.get(), NULL);
             } else {
 #ifndef PURE_OPENGL_ES_2
             Picking p;
@@ -1145,7 +1145,7 @@ void ObjectSlice::render(RenderInfo * info)
 	      int already_rendered = false;
 
               if (oss->shaderCGO){
-                CGORenderGL(oss->shaderCGO.get(), NULL, NULL, I->Setting.get(), info, NULL);
+                CGORender(oss->shaderCGO.get(), NULL, NULL, I->Setting.get(), info, NULL);
                 already_rendered = true;
               } else {
                 oss->shaderCGO.reset(CGONew(G));
@@ -1211,7 +1211,7 @@ void ObjectSlice::render(RenderInfo * info)
                   oss->shaderCGO.reset(CGOOptimizeToVBONotIndexed(oss->shaderCGO.get()));
                   assert(oss->shaderCGO->use_shader);
                 }
-                CGORenderGL(oss->shaderCGO.get(), NULL, NULL, I->Setting.get(), info, NULL);
+                CGORender(oss->shaderCGO.get(), NULL, NULL, I->Setting.get(), info, NULL);
                 SceneInvalidatePicking(G);  // any time cgo is re-generated, needs to invalidate so
                 // pick colors can be re-assigned
               }

@@ -614,7 +614,7 @@ void SceneRenderAA(PyMOLGlobals * G){
     }
   }
   if (ok && I->offscreenCGO) {
-    CGORenderGL(I->offscreenCGO, NULL, NULL, NULL, NULL, NULL);
+    CGORender(I->offscreenCGO, NULL, NULL, NULL, NULL, NULL);
     G->ShaderMgr->Disable_Current_Shader();
     glBindTexture(GL_TEXTURE_2D, 0);
     glEnable(GL_DEPTH_TEST);
@@ -859,7 +859,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
     CGOStop(info.alpha_cgo);
     /* this only works when all objects are rendered in the same frame of reference */
     if(pass == RenderPass::Transparent) {
-      CGORenderGLAlpha(info.alpha_cgo, &info, 0);
+      CGORenderAlpha(info.alpha_cgo, &info, 0);
     }
   }
 }
@@ -939,7 +939,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
 #ifdef PURE_OPENGL_ES_2
         if (!onlySelections){
           EditorRender(G, curState);
-          CGORenderGL(G->DebugCGO, NULL, NULL, NULL, NULL, NULL);
+          CGORender(G->DebugCGO, NULL, NULL, NULL, NULL, NULL);
         }
 #else
         if (!use_shaders)
@@ -953,7 +953,7 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
         if (!onlySelections){
           if (!use_shaders)
             glNormal3fv(normal);
-          CGORenderGL(G->DebugCGO, NULL, NULL, NULL, NULL, NULL);
+          CGORender(G->DebugCGO, NULL, NULL, NULL, NULL, NULL);
         }
         if (!use_shaders){
           glPopMatrix();    /* 1 */
@@ -1035,14 +1035,14 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
             CGOChangeShadersTo(I->offscreenOIT_CGO_copy, GL_DEFAULT_SHADER_WITH_SETTINGS, GL_OIT_COPY_SHADER);
             I->offscreenOIT_CGO_copy->use_shader = true;
           }
-          CGORenderGL(I->offscreenOIT_CGO_copy, NULL, NULL, NULL, NULL, NULL);
+          CGORender(I->offscreenOIT_CGO_copy, NULL, NULL, NULL, NULL, NULL);
         }
         if (!I->offscreenOIT_CGO){
           I->offscreenOIT_CGO = GenerateUnitScreenCGO(G);
           CGOChangeShadersTo(I->offscreenOIT_CGO, GL_DEFAULT_SHADER_WITH_SETTINGS, GL_OIT_SHADER);
           I->offscreenOIT_CGO->use_shader = true;
         }
-        CGORenderGL(I->offscreenOIT_CGO, NULL, NULL, NULL, NULL, NULL);
+        CGORender(I->offscreenOIT_CGO, NULL, NULL, NULL, NULL, NULL);
 
         glBlendFunc_default();
 

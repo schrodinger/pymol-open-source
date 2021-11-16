@@ -1838,7 +1838,7 @@ void ObjectMap::render(RenderInfo * info)
               if (shaderPrg) {
                 shaderPrg->SetLightingEnabled(0);
 
-                CGORenderGL(ms->shaderCGO.get(), ColorGet(G, I->Color),
+                CGORender(ms->shaderCGO.get(), ColorGet(G, I->Color),
                     NULL, NULL, info, NULL);
                 shaderPrg->Disable();
               }

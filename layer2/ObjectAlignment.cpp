@@ -1135,7 +1135,7 @@ void ObjectAlignment::render(RenderInfo * info)
           }
 
           if (cgo) {
-            CGORenderGL(cgo, color, I->Setting.get(), NULL, info, NULL);
+            CGORender(cgo, color, I->Setting.get(), NULL, info, NULL);
           }
 
 #ifndef PURE_OPENGL_ES_2

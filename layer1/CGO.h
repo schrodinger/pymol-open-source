@@ -1006,11 +1006,11 @@ int CGOAlphaTriangle(CGO * I,
 		     float a1, float a2, float a3, int reverse);
 void CGOSetZVector(CGO * I, float z0, float z1, float z2);
 struct GadgetSet;
-void CGORenderGLPicking(CGO * I, RenderInfo *info,
+void CGORenderPicking(CGO * I, RenderInfo *info,
                         PickContext * context, CSetting * set1, CSetting * set2, Rep *rep=NULL);
-void CGORenderGL(CGO * I, const float *color, CSetting * set1, CSetting * set2,
+void CGORender(CGO * I, const float *color, CSetting * set1, CSetting * set2,
                  RenderInfo * info, Rep *rep);
-void CGORenderGLAlpha(CGO * I, RenderInfo * info, bool calcDepth);
+void CGORenderAlpha(CGO * I, RenderInfo * info, bool calcDepth);
 int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, ObjectGadgetRamp *ramp, CSetting * set1, CSetting * set2);
 void CGOReset(CGO * I);
 

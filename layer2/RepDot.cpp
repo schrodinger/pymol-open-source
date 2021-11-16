@@ -197,7 +197,7 @@ void RepDot::render(RenderInfo * info)
 	if (ok) {
 	  const float *color;
 	  color = ColorGet(G, I->obj->Color);
-	  CGORenderGL(I->shaderCGO, color, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, color, NULL, NULL, info, I);
 	  return; /* should not do any other rendering after shaderCGO has
 		    been rendered */
 	}

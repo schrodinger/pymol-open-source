@@ -64,9 +64,9 @@ void RepNonbondedSphere::render(RenderInfo* info)
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
       if (I->shaderCGO){
-	CGORenderGLPicking(I->shaderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
+	CGORenderPicking(I->shaderCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
       } else if (I->primitiveCGO){
-	CGORenderGLPicking(I->primitiveCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
+	CGORenderPicking(I->primitiveCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get());
       }
     } else { /* rendering */
       short use_shader, use_sphere_shader;
@@ -91,9 +91,9 @@ void RepNonbondedSphere::render(RenderInfo* info)
           }
           I->shaderCGO->use_shader = true;
         }
-        CGORenderGL(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+        CGORender(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
       } else {
-        CGORenderGL(I->primitiveCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+        CGORender(I->primitiveCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
       }
     }
   }
