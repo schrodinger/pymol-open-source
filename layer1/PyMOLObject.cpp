@@ -126,10 +126,10 @@ int ObjectGetSpecLevel(pymol::CObject * I, int frame)
   return -1;
 }
 
-void ObjectDrawViewElem(pymol::CObject *I, BlockRect *rect,int frames ORTHOCGOARG)
+void ObjectDrawViewElem(pymol::CObject *I, BlockRect *rect,int frames , CGO *orthoCGO)
 {
   if(I->ViewElem) {
-    ViewElemDraw(I->G,I->ViewElem,rect,frames,I->Name ORTHOCGOARGVAR);
+    ViewElemDraw(I->G,I->ViewElem,rect,frames,I->Name, orthoCGO);
   }
 }
 

@@ -241,7 +241,7 @@ void SceneUpdateAnimation(PyMOLGlobals * G);
 
 void SceneSetupGLPicking(PyMOLGlobals * G);
 
-int SceneDrawImageOverlay(PyMOLGlobals * G, int override  ORTHOCGOARG);
+int SceneDrawImageOverlay(PyMOLGlobals * G, int override  , CGO *orthoCGO);
 
 int SceneIncrementTextureRefreshes(PyMOLGlobals * G);
 

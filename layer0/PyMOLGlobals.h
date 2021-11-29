@@ -232,10 +232,4 @@ struct PyMOLGlobals {
 extern PyMOLGlobals *SingletonPyMOLGlobals;
 #endif
 
-#define ORTHOCGOARG , CGO *orthoCGO
-#define ORTHOCGOARGB  orthoCGO
-#define ORTHOCGOARGVAR , orthoCGO
-#define ORTHOFASTCGOARGVAR , orthoFastCGO
-#define ORTHOCGOARGNULL , NULL
-
 #endif

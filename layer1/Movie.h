@@ -93,7 +93,7 @@ struct CMovie : public Block {
 int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning);
 PyObject *MovieAsPyList(PyMOLGlobals * G);
 int MovieGetSpecLevel(PyMOLGlobals *G,int frame);
-void MovieDrawViewElem(PyMOLGlobals *G, BlockRect *rect,int frames ORTHOCGOARG);
+void MovieDrawViewElem(PyMOLGlobals *G, BlockRect *rect,int frames , CGO *orthoCGO);
 
 Block *MovieGetBlock(PyMOLGlobals * G);
 void MovieFree(PyMOLGlobals * G);

@@ -643,7 +643,7 @@ int ExecutiveCountMotions(PyMOLGlobals * G)
   return (count);
 }
 
-void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected ORTHOCGOARG)
+void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected , CGO *orthoCGO)
 {
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
@@ -661,7 +661,7 @@ void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected ORTHOCG
         }
         draw_rect.top = rect->top - (height * count) / expected;
         draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
-        MovieDrawViewElem(G,&draw_rect,frames ORTHOCGOARGVAR);
+        MovieDrawViewElem(G,&draw_rect,frames, orthoCGO);
         count++;
         if(presentation) { 
           goto done;
@@ -673,7 +673,7 @@ void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected ORTHOCG
       if(ObjectGetSpecLevel(rec->obj,0)>=0) {
         draw_rect.top = rect->top - (height * count) / expected;
         draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
-        ObjectDrawViewElem(rec->obj,&draw_rect,frames ORTHOCGOARGVAR);
+        ObjectDrawViewElem(rec->obj,&draw_rect,frames, orthoCGO);
         count++;
       }
       break;
@@ -15546,7 +15546,7 @@ int CExecutive::drag(int x, int y, int mod)
 }
 
 static void draw_button(int x2, int y2, int w, int h, const float *light, const float *dark,
-                        const float *inside ORTHOCGOARG)
+                        const float *inside , CGO *orthoCGO)
 {
   if (orthoCGO){
     CGOColorv(orthoCGO, light);
@@ -15630,11 +15630,11 @@ static void draw_button(int x2, int y2, int w, int h, const float *light, const 
 }
 
 #ifndef _PYMOL_NOPY
-static void draw_button_char(PyMOLGlobals * G, int x2, int y2, char ch ORTHOCGOARG)
+static void draw_button_char(PyMOLGlobals * G, int x2, int y2, char ch , CGO *orthoCGO)
 {
   TextSetColor3f(G, 0.0F, 0.0F, 0.0F);
   TextSetPos2i(G, x2 + ExecToggleTextShift, y2);
-  TextDrawChar(G, ch ORTHOCGOARGVAR);
+  TextDrawChar(G, ch, orthoCGO);
 }
 #endif
 
@@ -15865,30 +15865,30 @@ void CExecutive::draw(CGO* orthoCGO)
 		/* the infamous ASHLC! */
 
                 draw_button(x2, y2, ExecToggleSize, (ExecLineHeight - 1),
-                            toggleLightEdge, toggleDarkEdge, toggleColor ORTHOCGOARGVAR);
+                            toggleLightEdge, toggleDarkEdge, toggleColor, orthoCGO);
 
-                draw_button_char(G, x2, y2 + text_lift, 'A' ORTHOCGOARGVAR);
+                draw_button_char(G, x2, y2 + text_lift, 'A', orthoCGO);
                 break;
               case 1:
                 draw_button(x2, y2, ExecToggleSize, (ExecLineHeight - 1),
-                            toggleLightEdge, toggleDarkEdge, toggleColor3 ORTHOCGOARGVAR);
+                            toggleLightEdge, toggleDarkEdge, toggleColor3, orthoCGO);
 
-                draw_button_char(G, x2, y2 + text_lift, 'S' ORTHOCGOARGVAR);
+                draw_button_char(G, x2, y2 + text_lift, 'S', orthoCGO);
                 break;
               case 2:
                 draw_button(x2, y2, ExecToggleSize, (ExecLineHeight - 1),
-                            toggleLightEdge, toggleDarkEdge, toggleColor2 ORTHOCGOARGVAR);
-                draw_button_char(G, x2, y2 + text_lift, 'H' ORTHOCGOARGVAR);
+                            toggleLightEdge, toggleDarkEdge, toggleColor2, orthoCGO);
+                draw_button_char(G, x2, y2 + text_lift, 'H', orthoCGO);
                 break;
               case 3:
                 draw_button(x2, y2, ExecToggleSize, (ExecLineHeight - 1),
-                            toggleLightEdge, toggleDarkEdge, toggleColor ORTHOCGOARGVAR);
-                draw_button_char(G, x2, y2 + text_lift, 'L' ORTHOCGOARGVAR);
+                            toggleLightEdge, toggleDarkEdge, toggleColor, orthoCGO);
+                draw_button_char(G, x2, y2 + text_lift, 'L', orthoCGO);
                 break;
               case 4:
                 draw_button(x2, y2, ExecToggleSize, (ExecLineHeight - 1),
-                            toggleLightEdge, toggleDarkEdge, NULL ORTHOCGOARGVAR);
-                draw_button_char(G, x2, y2 + text_lift, 'C' ORTHOCGOARGVAR);
+                            toggleLightEdge, toggleDarkEdge, NULL, orthoCGO);
+                draw_button_char(G, x2, y2 + text_lift, 'C', orthoCGO);
                 break;
               case 5:
                 {
@@ -15910,10 +15910,10 @@ void CExecutive::draw(CGO* orthoCGO)
                       break;
                   }
                   draw_button(x2, y2, ExecToggleSize, (ExecLineHeight - 1),
-                              toggleLightEdge, toggleDarkEdge, button_color ORTHOCGOARGVAR);
+                              toggleLightEdge, toggleDarkEdge, button_color, orthoCGO);
                 }
 
-                draw_button_char(G, x2, y2 + text_lift, 'M' ORTHOCGOARGVAR);
+                draw_button_char(G, x2, y2 + text_lift, 'M', orthoCGO);
                 break;
               }
               x2 += ExecToggleWidth;
@@ -15950,19 +15950,19 @@ void CExecutive::draw(CGO* orthoCGO)
                   const int button_width = DIP2PIXEL(15);
                   if((rec->hilight == 2) && (I->Over == I->Pressed)) {
                     draw_button(x3, y2, button_width, (ExecLineHeight - 1), lightEdge, darkEdge,
-                                pressedColor ORTHOCGOARGVAR);
+                                pressedColor, orthoCGO);
                   } else if(panel->is_open) {
                     draw_button(x3, y2, button_width, (ExecLineHeight - 1), lightEdge, darkEdge,
-                                disabledColor ORTHOCGOARGVAR);
+                                disabledColor, orthoCGO);
                   } else {
                     draw_button(x3, y2, button_width, (ExecLineHeight - 1), lightEdge, darkEdge,
-                                disabledColor ORTHOCGOARGVAR);
+                                disabledColor, orthoCGO);
                   }
                   TextSetPos2i(G, x3 + DIP2PIXEL(4), y2 + text_lift);
                   if(panel->is_open) {
-                    TextDrawChar(G, '-' ORTHOCGOARGVAR);
+                    TextDrawChar(G, '-', orthoCGO);
                   } else {
-                    TextDrawChar(G, '+' ORTHOCGOARGVAR);
+                    TextDrawChar(G, '+', orthoCGO);
                   }
 
                   but_width -= DIP2PIXEL(16);
@@ -15993,7 +15993,7 @@ void CExecutive::draw(CGO* orthoCGO)
                 }
 
                 draw_button(x3, y2, but_width, (ExecLineHeight - 1), lightEdge,
-                    darkEdge, but_color ORTHOCGOARGVAR);
+                    darkEdge, but_color, orthoCGO);
               }
 
               TextSetColor(G, getNameColor(rec->obj, name_color_mode, but_color,
@@ -16020,7 +16020,7 @@ void CExecutive::draw(CGO* orthoCGO)
 	      /* wrap selection names with "(" and ")" */
               if(rec->type == cExecSelection)
                 if((nChar--) > 0) {
-                  TextDrawChar(G, '(' ORTHOCGOARGVAR);
+                  TextDrawChar(G, '(', orthoCGO);
                 }
             }
 
@@ -16028,16 +16028,16 @@ void CExecutive::draw(CGO* orthoCGO)
               if(hidden_prefix) {
 		/* ^.name */
                 if(arrows && ((nChar--) > 0)) {
-                  TextDrawChar(G, '^' ORTHOCGOARGVAR);
+                  TextDrawChar(G, '^', orthoCGO);
                   TextSetPos2i(G, x3 + DIP2PIXEL(2), y2 + text_lift);
-                  TextDrawChar(G, '|' ORTHOCGOARGVAR);
+                  TextDrawChar(G, '|', orthoCGO);
                 }
               }
 
 	      /* draw the object name, char by char */
               while(*c) {
                 if((nChar--) > 0) {
-                  TextDrawChar(G, *(c++) ORTHOCGOARGVAR);
+                  TextDrawChar(G, *(c++), orthoCGO);
 		}
                 else
                   break;
@@ -16047,7 +16047,7 @@ void CExecutive::draw(CGO* orthoCGO)
 	    /* SELECTIONS: wrap selection names with "(" and ")" */
             if(rec->type == cExecSelection) {
               if((nChar--) > 0) {
-                TextDrawChar(G, ')' ORTHOCGOARGVAR);
+                TextDrawChar(G, ')', orthoCGO);
               }
             }
 
@@ -16061,13 +16061,13 @@ void CExecutive::draw(CGO* orthoCGO)
                 TextSetColor(G, captionColor);
                 TextSetPos2i(G, x + DIP2PIXEL(2) + DIP2PIXEL(8) * (max_char - nChar), y2 + text_lift);
                 if((nChar--) > 0)
-                  TextDrawChar(G, ' ' ORTHOCGOARGVAR);
+                  TextDrawChar(G, ' ', orthoCGO);
                 while(*c && nChar > 0) {
 		    /* allow color encoding for names */
                   if(TextSetColorFromCode(G, c, captionColor)) {
 		      c += 4;
                   } else {
-                    TextDrawChar(G, *(c++) ORTHOCGOARGVAR);
+                    TextDrawChar(G, *(c++), orthoCGO);
                     --nChar;
 		  }
                 }

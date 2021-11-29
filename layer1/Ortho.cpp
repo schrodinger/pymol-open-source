@@ -1808,13 +1808,13 @@ void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
             TextSetColor(G, I->OverlayColor);
           TextSetPos2i(G, x, y);
           if(str) {
-            TextDrawStr(G, str ORTHOCGOARGVAR);
+            TextDrawStr(G, str, orthoCGO);
             if((lcount == 1) && (I->InputFlag)) {
               if(!skip_prompt) {
                 if(I->CursorChar >= 0) {
                   TextSetPos2i(G, x + cOrthoCharWidth * I->CursorChar, y);
                 }
-                TextDrawChar(G, '_' ORTHOCGOARGVAR);
+                TextDrawChar(G, '_', orthoCGO);
               }
             }
           }
@@ -1823,7 +1823,7 @@ void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
         }
       }
 
-      OrthoDrawWizardPrompt(G ORTHOCGOARGVAR);
+      OrthoDrawWizardPrompt(G, orthoCGO);
 
       if(draw_text || I->SplashFlag) {
         Block *block;
@@ -1884,7 +1884,7 @@ void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
 
       /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef PYMOL_EVAL
-      OrthoDrawEvalMessage(G ORTHOCGOARGVAR);
+      OrthoDrawEvalMessage(G, orthoCGO);
 #endif
 #ifdef PYMOL_BETA
       OrthoDrawBetaMessage(G);
@@ -2010,7 +2010,7 @@ void OrthoRenderCGO(PyMOLGlobals * G){
 }
 /*========================================================================*/
 
-void OrthoDrawWizardPrompt(PyMOLGlobals * G ORTHOCGOARG)
+void OrthoDrawWizardPrompt(PyMOLGlobals * G , CGO *orthoCGO)
 {
   /* assumes PMGUI */
 
@@ -2133,7 +2133,7 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G ORTHOCGOARG)
         }
         if(c--) {
           if(*p) {
-            TextDrawChar(G, *p ORTHOCGOARGVAR);
+            TextDrawChar(G, *p, orthoCGO);
           }
           if(!*(p++)) {
             y = y - cOrthoLineHeight;

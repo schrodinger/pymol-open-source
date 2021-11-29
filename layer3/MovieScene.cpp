@@ -821,14 +821,10 @@ static bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, MovieScene &out)
     return false;
   }
 
-  if (!PConvArgsFromPyList(nullptr, obj,
-        out.storemask,
-        out.frame,
-        out.message,
-        out.view,
-        atomdata_old_ids,
-        out.objectdata))
-    /* ignore */;
+  if (!PConvArgsFromPyList(nullptr, obj, out.storemask, out.frame, out.message,
+          out.view, atomdata_old_ids, out.objectdata)) {
+    /* ignore */
+  }
 
   // restore atomdata dict but with converted ids
   PConvFromPyObject(G, PyList_GetItem(obj, 4), atomdata_old_ids);

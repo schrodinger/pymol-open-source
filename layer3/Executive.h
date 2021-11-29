@@ -724,7 +724,7 @@ pymol::Result<> ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const
 
 int ExecutiveVolumeColor(PyMOLGlobals * G, const char * volume_name, float * colors, int ncolors );
 
-void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected ORTHOCGOARG);
+void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected , CGO *orthoCGO);
 
 void ExecutiveMotionReinterpolate(PyMOLGlobals * G);
 

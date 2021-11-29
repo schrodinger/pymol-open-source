@@ -104,7 +104,7 @@ int ViewElemXtoFrame(BlockRect *rect, int frames, int x, int nearest)
 }
 
 void ViewElemDrawBox(PyMOLGlobals *G, BlockRect *rect, int first, int last,
-                     int frames, float *color4,int fill ORTHOCGOARG)
+                     int frames, float *color4,int fill , CGO *orthoCGO)
 {  
   if(G->HaveGUI && G->ValidContext && rect) {
     int nDrawn = frames;
@@ -157,7 +157,7 @@ void ViewElemDrawBox(PyMOLGlobals *G, BlockRect *rect, int first, int last,
 void ViewElemDraw(PyMOLGlobals *G,
     const CViewElem * view_elem,
     const BlockRect *rect, int frames,
-    const char *title ORTHOCGOARG)
+    const char *title , CGO *orthoCGO)
 {
   if(G->HaveGUI && G->ValidContext && view_elem) {
     int size = VLAGetSize(view_elem);

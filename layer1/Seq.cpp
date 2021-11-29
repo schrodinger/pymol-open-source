@@ -373,7 +373,7 @@ void CSeq::draw(CGO* orthoCGO)
           pix_wid = DIP2PIXEL(I->CharWidth * ch_wid);
           tot_len = col->offset + ch_wid - I->NSkip;
           if(tot_len <= vis_size) {
-            TextDrawSubStrFast(G, row->txt, xx, y1, col->start, ch_wid ORTHOCGOARGVAR);
+            TextDrawSubStrFast(G, row->txt, xx, y1, col->start, ch_wid, orthoCGO);
           }
         }
         y1 += DIP2PIXEL(I->LineHeight);
@@ -480,7 +480,7 @@ void CSeq::draw(CGO* orthoCGO)
 		}
                 TextSetColor(G, black);
               }
-              TextDrawSubStrFast(G, row->txt, xx, y1, col->start, ch_wid ORTHOCGOARGVAR);
+              TextDrawSubStrFast(G, row->txt, xx, y1, col->start, ch_wid, orthoCGO);
             }
           }
         }
@@ -498,7 +498,7 @@ void CSeq::draw(CGO* orthoCGO)
               pix_wid = DIP2PIXEL(I->CharWidth * ch_wid);
               tot_len = col->offset + ch_wid - I->NSkip;
               if(tot_len <= vis_size) {
-                TextDrawCharRepeat(G, fill_char, xx, y1, col->start, ch_wid ORTHOCGOARGVAR);
+                TextDrawCharRepeat(G, fill_char, xx, y1, col->start, ch_wid, orthoCGO);
               }
             }
           }

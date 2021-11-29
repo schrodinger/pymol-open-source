@@ -875,7 +875,7 @@ void CPopUp::draw(CGO* orthoCGO)
           }
 
           TextSetPos2i(G, xx, y + cPopUpCharLift);
-          TextDrawChar(G, *(c++) ORTHOCGOARGVAR);
+          TextDrawChar(G, *(c++), orthoCGO);
           xx = xx + DIP2PIXEL(8);
         }
 

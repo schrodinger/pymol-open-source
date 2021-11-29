@@ -2729,7 +2729,7 @@ int SceneLoadPNG(PyMOLGlobals * G, const char *fname, int movie_flag, int stereo
 #define SceneTextLeftMargin DIP2PIXEL(1)
 #ifndef _PYMOL_NOPY
 static void draw_button(int x2, int y2, int z, int w, int h, float *light, float *dark,
-                        float *inside ORTHOCGOARG)
+                        float *inside , CGO *orthoCGO)
 {
   if (orthoCGO){
     CGOColorv(orthoCGO, light);
@@ -2833,7 +2833,7 @@ void SceneSetNames(PyMOLGlobals * G, const std::vector<std::string> &list)
 
 
 /*========================================================================*/
-static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
+static void SceneDrawButtons(Block * block, int draw_for_real , CGO *orthoCGO)
 {
 #ifndef _PYMOL_NOPY
   PyMOLGlobals *G = block->m_G;
@@ -2979,13 +2979,13 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
 
                 if((item == I->Pressed) && (item == I->Over)) {
                   draw_button(x, y, 0, (x2 - x) - 1, (lineHeight - 1), lightEdge,
-                              darkEdge, pressedColor ORTHOCGOARGVAR);
+                              darkEdge, pressedColor, orthoCGO);
                 } else if(cur_name && elem->name == cur_name) {
                   draw_button(x, y, 0, (x2 - x) - 1, (lineHeight - 1), lightEdge,
-                              darkEdge, enabledColor ORTHOCGOARGVAR);
+                              darkEdge, enabledColor, orthoCGO);
                 } else {
                   draw_button(x, y, 0, (x2 - x) - 1, (lineHeight - 1), lightEdge,
-                              darkEdge, disabledColor ORTHOCGOARGVAR);
+                              darkEdge, disabledColor, orthoCGO);
                 }
 
                 TextSetColor(G, I->TextColor);
@@ -2993,7 +2993,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
                 if(c) {
                   while(*c) {
                     if((nChar--) > 0)
-                      TextDrawChar(G, *(c++) ORTHOCGOARGVAR);
+                      TextDrawChar(G, *(c++), orthoCGO);
                     else
                       break;
                   }
@@ -3013,7 +3013,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
 #endif
 }
 
-int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
+int SceneDrawImageOverlay(PyMOLGlobals * G, int override , CGO *orthoCGO){
   CScene *I = G->Scene;
   int drawn = false;
   int text = SettingGetGlobal_b(G, cSetting_text);
@@ -3176,7 +3176,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
 	  
 	  TextSetColor3f(G, rgba[0], rgba[1], rgba[2]);
 	  TextDrawStrAt(G, buffer,
-            x_pos + I->rect.left, y_pos + I->rect.bottom ORTHOCGOARGVAR);
+            x_pos + I->rect.left, y_pos + I->rect.bottom, orthoCGO);
 	}
       }
     } else if(((width < I->Width) || (height < I->Height)) && ((I->Width - width) > 2) && ((I->Height - height) > 2)) {
@@ -3349,16 +3349,16 @@ void CScene::draw(CGO* orthoCGO) /* returns true if scene was drawn (using a cac
 
     I->ButtonsShown = false;
 
-    drawn = SceneDrawImageOverlay(G, 0 ORTHOCGOARGVAR);
+    drawn = SceneDrawImageOverlay(G, 0, orthoCGO);
 
     if(SettingGetGlobal_b(G, cSetting_scene_buttons)) {
-      SceneDrawButtons(this, true ORTHOCGOARGVAR);
+      SceneDrawButtons(this, true, orthoCGO);
     } else {
       I->ButtonMargin = 0;
     }
   }
   if(drawn)
-    OrthoDrawWizardPrompt(G ORTHOCGOARGVAR); /* ugly hack necessitated because wizard
+    OrthoDrawWizardPrompt(G, orthoCGO); /* ugly hack necessitated because wizard
 						prompt is overwritten when image is drawn */
 
 }

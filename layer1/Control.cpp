@@ -478,7 +478,7 @@ int CControl::click(int button, int x, int y, int mod)
 }
 
 static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
-                        float *inside ORTHOCGOARG)
+                        float *inside , CGO *orthoCGO)
 {
   if (orthoCGO){
     CGOColorv(orthoCGO, light);
@@ -641,15 +641,15 @@ void CControl::draw(CGO* orthoCGO)
 
       if(but_num == I->Active) {
         draw_button(but_left, but_bottom,
-                    but_width, but_height, lightEdge, darkEdge, pushed ORTHOCGOARGVAR);
+                    but_width, but_height, lightEdge, darkEdge, pushed, orthoCGO);
       } else if(((but_num == 6) && (SettingGetGlobal_b(G, cSetting_seq_view))) ||
                 ((but_num == 3) && (MoviePlaying(G))) ||
                 ((but_num == 7) && (SettingGetGlobal_b(G, cSetting_rock)))){
         draw_button(but_left, but_bottom,
-                    but_width, but_height, lightEdge, darkEdge, I->ActiveColor ORTHOCGOARGVAR);
+                    but_width, but_height, lightEdge, darkEdge, I->ActiveColor, orthoCGO);
       } else {
         draw_button(but_left, but_bottom,
-                    but_width, but_height, lightEdge, darkEdge, I->ButtonColor ORTHOCGOARGVAR);
+                    but_width, but_height, lightEdge, darkEdge, I->ButtonColor, orthoCGO);
       }
 
       if(control_width > 100) {
@@ -818,7 +818,7 @@ void CControl::draw(CGO* orthoCGO)
         case 6:
 	  TextSetColor(G, TextColor);
           TextDrawStrAt(G, "S", x + cControlInnerMargin,
-                        y - cControlBoxSize + cControlInnerMargin + 1 ORTHOCGOARGVAR);
+                        y - cControlBoxSize + cControlInnerMargin + 1, orthoCGO);
           break;
         case 7:
 	  if (orthoCGO){
@@ -840,7 +840,7 @@ void CControl::draw(CGO* orthoCGO)
         case 8:
 	  TextSetColor(G, TextColor);
           TextDrawStrAt(G, "F", x + cControlInnerMargin,
-                        y - cControlBoxSize + cControlInnerMargin + 1 ORTHOCGOARGVAR);
+                        y - cControlBoxSize + cControlInnerMargin + 1, orthoCGO);
           break;
         }
       }

@@ -568,7 +568,7 @@ int CWizard::release(int button, int x, int y, int mod)
     switch (I->Line[a].type) {
     case cWizTypeButton:
       {
-        if (auto wiz = WizardGet(G)) {
+        if (WizardGet(G)) {
           PLog(G, I->Line[a].code, cPLog_pym);
           PParse(G, I->Line[a].code);
           PFlush(G);
@@ -582,7 +582,7 @@ int CWizard::release(int button, int x, int y, int mod)
 }
 
 static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
-                        float *inside ORTHOCGOARG)
+                        float *inside , CGO *orthoCGO)
 {
     if (orthoCGO){
       CGOColorv(orthoCGO, light);
@@ -666,7 +666,7 @@ static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
 
 }
 
-static void draw_text(PyMOLGlobals * G, char *c, int xx, int yy, float *color ORTHOCGOARG)
+static void draw_text(PyMOLGlobals * G, char *c, int xx, int yy, float *color , CGO *orthoCGO)
 {
   TextSetColor(G, color);
   while(*c) {
@@ -674,7 +674,7 @@ static void draw_text(PyMOLGlobals * G, char *c, int xx, int yy, float *color OR
       c += 4;
     }
     TextSetPos2i(G, xx, yy);
-    TextDrawChar(G, *(c++) ORTHOCGOARGVAR);
+    TextDrawChar(G, *(c++), orthoCGO);
     xx = xx + DIP2PIXEL(8);
   }
 }
@@ -743,7 +743,7 @@ void CWizard::draw(CGO* orthoCGO)
       if(I->Pressed == a) {
         draw_button(rect.left + 1, y,
                     (rect.right - rect.left) - 1,
-                    LineHeight - 1, dimLightEdge, dimDarkEdge, buttonActiveColor ORTHOCGOARGVAR);
+                    LineHeight - 1, dimLightEdge, dimDarkEdge, buttonActiveColor, orthoCGO);
         /*        glColor3f(0.0,0.0,0.0); */
         text_color = black_color;
       } else {
@@ -755,7 +755,7 @@ void CWizard::draw(CGO* orthoCGO)
         case cWizTypeButton:
           draw_button(rect.left + 1, y,
                       (rect.right - rect.left) - 1,
-                      LineHeight - 1, dimLightEdge, dimDarkEdge, dimColor ORTHOCGOARGVAR);
+                      LineHeight - 1, dimLightEdge, dimDarkEdge, dimColor, orthoCGO);
 
           /*          glColor3fv(buttonTextColor); */
           text_color = buttonTextColor;
@@ -763,7 +763,7 @@ void CWizard::draw(CGO* orthoCGO)
         case cWizTypePopUp:
           draw_button(rect.left + 1, y,
                       (rect.right - rect.left) - 1,
-                      LineHeight - 1, menuLightEdge, menuDarkEdge, menuBGColor ORTHOCGOARGVAR);
+                      LineHeight - 1, menuLightEdge, menuDarkEdge, menuBGColor, orthoCGO);
           /* glColor3fv(menuColor); */
           text_color = menuColor;
           break;
@@ -771,7 +771,7 @@ void CWizard::draw(CGO* orthoCGO)
           break;
         }
       }
-      draw_text(G, I->Line[a].text, x, y + text_lift, text_color ORTHOCGOARGVAR);
+      draw_text(G, I->Line[a].text, x, y + text_lift, text_color, orthoCGO);
       /*GrapDrawStr(I->Line[a].text,x+1,y+text_lift); */
       y -= LineHeight;
     }

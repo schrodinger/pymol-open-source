@@ -99,7 +99,6 @@ TEST_CASE("TTT Matrix Construct from Components", "[TTT Matrix]")
   glm::vec3 ori(10.0f, 20.0f, 30.0f);
   auto ori_ptr = glm::value_ptr(ori);
   glm::vec3 tr(5.0f, 15.0f, 25.0f);
-  auto tr_ptr = glm::value_ptr(tr);
   auto ang = glm::radians(90.0f);
   auto axis = glm::vec3(1.0f, 0.0f, 0.0f);
   glm::quat rot = glm::angleAxis(ang, axis);
