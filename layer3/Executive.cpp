@@ -1665,7 +1665,7 @@ static int ExecutiveGetObjectParentList(PyMOLGlobals * G, SpecRec * child)
         if (keyRes != I->Key.end()) {
           if (TrackerGetCandRef(I_Tracker, keyRes->second,
                                (TrackerRef **) (void *) &group_rec)) {
-            if(TrackerLink(I_Tracker, result.word, list_id, priority++)) {
+            if (TrackerLink(I_Tracker, keyRes->second, list_id, priority++)) {
               /* checking this prevents infinite loops */
               if(group_rec->group) {
                 repeat_flag = true;
