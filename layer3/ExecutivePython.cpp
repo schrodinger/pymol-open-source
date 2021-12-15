@@ -28,8 +28,6 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
       if (origObj->type != cObjectMolecule) {
         ExecutiveDelete(G, valid_name);
         origObj = NULL;
-      } else {
-        discrete = 1;
       }
     }
     PBlock(G); /*PBlockAndUnlockAPI(); */

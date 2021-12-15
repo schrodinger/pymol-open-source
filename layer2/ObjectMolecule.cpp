@@ -7209,8 +7209,8 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
       std::swap(atInfo, I->AtomInfo);
       isNew = true;
     } else {
-      if (discrete)
-	ObjectMoleculeSetDiscrete(G, I, true);
+      if (discrete > -1)
+        ObjectMoleculeSetDiscrete(G, I, discrete);
     }
 
     if(isNew) {
