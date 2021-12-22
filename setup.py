@@ -46,7 +46,7 @@ try:
             help="skip libxml2 dependency, disables COLLADA export")
     parser.add_argument('--use-openmp', choices=('yes', 'no'),
             help="Use OpenMP")
-    parser.add_argument('--use-vtkm', choices=('1.5', '1.6', 'no'),
+    parser.add_argument('--use-vtkm', choices=('1.5', '1.6', '1.7', 'no'),
             help="Use VTK-m for isosurface generation")
     parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'guess', 'no'),
             help="c++11: use msgpack-c header-only library; c: link against "
