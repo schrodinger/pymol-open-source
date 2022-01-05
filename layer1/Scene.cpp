@@ -3957,7 +3957,9 @@ static int SceneDeferredImage(DeferredImage * di)
   if(!di->filename.empty() || di->out_img) {
     std::vector<unsigned char> outbuf;
     ScenePNG(G, di->filename.c_str(), di->dpi, di->quiet, false, di->format, &outbuf);
-    di->out_img->setVecData(outbuf);
+    if (di->out_img) {
+      di->out_img->setVecData(outbuf);
+    }
   } else if(call_raw_image_callback(G)) {
   } else if(G->HaveGUI && SettingGetGlobal_b(G, cSetting_auto_copy_images)) {
 #ifdef _PYMOL_IP_EXTRAS

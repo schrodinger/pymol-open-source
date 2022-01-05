@@ -61,7 +61,7 @@ struct DeferredImage : public CDeferred {
   float dpi { 0.0f };
   int entire_window { 0 };
   int format { 0 };
-  pymol::Image* out_img;
+  pymol::Image* out_img = nullptr;
   DeferredImage(PyMOLGlobals * G) : CDeferred(G){}
 };
 
