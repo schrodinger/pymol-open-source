@@ -154,8 +154,6 @@ def create_dialog():
     dialog = QtWidgets.QDialog()
     dialog.setWindowTitle('Lighting Settings')
 
-    setting = plugins.get_pmgapp().skin.setting
-
     sliders = [
         "Diffuse Reflection",
         ('ambient', 0, 1, None),
