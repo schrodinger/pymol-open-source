@@ -154,6 +154,8 @@ typedef struct _CPyMOL CPyMOL;
 #define ATOM_PROP_SETTINGS 33
 #define ATOM_PROP_PROPERTIES 34
 #define ATOM_PROP_ONELETTER 40
+#define ATOM_PROP_EXPLICIT_DEGREE 41
+#define ATOM_PROP_EXPLICIT_VALENCE 42
 
 /* return status values */
 

@@ -24,6 +24,8 @@ expr_sc = ExprShortcut([
     'oneletter',
     'model', 'resv', 'type', 'stereo', 'rank', 'index', 'ss', 'color', 'reps',
     'protons', 'label', 'geom', 'valence', 'flags', 'cartoon',
+    'explicit_degree',
+    'explicit_valence',
 ])
 
 

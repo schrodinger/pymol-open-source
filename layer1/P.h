@@ -50,7 +50,7 @@ Z* -------------------------------------------------------------------
 #define cPType_schar          14
 #define cPType_uint32         15
 
-#define NUM_ATOM_PROPERTIES    41
+#define NUM_ATOM_PROPERTIES    43
 
 #define cPRunType_alter          1
 #define cPRunType_alter_state    2

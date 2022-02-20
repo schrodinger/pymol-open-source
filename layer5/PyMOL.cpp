@@ -197,6 +197,8 @@ typedef struct _CPyMOL {
     lex_atom_prop_stereo, lex_atom_prop_cartoon, lex_atom_prop_color,
     lex_atom_prop_ID, lex_atom_prop_rank, lex_atom_prop_flags,
     lex_atom_prop_geom, lex_atom_prop_valence,
+    lex_atom_prop_explicit_degree,
+    lex_atom_prop_explicit_valence,
     lex_atom_prop_x, lex_atom_prop_y, lex_atom_prop_z,
     lex_atom_prop_settings, lex_atom_prop_properties,
     lex_atom_prop_reps,
@@ -613,6 +615,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_ATOM_PROP(reps, 38, cPType_int, offsetof(AtomInfoType, visRep));
   LEX_ATOM_PROP(protons, 39, cPType_schar, offsetof(AtomInfoType, protons));
   LEX_ATOM_PROP(oneletter, 40, 0, 0);
+  LEX_ATOM_PROP(explicit_degree, ATOM_PROP_EXPLICIT_DEGREE, 0, 0);
+  LEX_ATOM_PROP(explicit_valence, ATOM_PROP_EXPLICIT_VALENCE, 0, 0);
   //  LEX_ATOM_PROP(, );
 
   return_OVstatus_SUCCESS;

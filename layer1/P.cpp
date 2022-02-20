@@ -608,6 +608,47 @@ static T const* get_member_pointer(S const* instance, size_t offset)
 }
 
 /**
+ * Explicit valence of an atom, defined as the sum of bond orders.
+ *
+ * Delocalized/aromatic bonds count as order=1.5 (heuristic).
+ *
+ * Should be equivalent to:
+ *   OBAtom::GetExplicitValence() [Open Babel 3.0]
+ */
+static int getExplicitValence(ObjectMolecule const* obj, size_t atm)
+{
+  int value = 0;
+
+  for (auto const& item : AtomNeighbors(obj, atm)) {
+    int const order = obj->Bond[item.bond].order;
+
+    if (order == cBondOrderDeloc) {
+      // simple rule which gets all aromatic C atoms right, but can
+      // be wrong for example for neutral aromatic N atoms with degree 3 or
+      // for neutral carboxy O atoms which PyMOL also assigns bond oder 4.
+      value += 3;
+    } else {
+      value += 2 * order;
+    }
+  }
+
+  return value / 2;
+}
+
+/**
+ * Explicit degree of an Atom, defined as the number of directly-bonded
+ * neighbors in the graph.
+ *
+ * Should be equivalent to:
+ *   RDKit::Atom::getDegree()
+ *   OBAtom::GetExplicitDegree() [Open Babel 3.0]
+ */
+static unsigned getExplicitDegree(ObjectMolecule const* obj, size_t atm)
+{
+  return AtomNeighbors(obj, atm).size();
+}
+
+/**
  * iterate-family namespace implementation: lookup
  *
  * Raise NameError if state attributes are accessed outside of iterate_state
@@ -734,6 +775,12 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
         char abbr[2] = {SeekerGetAbbr(G, st, 'O', 'X'), 0};
         ret = PyUnicode_FromString(abbr);
       } break;
+      case ATOM_PROP_EXPLICIT_DEGREE: {
+        ret = PyLong_FromLong(getExplicitDegree(wobj->obj, wobj->atm));
+      } break;
+      case ATOM_PROP_EXPLICIT_VALENCE: {
+        ret = PyLong_FromLong(getExplicitValence(wobj->obj, wobj->atm));
+      } break;
       default:
         PyErr_SetString(PyExc_SystemError, "unhandled atom property type");
       }
@@ -746,7 +793,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
     if (ret) {
       Py_INCREF(ret);
     } else {
-      PyErr_SetNone(PyExc_KeyError);
+      PyErr_SetObject(PyExc_KeyError, key);
     }
   }
 
