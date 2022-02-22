@@ -91,7 +91,7 @@ TEST_CASE("TTT Matrix Get Homogenous Matrix", "[TTT Matrix]")
   mat[7] += trans_vec[1];
   mat[11] += trans_vec[2];
 
-  REQUIRE(pymol::almost_equal_n(hom_ptr, std::size(mat), mat));
+  REQUIRE(pymol::almost_equal_n(hom_ptr, 16, mat));
 }
 
 TEST_CASE("TTT Matrix Construct from Components", "[TTT Matrix]")

@@ -91,7 +91,7 @@ public:
    * @param axis normalized axis
    * @param angRad angle to rotate by (as radians)
    */
-  void TTT::rotate(float angRad, const glm::vec3& axis);
+  void rotate(float angRad, const glm::vec3& axis);
 
   /**
    * Transforms a position
