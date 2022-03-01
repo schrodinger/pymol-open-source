@@ -23,7 +23,7 @@ def _to_chempy(data, use_auth=True):
     '''
     Construct a "chempy" model (molecule) from decoded MMTF data.
     '''
-    from itertools import islice
+    from itertools import islice, zip_longest
     from chempy import models, Atom, Bond
 
     def add_bond(i1, i2, order, offset=0):
@@ -82,10 +82,11 @@ def _to_chempy(data, use_auth=True):
                 group = groupList[groupType]
                 resn = as_str(group['groupName'])
 
-                group_bond_iter = zip(
-                        group['bondAtomList'][0::2],
-                        group['bondAtomList'][1::2],
-                        group['bondOrderList'],
+                bondAtomList_iter = iter(group.get('bondAtomList', ()))
+                group_bond_iter = zip_longest(
+                        bondAtomList_iter,
+                        bondAtomList_iter,
+                        group.get('bondOrderList', ()),
                         )
 
                 offset = len(model.atom)
@@ -126,9 +127,10 @@ def _to_chempy(data, use_auth=True):
     model_iter = iter(model_output)
     bondAtomList_iter = data.get_iter('bondAtomList')
 
-    for order in data.get_iter('bondOrderList'):
-        i1 = next(bondAtomList_iter)
-        i2 = next(bondAtomList_iter)
+    for i1, i2, order in zip_longest(bondAtomList_iter,
+                                     bondAtomList_iter,
+                                     data.get_iter('bondOrderList'),
+                                     fillvalue=1):
         if i1 >= model_atom_max or i2 >= model_atom_max:
             model = next(model_iter)
             model_atom_min = model_atom_max
