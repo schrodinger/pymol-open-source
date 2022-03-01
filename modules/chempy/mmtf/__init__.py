@@ -2,17 +2,7 @@
 Experimental MMTF (Macromolecular Transmission Format) support
 '''
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-try:
-    from itertools import izip
-    as_str = str
-except ImportError:
-    # python3
-    izip = zip
-    as_str = lambda s: s if isinstance(s, str) else s.decode()
+as_str = lambda s: s if isinstance(s, str) else s.decode("utf-8")
 
 #####################################################################
 
@@ -90,22 +80,22 @@ def _to_chempy(data, use_auth=True):
                     islice(group_iter, n_groups):
 
                 group = groupList[groupType]
-                resn = as_str(group[b'groupName'])
+                resn = as_str(group['groupName'])
 
-                group_bond_iter = izip(
-                        group[b'bondAtomList'][0::2],
-                        group[b'bondAtomList'][1::2],
-                        group[b'bondOrderList'],
+                group_bond_iter = zip(
+                        group['bondAtomList'][0::2],
+                        group['bondAtomList'][1::2],
+                        group['bondOrderList'],
                         )
 
                 offset = len(model.atom)
                 for (i1, i2, order) in group_bond_iter:
                     add_bond(i1, i2, order, offset)
 
-                group_atom_iter = izip(
-                        group[b'atomNameList'],
-                        group[b'elementList'],
-                        group[b'formalChargeList'],
+                group_atom_iter = zip(
+                        group['atomNameList'],
+                        group['elementList'],
+                        group['formalChargeList'],
                         )
 
                 for (name, elem, formal_charge) in group_atom_iter:
