@@ -1987,6 +1987,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
   // fallback MMTF support
   PyRun_SimpleString(
       "import pymol.importing;"
+      "pymol.importing.loadable.mmtf = None;"
       "pymol.importing.loadfunctions.setdefault('mmtf',"
       "pymol.importing.load_mmtf)");
 #endif

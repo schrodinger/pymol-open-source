@@ -2,17 +2,7 @@
 Experimental MMTF (Macromolecular Transmission Format) support
 '''
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-try:
-    from itertools import izip
-    as_str = str
-except ImportError:
-    # python3
-    izip = zip
-    as_str = lambda s: s if isinstance(s, str) else s.decode()
+as_str = lambda s: s if isinstance(s, str) else s.decode("utf-8")
 
 #####################################################################
 
@@ -33,7 +23,7 @@ def _to_chempy(data, use_auth=True):
     '''
     Construct a "chempy" model (molecule) from decoded MMTF data.
     '''
-    from itertools import islice
+    from itertools import islice, zip_longest
     from chempy import models, Atom, Bond
 
     def add_bond(i1, i2, order, offset=0):
@@ -90,22 +80,23 @@ def _to_chempy(data, use_auth=True):
                     islice(group_iter, n_groups):
 
                 group = groupList[groupType]
-                resn = as_str(group[b'groupName'])
+                resn = as_str(group['groupName'])
 
-                group_bond_iter = izip(
-                        group[b'bondAtomList'][0::2],
-                        group[b'bondAtomList'][1::2],
-                        group[b'bondOrderList'],
+                bondAtomList_iter = iter(group.get('bondAtomList', ()))
+                group_bond_iter = zip_longest(
+                        bondAtomList_iter,
+                        bondAtomList_iter,
+                        group.get('bondOrderList', ()),
                         )
 
                 offset = len(model.atom)
                 for (i1, i2, order) in group_bond_iter:
                     add_bond(i1, i2, order, offset)
 
-                group_atom_iter = izip(
-                        group[b'atomNameList'],
-                        group[b'elementList'],
-                        group[b'formalChargeList'],
+                group_atom_iter = zip(
+                        group['atomNameList'],
+                        group['elementList'],
+                        group['formalChargeList'],
                         )
 
                 for (name, elem, formal_charge) in group_atom_iter:
@@ -136,9 +127,10 @@ def _to_chempy(data, use_auth=True):
     model_iter = iter(model_output)
     bondAtomList_iter = data.get_iter('bondAtomList')
 
-    for order in data.get_iter('bondOrderList'):
-        i1 = next(bondAtomList_iter)
-        i2 = next(bondAtomList_iter)
+    for i1, i2, order in zip_longest(bondAtomList_iter,
+                                     bondAtomList_iter,
+                                     data.get_iter('bondOrderList'),
+                                     fillvalue=1):
         if i1 >= model_atom_max or i2 >= model_atom_max:
             model = next(model_iter)
             model_atom_min = model_atom_max

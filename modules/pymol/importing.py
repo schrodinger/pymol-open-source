@@ -907,7 +907,8 @@ EXAMPLE
             multiplex=-2
         ftype = getattr(loadable, format, None)
         if ftype is None:
-            assert format not in ('cif', 'mmtf', 'pdb', 'dx')
+            assert format not in ('cif', 'pdb', 'dx')
+            assert format not in ('mmtf', ) or format in loadfunctions
 
             if not isinstance(content, bytes):
                 content = content.encode("utf-8")
