@@ -207,6 +207,8 @@ typedef char ElemName[cElemNameLen + 1];
 // for customType (not geom)
 #define cAtomInfoNoType -9999
 
+#define cBondOrderDeloc 4
+
 inline char makeInscode(char c) {
   return (c <= ' ') ? '\0' : c;
 }
@@ -283,6 +285,11 @@ typedef struct AtomInfoType {
   signed char formalCharge;     // values typically in range -2..+2
   signed char cartoon;          /* 0 = default which is auto (use ssType) */
   signed char geom;             // cAtomInfo*
+
+  // "valence" should be renamed to "degree" (or "total_degree"). It's the
+  // number of explicit and implicit neighbors, independent of bond order.
+  // Should be equivalent to RDKit::Atom::getTotalDegree() and
+  // OBAtom::GetTotalDegree().
   signed char valence;          // 0-4
   signed char protons;          /* atomic number */
 
