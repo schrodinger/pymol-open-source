@@ -99,6 +99,9 @@ class Normal(PMGSkin, pymol._gui.PyMOLDesktopGUI):
     contactweb     = 'http://www.pymol.org'
     contactemail   = 'sales@schrodinger.com'
     
+    def scene_panel_menu_dialog(self):
+        print("scene_panel_menu_dialog not available in pmg_tk.")
+
     # responsible for setup and takedown of the normal skin
 
     def _inc_fontsize(self, delta, font):
