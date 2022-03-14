@@ -56,6 +56,28 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual([a.name for a in atoms], ['N', 'CA', 'C', 'O'])
         self.assertEqual([a.protons for a in atoms], [7, 6, 6, 8])
 
+    @testing.requires_version("2.6")
+    def testIterate__explicit_degree(self):
+        cmd.fragment("ala")
+        result = []
+        cmd.iterate("all", "result.append(explicit_degree)", space=locals())
+        self.assertEqual(result, [2, 4, 2, 1, 4, 1, 1, 1, 1, 1])
+
+    @testing.requires_version("2.6")
+    def testIterate__explicit_valence(self):
+        cmd.fragment("ala")
+        result = []
+        cmd.iterate("all", "result.append(explicit_valence)", space=locals())
+        self.assertEqual(result, [2, 4, 3, 2, 4, 1, 1, 1, 1, 1])
+
+    @testing.requires_version("2.6")
+    def testIterate__explicit_valence__aromatic(self):
+        cmd.fragment("benzene")
+        cmd.valence("aromatic", "elem C", "elem C")
+        result = []
+        cmd.iterate("all", "result.append(explicit_valence)", space=locals())
+        self.assertEqual(result, [4, 4, 4, 4, 4, 4, 1, 1, 1, 1, 1, 1])
+
     def testIterateState(self):
         cmd.fragment('ala')
         cmd.create('ala', 'ala', 1, 2)
