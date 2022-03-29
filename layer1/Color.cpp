@@ -433,7 +433,7 @@ PyObject *ColorAsPyList(PyMOLGlobals * G)
   for (const auto& color : I->Color) {
     if (color.Custom || color.LutColorFlag) {
       auto* list = PyList_New(7);
-      PyList_SetItem(list, 0, PyString_FromString(color.Name));
+      PyList_SetItem(list, 0, PyString_FromString(color.Name ? color.Name : ""));
       PyList_SetItem(list, 1, PyInt_FromLong(a));
       PyList_SetItem(list, 2, PConvFloatArrayToPyList(color.Color, 3));
       PyList_SetItem(list, 3, PyInt_FromLong(color.Custom));
