@@ -20,6 +20,8 @@ Z* -------------------------------------------------------------------
 #include <unordered_map>
 #include <string>
 
+#include "pymol/zstring_view.h"
+
 #include"os_python.h"
 
 #include"Rep.h"
@@ -121,6 +123,14 @@ struct ObjectGadgetRamp *ColorGetRamp(PyMOLGlobals * G, int index);
 
 void ColorRegisterExt(PyMOLGlobals* G, const char* name, ObjectGadgetRamp*);
 void ColorForgetExt(PyMOLGlobals * G, const char *name);
+
+/**
+ * Renames a color extension
+ *
+ * @param oldName: Old Ext name
+ * @param newName: New Ext name
+ */
+void ColorRenameExt(PyMOLGlobals* G, pymol::zstring_view oldName, pymol::zstring_view newName);
 
 PyObject *ColorAsPyList(PyMOLGlobals * G);
 int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore);

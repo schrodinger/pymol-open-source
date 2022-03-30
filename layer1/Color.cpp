@@ -1892,3 +1892,34 @@ int Color3fToInt(PyMOLGlobals * G, const float *rgb){
 	   ( ( gc << 8 ) & 0x0000FF00) |
 	   ( ( bc & 0x000000FF ) ) );
 }
+
+void ColorRenameExt(
+    PyMOLGlobals* G, pymol::zstring_view oldName, pymol::zstring_view newName)
+{
+  auto I = G->Color;
+
+  // Find color idx
+  auto oldNameIt = I->Idx.find(oldName.c_str());
+  if (oldNameIt == I->Idx.end()) {
+    return;
+  }
+  auto idx = oldNameIt->second;
+  reg_name(I, idx, newName.c_str(), true);
+  if (ExecutiveFindObject<ObjectGadgetRamp>(G, newName) == nullptr) {
+    return;
+  }
+
+  // Find corresponding color ext and provide it the new name
+  auto extIt = std::find_if(I->Ext.begin(), I->Ext.end(), [oldName](const ExtRec& rec) {
+    return oldName == rec.Name;
+  });
+  if (extIt == I->Ext.end()) {
+    return;
+  }
+  auto newNameit = I->Idx.find(newName.c_str());
+  if (newNameit == I->Idx.end()) {
+   return;
+  }
+  auto& ext = *extIt;
+  ext.Name = newNameit->first.c_str();
+}

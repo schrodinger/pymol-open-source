@@ -3593,6 +3593,7 @@ pymol::Result<std::vector<DiscardedRec>> ExecutiveSetName(
       ExecutiveInvalidateGroups(G, false);
     }
   }
+  ColorRenameExt(G, old_name_view, new_name_view);
   return discarded;
 }
 
