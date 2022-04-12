@@ -10888,15 +10888,20 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule * I, int atom,
           sp2_flag = true;
         }
 
-        if(I->AtomInfo[a2].protons != 1) {      /* ignore hydrogens */
-          if(CoordSetGetAtomVertex(cs, a2, v_neigh)) {
-            subtract3f(v_atom, v_neigh, v_diff);
-            normalize3f(v_diff);
-            add3f(v_diff, v_acc, v_acc);
-            vec_cnt++;
-          }
+    const auto& ai = I->AtomInfo[atom];
+
+    bool isH = I->AtomInfo[a2].protons == cAN_H;
+
+    if (!isH || (ai.protons == cAN_O && isH))
+      { /* ignore hydrogens unless water*/
+        if (CoordSetGetAtomVertex(cs, a2, v_neigh)) {
+          subtract3f(v_atom, v_neigh, v_diff);
+          normalize3f(v_diff);
+          add3f(v_diff, v_acc, v_acc);
+          vec_cnt++;
         }
       }
+    }
       if(vec_cnt) {
         result = (float) length3f(v_acc);
         result = result / vec_cnt;
