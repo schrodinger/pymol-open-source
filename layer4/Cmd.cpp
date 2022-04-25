@@ -735,9 +735,8 @@ static PyObject * CmdFindMolfilePlugin(PyObject * self, PyObject * args)
     if (G) {
       APIEnter(G);
       const char * plugin = PlugIOManagerFindPluginByExt(G, ext, mask);
-      PyObject * result = PyString_FromString(plugin ? plugin : "");
       APIExit(G);
-      return APIAutoNone(result);
+      return PyUnicode_FromString(plugin ? plugin : "");
     }
   }
   return APIAutoNone(NULL);
