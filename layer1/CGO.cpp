@@ -554,6 +554,9 @@ int CGOFromFloatArray(CGO * I, const float *src, int len)
     for(a = 0; a < sz; a++) {
       cc++;
       val = *(src++);
+      if (std::abs(val) <= R_SMALL8) {
+        val = 0;
+      }
       if((FLT_MAX - val) > 0.0F) {      /* make sure we have a real float */
         *(pc++) = val;
       } else {
