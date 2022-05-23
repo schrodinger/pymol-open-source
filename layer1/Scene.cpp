@@ -5674,8 +5674,7 @@ Rect2D SceneGetViewport(PyMOLGlobals* G)
 {
   Rect2D viewport{};
 #ifdef _PYMOL_IOS
-  view_save.offset = Offset2D{};
-  view_save.extent = SceneGetExtent(G);
+  viewport.extent = SceneGetExtent(G);
 #else
   int viewBuffer[4];
   glGetIntegerv(GL_VIEWPORT, (GLint*) (void*) viewBuffer);
