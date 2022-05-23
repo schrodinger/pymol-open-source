@@ -1043,9 +1043,8 @@ CShaderPrg *CShaderMgr::Enable_ConnectorShader(RenderPass pass){
     shaderPrg->Set1f("clipRange", back - front);
   }
 
-  int width, height;
-  SceneGetWidthHeightStereo(G, &width, &height);
-  shaderPrg->Set2f("screenSize", width, height);
+  auto extent = SceneGetExtentStereo(G);
+  shaderPrg->Set2f("screenSize", extent.width, extent.height);
 
   {
     float v_scale = SceneGetScreenVertexScale(G, nullptr);
@@ -1096,10 +1095,9 @@ CShaderPrg *CShaderMgr::Enable_CylinderShader(RenderPass pass){
 }
 
 CShaderPrg *CShaderMgr::Enable_CylinderShader(const char *shader_name, RenderPass pass){
-  int width, height;
   CShaderPrg *shaderPrg;
 
-  SceneGetWidthHeightStereo(G, &width, &height);
+  auto extent = SceneGetExtentStereo(G);
   shaderPrg = GetShaderPrg(shader_name, 1, pass);
   if (!shaderPrg)
       return nullptr;
@@ -1111,7 +1109,7 @@ CShaderPrg *CShaderMgr::Enable_CylinderShader(const char *shader_name, RenderPas
 
   shaderPrg->Set_Stereo_And_AnaglyphMode();
 
-  shaderPrg->Set1f("inv_height", 1.0/height);
+  shaderPrg->Set1f("inv_height", 1.0f / extent.height);
   shaderPrg->Set1i("no_flat_caps", 1);
   {
     float smooth_half_bonds = (SettingGetGlobal_i(G, cSetting_smooth_half_bonds)) ? .2f : 0.f;
@@ -1200,12 +1198,8 @@ CShaderPrg *CShaderMgr::Enable_TriLinesShader() {
   shaderPrg->SetBgUniforms();
   shaderPrg->Set_Stereo_And_AnaglyphMode();
   shaderPrg->Set_Matrices();
-  {
-    int width, height;
-    SceneGetWidthHeightStereo(G, &width, &height);
-
-      shaderPrg->Set2f("inv_dimensions", 1.f/width, 1.f/height);
-  }
+  auto extent = SceneGetExtentStereo(G);
+  shaderPrg->Set2f("inv_dimensions", 1.f/extent.width, 1.f/extent.height);
   return shaderPrg;
 }
 
@@ -1291,8 +1285,6 @@ CShaderPrg *CShaderMgr::Enable_RampShader(){
 }
 
 CShaderPrg *CShaderMgr::Setup_LabelShader(CShaderPrg *shaderPrg) {
-  int width = 0, height = 0;
-
   shaderPrg->Set_Matrices();
 
   glActiveTexture(GL_TEXTURE3);
@@ -1302,10 +1294,9 @@ CShaderPrg *CShaderMgr::Setup_LabelShader(CShaderPrg *shaderPrg) {
     shaderPrg->Set1i("textureMap", 3);
   }
 
-  SceneGetWidthHeightStereo(G, &width, &height);
+  auto extent = SceneGetExtentStereo(G);
 
-  if (width)
-    shaderPrg->Set2f("screenSize", width, height);
+  shaderPrg->Set2f("screenSize", extent.width, extent.height);
 
   shaderPrg->SetBgUniforms();
 
@@ -1782,9 +1773,9 @@ void CShaderMgr::bindOffscreen(int width, int height, GridInfo *grid) {
 
   SceneInitializeViewport(G, 1);
   if (grid->active) {
-    grid->cur_view[0] = grid->cur_view[1] = 0;
-    grid->cur_view[2] = req_size.x;
-    grid->cur_view[3] = req_size.y;
+    grid->cur_view.offset = Offset2D{};
+    grid->cur_view.extent.width = static_cast<std::uint32_t>(req_size.x);
+    grid->cur_view.extent.height = static_cast<std::uint32_t>(req_size.y);
   }
 }
 

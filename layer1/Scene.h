@@ -169,7 +169,7 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
 void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty);
 void SceneGetCenter(PyMOLGlobals * G, float *pos);
 void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height);
-void SceneGetWidthHeightStereo(PyMOLGlobals * G, int *width, int *height);
+Extent2D SceneGetExtentStereo(PyMOLGlobals* G);
 void SceneInvalidateCopy(PyMOLGlobals * G, int free_buffer);
 
 void SceneSetCardInfo(PyMOLGlobals * G, const char *vendor, const char *renderer, const char *version);
@@ -264,14 +264,12 @@ int StereoIsAdjacent(PyMOLGlobals * G);
 int SceneGetGridSize(PyMOLGlobals * G, int grid_mode);
 
 void GridUpdate(GridInfo * I, float asp_ratio, int mode, int size);
-void GridGetRayViewport(GridInfo * I, int width, int height);
-void GridSetRayViewport(GridInfo * I, int slot, int *x, int *y, int *width,
-                        int *height);
+Rect2D GridSetRayViewport(GridInfo& I, int slot);
 int SceneGetDrawFlag(GridInfo * grid, int *slot_vla, int slot);
 
 void SceneApplyImageGamma(PyMOLGlobals * G, unsigned int *buffer, int width,
                           int height);
-void ScenePrepareUnitContext(SceneUnitContext * context, int width, int height);
+SceneUnitContext ScenePrepareUnitContext(const Extent2D& extent);
 
 float GetFovWidth(PyMOLGlobals * G);
 
@@ -298,6 +296,11 @@ int stereo_via_adjacent_array(int stereo_mode);
 int SceneDeferredClick(DeferredMouse * dm);
 int SceneDeferredDrag(DeferredMouse * dm);
 int SceneDeferredRelease(DeferredMouse * dm);
+
+void SceneSetViewport(const Rect2D& rect);
+Rect2D SceneGetViewport(PyMOLGlobals* G);
+Extent2D SceneGetExtent(PyMOLGlobals* G);
+float SceneGetAspectRatio(PyMOLGlobals* G);
 
 #endif
 

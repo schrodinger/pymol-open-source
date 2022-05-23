@@ -99,8 +99,9 @@ static std::vector<unsigned> SceneGetPickIndices(PyMOLGlobals* G,
 
   std::vector<unsigned> indices(w * h);
 
-  if(I->grid.active)
-    GridGetGLViewport(G, &I->grid);
+  if (I->grid.active) {
+    I->grid.cur_view = SceneGetViewport(G);
+  }
 
   for (int pass = 0;; ++pass) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

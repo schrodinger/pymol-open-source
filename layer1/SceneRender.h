@@ -40,7 +40,6 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
 
 void SceneInitializeViewport(PyMOLGlobals * G, int offscreen);
 
-void GridGetGLViewport(PyMOLGlobals * G, GridInfo * I);
 void GridSetGLViewport(GridInfo * I, int slot);
 
 #endif

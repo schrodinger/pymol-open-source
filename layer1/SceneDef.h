@@ -81,7 +81,37 @@ typedef struct {
   float unit_left, unit_right, unit_top, unit_bottom, unit_front, unit_back;
 } SceneUnitContext;
 
-typedef struct {
+
+struct Offset2D
+{
+  std::int32_t x;
+  std::int32_t y;
+};
+
+struct Extent2D
+{
+  std::uint32_t width;
+  std::uint32_t height;
+};
+
+struct Rect2D
+{
+  Offset2D offset;
+  Extent2D extent;
+};
+
+
+inline bool operator==(const Rect2D& rectA, const Rect2D& rectB) {
+  return rectA.offset.x == rectB.offset.x && rectA.offset.y == rectB.offset.y &&
+         rectA.extent.width == rectB.extent.width &&
+         rectA.extent.height == rectB.extent.height;
+}
+
+inline bool operator!=(const Rect2D& rectA, const Rect2D& rectB) {
+  return !(rectA == rectB);
+}
+
+struct GridInfo {
   int n_col;
   int n_row;
   int first_slot;
@@ -91,10 +121,10 @@ typedef struct {
   int size;
   int slot;
   int mode;
-  GLint cur_view[4];
-  GLint cur_viewport_size[2];
+  Rect2D cur_view;
+  Extent2D cur_viewport_size;
   SceneUnitContext context;     /* for whole-window display */
-} GridInfo;
+};
 
 
 class CScene : public Block {

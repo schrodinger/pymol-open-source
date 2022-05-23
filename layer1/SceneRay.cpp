@@ -193,13 +193,20 @@ bool SceneRay(PyMOLGlobals * G,
     int tot_height = ray_height;
     int ray_x = 0, ray_y = 0;
 
-    if(I->grid.active)
-      GridGetRayViewport(&I->grid, ray_width, ray_height);
+    if (I->grid.active) {
+      I->grid.cur_view.offset = Offset2D{};
+      I->grid.cur_view.extent = Extent2D{static_cast<std::uint32_t>(ray_width),
+          static_cast<std::uint32_t>(ray_height)};
+    }
 
     for(slot = 0; slot <= I->grid.last_slot; slot++) {
 
-      if(I->grid.active) {
-        GridSetRayViewport(&I->grid, slot, &ray_x, &ray_y, &ray_width, &ray_height);
+      if (I->grid.active) {
+        auto ray_rect = GridSetRayViewport(I->grid, slot);
+        ray_x = ray_rect.offset.x;
+        ray_y = ray_rect.offset.y;
+        ray_width = ray_rect.extent.width;
+        ray_height = ray_rect.extent.height;
         OrthoBusySlow(G, slot, I->grid.last_slot);
       }
 
@@ -482,8 +489,13 @@ bool SceneRay(PyMOLGlobals * G,
       }
       RayFree(ray);
     }
-    if(I->grid.active)
-      GridSetRayViewport(&I->grid, -1, &ray_x, &ray_y, &ray_width, &ray_height);
+    if(I->grid.active) {
+      auto ray_rect = GridSetRayViewport(I->grid, -1);
+      ray_x = ray_rect.offset.x;
+      ray_y = ray_rect.offset.y;
+      ray_width = ray_rect.extent.width;
+      ray_height = ray_rect.extent.height;
+    }
 
     if((mode == 0) && I->Image && !I->Image->empty()) {
       SceneApplyImageGamma(G, I->Image->pixels(), I->Image->getWidth(),

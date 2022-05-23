@@ -132,60 +132,44 @@ int SceneViewEqual(SceneViewType left, SceneViewType right)
   return true;
 }
 
-void GridSetRayViewport(GridInfo * I, int slot, int *x, int *y, int *width,
-                        int *height)
+Rect2D GridSetRayViewport(GridInfo& I, int slot)
 {
-  if(slot)
-    I->slot = slot + I->first_slot - 1;
+  Rect2D view{};
+  if (slot)
+    I.slot = slot + I.first_slot - 1;
   else
-    I->slot = slot;
+    I.slot = slot;
   /* if we are in grid mode, then prepare the grid slot viewport */
-  if(slot < 0) {
-    *x = I->cur_view[0];
-    *y = I->cur_view[1];
-    *width = I->cur_view[2];
-    *height = I->cur_view[3];
-  } else if(!slot) {
-    int vx = 0;
-    int vw = I->cur_view[2] / I->n_col;
-    int vy = 0;
-    int vh = I->cur_view[3] / I->n_row;
-    if(I->n_col < I->n_row) {
-      vw *= I->n_col;
-      vh *= I->n_col;
+  if (slot < 0) {
+    return I.cur_view;
+  } else if (slot == 0) {
+    view.offset = Offset2D{};
+    view.extent.width = static_cast<std::uint32_t>(I.cur_view.extent.width / I.n_col);
+    view.extent.height = static_cast<std::uint32_t>(I.cur_view.extent.height / I.n_row);
+    if (I.n_col < I.n_row) {
+      view.extent.width *= I.n_col;
+      view.extent.height *= I.n_col;
     } else {
-      vw *= I->n_row;
-      vh *= I->n_row;
+      view.extent.width *= I.n_row;
+      view.extent.height *= I.n_row;
     }
-    vx += I->cur_view[0] + (I->cur_view[2] - vw) / 2;
-    vy += I->cur_view[1];
-    *x = vx;
-    *y = vy;
-    *width = vw;
-    *height = vh;
+    view.offset.x += I.cur_view.offset.x + (I.cur_view.extent.width - view.extent.width) / 2;
+    view.offset.y += I.cur_view.offset.y;
   } else {
-    int abs_grid_slot = slot - I->first_slot;
-    int grid_col = abs_grid_slot % I->n_col;
-    int grid_row = (abs_grid_slot / I->n_col);
-    int vx = (grid_col * I->cur_view[2]) / I->n_col;
-    int vw = ((grid_col + 1) * I->cur_view[2]) / I->n_col - vx;
-    int vy = I->cur_view[3] - ((grid_row + 1) * I->cur_view[3]) / I->n_row;
-    int vh = (I->cur_view[3] - ((grid_row) * I->cur_view[3]) / I->n_row) - vy;
-    vx += I->cur_view[0];
-    vy += I->cur_view[1];
-    *x = vx;
-    *y = vy;
-    *width = vw;
-    *height = vh;
+    int abs_grid_slot = slot - I.first_slot;
+    int grid_col = abs_grid_slot % I.n_col;
+    int grid_row = (abs_grid_slot / I.n_col);
+    view.offset.x =
+        static_cast<std::int32_t>((grid_col * I.cur_view.extent.width) / I.n_col);
+    view.offset.y = static_cast<std::int32_t>(
+        I.cur_view.extent.height - ((grid_row + 1) * I.cur_view.extent.height) / I.n_row);
+    view.extent.width = ((grid_col + 1) * I.cur_view.extent.width) / I.n_col - view.offset.x;
+    view.extent.height = static_cast<std::uint32_t>(
+        (I.cur_view.extent.height - ((grid_row) *I.cur_view.extent.height) / I.n_row) - view.offset.y);
+    view.offset.x += I.cur_view.offset.x;
+    view.offset.y += I.cur_view.offset.y;
   }
-}
-
-void GridGetRayViewport(GridInfo * I, int width, int height)
-{
-  I->cur_view[0] = 0;
-  I->cur_view[1] = 0;
-  I->cur_view[2] = width;
-  I->cur_view[3] = height;
+  return view;
 }
 
 void GridUpdate(GridInfo * I, float asp_ratio, int mode, int size)
@@ -738,17 +722,14 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
 #endif // _OPENVR_STEREO_DEBUG_VIEWS
 }
 
-void ScenePrepareUnitContext(SceneUnitContext * context, int width, int height)
+SceneUnitContext ScenePrepareUnitContext(const Extent2D& extent)
 {
+  SceneUnitContext context{};
   float tw = 1.0F;
   float th = 1.0F;
-  float aspRat;
-
-  if(height) {
-    aspRat = width / (float) height;
-  } else {
-    aspRat = 1.0F;
-  }
+  float aspRat = extent.height != 0
+                     ? (extent.width / static_cast<float>(extent.height))
+                     : 1.0f;
 
   if(aspRat > 1.0F) {
     tw = aspRat;
@@ -756,12 +737,12 @@ void ScenePrepareUnitContext(SceneUnitContext * context, int width, int height)
     th = 1.0F / aspRat;
   }
 
-  context->unit_left = (1.0F - tw) / 2;
-  context->unit_right = (tw + 1.0F) / 2;
-  context->unit_top = (1.0F - th) / 2;
-  context->unit_bottom = (th + 1.0F) / 2;
-  context->unit_front = -0.5F;
-  context->unit_back = 0.5F;
+  context.unit_left = (1.0F - tw) / 2;
+  context.unit_right = (tw + 1.0F) / 2;
+  context.unit_top = (1.0F - th) / 2;
+  context.unit_bottom = (th + 1.0F) / 2;
+  context.unit_front = -0.5F;
+  context.unit_back = 0.5F;
   /*
      printf(
      "ScenePrepareUnitContext:%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
@@ -772,6 +753,7 @@ void ScenePrepareUnitContext(SceneUnitContext * context, int width, int height)
      context->unit_front,
      context->unit_back);
    */
+  return context;
 }
 
 /**
@@ -784,26 +766,37 @@ void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height)
   *height = I->Height;
 }
 
+Extent2D SceneGetExtent(PyMOLGlobals* G)
+{
+  return Extent2D{static_cast<std::uint32_t>(G->Scene->Width),
+      static_cast<std::uint32_t>(G->Scene->Height)};
+}
+
+float SceneGetAspectRatio(PyMOLGlobals* G)
+{
+  auto extent = SceneGetExtent(G);
+  return static_cast<float>(extent.width) / static_cast<float>(extent.height);
+}
+
 /**
  * Get the actual current (sub-)viewport size, considering grid mode and
  * side-by-side stereo
  */
-void SceneGetWidthHeightStereo(PyMOLGlobals * G, int *width, int *height)
+Extent2D SceneGetExtentStereo(PyMOLGlobals* G)
 {
-  CScene *I = G->Scene;
+  auto I = G->Scene;
 
   if (I->grid.active) {
     // TODO: this considers "draw W, H" (PYMOL-2775)
-    *width = I->grid.cur_viewport_size[0];
-    *height = I->grid.cur_viewport_size[1];
-    return;
+    return I->grid.cur_viewport_size;
   }
 
+  Extent2D extent{static_cast<std::uint32_t>(I->Width),
+      static_cast<std::uint32_t>(I->Height)};
   // TODO: this does NOT consider "draw W, H" (PYMOL-2775)
-  *width = I->Width;
-  *height = I->Height;
   if (stereo_via_adjacent_array(I->StereoMode))
-    *width /= 2.f;
+    extent.width /= 2.f;
+  return extent;
 }
 
 void SceneSetCardInfo(PyMOLGlobals * G,
@@ -1905,8 +1898,8 @@ std::pair<int, int> SceneGetImageSize(PyMOLGlobals * G)
 
 float SceneGetGridAspectRatio(PyMOLGlobals * G){
   CScene *I = G->Scene;
-  return (I->Width / (float)I->Height) /
-    (float)(I->grid.cur_viewport_size[0] / (float)I->grid.cur_viewport_size[1]);
+  auto gridAspRat = (float)(I->grid.cur_viewport_size.width / (float)I->grid.cur_viewport_size.height);
+  return SceneGetAspectRatio(G) / gridAspRat;
 }
 
 int SceneCopyExternal(PyMOLGlobals * G, int width, int height,
@@ -5606,10 +5599,11 @@ void SceneSetPointToWorldScreenRelative(PyMOLGlobals *G, float *pos, float *scre
 {
   float npos[4];
   float InvPmvMatrix[16];
-  int width, height;
-  SceneGetWidthHeightStereo(G, &width, &height);
-  npos[0] = (.5f + floor(screenPt[0]*width)) /width ;  // add .5, in middle of pixels?
-  npos[1] = (.5f + floor(screenPt[1]*height)) /height ; // add .5, in middle of pixels?
+  auto extent = SceneGetExtentStereo(G);
+  npos[0] = (.5f + floor(screenPt[0] * extent.width)) /
+            extent.width; // add .5, in middle of pixels?
+  npos[1] = (.5f + floor(screenPt[1] * extent.height)) /
+            extent.height; // add .5, in middle of pixels?
   npos[2] = 0.f;
   npos[3] = 1.f;
   MatrixInvertC44f(SceneGetPmvMatrix(G), InvPmvMatrix);
@@ -5671,3 +5665,24 @@ SceneElem::SceneElem(std::string name_, bool drawn_)
 {
 }
 
+void SceneSetViewport(const Rect2D& rect)
+{
+  glViewport(rect.offset.x, rect.offset.y, rect.extent.width, rect.extent.height);
+}
+
+Rect2D SceneGetViewport(PyMOLGlobals* G)
+{
+  Rect2D viewport{};
+#ifdef _PYMOL_IOS
+  view_save.offset = Offset2D{};
+  view_save.extent = SceneGetExtent(G);
+#else
+  int viewBuffer[4];
+  glGetIntegerv(GL_VIEWPORT, (GLint*) (void*) viewBuffer);
+  viewport.offset = Offset2D{static_cast<std::int32_t>(viewBuffer[0]),
+      static_cast<std::int32_t>(viewBuffer[1])};
+  viewport.extent = Extent2D{static_cast<std::uint32_t>(viewBuffer[2]),
+      static_cast<std::uint32_t>(viewBuffer[3])};
+#endif
+return viewport;
+}
