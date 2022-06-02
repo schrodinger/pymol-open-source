@@ -4,73 +4,72 @@
 
 #include <algorithm>
 
-#include"Scene.h"
-#include"SceneRay.h"
-#include"ScenePicking.h"
-#include"ShaderMgr.h"
-#include"CGO.h"
-#include"Matrix.h"
-#include"PyMOLOptions.h"
-#include"Util.h"
-#include"main.h"
-#include"Control.h"
-#include"Editor.h"
-#include"Executive.h"
-#include"P.h"
-#include"Err.h"
-#include"Picking.h"
+#include "CGO.h"
+#include "Control.h"
+#include "Editor.h"
+#include "Err.h"
+#include "Executive.h"
 #include "Feedback.h"
+#include "Matrix.h"
+#include "P.h"
+#include "Picking.h"
+#include "PyMOLOptions.h"
+#include "Scene.h"
+#include "ScenePicking.h"
+#include "SceneRay.h"
+#include "ShaderMgr.h"
+#include "Util.h"
+#include "main.h"
 
 #ifdef _PYMOL_OPENVR
-#include"OpenVRMode.h"
+#include "OpenVRMode.h"
 #endif
 
 /* EXPERIMENTAL VOLUME RAYTRACING DATA */
-extern float *rayDepthPixels;
+extern float* rayDepthPixels;
 extern int rayVolume, rayWidth, rayHeight;
 
-static
-void SetDrawBufferForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, int times, int fog_active, int offscreen);
-static
-void SceneDrawStencilInBuffer(PyMOLGlobals * G, CScene *I, int stereo_mode);
+static void SetDrawBufferForStereo(PyMOLGlobals* G, CScene* I, int stereo_mode,
+    int times, int fog_active, int offscreen);
+static void SceneDrawStencilInBuffer(
+    PyMOLGlobals* G, CScene* I, int stereo_mode);
 
-static
-void SceneRenderStereoLoop(PyMOLGlobals * G, int timesArg, int must_render_stereo, int stereo_mode, 
-                           short render_to_texture, int x, int y, int oversize_width, int oversize_height, 
-                           int stereo_double_pump_mono, int curState, float *normal, 
-                           SceneUnitContext *context, float width_scale, int fog_active, 
-                           int onlySelections, int noAA);
+static void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
+    int must_render_stereo, int stereo_mode, short render_to_texture, int x,
+    int y, int oversize_width, int oversize_height, int stereo_double_pump_mono,
+    int curState, float* normal, SceneUnitContext* context, float width_scale,
+    int fog_active, int onlySelections, int noAA);
 
-static
-void SceneRenderAA(PyMOLGlobals * G);
+static void SceneRenderAA(PyMOLGlobals* G);
 
-static
-void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen, int times,
-                                  int x, int y, int oversize_width, int oversize_height, GLenum draw_mode,
-                                  int position /* left=0, right=1 */);
+static void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I,
+    int stereo_mode, short offscreen, int times, int x, int y,
+    int oversize_width, int oversize_height, GLenum draw_mode,
+    int position /* left=0, right=1 */);
 
-static
-void PrepareViewPortForMonoInitializeViewPort(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen,
-                                              int times, int x, int y, int oversize_width, int oversize_height);
+static void PrepareViewPortForMonoInitializeViewPort(PyMOLGlobals* G, CScene* I,
+    int stereo_mode, short offscreen, int times, int x, int y,
+    int oversize_width, int oversize_height);
 
-static
-void PrepareViewPortForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen, int times,
-                              int x, int y, int oversize_width, int oversize_height);
+static void PrepareViewPortForStereo(PyMOLGlobals* G, CScene* I,
+    int stereo_mode, short offscreen, int times, int x, int y,
+    int oversize_width, int oversize_height);
 
-static
-void PrepareViewPortForStereo2nd(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen,
-                                 int times, int x, int y, int oversize_width, int oversize_height);
+static void PrepareViewPortForStereo2nd(PyMOLGlobals* G, CScene* I,
+    int stereo_mode, short offscreen, int times, int x, int y,
+    int oversize_width, int oversize_height);
 
-static
-void InitializeViewPortToScreenBlock(PyMOLGlobals * G, CScene *I, int x, int y, int oversize_width, int oversize_height, 
-                                     int *stereo_mode, float *width_scale);
+static void InitializeViewPortToScreenBlock(PyMOLGlobals* G, CScene* I, int x,
+    int y, int oversize_width, int oversize_height, int* stereo_mode,
+    float* width_scale);
 
-static
-void SceneSetPrepareViewPortForStereo(PyMOLGlobals *G, void (*prepareViewPortForStereo)(PyMOLGlobals *, CScene *, int, short, int, int, int, int, int), 
-                                      int times, int x, int y, int oversize_width, int oversize_height, int stereo_mode, float width_scale);
+static void SceneSetPrepareViewPortForStereo(PyMOLGlobals* G,
+    void (*prepareViewPortForStereo)(
+        PyMOLGlobals*, CScene*, int, short, int, int, int, int, int),
+    int times, int x, int y, int oversize_width, int oversize_height,
+    int stereo_mode, float width_scale);
 
-static
-CGO *GenerateUnitScreenCGO(PyMOLGlobals * G);
+static CGO* GenerateUnitScreenCGO(PyMOLGlobals* G);
 
 static int stereo_via_stencil(int stereo_mode)
 {
@@ -84,8 +83,7 @@ static int stereo_via_stencil(int stereo_mode)
   return false;
 }
 
-static
-int render_stereo_blend_into_full_screen(int stereo_mode)
+static int render_stereo_blend_into_full_screen(int stereo_mode)
 {
   switch (stereo_mode) {
   case cStereo_stencil_by_row:
@@ -100,28 +98,29 @@ int render_stereo_blend_into_full_screen(int stereo_mode)
   return false;
 }
 
-void GridSetGLViewport(GridInfo * I, int slot)
+void GridSetGLViewport(GridInfo* I, int slot)
 {
-  if(slot)
+  if (slot)
     I->slot = slot + I->first_slot - 1;
   else
     I->slot = slot;
   /* if we are in grid mode, then prepare the grid slot viewport */
-  if(slot < 0) {
+  if (slot < 0) {
     SceneSetViewport(I->cur_view);
-  } else if(!slot) { /* slot 0 is the full screen */
+  } else if (!slot) { /* slot 0 is the full screen */
     Rect2D view{};
     view.offset = Offset2D{};
     view.extent.width = I->cur_view.extent.width / I->n_col;
     view.extent.height = I->cur_view.extent.height / I->n_row;
-    if(I->n_col < I->n_row) {
+    if (I->n_col < I->n_row) {
       view.extent.width *= I->n_col;
       view.extent.height *= I->n_col;
     } else {
       view.extent.width *= I->n_row;
       view.extent.height *= I->n_row;
     }
-    view.offset.x += I->cur_view.offset.x + (I->cur_view.extent.width - view.extent.width) / 2;
+    view.offset.x += I->cur_view.offset.x +
+                     (I->cur_view.extent.width - view.extent.width) / 2;
     view.offset.y += I->cur_view.offset.y;
     SceneSetViewport(view);
     I->context = ScenePrepareUnitContext(view.extent);
@@ -131,9 +130,14 @@ void GridSetGLViewport(GridInfo * I, int slot)
     int grid_row = (abs_grid_slot / I->n_col);
     Rect2D view{};
     view.offset.x = (grid_col * I->cur_view.extent.width) / I->n_col;
-    view.extent.width = ((grid_col + 1) * I->cur_view.extent.width) / I->n_col - view.offset.x;
-    view.offset.y = I->cur_view.extent.height - ((grid_row + 1) * I->cur_view.extent.height) / I->n_row;
-    view.extent.height = (I->cur_view.extent.height - ((grid_row) * I->cur_view.extent.height) / I->n_row) - view.offset.y;
+    view.extent.width =
+        ((grid_col + 1) * I->cur_view.extent.width) / I->n_col - view.offset.x;
+    view.offset.y = I->cur_view.extent.height -
+                    ((grid_row + 1) * I->cur_view.extent.height) / I->n_row;
+    view.extent.height =
+        (I->cur_view.extent.height -
+            ((grid_row) *I->cur_view.extent.height) / I->n_row) -
+        view.offset.y;
     view.offset.x += I->cur_view.offset.x;
     view.offset.y += I->cur_view.offset.y;
     I->cur_viewport_size = view.extent;
@@ -142,11 +146,11 @@ void GridSetGLViewport(GridInfo * I, int slot)
   }
 }
 
-static void glBlendFunc_default() {
+static void glBlendFunc_default()
+{
   if (glBlendFuncSeparate) {
     glBlendFuncSeparate(
-      GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA,
-      GL_ONE,         GL_ONE_MINUS_SRC_ALPHA);
+        GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   } else {
     // OpenGL 1.x (e.g. remote desktop on Windows)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -223,7 +227,8 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
       PyMOLCheckOpenGLErr("SceneRender checkpoint 0");
 
     int stereo_double_pump_mono = false;
-    bool must_render_stereo = (stereo && stereo_mode != 0); // are we doing stereo?
+    bool must_render_stereo =
+        (stereo && stereo_mode != 0); // are we doing stereo?
     if (!must_render_stereo) {
       if (G->StereoCapable &&
           SettingGet<int>(G, NULL, NULL, cSetting_stereo_double_pump_mono)) {
@@ -320,7 +325,8 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
           I->m_view.m_clipSafe().m_back);
     } else {
       Extent2D extent;
-      extent.height = std::max(R_SMALL4, -I->m_view.pos().z) * GetFovWidth(G) / 2.f;
+      extent.height =
+          std::max(R_SMALL4, -I->m_view.pos().z) * GetFovWidth(G) / 2.f;
       extent.width = extent.height * aspRat;
       glOrtho44f(I->ProjectionMatrix, -static_cast<GLfloat>(extent.width),
           static_cast<GLfloat>(extent.width),
@@ -547,9 +553,10 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
 }
 
 #ifndef _PYMOL_NO_AA_SHADERS
-static
-void AppendCopyWithChangedShader(PyMOLGlobals * G, CGO *destCGO, CGO *srcCGO, int frommode, int tomode){
-  CGO *cgo = CGONew(G);
+static void AppendCopyWithChangedShader(
+    PyMOLGlobals* G, CGO* destCGO, CGO* srcCGO, int frommode, int tomode)
+{
+  CGO* cgo = CGONew(G);
   CGOAppendNoStop(cgo, srcCGO);
   CGOChangeShadersTo(cgo, frommode, tomode);
   CGOAppendNoStop(destCGO, cgo);
@@ -559,36 +566,42 @@ void AppendCopyWithChangedShader(PyMOLGlobals * G, CGO *destCGO, CGO *srcCGO, in
 
 /* SceneRenderAA: renders Anti-aliasing from the I->offscreen_texture texture,
                   depending on the antialias_shader setting, FXAA (1 stage)
-                  or SMAA (3 stages) are rendered using framebuffers I->offscreen2_fb,
-                  I->offscreen3_fb, and into the screen block
+                  or SMAA (3 stages) are rendered using framebuffers
+   I->offscreen2_fb, I->offscreen3_fb, and into the screen block
  */
-void SceneRenderAA(PyMOLGlobals * G){
+void SceneRenderAA(PyMOLGlobals* G)
+{
 #ifndef _PYMOL_NO_AA_SHADERS
-  CScene *I = G->Scene;
+  CScene* I = G->Scene;
   int ok = true;
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, G->ShaderMgr->default_framebuffer_id);
+  glBindFramebufferEXT(
+      GL_FRAMEBUFFER_EXT, G->ShaderMgr->default_framebuffer_id);
   if (!I->offscreenCGO) {
-    CGO *unitCGO = GenerateUnitScreenCGO(G);
-    ok &= unitCGO!=NULL;
-    if (ok){
+    CGO* unitCGO = GenerateUnitScreenCGO(G);
+    ok &= unitCGO != NULL;
+    if (ok) {
       int offscreen = SettingGet<int>(G, cSetting_antialias_shader);
 
       I->offscreenCGO = CGONew(G);
 
-      switch (offscreen){
+      switch (offscreen) {
       case 0:
         break;
       case 1: // fxaa
-        AppendCopyWithChangedShader(G, I->offscreenCGO, unitCGO, GL_DEFAULT_SHADER_WITH_SETTINGS, GL_FXAA_SHADER);
+        AppendCopyWithChangedShader(G, I->offscreenCGO, unitCGO,
+            GL_DEFAULT_SHADER_WITH_SETTINGS, GL_FXAA_SHADER);
         break;
       default:
-        AppendCopyWithChangedShader(G, I->offscreenCGO, unitCGO, GL_DEFAULT_SHADER_WITH_SETTINGS, GL_SMAA1_SHADER);
-        if (offscreen!=3){ // not 1nd Pass as output
+        AppendCopyWithChangedShader(G, I->offscreenCGO, unitCGO,
+            GL_DEFAULT_SHADER_WITH_SETTINGS, GL_SMAA1_SHADER);
+        if (offscreen != 3) { // not 1nd Pass as output
           CGODisable(I->offscreenCGO, GL_SMAA1_SHADER);
-          AppendCopyWithChangedShader(G, I->offscreenCGO, unitCGO, GL_DEFAULT_SHADER_WITH_SETTINGS, GL_SMAA2_SHADER);
+          AppendCopyWithChangedShader(G, I->offscreenCGO, unitCGO,
+              GL_DEFAULT_SHADER_WITH_SETTINGS, GL_SMAA2_SHADER);
           CGODisable(I->offscreenCGO, GL_SMAA2_SHADER);
-          if (offscreen!=4){ // not 2nd Pass as output
-            AppendCopyWithChangedShader(G, I->offscreenCGO, unitCGO, GL_DEFAULT_SHADER_WITH_SETTINGS, GL_SMAA3_SHADER);
+          if (offscreen != 4) { // not 2nd Pass as output
+            AppendCopyWithChangedShader(G, I->offscreenCGO, unitCGO,
+                GL_DEFAULT_SHADER_WITH_SETTINGS, GL_SMAA3_SHADER);
             CGODisable(I->offscreenCGO, GL_SMAA3_SHADER);
           }
         }
@@ -606,22 +619,15 @@ void SceneRenderAA(PyMOLGlobals * G){
     G->ShaderMgr->Disable_Current_Shader();
     glBindTexture(GL_TEXTURE_2D, 0);
     glEnable(GL_DEPTH_TEST);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, G->ShaderMgr->default_framebuffer_id);
+    glBindFramebufferEXT(
+        GL_FRAMEBUFFER_EXT, G->ShaderMgr->default_framebuffer_id);
   }
 #endif
 }
 
-static
-void SceneRenderAllObject(PyMOLGlobals * G,
-    CScene *I,
-    SceneUnitContext * context,
-    RenderInfo *info,
-    float *normal,
-    int state,
-    pymol::CObject *obj,
-    GridInfo * grid,
-    int *slot_vla,
-    int fat)
+static void SceneRenderAllObject(PyMOLGlobals* G, CScene* I,
+    SceneUnitContext* context, RenderInfo* info, float* normal, int state,
+    pymol::CObject* obj, GridInfo* grid, int* slot_vla, int fat)
 {
   if (!SceneGetDrawFlag(grid, slot_vla, obj->grid_slot))
     return;
@@ -632,90 +638,89 @@ void SceneRenderAllObject(PyMOLGlobals * G,
   glLineWidth(fat ? 3.0 : 1.0);
 #endif
 
-    switch (obj->getRenderContext()) {
-    case pymol::RenderContext::UnitWindow:
-      // e.g. Gadgets/Ramps
-      {
-        float projSave[16];
-        copy44f(I->ProjectionMatrix, projSave);
+  switch (obj->getRenderContext()) {
+  case pymol::RenderContext::UnitWindow:
+    // e.g. Gadgets/Ramps
+    {
+      float projSave[16];
+      copy44f(I->ProjectionMatrix, projSave);
 
-        if (grid->active) {
-          context = &grid->context;
-        }
-
-        glOrtho44f(I->ProjectionMatrix,
-            context->unit_left,  context->unit_right,
-            context->unit_top,   context->unit_bottom,
-            context->unit_front, context->unit_back);
-
-#ifndef PURE_OPENGL_ES_2
-        if (ALWAYS_IMMEDIATE_OR(!use_shader)) {
-          glPushAttrib(GL_LIGHTING_BIT);
-
-          glMatrixMode(GL_PROJECTION);
-          glLoadMatrixf(I->ProjectionMatrix);
-
-          glMatrixMode(GL_MODELVIEW);
-          glPushMatrix();
-          glLoadIdentity();
-
-          float vv[4] = { 0.f, 0.f, -1.f, 0.f }, dif[4] = { 1.f, 1.f, 1.f, 1.f };
-          glLightfv(GL_LIGHT0, GL_POSITION, vv);
-          glLightfv(GL_LIGHT0, GL_DIFFUSE, dif);
-
-          glNormal3f(0.0F, 0.0F, 1.0F);
-        }
-#endif
-
-        info->state = ObjectGetCurrentState(obj, false);
-        obj->render(info);
-
-        copy44f(projSave, I->ProjectionMatrix);
-
-#ifndef PURE_OPENGL_ES_2
-        if (ALWAYS_IMMEDIATE_OR(!use_shader)) {
-          glMatrixMode(GL_PROJECTION);
-          glLoadMatrixf(I->ProjectionMatrix);
-
-          glMatrixMode(GL_MODELVIEW);
-          glPopMatrix();
-
-          glPopAttrib();
-        }
-#endif
-      }
-      break;
-    case pymol::RenderContext::Camera:              /* context/grid 0 is all slots */
-    default:
-      ScenePushModelViewMatrix(G);
-
-#ifndef PURE_OPENGL_ES_2
-      if (normal && Feedback(G, FB_OpenGL, FB_Debugging))
-        glNormal3fv(normal);
-#endif
-
-      if((!grid->active) || (grid->mode < 2)) {
-	info->state = ObjectGetCurrentState(obj, false);
-	obj->render(info);
-      } else if(grid->slot) {
-        if (grid->mode == 2) {
-          if((info->state = state + grid->slot - 1) >= 0)
-            obj->render(info);
-        } else if (grid->mode == 3) {
-          info->state = grid->slot - obj->grid_slot - 1;
-          if (info->state >= 0 && info->state < obj->getNFrame())
-            obj->render(info);
-        }
+      if (grid->active) {
+        context = &grid->context;
       }
 
-      ScenePopModelViewMatrix(G, !use_shader);
-      break;
+      glOrtho44f(I->ProjectionMatrix, context->unit_left, context->unit_right,
+          context->unit_top, context->unit_bottom, context->unit_front,
+          context->unit_back);
+
+#ifndef PURE_OPENGL_ES_2
+      if (ALWAYS_IMMEDIATE_OR(!use_shader)) {
+        glPushAttrib(GL_LIGHTING_BIT);
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadMatrixf(I->ProjectionMatrix);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+
+        float vv[4] = {0.f, 0.f, -1.f, 0.f}, dif[4] = {1.f, 1.f, 1.f, 1.f};
+        glLightfv(GL_LIGHT0, GL_POSITION, vv);
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, dif);
+
+        glNormal3f(0.0F, 0.0F, 1.0F);
+      }
+#endif
+
+      info->state = ObjectGetCurrentState(obj, false);
+      obj->render(info);
+
+      copy44f(projSave, I->ProjectionMatrix);
+
+#ifndef PURE_OPENGL_ES_2
+      if (ALWAYS_IMMEDIATE_OR(!use_shader)) {
+        glMatrixMode(GL_PROJECTION);
+        glLoadMatrixf(I->ProjectionMatrix);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+
+        glPopAttrib();
+      }
+#endif
+    }
+    break;
+  case pymol::RenderContext::Camera: /* context/grid 0 is all slots */
+  default:
+    ScenePushModelViewMatrix(G);
+
+#ifndef PURE_OPENGL_ES_2
+    if (normal && Feedback(G, FB_OpenGL, FB_Debugging))
+      glNormal3fv(normal);
+#endif
+
+    if ((!grid->active) || (grid->mode < 2)) {
+      info->state = ObjectGetCurrentState(obj, false);
+      obj->render(info);
+    } else if (grid->slot) {
+      if (grid->mode == 2) {
+        if ((info->state = state + grid->slot - 1) >= 0)
+          obj->render(info);
+      } else if (grid->mode == 3) {
+        info->state = grid->slot - obj->grid_slot - 1;
+        if (info->state >= 0 && info->state < obj->getNFrame())
+          obj->render(info);
+      }
+    }
+
+    ScenePopModelViewMatrix(G, !use_shader);
+    break;
   }
 }
 
 /*========================================================================
  * SceneRenderAll: Renders all CObjects in the scene
- * 
+ *
  * context: context info
  * normal: initial normal (for immediate mode)
  * pass: which pass (opaque, antialias, transparent)
@@ -723,13 +728,14 @@ void SceneRenderAllObject(PyMOLGlobals * G,
  * width_scale: specifies width_scale and sampling
  * grid: grid information
  * dynamic_pass: for specific stereo modes dynamic and clone_dynamic
- * which: enum specifying which objects (AllObjects, OnlyGadgets, OnlyNonGadgets, GadgetsLast)
+ * which: enum specifying which objects (AllObjects, OnlyGadgets,
+ * OnlyNonGadgets, GadgetsLast)
  */
-void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal, PickColorManager* pickmgr,
-                    RenderPass pass, int fat, float width_scale,
-                    GridInfo * grid, int dynamic_pass, SceneRenderWhich which_objects)
+void SceneRenderAll(PyMOLGlobals* G, SceneUnitContext* context, float* normal,
+    PickColorManager* pickmgr, RenderPass pass, int fat, float width_scale,
+    GridInfo* grid, int dynamic_pass, SceneRenderWhich which_objects)
 {
-  CScene *I = G->Scene;
+  CScene* I = G->Scene;
   int state = SceneGetState(G);
   RenderInfo info;
 #if defined(_WEBGL) && defined(PYMOL_EVAL)
@@ -744,7 +750,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
   info.front = I->m_view.m_clipSafe().m_front;
   info.use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
 #if defined(_PYMOL_IOS) && !defined(_WEBGL)
-  /* For now, on IOS, just crank up the sampling for text, 
+  /* For now, on IOS, just crank up the sampling for text,
      TODO : need to figure out where this change should really be */
   info.sampling = 2;
 #else
@@ -752,7 +758,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
 #endif
   info.alpha_cgo = I->AlphaCGO;
   info.ortho = SettingGetGlobal_b(G, cSetting_ortho);
-  if(I->StereoMode && dynamic_pass && (!info.pick)) {
+  if (I->StereoMode && dynamic_pass && (!info.pick)) {
     int stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
     switch (stereo_mode) {
     case cStereo_dynamic:
@@ -762,13 +768,14 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
     }
   }
 
-  if(I->StereoMode) {
+  if (I->StereoMode) {
     float buffer;
     float stAng, stShift;
     stAng = SettingGetGlobal_f(G, cSetting_stereo_angle);
     stShift = SettingGetGlobal_f(G, cSetting_stereo_shift);
     stShift = (float) (stShift * fabs(I->m_view.pos().z) / 100.0);
-    stAng = (float) (stAng * atan(stShift / fabs(I->m_view.pos().z)) * 90.0 / cPI);
+    stAng =
+        (float) (stAng * atan(stShift / fabs(I->m_view.pos().z)) * 90.0 / cPI);
     buffer = fabs(I->Width * I->VertexScale * tan(cPI * stAng / 180.0));
     info.stereo_front = I->m_view.m_clipSafe().m_front + buffer;
   } else {
@@ -778,27 +785,29 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
   info.back = I->m_view.m_clipSafe().m_back;
   SceneGetViewNormal(G, info.view_normal);
 
-  if(info.alpha_cgo && (pass == RenderPass::Opaque)) {
+  if (info.alpha_cgo && (pass == RenderPass::Opaque)) {
     CGOReset(info.alpha_cgo);
-    CGOSetZVector(info.alpha_cgo, I->ModMatrix[2], I->ModMatrix[6], I->ModMatrix[10]);
+    CGOSetZVector(
+        info.alpha_cgo, I->ModMatrix[2], I->ModMatrix[6], I->ModMatrix[10]);
   }
 
-  if(SettingGetGlobal_b(G, cSetting_dynamic_width)) {
+  if (SettingGetGlobal_b(G, cSetting_dynamic_width)) {
     info.dynamic_width = true;
-    info.dynamic_width_factor = SettingGetGlobal_f(G, cSetting_dynamic_width_factor);
+    info.dynamic_width_factor =
+        SettingGetGlobal_f(G, cSetting_dynamic_width_factor);
     info.dynamic_width_min = SettingGetGlobal_f(G, cSetting_dynamic_width_min);
     info.dynamic_width_max = SettingGetGlobal_f(G, cSetting_dynamic_width_max);
   }
 
-  if(width_scale != 0.0F) {
+  if (width_scale != 0.0F) {
     info.width_scale_flag = true;
     info.width_scale = width_scale;
     info.sampling = (int) info.width_scale;
-    if(info.sampling < 1)
+    if (info.sampling < 1)
       info.sampling = 1;
   }
   {
-    int *slot_vla = I->SlotVLA;
+    int* slot_vla = I->SlotVLA;
     switch (which_objects) {
     case SceneRenderWhich::AllObjects:
       for (auto obj : I->Obj) {
@@ -811,8 +820,8 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
       break;
     case SceneRenderWhich::OnlyGadgets:
       for (auto obj : I->GadgetObjs) {
-          SceneRenderAllObject(
-              G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
+        SceneRenderAllObject(
+            G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
       }
       break;
     case SceneRenderWhich::OnlyNonGadgets:
@@ -836,59 +845,65 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context, float *normal,
         }
       }
       for (auto obj : I->GadgetObjs) {
-          SceneRenderAllObject(
-              G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
+        SceneRenderAllObject(
+            G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
       }
       break;
     }
   }
 
-  if(info.alpha_cgo) {
+  if (info.alpha_cgo) {
     CGOStop(info.alpha_cgo);
-    /* this only works when all objects are rendered in the same frame of reference */
-    if(pass == RenderPass::Transparent) {
+    /* this only works when all objects are rendered in the same frame of
+     * reference */
+    if (pass == RenderPass::Transparent) {
       CGORenderAlpha(info.alpha_cgo, &info, 0);
     }
   }
 }
 /*==================================================================================*/
-/* DoRendering: This is the function that is responsible for looping through each
-   rendering pass (opaque, then antialiased, then transparent) for each grid slot
-   (only one grid slot if full screen).  It also implements transparency_mode 3, 
-   (weighted, blended order-independent transparency) which renders the opaque/antialiased
-   passes to the offscreen texture with a depth texture, renders the transparent 
-   pass to the OIT offscreen texture, calls OIT_copy to copy the opaque to the
-   screen (if necessary, i.e., not already rendering to AA texture), and then
-   calls the OIT rendering pass that computes the resulting image.
-   This function also renders only the selections (onlySelections) for all grids or
-   the full screen.
+/* DoRendering: This is the function that is responsible for looping through
+   each rendering pass (opaque, then antialiased, then transparent) for each
+   grid slot (only one grid slot if full screen).  It also implements
+   transparency_mode 3, (weighted, blended order-independent transparency) which
+   renders the opaque/antialiased passes to the offscreen texture with a depth
+   texture, renders the transparent pass to the OIT offscreen texture, calls
+   OIT_copy to copy the opaque to the screen (if necessary, i.e., not already
+   rendering to AA texture), and then calls the OIT rendering pass that computes
+   the resulting image. This function also renders only the selections
+   (onlySelections) for all grids or the full screen.
  */
-static
-void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, int times, 
-                 int curState, float *normal, SceneUnitContext *context, 
-                 float width_scale, short onlySelections, short excludeSelections){
-  const RenderPass passes[] = { RenderPass::Opaque, RenderPass::Antialias, RenderPass::Transparent };
-  bool use_shaders = (bool)SettingGetGlobal_b(G, cSetting_use_shaders);
-  bool t_mode_3_os = use_shaders && SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
+static void DoRendering(PyMOLGlobals* G, CScene* I, short offscreen,
+    GridInfo* grid, int times, int curState, float* normal,
+    SceneUnitContext* context, float width_scale, short onlySelections,
+    short excludeSelections)
+{
+  const RenderPass passes[] = {
+      RenderPass::Opaque, RenderPass::Antialias, RenderPass::Transparent};
+  bool use_shaders = (bool) SettingGetGlobal_b(G, cSetting_use_shaders);
+  bool t_mode_3_os =
+      use_shaders && SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
   bool t_mode_3 = !onlySelections && t_mode_3_os;
   GLint currentFrameBuffer;
 
 #if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
-  if (t_mode_3){
+  if (t_mode_3) {
     glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFrameBuffer);
-    // currentFrameBuffer: 0 - rendering to screen, need to render opaque to offscreen buffer
-    //                     non-0 - already rendering to AA texture, need to use I->offscreen_depth_rb
+    // currentFrameBuffer: 0 - rendering to screen, need to render opaque to
+    // offscreen buffer
+    //                     non-0 - already rendering to AA texture, need to use
+    //                     I->offscreen_depth_rb
     //                             transparent (OIT) pass
-    // In the case of jymol the currentFramebuffer is not 0 so we are checking against the default
-    // framebuffer
-    if (currentFrameBuffer == G->ShaderMgr->default_framebuffer_id){
+    // In the case of jymol the currentFramebuffer is not 0 so we are checking
+    // against the default framebuffer
+    if (currentFrameBuffer == G->ShaderMgr->default_framebuffer_id) {
       G->ShaderMgr->bindOffscreen(I->Width, I->Height, &I->grid);
       bg_grad(G);
     }
     glEnable(GL_DEPTH_TEST);
   }
 #endif
-  if (grid->active) {// && !offscreen)
+  if (grid->active) { // && !offscreen)
     grid->cur_view = SceneGetViewport(G);
   }
   {
@@ -896,162 +911,183 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
     bool cont = true;
     bool t_first_pass = true;
     G->ShaderMgr->stereo_draw_buffer_pass = 0;
-    for (auto pass : passes) {        /* render opaque, then antialiased, then transparent... */
+    for (auto pass :
+        passes) { /* render opaque, then antialiased, then transparent... */
       if (!cont) {
         break;
       }
 #if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
-      if (t_mode_3 && pass == RenderPass::Transparent){
+      if (t_mode_3 && pass == RenderPass::Transparent) {
         G->ShaderMgr->Disable_Current_Shader();
         int drawbuf = 1;
-        if (TM3_IS_ONEBUF){
-          if (!t_first_pass){
+        if (TM3_IS_ONEBUF) {
+          if (!t_first_pass) {
             G->ShaderMgr->stereo_draw_buffer_pass = 1;
           }
           drawbuf = t_first_pass ? 1 : 2;
         }
         G->ShaderMgr->bindOffscreenOIT(I->Width, I->Height, drawbuf);
-        G->ShaderMgr->oit_pp->bindRT(drawbuf); // for transparency pass, render to OIT texture
-        if (currentFrameBuffer == G->ShaderMgr->default_framebuffer_id){
+        G->ShaderMgr->oit_pp->bindRT(
+            drawbuf); // for transparency pass, render to OIT texture
+        if (currentFrameBuffer == G->ShaderMgr->default_framebuffer_id) {
           SceneInitializeViewport(G, 2);
         }
       }
 #endif
-      for(slot = 0; slot <= grid->last_slot; slot++) {
-        if(grid->active) {
+      for (slot = 0; slot <= grid->last_slot; slot++) {
+        if (grid->active) {
           GridSetGLViewport(grid, slot);
-        } else if (slot){
-          break; // if grid is off, then just get out of loop after 1st pass (full screen)
+        } else if (slot) {
+          break; // if grid is off, then just get out of loop after 1st pass
+                 // (full screen)
         }
         /* render picked atoms */
         /* render the debugging CGO */
 #ifdef PURE_OPENGL_ES_2
-        if (!onlySelections){
+        if (!onlySelections) {
           EditorRender(G, curState);
           CGORender(G->DebugCGO, NULL, NULL, NULL, NULL, NULL);
         }
 #else
         if (!use_shaders)
-          glPushMatrix();   /* 2 */
+          glPushMatrix(); /* 2 */
         if (!onlySelections && !t_mode_3)
           EditorRender(G, curState);
-        if (!use_shaders){
-          glPopMatrix();    /* 1 */
-          glPushMatrix();   /* 2 */
+        if (!use_shaders) {
+          glPopMatrix();  /* 1 */
+          glPushMatrix(); /* 2 */
         }
-        if (!onlySelections){
+        if (!onlySelections) {
           if (!use_shaders)
             glNormal3fv(normal);
           CGORender(G->DebugCGO, NULL, NULL, NULL, NULL, NULL);
         }
-        if (!use_shaders){
-          glPopMatrix();    /* 1 */
-          glPushMatrix();   /* 2 */
+        if (!use_shaders) {
+          glPopMatrix();  /* 1 */
+          glPushMatrix(); /* 2 */
         }
 #endif
         /* render all objects */
-        if (!onlySelections){
+        if (!onlySelections) {
 #if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
-          if (t_mode_3){
-            if (pass == RenderPass::Opaque){
+          if (t_mode_3) {
+            if (pass == RenderPass::Opaque) {
               EditorRender(G, curState);
             }
             // transparency-mode == 3 render all objects for this pass
-            SceneRenderAll(G, context, normal, NULL, pass, false, width_scale, grid, times, SceneRenderWhich::OnlyNonGadgets); // opaque
+            SceneRenderAll(G, context, normal, NULL, pass, false, width_scale,
+                grid, times, SceneRenderWhich::OnlyNonGadgets); // opaque
           } else {
 #else
-            {
+          {
 #endif
-              // transparency-mode != 3 render all objects for each pass
-              for (const auto pass2 : passes) { /* render opaque, then antialiased, then transparent... */
-                SceneRenderAll(G, context, normal, NULL, pass2, false, width_scale, grid,
-                               times, SceneRenderWhich::GadgetsLast);
-              }
-              cont = false;
+            // transparency-mode != 3 render all objects for each pass
+            for (const auto pass2 :
+                passes) { /* render opaque, then antialiased, then
+                             transparent... */
+              SceneRenderAll(G, context, normal, NULL, pass2, false,
+                  width_scale, grid, times, SceneRenderWhich::GadgetsLast);
             }
-          } else if (t_mode_3_os && pass == RenderPass::Opaque){
-            // onlySelections and t_mode_3, render only gadgets
-            glEnable(GL_BLEND);  // need to blend for the text onto the gadget background
-            glBlendFunc_default();
-
-            SceneRenderAll(G, context, normal, NULL, RenderPass::Transparent /* gadgets render in transp pass */, false, width_scale, grid,
-                           times, SceneRenderWhich::OnlyGadgets);
-            glDisable(GL_BLEND);
+            cont = false;
           }
+        } else if (t_mode_3_os && pass == RenderPass::Opaque) {
+          // onlySelections and t_mode_3, render only gadgets
+          glEnable(GL_BLEND); // need to blend for the text onto the gadget
+                              // background
+          glBlendFunc_default();
+
+          SceneRenderAll(G, context, normal, NULL,
+              RenderPass::Transparent /* gadgets render in transp pass */,
+              false, width_scale, grid, times, SceneRenderWhich::OnlyGadgets);
+          glDisable(GL_BLEND);
+        }
 #ifdef PURE_OPENGL_ES_2
-        if (!excludeSelections){
-          if (!grid->active || slot > 0){ /* slot 0 is the full screen in grid mode, so don't render selections */
-            int s = grid->active && grid->mode==1 ? slot : 0;
+        if (!excludeSelections) {
+          if (!grid->active ||
+              slot > 0) { /* slot 0 is the full screen in grid mode, so don't
+                             render selections */
+            int s = grid->active && grid->mode == 1 ? slot : 0;
             ExecutiveRenderSelections(G, curState, s, grid);
           }
         }
 #else
-        if (!use_shaders){
-          glPopMatrix();    /* 1 */
+        if (!use_shaders) {
+          glPopMatrix(); /* 1 */
           /* render selections */
-          glPushMatrix();   /* 2 */
+          glPushMatrix(); /* 2 */
           glNormal3fv(normal);
         }
-        if (!t_mode_3 && !excludeSelections){
-          if (!grid->active || slot > 0){ /* slot 0 is the full screen in grid mode, so don't render selections */
-            int s = grid->active && grid->mode==1 ? slot : 0;
+        if (!t_mode_3 && !excludeSelections) {
+          if (!grid->active ||
+              slot > 0) { /* slot 0 is the full screen in grid mode, so don't
+                             render selections */
+            int s = grid->active && grid->mode == 1 ? slot : 0;
             ExecutiveRenderSelections(G, curState, s, grid);
           }
         }
-        if (!use_shaders){
-          glPopMatrix();    /* 1 */
+        if (!use_shaders) {
+          glPopMatrix(); /* 1 */
         }
 #endif
-        } // end slot loop
-    if (TM3_IS_ONEBUF){
-      if (t_mode_3 && pass == RenderPass::Transparent && t_first_pass){
-        pass = RenderPass::Antialias;
-        t_first_pass = false;
-        continue;
+      } // end slot loop
+      if (TM3_IS_ONEBUF) {
+        if (t_mode_3 && pass == RenderPass::Transparent && t_first_pass) {
+          pass = RenderPass::Antialias;
+          t_first_pass = false;
+          continue;
+        }
       }
-    }
 #if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
-      if (t_mode_3 && pass == RenderPass::Transparent){
+      if (t_mode_3 && pass == RenderPass::Transparent) {
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFrameBuffer);
         glBindTexture(GL_TEXTURE_2D, 0);
-        if(grid->active)
+        if (grid->active)
           GridSetGLViewport(grid, -1);
-        if (currentFrameBuffer == G->ShaderMgr->default_framebuffer_id){  // if rendering to screen, need to render offscreen opaque to screen
+        if (currentFrameBuffer ==
+            G->ShaderMgr
+                ->default_framebuffer_id) { // if rendering to screen, need to
+                                            // render offscreen opaque to screen
           SceneInitializeViewport(G, 0);
-          if (!I->offscreenOIT_CGO_copy){
+          if (!I->offscreenOIT_CGO_copy) {
             // TODO G->ShaderMgr->Reload_Copy_Shaders();
             I->offscreenOIT_CGO_copy = GenerateUnitScreenCGO(G);
-            CGOChangeShadersTo(I->offscreenOIT_CGO_copy, GL_DEFAULT_SHADER_WITH_SETTINGS, GL_OIT_COPY_SHADER);
+            CGOChangeShadersTo(I->offscreenOIT_CGO_copy,
+                GL_DEFAULT_SHADER_WITH_SETTINGS, GL_OIT_COPY_SHADER);
             I->offscreenOIT_CGO_copy->use_shader = true;
           }
           CGORender(I->offscreenOIT_CGO_copy, NULL, NULL, NULL, NULL, NULL);
         }
-        if (!I->offscreenOIT_CGO){
+        if (!I->offscreenOIT_CGO) {
           I->offscreenOIT_CGO = GenerateUnitScreenCGO(G);
-          CGOChangeShadersTo(I->offscreenOIT_CGO, GL_DEFAULT_SHADER_WITH_SETTINGS, GL_OIT_SHADER);
+          CGOChangeShadersTo(I->offscreenOIT_CGO,
+              GL_DEFAULT_SHADER_WITH_SETTINGS, GL_OIT_SHADER);
           I->offscreenOIT_CGO->use_shader = true;
         }
         CGORender(I->offscreenOIT_CGO, NULL, NULL, NULL, NULL, NULL);
 
         glBlendFunc_default();
 
-        if ((currentFrameBuffer == G->ShaderMgr->default_framebuffer_id) && t_mode_3){
+        if ((currentFrameBuffer == G->ShaderMgr->default_framebuffer_id) &&
+            t_mode_3) {
           // onlySelections and t_mode_3, render only gadgets
-          SceneRenderAll(G, context, normal, NULL, RenderPass::Transparent /* gadgets render in transp pass */, false, width_scale, grid,
-                         times, SceneRenderWhich::OnlyGadgets);
+          SceneRenderAll(G, context, normal, NULL,
+              RenderPass::Transparent /* gadgets render in transp pass */,
+              false, width_scale, grid, times, SceneRenderWhich::OnlyGadgets);
         }
 
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
 
-        if (!excludeSelections){
+        if (!excludeSelections) {
           grid->cur_view = SceneGetViewport(G);
-          for(slot = 0; slot <= grid->last_slot; slot++) {
-            if(grid->active) {
+          for (slot = 0; slot <= grid->last_slot; slot++) {
+            if (grid->active) {
               GridSetGLViewport(grid, slot);
             }
-            if (!grid->active || slot > 0){ /* slot 0 is the full screen in grid mode, so don't render selections */
-              int s = grid->active && grid->mode==1 ? slot : 0;
+            if (!grid->active ||
+                slot > 0) { /* slot 0 is the full screen in grid mode, so don't
+                               render selections */
+              int s = grid->active && grid->mode == 1 ? slot : 0;
               ExecutiveRenderSelections(G, curState, s, grid);
             }
           }
@@ -1060,38 +1096,41 @@ void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, i
 #endif
     }
   }
-  if(grid->active)
+  if (grid->active)
     GridSetGLViewport(grid, -1);
 }
 
 /*==================================================================================*/
-/* SceneRenderStereoLoop: This is the function that is responsible for rendering all
-   objects either in a monoscopic or stereo display.  It prepares the viewport, 
-   offscreen textures (if necessary), draws the background (if necessary) and 
-   calls DoRendering either once (for monoscopic) or twice (for stereo)
+/* SceneRenderStereoLoop: This is the function that is responsible for rendering
+   all objects either in a monoscopic or stereo display.  It prepares the
+   viewport, offscreen textures (if necessary), draws the background (if
+   necessary) and calls DoRendering either once (for monoscopic) or twice (for
+   stereo)
  */
-void SceneRenderStereoLoop(PyMOLGlobals * G, int timesArg, int must_render_stereo, int stereo_mode, 
-                           short render_to_texture, int x, int y, int oversize_width, int oversize_height, 
-                           int stereo_double_pump_mono, int curState, float *normal, 
-                           SceneUnitContext *context, float width_scale, int fog_active, 
-                           int onlySelections, int noAA){
-  CScene *I = G->Scene;
+void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
+    int must_render_stereo, int stereo_mode, short render_to_texture, int x,
+    int y, int oversize_width, int oversize_height, int stereo_double_pump_mono,
+    int curState, float* normal, SceneUnitContext* context, float width_scale,
+    int fog_active, int onlySelections, int noAA)
+{
+  CScene* I = G->Scene;
   int times = timesArg;
   short offscreen_aa = !onlySelections && render_to_texture && !noAA;
-  bool use_shaders = (bool)SettingGetGlobal_b(G, cSetting_use_shaders);
+  bool use_shaders = (bool) SettingGetGlobal_b(G, cSetting_use_shaders);
 
-  // only cStereo_clone_dynamic and cStereo_dynamic has times=2, otherwise times=1
-  while(times--) {
-    if(must_render_stereo) {
-      bool anaglyph = G->ShaderMgr && stereo_mode==cStereo_anaglyph;
+  // only cStereo_clone_dynamic and cStereo_dynamic has times=2, otherwise
+  // times=1
+  while (times--) {
+    if (must_render_stereo) {
+      bool anaglyph = G->ShaderMgr && stereo_mode == cStereo_anaglyph;
       /* STEREO RENDERING (real or double-pumped) */
       PRINTFD(G, FB_Scene)
-	" SceneRender: left hand stereo...\n" ENDFD;
+      " SceneRender: left hand stereo...\n" ENDFD;
 
       /* LEFT HAND STEREO */
-      if (anaglyph){
-	G->ShaderMgr->stereo_flag = -1; // left eye
-	G->ShaderMgr->stereo_blend = 0;
+      if (anaglyph) {
+        G->ShaderMgr->stereo_flag = -1; // left eye
+        G->ShaderMgr->stereo_blend = 0;
       }
 
 #ifdef _PYMOL_OPENVR
@@ -1103,29 +1142,33 @@ void SceneRenderStereoLoop(PyMOLGlobals * G, int timesArg, int must_render_stere
       }
 #endif
 
-      SceneSetPrepareViewPortForStereo(G, PrepareViewPortForStereo, times, x, y, oversize_width, oversize_height, stereo_mode, width_scale);
+      SceneSetPrepareViewPortForStereo(G, PrepareViewPortForStereo, times, x, y,
+          oversize_width, oversize_height, stereo_mode, width_scale);
 
-      if (!offscreen_aa){
-        PrepareViewPortForStereo(G, I, stereo_mode, render_to_texture, times, x, y, oversize_width, oversize_height);
+      if (!offscreen_aa) {
+        PrepareViewPortForStereo(G, I, stereo_mode, render_to_texture, times, x,
+            y, oversize_width, oversize_height);
       }
 #ifndef PURE_OPENGL_ES_2
       if (use_shaders)
-        glPushMatrix();       // 1 
-      if (offscreen_aa){
+        glPushMatrix(); // 1
+      if (offscreen_aa) {
         G->ShaderMgr->bindOffscreen(I->Width, I->Height, &I->grid);
         bg_grad(G);
       }
 #endif
       ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 1, stereo_mode);
-      DoRendering(G, I, render_to_texture, &I->grid, times, curState, normal, context, width_scale, onlySelections, render_to_texture);
-                  
+      DoRendering(G, I, render_to_texture, &I->grid, times, curState, normal,
+          context, width_scale, onlySelections, render_to_texture);
+
 #ifndef PURE_OPENGL_ES_2
       if (use_shaders)
-        glPopMatrix();        // 0 
+        glPopMatrix(); // 0
 #endif
 
 #ifdef _PYMOL_OPENVR
-      // TODO Check if this is the correct place for this block. In openvr branch, was last block in DoHandedStereo.
+      // TODO Check if this is the correct place for this block. In openvr
+      // branch, was last block in DoHandedStereo.
       if (stereo_mode == cStereo_openvr) {
         OpenVRDraw(G);
         OpenVREyeFinish(G);
@@ -1133,47 +1176,52 @@ void SceneRenderStereoLoop(PyMOLGlobals * G, int timesArg, int must_render_stere
 #endif
 
       PRINTFD(G, FB_Scene)
-	" SceneRender: right hand stereo...\n" ENDFD;
-      if (offscreen_aa){
-	SceneRenderAA(G);
+      " SceneRender: right hand stereo...\n" ENDFD;
+      if (offscreen_aa) {
+        SceneRenderAA(G);
       }
 
       /* RIGHT HAND STEREO */
-      if (anaglyph){
-	G->ShaderMgr->stereo_flag = 1; // right eye
-	G->ShaderMgr->stereo_blend = render_stereo_blend_into_full_screen(stereo_mode);
+      if (anaglyph) {
+        G->ShaderMgr->stereo_flag = 1; // right eye
+        G->ShaderMgr->stereo_blend =
+            render_stereo_blend_into_full_screen(stereo_mode);
       }
-      SceneSetPrepareViewPortForStereo(G, PrepareViewPortForStereo2nd, times, x, y, oversize_width, oversize_height, stereo_mode, width_scale);
-      if (!offscreen_aa){
-        PrepareViewPortForStereo2nd(G, I, stereo_mode, render_to_texture, times, x, y, oversize_width, oversize_height);
+      SceneSetPrepareViewPortForStereo(G, PrepareViewPortForStereo2nd, times, x,
+          y, oversize_width, oversize_height, stereo_mode, width_scale);
+      if (!offscreen_aa) {
+        PrepareViewPortForStereo2nd(G, I, stereo_mode, render_to_texture, times,
+            x, y, oversize_width, oversize_height);
       }
 #ifndef PURE_OPENGL_ES_2
       if (!use_shaders)
-        glPushMatrix();       // 1 
-      if (offscreen_aa){
+        glPushMatrix(); // 1
+      if (offscreen_aa) {
         G->ShaderMgr->bindOffscreen(I->Width, I->Height, &I->grid);
       }
       if (offscreen_aa ||
           (stereo_mode == cStereo_quadbuffer && !onlySelections) // PYMOL-2342
-          ) {
+      ) {
         bg_grad(G);
       }
 #endif
       ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 2, stereo_mode);
       glClear(GL_DEPTH_BUFFER_BIT);
-      DoRendering(G, I, render_to_texture, &I->grid, times, curState, normal, context, width_scale, onlySelections, render_to_texture);
-      if (anaglyph){
-	G->ShaderMgr->stereo_flag = 0;
+      DoRendering(G, I, render_to_texture, &I->grid, times, curState, normal,
+          context, width_scale, onlySelections, render_to_texture);
+      if (anaglyph) {
+        G->ShaderMgr->stereo_flag = 0;
         G->ShaderMgr->stereo_blend = 0;
       }
 #ifndef PURE_OPENGL_ES_2
       if (!use_shaders)
-        glPopMatrix();        // 0
+        glPopMatrix(); // 0
 #endif
 
 #ifdef _PYMOL_OPENVR
       if (stereo_mode == cStereo_openvr) {
-        // TODO Check if this is the correct place for this block. In openvr branch, was last block in DoHandedStereo.
+        // TODO Check if this is the correct place for this block. In openvr
+        // branch, was last block in DoHandedStereo.
         OpenVRDraw(G);
         OpenVREyeFinish(G);
 
@@ -1183,47 +1231,65 @@ void SceneRenderStereoLoop(PyMOLGlobals * G, int timesArg, int must_render_stere
 #endif
 
       /* restore draw buffer */
-      if (offscreen_aa){
-	SceneRenderAA(G);	
+      if (offscreen_aa) {
+        SceneRenderAA(G);
       }
-      SetDrawBufferForStereo(G, I, stereo_mode, times, fog_active, render_to_texture);
+      SetDrawBufferForStereo(
+          G, I, stereo_mode, times, fog_active, render_to_texture);
     } else {
-      if (G->ShaderMgr){
-	G->ShaderMgr->stereo_flag = 0;
-	G->ShaderMgr->stereo_blend = 0;
+      if (G->ShaderMgr) {
+        G->ShaderMgr->stereo_flag = 0;
+        G->ShaderMgr->stereo_blend = 0;
       }
       /* MONOSCOPING RENDERING (not double-pumped) */
-      if(!I->grid.active && render_to_texture) {
-	glViewport(0, 0, I->Width, I->Height);
-	if (!onlySelections)
-	  bg_grad(G);
+      if (!I->grid.active && render_to_texture) {
+        glViewport(0, 0, I->Width, I->Height);
+        if (!onlySelections)
+          bg_grad(G);
       }
-      if(Feedback(G, FB_OpenGL, FB_Debugging))
-	PyMOLCheckOpenGLErr("Before mono rendering");
-      SceneSetPrepareViewPortForStereo(G, PrepareViewPortForMonoInitializeViewPort, times, x, y, oversize_width, oversize_height, stereo_mode, width_scale);
-      DoRendering(G, I, render_to_texture, &I->grid, times, curState, normal, context, width_scale, onlySelections, render_to_texture);
-      if(Feedback(G, FB_OpenGL, FB_Debugging))
-	PyMOLCheckOpenGLErr("during mono rendering");
+      if (Feedback(G, FB_OpenGL, FB_Debugging))
+        PyMOLCheckOpenGLErr("Before mono rendering");
+      SceneSetPrepareViewPortForStereo(G,
+          PrepareViewPortForMonoInitializeViewPort, times, x, y, oversize_width,
+          oversize_height, stereo_mode, width_scale);
+      DoRendering(G, I, render_to_texture, &I->grid, times, curState, normal,
+          context, width_scale, onlySelections, render_to_texture);
+      if (Feedback(G, FB_OpenGL, FB_Debugging))
+        PyMOLCheckOpenGLErr("during mono rendering");
     }
   }
 }
 
-void PrepareViewPortForMonoInitializeViewPort(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen, int times, int x, int y, int oversize_width, int oversize_height){
+void PrepareViewPortForMonoInitializeViewPort(PyMOLGlobals* G, CScene* I,
+    int stereo_mode, short offscreen, int times, int x, int y,
+    int oversize_width, int oversize_height)
+{
   float width_scale;
-  InitializeViewPortToScreenBlock(G, I, x, y, oversize_width, oversize_height, &stereo_mode, &width_scale);
+  InitializeViewPortToScreenBlock(
+      G, I, x, y, oversize_width, oversize_height, &stereo_mode, &width_scale);
 }
 
-void PrepareViewPortForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen, int times, int x, int y, int oversize_width, int oversize_height){
-  PrepareViewPortForStereoImpl(G, I, stereo_mode, offscreen, times, x, y, oversize_width, oversize_height, GL_BACK_LEFT, 0);
+void PrepareViewPortForStereo(PyMOLGlobals* G, CScene* I, int stereo_mode,
+    short offscreen, int times, int x, int y, int oversize_width,
+    int oversize_height)
+{
+  PrepareViewPortForStereoImpl(G, I, stereo_mode, offscreen, times, x, y,
+      oversize_width, oversize_height, GL_BACK_LEFT, 0);
 }
 
-void PrepareViewPortForStereo2nd(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen, int times, int x, int y, int oversize_width, int oversize_height){
-  PrepareViewPortForStereoImpl(G, I, stereo_mode, offscreen, times, x, y, oversize_width, oversize_height, GL_BACK_RIGHT, 1);
+void PrepareViewPortForStereo2nd(PyMOLGlobals* G, CScene* I, int stereo_mode,
+    short offscreen, int times, int x, int y, int oversize_width,
+    int oversize_height)
+{
+  PrepareViewPortForStereoImpl(G, I, stereo_mode, offscreen, times, x, y,
+      oversize_width, oversize_height, GL_BACK_RIGHT, 1);
 }
 
-void InitializeViewPortToScreenBlock(PyMOLGlobals * G, CScene *I, int x, int y, int oversize_width, int oversize_height, 
-			int *stereo_mode, float *width_scale){
-  if(oversize_width && oversize_height) {
+void InitializeViewPortToScreenBlock(PyMOLGlobals* G, CScene* I, int x, int y,
+    int oversize_width, int oversize_height, int* stereo_mode,
+    float* width_scale)
+{
+  if (oversize_width && oversize_height) {
     Rect2D want_view{};
     want_view.offset.x = static_cast<std::int32_t>(I->rect.left + x);
     want_view.offset.y = static_cast<std::int32_t>(I->rect.bottom + y);
@@ -1251,66 +1317,70 @@ void InitializeViewPortToScreenBlock(PyMOLGlobals * G, CScene *I, int x, int y, 
   }
 }
 
-void SceneSetPrepareViewPortForStereo(PyMOLGlobals *G, void (*prepareViewPortForStereo)(PyMOLGlobals *, CScene *, int, short, int, int, int, int, int),
-                                      int times, int x, int y, int oversize_width, int oversize_height, int stereo_mode, float width_scale){
-  CScene *I = G->Scene;
+void SceneSetPrepareViewPortForStereo(PyMOLGlobals* G,
+    void (*prepareViewPortForStereo)(
+        PyMOLGlobals*, CScene*, int, short, int, int, int, int, int),
+    int times, int x, int y, int oversize_width, int oversize_height,
+    int stereo_mode, float width_scale)
+{
+  CScene* I = G->Scene;
   I->vp_prepareViewPortForStereo = prepareViewPortForStereo;
   I->vp_times = times;
-  I->vp_x = x; I->vp_y = y; I->vp_owidth = oversize_width; I->vp_oheight = oversize_height; 
-  I->vp_stereo_mode = stereo_mode; I->vp_width_scale = width_scale;
+  I->vp_x = x;
+  I->vp_y = y;
+  I->vp_owidth = oversize_width;
+  I->vp_oheight = oversize_height;
+  I->vp_stereo_mode = stereo_mode;
+  I->vp_width_scale = width_scale;
 }
 
 /* PrepareViewPortForStereoImpl : sets up viewport and GL state for stereo_modes
  */
-void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen, int times,
-                                  int x, int y, int oversize_width, int oversize_height, GLenum draw_mode,
-                                  int position /* left=0, right=1 */){
+void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
+    short offscreen, int times, int x, int y, int oversize_width,
+    int oversize_height, GLenum draw_mode, int position /* left=0, right=1 */)
+{
   int position_inv = 1 - position;
   switch (stereo_mode) {
-  case cStereo_quadbuffer:   /* hardware */
+  case cStereo_quadbuffer: /* hardware */
     OrthoDrawBuffer(G, draw_mode);
     glViewport(I->rect.left, I->rect.bottom, I->Width, I->Height);
     break;
-  case cStereo_crosseye:     /* side by side, crosseye */
-    if (offscreen){
-      glViewport(position_inv * I->Width / 2, 0, I->Width / 2,
-		 I->Height);
-    } else if(oversize_width && oversize_height) {
+  case cStereo_crosseye: /* side by side, crosseye */
+    if (offscreen) {
+      glViewport(position_inv * I->Width / 2, 0, I->Width / 2, I->Height);
+    } else if (oversize_width && oversize_height) {
       glViewport(I->rect.left + (position_inv * oversize_width / 2) + x,
-		 I->rect.bottom + y,
-		 oversize_width / 2, oversize_height);
+          I->rect.bottom + y, oversize_width / 2, oversize_height);
     } else {
       glViewport(I->rect.left + (position_inv * I->Width / 2), I->rect.bottom,
-		 I->Width / 2, I->Height);
+          I->Width / 2, I->Height);
     }
     break;
   case cStereo_walleye:
   case cStereo_sidebyside:
-    if (offscreen){
-      glViewport(position * I->Width / 2, 0, I->Width / 2,
-		 I->Height);
-    } else if(oversize_width && oversize_height) {
+    if (offscreen) {
+      glViewport(position * I->Width / 2, 0, I->Width / 2, I->Height);
+    } else if (oversize_width && oversize_height) {
       glViewport(I->rect.left + (position * oversize_width / 2) + x,
-		 I->rect.bottom + y,
-		 oversize_width / 2, oversize_height);
+          I->rect.bottom + y, oversize_width / 2, oversize_height);
     } else {
-      glViewport(I->rect.left + (position * I->Width / 2), I->rect.bottom, I->Width / 2,
-		 I->Height);
+      glViewport(I->rect.left + (position * I->Width / 2), I->rect.bottom,
+          I->Width / 2, I->Height);
     }
     break;
   case cStereo_geowall:
-    if (offscreen){
-      glViewport(position * I->Width / 2, 0, I->Width / 2,
-		 I->Height);
+    if (offscreen) {
+      glViewport(position * I->Width / 2, 0, I->Width / 2, I->Height);
     } else {
-      glViewport(I->rect.left + (position * G->Option->winX / 2), I->rect.bottom, 
-		 I->Width, I->Height);
+      glViewport(I->rect.left + (position * G->Option->winX / 2),
+          I->rect.bottom, I->Width, I->Height);
     }
     break;
   case cStereo_stencil_by_row:
   case cStereo_stencil_by_column:
   case cStereo_stencil_checkerboard:
-    if(I->StencilValid) {
+    if (I->StencilValid) {
       glStencilFunc(GL_EQUAL, position_inv, 1);
       glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
       glEnable(GL_STENCIL_TEST);
@@ -1328,12 +1398,13 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, 
     glColorMask(position_inv, position, position, true);
 #else
 
-    if (TM3_IS_ONEBUF){
+    if (TM3_IS_ONEBUF) {
       glColorMask(position_inv, position, position, true);
     } else {
-      if (GLEW_VERSION_3_0 && SettingGetGlobal_i(G, cSetting_transparency_mode) == 3){
-        // if GL 3.0 is available, use glColorMaski to mask only first draw buffer
-        // for anaglyph in transparency_mode 3
+      if (GLEW_VERSION_3_0 &&
+          SettingGetGlobal_i(G, cSetting_transparency_mode) == 3) {
+        // if GL 3.0 is available, use glColorMaski to mask only first draw
+        // buffer for anaglyph in transparency_mode 3
         glColorMaski(0, position_inv, position, position, true);
       } else {
         glColorMask(position_inv, position, position, true);
@@ -1346,80 +1417,85 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, 
     break;
 #ifndef PURE_OPENGL_ES_2
   case cStereo_clone_dynamic:
-    if (position_inv){
+    if (position_inv) {
       glClear(GL_ACCUM_BUFFER_BIT);
       OrthoDrawBuffer(G, GL_BACK_LEFT);
-      if(times) {
-	float dynamic_strength =
-	  SettingGetGlobal_f(G, cSetting_stereo_dynamic_strength);
-	float vv[4] = { 0.75F, 0.75F, 0.75F, 1.0F };
-	vv[0] = dynamic_strength;
-	vv[1] = dynamic_strength;
-	vv[2] = dynamic_strength;
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
-	glAccum(GL_ADD, 0.5);
-	glDisable(GL_FOG);
+      if (times) {
+        float dynamic_strength =
+            SettingGetGlobal_f(G, cSetting_stereo_dynamic_strength);
+        float vv[4] = {0.75F, 0.75F, 0.75F, 1.0F};
+        vv[0] = dynamic_strength;
+        vv[1] = dynamic_strength;
+        vv[2] = dynamic_strength;
+        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
+        glAccum(GL_ADD, 0.5);
+        glDisable(GL_FOG);
       }
     } else {
       GLenum err;
-      if(times) {
-	glAccum(GL_ACCUM, -0.5);
+      if (times) {
+        glAccum(GL_ACCUM, -0.5);
       } else {
-	glAccum(GL_ACCUM, 0.5);
+        glAccum(GL_ACCUM, 0.5);
       }
-      if((err = glGetError())) {
-	  PRINTFB(G, FB_Scene, FB_Errors)
-            "Stereo Error 0x%x: stereo_mode=12 clone_dynamic requires access to the accumulation buffer,\n"
-            "you need to start PyMOL with the -t argument, setting back to default\n", err ENDFB(G);
-	  SettingSetGlobal_i(G, cSetting_stereo_mode, cStereo_crosseye);
-	  SceneSetStereo(G, 0);
-	  return;
+      if ((err = glGetError())) {
+        PRINTFB(G, FB_Scene, FB_Errors)
+        "Stereo Error 0x%x: stereo_mode=12 clone_dynamic requires access to "
+        "the accumulation buffer,\n"
+        "you need to start PyMOL with the -t argument, setting back to "
+        "default\n",
+            err ENDFB(G);
+        SettingSetGlobal_i(G, cSetting_stereo_mode, cStereo_crosseye);
+        SceneSetStereo(G, 0);
+        return;
       }
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
     break;
   case cStereo_dynamic:
-    if (position_inv){
-      if(times) {
-	float dynamic_strength =
-	  SettingGetGlobal_f(G, cSetting_stereo_dynamic_strength);
-	float vv[4] = { 0.75F, 0.75F, 0.75F, 1.0F };
-	vv[0] = dynamic_strength;
-	vv[1] = dynamic_strength;
-	vv[2] = dynamic_strength;
-	glClearAccum(0.5, 0.5, 0.5, 0.5);
-	glClear(GL_ACCUM_BUFFER_BIT);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
-	glDisable(GL_FOG);
-	glViewport(I->rect.left + G->Option->winX / 2,
-		   I->rect.bottom, I->Width, I->Height);
+    if (position_inv) {
+      if (times) {
+        float dynamic_strength =
+            SettingGetGlobal_f(G, cSetting_stereo_dynamic_strength);
+        float vv[4] = {0.75F, 0.75F, 0.75F, 1.0F};
+        vv[0] = dynamic_strength;
+        vv[1] = dynamic_strength;
+        vv[2] = dynamic_strength;
+        glClearAccum(0.5, 0.5, 0.5, 0.5);
+        glClear(GL_ACCUM_BUFFER_BIT);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
+        glDisable(GL_FOG);
+        glViewport(I->rect.left + G->Option->winX / 2, I->rect.bottom, I->Width,
+            I->Height);
       } else {
-	glClearAccum(0.0, 0.0, 0.0, 0.0);
-	glClear(GL_ACCUM_BUFFER_BIT);
-	glViewport(I->rect.left,
-		   I->rect.bottom, I->Width, I->Height);
+        glClearAccum(0.0, 0.0, 0.0, 0.0);
+        glClear(GL_ACCUM_BUFFER_BIT);
+        glViewport(I->rect.left, I->rect.bottom, I->Width, I->Height);
       }
     } else {
       GLenum err;
-      if(times) {
-	glAccum(GL_ACCUM, -0.5);
+      if (times) {
+        glAccum(GL_ACCUM, -0.5);
       } else {
-	glAccum(GL_ACCUM, 0.5);
-	glEnable(GL_SCISSOR_TEST);
+        glAccum(GL_ACCUM, 0.5);
+        glEnable(GL_SCISSOR_TEST);
       }
-      if((err = glGetError())) {
-	if (SettingGetGlobal_i(G, cSetting_stereo_mode) != cStereo_crosseye){
-	  PRINTFB(G, FB_Scene, FB_Errors)
-            "Stereo Error 0x%x: stereo_mode=11 dynamic requires access to the accumulation buffer,\n"
-            "you need to start PyMOL with the -t argument, setting back to default\n", err ENDFB(G);
-	  SettingSetGlobal_i(G, cSetting_stereo_mode, cStereo_crosseye);
-	  SceneSetStereo(G, 0);
-	}
-	return;
+      if ((err = glGetError())) {
+        if (SettingGetGlobal_i(G, cSetting_stereo_mode) != cStereo_crosseye) {
+          PRINTFB(G, FB_Scene, FB_Errors)
+          "Stereo Error 0x%x: stereo_mode=11 dynamic requires access to the "
+          "accumulation buffer,\n"
+          "you need to start PyMOL with the -t argument, setting back to "
+          "default\n",
+              err ENDFB(G);
+          SettingSetGlobal_i(G, cSetting_stereo_mode, cStereo_crosseye);
+          SceneSetStereo(G, 0);
+        }
+        return;
       }
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      if(!times) {
-      glDisable(GL_SCISSOR_TEST);
+      if (!times) {
+        glDisable(GL_SCISSOR_TEST);
       }
     }
     break;
@@ -1432,15 +1508,18 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals * G, CScene *I, int stereo_mode, 
   }
 }
 
-/* SetDrawBufferForStereo : called after 2nd/right eye rendered in stereo to reset GL state properly 
-                            based on what was changed in PrepareViewPortForStereoImpl per stereo_mode
+/* SetDrawBufferForStereo : called after 2nd/right eye rendered in stereo to
+   reset GL state properly based on what was changed in
+   PrepareViewPortForStereoImpl per stereo_mode
  */
-void SetDrawBufferForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, int times, int fog_active, int offscreen){
+void SetDrawBufferForStereo(PyMOLGlobals* G, CScene* I, int stereo_mode,
+    int times, int fog_active, int offscreen)
+{
   switch (stereo_mode) {
   case cStereo_quadbuffer:
-    OrthoDrawBuffer(G, GL_BACK_LEFT); /* leave us in a stereo context 
-					 (avoids problems with cards than can't handle
-					 use of mono contexts) */
+    OrthoDrawBuffer(G, GL_BACK_LEFT); /* leave us in a stereo context
+                                         (avoids problems with cards than can't
+                                         handle use of mono contexts) */
     break;
   case cStereo_crosseye:
   case cStereo_walleye:
@@ -1464,12 +1543,12 @@ void SetDrawBufferForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, int ti
 #ifndef PURE_OPENGL_ES_2
     glAccum(GL_ACCUM, 0.5);
 #endif
-    if(times) {
-      float vv[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
+    if (times) {
+      float vv[4] = {0.0F, 0.0F, 0.0F, 0.0F};
 #ifndef PURE_OPENGL_ES_2
       glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
-      if(fog_active)
-	glEnable(GL_FOG);
+      if (fog_active)
+        glEnable(GL_FOG);
 #endif
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       OrthoDrawBuffer(G, GL_BACK_RIGHT);
@@ -1483,23 +1562,22 @@ void SetDrawBufferForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, int ti
 #ifndef PURE_OPENGL_ES_2
     glAccum(GL_ACCUM, 0.5);
 #endif
-    if(times) {
-      float vv[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
+    if (times) {
+      float vv[4] = {0.0F, 0.0F, 0.0F, 0.0F};
 #ifndef PURE_OPENGL_ES_2
       glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
-      if(fog_active)
-	glEnable(GL_FOG);
+      if (fog_active)
+        glEnable(GL_FOG);
 #endif
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 #ifndef PURE_OPENGL_ES_2
     glAccum(GL_RETURN, 1.0);
 #endif
-    if(times) {
-      glViewport(I->rect.left,
-		 I->rect.bottom, I->Width + 2, I->Height + 2);
-      glScissor(I->rect.left - 1,
-		I->rect.bottom - 1, I->Width + 2, I->Height + 2);
+    if (times) {
+      glViewport(I->rect.left, I->rect.bottom, I->Width + 2, I->Height + 2);
+      glScissor(
+          I->rect.left - 1, I->rect.bottom - 1, I->Width + 2, I->Height + 2);
       glEnable(GL_SCISSOR_TEST);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glDisable(GL_SCISSOR_TEST);
@@ -1510,30 +1588,36 @@ void SetDrawBufferForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, int ti
   }
 }
 
-void SceneInitializeViewport(PyMOLGlobals * G, int offscreen){
-  CScene *I = G->Scene;
+void SceneInitializeViewport(PyMOLGlobals* G, int offscreen)
+{
+  CScene* I = G->Scene;
   if (offscreen == 1 || offscreen == 2)
     glViewport(0, 0, I->Width, I->Height);
-  else
-  {
-    if (I->vp_prepareViewPortForStereo){
+  else {
+    if (I->vp_prepareViewPortForStereo) {
       GLint currentFrameBuffer;
       glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFrameBuffer);
-      if (currentFrameBuffer == G->ShaderMgr->default_framebuffer_id){ // if writing to screen, then set viewport to screen
+      if (currentFrameBuffer ==
+          G->ShaderMgr->default_framebuffer_id) { // if writing to screen, then
+                                                  // set viewport to screen
         float width_scale;
         // this is called before preparing view port, since the prepare function
         // doesn't setup/change the viewport in all modes
-        InitializeViewPortToScreenBlock(G, I, I->vp_x, I->vp_y, I->vp_owidth, I->vp_oheight, &I->vp_stereo_mode, &width_scale);
+        InitializeViewPortToScreenBlock(G, I, I->vp_x, I->vp_y, I->vp_owidth,
+            I->vp_oheight, &I->vp_stereo_mode, &width_scale);
       }
-      I->vp_prepareViewPortForStereo(G, I, I->vp_stereo_mode, 0, I->vp_times, I->vp_x, I->vp_y, I->vp_owidth, I->vp_oheight);
+      I->vp_prepareViewPortForStereo(G, I, I->vp_stereo_mode, 0, I->vp_times,
+          I->vp_x, I->vp_y, I->vp_owidth, I->vp_oheight);
     } else {
       PRINTFB(G, FB_Scene, FB_Errors)
-        " SceneInitializeViewport: I->vp_prepareViewPortForStereo=NULL\n" ENDFB(G);
+      " SceneInitializeViewport: I->vp_prepareViewPortForStereo=NULL\n" ENDFB(
+          G);
     }
   }
 }
 
-void SceneDrawStencilInBuffer(PyMOLGlobals * G, CScene *I, int stereo_mode){
+void SceneDrawStencilInBuffer(PyMOLGlobals* G, CScene* I, int stereo_mode)
+{
   GLint viewport[4];
 #ifdef _PYMOL_IOS
   {
@@ -1546,7 +1630,7 @@ void SceneDrawStencilInBuffer(PyMOLGlobals * G, CScene *I, int stereo_mode){
 #else
   glGetIntegerv(GL_VIEWPORT, viewport);
 #endif
-  
+
 #ifndef PURE_OPENGL_ES_2
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
@@ -1556,77 +1640,72 @@ void SceneDrawStencilInBuffer(PyMOLGlobals * G, CScene *I, int stereo_mode){
   glPushMatrix();
   glLoadIdentity();
   glTranslatef(0.33F, 0.33F, 0.0F);
-  
+
   glDisable(GL_ALPHA_TEST);
   glDisable(GL_LIGHTING);
   glDisable(GL_FOG);
   glDisable(GL_NORMALIZE);
   glDisable(GL_COLOR_MATERIAL);
   glDisable(GL_LINE_SMOOTH);
-  glShadeModel(SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
-  glDisable(0x809D);      /* GL_MULTISAMPLE_ARB */
+  glShadeModel(
+      SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
+  glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
 #endif
-  
+
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_DITHER);
   glDisable(GL_BLEND);
-  
+
   glDisable(GL_STENCIL_TEST);
   glClearStencil(0);
   glColorMask(false, false, false, false);
   glDepthMask(false);
   glClear(GL_STENCIL_BUFFER_BIT);
-  
+
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_ALWAYS, 1, 1);
   glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-  
+
 #ifndef PURE_OPENGL_ES_2
   {
     int h = viewport[3], w = viewport[2];
     glLineWidth(1.0);
     switch (stereo_mode) {
-    case cStereo_stencil_by_row:
-      {
-	int parity = I->StencilParity;
-	int y;
-	glBegin(GL_LINES);
-	for(y = 0; y < h; y += 2) {
-	  glVertex2i(0, y + parity);
-	  glVertex2i(w, y + parity);
-	}
-	glEnd();
+    case cStereo_stencil_by_row: {
+      int parity = I->StencilParity;
+      int y;
+      glBegin(GL_LINES);
+      for (y = 0; y < h; y += 2) {
+        glVertex2i(0, y + parity);
+        glVertex2i(w, y + parity);
       }
-      break;
-    case cStereo_stencil_by_column:
-      {
-	int x;
-	glBegin(GL_LINES);
-	for(x = 0; x < w; x += 2) {
-	  glVertex2i(x, 0);
-	  glVertex2i(x, h);
-	}
-	glEnd();
+      glEnd();
+    } break;
+    case cStereo_stencil_by_column: {
+      int x;
+      glBegin(GL_LINES);
+      for (x = 0; x < w; x += 2) {
+        glVertex2i(x, 0);
+        glVertex2i(x, h);
       }
-      break;
-    case cStereo_stencil_checkerboard:
-      {
-	int i, m = 2 * ((h > w) ? h : w);
-	glBegin(GL_LINES);
-	for(i = 0; i < m; i += 2) {
-	  glVertex2i(i, 0);
-	  glVertex2i(0, i);
-	}
-	glEnd();
+      glEnd();
+    } break;
+    case cStereo_stencil_checkerboard: {
+      int i, m = 2 * ((h > w) ? h : w);
+      glBegin(GL_LINES);
+      for (i = 0; i < m; i += 2) {
+        glVertex2i(i, 0);
+        glVertex2i(0, i);
       }
-      break;
+      glEnd();
+    } break;
     }
   }
 #endif
-  
+
   glColorMask(true, true, true, true);
   glDepthMask(true);
-  
+
 #ifndef PURE_OPENGL_ES_2
   glMatrixMode(GL_MODELVIEW);
   glPopMatrix();
