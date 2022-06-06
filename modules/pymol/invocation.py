@@ -209,7 +209,7 @@ if True:
         return os.path.expanduser('~')
 
     def get_user_config():
-        for d in [os.getcwd(), '$HOME', '$HOMEDRIVE$HOMEPATH', '$PYMOL_PATH']:
+        for d in [os.getcwd(), '$HOME', '$HOMEDRIVE$HOMEPATH', '$PYMOL_PATH', '{}/pymol'.format(os.environ.get('XDG_CONFIG_HOME', '$HOME/.config'))]:
             d = os.path.expandvars(d)
             for pat in [pymolrc_pat1, pymolrc_pat2]:
                 lst = glob.glob(d + os.sep + pat)
