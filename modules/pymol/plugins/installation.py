@@ -292,7 +292,7 @@ def installPluginFromFile(ofile, parent=None, plugdir=None):
             mod_dir = os.path.join(plugdir, name)
             check_reinstall(name, mod_dir)
             check_valid_name(name)
-            shutil.copytree(odir, mod_dir)
+            shutil.copytree(odir, mod_dir, ignore=shutil.ignore_patterns(".git"))
 
             mod_file = os.path.join(mod_dir, '__init__.py')
 
@@ -303,7 +303,7 @@ def installPluginFromFile(ofile, parent=None, plugdir=None):
             mod_dir = os.path.join(plugdir, name)
             check_reinstall(name, mod_dir)
             check_valid_name(name)
-            shutil.copytree(odir, mod_dir)
+            shutil.copytree(odir, mod_dir, ignore=shutil.ignore_patterns(".git"))
 
             mod_file = os.path.join(mod_dir, '__init__.py')
 
