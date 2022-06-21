@@ -297,7 +297,8 @@ int SceneDeferredClick(DeferredMouse * dm);
 int SceneDeferredDrag(DeferredMouse * dm);
 int SceneDeferredRelease(DeferredMouse * dm);
 
-void SceneSetViewport(const Rect2D& rect);
+void SceneSetViewport(PyMOLGlobals* G, const Rect2D& rect);
+void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height);
 Rect2D SceneGetViewport(PyMOLGlobals* G);
 Extent2D SceneGetExtent(PyMOLGlobals* G);
 float SceneGetAspectRatio(PyMOLGlobals* G);

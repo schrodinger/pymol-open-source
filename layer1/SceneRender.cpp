@@ -100,7 +100,7 @@ static int render_stereo_blend_into_full_screen(int stereo_mode)
   return false;
 }
 
-void GridSetGLViewport(GridInfo* I, int slot)
+void GridSetViewport(PyMOLGlobals* G, GridInfo* I, int slot)
 {
   if (slot)
     I->slot = slot + I->first_slot - 1;
@@ -108,7 +108,7 @@ void GridSetGLViewport(GridInfo* I, int slot)
     I->slot = slot;
   /* if we are in grid mode, then prepare the grid slot viewport */
   if (slot < 0) {
-    SceneSetViewport(I->cur_view);
+    SceneSetViewport(G, I->cur_view);
   } else if (!slot) { /* slot 0 is the full screen */
     Rect2D view{};
     view.offset = Offset2D{};
@@ -124,7 +124,7 @@ void GridSetGLViewport(GridInfo* I, int slot)
     view.offset.x += I->cur_view.offset.x +
                      (I->cur_view.extent.width - view.extent.width) / 2;
     view.offset.y += I->cur_view.offset.y;
-    SceneSetViewport(view);
+    SceneSetViewport(G, view);
     I->context = ScenePrepareUnitContext(view.extent);
   } else {
     int abs_grid_slot = slot - I->first_slot;
@@ -143,7 +143,7 @@ void GridSetGLViewport(GridInfo* I, int slot)
     view.offset.x += I->cur_view.offset.x;
     view.offset.y += I->cur_view.offset.y;
     I->cur_viewport_size = view.extent;
-    SceneSetViewport(view);
+    SceneSetViewport(G, view);
     I->context = ScenePrepareUnitContext(view.extent);
   }
 }
@@ -512,7 +512,7 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
         glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
     }
 #endif
-    SceneSetViewport(view_save);
+    SceneSetViewport(G, view_save);
 
     if (Feedback(G, FB_OpenGL, FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender final checkpoint");
@@ -943,7 +943,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
 #endif
       for (slot = 0; slot <= grid->last_slot; slot++) {
         if (grid->active) {
-          GridSetGLViewport(grid, slot);
+          GridSetViewport(G, grid, slot);
         } else if (slot) {
           break; // if grid is off, then just get out of loop after 1st pass
                  // (full screen)
@@ -1049,7 +1049,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFrameBuffer);
         glBindTexture(GL_TEXTURE_2D, 0);
         if (grid->active)
-          GridSetGLViewport(grid, -1);
+          GridSetViewport(G, grid, -1);
         if (currentFrameBuffer ==
             G->ShaderMgr
                 ->default_framebuffer_id) { // if rendering to screen, need to
@@ -1089,7 +1089,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
           grid->cur_view = SceneGetViewport(G);
           for (slot = 0; slot <= grid->last_slot; slot++) {
             if (grid->active) {
-              GridSetGLViewport(grid, slot);
+              GridSetViewport(G, grid, slot);
             }
             if (!grid->active ||
                 slot > 0) { /* slot 0 is the full screen in grid mode, so don't
@@ -1104,7 +1104,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
     }
   }
   if (grid->active)
-    GridSetGLViewport(grid, -1);
+    GridSetViewport(G, grid, -1);
 }
 
 /*==================================================================================*/
@@ -1251,7 +1251,7 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
       }
       /* MONOSCOPING RENDERING (not double-pumped) */
       if (!I->grid.active && render_to_texture) {
-        glViewport(0, 0, I->Width, I->Height);
+        SceneSetViewport(G, 0, 0, I->Width, I->Height);
         if (!onlySelections)
           bg_grad(G);
       }
@@ -1302,7 +1302,7 @@ void InitializeViewPortToScreenBlock(PyMOLGlobals* G, CScene* I,
     want_view.offset.x = static_cast<std::int32_t>(I->rect.left + pos.x);
     want_view.offset.y = static_cast<std::int32_t>(I->rect.bottom + pos.y);
     want_view.extent = oversizeExtent;
-    SceneSetViewport(want_view);
+    SceneSetViewport(G, want_view);
     auto got_view = SceneGetViewport(G);
 #ifndef _WEBGL
     if (want_view != got_view) {
@@ -1320,7 +1320,7 @@ void InitializeViewPortToScreenBlock(PyMOLGlobals* G, CScene* I,
     Rect2D view{};
     view.offset = Offset2D{I->rect.left, I->rect.bottom};
     view.extent = SceneGetExtent(G);
-    SceneSetViewport(view);
+    SceneSetViewport(G, view);
   }
 }
 
@@ -1349,39 +1349,41 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
   switch (stereo_mode) {
   case cStereo_quadbuffer: /* hardware */
     OrthoDrawBuffer(G, draw_mode);
-    glViewport(I->rect.left, I->rect.bottom, I->Width, I->Height);
+    SceneSetViewport(G, I->rect.left, I->rect.bottom, I->Width, I->Height);
     break;
   case cStereo_crosseye: /* side by side, crosseye */
     if (offscreen) {
-      glViewport(position_inv * I->Width / 2, 0, I->Width / 2, I->Height);
+      SceneSetViewport(
+          G, position_inv * I->Width / 2, 0, I->Width / 2, I->Height);
     } else if (oversizeExtent.width != 0 && oversizeExtent.height != 0) {
-      glViewport(
+      SceneSetViewport(G,
           I->rect.left + (position_inv * oversizeExtent.width / 2) + pos.x,
           I->rect.bottom + pos.y, oversizeExtent.width / 2,
           oversizeExtent.height);
     } else {
-      glViewport(I->rect.left + (position_inv * I->Width / 2), I->rect.bottom,
-          I->Width / 2, I->Height);
+      SceneSetViewport(G, I->rect.left + (position_inv * I->Width / 2),
+          I->rect.bottom, I->Width / 2, I->Height);
     }
     break;
   case cStereo_walleye:
   case cStereo_sidebyside:
     if (offscreen) {
-      glViewport(position * I->Width / 2, 0, I->Width / 2, I->Height);
+      SceneSetViewport(G, position * I->Width / 2, 0, I->Width / 2, I->Height);
     } else if (oversizeExtent.width != 0 && oversizeExtent.height != 0) {
-      glViewport(I->rect.left + (position * oversizeExtent.width / 2) + pos.x,
+      SceneSetViewport(G,
+          I->rect.left + (position * oversizeExtent.width / 2) + pos.x,
           I->rect.bottom + pos.y, oversizeExtent.width / 2,
           oversizeExtent.height);
     } else {
-      glViewport(I->rect.left + (position * I->Width / 2), I->rect.bottom,
-          I->Width / 2, I->Height);
+      SceneSetViewport(G, I->rect.left + (position * I->Width / 2),
+          I->rect.bottom, I->Width / 2, I->Height);
     }
     break;
   case cStereo_geowall:
     if (offscreen) {
-      glViewport(position * I->Width / 2, 0, I->Width / 2, I->Height);
+      SceneSetViewport(G, position * I->Width / 2, 0, I->Width / 2, I->Height);
     } else {
-      glViewport(I->rect.left + (position * G->Option->winX / 2),
+      SceneSetViewport(G, I->rect.left + (position * G->Option->winX / 2),
           I->rect.bottom, I->Width, I->Height);
     }
     break;
@@ -1473,12 +1475,12 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
         glClear(GL_ACCUM_BUFFER_BIT);
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
         glDisable(GL_FOG);
-        glViewport(I->rect.left + G->Option->winX / 2, I->rect.bottom, I->Width,
-            I->Height);
+        SceneSetViewport(G, I->rect.left + G->Option->winX / 2, I->rect.bottom,
+            I->Width, I->Height);
       } else {
         glClearAccum(0.0, 0.0, 0.0, 0.0);
         glClear(GL_ACCUM_BUFFER_BIT);
-        glViewport(I->rect.left, I->rect.bottom, I->Width, I->Height);
+        SceneSetViewport(G, I->rect.left, I->rect.bottom, I->Width, I->Height);
       }
     } else {
       GLenum err;
@@ -1583,7 +1585,8 @@ void SetDrawBufferForStereo(
     glAccum(GL_RETURN, 1.0);
 #endif
     if (times) {
-      glViewport(I->rect.left, I->rect.bottom, I->Width + 2, I->Height + 2);
+      SceneSetViewport(
+          G, I->rect.left, I->rect.bottom, I->Width + 2, I->Height + 2);
       glScissor(
           I->rect.left - 1, I->rect.bottom - 1, I->Width + 2, I->Height + 2);
       glEnable(GL_SCISSOR_TEST);
@@ -1600,7 +1603,7 @@ void SceneInitializeViewport(PyMOLGlobals* G, bool offscreen)
 {
   CScene* I = G->Scene;
   if (offscreen)
-    glViewport(0, 0, I->Width, I->Height);
+    SceneSetViewport(G, 0, 0, I->Width, I->Height);
   else {
     if (I->vp_prepareViewPortForStereo) {
       GLint currentFrameBuffer;

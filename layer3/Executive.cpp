@@ -11188,10 +11188,10 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
 	{
 	  int width = G->Option->winX;
 	  int height = G->Option->winY;
-	  glViewport(0, 0, width / 2, height);
+	  SceneSetViewport(G, 0, 0, width / 2, height);
 	  OrthoDoDraw(G, OrthoRenderMode::GeoWallLeft);
 	  OrthoDoDraw(G, OrthoRenderMode::GeoWallRight);
-	  glViewport(0, 0, width, height);
+	  SceneSetViewport(G, 0, 0, width, height);
 	}
 	break;
 #ifdef _PYMOL_OPENVR

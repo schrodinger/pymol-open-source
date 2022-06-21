@@ -105,7 +105,7 @@ public:
   int Pushed{};
   std::vector<std::unique_ptr<CDeferred>> deferred; //Ortho manages DeferredObjs
   OrthoRenderMode RenderMode = OrthoRenderMode::Main;
-  GLint ViewPort[4]{};
+  Rect2D Viewport;
   int WrapXFlag{};
   GLenum ActiveGLBuffer{};
   double DrawTime{}, LastDraw{};
@@ -2683,28 +2683,25 @@ void OrthoFree(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-void OrthoPushMatrix(PyMOLGlobals * G)
+void OrthoPushMatrix(PyMOLGlobals* G)
 {
-  COrtho *I = G->Ortho;
+  COrtho* I = G->Ortho;
 
-  if(G->HaveGUI && G->ValidContext) {
-
-    if(!I->Pushed) {
-      glGetIntegerv(GL_VIEWPORT, I->ViewPort);
+  if (G->HaveGUI && G->ValidContext) {
+    if (!I->Pushed) {
+      I->Viewport = SceneGetViewport(G);
     }
-    switch (I->RenderMode) {
-    case OrthoRenderMode::GeoWallRight:
-      glViewport(I->ViewPort[0] + I->ViewPort[2], I->ViewPort[1],
-                 I->ViewPort[2], I->ViewPort[3]);
-      break;
-    default:
-      glViewport(I->ViewPort[0], I->ViewPort[1], I->ViewPort[2], I->ViewPort[3]);
+    auto viewport = I->Viewport;
+    if (I->RenderMode == OrthoRenderMode::GeoWallRight) {
+      viewport.offset.x += viewport.extent.width;
     }
+    SceneSetViewport(G, viewport);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, I->ViewPort[2], 0, I->ViewPort[3], -100, 100);
+    glOrtho(0, I->Viewport.extent.width, 0,
+            I->Viewport.extent.height, -100, 100);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
@@ -2742,7 +2739,7 @@ void OrthoPopMatrix(PyMOLGlobals * G)
   if(G->HaveGUI && G->ValidContext) {
 
     if(I->Pushed >= 0) {
-      glViewport(I->ViewPort[0], I->ViewPort[1], I->ViewPort[2], I->ViewPort[3]);
+      SceneSetViewport(G, I->Viewport);
       glPopMatrix();
       glMatrixMode(GL_PROJECTION);
       glPopMatrix();

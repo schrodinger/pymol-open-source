@@ -121,7 +121,7 @@ static std::vector<unsigned> SceneGetPickIndices(PyMOLGlobals* G,
       int slot;
       for(slot = 0; slot <= I->grid.last_slot; slot++) {
         if(I->grid.active) {
-          GridSetGLViewport(&I->grid, slot);
+          GridSetViewport(G, &I->grid, slot);
         }
         SceneRenderAll(
             G, context, NULL, &pickmgr, RenderPass::Antialias, true, 0.0F, &I->grid, 0, SceneRenderWhich::AllObjects);
@@ -167,7 +167,7 @@ static std::vector<unsigned> SceneGetPickIndices(PyMOLGlobals* G,
   }
 
   if(I->grid.active)
-    GridSetGLViewport(&I->grid, -1);
+    GridSetViewport(G, &I->grid, -1);
 
   pickmgr.m_valid = true;
 
@@ -290,7 +290,7 @@ void SceneRenderPicking(PyMOLGlobals* G, int stereo_mode, ClickSide click_side,
     case cStereo_crosseye:
     case cStereo_walleye:
     case cStereo_sidebyside:
-      glViewport(I->rect.left, I->rect.bottom, I->Width / 2, I->Height);
+      SceneSetViewport(G, I->rect.left, I->rect.bottom, I->Width / 2, I->Height);
       break;
     case cStereo_geowall:
       click_side = OrthoGetWrapClickSide(G);

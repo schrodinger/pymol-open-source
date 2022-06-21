@@ -59,6 +59,7 @@ Z* -------------------------------------------------------------------
 #include"ScrollBar.h"
 #include "ShaderMgr.h"
 #include "Feedback.h"
+#include "GFXManager.h"
 
 #ifdef _PYMOL_OPENVR
 #include"OpenVRMode.h"
@@ -5671,15 +5672,28 @@ SceneElem::SceneElem(std::string name_, bool drawn_)
 {
 }
 
-void SceneSetViewport(const Rect2D& rect)
+void SceneSetViewport(PyMOLGlobals* G, const Rect2D& rect)
 {
-  glViewport(rect.offset.x, rect.offset.y, rect.extent.width, rect.extent.height);
+  switch (G->GFXMgr->backend()) {
+  case GFXAPIBackend::OPENGL:
+    glViewport(rect.offset.x, rect.offset.y, rect.extent.width, rect.extent.height);
+  default:
+    break;
+  }
+}
+
+void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height)
+{
+  assert(width >= 0 && height >= 0);
+  SceneSetViewport(G, Rect2D{x, y, width, height});
 }
 
 Rect2D SceneGetViewport(PyMOLGlobals* G)
 {
   Rect2D viewport{};
 #ifdef _PYMOL_IOS
+  /* This only works when GUI has no internal_gui, internal_feedback,
+     or internal_prompt, which IOS does not have. */
   viewport.extent = SceneGetExtent(G);
 #else
   int viewBuffer[4];

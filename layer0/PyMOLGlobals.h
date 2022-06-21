@@ -127,6 +127,8 @@ class CGO;
 #define CGO_DEFINED
 #endif
 
+class GFXManager;
+
 #define cPyMOLGlobals_LaunchStatus_StereoFailed 0x1
 #define cPyMOLGlobals_LaunchStatus_MultisampleFailed 0x2
 
@@ -174,7 +176,7 @@ struct PyMOLGlobals {
   CPlugIOManager *PlugIOManager;
   CShaderMgr* ShaderMgr;
   COpenVR* OpenVR;
-
+  GFXManager* GFXMgr;
 #ifndef _PYMOL_NOPY
   CP_inst *P_inst;
 #endif

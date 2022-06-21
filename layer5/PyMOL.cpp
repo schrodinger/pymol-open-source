@@ -65,6 +65,7 @@
 #include "SelectorDef.h"
 #include "ButMode.h"
 #include "CGORenderer.h"
+#include "GFXManager.h"
 
 #ifdef _PYMOL_OPENVR
 #include "OpenVRMode.h"
@@ -1902,6 +1903,7 @@ void PyMOL_Start(CPyMOL * I)
   ColorInit(G);
   CGORendererInit(G);
   ShaderMgrInit(G);
+  G->GFXMgr = new GFXManager(G->ShaderMgr);
   SettingInitGlobal(G, true, true, false);
   SettingSetGlobal_i(G, cSetting_internal_gui, G->Option->internal_gui);
   SettingSetGlobal_i(G, cSetting_internal_feedback, G->Option->internal_feedback);
@@ -1997,6 +1999,7 @@ void PyMOL_Stop(CPyMOL * I)
 #ifdef _PYMOL_OPENVR
   OpenVRFree(G);
 #endif
+  DeleteP(G->GFXMgr);
   DeleteP(G->ShaderMgr);
   SettingFreeGlobal(G);
   CharacterFree(G);
