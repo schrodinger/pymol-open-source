@@ -1771,7 +1771,7 @@ void CShaderMgr::bindOffscreen(int width, int height, GridInfo *grid) {
     rt->bind(!stereo_blend);
   glEnable(GL_BLEND);
 
-  SceneInitializeViewport(G, 1);
+  SceneInitializeViewport(G, true);
   if (grid->active) {
     grid->cur_view.offset = Offset2D{};
     grid->cur_view.extent.width = static_cast<std::uint32_t>(req_size.x);

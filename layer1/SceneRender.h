@@ -38,7 +38,7 @@ void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
                     RenderPass pass, int fat, float width_scale,
                     GridInfo * grid, int dynamic_pass, SceneRenderWhich which_objects);
 
-void SceneInitializeViewport(PyMOLGlobals * G, int offscreen);
+void SceneInitializeViewport(PyMOLGlobals* G, bool offscreen);
 
 void GridSetGLViewport(GridInfo * I, int slot);
 
