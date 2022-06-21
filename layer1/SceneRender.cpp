@@ -29,16 +29,17 @@
 extern float* rayDepthPixels;
 extern int rayVolume, rayWidth, rayHeight;
 
-static void SetDrawBufferForStereo(PyMOLGlobals* G, CScene* I, int stereo_mode,
-    int times, int fog_active);
+static void SetDrawBufferForStereo(
+    PyMOLGlobals* G, CScene* I, int stereo_mode, int times, int fog_active);
 static void SceneDrawStencilInBuffer(
     PyMOLGlobals* G, CScene* I, int stereo_mode);
 
 static void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
-    int must_render_stereo, int stereo_mode, bool render_to_texture, const Offset2D& pos,
-    const Extent2D& oversizeExtent, int stereo_double_pump_mono,
-    int curState, float* normal, SceneUnitContext* context, float width_scale,
-    int fog_active, bool onlySelections, bool noAA);
+    int must_render_stereo, int stereo_mode, bool render_to_texture,
+    const Offset2D& pos, const Extent2D& oversizeExtent,
+    int stereo_double_pump_mono, int curState, float* normal,
+    SceneUnitContext* context, float width_scale, int fog_active,
+    bool onlySelections, bool noAA);
 
 static void SceneRenderAA(PyMOLGlobals* G);
 
@@ -426,7 +427,8 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
       auto fog_active = SceneSetFog(G);
 
 #ifndef _PYMOL_NO_AA_SHADERS
-      if (!renderInfo.oversizeExtent.width && !renderInfo.oversizeExtent.height) {
+      if (renderInfo.oversizeExtent.width == 0 &&
+          renderInfo.oversizeExtent.height == 0) {
         render_to_texture_for_pp =
             SettingGet<int>(G, cSetting_antialias_shader);
       }
@@ -480,8 +482,8 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
 #endif
         bool renderToTexture{false};
         onlySelections = true;
-        SceneRenderStereoLoop(G, times, must_render_stereo, stereo_mode, 0,
-            renderInfo.mousePos, renderInfo.oversizeExtent,
+        SceneRenderStereoLoop(G, times, must_render_stereo, stereo_mode,
+            renderToTexture, renderInfo.mousePos, renderInfo.oversizeExtent,
             stereo_double_pump_mono, curState, normal, &context, width_scale,
             fog_active, onlySelections, postprocessOnce);
       }
@@ -519,7 +521,8 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
   PRINTFD(G, FB_Scene)
   " SceneRender: rendering complete.\n" ENDFD;
 
-  if (!(renderInfo.pick || renderInfo.sceneMultipick)) { /* update frames per second field */
+  if (!(renderInfo.pick ||
+          renderInfo.sceneMultipick)) { /* update frames per second field */
     I->LastRender = UtilGetSeconds(G);
     I->ApproxRenderTime = I->LastRender - start_time;
 
@@ -1151,7 +1154,7 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
       SceneSetPrepareViewPortForStereo(G, PrepareViewPortForStereo, times, pos,
           oversizeExtent, stereo_mode, width_scale);
 
-      if (!shouldPrepareOffscreen){
+      if (!shouldPrepareOffscreen) {
         PrepareViewPortForStereo(
             G, I, stereo_mode, render_to_texture, times, pos, oversizeExtent);
       }
@@ -1517,8 +1520,8 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
    reset GL state properly based on what was changed in
    PrepareViewPortForStereoImpl per stereo_mode
  */
-void SetDrawBufferForStereo(PyMOLGlobals* G, CScene* I, int stereo_mode,
-    int times, int fog_active)
+void SetDrawBufferForStereo(
+    PyMOLGlobals* G, CScene* I, int stereo_mode, int times, int fog_active)
 {
   switch (stereo_mode) {
   case cStereo_quadbuffer:
