@@ -310,7 +310,7 @@ int StereoIsAdjacent(PyMOLGlobals * G){
 }
 
 #ifdef _PYMOL_IOS
-static int get_stereo_x(int x, int *last_x, int width, int *click_side)
+static int get_stereo_x(int x, int *last_x, int width, ClickSide* click_side)
 {
   int width_2 = width / 2;
   int width_3 = width / 3;
@@ -318,23 +318,23 @@ static int get_stereo_x(int x, int *last_x, int width, int *click_side)
     if(x > width_2) {
       x -= width_2;
       if(click_side)
-        *click_side = 1;        /* right */
+        *click_side = ClickSide::Right;
     } else {
       if(click_side)
-        *click_side = -1;       /* left */
+        *click_side = ClickSide::Left;
     }
   } else {
     if((x - (*last_x)) > width_3) {
       x -= width_2;
       if(click_side)
-        *click_side = 1;        /* right */
+        *click_side = ClickSide::Right;
     } else if(((*last_x) - x) > width_3) {
       x += width_2;
       if(click_side)
-        *click_side = 1;        /* right */
+        *click_side = ClickSide::Right;
     } else {
       if(click_side)
-        *click_side = -1;       /* left */
+        *click_side = ClickSide::Left;
     }
   }
   return x;
@@ -1685,7 +1685,12 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
 
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
             SceneInvalidateCopy(G, false);
-            SceneRender(G, NULL, x_offset, y_offset, NULL, width, height, 0, 0);
+            SceneRenderInfo renderInfo{};
+            renderInfo.mousePos = Offset2D{x_offset, y_offset};
+            renderInfo.oversizeExtent =
+                Extent2D{static_cast<std::uint32_t>(width),
+                    static_cast<std::uint32_t>(height)};
+            SceneRender(G, renderInfo);
             SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
 
             if(draw_both) {
@@ -2292,7 +2297,8 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
         }
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         /* insert OpenGL context validation code here? */
-        SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0, 0);
+        SceneRenderInfo renderInfo{};
+        SceneRender(G, renderInfo);
         SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
         if(draw_both) {
           SceneCopy(G, GL_BACK_LEFT, true, false);
@@ -5642,7 +5648,7 @@ float SceneGetScale(PyMOLGlobals * G) {
 
 void ScenePickAtomInWorld(PyMOLGlobals * G, int x, int y, float *atomWorldPos) {
   CScene *I = G->Scene;
-  if (SceneDoXYPick(G, x, y, 0)) {
+  if (SceneDoXYPick(G, x, y, ClickSide::None)) {
     pymol::CObject *obj = I->LastPicked.context.object;
     if (obj->type != cObjectMolecule) {
       return;

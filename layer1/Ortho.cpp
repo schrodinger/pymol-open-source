@@ -109,7 +109,7 @@ public:
   int WrapXFlag{};
   GLenum ActiveGLBuffer{};
   double DrawTime{}, LastDraw{};
-  int WrapClickSide{};            /* ugly kludge for finding click side in geowall stereo mode */
+  ClickSide WrapClickSide = ClickSide::None;            /* ugly kludge for finding click side in geowall stereo mode */
 
   /* packing information */
   int WizardHeight{};
@@ -183,31 +183,31 @@ void OrthoParseCurrentLine(PyMOLGlobals * G);
 #define cWizardLeftMargin 15
 #define cWizardBorder 7
 
-static int get_wrap_x(int x, int *last_x, int width, int *click_side)
+static int get_wrap_x(int x, int *last_x, int width, ClickSide* click_side)
 {
   int width_2 = width / 2;
   int width_3 = width / 3;
   if(!last_x) {
     if(x > width_2) {
       x -= width_2;
-      if(click_side)
-        *click_side = 1;
+      if (click_side)
+        *click_side = ClickSide::Right;
     } else {
-      if(click_side)
-        *click_side = -1;
+      if (click_side)
+        *click_side = ClickSide::Left;
     }
   } else {
     if((x - (*last_x)) > width_3) {
       x -= width_2;
-      if(click_side)
-        *click_side = 1;
+      if (click_side)
+        *click_side = ClickSide::Right;
     } else if(((*last_x) - x) > width_3) {
       x += width_2;
-      if(click_side)
-        *click_side = 1;
+      if (click_side)
+        *click_side = ClickSide::Right;
     } else {
-      if(click_side)
-        *click_side = -1;
+      if (click_side)
+        *click_side = ClickSide::Left;
     }
   }
   return x;
@@ -1619,9 +1619,11 @@ void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
     I->DrawTime += I->LastDraw;
     ButModeSetRate(G, (float) I->DrawTime);
 
-    if(render && (render_mode != OrthoRenderMode::GeoWallRight))
-      SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0,
-                  SettingGetGlobal_b(G, cSetting_image_copy_always));
+    if (render && (render_mode != OrthoRenderMode::GeoWallRight)) {
+      SceneRenderInfo renderInfo{};
+      renderInfo.forceCopy = SettingGet<bool>(G, cSetting_image_copy_always);
+      SceneRender(G, renderInfo);
+    }
     else if (text){
       bg_grad(G);  // only render the background for text
     }
@@ -2366,7 +2368,7 @@ void OrthoReshapeWizard(PyMOLGlobals * G, ov_size wizHeight)
 }
 
 /*========================================================================*/
-int OrthoGetWrapClickSide(PyMOLGlobals * G)
+ClickSide OrthoGetWrapClickSide(PyMOLGlobals* G)
 {
   return G->Ortho->WrapClickSide;
 }
@@ -2400,7 +2402,7 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
       x = get_wrap_x(x, &I->LastX, G->Option->winX, &I->WrapClickSide);
     }
   } else {
-    I->WrapClickSide = 0;
+    I->WrapClickSide = ClickSide::None;
   }
 
   OrthoRemoveSplash(G);

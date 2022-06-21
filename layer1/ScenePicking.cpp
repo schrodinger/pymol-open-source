@@ -14,19 +14,25 @@
 
 #define cRange 7
 
-int SceneDoXYPick(PyMOLGlobals * G, int x, int y, int click_side)
+int SceneDoXYPick(PyMOLGlobals * G, int x, int y, ClickSide click_side)
 {
   CScene *I = G->Scene;
-  int defer_builds_mode = SettingGetGlobal_i(G, cSetting_defer_builds_mode);
+  int defer_builds_mode = SettingGet<int>(G, cSetting_defer_builds_mode);
 
   if(defer_builds_mode == 5)    /* force generation of a pickable version */
     SceneUpdate(G, true);
-  if(OrthoGetOverlayStatus(G) || SettingGetGlobal_i(G, cSetting_text))
-    SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0, 0);       /* remove overlay if present */
+  if (OrthoGetOverlayStatus(G) || SettingGet<int>(G, cSetting_text)) {
+    SceneRenderInfo renderInfo{};
+    SceneRender(G, renderInfo);       /* remove overlay if present */
+  }
   SceneDontCopyNext(G);
 
   I->LastPicked.context.object = NULL;
-  SceneRender(G, &I->LastPicked, x, y, NULL, 0, 0, click_side, 0);
+  SceneRenderInfo renderInfo{};
+  renderInfo.pick = &I->LastPicked;
+  renderInfo.mousePos = Offset2D{x, y};
+  renderInfo.clickSide = click_side;
+  SceneRender(G, renderInfo);
   return (I->LastPicked.context.object != NULL);
   /* did we pick something? */
 }
@@ -267,9 +273,10 @@ void SceneRenderPickingMultiPick(PyMOLGlobals * G, SceneUnitContext *context, Mu
 #endif
 }
 
-void SceneRenderPicking(PyMOLGlobals * G, int stereo_mode, int *click_side, int stereo_double_pump_mono, 
-			Picking * pick, int x, int y, Multipick * smp, SceneUnitContext *context,
-			GLenum render_buffer){
+void SceneRenderPicking(PyMOLGlobals* G, int stereo_mode, ClickSide click_side,
+    int stereo_double_pump_mono, Picking* pick, int x, int y, Multipick* smp,
+    SceneUnitContext* context, GLenum render_buffer)
+{
   CScene *I = G->Scene;
 
   if (render_buffer == GL_BACK) {
@@ -286,7 +293,7 @@ void SceneRenderPicking(PyMOLGlobals * G, int stereo_mode, int *click_side, int 
       glViewport(I->rect.left, I->rect.bottom, I->Width / 2, I->Height);
       break;
     case cStereo_geowall:
-      *click_side = OrthoGetWrapClickSide(G);
+      click_side = OrthoGetWrapClickSide(G);
       break;
     }
   }
@@ -296,12 +303,12 @@ void SceneRenderPicking(PyMOLGlobals * G, int stereo_mode, int *click_side, int 
 
   switch (stereo_mode) {
   case cStereo_crosseye:
-    ScenePrepareMatrix(G, (*click_side > 0) ? 1 : 2);
+    ScenePrepareMatrix(G, click_side == ClickSide::Right ? 1 : 2);
     break;
   case cStereo_walleye:
   case cStereo_geowall:
   case cStereo_sidebyside:
-    ScenePrepareMatrix(G, (*click_side < 0) ? 1 : 2);
+    ScenePrepareMatrix(G, click_side == ClickSide::Left ? 1 : 2);
     break;
 #ifdef _PYMOL_OPENVR
   case cStereo_openvr:
@@ -325,23 +332,29 @@ void SceneRenderPicking(PyMOLGlobals * G, int stereo_mode, int *click_side, int 
 int SceneMultipick(PyMOLGlobals * G, Multipick * smp)
 {
   CScene *I = G->Scene;
-  int click_side = 0;
-  int defer_builds_mode = SettingGetGlobal_i(G, cSetting_defer_builds_mode);
+  int defer_builds_mode = SettingGet<int>(G, cSetting_defer_builds_mode);
 
   if(defer_builds_mode == 5)    /* force generation of a pickable version */
     SceneUpdate(G, true);
 
-  if(OrthoGetOverlayStatus(G) || SettingGetGlobal_i(G, cSetting_text))
-    SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0, 0);       /* remove overlay if present */
+  if (OrthoGetOverlayStatus(G) || SettingGet<int>(G, cSetting_text)) {
+    SceneRenderInfo renderInfo{};
+    SceneRender(G, renderInfo);       /* remove overlay if present */
+  }
   SceneDontCopyNext(G);
-  if(StereoIsAdjacent(G)) {
+
+  auto click_side = ClickSide::None;
+  if (StereoIsAdjacent(G)) {
     if(smp->x > (I->Width / 2))
-      click_side = 1;
+      click_side = ClickSide::Right;
     else
-      click_side = -1;
+      click_side = ClickSide::Left;
     smp->x = smp->x % (I->Width / 2);
   }
-  SceneRender(G, NULL, 0, 0, smp, 0, 0, click_side, 0);
+  SceneRenderInfo renderInfo{};
+  renderInfo.sceneMultipick = smp;
+  renderInfo.clickSide = click_side;
+  SceneRender(G, renderInfo);
   SceneDirty(G);
   return (1);
 }

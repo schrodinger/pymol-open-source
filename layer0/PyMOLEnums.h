@@ -44,3 +44,10 @@ enum class OrthoRenderMode
   GeoWallLeft = Main,
   GeoWallRight,
 };
+
+enum class ClickSide
+{
+  Left = -1,
+  None = 0,
+  Right = 1
+};

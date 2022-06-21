@@ -596,7 +596,7 @@ void SceneClickPickNothing(PyMOLGlobals* G, int button, int mod, int mode)
   OrthoRestorePrompt(G);
 }
 
-static int get_stereo_x(int x, int* last_x, int width, int* click_side)
+static int get_stereo_x(int x, int* last_x, int width, ClickSide* click_side)
 {
   int width_2 = width / 2;
   int width_3 = width / 3;
@@ -604,23 +604,23 @@ static int get_stereo_x(int x, int* last_x, int width, int* click_side)
     if (x > width_2) {
       x -= width_2;
       if (click_side)
-        *click_side = 1; /* right */
+        *click_side = ClickSide::Right;
     } else {
       if (click_side)
-        *click_side = -1; /* left */
+        *click_side = ClickSide::Left;
     }
   } else {
     if ((x - (*last_x)) > width_3) {
       x -= width_2;
       if (click_side)
-        *click_side = 1; /* right */
+        *click_side = ClickSide::Right;
     } else if (((*last_x) - x) > width_3) {
       x += width_2;
       if (click_side)
-        *click_side = 1; /* right */
+        *click_side = ClickSide::Right;
     } else {
       if (click_side)
-        *click_side = -1; /* left */
+        *click_side = ClickSide::Left;
     }
   }
   return x;
@@ -676,7 +676,7 @@ static int SceneClick(
   } // end not single-click
 
   int click_handled = false;
-  int click_side = 0;
+  auto click_side = ClickSide::None;
 
   I->LastWinX = x;
   I->LastWinY = y;

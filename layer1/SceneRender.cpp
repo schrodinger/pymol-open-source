@@ -35,39 +35,38 @@ static void SceneDrawStencilInBuffer(
     PyMOLGlobals* G, CScene* I, int stereo_mode);
 
 static void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
-    int must_render_stereo, int stereo_mode, bool render_to_texture, int x,
-    int y, int oversize_width, int oversize_height, int stereo_double_pump_mono,
+    int must_render_stereo, int stereo_mode, bool render_to_texture, const Offset2D& pos,
+    const Extent2D& oversizeExtent, int stereo_double_pump_mono,
     int curState, float* normal, SceneUnitContext* context, float width_scale,
     int fog_active, bool onlySelections, bool noAA);
 
 static void SceneRenderAA(PyMOLGlobals* G);
 
 static void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I,
-    int stereo_mode, bool offscreen, int times, int x, int y,
-    int oversize_width, int oversize_height, GLenum draw_mode,
+    int stereo_mode, bool offscreen, int times, const Offset2D& pos,
+    const Extent2D& oversizeExtent, GLenum draw_mode,
     int position /* left=0, right=1 */);
 
 static void PrepareViewPortForMonoInitializeViewPort(PyMOLGlobals* G, CScene* I,
-    int stereo_mode, bool offscreen, int times, int x, int y,
-    int oversize_width, int oversize_height);
+    int stereo_mode, bool offscreen, int times, const Offset2D& pos,
+    const Extent2D& oversizeExtent);
 
 static void PrepareViewPortForStereo(PyMOLGlobals* G, CScene* I,
-    int stereo_mode, bool offscreen, int times, int x, int y,
-    int oversize_width, int oversize_height);
+    int stereo_mode, bool offscreen, int times, const Offset2D& pos,
+    const Extent2D& oversizeExtent);
 
 static void PrepareViewPortForStereo2nd(PyMOLGlobals* G, CScene* I,
-    int stereo_mode, bool offscreen, int times, int x, int y,
-    int oversize_width, int oversize_height);
+    int stereo_mode, bool offscreen, int times, const Offset2D& pos,
+    const Extent2D& oversizeExtent);
 
-static void InitializeViewPortToScreenBlock(PyMOLGlobals* G, CScene* I, int x,
-    int y, int oversize_width, int oversize_height, int* stereo_mode,
+static void InitializeViewPortToScreenBlock(PyMOLGlobals* G, CScene* I,
+    const Offset2D& pos, const Extent2D& oversizeExtent, int* stereo_mode,
     float* width_scale);
 
 static void SceneSetPrepareViewPortForStereo(PyMOLGlobals* G,
-    void (*prepareViewPortForStereo)(
-        PyMOLGlobals*, CScene*, int, bool, int, int, int, int, int),
-    int times, int x, int y, int oversize_width, int oversize_height,
-    int stereo_mode, float width_scale);
+    PrepareViewportForStereoFuncT prepareViewportForStereo, int times,
+    const Offset2D& pos, const Extent2D& oversizeExtent, int stereo_mode,
+    float width_scale);
 
 static CGO* GenerateUnitScreenCGO(PyMOLGlobals* G);
 
@@ -165,8 +164,7 @@ static void glBlendFunc_default()
                 It also takes calls anti-aliasing (SceneRenderAA) if
                 necessary after rendering and before selection markers.
  */
-void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
-    int oversize_width, int oversize_height, int click_side, int force_copy)
+void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
 {
   /* think in terms of the camera's world */
   CScene* I = G->Scene;
@@ -184,8 +182,9 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
     return;
 #endif
   PRINTFD(G, FB_Scene)
-  " SceneRender: entered. pick %p x %d y %d smp %p\n", (void*) pick, x, y,
-      (void*) smp ENDFD;
+  " SceneRender: entered. pick %p x %d y %d smp %p\n", (void*) renderInfo.pick,
+      renderInfo.mousePos.x, renderInfo.mousePos.y,
+      (void*) renderInfo.sceneMultipick ENDFD;
 
   G->ShaderMgr->Check_Reload();
 
@@ -275,10 +274,10 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
       PyMOLCheckOpenGLErr("SceneRender checkpoint 1");
 
     auto view_save = SceneGetViewport(G);
-    InitializeViewPortToScreenBlock(G, I, x, y, oversize_width, oversize_height,
-        &stereo_mode, &width_scale);
+    InitializeViewPortToScreenBlock(G, I, renderInfo.mousePos,
+        renderInfo.oversizeExtent, &stereo_mode, &width_scale);
 
-    if (!(pick || smp))
+    if (!(renderInfo.pick || renderInfo.sceneMultipick))
       bg_grad(G);
 
 #ifndef _WEBGL
@@ -289,7 +288,7 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
     /* get matrixes for unit objects */
 #ifndef PURE_OPENGL_ES_2
     if (SettingGet<bool>(G, cSetting_line_smooth)) {
-      if (!(pick || smp)) {
+      if (!(renderInfo.pick || renderInfo.sceneMultipick)) {
         glEnable(GL_LINE_SMOOTH);
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
       }
@@ -384,11 +383,11 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
     " SceneRender: matrices loaded. rendering objects...\n" ENDFD;
 
     /* 1. render all objects */
-    if (pick || smp) {
-
-      SceneRenderPicking(G, stereo_mode, &click_side, stereo_double_pump_mono,
-          pick, x, y, smp, &context, render_buffer);
-
+    if (renderInfo.pick || renderInfo.sceneMultipick) {
+      SceneRenderPicking(G, stereo_mode, renderInfo.clickSide,
+          stereo_double_pump_mono, renderInfo.pick, renderInfo.mousePos.x,
+          renderInfo.mousePos.y, renderInfo.sceneMultipick, &context,
+          render_buffer);
     } else {
       int times = 1;
       bool render_to_texture_for_pp{false};
@@ -427,7 +426,7 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
       auto fog_active = SceneSetFog(G);
 
 #ifndef _PYMOL_NO_AA_SHADERS
-      if (!oversize_width && !oversize_height) {
+      if (!renderInfo.oversizeExtent.width && !renderInfo.oversizeExtent.height) {
         render_to_texture_for_pp =
             SettingGet<int>(G, cSetting_antialias_shader);
       }
@@ -462,9 +461,9 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
 
       bool onlySelections{false};
       SceneRenderStereoLoop(G, times, must_render_stereo, stereo_mode,
-          render_to_texture_for_pp, x, y, oversize_width, oversize_height,
-          stereo_double_pump_mono, curState, normal, &context, width_scale,
-          fog_active, onlySelections, postprocessOnce);
+          render_to_texture_for_pp, renderInfo.mousePos,
+          renderInfo.oversizeExtent, stereo_double_pump_mono, curState, normal,
+          &context, width_scale, fog_active, onlySelections, postprocessOnce);
 
       if (render_to_texture_for_pp) {
         /* BEGIN rendering the selection markers, should we put all of this into
@@ -473,15 +472,16 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
 #ifndef PURE_OPENGL_ES_2
         if (!must_render_stereo || postprocessOnce) {
           SceneSetPrepareViewPortForStereo(G,
-              PrepareViewPortForMonoInitializeViewPort, times, x, y,
-              oversize_width, oversize_height, stereo_mode, width_scale);
+              PrepareViewPortForMonoInitializeViewPort, times,
+              renderInfo.mousePos, renderInfo.oversizeExtent, stereo_mode,
+              width_scale);
           SceneRenderPostProcessStack(G);
         }
 #endif
         bool renderToTexture{false};
         onlySelections = true;
-        SceneRenderStereoLoop(G, times, must_render_stereo, stereo_mode,
-            renderToTexture, x, y, oversize_width, oversize_height,
+        SceneRenderStereoLoop(G, times, must_render_stereo, stereo_mode, 0,
+            renderInfo.mousePos, renderInfo.oversizeExtent,
             stereo_double_pump_mono, curState, normal, &context, width_scale,
             fog_active, onlySelections, postprocessOnce);
       }
@@ -519,7 +519,7 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
   PRINTFD(G, FB_Scene)
   " SceneRender: rendering complete.\n" ENDFD;
 
-  if (!(pick || smp)) { /* update frames per second field */
+  if (!(renderInfo.pick || renderInfo.sceneMultipick)) { /* update frames per second field */
     I->LastRender = UtilGetSeconds(G);
     I->ApproxRenderTime = I->LastRender - start_time;
 
@@ -535,7 +535,7 @@ void SceneRender(PyMOLGlobals* G, Picking* pick, int x, int y, Multipick* smp,
     } else {
       I->CopyNextFlag = true;
     }
-    if (force_copy && !(I->CopyType)) {
+    if (renderInfo.forceCopy && !(I->CopyType)) {
       SceneCopy(G, render_buffer, true, false);
       I->CopyType = 2; /* do not display force copies */
     }
@@ -1112,10 +1112,11 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
    stereo)
  */
 void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
-    int must_render_stereo, int stereo_mode, bool render_to_texture, int x,
-    int y, int oversize_width, int oversize_height, int stereo_double_pump_mono,
-    int curState, float* normal, SceneUnitContext* context, float width_scale,
-    int fog_active, bool onlySelections, bool offscreenPrepared)
+    int must_render_stereo, int stereo_mode, bool render_to_texture,
+    const Offset2D& pos, const Extent2D& oversizeExtent,
+    int stereo_double_pump_mono, int curState, float* normal,
+    SceneUnitContext* context, float width_scale, int fog_active,
+    bool onlySelections, bool offscreenPrepared)
 {
   CScene* I = G->Scene;
   int times = timesArg;
@@ -1147,12 +1148,12 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
       }
 #endif
 
-      SceneSetPrepareViewPortForStereo(G, PrepareViewPortForStereo, times, x, y,
-          oversize_width, oversize_height, stereo_mode, width_scale);
+      SceneSetPrepareViewPortForStereo(G, PrepareViewPortForStereo, times, pos,
+          oversizeExtent, stereo_mode, width_scale);
 
-      if (!shouldPrepareOffscreen) {
-        PrepareViewPortForStereo(G, I, stereo_mode, render_to_texture, times, x,
-            y, oversize_width, oversize_height);
+      if (!shouldPrepareOffscreen){
+        PrepareViewPortForStereo(
+            G, I, stereo_mode, render_to_texture, times, pos, oversizeExtent);
       }
 #ifndef PURE_OPENGL_ES_2
       if (use_shaders)
@@ -1192,11 +1193,11 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
         G->ShaderMgr->stereo_blend =
             render_stereo_blend_into_full_screen(stereo_mode);
       }
-      SceneSetPrepareViewPortForStereo(G, PrepareViewPortForStereo2nd, times, x,
-          y, oversize_width, oversize_height, stereo_mode, width_scale);
+      SceneSetPrepareViewPortForStereo(G, PrepareViewPortForStereo2nd, times,
+          pos, oversizeExtent, stereo_mode, width_scale);
       if (!shouldPrepareOffscreen) {
-        PrepareViewPortForStereo2nd(G, I, stereo_mode, render_to_texture, times,
-            x, y, oversize_width, oversize_height);
+        PrepareViewPortForStereo2nd(
+            G, I, stereo_mode, render_to_texture, times, pos, oversizeExtent);
       }
 #ifndef PURE_OPENGL_ES_2
       if (!use_shaders)
@@ -1254,8 +1255,8 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
       if (Feedback(G, FB_OpenGL, FB_Debugging))
         PyMOLCheckOpenGLErr("Before mono rendering");
       SceneSetPrepareViewPortForStereo(G,
-          PrepareViewPortForMonoInitializeViewPort, times, x, y, oversize_width,
-          oversize_height, stereo_mode, width_scale);
+          PrepareViewPortForMonoInitializeViewPort, times, pos, oversizeExtent,
+          stereo_mode, width_scale);
       DoRendering(G, I, &I->grid, times, curState, normal, context, width_scale,
           onlySelections, render_to_texture);
       if (Feedback(G, FB_OpenGL, FB_Debugging))
@@ -1265,40 +1266,39 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
 }
 
 void PrepareViewPortForMonoInitializeViewPort(PyMOLGlobals* G, CScene* I,
-    int stereo_mode, bool offscreen, int times, int x, int y,
-    int oversize_width, int oversize_height)
+    int stereo_mode, bool offscreen, int times, const Offset2D& pos,
+    const Extent2D& oversizeExtent)
 {
   float width_scale;
   InitializeViewPortToScreenBlock(
-      G, I, x, y, oversize_width, oversize_height, &stereo_mode, &width_scale);
+      G, I, pos, oversizeExtent, &stereo_mode, &width_scale);
 }
 
 void PrepareViewPortForStereo(PyMOLGlobals* G, CScene* I, int stereo_mode,
-    bool offscreen, int times, int x, int y, int oversize_width,
-    int oversize_height)
+    bool offscreen, int times, const Offset2D& pos,
+    const Extent2D& oversizeExtent)
 {
-  PrepareViewPortForStereoImpl(G, I, stereo_mode, offscreen, times, x, y,
-      oversize_width, oversize_height, GL_BACK_LEFT, 0);
+  PrepareViewPortForStereoImpl(G, I, stereo_mode, offscreen, times, pos,
+      oversizeExtent, GL_BACK_LEFT, 0);
 }
 
 void PrepareViewPortForStereo2nd(PyMOLGlobals* G, CScene* I, int stereo_mode,
-    bool offscreen, int times, int x, int y, int oversize_width,
-    int oversize_height)
+    bool offscreen, int times, const Offset2D& pos,
+    const Extent2D& oversizeExtent)
 {
-  PrepareViewPortForStereoImpl(G, I, stereo_mode, offscreen, times, x, y,
-      oversize_width, oversize_height, GL_BACK_RIGHT, 1);
+  PrepareViewPortForStereoImpl(G, I, stereo_mode, offscreen, times, pos,
+      oversizeExtent, GL_BACK_RIGHT, 1);
 }
 
-void InitializeViewPortToScreenBlock(PyMOLGlobals* G, CScene* I, int x, int y,
-    int oversize_width, int oversize_height, int* stereo_mode,
+void InitializeViewPortToScreenBlock(PyMOLGlobals* G, CScene* I,
+    const Offset2D& pos, const Extent2D& oversizeExtent, int* stereo_mode,
     float* width_scale)
 {
-  if (oversize_width && oversize_height) {
+  if (oversizeExtent.width != 0 && oversizeExtent.height != 0) {
     Rect2D want_view{};
-    want_view.offset.x = static_cast<std::int32_t>(I->rect.left + x);
-    want_view.offset.y = static_cast<std::int32_t>(I->rect.bottom + y);
-    want_view.extent.width = static_cast<std::uint32_t>(oversize_width);
-    want_view.extent.height = static_cast<std::uint32_t>(oversize_height);
+    want_view.offset.x = static_cast<std::int32_t>(I->rect.left + pos.x);
+    want_view.offset.y = static_cast<std::int32_t>(I->rect.bottom + pos.y);
+    want_view.extent = oversizeExtent;
     SceneSetViewport(want_view);
     auto got_view = SceneGetViewport(G);
 #ifndef _WEBGL
@@ -1312,7 +1312,7 @@ void InitializeViewPortToScreenBlock(PyMOLGlobals* G, CScene* I, int x, int y,
       *stereo_mode = 0;
       break;
     }
-    *width_scale = ((float) (oversize_width)) / I->Width;
+    *width_scale = ((float) (oversizeExtent.width)) / I->Width;
   } else {
     Rect2D view{};
     view.offset = Offset2D{I->rect.left, I->rect.bottom};
@@ -1322,18 +1322,15 @@ void InitializeViewPortToScreenBlock(PyMOLGlobals* G, CScene* I, int x, int y,
 }
 
 void SceneSetPrepareViewPortForStereo(PyMOLGlobals* G,
-    void (*prepareViewPortForStereo)(
-        PyMOLGlobals*, CScene*, int, bool, int, int, int, int, int),
-    int times, int x, int y, int oversize_width, int oversize_height,
-    int stereo_mode, float width_scale)
+    PrepareViewportForStereoFuncT prepareViewportForStereo, int times,
+    const Offset2D& pos, const Extent2D& oversizeExtent, int stereo_mode,
+    float width_scale)
 {
   CScene* I = G->Scene;
-  I->vp_prepareViewPortForStereo = prepareViewPortForStereo;
+  I->vp_prepareViewPortForStereo = prepareViewportForStereo;
   I->vp_times = times;
-  I->vp_x = x;
-  I->vp_y = y;
-  I->vp_owidth = oversize_width;
-  I->vp_oheight = oversize_height;
+  I->vp_pos = pos;
+  I->vp_oversize = oversizeExtent;
   I->vp_stereo_mode = stereo_mode;
   I->vp_width_scale = width_scale;
 }
@@ -1341,8 +1338,9 @@ void SceneSetPrepareViewPortForStereo(PyMOLGlobals* G,
 /* PrepareViewPortForStereoImpl : sets up viewport and GL state for stereo_modes
  */
 void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
-    bool offscreen, int times, int x, int y, int oversize_width,
-    int oversize_height, GLenum draw_mode, int position /* left=0, right=1 */)
+    bool offscreen, int times, const Offset2D& pos,
+    const Extent2D& oversizeExtent, GLenum draw_mode,
+    int position /* left=0, right=1 */)
 {
   int position_inv = 1 - position;
   switch (stereo_mode) {
@@ -1353,9 +1351,11 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
   case cStereo_crosseye: /* side by side, crosseye */
     if (offscreen) {
       glViewport(position_inv * I->Width / 2, 0, I->Width / 2, I->Height);
-    } else if (oversize_width && oversize_height) {
-      glViewport(I->rect.left + (position_inv * oversize_width / 2) + x,
-          I->rect.bottom + y, oversize_width / 2, oversize_height);
+    } else if (oversizeExtent.width != 0 && oversizeExtent.height != 0) {
+      glViewport(
+          I->rect.left + (position_inv * oversizeExtent.width / 2) + pos.x,
+          I->rect.bottom + pos.y, oversizeExtent.width / 2,
+          oversizeExtent.height);
     } else {
       glViewport(I->rect.left + (position_inv * I->Width / 2), I->rect.bottom,
           I->Width / 2, I->Height);
@@ -1365,9 +1365,10 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
   case cStereo_sidebyside:
     if (offscreen) {
       glViewport(position * I->Width / 2, 0, I->Width / 2, I->Height);
-    } else if (oversize_width && oversize_height) {
-      glViewport(I->rect.left + (position * oversize_width / 2) + x,
-          I->rect.bottom + y, oversize_width / 2, oversize_height);
+    } else if (oversizeExtent.width != 0 && oversizeExtent.height != 0) {
+      glViewport(I->rect.left + (position * oversizeExtent.width / 2) + pos.x,
+          I->rect.bottom + pos.y, oversizeExtent.width / 2,
+          oversizeExtent.height);
     } else {
       glViewport(I->rect.left + (position * I->Width / 2), I->rect.bottom,
           I->Width / 2, I->Height);
@@ -1607,11 +1608,11 @@ void SceneInitializeViewport(PyMOLGlobals* G, bool offscreen)
         float width_scale;
         // this is called before preparing view port, since the prepare function
         // doesn't setup/change the viewport in all modes
-        InitializeViewPortToScreenBlock(G, I, I->vp_x, I->vp_y, I->vp_owidth,
-            I->vp_oheight, &I->vp_stereo_mode, &width_scale);
+        InitializeViewPortToScreenBlock(
+            G, I, I->vp_pos, I->vp_oversize, &I->vp_stereo_mode, &width_scale);
       }
-      I->vp_prepareViewPortForStereo(G, I, I->vp_stereo_mode, 0, I->vp_times,
-          I->vp_x, I->vp_y, I->vp_owidth, I->vp_oheight);
+      I->vp_prepareViewPortForStereo(
+          G, I, I->vp_stereo_mode, 0, I->vp_times, I->vp_pos, I->vp_oversize);
     } else {
       PRINTFB(G, FB_Scene, FB_Errors)
       " SceneInitializeViewport: I->vp_prepareViewPortForStereo=NULL\n" ENDFB(

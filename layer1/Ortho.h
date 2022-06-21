@@ -118,7 +118,7 @@ int OrthoDeferredWaiting(PyMOLGlobals * G);
 
 OrthoRenderMode OrthoGetRenderMode(PyMOLGlobals * G);
 void OrthoDrawBuffer(PyMOLGlobals * G, GLenum mode);
-int OrthoGetWrapClickSide(PyMOLGlobals * G);
+ClickSide OrthoGetWrapClickSide(PyMOLGlobals* G);
 float *OrthoGetOverlayColor(PyMOLGlobals * G);
 void OrthoDrawWizardPrompt(PyMOLGlobals * G, CGO *orthoCGO);
 

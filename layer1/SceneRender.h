@@ -30,9 +30,17 @@ enum class SceneRenderWhich {
   GadgetsLast
 };
 
-void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
-                 Multipick * smp, int oversize_width, int oversize_height,
-                 int click_side, int force_copy);
+struct SceneRenderInfo
+{
+  Picking* pick = nullptr;
+  Offset2D mousePos{};
+  Multipick* sceneMultipick = nullptr;
+  Extent2D oversizeExtent{};
+  ClickSide clickSide = ClickSide::None;
+  bool forceCopy = false;
+};
+
+void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo);
 void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
                     float *normal, PickColorManager*,
                     RenderPass pass, int fat, float width_scale,

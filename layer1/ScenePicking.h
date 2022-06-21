@@ -22,11 +22,11 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"View.h"
 
-int SceneDoXYPick(PyMOLGlobals * G, int x, int y, int click_side);
+int SceneDoXYPick(PyMOLGlobals * G, int x, int y, ClickSide click_side);
 
-void SceneRenderPicking(PyMOLGlobals * G, int stereo_mode, int *click_side, int stereo_double_pump_mono, 
-			Picking * pick, int x, int y, Multipick * smp, SceneUnitContext *context,
-			GLenum render_buffer);
+void SceneRenderPicking(PyMOLGlobals* G, int stereo_mode, ClickSide click_side,
+    int stereo_double_pump_mono, Picking* pick, int x, int y, Multipick* smp,
+    SceneUnitContext* context, GLenum render_buffer);
 int SceneMultipick(PyMOLGlobals * G, Multipick * smp);
 
 #endif

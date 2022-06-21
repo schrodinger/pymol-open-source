@@ -126,6 +126,9 @@ struct GridInfo {
   SceneUnitContext context;     /* for whole-window display */
 };
 
+using PrepareViewportForStereoFuncT = void (*)(
+    PyMOLGlobals*, CScene*, int, bool, int, const Offset2D&,
+    const Extent2D&);
 
 class CScene : public Block {
  public:
@@ -221,8 +224,10 @@ class CScene : public Block {
   CGO *offscreenCGO { nullptr };
   CGO *offscreenOIT_CGO { nullptr };
   CGO *offscreenOIT_CGO_copy { nullptr };
-  void (*vp_prepareViewPortForStereo)(PyMOLGlobals *, CScene *, int, bool, int, int, int, int, int){};
-  int vp_times{}, vp_x{}, vp_y{}, vp_owidth{}, vp_oheight{}, vp_stereo_mode{};
+  PrepareViewportForStereoFuncT vp_prepareViewPortForStereo = nullptr;
+  Offset2D vp_pos{};
+  Extent2D vp_oversize{};
+  int vp_times{}, vp_stereo_mode{};
   float vp_width_scale{};
   PickColorManager pickmgr;
 
