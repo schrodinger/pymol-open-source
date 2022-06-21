@@ -1082,10 +1082,7 @@ SEE ALSO
 
         s = str(s)
         if unquote_re.match(s):
-            try:
-                return cmd.safe_eval(s)
-            except SyntaxError:
-                print(" Warning: unquote failed for", repr(s))
+            s = s.strip('\"')
         return s
 
     def pseudoatom(object='', selection='', name='PS1', resn='PSD', resi='1', chain='P',
