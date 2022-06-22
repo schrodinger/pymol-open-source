@@ -5685,7 +5685,8 @@ void SceneSetViewport(PyMOLGlobals* G, const Rect2D& rect)
 void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height)
 {
   assert(width >= 0 && height >= 0);
-  SceneSetViewport(G, Rect2D{x, y, width, height});
+  SceneSetViewport(G, Rect2D{x, y, static_cast<std::uint32_t>(width),
+                          static_cast<std::uint32_t>(height)});
 }
 
 Rect2D SceneGetViewport(PyMOLGlobals* G)
