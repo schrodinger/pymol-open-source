@@ -1015,7 +1015,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
           if (!grid->active ||
               slot > 0) { /* slot 0 is the full screen in grid mode, so don't
                              render selections */
-            int s = grid->active && grid->mode == 1 ? slot : 0;
+            int s = grid->active && grid->mode == GridMode::ByObject ? slot : 0;
             ExecutiveRenderSelections(G, curState, s, grid);
           }
         }
