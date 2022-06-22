@@ -189,9 +189,9 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
 
   G->ShaderMgr->Check_Reload();
 
-  int grid_mode = SettingGet<int>(G, cSetting_grid_mode);
+  auto grid_mode = SettingGet<GridMode>(G, cSetting_grid_mode);
   int grid_size = 0;
-  if (grid_mode) {
+  if (grid_mode != GridMode::NoGrid) {
     grid_size = SceneGetGridSize(G, grid_mode);
     GridUpdate(&I->grid, aspRat, grid_mode, grid_size);
     if (I->grid.active)
@@ -707,14 +707,16 @@ static void SceneRenderAllObject(PyMOLGlobals* G, CScene* I,
       glNormal3fv(normal);
 #endif
 
-    if ((!grid->active) || (grid->mode < 2)) {
+    if (!grid->active ||
+        grid->mode == GridMode::NoGrid ||
+        grid->mode == GridMode::ByObject) {
       info->state = ObjectGetCurrentState(obj, false);
       obj->render(info);
     } else if (grid->slot) {
-      if (grid->mode == 2) {
+      if (grid->mode == GridMode::ByObjectStates) {
         if ((info->state = state + grid->slot - 1) >= 0)
           obj->render(info);
-      } else if (grid->mode == 3) {
+      } else if (grid->mode == GridMode::ByObjectByState) {
         info->state = grid->slot - obj->grid_slot - 1;
         if (info->state >= 0 && info->state < obj->getNFrame())
           obj->render(info);
@@ -815,7 +817,7 @@ void SceneRenderAll(PyMOLGlobals* G, SceneUnitContext* context, float* normal,
       info.sampling = 1;
   }
   {
-    int* slot_vla = I->SlotVLA;
+    auto slot_vla = I->m_slots.data();
     switch (which_objects) {
     case SceneRenderWhich::AllObjects:
       for (auto obj : I->Obj) {
@@ -1028,7 +1030,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
           if (!grid->active ||
               slot > 0) { /* slot 0 is the full screen in grid mode, so don't
                              render selections */
-            int s = grid->active && grid->mode == 1 ? slot : 0;
+            int s = grid->active && grid->mode == GridMode::ByObject ? slot : 0;
             ExecutiveRenderSelections(G, curState, s, grid);
           }
         }
@@ -1094,7 +1096,8 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
             if (!grid->active ||
                 slot > 0) { /* slot 0 is the full screen in grid mode, so don't
                                render selections */
-              int s = grid->active && grid->mode == 1 ? slot : 0;
+              int s =
+                  grid->active && grid->mode == GridMode::ByObject ? slot : 0;
               ExecutiveRenderSelections(G, curState, s, grid);
             }
           }

@@ -106,7 +106,7 @@ bool SceneRay(PyMOLGlobals * G,
   char *headerVLA = NULL;
   float fov;
   int stereo_hand = 0;
-  int grid_mode = SettingGetGlobal_i(G, cSetting_grid_mode);
+  auto grid_mode = SettingGet<GridMode>(G, cSetting_grid_mode);
   std::shared_ptr<pymol::Image> stereo_image;
   OrthoLineType prefix = "";
   int ortho = SettingGetGlobal_i(G, cSetting_ray_orthoscopic);
@@ -120,7 +120,7 @@ bool SceneRay(PyMOLGlobals * G,
     ortho = SettingGetGlobal_b(G, cSetting_ortho);
 
   if(mode != 0)
-    grid_mode = 0;              /* only allow grid mode with PyMOL renderer */
+    grid_mode = GridMode::NoGrid; /* only allow grid mode with PyMOL renderer */
 
   SceneUpdateAnimation(G);
 
@@ -176,7 +176,7 @@ bool SceneRay(PyMOLGlobals * G,
 
   aspRat = ((float) ray_width) / ((float) ray_height);
 
-  if(grid_mode) {
+  if (grid_mode != GridMode::NoGrid) {
     grid_size = SceneGetGridSize(G, grid_mode);
     GridUpdate(&I->grid, aspRat, grid_mode, grid_size);
     if(I->grid.active)
@@ -265,7 +265,7 @@ bool SceneRay(PyMOLGlobals * G,
         }
       }
       {
-        int *slot_vla = I->SlotVLA;
+        auto slot_vla = I->m_slots.data();
         int state = SceneGetState(G);
         RenderInfo info;
         info.ray = ray;
@@ -303,14 +303,16 @@ bool SceneRay(PyMOLGlobals * G,
                 ray->interiorColor3fv(icolor, false);
               }
 
-              if((!I->grid.active) || (I->grid.mode < 2)) {
+              if(!I->grid.active ||
+                  I->grid.mode == GridMode::NoGrid ||
+                  I->grid.mode == GridMode::ByObject) {
                 info.state = ObjectGetCurrentState(obj, false);
                 obj->render(&info);
-              } else if(I->grid.slot) {
-                if (I->grid.mode == 2) {
+              } else if (I->grid.slot) {
+                if (I->grid.mode == GridMode::ByObjectStates) {
                   if((info.state = state + I->grid.slot - 1) >= 0)
                     obj->render(&info);
-                } else if (I->grid.mode == 3) {
+                } else if (I->grid.mode == GridMode::ByObjectByState) {
                   info.state = I->grid.slot - obj->grid_slot - 1;
                   if (info.state >= 0 && info.state < obj->getNFrame())
                     obj->render(&info);

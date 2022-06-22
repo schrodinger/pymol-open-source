@@ -173,9 +173,9 @@ Rect2D GridSetRayViewport(GridInfo& I, int slot)
   return view;
 }
 
-void GridUpdate(GridInfo * I, float asp_ratio, int mode, int size)
+void GridUpdate(GridInfo * I, float asp_ratio, GridMode mode, int size)
 {
-  if(mode) {
+  if (mode != GridMode::NoGrid) {
     I->size = size;
     I->mode = mode;
     {
@@ -216,64 +216,56 @@ void SceneInvalidateStencil(PyMOLGlobals * G)
   I->StencilValid = false;
 }
 
-int SceneGetGridSize(PyMOLGlobals * G, int grid_mode)
+int SceneGetGridSize(PyMOLGlobals* G, GridMode grid_mode)
 {
-  CScene *I = G->Scene;
-  int slot;
+  CScene* I = G->Scene;
   int size = 0;
 
   switch (grid_mode) {
-  case 1:
-    if(!I->SlotVLA)
-      I->SlotVLA = VLACalloc(int, 1);
-    else {
-      UtilZeroMem(I->SlotVLA, sizeof(int) * VLAGetSize(I->SlotVLA));
-    }
-    {
-      int max_slot = 0;
-      for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
-        if((slot = (*it)->grid_slot)) {
-          if(max_slot < slot)
-            max_slot = slot;
-          if(slot > 0) {
-            VLACheck(I->SlotVLA, int, slot);
-            I->SlotVLA[slot] = 1;
-          }
-        }
-      }
-      for(slot = 0; slot <= max_slot; slot++) {
-        if(I->SlotVLA[slot])
-          I->SlotVLA[slot] = ++size;
-      }
-    }
-    break;
-  case 2:
-  case 3:
-    if(I->SlotVLA) {
-      VLAFreeP(I->SlotVLA);
-      I->SlotVLA = NULL;
+  case GridMode::ByObject:
+    if (!I->m_slots.empty()) {
+      std::fill(I->m_slots.begin(), I->m_slots.end(), 0);
     }
     {
       int max_slot = 0;
       for (auto& obj : I->Obj) {
-          slot = obj->getNFrame();
-          if(grid_mode == 3) {
-            obj->grid_slot = max_slot; // slot offset for 1st state
-            max_slot += slot;
-          } else if(max_slot < slot) {
-            max_slot = slot;
+        if (auto slot = obj->grid_slot) {
+          max_slot = std::max(slot, max_slot);
+          if (slot > 0) {
+            VecCheck(I->m_slots, slot);
+            I->m_slots[slot] = 1;
           }
+        }
+      }
+      for (int slot = 0; slot <= max_slot; slot++) {
+        if (I->m_slots[slot])
+          I->m_slots[slot] = ++size;
+      }
+    }
+    break;
+  case GridMode::ByObjectStates:
+  case GridMode::ByObjectByState:
+    if (!I->m_slots.empty()) {
+      I->m_slots.clear();
+    }
+    {
+      int max_slot = 0;
+      for (auto& obj : I->Obj) {
+        auto slot = obj->getNFrame();
+        if (grid_mode == GridMode::ByObjectByState) {
+          obj->grid_slot = max_slot; // slot offset for 1st state
+          max_slot += slot;
+        } else if (max_slot < slot) {
+          max_slot = slot;
+        }
       }
       size = max_slot;
     }
     break;
   }
-  {
-    int grid_max = SettingGetGlobal_i(G, cSetting_grid_max);
-    if(grid_max >= 0)
-      if(size > grid_max)
-        size = grid_max;
-  }
+  auto grid_max = SettingGet<int>(G, cSetting_grid_max);
+  if (grid_max >= 0)
+    size = std::min(size, grid_max);
   return size;
 }
 
@@ -4082,7 +4074,7 @@ void SceneFree(PyMOLGlobals * G)
   CGOFree(I->offscreenCGO);
   CGOFree(I->offscreenOIT_CGO);
   CGOFree(I->offscreenOIT_CGO_copy);
-  VLAFreeP(I->SlotVLA);
+  I->m_slots.clear();
   I->Obj.clear();
   I->GadgetObjs.clear();
   I->NonGadgetObjs.clear();
@@ -4456,7 +4448,7 @@ int SceneGetDrawFlag(GridInfo * grid, int *slot_vla, int slot)
   int draw_flag = false;
   if(grid && grid->active) {
     switch (grid->mode) {
-    case 1:                    /* assigned grid slots (usually by group) */
+    case GridMode::ByObject: /* assigned grid slots (usually by group) */
       {
         if(((slot < 0) && grid->slot) ||
            ((slot == 0) && (grid->slot == 0)) ||
@@ -4465,8 +4457,8 @@ int SceneGetDrawFlag(GridInfo * grid, int *slot_vla, int slot)
         }
       }
       break;
-    case 2:                    /* each state in a separate slot */
-    case 3:                    /* each object-state */
+    case GridMode::ByObjectStates:
+    case GridMode::ByObjectByState:
       draw_flag = true;
       break;
     }
@@ -4479,7 +4471,7 @@ int SceneGetDrawFlag(GridInfo * grid, int *slot_vla, int slot)
 int SceneGetDrawFlagGrid(PyMOLGlobals * G, GridInfo * grid, int slot)
 {
   CScene *I = G->Scene;
-  return SceneGetDrawFlag(grid, I->SlotVLA, slot);
+  return SceneGetDrawFlag(grid, I->m_slots.data(), slot);
 }
 
 /*========================================================================*/

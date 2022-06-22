@@ -51,3 +51,12 @@ enum class ClickSide
   None = 0,
   Right = 1
 };
+
+enum class GridMode
+{
+  NoGrid = 0, // No Grid
+  ByObject = 1, // One slot per Object
+  ByObjectStates = 2, // One slot per State
+  ByObjectByState = 3, // One slot per state per object
+  ByCamera = 4, // One slot per camera
+};

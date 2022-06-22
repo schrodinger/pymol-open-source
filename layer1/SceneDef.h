@@ -120,7 +120,7 @@ struct GridInfo {
   int active;
   int size;
   int slot;
-  int mode;
+  GridMode mode;
   Rect2D cur_view;
   Extent2D cur_viewport_size;
   SceneUnitContext context;     /* for whole-window display */
@@ -197,7 +197,7 @@ class CScene : public Block {
   std::vector<SceneElem> SceneVec;
   CGO *AlphaCGO { nullptr };
 
-  int *SlotVLA { nullptr };
+  std::vector<int> m_slots;
 
   int StencilValid{}, StencilParity{};
   bool ReinterpolateFlag{};

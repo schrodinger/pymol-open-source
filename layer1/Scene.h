@@ -261,9 +261,21 @@ void SceneSetPointToWorldScreenRelative(PyMOLGlobals *G, float *pos, float *scre
 
 int StereoIsAdjacent(PyMOLGlobals * G);
 
-int SceneGetGridSize(PyMOLGlobals * G, int grid_mode);
+/**
+ * Retrieves number of slot in grid
+ * @param grid_mode grid mode
+ * @return number of slots in grid
+ */
+int SceneGetGridSize(PyMOLGlobals* G, GridMode grid_mode);
 
-void GridUpdate(GridInfo * I, float asp_ratio, int mode, int size);
+/**
+ * Updates the Grid slot extents
+ * @param I grid to update
+ * @param asp_ratio aspect ratio of screen to display grid
+ * @param grid_mode grid mode
+ * @param size size of grid
+ */
+void GridUpdate(GridInfo* I, float asp_ratio, GridMode mode, int size);
 Rect2D GridSetRayViewport(GridInfo& I, int slot);
 int SceneGetDrawFlag(GridInfo * grid, int *slot_vla, int slot);
 
