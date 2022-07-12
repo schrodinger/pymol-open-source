@@ -83,8 +83,8 @@ TTT TTT::operator*(const TTT& other) const
   result.m_rotation = glm::quat_cast(mult);
 
   auto pre = -m_pretranslation;
-  result.m_posttranslation = mult * glm::vec4(pre, 1.0f);
-  result.m_pretranslation = mult[3];
+  result.m_posttranslation = glm::vec3(mult * glm::vec4(pre, 1.0f));
+  result.m_pretranslation = glm::vec3(mult[3]);
   return result;
 }
 
