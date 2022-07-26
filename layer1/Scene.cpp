@@ -223,7 +223,9 @@ int SceneGetGridSize(PyMOLGlobals* G, GridMode grid_mode)
 
   switch (grid_mode) {
   case GridMode::ByObject:
-    if (!I->m_slots.empty()) {
+    if (I->m_slots.empty()) {
+      I->m_slots.push_back(0);
+    } else {
       std::fill(I->m_slots.begin(), I->m_slots.end(), 0);
     }
     {
