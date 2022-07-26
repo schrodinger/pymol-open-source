@@ -1934,6 +1934,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_grid_mode:
     if (!SettingGetGlobal_i(G, cSetting_grid_mode))
       G->ShaderMgr->ResetUniformSet();
+    ExecutiveUpdateSceneMembers(G);
   case cSetting_grid_slot:
     ExecutiveInvalidateGroups(G, false);
     SceneChanged(G);
