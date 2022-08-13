@@ -688,6 +688,28 @@ namespace cgo {
       cCylCap get_cap1() const { return static_cast<cCylCap>(int(cap1)); }
       cCylCap get_cap2() const { return static_cast<cCylCap>(int(cap2)); }
     };
+
+    struct cone {
+      static const int op_code = CGO_CONE;
+      cone(const float* _vertex1, const float* _vertex2, const float _radius1,
+          const float _radius2, const float* _color1, const float* _color2,
+          const float _cap1, const float _cap2)
+          : radius1(_radius1)
+          , radius2(_radius2)
+          , cap1(_cap1)
+          , cap2(_cap2)
+      {
+        copy3f(_vertex1, vertex1);
+        copy3f(_vertex2, vertex2);
+        copy3f(_color1, color1);
+        copy3f(_color2, color2);
+      };
+      float vertex1[3], vertex2[3], radius1, radius2, color1[3], color2[3];
+      float cap1, cap2;
+
+      cCylCap get_cap1() const { return static_cast<cCylCap>(int(cap1)); }
+      cCylCap get_cap2() const { return static_cast<cCylCap>(int(cap2)); }
+    };
   };
 };
 

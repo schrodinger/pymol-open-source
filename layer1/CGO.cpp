@@ -246,7 +246,7 @@ static int CGOSimpleQuadric(CGO * I, const float *v, float vdw, const float *q);
 static int CGOSimpleSphere(CGO * I, const float *v, float vdw, short sphere_quality);
 static int CGOSimpleCone(CGO * I, const float *v1, const float *v2, float r1, float r2, const float *c1,
 			 const float *c2, cCylCap cap1, cCylCap cap2);
-
+int CGOSimpleCone(CGO* I, const cgo::draw::cone& cone);
 
 /**
  * Inverse function of CGOArrayFromPyListInPlace
@@ -4223,9 +4223,10 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
       }
       break;
     case CGO_CONE:
-      ok &= CGOSimpleCone(cgo, pc, pc + 3, *(pc + 6), *(pc + 7), pc + 8, pc + 11,
-          static_cast<cCylCap>(int(pc[14])),
-          static_cast<cCylCap>(int(pc[15])));
+      {
+        auto cone = it.cast<cgo::draw::cone>();
+        ok &= CGOSimpleCone(cgo, *cone);
+      }
       break;
     case CGO_SAUSAGE:
       ok &= CGOSimpleCylinder(cgo, pc, pc + 3, *(pc + 6), pc + 7, pc + 10, cgo->alpha, cgo->alpha, true, cCylCap::Round, cCylCap::Round, nullptr, stick_round_nub);
@@ -4517,9 +4518,10 @@ CGO *CGOSimplifyNoCompress(const CGO * I, int est, short sphere_quality, bool st
       }
       break;
     case CGO_CONE:
-      ok &= CGOSimpleCone(cgo, pc, pc + 3, *(pc + 6), *(pc + 7), pc + 8, pc + 11,
-          static_cast<cCylCap>(int(pc[14])),
-          static_cast<cCylCap>(int(pc[15])));
+      {
+        auto cone = it.cast<cgo::draw::cone>();
+        ok &= CGOSimpleCone(cgo, *cone);
+      }
       break;
     case CGO_SAUSAGE:
       ok &= CGOSimpleCylinder(cgo, pc, pc + 3, *(pc + 6), pc + 7, pc + 10, cgo->alpha, cgo->alpha, true, cCylCap::Round, cCylCap::Round, nullptr, stick_round_nub);
@@ -6578,6 +6580,13 @@ static int CGOSimpleCone(CGO* I, const float* v1, const float* v2, float r1,
       ok &= CGOEnd(I);
   }
   return ok;
+}
+
+int CGOSimpleCone(CGO* I, const cgo::draw::cone& cone)
+{
+  return CGOSimpleCone(I, cone.vertex1, cone.vertex2, cone.radius1,
+      cone.radius2, cone.color1, cone.color2, static_cast<cCylCap>(cone.cap1),
+      static_cast<cCylCap>(cone.cap2));
 }
 
 /* CGOGetNextDrawBufferedIndex: This is used by RepSurface to */
