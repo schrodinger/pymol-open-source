@@ -1073,8 +1073,9 @@ public:
  *
  * return: models as VLA of coordinate sets
  */
-static CoordSet ** read_atom_site(PyMOLGlobals * G, const cif_data * data,
-    AtomInfoType ** atInfoPtr, CifContentInfo &info, bool discrete) {
+static CoordSet** read_atom_site(PyMOLGlobals* G, const cif_data* data,
+    AtomInfoType** atInfoPtr, CifContentInfo& info, bool discrete, bool quiet)
+{
 
   const cif_array *arr_x, *arr_y, *arr_z;
   const cif_array *arr_name = nullptr, *arr_resn = nullptr, *arr_resi = nullptr,
@@ -1113,13 +1114,17 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, const cif_data * data,
 
   if (arr_name) {
     info.type = CIF_MMCIF;
-    PRINTFB(G, FB_Executive, FB_Details)
-      " ExecutiveLoad-Detail: Detected mmCIF\n" ENDFB(G);
+    if (!quiet) {
+      PRINTFB(G, FB_Executive, FB_Details)
+        " ExecutiveLoad-Detail: Detected mmCIF\n" ENDFB(G);
+    }
   } else {
     arr_name      = data->get_opt("_atom_site_label");
     info.type = CIF_CORE;
-    PRINTFB(G, FB_Executive, FB_Details)
-      " ExecutiveLoad-Detail: Detected small molecule CIF\n" ENDFB(G);
+    if (!quiet) {
+      PRINTFB(G, FB_Executive, FB_Details)
+        " ExecutiveLoad-Detail: Detected small molecule CIF\n" ENDFB(G);
+    }
   }
 
   arr_segi        = data->get_opt("_atom_site.label_asym_id");
@@ -2103,7 +2108,8 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
   I->Color = AtomInfoUpdateAutoColor(G);
 
   // read coordsets from datablock
-  if ((csets = read_atom_site(G, datablock, &I->AtomInfo, info, I->DiscreteFlag))) {
+  if ((csets = read_atom_site(
+           G, datablock, &I->AtomInfo, info, I->DiscreteFlag, quiet))) {
     // anisou
     read_atom_site_aniso(G, datablock, I->AtomInfo);
 
