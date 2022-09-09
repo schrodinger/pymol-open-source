@@ -254,4 +254,34 @@ struct SelectorTmp2 : SelectorTmp {
       PyMOLGlobals* G, const char* sele, bool empty_is_error = false);
 };
 
+/**
+ * Check if atoms are neighbors
+ *
+ * @param maxDepth - maximum depth
+ * @param obj - object molecule
+ * @param at1 - atom id
+ * @param at2 - atom id
+ * @param zero - temporary memory
+ * @param scratch - temporary memory
+ *
+ * @return int - 1 if atoms are neighbors. 0 otherwise
+ */
+int SelectorCheckNeighbors(PyMOLGlobals* G, int maxDepth, ObjectMolecule* obj,
+    int at1, int at2, int* zero, int* scratch);
+
+/**
+ * Find all pairs between `sele1` and `sele2` which are within a distance
+ * cutoff.
+ *
+ * @param sele1 - selections index
+ * @param state1 - state index
+ * @param sele2 - selection index
+ * @param state2 - state index
+ * @param cutoff - cutoff distance
+ *
+ * @return vector of selector table index pairs
+ */
+std::vector<int> SelectorGetInterstateVector(PyMOLGlobals* G, int sele1,
+    int state1, int sele2, int state2, float cutoff);
+
 #endif

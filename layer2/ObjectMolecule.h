@@ -267,6 +267,20 @@ typedef struct {
 void ObjMolPairwiseInit(ObjMolPairwise * pairwise);
 void ObjMolPairwisePurge(ObjMolPairwise * pairwise);
 
+/**
+ * Get neighbor vector
+ *
+ * @param I - ObjectMolecule
+ * @param atom - atom index
+ * @param state - state index
+ * @param v_result - vector result
+ *
+ * @return true if there is a neighbor
+ * @return false if there is no neighbor
+ */
+bool ObjectMoleculeGetNeighborVector(
+    ObjectMolecule* I, int atom, int state, float* v_result);
+
 int ObjectMoleculeGetTopNeighbor(PyMOLGlobals * G,
                                  ObjectMolecule * I, int start, int excluded);
 

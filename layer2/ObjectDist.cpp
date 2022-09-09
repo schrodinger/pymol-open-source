@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"DistSet.h"
 #include"ListMacros.h"
+#include "Interactions.h"
 #ifdef _PYMOL_INCENTIVE
 #endif
 
@@ -449,6 +450,9 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
           ENDFB(G);
         I->DSet[a] = nullptr;
 #endif
+      } else if (mode == 9) { // 9: halogen-bond interaction
+        I->DSet[a].reset(pymol::FindHalogenBondInteractions(G,
+            I->DSet[a].release(), sele1, state1, sele2, state2, cutoff, &dist));
       } else {
         I->DSet[a].reset(SelectorGetDistSet(
             G, I->DSet[a].release(), sele1, state1, sele2, state2, mode, cutoff, &dist));

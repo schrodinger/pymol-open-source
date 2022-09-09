@@ -152,8 +152,6 @@ typedef struct {
 
 static pymol::Result<sele_array_t> SelectorSelect(
     PyMOLGlobals* G, const char* sele, int state, SelectorID_t domain, int quiet);
-static std::vector<int> SelectorGetInterstateVLA(PyMOLGlobals* G, int sele1,
-    int state1, int sele2, int state2, float cutoff);
 
 static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state);
 static int SelectorSelect0(PyMOLGlobals * G, EvalElem * base);
@@ -170,8 +168,6 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, const int *atom, pymol::zstr
 static int *SelectorGetIndexVLA(PyMOLGlobals * G, SelectorID_t sele);
 static int *SelectorGetIndexVLAImpl(PyMOLGlobals * G, CSelector *I, int sele);
 static void SelectorClean(PyMOLGlobals * G);
-static int SelectorCheckNeighbors(PyMOLGlobals * G, int maxDepth, ObjectMolecule * obj,
-                                  int at1, int at2, int *zero, int *scratch);
 
 static void SelectorUpdateTableSingleObject(PyMOLGlobals* G,
     ObjectMolecule* obj, int req_state, bool no_dummies = false);
@@ -3127,7 +3123,7 @@ int SelectorVdwFit(PyMOLGlobals * G, int sele1, int state1, int sele2, int state
     SelectorUpdateTable(G, state1, -1);
   }
 
-  auto vla = SelectorGetInterstateVLA(
+  auto vla = SelectorGetInterstateVector(
       G, sele1, state1, sele2, state2, 2 * MAX_VDW + buffer);
   const int c = vla.size() / 2;
 
@@ -3243,7 +3239,7 @@ int SelectorGetPairIndices(PyMOLGlobals * G, int sele1, int state1, int sele2, i
   if(cutoff < 0)
     cutoff = 1000.0;
 
-  auto vla = SelectorGetInterstateVLA(G, sele1, state1, sele2, state2, cutoff);
+  auto vla = SelectorGetInterstateVector(G, sele1, state1, sele2, state2, cutoff);
   const int c = vla.size() / 2;
 
   (*indexVLA) = VLAlloc(int, 1000);
@@ -3953,7 +3949,7 @@ void SelectorDeletePrefixSet(PyMOLGlobals * G, const char *pref)
 /*========================================================================*/
 #define MAX_DEPTH 1000
 
-static int SelectorCheckNeighbors(PyMOLGlobals * G, int maxDist, ObjectMolecule * obj,
+int SelectorCheckNeighbors(PyMOLGlobals * G, int maxDist, ObjectMolecule * obj,
                                   int at1, int at2, int *zero, int *scratch)
 {
   int stkDepth = 0;
@@ -4640,7 +4636,7 @@ float SelectorSumVDWOverlap(PyMOLGlobals * G, int sele1, int state1, int sele2,
     SelectorUpdateTable(G, state1, -1);
   }
 
-  auto vla = SelectorGetInterstateVLA(
+  auto vla = SelectorGetInterstateVector(
       G, sele1, state1, sele2, state2, 2 * MAX_VDW + adjust);
   const int c = vla.size() / 2;
 
@@ -4677,14 +4673,7 @@ float SelectorSumVDWOverlap(PyMOLGlobals * G, int sele1, int state1, int sele2,
   return (result);
 }
 
-/*========================================================================*/
-/**
- * Find all pairs between `sele1` and `sele2` which are within a distance cutoff.
- *
- * @param cutoff Distance cutoff
- * @return List of selector table index pairs
- */
-std::vector<int> SelectorGetInterstateVLA(
+std::vector<int> SelectorGetInterstateVector(
     PyMOLGlobals* G, int sele1, int state1, int sele2, int state2, float cutoff)
 {                               /* Assumes valid tables */
   const size_t table_size = G->Selector->Table.size();
@@ -10301,7 +10290,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
     }
 
     /* this creates an interleaved list of ints for mapping ids to states within a given neighborhood */
-    vla = SelectorGetInterstateVLA(G, sele1, state1, sele2, state2, cutoff_map);
+    vla = SelectorGetInterstateVector(G, sele1, state1, sele2, state2, cutoff_map);
     c = vla.size() / 2;
   }
 

@@ -1,0 +1,874 @@
+"active_selections","controls whether or not PyMOL relies upon the concept of an active selection.","boolean","on","0"
+"alignment_as_cylinders","If true, distance measure dashes are drawn as high-quality cylinders instead of lines.","boolean","off","0"
+"all_states","controls whether or not all molecular states are visible.","boolean","off","1"
+"ambient","(float 0.0-1.0, default: 0.14) controls the ambient lighting level.","","","0"
+"ambient_occlusion_mode","Controls which method is used to draw ambient occlusion. 0=disabled, 1=atom-based occlusion, 2=triangle-based occlusion","integer","0","2"
+"ambient_occlusion_scale","The scale by which ambient occlusion values are modified. The larger this value the more hinting is applied.","float","25.0","2"
+"ambient_occlusion_smooth","Controls whether or not ambient occlusion uses smoothing of nearby values.","int","10","2"
+"anaglyph_mode","implements the following 4 anaglyph modes (see also [[setting:anaglyph_mode|Anaglyph stereo mode settings]])
+
+0 = true anaglyph
+1 = gray
+2 = color
+3 = half-color
+4 = optimized (default)","integer","4","0"
+"angle_color","Controls the coloring of angle measures.","color","default","2"
+"angle_label_position","(float: >0.0, default: 0.5) controls where the angle label is drawn.","","","2"
+"angle_size","(float: >0.0, default: 0.6666) controls how far out the angle indicator is drawn.","","","2"
+"animation","controls whether or not the camera is smoothly interpolated between views.","boolean","on","0"
+"animation_duration","controls the default duration of animation for changes in view (note: [[setting:scene|scene_animation_duration]] controls the timing of scene transitions. ","float","0.75","0"
+"antialias","(integer 0-4, default: 1) general settings for controlling antialiasing. 
+
+0 = no antialiasing
+1 = adaptive antialiasing
+2 = 2-times uniform oversampling plus adaptive antialiasing
+3 = 3-times uniform oversampling plus adaptive antialiasing
+4 = 4-times uniform oversampling plus adaptive antialiasing","","","0"
+"assembly","For loading mmCIF files: Read assembly (biological unit) instead of asymmetric unit","string","''","0"
+"async_builds","controls whether or not geometry builds should be performed in parallel on multithreaded machines.  WARNING: This setting can create instability and should be used with caution.","boolean","off","1"
+"ati_bugs","Controls whether or not PyMOL adapts its rendering to avoid known ATI bugs.","yes","false","0"
+"atom_name_wildcard","controls the wildcard character used when matching atom names.  If this string is empty, then the normal wildcard setting will be used.  The practical purpose of this setting is to disable use of asterisks as an atom name wildcard when PDB structures are loaded with asterisks in atom names.","string","''","1"
+"atom_type_format","Sets the label format for label types. Supported options are: mol2, sybyl, macromodel, mmd, sdf.
+
+mol2
+sybyl (synonym for mol2)
+macromodel
+mmd (synonym for macromodel)
+sdf (default)","string","mol2","0"
+"auto_classify_atoms","controls whether or not PyMOL spends extra CPU cycles classifying atoms as polymer, organic, solvent, or inorganic as well as locating per-residue guide atoms.","boolean","on","0"
+"auto_color","controls whether or not new objects are given a different color for their carbon atoms.","boolean","on","0"
+"auto_copy_images","controls whether or not PyMOL automatically copies images from the OpenGL viewport into the system's clipboard.","boolean","on","0"
+"auto_defer_atom_count","Structures with fewer than ''auto_defer_atom_count'' atoms are automatically labeled upon loading. Set to 0 to auto label none.","integer","0","0"
+"auto_defer_builds","Multistate models with fewer than ''auto_defer_builds'' number of states will automatically be preprocessed for geometry and rendering. Set to -1 to process all states regardless of count.","integer","500","0"
+"auto_dss","controls whether or not secondary structure is automatically computed for structure which lack such definitions.","boolean","on","0"
+"auto_hide_selections","controls whether or not PyMOL automatically disables selections when new objects or selections are created.","boolean","on","0"
+"auto_indicate_flags","controls whether or not PyMOL automatically indicates flagged atoms when the \"flag\" command is issue.","boolean","on","0"
+"auto_number_selections","controls whether PyMOL gives each new unnamed selection a unique name or whether it simply uses \"sele\".","boolean","off","0"
+"auto_overlay","controls whether or not overlay text is automatically shown/hidden in response to user actions.","boolean","off","0"
+"auto_remove_hydrogens","controls whether or not hydrogens are automatically removed when building.","boolean","off","0"
+"auto_rename_duplicate_objects","if on, PyMOL will rename new objects that have the same name as an existing object; if off, PyMOL will overwrite the existing object.","boolean","off","0"
+"auto_sculpt","controls whether or not sculpting is automatically activated when an atom is moved.","boolean","off","0"
+"auto_show_lines","controls whether or not the lines representation is automatically shown for new objects.","boolean","on","0"
+"auto_show_nonbonded","control whether or not the nonbonded representation is automatically shown for new objects.","boolean","on","0"
+"auto_show_selections","controls whether or not PyMOL automatically enables each new selection.","boolean","on","0"
+"auto_show_spheres","controls whether or not the sphere representation is automatically shown for new objects.","boolean","off","0"
+"auto_zoom","controls automatic zooming behavior:
+
+0 = no zoom
+1 = zoom new objects
+2 = zoom always
+3 = zoom current state always
+4 = zoom all objects
+5 = zoom first object only ","integer","-1","0"
+"autoclose_dialogs","Unused setting.","boolean","on","0"
+"axis","- The cmd can be one of: 'x', 'y', or 'z'.","","","0"
+"backface_cull","controls whether or not the raytracer renders backfacing triangles.","boolean","on","0"
+"batch_prefix","contains a prefix to be used for temporary files.","string","tmp_pymol","0"
+"bg_gradient","Controls whether or not the background is gradient colored. If yes, then bg_rgb_top and bg_rgb_bottom will be used to set the colors.","boolean","off","0"
+"bg_image_filename","if set controls the image used in the background.","string","''","0"
+"bg_image_linear","controls the sampling of the texture for the background image.  If off, then the nearest pixel is set, otherwise, a linear interpolation is used.","boolean","on","0"
+"bg_image_mode","Determines how the background image is drawn.  0 - stretched, 1 - centered, 2 - tiled, 3 - centered and repeated","integer","0","0"
+"bg_image_tilesize","This setting is used when bg_image_mode=3 and defines the size of each tile (in x and y, z is not used).","vector","[100.0, 100.0, 0.0]","0"
+"bg_rgb","controls the background rgb color.","vector","[0.0,0.0,0.0]","0"
+"bg_rgb_bottom","Controls bottom color when bg_gradient is set.","color","[0.2,0.2,0.5]","0"
+"bg_rgb_top","Controls top color when bg_grdient is set.","color","[0.0,0.0,0.3]","0"
+"button_mode","reports the current button mode index (internal).","integer","0","0"
+"button_mode_name","reports the current button mode name.","string","3-Button Viewing","0"
+"cache_display","controls whether or not a copy is made of the current display in order to speed updates of menus, etc.","boolean","depends","0"
+"cache_frames","controls whether or not each movie frame will be stored in RAM and then replayed from memory.  This is used for previewing a movie at a higher frame rate.  The \"mclear\" command can be used to flush this cache.","boolean","on","0"
+"cache_max","controls how many primitive data elements can be retained in the geometry cache (before old/unused entries are expired).","integer","1250000","0"
+"cache_memory","special case, currently unsupported setting.","boolean","off","0"
+"cache_mode","(integer: 0-2, default 0) controls whether or not PyMOL retains precomputed geometries (such as molecular surfaces) inside the session file.
+
+ 0: off
+ 1: read only
+ 2: retain all new surfaces computed","","","2"
+"cartoon_color","(color, default:-1) controls the color of the cartoon representation.","","","3"
+"cartoon_cylindrical_helices","controls whether helices are displayed as cylinders or as a residue-based cartoon.","boolean","off","2"
+"cartoon_debug","(integer: 0-3, default: 0) is for development.","","","2"
+"cartoon_discrete_colors","affects whether per-residue colors change at or halfway inbetween the C-alpha position. ","boolean","off","2"
+"cartoon_dumbbell_length","is a parameter for the dumbbell cross-section.","float","1.6","2"
+"cartoon_dumbbell_radius","is a parameter for the dumbbell cross-section.","float","0.16","2"
+"cartoon_dumbbell_width","is a parameter for the dumbbell cross-section.","float","0.17","2"
+"cartoon_fancy_helices","controls whether dumbbell or oval cross-section is used. ","boolean","off","2"
+"cartoon_fancy_sheets","controls whether or not beta-sheet strands have arrows.","boolean","off","2"
+"cartoon_flat_cycles","is the number of cycles of \"flattening\" applied to beta-sheets when cartoon_flat_sheets is on.","integer","4","2"
+"cartoon_flat_sheets","controls whether or not beta-sheet strands are flattened.","boolean","on","2"
+"cartoon_gap_cutoff","cutoff for drawing a dashed cartoon loop across gaps. E.g. if one residue is missing, the cutoff needs to be >=2 (or for 5 missing residues, >= 6, etc.).","integer","0","2"
+"cartoon_helix_radius","controls the radius of the cylindrical helix representation.","float","2.25","2"
+"cartoon_highlight_color","controls the accent color.","color","-1","2"
+"cartoon_ladder_color","controls the color of the ladder representation.","color","-1","2"
+"cartoon_ladder_mode","controls how the ladder is drawn.","integer","1","2"
+"cartoon_ladder_radius","controls the radius of the ladder representation.","float","0.25","2"
+"cartoon_loop_cap","(integer: 0-2, default: 1) controls how loop segments are capped:
+
+0 = not capped
+1 = round cap
+2 = flat cap","","","2"
+"cartoon_loop_quality","controls how many facets are used to draw the loop cross-section.","integer","6","2"
+"cartoon_loop_radius","controls the radius of loop segments.","float","0.2","2"
+"cartoon_nucleic_acid_as_cylinders","controls whether or not PyMOL draws cartoon nucleic acids as high-quality cylinders or low-quality.","boolean","on","0"
+"cartoon_nucleic_acid_color","controls the control of nucleic acid backbone cartoons.","color","-1","2"
+"cartoon_nucleic_acid_mode","controls how the nucleic acid backbone is computed:
+
+0 = use P coordinates
+1 = use C1* coordinates
+2 = use P coordinates and terminal 3' OH (if present)
+3 = use P coordinates and terminal 5' OH (if present)
+4 = use P coordinates and both terminal 3' and 5' OHs (if present)","integer","4","2"
+"cartoon_oval_length","is the length of the oval cross-section.","float","1.35","2"
+"cartoon_oval_quality","controls how many facets are used to draw the oval cross-section.","integer","10","2"
+"cartoon_oval_width","is the width of the oval cross section.","float","0.25","2"
+"cartoon_power","affects cartoon shape.","float","2.0","2"
+"cartoon_power_b","affects cartoon shape.","float","0.5","2"
+"cartoon_putty_quality","controls how many facets are used.","float","11","2"
+"cartoon_putty_radius","is the default putty size.","float","0.4","2"
+"cartoon_putty_range","is a putty scaling parameter.","float","2.0","2"
+"cartoon_putty_scale_max","is a putty scaling parameter.","float","4.0","2"
+"cartoon_putty_scale_min","is a putty scaling parameter.","float","0.6","2"
+"cartoon_putty_scale_power","is a putty scaling parameter.","float","1.5","2"
+"cartoon_putty_transform","0 is normalized nonlinear scaling; 1 is relative nonlinear scaling; 2 is scaled nonlinear scaling; 3 is absolute nonlinear scaling; 4 is normalized linear scaling; 5 is relative linear scaling; 6 is scaled linear scaling; 7 is absolute linear scaling from the B factor; and, 8 is implied RMS scaling.","integer","0","2"
+"cartoon_rect_length","is the length of the rectangle cross-section.","float","1.4","2"
+"cartoon_rect_width","is the width of the rectangle cross-section.","float","0.4","2"
+"cartoon_refine","controls how much refinement is done of intermediate cartoon coordinates.","integer","5","2"
+"cartoon_refine_normals","controls whether or not normals are refined (-1 = automatic).","integer","-1","2"
+"cartoon_refine_tips","controls how much the tips of beta-strands are refined (straightened).","integer","10","2"
+"cartoon_ring_color","controls the color of ring representation.","color","-1","2"
+"cartoon_ring_finder","controls how rings are detected:
+
+1 = all rings with a \"C4*\" or \"C4\" atom (e.g. nucleic acid bases)
+2 = all rings with a \"C4\" atom (e.g. carbohydrates)
+3 = all rings with a \"C#\" atom where # is any integer
+4 = all rings","integer","1","2"
+"cartoon_ring_mode","controls how rings are shown:
+
+0 = no ring (use ladders for bases, if applicable)
+1 = round-edge rings
+2 = square-edge rings
+3 = rings with edges
+4 = show ring as a sphere of approximate size
+5 = show ring centers as small spheres","integer","0","2"
+"cartoon_ring_radius","controls the radius of the sphere used to represent rings (-1.0 means compute from ring geometry).","float","-1","2"
+"cartoon_ring_transparency","controls the transparency level of rings.  When negative, this setting is controlled by cartoon_transparency.","float","-1.0","2"
+"cartoon_ring_width","controls the thickness of the ring representation.","float","0.125","2"
+"cartoon_round_helices","controls whether or not PyMOL makes helices round by forcing orientation vectors to point along the helix axes.","boolean"," on","2"
+"cartoon_sampling","controls how many facets are used to draw cartoon segments.","integer","7","2"
+"cartoon_side_chain_helper","controls whether or not PyMOL will hide backbone lines and sticks when the cartoon representation is visible as well as disabling smoothing for C-alpha coordinates for residues whose side chains are shown.","boolean","off","3"
+"cartoon_smooth_cycles","controls how many smoothing cycles are applied to the overall cartoon.","integer","2","2"
+"cartoon_smooth_first"," (integer, default: 1) controls the start point for smoothing each segment.","","","2"
+"cartoon_smooth_last","controls the stop point for smoothing of each segment.","integer","1","2"
+"cartoon_smooth_loops","controls whether or not loop segments are smoothed.  Note that this setting modifies the apparent coordinates of the loop in order to achieve improved aesthetics.","boolean","off","2"
+"cartoon_throw","affects cartoon geometry.","float","1.35","2"
+"cartoon_trace_atoms","controls whether cartoons are traced through all atoms.  Note that this setting only works well for the loop and tube representations.","boolean","off","2"
+"cartoon_transparency","controls the transparency of cartoon representations.","float","0.0","2"
+"cartoon_tube_cap","controls the type of cap applied to the tube, and accepts the same values as cartoon_loop_cap.","integer","2","2"
+"cartoon_tube_quality","controls how many facets are used in the tube cross-section.","integer","9","2"
+"cartoon_tube_radius","controls the radius of tube segments.","float","0.5","2"
+"cartoon_use_shader","If true, on screen rendering of cartoons uses the OpenGL shader language (GLSL) to render cartoon. If false, OpenGL v1.x style rendering is used.","boolean","on","0"
+"cavity_cull","is the threshold below which isolated clusters of points will be excluded from the surface representation.  These are generally interior pockets inside of proteins.","integer","10","2"
+"cgo_debug","Controls whether or not PyMOL shows debugging graphics related to CGO objects.","int","0","0"
+"cgo_dot_radius","if greater than zero, controls the default radius for cgo dots when ray tracing.  Otherwise, the radius is computed from cgo_dot_width.","float","-1.0","2"
+"cgo_dot_width","controls the width of cgo dots.","float","1.0","2"
+"cgo_ellipsoid_quality","Controls cgo-based representation quality of ellipsoids.","integer","-1","0"
+"cgo_lighting","controls whether or not PyMOL lights CGOs.","boolean","1","1"
+"cgo_line_radius","if greater than zero, controls the default radius for lines when ray tracing.  Otherwise, the radius is computed from cgo_line_width;","float","-1.0","2"
+"cgo_line_width","is the default line width for cgo geometries.","float","1.0","2"
+"cgo_shader_ub_color","controls the data size of color data sent to the graphics card. If enabled, unsigned bytes are sent which may be faster and smaller.","boolean","0","0"
+"cgo_shader_ub_flags","controls whether or not unsigned bytes are used in sending data to the graphics card.","boolean","0","0"
+"cgo_shader_ub_normal","controls the data size of normals sent to the graphics card. If enabled, unsigned bytes are sent which may be faster and smaller.","boolean","0","0"
+"cgo_sphere_quality","controls the sphere quality to use when loading CGO representations.","integer","1","0"
+"cgo_transparency","controls the default transparency of cgo geometries.","float","0.0","2"
+"cgo_use_shader","If true, on screen rendering of CGOs uses the OpenGL shader language (GLSL). If false, OpenGL v1.x style rendering is used.","boolean","on","0"
+"cif_keepinmemory","Experimental feature. Retain parsed CIF file in memory, for pymol.querying.cif_get_array","boolean","off","0"
+"cif_use_auth","When loading mmCIF files, use 'auth_*' identifiers (if present, fallback to 'label_*' identifiers). Note that 'label_asym_id' is always loaded as the 'segi' identifier (if present).","boolean","on","0"
+"clamp_colors","controls whether or not colors are clamped to the current color table.","boolean","on","0"
+"clean_eletro_mode","controls whether or not electrostatics are taken into account when cleaning.","integer","0","0"
+"cmd","- The cmd cant be stop(0), play(1), or toggle(-1).","","","0"
+"cone_quality","controls the number of segments used to draw CGO cones.","integer","18","0"
+"connect_bonded","controls whether or not bonds can be detected between atoms with explicit bonds in the PDB file.","boolean","off","0"
+"connect_cutoff","affects how close atoms need to be in order for bonds to be created.","float","0.4","0"
+"connect_mode","controls how bonds are detected when PDB files are loaded.
+
+0 = auto-connect and use explicit valences
+1 = use explicit valences only
+2 = reserved","integer","0","0"
+"coulomb_cutoff","is the cutoff for coulombic calculations.","float","10.0","0"
+"coulomb_dielectric","is the dielectric for coulombic calculations.","float","2.0","0"
+"coulomb_units_factor","is the conversion factor to give output units (kT/e).","float","557.0","0"
+"cromadepth","color by depth, gives stereo effect with ChromaDepth glasses (shader rendering only)","boolean","off","0"
+"cull_spheres","No longer used, previously used for performance.","integer","-1","2"
+"cylinder_shader_ff_workaround","If true, then the workaround that corrects improper rendering on some Intel and NVidia cards is enabled. Some hardware allow correct rendering when this is disabled, and in that case rendering speed is generally improved.","boolean","on","0"
+"cylinders_shader_filter_faces","If true, then the workaround that corrects improper rendering on some Intel and NVidia cards is enabled. Some hardware allow correct rendering when this is disabled, and in that case rendering speed is generally improved.","boolean","on","0"
+"dash_as_cylinders","If true, distance measure dashes are drawn as high-quality cylinders instead of lines.","bool","on","0"
+"dash_color","Controls the color of dashes used to represent distance measures.","color","-1","2"
+"dash_gap","controls the length of the visible dash.","float","0.35","2"
+"dash_length","controls the separation between dashes.","float","0.15","2"
+"dash_radius","if greater than zero, controls the radius of the dash when ray tracing.  Otherwise, the radius is computed from dash_width.","float","0.0","2"
+"dash_round_ends","controls whether or not dashes are rounded on their ends.","boolean","on","2"
+"dash_use_shader"," If true, on screen rendering of dashes uses the OpenGL shader language (GLSL). If false, OpenGL v1.x style rendering is used.","boolean","on","0"
+"dash_width","controls the width of the lines used to draw dashes.","float","3.0","2"
+"debug_pick","a setting for debugging mouse pick problems.","integer","0","0"
+"default_2fofc_map_rep","This controls the default map representation when a 2FoFc map is loaded from an MTZ map.","string","volume","0"
+"default_buster_names","This is the list of valid column names to be sought when autoloading Buster maps.","string","2FOFCWT PH2FOFCWT FOFCWT PHFOFCWT","0"
+"default_fofc_map_rep","This controls the default map representation when a FoFc map is loaded from an MTZ map.","string","volume","0"
+"default_phenix_names","This is the list of valid column names to be sought when autoloading Phenix maps.","string","2FOFCWT PH2FOFCWT FOFCWT PHFOFCWT","0"
+"default_phenix_no_fill_names","This is the list of valid column names to be sought when autoloading Phenix (no fill) maps.","string","2FOFCWT_no_fil PH2FOFCWT_no_fill None None","0"
+"default_refmac_names","This is the list of valid column names to be sought when autoloading Refmac maps.","string","FWT PHWT DELFWT PHDELWT","0"
+"defer_builds_mode","controls when the underlying geometry for molecular representations is generated, as follows:  
+
+0: visible geometry for all states of all enabled objects is generated upfront and retained in memory for reuse (highest memory usage).
+1: visible geometry for the current states of all enabled objects is generated only when needed and then retained in memory for later reuse.
+2: visible geometry for the current state of all enabled objects is generated only when needed and retained for the current state, even in disabled objects.
+3: visible geometry for the current state of all enabled objects is generated only when needs and retained for reuse in enabled objects only while in the current state (lowest memory usage).","integer","0","2"
+"depth_cue","controls whether or not a depth cue fog effect is used.","boolean","on","0"
+"dihedral_color","controls dihedral measurement colors.","color","default","2"
+"dihedral_label_position","(float: >0.0, default: 1.2) controls where the dihedral label is drawn.","","","2"
+"dihedral_size","(float: >0.0, default: 0.6666) controls how far out the dihedral indicator is drawn.","","","2"
+"direct","(float 0.0-1.0, default: 0.45) is the amount of light being emitted from the camera.","","","0"
+"dist_counter","is the counter used when auto-generating measurement object names.","integer","0","0"
+"distance_exclusion","controls the cutoff of bonds that two atoms must exceed if a distance is to be drawn between them when mode=3 is used as an option to the distance command.","integer","5","0"
+"dot_as_sphere"," If true, on screen rendering of dots uses the spheres representation, not dots to draw the dots.","boolean","on","0"
+"dot_color","(color, default -1) controls the color of the dot representation.  By default, dots assume the color of the associated atom.","","","3"
+"dot_density","controls the density of dots taken from the surface of a sphere.","integer","2","2"
+"dot_hydrogens","controls whether or not dots are drawn on hydrogen atoms.","boolean","on","2"
+"dot_lighting","controls whether or not dots are lit based on their associated surface normals.  The setting has no effect when ray tracing.","boolean","on","2"
+"dot_normals","controls whether or not dots are drawn with normals.  This achieves essentially the same effect as dot_lighting, and it too has no effect when ray tracing.","boolean","on","2"
+"dot_radius","if greater than zero, controls the radius of dots.  Otherwise, the dot radius is computed from dot_width based on the pixel size of the current viewport.","float","0.0","2"
+"dot_solvent","controls whether we generate dots for the atomic or solvent accessible surface.","boolean","off","2"
+"dot_use_shader"," If true, on screen rendering of dots uses the OpenGL shader language (GLSL). If false, OpenGL v1.x style rendering is used.","boolean","on","0"
+"dot_width","controls the dot width in viewport pixels.","float","2.0","2"
+"draw_frames","controls whether or not each movie frame is rendered using the \"draw\" command.","boolean","on","0"
+"draw_mode","0 is the normal OpenGL renderer; 1 is antialised OpenGL; 2 is ray traced without shadows; 3 is ray traced with shadows.","integer","0","0"
+"dynamic_measures","controls whether or not PyMOL updates measurement objects when incorporated atoms are moved.","boolean","1","1"
+"dynamic_width","controls whether or not PyMOL draws lines thicker for easier viewing.","boolean","on","0"
+"dynamic_width_factor","controls the dynamic width scaling.","float","0.06","0"
+"dynamic_width_max","controls the dynamic width scaling.","float","2.5","0"
+"dynamic_width_min","controls the dynamic width scaling.","float","0.75","0"
+"edit_bond_cycle_mode","(integer, default: 1): controls the order in which PyMOL cycles bonds: 0 is single, double, triple; 1 is single, aromatic, double, triple, and 2 is single, double, triple, aromatic.","","","0"
+"edit_light","(integer 1-8, default: 1) This setting controls which light may be moved by the mouse.","","","0"
+"editor_auto_dihedral","controls whether or not the dihedral value is automatically shown when modifying a dihedral torsion.","boolean","on","0"
+"editor_auto_origin","controls whether or not the origin is automatically set when rotating molecules.","boolean","on","0"
+"editor_label_fragments","not currently functional.","boolean","off","0"
+"ellipsoid_color","Controls ellipsoid coloring. Possible values are any PyMOL color.","color","default","3"
+"ellipsoid_probability","Probability value around which to draw the ellipsoids.","float","0.5","2"
+"ellipsoid_quality","Controls ellipsoid quality.","integer","1","0"
+"ellipsoid_scale","Multiplicative scale factors that controls ellipsoid size scaling. ","float","1.","3"
+"ellipsoid_transparency","Controls ellipsoid transparency; 0=opaque, 1=transparent.","float","0","3"
+"fast_idle","affects idling behavior and should not normally need to be modified.","float","20,000","0"
+"fetch_host","Controls the server from which PDB are fetched. Specify the European PDB server with 'pdbe' and the Japanese PDB server with 'pdbj'. This setting defaults to the US server.","string","pdb; valid values: pdb, pdbe, pdbj","0"
+"fetch_path","is the default location for files obtained via the fetch command.","string",".","0"
+"field_of_view","(float: 1-179:, default: 20.0) determines the vertical field of view for the window, in degrees.","","","0"
+"fit_iterations","is the maximum number of iterations for fitting.","integer","1000","0"
+"fit_kabsch","Controls whether the published Kabsch method is used to fit or a faster proprietary method is used.","int","0","0"
+"fit_tolerance","is the maximum residual for fitting.","float","0.00001","0"
+"float_labels","controls whether or not labels are drawn last without Z-buffer clipping so that they appear to float over the image.  This setting has no effect when ray tracing.","boolean","off","2"
+"fog","(float 0-1.0, default: 1.0) controls the fog density.","","","0"
+"fog_start","(float 0-1.0, default: 0.45) controls where fog starts.","","","0"
+"frame","stores the value of the current movie frame.","integer","1","0"
+"full_screen","returns whether or not PyMOL is in full screen mode.  You must use [[command:full_screen]] to change this setting.","boolean","off","0"
+"gamma","controls the gamma level applied to each pixel.","float","1.0","0"
+"gaussian_b_adjust","is an adjustment made to the temperature factors before computing the gaussian maps.","float","0.0","0"
+"gaussian_b_floor","is the minimum temperature factor that for computing gaussian maps.","float","0.0","0"
+"gaussian_resolution","is the default resolution for computing gaussian maps.","float","2.0","0"
+"geometry_export_mode","An undocumented setting that might have somthing to do with OBJ, VRML, and other 3D output formats.","integer","0","0"
+"gradient_max_length","(float, default: 100)","","","2"
+"gradient_min_length","(float, default: 2.0)","","","2"
+"gradient_min_slope","(float, default: 0.00001)","","","2"
+"gradient_normal_min_dot","(float, default: 0.70)","","","2"
+"gradient_spacing","(int, default: 3)","","","2"
+"gradient_step_size","(float, default: 0.25)","","","2"
+"gradient_symmetry","(float, default: 0.0)","","","2"
+"grid_max","Controls the maximum number of grid slots.","int","-1","0"
+"grid_mode","This setting enables or disables grid mode, where each object or state can be drawn in its own subwindow.","int","0","0"
+"grid_slot","Controls in which grid window an object will be drawn.","int","-1","1"
+"group_arrow_prefix","Show an \"up\" arrow prefix for group subitems","bool","off","0"
+"group_auto_mode","(int 0-2, default: 1) Treats dots in object names as group prefix delimiter. 0: off, 1: put in existing groups, 2: create groups if they do not exist","","","0"
+"group_full_member_names","With group_auto_mode, either show full object names in object panel, or strip group name prefix from object name.","bool","off","0"
+"h_bond_cone","is a hydrogen-bond geometry parameter.","float","180.0","0"
+"h_bond_cutoff_center","is the maximum distance for ideal hydrogen bonds.","float","3.6","0"
+"h_bond_cutoff_edge","is the maximum distance for a marginal hydrogen bond.","float","3.6","0"
+"h_bond_exclusion","controls suppression of hydrogen bonds around adjacent atoms.","integer","3","0"
+"h_bond_from_proton","determines if PyMOL draws the hydrogen bonds from the heavy atom or the hydrogen.","boolean","on","0"
+"h_bond_max_angle","is the maximum angle for a marginal hydrogen bond.","float","63.0","0"
+"h_bond_power_a","is a hydrogen-bond geometry parameter.","float","1.6","0"
+"h_bond_power_b","is a hydrogen-bond geometry parameter.","float","5.0","0"
+"halogen_bond_distance","Halogen-bonds maximum distance.","float","3.5","0"
+"halogen_bond_as_donor_min_donor_angle","Halogen-bonds as donor minumum donor angle.","float","140.0","0"
+"halogen_bond_as_donor_min_acceptor_angle","Halogen-bonds as donor minumum acceptor angle.","float","90.0","0"
+"halogen_bond_as_acceptor_min_donor_angle","Halogen-bonds as acceptor minumum donor angle.","float","120.0","0"
+"halogen_bond_as_acceptor_min_acceptor_angle","Halogen-bonds as acceptor minumum acceptor angle.","float","90.0","0"
+"halogen_bond_as_acceptor_max_acceptor_angle","Halogen-bonds as acceptor maximum acceptor angle.","float","170.0","0"
+"half_bonds","controls whether or not half-bonds are shown when only one of the two atoms is visible.","boolean","off","2"
+"hash_max","controls the maximum amount of memory used by the various temporary 3D hash tables used in geometry generation and raytracing.","integer","depends","0"
+"heavy_neighbor_cutoff","cutoff for finding heavy neighbors in measurements wizard.","float","3.5","0"
+"hide_long_bonds","controls whether or not PyMOL hides bonds longer than 90% of the sum the vdw radii.","boolean","off","2"
+"hide_underscore_names","controls whether or not names with leading underscores are hidden from the user.","boolean","on","0"
+"idle_delay","affects idling behavior and should not normally need to be modified.","float","1.5","0"
+"ignore_case","controls whether or not the selection language is case sensitive or not (excludes chain and segi, see ignore_case_chain).","boolean","on","0"
+"ignore_case_chain","controls whether or not the selection language is case sensitive for chain and segi.","boolean","off","0"
+"ignore_pdb_segi","controls whether or not the PDB segment identifier is ignored.","boolean","off","0"
+"image_dots_per_inch","if non-zero, controls the dots-per-inch in the output file.","float","0.0","0"
+"internal_feedback","controls the number of lines of output shown in the viewer window.","integer","1","0"
+"internal_gui","controls whether or not the internal graphical user interface (internal gui) is shown in the viewer window.","boolean","on","1"
+"internal_gui_control_size","controls the height of controls in the internal gui.","integer","18","0"
+"internal_gui_mode","function unknown.","integer","0","0"
+"internal_gui_name_color_mode","controls the text color of object names: 0=default (white), 1=first carbon atom color, 2=object color","integer","0","0"
+"internal_gui_width","controls the width of the internal gui in pixels.","integer","220","0"
+"internal_prompt","controls whether or not the user is presented with a prompt in the viewer window or merely an output log.","boolean","on","0"
+"keep_alive","when running without a GUI, don’t quit after the input is exhausted","boolean","false","0"
+"label_anchor"," (string, default: CA) Atom name to which default labels are attached. For example, CA=alpha carbon and CB=beta carbon.","","","0"
+"label_angle_digits"," (integer, default: -1) controls the number of decimal places shown on angle labels. If default use value from label_digits setting.","","","2"
+"label_bg_color","controls the color of label's background. By default, the background is not shown, but once this value is set to a value other than -1/default, the background is shown.","color","-1","4"
+"label_bg_outline","controls whether or not the label's background outline is drawn.  If set, the outline is drawn in the same color as label_connector_color.","boolean","off","4"
+"label_bg_transparency","controls the transparency of the label's background.","float",".6","4"
+"label_color","(color, default: -6 (front)) controls the text color of labels.  By default, labels assume the front color, which is a color that has sharp contrast to the background. (i.e., white if the background is black)","","","3"
+"label_connector","controls whether or not the connector between the label and its target atom is drawn.","boolean","off","4"
+"label_connector_color","controls the color of label connector. By default, label connectors behave the same way as labels and assume the front color, which is a color that has sharp contrast to the background. (i.e., white if the background is black)","color","-6","4"
+"label_connector_ext_length","controls the distance away from the label in which the two lines meet in label_connector_mode 2 and 4.  This value is multiplied by the label_size.","float","2.5","4"
+"label_connector_mode","controls how the connector is drawn from the label to its target atom.
+
+0 - line from target to closest corner or midpoint of label's outline bounding box
+1 - line from target to center of label (stops at bounding box)
+2 - two lines drawn from target to lower corner of label (with bend at label_connector_ext_length distance from label)
+3 - line from target to closest corner or edge of label
+4 - same as mode #2, except that if the target is in-between the label in either dimension, a line is drawn directly perpendicular to the label","integer","0","4"
+"label_connector_width","controls the width of the connector and background outline lines.","float","2.0","4"
+"label_digits"," (integer, default: 1) controls the number of decimal places shown on labels.","","","2"
+"label_dihedral_digits"," (integer, default: -1) controls the number of decimal places shown on dihedral labels. If default use value from label_digits setting.","","","2"
+"label_distance_digits"," (integer, default: -1) controls the number of decimal places shown on distance labels. If default use value from label_digits setting.","","","2"
+"label_font_id","(integer: 1-15, default: 5) controls what font is used to draw labels.
+
+label fonts 1-4: are non-scalable raster fonts
+label fonts 5-15: are scalable vector fonts.  Font 15 includes greek characters accessible via  unicode.","","","2"
+"label_multiline_justification","For labels with multiple lines, this justification value controls the horizontal justification.  This value is a floating point value, so it can be interpolated between the values below.
+
+1 = left justification
+0 = center justification
+-1 = right justification","float","1.","4"
+"label_multiline_spacing","controls the space between multiline labels (value is in label_size scale, e.g., 1.2 there is .2 label_size between the lines)","float","1.2","4"
+"label_outline_color","(color, default -1) controls whether or not an outline of the indicated color is drawn around each character in order to improve contrast and readability.  This setting only applies to scalable fonts.","","","2"
+"label_padding","controls the space between the bounds of the text and the background outline in the X and Y direction. (values are in label_size scale), 3rd value in the vector is currently not used.","vector","[0.2, 0.2, 0.0]","4"
+"label_placement_offset","controls the position of labels in camera X, Y, and Z.  This value is changed at the atom-state level when the labels are dragged with the mouse.  This setting behaves similar to the label_position setting without the alignment functionality.","vector","[0.0, 0.0, 0.0]","4"
+"label_position","controls the position and alignment of labels in camera X, Y, and Z.  Values between -1.0 and 1.0 affect alignment only, with the label attached to the atom position.  Values beyond that range represent coordinate displacements.  For the z dimension, values from -1 to 1 do not mean anything.  Values above 1 and below -1 are offsets (minus 1 of the absolute value) in world coordinates.  For example, the default 1.75 is .75 angstroms closer to the viewer.","vector","[0.0, 0.0, 1.75]","4"
+"label_relative_mode","specifies whether the label is relative to the world or screen. When set to 0 labels are relative to the \"world coordinates,\" and will move when the camera moves. When set to 1, the labels are relative to screen coordinates, and thus will not move upon camera transformations.  For screen relative values, the label_screen_point setting is used.
+
+0 = relative to the world
+1 = relative to the screen (label_screen_point setting values -1 to 1 is the screen range)
+2 = relative to the screen (label_screen_point setting values in pixels, where 0,0 is the lower left corner)","integer","0","4"
+"label_screen_point","specifies screen placement when label_relative_mode is 1 or 2 (see above). If label_z_target is not set, the 3rd value is used for the normalized z value relative to the clipping planes (1. is on the front clipping plane, -1 is on the back clipping plane).","vector","[0.0, 0.0, 0.0]","4"
+"label_shadow_mode","controls whether labels cast and/or catch shadows.  
+
+0 = labels neither cast nor catch shadows.
+1 = labels catch shadows.
+2 = labels cast shadows.
+3 = labels both cast and catch shadows just like normal geometries.","integer","0","0"
+"label_size","controls the approximate size of label text.  Negative values specify label size in world coordinates (e.g., -1. will show a label 1 angstrom in height)","float","14.0","2"
+"label_z_target","(New in 1.7)","","","4"
+"legacy_mouse_zoom","controls whether or not the zoom axis is flipped.","boolean","off","0"
+"legacy_vdw_radii","controls whether or not old VDW radii are used.","boolean","off","0"
+"light","is the direction of movable light source 1.","vector","[ -0.4, -0.4, -1.0]","0"
+"light2","is the direction of movable light source 2.","vector","[ -0.55, -0.7, 0.15]","0"
+"light3","is the direction of movable light source 3.","vector","[ 0.3, -0.6, -0.2]","0"
+"light4","is the direction of movable light source 4.","vector","[ -1.2, 0.3, -0.2]","0"
+"light5","is the direction of movable light source 5.","vector","[ 0.3, 0.6, -0.75]","0"
+"light6","is the direction of movable light source 6.","vector","[ -0.3, 0.5, 0.0]","0"
+"light7","is the direction of movable light source 7.","vector","[ 0.9, -0.1, -0.15]","0"
+"light8","is the direction of movable light source 8.","vector","[ 1.3, 2.0, 0.8]","0"
+"light9","is the direction of movable light source 9.","vector","[ -1.7, -0.5, 1.2]","0"
+"light_count","(integer 1-10, default: 2) is the number of light sources including the camera source.","","","0"
+"line_as_cylinders"," If true, on screen rendering of lines uses the OpenGL shader language (GLSL) and extruded as thicker cylinders. If false, OpenGL lines are used.","boolean","off","0"
+"line_color","controls how PyMOL colors lines.","color","default","2"
+"line_radius","controls the line width in Angstroms when lines are rendered via the ray tracer.  If this value is equal to 0.0, then the line radius will be calculated based line_width using a pixel size corresponding to the dimensions of the viewer window.","float","0.0","2"
+"line_smooth","controls whether or not lines are antialiased.","boolean","on","0"
+"line_stick_helper","controls whether or not lines will be automatically hidden when sticks are visible and opaque.","boolean","on","2"
+"line_use_shader"," If true, on screen rendering of lines uses the OpenGL shader language (GLSL). If false, OpenGL v1.x style rendering is used.","boolean","on","0"
+"line_width","controls the line width in pixels for the lines representation.  ","float","1.4","2"
+"log_box_selections","controls whether or not \"box\" selections are logged.","boolean","on","0"
+"log_conformations","controls whether or not conformational chages are logged.","boolean","on","0"
+"logging","reports whether or not logging is active.","boolean","off","0"
+"map_auto_expan_sym","When map_auto_expand_sym is on, symmetry operations will be applied to expand it beyond the precalculated volume when necessary. Symmetry information is taken from the molecular selection if available, or from the map object, if available.","boolean","on","0"
+"matrix_mode","(integer: 0-2, default: 0) affects how objects are transformed and manipulated.
+
+0 = by coordinate
+1 = by matrix","","","2"
+"max_threads","controls how many threads are used for raytracing.  This setting is auto-configured (when possible).","integer","1","1"
+"max_ups","throttles PyMOL to a maximum number of updates per second. When set to 0, PyMOL updates as quickly as possible.","integer","0","0"
+"mesh_as_cylinders"," If true, on screen rendering of mesh uses the OpenGL shader language (GLSL) and extruded as thicker cylinders. If false, OpenGL lines are used.","boolean","off","0"
+"mesh_carve_cutoff","carves all mesh beyond this cutoff from the value in ''mesh_carve_selection''","float","0.0","2"
+"mesh_carve_selection","(float, default: 0.0)","","","2"
+"mesh_carve_state","the state from which to carve meshes.","integer","0.0","2"
+"mesh_clear_cutoff","","float","0.0","2"
+"mesh_clear_state","the state from which to carve meshes.","integer","0","2"
+"mesh_color","is the color of the mesh representation.","color","-1","3"
+"mesh_mode","controls what atoms are considered when generating the mesh:
+
+0 = consider atoms based on their ignore and exfoliate flags.
+1 = consider all atoms
+2 = condider only non-hydrogen atoms","integer","0","2"
+"mesh_negative_color","inside mesh color","color","default","1"
+"mesh_negative_visible","controls whether or not the inside of the mesh is shown.","boolean","true","0"
+"mesh_quality","is a tuning parameter that should not need to be modified.","integer","2","2"
+"mesh_radius","if greater than zero, controls the radius of the mesh representation when ray tracing.  Otherwise, the radius is computed from mesh_width.","float","0.0","2"
+"mesh_skip","(integer, default: 0)","","","2"
+"mesh_solvent","controls whether the mesh is generated for a solvent accessible surface as opposed to the default molecular surface.","boolean","off","2"
+"mesh_type","(integer: 0-1,default: 0) controls what type of mesh is generated:
+
+0 = wire
+1 = points","","","2"
+"mesh_use_shader"," If true, on screen rendering of mesh uses the OpenGL shader language (GLSL). If false, OpenGL v1.x style rendering is used.","boolean","on","0"
+"mesh_width","controls the default width of the mesh.","float","1.0","2"
+"min_mesh_spacing","controls the minimum mesh spacing.","float","0.6","2"
+"mode","- The mode can be on(true) or off(false) (on by default).","","","0"
+"moe_separate_chains","controls whether or not PyMOL separates chains when reading MOE files.","boolean","-1","0"
+"motion_bias","with bias>1, the motion will pause for some frames around the keyframe","float","-1.0","1"
+"motion_hand","determins the rotation direction for full 180° turns","int","1","1"
+"motion_linear","(float, default: 0.0)","","","1"
+"motion_power","With power<1 the motion will slow down at keyframes, with power=1 it will not change the speed.","float","0.0","1"
+"motion_simple","(int, default: 0)","","","1"
+"mouse_grid","show the mouse actions table in the mouse mode panel","bool","on","0"
+"mouse_limit","is an internal setting.","float","100.0","0"
+"mouse_restart_movie_delay","controls whether or not the movie delay is restarted after any mouse movement.","boolean","off","0"
+"mouse_scale","affects the impact of mouse movement on rotation.","float","1.3","0"
+"mouse_selection_mode","contols what the mouse is currently selecting:
+
+0 = atoms
+1 = residues
+2 = chains
+3 = segments
+4 = objects
+5 = molecules","integer","1","0"
+"mouse_wheel_scale","clipping slab adjustment step when using the mouse wheel.","float","0.5","0"
+"mouse_z_scale","Controls mouse sensitivity along the Z-axis.","float","1.0","0"
+"movie_animate_by_frame","If movie is playing and rocking animation is performed, calculate animation progression by frame count and **movie_fps**, otherwise by elapsed time.","bool","off","0"
+"movie_auto_interpolate","reinterpolate object and camera motions whenever keyframes are stored.","bool","on","1"
+"movie_auto_store","store a keyframe when an object is dragged","bool","on","1"
+"movie_delay","controls how long should PyMOL wait before playing the next movie frame.","float","30.0","0"
+"movie_fps","Sets the number of frames per second at which movies will be created.","float","30.0","0"
+"movie_loop","controls whether PyMOL plays the movie in a continuous loop or just once through.","boolean","on","1"
+"movie_panel","Controls whether the movie timeline is shown.","int","1","0"
+"movie_panel_row_height","row height in pixels of rows in movie panel","int","15","0"
+"movie_quality","Controls the compression step of moviemaking. The higher the value the better the quality but larger the output file.","integer","90","0"
+"movie_rock","if 0 or 1 then this will override the **rock** setting during movie play.","int","-1","0"
+"multiplex","controls whether or not multi-state objects are loaded into one object or multiple objects.","integer","-1","0"
+"name","is the name of the object (required)","","","0"
+"nb_spheres_quality","controls how many triangles are used to render nonbonded spheres without shaders.","int","1","2"
+"nb_spheres_size","nonbonded spheres radius","float","0.25","2"
+"nb_spheres_use_shader","(int 0-2, default: 1)  On screen rendering of nonbonded spheres uses the OpenGL shader language (GLSL), 0 (off), 1 (default shader), or 2 (sphere shader)","","","0"
+"neighbor_cutoff","cutoff for finding neighbors in measurements wizard.","float","3.5","0"
+"no_idle","affects idling behavior and should not normally need to be modified.","float","10,000","0"
+"nonbonded_as_cylinders","Draw nonbonded crosses as cylinders instead of lines","bool","on","0"
+"nonbonded_size","(float, default:0.25) controls the size of the nonbonded and nb_sphere representations.","","","2"
+"nonbonded_transparency","(float, default:0.0) controls the transparency of the nonbonded and nb_sphere representations.","","","3"
+"nonbonded_use_shader"," If true, on screen rendering of nonbonded crosses uses the OpenGL shader language (GLSL). If false, OpenGL v1.x style rendering is used.","boolean","on","0"
+"normal_workaround","is a workaround for OpenGL graphics cards that don't transform normals properly when drawing lines.","boolean","off","0"
+"normalize_ccp4_maps","controls whether or not CCP4 maps are automatically normalized upon loading.","boolean","on","0"
+"normalize_grd_maps","controls whether or not GRD maps are automatically normalized upon loading.","boolean","off","0"
+"normalize_o_maps","controls whether or not O maps are automatically normalized upon loading.","boolean","on","0"
+"nvidia_bugs","can sometimes help with broken video card drivers including those affecting old nvidia cards.","integer","0","0"
+"offscreen_rendering_for_antialiasing","when doing a [[command:draw]] (for example in movie export without **ray_trace_frames**=on), render the OpenGL image into a buffer which is **offscreen_rendering_multiplier** times bigger.","bool","off","0"
+"offscreen_rendering_multiplier","see **offscreen_rendering_for_antialiasing**","float","4.0","0"
+"opaque_background","controls whether or not the background is opaque.","boolean","on","0"
+"orthoscopic","controls whether or not the perspective transformation is used.","boolean","off","0"
+"overlay","controls whether or not output text is shown overlayed on the viewer window.","boolean","off","0"
+"overlay_lines","controls the maximum number of lines of overlayed text.","integer","5","0"
+"pdb_conect_all","controls whether or not PDB files are written out with CONECT records for all atoms/.","boolean","off","0"
+"pdb_conect_nodup","if off, encode bond orders by duplicating CONECT records when writing PDB files //(new in PyMOL 1.6.1)//.","boolean","off","0"
+"pdb_discrete_chains","controls whether or not bonds are allowed between chains within a PDB file.","integer","-1","0"
+"pdb_echo_tags","controls which tags in the PDB file are echoed to the output.","string","HEADER, TITLE, COMPND","0"
+"pdb_hetatm_guess_valences","If true, PyMOL will guess the valences on HETATMs.","bool","on","0"
+"pdb_hetatm_sort","controls whether HETATMs are segregated.","boolean","off","1"
+"pdb_honor_model_number","controls whether or not PDB MODEL numbers are used as state indices.","boolean","off","0"
+"pdb_ignore_conect","If true, PyMOL ignores CONECT records from PDB files. This causes PyMOL to use structural knowledge to bond atoms. See also [[setting:connect|connect_mode]].","bool","off","0"
+"pdb_insertions_go_first","controls how insertion residues are sorted.","boolean","off","0"
+"pdb_insure_orthogonal","controls whether or not suspicious PDB SCALEn matrices are ignored.","boolean","on","0"
+"pdb_literal_names","controls whether or not names are preserved literally.","boolean","off","0"
+"pdb_no_end_record","controls whether or not an END record is omitted.","boolean","off","0"
+"pdb_reformat_names_mode","(integer: 0-4, default: 0) affects how and whether or not PDB names are reformatted in order to attempt to meet alternate conventions.","","","0"
+"pdb_retain_ids","controls whether or not PDB files are written out with their original identifier numbers preserved intact.","boolean","off","0"
+"pdb_standard_order","controls whether or not PDB atoms are sorted using the standard conventions.","boolean","on","0"
+"pdb_truncate_residue_name","controls whether or not PDB residue names are truncated to three letters only.","boolean","off","0"
+"pdb_unbond_cations","controls whether or not cations within bonding distances are left unbound during automatically bond detection.","boolean","on","0"
+"pdb_use_ter_records","controls whether or not TER records are written.","boolean","on","0"
+"pick_labels","controls whether labels are picked.  These work on the object or global level.
+
+0 - do not pick labels
+1 - pick labels
+2 - only pick labels (i.e., do not pick anything else)","integer","1","2"
+"pickable","controls whether or not extra resources are expended in order to  enable picking of displayed geometry using the mouse.","boolean","on","2"
+"png_file_gamma","file gamma value for PNG file output.","float","1.0","0"
+"png_screen_gamma","screen gamma value for PNG file output.","float","2.4","0"
+"polar_neighbor_cutoff","cutoff for finding polar neighbors in measurements wizard.","float","3.5","0"
+"power","controls how light is scattered.","float","1.0","0"
+"pqr_no_chain_id","controls whether or not PQR files are written without chain identifiers.","boolean","on","0"
+"precomputed_lighting","Alternative lighting implementation for shaders, might give performance improvement.","boolean","off","0"
+"presentation","reports whether or not presentation (show) mode is active.","boolean","off","0"
+"presentation_auto_quit","controls whether or not presentation mode quits after the ","boolean","on","0"
+"presentation_auto_start","controls whether or not the first scene is automatically shown.","boolean","on","0"
+"presentation_mode","reserved.","integer","1","0"
+"preserve_chempy_ids","controls whether or not Chemical Python objects are loaded with their identifiers preserved.","boolean","off","0"
+"pse_binary_dump","Unsupported. Creates smaller and faster loading PSE files. See also pse_export_version.","boolean","off","0"
+"pse_export_version","For saving a PSE for an older PyMOL version. Example: 1.74 to save a session for PyMOL 1.7.4. Has limitations, e.g. scenes before 1.7.6 and volume before 1.7.2.","float","0","0"
+"pymol_space_max_blue","affects the optional \"pymol\" color space.","float","0.9","0"
+"pymol_space_max_green","affects the optional \"pymol\" color space.","float","0.75","0"
+"pymol_space_max_red","affects the optional \"pymol\" color space.","float","0.9","0"
+"pymol_space_min_factor","affects the optional \"pymol\" color space.","float","0.15","0"
+"raise_exceptions","Obsolete, PyMOL now always raises exceptions on error.","boolean","on","0"
+"rank_assisted_sorts","controls whether or not the position of an atom in the input file is using in the sorting algorithm.","boolean","on","0"
+"ray_blend_blue","controls blending of the blue component when blending colors.","float","0.14","0"
+"ray_blend_colors","controls whether or not the raytracer blends oversaturated colors.","boolean","off","0"
+"ray_blend_green","controls blending of the green component when blending colors.","float","0.25","0"
+"ray_blend_red","controls blending of the red component when blending colors.","float","0.17","0"
+"ray_clip_shadows","controls whether or not shadows take into account the front clipping plane.","boolean","off","0"
+"ray_color_ramps","controls whether or not color ramps are sampled on a per-pixel basis for surfaces (as opposed to per-vertex).","boolean","off","2"
+"ray_default_renderer","controls which renderer is used:
+
+0 = PyMOL's builtin raytracer
+1 = PovRay (if available)
+2 = A simple geometry counter with no output","integer","0","0"
+"ray_direct_shade","controls whether or not shaded regions are still lit by the direct light eminating from the camera.","float","0.0","0"
+"ray_hint_camera","affects how the raytracer optimizes camera hash table sizes based on the average size of input primitives.","float","2.15","0"
+"ray_hint_shadow","affects how the raytracer optimizes shadow hash table sizes based on the average size of input primitives.","float","0.65","0"
+"ray_improve_shadows","controls how much the raytracer tries to extrapolate triangle coordinates in order to improve shadow appearance.","float","0.10","0"
+"ray_interior_color","controls the color of interiors in the raytracer.","color","-1","2"
+"ray_interior_mode","when set to 2, triangle-based (sphere or cartoon) interiors are ignored but not those of spheres (atoms) or cylinders (bonds).","integer","0","0"
+"ray_interior_reflect","controls how reflective the interior surface is.","float","0.4","0"
+"ray_interior_shadows","controls whether or not interior surfaces can be shadowed by geometry beyond the front clipping plane.","boolean","off","0"
+"ray_interior_texture","(integer: -1-5, default: -1) controls what texture (if any) is applied to the interior surface.","","","0"
+"ray_label_connector_flat","controls whether the connector and outline are drawn as flat geometry.  If this setting is not set, then cylinders are used.","boolean","on","4"
+"ray_label_specular","controls whether or not specular reflections apply to labels","boolean","on","0"
+"ray_legacy_lighting","(float: 0-1.0, default: 0.0) controls blending of the old legacy PyMOL lighting model.","","","0"
+"ray_max_passes","controls how many passes the raytracer can make when dealing with transparent primitives.","integer","25","0"
+"ray_opaque_background","controls whether or not the raytracer background is opaque.  If -1, then [[setting:bg|opaque_background]] controls.","integer","-1","0"
+"ray_orthoscopic","controls whether or not the raytracer renders using an orthoscopic projection.  If -1, then [[setting:animation|orthoscopic]] controls.","integer","-1","0"
+"ray_oversample_cutoff","controls how different two adjacent pixels need to be in order to trigger oversampling when antialias is greater than 0.","integer","120","0"
+"ray_pixel_scale","controls how the screen pixels size is scaled to a raytracer distance.","float","1.3","0"
+"ray_shadow","controls whether or not shadows are cast in the raytracer.","integer","1","0"
+"ray_shadow_decay_factor","controls how fast shadows decay (0.0 = no decay).","float","0.0","0"
+"ray_shadow_decay_range","controls how far shadows must extend before they begin to decay.","float","1.8","0"
+"ray_shadow_fudge","is a tuning parameter that should not need to be modified.","float","0.001","0"
+"ray_texture","(integer: 0-5, default: 0) controls what built-in texture (if any) is applied.","","","2"
+"ray_texture_settings","affects texture appearance.","vector","[ 0.1, 5.0, 1.0 ]","2"
+"ray_trace_color","Controls the ray trace gain color. Ray trace gain is used when ray_trace_mode is set to 1.","color","-6","0"
+"ray_trace_depth_factor","is a tuning parameter for ray_trace_modes 1-3.","float","0.1","0"
+"ray_trace_disco_factor","is a tuning parameter for ray_trace_modes 1-3.","float","0.05","0"
+"ray_trace_fog","controls fog density when raytracing.  If -1.0, then the [[setting:bg|fog]] setting is used.","float","-1.0","0"
+"ray_trace_fog_start","controls fog start when raytracing.  If -1.0, then the [[setting:bg|fog_start]] setting is used.","float","-1.0","0"
+"ray_trace_frames","Controls whether or not PyMOL ray traces movie frames. This can increase movie quailty, but at the expense of moviemaking speed.","bool","off","0"
+"ray_trace_gain","is a gain parameter for ray_trace_modes 1-3.","float","0.12","0"
+"ray_trace_mode","controls the behavior of the built-in ray tracer (see [[http://www.pymolwiki.org/index.php/Ray#Modes|PyMOLWiki]] for sample images):
+
+0 = normal raytracing
+1 = color raytracing with outlines 
+2 = black & white raytracing with outlines (use a white background)
+3 = quantized color raytracing with outlines","integer","0","0"
+"ray_trace_slope_factor","is a tuning parameter for ray_trace_modes 1-3.","float","0.6","0"
+"ray_transparency_contrast","(float: 1.0-3.0, default: 1.0) can be used to boost the contrast of objects under transparent surfaces.","","","0"
+"ray_transparency_oblique","Controls whether PyMOL uses normal-based transparency for rendering surfaces.","float","0.0","0"
+"ray_transparency_oblique_power","Controls the strength of transparency for normal-based transparency when rendering surfaces. Requires ray_transparency_oblique setting to be enabled.","float","1.0","0"
+"ray_transparency_shadows","controls whether or not transparency geometries cast shadows.","boolean","on","0"
+"ray_transparency_spec_cut","affects the strength of the specular effect on transparent surfaces.","float","0.9","0"
+"ray_transparency_specular","affects the strength of the specular effect on transparent surfaces.","float","0.4","0"
+"ray_triangle_fudge","is a tuning parameter that should not need to be modified.","float","0.0000001","0"
+"ray_volume","If true then volumes will be ray added to ray traced scenes.","boolean","off","0"
+"reflect","(float 0-1.0, default: 0.45) controls the aggregate intensity of the movable light sources.","","","0"
+"reflect_power","controls the reflective exponent for the movable light sources. ","float","1.0","0"
+"retain_order","controls whether or not PyMOL sorts atoms internally.","boolean","off","1"
+"ribbon_color","controls the color of the ribbon representation.","color","-1","3"
+"ribbon_nucleic_acid_mode","(integer 0-4, default:0) controls how the nucleic acid backbone is drawn:
+
+0: through phosphorus
+1: through C4* carbon of the ribose ring
+2: through phosphorus with 3' extension
+3: through phosphorus with 5' extension
+4: through phorphorus with both 3' and 5' extensions","","","2"
+"ribbon_power","affects ribbon shape.","float","2.0","2"
+"ribbon_power_b","affects ribbon shape.","float","0.5","2"
+"ribbon_radius","if greater than 0.0, controls the radius used when rendering the ribbon.","float","0.0","2"
+"ribbon_sampling","controls how many segments are used between the guide points.","integer","1","2"
+"ribbon_side_chain_helper","controls whether or not atom and bond representations are automatically hidden for main chain atoms when the ribbon is shown.","boolean","off","3"
+"ribbon_smooth","controls whether or not the ribbon representation is drawn with smooth (antialiased) lines.","boolean","-1","1"
+"ribbon_throw","affects ribbon shape.","float","1.35","2"
+"ribbon_trace_atoms","controls whether or not the ribbon representation traces through all atoms or just guide atoms.","boolean","off","2"
+"ribbon_use_shader"," If true, on screen rendering of ribbons uses the OpenGL shader language (GLSL). If false, OpenGL v1.x style rendering is used.","boolean","on","0"
+"ribbon_width","controls the thickness of the ribbon representation in pixels.","float","3.0","2"
+"robust_logs","controls whether or not atom selections are logged by property match (slow & robust) or by object index (fast & fragile).","boolean","off","0"
+"rock","Controls whether PyMOL animates real time rocking of the current scene. See also [[command:rock|rock command]].","bool","off","0"
+"rock_delay","controls the rocking update frequency.","float","30.0","0"
+"roving_byres","controls whether or not roving display is per-residue. ","boolean","on","0"
+"roving_cartoon","is the cutoff radius for cartoons.","float","0.0","0"
+"roving_delay","delay between updates.","float","0.2","0"
+"roving_detail","enables or disables roving detail.","boolean","off","0"
+"roving_isomesh","is the cutoff radius for isosurface meshes.","float","8.0","0"
+"roving_isosurface","is the cutoff radius for solid isosurfaces.","float","0.0","0"
+"roving_labels","is the cutoff radius for labels.","float","0.0","0"
+"roving_lines"," (float, default: 0.0) is the cutoff radius for lines.","","","0"
+"roving_map1_level","(float, default: 1.0)","","","0"
+"roving_map1_name","(string, default: blank)","","","0"
+"roving_map2_level","(float, default: 2.0)","","","0"
+"roving_map2_name","(string, default: blank)","","","0"
+"roving_map3_level","(float, default: 3.0)","","","0"
+"roving_map3_name","(string, default: blank)","","","0"
+"roving_nb_spheres","is the cutoff radius for nonbonded spheres.","float","0.0","0"
+"roving_nonbonded","is the cutoff radius for nonbonded.","float","0.0","0"
+"roving_origin","controls whether or not the origin moves with the screen.","boolean","on","0"
+"roving_origin_z","controls whether or not the Z component of the origin moves with the clipping planes.","boolean","on","0"
+"roving_origin_z_cushion","controls how close the origin can come to the clipping planes.","float","3.0","0"
+"roving_polar_contacts","is the cutoff radius for polar contacts.","boolean","7.0","0"
+"roving_polar_cutoff","is the distance cutoff for the polar contacts.","float","3.31","0"
+"roving_ribbon","is the cutoff radius for ribbons.","boolean","-7.0","0"
+"roving_selection","is the roving selection.","string","all","0"
+"roving_spheres","is the cutoff radius for spheres.","float","0.0","0"
+"roving_sticks","is the cutoff radius for sticks.","float","6.0","0"
+"scene_animation","controls whether or not scenes are animated.  If negative, then [[setting:animation|animation]] controls.","integer","-1","0"
+"scene_animation_duration","controls how long it takes to interpolate the camera between scenes.","float","2.25","0"
+"scene_buttons","Controls whether PyMOL displays scene buttons on screen.","bool","off","0"
+"scene_current_name","contains the name of the current scene (if any).","string","blank","0"
+"scene_loop","controls whether or not the scenes loop without an intervening blank scene.","boolean","on","0"
+"scenes_changed","this is a setting PyMOL uses internally.","float","1.0","0"
+"sculpt_angl_weight","(float) undocumented and unsupported.","","","2"
+"sculpt_auto_center","(boolean) undocumented and unsupported.","","","0"
+"sculpt_avd_excl","(integer) undocumented and unsupported.","","","2"
+"sculpt_avd_gap","(float) undocumented and unsupported.","","","2"
+"sculpt_avd_range","(float) undocumented and unsupported.","","","2"
+"sculpt_avd_weight","(float) undocumented and unsupported.","","","2"
+"sculpt_bond_weight","(float) undocumented and unsupported.","","","2"
+"sculpt_field_mask","(integer) undocumented and unsupported.","","","2"
+"sculpt_hb_overlap","(float) undocumented and unsupported.","","","2"
+"sculpt_hb_overlap_base","(float) undocumented and unsupported.","","","2"
+"sculpt_line_weight","(float) undocumented and unsupported.","","","2"
+"sculpt_max_max","(float) undocumented and unsupported.","","","2"
+"sculpt_max_min","(float) undocumented and unsupported.","","","2"
+"sculpt_max_scale","(float) undocumented and unsupported.","","","2"
+"sculpt_max_weight","(float) undocumented and unsupported.","","","2"
+"sculpt_memory","undocumented and unsupported.","boolean","on","2"
+"sculpt_min_max","(float) undocumented and unsupported.","","","2"
+"sculpt_min_min","(float) undocumented and unsupported.","","","2"
+"sculpt_min_scale","(float) undocumented and unsupported.","","","2"
+"sculpt_min_weight","(float) undocumented and unsupported.","","","2"
+"sculpt_nb_interval","(integer) undocumented and unsupported.","","","2"
+"sculpt_plan_weight","(float) undocumented and unsupported.","","","2"
+"sculpt_pyra_weight","(float) undocumented and unsupported.","","","2"
+"sculpt_tors_tolerance","(float) undocumented and unsupported.","","","2"
+"sculpt_tors_weight","(float) undocumented and unsupported.","","","2"
+"sculpt_tri_max","(float) undocumented and unsupported.","","","2"
+"sculpt_tri_min","(float) undocumented and unsupported.","","","2"
+"sculpt_tri_mode","(integer) undocumented and unsupported.","","","2"
+"sculpt_tri_scale","(float) undocumented and unsupported.","","","2"
+"sculpt_tri_weight","(float) undocumented and unsupported.","","","2"
+"sculpt_vdw_scale","(float) undocumented and unsupported.","","","2"
+"sculpt_vdw_scale14","(float) undocumented and unsupported.","","","2"
+"sculpt_vdw_vis_max","(float) undocumented and unsupported.","","","2"
+"sculpt_vdw_vis_mid","(float) undocumented and unsupported.","","","2"
+"sculpt_vdw_vis_min","(float) undocumented and unsupported.","","","2"
+"sculpt_vdw_vis_mode","(float) undocumented and unsupported.","","","2"
+"sculpt_vdw_weight","(float) undocumented and unsupported.","","","2"
+"sculpt_vdw_weight14","(float) undocumented and unsupported.","","","2"
+"sculpting","controls whether or not sculpting is performed.","boolean","off","2"
+"sculpting_cycles","controls how many sculpting cycles are performed per update.","integer","10","1"
+"secondary_structure","(int 1-4, default: 2) Secondary structure phi/psi angle preset with the builder
+
+1 = Helix
+2 = Antiparallel Beta Sheet
+3 = Parallel Beta Sheet
+4 = Extended (180°/180°)","","","0"
+"security","is an internal setting.","integer","1","0"
+"sel_counter","when auto_number_selections is on, this setting tracks the number of the last selection created.","integer","0","0"
+"selection_overlay","controls whether the visual selection indicators are overlayed on top of the 3D geometry or drawn together with them, in which case they may be hidden by the atom representation.","integer","on","0"
+"selection_round_points","controls whether the selection indicators are drawn as square or round points.  ","boolean","on","0"
+"selection_visible_only","controls whether all selected atoms are indicated or only those with at least one visible representation.","boolean","off","0"
+"selection_width","controls the minimum width of selection indicators in pixels.","float","3.0","0"
+"selection_width_max","controls the maximum width of selection indicators in pixels.","float","10.0","0"
+"selection_width_scale","controls the rate at which selection indicators are scaled.","float","2.0","0"
+"seq_view","controls whether or not the sequence viewer is active.","boolean","off","1"
+"seq_view_alignment","currently unsupported.","string","blank","0"
+"seq_view_color","controls the color of the sequence view (default = atom colors).","color","-1","2"
+"seq_view_discrete_by_state","currently unsupported.","","","1"
+"seq_view_fill_char","currently unsupported.","","","0"
+"seq_view_fill_color","currently unsupported.","","","0"
+"seq_view_format","controls the format of the sequence viewer.
+
+0 = one-letter residue codes (if known)
+1 = residue codes
+2 = atoms
+3 = chains
+4 = states","integer","0","1"
+"seq_view_gap_mode","controls whether gaps are shown in sequence.","integer","0","0"
+"seq_view_label_color","controls the color of label text.","color","white","0"
+"seq_view_label_mode","controls what labels are shown:
+
+0 = object names only
+1 = object names and identifier labels for first object only
+2 = object names and identifier labels for all objects
+3 = nothing","integer","2","0"
+"seq_view_label_spacing","affects the spacing of labels.","integer","2","1"
+"seq_view_label_start","function unknown.","integer","1","1"
+"seq_view_location","controls the location of the sequence viewer.
+
+0 = top
+1 = bottom","integer","0","0"
+"seq_view_overlay","controls whether or not the sequence view overlays the 3D molecular graphics.","boolean","off","0"
+"seq_view_unaligned_color","currently unsupported.","color","-1","0"
+"seq_view_unaligned_mode","currently unsupported.","integer","0","0"
+"session_changed","(boolean, default off) used internally by PyMOL to keep track of whether or not the session has been changed.","","","0"
+"session_file","contains the filename of the current session file (if any).","string","blank","0"
+"session_migration","controls whether or not old sessions are automatically adapted into new PyMOL versions upon loading.","boolean","on","0"
+"session_version_check","controls whether or not a version check is performed when loading sessions.","boolean","on","0"
+"shader_path","Defines the location at which PyMOL searches for OpenGL shader language (GLSL) files.","str","data/shaders","0"
+"shininess","is the specular exponent for the movable light sources.","float","55.0","0"
+"show_alpha_checker","controls whether or not a checker pattern is shown in the background.","boolean","on","0"
+"show_progress","controls whether or not a progress bar is shown in the viewer window.","boolean","on","0"
+"single_image","controls whether or not PyMOL can can assume that each molecular state corresponds to only one single movie image.  This setting can enable optimized rendering of still frames with certain types of molecular movies, but it is not generally applicable.","boolean","off","0"
+"slice_dynamic_grid","controls whether or not sampling grid is adjusted based on proximity to the camera.","boolean","off","1"
+"slice_dynamic_grid_resolution","controls how finely the grid is sampled (in screen pixels).","float","3.0","1"
+"slice_grid","controls the space of the static sampling grid.","float","0.3","1"
+"slice_height_map","enables or disables the height map display.","boolean","off","1"
+"slice_height_scale","is the scaling factor for the height map.","float","1.0","1"
+"slice_track_camera","controls whether or not the grid is maintained in a plane perpendicular to the camera and passing through the origin of rotation.","boolean","on","1"
+"slow_idle","affects idling behavior and should not normally need to be modified.","float","200,000","0"
+"solvent_radius","is the radius used in computing the surface as well as a number of other solvent-dependent properties within PyMOL.","float","1.4","2"
+"spec_count","controls how many movable light sources are used when drawing specular reflections.","integer","-1","0"
+"spec_direct","controls the specular intensity for the camera light source.","float","0.0","0"
+"spec_direct_power","controls the specular exponent for camera light source.","float","55.0","0"
+"spec_power","controls the specularity power coefficient for the raytracer.  If < 0.0, then [[setting:light|shininess]] is used.","float","-1.0","0"
+"spec_reflect","controls specularity intensity for the raytracer.  If < 0.0, then [[setting:light|specular_intensity]] is used.","float","-1.0","0"
+"specular","controls the specular intensity for movable light sources.","float","1.0","0"
+"specular_intensity","controls the specular intensity for movable light sources, if specular is set to 1.0.  ","float","0.5","0"
+"sphere_color","controls the color of the sphere representation.  By default, spheres assume atom coloring.","color","-1","3"
+"sphere_mode","controls how spheres are drawn.  This setting is essential for boosting OpenGL performance when working with million-atom systems.
+
+0 = use triangles
+1 = use flat-lit minimal square points
+2 = use flat-lit scaled square points
+3 = use scaled rounded points (if available)
+4 = use sphere imposters constructed of multiple rounded circles
+5 = use fragment programs to drag pixel-perfect spheres
+6 = use minimal square points with an environment-based normal
+7 = use scaled square points with an environment-based normal
+8 = use scaled rounded points with an environment-based normal","integer","-1","2"
+"sphere_point_max_size","limits the maximum size of point representations.","float","10.0","2"
+"sphere_point_size","controls the point size for sphere modes 1 and 6.","float","1.0","0"
+"sphere_scale","controls how spheres are scaled relative to an atoms van der waals radius.","float","1.0","3"
+"sphere_solvent","controls whether or not a solvent radius is added to the sphere radius.","boolean","off","2"
+"sphere_transparency","controls the transparency of the sphere representation.","float","0.0","3"
+"sphere_use_shader"," If true, on screen rendering of spheres uses the OpenGL shader language (GLSL). If false, OpenGL v1.x style rendering is used.","boolean","on","0"
+"ss_helix_phi_exclude","is a helix detection parameter for the phi angle.","float","85.0","0"
+"ss_helix_phi_include","is a helix detection parameter for the phi angle.","float","55.0","0"
+"ss_helix_phi_target","is a helix detection parameter for the phi angle.","float","-57.0","0"
+"ss_helix_psi_exclude","is a helix detection parameter for the psi angle.","float","85.0","0"
+"ss_helix_psi_include","is a helix detection parameter for the psi angle.","float","55.0","0"
+"ss_helix_psi_target","is a helix detection parameter for the psi angle.","float","-48.0","0"
+"ss_strand_phi_exclude","is a strand detection parameter for the phi angle.","float","100.0","0"
+"ss_strand_phi_include","is a strand detection parameter for the phi angle.","float","40.0","0"
+"ss_strand_phi_target","is a strand detection parameter for the phi angle.","float","-129.0","0"
+"ss_strand_psi_exclude","is a strand detection parameter for the psi angle.","float","90.0","0"
+"ss_strand_psi_include","is a strand detection parameter for the psi angle.","float","40.0","0"
+"ss_strand_psi_target","is a strand detection parameter for the psi angle.","float","124.0","0"
+"state","stores the value of the current molecular state.","integer","1","1"
+"static_singletons","controls whether or not PyMOL will treat molecular objects consisting of only of a single molecular state (state 1), as being present in all molecular states.  This is a convenient optimization when rendering movies where some objects are completely static, and others have moving coordinates.","boolean","on","1"
+"stereo","can be used to determine whether or not stereo is active.","boolean","off","0"
+"stereo_angle","affects stereo separation. stereo_angle is a scaling factor applied to the natural angular difference which would occur between two eyes at that distance, both looking at the objective.","float","2.1","0"
+"stereo_double_pump_mono","controls whether or not stereo contexts are used to render monoscopic contexts (required for some systems).","boolean","off","0"
+"stereo_mode","can be used to determine the current stereo mode:
+
+1  = quadbuffer
+2  = cross eye
+3  = wall eye
+4  = geowall
+5  = sidebyside
+6  = byrow
+7  = bycolumn
+8  = checkerboard
+9  = custom
+10 = anaglyph
+11 = dynamic
+12 = clonedynamic","integer","1","0"
+"stereo_shift","affects stereo separation. stereo_shift is the separation between the two cameras observing the image, expressed as a % of the distance from the objective.","float","2.0","0"
+"stick_ball_ratio","controls the radius of the ball relative to that of the stick","float","1.0","2"
+"stick_color","contols the color of the stick representation.  Atom color are used by default.","color","-1","2"
+"stick_fixed_radius","when the [[setting:connect|valence]] setting is enabled, this setting controls whether or not valence bonds are shown using cylinders of fixed or variable radius.","boolean","off","2"
+"stick_nub","controls the size of the cone placed on the end of cylinders.","float","0.7","2"
+"stick_overlap","control how far stick cylinders are extended beyond atom coordinates.","float","0.2","2"
+"stick_radius","controls the radius of the cylinder.","float","0.25","2"
+"stick_transparency","controls transparency of the stick representation.","float","0.0","2"
+"stick_use_shader","If true, on screen rendering of sticks uses the OpenGL shader language (GLSL). If false, OpenGL v1.x style rendering is used.","bool","on","0"
+"stick_valence_scale","controls the radius of the invisible cylinder within which bond valences are shown relative to the stick radius.","float","1.0","2"
+"stop_on_exceptions","controls whether or not script execution is halted after an error is encountered.","boolean","off","0"
+"surface_best","is a tuning parameter that should not need to be modified.","float","0.25","2"
+"surface_carve_cutoff","controls the cutoff distance from surface_carve_selection atoms which surface points must meet to be included in the carved surface.","float","0.0","2"
+"surface_carve_normal_cutoff","controls the dot product threshold from surface_carve_selection atoms which surface points must meet to be included in the carved surface.","float","-1.0","2"
+"surface_carve_selection","is the named selection of atoms about which the surface is carved.","string","blank","2"
+"surface_carve_state","is the controlling state for surface carving.  By default, the corresponding coordinate set state is used.","integer","0","2"
+"surface_circumscribe","(integer 0-120, default: -1) is a parameter that can be used to force approximate surfaces to track concave regions more closely, but this can degrade visual aesthetics.  By default, this setting is automatically activated to improve the quality of certain surface types.","","","2"
+"surface_clear_cutoff","controls the cutoff distance from surface_clear_selection atoms which surface points must meet to be excluded for the carved surface.","float","0.0","2"
+"surface_clear_selection","is the named selection of atoms about which the carved surface avoids.","string","blank","2"
+"surface_clear_state","is the controlling state for clearing.","integer","0","2"
+"surface_color","controls the surface color.  By default, surfaces assume the color of the underlying atom.","color","-1","3"
+"surface_debug","activates debugging mode for development.","integer","0","0"
+"surface_miserable","is a tuning parameter that should not need to be modified.","float","2.0","2"
+"surface_mode","controls what atoms are considered when generating the surface:
+
+0 = consider atoms based on their ignore and exfoliate flags.
+1 = consider all atoms
+2 = condider only non-hydrogen atoms","integer","0","2"
+"surface_normal","is a tuning parameter that should not need to be modified.","float","0.5","2"
+"surface_optimize_subsets","tells PyMOL that it can compute a subsurface without rendering the entire surface.  This option should be disabled when trying to effectively multiple surface from identical objects.","boolean","on","2"
+"surface_poor","is a tuning parameter that should not need to be modified.","float","0.85","2"
+"surface_proximity","controls whether or not PyMOL draws triangle with one or two vertices belonging to atoms not currently shown.","boolean","on","2"
+"surface_quality","(integer: -4 to 4, default: 0) controls how many triangles are used to render the surface.  Surface qualities of 2 and above are only practical for very small systems.  Surface qualities below 2 are only practical for large globular systems.","","","2"
+"surface_ramp_above_mode","controls whether surfaces are colored by the value at the surface or one solvent radius above the surface.","boolean","off","2"
+"surface_solvent","controls whether or not solvent accessible surfaces are generated.","boolean","off","2"
+"surface_smooth_edges","makes edges of trimmed surfaces (e.g. ligand binding sites) smoother by averaging consecutive vertex positions.","boolean","off","2"
+"surface_trim_cutoff","(float, default:0.2) is a tuning parameter that should not need to be modified.","","","2"
+"surface_trim_factor","(float, default:2.0) is a tuning parameter that should not need to be modified.","","","2"
+"surface_type","controls what kind of surface is generated:
+
+0 = a solid surface via PyMOL's conventional algorithm.
+1 = a dot surface via PyMOL's conventional algorithm.
+2 = a triangle mesh surface via PyMOL's conventional algorithm.
+3 = a solid surface using a deterministic algorithm better suited to dynamic surface animations.
+4 = a solid surface using the algorithm from 3 with different weightings.
+5 = a solid surface where all points are generated from pairwise scribed intersections instead of virtual solvent atoms.","integer","0","2"
+"surface_use_shader"," If true, on screen rendering of surfaces uses the OpenGL shader language (GLSL). If false, OpenGL v1.x style rendering is used.","boolean","on","0"
+"suspend_undo","If on, undo is disabled.","bool","off","0"
+"suspend_undo_atom_count","Objects with more atoms than the value of this setting are ignored for undo. If set to 0, however, all objects are tracked regardless of atom count.","integer","1000","0"
+"swap_dsn6_bytes","controls whether or not dsn6 maps are automatically byte swapped.","boolean","on","0"
+"sweep_angle","controls the sweep angle when rocking.","float","20.0","0"
+"sweep_mode","controls how rocking is perfoming:
+
+0 = y-axis
+1 = x-axis
+2 = z-axis
+3 = xy nutation","integer","0","0"
+"sweep_phase","controls the phase of the rocking motion.","float","0.0","0"
+"sweep_speed","controls the speed of the rocking motion.","float","0.75","0"
+"test1","(float) is sometimes used in development.","","","0"
+"test2","(float) is sometimes used in development.","","","0"
+"text","controls whether the viewer window is filled with text or graphics.","boolean","off","0"
+"texture_fonts","(DEPRECATED; boolean, default: off) controls whether labels are drawn using textures or bitmaps, if both choices are available. ","","","0"
+"trace_atoms_mode","controls how chain breaks are found when tracing atoms.","integer","5","2"
+"transparency","controls surface transparency","float","0.0","3"
+"transparency_mode","controls how transparency is rendered:
+
+0 = fast and ugly
+1 = multi-layer
+2 = uni-layer","integer","2","2"
+"transparency_picking_mode","affects whether or not transparency objects can be picked using the mouse.","integer","2","2"
+"triangle_max_passes","controls how much time PyMOL is allowed to spend attempting to resolve problematic surface regions.","integer","5","0"
+"trim_dots","controls whether or not certain atoms are treated differently based on their ignore and exfoliate flags.","boolean","on","2"
+"two_sided_lighting","controls whether both faces of a triangle are lit or just the front face (as defined by convention).","boolean","on","2"
+"use_shaders","If true, the OpenGL shader language (GLSL) is used for on screen rendering. If false, the OpenGL v1.x rendering pipeline is used.","boolean","on","2"
+"valence","controls whether or not bond valences are shown.","boolean","off","2"
+"valence_size","controls how far apart bond valences are drawn.","float","0.06","2"
+"valence_zero_mode","Appearance of zero order bonds (lines and sticks): 0=skip, 1=dashed (default), 2=solid","integer","1","2"
+"valence_zero_scale","Stick radius of zero order bonds, relative to 'stick_radius'","float","0.2","2"
+"validate_object_names","controls whether or not object names are constrained to only contain safe characters.","boolean","on","0"
+"value","- The value is a string that represents a color that can be specified in the same way colors are specified in PyMOL. Either with key words (e.g., red, brightorange, palegreen, etc.) or with an explicit hex RGB \"0xRRGGBB\". The default value is black if this is called without an argument.","","","0"
+"virtual_trackball","controls whether or not a virtual trackball is used.","boolean","on","0"
+"volume_bitdepth","Number of bits used per RGB channel for representing color.","integer","8","0"
+"volume_color","(array, default: default)","","","0"
+"volume_data_range","Number of standard deviations above and below the mean around which color ramps should be colored.","float","5.0","1"
+"volume_layers","Number of layers used to draw the volumes on screen. Drawing fewer layers increases real-time rendering speed; more layers reduces rendering speed, but increases color intensity.","integer","256","1"
+"volume_mode","Volume rendering method: 0 = post-classified (faster); 1 = pre-integrated (better)","integer","1","0"
+"wildcard","controls the wildcard character used in matching selections.","string","*","1"
+"wizard_prompt_mode","affects how wizard prompts are shown.","integer","1","0"
+"wrap_output","this setting is apparently broken.","boolean","off","0"

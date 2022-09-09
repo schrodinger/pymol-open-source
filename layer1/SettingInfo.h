@@ -896,7 +896,12 @@ enum {
   REC_i( 786, cartoon_smooth_cylinder_window          , global    , 2 ),
   REC_i( 787, isosurface_algorithm                    , global    , 0, 0, 2 ),
   REC_b( 788, cell_centered                           , global    , false ),
-
+  REC_f( 789, halogen_bond_distance                       , global    , 3.5f ),
+  REC_f( 790, halogen_bond_as_donor_min_donor_angle       , global    , 140.0f ),
+  REC_f( 791, halogen_bond_as_donor_min_acceptor_angle    , global    , 90.0f ),
+  REC_f( 792, halogen_bond_as_acceptor_min_donor_angle    , global    , 120.0f ),
+  REC_f( 793, halogen_bond_as_acceptor_min_acceptor_angle , global    , 90.0f ),
+  REC_f( 794, halogen_bond_as_acceptor_max_acceptor_angle , global    , 170.0f ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

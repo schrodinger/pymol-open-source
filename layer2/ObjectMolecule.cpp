@@ -846,6 +846,33 @@ void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec * op)
   UtilZeroMem((char *) op, sizeof(ObjectMoleculeOpRec));
 }
 
+bool ObjectMoleculeGetNeighborVector(
+    ObjectMolecule* I, int atom, int state, float* v_result)
+{
+  float v_atom[3] = {0.0, 0.0, 0.0};
+
+  auto const* cs = I->getCoordSet(state);
+  if (cs == nullptr) {
+    return false;
+  }
+
+  if (!CoordSetGetAtomVertex(cs, atom, v_atom)) {
+    return false;
+  }
+
+  for (auto const& neighbor : AtomNeighbors(I, atom)) {
+    auto const a2 = neighbor.atm;
+
+    // ignore hydrogens
+    if (I->AtomInfo[a2].protons != cAN_H &&
+        CoordSetGetAtomVertex(cs, a2, v_result)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /**
  * Returns the most proton-rich element with the lowest priority value (OG1
  * before OG2, CG, HB1)
