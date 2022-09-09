@@ -609,79 +609,18 @@ static PyObject *CmdSetRawAlignment(PyObject * self, PyObject * args)
   return APIResult(G, result);
 }
 
-static PyObject* GetRawAlignment(PyMOLGlobals* G,
-    const ObjectAlignment* alnobj,
-    bool active_only,
-    int state)
-{
-  if (state >= alnobj->getNFrame()) {
-    PyErr_Format(PyExc_IndexError, "state %d >= NState %d", state, alnobj->getNFrame());
-    return nullptr;
-  }
-
-  const auto& vla = alnobj->State[state].alignVLA;
-
-  if (!vla) {
-    PyErr_Format(PyExc_IndexError, "state %d not valid", state);
-    return nullptr;
-  }
-
-  auto hide_underscore = SettingGet<bool>(G, cSetting_hide_underscore_names);
-  const auto vla_len = VLAGetSize(vla);
-
-  PyObject * raw = PyList_New(0);
-
-  for (size_t i = 0; i < vla_len; ++i) {
-    PyObject * col = PyList_New(0);
-
-    for (int id; (id = vla[i]); ++i) {
-      auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
-      if (eoo
-          && (!active_only || eoo->obj->Enabled)
-          && (!hide_underscore || eoo->obj->Name[0] != '_')) {
-        PyObject * idx = Py_BuildValue("si", eoo->obj->Name, eoo->atm + 1);
-        PyList_Append(col, idx);
-        Py_DECREF(idx);
-      }
-    }
-
-    if (PyList_Size(col) > 0) {
-      PyList_Append(raw, col);
-    }
-
-    Py_DECREF(col);
-  }
-
-  return raw;
-}
-
 static PyObject *CmdGetRawAlignment(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   const char *name;
   int active_only;
   int state = 0;
-  PyObject *result = NULL;
   API_SETUP_ARGS(G, self, args, "Osi|i", &self, &name, &active_only, &state);
+  pymol::Result<PyObject*> result;
   APIEnterBlocked(G);
-  {
-    if (!name[0]) {
-      name = ExecutiveGetActiveAlignment(G);
-    }
-    if (name && name[0]) {
-      pymol::CObject *obj = ExecutiveFindObjectByName(G, name);
-      if (obj && obj->type == cObjectAlignment) {
-        result = GetRawAlignment(G, (ObjectAlignment*) obj, active_only, state);
-      } else {
-        PyErr_Format(PyExc_KeyError, "no such alignment: '%s'", name);
-      }
-    }
-    APIExitBlocked(G);
-  }
-  if(!result && !PyErr_Occurred()) {
-    return APIFailure(G);
-  } else
-    return result;
+  result = ExecutiveGetRawAlignment(G, name, active_only, state);
+  APIExitBlocked(G);
+  return APIResult(G, result);
 }
 
 static PyObject *CmdGetOrigin(PyObject * self, PyObject * args)
