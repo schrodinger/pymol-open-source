@@ -31,19 +31,22 @@ except NameError:
 def compareListFunction(x, y):
     return collections.Counter(x) == collections.Counter(y)
 
-def import_from_file(filename, name=None):
-    import imp
+
+def import_from_file(filename: str, name: str = None):
+    import importlib
     if name is None:
         try:
-             name = os.path.relpath(filename).replace('.', '_')
+            name = os.path.relpath(filename).replace('.', '_')
         except ValueError:
-             name = os.path.basename(filename).replace('.', '_')
-    for suffix in imp.get_suffixes():
-        if filename.endswith(suffix[0]):
+            name = os.path.basename(filename).replace('.', '_')
+    for suffix in importlib.machinery.all_suffixes():
+        if filename.endswith(suffix):
             break
     else:
-        raise ValueError('invalid extension: "%s"' % filename)
-    return imp.load_module(name, open(filename), filename, suffix)
+        raise ValueError(f"invalid extension: {filename}")
+    loader = importlib.machinery.SourceFileLoader(name, filename)
+    return loader.load_module()
+
 
 if __name__ != 'pymol.testing':
     # pymol foo.py    -> __name__ == 'pymol'
