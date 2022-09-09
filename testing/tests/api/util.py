@@ -221,8 +221,19 @@ class TestUtil(testing.PyMOLTestCase):
 
     @testing.requires_version('1.8.0')
     def test_get_sasa_relative(self):
-        pymol.util.get_sasa_relative
-        self.skipTest("TODO")
+        cmd.load(self.datafile('1oky-frag.pdb'))
+        r = cmd.get_sasa_relative()
+        self.assertAlmostEqual(r['1oky-frag', '', 'A', '86'], 0.708, delta=1e-3)
+        r = cmd.get_sasa_relative("resi 86")
+        self.assertAlmostEqual(r['1oky-frag', '', 'A', '86'], 0.708, delta=1e-3)
+
+    @testing.requires_version('2.6')
+    def test_get_sasa_relative_subsele(self):
+        cmd.load(self.datafile('1oky-frag.pdb'))
+        r = cmd.get_sasa_relative(subsele="sidechain")
+        self.assertAlmostEqual(r['1oky-frag', '', 'A', '86'], 0.812, delta=1e-3)
+        r = cmd.get_sasa_relative("resi 86", subsele="sidechain")
+        self.assertAlmostEqual(r['1oky-frag', '', 'A', '86'], 0.812, delta=1e-3)
 
     @testing.requires_version('1.8.6')
     def test_ligand_zoom(self):

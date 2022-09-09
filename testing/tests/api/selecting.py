@@ -523,6 +523,12 @@ class TestSelecting(testing.PyMOLTestCase):
         self.assertEqual(60, cmd.count_atoms('name C*+N'))
         self.assertEqual(63, cmd.count_atoms('name C*+N*'))
 
+    def test_guide(self):
+        cmd.fragment("gly")
+        self.assertEqual(0, cmd.count_atoms("organic"))
+        self.assertEqual(1, cmd.count_atoms("guide"))
+        self.assertEqual(1, cmd.count_atoms("organic | guide"))
+
     @testing.foreach('origin', 'center')
     def test_dummy_selectors(self, op):
         self.assertEqual(cmd.count_atoms('all'), 0)
