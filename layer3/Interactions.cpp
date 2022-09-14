@@ -873,10 +873,15 @@ DistSet* FindHalogenBondInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
                 float* vv0 = coords + (numVerts * 3);
 
                 if (don_vv != nullptr && acc_vv != nullptr) {
-                  const size_t count_to_copy = 6;
+                  const size_t count_to_copy = 3;
+
                   std::copy_n(don_vv, count_to_copy, vv0);
                   vv0 += count_to_copy;
                   don_vv += count_to_copy;
+
+                  std::copy_n(acc_vv, count_to_copy, vv0);
+                  vv0 += count_to_copy;
+                  acc_vv += count_to_copy;
                 }
 
                 numVerts += 2;
