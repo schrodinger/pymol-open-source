@@ -453,6 +453,9 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
       } else if (mode == 9) { // 9: halogen-bond interaction
         I->DSet[a].reset(pymol::FindHalogenBondInteractions(G,
             I->DSet[a].release(), sele1, state1, sele2, state2, cutoff, &dist));
+      } else if (mode == 10) { // 10: salt-bridge interaction
+        I->DSet[a].reset(pymol::FindSaltBridgeInteractions(G,
+            I->DSet[a].release(), sele1, state1, sele2, state2, cutoff, &dist));
       } else {
         I->DSet[a].reset(SelectorGetDistSet(
             G, I->DSet[a].release(), sele1, state1, sele2, state2, mode, cutoff, &dist));

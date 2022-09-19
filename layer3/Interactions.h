@@ -46,6 +46,23 @@ public:
   HalogenBondCriteria(PyMOLGlobals* G);
 };
 
+/**
+ * Salt Bridge criteria
+ */
+class SaltBridgeCriteria
+{
+
+public:
+  // Cutoff distance
+  float m_distance = 5.0f;
+
+public:
+  /**
+   * Construct a new Salt Bridge Criteria object and initialize it's member variables
+   */
+  SaltBridgeCriteria(PyMOLGlobals* G);
+};
+
 DistSet* FindPiInteractions(PyMOLGlobals* G,
     DistSet* ds,           //
     int sele1, int state1, //
@@ -67,5 +84,21 @@ DistSet* FindPiInteractions(PyMOLGlobals* G,
  * @return DistSet - distance set
  */
 DistSet* FindHalogenBondInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
+    int state1, int sele2, int state2, float cutoff, float* result);
+
+/**
+ * Find Salt-bridge interactions
+ *
+ * @param ds - DistSet
+ * @param sele1 - selections index
+ * @param state1 - state index
+ * @param sele2 - selection index
+ * @param state2 - state index
+ * @param cutoff - cutoff distance
+ * @param result - result average distance
+ *
+ * @return DistSet - distance set
+ */
+DistSet* FindSaltBridgeInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
     int state1, int sele2, int state2, float cutoff, float* result);
 }

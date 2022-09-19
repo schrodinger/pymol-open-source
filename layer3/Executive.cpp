@@ -9539,7 +9539,10 @@ pymol::Result<float> ExecutiveDistance(PyMOLGlobals* G, const char* nam,
       SettingSet(cSetting_dash_color, "0xff8800" /* light red */, obj);
       break;
     case 9: // "halogen-bonds"
-      SettingSet(cSetting_dash_color, "0xff00ff" /* magenta */, obj);
+      SettingSet(cSetting_dash_color, "0xaa00ff" /* dark magenta */, obj);
+      break;
+    case 10: // "salted-bridge"
+      SettingSet(cSetting_dash_color, "0xff2eff" /* light magenta */, obj);
       break;
     }
 

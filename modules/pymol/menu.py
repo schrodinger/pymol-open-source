@@ -993,6 +993,14 @@ def halogen_bond(self_cmd, sele):
         ],
     ]
 
+def salt_bridge(self_cmd, sele):
+    return [[2, 'Salt-Bridge Interactions:', '']] + [
+        [
+            1, 'salt-bridge', 'cmd.distance("' + sele + '_salt_bridge","' +
+            sele + '","same",reset=1,mode=10)'
+        ],
+    ]
+
 def polar(self_cmd, sele):
     return [[ 2, 'Polar Contacts:', ''],
               [ 1, 'within selection'  ,
@@ -1047,6 +1055,7 @@ def find(self_cmd, sele):
                   for d in (3.0, 3.5, 4.0)
               ]],
               [ 1, 'halogen-bond interactions', halogen_bond(self_cmd, sele)],
+              [ 1, 'salt-bridge interactions', salt_bridge(self_cmd, sele)],
               [ 1, 'pi interactions', [[ 2, 'Pi Interactions:', '']] + [
                   [1, 'all', 'cmd.pi_interactions("'+sele+'_pi_interactions","'+sele+'",reset=1)'],
                   [1, 'pi-pi', 'cmd.distance("'+sele+'_pi_pi","'+sele+'","same",reset=1,mode=6)'],

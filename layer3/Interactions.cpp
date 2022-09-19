@@ -657,6 +657,12 @@ static bool CheckHalogenBondAsAcceptor(ObjectMolecule* don_obj, int don_atom,
   return result;
 }
 
+SaltBridgeCriteria::SaltBridgeCriteria(PyMOLGlobals* G)
+{
+  m_distance =
+      SettingGet<float>(G, nullptr, nullptr, cSetting_salt_bridge_distance);
+}
+
 HalogenBondCriteria::HalogenBondCriteria(PyMOLGlobals* G)
 {
   m_distance =
@@ -673,24 +679,20 @@ HalogenBondCriteria::HalogenBondCriteria(PyMOLGlobals* G)
       cSetting_halogen_bond_as_acceptor_max_acceptor_angle);
 }
 
-DistSet* FindHalogenBondInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
-    int state1, int sele2, int state2, float cutoff, float* result)
+/**
+ * Prepare neighbor tables
+ *
+ * @param sele1 - selections index
+ * @param state1 - state index
+ * @param sele2 - selection index
+ * @param state2 - state index
+ *
+ * @return maximum number of atoms
+ */
+int PrepareNeighborTables(
+    PyMOLGlobals* G, int sele1, int state1, int sele2, int state2)
 {
   CSelector* I = G->Selector;
-
-  int exclusion = SettingGet<int>(G, cSetting_h_bond_exclusion);
-
-  int numVerts = 0;
-  *result = 0.0f;
-  // if the dist set exists, get info from it, otherwise get a new one
-  if (ds == nullptr) {
-    ds = DistSetNew(G);
-  } else {
-    numVerts = ds->NIndex; // number of vertices
-  }
-
-  auto& coords = ds->Coord;
-  coords.reserve(10);
 
   // update states: if the two are the same, update that one state, else update
   // all states
@@ -727,6 +729,103 @@ DistSet* FindHalogenBondInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
     }
   }
 
+  return max_n_atom;
+}
+
+/**
+ * Insert distance info into DistSet and copy atom's coordinates
+ *
+ * @param ds - distance set
+ * @param state1 - state index
+ * @param state2 - state index
+ * @param ai1 - atom info
+ * @param ai2 - atom info
+ * @param atom1_vv - atom coordinates
+ * @param atom2_vv - atom coordinates
+ * @param numVerts - number of vertices
+ */
+void InsertDistanceInfo(PyMOLGlobals* G, DistSet* ds, int state1, int state2,
+    AtomInfoType* ai1, AtomInfoType* ai2, float* atom1_vv, float* atom2_vv,
+    int numVerts)
+{
+  // Insert DistInfo records for updating distances
+  // Init/Add the elem to the DistInfo list
+  ds->MeasureInfo.emplace_front();
+  auto* atom1Info = &ds->MeasureInfo.front();
+
+  // TH
+  atom1Info->id[0] = AtomInfoCheckUniqueID(G, ai1);
+  atom1Info->id[1] = AtomInfoCheckUniqueID(G, ai2);
+
+  atom1Info->offset = numVerts; // offset into this DSet's Coord
+  atom1Info->state[0] = state1; // state1 of sel1
+  atom1Info->state[1] = state2;
+  atom1Info->measureType = cRepDash; // DISTANCE-dash
+
+  auto& coords = ds->Coord;
+
+  // see if coords has room at another 6 floats
+  VLACheck(coords, float, (numVerts * 3) + 6);
+  float* vv0 = coords + (numVerts * 3);
+
+  if (atom1_vv != nullptr && atom2_vv != nullptr) {
+    const size_t count_to_copy = 3;
+
+    std::copy_n(atom1_vv, count_to_copy, vv0);
+    vv0 += count_to_copy;
+    atom1_vv += count_to_copy;
+
+    std::copy_n(atom2_vv, count_to_copy, vv0);
+    vv0 += count_to_copy;
+    atom2_vv += count_to_copy;
+  }
+}
+
+/**
+ * Create coverage vector
+ *
+ * @param sele1 - selection index
+ * @param sele2 - selection index
+ * @return vector of booleans which determines if a given atom appears in sele1
+ * and sele2
+ */
+static std::vector<bool> CreateCoverage(PyMOLGlobals* G, int sele1, int sele2)
+{
+  CSelector* I = G->Selector;
+  std::vector<bool> result(I->Table.size());
+
+  // coverage determines if a given atom appears in sele1 and sele2
+  for (SelectorAtomIterator iter(I); iter.next();) {
+    int s = iter.getAtomInfo()->selEntry;
+    if (SelectorIsMember(G, s, sele1) && SelectorIsMember(G, s, sele2)) {
+      result[iter.a] = true;
+    }
+  }
+
+  return result;
+}
+
+DistSet* FindHalogenBondInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
+    int state1, int sele2, int state2, float cutoff, float* result)
+{
+  CSelector* I = G->Selector;
+
+  int exclusion = SettingGet<int>(G, cSetting_h_bond_exclusion);
+
+  int numVerts = 0;
+  *result = 0.0f;
+  // if the dist set exists, get info from it, otherwise get a new one
+  if (ds == nullptr) {
+    ds = DistSetNew(G);
+  } else {
+    numVerts = ds->NIndex; // number of vertices
+  }
+
+  auto& coords = ds->Coord;
+  coords.reserve(10);
+
+  int max_n_atom = PrepareNeighborTables(G, sele1, state1, sele2, state2);
+
   HalogenBondCriteria halogenbcRec(G);
   cutoff = halogenbcRec.m_distance;
   if (cutoff < 0.0f) {
@@ -735,13 +834,7 @@ DistSet* FindHalogenBondInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
   }
 
   // coverage determines if a given atom appears in sel1 and sel2
-  std::vector<bool> coverage(I->Table.size());
-  for (SelectorAtomIterator iter(I); iter.next();) {
-    int s = iter.getAtomInfo()->selEntry;
-    if (SelectorIsMember(G, s, sele1) && SelectorIsMember(G, s, sele2)) {
-      coverage[iter.a] = true;
-    }
-  }
+  std::vector<bool> coverage = CreateCoverage(G, sele1, sele2);
 
   // this creates an interleaved list of ints for mapping ids to states within a
   // given neighborhood
@@ -771,6 +864,10 @@ DistSet* FindHalogenBondInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
       int at1 = I->Table[a1].atom;
       int at2 = I->Table[a2].atom;
 
+      if (sele1 == sele2 && at1 > at2) {
+        continue;
+      }
+
       // get the object for this global atom ID
       ObjectMolecule* obj1 = I->Obj[I->Table[a1].model];
       ObjectMolecule* obj2 = I->Obj[I->Table[a2].model];
@@ -799,8 +896,6 @@ DistSet* FindHalogenBondInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
 
             // if we pass the bonding cutoff
             if (dist < cutoff) {
-              float h_crd[3];
-              AtomInfoType* h_ai = nullptr;
 
               bool a_keeper = false;
               if (exclusion && obj1 == obj2) {
@@ -846,44 +941,156 @@ DistSet* FindHalogenBondInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
                 }
               }
 
-              if (sele1 == sele2 && at1 > at2) {
-                a_keeper = false;
+              if (a_keeper) {
+                InsertDistanceInfo(
+                    G, ds, state1, state2, ai1, ai2, don_vv, acc_vv, numVerts);
+                dist_cnt++;
+                dist_sum += dist;
+                numVerts += 2;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (dist_cnt > 0) {
+    (*result) = dist_sum / dist_cnt;
+  }
+
+  if (coords) {
+    coords.resize((numVerts + 1) * 3);
+  }
+
+  ds->NIndex = numVerts;
+
+  return ds;
+}
+
+DistSet* FindSaltBridgeInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
+    int state1, int sele2, int state2, float cutoff, float* result)
+{
+  CSelector* I = G->Selector;
+
+  int exclusion = SettingGet<int>(G, cSetting_h_bond_exclusion);
+
+  int numVerts = 0;
+  *result = 0.0f;
+  // if the dist set exists, get info from it, otherwise get a new one
+  if (ds == nullptr) {
+    ds = DistSetNew(G);
+  } else {
+    numVerts = ds->NIndex; // number of vertices
+  }
+
+  auto& coords = ds->Coord;
+  coords.reserve(10);
+
+  int max_n_atom = PrepareNeighborTables(G, sele1, state1, sele2, state2);
+
+  SaltBridgeCriteria saltbcRec(G);
+  cutoff = saltbcRec.m_distance;
+  if (cutoff < 0.0f) {
+    const float max_cutoff = 1000.0f;
+    cutoff = max_cutoff;
+  }
+
+  // coverage determines if a given atom appears in sel1 and sel2
+  std::vector<bool> coverage = CreateCoverage(G, sele1, sele2);
+
+  // this creates an interleaved list of ints for mapping ids to states within a
+  // given neighborhood
+  std::vector<int> interstate_vector =
+      SelectorGetInterstateVector(G, sele1, state1, sele2, state2, cutoff);
+  int cnt = interstate_vector.size() / 2;
+
+  std::vector<int> zero(max_n_atom);
+  std::vector<int> scratch(max_n_atom);
+
+  float dist_sum = 0.0f;
+  int dist_cnt = 0;
+
+  // for each state
+  for (int a = 0; a < cnt; a++) {
+
+    // get the interstate atom identifier for the two atoms to distance
+    int a1 = interstate_vector[a * 2];
+    int a2 = interstate_vector[a * 2 + 1];
+
+    // check their coverage to avoid duplicates
+    if (a1 < a2 || (a1 != a2 && !(coverage[a1] && coverage[a2])) ||
+        (state1 != state2)) {
+      // eliminate reverse duplicates
+
+      // get the object-local atom ID
+      int at1 = I->Table[a1].atom;
+      int at2 = I->Table[a2].atom;
+
+      if (sele1 == sele2 && at1 > at2) {
+        continue;
+      }
+
+      // get the object for this global atom ID
+      ObjectMolecule* obj1 = I->Obj[I->Table[a1].model];
+      ObjectMolecule* obj2 = I->Obj[I->Table[a2].model];
+
+      // the states are valid for these two atoms
+      if (state1 < obj1->NCSet && state2 < obj2->NCSet) {
+        // get the coordinate sets for both atoms
+        CoordSet* cs1 = obj1->CSet[state1];
+        CoordSet* cs2 = obj2->CSet[state2];
+        if (cs1 != nullptr && cs2 != nullptr) {
+          // for bonding
+          float* anion_vv = nullptr;
+          float* cation_vv = nullptr;
+
+          // grab the appropriate atom information for this object-local atom
+          AtomInfoType* ai1 = obj1->AtomInfo + at1;
+          AtomInfoType* ai2 = obj2->AtomInfo + at2;
+
+          int atom1_charge = ai1->formalCharge;
+          int atom2_charge = ai2->formalCharge;
+          if (atom1_charge * atom2_charge >= 0) {
+            continue;
+          }
+
+          if (ai1->isHydrogen() || ai2->isHydrogen()) {
+            continue;
+          }
+
+          int idx1 = cs1->atmToIdx(at1);
+          int idx2 = cs2->atmToIdx(at2);
+
+          if (idx1 >= 0 && idx2 >= 0) {
+            // actual distance calculation from ptA to ptB
+            float dist =
+                (float) diff3f(cs1->coordPtr(idx1), cs2->coordPtr(idx2));
+
+            // if we pass the bonding cutoff
+            if (dist < cutoff) {
+
+              bool a_keeper = false;
+              if (exclusion && obj1 == obj2) {
+                a_keeper = !SelectorCheckNeighbors(
+                    G, exclusion, obj1, at1, at2, zero.data(), scratch.data());
               }
 
               if (a_keeper) {
-                // Insert DistInfo records for updating distances
-                // Init/Add the elem to the DistInfo list
-                ds->MeasureInfo.emplace_front();
-                auto* atom1Info = &ds->MeasureInfo.front();
+                if (atom1_charge < 0) {
+                  anion_vv = cs1->coordPtr(idx1);
+                  cation_vv = cs2->coordPtr(idx2);
+                } else {
+                  anion_vv = cs2->coordPtr(idx2);
+                  cation_vv = cs1->coordPtr(idx1);
+                }
+              }
 
-                // TH
-                atom1Info->id[0] = AtomInfoCheckUniqueID(G, ai1);
-                atom1Info->id[1] = AtomInfoCheckUniqueID(G, ai2);
-
-                atom1Info->offset = numVerts; // offset into this DSet's Coord
-                atom1Info->state[0] = state1; // state1 of sel1
-                atom1Info->state[1] = state2;
-                atom1Info->measureType = cRepDash; // DISTANCE-dash
-
-                // we have a distance we want to keep
+              if (a_keeper) {
+                InsertDistanceInfo(G, ds, state1, state2, ai1, ai2, anion_vv,
+                    cation_vv, numVerts);
                 dist_cnt++;
                 dist_sum += dist;
-                // see if coords has room at another 6 floats
-                VLACheck(coords, float, (numVerts * 3) + 6);
-                float* vv0 = coords + (numVerts * 3);
-
-                if (don_vv != nullptr && acc_vv != nullptr) {
-                  const size_t count_to_copy = 3;
-
-                  std::copy_n(don_vv, count_to_copy, vv0);
-                  vv0 += count_to_copy;
-                  don_vv += count_to_copy;
-
-                  std::copy_n(acc_vv, count_to_copy, vv0);
-                  vv0 += count_to_copy;
-                  acc_vv += count_to_copy;
-                }
-
                 numVerts += 2;
               }
             }
