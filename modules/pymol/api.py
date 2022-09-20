@@ -33,6 +33,7 @@ from . import creating
 from .creating import \
       copy,               \
       create,             \
+      curve_new,          \
       extract,            \
       fragment,           \
       group,              \

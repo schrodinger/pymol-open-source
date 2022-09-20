@@ -153,8 +153,8 @@ int CGO_sz[] = {
 
   CGO_VERTEX_SZ,
   CGO_NORMAL_SZ,
-  CGO_COLOR_SZ,
-  CGO_SPHERE_SZ,
+  fsizeof<cgo::draw::color>(),
+  fsizeof<cgo::draw::sphere>(),
 
   CGO_TRIANGLE_SZ,
   fsizeof<cgo::draw::cylinder>(),

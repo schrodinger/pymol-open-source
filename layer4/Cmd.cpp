@@ -1392,6 +1392,18 @@ static PyObject *CmdGetColor(PyObject * self, PyObject * args)
   return (APIAutoNone(result));
 }
 
+static PyObject* CmdCurveNew(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  const char* curveName;
+  const char* curveType;
+  API_SETUP_ARGS(G, self, args, "Oss", &self, &curveName, &curveType);
+  API_ASSERT(APIEnterBlockedNotModal(G));
+  auto result = ExecutiveCurveNew(G, curveName, curveType);
+  APIExitBlocked(G);
+  return APIResult(G, result);
+}
+
 static PyObject *CmdGetChains(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -6227,6 +6239,7 @@ static PyMethodDef Cmd_methods[] = {
   {"count_states", CmdCountStates, METH_VARARGS},
   {"count_frames", CmdCountFrames, METH_VARARGS},
   {"count_discrete", CmdCountDiscrete, METH_VARARGS},
+  {"curve_new", CmdCurveNew, METH_VARARGS},
   {"cycle_valence", CmdCycleValence, METH_VARARGS},
   {"debug", CmdDebug, METH_VARARGS},
   {"decline", CmdDecline, METH_VARARGS},

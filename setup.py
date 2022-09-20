@@ -361,6 +361,7 @@ inc_dirs += pymol_src_dirs
 #============================================================================
 if MAC:
         libs += ["GLEW"]
+        def_macros += [("PYMOL_CURVE_VALIDATE", None)]
 
         if options.osx_frameworks:
             ext_link_args += [

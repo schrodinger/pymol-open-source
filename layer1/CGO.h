@@ -382,6 +382,23 @@ namespace cgo {
       int get_data_length() const { return nverts * 3 + n_data; };
     };
 
+    struct color {
+      static const int op_code = CGO_COLOR;
+      color(const float* _rgb) { copy3f(_rgb, rgb); }
+      float rgb[3]{};
+    };
+
+    struct sphere {
+      static const int op_code = CGO_SPHERE;
+      sphere(const float* _center, float _diameter)
+          : diamter(_diameter)
+      {
+        copy3f(_center, center);
+      }
+      float center[3]{};
+      float diamter{};
+    };
+
     struct sphere_buffers : op_with_data, op_with_draw_buffers {
       static const int op_code = CGO_DRAW_SPHERE_BUFFERS;
       sphere_buffers(int _num_spheres, int _ub_flags,

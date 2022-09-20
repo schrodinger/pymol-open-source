@@ -862,4 +862,19 @@ void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
  * @param color new bg color
  */
 pymol::Result<> ExecutiveBackgroundColor(PyMOLGlobals* G, pymol::zstring_view color);
+
+/**
+ * Sets background color
+ * @param colorIdx new bg color idx
+ */
+pymol::Result<> ExecutiveBackgroundColor(PyMOLGlobals* G, int colorIdx);
+
+/**
+ * Adds a new curve object
+ * @param curveName name of curve
+ * @param curveType type of curve
+ */
+pymol::Result<> ExecutiveCurveNew(PyMOLGlobals* G,
+    pymol::zstring_view curveName, pymol::zstring_view curveType);
+
 #endif

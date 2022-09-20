@@ -295,6 +295,29 @@ public:
   };
 };
 
+/**
+ * Similar to StateIterator but easily useable
+ * with ranged-for loops
+ */
+class StateIteratorV2 {
+  StateIndex_t m_beg;
+  StateIndex_t m_end;
+  StateIndex_t m_cur;
+
+public:
+  StateIteratorV2(pymol::CObject*, StateIndex_t);
+
+  /**
+   * @return begin state iterator
+   */
+  StateIndex_t* begin();
+
+  /**
+   * @return end state iterator
+   */
+  StateIndex_t* end();
+};
+
 /*
  * Setting levels (global, object, ...)
  */

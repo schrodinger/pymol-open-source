@@ -50,6 +50,7 @@ enum cObject_t : int {
   cObjectAlignment = 11,
   cObjectGroup = 12,
   cObjectVolume = 13,
+  cObjectCurve = 14,
 };
 
 /* 
@@ -105,6 +106,24 @@ protected:
 public:
   virtual ~CObject();
 
+  /**
+   * Gets a copy TTT matrix of PyMOL Object, disregarding TTT flag
+   * @return copy of TTT matrix
+   * Note: See also ObjectGetTTT (by-pointer retrieval)
+   */
+  pymol::Mat4 getTTT() const
+  {
+    pymol::Mat4 ret_ttt;
+    std::copy_n(std::begin(TTT), 16, ret_ttt.begin());
+    return ret_ttt;
+  }
+
+  /**
+   * Method version of ObjectSetName
+   * @param name new object Name
+   */
+  void setName(pymol::zstring_view name);
+
   virtual void update() {}
   virtual void render(RenderInfo* info);
   virtual void invalidate(cRep_t rep, cRepInv_t level, int state) {}
@@ -135,7 +154,7 @@ void ObjectCombineTTT(pymol::CObject * I, const float *ttt, int reverse_order, i
 void ObjectTranslateTTT(pymol::CObject * T, const float *v,int store);
 void ObjectSetTTTOrigin(pymol::CObject * I, float *origin);
 void ObjectResetTTT(pymol::CObject * I,int store);
-PyObject *ObjectAsPyList(pymol::CObject * I);
+PyObject *ObjectAsPyList(const pymol::CObject * I);
 int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, pymol::CObject * I);
 int ObjectGetCurrentState(const pymol::CObject * I, int ignore_all_states);
 void ObjectAdjustStateRebuildRange(pymol::CObject * I, int *start, int *stop);

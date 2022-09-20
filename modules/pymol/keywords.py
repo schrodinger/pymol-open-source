@@ -54,6 +54,7 @@ def get_command_keywords(self_cmd=cmd):
         'count_frames'  : [ self_cmd.count_frames      , 0 , 0 , ''  , parsing.STRICT ],
         'count_states'  : [ self_cmd.count_states      , 0 , 0 , ''  , parsing.STRICT ],
         'count_discrete': [ self_cmd.count_discrete    , 0 , 0 , ''  , parsing.STRICT ],
+        'curve_new'     : [ self_cmd.curve_new         , 0 , 0 , ''  , parsing.STRICT ],
         'cycle_valence' : [ self_cmd.cycle_valence     , 0 , 0 , ''  , parsing.STRICT ],
         'create'        : [ self_cmd.create            , 0 , 0 , ''  , parsing.LEGACY ],
         'decline'       : [ self_cmd.decline           , 0 , 0 , ''  , parsing.STRICT ],

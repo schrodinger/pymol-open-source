@@ -1205,3 +1205,20 @@ EXAMPLE
 
         if int(zoom):
             _self.zoom(name, state=0)
+
+    def curve_new(name="", curve_type="bezier", *, _self=cmd):
+        """
+DESCRIPTION
+
+    "curve_new" creates a new curve object.
+
+ARGUMENTS
+
+    name = string: name of object to create
+
+    curve_type = string: type of curve (currently only "bezier" supported)
+        """
+        if not name:
+            name = _self.get_unused_name("Curve")
+        with _self.lockcm:
+            _cmd.curve_new(_self._COb, name, curve_type)

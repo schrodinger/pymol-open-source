@@ -678,7 +678,7 @@ int ObjectGetCurrentState(const pymol::CObject * I, int ignore_all_states)
   return std::max(-1, I->getCurrentState());
 }
 
-PyObject *ObjectAsPyList(pymol::CObject * I)
+PyObject *ObjectAsPyList(const pymol::CObject * I)
 {
   PyObject *result = NULL;
   result = PyList_New(14);
@@ -1135,6 +1135,10 @@ void ObjectSetName(pymol::CObject * I, const char *name)
     ObjectMakeValidName(I->G, I->Name);
 }
 
+void pymol::CObject::setName(pymol::zstring_view name)
+{
+  ObjectSetName(this, name.data());
+}
 
 /*========================================================================*/
 pymol::CObject::~CObject()

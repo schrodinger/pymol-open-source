@@ -3177,6 +3177,43 @@ StateIterator::StateIterator(pymol::CObject* obj, StateIndex_t state_)
 {
 }
 
+StateIteratorV2::StateIteratorV2(
+    pymol::CObject* obj, StateIndex_t state_)
+{
+  auto G = obj->G;
+  auto set = obj->Setting.get();
+  auto nstate = obj->getNFrame();
+  if (state_ == cStateCurrent) {
+    state_ = SettingGet<int>(G, set, nullptr, cSetting_state) - 1;
+  }
+
+  if (state_ == cStateAll) {
+    m_cur = 0;
+    m_end = nstate;
+  } else {
+    // given state or static singleton
+    m_cur = (state_ > 0 && nstate == 1 &&
+                SettingGet<bool>(G, set, nullptr, cSetting_static_singletons))
+                ? 0
+                : state_;
+    m_end = m_cur + 1;
+  }
+  m_cur = std::max(0, m_cur);
+  m_beg = m_cur;
+  m_end = std::min(m_end, nstate);
+
+  m_cur--;
+}
+
+StateIndex_t* StateIteratorV2::begin()
+{
+  return &m_beg;
+}
+StateIndex_t* StateIteratorV2::end()
+{
+  return &m_end;
+}
+
 /**
  * Helper function to init CPyMOL.Setting, a (name: index) dictionary.
  * Called in PyMOL_InitAPI

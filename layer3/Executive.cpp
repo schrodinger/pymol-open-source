@@ -47,6 +47,7 @@
 #include"ObjectCallback.h"
 #include"ObjectMap.h"
 #include"ObjectMolecule3.h"
+#include"ObjectCurve.h"
 #include"ListMacros.h"
 #include"List.h"
 #include"MyPNG.h"
@@ -16799,5 +16800,25 @@ pymol::Result<> ExecutiveBackgroundColor(PyMOLGlobals* G, pymol::zstring_view co
 {
   SettingSet_color(G->Setting, cSetting_bg_rgb, color.c_str());
   SettingGenerateSideEffects(G, cSetting_bg_rgb, nullptr, -1, 0);
+  return {};
+}
+
+pymol::Result<> ExecutiveBackgroundColor(PyMOLGlobals* G, int colorIdx)
+{
+  SettingSet_i(G->Setting, cSetting_bg_rgb, colorIdx);
+  SettingGenerateSideEffects(G, cSetting_bg_rgb, nullptr, -1, 0);
+  return {};
+}
+
+pymol::Result<> ExecutiveCurveNew(PyMOLGlobals* G,
+    pymol::zstring_view curveName, pymol::zstring_view curvetype)
+{
+  auto oldObj = ExecutiveFindObject<ObjectCurve>(G, curveName);
+  if (oldObj) {
+    return pymol::make_error("Curve of this name already exists.");
+  }
+  auto obj = pymol::make_unique<ObjectCurve>(G);
+  obj->setName(curveName);
+  ExecutiveManageObject(G, obj.release(), false, true);
   return {};
 }
