@@ -1,5 +1,8 @@
 #include "Camera.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 namespace pymol
 {
 
@@ -87,4 +90,8 @@ SceneView::ClippingPlane& Camera::m_clipSafe()
   return m_view.m_clipSafe;
 }
 
+glm::vec3 Camera::worldPos() const
+{
+  return m_view.worldPos();
+}
 } // namespace pymol

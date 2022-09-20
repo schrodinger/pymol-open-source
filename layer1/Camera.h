@@ -108,5 +108,10 @@ public:
    * @returns safe values of camera clipping plane
    */
   SceneView::ClippingPlane& m_clipSafe();
+
+  /**
+   * @returns the camera position in model/world space
+   */
+  glm::vec3 worldPos() const;
 };
 } // namespace pymol

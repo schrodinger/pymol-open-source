@@ -205,6 +205,7 @@ from .editing import \
       invert,             \
       iterate,            \
       iterate_state,      \
+      look_at,            \
       map_set,            \
       map_set_border,     \
       map_double,         \

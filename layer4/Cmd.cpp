@@ -6195,6 +6195,17 @@ static PyObject* CmdM2ioFirstBlockProperties(PyObject* self, PyObject* args)
 #endif
 }
 
+static PyObject* CmdLookAt(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  const char* targetObjName;
+  API_SETUP_ARGS(G, self, args, "Os", &self, &targetObjName);
+  API_ASSERT(APIEnterBlockedNotModal(G));
+  auto result = ExecutiveLookAt(G, targetObjName);
+  APIExitBlocked(G);
+  return APIResult(G, result);
+}
+
 static PyMethodDef Cmd_methods[] = {
   {"glViewport", Cmd_glViewport, METH_VARARGS},
   {"_new", Cmd_New, METH_VARARGS},
@@ -6364,6 +6375,7 @@ static PyMethodDef Cmd_methods[] = {
   {"load_png", CmdLoadPNG, METH_VARARGS},
   {"load_object", CmdLoadObject, METH_VARARGS},
   {"load_traj", CmdLoadTraj, METH_VARARGS},
+  {"look_at", CmdLookAt, METH_VARARGS},
   {"map_generate", CmdMapGenerate, METH_VARARGS},
   {"map_new", CmdMapNew, METH_VARARGS},
   {"map_double", CmdMapDouble, METH_VARARGS},

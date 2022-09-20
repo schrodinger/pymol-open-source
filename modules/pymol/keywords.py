@@ -151,6 +151,7 @@ def get_command_keywords(self_cmd=cmd):
         'log'           : [ self_cmd.log               , 0 , 0 , ''  , parsing.STRICT ],
         'log_close'     : [ self_cmd.log_close         , 0 , 0 , ''  , parsing.STRICT ],
         'log_open'      : [ self_cmd.log_open          , 0 , 0 , ''  , parsing.STRICT ],
+        'look_at'       : [ self_cmd.look_at           , 0 , 0 , ''  , parsing.STRICT ],
         'ls'            : [ self_cmd.ls                , 0 , 0 , ''  , parsing.STRICT ],
         'madd'          : [ self_cmd.madd              , 0 , 0 , ''  , parsing.STRICT ],
         'mask'          : [ self_cmd.mask              , 0 , 0 , ''  , parsing.STRICT ],

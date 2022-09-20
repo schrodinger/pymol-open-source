@@ -1852,6 +1852,25 @@ PYMOL API
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
+    def look_at(target_obj: str, *, _self=cmd):
+        """
+DESCRIPTION
+
+    "look_at" modifies a rotation of an object (or view) so that its forward (z axis)
+    faces a target object.
+
+USAGE
+
+    look_at target_obj
+
+PYMOL API
+
+    cmd.look_at(string target_obj)
+
+    """
+        with _self.lockcm:
+            return _cmd.look_at(_self._COb, target_obj)
+
 
     def set_title(object, state, text, _self=cmd):
         '''

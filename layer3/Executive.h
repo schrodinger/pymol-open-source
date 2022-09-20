@@ -870,6 +870,12 @@ pymol::Result<> ExecutiveBackgroundColor(PyMOLGlobals* G, pymol::zstring_view co
 pymol::Result<> ExecutiveBackgroundColor(PyMOLGlobals* G, int colorIdx);
 
 /**
+ * Directs a rotation toward facing an object
+ */
+pymol::Result<> ExecutiveLookAt(
+    PyMOLGlobals* G, pymol::zstring_view targetObjectName);
+ 
+/** 
  * Adds a new curve object
  * @param curveName name of curve
  * @param curveType type of curve

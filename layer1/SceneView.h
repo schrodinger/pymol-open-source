@@ -24,6 +24,28 @@ struct SceneView {
 
   const glm::mat4& rotMatrix() const noexcept;
   void setRotMatrix(const glm::mat4& m);
+
+  /**
+   * @return the homogeneous Camera matrix of this SceneView
+   */
+  glm::mat4 toWorldHomogeneous() const noexcept;
+
+  /**
+   * Converts a Homogenous Camera matrix to a SceneView
+   * Requires the original sceneView
+   * @param mat Homogenous matrix in World space
+   * @param sceneView reference SceneView
+   * @return new SceneView
+   */
+  static SceneView FromWorldHomogeneous(
+      const glm::mat4& mat, SceneView sceneView);
+
+  /**
+   * Returns the position of the view in world/model-
+   * space.
+   */
+  glm::vec3 worldPos() const noexcept;
+
 private:
   glm::vec3 m_pos;
   glm::vec3 m_origin;

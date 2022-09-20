@@ -82,3 +82,39 @@ void SceneView::setRotMatrix(const glm::mat4& m)
 {
   m_rotMatrix = m;
 }
+
+glm::mat4 SceneView::toWorldHomogeneous() const noexcept
+{
+  glm::mat4 matrix = glm::translate(glm::mat4(1.0f), m_pos);
+  matrix *= rotMatrix();
+  return glm::translate(matrix, -m_origin);
+}
+
+SceneView SceneView::FromWorldHomogeneous(
+    const glm::mat4& mat, SceneView sceneView)
+{
+  // build inverse origin translate
+  const auto& ori = sceneView.origin();
+  glm::mat4 invOriginTranslate = glm::translate(glm::mat4(1.0), ori);
+  glm::mat4 temp = mat * invOriginTranslate;
+  auto atemp = glm::value_ptr(temp);
+  sceneView.setPos(atemp[12], atemp[13], atemp[14]);
+  // decompose shiftRot
+  atemp[12] = atemp[13] = atemp[14] = 0.0f;
+  sceneView.setRotMatrix(temp);
+  return sceneView;
+}
+
+glm::vec3 SceneView::worldPos() const noexcept
+{
+  auto mat = glm::translate(glm::mat4(1.0f), m_pos);
+  mat *= rotMatrix();
+  mat = glm::translate(mat, -m_origin);
+
+  auto mvm = glm::value_ptr(mat);
+  auto trans = glm::make_vec3(glm::make_vec3(mvm + 12));
+  mat = glm::transpose(mat);
+  glm::vec3 eyePosM = mat * glm::vec4(trans, 1);
+  eyePosM *= -1;
+  return eyePosM;
+}

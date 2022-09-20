@@ -16810,6 +16810,53 @@ pymol::Result<> ExecutiveBackgroundColor(PyMOLGlobals* G, int colorIdx)
   return {};
 }
 
+/**
+ * @return the center of an object's extent
+ * @param objName the name of object to face
+ */
+static pymol::Result<glm::vec3> ExecutiveGetObjectExtentCenter(
+    PyMOLGlobals* G, pymol::zstring_view objName)
+{
+  glm::vec3 min;
+  glm::vec3 max;
+  bool asTransformed = true;
+  bool quiet = true;
+  auto ext = ExecutiveGetExtent(G, objName.c_str(), glm::value_ptr(min),
+      glm::value_ptr(max), asTransformed, cStateCurrent, quiet);
+  if (!ext) {
+    return pymol::make_error("Couldn't get extent of: ", objName.c_str());
+  }
+  return (min + max) / 2.0f;
+}
+
+/**
+ * Directs the view toward an object
+ * @param tarObj the object to face
+ */
+static pymol::Result<> ExecutiveCameraLookAt(PyMOLGlobals* G, pymol::CObject& tarObj)
+{
+  auto& cam = G->Scene->m_view;
+
+  auto target = ExecutiveGetObjectExtentCenter(G, tarObj.Name);
+  if (!target) {
+    return target.error();
+  }
+
+  auto tfx = glm::lookAt(cam.worldPos(), *target, glm::vec3(0.0f, 1.0f, 0.0f));
+  cam.setView(SceneView::FromWorldHomogeneous(tfx, cam.getView()));
+  return {};
+}
+
+pymol::Result<> ExecutiveLookAt(
+    PyMOLGlobals* G, pymol::zstring_view targetObjectName)
+{
+  auto targetObj = ExecutiveFindObjectByName(G, targetObjectName);
+  if (!targetObj) {
+    return pymol::make_error("Target object not found.");
+  }
+  return ExecutiveCameraLookAt(G, *targetObj);
+}
+
 pymol::Result<> ExecutiveCurveNew(PyMOLGlobals* G,
     pymol::zstring_view curveName, pymol::zstring_view curvetype)
 {
