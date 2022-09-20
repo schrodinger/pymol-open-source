@@ -1,0 +1,14 @@
+#version 400
+
+layout(vertices = 4) out;
+
+uniform float segmentCount;
+uniform float stripCount;
+
+void main()
+{
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+
+    gl_TessLevelOuter[1] = segmentCount;
+    gl_TessLevelOuter[0] = stripCount;
+}

@@ -337,6 +337,7 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
 
     CGO *allCylinders = NULL;
     CGO *allSpheres = NULL;
+    CGO* allBeziers = nullptr;
     pymol::cache_ptr<CGO> preOpt;
 
     {
@@ -395,6 +396,14 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
               CGOFree(allButSpheres);
             }
           }
+          if (CGOHasBezierOperations(convertcgo)) {
+            CGO* allButBezier = new CGO(G);
+            allBeziers = CGOOptimizeBezier(convertcgo);
+            CGOFilterOutBezierOperationsInto(convertcgo, allButBezier);
+            CGOStop(allButBezier);
+            CGOFree(convertcgo);
+            convertcgo = allButBezier;
+          }
           preOpt.reset(CGOSimplify(convertcgo, 0));
         } else {
           preOpt.reset(CGOSimplifyNoCompress(convertcgo, 0));
@@ -435,6 +444,10 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
         preOpt->free_append(allSpheres);
       }
 
+      if (allBeziers) {
+        preOpt->free_append(allBeziers);
+      }
+
       sobj->renderCGO = std::move(preOpt);
     } else {
       assert(sobj->hasTransparency == CGOHasTransparency(preOpt.get()));
@@ -450,6 +463,7 @@ static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState
 
     assert(allCylinders == nullptr);
     assert(allSpheres == nullptr);
+    assert(allBeziers == nullptr);
 
     sobj->renderWithShaders = use_shader;
     sobj->cgo_lighting = cgo_lighting;

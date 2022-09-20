@@ -73,6 +73,7 @@ Z* -------------------------------------------------------------------
 
 #ifndef _DEAD_CODE_DIE
 #define SUPPRESS_GEOMETRY_SHADER_ERRORS
+#define SUPPRESS_TESSELLATION_SHADER_ERRORS
 #endif
 
 #define CONNECTOR_GS_NUM_VERTICES  31
@@ -99,12 +100,18 @@ bool CShaderPrg::reload(){
   if (is_valid || vertfile.empty())
     return true;
 
-  std::string gs, vs, fs;
+  std::string gs, vs, fs, ts_ctrl, ts_eval;
   CShaderMgr *I = G->ShaderMgr;
   GLint status;
 
-  if (!geomfile.empty())
-    gs = I->GetShaderSource(geomfile);
+  if (geomParams) {
+    gs = I->GetShaderSource(geomParams->file);
+  }
+
+  if (tessParams) {
+    ts_ctrl = I->GetShaderSource(tessParams->controlFile);
+    ts_eval = I->GetShaderSource(tessParams->evaluationFile);
+  }
 
   vs = I->GetShaderSource(vertfile);
   fs = I->GetShaderSource(fragfile);
@@ -120,49 +127,99 @@ bool CShaderPrg::reload(){
   }
 
 #ifndef PURE_OPENGL_ES_2
-  if (!gs.empty() && SettingGetGlobal_b(G, cSetting_use_geometry_shaders)) {
-    if (!gid) {
-      gid = glCreateShader(GL_GEOMETRY_SHADER);
+  if (geomParams && SettingGet<bool>(G, cSetting_use_geometry_shaders)) {
+    if (!geomParams->id) {
+      geomParams->id = glCreateShader(GL_GEOMETRY_SHADER);
 
       GLenum err;
-      if ((err=glGetError()) || !gid) {
+      if ((err=glGetError()) || !geomParams->id) {
         PRINTFB(G, FB_ShaderMgr, FB_Errors)
           " Error: geometry shader creation failed. name=%s err=0x%x\n", name.c_str(), err ENDFB(G);
         return false;
       }
 
-      glAttachShader(id, gid);
+      glAttachShader(id, geomParams->id);
     }
 
-    glShaderSource1String(gid, gs);
-    glCompileShader((GLuint) gid);
-    glGetShaderiv(gid, GL_COMPILE_STATUS, &status);
+    glShaderSource1String(geomParams->id, gs);
+    glCompileShader((GLuint) geomParams->id);
+    glGetShaderiv(geomParams->id, GL_COMPILE_STATUS, &status);
 
     if (!status) {
 #ifndef SUPPRESS_GEOMETRY_SHADER_ERRORS
-      ErrorMsgWithShaderInfoLog(gid, "geometry shader compilation failed.");
+      ErrorMsgWithShaderInfoLog(geomParams->id, "geometry shader compilation failed.");
 #endif
-      glDetachShader(id, gid);
-      glDeleteShader(gid);
-      gid = 0;
+      glDetachShader(id, geomParams->id);
+      glDeleteShader(geomParams->id);
+      geomParams->id = 0;
       return false;
     }
 
-    glProgramParameteriEXT(id, GL_GEOMETRY_INPUT_TYPE_EXT, gsInput);
-    glProgramParameteriEXT(id, GL_GEOMETRY_OUTPUT_TYPE_EXT, gsOutput);
-    glProgramParameteriEXT(id, GL_GEOMETRY_VERTICES_OUT_EXT, ngsVertsOut);
+    glProgramParameteriEXT(id, GL_GEOMETRY_INPUT_TYPE_EXT, geomParams->input);
+    glProgramParameteriEXT(id, GL_GEOMETRY_OUTPUT_TYPE_EXT, geomParams->output);
+    glProgramParameteriEXT(id, GL_GEOMETRY_VERTICES_OUT_EXT, geomParams->numVertsOut);
 
     PRINTFB(G, FB_ShaderMgr, FB_Debugging)
       " ShaderPrg-Debug: geometry shader compiled.\n" ENDFB(G);
-  } else if (gid) {
+  } else if (geomParams && geomParams->id) {
     // for manually switching off geometry shaders (set use_geometry_shaders, off)
-    glDetachShader(id, gid);
-    glDeleteShader(gid);
-    gid = 0;
+    glDetachShader(id, geomParams->id);
+    glDeleteShader(geomParams->id);
+    geomParams->id = 0;
   }
 
   WARNING_IF_GLERROR("CShaderPrg::reload after geometry shader");
-#endif
+
+  if (tessParams && SettingGet<bool>(G, cSetting_use_tessellation_shaders)) {
+    if (!tessParams->controlID) {
+      tessParams->controlID = glCreateShader(GL_TESS_CONTROL_SHADER);
+      GLenum err;
+      if ((err = glGetError()) || !tessParams->controlID) {
+        PRINTFB(G, FB_ShaderMgr, FB_Errors)
+        " Error: geometry shader creation failed. name=%s err=0x%x\n",
+            name.c_str(), err ENDFB(G);
+        return false;
+      }
+      glAttachShader(id, tessParams->controlID);
+    }
+    glShaderSource1String(tessParams->controlID, ts_ctrl);
+    glCompileShader((GLuint) tessParams->controlID);
+    glGetShaderiv(tessParams->controlID, GL_COMPILE_STATUS, &status);
+
+    if (!status) {
+      ErrorMsgWithShaderInfoLog(
+          tessParams->controlID, "tess ctrl shader compilation failed.");
+      glDetachShader(id, tessParams->controlID);
+      glDeleteShader(tessParams->controlID);
+      tessParams->controlID = 0;
+      return false;
+    }
+
+    if (!tessParams->evaluationID) {
+      tessParams->evaluationID = glCreateShader(GL_TESS_EVALUATION_SHADER);
+      GLenum err;
+      if ((err = glGetError()) || !tessParams->evaluationID) {
+        PRINTFB(G, FB_ShaderMgr, FB_Errors)
+        " Error: tess eval shader creation failed. name=%s err=0x%x\n",
+            name.c_str(), err ENDFB(G);
+        return false;
+      }
+      glAttachShader(id, tessParams->evaluationID);
+    }
+    glShaderSource1String(tessParams->evaluationID, ts_eval);
+    glCompileShader((GLuint) tessParams->evaluationID);
+    glGetShaderiv(tessParams->evaluationID, GL_COMPILE_STATUS, &status);
+
+    if (!status) {
+      ErrorMsgWithShaderInfoLog(
+          tessParams->evaluationID, "tess ctrl evaluation compilation failed.");
+      glDetachShader(id, tessParams->evaluationID);
+      glDeleteShader(tessParams->evaluationID);
+      tessParams->evaluationID = 0;
+      return false;
+    }
+  }
+#endif // PURE_OPENGL_ES2
 
   // vertex shader
   {
@@ -225,6 +282,7 @@ bool CShaderPrg::reload(){
 
 #define MASK_SHADERS_PRESENT_GEOMETRY 0x2;
 #define MASK_SHADERS_PRESENT_SMAA 0x4;
+#define MASK_SHADERS_PRESENT_TESSELLATION 0x8;
 
 static void getGLVersion(PyMOLGlobals * G, int *major, int* minor);
 static void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor);
@@ -257,6 +315,19 @@ static void disableGeometryShaders(PyMOLGlobals * G) {
   if (G->Option && !G->Option->quiet)
     PRINTFB(G, FB_ShaderMgr, FB_Warnings)
       " Geometry shaders not available\n" ENDFB(G);
+}
+
+static void disableTessellationShaders(PyMOLGlobals* G)
+{
+  SettingSet<bool>(G, cSetting_use_tessellation_shaders, false);
+  if (G->ShaderMgr) {
+    G->ShaderMgr->SetPreprocVar("use_tessellation_shaders", false);
+  }
+
+  if (G->Option && !G->Option->quiet) {
+    PRINTFB(G, FB_ShaderMgr, FB_Warnings)
+    " Tessellation shaders not available\n" ENDFB(G);
+  }
 }
 
 /**
@@ -745,10 +816,21 @@ void CShaderMgr::Config() {
   make_program("screen", "screen.vs", "screen.fs");
 
   if (GLEW_EXT_geometry_shader4 && GLEW_EXT_gpu_shader4){
-    make_program("connector", "connector.vs", "connector.fs",
-		 "connector.gs", GL_POINTS, GL_TRIANGLE_STRIP, CONNECTOR_GS_NUM_VERTICES);
+    auto geoParams = pymol::make_copyable<CShaderPrg::GeometryShaderParams>(
+        CShaderPrg::GeometryShaderParams{"connector.gs", GL_POINTS,
+            GL_TRIANGLE_STRIP, CONNECTOR_GS_NUM_VERTICES});
+    make_program(
+        "connector", "connector.vs", "connector.fs", std::move(geoParams));
   } else {
     make_program("connector", "connector.vs", "connector.fs");
+  }
+
+  if (GLEW_ARB_tessellation_shader && GLEW_ARB_gpu_shader5) {
+    auto tessParams =
+        pymol::make_copyable<CShaderPrg::TessellationShaderParams>(
+            CShaderPrg::TessellationShaderParams{"bezier.tsc", "bezier.tse"});
+    make_program(
+        "bezier", "bezier.vs", "bezier.fs", nullptr, std::move(tessParams));
   }
 
   if (GET_FRAGDEPTH_SUPPORT()) {
@@ -771,13 +853,28 @@ void CShaderMgr::Config() {
 
 #ifndef PURE_OPENGL_ES_2
   // geometry shaders availability test
-  if (programs["connector"]->reload() && programs["connector"]->gid) {
+  if (programs["connector"]->reload() &&
+      programs["connector"]->geomParams->id) {
     shaders_present |= MASK_SHADERS_PRESENT_GEOMETRY;
   } else {
     disableGeometryShaders(G);
   }
+
+  // tessellation shaders availability test
+  if (programs.find("bezier") != programs.end()) {
+    auto& tess = programs["bezier"];
+    if (tess->reload()) {
+      auto& tessParams = tess->tessParams;
+      if (tessParams && tessParams->controlID && tessParams->evaluationID) {
+        shaders_present |= MASK_SHADERS_PRESENT_TESSELLATION;
+      }
+    }
+  } else {
+    disableTessellationShaders(G);
+  }
 #else
   SettingSetGlobal_b(G, cSetting_use_geometry_shaders, 0);
+  SettingSet<bool>(G, cSetting_use_tessellation_shaders, 0);
 #endif
 
 #define check_program(name, setting, value) {   \
@@ -1361,6 +1458,31 @@ CShaderPrg *CShaderMgr::Enable_IndicatorShader() {
   return (shaderPrg);
 }
 
+CShaderPrg* CShaderMgr::Enable_BezierShader()
+{
+  auto shaderPrg = Get_BezierShader();
+  if (!shaderPrg) {
+    return nullptr;
+  }
+  shaderPrg->Enable();
+
+  glPatchParameteri(GL_PATCH_VERTICES, 4);
+
+  const float segmentCount = 256.0f;
+  const float stripCount = 1.0f;
+
+  shaderPrg->Set1f("segmentCount", segmentCount);
+  shaderPrg->Set1f("stripCount", stripCount);
+
+  shaderPrg->SetMat4fc("g_ModelViewMatrix", SceneGetModelViewMatrix(G));
+  shaderPrg->SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrix(G));
+  return shaderPrg;
+}
+
+CShaderPrg* CShaderMgr::Get_BezierShader()
+{
+  return GetShaderPrg("bezier");
+}
 
 void CShaderMgr::ResetUniformSet() {
   for (auto & prog : programs) {
@@ -1565,8 +1687,13 @@ GLfloat *CShaderMgr::GetLineWidthRange() {
 void CShaderMgr::RegisterDependantFileNames(CShaderPrg * shader) {
   shader_deps[shader->vertfile].push_back(shader->name);
   shader_deps[shader->fragfile].push_back(shader->name);
-  if (!shader->geomfile.empty())
-    shader_deps[shader->geomfile].push_back(shader->name);
+  if (shader->geomParams) {
+    shader_deps[shader->geomParams->file].push_back(shader->name);
+  }
+  if (shader->tessParams) {
+    shader_deps[shader->tessParams->controlFile].push_back(shader->name);
+    shader_deps[shader->tessParams->evaluationFile].push_back(shader->name);
+  }
 }
 
 /**

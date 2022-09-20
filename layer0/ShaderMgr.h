@@ -59,40 +59,58 @@ static PFNGLGETPROGRAMIVARBPROC glGetProgramivARB;
 
 class CShaderPrg {
 public:
-  const std::string name, geomfile, vertfile, fragfile;
+  struct GeometryShaderParams
+  {
+    std::string file = "";
+    GLenum input{};
+    GLenum output{};
+    int numVertsOut{};
+    GLuint id{};
+  };
+
+  struct TessellationShaderParams
+  {
+    std::string controlFile = "";
+    std::string evaluationFile = "";
+    GLuint controlID{};
+    GLuint evaluationID{};
+  };
+
+  const std::string name, vertfile, fragfile;
+  pymol::copyable_ptr<GeometryShaderParams> geomParams;
+  pymol::copyable_ptr<TessellationShaderParams> tessParams;
 
   std::map<int, std::string> uniformLocations;
-
-  GLenum gsInput, gsOutput;
-  int ngsVertsOut;
 
   std::string derivative;
   bool is_valid;
   bool is_linked;
 
-  CShaderPrg(PyMOLGlobals * G_,
-             const std::string &name,
-             const std::string &vertfile,
-             const std::string &fragfile,
-             const std::string &geomfile = "",
-             GLenum gsInput = 0,
-             GLenum gsOutput = 0,
-             int ngsVertsOut = 0) :
-    name(name),
-    geomfile(geomfile), vertfile(vertfile), fragfile(fragfile),
-    gsInput(gsInput), gsOutput(gsOutput), ngsVertsOut(ngsVertsOut),
-    is_valid(false), is_linked(false), G(G_),
-    id(0), gid(0), vid(0), fid(0), uniform_set(0) {}
-
-  ~CShaderPrg() {}
+  CShaderPrg(PyMOLGlobals* G_, const std::string& name,
+      const std::string& vertfile, const std::string& fragfile,
+      pymol::copyable_ptr<GeometryShaderParams> geomParams = nullptr,
+      pymol::copyable_ptr<TessellationShaderParams> tessParams = nullptr)
+      : name(name)
+      , geomParams(std::move(geomParams))
+      , tessParams(std::move(tessParams))
+      , vertfile(vertfile)
+      , fragfile(fragfile)
+      , is_valid(false)
+      , is_linked(false)
+      , G(G_)
+  {
+  }
 
   bool reload();
 
   /*
    * Create a derivative copy. This will reload with ShaderMgr::Reload_Derivatives.
    */
-  CShaderPrg * DerivativeCopy(const std::string &name, const std::string &variable) {
-    CShaderPrg * copy = new CShaderPrg(G, name, vertfile, fragfile, geomfile, gsInput, gsOutput, ngsVertsOut);
+  CShaderPrg* DerivativeCopy(
+      const std::string& name, const std::string& variable)
+  {
+    CShaderPrg* copy =
+        new CShaderPrg(G, name, vertfile, fragfile, geomParams, tessParams);
     copy->derivative = variable;
     return copy;
   }
@@ -137,17 +155,16 @@ public:
   PyMOLGlobals * G;
 
   /* openGL assigned id */
-  int id;
+  int id{};
 
   /* openGL fragment and vertex shader ids */
-  GLuint gid;
-  GLuint vid;
-  GLuint fid;
+  GLuint vid{};
+  GLuint fid{};
 
   std::map<std::string, int> uniforms;
   std::map<std::string, int> attributes;
 
-  int uniform_set ; // bitmask
+  int uniform_set{}; // bitmask
 };
 
 /* ============================================================================
@@ -234,6 +251,7 @@ public:
   CShaderPrg *Enable_OITCopyShader();
   CShaderPrg *Enable_IndicatorShader();
   CShaderPrg *Enable_BackgroundShader();
+  CShaderPrg* Enable_BezierShader();
 
   void Disable_Current_Shader();
 
@@ -250,6 +268,7 @@ public:
   CShaderPrg *Get_IndicatorShader();
   CShaderPrg *Get_BackgroundShader();
   CShaderPrg *Get_LabelShader(RenderPass pass);
+  CShaderPrg* Get_BezierShader();
 
   void Reload_CallComputeColorForLight();
   void Reload_All_Shaders();

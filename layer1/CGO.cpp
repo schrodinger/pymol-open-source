@@ -217,6 +217,8 @@ int CGO_sz[] = {
   CGO_VERTEX_BEGIN_LINE_STRIP_SZ,  CGO_INTERPOLATED_SZ,  CGO_VERTEX_CROSS_SZ,
   fsizeof<cgo::draw::vertex_attribute_4ub_if_picking>(),
   fsizeof<cgo::draw::custom_cylinder_alpha>(),
+  CGO_BEZIER_SZ,
+  fsizeof<cgo::draw::bezier_buffers>(),
   CGO_NULL_SZ
 };
 
@@ -4143,6 +4145,42 @@ CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est, bool addshaders, 
   return (cgo);
 }
 
+CGO* CGOOptimizeBezier(const CGO* I)
+{
+  auto cgo = pymol::make_unique<CGO>(I->G);
+  int num_splines = CGOCountNumberOfOperationsOfType(I, CGO_BEZIER);
+  auto vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
+  std::vector<float> vertData;
+  vertData.reserve(num_splines * CGO_BEZIER_SZ);
+  for (auto it = I->begin(); !it.is_stop(); ++it) {
+    const auto op = it.op_code();
+    const auto pc = it.data();
+
+    switch (op) {
+    case CGO_BEZIER:
+      {
+        vertData.resize(vertData.size() + CGO_BEZIER_SZ);
+        std::copy_n(pc, CGO_BEZIER_SZ, vertData.end() - CGO_BEZIER_SZ);
+      }
+      break;
+    }
+  }
+
+  std::size_t numDimensions = 3;
+  std::size_t numVerts = 4;
+  vbo->bufferData({
+      BufferDesc("position", GL_FLOAT, numDimensions, sizeof(float) * numVerts * numDimensions,
+          vertData.data(), GL_FALSE),
+  });
+  size_t vboid = vbo->get_hash_id();
+
+  CGOEnable(cgo.get(), GL_BEZIER_SHADER);
+  cgo->add<cgo::draw::bezier_buffers>(vboid);
+  CGODisable(cgo.get(), GL_BEZIER_SHADER);
+  cgo->use_shader = true;
+  return cgo.release();
+}
+
 /**
  * converts a CGO that has primitives into pure geometry,
  *    and converts CGO_BEGIN/CGO_END blocks into CGO_DRAW_ARRAYS
@@ -6749,6 +6787,12 @@ bool CGOFilterOutCylinderOperationsInto(const CGO *I, CGO *cgo){
   return CGOFilterOutOperationsOfTypeN(I, cgo, optypes);
 }
 
+bool CGOFilterOutBezierOperationsInto(const CGO* I, CGO* cgo)
+{
+  static std::set<int> optypes = {CGO_BEZIER};
+  return CGOFilterOutOperationsOfTypeN(I, cgo, optypes);
+}
+
 bool CGOHasCylinderOperations(const CGO *I){
   static std::set<int> optypes = { CGO_SHADER_CYLINDER, 
                                    CGO_SHADER_CYLINDER_WITH_2ND_COLOR,
@@ -6761,6 +6805,12 @@ bool CGOHasCylinderOperations(const CGO *I){
 
 bool CGOHasSphereOperations(const CGO *I){
   static std::set<int> optypes = { CGO_SPHERE };
+  return CGOHasOperationsOfTypeN(I, optypes);
+}
+
+bool CGOHasBezierOperations(const CGO* I)
+{
+  static std::set<int> optypes = {CGO_BEZIER};
   return CGOHasOperationsOfTypeN(I, optypes);
 }
 

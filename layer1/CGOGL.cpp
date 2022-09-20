@@ -741,6 +741,21 @@ static void CGO_gl_draw_sphere_buffers(CCGORenderer* I, CGO_op_data pc)
   vbo->unbind();
 }
 
+static void CGO_gl_draw_bezier_buffers(CCGORenderer* I, CGO_op_data cgo_data)
+{
+  const auto bezier =
+      reinterpret_cast<const cgo::draw::bezier_buffers*>(*cgo_data);
+  const auto vbo = I->G->ShaderMgr->getGPUBuffer<VertexBuffer>(bezier->vboid);
+  auto shaderPrg = I->G->ShaderMgr->Get_BezierShader();
+  if (!shaderPrg) {
+    return;
+  }
+
+  vbo->bind(shaderPrg->id);
+  glDrawArrays(GL_PATCHES, 0, 4);
+  vbo->unbind();
+}
+
 static void CGO_gl_draw_cylinder_buffers(CCGORenderer* I, CGO_op_data pc)
 {
   const cgo::draw::cylinder_buffers* sp = reinterpret_cast<decltype(sp)>(*pc);
@@ -1579,6 +1594,9 @@ static void CGO_gl_enable(CCGORenderer* I, CGO_op_data pc)
         if (float_text)
           glEnable(GL_DEPTH_TEST);
       } break;
+      case GL_BEZIER_SHADER:
+        shaderMgr->Enable_BezierShader();
+        break;
       }
     }
   } else {
@@ -1837,7 +1855,11 @@ CGO_op_fn CGO_gl[] = {CGO_gl_null, /* 0x00 */
     CGO_gl_bind_vbo_for_picking, CGO_gl_vertex,
     CGO_gl_null,         // interpolated
     CGO_gl_vertex_cross, // CGO_VERTEX_CROSS
-    CGO_gl_vertex_attribute_4ub_if_picking, CGO_gl_error};
+    CGO_gl_vertex_attribute_4ub_if_picking,
+    CGO_gl_null, // custom cylinder alpha
+    CGO_gl_null, // bezier
+    CGO_gl_draw_bezier_buffers,
+    CGO_gl_error};
 
 #if 0
 static

@@ -258,6 +258,11 @@ inline uchar CLIP_NORMAL_VALUE(float cv){ return ((cv>1.f) ? 127 :
 
 #define CGO_CUSTOM_CYLINDER_ALPHA      0x41
 
+#define CGO_BEZIER 0x42
+#define CGO_BEZIER_SZ 12
+
+#define CGO_DRAW_BEZIER 0x43
+
 #define CGO_LIGHTING             0x0B50
 
 #define CGO_VERTEX_ARRAY         0x01
@@ -710,6 +715,28 @@ namespace cgo {
       cCylCap get_cap1() const { return static_cast<cCylCap>(int(cap1)); }
       cCylCap get_cap2() const { return static_cast<cCylCap>(int(cap2)); }
     };
+
+    struct bezier {
+      static const int op_code = CGO_BEZIER;
+      bezier(const float* _cpA, const float* _lhA, const float* _rhB,
+          const float* _cpB)
+      {
+        copy3f(_cpA, cpA);
+        copy3f(_lhA, lhA);
+        copy3f(_rhB, rhB);
+        copy3f(_cpB, cpB);
+      }
+      float cpA[3], lhA[3], rhB[3], cpB[3];
+    };
+
+    struct bezier_buffers : op_with_draw_buffers {
+      static const int op_code = CGO_DRAW_BEZIER;
+      bezier_buffers(size_t _vboid)
+          : vboid(_vboid)
+      {
+      }
+      std::size_t vboid{};
+    };
   };
 };
 
@@ -927,6 +954,13 @@ CGO* CGOOptimizeToVBONotIndexed(const CGO* I, int est = 0,
 CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est=0, bool addshaders=false, CGO *leftOverCGO=NULL);
 #define CGOOptimizeSpheresToVBONonIndexedNoShader(I, est) CGOOptimizeSpheresToVBONonIndexed(I, est, false, NULL)
 
+/**
+ * Creates a VBO-based Bezier CGO.
+ * @param cgo CGO that contains raw Bezier CGOs
+ * @return optimized (VBO-based) bezier CGOs
+ */
+CGO* CGOOptimizeBezier(const CGO* cgo);
+
 int CGOCheckComplex(CGO * I);
 int CGOPreloadFonts(CGO * I);
 
@@ -1060,7 +1094,20 @@ bool CGOHasOperationsOfType(const CGO *I, int optype);
 bool CGOHasOperationsOfTypeN(const CGO *I, const std::set<int> &optype);
 bool CGOHasCylinderOperations(const CGO *I);
 bool CGOHasSphereOperations(const CGO *I);
+
+/**
+ * @param cgo input CGO
+ * @return true if CGO contains CGO_BEZIER operations
+ */
+bool CGOHasBezierOperations(const CGO* cgo);
 bool CGOFilterOutCylinderOperationsInto(const CGO *I, CGO *cgo);
+
+/**
+ * @param input input CGO
+ * @param[out] outputCGO filtered CGO
+ * @return true if CGO is filtered
+ */
+bool CGOFilterOutBezierOperationsInto(const CGO* inputCGO, CGO* outCGO);
 
 bool CGOCheckWhetherToFree(PyMOLGlobals * G, CGO *I);
 

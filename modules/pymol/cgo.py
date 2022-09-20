@@ -66,6 +66,8 @@ CONE               = 27.0
 
 PICK_COLOR         = 31.0 # 0x1F [PICK_COLOR, index, bond/cPickable_t]
 
+BEZIER             = 66.0 # 0x42
+
 LIGHTING           = float(0x0B50)
 
 # enum cPickable_t:

@@ -64,7 +64,7 @@ def create_shadertext(shaderdir, shaderdir2, outputheader, outputfile):
     # get all *.gs *.vs *.fs *.shared from the two input directories
     shaderfiles = set()
     for sdir in [shaderdir, shaderdir2]:
-        for ext in ['gs', 'vs', 'fs', 'shared']:
+        for ext in ['gs', 'vs', 'fs', 'shared', 'tsc', 'tse']:
             shaderfiles.update(map(os.path.basename,
                 sorted(glob.glob(os.path.join(sdir, '*.' + ext)))))
 

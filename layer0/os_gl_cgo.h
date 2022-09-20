@@ -4,6 +4,7 @@
  * Enums for CGOEnable
  */
 enum {
+  GL_BEZIER_SHADER                      = 0xffdf,
   GL_DEFAULT_SHADER_WITH_SETTINGS       = 0xffe0,
   GL_SPHERE_SHADER                      = 0xffe1,
   GL_CYLINDER_SHADER                    = 0xffe2,

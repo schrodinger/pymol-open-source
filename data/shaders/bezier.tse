@@ -1,0 +1,23 @@
+#version 400
+
+layout(isolines) in;
+
+uniform mat4 g_ProjectionMatrix;
+uniform mat4 g_ModelViewMatrix;
+
+void main()
+{
+    float t = gl_TessCoord.x;
+    float oneMinusT = 1.0 - t;
+
+    vec3 p0 = gl_in[0].gl_Position.xyz;
+    vec3 p1 = gl_in[1].gl_Position.xyz;
+    vec3 p2 = gl_in[2].gl_Position.xyz;
+    vec3 p3 = gl_in[3].gl_Position.xyz;
+
+    vec3 curveP = oneMinusT * oneMinusT * oneMinusT * p0 +
+         3.0f * oneMinusT * oneMinusT * t * p1 + 3.0f * oneMinusT * t * t * p2 +
+         t * t * t * p3;
+
+    gl_Position = g_ProjectionMatrix * g_ModelViewMatrix * vec4(curveP, 1.0);
+}

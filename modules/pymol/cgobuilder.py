@@ -129,7 +129,7 @@ class Cylinder(CGO):
     """
     point1: Point = Point(0, 0, 0)
     point2: Point = Point(1, 1, 1)
-    radius: float = Point(1.0)
+    radius: float = 1.0
     color1: Color = Point(0, 0, 0)
     color2: Color = Color(0, 0, 0)
 
@@ -262,6 +262,36 @@ class Cone(CGO):
         self._data.extend(self.color.array())
         self._data.extend(self.color.array())
         self._data.extend([1.0, 0.0])
+
+
+@dataclasses.dataclass
+class Bezier(CGO):
+    """
+    Cubic Bezier CGO
+
+    Attributes:
+        control_pt_A (Point): on-curve bezier spline position (from)
+        A_right_handle (Point): influences curve from A to B
+        control_pt_B (Point): on-curve bezier spline position (to)
+        B_left_handle (Point): influences curve from A to B
+        A_color (Color): color at point A
+        B_color (Color): color at point B
+    """
+    control_pt_A = Point(-5.0, 0.0, 0.0)
+    A_right_handle = Point(0.0, 10.0, 0.0)
+    B_left_handle = Point(1.0, -10.0, 0.0)
+    control_pt_B = Point(5.0, 0.0, 0.0)
+
+    def rebuild(self) -> None:
+        """
+        Rebuilds bezier spline
+        """
+        self._data = []
+        self._data.append(cgo.BEZIER)
+        self._data.extend(self.control_pt_A.array())
+        self._data.extend(self.A_right_handle.array())
+        self._data.extend(self.B_left_handle.array())
+        self._data.extend(self.control_pt_B.array())
 
 
 class CGOBuilder:

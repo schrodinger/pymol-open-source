@@ -228,10 +228,18 @@ void CShaderPrg::SetAttrib1fLocation(const char * name, float f1){
 void CShaderPrg::Invalidate() {
   if (!id)
     return;
-  if (gid){
-    glDetachShader(id, gid);
-    glDeleteShader(gid);
-    gid = 0;
+  if (geomParams && geomParams->id) {
+    glDetachShader(id, geomParams->id);
+    glDeleteShader(geomParams->id);
+    geomParams->id = 0;
+  }
+  if (tessParams && tessParams->controlID) {
+    glDetachShader(id, tessParams->controlID);
+    glDeleteShader(tessParams->controlID);
+  }
+  if (tessParams && tessParams->evaluationID) {
+    glDetachShader(id, tessParams->evaluationID);
+    glDeleteShader(tessParams->evaluationID);
   }
   if (vid){
     glDetachShader(id, vid);
