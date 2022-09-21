@@ -395,7 +395,7 @@ static PyObject* BezierPointAsPyList(const pymol::BezierSplinePoint& pt)
   PyList_SetItem(bezierList, 6, PyFloat_FromDouble(pt.rightHandle[0]));
   PyList_SetItem(bezierList, 7, PyFloat_FromDouble(pt.rightHandle[1]));
   PyList_SetItem(bezierList, 8, PyFloat_FromDouble(pt.rightHandle[2]));
-  PyList_SetItem(bezierList, 9, PyLong_FromLong(static_cast<int>(pt.mode)));
+  PyList_SetItem(bezierList, 9, PyInt_FromLong(static_cast<int>(pt.mode)));
   return PConvAutoNone(bezierList);
 }
 
@@ -457,7 +457,7 @@ pymol::Result<pymol::BezierSplinePoint> BezierSplineFromPyList(
   };
   auto to_handle_mode = [&](int idx) {
     return static_cast<pymol::BezierControlPointMode>(
-        PyLong_AsLong(PyList_GetItem(serializedList, idx)));
+        PyInt_AsLong(PyList_GetItem(serializedList, idx)));
   };
   pt.control = to_glm_vec3(0);
   pt.leftHandle = to_glm_vec3(3);
