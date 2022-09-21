@@ -463,7 +463,6 @@ pymol::Result<pymol::BezierSplinePoint> BezierSplineFromPyList(
   pt.leftHandle = to_glm_vec3(3);
   pt.rightHandle = to_glm_vec3(6);
   pt.mode = to_handle_mode(9);
-  CPythonVal_Free(statePyList);
   return pt;
 }
 
@@ -486,7 +485,6 @@ ObjectCurveState::ObjectCurveState(PyMOLGlobals* G, PyObject* serializedList)
         newSpline.addBezierPoint(*splineListResult);
       }
     }
-    CPythonVal_Free(statePyList);
   }
 }
 
