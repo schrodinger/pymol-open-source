@@ -15,9 +15,10 @@ import distutils.unixccompiler
 from distutils import log
 from distutils.errors import (DistutilsExecError, DistutilsPlatformError,
                               CompileError, LibError, LinkError)
+from multiprocessing.pool import ThreadPool
 
 # threaded parallel map (optional)
-pmap = map
+parallel_jobs = 1
 
 try:
     import _osx_support
@@ -40,13 +41,9 @@ def set_parallel_jobs(N):
     N=1 : single threaded
     N=0 : use number of CPUs
     '''
-    global pmap
+    global parallel_jobs
 
-    if N == 1:
-        pmap = map
-    else:
-        from multiprocessing import pool
-        pmap = pool.ThreadPool(N or None).map
+    parallel_jobs = N or None
 
 
 def incremental_parallel_compile(single_compile, objects, force):
@@ -80,8 +77,10 @@ def incremental_parallel_compile(single_compile, objects, force):
 
         return False
 
-    for _ in pmap(single_compile, filter(need_compile, objects)):
-        pass
+    with ThreadPool(parallel_jobs) as p:
+        pmap = map if parallel_jobs == 1 else p.map
+        for _ in pmap(single_compile, filter(need_compile, objects)):
+            pass
 
 
 def monkeypatch(parent, name):
