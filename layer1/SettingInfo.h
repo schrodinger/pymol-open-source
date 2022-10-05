@@ -895,6 +895,7 @@ enum {
   REC_i( 785, cartoon_smooth_cylinder_cycles          , global    , 3 ),
   REC_i( 786, cartoon_smooth_cylinder_window          , global    , 2 ),
   REC_i( 787, isosurface_algorithm                    , global    , 0, 0, 2 ),
+  REC_b( 788, cell_centered                           , global    , false ),
 
 
 #ifdef SETTINGINFO_IMPLEMENTATION

@@ -2655,7 +2655,6 @@ bool ObjectMolecule::setSymmetry(CSymmetry const& symmetry, int state)
     auto cs = CSet[iter.state];
     if (cs) {
       cs->Symmetry.reset(all_states ? nullptr : new CSymmetry(symmetry));
-      cs->UnitCellCGO.reset();
       cs->invalidateRep(cRepCell, cRepInvRep);
       success = true;
     }
