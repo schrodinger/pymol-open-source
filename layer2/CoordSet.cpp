@@ -1180,6 +1180,11 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
     }
   }
 
+  // cell
+  if (type == cRepCell) {
+    UnitCellCGO.reset();
+  }
+
   /* invalidate basd on one representation, 'type' */
   for (RepIterator iter(G, type); iter.next(); ){
     auto eff_level = level;

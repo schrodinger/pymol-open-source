@@ -2738,6 +2738,10 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
      ExecutiveInvalidateRep(G, inv_sele, cRepNonbonded, cRepInvRep);
      SceneChanged(G);
      break;
+  case cSetting_cell_centered:
+     ExecutiveInvalidateRep(G, inv_sele, cRepCell, cRepInvRep);
+     SceneChanged(G);
+     break;
   case cSetting_dot_width:
   case cSetting_dot_radius:
   case cSetting_dot_density:
