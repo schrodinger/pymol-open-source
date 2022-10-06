@@ -831,6 +831,10 @@ float MMTF_parser_fetch_float(const msgpack_object* object) {
     case /* FLOAT32 */ 0x0a: // msgpack-c >= 2.1
 #endif
         return (float)object->via.f64;
+    case MMTF_MSGPACK_TYPE(POSITIVE_INTEGER):
+        return (float)object->via.u64;
+    case MMTF_MSGPACK_TYPE(NEGATIVE_INTEGER):
+        return (float)object->via.i64;
     default:
         fprintf(stderr, "Error in %s: the entry encoded in the MMTF is not a float.\n", __FUNCTION__);
         return NAN;
@@ -884,7 +888,7 @@ void* MMTF_parser_fetch_typed_array(const msgpack_object* object, size_t* length
 CODEGEN_MMTF_parser_fetch_array(char,   result[i] = iter->via.u64)
 CODEGEN_MMTF_parser_fetch_array(int8,   result[i] = iter->via.u64)
 CODEGEN_MMTF_parser_fetch_array(int32,  result[i] = iter->via.u64)
-CODEGEN_MMTF_parser_fetch_array(float,  result[i] = iter->via.f64)
+CODEGEN_MMTF_parser_fetch_array(float,  result[i] = MMTF_parser_fetch_float(iter))
 CODEGEN_MMTF_parser_fetch_array(string, MMTF_parser_put_string(iter, result + i))
 
 static
