@@ -3721,7 +3721,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
   /* find all of the CA points */
 
-  auto const nAtIndex = cs->AtmToIdx.size(); // was NAtIndex
+  auto const nAtIndex = obj->NAtom; // was NAtIndex
   at = pymol::malloc<int>(nAtIndex);        /* cs index pointers */
   pv = pymol::malloc<float>(nAtIndex * 3);
   tmp = pymol::malloc<float>(nAtIndex * 3);
