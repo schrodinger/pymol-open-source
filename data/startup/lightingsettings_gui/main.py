@@ -22,7 +22,7 @@ class SettingSlider(QtWidgets.QSlider):
         self.setObjectName(self.setting)
 
         self.setMinimum(0)
-        self.setMaximum(self.value_range / float(res))
+        self.setMaximum(int(self.value_range / float(res)))
 
         val = float(cmd.get(setting))
         self.setDoubleValue(val)
@@ -57,7 +57,8 @@ class SettingSlider(QtWidgets.QSlider):
             (self.value()) / float(self.maximum()))
 
     def setDoubleValue(self, val):
-        self.setValue(self.maximum() * (val - self.min_val) / self.value_range)
+        self.setValue(
+            int(self.maximum() * (val - self.min_val) / self.value_range))
 
 
 def update_setting(name, value):
