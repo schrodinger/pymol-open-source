@@ -527,7 +527,6 @@ static bool CheckHalogenBondAsDonor(ObjectMolecule* don_obj, int don_atom,
   }
 
   AtomInfoType* don_atom_info = don_obj->AtomInfo + don_atom;
-  AtomInfoType* acc_atom_info = acc_obj->AtomInfo + acc_atom;
 
   if (don_atom_info->protons == cAN_Cl || don_atom_info->protons == cAN_Br ||
       don_atom_info->protons == cAN_I) {

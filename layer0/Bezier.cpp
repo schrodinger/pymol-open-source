@@ -66,9 +66,6 @@ void BezierSpline::addBezierPoint()
   }
   const auto prevPoint = getLastBezierPoint();
   assert(prevPoint != nullptr);
-  const auto& prevLeftControl = prevPoint->control;
-  const auto& prevLeftHandle = prevPoint->leftHandle;
-  auto prevHandleVector = prevLeftHandle - prevLeftControl;
 
   // To make sure we add the new point in the direction of the curve,
   // we'll take the first derivative at the end.

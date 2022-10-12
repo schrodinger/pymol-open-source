@@ -42,7 +42,6 @@ CViewElem TTT::to_view_elem(const TTT& ttt)
 
 TTT TTT::from_view_elem(const CViewElem& elem)
 {
-  TTT ttt;
   glm::vec3 pre;
   glm::quat rot;
   glm::vec3 post;

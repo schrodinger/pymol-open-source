@@ -266,7 +266,6 @@ TEST_CASE("TTT Lerp", "[TTT Matrix]")
 TEST_CASE("TTT Serialize To", "[TTT Matrix]")
 {
   glm::vec3 ori(100.0f, 100.0f, 100.0f);
-  glm::vec3 vec(5.0f, 6.0f, 7.0f);
   glm::vec3 tr(3.0f, 4.0f, 5.0f);
 
   pymol::TTT ttt;
@@ -294,7 +293,6 @@ TEST_CASE("TTT Serialize To", "[TTT Matrix]")
 TEST_CASE("TTT Serialize From", "[TTT Matrix]")
 {
   glm::vec3 ori(100.0f, 100.0f, 100.0f);
-  glm::vec3 vec(5.0f, 6.0f, 7.0f);
   glm::vec3 tr(3.0f, 4.0f, 5.0f);
 
   float ttt[16];
@@ -335,7 +333,6 @@ TEST_CASE("TTT Get Rotation About", "[TTT Matrix]")
 TEST_CASE("TTT to SceneView", "[TTT Matrix]")
 {
   glm::vec3 ori(100.0f, 100.0f, 100.0f);
-  glm::vec3 pos(5.0f, 6.0f, 7.0f);
   glm::vec3 tr(3.0f, 4.0f, 5.0f);
   float ang = glm::radians(45.0f);
   auto axis = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -379,7 +376,6 @@ TEST_CASE("TTT to SceneView", "[TTT Matrix]")
 TEST_CASE("SceneView to TTT", "[TTT Matrix]")
 {
   glm::vec3 ori(100.0f, 100.0f, 100.0f);
-  glm::vec3 pos(5.0f, 6.0f, 7.0f);
   glm::vec3 tr(3.0f, 4.0f, 5.0f);
   float ang = glm::radians(45.0f);
   auto axis = glm::vec3(1.0f, 0.0f, 0.0f);

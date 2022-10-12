@@ -170,8 +170,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
   bool use_auth = SettingGetGlobal_b(G, cSetting_cif_use_auth);
 
   // symmetry
-  if (container->unitCell &&
-      container->spaceGroup &&
+  if (container->spaceGroup &&
       container->spaceGroup[0]) {
     I->Symmetry.reset(new CSymmetry(G));
     I->Symmetry->Crystal.setDims(container->unitCell);
