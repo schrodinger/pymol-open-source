@@ -1310,115 +1310,112 @@ void OrthoBackgroundTextureNeedsUpdate(PyMOLGlobals * G){
   I->bg_texture_needs_update = 1;
 }
 
+static std::unique_ptr<pymol::Image> makeBgGradientImage(PyMOLGlobals* G)
+{
+  constexpr unsigned height = BACKGROUND_TEXTURE_SIZE;
+
+  auto tmpImg = pymol::make_unique<pymol::Image>(1, height);
+
+  float top[3], bottom[3], mixed[4]{0, 0, 0, 1};
+  copy3f(ColorGet(G, SettingGet_color(G, cSetting_bg_rgb_top)), top);
+  copy3f(ColorGet(G, SettingGet_color(G, cSetting_bg_rgb_bottom)), bottom);
+
+  unsigned char* q = tmpImg->bits();
+
+  for (unsigned b = 0; b != height; ++b) {
+    mix3f(bottom, top, b / float(height - 1), mixed);
+
+    for (unsigned i = 0; i != 4; ++i) {
+      *(q++) = static_cast<unsigned char>(mixed[i] * 0xFF + 0.5);
+    }
+  }
+
+  return tmpImg;
+}
+
+static CGO* makeBgCGO(PyMOLGlobals* G)
+{
+  constexpr float z_value = 0.98f;
+  CGO primCgo(G);
+
+  bool ok =                                    //
+      CGOBegin(&primCgo, GL_TRIANGLE_STRIP) && //
+      CGOVertex(&primCgo, -1, -1, z_value) &&  //
+      CGOVertex(&primCgo, 1, -1, z_value) &&   //
+      CGOVertex(&primCgo, -1, 1, z_value) &&   //
+      CGOVertex(&primCgo, 1, 1, z_value) &&    //
+      CGOEnd(&primCgo);
+
+  if (!ok) {
+    return nullptr;
+  }
+
+  assert(primCgo.has_begin_end);
+
+  std::unique_ptr<CGO> bgCgo(CGOOptimizeToVBONotIndexed(&primCgo));
+
+  CGOChangeShadersTo(
+      bgCgo.get(), GL_DEFAULT_SHADER_WITH_SETTINGS, GL_BACKGROUND_SHADER);
+
+  assert(bgCgo->use_shader);
+
+  return bgCgo.release();
+}
+
+static void updateBgTexture(
+    PyMOLGlobals* G, pymol::Image const& bgImage, GLuint const bg_texture_id)
+{
+  glActiveTexture(GL_TEXTURE4);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glBindTexture(GL_TEXTURE_2D, bg_texture_id);
+
+  auto const bg_image_mode = SettingGet<int>(G, cSetting_bg_image_mode);
+  bool const is_repeat = bg_image_mode > 1;
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, is_repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, is_repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+
+  auto const bg_image_linear = SettingGet<bool>(G, cSetting_bg_image_linear);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bgImage.getWidth(),
+      bgImage.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
+      (GLvoid*) bgImage.bits());
+}
+
 void bg_grad(PyMOLGlobals * G) {
   COrtho *I = G->Ortho;    
-  float top[3];
-  float bottom[3];
   int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
-  int bg_image_mode = SettingGet_b(G, NULL, NULL, cSetting_bg_image_mode);
   const char * bg_image_filename = SettingGetGlobal_s(G, cSetting_bg_image_filename);
-  short bg_image = bg_image_filename && bg_image_filename[0];
-  short bg_is_solid = 0;
-  short is_repeat = bg_gradient ? 0 : 1;
-  int ok = true;
-  copy3f(ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_top)), top);
-  copy3f(ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom)), bottom);
 
-  if (!bg_gradient && !bg_image && !I->bgData){
+  if (bg_image_filename && !bg_image_filename[0]) {
+    bg_image_filename = nullptr;
+  }
+
+  if (!(bg_gradient || bg_image_filename || I->bgData) ||
+      !G->ShaderMgr->ShadersPresent()) {
     const float *bg_rgb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
     SceneGLClearColor(bg_rgb[0], bg_rgb[1], bg_rgb[2], 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      return;
-  }
-
-  if (!G->ShaderMgr->ShadersPresent()){
-    float zero[3] = { 0.f, 0.f, 0.f } ;
-    const float *bg_rgb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
-    bg_is_solid = !equal3f(bg_rgb, zero);
-      SceneGLClearColor(bg_rgb[0], bg_rgb[1], bg_rgb[2], 1.0);
-      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     return;
-    }
-  if (bg_image || I->bgData){
-    is_repeat = (bg_image_mode==0 || bg_image_mode==1) ? 0 : 1;
   }
 
-  glDisable(GL_DEPTH_TEST);
+  if (!I->bgCGO) {
+    I->bgCGO = makeBgCGO(G);
+    assert(I->bgCGO);
+  }
 
-  {
-    if (!I->bgCGO) {
-      CGO cgo_value(G);
-      CGO* cgo = &cgo_value;
-      ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
-      if (ok)
-	ok &= CGOVertex(cgo, -1.f, -1.f, 0.98f);
-      if (ok)
-	ok &= CGOVertex(cgo, 1.f, -1.f, 0.98f);
-      if (ok)
-	ok &= CGOVertex(cgo, -1.f, 1.f, 0.98f);
-      if (ok)
-	ok &= CGOVertex(cgo, 1.f, 1.f, 0.98f);
-      if (ok)
-	ok &= CGOEnd(cgo);
-      assert(cgo->has_begin_end);
-      if (ok)
-	I->bgCGO = CGOOptimizeToVBONotIndexed(cgo, 0);
-      if (ok){
-	CGOChangeShadersTo(I->bgCGO, GL_DEFAULT_SHADER_WITH_SETTINGS, GL_BACKGROUND_SHADER);
-	I->bgCGO->use_shader = true;
-      } else {
-	CGOFree(I->bgCGO);
-      }
-    }
-    if (ok && !bg_is_solid && (I->bgData && (!I->bg_texture_id || I->bg_texture_needs_update))){
-      short is_new = !I->bg_texture_id;
-      if (is_new){
-	glGenTextures(1, &I->bg_texture_id);
-      }
-      glActiveTexture(GL_TEXTURE4);
-      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-      glBindTexture(GL_TEXTURE_2D, I->bg_texture_id);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, is_repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, is_repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-      {
-	int bg_image_linear = SettingGet_b(G, NULL, NULL, cSetting_bg_image_linear);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
-      }
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-		   I->bgData->getWidth(), I->bgData->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)I->bgData->bits());
+  if (!I->bg_texture_id || I->bg_texture_needs_update) {
+    std::shared_ptr<const pymol::Image> bgImage = I->bgData;
 
-      bg_image = false;
-      bg_gradient = I->bg_texture_needs_update = 0;
-    }
-
-    if (ok && !bg_is_solid && (bg_image && (!I->bg_texture_id || I->bg_texture_needs_update))){
+    if (bgImage) {
+      // pass
+    } else if (bg_image_filename){
       // checking to see if bg_image_filename can be loaded into texture
-      auto bgImage = MyPNGRead(bg_image_filename);
+      bgImage = MyPNGRead(bg_image_filename);
       if(bgImage) {
         I->bgWidth = bgImage->getWidth();
         I->bgHeight = bgImage->getHeight();
-
-	short is_new = !I->bg_texture_id;
-	if (is_new){
-	  glGenTextures(1, &I->bg_texture_id);
-	}
-
-	glActiveTexture(GL_TEXTURE4);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glBindTexture(GL_TEXTURE_2D, I->bg_texture_id);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, is_repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, is_repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-	{
-	  int bg_image_linear = SettingGet_b(G, NULL, NULL, cSetting_bg_image_linear);
-	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
-	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
-	}
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bgImage->getWidth(),
-            bgImage->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
-            (GLvoid*) bgImage->bits());
-        bgImage.reset();
-      bg_gradient = I->bg_texture_needs_update = 0;
       } else {
 	PRINTFB(G, FB_Ortho, FB_Errors)
 	  "Ortho: bg_grad: bg_image_filename='%s' cannot be loaded, unset\n", bg_image_filename
@@ -1426,59 +1423,23 @@ void bg_grad(PyMOLGlobals * G) {
 	SettingSetGlobal_s(G, cSetting_bg_image_filename, "");
 	G->ShaderMgr->Reload_All_Shaders();
       }
-      bgImage = nullptr;
+    } else if (bg_gradient) {
+      bgImage = makeBgGradientImage(G);
     }
 
-    if (ok && !bg_is_solid && bg_gradient && (!I->bg_texture_id || I->bg_texture_needs_update)){
-      short is_new = !I->bg_texture_id;
-      int tex_dim = BACKGROUND_TEXTURE_SIZE;
-      pymol::Image tmpImg(tex_dim, tex_dim);
-      I->bg_texture_needs_update = 0;
-      if (is_new){
+    if (bgImage) {
+      if (!I->bg_texture_id) {
 	glGenTextures(1, &I->bg_texture_id);
       }
-      glActiveTexture(GL_TEXTURE4);
-      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-      glBindTexture(GL_TEXTURE_2D, I->bg_texture_id);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, is_repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, is_repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-      {
-	int bg_image_linear = SettingGet_b(G, NULL, NULL, cSetting_bg_image_linear);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
-      }
 
-      {
-	int a, b;
-	unsigned char *q, val[4];
-	float bot[3] = { bottom[0]*255, bottom[1]*255, bottom[2]*255 };
-	float tmpb, diff[3] = { 255.f*(top[0] - bottom[0]), 
-				255.f*(top[1] - bottom[1]), 
-				255.f*(top[2] - bottom[2]) };
-          
-	for(b = 0; b < BACKGROUND_TEXTURE_SIZE; b++) {
-	  tmpb = b / (BACKGROUND_TEXTURE_SIZE-1.f);
-	  val[0] = (unsigned char)pymol_roundf(bot[0] + tmpb*diff[0]) ;
-	  val[1] = (unsigned char)pymol_roundf(bot[1] + tmpb*diff[1]) ;
-	  val[2] = (unsigned char)pymol_roundf(bot[2] + tmpb*diff[2]) ;
-	  for(a = 0; a < BACKGROUND_TEXTURE_SIZE; a++) {
-	    q = tmpImg.bits() + (4 * BACKGROUND_TEXTURE_SIZE * b) + 4 * a;
-	    *(q++) = val[0];
-	    *(q++) = val[1];
-	    *(q++) = val[2];
-	    *(q++) = 255;
-	  }
-	}
-      }
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-		   tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)tmpImg.bits());
-    }
-    if (ok && I->bgCGO) {
-      CGORender(I->bgCGO, NULL, NULL, NULL, NULL, NULL);
-      glEnable(GL_DEPTH_TEST);
+      updateBgTexture(G, *bgImage, I->bg_texture_id);
+
+      I->bg_texture_needs_update = false;
     }
   }
 
+  glDisable(GL_DEPTH_TEST);
+  CGORender(I->bgCGO, NULL, NULL, NULL, NULL, NULL);
   glEnable(GL_DEPTH_TEST);
 }
 
