@@ -493,7 +493,7 @@ PYMOL API
                 _self.unlock(-1,_self=_self)
         return None
 
-    def delete(name,_self=cmd):
+    def delete(name, *, _self=cmd):
         '''
 DESCRIPTION
 
