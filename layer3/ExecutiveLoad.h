@@ -29,7 +29,7 @@ pymol::Result<ExecutiveLoadArgs> ExecutiveLoadPrepareArgs(PyMOLGlobals* G,
     int content_length, cLoadType_t content_format,
     const char* object_name_proposed, int state, int zoom, int discrete,
     int finish, int multiplex, int quiet, const char* plugin_arg,
-    const char* object_props, const char* atom_props, bool mimic = false);
+    const char* object_props, const char* atom_props, bool mimic = true);
 
 /**
  * Implementation of ExecutiveLoad
