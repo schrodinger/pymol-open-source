@@ -759,7 +759,7 @@ enum {
   REC_s( 659, default_2fofc_map_rep                   , global    , "volume" ),
   REC_s( 660, atom_type_format                        , global    , "mol2" ),
   REC_b( 661, autoclose_dialogs                       , global    , 1 ),
-  REC_b( 662, bg_gradient                             , global    , 0 ),
+  REC_i( 662, bg_gradient                             , global    , 0 ),
   REC_c( 663, bg_rgb_top                              , global    , "0x00004D" ),
   REC_c( 664, bg_rgb_bottom                           , global    , "0x333380" ),
   REC_b( 665, ray_volume                              , global    , 0 ),

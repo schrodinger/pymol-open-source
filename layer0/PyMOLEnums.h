@@ -60,3 +60,10 @@ enum class GridMode
   ByObjectByState = 3, // One slot per state per object
   ByCamera = 4, // One slot per camera
 };
+
+enum class BgGradient
+{
+  None = 0,
+  Vertical = 1,
+  Grid = 2,
+};
