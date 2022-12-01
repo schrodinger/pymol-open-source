@@ -2755,6 +2755,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_bg_gradient:
       ColorUpdateFrontFromSettings(G);
       ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
+    OrthoBackgroundTextureNeedsUpdate(G);
     G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
     SceneChanged(G);
     break;

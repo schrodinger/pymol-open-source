@@ -1310,6 +1310,35 @@ void OrthoBackgroundTextureNeedsUpdate(PyMOLGlobals * G){
   I->bg_texture_needs_update = 1;
 }
 
+/**
+ * Make a background image for grid mode.
+ *
+ * Repurpose the `bg_rgb_top` and `bg_rgb_bottom` colors to color grid cells
+ * with alternating colors.
+ */
+static std::unique_ptr<pymol::Image> makeBgGridImage(PyMOLGlobals* G)
+{
+  auto const& grid = G->Scene->grid;
+  auto tmpImg = pymol::make_unique<pymol::Image>( //
+      grid.n_col > 1 ? grid.n_col : 1,            //
+      grid.n_row > 1 ? grid.n_row : 1);
+
+  unsigned char top[4]{0, 0, 0, 0xFF}, bottom[4]{0, 0, 0, 0xFF};
+  pymol::scale3(ColorGet(G, SettingGet_color(G, cSetting_bg_rgb_top)), 0xFF, top);
+  pymol::scale3(ColorGet(G, SettingGet_color(G, cSetting_bg_rgb_bottom)), 0xFF, bottom);
+
+  unsigned char* q = tmpImg->bits();
+
+  for (unsigned j = 0; j != tmpImg->getHeight(); ++j) {
+    for (unsigned i = 0; i != tmpImg->getWidth(); ++i, q += 4) {
+      auto color = (i + j) % 2 ? top : bottom;
+      copy4(color, q);
+    }
+  }
+
+  return tmpImg;
+}
+
 static std::unique_ptr<pymol::Image> makeBgGradientImage(PyMOLGlobals* G)
 {
   constexpr unsigned height = BACKGROUND_TEXTURE_SIZE;
@@ -1385,14 +1414,19 @@ static void updateBgTexture(
 
 void bg_grad(PyMOLGlobals * G) {
   COrtho *I = G->Ortho;    
-  int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
+  auto bg_gradient = SettingGet<BgGradient>(G, cSetting_bg_gradient);
   const char * bg_image_filename = SettingGetGlobal_s(G, cSetting_bg_image_filename);
 
   if (bg_image_filename && !bg_image_filename[0]) {
     bg_image_filename = nullptr;
   }
 
-  if (!(bg_gradient || bg_image_filename || I->bgData) ||
+  if (bg_gradient == BgGradient::Grid &&
+      SettingGet<GridMode>(G, cSetting_grid_mode) == GridMode::NoGrid) {
+    bg_gradient = BgGradient::None;
+  }
+
+  if (!(bg_gradient != BgGradient::None || bg_image_filename || I->bgData) ||
       !G->ShaderMgr->ShadersPresent()) {
     const float *bg_rgb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
     SceneGLClearColor(bg_rgb[0], bg_rgb[1], bg_rgb[2], 1.0);
@@ -1423,7 +1457,9 @@ void bg_grad(PyMOLGlobals * G) {
 	SettingSetGlobal_s(G, cSetting_bg_image_filename, "");
 	G->ShaderMgr->Reload_All_Shaders();
       }
-    } else if (bg_gradient) {
+    } else if (bg_gradient == BgGradient::Grid) {
+      bgImage = makeBgGridImage(G);
+    } else if (bg_gradient == BgGradient::Vertical) {
       bgImage = makeBgGradientImage(G);
     }
 

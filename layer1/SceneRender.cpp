@@ -189,6 +189,8 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
 
   G->ShaderMgr->Check_Reload();
 
+  auto const last_grid_shape = std::array<int, 2>{I->grid.n_col, I->grid.n_row};
+
   auto grid_mode = SettingGet<GridMode>(G, cSetting_grid_mode);
   int grid_size = 0;
   if (grid_mode != GridMode::NoGrid) {
@@ -199,6 +201,14 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
   } else {
     I->grid.active = false;
   }
+
+  auto const grid_shape = std::array<int, 2>{I->grid.n_col, I->grid.n_row};
+
+  if (last_grid_shape != grid_shape &&
+      SettingGet<BgGradient>(G, cSetting_bg_gradient) == BgGradient::Grid) {
+    OrthoBackgroundTextureNeedsUpdate(G);
+  }
+
   if (last_grid_active != I->grid.active || grid_size != I->last_grid_size) {
     G->ShaderMgr->ResetUniformSet();
   }
