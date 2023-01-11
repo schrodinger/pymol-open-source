@@ -682,9 +682,11 @@ void CShaderMgr::Config() {
 #ifndef PURE_OPENGL_ES_2
   GLenum err = glewInit();
 
+#ifdef GLEW_ERROR_NO_GLX_DISPLAY
   if (err == GLEW_ERROR_NO_GLX_DISPLAY) {
     err = GLEW_OK;
   }
+#endif
 
   if (GLEW_OK==err) {
     GLint gl_major = 0, gl_minor = 0;
