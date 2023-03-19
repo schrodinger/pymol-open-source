@@ -38,7 +38,6 @@ Z* -------------------------------------------------------------------
 #include"Wizard.h"
 #include"Seq.h"
 #include"PyMOLOptions.h"
-#include"OVContext.h"
 #include"ShaderMgr.h"
 #include"Sphere.h"
 #include"Selector.h"

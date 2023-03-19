@@ -40,7 +40,6 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"Editor.h"
 #include"Sculpt.h"
-#include"OVContext.h"
 #include"OVLexicon.h"
 #include"ListMacros.h"
 #include"File.h"

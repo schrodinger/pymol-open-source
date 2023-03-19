@@ -28,7 +28,6 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"PyMOLGlobals.h"
 #include"Word.h"
-#include"OVLexicon.h"
 
 struct ObjectGadgetRamp;
 
