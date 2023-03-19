@@ -114,7 +114,7 @@ void PyMOLOptions_Free(CPyMOLOptions * option);
 /* PyMOL instance type */
 
 #ifndef CPyMOL_DEFINED
-typedef struct _CPyMOL CPyMOL;
+struct CPyMOL;
 #define CPyMOL_DEFINED
 #endif
 

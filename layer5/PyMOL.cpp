@@ -81,6 +81,8 @@
 #include "ShaderMgr.h"
 #include "Version.h"
 
+#include <unordered_map>
+
 #ifndef _PYMOL_NOPY
 PyMOLGlobals *SingletonPyMOLGlobals = NULL;
 #endif
@@ -100,117 +102,115 @@ PyMOLGlobals *SingletonPyMOLGlobals = NULL;
 #endif
 #define IDLE_AND_READY 3
 
-typedef struct _CPyMOL {
-  PyMOLGlobals *G;
-  int FakeDragFlag;
-  int RedisplayFlag;
-  int PassiveFlag;
-  int SwapFlag;
-  int BusyFlag;
-  int InterruptFlag;
-  int ReshapeFlag;
-  int ClickReadyFlag;
-  int DrawnFlag;
-  ObjectNameType ClickedObject;
-  int ClickedIndex, ClickedButton, ClickedModifiers, ClickedX, ClickedY, ClickedHavePos, ClickedPosState;
-  int ClickedBondIndex;
-  float ClickedPos[3];
-  int ImageRequestedFlag, ImageReadyFlag;
-  int DraggedFlag;
-  int Reshape[PYMOL_RESHAPE_SIZE];
-  int Progress[PYMOL_PROGRESS_SIZE];
-  int ProgressChanged;
-  int IdleAndReady;
-  int ExpireCount;
-  bool done_ConfigureShaders;
+struct CPyMOL {
+  PyMOLGlobals *G = nullptr;
+  int FakeDragFlag{};
+  int RedisplayFlag{};
+  int PassiveFlag{};
+  int SwapFlag{};
+  int BusyFlag{};
+  int InterruptFlag{};
+  int ReshapeFlag{};
+  int ClickReadyFlag{};
+  int DrawnFlag{};
+  ObjectNameType ClickedObject{};
+  int ClickedIndex{}, ClickedButton{}, ClickedModifiers{}, ClickedX{}, ClickedY{}, ClickedHavePos{}, ClickedPosState{};
+  int ClickedBondIndex{};
+  float ClickedPos[3]{};
+  int ImageRequestedFlag{}, ImageReadyFlag{};
+  int DraggedFlag{};
+  int Reshape[PYMOL_RESHAPE_SIZE]{};
+  int Progress[PYMOL_PROGRESS_SIZE]{};
+  int ProgressChanged{};
+  int IdleAndReady{};
+  int ExpireCount{};
+  bool done_ConfigureShaders{};
 
-  PyMOLModalDrawFn *ModalDraw;
+  PyMOLModalDrawFn *ModalDraw = nullptr;
 
-  PyMOLSwapBuffersFn *SwapFn;
+  PyMOLSwapBuffersFn *SwapFn = nullptr;
 
 
 /* Python stuff */
 #ifndef _PYMOL_NOPY
-  int PythonInitStage;
+  int PythonInitStage{};
 #endif
   /* dynamically mapped string constants */
 
-  OVLexicon *Lex;
-  OVOneToOne *Rep;
-  ov_word lex_everything, lex_sticks, lex_spheres, lex_surface;
-  ov_word lex_labels, lex_nb_spheres, lex_cartoon, lex_ribbon;
-  ov_word lex_lines, lex_mesh, lex_dots, lex_dashes, lex_nonbonded;
-  ov_word lex_cell, lex_cgo, lex_callback, lex_extent, lex_slice;
+  OVLexicon *Lex = nullptr;
+  std::unordered_map<int, int> Rep;
+  ov_word lex_everything{}, lex_sticks{}, lex_spheres{}, lex_surface{};
+  ov_word lex_labels{}, lex_nb_spheres{}, lex_cartoon{}, lex_ribbon{};
+  ov_word lex_lines{}, lex_mesh{}, lex_dots{}, lex_dashes{}, lex_nonbonded{};
+  ov_word lex_cell{}, lex_cgo{}, lex_callback{}, lex_extent{}, lex_slice{};
 
-  OVOneToOne *Clip;
-  ov_word lex_near, lex_far, lex_move, lex_slab, lex_atoms;
-
-  OVOneToOne *Reinit;
+  std::unordered_map<int, int> Reinit;
   ov_word lex_settings;
 
-  OVOneToOne *SelectList;
-  ov_word lex_index, lex_id, lex_rank;
+  std::unordered_map<int, int> SelectList;
+  ov_word lex_index{}, lex_id{}, lex_rank{};
 
-  OVOneToOne *Setting;
+  std::unordered_map<int, int> Setting;
 
 #ifdef _PYMOL_LIB
-  OVOneToOne *MouseButtonCodeLexicon;
-  ov_word lex_left, lex_middle, lex_right;
-  ov_word lex_wheel;
-  ov_word lex_double_left, lex_double_middle, lex_double_right;
-  ov_word lex_single_left, lex_single_middle, lex_single_right;
+  std::unordered_map<int, int> MouseButtonCodeLexicon;
+  ov_word lex_left{}, lex_middle{}, lex_right{};
+  ov_word lex_wheel{};
+  ov_word lex_double_left{}, lex_double_middle{}, lex_double_right{};
+  ov_word lex_single_left{}, lex_single_middle{}, lex_single_right{};
 
-  OVOneToOne *MouseButtonModCodeLexicon;
-  ov_word lex_none, lex_shft, lex_ctrl, lex_ctsh;
-  ov_word lex_alt, lex_alsh, lex_ctal, lex_ctas;
+  std::unordered_map<int, int> MouseButtonModCodeLexicon;
+  ov_word lex_none{}, lex_shft{}, lex_ctrl{}, lex_ctsh{};
+  ov_word lex_alt{}, lex_alsh{}, lex_ctal{}, lex_ctas{};
 
-  OVOneToOne *MouseButtonActionCodeLexicon;
-  ov_word lex_but_rota, lex_but_move, lex_but_movz, lex_but_clip, lex_but_rotz;
-  ov_word lex_but_clpn, lex_but_clpf, lex_but_lb, lex_but_mb, lex_but_rb;
-  ov_word lex_but_plus_lb, lex_but_plus_mb, lex_but_plus_rb, lex_but_pkat, lex_but_pkbd;
-  ov_word lex_but_rotf, lex_but_torf, lex_but_movf, lex_but_orig, lex_but_plus_lbx;
-  ov_word lex_but_minus_lbx, lex_but_lbbx, lex_but_none, lex_but_cent, lex_but_pktb;
-  ov_word lex_but_slab, lex_but_movs, lex_but_pk1;
-  ov_word lex_but_mova, lex_but_menu, lex_but_sele, lex_but_plus_minus;
-  ov_word lex_but_plus_box, lex_but_minus_box, lex_but_mvsz, lex_but_dgrt, lex_but_dgmv;
-  ov_word lex_but_dgmz, lex_but_roto, lex_but_movo, lex_but_mvoz, lex_but_mvfz;
-  ov_word lex_but_mvaz, lex_but_drgm, lex_but_rotv, lex_but_movv, lex_but_mvvz;
-  ov_word lex_but_drgo, lex_but_imsz, lex_but_imvz, lex_but_box, lex_but_irtz;
+  std::unordered_map<int, int> MouseButtonActionCodeLexicon;
+  ov_word lex_but_rota{}, lex_but_move{}, lex_but_movz{}, lex_but_clip{}, lex_but_rotz{};
+  ov_word lex_but_clpn{}, lex_but_clpf{}, lex_but_lb, lex_but_mb{}, lex_but_rb{};
+  ov_word lex_but_plus_lb{}, lex_but_plus_mb{}, lex_but_plus_rb{}, lex_but_pkat{}, lex_but_pkbd{};
+  ov_word lex_but_rotf{}, lex_but_torf{}, lex_but_movf{}, lex_but_orig{}, lex_but_plus_lbx{};
+  ov_word lex_but_minus_lbx{}, lex_but_lbbx, lex_but_none{}, lex_but_cent{}, lex_but_pktb{};
+  ov_word lex_but_slab{}, lex_but_movs{}, lex_but_pk1{};
+  ov_word lex_but_mova{}, lex_but_menu{}, lex_but_sele{}, lex_but_plus_minus{};
+  ov_word lex_but_plus_box{}, lex_but_minus_box{}, lex_but_mvsz, lex_but_dgrt{}, lex_but_dgmv{};
+  ov_word lex_but_dgmz{}, lex_but_roto{}, lex_but_movo{}, lex_but_mvoz{}, lex_but_mvfz{};
+  ov_word lex_but_mvaz{}, lex_but_drgm{}, lex_but_rotv{}, lex_but_movv{}, lex_but_mvvz{};
+  ov_word lex_but_drgo{}, lex_but_imsz{}, lex_but_imvz{}, lex_but_box{}, lex_but_irtz{};
+  ov_word lex_but_clik{};
 
-  OVOneToOne *MouseModeLexicon;
+  std::unordered_map<int, int> MouseModeLexicon;
 #include "buttonmodes_lex_def.h"
 
-  OVOneToOne *PaletteLexicon;
+  std::unordered_map<int, int> PaletteLexicon;
 #include "palettes_lex_def.h"
 
 #endif
 
-  AtomPropertyInfo AtomPropertyInfos[NUM_ATOM_PROPERTIES];
-  OVOneToOne *AtomPropertyLexicon;
-  ov_word lex_atom_prop_model, lex_atom_prop_index, lex_atom_prop_type,
-    lex_atom_prop_name, lex_atom_prop_resn, lex_atom_prop_resi,
-    lex_atom_prop_resv, lex_atom_prop_chain, lex_atom_prop_alt,
-    lex_atom_prop_segi, lex_atom_prop_elem,
-    lex_atom_prop_ss, lex_atom_prop_text_type, 
-    lex_atom_prop_custom, lex_atom_prop_label, lex_atom_prop_numeric_type,
-    lex_atom_prop_q, lex_atom_prop_b, lex_atom_prop_vdw,
-    lex_atom_prop_elec_radius, lex_atom_prop_partial_charge, lex_atom_prop_formal_charge,
-    lex_atom_prop_stereo, lex_atom_prop_cartoon, lex_atom_prop_color,
-    lex_atom_prop_ID, lex_atom_prop_rank, lex_atom_prop_flags,
-    lex_atom_prop_geom, lex_atom_prop_valence,
-    lex_atom_prop_explicit_degree,
-    lex_atom_prop_explicit_valence,
-    lex_atom_prop_x, lex_atom_prop_y, lex_atom_prop_z,
-    lex_atom_prop_settings, lex_atom_prop_properties,
-    lex_atom_prop_reps,
-    lex_atom_prop_protons,
-    lex_atom_prop_oneletter,
-    lex_atom_prop_s, lex_atom_prop_p, lex_atom_prop_state; 
+  AtomPropertyInfo AtomPropertyInfos[NUM_ATOM_PROPERTIES]{};
+  std::unordered_map<int, int> AtomPropertyLexicon;
+  ov_word lex_atom_prop_model{}, lex_atom_prop_index{}, lex_atom_prop_type{},
+    lex_atom_prop_name{}, lex_atom_prop_resn{}, lex_atom_prop_resi{},
+    lex_atom_prop_resv{}, lex_atom_prop_chain{}, lex_atom_prop_alt{},
+    lex_atom_prop_segi{}, lex_atom_prop_elem{},
+    lex_atom_prop_ss{}, lex_atom_prop_text_type{},
+    lex_atom_prop_custom{}, lex_atom_prop_label{}, lex_atom_prop_numeric_type{},
+    lex_atom_prop_q{}, lex_atom_prop_b, lex_atom_prop_vdw{},
+    lex_atom_prop_elec_radius{}, lex_atom_prop_partial_charge{}, lex_atom_prop_formal_charge{},
+    lex_atom_prop_stereo{}, lex_atom_prop_cartoon{}, lex_atom_prop_color{},
+    lex_atom_prop_ID{}, lex_atom_prop_rank{}, lex_atom_prop_flags{},
+    lex_atom_prop_geom{}, lex_atom_prop_valence{},
+    lex_atom_prop_explicit_degree{},
+    lex_atom_prop_explicit_valence{},
+    lex_atom_prop_x{}, lex_atom_prop_y, lex_atom_prop_z{},
+    lex_atom_prop_settings{}, lex_atom_prop_properties{},
+    lex_atom_prop_reps{},
+    lex_atom_prop_protons{},
+    lex_atom_prop_oneletter{},
+    lex_atom_prop_s{}, lex_atom_prop_p{}, lex_atom_prop_state{};
   /*
     lex_atom_prop_, lex_atom_prop_, lex_atom_prop_,
     lex_atom_prop_, lex_atom_prop_, lex_atom_prop_,*/
 
-} _CPyMOL;
+};
 
 
 /* convenience functions -- inline */
@@ -276,6 +276,158 @@ static PyMOLreturn_string_array return_result(
   return result;
 }
 
+pymol::Result<int> get_setting_id(CPyMOL * I, const char *setting)
+{
+  OVreturn_word result;
+  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, setting))))
+    return pymol::make_error(setting, " not found.");
+  auto it = I->Setting.find(result.word);
+  if (it == I->Setting.end()) {
+    return pymol::make_error(setting, " not found.");
+  }
+  return it->second;
+}
+
+static pymol::Result<int> get_rep_id(CPyMOL* I, const char* representation)
+{
+  OVreturn_word result;
+
+  if (!OVreturn_IS_OK(
+          (result = OVLexicon_BorrowFromCString(I->Lex, representation))))
+    return pymol::make_error(representation, " not found.");
+  auto it = I->Rep.find(result.word);
+  if (it == I->Rep.end()) {
+    return pymol::make_error(representation, " not found.");
+  }
+  return it->second;
+}
+
+static pymol::Result<int> get_reinit_id(CPyMOL* I, const char* reinit)
+{
+  OVreturn_word result;
+  if (!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, reinit))))
+    return pymol::make_error(reinit, " not found.");
+  auto it = I->Reinit.find(result.word);
+  if (it == I->Reinit.end()) {
+    return pymol::make_error(reinit, " not found.");
+  }
+  return it->second;
+}
+
+static pymol::Result<int> get_select_list_mode(CPyMOL* I, const char* mode)
+{
+  OVreturn_word result;
+  if (!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, mode))))
+    return pymol::make_error(mode, " not found.\n");
+  auto it = I->SelectList.find(result.word);
+  if (it == I->SelectList.end()) {
+    return pymol::make_error(mode, " not found.\n");
+  }
+  return it->second;
+}
+
+#ifdef _PYMOL_LIB
+
+static pymol::Result<int> get_button_code(CPyMOL* I, char* code)
+{
+  OVreturn_word result;
+  if (!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, code))))
+    return pymol::make_error("Mouse button code ", code, " not found.");
+  auto it = I->MouseButtonCodeLexicon.find(result.word);
+  if (it == I->MouseButtonCodeLexicon.end()) {
+    return pymol::make_error("Mouse button code ", code, " not found.");
+  }
+  return it->second;
+}
+
+static pymol::Result<int> get_button_mod_code(CPyMOL* I, char* modcode)
+{
+  OVreturn_word result;
+  if (!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, modcode))))
+    return pymol::make_error("Mouse button mod code ", modcode, " not found.");
+  auto it = I->MouseButtonModCodeLexicon.find(result.word);
+  if (it == I->MouseButtonModCodeLexicon.end()) {
+    return pymol::make_error("Mouse button mod code ", modcode, " not found.");
+  }
+  return it->second;
+}
+
+static pymol::Result<int> get_button_action_code(CPyMOL * I, char *actioncode)
+{
+  OVreturn_word result;
+  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, actioncode))))
+    return pymol::make_error("Mouse button action code ", actioncode, " not found.");
+  auto it = I->MouseButtonActionCodeLexicon.find(result.word);
+  if (it == I->MouseButtonActionCodeLexicon.end()) {
+    return pymol::make_error("Mouse button action code ", actioncode, " not found.");
+  }
+  return it->second;
+}
+
+static pymol::Result<int> get_mouse_mode(CPyMOL * I, char *mousemode)
+{
+  OVreturn_word result;
+  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, mousemode))))
+    return pymol::make_error("Mouse mode", mousemode, " not found.");
+  auto it = I->MouseModeLexicon.find(result.word);
+  if (it == I->MouseModeLexicon.end()) {
+    return pymol::make_error("Mouse mode", mousemode, " not found.");
+  }
+  return it->second;
+}
+
+#include "palettes.h"
+
+static pymol::Result<int> get_palette(CPyMOL* I, char* palette)
+{
+  OVreturn_word result;
+  if (!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, palette))))
+    return pymol::make_error("Palette ", palette, " not found.");
+  auto it = I->PaletteLexicon.find(result.word);
+  if (it == I->PaletteLexicon.end()) {
+    return pymol::make_error("Palette ", palette, " not found.");
+  }
+  return it->second;
+}
+
+static pymol::Result<int> get_cartoon(CPyMOL* I, char* cartoon)
+{
+  OVreturn_word result;
+  if (!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, cartoon))))
+    return pymol::make_error("Cartoon ", cartoon, " not found.");
+  auto it = I->CartoonLexicon.find(result.word);
+  if (it == I->CartoonLexicon.end()) {
+    return pymol::make_error("Cartoon ", cartoon, " not found.");
+  }
+  return it->second;
+}
+
+static pymol::Result<int> get_flag(CPyMOL* I, char* flag)
+{
+  OVreturn_word result;
+  if (!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, flag))))
+    return pymol::make_error("Flag ", flag, " not found.");
+  auto it = I->FlagLexicon.find(result.word);
+  if (it == I->FlagLexicon.end()) {
+    return pymol::make_error("Flag ", flag, " not found.");
+  }
+  return it->second;
+}
+
+static pymol::Result<int> get_flag_action(CPyMOL* I, char* flag)
+{
+  OVreturn_word result;
+  if (!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, flag))))
+    return pymol::make_error("Flag Action ", flag, " not found.");
+  auto it = I->FlagActionLexicon.find(result.word);
+  if (it == I->FlagActionLexicon.end()) {
+    return pymol::make_error("Flag Action ", flag, " not found.");
+  }
+  return it->second;
+}
+
+#endif // _PYMOL_LIB
+
 #if defined(__cplusplus) && !defined(_WEBGL)
 extern "C" {
 #endif
@@ -303,13 +455,9 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
 
   /* string constants that are accepted on input */
 
-#define LEX_REP(NAME,CODE) LEX(NAME) \
-    if(!OVreturn_IS_OK( OVOneToOne_Set(I->Rep,I->lex_ ## NAME, CODE)))  \
-      return_OVstatus_FAILURE;
-
-  I->Rep = OVOneToOne_New(C->heap);
-  if(!I->Rep)
-    return_OVstatus_FAILURE;
+#define LEX_REP(NAME, CODE)                                                    \
+  LEX(NAME)                                                                    \
+  I->Rep[I->lex_##NAME] = CODE;
 
   LEX_REP(everything, -1);
   LEX_REP(sticks, 0);
@@ -330,70 +478,35 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_REP(extent, 15);
   LEX_REP(slice, 16);
 
-  /* workaround for unexplained bug with nested macro on VC6 */
-
-#define LEX_CLIP(NAME,CODE) {if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,#NAME))))  \
-    return_OVstatus_FAILURE \
-    else \
-    I -> lex_ ## NAME = result.word;} \
-    if(!OVreturn_IS_OK( OVOneToOne_Set(I->Clip,I->lex_ ## NAME, CODE)))  \
-      return_OVstatus_FAILURE;
-
-  I->Clip = OVOneToOne_New(C->heap);
-  if(!I->Clip)
-    return_OVstatus_FAILURE;
-
-  LEX_CLIP(near, 0);
-  LEX_CLIP(far, 1);
-  LEX_CLIP(move, 2);
-  LEX_CLIP(slab, 3);
-  LEX_CLIP(atoms, 4);
-
-#define LEX_REINIT(NAME,CODE) {if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,#NAME))))  \
-    return_OVstatus_FAILURE \
-    else \
-    I -> lex_ ## NAME = result.word;} \
-    if(!OVreturn_IS_OK( OVOneToOne_Set(I->Reinit,I->lex_ ## NAME, CODE)))  \
-      return_OVstatus_FAILURE;
-
-  I->Reinit = OVOneToOne_New(C->heap);
-  if(!I->Reinit)
-    return_OVstatus_FAILURE;
+#define LEX_REINIT(NAME, CODE)                                                 \
+  {                                                                            \
+    if (!OVreturn_IS_OK((result = OVLexicon_GetFromCString(I->Lex, #NAME))))   \
+      return_OVstatus_FAILURE else I->lex_##NAME = result.word;                \
+  }                                                                            \
+  I->Reinit[I->lex_##NAME] = CODE;
 
   LEX_REINIT(everything, 0);
   LEX_REINIT(settings, 1);
 
-#define LEX_SELLIST(NAME,CODE) {if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,#NAME))))  \
-    return_OVstatus_FAILURE \
-    else \
-    I -> lex_ ## NAME = result.word;} \
-    if(!OVreturn_IS_OK( OVOneToOne_Set(I->SelectList,I->lex_ ## NAME, CODE)))  \
-      return_OVstatus_FAILURE;
-
-  I->SelectList = OVOneToOne_New(C->heap);
-  if(!I->SelectList)
-    return_OVstatus_FAILURE;
+#define LEX_SELLIST(NAME, CODE)                                                \
+  {                                                                            \
+    if (!OVreturn_IS_OK((result = OVLexicon_GetFromCString(I->Lex, #NAME))))   \
+      return_OVstatus_FAILURE else I->lex_##NAME = result.word;                \
+  }                                                                            \
+  I->SelectList[I->lex_##NAME] = CODE;
 
   LEX_SELLIST(index, 0);
   LEX_SELLIST(id, 1);
   LEX_SELLIST(rank, 2);
-
-  I->Setting = OVOneToOne_New(C->heap);
-  if(!I->Setting)
-    return_OVstatus_FAILURE;
 
   if(!CPyMOLInitSetting(I->Lex, I->Setting))
     return_OVstatus_FAILURE;
 
 #ifdef _PYMOL_LIB
 
-  I->MouseButtonCodeLexicon = OVOneToOne_New(C->heap);
-  if(!I->MouseButtonCodeLexicon)
-    return_OVstatus_FAILURE;
-
-#define LEX_MOUSECODE(NAME,CODE) LEX(NAME) \
-    if(!OVreturn_IS_OK( OVOneToOne_Set(I->MouseButtonCodeLexicon,I->lex_ ## NAME, CODE)))  \
-      return_OVstatus_FAILURE;
+#define LEX_MOUSECODE(NAME, CODE)                                              \
+  LEX(NAME)                                                                    \
+  I->MouseButtonCodeLexicon[I->lex_##NAME] = CODE;
 
   LEX_MOUSECODE(left, 0);
   LEX_MOUSECODE(middle, 1);
@@ -406,13 +519,9 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_MOUSECODE(single_middle, 8);
   LEX_MOUSECODE(single_right, 9);
 
-  I->MouseButtonModCodeLexicon = OVOneToOne_New(C->heap);
-  if(!I->MouseButtonModCodeLexicon)
-    return_OVstatus_FAILURE;
-
-#define LEX_BUTTONMODCODE(NAME,CODE) LEX(NAME) \
-    if(!OVreturn_IS_OK( OVOneToOne_Set(I->MouseButtonModCodeLexicon,I->lex_ ## NAME, CODE)))  \
-      return_OVstatus_FAILURE;
+#define LEX_BUTTONMODCODE(NAME, CODE)                                          \
+  LEX(NAME)                                                                    \
+  I->MouseButtonModCodeLexicon[I->lex_##NAME] = CODE;
 
   LEX_BUTTONMODCODE(none, 0);
   LEX_BUTTONMODCODE(shft, 1);
@@ -423,27 +532,17 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_BUTTONMODCODE(ctal, 6);
   LEX_BUTTONMODCODE(ctas, 7);
 
-  I->MouseButtonActionCodeLexicon = OVOneToOne_New(C->heap);
-  if(!I->MouseButtonActionCodeLexicon)
-    return_OVstatus_FAILURE;
+#define LEX_BUT(ARG)                                                           \
+  if (!OVreturn_IS_OK((result = OVLexicon_GetFromCString(I->Lex, #ARG))))      \
+    return_OVstatus_FAILURE else I->lex_but_##ARG = result.word;
 
-#define LEX_BUT(ARG)  \
-  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,#ARG))))  \
-    return_OVstatus_FAILURE \
-    else \
-      I -> lex_but_ ## ARG = result.word;
-
-#define LEX_BUTTONACTIONCODE(NAME,CODE) LEX_BUT(NAME) \
-    if(!OVreturn_IS_OK( OVOneToOne_Set(I->MouseButtonActionCodeLexicon,I->lex_but_ ## NAME, CODE)))  \
-      return_OVstatus_FAILURE;
-#define LEX_BUTTONACTIONCODEWITHSTRING(NAME,STRARG,CODE) \
-  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,STRARG))))  \
-    return_OVstatus_FAILURE \
-    else \
-      I -> lex_but_ ## NAME = result.word; \
-  if(!OVreturn_IS_OK( OVOneToOne_Set(I->MouseButtonActionCodeLexicon,I->lex_but_ ## NAME, CODE)))  \
-    return_OVstatus_FAILURE;
-
+#define LEX_BUTTONACTIONCODE(NAME, CODE)                                       \
+  LEX_BUT(NAME)                                                                \
+  I->MouseButtonActionCodeLexicon[I->lex_but_##NAME] = CODE;
+#define LEX_BUTTONACTIONCODEWITHSTRING(NAME, STRARG, CODE)                     \
+  if (!OVreturn_IS_OK((result = OVLexicon_GetFromCString(I->Lex, STRARG))))    \
+    return_OVstatus_FAILURE else I->lex_but_##NAME = result.word;              \
+  I->MouseButtonActionCodeLexicon[I->lex_but_##NAME] = CODE;
 
   LEX_BUTTONACTIONCODE(rota, 0);
   LEX_BUTTONACTIONCODE(move, 1);
@@ -498,13 +597,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_BUTTONACTIONCODE(box, 52);
   LEX_BUTTONACTIONCODE(irtz, 53);
 
-  I->MouseModeLexicon = OVOneToOne_New(C->heap);
-  if(!I->MouseModeLexicon)
-    return_OVstatus_FAILURE;
-
 #define LEX_MOUSEMODECODE(NAME,CODE) LEX(NAME) \
-    if(!OVreturn_IS_OK( OVOneToOne_Set(I->MouseModeLexicon,I->lex_ ## NAME, CODE)))  \
-      return_OVstatus_FAILURE;
+  I->MouseModeLexicon[I->lex_ ## NAME] = CODE;
 
 #include "buttonmodes_lex_init.h"
 
@@ -536,43 +630,32 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
     }
   }
 
-  I->PaletteLexicon = OVOneToOne_New(C->heap);
-  if(!I->PaletteLexicon)
-    return_OVstatus_FAILURE;
-
-#define LEX_PALETTE(NAME,CODE) LEX(NAME) \
-    if(!OVreturn_IS_OK( OVOneToOne_Set(I->PaletteLexicon,I->lex_ ## NAME, CODE)))  \
-      return_OVstatus_FAILURE;
+#define LEX_PALETTE(NAME, CODE)                                                \
+  LEX(NAME)                                                                    \
+  I->PaletteLexicon[I->lex_##NAME] = CODE;
 
 #include "palettes_lex_init.h"
 
 #endif
 
+#define LEX_ATM_PROP(ARG)                                                      \
+  if (!OVreturn_IS_OK((result = OVLexicon_GetFromCString(I->Lex, #ARG))))      \
+    return_OVstatus_FAILURE else I->lex_atom_prop_##ARG = result.word;
+#define LEX_ATOM_PROP(NAME, CODE, TYPE, OFFSET)                                \
+  LEX_ATM_PROP(NAME)                                                           \
+  I->AtomPropertyLexicon[I->lex_atom_prop_##NAME] = CODE;                      \
+  I->AtomPropertyInfos[CODE].id = CODE;                                        \
+  I->AtomPropertyInfos[CODE].Ptype = TYPE;                                     \
+  I->AtomPropertyInfos[CODE].offset = OFFSET;                                  \
+  I->AtomPropertyInfos[CODE].maxlen = 0;
 
-  I->AtomPropertyLexicon = OVOneToOne_New(C->heap);
-  if(!I->AtomPropertyLexicon)
-    return_OVstatus_FAILURE;
-
-#define LEX_ATM_PROP(ARG)  \
-  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,#ARG))))  \
-    return_OVstatus_FAILURE \
-    else \
-      I -> lex_atom_prop_ ## ARG = result.word;
-#define LEX_ATOM_PROP(NAME,CODE,TYPE,OFFSET) LEX_ATM_PROP(NAME)		\
-    if(!OVreturn_IS_OK( OVOneToOne_Set(I->AtomPropertyLexicon,I->lex_atom_prop_ ## NAME, CODE)))  \
-      return_OVstatus_FAILURE;     \
-    I->AtomPropertyInfos[CODE].id = CODE;    \
-    I->AtomPropertyInfos[CODE].Ptype = TYPE;    \
-    I->AtomPropertyInfos[CODE].offset = OFFSET;  \
-    I->AtomPropertyInfos[CODE].maxlen = 0;
-
-#define LEX_ATOM_PROP_S(NAME,CODE,TYPE,OFFSET,MAXLEN) LEX_ATM_PROP(NAME)	\
-    if(!OVreturn_IS_OK( OVOneToOne_Set(I->AtomPropertyLexicon,I->lex_atom_prop_ ## NAME, CODE)))  \
-      return_OVstatus_FAILURE;     \
-    I->AtomPropertyInfos[CODE].id = CODE;    \
-    I->AtomPropertyInfos[CODE].Ptype = TYPE;    \
-    I->AtomPropertyInfos[CODE].offset = OFFSET;  \
-    I->AtomPropertyInfos[CODE].maxlen = MAXLEN;
+#define LEX_ATOM_PROP_S(NAME, CODE, TYPE, OFFSET, MAXLEN)                      \
+  LEX_ATM_PROP(NAME)                                                           \
+  I->AtomPropertyLexicon[I->lex_atom_prop_##NAME] = CODE;                      \
+  I->AtomPropertyInfos[CODE].id = CODE;                                        \
+  I->AtomPropertyInfos[CODE].Ptype = TYPE;                                     \
+  I->AtomPropertyInfos[CODE].offset = OFFSET;                                  \
+  I->AtomPropertyInfos[CODE].maxlen = MAXLEN;
 
   /*TEMP*/
   LEX_ATOM_PROP(model, 0, cPType_model, 0);
@@ -643,24 +726,6 @@ int PyMOL_DelG3DStream(CPyMOL * I, int *array_ptr)
 
 static OVstatus PyMOL_PurgeAPI(CPyMOL * I)
 {
-  OVOneToOne_DEL_AUTO_NULL(I->Setting);
-  OVOneToOne_DEL_AUTO_NULL(I->Clip);
-  OVOneToOne_DEL_AUTO_NULL(I->SelectList);
-  OVOneToOne_DEL_AUTO_NULL(I->Reinit);
-  OVOneToOne_DEL_AUTO_NULL(I->Rep);
-#ifdef _PYMOL_LIB
-  OVOneToOne_DEL_AUTO_NULL(I->MouseButtonCodeLexicon);
-  OVOneToOne_DEL_AUTO_NULL(I->MouseButtonModCodeLexicon);
-  OVOneToOne_DEL_AUTO_NULL(I->MouseButtonActionCodeLexicon);
-  OVOneToOne_DEL_AUTO_NULL(I->MouseModeLexicon);
-  OVOneToOne_DEL_AUTO_NULL(I->PaletteLexicon);
-  OVOneToOne_DEL_AUTO_NULL(I->CartoonLexicon);
-  OVOneToOne_DEL_AUTO_NULL(I->FlagLexicon);
-  OVOneToOne_DEL_AUTO_NULL(I->FlagActionLexicon);
-#endif
-
-  OVOneToOne_DEL_AUTO_NULL(I->AtomPropertyLexicon);
-
   OVLexicon_DEL_AUTO_NULL(I->Lex);
   return_OVstatus_SUCCESS;
 }
@@ -880,39 +945,6 @@ PyMOLreturn_status PyMOL_CmdOriginAt(CPyMOL * I, float x, float y, float z, int 
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-static OVreturn_word get_rep_id(CPyMOL * I, const char *representation)
-{
-  OVreturn_word result;
-
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, representation))))
-    return result;
-  return OVOneToOne_GetForward(I->Rep, result.word);
-}
-
-OVreturn_word get_setting_id(CPyMOL * I, const char *setting)
-{
-  OVreturn_word result;
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, setting))))
-    return result;
-  return OVOneToOne_GetForward(I->Setting, result.word);
-}
-
-static OVreturn_word get_reinit_id(CPyMOL * I, const char *reinit)
-{
-  OVreturn_word result;
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, reinit))))
-    return result;
-  return OVOneToOne_GetForward(I->Reinit, result.word);
-}
-
-static OVreturn_word get_select_list_mode(CPyMOL * I, const char *mode)
-{
-  OVreturn_word result;
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, mode))))
-    return result;
-  return OVOneToOne_GetForward(I->SelectList, result.word);
-}
-
 PyMOLreturn_status PyMOL_CmdClip(CPyMOL * I,
                                  const char *mode, float amount,
                                  const char *selection,
@@ -949,11 +981,11 @@ PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL * I, const char *name, const char 
                                        int list_len, int state, const char *mode, int quiet)
 {
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
-  PYMOL_API_LOCK OVreturn_word mode_id;
-  if(OVreturn_IS_OK((mode_id = get_select_list_mode(I, mode)))) {
-    auto res =
-      ExecutiveSelectList(I->G, name, object, list, list_len, state - 1, mode_id.word,
-                          quiet);
+  PYMOL_API_LOCK
+
+  if (auto mode_id = get_select_list_mode(I, mode)) {
+    auto res = ExecutiveSelectList(
+        I->G, name, object, list, list_len, state - 1, *mode_id, quiet);
     result = return_status_ok(bool(res));
   }
   PYMOL_API_UNLOCK return result;
@@ -966,13 +998,12 @@ PyMOLreturn_status PyMOL_CmdShow(CPyMOL * I,
 {
   int ok = true;
   PYMOL_API_LOCK OrthoLineType s1;
-  OVreturn_word rep_id;
-  if(OVreturn_IS_OK((rep_id = get_rep_id(I, representation)))) {
+  if (auto rep_id = get_rep_id(I, representation)) {
     SelectorGetTmp2(I->G, selection, s1);
     if (!s1[0]){  /* This doesn't catch patterns that don't match, but everything else */
       ok = false;
     } else {
-      ExecutiveSetRepVisib(I->G, s1, rep_id.word, true);
+      ExecutiveSetRepVisib(I->G, s1, *rep_id, true);
       PyMOL_NeedRedisplay(I);  /* this should really only get called if ExecutiveSetRepVisib changes something */
       SelectorFreeTmp(I->G, s1);
     }
@@ -989,13 +1020,12 @@ PyMOLreturn_status PyMOL_CmdHide(CPyMOL * I,
 {
   int ok = true;
   PYMOL_API_LOCK OrthoLineType s1;
-  OVreturn_word rep_id;
-  if(OVreturn_IS_OK((rep_id = get_rep_id(I, representation)))) {
+  if (auto rep_id = get_rep_id(I, representation)) {
     SelectorGetTmp2(I->G, selection, s1);
     if (!s1[0]){  /* This doesn't catch patterns that don't match, but everything else */
       ok = false;
     } else {
-      ExecutiveSetRepVisib(I->G, s1, rep_id.word, false);
+      ExecutiveSetRepVisib(I->G, s1, *rep_id, false);
       SelectorFreeTmp(I->G, s1);
     }
   } else {
@@ -1037,10 +1067,10 @@ PyMOLreturn_status PyMOL_CmdSetBond(CPyMOL * I, const char *setting, const char 
 {
   int ok = true;
   PYMOL_API_LOCK {
-    OVreturn_word setting_id;
     OrthoLineType s1 = "";
     OrthoLineType s2 = "";
-    if(ok) ok = OVreturn_IS_OK((setting_id = get_setting_id(I, setting)));
+    auto setting_id = get_setting_id(I, setting);
+    if(ok) ok = static_cast<bool>(setting_id);
     if(ok) ok = (SelectorGetTmp(I->G, selection1, s1) >= 0);
     if(ok) {
       if(selection2 && selection2[0]) {
@@ -1050,7 +1080,7 @@ PyMOLreturn_status PyMOL_CmdSetBond(CPyMOL * I, const char *setting, const char 
       }
     }
     if(ok) {
-      ok = ExecutiveSetBondSettingFromString(I->G, setting_id.word, value,
+      ok = ExecutiveSetBondSettingFromString(I->G, *setting_id, value,
                                              s1, s2,
                                              state - 1, quiet, side_effects);
     }
@@ -1066,10 +1096,10 @@ PyMOLreturn_status PyMOL_CmdUnsetBond(CPyMOL * I, const char *setting,
 {
   int ok = true;
   PYMOL_API_LOCK {
-    OVreturn_word setting_id;
     OrthoLineType s1 = "";
     OrthoLineType s2 = "";
-    if(ok) ok = OVreturn_IS_OK((setting_id = get_setting_id(I, setting)));
+    auto setting_id = get_setting_id(I, setting);
+    if(ok) ok = static_cast<bool>(setting_id);
     if(ok) ok = (SelectorGetTmp(I->G, selection1, s1) >= 0);
     if(ok) {
       if(selection2 && selection2[0]) {
@@ -1079,7 +1109,7 @@ PyMOLreturn_status PyMOL_CmdUnsetBond(CPyMOL * I, const char *setting,
       }
     }
     if(ok) {
-      ok = ExecutiveUnsetBondSetting(I->G, setting_id.word, 
+      ok = ExecutiveUnsetBondSetting(I->G, *setting_id,
                                      s1, s2,
                                      state - 1, quiet, side_effects);
     }
@@ -1097,13 +1127,13 @@ PyMOLreturn_status PyMOL_CmdSet(CPyMOL * I,
 {
   int ok = true;
   PYMOL_API_LOCK {
-    OVreturn_word setting_id;
     OrthoLineType s1 = "";
-    if(ok) ok = OVreturn_IS_OK((setting_id = get_setting_id(I, setting)));
+    auto setting_id = get_setting_id(I, setting);
+    if(ok) ok = static_cast<bool>(setting_id);
     if(ok) ok = (SelectorGetTmp2(I->G, selection, s1) >= 0);
     
     if(ok) {
-      ExecutiveSetSettingFromString(I->G, setting_id.word, value, s1,
+      ExecutiveSetSettingFromString(I->G, *setting_id, value, s1,
                                     state - 1, quiet, side_effects);
     }
     SelectorFreeTmp(I->G, s1);
@@ -1119,13 +1149,13 @@ PyMOLreturn_value PyMOL_CmdGet(CPyMOL * I,
   PyMOLreturn_value result = { PyMOLstatus_SUCCESS };
 
   PYMOL_API_LOCK {
-    OVreturn_word setting_id;
     OrthoLineType s1 = "";
-    if(ok) ok = OVreturn_IS_OK((setting_id = get_setting_id(I, setting)));
+    auto setting_id = get_setting_id(I, setting);
+    if(ok) ok = static_cast<bool>(setting_id);
     if(ok) ok = (SelectorGetTmp2(I->G, selection, s1) >= 0);
     
     if(ok) {
-      ExecutiveGetSettingFromString(I->G, &result, setting_id.word, s1,
+      ExecutiveGetSettingFromString(I->G, &result, *setting_id, s1,
                                     state - 1, quiet);
     }
     SelectorFreeTmp(I->G, s1);
@@ -1139,12 +1169,12 @@ PyMOLreturn_status PyMOL_CmdUnset(CPyMOL * I, const char *setting, const char *s
 {
   int ok = true;
   PYMOL_API_LOCK {
-    OVreturn_word setting_id;
     OrthoLineType s1 = "";
-    if(ok) ok = OVreturn_IS_OK((setting_id = get_setting_id(I, setting)));
+    auto setting_id = get_setting_id(I, setting);
+    if(ok) ok = static_cast<bool>(setting_id);
     if(ok) ok = (SelectorGetTmp2(I->G, selection, s1) >= 0);
     if(ok) {
-      ExecutiveUnsetSetting(I->G, setting_id.word, s1,
+      ExecutiveUnsetSetting(I->G, *setting_id, s1,
                             state - 1, quiet, side_effects);
     }
     SelectorFreeTmp(I->G, s1);
@@ -1181,9 +1211,11 @@ PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL * I,
     const char *object_name)
 {
   int ok = true;
-  OVreturn_word what_id;
-  PYMOL_API_LOCK if(OVreturn_IS_OK((what_id = get_reinit_id(I, what)))) {
-    auto res = ExecutiveReinitialize(I->G, what_id.word, object_name);
+  PYMOL_API_LOCK
+  auto what_id = get_reinit_id(I, what);
+  ok = static_cast<bool>(what_id);
+  if (ok) {
+    auto res = ExecutiveReinitialize(I->G, *what_id, object_name);
     ok = static_cast<bool>(res);
   }
   PYMOL_API_UNLOCK return return_status_ok(ok);
@@ -1851,7 +1883,7 @@ CPyMOL *PyMOL_New(void)
 
 CPyMOL *PyMOL_NewWithOptions(const CPyMOLOptions * option)
 {
-  auto result = pymol::calloc<CPyMOL>(1);
+  auto result = new CPyMOL();
   assert(result);
 
   auto G = pymol::calloc<PyMOLGlobals>(1);
@@ -1981,6 +2013,9 @@ void PyMOL_Stop(CPyMOL * I)
   TetsurfFree(G);
   IsosurfFree(G);
   WizardFree(G);
+#ifdef SYM_TO_MAT_LIST_IN_C
+  SymmetryFree(G);
+#endif
   EditorFree(G);
   ExecutiveFree(G);
   VFontFree(G);
@@ -3053,110 +3088,76 @@ PyMOLreturn_int_array PyMOL_GetRepsForObject(CPyMOL * I, const char *name){
   PYMOL_API_UNLOCK return result;
 }
 
-static OVreturn_word get_button_code(CPyMOL * I, char *code);
-static OVreturn_word get_button_mod_code(CPyMOL * I, char *modcode);
-static OVreturn_word get_button_action_code(CPyMOL * I, char *actioncode);
-static OVreturn_word get_mouse_mode(CPyMOL * I, char *mousemode);
-
 PyMOLreturn_status PyMOL_SetButton(CPyMOL * I, const char *buttonarg, const char *modifierarg, const char *actionarg){
-  int ok = true;
-  OVreturn_word button_num, but_mod_num, act_code;
-  int but_code;
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   OrthoLineType button, modifier, action;
   PYMOL_API_LOCK
     UtilNCopyToLower(button, buttonarg, strlen(buttonarg)+1);
     UtilNCopyToLower(modifier, modifierarg, strlen(modifierarg)+1);
     UtilNCopyToLower(action, actionarg, strlen(actionarg)+1);
-    ok = OVreturn_IS_OK(button_num = get_button_code(I, button));
-  if (ok) ok = OVreturn_IS_OK((but_mod_num = get_button_mod_code(I, modifier)));
-  if (ok) ok = OVreturn_IS_OK((act_code = get_button_action_code(I, action)));
+    auto button_num = get_button_code(I, button);
+    auto but_mod_num = get_button_mod_code(I, modifier);
+    auto act_code = get_button_action_code(I, action);
+    auto ok = static_cast<bool>(button_num) && static_cast<bool>(but_mod_num) &&
+         static_cast<bool>(act_code);
 
-  if (ok){
-    /* This is directly from the button() function in controlling.py */
-    if (button_num.word < 3){ // normal button (L,M,R)
-      if (but_mod_num.word < 4){ 
-	// none, shft, ctrl, ctsh
-	but_code = button_num.word + 3*but_mod_num.word;
+    if (ok) {
+      int but_code;
+      /* This is directly from the button() function in controlling.py */
+      if (*button_num < 3) { // normal button (L,M,R)
+        if (*but_mod_num < 4) {
+          // none, shft, ctrl, ctsh
+          but_code = *button_num + 3 * *but_mod_num;
+        } else {
+          // alt, alsh, alct, alcs
+          but_code = *button_num + 68 + 3 * (*but_mod_num - 4);
+        }
+      } else if (*button_num < 4) { // wheel
+        if (*but_mod_num < 4) {
+          // none, shft, ctrl, ctsh
+          but_code = 12 + *but_mod_num;
+        } else {
+          but_code = 64 + *but_mod_num - 4;
+        }
       } else {
-	// alt, alsh, alct, alcs
-	but_code = button_num.word + 68 + 3*(but_mod_num.word-4);
+        // single and double clicks
+        but_code = (16 + *button_num - 4) + *but_mod_num * 6;
       }
-    } else if (button_num.word < 4){ // wheel
-      if (but_mod_num.word < 4){
-	// none, shft, ctrl, ctsh
-	but_code = 12 + but_mod_num.word;
-      } else {
-	but_code = 64 + but_mod_num.word - 4;
-      }
-    } else {
-      // single and double clicks
-      but_code = (16 + button_num.word -4) + but_mod_num.word * 6;
-    }
-    ButModeSet(I->G, but_code, act_code.word);
-    result.status =  PyMOLstatus_SUCCESS;
+      ButModeSet(I->G, but_code, *act_code);
+      result.status = PyMOLstatus_SUCCESS;
   }
   PYMOL_API_UNLOCK return result;
 }
 #include "buttonmodes.h"
 
 PyMOLreturn_status PyMOL_SetMouseButtonMode(CPyMOL * I, const char *modename){
-  int ok = true, i, start;
-  OVreturn_word mode;
+  int ok = true, start;
+  pymol::Result<int> mode;
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
 
   PYMOL_API_LOCK
     {
         char *nmodename = (char*)malloc(strlen(modename)+1);
-	UtilNCopyToLower((char*)nmodename, modename, strlen(modename)+1);
-        ok = OVreturn_IS_OK(mode = get_mouse_mode(I, (char*)nmodename));
+        UtilNCopyToLower((char*)nmodename, modename, strlen(modename)+1);
+        mode = get_mouse_mode(I, (char*)nmodename);
+        ok = static_cast<bool>(mode);
         free(nmodename);
     }
   if (ok){
     result.status =  PyMOLstatus_SUCCESS;
     {
-      int a;
       /* for Button modes, first initialize all buttons, so that 
 	 previous functionality does not linger */
-      for(a = 0; a < cButModeInputCount; a++) {
+      for (int a = 0; a < cButModeInputCount; a++) {
 	ButModeSet(I->G, a, initial_button_modes[a]);
       }
     }
-    start = button_mode_start[mode.word];
-    for (i=0; i<n_button_mode[mode.word]; i++, start+=2){
+    start = button_mode_start[*mode];
+    for (int i = 0; i < n_button_mode[*mode]; i++, start += 2) {
       ButModeSet(I->G, all_buttons[start], all_buttons[start+1]);
     }
   }
   PYMOL_API_UNLOCK return result;  
-}
-
-static OVreturn_word get_button_code(CPyMOL * I, char *code)
-{
-  OVreturn_word result;
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, code))))
-    return result;
-  return OVOneToOne_GetForward(I->MouseButtonCodeLexicon, result.word);
-}
-static OVreturn_word get_button_mod_code(CPyMOL * I, char *modcode)
-{
-  OVreturn_word result;
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, modcode))))
-    return result;
-  return OVOneToOne_GetForward(I->MouseButtonModCodeLexicon, result.word);
-}
-static OVreturn_word get_button_action_code(CPyMOL * I, char *actioncode)
-{
-  OVreturn_word result;
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, actioncode))))
-    return result;
-  return OVOneToOne_GetForward(I->MouseButtonActionCodeLexicon, result.word);
-}
-static OVreturn_word get_mouse_mode(CPyMOL * I, char *mousemode)
-{
-  OVreturn_word result;
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, mousemode))))
-    return result;
-  return OVOneToOne_GetForward(I->MouseModeLexicon, result.word);
 }
 
 PyMOLreturn_status PyMOL_ZoomScene(CPyMOL * I, float scale){
@@ -3176,16 +3177,6 @@ PyMOLreturn_status PyMOL_TranslateScene(CPyMOL * I, float x, float y, float z){
   PYMOL_API_UNLOCK return result;
 }
 
-#include "palettes.h"
-
-static OVreturn_word get_palette(CPyMOL * I, char *palette)
-{
-  OVreturn_word result;
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, palette))))
-    return result;
-  return OVOneToOne_GetForward(I->PaletteLexicon, result.word);
-}
-
 PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, const char *expression, const char *pal, const char *selection, float minimum, float maximum, int byres, int quiet){
   PyMOLreturn_float_array result = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK
@@ -3193,31 +3184,33 @@ PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, const char *expression, const
   int digits, first, last, array_pl, ret;
   float min_ret, max_ret;
   char prefix[2];
-  OVreturn_word pal_word;
   char *palette = (char*)malloc(strlen(pal)+1);
     UtilNCopyToLower((char*)palette, pal, strlen(pal)+1);
   
-  if (ok)
-    ok = OVreturn_IS_OK(pal_word = get_palette(I, (char*)palette));  
+  auto pal_word = get_palette(I, (char*)palette);
   free(palette);
-  prefix[0] = palette_prefix[pal_word.word];
-  prefix[1] = 0;
-  array_pl = pal_word.word * 3;
-  digits = palette_data[array_pl++];
-  first = palette_data[array_pl++];
-  last = palette_data[array_pl++];
+  if (ok)
+    ok = static_cast<bool>(pal_word);
 
-  ret = ExecutiveSpectrum(I->G, selection, expression, minimum, maximum,
-      first, last, prefix, digits, byres, quiet, &min_ret, &max_ret);
+  result.status = PyMOLstatus_FAILURE;
+  if (ok) {
+    prefix[0] = palette_prefix[*pal_word];
+    prefix[1] = 0;
+    array_pl = *pal_word * 3;
+    digits = palette_data[array_pl++];
+    first = palette_data[array_pl++];
+    last = palette_data[array_pl++];
 
-  if (ret){
-    result.size = 2;
-    result.array = VLAlloc(float, 2);
-    result.array[0] = min_ret;
-    result.array[1] = max_ret;
-    result.status = PyMOLstatus_SUCCESS;
-  } else {
-    result.status = PyMOLstatus_FAILURE;
+    auto ret = ExecutiveSpectrum(I->G, selection, expression, minimum, maximum,
+        first, last, prefix, digits, byres, quiet);
+
+    if (ret) {
+      result.size = 2;
+      result.array = VLAlloc(float, 2);
+      result.array[0] = ret.result().first;
+      result.array[1] = ret.result().second;
+      result.status = PyMOLstatus_SUCCESS;
+    }
   }
   PYMOL_API_UNLOCK return result;
 }
@@ -3238,15 +3231,17 @@ PyMOLreturn_value PyMOL_GetVersion(CPyMOL * I){
   PYMOL_API_UNLOCK return result;
 }
 
-AtomPropertyInfo *PyMOL_GetAtomPropertyInfo(CPyMOL * I, const char *atompropname)
+AtomPropertyInfo* PyMOL_GetAtomPropertyInfo(CPyMOL* I, const char* atompropname)
 {
   OVreturn_word result;
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, atompropname))))
-    return NULL;
-  result = OVOneToOne_GetForward(I->AtomPropertyLexicon, result.word);
-  if(!OVreturn_IS_OK(result))
-    return NULL;
-  return &I->AtomPropertyInfos[result.word];
+  if (!OVreturn_IS_OK(
+          (result = OVLexicon_BorrowFromCString(I->Lex, atompropname))))
+    return nullptr;
+  auto it = I->AtomPropertyLexicon.find(result.word);
+  if (it == I->AtomPropertyLexicon.end()) {
+    return nullptr;
+  }
+  return &I->AtomPropertyInfos[it->second];
 }
 
 #ifdef __cplusplus

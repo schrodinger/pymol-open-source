@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Symmetry.h"
 #include"P.h"
 #include"PConv.h"
+#include "Result.h"
 #ifdef SYM_TO_MAT_LIST_IN_C
 #endif
 

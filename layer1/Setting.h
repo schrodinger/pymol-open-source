@@ -23,8 +23,8 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 #include"PyMOLGlobals.h"
-#include"OVOneToOne.h"
 #include"pymol/memory.h"
+#include"Result.h"
 
 typedef char SettingName[255];
 
@@ -345,8 +345,8 @@ const char * SettingLevelGetName(unsigned index);
 bool SettingLevelCheckMask(PyMOLGlobals * G, int index, unsigned char mask);
 bool SettingLevelCheck(PyMOLGlobals * G, int index, unsigned char level);
 
-bool CPyMOLInitSetting(OVLexicon * Lex, OVOneToOne * Setting);
-extern "C" OVreturn_word get_setting_id(CPyMOL * I, const char *setting);
+bool CPyMOLInitSetting(OVLexicon * Lex, std::unordered_map<int, int>& Setting);
+pymol::Result<int> get_setting_id(CPyMOL* I, const char* setting);
 
 /*
  * Overloaded setters for templatted programming

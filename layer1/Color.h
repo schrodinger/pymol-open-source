@@ -29,7 +29,6 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 #include"Word.h"
 #include"OVLexicon.h"
-#include"OVOneToOne.h"
 
 struct ObjectGadgetRamp;
 

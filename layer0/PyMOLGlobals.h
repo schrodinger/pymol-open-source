@@ -112,13 +112,8 @@ typedef struct _OVContext OVContext;
 #define OVCONTEXT_DEFINED
 #endif
 
-#ifndef OVONETOONE_DEFINED
-typedef struct _OVOneToOne OVOneToOne;
-#define OVONETOONE_DEFINED
-#endif
-
 #ifndef CPyMOL_DEFINED
-typedef struct _CPyMOL CPyMOL;
+struct CPyMOL;
 #define CPyMOL_DEFINED
 #endif
 

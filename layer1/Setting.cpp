@@ -1855,11 +1855,9 @@ int SettingSet_3fv(CSetting * I, int index, const float *vector)
 /*========================================================================*/
 int SettingGetIndex(PyMOLGlobals * G, const char *name)
 {
-  OVreturn_word result = get_setting_id(G->PyMOL, name);
-
-  if (OVreturn_IS_OK(result))
-    return result.word;
-
+  if (auto result = get_setting_id(G->PyMOL, name)) {
+    return *result;
+  }
   return -1;
 }
 
@@ -3218,7 +3216,7 @@ StateIndex_t* StateIteratorV2::end()
  * Helper function to init CPyMOL.Setting, a (name: index) dictionary.
  * Called in PyMOL_InitAPI
  */
-bool CPyMOLInitSetting(OVLexicon * Lex, OVOneToOne * Setting) {
+bool CPyMOLInitSetting(OVLexicon * Lex, std::unordered_map<int, int>& Setting) {
   for(int index = 0; index < cSetting_INIT; ++index) {
     auto &rec = SettingInfo[index];
 
@@ -3227,11 +3225,11 @@ bool CPyMOLInitSetting(OVLexicon * Lex, OVOneToOne * Setting) {
 
     OVreturn_word result = OVLexicon_GetFromCString(Lex, rec.name);
 
-    if( !OVreturn_IS_OK(result) ||
-        !OVreturn_IS_OK(OVOneToOne_Set(Setting, result.word, index)))
+    if (!OVreturn_IS_OK(result)) {
       return false;
+    }
+    Setting[result.word] = index;
   }
-
   return true;
 }
 
