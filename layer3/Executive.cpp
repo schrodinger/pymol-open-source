@@ -16622,7 +16622,7 @@ pymol::Result<> ExecutiveSliceNew(PyMOLGlobals* G, const char* slice_name,
 }
 
 pymol::Result<> ExecutiveLoadCoordset(
-    PyMOLGlobals* G, pymol::zstring_view oname, PyObject* model, int frame)
+    PyMOLGlobals* G, pymol::zstring_view oname, PyObject* model, int frame, bool quiet)
 {
   auto origObj = ExecutiveFindObjectByName(G, oname.c_str());
   if(!origObj || origObj->type != cObjectMolecule) {
@@ -16638,10 +16638,11 @@ pymol::Result<> ExecutiveLoadCoordset(
   if(frame < 0)
     frame = obj->NCSet - 1;
 
-  PRINTFB(G, FB_Executive, FB_Actions)
-    " CmdLoad: Coordinates appended into object \"%s\", state %d.\n",
-    oname.c_str(), frame + 1 ENDFB(G);
-
+  if (!quiet) {
+    PRINTFB(G, FB_Executive, FB_Actions)
+      " CmdLoad: Coordinates appended into object \"%s\", state %d.\n",
+      oname.c_str(), frame + 1 ENDFB(G);
+  }
   return {};
 }
 

@@ -5449,10 +5449,11 @@ static PyObject *CmdLoadCoordSet(PyObject * self, PyObject * args)
   const char* oname;
   PyObject *model;
   int frame;
+  int quiet;
 
-  API_SETUP_ARGS(G, self, args, "OsOi", &self, &oname, &model, &frame);
+  API_SETUP_ARGS(G, self, args, "OsOii", &self, &oname, &model, &frame, &quiet);
   API_ASSERT(APIEnterNotModal(G));
-  auto result = ExecutiveLoadCoordset(G, oname, model, frame);
+  auto result = ExecutiveLoadCoordset(G, oname, model, frame, static_cast<bool>(quiet));
   APIExit(G);
   return APISuccess();
 }

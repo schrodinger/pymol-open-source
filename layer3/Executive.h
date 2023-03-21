@@ -792,7 +792,7 @@ char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, const char *name, int 
 
 CoordSet * ExecutiveGetCoordSet(PyMOLGlobals * G, const char * name, int state, ObjectMolecule ** omp=NULL);
 pymol::Result<> ExecutiveLoadCoordset(
-    PyMOLGlobals* G, pymol::zstring_view oname, PyObject* model, int frame);
+    PyMOLGlobals* G, pymol::zstring_view oname, PyObject* model, int frame, bool quiet);
 
 void ExecutiveUndo(PyMOLGlobals * G, int dir);
 int ExecutiveSaveUndo(PyMOLGlobals * G, const char *s1, int state);

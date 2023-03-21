@@ -1415,7 +1415,7 @@ SEE ALSO
     cmd.load_coords
         '''
         with _self.lockcm:
-            r = _cmd.load_coordset(_self._COb, object, coords, int(state)-1)
+            r = _cmd.load_coordset(_self._COb, object, coords, int(state)-1, quiet)
         return r
 
     def load_coords(coords, selection, state=1, quiet=1, *, _self=cmd):
