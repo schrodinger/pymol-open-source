@@ -809,8 +809,6 @@ DistSet* FindHalogenBondInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
 {
   CSelector* I = G->Selector;
 
-  int exclusion = SettingGet<int>(G, cSetting_h_bond_exclusion);
-
   int numVerts = 0;
   *result = 0.0f;
   // if the dist set exists, get info from it, otherwise get a new one
@@ -897,45 +895,37 @@ DistSet* FindHalogenBondInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
             if (dist < cutoff) {
 
               bool a_keeper = false;
-              if (exclusion && obj1 == obj2) {
-                a_keeper = !SelectorCheckNeighbors(
-                    G, exclusion, obj1, at1, at2, zero.data(), scratch.data());
+
+              if (ai1->hb_donor) {
+                a_keeper = CheckHalogenBondAsAcceptor(
+                    obj1, at1, state1, obj2, at2, state2, &halogenbcRec);
+                if (a_keeper) {
+                  don_vv = cs1->coordPtr(idx1);
+                  acc_vv = cs2->coordPtr(idx2);
+                }
+              } else if (ai2->hb_donor) {
+                a_keeper = CheckHalogenBondAsAcceptor(
+                    obj2, at2, state2, obj1, at1, state1, &halogenbcRec);
+                if (a_keeper) {
+                  don_vv = cs2->coordPtr(idx2);
+                  acc_vv = cs1->coordPtr(idx1);
+                }
               }
 
-              if (a_keeper) {
-                a_keeper = false;
-
-                if (ai1->hb_donor) {
-                  a_keeper = CheckHalogenBondAsAcceptor(
+              if (a_keeper == false) {
+                if (ai2->hb_acceptor) {
+                  a_keeper = CheckHalogenBondAsDonor(
                       obj1, at1, state1, obj2, at2, state2, &halogenbcRec);
                   if (a_keeper) {
                     don_vv = cs1->coordPtr(idx1);
                     acc_vv = cs2->coordPtr(idx2);
                   }
-                } else if (ai2->hb_donor) {
-                  a_keeper = CheckHalogenBondAsAcceptor(
+                } else if (ai1->hb_acceptor) {
+                  a_keeper = CheckHalogenBondAsDonor(
                       obj2, at2, state2, obj1, at1, state1, &halogenbcRec);
                   if (a_keeper) {
                     don_vv = cs2->coordPtr(idx2);
                     acc_vv = cs1->coordPtr(idx1);
-                  }
-                }
-
-                if (a_keeper == false) {
-                  if (ai2->hb_acceptor) {
-                    a_keeper = CheckHalogenBondAsDonor(
-                        obj1, at1, state1, obj2, at2, state2, &halogenbcRec);
-                    if (a_keeper) {
-                      don_vv = cs1->coordPtr(idx1);
-                      acc_vv = cs2->coordPtr(idx2);
-                    }
-                  } else if (ai1->hb_acceptor) {
-                    a_keeper = CheckHalogenBondAsDonor(
-                        obj2, at2, state2, obj1, at1, state1, &halogenbcRec);
-                    if (a_keeper) {
-                      don_vv = cs2->coordPtr(idx2);
-                      acc_vv = cs1->coordPtr(idx1);
-                    }
                   }
                 }
               }
@@ -971,8 +961,6 @@ DistSet* FindSaltBridgeInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
     int state1, int sele2, int state2, float cutoff, float* result)
 {
   CSelector* I = G->Selector;
-
-  int exclusion = SettingGet<int>(G, cSetting_h_bond_exclusion);
 
   int numVerts = 0;
   *result = 0.0f;
@@ -1069,29 +1057,19 @@ DistSet* FindSaltBridgeInteractions(PyMOLGlobals* G, DistSet* ds, int sele1,
             // if we pass the bonding cutoff
             if (dist < cutoff) {
 
-              bool a_keeper = false;
-              if (exclusion && obj1 == obj2) {
-                a_keeper = !SelectorCheckNeighbors(
-                    G, exclusion, obj1, at1, at2, zero.data(), scratch.data());
+              if (atom1_charge < 0) {
+                anion_vv = cs1->coordPtr(idx1);
+                cation_vv = cs2->coordPtr(idx2);
+              } else {
+                anion_vv = cs2->coordPtr(idx2);
+                cation_vv = cs1->coordPtr(idx1);
               }
 
-              if (a_keeper) {
-                if (atom1_charge < 0) {
-                  anion_vv = cs1->coordPtr(idx1);
-                  cation_vv = cs2->coordPtr(idx2);
-                } else {
-                  anion_vv = cs2->coordPtr(idx2);
-                  cation_vv = cs1->coordPtr(idx1);
-                }
-              }
-
-              if (a_keeper) {
-                InsertDistanceInfo(G, ds, state1, state2, ai1, ai2, anion_vv,
-                    cation_vv, numVerts);
-                dist_cnt++;
-                dist_sum += dist;
-                numVerts += 2;
-              }
+              InsertDistanceInfo(G, ds, state1, state2, ai1, ai2, anion_vv,
+                  cation_vv, numVerts);
+              dist_cnt++;
+              dist_sum += dist;
+              numVerts += 2;
             }
           }
         }
