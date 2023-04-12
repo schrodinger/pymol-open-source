@@ -14,6 +14,29 @@
 #include <catch2/catch.hpp>
 
 namespace pymol {
+
+/**
+ * Basic PyMOL Instance & Globals for C-testing purposes.
+ */
+class PyMOLInstance
+{
+public:
+  PyMOLInstance();
+  PyMOLInstance(const PyMOLInstance&) = delete;
+  PyMOLInstance& operator=(const PyMOLInstance&) = delete;
+  PyMOLInstance(PyMOLInstance&&) = delete;
+  PyMOLInstance& operator=(PyMOLInstance&&) = delete;
+  ~PyMOLInstance();
+
+  /**
+   * @return PyMOLGlobals pointer
+   */
+  PyMOLGlobals* G() noexcept;
+private:
+  CPyMOL* m_Inst;
+  PyMOLGlobals* m_G;
+};
+
 namespace test {
 
 // Checks whether obj is zero'd out (Struct of all PoD Types without non-default

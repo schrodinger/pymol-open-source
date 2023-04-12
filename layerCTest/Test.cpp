@@ -12,6 +12,11 @@
 #include "Test.h"
 #include "TestCmdTest2.h"
 
+#include "P.h"
+#include "PyMOL.h"
+#include "PyMOLGlobals.h"
+#include "PyMOLOptions.h"
+
 /**
  * @pre GIL
  * @return 0 on success, non-zero on error
@@ -25,6 +30,30 @@ PyObject *CmdTest2(PyObject *, PyObject *) {
 }
 
 namespace pymol {
+
+PyMOLInstance::PyMOLInstance()
+{
+  auto options = PyMOLOptions_New();
+  options->show_splash = false;
+  m_Inst = PyMOL_NewWithOptions(options);
+  PyMOLOptions_Free(options);
+  m_G = PyMOL_GetGlobals(m_Inst);
+  PInit(m_G, true);
+  PyMOL_Start(m_Inst);
+}
+
+PyMOLInstance::~PyMOLInstance()
+{
+  PyMOL_Stop(m_Inst);
+  PFree(m_G);
+  PyMOL_Free(m_Inst);
+}
+
+PyMOLGlobals* PyMOLInstance::G() noexcept
+{
+  return m_G;
+}
+
 namespace test {
 
 TmpFILE::TmpFILE()
