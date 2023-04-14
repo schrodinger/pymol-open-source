@@ -293,15 +293,6 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load_raw(open(self.datafile("sampletrajectory.pdb")).read(), "pdb")
         self.assertEqual(115, cmd.count_atoms())
 
-    @testing.requires("multi_undo")
-    def testUndoLoadRaw(self):
-        cmd.load_raw(open(self.datafile("sampletrajectory.pdb")).read(), "pdb")
-        self.assertEqual(115, cmd.count_atoms())
-        cmd.undo()
-        self.assertEqual(0, cmd.count_atoms())
-        cmd.redo()
-        self.assertEqual(115, cmd.count_atoms())
-
     @testing.requires_version('2.3.3')
     def testLoadRawMMTF(self):
         import gzip
@@ -358,52 +349,6 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load(self.datafile("sampletrajectory.pdb"))
         cmd.load_traj(self.datafile("sampletrajectory.dcd"))
         self.assertEqual(10, cmd.count_states())
-
-    @testing.foreach(
-            ['.pdb', '.dcd'],
-            ['.pdb', '.crd'],
-            ['.gro', '.xtc'],
-            )
-    @testing.requires("multi_undo")
-    def testUndoLoadTraj(self, topext, trjext):
-        pdbfile = self.datafile("sampletrajectory" + topext)
-        dcdfile = self.datafile("sampletrajectory" + trjext)
-
-        cmd.load(pdbfile)
-        cmd.load_traj(dcdfile, state=0)
-        self.assertEqual(11, cmd.count_states())
-        cmd.undo()
-        self.assertEqual(1, cmd.count_states())
-        cmd.redo()
-        self.assertEqual(11, cmd.count_states())
-        cmd.delete('*')
-
-        cmd.load(pdbfile)
-        cmd.load_traj(dcdfile, state=1, interval=2, max=3)
-        self.assertEqual(3, cmd.count_states())
-        cmd.undo()
-        self.assertEqual(1, cmd.count_states())
-        cmd.redo()
-        self.assertEqual(3, cmd.count_states())
-        cmd.delete('*')
-
-        cmd.load(pdbfile)
-        cmd.load_traj(dcdfile, state=1, start=3, stop=5)
-        self.assertEqual(3, cmd.count_states())
-        cmd.undo()
-        self.assertEqual(1, cmd.count_states())
-        cmd.redo()
-        self.assertEqual(3, cmd.count_states())
-        cmd.delete('*')
-
-        cmd.load(pdbfile)
-        cmd.load_traj(dcdfile, state=1, stop=9, average=3)
-        self.assertEqual(3, cmd.count_states())
-        cmd.undo()
-        self.assertEqual(1, cmd.count_states())
-        cmd.redo()
-        self.assertEqual(3, cmd.count_states())
-        cmd.delete('*')
 
     # via ObjectMoleculeLoadTRJFile
     @testing.requires_version('1.7')

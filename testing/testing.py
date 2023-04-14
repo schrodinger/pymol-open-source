@@ -17,6 +17,7 @@ import pymol
 import collections
 import platform
 import inspect
+import pathlib
 
 try:
     WindowsError
@@ -52,8 +53,10 @@ if __name__ != 'pymol.testing':
     # pymol foo.py    -> __name__ == 'pymol'
     # pymol -r foo.py -> __name__ == '__main__'
 
-    _file = inspect.currentframe().f_code.co_filename
-    pymol.testing = import_from_file(_file, 'pymol.testing')
+    this_path = pathlib.Path(inspect.currentframe().f_code.co_filename)
+    test_utils = this_path.parent.joinpath('tests', 'helpers', 'test_utils.py')
+    pymol.testing = import_from_file(str(this_path), 'pymol.testing')
+    pymol.test_utils = import_from_file(str(test_utils), 'pymol.test_utils')
     pymol.testing.cli()
 
 else:
@@ -63,6 +66,7 @@ else:
     import itertools
     import tempfile
     import argparse
+    import pytest
 
     try:
         import Image
@@ -700,8 +704,9 @@ USAGE
             # silently do nothing
             return
 
+        pytest_nfail = pytest.main(['-v', 'tests/undo/api'])
         nfail = run_testfiles(**vars(cliargs))
-        cmd.quit(nfail)
+        cmd.quit(pytest_nfail + nfail)
 
     cmd.extend('run_testfiles', run_testfiles)
 

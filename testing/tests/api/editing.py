@@ -512,44 +512,6 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual([0.,0.,1.], cmd.get_atom_coords('m1`1'))
         self.assertEqual([1.,1.,1.], cmd.get_atom_coords('m1`2'))
 
-    @testing.requires("multi_undo")
-    def test_undo_protect(self):
-        cmd.pseudoatom('m1', pos=[0.,0.,0.])
-        cmd.pseudoatom('m1', pos=[1.,0.,0.])
-
-        cmd.protect('m1`1')
-        cmd.undo()
-        cmd.translate([0.,0.,1.])
-        self.assertEqual([0.,0.,1.], cmd.get_atom_coords('m1`1'))
-        self.assertEqual([1.,0.,1.], cmd.get_atom_coords('m1`2'))
-
-        cmd.protect('m1`1')
-        cmd.undo()
-        cmd.redo()
-        cmd.translate([0.,1.,0.])
-        self.assertEqual([0.,0.,1.], cmd.get_atom_coords('m1`1'))
-        self.assertEqual([1.,1.,1.], cmd.get_atom_coords('m1`2'))
-
-    @testing.requires("multi_undo")
-    def test_undo_deprotect(self):
-        cmd.pseudoatom('m1', pos=[0.,0.,0.])
-        cmd.pseudoatom('m1', pos=[1.,0.,0.])
-
-        cmd.protect('m1`1')
-        cmd.deprotect()
-        cmd.undo()
-        cmd.translate([0.,0.,1.])
-        self.assertEqual([0.,0.,0.], cmd.get_atom_coords('m1`1'))
-        self.assertEqual([1.,0.,1.], cmd.get_atom_coords('m1`2'))
-
-        cmd.protect('m1`1')
-        cmd.deprotect()
-        cmd.undo()
-        cmd.redo()
-        cmd.translate([0.,1.,0.])
-        self.assertEqual([0.,1.,0.], cmd.get_atom_coords('m1`1'))
-        self.assertEqual([1.,1.,1.], cmd.get_atom_coords('m1`2'))
-
     def test_push_undo(self):
         cmd.push_undo
         self.skipTest("TODO")
@@ -876,10 +838,6 @@ class TestEditing(testing.PyMOLTestCase):
         # see test_bond
         pass
 
-    def test_undo(self):
-        cmd.undo
-        self.skipTest("TODO")
-
     def test_unpick(self):
         cmd.pseudoatom('m1')
         cmd.edit('m1')
@@ -925,41 +883,6 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertArrayEqual(cs1, cs('m2', 1))
         self.assertArrayEqual(cs1, cs('m2', 2))
         self.assertArrayEqual(cs1, cs('m2', 3))
-
-    @testing.requires("multi_undo")
-    def test_undo_update(self):
-        # 3 states
-        cmd.fragment('gly', 'm1')
-        cmd.create('m1', 'm1', 1, 2)
-        cmd.create('m1', 'm1', 1, 3)
-
-        # second object, 90 degree rotates
-        cmd.copy('m2', 'm1')
-        cmd.rotate('x', 90, '(m2)', state=0)
-
-        # reference coordsets
-        cs = cmd.get_coordset
-        cs1 = cs('m1', 1)
-        cs2 = cs('m2', 1)
-
-        # m2/3 will change (pre-check)
-        self.assertArrayEqual(cs2, cs('m2', 3))
-        self.assertArrayNotEqual(cs1, cs('m2', 3))
-
-        # update explicit state
-        cmd.update('m2', 'm1', 3, 2)
-
-        # m2/3 has changed
-        self.assertArrayEqual(cs1, cs('m2', 3))
-        self.assertArrayNotEqual(cs2, cs('m2', 3))
-
-        cmd.undo()
-        self.assertArrayNotEqual(cs1, cs('m2', 3))
-        self.assertArrayEqual(cs2, cs('m2', 3))
-
-        cmd.redo()
-        self.assertArrayEqual(cs1, cs('m2', 3))
-        self.assertArrayNotEqual(cs2, cs('m2', 3))
 
     def test_valence(self):
         cmd.fragment('gly')
