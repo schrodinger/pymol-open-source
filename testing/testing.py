@@ -648,25 +648,33 @@ USAGE
 
     run_testfiles file1 file2 ... [, verbosity [, out ]]
         '''
-        import glob
-
         if filenames in ('all', ['all']):
             global run_all
             run_all = True
-            filenames = os.path.join(pymol_test_dir, 'tests', '*', '*.py')
+            filenames = pathlib.Path(pymol_test_dir, 'tests').glob('**/*.py')
+        else:
+            filenames = [pathlib.Path(f).resolve() for f in filenames]
 
-        if isinstance(filenames, basestring):
-            filenames = [filename
-                    for pattern in filenames.split()
-                    for filename in glob.glob(cmd.exp_path(pattern))]
+        unittest_files = []
+        pytest_files = []
 
-        suite = unittest.TestSuite()
+        # Glob all files
+        filenames = [f for filename in filenames
+                     for f in (filename.glob('**/*.py')
+                               if filename.is_dir() else [filename])]
 
-        for filename in filenames:
-            if os.path.isdir(filename):
-                filenames.extend(glob.glob(os.path.join(filename, '*.py')))
+        # Separate pytest files from unittest files
+        for path in filenames:
+            if path.stem.startswith('test_') and \
+               path.parent.stem not in ("properties", "settings"):
+                pytest_files.append(path)
                 continue
+            unittest_files.append(path)
 
+        # Run unittest files
+        suite = unittest.TestSuite()
+        for path in unittest_files:
+            filename = str(path)
             mod = import_from_file(filename)
 
             # hacky: register working directory with test cases
@@ -687,6 +695,9 @@ USAGE
             testresult = unittest.TextTestRunner(stream=out,
                                                  resultclass=PyMOLTestResult, verbosity=int(verbosity)).run(suite)
 
+        # Run pytest files if any
+        pytest_nfail = pytest.main(['-v', *pytest_files]) if pytest_files else 0
+
         while deferred_unlink:
             os.unlink(deferred_unlink.pop())
 
@@ -694,7 +705,7 @@ USAGE
             import subprocess
             subprocess.call(['rd', '/s', '/q', deferred_rmtree.pop()], shell=True)
 
-        return len(testresult.errors) + len(testresult.failures)
+        return len(testresult.errors) + len(testresult.failures) + pytest_nfail
 
     def cli():
         '''
@@ -703,10 +714,8 @@ USAGE
         if not cliargs.filenames:
             # silently do nothing
             return
-
-        pytest_nfail = pytest.main(['-v', 'tests/undo/api'])
         nfail = run_testfiles(**vars(cliargs))
-        cmd.quit(pytest_nfail + nfail)
+        cmd.quit(nfail)
 
     cmd.extend('run_testfiles', run_testfiles)
 

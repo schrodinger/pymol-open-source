@@ -2,6 +2,9 @@ import tempfile
 from PIL import Image
 import numpy
 from pathlib import Path
+import pytest
+
+from pymol import cmd
 
 
 def datafile(filename: str) -> Path:
@@ -104,3 +107,27 @@ def assert_in_names_undo(cmd, name: str) -> None:
     assert name not in cmd.get_names()
     cmd.redo()
     assert name in cmd.get_names()
+
+
+def compatible_with(version: str) -> bool:
+    def tupleize_version(str_: str):
+        return tuple(int(x) for x in str_.partition('.')[0::2] if x.isdigit())
+
+    PYMOL_VERSION = cmd.get_version()
+    PYMOL_VERSION_TUPLE = tupleize_version(PYMOL_VERSION[0])
+
+    if isinstance(version, int):
+        return version <= PYMOL_VERSION[2]
+    elif isinstance(version, float):
+        return version <= PYMOL_VERSION[1]
+    else:
+        return tupleize_version(version) <= PYMOL_VERSION_TUPLE
+
+
+def requires_version(version, reason=None):
+    def decorator(test_func):
+        return pytest.mark.skipif(
+            not compatible_with(version),
+            reason=reason or f"Requires PyMOL {version}"
+        )(test_func)
+    return decorator

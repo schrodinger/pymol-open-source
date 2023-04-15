@@ -1,6 +1,8 @@
 from pymol import cmd
+from pymol import test_utils
 
 
+@test_utils.requires_version("3.0")
 def test_clip_set_near_far():
     near_value = 10
     far_value = 20
@@ -10,7 +12,7 @@ def test_clip_set_near_far():
     assert near == near_value
     assert far == far_value
 
-
+@test_utils.requires_version("3.0")
 def test_clip_set_near_far_overlap():
     near_value = 10
     far_value = 8

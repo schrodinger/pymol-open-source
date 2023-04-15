@@ -1,7 +1,9 @@
 from pymol import cmd
+from pymol import test_utils
 import pytest
 
 
+@test_utils.requires_version("3.0")
 def test_look_at():
     ori_view = cmd.get_view()
     cmd.pseudoatom("M1", pos=[10, 0, 0])
