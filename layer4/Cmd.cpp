@@ -1368,13 +1368,11 @@ static PyObject *CmdCombineObjectTTT(PyObject * self, PyObject * args)
   PyObject *m;
   float ttt[16];
   API_SETUP_ARGS(G, self, args, "OsO", &self, &name, &m);
+  if (PConvPyListToFloatArrayInPlace(m, ttt, 16) <= 0) {
+    return APIFailure(G, "Bad Matrix");
+  }
   API_ASSERT(APIEnterNotModal(G))
-  pymol::Result<> result;
-    if(PConvPyListToFloatArrayInPlace(m, ttt, 16) > 0) {
-    result = ExecutiveCombineObjectTTT(G, name, ttt, false, -1);
-    } else {
-    result = pymol::Error{"Bad Matrix"};
-    }
+  auto result = ExecutiveCombineObjectTTT(G, name, ttt, false, -1);
   APIExit(G);
   return APIResult(G, result);
 }
@@ -1821,14 +1819,12 @@ static PyObject *CmdTransformObject(PyObject * self, PyObject * args)
   float matrix[16];
   int homo;
   API_SETUP_ARGS(G, self, args, "OsiOisi", &self, &name, &state, &m, &log, &sele, &homo);
-  API_ASSERT(APIEnterNotModal(G));
-  pymol::Result<> result;
-  if(PConvPyListToFloatArrayInPlace(m, matrix, 16) > 0) {
-    result = ExecutiveTransformObjectSelection(G, name,
-                                                 state, sele, log, matrix, homo, true);
-  } else {
-    result = pymol::Error{"Bad Matrix"};
+  if (PConvPyListToFloatArrayInPlace(m, matrix, 16) <= 0) {
+    return APIFailure(G, "Bad Matrix");
   }
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveTransformObjectSelection(G, name,
+                                                 state, sele, log, matrix, homo, true);
   APIExit(G);
   return APIResult(G, result);
 }
@@ -1842,13 +1838,11 @@ static PyObject *CmdTransformSelection(PyObject * self, PyObject * args)
   PyObject *m;
   float ttt[16];
   API_SETUP_ARGS(G, self, args, "OsiOii", &self, &sele, &state, &m, &log, &homo);
-  API_ASSERT(APIEnterNotModal(G));
-  pymol::Result<> result;
-  if(PConvPyListToFloatArrayInPlace(m, ttt, 16) > 0) {
-    result = ExecutiveTransformSelection(G, state, sele, log, ttt, homo);
-  } else {
-    result = pymol::Error{"Bad Matrix"};
+  if (PConvPyListToFloatArrayInPlace(m, ttt, 16) <= 0) {
+    return APIFailure(G, "Bad Matrix");
   }
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveTransformSelection(G, state, sele, log, ttt, homo);
   APIExit(G);
   return APIResult(G, result);
 }
@@ -4597,13 +4591,13 @@ static PyObject *CmdGetObjectTTT(PyObject * self, PyObject * args)
 
   API_SETUP_PYMOL_GLOBALS;
   ok_assert(1, G);
-  APIEnter(G);
+  APIEnterBlocked(G);
 
   ExecutiveGetObjectTTT(G, name, &ttt, state, quiet);
   if (ttt)
     result = PConvFloatArrayToPyList(ttt, 16);
 
-  APIExit(G);
+  APIExitBlocked(G);
 ok_except1:
   return APIAutoNone(result);
 }
