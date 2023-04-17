@@ -6291,7 +6291,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
           ai = I->AtomInfo;
           for(a = 0; a < I->NAtom; a++) {
             s = ai->selEntry;
-            if(!(ai->protekted == 1))
+            if(!(ai->protekted == cAtomProtected_explicit))
               if(SelectorIsMember(G, s, sele)) {
                 if(homogenous)
                   CoordSetTransformAtomR44f(cs, a, matrix);
@@ -6305,7 +6305,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
           if(!use_matrices) {
             ai = I->AtomInfo;
             for(a = 0; a < I->NAtom; a++) {
-              if(!(ai->protekted == 1)) {
+              if(!(ai->protekted == cAtomProtected_explicit)) {
                 if(homogenous)
                   CoordSetTransformAtomR44f(cs, a, matrix);
                 else
@@ -10708,7 +10708,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, const float
   int result = 0;
   PyMOLGlobals *G = I->G;
   CoordSet *cs;
-  if(!(I->AtomInfo[index].protekted == 1)) {
+  if(!(I->AtomInfo[index].protekted == cAtomProtected_explicit)) {
     if(state < 0)
       state = 0;
     if(I->NCSet == 1)
@@ -10741,7 +10741,7 @@ int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float 
 {
   int result = 0;
   CoordSet *cs;
-  if(!(I->AtomInfo[index].protekted == 1)) {
+  if(!(I->AtomInfo[index].protekted == cAtomProtected_explicit)) {
     if(state < 0)
       state = 0;
     if(I->NCSet == 1)

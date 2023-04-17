@@ -538,7 +538,7 @@ void SceneClickPickBond(PyMOLGlobals* G, int x, int y, int mode, const NamedPick
       I->SculptingFlag = 1;
       I->SculptingSave =
           obj->AtomInfo[LastPicked.src.index].protekted;
-      obj->AtomInfo[LastPicked.src.index].protekted = 2;
+      obj->AtomInfo[LastPicked.src.index].protekted = cAtomProtected_drag;
     }
     WizardDoPick(G, 1, LastPicked.context.state);
   } else {
@@ -713,7 +713,7 @@ static int SceneClick(
         G, button, mod); /* trying to work around something... */
 
     I->Button = button;
-    I->SculptingSave = 0;
+    I->SculptingSave = cAtomProtected_off;
     switch (mode) {
     case cButModeScaleSlabExpand:
       SceneNoteMouseInteraction(G);
@@ -995,7 +995,7 @@ static int SceneClick(
               I->SculptingFlag = 1;
               I->SculptingSave =
                   objMol->AtomInfo[I->LastPicked.src.index].protekted;
-              objMol->AtomInfo[I->LastPicked.src.index].protekted = 2;
+              objMol->AtomInfo[I->LastPicked.src.index].protekted = cAtomProtected_drag;
             }
           }
           break;
