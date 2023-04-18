@@ -5,16 +5,16 @@ on: [push]
 jobs:
   build:
 
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version: [3.8]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -27,6 +27,7 @@ jobs:
       run: >
         sudo apt-get update;
         sudo apt-get install
+        catch2
         libfreetype6-dev
         libglew-dev
         libglm-dev
@@ -45,8 +46,6 @@ jobs:
         git clone --depth 1 https://github.com/schrodinger/pymol-testing.git
         git clone --depth 1 https://github.com/rcsb/mmtf-cpp.git
         cp -R mmtf-cpp/include/mmtf* include/
-        mkdir -p include/catch2
-        (cd include/catch2; wget -nv https://github.com/catchorg/Catch2/releases/download/v2.12.2/catch.hpp)
 
     - name: Build
       run: |
