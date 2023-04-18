@@ -6,27 +6,14 @@ jobs:
   build:
 
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        python-version: [3.8]
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install numpy biopython Pillow
-
     - name: Install system dependencies
       run: >
         sudo apt-get update;
-        sudo apt-get install
+        sudo apt-get --no-install-recommends install
         catch2
         libfreetype6-dev
         libglew-dev
@@ -35,6 +22,13 @@ jobs:
         libnetcdf-dev
         libpng-dev
         libxml2-dev
+        python-is-python3
+        python3-biopython
+        python3-dev
+        python3-distutils
+        python3-numpy
+        python3-pil
+        python3-pytest
 
     - name: Install collada2gltf
       run: |
