@@ -1118,7 +1118,8 @@ SEE ALSO
                 return _cmd.scene(_self._COb, key, action, message, int(view),
                                     int(color),
                                     int(active), int(rep), int(frame),
-                                    float(animate), new_key, int(hand), sele)
+                                    float(animate), new_key, int(hand),
+                                    int(quiet), sele)
 
         r = _self._call_with_opengl_context(func)
 

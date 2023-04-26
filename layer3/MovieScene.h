@@ -40,6 +40,7 @@ struct MovieSceneFuncArgs
   bool hand = true;
   std::string sele = "all";
   std::size_t stack = cMovieSceneStackDefault;
+  bool quiet = false;
 };
 
 /**
@@ -115,7 +116,8 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
     bool store_frame,
     bool store_thumbnail,
     const char * sele,
-    std::size_t stack);
+    std::size_t stack,
+    bool quiet);
 
 pymol::Result<> MovieSceneRename(PyMOLGlobals * G, const char * name, const char * new_name = nullptr);
 

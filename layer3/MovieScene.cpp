@@ -188,7 +188,8 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
     bool store_frame,
     bool store_thumbnail,
     const char * sele,
-    size_t stack)
+    size_t stack,
+    bool quiet)
 {
   const bool is_defaultstack = stack == cMovieSceneStackDefault;
   auto scenes = G->scenes + stack;
@@ -272,7 +273,7 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
     SET_BIT_TO(sceneobj.visRep, 0, rec->visible);
   }
 
-  if (is_defaultstack) {
+  if (is_defaultstack && !quiet) {
     PRINTFB(G, FB_Scene, FB_Details)
     " scene: scene stored as \"%s\".\n", key.c_str() ENDFB(G);
   }
@@ -733,7 +734,7 @@ pymol::Result<> MovieSceneFunc(PyMOLGlobals* G, const MovieSceneFuncArgs& args)
   } else if (action == "store") {
     status = MovieSceneStore(G, key.c_str(), args.message.c_str(), args.store_view,
     args.store_color, args.store_active, args.store_rep, args.store_frame, args.store_thumbnail,
-    args.sele.c_str(), args.stack);
+    args.sele.c_str(), args.stack, args.quiet);
 
     // insert_before, insert_after
     if (status && beforeafter)
