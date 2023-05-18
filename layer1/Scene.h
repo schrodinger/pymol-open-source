@@ -187,7 +187,22 @@ void SceneUpdateStereoMode(PyMOLGlobals * G);
 void SceneSuppressMovieFrame(PyMOLGlobals * G);
 int SceneDeferClick(Block * block, int button, int x, int y, int mod);
 int SceneDeferDrag(Block * block, int x, int y, int mod);
-int SceneDeferImage(PyMOLGlobals* G, int width, int height,
+
+/**
+ * If we have a current OpenGL context, render the image immediately.
+ * Otherwise, defer the rendering.
+ *
+ * @param width image width in pixels
+ * @param height image height in pixels
+ * @param filename image filename
+ * @param antialias antialiasing level
+ * @param dpi image resolution in dots per inch
+ * @param format image format
+ * @param quiet suppress messages
+ * @param[out] out_img image data
+ * @return true if rendering was deferred, false if it was rendered immediately.
+ */
+bool SceneDeferImage(PyMOLGlobals* G, int width, int height,
     const char* filename, int antialias, float dpi, int format, int quiet,
     pymol::Image* out_img);
 const char *SceneGetSeleModeKeyword(PyMOLGlobals * G);
@@ -305,9 +320,6 @@ void SceneDoRoving(PyMOLGlobals * G, float old_front,
                    int adjust_flag, int zoom_flag);
 void UpdateFrontBackSafe(CScene *I);
 int stereo_via_adjacent_array(int stereo_mode);
-int SceneDeferredClick(DeferredMouse * dm);
-int SceneDeferredDrag(DeferredMouse * dm);
-int SceneDeferredRelease(DeferredMouse * dm);
 
 void SceneSetViewport(PyMOLGlobals* G, const Rect2D& rect);
 void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height);

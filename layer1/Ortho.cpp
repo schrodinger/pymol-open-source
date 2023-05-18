@@ -103,7 +103,7 @@ public:
   int cmdActiveBusy{};
   std::queue<std::string> feedback;
   int Pushed{};
-  std::vector<std::unique_ptr<CDeferred>> deferred; //Ortho manages DeferredObjs
+  std::vector<std::function<void()>> deferred; //Ortho manages DeferredObjs
   OrthoRenderMode RenderMode = OrthoRenderMode::Main;
   Rect2D Viewport;
   int WrapXFlag{};
@@ -260,13 +260,13 @@ void OrthoExecDeferred(PyMOLGlobals * G)
   COrtho *I = G->Ortho;
   /* execute all deferred actions that happened to require a
    * valid OpenGL context (such as atom picks, etc.) */
-  for(const auto& d : I->deferred){
-    d->exec();
+  for (const auto& d : I->deferred) {
+    d();
   }
   I->deferred.clear();
 }
 
-void OrthoDefer(PyMOLGlobals * G, std::unique_ptr<CDeferred> && D)
+void OrthoDefer(PyMOLGlobals * G, std::function<void()>&& D)
 {
   COrtho *I = G->Ortho;
   I->deferred.emplace_back(std::move(D));
@@ -2443,33 +2443,13 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
   return (handled);
 }
 
-struct COrthoButtonDeferred : public CDeferred {
-  int button;
-  int state;
-  int x;
-  int y;
-  int mod;
-  COrthoButtonDeferred(PyMOLGlobals *G) : CDeferred(G) {}
-};
-
-static
-void OrthoButtonDeferred(COrthoButtonDeferred * d)
+int OrthoButtonDefer(
+    PyMOLGlobals* G, int button, int state, int x, int y, int mod)
 {
-  OrthoButton(d->m_G, d->button, d->state, d->x, d->y, d->mod);
-}
-
-int OrthoButtonDefer(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
-{
-  auto d = pymol::make_unique<COrthoButtonDeferred>(G);
-  if(d) {
-    d->fn = (DeferredFn *)OrthoButtonDeferred;
-    d->button = button;
-    d->state = state;
-    d->x = x;
-    d->y = y;
-    d->mod = mod;
-  }
-  OrthoDefer(G, std::move(d));
+  std::function<void()> deferred = [=]() {
+    OrthoButton(G, button, state, x, y, mod);
+  };
+  OrthoDefer(G, std::move(deferred));
   return 1;
 }
 

@@ -28,7 +28,6 @@ Z* -------------------------------------------------------------------
 #include"SceneElem.h"
 #include"SceneView.h"
 #include"Rect.h"
-#include "Deferred.h"
 #include "Camera.h"
 #include<list>
 #include<vector>
@@ -40,42 +39,6 @@ namespace pymol
 {
   struct CObject;
 }
-
-struct DeferredMouse : public CDeferred {
-  Block *block { nullptr };
-  int button { 0 };
-  int x { 0 };
-  int y { 0 };
-  int mod { 0 };
-  double when { 0.0 };
-  int mode_override { 0 };
-  DeferredMouse(PyMOLGlobals * G) : CDeferred(G){}
-};
-
-struct DeferredImage : public CDeferred {
-  int width { 0 };
-  int height { 0 };
-  std::string filename;
-  int quiet { 0 };
-  int antialias { 0 };
-  float dpi { 0.0f };
-  int entire_window { 0 };
-  int format { 0 };
-  pymol::Image* out_img = nullptr;
-  DeferredImage(PyMOLGlobals * G) : CDeferred(G){}
-};
-
-struct DeferredRay : public CDeferred {
-  int ray_width { 0 };
-  int ray_height { 0 };
-  int mode { 0 };
-  float angle { 0.0f };
-  float shift { 0.0f };
-  int quiet { 0 };
-  int show_timing { 0 };
-  int antialias { 0 };
-  DeferredRay(PyMOLGlobals * G) : CDeferred(G){}
-};
 
 typedef struct {
   float unit_left, unit_right, unit_top, unit_bottom, unit_front, unit_back;

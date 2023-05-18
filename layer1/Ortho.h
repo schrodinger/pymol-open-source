@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #define cOrthoBottomSceneMargin DIP2PIXEL(18)
 #define cOrthoLineHeight DIP2PIXEL(12)
 
+#include <functional>
 #include <string>
 
 #include"os_gl.h"
@@ -37,7 +38,6 @@ Z* -------------------------------------------------------------------
 
 struct BlockRect;
 struct Block;
-struct CDeferred;
 struct PyMOLGlobals;
 class COrtho;
 class CGO;
@@ -112,7 +112,7 @@ int OrthoCommandWaiting(PyMOLGlobals * G);
 
 int OrthoTextVisible(PyMOLGlobals * G);
 void OrthoReshapeWizard(PyMOLGlobals * G, ov_size height);
-void OrthoDefer(PyMOLGlobals * G, std::unique_ptr<CDeferred> && D);
+void OrthoDefer(PyMOLGlobals* G, std::function<void()>&& D);
 void OrthoExecDeferred(PyMOLGlobals * G);
 int OrthoDeferredWaiting(PyMOLGlobals * G);
 

@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 #include"Scene.h"
 #include"SceneRay.h"
+#include"SceneMouse.h"
 #include"ScenePicking.h"
 #include"Ortho.h"
 #include"Vector.h"
@@ -3954,16 +3955,30 @@ bool call_raw_image_callback(PyMOLGlobals * G) {
   return done;
 }
 
-static int SceneDeferredImage(DeferredImage * di)
+/**
+ * Creates an image of the current scene.
+ *
+ * @param width width of the image in pixels
+ * @param height height of the image in pixels
+ * @param antialias antialias mode
+ * @param dpi dots per inch
+ * @param format ??
+ * @param quiet if true, don't print messages
+ * @param out_img if not NULL, store the image data here
+ * @param filename if not empty, store the image to this file as PNG
+ */
+
+static void SceneImage(PyMOLGlobals* G, int width, int height, int antialias,
+    float dpi, int format, bool quiet, pymol::Image* out_img,
+    const std::string& filename)
 {
-  PyMOLGlobals *G = di->m_G;
-  SceneMakeSizedImage(G, di->width, di->height, di->antialias);
-  if (!di->filename.empty()) {
-    ScenePNG(G, di->filename.c_str(), di->dpi, di->quiet, false, di->format, nullptr);
-  } else if (di->out_img) {
+  SceneMakeSizedImage(G, width, height, antialias);
+  if (!filename.empty()) {
+    ScenePNG(G, filename.c_str(), dpi, quiet, false, format, nullptr);
+  } else if (out_img) {
     png_outbuf_t outbuf;
-    ScenePNG(G, "", di->dpi, di->quiet, false, di->format, &outbuf);
-    di->out_img->setVecData(std::move(outbuf));
+    ScenePNG(G, "", dpi, quiet, false, format, &outbuf);
+    out_img->setVecData(std::move(outbuf));
   } else if(call_raw_image_callback(G)) {
   } else if(G->HaveGUI && SettingGetGlobal_b(G, cSetting_auto_copy_images)) {
 #ifdef _PYMOL_IP_EXTRAS
@@ -3976,40 +3991,25 @@ static int SceneDeferredImage(DeferredImage * di)
 #endif
 #endif
   }
-  return 1;
 }
 
-/**
- * If we have a current OpenGL context, render the image immediately. Otherwise, defer the rendering.
- *
- * @return 1 if rendering was deferred, 0 if it was rendered immediately.
- */
-int SceneDeferImage(PyMOLGlobals * G, int width, int height,
-                    const char *filename, int antialias, float dpi, int format, int quiet,
-                    pymol::Image* out_img)
+bool SceneDeferImage(PyMOLGlobals* G, int width, int height,
+    const char* filename, int antialias, float dpi, int format, int quiet,
+    pymol::Image* out_img)
 {
-  auto di = pymol::make_unique<DeferredImage>(G);
-  if(di) {
-    di->width = width;
-    di->height = height;
-    di->antialias = antialias;
-    di->fn = (DeferredFn *) SceneDeferredImage;
-    di->dpi = dpi;
-    di->format = format;
-    di->quiet = quiet;
-    di->out_img = out_img;
-    if(filename){
-      di->filename = filename;
-    }
-  }
+  std::string filenameStr = filename ? filename : "";
+  std::function<void()> deferred = [=]() {
+    SceneImage(
+        G, width, height, antialias, dpi, format, quiet, out_img, filenameStr);
+  };
 
   if (G->ValidContext) {
-    di->exec();
-    return 0;
+    deferred();
+    return false;
   }
 
-  OrthoDefer(G, std::move(di));
-  return 1;
+  OrthoDefer(G, std::move(deferred));
+  return true;
 }
 
 int CScene::click(int button, int x, int y, int mod) // Originally SceneDeferClick!!
@@ -4021,33 +4021,21 @@ static int SceneDeferClickWhen(Block * block, int button, int x, int y, double w
                                int mod)
 {
   PyMOLGlobals *G = block->m_G;
-  auto dm = pymol::make_unique<DeferredMouse>(G);
-  if(dm) {
-    dm->block = block;
-    dm->button = button;
-    dm->x = x;
-    dm->y = y;
-    dm->when = when;
-    dm->mod = mod;
-    dm->fn = (DeferredFn *) SceneDeferredClick;
-  }
-  OrthoDefer(G, std::move(dm));
+  std::function<void()> deferred = [=]() {
+    SceneClick(block, button, x, y, mod, when);
+  };
+  OrthoDefer(G, std::move(deferred));
   return 1;
 }
 
 int CScene::drag(int x, int y, int mod) //Originally SceneDeferDrag
 {
   PyMOLGlobals *G = m_G;
-  auto dm = pymol::make_unique<DeferredMouse>(G);
-  if(dm) {
-    dm->block = this;
-    dm->x = x;
-    dm->y = y;
-    dm->mod = mod;
-    dm->when = UtilGetSeconds(G);
-    dm->fn = (DeferredFn *) SceneDeferredDrag;
-  }
-  OrthoDefer(G, std::move(dm));
+  auto when = UtilGetSeconds(G);
+  std::function<void()> deferred = [=]() {
+    SceneDrag(this, x, y, mod, when);
+  };
+  OrthoDefer(G, std::move(deferred));
   return 1;
 }
 
@@ -4060,17 +4048,12 @@ int CScene::drag(int x, int y, int mod) //Originally SceneDeferDrag
 int CScene::release(int button, int x, int y, int mod) // Originally SceneDeferRelease
 {
   PyMOLGlobals *G = m_G;
-  auto dm = pymol::make_unique<DeferredMouse>(G);
-  if(dm) {
-    dm->block = this;
-    dm->button = button;
-    dm->x = x;
-    dm->y = y;
-    dm->mod = mod;
-    dm->when = UtilGetSeconds(G);
-    dm->fn = (DeferredFn *) SceneDeferredRelease;
-  }
-  OrthoDefer(G, std::move(dm));
+  auto when = UtilGetSeconds(G);
+  std::function<void()> deferred = [=]() {
+    SceneRelease(this, button, x, y, mod, when);
+  };
+
+  OrthoDefer(G, std::move(deferred));
   return 1;
 }
 

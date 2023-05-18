@@ -39,7 +39,7 @@ static void SceneNoteMouseInteraction(PyMOLGlobals* G)
   }
 }
 
-static int SceneLoopClick(Block* block, int button, int x, int y, int mod)
+static void SceneLoopClick(Block* block, int button, int x, int y, int mod)
 {
   PyMOLGlobals* G = block->m_G;
   CScene* I = G->Scene;
@@ -51,20 +51,18 @@ static int SceneLoopClick(Block* block, int button, int x, int y, int mod)
   I->LoopMod = mod;
   OrthoSetLoopRect(G, true, &I->LoopRect);
   OrthoGrab(G, block);
-  return 1;
 }
 
-static int SceneLoopDrag(Block* block, int x, int y, int mod)
+static void SceneLoopDrag(Block* block, int x, int y, int mod)
 {
   PyMOLGlobals* G = block->m_G;
   CScene* I = G->Scene;
   I->LoopRect.right = x;
   I->LoopRect.bottom = y;
   OrthoSetLoopRect(G, true, &I->LoopRect);
-  return 1;
 }
 
-static int SceneLoopRelease(Block* block, int button, int x, int y, int mod)
+static void SceneLoopRelease(Block* block, int button, int x, int y, int mod)
 {
   PyMOLGlobals* G = block->m_G;
   CScene* I = G->Scene;
@@ -87,7 +85,6 @@ static int SceneLoopRelease(Block* block, int button, int x, int y, int mod)
   I->LoopFlag = false;
   OrthoUngrab(G);
   OrthoDirty(G);
-  return 1;
 }
 
 void SceneClickButtonAddTo(PyMOLGlobals* G, pymol::CObject* obj,
@@ -627,8 +624,7 @@ static int get_stereo_x(int x, int* last_x, int width, ClickSide* click_side)
 }
 
 /*========================================================================*/
-static int SceneClick(
-    Block* block, int button, int x, int y, int mod, double when)
+void SceneClick(Block* block, int button, int x, int y, int mod, double when)
 {
   PyMOLGlobals* G = block->m_G;
   CScene* I = G->Scene;
@@ -807,7 +803,8 @@ static int SceneClick(
     case cButModeSeleAddBox:
     case cButModeSeleSetBox:
     case cButModeSeleSubBox:
-      return SceneLoopClick(block, button, x, y, mod);
+      SceneLoopClick(block, button, x, y, mod);
+      return;
       break;
     case cButModeRotDrag:
     case cButModeMovDrag:
@@ -1065,12 +1062,10 @@ static int SceneClick(
     I->StartX = I->LastX;
     I->StartY = I->LastY;
   }
-  return (1);
 }
 
 /*========================================================================*/
-static int SceneRelease(
-    Block* block, int button, int x, int y, int mod, double when)
+void SceneRelease(Block* block, int button, int x, int y, int mod, double when)
 {
   PyMOLGlobals* G = block->m_G;
   CScene* I = G->Scene;
@@ -1174,7 +1169,8 @@ static int SceneRelease(
     }
     if (I->LoopFlag) {
       I->PossibleSingleClick = 0;
-      return SceneLoopRelease(block, button, x, y, mod);
+      SceneLoopRelease(block, button, x, y, mod);
+      return;
     }
     OrthoUngrab(G);
     I->LoopFlag = false;
@@ -1200,23 +1196,10 @@ static int SceneRelease(
       I->MotionGrabbedObj = NULL;
     }
   }
-  return 1;
-}
-
-int SceneDeferredClick(DeferredMouse* dm)
-{
-  SceneClick(dm->block, dm->button, dm->x, dm->y, dm->mod, dm->when);
-  return 1;
-}
-
-int SceneDeferredRelease(DeferredMouse* dm)
-{
-  SceneRelease(dm->block, dm->button, dm->x, dm->y, dm->mod, dm->when);
-  return 1;
 }
 
 /*========================================================================*/
-static int SceneDrag(Block* block, int x, int y, int mod, double when)
+void SceneDrag(Block* block, int x, int y, int mod, double when)
 {
   PyMOLGlobals* G = block->m_G;
   CScene* I = G->Scene;
@@ -1241,7 +1224,8 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
   }
 
   if (I->LoopFlag) {
-    return SceneLoopDrag(block, x, y, mod);
+    SceneLoopDrag(block, x, y, mod);
+    return;
   }
   if (I->ButtonsShown && I->PressMode) {
     if (I->ButtonsValid) {
@@ -2046,11 +2030,4 @@ static int SceneDrag(Block* block, int x, int y, int mod, double when)
       I->PossibleSingleClick = false;
     }
   }
-  return (1);
-}
-
-int SceneDeferredDrag(DeferredMouse* dm)
-{
-  SceneDrag(dm->block, dm->x, dm->y, dm->mod, dm->when);
-  return 1;
 }

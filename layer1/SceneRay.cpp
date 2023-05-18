@@ -744,44 +744,29 @@ bool SceneRay(PyMOLGlobals * G,
 #endif
 }
 
-static int SceneDeferredRay(DeferredRay * dr)
-{
-  PyMOLGlobals *G = dr->m_G;
-  SceneRay(G, dr->ray_width, dr->ray_height, dr->mode,
-           NULL, NULL, dr->angle, dr->shift, dr->quiet,
-           NULL, dr->show_timing, dr->antialias);
-  if((dr->mode == 0) && G->HaveGUI && SettingGetGlobal_b(G, cSetting_auto_copy_images)) {
-#ifdef _PYMOL_IP_EXTRAS
-    PParse(G, "cmd._copy_image(quiet=0)");
-#else
-#ifdef PYMOL_EVAL
-    PRINTFB(G, FB_Scene, FB_Warnings)
-      " Warning: Clipboard image transfers disabled in Evaluation Builds.\n" ENDFB(G);
-#endif
-#endif
-  }
-  return 1;
-}
-
 int SceneDeferRay(PyMOLGlobals * G,
                   int ray_width,
                   int ray_height,
                   int mode,
                   float angle, float shift, int quiet, int show_timing, int antialias)
 {
-  auto dr = pymol::make_unique<DeferredRay>(G);
-  if(dr) {
-    dr->ray_width = ray_width;
-    dr->ray_height = ray_height;
-    dr->mode = mode;
-    dr->angle = angle;
-    dr->shift = shift;
-    dr->quiet = quiet;
-    dr->show_timing = show_timing;
-    dr->antialias = antialias;
-    dr->fn = (DeferredFn *) SceneDeferredRay;
-  }
-  OrthoDefer(G, std::move(dr));
+  auto deferred = [=]() {
+    SceneRay(G, ray_width, ray_height, mode, nullptr, nullptr, angle, shift,
+        quiet, nullptr, show_timing, antialias);
+    if ((mode == 0) && G->HaveGUI &&
+        SettingGet<bool>(G, cSetting_auto_copy_images)) {
+#ifdef _PYMOL_IP_EXTRAS
+      PParse(G, "cmd._copy_image(quiet=0)");
+#else
+#ifdef PYMOL_EVAL
+      PRINTFB(G, FB_Scene, FB_Warnings)
+      " Warning: Clipboard image transfers disabled in Evaluation "
+      "Builds.\n" ENDFB(G);
+#endif
+#endif
+    }
+  };
+  OrthoDefer(G, std::move(deferred));
   return 1;
 }
 
