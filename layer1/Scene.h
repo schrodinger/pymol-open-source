@@ -105,7 +105,7 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
     int width=0, int height=0);
 int SceneValidateImageMode(PyMOLGlobals * G, int mode, bool defaultdraw);
 
-bool ScenePNG(PyMOLGlobals* G, const char* png, float dpi, int quiet,
+bool ScenePNG(PyMOLGlobals* G, pymol::zstring_view png, float dpi, int quiet,
     int prior_only, int format, std::vector<unsigned char>* outbuf = nullptr);
 int SceneCopyExternal(PyMOLGlobals * G, int width, int height, int rowbytes,
                       unsigned char *dest, int mode);

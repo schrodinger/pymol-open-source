@@ -169,10 +169,11 @@ static void write_data_to_file(
 }
 #endif
 
-int MyPNGWrite(const char* file_name, const pymol::Image& img, const float dpi,
-    const int format, const int quiet, const float screen_gamma,
-    const float file_gamma, png_outbuf_t* io_ptr)
+int MyPNGWrite(pymol::zstring_view file_name_view, const pymol::Image& img,
+    const float dpi, const int format, const int quiet,
+    const float screen_gamma, const float file_gamma, png_outbuf_t* io_ptr)
 {
+  const char* file_name = file_name_view.c_str();
   const unsigned char* data_ptr = img.bits();
   int width = img.getWidth();
   int height = img.getHeight();

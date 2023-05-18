@@ -576,6 +576,7 @@ PYMOL API
 
         width = _unit2px(width, dpi)
         height = _unit2px(height, dpi)
+        filename = "" if filename is None else filename
 
         def func():
             with _self.lockcm:

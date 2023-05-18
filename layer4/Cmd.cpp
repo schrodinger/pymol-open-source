@@ -4742,6 +4742,7 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
 
   // if `filename` is None, then return a PNG buffer
   std::vector<unsigned char> pngbuf;
+  pymol::null_safe_zstring_view fileview(filename);
 
   {
     // with prior=1 other arguments (width, height, ray) are ignored
@@ -4751,8 +4752,8 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
         prior = SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
                  NULL, NULL, 0.0F, 0.0F, quiet, NULL, true, -1);
       } else if(width || height) {
-        prior = !SceneDeferImage(
-            G, width, height, filename, -1, dpi, format, quiet, nullptr);
+        prior = !SceneDeferImage(G, width, height, fileview.c_str(), -1, dpi,
+            format, quiet, nullptr);
         result = bool(filename);
       } else if(!SceneGetCopyType(G)) {
         ExecutiveDrawNow(G);      /* TODO STATUS */
@@ -4760,14 +4761,16 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
     }
 
     if(!result) {
-      if (ScenePNG(G, filename, dpi, quiet, prior, format,
-              filename ? nullptr : &pngbuf))
-        result = 1;             /* signal success by returning 1 instead of 0, or -1 for error  */
+      auto outbuf = !fileview.empty() ? nullptr : &pngbuf;
+      if (ScenePNG(G, fileview.c_str(), dpi, quiet, prior, format, outbuf)) {
+        /* signal success by returning 1 instead of 0, or -1 for error */
+        result = 1;
+      }
     }
     APIExit(G);
   }
 
-  if (!filename) {
+  if (fileview.empty()) {
     if (pngbuf.empty()) {
       return APIFailure(G, "getting png buffer failed");
     }

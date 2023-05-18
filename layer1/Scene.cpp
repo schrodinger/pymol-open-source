@@ -1993,8 +1993,8 @@ int SceneCopyExternal(PyMOLGlobals * G, int width, int height,
   return (result);
 }
 
-bool ScenePNG(PyMOLGlobals * G, const char *png, float dpi, int quiet,
-             int prior_only, int format, png_outbuf_t* outbuf)
+bool ScenePNG(PyMOLGlobals* G, pymol::zstring_view png, float dpi, int quiet,
+    int prior_only, int format, png_outbuf_t* outbuf)
 {
   CScene *I = G->Scene;
   SceneImagePrepare(G, prior_only);
@@ -3958,12 +3958,12 @@ static int SceneDeferredImage(DeferredImage * di)
 {
   PyMOLGlobals *G = di->m_G;
   SceneMakeSizedImage(G, di->width, di->height, di->antialias);
-  if(!di->filename.empty() || di->out_img) {
-    std::vector<unsigned char> outbuf;
-    ScenePNG(G, di->filename.c_str(), di->dpi, di->quiet, false, di->format, &outbuf);
-    if (di->out_img) {
-      di->out_img->setVecData(outbuf);
-    }
+  if (!di->filename.empty()) {
+    ScenePNG(G, di->filename.c_str(), di->dpi, di->quiet, false, di->format, nullptr);
+  } else if (di->out_img) {
+    png_outbuf_t outbuf;
+    ScenePNG(G, "", di->dpi, di->quiet, false, di->format, &outbuf);
+    di->out_img->setVecData(std::move(outbuf));
   } else if(call_raw_image_callback(G)) {
   } else if(G->HaveGUI && SettingGetGlobal_b(G, cSetting_auto_copy_images)) {
 #ifdef _PYMOL_IP_EXTRAS

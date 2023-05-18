@@ -22,13 +22,14 @@ Z* -------------------------------------------------------------------
 #include <vector>
 
 #include "Image.h"
+#include "pymol/zstring_view.h"
 
 #include"PyMOLGlobals.h"
 
 #define cMyPNG_FormatPNG 0
 #define cMyPNG_FormatPPM 1
 
-int MyPNGWrite(const char* file_name, const pymol::Image& img, const float dpi,
+int MyPNGWrite(pymol::zstring_view file_name, const pymol::Image& img, const float dpi,
     const int format, const int quiet, const float screen_gamma,
     const float file_gamma, png_outbuf_t* io_ptr = nullptr);
 
