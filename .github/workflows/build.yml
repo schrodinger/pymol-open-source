@@ -5,28 +5,16 @@ on: [push]
 jobs:
   build:
 
-    runs-on: ubuntu-18.04
-    strategy:
-      matrix:
-        python-version: [3.8]
+    runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install numpy biopython Pillow
+    - uses: actions/checkout@v3
 
     - name: Install system dependencies
       run: >
         sudo apt-get update;
-        sudo apt-get install
+        sudo apt-get --no-install-recommends install
+        catch2
         libfreetype6-dev
         libglew-dev
         libglm-dev
@@ -34,6 +22,13 @@ jobs:
         libnetcdf-dev
         libpng-dev
         libxml2-dev
+        python-is-python3
+        python3-biopython
+        python3-dev
+        python3-distutils
+        python3-numpy
+        python3-pil
+        python3-pytest
 
     - name: Install collada2gltf
       run: |
@@ -45,8 +40,6 @@ jobs:
         git clone --depth 1 https://github.com/schrodinger/pymol-testing.git
         git clone --depth 1 https://github.com/rcsb/mmtf-cpp.git
         cp -R mmtf-cpp/include/mmtf* include/
-        mkdir -p include/catch2
-        (cd include/catch2; wget -nv https://github.com/catchorg/Catch2/releases/download/v2.12.2/catch.hpp)
 
     - name: Build
       run: |
