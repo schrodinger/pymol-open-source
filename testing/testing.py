@@ -696,7 +696,7 @@ USAGE
                                                  resultclass=PyMOLTestResult, verbosity=int(verbosity)).run(suite)
 
         # Run pytest files if any
-        pytest_nfail = pytest.main(['-v', *pytest_files]) if pytest_files else 0
+        pytest_nfail = pytest.main(['-v', *map(str, pytest_files)]) if pytest_files else 0
 
         while deferred_unlink:
             os.unlink(deferred_unlink.pop())
