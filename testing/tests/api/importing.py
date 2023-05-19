@@ -43,6 +43,14 @@ mmodstr = '''     7  gly
   41     2 1     0 0     0 0     0 0     0 0     0 0    0.434000   -0.159000   -1.479000    22G   21  0.00000  0.00000 GLY   HA
 '''
 
+
+def _get_free_port() -> int:
+    import socket
+    with socket.socket() as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
+
+
 class TestImporting(testing.PyMOLTestCase):
 
     @testing.requires('network')
@@ -592,7 +600,7 @@ class TestImporting(testing.PyMOLTestCase):
             import urllib.request as urllib2
 
         content_index = b'Hello World\n'
-        port = 8084
+        port = _get_free_port()
         baseurl = 'http://localhost:%d' % port
 
         def urlread(url):
