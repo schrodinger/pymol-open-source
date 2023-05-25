@@ -2015,12 +2015,12 @@ bool ScenePNG(PyMOLGlobals* G, pymol::zstring_view png, float dpi, int quiet,
       if(!quiet) {
         PRINTFB(G, FB_Scene, FB_Actions)
           " %s: wrote %dx%d pixel image to file \"%s\".\n", __func__,
-          width, I->Image->getHeight(), png ENDFB(G);
+          width, I->Image->getHeight(), png.c_str() ENDFB(G);
       }
     } else {
       PRINTFB(G, FB_Scene, FB_Errors)
         " %s-Error: error writing \"%s\"! Please check directory...\n", __func__,
-        png ENDFB(G);
+        png.c_str() ENDFB(G);
     }
   }
   return I->Image.get() != nullptr;
