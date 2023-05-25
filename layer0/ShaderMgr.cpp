@@ -853,9 +853,15 @@ void CShaderMgr::Config() {
 
 #ifndef PURE_OPENGL_ES_2
   // geometry shaders availability test
-  if (programs["connector"]->reload() &&
-      programs["connector"]->geomParams->id) {
-    shaders_present |= MASK_SHADERS_PRESENT_GEOMETRY;
+  if (const auto geomIt = programs.find("connector");
+      geomIt != programs.end()) {
+    const auto& geom = geomIt->second;
+    if (geom->reload()) {
+      const auto& geomParams = geom->geomParams;
+      if (geomParams && geomParams->id) {
+        shaders_present |= MASK_SHADERS_PRESENT_GEOMETRY;
+      }
+    }
   } else {
     disableGeometryShaders(G);
   }
