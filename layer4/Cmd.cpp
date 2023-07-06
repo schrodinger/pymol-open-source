@@ -4063,39 +4063,36 @@ static PyObject *CmdDirty(PyObject * self, PyObject * args)
   return APISuccess();
 }
 
+static pymol::Result<PyObject*> _getObjectMoleculeNamePyList(
+    PyMOLGlobals* G, char const* sele)
+{
+  if (!sele[0]) {
+    // preserve non-error legacy behavior: Empty selection returns None
+    return APIAutoNone(nullptr);
+  }
+  auto tmpsele1 = SelectorTmp::make(G, sele);
+  p_return_if_error(tmpsele1);
+  auto const list = ExecutiveGetObjectMoleculeVLA(G, tmpsele1->getName());
+  assert(list);
+  auto const size = list.size();
+  auto result = PyList_New(size);
+  if (result) {
+    for (unsigned a = 0; a < size; ++a) {
+      PyList_SetItem(result, a, PyUnicode_FromString(list[a]->Name));
+    }
+  }
+  return result;
+}
+
 static PyObject *CmdGetObjectList(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = nullptr;
   char *str1;
-  OrthoLineType s1;
-  int ok = false;
-  PyObject *result = nullptr;
-
-  ok = PyArg_ParseTuple(args, "Os", &self, &str1);
-
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != nullptr);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    auto list = ExecutiveGetObjectMoleculeVLA(G, s1);
-    if(list) {
-      unsigned int size = VLAGetSize(list);
-      result = PyList_New(size);
-      if(result) {
-        unsigned int a;
-        for(a = 0; a < size; a++) {
-          PyList_SetItem(result, a, PyString_FromString(list[a]->Name));
-        }
-      }
-    }
-    SelectorFreeTmp(G, s1);
-    APIExitBlocked(G);
-  }
-  return (APIAutoNone(result));
+  API_SETUP_ARGS(G, self, args, "Os", &self, &str1);
+  API_ASSERT(APIEnterBlockedNotModal(G));
+  auto res = _getObjectMoleculeNamePyList(G, str1);
+  APIExitBlocked(G);
+  return APIResult(G, res);
 }
 
 static PyObject *CmdGetDistance(PyObject * self, PyObject * args)

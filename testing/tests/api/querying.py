@@ -339,6 +339,18 @@ class TestQuerying(testing.PyMOLTestCase):
         cmd.ramp_new('ramp1', 'none')  # non-molecular object
         self.assertEqual(cmd.get_object_list(), ['gly', 'cys'])
         self.assertEqual(cmd.get_object_list('elem S'), ['cys'])
+        self.assertEqual(cmd.get_object_list('none'), [])
+        # whitespace string is empty selection
+        self.assertEqual(cmd.get_object_list(' '), [])
+        # empty string is a falsy value
+        self.assertTrue(not cmd.get_object_list(''))
+        # empty string is a silent None
+        # https://github.com/schrodinger/pymol-open-source/issues/478
+        self.assertTrue(cmd.get_object_list('') is None)
+
+    def testGetObjectList__invalid_selection(self):
+        self.assertRaises(CmdException, cmd.get_object_list, 'invalid_selection_name')
+        self.assertRaises(CmdException, cmd.get_object_list, '(none')  # malformed
 
     @testing.requires_version('1.6')
     def testGetObjectMatrix(self):
