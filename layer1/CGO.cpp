@@ -8501,7 +8501,7 @@ void CheckAttributesForUsage(const CGO *I, AttribDataDesc &attrData, AttribDataD
           // need to add glVertexAttrib CGO OP
           int attr_lookup_idx = I->G->ShaderMgr->GetAttributeUID(attrData[idx].attr_name);
           switch (GetVertexFormatBaseType(attrData[idx].m_format)) {
-          case GL_FLOAT:
+          case VertexFormatBaseType::Float:
             switch (VertexFormatToGLSize(attrData[idx].m_format)) {
             case 1:
               cgo->add<cgo::draw::vertex_attribute_1f>(attr_lookup_idx, *(float*)attrData[idx].default_value);
@@ -8515,7 +8515,7 @@ void CheckAttributesForUsage(const CGO *I, AttribDataDesc &attrData, AttribDataD
                         << std::endl;
             }
             break;
-          case GL_UNSIGNED_BYTE:
+          case VertexFormatBaseType::UByte:
             switch (VertexFormatToGLSize(attrData[idx].m_format)) {
             case 1:
               {
