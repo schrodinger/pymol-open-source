@@ -114,6 +114,11 @@ void TTT::rotate(float angRad, const glm::vec3& axis)
   m_rotation *= glm::angleAxis(angRad, axis);
 }
 
+void TTT::setTranslation(const glm::vec3& trans)
+{
+  m_posttranslation = trans;
+}
+
 glm::mat4 TTT::as_pymol_2_legacy(const TTT& mat)
 {
   auto preTranslation = mat.getPreTranslation();

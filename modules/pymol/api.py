@@ -213,6 +213,7 @@ from .editing import \
       map_trim,           \
       matrix_copy,        \
       matrix_reset,       \
+      move_on_curve,      \
       mse2met,            \
       pbc_unwrap, \
       pbc_wrap, \

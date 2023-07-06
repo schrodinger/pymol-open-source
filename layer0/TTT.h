@@ -94,6 +94,12 @@ public:
   void rotate(float angRad, const glm::vec3& axis);
 
   /**
+   * Sets translation
+   * @param trans new translation vector
+   */
+  void setTranslation(const glm::vec3& trans);
+
+  /**
    * Transforms a position
    * @param mat TTT matrix used to transform
    * @param pos position to transform

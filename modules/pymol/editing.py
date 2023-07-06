@@ -1852,12 +1852,18 @@ PYMOL API
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def look_at(target_obj: str, *, _self=cmd):
+    def look_at(target_obj: str, mobile_obj: str = "_Camera", *, _self=cmd):
         """
 DESCRIPTION
 
     "look_at" modifies a rotation of an object (or view) so that its forward (z axis)
-    faces a target object.
+    faces the center of a target object.
+
+ARGUMENTS
+
+    mobile_obj the object to rotate
+
+    target_obj the object to look at
 
 USAGE
 
@@ -1869,7 +1875,34 @@ PYMOL API
 
     """
         with _self.lockcm:
-            return _cmd.look_at(_self._COb, target_obj)
+            return _cmd.look_at(_self._COb, target_obj, mobile_obj)
+
+
+    def move_on_curve(mobile_obj: str,
+                      curve_obj: str,
+                      t: float,
+                      *,
+                      _self=cmd) -> None:
+        '''
+DESCRIPTION
+
+    "move_on_curve" moves an object along a curve.
+
+ARGUMENTS
+
+    mobile_obj the object to move
+    curve_obj the curve to move the object along
+
+USAGE
+
+    move_on_curve mobile_obj, curve_obj, t
+
+PYMOL API
+
+    cmd.move_on_curve(string mobile_obj, string curve_obj, float t)
+        '''
+        with _self.lockcm:
+            return _cmd.move_on_curve(_self._COb, mobile_obj, curve_obj, t)
 
 
     def set_title(object, state, text, _self=cmd):

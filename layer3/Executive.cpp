@@ -91,6 +91,7 @@
 #include "AtomIterators.h"
 #include "ButMode.h"
 #include "Feedback.h"
+#include "TTT.h"
 
 #include"OVContext.h"
 #include"OVLexicon.h"
@@ -16811,23 +16812,88 @@ pymol::Result<> ExecutiveBackgroundColor(PyMOLGlobals* G, int colorIdx)
   return {};
 }
 
+pymol::Result<> ExecutiveCurveNew(PyMOLGlobals* G,
+    pymol::zstring_view curveName, pymol::zstring_view curvetype)
+{
+  auto oldObj = ExecutiveFindObject<ObjectCurve>(G, curveName);
+  if (oldObj) {
+    return pymol::make_error("Curve of this name already exists.");
+  }
+  auto obj = pymol::make_unique<ObjectCurve>(G);
+  obj->setName(curveName);
+  ExecutiveManageObject(G, obj.release(), false, true);
+  return {};
+}
+
+static pymol::Result<> ExecutiveMoveObjectOnCurve(
+    PyMOLGlobals* G, pymol::CObject& mobileObj, ObjectCurve& curveObj, float t)
+{
+  auto pos = curveObj.getPosition(t);
+  if (!mobileObj.TTTFlag) {
+    initializeTTT44f(mobileObj.TTT);
+    mobileObj.TTTFlag = true;
+  }
+  auto ttt = pymol::TTT::from_pymol_2_legacy(mobileObj.TTT);
+  ttt.setTranslation(pos);
+  std::copy_n(glm::value_ptr(pymol::TTT::as_pymol_2_legacy(ttt)), 16, mobileObj.TTT);
+  return {};
+}
+
 /**
  * @return the center of an object's extent
  * @param objName the name of object to face
  */
 static pymol::Result<glm::vec3> ExecutiveGetObjectExtentCenter(
-    PyMOLGlobals* G, pymol::zstring_view objName)
+    PyMOLGlobals* G, pymol::zstring_view name)
 {
   glm::vec3 min;
   glm::vec3 max;
   bool asTransformed = true;
   bool quiet = true;
-  auto ext = ExecutiveGetExtent(G, objName.c_str(), glm::value_ptr(min),
+  auto ext = ExecutiveGetExtent(G, name.c_str(), glm::value_ptr(min),
       glm::value_ptr(max), asTransformed, cStateCurrent, quiet);
   if (!ext) {
-    return pymol::make_error("Couldn't get extent of: ", objName.c_str());
+    return pymol::make_error("Couldn't get extent of: ", name.c_str());
   }
   return (min + max) / 2.0f;
+}
+
+/**
+ * Moves the camera along a curve
+ * @param tarObj the curve to move the camera along
+ * @param t the progress along the curve
+ */
+static pymol::Result<> ExecutiveMoveCameraOnCurve(
+    PyMOLGlobals* G, ObjectCurve& curveObj, float t)
+{
+  auto& cam = G->Scene->m_view;
+  auto pos = curveObj.getPosition(t);
+  auto dir = glm::normalize(curveObj.getNormalizedDirection(t));
+  auto tfx = glm::lookAt(pos, pos + dir, glm::vec3(0.0f, 1.0f, 0.0f));
+  cam.setView(SceneView::FromWorldHomogeneous(tfx, cam.getView()));
+
+  return {};
+}
+
+pymol::Result<> ExecutiveMoveOnCurve(PyMOLGlobals* G,
+    pymol::zstring_view mobileObjectName, pymol::zstring_view curveObjectName, float t)
+{
+  t = pymol::clamp(t, 0.0f, 1.0f);
+  auto curveObj = ExecutiveFindObject<ObjectCurve>(G, curveObjectName);
+  if (!curveObj) {
+    return pymol::make_error("Curve object not found.");
+  }
+  if (mobileObjectName == "_Camera") {
+    return ExecutiveMoveCameraOnCurve(G, *curveObj, t);
+  }
+  auto mobileObj = ExecutiveFindObjectByName(G, mobileObjectName);
+  if (!mobileObj) {
+    return pymol::make_error("Mobile object not found.");
+  }
+  if (curveObj == mobileObj) {
+    return pymol::make_error("Mobile and curve cannot be the same.");
+  }
+  return ExecutiveMoveObjectOnCurve(G, *mobileObj, *curveObj, t);
 }
 
 /**
@@ -16848,25 +16914,25 @@ static pymol::Result<> ExecutiveCameraLookAt(PyMOLGlobals* G, pymol::CObject& ta
   return {};
 }
 
-pymol::Result<> ExecutiveLookAt(
-    PyMOLGlobals* G, pymol::zstring_view targetObjectName)
+static pymol::Result<> ExecutiveObjectLookAt(
+    PyMOLGlobals* G, pymol::CObject& targetObj, pymol::CObject& mobileObj)
+{
+  return {};
+}
+
+pymol::Result<> ExecutiveLookAt(PyMOLGlobals* G,
+    pymol::zstring_view targetObjectName, pymol::zstring_view mobileObjectName)
 {
   auto targetObj = ExecutiveFindObjectByName(G, targetObjectName);
   if (!targetObj) {
     return pymol::make_error("Target object not found.");
   }
-  return ExecutiveCameraLookAt(G, *targetObj);
-}
-
-pymol::Result<> ExecutiveCurveNew(PyMOLGlobals* G,
-    pymol::zstring_view curveName, pymol::zstring_view curvetype)
-{
-  auto oldObj = ExecutiveFindObject<ObjectCurve>(G, curveName);
-  if (oldObj) {
-    return pymol::make_error("Curve of this name already exists.");
+  if (mobileObjectName == "_Camera") {
+    return ExecutiveCameraLookAt(G, *targetObj);
   }
-  auto obj = pymol::make_unique<ObjectCurve>(G);
-  obj->setName(curveName);
-  ExecutiveManageObject(G, obj.release(), false, true);
-  return {};
+  auto mobileObj = ExecutiveFindObjectByName(G, mobileObjectName);
+  if (!mobileObj) {
+    return pymol::make_error("Mobile object not found.");
+  }
+  return ExecutiveObjectLookAt(G, *targetObj, *mobileObj);
 }

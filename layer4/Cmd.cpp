@@ -6202,10 +6202,24 @@ static PyObject* CmdM2ioFirstBlockProperties(PyObject* self, PyObject* args)
 static PyObject* CmdLookAt(PyObject* self, PyObject* args)
 {
   PyMOLGlobals* G = nullptr;
+  const char* mobileObjName;
   const char* targetObjName;
-  API_SETUP_ARGS(G, self, args, "Os", &self, &targetObjName);
+  API_SETUP_ARGS(G, self, args, "Oss", &self, &targetObjName, &mobileObjName);
   API_ASSERT(APIEnterBlockedNotModal(G));
-  auto result = ExecutiveLookAt(G, targetObjName);
+  auto result = ExecutiveLookAt(G, targetObjName, mobileObjName);
+  APIExitBlocked(G);
+  return APIResult(G, result);
+}
+
+static PyObject* CmdMoveOnCurve(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  const char* mobileObjName;
+  const char* curveObjName;
+  float t;
+  API_SETUP_ARGS(G, self, args, "Ossf", &self, &mobileObjName, &curveObjName, &t);
+  API_ASSERT(APIEnterBlockedNotModal(G));
+  auto result = ExecutiveMoveOnCurve(G, mobileObjName, curveObjName, t);
   APIExitBlocked(G);
   return APIResult(G, result);
 }
@@ -6400,6 +6414,7 @@ static PyMethodDef Cmd_methods[] = {
   {"mplay", CmdMPlay, METH_VARARGS},
   {"mpng_", CmdMPNG, METH_VARARGS},
   {"mmatrix", CmdMMatrix, METH_VARARGS},
+  {"move_on_curve", CmdMoveOnCurve, METH_VARARGS},
   {"mview", CmdMView, METH_VARARGS},
   {"object_update_thread", CmdObjectUpdateThread, METH_VARARGS},
   {"origin", CmdOrigin, METH_VARARGS},
