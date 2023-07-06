@@ -45,12 +45,12 @@ void PyMOLDrawPixels(GLsizei width,
 int PyMOLCheckOpenGLErr(const char *pos);
 
 #if defined(_PYMOL_IOS) && !defined(_WEBGL)
-#define GL_C_INT_TYPE ushort
-#define GL_C_INT_ENUM GL_UNSIGNED_SHORT
+#define VertexIndex_t std::uint16_t
+#define VertexIndex_GL_ENUM GL_UNSIGNED_SHORT
 #define SceneGLClearColor(red,green,blue,alpha) if (!SceneGetBackgroundColorAlreadySet(G)) glClearColor(red,green,blue,alpha);
 #else
-#define GL_C_INT_TYPE uint
-#define GL_C_INT_ENUM GL_UNSIGNED_INT
+#define VertexIndex_t std::uint32_t
+#define VertexIndex_GL_ENUM GL_UNSIGNED_INT
 #define SceneGLClearColor(red,green,blue,alpha) glClearColor(red,green,blue,alpha);
 #endif
 

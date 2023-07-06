@@ -481,8 +481,8 @@ void TransparentInfoSortIX(PyMOLGlobals* G, float* sum, float* z_value, int* ix,
  *
  */
 static void CGOReorderIndicesWithTransparentInfo(PyMOLGlobals* G, int nindices,
-    size_t vbuf, int n_tri, int* ix, GL_C_INT_TYPE* vertexIndicesOriginal,
-    GL_C_INT_TYPE* vertexIndices)
+    size_t vbuf, int n_tri, int* ix, VertexIndex_t* vertexIndicesOriginal,
+    VertexIndex_t* vertexIndices)
 {
   int c, pl, idx;
   IndexBuffer* ibo = G->ShaderMgr->getGPUBuffer<IndexBuffer>(vbuf);
@@ -498,7 +498,7 @@ static void CGOReorderIndicesWithTransparentInfo(PyMOLGlobals* G, int nindices,
     vertexIndices[pl++] = vertexIndicesOriginal[idx + 1];
     vertexIndices[pl++] = vertexIndicesOriginal[idx + 2];
   }
-  ibo->bufferSubData(0, sizeof(GL_C_INT_TYPE) * nindices, vertexIndices);
+  ibo->bufferSubData(0, sizeof(VertexIndex_t) * nindices, vertexIndices);
 }
 
 static void CGO_gl_draw_buffers_indexed(CCGORenderer* I, CGO_op_data pc)
@@ -549,9 +549,8 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer* I, CGO_op_data pc)
       set2 = I->rep->obj->Setting.get();
     t_mode = SettingGet_i(I->G, set1, set2, cSetting_transparency_mode);
     if (t_mode != 3) {
-      GL_C_INT_TYPE* vertexIndicesOriginalTI =
-          (GL_C_INT_TYPE*) (sort_mem + n_tri + 256);
-      GL_C_INT_TYPE* vertexIndicesTI = vertexIndicesOriginalTI + nindices;
+      auto vertexIndicesOriginalTI = (VertexIndex_t*) (sort_mem + n_tri + 256);
+      auto vertexIndicesTI = vertexIndicesOriginalTI + nindices;
       TransparentInfoSortIX(I->G, sum, z_value, ix, n_tri, sort_mem, t_mode);
       CGOReorderIndicesWithTransparentInfo(I->G, nindices, iboid, n_tri, ix,
           vertexIndicesOriginalTI, vertexIndicesTI);
@@ -566,7 +565,7 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer* I, CGO_op_data pc)
 
   CheckGLErrorOK(
       I->G, "CGO_gl_draw_buffers_indexed: before glDrawElements err=%d\n");
-  glDrawElements(mode, nindices, GL_C_INT_ENUM, 0);
+  glDrawElements(mode, nindices, VertexIndex_GL_ENUM, 0);
   CheckGLErrorOK(
       I->G, "CGO_gl_draw_buffers_indexed: after glDrawElements err=%d\n");
 
@@ -683,7 +682,7 @@ static void CGO_gl_draw_custom(CCGORenderer* I, CGO_op_data pc)
   vbo->bind(shaderPrg->id);
   if (ibo) {
     ibo->bind();
-    glDrawElements(sp->mode, sp->nindices, GL_C_INT_ENUM, 0);
+    glDrawElements(sp->mode, sp->nindices, VertexIndex_GL_ENUM, 0);
   } else {
     glDrawArrays(sp->mode, 0, sp->nverts);
   }
@@ -805,12 +804,12 @@ static void CGO_gl_draw_cylinder_buffers(CCGORenderer* I, CGO_op_data pc)
   if (min_alpha < 255) {
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glDrawElements(GL_TRIANGLES, num_cyl * NumTotalVerticesPerCylinder(),
-        GL_C_INT_ENUM, 0);
+        VertexIndex_GL_ENUM, 0);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glDepthFunc(GL_LEQUAL);
   }
   glDrawElements(GL_TRIANGLES, num_cyl * NumTotalVerticesPerCylinder(),
-      GL_C_INT_ENUM, 0);
+      VertexIndex_GL_ENUM, 0);
 
   if (min_alpha < 255) {
     glDepthFunc(GL_LESS);

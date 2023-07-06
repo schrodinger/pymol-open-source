@@ -2170,6 +2170,35 @@ void SetVertexValuesForVBO(PyMOLGlobals * G, CGO *cgo, int pl, int plc, int cnt,
   }
 }
 
+struct NormalColorFormatSize
+{
+  VertexFormat normalFormat{};
+  VertexFormat colorFormat{};
+  std::size_t normalSize{};
+  std::size_t colorSize{};
+};
+
+static NormalColorFormatSize GetNormalColorFormatSize(PyMOLGlobals* G)
+{
+  NormalColorFormatSize fmt{};
+
+  fmt.normalFormat =
+      VERTEX_NORMAL_SIZE == 3 ? VertexFormat::Float3 : VertexFormat::Float4;
+  if (SettingGet<int>(G, cSetting_cgo_shader_ub_normal)) {
+    fmt.normalFormat = VERTEX_NORMAL_SIZE == 3 ? VertexFormat::Byte3Norm
+                                               : VertexFormat::Byte4Norm;
+  }
+  fmt.normalSize = GetSizeOfVertexFormat(fmt.normalFormat);
+
+  fmt.colorFormat = VertexFormat::Float4;
+  if (SettingGet<int>(G, cSetting_cgo_shader_ub_color)) {
+    fmt.colorFormat = VertexFormat::UByte4Norm;
+  }
+  fmt.colorSize = GetSizeOfVertexFormat(fmt.colorFormat);
+
+  return fmt;
+}
+
 static int OptimizePointsToVBO(const CGO *I, CGO *cgo, int num_total_vertices_points, float *min, float *max, short *has_draw_buffer, bool addshaders){
   auto G = I->G;
   float *vertexVals = 0, *colorVals = 0, *normalVals = 0;
@@ -2301,34 +2330,20 @@ static int OptimizePointsToVBO(const CGO *I, CGO *cgo, int num_total_vertices_po
   }
   if (ok){
     short arrays = CGO_VERTEX_ARRAY | CGO_PICK_COLOR_ARRAY;
-    short nsz = 12;
-    GLenum ntp = GL_FLOAT;
-    bool nnorm = GL_FALSE;
-    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
-      nsz = 3;
-      ntp = GL_BYTE;
-      nnorm = GL_TRUE;
-    }
-
-    short csz = 4;
-    GLenum ctp = GL_FLOAT;
-    bool cnorm = GL_FALSE;
-    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
-      csz = 1;
-      ctp = GL_UNSIGNED_BYTE;
-      cnorm = GL_TRUE;
-    }
+    auto fmt = GetNormalColorFormatSize(I->G);
 
     VertexBuffer * vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
 
-    BufferDataDesc bufData =
-      { { "a_Vertex", GL_FLOAT, 3, sizeof(float) * num_total_vertices_points * 3, vertexVals, GL_FALSE } };
+    BufferDataDesc bufData = {{"a_Vertex", VertexFormat::Float3,
+        sizeof(float) * num_total_vertices_points * 3, vertexVals}};
 
-    if (has_normals){
-      bufData.push_back( { "a_Normal", ntp,      3, (size_t)(num_total_vertices_points * nsz), normalVals, nnorm } );
+    if (has_normals) {
+        bufData.push_back({"a_Normal", fmt.normalFormat,
+            num_total_vertices_points * fmt.normalSize, normalVals});
     }
-    if (has_colors){
-      bufData.push_back( { "a_Color",  ctp,      4, sizeof(float) * num_total_vertices_points * csz, colorVals, cnorm } );
+    if (has_colors) {
+        bufData.push_back({"a_Color", fmt.colorFormat,
+            num_total_vertices_points * fmt.colorSize, colorVals});
     }
     ok = vbo->bufferData(std::move(bufData));
 
@@ -2850,35 +2865,21 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
       return (NULL);
     }
     if (ok){
-      short nsz = VERTEX_NORMAL_SIZE * 4;
-      GLenum ntp = GL_FLOAT;
-      bool nnorm = GL_FALSE;
-      if (SettingGet<int>(G, cSetting_cgo_shader_ub_normal)) {
-        nsz = VERTEX_NORMAL_SIZE;
-        ntp = GL_BYTE;
-        nnorm = GL_TRUE;
-      }
-
-      short csz = 4;
-      GLenum ctp = GL_FLOAT;
-      bool cnorm = GL_FALSE;
-      if (SettingGet<int>(G, cSetting_cgo_shader_ub_color)) {
-        csz = 1;
-        ctp = GL_UNSIGNED_BYTE;
-        cnorm = GL_TRUE;
-      }
+      auto fmt = GetNormalColorFormatSize(G);
 
       VertexBuffer * vbo = G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL);
-      BufferDataDesc bufData =
-        { { "a_Vertex", GL_FLOAT, 3, sizeof(float) * num_total_indexes * 3, vertexVals, GL_FALSE } };
-      if (has_normals){
-        bufData.push_back( { "a_Normal", ntp,      VERTEX_NORMAL_SIZE, (size_t)(num_total_indexes * nsz), normalVals, nnorm } );
+      BufferDataDesc bufData = {{"a_Vertex", VertexFormat::Float3,
+          sizeof(float) * num_total_indexes * 3, vertexVals}};
+      if (has_normals) {
+        bufData.push_back({"a_Normal", fmt.normalFormat,
+            num_total_indexes * fmt.normalSize, normalVals});
       }
-      if (has_colors){
-        bufData.push_back( { "a_Color",  ctp,      4, sizeof(float) * num_total_indexes * csz, colorVals, cnorm } );
+      if (has_colors) {
+        bufData.push_back({"a_Color", fmt.colorFormat,
+            num_total_indexes * fmt.colorSize, colorVals});
       }
       if (has_accessibility){
-        bufData.push_back( { "a_Accessibility", GL_FLOAT, 1, sizeof(float) * num_total_indexes, accessibilityVals, GL_FALSE } );
+        bufData.push_back({"a_Accessibility", VertexFormat::Float, sizeof(float) * num_total_indexes, accessibilityVals});
       }
       ok = vbo->bufferData(std::move(bufData));
 
@@ -2886,8 +2887,8 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
       // picking VBO: generate a buffer twice the size needed, for each picking pass
       VertexBuffer * pickvbo = G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL, GL_DYNAMIC_DRAW);
       ok = pickvbo->bufferData({
-          BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * num_total_indexes, 0, GL_TRUE ),
-          BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * num_total_indexes, 0, GL_TRUE )
+          BufferDesc{"a_Color", VertexFormat::UByte4Norm, sizeof(float) * num_total_indexes},
+          BufferDesc{"a_Color", VertexFormat::UByte4Norm, sizeof(float) * num_total_indexes}
         });
       size_t pickvboid = pickvbo->get_hash_id();
 
@@ -3108,33 +3109,19 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
       }
     }
     {
-      short nsz = VERTEX_NORMAL_SIZE * 4;
-      GLenum ntp = GL_FLOAT;
-      bool nnorm = GL_FALSE;
-      if (SettingGet<int>(G, cSetting_cgo_shader_ub_normal)){
-        nsz = VERTEX_NORMAL_SIZE;
-        ntp = GL_BYTE;
-        nnorm = GL_TRUE;
-      }
-
-      short csz = 4;
-      GLenum ctp = GL_FLOAT;
-      bool cnorm = GL_FALSE;
-      if (SettingGet<int>(G, cSetting_cgo_shader_ub_color)){
-        csz = 1;
-        ctp = GL_UNSIGNED_BYTE;
-        cnorm = GL_TRUE;
-      }
+      auto fmt = GetNormalColorFormatSize(G);
 
       VertexBuffer * vbo = G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL);
-      BufferDataDesc bufData =
-        { { "a_Vertex", GL_FLOAT, 3, sizeof(float) * num_total_indexes_lines * 3, vertexVals, GL_FALSE } };
+      BufferDataDesc bufData = {{"a_Vertex", VertexFormat::Float3,
+          sizeof(float) * num_total_indexes_lines * 3, vertexVals}};
 
-      if (has_normals){
-        bufData.push_back( { "a_Normal", ntp,      VERTEX_NORMAL_SIZE, (size_t)(num_total_indexes_lines * nsz), normalVals, nnorm } );
+      if (has_normals) {
+        bufData.push_back({"a_Normal", fmt.normalFormat,
+            num_total_indexes_lines * fmt.normalSize, normalVals});
       }
-      if (has_color){
-        bufData.push_back( { "a_Color",  ctp,      4, sizeof(float) * num_total_indexes_lines * csz, colorVals, cnorm } );
+      if (has_color) {
+        bufData.push_back({"a_Color", fmt.colorFormat,
+            num_total_indexes_lines * fmt.colorSize, colorVals});
       }
       ok = vbo->bufferData(std::move(bufData));
       size_t vboid = vbo->get_hash_id();
@@ -3142,8 +3129,8 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
       // picking VBO: generate a buffer twice the size needed, for each picking pass
       VertexBuffer * pickvbo = G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL, GL_DYNAMIC_DRAW);
       ok &= pickvbo->bufferData({
-          BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * num_total_indexes_lines, 0, GL_TRUE ),
-          BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * num_total_indexes_lines, 0, GL_TRUE )
+          BufferDesc("a_Color", VertexFormat::UByte4Norm, sizeof(float) * num_total_indexes_lines),
+          BufferDesc("a_Color", VertexFormat::UByte4Norm, sizeof(float) * num_total_indexes_lines)
         });
       size_t pickvboid = pickvbo->get_hash_id();
 
@@ -3266,8 +3253,6 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
   if (num_total_vertices>0){
     float *vertexVals = 0, *colorVals = 0, *normalVals, *accessibilityVals = 0;
     float *pickColorVals;
-    GL_C_INT_TYPE *vertexIndices; 
-    short vertexIndicesAllocated = 0;
     int pl = 0, plc = 0, idxpl = 0, vpl = 0, nxtn;
     uchar *colorValsUC = 0;
     uchar *normalValsC = 0;
@@ -3277,15 +3262,14 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
 
     if (embedTransparencyInfo){
       int n_tri = num_total_indexes / 3;
-      int bytes_to_allocate = 2 * num_total_indexes * sizeof(GL_C_INT_TYPE) + // vertexIndicesOriginal, vertexIndices
+      int bytes_to_allocate = 2 * num_total_indexes * sizeof(VertexIndex_t) + // vertexIndicesOriginal, vertexIndices
 	3 * num_total_indexes * sizeof(float) +  // 3 * for sum
 	n_tri * sizeof(float) + 2 * n_tri * sizeof(int) + 256 * sizeof(int);    // z_value (float * n_tri), ix (n_tri * int), sort_mem ((n_tri + 256) * int)
       // round to 4 byte words for the length of the CGO
       n_data = bytes_to_allocate / 4 + (((bytes_to_allocate % 4) == 0) ? 0 : 1) ;
     }
-    vertexIndices = pymol::calloc<GL_C_INT_TYPE>(num_total_indexes);
-    vertexIndicesAllocated = 1;
-    if (!vertexIndices){
+    std::vector<VertexIndex_t> vertexIndices(num_total_indexes);
+    if (vertexIndices.empty()) {
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBOIndexed() vertexIndices could not be allocated\n" ENDFB(I->G);	
       CGOFree(cgo);
       return (NULL);
@@ -3505,40 +3489,27 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
       }
     }
     if (ok) {
-      short nsz = VERTEX_NORMAL_SIZE * 4;
-      GLenum ntp = GL_FLOAT;
-      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
-        nsz = VERTEX_NORMAL_SIZE;
-        ntp = GL_BYTE;
-      }
-
-      short csz = 4;
-      GLenum ctp = GL_FLOAT;
-      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
-        csz = 1;
-        ctp = GL_UNSIGNED_BYTE;
-      }
+      auto fmt = GetNormalColorFormatSize(I->G);
 
       VertexBuffer * vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
       ok &= vbo->bufferData({
-          BufferDesc( "a_Vertex",        GL_FLOAT, 3, sizeof(float) * num_total_vertices * 3, vertexVals, GL_FALSE ),
-          BufferDesc( "a_Normal",        ntp,      VERTEX_NORMAL_SIZE, num_total_vertices * nsz, normalVals, GL_FALSE ),
-          BufferDesc( "a_Color",         ctp,      4, sizeof(float) * num_total_vertices * csz, colorVals, GL_TRUE ),
-          BufferDesc( "a_Accessibility", GL_FLOAT, 1, sizeof(float) * num_total_vertices, accessibilityVals, GL_FALSE )
+          BufferDesc{"a_Vertex", VertexFormat::Float3, sizeof(float) * num_total_vertices * 3, vertexVals},
+          BufferDesc{"a_Normal", fmt.normalFormat, num_total_vertices * fmt.normalSize, normalVals},
+          BufferDesc{"a_Color", fmt.colorFormat, num_total_vertices * fmt.colorSize, colorVals},
+          BufferDesc{"a_Accessibility", VertexFormat::Float, sizeof(float) * num_total_vertices, accessibilityVals}
         });
 
       IndexBuffer * ibo = I->G->ShaderMgr->newGPUBuffer<IndexBuffer>();
-      ok &= ibo->bufferData({
-          BufferDesc( GL_UNSIGNED_INT, sizeof(GL_C_INT_TYPE) * num_total_indexes, vertexIndices )
-        });
+      ok &= ibo->bufferData({BufferDesc{nullptr, VertexFormat::UInt,
+          sizeof(VertexIndex_t) * num_total_indexes, vertexIndices.data()}});
 
       size_t vboid = vbo->get_hash_id();
       size_t iboid = ibo->get_hash_id();
 
       VertexBuffer * pickvbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL, GL_DYNAMIC_DRAW);
       ok &= pickvbo->bufferData({
-          BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * num_total_indexes, 0, GL_TRUE ),
-          BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * num_total_indexes, 0, GL_TRUE )
+          BufferDesc{"a_Color", VertexFormat::UByte4Norm, sizeof(float) * num_total_indexes},
+          BufferDesc{"a_Color", VertexFormat::UByte4Norm, sizeof(float) * num_total_indexes}
         });
       size_t pickvboid = pickvbo->get_hash_id();
 
@@ -3558,14 +3529,14 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
 	  float *z_value = sum + (num_total_indexes*3);
 	  int *ix = (int *)z_value + n_tri;
 	  int *sort_mem = ix + n_tri;
-	  GL_C_INT_TYPE *vertexIndicesOriginalTI = (GL_C_INT_TYPE *)(sort_mem + n_tri + 256);
+	  auto vertexIndicesOriginalTI = (VertexIndex_t*)(sort_mem + n_tri + 256);
 	  
 	  for (idxpl = 0; idxpl < num_total_indexes; idxpl+=3){
 	    add3f(&vertexVals[3 * vertexIndices[idxpl]], &vertexVals[3 * vertexIndices[idxpl+1]], sumarray);
 	    add3f(&vertexVals[3 * vertexIndices[idxpl+2]], sumarray, sumarray);
 	    sumarray += 3;
 	  }
-	  memcpy(vertexIndicesOriginalTI, vertexIndices, sizeof(GL_C_INT_TYPE) * num_total_indexes);
+	  memcpy(vertexIndicesOriginalTI, vertexIndices.data(), sizeof(VertexIndex_t) * num_total_indexes);
 	}
 
 	if (addshaders && ok)
@@ -3585,22 +3556,19 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
         I->G->ShaderMgr->freeGPUBuffer(iboid);
       }
     }
-    if (vertexIndicesAllocated)
-      FreeP(vertexIndices);
     FreeP(vertexVals);
   }
   if (ok && num_total_vertices_lines>0){
     float *vertexVals = 0, *colorVals = 0, *normalVals = NULL, *nxtVals;
     float *pickColorVals;
-    GL_C_INT_TYPE *vertexIndexes; 
     uchar *colorValsUC = 0;
     uchar *normalValsC = 0;
     int pl = 0, plc = 0, idxpl = 0, vpl = 0, sz;
     bool hasNormals = 0;
 
     hasNormals = !CGOHasAnyLineVerticesWithoutNormals(I);
-    vertexIndexes = pymol::malloc<GL_C_INT_TYPE>(num_total_indexes_lines);
-    if (!vertexIndexes){
+    std::vector<VertexIndex_t> vertexIndexes(num_total_indexes_lines);
+    if (vertexIndexes.empty()) {
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBOIndexed() vertexIndexes could not be allocated\n" ENDFB(I->G);	
       CGOFree(cgo);
       return (NULL);
@@ -3785,39 +3753,27 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
       ok &= !I->G->Interrupt;
     }
     if (ok) {
-      short nsz = VERTEX_NORMAL_SIZE * sizeof(float);
-      GLenum ntp = GL_FLOAT;
-      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
-        nsz = VERTEX_NORMAL_SIZE;
-        ntp = GL_BYTE;
-      }
-
-      short csz = VERTEX_COLOR_SIZE;
-      GLenum ctp = GL_FLOAT;
-      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
-        csz = 1;
-        ctp = GL_UNSIGNED_BYTE;
-      }
+      auto fmt = GetNormalColorFormatSize(I->G);
 
       VertexBuffer * vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
       ok &= vbo->bufferData({
-          BufferDesc( "a_Vertex",        GL_FLOAT, 3, sizeof(float) * num_total_vertices_lines * 3, vertexVals, GL_FALSE ),
-          BufferDesc( "a_Normal",        ntp,      VERTEX_NORMAL_SIZE, num_total_vertices_lines * nsz, normalVals, GL_FALSE ),
-          BufferDesc( "a_Color",         ctp,      4, sizeof(float) * num_total_vertices_lines * csz, colorVals, GL_TRUE )
+          BufferDesc{"a_Vertex", VertexFormat::Float3, sizeof(float) * num_total_vertices_lines * 3, vertexVals},
+          BufferDesc{"a_Normal", fmt.normalFormat, num_total_vertices_lines * fmt.normalSize, normalVals},
+          BufferDesc{"a_Color", fmt.colorFormat, num_total_vertices_lines * fmt.colorSize, colorVals},
         });
 
       IndexBuffer * ibo = I->G->ShaderMgr->newGPUBuffer<IndexBuffer>();
-      ok &= ibo->bufferData({
-          BufferDesc( GL_UNSIGNED_INT, sizeof(GL_C_INT_TYPE) * num_total_indexes_lines, vertexIndexes )
-        });
+      ok &= ibo->bufferData({BufferDesc(nullptr, VertexFormat::UInt,
+          sizeof(VertexIndex_t) * num_total_indexes_lines,
+          vertexIndexes.data())});
 
       size_t vboid = vbo->get_hash_id();
       size_t iboid = ibo->get_hash_id();
 
       VertexBuffer * pickvbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL, GL_DYNAMIC_DRAW);
       ok &= pickvbo->bufferData({
-          BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * num_total_indexes, 0, GL_TRUE ),
-          BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * num_total_indexes, 0, GL_TRUE )
+          BufferDesc("a_Color", VertexFormat::UByte4Norm, sizeof(float) * num_total_indexes),
+          BufferDesc("a_Color", VertexFormat::UByte4Norm, sizeof(float) * num_total_indexes)
         });
       size_t pickvboid = pickvbo->get_hash_id();
 
@@ -3850,7 +3806,6 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
         I->G->ShaderMgr->freeGPUBuffer(iboid);
       }
     }
-    FreeP(vertexIndexes);
     FreeP(vertexVals);
   }
   if (ok && (num_total_vertices>0 || num_total_vertices_lines>0)){
@@ -4047,28 +4002,28 @@ static OptimizeSphereData GetOptimizeSphereData(const CGO* I, CGO*& cgo, int num
 static bool PopulateGLBufferOptimizedSphereData(const CGO* I, CGO* cgo, bool addshaders, int num_total_spheres, const OptimizeSphereData& sphereData)
 {
   bool ok = true;
-  GLenum rtp = GL_FLOAT;
+  auto rtp = VertexFormat::Float;
   short rsz  = sizeof(float);
   const void* radiusptr = sphereData.rightUpFlags.data();
   auto cgo_shader_ub_flags = SettingGet<bool>(cgo->G, cSetting_cgo_shader_ub_flags);
   if (cgo_shader_ub_flags) {
-    rtp = GL_UNSIGNED_BYTE;
-    rsz = sizeof(GLubyte);
+    rtp = VertexFormat::UByte;
+    rsz = sizeof(std::uint8_t);
     radiusptr = sphereData.rightUpFlagsUB.data();
   }
 
   VertexBuffer * vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
   ok &= vbo->bufferData({
-      BufferDesc( "a_vertex_radius", GL_FLOAT, 4, sizeof(float) * sphereData.total_vert * 4, sphereData.vert.data(), GL_FALSE ),
-      BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * sphereData.total_vert, sphereData.color.data(), GL_TRUE ),
-      BufferDesc( "a_rightUpFlags", rtp, VALUES_PER_IMPOSTER_SPACE_COORD, rsz * sphereData.total_vert * VALUES_PER_IMPOSTER_SPACE_COORD, radiusptr, GL_FALSE )
+      BufferDesc("a_vertex_radius", VertexFormat::Float4, sizeof(float) * sphereData.total_vert * 4, sphereData.vert.data()),
+      BufferDesc("a_Color", VertexFormat::UByte4Norm, sizeof(float) * sphereData.total_vert, sphereData.color.data()),
+      BufferDesc("a_rightUpFlags", rtp, rsz * sphereData.total_vert * VALUES_PER_IMPOSTER_SPACE_COORD, radiusptr),
     });
   size_t vboid = vbo->get_hash_id();
 
   VertexBuffer * pickvbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL, GL_DYNAMIC_DRAW);
   ok &= pickvbo->bufferData({
-      BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, 0, GL_TRUE ),
-      BufferDesc( "a_Color", GL_UNSIGNED_BYTE, 4, sizeof(float) * sphereData.total_vert, GL_TRUE )
+      BufferDesc("a_Color", VertexFormat::UByte4Norm, 0),
+      BufferDesc("a_Color", VertexFormat::UByte4Norm, sizeof(float) * sphereData.total_vert)
     }, 0, sizeof(float) * sphereData.total_vert * 2, 0);
   size_t pickvboid = pickvbo->get_hash_id();
 
@@ -4169,8 +4124,8 @@ CGO* CGOOptimizeBezier(const CGO* I)
   std::size_t numDimensions = 3;
   std::size_t numVerts = 4;
   vbo->bufferData({
-      BufferDesc("position", GL_FLOAT, numDimensions, sizeof(float) * numVerts * numDimensions,
-          vertData.data(), GL_FALSE),
+      BufferDesc("position", VertexFormat::Float3,
+          sizeof(float) * numVerts * numDimensions, vertData.data()),
   });
   size_t vboid = vbo->get_hash_id();
 
@@ -4724,9 +4679,9 @@ CGO *CGOOptimizeTextures(const CGO * I, int est)
     if (ok) {
       VertexBuffer * vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL);
       ok &= vbo->bufferData({
-          BufferDesc( "attr_worldpos", GL_FLOAT, 3, sizeof(float) * num_total_textures * 18, worldPos, GL_FALSE ),
-          BufferDesc( "attr_screenoffset", GL_FLOAT, 3, sizeof(float) * num_total_textures * 18, screenValues, GL_FALSE ),
-          BufferDesc( "attr_texcoords", GL_FLOAT, 3, sizeof(float) * num_total_textures * 18, textExtents, GL_FALSE )
+          BufferDesc("attr_worldpos", VertexFormat::Float3, sizeof(float) * num_total_textures * 18, worldPos),
+          BufferDesc("attr_screenoffset", VertexFormat::Float3, sizeof(float) * num_total_textures * 18, screenValues),
+          BufferDesc("attr_texcoords", VertexFormat::Float3, sizeof(float) * num_total_textures * 18, textExtents)
         });
       size_t vboid = vbo->get_hash_id();
 
@@ -4773,12 +4728,13 @@ CGO *CGOConvertToLabelShader(const CGO *I, CGO * addTo){
   AttribDataOp target_pos_op =
     { { CGO_DRAW_LABEL,       7, FLOAT3_TO_FLOAT3, offsetof(cgo::draw::label, target_pos),          6 } };
 
-  AttribDataDesc attrDesc = { { "attr_worldpos",          GL_FLOAT, 3, GL_FALSE, world_pos_op },
-                              { "attr_targetpos",         GL_FLOAT, 3, GL_FALSE, target_pos_op },
-                              { "attr_screenoffset",      GL_FLOAT, 3, GL_FALSE, screen_min_op },
-                              { "attr_texcoords",         GL_FLOAT, 2, GL_FALSE, text_extent_op },
-                              { "attr_screenworldoffset", GL_FLOAT, 3, GL_FALSE, screen_offset_op },
-                              { "attr_relative_mode",     GL_FLOAT, 1, GL_FALSE, relative_mode_op } };
+  AttribDataDesc attrDesc = {
+      {"attr_worldpos", VertexFormat::Float3, world_pos_op},
+      {"attr_targetpos", VertexFormat::Float3, target_pos_op},
+      {"attr_screenoffset", VertexFormat::Float3, screen_min_op},
+      {"attr_texcoords", VertexFormat::Float2, text_extent_op},
+      {"attr_screenworldoffset", VertexFormat::Float3, screen_offset_op},
+      {"attr_relative_mode", VertexFormat::Float, relative_mode_op}};
 
   auto ComputeScreenValues = [](void * varData, const float * pc, void * screenData, int idx) {
     auto sp = reinterpret_cast<const cgo::draw::label *>(pc);
@@ -4830,7 +4786,7 @@ CGO *CGOConvertToLabelShader(const CGO *I, CGO * addTo){
   addTo->add<cgo::draw::vertex_attribute_4ub>(G->ShaderMgr->GetAttributeUID("attr_pickcolor"), pickdata);
 
   AttribDataOp pickOp = { { CGO_PICK_COLOR, 1, UINT_INT_TO_PICK_DATA, 0, 0 } };
-  AttribDataDesc pickDesc = { { "attr_pickcolor", GL_UNSIGNED_BYTE, 4, GL_TRUE, pickOp } };
+  AttribDataDesc pickDesc = {{"attr_pickcolor", VertexFormat::UByte4Norm, pickOp}};
   return CGOConvertToShader(I, attrDesc, pickDesc, GL_TRIANGLES, VertexBuffer::INTERLEAVED, true);
 }
 
@@ -4943,19 +4899,19 @@ CGO *CGOOptimizeLabels(const CGO * I, int est, bool addshaders)
       // Static Vertex Data
       VertexBuffer * vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL);
       ok &= vbo->bufferData({
-          BufferDesc( "attr_worldpos", GL_FLOAT, 3, sizeof(float)*18*num_total_labels, worldPos,          GL_FALSE ),
-          BufferDesc( "attr_targetpos", GL_FLOAT, 3, sizeof(float)*18*num_total_labels, targetPos,         GL_FALSE ),
-          BufferDesc( "attr_screenoffset", GL_FLOAT, 3, sizeof(float)*18*num_total_labels, screenValues,      GL_FALSE ),
-          BufferDesc( "attr_texcoords", GL_FLOAT, 2, sizeof(float)*12*num_total_labels, textExtents,       GL_FALSE ),
-          BufferDesc( "attr_screenworldoffset", GL_FLOAT, 3, sizeof(float)*18*num_total_labels, screenWorldValues, GL_FALSE ),
-          BufferDesc( "attr_relative_mode", GL_FLOAT, 1, sizeof(float)*6*num_total_labels,  relativeMode,      GL_FALSE )
+          BufferDesc("attr_worldpos", VertexFormat::Float3, sizeof(float) * num_total_labels * 18, worldPos),
+          BufferDesc("attr_targetpos", VertexFormat::Float3, sizeof(float) * num_total_labels * 18, targetPos),
+          BufferDesc("attr_screenoffset", VertexFormat::Float3, sizeof(float) * num_total_labels * 18, screenValues),
+          BufferDesc("attr_texcoords", VertexFormat::Float2, sizeof(float) * num_total_labels * 12, textExtents),
+          BufferDesc("attr_screenworldoffset", VertexFormat::Float3, sizeof(float) * num_total_labels * 18, screenWorldValues),
+          BufferDesc("attr_relative_mode", VertexFormat::Float, sizeof(float) * num_total_labels * 6, relativeMode)
         });
       size_t vboid = vbo->get_hash_id();
 
       VertexBuffer * pickvbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL, GL_DYNAMIC_DRAW);
       ok &= pickvbo->bufferData({
-          BufferDesc( "attr_pickcolor", GL_UNSIGNED_BYTE, VERTEX_COLOR_SIZE, 0, GL_TRUE ),
-          BufferDesc( "attr_pickcolor", GL_UNSIGNED_BYTE, VERTEX_COLOR_SIZE, sizeof(float) * num_total_labels * 6, GL_TRUE )
+          BufferDesc("attr_pickcolor", VertexFormat::UByteNorm, 0),
+          BufferDesc("attr_pickcolor", VertexFormat::UByteNorm, sizeof(float) * num_total_labels * 6)
         }, 0, sizeof(float) * num_total_labels * 12, 0);
       size_t pickvboid = pickvbo->get_hash_id();
 
@@ -5100,18 +5056,18 @@ CGO *CGOOptimizeConnectors(const CGO * I, int est)
       const size_t quant = factor * num_total_connectors;
       VertexBuffer * vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
       ok = vbo->bufferData({
-          BufferDesc( "a_target_pt3d",       GL_FLOAT, 3, sizeof(float) * 3 * quant,     targetPt3d,        GL_FALSE ),
-          BufferDesc( "a_center_pt3d",       GL_FLOAT, 3, sizeof(float) * 3 * quant,     labelCenterPt3d,   GL_FALSE ),
-          BufferDesc( "a_indentFactor",      GL_FLOAT, 2, sizeof(float) * 2 * quant,     indentFactor,      GL_FALSE ),
-          BufferDesc( "a_screenWorldOffset", GL_FLOAT, 3, sizeof(float) * 3 * quant,     screenWorldOffset, GL_FALSE ),
-          BufferDesc( "a_textSize",          GL_FLOAT, 2, sizeof(float) * 2 * quant,     textSize,          GL_FALSE ),
-          BufferDesc( "a_Color",             GL_UNSIGNED_BYTE, 4, sizeof(float) * quant, connectorColor,    GL_TRUE  ),
-          BufferDesc( "a_relative_mode",     GL_UNSIGNED_BYTE, 1, sizeof(uchar) * quant, relativeMode,      GL_FALSE ),
-          BufferDesc( "a_draw_flags",        GL_UNSIGNED_BYTE, 1, sizeof(uchar) * quant, drawBkgrd,         GL_FALSE ),
-          BufferDesc( "a_bkgrd_color",       GL_UNSIGNED_BYTE, 4, sizeof(float) * quant, bkgrdColor,        GL_TRUE  ),
-          BufferDesc( "a_rel_ext_length",    GL_FLOAT, 1, sizeof(float) * quant,         relExtLength,      GL_FALSE ),
-          BufferDesc( "a_con_width",         GL_FLOAT, 1, sizeof(float) * quant,         connectorWidth,    GL_FALSE ),
-          BufferDesc( "a_isCenterPt",        GL_UNSIGNED_BYTE, 1, sizeof(uchar) * quant, isCenterPt,        GL_FALSE )
+          BufferDesc("a_target_pt3d", VertexFormat::Float3, sizeof(float) * 3 * quant, targetPt3d),
+          BufferDesc("a_center_pt3d", VertexFormat::Float3, sizeof(float) * 3 * quant, labelCenterPt3d),
+          BufferDesc("a_indentFactor", VertexFormat::Float2, sizeof(float) * 2 * quant, indentFactor),
+          BufferDesc("a_screenWorldOffset", VertexFormat::Float3, sizeof(float) * 3 * quant, screenWorldOffset),
+          BufferDesc("a_textSize", VertexFormat::Float2, sizeof(float) * 2 * quant, textSize),
+          BufferDesc("a_Color", VertexFormat::UByteNorm, sizeof(float) * quant, connectorColor),
+          BufferDesc("a_relative_mode", VertexFormat::UByteNorm, sizeof(std::uint8_t) * quant, relativeMode),
+          BufferDesc("a_draw_flags", VertexFormat::UByteNorm, sizeof(std::uint8_t) * quant, drawBkgrd),
+          BufferDesc("a_bkgrd_color", VertexFormat::UByteNorm, sizeof(float) * quant, bkgrdColor),
+          BufferDesc("a_rel_ext_length", VertexFormat::Float, sizeof(float) * quant, relExtLength),
+          BufferDesc("a_con_width", VertexFormat::Float, sizeof(float) * quant, connectorWidth),
+          BufferDesc("a_isCenterPt", VertexFormat::UByteNorm, sizeof(std::uint8_t) * quant, isCenterPt)
         });
       size_t vboid = vbo->get_hash_id();
       if (ok) {
@@ -7248,9 +7204,9 @@ CGO *CGOOptimizeScreenTexturesAndPolygons(CGO * I, int est)
     if (ok){
       VertexBuffer * vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
       ok = vbo->bufferData({
-          BufferDesc( "attr_screenoffset", GL_FLOAT,         3, sizeof(float) * num_total_indices * 3, vertexVals,   GL_FALSE ),
-          BufferDesc( "attr_texcoords", GL_FLOAT,         2, sizeof(float) * num_total_indices * 2, texcoordVals, GL_FALSE ),
-          BufferDesc( "attr_backgroundcolor", GL_UNSIGNED_BYTE, 4, sizeof(uchar) * num_total_indices * 4, colorValsUC,  GL_TRUE )
+          BufferDesc("attr_screenoffset", VertexFormat::Float3, sizeof(float) * num_total_indices * 3, vertexVals),
+          BufferDesc("attr_texcoords", VertexFormat::Float2, sizeof(float) * num_total_indices * 2, texcoordVals),
+          BufferDesc("attr_backgroundcolor", VertexFormat::UByte4Norm, sizeof(std::uint8_t) * num_total_indices * 4, colorValsUC)
         });
       size_t vboid = vbo->get_hash_id();
       if (ok){
@@ -8264,11 +8220,11 @@ void copyAttributeForOp(bool isInterleaved, int &nvert, AttribOp *attribOp, int 
       pc = ((unsigned char*) dataPtrs[ord]) + nvert * vertexDataSize + attrOffset[copyord];
     }
   } else {
-    int sz = gl_sizeof(attrDesc->type_size) * attrDesc->type_dim;
+    auto sz = GetSizeOfVertexFormat(attrDesc->m_format);
     dataPtr = (unsigned char*) dataPtr + nvert * sz;
     if (attribOp->copyAttribDesc){
       copyord = attribOp->copyAttribDesc->order;
-      int copysz = gl_sizeof(attribOp->copyAttribDesc->type_size) * attribOp->copyAttribDesc->type_dim;
+      auto copysz = GetSizeOfVertexFormat(attribOp->copyAttribDesc->m_format);
       pc = (unsigned char*) dataPtr + nvert * copysz;
     }
   }
@@ -8442,7 +8398,7 @@ void copyAttributeForVertex(bool isInterleaved, int &nvert, AttribDesc &attribDe
   int ord = attribDesc.order;
   void *dataPtr = dataPtrs[ord];
   unsigned char *pc = NULL;
-  int attrSize = gl_sizeof(attribDesc.type_size) * attribDesc.type_dim;
+  auto attrSize = GetSizeOfVertexFormat(attribDesc.m_format);
   if (isInterleaved){
     dataPtr = (unsigned char*) dataPtr + nvert * vertexDataSize + attrOffset[ord];
     pc = (unsigned char*) dataPtr - vertexDataSize;
@@ -8544,9 +8500,9 @@ void CheckAttributesForUsage(const CGO *I, AttribDataDesc &attrData, AttribDataD
         if (attrData[idx].default_value){
           // need to add glVertexAttrib CGO OP
           int attr_lookup_idx = I->G->ShaderMgr->GetAttributeUID(attrData[idx].attr_name);
-          switch (attrData[idx].type_size){
+          switch (GetVertexFormatBaseType(attrData[idx].m_format)) {
           case GL_FLOAT:
-            switch (attrData[idx].type_dim){
+            switch (VertexFormatToGLSize(attrData[idx].m_format)) {
             case 1:
               cgo->add<cgo::draw::vertex_attribute_1f>(attr_lookup_idx, *(float*)attrData[idx].default_value);
               break;
@@ -8554,16 +8510,18 @@ void CheckAttributesForUsage(const CGO *I, AttribDataDesc &attrData, AttribDataD
               cgo->add<cgo::draw::vertex_attribute_3f>(attr_lookup_idx, attrData[idx].default_value);
               break;
             default:
-              std::cerr << "\tNOT IMPLEMENTED: attrData[idx].type_size=" << attrData[idx].type_size << " attrData[idx].type_dim=" << attrData[idx].type_dim << std::endl;
+              std::cerr << "\tBAD SIZE: attrData[idx].m_format="
+                        << static_cast<int>(attrData[idx].m_format)
+                        << std::endl;
             }
             break;
           case GL_UNSIGNED_BYTE:
-            switch (attrData[idx].type_dim){
+            switch (VertexFormatToGLSize(attrData[idx].m_format)) {
             case 1:
               {
                 float val;
                 unsigned char valuc = *attrData[idx].default_value;
-                if (attrData[idx].data_norm){
+                if (VertexFormatIsNormalized(attrData[idx].m_format)) {
                   val = CLAMPVALUE(valuc / 255.f, 0.f, 1.f);
                 } else {
                   val = (float)valuc;
@@ -8575,7 +8533,9 @@ void CheckAttributesForUsage(const CGO *I, AttribDataDesc &attrData, AttribDataD
               cgo->add<cgo::draw::vertex_attribute_4ub>(attr_lookup_idx, attrData[idx].default_value);
               break;
             default:
-              std::cerr << "\tNOT IMPLEMENTED: attrData[idx].type_size=" << attrData[idx].type_size << " attrData[idx].type_dim=" << attrData[idx].type_dim << std::endl;
+              std::cerr << "\tNOT IMPLEMENTED: attrData[idx].m_format="
+                        << static_cast<int>(attrData[idx].m_format)
+                        << std::endl;
             }
           }
         }
@@ -8713,7 +8673,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
   size_t attrIdx = 0;
   for (auto &attrDesc : attrData){
     attrDesc.order = attrIdx++;
-    int attrSize = gl_sizeof(attrDesc.type_size) * attrDesc.type_dim;
+    auto attrSize = GetSizeOfVertexFormat(attrDesc.m_format);
     attrSizes.push_back(attrSize);
     vertexDataSize += attrSize;
 
@@ -8794,11 +8754,10 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
   size_t iboid = 0;
   int num_total_indexes = 0;
   if (nvertsperfrag){
-    GL_C_INT_TYPE *vertexIndices; 
     int nfrags = nfragspergroup * ntotalverts/vertsperpickinfo;
     int nvertsperindivfrag = vertsperpickinfo/nfragspergroup;
     num_total_indexes = nfrags * nvertsperfrag;
-    vertexIndices = pymol::calloc<GL_C_INT_TYPE>(num_total_indexes);
+    std::vector<VertexIndex_t> vertexIndices(num_total_indexes);
     int idxpl=0;
     // using vertsperpickinfo as verts per frag
     for (int cnt = 0, vpl = 0; cnt < nfrags; ++cnt){
@@ -8809,10 +8768,8 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
       vpl+=nvertsperindivfrag;
     }
     IndexBuffer * ibo = I->G->ShaderMgr->newGPUBuffer<IndexBuffer>();
-    ok &= ibo->bufferData({
-        BufferDesc( GL_C_INT_ENUM, sizeof(GL_C_INT_TYPE) * num_total_indexes, vertexIndices )
-          });
-    FreeP(vertexIndices);
+    ok &= ibo->bufferData({BufferDesc(nullptr, VertexFormat::UInt,
+        sizeof(VertexIndex_t) * num_total_indexes, vertexIndices.data())});
     iboid = ibo->get_hash_id();
   }
 
@@ -8840,7 +8797,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
       first_value = (attrDesc->default_value ? attrDesc->default_value : 
                      (attrDesc->repeat_value ? attrDesc->repeat_value : NULL));
       if (first_value){
-        int attrSize = gl_sizeof(attrDesc->type_size) * attrDesc->type_dim;
+        auto attrSize = GetSizeOfVertexFormat(attrDesc->m_format);
         memcpy(((unsigned char*)allData)+attrOffset, first_value, attrSize);
       }
       dataPtrs.push_back((void*)allData);
@@ -8957,7 +8914,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
                   for (; attrDataIt!=attrData.end() && dataPtrIt!=dataPtrs.end(); ++attrDataIt, ++dataPtrIt){
                     auto attrDesc = &(*attrDataIt);
                     auto dataPtr = *dataPtrIt;
-                    int attrSize = gl_sizeof(attrDesc->type_size) * attrDesc->type_dim;
+                    auto attrSize = GetSizeOfVertexFormat(attrDesc->m_format);
                     void *dest = ((unsigned char*)dataPtr)+attrSize*nvert;
                     memcpy((unsigned char*)dest, ((unsigned char*)dest) - attrSize, attrSize);
                   }
@@ -8998,9 +8955,9 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
     BufferDataDesc pickBufferData;
     for (int i=0; i < npickcolattr; i++){
       for (auto &pickDesc : pickData){
-	int pickSize = gl_sizeof(pickDesc.type_size) * pickDesc.type_dim;
-        pickBufferData.push_back(BufferDesc(pickDesc.attr_name, pickDesc.type_size,
-                                            pickDesc.type_dim, pickSize * nvert, NULL, pickDesc.data_norm));
+        auto pickSize = GetSizeOfVertexFormat(pickDesc.m_format);
+        pickBufferData.push_back(BufferDesc(
+            pickDesc.attr_name, pickDesc.m_format, pickSize * nvert));
       }
     }
     pickvbo->bufferData(std::move(pickBufferData));
@@ -9021,8 +8978,8 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
         auto attrDesc = &(*attrDataIt);
         auto dataPtr = *dataPtrIt;
         auto attrSize = *attrSizeIt;
-        bufferData.push_back(BufferDesc(attrDesc->attr_name, attrDesc->type_size, 
-                                        attrDesc->type_dim, nvert * attrSize, dataPtr, attrDesc->data_norm));
+        bufferData.push_back(BufferDesc(attrDesc->attr_name, attrDesc->m_format,
+            nvert * attrSize, dataPtr));
       }
         vbo->bufferData(std::move(bufferData));
     break;
@@ -9035,8 +8992,8 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
       for (; attrDataIt!=attrData.end() && attrOffsetIt!=attrOffset.end(); ++attrDataIt, ++attrOffsetIt){
         auto attrDesc = &(*attrDataIt);
         auto offset = *attrOffsetIt;
-        bufferData.push_back(BufferDesc(attrDesc->attr_name, attrDesc->type_size,
-                                        attrDesc->type_dim, offset, attrDesc->data_norm));
+        bufferData.push_back(BufferDesc{attrDesc->attr_name, attrDesc->m_format,
+            0, nullptr, (std::uint32_t) offset});
       }
       vbo->bufferData(std::move(bufferData), (const void *)allData,
                       (size_t)(nvert*vertexDataSize), (size_t)vertexDataSize);
@@ -9155,15 +9112,15 @@ CGO *CGOConvertToTrilinesShader(const CGO *I, CGO *addTo, bool add_color){
   AttribDataOp extraPickColor2Ops =
     { { CGO_PICK_COLOR, 2, UINT_INT_TO_PICK_DATA, 0, 0 },
       { CGO_SPLITLINE,  4, UINT_INT_TO_PICK_DATA, offsetof(cgo::draw::splitline, index), 0 } };
-  AttribDataDesc pickDesc =
-    { { "a_Color", GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColorOps },
-      { "a_Color2", GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColor2Ops }};
-  AttribDataDesc attrDesc =
-    { { "a_Vertex", GL_FLOAT, 3, GL_FALSE, vertexOps },
-      { "a_OtherVertex", GL_FLOAT, 3, GL_FALSE, vertexOtherOps },
-      { "a_Color", GL_UNSIGNED_BYTE, 4, GL_TRUE, colorOps },
-      { "a_Color2", GL_UNSIGNED_BYTE, 4, GL_TRUE, color2Ops },
-      { "a_UV", GL_UNSIGNED_BYTE, 1, GL_FALSE } };
+  AttribDataDesc pickDesc = {
+      {"a_Color", VertexFormat::UByte4Norm, extraPickColorOps},
+      {"a_Color2", VertexFormat::UByte4Norm, extraPickColor2Ops}};
+  AttribDataDesc attrDesc = {
+      {"a_Vertex", VertexFormat::Float3, vertexOps},
+      {"a_OtherVertex", VertexFormat::Float3, vertexOtherOps},
+      {"a_Color", VertexFormat::UByte4Norm, colorOps},
+      {"a_Color2", VertexFormat::UByte4Norm, color2Ops},
+      {"a_UV", VertexFormat::UByte}};
 
   if (add_color){
     static unsigned char default_color[] = { 255, 255, 255, 255 }; // to write in alpha if CGO doesn't have it
@@ -9182,7 +9139,7 @@ CGO *CGOConvertToTrilinesShader(const CGO *I, CGO *addTo, bool add_color){
     AttribDataOp interpOps =
       { { CGO_SPLITLINE, 1, UB1_TO_INTERP, offsetof(cgo::draw::splitline, flags), 0 } };
     // need to add a_interpolate attribute
-    attrDesc.push_back({ "a_interpolate", GL_UNSIGNED_BYTE, 1, GL_FALSE, interpOps } );
+    attrDesc.push_back({"a_interpolate", VertexFormat::UByte, interpOps});
   }
   if (!add_color){
     attrDesc.erase(attrDesc.begin()+2); // a_Color
@@ -9207,12 +9164,11 @@ CGO *CGOConvertToLinesShader(const CGO *I, CGO *addTo, bool add_color){
   AttribDataOp extraPickColorOps =
     { { CGO_PICK_COLOR, 1, UINT_INT_TO_PICK_DATA, 0, 0 },
       { CGO_SPLITLINE,  4, UINT_INT_TO_PICK_DATA, offsetof(cgo::draw::splitline, index), 0 } };
-  
-  AttribDataDesc pickDesc =
-    { { "a_Color", GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColorOps } };
-  AttribDataDesc attrDesc =
-    { { "a_Vertex", GL_FLOAT, 3, GL_FALSE, vertexOps },
-      { "a_Color", GL_UNSIGNED_BYTE, 4, GL_TRUE, colorOps } };
+
+  AttribDataDesc pickDesc = {
+      {"a_Color", VertexFormat::UByte4Norm, extraPickColorOps}};
+  AttribDataDesc attrDesc = {{"a_Vertex", VertexFormat::Float3, vertexOps},
+      {"a_Color", VertexFormat::UByte4Norm, colorOps}};
   if (add_color){
     static unsigned char default_color[] = { 255, 255, 255, 255 }; // to write in alpha if CGO doesn't have it
     attrDesc[1].default_value = default_color;
@@ -9224,11 +9180,11 @@ CGO *CGOConvertToLinesShader(const CGO *I, CGO *addTo, bool add_color){
     AttribDataOp interpOps =
       { { CGO_SPLITLINE, 1, UB1_TO_INTERP, offsetof(cgo::draw::splitline, flags), 0 } };
     // need to add a_interpolate attribute
-    attrDesc.push_back({ "a_interpolate", GL_UNSIGNED_BYTE, 1, GL_FALSE, interpOps } );
+    attrDesc.push_back({"a_interpolate", VertexFormat::UByte, interpOps});
   }
 #ifndef PURE_OPENGL_ES_2
   {
-    attrDesc.push_back({ "a_line_position", GL_UNSIGNED_BYTE, 1, GL_FALSE } );
+    attrDesc.push_back({"a_line_position", VertexFormat::UByte});
     AttribDesc *lpdesc = &attrDesc[attrDesc.size()-1];
     lpdesc->repeat_value_length = 2;
     static unsigned char flip_bits[] = { 0, 1 };
@@ -9261,15 +9217,16 @@ CGO *CGOConvertLinesToCylinderShader(const CGO *I, CGO *addTo, bool add_color){
       { CGO_ALPHA,      1, FLOAT1_TO_UB_4TH,      0 },
       { CGO_SPLITLINE,  3, UB3_TO_UB3,            offsetof(cgo::draw::splitline, color2) } };
 
-  AttribDataDesc attrDesc = { { "attr_vertex1", GL_FLOAT, 3, GL_FALSE, vertex1Ops },
-                              { "attr_vertex2", GL_FLOAT, 3, GL_FALSE, vertex2Ops },
-                              { "a_Color",  GL_UNSIGNED_BYTE, 4, GL_TRUE, colorOps },
-                              { "a_Color2", GL_UNSIGNED_BYTE, 4, GL_TRUE, color2Ops },
-                              { "attr_radius", GL_FLOAT, 1, GL_FALSE } };
+  AttribDataDesc attrDesc = {{"attr_vertex1", VertexFormat::Float3, vertex1Ops},
+      {"attr_vertex2", VertexFormat::Float3, vertex2Ops},
+      {"a_Color", VertexFormat::UByte4Norm, colorOps},
+      {"a_Color2", VertexFormat::UByte4Norm, color2Ops},
+      {"attr_radius", VertexFormat::Float}};
+
   AttribDesc *fdesc;
   static unsigned char cyl_flags[] = { 0, 4, 6, 2, 1, 5, 7, 3 }; // right(4)/up(2)/out(1)
 
-  attrDesc.push_back( { "attr_flags", GL_UNSIGNED_BYTE, 1, GL_FALSE } ) ;
+  attrDesc.push_back({"attr_flags", VertexFormat::UByte});
   fdesc = &attrDesc[attrDesc.size()-1];
   fdesc->repeat_value = cyl_flags;
   fdesc->repeat_value_length = 8;
@@ -9298,7 +9255,7 @@ CGO *CGOConvertLinesToCylinderShader(const CGO *I, CGO *addTo, bool add_color){
     AttribDataOp interpOps =
       { { CGO_SPLITLINE, 1, UB1_INTERP_TO_CAP, offsetof(cgo::draw::splitline, flags), 0 } };
     // need to add a_cap attribute
-    attrDesc.push_back({ "a_cap", GL_UNSIGNED_BYTE, 1, GL_FALSE, interpOps } );
+    attrDesc.push_back({"a_cap", VertexFormat::UByte, interpOps});
   }
 
   if (!add_color){
@@ -9310,8 +9267,9 @@ CGO *CGOConvertLinesToCylinderShader(const CGO *I, CGO *addTo, bool add_color){
                                      { CGO_SPLITLINE,  7, UINT_INT_TO_PICK_DATA, offsetof(cgo::draw::splitline, index), 0 } };
   AttribDataOp extraPickColor2Ops = { { CGO_PICK_COLOR, 2, UINT_INT_TO_PICK_DATA, 0, 0 },
                                       { CGO_SPLITLINE,  4, UINT_INT_TO_PICK_DATA, offsetof(cgo::draw::splitline, index), 0 } };
-  AttribDataDesc pickDesc = { { "a_Color",  GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColorOps },
-                              { "a_Color2", GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColor2Ops }};
+  AttribDataDesc pickDesc = {
+      {"a_Color", VertexFormat::UByte4Norm, extraPickColorOps},
+      {"a_Color2", VertexFormat::UByte4Norm, extraPickColor2Ops}};
   return CGOConvertToShader(I, attrDesc, pickDesc, GL_TRIANGLES, VertexBuffer::INTERLEAVED, true, box_indices_ptr, 36);
 }
 
@@ -9344,11 +9302,12 @@ CGO *CGOConvertCrossesToCylinderShader(const CGO *I, CGO *addTo, float cross_siz
       { CGO_ALPHA,      1, FLOAT1_TO_UB_4TH,      0 } };
 
   CrossSizeData crossData[] = { { cross_size_arg, false }, { cross_size_arg, true } };
-  AttribDataDesc attrDesc = { { "attr_vertex1", GL_FLOAT, 3, GL_FALSE, vertex1Ops },
-                              { "attr_vertex2", GL_FLOAT, 3, GL_FALSE, vertex2Ops },
-                              { "a_Color",  GL_UNSIGNED_BYTE, 4, GL_TRUE, colorOps },
-                              { "a_Color2", GL_UNSIGNED_BYTE, 4, GL_TRUE, color2Ops },
-                              { "attr_radius", GL_FLOAT, 1, GL_FALSE } };
+  AttribDataDesc attrDesc = {{"attr_vertex1", VertexFormat::Float3, vertex1Ops},
+      {"attr_vertex2", VertexFormat::Float3, vertex2Ops},
+      {"a_Color", VertexFormat::UByte4Norm, colorOps},
+      {"a_Color2", VertexFormat::UByte4Norm, color2Ops},
+      {"attr_radius", VertexFormat::Float}};
+
   attrDesc.reserve(10);
   attrDesc[1].attrOps[0].funcDataConversions.push_back( { CrossVertexConversion, &crossData[0], "attr_vertex1" } );
   attrDesc[1].attrOps[0].funcDataConversions.push_back( { CrossVertexConversion, &crossData[1], "attr_vertex2" } );
@@ -9356,7 +9315,7 @@ CGO *CGOConvertCrossesToCylinderShader(const CGO *I, CGO *addTo, float cross_siz
   AttribDesc *fdesc;
   static unsigned char cyl_flags[] = { 0, 4, 6, 2, 1, 5, 7, 3 }; // right(4)/up(2)/out(1)
 
-  attrDesc.push_back( { "attr_flags", GL_UNSIGNED_BYTE, 1, GL_FALSE } ) ;
+  attrDesc.push_back({"attr_flags", VertexFormat::UByte});
   fdesc = &attrDesc[attrDesc.size()-1];
   fdesc->repeat_value = cyl_flags;
   fdesc->repeat_value_length = 8;
@@ -9379,8 +9338,8 @@ CGO *CGOConvertCrossesToCylinderShader(const CGO *I, CGO *addTo, float cross_siz
 
   AttribDataOp extraPickColorOps = { { CGO_PICK_COLOR, 1, UINT_INT_TO_PICK_DATA, 0, 0 } };
   AttribDataOp extraPickColor2Ops = { { CGO_PICK_COLOR, 2, UINT_INT_TO_PICK_DATA, 0, 0 } };
-  AttribDataDesc pickDesc = { { "a_Color",  GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColorOps },
-                              { "a_Color2", GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColor2Ops }};
+  AttribDataDesc pickDesc = {{"a_Color", VertexFormat::UByte4Norm, extraPickColorOps},
+                             {"a_Color2", VertexFormat::UByte4Norm, extraPickColor2Ops}};
   return CGOConvertToShader(I, attrDesc, pickDesc, GL_TRIANGLES, VertexBuffer::INTERLEAVED, true, box_indices_ptr, 36, 3);
 }
 
@@ -9408,11 +9367,10 @@ CGO *CGOConvertCrossesToLinesShader(const CGO *I, CGO *addTo, float cross_size_a
   AttribDataOp extraPickColorOps =
     { { CGO_PICK_COLOR, 1, UINT_INT_TO_PICK_DATA, 0, 0 } };
 
-  AttribDataDesc pickDesc =
-    { { "a_Color", GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColorOps } };
-  AttribDataDesc attrDesc =
-    { { "a_Vertex", GL_FLOAT, 3, GL_FALSE, vertexOps },
-      { "a_Color", GL_UNSIGNED_BYTE, 4, GL_TRUE, colorOps } };
+  AttribDataDesc pickDesc = {
+      {"a_Color", VertexFormat::UByte4Norm, extraPickColorOps}};
+  AttribDataDesc attrDesc = {{"a_Vertex", VertexFormat::Float3, vertexOps},
+      {"a_Color", VertexFormat::UByte4Norm, colorOps}};
   unsigned char default_color[] = { 255, 255, 255, 255 }; // to write in alpha if CGO doesn't have it
   attrDesc[1].default_value = default_color;
 
@@ -9426,11 +9384,11 @@ CGO *CGOConvertCrossesToLinesShader(const CGO *I, CGO *addTo, float cross_size_a
     AttribDataOp interpOps =
       { { CGO_SPLITLINE, 1, UB1_TO_INTERP, offsetof(cgo::draw::splitline, flags), 0 } };
     // need to add a_interpolate attribute
-    attrDesc.push_back({ "a_interpolate", GL_UNSIGNED_BYTE, 1, GL_FALSE, interpOps } );
+    attrDesc.push_back({"a_interpolate", VertexFormat::UByte, interpOps});
   }
 #ifndef PURE_OPENGL_ES_2
   {
-    attrDesc.push_back({ "a_line_position", GL_UNSIGNED_BYTE, 1, GL_FALSE } );
+    attrDesc.push_back({"a_line_position", VertexFormat::UByte});
     AttribDesc *lpdesc = &attrDesc[attrDesc.size()-1];
     lpdesc->repeat_value_length = 2;
     static unsigned char flip_bits[] = { 0, 1 };
@@ -9464,15 +9422,14 @@ CGO *CGOConvertCrossesToTrilinesShader(const CGO *I, CGO *addTo, float cross_siz
     { { CGO_PICK_COLOR, 1, UINT_INT_TO_PICK_DATA, 0, 0 } };
   AttribDataOp extraPickColor2Ops =
     { { CGO_PICK_COLOR, 2, UINT_INT_TO_PICK_DATA, 0, 0 } };
-  AttribDataDesc pickDesc =
-    { { "a_Color", GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColorOps },
-      { "a_Color2", GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColor2Ops } };
-  AttribDataDesc attrDesc =
-    { { "a_Vertex", GL_FLOAT, 3, GL_FALSE, vertexOps },
-      { "a_OtherVertex", GL_FLOAT, 3, GL_FALSE, vertexOtherOps },
-      { "a_Color", GL_UNSIGNED_BYTE, 4, GL_TRUE, colorOps },
-      { "a_Color2", GL_UNSIGNED_BYTE, 4, GL_TRUE, color2Ops },
-      { "a_UV", GL_UNSIGNED_BYTE, 1, GL_FALSE } };
+  AttribDataDesc pickDesc = {
+      {"a_Color", VertexFormat::UByte4Norm, extraPickColorOps},
+      {"a_Color2", VertexFormat::UByte4Norm, extraPickColor2Ops}};
+  AttribDataDesc attrDesc = {{"a_Vertex", VertexFormat::Float3, vertexOps},
+      {"a_OtherVertex", VertexFormat::Float3, vertexOtherOps},
+      {"a_Color", VertexFormat::UByte4Norm, colorOps},
+      {"a_Color2", VertexFormat::UByte4Norm, color2Ops},
+      {"a_UV", VertexFormat::UByte}};
 
   CrossSizeData crossData[] = { { cross_size_arg, false }, { cross_size_arg, true } };
 
@@ -9566,18 +9523,20 @@ CGO *CGOConvertShaderCylindersToCylinderShader(const CGO *I, CGO *addTo){
       { CGO_CUSTOM_CYLINDER,                 3, FLOAT_TO_FLOAT,        offsetof(cgo::draw::custom_cylinder, radius), 0 },
       { CGO_CUSTOM_CYLINDER_ALPHA,           3, FLOAT_TO_FLOAT,        offsetof(cgo::draw::custom_cylinder_alpha, radius), 0 } };
 
-  AttribDataDesc attrDesc = { { "attr_vertex1", GL_FLOAT,         3, GL_FALSE, vertex1Ops },
-                              { "attr_vertex2", GL_FLOAT,         3, GL_FALSE, vertex2Ops },
-                              { "a_Color",  GL_UNSIGNED_BYTE, 4, GL_TRUE,  colorOps },
-                              { "a_Color2", GL_UNSIGNED_BYTE, 4, GL_TRUE,  color2Ops },
-                              { "attr_radius",  GL_FLOAT,         1, GL_FALSE, radiusOps } };
+  AttribDataDesc attrDesc =
+      {{"attr_vertex1", VertexFormat::Float3, vertex1Ops},
+      {"attr_vertex2", VertexFormat::Float3, vertex2Ops},
+      {"a_Color", VertexFormat::UByte4Norm, colorOps},
+      {"a_Color2", VertexFormat::UByte4Norm, color2Ops},
+      {"attr_radius", VertexFormat::Float, radiusOps}};
+
   AttribDesc *fdesc;
   static unsigned char cyl_flags[] = { 0, 4, 6, 2, 1, 5, 7, 3 }; // right(4)/up(2)/out(1)
 
   attrDesc[1].attrOps[0].funcDataConversions.push_back( { SetVertexFromOriginAxisForCylinder, NULL, "attr_vertex2" } );
   attrDesc[1].attrOps[1].funcDataConversions.push_back( { SetVertexFromOriginAxisForCylinder, NULL, "attr_vertex2" } );
 
-  attrDesc.push_back( { "attr_flags", GL_UNSIGNED_BYTE, 1, GL_FALSE } ) ;
+  attrDesc.push_back({"attr_flags", VertexFormat::UByte});
   fdesc = &attrDesc[attrDesc.size()-1];
   fdesc->repeat_value = cyl_flags;
   fdesc->repeat_value_length = 8;
@@ -9609,15 +9568,15 @@ CGO *CGOConvertShaderCylindersToCylinderShader(const CGO *I, CGO *addTo){
         { CGO_CUSTOM_CYLINDER,                2, CYL_CAPS_ARE_CUSTOM, offsetof(cgo::draw::custom_cylinder, cap1), 0 },
         { CGO_CUSTOM_CYLINDER_ALPHA,          2, CYL_CAPS_ARE_CUSTOM, offsetof(cgo::draw::custom_cylinder_alpha, cap1), 0 },
       };
-    attrDesc.push_back({ "a_cap", GL_UNSIGNED_BYTE, 1, GL_FALSE, interpOps } );
+    attrDesc.push_back({"a_cap", VertexFormat::UByte, interpOps});
   }
 
   AttribDataOp extraPickColorOps = { { CGO_PICK_COLOR, 1, UINT_INT_TO_PICK_DATA, 0, 0 },
                                      { CGO_SHADER_CYLINDER_WITH_2ND_COLOR,  8, UINT_INT_TO_PICK_DATA, offsetof(cgo::draw::shadercylinder2ndcolor, pick_color_index), 0 } };
   AttribDataOp extraPickColor2Ops = { { CGO_PICK_COLOR, 2, UINT_INT_TO_PICK_DATA, 0, 0 },
                                       { CGO_SHADER_CYLINDER_WITH_2ND_COLOR,  5, UINT_INT_TO_PICK_DATA, offsetof(cgo::draw::shadercylinder2ndcolor, pick_color_index), 0 } };
-  AttribDataDesc pickDesc = { { "a_Color",  GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColorOps },
-                              { "a_Color2", GL_UNSIGNED_BYTE, 4, GL_TRUE, extraPickColor2Ops }};
+  AttribDataDesc pickDesc = {{"a_Color", VertexFormat::UByte4Norm, extraPickColorOps},
+                             {"a_Color2", VertexFormat::UByte4Norm, extraPickColor2Ops}};
   return CGOConvertToShader(I, attrDesc, pickDesc, GL_TRIANGLES, VertexBuffer::INTERLEAVED, true, box_indices_ptr, 36);
 }
 

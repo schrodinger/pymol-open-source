@@ -1,5 +1,199 @@
 #include <iostream>
 #include "GenericBuffer.h"
+
+VertexFormatBaseType GetVertexFormatBaseType(VertexFormat format)
+{
+  switch (format) {
+  case VertexFormat::Float:
+  case VertexFormat::Float2:
+  case VertexFormat::Float3:
+  case VertexFormat::Float4:
+    return VertexFormatBaseType::Float;
+  case VertexFormat::Byte:
+  case VertexFormat::Byte2:
+  case VertexFormat::Byte3:
+  case VertexFormat::Byte4:
+    return VertexFormatBaseType::Byte;
+  case VertexFormat::UByte:
+  case VertexFormat::UByte2:
+  case VertexFormat::UByte3:
+  case VertexFormat::UByte4:
+    return VertexFormatBaseType::UByte;
+  case VertexFormat::Int:
+  case VertexFormat::Int2:
+  case VertexFormat::Int3:
+  case VertexFormat::Int4:
+    return VertexFormatBaseType::Int;
+  case VertexFormat::UInt:
+  case VertexFormat::UInt2:
+  case VertexFormat::UInt3:
+  case VertexFormat::UInt4:
+    return VertexFormatBaseType::UInt;
+  default:
+    return VertexFormatBaseType::Float; // std::unreachable();
+  }
+}
+
+GLenum VertexFormatToGLType(VertexFormat format)
+{
+  switch (format)
+  {
+  case VertexFormat::Byte:
+  case VertexFormat::Byte2:
+  case VertexFormat::Byte3:
+  case VertexFormat::Byte4:
+  case VertexFormat::ByteNorm:
+  case VertexFormat::Byte2Norm:
+  case VertexFormat::Byte3Norm:
+  case VertexFormat::Byte4Norm:
+    return GL_BYTE;
+  case VertexFormat::UByte:
+  case VertexFormat::UByte2:
+  case VertexFormat::UByte3:
+  case VertexFormat::UByte4:
+  case VertexFormat::UByteNorm:
+  case VertexFormat::UByte2Norm:
+  case VertexFormat::UByte3Norm:
+  case VertexFormat::UByte4Norm:
+    return GL_UNSIGNED_BYTE;
+  case VertexFormat::Float:
+  case VertexFormat::Float2:
+  case VertexFormat::Float3:
+  case VertexFormat::Float4:
+    return GL_FLOAT;
+  case VertexFormat::Int:
+  case VertexFormat::Int2:
+  case VertexFormat::Int3:
+  case VertexFormat::Int4:
+    return GL_INT;
+  case VertexFormat::UInt:
+  case VertexFormat::UInt2:
+  case VertexFormat::UInt3:
+  case VertexFormat::UInt4:
+    return GL_UNSIGNED_INT;
+  default:
+    return GL_INVALID_ENUM; // std::unreachable()
+  }
+}
+
+GLint VertexFormatToGLSize(VertexFormat format)
+{
+  switch (format)
+  {
+  case VertexFormat::Byte:
+  case VertexFormat::UByte:
+  case VertexFormat::ByteNorm:
+  case VertexFormat::UByteNorm:
+  case VertexFormat::Float:
+  case VertexFormat::Int:
+  case VertexFormat::UInt:
+    return 1;
+  case VertexFormat::Byte2:
+  case VertexFormat::UByte2:
+  case VertexFormat::Byte2Norm:
+  case VertexFormat::UByte2Norm:
+  case VertexFormat::Float2:
+  case VertexFormat::Int2:
+  case VertexFormat::UInt2:
+    return 2;
+  case VertexFormat::Byte3:
+  case VertexFormat::UByte3:
+  case VertexFormat::Byte3Norm:
+  case VertexFormat::UByte3Norm:
+  case VertexFormat::Float3:
+  case VertexFormat::Int3:
+  case VertexFormat::UInt3:
+    return 3;
+  case VertexFormat::Byte4:
+  case VertexFormat::UByte4:
+  case VertexFormat::Byte4Norm:
+  case VertexFormat::UByte4Norm:
+  case VertexFormat::Float4:
+  case VertexFormat::Int4:
+  case VertexFormat::UInt4:
+    return 4;
+  default:
+    return 0; // std::unreachable()
+  }
+}
+
+bool VertexFormatIsNormalized(VertexFormat format)
+{
+  switch (format)
+  {
+  case VertexFormat::ByteNorm:
+  case VertexFormat::Byte2Norm:
+  case VertexFormat::Byte3Norm:
+  case VertexFormat::Byte4Norm:
+  case VertexFormat::UByteNorm:
+  case VertexFormat::UByte2Norm:
+  case VertexFormat::UByte3Norm:
+  case VertexFormat::UByte4Norm:
+    return true;
+  default:
+    return false;
+  }
+}
+
+GLboolean VertexFormatToGLNormalized(VertexFormat format)
+{
+  auto normalized = VertexFormatIsNormalized(format);
+  return normalized ? GL_TRUE : GL_FALSE;
+}
+
+std::size_t GetSizeOfVertexFormat(VertexFormat format)
+{
+  switch (format)
+  {
+  case VertexFormat::Byte:
+  case VertexFormat::UByte:
+  case VertexFormat::ByteNorm:
+  case VertexFormat::UByteNorm:
+    return 1;
+  case VertexFormat::Byte2:
+  case VertexFormat::UByte2:
+  case VertexFormat::Byte2Norm:
+  case VertexFormat::UByte2Norm:
+    return 2;
+  case VertexFormat::Byte3:
+  case VertexFormat::UByte3:
+  case VertexFormat::Byte3Norm:
+  case VertexFormat::UByte3Norm:
+    return 3;
+  case VertexFormat::Byte4:
+  case VertexFormat::UByte4:
+  case VertexFormat::Byte4Norm:
+  case VertexFormat::UByte4Norm:
+    return 4;
+  case VertexFormat::Float:
+    return 4;
+  case VertexFormat::Float2:
+    return 8;
+  case VertexFormat::Float3:
+    return 12;
+  case VertexFormat::Float4:
+    return 16;
+  case VertexFormat::Int:
+    return 4;
+  case VertexFormat::Int2:
+    return 8;
+  case VertexFormat::Int3:
+    return 12;
+  case VertexFormat::Int4:
+    return 16;
+  case VertexFormat::UInt:
+    return 4;
+  case VertexFormat::UInt2:
+    return 8;
+  case VertexFormat::UInt3:
+    return 12;
+  case VertexFormat::UInt4:
+    return 16;
+  default:
+    return 0; // std::unreachable()
+  }
+}
+
 /***********************************************************************
  * RENDERBUFFER
  ***********************************************************************/

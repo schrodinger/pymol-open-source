@@ -10,41 +10,105 @@
 #include <cstdlib>
 #include <string.h>
 #include <glm/vec2.hpp>
+
+enum class VertexFormat {
+  // 8 bit
+  Byte,
+  Byte2,
+  Byte3,
+  Byte4,
+  ByteNorm,
+  Byte2Norm,
+  Byte3Norm,
+  Byte4Norm,
+  UByte,
+  UByte2,
+  UByte3,
+  UByte4,
+  UByteNorm,
+  UByte2Norm,
+  UByte3Norm,
+  UByte4Norm,
+
+  //Single Precision
+  Float,
+  Float2,
+  Float3,
+  Float4,
+
+  // 32 bit
+  Int,
+  Int2,
+  Int3,
+  Int4,
+  UInt,
+  UInt2,
+  UInt3,
+  UInt4,
+};
+
+enum class VertexFormatBaseType { Byte, UByte, Float, Int, UInt };
+
+/**
+ * @param format Vertex format
+ * @return The base type of the vertex format
+*/
+VertexFormatBaseType GetVertexFormatBaseType(VertexFormat format);
+
+/**
+ * @param format Vertex format
+ * @return The GL type of the vertex format
+*/
+GLenum VertexFormatToGLType(VertexFormat format);
+
+/**
+ * @param format Vertex format
+ * @return The number of components in the vertex format
+*/
+GLint VertexFormatToGLSize(VertexFormat format);
+
+/**
+ * @param format Vertex format
+ * @return Whether the vertex format is a normalized type
+*/
+bool VertexFormatIsNormalized(VertexFormat format);
+
+/**
+ * @param format Vertex format
+ * @return Whether the vertex format is a normalized type as a GLboolean
+*/
+GLboolean VertexFormatToGLNormalized(VertexFormat format);
+
+/**
+ * @param format Vertex format
+ * @return The size of the vertex format in bytes
+*/
+std::size_t GetSizeOfVertexFormat(VertexFormat format);
+
+
 // -----------------------------------------------------------------------------
 // DESCRIPTORS
 // -----------------------------------------------------------------------------
 // Describes a single array held in the vbo
 struct BufferDesc {
-  BufferDesc(const char * _attr_name, GLenum _type_size, size_t _type_dim,
-             size_t _data_size, const void * _data_ptr, bool _data_norm)
-    : attr_name(_attr_name), type_size(_type_size), type_dim(_type_dim),
-      data_size(_data_size), data_ptr(_data_ptr), data_norm(_data_norm)
-      {}
+  BufferDesc(const char* _attr_name, VertexFormat _format,
+      std::size_t _data_size = 0, const void* _data_ptr = nullptr,
+      std::uint32_t offset = 0)
+      : attr_name(_attr_name)
+      , m_format(_format)
+      , data_size(_data_size)
+      , data_ptr(_data_ptr)
+      , offset(offset)
+  {
+  }
 
-  // Constructor for just layout
-  BufferDesc(const char * _attr_name, GLenum _type_size, size_t _type_dim,
-             size_t _offset, bool _data_norm)
-    : attr_name(_attr_name), type_size(_type_size), type_dim(_type_dim),
-      data_norm(_data_norm), offset(_offset) {}
-
-  // Constructor used for index buffers
-  BufferDesc(GLenum _type_size, size_t _data_size, const void * _data_ptr, size_t _offset = 0)
-    : type_size(_type_size), data_size(_data_size), data_ptr(_data_ptr),
-      offset(_offset) {}
-
-  // Constructor used for data replication
-  BufferDesc(const char * _attr_name, GLuint _gl_id) :
-    attr_name(_attr_name), gl_id(_gl_id) {}
-
-  const char * attr_name { nullptr };
-  GLenum type_size { GL_FLOAT };
-  size_t type_dim  { 0 };
-  size_t data_size { 0 };
-  const void * data_ptr  { nullptr };
-  bool   data_norm { false };
-  GLuint gl_id     { 0 };
-  size_t offset    { 0 };
+  const char* attr_name{nullptr};
+  VertexFormat m_format{VertexFormat::Float};
+  std::size_t data_size{};
+  const void* data_ptr{nullptr};
+  std::uint32_t offset{};
 };
+
 using BufferDataDesc = std::vector< BufferDesc >;
 
 /* different types of AttribOp */
@@ -152,23 +216,20 @@ using AttribDataOp = std::vector< AttribOp >;
  *
  */
 struct AttribDesc {
-  AttribDesc(const char * _attr_name, GLenum _type_size, size_t _type_dim, bool _data_norm, AttribDataOp _attrOps={})
-    : attr_name(_attr_name)
-    , attrOps(_attrOps)
-    , default_value(NULL)
-    , type_size(_type_size)
-    , type_dim(_type_dim)
-    , data_norm(_data_norm)
-    {}
+  AttribDesc(
+      const char* _attr_name, VertexFormat _format, AttribDataOp _attrOps = {})
+      : attr_name(_attr_name)
+      , m_format(_format)
+      , attrOps(_attrOps)
+  {
+  }
   const char * attr_name { nullptr };
+  VertexFormat m_format { VertexFormat::Float };
   int order { 0 };
   AttribDataOp attrOps { };
   unsigned char *default_value { nullptr };
   unsigned char *repeat_value { nullptr };
   int repeat_value_length { 0 };
-  GLenum type_size { GL_FLOAT };
-  size_t type_dim  { 0 };
-  bool   data_norm { false };
 };
 using AttribDataDesc = std::vector< AttribDesc >;
 
@@ -219,9 +280,11 @@ public:
     m_buffer_usage(usage), m_layout(layout) {}
 
   ~GenericBuffer() {
-    for (auto &d : m_desc) {
-      if (d.gl_id) {
-	glDeleteBuffers(1, &d.gl_id);
+    for (auto i = 0; i < m_desc.size(); ++i) {
+      const auto& d = m_desc[i];
+      auto& glID = desc_glIDs[i];
+      if (glID) {
+        glDeleteBuffers(1, &glID);
       }
     }
     if (m_interleavedID) {
@@ -240,12 +303,14 @@ public:
    ***********************************************************************/
   bool bufferData(BufferDataDesc && desc) {
     m_desc = std::move(desc);
+    desc_glIDs = std::vector<GLuint>(m_desc.size());
     return evaluate();
   }
 
   bool bufferData(BufferDataDesc && desc, const void * data, size_t len, size_t stride) {
     bool ok = true;
     m_desc = std::move(desc);
+    desc_glIDs = std::vector<GLuint>(m_desc.size());
     m_interleaved = true;
     m_stride = stride;
     ok = genBuffer(m_interleavedID, len, data);
@@ -255,24 +320,11 @@ public:
   // -----------------------------------------------------------------------------
   // bufferSubData :
   // This function assumes that the data layout hasn't change
-  bool bufferSubData(const void * data, size_t index = 0) {
-    auto &d = m_desc[index];
-    if (m_interleavedID) {
-      glBindBuffer(TYPE, m_interleavedID);
-    } else {
-      glBindBuffer(TYPE, d.gl_id);
-    }
-    glBufferSubData(TYPE, 0, d.data_size, data);
-    return glCheckOkay();
-  }
-
   void bufferSubData(size_t offset, size_t size, void * data, size_t index = 0) {
-    // maybe assert that the index is within range
-    if (m_interleavedID) {
-      glBindBuffer(TYPE, m_interleavedID);
-    } else {
-      glBindBuffer(TYPE, m_desc[index].gl_id);
-    }
+    assert("Invalid Desc index" && index < m_desc.size());
+    assert("Invalid GLDesc index" && index < desc_glIDs.size());
+    auto glID = m_interleaved ? m_interleavedID : desc_glIDs[index];
+    glBindBuffer(TYPE, glID);
     glBufferSubData(TYPE, offset, size, data);
   }
 
@@ -307,14 +359,17 @@ protected:
 
   // USAGE PATTERNS
   bool sepBufferData() {
-    for ( auto &d : m_desc ) {
+    for (auto i = 0; i < m_desc.size(); ++i) {
       // If the specified size is 0 but we have a valid pointer
       // then we are going to glVertexAttribXfv X in {1,2,3,4}
+      const auto& d = m_desc[i];
+      auto& glID = desc_glIDs[i];
       if (d.data_ptr && (m_buffer_usage == GL_STATIC_DRAW)) {
-	if (d.data_size) {
-	  if (!genBuffer(d.gl_id, d.data_size, d.data_ptr))
-	    return false;
-	}
+        if (d.data_size) {
+          if (!genBuffer(glID, d.data_size, d.data_ptr)) {
+            return false;
+          }
+        }
       }
     }
     return true;
@@ -329,8 +384,8 @@ protected:
       buffer_size += d.data_size;
     }
 
-    uint8_t * buffer_data = new uint8_t[buffer_size];
-    uint8_t * data_ptr = buffer_data;
+    std::vector<std::uint8_t> buffer_data(buffer_size);
+    auto data_ptr = buffer_data.data();
     size_t offset = 0;
 
     for ( auto & d : m_desc ) {
@@ -343,10 +398,7 @@ protected:
       offset += d.data_size;
     }
 
-    bool ok = true;
-    ok = genBuffer(m_interleavedID, buffer_size, buffer_data);
-    delete[] buffer_data;
-    return ok;
+    return genBuffer(m_interleavedID, buffer_size, buffer_data.data());
   }
 
   bool interleaveBufferData() {
@@ -356,19 +408,17 @@ protected:
     std::vector<uint8_t *> data_table(buffer_count);
     std::vector<uint8_t *> ptr_table(buffer_count);
     std::vector<size_t> size_table(buffer_count);
-    size_t count = m_desc[0].data_size / (gl_sizeof(m_desc[0].type_size) * m_desc[0].type_dim);
+    size_t count = m_desc[0].data_size / GetSizeOfVertexFormat(m_desc[0].m_format);
 
     // Maybe assert that all pointers in d_desc are valid?
     for ( size_t i = 0; i < buffer_count; ++i ) {
       auto &d = m_desc[i];
-      size_t size = gl_sizeof(d.type_size);
-
       // offset is the current stride
       d.offset = stride;
 
       // These must come after so that offset starts at 0
       // Size of 3 normals or whatever the current type is
-      size_table[i] = size * d.type_dim;
+      size_table[i] = GetSizeOfVertexFormat(d.m_format);
 
       // Increase our current estimate of the stride by this amount
       stride += size_table[i];
@@ -430,14 +480,18 @@ protected:
   const buffer_layout m_layout { SEPARATE };
   size_t m_stride              { 0 };
   BufferDataDesc     m_desc;
+  std::vector<GLuint> desc_glIDs; // m_desc's gl buffer IDs
 };
 
 /**
  * Vertex buffer specialization
  */
 class VertexBuffer : public GenericBuffer<GL_ARRAY_BUFFER> {
-  void bind_attrib(GLuint prg, const BufferDesc & d) {
+  void bind_attrib(GLuint prg, const BufferDesc& d, GLuint glID) {
     GLint loc = glGetAttribLocation(prg, d.attr_name);
+    auto type_dim = VertexFormatToGLSize(d.m_format);
+    auto type = VertexFormatToGLType(d.m_format);
+    auto data_norm = VertexFormatToGLNormalized(d.m_format);
     bool masked = false;
     for (GLint lid : m_attribmask)
       if (lid == loc)
@@ -445,10 +499,11 @@ class VertexBuffer : public GenericBuffer<GL_ARRAY_BUFFER> {
     if ( loc >= 0 )
       m_locs.push_back(loc);
     if ( loc >= 0 && !masked ) {
-      if (!m_interleaved && d.gl_id)
-        glBindBuffer( TYPE, d.gl_id );
+      if (!m_interleaved && glID)
+        glBindBuffer( TYPE, glID);
       glEnableVertexAttribArray( loc );
-      glVertexAttribPointer( loc, d.type_dim, d.type_size, d.data_norm, m_stride, (const void *)d.offset );
+      glVertexAttribPointer(loc, type_dim, type, data_norm, m_stride,
+          reinterpret_cast<const void*>(d.offset));
     }
   };
 
@@ -464,12 +519,14 @@ public:
   void bind(GLuint prg, int index = -1) {
     if (index >= 0) {
       glBindBuffer( TYPE, m_interleavedID );
-      bind_attrib(prg, m_desc[index]);
+      bind_attrib(prg, m_desc[index], desc_glIDs[index]);
     } else {
       if (m_interleaved && m_interleavedID)
         glBindBuffer( TYPE, m_interleavedID );
-      for (auto & d : m_desc) {
-        bind_attrib(prg, d);
+      for (auto i = 0; i < m_desc.size(); ++i) {
+        const auto& d = m_desc[i];
+        auto glID = desc_glIDs[i];
+        bind_attrib(prg, d, glID);
       }
       m_attribmask.clear();
     }
@@ -489,16 +546,6 @@ public:
 
   void maskAttribute(GLint attrib_loc) {
     m_attribmask.push_back(attrib_loc);
-  }
-
-  void replicate_data(const char * attrib_name, int index) {
-    auto & d = m_desc[index];
-    BufferDesc newdesc(attrib_name, d.gl_id);
-    newdesc.offset    = d.offset;
-    newdesc.data_norm = d.data_norm;
-    newdesc.type_size = d.type_size;
-    newdesc.type_dim  = d.type_dim;
-    m_desc.push_back(newdesc);
   }
 
 private:
