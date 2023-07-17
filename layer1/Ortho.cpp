@@ -1657,8 +1657,7 @@ void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode)
       OrthoPushMatrix(G);
 
       if (G->ShaderMgr->ShadersPresent()){
-	if(SettingGetGlobal_b(G, cSetting_internal_gui) && 
-	   SettingGetGlobal_b(G, cSetting_use_shaders)){
+        if (SettingGet<bool>(G, cSetting_use_shaders)) {
 	  CGO *orthoFastCGO = CGONew(G);
           CGOFree(I->orthoFastCGO);
 	  if (G->Ortho->fastDraw(orthoFastCGO)){
