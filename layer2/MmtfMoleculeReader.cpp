@@ -14,7 +14,9 @@
 #include <mmtf_parser.h>
 
 #include <algorithm>
+#include <vector>
 
+#include "pymol/zstring_view.h"
 #include "AssemblyHelpers.h"
 #include "AtomInfo.h"
 #include "Err.h"
@@ -177,6 +179,16 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
     I->Symmetry->setSpaceGroup(container->spaceGroup);
   }
 
+  // entities
+  auto chain2entity = std::vector<MMTF_Entity const*>(container->numChains);
+  for (int entityIndex = 0; entityIndex < container->entityListCount; ++entityIndex) {
+    auto const entity = &container->entityList[entityIndex];
+
+    for (int i = 0; i < entity->chainIndexListCount; ++i) {
+      chain2entity[entity->chainIndexList[i]] = entity;
+    }
+  }
+
   // models (states)
   for (int modelIndex = 0; modelIndex < container->numModels; ++modelIndex) {
     int modelChainCount = container->chainsPerModel[modelIndex];
@@ -189,6 +201,8 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
 
     // chains
     for (int j = 0; j < modelChainCount; ++j, ++chainIndex) {
+      auto const entity = chain2entity[chainIndex];
+
       if (container->chainNameList)
         LexAssign(G, tai.chain, container->chainNameList[chainIndex]);
       if (use_auth)
@@ -208,7 +222,11 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
         }
 
         LexAssign(G, tai.resn, group->groupName);
-        tai.hetatm = group->singleLetterCode == '?';
+        if (entity) {
+          tai.hetatm = pymol::null_safe_zstring_view(entity->type) != "polymer";
+        } else {
+          tai.hetatm = group->singleLetterCode == '?';
+        }
         tai.flags = tai.hetatm ? cAtomFlag_ignore : 0;
 
         if (use_auth) {
