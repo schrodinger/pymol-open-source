@@ -222,7 +222,7 @@ void CharacterRenderOpenGLDone(PyMOLGlobals * G, const RenderInfo * info)
   }
 }
 
-short CharacterRenderOpenGL(PyMOLGlobals * G, const RenderInfo * info, int id, short isworldlabel, short relativeMode SHADERCGOARG)
+short CharacterRenderOpenGL(PyMOLGlobals * G, const RenderInfo * info, int id, short isworldlabel, short relativeMode, CGO* shaderCGO)
 
 /* need orientation matrix */
 {

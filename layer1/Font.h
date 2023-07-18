@@ -34,10 +34,6 @@ Z* -------------------------------------------------------------------
 
 #include "os_gl.h"
 
-#define SHADERCGOARG , CGO *shaderCGO
-#define SHADERCGOARGVAR ,shaderCGO
-#define SHADERCGOARGV shaderCGO
-
 struct CFont {
   PyMOLGlobals* G = nullptr;
   int TextID = 0;

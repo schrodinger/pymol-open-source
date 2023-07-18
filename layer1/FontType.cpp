@@ -279,7 +279,7 @@ static const char* FontTypeRenderOpenGLImpl(const RenderInfo* info, CFontType* I
                 TextAdvance(G, TypeFaceGetKerning(I->TypeFace,
                                                   last_c, c, size) / sampling);
               }
-              cont &= CharacterRenderOpenGL(G, info, id, true, relativeMode SHADERCGOARGVAR);       /* handles advance */
+              cont &= CharacterRenderOpenGL(G, info, id, true, relativeMode, shaderCGO);       /* handles advance */
             }
           }
           kern_flag = true;

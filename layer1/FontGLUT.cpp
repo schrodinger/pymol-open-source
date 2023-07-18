@@ -118,7 +118,7 @@ const char* CFontGLUT::RenderOpenGL(const RenderInfo* info, const char* st,
     FontGLUTBitmapFontRec const *font_info = glutFont;
     int first, last;
     FontGLUTBitmapCharRec const *ch;
-    int textured = true && SHADERCGOARGV;
+    int textured = true && shaderCGO;
     int pushed = OrthoGetPushed(G);
     int sampling = 1;
     const float _0 = 0.0F, _1 = 1.0F, _m1 = -1.0F;
@@ -284,7 +284,7 @@ const char* CFontGLUT::RenderOpenGL(const RenderInfo* info, const char* st,
                                               (float) ch->advance, &fprnt, sampling);
                 }
                 if(id) {
-                  CharacterRenderOpenGL(G, info, id, false, relativeMode SHADERCGOARGVAR);   /* handles advance */
+                  CharacterRenderOpenGL(G, info, id, false, relativeMode, shaderCGO);   /* handles advance */
                 }
               }
             }
