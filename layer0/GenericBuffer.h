@@ -281,7 +281,6 @@ public:
 
   ~GenericBuffer() {
     for (auto i = 0; i < m_desc.size(); ++i) {
-      const auto& d = m_desc[i];
       auto& glID = desc_glIDs[i];
       if (glID) {
         glDeleteBuffers(1, &glID);
