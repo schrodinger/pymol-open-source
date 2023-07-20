@@ -533,7 +533,7 @@ class TestImporting(testing.PyMOLTestCase):
     def testLoadPLY(self):
         cmd.load(self.datafile("test_PHE_pentamer.ply.gz"))
         e = cmd.get_extent('test_PHE_pentamer')
-        self.assertArrayEqual(e, [[-314.1,-303.6,-280.9], [1592.0,1042.5, 868.0]], delta=1e-3)
+        self.assertArrayEqual(e, [[-3.141,-3.036,-2.809], [15.920, 10.425, 8.680]], delta=1e-3)
 
     @testing.requires_version('1.8.4')
     def testLoadMMTF(self):
