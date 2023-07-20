@@ -3,6 +3,8 @@ Volume color ramp utilities
 '''
 
 import sys
+from pymol.constants import CURRENT_STATE
+
 cmd = sys.modules["pymol.cmd"]
 
 _volume_windows = {}
@@ -82,17 +84,23 @@ SEE ALSO
     namedramps[name] = ramp
 
 
-def get_volume_color(name, quiet=1, _self=cmd):
+def get_volume_color(name, state=CURRENT_STATE, quiet=1, _self=cmd):
     '''
 DESCRIPTION
 
     Get the volume color ramp of a volume object.
+
+ARGUMENTS
+
+    name = str: volume object name
+
+    state = int: state of volume
     '''
     quiet = int(quiet)
 
     r = _self.DEFAULT_ERROR
     with _self.lockcm:
-        r = _self._cmd.get_volume_ramp(_self._COb, name)
+        r = _self._cmd.get_volume_ramp(_self._COb, name, int(state)-1)
 
     if isinstance(r, list):
         if not quiet:
@@ -112,7 +120,7 @@ DESCRIPTION
 
     return r
 
-def volume_color(name, ramp='', quiet=1, _guiupdate=True, _self=cmd):
+def volume_color(name, ramp='', state=CURRENT_STATE, quiet=1, _guiupdate=True, _self=cmd):
     '''
 DESCRIPTION
 
@@ -126,6 +134,8 @@ ARGUMENTS
     with (x, color, alpha, ...) or (x, r, g, b, alpha, ...) values. If empty, get
     the current volume colors.
 
+    state = int: state of volume to color
+
 EXAMPLE
 
     fetch 1a00, map, type=2fofc
@@ -135,7 +145,7 @@ EXAMPLE
     quiet = int(quiet)
 
     if not ramp:
-        return get_volume_color(name, quiet, _self)
+        return get_volume_color(name, state, quiet, _self)
 
     if isinstance(ramp, str) and ramp in namedramps:
         ramp = namedramps[ramp]
@@ -143,7 +153,7 @@ EXAMPLE
     ramplist = ramp_expand(ramp)
 
     with _self.lockcm:
-        r = cmd._cmd.set_volume_ramp(_self._COb, name, ramplist)
+        r = cmd._cmd.set_volume_ramp(_self._COb, name, ramplist, int(state)-1)
 
     if _guiupdate and name in _volume_windows:
         from pymol import gui

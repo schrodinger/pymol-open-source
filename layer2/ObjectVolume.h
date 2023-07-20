@@ -64,6 +64,9 @@ struct ObjectVolume : public pymol::CObject {
   void invalidate(cRep_t rep, cRepInv_t level, int state) override;
   int getNFrame() const override;
   pymol::CObject* clone() const override;
+
+protected:
+  CObjectState* _getObjectState(int state) override;
 };
 
 ObjectVolume *ObjectVolumeFromBox(PyMOLGlobals * G, ObjectVolume * obj, ObjectMap * map,
@@ -84,8 +87,8 @@ int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume **
 int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name, const char * new_name);
 
 CField   * ObjectVolumeGetField(ObjectVolume* I);
-PyObject * ObjectVolumeGetRamp(ObjectVolume* I);
-pymol::Result<>  ObjectVolumeSetRamp(ObjectVolume* I, std::vector<float>&& ramp_list);
+PyObject* ObjectVolumeGetRamp(ObjectVolume* I, int state);
+pymol::Result<>  ObjectVolumeSetRamp(ObjectVolume* I, std::vector<float>&& ramp_list, int state);
 
 ObjectMapState * ObjectVolumeGetMapState(ObjectVolume * I);
 

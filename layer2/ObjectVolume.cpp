@@ -64,6 +64,11 @@ static ObjectVolumeState* ObjectVolumeGetActiveState(ObjectVolume* I)
   return nullptr;
 }
 
+CObjectState* ObjectVolume::_getObjectState(int state)
+{
+  return &State[state];
+}
+
 static ObjectMapState * ObjectVolumeStateGetMapState(ObjectVolumeState * vs) {
   ObjectMap *map = NULL;
 
@@ -1262,30 +1267,34 @@ void ObjectVolumeRecomputeExtent(ObjectVolume * I)
 
 
 /*==============================================================================*/
-PyObject * ObjectVolumeGetRamp(ObjectVolume * I)
+PyObject* ObjectVolumeGetRamp(ObjectVolume* I, int state)
 {
   /* TODO: Allow for multi-state maps? */
-  PyObject * result = NULL;
-  ObjectVolumeState *ovs;
-
-  if(I && (ovs = ObjectVolumeGetActiveState(I))) {
+  if (!I) {
+    return (PConvAutoNone(nullptr));
+  }
+  if (auto ovs = static_cast<ObjectVolumeState*>(I->getObjectState(state))) {
     if(!ovs->isUpdated)
       I->update();
 
-    result = PConvFloatArrayToPyList(ovs->Ramp.data(), ovs->Ramp.size());
+    return PConvFloatArrayToPyList(ovs->Ramp.data(), ovs->Ramp.size());
   }
-  
-  return (PConvAutoNone(result));
+  return (PConvAutoNone(nullptr));
 }
 
 /*==============================================================================*/
-pymol::Result<> ObjectVolumeSetRamp(ObjectVolume * I, std::vector<float>&& ramp_list)
+pymol::Result<> ObjectVolumeSetRamp(ObjectVolume* I, std::vector<float>&& ramp_list, int state)
 {
   /* TODO: Allow for multi-state maps? */
-  ObjectVolumeState *ovs = ObjectVolumeGetActiveState(I);
-
-  if(!ovs || ramp_list.empty()) {
-    return pymol::make_error("ObjectVolumeSetRamp failed.");
+  if (!I) {
+    return pymol::make_error("Invalid volume.");
+  }
+  if (ramp_list.empty()) {
+    return pymol::make_error("Empty ramp.");
+  }
+  auto ovs = static_cast<ObjectVolumeState*>(I->getObjectState(state));
+  if (!ovs) {
+    return pymol::make_error("Invalid volume state.");
   }
 
   ovs->Ramp = std::move(ramp_list);

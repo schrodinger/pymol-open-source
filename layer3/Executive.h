@@ -649,8 +649,8 @@ const char *ExecutiveFindBestNameMatch(PyMOLGlobals * G, const char *name);
 int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict);
 PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G);
 CField   *ExecutiveGetVolumeField(PyMOLGlobals * G, const char * objName, int state);
-pymol::Result<> ExecutiveSetVolumeRamp(PyMOLGlobals * G, const char * objName, std::vector<float> ramp_list);
-PyObject *ExecutiveGetVolumeRamp(PyMOLGlobals * G, const char * objName);
+pymol::Result<> ExecutiveSetVolumeRamp(PyMOLGlobals* G, const char* objName, std::vector<float> ramp_list, int state);
+PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals* G, const char* objName, int state);
 
 pymol::Result<std::vector<float>>
 ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points,

@@ -4580,18 +4580,16 @@ ExecutiveGetHistogram(PyMOLGlobals * G, const char * objName, int n_points, floa
   return pymol::make_error("failed to get map state");
 }
 
-PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, const char * objName) {
+PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals* G, const char* objName, int state) {
 #ifdef _PYMOL_NOPY
-  return NULL;
+  return nullptr;
 #else
-  pymol::CObject *obj;
-  PyObject* result = NULL;
+  PyObject* result = nullptr;
 
   PRINTFD(G, FB_Executive) "Executive-GetVolumeRamp Entered.\n" ENDFD;
 
-  obj = ExecutiveFindObjectByName(G, objName);
-  if(obj && obj->type==cObjectVolume) {
-    result = ObjectVolumeGetRamp((ObjectVolume *) obj);
+  if (auto obj = ExecutiveFindObject<ObjectVolume>(G, objName)) {
+    result = ObjectVolumeGetRamp(obj, state);
   }
 
   PRINTFD(G, FB_Executive) "Executive-GetVolumeRamp Exited.\n" ENDFD;
@@ -4601,11 +4599,11 @@ PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, const char * objName) {
 #endif
 }
 
-pymol::Result<> ExecutiveSetVolumeRamp(PyMOLGlobals * G, const char * objName, std::vector<float> ramp_list) {
-
+pymol::Result<> ExecutiveSetVolumeRamp(PyMOLGlobals* G, const char* objName, std::vector<float> ramp_list, int state)
+{
   auto obj = ExecutiveFindObject<ObjectVolume>(G, objName);
-  if(obj) {
-    return ObjectVolumeSetRamp(obj, std::move(ramp_list));
+  if (obj) {
+    return ObjectVolumeSetRamp(obj, std::move(ramp_list), state);
   }
 
   return pymol::make_error("Object ", objName, " not found");

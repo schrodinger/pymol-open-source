@@ -593,6 +593,8 @@ ARGUMENTS
     selection = an atom selection about which to display the mesh with
         an additional "buffer" (if provided).
 
+    state = specifies which state to create.
+
     carve = a radius about each atom in the selection for which to
         include density. If "carve" is not provided, then the whole
         brick is displayed.
@@ -635,7 +637,7 @@ SEE ALSO
                             int(source_state)-1,int(quiet))
 
         if ramp:
-            _self.volume_color(name, ramp)
+            _self.volume_color(name, ramp, state)
 
         return r
 

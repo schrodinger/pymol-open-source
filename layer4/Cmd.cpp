@@ -818,7 +818,8 @@ static PyObject * CmdGetVolumeRamp(PyObject * self, PyObject * args)
   PyObject *result = NULL;
   int ok = false;
   char* objName;
-  ok = PyArg_ParseTuple(args, "Os", &self, &objName);
+  int state;
+  ok = PyArg_ParseTuple(args, "Osi", &self, &objName, &state);
 
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -827,7 +828,7 @@ static PyObject * CmdGetVolumeRamp(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    result = ExecutiveGetVolumeRamp(G,objName);
+    result = ExecutiveGetVolumeRamp(G, objName, state);
     APIExitBlocked(G);
   }
 
@@ -843,8 +844,9 @@ static PyObject * CmdSetVolumeRamp(PyObject * self, PyObject * args)
   char* objName;
   PyObject *ramp_list;
   std::vector<float> float_array;
+  int state;
 
-  API_SETUP_ARGS(G, self, args, "OsO", &self, &objName, &ramp_list);
+  API_SETUP_ARGS(G, self, args, "OsOi", &self, &objName, &ramp_list, &state);
 
   if (!PyList_Check(ramp_list) ||
       !PConvFromPyObject(G, ramp_list, float_array)) {
@@ -853,7 +855,7 @@ static PyObject * CmdSetVolumeRamp(PyObject * self, PyObject * args)
 
   API_ASSERT(APIEnterBlockedNotModal(G));
   auto result =
-    ExecutiveSetVolumeRamp(G, objName, std::move(float_array));
+    ExecutiveSetVolumeRamp(G, objName, std::move(float_array), state);
   APIExitBlocked(G);
   return APIResult(G, result);
 }
