@@ -541,9 +541,19 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(169, cmd.count_atoms())
         self.assertEqual(36, cmd.count_atoms('ss S'))
         self.assertEqual(25, cmd.count_atoms('solvent'))
+        self.assertEqual(25, cmd.count_atoms('not polymer'))
         symmetry = cmd.get_symmetry()
         self.assertArrayEqual(symmetry[:6], [19.465, 21.432, 29.523, 90.0, 90.0, 90.0], delta=1e-4)
         self.assertEqual(symmetry[6], 'P 21 21 21')
+
+    @testing.requires_version('2.6')
+    def testLoadMMTF_polymer(self):
+        cmd.load(self.datafile("1x8x.mmtf.gz"))
+        self.assertEqual(2780, cmd.count_atoms())
+        self.assertEqual(2544, cmd.count_atoms('polymer'))
+        self.assertEqual(218, cmd.count_atoms('solvent'))
+        self.assertEqual(13, cmd.count_atoms('organic'))
+        self.assertEqual(5, cmd.count_atoms('inorganic'))
 
     @testing.requires_version('1.8.4')
     def testLoadMMTFEmpty(self):
