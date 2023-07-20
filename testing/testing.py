@@ -377,8 +377,6 @@ else:
             assertEquals = unittest.TestCase.assertEqual
             assertItemsEqual = unittest.TestCase.assertCountEqual
 
-        moddirs = {}
-
         def setUp(self):
             self.oldcwd = os.getcwd()
             cmd.reinitialize()
@@ -387,7 +385,7 @@ else:
             if cliargs.no_undo:
                 cmd.set('suspend_undo', updates=0)
 
-            cwd = self.moddirs[type(self).__module__]
+            cwd = os.path.dirname(inspect.getfile(type(self)))
             os.chdir(cwd)
 
             cmd.feedback('push')
@@ -679,7 +677,6 @@ USAGE
 
             # hacky: register working directory with test cases
             dirname = os.path.abspath(os.path.dirname(filename))
-            PyMOLTestCase.moddirs[mod.__name__] = dirname
 
             suite.addTest(unittest.defaultTestLoader
                     .loadTestsFromModule(mod))
