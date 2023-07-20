@@ -606,9 +606,9 @@ def from_plystr(contents, surfacenormals=True, alphaunit=1.):
                         obj.append(vertex['nz'])
 
                     obj.append(VERTEX)
-                    obj.append(vertex['x'] * 100)
-                    obj.append(vertex['y'] * 100)
-                    obj.append(vertex['z'] * 100)
+                    obj.append(vertex['x'])
+                    obj.append(vertex['y'])
+                    obj.append(vertex['z'])
             obj.append(END)
 
     obj.append(STOP)
