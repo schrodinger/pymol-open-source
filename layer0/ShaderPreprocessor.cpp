@@ -2,7 +2,6 @@
 
 #include <bitset>
 #include <cstdint>
-#include <filesystem>
 #include <string_view>
 
 #include "Feedback.h"
@@ -124,17 +123,21 @@ static std::string GetShaderFromDisk(PyMOLGlobals* G, std::string_view filename)
                   pymolDataPath.data() + "\n";
     return {};
   }
-  auto shaderPath = std::filesystem::path(pymolDataPath) / "shaders" / filename;
+  auto shaderPath = std::string(pymolDataPath)
+                        .append(PATH_SEP)
+                        .append("shaders")
+                        .append(PATH_SEP)
+                        .append(filename);
 
   std::string buffer;
   std::string_view pl;
   try {
-    buffer = pymol::file_get_contents(shaderPath.string().data());
+    buffer = pymol::file_get_contents(shaderPath.c_str());
     pl = buffer.c_str();
   } catch (const std::exception&) {
     auto reason =
         std::string("shaders_from_dist=on, but unable to open file: ") +
-        shaderPath.string();
+        shaderPath;
     G->Feedback->autoAdd(FB_ShaderMgr, FB_Warnings, reason.c_str());
     return {};
   }
