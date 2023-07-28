@@ -427,16 +427,7 @@ void CShaderMgr::Reload_All_Shaders(){
   }
 }
 
-// bitmasks for preprocessor parsing
-#define IFDEF    1   // #ifdef or #ifndef
-#define IFNDEF   2   // #ifndef
-#define ELSE     4   // #else
-#define ENDIF    8   // #endif
-#define INCLUDE 16   // #include
-#define LOOKUP  32   // #ifdef or #ifndef or #include
-
-// preprocessor directive (like '#ifdef') -> bitmask
-static std::map<std::string, short> preprocmap;
+static bool shader_cache_initialized = false;
 
 // filename -> contents (static filesystem)
 static std::map<std::string, const char *> shader_cache_raw;
@@ -447,179 +438,14 @@ std::map<std::string, const char **> ifdef_deps;
 // filename -> NULL terminated list of filenames ("included by")
 std::map<std::string, const char **> include_deps;
 
-/**
- * Return a pointer to the next whitespace character or to the end of the string
- */
-static const char * nextwhitespace(const char * p) {
-  for (;; p++) {
-    switch (*p) {
-      case ' ': case '\0': case '\n': case '\r': case '\t':
-        return p;
-    }
-  }
-}
-
-/**
- * Return a pointer to the next line beginning or to the end of the string.
- * Skips blank lines.
- */
-static const char * nextline(const char * p) {
-  for (;; p++) {
-    switch (*p) {
-      case '\0': case '\n': case '\r':
-        goto switch2;
-    }
-  }
-  for (;; p++) {
-switch2:
-    switch (*p) {
-      case ' ': case '\n': case '\r': case '\t':
-        break;
-      default:
-        return p;
-    }
-  }
-}
-
-/**
- * Get the processed shader file contents with all `#ifdef` and `#include`
- * preprocessors processed.
- *
- * Note: There must be a single whitespace character between preprocessor
- * directive and argument.
- *
- * Valid:
- *
- *     #ifdef foo
- *
- * Invalid:
- *
- *     # ifdef foo
- *     #ifdef  foo
- *
- * @param filename file name of the shader file inside `$PYMOL_DATA/shaders`
- */
 std::string CShaderMgr::GetShaderSource(const std::string &filename)
 {
-  // processed cache
-  auto it = shader_cache_processed.find(filename);
-  if (it != shader_cache_processed.end()) {
-    return it->second;
-  }
+  return m_shaderPreprocessor.getSource(filename);
+}
 
-  std::string buffer;
-  const char *pl = nullptr, *newpl, *tpl;
-  std::ostringstream newbuffer;
-
-  /* "if_depth" counts the level of nesting, and "true_depth" how far the
-   * if conditions were actually true. So if the current block is true, then
-   * if_depth == true_depth, otherwise if_depth > true_depth.
-   */
-  int if_depth = 0, true_depth = 0;
-
-#ifndef _PYMOL_IOS
-  /* read the file from disk */
-  if (SettingGetGlobal_b(G, cSetting_shaders_from_disk)) {
-    const char * pymol_data = getenv("PYMOL_DATA");
-
-    if (pymol_data && pymol_data[0]) {
-      std::string path(pymol_data);
-      path.append(PATH_SEP).append("shaders").append(PATH_SEP).append(filename);
-
-      try {
-        buffer = pymol::file_get_contents(path);
-        pl = buffer.c_str();
-      } catch (...) {
-        PRINTFB(G, FB_ShaderMgr, FB_Warnings)
-          " Warning: shaders_from_dist=on, but unable to open file '%s'\n",
-          path.c_str() ENDFB(G);
-      }
-    } else {
-      PRINTFB(G, FB_ShaderMgr, FB_Warnings)
-        " Warning: shaders_from_dist=on, but PYMOL_DATA not set\n" ENDFB(G);
-    }
-  }
-#endif
-
-  if (!pl) {
-    pl = shader_cache_raw[filename];
-    if (!pl) {
-      PRINTFB(G, FB_ShaderMgr, FB_Errors)
-        " GetShaderSource-Error: No such file: '%s'\n", filename.c_str() ENDFB(G);
-      return "";
-    }
-  }
-
-  /* Now we need to read through the shader and do processing if necessary */
-  for (; *pl; pl = newpl) {
-    int preproc = 0;
-
-    // only do preprocessor lookup if line starts with a hash
-    if (pl[0] == '#') {
-      // next white space
-      tpl = nextwhitespace(pl);
-
-      // copy of first word
-      std::string tmp_str(pl, tpl - pl);
-
-      // lookup word in preprocmap
-      std::map<std::string, short>::const_iterator
-        preprocit = preprocmap.find(tmp_str);
-      if (preprocit != preprocmap.end()) {
-        preproc = preprocit->second;
-
-        if (preproc & LOOKUP) { // #ifdef or #ifndef or #include
-          if (if_depth == true_depth) {
-            // copy of second word
-            tpl++;
-            tmp_str = std::string(tpl, nextwhitespace(tpl) - tpl);
-
-            if (preproc & IFDEF) { // #ifdef or #ifndef
-              bool if_value = false;
-
-              // lookup for boolean shader preprocessor values
-              auto item = preproc_vars.find(tmp_str);
-              if (item != preproc_vars.end())
-                if_value = item->second;
-
-              if (preproc & IFNDEF)
-                if_value = !if_value; // #ifndef
-
-              if (if_value)
-                true_depth++;
-
-            } else if (preproc & INCLUDE) { //#include
-              tmp_str = std::string(tpl, nextwhitespace(tpl) - tpl);
-              newbuffer << GetShaderSource(tmp_str);
-            }
-          }
-
-          if (preproc & IFDEF)
-            if_depth++;
-
-        } else if (preproc & ENDIF){ // #endif
-          if (if_depth-- == true_depth)
-            true_depth--;
-        } else if (preproc & ELSE){ // #else
-          if (if_depth == true_depth)
-            true_depth--;
-          else if (if_depth == true_depth + 1)
-            true_depth++;
-        }
-      }
-    }
-
-    newpl = nextline(pl);
-
-    // add to the output buffer if this is a regular active line
-    if (!preproc && if_depth == true_depth) {
-      newbuffer.write(pl, newpl - pl);
-    }
-  }
-
-  std::string result = newbuffer.str();
-  shader_cache_processed[filename] = result;
-  return result;
+std::map<std::string, const char*>* CShaderMgr::GetRawShaderCache()
+{
+  return &shader_cache_raw;
 }
 
 #define FREE_AND_REPLACE_WITH(var, with) if (var) free(var);  var = with;
@@ -687,12 +513,8 @@ void CShaderMgr::Reload_Shader_Variables() {
  */
 bool ShaderMgrInit(PyMOLGlobals * G) {
   // initialize some globals (do this only once)
-  if (preprocmap.empty()) {
-    preprocmap["#ifdef"] = LOOKUP | IFDEF;
-    preprocmap["#ifndef"] = LOOKUP | IFDEF | IFNDEF;
-    preprocmap["#else"] = ELSE;
-    preprocmap["#endif"] = ENDIF;
-    preprocmap["#include"] = LOOKUP | INCLUDE;
+  if (!shader_cache_initialized) {
+    shader_cache_initialized = true;
 
     // make #include dependency map from flat array
     for (const char ** ptr = _include_deps; *ptr; ++ptr) {
@@ -785,16 +607,16 @@ void CShaderMgr::Config() {
 #endif
 
   // static preprocessor values
-  preproc_vars["GLEW_VERSION_3_0"] = GLEW_VERSION_3_0 ? true : false;
+  m_shaderPreprocessor.setVar("GLEW_VERSION_3_0", GLEW_VERSION_3_0 ? true : false);
   if (TM3_IS_ONEBUF){
-    preproc_vars["ONE_DRAW_BUFFER"] = true;
+    m_shaderPreprocessor.setVar("ONE_DRAW_BUFFER", true);
   }
 #ifdef PURE_OPENGL_ES_2
-  preproc_vars["PURE_OPENGL_ES_2"] = 1;
-  preproc_vars["PYMOL_WEBGL"] = 1;
-  preproc_vars["PYMOL_WEBGL_IOS"] = 1;
+  m_shaderPreprocessor.setVar("PURE_OPENGL_ES_2", true);
+  m_shaderPreprocessor.setVar("PYMOL_WEBGL", true);
+  m_shaderPreprocessor.setVar("PYMOL_WEBGL_IOS", true);
 #else
-  preproc_vars["gl_VertexID_enabled"] = GLEW_EXT_gpu_shader4;
+  m_shaderPreprocessor.setVar("gl_VertexID_enabled", GLEW_EXT_gpu_shader4);
 #endif
 
   // shaders
@@ -990,6 +812,7 @@ void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor) {
  * CShaderMgr -- Simple Shader Manager class
  */
 CShaderMgr::CShaderMgr(PyMOLGlobals * G_)
+  : m_shaderPreprocessor(G_, CShaderMgr::GetRawShaderCache())
 {
   G = G_;
   current_shader = nullptr;
@@ -1016,8 +839,6 @@ CShaderMgr::~CShaderMgr() {
     delete prog.second;
   }
   programs.clear();
-
-  shader_cache_processed.clear();
 
   freeGPUBuffer(offscreen_rt);
 
@@ -1672,7 +1493,7 @@ void CShaderMgr::Check_Reload() {
     if (reload_bits == RELOAD_ALL_SHADERS) {
       for (auto& prog : programs)
         prog.second->is_valid = false;
-      shader_cache_processed.clear();
+      m_shaderPreprocessor.clear();
     }
 
     Reload_All_Shaders();
@@ -1786,11 +1607,7 @@ void CShaderMgr::ShaderSourceInvalidate(const char * filename, bool invshaders) 
     }
   }
 
-  // invalidate source file
-  auto repl_it = shader_cache_processed.find(filename);
-  if (repl_it != shader_cache_processed.end()) {
-    shader_cache_processed.erase(repl_it);
-  }
+  m_shaderPreprocessor.invalidate(filename);
 }
 
 /**
@@ -1798,7 +1615,7 @@ void CShaderMgr::ShaderSourceInvalidate(const char * filename, bool invshaders) 
  * then invalidate all its dependant shader source files.
  */
 void CShaderMgr::SetPreprocVar(const std::string &key, bool value, bool invshaders) {
-  auto &ref = preproc_vars[key];
+  auto& ref = m_shaderPreprocessor.getVar(key);
   if (ref != value) {
     for (const char ** filenameptr = ifdef_deps[key];
         *filenameptr; ++filenameptr) {
@@ -1814,7 +1631,7 @@ void CShaderMgr::SetPreprocVar(const std::string &key, bool value, bool invshade
  */
 void CShaderMgr::SetShaderSource(const char * filename, const std::string &contents) {
   ShaderSourceInvalidate(filename);
-  shader_cache_processed[filename] = contents;
+  m_shaderPreprocessor.setSource(filename, contents);
 }
 
 void CShaderMgr::bindGPUBuffer(size_t hashid) {

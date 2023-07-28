@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include "Rep.h"
 #include "GenericBuffer.h"
 #include "SceneDef.h"
+#include "ShaderPreprocessor.h"
 #include "PostProcess.h"
 #include <map>
 #include <set>
@@ -290,6 +291,11 @@ public:
 
   void SetPreprocVar(const std::string &key, bool value, bool invshaders = true);
 
+  /**
+   * @return a map of shader filenames to their raw source code
+   */
+  static std::map<std::string, const char*>* GetRawShaderCache();
+
 private:
   void freeAllGPUBuffers();
   void RegisterDependantFileNames(CShaderPrg * shader);
@@ -319,11 +325,7 @@ public:
      string lookups. */
 
 private:
-  // filename -> processed shader source, for #include preprocessor
-  std::map<std::string, std::string> shader_cache_processed;
-
-  // variable -> boolean value for #ifdef preprocessor
-  std::map<std::string, bool> preproc_vars;
+  ShaderPreprocessor m_shaderPreprocessor;
 
   std::unordered_map<size_t, gpuBuffer_t*> _gpu_object_map;
   std::vector<size_t> _gpu_objects_to_free_vector;
