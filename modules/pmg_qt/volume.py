@@ -113,6 +113,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         painter.setPen(pen)
         for line in range(1, num_lines):
             y = y0 + h * (1.0 - self.alphaToY(line / float(num_lines)))
+            y = round(y)
             painter.drawLine(x0, y, x1, y)
 
     def paintColorDots(self, painter, rect):
@@ -125,12 +126,14 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             x, y, r, g, b = point
             x = rect.left() + rect.width() * self.dataToX(x)
             y = rect.top() + rect.height() * (1.0 - self.alphaToY(y))
+            x = round(x)
+            y = round(y)
             if scaled_pts:
                 painter.drawLine(scaled_pts[-1][0], scaled_pts[-1][1], x, y)
             scaled_pts.append((x, y, r, g, b))
 
         for x, y, r, g, b in scaled_pts:
-            painter.setBrush(QtGui.QColor(255 * r, 255 * g, 255 * b))
+            painter.setBrush(QtGui.QColor.fromRgbF(r, g, b))
             painter.drawEllipse(x - DOT_RADIUS, y - DOT_RADIUS, 2 * DOT_RADIUS,
                                 2 * DOT_RADIUS)
 
@@ -138,7 +141,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             # use larger radius for hover dot
             radius = DOT_RADIUS + 2
             x, y, r, g, b = scaled_pts[self.hover_point]
-            painter.setBrush(QtGui.QColor(255 * r, 255 * g, 255 * b))
+            painter.setBrush(QtGui.QColor.fromRgbF(r, g, b))
             painter.drawEllipse(x - radius, y - radius, 2 * radius,
                                 2 * radius)
 
@@ -182,7 +185,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
                       value,
                       format="%.3f"):
         s = format % value
-        sw = font_metrics.width(s)
+        sw = font_metrics.boundingRect(s).size().width()
         sh = font_metrics.height()
         if right_just:
             rect = QtCore.QRect(x - sw - 4, y - sh, sw + 4, sh + 2)
@@ -218,8 +221,9 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             x = x0 + w / 2 + rect.width() * (tick - self.vmin
                                              ) / float(self.vmax - self.vmin)
             if x - lastx > w + 2 * fw:
+                x = round(x)
                 painter.drawLine(x, y0, x, y1)
-                painter.drawText(x - w / 2, y1 + fh - 2, s)
+                painter.drawText(round(x - w / 2), y1 + fh - 2, s)
                 lastx = x
 
         #vertical axis
@@ -229,8 +233,9 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             t = tick / 10.0
             y = y0 - self.alphaToY(t) * rect.height()
             if lasty - y > fh and y > 2 * fh:
+                y = round(y)
                 painter.drawLine(x1 - 5, y, x1, y)
-                painter.drawText(x1 - 5 - 3 * fw, y - 2 + fh / 2, str(t))
+                painter.drawText(x1 - 5 - 3 * fw, round(y - 2 + fh / 2), str(t))
                 lasty = y
 
         # text boxes
@@ -410,7 +415,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             self.color_dialog.currentColorChanged.connect(
                 self.updatePointColor)
             self.color_dialog.finished.connect(self.colorDialogClosed)
-        self.original_color = QtGui.QColor(255 * r, 255 * g, 255 * b)
+        self.original_color = QtGui.QColor.fromRgbF(r, g, b)
         self.color_dialog.setCurrentColor(self.original_color)
         # open modal color dialog
         self.color_dialog.open()
@@ -526,7 +531,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         delta /= -1000.0
 
         for key, rect in self.text_boxes.items():
-            if rect.contains(event.pos()):
+            if rect.contains(event.position().toPoint()):
                 vrange = self.vmax - self.vmin
                 if key == "amax":
                     self.amax = max(min(self.amax * (1.0 + delta), 1.0), 0.0)
