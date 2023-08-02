@@ -1114,9 +1114,9 @@ PYMOL API
         return r
 
     fetchHosts = {
-        "pdb"  : "https://ftp.wwpdb.org/pub/pdb",
+        "pdb"  : "https://files.wwpdb.org/pub/pdb",
         "pdbe" : "https://ftp.ebi.ac.uk/pub/databases/pdb",
-        "pdbj" : "http://ftp.pdbj.org/pub/pdb",
+        "pdbj" : "https://files.pdbj.org/pub/pdb",
     }
 
     hostPaths = {
@@ -1132,7 +1132,7 @@ PYMOL API
         "cif"  : [
             "https://files.rcsb.org/download/{code}.{type}.gz",
             "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
-            "https://ftp-versioned.wwpdb.org/pdb_versioned/views/latest/coordinates/mmcif/{mid}/pdb_{code:0>8}/pdb_{code:0>8}_xyz.cif.gz",
+            "https://files-versioned.wwpdb.org/pdb_versioned/views/latest/coordinates/mmcif/{mid}/pdb_{code:0>8}/pdb_{code:0>8}_xyz.cif.gz",
         ],
         "2fofc" : "https://www.ebi.ac.uk/pdbe/coordinates/files/{code}.ccp4",
         "fofc" : "https://www.ebi.ac.uk/pdbe/coordinates/files/{code}_diff.ccp4",

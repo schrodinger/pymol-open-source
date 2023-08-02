@@ -318,8 +318,7 @@ def download_chem_comp(resn, quiet=1, _self=cmd):
     if os.path.exists(filename):
         return filename
 
-    url = "ftp://ftp.ebi.ac.uk/pub/databases/msd/pdbechem/files/mmcif/" + resn + ".cif"
-    url = "http://files.rcsb.org/ligands/download/" + resn + ".cif"
+    url = "https://files.rcsb.org/ligands/download/" + resn + ".cif"
     if not quiet:
         print(' Downloading ' + url)
 
