@@ -3,7 +3,7 @@
 #include <string>
 
 #include "ShaderMgr.h"
-#include "ShaderPreProcessor.h"
+#include "ShaderPreprocessor.h"
 
 using namespace pymol;
 
