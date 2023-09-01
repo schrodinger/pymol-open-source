@@ -104,8 +104,10 @@ else:
     parser.add_argument('filenames', nargs='*', default=[])
     parser.add_argument('--out', default=sys.stdout)
     parser.add_argument('--offline', action='store_true')
-    parser.add_argument('--no-mmlibs', action='store_true')
-    parser.add_argument('--no-undo', action='store_true')
+    parser.add_argument('--no-mmlibs', action='store_true', default=True)
+    parser.add_argument('--with-mmlibs', action='store_false', dest='no_mmlibs')
+    parser.add_argument('--no-undo', action='store_true', default=True)
+    parser.add_argument('--with-undo', action='store_false', dest='no_undo')
     parser.add_argument('--verbosity', type=int, default=2)
 
     have_dash_dash = __file__.startswith(sys.argv[0]) or '--run' in sys.argv
