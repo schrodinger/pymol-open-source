@@ -197,10 +197,10 @@ void GridUpdate(GridInfo * I, float asp_ratio, GridMode mode, int size)
 
       // the above algorithm can generate a 3x2 grid for size=4, but we want a
       // 2x2 in that case.
-      while ((n_col - 1) * n_row >= size) {
+      while ((n_col - 1) * n_row >= size && size) {
         n_col -= 1;
       }
-      while ((n_row - 1) * n_col >= size) {
+      while ((n_row - 1) * n_col >= size && size) {
         n_row -= 1;
       }
 
