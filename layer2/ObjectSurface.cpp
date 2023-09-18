@@ -866,18 +866,25 @@ static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
 static void ObjectSurfaceRenderCell(PyMOLGlobals *G, ObjectSurface * I,
     RenderInfo * info, ObjectSurfaceState *ms, short use_shader)
 {
+  /**
+   * TODO: Ray with primitive CGO
+   */
+
   const float *color = ColorGet(G, I->Color);
   if (use_shader != ms->UnitCellCGO->has_draw_buffers){
     if (use_shader){
-      CGO *convertcgo = CGOOptimizeToVBONotIndexed(ms->UnitCellCGO.get(), 0);
-      ms->UnitCellCGO.reset(convertcgo);
-      assert(ms->UnitCellCGO->use_shader);
+      auto preCGO = pymol::make_unique<CGO>(G);
+      CGOColorv(preCGO.get(), color);
+      CGOAppendNoStop(preCGO.get(), ms->UnitCellCGO.get());
+      std::unique_ptr<CGO> optimized(CGOOptimizeToVBONotIndexed(preCGO.get(), 0));
+      ms->UnitCellShaderCGO.reset(optimized.release());
+      assert(ms->UnitCellShaderCGO->use_shader);
     } else {
       ms->UnitCellCGO.reset(CrystalGetUnitCellCGO(&ms->Crystal));
     }
   }
-  CGORender(ms->UnitCellCGO.get(), color,
-              I->Setting.get(), NULL, info, NULL);
+  auto renderCGO = use_shader ? ms->UnitCellShaderCGO.get() : ms->UnitCellCGO.get();
+  CGORender(renderCGO, color, I->Setting.get(), nullptr, info, nullptr);
 }
 
 void ObjectSurface::render(RenderInfo * info)

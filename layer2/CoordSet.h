@@ -134,6 +134,7 @@ struct CoordSet : CObjectState {
   CGO *SculptCGO = nullptr;
   CGO *SculptShaderCGO = nullptr;
   pymol::cache_ptr<CGO> UnitCellCGO;
+  pymol::cache_ptr<CGO> UnitCellShaderCGO;
 
   MapType *Coord2Idx = nullptr;
   float Coord2IdxReq = 0, Coord2IdxDiv = 0;

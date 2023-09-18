@@ -1285,6 +1285,16 @@ void CoordSet::update(int state)
   if ((Obj->visRep & cRepCellBit) && !UnitCellCGO) {
     if (auto const* sym = getSymmetry()) {
       UnitCellCGO.reset(CrystalGetUnitCellCGO(&sym->Crystal));
+      auto use_shader = SettingGet<bool>(G, cSetting_use_shaders);
+      if (use_shader) {
+        auto color = ColorGet(G, Obj->Color);
+        auto preCGO = pymol::make_unique<CGO>(G);
+        CGOColorv(preCGO.get(), color);
+        CGOAppendNoStop(preCGO.get(), UnitCellCGO.get());
+        std::unique_ptr<CGO> optimized(CGOOptimizeToVBONotIndexed(preCGO.get(), 0));
+        UnitCellShaderCGO.reset(optimized.release());
+        assert(UnitCellShaderCGO->use_shader);
+      }
     }
   }
 
@@ -1322,6 +1332,7 @@ void CoordSet::render(RenderInfo * info)
   const auto pass = info->pass;
   const auto pick = bool(info->pick);
   auto* ray = info->ray;
+  auto use_shader = SettingGet<bool>(G, cSetting_use_shaders);
 
   if (!(ray || pick) &&
       (SettingGet<int>(*this, cSetting_defer_builds_mode) == 5)) {
@@ -1371,7 +1382,11 @@ void CoordSet::render(RenderInfo * info)
     } else if (!pick && pass == RenderPass::Opaque && G->HaveGUI &&
                G->ValidContext) {
       ObjectUseColor(Obj);
-      CGORender(UnitCellCGO.get(), ColorGet(G, Obj->Color), Setting.get(),
+      auto renderCGO = UnitCellCGO.get();
+      if (use_shader && UnitCellShaderCGO) {
+        renderCGO = UnitCellShaderCGO.get();
+      }
+      CGORender(renderCGO, ColorGet(G, Obj->Color), Setting.get(),
           Obj->Setting.get(), info, nullptr);
     }
   }

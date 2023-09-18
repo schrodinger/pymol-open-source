@@ -51,6 +51,7 @@ struct ObjectSurfaceState : public CObjectState
   cIsosurfaceMode Mode;
   int DotFlag;
   pymol::cache_ptr<CGO> UnitCellCGO;
+  pymol::cache_ptr<CGO> UnitCellShaderCGO;
   cIsosurfaceSide Side = cIsosurfaceSide::front;
   pymol::cache_ptr<CGO> shaderCGO;
   ObjectSurfaceState(PyMOLGlobals* G);
