@@ -1785,7 +1785,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
           a = *(a_ptr++);
           {
             AtomInfoType *ai = obj->AtomInfo + a;
-            if((ai->protekted != 1) && !(ai->flags & cAtomFlag_fix)) {
+            if((ai->protekted != cAtomProtected_explicit) && !(ai->flags & cAtomFlag_fix)) {
               v2 = cs_coord + 3 * atm2idx[a];
               center[4] += *(v2);
               center[5] += *(v2 + 1);
@@ -2157,7 +2157,8 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
                                 a1 = atm2idx[b1];
                                 v1 = cs_coord + 3 * a1;
                                 if(vdw_vis_mode && cgo && (n_cycle < 1)
-                                   && ((!((ai0->protekted && ai1->protekted)
+                                   && ((!((ai0->protekted != cAtomProtected_off &&
+                                           ai1->protekted != cAtomProtected_off)
                                           || (ai0->flags & ai1->flags & cAtomFlag_fix))
                                        ) || (ai0->flags & cAtomFlag_study)
                                        || (ai1->flags & cAtomFlag_study))) {
@@ -2299,7 +2300,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
               AtomInfoType *ai = obj->AtomInfo + a;
               const RefPosType *cs_refpos = cs->RefPos.data();
               int flags;
-              if(!(ai->protekted || ((flags = ai->flags) & cAtomFlag_fix))) {
+              if(!(ai->protekted != cAtomProtected_off || ((flags = ai->flags) & cAtomFlag_fix))) {
                 v1 = disp + 3 * a;
                 v2 = cs_coord + 3 * atm2idx[a];
 
@@ -2336,7 +2337,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
               int a = *(a_ptr++);
               {
                 AtomInfoType *ai = obj->AtomInfo + a;
-                if((ai->protekted != 1) && !(ai->flags & cAtomFlag_fix)) {
+                if((ai->protekted != cAtomProtected_explicit) && !(ai->flags & cAtomFlag_fix)) {
                   v2 = cs_coord + 3 * atm2idx[a];
                   center[0] += *(v2);
                   center[1] += *(v2 + 1);

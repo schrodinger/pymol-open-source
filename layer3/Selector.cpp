@@ -4013,7 +4013,7 @@ int SelectorWalkTree(PyMOLGlobals * G, int *atom, int *comp, int *toDo, int **st
         SelectorIsMember(G, s, sele1) || SelectorIsMember(G, s, sele2) ||
         SelectorIsMember(G, s, sele3) || SelectorIsMember(G, s, sele4);
     if(!seleFlag) {
-      if(!(ai->protekted == 1)) {       /* if not explicitly protected... */
+      if(!(ai->protekted == cAtomProtected_explicit)) {       /* if not explicitly protected... */
         atom[a] = 1;            /* mark this atom into the selection */
         comp[a] = 1;
       }
@@ -4090,7 +4090,7 @@ static int SelectorWalkTreeDepth(PyMOLGlobals * G, int *atom, int *comp, int *to
 
     if(!seleFlag) {
       toDo[a] = 0;
-      if(!(ai->protekted == 1)) {       /* if not explicitly protected... */
+      if(!(ai->protekted == cAtomProtected_explicit)) {       /* if not explicitly protected... */
         atom[a] = 1;            /* mark this atom into the selection */
         comp[a] = 1;
       }
@@ -7583,7 +7583,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
     break;
   case SELE_PTDz:
     for(a = cNDummyAtoms; a < I->Table.size(); a++)
-      base[0].sele[a] = I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].protekted;
+      base[0].sele[a] = I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].protekted != cAtomProtected_off;
     break;
   case SELE_MSKz:
     for(a = cNDummyAtoms; a < I->Table.size(); a++)

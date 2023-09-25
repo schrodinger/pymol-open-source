@@ -35,6 +35,12 @@ Z* -------------------------------------------------------------------
 #define BondInfoVERSION  181
 #endif
 
+enum {
+  cAtomProtected_off = 0,
+  cAtomProtected_explicit = 1,
+  cAtomProtected_drag = 2,
+};
+
 /* FLAGS 0-3 have the following conventional usage for molecular modeling */
 
 
