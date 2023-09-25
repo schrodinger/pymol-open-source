@@ -8963,7 +8963,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
       int break_atom_low = 0;
       int last_tag = 0;
       for(a = cNDummyAtoms; a < n_atom; a++) {
-        auto& table_a = I->Table[cNDummyAtoms];
+        auto& table_a = I->Table[a];
         if((tag = base_0_sele[a])
            && ((a >= break_atom_high) || (base_0_sele[a] != last_tag))) {
           if(tag != last_tag)
