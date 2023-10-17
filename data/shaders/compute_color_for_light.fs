@@ -10,16 +10,20 @@ uniform float spec_value_0;
 #ifdef precomputed_lighting
 uniform samplerCube lightingTex;
 #else
-uniform struct {
+struct LightSource{
   vec4 ambient;
   vec4 diffuse;
   vec4 specular;
   vec4 position;
-} g_LightSource[8];
+};
 
-uniform struct {
+uniform LightSource g_LightSource[8];
+
+struct  LightModel {
   vec4 ambient;
-} g_LightModel;
+};
+
+uniform LightModel g_LightModel;
 #endif
 
 #ifdef ray_transparency_oblique
