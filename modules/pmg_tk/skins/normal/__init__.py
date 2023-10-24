@@ -849,7 +849,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                     # _state004
                                     inter = "_state" + str(stateSave).zfill(len(str(s))+1)
                                     # g either MATCHES *.pdb or not.  If so, save, name_stateXYZ.pdb
-                                    g = re.search("(.*)(\..*)$", save_file)
+                                    g = re.search(r"(.*)(\..*)$", save_file)
                                     if g!=None:
                                         # 1PDB_state004.pdb
                                         save_file = g.groups()[0] + inter + g.groups()[1]
@@ -889,7 +889,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                         ])
         if len(ofile):
             self.__script__ = ofile
-            if re.search("\.pym*$|\.PYM*$",ofile):
+            if re.search(r"\.pym*$|\.PYM*$",ofile):
                 self.cmd.do("run "+ofile);      
             else:
                 self.cmd.do("@"+ofile);

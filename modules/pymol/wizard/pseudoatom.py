@@ -10,7 +10,7 @@ class Pseudoatom(Wizard):
         Wizard.__init__(self,_self)
         self.mode = mode
         if mode == 'label':
-            self.prefix = 'Label text: \888'
+            self.prefix = r'Label text: \888'
         self.text = ''
         self.pos = pos
 

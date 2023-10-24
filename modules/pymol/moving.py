@@ -730,7 +730,7 @@ SEE ALSO
         try:
             _self.lock(_self)
             output=[]
-            input = re.sub("\s"," ",specification)
+            input = re.sub(r"\s"," ",specification)
             input = input.replace("x"," x");
             input = input.replace("-"," -");
             input = input.replace("x ","x");

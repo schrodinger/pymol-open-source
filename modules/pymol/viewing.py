@@ -936,7 +936,7 @@ PYMOL API
         # assumes locked interpreter
         r = 0
         session_file = str(_self.get("session_file"))
-        re_pat = re.compile("[0-9]+\.")
+        re_pat = re.compile(r"[0-9]+\.")
         if len(session_file): # find next session file, if it exists
             mo = re_pat.search(session_file)
             if mo is not None:
@@ -949,9 +949,9 @@ PYMOL API
                         new_file = re_pat.sub(new_pat, session_file)
                         # try both PSE and PSW
                         if not os.path.exists(new_file):
-                            new_file = re.sub("\.pse$",".psw",new_file,re.I)
+                            new_file = re.sub(r"\.pse$",".psw",new_file,re.I)
                         if not os.path.exists(new_file):
-                            new_file = re.sub("\.psw$",".pse",new_file,re.I)
+                            new_file = re.sub(r"\.psw$",".pse",new_file,re.I)
                         if os.path.exists(new_file):
                             _self.do("_ cmd.load(r'''"+new_file+"''',format='psw')")
                             return 1

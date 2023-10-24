@@ -249,12 +249,12 @@ def _mpng(prefix, first=-1, last=-1, preserve=0, modal=0,
     try:
         _self.lock(_self)
         fname = prefix
-        if re.search("[0-9]*\.png$",fname): # remove numbering, etc.
-            fname = re.sub("[0-9]*\.png$","",fname)
-        if re.search("[0-9]*\.ppm$",fname):
+        if re.search(r"[0-9]*\.png$",fname): # remove numbering, etc.
+            fname = re.sub(r"[0-9]*\.png$","",fname)
+        if re.search(r"[0-9]*\.ppm$",fname):
             if format<0:
                 format = 1 # PPM
-            fname = re.sub("[0-9]*\.ppm$","",fname)
+            fname = re.sub(r"[0-9]*\.ppm$","",fname)
         if format<0:
             format = 0 # default = PNG
         fname = cmd.exp_path(fname)

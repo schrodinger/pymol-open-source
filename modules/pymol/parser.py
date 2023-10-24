@@ -45,7 +45,7 @@ if True:
                       '|=' :1, '^='  : 1, '>>=' : 1,'<<=' : 1,
                       '**=':1 }
 
-    remove_lists_re = re.compile("\[[^\]]*\]")
+    remove_lists_re = re.compile(r"\[[^\]]*\]")
 
     def complete_sc(st,sc,type_name,postfix, mode=0):
         result = None
@@ -405,7 +405,7 @@ if True:
                                             nest_securely = 1
                                         else:
                                             nest_securely = secure
-                                        if re.search("\.py$|\.pym$",path) is not None:
+                                        if re.search(r"\.py$|\.pym$",path) is not None:
                                             if self.cmd._feedback(fb_module.parser,fb_mask.warnings):
                                                 print("Warning: use 'run' instead of '@' with Python files?")
                                         layer.script = open(path,'r')

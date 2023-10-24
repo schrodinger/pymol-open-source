@@ -815,7 +815,7 @@ produce_mode_sc = cmd.Shortcut(produce_mode_dict.keys())
 
 
 def find_exe(exe):
-    '''Return full path to executable or None.
+    r'''Return full path to executable or None.
     Excludes C:\Windows\System32\convert.exe
     Tests .exe extension on Unix (e.g. for legacy "mpeg_encode.exe" name).
     '''

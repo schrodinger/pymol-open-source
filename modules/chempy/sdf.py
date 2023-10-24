@@ -20,8 +20,8 @@ from chempy import io
 class SDFRec:
 
     def __init__(self,sdflist):
-        getkee = re.compile("^>\s+<([^>]*)>")
-        gettag = re.compile("^>\s+<[^>]*>\s+\((.*)\)")
+        getkee = re.compile(r"^>\s+<([^>]*)>")
+        gettag = re.compile(r"^>\s+<[^>]*>\s+\((.*)\)")
         ll = len(sdflist)
         if ll<4:
             print(" SDFRec: invalid SDF record format #1")

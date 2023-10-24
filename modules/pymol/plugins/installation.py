@@ -20,7 +20,7 @@ class BadInstallationFile(Exception):
     pass
 
 def get_default_user_plugin_path():
-    '''
+    r'''
     User plugin directory defaults to ~/.pymol/startup on Linux and to
     %APPDATA%\pymol\startup on windows.
     '''
