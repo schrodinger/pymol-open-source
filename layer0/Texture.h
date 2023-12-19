@@ -22,10 +22,18 @@ Z* -------------------------------------------------------------------
 
 int TextureInit(PyMOLGlobals * G);
 void TextureFree(PyMOLGlobals * G);
-int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent);
+/**
+ * Determines whether the given character is textured.
+ * @param char_id character id
+ * @param[out] extent texture extent
+ */
+bool TextureIsCharTextured(PyMOLGlobals* G, int char_id, float* extent);
 void TextureInvalidateTextTexture(PyMOLGlobals * G);
 void TextureInitTextTexture(PyMOLGlobals * G);
-GLuint TextureGetTextTextureID(PyMOLGlobals * G);
+/**
+ * Binds the global Text Texture
+ */
+void TextureBindTexture(PyMOLGlobals* G);
 void TextureGetPlacementForNewSubtexture(PyMOLGlobals * G, int new_texture_width, int new_texture_height, int *new_texture_posx, int *new_texture_posy);
 int TextureGetTextTextureSize(PyMOLGlobals * G);
 

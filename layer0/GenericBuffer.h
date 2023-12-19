@@ -703,11 +703,26 @@ public:
   }
 
   void bind() const;
+  /**
+   * Binds the texture to a specific texture unit
+   * @param textureUnit The texture unit to bind to (0, 1, 2, etc)
+   */
+  void bindToTextureUnit(std::uint8_t textureUnit) const;
   void unbind() const;
 
   void texture_data_1D(int width, const void * data);
   void texture_data_2D(int width, int height, const void * data);
   void texture_data_3D(int width, int height, int depth, const void * data);
+
+  /**
+   * Specifies a 2D texture subimage
+   * @param xoffset The x offset of the subimage
+   * @param yoffset The y offset of the subimage
+   * @param width The width of the subimage
+   * @param height The height of the subimage
+   * @param data The data to upload
+  */
+  void texture_subdata_2D(int xoffset, int yoffset, int width, int height, const void* data);
 private:
   void genBuffer();
   void freeBuffer();

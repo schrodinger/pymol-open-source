@@ -1048,7 +1048,8 @@ int CGOWriteIndent(CGO * I, const char *str, float indent);
 int CGOBoundingBox(CGO *I, const float *min, const float *max);
 int CGOAccessibility(CGO * I, const float a);
 
-int CGODrawTexture(CGO *I, int texture_id, float *worldPos, float *screenMin, float *screenMax, float *textExtent);
+int CGODrawTexture(CGO* I, float* worldPos, float* screenMin, float* screenMax,
+    float* textExtent);
 int CGODrawConnector(CGO *I, float *targetPt3d, float *labelCenterPt3d, float text_width, float text_height, float *screenOffset, float *screenWorldOffset, float *connectorColor, short relativeMode, int draw_bkgrd, float bkgrd_transp, float *bkgrd_color, float rel_ext_length, float connectorWidth);
 CGO *CGOOptimizeLabels(const CGO * I, int est, bool addshaders=false);
 CGO *CGOOptimizeTextures(const CGO * I, int est);

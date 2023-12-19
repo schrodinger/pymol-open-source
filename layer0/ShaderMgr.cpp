@@ -1218,7 +1218,7 @@ CShaderPrg *CShaderMgr::Setup_LabelShader(CShaderPrg *shaderPrg) {
   shaderPrg->Set_Matrices();
 
   glActiveTexture(GL_TEXTURE3);
-  glBindTexture(GL_TEXTURE_2D, TextureGetTextTextureID(G));
+  TextureBindTexture(G);
   if (!(shaderPrg->uniform_set & 8)){
     shaderPrg->uniform_set |= 8;
     shaderPrg->Set1i("textureMap", 3);
@@ -1272,7 +1272,7 @@ CShaderPrg *CShaderMgr::Enable_IndicatorShader() {
   shaderPrg->Set_Matrices();
 
   glActiveTexture(GL_TEXTURE3);
-  glBindTexture(GL_TEXTURE_2D, TextureGetTextTextureID(G));
+  TextureBindTexture(G);
   if (!(shaderPrg->uniform_set & 8)){
     shaderPrg->Set1i("textureMap", 3);
     shaderPrg->uniform_set |= 8;

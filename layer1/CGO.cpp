@@ -736,7 +736,8 @@ int CGOAccessibility(CGO * I, float a)
   return true;
 }
 
-int CGODrawTexture(CGO *I, int texture_id, float *worldPos, float *screenMin, float *screenMax, float *textExtent)
+int CGODrawTexture(CGO* I, float* worldPos, float* screenMin, float* screenMax,
+    float* textExtent)
 {
   float *pc = CGO_add(I, CGO_DRAW_TEXTURE_SZ + 1);
   if (!pc)

@@ -229,18 +229,20 @@ short CharacterRenderOpenGL(PyMOLGlobals * G, const RenderInfo * info, int id, s
   CCharacter *I = G->Character;
   CharRec *rec = I->Char + id;
   short success = 1;
-  int texture_id = TextureGetFromChar(G, id, rec->extent);
+  auto isTextured = TextureIsCharTextured(G, id, rec->extent);
   float sampling = 1.0F;
 
-  if(G->HaveGUI && G->ValidContext && texture_id) {
+  if (G->HaveGUI && G->ValidContext && isTextured) {
     if(info)
       sampling = (float) info->sampling;
-    if(texture_id) {
+    if (isTextured) {
     /*    if(glIsTexture(texture_id)) -- BAD -- impacts performance */
       float *v, v0[3];
       float v1[3];
       if (!shaderCGO){
-        glBindTexture(GL_TEXTURE_2D, TextGetIsPicking(G) ? 0 : texture_id);
+        if (!TextGetIsPicking(G)) {
+          TextureBindTexture(G);
+        }
       }
       v = TextGetPos(G);
       copy3f(v, v0);
@@ -263,7 +265,7 @@ short CharacterRenderOpenGL(PyMOLGlobals * G, const RenderInfo * info, int id, s
                                              relativeMode,
                                              glm::make_vec3(targetPos));
 	  } else {
-	    CGODrawTexture(shaderCGO, texture_id, worldPos, v0, v1, rec->extent);
+	    CGODrawTexture(shaderCGO, worldPos, v0, v1, rec->extent);
 	  }
       } else {
 #ifndef PURE_OPENGL_ES_2
@@ -292,7 +294,7 @@ short CharacterRenderOpenGL(PyMOLGlobals * G, const RenderInfo * info, int id, s
     }
      TextAdvance(G, rec->Advance / sampling);
   } else {
-    if (!texture_id)
+    if (!isTextured)
       success = 0;
   }
   return success;

@@ -15,6 +15,10 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
+#include <memory>
+#include <unordered_set>
+
 #include"os_python.h"
 #include"os_gl.h"
 
@@ -30,27 +34,32 @@ Z* -------------------------------------------------------------------
 #include "Executive.h"
 #include "Ortho.h"
 #include "ShaderMgr.h"
+#include "GenericBuffer.h"
 
 #define POS_START  2
 
-typedef struct  {
-  int id,dim;
-} texture_info;
+/**
+ * Texture unit assigned to the global text texture.
+ * See ShaderMgr.cpp for more details.
+ */
+constexpr std::uint8_t GlobalTextTextureUnit = 3;
 
 struct CTexture {
-  std::unordered_map<int, int> ch2tex;
-  GLuint text_texture_id{};
+  std::unordered_set<int> texturedCharIDs; // set of char ids that have been textured
+  std::unique_ptr<textureBuffer_t> texture;
   int xpos{};
   int ypos{};
   int maxypos{};
-  int num_chars{};
   int text_texture_dim{};
 };
 
-GLuint TextureGetTextTextureID(PyMOLGlobals * G){
-  CTexture *I = G->Texture;
-  return I->text_texture_id;
+void TextureBindTexture(PyMOLGlobals* G) {
+  auto I = G->Texture;
+  if (I->texture) {
+    I->texture->bind();
+  }
 }
+
 int TextureGetTextTextureSize(PyMOLGlobals * G){
   CTexture *I = G->Texture;
   return I->text_texture_dim;
@@ -64,7 +73,7 @@ int TextureInit(PyMOLGlobals * G)
   G->Texture = I;
 
   I->text_texture_dim = INIT_TEXTURE_SIZE;
-  I->ypos = I->maxypos = I->num_chars = 0;
+  I->ypos = I->maxypos = 0;
   I->xpos = POS_START;
   return (I ? 1 : 0);
 }
@@ -77,11 +86,9 @@ void TextureInitTextTexture(PyMOLGlobals *G){
 }
 void TextureInvalidateTextTexture(PyMOLGlobals * G){
   CTexture *I = G->Texture;
-  if (I->text_texture_id){
-    I->ch2tex.clear();
-    I->num_chars = 0;
-    glDeleteTextures(1, &I->text_texture_id);
-    I->text_texture_id = 0;
+  if (I->texture) {
+    I->texturedCharIDs.clear();
+    I->texture.reset();
     I->text_texture_dim = INIT_TEXTURE_SIZE;
     I->xpos = POS_START; I->ypos = 0; I->maxypos = POS_START;
   }
@@ -93,36 +100,29 @@ void TextureInitTextTextureImpl(PyMOLGlobals *G, int textureSizeArg){
   int textureSize = textureSizeArg;
   if (!textureSize)
     textureSize = INIT_TEXTURE_SIZE;
-  if (!I->text_texture_id){
-    glGenTextures(1, &I->text_texture_id);
-    is_new = 1;
+  if (!I->texture) {
+    using namespace tex;
+    I->texture =
+        std::make_unique<textureBuffer_t>(format::RGBA, data_type::UBYTE,
+            filter::NEAREST, filter::NEAREST, wrap::CLAMP, wrap::CLAMP);
+    is_new = true;
   }
-  if(I->text_texture_id){
-    if (G->ShaderMgr->ShadersPresent()){
-      glActiveTexture(GL_TEXTURE3);
-    }
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glBindTexture(GL_TEXTURE_2D, I->text_texture_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    if (is_new){
+  if (I->texture) {
+    if (is_new) {
       int tex_dim = textureSize;
       int buff_total = tex_dim * tex_dim;
-      unsigned char *temp_buffer = pymol::malloc<unsigned char>(buff_total * 4);
-      UtilZeroMem(temp_buffer, buff_total * 4);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-		   tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)temp_buffer);
+      std::vector<unsigned char> temp_buffer(
+          buff_total * GetSizeOfVertexFormat(VertexFormat::UByte4), 0);
+      I->texture->bindToTextureUnit(GlobalTextTextureUnit);
+      I->texture->texture_data_2D(tex_dim, tex_dim, temp_buffer.data());
       I->text_texture_dim = textureSize;
-      FreeP(temp_buffer);
       I->xpos = POS_START; I->ypos = 0; I->maxypos = POS_START;
     }
   }
 }
 
 #include "Rep.h"
-int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
+bool TextureIsCharTextured(PyMOLGlobals* G, int char_id, float* extent)
 {
   CTexture *I = G->Texture;
   int is_new = false;
@@ -130,27 +130,28 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
   short use_shader = (short) SettingGetGlobal_b(G, cSetting_use_shaders);
 
   if(G->HaveGUI && G->ValidContext) {
-    auto it = I->ch2tex.find(char_id);
-    if (it != I->ch2tex.end()) {
-      if(glIsTexture(I->text_texture_id))
-        return I->text_texture_id;
+    auto it = I->texturedCharIDs.find(char_id);
+    if (it != I->texturedCharIDs.end()) {
+      if (I->texture) {
+        return true;
+      }
       else {
-        I->ch2tex.erase(it);
+        I->texturedCharIDs.erase(char_id);
       }
     }
     {
       unsigned char *buffer = NULL;
-      if (!I->text_texture_id){
+      if (!I->texture) {
           is_new = true;
       }
       buffer = CharacterGetPixmapBuffer(G, char_id);
       if(buffer) {
         int w = CharacterGetWidth(G, char_id);
         int h = CharacterGetHeight(G, char_id);
-        GLuint texture_id = 0;
         int buff_incr = is_new ? tex_dim : w;
         int buff_total = is_new ? tex_dim * tex_dim : w * h;
-        unsigned char *temp_buffer = pymol::malloc<unsigned char>(buff_total * 4);
+        std::vector<unsigned char> temp_buffer(
+            buff_total * GetSizeOfVertexFormat(VertexFormat::UByte4), 0);
 
         {
           int a, b;
@@ -159,10 +160,9 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 	  if (is_new){
 	    fa += I->xpos; ta += I->xpos;
 	  }
-          UtilZeroMem(temp_buffer, buff_total * 4);
           for(b = 0; b < h; b++) {
 	    for(a = fa; a < ta; a++) {
-              q = temp_buffer + (4 * buff_incr * b) + 4 * a;
+              q = temp_buffer.data() + (4 * buff_incr * b) + 4 * a;
               *(q++) = *(p++);
               *(q++) = *(p++);
               *(q++) = *(p++);
@@ -177,15 +177,13 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 	  if ((I->ypos + h) >= I->text_texture_dim){ // only need to check y since x gets reset above
 	    int nrefreshes;
 	    I->xpos = POS_START; I->ypos = 0; I->maxypos = POS_START;
-	    I->ch2tex.clear();
-	    I->num_chars = 0;
+	    I->texturedCharIDs.clear();
 	    /* Also need to reload the selection markers into the texture, since
 	       we are wiping everything out from the texture and starting from the origin */
 	    if ((nrefreshes=SceneIncrementTextureRefreshes(G)) > 1){
 	      /* Texture was refreshed more than once for this frame, increase size of texture */
 	      int newDim = I->text_texture_dim * 2;
-	      glDeleteTextures(1, &I->text_texture_id);
-	      I->text_texture_id = 0;
+	      I->texture.reset();
 	      TextureInitTextTextureImpl(G, newDim);
 	      PRINTFB(G, FB_OpenGL, FB_Output)
 		" Texture OpenGL: nrefreshes=%d newDim=%d\n", nrefreshes, newDim ENDFB(G);
@@ -197,7 +195,7 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 	    ExecutiveInvalidateRep(G, "all", cRepLabel, cRepInvRep);
 	    ExecutiveInvalidateSelectionIndicators(G);
 	    OrthoInvalidateDoDraw(G);
-	    return 0;
+	    return false;
 	  }
           extent[0] = (I->xpos / (float) tex_dim);
           extent[1] = (I->ypos / (float) tex_dim);
@@ -205,31 +203,32 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
           extent[3] = ((I->ypos + h) / (float) tex_dim);
         }
 
-	if (!I->text_texture_id){
-          glGenTextures(1, &I->text_texture_id);
-	}
-	texture_id = I->text_texture_id;
-	if (I->text_texture_id) {
-	  I->ch2tex[char_id] = I->num_chars++;
-	  if (use_shader && G->ShaderMgr->ShadersPresent()){
-	    glActiveTexture(GL_TEXTURE3);
-	  }
-          glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-          glBindTexture(GL_TEXTURE_2D, texture_id);
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-          if(is_new) {
+        if (!I->texture) {
+          using namespace tex;
+          I->texture =
+              std::make_unique<textureBuffer_t>(format::RGBA, data_type::UBYTE,
+                  filter::NEAREST, filter::NEAREST, wrap::CLAMP, wrap::CLAMP);
+        }
+        auto texture_id = I->texture->get_hash_id();
+	if (I->texture) {
+	  I->texturedCharIDs.emplace(char_id);
+          if (is_new) {
 	    I->text_texture_dim = tex_dim;
-	      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-			   tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)temp_buffer);
+        I->texture->bindToTextureUnit(GlobalTextTextureUnit);
+        I->texture->texture_data_2D(tex_dim, tex_dim, temp_buffer.data());
           } else {
 	    int xoff = 0, yoff = 0;
 	    xoff = I->xpos;
 	    yoff = I->ypos;
-	      glTexSubImage2D(GL_TEXTURE_2D, 0, xoff, yoff,
-			      w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_buffer);
+        I->texture->texture_subdata_2D(xoff, yoff, w, h, temp_buffer.data());
+#ifdef _WEBGL
+              static bool error_flag = false;
+              if ((glGetError()) != 0 && error_flag) {
+                PRINTFB(G, FB_OpenGL, FB_Output)
+                  " IE11 texSubImage2D bug detected, supressing...\n" ENDFB(G);
+                error_flag = true;
+              }
+#endif
           }
         }
 	if (I->ypos + h > I->maxypos){
@@ -241,12 +240,11 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 	} else {
 	  I->xpos += w + 1; // added space for running on Ipad/Iphone (weird artifacts)
 	}
-          FreeP(temp_buffer);
         return texture_id;
       }
     }
   }
-  return 0;
+  return true;
 }
 
 void TextureGetPlacementForNewSubtexture(PyMOLGlobals * G, int new_texture_width, int new_texture_height, int *new_texture_posx, int *new_texture_posy){
