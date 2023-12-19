@@ -15,6 +15,15 @@ SelectorTmp::SelectorTmp(SelectorTmp&& other)
   assert(other.m_count == -1);
 }
 
+int SelectorTmp::getAtomCount()
+{
+  if (m_count != 0) {
+    return m_count;
+  }
+
+  return SelectorCountAtoms(m_G, getIndex(), cSelectorUpdateTableAllStates);
+}
+
 /**
  * Factory which propagates errors.
  * @param sele Selection expression
