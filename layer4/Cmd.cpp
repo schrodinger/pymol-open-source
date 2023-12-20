@@ -2319,9 +2319,9 @@ static PyObject *CmdGetUnusedName(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok && (ok = APIEnterNotModal(G))) {
+  if (ok && (ok = APIEnterBlockedNotModal(G))) {
     auto result = PConvToPyObject(ExecutiveGetUnusedName(G, prefix, alwaysnumber));
-    APIExit(G);
+    APIExitBlocked(G);
     return result;
   } else {
     return APIResultOk(ok);
