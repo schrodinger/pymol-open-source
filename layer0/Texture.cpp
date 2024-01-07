@@ -209,7 +209,6 @@ bool TextureIsCharTextured(PyMOLGlobals* G, int char_id, float* extent)
               std::make_unique<textureBuffer_t>(format::RGBA, data_type::UBYTE,
                   filter::NEAREST, filter::NEAREST, wrap::CLAMP, wrap::CLAMP);
         }
-        auto texture_id = I->texture->get_hash_id();
 	if (I->texture) {
 	  I->texturedCharIDs.emplace(char_id);
           if (is_new) {
@@ -240,7 +239,7 @@ bool TextureIsCharTextured(PyMOLGlobals* G, int char_id, float* extent)
 	} else {
 	  I->xpos += w + 1; // added space for running on Ipad/Iphone (weird artifacts)
 	}
-        return texture_id;
+        return I->texture != nullptr;
       }
     }
   }
