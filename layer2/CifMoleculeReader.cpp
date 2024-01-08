@@ -291,33 +291,6 @@ static void ObjectMoleculeAddBond2(ObjectMolecule * I, int i1, int i2, int order
 }
 
 /**
- * Distance based connectivity for discrete objects
- */
-static void ObjectMoleculeConnectDiscrete(ObjectMolecule * I) {
-  for (int i = 0; i < I->NCSet; i++) {
-    if (!I->CSet[i])
-      continue;
-
-    int nbond = 0;
-    pymol::vla<BondType> bond;
-
-    ObjectMoleculeConnect(I, nbond, bond, I->CSet[i], true, 3);
-
-    if (!bond)
-      continue;
-
-    if (!I->Bond) {
-      I->Bond = std::move(bond);
-    } else {
-      I->Bond.check(I->NBond + nbond - 1);
-      std::copy_n(bond.data(), nbond, I->Bond.data() + I->NBond);
-    }
-
-    I->NBond += nbond;
-  }
-}
-
-/**
  * Get the distance between two atoms in ObjectMolecule
  */
 static float GetDistance(ObjectMolecule * I, int i1, int i2) {
@@ -2214,7 +2187,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
   // if non of the above created I->Bond, then do distance based bonding
   if (!I->Bond) {
     if (I->DiscreteFlag) {
-      ObjectMoleculeConnectDiscrete(I);
+      ObjectMoleculeConnectDiscrete(I, true, 3);
     } else if (cset) {
       ObjectMoleculeConnect(I, cset, true, 3);
     }

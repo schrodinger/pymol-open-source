@@ -4003,6 +4003,33 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
   return true;
 }
 
+void ObjectMoleculeConnectDiscrete(ObjectMolecule* I, int searchFlag,
+    int connectModeOverride, bool pbc)
+{
+  for (int i = 0; i < I->NCSet; i++) {
+    if (!I->CSet[i]) {
+      continue;
+    }
+
+    int nbond = 0;
+    pymol::vla<BondType> bond;
+
+    ObjectMoleculeConnect(I, nbond, bond, I->CSet[i], searchFlag, connectModeOverride, pbc);
+
+    if (!bond) {
+      continue;
+    }
+
+    if (!I->Bond) {
+      I->Bond = std::move(bond);
+    } else {
+      I->Bond.check(I->NBond + nbond - 1);
+      std::copy_n(bond.data(), nbond, I->Bond.data() + I->NBond);
+    }
+
+    I->NBond += nbond;
+  }
+}
 
 /*========================================================================*/
 /**

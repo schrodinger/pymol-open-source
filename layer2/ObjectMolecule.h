@@ -451,6 +451,16 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, CoordSet* cs,
 bool ObjectMoleculeConnect(ObjectMolecule* I, int& nbond, pymol::vla<BondType>& bond,
                           struct CoordSet *cs, int searchFlag, int connectModeOverride,
                           bool pbc = false);
+/**
+ * Connects bonds for a discrete object (https://pymolwiki.org/index.php/Discrete_objects)
+ * @param I ObjectMolecule to connect bonds discretely
+ * @param bondSearchMode If false and `connect_mode` != 2, do not search for new
+ * bonds (only use TmpBond/TmpLinkBond).
+ * @param connectModeOverride Overrides `connect_mode` setting if not -1
+ * @param pbc Use periodic boundary conditions (find symop bonds)
+ */
+void ObjectMoleculeConnectDiscrete(ObjectMolecule* I, int bondSearchMode,
+                                   int connectModeOverride, bool pbc = false);
 int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete);
 
 float ObjectMoleculeGetMaxVDW(ObjectMolecule * I);

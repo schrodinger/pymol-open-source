@@ -16668,7 +16668,14 @@ pymol::Result<> ExecutiveRebond(
   }
 
   ObjectMoleculeRemoveBonds(obj, 0, 0);
-  ObjectMoleculeConnect(obj, cs, true, 3, pbc);
+
+  // Cases where we want to discretely rebond that isn't a pbc case?
+  if (obj->DiscreteFlag && pbc) {
+    ObjectMoleculeConnectDiscrete(obj, true, 3, pbc);
+  } else {
+    ObjectMoleculeConnect(obj, cs, true, 3, pbc);
+  }
+
   obj->invalidate(cRepAll, cRepInvAll, -1);
 
   return {};

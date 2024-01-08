@@ -234,6 +234,7 @@ from .editing import \
       set_dihedral,       \
       set_name,           \
       set_geometry,       \
+      set_discrete,       \
       set_object_color,   \
       set_object_ttt,     \
       set_state_order,    \
