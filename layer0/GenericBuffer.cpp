@@ -397,6 +397,9 @@ void textureBuffer_t::texture_data_1D(int width, const void *data) {
                  tex_tab(_format), tex_tab(tex::data_type::FLOAT), data);
     break;
   case data_type::FLOAT:
+    glTexImage1D(GL_TEXTURE_1D, 0, tex_format_internal_float(_format), _width, 0,
+                 tex_tab(_format), tex_tab(_type), data);
+    break;
   case data_type::UBYTE:
     glTexImage1D(GL_TEXTURE_1D, 0, tex_format_internal_byte(_format), _width, 0,
                  tex_tab(_format), tex_tab(_type), data);
@@ -419,6 +422,9 @@ void textureBuffer_t::texture_data_2D(int width, int height, const void *data) {
                  _height, 0, tex_tab(_format), tex_tab(tex::data_type::FLOAT), data);
     break;
   case data_type::FLOAT:
+    glTexImage2D(GL_TEXTURE_2D, 0, tex_format_internal_float(_format), _width,
+                 _height, 0, tex_tab(_format), tex_tab(_type), data);
+    break;
   case data_type::UBYTE:
     glTexImage2D(GL_TEXTURE_2D, 0, tex_format_internal_byte(_format), _width,
                  _height, 0, tex_tab(_format), tex_tab(_type), data);
