@@ -131,7 +131,10 @@ int ObjectMoleculeSetMissingNeighborCoords(
   int n_present = 0;
   float cbuf[4 * 3];
   int present_atm = -1;
-  int missing_atm[4];
+  // Ideally atoms should just have up to 4 neighbors, but odd structures
+  // could have more.
+  constexpr int MAX_MISSING = 8;
+  int missing_atm[MAX_MISSING];
   int n_missing = 0;
 
   const AtomInfoType* ai = I->AtomInfo + atm;
@@ -143,7 +146,7 @@ int ObjectMoleculeSetMissingNeighborCoords(
   const float* center_coord = cs->coordPtr(idx);
 
   for (auto const& neighbor : AtomNeighbors(I, atm)) {
-    if (n_present == 4)
+    if (n_present == 4 || n_missing >= MAX_MISSING)
       break;
 
     // get neighbor coordinate
