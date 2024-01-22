@@ -5066,6 +5066,11 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int vers
           skip = !ObjectCallbackNewFromPyList(G, el, (ObjectCallback **) (void *) &rec->obj);
           break;
 #endif
+        case cObjectCurve:
+        {
+          rec->obj = new ObjectCurve(G, el);
+        }
+        break;
         default:
           PRINTFB(G, FB_Executive, FB_Errors)
             " Executive: skipping unrecognized object \"%s\" of type %d.\n",
@@ -5254,6 +5259,9 @@ static PyObject *ExecutiveGetExecObjectAsPyList(PyMOLGlobals * G, SpecRec * rec)
     break;
   case cObjectCallback:
     PyList_SetItem(result, 5, ObjectCallbackAsPyList((ObjectCallback *) rec->obj));
+    break;
+  case cObjectCurve:
+    PyList_SetItem(result, 5, static_cast<ObjectCurve*>(rec->obj)->asPyList());
     break;
   default:
     PyList_SetItem(result, 5, PConvAutoNone(NULL));
