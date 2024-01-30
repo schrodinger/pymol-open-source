@@ -6,11 +6,17 @@
 # It may assume that all of PyMOL's external dependencies are
 # pre-installed into the system.
 
+import argparse
+import glob
+import os
+import re
+import sys
+import shutil
+
 from distutils.core import setup, Extension
 from distutils.util import change_root
-from glob import glob
-import shutil
-import sys, os, re
+
+import create_shadertext
 
 # non-empty DEBUG variable turns off optimization and adds -g flag
 DEBUG = bool(os.getenv('DEBUG', ''))
@@ -19,6 +25,8 @@ WIN = sys.platform.startswith('win')
 MAC = sys.platform.startswith('darwin')
 
 # handle extra arguments
+
+
 class options:
     osx_frameworks = True
     jobs = int(os.getenv('JOBS', 0))
@@ -32,36 +40,33 @@ class options:
     use_vtkm = 'no'
     vmd_plugins = True
 
-try:
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--glut', dest='no_glut', action="store_false",
-            help="link with GLUT (legacy GUI)")
-    parser.add_argument('--no-osx-frameworks', dest='osx_frameworks',
-            help="on MacOS use XQuartz instead of native frameworks",
-            action="store_false")
-    parser.add_argument('--jobs', '-j', type=int, help="for parallel builds "
-            "(defaults to number of processors)")
-    parser.add_argument('--no-libxml', action="store_true",
-            help="skip libxml2 dependency, disables COLLADA export")
-    parser.add_argument('--use-openmp', choices=('yes', 'no'),
-            help="Use OpenMP")
-    parser.add_argument('--use-vtkm', choices=('1.5', '1.6', '1.7', 'no'),
-            help="Use VTK-m for isosurface generation")
-    parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'guess', 'no'),
-            help="c++11: use msgpack-c header-only library; c: link against "
-            "shared library; no: disable fast MMTF load support")
-    parser.add_argument('--help-distutils', action="store_true",
-            help="show help for distutils options and exit")
-    parser.add_argument('--testing', action="store_true",
-            help="Build C-level tests")
-    parser.add_argument('--openvr', dest='openvr', action='store_true')
-    parser.add_argument('--no-vmd-plugins', dest='vmd_plugins',
-            action='store_false',
-            help='Disable VMD molfile plugins (libnetcdf dependency)')
-    options, sys.argv[1:] = parser.parse_known_args(namespace=options)
-except ImportError:
-    print("argparse not available")
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--glut', dest='no_glut', action="store_false",
+                    help="link with GLUT (legacy GUI)")
+parser.add_argument('--no-osx-frameworks', dest='osx_frameworks',
+                    help="on MacOS use XQuartz instead of native frameworks",
+                    action="store_false")
+parser.add_argument('--jobs', '-j', type=int, help="for parallel builds "
+                    "(defaults to number of processors)")
+parser.add_argument('--no-libxml', action="store_true",
+                    help="skip libxml2 dependency, disables COLLADA export")
+parser.add_argument('--use-openmp', choices=('yes', 'no'),
+                    help="Use OpenMP")
+parser.add_argument('--use-vtkm', choices=('1.5', '1.6', '1.7', 'no'),
+                    help="Use VTK-m for isosurface generation")
+parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'guess', 'no'),
+                    help="c++11: use msgpack-c header-only library; c: link against "
+                    "shared library; no: disable fast MMTF load support")
+parser.add_argument('--help-distutils', action="store_true",
+                    help="show help for distutils options and exit")
+parser.add_argument('--testing', action="store_true",
+                    help="Build C-level tests")
+parser.add_argument('--openvr', dest='openvr', action='store_true')
+parser.add_argument('--no-vmd-plugins', dest='vmd_plugins',
+                    action='store_false',
+                    help='Disable VMD molfile plugins (libnetcdf dependency)')
+options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 
 if options.help_distutils:
     sys.argv.append("--help")
@@ -75,6 +80,7 @@ def forms_uic(build_lib='modules'):
     '''
     Convert Qt UI files in "modules/pmg_qt/forms" to Python files in place
     '''
+
 
 def get_prefix_path():
     '''
@@ -141,10 +147,12 @@ class build_ext_pymol(build_ext):
         if DEBUG and not WIN:
             self.debug = True
 
+
 class build_py_pymol(build_py):
     def run(self):
         build_py.run(self)
         forms_uic(self.build_lib)
+
 
 class install_pymol(install):
     pymol_path = None
@@ -155,7 +163,7 @@ class install_pymol(install):
         ('pymol-path=', None, 'PYMOL_PATH'),
         ('bundled-pmw', None, 'install bundled Pmw module'),
         ('no-launcher', None, 'skip installation of the pymol launcher'),
-        ]
+    ]
 
     def finalize_options(self):
         install.finalize_options(self)
@@ -163,7 +171,8 @@ class install_pymol(install):
         self.pymol_path_is_default = self.pymol_path is None
 
         if self.pymol_path is None:
-            self.pymol_path = os.path.join(self.install_libbase, 'pymol', 'pymol_path')
+            self.pymol_path = os.path.join(
+                self.install_libbase, 'pymol', 'pymol_path')
         elif self.root is not None:
             self.pymol_path = change_root(self.root, self.pymol_path)
 
@@ -176,7 +185,7 @@ class install_pymol(install):
 
         if self.bundled_pmw:
             raise Exception('--bundled-pmw has been removed, please install Pmw from '
-                    'https://github.com/schrodinger/pmw-patched')
+                            'https://github.com/schrodinger/pmw-patched')
 
     def unchroot(self, name):
         if self.root is not None and name.startswith(self.root):
@@ -184,7 +193,7 @@ class install_pymol(install):
         return name
 
     def copy_tree_nosvn(self, src, dst):
-        ignore = lambda src, names: set([
+        def ignore(src, names): return set([
         ]).intersection(names)
         if os.path.exists(dst):
             shutil.rmtree(dst)
@@ -197,7 +206,7 @@ class install_pymol(install):
 
     def install_pymol_path(self):
         self.mkpath(self.pymol_path)
-        for name in [ 'LICENSE', 'data', 'test', 'examples', ]:
+        for name in ['LICENSE', 'data', 'test', 'examples', ]:
             self.copy(name, os.path.join(self.pymol_path, name))
 
         if options.openvr:
@@ -214,18 +223,21 @@ class install_pymol(install):
         launch_script = os.path.join(self.install_scripts, launch_script)
 
         python_exe = os.path.abspath(sys.executable)
-        pymol_file = self.unchroot(os.path.join(self.install_libbase, 'pymol', '__init__.py'))
+        pymol_file = self.unchroot(os.path.join(
+            self.install_libbase, 'pymol', '__init__.py'))
         pymol_path = self.unchroot(self.pymol_path)
 
         with open(launch_script, 'w') as out:
             if sys.platform.startswith('win'):
                 # paths relative to launcher, if possible
                 try:
-                    python_exe = '%~dp0\\' + os.path.relpath(python_exe, self.install_scripts)
+                    python_exe = '%~dp0\\' + \
+                        os.path.relpath(python_exe, self.install_scripts)
                 except ValueError:
                     pass
                 try:
-                    pymol_file = '%~dp0\\' + os.path.relpath(pymol_file, self.install_scripts)
+                    pymol_file = '%~dp0\\' + \
+                        os.path.relpath(pymol_file, self.install_scripts)
                 except ValueError:
                     pymol_file = os.path.abspath(pymol_file)
 
@@ -237,17 +249,18 @@ class install_pymol(install):
                 out.write('#!/bin/sh' + os.linesep)
                 if not self.pymol_path_is_default:
                     out.write(f'export PYMOL_PATH="{pymol_path}"' + os.linesep)
-                out.write('exec "%s" "%s" "$@"' % (python_exe, pymol_file) + os.linesep)
+                out.write('exec "%s" "%s" "$@"' %
+                          (python_exe, pymol_file) + os.linesep)
 
         os.chmod(launch_script, 0o755)
 
-#============================================================================
+# ============================================================================
+
 
 # should be something like (build_base + "/generated"), but that's only
 # known to build and install instances
 generated_dir = os.path.join(os.environ.get("PYMOL_BLD", "build"), "generated")
 
-import create_shadertext
 create_shadertext.create_all(generated_dir)
 
 # can be changed with environment variable PREFIX_PATH
@@ -358,51 +371,50 @@ if options.openvr:
 
 inc_dirs += pymol_src_dirs
 
-#============================================================================
+# ============================================================================
 if MAC:
-        libs += ["GLEW"]
-        def_macros += [("PYMOL_CURVE_VALIDATE", None)]
+    libs += ["GLEW"]
+    def_macros += [("PYMOL_CURVE_VALIDATE", None)]
 
-        if options.osx_frameworks:
-            ext_link_args += [
-                "-framework", "OpenGL",
-            ] + (not options.no_glut) * [
-                "-framework", "GLUT",
-            ]
-            def_macros += [
-                ("_PYMOL_OSX", None),
-            ]
-        else:
-            libs += [
-                "GL",
-            ] + (not options.no_glut) * [
-                "glut",
-            ]
+    if options.osx_frameworks:
+        ext_link_args += [
+            "-framework", "OpenGL",
+        ] + (not options.no_glut) * [
+            "-framework", "GLUT",
+        ]
+        def_macros += [
+            ("_PYMOL_OSX", None),
+        ]
+    else:
+        libs += [
+            "GL",
+        ] + (not options.no_glut) * [
+            "glut",
+        ]
 
 if WIN:
-        # clear
-        libs = []
+    # clear
+    libs = []
 
-        def_macros += [
-            ("WIN32", None),
-        ]
+    def_macros += [
+        ("WIN32", None),
+    ]
 
+    libs += [
+        "Advapi32",  # Registry (RegCloseKey etc.)
+        "Ws2_32",   # htonl
+    ]
+
+    if True:
         libs += [
-            "Advapi32", # Registry (RegCloseKey etc.)
-            "Ws2_32",   # htonl
+            "glew32",
+            "freetype",
+            "libpng",
+        ] + (not options.no_glut) * [
+            "freeglut",
+        ] + (not options.no_libxml) * [
+            "libxml2",
         ]
-
-        if True:
-
-            libs += [
-                "glew32",
-                "freetype",
-                "libpng",
-            ] + (not options.no_glut) * [
-                "freeglut",
-            ] + (not options.no_libxml) * [
-                "libxml2",
-            ]
 
         if DEBUG:
             ext_comp_args += ['/Z7']
@@ -413,16 +425,17 @@ if WIN:
         ]
 
 if not (MAC or WIN):
-        libs += [
-            "GL",
-            "GLEW",
-        ] + (not options.no_glut) * [
-            "glut",
-        ]
+    libs += [
+        "GL",
+        "GLEW",
+    ] + (not options.no_glut) * [
+        "glut",
+    ]
 
 if options.use_vtkm != "no":
     for prefix in prefix_path:
-        vtkm_inc_dir = os.path.join(prefix, "include", f"vtkm-{options.use_vtkm}")
+        vtkm_inc_dir = os.path.join(
+            prefix, "include", f"vtkm-{options.use_vtkm}")
         if os.path.exists(vtkm_inc_dir):
             break
     else:
@@ -470,10 +483,12 @@ if True:
 if True:
     for prefix in prefix_path:
         for dirs, suffixes in [
-                [inc_dirs, [("include",), ("include", "freetype2"), ("include", "libxml2"), ("include", "openvr")]],
+                [inc_dirs, [("include",), ("include", "freetype2"),
+                            ("include", "libxml2"), ("include", "openvr")]],
                 [lib_dirs, [("lib64",), ("lib",)]],
-                ]:
-            dirs.extend(filter(os.path.isdir, [os.path.join(prefix, *s) for s in suffixes]))
+        ]:
+            dirs.extend(
+                filter(os.path.isdir, [os.path.join(prefix, *s) for s in suffixes]))
 
 if True:
     # optimization currently causes a clang segfault on OS X 10.9 when
@@ -481,11 +496,14 @@ if True:
     if sys.platform == 'darwin':
         ext_comp_args += ["-fno-strict-aliasing"]
 
+
 def get_pymol_version():
     return re.findall(r'_PyMOL_VERSION "(.*)"', open('layer0/Version.h').read())[0]
 
+
 def get_sources(subdirs, suffixes=('.c', '.cpp')):
-    return sorted([f for d in subdirs for s in suffixes for f in glob(d + '/*' + s)])
+    return sorted([f for d in subdirs for s in suffixes for f in glob.glob(d + '/*' + s)])
+
 
 def get_packages(base, parent='', r=None):
     from os.path import join, exists
@@ -498,48 +516,49 @@ def get_packages(base, parent='', r=None):
             get_packages(base, join(parent, name), r)
     return r
 
+
 package_dir = dict((x, os.path.join(base, x))
-        for base in ['modules']
-        for x in get_packages(base))
+                   for base in ['modules']
+                   for x in get_packages(base))
 
 ext_modules += [
     Extension("pymol._cmd",
               get_sources(pymol_src_dirs),
-              include_dirs = inc_dirs,
-              libraries = libs,
-              library_dirs = lib_dirs,
-              define_macros = def_macros,
-              extra_link_args = ext_link_args,
-              extra_compile_args = ext_comp_args,
-              extra_objects = ext_objects,
-    ),
+              include_dirs=inc_dirs,
+              libraries=libs,
+              library_dirs=lib_dirs,
+              define_macros=def_macros,
+              extra_link_args=ext_link_args,
+              extra_compile_args=ext_comp_args,
+              extra_objects=ext_objects,
+              ),
 
     Extension("chempy.champ._champ",
-        get_sources(['contrib/champ']),
-        include_dirs=["contrib/champ"],
-    ),
+              get_sources(['contrib/champ']),
+              include_dirs=["contrib/champ"],
+              ),
 ]
 
-distribution = setup ( # Distribution meta-data
-    cmdclass  = {
+distribution = setup(  # Distribution meta-data
+    cmdclass={
         'build_ext': build_ext_pymol,
         'build_py': build_py_pymol,
         'install': install_pymol,
     },
-    name      = "pymol",
-    version   = get_pymol_version(),
-    author    = "Schrodinger",
-    url       = "http://pymol.org",
-    contact   = "pymol-users@lists.sourceforge.net",
-    description = ("PyMOL is a Python-enhanced molecular graphics tool. "
-        "It excels at 3D visualization of proteins, small molecules, density, "
-        "surfaces, and trajectories. It also includes molecular editing, "
-        "ray tracing, and movies. Open Source PyMOL is free to everyone!"),
+    name="pymol",
+    version=get_pymol_version(),
+    author="Schrodinger",
+    url="http://pymol.org",
+    contact="pymol-users@lists.sourceforge.net",
+    description=("PyMOL is a Python-enhanced molecular graphics tool. "
+                 "It excels at 3D visualization of proteins, small molecules, density, "
+                 "surfaces, and trajectories. It also includes molecular editing, "
+                 "ray tracing, and movies. Open Source PyMOL is free to everyone!"),
 
-    package_dir = package_dir,
-    packages = list(package_dir),
-    package_data = {'pmg_qt': ['forms/*.ui']},
+    package_dir=package_dir,
+    packages=list(package_dir),
+    package_data={'pmg_qt': ['forms/*.ui']},
 
-    ext_modules = ext_modules,
-    data_files  = data_files,
+    ext_modules=ext_modules,
+    data_files=data_files,
 )
