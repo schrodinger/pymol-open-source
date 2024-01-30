@@ -406,7 +406,7 @@ std::unique_ptr<pymol::Image> MyPNGRead(const char *file_name)
   }
 
   if(ok) {
-    ret = png_check_sig(buf, 8);
+    ret = !png_sig_cmp(buf, 0, 8);
     if(!ret)
       ok = false;
   }
