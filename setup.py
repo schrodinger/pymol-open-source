@@ -423,6 +423,8 @@ if WIN:
         libs += [
             "opengl32",
         ]
+    # TODO: Remove when we move to setup-CMake
+    ext_comp_args += ["/std:c++17"]
 
 if not (MAC or WIN):
     libs += [
