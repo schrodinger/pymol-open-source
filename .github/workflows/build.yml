@@ -37,7 +37,6 @@ jobs:
 
     - name: Get additional sources
       run: |
-        git clone --depth 1 https://github.com/schrodinger/pymol-testing.git
         git clone --depth 1 https://github.com/rcsb/mmtf-cpp.git
         cp -R mmtf-cpp/include/mmtf* include/
 
@@ -49,4 +48,4 @@ jobs:
 
     - name: Test
       run: |
-        ./install-prefix/bin/pymol -ckqy pymol-testing/testing.py --run all
+        ./install-prefix/bin/pymol -ckqy testing/testing.py --run all
