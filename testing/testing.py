@@ -104,8 +104,10 @@ else:
     parser.add_argument('filenames', nargs='*', default=[])
     parser.add_argument('--out', default=sys.stdout)
     parser.add_argument('--offline', action='store_true')
-    parser.add_argument('--no-mmlibs', action='store_true')
-    parser.add_argument('--no-undo', action='store_true')
+    parser.add_argument('--no-mmlibs', action='store_true', default=True)
+    parser.add_argument('--with-mmlibs', action='store_false', dest='no_mmlibs')
+    parser.add_argument('--no-undo', action='store_true', default=True)
+    parser.add_argument('--with-undo', action='store_false', dest='no_undo')
     parser.add_argument('--verbosity', type=int, default=2)
 
     have_dash_dash = __file__.startswith(sys.argv[0]) or '--run' in sys.argv
@@ -377,8 +379,6 @@ else:
             assertEquals = unittest.TestCase.assertEqual
             assertItemsEqual = unittest.TestCase.assertCountEqual
 
-        moddirs = {}
-
         def setUp(self):
             self.oldcwd = os.getcwd()
             cmd.reinitialize()
@@ -387,7 +387,7 @@ else:
             if cliargs.no_undo:
                 cmd.set('suspend_undo', updates=0)
 
-            cwd = self.moddirs[type(self).__module__]
+            cwd = os.path.dirname(inspect.getfile(type(self)))
             os.chdir(cwd)
 
             cmd.feedback('push')
@@ -679,7 +679,6 @@ USAGE
 
             # hacky: register working directory with test cases
             dirname = os.path.abspath(os.path.dirname(filename))
-            PyMOLTestCase.moddirs[mod.__name__] = dirname
 
             suite.addTest(unittest.defaultTestLoader
                     .loadTestsFromModule(mod))
