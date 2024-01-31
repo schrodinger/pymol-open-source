@@ -1,0 +1,135 @@
+#------------------------------------------------------------------------------
+#$Date: 2015-05-01 08:48:03 +0000 (Fri, 01 May 2015) $
+#$Revision: 135472 $
+#$URL: file:///home/coder/svn-repositories/cod/cif/1/51/91/1519159.cif $
+#------------------------------------------------------------------------------
+#
+# This file is available in the Crystallography Open Database (COD),
+# http://www.crystallography.net/
+#
+# All data on this site have been placed in the public domain by the
+# contributors.
+#
+data_1519159
+_publ_author_name                'Acharya, K.R.'
+_publ_section_title
+;
+ Crystal structure of 6-[(1-methyl-4-nitroimidazol-5-yl)thio] purine
+;
+_journal_issue                   2
+_journal_name_full
+'Proceedings of the Indian Academy of Sciences - Chemical Sciences'
+_journal_page_first              183
+_journal_page_last               187
+_journal_paper_doi               10.1007/BF02842141
+_journal_volume                  93
+_journal_year                    1984
+_chemical_formula_moiety         'C9 H7 N7 O2 S'
+_chemical_formula_sum            'C9 H7 N7 O2 S'
+_chemical_name_common            Azathioprine
+_chemical_name_systematic
+6-[(1-Methyl-4-nitro-1H-imidazol-5-yl)sulfanyl]-1H-purine
+_space_group_IT_number           14
+_symmetry_cell_setting           monoclinic
+_symmetry_Int_Tables_number      14
+_symmetry_space_group_name_Hall  '-P 2ybc'
+_symmetry_space_group_name_H-M   'P 1 21/c 1'
+_cell_angle_alpha                90
+_cell_angle_beta                 105.99000
+_cell_angle_gamma                90
+_cell_formula_units_Z            4
+_cell_length_a                   4.488(2)
+_cell_length_b                   31.886(4)
+_cell_length_c                   8.067(2)
+_cell_measurement_reflns_used    20
+_cell_measurement_temperature    413
+_cell_measurement_theta_max      26
+_cell_measurement_theta_min      12
+_cell_volume                     1109.8(6)
+_citation_author_name            'Acharya, K.R.'
+_diffrn_radiation_probe          x-ray
+_[local]_cod_data_source_file    Azathioprine1984
+_[local]_cod_data_source_block   Azathioprine
+_[local]_cod_cif_authors_sg_H-M  'P 21/c'
+_cod_original_cell_volume        1149.5
+_cod_database_code               1519159
+loop_
+_chemical_conn_bond_atom_1
+_chemical_conn_bond_atom_2
+_chemical_conn_bond_type
+1 8 sing
+1 14 sing
+2 3 doub
+2 8 sing
+3 4 sing
+3 5 sing
+5 6 doub
+6 7 sing
+6 12 sing
+7 8 doub
+7 9 sing
+8 1 sing
+9 10 doub
+10 11 sing
+10 12 sing
+12 13 sing
+14 15 doub
+14 19 sing
+15 16 sing
+15 24 sing
+16 17 doub
+17 18 sing
+17 19 sing
+19 20 sing
+20 21 sing
+20 22 sing
+20 23 sing
+24 25 doub
+24 26 doub
+20 21 sing
+20 22 sing
+20 23 sing
+16 17 doub
+17 19 sing
+14 15 doub
+loop_
+_symmetry_equiv_pos_as_xyz
+'x, y, z'
+'-x, -y, -z'
+'-x, y+1/2, -z+1/2'
+'x, -y+1/2, z+1/2'
+loop_
+_atom_site_label
+_atom_site_chemical_conn_number
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_adp_type
+_atom_site_B_iso_or_equiv
+_atom_site_type_symbol
+S1 1 0.540(1) 0.3863(1) 0.4318(6) Bani 3.3(5) S
+N2 2 0.353(3) 0.3885(4) 0.723(2) Bani 2.1(5) N
+C3 3 0.315(4) 0.4101(4) 0.856(2) Bani 2.1(5) C
+H3 4 0.25(3) 0.385(4) 0.96(2) Biso 2.8000 H
+N4 5 0.422(3) 0.4466(4) 0.915(1) Bani 2.0(6) N
+C5 6 0.575(3) 0.4655(5) 0.810(2) Bani 2.4(5) C
+C6 7 0.636(3) 0.4462(5) 0.667(1) Bani 2.4(5) C
+C7 8 0.510(3) 0.4086(5) 0.628(2) Bani 2.5(4) C
+N8 9 0.796(3) 0.4711(3) 0.587(2) Bani 2.2(3) N
+C9 10 0.837(3) 0.5039(5) 0.684(2) Bani 2.6(3) C
+H9 11 0.97(3) 0.537(4) 0.66(2) Biso 3.2000 H
+N10 12 0.711(3) 0.5005(3) 0.822(1) Bani 3.0(3) N
+H10 13 0.64(3) 0.515(4) 0.87(2) Biso 3.7000 H
+C11 14 0.382(4) 0.3377(5) 0.442(2) Bani 3.3(5) C
+C12 15 0.144(5) 0.3168(6) 0.334(2) Bani 2.5000 C
+N13 16 0.118(5) 0.2780(5) 0.373(3) Bani 2.7000 N
+C14 17 0.351(7) 0.2754(7) 0.512(3) Bani 3.6(5) C
+H14 18 0.44(3) 0.246(4) 0.59(2) Biso 4.6000 H
+N15 19 0.530(4) 0.3086(4) 0.559(2) Bani 2.9(6) N
+C16 20 0.797(5) 0.3125(5) 0.710(2) Bani 3.4(5) C
+H16a 21 0.73(3) 0.336(4) 0.82(2) Biso 4.2000 H
+H16b 22 0.82(3) 0.281(4) 0.73(2) Biso 4.2000 H
+H16c 23 0.94(3) 0.345(5) 0.68(2) Biso 4.2000 H
+N17 24 -0.082(4) 0.3350(5) 0.185(2) Bani 3.2(6) N
+O18 25 -0.036(3) 0.3696(4) 0.136(2) Bani 3.7(3) O
+O19 26 -0.316(4) 0.3156(5) 0.119(2) Bani 3.5(3) O

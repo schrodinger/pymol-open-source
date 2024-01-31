@@ -1,0 +1,14 @@
+data_FE
+_chem_comp_atom.comp_id                    FE
+_chem_comp_atom.atom_id                    FE
+_chem_comp_atom.type_symbol                FE
+_chem_comp_atom.charge                     3
+_chem_comp_atom.model_Cartn_x              1.000
+_chem_comp_atom.model_Cartn_y              2.000
+_chem_comp_atom.model_Cartn_z              3.000
+_chem_comp_atom.pdbx_model_Cartn_x_ideal   4.000
+_chem_comp_atom.pdbx_model_Cartn_y_ideal   5.000
+_chem_comp_atom.pdbx_model_Cartn_z_ideal   6.000
+_chem_comp_atom.x 7.000
+_chem_comp_atom.y 8.000
+_chem_comp_atom.z 9.000

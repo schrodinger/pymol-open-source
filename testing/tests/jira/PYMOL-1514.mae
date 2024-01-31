@@ -1,0 +1,58 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ s_m_source_file
+ i_m_source_file_index
+ i_m_ct_format
+ :::
+ x 
+  2 
+  x.1 
+  /tmp/x.pdb 
+  1
+  2
+ m_atom[4] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  s_m_mmod_res
+  i_m_color
+  s_m_pdb_residue_name
+  s_m_pdb_atom_name
+  i_m_atomic_number
+  i_m_formal_charge
+  s_m_color_rgb
+  i_m_secondary_structure
+  r_m_pdb_tfactor
+  r_m_pdb_occupancy
+  i_pdb_PDB_serial
+  :::
+  1 35 -1.195000 0.201000 -0.206000 22 G 38 "GLY " " N  " 7 1 2F2FFF  0 -1 1 1
+  2 5 0.230000 0.318000 -0.502000 22 G 2 "GLY " " CA " 6 0 A0A0A0  0 -1.0 1 2
+  3 7 1.059000 -0.390000 0.542000 22 G 2 "GLY " " C  " 6 0 A0A0A0  0 -2.3 1 3
+  4 15 0.545000 -0.975000 1.499000 22 G 75 "GLY " " O  " 8 0 FF5757  0 2.86 1 4
+  :::
+ } 
+ m_bond[3] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 2 3 1
+  3 3 4 2
+  :::
+ } 
+} 
+

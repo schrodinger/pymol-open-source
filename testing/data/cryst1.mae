@@ -1,0 +1,75 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ r_pdb_PDB_CRYST1_a
+ r_pdb_PDB_CRYST1_b
+ r_pdb_PDB_CRYST1_c
+ r_pdb_PDB_CRYST1_alpha
+ r_pdb_PDB_CRYST1_beta
+ r_pdb_PDB_CRYST1_gamma
+ s_pdb_PDB_CRYST1_Space_Group
+ i_pdb_PDB_CRYST1_z
+ i_m_ct_format
+ :::
+  50.84
+  42.77
+  28.95
+  90
+  90
+  90
+  "P 21 21 21" 
+  4
+  2
+ m_atom[9] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  s_m_mmod_res
+  s_m_chain_name
+  i_m_color
+  s_m_pdb_residue_name
+  s_m_pdb_atom_name
+  i_m_atomic_number
+  i_m_formal_charge
+  s_m_color_rgb
+  i_m_secondary_structure
+  r_m_pdb_occupancy
+  r_m_pdb_tfactor
+  i_pdb_PDB_serial
+  :::
+  1 35 19.810000 29.378000 18.578000 46 A A 38 "ALA " " N  " 7 1 2E2EFF  0 1 6.53 1
+  2 4 18.443000 29.143000 19.083000 46 A A 24 "ALA " " CA " 6 0 808080  0 1 7.15 2
+  3 2 18.453000 28.941000 20.591000 46 A A 24 "ALA " " C  " 6 0 808080  0 1 9 3
+  4 15 17.860000 27.994000 21.128000 46 A A 70 "ALA " " O  " 8 0 FF2E2E  0 1 11.15 4
+  5 6 17.864000 27.977000 18.346000 46 A A 24 "ALA " " CB " 6 0 808080  0 1 8.99 5
+  6 29 19.172000 29.808000 21.243000 47 G A 38 "GLY " " N  " 7 0 2E2EFF  0 1 9.35 6
+  7 5 19.399000 29.894000 22.655000 47 G A 24 "GLY " " CA " 6 0 808080  0 1 11.68 7
+  8 7 20.083000 28.729000 23.321000 47 G A 24 "GLY " " C  " 6 0 808080  0 1 11.14 8
+  9 15 19.991000 28.584000 24.561000 47 G A 70 "GLY " " O  " 8 0 FF2E2E  0 1 13.93 9
+  :::
+ } 
+ m_bond[8] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 2 3 1
+  3 2 5 1
+  4 3 4 2
+  5 3 6 1
+  6 6 7 1
+  7 7 8 1
+  8 8 9 2
+  :::
+ } 
+} 
+
