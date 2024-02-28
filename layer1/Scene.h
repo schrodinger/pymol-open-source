@@ -317,7 +317,16 @@ void UpdateFrontBackSafe(CScene *I);
 int stereo_via_adjacent_array(int stereo_mode);
 
 std::shared_ptr<pymol::Image> SceneGetSharedImage(PyMOLGlobals* G);
-int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int antialias);
+
+/**
+ * Creates a sized image of the current workspace
+ * @width width of the image
+ * @height height of the image
+ * @antialias antialiasing level
+ * @excludeSelections exclude selections from the image
+*/
+int SceneMakeSizedImage(PyMOLGlobals* G, int width, int height, int antialias,
+    bool excludeSelections);
 
 void SceneSetViewport(PyMOLGlobals* G, const Rect2D& rect);
 void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height);

@@ -38,6 +38,7 @@ struct SceneRenderInfo
   Extent2D oversizeExtent{};
   ClickSide clickSide = ClickSide::None;
   bool forceCopy = false;
+  bool excludeSelections = false;
 };
 
 void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo);

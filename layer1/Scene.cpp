@@ -1527,7 +1527,8 @@ int SceneCaptureWindow(PyMOLGlobals * G)
   return ok;
 }
 
-int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int antialias)
+int SceneMakeSizedImage(PyMOLGlobals* G, int width, int height, int antialias,
+    bool excludeSelections)
 {
   CScene *I = G->Scene;
   int ok = true;
@@ -1666,6 +1667,7 @@ int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int antialias)
             renderInfo.oversizeExtent =
                 Extent2D{static_cast<std::uint32_t>(width),
                     static_cast<std::uint32_t>(height)};
+            renderInfo.excludeSelections = excludeSelections;
             SceneRender(G, renderInfo);
             SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -2260,7 +2262,8 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
              nullptr, nullptr, 0.0F, 0.0F, false, nullptr, show_timing, -1);
     break;
   case cSceneImage_Draw:
-    SceneMakeSizedImage(G, width, height, SettingGetGlobal_i(G, cSetting_antialias));
+    SceneMakeSizedImage(G, width, height,
+        SettingGetGlobal_i(G, cSetting_antialias), /*excludeSelections*/ false);
     break;
   case cSceneImage_Normal:
     {
@@ -3994,7 +3997,7 @@ static void SceneImage(PyMOLGlobals* G, int width, int height, int antialias,
     float dpi, int format, bool quiet, pymol::Image* out_img,
     const std::string& filename)
 {
-  SceneMakeSizedImage(G, width, height, antialias);
+  SceneMakeSizedImage(G, width, height, antialias, /*excludeSelecions*/ true);
   if (!filename.empty()) {
     ScenePNG(G, filename.c_str(), dpi, quiet, false, format, nullptr);
   } else if (out_img) {
@@ -4803,7 +4806,7 @@ int SceneRenderCached(PyMOLGlobals * G)
       SceneRay(G, 0, 0, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
                nullptr, nullptr, 0.0F, 0.0F, false, nullptr, true, -1);
     } else if((moviePlaying && SettingGetGlobal_b(G, cSetting_draw_frames)) || (draw_mode == 2)) {
-      SceneMakeSizedImage(G, 0, 0, SettingGetGlobal_i(G, cSetting_antialias));
+      SceneMakeSizedImage(G, 0, 0, SettingGetGlobal_i(G, cSetting_antialias), /*excludeSelections*/ false);
     } else if(I->CopyType == true) {    /* true vs. 2 */
       renderedFlag = true;
     } else {

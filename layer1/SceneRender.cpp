@@ -39,7 +39,7 @@ static void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
     const Offset2D& pos, const Extent2D& oversizeExtent,
     int stereo_double_pump_mono, int curState, float* normal,
     SceneUnitContext* context, float width_scale, int fog_active,
-    bool onlySelections, bool noAA);
+    bool onlySelections, bool noAA, bool excludeSelections);
 
 static void SceneRenderAA(PyMOLGlobals* G);
 
@@ -476,7 +476,7 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
       SceneRenderStereoLoop(G, times, must_render_stereo, stereo_mode,
           render_to_texture_for_pp, renderInfo.mousePos,
           renderInfo.oversizeExtent, stereo_double_pump_mono, curState, normal,
-          &context, width_scale, fog_active, onlySelections, postprocessOnce);
+          &context, width_scale, fog_active, onlySelections, postprocessOnce, renderInfo.excludeSelections);
 
       if (render_to_texture_for_pp) {
         /* BEGIN rendering the selection markers, should we put all of this into
@@ -496,7 +496,7 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
         SceneRenderStereoLoop(G, times, must_render_stereo, stereo_mode,
             renderToTexture, renderInfo.mousePos, renderInfo.oversizeExtent,
             stereo_double_pump_mono, curState, normal, &context, width_scale,
-            fog_active, onlySelections, postprocessOnce);
+            fog_active, onlySelections, postprocessOnce, renderInfo.excludeSelections);
       }
 
 #ifndef PURE_OPENGL_ES_2
@@ -1130,7 +1130,7 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
     const Offset2D& pos, const Extent2D& oversizeExtent,
     int stereo_double_pump_mono, int curState, float* normal,
     SceneUnitContext* context, float width_scale, int fog_active,
-    bool onlySelections, bool offscreenPrepared)
+    bool onlySelections, bool offscreenPrepared, bool excludeSelections)
 {
   CScene* I = G->Scene;
   int times = timesArg;
@@ -1179,7 +1179,7 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
 #endif
       ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 1, stereo_mode);
       DoRendering(G, I, &I->grid, times, curState, normal, context, width_scale,
-          onlySelections, render_to_texture);
+          onlySelections, render_to_texture || excludeSelections);
 
 #ifndef PURE_OPENGL_ES_2
       if (use_shaders)
@@ -1228,7 +1228,7 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
       ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 2, stereo_mode);
       glClear(GL_DEPTH_BUFFER_BIT);
       DoRendering(G, I, &I->grid, times, curState, normal, context, width_scale,
-          onlySelections, render_to_texture);
+          onlySelections, render_to_texture || excludeSelections);
       if (anaglyph) {
         G->ShaderMgr->stereo_flag = 0;
         G->ShaderMgr->stereo_blend = 0;
@@ -1272,7 +1272,7 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
           PrepareViewPortForMonoInitializeViewPort, times, pos, oversizeExtent,
           stereo_mode, width_scale);
       DoRendering(G, I, &I->grid, times, curState, normal, context, width_scale,
-          onlySelections, render_to_texture);
+          onlySelections, render_to_texture || excludeSelections);
       if (Feedback(G, FB_OpenGL, FB_Debugging))
         PyMOLCheckOpenGLErr("during mono rendering");
     }
