@@ -8056,8 +8056,8 @@ static void ExecutiveRegenerateTextureForSelector(PyMOLGlobals *G, int round_poi
       //      printf("\n");
     }
   }
-  glTexSubImage2D(GL_TEXTURE_2D, 0, I->selectorTexturePosX, I->selectorTexturePosY,
-		  widths_arg[0], widths_arg[0], GL_RGBA, GL_UNSIGNED_BYTE, temp_buffer);  
+  TextureFillNewSubtexture(G, widths_arg[0], widths_arg[0],
+    I->selectorTexturePosX, I->selectorTexturePosY, temp_buffer);
   FreeP(temp_buffer);
 }
 

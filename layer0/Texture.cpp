@@ -260,6 +260,14 @@ void TextureGetPlacementForNewSubtexture(PyMOLGlobals * G, int new_texture_width
   I->xpos += new_texture_width + 1; // added space for running on Ipad/Iphone (weird artifacts)
 }
 
+void TextureFillNewSubtexture(PyMOLGlobals* G, int width, int height, int x, int y, const void* data)
+{
+  CTexture *I = G->Texture;
+  if (I->texture) {
+    I->texture->texture_subdata_2D(x, y, width, height, data);
+  }
+}
+
 void TextureFree(PyMOLGlobals * G)
 {
   /* TODO -- free all the resident textures */
