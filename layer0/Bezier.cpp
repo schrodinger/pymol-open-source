@@ -2,6 +2,7 @@
 
 #include "pymol/algorithm.h"
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/io.hpp>
 
 namespace pymol
