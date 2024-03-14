@@ -867,7 +867,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.cmd.cd(dname or '.', quiet=0)
 
     def confirm_quit(self):
-        QtWidgets.qApp.quit()
+        QtWidgets.QApplication.instance().quit()
 
     def settings_edit_all_dialog(self):
         from .advanced_settings_gui import PyMOLAdvancedSettings
