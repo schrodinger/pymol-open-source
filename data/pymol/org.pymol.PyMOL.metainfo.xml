@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+ <id>org.pymol.PyMOL</id>
+ <launchable type="desktop-id">org.pymol.PyMOL.desktop</launchable>
+ <metadata_license>CC0-1.0</metadata_license>
+ <project_license>Python-2.0</project_license>
+ <name>Python Molecular Graphics</name>
+ <summary>Molecular visualization and raytracing</summary>
+ <description>
+   <p>
+     PyMOL is one of a few open-source visualization tools available
+     for use in structural biology. The Py portion of the software's
+     name refers to the fact that it extends, and is extensible by the
+     Python programming language.
+   </p>
+   <p>
+     PyMOL has the ability to load, manipulate and visualize molecules
+     from a variety of formats and sources.  The program can easily be
+     controlled using a menu-driven GUI, or from a large number of
+     commands and/or scripts.  A built-in raytracer is available to
+     generate high-quality images of the views generated in the GL
+     portion of the GUI.
+   </p>
+   <p>
+     PyMOL uses OpenGL Extension Wrangler Library (GLEW) and Freeglut,
+     and can solve Poisson–Boltzmann equations using the Adaptive
+     Poisson Boltzmann Solver (apbs).
+  </p>
+  <p>
+    Install this application to view, analyze, and prepare graphics
+    images of proteins and experimental strucural data
+    (e.g. crystallographic, NMR and electron microscopy based).
+  </p>
+ </description>
+ <screenshots>
+   <screenshot type="default">
+     <image>https://upload.wikimedia.org/wikipedia/commons/3/36/PyMOL_large.png</image>
+     <caption>Main PyMOL instance with viewer and object window</caption>
+  </screenshot>
+  <screenshot>
+    <image>http://www.pymolwiki.org/images/e/ee/Pocket.png</image>
+    <caption>Representation of a binding pocket in a protein</caption>
+  </screenshot>
+  <screenshot>
+   <image>http://www.pymolwiki.org/images/1/18/Cool.png</image>
+   <caption>A stylized rendering of a protein</caption>
+  </screenshot>
+ </screenshots>
+ <url type="homepage">https://www.pymol.org/</url>
+ <url type="help">https://pymol.org/2/support.html?</url>
+ <url type="bugtracker">https://github.com/schrodinger/pymol-open-source/issues</url>
+ <content_rating type="oars-1.1"/>
+ <releases>
+     <release version="2.5.0." date="2021-05-10">
+     </release>    
+ </releases>
+</component>
