@@ -1,0 +1,1405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>530</width>
+    <height>654</height>
+   </rect>
+  </property>
+  <property name="baseSize">
+   <size>
+    <width>200</width>
+    <height>200</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string notr="true">APBS Electrostatics</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QScrollArea" name="scrollArea">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QWidget[transparent_background=true] {background-color:transparent}</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <property name="transparent_background" stdset="0">
+       <bool>true</bool>
+      </property>
+      <attribute name="title">
+       <string notr="true">Main</string>
+      </attribute>
+      <widget class="QWidget" name="scrollAreaWidgetContents">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>485</width>
+         <height>965</height>
+        </rect>
+       </property>
+       <property name="transparent_background" stdset="0">
+        <bool>true</bool>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_16">
+        <property name="leftMargin">
+         <number>10</number>
+        </property>
+        <property name="topMargin">
+         <number>12</number>
+        </property>
+        <property name="rightMargin">
+         <number>10</number>
+        </property>
+        <property name="bottomMargin">
+         <number>10</number>
+        </property>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string notr="true">Selection:</string>
+            </property>
+            <property name="buddy">
+             <cstring>input_sele</cstring>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="input_sele">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="editable">
+             <bool>true</bool>
+            </property>
+            <item>
+             <property name="text">
+              <string notr="true">polymer</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_sele_has">
+          <property name="font">
+           <font>
+            <italic>true</italic>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background: #f66; padding: 5;</string>
+          </property>
+          <property name="text">
+           <string notr="true">Selection has ...</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="groupBox">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout">
+             <item>
+              <widget class="QCheckBox" name="do_prepare">
+               <property name="toolTip">
+                <string notr="true">uncheck if the selected molecule already has partial charges and radii (&quot;elec_radius&quot; property) assigned, e.g. if you have loaded a PQR file</string>
+               </property>
+               <property name="text">
+                <string notr="true">Prepare Molecule</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="optbutton_prepare">
+               <property name="text">
+                <string notr="true">Options &gt;&gt;</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QWidget" name="optarea_prep" native="true">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <layout class="QGridLayout" name="gridLayout">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetDefaultConstraint</enum>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string notr="true">Method:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>prep_method</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1" colspan="2">
+               <widget class="QComboBox" name="prep_method">
+                <item>
+                 <property name="text">
+                  <string notr="true">pdb2pqr</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string notr="true" comment="what's disambiguation?" extracomment="prepwizard adds hydrogens and missing sidechain atoms, and assigns partial charges. PyMOL's vdw radii will be used. Requires Schrodinger Suite.">prepwizard (SCHRODINGER)</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string notr="true">protein_assign_charges_and_radii</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string notr="true">use formal_charge and vdw</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string notr="true">use CB-pseudocharge and vdw</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string notr="true">use CA-pseudocharge and radius=3.0</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string notr="true">use vdw</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <spacer name="horizontalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="2" column="2" colspan="2">
+               <widget class="QLineEdit" name="prep_name">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="placeholderText">
+                 <string notr="true">prepared</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0" colspan="2">
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string notr="true">Output Molecule Object:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>prep_name</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0" colspan="4">
+               <widget class="QStackedWidget" name="stackedWidget">
+                <property name="currentIndex">
+                 <number>0</number>
+                </property>
+                <widget class="QWidget" name="widget_2">
+                 <layout class="QVBoxLayout" name="verticalLayout_8">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_21">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string notr="true">&quot;pdb2pqr&quot; adds hydrogens and missing sidechain atoms, assigns partial charges and radii. REMOVES ligands and modified residues.</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                    </property>
+                    <property name="wordWrap">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="pdb2pqr_ignore_warnings">
+                    <property name="text">
+                     <string notr="true">Ignore warnings</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="widget">
+                 <layout class="QVBoxLayout" name="verticalLayout_9">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_22">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string notr="true">&quot;prepwizard&quot; adds hydrogens and missing sidechain atoms, and assigns partial charges. Can handle ligands and modified residues. PyMOL's vdw radii will be used. Requires Schrodinger Suite.</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                    </property>
+                    <property name="wordWrap">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="prepwizard_args">
+                    <property name="toolTip">
+                     <string>Additional command line options for prepwizard, for example &quot;-r 2.0&quot; or &quot;-fix&quot;</string>
+                    </property>
+                    <property name="placeholderText">
+                     <string notr="true">extra command line options</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="page_3">
+                 <layout class="QVBoxLayout" name="verticalLayout_10">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_23">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string notr="true">&quot;protein_assign_charges_and_radii&quot; REMOVES incomplete or modified residues, adds missing C-terminus, and assigns AMBER99 partial charges and radii</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                    </property>
+                    <property name="wordWrap">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="page_4">
+                 <layout class="QVBoxLayout" name="verticalLayout_11">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_24">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string notr="true">Coarse grained charge model: use formal charges (-1/0/1) and PyMOL's vdw radii. Note that missing sidechains of charged residues (e.g. GLU) will not contribute any charge!</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                    </property>
+                    <property name="wordWrap">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="page">
+                 <layout class="QVBoxLayout" name="verticalLayout_12">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_25">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string notr="true">Coarse grained charge model for proteins with &quot;stub&quot; side chains: place a pseudo charge on the CB atom of GLU, ASP, ARG and LYS</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                    </property>
+                    <property name="wordWrap">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="page_2">
+                 <layout class="QVBoxLayout" name="verticalLayout_13">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_26">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string notr="true">Coarse grained charge model for CA-only models: place a pseudo charge on the CA atom of GLU, ASP, ARG and LYS and set a radius of 3.0 for all atoms</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                    </property>
+                    <property name="wordWrap">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="page_5">
+                 <layout class="QVBoxLayout" name="verticalLayout_14">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_27">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string notr="true">Use existing &quot;partial_charge&quot;, use vdw as &quot;elec_radius&quot;</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                    </property>
+                    <property name="wordWrap">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="groupBox_2">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <widget class="QCheckBox" name="do_apbs">
+               <property name="text">
+                <string notr="true">Calculate Map with APBS</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="optbutton_apbs">
+               <property name="text">
+                <string notr="true">Options &gt;&gt;</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QWidget" name="optarea_apbs" native="true">
+             <layout class="QGridLayout" name="gridLayout_2">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_5">
+                <property name="toolTip">
+                 <string notr="true">limit the expensive fine grid calculation to a region of interest, e.g. a binding pocket</string>
+                </property>
+                <property name="text">
+                 <string notr="true">Focus Selection (optional):</string>
+                </property>
+                <property name="buddy">
+                 <cstring>focus_sele</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="focus_sele"/>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string notr="true">Output Map Object:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>apbs_map</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QLineEdit" name="apbs_map">
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+                <property name="placeholderText">
+                 <string notr="true">apbs_map</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_20">
+                <property name="toolTip">
+                 <string notr="true">Grid spacing not guaranteed, will increase grid spacing if grid doesn't fit into memory</string>
+                </property>
+                <property name="text">
+                 <string notr="true">Grid Spacing:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>apbs_grid</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QDoubleSpinBox" name="apbs_grid">
+                <property name="toolTip">
+                 <string notr="true">Angstrom</string>
+                </property>
+                <property name="minimum">
+                 <double>0.010000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.250000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.500000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="groupBox_3">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <item>
+              <widget class="QCheckBox" name="do_surface">
+               <property name="text">
+                <string notr="true">Molecular Surface Visualization</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_3">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="optbutton_surface">
+               <property name="text">
+                <string notr="true">Options &gt;&gt;</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="flat">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QWidget" name="optarea_surf" native="true">
+             <layout class="QGridLayout" name="gridLayout_3">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string notr="true">Map:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>surf_map</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1" colspan="2">
+               <widget class="QComboBox" name="surf_map">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="editable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0" colspan="2">
+               <widget class="QLabel" name="label_9">
+                <property name="text">
+                 <string notr="true">Range: +/-</string>
+                </property>
+                <property name="buddy">
+                 <cstring>surf_range</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QDoubleSpinBox" name="surf_range">
+                <property name="value">
+                 <double>5.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0" colspan="2">
+               <widget class="QLabel" name="label_19">
+                <property name="text">
+                 <string notr="true">Output Ramp:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>surf_ramp</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QLineEdit" name="surf_ramp">
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+                <property name="placeholderText">
+                 <string notr="true">apbs_ramp</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0" colspan="3">
+               <widget class="QComboBox" name="surf_type">
+                <item>
+                 <property name="text">
+                  <string notr="true">Solvent Excluded Surface (Connolly surface)</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string notr="true">Solvent Accessible Surface</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="0" column="0" colspan="3">
+               <widget class="QLabel" name="label_15">
+                <property name="font">
+                 <font>
+                  <italic>true</italic>
+                 </font>
+                </property>
+                <property name="text">
+                 <string notr="true">Projects the electrostatic potential onto the molecular surface</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="groupBox_7">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_6">
+             <item>
+              <widget class="QLabel" name="label_4">
+               <property name="text">
+                <string notr="true">Other Visualizations</string>
+               </property>
+               <property name="buddy">
+                <cstring>optbutton_other</cstring>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_5">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="optbutton_other">
+               <property name="text">
+                <string notr="true">Options &gt;&gt;</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="flat">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QWidget" name="optarea_other" native="true">
+             <layout class="QVBoxLayout" name="verticalLayout_7">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_8">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="font">
+                 <font>
+                  <italic>true</italic>
+                 </font>
+                </property>
+                <property name="text">
+                 <string notr="true">After the map has been calculated, create additional visualizations using the &quot;Action&quot; items in the object menu panel:</string>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_10">
+                <property name="text">
+                 <string notr="true">Isosurface with &quot;A &gt; surface &gt; level +/-1.0&quot;</string>
+                </property>
+                <property name="indent">
+                 <number>10</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string notr="true">Volume with &quot;A &gt; volume &gt; esp&quot;</string>
+                </property>
+                <property name="indent">
+                 <number>10</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_16">
+                <property name="text">
+                 <string notr="true">Field lines with &quot;A &gt; gradient &gt; default&quot;</string>
+                </property>
+                <property name="indent">
+                 <number>10</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_12">
+                <property name="text">
+                 <string notr="true">Slice with &quot;A &gt; slice &gt; default&quot;</string>
+                </property>
+                <property name="indent">
+                 <number>10</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>0</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="tab_3">
+      <attribute name="title">
+       <string notr="true">APBS Template</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_15">
+       <property name="leftMargin">
+        <number>10</number>
+       </property>
+       <property name="topMargin">
+        <number>12</number>
+       </property>
+       <property name="rightMargin">
+        <number>10</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="label_11">
+         <property name="text">
+          <string notr="true">Documentation: &lt;a href=&quot;https://apbs.readthedocs.io/en/latest/using/input/elec/&quot;&gt;apbs.readthedocs.io&lt;/a&gt;</string>
+         </property>
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <item>
+          <widget class="QLabel" name="label_28">
+           <property name="text">
+            <string notr="true">Load existing &quot;apbs.in&quot; file:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="button_load">
+           <property name="text">
+            <string notr="true">Browse...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="button_reset">
+           <property name="text">
+            <string notr="true">Reset</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPlainTextEdit" name="apbs_template">
+         <property name="font">
+          <font>
+           <family>Monospace</family>
+          </font>
+         </property>
+         <property name="lineWrapMode">
+          <enum>QPlainTextEdit::NoWrap</enum>
+         </property>
+         <property name="plainText">
+          <string notr="true"/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_2">
+      <attribute name="title">
+       <string notr="true">Advanced Configuration</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_18">
+       <property name="leftMargin">
+        <number>10</number>
+       </property>
+       <property name="topMargin">
+        <number>12</number>
+       </property>
+       <property name="rightMargin">
+        <number>10</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="groupBox_5">
+         <property name="title">
+          <string notr="true">Program Locations</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_9">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_14">
+            <property name="text">
+             <string notr="true">apbs</string>
+            </property>
+            <property name="buddy">
+             <cstring>apbs_exe</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="apbs_exe"/>
+          </item>
+          <item row="0" column="2">
+           <widget class="QPushButton" name="apbs_exe_browse">
+            <property name="text">
+             <string notr="true">...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string notr="true">pdb2pqr</string>
+            </property>
+            <property name="buddy">
+             <cstring>pdb2pqr_exe</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="pdb2pqr_exe"/>
+          </item>
+          <item row="1" column="2">
+           <widget class="QPushButton" name="pdb2pqr_exe_browse">
+            <property name="text">
+             <string notr="true">...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="title">
+          <string notr="true">pdb2pqr</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_10">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_18">
+            <property name="text">
+             <string notr="true">command line options:</string>
+            </property>
+            <property name="buddy">
+             <cstring>pdb2pqr_args</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="pdb2pqr_args">
+            <property name="text">
+             <string notr="true">--ff=AMBER</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QCheckBox" name="pdb2pqr_fixrna">
+            <property name="text">
+             <string notr="true">For RNA, use residue names RA, RC, RG, RU</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_6">
+         <property name="title">
+          <string notr="true">Objects and Files</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_17">
+          <item>
+           <widget class="QCheckBox" name="check_no_group">
+            <property name="text">
+             <string notr="true">Don't group new objects</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="check_preserve">
+            <property name="text">
+             <string notr="true">Don't delete temporary files</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <item>
+      <widget class="QPushButton" name="button_register">
+       <property name="text">
+        <string notr="true">Register APBS Use</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="button_ok">
+       <property name="text">
+        <string notr="true">Run</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>input_sele</tabstop>
+  <tabstop>do_prepare</tabstop>
+  <tabstop>prep_method</tabstop>
+  <tabstop>prep_name</tabstop>
+  <tabstop>do_apbs</tabstop>
+  <tabstop>focus_sele</tabstop>
+  <tabstop>apbs_grid</tabstop>
+  <tabstop>apbs_map</tabstop>
+  <tabstop>do_surface</tabstop>
+  <tabstop>surf_map</tabstop>
+  <tabstop>surf_range</tabstop>
+  <tabstop>surf_ramp</tabstop>
+  <tabstop>surf_type</tabstop>
+  <tabstop>button_register</tabstop>
+  <tabstop>button_ok</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>apbs_exe</tabstop>
+  <tabstop>apbs_exe_browse</tabstop>
+  <tabstop>pdb2pqr_exe</tabstop>
+  <tabstop>pdb2pqr_exe_browse</tabstop>
+  <tabstop>pdb2pqr_args</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>optbutton_surface</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>optarea_surf</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>484</x>
+     <y>206</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>368</x>
+     <y>261</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>do_surface</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>optarea_surf</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>268</x>
+     <y>210</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>269</x>
+     <y>261</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>optbutton_apbs</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>optarea_apbs</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>484</x>
+     <y>51</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>320</x>
+     <y>94</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>do_apbs</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>optarea_apbs</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>229</x>
+     <y>53</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>145</x>
+     <y>94</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>optbutton_prepare</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>optarea_prep</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>484</x>
+     <y>-155</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>325</x>
+     <y>-89</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>do_prepare</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>optarea_prep</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>157</x>
+     <y>-163</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>128</x>
+     <y>-90</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>apbs_map</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>surf_map</receiver>
+   <slot>setEditText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>442</x>
+     <y>163</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>442</x>
+     <y>297</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>do_apbs</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>surf_map</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>229</x>
+     <y>53</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>442</x>
+     <y>297</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>optbutton_other</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>optarea_other</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>484</x>
+     <y>435</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>429</x>
+     <y>502</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>prep_method</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>stackedWidget</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>401</x>
+     <y>-119</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>-38</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
