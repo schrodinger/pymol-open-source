@@ -573,9 +573,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             R = form.input_R.value()
             G = form.input_G.value()
             B = form.input_B.value()
-            form.slider_R.setValue(R * 100)
-            form.slider_G.setValue(G * 100)
-            form.slider_B.setValue(B * 100)
+            form.slider_R.setValue(round(R * 100))
+            form.slider_G.setValue(round(G * 100))
+            form.slider_B.setValue(round(B * 100))
             form.frame_color.setStyleSheet(
                 "background-color: rgb(%d,%d,%d)" % (
                     R * 0xFF, G * 0xFF, B * 0xFF))
