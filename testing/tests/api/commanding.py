@@ -171,3 +171,41 @@ class TestCommanding(testing.PyMOLTestCase):
             self.assertTrue(stored.tmp)
             if mod:
                 self.assertEqual(rw, hasattr(sys.modules[mod], varname))
+
+    def test_declare_command_casting(self):
+        from pathlib import Path
+
+        @cmd.declare_command
+        def func(a: int, b: Path):
+            assert isinstance(a, int) and a == 1
+            assert isinstance(b, Path) and b == Path("/tmp")
+
+        func(1, "/tmp")
+        # cmd.do('func 1, "/tmp"')
+
+
+    def test_declare_command_bool(self):
+        @cmd.declare_command
+        def func(a: bool, b: bool):
+            assert a
+            assert not b
+
+        func("True", "no")
+        # cmd.do("func True, no")
+
+
+    def test_declare_command_default(self):
+        from pymol.commanding import Selection
+        @cmd.declare_command
+        def func(a: Selection = "sele"):
+            assert a == "a"
+
+        func("a")
+        # cmd.do("func b")
+
+
+    def test_declare_command_docstring(self):
+        @cmd.declare_command
+        def func():
+            """docstring"""
+        assert func.__doc__ == "docstring"
