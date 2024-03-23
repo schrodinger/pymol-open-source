@@ -1,20 +1,22 @@
 from . import editor
+
 cmd = __import__("sys").modules["pymol.cmd"]
 from .cmd import DEFAULT_SUCCESS, DEFAULT_ERROR
+
 
 # persistent storage between copy/paste
 class _PersistentEditing:
 
-    def __init__(self,self_cmd=cmd):
+    def __init__(self, self_cmd=cmd):
         self._cmd = self_cmd
         self._obj = None
 
     def get_clipboard_object(self):
-        '''name of the temporary persistent object'''
+        """name of the temporary persistent object"""
         return self._obj
 
-    def create_tmp(self,sel,extract):
-        '''copy or cut selection to clipboard'''
+    def create_tmp(self, sel, extract):
+        """copy or cut selection to clipboard"""
         if self._obj:
             self._cmd.delete(self._obj)
         else:
@@ -29,21 +31,23 @@ class _PersistentEditing:
         finally:
             self._cmd.set("auto_hide_selections", auto_hide_sele, updates=0)
 
+
 # user commands via keyboard
 
-_kCopy  = 0
+_kCopy = 0
 _kPaste = 1
-_kCut   = 2
+_kCut = 2
+
 
 def editing_ring(action, *, _self=cmd):
     """
-DESCRIPTION
+    DESCRIPTION
 
-    Helper function for copy/cut/paste of molecular selections.
+        Helper function for copy/cut/paste of molecular selections.
 
-ARGUMENTS
+    ARGUMENTS
 
-    action = cut/copy/paste/invert
+        action = cut/copy/paste/invert
     """
 
     space = getattr(_self, "_editing_ring_space", None)
@@ -78,7 +82,7 @@ ARGUMENTS
 
     # INVERT the current selection
     elif action == "invert":
-        _self.select(sel, 'not ' + sel)
+        _self.select(sel, "not " + sel)
 
     else:
         raise AttributeError(action)
@@ -86,6 +90,7 @@ ARGUMENTS
 
 def get_default_keys(_self=cmd):
     from pymol.shortcut_manager import shortcut_dict_ref, ShortcutIndex
+
     keys = {}
     for key in shortcut_dict_ref:
         keys[key] = shortcut_dict_ref[key][ShortcutIndex.COMMAND]

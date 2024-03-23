@@ -1,10 +1,12 @@
 """
 Testing PyQt Fab & Builder
 """
+
 from pymol import cmd, testing
 
-@testing.requires('incentive')
-@testing.requires_version('2.3')
+
+@testing.requires("incentive")
+@testing.requires_version("2.3")
 class TestNucBuilder(testing.PyMOLTestCase):
     def testCanInit(self):
         self.assertEqual(cmd.fnab("A"), None)
@@ -31,7 +33,7 @@ class TestNucBuilder(testing.PyMOLTestCase):
         antisense_strand = fasta_raw[1]
         self.assertEqual(dna, sense_strand)
         self.assertEqual(revcomp, antisense_strand)
-        cmd.delete('all')
+        cmd.delete("all")
         cmd.fnab(input=dna)
         fasta_str = cmd.get_fastastr().splitlines()
         fasta_raw = (fasta_str[1], fasta_str[3])
@@ -45,7 +47,7 @@ class TestNucBuilder(testing.PyMOLTestCase):
         cmd.fnab(input=rna, mode="RNA", form="B", dbl_helix=1)
 
         fasta_str = cmd.get_fastastr().splitlines()
-        self.assertEqual(len(fasta_str), 2)        
+        self.assertEqual(len(fasta_str), 2)
         sense_strand = fasta_str[1]
         self.assertEqual(rna, sense_strand)
 

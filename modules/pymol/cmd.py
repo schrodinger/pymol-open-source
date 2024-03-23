@@ -1,17 +1,16 @@
-
-#A* -------------------------------------------------------------------
-#B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC.
-#D* -------------------------------------------------------------------
-#E* It is unlawful to modify or remove this copyright notice.
-#F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information.
-#H* -------------------------------------------------------------------
-#I* Additional authors of this source file include:
-#-*
-#-*
-#-*
-#Z* -------------------------------------------------------------------
+# A* -------------------------------------------------------------------
+# B* This file contains source code for the PyMOL computer program
+# C* Copyright (c) Schrodinger, LLC.
+# D* -------------------------------------------------------------------
+# E* It is unlawful to modify or remove this copyright notice.
+# F* -------------------------------------------------------------------
+# G* Please see the accompanying LICENSE file for further information.
+# H* -------------------------------------------------------------------
+# I* Additional authors of this source file include:
+# -*
+# -*
+# -*
+# Z* -------------------------------------------------------------------
 
 # cmd.py
 # Python interface module for PyMol
@@ -33,6 +32,7 @@
 #
 # In rare cases, certain nonserious error or warning output should
 # also be suppressed.  Set "quiet" to 2 for this behavior.
+
 
 def _deferred_init_pymol_internals(_pymol):
     # set up some global session tasks
@@ -57,6 +57,8 @@ def _deferred_init_pymol_internals(_pymol):
     _pymol._view_dict_sc = Shortcut({})
 
     #
+
+
 if True:
 
     import sys
@@ -89,19 +91,21 @@ if True:
         from .constants import *
         from .constants import _load2str
 
-        fb_debug = sys.stderr # can redirect python debugging output elsewhere if desred...
+        fb_debug = (
+            sys.stderr
+        )  # can redirect python debugging output elsewhere if desred...
 
-        #--------------------------------------------------------------------
+        # --------------------------------------------------------------------
         # convenient type and result checking
 
         from .checking import *
         from .checking import _raising
 
-        #-------------------------------------------------------------------
+        # -------------------------------------------------------------------
         # path expansion, including our fixes for Win32
 
-        def _nt_expandvars(path): # allow for //share/folder$/file
-            path = nt_hidden_path_re.sub(r"$$\\",path)
+        def _nt_expandvars(path):  # allow for //share/folder$/file
+            path = nt_hidden_path_re.sub(r"$$\\", path)
             return os.path.expandvars(path)
 
         if "nt" in sys.builtin_module_names:
@@ -117,14 +121,14 @@ if True:
             # On Windows, always work with unicode file names. On Unix,
             # UTF-8 byte strings seem to be fine, so keep them for now.
             if isinstance(path, bytes) and pymol.IS_WINDOWS:
-                for encoding in ('utf-8', 'mbcs'):
+                for encoding in ("utf-8", "mbcs"):
                     try:
                         return path.decode(encoding)
                     except UnicodeError:
                         pass
             return path
 
-        #--------------------------------------------------------------------
+        # --------------------------------------------------------------------
         # locks and threading
 
         reaper = None
@@ -139,20 +143,21 @@ if True:
         lock_api_allow_flush = 1
 
         from .locking import *
+
         lockcm = LockCM()
 
-        #--------------------------------------------------------------------
+        # --------------------------------------------------------------------
         # status monitoring
 
         from .monitoring import *
 
-        #--------------------------------------------------------------------
+        # --------------------------------------------------------------------
         # Feedback
 
         from .feedingback import *
         from .feedingback import _feedback
 
-        #--------------------------------------------------------------------
+        # --------------------------------------------------------------------
         # internal API routines
 
         from . import internal
@@ -209,13 +214,17 @@ if True:
         from .helping import python_help
 
         def write_html_ref(file):
-            '''Write the PyMOL Command Reference to an HTML file'''
-            f=open(file,'w')
-            kees = [a for a in keywords.get_command_keywords()
-                    if not a.startswith('_') and keyword[a][0] != python_help]
+            """Write the PyMOL Command Reference to an HTML file"""
+            f = open(file, "w")
+            kees = [
+                a
+                for a in keywords.get_command_keywords()
+                if not a.startswith("_") and keyword[a][0] != python_help
+            ]
             kees.sort()
-            title = 'PyMOL Command Reference'
-            f.write('''<html>
+            title = "PyMOL Command Reference"
+            f.write(
+                """<html>
 <head>
 <title>%s</title>
 <style type='text/css'>
@@ -269,7 +278,9 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
 <hr size=1>
 
 <ul>
-''' % (title, title))
+"""
+                % (title, title)
+            )
 
             for a in kees:
                 f.write("<li><a href='#%s'>%s</a></li>" % (a, a))
@@ -284,9 +295,13 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
 
             for a in kees:
                 func = keyword[a][0]
-                doc = (getattr(func, '__doc__') or 'UNDOCUMENTED').strip(). \
-                        replace("<", "&lt;"). \
-                        replace(">", "&gt;").splitlines()
+                doc = (
+                    (getattr(func, "__doc__") or "UNDOCUMENTED")
+                    .strip()
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .splitlines()
+                )
 
                 # attemt to do some HTML formatting
                 isseealso = False
@@ -296,19 +311,20 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
                     isindented = line[:1].isspace()
                     if isindented:
                         if isseealso:
-                            doc[i] = re.sub(r'\w+', make_see_also_link, line)
+                            doc[i] = re.sub(r"\w+", make_see_also_link, line)
                     elif line.isupper():
-                        isseealso = line.startswith('SEE ALSO')
-                        doc[i] = '<b>' + line + '</b>'
+                        isseealso = line.startswith("SEE ALSO")
+                        doc[i] = "<b>" + line + "</b>"
 
                 f.write("<hr size=1><h2 id='%s'>%s</h2>" % (a, a))
-                f.write("<pre>%s</pre>" % ('\n'.join(doc)))
-                f.write("<p class='api'>api: %s.%s</p>" % (func.__module__, func.__name__))
+                f.write("<pre>%s</pre>" % ("\n".join(doc)))
+                f.write(
+                    "<p class='api'>api: %s.%s</p>" % (func.__module__, func.__name__)
+                )
             f.write("</BODY></HTML>")
             f.close()
 
             print("PyMOL Command Reference written to %s" % (os.path.abspath(file)))
-
 
         #####################################################################
         # Here is where the PyMOL Command Language and API are built.
@@ -325,6 +341,7 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
         # now we create the command langauge
 
         from . import keywords
+
         keyword = keywords.get_command_keywords()
         kw_list = list(keyword.keys())
 
@@ -336,7 +353,7 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
         # PyMOL command language namespace
 
         help_only = keywords.get_help_only_keywords()
-        help_sc = Shortcut(list(keyword.keys())+list(help_only.keys()))
+        help_sc = Shortcut(list(keyword.keys()) + list(help_only.keys()))
 
         # keyboard configuration
 
@@ -344,34 +361,81 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
 
         key_mappings = keyboard.get_default_keys()
 
-        selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+[
-            'not ', 'and ', 'or ', 'first ', 'last ', 'in ', 'like ',
+        selection_sc = lambda sc=Shortcut, gn=get_names: sc(
+            gn("public")
+            + [
+                "not ",
+                "and ",
+                "or ",
+                "first ",
+                "last ",
+                "in ",
+                "like ",
+                "byobject ",
+                "bysegi ",
+                "bychain ",
+                "byres ",
+                "bycalpha ",
+                "bymolecule ",
+                "bound_to ",
+                "neighbor ",
+                "extend ",
+                "within ",
+                "around ",
+                "expand ",
+                "gap ",
+                "near_to ",
+                "beyond ",
+                "model ",
+                "chain ",
+                "segi ",
+                "resn ",
+                "resi ",
+                "name ",
+                "alt ",
+                "index ",
+                "id ",
+                "rank ",
+                "partial_charge ",
+                "formal_charge ",
+                "b ",
+                "q ",
+                "ss ",
+                "elem ",
+                "rep ",
+                "color ",
+                "pepseq ",
+                "all",
+                "enabled",
+                "visible",
+                "bonded",
+                "protected",
+                "masked",
+                "organic",
+                "inorganic",
+                "solvent",
+                "polymer",
+                "guide",
+                "hetatm",
+                "hydrogens",
+                "backbone",
+                "sidechain",
+                "metals",
+                "donors",
+                "acceptors",
+                "polymer.protein",
+                "polymer.nucleic",
+                "center",
+                "origin",
+            ]
+        )
 
-            'byobject ', 'bysegi ', 'bychain ', 'byres ', 'bycalpha ',
-            'bymolecule ',
-
-            'bound_to ', 'neighbor ', 'extend ', 'within ', 'around ',
-            'expand ', 'gap ', 'near_to ', 'beyond ',
-
-            'model ', 'chain ', 'segi ', 'resn ', 'resi ', 'name ', 'alt ', 'index ',
-            'id ', 'rank ',
-
-            'partial_charge ', 'formal_charge ', 'b ', 'q ', 'ss ', 'elem ',
-            'rep ', 'color ', 'pepseq ',
-
-            'all', 'enabled', 'visible', 'bonded', 'protected', 'masked',
-            'organic', 'inorganic', 'solvent', 'polymer', 'guide', 'hetatm',
-            'hydrogens', 'backbone', 'sidechain', 'metals', 'donors',
-            'acceptors',
-            'polymer.protein', 'polymer.nucleic',
-
-            'center', 'origin',
-        ])
-
-        object_sc = lambda sc=Shortcut,gn=get_names:sc(gn('objects'))
-        map_sc = lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:map'))
-        contour_sc =  lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:mesh')+gnot('object:surface'))
-        group_sc = lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:group'))
+        object_sc = lambda sc=Shortcut, gn=get_names: sc(gn("objects"))
+        map_sc = lambda sc=Shortcut, gnot=get_names_of_type: sc(gnot("object:map"))
+        contour_sc = lambda sc=Shortcut, gnot=get_names_of_type: sc(
+            gnot("object:mesh") + gnot("object:surface")
+        )
+        group_sc = lambda sc=Shortcut, gnot=get_names_of_type: sc(gnot("object:group"))
 
         # Table for argument autocompletion
 

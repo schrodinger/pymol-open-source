@@ -1,6 +1,6 @@
-'''
+"""
 CCP4/MRC ORIGIN
-'''
+"""
 
 from chempy import cpv
 from pymol import cmd, testing
@@ -17,21 +17,22 @@ ORIGINS = {
     "h2o-elf-nstart.ccp4": (0.6, 0.45, 0.75),
 }
 
-@testing.requires_version('2.4')
+
+@testing.requires_version("2.4")
 class Test3260(testing.PyMOLTestCase):
 
     @testing.foreach(*ORIGINS)
     def test(self, filename):
-        cmd.load(self.datafile(filename), 'map')
+        cmd.load(self.datafile(filename), "map")
 
         ori = ORIGINS[filename]
         ext = [ori, cpv.add(ori, EDGELENGTHS)]
 
-        self.assertArrayEqual(cmd.get_extent('map'), ext, delta=1e-3)
+        self.assertArrayEqual(cmd.get_extent("map"), ext, delta=1e-3)
 
-        with testing.mktemp('.map') as filename:
-            cmd.save(filename, 'map')
-            cmd.delete('*')
-            cmd.load(filename, 'map')
+        with testing.mktemp(".map") as filename:
+            cmd.save(filename, "map")
+            cmd.delete("*")
+            cmd.load(filename, "map")
 
-        self.assertArrayEqual(cmd.get_extent('map'), ext, delta=1e-3)
+        self.assertArrayEqual(cmd.get_extent("map"), ext, delta=1e-3)

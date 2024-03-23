@@ -8,29 +8,31 @@ from pymol import cmd, testing, stored
 # spectrum produces colors which are wrong in the second digit
 get_color_tuple = lambda c, n=1: tuple([round(x, n) for x in cmd.get_color_tuple(c)])
 
+
 class TestUtil(testing.PyMOLTestCase):
 
     _color_by_area_cache = {}
 
-    @testing.foreach('molecular', 'solvent')
-    @testing.requires_version('1.9.0')
+    @testing.foreach("molecular", "solvent")
+    @testing.requires_version("1.9.0")
     def test_color_by_area(self, mode):
-        cmd.fragment('tyr')
-        cmd.color('white')
-        pymol.util.color_by_area('*', mode, palette='blue_white_red')
+        cmd.fragment("tyr")
+        cmd.color("white")
+        pymol.util.color_by_area("*", mode, palette="blue_white_red")
         stored.colors = set()
-        cmd.iterate('*', 'stored.colors.add(color)')
+        cmd.iterate("*", "stored.colors.add(color)")
         colors = [get_color_tuple(c) for c in sorted(stored.colors)]
-        self.assertTrue((1., 0., 0.) in colors)
-        self.assertTrue((0., 0., 1.) in colors)
+        self.assertTrue((1.0, 0.0, 0.0) in colors)
+        self.assertTrue((0.0, 0.0, 1.0) in colors)
 
         # compare with other mode
         self._color_by_area_cache[mode] = colors
         colors_mode_other = self._color_by_area_cache.get(
-                'molecular' if mode == 'solvent' else 'solvent')
+            "molecular" if mode == "solvent" else "solvent"
+        )
         self.assertNotEqual(colors, colors_mode_other)
 
-    @testing.requires_version('1.7.2')
+    @testing.requires_version("1.7.2")
     def test_find_surface_residues(self):
         pymol.util.find_surface_residues
         self.skipTest("TODO")
@@ -39,7 +41,7 @@ class TestUtil(testing.PyMOLTestCase):
         pymol.util.find_surface_atoms
         self.skipTest("TODO")
 
-    @testing.requires_version('1.7.2')
+    @testing.requires_version("1.7.2")
     def test_get_area(self):
         pymol.util.get_area
         self.skipTest("TODO")
@@ -77,19 +79,19 @@ class TestUtil(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def test_cbss(self):
-        cmd.load(self.datafile('1oky-frag.pdb'))
-        c = [2, 13, 22] # blue orange forest
-        pymol.util.cbss('*', *c)
+        cmd.load(self.datafile("1oky-frag.pdb"))
+        c = [2, 13, 22]  # blue orange forest
+        pymol.util.cbss("*", *c)
         stored.colors = set()
-        cmd.iterate('*', 'stored.colors.add((ss or "L", color))')
-        self.assertEqual(stored.colors, set(zip('HSL', c)))
+        cmd.iterate("*", 'stored.colors.add((ss or "L", color))')
+        self.assertEqual(stored.colors, set(zip("HSL", c)))
 
     def _test_cba(self, fun, expected_color):
-        cmd.fragment('gly')
-        cmd.color('white')
-        fun('*')
+        cmd.fragment("gly")
+        cmd.color("white")
+        fun("*")
         stored.colors = set()
-        cmd.iterate('elem C', 'stored.colors.add(color)')
+        cmd.iterate("elem C", "stored.colors.add(color)")
         colors = [get_color_tuple(c, 3) for c in stored.colors]
         self.assertEqual(colors, [expected_color])
 
@@ -144,31 +146,31 @@ class TestUtil(testing.PyMOLTestCase):
 
     def test_performance(self):
         pymol.util.performance(0)
-        self.assertEqual(1, cmd.get_setting_int('surface_quality'))
-        self.assertEqual(1, cmd.get_setting_int('depth_cue'))
+        self.assertEqual(1, cmd.get_setting_int("surface_quality"))
+        self.assertEqual(1, cmd.get_setting_int("depth_cue"))
         pymol.util.performance(33)
-        self.assertEqual(0, cmd.get_setting_int('surface_quality'))
-        self.assertEqual(1, cmd.get_setting_int('depth_cue'))
+        self.assertEqual(0, cmd.get_setting_int("surface_quality"))
+        self.assertEqual(1, cmd.get_setting_int("depth_cue"))
         pymol.util.performance(66)
-        self.assertEqual(0, cmd.get_setting_int('surface_quality'))
-        self.assertEqual(0, cmd.get_setting_int('depth_cue'))
+        self.assertEqual(0, cmd.get_setting_int("surface_quality"))
+        self.assertEqual(0, cmd.get_setting_int("depth_cue"))
         pymol.util.performance(100)
-        self.assertEqual(-1, cmd.get_setting_int('surface_quality'))
-        self.assertEqual(0, cmd.get_setting_int('depth_cue'))
+        self.assertEqual(-1, cmd.get_setting_int("surface_quality"))
+        self.assertEqual(0, cmd.get_setting_int("depth_cue"))
 
-    def test_label_chains(self, mode='chain'):
-        cmd.load(self.datafile('4m4b-minimal-w-assembly.cif'))
-        if mode == 'chain':
+    def test_label_chains(self, mode="chain"):
+        cmd.load(self.datafile("4m4b-minimal-w-assembly.cif"))
+        if mode == "chain":
             pymol.util.label_chains()
         else:
             pymol.util.label_segments()
         stored.labels = set()
-        cmd.iterate('*', 'stored.labels.add(label)')
-        self.assertEqual(stored.labels, set(['', mode + ' A', mode + ' B']))
+        cmd.iterate("*", "stored.labels.add(label)")
+        self.assertEqual(stored.labels, set(["", mode + " A", mode + " B"]))
 
-    @testing.requires_version('1.7.2')
+    @testing.requires_version("1.7.2")
     def test_label_segments(self):
-        self.test_label_chains('segi')
+        self.test_label_chains("segi")
 
     def test_cbc(self):
         pymol.util.cbc
@@ -207,35 +209,35 @@ class TestUtil(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def test_colors(self):
-        cmd.fragment('gly')
+        cmd.fragment("gly")
         pymol.util.colors("jmol")
         stored.colors = set()
-        cmd.iterate('elem C', 'stored.colors.add(color)')
+        cmd.iterate("elem C", "stored.colors.add(color)")
         colors = [get_color_tuple(c, 3) for c in stored.colors]
         self.assertEqual(colors, [(0.567, 0.567, 0.567)])
 
-    @testing.requires_version('1.7.6')
+    @testing.requires_version("1.7.6")
     def test_interchain_distances(self):
         pymol.util.interchain_distances
         self.skipTest("TODO")
 
-    @testing.requires_version('1.8.0')
+    @testing.requires_version("1.8.0")
     def test_get_sasa_relative(self):
-        cmd.load(self.datafile('1oky-frag.pdb'))
+        cmd.load(self.datafile("1oky-frag.pdb"))
         r = cmd.get_sasa_relative()
-        self.assertAlmostEqual(r['1oky-frag', '', 'A', '86'], 0.708, delta=1e-3)
+        self.assertAlmostEqual(r["1oky-frag", "", "A", "86"], 0.708, delta=1e-3)
         r = cmd.get_sasa_relative("resi 86")
-        self.assertAlmostEqual(r['1oky-frag', '', 'A', '86'], 0.708, delta=1e-3)
+        self.assertAlmostEqual(r["1oky-frag", "", "A", "86"], 0.708, delta=1e-3)
 
-    @testing.requires_version('2.6')
+    @testing.requires_version("2.6")
     def test_get_sasa_relative_subsele(self):
-        cmd.load(self.datafile('1oky-frag.pdb'))
+        cmd.load(self.datafile("1oky-frag.pdb"))
         r = cmd.get_sasa_relative(subsele="sidechain")
-        self.assertAlmostEqual(r['1oky-frag', '', 'A', '86'], 0.812, delta=1e-3)
+        self.assertAlmostEqual(r["1oky-frag", "", "A", "86"], 0.812, delta=1e-3)
         r = cmd.get_sasa_relative("resi 86", subsele="sidechain")
-        self.assertAlmostEqual(r['1oky-frag', '', 'A', '86'], 0.812, delta=1e-3)
+        self.assertAlmostEqual(r["1oky-frag", "", "A", "86"], 0.812, delta=1e-3)
 
-    @testing.requires_version('1.8.6')
+    @testing.requires_version("1.8.6")
     def test_ligand_zoom(self):
         pymol.util.ligand_zoom
         self.skipTest("TODO")

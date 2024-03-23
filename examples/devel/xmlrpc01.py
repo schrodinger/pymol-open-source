@@ -8,7 +8,7 @@
 # (1) in one process launch PyMOL with "-R" option "./pymol.com -R"
 # (2) in another process "python xmlrpc01.py"
 
-molData="""foo
+molData = """foo
 
 
   5  4  0  0  0                 1 V2000
@@ -23,35 +23,35 @@ molData="""foo
   1  5  1  0  0  0
 M  END
 """
-import sys,tempfile,os
+import sys, tempfile, os
 
 try:
     import xmlrpclib
 except ImportError:
     import xmlrpc.client as xmlrpclib
 
-fName = tempfile.mktemp('.mol')
-open(fName,'w+').write(molData)
+fName = tempfile.mktemp(".mol")
+open(fName, "w+").write(molData)
 port = 9123
-if len(sys.argv)>1:
-  port = int(sys.argv[1])
+if len(sys.argv) > 1:
+    port = int(sys.argv[1])
 
-s = xmlrpclib.Server('http://localhost:%d'%(port))
-s.do('delete fooby')
-s.do('delete fooby-o')
-s.do('load %s, fooby'%(fName))
-s.sphere((.5,.5,.5),.5,(1,.5,1),'fooby-o',0)
-s.sphere((-.5,-.5,.5),.5,(1,1,.5),'fooby-o')
-s.sphere((-.5,.5,-.5),.5,(1,.5,5),'fooby-o')
-s.sphere((.5,-.5,-.5),.5,(.5,1,.5),'fooby-o')
+s = xmlrpclib.Server("http://localhost:%d" % (port))
+s.do("delete fooby")
+s.do("delete fooby-o")
+s.do("load %s, fooby" % (fName))
+s.sphere((0.5, 0.5, 0.5), 0.5, (1, 0.5, 1), "fooby-o", 0)
+s.sphere((-0.5, -0.5, 0.5), 0.5, (1, 1, 0.5), "fooby-o")
+s.sphere((-0.5, 0.5, -0.5), 0.5, (1, 0.5, 5), "fooby-o")
+s.sphere((0.5, -0.5, -0.5), 0.5, (0.5, 1, 0.5), "fooby-o")
 
-s.cylinder((.5,.5,.5),(-.5,-.5,.5),.1,(.5,.5,.5),'fooby-o')
-s.cylinder((.5,.5,.5),(-.5,.5,-.5),.1,(.5,.5,.5),'fooby-o')
-s.cylinder((.5,.5,.5),(.5,-.5,-.5),.1,(.5,.5,.5),'fooby-o')
-s.cylinder((-.5,-.5,.5),(.5,-.5,-.5),.1,(.5,.5,.5),'fooby-o')
-s.cylinder((-.5,-.5,.5),(-.5,.5,-.5),.1,(.5,.5,.5),'fooby-o')
-s.cylinder((.5,-.5,-.5),(-.5,.5,-.5),.1,(.5,.5,.5),'fooby-o')
+s.cylinder((0.5, 0.5, 0.5), (-0.5, -0.5, 0.5), 0.1, (0.5, 0.5, 0.5), "fooby-o")
+s.cylinder((0.5, 0.5, 0.5), (-0.5, 0.5, -0.5), 0.1, (0.5, 0.5, 0.5), "fooby-o")
+s.cylinder((0.5, 0.5, 0.5), (0.5, -0.5, -0.5), 0.1, (0.5, 0.5, 0.5), "fooby-o")
+s.cylinder((-0.5, -0.5, 0.5), (0.5, -0.5, -0.5), 0.1, (0.5, 0.5, 0.5), "fooby-o")
+s.cylinder((-0.5, -0.5, 0.5), (-0.5, 0.5, -0.5), 0.1, (0.5, 0.5, 0.5), "fooby-o")
+s.cylinder((0.5, -0.5, -0.5), (-0.5, 0.5, -0.5), 0.1, (0.5, 0.5, 0.5), "fooby-o")
 
-#s.label((1,0,0),"foobar")
+# s.label((1,0,0),"foobar")
 
 os.unlink(fName)

@@ -33,6 +33,7 @@ class Point:
         y (float): y-coordinate
         z (float): z-coordinate
     """
+
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0
@@ -56,6 +57,7 @@ class Color:
         b (float): blue channel value
         a (float): alpha channel value
     """
+
     r: float = 0.0
     g: float = 0.0
     b: float = 0.0
@@ -76,6 +78,7 @@ class CGO:
     For all CGO types, whenever attributes are changed, `rebuild` should be
     called to update the data cache.
     """
+
     _data: List[float] = dataclasses.field(default_factory=list)
 
     def __post_init__(self):
@@ -99,6 +102,7 @@ class Sphere(CGO):
         radius (float): sphere radius
         color (Color): sphere color
     """
+
     center: Point = Point(0, 0, 0)
     radius: float = 0.0
     color: Color = Point(0, 0, 0)
@@ -127,6 +131,7 @@ class Cylinder(CGO):
         color1 (Color): color of first cylinder half
         color2 (Color): color of second cylinder half
     """
+
     point1: Point = Point(0, 0, 0)
     point2: Point = Point(1, 1, 1)
     radius: float = 1.0
@@ -160,6 +165,7 @@ class Torus(CGO):
         samples (int): number of samples to generate torus segment
         csamples (int): number of samples to generate torus ring
     """
+
     center: Point = Point(0.0, 0.0, 0.0)
     normal: Point = Point(0.0, 0.0, 1.0)
     radius: float = 1.0
@@ -174,13 +180,14 @@ class Torus(CGO):
         """
         obj = []
 
-        axis = cpv.cross_product(self.normal.array(), (0., 0., 1.))
-        angle = -cpv.get_angle(self.normal.array(), (0., 0., 1.))
+        axis = cpv.cross_product(self.normal.array(), (0.0, 0.0, 1.0))
+        angle = -cpv.get_angle(self.normal.array(), (0.0, 0.0, 1.0))
         matrix = cpv.rotation_matrix(angle, cpv.normalize(axis))
 
         def obj_vertex(x, y, z):
-            return [cgo.VERTEX] + cpv.add(self.center.array(),
-                                          cpv.transform(matrix, [x, y, z]))
+            return [cgo.VERTEX] + cpv.add(
+                self.center.array(), cpv.transform(matrix, [x, y, z])
+            )
 
         def obj_normal(x, y, z):
             return [cgo.NORMAL] + cpv.transform(matrix, [x, y, z])
@@ -212,20 +219,27 @@ class Torus(CGO):
                 c_vdv = math.cos(v + dv)
                 s_vdv = math.sin(v + dv)
                 obj.extend(
-                    obj_normal((r + rr * c_v) * c_w - (r + cr * c_v) * c_w,
-                               (r + rr * c_v) * s_w - (r + cr * c_v) * s_w,
-                               (rr * s_v - cr * s_v)))
+                    obj_normal(
+                        (r + rr * c_v) * c_w - (r + cr * c_v) * c_w,
+                        (r + rr * c_v) * s_w - (r + cr * c_v) * s_w,
+                        (rr * s_v - cr * s_v),
+                    )
+                )
                 obj.extend(
-                    obj_vertex((r + cr * c_v) * c_w, (r + cr * c_v) * s_w,
-                               cr * s_v))
+                    obj_vertex((r + cr * c_v) * c_w, (r + cr * c_v) * s_w, cr * s_v)
+                )
                 obj.extend(
                     obj_normal(
                         (r + rr * c_vdv) * c_wdw - (r + cr * c_vdv) * c_wdw,
                         (r + rr * c_vdv) * s_wdw - (r + cr * c_vdv) * s_wdw,
-                        rr * s_vdv - cr * s_vdv))
+                        rr * s_vdv - cr * s_vdv,
+                    )
+                )
                 obj.extend(
-                    obj_vertex((r + cr * c_vdv) * c_wdw,
-                               (r + cr * c_vdv) * s_wdw, cr * s_vdv))
+                    obj_vertex(
+                        (r + cr * c_vdv) * c_wdw, (r + cr * c_vdv) * s_wdw, cr * s_vdv
+                    )
+                )
                 v += dv
 
             obj.append(cgo.END)
@@ -245,6 +259,7 @@ class Cone(CGO):
         radius (float): cone base radius
         color (Color): cone color
     """
+
     tip: Point = Point(1.0, 0.0, 0.0)
     base_center: Point = Point(0.0, 0.0, 0.0)
     radius: float = 1.0
@@ -277,6 +292,7 @@ class Bezier(CGO):
         A_color (Color): color at point A
         B_color (Color): color at point B
     """
+
     control_pt_A = Point(-5.0, 0.0, 0.0)
     A_right_handle = Point(0.0, 10.0, 0.0)
     B_left_handle = Point(1.0, -10.0, 0.0)
@@ -303,6 +319,7 @@ class CGOBuilder:
     Attributes:
         cgos (Dict[CGO]): Collection of CGOs
     """
+
     cgos: Dict[int, CGO] = {}
     _token_count = 0
 

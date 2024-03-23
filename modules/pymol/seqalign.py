@@ -1,4 +1,4 @@
-'''
+"""
 Sequence alignment stuff.
 
 Based on psico.seqalign
@@ -7,21 +7,22 @@ Based on psico.seqalign
 (c) 2011 Thomas Holder, MPI for Developmental Biology
 
 License: BSD-2-Clause
-'''
+"""
 
 from pymol import cmd, CmdException
 
 
 def needle_alignment(s1, s2):
-    '''
-DESCRIPTION
+    """
+    DESCRIPTION
 
-    Does a Needleman-Wunsch Alignment of sequence s1 and s2 and
-    returns a Bio.Align.MultipleSeqAlignment object.
-    '''
+        Does a Needleman-Wunsch Alignment of sequence s1 and s2 and
+        returns a Bio.Align.MultipleSeqAlignment object.
+    """
     from Bio import pairwise2
     from Bio.Align import MultipleSeqAlignment
     from Bio.SeqRecord import SeqRecord
+
     try:
         from Bio.Align import substitution_matrices
     except ImportError:
@@ -32,9 +33,9 @@ DESCRIPTION
     def match_callback(c1, c2):
         return blosum62.get((c1, c2), 1 if c1 == c2 else -4)
 
-    alns = pairwise2.align.globalcs(s1, s2,
-            match_callback, -10., -.5,
-            one_alignment_only=True)
+    alns = pairwise2.align.globalcs(
+        s1, s2, match_callback, -10.0, -0.5, one_alignment_only=True
+    )
 
     a = MultipleSeqAlignment([])
     s1 = SeqRecord(alns[0][0], id="s1")
@@ -44,53 +45,56 @@ DESCRIPTION
 
 
 def alignment_mapping(seq1, seq2):
-    '''
-DESCRIPTION
+    """
+    DESCRIPTION
 
-    Returns an iterator with seq1 indices mapped to seq2 indices
+        Returns an iterator with seq1 indices mapped to seq2 indices
 
-    >>> mapping = dict(alignment_mapping(s1, s2))
-    '''
+        >>> mapping = dict(alignment_mapping(s1, s2))
+    """
     i, j = -1, -1
     for a, b in zip(seq1, seq2):
-        if a != '-': i += 1
-        if b != '-': j += 1
-        if a != '-' and b != '-': yield i, j
+        if a != "-":
+            i += 1
+        if b != "-":
+            j += 1
+        if a != "-" and b != "-":
+            yield i, j
 
 
 def aln_magic_format(infile):
-    '''
-DESCRIPTION
+    """
+    DESCRIPTION
 
-    Guess alignment file format.
-    '''
+        Guess alignment file format.
+    """
     with open(infile) as handle:
         for line in handle:
             if len(line.rstrip()) > 0:
                 break
-    if line.startswith('CLUSTAL') or line.startswith('MUSCLE'):
-        informat = 'clustal'
-    elif line.startswith('>P1;'):
-        informat = 'pir'
-    elif line.startswith('>'):
-        informat = 'fasta'
-    elif line.startswith('# STOCKHOLM'):
-        informat = 'stockholm'
-    elif line.startswith('Align '):
-        informat = 'fatcat'
-    elif line.startswith('# ProSMART Alignment File'):
-        informat = 'prosmart'
+    if line.startswith("CLUSTAL") or line.startswith("MUSCLE"):
+        informat = "clustal"
+    elif line.startswith(">P1;"):
+        informat = "pir"
+    elif line.startswith(">"):
+        informat = "fasta"
+    elif line.startswith("# STOCKHOLM"):
+        informat = "stockholm"
+    elif line.startswith("Align "):
+        informat = "fatcat"
+    elif line.startswith("# ProSMART Alignment File"):
+        informat = "prosmart"
     else:
-        informat = 'emboss'
+        informat = "emboss"
     return informat
 
 
 def aln_magic_read(infile, format=None):
-    '''
-DESCRIPTION
+    """
+    DESCRIPTION
 
-    Wrapper for Bio.AlignIO.read that guesses alignment file format.
-    '''
+        Wrapper for Bio.AlignIO.read that guesses alignment file format.
+    """
     from Bio import AlignIO
 
     if not format:
@@ -100,44 +104,45 @@ DESCRIPTION
         return AlignIO.read(handle, format)
 
 
-def load_aln_multi(filename, object=None, mapping='', alignioformat='', guide='',
-        quiet=1, _self=cmd):
-    '''
-DESCRIPTION
+def load_aln_multi(
+    filename, object=None, mapping="", alignioformat="", guide="", quiet=1, _self=cmd
+):
+    """
+    DESCRIPTION
 
-    Load a multiple sequence alignment from file and apply it to already
-    loaded structures.
+        Load a multiple sequence alignment from file and apply it to already
+        loaded structures.
 
-    Requires Biopython (conda install biopython)
+        Requires Biopython (conda install biopython)
 
-USAGE
+    USAGE
 
-    load_aln_multi filename [, object [, mapping [, alignioformat [, guide ]]]]
+        load_aln_multi filename [, object [, mapping [, alignioformat [, guide ]]]]
 
-ARGUMENTS
+    ARGUMENTS
 
-    filename = str: alignment file
+        filename = str: alignment file
 
-    object = str: name of the new alignment object {default: filename prefix}
+        object = str: name of the new alignment object {default: filename prefix}
 
-    mapping = str: space separated list of sequence-id to object-name
-    mappings {default: assume sequence-id = object-name}
+        mapping = str: space separated list of sequence-id to object-name
+        mappings {default: assume sequence-id = object-name}
 
-    alignioformat = str: file format, see http://biopython.org/wiki/AlignIO
-    {default: guess from first line in file}
+        alignioformat = str: file format, see http://biopython.org/wiki/AlignIO
+        {default: guess from first line in file}
 
-    guide = str: object name of "guide" object (PyMOL only knows many-to-one
-    alignment, not true multiple alignments) {default: random object}
+        guide = str: object name of "guide" object (PyMOL only knows many-to-one
+        alignment, not true multiple alignments) {default: random object}
 
-SEE ALSO
+    SEE ALSO
 
-    psico.importing.load_aln
-    '''
+        psico.importing.load_aln
+    """
     import os
 
     quiet = int(quiet)
     if object is None:
-        object = os.path.basename(filename).rsplit('.', 1)[0]
+        object = os.path.basename(filename).rsplit(".", 1)[0]
 
     # load alignment file
     alignment = aln_magic_read(cmd.exp_path(filename), alignioformat)
@@ -159,23 +164,25 @@ SEE ALSO
             continue
 
         atoms = []
-        n = _self.iterate('?{} & guide'.format(oname), 'atoms.append((oneletter or "?", index))',
-                space=locals())
+        n = _self.iterate(
+            "?{} & guide".format(oname),
+            'atoms.append((oneletter or "?", index))',
+            space=locals(),
+        )
 
         if n == 0:
             print(" Warning: no atoms for object '{}'".format(oname))
             continue
 
         # align sequences from file to structures
-        aln = needle_alignment(str(record.seq), ''.join(a[0] for a in atoms))
+        aln = needle_alignment(str(record.seq), "".join(a[0] for a in atoms))
 
         # get index mappings
-        i2index[r] = dict((i, atoms[j][1])
-                for (i, j) in alignment_mapping(*aln))
+        i2index[r] = dict((i, atoms[j][1]) for (i, j) in alignment_mapping(*aln))
         onames[r] = oname
 
     if len(onames) < 2:
-        raise CmdException('Failed to map alignment to objects')
+        raise CmdException("Failed to map alignment to objects")
 
     # build alignment list
     raw = []
@@ -184,7 +191,7 @@ SEE ALSO
         for r, aa in enumerate(alignment[:, c]):
             if onames[r] is None:
                 continue
-            if aa != '-':
+            if aa != "-":
                 indices[r] += 1
                 index = i2index[r].get(indices[r], -1)
                 if index >= 0:

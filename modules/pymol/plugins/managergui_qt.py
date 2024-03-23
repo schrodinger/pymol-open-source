@@ -8,28 +8,37 @@ from . import pref_get
 
 Qt = QtCore.Qt
 
+
 def confirm_network_access():
-    '''
+    """
     Popup dialog with network access notification (only once per session)
-    '''
+    """
     self = confirm_network_access
     if self.ok < 0:
-        check = QtWidgets.QMessageBox.information(None, 'Info',
-            'Network download has been disabled, sorry!')
+        check = QtWidgets.QMessageBox.information(
+            None, "Info", "Network download has been disabled, sorry!"
+        )
         return False
     if self.ok > 0:
         return True
-    if QtWidgets.QMessageBox.question(None, 'Confirm',
-        'PyMOL will now download executable code from the internet!'
-        ' Proceed?') == QtWidgets.QMessageBox.Yes:
+    if (
+        QtWidgets.QMessageBox.question(
+            None,
+            "Confirm",
+            "PyMOL will now download executable code from the internet!" " Proceed?",
+        )
+        == QtWidgets.QMessageBox.Yes
+    ):
         self.ok = 1
     else:
         self.ok = 0
 
     return self.ok
 
+
 # valid values: 1=never ask, 0=ask once per session, -1=network access disabled
-confirm_network_access.ok = pref_get('network_access_ok', 0)
+confirm_network_access.ok = pref_get("network_access_ok", 0)
+
 
 class PluginManager(QtCore.QObject):
 
@@ -39,7 +48,7 @@ class PluginManager(QtCore.QObject):
 
         window = getPyMOLWindow()
 
-        self.form = window.load_form('pluginmanager')
+        self.form = window.load_form("pluginmanager")
         self.form.b_wiki.pressed.connect(self.fetchplugin)
         self.form.e_wiki.returnPressed.connect(self.fetchplugin)
         self.form.b_local.pressed.connect(self.installplugin)
@@ -57,7 +66,8 @@ class PluginManager(QtCore.QObject):
         self.form.b_remove_repo.pressed.connect(self.remove_repository)
         self.reload_plugins()
         self.form.l_repo_plugins.setSelectionMode(
-            QtWidgets.QAbstractItemView.ExtendedSelection)
+            QtWidgets.QAbstractItemView.ExtendedSelection
+        )
         self.form.b_install.pressed.connect(self.install_repo_plugins)
         self.form.b_info.pressed.connect(self.info_repo_plugin)
         self.populate_repositories()
@@ -67,21 +77,23 @@ class PluginManager(QtCore.QObject):
 
     def populate_repositories(self):
         repos = [
-            'http://pldserver1.biochem.queensu.ca/~rlc/work/pymol/',
-            'https://github.com/Pymol-Scripts/Pymol-script-repo',
+            "http://pldserver1.biochem.queensu.ca/~rlc/work/pymol/",
+            "https://github.com/Pymol-Scripts/Pymol-script-repo",
             # for testing
-            'http://www.thomas-holder.de/projects/pymol/repository/'
+            "http://www.thomas-holder.de/projects/pymol/repository/",
         ]
         for rep in repos:
             self.form.l_repositories.addItem(rep)
 
     def populate_startup_paths(self):
         from . import get_startup_path
+
         items = get_startup_path(True)
         self.form.slb_path.addItems(items)
 
     def update_startup_paths(self):
         from . import set_startup_path
+
         items = []
         for index in range(self.form.slb_path.count()):
             items.append(self.form.slb_path.item(index).text())
@@ -114,6 +126,7 @@ class PluginManager(QtCore.QObject):
 
     def update_preferences_item(self, item):
         from . import pref_get, pref_set
+
         key = self.t_preferences_keys[item.row()]
 
         if item.flags() & Qt.ItemIsUserCheckable:
@@ -121,11 +134,11 @@ class PluginManager(QtCore.QObject):
         else:
             value = item.data(0)
 
-            if hasattr(value, 'toString'):  # PyQt4
+            if hasattr(value, "toString"):  # PyQt4
                 value = value.toString()
 
             try:
-                value = type(pref_get(key, ''))(value)
+                value = type(pref_get(key, ""))(value)
             except BaseException as e:
                 print(e)
 
@@ -133,6 +146,7 @@ class PluginManager(QtCore.QObject):
 
     def install_repo_plugins(self):
         from .installation import installPluginFromFile, get_plugdir
+
         items = self.form.l_repo_plugins.selectedItems()
         if len(items) == 0:
             return
@@ -142,6 +156,7 @@ class PluginManager(QtCore.QObject):
         import sys, tempfile, shutil, os
         from .legacysupport import tkMessageBox
         from .repository import guess
+
         tmpdir = tempfile.mkdtemp()
         try:
             for item in items:
@@ -150,7 +165,9 @@ class PluginManager(QtCore.QObject):
                 installPluginFromFile(filename, None, plugdir)
         except:
             err = str(sys.exc_info()[1])
-            tkMessageBox.showinfo('Error', 'Could not install plugin ' + name + '\n\n' + err)
+            tkMessageBox.showinfo(
+                "Error", "Could not install plugin " + name + "\n\n" + err
+            )
         finally:
             shutil.rmtree(tmpdir)
         self.reload_plugins()
@@ -159,10 +176,12 @@ class PluginManager(QtCore.QObject):
         from . import PluginInfo
         from .installation import get_name_and_ext, extract_zipfile, zip_extensions
         from .legacysupport import tkMessageBox
+
         items = self.form.l_repo_plugins.selectedItems()
         if len(items) == 0:
             return
         import tempfile, shutil, os
+
         tmpdir = tempfile.mkdtemp()
         tmpdirs = [tmpdir]
         try:
@@ -173,17 +192,18 @@ class PluginManager(QtCore.QObject):
                 tmpdir, dirnames = extract_zipfile(filename, ext)
                 tmpdirs.append(tmpdir)
                 name = dirnames[-1]
-                filename = os.path.join(os.path.join(tmpdir, *dirnames), '__init__.py')
+                filename = os.path.join(os.path.join(tmpdir, *dirnames), "__init__.py")
             info = PluginInfo(name, filename)
             self.show_plugin_info_dialog(info)
         except:
-            tkMessageBox.showinfo('Error', 'Could not get plugin info')
+            tkMessageBox.showinfo("Error", "Could not get plugin info")
         finally:
             for tmpdir in tmpdirs:
                 shutil.rmtree(tmpdir)
 
     def repo_changed(self, item):
         from .repository import guess
+
         url = item.text()
         self.repo_r = guess(url)
         plist = self.repo_r.list()
@@ -192,9 +212,10 @@ class PluginManager(QtCore.QObject):
             self.form.l_repo_plugins.addItem(p)
 
     def add_repository(self):
-        repo, result = QtWidgets.QInputDialog.getText(None,
-            'Add repository', 'Enter repository URL')
-        if result and repo.startswith('http'):
+        repo, result = QtWidgets.QInputDialog.getText(
+            None, "Add repository", "Enter repository URL"
+        )
+        if result and repo.startswith("http"):
             self.form.l_repositories.addItem(repo)
 
     def remove_repository(self):
@@ -218,12 +239,13 @@ class PluginManager(QtCore.QObject):
 
     def reload_plugins(self, setting=None):
         from . import plugins
+
         window = getPyMOLWindow()
 
         self.clear_plugins()
 
         def add_plugin_item(info):
-            item = window.load_form('pluginitem', QtWidgets.QFrame())
+            item = window.load_form("pluginitem", QtWidgets.QFrame())
             item._widget = item._dialog
             item._widget.setFrameStyle(QtWidgets.QFrame.Sunken)
             item._widget.setFrameShape(QtWidgets.QFrame.Panel)
@@ -238,7 +260,7 @@ class PluginManager(QtCore.QObject):
             item.w_uninstall.pressed.connect(self.reload_plugins)
             if info.loaded:
                 item.w_enable.setEnabled(False)
-            if hasattr(info.module, 'settings_dialog'):
+            if hasattr(info.module, "settings_dialog"):
                 item.w_settings.setVisible(True)
             else:
                 item.w_settings.setVisible(False)
@@ -276,7 +298,7 @@ class PluginManager(QtCore.QObject):
         filter_startup = self.form.c_startup.isChecked()
         filter_name = self.form.e_filter.text().lower()
 
-        for (item, info) in self.plugin_info.items():
+        for item, info in self.plugin_info.items():
             if filter_name not in info.name.lower():
                 vis = False
             elif filter_loaded and not info.loaded:
@@ -300,6 +322,7 @@ class PluginManager(QtCore.QObject):
 
     def installplugin(self):
         from .legacysupport import installPlugin
+
         installPlugin(self)
         self.reload_plugins()
 
@@ -309,16 +332,19 @@ class PluginManager(QtCore.QObject):
         from .installation import installPluginFromFile
         from .repository import fetchscript
         from pymol import CmdException
+
         url = self.form.e_wiki.text()
         if not len(url):
             return
         import tempfile, shutil
+
         tmpdir = tempfile.mkdtemp()
         try:
             filename = fetchscript(url, tmpdir, False)
         except BaseException as e:
-            QtWidgets.QMessageBox.critical(None, 'Error',
-                'Fetching Plugin failed.\n' + str(e))
+            QtWidgets.QMessageBox.critical(
+                None, "Error", "Fetching Plugin failed.\n" + str(e)
+            )
             return
 
         if filename:
@@ -337,7 +363,7 @@ class PluginManager(QtCore.QObject):
 
     def show_plugin_info_dialog(self, info):
         dialog = QtWidgets.QDialog(None)
-        dialog.setWindowTitle('Plugin Information')
+        dialog.setWindowTitle("Plugin Information")
         layout = QtWidgets.QVBoxLayout()
         table = QtWidgets.QTableWidget(0, 2)
         table.verticalHeader().hide()
@@ -350,18 +376,16 @@ class PluginManager(QtCore.QObject):
             row = table.rowCount()
             table.insertRow(table.rowCount())
             table_item = QtWidgets.QTableWidgetItem(label)
-            table_item.setFlags(table_item.flags() &
-                 ~(Qt.ItemIsEditable))
+            table_item.setFlags(table_item.flags() & ~(Qt.ItemIsEditable))
             table.setItem(row, 0, table_item)
             table_item = QtWidgets.QTableWidgetItem(text)
-            table_item.setFlags(table_item.flags() &
-                 ~(Qt.ItemIsEditable))
+            table_item.setFlags(table_item.flags() & ~(Qt.ItemIsEditable))
             table.setItem(row, 1, table_item)
 
-        add_line('Name', info.name)
+        add_line("Name", info.name)
         if not info.is_temporary:
-            add_line('Python Module Name', info.mod_name)
-            add_line('Filename', info.filename)
+            add_line("Python Module Name", info.mod_name)
+            add_line("Filename", info.filename)
 
         metadata = info.get_metadata()
         for label, value in metadata.items():
@@ -369,8 +393,8 @@ class PluginManager(QtCore.QObject):
 
         if not info.is_temporary:
             if info.loaded:
-                add_line('commands', ', '.join(info.commands))
-        docstring = info.get_docstring() or 'No documentation available.'
+                add_line("commands", ", ".join(info.commands))
+        docstring = info.get_docstring() or "No documentation available."
 
         browser = QtWidgets.QTextBrowser()
         browser.setPlainText(docstring)
@@ -383,8 +407,10 @@ class PluginManager(QtCore.QObject):
 
     def add_path(self):
         from .installation import get_default_user_plugin_path as userpath
-        d = QtWidgets.QFileDialog.getExistingDirectory(None,
-            'Add plugin directory', userpath())
+
+        d = QtWidgets.QFileDialog.getExistingDirectory(
+            None, "Add plugin directory", userpath()
+        )
         if len(d) > 0:
             self.form.slb_path.addItem(d)
         self.update_startup_paths()
@@ -395,7 +421,7 @@ class PluginManager(QtCore.QObject):
             row = self.form.slb_path.row(items[0])
             if row > 0:
                 item = self.form.slb_path.takeItem(row)
-                self.form.slb_path.insertItem(row-1, item)
+                self.form.slb_path.insertItem(row - 1, item)
         self.update_startup_paths()
 
     def move_path_down(self):
@@ -404,7 +430,7 @@ class PluginManager(QtCore.QObject):
             row = self.form.slb_path.row(items[0])
             if row < self.form.slb_path.rowCount() - 1:
                 item = self.form.slb_path.takeItem(row)
-                self.form.slb_path.insertItem(row+1, item)
+                self.form.slb_path.insertItem(row + 1, item)
         self.update_startup_paths()
 
     def remove_path(self):

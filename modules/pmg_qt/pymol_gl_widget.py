@@ -7,6 +7,7 @@ import pymol
 from pymol.Qt import QtCore
 from pymol.Qt import QtGui
 from pymol.Qt import QtWidgets
+
 Gesture = QtCore.QEvent.Gesture
 Qt = QtCore.Qt
 
@@ -19,14 +20,16 @@ from pymol._cmd import glViewport
 # QOpenGLWidget is supposed to supersede QGLWidget, but has issues (e.g.
 # no stereo support)
 USE_QOPENGLWIDGET = int(
-    os.getenv("PYMOL_USE_QOPENGLWIDGET") or
-    (pymol.IS_MACOS and QtCore.QT_VERSION >= 0x50400))
+    os.getenv("PYMOL_USE_QOPENGLWIDGET")
+    or (pymol.IS_MACOS and QtCore.QT_VERSION >= 0x50400)
+)
 
 if USE_QOPENGLWIDGET:
     BaseGLWidget = QtWidgets.QOpenGLWidget
     AUTO_DETECT_STEREO = False
 else:
     from pymol.Qt import QtOpenGL
+
     BaseGLWidget = QtOpenGL.QGLWidget
     # only attempt stereo detection in Qt <= 5.6 (with 5.9+ on Linux I
     # get GL_DOUBLEBUFFER=0 with flickering when requesting stereo)
@@ -34,11 +37,11 @@ else:
 
 
 class PyMOLGLWidget(BaseGLWidget):
-    '''
+    """
     PyMOL OpenGL Widget
 
     Can be used as a context manager to make OpenGL context current.
-    '''
+    """
 
     # mouse button map
     _buttonMap = {
@@ -48,12 +51,12 @@ class PyMOLGLWidget(BaseGLWidget):
     }
 
     def __enter__(self):
-        '''
+        """
         Context manager to make the OpenGL context "current".
 
         Fixes depth-buffer issue with QOpenGLWidget
         https://github.com/schrodinger/pymol-open-source/issues/25
-        '''
+        """
         self.makeCurrent()
         pymol._cmd._pushValidContext(self.cmd._COb)
 
@@ -81,7 +84,8 @@ class PyMOLGLWidget(BaseGLWidget):
             # See layer1/Setting.h for stereo modes
 
             if options.stereo_mode in (1, 12) or (
-                    options.stereo_mode == 0 and AUTO_DETECT_STEREO):
+                options.stereo_mode == 0 and AUTO_DETECT_STEREO
+            ):
                 f.setStereo(True)
 
             if options.stereo_mode in (11, 12) and not USE_QOPENGLWIDGET:
@@ -101,6 +105,7 @@ class PyMOLGLWidget(BaseGLWidget):
 
         # capture python output for feedback
         import pcatch
+
         pcatch._install()
 
         # for passive move drag
@@ -147,7 +152,7 @@ class PyMOLGLWidget(BaseGLWidget):
 
         if changeFlags & QtWidgets.QPinchGesture.RotationAngleChanged:
             delta = gesture.lastRotationAngle() - gesture.rotationAngle()
-            self.cmd.turn('z', delta)
+            self.cmd.turn("z", delta)
 
         if changeFlags & QtWidgets.QPinchGesture.ScaleFactorChanged:
             view = list(self.cmd.get_view())
@@ -179,8 +184,7 @@ class PyMOLGLWidget(BaseGLWidget):
     def mousePressEvent(self, ev, state=0):
         if ev.button() not in self._buttonMap:
             return
-        self.pymol.button(self._buttonMap[ev.button()], state,
-                          *self._event_x_y_mod(ev))
+        self.pymol.button(self._buttonMap[ev.button()], state, *self._event_x_y_mod(ev))
 
     def mouseReleaseEvent(self, ev):
         self.mousePressEvent(ev, 1)
@@ -199,8 +203,12 @@ class PyMOLGLWidget(BaseGLWidget):
 
     def paintGL(self):
         if not USE_QOPENGLWIDGET:
-            glViewport(0, 0, int(self.fb_scale * self.width()),
-                         int(self.fb_scale * self.height()))
+            glViewport(
+                0,
+                0,
+                int(self.fb_scale * self.width()),
+                int(self.fb_scale * self.height()),
+            )
         self.pymol.draw()
         self._timer.start(0)
 
@@ -212,12 +220,12 @@ class PyMOLGLWidget(BaseGLWidget):
         self.pymol.reshape(w, h, True)
 
     def updateFbScale(self, context):
-        '''Update PyMOL's display scale factor from the window or screen context
+        """Update PyMOL's display scale factor from the window or screen context
         @type context: QWindow or QScreen
-        '''
+        """
         self.fb_scale = context.devicePixelRatio()
         try:
-            self.cmd.set('display_scale_factor', int(self.fb_scale))
+            self.cmd.set("display_scale_factor", int(self.fb_scale))
         except BaseException as e:
             # fails with modal draw (mpng ..., modal=1)
             print(e)
@@ -234,7 +242,8 @@ class PyMOLGLWidget(BaseGLWidget):
             self.updateFbScale(window)
             window.screenChanged.connect(self.updateFbScale)
             window.screen().physicalDotsPerInchChanged.connect(
-                    lambda dpi: self.updateFbScale(window))
+                lambda dpi: self.updateFbScale(window)
+            )
 
         except AttributeError:
             # Fallback for Qt4

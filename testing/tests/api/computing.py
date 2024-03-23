@@ -1,15 +1,15 @@
-
 from pymol import cmd, testing, stored
 
-@testing.requires('no_edu')
+
+@testing.requires("no_edu")
 class TestComputing(testing.PyMOLTestCase):
 
-    @testing.requires('incentive')
+    @testing.requires("incentive")
     def testClean(self):
-        cmd.fragment('his')
-        xyz1 = cmd.get_model('his').get_coord_list()
-        energy = cmd.clean('his')
-        xyz2 = cmd.get_model('his').get_coord_list()
+        cmd.fragment("his")
+        xyz1 = cmd.get_model("his").get_coord_list()
+        energy = cmd.clean("his")
+        xyz2 = cmd.get_model("his").get_coord_list()
         self.assertEqual(len(xyz1), len(xyz2))
 
         # coords have changed

@@ -1,6 +1,6 @@
-'''
+"""
 unit tests for pymol.wizard.nucmutagenesis
-'''
+"""
 
 import os
 import sys
@@ -9,12 +9,13 @@ import unittest
 
 from pymol import cmd, testing
 
-@testing.requires_version('2.2')
+
+@testing.requires_version("2.2")
 class TestNucMutagenesis(testing.PyMOLTestCase):
 
     def test_CanGetSourceSequence(self):
         cmd.load(self.datafile("1rna.cif"))
-        seq = cmd.get_fastastr('/1rna/A/A').splitlines()[1]
+        seq = cmd.get_fastastr("/1rna/A/A").splitlines()[1]
         self.assertEqual(seq, "UUAUAUAUAUAUAA")
 
     def test_CanGetFragment(self):
@@ -28,20 +29,24 @@ class TestNucMutagenesis(testing.PyMOLTestCase):
 
     def test_CorrectChiDihedral(self):
         cmd.load(self.datafile("1rna.cif"))
-        src_dihedral = cmd.get_dihedral("/1rna/A/A/14 & name O4'",
-                                        "/1rna/A/A/14 & name C1'",
-                                        "/1rna/A/A/14 & name N9",
-                                        "/1rna/A/A/14 & name C4'")
+        src_dihedral = cmd.get_dihedral(
+            "/1rna/A/A/14 & name O4'",
+            "/1rna/A/A/14 & name C1'",
+            "/1rna/A/A/14 & name N9",
+            "/1rna/A/A/14 & name C4'",
+        )
         cmd.wizard("nucmutagenesis")
         cmd.select("/1rna/A/A/14")
         cmd.get_wizard().mode = "Guanine"
         cmd.get_wizard().do_select("sele")
         cmd.get_wizard().apply()
-        des_dihedral = cmd.get_dihedral("/1rna/A/A/14 & name O4'",
-                                        "/1rna/A/A/14 & name C1'",
-                                        "/1rna/A/A/14 & name N9",
-                                        "/1rna/A/A/14 & name C4'")
-        self.assertAlmostEqual(src_dihedral, des_dihedral, delta = 2.0)
+        des_dihedral = cmd.get_dihedral(
+            "/1rna/A/A/14 & name O4'",
+            "/1rna/A/A/14 & name C1'",
+            "/1rna/A/A/14 & name N9",
+            "/1rna/A/A/14 & name C4'",
+        )
+        self.assertAlmostEqual(src_dihedral, des_dihedral, delta=2.0)
 
     def test_CanGetNewRNASequence(self):
         cmd.load(self.datafile("1rna.cif"))

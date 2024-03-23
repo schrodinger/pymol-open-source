@@ -15,8 +15,8 @@ from collections import defaultdict
 from matplotlib import pyplot, rcParams, dates
 
 # plot setup
-rcParams['figure.figsize'] = 5.0, 2.5
-rcParams['font.size'] = 9
+rcParams["figure.figsize"] = 5.0, 2.5
+rcParams["font.size"] = 9
 
 # command line options
 parser = OptionParser()
@@ -30,26 +30,29 @@ tabname = os.getenv("PYMOLTESTTIMINGS", "timings.tab")
 # read file
 db = defaultdict(lambda: defaultdict(list))
 for line in open(tabname):
-    a = line.rstrip('\n').split("\t")
+    a = line.rstrip("\n").split("\t")
     timestamp = float(a[0])
     try:
         mac = a[9] + a[5]
     except:
         mac = a[1]
-        mac = ':'.join(mac[i:i+2] for i in range(0, len(mac), 2))
+        mac = ":".join(mac[i : i + 2] for i in range(0, len(mac), 2))
     value = float(a[2])
-    key = '%s(%s)' % (a[3], a[4])
+    key = "%s(%s)" % (a[3], a[4])
     db[key][mac].append((timestamp, value))
 
 # helper function for unique PNG filenames
 used_png = set()
+
+
 def get_unused_png(key):
-    r = key = re.sub(r'[^-\w.]', '_', key)
+    r = key = re.sub(r"[^-\w.]", "_", key)
     i = 0
     while r in used_png:
         i += 1
-        r = key + '-%d' % i
-    return r + '.png'
+        r = key + "-%d" % i
+    return r + ".png"
+
 
 # create output dir
 outdir = tempfile.mkdtemp()
@@ -70,7 +73,7 @@ for key in sorted(db):
         ax.plot(x, y, "o-", label=mac[:290])
 
     fig.autofmt_xdate()
-    ax.xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_formatter(dates.DateFormatter("%Y-%m-%d"))
     ax.yaxis.set_label_text("Seconds")
     ax.set_title(key)
 
@@ -92,4 +95,5 @@ if options.browse:
         os.system("open " + outhtml)
     else:
         import webbrowser
+
         webbrowser.open(outhtml)

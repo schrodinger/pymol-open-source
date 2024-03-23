@@ -1,34 +1,34 @@
-
-'''
+"""
 Testing atom properties for simple getting/setting and loading from sdf and mae files
-'''
+"""
 
 import unittest
 from pymol import cmd, testing, stored
 
-@testing.requires('properties')
+
+@testing.requires("properties")
 class TestAtomProperties(testing.PyMOLTestCase):
 
     def testSetNoAtomProperty(self):
         try:
-            cmd.set_atom_property('test_prop', 1, "index 1")
+            cmd.set_atom_property("test_prop", 1, "index 1")
         except:
             self.assertEqual(False, True)
             pass
 
-    @testing.foreach('1molecule.mae')
+    @testing.foreach("1molecule.mae")
     def testLoadNoProperties(self, molfilename):
-        cmd.set('load_object_props_default', '')
-        cmd.load(self.datafile(molfilename), 'test')
+        cmd.set("load_object_props_default", "")
+        cmd.load(self.datafile(molfilename), "test")
         objs = cmd.get_object_list()
         for obj in objs:
-            prop_list= cmd.get_property_list(obj)
+            prop_list = cmd.get_property_list(obj)
             self.assertEquals(prop_list, None)
 
-    @testing.foreach('1molecule.mae')
+    @testing.foreach("1molecule.mae")
     def testLoadNoAtomProperties(self, molfilename):
-        cmd.set('load_atom_props_default', '')
-        cmd.load(self.datafile(molfilename), 'test', object_props='*')
+        cmd.set("load_atom_props_default", "")
+        cmd.load(self.datafile(molfilename), "test", object_props="*")
         objs = cmd.get_object_list()
         for obj in objs:
             stored.prop_lookup = {}
@@ -37,20 +37,22 @@ class TestAtomProperties(testing.PyMOLTestCase):
             for i in stored.prop_lookup.keys():
                 self.assertEquals(len(stored.prop_lookup[i]), 0)
 
-    @testing.foreach('1molecule.mae', '1d_smiles.mae')
+    @testing.foreach("1molecule.mae", "1d_smiles.mae")
     def testMAEchempy(self, molfilename):
-        cmd.load(self.datafile(molfilename), 'test', object_props='*', atom_props='*')
+        cmd.load(self.datafile(molfilename), "test", object_props="*", atom_props="*")
         objs = cmd.get_object_list()
         for obj in objs:
             idxToVal = {}
             natoms = cmd.count_atoms(obj)
             for i in range(natoms):
-                idxToVal[i+1] = i*10
-                cmd.set_atom_property('test_prop', i*10, "index %d and %s" % (i+1, obj))
+                idxToVal[i + 1] = i * 10
+                cmd.set_atom_property(
+                    "test_prop", i * 10, "index %d and %s" % (i + 1, obj)
+                )
             model = cmd.get_model(obj)
 
             # test to make sure the properties that exist are the same
-            prop_list= cmd.get_property_list(obj)
+            prop_list = cmd.get_property_list(obj)
             mol_prop_list = [x[0] for x in model.molecule_properties]
             self.assertEqual(set(prop_list), set(mol_prop_list))
 
@@ -72,8 +74,8 @@ class TestAtomProperties(testing.PyMOLTestCase):
                 idx += 1
 
     def testMAEsaveLoadSessionsWithAtomProperties(self, binary_dump=False):
-        cmd.set('pse_binary_dump', binary_dump)
-        cmd.load(self.datafile('1molecule.mae'), '1molecule', atom_props='*')
+        cmd.set("pse_binary_dump", binary_dump)
+        cmd.load(self.datafile("1molecule.mae"), "1molecule", atom_props="*")
         allpropdata = {}
         objs = cmd.get_object_list()
         stored.prop_lookup = {}
@@ -81,45 +83,45 @@ class TestAtomProperties(testing.PyMOLTestCase):
             stored.prop_lookup[obj] = {}
             cmd.iterate(obj, "stored.prop_lookup['%s'][index-1] = properties.all" % obj)
         prop_lookup = stored.prop_lookup
-        with testing.mktemp('.pse') as psefilename:
+        with testing.mktemp(".pse") as psefilename:
             cmd.save(psefilename)
             cmd.load(psefilename)
         stored.prop_lookup = {}
         for obj in objs:
             stored.prop_lookup[obj] = {}
             cmd.iterate(obj, "stored.prop_lookup['%s'][index-1] = properties.all" % obj)
-        #test to make sure the properties are exactly the same from the saved session as the loaded session
+        # test to make sure the properties are exactly the same from the saved session as the loaded session
         self.assertEqual(prop_lookup, stored.prop_lookup)
 
-    @testing.requires_version('2.4')
+    @testing.requires_version("2.4")
     def testMAEsaveLoadSessionsWithAtomPropertiesBinaryDump(self):
-        cmd.set('pse_export_version', 2.4)
+        cmd.set("pse_export_version", 2.4)
         self.testMAEsaveLoadSessionsWithAtomProperties(True)
 
-    @testing.requires_version('1.8.0.7')
+    @testing.requires_version("1.8.0.7")
     def testDel(self):
-        cmd.pseudoatom('m1')
+        cmd.pseudoatom("m1")
 
         stored.keys = []
-        cmd.alter('all', 'p.foo = 123')
-        cmd.alter('all', 'p.bar = "Hello World"')
-        cmd.iterate('all', 'stored.keys = list(sorted(p.all))')
-        self.assertEqual(stored.keys, ['bar', 'foo'])
+        cmd.alter("all", "p.foo = 123")
+        cmd.alter("all", 'p.bar = "Hello World"')
+        cmd.iterate("all", "stored.keys = list(sorted(p.all))")
+        self.assertEqual(stored.keys, ["bar", "foo"])
 
         stored.keys = []
-        cmd.alter('all', "del p['foo']")
-        cmd.iterate('all', 'stored.keys = list(sorted(p.all))')
-        self.assertEqual(stored.keys, ['bar'])
+        cmd.alter("all", "del p['foo']")
+        cmd.iterate("all", "stored.keys = list(sorted(p.all))")
+        self.assertEqual(stored.keys, ["bar"])
 
         stored.keys = []
-        cmd.alter('all', "p.bar = None")
-        cmd.iterate('all', 'stored.keys = list(sorted(p.all))')
+        cmd.alter("all", "p.bar = None")
+        cmd.iterate("all", "stored.keys = list(sorted(p.all))")
         self.assertEqual(stored.keys, [])
 
         # object-level
-        cmd.set_property('bla', 456, 'm1')
-        stored.keys = cmd.get_property_list('m1')
-        self.assertEqual(stored.keys, ['bla'])
-        cmd.set_property('bla', None, 'm1')
-        stored.keys = cmd.get_property_list('m1')
+        cmd.set_property("bla", 456, "m1")
+        stored.keys = cmd.get_property_list("m1")
+        self.assertEqual(stored.keys, ["bla"])
+        cmd.set_property("bla", None, "m1")
+        stored.keys = cmd.get_property_list("m1")
         self.assertEqual(stored.keys, [])

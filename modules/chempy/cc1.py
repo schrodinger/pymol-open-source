@@ -1,23 +1,24 @@
-#A* -------------------------------------------------------------------
-#B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
-#D* -------------------------------------------------------------------
-#E* It is unlawful to modify or remove this copyright notice.
-#F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information.
-#H* -------------------------------------------------------------------
-#I* Additional authors of this source file include:
-#-*
-#-*
-#-*
-#Z* -------------------------------------------------------------------
+# A* -------------------------------------------------------------------
+# B* This file contains source code for the PyMOL computer program
+# C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
+# D* -------------------------------------------------------------------
+# E* It is unlawful to modify or remove this copyright notice.
+# F* -------------------------------------------------------------------
+# G* Please see the accompanying LICENSE file for further information.
+# H* -------------------------------------------------------------------
+# I* Additional authors of this source file include:
+# -*
+# -*
+# -*
+# Z* -------------------------------------------------------------------
 
 from chempy.models import Indexed
-from chempy import Storage,Atom,Bond
+from chempy import Storage, Atom, Bond
 
-class CC1(Storage): # ChemDraw3D 5.0 std., cartesian coordinates
 
-    def fromList(self,molList):
+class CC1(Storage):  # ChemDraw3D 5.0 std., cartesian coordinates
+
+    def fromList(self, molList):
 
         model = Indexed()
 
@@ -32,8 +33,11 @@ class CC1(Storage): # ChemDraw3D 5.0 std., cartesian coordinates
             at = Atom()
             at.index = cnt
             id_dict[molList[irec][3:8].strip()] = at.index
-            at.coord = [float(molList[irec][8:20]),
-                float(molList[irec][20:32]),float(molList[irec][32:44])]
+            at.coord = [
+                float(molList[irec][8:20]),
+                float(molList[irec][20:32]),
+                float(molList[irec][32:44]),
+            ]
             at.symbol = molList[irec][0:3].strip()
             at.numeric_type = int(molList[irec][44:49])
             lst = molList[irec][49:].split()
@@ -48,16 +52,16 @@ class CC1(Storage): # ChemDraw3D 5.0 std., cartesian coordinates
             lst = a.bonds
             del a.bonds
             for b in lst:
-                if a.index<id_dict[b]:
+                if a.index < id_dict[b]:
                     bnd = Bond()
-                    bnd.index = [ a.index,id_dict[b]]
+                    bnd.index = [a.index, id_dict[b]]
                     model.bond.append(bnd)
 
         # obtain formal charges from M  CHG record
         return model
 
-#------------------------------------------------------------------------------
-    def toList(self,model):
+    # ------------------------------------------------------------------------------
+    def toList(self, model):
 
         return []
 

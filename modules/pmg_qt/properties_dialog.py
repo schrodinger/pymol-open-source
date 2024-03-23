@@ -3,36 +3,44 @@ import os
 from pymol.Qt import QtGui, QtCore, QtWidgets
 from pymol.Qt.utils import UpdateLock, PopupOnException
 import pymol
+
 Qt = QtCore.Qt
 
 from pymol.setting import name_dict
 
 # Functions to convert atom property values to strings for display in the GUI
 strfunctions = {
-    'color': lambda c: hex(c) if (c >= 0x40000000) else str(c),
-    'reps': bin,
-    'flags': bin,
+    "color": lambda c: hex(c) if (c >= 0x40000000) else str(c),
+    "reps": bin,
+    "flags": bin,
 }
+
 
 class UneditableDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         return None
 
+
 class FunctionSuspender:
     def __init__(self, func):
         self.func = func
+
     def __enter__(self):
         self.func.suspended = True
+
     def __exit__(self, exc_type, exc_value, traceback):
         self.func.suspended = False
+
 
 def suspendable(func):
     def wrapper(*args, **kwargs):
         if not func.suspended:
             return func(*args, **kwargs)
+
     func.suspended = False
     wrapper.suspend = FunctionSuspender(func)
     return wrapper
+
 
 def get_object_names(_self):
     # was _self.get_names('public_objects') in PyMOL 2.1
@@ -40,11 +48,12 @@ def get_object_names(_self):
     names = _self.get_object_list()
     return names
 
+
 class PropsDialog(QtWidgets.QWidget):
     def __init__(self, parent):
         QtWidgets.QWidget.__init__(self)
         self.cmd = parent.cmd
-        self.form = parent.load_form('props')
+        self.form = parent.load_form("props")
         self.setup_tree_widget()
         self.setup_behavior()
         self.item_changed_skip = False
@@ -52,9 +61,11 @@ class PropsDialog(QtWidgets.QWidget):
     def make_entry(self, parent, label):
         item = QtWidgets.QTreeWidgetItem(parent)
         item.setText(0, str(label))
-        item.setFlags(QtCore.Qt.ItemIsEditable |
-                      QtCore.Qt.ItemIsEnabled |
-                      QtCore.Qt.ItemIsSelectable )
+        item.setFlags(
+            QtCore.Qt.ItemIsEditable
+            | QtCore.Qt.ItemIsEnabled
+            | QtCore.Qt.ItemIsSelectable
+        )
         return item
 
     def make_cat(self, parent, label):
@@ -62,8 +73,7 @@ class PropsDialog(QtWidgets.QWidget):
         item.setText(0, str(label))
         item.setFirstColumnSpanned(True)
         item.setExpanded(True)
-        item.setChildIndicatorPolicy(
-            QtWidgets.QTreeWidgetItem.ShowIndicator)
+        item.setChildIndicatorPolicy(QtWidgets.QTreeWidgetItem.ShowIndicator)
         return item
 
     def setup_tree_widget(self):
@@ -86,22 +96,48 @@ class PropsDialog(QtWidgets.QWidget):
         self.item_atom_properties = Ellipsis  # Incentive PyMOL only
 
         self.item_astate = self.make_cat(self.form.treeWidget, "Atom-State-Level")
-        self.item_astate_builtins = self.make_cat(self.item_astate, "Properties (built-in)")
+        self.item_astate_builtins = self.make_cat(
+            self.item_astate, "Properties (built-in)"
+        )
         self.item_astate_settings = self.make_cat(self.item_astate, "Settings")
 
-        self.keys_atom_identifiers = ['model', 'index', 'segi', 'chain', 'resi',
-                                'resn',
-                                'oneletter',  # read-only
-                                'name', 'alt', 'ID', 'rank']
-        self.keys_atom_builtins = ['elem', 'q', 'b', 'type', 'formal_charge',
-                            'partial_charge', 'numeric_type', 'text_type',
-                            # avoid stereo auto-assignment errors
-                            # 'stereo',
-                            'vdw', 'ss', 'color', 'reps',
-                            'flags',
-                            'label', 'cartoon',
-                            'protons', 'geom', 'valence', 'elec_radius']
-        self.keys_astate_builtins = ['state', 'x', 'y', 'z']
+        self.keys_atom_identifiers = [
+            "model",
+            "index",
+            "segi",
+            "chain",
+            "resi",
+            "resn",
+            "oneletter",  # read-only
+            "name",
+            "alt",
+            "ID",
+            "rank",
+        ]
+        self.keys_atom_builtins = [
+            "elem",
+            "q",
+            "b",
+            "type",
+            "formal_charge",
+            "partial_charge",
+            "numeric_type",
+            "text_type",
+            # avoid stereo auto-assignment errors
+            # 'stereo',
+            "vdw",
+            "ss",
+            "color",
+            "reps",
+            "flags",
+            "label",
+            "cartoon",
+            "protons",
+            "geom",
+            "valence",
+            "elec_radius",
+        ]
+        self.keys_astate_builtins = ["state", "x", "y", "z"]
 
         self.items = {}
         for key in self.keys_atom_identifiers:
@@ -111,10 +147,10 @@ class PropsDialog(QtWidgets.QWidget):
         for key in self.keys_astate_builtins:
             self.items[key] = self.make_entry(self.item_astate_builtins, key)
 
-        self.items['model'].setDisabled(True)
-        self.items['index'].setDisabled(True)
-        self.items['state'].setDisabled(True)
-        self.items['oneletter'].setDisabled(True)
+        self.items["model"].setDisabled(True)
+        self.items["index"].setDisabled(True)
+        self.items["state"].setDisabled(True)
+        self.items["oneletter"].setDisabled(True)
 
     def setup_behavior(self):
         # init input fields
@@ -135,8 +171,9 @@ class PropsDialog(QtWidgets.QWidget):
 
         # themed icons only available by default on X11
         if self.form.button_refresh.icon().isNull():
-            self.form.button_refresh.setIcon(QtGui.QIcon(
-                os.path.expandvars('$PYMOL_DATA/pmg_qt/icons/refresh.svg')))
+            self.form.button_refresh.setIcon(
+                QtGui.QIcon(os.path.expandvars("$PYMOL_DATA/pmg_qt/icons/refresh.svg"))
+            )
 
         # update and show
         self.update_treewidget_model()
@@ -176,7 +213,7 @@ class PropsDialog(QtWidgets.QWidget):
                 try:
                     new_value = self.cmd.safe_eval(new_value)
                     result = self.cmd.transform_object(model, new_value, state)
-                except: # CmdTransformObject-DEBUG: bad matrix
+                except:  # CmdTransformObject-DEBUG: bad matrix
                     result = False
             elif parent is self.item_object_settings:
                 with PopupOnException():
@@ -190,11 +227,11 @@ class PropsDialog(QtWidgets.QWidget):
                 is_state = False
 
                 if parent is self.item_atom_properties:
-                    key = 'p.' + key
+                    key = "p." + key
                 elif parent is self.item_atom_settings:
-                    key = 's.' + key
+                    key = "s." + key
                 elif parent is self.item_astate_settings:
-                    key = 's.' + key
+                    key = "s." + key
                     is_state = True
                 elif key in self.keys_astate_builtins:
                     is_state = True
@@ -210,10 +247,14 @@ class PropsDialog(QtWidgets.QWidget):
                     except ValueError:
                         # return str and let PyMOL handle it (e.g. change
                         # type of user property)
-                        return new_value.encode('utf-8')
+                        return new_value.encode("utf-8")
 
-                alter_args = ('pk1', key + '= get_new_value(' + key + ')', 0,
-                        {'get_new_value': get_new_value})
+                alter_args = (
+                    "pk1",
+                    key + "= get_new_value(" + key + ")",
+                    0,
+                    {"get_new_value": get_new_value},
+                )
 
                 with PopupOnException():
                     if is_state:
@@ -227,9 +268,9 @@ class PropsDialog(QtWidgets.QWidget):
         self.item_changed_skip = False
 
     def unset_item(self, item):
-        '''
+        """
         Calls unset on item if applicable. Matrices will be reset.
-        '''
+        """
         model = self.form.input_model.currentText()
         state = self.form.input_state.value()
         key = item.text(0)
@@ -244,11 +285,11 @@ class PropsDialog(QtWidgets.QWidget):
             return unset_result
 
         if item is self.item_object_ttt:
-            self.cmd.matrix_reset(model, mode=1) # mode=1 for TTT matrix reset
+            self.cmd.matrix_reset(model, mode=1)  # mode=1 for TTT matrix reset
         elif item is self.item_ostate_title:
-            self.cmd.set_title(model, state, '')
+            self.cmd.set_title(model, state, "")
         elif item is self.item_ostate_matrix:
-            self.cmd.matrix_reset(model, state, mode=2) # mode=2 for state matrix reset
+            self.cmd.matrix_reset(model, state, mode=2)  # mode=2 for state matrix reset
         elif parent is self.item_object_settings:
             self.cmd.unset(key, model, quiet=0)
         elif parent is self.item_ostate_settings:
@@ -256,12 +297,12 @@ class PropsDialog(QtWidgets.QWidget):
         elif parent is self.item_ostate_properties:
             self.cmd.set_property(key, None, model, state, quiet=0)
         elif parent is self.item_atom_properties:
-            key = 'p.' + key
-            alter_args = ('pk1', key + '= None', 0)
+            key = "p." + key
+            alter_args = ("pk1", key + "= None", 0)
             unset_result = self.cmd.alter(*alter_args)
         elif parent is self.item_atom_settings:
-            key = 's.' + key
-            alter_args = ('pk1', key + '= None', 0)
+            key = "s." + key
+            alter_args = ("pk1", key + "= None", 0)
             unset_result = self.cmd.alter(*alter_args)
         else:
             unset_result = False
@@ -276,18 +317,18 @@ class PropsDialog(QtWidgets.QWidget):
         self.unset_item(item_list_selected[0])
 
     def eventFilter(self, source, event):
-        '''
+        """
         Event filter for creating new shortcuts. Processes the key event before passing it on.
-        '''
-        if (event.type() == QtCore.QEvent.KeyPress and source is self.form.treeWidget):
-            if (event.key() == QtCore.Qt.Key_Delete):
+        """
+        if event.type() == QtCore.QEvent.KeyPress and source is self.form.treeWidget:
+            if event.key() == QtCore.Qt.Key_Delete:
                 self.unset_caller()
                 return 0
         return super().eventFilter(source, event)
 
     def update_object_settings(self, parent, model, state):
         parent.takeChildren()
-        for sitem in (self.cmd.get_object_settings(model, state) or []):
+        for sitem in self.cmd.get_object_settings(model, state) or []:
             key = name_dict.get(sitem[0], sitem[0])
             item = self.make_entry(parent, key)
             item.setText(1, str(sitem[2]))
@@ -311,20 +352,22 @@ class PropsDialog(QtWidgets.QWidget):
             try:
                 value = ns[key]
             except Exception as e:
-                value = 'ERROR: ' + str(e)
+                value = "ERROR: " + str(e)
             self.items[key].setText(1, strfunctions.get(key, str)(value))
-        self.update_atom_settings(ns['s'], self.item_atom_settings)
+        self.update_atom_settings(ns["s"], self.item_atom_settings)
 
     def update_astate_fields(self, ns):
         for key in self.keys_astate_builtins:
             value = ns[key]
             self.items[key].setText(1, str(value))
-        self.update_atom_settings(ns['s'], self.item_astate_settings)
+        self.update_atom_settings(ns["s"], self.item_astate_settings)
 
     def update_from_pk1(self):
         pk1_atom = []
-        if self.cmd.iterate('?pk1', 'pk1_atom[:] = [model, index]', space=locals()) > 0:
-            self.form.input_model.setCurrentIndex(self.form.input_model.findText(pk1_atom[0]))
+        if self.cmd.iterate("?pk1", "pk1_atom[:] = [model, index]", space=locals()) > 0:
+            self.form.input_model.setCurrentIndex(
+                self.form.input_model.findText(pk1_atom[0])
+            )
             self.form.input_index.setValue(pk1_atom[1])
 
     def update_pk1(self):
@@ -347,14 +390,17 @@ class PropsDialog(QtWidgets.QWidget):
         state = self.form.input_state.value()
 
         self.item_changed_skip = True
-        space = {'update_atom_fields': self.update_atom_fields,'update_astate_fields': self.update_astate_fields,'locals': locals}
-        count = self.cmd.iterate(
-            'pk1', 'update_atom_fields(locals())', space=space)
+        space = {
+            "update_atom_fields": self.update_atom_fields,
+            "update_astate_fields": self.update_astate_fields,
+            "locals": locals,
+        }
+        count = self.cmd.iterate("pk1", "update_atom_fields(locals())", space=space)
         self.item_atom.setDisabled(not count)
         if count:
             count = self.cmd.iterate_state(
-                state, 'pk1',
-                'update_astate_fields(locals())', space=space)
+                state, "pk1", "update_astate_fields(locals())", space=space
+            )
         self.item_astate.setDisabled(not count)
         self.item_changed_skip = False
 
@@ -365,12 +411,10 @@ class PropsDialog(QtWidgets.QWidget):
             return
 
         self.item_changed_skip = True
-        self.item_ostate_title.setText(
-            1, str(self.cmd.get_title(model, state) or ''))
+        self.item_ostate_title.setText(1, str(self.cmd.get_title(model, state) or ""))
         self.item_ostate_matrix.setText(
-            1, str(
-                self.cmd.get_object_matrix(
-                    model, state, 0) or ''))
+            1, str(self.cmd.get_object_matrix(model, state, 0) or "")
+        )
 
         self.update_object_settings(self.item_ostate_settings, model, state)
 
@@ -385,11 +429,11 @@ class PropsDialog(QtWidgets.QWidget):
         if not model:
             return
 
-        self.item_object_ttt.setText(1, str(self.cmd.get_object_ttt(model) or ''))
+        self.item_object_ttt.setText(1, str(self.cmd.get_object_ttt(model) or ""))
         self.update_object_settings(self.item_object_settings, model, 0)
 
-        natoms = self.cmd.count_atoms('?' + model)
-        nstates = self.cmd.count_states('?' + model)
+        natoms = self.cmd.count_atoms("?" + model)
+        nstates = self.cmd.count_states("?" + model)
 
         self.form.input_state.setMinimum(1)
         self.form.input_state.setMaximum(nstates)
@@ -404,7 +448,7 @@ class PropsDialog(QtWidgets.QWidget):
         self.item_changed_skip = False
 
     def update_model_list(self, *args):
-        if 'pk1' not in self.cmd.get_names('selections'):
+        if "pk1" not in self.cmd.get_names("selections"):
             self.update_pk1()
 
         with self.update_treewidget_model.suspend:

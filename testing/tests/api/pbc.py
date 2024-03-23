@@ -1,6 +1,6 @@
-'''
+"""
 Tests for periodic boundary condition tools
-'''
+"""
 
 from pymol import cmd, testing
 
@@ -18,9 +18,7 @@ class TestPBC(testing.PyMOLTestCase):
         return cmd.get_coords(sele, state).mean(0)
 
     def assertMeanEqual(self, sele, state, expected, delta=1e-4):
-        self.assertArrayEqual(self._get_mean(sele, state),
-                              expected,
-                              delta=delta)
+        self.assertArrayEqual(self._get_mean(sele, state), expected, delta=delta)
 
     def assertMeanEqualAllStates(self, sele, expected, delta=1e-4):
         for state in range(1, cmd.count_states(sele) + 1):
@@ -41,9 +39,9 @@ class TestPBC(testing.PyMOLTestCase):
         self.assertMeanEqual("m1", 100, [-0.21415119, 0.01216528, -0.23332132])
         self.assertMeanEqual(ligsele, 100, [-13.1273365, -3.823541, -6.660239])
         cmd.pbc_wrap("m1", center=[0, 0, 0])
-        self.assertMeanEqualAllStates("m1", [0., 0., 0.], delta=0.5)
+        self.assertMeanEqualAllStates("m1", [0.0, 0.0, 0.0], delta=0.5)
         cmd.pbc_wrap("m1", center=[10, 20, 30])
-        self.assertMeanEqualAllStates("m1", [10., 20., 30.], delta=0.5)
+        self.assertMeanEqualAllStates("m1", [10.0, 20.0, 30.0], delta=0.5)
         self.assertMeanEqual(ligsele, 100, [13.758579, 29.096472, 22.250914])
 
     @testing.foreach(
@@ -71,10 +69,12 @@ class TestPBC(testing.PyMOLTestCase):
         self.assertArrayEqual(
             cmd.get_extent("m1", state=100),
             [[-14.278, -17.192, -15.273], [14.187, 17.142, 15.317]],
-            delta=1.0)
+            delta=1.0,
+        )
 
         cmd.smooth("m1", 10, pbc=0)
         self.assertArrayEqual(
             cmd.get_extent("m1", state=100),
             [[-11.245, -13.397, -12.412], [10.829, 12.899, 12.103]],
-            delta=0.5)
+            delta=0.5,
+        )

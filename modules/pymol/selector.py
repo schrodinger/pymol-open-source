@@ -4,4 +4,4 @@ def process(sele):
         return "%s`%d" % sele
 
     # convert unicode hyphens to dashes
-    return str(sele).replace(u'\u2212', '-')
+    return str(sele).replace("\u2212", "-")

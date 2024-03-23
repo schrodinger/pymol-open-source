@@ -1,6 +1,6 @@
-'''
+"""
 Experimental MMTF (Macromolecular Transmission Format) I/O library
-'''
+"""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -19,10 +19,12 @@ except ImportError:
 
 if True:
     from urllib.request import urlopen
+
     izip = zip
     izip_longest = itertools.zip_longest
     as_msgpack_key = lambda k: k if isinstance(k, str) else k.decode("utf-8")
     buffer = lambda s, i=0: memoryview(s)[i:]
+
 
 # should be replaced with a more efficient numpy-array aware iterator
 def simpleiter(iterable):
@@ -32,14 +34,17 @@ def simpleiter(iterable):
         return iter(iterable.tolist())
     return iter(iterable)
 
-def asarray(arr, dtype='i'):
-    if hasattr(arr, '__len__'):
+
+def asarray(arr, dtype="i"):
+    if hasattr(arr, "__len__"):
         return numpy.asarray(arr, dtype)
     return numpy.fromiter(arr, dtype)
 
-MMTF_ENDIAN = '>' # big-endian
+
+MMTF_ENDIAN = ">"  # big-endian
 
 ########### ENCODINGS ################
+
 
 class RunLength:
     @staticmethod
@@ -67,14 +72,16 @@ class RunLength:
             extend([item] * next(in_iter))
         return out
 
+
 class Delta:
     @staticmethod
     def encode(iterable):
-        return numpy.diff(asarray(iterable, 'i4'))
+        return numpy.diff(asarray(iterable, "i4"))
 
     @staticmethod
     def decode(iterable):
-        return asarray(iterable).cumsum(dtype='i4')
+        return asarray(iterable).cumsum(dtype="i4")
+
 
 class RecursiveIndex:
     def __init__(self, min, max):
@@ -85,7 +92,7 @@ class RecursiveIndex:
         for curr in simpleiter(iterable):
             while curr >= max:
                 yield max
-                curr -=  max
+                curr -= max
             while curr <= min:
                 yield min
                 curr -= min
@@ -100,15 +107,17 @@ class RecursiveIndex:
                 yield decoded_val
                 decoded_val = 0
 
+
 class IntegerFloats:
     def __init__(self, factor):
         self.factor = factor
 
     def encode(self, in_floats):
-        return (asarray(in_floats, 'f4') * self.factor).astype('i4')
+        return (asarray(in_floats, "f4") * self.factor).astype("i4")
 
     def decode(self, in_ints):
-        return asarray(in_ints, 'f4') / self.factor
+        return asarray(in_ints, "f4") / self.factor
+
 
 class IntegerChars:
     @staticmethod
@@ -117,12 +126,14 @@ class IntegerChars:
 
     @staticmethod
     def decode(in_ints):
-        return [(chr(x) if x else '') for x in simpleiter(in_ints)]
+        return [(chr(x) if x else "") for x in simpleiter(in_ints)]
+
 
 ######## BUFFERS ###########
 
+
 class NumbersBuffer:
-    def __init__(self, basetype='i', dectype=''):
+    def __init__(self, basetype="i", dectype=""):
         self.enctype = numpy.dtype(MMTF_ENDIAN + basetype)
         self.dectype = numpy.dtype(dectype or basetype)
 
@@ -132,9 +143,10 @@ class NumbersBuffer:
     def encode(self, in_ints):
         return asarray(in_ints, self.enctype).tostring()
 
+
 class StringsBuffer:
-    def __init__(self, nbytes, encoding='ascii'):
-        self.enctype = numpy.dtype('S' + str(nbytes))
+    def __init__(self, nbytes, encoding="ascii"):
+        self.enctype = numpy.dtype("S" + str(nbytes))
         self.encoding = encoding
 
     def decode(self, in_bytes):
@@ -142,42 +154,46 @@ class StringsBuffer:
         return [b.decode(self.encoding) for b in bstrings]
 
     def encode(self, strings):
-        bstrings = numpy.fromiter((s.encode(self.encoding) for s in strings),
-                self.enctype, len(strings))
+        bstrings = numpy.fromiter(
+            (s.encode(self.encoding) for s in strings), self.enctype, len(strings)
+        )
         return bstrings.tostring()
+
 
 ########## STRATEGIES #############
 
-def _PackedIntBufStrategy(nbytes=1, dectype='i4'):
+
+def _PackedIntBufStrategy(nbytes=1, dectype="i4"):
     m = 1 << (nbytes * 8 - 1)
     return [
-        NumbersBuffer('i' + str(nbytes), dectype),
+        NumbersBuffer("i" + str(nbytes), dectype),
         RecursiveIndex(-m, m - 1),
     ]
 
+
 strategies = {
-    1: [NumbersBuffer('f4')],
-    2: [NumbersBuffer('i1')],
-    3: [NumbersBuffer('i2')],
-    4: [NumbersBuffer('i4')],
+    1: [NumbersBuffer("f4")],
+    2: [NumbersBuffer("i1")],
+    3: [NumbersBuffer("i2")],
+    4: [NumbersBuffer("i4")],
     5: lambda length: [StringsBuffer(length)],
-    6: [NumbersBuffer('i4'), RunLength, IntegerChars],
-    7: [NumbersBuffer('i4'), RunLength],
-    8: [NumbersBuffer('i4'), RunLength, Delta],
-    9: lambda factor: [NumbersBuffer('i4'), RunLength, IntegerFloats(factor)],
-   10: lambda factor: _PackedIntBufStrategy(2) + [Delta, IntegerFloats(factor)],
-   11: lambda factor: [NumbersBuffer('i2'), IntegerFloats(factor)],
-   12: lambda factor: _PackedIntBufStrategy(2) + [IntegerFloats(factor)],
-   13: lambda factor: _PackedIntBufStrategy(1) + [IntegerFloats(factor)],
-   14: _PackedIntBufStrategy(2),
-   15: _PackedIntBufStrategy(1),
+    6: [NumbersBuffer("i4"), RunLength, IntegerChars],
+    7: [NumbersBuffer("i4"), RunLength],
+    8: [NumbersBuffer("i4"), RunLength, Delta],
+    9: lambda factor: [NumbersBuffer("i4"), RunLength, IntegerFloats(factor)],
+    10: lambda factor: _PackedIntBufStrategy(2) + [Delta, IntegerFloats(factor)],
+    11: lambda factor: [NumbersBuffer("i2"), IntegerFloats(factor)],
+    12: lambda factor: _PackedIntBufStrategy(2) + [IntegerFloats(factor)],
+    13: lambda factor: _PackedIntBufStrategy(1) + [IntegerFloats(factor)],
+    14: _PackedIntBufStrategy(2),
+    15: _PackedIntBufStrategy(1),
 }
 
 # optional parameters format (defaults to 'i' -> one int32 argument)
-strategyparamsfmt = {
-}
+strategyparamsfmt = {}
 
 ########## MEDIUM LEVEL ARRAY ENCODE/DECODE API ##############
+
 
 def encode(arr, codec, param=0):
     strategy = strategies[codec]
@@ -185,7 +201,7 @@ def encode(arr, codec, param=0):
     if not isinstance(strategy, list):
         strategy = strategy(param)
 
-    buf = struct.pack(MMTF_ENDIAN + 'iii', codec, len(arr), param)
+    buf = struct.pack(MMTF_ENDIAN + "iii", codec, len(arr), param)
 
     for handler in reversed(strategy):
         arr = handler.encode(arr)
@@ -193,16 +209,18 @@ def encode(arr, codec, param=0):
     buf += arr
     return buf
 
+
 def encode_int(arr):
-    '''Find the best compression for a 32bit int array'''
+    """Find the best compression for a 32bit int array"""
     return min((encode(arr, codec) for codec in (4, 7, 8)), key=len)
 
+
 def decode(value):
-    codec, length = struct.unpack(MMTF_ENDIAN + 'ii', value[:8])
+    codec, length = struct.unpack(MMTF_ENDIAN + "ii", value[:8])
 
     strategy = strategies[codec]
     if not isinstance(strategy, list):
-        fmt = strategyparamsfmt.get(codec, 'i')
+        fmt = strategyparamsfmt.get(codec, "i")
         params = struct.unpack(MMTF_ENDIAN + fmt, value[8:12])
         strategy = strategy(*params)
 
@@ -212,23 +230,26 @@ def decode(value):
 
     return value
 
+
 ############### HIGH LEVEL READER API ################
+
 
 class MmtfReader:
     def __init__(self, data):
         if isinstance(data, bytes):
-            if data[:2] != b'\x1f\x8b': # gzip magic number
+            if data[:2] != b"\x1f\x8b":  # gzip magic number
                 self._data = msgpack.unpackb(data, raw=False)
                 return
 
             import io, gzip
+
             data = gzip.GzipFile(fileobj=io.BytesIO(data))
 
         self._data = msgpack.unpack(data, raw=False)
 
     @classmethod
     def from_url(cls, url):
-        handle = open(url, 'rb') if os.path.isfile(url) else urlopen(url)
+        handle = open(url, "rb") if os.path.isfile(url) else urlopen(url)
         return cls(handle.read())
 
     def get(self, key, default=None):
@@ -238,7 +259,7 @@ class MmtfReader:
         except KeyError:
             return default
 
-        if not (key.endswith('List') and isinstance(value, bytes)):
+        if not (key.endswith("List") and isinstance(value, bytes)):
             return value
 
         return decode(value)
@@ -249,5 +270,6 @@ class MmtfReader:
     def get_table_iter(self, keys, defaults=None):
         if defaults is None:
             return izip_longest(*[self.get_iter(k) for k in keys])
-        return izip(*[self.get_iter(k, itertools.repeat(d))
-            for (k, d) in zip(keys, defaults)])
+        return izip(
+            *[self.get_iter(k, itertools.repeat(d)) for (k, d) in zip(keys, defaults)]
+        )

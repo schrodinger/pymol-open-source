@@ -9,31 +9,33 @@
               module (1.0 or greater should be fine)
   RD Version: $Rev$            
 """
+
 try:
     import xmlrpclib
 except ImportError:
     import xmlrpc.client as xmlrpclib
 
-def startServer(host='localhost',startPort=9123,nToTry=5):
-  done = 0
-  offset = 0
-  while offset < nToTry:
-    c = xmlrpclib.Server('http://%s:%d'%(host,startPort+offset))
-    try:
-      c.ping()
-    except:
-      print('Failed on port %d, trying another'%(startPort+offset))
-      offset = offset + 1
+
+def startServer(host="localhost", startPort=9123, nToTry=5):
+    done = 0
+    offset = 0
+    while offset < nToTry:
+        c = xmlrpclib.Server("http://%s:%d" % (host, startPort + offset))
+        try:
+            c.ping()
+        except:
+            print("Failed on port %d, trying another" % (startPort + offset))
+            offset = offset + 1
+        else:
+            done = 1
+            break
+    if done:
+        return c, startPort + offset
     else:
-      done = 1
-      break
-  if done:
-    return c,startPort+offset
-  else:
-    return None,-1
+        return None, -1
 
 
-molBlock="""3d.mol
+molBlock = """3d.mol
 
 
  27 28  0  0  0                 1 V2000
@@ -95,19 +97,19 @@ molBlock="""3d.mol
 M  END
 """
 
-if __name__=='__main__':
-  import sys
-  serv,port = startServer()
-  if serv is not None:
-    print('connected to PyMol rpc-server on port %d'%port)
-  else:
-    print('unable to connect to PyMol')
-    sys.exit(-1)
-  serv.loadMolBlock(molBlock,'sample-mol')
-  serv.set('sphere_scale',0.25,'sample-mol')
-  serv.do('show sticks;show spheres')
-  serv.sphere((.28,-1.2,1.48),.5,(1,0,1),'demo')
-  serv.sphere((0,1.87,.26),.5,(1,0,1),'demo')
-  serv.cylinder((.28,-1.2,1.48),(0,1.87,.26),.1,(.5,0,.5),'demo')
-  serv.zoom()
-  
+if __name__ == "__main__":
+    import sys
+
+    serv, port = startServer()
+    if serv is not None:
+        print("connected to PyMol rpc-server on port %d" % port)
+    else:
+        print("unable to connect to PyMol")
+        sys.exit(-1)
+    serv.loadMolBlock(molBlock, "sample-mol")
+    serv.set("sphere_scale", 0.25, "sample-mol")
+    serv.do("show sticks;show spheres")
+    serv.sphere((0.28, -1.2, 1.48), 0.5, (1, 0, 1), "demo")
+    serv.sphere((0, 1.87, 0.26), 0.5, (1, 0, 1), "demo")
+    serv.cylinder((0.28, -1.2, 1.48), (0, 1.87, 0.26), 0.1, (0.5, 0, 0.5), "demo")
+    serv.zoom()

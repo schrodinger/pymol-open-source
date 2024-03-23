@@ -1,16 +1,16 @@
-#A* -------------------------------------------------------------------
-#B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC.
-#D* -------------------------------------------------------------------
-#E* It is unlawful to modify or remove this copyright notice.
-#F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information.
-#H* -------------------------------------------------------------------
-#I* Additional authors of this source file include:
-#-* Filipe Maia (slicing code)
-#-*
-#-*
-#Z* -------------------------------------------------------------------
+# A* -------------------------------------------------------------------
+# B* This file contains source code for the PyMOL computer program
+# C* Copyright (c) Schrodinger, LLC.
+# D* -------------------------------------------------------------------
+# E* It is unlawful to modify or remove this copyright notice.
+# F* -------------------------------------------------------------------
+# G* Please see the accompanying LICENSE file for further information.
+# H* -------------------------------------------------------------------
+# I* Additional authors of this source file include:
+# -* Filipe Maia (slicing code)
+# -*
+# -*
+# Z* -------------------------------------------------------------------
 
 from . import colorprinting
 
@@ -23,229 +23,288 @@ if True:
     import copy
     from . import parsing
     import re
+
     cmd = sys.modules["pymol.cmd"]
 
-    from .cmd import _cmd, Shortcut, \
-          _feedback,fb_module,fb_mask, \
-          repres,repres_sc, is_string, is_list, \
-          repmasks,repmasks_sc, \
-          toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
-          palette_dict, palette_sc, window_dict, window_sc, \
-          safe_list_eval, safe_alpha_list_eval, \
-          location_code, location_sc, boolean_dict, boolean_sc, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS
+    from .cmd import (
+        _cmd,
+        Shortcut,
+        _feedback,
+        fb_module,
+        fb_mask,
+        repres,
+        repres_sc,
+        is_string,
+        is_list,
+        repmasks,
+        repmasks_sc,
+        toggle_dict,
+        toggle_sc,
+        stereo_dict,
+        stereo_sc,
+        palette_dict,
+        palette_sc,
+        window_dict,
+        window_sc,
+        safe_list_eval,
+        safe_alpha_list_eval,
+        location_code,
+        location_sc,
+        boolean_dict,
+        boolean_sc,
+        DEFAULT_ERROR,
+        DEFAULT_SUCCESS,
+    )
 
     palette_colors_dict = {
-        'rainbow_cycle'     : 'magenta blue cyan green yellow orange red magenta',
-        'rainbow_cycle_rev' : 'magenta red orange yellow green cyan blue magenta',
-        'rainbow'           : 'blue cyan green yellow orange red',
-        'rainbow_rev'       : 'red orange yellow green cyan blue',
-        'rainbow2'          : 'blue cyan green yellow orange red',
-        'rainbow2_rev'      : 'red orange yellow green cyan blue',
-        'gcbmry'            : 'green cyan blue magenta red yellow',
-        'yrmbcg'            : 'yellow red magenta blue cyan green',
-        'cbmr'              : 'cyan blue magenta red',
-        'rmbc'              : 'red magenta blue cyan',
+        "rainbow_cycle": "magenta blue cyan green yellow orange red magenta",
+        "rainbow_cycle_rev": "magenta red orange yellow green cyan blue magenta",
+        "rainbow": "blue cyan green yellow orange red",
+        "rainbow_rev": "red orange yellow green cyan blue",
+        "rainbow2": "blue cyan green yellow orange red",
+        "rainbow2_rev": "red orange yellow green cyan blue",
+        "gcbmry": "green cyan blue magenta red yellow",
+        "yrmbcg": "yellow red magenta blue cyan green",
+        "cbmr": "cyan blue magenta red",
+        "rmbc": "red magenta blue cyan",
     }
 
-    rep_list = [ "lines", "sticks", "spheres", "dots", "surface",
-                 "mesh", "nonbonded", "nb_spheres", "cartoon",
-                 "ribbon", "labels", "slice", "ellipsoids", "volume" ]
+    rep_list = [
+        "lines",
+        "sticks",
+        "spheres",
+        "dots",
+        "surface",
+        "mesh",
+        "nonbonded",
+        "nb_spheres",
+        "cartoon",
+        "ribbon",
+        "labels",
+        "slice",
+        "ellipsoids",
+        "volume",
+    ]
 
-    scene_action_sc = Shortcut(['store','recall','clear','insert_before',
-                                'insert_after','next','previous',
-                                'start', 'update','rename','delete',
-                                'order', 'sort', 'first',
-                                'append'])
+    scene_action_sc = Shortcut(
+        [
+            "store",
+            "recall",
+            "clear",
+            "insert_before",
+            "insert_after",
+            "next",
+            "previous",
+            "start",
+            "update",
+            "rename",
+            "delete",
+            "order",
+            "sort",
+            "first",
+            "append",
+        ]
+    )
     scene_action_dict = {}
     scene_action_dict_sc = Shortcut([])
 
-    view_sc = Shortcut(['store','recall','clear'])
+    view_sc = Shortcut(["store", "recall", "clear"])
 
     def zoom(selection="all", buffer=0.0, state=0, complete=0, animate=0, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "zoom" scales and translates the window and the origin to cover the
-    atom selection.
+            "zoom" scales and translates the window and the origin to cover the
+            atom selection.
 
-USAGE
+        USAGE
 
-    zoom [ selection [, buffer [, state [, complete [, animate ]]]]]
-    
-EXAMPLES
+            zoom [ selection [, buffer [, state [, complete [, animate ]]]]]
 
-    zoom 
-    zoom complete=1
-    zoom 142/, animate=3
-    zoom (chain A)
+        EXAMPLES
 
-ARGUMENTS
+            zoom
+            zoom complete=1
+            zoom 142/, animate=3
+            zoom (chain A)
 
-    selection = string: selection-expression or name pattern {default: all}
+        ARGUMENTS
 
-    buffer = float: distance  {default: 0}
-    
-    state = 0: uses all coordinate states {default}
-    
-    state = -1: uses only coordinates for the current state
-    
-    state > 0: uses coordinates for a specific state
+            selection = string: selection-expression or name pattern {default: all}
 
-    complete = 0 or 1: will insure no atoms centers are clipped
+            buffer = float: distance  {default: 0}
 
-    animate < 0: uses the default animation duration
-    
-    animate = 0: no animation
-    
-    animate > 0: animates using the provided duration in seconds
-    
-PYMOL API
+            state = 0: uses all coordinate states {default}
 
-    cmd.zoom(string selection, float buffer, int state, int complete,
-             int animate)
+            state = -1: uses only coordinates for the current state
 
-NOTES
+            state > 0: uses coordinates for a specific state
 
-    The zoom command normally tries to guess an optimal zoom level for
-    visualization, balancing closeness against occasional clipping of
-    atoms out of the field of view.  You can change this behavior by
-    setting the complete option to 1, which will guarantee that the
-    atom positions for the entire selection will fit in the field of
-    an orthoscopic view.
+            complete = 0 or 1: will insure no atoms centers are clipped
 
-    To absolutely prevent clipping, you may also need to add an
-    additional buffer (typically 2 A) to account for graphical
-    representations which extend beyond the atom coordinates.  
+            animate < 0: uses the default animation duration
 
-SEE ALSO
+            animate = 0: no animation
 
-    origin, orient, center
-        '''
+            animate > 0: animates using the provided duration in seconds
+
+        PYMOL API
+
+            cmd.zoom(string selection, float buffer, int state, int complete,
+                     int animate)
+
+        NOTES
+
+            The zoom command normally tries to guess an optimal zoom level for
+            visualization, balancing closeness against occasional clipping of
+            atoms out of the field of view.  You can change this behavior by
+            setting the complete option to 1, which will guarantee that the
+            atom positions for the entire selection will fit in the field of
+            an orthoscopic view.
+
+            To absolutely prevent clipping, you may also need to add an
+            additional buffer (typically 2 A) to account for graphical
+            representations which extend beyond the atom coordinates.
+
+        SEE ALSO
+
+            origin, orient, center
+        """
         # preprocess selection
         selection = selector.process(selection)
         #
         with _self.lockcm:
-            r = _cmd.zoom(_self._COb,str(selection),float(buffer),
-                              int(state)-1,int(complete),float(animate))
+            r = _cmd.zoom(
+                _self._COb,
+                str(selection),
+                float(buffer),
+                int(state) - 1,
+                int(complete),
+                float(animate),
+            )
         return r
 
     def center(selection="all", state=0, origin=1, animate=0, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "center" translates the window, the clipping slab, and the
-    origin to a point centered within the atom selection.
+            "center" translates the window, the clipping slab, and the
+            origin to a point centered within the atom selection.
 
-USAGE
+        USAGE
 
-    center [ selection [, state [, origin [, animate ]]]]
+            center [ selection [, state [, origin [, animate ]]]]
 
-EXAMPLES
+        EXAMPLES
 
-    center chain B
-    center 145/
+            center chain B
+            center 145/
 
-ARGUMENTS
+        ARGUMENTS
 
-    selection = string: selection-expression or name pattern (default: "all").
-    
-    state = 0 (default) use all coordinate states
-    
-    state = -1 use only coordinates for the current state
-    
-    state > 0  use coordinates for a specific state
+            selection = string: selection-expression or name pattern (default: "all").
 
-    origin = 1 (default) move the origin
-    
-    origin = 0 leave the origin unchanged
+            state = 0 (default) use all coordinate states
 
-PYMOL API
+            state = -1 use only coordinates for the current state
 
-    cmd.center(string selection, int state, int origin)
+            state > 0  use coordinates for a specific state
 
-SEE ALSO
+            origin = 1 (default) move the origin
 
-    origin, orient, zoom
-        '''
+            origin = 0 leave the origin unchanged
+
+        PYMOL API
+
+            cmd.center(string selection, int state, int origin)
+
+        SEE ALSO
+
+            origin, orient, zoom
+        """
         # preprocess selection
         selection = selector.process(selection)
         #
         with _self.lockcm:
-            r = _cmd.center(_self._COb,str(selection),int(state)-1,int(origin),float(animate))
+            r = _cmd.center(
+                _self._COb, str(selection), int(state) - 1, int(origin), float(animate)
+            )
         return r
 
-    clip_action_sc = Shortcut([ 'near','far','move','slab','atoms', 'near_set', 'far_set' ])
+    clip_action_sc = Shortcut(
+        ["near", "far", "move", "slab", "atoms", "near_set", "far_set"]
+    )
 
     def clip(mode, distance, selection=None, state=0, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "clip" alters the positions of the clipping planes.
+            "clip" alters the positions of the clipping planes.
 
-USAGE
+        USAGE
 
-    clip mode, distance [, selection [, state ]]
+            clip mode, distance [, selection [, state ]]
 
-ARGUMENTS 
+        ARGUMENTS
 
-    mode = near, far, move, slab, or atoms
+            mode = near, far, move, slab, or atoms
 
-    distance is a floating point value
+            distance is a floating point value
 
-    selection = atom selection (for mode=atoms only)
+            selection = atom selection (for mode=atoms only)
 
-EXAMPLES
+        EXAMPLES
 
-    clip near, -5           # moves near plane away from you by 5 A
-    clip far, 10            # moves far plane towards you by 10 A
-    clip move, -5           # moves the slab away from you by 5 A
-    clip slab, 20           # sets slab thickness to 20 A
-    clip slab, 10, resi 11  # clip 10 A slab about residue 11
+            clip near, -5           # moves near plane away from you by 5 A
+            clip far, 10            # moves far plane towards you by 10 A
+            clip move, -5           # moves the slab away from you by 5 A
+            clip slab, 20           # sets slab thickness to 20 A
+            clip slab, 10, resi 11  # clip 10 A slab about residue 11
 
-    clip atoms, 5, pept     # clip atoms in "pept" with a 5 A buffer
-                            # about their current camera positions
+            clip atoms, 5, pept     # clip atoms in "pept" with a 5 A buffer
+                                    # about their current camera positions
 
-PYMOL API
+        PYMOL API
 
-    cmd.clip(string mode, float distance, string selection, int state)
+            cmd.clip(string mode, float distance, string selection, int state)
 
-SEE ALSO
+        SEE ALSO
 
-    zoom, orient, reset
-        '''
-        mode = clip_action_sc.auto_err(str(mode),'mode')
+            zoom, orient, reset
+        """
+        mode = clip_action_sc.auto_err(str(mode), "mode")
         if selection is not None:
             selection = selector.process(selection)
         else:
-            selection = ''
+            selection = ""
         with _self.lockcm:
-            r = _cmd.clip(_self._COb,str(mode),float(distance),
-                          str(selection),int(state)-1)
+            r = _cmd.clip(
+                _self._COb, str(mode), float(distance), str(selection), int(state) - 1
+            )
         return r
 
     def get_clip(quiet: int = 1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "get_clip" returns the positions of the clipping planes.
+            "get_clip" returns the positions of the clipping planes.
 
-USAGE
+        USAGE
 
-    get_clip
+            get_clip
 
-ARGUMENTS
+        ARGUMENTS
 
-EXAMPLES
+        EXAMPLES
 
-PYMOL API
+        PYMOL API
 
-    cmd.get_clip()
+            cmd.get_clip()
 
-SEE ALSO
+        SEE ALSO
 
-    clip
-        '''
+            clip
+        """
         with _self.lockcm:
             r = _cmd.get_clip(_self._COb)
             if not quiet:
@@ -253,257 +312,263 @@ SEE ALSO
             return r
 
     def origin(selection="(all)", object=None, position=None, state=0, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "origin" sets the center of rotation about a selection.  If an
-    object name is specified, it can be used to set the center of
-    rotation for the object (for use in animation and editing).
+            "origin" sets the center of rotation about a selection.  If an
+            object name is specified, it can be used to set the center of
+            rotation for the object (for use in animation and editing).
 
-USAGE
+        USAGE
 
-    origin [ selection [, object [,position, [, state ]]]]
+            origin [ selection [, object [,position, [, state ]]]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    selection = string: selection-expression or name-list {default: (all)}
-    
-    state = 0 (default) use all coordinate states
-    
-    state = -1 use only coordinates for the current state
-    
-    state > 0  use coordinates for a specific state
+            selection = string: selection-expression or name-list {default: (all)}
 
-EXAMPLES
+            state = 0 (default) use all coordinate states
 
-    origin chain A
-    
-    origin position=[1.0,2.0,3.0]
+            state = -1 use only coordinates for the current state
 
-PYMOL API
+            state > 0  use coordinates for a specific state
 
-    cmd.origin(string object-or-selection)
+        EXAMPLES
 
-SEE ALSO
+            origin chain A
 
-    zoom, orient, reset
-        '''
+            origin position=[1.0,2.0,3.0]
+
+        PYMOL API
+
+            cmd.origin(string object-or-selection)
+
+        SEE ALSO
+
+            zoom, orient, reset
+        """
         #'
         # preprocess selection
         selection = selector.process(selection)
         #
         with _self.lockcm:
-            if object is None: object=''
-            if position is None: position=(0.0,0.0,0.0)
+            if object is None:
+                object = ""
+            if position is None:
+                position = (0.0, 0.0, 0.0)
             else:
                 if _self.is_string(position):
                     position = safe_list_eval(position)
-                selection = ''
-            r = _cmd.origin(_self._COb,selection,str(object),
-                                 (float(position[0]),
-                                  float(position[1]),
-                                  float(position[2])
-                                  ),int(state)-1)
+                selection = ""
+            r = _cmd.origin(
+                _self._COb,
+                selection,
+                str(object),
+                (float(position[0]), float(position[1]), float(position[2])),
+                int(state) - 1,
+            )
         return r
 
     def orient(selection="(all)", state=0, animate=0, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "orient" aligns the principal components of the atoms in the
-    selection with the XYZ axes.  
+            "orient" aligns the principal components of the atoms in the
+            selection with the XYZ axes.
 
-USAGE
+        USAGE
 
-    orient [ selection [, state [, animate ]]]
+            orient [ selection [, state [, animate ]]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    selection = a selection-expression or name-pattern {default: (all)}
+            selection = a selection-expression or name-pattern {default: (all)}
 
-    state = 0: use all coordinate states {default}
-    
-    state = -1: uses only coordinates for the current state
-    
-    state > 0: uses coordinates for a specific state
+            state = 0: use all coordinate states {default}
 
-EXAMPLES
+            state = -1: uses only coordinates for the current state
 
-    orient organic
+            state > 0: uses coordinates for a specific state
 
-NOTES
+        EXAMPLES
 
-    The function is similar to the orient command in X-PLOR.
+            orient organic
 
-PYMOL API
+        NOTES
 
-    cmd.orient(string object-or-selection, int state, float animate)
+            The function is similar to the orient command in X-PLOR.
 
-SEE ALSO
+        PYMOL API
 
-    zoom, origin, reset
-        '''
+            cmd.orient(string object-or-selection, int state, float animate)
+
+        SEE ALSO
+
+            zoom, origin, reset
+        """
         # preprocess selection
         selection = selector.process(selection)
         with _self.lockcm:
-            return _cmd.orient(_self._COb,"("+selection+")",int(state)-1,float(animate))
+            return _cmd.orient(
+                _self._COb, "(" + selection + ")", int(state) - 1, float(animate)
+            )
 
     def move(axis, distance, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "move" translates the camera about one of the three primary axes.
+            "move" translates the camera about one of the three primary axes.
 
-USAGE
+        USAGE
 
-    move axis, distance
+            move axis, distance
 
-EXAMPLES
+        EXAMPLES
 
-    move x, 3
-    move y, -1
+            move x, 3
+            move y, -1
 
-PYMOL API
+        PYMOL API
 
-    cmd.move(string axis, float distance)
+            cmd.move(string axis, float distance)
 
-SEE ALSO
+        SEE ALSO
 
-    turn, rotate, translate, zoom, center, clip
-        '''
+            turn, rotate, translate, zoom, center, clip
+        """
         with _self.lockcm:
-            return _cmd.move(_self._COb,str(axis),float(distance))
+            return _cmd.move(_self._COb, str(axis), float(distance))
 
-    def enable(name='all', parents=0, *, _self=cmd):
-        '''
-DESCRIPTION
+    def enable(name="all", parents=0, *, _self=cmd):
+        """
+        DESCRIPTION
 
-    "enable" turns on display of one or more objects and/or selections.
+            "enable" turns on display of one or more objects and/or selections.
 
-USAGE
+        USAGE
 
-    enable name
+            enable name
 
-ARGUMENTS    
+        ARGUMENTS
 
-    name = name-pattern or selection. 
+            name = name-pattern or selection.
 
-NOTES
+        NOTES
 
-    If name matches a selection name, then selection indicator dots
-    are shown for atoms in that selection.  If name is a
-    selection-expression, then all objects with atoms in that
-    selection are enabled.
+            If name matches a selection name, then selection indicator dots
+            are shown for atoms in that selection.  If name is a
+            selection-expression, then all objects with atoms in that
+            selection are enabled.
 
-    For an object\'s content to be displayed in the 3D viewer, the
-    object must be enabled AND at least one of the available
-    representations must be shown.
-    
-PYMOL API
+            For an object\'s content to be displayed in the 3D viewer, the
+            object must be enabled AND at least one of the available
+            representations must be shown.
 
-    cmd.enable(string object-name)
+        PYMOL API
 
-EXAMPLES
+            cmd.enable(string object-name)
 
-    enable target_protein  # enables the target_protein object
+        EXAMPLES
 
-    enable 1dn2.*   # enables all entities starting with 1dn2.
-    
-    enable *lig     # enables all entities ending with lig
-    
-SEE ALSO
+            enable target_protein  # enables the target_protein object
 
-    show, hide, disable
-        '''
-        if name[0]=='(':
+            enable 1dn2.*   # enables all entities starting with 1dn2.
+
+            enable *lig     # enables all entities ending with lig
+
+        SEE ALSO
+
+            show, hide, disable
+        """
+        if name[0] == "(":
             selection = selector.process(name)
             with _self.lockcm:
-                r = _cmd.onoff_by_sele(_self._COb,selection,1)
+                r = _cmd.onoff_by_sele(_self._COb, selection, 1)
         else:
             with _self.lockcm:
-                r = _cmd.onoff(_self._COb,str(name),1,int(parents));
+                r = _cmd.onoff(_self._COb, str(name), 1, int(parents))
         return r
 
-    def disable(name='all', *, _self=cmd):
-        '''
-DESCRIPTION
+    def disable(name="all", *, _self=cmd):
+        """
+        DESCRIPTION
 
-    "disable" turns off display of one or more objects and/or selections.
+            "disable" turns off display of one or more objects and/or selections.
 
-USAGE
+        USAGE
 
-    disable name
+            disable name
 
-ARGUMENTS    
+        ARGUMENTS
 
-    name = name-pattern or selection.
+            name = name-pattern or selection.
 
-PYMOL API
+        PYMOL API
 
-    cmd.disable(string name) 
+            cmd.disable(string name)
 
-SEE ALSO
+        SEE ALSO
 
-    show, hide, enable   
-        '''
-        if name[0]=='(':
+            show, hide, enable
+        """
+        if name[0] == "(":
             selection = selector.process(name)
             with _self.lockcm:
-                r = _cmd.onoff_by_sele(_self._COb,selection,0)
+                r = _cmd.onoff_by_sele(_self._COb, selection, 0)
         else:
             with _self.lockcm:
-                r = _cmd.onoff(_self._COb,str(name),0,0);
+                r = _cmd.onoff(_self._COb, str(name), 0, 0)
         return r
 
     def _rep_to_repmask(rep):
         repn = 0
         for rep in rep.split():
-            rep = repmasks_sc.auto_err(rep, 'representation')
+            rep = repmasks_sc.auto_err(rep, "representation")
             repn |= repmasks[rep]
         return repn
 
     def toggle(representation="lines", selection="all", *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "toggle" toggles the visibility of a representation within a
-    selection.
-    
-USAGE
+            "toggle" toggles the visibility of a representation within a
+            selection.
 
-    toggle [ representation [, selection ]]
+        USAGE
 
-ARGUMENTS
+            toggle [ representation [, selection ]]
 
-    representation = string: named representation {default: lines}
+        ARGUMENTS
 
-    selection = string: atom selection {default: all}
+            representation = string: named representation {default: lines}
 
-NOTES
+            selection = string: atom selection {default: all}
 
-    If the representation is enabled for any atom in the selection, it will
-    be turned off.
+        NOTES
 
-PYMOL API
+            If the representation is enabled for any atom in the selection, it will
+            be turned off.
 
-    cmd.toggle(string representation, string selection)
+        PYMOL API
 
-SEE ALSO
+            cmd.toggle(string representation, string selection)
 
-    show, hide
-        '''
+        SEE ALSO
+
+            show, hide
+        """
         with _self.lockcm:
-            if representation == 'object':
+            if representation == "object":
                 repn = -2
             else:
                 repn = _rep_to_repmask(representation)
                 # preprocess selection
                 selection = selector.process(selection)
-            r = _cmd.toggle(_self._COb,str(selection),int(repn));
+            r = _cmd.toggle(_self._COb, str(selection), int(repn))
         return r
 
     def _showhide(rep, selection, value, _self):
-        if not selection and (rep in ("", "all") or '(' in rep or '/' in rep):
+        if not selection and (rep in ("", "all") or "(" in rep or "/" in rep):
             # rep looks like a selection
             selection = rep
             rep = "wire" if value else "everything"
@@ -517,173 +582,172 @@ SEE ALSO
         return r
 
     def show(representation="wire", selection="", *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "show" turns on representations for objects and selections.
+            "show" turns on representations for objects and selections.
 
-USAGE
+        USAGE
 
-    show [ representation [, selection ]]
+            show [ representation [, selection ]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    representation = lines, spheres, mesh, ribbon, cartoon, sticks,
-       dots, surface, labels, extent, nonbonded, nb_spheres, slice,
-       extent, slice, dashes, angles, dihedrals, cgo, cell, callback,
-       or everything
+            representation = lines, spheres, mesh, ribbon, cartoon, sticks,
+               dots, surface, labels, extent, nonbonded, nb_spheres, slice,
+               extent, slice, dashes, angles, dihedrals, cgo, cell, callback,
+               or everything
 
-    selection = string: a selection-expression or name-pattern
+            selection = string: a selection-expression or name-pattern
 
-NOTES
+        NOTES
 
-    With no arguments, "show" alone turns on lines for all bonds and
-    nonbonded for all atoms in all molecular objects.
+            With no arguments, "show" alone turns on lines for all bonds and
+            nonbonded for all atoms in all molecular objects.
 
-EXAMPLES
+        EXAMPLES
 
-    show
-    show ribbon
-    show lines, (name CA+C+N)
+            show
+            show ribbon
+            show lines, (name CA+C+N)
 
-SEE ALSO
+        SEE ALSO
 
-    hide, enable, disable
+            hide, enable, disable
 
-'''
+        """
         return _showhide(representation, selection, 1, _self)
 
     def show_as(representation="wire", selection="", *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "as" turns on and off atom and bond representations.
+            "as" turns on and off atom and bond representations.
 
-USAGE
+        USAGE
 
-    as representation [, selection ]
+            as representation [, selection ]
 
-ARGUMENTS
-    
-    representation = lines, spheres, mesh, ribbon, cartoon, sticks,
-        dots, surface, labels, extent, nonbonded, nb_spheres, slice,
-        extent, slice, dashes, angles, dihedrals, cgo, cell, callback,
-        volume or everything
+        ARGUMENTS
 
-    selection = string {default: all}
+            representation = lines, spheres, mesh, ribbon, cartoon, sticks,
+                dots, surface, labels, extent, nonbonded, nb_spheres, slice,
+                extent, slice, dashes, angles, dihedrals, cgo, cell, callback,
+                volume or everything
 
-EXAMPLES
+            selection = string {default: all}
 
-    as lines, name CA+C+N
+        EXAMPLES
 
-    as ribbon
+            as lines, name CA+C+N
 
-PYMOL API
+            as ribbon
 
-    cmd.show_as(string representation, string selection)
+        PYMOL API
 
-NOTES
+            cmd.show_as(string representation, string selection)
 
-    "selection" can be an object name
-    "as" alone will turn on lines and nonbonded and hide everything else.
+        NOTES
 
-SEE ALSO
+            "selection" can be an object name
+            "as" alone will turn on lines and nonbonded and hide everything else.
 
-    show, hide, enable, disable
-        '''
+        SEE ALSO
+
+            show, hide, enable, disable
+        """
         return _showhide(representation, selection, 2, _self)
 
     def hide(representation="everything", selection="", *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "hide" turns off atom and bond representations.
+            "hide" turns off atom and bond representations.
 
 
-USAGE
+        USAGE
 
-    hide [ representation [, selection ]]
+            hide [ representation [, selection ]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    representation = lines, spheres, mesh, ribbon, cartoon,
-       sticks, dots, surface, labels, extent, nonbonded, nb_spheres,
-       slice, extent, slice, dashes, angles, dihedrals, cgo, cell, callback, 
-       or everything
+            representation = lines, spheres, mesh, ribbon, cartoon,
+               sticks, dots, surface, labels, extent, nonbonded, nb_spheres,
+               slice, extent, slice, dashes, angles, dihedrals, cgo, cell, callback,
+               or everything
 
-    selection = string: a selection-expression or name-pattern
+            selection = string: a selection-expression or name-pattern
 
-EXAMPLES
+        EXAMPLES
 
-    hide lines, all
-    hide ribbon
+            hide lines, all
+            hide ribbon
 
-PYMOL API
+        PYMOL API
 
-    cmd.hide(string representation, string selection)
+            cmd.hide(string representation, string selection)
 
-SEE ALSO
+        SEE ALSO
 
-    show, enable, disable
+            show, enable, disable
 
-        '''
+        """
         return _showhide(representation, selection, 0, _self)
 
-
     def get_view(output=1, quiet=1, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "get_view" returns and optionally prints out the current view
-    information in a format which can be embedded into a command
-    script and can be used in subsequent calls to "set_view".
+            "get_view" returns and optionally prints out the current view
+            information in a format which can be embedded into a command
+            script and can be used in subsequent calls to "set_view".
 
-    If a log file is currently open, get_view will not write the view
-    matrix to the screen unless the "output" parameter is 2.
+            If a log file is currently open, get_view will not write the view
+            matrix to the screen unless the "output" parameter is 2.
 
-USAGE
+        USAGE
 
-    get_view [output]
+            get_view [output]
 
-ARGUMENTS
+        ARGUMENTS
 
-    output = 0: output matrix to screen
+            output = 0: output matrix to screen
 
-    output = 1: do not Output matrix to screen
+            output = 1: do not Output matrix to screen
 
-    output = 2: force output to screen even if log file is open
+            output = 2: force output to screen even if log file is open
 
-    output = 3: return formatted string instead of a list
+            output = 3: return formatted string instead of a list
 
-NOTES
+        NOTES
 
-    Contents of the view matrix:
-    
-    * 0  -  8: column-major 3x3 matrix which rotates model space to camera space
+            Contents of the view matrix:
 
-    * 9  - 11: origin of rotation relative to camera (in camera space)
+            * 0  -  8: column-major 3x3 matrix which rotates model space to camera space
 
-    * 12 - 14: origin of rotation (in model space)
+            * 9  - 11: origin of rotation relative to camera (in camera space)
 
-    * 15: front plane distance from the camera
+            * 12 - 14: origin of rotation (in model space)
 
-    * 16: rear plane distance from the camera
+            * 15: front plane distance from the camera
 
-    * 17: orthoscopic flag (+/-) and field of view (if abs(value) > 1)
+            * 16: rear plane distance from the camera
 
-    The camera always looks down -Z with its +X left and its +Y down.
+            * 17: orthoscopic flag (+/-) and field of view (if abs(value) > 1)
 
-    Therefore, in the default view, model +X is to the observer\'s
-    right, +Y is upward, and +Z points toward the observer.
+            The camera always looks down -Z with its +X left and its +Y down.
 
-PYMOL API
+            Therefore, in the default view, model +X is to the observer\'s
+            right, +Y is upward, and +Z points toward the observer.
 
-    cmd.get_view(output=1, quiet=1)
+        PYMOL API
 
-SEE ALSO
+            cmd.get_view(output=1, quiet=1)
 
-    set_view
-    '''
+        SEE ALSO
+
+            set_view
+        """
 
         with _self.lockcm:
             r = _cmd.get_view(_self._COb)
@@ -691,47 +755,61 @@ SEE ALSO
         if True:
             output = int(output)
             if True:
-                if (_self.get_setting_int("logging") != 0) and (output<3):
+                if (_self.get_setting_int("logging") != 0) and (output < 3):
                     if not quiet:
                         print(" get_view: matrix written to log file.")
-                    _self.log("_ set_view (\\\n","cmd.set_view((\\\n")
-                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3]  ,
-                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3])
-                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7]  ,
-                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7])
-                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11] ,
-                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11])
-                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19],
-                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19])
-                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22],
-                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22])
-                    _self.log("_  %14.9f, %14.9f, %14.9f )\n"%r[22:25] ,
-                              "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
-                    if output<2: # suppress if we have a log file open
-                        output=0
-                if output and (not quiet) and (output<3):
+                    _self.log("_ set_view (\\\n", "cmd.set_view((\\\n")
+                    _self.log(
+                        "_  %14.9f, %14.9f, %14.9f,\\\n" % r[0:3],
+                        "  %14.9f, %14.9f, %14.9f,\\\n" % r[0:3],
+                    )
+                    _self.log(
+                        "_  %14.9f, %14.9f, %14.9f,\\\n" % r[4:7],
+                        "  %14.9f, %14.9f, %14.9f,\\\n" % r[4:7],
+                    )
+                    _self.log(
+                        "_  %14.9f, %14.9f, %14.9f,\\\n" % r[8:11],
+                        "  %14.9f, %14.9f, %14.9f,\\\n" % r[8:11],
+                    )
+                    _self.log(
+                        "_  %14.9f, %14.9f, %14.9f,\\\n" % r[16:19],
+                        "  %14.9f, %14.9f, %14.9f,\\\n" % r[16:19],
+                    )
+                    _self.log(
+                        "_  %14.9f, %14.9f, %14.9f,\\\n" % r[19:22],
+                        "  %14.9f, %14.9f, %14.9f,\\\n" % r[19:22],
+                    )
+                    _self.log(
+                        "_  %14.9f, %14.9f, %14.9f )\n" % r[22:25],
+                        "  %14.9f, %14.9f, %14.9f ))\n" % r[22:25],
+                    )
+                    if output < 2:  # suppress if we have a log file open
+                        output = 0
+                if output and (not quiet) and (output < 3):
                     print("### cut below here and paste into script ###")
                     print("set_view (\\")
-                    print("  %14.9f, %14.9f, %14.9f,\\"%r[0:3])
-                    print("  %14.9f, %14.9f, %14.9f,\\"%r[4:7])
-                    print("  %14.9f, %14.9f, %14.9f,\\"%r[8:11])
-                    print("  %14.9f, %14.9f, %14.9f,\\"%r[16:19])
-                    print("  %14.9f, %14.9f, %14.9f,\\"%r[19:22])
-                    print("  %14.9f, %14.9f, %14.9f )"%r[22:25])
+                    print("  %14.9f, %14.9f, %14.9f,\\" % r[0:3])
+                    print("  %14.9f, %14.9f, %14.9f,\\" % r[4:7])
+                    print("  %14.9f, %14.9f, %14.9f,\\" % r[8:11])
+                    print("  %14.9f, %14.9f, %14.9f,\\" % r[16:19])
+                    print("  %14.9f, %14.9f, %14.9f,\\" % r[19:22])
+                    print("  %14.9f, %14.9f, %14.9f )" % r[22:25])
                     print("### cut above here and paste into script ###")
-            if output==3:
-                return ("set_view (\\\n"+
-                  "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3] +
-                  "  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7] +
-                  "  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11] +
-                  "  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19] +
-                  "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22] +
-                  "  %14.9f, %14.9f, %14.9f )\n"%r[22:25])
-            r = r[0:3]+r[4:7]+r[8:11]+r[16:25]
+            if output == 3:
+                return (
+                    "set_view (\\\n"
+                    + "  %14.9f, %14.9f, %14.9f,\\\n" % r[0:3]
+                    + "  %14.9f, %14.9f, %14.9f,\\\n" % r[4:7]
+                    + "  %14.9f, %14.9f, %14.9f,\\\n" % r[8:11]
+                    + "  %14.9f, %14.9f, %14.9f,\\\n" % r[16:19]
+                    + "  %14.9f, %14.9f, %14.9f,\\\n" % r[19:22]
+                    + "  %14.9f, %14.9f, %14.9f )\n" % r[22:25]
+                )
+            r = r[0:3] + r[4:7] + r[8:11] + r[16:25]
         return r
 
-    def set_view(view,animate=0,quiet=1,hand=1, *, _self=cmd):
-        r'''
+    def set_view(view, animate=0, quiet=1, hand=1, *, _self=cmd):
+        r"""
 DESCRIPTION
 
     "set_view" sets viewing information for the current scene,
@@ -759,67 +837,92 @@ PYMOL API
 SEE ALSO
 
     get_view
-    '''
+    """
         if isinstance(view, (str, bytes)):
             view = safe_list_eval(view)
 
-        if len(view)!=18:
+        if len(view) != 18:
             raise pymol.CmdException(
-                "bad view argument; should be a sequence of 18 floats")
+                "bad view argument; should be a sequence of 18 floats"
+            )
 
         with _self.lockcm:
-            r = _cmd.set_view(_self._COb,(
-                    float(view[ 0]),float(view[ 1]),float(view[ 2]),0.0,
-                    float(view[ 3]),float(view[ 4]),float(view[ 5]),0.0,
-                    float(view[ 6]),float(view[ 7]),float(view[ 8]),0.0,
-                    0.0,0.0,0.0,1.0,
-                    float(view[ 9]),float(view[10]),float(view[11]),
-                    float(view[12]),float(view[13]),float(view[14]),
-                    float(view[15]),float(view[16]),float(view[17])),
-                    int(quiet),float(animate),int(hand))
+            r = _cmd.set_view(
+                _self._COb,
+                (
+                    float(view[0]),
+                    float(view[1]),
+                    float(view[2]),
+                    0.0,
+                    float(view[3]),
+                    float(view[4]),
+                    float(view[5]),
+                    0.0,
+                    float(view[6]),
+                    float(view[7]),
+                    float(view[8]),
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    float(view[9]),
+                    float(view[10]),
+                    float(view[11]),
+                    float(view[12]),
+                    float(view[13]),
+                    float(view[14]),
+                    float(view[15]),
+                    float(view[16]),
+                    float(view[17]),
+                ),
+                int(quiet),
+                float(animate),
+                int(hand),
+            )
         return r
 
-    def view(key, action='recall', animate=-1, *, _self=cmd):
-        '''
-DESCRIPTION
+    def view(key, action="recall", animate=-1, *, _self=cmd):
+        """
+        DESCRIPTION
 
-    "view" saves and restore camera views.
+            "view" saves and restore camera views.
 
-USAGE
+        USAGE
 
-    view key [, action [, animate]]
-    
-ARGUMENTS
+            view key [, action [, animate]]
 
-    key = string or *
+        ARGUMENTS
 
-    action = store, recall, clear: {default: recall}
+            key = string or *
 
-NOTES
+            action = store, recall, clear: {default: recall}
 
-    Views F1 through F12 are automatically bound to function keys
-    provided that "set_key" has not been used to redefine the
-    behaviour of the respective key, and that a "scene" has not been
-    defined for that key.
+        NOTES
 
-EXAMPLES
+            Views F1 through F12 are automatically bound to function keys
+            provided that "set_key" has not been used to redefine the
+            behaviour of the respective key, and that a "scene" has not been
+            defined for that key.
 
-    view 0, store
-    view 0
+        EXAMPLES
 
-PYMOL API
+            view 0, store
+            view 0
 
-    cmd.view(string key, string action)
+        PYMOL API
 
-SEE ALSO
+            cmd.view(string key, string action)
 
-    scene, set_view, get_view
-        '''
-        pymol=_self._pymol
+        SEE ALSO
 
-        if key=='*':
-            action = view_sc.auto_err(action,'action')
-            if action=='clear':
+            scene, set_view, get_view
+        """
+        pymol = _self._pymol
+
+        if key == "*":
+            action = view_sc.auto_err(action, "action")
+            if action == "clear":
                 pymol._view_dict = {}
                 pymol._view_dict_sc = Shortcut(pymol._view_dict.keys())
             else:
@@ -829,49 +932,48 @@ SEE ALSO
                 parsing.dump_str_list(lst)
 
         else:
-            action = view_sc.auto_err(action,'action')
-            if action=='recall':
-                key = pymol._view_dict_sc.auto_err(key,'view')
-                _self.set_view(pymol._view_dict[key],animate=animate)
-                if _feedback(fb_module.scene,fb_mask.actions,_self): # redundant
-                    print(" view: \"%s\" recalled."%key)
-            elif (action=='store') or (action=='update'):
+            action = view_sc.auto_err(action, "action")
+            if action == "recall":
+                key = pymol._view_dict_sc.auto_err(key, "view")
+                _self.set_view(pymol._view_dict[key], animate=animate)
+                if _feedback(fb_module.scene, fb_mask.actions, _self):  # redundant
+                    print(' view: "%s" recalled.' % key)
+            elif (action == "store") or (action == "update"):
                 pymol._view_dict_sc.append(key)
-                pymol._view_dict[key]=_self.get_view(0)
-                if _feedback(fb_module.scene,fb_mask.actions,_self):
-                    print(" view: view "+action+"d as \"%s\"."%key)
-            elif action=='clear':
-                key = pymol._view_dict_sc.auto_err(key,'view')
+                pymol._view_dict[key] = _self.get_view(0)
+                if _feedback(fb_module.scene, fb_mask.actions, _self):
+                    print(" view: view " + action + 'd as "%s".' % key)
+            elif action == "clear":
+                key = pymol._view_dict_sc.auto_err(key, "view")
                 if key in pymol._view_dict:
                     del pymol._view_dict[key]
                     pymol._view_dict_sc = Shortcut(pymol._view_dict.keys())
-                    if _feedback(fb_module.scene,fb_mask.actions,_self): # redundant
-                        print(" view: '%s' deleted."%key)
-
+                    if _feedback(fb_module.scene, fb_mask.actions, _self):  # redundant
+                        print(" view: '%s' deleted." % key)
 
     def get_viewport(output=1, quiet=1, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "get_viewport" returns and optionally prints out the screen viewport size
+            "get_viewport" returns and optionally prints out the screen viewport size
 
-USAGE
+        USAGE
 
-    get_viewport [output]
+            get_viewport [output]
 
-ARGUMENTS
+        ARGUMENTS
 
-    output = 0: do not print to screen
+            output = 0: do not print to screen
 
-    output = 1 {default}: print to screen if not logging and not quiet
+            output = 1 {default}: print to screen if not logging and not quiet
 
-    output = 2: force output to screen even if log file is open
+            output = 2: force output to screen even if log file is open
 
-PYMOL API
+        PYMOL API
 
-    cmd.get_viewport(output=1, quiet=1)
+            cmd.get_viewport(output=1, quiet=1)
 
-    '''
+        """
         output = int(output)
 
         with _self.lockcm:
@@ -907,11 +1009,11 @@ PYMOL API
         with _self.lockcm:
             return _cmd.get_colorection(_self._COb, key)
 
-    def set_colorection(dict,key, *, _self=cmd):
+    def set_colorection(dict, key, *, _self=cmd):
         with _self.lockcm:
             return _cmd.set_colorection(_self._COb, dict, key)
 
-    def del_colorection(dict,key, *, _self=cmd):
+    def del_colorection(dict, key, *, _self=cmd):
         with _self.lockcm:
             return _cmd.del_colorection(_self._COb, dict, key)
 
@@ -933,69 +1035,70 @@ PYMOL API
 
     def chain_session(_self=cmd):
         import os
+
         # assumes locked interpreter
         r = 0
         session_file = str(_self.get("session_file"))
         re_pat = re.compile(r"[0-9]+\.")
-        if len(session_file): # find next session file, if it exists
+        if len(session_file):  # find next session file, if it exists
             mo = re_pat.search(session_file)
             if mo is not None:
                 pat = mo.group(0)
                 if len(pat):
                     file_no = int(float(pat)) + 1
-                    new_form = r"%0"+str(len(pat)-1)+"d."
-                    for new_num in range(file_no, file_no+11):
+                    new_form = r"%0" + str(len(pat) - 1) + "d."
+                    for new_num in range(file_no, file_no + 11):
                         new_pat = new_form % new_num
                         new_file = re_pat.sub(new_pat, session_file)
                         # try both PSE and PSW
                         if not os.path.exists(new_file):
-                            new_file = re.sub(r"\.pse$",".psw",new_file,re.I)
+                            new_file = re.sub(r"\.pse$", ".psw", new_file, re.I)
                         if not os.path.exists(new_file):
-                            new_file = re.sub(r"\.psw$",".pse",new_file,re.I)
+                            new_file = re.sub(r"\.psw$", ".pse", new_file, re.I)
                         if os.path.exists(new_file):
-                            _self.do("_ cmd.load(r'''"+new_file+"''',format='psw')")
+                            _self.do("_ cmd.load(r'''" + new_file + "''',format='psw')")
                             return 1
         return 0
 
-    def scene_order(names,sort=0,location='current',quiet=1, *, _self=cmd):
-        '''
-DESCRIPTION
+    def scene_order(names, sort=0, location="current", quiet=1, *, _self=cmd):
+        """
+        DESCRIPTION
 
-    "scene_order" changes the ordering of scenes.
+            "scene_order" changes the ordering of scenes.
 
-USAGE
+        USAGE
 
-    scene_order names, sort, location
+            scene_order names, sort, location
 
-ARGUMENTS
+        ARGUMENTS
 
-    names = string: a space-separated list of names
+            names = string: a space-separated list of names
 
-    sort = yes or no {default: no}
+            sort = yes or no {default: no}
 
-    location = top, current, or bottom {default: current}
+            location = top, current, or bottom {default: current}
 
-EXAMPLES
+        EXAMPLES
 
-    scene_order *,yes             
-    scene_order F6 F4 F3 
-    scene_order 003 006 004, location=top
+            scene_order *,yes
+            scene_order F6 F4 F3
+            scene_order 003 006 004, location=top
 
-    # if names have spaces
-    cmd.scene_order(["name 1", "name 2"])
+            # if names have spaces
+            cmd.scene_order(["name 1", "name 2"])
 
-PYMOL API
+        PYMOL API
 
-    cmd.scene_order(names: Union[list, str], sort: str, location: str)
+            cmd.scene_order(names: Union[list, str], sort: str, location: str)
 
-SEE ALSO
+        SEE ALSO
 
-    scene
-    '''
+            scene
+        """
 
-        location = location_sc.auto_err(location,'location')
+        location = location_sc.auto_err(location, "location")
         if is_string(sort):
-            sort=boolean_dict[boolean_sc.auto_err(sort,'sort option')]
+            sort = boolean_dict[boolean_sc.auto_err(sort, "sort option")]
 
         if isinstance(names, str):
             names = names.split()
@@ -1005,19 +1108,27 @@ SEE ALSO
 
     def _scene_get_current_message(_self=cmd):
         wiz = _self.get_wizard()
-        return '\n'.join(wiz.message) if (wiz is not None
-                and wiz.__class__.__name__ == 'Message'
-                and hasattr(wiz, 'from_scene')) else None
+        return (
+            "\n".join(wiz.message)
+            if (
+                wiz is not None
+                and wiz.__class__.__name__ == "Message"
+                and hasattr(wiz, "from_scene")
+            )
+            else None
+        )
 
     def scene_recall_message(message, *, _self=cmd):
-        '''
+        """
         INTERNAL, DO NOT USE.
         Display a scene message.
-        '''
+        """
         wiz = _self.get_wizard()
-        replace_flag = (wiz is not None
-                and wiz.__class__.__name__ == 'Message'
-                and hasattr(wiz, 'from_scene'))
+        replace_flag = (
+            wiz is not None
+            and wiz.__class__.__name__ == "Message"
+            and hasattr(wiz, "from_scene")
+        )
 
         if message:
             if is_string(message):
@@ -1030,96 +1141,123 @@ SEE ALSO
         elif replace_flag:
             _self.wizard()
 
-    def scene(key='auto', action='recall', message=None, view=1,
-              color=1, active=1, rep=1, frame=1, animate=-1,
-              new_key=None, hand=1, quiet=1, sele="all", *, _self=cmd):
-        '''
-DESCRIPTION
+    def scene(
+        key="auto",
+        action="recall",
+        message=None,
+        view=1,
+        color=1,
+        active=1,
+        rep=1,
+        frame=1,
+        animate=-1,
+        new_key=None,
+        hand=1,
+        quiet=1,
+        sele="all",
+        *,
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-    "scene" saves and restores scenes.  A scene consists of the camera
-    view, all object activity information, all atom-wise visibilities,
-    all atom-wise colors, all representations, the global frame index,
-    and may contain a text message to display on playback.
+            "scene" saves and restores scenes.  A scene consists of the camera
+            view, all object activity information, all atom-wise visibilities,
+            all atom-wise colors, all representations, the global frame index,
+            and may contain a text message to display on playback.
 
-USAGE
+        USAGE
 
-    scene [key [,action [, message, [ new_key=new-key-value ]]]]
+            scene [key [,action [, message, [ new_key=new-key-value ]]]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    key = string, new, auto, or *: use new for an automatically
-    numbered new scene, use auto for the current scene (if one
-    exists), and use * for all scenes (clear and recall actions only).
-    
-    action = store, recall, insert_after, insert_before, next,
-    previous, update, rename, or clear: (default = recall).  If
-    rename, then a new_key argument must be explicitly defined.
+            key = string, new, auto, or *: use new for an automatically
+            numbered new scene, use auto for the current scene (if one
+            exists), and use * for all scenes (clear and recall actions only).
 
-    message = string: a text message to display with the scene.
+            action = store, recall, insert_after, insert_before, next,
+            previous, update, rename, or clear: (default = recall).  If
+            rename, then a new_key argument must be explicitly defined.
 
-    new_key = string: the new name for the scene
-    
-EXAMPLES
+            message = string: a text message to display with the scene.
 
-    scene *
+            new_key = string: the new name for the scene
 
-    scene F1, store
-    scene F2, store, Please note the critical hydrogen bond shown in yellow.
+        EXAMPLES
 
-    scene F1
-    scene F2
+            scene *
 
-    scene F1, rename, new_key=F5
+            scene F1, store
+            scene F2, store, Please note the critical hydrogen bond shown in yellow.
 
-NOTES
+            scene F1
+            scene F2
 
-    Scenes F1 through F12 are automatically bound to function keys
-    provided that "set_key" has not been used to redefine the behaviour
-    of the respective key.
-    
-SEE ALSO
+            scene F1, rename, new_key=F5
 
-    view, set_view, get_view
+        NOTES
 
-        '''
-        action = scene_action_sc.auto_err(action, 'action')
+            Scenes F1 through F12 are automatically bound to function keys
+            provided that "set_key" has not been used to redefine the behaviour
+            of the respective key.
+
+        SEE ALSO
+
+            view, set_view, get_view
+
+        """
+        action = scene_action_sc.auto_err(action, "action")
 
         if is_list(message):
-            message = '\n'.join(message)
+            message = "\n".join(message)
 
         # default when called with no arguments
-        if key == 'auto':
-            if action == 'recall':
-                action = 'next'
+        if key == "auto":
+            if action == "recall":
+                action = "next"
 
         # preserve message on update
-        if action == 'update':
+        if action == "update":
             if message is None:
                 message = _scene_get_current_message(_self)
 
         # aliases (DEPRECATED)
-        if action == 'clear':
-            action = 'delete'
-        elif action == 'append' or action == 'update':
-            action = 'store'
+        if action == "clear":
+            action = "delete"
+        elif action == "append" or action == "update":
+            action = "store"
 
         # presentation auto quit
-        if (pymol._scene_quit_on_action == action and
-                action in ('next', 'previous') and
-                _self.get_setting_boolean("presentation") and
-                _self.get_setting_boolean("presentation_auto_quit") and
-                _self.get("scene_current_name") == ""):
+        if (
+            pymol._scene_quit_on_action == action
+            and action in ("next", "previous")
+            and _self.get_setting_boolean("presentation")
+            and _self.get_setting_boolean("presentation_auto_quit")
+            and _self.get("scene_current_name") == ""
+        ):
             if not chain_session(_self):
                 _self.quit()
 
         # call C function
         def func():
             with _self.lockcm:
-                return _cmd.scene(_self._COb, key, action, message, int(view),
-                                    int(color),
-                                    int(active), int(rep), int(frame),
-                                    float(animate), new_key, int(hand),
-                                    int(quiet), sele)
+                return _cmd.scene(
+                    _self._COb,
+                    key,
+                    action,
+                    message,
+                    int(view),
+                    int(color),
+                    int(active),
+                    int(rep),
+                    int(frame),
+                    float(animate),
+                    new_key,
+                    int(hand),
+                    int(quiet),
+                    sele,
+                )
 
         r = _self._call_with_opengl_context(func)
 
@@ -1128,11 +1266,24 @@ SEE ALSO
 
         return r
 
-    def _legacy_scene(key='auto', action='recall', message=None, view=1,
-              color=1, active=1, rep=1, frame=1, animate=-1,
-              new_key=None, hand=1, quiet=1, *, _self=cmd):
-        ''' FOR INTERNAL USE ONLY. Stores and deletes <=1.7.4 compatible scenes. '''
-        pymol=_self._pymol
+    def _legacy_scene(
+        key="auto",
+        action="recall",
+        message=None,
+        view=1,
+        color=1,
+        active=1,
+        rep=1,
+        frame=1,
+        animate=-1,
+        new_key=None,
+        hand=1,
+        quiet=1,
+        *,
+        _self=cmd,
+    ):
+        """FOR INTERNAL USE ONLY. Stores and deletes <=1.7.4 compatible scenes."""
+        pymol = _self._pymol
         view = int(view)
         rep = int(rep)
         color = int(color)
@@ -1142,34 +1293,36 @@ SEE ALSO
         animate = 0
 
         with _self.lockcm:
-            if key=='*':
-                if action=='clear':
+            if key == "*":
+                if action == "clear":
                     for key in pymol._scene_dict:
                         # free selections
                         scene_list = pymol._scene_dict[key]
-                        if len(scene_list)>3:
+                        if len(scene_list) > 3:
                             colorection = scene_list[3]
                             if colorection is not None:
-                                _self.del_colorection(colorection,key)
-                        name = "_scene_"+key+"_*"
+                                _self.del_colorection(colorection, key)
+                        name = "_scene_" + key + "_*"
                         _self.delete(name)
                 else:
-                    raise ValueError('action=' + action)
+                    raise ValueError("action=" + action)
             else:
-                if action == 'store':
-                    if key in ('new', 'auto'):
-                        raise ValueError('key=' + key)
+                if action == "store":
+                    if key in ("new", "auto"):
+                        raise ValueError("key=" + key)
                     if key in pymol._scene_dict:
-                        raise RuntimeError('update not supported')
+                        raise RuntimeError("update not supported")
                     if rep:
                         for rep_name in rep_list:
-                            name = "_scene_"+key+"_"+rep_name
-                            _self.select(name,"rep "+rep_name)
+                            name = "_scene_" + key + "_" + rep_name
+                            _self.select(name, "rep " + rep_name)
                     if is_string(message):
                         if message:
-                            if (message[0:1] in [ '"',"'"] and
-                                 message[-1:] in [ '"',"'"]):
-                                message=message[1:-1]
+                            if message[0:1] in ['"', "'"] and message[-1:] in [
+                                '"',
+                                "'",
+                            ]:
+                                message = message[1:-1]
                             else:
                                 message = message.splitlines()
                     pymol._scene_dict[key] = [
@@ -1181,38 +1334,38 @@ SEE ALSO
                         message,
                     ]
                 else:
-                    raise ValueError('action=' + action)
+                    raise ValueError("action=" + action)
 
     def session_save_views(session, *, _self=cmd):
-        pymol=_self._pymol
-        session['view_dict']=copy.deepcopy(pymol._view_dict)
+        pymol = _self._pymol
+        session["view_dict"] = copy.deepcopy(pymol._view_dict)
         return 1
 
     def session_restore_views(session, *, _self=cmd):
-        pymol=_self._pymol
-        if 'view_dict' in session:
-            pymol._view_dict=copy.deepcopy(session['view_dict'])
+        pymol = _self._pymol
+        if "view_dict" in session:
+            pymol._view_dict = copy.deepcopy(session["view_dict"])
             pymol._view_dict_sc.rebuild(list(pymol._view_dict.keys()))
         return 1
 
     def session_restore_scenes(session, *, _self=cmd):
         # Restore scenes from old session files (<= 1.7.4)
 
-        if 'scene_dict' in session:
-            _self.scene('*', 'clear')
+        if "scene_dict" in session:
+            _self.scene("*", "clear")
 
             # save initial scene
-            tempname = '_initial_scene'
-            while tempname in session['scene_dict']:
-                tempname += '_'
-            _self.scene(tempname, 'store')
+            tempname = "_initial_scene"
+            while tempname in session["scene_dict"]:
+                tempname += "_"
+            _self.scene(tempname, "store")
 
             frame = 0
             if _self.get_movie_playing():
                 _self.mstop()
                 frame = _self.get_frame()
 
-            for key, data in list(session['scene_dict'].items()):
+            for key, data in list(session["scene_dict"].items()):
                 _convert_legacy_scene(key, data, _self)
 
             if frame:
@@ -1220,11 +1373,11 @@ SEE ALSO
                 _self.mplay()
 
             # restore initial scene
-            _self.scene(tempname, 'recall', animate=0)
-            _self.scene(tempname, 'clear')
+            _self.scene(tempname, "recall", animate=0)
+            _self.scene(tempname, "clear")
 
-        if 'scene_order' in session:
-            _self.scene_order(' '.join(session['scene_order']))
+        if "scene_order" in session:
+            _self.scene_order(" ".join(session["scene_order"]))
 
         return 1
 
@@ -1234,8 +1387,9 @@ SEE ALSO
 
         scene_list += [None] * 5
 
-        view, active, frame, color, rep = [(0 if x is None else 1)
-                for x in scene_list[:5]]
+        view, active, frame, color, rep = [
+            (0 if x is None else 1) for x in scene_list[:5]
+        ]
 
         if frame:
             _self.frame(scene_list[2])
@@ -1254,166 +1408,163 @@ SEE ALSO
 
         if rep:
             # only atomic representations
-            _self.hide('everything', '(*)')
-            sele_prefix = _self.get_legal_name('_scene_' + key + '_')
+            _self.hide("everything", "(*)")
+            sele_prefix = _self.get_legal_name("_scene_" + key + "_")
             for rep_name in rep_list:
                 _self.show(rep_name, "?" + sele_prefix + rep_name)
             _self.delete(sele_prefix + "*")
 
-        _self.scene(key, 'store', scene_list[5], view, color, active, rep, frame)
+        _self.scene(key, "store", scene_list[5], view, color, active, rep, frame)
 
-    def stereo(toggle='on', quiet=1, *, _self=cmd):
-        '''
-DESCRIPTION
+    def stereo(toggle="on", quiet=1, *, _self=cmd):
+        """
+        DESCRIPTION
 
-    "stereo" activates or deactives stereo mode.
+            "stereo" activates or deactives stereo mode.
 
-USAGE
+        USAGE
 
-    stereo [toggle]
+            stereo [toggle]
 
-ARGUMENTS
+        ARGUMENTS
 
-    toggle = on, off, crosseye, walleye, quadbuffer, sidebyside, geowall, or openvr
-    
-EXAMPLES
+            toggle = on, off, crosseye, walleye, quadbuffer, sidebyside, geowall, or openvr
 
-    stereo on
-    stereo off
-    stereo crosseye
+        EXAMPLES
 
-NOTES
+            stereo on
+            stereo off
+            stereo crosseye
 
-    "quadbuffer" is the default stereo mode if hardware stereo is available.
-    otherwise, "crosseye" is the default.
+        NOTES
 
-PYMOL API
+            "quadbuffer" is the default stereo mode if hardware stereo is available.
+            otherwise, "crosseye" is the default.
 
-    cmd.stereo(string toggle)
-        '''
-        toggle = stereo_dict[stereo_sc.auto_err(str(toggle),'toggle')]
+        PYMOL API
+
+            cmd.stereo(string toggle)
+        """
+        toggle = stereo_dict[stereo_sc.auto_err(str(toggle), "toggle")]
         with _self.lockcm:
             return _cmd.stereo(_self._COb, toggle)
 
-
     def turn(axis, angle, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "turn" rotates the camera about one of the three primary axes,
-    centered at the origin.
+            "turn" rotates the camera about one of the three primary axes,
+            centered at the origin.
 
-USAGE
+        USAGE
 
-    turn axis, angle
+            turn axis, angle
 
-EXAMPLES
+        EXAMPLES
 
-    turn x, 90
-    turn y, 45
+            turn x, 90
+            turn y, 45
 
-PYMOL API
+        PYMOL API
 
-    cmd.turn(string axis, float angle)
+            cmd.turn(string axis, float angle)
 
-SEE ALSO
+        SEE ALSO
 
-    move, rotate, translate, zoom, center, clip
-        '''
+            move, rotate, translate, zoom, center, clip
+        """
         with _self.lockcm:
-            r = _cmd.turn(_self._COb,str(axis),float(angle))
+            r = _cmd.turn(_self._COb, str(axis), float(angle))
         return r
 
-
     def full_screen(toggle=-1, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "full_screen" enables or disables full screen mode.  
+            "full_screen" enables or disables full screen mode.
 
-USAGE
+        USAGE
 
-    full_screen [toggle]
+            full_screen [toggle]
 
-EXAMPLES
+        EXAMPLES
 
 
-    full_screen
-    full_screen on
-    full_screen off
+            full_screen
+            full_screen on
+            full_screen off
 
-NOTES
+        NOTES
 
-    This does not work correctly on all platforms.  If you encounter
-    trouble, try using the maximize button on the viewer window
-    instead.
-    
-    '''
-        toggle = toggle_dict[toggle_sc.auto_err(str(toggle),'toggle')]
+            This does not work correctly on all platforms.  If you encounter
+            trouble, try using the maximize button on the viewer window
+            instead.
+
+        """
+        toggle = toggle_dict[toggle_sc.auto_err(str(toggle), "toggle")]
         with _self.lockcm:
             if _self.is_gui_thread():
-                return _cmd.full_screen(_self._COb,int(toggle))
+                return _cmd.full_screen(_self._COb, int(toggle))
             return _self._do("full_screen %s" % (toggle), echo=0)
 
-
     def rock(mode=-1, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "rock" toggles Y axis rocking.
+            "rock" toggles Y axis rocking.
 
-USAGE
+        USAGE
 
-    rock
+            rock
 
-PYMOL API
+        PYMOL API
 
-    cmd.rock()
-        '''
+            cmd.rock()
+        """
         with _self.lockcm:
-            r = _cmd.rock(_self._COb,int(mode))
+            r = _cmd.rock(_self._COb, int(mode))
         return r
 
     def label(selection="(all)", expression="", quiet=1, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "label" labels one or more atoms in a selection by evaluating an
-    Python expression referencing properties for each atom.
+            "label" labels one or more atoms in a selection by evaluating an
+            Python expression referencing properties for each atom.
 
-USAGE
+        USAGE
 
-    label [ selection [, expression ]]
+            label [ selection [, expression ]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    selection = string: a selection-expression
+            selection = string: a selection-expression
 
-    expression = string: a Python expression that can be converted to a string
-    
-EXAMPLES
+            expression = string: a Python expression that can be converted to a string
 
-    label chain A, chain
-    label name CA,"%s-%s" % (resn,resi)
-    label resi 200,"%1.3f" % partial_charge
+        EXAMPLES
 
-NOTES
+            label chain A, chain
+            label name CA,"%s-%s" % (resn,resi)
+            label resi 200,"%1.3f" % partial_charge
 
-    The symbols defined in the label name space for each atom are:
+        NOTES
 
-        name, resi, resn, resv, chain, segi, model, alt, q, b, type,
-        index, rank, ID, ss, vdw, elec_radius, label, elem, geom,
-        flags, color, cartoon, valence, formal_charge, partial_charge,
-        numeric_type, text_type, stereo
+            The symbols defined in the label name space for each atom are:
 
-    All strings in the expression must be explicitly quoted.
+                name, resi, resn, resv, chain, segi, model, alt, q, b, type,
+                index, rank, ID, ss, vdw, elec_radius, label, elem, geom,
+                flags, color, cartoon, valence, formal_charge, partial_charge,
+                numeric_type, text_type, stereo
 
-    This operation typically takes several seconds per thousand atoms
-    labelled.
+            All strings in the expression must be explicitly quoted.
 
-    To clear labels, simply omit the expression or set it to ''.
+            This operation typically takes several seconds per thousand atoms
+            labelled.
 
-        '''
+            To clear labels, simply omit the expression or set it to ''.
+
+        """
         # preprocess selection
         selection = selector.process(selection)
         #
@@ -1427,226 +1578,235 @@ NOTES
         with _self.lockcm:
             return _cmd.label2(_self._COb, selection, expression, quiet)
 
-    def window(action='show', x=0, y=0, width=0, height=0, *, _self=cmd):
-        '''
-DESCRIPTION
+    def window(action="show", x=0, y=0, width=0, height=0, *, _self=cmd):
+        """
+        DESCRIPTION
 
-    "window" controls the visibility of PyMOL\'s output window
+            "window" controls the visibility of PyMOL\'s output window
 
-USAGE
+        USAGE
 
-    window [ action [, x [, y [, width [, height ]]]]]
+            window [ action [, x [, y [, width [, height ]]]]]
 
-PYMOL API
+        PYMOL API
 
-    cmd.window(string action, int x, int y, int width, int height)
+            cmd.window(string action, int x, int y, int width, int height)
 
-        '''
-        action = window_sc.auto_err(action,'action')
+        """
+        action = window_sc.auto_err(action, "action")
         action = window_dict[str(action)]
 
         with _self.lockcm:
             from pymol.gui import get_qtwindow as getPyMOLWindow
+
             qt_window = getPyMOLWindow()
             if qt_window:
                 r = DEFAULT_SUCCESS
-                qt_window.window_cmd(action, int(x),int(y),int(width),int(height))
+                qt_window.window_cmd(action, int(x), int(y), int(width), int(height))
             else:
-                r = _cmd.window(_self._COb,action,int(x),int(y),int(width),int(height))
+                r = _cmd.window(
+                    _self._COb, action, int(x), int(y), int(width), int(height)
+                )
         return r
 
-    def viewport(width=-1,height=-1, *, _self=cmd):
-        '''
-DESCRIPTION
+    def viewport(width=-1, height=-1, *, _self=cmd):
+        """
+        DESCRIPTION
 
-    "viewport" changes the size of the graphics display area.
+            "viewport" changes the size of the graphics display area.
 
-USAGE
+        USAGE
 
-    viewport width, height
+            viewport width, height
 
-PYMOL API
+        PYMOL API
 
-    cmd.viewport(int width, int height)
-        '''
+            cmd.viewport(int width, int height)
+        """
         if cmd.is_string(width) and height == -1:
             width = _self.safe_eval(width)
             if _self.is_sequence(width):
-                colorprinting.warning(" Warning: Tuple-syntax (parentheses) "
-                                      "for viewport is deprecated")
+                colorprinting.warning(
+                    " Warning: Tuple-syntax (parentheses) " "for viewport is deprecated"
+                )
                 width, height = width
 
         if not cmd.is_gui_thread():
-            _self.do("viewport %d,%d"%(int(width),int(height)),0)
+            _self.do("viewport %d,%d" % (int(width), int(height)), 0)
             return None
 
         with _self.lockcm:
             return _cmd.viewport(_self._COb, int(width), int(height))
 
-
     def bg_color(color="black", *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "bg_color" sets the background color.
+            "bg_color" sets the background color.
 
-USAGE
+        USAGE
 
-    bg_color [ color ]
+            bg_color [ color ]
 
-ARGUMENTS
+        ARGUMENTS
 
-    color = string: color name or number {default: black}
+            color = string: color name or number {default: black}
 
-EXAMPLES
+        EXAMPLES
 
-    bg_color grey30
+            bg_color grey30
 
-    bg_color
-    
-NOTES
+            bg_color
 
-    To obtain a transparent background, "unset opaque_background", and
-    then use "ray".
-    
-SEE ALSO
+        NOTES
 
-    set_color, ray
-    
-PYMOL API
+            To obtain a transparent background, "unset opaque_background", and
+            then use "ray".
 
-    cmd.bg_color(string color)
+        SEE ALSO
 
-        '''
-        color = _self._interpret_color(_self,color)
+            set_color, ray
+
+        PYMOL API
+
+            cmd.bg_color(string color)
+
+        """
+        color = _self._interpret_color(_self, color)
         with _self.lockcm:
-            r = _cmd.bg_color(_self._COb,str(color))
+            r = _cmd.bg_color(_self._COb, str(color))
         return r
 
     cartoon_dict = {
-        'skip'        : -1,
-        'automatic'   : 0,
-        'loop'        : 1,
-        'rectangle'   : 2,
-        'oval'        : 3,
-        'tube'        : 4,
-        'arrow'       : 5,
-        'dumbbell'    : 6,
-        'putty'       : 7,
-        'dash'        : 8,
-        'cylinder'    : 9,
+        "skip": -1,
+        "automatic": 0,
+        "loop": 1,
+        "rectangle": 2,
+        "oval": 3,
+        "tube": 4,
+        "arrow": 5,
+        "dumbbell": 6,
+        "putty": 7,
+        "dash": 8,
+        "cylinder": 9,
     }
 
     cartoon_sc = Shortcut(cartoon_dict.keys())
 
     def cartoon(type, selection="(all)", *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "cartoon" changes the default cartoon representation for a set of atoms.
+            "cartoon" changes the default cartoon representation for a set of atoms.
 
-USAGE
+        USAGE
 
-    cartoon type, selection
+            cartoon type, selection
 
-ARGUMENTS
+        ARGUMENTS
 
-    type = automatic, skip, loop, rectangle, oval, tube, arrow, dumbbell
-    
-PYMOL API
+            type = automatic, skip, loop, rectangle, oval, tube, arrow, dumbbell
 
-    cmd.cartoon(string type, string selection)
+        PYMOL API
 
-EXAMPLES
+            cmd.cartoon(string type, string selection)
 
-    cartoon rectangle, chain A
+        EXAMPLES
 
-    cartoon skip, resi 145-156
+            cartoon rectangle, chain A
 
-NOTES
+            cartoon skip, resi 145-156
 
-    This command is rarely required since the default "automatic" mode
-    chooses cartoons according to the information in the PDB HELIX and
-    SHEET records.
-    
-    '''
-# preprocess selection
+        NOTES
+
+            This command is rarely required since the default "automatic" mode
+            chooses cartoons according to the information in the PDB HELIX and
+            SHEET records.
+
+        """
+        # preprocess selection
         selection = selector.process(selection)
         #
-        type = cartoon_dict[cartoon_sc.auto_err(str(type),'type')];
+        type = cartoon_dict[cartoon_sc.auto_err(str(type), "type")]
         with _self.lockcm:
             return _cmd.cartoon(_self._COb, selection, int(type))
 
-    def _ray(width,height,antialias,angle,shift,renderer,quiet,_self=cmd):
+    def _ray(width, height, antialias, angle, shift, renderer, quiet, _self=cmd):
         r = DEFAULT_ERROR
         try:
             _self.lock_without_glut()
             try:
-                _cmd.set_busy(_self._COb,1)
-                r = _cmd.render(_self._COb,int(width),int(height),
-                                int(antialias),
-                                float(angle),
-                                float(shift),int(renderer),
-                                int(quiet))
+                _cmd.set_busy(_self._COb, 1)
+                r = _cmd.render(
+                    _self._COb,
+                    int(width),
+                    int(height),
+                    int(antialias),
+                    float(angle),
+                    float(shift),
+                    int(renderer),
+                    int(quiet),
+                )
             finally:
-                _cmd.set_busy(_self._COb,0)
+                _cmd.set_busy(_self._COb, 0)
         finally:
             _self.unlock(r)
         return r
 
     def capture(quiet=1, *, _self=cmd):
-        _self.draw(antialias=-2,quiet=quiet)
+        _self.draw(antialias=-2, quiet=quiet)
 
     def draw(width=0, height=0, antialias=-1, quiet=1, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "draw" creates an OpenGL-based image of the current frame.  
+            "draw" creates an OpenGL-based image of the current frame.
 
-USAGE
+        USAGE
 
-    draw [width [,height [,antialias ]]]
+            draw [width [,height [,antialias ]]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    width = integer {default: 0 (current)}
+            width = integer {default: 0 (current)}
 
-    height = integer {default: 0 (current)}
+            height = integer {default: 0 (current)}
 
-    antialias = integer {default: -1 (use antialias setting)}
-    
-EXAMPLES
+            antialias = integer {default: -1 (use antialias setting)}
 
-    draw
-    draw 1600
+        EXAMPLES
 
-NOTES
+            draw
+            draw 1600
 
-    Default width and height are taken from the current viewpoint. If
-    one is specified but not the other, then the missing value is
-    scaled so as to preserve the current aspect ratio.
+        NOTES
 
-    Because this feature uses the OpenGL rendering context to piece
-    together the image, it does not work when running in the
-    command-line only mode.
+            Default width and height are taken from the current viewpoint. If
+            one is specified but not the other, then the missing value is
+            scaled so as to preserve the current aspect ratio.
 
-    On certain graphics hardware, "unset opaque_background" followed
-    by "draw" will produce an image with a transparent background.
-    However, better results can usually be obtained using "ray".
-    
-PYMOL API
+            Because this feature uses the OpenGL rendering context to piece
+            together the image, it does not work when running in the
+            command-line only mode.
 
-    cmd.draw(int width, int height, int antialias, int quiet)
+            On certain graphics hardware, "unset opaque_background" followed
+            by "draw" will produce an image with a transparent background.
+            However, better results can usually be obtained using "ray".
 
-SEE ALSO
+        PYMOL API
 
-    ray, png, save
-'''
+            cmd.draw(int width, int height, int antialias, int quiet)
+
+        SEE ALSO
+
+            ray, png, save
+        """
         # stop movies and sculpting if they're on...
         if _self.get_movie_playing():
             _self.mstop()
         if _self.get_setting_boolean("sculpting"):
-            _self.set("sculpting","off",quiet=1)
+            _self.set("sculpting", "off", quiet=1)
+
         #
         def func():
             with _self.lockcm:
@@ -1654,87 +1814,106 @@ SEE ALSO
                 # TODO could this be fixed with PYMOL-3328 (SceneUpdate)?
                 _cmd.refresh_now(_self._COb)
 
-                return _cmd.draw(_self._COb,int(width),int(height),
-                          int(antialias),int(quiet))
+                return _cmd.draw(
+                    _self._COb, int(width), int(height), int(antialias), int(quiet)
+                )
+
         return _self._call_with_opengl_context(func)
 
-    def ray(width=0, height=0, antialias=-1, angle=0.0, shift=0.0,
-            renderer=-1, quiet=1, async_=0, _self=cmd, **kwargs):
-        '''
-DESCRIPTION
+    def ray(
+        width=0,
+        height=0,
+        antialias=-1,
+        angle=0.0,
+        shift=0.0,
+        renderer=-1,
+        quiet=1,
+        async_=0,
+        _self=cmd,
+        **kwargs,
+    ):
+        """
+        DESCRIPTION
 
-    "ray" creates a ray-traced image of the current frame. This
-    can take some time (up to several minutes, depending on image
-    complexity).
+            "ray" creates a ray-traced image of the current frame. This
+            can take some time (up to several minutes, depending on image
+            complexity).
 
-USAGE
+        USAGE
 
-    ray [width [,height [,antialias [,angle [,shift [,renderer [,quiet
-        [,async ]]]]]]]]]
+            ray [width [,height [,antialias [,angle [,shift [,renderer [,quiet
+                [,async ]]]]]]]]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    width = integer {default: 0 (current)}
+            width = integer {default: 0 (current)}
 
-    height = integer {default: 0 (current)}
+            height = integer {default: 0 (current)}
 
-    antialias = integer {default: -1 (use antialias setting)}
+            antialias = integer {default: -1 (use antialias setting)}
 
-    angle = float: y-axis rotation for stereo image generation
-    {default: 0.0}
+            angle = float: y-axis rotation for stereo image generation
+            {default: 0.0}
 
-    shift = float: x-axis translation for stereo image generation
-    {default: 0.0}
+            shift = float: x-axis translation for stereo image generation
+            {default: 0.0}
 
-    renderer = -1, 0, 1, or 2: respectively, default, built-in,
-    pov-ray, or dry-run {default: 0}
-    
-    async = 0 or 1: should rendering be done in a background thread?
-    
-EXAMPLES
+            renderer = -1, 0, 1, or 2: respectively, default, built-in,
+            pov-ray, or dry-run {default: 0}
 
-    ray
-    ray 1024,768
-    ray renderer=2
+            async = 0 or 1: should rendering be done in a background thread?
 
-NOTES
+        EXAMPLES
 
-    Default width and height are taken from the current viewpoint. If
-    one is specified but not the other, then the missing value is
-    scaled so as to preserve the current aspect ratio.
-    
-    angle and shift can be used to generate matched stereo pairs
+            ray
+            ray 1024,768
+            ray renderer=2
 
-    renderer = 1 uses PovRay.  This is Unix-only and you must have
-        "povray" in your path.  It utilizes two two temporary files:
-        "tmp_pymol.pov" and "tmp_pymol.png".
+        NOTES
 
-    See "help faster" for optimization tips with the builtin renderer.
-    See "help povray" for how to use PovRay instead of PyMOL\'s
-    built-in ray-tracing engine.
+            Default width and height are taken from the current viewpoint. If
+            one is specified but not the other, then the missing value is
+            scaled so as to preserve the current aspect ratio.
 
-PYMOL API
+            angle and shift can be used to generate matched stereo pairs
 
-    cmd.ray(int width, int height, int antialias, float angle,
-            float shift, int renderer, int quiet, int async)
-SEE ALSO
+            renderer = 1 uses PovRay.  This is Unix-only and you must have
+                "povray" in your path.  It utilizes two two temporary files:
+                "tmp_pymol.pov" and "tmp_pymol.png".
 
-    draw, png, save
-        '''
-        async_ = int(kwargs.pop('async', async_))
+            See "help faster" for optimization tips with the builtin renderer.
+            See "help povray" for how to use PovRay instead of PyMOL\'s
+            built-in ray-tracing engine.
+
+        PYMOL API
+
+            cmd.ray(int width, int height, int antialias, float angle,
+                    float shift, int renderer, int quiet, int async)
+        SEE ALSO
+
+            draw, png, save
+        """
+        async_ = int(kwargs.pop("async", async_))
 
         if kwargs:
-            raise pymol.CmdException('unknown argument: ' + ', '.join(kwargs))
+            raise pymol.CmdException("unknown argument: " + ", ".join(kwargs))
 
-        arg_tup = (int(width),int(height),
-                   int(antialias),float(angle),
-                   float(shift),int(renderer),int(quiet),_self)
+        arg_tup = (
+            int(width),
+            int(height),
+            int(antialias),
+            float(angle),
+            float(shift),
+            int(renderer),
+            int(quiet),
+            _self,
+        )
         # stop movies, rocking, and sculpting if they're on...
         if _self.get_movie_playing():
             _self.mstop()
         if _self.get_setting_boolean("sculpting"):
-            _self.set("sculpting","off",quiet=1)
-        if _self.rock(-2)>0:
+            _self.set("sculpting", "off", quiet=1)
+        if _self.rock(-2) > 0:
             _self.rock(0)
         #
         if not async_:
@@ -1747,293 +1926,313 @@ SEE ALSO
         return r
 
     def refresh(_self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "refresh" causes the scene to be redrawn as soon as the operating
-    system allows it to be done.
+            "refresh" causes the scene to be redrawn as soon as the operating
+            system allows it to be done.
 
-USAGE
+        USAGE
 
-    refresh
+            refresh
 
-PYMOL API
+        PYMOL API
 
-    cmd.refresh()
+            cmd.refresh()
 
-SEE ALSO
+        SEE ALSO
 
-    rebuild
-        '''
+            rebuild
+        """
         if _self.is_gui_thread():
             return _self._refresh()
         with _self.lockcm:
             return _self._do("_ cmd._refresh()")
 
-    def reset(object='', *, _self=cmd):
-        '''
-DESCRIPTION
+    def reset(object="", *, _self=cmd):
+        """
+        DESCRIPTION
 
-    "reset" restores the rotation matrix to identity, sets the origin
-    to the center of mass (approx.) and zooms the window and clipping
-    planes to cover all objects.  Alternatively, it can reset object
-    matrices.
+            "reset" restores the rotation matrix to identity, sets the origin
+            to the center of mass (approx.) and zooms the window and clipping
+            planes to cover all objects.  Alternatively, it can reset object
+            matrices.
 
-USAGE
+        USAGE
 
-    reset [ object ]
+            reset [ object ]
 
-PYMOL API
+        PYMOL API
 
-    cmd.reset()
-        '''
+            cmd.reset()
+        """
         with _self.lockcm:
             return _cmd.reset(_self._COb, str(object))
 
-
-    def dirty(_self=cmd): # OBSOLETE?
+    def dirty(_self=cmd):  # OBSOLETE?
         with _self.lockcm:
             r = _cmd.dirty(_self._COb)
         return r
 
     def meter_reset(_self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "meter_reset" resets the frames per secound counter.
+            "meter_reset" resets the frames per secound counter.
 
-USAGE
+        USAGE
 
-    meter_reset
-        '''
+            meter_reset
+        """
         with _self.lockcm:
             r = _cmd.reset_rate(_self._COb)
         return r
 
     def load_png(filename, movie=1, stereo=-1, quiet=0, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "load_png" loads and displays a PNG file from disk.
+            "load_png" loads and displays a PNG file from disk.
 
-USAGE
+        USAGE
 
-    load_png filename
+            load_png filename
 
-NOTES
+        NOTES
 
-    If the displayed image is too big for the window, it will be
-    reduced 2-fold repeatedly until it fits.
-    
-    '''
+            If the displayed image is too big for the window, it will be
+            reduced 2-fold repeatedly until it fits.
+
+        """
 
         filename = _self.exp_path(str(filename))
         with _self.lockcm:
-            return _cmd.load_png(_self._COb, filename, int(movie), int(stereo),
-                                 int(quiet))
+            return _cmd.load_png(
+                _self._COb, filename, int(movie), int(stereo), int(quiet)
+            )
 
+    def rebuild(selection="all", representation="everything", *, _self=cmd):
+        """
+        DESCRIPTION
 
-    def rebuild(selection='all',representation='everything', *, _self=cmd):
-        '''
-DESCRIPTION
+            "rebuild" forces PyMOL to recreate geometric objects in
+            case any of them have gone out of sync.
 
-    "rebuild" forces PyMOL to recreate geometric objects in
-    case any of them have gone out of sync.
+        USAGE
 
-USAGE
+            rebuild [selection [, representation ]]
 
-    rebuild [selection [, representation ]]
+        ARGUMENTS
 
-ARGUMENTS
+            selection = string {default: all}
 
-    selection = string {default: all}
+            representation = string: {default: everything}
 
-    representation = string: {default: everything}
+        PYMOL API
 
-PYMOL API
+            cmd.rebuild(string selection, string representation)
 
-    cmd.rebuild(string selection, string representation)
+        SEE ALSO
 
-SEE ALSO
-
-    refresh
-    '''
+            refresh
+        """
         selection = selector.process(selection)
-        representation = repres_sc.auto_err(representation,'representation')
-        repn = repres[representation];
+        representation = repres_sc.auto_err(representation, "representation")
+        repn = repres[representation]
         with _self.lockcm:
             return _cmd.rebuild(_self._COb, selection, repn)
 
-    def recolor(selection='all', representation='everything', *, _self=cmd):
-        '''
-DESCRIPTION
+    def recolor(selection="all", representation="everything", *, _self=cmd):
+        """
+        DESCRIPTION
 
-    "recolor" forces reapplication of colors to existing objects.
-    
-USAGE
+            "recolor" forces reapplication of colors to existing objects.
 
-    recolor [selection [, representation ]]
+        USAGE
 
-ARGUMENTS
+            recolor [selection [, representation ]]
 
-    selection = string {default: all}
+        ARGUMENTS
 
-    representation = string {default: everything}
-    
-NOTES
+            selection = string {default: all}
 
-    This command often needs to be executed after "set_color" has been
-    used to redefine one or more existing colors.
-    
-PYMOL API
+            representation = string {default: everything}
 
-    cmd.recolor(string selection = 'all', string representation = 'everything')
+        NOTES
 
-SEE ALSO
+            This command often needs to be executed after "set_color" has been
+            used to redefine one or more existing colors.
 
-    color, set_color
-    '''
+        PYMOL API
+
+            cmd.recolor(string selection = 'all', string representation = 'everything')
+
+        SEE ALSO
+
+            color, set_color
+        """
         selection = selector.process(selection)
-        representation = repres_sc.auto_err(representation,'representation')
-        repn = repres[representation];
+        representation = repres_sc.auto_err(representation, "representation")
+        repn = repres[representation]
         with _self.lockcm:
             return _cmd.recolor(_self._COb, selection, repn)
 
-
     def color(color, selection="(all)", quiet=1, flags=0, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "color" changes the color of objects or atoms.
+            "color" changes the color of objects or atoms.
 
-USAGE
+        USAGE
 
-    color color [, selection ]
+            color color [, selection ]
 
-ARGUMENTS
+        ARGUMENTS
 
-    color = string: color name or number
+            color = string: color name or number
 
-    selection = string: selection-expression or name-pattern
-    corresponding to the atoms or objects to be colored
-    {default: (all)}.
+            selection = string: selection-expression or name-pattern
+            corresponding to the atoms or objects to be colored
+            {default: (all)}.
 
-NOTES
+        NOTES
 
-    When using color ramps, the ramp can be used as a color.
-    
-PYMOL API
+            When using color ramps, the ramp can be used as a color.
 
-    cmd.color(string color, string selection, int quiet)
+        PYMOL API
 
-SEE ALSO
+            cmd.color(string color, string selection, int quiet)
 
-    color_deep, set_color, recolor
-    
-EXAMPLE 
+        SEE ALSO
 
-    color cyan
-    color yellow, chain A
-    '''
+            color_deep, set_color, recolor
+
+        EXAMPLE
+
+            color cyan
+            color yellow, chain A
+        """
         # preprocess selection
         selection = selector.process(selection)
-        color = _self._interpret_color(_self,str(color))
+        color = _self._interpret_color(_self, str(color))
 
         with _self.lockcm:
-            return _cmd.color(_self._COb, str(color), str(selection),
-                              int(flags), int(quiet))
+            return _cmd.color(
+                _self._COb, str(color), str(selection), int(flags), int(quiet)
+            )
 
+    def color_deep(color, name="all", quiet=1, *, _self=cmd):
+        """
+        DESCRIPTION
 
-    def color_deep(color, name='all', quiet=1, *, _self=cmd):
-        '''
-DESCRIPTION
+            Unset all object and atom level (not global) color settings and
+            apply given color.
 
-    Unset all object and atom level (not global) color settings and
-    apply given color.
+        ARGUMENTS
 
-ARGUMENTS
+            color = str: color name or number
 
-    color = str: color name or number
+            name = str: object name or pattern {default: all}
 
-    name = str: object name or pattern {default: all}
+        SEE ALSO
 
-SEE ALSO
-
-    color, unset_deep
-        '''
+            color, unset_deep
+        """
         from pymol.menu import rep_setting_lists
-        _self.unset_deep([s for L in rep_setting_lists for (r, s) in L if s],
-                name, updates=0, quiet=quiet)
+
+        _self.unset_deep(
+            [s for L in rep_setting_lists for (r, s) in L if s],
+            name,
+            updates=0,
+            quiet=quiet,
+        )
         _self.color(color, name, quiet=quiet)
 
-
     import colorsys
+
     _spectrumany_interpolations = {
-        'hls': (colorsys.rgb_to_hls, colorsys.hls_to_rgb),
-        'hsv': (colorsys.rgb_to_hsv, colorsys.hsv_to_rgb),
-        'rgb': ((lambda *rgb: rgb), (lambda *rgb: rgb)),
+        "hls": (colorsys.rgb_to_hls, colorsys.hls_to_rgb),
+        "hsv": (colorsys.rgb_to_hsv, colorsys.hsv_to_rgb),
+        "rgb": ((lambda *rgb: rgb), (lambda *rgb: rgb)),
     }
 
-    def spectrumany(expression, colors, selection='(all)', minimum=None,
-            maximum=None, quiet=1, interpolation='rgb', *, _self=cmd):
-        '''
-DESCRIPTION
+    def spectrumany(
+        expression,
+        colors,
+        selection="(all)",
+        minimum=None,
+        maximum=None,
+        quiet=1,
+        interpolation="rgb",
+        *,
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-    Pure python implementation of the spectrum command. Supports arbitrary
-    color lists instead of palettes and any numerical atom property which
-    works in iterate as expression.
+            Pure python implementation of the spectrum command. Supports arbitrary
+            color lists instead of palettes and any numerical atom property which
+            works in iterate as expression.
 
-    Non-numeric values (like resn) will be enumerated.
+            Non-numeric values (like resn) will be enumerated.
 
-    This is not a separate PyMOL command but is used as a fallback in "spectrum".
-        '''
+            This is not a separate PyMOL command but is used as a fallback in "spectrum".
+        """
         from . import CmdException
 
         try:
             from_rgb, to_rgb = _spectrumany_interpolations[interpolation]
         except KeyError:
-            raise CmdException('interpolation must be one of {}'.format(
-                list(_spectrumany_interpolations)))
+            raise CmdException(
+                "interpolation must be one of {}".format(
+                    list(_spectrumany_interpolations)
+                )
+            )
 
-        if ' ' not in colors:
-            colors = palette_colors_dict.get(colors) or colors.replace('_', ' ')
+        if " " not in colors:
+            colors = palette_colors_dict.get(colors) or colors.replace("_", " ")
 
         quiet, colors = int(quiet), colors.split()
 
         n_colors = len(colors)
         if n_colors < 2:
-            raise CmdException('please provide at least 2 colors')
+            raise CmdException("please provide at least 2 colors")
 
         col_tuples = [_self.get_color_tuple(i) for i in colors]
         if None in col_tuples:
-            raise CmdException('unknown color')
+            raise CmdException("unknown color")
 
         col_tuples = [from_rgb(*c) for c in col_tuples]
 
-        expression = {'pc': 'partial_charge', 'fc': 'formal_charge',
-                'resi': 'resv'}.get(expression, expression)
+        expression = {
+            "pc": "partial_charge",
+            "fc": "formal_charge",
+            "resi": "resv",
+        }.get(expression, expression)
 
-        if expression == 'count':
+        if expression == "count":
             e_list = list(range(_self.count_atoms(selection)))
         else:
             e_list = []
-            _self.iterate(selection, 'e_list.append(%s)' % (expression), space=locals())
+            _self.iterate(selection, "e_list.append(%s)" % (expression), space=locals())
 
         try:
             v_list = [float(v) for v in e_list if v is not None]
         except (TypeError, ValueError):
             if not quiet:
-                print(' Spectrum: Expression is non-numeric, enumerating values')
+                print(" Spectrum: Expression is non-numeric, enumerating values")
             v_list = e_list = list(map(sorted(set(e_list)).index, e_list))
 
         if not v_list:
-            return (0., 0.)
+            return (0.0, 0.0)
 
-        if minimum is None: minimum = min(v_list)
-        if maximum is None: maximum = max(v_list)
+        if minimum is None:
+            minimum = min(v_list)
+        if maximum is None:
+            maximum = max(v_list)
         r = minimum, maximum = float(minimum), float(maximum)
         if not quiet:
-            print(' Spectrum: range (%.5f to %.5f)' % r)
+            print(" Spectrum: range (%.5f to %.5f)" % r)
 
         val_range = maximum - minimum
         if not val_range:
@@ -2041,6 +2240,7 @@ DESCRIPTION
             return r
 
         e_it = iter(e_list)
+
         def next_color():
             v = next(e_it)
             if v is None:
@@ -2049,164 +2249,193 @@ DESCRIPTION
             i = min(int(v), n_colors - 2)
             p = v - i
 
-            col = [(col_tuples[i+1][j] * p + col_tuples[i][j] * (1.0 - p))
-                    for j in range(3)]
+            col = [
+                (col_tuples[i + 1][j] * p + col_tuples[i][j] * (1.0 - p))
+                for j in range(3)
+            ]
 
             rgb = [int(0xFF * v) for v in to_rgb(*col)]
 
             return 0x40000000 + rgb[0] * 0x10000 + rgb[1] * 0x100 + rgb[2]
 
-        _self.alter(selection, 'color = next_color() or color', space=locals())
+        _self.alter(selection, "color = next_color() or color", space=locals())
         _self.recolor(selection)
 
         return r
 
-    def spectrum(expression="count", palette="rainbow",
-                 selection="(all)", minimum=None, maximum=None,
-                 byres=0, quiet=1, interpolation='rgb', *, _self=cmd):
+    def spectrum(
+        expression="count",
+        palette="rainbow",
+        selection="(all)",
+        minimum=None,
+        maximum=None,
+        byres=0,
+        quiet=1,
+        interpolation="rgb",
+        *,
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "spectrum" colors atoms with a spectrum of colors based on an atomic
+            property.
 
-    "spectrum" colors atoms with a spectrum of colors based on an atomic
-    property.
-    
-USAGE
+        USAGE
 
-    spectrum [expression [, palette [, selection [, minimum [, maximum [, byres ]]]]]]
+            spectrum [expression [, palette [, selection [, minimum [, maximum [, byres ]]]]]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    expression = count, b, q, or pc: respectively, atom count, temperature factor,
-    occupancy, or partial charge {default: count}
-    
-    palette = string: palette name or space separated list of colors
-    {default: rainbow}
+            expression = count, b, q, or pc: respectively, atom count, temperature factor,
+            occupancy, or partial charge {default: count}
 
-    selection = string: atoms to color {default: (all)}
+            palette = string: palette name or space separated list of colors
+            {default: rainbow}
 
-    minimum = float: {default: None (automatic)}
+            selection = string: atoms to color {default: (all)}
 
-    maximum = float: {default: None (automatic)}
+            minimum = float: {default: None (automatic)}
 
-    byres = integer: controls whether coloring is applied per-residue {default: 0}
+            maximum = float: {default: None (automatic)}
 
-EXAMPLES
+            byres = integer: controls whether coloring is applied per-residue {default: 0}
 
-    spectrum b, blue_red, minimum=10, maximum=50
+        EXAMPLES
 
-    spectrum count, rainbow_rev, chain A, byres=1
+            spectrum b, blue_red, minimum=10, maximum=50
 
-NOTES
+            spectrum count, rainbow_rev, chain A, byres=1
 
-    Available palettes include:
+        NOTES
 
-       blue_green blue_magenta blue_red blue_white_green
-       blue_white_magenta blue_white_red blue_white_yellow blue_yellow
-       cbmr cyan_magenta cyan_red cyan_white_magenta cyan_white_red
-       cyan_white_yellow cyan_yellow gcbmry green_blue green_magenta
-       green_red green_white_blue green_white_magenta green_white_red
-       green_white_yellow green_yellow green_yellow_red magenta_blue
-       magenta_cyan magenta_green magenta_white_blue
-       magenta_white_cyan magenta_white_green magenta_white_yellow
-       magenta_yellow rainbow rainbow2 rainbow2_rev rainbow_cycle
-       rainbow_cycle_rev rainbow_rev red_blue red_cyan red_green
-       red_white_blue red_white_cyan red_white_green red_white_yellow
-       red_yellow red_yellow_green rmbc yellow_blue yellow_cyan
-       yellow_cyan_white yellow_green yellow_magenta yellow_red
-       yellow_white_blue yellow_white_green yellow_white_magenta
-       yellow_white_red yrmbcg
+            Available palettes include:
 
-PYMOL API
+               blue_green blue_magenta blue_red blue_white_green
+               blue_white_magenta blue_white_red blue_white_yellow blue_yellow
+               cbmr cyan_magenta cyan_red cyan_white_magenta cyan_white_red
+               cyan_white_yellow cyan_yellow gcbmry green_blue green_magenta
+               green_red green_white_blue green_white_magenta green_white_red
+               green_white_yellow green_yellow green_yellow_red magenta_blue
+               magenta_cyan magenta_green magenta_white_blue
+               magenta_white_cyan magenta_white_green magenta_white_yellow
+               magenta_yellow rainbow rainbow2 rainbow2_rev rainbow_cycle
+               rainbow_cycle_rev rainbow_rev red_blue red_cyan red_green
+               red_white_blue red_white_cyan red_white_green red_white_yellow
+               red_yellow red_yellow_green rmbc yellow_blue yellow_cyan
+               yellow_cyan_white yellow_green yellow_magenta yellow_red
+               yellow_white_blue yellow_white_green yellow_white_magenta
+               yellow_white_red yrmbcg
 
-    def spectrum(string expression, string palette,
-                 string selection, float minimum, float maximum,
-                 int byres, int quiet)
+        PYMOL API
+
+            def spectrum(string expression, string palette,
+                         string selection, float minimum, float maximum,
+                         int byres, int quiet)
 
 
-        '''
+        """
         palette_hit = palette_sc.shortcut.get(palette)
         if palette_hit:
             palette = palette_hit
 
-        if not expression.replace('_', '').isalpha() or not palette_hit:
-            return spectrumany(expression, palette, selection,
-                    minimum, maximum, quiet, interpolation, _self=_self)
+        if not expression.replace("_", "").isalpha() or not palette_hit:
+            return spectrumany(
+                expression,
+                palette,
+                selection,
+                minimum,
+                maximum,
+                quiet,
+                interpolation,
+                _self=_self,
+            )
 
-        (prefix,digits,first,last) = palette_dict[str(palette)]
+        (prefix, digits, first, last) = palette_dict[str(palette)]
 
         if (maximum is None) or (minimum is None):
-            minimum = 0 # signal to auto-adjust levels
+            minimum = 0  # signal to auto-adjust levels
             maximum = -1
 
         # preprocess selection
         selection = selector.process(selection)
         #
         with _self.lockcm:
-            r = _cmd.spectrum(_self._COb,str(selection),str(expression),
-                                    float(minimum),float(maximum),
-                                    int(first),int(last),str(prefix),
-                                    int(digits),int(byres),int(quiet))
+            r = _cmd.spectrum(
+                _self._COb,
+                str(selection),
+                str(expression),
+                float(minimum),
+                float(maximum),
+                int(first),
+                int(last),
+                str(prefix),
+                int(digits),
+                int(byres),
+                int(quiet),
+            )
         return r
 
     def set_color(name, rgb, mode=0, quiet=1, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "set_color" defines a new color using the red, green, and blue
-    (RGB) color components.
+            "set_color" defines a new color using the red, green, and blue
+            (RGB) color components.
 
-USAGE
+        USAGE
 
-    set_color name, rgb
+            set_color name, rgb
 
-ARGUMENTS
+        ARGUMENTS
 
-    name = string: name for the new or existing color
+            name = string: name for the new or existing color
 
-    rgb = list of numbers: [red, green, blue] each and all in the range
-    (0.0, 1.0) or (0, 255)
-    
-EXAMPLES 
+            rgb = list of numbers: [red, green, blue] each and all in the range
+            (0.0, 1.0) or (0, 255)
 
-    set_color red, [ 1.0, 0.0, 0.0 ]
+        EXAMPLES
 
-    set_color yellow, [ 255, 255, 0 ]
+            set_color red, [ 1.0, 0.0, 0.0 ]
 
-NOTES
+            set_color yellow, [ 255, 255, 0 ]
 
-    PyMOL automatically infers the range based on the input arguments.
+        NOTES
 
-    It may be necessary to issue "recolor" command in order to force
-    recoloring of existing objects.
-    
-SEE ALSO
+            PyMOL automatically infers the range based on the input arguments.
 
-    recolor
-    
-PYMOL API
+            It may be necessary to issue "recolor" command in order to force
+            recoloring of existing objects.
 
-    cmd.set_color(string name, list-of-numbers rgb, int mode )
+        SEE ALSO
 
-        '''
+            recolor
+
+        PYMOL API
+
+            cmd.set_color(string name, list-of-numbers rgb, int mode )
+
+        """
         if isinstance(rgb, (str, bytes)):
             rgb = safe_list_eval(rgb)
 
         if not isinstance(rgb, (list, tuple)) or len(rgb) != 3:
             raise pymol.CmdException(
-                "color specification must be a list such as [ 1.0, 0.0, 0.0 ]")
+                "color specification must be a list such as [ 1.0, 0.0, 0.0 ]"
+            )
 
         rgb = [float(c) for c in rgb]
         if rgb[0] > 1.0 or rgb[1] > 1.0 or rgb[2] > 1.0:
             rgb = [c / 0xFF for c in rgb]
 
         with _self.lockcm:
-            r = _cmd.colordef(_self._COb, str(name), rgb[0], rgb[1], rgb[2],
-                              int(mode), int(quiet))
+            r = _cmd.colordef(
+                _self._COb, str(name), rgb[0], rgb[1], rgb[2], int(mode), int(quiet)
+            )
             _self._invalidate_color_sc()
         return r
 
-# Aliases for Mother England.
+    # Aliases for Mother England.
 
     colour = color
     set_colour = set_color
@@ -2223,6 +2452,7 @@ def ipython_image(*args, _self=cmd, **kwargs):
     """
     import os, tempfile
     from IPython.display import Image
+
     filename = tempfile.mktemp(".png")
     _self.png(filename, *args, **kwargs)
     try:

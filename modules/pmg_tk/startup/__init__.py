@@ -4,13 +4,13 @@
 
 # === BEGIN EXAMPLE: myplugin.py ===
 #
-#from Tkinter import *
-#from pymol import cmd
+# from Tkinter import *
+# from pymol import cmd
 #
-#def __init__(self):
+# def __init__(self):
 #   self.menuBar.addcascademenu('Plugin', 'MyPlugin', 'Sample Plugin',
 #                               label='Sample Plugin')
-#   
+#
 #   self.menuBar.addmenuitem('MyPlugin', 'command',
 #                      'Set White Background',
 #                      label='Set White Background',
@@ -23,14 +23,12 @@
 # === END EXAMPLE
 
 
-
-
 # === BEGIN EXAMPLE: newmenu.py ===
 #
-#from Tkinter import *
-#from pymol import cmd
+# from Tkinter import *
+# from pymol import cmd
 #
-#def __init__(self):
+# def __init__(self):
 #   self.menuBar.addmenu('NewMenu', 'Sample Menu')
 #
 #   self.menuBar.addmenuitem('NewMenu', 'command',

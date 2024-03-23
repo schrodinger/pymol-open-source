@@ -15,12 +15,12 @@ from pymol.cgo import *
 # desired shadowing.
 #
 # If the plane is too close to the molecule, move the rear clipping
-# plane back and then re-run cgo_plane.py.  
+# plane back and then re-run cgo_plane.py.
 #
 # NOTE that once the plane is created, there is no easy way to move it
 # (other than recreating it).  However, you can move you molecule
 # relative to the plane using PyMOL's molecular editing features.
-# 
+#
 # (Remember, you can't click on cartoons, but you can click on ribbons).
 #
 # Good luck,
@@ -30,73 +30,81 @@ view = cmd.get_view()
 
 # locate plane most of the way to the rear clipping plane
 
-plane_z = - (view[11] + (view[15]+5*view[16])/6.0)
+plane_z = -(view[11] + (view[15] + 5 * view[16]) / 6.0)
 
 # choose the size of the plane
 
-plane_size = abs(view[11])/3.0
-   
+plane_size = abs(view[11]) / 3.0
+
 obj = []
 
 # now create a plane in camera space
 
 plane = [
-   [ -plane_size,  plane_size, plane_z ],
-   [  plane_size,  plane_size, plane_z ],
-   [ -plane_size, -plane_size, plane_z ],
-   [  plane_size, -plane_size, plane_z ]]
+    [-plane_size, plane_size, plane_z],
+    [plane_size, plane_size, plane_z],
+    [-plane_size, -plane_size, plane_z],
+    [plane_size, -plane_size, plane_z],
+]
 
 
-normal = [ 0.0, 0.0, 1.0 ]
+normal = [0.0, 0.0, 1.0]
 
 
-# then transform plane coordinates into model space 
+# then transform plane coordinates into model space
 
-plane = map( lambda p,v=view: [
-   v[0] * p[0] + v[1] * p[1] + v[2]* p[2],
-   v[3] * p[0] + v[4] * p[1] + v[5]* p[2],
-   v[6] * p[0] + v[7] * p[1] + v[8]* p[2]
-   ], plane )
+plane = map(
+    lambda p, v=view: [
+        v[0] * p[0] + v[1] * p[1] + v[2] * p[2],
+        v[3] * p[0] + v[4] * p[1] + v[5] * p[2],
+        v[6] * p[0] + v[7] * p[1] + v[8] * p[2],
+    ],
+    plane,
+)
 plane = list(plane)
 
-normal = ( lambda p,v=view:[
-   v[0] * p[0] + v[1] * p[1] + v[2]* p[2],
-   v[3] * p[0] + v[4] * p[1] + v[5]* p[2],
-   v[6] * p[0] + v[7] * p[1] + v[8]* p[2]
-   ])(*(normal,))
+normal = (
+    lambda p, v=view: [
+        v[0] * p[0] + v[1] * p[1] + v[2] * p[2],
+        v[3] * p[0] + v[4] * p[1] + v[5] * p[2],
+        v[6] * p[0] + v[7] * p[1] + v[8] * p[2],
+    ]
+)(*(normal,))
 
-# and position relative to the camera 
+# and position relative to the camera
 
-plane = map( lambda p,v=view: [
-   p[0] + v[9 ] + v[12],
-   p[1] + v[10] + v[13],
-   p[2] +       + v[14],
-   ], plane )
+plane = map(
+    lambda p, v=view: [
+        p[0] + v[9] + v[12],
+        p[1] + v[10] + v[13],
+        p[2] + +v[14],
+    ],
+    plane,
+)
 plane = list(plane)
 
 # set color
-obj.extend( [ COLOR, 0.8, 0.8, 0.8 ] ) # greyish
+obj.extend([COLOR, 0.8, 0.8, 0.8])  # greyish
 
-# begin triangle strip 
-obj.extend( [ BEGIN, TRIANGLE_STRIP ] )
+# begin triangle strip
+obj.extend([BEGIN, TRIANGLE_STRIP])
 
 # set normal
 
-obj.append( NORMAL )
-obj.extend( normal )
+obj.append(NORMAL)
+obj.extend(normal)
 
 # draw the plane
 for a in plane:
-   obj.append( VERTEX)
-   obj.extend(a)
-obj.append( END )
+    obj.append(VERTEX)
+    obj.extend(a)
+obj.append(END)
 
 # delete existing object (if any)
 cmd.delete("cgo_plane")
 
 # now load the new object without zooming
-auto_zoom = cmd.get('auto_zoom')
-cmd.set('auto_zoom', 0, quiet=1)
-cmd.load_cgo(obj,'cgo_plane')
-cmd.set('auto_zoom', auto_zoom, quiet=1)
-
+auto_zoom = cmd.get("auto_zoom")
+cmd.set("auto_zoom", 0, quiet=1)
+cmd.load_cgo(obj, "cgo_plane")
+cmd.set("auto_zoom", auto_zoom, quiet=1)

@@ -13,34 +13,34 @@ cmd.wizard("mutagenesis")
 cmd.get_wizard().set_mode("ALA")
 
 from pymol import stored
+
 stored.list = []
 
 # generate our list of residues (CA-atoms) to mutate
 
-cmd.iterate("1hpv//A//CA",
-"stored.list.append('/'.join([model,segi,chain,resi,name]))")
+cmd.iterate("1hpv//A//CA", "stored.list.append('/'.join([model,segi,chain,resi,name]))")
 
 # now iterate through each residue
 
 for sele in stored.list:
-   
-   # pick a residue
 
-   cmd.edit(sele)
+    # pick a residue
 
-   # notify the wizard about the picked residue
+    cmd.edit(sele)
 
-   cmd.get_wizard().do_pick(0)
+    # notify the wizard about the picked residue
 
-   # apply the mutation
+    cmd.get_wizard().do_pick(0)
 
-   cmd.get_wizard().apply()
+    # apply the mutation
 
-   # update the screen, showing the mutation
+    cmd.get_wizard().apply()
 
-   cmd.indicate("byres "+sele)
-   cmd.refresh()
-   
+    # update the screen, showing the mutation
+
+    cmd.indicate("byres " + sele)
+    cmd.refresh()
+
 # now close the wizard
 
 cmd.set_wizard()

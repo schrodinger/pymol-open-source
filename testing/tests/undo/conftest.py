@@ -6,7 +6,7 @@ import pytest
 import pymol
 from pymol import cmd
 
-has_multi_undo = 'multi_undo' in pymol.get_capabilities()
+has_multi_undo = "multi_undo" in pymol.get_capabilities()
 
 
 @pytest.fixture(autouse=True)

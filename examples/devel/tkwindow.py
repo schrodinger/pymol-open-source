@@ -13,22 +13,20 @@ except ImportError:
 
 from pymol import cmd
 
+
 class myTkWindow:
 
-    def __init__(self,app):
+    def __init__(self, app):
         self.root = Tk()
         self.app = app
         self.root.geometry(newGeometry="+900+50")
-        Button(self.root,
-               text="Open File",
-               command=lambda s=self:s.open()).pack()
+        Button(self.root, text="Open File", command=lambda s=self: s.open()).pack()
 
     def open(self):
         file_list = askopenfilename(multiple=1)
         for file in file_list:
             self.app.pymol.cmd.load(file)
-        
+
+
 def __init__(app):
     myTkWindow(app)
-    
-        

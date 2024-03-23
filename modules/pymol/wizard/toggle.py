@@ -3,12 +3,13 @@ from pymol import cmd
 import pymol
 import types
 
+
 class Toggle(Wizard):
 
     def __init__(self, *arg, _self=cmd):
         self.message = []
         for a in arg:
-            if not isinstance(a,list):
+            if not isinstance(a, list):
                 self.message.append(a)
             else:
                 self.message.extend(a)
@@ -29,14 +30,15 @@ class Toggle(Wizard):
 
     def get_panel(self):
         panel = [
-            [ 2, 'Toggle Fullscreen',
-              'cmd.full_screen()'],
-            [ 2, 'Toggle Stereo 3D',
-              'cmd.stereo("off" if cmd.get_setting_int("stereo") else "on")'],
-            [ 2, 'Toggle Message',
-              'cmd.get_wizard().toggle()'],
-            [ 2, 'Dismiss', 'cmd.set_wizard()' ]
-            ]
-        if len(self.message)==0:
+            [2, "Toggle Fullscreen", "cmd.full_screen()"],
+            [
+                2,
+                "Toggle Stereo 3D",
+                'cmd.stereo("off" if cmd.get_setting_int("stereo") else "on")',
+            ],
+            [2, "Toggle Message", "cmd.get_wizard().toggle()"],
+            [2, "Dismiss", "cmd.set_wizard()"],
+        ]
+        if len(self.message) == 0:
             del panel[2]
         return panel

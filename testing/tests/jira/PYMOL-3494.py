@@ -1,14 +1,15 @@
-'''
+"""
 ray_color_ramps regression in 2.4
-'''
+"""
 
 from pymol import cmd, testing
+
 
 class Test3494(testing.PyMOLTestCase):
     def test(self):
         cmd.fragment("gly", "m1")
-        cmd.color('blue')
-        cmd.color('yellow', 'elem C+O')
+        cmd.color("blue")
+        cmd.color("yellow", "elem C+O")
         cmd.set("gaussian_resolution", 3.0)
         cmd.set("gaussian_b_floor", 40)
         cmd.map_new("map", "gaussian", 2.0, "m1", 5.0)
@@ -18,13 +19,28 @@ class Test3494(testing.PyMOLTestCase):
         cmd.disable("*")
         cmd.enable("isosurf")
 
-        cmd.set_view((\
-             0.696023464,    0.704662204,    0.137847140,\
-            -0.434485614,    0.260496944,    0.862185299,\
-             0.571640551,   -0.659994185,    0.487477839,\
-            -0.000000065,   -0.000000011,  -22.690608978,\
-             0.078630894,   -0.295513719,    0.061826922,\
-            17.590608597,   27.790609360,  -20.000000000 ))
+        cmd.set_view(
+            (
+                0.696023464,
+                0.704662204,
+                0.137847140,
+                -0.434485614,
+                0.260496944,
+                0.862185299,
+                0.571640551,
+                -0.659994185,
+                0.487477839,
+                -0.000000065,
+                -0.000000011,
+                -22.690608978,
+                0.078630894,
+                -0.295513719,
+                0.061826922,
+                17.590608597,
+                27.790609360,
+                -20.000000000,
+            )
+        )
 
         self.ambientOnly()
 
@@ -51,7 +67,7 @@ class Test3494(testing.PyMOLTestCase):
         self.assertEqual(self.imageCountColors(img), 3)
 
     @testing.foreach(1, 2)
-    @testing.requires_version('2.5')
+    @testing.requires_version("2.5")
     def testIsosurfaceAlgorithm(self, isosurface_algorithm):
         cmd.set("isosurface_algorithm", isosurface_algorithm)
         self.test()

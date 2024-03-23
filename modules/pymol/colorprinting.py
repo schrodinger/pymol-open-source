@@ -6,21 +6,16 @@ import re
 
 
 def htmlspecialchars(s):
-    '''Convert special characters to HTML entities
-    '''
-    return (s
-        .replace('&', '&amp;')
-        .replace('<', '&lt;')
-        .replace('>', '&gt;')
-    )
+    """Convert special characters to HTML entities"""
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
 
 def text2html(s, whitespace=True):
-    '''Convert plain text to HTML
-    '''
+    """Convert plain text to HTML"""
     s = htmlspecialchars(s)
 
     if whitespace:
-        s = s.replace(' ', '&nbsp;').replace('\n', '<br>')
+        s = s.replace(" ", "&nbsp;").replace("\n", "<br>")
 
     return s
 
@@ -32,8 +27,7 @@ parrot = print
 
 
 def print_exc(strip_filenames=()):
-    '''Print a colored traceback, with an (optionally) reduced stack
-    '''
+    """Print a colored traceback, with an (optionally) reduced stack"""
     import sys, traceback
 
     exc_type, exc_value, tb = sys.exc_info()
@@ -43,6 +37,6 @@ def print_exc(strip_filenames=()):
             tb = tb.tb_next
 
     s_list = traceback.format_exception(exc_type, exc_value, tb)
-    error(''.join(s_list).rstrip())
+    error("".join(s_list).rstrip())
 
     return exc_type, exc_value, tb

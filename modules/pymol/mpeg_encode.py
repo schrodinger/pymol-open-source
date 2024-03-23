@@ -1,16 +1,17 @@
-'''
+"""
 Derived from freemol.mpeg_encode
 
 Copyright (c) Schrodinger, Inc.
-'''
+"""
 
 
 def validate():
-    '''
+    """
     Return the path to the "mpeg_encode" executable or None if not found
-    '''
+    """
     from shutil import which
-    return which('mpeg_encode') or which('mpeg_encode.exe')
+
+    return which("mpeg_encode") or which("mpeg_encode.exe")
 
 
 INPUT_TEMPLATE = """
@@ -179,9 +180,9 @@ FRAME_RATE 30
 
 
 def input(filename, path, prefix, first, last, quality=12):
-    '''
+    """
     Return a parameter file (file contents).
-    '''
+    """
     return INPUT_TEMPLATE % (
         filename,
         path,
@@ -195,13 +196,14 @@ def input(filename, path, prefix, first, last, quality=12):
 
 
 def run(paraminput):
-    '''
+    """
     Run "mpeg_encode"
 
     :param paraminput: Parameter file contents
     :return: (stdout, stderr) bytes tuple
-    '''
+    """
     from subprocess import Popen, PIPE
+
     mpeg_encode_exe = validate()
 
     if not mpeg_encode_exe:

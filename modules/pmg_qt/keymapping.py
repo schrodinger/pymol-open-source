@@ -1,8 +1,9 @@
-'''
+"""
 Module for translating Qt key codes to PyMOL key and "special" codes
-'''
+"""
 
 from pymol.Qt import QtCore
+
 Qt = QtCore.Qt
 
 DEBUG = False
@@ -42,7 +43,7 @@ specialMap = {
 
 
 def get_modifiers(ev):
-    '''Get modifers from event and translate into PyMOL modifier mask'''
+    """Get modifers from event and translate into PyMOL modifier mask"""
     pymolmod = 0
     qtmodifiers = ev.modifiers()
 
@@ -50,7 +51,7 @@ def get_modifiers(ev):
         (0x1, Qt.ShiftModifier),
         (0x2, Qt.MetaModifier),  # CTRL on Mac
         (0x2, Qt.ControlModifier),
-        (0x4, Qt.AltModifier)
+        (0x4, Qt.AltModifier),
     ]:
         if qtmodifiers & qtm:
             pymolmod |= mask
@@ -91,17 +92,17 @@ def keyPressEventToPyMOLButtonArgs(ev):
 
         if k > 255 or k < 0:
             if DEBUG:
-                print('DEBUG: skipped: 0x%x 0x%x' % (key, k))
+                print("DEBUG: skipped: 0x%x 0x%x" % (key, k))
             return
 
     return (k, state, 0, 0, pymolmod)
 
 
 def get_wheel_delta(ev):
-    '''
+    """
     Get mouse wheel delta from event.
     Ignores horizontal scrolling (returns zero).
-    '''
+    """
     try:
         # Qt4
         return ev.delta()
@@ -123,10 +124,10 @@ def get_wheel_delta(ev):
 
 
 def get_wheel_button(ev):
-    '''
+    """
     Get mouse wheel button index (3 or 4) from event, or 0 if no vertial
     scrolling was detected.
-    '''
+    """
     delta = get_wheel_delta(ev)
     if delta > 0:
         return 3

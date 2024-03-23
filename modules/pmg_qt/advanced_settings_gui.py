@@ -1,6 +1,7 @@
 from pymol import setting
 from pymol.Qt import QtGui, QtWidgets
 from pymol.Qt import QtCore, QtCoreModels
+
 Qt = QtCore.Qt
 QSI = QtGui.QStandardItem  # For brevity
 
@@ -10,6 +11,7 @@ class PyMOLAdvancedSettings(QtWidgets.QWidget):
     The Advanced Settings dialog for PyMOL.  This iterates through all possible
     options and adds them to a filterable table.
     """
+
     def __init__(self, parent, cmd):
         QtWidgets.QWidget.__init__(self, parent, Qt.Window)
         self.setMinimumSize(400, 500)
@@ -19,7 +21,7 @@ class PyMOLAdvancedSettings(QtWidgets.QWidget):
         self.proxy_model = QtCoreModels.QSortFilterProxyModel(self)
         self.proxy_model.setSourceModel(self.model)
 
-        self.setWindowTitle('PyMOL Advanced Settings')
+        self.setWindowTitle("PyMOL Advanced Settings")
         layout = QtWidgets.QVBoxLayout(self)
         self.setLayout(layout)
         self.filter_le = QtWidgets.QLineEdit(self)

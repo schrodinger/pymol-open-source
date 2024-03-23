@@ -1,19 +1,19 @@
-
-'''
+"""
 Testing atom properties for simple getting/setting and loading from sdf and mae files
-'''
+"""
 
 import unittest
 from pymol import cmd, testing, stored
 
-@testing.requires('properties')
+
+@testing.requires("properties")
 class TestCopyProperties(testing.PyMOLTestCase):
 
     def testCopyObjectProperties(self):
-        cmd.load(self.datafile('1molecule.mae'), 'test', object_props='*')
+        cmd.load(self.datafile("1molecule.mae"), "test", object_props="*")
         objs = cmd.get_object_list()
         for obj in objs:
-            obj_copy = '%s_copy' % obj
+            obj_copy = "%s_copy" % obj
             cmd.create(obj_copy, obj, copy_properties=True)
             props1 = cmd.get_property_list(obj)
             props2 = cmd.get_property_list(obj_copy)
@@ -24,15 +24,16 @@ class TestCopyProperties(testing.PyMOLTestCase):
                 self.assertEqual(prop1, prop2)
 
     def testCopyAtomProperties(self):
-        cmd.load(self.datafile('1molecule.mae'), 'test', object_props='*', atom_props='*')
+        cmd.load(
+            self.datafile("1molecule.mae"), "test", object_props="*", atom_props="*"
+        )
         objs = cmd.get_object_list()
         for obj in objs:
-            obj_copy = '%s_copy' % obj
+            obj_copy = "%s_copy" % obj
             cmd.create(obj_copy, obj, copy_properties=True)
 
             stored.proplookup1 = {}
-            cmd.iterate(obj,  'stored.proplookup1[index] = property')
+            cmd.iterate(obj, "stored.proplookup1[index] = property")
             stored.proplookup2 = {}
-            cmd.iterate(obj_copy,  'stored.proplookup2[index] = property')
+            cmd.iterate(obj_copy, "stored.proplookup2[index] = property")
             self.assertEqual(stored.proplookup1, stored.proplookup2)
-

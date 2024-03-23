@@ -2,7 +2,4 @@
 
 from pymol.wizard.demo import DemoState
 
-Demo=DemoState
-
-
-
+Demo = DemoState

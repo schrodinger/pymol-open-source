@@ -1,40 +1,40 @@
-#A* -------------------------------------------------------------------
-#B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
-#D* -------------------------------------------------------------------
-#E* It is unlawful to modify or remove this copyright notice.
-#F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information.
-#H* -------------------------------------------------------------------
-#I* Additional authors of this source file include:
-#-*
-#-*
-#-*
-#Z* -------------------------------------------------------------------
+# A* -------------------------------------------------------------------
+# B* This file contains source code for the PyMOL computer program
+# C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
+# D* -------------------------------------------------------------------
+# E* It is unlawful to modify or remove this copyright notice.
+# F* -------------------------------------------------------------------
+# G* Please see the accompanying LICENSE file for further information.
+# H* -------------------------------------------------------------------
+# I* Additional authors of this source file include:
+# -*
+# -*
+# -*
+# Z* -------------------------------------------------------------------
 
 import copy
 
 
-def combine_fragments(*arg,**kw):
-    '''
+def combine_fragments(*arg, **kw):
+    """
     merge_fragments(target,source1,source2,source3,...)
-    
+
     WARNING: This is not how you *should* combine fragments,
     rather this is just a convenient kludge for getting
     something remotely realistic in a big hurry.
-    
+
     NOTE: atom names must be unique throughout -- especially
     including the "capping" atoms used during the ab-initio
     calculations (you can use PyMOL to rename these if they
     happen to coincide).
-'''
+    """
 
-    if 'net_charge' in kw:
-        net_charge = kw['net_charge']
+    if "net_charge" in kw:
+        net_charge = kw["net_charge"]
     else:
         net_charge = None
-    if len(arg)<1:
-        raise TypeError('invalid arguments')
+    if len(arg) < 1:
+        raise TypeError("invalid arguments")
     dst = copy.deepcopy(arg[0])
     frg_lst = arg[1:]
     n_frg = len(frg_lst)
@@ -69,9 +69,9 @@ def combine_fragments(*arg,**kw):
                 attached_index = None
                 for b in fragment.bond:
                     attached = None
-                    if b.index[0]==c:
+                    if b.index[0] == c:
                         attached = fragment.atom[b.index[1]]
-                    elif b.index[1]==c:
+                    elif b.index[1] == c:
                         attached = fragment.atom[b.index[0]]
                     if attached is not None:
                         if attached.name in dst_dict:
@@ -96,7 +96,7 @@ def combine_fragments(*arg,**kw):
     for fragment in frg_lst:
         for a in fragment.atom:
             index = a.chg_index
-            if (index < n_dst_atm):
+            if index < n_dst_atm:
                 chg[c][index] = chg[c][index] + a.partial_charge
                 cnt[index] = cnt[index] + 1
             else:
@@ -112,7 +112,7 @@ def combine_fragments(*arg,**kw):
             tmp_lst = []
             for a in chg:
                 tmp_lst.append(a[index])
-            avg.append(sum(tmp_lst)/cnt[index])
+            avg.append(sum(tmp_lst) / cnt[index])
         else:
             avg.append(0.0)
 
@@ -120,7 +120,7 @@ def combine_fragments(*arg,**kw):
 
     chg_sum = sum(avg)
 
-    print("chg_sum",chg_sum)
+    print("chg_sum", chg_sum)
     if net_charge is not None:
         chg_diff = net_charge - chg_sum
         chg_adjust = chg_diff / n_dst_atm

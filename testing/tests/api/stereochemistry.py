@@ -1,8 +1,9 @@
 import os
 from pymol import movie, cmd, testing, stored
 
-@testing.requires('incentive')
-@testing.requires_version('2.2')
+
+@testing.requires("incentive")
+@testing.requires_version("2.2")
 class TestStereochemistry(testing.PyMOLTestCase):
 
     def test_assign_stereo_schrodinger(self):

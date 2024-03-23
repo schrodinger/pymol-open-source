@@ -4,14 +4,14 @@ import keyword
 from . import *
 
 STYLES = {
-    'keyword': textformat('darkOrange'),
-    'builtins': textformat('green'),
-    'decorator': textformat('darkBlue'),
-    'defclass': textformat('darkGreen'),
-    'string': textformat('magenta'),
-    'comment': textformat('blue'),
-    'self': textformat('black', 'bold'),
-    'numbers': textformat('brown'),
+    "keyword": textformat("darkOrange"),
+    "builtins": textformat("green"),
+    "decorator": textformat("darkBlue"),
+    "defclass": textformat("darkGreen"),
+    "string": textformat("magenta"),
+    "comment": textformat("blue"),
+    "self": textformat("black", "bold"),
+    "numbers": textformat("brown"),
 }
 
 
@@ -28,7 +28,7 @@ QUOTES = [None, '"', "'", '"""', "'''"]
 
 
 def find_first(subs, text, start):
-    '''Index of first occurence of `subs` in `text`. Return None if not found.'''
+    """Index of first occurence of `subs` in `text`. Return None if not found."""
     best = None
     for sub in subs:
         index = text.find(sub, start, best)
@@ -41,31 +41,30 @@ python_rules = [
     (re.compile(pat), index, fmt)
     for (pat, index, fmt) in [
         # decorators
-        (r'^\s*@[\w\.]+', 0, STYLES['decorator']),
-
+        (r"^\s*@[\w\.]+", 0, STYLES["decorator"]),
         # built in names
-        (r'(?<!\.)\b(?:' + '|'.join(__builtins__) + r')\b', 0, STYLES['builtins']),
-
+        (r"(?<!\.)\b(?:" + "|".join(__builtins__) + r")\b", 0, STYLES["builtins"]),
         # 'self'
-        (r'\bself\b', 0, STYLES['self']),
-
+        (r"\bself\b", 0, STYLES["self"]),
         # 'def' or 'class' followed by an identifier
-        (r'\b(?:def|class)\s+(\w+)', 1, STYLES['defclass']),
-
+        (r"\b(?:def|class)\s+(\w+)", 1, STYLES["defclass"]),
         # Numeric literals
-        (r'\b[+-]?(?:[0-9]+|0[xX][0-9A-Fa-f]+|0[bB][01]+)[lL]?\b', 0, STYLES['numbers']),
-        (r'\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b', 0, STYLES['numbers']),
-
+        (
+            r"\b[+-]?(?:[0-9]+|0[xX][0-9A-Fa-f]+|0[bB][01]+)[lL]?\b",
+            0,
+            STYLES["numbers"],
+        ),
+        (r"\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b", 0, STYLES["numbers"]),
         # keywords
-        (r'\b(?:' + '|'.join(keyword.kwlist) + r')\b', 0, STYLES['keyword']),
+        (r"\b(?:" + "|".join(keyword.kwlist) + r")\b", 0, STYLES["keyword"]),
     ]
 ]
 
-re_end_of_line = re.compile(r'$', re.M)
+re_end_of_line = re.compile(r"$", re.M)
 
 
 def highlightPython(self, state, text, offset=0, end=None):
-    '''
+    """
     @type self: QSyntaxHighlighter
     @type state: int
     @type text: str
@@ -74,7 +73,7 @@ def highlightPython(self, state, text, offset=0, end=None):
 
     @rtype: int
     @return current block state
-    '''
+    """
     # support highlighting substrings
     text = text[offset:end]
 
@@ -91,7 +90,7 @@ def highlightPython(self, state, text, offset=0, end=None):
     while index < L:
         if state == QUOTESTATE.NONE:
             # find opening quote
-            start = find_first(('"', "'", '#'), text, index)
+            start = find_first(('"', "'", "#"), text, index)
 
             if start is None:
                 # nothing found
@@ -99,11 +98,10 @@ def highlightPython(self, state, text, offset=0, end=None):
 
             index = start + 1
 
-            if text[start] == '#':
+            if text[start] == "#":
                 # found comment
                 index += re_end_of_line.search(text[index:]).end()
-                self.setFormat(start + offset, index - start,
-                               STYLES['comment'])
+                self.setFormat(start + offset, index - start, STYLES["comment"])
                 continue
 
             if text[start] == '"':
@@ -114,7 +112,7 @@ def highlightPython(self, state, text, offset=0, end=None):
                 state = QUOTESTATE.SINGLE
 
             # check for triple quote
-            if text[index:index + 2] == QUOTES[state] * 2:
+            if text[index : index + 2] == QUOTES[state] * 2:
                 state += QUOTESTATE.TRIPLEOFFSET
                 index += 2
 
@@ -123,19 +121,19 @@ def highlightPython(self, state, text, offset=0, end=None):
 
         # find closing quote
         while index < L:
-            if text[index] == '\\':
+            if text[index] == "\\":
                 index += 1
-            elif text[index:index + quotelen] == quote:
+            elif text[index : index + quotelen] == quote:
                 index += quotelen
                 state = QUOTESTATE.NONE
                 break
             index += 1
 
         # raw/unicode/bytes prefix
-        if start > 0 and text[start - 1].lower() in 'rub':
+        if start > 0 and text[start - 1].lower() in "rub":
             start -= 1
 
-        self.setFormat(start + offset, index - start, STYLES['string'])
+        self.setFormat(start + offset, index - start, STYLES["string"])
 
     return state
 

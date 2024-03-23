@@ -1,6 +1,7 @@
 import pymol
 from pymol import cmd, testing, stored
 
+
 class TestExperimenting(testing.PyMOLTestCase):
 
     def testGetBondPrint(self):
@@ -8,10 +9,10 @@ class TestExperimenting(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def testSpheroid(self):
-        cmd.fragment('gly', 'm1')
-        cmd.create('m1', 'm1', 1, 2)
-        cmd.spheroid('m1')
-        self.assertEqual(1, cmd.count_states('m1'))
+        cmd.fragment("gly", "m1")
+        cmd.create("m1", "m1", 1, 2)
+        cmd.spheroid("m1")
+        self.assertEqual(1, cmd.count_states("m1"))
 
     def testCheck(self):
         cmd.check
@@ -29,9 +30,9 @@ class TestExperimenting(testing.PyMOLTestCase):
         cmd.dump
         self.skipTest("TODO")
 
-    @testing.requires('incentive')
-    @testing.requires('no_edu') # ray
+    @testing.requires("incentive")
+    @testing.requires("no_edu")  # ray
     def testFocalblur(self):
         cmd.viewport(100, 100)
-        cmd.fragment('gly', 'm1')
+        cmd.fragment("gly", "m1")
         cmd.focal_blur(4.0, 3)

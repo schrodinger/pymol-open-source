@@ -1,6 +1,7 @@
 from pymol import cmd, testing, stored
 from chempy import cpv
 
+
 class TestFitting(testing.PyMOLTestCase):
 
     def testAlign(self):
@@ -56,31 +57,43 @@ class TestFitting(testing.PyMOLTestCase):
         pass
 
     def testPairFit(self):
-        cmd.fragment('trp')
-        cmd.fragment('his')
+        cmd.fragment("trp")
+        cmd.fragment("his")
 
         # 1 atom
-        sele = ('trp and guide', 'his and guide')
+        sele = ("trp and guide", "his and guide")
         pos = list(map(cmd.get_atom_coords, sele))
         vec = cpv.sub(*pos)
         mat_ref = [
-            1.0, 0.0, 0.0, -vec[0],
-            0.0, 1.0, 0.0, -vec[1],
-            0.0, 0.0, 1.0, -vec[2],
-            0.0, 0.0, 0.0, 1.0]
+            1.0,
+            0.0,
+            0.0,
+            -vec[0],
+            0.0,
+            1.0,
+            0.0,
+            -vec[1],
+            0.0,
+            0.0,
+            1.0,
+            -vec[2],
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        ]
         rms = cmd.pair_fit(*sele)
         self.assertEqual(rms, 0.0)
-        mat = cmd.get_object_matrix('trp')
+        mat = cmd.get_object_matrix("trp")
         self.assertArrayEqual(mat, mat_ref, 1e-4)
 
         # 2 atoms
-        sele += ('trp & name CB', 'his & name CB')
+        sele += ("trp & name CB", "his & name CB")
         rms = cmd.pair_fit(*sele)
         self.assertAlmostEqual(rms, 0.0082, delta=1e-4)
 
         # 4 atoms
-        sele += ('trp & name CG', 'his & name CG',
-                 'trp & name CD1', 'his & name CD2')
+        sele += ("trp & name CG", "his & name CG", "trp & name CD1", "his & name CD2")
         rms = cmd.pair_fit(*sele)
         self.assertAlmostEqual(rms, 0.0713, delta=1e-4)
 
@@ -99,4 +112,3 @@ class TestFitting(testing.PyMOLTestCase):
         self.assertAlmostEqual(r[0], 0.9667, delta=1e-4)
         self.assertEqual(r[1], 172)
         self.assertEqual(r[1], cmd.count_atoms("aln") / 2)
-

@@ -4,14 +4,12 @@ from pymol.Qt import QtCore, QtWidgets
 class ResizableMessageBox(QtWidgets.QMessageBox):
 
     _EVENT_TYPES = (
-            QtCore.QEvent.UpdateRequest,
-            QtCore.QEvent.WinIdChange,
-            QtCore.QEvent.ShowToParent,
-            )
+        QtCore.QEvent.UpdateRequest,
+        QtCore.QEvent.WinIdChange,
+        QtCore.QEvent.ShowToParent,
+    )
 
-    _UNWANTED_WINDOW_FLAGS = (
-            QtCore.Qt.MSWindowsFixedSizeDialogHint |
-            0)
+    _UNWANTED_WINDOW_FLAGS = QtCore.Qt.MSWindowsFixedSizeDialogHint | 0
 
     def _make_resizable(self):
         textEdit = self.findChild(QtWidgets.QTextEdit)
@@ -22,7 +20,7 @@ class ResizableMessageBox(QtWidgets.QMessageBox):
 
         ex = QtWidgets.QSizePolicy.Expanding
         for w in [self, textEdit]:
-            w.setMaximumSize(0xffffff, 0xffffff)
+            w.setMaximumSize(0xFFFFFF, 0xFFFFFF)
             w.setSizePolicy(ex, ex)
 
     def event(self, e):

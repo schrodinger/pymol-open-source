@@ -8,32 +8,30 @@ from pymol import cmd
 
 # define a callback object
 
+
 class myCallback(Callback):
 
-   def __call__(self):
-      
-      glBegin(GL_LINES)
-      
-      glColor3f(1.0,1.0,1.0)
-      
-      glVertex3f(0.0,0.0,0.0)
-      glVertex3f(1.0,0.0,0.0)
+    def __call__(self):
 
-      glVertex3f(0.0,0.0,0.0)
-      glVertex3f(0.0,2.0,0.0)
+        glBegin(GL_LINES)
 
-      glVertex3f(0.0,0.0,0.0)
-      glVertex3f(0.0,0.0,3.0)
+        glColor3f(1.0, 1.0, 1.0)
 
-      glEnd()
+        glVertex3f(0.0, 0.0, 0.0)
+        glVertex3f(1.0, 0.0, 0.0)
 
-   def get_extent(self):
-      return [[0.0,0.0,0.0],[1.0,2.0,3.0]]
+        glVertex3f(0.0, 0.0, 0.0)
+        glVertex3f(0.0, 2.0, 0.0)
+
+        glVertex3f(0.0, 0.0, 0.0)
+        glVertex3f(0.0, 0.0, 3.0)
+
+        glEnd()
+
+    def get_extent(self):
+        return [[0.0, 0.0, 0.0], [1.0, 2.0, 3.0]]
+
 
 # load it into PyMOL
 
-cmd.load_callback(myCallback(),'gl01')
-
-
-
-
+cmd.load_callback(myCallback(), "gl01")

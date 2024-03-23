@@ -7,10 +7,12 @@
 import unittest
 import xmlrunner
 
+
 class XMLTestRunnerTestCase(unittest.TestCase):
-    """XMLTestRunner test case.
-    """
+    """XMLTestRunner test case."""
+
     pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

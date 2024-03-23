@@ -1,4 +1,3 @@
-
 # NOTE that in general, PyMOL API calls should not be made during the
 # __call__ method of a callback object.  The PYMOL API is not designed
 # to be re-entrant, and the callback object's __call__ method may in
@@ -9,6 +8,7 @@
 #
 #    cmd.get_frame()
 #    cmd.get_state()
+
 
 class Callback(object):
     def __call__(self):

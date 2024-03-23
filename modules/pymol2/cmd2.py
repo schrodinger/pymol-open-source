@@ -6,9 +6,9 @@ import weakref
 
 
 class Cmd:
-    '''
+    """
     Proxy for the pymol.cmd module for multiple instances support.
-    '''
+    """
 
     def __init__(self, _pymol, _COb):
         self._weakref = weakref.ref(self)
@@ -65,15 +65,21 @@ class Cmd:
         keywords.fix_dict(self.keyword)
 
         self.help_only = keywords.get_help_only_keywords()
-        self.help_sc = self.Shortcut(
-            itertools.chain(self.keyword, self.help_only))
+        self.help_sc = self.Shortcut(itertools.chain(self.keyword, self.help_only))
 
-
-        self.selection_sc = lambda sc=self.Shortcut,gn=self.get_names:sc(gn('public')+['all'])
-        self.object_sc = lambda sc=self.Shortcut,gn=self.get_names:sc(gn('objects'))
-        self.map_sc = lambda sc=self.Shortcut,gnot=self.get_names_of_type:sc(gnot('object:map'))
-        self.contour_sc =  lambda sc=self.Shortcut,gnot=self.get_names_of_type:sc(gnot('object:mesh')+gnot('object:surface'))
-        self.group_sc = lambda sc=self.Shortcut,gnot=self.get_names_of_type:sc(gnot('object:group'))
+        self.selection_sc = lambda sc=self.Shortcut, gn=self.get_names: sc(
+            gn("public") + ["all"]
+        )
+        self.object_sc = lambda sc=self.Shortcut, gn=self.get_names: sc(gn("objects"))
+        self.map_sc = lambda sc=self.Shortcut, gnot=self.get_names_of_type: sc(
+            gnot("object:map")
+        )
+        self.contour_sc = lambda sc=self.Shortcut, gnot=self.get_names_of_type: sc(
+            gnot("object:mesh") + gnot("object:surface")
+        )
+        self.group_sc = lambda sc=self.Shortcut, gnot=self.get_names_of_type: sc(
+            gnot("object:group")
+        )
 
         self.fb_action_sc = pymol.feedingback.fb_action_sc
         self.fb_module_sc = pymol.feedingback.fb_module_sc
@@ -88,7 +94,7 @@ class Cmd:
 
         self.key_mappings = keyboard.get_default_keys(self)
 
-# PUBLIC API METHODS which expect "self" as the first argument
+    # PUBLIC API METHODS which expect "self" as the first argument
 
     def __getattr__(self, key):
         v = getattr(global_cmd, key)
@@ -97,9 +103,9 @@ class Cmd:
         i = -1
         try:
             argspec = inspect.getfullargspec(v)
-            if '_self' not in argspec.kwonlyargs:
+            if "_self" not in argspec.kwonlyargs:
                 try:
-                    i = argspec.args.index('_self')
+                    i = argspec.args.index("_self")
                 except ValueError:
                     if argspec.varkw is None:
                         raise TypeError
@@ -109,10 +115,12 @@ class Cmd:
         # don't bind a circular reference into the wrapper
         # namespace, use a weak reference instead
         cmdref = self._weakref
+
         def wrapper(*a, **k):
             if i == -1 or len(a) <= i:
-                k['_self'] = cmdref()
+                k["_self"] = cmdref()
             return v(*a, **k)
+
         wrapper.__name__ = key
         setattr(self, key, wrapper)
         return wrapper

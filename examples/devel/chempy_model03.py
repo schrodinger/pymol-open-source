@@ -7,26 +7,26 @@ import time
 
 # first we need a model
 
-cmd.load("$PYMOL_PATH/test/dat/pept.pdb","demo")
+cmd.load("$PYMOL_PATH/test/dat/pept.pdb", "demo")
 
-# let's dress it up a little bit 
+# let's dress it up a little bit
 
-cmd.show("sticks","demo")
+cmd.show("sticks", "demo")
 
-cmd.show("spheres","resi 10")
+cmd.show("spheres", "resi 10")
 
-cmd.color("yellow","resi 5 and element C")
+cmd.color("yellow", "resi 5 and element C")
 
 # now loop, updating the coordinates and appending the model
 # onto 99 subsequent frames...
 
 m = cmd.get_model()
-for a in range(1,100):
-   for a in m.atom:
-      a.coord[0]+=(random()-0.5)*0.1
-      a.coord[1]+=(random()-0.5)*0.1
-      a.coord[2]+=(random()-0.5)*0.1
-   cmd.load_model(m,"demo") # NOTE: no state number provided -> appends
+for a in range(1, 100):
+    for a in m.atom:
+        a.coord[0] += (random() - 0.5) * 0.1
+        a.coord[1] += (random() - 0.5) * 0.1
+        a.coord[2] += (random() - 0.5) * 0.1
+    cmd.load_model(m, "demo")  # NOTE: no state number provided -> appends
 
 # now define the movie with short pauses at beginning and and
 
@@ -38,4 +38,3 @@ cmd.mplay()
 
 # by default, PyMOL plays ~30 fps.
 # "set movie_delay=0" to see maximum speed...
-

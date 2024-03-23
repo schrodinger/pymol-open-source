@@ -15,19 +15,19 @@ DOT_RADIUS = 5
 ALPHA_LOG_BASE = 10.0
 
 DEFAULT_COLORS = [
-    (1., 1., 0.),
-    (1., 0., 0.),
-    (0., 0., 1.),
-    (0., 1., 0.),
-    (0., 1., 1.),
-    (1., 0., 1.),
+    (1.0, 1.0, 0.0),
+    (1.0, 0.0, 0.0),
+    (0.0, 0.0, 1.0),
+    (0.0, 1.0, 0.0),
+    (0.0, 1.0, 1.0),
+    (1.0, 0.0, 1.0),
 ]
 
 EPS = 1e-6
 
 DEFAULT_TEXT_DIALOG_WIDTH = 500
 
-VOLUME_HELP = '''
+VOLUME_HELP = """
 VOLUME PANEL HELP
 
 --------------------------------------------------
@@ -63,11 +63,11 @@ R = Right mouse button
 --------------------------------------------------
 See also the "volume_color" command for getting and
 setting volume colors on the command line.
-'''
+"""
 
 
 class VolumeEditorWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None, volume_name='', cmd=None):
+    def __init__(self, parent=None, volume_name="", cmd=None):
         super(VolumeEditorWidget, self).__init__(parent)
         self.setObjectName("volume_editor_widget")
         self.setMouseTracking(True)
@@ -134,16 +134,16 @@ class VolumeEditorWidget(QtWidgets.QWidget):
 
         for x, y, r, g, b in scaled_pts:
             painter.setBrush(QtGui.QColor.fromRgbF(r, g, b))
-            painter.drawEllipse(x - DOT_RADIUS, y - DOT_RADIUS, 2 * DOT_RADIUS,
-                                2 * DOT_RADIUS)
+            painter.drawEllipse(
+                x - DOT_RADIUS, y - DOT_RADIUS, 2 * DOT_RADIUS, 2 * DOT_RADIUS
+            )
 
         if 0 <= self.hover_point < len(scaled_pts):
             # use larger radius for hover dot
             radius = DOT_RADIUS + 2
             x, y, r, g, b = scaled_pts[self.hover_point]
             painter.setBrush(QtGui.QColor.fromRgbF(r, g, b))
-            painter.drawEllipse(x - radius, y - radius, 2 * radius,
-                                2 * radius)
+            painter.drawEllipse(x - radius, y - radius, 2 * radius, 2 * radius)
 
     def paintHistogram(self, painter, rect):
         if self.path:
@@ -153,7 +153,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             norm_min = (self.vmin - self.original_vmin) / vrange
             norm_max = (self.vmax - self.original_vmin) / vrange
             h = rect.height() - 2
-            dnorm = norm_max-norm_min
+            dnorm = norm_max - norm_min
             iwidth = 1.0 / (rect.width())
             painter_path = QtGui.QPainterPath()
             for i in range(rect.width()):
@@ -162,8 +162,8 @@ class VolumeEditorWidget(QtWidgets.QWidget):
                 if pos < 0 or ipos >= len(self.path) - 1:
                     continue
                 y0 = self.path[ipos][1]
-                y1 = self.path[ipos+1][1]
-                y = y0 + (y1-y0) * (pos - int(pos)) # lerp
+                y1 = self.path[ipos + 1][1]
+                y = y0 + (y1 - y0) * (pos - int(pos))  # lerp
                 x = rect.left() + i
                 y = h - self.alphaToY(y) * h + 1
                 if painter_path.elementCount() == 0:
@@ -176,14 +176,9 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             painter.setPen(pen)
             painter.drawPath(painter_path)
 
-    def paintValueBox(self,
-                      painter,
-                      font_metrics,
-                      x,
-                      y,
-                      right_just,
-                      value,
-                      format="%.3f"):
+    def paintValueBox(
+        self, painter, font_metrics, x, y, right_just, value, format="%.3f"
+    ):
         s = format % value
         sw = font_metrics.boundingRect(s).size().width()
         sh = font_metrics.height()
@@ -191,9 +186,14 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             rect = QtCore.QRect(x - sw - 4, y - sh, sw + 4, sh + 2)
         else:
             rect = QtCore.QRect(x, y - sh, sw + 4, sh + 2)
-        painter.fillRect(rect,
-                QtGui.QColor(96, 96, 128) if self.line_color == Qt.lightGray else
-                QtGui.QColor(0xFF, 0xFF, 0xFF))
+        painter.fillRect(
+            rect,
+            (
+                QtGui.QColor(96, 96, 128)
+                if self.line_color == Qt.lightGray
+                else QtGui.QColor(0xFF, 0xFF, 0xFF)
+            ),
+        )
         painter.drawRect(rect)
         painter.drawText(rect.x() + 2, y - 2, s)
         return rect
@@ -218,15 +218,18 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         for tick in range(low, hi):
             s = str(tick)
             w = fw * len(s)
-            x = x0 + w / 2 + rect.width() * (tick - self.vmin
-                                             ) / float(self.vmax - self.vmin)
+            x = (
+                x0
+                + w / 2
+                + rect.width() * (tick - self.vmin) / float(self.vmax - self.vmin)
+            )
             if x - lastx > w + 2 * fw:
                 x = round(x)
                 painter.drawLine(x, y0, x, y1)
                 painter.drawText(round(x - w / 2), y1 + fh - 2, s)
                 lastx = x
 
-        #vertical axis
+        # vertical axis
         x1 = rect.left()
         lasty = y0
         for tick in range(1, 10):
@@ -239,14 +242,15 @@ class VolumeEditorWidget(QtWidgets.QWidget):
                 lasty = y
 
         # text boxes
-        self.text_boxes["vmin"] = self.paintValueBox(painter, fm,
-                                                     rect.left(), y1 + fh,
-                                                     False, self.vmin)
-        self.text_boxes["vmax"] = self.paintValueBox(painter, fm,
-                                                     rect.right(), y1 + fh,
-                                                     True, self.vmax)
+        self.text_boxes["vmin"] = self.paintValueBox(
+            painter, fm, rect.left(), y1 + fh, False, self.vmin
+        )
+        self.text_boxes["vmax"] = self.paintValueBox(
+            painter, fm, rect.right(), y1 + fh, True, self.vmax
+        )
         self.text_boxes["amax"] = self.paintValueBox(
-            painter, fm, x0 - 4 * fw, 2 + fh, False, self.amax, format="%.2f")
+            painter, fm, x0 - 4 * fw, 2 + fh, False, self.amax, format="%.2f"
+        )
 
     def paintZoomArea(self, painter, rect):
         if self.init_pos and self.zoom_pos:
@@ -283,7 +287,8 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         Handles entering new values into alpha / min / max boxes.
         """
         new_value, status = QtWidgets.QInputDialog.getDouble(
-            self, "", title, value, min_value, max_value, decimals=6)
+            self, "", title, value, min_value, max_value, decimals=6
+        )
         if status:
             return new_value
 
@@ -295,30 +300,30 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             for key, rect in self.text_boxes.items():
                 if rect.contains(event.pos()):
                     if key == "amax":
-                        self.amax = self.enterValue("Maximum Alpha Value",
-                                                    self.amax, EPS, 1.0)
+                        self.amax = self.enterValue(
+                            "Maximum Alpha Value", self.amax, EPS, 1.0
+                        )
                     elif key == "vmin":
-                        self.vmin = self.enterValue("Minimum Data Value",
-                                                    self.vmin, -1e8,
-                                                    self.vmax - EPS)
+                        self.vmin = self.enterValue(
+                            "Minimum Data Value", self.vmin, -1e8, self.vmax - EPS
+                        )
                     else:
-                        self.vmax = self.enterValue("Maximum Data Value",
-                                                    self.vmax, self.vmin + EPS,
-                                                    1e8)
+                        self.vmax = self.enterValue(
+                            "Maximum Data Value", self.vmax, self.vmin + EPS, 1e8
+                        )
                     self.repaint()
                     return
 
         if self.paint_rect.adjusted(
-            -DOT_RADIUS, -DOT_RADIUS, DOT_RADIUS, DOT_RADIUS).contains(
-            event.pos()):
+            -DOT_RADIUS, -DOT_RADIUS, DOT_RADIUS, DOT_RADIUS
+        ).contains(event.pos()):
             self.dragged = False
             self.point = self.findPoint(event.pos())
             self.init_pos = event.pos()
             self.zoom_pos = None
             self.constraint = None
             if self.point < 0 and event.button() == Qt.LeftButton:
-                self.addPoint(
-                    event.pos(), event.modifiers() == Qt.ControlModifier)
+                self.addPoint(event.pos(), event.modifiers() == Qt.ControlModifier)
                 # suppress color picker
                 self.dragged = True
 
@@ -329,26 +334,28 @@ class VolumeEditorWidget(QtWidgets.QWidget):
                 # in 2.0: help says NoModifier, implemented is ControlModifier
                 if event.modifiers() in (Qt.ControlModifier, Qt.NoModifier):
                     value = self.points[self.point][0]
-                    prev_x = self.points[self.point-1][0] if self.point > 0 else self.vmin
-                    next_x = self.points[self.point+1][0] if self.point < len(self.points)-1 else self.vmax
-                    x = self.enterValue("Data value",
-                        value, prev_x, next_x)
+                    prev_x = (
+                        self.points[self.point - 1][0] if self.point > 0 else self.vmin
+                    )
+                    next_x = (
+                        self.points[self.point + 1][0]
+                        if self.point < len(self.points) - 1
+                        else self.vmax
+                    )
+                    x = self.enterValue("Data value", value, prev_x, next_x)
                 elif event.modifiers() == Qt.ShiftModifier:
                     value = self.points[self.point][1]
-                    y = self.enterValue("Alpha value (opacity)",
-                        value, 0.0, 1.0)
+                    y = self.enterValue("Alpha value (opacity)", value, 0.0, 1.0)
                 self.points[self.point] = (x, y, r, g, b)
                 self.repaint()
                 if self.real_time:
                     self.updateVolumeColors()
-            if (event.button() == Qt.MidButton or
-                (event.button() == Qt.LeftButton and
-                 event.modifiers() & Qt.ShiftModifier)):
-                self.removePoints(
-                    event.modifiers() & Qt.ControlModifier)
+            if event.button() == Qt.MidButton or (
+                event.button() == Qt.LeftButton and event.modifiers() & Qt.ShiftModifier
+            ):
+                self.removePoints(event.modifiers() & Qt.ControlModifier)
             elif event.button() == Qt.LeftButton:
-                self.setPointColor(self.point,
-                        event.modifiers() == Qt.ControlModifier)
+                self.setPointColor(self.point, event.modifiers() == Qt.ControlModifier)
 
         self.point = -1
         self.hover_point = -1
@@ -356,9 +363,12 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         if self.init_pos and self.zoom_pos:
             if self.init_pos.x() != self.zoom_pos.x():
                 # zoom in
-                self.vmin, self.vmax = sorted([
-                    self.xToData(self.convertX(self.init_pos.x())),
-                    self.xToData(self.convertX(self.zoom_pos.x()))])
+                self.vmin, self.vmax = sorted(
+                    [
+                        self.xToData(self.convertX(self.init_pos.x())),
+                        self.xToData(self.convertX(self.zoom_pos.x())),
+                    ]
+                )
 
         self.zoom_pos = None
         self.repaint()
@@ -412,8 +422,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         _, _, r, g, b = self.points[self.color_point]
         if not self.color_dialog:
             self.color_dialog = QtWidgets.QColorDialog(self)
-            self.color_dialog.currentColorChanged.connect(
-                self.updatePointColor)
+            self.color_dialog.currentColorChanged.connect(self.updatePointColor)
             self.color_dialog.finished.connect(self.colorDialogClosed)
         self.original_color = QtGui.QColor.fromRgbF(r, g, b)
         self.color_dialog.setCurrentColor(self.original_color)
@@ -492,23 +501,24 @@ class VolumeEditorWidget(QtWidgets.QWidget):
 
     def mouseMoveEvent(self, event):
         if event.buttons() in (Qt.LeftButton, Qt.RightButton):
-            if (event.buttons() == Qt.RightButton and
-                    event.modifiers() == Qt.ControlModifier):
+            if (
+                event.buttons() == Qt.RightButton
+                and event.modifiers() == Qt.ControlModifier
+            ):
                 # zoom in
                 self.zoom_pos = event.pos()
                 self.repaint()
             elif self.point >= 0:
                 self.dragged = True
-                if event.buttons(
-                ) & Qt.RightButton and not self.constraint:
+                if event.buttons() & Qt.RightButton and not self.constraint:
                     # constrained movement
                     dpos = event.pos() - self.init_pos
-                    self.constraint = 'x' if (
-                        abs(dpos.x()) > abs(dpos.y())) else 'y'
+                    self.constraint = "x" if (abs(dpos.x()) > abs(dpos.y())) else "y"
                 self.movePoints(event)
         else:
-            if not self.paint_rect.adjusted(-DOT_RADIUS, -DOT_RADIUS,
-                    DOT_RADIUS, DOT_RADIUS).contains(event.pos()):
+            if not self.paint_rect.adjusted(
+                -DOT_RADIUS, -DOT_RADIUS, DOT_RADIUS, DOT_RADIUS
+            ).contains(event.pos()):
                 new_point = -1
             else:
                 new_point = self.findPoint(event.pos())
@@ -536,11 +546,9 @@ class VolumeEditorWidget(QtWidgets.QWidget):
                 if key == "amax":
                     self.amax = max(min(self.amax * (1.0 + delta), 1.0), 0.0)
                 elif key == "vmin":
-                    self.vmin = min(self.vmin + vrange * delta,
-                                    self.vmax - EPS)
+                    self.vmin = min(self.vmin + vrange * delta, self.vmax - EPS)
                 else:
-                    self.vmax = max(self.vmax + vrange * delta,
-                                    self.vmin + EPS)
+                    self.vmax = max(self.vmax + vrange * delta, self.vmin + EPS)
                 self.repaint()
                 return
 
@@ -566,17 +574,25 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         dx = new_x - x
 
         if dx < 0:
-            min_x = self.points[self.point - delta][
-                0] if self.point > delta - 1 else self.vmin
-            x0 = self.points[self.point - delta + 1][
-                0] if self.point > 0 else x
+            min_x = (
+                self.points[self.point - delta][0]
+                if self.point > delta - 1
+                else self.vmin
+            )
+            x0 = self.points[self.point - delta + 1][0] if self.point > 0 else x
             if x0 + dx < min_x:
                 dx = min_x - x0
         else:
-            max_x = self.points[self.point + delta][
-                0] if self.point < num_points - delta else self.vmax
-            x0 = self.points[self.point + delta - 1][
-                0] if self.point < num_points - delta + 1 else x
+            max_x = (
+                self.points[self.point + delta][0]
+                if self.point < num_points - delta
+                else self.vmax
+            )
+            x0 = (
+                self.points[self.point + delta - 1][0]
+                if self.point < num_points - delta + 1
+                else x
+            )
             if x0 + dx > max_x:
                 dx = max_x - x0
 
@@ -584,8 +600,8 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         new_y = self.yToAlpha(self.convertY(event.y()))
 
         # apply constrained motion
-        new_x = x if self.constraint == 'y' else new_x
-        new_y = y if self.constraint == 'x' or delta > 1 else new_y
+        new_x = x if self.constraint == "y" else new_x
+        new_y = y if self.constraint == "x" or delta > 1 else new_y
 
         self.points[self.point] = (new_x, new_y, r, g, b)
 
@@ -623,10 +639,10 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         self.points.insert(new_index, (self.xToData(new_x), new_y, r, g, b))
 
         if three_points:
-            new_x = self.convertX(pos.x()-10)
+            new_x = self.convertX(pos.x() - 10)
             self.points.insert(new_index, (self.xToData(new_x), 0, r, g, b))
-            new_x = self.convertX(pos.x()+10)
-            self.points.insert(new_index+2, (self.xToData(new_x), 0, r, g, b))
+            new_x = self.convertX(pos.x() + 10)
+            self.points.insert(new_index + 2, (self.xToData(new_x), 0, r, g, b))
             new_index += 1
 
         self.point = new_index
@@ -654,10 +670,14 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         """
         for index, point in enumerate(self.points):
             x, y, r, g, b = point
-            dx = self.dataToX(x) * (self.width() - self.left_margin
-                                    ) - pos.x() + self.left_margin
-            dy = (self.height() - self.bottom_margin) * (1.0 - self.alphaToY(y)
-                                                         ) - pos.y()
+            dx = (
+                self.dataToX(x) * (self.width() - self.left_margin)
+                - pos.x()
+                + self.left_margin
+            )
+            dy = (self.height() - self.bottom_margin) * (
+                1.0 - self.alphaToY(y)
+            ) - pos.y()
             if dx * dx + dy * dy < 4 * DOT_RADIUS * DOT_RADIUS:
                 return index
         return -1
@@ -678,8 +698,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             self.vmin -= 1.0
             self.vmax += 1.0
         elif math.isnan(self.vmin) or math.isnan(self.vmax):
-            print('Warning: setHistogram vmin={} vmax={}'.format(
-                self.vmin, self.vmax))
+            print("Warning: setHistogram vmin={} vmax={}".format(self.vmin, self.vmax))
             self.vmin = self.original_vmin
             self.vmax = self.original_vmax
             return
@@ -729,7 +748,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             y = a
 
             if math.isnan(x):
-                print('Warning: setColors x={}'.format(x))
+                print("Warning: setColors x={}".format(x))
                 return
 
             self.points.append((x, y, r, g, b))
@@ -756,7 +775,8 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             self.text_dialog.text_display = QtWidgets.QPlainTextEdit()
             self.text_dialog.text_display.setReadOnly(True)
             self.text_dialog.text_display.setStyleSheet(
-                "font-family: monospace, courier")
+                "font-family: monospace, courier"
+            )
             size = self.text_dialog.size()
             size.setWidth(DEFAULT_TEXT_DIALOG_WIDTH)
             self.text_dialog.resize(size)
@@ -779,24 +799,23 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         import random
 
         r = self.getColors()
-        rname = 'ramp%03d' % random.randint(0, 999)
-        s = ['### cut below here and paste into script ###\n']
-        s.append('cmd.volume_ramp_new(%s, [\\\n' % repr(rname))
+        rname = "ramp%03d" % random.randint(0, 999)
+        s = ["### cut below here and paste into script ###\n"]
+        s.append("cmd.volume_ramp_new(%s, [\\\n" % repr(rname))
         for i in range(0, len(r), 5):
-            s.append('    %6.2f, %.2f, %.2f, %.2f, %.2f, \\\n' %
-                     tuple(r[i:i + 5]))
-        s.append('    ])\n')
-        s.append('### cut above here and paste into script ###\n')
+            s.append("    %6.2f, %.2f, %.2f, %.2f, %.2f, \\\n" % tuple(r[i : i + 5]))
+        s.append("    ])\n")
+        s.append("### cut above here and paste into script ###\n")
 
         s += [
-            '\n',
-            'Paste into a .pml or .py script or your pymolrc file and use this\n',
-            'named color ramp on the PyMOL command line like this:\n',
-            '\n',
-            'PyMOL> volume_color yourvolume, %s\n' % rname,
+            "\n",
+            "Paste into a .pml or .py script or your pymolrc file and use this\n",
+            "named color ramp on the PyMOL command line like this:\n",
+            "\n",
+            "PyMOL> volume_color yourvolume, %s\n" % rname,
         ]
 
-        self.displayTextDialog(''.join(s))
+        self.displayTextDialog("".join(s))
 
     def windowTopLevelChanged(self, floating):
         """
@@ -831,10 +850,10 @@ VolumePanel = VolumePanelDocked
 
 
 class _VolumePanel(object):
-    def __init__(self, widget, window=None, name='', _self=None):
+    def __init__(self, widget, window=None, name="", _self=None):
 
         if window:
-            window.setWindowTitle(name + ' - Volume Color Map Editor')
+            window.setWindowTitle(name + " - Volume Color Map Editor")
 
         cmd = _self
 
@@ -854,12 +873,12 @@ class _VolumePanel(object):
         reset_btn.setAutoDefault(False)
         reset_btn.clicked.connect(widget.editor.reset)
         widget.editor.update_cb = QtWidgets.QCheckBox(
-            "Update volume colors in real-time")
+            "Update volume colors in real-time"
+        )
         widget.editor.update_cb.setObjectName("volume_checkbox")
         widget.editor.update_cb.setChecked(True)
         widget.editor.update_cb.setMinimumWidth(30)
-        widget.editor.update_cb.toggled.connect(
-            widget.editor.toggleRealTimeUpdates)
+        widget.editor.update_cb.toggled.connect(widget.editor.toggleRealTimeUpdates)
 
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.addWidget(get_colors_btn)

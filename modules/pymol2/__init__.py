@@ -1,16 +1,16 @@
-#A* -------------------------------------------------------------------
-#B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2007 by Warren Lyford Delano of DeLano Scientific.
-#D* -------------------------------------------------------------------
-#E* It is unlawful to modify or remove this copyright notice.
-#F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information.
-#H* -------------------------------------------------------------------
-#I* Additional authors of this source file include:
-#-*
-#-*
-#-*
-#Z* -------------------------------------------------------------------
+# A* -------------------------------------------------------------------
+# B* This file contains source code for the PyMOL computer program
+# C* copyright 1998-2007 by Warren Lyford Delano of DeLano Scientific.
+# D* -------------------------------------------------------------------
+# E* It is unlawful to modify or remove this copyright notice.
+# F* -------------------------------------------------------------------
+# G* Please see the accompanying LICENSE file for further information.
+# H* -------------------------------------------------------------------
+# I* Additional authors of this source file include:
+# -*
+# -*
+# -*
+# Z* -------------------------------------------------------------------
 
 import pymol
 
@@ -27,10 +27,12 @@ pymol2_lock = threading.RLock()
 ## which also holds the _COb pointer.
 ##
 
+
 class SingletonPyMOL:
-    '''
+    """
     Start an exclusive PyMOL instance, only one instance allowed
-    '''
+    """
+
     def idle(self):
         return _cmd._idle(self._COb)
 
@@ -52,7 +54,7 @@ class SingletonPyMOL:
     def start(self):
         cmd = pymol.cmd
         if cmd._COb is not None:
-            raise RuntimeError('can only start SingletonPyMOL once')
+            raise RuntimeError("can only start SingletonPyMOL once")
 
         with pymol2_lock:
             cmd._COb = _cmd._new(pymol, pymol.invocation.options, True)
@@ -77,15 +79,15 @@ class SingletonPyMOL:
 
 
 class PyMOL(SingletonPyMOL):
-    '''
+    """
     Start a non-exclusive PyMOL instance, multiple instances are possible
-    '''
+    """
 
     def __getattr__(self, key):
         # Make this a proxy to the "pymol" module.
         return getattr(pymol, key)
 
-    def __init__(self,scheme=None): # initialize a PyMOL instance
+    def __init__(self, scheme=None):  # initialize a PyMOL instance
         from .cmd2 import Cmd
 
         with pymol2_lock:
@@ -95,8 +97,8 @@ class PyMOL(SingletonPyMOL):
 
             options = self.invocation.options
 
-            if scheme is not None: #
-                if scheme == 'presentation':
+            if scheme is not None:  #
+                if scheme == "presentation":
                     options.quiet = 0
                     options.show_splash = 0
                     options.external_gui = 0
@@ -104,20 +106,20 @@ class PyMOL(SingletonPyMOL):
                     options.no_quit = 1
                     options.internal_gui = 0
                     options.presentation = 1
-                elif scheme == 'widget': # An embedded widget of some type
+                elif scheme == "widget":  # An embedded widget of some type
                     options.quiet = 0
                     options.show_splash = 0
                     options.external_gui = 0
                     options.internal_feedback = 1
                     options.no_quit = 1
             else:
-                options.show_splash = 0 # suppress this annoyance by default
+                options.show_splash = 0  # suppress this annoyance by default
 
-            self._COb = _cmd._new(self,self.invocation.options)
+            self._COb = _cmd._new(self, self.invocation.options)
 
             # initialize the cmd API
 
-            self.cmd = Cmd(self,self._COb)
+            self.cmd = Cmd(self, self._COb)
 
             # begin assembling the instance member by member
 

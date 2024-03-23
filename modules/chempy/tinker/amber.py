@@ -1,16 +1,16 @@
-#A* -------------------------------------------------------------------
-#B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
-#D* -------------------------------------------------------------------
-#E* It is unlawful to modify or remove this copyright notice.
-#F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information.
-#H* -------------------------------------------------------------------
-#I* Additional authors of this source file include:
-#-* Scott Dixon, Metaphorics, LLC
-#-*
-#-*
-#Z* -------------------------------------------------------------------
+# A* -------------------------------------------------------------------
+# B* This file contains source code for the PyMOL computer program
+# C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
+# D* -------------------------------------------------------------------
+# E* It is unlawful to modify or remove this copyright notice.
+# F* -------------------------------------------------------------------
+# G* Please see the accompanying LICENSE file for further information.
+# H* -------------------------------------------------------------------
+# I* Additional authors of this source file include:
+# -* Scott Dixon, Metaphorics, LLC
+# -*
+# -*
+# Z* -------------------------------------------------------------------
 
 from __future__ import print_function
 
@@ -18,106 +18,107 @@ from chempy import feedback
 
 import copy
 
-default_extra = { # atomic number, and normal valency (for tinker)
+default_extra = {  # atomic number, and normal valency (for tinker)
     # NOTE: THIS SET IS ONLY USED IF THERE ARE NO TINKER RECORDS
     # IN THE PARAMETER FILE
     # bromine
-    'BR' : [                 35 ,               1 ],
+    "BR": [35, 1],
     # carbon
-    'C'  : [                  6 ,               3 ],
-    'CA' : [                  6 ,               3 ],
-    'CB' : [                  6 ,               3 ],
-    'CC' : [                  6 ,               3 ],
-    'CF' : [                  6 ,               3 ],
-    'CK' : [                  6 ,               3 ],
-    'CM' : [                  6 ,               3 ],
-    'CN' : [                  6 ,               3 ],
-    'CQ' : [                  6 ,               3 ],
-    'CR' : [                  6 ,               3 ],
-    'CT' : [                  6 ,               4 ],
-    'CV' : [                  6 ,               3 ],
-    'CW' : [                  6 ,               3 ],
-    'CY' : [                  6 ,               2 ],
-    'CX' : [                  6 ,               2 ],
-    'C5' : [                  6 ,               3 ],
-    'C*' : [                  6 ,               3 ],
+    "C": [6, 3],
+    "CA": [6, 3],
+    "CB": [6, 3],
+    "CC": [6, 3],
+    "CF": [6, 3],
+    "CK": [6, 3],
+    "CM": [6, 3],
+    "CN": [6, 3],
+    "CQ": [6, 3],
+    "CR": [6, 3],
+    "CT": [6, 4],
+    "CV": [6, 3],
+    "CW": [6, 3],
+    "CY": [6, 2],
+    "CX": [6, 2],
+    "C5": [6, 3],
+    "C*": [6, 3],
     # calcium
-    'C0' : [                 20 ,               3 ],
+    "C0": [20, 3],
     # chloride
-    'Cl' : [                 17 ,               1 ],
+    "Cl": [17, 1],
     # fluorine
-    'F'  : [                  9 ,               1 ],
+    "F": [9, 1],
     # hydrogen
-    'H'  : [                  1 ,               1 ],
-    'H1' : [                  1 ,               1 ],
-    'H2' : [                  1 ,               1 ],
-    'H3' : [                  1 ,               1 ],
-    'H4' : [                  1 ,               1 ],
-    'H5' : [                  1 ,               1 ],
-    'HA' : [                  1 ,               1 ],
-    'HC' : [                  1 ,               1 ],
-    'HO' : [                  1 ,               1 ],
-    'HP' : [                  1 ,               1 ],
-    'HS' : [                  1 ,               1 ],
-    'HW' : [                  1 ,               2 ],
+    "H": [1, 1],
+    "H1": [1, 1],
+    "H2": [1, 1],
+    "H3": [1, 1],
+    "H4": [1, 1],
+    "H5": [1, 1],
+    "HA": [1, 1],
+    "HC": [1, 1],
+    "HO": [1, 1],
+    "HP": [1, 1],
+    "HS": [1, 1],
+    "HW": [1, 2],
     # iodine
-    'I'  : [                 53 ,               1 ],
+    "I": [53, 1],
     # chloride anion
-    'IM' : [                 17 ,               0 ],
+    "IM": [17, 0],
     # sodium cation
-    'IP' : [                 11 ,               0 ],
+    "IP": [11, 0],
     # magnesium
-    'MG' : [                 12 ,               0 ],
+    "MG": [12, 0],
     # nitrogen
-    'N'  : [                  7 ,               3 ],
-    'N*' : [                  7 ,               2 ],
-    'N2' : [                  7 ,               3 ],
-    'N3' : [                  7 ,               4 ],
-    'NA' : [                  7 ,               3 ],
-    'NB' : [                  7 ,               2 ],
-    'NC' : [                  7 ,               2 ],
-    'NX' : [                  7 ,               2 ],
-    'NZ' : [                  7 ,               3 ],
+    "N": [7, 3],
+    "N*": [7, 2],
+    "N2": [7, 3],
+    "N3": [7, 4],
+    "NA": [7, 3],
+    "NB": [7, 2],
+    "NC": [7, 2],
+    "NX": [7, 2],
+    "NZ": [7, 3],
     #
-    'OW' : [                  8 ,               2 ],
-    'OH' : [                  8 ,               2 ],
-    'OS' : [                  8 ,               2 ],
-    'O'  : [                  8 ,               1 ],
-    'O2' : [                  8 ,               1 ],
-    'OM' : [                  8 ,               1 ],
-    'OZ' : [                  8 ,               1 ],
-    'P'  : [                 15 ,               4 ],
-    'S'  : [                 16 ,               2 ],
-    'SO'  : [                16 ,               4 ],
-    'SX'  : [                16 ,               2 ],
-    'SH' : [                 16 ,               2 ],
+    "OW": [8, 2],
+    "OH": [8, 2],
+    "OS": [8, 2],
+    "O": [8, 1],
+    "O2": [8, 1],
+    "OM": [8, 1],
+    "OZ": [8, 1],
+    "P": [15, 4],
+    "S": [16, 2],
+    "SO": [16, 4],
+    "SX": [16, 2],
+    "SH": [16, 2],
     # copper
-    'CU' : [                 29 ,               0 ],
+    "CU": [29, 0],
     # iron
-    'FE' : [                 26 ,               0 ],
+    "FE": [26, 0],
     # lithium
-    'Li' : [                  3 ,               0 ],
+    "Li": [3, 0],
     # potassium
-    'K'  : [                 19 ,               0 ],
+    "K": [19, 0],
     # rubidium
-    'Rb' : [                 37 ,               0 ],
+    "Rb": [37, 0],
     # cesium
-    'Cs' : [                 55 ,               0 ],
+    "Cs": [55, 0],
     # calcium (alternate)
-    'Ca' : [                 20 ,               0 ],
+    "Ca": [20, 0],
     # dummy
-    'X ' : [                  6 ,               1 ],
+    "X ": [6, 1],
     # zinc
-    'Z0' : [                 30 ,               0 ],
-    'Z4' : [                 30 ,               4 ],
-    'Z5' : [                 30 ,               5 ],
-    }
+    "Z0": [30, 0],
+    "Z4": [30, 4],
+    "Z5": [30, 5],
+}
+
 
 class Parameters:
 
-    def __init__(self,fname):
-        if feedback['actions']:
-            print(' '+str(self.__class__)+': loading from "%s"...' % fname)
+    def __init__(self, fname):
+        if feedback["actions"]:
+            print(" " + str(self.__class__) + ': loading from "%s"...' % fname)
         f = open(fname)
         # skip
         l = f.readline()
@@ -126,66 +127,78 @@ class Parameters:
         self.mw = {}
         while 1:
             l = f.readline().strip()
-            if not len(l): break
+            if not len(l):
+                break
             a2 = l[0:2].strip()
             self.type.append(a2)
-            self.mw[a2] = [float(l[3:13]),l[34:].strip()]
+            self.mw[a2] = [float(l[3:13]), l[34:].strip()]
         # skip 1
         l = f.readline()
         # read bonds
         self.bond = {}
         while 1:
             l = f.readline().strip()
-            if not len(l): break
+            if not len(l):
+                break
             a5 = l[0:5]
-            self.bond[a5] = [float(l[5:12]),float(l[12:22]),
-                                  l[22:].strip()]
+            self.bond[a5] = [float(l[5:12]), float(l[12:22]), l[22:].strip()]
         # read angles
         self.angle = {}
         while 1:
             l = f.readline().strip()
-            if not len(l): break
+            if not len(l):
+                break
             a5 = l[0:8]
-            self.angle[a5] = [float(l[8:16]),float(l[16:28]),
-                                  l[28:].strip()]
+            self.angle[a5] = [float(l[8:16]), float(l[16:28]), l[28:].strip()]
         # read torsion
         self.torsion = {}
         while 1:
             l = f.readline().strip()
-            if not len(l): break
+            if not len(l):
+                break
             a5 = l[0:11]
             if a5 in self.torsion:
                 self.torsion[a5].extend(
-                    [int(l[11:15]),
-                     float(l[15:27]),
-                     float(l[27:36]),
-                     abs(int(float(l[40:52]))),
-                     l[52:].strip()])
+                    [
+                        int(l[11:15]),
+                        float(l[15:27]),
+                        float(l[27:36]),
+                        abs(int(float(l[40:52]))),
+                        l[52:].strip(),
+                    ]
+                )
             else:
-                self.torsion[a5] = [int(l[11:15]),
-                                          float(l[15:27]),
-                                          float(l[27:36]),
-                                          abs(int(float(l[40:52]))),
-                                          l[52:].strip()]
+                self.torsion[a5] = [
+                    int(l[11:15]),
+                    float(l[15:27]),
+                    float(l[27:36]),
+                    abs(int(float(l[40:52]))),
+                    l[52:].strip(),
+                ]
         # read impropers
         self.improper = {}
         while 1:
             l = f.readline().strip()
-            if not len(l): break
+            if not len(l):
+                break
             a5 = l[0:11]
-            self.improper[a5] = [float(l[15:27]),
-                                        float(l[27:40]),
-                                        abs(int(float(l[40:51]))),
-                                        l[51:].strip()]
+            self.improper[a5] = [
+                float(l[15:27]),
+                float(l[27:40]),
+                abs(int(float(l[40:51]))),
+                l[51:].strip(),
+            ]
         # skip
         while 1:
             l = f.readline().strip()
-            if not len(l): break
+            if not len(l):
+                break
         # read vdw equivalents
         self.vdw_eq = {}
         while 1:
             l = f.readline().strip()
-            if not len(l): break
+            if not len(l):
+                break
             a4 = l[0:4].strip()
             l = l[4:]
             while len(l):
@@ -197,32 +210,30 @@ class Parameters:
         self.vdw = {}
         while 1:
             l = f.readline().strip()
-            if not len(l): break
-            l = '  ' + l
+            if not len(l):
+                break
+            l = "  " + l
             a4 = l[0:4].strip()
-            self.vdw[a4] =  [float(l[4:20]),
-                                  float(l[20:37]),
-                                  l[37:].strip()]
+            self.vdw[a4] = [float(l[4:20]), float(l[20:37]), l[37:].strip()]
 
         # read extra tinker information if present
         self.extra = {}
         while 1:
             l = f.readline()
-            if not l: break
-            if l[0:6] == 'TINKER':
-                self.extra[l[6:12].strip()]  = [
-                    int(l[12:18]),
-                    int(l[18:24])]
+            if not l:
+                break
+            if l[0:6] == "TINKER":
+                self.extra[l[6:12].strip()] = [int(l[12:18]), int(l[18:24])]
         if not self.extra:
-                self.extra = default_extra
+            self.extra = default_extra
         # now generate redundant equivalents
         for a in self.vdw_eq.keys():
             self.vdw[a] = self.vdw[self.vdw_eq[a]]
         for a in list(self.bond.keys()):
-            k = a[3:5]+'-'+a[0:2]
+            k = a[3:5] + "-" + a[0:2]
             self.bond[k] = self.bond[a]
         for a in list(self.angle.keys()):
-            k = a[6:8]+'-'+a[3:5]+'-'+a[0:2]
+            k = a[6:8] + "-" + a[3:5] + "-" + a[0:2]
             self.angle[k] = self.angle[a]
 
     def dump(self):
@@ -231,43 +242,43 @@ class Parameters:
         kees = list(self.mw.keys())
         kees.sort()
         for b in kees:
-            print(b,self.mw[b])
+            print(b, self.mw[b])
         kees = list(self.vdw_eq.keys())
         kees.sort()
         for b in kees:
-            print(b,self.vdw_eq[b])
+            print(b, self.vdw_eq[b])
         kees = list(self.vdw.keys())
         kees.sort()
         for b in kees:
-            print(b,self.vdw[b])
+            print(b, self.vdw[b])
         kees = list(self.bond.keys())
         kees.sort()
         for b in kees:
-            print(b,self.bond[b])
+            print(b, self.bond[b])
         kees = list(self.angle.keys())
         kees.sort()
         for b in kees:
-            print(b,self.angle[b])
+            print(b, self.angle[b])
         kees = list(self.torsion.keys())
         kees.sort()
         for b in kees:
-            print(b,self.torsion[b])
+            print(b, self.torsion[b])
         kees = list(self.improper.keys())
         kees.sort()
         for b in kees:
-            print(b,self.improper[b])
+            print(b, self.improper[b])
         kees = list(self.vdw.keys())
         kees.sort()
         for b in kees:
-            print(b,self.vdw[b])
+            print(b, self.vdw[b])
 
 
 class Topology:
 
-    def __init__(self,model):
+    def __init__(self, model):
         self.model = model
-        if feedback['actions']:
-            print(' '+str(self.__class__)+': searching...')
+        if feedback["actions"]:
+            print(" " + str(self.__class__) + ": searching...")
         # get a connected version too
         cmodel = copy.deepcopy(model).convert_to_connected()
         # find atom types in molecule
@@ -280,91 +291,91 @@ class Topology:
             a0 = b.index[0]
             a1 = b.index[1]
             if a0 < a1:
-                self.bond[(a0,a1)] = 1
+                self.bond[(a0, a1)] = 1
             else:
-                self.bond[(a1,a0)] = 1
+                self.bond[(a1, a0)] = 1
         # find angles
         self.angle = {}
         ang = self.angle
         for b in model.bond:
             a0 = b.index[0]
             a1 = b.index[1]
-            for c in cmodel.bond[a0]: # a0 in center
+            for c in cmodel.bond[a0]:  # a0 in center
                 a2 = c.index[0]
-                if a2 not in (a0,a1): # outside atom
+                if a2 not in (a0, a1):  # outside atom
                     if a1 < a2:
-                        an = (a1,a0,a2)
+                        an = (a1, a0, a2)
                     else:
-                        an = (a2,a0,a1)
+                        an = (a2, a0, a1)
                     ang[an] = 1
                 a2 = c.index[1]
-                if a2 not in (a0,a1): # outside atom
+                if a2 not in (a0, a1):  # outside atom
                     if a1 < a2:
-                        an = (a1,a0,a2)
+                        an = (a1, a0, a2)
                     else:
-                        an = (a2,a0,a1)
+                        an = (a2, a0, a1)
                     ang[an] = 1
-            for c in cmodel.bond[a1]: # a1 in center
+            for c in cmodel.bond[a1]:  # a1 in center
                 a2 = c.index[0]
-                if a2 not in (a0,a1): # outside atom
+                if a2 not in (a0, a1):  # outside atom
                     if a0 < a2:
-                        an = (a0,a1,a2)
+                        an = (a0, a1, a2)
                     else:
-                        an = (a2,a1,a0)
+                        an = (a2, a1, a0)
                     ang[an] = 1
                 a2 = c.index[1]
-                if a2 not in (a0,a1): # outside atom
+                if a2 not in (a0, a1):  # outside atom
                     if a0 < a2:
-                        an = (a0,a1,a2)
+                        an = (a0, a1, a2)
                     else:
-                        an = (a2,a1,a0)
+                        an = (a2, a1, a0)
                     ang[an] = 1
         # find torsions
         self.torsion = {}
         tors = self.torsion
-        for b in model.bond: # use bond as center of torsion
+        for b in model.bond:  # use bond as center of torsion
             a1 = b.index[0]
             a2 = b.index[1]
             for c in cmodel.bond[a1]:
                 a0 = c.index[0]
-                if a0 not in (a1,a2): # outside atom
+                if a0 not in (a1, a2):  # outside atom
                     for d in cmodel.bond[a2]:
                         a3 = d.index[0]
-                        if a3 not in (a0,a1,a2): # outside atom
+                        if a3 not in (a0, a1, a2):  # outside atom
                             if a0 < a3:
-                                to = (a0,a1,a2,a3)
+                                to = (a0, a1, a2, a3)
                             else:
-                                to = (a3,a2,a1,a0)
+                                to = (a3, a2, a1, a0)
                             tors[to] = 1
                         a3 = d.index[1]
-                        if a3 not in (a0,a1,a2): # outside atom
+                        if a3 not in (a0, a1, a2):  # outside atom
                             if a0 < a3:
-                                to = (a0,a1,a2,a3)
+                                to = (a0, a1, a2, a3)
                             else:
-                                to = (a3,a2,a1,a0)
+                                to = (a3, a2, a1, a0)
                             tors[to] = 1
                 a0 = c.index[1]
-                if a0 not in (a1,a2): # outside atom
+                if a0 not in (a1, a2):  # outside atom
                     for d in cmodel.bond[a2]:
                         a3 = d.index[0]
-                        if a3 not in (a0,a1,a2): # outside atom
+                        if a3 not in (a0, a1, a2):  # outside atom
                             if a0 < a3:
-                                to = (a0,a1,a2,a3)
+                                to = (a0, a1, a2, a3)
                             else:
-                                to = (a3,a2,a1,a0)
+                                to = (a3, a2, a1, a0)
                             tors[to] = 1
                         a3 = d.index[1]
-                        if a3 not in (a0,a1,a2): # outside atom
+                        if a3 not in (a0, a1, a2):  # outside atom
                             if a0 < a3:
-                                to = (a0,a1,a2,a3)
+                                to = (a0, a1, a2, a3)
                             else:
-                                to = (a3,a2,a1,a0)
+                                to = (a3, a2, a1, a0)
                             tors[to] = 1
         # find impropers (only autogenerates for atoms with 3 bonds)
         self.improper = {}
         impr = self.improper
         a2 = 0
-        for a in model.atom: # a2 is the center atom
+        for a in model.atom:  # a2 is the center atom
             bnd = cmodel.bond[a2]
             if len(bnd) == 3:
                 lst = []
@@ -374,21 +385,36 @@ class Topology:
                         at = b.index[1]
                     lst.append(at)
                 lst.sort()
-                impr[(lst[0],lst[1],a2,lst[2])] = 1
+                impr[(lst[0], lst[1], a2, lst[2])] = 1
             a2 = a2 + 1
 
-        if feedback['actions']:
-            print(' '+str(self.__class__)+': found:')
-            print(' '+str(self.__class__)+':    types       %6d' % (
-                len(list(self.present.keys()))))
-            print(' '+str(self.__class__)+':    bonds       %6d' % (
-                len(list(self.bond.keys()))))
-            print(' '+str(self.__class__)+':    angles      %6d' % (
-                len(list(self.angle.keys()))))
-            print(' '+str(self.__class__)+':    torsions    %6d' % (
-                len(list(self.torsion.keys()))))
-            print(' '+str(self.__class__)+':    impropers   %6d' % (
-                len(list(self.improper.keys()))))
+        if feedback["actions"]:
+            print(" " + str(self.__class__) + ": found:")
+            print(
+                " "
+                + str(self.__class__)
+                + ":    types       %6d" % (len(list(self.present.keys())))
+            )
+            print(
+                " "
+                + str(self.__class__)
+                + ":    bonds       %6d" % (len(list(self.bond.keys())))
+            )
+            print(
+                " "
+                + str(self.__class__)
+                + ":    angles      %6d" % (len(list(self.angle.keys())))
+            )
+            print(
+                " "
+                + str(self.__class__)
+                + ":    torsions    %6d" % (len(list(self.torsion.keys())))
+            )
+            print(
+                " "
+                + str(self.__class__)
+                + ":    impropers   %6d" % (len(list(self.improper.keys())))
+            )
 
     def dump(self):
         kees = list(self.present.keys())
@@ -413,16 +439,19 @@ class Topology:
             print(b)
 
     def get_list(self):
-        return [list(self.bond.keys()),
-                  list(self.angle.keys()),
-                  list(self.torsion.keys()),
-                  list(self.improper.keys())]
+        return [
+            list(self.bond.keys()),
+            list(self.angle.keys()),
+            list(self.torsion.keys()),
+            list(self.improper.keys()),
+        ]
+
 
 class Subset:
 
-    def __init__(self,par,top):
-        if feedback['actions']:
-            print(' '+str(self.__class__)+': applying parameter set to topology...')
+    def __init__(self, par, top):
+        if feedback["actions"]:
+            print(" " + str(self.__class__) + ": applying parameter set to topology...")
         self.model = top.model
         self.present = copy.deepcopy(top.present)
         atype = []
@@ -469,11 +498,11 @@ class Subset:
         bond = top.bond
         p_bond = par.bond
         for a in list(bond.keys()):
-            kee = "%-2s-%-2s" % (atype[a[0]],atype[a[1]])
+            kee = "%-2s-%-2s" % (atype[a[0]], atype[a[1]])
             if kee in p_bond:
                 s_bond[kee] = p_bond[kee]
             else:
-                self.miss_bond.append((a,kee))
+                self.miss_bond.append((a, kee))
         # angles
         self.miss_angle = []
         self.angle = {}
@@ -481,11 +510,11 @@ class Subset:
         angle = top.angle
         p_angle = par.angle
         for a in angle.keys():
-            kee = "%-2s-%-2s-%-2s" % (atype[a[0]],atype[a[1]],atype[a[2]])
+            kee = "%-2s-%-2s-%-2s" % (atype[a[0]], atype[a[1]], atype[a[2]])
             if kee in p_angle:
                 s_angle[kee] = p_angle[kee]
             else:
-                self.miss_angle.append((a,kee))
+                self.miss_angle.append((a, kee))
         # torsions
         self.miss_torsion = []
         self.torsion = {}
@@ -493,28 +522,28 @@ class Subset:
         torsion = top.torsion
         p_torsion = par.torsion
         for a in list(torsion.keys()):
-            at0=atype[a[0]]
-            at1=atype[a[1]]
-            at2=atype[a[2]] # center atom
-            at3=atype[a[3]]
-            while 1: # not a real loop, just "else" avoidance
-                kee1 = "%-2s-%-2s-%-2s-%-2s" % (at0,at1,at2,at3)
+            at0 = atype[a[0]]
+            at1 = atype[a[1]]
+            at2 = atype[a[2]]  # center atom
+            at3 = atype[a[3]]
+            while 1:  # not a real loop, just "else" avoidance
+                kee1 = "%-2s-%-2s-%-2s-%-2s" % (at0, at1, at2, at3)
                 if kee1 in p_torsion:
                     s_torsion[kee1] = p_torsion[kee1]
                     break
-                kee2 = "%-2s-%-2s-%-2s-%-2s" % (at3,at2,at1,at0)
+                kee2 = "%-2s-%-2s-%-2s-%-2s" % (at3, at2, at1, at0)
                 if kee2 in p_torsion:
                     s_torsion[kee2] = p_torsion[kee2]
                     break
-                kee = "X -%-2s-%-2s-X " % (at1,at2)
+                kee = "X -%-2s-%-2s-X " % (at1, at2)
                 if kee in p_torsion:
                     s_torsion[kee1] = p_torsion[kee]
                     break
-                kee = "X -%-2s-%-2s-X " % (at2,at1)
+                kee = "X -%-2s-%-2s-X " % (at2, at1)
                 if kee in p_torsion:
                     s_torsion[kee2] = p_torsion[kee]
                     break
-                self.miss_torsion.append((a,kee1))
+                self.miss_torsion.append((a, kee1))
                 break
         # impropers
         self.miss_improper = []
@@ -523,155 +552,179 @@ class Subset:
         improper = top.improper
         p_improper = par.improper
         for a in improper.keys():
-            at0=atype[a[0]]
-            at1=atype[a[1]]
-            at2=atype[a[2]] # center atom
-            at3=atype[a[3]]
-            while 1: # not a real loop, just "else" avoidance
+            at0 = atype[a[0]]
+            at1 = atype[a[1]]
+            at2 = atype[a[2]]  # center atom
+            at3 = atype[a[3]]
+            while 1:  # not a real loop, just "else" avoidance
 
-                kee1 = "%-2s-%-2s-%-2s-%-2s" % (at1,at3,at2,at0)
+                kee1 = "%-2s-%-2s-%-2s-%-2s" % (at1, at3, at2, at0)
                 if kee1 in p_improper:
                     s_improper[kee1] = p_improper[kee1]
                     break
-                kee2 = "%-2s-%-2s-%-2s-%-2s" % (at3,at1,at2,at0)
+                kee2 = "%-2s-%-2s-%-2s-%-2s" % (at3, at1, at2, at0)
                 if kee2 in p_improper:
                     s_improper[kee2] = p_improper[kee2]
                     break
 
-                kee3 = "%-2s-%-2s-%-2s-%-2s" % (at0,at3,at2,at1)
+                kee3 = "%-2s-%-2s-%-2s-%-2s" % (at0, at3, at2, at1)
                 if kee3 in p_improper:
                     s_improper[kee3] = p_improper[kee3]
                     break
-                kee4 = "%-2s-%-2s-%-2s-%-2s" % (at3,at0,at2,at1)
+                kee4 = "%-2s-%-2s-%-2s-%-2s" % (at3, at0, at2, at1)
                 if kee4 in p_improper:
                     s_improper[kee4] = p_improper[kee4]
                     break
 
-                kee5 = "%-2s-%-2s-%-2s-%-2s" % (at0,at1,at2,at3)
+                kee5 = "%-2s-%-2s-%-2s-%-2s" % (at0, at1, at2, at3)
                 if kee5 in p_improper:
                     s_improper[kee5] = p_improper[kee5]
                     break
-                kee6 = "%-2s-%-2s-%-2s-%-2s" % (at1,at0,at2,at3)
+                kee6 = "%-2s-%-2s-%-2s-%-2s" % (at1, at0, at2, at3)
                 if kee6 in p_improper:
                     s_improper[kee6] = p_improper[kee6]
                     break
 
-                kee = "X -%-2s-%-2s-%-2s" % (at3,at2,at0)
+                kee = "X -%-2s-%-2s-%-2s" % (at3, at2, at0)
                 if kee in p_improper:
                     s_improper[kee1] = p_improper[kee]
                     break
-                kee = "X -%-2s-%-2s-%-2s" % (at1,at2,at0)
+                kee = "X -%-2s-%-2s-%-2s" % (at1, at2, at0)
                 if kee in p_improper:
                     s_improper[kee2] = p_improper[kee]
                     break
-                kee = "X -%-2s-%-2s-%-2s" % (at3,at2,at1)
+                kee = "X -%-2s-%-2s-%-2s" % (at3, at2, at1)
                 if kee in p_improper:
                     s_improper[kee3] = p_improper[kee]
                     break
-                kee = "X -%-2s-%-2s-%-2s" % (at0,at2,at1)
+                kee = "X -%-2s-%-2s-%-2s" % (at0, at2, at1)
                 if kee in p_improper:
                     s_improper[kee4] = p_improper[kee]
                     break
-                kee = "X -%-2s-%-2s-%-2s" % (at1,at2,at3)
+                kee = "X -%-2s-%-2s-%-2s" % (at1, at2, at3)
                 if kee in p_improper:
                     s_improper[kee5] = p_improper[kee]
                     break
-                kee = "X -%-2s-%-2s-%-2s" % (at0,at2,at3)
+                kee = "X -%-2s-%-2s-%-2s" % (at0, at2, at3)
                 if kee in p_improper:
                     s_improper[kee6] = p_improper[kee]
                     break
 
-                kee = "X -X -%-2s-%-2s" % (at2,at0)
+                kee = "X -X -%-2s-%-2s" % (at2, at0)
                 if kee in p_improper:
                     s_improper[kee1] = p_improper[kee]
                     break
-                kee = "X -X -%-2s-%-2s" % (at2,at1)
+                kee = "X -X -%-2s-%-2s" % (at2, at1)
                 if kee in p_improper:
                     s_improper[kee3] = p_improper[kee]
                     break
-                kee = "X -X -%-2s-%-2s" % (at2,at3)
+                kee = "X -X -%-2s-%-2s" % (at2, at3)
                 if kee in p_improper:
                     s_improper[kee5] = p_improper[kee]
                     break
-                self.miss_improper.append((a,kee1))
+                self.miss_improper.append((a, kee1))
                 break
 
-        if feedback['actions']:
-            print(' '+str(self.__class__)+': missing:')
-            print(' '+str(self.__class__)+':    mol. wts.         %6d' % (
-                len(self.miss_mw)))
-            print(' '+str(self.__class__)+':    vdw               %6d' % (
-                len(self.miss_vdw)))
-            print(' '+str(self.__class__)+':    bonds             %6d' % (
-                len(self.miss_bond)))
-            print(' '+str(self.__class__)+':    angles            %6d' % (
-                len(self.miss_angle)))
-            print(' '+str(self.__class__)+':    torsions          %6d' % (
-                len(self.miss_torsion)))
-            print(' '+str(self.__class__)+':    impropers         %6d (usually okay)' % (
-                len(self.miss_improper)))
-            print(' '+str(self.__class__)+':    extra tinker info %6d' % (
-                len(self.miss_extra)))
+        if feedback["actions"]:
+            print(" " + str(self.__class__) + ": missing:")
+            print(
+                " "
+                + str(self.__class__)
+                + ":    mol. wts.         %6d" % (len(self.miss_mw))
+            )
+            print(
+                " "
+                + str(self.__class__)
+                + ":    vdw               %6d" % (len(self.miss_vdw))
+            )
+            print(
+                " "
+                + str(self.__class__)
+                + ":    bonds             %6d" % (len(self.miss_bond))
+            )
+            print(
+                " "
+                + str(self.__class__)
+                + ":    angles            %6d" % (len(self.miss_angle))
+            )
+            print(
+                " "
+                + str(self.__class__)
+                + ":    torsions          %6d" % (len(self.miss_torsion))
+            )
+            print(
+                " "
+                + str(self.__class__)
+                + ":    impropers         %6d (usually okay)"
+                % (len(self.miss_improper))
+            )
+            print(
+                " "
+                + str(self.__class__)
+                + ":    extra tinker info %6d" % (len(self.miss_extra))
+            )
 
     def dump(self):
         kees = list(self.mw.keys())
         kees.sort()
         for b in kees:
-            print(b,self.mw[b])
+            print(b, self.mw[b])
         kees = list(self.bond.keys())
         kees.sort()
         for b in kees:
-            print(b,self.bond[b])
+            print(b, self.bond[b])
         kees = list(self.angle.keys())
         kees.sort()
         for b in kees:
-            print(b,self.angle[b])
+            print(b, self.angle[b])
         kees = list(self.torsion.keys())
         kees.sort()
         for b in kees:
-            print(b,self.torsion[b])
+            print(b, self.torsion[b])
         kees = list(self.improper.keys())
         kees.sort()
         for b in kees:
-            print(b,self.improper[b])
+            print(b, self.improper[b])
         kees = list(self.vdw.keys())
         kees.sort()
         for b in kees:
-            print(b,self.vdw[b])
+            print(b, self.vdw[b])
 
-    def dump_missing(self,impropers=0):
+    def dump_missing(self, impropers=0):
         if len(self.miss_mw):
-            print(' '+str(self.__class__)+': missing molecular weights...')
+            print(" " + str(self.__class__) + ": missing molecular weights...")
         for b in self.miss_mw:
-            print(" ",b)
+            print(" ", b)
         if len(self.miss_vdw):
-            print(' '+str(self.__class__)+': missing van der Waalss...')
+            print(" " + str(self.__class__) + ": missing van der Waalss...")
         for b in self.miss_vdw:
-            print(" ",b)
+            print(" ", b)
         if len(self.miss_bond):
-            print(' '+str(self.__class__)+': missing bonds...')
+            print(" " + str(self.__class__) + ": missing bonds...")
         for b in self.miss_bond:
-            print(" ",b)
+            print(" ", b)
         if len(self.miss_angle):
-            print(' '+str(self.__class__)+': missing angless...')
+            print(" " + str(self.__class__) + ": missing angless...")
         for b in self.miss_angle:
-            print(" ",b)
+            print(" ", b)
         if len(self.miss_torsion):
-            print(' '+str(self.__class__)+': missing torsions...')
+            print(" " + str(self.__class__) + ": missing torsions...")
         for b in self.miss_torsion:
-            print(" ",b)
+            print(" ", b)
         if impropers:
             if len(self.miss_improper):
-                print(' '+str(self.__class__)+': missing impropers...')
+                print(" " + str(self.__class__) + ": missing impropers...")
             for b in self.miss_improper:
-                print(" ",b)
+                print(" ", b)
 
     def complete(self):
-        if not ( len(self.miss_mw) or
-                    len(self.miss_vdw) or
-                    len(self.miss_bond) or
-                    len(self.miss_angle) or
-                    len(self.miss_torsion) ):
+        if not (
+            len(self.miss_mw)
+            or len(self.miss_vdw)
+            or len(self.miss_bond)
+            or len(self.miss_angle)
+            or len(self.miss_torsion)
+        ):
             return 1
         else:
             return 0
@@ -694,7 +747,7 @@ class Subset:
         for a in self.model.atom:
             a.numeric_type = map[a.text_type]
 
-    def write_tinker_prm(self,fname,proofread=None,smooth=None):
+    def write_tinker_prm(self, fname, proofread=None, smooth=None):
         c = 0
         self.mapping = {}
         map = self.mapping
@@ -717,19 +770,24 @@ class Subset:
         # assign numeric types as per the parameter we're writing
         for a in self.model.atom:
             a.numeric_type = map[a.text_type]
-        f = open(fname,'w')
+        f = open(fname, "w")
         if smooth:
-            f.write('''
+            f.write(
+                """
 forcefield              SMOOTH AMBER
 vdwtype                 GAUSSIAN
 gausstype               LJ-2
-''')
+"""
+            )
         else:
-            f.write('''
+            f.write(
+                """
 forcefield              AMBER95
 vdwtype                 LENNARD-JONES
-''')
-        f.write('''
+"""
+            )
+        f.write(
+            """
 radiusrule              ARITHMETIC
 radiustype              R-MIN
 radiussize              RADIUS
@@ -739,108 +797,135 @@ vdw-scale               2.0
 chg-14-use
 chg-scale               1.2
 dielectric              1.0
-''')
+"""
+        )
 
         # types
         for c in range(len(self.present)):
             at = type[c]
-            f.write("atom %6s %6s    %-2s      %-25s %3d %10.3f%6d\n" % (
-                label[c],label[c],at,'"'+self.mw[at][1][0:23]+'"',
-                self.extra[at][0],
-                self.mw[at][0],self.extra[at][1]))
+            f.write(
+                "atom %6s %6s    %-2s      %-25s %3d %10.3f%6d\n"
+                % (
+                    label[c],
+                    label[c],
+                    at,
+                    '"' + self.mw[at][1][0:23] + '"',
+                    self.extra[at][0],
+                    self.mw[at][0],
+                    self.extra[at][1],
+                )
+            )
         # van der waals
         for c in range(len(self.present)):
             at = type[c]
-            f.write("vdw   %8s          %10.4f %10.4f\n" % (
-                map[at],self.vdw[at][0],self.vdw[at][1]))
+            f.write(
+                "vdw   %8s          %10.4f %10.4f\n"
+                % (map[at], self.vdw[at][0], self.vdw[at][1])
+            )
         # bonds
         bond = {}
         for a in list(self.bond.keys()):
-            kee = (map[a[0:2].strip()],map[a[3:5].strip()])
+            kee = (map[a[0:2].strip()], map[a[3:5].strip()])
             bond[kee] = a
         kees = list(bond.keys())
         kees.sort()
         for a in kees:
             kee = bond[a]
-            f.write("bond    %6s%5s     %10.1f %10.4f\n" % (
-                a[0],a[1],self.bond[kee][0],self.bond[kee][1]))
+            f.write(
+                "bond    %6s%5s     %10.1f %10.4f\n"
+                % (a[0], a[1], self.bond[kee][0], self.bond[kee][1])
+            )
         # angles
         angle = {}
         for a in list(self.angle.keys()):
-            kee = (map[a[0:2].strip()],
-                     map[a[3:5].strip()],
-                     map[a[6:8].strip()],
-                     )
+            kee = (
+                map[a[0:2].strip()],
+                map[a[3:5].strip()],
+                map[a[6:8].strip()],
+            )
             angle[kee] = a
         kees = list(angle.keys())
         kees.sort()
         for a in kees:
             kee = angle[a]
-            f.write("angle    %5s%5s%5s%9.2f    %8.2f\n" % (
-                a[0],a[1],a[2],self.angle[kee][0],self.angle[kee][1]))
+            f.write(
+                "angle    %5s%5s%5s%9.2f    %8.2f\n"
+                % (a[0], a[1], a[2], self.angle[kee][0], self.angle[kee][1])
+            )
         # impropers
         if not smooth:
             improper = {}
             for a in self.improper.keys():
-                kee = (map[a[0:2].strip()],
-                         map[a[3:5].strip()],
-                         map[a[6:8].strip()],
-                         map[a[9:11].strip()],
-                         )
+                kee = (
+                    map[a[0:2].strip()],
+                    map[a[3:5].strip()],
+                    map[a[6:8].strip()],
+                    map[a[9:11].strip()],
+                )
                 improper[kee] = a
             kees = list(improper.keys())
             kees.sort()
             for a in kees:
                 kee = improper[a]
-                f.write("imptors  %5s%5s%5s%5s     %10.3f%7.1f%3d\n" % (
-                    a[0],a[1],a[2],a[3],self.improper[kee][0],
-                    self.improper[kee][1],self.improper[kee][2]))
+                f.write(
+                    "imptors  %5s%5s%5s%5s     %10.3f%7.1f%3d\n"
+                    % (
+                        a[0],
+                        a[1],
+                        a[2],
+                        a[3],
+                        self.improper[kee][0],
+                        self.improper[kee][1],
+                        self.improper[kee][2],
+                    )
+                )
         else:
             improper = {}
             for a in self.improper.keys():
-                kee = (map[a[0:2].strip()],
-                         map[a[3:5].strip()],
-                         map[a[6:8].strip()],
-                         map[a[9:11].strip()],
-                         )
+                kee = (
+                    map[a[0:2].strip()],
+                    map[a[3:5].strip()],
+                    map[a[6:8].strip()],
+                    map[a[9:11].strip()],
+                )
                 improper[kee] = a
             kees = list(improper.keys())
             kees.sort()
             for a in kees:
                 kee = improper[a]
-                f.write("improper %5s%5s%5s%5s      %10.2f       0.00\n" % (
-                    a[2],a[0],a[1],a[3],self.improper[kee][0]*3.5))
+                f.write(
+                    "improper %5s%5s%5s%5s      %10.2f       0.00\n"
+                    % (a[2], a[0], a[1], a[3], self.improper[kee][0] * 3.5)
+                )
         # torsions
         torsion = {}
         for a in self.torsion.keys():
-            kee = (map[a[0:2].strip()],
-                     map[a[3:5].strip()],
-                     map[a[6:8].strip()],
-                     map[a[9:11].strip()],
-                     )
+            kee = (
+                map[a[0:2].strip()],
+                map[a[3:5].strip()],
+                map[a[6:8].strip()],
+                map[a[9:11].strip()],
+            )
             torsion[kee] = a
         kees = list(torsion.keys())
         kees.sort()
         for a in kees:
             kee = torsion[a]
-            st = "torsion  %5s%5s%5s%5s     " % (
-                a[0],a[1],a[2],a[3])
+            st = "torsion  %5s%5s%5s%5s     " % (a[0], a[1], a[2], a[3])
             lst = self.torsion[kee]
             div = lst[0]
             lst = lst[1:]
             while len(lst):
-                st = st + "%10.3f%7.1f%3d  " % (
-                    lst[0]/div,lst[1],lst[2])
+                st = st + "%10.3f%7.1f%3d  " % (lst[0] / div, lst[1], lst[2])
                 lst = lst[5:]
-            while len(st)>79:
-                st = st.replace('  ',' ')
-            f.write(st+"\n")
+            while len(st) > 79:
+                st = st.replace("  ", " ")
+            f.write(st + "\n")
         # null charge records
         for c in range(len(self.present)):
             a = label[c]
-            f.write("charge  %6s    %10.4f\n" % (a,0.0))
+            f.write("charge  %6s    %10.4f\n" % (a, 0.0))
         f.close()
-
 
     def get_list(self):
         list = []
@@ -863,78 +948,92 @@ dielectric              1.0
         typ_list = []
         for c in range(len(self.present)):
             at = type[c]
-            typ_list.append((map[at],self.extra[at][0],self.mw[at][0],self.extra[at][1]))
+            typ_list.append(
+                (map[at], self.extra[at][0], self.mw[at][0], self.extra[at][1])
+            )
         list.append(typ_list)
         # van der waals
         vdw_list = []
         for c in range(len(self.present)):
             at = type[c]
-            vdw_list.append((map[at],self.vdw[at][0],self.vdw[at][1]))
+            vdw_list.append((map[at], self.vdw[at][0], self.vdw[at][1]))
         list.append(vdw_list)
         # bonds
         bnd_list = []
         bond = {}
         for a in list(self.bond.keys()):
-            kee = (map[a[0:2].strip()],map[a[3:5].strip()])
+            kee = (map[a[0:2].strip()], map[a[3:5].strip()])
             bond[kee] = a
         kees = list(bond.keys())
         kees.sort()
         for a in kees:
             kee = bond[a]
-            bnd_list.append((a[0],a[1],self.bond[kee][0],self.bond[kee][1]))
+            bnd_list.append((a[0], a[1], self.bond[kee][0], self.bond[kee][1]))
         list.append(bnd_list)
         # angles
         ang_list = []
         angle = {}
         for a in self.angle.keys():
-            kee = (map[a[0:2].strip()],
-                     map[a[3:5].strip()],
-                     map[a[6:8].strip()],
-                     )
+            kee = (
+                map[a[0:2].strip()],
+                map[a[3:5].strip()],
+                map[a[6:8].strip()],
+            )
             angle[kee] = a
         kees = list(angle.keys())
         kees.sort()
         for a in kees:
             kee = angle[a]
-            ang_list.append((a[0],a[1],a[2],self.angle[kee][0],self.angle[kee][1]))
+            ang_list.append((a[0], a[1], a[2], self.angle[kee][0], self.angle[kee][1]))
         list.append(ang_list)
         # impropers
         imp_list = []
         improper = {}
         for a in self.improper.keys():
-            kee = (map[a[0:2].strip()],
-                     map[a[3:5].strip()],
-                     map[a[6:8].strip()],
-                     map[a[9:11].strip()],
-                     )
+            kee = (
+                map[a[0:2].strip()],
+                map[a[3:5].strip()],
+                map[a[6:8].strip()],
+                map[a[9:11].strip()],
+            )
             improper[kee] = a
         kees = list(improper.keys())
         kees.sort()
         for a in kees:
             kee = improper[a]
-            imp_list.append((a[0],a[1],a[2],a[3],self.improper[kee][0],
-                self.improper[kee][1],self.improper[kee][2]))
+            imp_list.append(
+                (
+                    a[0],
+                    a[1],
+                    a[2],
+                    a[3],
+                    self.improper[kee][0],
+                    self.improper[kee][1],
+                    self.improper[kee][2],
+                )
+            )
         list.append(imp_list)
         # torsions
         tor_list = []
         torsion = {}
         for a in self.torsion.keys():
-            kee = (map[a[0:2].strip()],
-                     map[a[3:5].strip()],
-                     map[a[6:8].strip()],
-                     map[a[9:11].strip()],
-                     )
+            kee = (
+                map[a[0:2].strip()],
+                map[a[3:5].strip()],
+                map[a[6:8].strip()],
+                map[a[9:11].strip()],
+            )
             torsion[kee] = a
         kees = list(torsion.keys())
         kees.sort()
         for a in kees:
             kee = torsion[a]
-            tor = [ a[0],a[1],a[2],a[3] ]
+            tor = [a[0], a[1], a[2], a[3]]
             lst = self.torsion[kee]
             div = lst[0]
             lst = lst[1:]
             while len(lst):
-                tor.extend([lst[0]/div,lst[1],lst[2]])
+                tor.extend([lst[0] / div, lst[1], lst[2]])
                 lst = lst[5:]
             tor_list.append(tor)
         list.append(tor_list)

@@ -1,7 +1,8 @@
 import pymol
 from pymol import cmd, testing
 
-@testing.requires_version('2.3')
+
+@testing.requires_version("2.3")
 class TestCTest(testing.PyMOLTestCase):
 
     def test2(self):

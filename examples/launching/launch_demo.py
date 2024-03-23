@@ -13,4 +13,3 @@ from pymol import cmd
 
 cmd.load("$PYMOL_PATH/test/dat/pept.pdb")
 cmd.show("sticks")
-

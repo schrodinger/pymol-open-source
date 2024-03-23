@@ -1,16 +1,16 @@
-#A* -------------------------------------------------------------------
-#B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC.
-#D* -------------------------------------------------------------------
-#E* It is unlawful to modify or remove this copyright notice.
-#F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information.
-#H* -------------------------------------------------------------------
-#I* Additional authors of this source file include:
-#-*
-#-*
-#-*
-#Z* -------------------------------------------------------------------
+# A* -------------------------------------------------------------------
+# B* This file contains source code for the PyMOL computer program
+# C* Copyright (c) Schrodinger, LLC.
+# D* -------------------------------------------------------------------
+# E* It is unlawful to modify or remove this copyright notice.
+# F* -------------------------------------------------------------------
+# G* Please see the accompanying LICENSE file for further information.
+# H* -------------------------------------------------------------------
+# I* Additional authors of this source file include:
+# -*
+# -*
+# -*
+# Z* -------------------------------------------------------------------
 
 import pymol
 from .constants import CURRENT_STATE, ALL_STATES
@@ -22,7 +22,7 @@ class _AtomProxy:
     """
 
     def __init__(self, ns):
-        self.__dict__['_ns'] = ns
+        self.__dict__["_ns"] = ns
 
     def __getattr__(self, key):
         return self._ns[key]
@@ -32,28 +32,30 @@ class _AtomProxy:
 
     def __repr__(self):
         if self.state != 0:
-            tail = f' ({self.x:.2f}, {self.y:.2f}, {self.z:.2f}) state={self.state}'
+            tail = f" ({self.x:.2f}, {self.y:.2f}, {self.z:.2f}) state={self.state}"
         else:
-            tail = ''
+            tail = ""
         return (
-            f'<{self.__class__.__name__} '
-            f'/{self.model}/{self.segi}/{self.chain}/{self.resn}`{self.resi}/{self.name}`{self.alt}{tail}>'
+            f"<{self.__class__.__name__} "
+            f"/{self.model}/{self.segi}/{self.chain}/{self.resn}`{self.resi}/{self.name}`{self.alt}{tail}>"
         )
 
     def __dir__(self):
         from .completing import expr_sc
+
         return [k.split(".")[0] for k in expr_sc.keywords]
+
 
 def _iterate_prepare_args(expression, space, _self):
     if not expression:
-        raise pymol.CmdException('missing expression')
+        raise pymol.CmdException("missing expression")
 
     if not isinstance(expression, str):
         assert callable(expression)
         assert space is None
         space = {
             "_callback": (lambda ns, f=expression, p=_AtomProxy: f(p(ns))),
-            "locals": locals
+            "locals": locals,
         }
         expression = "_callback(locals())"
     elif space is None:
@@ -66,147 +68,167 @@ if True:
 
     import math
     from . import selector
+
     cmd = __import__("sys").modules["pymol.cmd"]
-    from .cmd import _cmd,lock,unlock,Shortcut,is_string, \
-          boolean_sc,boolean_dict,safe_list_eval, is_sequence, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+    from .cmd import (
+        _cmd,
+        lock,
+        unlock,
+        Shortcut,
+        is_string,
+        boolean_sc,
+        boolean_dict,
+        safe_list_eval,
+        is_sequence,
+        DEFAULT_ERROR,
+        DEFAULT_SUCCESS,
+        _raising,
+        is_ok,
+        is_error,
+    )
     from chempy import cpv
 
     ref_action_dict = {
-        'store'     : 1,
-        'recall'    : 2,
-        'validate'  : 3,
-        'swap'      : 4,
+        "store": 1,
+        "recall": 2,
+        "validate": 3,
+        "swap": 4,
     }
 
     ref_action_sc = Shortcut(ref_action_dict.keys())
 
-    def reference(action='validate', selection='(all)',
-                  state=0, quiet=1, _self=cmd):
+    def reference(action="validate", selection="(all)", state=0, quiet=1, _self=cmd):
         r = DEFAULT_ERROR
         if is_string(action):
-            action = ref_action_sc.auto_err(action,"action")
+            action = ref_action_sc.auto_err(action, "action")
             action = ref_action_dict[action]
         else:
             action = int(action)
         selection = selector.process(selection)
         try:
             _self.lock(_self)
-            r = _cmd.reference( _self._COb, int(action), str(selection),
-                               int(state)-1, int(quiet))
+            r = _cmd.reference(
+                _self._COb, int(action), str(selection), int(state) - 1, int(quiet)
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def sculpt_purge(_self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "sculpt_purge" is an unsupported feature.
-    
-    '''
+            "sculpt_purge" is an unsupported feature.
+
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.sculpt_purge(_self._COb)
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def sculpt_deactivate(object, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "sculpt_deactivate" deactivates sculpting for the given object and
-    clears the stored restraints.
+            "sculpt_deactivate" deactivates sculpting for the given object and
+            clears the stored restraints.
 
-ARGUMENTS
+        ARGUMENTS
 
-    object = str: name of a single object or "all"
+            object = str: name of a single object or "all"
 
-SEE ALSO
+        SEE ALSO
 
-    sculpt_activate
-    '''
+            sculpt_activate
+        """
         r = 0
         try:
             _self.lock(_self)
-            r = _cmd.sculpt_deactivate(_self._COb,str(object))
+            r = _cmd.sculpt_deactivate(_self._COb, str(object))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def sculpt_activate(object, state=0, match_state=-1,
-                        match_by_segment=0, _self=cmd):
-        '''
-DESCRIPTION
+    def sculpt_activate(object, state=0, match_state=-1, match_by_segment=0, _self=cmd):
+        """
+        DESCRIPTION
 
-    "sculpt_activate" enables sculpting for the given object. The current
-    geometry (bond lengths, angles, etc.) of the given state is remembered as
-    the reference geometry.
+            "sculpt_activate" enables sculpting for the given object. The current
+            geometry (bond lengths, angles, etc.) of the given state is remembered as
+            the reference geometry.
 
-ARGUMENTS
+        ARGUMENTS
 
-    object = str: name of a single object or "all"
+            object = str: name of a single object or "all"
 
-    state = int: object state or 0 for current state {default: 0}
+            state = int: object state or 0 for current state {default: 0}
 
-SEE ALSO
+        SEE ALSO
 
-    sculpt_iterate, sculpt_deactivate
-    '''
+            sculpt_iterate, sculpt_deactivate
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.sculpt_activate(_self._COb,str(object),
-                                     int(state)-1,
-                                     int(match_state)-1,
-                                     int(match_by_segment))
+            r = _cmd.sculpt_activate(
+                _self._COb,
+                str(object),
+                int(state) - 1,
+                int(match_state) - 1,
+                int(match_by_segment),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def split_states(object, first=1, last=0, prefix=None, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "split_states" separates a multi-state molecular object into a set
-    of single-state molecular objects.
+            "split_states" separates a multi-state molecular object into a set
+            of single-state molecular objects.
 
-USAGE
+        USAGE
 
-    split_states object [, first [, last [, prefix ]]]
-    
-EXAMPLE
+            split_states object [, first [, last [, prefix ]]]
 
-    load docking_hits.sdf
-    split_states docking_hits, prefix=hit
-    delete docking_hits
-    
-SEE ALSO
+        EXAMPLE
 
-    join_states
-        '''
+            load docking_hits.sdf
+            split_states docking_hits, prefix=hit
+            delete docking_hits
+
+        SEE ALSO
+
+            join_states
+        """
         r = DEFAULT_SUCCESS
         prefix_set = bool(prefix)
-        first=int(first)
-        last=int(last)
+        first = int(first)
+        last = int(last)
         prefix_a = first - 1
 
         # support selections, not only objects
-        sele = _self.get_unused_name('_sele_Abnqh5s5VS')
+        sele = _self.get_unused_name("_sele_Abnqh5s5VS")
         _self.select(sele, object, 0)
 
         # all names to check for name conflicts
-        names = set(_self.get_names('all'))
+        names = set(_self.get_names("all"))
 
         # iterate over objects
         for object in _self.get_object_list(sele):
-            olast = _self.count_states('%' + object)
+            olast = _self.count_states("%" + object)
 
             if 0 < last < olast:
                 olast = last
@@ -218,7 +240,7 @@ SEE ALSO
                 else:
                     prefix_a = a
                     prefix = object + "_"
-                    name = _self.get_title(object,a)
+                    name = _self.get_title(object, a)
 
                 if not name:
                     name = prefix + "%04d" % prefix_a
@@ -232,594 +254,658 @@ SEE ALSO
                     break
 
         _self.delete(sele)
-        if _self._raising(r,_self): raise pymol.CmdException
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def sculpt_iterate(object, state=CURRENT_STATE, cycles=10, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "sculpt_iterate" performs a simple energy minimization of atomic
-    coordinates based on the geometry restraints which were defined with
-    the "sculpt_activate" invocation and which are selected in the
-    "sculpt_field_mask" setting. Sculpting currently supports local
-    geometry restraints and vdw repulsion, but no solvation or
-    electrostatic effects.
+            "sculpt_iterate" performs a simple energy minimization of atomic
+            coordinates based on the geometry restraints which were defined with
+            the "sculpt_activate" invocation and which are selected in the
+            "sculpt_field_mask" setting. Sculpting currently supports local
+            geometry restraints and vdw repulsion, but no solvation or
+            electrostatic effects.
 
-ARGUMENTS
+        ARGUMENTS
 
-    object = str: name of a single object or "all"
+            object = str: name of a single object or "all"
 
-    state = int: object state or -1 for current state, 0 for all states
-    {default: -1} (changed in PyMOL 2.5: 0 used to be "current state" as well)
+            state = int: object state or -1 for current state, 0 for all states
+            {default: -1} (changed in PyMOL 2.5: 0 used to be "current state" as well)
 
-    cycles = int: number of iterations {default: 10}
+            cycles = int: number of iterations {default: 10}
 
-SEE ALSO
+        SEE ALSO
 
-    commands: sculpt_activate, sculpt_deactivate
-    settings: "sculpting" setting, all "sculpt_*" settings
-    '''
+            commands: sculpt_activate, sculpt_deactivate
+            settings: "sculpting" setting, all "sculpt_*" settings
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.sculpt_iterate(_self._COb,str(object),int(state)-1,int(cycles))
+            r = _cmd.sculpt_iterate(
+                _self._COb, str(object), int(state) - 1, int(cycles)
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def smooth(selection="all", passes=1, window=5, first=1,
-               last=0, ends=0, quiet=1, *, cutoff=-1, pbc=1, _self=cmd):
+    def smooth(
+        selection="all",
+        passes=1,
+        window=5,
+        first=1,
+        last=0,
+        ends=0,
+        quiet=1,
+        *,
+        cutoff=-1,
+        pbc=1,
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "smooth" performs a window average of coordinate states.
 
-    "smooth" performs a window average of coordinate states.  
+        USAGE
 
-USAGE
+            smooth [ selection [, passes [, window [, first [, last [, ends]]]]]]
 
-    smooth [ selection [, passes [, window [, first [, last [, ends]]]]]]
+        ARGUMENTS
 
-ARGUMENTS
+            ends = 0 or 1: controls whether or not the end states are also smoothed
+            using a weighted asymmetric window
 
-    ends = 0 or 1: controls whether or not the end states are also smoothed
-    using a weighted asymmetric window
+            cutoff = float: Distance cutoff for atom movement between two frames.
 
-    cutoff = float: Distance cutoff for atom movement between two frames.
+            pbc = 0/1: Consider periodic boundary conditions {default: 1}
 
-    pbc = 0/1: Consider periodic boundary conditions {default: 1}
+        NOTES
 
-NOTES
+            This type of averaging is often used to suppress high-frequency
+            vibrations in a molecular dynamics trajectory.
 
-    This type of averaging is often used to suppress high-frequency
-    vibrations in a molecular dynamics trajectory.
+        SEE ALSO
 
-SEE ALSO
+            load_traj
 
-    load_traj
-
-    '''
+        """
         selection = selector.process(selection)
         with _self.lockcm:
-            return _cmd.smooth(_self._COb, selection, int(passes), int(window),
-                               int(first) - 1,
-                               int(last) - 1, int(ends), int(quiet),
-                               float(cutoff), int(pbc))
+            return _cmd.smooth(
+                _self._COb,
+                selection,
+                int(passes),
+                int(window),
+                int(first) - 1,
+                int(last) - 1,
+                int(ends),
+                int(quiet),
+                float(cutoff),
+                int(pbc),
+            )
 
     def pbc_unwrap(oname, bymol=True, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    Unwrap molecules or atoms from PBC box so that they don't jump
-    across periodic boundaries.
+            Unwrap molecules or atoms from PBC box so that they don't jump
+            across periodic boundaries.
 
-ARGUMENTS
+        ARGUMENTS
 
-    oname = str: object name
+            oname = str: object name
 
-    bymol = 0/1: Unwrap by molecule, not by atom {default: 1}
-        '''
+            bymol = 0/1: Unwrap by molecule, not by atom {default: 1}
+        """
         with _self.lockcm:
             return _cmd.pbc_unwrap(_self._COb, oname, int(bymol))
 
     def pbc_wrap(oname, center=None, *, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    Wrap molecules into PBC box.
+            Wrap molecules into PBC box.
 
-ARGUMENTS
+        ARGUMENTS
 
-    oname = str: object name
+            oname = str: object name
 
-    center = list or None: Center position in model space, or None
-    to use average of first coordinate state.
+            center = list or None: Center position in model space, or None
+            to use average of first coordinate state.
 
-EXAMPLE
+        EXAMPLE
 
-    pbc_wrap trajectory, center=[0, 0, 0]
-        '''
+            pbc_wrap trajectory, center=[0, 0, 0]
+        """
         if isinstance(center, str):
             center = _self.safe_list_eval(center)
         with _self.lockcm:
             return _cmd.pbc_wrap(_self._COb, oname, center)
 
     def set_state_order(name, order, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    API only. Set the order of states for an object.
+            API only. Set the order of states for an object.
 
-ARGUMENTS
+        ARGUMENTS
 
-    name = str: object name
+            name = str: object name
 
-    order = list of int: index array (1-based state indices)
+            order = list of int: index array (1-based state indices)
 
-EXAMPLE
+        EXAMPLE
 
-    # reverse the order of a 20 model object
-    cmd.set_state_order('1nmr', range(20, 0, -1))
-        '''
+            # reverse the order of a 20 model object
+            cmd.set_state_order('1nmr', range(20, 0, -1))
+        """
         with _self.lockcm:
             return _cmd.set_state_order(_self._COb, name, [i - 1 for i in order])
 
     def set_discrete(name, discrete=1, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    Convert discrete to non-discrete object or vice versa.
-        '''
+            Convert discrete to non-discrete object or vice versa.
+        """
         with _self.lockcm:
             return _cmd.set_discrete(_self._COb, name, int(discrete))
 
-    def set_symmetry(selection,
-            a, b, c, alpha, beta, gamma, spacegroup="P1",
-            state=-1, quiet=1,
-            _self=cmd):
+    def set_symmetry(
+        selection,
+        a,
+        b,
+        c,
+        alpha,
+        beta,
+        gamma,
+        spacegroup="P1",
+        state=-1,
+        quiet=1,
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "set_symmetry" defines or redefines the crystal and spacegroup
+            parameters for a molecule or map object.
 
-    "set_symmetry" defines or redefines the crystal and spacegroup
-    parameters for a molecule or map object.
+        USAGE
 
-USAGE
+            set_symmetry selection, a, b, c, alpha, beta, gamma, spacegroup
 
-    set_symmetry selection, a, b, c, alpha, beta, gamma, spacegroup
+        ARGUMENTS
 
-ARGUMENTS
+            selection = str: object name pattern
 
-    selection = str: object name pattern
+        PYMOL API
 
-PYMOL API
+            cmd.set_symmetry(string selection, float a, float b, float c,
+                  float alpha, float beta, float gamma, string spacegroup)
 
-    cmd.set_symmetry(string selection, float a, float b, float c,
-          float alpha, float beta, float gamma, string spacegroup)
-
-        '''
+        """
         with _self.lockcm:
-            r = _cmd.set_symmetry(_self._COb,str(selection), int(state) - 1,
-                                         float(a),float(b),float(c),
-                                         float(alpha),float(beta),float(gamma),
-                                         str(spacegroup),
-                                         int(quiet))
+            r = _cmd.set_symmetry(
+                _self._COb,
+                str(selection),
+                int(state) - 1,
+                float(a),
+                float(b),
+                float(c),
+                float(alpha),
+                float(beta),
+                float(gamma),
+                str(spacegroup),
+                int(quiet),
+            )
         return r
 
-    def symmetry_copy(source_name,
-                      target_name,
-                      source_state=1,
-                      target_state=1,
-                      quiet=1,
-                      _self=cmd):
+    def symmetry_copy(
+        source_name, target_name, source_state=1, target_state=1, quiet=1, _self=cmd
+    ):
         """
-DESCRIPTION
+        DESCRIPTION
 
-    "symmetry_copy" copies symmetry information from one object to another.
+            "symmetry_copy" copies symmetry information from one object to another.
 
-USAGE
+        USAGE
 
-    symmetry_copy source_name, target_name, source_state, target_state
+            symmetry_copy source_name, target_name, source_state, target_state
 
-ARGUMENTS
+        ARGUMENTS
 
-    source_name = str: object name
-    target_name = str: object name pattern
-    source_state = int: object state (maps only)
-    target_state = int: object state (maps only)
+            source_name = str: object name
+            target_name = str: object name pattern
+            source_state = int: object state (maps only)
+            target_state = int: object state (maps only)
 
-NOTES
+        NOTES
 
-    Molecular objects don't support individual states yet.
+            Molecular objects don't support individual states yet.
         """
         with _self.lockcm:
-            return _cmd.symmetry_copy(_self._COb,
-                                   str(source_name),
-                                   str(target_name),
-                                   int(source_state)-1,
-                                   int(target_state)-1,
-                                   int(quiet))
+            return _cmd.symmetry_copy(
+                _self._COb,
+                str(source_name),
+                str(target_name),
+                int(source_state) - 1,
+                int(target_state) - 1,
+                int(quiet),
+            )
 
+    def set_name(old_name, new_name, _self=cmd):
+        """
+        DESCRIPTION
 
-    def set_name(old_name, new_name,_self=cmd):
-        '''
-DESCRIPTION
+            "set_name" changes the name of an object or selection.
 
-    "set_name" changes the name of an object or selection.
-    
-USAGE
+        USAGE
 
-    set_name old_name, new_name
-    
-PYMOL API
+            set_name old_name, new_name
 
-    cmd.set_name(string old_name, string new_name)
+        PYMOL API
 
-        '''
+            cmd.set_name(string old_name, string new_name)
+
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.set_name(_self._COb,str(old_name),
-                                    str(new_name))
+            r = _cmd.set_name(_self._COb, str(old_name), str(new_name))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-
     def set_geometry(selection, geometry, valence, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "set_geometry" changes PyMOL\'s assumptions about the proper valence
-    and geometry of atoms in the selection.
+            "set_geometry" changes PyMOL\'s assumptions about the proper valence
+            and geometry of atoms in the selection.
 
-USAGE
+        USAGE
 
-    set_geometry selection, geometry, valence
+            set_geometry selection, geometry, valence
 
-NOTES
+        NOTES
 
-    Immature functionality. See code for details.
+            Immature functionality. See code for details.
 
-PYMOL API
+        PYMOL API
 
-    cmd.set_geometry(string selection, int geometry, int valence)
+            cmd.set_geometry(string selection, int geometry, int valence)
 
-SEE ALSO
+        SEE ALSO
 
-    remove, attach, fuse, bond, unbond
-    '''
+            remove, attach, fuse, bond, unbond
+        """
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
         try:
             _self.lock(_self)
-            r = _cmd.set_geometry(_self._COb,str(selection),int(geometry),int(valence))
+            r = _cmd.set_geometry(
+                _self._COb, str(selection), int(geometry), int(valence)
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def undo(_self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "undo" restores the previous conformation of the object currently
-    being edited.
+            "undo" restores the previous conformation of the object currently
+            being edited.
 
-USAGE
+        USAGE
 
-    undo
+            undo
 
-SEE ALSO
+        SEE ALSO
 
-    redo, push_undo
-    '''
+            redo, push_undo
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.undo(_self._COb,-1)
+            r = _cmd.undo(_self._COb, -1)
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def push_undo(selection, just_coordinates=1, finish_undo=0, add_objects=0, delete_objects=0, state=0, _self=cmd):
-        '''
-DESCRIPTION
+    def push_undo(
+        selection,
+        just_coordinates=1,
+        finish_undo=0,
+        add_objects=0,
+        delete_objects=0,
+        state=0,
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-    "push_undo" stores the current conformations of objects in the
-    selection onto their individual undo rings.
+            "push_undo" stores the current conformations of objects in the
+            selection onto their individual undo rings.
 
-    Notice: This command is only partly implemented in open-source PyMOL.
+            Notice: This command is only partly implemented in open-source PyMOL.
 
-USAGE
+        USAGE
 
-    push_undo (all)
+            push_undo (all)
 
-SEE ALSO
+        SEE ALSO
 
-    undo, redo
-    '''
+            undo, redo
+        """
         # preprocess selections
         selection = selector.process(selection)
         #
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.push_undo(_self._COb,"("+str(selection)+")",int(state)-1)
+            r = _cmd.push_undo(_self._COb, "(" + str(selection) + ")", int(state) - 1)
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def redo(_self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "redo" reapplies the conformational change of the object currently
-    being edited.
+            "redo" reapplies the conformational change of the object currently
+            being edited.
 
-USAGE
+        USAGE
 
-    redo
+            redo
 
-SEE ALSO
+        SEE ALSO
 
-    undo, push_undo
-    '''
+            undo, push_undo
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.undo(_self._COb,1)
+            r = _cmd.undo(_self._COb, 1)
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     order_dict = {
-    # simulation
-        '0'         : 0,
-        '1'         : 1,
-        '2'         : 2,
-        '3'         : 3,
-        '4'         : 4,
-        'aromatic'  : 4,
-        'guess'     : -1,
-        'copy'      : -2
+        # simulation
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "aromatic": 4,
+        "guess": -1,
+        "copy": -2,
     }
 
     order_sc = Shortcut(order_dict.keys())
 
-    def valence(order, selection1=None, selection2=None, source='',
-                target_state=0, source_state=0, reset=1,
-                quiet=1, *, symop="", _self=cmd):
-        '''
-DESCRIPTION
+    def valence(
+        order,
+        selection1=None,
+        selection2=None,
+        source="",
+        target_state=0,
+        source_state=0,
+        reset=1,
+        quiet=1,
+        *,
+        symop="",
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-    "valence" modifies the valences of all existing bonds formed
-    between two atom selections.
-    
-USAGE
+            "valence" modifies the valences of all existing bonds formed
+            between two atom selections.
 
-    valence 2, (name C), (name O)
+        USAGE
 
-PYMOL API
+            valence 2, (name C), (name O)
 
-    cmd.valence(string selection1, selection2)
+        PYMOL API
 
-SEE ALSO
+            cmd.valence(string selection1, selection2)
 
-    unbond, fuse, attach, replace, remove_picked
-    '''
+        SEE ALSO
+
+            unbond, fuse, attach, replace, remove_picked
+        """
         if is_string(order):
-            order = order_sc.auto_err(order,"order")
+            order = order_sc.auto_err(order, "order")
             order = order_dict[order]
         else:
             order = int(order)
         r = DEFAULT_ERROR
         # preprocess selections
         if selection1 is None:
-            selection1="(pk1)"
+            selection1 = "(pk1)"
             if selection2 is None:
-                selection2="(pk2)"
+                selection2 = "(pk2)"
         if selection2 is None:
             selection2 = selection1
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
-        if source!='':
+        if source != "":
             source = selector.process(source)
         try:
             _self.lock(_self)
-            if order>=0:
-                r = _cmd.bond(_self._COb, selection1, selection2, int(order), 2, int(quiet), symop)
+            if order >= 0:
+                r = _cmd.bond(
+                    _self._COb, selection1, selection2, int(order), 2, int(quiet), symop
+                )
             else:
-                r = _cmd.revalence(_self._COb,
-                                   "("+selection1+")",
-                                   "("+selection2+")",
-                                   str(source),
-                                   int(target_state)-1, int(source_state)-1,
-                                   int(reset), int(quiet))
+                r = _cmd.revalence(
+                    _self._COb,
+                    "(" + selection1 + ")",
+                    "(" + selection2 + ")",
+                    str(source),
+                    int(target_state) - 1,
+                    int(source_state) - 1,
+                    int(reset),
+                    int(quiet),
+                )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def add_bond(oname, index1, index2, order=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    API-only function to add a bond by atom indices (1-based, same as "index"
-    in cmd.iterate()).
+            API-only function to add a bond by atom indices (1-based, same as "index"
+            in cmd.iterate()).
 
-    To add bonds by atom selection, use cmd.bond()
+            To add bonds by atom selection, use cmd.bond()
 
-ARGUMENTS
+        ARGUMENTS
 
-    oname = str: object name
+            oname = str: object name
 
-    index1 = int: first atom index
+            index1 = int: first atom index
 
-    index2 = int: second atom index
+            index2 = int: second atom index
 
-    order = int: bond order {default: 1}
+            order = int: bond order {default: 1}
 
-SEE ALSO
+        SEE ALSO
 
-    cmd.get_bonds()
-        '''
+            cmd.get_bonds()
+        """
         with _self.lockcm:
             return _cmd.add_bond(_self._COb, oname, index1 - 1, index2 - 1, order)
 
     def rebond(oname, state=CURRENT_STATE, *, pbc=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    Discard all bonds and do distance based bonding.
+            Discard all bonds and do distance based bonding.
 
-ARGUMENTS
+        ARGUMENTS
 
-    oname = str: object name
+            oname = str: object name
 
-    state = int: object state {default: -1 (current state)}
+            state = int: object state {default: -1 (current state)}
 
-    pbc = 0/1: Use periodic boundary conditions (only if symmetry
-    is defined for the object) {default: 1}
-        '''
+            pbc = 0/1: Use periodic boundary conditions (only if symmetry
+            is defined for the object) {default: 1}
+        """
         with _self.lockcm:
             return _cmd.rebond(_self._COb, oname, int(state) - 1, int(pbc))
 
     def bond(atom1="pk1", atom2="pk2", order=1, *, quiet=1, symop="", _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "bond" creates a new bond between two selections, each of which
-    should contain one atom.
+            "bond" creates a new bond between two selections, each of which
+            should contain one atom.
 
-USAGE
+        USAGE
 
-    bond [atom1, atom2 [,order]]
+            bond [atom1, atom2 [,order]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    atom1 = str: Atom selection of first atom {default: pk1}
+            atom1 = str: Atom selection of first atom {default: pk1}
 
-    atom2 = str: Atom selection of second atom {default: pk2}
+            atom2 = str: Atom selection of second atom {default: pk2}
 
-    order = int: Bond order {default: 1}
+            order = int: Bond order {default: 1}
 
-    symop = str: Symmetry operation code for second atom (e.g. "1_555")
+            symop = str: Symmetry operation code for second atom (e.g. "1_555")
 
-NOTES
+        NOTES
 
-    The atoms must both be within the same object.
+            The atoms must both be within the same object.
 
-SEE ALSO
+        SEE ALSO
 
-    unbond, fuse, attach, replace, remove_picked
-    '''
+            unbond, fuse, attach, replace, remove_picked
+        """
         r = DEFAULT_ERROR
         # preprocess selections
         atom1 = selector.process(atom1)
         atom2 = selector.process(atom2)
         try:
             _self.lock(_self)
-            r = _cmd.bond(_self._COb,
-                          atom1, atom2,
-                          int(order),1,int(quiet), symop)
+            r = _cmd.bond(_self._COb, atom1, atom2, int(order), 1, int(quiet), symop)
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def invert(quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "invert" inverts the stereo-chemistry of atom (pk1), holding attached atoms
-    (pk2) and (pk3) immobile.
+            "invert" inverts the stereo-chemistry of atom (pk1), holding attached atoms
+            (pk2) and (pk3) immobile.
 
-USAGE
+        USAGE
 
-    invert 
+            invert
 
-NOTES
+        NOTES
 
-    The invert function is usually bound to CTRL-E in Editing Mode.
+            The invert function is usually bound to CTRL-E in Editing Mode.
 
-PYMOL API
+        PYMOL API
 
-    cmd.invert( )
+            cmd.invert( )
 
-    '''
+        """
         #
         with _self.lockcm:
             return _cmd.invert(_self._COb, int(quiet))
 
     def unbond(atom1="(pk1)", atom2="(pk2)", quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "unbond" removes all bonds between two selections.
+            "unbond" removes all bonds between two selections.
 
-USAGE
+        USAGE
 
-    unbond atom1,atom2
+            unbond atom1,atom2
 
-ARGUMENTS
+        ARGUMENTS
 
-    atom1 = string {default: (pk1)}
+            atom1 = string {default: (pk1)}
 
-    atom2 = string {default: (pk2)}
+            atom2 = string {default: (pk2)}
 
-PYMOL API
+        PYMOL API
 
-    cmd.unbond(selection atom1, selection atom2)
+            cmd.unbond(selection atom1, selection atom2)
 
-SEE ALSO
+        SEE ALSO
 
-    bond, fuse, remove_picked, attach, detach, replace
+            bond, fuse, remove_picked, attach, detach, replace
 
-    '''
+        """
         r = DEFAULT_ERROR
         # preprocess selections
         atom1 = selector.process(atom1)
         atom2 = selector.process(atom2)
         try:
             _self.lock(_self)
-            r = _cmd.bond(_self._COb,
-                          atom1, atom2,
-                          0,0,int(quiet))
+            r = _cmd.bond(_self._COb, atom1, atom2, 0, 0, int(quiet))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def remove(selection, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "remove" eleminates the atoms in a selection from their respective
-    molecular objects.
+            "remove" eleminates the atoms in a selection from their respective
+            molecular objects.
 
-USAGE
+        USAGE
 
-    remove selection
+            remove selection
 
-EXAMPLES
+        EXAMPLES
 
-    remove resi 124 
+            remove resi 124
 
-PYMOL API
+        PYMOL API
 
-    cmd.remove( string selection )
+            cmd.remove( string selection )
 
-SEE ALSO
+        SEE ALSO
 
-    delete
-    '''
+            delete
+        """
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
@@ -827,151 +913,154 @@ SEE ALSO
         r = 1
         try:
             _self.lock(_self)
-            r = _cmd.remove(_self._COb,"("+selection+")",int(quiet))
+            r = _cmd.remove(_self._COb, "(" + selection + ")", int(quiet))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
+    def remove_picked(hydrogens=1, quiet=1, _self=cmd):
+        """
+        DESCRIPTION
 
-    def remove_picked(hydrogens=1,quiet=1,_self=cmd):
-        '''
-DESCRIPTION
+            "remove_picked" removes the atom or bond currently picked for
+            editing.
 
-    "remove_picked" removes the atom or bond currently picked for
-    editing.
+        USAGE
 
-USAGE
+            remove_picked [ hydrogens ]
 
-    remove_picked [ hydrogens ]
+        NOTES
 
-NOTES
+            This function is usually connected to the
+            DELETE key and "CTRL-D".
 
-    This function is usually connected to the
-    DELETE key and "CTRL-D".
+            By default, attached hydrogens will also be deleted unless
+            hydrogen-flag is zero.
 
-    By default, attached hydrogens will also be deleted unless
-    hydrogen-flag is zero.
+        PYMOL API
 
-PYMOL API
+            cmd.remove_picked(integer hydrogens)
 
-    cmd.remove_picked(integer hydrogens)
+        SEE ALSO
 
-SEE ALSO
-
-    attach, replace
-    '''
+            attach, replace
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.remove_picked(_self._COb,int(hydrogens),int(quiet))
+            r = _cmd.remove_picked(_self._COb, int(hydrogens), int(quiet))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
-
 
     def cycle_valence(h_fill=1, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "cycle_valence" cycles the valence on the currently selected bond.
+            "cycle_valence" cycles the valence on the currently selected bond.
 
-USAGE
+        USAGE
 
-    cycle_valence [ h_fill ]
+            cycle_valence [ h_fill ]
 
-ARGUMENTS
+        ARGUMENTS
 
-    h_fill = 0 or 1: updated hydrogens too? {default: 1 (yes)}
-    
-EXAMPLE
+            h_fill = 0 or 1: updated hydrogens too? {default: 1 (yes)}
 
-    cycle_valence
+        EXAMPLE
 
-NOTES
+            cycle_valence
 
-    If the h_fill flag is true, hydrogens will be added or removed to
-    satisfy valence requirements.
+        NOTES
 
-    This function is usually connected to the DELETE key and "CTRL-W".
+            If the h_fill flag is true, hydrogens will be added or removed to
+            satisfy valence requirements.
 
-PYMOL API
+            This function is usually connected to the DELETE key and "CTRL-W".
 
-    cmd.cycle_valence(int h_fill)
+        PYMOL API
 
-SEE ALSO
+            cmd.cycle_valence(int h_fill)
 
-    remove_picked, attach, replace, fuse, h_fill
-    '''
+        SEE ALSO
+
+            remove_picked, attach, replace, fuse, h_fill
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.cycle_valence(_self._COb,quiet)
+            r = _cmd.cycle_valence(_self._COb, quiet)
         finally:
-            _self.unlock(r,_self)
+            _self.unlock(r, _self)
         if h_fill:
-            globals()['h_fill'](quiet)
-        if _self._raising(r,_self): raise pymol.CmdException
+            globals()["h_fill"](quiet)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
+    def attach(element, geometry, valence, name="", quiet=1, _self=cmd):
+        """
+        DESCRIPTION
 
-    def attach(element,geometry,valence,name='',quiet=1,_self=cmd):
-        '''
-DESCRIPTION
+            "attach" adds a single atom on to the picked atom.
 
-    "attach" adds a single atom on to the picked atom.
+        USAGE
 
-USAGE
+            attach element, geometry, valence
 
-    attach element, geometry, valence
+        PYMOL API
 
-PYMOL API
+            cmd.attach( element, geometry, valence )
 
-    cmd.attach( element, geometry, valence )
-
-    '''
+        """
         with _self.lockcm:
-            return _cmd.attach(_self._COb,str(element),int(geometry),int(valence),str(name))
+            return _cmd.attach(
+                _self._COb, str(element), int(geometry), int(valence), str(name)
+            )
 
-    def fuse(selection1="(pk1)", selection2="(pk2)",
-             mode=0, recolor=1, move=1, _self=cmd):
-        '''
-DESCRIPTION
+    def fuse(
+        selection1="(pk1)", selection2="(pk2)", mode=0, recolor=1, move=1, _self=cmd
+    ):
+        """
+        DESCRIPTION
 
-    "fuse" joins two objects into one by forming a bond.  A copy of
-    the object containing the first atom is moved so as to form an
-    approximately resonable bond with the second, and that copy is
-    then merged with the first object.
+            "fuse" joins two objects into one by forming a bond.  A copy of
+            the object containing the first atom is moved so as to form an
+            approximately resonable bond with the second, and that copy is
+            then merged with the first object.
 
-USAGE
+        USAGE
 
-    fuse [ selection1 [, selection2 [, mode [, recolor [, move ]]]]]
+            fuse [ selection1 [, selection2 [, mode [, recolor [, move ]]]]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    selection1 = str: single atom selection (will be copied to object 2)
+            selection1 = str: single atom selection (will be copied to object 2)
 
-    selection2 = str: single atom selection
+            selection2 = str: single atom selection
 
-    mode = int: {default: 0}
-      3: don't move and don't create a bond, just combine into single object
+            mode = int: {default: 0}
+              3: don't move and don't create a bond, just combine into single object
 
-    recolor = bool: recolor C atoms to match target {default: 1}
+            recolor = bool: recolor C atoms to match target {default: 1}
 
-    move = bool: {default: 1}
+            move = bool: {default: 1}
 
-NOTES
+        NOTES
 
-    Each selection must include a single atom in each object.
-    The atoms can both be hydrogens, in which case they are
-    eliminated, or they can both be non-hydrogens, in which
-    case a bond is formed between the two atoms.
+            Each selection must include a single atom in each object.
+            The atoms can both be hydrogens, in which case they are
+            eliminated, or they can both be non-hydrogens, in which
+            case a bond is formed between the two atoms.
 
-SEE ALSO
+        SEE ALSO
 
-    bond, unbond, attach, replace, fuse, remove_picked
-    '''
+            bond, unbond, attach, replace, fuse, remove_picked
+        """
         r = DEFAULT_ERROR
         # preprocess selections
         selection1 = selector.process(selection1)
@@ -979,77 +1068,85 @@ SEE ALSO
         #
         try:
             _self.lock(_self)
-            r = _cmd.fuse(_self._COb,str(selection1),str(selection2),
-                              int(mode),int(recolor),int(move))
+            r = _cmd.fuse(
+                _self._COb,
+                str(selection1),
+                str(selection2),
+                int(mode),
+                int(recolor),
+                int(move),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def unpick(_self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "unpick" deletes the special "pk" atom selections (pk1, pk2, etc.)
-    used in atom picking and molecular editing.
+            "unpick" deletes the special "pk" atom selections (pk1, pk2, etc.)
+            used in atom picking and molecular editing.
 
-USAGE
+        USAGE
 
-    unpick
+            unpick
 
-PYMOL API
+        PYMOL API
 
-    cmd.unpick()
+            cmd.unpick()
 
-SEE ALSO
+        SEE ALSO
 
-    edit
-        '''
+            edit
+        """
 
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
             r = _cmd.unpick(_self._COb)
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def drag(selection=None, wizard=1, edit=1, quiet=1, mode=-1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "drag" activates dragging for a selection, enabling the user to
-    manipulate the atom coordinates of the atoms using mouse controls
-    similar to those for controlling the camera.
+            "drag" activates dragging for a selection, enabling the user to
+            manipulate the atom coordinates of the atoms using mouse controls
+            similar to those for controlling the camera.
 
-USAGE
+        USAGE
 
-    drag [ selection ]
+            drag [ selection ]
 
-ARGUMENTS
-  
-    selection = string: atoms to drag.  If not provided, and dragging
-    is active, then dragging is instead deactivated.
+        ARGUMENTS
 
-NOTES
+            selection = string: atoms to drag.  If not provided, and dragging
+            is active, then dragging is instead deactivated.
 
-    Currently, the selection of atom to drag must all reside in a
-    single molecular object.
+        NOTES
 
-'''
+            Currently, the selection of atom to drag must all reside in a
+            single molecular object.
+
+        """
         import pymol.wizard.dragging
 
         quiet = int(quiet)
-        if (selection is not None) and (selection!=""):
+        if (selection is not None) and (selection != ""):
             selection = selector.process(selection)
             if is_string(edit):
-                edit=boolean_dict[boolean_sc.auto_err(edit,'boolean')]
+                edit = boolean_dict[boolean_sc.auto_err(edit, "boolean")]
             if is_string(wizard):
-                wizard=boolean_dict[boolean_sc.auto_err(wizard,'boolean')]
+                wizard = boolean_dict[boolean_sc.auto_err(wizard, "boolean")]
             edit = int(edit)
             wizard = int(wizard)
-            old_button_mode = _self.get('button_mode')
+            old_button_mode = _self.get("button_mode")
         else:
             wizard = 0
             edit = 0
@@ -1058,51 +1155,60 @@ NOTES
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.drag(_self._COb,str(selection),int(quiet),int(mode))
+            r = _cmd.drag(_self._COb, str(selection), int(quiet), int(mode))
         finally:
-            _self.unlock(r,_self)
+            _self.unlock(r, _self)
         if not is_error(r):
             if edit:
                 _self.edit_mode(edit)
             if wizard:
                 wiz = _self.get_wizard()
-                if (wiz is None):
-                    _self.wizard("dragging",old_button_mode)
+                if wiz is None:
+                    _self.wizard("dragging", old_button_mode)
                 elif not isinstance(wiz, pymol.wizard.dragging.Dragging):
-                    _self.wizard("dragging",old_button_mode)
+                    _self.wizard("dragging", old_button_mode)
                 else:
                     wiz.recount()
-        if _self._raising(r,_self): raise pymol.CmdException
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def edit(selection1='', selection2='none', selection3='none',
-             selection4='none', pkresi=0, pkbond=1, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+    def edit(
+        selection1="",
+        selection2="none",
+        selection3="none",
+        selection4="none",
+        pkresi=0,
+        pkbond=1,
+        quiet=1,
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-    "edit" picks atoms or a bond for editing.
+            "edit" picks atoms or a bond for editing.
 
-USAGE
+        USAGE
 
-    edit selection1 [, selection2 [, selection3 [, selection4 [, pkresi [, pkbond ]]]]] 
+            edit selection1 [, selection2 [, selection3 [, selection4 [, pkresi [, pkbond ]]]]]
 
-NOTES
+        NOTES
 
-    If only one selection is provided, an atom is picked.
+            If only one selection is provided, an atom is picked.
 
-    If two selections are provided, the bond between them
-    is picked (by default, if one exists).
+            If two selections are provided, the bond between them
+            is picked (by default, if one exists).
 
-PYMOL API
+        PYMOL API
 
-    cmd.edit(string selection1, string selection2,
-             string selection3, string selection4,
-             int pkresi, int pkbond, int quiet)
+            cmd.edit(string selection1, string selection2,
+                     string selection3, string selection4,
+                     int pkresi, int pkbond, int quiet)
 
-SEE ALSO
+        SEE ALSO
 
-    unpick, remove_picked, cycle_valence, torsion
-    '''
+            unpick, remove_picked, cycle_valence, torsion
+        """
         # preprocess selections
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
@@ -1112,12 +1218,20 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.edit(_self._COb,str(selection1),str(selection2),
-                              str(selection3),str(selection4),
-                              int(pkresi),int(pkbond),int(quiet))
+            r = _cmd.edit(
+                _self._COb,
+                str(selection1),
+                str(selection2),
+                str(selection3),
+                str(selection4),
+                int(pkresi),
+                int(pkbond),
+                int(quiet),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def get_editor_scheme(_self=cmd):
@@ -1126,284 +1240,288 @@ SEE ALSO
             _self.lock(_self)
             r = _cmd.get_editor_scheme(_self._COb)
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def torsion(angle,_self=cmd):
-        '''
-DESCRIPTION
+    def torsion(angle, _self=cmd):
+        """
+        DESCRIPTION
 
-    "torsion" rotates the torsion on the bond currently
-    picked for editing.  The rotated fragment will correspond
-    to the first atom specified when picking the bond (or the
-    nearest atom, if picked using the mouse).
+            "torsion" rotates the torsion on the bond currently
+            picked for editing.  The rotated fragment will correspond
+            to the first atom specified when picking the bond (or the
+            nearest atom, if picked using the mouse).
 
-USAGE
+        USAGE
 
-    torsion angle
+            torsion angle
 
-PYMOL API
+        PYMOL API
 
-    cmd.torsion( float angle )
+            cmd.torsion( float angle )
 
-SEE ALSO
+        SEE ALSO
 
-    edit, unpick, remove_picked, cycle_valence
-    '''
+            edit, unpick, remove_picked, cycle_valence
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.torsion(_self._COb,float(angle))
+            r = _cmd.torsion(_self._COb, float(angle))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def h_fill(quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "h_fill" removes and replaces hydrogens on the atom or bond picked
-    for editing.
+            "h_fill" removes and replaces hydrogens on the atom or bond picked
+            for editing.
 
-USAGE
+        USAGE
 
-    h_fill
+            h_fill
 
-NOTES
+        NOTES
 
-    This is useful for fixing hydrogens after changing bond valences.
+            This is useful for fixing hydrogens after changing bond valences.
 
-PYMOL API
+        PYMOL API
 
-    cmd.h_fill()
+            cmd.h_fill()
 
-SEE ALSO
+        SEE ALSO
 
-    edit, cycle_valence, h_add
-    '''
+            edit, cycle_valence, h_add
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.h_fill(_self._COb,int(quiet))
+            r = _cmd.h_fill(_self._COb, int(quiet))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def h_fix(selection="",quiet=1,_self=cmd):
-        '''
-DESCRIPTION
+    def h_fix(selection="", quiet=1, _self=cmd):
+        """
+        DESCRIPTION
 
-    "h_fix" is an unsupported command that may have something to do
-    with repositioning hydrogen atoms.
-    
-    '''
+            "h_fix" is an unsupported command that may have something to do
+            with repositioning hydrogen atoms.
+
+        """
         # preprocess selection
         selection = selector.process(selection)
 
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.h_fix(_self._COb,str(selection),int(quiet))
+            r = _cmd.h_fix(_self._COb, str(selection), int(quiet))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-
     def h_add(selection="(all)", quiet=1, state=0, legacy=0, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "h_add" adds hydrogens onto a molecule based on current valences.
+            "h_add" adds hydrogens onto a molecule based on current valences.
 
-USAGE
+        USAGE
 
-    h_add [ selection [, state ]]
+            h_add [ selection [, state ]]
 
-ARGUMENTS
+        ARGUMENTS
 
-    selection = string {default: (all)}
+            selection = string {default: (all)}
 
-    state = int {default: 0 (all states)}
+            state = int {default: 0 (all states)}
 
-NOTES
+        NOTES
 
-    Because PDB files do not normally contain bond valences for
-    ligands and other nonstandard components, it may be necessary to
-    manually correct ligand conformations before adding hydrogens.
+            Because PDB files do not normally contain bond valences for
+            ligands and other nonstandard components, it may be necessary to
+            manually correct ligand conformations before adding hydrogens.
 
-SEE ALSO
+        SEE ALSO
 
-    h_fill
-    '''
+            h_fill
+        """
         # preprocess selection
         selection = selector.process(selection)
         #
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.h_add(_self._COb,selection,int(quiet),
-                    int(state) - 1, int(legacy))
+            r = _cmd.h_add(
+                _self._COb, selection, int(quiet), int(state) - 1, int(legacy)
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
+    def sort(object="", _self=cmd):
+        """
+        DESCRIPTION
 
+            "sort" reorders atoms in the structure.  It usually only necessary
+            to run this routine after an "alter" command which has modified the
+            names of atom properties.  Without an argument, sort will resort
+            all atoms in all objects.
 
-    def sort(object="",_self=cmd):
-        '''
-DESCRIPTION
+        USAGE
 
-    "sort" reorders atoms in the structure.  It usually only necessary
-    to run this routine after an "alter" command which has modified the
-    names of atom properties.  Without an argument, sort will resort
-    all atoms in all objects.
+            sort [object]
 
-USAGE
+        PYMOL API
 
-    sort [object]
+            cmd.sort(string object)
 
-PYMOL API
+        SEE ALSO
 
-    cmd.sort(string object)
-
-SEE ALSO
-
-    alter
-    '''
+            alter
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.sort(_self._COb,str(object))
+            r = _cmd.sort(_self._COb, str(object))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
+    def replace(element, geometry, valence, h_fill=1, name="", quiet=1, _self=cmd):
+        """
+        DESCRIPTION
 
-    def replace(element, geometry, valence, h_fill=1, name="",
-		quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+            "replace" replaces the picked atom with a new atom.
 
-    "replace" replaces the picked atom with a new atom.
+        USAGE
 
-USAGE
+            replace element, geometry, valence [, h_fill [, name ]]
 
-    replace element, geometry, valence [, h_fill [, name ]]
+        NOTES
 
-NOTES
+            Immature functionality. See code for details.
 
-    Immature functionality. See code for details.
+        PYMOL API
 
-PYMOL API
+            cmd.replace(string element, int geometry, int valence, int h_fill,
+                        string name)
 
-    cmd.replace(string element, int geometry, int valence, int h_fill,
-                string name)
+        SEE ALSO
 
-SEE ALSO
-
-    remove, attach, fuse, bond, unbond
-    '''
+            remove, attach, fuse, bond, unbond
+        """
         r = DEFAULT_ERROR
         if "pk1" not in _self.get_names("selections"):
             print(" Error: you must first pick an atom to replace.")
             raise pymol.CmdException
         try:
-            if h_fill: # strip off existing hydrogens
-                remove("((neighbor pk1) and elem H)",quiet=quiet)
+            if h_fill:  # strip off existing hydrogens
+                remove("((neighbor pk1) and elem H)", quiet=quiet)
             _self.lock(_self)
-            r = _cmd.replace(_self._COb,str(element),int(geometry),int(valence),str(name),quiet)
+            r = _cmd.replace(
+                _self._COb, str(element), int(geometry), int(valence), str(name), quiet
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def rename(selection="all", force=0, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "rename" creates new atom names which are unique within residues.
+            "rename" creates new atom names which are unique within residues.
 
-USAGE
+        USAGE
 
-    rename selection [, force ]
+            rename selection [, force ]
 
-PYMOL API
+        PYMOL API
 
-    cmd.rename(string selection, int force )
+            cmd.rename(string selection, int force )
 
-SEE ALSO
+        SEE ALSO
 
-    alter
-    '''
+            alter
+        """
         r = DEFAULT_ERROR
-        selection = "("+selector.process(selection)+")"
+        selection = "(" + selector.process(selection) + ")"
         try:
             _self.lock(_self)
-            r = _cmd.rename(_self._COb,str(selection),int(force),int(quiet))
+            r = _cmd.rename(_self._COb, str(selection), int(force), int(quiet))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def dss(selection="(all)", state=0, context=None, preserve=0,
-            quiet=1, _self=cmd):
+    def dss(selection="(all)", state=0, context=None, preserve=0, quiet=1, _self=cmd):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "dss" defines secondary structure based on backbone geometry
+            and hydrogen bonding patterns.
 
-    "dss" defines secondary structure based on backbone geometry
-    and hydrogen bonding patterns.
-    
-USAGE
+        USAGE
 
-    dss selection, state
+            dss selection, state
 
-ARGUMENT
+        ARGUMENT
 
-    selection = string: {default: (all)}
+            selection = string: {default: (all)}
 
-    state = integer: {default: 0 -- all states}
-    
-EXAMPLE
+            state = integer: {default: 0 -- all states}
 
-    dss
+        EXAMPLE
 
-NOTES
+            dss
 
-    With PyMOL, heavy emphasis is placed on cartoon aesthetics, and so
-    both hydrogen bonding patterns and backbone geometry are used in
-    the assignment process.  Depending upon the local context, helix
-    and strand assignments are made based on geometry, hydrogen
-    bonding, or both.
+        NOTES
 
-    This command will generate results which differ slightly from DSSP
-    and other programs.  Most deviations occur in borderline or
-    transition regions.  Generally speaking, PyMOL is more strict, thus
-    assigning fewer helix/sheet residues, except for partially
-    distorted helices, which PyMOL tends to tolerate.
-    
-    WARNING: This algorithm has not yet been rigorously validated.
+            With PyMOL, heavy emphasis is placed on cartoon aesthetics, and so
+            both hydrogen bonding patterns and backbone geometry are used in
+            the assignment process.  Depending upon the local context, helix
+            and strand assignments are made based on geometry, hydrogen
+            bonding, or both.
 
-    If you dislike one or more of the assignments made by dss, you can
-    use the alter command to make changes (followed by "rebuild").
-    For example:
-    
-        alter 123-125/, ss=\'L\'
-        alter pk1, ss=\'S\'
-        alter 90/, ss=\'H\'
-        rebuild
+            This command will generate results which differ slightly from DSSP
+            and other programs.  Most deviations occur in borderline or
+            transition regions.  Generally speaking, PyMOL is more strict, thus
+            assigning fewer helix/sheet residues, except for partially
+            distorted helices, which PyMOL tends to tolerate.
 
-PYMOL API
+            WARNING: This algorithm has not yet been rigorously validated.
 
-    cmd.dss(string selection, int state)
-        
-        '''
+            If you dislike one or more of the assignments made by dss, you can
+            use the alter command to make changes (followed by "rebuild").
+            For example:
+
+                alter 123-125/, ss=\'L\'
+                alter pk1, ss=\'S\'
+                alter 90/, ss=\'H\'
+                rebuild
+
+        PYMOL API
+
+            cmd.dss(string selection, int state)
+
+        """
         # preprocess selections
         selection = selector.process(selection)
         r = DEFAULT_ERROR
@@ -1414,155 +1532,162 @@ PYMOL API
         #
         try:
             _self.lock(_self)
-            r = _cmd.dss(_self._COb,str(selection),int(state)-1,str(context),
-                            int(preserve),int(quiet))
+            r = _cmd.dss(
+                _self._COb,
+                str(selection),
+                int(state) - 1,
+                str(context),
+                int(preserve),
+                int(quiet),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def alter(selection, expression, quiet=1, space=None, _self=cmd):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "alter" changes atomic properties using an expression evaluated
+            within a temporary namespace for each atom.
 
-    "alter" changes atomic properties using an expression evaluated
-    within a temporary namespace for each atom.
+        USAGE
 
-USAGE
+            alter selection, expression
 
-    alter selection, expression
+        EXAMPLES
 
-EXAMPLES
+            alter chain A, chain='B'
+            alter all, resi=str(int(resi)+100)
+            sort
 
-    alter chain A, chain='B'
-    alter all, resi=str(int(resi)+100)
-    sort
+        NOTES
 
-NOTES
+            Symbols defined (* = read only):
 
-    Symbols defined (* = read only):
+            name, resn, resi, resv, chain, segi, elem, alt, q, b, vdw, type,
+            partial_charge, formal_charge, elec_radius, text_type, label,
+            numeric_type, model*, state*, index*, ID, rank, color, ss,
+            cartoon, flags
 
-    name, resn, resi, resv, chain, segi, elem, alt, q, b, vdw, type,
-    partial_charge, formal_charge, elec_radius, text_type, label, 
-    numeric_type, model*, state*, index*, ID, rank, color, ss,
-    cartoon, flags
+            All strings must be explicitly quoted.  This operation typically
+            takes several seconds per thousand atoms altered.
 
-    All strings must be explicitly quoted.  This operation typically
-    takes several seconds per thousand atoms altered.  
+            You may need to issue a "rebuild" in order to update associated
+            representations.
 
-    You may need to issue a "rebuild" in order to update associated
-    representations.
-    
-    WARNING: You should always issue a "sort" command on an object
-    after modifying any property which might affect canonical atom
-    ordering (names, chains, etc.).  Failure to do so will confound
-    subsequent "create" and "byres" operations.  
+            WARNING: You should always issue a "sort" command on an object
+            after modifying any property which might affect canonical atom
+            ordering (names, chains, etc.).  Failure to do so will confound
+            subsequent "create" and "byres" operations.
 
-SEE ALSO
+        SEE ALSO
 
-    alter_state, iterate, iterate_state, sort
-        '''
+            alter_state, iterate, iterate_state, sort
+        """
         expression, space = _iterate_prepare_args(expression, space, _self)
 
         # preprocess selections
         selection = selector.process(selection)
 
         with _self.lockcm:
-            return _cmd.alter(_self._COb, selection, expression, False,
-                              int(quiet), dict(space))
+            return _cmd.alter(
+                _self._COb, selection, expression, False, int(quiet), dict(space)
+            )
 
     def alter_list(object, expr_list, quiet=1, space=None, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "alter_list" is an unsupported feature.
-    
-        '''
+            "alter_list" is an unsupported feature.
+
+        """
         if space is None:
             space = _self._pymol.__dict__
 
         with _self.lockcm:
-            return _cmd.alter_list(_self._COb, object, list(expr_list),
-                                   int(quiet), dict(space))
-
+            return _cmd.alter_list(
+                _self._COb, object, list(expr_list), int(quiet), dict(space)
+            )
 
     def iterate(selection, expression, quiet=1, space=None, _self=cmd):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "iterate" iterates over an expression within a temporary namespace
+            for each atom.
 
-    "iterate" iterates over an expression within a temporary namespace
-    for each atom.
+        USAGE
 
-USAGE
+            iterate selection, expression
 
-    iterate selection, expression
+        EXAMPLES
 
-EXAMPLES
+            stored.net_charge = 0
+            iterate all, stored.net_charge = stored.net_charge + partial_charge
+            print(stored.net_charge)
 
-    stored.net_charge = 0
-    iterate all, stored.net_charge = stored.net_charge + partial_charge
-    print(stored.net_charge)
-    
-    stored.names = []
-    iterate all, stored.names.append(name)
-    print(stored.names)
-    
-    # Using a Python callback (new in PyMOL 2.5)
-    names = []
-    cmd.iterate("all", lambda atom: names.append(atom.name))
-    print(names)
+            stored.names = []
+            iterate all, stored.names.append(name)
+            print(stored.names)
 
-NOTES
+            # Using a Python callback (new in PyMOL 2.5)
+            names = []
+            cmd.iterate("all", lambda atom: names.append(atom.name))
+            print(names)
 
-    Unlike with the "alter" command, atomic properties cannot be
-    altered.  Other than that, the commands are identical.
+        NOTES
 
-SEE ALSO
+            Unlike with the "alter" command, atomic properties cannot be
+            altered.  Other than that, the commands are identical.
 
-    iterate_state, alter, alter_state
-        '''
+        SEE ALSO
+
+            iterate_state, alter, alter_state
+        """
         expression, space = _iterate_prepare_args(expression, space, _self)
 
         # preprocess selection
         selection = selector.process(selection)
 
         with _self.lockcm:
-            return _cmd.alter(_self._COb, selection, expression, True,
-                              int(quiet), dict(space))
+            return _cmd.alter(
+                _self._COb, selection, expression, True, int(quiet), dict(space)
+            )
 
-    def alter_state(state, selection, expression, quiet=1,
-                    space=None, atomic=1, _self=cmd):
+    def alter_state(
+        state, selection, expression, quiet=1, space=None, atomic=1, _self=cmd
+    ):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "alter_state" changes atom coordinates and flags over a particular
+            state and selection using the Python evaluator with a temporary
+            namespace for each atomic coordinate.
 
-    "alter_state" changes atom coordinates and flags over a particular
-    state and selection using the Python evaluator with a temporary
-    namespace for each atomic coordinate.
+        USAGE
 
-USAGE
+            alter_state state, selection, expression
 
-    alter_state state, selection, expression
+        EXAMPLES
 
-EXAMPLES
+            alter_state 1, all, x=x+5
+            rebuild
 
-    alter_state 1, all, x=x+5
-    rebuild
-    
-NOTES
+        NOTES
 
-    By default, most of the symbols from "alter" are available for use
-    on a read-only basis.  
+            By default, most of the symbols from "alter" are available for use
+            on a read-only basis.
 
-    It is usually necessary to "rebuild" representations once your
-    alterations are complete.
-    
-SEE ALSO
+            It is usually necessary to "rebuild" representations once your
+            alterations are complete.
 
-    iterate_state, alter, iterate
-        '''
+        SEE ALSO
+
+            iterate_state, alter, iterate
+        """
         expression, space = _iterate_prepare_args(expression, space, _self)
 
         # preprocess selection
@@ -1571,102 +1696,120 @@ SEE ALSO
         state = int(state)
 
         with _self.lockcm:
-            return _cmd.alter_state(_self._COb,
-                                    int(state) - 1, selection, expression,
-                                    False, int(quiet), dict(space))
+            return _cmd.alter_state(
+                _self._COb,
+                int(state) - 1,
+                selection,
+                expression,
+                False,
+                int(quiet),
+                dict(space),
+            )
 
-    def iterate_state(state, selection, expression, quiet=1,
-                      space=None, atomic=1, _self=cmd):
+    def iterate_state(
+        state, selection, expression, quiet=1, space=None, atomic=1, _self=cmd
+    ):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "iterate_state" is to "alter_state" as "iterate" is to "alter"
 
-    "iterate_state" is to "alter_state" as "iterate" is to "alter"
+        USAGE
 
-USAGE
+            iterate_state state, selection, expression
 
-    iterate_state state, selection, expression
+        EXAMPLES
 
-EXAMPLES
+            stored.sum_x = 0.0
+            iterate_state 1, all, stored.sum_x = stored.sum_x + x
+            print(stored.sum_x)
 
-    stored.sum_x = 0.0
-    iterate_state 1, all, stored.sum_x = stored.sum_x + x
-    print(stored.sum_x)
-    
-SEE ALSO
+        SEE ALSO
 
-    iterate, alter, alter_state
-        '''
+            iterate, alter, alter_state
+        """
         expression, space = _iterate_prepare_args(expression, space, _self)
 
         # preprocess selection
         selection = selector.process(selection)
 
         with _self.lockcm:
-            return _cmd.alter_state(_self._COb,
-                                    int(state) - 1, selection, expression,
-                                    True, int(quiet), dict(space))
+            return _cmd.alter_state(
+                _self._COb,
+                int(state) - 1,
+                selection,
+                expression,
+                True,
+                int(quiet),
+                dict(space),
+            )
 
-    def translate(vector=[0.0,0.0,0.0], selection="all", state=-1,
-                  camera=1, object=None, object_mode=0, _self=cmd):
+    def translate(
+        vector=[0.0, 0.0, 0.0],
+        selection="all",
+        state=-1,
+        camera=1,
+        object=None,
+        object_mode=0,
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "translate" translates the atomic coordinates of atoms in a
+            selection.  Alternatively, is modifies the matrix associated with
+            a particular object or object-state.
 
-    "translate" translates the atomic coordinates of atoms in a
-    selection.  Alternatively, is modifies the matrix associated with
-    a particular object or object-state.
+        USAGE
 
-USAGE
+            translate vector [, selection [, state [, camera [, object ]]]]
 
-    translate vector [, selection [, state [, camera [, object ]]]]
+        ARGUMENTS
 
-ARGUMENTS
+            vector = float vector: translation vector
 
-    vector = float vector: translation vector
+            selection = string: atoms whose coordinates should be modified {default: all}
 
-    selection = string: atoms whose coordinates should be modified {default: all}
+            state > 0: only the indicated state is modified
 
-    state > 0: only the indicated state is modified
+            state = 0: all states are modified
 
-    state = 0: all states are modified
+            state = -1: only current state is modified {default}
 
-    state = -1: only current state is modified {default}
+            camera = 0 or 1: is the vector in camera coordinates? {default: 1 (yes)}
 
-    camera = 0 or 1: is the vector in camera coordinates? {default: 1 (yes)}
-
-    object = string: object name (only if rotating object matrix) {default: None}
+            object = string: object name (only if rotating object matrix) {default: None}
 
 
-PYMOL API
+        PYMOL API
 
-    cmd.translate(list vector, string selection, int state, int
-                  camera, string object)
+            cmd.translate(list vector, string selection, int state, int
+                          camera, string object)
 
-EXAMPLES
+        EXAMPLES
 
-    translate [1,0,0], name CA
+            translate [1,0,0], name CA
 
-NOTES
+        NOTES
 
-    "translate" can be used to translate the atomic coordinates of a
-    molecular object.  Behavior differs depending on whether or not
-    the "object" parameter is specified.
+            "translate" can be used to translate the atomic coordinates of a
+            molecular object.  Behavior differs depending on whether or not
+            the "object" parameter is specified.
 
-    If object is None, then translate translates atomic coordinates
-    according to the vector provided for the selection and in the state
-    provided.  All representation geometries will need to be
-    regenerated to reflect the new atomic coordinates.
+            If object is None, then translate translates atomic coordinates
+            according to the vector provided for the selection and in the state
+            provided.  All representation geometries will need to be
+            regenerated to reflect the new atomic coordinates.
 
-    If object is set to an object name, then selection is ignored and
-    instead of translating the atomic coordinates, the object\'s
-    overall representation display matrix is modified.  This option is
-    for use in animations only.
+            If object is set to an object name, then selection is ignored and
+            instead of translating the atomic coordinates, the object\'s
+            overall representation display matrix is modified.  This option is
+            for use in animations only.
 
-    The "camera" option controls whether the camera or the model\'s
-    axes are used to interpret the translation vector.
+            The "camera" option controls whether the camera or the model\'s
+            axes are used to interpret the translation vector.
 
-        '''
+        """
         r = DEFAULT_ERROR
         object_mode = int(object_mode)
         if _self.is_string(vector):
@@ -1675,329 +1818,427 @@ NOTES
             print("Error: bad vector.")
             raise pymol.CmdException
         else:
-            vector = [float(vector[0]),float(vector[1]),float(vector[2])]
+            vector = [float(vector[0]), float(vector[1]), float(vector[2])]
             selection = selector.process(selection)
-            camera=int(camera)
+            camera = int(camera)
             view = _self.get_view(0)
             if camera:
-                mat = [ view[0:3],view[3:6],view[6:9] ]
-                shift = cpv.transform(mat,vector)
+                mat = [view[0:3], view[3:6], view[6:9]]
+                shift = cpv.transform(mat, vector)
             else:
                 shift = vector
             if object is None:
-                ttt = [1.0,0.0,0.0,shift[0],
-                         0.0,1.0,0.0,shift[1],
-                         0.0,0.0,1.0,shift[2],
-                         0.0,0.0,0.0,1.0]
-                r=_self.transform_selection(selection,ttt,state=state)
-            elif object_mode==0: # update the TTT display matrix
+                ttt = [
+                    1.0,
+                    0.0,
+                    0.0,
+                    shift[0],
+                    0.0,
+                    1.0,
+                    0.0,
+                    shift[1],
+                    0.0,
+                    0.0,
+                    1.0,
+                    shift[2],
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                ]
+                r = _self.transform_selection(selection, ttt, state=state)
+            elif object_mode == 0:  # update the TTT display matrix
                 try:
                     _self.lock(_self)
-                    r=_cmd.translate_object_ttt(_self._COb,str(object),shift)
+                    r = _cmd.translate_object_ttt(_self._COb, str(object), shift)
                 finally:
-                    _self.unlock(r,_self)
-            elif object_mode==1: # either updates TTT or coordinates & history
-                     # depending on the current matrix mode
-                matrix = [1.0, 0.0, 0.0, shift[0],
-                          0.0, 1.0, 0.0, shift[1],
-                          0.0, 0.0, 1.0, shift[2],
-                          0.0, 0.0, 0.0, 1.0]
+                    _self.unlock(r, _self)
+            elif object_mode == 1:  # either updates TTT or coordinates & history
+                # depending on the current matrix mode
+                matrix = [
+                    1.0,
+                    0.0,
+                    0.0,
+                    shift[0],
+                    0.0,
+                    1.0,
+                    0.0,
+                    shift[1],
+                    0.0,
+                    0.0,
+                    1.0,
+                    shift[2],
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                ]
                 try:
                     _self.lock(_self)
-                    r = _cmd.transform_object(_self._COb,str(object),int(state)-1,
-                                                      list(matrix),0,'',1)
+                    r = _cmd.transform_object(
+                        _self._COb, str(object), int(state) - 1, list(matrix), 0, "", 1
+                    )
                 finally:
-                    _self.unlock(r,_self)
+                    _self.unlock(r, _self)
             else:
                 print(" Error: translate: unrecognized object_mode")
-        if _self._raising(r,_self): raise pymol.CmdException
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def rotate(axis='x', angle=0.0, selection="all", state=-1, camera=1,
-               object=None, origin=None, object_mode=0, _self=cmd):
+    def rotate(
+        axis="x",
+        angle=0.0,
+        selection="all",
+        state=-1,
+        camera=1,
+        object=None,
+        origin=None,
+        object_mode=0,
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "rotate" rotates the atomic coordinates of atoms in a selection
+            about an axis.  Alternatively, it modifies the matrix associated
+            with a particular object or object state.
 
-    "rotate" rotates the atomic coordinates of atoms in a selection
-    about an axis.  Alternatively, it modifies the matrix associated
-    with a particular object or object state.
+        USAGE
 
-USAGE
+            rotate axis, angle [, selection [, state [, camera [, object
+                [, origin ]]]]]
 
-    rotate axis, angle [, selection [, state [, camera [, object 
-        [, origin ]]]]]
+        ARGUMENTS
 
-ARGUMENTS
+            axis = x, y, z, or float vector: axis about which to rotate
 
-    axis = x, y, z, or float vector: axis about which to rotate
+            angle = float: degrees of rotation
 
-    angle = float: degrees of rotation
+            selection = string: atoms whose coordinates should be modified {default: all}
 
-    selection = string: atoms whose coordinates should be modified {default: all}
-    
-    state > 0: only the indicated state is modified
+            state > 0: only the indicated state is modified
 
-    state = 0: all states are modified
+            state = 0: all states are modified
 
-    state = -1: only the current state is modified {default}
+            state = -1: only the current state is modified {default}
 
-    camera = 0 or 1: is the axis specific in camera coordinates? {default: 1}
+            camera = 0 or 1: is the axis specific in camera coordinates? {default: 1}
 
-    object = string: object name (only if rotating object matrix) {default: None}
+            object = string: object name (only if rotating object matrix) {default: None}
 
-    origin = float vector: origin of rotateion {default: None}
-        
-EXAMPLES
+            origin = float vector: origin of rotateion {default: None}
 
-    rotate x, 45, pept
+        EXAMPLES
 
-    rotate [1,1,1], 10, chain A
+            rotate x, 45, pept
 
-NOTES
+            rotate [1,1,1], 10, chain A
 
-    Behavior differs depending on whether or not the "object"
-    parameter is specified.
+        NOTES
 
-    If object is None, then the atomic coordinates are modified
-    directly, and all representation geometries will need to be
-    regenerated to reflect the new atomic coordinates.
+            Behavior differs depending on whether or not the "object"
+            parameter is specified.
 
-    If object is set to an object name, then the selection field is
-    ignored and instead of translating the atomic coordinates, the
-    object matrix is modified.  This option is only intended for use
-    in animations and is not yet fully supported.
+            If object is None, then the atomic coordinates are modified
+            directly, and all representation geometries will need to be
+            regenerated to reflect the new atomic coordinates.
 
-PYMOL API
+            If object is set to an object name, then the selection field is
+            ignored and instead of translating the atomic coordinates, the
+            object matrix is modified.  This option is only intended for use
+            in animations and is not yet fully supported.
 
-    cmd.rotate(list-or-string axis, float angle, string selection, 
-               int state, int camera, string object)
+        PYMOL API
 
-        '''
+            cmd.rotate(list-or-string axis, float angle, string selection,
+                       int state, int camera, string object)
+
+        """
         r = DEFAULT_ERROR
         object_mode = int(object_mode)
         have_origin = 0
-        if axis in ['x','X']:
-            axis = [1.0,0.0,0.0]
-        elif axis in ['y','Y']:
-            axis = [0.0,1.0,0.0]
-        elif axis in ['z','Z']:
-            axis = [0.0,0.0,1.0]
+        if axis in ["x", "X"]:
+            axis = [1.0, 0.0, 0.0]
+        elif axis in ["y", "Y"]:
+            axis = [0.0, 1.0, 0.0]
+        elif axis in ["z", "Z"]:
+            axis = [0.0, 0.0, 1.0]
         else:
             axis = safe_list_eval(str(axis))
         if not _self.is_list(axis):
             print("Error: bad axis.")
             raise pymol.CmdException
         else:
-            axis = [float(axis[0]),float(axis[1]),float(axis[2])]
-            angle = math.pi*float(angle)/180.0
+            axis = [float(axis[0]), float(axis[1]), float(axis[2])]
+            angle = math.pi * float(angle) / 180.0
             view = _self.get_view(0)
             if origin is not None:
                 have_origin = 1
                 if _self.is_string(origin):
-                    if ',' in origin:
-                        origin = safe_list_eval(origin) # should be a sequence of floats
+                    if "," in origin:
+                        origin = safe_list_eval(
+                            origin
+                        )  # should be a sequence of floats
                     else:
                         _self.lock(_self)
                         try:
-                            origin = _cmd.get_origin(_self._COb,str(origin))
+                            origin = _cmd.get_origin(_self._COb, str(origin))
                         finally:
                             unlock(-1)
-                origin = [float(origin[0]),float(origin[1]),float(origin[2])]
+                origin = [float(origin[0]), float(origin[1]), float(origin[2])]
             else:
-                origin = [view[12],view[13],view[14]]
-            camera=int(camera)
+                origin = [view[12], view[13], view[14]]
+            camera = int(camera)
             if camera:
-                vmat = [ view[0:3],view[3:6],view[6:9] ]
-                axis = cpv.transform(vmat,axis)
-            mat = cpv.rotation_matrix(angle,axis)
+                vmat = [view[0:3], view[3:6], view[6:9]]
+                axis = cpv.transform(vmat, axis)
+            mat = cpv.rotation_matrix(angle, axis)
             if object is None:
-                ttt = [mat[0][0],mat[0][1],mat[0][2],origin[0],
-                       mat[1][0],mat[1][1],mat[1][2],origin[1],
-                       mat[2][0],mat[2][1],mat[2][2],origin[2],
-                       -origin[0],-origin[1],-origin[2], 1.0]
-                r=_self.transform_selection(selection,ttt,state=state)
-            elif object_mode==0:
+                ttt = [
+                    mat[0][0],
+                    mat[0][1],
+                    mat[0][2],
+                    origin[0],
+                    mat[1][0],
+                    mat[1][1],
+                    mat[1][2],
+                    origin[1],
+                    mat[2][0],
+                    mat[2][1],
+                    mat[2][2],
+                    origin[2],
+                    -origin[0],
+                    -origin[1],
+                    -origin[2],
+                    1.0,
+                ]
+                r = _self.transform_selection(selection, ttt, state=state)
+            elif object_mode == 0:
                 _self.lock(_self)
                 try:
                     if not have_origin:
-                        origin = _cmd.get_origin(_self._COb,str(object))
+                        origin = _cmd.get_origin(_self._COb, str(object))
                     if is_sequence(origin):
-                        ttt = [mat[0][0],mat[0][1],mat[0][2], origin[0],
-                               mat[1][0],mat[1][1],mat[1][2], origin[1],
-                               mat[2][0],mat[2][1],mat[2][2], origin[2],
-                               -origin[0], -origin[1], -origin[2], 1.0]
-                        r=_cmd.combine_object_ttt(_self._COb,str(object),ttt)
+                        ttt = [
+                            mat[0][0],
+                            mat[0][1],
+                            mat[0][2],
+                            origin[0],
+                            mat[1][0],
+                            mat[1][1],
+                            mat[1][2],
+                            origin[1],
+                            mat[2][0],
+                            mat[2][1],
+                            mat[2][2],
+                            origin[2],
+                            -origin[0],
+                            -origin[1],
+                            -origin[2],
+                            1.0,
+                        ]
+                        r = _cmd.combine_object_ttt(_self._COb, str(object), ttt)
                 finally:
-                    _self.unlock(r,_self)
+                    _self.unlock(r, _self)
                 if not is_sequence(origin):
-                    print(" Error: rotate: unknown object '%s'."%object)
-                    if _self._raising(r,_self):
+                    print(" Error: rotate: unknown object '%s'." % object)
+                    if _self._raising(r, _self):
                         raise pymol.CmdException
-            elif object_mode==1:
+            elif object_mode == 1:
 
-                matrix = [mat[0][0],mat[0][1],mat[0][2], origin[0],
-                          mat[1][0],mat[1][1],mat[1][2], origin[1],
-                          mat[2][0],mat[2][1],mat[2][2], origin[2],
-                          -origin[0],-origin[1],-origin[2], 1.0]
+                matrix = [
+                    mat[0][0],
+                    mat[0][1],
+                    mat[0][2],
+                    origin[0],
+                    mat[1][0],
+                    mat[1][1],
+                    mat[1][2],
+                    origin[1],
+                    mat[2][0],
+                    mat[2][1],
+                    mat[2][2],
+                    origin[2],
+                    -origin[0],
+                    -origin[1],
+                    -origin[2],
+                    1.0,
+                ]
                 try:
                     _self.lock(_self)
-                    r = _cmd.transform_object(_self._COb,str(object),int(state)-1,
-                                                      list(matrix),0,'',0)
+                    r = _cmd.transform_object(
+                        _self._COb, str(object), int(state) - 1, list(matrix), 0, "", 0
+                    )
                 finally:
-                    _self.unlock(r,_self)
+                    _self.unlock(r, _self)
 
             else:
                 print(" Error: rotate: unrecognized object_mode")
-        if _self._raising(r,_self): raise pymol.CmdException
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def look_at(target_obj: str, mobile_obj: str = "_Camera", *, _self=cmd):
         """
-DESCRIPTION
+        DESCRIPTION
 
-    "look_at" modifies a rotation of an object (or view) so that its forward (z axis)
-    faces the center of a target object.
+            "look_at" modifies a rotation of an object (or view) so that its forward (z axis)
+            faces the center of a target object.
 
-ARGUMENTS
+        ARGUMENTS
 
-    mobile_obj the object to rotate
+            mobile_obj the object to rotate
 
-    target_obj the object to look at
+            target_obj the object to look at
 
-USAGE
+        USAGE
 
-    look_at target_obj
+            look_at target_obj
 
-PYMOL API
+        PYMOL API
 
-    cmd.look_at(string target_obj)
+            cmd.look_at(string target_obj)
 
-    """
+        """
         with _self.lockcm:
             return _cmd.look_at(_self._COb, target_obj, mobile_obj)
 
+    def move_on_curve(mobile_obj: str, curve_obj: str, t: float, *, _self=cmd) -> None:
+        """
+        DESCRIPTION
 
-    def move_on_curve(mobile_obj: str,
-                      curve_obj: str,
-                      t: float,
-                      *,
-                      _self=cmd) -> None:
-        '''
-DESCRIPTION
+            "move_on_curve" moves an object along a curve.
 
-    "move_on_curve" moves an object along a curve.
+        ARGUMENTS
 
-ARGUMENTS
+            mobile_obj the object to move
+            curve_obj the curve to move the object along
 
-    mobile_obj the object to move
-    curve_obj the curve to move the object along
+        USAGE
 
-USAGE
+            move_on_curve mobile_obj, curve_obj, t
 
-    move_on_curve mobile_obj, curve_obj, t
+        PYMOL API
 
-PYMOL API
-
-    cmd.move_on_curve(string mobile_obj, string curve_obj, float t)
-        '''
+            cmd.move_on_curve(string mobile_obj, string curve_obj, float t)
+        """
         with _self.lockcm:
             return _cmd.move_on_curve(_self._COb, mobile_obj, curve_obj, t)
 
-
     def set_title(object, state, text, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "set_title" attaches a text string to the state of a particular
-    object which can be displayed next to the object name when that
-    state is active.  This is useful for display the energies of a set
-    of conformers.
+            "set_title" attaches a text string to the state of a particular
+            object which can be displayed next to the object name when that
+            state is active.  This is useful for display the energies of a set
+            of conformers.
 
-USAGE
+        USAGE
 
-    set_title object, state, text
+            set_title object, state, text
 
-PYMOL API
+        PYMOL API
 
-    cmd.set_title(string object, int state, string text)
+            cmd.set_title(string object, int state, string text)
 
-    '''
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.set_title(_self._COb,str(object),int(state)-1,str(text))
+            r = _cmd.set_title(_self._COb, str(object), int(state) - 1, str(text))
         finally:
-            _self.unlock(r,_self)
+            _self.unlock(r, _self)
 
-    def set_object_ttt(object, ttt, state=0, quiet=1, homogenous=0,
-                       _self=cmd):
-        '''
-DESCRIPTION
+    def set_object_ttt(object, ttt, state=0, quiet=1, homogenous=0, _self=cmd):
+        """
+        DESCRIPTION
 
-    "set_object_ttt" is an API-only function which sets the TTT matrix
-    (view transformation) for an object.
+            "set_object_ttt" is an API-only function which sets the TTT matrix
+            (view transformation) for an object.
 
-    When a movie is defined and the object has key frames for object
-    motions, then the key frames take priority and update the TTT matrix
-    while the movie is playing.
+            When a movie is defined and the object has key frames for object
+            motions, then the key frames take priority and update the TTT matrix
+            while the movie is playing.
 
-    Unlike a homogenous matrix where the last row is always [0,0,0,1],
-    a TTT matrix may have a pre-translation vector in the last row.
+            Unlike a homogenous matrix where the last row is always [0,0,0,1],
+            a TTT matrix may have a pre-translation vector in the last row.
 
-ARGUMENTS
+        ARGUMENTS
 
-    object = str: object name
+            object = str: object name
 
-    ttt = list of 16 floats: TTT matrix
+            ttt = list of 16 floats: TTT matrix
 
-    state = int: UNUSED, TTT matrices are not state specific
+            state = int: UNUSED, TTT matrices are not state specific
 
-    homogenous = 0/1: NAME IS MISLEADING AND IMPLEMENTATION
-    POSSIBLY WRONG! If 1, then transpose the input matrix and
-    set the last column (post-translation) to [0,0,0,1].
+            homogenous = 0/1: NAME IS MISLEADING AND IMPLEMENTATION
+            POSSIBLY WRONG! If 1, then transpose the input matrix and
+            set the last column (post-translation) to [0,0,0,1].
 
-SEE ALSO
+        SEE ALSO
 
-    cmd.transform_object, cmd.matrix_reset
-        '''
+            cmd.transform_object, cmd.matrix_reset
+        """
         r = None
         if _self.is_string(ttt):
             ttt = safe_list_eval(str(ttt))
-        if homogenous: # passed a homogenous matrix, so do the best we can
-            ttt = [ # NOTE: this appears to be incorrect...
-                ttt[ 0], ttt[ 4], ttt[ 8], 0.0,
-                ttt[ 1], ttt[ 5], ttt[ 9], 0.0,
-                ttt[ 2], ttt[ 6], ttt[10], 0.0,
-                ttt[ 3], ttt[ 7], ttt[11], 1.0]
+        if homogenous:  # passed a homogenous matrix, so do the best we can
+            ttt = [  # NOTE: this appears to be incorrect...
+                ttt[0],
+                ttt[4],
+                ttt[8],
+                0.0,
+                ttt[1],
+                ttt[5],
+                ttt[9],
+                0.0,
+                ttt[2],
+                ttt[6],
+                ttt[10],
+                0.0,
+                ttt[3],
+                ttt[7],
+                ttt[11],
+                1.0,
+            ]
         try:
             _self.lock(_self)
-            r = _cmd.set_object_ttt(_self._COb,str(object),
-				    (float(ttt[ 0]),
-				     float(ttt[ 1]),
-				     float(ttt[ 2]),
-				     float(ttt[ 3]),
-				     float(ttt[ 4]),
-				     float(ttt[ 5]),
-				     float(ttt[ 6]),
-				     float(ttt[ 7]),
-				     float(ttt[ 8]),
-				     float(ttt[ 9]),
-				     float(ttt[10]),
-				     float(ttt[11]),
-				     float(ttt[12]),
-				     float(ttt[13]),
-				     float(ttt[14]),
-				     float(ttt[15])),
-				    int(state)-1,int(quiet))
+            r = _cmd.set_object_ttt(
+                _self._COb,
+                str(object),
+                (
+                    float(ttt[0]),
+                    float(ttt[1]),
+                    float(ttt[2]),
+                    float(ttt[3]),
+                    float(ttt[4]),
+                    float(ttt[5]),
+                    float(ttt[6]),
+                    float(ttt[7]),
+                    float(ttt[8]),
+                    float(ttt[9]),
+                    float(ttt[10]),
+                    float(ttt[11]),
+                    float(ttt[12]),
+                    float(ttt[13]),
+                    float(ttt[14]),
+                    float(ttt[15]),
+                ),
+                int(state) - 1,
+                int(quiet),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def transform_selection(selection, matrix, state=-1, log=0,
-                            homogenous=0, transpose=0, _self=cmd):
-        '''
+    def transform_selection(
+        selection, matrix, state=-1, log=0, homogenous=0, transpose=0, _self=cmd
+    ):
+        """
 
 DESCRIPTION
 
@@ -2038,266 +2279,358 @@ NOTES
     y1 = m4*(x0+m12) + m5*(x1+m13) +  m6*(x2+m14) + m7 \\
     y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11 
 
-        '''
+        """
         r = DEFAULT_ERROR
         selection = selector.process(selection)
         if int(transpose):
-            matrix = [ matrix[0], matrix[4], matrix[8 ], matrix[12],
-                       matrix[1], matrix[5], matrix[9 ], matrix[13],
-                       matrix[2], matrix[6], matrix[10], matrix[14],
-                       matrix[3], matrix[7], matrix[11], matrix[15]]
+            matrix = [
+                matrix[0],
+                matrix[4],
+                matrix[8],
+                matrix[12],
+                matrix[1],
+                matrix[5],
+                matrix[9],
+                matrix[13],
+                matrix[2],
+                matrix[6],
+                matrix[10],
+                matrix[14],
+                matrix[3],
+                matrix[7],
+                matrix[11],
+                matrix[15],
+            ]
         try:
             _self.lock(_self)
-            r = _cmd.transform_selection(_self._COb,str(selection),int(state)-1,
-                                                  list(matrix),int(log),int(homogenous))
+            r = _cmd.transform_selection(
+                _self._COb,
+                str(selection),
+                int(state) - 1,
+                list(matrix),
+                int(log),
+                int(homogenous),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
-
-    def transform_object(name, matrix, state=-1, log=0, selection='',
-                         homogenous=0, transpose=0, _self=cmd):
-        '''
-DESCRIPTION
-
-    "transform_object" in an API-only function which applies a
-    transformation matrix to an object.
-
-    If setting "matrix_mode" > 0 and selection is empty, then this
-    function operates on the TTT (movie) matrix.
-
-ARGUMENTS
-
-    name = str: object name
-
-    matrix = list of 16 floats: transformation matrix
-
-    state = int: object state {default: -1}
-
-    log = 0/1: write action to log file (only applies if object is a
-    molecular object) {default: 0}
-
-    selection = str: atom selection (only applies to molecular objects,
-    if empty then the whole object state is transformed).
-
-    homogenous = 0/1: if 0, then matrix[12:15] may contain a pre-translation,
-    otherwise those values must be zeros (see also cmd.transform_selection)
-    {default: 0}
-
-    transpose = 0/1: matrix is 0=row-major, 1=column-major {default: 0}
-
-SEE ALSO
-
-    cmd.transform_selection, cmd.set_object_ttt, cmd.matrix_reset
-        '''
-        r = DEFAULT_ERROR
-        if int(transpose):
-            matrix = [ matrix[0], matrix[4], matrix[8 ], matrix[12],
-                          matrix[1], matrix[5], matrix[9 ], matrix[13],
-                          matrix[2], matrix[6], matrix[10], matrix[14],
-                          matrix[3], matrix[7], matrix[11], matrix[15]]
-        try:
-            _self.lock(_self)
-            r = _cmd.transform_object(_self._COb,str(name),int(state)-1,
-                                              list(matrix),int(log),
-                                              str(selection),
-                                              int(homogenous))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
-
-    def matrix_copy(source_name='', target_name='',
-                    source_mode=-1, target_mode=-1,
-                    source_state=1, target_state=1,
-                    target_undo=1, log=0, quiet=1,
-                    _self=cmd):
-        '''
-
-DESCRIPTION
-        
-    "matrix_copy" copies a transformation matrix from one object to
-    another.
-
-USAGE
-
-    matrix_copy source_name, target_name
-
-NOTES
-
-    This command is often used after a protein structure alignment to
-    bring other related objects into the same frame of reference.
-
-SEE ALSO
-
-    matrix_reset, align, fit, pair_fit
-'''
-
-        r = DEFAULT_ERROR
-        if source_name is None:
-            source_name = ''
-        target_name = str(target_name).strip()
-        source_name = str(source_name).strip()
-        if (target_name == '' and source_name != ''): # tentative -- create a new command instead?
-            mat = _self.get_object_matrix(source_name,source_state)
-            view = _self.get_view()
-            new_view = (
-                mat[ 0]*view[ 0] + mat[ 4]*view[ 3] + mat[ 8]*view[ 6],
-                mat[ 0]*view[ 1] + mat[ 4]*view[ 4] + mat[ 8]*view[ 7],
-                mat[ 0]*view[ 2] + mat[ 4]*view[ 5] + mat[ 8]*view[ 8],
-                mat[ 1]*view[ 0] + mat[ 5]*view[ 3] + mat[ 9]*view[ 6],
-                mat[ 1]*view[ 1] + mat[ 5]*view[ 4] + mat[ 9]*view[ 7],
-                mat[ 1]*view[ 2] + mat[ 5]*view[ 5] + mat[ 9]*view[ 8],
-                mat[ 2]*view[ 0] + mat[ 6]*view[ 3] + mat[10]*view[ 6],
-                mat[ 2]*view[ 1] + mat[ 6]*view[ 4] + mat[10]*view[ 7],
-                mat[ 2]*view[ 2] + mat[ 6]*view[ 5] + mat[10]*view[ 8],
-                view[ 9] ,         view[10] ,         view[11],
-                mat[ 0]*view[12] + mat[ 1]*view[13] + mat[ 2]*view[14] -
-                mat[ 0]* mat[ 3] - mat[ 4]* mat[ 7] - mat[ 8]* mat[11],
-                mat[ 4]*view[12] + mat[ 5]*view[13] + mat[ 6]*view[14] -
-                mat[ 1]* mat[ 3] - mat[ 5]* mat[ 7] - mat[ 9]* mat[11],
-                mat[ 8]*view[12] + mat[ 9]*view[13] + mat[10]*view[14] -
-                mat[ 2]* mat[ 3] - mat[ 6]* mat[ 7] - mat[10]* mat[11],
-                view[15] ,         view[16] ,         view[17] )
-            r = _self.set_view(new_view)
-        else:
-            with _self.lockcm:
-                r = _cmd.matrix_copy(_self._COb,str(source_name),
-                                                 str(target_name),
-                                                 int(source_mode),
-                                                 int(target_mode),
-                                                 int(source_state)-1,
-                                                 int(target_state)-1,
-                                                 int(target_undo),
-                                                 int(log),
-                                                 int(quiet))
-            if _self._raising(r,_self):
-                raise pymol.CmdException
-        return r
-
-    def matrix_reset(name, state=1, mode=-1, log=0, quiet=1,_self=cmd):
-        '''
-
-DESCRIPTION
-        
-    "matrix_reset" resets the transformation for an object.
-
-USAGE
-
-    matrix_reset name [, state [, mode ]]
-
-ARGUMENTS
-
-    name = str: object name
-
-    state = int: object state {default: 1}
-
-    mode = int: {defualt: -1 = matrix_mode or 0}
-      0: transformation was applied to coordinates
-      1: reset TTT matrix (movie transformation)
-      2: reset state matrix
-
-SEE ALSO
-
-    matrix_copy, align, super, fit, pair_fit
-    
-'''
-
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.reset_matrix(_self._COb,str(name),
-                                         int(mode),
-                                         int(state)-1,
-                                         int(log),
-                                         int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self):
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
             raise pymol.CmdException
         return r
 
+    def transform_object(
+        name,
+        matrix,
+        state=-1,
+        log=0,
+        selection="",
+        homogenous=0,
+        transpose=0,
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-    def translate_atom(sele1, v0, v1, v2, state=0, mode=0,
-                       log=0, _self=cmd):
+            "transform_object" in an API-only function which applies a
+            transformation matrix to an object.
+
+            If setting "matrix_mode" > 0 and selection is empty, then this
+            function operates on the TTT (movie) matrix.
+
+        ARGUMENTS
+
+            name = str: object name
+
+            matrix = list of 16 floats: transformation matrix
+
+            state = int: object state {default: -1}
+
+            log = 0/1: write action to log file (only applies if object is a
+            molecular object) {default: 0}
+
+            selection = str: atom selection (only applies to molecular objects,
+            if empty then the whole object state is transformed).
+
+            homogenous = 0/1: if 0, then matrix[12:15] may contain a pre-translation,
+            otherwise those values must be zeros (see also cmd.transform_selection)
+            {default: 0}
+
+            transpose = 0/1: matrix is 0=row-major, 1=column-major {default: 0}
+
+        SEE ALSO
+
+            cmd.transform_selection, cmd.set_object_ttt, cmd.matrix_reset
+        """
+        r = DEFAULT_ERROR
+        if int(transpose):
+            matrix = [
+                matrix[0],
+                matrix[4],
+                matrix[8],
+                matrix[12],
+                matrix[1],
+                matrix[5],
+                matrix[9],
+                matrix[13],
+                matrix[2],
+                matrix[6],
+                matrix[10],
+                matrix[14],
+                matrix[3],
+                matrix[7],
+                matrix[11],
+                matrix[15],
+            ]
+        try:
+            _self.lock(_self)
+            r = _cmd.transform_object(
+                _self._COb,
+                str(name),
+                int(state) - 1,
+                list(matrix),
+                int(log),
+                str(selection),
+                int(homogenous),
+            )
+        finally:
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
+        return r
+
+    def matrix_copy(
+        source_name="",
+        target_name="",
+        source_mode=-1,
+        target_mode=-1,
+        source_state=1,
+        target_state=1,
+        target_undo=1,
+        log=0,
+        quiet=1,
+        _self=cmd,
+    ):
+        """
+
+        DESCRIPTION
+
+            "matrix_copy" copies a transformation matrix from one object to
+            another.
+
+        USAGE
+
+            matrix_copy source_name, target_name
+
+        NOTES
+
+            This command is often used after a protein structure alignment to
+            bring other related objects into the same frame of reference.
+
+        SEE ALSO
+
+            matrix_reset, align, fit, pair_fit
+        """
+
+        r = DEFAULT_ERROR
+        if source_name is None:
+            source_name = ""
+        target_name = str(target_name).strip()
+        source_name = str(source_name).strip()
+        if (
+            target_name == "" and source_name != ""
+        ):  # tentative -- create a new command instead?
+            mat = _self.get_object_matrix(source_name, source_state)
+            view = _self.get_view()
+            new_view = (
+                mat[0] * view[0] + mat[4] * view[3] + mat[8] * view[6],
+                mat[0] * view[1] + mat[4] * view[4] + mat[8] * view[7],
+                mat[0] * view[2] + mat[4] * view[5] + mat[8] * view[8],
+                mat[1] * view[0] + mat[5] * view[3] + mat[9] * view[6],
+                mat[1] * view[1] + mat[5] * view[4] + mat[9] * view[7],
+                mat[1] * view[2] + mat[5] * view[5] + mat[9] * view[8],
+                mat[2] * view[0] + mat[6] * view[3] + mat[10] * view[6],
+                mat[2] * view[1] + mat[6] * view[4] + mat[10] * view[7],
+                mat[2] * view[2] + mat[6] * view[5] + mat[10] * view[8],
+                view[9],
+                view[10],
+                view[11],
+                mat[0] * view[12]
+                + mat[1] * view[13]
+                + mat[2] * view[14]
+                - mat[0] * mat[3]
+                - mat[4] * mat[7]
+                - mat[8] * mat[11],
+                mat[4] * view[12]
+                + mat[5] * view[13]
+                + mat[6] * view[14]
+                - mat[1] * mat[3]
+                - mat[5] * mat[7]
+                - mat[9] * mat[11],
+                mat[8] * view[12]
+                + mat[9] * view[13]
+                + mat[10] * view[14]
+                - mat[2] * mat[3]
+                - mat[6] * mat[7]
+                - mat[10] * mat[11],
+                view[15],
+                view[16],
+                view[17],
+            )
+            r = _self.set_view(new_view)
+        else:
+            with _self.lockcm:
+                r = _cmd.matrix_copy(
+                    _self._COb,
+                    str(source_name),
+                    str(target_name),
+                    int(source_mode),
+                    int(target_mode),
+                    int(source_state) - 1,
+                    int(target_state) - 1,
+                    int(target_undo),
+                    int(log),
+                    int(quiet),
+                )
+            if _self._raising(r, _self):
+                raise pymol.CmdException
+        return r
+
+    def matrix_reset(name, state=1, mode=-1, log=0, quiet=1, _self=cmd):
+        """
+
+        DESCRIPTION
+
+            "matrix_reset" resets the transformation for an object.
+
+        USAGE
+
+            matrix_reset name [, state [, mode ]]
+
+        ARGUMENTS
+
+            name = str: object name
+
+            state = int: object state {default: 1}
+
+            mode = int: {defualt: -1 = matrix_mode or 0}
+              0: transformation was applied to coordinates
+              1: reset TTT matrix (movie transformation)
+              2: reset state matrix
+
+        SEE ALSO
+
+            matrix_copy, align, super, fit, pair_fit
+
+        """
+
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            r = _cmd.reset_matrix(
+                _self._COb, str(name), int(mode), int(state) - 1, int(log), int(quiet)
+            )
+        finally:
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
+        return r
+
+    def translate_atom(sele1, v0, v1, v2, state=0, mode=0, log=0, _self=cmd):
 
         r = DEFAULT_ERROR
         sele1 = selector.process(sele1)
         try:
             _self.lock(_self)
-            r = _cmd.translate_atom(_self._COb,str(sele1),float(v0),float(v1),
-                                            float(v2),int(state)-1,int(mode),int(log))
+            r = _cmd.translate_atom(
+                _self._COb,
+                str(sele1),
+                float(v0),
+                float(v1),
+                float(v2),
+                int(state) - 1,
+                int(mode),
+                int(log),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def update(target, source, target_state=0, source_state=0,
-               matchmaker=1, quiet=1, _self=cmd):
+    def update(
+        target, source, target_state=0, source_state=0, matchmaker=1, quiet=1, _self=cmd
+    ):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "update" transfers coordinates from one selection to another.
+        USAGE
 
-    "update" transfers coordinates from one selection to another.
-USAGE
+            update (target-selection),(source-selection)
 
-    update (target-selection),(source-selection)
+        EXAMPLES
 
-EXAMPLES
+            update target,(variant)
 
-    update target,(variant)
+        NOTES
 
-NOTES
+            Currently, this applies across all pairs of states.  Fine
+            control will be added later.
 
-    Currently, this applies across all pairs of states.  Fine
-    control will be added later.
+        SEE ALSO
 
-SEE ALSO
-
-    load
-    '''
+            load
+        """
         r = DEFAULT_ERROR
-        a=target
-        b=source
+        a = target
+        b = source
         # preprocess selections
         a = selector.process(a)
         b = selector.process(b)
         #
-        if a[0]!='(': a="("+str(a)+")"
-        if b[0]!='(': b="("+str(b)+")"
+        if a[0] != "(":
+            a = "(" + str(a) + ")"
+        if b[0] != "(":
+            b = "(" + str(b) + ")"
         try:
             _self.lock(_self)
-            r = _cmd.update(_self._COb,str(a),str(b),int(target_state)-1,
-                                 int(source_state)-1,int(matchmaker),int(quiet))
+            r = _cmd.update(
+                _self._COb,
+                str(a),
+                str(b),
+                int(target_state) - 1,
+                int(source_state) - 1,
+                int(matchmaker),
+                int(quiet),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-
     def set_dihedral(atom1, atom2, atom3, atom4, angle, state=1, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "set_dihedral" changes the dihedral angle formed between the four
-    bonded atoms provided.  The atoms must be acyclic.
-    
-USAGE
+            "set_dihedral" changes the dihedral angle formed between the four
+            bonded atoms provided.  The atoms must be acyclic.
 
-    set_dihedral atom1, atom2, atom3, atom4, angle [, state [, quiet ]]
+        USAGE
 
-NOTES
+            set_dihedral atom1, atom2, atom3, atom4, angle [, state [, quiet ]]
 
-    Because set_dihedral uses the molecular editing capability,
-    numbered "pk" atom selections (if any) will be redefined by this
-    operation.
-    
-PYMOL API
+        NOTES
 
-    cmd.set_dihedral(string atom1, string atom2, string atom3, string atom4,
-                     float angle, int state, int quiet)
+            Because set_dihedral uses the molecular editing capability,
+            numbered "pk" atom selections (if any) will be redefined by this
+            operation.
 
-    '''
+        PYMOL API
+
+            cmd.set_dihedral(string atom1, string atom2, string atom3, string atom4,
+                             float angle, int state, int quiet)
+
+        """
         # preprocess selections
         atom1 = selector.process(atom1)
         atom2 = selector.process(atom2)
@@ -2307,157 +2640,185 @@ PYMOL API
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.set_dihe(_self._COb,atom1,atom2,atom3,atom4,
-                                    float(angle),int(state)-1,int(quiet))
+            r = _cmd.set_dihe(
+                _self._COb,
+                atom1,
+                atom2,
+                atom3,
+                atom4,
+                float(angle),
+                int(state) - 1,
+                int(quiet),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     map_op_dict = {
-        'minimum'       : 0,
-        'maximum'       : 1,
-        'sum'           : 2,
-        'average'       : 3,
-        'difference'    : 4,
-        'copy'          : 5,
-        'unique'        : 6,
-        }
+        "minimum": 0,
+        "maximum": 1,
+        "sum": 2,
+        "average": 3,
+        "difference": 4,
+        "copy": 5,
+        "unique": 6,
+    }
 
     map_op_sc = Shortcut(map_op_dict.keys())
 
-    def map_set(name, operator, operands='', target_state=0,
-                source_state=0, zoom=0, quiet=1, _self=cmd):
+    def map_set(
+        name,
+        operator,
+        operands="",
+        target_state=0,
+        source_state=0,
+        zoom=0,
+        quiet=1,
+        _self=cmd,
+    ):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "map_set" provides a number of common operations on and between maps.
 
-    "map_set" provides a number of common operations on and between maps.
+        USAGE
 
-USAGE
+            map_set name, operator, operands, target_state, source_state
 
-    map_set name, operator, operands, target_state, source_state
+            operator may be "minimum, maximum, average, sum, or difference"
 
-    operator may be "minimum, maximum, average, sum, or difference"
+        EXAMPLES
 
-EXAMPLES
+            map my_sum, add, map1 map2 map3
+            map my_avg, average, map1 map2 map3
 
-    map my_sum, add, map1 map2 map3
-    map my_avg, average, map1 map2 map3
-    
-NOTES
+        NOTES
 
-    source_state = 0 means all states
-    target_state = -1 means current state
-    
-    experimental
-    
-SEE ALSO
+            source_state = 0 means all states
+            target_state = -1 means current state
 
-    map_new
-        '''
+            experimental
+
+        SEE ALSO
+
+            map_new
+        """
         r = DEFAULT_ERROR
-        operator_index = map_op_dict[map_op_sc.auto_err(operator,'operator')]
+        operator_index = map_op_dict[map_op_sc.auto_err(operator, "operator")]
         try:
             _self.lock(_self)
-            r = _cmd.map_set(_self._COb,str(name), int(operator_index), str(operands),
-                         int(target_state)-1, int(source_state)-1, int(zoom), int(quiet))
+            r = _cmd.map_set(
+                _self._COb,
+                str(name),
+                int(operator_index),
+                str(operands),
+                int(target_state) - 1,
+                int(source_state) - 1,
+                int(zoom),
+                int(quiet),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def map_set_border(name, level=0.0, state=0, _self=cmd):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "map_set_border" is a function (reqd by PDA) which allows you to set the
+            level on the edge points of a map
 
-    "map_set_border" is a function (reqd by PDA) which allows you to set the
-    level on the edge points of a map
+        USAGE
 
-USAGE
+            map_set_border name, level
 
-    map_set_border name, level
+        NOTES
 
-NOTES
+            unsupported.
 
-    unsupported.
-    
-SEE ALSO
+        SEE ALSO
 
-    load
-        '''
+            load
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.map_set_border(_self._COb,str(name),float(level),int(state))
+            r = _cmd.map_set_border(_self._COb, str(name), float(level), int(state))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def map_double(name, state=0, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "map_double" resamples a map at twice the current resolution.
+            "map_double" resamples a map at twice the current resolution.
 
-NOTES
+        NOTES
 
-     The amount of memory required to store the map will increase
-     eight-fold.
+             The amount of memory required to store the map will increase
+             eight-fold.
 
-USAGE
+        USAGE
 
-    map_double map_name, state
-        '''
+            map_double map_name, state
+        """
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.map_double(_self._COb,str(name),int(state)-1)
+            r = _cmd.map_double(_self._COb, str(name), int(state) - 1)
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def map_halve(name, state=0, smooth=1, _self=cmd):
+        """
+        DESCRIPTION
 
-        '''
-DESCRIPTION
+            "map_halve" resamples a map at half the current resolution.
 
-    "map_halve" resamples a map at half the current resolution.  
+        USAGE
 
-USAGE
+            map_halve map_name, state
 
-    map_halve map_name, state
-    
-NOTES
+        NOTES
 
-    The amount of memory required to store the map will decrease
-    eight-fold.
+            The amount of memory required to store the map will decrease
+            eight-fold.
 
-SEE ALSO
+        SEE ALSO
 
-    map_double
-        '''
+            map_double
+        """
 
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.map_halve(_self._COb,str(name),int(state)-1,int(smooth))
+            r = _cmd.map_halve(_self._COb, str(name), int(state) - 1, int(smooth))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def map_trim(name, selection, buffer=0.0, map_state=0, sele_state=0, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+    def map_trim(
+        name, selection, buffer=0.0, map_state=0, sele_state=0, quiet=1, _self=cmd
+    ):
+        """
+        DESCRIPTION
 
-    "map_trim" is an unsupported command that may have something to do with
-    reducing the extent of a map to cover just a single selection of atoms.
+            "map_trim" is an unsupported command that may have something to do with
+            reducing the extent of a map to cover just a single selection of atoms.
 
-    '''
+        """
 
         r = DEFAULT_ERROR
         # preprocess selection
@@ -2465,130 +2826,143 @@ DESCRIPTION
         #
         try:
             _self.lock(_self)
-            r = _cmd.map_trim(_self._COb,str(name),str(selection),
-                                  float(buffer),int(map_state)-1,
-                                  int(sele_state)-1,int(quiet))
+            r = _cmd.map_trim(
+                _self._COb,
+                str(name),
+                str(selection),
+                float(buffer),
+                int(map_state) - 1,
+                int(sele_state) - 1,
+                int(quiet),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
-
 
     def protect(selection="(all)", quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "protect" protects a set of atoms from tranformations performed
-    using the editing features.  This is most useful when you are
-    modifying an internal portion of a chain or cycle and do not wish
-    to affect the rest of the molecule.
+            "protect" protects a set of atoms from tranformations performed
+            using the editing features.  This is most useful when you are
+            modifying an internal portion of a chain or cycle and do not wish
+            to affect the rest of the molecule.
 
-USAGE
+        USAGE
 
-    protect (selection)
+            protect (selection)
 
-PYMOL API
+        PYMOL API
 
-    cmd.protect(string selection)
+            cmd.protect(string selection)
 
-SEE ALSO
+        SEE ALSO
 
-    deprotect, mask, unmask, mouse, editing
-    '''
+            deprotect, mask, unmask, mouse, editing
+        """
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
         #
         try:
             _self.lock(_self)
-            r = _cmd.protect(_self._COb,"("+str(selection)+")",1,int(quiet))
+            r = _cmd.protect(_self._COb, "(" + str(selection) + ")", 1, int(quiet))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def deprotect(selection="(all)", quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+        """
+        DESCRIPTION
 
-    "deprotect" reverses the effect of the "protect" command.
+            "deprotect" reverses the effect of the "protect" command.
 
-USAGE
+        USAGE
 
-    deprotect (selection)
+            deprotect (selection)
 
-PYMOL API
+        PYMOL API
 
-    cmd.deprotect(string selection)
+            cmd.deprotect(string selection)
 
-SEE ALSO
+        SEE ALSO
 
-    protect, mask, unmask, mouse, editing
-    '''
+            protect, mask, unmask, mouse, editing
+        """
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
         #
         try:
             _self.lock(_self)
-            r = _cmd.protect(_self._COb,"("+str(selection)+")",0,int(quiet))
+            r = _cmd.protect(_self._COb, "(" + str(selection) + ")", 0, int(quiet))
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
     flag_dict = {
-    # simulation
-        'focus'         : 0,
-        'free'          : 1,
-        'restrain'      : 2,
-        'fix'           : 3,
-        'exclude'       : 4,
-        'study'         : 5,
-
-    # rendering
-        'exfoliate'     : 24,
-        'ignore'        : 25,
-        'no_smooth'     : 26,
+        # simulation
+        "focus": 0,
+        "free": 1,
+        "restrain": 2,
+        "fix": 3,
+        "exclude": 4,
+        "study": 5,
+        # rendering
+        "exfoliate": 24,
+        "ignore": 25,
+        "no_smooth": 26,
     }
 
     flag_sc = Shortcut(flag_dict.keys())
 
     flag_action_dict = {
-        'reset' : 0,
-        'set'   : 1,
-        'clear' : 2,
-        }
+        "reset": 0,
+        "set": 1,
+        "clear": 2,
+    }
 
     flag_action_sc = Shortcut(flag_action_dict.keys())
 
-    def fix_chemistry(selection1="all", selection2="all",
-		      invalidate=1, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
-   
-    "fix chemistry" is an unsupported feature.
+    def fix_chemistry(
+        selection1="all", selection2="all", invalidate=1, quiet=1, _self=cmd
+    ):
+        """
+        DESCRIPTION
 
-'''
+            "fix chemistry" is an unsupported feature.
+
+        """
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
         with _self.lockcm:
-            return _cmd.fix_chemistry(_self._COb,str(selection1),
-				   str(selection2),int(invalidate),
-				   int(quiet))
+            return _cmd.fix_chemistry(
+                _self._COb,
+                str(selection1),
+                str(selection2),
+                int(invalidate),
+                int(quiet),
+            )
 
     def set_object_color(name, color, quiet=1, _self=cmd):
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.set_object_color(_self._COb,str(name),str(color),int(quiet))
+            r = _cmd.set_object_color(_self._COb, str(name), str(color), int(quiet))
         finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _raising(r, _self):
+            raise pymol.CmdException
         return r
 
     def flag(flag, selection, action="reset", quiet=1, _self=cmd):
-        '''
+        """
 DESCRIPTION
 
     "flag" sets the indicated flag for atoms in the selection and
@@ -2655,7 +3029,7 @@ PYMOL API
     cmd.flag(int flag, string selection, string action="reset",
              int indicate=0)
 
-        '''
+        """
         if isinstance(flag, str) and not flag.isdigit():
             flag = flag_dict[flag_sc.auto_err(flag, "flag")]
         else:
@@ -2663,18 +3037,20 @@ PYMOL API
 
         # preprocess selection
         selection = selector.process(selection)
-        action = flag_action_dict[flag_action_sc.auto_err(action,'action')]
+        action = flag_action_dict[flag_action_sc.auto_err(action, "action")]
 
         with _self.lockcm:
             return _cmd.flag(_self._COb, flag, selection, action, int(quiet))
 
-    def vdw_fit(selection1, selection2, state1=1,state2=1,buffer=0.24,quiet=1,_self=cmd):
-        '''
-DESCRIPTION
+    def vdw_fit(
+        selection1, selection2, state1=1, state2=1, buffer=0.24, quiet=1, _self=cmd
+    ):
+        """
+        DESCRIPTION
 
-    "vdw_fit" is an unsupported feature.
-    
-    '''
+            "vdw_fit" is an unsupported feature.
+
+        """
         # preprocess selections
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
@@ -2682,123 +3058,136 @@ DESCRIPTION
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.vdw_fit(_self._COb,str(selection1),int(state1)-1,
-                             str(selection2),int(state2)-1,
-                             float(buffer),int(quiet))
+            r = _cmd.vdw_fit(
+                _self._COb,
+                str(selection1),
+                int(state1) - 1,
+                str(selection2),
+                int(state2) - 1,
+                float(buffer),
+                int(quiet),
+            )
         finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
+            _self.unlock(r, _self)
+        if _self._raising(r, _self):
+            raise pymol.CmdException
         return r
 
-    def split_chains(selection='(all)', prefix=None, group=None, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+    def split_chains(selection="(all)", prefix=None, group=None, quiet=1, _self=cmd):
+        """
+        DESCRIPTION
 
-    Create a single object for each chain in selection
+            Create a single object for each chain in selection
 
-SEE ALSO
+        SEE ALSO
 
-    split_states
-        '''
+            split_states
+        """
         count = 0
-        models = _self.get_object_list('(' + selection + ')')
+        models = _self.get_object_list("(" + selection + ")")
         names_list = []
         for model in models:
-            for chain in _self.get_chains('(%s) and model %s' % (selection, model)):
+            for chain in _self.get_chains("(%s) and model %s" % (selection, model)):
                 count += 1
                 if not prefix:
-                    name = '%s_%s' % (model, chain)
+                    name = "%s_%s" % (model, chain)
                 else:
-                    name = '%s%04d' % (prefix, count)
-                _self.create(name, '(%s) and model %s and chain "%s"' %
-                        (selection, model, chain), zoom=0)
+                    name = "%s%04d" % (prefix, count)
+                _self.create(
+                    name,
+                    '(%s) and model %s and chain "%s"' % (selection, model, chain),
+                    zoom=0,
+                )
                 names_list.append(name)
             _self.disable(model)
 
         if group:
-            _self.group(group, ' '.join(names_list), 'add')
+            _self.group(group, " ".join(names_list), "add")
 
-    def alphatoall(selection='polymer', properties='b', operator='byca',
-            quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+    def alphatoall(
+        selection="polymer", properties="b", operator="byca", quiet=1, _self=cmd
+    ):
+        """
+        DESCRIPTION
 
-    Expand any given property of the CA atoms to all atoms in the residue
+            Expand any given property of the CA atoms to all atoms in the residue
 
-ARGUMENTS
+        ARGUMENTS
 
-    selection = string: atom selection {default: polymer}
+            selection = string: atom selection {default: polymer}
 
-    properties = string: space separated list of atom properties {default: b}
-        '''
-        properties = '(' + ','.join(properties.split()) + ')'
-        space = {'props': {}}
-        _self.iterate('%s (%s)' % (operator, selection),
-                'props[model,segi,chain,resi] = ' + properties,
-                space=space)
-        _self.alter(selection,
-                properties + ' = props.get((model,segi,chain,resi), ' + properties + ')',
-                space=space)
+            properties = string: space separated list of atom properties {default: b}
+        """
+        properties = "(" + ",".join(properties.split()) + ")"
+        space = {"props": {}}
+        _self.iterate(
+            "%s (%s)" % (operator, selection),
+            "props[model,segi,chain,resi] = " + properties,
+            space=space,
+        )
+        _self.alter(
+            selection,
+            properties + " = props.get((model,segi,chain,resi), " + properties + ")",
+            space=space,
+        )
         if not int(quiet):
-            print(' Modified %d residues' % (len(space['props'])))
+            print(" Modified %d residues" % (len(space["props"])))
 
-    def mse2met(selection='all', quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+    def mse2met(selection="all", quiet=1, _self=cmd):
+        """
+        DESCRIPTION
 
-    Mutate selenomethionine to methionine
-        '''
-        x = _self.alter('(%s) and MSE/SE' % selection, 'name="SD";elem="S"')
-        _self.flag('ignore', '(%s) and resn MSE' % (selection), 'clear')
-        _self.alter('(%s) and resn MSE' % selection, 'resn="MET";type="ATOM"')
+            Mutate selenomethionine to methionine
+        """
+        x = _self.alter("(%s) and MSE/SE" % selection, 'name="SD";elem="S"')
+        _self.flag("ignore", "(%s) and resn MSE" % (selection), "clear")
+        _self.alter("(%s) and resn MSE" % selection, 'resn="MET";type="ATOM"')
         if not int(quiet):
-            print(' Altered %d MSE residues to MET' % (x))
-
+            print(" Altered %d MSE residues to MET" % (x))
 
     def _base(i, numerals, _emptyzero=False):
         if i == 0:
-            return '' if _emptyzero else numerals[0]
+            return "" if _emptyzero else numerals[0]
 
         b = len(numerals)
         return _base(i // b, numerals, True) + numerals[i % b]
 
+    def uniquify(identifier, selection, reference="", quiet=1, _self=cmd):
+        """
+        DESCRIPTION
 
-    def uniquify(identifier, selection, reference='', quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+            Make `identifier` unique with respect to reference selection.
 
-    Make `identifier` unique with respect to reference selection.
+        ARGUMENTS
 
-ARGUMENTS
+            identifier = str: atom identifier (chain, segi, etc.)
 
-    identifier = str: atom identifier (chain, segi, etc.)
+            selection = str: atom selection to modify
 
-    selection = str: atom selection to modify
+            reference = str: atom selection whose identifiers must not be
+            present in the first selection {default: !selection}
 
-    reference = str: atom selection whose identifiers must not be
-    present in the first selection {default: !selection}
+        EXAMPLE
 
-EXAMPLE
-
-    fetch 1a00 1hbb, async=0
-    uniquify chain, 1hbb
-    # 1hbb now has chains E,F,G,H
-        '''
+            fetch 1a00 1hbb, async=0
+            uniquify chain, 1hbb
+            # 1hbb now has chains E,F,G,H
+        """
         import itertools
         import string
 
         if not reference:
-            reference = '!(' + selection + ')'
+            reference = "!(" + selection + ")"
 
         p = identifier
 
         set_ref = set()
         set_sel = set()
         mapping = {}
-        space = {'set_ref': set_ref, 'set_sel': set_sel, 'mapping': mapping}
+        space = {"set_ref": set_ref, "set_sel": set_sel, "mapping": mapping}
 
-        _self.iterate(reference, 'set_ref.add(' + p + ')', space=space)
-        _self.iterate(selection, 'set_sel.add(' + p + ')', space=space)
+        _self.iterate(reference, "set_ref.add(" + p + ")", space=space)
+        _self.iterate(selection, "set_sel.add(" + p + ")", space=space)
 
         set_union = set_ref | set_sel
         set_inter = set_ref & set_sel
@@ -2811,11 +3200,11 @@ EXAMPLE
 
         if isinstance(next(iter(set_inter)), int):
             basefunc = int
-        elif p in ('resi',):
+        elif p in ("resi",):
             basefunc = str
         else:
             basefunc = _base
-            baseargs = (string.ascii_uppercase + '123456789',)
+            baseargs = (string.ascii_uppercase + "123456789",)
             i_iter = itertools.count(0)
 
         for name in set_inter:
@@ -2826,50 +3215,48 @@ EXAMPLE
                     set_union.add(newname)
                     break
 
-        _self.alter(selection, '%s = mapping.get(%s, %s)' % (p, p, p),
-                space=space)
+        _self.alter(selection, "%s = mapping.get(%s, %s)" % (p, p, p), space=space)
 
         if not int(quiet):
-            print(' Uniquify: renamed %d %s identifier(s)' % (len(mapping), p))
+            print(" Uniquify: renamed %d %s identifier(s)" % (len(mapping), p))
 
+    def copy_to(name, selection, rename="chain segi ID", zoom=-1, quiet=1, _self=cmd):
+        """
+        DESCRIPTION
 
-    def copy_to(name, selection, rename='chain segi ID', zoom=-1, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
+            Copies selection to object `name` (all states) and by default
+            renames chain, segi and ID identifiers to avoid naming conflicts.
 
-    Copies selection to object `name` (all states) and by default
-    renames chain, segi and ID identifiers to avoid naming conflicts.
+        ARGUMENTS
 
-ARGUMENTS
+            name = str: object name to modify
 
-    name = str: object name to modify
+            selection = str: atom selection (will be copied to `name`)
 
-    selection = str: atom selection (will be copied to `name`)
+            rename = str: space separated list of identifiers to rename
+            {default: chain segi ID}
 
-    rename = str: space separated list of identifiers to rename
-    {default: chain segi ID}
+        SEE ALSO
 
-SEE ALSO
-
-    create, fuse
-        '''
-        temp = _self.get_unused_name('_tmp')
+            create, fuse
+        """
+        temp = _self.get_unused_name("_tmp")
 
         try:
             _self.create(temp, selection, zoom=0)
-            _self.disable(' '.join(_self.get_object_list(selection)))
+            _self.disable(" ".join(_self.get_object_list(selection)))
 
             for prop in rename.split():
-                if prop.upper() == 'ID':
-                    _self.alter(temp, 'ID = -1')
+                if prop.upper() == "ID":
+                    _self.alter(temp, "ID = -1")
                 else:
-                    uniquify(prop, temp, '?' + name, quiet=quiet)
+                    uniquify(prop, temp, "?" + name, quiet=quiet)
 
-            _self.create(name, '?' + name + ' ' + temp, zoom=zoom)
+            _self.create(name, "?" + name + " " + temp, zoom=zoom)
             _self.unpick()
 
             if not int(quiet):
                 n = _self.count_atoms(temp)
-                print(' Copied %d atoms to object %s' % (n, name))
+                print(" Copied %d atoms to object %s" % (n, name))
         finally:
             _self.delete(temp)

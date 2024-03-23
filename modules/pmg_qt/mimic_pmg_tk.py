@@ -1,16 +1,17 @@
-'''
+"""
 Mimic the pmg_tk API for plugin legacy support
-'''
+"""
 
 import sys
 
 tkinter = None
 
+
 def tkinter_init():
     global tkinter
 
-    if hasattr(_BaseWidget_setup, '_super'):
-        raise RuntimeError('tkinter init failed')
+    if hasattr(_BaseWidget_setup, "_super"):
+        raise RuntimeError("tkinter init failed")
 
     import tkinter
 
@@ -22,6 +23,7 @@ def tkinter_init():
 def _BaseWidget_setup(self, master, cnf):
     if not master and not tkinter._default_root:
         from pymol import plugins
+
         tkinter._default_root = plugins.get_tk_root()
     return _BaseWidget_setup._super(self, master, cnf)
 
@@ -34,58 +36,60 @@ class PmwMenuBar:
         try:
             return self._menudict[menuName]
         except KeyError:
-            print('Error: no such menu: ' + repr(menuName))
+            print("Error: no such menu: " + repr(menuName))
             return None
 
     def addmenu(self, menuName, *args, **kw):
-        self.addcascademenu('', menuName)
+        self.addcascademenu("", menuName)
 
     def deletemenuitems(self, menuName, start, end=None):
         menu = self._get_menu(menuName)
         if menu is None:
             return
 
-        for a in menu.actions()[start - 1:(end or start)]:
+        for a in menu.actions()[start - 1 : (end or start)]:
             menu.removeAction(a)
 
-    def addmenuitem(self, menuName, itemType, statusHelp='',
-                    traverseSpec=None, **kw):
+    def addmenuitem(self, menuName, itemType, statusHelp="", traverseSpec=None, **kw):
         menu = self._get_menu(menuName)
         if menu is None:
             return
 
-        if itemType == 'separator':
+        if itemType == "separator":
             menu.addSeparator()
             return
 
-        if itemType != 'command' or 'command' not in kw:
+        if itemType != "command" or "command" not in kw:
             return
 
         # Wrapper for exception safety. PyMOL would crash if an exception
         # is not caught!
-        def wrapper(command=kw['command']):
+        def wrapper(command=kw["command"]):
             try:
                 command()
             except BaseException as e:
                 from pymol import colorprinting
+
                 colorprinting.print_exc([__file__])
 
                 from pymol.Qt import QtWidgets
-                QtWidgets.QMessageBox.critical(None, 'Error', str(e))
 
-        label = kw.get('label', statusHelp)
+                QtWidgets.QMessageBox.critical(None, "Error", str(e))
+
+        label = kw.get("label", statusHelp)
         menu.addAction(label, wrapper)
 
-    def addcascademenu(self, parentMenuName, menuName, statusHelp='',
-                       traverseSpec=None, **kw):
+    def addcascademenu(
+        self, parentMenuName, menuName, statusHelp="", traverseSpec=None, **kw
+    ):
         menu = self._get_menu(parentMenuName)
         if menu is None:
             return
 
         if menuName in self._menudict:
-            raise ValueError('menu ' + repr(menuName) + ' exists')
+            raise ValueError("menu " + repr(menuName) + " exists")
 
-        label = kw.get('label', statusHelp) or menuName
+        label = kw.get("label", statusHelp) or menuName
         menu = menu.addMenu(label)
         menu.setTearOffEnabled(True)
         self._menudict[menuName] = menu
@@ -100,6 +104,7 @@ class PMGSkin(object):
     def setting(self):
         if self._setting is None:
             from pmg_tk.Setting import Setting
+
             self._setting = Setting(self._pmgapp)
 
         return self._setting
@@ -115,7 +120,7 @@ class tkapp_proxy(object):
 
     def call(self, tkcmd, *args):
         # suspend our own updates for commands which enter the event loop
-        pause = tkcmd in ('update', 'tkwait', 'vwait')
+        pause = tkcmd in ("update", "tkwait", "vwait")
 
         if pause:
             self._pmgapp._tk_update_paused += 1
@@ -132,6 +137,7 @@ class tkapp_proxy(object):
 class PMGApp(object):
     def __init__(self):
         import pymol
+
         self._root = None
         self.pymol = pymol
         self.skin = PMGSkin(self)
@@ -151,11 +157,13 @@ class PMGApp(object):
 
             # feed Tk event loop from this thread
             timer = QtCore.QTimer()
+
             @timer.timeout.connect
             def _():
                 if not self._tk_update_paused:
                     self._root.update()
                 timer.start()
+
             timer.setSingleShot(True)
             timer.start(50)
 
@@ -163,6 +171,7 @@ class PMGApp(object):
             self._tk_update_timer = timer
 
             import Pmw
+
             Pmw.initialise(self._root)
 
         return self._root

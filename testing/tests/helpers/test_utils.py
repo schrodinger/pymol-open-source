@@ -18,7 +18,7 @@ def datafile(filename: str) -> Path:
     PYMOL_TESTING_ROOT = 2
     # pymol-testing root
     pymol_test_dir = Path(__file__).parents[PYMOL_TESTING_ROOT]
-    return pymol_test_dir.joinpath('data', filename)
+    return pymol_test_dir.joinpath("data", filename)
 
 
 class mktemp(object):
@@ -27,7 +27,7 @@ class mktemp(object):
     deletes the file in the end, if it exists.
     """
 
-    def __init__(self, suffix: str = ''):
+    def __init__(self, suffix: str = ""):
         self.file = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
         self.file.close()  # Allow other processes to access the file
         self.filename = self.file.name
@@ -44,13 +44,13 @@ def ambientOnly(cmd) -> None:
     """
     Set up a scene with only ambient lighting.
     """
-    cmd.set('ambient', 1)
-    cmd.set('antialias', 0)
-    cmd.set('light_count', 1)
-    cmd.set('depth_cue', 0)
+    cmd.set("ambient", 1)
+    cmd.set("antialias", 0)
+    cmd.set("light_count", 1)
+    cmd.set("depth_cue", 0)
     # needed for open-source
-    cmd.set('reflect', 0)
-    cmd.set('direct', 0)
+    cmd.set("reflect", 0)
+    cmd.set("direct", 0)
 
 
 def get_imagearray(cmd, **kwargs) -> numpy.array:
@@ -59,12 +59,13 @@ def get_imagearray(cmd, **kwargs) -> numpy.array:
     :kwargs: keyword arguments passed to cmd.png
     """
 
-    with mktemp('.png') as filename:
+    with mktemp(".png") as filename:
         cmd.png(filename, **kwargs)
         img = Image.open(filename)
 
-        return numpy.array(img.getdata(),
-                           numpy.uint8).reshape((img.size[1], img.size[0], -1))
+        return numpy.array(img.getdata(), numpy.uint8).reshape(
+            (img.size[1], img.size[0], -1)
+        )
 
 
 def _imageHasColor(cmd, color, img, delta=0) -> bool:
@@ -75,7 +76,7 @@ def _imageHasColor(cmd, color, img, delta=0) -> bool:
     :delta: maximum difference between color and image color
     """
     if isinstance(color, str):
-        color = [int(v*255) for v in cmd.get_color_tuple(color)]
+        color = [int(v * 255) for v in cmd.get_color_tuple(color)]
     else:
         color = list(color)
     dim = img.shape[-1]
@@ -111,7 +112,7 @@ def assert_in_names_undo(cmd, name: str) -> None:
 
 def compatible_with(version: str) -> bool:
     def tupleize_version(str_: str):
-        return tuple(int(x) for x in str_.partition('.')[0::2] if x.isdigit())
+        return tuple(int(x) for x in str_.partition(".")[0::2] if x.isdigit())
 
     PYMOL_VERSION = cmd.get_version()
     PYMOL_VERSION_TUPLE = tupleize_version(PYMOL_VERSION[0])
@@ -127,7 +128,7 @@ def compatible_with(version: str) -> bool:
 def requires_version(version, reason=None):
     def decorator(test_func):
         return pytest.mark.skipif(
-            not compatible_with(version),
-            reason=reason or f"Requires PyMOL {version}"
+            not compatible_with(version), reason=reason or f"Requires PyMOL {version}"
         )(test_func)
+
     return decorator

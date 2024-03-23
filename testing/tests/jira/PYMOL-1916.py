@@ -1,8 +1,9 @@
-'''
+"""
 Crash with sticks, valence and order=0
-'''
+"""
 
 from pymol import cmd, testing, stored
+
 
 class Test1916(testing.PyMOLTestCase):
 
@@ -13,7 +14,7 @@ class Test1916(testing.PyMOLTestCase):
 
         for i in range(2):
             a = Atom()
-            a.coord = [float(i), 0., 0.]
+            a.coord = [float(i), 0.0, 0.0]
             m.add_atom(a)
 
         b = Bond()
@@ -21,7 +22,7 @@ class Test1916(testing.PyMOLTestCase):
         b.order = 0
         m.add_bond(b)
 
-        cmd.load_model(m, 'foo')
+        cmd.load_model(m, "foo")
 
-        cmd.set('valence')
-        cmd.show('sticks')
+        cmd.set("valence")
+        cmd.show("sticks")

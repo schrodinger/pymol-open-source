@@ -13,10 +13,11 @@ import os
 state = None
 model = None
 
-def assign(sele,preserve=0):
+
+def assign(sele, preserve=0):
 
     from molobj import MolObj
-    from typer import Typer,Rules
+    from typer import Typer, Rules
     import rules
 
     result = 1
@@ -34,7 +35,7 @@ def assign(sele,preserve=0):
     mobj = MolObj()
     mobj.fromChemPyModel(model)
 
-    typed = Typer(molObj = mobj)
+    typed = Typer(molObj=mobj)
 
     print(" realtime: assigning atom types")
     typed.applyRules(ruleSet)
@@ -42,15 +43,16 @@ def assign(sele,preserve=0):
     c = 0
     for a in typed.getTypes():
         at = model.atom[c]
-        if (at.text_type == '??') or (not preserve):
-            if a==-99:
-                print(" warning: unable to assign atom type to atom %d"%c)
+        if (at.text_type == "??") or (not preserve):
+            if a == -99:
+                print(" warning: unable to assign atom type to atom %d" % c)
                 result = 0
             else:
-                cmd.alter("((%s) and (index %s))" % (sele,at.index),
-                             "numeric_type ='%s'" % a)
-                if feedback['tinker']:
-                    print(" "+str(__name__)+': %s is a %s' % (at.name,a))
+                cmd.alter(
+                    "((%s) and (index %s))" % (sele, at.index), "numeric_type ='%s'" % a
+                )
+                if feedback["tinker"]:
+                    print(" " + str(__name__) + ": %s is a %s" % (at.name, a))
                 at.numeric_type = a
         c = c + 1
 
@@ -61,7 +63,8 @@ def assign(sele,preserve=0):
 
     return result
 
-def setup(sele,preserve=0):
+
+def setup(sele, preserve=0):
 
     global state
     global model
@@ -77,7 +80,8 @@ def setup(sele,preserve=0):
     state.load_model(model)
     return 1
 
-def check(obj='check'):
+
+def check(obj="check"):
     global state
     global model
 
@@ -85,19 +89,22 @@ def check(obj='check'):
         if not model:
             print(" realtime.reload: please run setup first.")
         else:
-            cmd.load_model(model,obj,1)
+            cmd.load_model(model, obj, 1)
     else:
         model = state.model
-        cmd.load_model(model,obj,1)
+        cmd.load_model(model, obj, 1)
 
-def mini(total_steps=500,
-            gradient=0.001,
-            interval=100,
-            object='rt',
-            fix_flag=None,
-            rest_flag=None,
-            solvation=None,
-            finish=None):
+
+def mini(
+    total_steps=500,
+    gradient=0.001,
+    interval=100,
+    object="rt",
+    fix_flag=None,
+    rest_flag=None,
+    solvation=None,
+    finish=None,
+):
 
     global state
     if not state:
@@ -106,25 +113,26 @@ def mini(total_steps=500,
         model = state.model
         print(" realtime.mini: %d atoms total\n" % model.nAtom)
         try:
-            while total_steps>0:
+            while total_steps > 0:
                 total_steps = total_steps - interval
-                state.minimize(max_iter=interval,
-                                    fix_flag=fix_flag,
-                                    rest_flag=rest_flag,
-                                    solvation=solvation)
+                state.minimize(
+                    max_iter=interval,
+                    fix_flag=fix_flag,
+                    rest_flag=rest_flag,
+                    solvation=solvation,
+                )
                 cmd.delete(object)
-                cmd.load_model(state.model,object,1)
+                cmd.load_model(state.model, object, 1)
                 cmd.refresh()
                 if finish is not None:
                     finish[0](*finish[1], **finish[2])
         except:
-            cmd.load_model(state.model,'ref')
+            cmd.load_model(state.model, "ref")
             traceback.print_exc()
         print(" realtime.mini: complete.")
 
-def mini_threaded(*args,**kwargs):
-    t = threading.Thread(target=mini,
-                                args=args,
-                                kwargs=kwargs)
+
+def mini_threaded(*args, **kwargs):
+    t = threading.Thread(target=mini, args=args, kwargs=kwargs)
     t.setDaemon(1)
     t.start()
