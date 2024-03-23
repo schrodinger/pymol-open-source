@@ -613,9 +613,9 @@ void MapLocus(const MapType * I, const float *v, int *a, int *b, int *c)
   bt = (int) ((v[1] - I->Min[1]) * invDiv) + MapBorder;
   ct = (int) ((v[2] - I->Min[2]) * invDiv) + MapBorder;
 
-  *a = pymol::clamp(at, I->iMin[0], I->iMax[0]);
-  *b = pymol::clamp(bt, I->iMin[1], I->iMax[1]);
-  *c = pymol::clamp(ct, I->iMin[2], I->iMax[2]);
+  *a = std::clamp(at, I->iMin[0], I->iMax[0]);
+  *b = std::clamp(bt, I->iMin[1], I->iMax[1]);
+  *c = std::clamp(ct, I->iMin[2], I->iMax[2]);
 }
 
 /**

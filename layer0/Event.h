@@ -2,7 +2,6 @@
 
 #include <functional>
 #include <vector>
-#include "pymol/functional.h"
 
 namespace pymol
 {
@@ -19,7 +18,7 @@ public:
       return;
     }
     for (const auto& callback : m_callbacks) {
-      pymol::invoke(callback, params...);
+      std::invoke(callback, params...);
     }
   }
 

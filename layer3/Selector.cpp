@@ -1357,7 +1357,7 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int stat
   if(sele < 0)
     return NULL;
   else {
-    auto ptr = pymol::make_unique<CSelector>(G, G->SelectorMgr);
+    auto ptr = std::make_unique<CSelector>(G, G->SelectorMgr);
     CSelector mapSele(G, G->SelectorMgr);
     auto I = &mapSele;
     SelectorUpdateTableImpl(G, I, state, -1);

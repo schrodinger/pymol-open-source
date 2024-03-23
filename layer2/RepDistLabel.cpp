@@ -247,7 +247,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
     return nullptr;
   }
 
-  default_digits = pymol::clamp(default_digits, 0, 10);
+  default_digits = std::clamp(default_digits, 0, 10);
 
   auto I = new RepDistLabel(ds->Obj, state);
 

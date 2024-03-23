@@ -88,7 +88,7 @@ void BezierSpline::addBezierPoint()
 
 std::pair<int, float> BezierSpline::getIndexAndLocalT(float globalT) const
 {
-  auto t = clamp(globalT, 0.0f, 1.0f);
+  auto t = std::clamp(globalT, 0.0f, 1.0f);
   if (t == 1.0f) {
     assert(bezierPoints.size() >= 2);
     return std::make_pair(static_cast<int>(bezierPoints.size() - 2), t);
@@ -108,7 +108,7 @@ glm::vec3 BezierSpline::GetBezierPoint(
 glm::vec3 BezierSpline::GetBezierPoint(const glm::vec3& p0, const glm::vec3& p1,
     const glm::vec3& p2, const glm::vec3& p3, float t)
 {
-  t = clamp(t, 0.0f, 1.0f);
+  t = std::clamp(t, 0.0f, 1.0f);
   float oneMinusT = 1.0f - t;
   return oneMinusT * oneMinusT * oneMinusT * p0 +
          3.0f * oneMinusT * oneMinusT * t * p1 + 3.0f * oneMinusT * t * t * p2 +
@@ -118,7 +118,7 @@ glm::vec3 BezierSpline::GetBezierPoint(const glm::vec3& p0, const glm::vec3& p1,
 glm::vec3 BezierSpline::GetBezierFirstDerivative(const glm::vec3& p0,
     const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, float t)
 {
-  t = clamp(t, 0.0f, 1.0f);
+  t = std::clamp(t, 0.0f, 1.0f);
   float oneMinusT = 1.0f - t;
   return 3.0f * oneMinusT * oneMinusT * (p1 - p0) +
          6.0f * oneMinusT * t * (p2 - p1) + 3.0f * t * t * (p3 - p2);

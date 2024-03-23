@@ -28,30 +28,6 @@ template <class C, class Pred> void erase_if(C& c, Pred pred)
 }
 
 /**
- * @brief C++17's version of std::clamp
- */
-template<typename T>
-const T& clamp(const T& value, const T& low, const T& high){
-  assert(low <= high);
-  return std::max(low, std::min(value, high));
-}
-
-/**
- * @brief C++14's std::equal
- */
-
-template <typename InIter1, typename InIter2>
-bool equal(InIter1 first1, InIter1 last1, InIter2 first2)
-{
-  for (; first1 != last1; ++first1, ++first2) {
-    if (*first1 != *first2) {
-      return false;
-    }
-  }
-  return true;
-}
-
-/**
  * @brief Checks whether two floating point values are nearly equal
  * @param first floating point number
  * @param second floating point number
@@ -60,7 +36,7 @@ bool equal(InIter1 first1, InIter1 last1, InIter2 first2)
  * @tparam U second floating point type
  */
 
-template <typename T, typename U, typename CommonT = pymol::common_type_t<T, U>>
+template <typename T, typename U, typename CommonT = std::common_type_t<T, U>>
 bool almost_equal(T a, U b, CommonT epsilon = 1e-6)
 {
   return std::abs(a - b) <= epsilon;
@@ -136,7 +112,7 @@ bool equal(const RangeT1& first, const RangeT2& second)
   if (range1Size != range2Size) {
     return false;
   }
-  return pymol::equal(std::begin(first), std::end(first), std::begin(second));
+  return std::equal(std::begin(first), std::end(first), std::begin(second));
 }
 
 /**
@@ -164,7 +140,7 @@ bool equal(const RangeT1& first, const RangeT2& second, Pred p)
     }
   }
   return true;
-  //return pymol::equal(std::begin(first), std::end(first), std::begin(second));
+  //return std::equal(std::begin(first), std::end(first), std::begin(second));
 }
 
 /**

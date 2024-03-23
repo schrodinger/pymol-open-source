@@ -58,7 +58,7 @@ static bool isArrayZero(const T *arr, const std::size_t len) {
 // Checks whether arrays are equal
 template <typename T>
 static bool isArrayEqual(const T *arr1, const T *arr2, const std::size_t len) {
-  return pymol::equal(arr1, arr1 + len, arr2);
+  return std::equal(arr1, arr1 + len, arr2);
 }
 
 // Checks whether type has all special member functions

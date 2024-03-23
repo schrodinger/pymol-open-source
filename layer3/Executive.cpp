@@ -5560,7 +5560,7 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
 
   if (partial_restore) {
     G->SettingUnique->old2new =
-        pymol::make_unique<std::unordered_map<int, int>>();
+        std::make_unique<std::unordered_map<int, int>>();
   }
 
   if(ok) {
@@ -16834,7 +16834,7 @@ pymol::Result<> ExecutiveCurveNew(PyMOLGlobals* G,
   if (oldObj) {
     return pymol::make_error("Curve of this name already exists.");
   }
-  auto obj = pymol::make_unique<ObjectCurve>(G);
+  auto obj = std::make_unique<ObjectCurve>(G);
   obj->setName(curveName);
   ExecutiveManageObject(G, obj.release(), false, true);
   return {};
@@ -16893,7 +16893,7 @@ static pymol::Result<> ExecutiveMoveCameraOnCurve(
 pymol::Result<> ExecutiveMoveOnCurve(PyMOLGlobals* G,
     pymol::zstring_view mobileObjectName, pymol::zstring_view curveObjectName, float t)
 {
-  t = pymol::clamp(t, 0.0f, 1.0f);
+  t = std::clamp(t, 0.0f, 1.0f);
   auto curveObj = ExecutiveFindObject<ObjectCurve>(G, curveObjectName);
   if (!curveObj) {
     return pymol::make_error("Curve object not found.");
