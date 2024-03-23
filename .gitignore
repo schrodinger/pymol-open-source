@@ -4,3 +4,4 @@ generated
 build
 *.so
 *.egg-info/
+__pycache__

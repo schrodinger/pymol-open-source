@@ -13,8 +13,8 @@ def test_declare_command_casting():
 
    @declare_command
    def func(a: int, b: Path):
-       assert isinstance(a, int)
-       assert isinstance(b, Path)
+       assert isinstance(a, int) and a == 1
+       assert isinstance(b, Path) and b == Path("/tmp")
    func(1, "/tmp")
    cmd.do('func 1, "/tmp"')
 
@@ -31,4 +31,10 @@ def test_declare_command_default():
    def func(a: Selection="sele"):
       assert a == "a"
    func("a")
-   cmd.do('func a')
+   cmd.do('func b')
+
+def test_declare_command_docstring():
+   @declare_command
+   def func():
+      """docstring"""
+   assert func.__doc__ == "docstring"

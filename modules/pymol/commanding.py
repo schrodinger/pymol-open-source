@@ -562,7 +562,7 @@ SEE ALSO
 
         if function.__code__.co_argcount != len(function.__annotations__):
             raise Exception("Messy annotations")
-
+        from functools import wraps
         import inspect
         from pathlib import Path
         from enum import Enum
@@ -592,7 +592,7 @@ SEE ALSO
                     sc = lambda: cmd.Shortcut[[m.value for m in func]]
                 if sc is not None:
                     _add_completion(name, idx, sc)
-
+        @wraps(function)
         def inner(*args, **kwargs):
             kwargs = {**kwargs_, **kwargs, **dict(zip(args2_, args))}
             kwargs.pop("_self", None)
