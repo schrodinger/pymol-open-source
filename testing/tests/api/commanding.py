@@ -181,7 +181,7 @@ class TestCommanding(testing.PyMOLTestCase):
             assert isinstance(b, Path) and b == Path("/tmp")
 
         func(1, "/tmp")
-        # cmd.do('func 1, "/tmp"')
+        cmd.do('func 1, /tmp')
 
 
     def test_declare_command_bool(self):
@@ -191,7 +191,7 @@ class TestCommanding(testing.PyMOLTestCase):
             assert not b
 
         func("True", "no")
-        # cmd.do("func True, no")
+        cmd.do("func True, no")
 
 
     def test_declare_command_default(self):
@@ -201,7 +201,7 @@ class TestCommanding(testing.PyMOLTestCase):
             assert a == "a"
 
         func("a")
-        # cmd.do("func b")
+        cmd.do("func a")
 
 
     def test_declare_command_docstring(self):

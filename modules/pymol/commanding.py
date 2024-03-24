@@ -597,7 +597,7 @@ SEE ALSO
             kwargs = {**kwargs_, **kwargs, **dict(zip(args2_, args))}
             kwargs.pop("_self", None)
             for arg in kwargs.copy():
-                if issubclass(funcs[arg], bool):
+                if funcs[arg] is _bool_func or issubclass(funcs[arg], bool):
                     funcs[arg] = _bool_func
                 kwargs[arg] = funcs[arg](kwargs[arg])
             return function(**kwargs)
