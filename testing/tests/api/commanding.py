@@ -1,6 +1,9 @@
 from __future__ import print_function
 
 import sys
+
+import pytest
+
 import pymol
 import __main__
 from pymol import cmd, testing, stored
@@ -179,10 +182,8 @@ class TestCommanding(testing.PyMOLTestCase):
         def func(a: int, b: Path):
             assert isinstance(a, int) and a == 1
             assert isinstance(b, Path) and b == Path("/tmp")
-
         func(1, "/tmp")
         cmd.do('func 1, /tmp')
-
 
     def test_declare_command_bool(self):
         @cmd.declare_command
@@ -193,7 +194,6 @@ class TestCommanding(testing.PyMOLTestCase):
         func("True", "no")
         cmd.do("func True, no")
 
-
     def test_declare_command_default(self):
         from pymol.commanding import Selection
         @cmd.declare_command
@@ -203,9 +203,16 @@ class TestCommanding(testing.PyMOLTestCase):
         func("a")
         cmd.do("func a")
 
-
     def test_declare_command_docstring(self):
         @cmd.declare_command
         def func():
             """docstring"""
         assert func.__doc__ == "docstring"
+
+
+    def test_declare_command_varargs(self):
+        from typing import List
+        @cmd.declare_command
+        def func(a:int, *args):
+            assert isinstance(args, tuple)
+        func(1, 2)
