@@ -6,6 +6,13 @@ import sys
 import os
 import webbrowser
 
+try:
+    from platformdirs import user_cache_dir
+except ImportError:
+    def user_cache_dir(appname, *args, **kwargs):
+        return f"~/.cache/{appname}"
+
+
 class PyMOLDesktopGUI(object):
     '''Superclass for PyMOL Desktop Applications'''
 
@@ -984,7 +991,7 @@ class PyMOLDesktopGUI(object):
                 return False
             return True
 
-        d = os.path.expanduser('~/.pymol')
+        d = os.path.expanduser(user_cache_dir("pymol"))
         f = os.path.join(d, 'recent.db')
 
         try:
