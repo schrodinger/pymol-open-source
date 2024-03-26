@@ -8,6 +8,12 @@ License: BSD-2-Clause
 
 import os
 
+try:
+    from platformdirs import user_data_dir
+except ImportError:
+    def user_data_dir(appname, *args, **kwargs):
+        return f"~/.local/share/{appname}"
+
 # supported file types for installation. Do not support pyc and pyo binaries,
 # we want text files that can be parsed for metadata.
 zip_extensions = ['zip', 'tar.gz']
@@ -21,12 +27,12 @@ class BadInstallationFile(Exception):
 
 def get_default_user_plugin_path():
     r'''
-    User plugin directory defaults to ~/.pymol/startup on Linux and to
+    User plugin directory defaults to $XDG_DATA_HOME/startup on Linux and to
     %APPDATA%\pymol\startup on windows.
     '''
     if 'APPDATA' in os.environ:
         return os.path.join(os.environ['APPDATA'], 'pymol', 'startup')
-    return os.path.expanduser('~/.pymol/startup')
+    return os.path.expanduser(os.path.join(user_data_dir("pymol"), "startup"))
 
 def is_writable(dirname):
     '''
