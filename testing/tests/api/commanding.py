@@ -221,4 +221,10 @@ class TestCommanding(testing.PyMOLTestCase):
         @cmd.declare_command
         def func() -> int:
             return 1
+
+        assert func() == 1
+
+        @cmd.declare_command
+        def func():
+            return 1
         assert func() == 1
