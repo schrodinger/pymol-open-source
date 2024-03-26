@@ -5,3 +5,6 @@ build
 *.so
 *.egg-info/
 __pycache__
+*.idea/
+*.vscode
+*venv

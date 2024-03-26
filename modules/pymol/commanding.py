@@ -555,12 +555,11 @@ SEE ALSO
             cmd.auto_arg.append(rec)
         rec[name] = [sc, "var", ""]
 
-
     def declare_command(name, function=None, _self=cmd):
         if function is None:
             name, function = name.__name__, name
-
-        if function.__code__.co_argcount != len(function.__annotations__):
+        annotations = [a for a in function.__annotations__ if a != "return"]
+        if function.__code__.co_argcount != len(annotations):
             raise Exception("Messy annotations")
         from functools import wraps
         import inspect

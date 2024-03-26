@@ -216,3 +216,9 @@ class TestCommanding(testing.PyMOLTestCase):
         def func(a:int, *args):
             assert isinstance(args, tuple)
         func(1, 2)
+
+    def test_declare_command_type_return(self):
+        @cmd.declare_command
+        def func() -> int:
+            return 1
+        assert func() == 1
