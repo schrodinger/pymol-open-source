@@ -991,8 +991,14 @@ class PyMOLDesktopGUI(object):
                 return False
             return True
 
-        d = os.path.expanduser(user_cache_dir("pymol"))
-        f = os.path.join(d, 'recent.db')
+        def _get_db_filepath():
+            db_filename = "recent.db"
+            dir1, dir2 = "~/.pymol", user_cache_dir("pymol")
+            f1 = os.path.expanduser(os.path.join(dir1, db_filename))
+            f2 = os.path.expanduser(os.path.join(dir2, db_filename))
+            return (dir1, f1) if os.path.exists(f1) else (dir2, f2)
+
+        d, f = _get_db_filepath()
 
         try:
             os.makedirs(d)
