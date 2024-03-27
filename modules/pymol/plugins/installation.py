@@ -30,9 +30,15 @@ def get_default_user_plugin_path():
     User plugin directory defaults to $XDG_DATA_HOME/startup on Linux and to
     %APPDATA%\pymol\startup on windows.
     '''
+    dirname = "startup"
     if 'APPDATA' in os.environ:
-        return os.path.join(os.environ['APPDATA'], 'pymol', 'startup')
-    return os.path.expanduser(os.path.join(user_data_dir("pymol"), "startup"))
+        return os.path.join(os.environ['APPDATA'], 'pymol', dirname)
+
+    dir1, dir2 = "~/.pymol", user_data_dir("pymol")
+    d1 = os.path.expanduser(os.path.join(dir1, dirname))
+    d2 = os.path.expanduser(os.path.join(dir2, dirname))
+    return d1 if os.path.exists(d1) else d2
+
 
 def is_writable(dirname):
     '''
