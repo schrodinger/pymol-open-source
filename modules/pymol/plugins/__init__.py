@@ -20,10 +20,16 @@ except ImportError:
         return f"~/.local/share/{appname}"
 
 # variables
-data_dir = os.path.expanduser(user_data_dir("pymol"))
-if not os.path.exists(data_dir):
+def _get_pymolplugins_rc_path():
+    f1 = os.path.expanduser("~/.pymolpluginsrc.py")
+    if os.path.exists(f1):
+        return f1
+
+    data_dir = os.path.expanduser(user_data_dir("pymol"))
     os.makedirs(data_dir, exist_ok=True)
-PYMOLPLUGINSRC = os.path.join(data_dir, 'pymolpluginsrc.py')
+    return os.path.join(data_dir, 'pymolpluginsrc.py')
+
+PYMOLPLUGINSRC = _get_pymolplugins_rc_path()
 
 preferences = {
     'verbose': False,
