@@ -209,6 +209,14 @@ class TestCommanding(testing.PyMOLTestCase):
             """docstring"""
         assert func.__doc__ == "docstring"
 
+        @cmd.declare_command
+        def func():
+            """
+            docstring
+            Test:
+                --foo
+            """
+        assert func.__doc__ == "docstring\nTest:\n    --foo"
 
     def test_declare_command_varargs(self):
         from typing import List

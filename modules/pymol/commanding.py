@@ -540,7 +540,12 @@ SEE ALSO
 
     def _bool_func(value: str):
         if isinstance(value, str):
-            return value.lower() in ["yes", "y", "1", "true"]
+            if value.lower() in ["yes", "1", "true", "on"]:
+                return True
+            elif value.lower() in ["no", "0", "false", "off"]:
+                return False
+            else:
+                raise Exception("Invalid boolean value: %s" % value)
         elif isinstance(value, bool):
             return value
         else:
@@ -558,41 +563,53 @@ SEE ALSO
     def declare_command(name, function=None, _self=cmd):
         if function is None:
             name, function = name.__name__, name
+
+        # new style commands should have annotations
         annotations = [a for a in function.__annotations__ if a != "return"]
         if function.__code__.co_argcount != len(annotations):
             raise Exception("Messy annotations")
-        from functools import wraps
-        import inspect
+
+        # docstring text, if present, should be dedented
+        from textwrap import dedent
+        if function.__doc__ is not None:
+            function.__doc__ = dedent(function.__doc__).strip()
+
+        # These "external" types are allowed
         from pathlib import Path
         from enum import Enum
+
+        from functools import wraps
+        import inspect
+        import glob
+
         spec = inspect.getfullargspec(function)
 
         kwargs_ = {}
         args_ = spec.args[:]
 
         defaults = list(spec.defaults or [])
-        
+
         args2_ = args_[:]
-        while args_ and defaults:   
+        while args_ and defaults:
             kwargs_[args_.pop(-1)] = defaults.pop(-1)
 
         funcs = {}
         for idx, (var, func) in enumerate(spec.annotations.items()):
             funcs[var] = func
-            if (name, idx) not in AUTO_ARGS:
-                sc = None
-                if issubclass(func, Selection):
-                    sc = cmd.object_sc
-                elif issubclass(func, Path):
-                    sc = lambda: cmd.Shortcut(glob("*"))
-                elif issubclass(func, bool):
-                    sc = lambda: cmd.Shortcut(["yes", "no"])
-                elif issubclass(func, Enum):
-                    sc = lambda: cmd.Shortcut[[m.value for m in func]]
-                if sc is not None:
-                    _add_completion(name, idx, sc)
+            sc = None
+            if issubclass(func, Selection):
+                sc = cmd.object_sc
+            elif issubclass(func, Path):
+                sc = lambda: cmd.Shortcut(glob.glob("*"))
+            elif issubclass(func, bool):
+                sc = lambda: cmd.Shortcut(["yes", "no"])
+            elif issubclass(func, Enum):
+                sc = lambda: cmd.Shortcut[[m.value for m in func]]
+            if sc is not None:
+                _add_completion(name, idx, sc)
         @wraps(function)
         def inner(*args, **kwargs):
+            # this code runs on every call but should have low overhead
             kwargs = {**kwargs_, **kwargs, **dict(zip(args2_, args))}
             kwargs.pop("_self", None)
             for arg in kwargs.copy():
