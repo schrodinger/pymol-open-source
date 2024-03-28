@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"os_numpy.h"
 
 #include"Util.h"
+#include "pymol/utility.h"
 
 #include"Word.h"
 #include"main.h"
@@ -73,6 +74,7 @@ Z* -------------------------------------------------------------------
 #include <algorithm>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
+#include <utility>
 
 static void glReadBufferError(PyMOLGlobals *G, GLenum b, GLenum e){
   PRINTFB(G, FB_OpenGL, FB_Warnings)
@@ -1528,7 +1530,7 @@ int SceneCaptureWindow(PyMOLGlobals * G)
 }
 
 int SceneMakeSizedImage(PyMOLGlobals* G, int width, int height, int antialias,
-    bool excludeSelections)
+    bool excludeSelections, SceneRenderWhich renderWhich)
 {
   CScene *I = G->Scene;
   int ok = true;
@@ -1668,6 +1670,7 @@ int SceneMakeSizedImage(PyMOLGlobals* G, int width, int height, int antialias,
                 Extent2D{static_cast<std::uint32_t>(width),
                     static_cast<std::uint32_t>(height)};
             renderInfo.excludeSelections = excludeSelections;
+            renderInfo.renderWhich = renderWhich;
             SceneRender(G, renderInfo);
             SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -3997,7 +4000,10 @@ static void SceneImage(PyMOLGlobals* G, int width, int height, int antialias,
     float dpi, int format, bool quiet, pymol::Image* out_img,
     const std::string& filename)
 {
-  SceneMakeSizedImage(G, width, height, antialias, /*excludeSelecions*/ true);
+  auto allButGizmos_i = pymol::to_underlying(SceneRenderWhich::All) &
+                        ~pymol::to_underlying(SceneRenderWhich::Gizmos);
+  auto allButGizmos = static_cast<SceneRenderWhich>(allButGizmos_i);
+  SceneMakeSizedImage(G, width, height, antialias, /*excludeSelecions*/ true, allButGizmos);
   if (!filename.empty()) {
     ScenePNG(G, filename.c_str(), dpi, quiet, false, format, nullptr);
   } else if (out_img) {

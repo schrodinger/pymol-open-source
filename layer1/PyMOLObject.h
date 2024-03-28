@@ -52,6 +52,8 @@ enum cObject_t : int {
   cObjectGroup = 12,
   cObjectVolume = 13,
   cObjectCurve = 14,
+  // Gizmo is UI object in world coordinate space (in 3D)
+  cObjectGizmo = 15,
 };
 
 /* 

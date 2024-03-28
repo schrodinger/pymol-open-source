@@ -24,10 +24,15 @@ Z* -------------------------------------------------------------------
 #include <vector>
 
 enum class SceneRenderWhich {
-  AllObjects,
-  OnlyGadgets,
-  OnlyNonGadgets,
-  GadgetsLast
+  NonGadgets = 1 << 0,
+  Gadgets = 1 << 1,
+  Gizmos = 1 << 2,
+  All = NonGadgets | Gadgets | Gizmos,
+};
+
+enum class SceneRenderOrder {
+  Undefined, // Arbitrary order
+  GadgetsLast,
 };
 
 struct SceneRenderInfo
@@ -39,13 +44,16 @@ struct SceneRenderInfo
   ClickSide clickSide = ClickSide::None;
   bool forceCopy = false;
   bool excludeSelections = false;
+  bool excludeGadgets = false;
+  SceneRenderWhich renderWhich = SceneRenderWhich::All;
 };
 
 void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo);
 void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
                     float *normal, PickColorManager*,
                     RenderPass pass, int fat, float width_scale,
-                    GridInfo * grid, int dynamic_pass, SceneRenderWhich which_objects);
+                    GridInfo * grid, int dynamic_pass, SceneRenderWhich which_objects,
+                    SceneRenderOrder render_order);
 
 void SceneInitializeViewport(PyMOLGlobals* G, bool offscreen);
 

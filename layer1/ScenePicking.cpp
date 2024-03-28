@@ -123,8 +123,8 @@ static std::vector<unsigned> SceneGetPickIndices(PyMOLGlobals* G,
         if(I->grid.active) {
           GridSetViewport(G, &I->grid, slot);
         }
-        SceneRenderAll(G, context, nullptr, &pickmgr, RenderPass::Antialias,
-            true, 0.0F, &I->grid, 0, SceneRenderWhich::GadgetsLast);
+        SceneRenderAll(G, context, nullptr, &pickmgr, RenderPass::Antialias, true,
+            0.0F, &I->grid, 0, SceneRenderWhich::All, SceneRenderOrder::GadgetsLast);
       }
     }
 

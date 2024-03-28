@@ -20,6 +20,7 @@
 #include "ShaderMgr.h"
 #include "Util.h"
 #include "main.h"
+#include "pymol/utility.h"
 
 #ifdef _PYMOL_OPENVR
 #include "OpenVRMode.h"
@@ -39,7 +40,8 @@ static void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
     const Offset2D& pos, const Extent2D& oversizeExtent,
     int stereo_double_pump_mono, int curState, float* normal,
     SceneUnitContext* context, float width_scale, int fog_active,
-    bool onlySelections, bool noAA, bool excludeSelections);
+    bool onlySelections, bool noAA, bool excludeSelections,
+    SceneRenderWhich which_objects = SceneRenderWhich::All);
 
 static void SceneRenderAA(PyMOLGlobals* G);
 
@@ -476,7 +478,8 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
       SceneRenderStereoLoop(G, times, must_render_stereo, stereo_mode,
           render_to_texture_for_pp, renderInfo.mousePos,
           renderInfo.oversizeExtent, stereo_double_pump_mono, curState, normal,
-          &context, width_scale, fog_active, onlySelections, postprocessOnce, renderInfo.excludeSelections);
+          &context, width_scale, fog_active, onlySelections, postprocessOnce,
+          renderInfo.excludeSelections, renderInfo.renderWhich);
 
       if (render_to_texture_for_pp) {
         /* BEGIN rendering the selection markers, should we put all of this into
@@ -748,12 +751,12 @@ static void SceneRenderAllObject(PyMOLGlobals* G, CScene* I,
  * width_scale: specifies width_scale and sampling
  * grid: grid information
  * dynamic_pass: for specific stereo modes dynamic and clone_dynamic
- * which: enum specifying which objects (AllObjects, OnlyGadgets,
- * OnlyNonGadgets, GadgetsLast)
+ * which_objects: enum specifying which objects (NonGadgets, Gadgets, All
+ * render_order: enum specifying object render order (Default, GadgetsLast)
  */
 void SceneRenderAll(PyMOLGlobals* G, SceneUnitContext* context, float* normal,
     PickColorManager* pickmgr, RenderPass pass, int fat, float width_scale,
-    GridInfo* grid, int dynamic_pass, SceneRenderWhich which_objects)
+    GridInfo* grid, int dynamic_pass, SceneRenderWhich which_objects, SceneRenderOrder render_order)
 {
   CScene* I = G->Scene;
   int state = SceneGetState(G);
@@ -823,47 +826,58 @@ void SceneRenderAll(PyMOLGlobals* G, SceneUnitContext* context, float* normal,
   }
   {
     auto slot_vla = I->m_slots.data();
-    switch (which_objects) {
-    case SceneRenderWhich::AllObjects:
-      for (auto obj : I->Obj) {
-        /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
-        if (!rayVolume || obj->type == cObjectVolume) {
+    auto which_objects_int =
+        std::underlying_type_t<SceneRenderWhich>(which_objects);
+    auto disregard_gizmo = !static_cast<bool>(
+        which_objects_int &
+        std::underlying_type_t<SceneRenderWhich>(SceneRenderWhich::Gizmos));
+    if (which_objects_int &
+        std::underlying_type_t<SceneRenderWhich>(SceneRenderWhich::All)) {
+      switch (render_order) {
+      case SceneRenderOrder::Undefined:
+        for (auto obj : I->Obj) {
+          /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
+          if (obj->type == cObjectGizmo && disregard_gizmo) {
+            continue;
+          }
+          if (!rayVolume || obj->type == cObjectVolume) {
+            SceneRenderAllObject(
+                G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
+          }
+        }
+        break;
+      case SceneRenderOrder::GadgetsLast:
+        for (auto obj : I->NonGadgetObjs) {
+          /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
+          if (!rayVolume || obj->type == cObjectVolume) {
+            SceneRenderAllObject(
+                G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
+          }
+        }
+        for (auto obj : I->GadgetObjs) {
+          if (obj->type == cObjectGizmo && disregard_gizmo) {
+            continue;
+          }
           SceneRenderAllObject(
               G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
         }
-      }
-      break;
-    case SceneRenderWhich::OnlyGadgets:
+        break;
+      } // end render order for all objects
+    } else if (which_objects_int & std::underlying_type_t<SceneRenderWhich>(
+                                       SceneRenderWhich::Gadgets)) {
       for (auto obj : I->GadgetObjs) {
+        if (obj->type == cObjectGizmo && disregard_gizmo) {
+          continue;
+        }
         SceneRenderAllObject(
             G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
       }
-      break;
-    case SceneRenderWhich::OnlyNonGadgets:
+    } else if (which_objects_int & std::underlying_type_t<SceneRenderWhich>(
+                                       SceneRenderWhich::NonGadgets)) {
       for (auto obj : I->NonGadgetObjs) {
-        // ObjectGroup used to have fRender = nullptr
-        if (obj->type != cObjectGroup) {
-          SceneRenderAllObject(
-              G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
-        }
-      }
-      break;
-    case SceneRenderWhich::GadgetsLast:
-      // Gadgets Last
-      for (auto obj : I->NonGadgetObjs) {
-        /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
-        if (obj->type !=
-                cObjectGroup && // ObjectGroup used to have fRender = nullptr
-            (!rayVolume || obj->type == cObjectVolume)) {
-          SceneRenderAllObject(
-              G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
-        }
-      }
-      for (auto obj : I->GadgetObjs) {
         SceneRenderAllObject(
             G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
       }
-      break;
     }
   }
 
@@ -876,6 +890,7 @@ void SceneRenderAll(PyMOLGlobals* G, SceneUnitContext* context, float* normal,
     }
   }
 }
+
 /*==================================================================================*/
 /* DoRendering: This is the function that is responsible for looping through
    each rendering pass (opaque, then antialiased, then transparent) for each
@@ -890,7 +905,8 @@ void SceneRenderAll(PyMOLGlobals* G, SceneUnitContext* context, float* normal,
  */
 static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
     int curState, float* normal, SceneUnitContext* context, float width_scale,
-    bool onlySelections, bool excludeSelections)
+    bool onlySelections, bool excludeSelections, SceneRenderWhich which_objects = SceneRenderWhich::All,
+    SceneRenderOrder render_order = SceneRenderOrder::Undefined)
 {
   const RenderPass passes[] = {
       RenderPass::Opaque, RenderPass::Antialias, RenderPass::Transparent};
@@ -991,8 +1007,13 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
               EditorRender(G, curState);
             }
             // transparency-mode == 3 render all objects for this pass
-            SceneRenderAll(G, context, normal, nullptr, pass, false, width_scale,
-                grid, times, SceneRenderWhich::OnlyNonGadgets); // opaque
+            auto nonGadgetsFilter_i =
+                pymol::to_underlying(which_objects) &
+                pymol::to_underlying(SceneRenderWhich::NonGadgets);
+            auto nonGadgetsFilter =
+                static_cast<SceneRenderWhich>(nonGadgetsFilter_i);
+            SceneRenderAll(G, context, normal, NULL, pass, false, width_scale,
+                grid, times, nonGadgetsFilter, SceneRenderOrder::Undefined); // opaque
           } else {
 #else
           {
@@ -1001,8 +1022,11 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
             for (const auto pass2 :
                 passes) { /* render opaque, then antialiased, then
                              transparent... */
+              auto allFilter_i = pymol::to_underlying(which_objects) &
+                                 pymol::to_underlying(SceneRenderWhich::All);
+              auto allFilter = static_cast<SceneRenderWhich>(allFilter_i);
               SceneRenderAll(G, context, normal, nullptr, pass2, false,
-                  width_scale, grid, times, SceneRenderWhich::GadgetsLast);
+                  width_scale, grid, times, allFilter, SceneRenderOrder::GadgetsLast);
             }
             cont = false;
           }
@@ -1012,9 +1036,13 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
                               // background
           glBlendFunc_default();
 
+          auto gadgetsFilter_i =
+              pymol::to_underlying(which_objects) &
+              pymol::to_underlying(SceneRenderWhich::Gadgets);
+          auto gadgetsFilter = static_cast<SceneRenderWhich>(gadgetsFilter_i);
           SceneRenderAll(G, context, normal, nullptr,
               RenderPass::Transparent /* gadgets render in transp pass */,
-              false, width_scale, grid, times, SceneRenderWhich::OnlyGadgets);
+              false, width_scale, grid, times, gadgetsFilter, SceneRenderOrder::Undefined);
           glDisable(GL_BLEND);
         }
 #ifdef PURE_OPENGL_ES_2
@@ -1086,10 +1114,15 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
 
         if ((currentDrawFramebuffer == G->ShaderMgr->defaultBackbuffer.framebuffer) &&
             t_mode_3) {
+          auto gadgetsFilter_i =
+              pymol::to_underlying(which_objects) &
+              pymol::to_underlying(SceneRenderWhich::Gadgets);
+          auto gadgetsFilter = static_cast<SceneRenderWhich>(gadgetsFilter_i);
           // onlySelections and t_mode_3, render only gadgets
           SceneRenderAll(G, context, normal, nullptr,
               RenderPass::Transparent /* gadgets render in transp pass */,
-              false, width_scale, grid, times, SceneRenderWhich::OnlyGadgets);
+              false, width_scale, grid, times, gadgetsFilter,
+              SceneRenderOrder::Undefined);
         }
 
         glDisable(GL_BLEND);
@@ -1130,7 +1163,8 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
     const Offset2D& pos, const Extent2D& oversizeExtent,
     int stereo_double_pump_mono, int curState, float* normal,
     SceneUnitContext* context, float width_scale, int fog_active,
-    bool onlySelections, bool offscreenPrepared, bool excludeSelections)
+    bool onlySelections, bool offscreenPrepared, bool excludeSelections,
+    SceneRenderWhich which_objects)
 {
   CScene* I = G->Scene;
   int times = timesArg;
@@ -1179,7 +1213,7 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
 #endif
       ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 1, stereo_mode);
       DoRendering(G, I, &I->grid, times, curState, normal, context, width_scale,
-          onlySelections, render_to_texture || excludeSelections);
+          onlySelections, render_to_texture || excludeSelections, which_objects);
 
 #ifndef PURE_OPENGL_ES_2
       if (use_shaders)
@@ -1228,7 +1262,7 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
       ScenePrepareMatrix(G, stereo_double_pump_mono ? 0 : 2, stereo_mode);
       glClear(GL_DEPTH_BUFFER_BIT);
       DoRendering(G, I, &I->grid, times, curState, normal, context, width_scale,
-          onlySelections, render_to_texture || excludeSelections);
+          onlySelections, render_to_texture || excludeSelections, which_objects);
       if (anaglyph) {
         G->ShaderMgr->stereo_flag = 0;
         G->ShaderMgr->stereo_blend = 0;
@@ -1272,7 +1306,7 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
           PrepareViewPortForMonoInitializeViewPort, times, pos, oversizeExtent,
           stereo_mode, width_scale);
       DoRendering(G, I, &I->grid, times, curState, normal, context, width_scale,
-          onlySelections, render_to_texture || excludeSelections);
+          onlySelections, render_to_texture || excludeSelections, which_objects);
       if (Feedback(G, FB_OpenGL, FB_Debugging))
         PyMOLCheckOpenGLErr("during mono rendering");
     }

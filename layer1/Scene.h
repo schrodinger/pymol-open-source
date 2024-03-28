@@ -324,9 +324,10 @@ std::shared_ptr<pymol::Image> SceneGetSharedImage(PyMOLGlobals* G);
  * @height height of the image
  * @antialias antialiasing level
  * @excludeSelections exclude selections from the image
+ * @renderWhich renders classes of objects to the image
 */
 int SceneMakeSizedImage(PyMOLGlobals* G, int width, int height, int antialias,
-    bool excludeSelections);
+    bool excludeSelections, SceneRenderWhich renderWhich = SceneRenderWhich::All);
 
 void SceneSetViewport(PyMOLGlobals* G, const Rect2D& rect);
 void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height);
