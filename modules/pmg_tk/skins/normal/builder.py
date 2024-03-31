@@ -345,7 +345,7 @@ class AttachWizard(RepeatableActionWizard):
     def get_panel(self):
         if self.getRepeating():
             return [
-                [ 1, 'Attaching Multiple Fragmnts',''],
+                [ 1, 'Attaching Multiple Fragments',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],                
                 [ 2, 'Combine w/ Existing Object','cmd.get_wizard().combine()'],                
                 [ 2, 'Done','cmd.set_wizard()'],

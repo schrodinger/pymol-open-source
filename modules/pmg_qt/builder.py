@@ -356,7 +356,7 @@ class AttachWizard(RepeatableActionWizard):
     def get_panel(self):
         if self.getRepeating():
             return [
-                [ 1, 'Attaching Multiple Fragmnts',''],
+                [ 1, 'Attaching Multiple Fragments',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
                 [ 2, 'Combine w/ Existing Object','cmd.get_wizard().combine()'],
                 [ 2, 'Done','cmd.set_wizard()'],
@@ -371,58 +371,83 @@ class AttachWizard(RepeatableActionWizard):
                 ]
 
 
-class AminoAcidWizard(RepeatableActionWizard):
+class BioPolymerWizard(RepeatableActionWizard):
 
-    def __init__(self, _self=pymol.cmd, ss=-1):
+    HIGHLIGHT_SELE = ""
+
+    def __init__(self, _self=pymol.cmd):
         RepeatableActionWizard.__init__(self,_self)
         self.mode = 0
-        self.setSecondaryStructure(ss)
+        self._highlighting_enabled = False
 
-    def setSecondaryStructure(self, ss):
-        self._secondary_structure = ss
+    def __enter__(self):
+        '''Context manager for temporarily disabling attachment point highlights
+        '''
+        self.highlight_attachment_points(False)
+
+    def __exit__(self, *_):
+        self.highlight_attachment_points()
+
+    def cleanup(self):
+        self.highlight_attachment_points(False)
+        RepeatableActionWizard.cleanup(self)
+
+    def highlight_attachment_points(self, show=True):
+        '''Show spheres for potential attachment points
+
+        :type show: bool
+        :param show: Switch to show or hide the highlights
+        '''
+        if self._highlighting_enabled:
+            fn = self.cmd.show if show else self.cmd.hide
+            fn('spheres', self.HIGHLIGHT_SELE)
 
     def attach_monomer(self, objectname=""):
-         editor.attach_amino_acid("?pk1", self.aminoAcid, object=objectname,
-                ss=self._secondary_structure,
-                 _self=self.cmd)
+        raise NotImplementedError
+
+    def combine_monomer(self):
+        raise NotImplementedError
 
     def do_pick(self, bondFlag):
         # since this function can change any position of atoms in a related
         # molecule, bymol is used
-        if self.mode == 0:
-            self.cmd.select(active_sele, "bymol pk1")
-            try:
-                with undocontext(self.cmd, "bymol ?pk1"):
-                    self.attach_monomer(self.aminoAcid)
-            except QuietException:
-                fin = -1
-        elif self.mode == 1:
-            self.cmd.select(active_sele, "bymol pk1")
-            editor.combine_fragment("pk1", self.aminoAcid, 0, 1, _self=self.cmd)
-            self.mode = 0
-            self.cmd.refresh_wizard()
+        with pymol.cmd.UndoCopyObjCM("bymol ?pk1", "Attach Nuc Monomer"):
+            if self.mode == 0:
+                self.cmd.select(active_sele, "bymol ?pk1")
+                try:
+                    with undocontext(self.cmd, "bymol ?pk1"):
+                        self.attach_monomer()
+                except pymol.CmdException as exc:
+                    print(exc)
+            elif self.mode == 1:
+                self.cmd.select(active_sele, "bymol ?pk1")
+                editor.combine_monomer()
+                self.mode = 0
+                self.cmd.refresh_wizard()
 
+            self.cmd.unpick()
+            if not self.getRepeating():
+                self.actionWizardDone()
+
+    def toggle(self, monomer):
+        self._monomer = monomer
+        self.setActionHash( (monomer,) )
+        if self.activateRepeatOrDismiss():
+            # enable temporary sphere highlighting of attachment points, but only
+            # if currently no spheres are displayed
+            self._highlighting_enabled = self.HIGHLIGHT_SELE and self.cmd.count_atoms(
+                    '(rep spheres) & ({})'.format(self.HIGHLIGHT_SELE)) == 0
+
+            self.highlight_attachment_points()
+
+    def create_new(self, *, _self=pymol.cmd):
         self.cmd.unpick()
+        name = self.cmd.get_unused_name("obj")
+        self.attach_monomer(name)
         if not self.getRepeating():
             self.actionWizardDone()
-
-    def toggle(self, amino_acid):
-        self.aminoAcid = amino_acid
-        self.setActionHash( (amino_acid,) )
-        self.activateRepeatOrDismiss()
-
-    def create_new(self):
-        names = self.cmd.get_names("objects")
-        num = 1
-        while 1:
-            name = "obj%02d"%num
-            if name not in names:
-                break
-            num = num + 1
-        self.attach_monomer(self.aminoAcid)
-
-        if not self.getRepeating():
-            self.actionWizardDone()
+        else:
+            self.cmd.unpick()
 
     def combine(self):
         self.mode = 1
@@ -431,28 +456,71 @@ class AminoAcidWizard(RepeatableActionWizard):
     def get_prompt(self):
         if self.mode == 0:
             if self.getRepeating():
-                return ["Pick locations to attach %s..."%self.aminoAcid]
+                return ["Pick locations to attach %s..." % self._monomer]
             else:
-                return ["Pick location to attach %s..."%self.aminoAcid]
+                return ["Pick location to attach %s..." % self._monomer]
         else:
-            return ["Pick object to combine %s into..."%self.aminoAcid]
+            return ["Pick object to combine %s into..." % self._monomer]
 
     def get_panel(self):
         if self.getRepeating():
             return [
                 [ 1, 'Attaching Multiple Residues',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
-                [ 2, 'Combine w/ Existing Object','cmd.get_wizard().combine()'],
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
         else:
             return [
                 [ 1, 'Attaching Amino Acid',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
-                [ 2, 'Combine w/ Existing Object','cmd.get_wizard().combine()'],
                 [ 2, 'Attach Multiple...','cmd.get_wizard().repeat()'],
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
+
+
+class AminoAcidWizard(BioPolymerWizard):
+
+    HIGHLIGHT_SELE = "(name N &! neighbor name C) | (name C &! neighbor name N)"
+
+    def __init__(self, _self=pymol.cmd, ss=-1):
+        BioPolymerWizard.__init__(self,_self)
+        self._monomerType = "Amino Acid"
+        self.setSecondaryStructure(ss)
+
+    def setSecondaryStructure(self, ss):
+        self._secondary_structure = ss
+
+    def attach_monomer(self, objectname=""):
+        with self:
+            with pymol.undo.UndoCopyObjCM(f"?{objectname}", "Attach Monomer"):
+                editor.attach_amino_acid("?pk1", self._monomer, object=objectname,
+                    ss=self._secondary_structure,
+                    _self=self.cmd)
+
+    def combine_monomer(self):
+        editor.combine_fragment("pk1", self._monomer, 0, 1, _self=self.cmd)
+
+
+class NucleicAcidWizard(BioPolymerWizard):
+
+    HIGHLIGHT_SELE = "(name O3' &! neighbor name P) | (name P &! neighbor name O3') | (name O5' &! neighbor name P) "
+
+    def _init(self, form, dbl_helix, nuc_type):
+        self._monomerType = "Nucleic Acid"
+        self._form = form
+        self._dbl_helix = dbl_helix
+        self._nuc_type = nuc_type
+        return self
+
+    def attach_monomer(self, objectname=""):
+        with self:
+            with pymol.cmd.UndoCopyObjCM(f"?{objectname}", "Attach Nuc Monomer"):
+                editor.attach_nuc_acid("?pk1", self._monomer, object=objectname,
+                    nuc_type=self._nuc_type, form=self._form,
+                    dbl_helix=self._dbl_helix, _self=self.cmd)
+
+    def combine_monomer(self):
+        editor.combine_nucleotide("pk1", self._monomer + self._form, 0, 1, _self=self.cmd)
 
 
 class ValenceWizard(RepeatableActionWizard):

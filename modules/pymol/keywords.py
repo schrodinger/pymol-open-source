@@ -83,6 +83,7 @@ def get_command_keywords(self_cmd=cmd):
         'extract'       : [ self_cmd.extract           , 0 , 0 , ''  , parsing.STRICT ],
         'exec'          : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'fab'           : [ self_cmd.fab               , 0 , 0 , ''  , parsing.STRICT ],
+        'fab'           : [ self_cmd.fnab              , 0 , 0 , ''  , parsing.STRICT ],
         'feedback'      : [ self_cmd.feedback          , 0,  0 , ''  , parsing.STRICT ],
         'fetch'         : [ self_cmd.fetch             , 0,  0 , ''  , parsing.STRICT ],
         'fit'           : [ self_cmd.fit               , 0 , 0 , ''  , parsing.STRICT ],

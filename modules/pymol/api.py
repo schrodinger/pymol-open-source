@@ -259,7 +259,8 @@ from .editing import \
       vdw_fit
 
 from .editor import \
-      fab
+      fab,                \
+      fnab
 
 from .computing import \
       clean
