@@ -1083,6 +1083,11 @@ DESCRIPTION
 
     Builds a nucleotide acid from sequence
 
+    Fragments provided by:
+    Lu, Xiang-Jun, Olson, Wilma K. 3DNA: a software package for the analysis,
+    rebuilding and visualization of three-dimensional nucleic acid structures,
+    Nucleic Acids Research, 32, W667-W675 (2004).
+
 USAGE
 
     fnab input [, name [, type [, form [, dbl_helix ]]]]
