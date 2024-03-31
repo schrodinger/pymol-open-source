@@ -87,7 +87,6 @@ using CIFData = std::variant<cif_detail::cif_str_data, cif_detail::bcif_data>;
    @endverbatim
  */
 class cif_file {
-public: //
   std::vector<char*> m_tokens;
   std::map<std::string, cif_data> m_datablocks;
   std::unique_ptr<char, pymol::default_free> m_contents;
@@ -177,7 +176,6 @@ class cif_array {
   friend class cif_file;
 
 private:
-public: //
   mutable std::string m_internal_str_cache;
   std::variant<cif_detail::cif_str_array, cif_detail::bcif_array> m_array;
 
@@ -248,7 +246,7 @@ public:
    * @param d default value for unknown/inapplicable elements
    */
   const char* as_s(unsigned pos = 0, const char* d = "") const {
-    if (auto arr = std::get_if<cif_detail::cif_str_array>(&m_array)) {
+    if (std::get_if<cif_detail::cif_str_array>(&m_array)) {
       return as(pos, d);
     } else if (auto arr = std::get_if<cif_detail::bcif_array>(&m_array)) {
       if (pos >= arr->m_arr.size())
@@ -319,7 +317,6 @@ namespace cif_detail {
 class cif_data {
   friend class cif_file;
 
-public: //
   CIFData m_data;
 
   // generic default value

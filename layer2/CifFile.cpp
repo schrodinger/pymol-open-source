@@ -219,8 +219,6 @@ const cif_array * cif_data::get_arr(const char * key) const {
     if (columnIt == category.end()) {
       return nullptr;
     }
-    auto arr = &columnIt->second;
-    auto& arrPtr = std::get<cif_detail::bcif_array>(arr->m_array);
     return &columnIt->second;
   }
 
@@ -623,7 +621,6 @@ static std::vector<CifArrayElement> run_length_decode(
     std::vector<CifArrayElement>& data, DataTypes srcType, int srcSize)
 {
   std::vector<CifArrayElement> result;
-  std::int32_t value = 0;
   for (std::size_t i = 0; i < data.size(); i += 2) {
     auto item = std::get<std::int32_t>(data[i]);
     auto count = std::get<std::int32_t>(data[i + 1]);
@@ -778,7 +775,6 @@ bool cif_file::parse_bcif(const char* bytes, std::size_t size)
       auto categoryName = categoryMap["name"].as<std::string>();
       std::transform(categoryName.begin(), categoryName.end(),
           categoryName.begin(), ::tolower);
-      auto rowCount = categoryMap["rowCount"].as<int>();
       auto columnsRaw = categoryMap["columns"].as<std::vector<msgpack::object>>();
       auto& columns = categoriesData.m_dict[categoryName];
       for (const auto& column : columnsRaw) {
