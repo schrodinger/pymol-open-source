@@ -789,8 +789,6 @@ def attach_nuc_acid(selection, nuc_acid, nuc_type, object= "", form ="B",
     nascent_partner =  NascentNucAcidInfo(nuc_acid_partner_temp + form, nuc_acid_partner_temp,
                                           nuc_type, form, dbl_helix)
 
-    print("A")
-
     if _self.cmd.count_atoms(selection) == 0:
         if object == "":
             object = nuc_acid
@@ -800,7 +798,7 @@ def attach_nuc_acid(selection, nuc_acid, nuc_type, object= "", form ="B",
             _self.fragment(frag_string,object)
         elif not dbl_helix:
             _self.fragment(nascent.fragment_name, object, origin=0)
-            _self.alter(object, f"segi='A';chain='A';resv=1;p.dna_form='{nascent.form}'")
+            _self.alter(object, f"segi='A';chain='A';resv=1")
             rename_three_to_one(nascent.nuc_acid, object, nascent.nuc_type)
 
         if nascent.nuc_type == "RNA":
@@ -834,7 +832,6 @@ def attach_nuc_acid(selection, nuc_acid, nuc_type, object= "", form ="B",
 
     _self.show("cartoon", f"byobject {selection}")
     _self.delete(tmp_wild)
-    print("Z")
 
 def extend_nuc_acid(nascent, nascent_partner, selection,
               object, atom_selection_name, chain = 'A', *, _self=cmd):
@@ -895,7 +892,7 @@ def extend_nuc_acid(nascent, nascent_partner, selection,
         _self.select(last_resi_sele, f"(byobject {selection}) & chain {chain} & resi \\{last_resv}")
 
         if not nascent.dbl_helix:
-            _self.alter(tmp_editor, f"chain='{chain}';segi='{chain}';resi=tmp_resv[0];p.dna_form='{nascent.form}'",
+            _self.alter(tmp_editor, f"chain='{chain}';segi='{chain}';resi=tmp_resv[0]",
                         space={'tmp_resv': tmp_resv})
             # Set parameters so that move_new_res can be used
             prev_oppo_res = "none"
@@ -1023,8 +1020,8 @@ def extend_nuc_acid(nascent, nascent_partner, selection,
             move_new_res(frag_string, tmp_editor, last_resi_sele, prev_oppo_res, double_stranded_bool, nascent.form, antisense=reverse)
 
             # Alter residues created
-            _self.alter("_tmp_editor_newresA",f"chain='{chain}';segi='{chain}';resv={resv};p.dna_form='{nascent.form}'")
-            _self.alter("_tmp_editor_newresB",f"chain='{chain_oppo}';segi='{chain_oppo}';resv={resv_oppo};p.dna_form='{nascent.form}'")
+            _self.alter("_tmp_editor_newresA",f"chain='{chain}';segi='{chain}';resv={resv}")
+            _self.alter("_tmp_editor_newresB",f"chain='{chain_oppo}';segi='{chain_oppo}';resv={resv_oppo}")
 
             # Connect the created residues
             if double_stranded_bool == True:
