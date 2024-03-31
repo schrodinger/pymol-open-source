@@ -45,17 +45,17 @@ TEST_CASE("misc", "[CifFile]")
   REQUIRE(cf1.datablocks().size() == 3);
   REQUIRE(cf2.datablocks().size() == 3);
   REQUIRE(cf3.datablocks().size() == 3);
-  REQUIRE(cf1.datablocks()[2].get_opt("_undotted_key")->as_s() == std::string("why not"));
-  REQUIRE(cf2.datablocks()[2].get_opt("_undotted_key")->as_s() == std::string("why not"));
-  REQUIRE(cf3.datablocks()[2].get_opt("_undotted_key")->as_s() == std::string("why not"));
+  REQUIRE(cf1.datablocks().find("baz")->second.get_opt("_undotted_key")->as_s() == std::string("why not"));
+  REQUIRE(cf2.datablocks().find("baz")->second.get_opt("_undotted_key")->as_s() == std::string("why not"));
+  REQUIRE(cf3.datablocks().find("baz")->second.get_opt("_undotted_key")->as_s() == std::string("why not"));
 
   auto& blocks = cf1.datablocks();
 
-  REQUIRE(blocks[0].code() == std::string("FOO"));
-  REQUIRE(blocks[1].code() == std::string("bar"));
-  REQUIRE(blocks[2].code() == std::string("baz"));
+  REQUIRE(blocks.find("FOO")->second.code() == std::string("FOO"));
+  REQUIRE(blocks.find("bar")->second.code() == std::string("bar"));
+  REQUIRE(blocks.find("baz")->second.code() == std::string("baz"));
 
-  auto* data = &blocks.front();
+  auto* data = &blocks.find("FOO")->second;
 
   REQUIRE(data->get_arr("_cat1.key3") != nullptr);
   REQUIRE(data->get_arr("_cat1.key3") == data->get_opt("_cat1.key3"));
@@ -137,15 +137,15 @@ TEST_CASE("misc", "[CifFile]")
 
   REQUIRE(data->get_arr("_cat2_key1") == nullptr);
   REQUIRE(data->get_opt("_cat2?key1")->as_i(0, 99) == 10);
-  REQUIRE(blocks[2].get_arr("_undotted.key") == nullptr);
-  REQUIRE(blocks[2].get_opt("_undotted?key")->as_s() == std::string("why not"));
+  REQUIRE(blocks.find("baz")->second.get_arr("_undotted.key") == nullptr);
+  REQUIRE(blocks.find("baz")->second.get_opt("_undotted?key")->as_s() == std::string("why not"));
 
   // float parsing
 
-  REQUIRE(blocks[2].get_opt("_typed_float1")->as<float>() == Approx(1230.f));
-  REQUIRE(blocks[2].get_opt("_typed_float1")->as<double>() == Approx(1230.00000));
-  REQUIRE(blocks[2].get_opt("_typed_float2")->as<double>() == Approx(12.3400000));
-  REQUIRE(blocks[2].get_opt("_typed_float3")->as<double>() == Approx(1.23456789));
+  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float1")->as<float>() == Approx(1230.f));
+  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float1")->as<double>() == Approx(1230.00000));
+  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float2")->as<double>() == Approx(12.3400000));
+  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float3")->as<double>() == Approx(1.23456789));
 }
 
 // vi:sw=2:expandtab
