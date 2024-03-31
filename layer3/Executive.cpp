@@ -3883,6 +3883,13 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
     p_return_if_error(res);
     obj = res.result();
   } break;
+  case cLoadTypeBCIF:
+  case cLoadTypeBCIFStr: {
+    auto res = ObjectMoleculeReadBCif(G, static_cast<ObjectMolecule*>(origObj),
+        content, size, state, discrete, quiet, multiplex, zoom);
+    p_return_if_error(res);
+    obj = res.result();
+  } break;
   case cLoadTypeMMTF:
   case cLoadTypeMMTFStr:
     obj = ObjectMoleculeReadMmtfStr(G, (ObjectMolecule *) origObj,
