@@ -142,6 +142,7 @@ class SculptWizard(ActionWizard):
             obj_list = self.cmd.get_object_list(active_sele)
             if len(obj_list)==1:
                 obj_name = obj_list[0]
+                self.cmd.push_undo(obj_name)
                 self.cmd.sculpt_activate(obj_name)
                 self.cmd.set("sculpting",1)
                 self.sculpt_object = obj_name
@@ -1257,10 +1258,9 @@ class _BuilderPanel(QtWidgets.QWidget):
               ( "@   ", None, None),
               ( "$Bumps", "Show VDW contacts during sculpting", "sculpt_vdw_vis_mode"),
               ( "@   ", None, None),
-              # TODO: Temporarily hidden until multiple undo supported for builder
-              #( "#Undo Enabled", "", "suspend_undo"),
-              #( "Undo", "Undo last change", self.undo),
-              #( "Redo", "Redo last change", self.redo),
+              ( "#Undo Enabled", "", "suspend_undo"),
+              ( "Undo", "Undo last change", self.undo),
+              ( "Redo", "Redo last change", self.redo),
             ]
         ]
 
