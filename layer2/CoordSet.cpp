@@ -1287,7 +1287,12 @@ void CoordSet::update(int state)
       UnitCellCGO.reset(CrystalGetUnitCellCGO(&sym->Crystal));
       auto use_shader = SettingGet<bool>(G, cSetting_use_shaders);
       if (use_shader) {
-        auto color = ColorGet(G, Obj->Color);
+        auto cell_color = SettingGet_color(
+            G, this->Setting.get(), Obj->Setting.get(), cSetting_cell_color);
+        if (cell_color < 0) {
+          cell_color = Obj->Color;
+        }
+        auto color = ColorGet(G, cell_color);
         auto preCGO = std::make_unique<CGO>(G);
         CGOColorv(preCGO.get(), color);
         CGOAppendNoStop(preCGO.get(), UnitCellCGO.get());
