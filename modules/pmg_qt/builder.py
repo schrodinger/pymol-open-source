@@ -418,9 +418,9 @@ class BioPolymerWizard(RepeatableActionWizard):
             self.mode = 0
             self.cmd.refresh_wizard()
 
-            self.cmd.unpick()
-            if not self.getRepeating():
-                self.actionWizardDone()
+        self.cmd.unpick()
+        if not self.getRepeating():
+            self.actionWizardDone()
 
     def toggle(self, monomer):
         self._monomer = monomer
