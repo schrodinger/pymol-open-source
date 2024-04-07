@@ -4448,7 +4448,7 @@ int SceneGetDrawFlag(GridInfo * grid, int *slot_vla, int slot)
       {
         if(((slot < 0) && grid->slot) ||
            ((slot == 0) && (grid->slot == 0)) ||
-           (slot_vla && (slot_vla[slot] == grid->slot))) {
+           (slot_vla && (slot >= 0 && slot_vla[slot] == grid->slot))) {
           draw_flag = true;
         }
       }
