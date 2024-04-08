@@ -13359,6 +13359,7 @@ ExecutiveSetObjVisib(PyMOLGlobals * G, pymol::zstring_view name, int onoff, int 
               ExecutiveInvalidateSceneMembers(G);
 	      ReportEnabledChange(G, rec);
             }
+            SceneChanged(G);
           }
           break;
         case cExecSelection:
