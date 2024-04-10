@@ -627,7 +627,7 @@ void ExtrudeShiftToAxis(CExtrude* I, float radius, int sampling)
         float* avg = smoothed.data() + (a - 1) * 3;
 
         for (int j = -w2; j <= w2; ++j) {
-          int const k = pymol::clamp(a + j, 0, I->N - 1);
+          int const k = std::clamp(a + j, 0, I->N - 1);
           add3f(I->p + k * 3, avg, avg);
         }
 

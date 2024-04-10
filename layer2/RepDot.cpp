@@ -298,7 +298,7 @@ Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
   // get current dot sampling
   // Note: significantly affects the accuracy of our area comp.
   auto ds = SettingGet<int>(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_density);
-  SphereRec const* sp = G->Sphere->Sphere[pymol::clamp(ds, 0, 4)];
+  SphereRec const* sp = G->Sphere->Sphere[std::clamp(ds, 0, 4)];
 
   int lastColor = cColorDefault;
   int colorCnt = 0;

@@ -61,7 +61,7 @@ public:
   bool isMaxed() const;
   void fill(CGO *orthoCGO);
   void setValueNoCheck(float _value) { m_Value = _value; }
-  void setValue(float _value){ m_Value = pymol::clamp(_value, 0.0f, m_ValueMax); }
+  void setValue(float _value){ m_Value = std::clamp(_value, 0.0f, m_ValueMax); }
   void drawNoFill(CGO *orthoCGO) { drawImpl(false, orthoCGO); }
   int grabbed() { return OrthoGrabbedBy(m_G, this); }
   float getValue() const { return m_Value; }

@@ -1103,7 +1103,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
               if(sscanf(cc, "%f", &angle[2]) != 1)
                 angles = false;
               if(periodic) {
-                cs->Symmetry = pymol::make_unique<CSymmetry>(G);
+                cs->Symmetry = std::make_unique<CSymmetry>(G);
                 cs->Symmetry->Crystal.setDims(box);
                 if(angles) {
                   cs->Symmetry->Crystal.setAngles(angle);
@@ -2171,7 +2171,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
           angle[2] = 60.0;
         }
 
-        cset->Symmetry = pymol::make_unique<CSymmetry>(G);
+        cset->Symmetry = std::make_unique<CSymmetry>(G);
         cset->Symmetry->Crystal.setDims(BOX1, BOX2, BOX3);
         cset->Symmetry->Crystal.setAngles(angle);
       }
@@ -3259,7 +3259,7 @@ pymol::Result<> ObjectMoleculeFuse(ObjectMolecule* I, int const index0,
   }
 
   /* copy atoms and atom info into a 1:1 direct mapping */
-  auto cs = pymol::make_unique<CoordSet>(G);
+  auto cs = std::make_unique<CoordSet>(G);
   cs->setNIndex(scs->NIndex);
   cs->enumIndices();
 

@@ -4103,7 +4103,7 @@ CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est, bool addshaders, 
 
 CGO* CGOOptimizeBezier(const CGO* I)
 {
-  auto cgo = pymol::make_unique<CGO>(I->G);
+  auto cgo = std::make_unique<CGO>(I->G);
   int num_splines = CGOCountNumberOfOperationsOfType(I, CGO_BEZIER);
   auto vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
   std::vector<float> vertData;
