@@ -248,7 +248,7 @@ const char * Tokenizer::token(bool ignore_single) {
   char c = peek();
   bool good = false;
   ssize_t diff;
-  while(state != DONE && c >= 0) {
+  while(state != DONE && c != std::char_traits<char>::eof()) {
     // make sure we have space in m_token for 2 more characters
     if ((diff = ptr-m_token) >= max_token_size-1) {
       m_token = (char *)realloc( m_token, 2*max_token_size );
