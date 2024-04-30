@@ -33,7 +33,6 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 #include "PyMOL.h"
-#include "Executive_pre.h"
 #include "Scene.h"
 #include "Result.h"
 #include "vla.h"
@@ -511,9 +510,24 @@ pymol::Result<float> ExecutiveGetArea(
     PyMOLGlobals*, const char* sele, int state, bool load_b);
 
 void ExecutiveInvalidateSceneMembers(PyMOLGlobals * G);
-void ExecutiveInvalidateSelectionIndicators(PyMOLGlobals *G);
-void ExecutiveInvalidateSelectionIndicatorsCGO(PyMOLGlobals *G);
-void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInfo *grid);
+
+/**
+ * Invalidates the selection indicators and resets selection texture size
+ */
+void ExecutiveInvalidateSelectionIndicators(PyMOLGlobals* G);
+
+/**
+ * Invalidates the selection indicators CGO
+ */
+void ExecutiveInvalidateSelectionIndicatorsCGO(PyMOLGlobals* G);
+
+/**
+ * Renders the selection indicators
+ * @param curState current state
+ * @param slot slot to render
+ * @param grid grid info
+ */
+void ExecutiveRenderSelections(PyMOLGlobals* G, int curState, int slot, GridInfo* grid);
 void ExecutiveHideSelections(PyMOLGlobals * G);
 pymol::Result<> ExecutiveSetTitle(PyMOLGlobals * G, const char *name, int state, const char *text);
 const char *ExecutiveGetTitle(PyMOLGlobals * G, const char *name, int state);

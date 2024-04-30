@@ -24,6 +24,7 @@
 #include <cassert>
 #include <clocale>
 #include <vector>
+#include <optional>
 
 #include "pymol/type_traits.h"
 
@@ -8071,7 +8072,11 @@ static void ExecutiveRegenerateTextureForSelector(PyMOLGlobals *G, int round_poi
   FreeP(temp_buffer);
 }
 
-static void ExecutiveRenderIndicatorCGO(PyMOLGlobals * G, CGO *selIndicatorsCGO){
+/**
+ * Draws the Selection Indicator CGO
+ * @param selIndicatorsCGO CGO to draw
+ */
+static void ExecutiveRenderIndicatorCGOGLRaster(PyMOLGlobals * G, CGO* selIndicatorsCGO){
   CExecutive *I = G->Executive;
   CShaderPrg *shaderPrg;
   float text_texture_dim = TextureGetTextTextureSize(G);
@@ -8100,46 +8105,53 @@ static void ExecutiveRenderIndicatorCGO(PyMOLGlobals * G, CGO *selIndicatorsCGO)
   shaderPrg->Disable();
 }
 
-static void ExecutiveSetupIndicatorPassGLImmediate(PyMOLGlobals * G, SpecRec *rec, int pass, float gl_width, int width){
+/**
+ * Draws the Selection Indicator CGO for a given pass
+ * @param rec SpecRec's whose selection color to use
+ * @param pass Pass number
+ * @param width Width of the selection indicator
+ * @param selIndicatorsCGO CGO to draw into
+*/
+static void ExecutiveSetupIndicatorPassMultipassImmediate(PyMOLGlobals * G, SpecRec *rec, int pass, int width, CGO* cgo) {
 #ifndef PURE_OPENGL_ES_2
   switch (pass){
   case 0:
     if(rec->sele_color < 0)
-      glColor3f(1.0F, 0.2F, 0.6F);
+      CGOColor(cgo, 1.0F, 0.2F, 0.6F);
     else
-      glColor3fv(ColorGet(G, rec->sele_color));
-    glPointSize(gl_width);
+      CGOColorv(cgo, ColorGet(G, rec->sele_color));
+    CGODotwidth(cgo, static_cast<float>(width));
     break;
   case 1:
     if(width > 2) {
       switch (width) {
       case 1: case 2: case 3:
-	glPointSize(1.0F);
+	CGODotwidth(cgo, 1.0F);
 	break;
       case 4:
-	glPointSize(2.0F);
+	CGODotwidth(cgo, 2.0F);
 	break;
       case 5:
-	glPointSize(3.0F);
+	CGODotwidth(cgo, 3.0F);
 	break;
       case 6: case 7: case 8: case 9:
-	glPointSize(4.0F);
+	CGODotwidth(cgo, 4.0F);
 	break;
       default:
-	glPointSize(6.0F);
+	CGODotwidth(cgo, 6.0F);
 	break;
       }
-      glColor3f(0.0F, 0.0F, 0.0F);
+      CGOColor(cgo, 0.0F, 0.0F, 0.0F);
       break;
     }
   case 2:
     if(width > 4) {
       if(width > 5) {
-	glPointSize(2.0F);
+	CGODotwidth(cgo, 2.0F);
       } else {
-	glPointSize(1.0F);
+	CGODotwidth(cgo, 1.0F);
       }
-      glColor3f(1.0F, 1.0F, 1.0F);
+      CGOColor(cgo, 1.0F, 1.0F, 1.0F);
     }
     break;
   }
@@ -8147,97 +8159,202 @@ static void ExecutiveSetupIndicatorPassGLImmediate(PyMOLGlobals * G, SpecRec *re
 }
 
 /*========================================================================*/
-void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInfo *grid)
+
+/**
+ * Gets the adjusted selection width
+ * @param round_points rounded indicator points
+ * @return adjusted selection width
+ */
+static int ExecutiveGetAdjustedSelectionWidth(PyMOLGlobals* G, bool round_points)
 {
-  CExecutive *I = G->Executive;
-  SpecRec *rec = nullptr;
-  int any_active = false;
-  int no_depth = (int) SettingGetGlobal_f(G, cSetting_selection_overlay);
-  short use_shader = (short) SettingGetGlobal_b(G, cSetting_use_shaders);
-  float min_width;
-  float gl_width;
   int width;
-  int max_width = (int) SettingGetGlobal_f(G, cSetting_selection_width_max);
-  float width_scale = SettingGetGlobal_f(G, cSetting_selection_width_scale);
-  int round_points = SettingGetGlobal_b(G, cSetting_selection_round_points);
-  short inv_indicators = false;
-  min_width = SettingGetGlobal_f(G, cSetting_selection_width);
-  if(width_scale >= 0.0F) {
-    width = (int) ((width_scale *
-		    fabs(SettingGetGlobal_f(G, cSetting_stick_radius)) /
-		    SceneGetScreenVertexScale(G, nullptr)));
-    if(width < min_width)
-      width = (int) min_width;
-    else if(width > max_width)
-      width = (int) max_width;
-  } else
-    width = (int) min_width;
-  if(round_points) {
-    width = (int) (width * 1.44F);
+  float width_scale = SettingGet<float>(G, cSetting_selection_width_scale);
+  auto min_width = static_cast<int>(SettingGet<float>(G, cSetting_selection_width));
+  auto max_width = static_cast<int>(SettingGet<float>(G, cSetting_selection_width_max));
+
+  if (width_scale >= 0.0f) {
+    width = static_cast<int>(
+        width_scale * std::fabs(SettingGetGlobal_f(G, cSetting_stick_radius)) /
+        SceneGetScreenVertexScale(G, nullptr));
+    width = std::clamp(width, min_width, max_width);
   }
-  gl_width = (float) width;
-  if(width > 6) {   /* keep it even above 6 */
-    if(width & 0x1) {
-      width--;
-      gl_width = (float) width;
+  if (round_points) {
+    width = static_cast<int>(width * 1.44f);
+  }
+  if (width > 6 && width & 0x1) { /* keep it even above 6 */
+    width--;
+  }
+  return width;
+}
+
+/**
+ * Gets the selection level widths
+ * @param width selection width
+ * @return level widths
+*/
+static glm::ivec3 ExecutiveGetSelectionLevelWidths(int width)
+{
+  glm::ivec3 level_widths(width, 0, 0);
+  if (width > 2) {
+    switch (width) {
+    case 1:
+    case 2:
+    case 3:
+      level_widths[1] = 1;
+      break;
+    case 4:
+      level_widths[1] = 2;
+      break;
+    case 5:
+      level_widths[1] = 3;
+      break;
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+      level_widths[1] = 4;
+      break;
+    default:
+      level_widths[1] = 6;
+      break;
     }
   }
-
-  if (use_shader){
-    if (I->selectorTextureSize!=(int)gl_width || round_points != I->selectorIsRound ){
-      inv_indicators = true;
+  if (width > 4) {
+    if (width > 5) {
+      level_widths[2] = 2;
     } else {
-      if (slot){
-	while(ListIterate(I->Spec, rec, next)) {
-	  if(rec->type == cExecObject) {
-	    if (SceneGetDrawFlagGrid(G, grid, rec->obj->grid_slot)){
-	      if (rec->gridSlotSelIndicatorsCGO){
-		ExecutiveRenderIndicatorCGO(G, rec->gridSlotSelIndicatorsCGO);
-	      }
-	    }
-	  }
-	}
-	rec = nullptr;
-      } else if (I->selIndicatorsCGO){
-	ExecutiveRenderIndicatorCGO(G, I->selIndicatorsCGO);
-	return;
-      }
-    }
-  } else {
-    inv_indicators = true;
-  }
-  if (inv_indicators){
-      CGOFree(I->selIndicatorsCGO);
-    if (slot){
-      while(ListIterate(I->Spec, rec, next)) {
-	if(rec->type == cExecObject) {
-	  if (SceneGetDrawFlagGrid(G, grid, rec->obj->grid_slot)){
-	      CGOFree(rec->gridSlotSelIndicatorsCGO);
-	  }
-	}
-      }
+      level_widths[2] = 1;
     }
   }
-  while(ListIterate(I->Spec, rec, next)) {
-    if(rec->type == cExecSelection) {
-      if (rec->visible) {
-        any_active = true;
-        break;
-      }
+  return level_widths;
+}
+
+/**
+ * Renders the selection indicators from the selected targets
+ * @param use_shader use shader
+ * @param width selection width
+ * @param curState current state
+ * @param slot grid slot
+ * @param grid grid info
+ */
+static void ExecutiveRenderSelectionsFromTargets(
+    PyMOLGlobals* G, bool use_shader, int width, int curState, int slot, GridInfo* grid)
+{
+  auto I = G->Executive;
+  bool vis_only = SettingGet<bool>(G, cSetting_selection_visible_only);
+
+  for (auto& rec : pymol::make_list_adapter(I->Spec)) {
+    if (rec.type != cExecSelection) {
+      continue;
     }
-  }
 
-  if(any_active) {
-    SpecRec *rec1;
-    int sele;
-    int vis_only = SettingGetGlobal_b(G, cSetting_selection_visible_only);
-    int fog = SettingGetGlobal_b(G, cSetting_depth_cue) && SettingGetGlobal_f(G, cSetting_fog);
+    if (!rec.visible) {
+      continue;
+    }
+    int enabled = true;
+    auto* group_rec = rec.group;
+    while (enabled && group_rec) {
+      if (!group_rec->visible)
+        enabled = false;
+      else
+        group_rec = group_rec->group;
+    }
 
-    (void)fog;
+    if (!enabled) {
+      continue;
+    }
 
-    rec = nullptr;
+    int sele = SelectorIndexByName(G, rec.name); /* TODO: speed this up */
+    if (sele < 0) {
+      continue;
+    }
+    int totpass = use_shader ? 1 : 3;
 
-    if(round_points) {
+    if (use_shader) { // there is only one pass anyway
+      if (!slot) {
+        I->selIndicatorsCGO = CGONew(G);
+        CGODotwidth(I->selIndicatorsCGO, width);
+        CGOBegin(I->selIndicatorsCGO, GL_POINTS);
+      }
+    } else {
+      I->selIndicatorsCGO = CGONew(G);
+    }
+
+    for (int pass = 0; pass < totpass; pass++) {
+      if (!use_shader) {
+        ExecutiveSetupIndicatorPassMultipassImmediate(G, &rec, pass, width, I->selIndicatorsCGO);
+        CGOBegin(I->selIndicatorsCGO, GL_POINTS);
+      }
+      for (auto& rec1 : pymol::make_list_adapter(I->Spec)) {
+        if (rec1.type != cExecObject) {
+          continue;
+        }
+        if (rec1.obj->type != cObjectMolecule) {
+          continue;
+        }
+        auto obj = static_cast<ObjectMolecule*>(rec1.obj);
+        if (SceneGetDrawFlagGrid(G, grid, rec1.obj->grid_slot)) {
+          if (!use_shader || !slot) {
+            ObjectMoleculeRenderSele(
+                obj, curState, sele, vis_only, *I->selIndicatorsCGO);
+          } else if (!rec1.gridSlotSelIndicatorsCGO) {
+            if (!use_shader) {
+              ObjectMoleculeRenderSele(obj, curState, sele, vis_only, *I->selIndicatorsCGO);
+            } else {
+              auto gssCGO = std::make_unique<CGO>(G);
+              CGODotwidth(gssCGO.get(), width);
+              CGOBegin(gssCGO.get(), GL_POINTS);
+              ObjectMoleculeRenderSele(obj, curState, sele, vis_only, *gssCGO);
+              CGOEnd(gssCGO.get());
+              CGOStop(gssCGO.get());
+              CGO* optimized = CGOOptimizeToVBONotIndexedNoShader(gssCGO.get());
+              rec1.gridSlotSelIndicatorsCGO = optimized;
+              assert(rec1.gridSlotSelIndicatorsCGO);
+              ExecutiveRenderIndicatorCGOGLRaster(G, rec1.gridSlotSelIndicatorsCGO);
+            }
+          }
+        } else {
+          CGOFree(rec1.gridSlotSelIndicatorsCGO);
+        }
+      }
+      if (!use_shader) {
+        CGOEnd(I->selIndicatorsCGO);
+      }
+    } // for pass
+    if (use_shader) {
+      if (!slot) {
+        CGOEnd(I->selIndicatorsCGO);
+        CGOStop(I->selIndicatorsCGO);
+        CGO* optimized =
+            CGOOptimizeToVBONotIndexedNoShader(I->selIndicatorsCGO);
+        CGOFree(I->selIndicatorsCGO);
+        if (I->selIndicatorsCGO = optimized) {
+          assert(I->selIndicatorsCGO->use_shader);
+          ExecutiveRenderSelections(G, curState, slot, grid);
+        }
+        return;
+      }
+    } else {
+      CGOStop(I->selIndicatorsCGO);
+      ExecutiveRenderSelections(G, curState, slot, grid);
+    }
+  } // for rec
+}
+
+// TODO: This should be incorporated into a CGO or GL Pipeline object
+class ExecutiveRenderSelectionSetTopLevelGLPipeline
+{
+public:
+  ExecutiveRenderSelectionSetTopLevelGLPipeline(bool round_points, bool no_depth, bool fog)
+  : m_round_points{round_points}
+  , m_no_depth{no_depth}
+  , m_fog{fog}
+  {
+#ifndef PURE_OPENGL_ES_2
+    // All of this state should probably be restored at the end.
+    if (m_round_points) {
+      glGetIntegerv(GL_ALPHA_TEST_FUNC, &alpha_func_before);
+      glGetFloatv(GL_ALPHA_TEST_REF, &alpha_ref_before);
       glEnable(GL_POINT_SMOOTH);
       glAlphaFunc(GL_GREATER, 0.5F);
       glEnable(GL_ALPHA_TEST);
@@ -8247,141 +8364,107 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
       glDisable(GL_ALPHA_TEST);
       glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
     }
-
-    if (use_shader && (I->selectorTextureSize!=(int)gl_width || round_points != I->selectorIsRound )){
-      int level_widths[] = { 0, 0, 0 };
-      level_widths[0] = (int)gl_width;
-      if(width > 2) {
-	switch (width) {
-	case 1: case 2: case 3:
-	  level_widths[1] = 1;
-	  break;
-	case 4:
-	  level_widths[1] = 2;
-	  break;
-	case 5:
-	  level_widths[1] = 3;
-	  break;
-	case 6: case 7: case 8: case 9:
-	  level_widths[1] = 4;
-	  break;
-	default:
-	  level_widths[1] = 6;
-	  break;
-	}
-      }
-      if(width > 4) {
-	if(width > 5) {
-	  level_widths[2] = 2;
-	} else {
-	  level_widths[2] = 1;
-	}
-      }
-      ExecutiveInvalidateSelectionIndicatorsCGO(G);
-      ExecutiveRegenerateTextureForSelector(G, round_points, level_widths);
-      I->selectorTextureSize = gl_width;
-      I->selectorIsRound = round_points;
+#endif
+      if (no_depth)
+        glDisable(GL_DEPTH_TEST);
+#ifndef PURE_OPENGL_ES_2
+      glDisable(GL_FOG);
+#endif
+  }
+  ~ExecutiveRenderSelectionSetTopLevelGLPipeline()
+  {
+#ifndef PURE_OPENGL_ES_2
+    if (m_fog)
+      glEnable(GL_FOG);
+#endif
+    if (m_no_depth)
+      glEnable(GL_DEPTH_TEST);
+#ifndef PURE_OPENGL_ES_2
+    if (m_round_points) {
+      glAlphaFunc(alpha_func_before, alpha_ref_before);
     }
+#endif
+  }
+private:
+  bool m_round_points;
+  bool m_no_depth;
+  bool m_fog;
+  GLint alpha_func_before;
+  GLfloat alpha_ref_before;
+};
 
-    while(ListIterate(I->Spec, rec, next)) {
-      if(rec->type == cExecSelection) {
+void ExecutiveRenderSelections(
+    PyMOLGlobals* G, int curState, int slot, GridInfo* grid)
+{
+  CExecutive* I = G->Executive;
+  bool use_shader = SettingGet<bool>(G, cSetting_use_shaders);
+  bool round_points = SettingGet<bool>(G, cSetting_selection_round_points);
+  short inv_indicators = false;
 
-        if(rec->visible) {
-          int enabled = true;
-          SpecRec *group_rec = rec->group;
-          while(enabled && group_rec) {
-            if(!group_rec->visible)
-              enabled = false;
-            else
-              group_rec = group_rec->group;
-          }
+  auto width = ExecutiveGetAdjustedSelectionWidth(G, round_points);
 
-          if(enabled) {
-
-            sele = SelectorIndexByName(G, rec->name);   /* TODO: speed this up */
-            if(sele >= 0) {
-	      int pass, totpass = use_shader ? 1 : 3;
-
-	      if (!use_shader){
-		if(no_depth)
-		  glDisable(GL_DEPTH_TEST);
-		glDisable(GL_FOG);
-	      }
-	      for (pass=0; pass<totpass; pass++){
-		if (use_shader){ // there is only one pass anyway
-		  if (!slot){
-		    I->selIndicatorsCGO = CGONew(G);
-		    CGODotwidth(I->selIndicatorsCGO, gl_width);
-		    CGOBegin(I->selIndicatorsCGO, GL_POINTS);
-		  }
-		} else {
-		  ExecutiveSetupIndicatorPassGLImmediate(G, rec, pass, gl_width, width);
-		  glBegin(GL_POINTS);
-		}
-		rec1 = nullptr;
-		while(ListIterate(I->Spec, rec1, next)) {
-		  if(rec1->type == cExecObject) {
-		    if(rec1->obj->type == cObjectMolecule) {
-		      if (SceneGetDrawFlagGrid(G, grid, rec1->obj->grid_slot)){
-			if (!use_shader || !slot){
-			  ObjectMoleculeRenderSele((ObjectMolecule *) rec1->obj, curState, sele,
-						   vis_only SELINDICATORARGVAR);
-			} else if (!rec1->gridSlotSelIndicatorsCGO){
-			  if (!use_shader){
-			    ObjectMoleculeRenderSele((ObjectMolecule *) rec1->obj, curState, sele,
-						     vis_only, nullptr);
-			  } else {
-			    rec1->gridSlotSelIndicatorsCGO = CGONew(G);
-			    CGODotwidth(rec1->gridSlotSelIndicatorsCGO, gl_width);
-			    CGOBegin(rec1->gridSlotSelIndicatorsCGO, GL_POINTS);
-			    ObjectMoleculeRenderSele((ObjectMolecule *) rec1->obj, curState, sele,
-						     vis_only, rec1->gridSlotSelIndicatorsCGO);
-			    CGOEnd(rec1->gridSlotSelIndicatorsCGO);
-			    CGOStop(rec1->gridSlotSelIndicatorsCGO);
-                            CGO* optimized = CGOOptimizeToVBONotIndexedNoShader(
-                                rec1->gridSlotSelIndicatorsCGO);
-                            CGOFree(rec1->gridSlotSelIndicatorsCGO);
-                            rec1->gridSlotSelIndicatorsCGO = optimized;
-                            assert(rec1->gridSlotSelIndicatorsCGO->use_shader);
-                            ExecutiveRenderIndicatorCGO(G, rec1->gridSlotSelIndicatorsCGO);
-			  }
-			}
-		      } else {
-			CGOFree(rec1->gridSlotSelIndicatorsCGO);
-		      }
-		    }
-		  }
-		}
-		if (use_shader){
-		  if (!slot){
-		    CGOEnd(I->selIndicatorsCGO);
-		    CGOStop(I->selIndicatorsCGO);
-                    CGO* optimized =
-                        CGOOptimizeToVBONotIndexedNoShader(I->selIndicatorsCGO);
-                    CGOFree(I->selIndicatorsCGO);
-                    if ((I->selIndicatorsCGO = optimized)) {
-                      assert(I->selIndicatorsCGO->use_shader);
-                      ExecutiveRenderSelections(G, curState, slot, grid);
-                    }
-                    return;
-		  }
-		} else {
-		  glEnd();
-		}
-	      }
-	      if(fog)
-		glEnable(GL_FOG);
-	      if(no_depth)
-		glEnable(GL_DEPTH_TEST);
+  if (I->selectorTextureSize != width || round_points != I->selectorIsRound) {
+    inv_indicators = true;
+  } else {
+    if (use_shader) {
+      if (slot) {
+        for (auto& rec : pymol::make_list_adapter(I->Spec)) {
+          if (rec.type == cExecObject) {
+            if (SceneGetDrawFlagGrid(G, grid, rec.obj->grid_slot)) {
+              if (rec.gridSlotSelIndicatorsCGO) {
+                ExecutiveRenderIndicatorCGOGLRaster(G, rec.gridSlotSelIndicatorsCGO);
+              }
             }
+          }
+        }
+      } else if (I->selIndicatorsCGO) {
+        ExecutiveRenderIndicatorCGOGLRaster(G, I->selIndicatorsCGO);
+        return;
+      }
+    } else {
+      if (I->selIndicatorsCGO) {
+        std::optional<ExecutiveRenderSelectionSetTopLevelGLPipeline> immediatePipeline;
+        auto no_depth = static_cast<int>(SettingGet<float>(G, cSetting_selection_overlay));
+        [[maybe_unused]] bool fog = SettingGet<bool>(G, cSetting_depth_cue) &&
+                                    SettingGet<float>(G, cSetting_fog);
+        immediatePipeline.emplace(round_points, no_depth, fog);
+        CGORender(I->selIndicatorsCGO, nullptr, nullptr, nullptr, nullptr, nullptr);
+        return;
+      }
+    }
+  }
+  if (inv_indicators) {
+    CGOFree(I->selIndicatorsCGO);
+    if (slot) {
+      for (auto& rec : pymol::make_list_adapter(I->Spec)) {
+        if (rec.type == cExecObject) {
+          if (SceneGetDrawFlagGrid(G, grid, rec.obj->grid_slot)) {
+            CGOFree(rec.gridSlotSelIndicatorsCGO);
           }
         }
       }
     }
-    if(!use_shader && round_points) {
-      glAlphaFunc(GL_GREATER, 0.05F);
-    }
   }
+
+  auto list_adaptor = pymol::make_list_adapter(I->Spec);
+  bool any_active = std::any_of(
+      std::begin(list_adaptor), std::end(list_adaptor), [](const auto& rec) {
+        return rec.type == cExecSelection && rec.visible;
+      });
+  if (!any_active) {
+    return;
+  }
+
+  if (use_shader && inv_indicators) {
+    auto level_widths = ExecutiveGetSelectionLevelWidths(width);
+    ExecutiveInvalidateSelectionIndicatorsCGO(G);
+    ExecutiveRegenerateTextureForSelector(
+        G, round_points, glm::value_ptr(level_widths));
+  }
+  I->selectorTextureSize = width;
+  I->selectorIsRound = round_points;
+
+  ExecutiveRenderSelectionsFromTargets(G, use_shader, width, curState, slot, grid);
 }
 
 /*========================================================================*/

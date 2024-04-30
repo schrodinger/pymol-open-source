@@ -18,7 +18,6 @@ Z* -------------------------------------------------------------------
 
 #include "os_gl.h"
 #include "PyMOLGlobals.h"
-#include "Executive_pre.h"
 #include "Rep.h"
 #include "GenericBuffer.h"
 #include "SceneDef.h"
