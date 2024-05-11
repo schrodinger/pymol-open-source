@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include <set>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
+#include <cstdint>
 
 /* Compiled Graphics Library for simple graphics objects
    in floating point three-space, with the goal of achieving
@@ -272,7 +273,7 @@ inline uchar CLIP_NORMAL_VALUE(float cv){ return ((cv>1.f) ? 127 :
 #define CGO_ACCESSIBILITY_ARRAY  0x10
 #define CGO_TEX_COORD_ARRAY      0x20
 
-extern int CGO_sz[];
+extern std::size_t CGO_sz[];
 size_t CGO_sz_size();
 
 // I think CGO rendering functions should not modify CGO's, so the

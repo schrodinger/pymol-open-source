@@ -1001,7 +1001,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                       color2 = ColorGet(G, g2_ai->color);
                     }
                     CGOPickColor(cgo, g1, g1_ai->masked ? cPickableNoPick : cPickableAtom);
-                    Pickable pickcolor2 = { g2, g2_ai->masked ? cPickableNoPick : cPickableAtom };
+                    Pickable pickcolor2 = { static_cast<unsigned int>(g2), g2_ai->masked ? cPickableNoPick : cPickableAtom };
                     float axis[3];
                     subtract3f(g2p, g1p, axis);
                     CGOColorv(cgo, color1);
@@ -1046,7 +1046,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                         color2 = ColorGet(G, bas_ai->color);
                       }
                       CGOPickColor(cgo, sugar_at, sug_ai->masked ? cPickableNoPick : cPickableAtom);
-                      Pickable pickcolor2 = { base_at, bas_ai->masked ? cPickableNoPick : cPickableAtom };
+                      Pickable pickcolor2 = { static_cast<unsigned int>(base_at), bas_ai->masked ? cPickableNoPick : cPickableAtom };
                       float axis[3];
                       subtract3f(cs->coordPtr(bas), cs->coordPtr(sug), axis);
                       CGOColorv(cgo, color1);
@@ -1103,7 +1103,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                   }
                   
                   CGOPickColor(cgo, sugar_at, sug_ai->masked ? cPickableNoPick : cPickableAtom);
-                  Pickable pickcolor2 = { base_at, bas_ai->masked ? cPickableNoPick : cPickableAtom };
+                  Pickable pickcolor2 = { static_cast<unsigned int>(base_at), bas_ai->masked ? cPickableNoPick : cPickableAtom };
                   float axis[3];
                   subtract3f(cs->coordPtr(bas), v_outer, axis);
                   CGOColorv(cgo, color1);
@@ -1347,7 +1347,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                     color1 = color2 = color;
                   }
                   CGOPickColor(cgo, atix[i], ai_i[i]->masked ? cPickableNoPick : cPickableAtom);
-                  Pickable pickcolor2 = { atix[ii], ai_i[ii]->masked ? cPickableNoPick : cPickableAtom };
+                  Pickable pickcolor2 = { static_cast<unsigned int>(atix[ii]), ai_i[ii]->masked ? cPickableNoPick : cPickableAtom };
                   float axis[3];
                   subtract3f(v_i[ii], v_i[i], axis);
                   CGOColorv(cgo, color1);

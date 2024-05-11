@@ -145,7 +145,7 @@ void AssignNewPickColor(CGO* cgo, PickColorManager* pickmgr,
   pickmgr->colorNext(color, context, index, bond);
 }
 
-int CGO_sz[] = {
+std::size_t CGO_sz[] = {
   CGO_NULL_SZ,
   CGO_NULL_SZ,
   CGO_BEGIN_SZ,
