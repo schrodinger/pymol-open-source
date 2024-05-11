@@ -693,12 +693,12 @@ static PyObject * CmdGetCCP4Str(PyObject * self, PyObject * args)
   } else {
     API_SETUP_PYMOL_GLOBALS;
     if (G) {
-      APIEnter(G);
+      APIEnterBlocked(G);
       auto v = ObjectMapGetCCP4Str(G, name, state, quiet, format);
       PyObject * result = v.empty() ? NULL :
         PyBytes_FromStringAndSize(&v.front(), v.size());
 
-      APIExit(G);
+      APIExitBlocked(G);
       return APIAutoNone(result);
     }
   }
