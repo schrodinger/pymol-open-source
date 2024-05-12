@@ -2388,7 +2388,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
      */
 
     if(ok && isNew)
-      ok &= ObjectMoleculeConnect(I, cset, false);
+      ok = ObjectMoleculeConnect(I, cset, false);
     if(cset->Symmetry && (!I->Symmetry)) {
       I->Symmetry.reset(new CSymmetry(*cset->Symmetry));
       CHECKOK(ok, I->Symmetry);
