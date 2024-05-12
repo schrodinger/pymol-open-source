@@ -1,6 +1,6 @@
 
 ----------------------------------------------------------------------
-INSTALLATION VIA COMPILATION 
+INSTALLATION VIA COMPILATION
 ----------------------------------------------------------------------
 
 See also: http://pymolwiki.org/index.php/Linux_Install
@@ -8,7 +8,6 @@ See also: http://pymolwiki.org/index.php/Linux_Install
 REQUIREMENTS
 
     - C++17 compiler (e.g. gcc 8+)
-    - CMake (3.13+)
     - Python 3.9+
     - Pmw (Python Megawidgets) (optional, for legacy GUI/plugins)
       https://github.com/schrodinger/pmw-patched
@@ -50,7 +49,7 @@ SETUP OPTIONS
 
 INSTALLATION
 
-    python setup.py install --prefix=~/someplace
+    pip install . --prefix=~/someplace
 
 RUNNING PyMOL
 
