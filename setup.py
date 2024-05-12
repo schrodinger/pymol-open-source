@@ -121,17 +121,18 @@ def is_conda_env():
 
 def guess_msgpackc():
     for prefix in prefix_path:
-        f = os.path.join(prefix, 'include', 'msgpack', 'version_master.h')
+        for suffix in ['h', 'hpp']:
+            f = os.path.join(prefix, 'include', 'msgpack', f'version_master.{suffix}')
 
-        try:
-            m = re.search(r'MSGPACK_VERSION_MAJOR\s+(\d+)', open(f).read())
-        except EnvironmentError:
-            continue
+            try:
+                m = re.search(r'MSGPACK_VERSION_MAJOR\s+(\d+)', open(f).read())
+            except EnvironmentError:
+                continue
 
-        if m is not None:
-            major = int(m.group(1))
-            if major > 1:
-                return 'c++11'
+            if m is not None:
+                major = int(m.group(1))
+                if major > 1:
+                    return 'c++11'
 
     return 'no'
 
@@ -348,7 +349,10 @@ if options.use_msgpackc == 'no':
     def_macros += [("_PYMOL_NO_MSGPACKC", None)]
 else:
     if options.use_msgpackc == 'c++11':
-        def_macros += [("MMTF_MSGPACK_USE_CPP11", None)]
+        def_macros += [
+            ("MMTF_MSGPACK_USE_CPP11", None),
+            ("MSGPACK_NO_BOOST", None),
+        ]
     else:
         libs += ['msgpackc']
 
