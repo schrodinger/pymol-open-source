@@ -45,8 +45,6 @@ def cmp_version(v1, v2):
     '''
     Compares two version strings. An empty version string is always considered
     smaller than a non-empty version string.
-
-    Uses distutils.version.StrictVersion to evaluate non-empty version strings.
     '''
     if v1 == v2:
         return 0
@@ -55,8 +53,9 @@ def cmp_version(v1, v2):
     if v2 == '':
         return 1
     try:
-        from distutils.version import StrictVersion as Version
-        return cmp(Version(v1), Version(v2))
+        v1_parts = list(map(int, v1.split('.')))
+        v2_parts = list(map(int, v2.split('.')))
+        return (v1_parts > v2_parts) - (v1_parts < v2_parts)
     except:
         print(' Warning: Version parsing failed for', v1, 'and/or', v2)
         return 0

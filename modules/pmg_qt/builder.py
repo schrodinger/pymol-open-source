@@ -13,7 +13,6 @@ from pymol.Qt.utils import PopupOnException
 Qt = QtCore.Qt
 
 from pymol.wizard import Wizard
-from pymol.parsing import QuietException
 
 from pymol import editor
 from pymol import computing
@@ -306,7 +305,7 @@ class AttachWizard(RepeatableActionWizard):
         RepeatableActionWizard.__init__(self,_self)
         self.mode = 0
 
-    def do_pick(self, bondFlag):
+    def do_pick(self, bondFlag,*,_self=pymol.cmd):
         if self.mode == 0:
             self.cmd.select(active_sele, "bymol pk1")
             editor.attach_fragment("pk1", self.fragment, self.position, self.geometry, _self=self.cmd)
@@ -328,14 +327,9 @@ class AttachWizard(RepeatableActionWizard):
         self.setActionHash( (fragment, position, geometry, text) )
         self.activateRepeatOrDismiss()
 
-    def create_new(self):
-        names = self.cmd.get_names("objects")
-        num = 1
-        while 1:
-            name = "obj%02d"%num
-            if name not in names:
-                break
-            num = num + 1
+    def create_new(self,*,_self=pymol.cmd):
+        self.cmd.unpick()
+        name = self.cmd.get_unused_name("obj")
         self.cmd.fragment(self.fragment, name)
         if not self.getRepeating():
             self.actionWizardDone()
@@ -356,7 +350,7 @@ class AttachWizard(RepeatableActionWizard):
     def get_panel(self):
         if self.getRepeating():
             return [
-                [ 1, 'Attaching Multiple Fragmnts',''],
+                [ 1, 'Attaching Multiple Fragments',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
                 [ 2, 'Combine w/ Existing Object','cmd.get_wizard().combine()'],
                 [ 2, 'Done','cmd.set_wizard()'],
@@ -371,34 +365,56 @@ class AttachWizard(RepeatableActionWizard):
                 ]
 
 
-class AminoAcidWizard(RepeatableActionWizard):
+class BioPolymerWizard(RepeatableActionWizard):
 
-    def __init__(self, _self=pymol.cmd, ss=-1):
+    HIGHLIGHT_SELE = ""
+
+    def __init__(self, _self=pymol.cmd):
         RepeatableActionWizard.__init__(self,_self)
         self.mode = 0
-        self.setSecondaryStructure(ss)
+        self._highlighting_enabled = False
 
-    def setSecondaryStructure(self, ss):
-        self._secondary_structure = ss
+    def __enter__(self):
+        '''Context manager for temporarily disabling attachment point highlights
+        '''
+        self.highlight_attachment_points(False)
+
+    def __exit__(self, *_):
+        self.highlight_attachment_points()
+
+    def cleanup(self):
+        self.highlight_attachment_points(False)
+        RepeatableActionWizard.cleanup(self)
+
+    def highlight_attachment_points(self, show=True):
+        '''Show spheres for potential attachment points
+
+        :type show: bool
+        :param show: Switch to show or hide the highlights
+        '''
+        if self._highlighting_enabled:
+            fn = self.cmd.show if show else self.cmd.hide
+            fn('spheres', self.HIGHLIGHT_SELE)
 
     def attach_monomer(self, objectname=""):
-         editor.attach_amino_acid("?pk1", self.aminoAcid, object=objectname,
-                ss=self._secondary_structure,
-                 _self=self.cmd)
+        raise NotImplementedError
+
+    def combine_monomer(self):
+        raise NotImplementedError
 
     def do_pick(self, bondFlag):
         # since this function can change any position of atoms in a related
         # molecule, bymol is used
         if self.mode == 0:
-            self.cmd.select(active_sele, "bymol pk1")
+            self.cmd.select(active_sele, "bymol ?pk1")
             try:
                 with undocontext(self.cmd, "bymol ?pk1"):
-                    self.attach_monomer(self.aminoAcid)
-            except QuietException:
-                fin = -1
+                    self.attach_monomer()
+            except pymol.CmdException as exc:
+                print(exc)
         elif self.mode == 1:
-            self.cmd.select(active_sele, "bymol pk1")
-            editor.combine_fragment("pk1", self.aminoAcid, 0, 1, _self=self.cmd)
+            self.cmd.select(active_sele, "bymol ?pk1")
+            editor.combine_monomer()
             self.mode = 0
             self.cmd.refresh_wizard()
 
@@ -406,23 +422,25 @@ class AminoAcidWizard(RepeatableActionWizard):
         if not self.getRepeating():
             self.actionWizardDone()
 
-    def toggle(self, amino_acid):
-        self.aminoAcid = amino_acid
-        self.setActionHash( (amino_acid,) )
-        self.activateRepeatOrDismiss()
+    def toggle(self, monomer):
+        self._monomer = monomer
+        self.setActionHash( (monomer,) )
+        if self.activateRepeatOrDismiss():
+            # enable temporary sphere highlighting of attachment points, but only
+            # if currently no spheres are displayed
+            self._highlighting_enabled = self.HIGHLIGHT_SELE and self.cmd.count_atoms(
+                    '(rep spheres) & ({})'.format(self.HIGHLIGHT_SELE)) == 0
 
-    def create_new(self):
-        names = self.cmd.get_names("objects")
-        num = 1
-        while 1:
-            name = "obj%02d"%num
-            if name not in names:
-                break
-            num = num + 1
-        self.attach_monomer(self.aminoAcid)
+            self.highlight_attachment_points()
 
+    def create_new(self, *, _self=pymol.cmd):
+        self.cmd.unpick()
+        name = self.cmd.get_unused_name("obj")
+        self.attach_monomer(name)
         if not self.getRepeating():
             self.actionWizardDone()
+        else:
+            self.cmd.unpick()
 
     def combine(self):
         self.mode = 1
@@ -431,29 +449,67 @@ class AminoAcidWizard(RepeatableActionWizard):
     def get_prompt(self):
         if self.mode == 0:
             if self.getRepeating():
-                return ["Pick locations to attach %s..."%self.aminoAcid]
+                return ["Pick locations to attach %s..." % self._monomer]
             else:
-                return ["Pick location to attach %s..."%self.aminoAcid]
+                return ["Pick location to attach %s..." % self._monomer]
         else:
-            return ["Pick object to combine %s into..."%self.aminoAcid]
+            return ["Pick object to combine %s into..." % self._monomer]
 
     def get_panel(self):
         if self.getRepeating():
             return [
                 [ 1, 'Attaching Multiple Residues',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
-                [ 2, 'Combine w/ Existing Object','cmd.get_wizard().combine()'],
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
         else:
             return [
                 [ 1, 'Attaching Amino Acid',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
-                [ 2, 'Combine w/ Existing Object','cmd.get_wizard().combine()'],
                 [ 2, 'Attach Multiple...','cmd.get_wizard().repeat()'],
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
 
+class AminoAcidWizard(BioPolymerWizard):
+
+    HIGHLIGHT_SELE = "(name N &! neighbor name C) | (name C &! neighbor name N)"
+
+    def __init__(self, _self=pymol.cmd, ss=-1):
+        BioPolymerWizard.__init__(self,_self)
+        self._monomerType = "Amino Acid"
+        self.setSecondaryStructure(ss)
+
+    def setSecondaryStructure(self, ss):
+        self._secondary_structure = ss
+
+    def attach_monomer(self, objectname=""):
+        with self:
+            editor.attach_amino_acid("?pk1", self._monomer, object=objectname,
+                ss=self._secondary_structure,
+                _self=self.cmd)
+
+    def combine_monomer(self):
+        editor.combine_fragment("pk1", self._monomer, 0, 1, _self=self.cmd)
+
+class NucleicAcidWizard(BioPolymerWizard):
+
+    HIGHLIGHT_SELE = "(name O3' &! neighbor name P) | (name P &! neighbor name O3') | (name O5' &! neighbor name P) "
+
+    def _init(self, form, dbl_helix, nuc_type):
+        self._monomerType = "Nucleic Acid"
+        self._form = form
+        self._dbl_helix = dbl_helix
+        self._nuc_type = nuc_type
+        return self
+
+    def attach_monomer(self, objectname=""):
+        with self:
+            editor.attach_nuc_acid("?pk1", self._monomer, object=objectname,
+                nuc_type=self._nuc_type, form=self._form,
+                dbl_helix=self._dbl_helix, _self=self.cmd)
+
+    def combine_monomer(self):
+        editor.combine_nucleotide("pk1", self._monomer + self._form, 0, 1, _self=self.cmd)
 
 class ValenceWizard(RepeatableActionWizard):
 
@@ -951,6 +1007,14 @@ def collectPicked(self_cmd):
 
 
 #############################################################
+### Nucleic Acid helper class
+
+class NucleicAcidProperties:
+    def __init__(self, form="B", double_helix=True):
+        self.dna_form = form
+        self.dna_dbl_helix = double_helix
+
+#############################################################
 ### Actual GUI
 
 
@@ -995,8 +1059,15 @@ class _BuilderPanel(QtWidgets.QWidget):
         self.protein_tab = QtWidgets.QWidget()
         self.protein_tab.setLayout(self.protein_layout)
 
+        self.nucleic_acid_layout  = QtWidgets.QVBoxLayout()
+        self.nucleic_acid_layout.setContentsMargins(5, 5, 5, 5)
+        self.nucleic_acid_layout.setSpacing(5)
+        self.nucleic_acid_tab = QtWidgets.QWidget()
+        self.nucleic_acid_tab.setLayout(self.nucleic_acid_layout)
+
         self.tabs.addTab(self.fragments_tab, "Chemical")
         self.tabs.addTab(self.protein_tab, "Protein")
+        self.tabs.addTab(self.nucleic_acid_tab, "Nucleic Acid")
 
         self.getIcons()
 
@@ -1082,6 +1153,76 @@ class _BuilderPanel(QtWidgets.QWidget):
         self.protein_layout.addWidget(self.ss_cbox, 2, lab_cols, 1, 4)
         self.ss_cbox.currentIndexChanged[int].connect(self.ssIndexChanged)
 
+        self.nucleic_acid_dna_layout = QtWidgets.QGridLayout()
+        self.nucleic_acid_dna_layout.setContentsMargins(5, 5, 5, 5)
+        self.nucleic_acid_dna_layout.setSpacing(5)
+        self.nucleic_acid_rna_layout = QtWidgets.QGridLayout()
+        self.nucleic_acid_rna_layout.setContentsMargins(5, 5, 5, 5)
+        self.nucleic_acid_rna_layout.setSpacing(5)
+
+
+        self.nucleic_acid_tab = QtWidgets.QTabWidget()
+        self.nucleic_acid_layout.addWidget(self.nucleic_acid_tab)
+        self.dna_tab = QtWidgets.QWidget()
+        self.dna_tab.setLayout(self.nucleic_acid_dna_layout)
+        self.rna_tab = QtWidgets.QWidget()
+        self.rna_tab.setLayout(self.nucleic_acid_rna_layout)
+
+        self.nucleic_acid_tab.addTab(self.dna_tab, "DNA")
+        self.nucleic_acid_tab.addTab(self.rna_tab, "RNA")
+
+        self._nuc_acid_prop = NucleicAcidProperties()
+
+        dna_buttons = (
+            ("A", "Deoxyadenosine", None, lambda: self.attach_nuc_acid("atp", "DNA")),
+            ("C", "Deoxycytidine", None, lambda: self.attach_nuc_acid("ctp", "DNA")),
+            ("T", "Deoxythymidine", None, lambda: self.attach_nuc_acid("ttp", "DNA")),
+            ("G", "Deoxyguanosine", None, lambda: self.attach_nuc_acid("gtp", "DNA")),
+            ("@Form:", None, None, None),
+            ("#A", None, False, lambda: setattr(self._nuc_acid_prop, 'dna_form', "A")),
+            ("#B", None, True, lambda: setattr(self._nuc_acid_prop, 'dna_form', "B")),
+            ("@Helix:", None, None, None),
+            ("#Single", None, False, lambda: setattr(self._nuc_acid_prop, 'dna_dbl_helix', False)),
+            ("#Double", None, True, lambda: setattr(self._nuc_acid_prop, 'dna_dbl_helix', True))
+        )
+        for col_num, btn_pkg in enumerate(dna_buttons):
+            btn_label, btn_tooltip, default_activated, btn_command = btn_pkg
+            if btn_label[0] == '@':
+                btn = QtWidgets.QLabel(btn_label[1:])
+                radio_group = QtWidgets.QButtonGroup(self)
+            elif btn_label[0] == '#':
+                btn = QtWidgets.QRadioButton(btn_label[1:])
+                btn.toggled.connect(btn_command)
+                btn.setChecked(default_activated)
+                radio_group.addButton(btn)
+            else:
+                btn = makeFragmentButton()
+                btn.setText(btn_label)
+                btn.setToolTip(btn_tooltip)
+                btn.clicked.connect(btn_command)
+            self.nucleic_acid_dna_layout.addWidget(btn, 0, col_num)
+
+
+        rna_buttons = (
+            ("A", "Adenosine", "atp", lambda: self.attach_nuc_acid("atp", "RNA")),
+            ("C", "Cytosine", "ctp", lambda: self.attach_nuc_acid("ctp", "RNA")),
+            ("U", "Uracil", "utp", lambda: self.attach_nuc_acid("utp", "RNA")),
+            ("G", "Guanine", "gtp", lambda: self.attach_nuc_acid("gtp", "RNA")))
+
+        for col_num, btn_pkg in enumerate(rna_buttons):
+            btn_label, btn_tooltip, btn_filename, btn_command = btn_pkg
+            btn = makeFragmentButton()
+            btn.setText(btn_label)
+            btn.setToolTip(btn_tooltip)
+            btn.clicked.connect(btn_command)
+            self.nucleic_acid_rna_layout.addWidget(btn, 0, col_num)
+
+        btn = QtWidgets.QLabel('Hint: Also check out '
+                '<a href="http://x3dna.org/articles/3dna-fiber-models">fiber</a> and its '
+                '<a href="http://x3dna.org/articles/pymol-wrapper-to-3dna-fiber-models">PyMOL wrapper</a>')
+        btn.setOpenExternalLinks(True)
+        self.nucleic_acid_rna_layout.addWidget(btn, 0, col_num + 1)
+
         buttons = [
             [
               ( "@Atoms:", None, None),
@@ -1094,6 +1235,8 @@ class _BuilderPanel(QtWidgets.QWidget):
               ( " +1 ", "Positive Charge", lambda: self.setCharge(1,"+1")),
               ( "  0 ", "Neutral Charge", lambda: self.setCharge(0,"neutral")),
               ( " -1 ", "Negative Charge", lambda: self.setCharge(-1,"-1")),
+              ( "@  Residue:", None, None),
+              ("Remove", "Remove residue", lambda: self.removeResn()),
             ],
             [
               ( "@Bonds:", None, None),
@@ -1139,9 +1282,12 @@ class _BuilderPanel(QtWidgets.QWidget):
                             self.cmd.set(n, checked, quiet=0)
                     else:
                         btn.setChecked(not value)
-                        @btn.toggled.connect
                         def _(checked, n=setting):
                             self.cmd.set(n, not checked, quiet=0)
+                        if setting == 'suspend_undo':
+                            self.setUndoEnabled(not value)
+                            _ = self.setUndoEnabled
+                        btn.toggled.connect(_)
                 else:
                     btn = makeFragmentButton()
                     btn.setText(btn_label)
@@ -1150,6 +1296,29 @@ class _BuilderPanel(QtWidgets.QWidget):
                     btn.setToolTip(btn_tooltip)
                 btn_row_layout.addWidget(btn)
             btn_row_layout.addStretch()
+
+    def setUndoEnabled(self, checked):
+        self.cmd.set('suspend_undo', not checked, quiet=0)
+        if not checked:
+            return
+
+        on_per_object = set(oname for oname in self.cmd.get_object_list()
+                if self.cmd.get_setting_int('suspend_undo', oname))
+
+        n = len(on_per_object)
+        if n > 20:
+            on_per_object = sorted(on_per_object)[:15] + [
+                    "[{} more]".format(n - 15)]
+
+        if on_per_object:
+            QMB = QtWidgets.QMessageBox
+            check = QMB.question(None, 'Enable for objects?',
+                    'Building "Undo" is disabled for the following objects:\n\n' +
+                    '\n'.join(on_per_object) + '\n\n'
+                    'Enable "Undo" for these objects?', QMB.Yes | QMB.No)
+            if check == QMB.Yes:
+                for oname in on_per_object:
+                    self.cmd.unset('suspend_undo', oname)
 
     def getIcons(self):
         self.icons = {}
@@ -1209,6 +1378,37 @@ class _BuilderPanel(QtWidgets.QWidget):
         if isinstance(w, AminoAcidWizard):
             w.setSecondaryStructure(index + 1)
 
+    def attach_nuc_acid(self, nuc_acid, nuc_type):
+        self._nuc_type = nuc_type
+        picked = collectPicked(self.cmd)
+        if len(picked)==1:
+            try:
+                with undocontext(self.cmd, "byobject %s" % picked[0]):
+                    editor.attach_nuc_acid(picked[0], nuc_acid,
+                                           nuc_type=self._nuc_type,
+                                           object="",
+                                           form=self._nuc_acid_prop.dna_form,
+                                           dbl_helix=self._nuc_acid_prop.dna_dbl_helix,
+                                           _self=self.cmd)
+            except pymol.CmdException as exc:
+                print(exc)
+            except ValueError as exc:
+                print(exc)
+            self.doZoom()
+        else:
+            self.cmd.unpick()
+            NucleicAcidWizard(_self=self.cmd)._init(form=self._nuc_acid_prop.dna_form,
+                              dbl_helix=self._nuc_acid_prop.dna_dbl_helix,
+                              nuc_type=self._nuc_type).toggle(nuc_acid)
+
+    def removeResn(self):
+        picked = collectPicked(self.cmd)
+        if picked == ["pk1"]:
+            self.cmd.select(newest_sele,"byres(pk1)")
+            self.cmd.remove(newest_sele)
+        else:
+            print("Select a single atom on the residue and press remove again")
+
     def doAutoPick(self, old_atoms=None):
         self.cmd.unpick()
         if self.cmd.select(newest_sele,"(byobj "+active_sele+") and not "+active_sele)==0:
@@ -1228,7 +1428,7 @@ class _BuilderPanel(QtWidgets.QWidget):
 
     def doZoom(self, *ignore):
         if "pk1" in self.cmd.get_names("selections"):
-            self.cmd.zoom("((neighbor pk1) extend 4)", 4.0, animate=-1)
+            self.cmd.center("%pk1 extend 9", animate=-1)
 
     def setCharge(self, charge, text):
         picked = collectPicked(self.cmd)
@@ -1303,12 +1503,6 @@ class _BuilderPanel(QtWidgets.QWidget):
         else:
             self.cmd.unpick()
             InvertWizard(self.cmd).toggle()
-
-    def center(self):
-        if "pk1" in self.cmd.get_names("selections"):
-            self.cmd.zoom("pk1", 5.0, animate=-1)
-        else:
-            self.cmd.zoom("all", 3.0, animate=-1)
 
     def removeAtom(self):
         picked = collectPicked(self.cmd)

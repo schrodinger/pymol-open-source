@@ -2537,7 +2537,7 @@ void CGORenderGLAlpha(CGO* I, RenderInfo* info, bool calcDepth)
             float* const pc = it.data();
             assert(base < pc && pc < I->op + I->c);
             auto i =
-                pymol::clamp<int>((pc[4] - I->z_min) * range_factor, 0, i_size);
+                std::clamp<int>((pc[4] - I->z_min) * range_factor, 0, i_size);
             CGO_put_int(pc, start[i]);
             start[i] = (pc - base); /* NOTE: will always be > 0 since we have
                                        CGO_read_int'd */

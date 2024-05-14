@@ -1742,7 +1742,7 @@ void CShaderMgr::bindOffscreenOIT(int width, int height, int drawbuf) {
   renderTarget_t::shape_type req_size(width, height);
 
   if(!oit_pp || oit_pp->size() != req_size) {
-    oit_pp = pymol::make_unique<OIT_PostProcess>(
+    oit_pp = std::make_unique<OIT_PostProcess>(
         width, height, getGPUBuffer<renderTarget_t>(offscreen_rt)->_rbo);
   } else {
     if (!TM3_IS_ONEBUF) {

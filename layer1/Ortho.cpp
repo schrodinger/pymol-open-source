@@ -1319,7 +1319,7 @@ void OrthoBackgroundTextureNeedsUpdate(PyMOLGlobals * G){
 static std::unique_ptr<pymol::Image> makeBgGridImage(PyMOLGlobals* G)
 {
   auto const& grid = G->Scene->grid;
-  auto tmpImg = pymol::make_unique<pymol::Image>( //
+  auto tmpImg = std::make_unique<pymol::Image>( //
       grid.n_col > 1 ? grid.n_col : 1,            //
       grid.n_row > 1 ? grid.n_row : 1);
 
@@ -1343,7 +1343,7 @@ static std::unique_ptr<pymol::Image> makeBgGradientImage(PyMOLGlobals* G)
 {
   constexpr unsigned height = BACKGROUND_TEXTURE_SIZE;
 
-  auto tmpImg = pymol::make_unique<pymol::Image>(1, height);
+  auto tmpImg = std::make_unique<pymol::Image>(1, height);
 
   float top[3], bottom[3], mixed[4]{0, 0, 0, 1};
   copy3f(ColorGet(G, SettingGet_color(G, cSetting_bg_rgb_top)), top);

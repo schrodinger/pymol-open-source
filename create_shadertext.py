@@ -7,7 +7,6 @@ import glob
 from collections import defaultdict
 from os.path import dirname
 from subprocess import Popen, PIPE
-from distutils import dir_util
 
 def create_all(generated_dir, pymoldir="."):
     '''
@@ -30,7 +29,7 @@ class openw(object):
             self.out = cStringIO.StringIO()
             self.filename = filename
         else:
-            dir_util.mkpath(os.path.dirname(filename))
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
             self.out = open(filename, "w")
             self.filename = None
     def close(self):

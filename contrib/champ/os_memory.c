@@ -176,7 +176,15 @@ void *OSMemoryMalloc(unsigned int size,const char *file,int line,int type)
   rec=(DebugRec*)malloc(sizeof(DebugRec)+size);
   if(!rec)
     return(NULL);
-  strcpy(rec->file,file);
+
+  int len = strlen(file);
+  int max_size = sizeof(rec->file) - 1;
+  if (len > max_size) {
+    strcpy(rec->file, file + len - max_size);
+  } else {
+    strcpy(rec->file, file);
+  }
+  rec->file[max_size - 1] = '\0';
   rec->line=line;
   rec->size=size;
   rec->type=type;
@@ -196,7 +204,15 @@ void *OSMemoryCalloc(unsigned int count,unsigned int size,const char *file,int l
   rec=(DebugRec*)calloc(1,sizeof(DebugRec)+size);
   if(!rec)
     return(NULL);
-  strcpy(rec->file,file);
+
+  int len = strlen(file);
+  int max_size = sizeof(rec->file) - 1;
+  if (len > max_size) {
+    strcpy(rec->file, file + len - max_size);
+  } else {
+    strcpy(rec->file, file);
+  }
+  rec->file[max_size - 1] = '\0';
   rec->line=line;
   rec->size=size;
   rec->type=type;

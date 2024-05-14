@@ -1287,8 +1287,13 @@ void CoordSet::update(int state)
       UnitCellCGO.reset(CrystalGetUnitCellCGO(&sym->Crystal));
       auto use_shader = SettingGet<bool>(G, cSetting_use_shaders);
       if (use_shader) {
-        auto color = ColorGet(G, Obj->Color);
-        auto preCGO = pymol::make_unique<CGO>(G);
+        auto cell_color = SettingGet_color(
+            G, this->Setting.get(), Obj->Setting.get(), cSetting_cell_color);
+        if (cell_color < 0) {
+          cell_color = Obj->Color;
+        }
+        auto color = ColorGet(G, cell_color);
+        auto preCGO = std::make_unique<CGO>(G);
         CGOColorv(preCGO.get(), color);
         CGOAppendNoStop(preCGO.get(), UnitCellCGO.get());
         std::unique_ptr<CGO> optimized(CGOOptimizeToVBONotIndexed(preCGO.get(), 0));
@@ -1507,7 +1512,7 @@ CoordSet::CoordSet(const CoordSet& cs)
   this->NTmpLinkBond = cs.NTmpLinkBond;
   /* deep copy & return ptr to new symmetry */
   if(cs.Symmetry) {
-    this->Symmetry = pymol::make_unique<CSymmetry>(*cs.Symmetry);
+    this->Symmetry = std::make_unique<CSymmetry>(*cs.Symmetry);
   }
   std::copy(std::begin(cs.Name), std::end(cs.Name), std::begin(this->Name));
   this->PeriodicBoxType = cs.PeriodicBoxType;

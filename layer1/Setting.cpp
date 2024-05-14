@@ -2481,6 +2481,9 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
     SceneInvalidate(G);
     break;
+  case cSetting_cell_color:
+    ExecutiveInvalidateRep(G, inv_sele, cRepCell, cRepInvColor);
+    SceneInvalidate(G);
   case cSetting_cull_spheres:
   case cSetting_sphere_scale:
   case cSetting_sphere_transparency:

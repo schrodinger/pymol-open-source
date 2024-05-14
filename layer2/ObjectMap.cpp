@@ -4886,7 +4886,7 @@ static pymol::Result<std::unique_ptr<ObjectMapState>> ObjectMapDXStrToMap(
 
   char cc[MAXLINELEN];
 
-  auto ms = pymol::make_unique<ObjectMapState>(G);
+  auto ms = std::make_unique<ObjectMapState>(G);
 
   ms->Origin = std::vector<float>(3);
   ms->Grid = std::vector<float>(3);

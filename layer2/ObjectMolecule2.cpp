@@ -3743,7 +3743,7 @@ bool ObjectMoleculeConnect(ObjectMolecule* I, int& nBond, pymol::vla<BondType>& 
     // For monitoring excessive numbers of bonds
     int violations = 0;
     auto const max_violations = cs->NIndex >> 3; // 12%
-    auto const cnt = pymol::make_unique<signed char[]>(size_t(cs->NIndex));
+    auto const cnt = std::make_unique<signed char[]>(size_t(cs->NIndex));
     p_return_val_if_fail(cnt, false); // memory error
 
     /* initialize each atom's (max) expected valence */

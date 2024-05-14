@@ -130,7 +130,7 @@ void ObjectCurveState::updateRawCGO()
 
 static CGO* FilterCGO(PyMOLGlobals* G, const CGO* rawCGO)
 {
-  auto optCGO = pymol::make_unique<CGO>(G);
+  auto optCGO = std::make_unique<CGO>(G);
   CGO* allCylinders = nullptr;
   CGO* allBeziers = nullptr;
   CGO* allSpheres = nullptr;

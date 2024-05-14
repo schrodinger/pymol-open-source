@@ -497,7 +497,7 @@ std::unique_ptr<pymol::Image> MyPNGRead(const char *file_name)
     png_read_end(png_ptr, info_ptr);
   }
 
-  img = pymol::make_unique<pymol::Image>(width, height);
+  img = std::make_unique<pymol::Image>(width, height);
   if(ok) {
     auto p = img->bits();
     for(row = 0; row < (signed) height; row++) {

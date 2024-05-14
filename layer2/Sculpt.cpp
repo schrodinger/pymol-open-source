@@ -235,7 +235,7 @@ static float ShakerDoDistMinim(float target, float *v0, float *v1, float *d0to1,
 CSculpt::CSculpt (PyMOLGlobals * G)
 {
   this->G = G;
-  this->Shaker = pymol::make_unique<CShaker>(G);
+  this->Shaker = std::make_unique<CShaker>(G);
   this->NBList = pymol::vla<int>(150000);
   this->NBHash = std::vector<int>(NB_HASH_SIZE);
   this->EXList = pymol::vla<int>(100000);

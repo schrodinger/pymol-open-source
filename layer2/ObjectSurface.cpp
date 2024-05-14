@@ -870,10 +870,15 @@ static void ObjectSurfaceRenderCell(PyMOLGlobals *G, ObjectSurface * I,
    * TODO: Ray with primitive CGO
    */
 
-  const float *color = ColorGet(G, I->Color);
+  // TODO: Surface-state level color?
+  auto cell_color = SettingGet_color(*I, cSetting_cell_color);
+  if (cell_color < 0) {
+    cell_color = I->Color;
+  }
+  const float *color = ColorGet(G, cell_color);
   if (use_shader != ms->UnitCellCGO->has_draw_buffers){
     if (use_shader){
-      auto preCGO = pymol::make_unique<CGO>(G);
+      auto preCGO = std::make_unique<CGO>(G);
       CGOColorv(preCGO.get(), color);
       CGOAppendNoStop(preCGO.get(), ms->UnitCellCGO.get());
       std::unique_ptr<CGO> optimized(CGOOptimizeToVBONotIndexed(preCGO.get(), 0));
