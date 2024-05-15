@@ -11,6 +11,7 @@
 #-*
 #-*
 #Z* -------------------------------------------------------------------
+import typing
 
 if True:
 
@@ -530,15 +531,11 @@ SEE ALSO
         return r
 
 
-
-    AUTO_ARGS = set()  # type: ignore
-
-
     class Selection(str):
         pass
 
 
-    def _bool_func(value: str):
+    def _parse_bool(value: str):
         if isinstance(value, str):
             if value.lower() in ["yes", "1", "true", "on"]:
                 return True
@@ -551,14 +548,17 @@ SEE ALSO
         else:
             raise Exception(f"Unsuported boolean flag {value}")
 
+    def _parse_list_str(value: str):
+        import shlex
+        return shlex.split(value)
 
-    def _add_completion(name, idx, sc):
-        try:
-            rec = cmd.auto_arg[idx]
-        except IndexError:
-            rec = {}
-            cmd.auto_arg.append(rec)
-        rec[name] = [sc, "var", ""]
+    def _parse_list_int(value: str):
+        import shlex
+        return list(map(int, shlex.split(value)))
+
+    def _parse_list_float(value: str):
+        import shlex
+        return list(map(float, shlex.split(value)))
 
     def declare_command(name, function=None, _self=cmd):
         if function is None:
@@ -582,6 +582,8 @@ SEE ALSO
         import inspect
         import glob
 
+        from typing import List
+
         spec = inspect.getfullargspec(function)
 
         kwargs_ = {}
@@ -596,33 +598,34 @@ SEE ALSO
         funcs = {}
         for idx, (var, func) in enumerate(spec.annotations.items()):
             funcs[var] = func
-            sc = None
-            if issubclass(func, Selection):
-                sc = cmd.object_sc
-            elif issubclass(func, Path):
-                sc = lambda: cmd.Shortcut(glob.glob("*"))
-            elif issubclass(func, bool):
-                sc = lambda: cmd.Shortcut(["yes", "no"])
-            elif issubclass(func, Enum):
-                sc = lambda: cmd.Shortcut[[m.value for m in func]]
-            if sc is not None:
-                _add_completion(name, idx, sc)
+
         @wraps(function)
         def inner(*args, **kwargs):
-            # this code runs on every call but should have low overhead
-            kwargs = {**kwargs_, **kwargs, **dict(zip(args2_, args))}
-            kwargs.pop("_self", None)
-            for arg in kwargs.copy():
-                if funcs[arg] is _bool_func or issubclass(funcs[arg], bool):
-                    funcs[arg] = _bool_func
-                kwargs[arg] = funcs[arg](kwargs[arg])
-            return function(**kwargs)
+            frame = traceback.format_stack()[-2]
+            caller = frame.split("\"", maxsplit=2)[1]
+            if caller.endswith("pymol/parser.py"):
+                kwargs = {**kwargs_, **kwargs, **dict(zip(args2_, args))}
+                kwargs.pop("_self", None)
+                for arg in kwargs.copy():
+                    if funcs[arg] is _parse_bool or funcs[arg] == bool:
+                        funcs[arg] = _parse_bool
+                    elif funcs[arg] == List[str]:
+                        funcs[arg] = _parse_list_str
+                    elif funcs[arg] == List[int]:
+                        funcs[arg] = _parse_list_int
+                    elif funcs[arg] == List[float]:
+                        funcs[arg] = _parse_list_float
 
+                    kwargs[arg] = funcs[arg](kwargs[arg])
+                return function(**kwargs)
+            else:
+                return function(*args, **kwargs)
         name = function.__name__
         _self.keyword[name] = [inner, 0, 0, ",", parsing.STRICT]
         _self.kwhash.append(name)
         _self.help_sc.append(name)
         return inner
+
     def extend(name, function=None, _self=cmd):
 
         '''
