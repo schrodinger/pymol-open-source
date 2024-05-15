@@ -537,9 +537,9 @@ SEE ALSO
 
     def _parse_bool(value: str):
         if isinstance(value, str):
-            if value.lower() in ["yes", "1", "true", "on"]:
+            if value.lower() in ["yes", "1", "true", "on", "y"]:
                 return True
-            elif value.lower() in ["no", "0", "false", "off"]:
+            elif value.lower() in ["no", "0", "false", "off", "n"]:
                 return False
             else:
                 raise Exception("Invalid boolean value: %s" % value)
@@ -604,7 +604,7 @@ SEE ALSO
         def inner(*args, **kwargs):
             frame = traceback.format_stack()[-2]
             caller = frame.split("\"", maxsplit=2)[1]
-            
+
             # It was called from command line or pml script, so parse arguments
             if caller.endswith("pymol/parser.py"):
                 kwargs = {**kwargs_, **kwargs, **dict(zip(args2_, args))}

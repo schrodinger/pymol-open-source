@@ -239,25 +239,25 @@ def test_declare_command_list_str(capsys):
 def test_declare_command_list_int(capsys):
     @cmd.declare_command
     def func(a: List[int]):
-        print(a[-1])
-        return a[-1]
+        print(a[-1] ** 2)
+        return a[-1] ** 2
 
-    assert func([1, 2, 3]) == 3
+    assert func([1, 2, 3]) == 9
     cmd.do('func 1 2 3')
     out, err = capsys.readouterr()
-    assert out == '3\n3\n'
+    assert out == '9\n9\n'
 
 
 def test_declare_command_list_float(capsys):
     @cmd.declare_command
     def func(a: List[float]):
-        print(a[-1])
-        return a[-1]
+        print(a[-1]**2)
+        return a[-1]**2
 
-    assert func([1.0, 2.0, 3.0]) == 3.0
+    assert func([1.1, 2.0, 3.0]) == 9.0
     cmd.do('func 1 2 3')
     out, err = capsys.readouterr()
-    assert out == '3.0\n3.0\n'
+    assert out == '9.0\n9.0\n'
 
 
 def test_declare_command_bool(capsys):
