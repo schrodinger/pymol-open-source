@@ -574,16 +574,16 @@ SEE ALSO
         if function.__doc__ is not None:
             function.__doc__ = dedent(function.__doc__).strip()
 
-        # These "external" types are allowed
+
         from pathlib import Path
         from enum import Enum
 
         from functools import wraps
         import inspect
         import glob
-
         from typing import List
 
+        # Analysing arguments
         spec = inspect.getfullargspec(function)
 
         kwargs_ = {}
@@ -599,10 +599,13 @@ SEE ALSO
         for idx, (var, func) in enumerate(spec.annotations.items()):
             funcs[var] = func
 
+        # Inner function that will be callable every time the command is executed
         @wraps(function)
         def inner(*args, **kwargs):
             frame = traceback.format_stack()[-2]
             caller = frame.split("\"", maxsplit=2)[1]
+            
+            # It was called from command line or pml script, so parse arguments
             if caller.endswith("pymol/parser.py"):
                 kwargs = {**kwargs_, **kwargs, **dict(zip(args2_, args))}
                 kwargs.pop("_self", None)
@@ -615,11 +618,16 @@ SEE ALSO
                         funcs[arg] = _parse_list_int
                     elif funcs[arg] == List[float]:
                         funcs[arg] = _parse_list_float
-
+                    else:
+                        raise NotImplemented(f"{funcs[arg]} argument is not supported.")
+                    # Convert the argument to the correct type
                     kwargs[arg] = funcs[arg](kwargs[arg])
                 return function(**kwargs)
+
+            # It was called by Python, so pass the arguments as is
             else:
                 return function(*args, **kwargs)
+
         name = function.__name__
         _self.keyword[name] = [inner, 0, 0, ",", parsing.STRICT]
         _self.kwhash.append(name)
