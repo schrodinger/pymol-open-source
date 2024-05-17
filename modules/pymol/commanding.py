@@ -610,7 +610,7 @@ SEE ALSO
                 kwargs = {**kwargs_, **kwargs, **dict(zip(args2_, args))}
                 kwargs.pop("_self", None)
                 for arg in kwargs.copy():
-                    if funcs[arg] is _parse_bool or funcs[arg] == bool:
+                    if funcs[arg] == bool:
                         funcs[arg] = _parse_bool
                     elif funcs[arg] == List[str]:
                         funcs[arg] = _parse_list_str
