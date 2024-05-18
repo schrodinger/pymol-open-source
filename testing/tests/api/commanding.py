@@ -190,13 +190,15 @@ def test_declare_command_casting():
     cmd.do('func 1, /tmp')
 
 
-def test_declare_command_default():
+def test_declare_command_default(capsys):
     from pymol.commanding import Selection
     @cmd.declare_command
     def func(a: Selection = "sele"):
         assert a == "a"
     func("a")
     cmd.do("func a")
+    out, err = capsys.readouterr()
+    assert out == ''
 
 def test_declare_command_docstring():
     @cmd.declare_command
@@ -214,12 +216,14 @@ def test_declare_command_docstring():
     assert func.__doc__ == "docstring\nTest:\n    --foo"
 
 
-def test_declare_command_type_return():
+def test_declare_command_type_return(capsys):
     @cmd.declare_command
     def func() -> int:
         return 1
 
     assert func() == 1
+    out, err = capsys.readouterr()
+    assert out == ''
 
     @cmd.declare_command
     def func():

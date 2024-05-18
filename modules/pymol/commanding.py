@@ -619,12 +619,13 @@ SEE ALSO
                     elif funcs[arg] == List[float]:
                         funcs[arg] = _parse_list_float
                     else:
-                        raise NotImplemented(f"{funcs[arg]} argument is not supported.")
+                        # Assumi it's a literal supported type
+                        pass
                     # Convert the argument to the correct type
                     kwargs[arg] = funcs[arg](kwargs[arg])
                 return function(**kwargs)
 
-            # It was called by Python, so pass the arguments as is
+            # It was called from Python, so pass the arguments as is
             else:
                 return function(*args, **kwargs)
 
