@@ -619,7 +619,7 @@ SEE ALSO
                     elif funcs[arg] == List[float]:
                         funcs[arg] = _parse_list_float
                     else:
-                        # Assumi it's a literal supported type
+                        # Assume it's a literal supported type
                         pass
                     # Convert the argument to the correct type
                     kwargs[arg] = funcs[arg](kwargs[arg])

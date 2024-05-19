@@ -194,9 +194,9 @@ def test_declare_command_default(capsys):
     from pymol.commanding import Selection
     @cmd.declare_command
     def func(a: Selection = "sele"):
-        assert a == "a"
-    func("a")
-    cmd.do("func a")
+        assert a == "sele"
+    func()
+    cmd.do("func")
     out, err = capsys.readouterr()
     assert out == ''
 
