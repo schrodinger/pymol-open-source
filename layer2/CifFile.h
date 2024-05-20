@@ -270,15 +270,14 @@ public:
       if (auto str_ptr = std::get_if<std::string>(&arr->m_arr[pos])) {
         return str_ptr->c_str();
       }
-      auto to_string_visitor = [](auto&& arg) -> std::string {
+      m_internal_str_cache = std::visit([](auto&& arg) -> std::string {
         if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
                           std::string>) {
           return arg;
         } else {
           return std::to_string(arg);
         }
-      };
-      m_internal_str_cache = std::visit(to_string_visitor, arr->m_arr[pos]);
+      }, arr->m_arr[pos]);
       return m_internal_str_cache.c_str();
     }
     return d;
