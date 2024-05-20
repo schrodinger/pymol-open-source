@@ -18,6 +18,11 @@
 // for pymol::default_free
 #include "MemoryDebug.h"
 
+template<class... Ts>
+struct overloaded : Ts... { using Ts::operator()...; };
+template<class... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
+
 namespace pymol {
 namespace _cif_detail {
 
@@ -167,6 +172,26 @@ namespace cif_detail {
   struct bcif_array {
     std::vector<CifArrayElement> m_arr{};
   };
+
+  template <typename T> T var_to_typed(const CifArrayElement& var, const T& d)
+  {
+    if constexpr (std::is_same_v<T, const char*>) {
+      auto& str = std::get<std::string>(var);
+      return !str.empty() ? str.c_str() : d;
+    } else {
+      if (auto ptr = std::get_if<std::string>(&var); ptr && ptr->empty()) {
+        return d;
+      }
+      if constexpr (!std::is_same_v<T, std::string>) {
+        return std::visit(overloaded{[](const std::string& s) -> T {
+                                       return _cif_detail::raw_to_typed<T>(
+                                           s.c_str());
+                                     },
+                              [](const auto& v) -> T { return v; }},
+            var);
+      }
+    }
+  }
 }
 
 /**
@@ -223,17 +248,8 @@ public:
     } else if (auto arr = std::get_if<cif_detail::bcif_array>(&m_array)) {
       if (pos >= arr->m_arr.size())
         return d;
-      if constexpr(std::is_same_v<T, const char*>) {
-        auto& str = std::get<std::string>(arr->m_arr[pos]);
-        return !str.empty() ? str.c_str() : d;
-      } else {
-        if (auto ptr = std::get_if<std::string>(&arr->m_arr[pos])) {
-          if (ptr->empty()) {
-            return d;
-          }
-        }
-        return std::get<T>(arr->m_arr[pos]);
-      }
+      auto& var = arr->m_arr[pos];
+      return cif_detail::var_to_typed<T>(var, d);
     }
     return d;
   }
