@@ -568,43 +568,28 @@ static std::vector<CifArrayElement> integer_packing_decode(
 
   auto as_int = [isUnsigned, byteCount](auto&& elem) -> std::int32_t {
     if (isUnsigned) {
-      if (byteCount == 1) {
-        return static_cast<std::int32_t>(std::get<std::uint8_t>(elem));
-      } else {
-        return static_cast<std::int32_t>(std::get<std::uint16_t>(elem));
-      }
+      return byteCount == 1 ? static_cast<std::int32_t>(std::get<std::uint8_t>(elem))
+                            : static_cast<std::int32_t>(std::get<std::uint16_t>(elem));
     } else {
-      if (byteCount == 1) {
-        return static_cast<std::int32_t>(std::get<std::int8_t>(elem));
-      } else {
-        return static_cast<std::int32_t>(std::get<std::int16_t>(elem));
-      }
+      return byteCount == 1 ? static_cast<std::int32_t>(std::get<std::int8_t>(elem))
+                            : static_cast<std::int32_t>(std::get<std::int16_t>(elem));
     }
   };
 
   auto at_limit = [isUnsigned, upperLimit, lowerLimit](std::int32_t t) -> bool {
-    if (isUnsigned) {
-      return t == upperLimit;
-    } else {
-      return t == upperLimit || t == lowerLimit;
-    }
+    return isUnsigned ? (t == upperLimit)
+                      : (t == upperLimit || t == lowerLimit);
   };
 
-  int i = 0;
-  int j = 0;
-  int n = packedInts.size();
-  while (i < n) {
+  for (int i = 0, j = 0; i < packedInts.size(); ++i, ++j) {
     std::int32_t value = 0;
     std::int32_t t = as_int(packedInts[i]);
     while (at_limit(t)) {
       value += t;
-      i++;
-      t = as_int(packedInts[i]);
+      t = as_int(packedInts[++i]);
     }
     value += t;
     result[j] = value;
-    i++;
-    j++;
   }
   return result;
 }
@@ -639,17 +624,12 @@ static std::vector<CifArrayElement> fixed_array_decode(
     std::vector<CifArrayElement>& data, int factor, DataTypes srcType)
 {
   std::vector<CifArrayElement> result = data;
-  if (srcType == DataTypes::Float32) {
-    auto div_int32_t = [factor](auto&& a) -> float {
-      return std::get<std::int32_t>(a) / static_cast<float>(factor);
-    };
-    std::transform(data.begin(), data.end(), result.begin(), div_int32_t);
-  } else {
-    auto div_int32_t = [factor](auto&& a) -> double {
-      return std::get<std::int32_t>(a) / static_cast<double>(factor);
-    };
-    std::transform(data.begin(), data.end(), result.begin(), div_int32_t);
-  }
+  auto div_int32_t = [factor, srcType](auto&& a) -> auto {
+    return srcType == DataTypes::Float32
+               ? std::get<std::int32_t>(a) / static_cast<float>(factor)
+               : std::get<std::int32_t>(a) / static_cast<double>(factor);
+  };
+  std::transform(data.begin(), data.end(), result.begin(), div_int32_t);
   return result;
 }
 
