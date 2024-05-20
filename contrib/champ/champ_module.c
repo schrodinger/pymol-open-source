@@ -1053,7 +1053,7 @@ static PyMethodDef champ_methods[] = {
   {NULL,		                    NULL}     /* sentinel */        
 };
 
-PyObject * PyInit__champ(void)
+PyMODINIT_FUNC PyInit__champ(void)
 {
   static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,

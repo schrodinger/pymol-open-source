@@ -6531,7 +6531,7 @@ static PyMethodDef Cmd_methods[] = {
 extern "C" {
 #endif
 
-PyObject * PyInit__cmd(void)
+PyMODINIT_FUNC PyInit__cmd(void)
 {
   static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
