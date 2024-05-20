@@ -173,6 +173,13 @@ namespace cif_detail {
     std::vector<CifArrayElement> m_arr{};
   };
 
+  /**
+   * Returns a typed value from a CIF data element.
+   * If the element is missing or inapplicable, return `d`.
+   * @param var CIF data element
+   * @param d default value
+   * @return typed value
+   */
   template <typename T> T var_to_typed(const CifArrayElement& var, const T& d)
   {
     if constexpr (std::is_same_v<T, const char*>) {
@@ -191,6 +198,7 @@ namespace cif_detail {
             var);
       }
     }
+    return d;
   }
 }
 
