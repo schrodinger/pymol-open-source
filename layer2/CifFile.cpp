@@ -722,9 +722,8 @@ static std::vector<CifArrayElement> parse_bcif_decode(const std::vector<unsigned
     std::vector<std::map<std::string, msgpack::object>>& dataEncoding)
 {
   std::vector<CifArrayElement> result;
-  for (auto begin = std::rbegin(dataEncoding), end = std::rend(dataEncoding);
-       begin != end; ++begin) {
-    auto& dataEncode = *begin;
+  for (auto it = std::rbegin(dataEncoding); it != std::rend(dataEncoding); ++it) {
+    auto& dataEncode = *it;
     parse_bcif_decode_kind(
         dataEncode["kind"].as<std::string>(), rawData, result, dataEncode);
   }
