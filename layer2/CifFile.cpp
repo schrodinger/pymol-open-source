@@ -22,7 +22,9 @@
 #include "MemoryDebug.h"
 #include "strcasecmp.h"
 
+#if !defined(_PYMOL_NO_MSGPACKC)
 #include <msgpack.hpp>
+#endif
 
 namespace pymol {
 namespace _cif_detail {
@@ -479,6 +481,8 @@ bool cif_file::parse(char*&& p) {
   return true;
 }
 
+
+#if !defined(_PYMOL_NO_MSGPACKC)
 enum class DataTypes
 {
   Int8 = 1,
@@ -793,6 +797,12 @@ bool cif_file::parse_bcif(const char* bytes, std::size_t size)
   }
   return true;
 }
+#else
+bool cif_file::parse_bcif(const char* bytes, std::size_t size)
+{
+  return false;
+}
+#endif // !defined(_PYMOL_NO_MSGPACKC)
 
 } // namespace pymol
 

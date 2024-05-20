@@ -2359,6 +2359,14 @@ pymol::Result<ObjectMolecule*> ObjectMoleculeReadBCif(PyMOLGlobals* G,
     ObjectMolecule* I, const char* bytes, std::size_t size, int frame,
     int discrete, int quiet, int multiplex, int zoom)
 {
+#ifdef _PYMOL_NO_MSGPACKC
+  PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+    " Error: This build has no BinaryCIF support.\n"
+    " Please install/enable msgpack-c.\n"
+  ENDFB(G);
+  return nullptr;
+#endif
+
   if (I) {
     return pymol::Error("loading BCIF into existing object not supported, "
                         "please use 'create' to append to an existing object.");
