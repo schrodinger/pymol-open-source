@@ -121,7 +121,7 @@ static int RepNonbondedCGOGenerate(RepNonbonded * I, RenderInfo * info)
   PyMOLGlobals *G = I->G;
   float alpha;
   int ok = true;
-  CGO *convertcgo = NULL;
+  CGO *convertcgo = nullptr;
   short nonbonded_as_cylinders ;
   short use_shader;
   float nonbonded_size =
@@ -180,7 +180,7 @@ static int RepNonbondedCGOGenerate(RepNonbonded * I, RenderInfo * info)
       CGOFree(I->shaderCGO);
       I->shaderCGO = convertcgo;
       I->shaderCGO->use_shader = use_shader;
-      convertcgo = NULL;
+      convertcgo = nullptr;
     }
   } else {
     // no shaders
@@ -188,7 +188,7 @@ static int RepNonbondedCGOGenerate(RepNonbonded * I, RenderInfo * info)
     CGOFree(I->shaderCGO);
     I->shaderCGO = convertcgo;
     I->shaderCGO->use_shader = use_shader;
-    convertcgo = NULL;
+    convertcgo = nullptr;
   }
   return ok;
 }
@@ -206,7 +206,7 @@ void RepNonbonded::render(RenderInfo* info)
     alpha = 1.0F;
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->cs->Obj->Setting.get());
+    CGORenderRay(I->primitiveCGO, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->cs->Obj->Setting.get());
     ray->transparentf(0.0);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
@@ -216,7 +216,7 @@ void RepNonbonded::render(RenderInfo* info)
       /* not pick, but render */
       bool use_shader = SettingGetGlobal_b(G, cSetting_nonbonded_use_shader) && SettingGetGlobal_b(G, cSetting_use_shaders);
       if (!use_shader){
-        CGORender(I->primitiveCGO, NULL, NULL, NULL, info, I);
+        CGORender(I->primitiveCGO, nullptr, nullptr, nullptr, info, I);
         return;
       }
       bool nonbonded_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_nonbonded_as_cylinders);
@@ -238,7 +238,7 @@ void RepNonbonded::render(RenderInfo* info)
         }
         ok &= RepNonbondedCGOGenerate(I, info);
       }
-      CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
+      CGORender(I->shaderCGO, nullptr, nullptr, nullptr, info, I);
     }
   }
 }
@@ -265,7 +265,7 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
 
   auto I = new RepNonbonded(cs, state);
 
-  I->shaderCGO = NULL;
+  I->shaderCGO = nullptr;
 
   I->primitiveCGO = CGONew(G);
 

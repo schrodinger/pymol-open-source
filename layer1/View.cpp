@@ -340,9 +340,9 @@ void ViewElemArrayPurge(PyMOLGlobals * G, CViewElem * view, int nFrame)
 PyObject *ViewElemAsPyList(PyMOLGlobals * G, const CViewElem * view)
 {
 #ifdef _PYMOL_NOPY
-  return NULL;
+  return nullptr;
 #else
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(21);
 
@@ -433,7 +433,7 @@ int ViewElemFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem * view)
   ov_size ll = 0;
 
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   if(ok)
@@ -483,7 +483,7 @@ int ViewElemFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem * view)
     if(ok)
       ok = PConvPyIntToInt(PyList_GetItem(list, 13), &view->scene_flag);
     if(ok && view->scene_flag) {
-      const char *ptr = NULL;
+      const char *ptr = nullptr;
       view->scene_flag = false;
       if(PConvPyStrToStrPtr(PyList_GetItem(list, 14), &ptr)) {
         OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, ptr);
@@ -525,15 +525,15 @@ int ViewElemVLAFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem ** vla_pt
                           int nFrame)
 {
   int ok = true;
-  CViewElem *vla = NULL;
+  CViewElem *vla = nullptr;
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   if(ok)
     ok = (PyList_Size(list) == nFrame);
   if(ok)
-    ok = ((vla = VLACalloc(CViewElem, nFrame)) != NULL);
+    ok = ((vla = VLACalloc(CViewElem, nFrame)) != nullptr);
   if(ok) {
     int a;
     for(a = 0; a < nFrame; a++) {
@@ -553,10 +553,10 @@ int ViewElemVLAFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem ** vla_pt
 PyObject *ViewElemVLAAsPyList(PyMOLGlobals * G, const CViewElem * vla, int nFrame)
 {
 #ifdef _PYMOL_NOPY
-  return NULL;
+  return nullptr;
 #else
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   int a;
   result = PyList_New(nFrame);
   for(a = 0; a < nFrame; a++) {
@@ -587,7 +587,7 @@ CViewIterator ViewGetIterator(CView * I)
 int ViewIterate(CView * I, CViewIterator * iter, CRay * ray, int at_least_once)
 {
   int result;
-  CViewElem *elem = NULL;
+  CViewElem *elem = nullptr;
 
   if((!I) || (!I->NView)) {     /* trusting short-circuit to avoid segfault */
     if(at_least_once) {

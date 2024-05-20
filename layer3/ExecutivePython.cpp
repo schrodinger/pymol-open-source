@@ -13,7 +13,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
     int discrete, int quiet, int zoom)
 {
   ObjectNameType valid_name = "";
-  pymol::CObject *origObj = NULL, *obj;
+  pymol::CObject *origObj = nullptr, *obj;
   OrthoLineType buf;
   buf[0] = 0;
   ExecutiveProcessObjectName(G, oname, valid_name);
@@ -27,7 +27,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
     if (origObj) {
       if (origObj->type != cObjectMolecule) {
         ExecutiveDelete(G, valid_name);
-        origObj = NULL;
+        origObj = nullptr;
       }
     }
     PBlock(G); /*PBlockAndUnlockAPI(); */
@@ -59,7 +59,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
     if (origObj)
       if (origObj->type != cObjectMap) {
         ExecutiveDelete(G, valid_name);
-        origObj = NULL;
+        origObj = nullptr;
       }
     PBlock(G); /*PBlockAndUnlockAPI(); */
     obj = ObjectMapLoadChemPyBrick(
@@ -81,7 +81,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
     if (origObj)
       if (origObj->type != cObjectMap) {
         ExecutiveDelete(G, valid_name);
-        origObj = NULL;
+        origObj = nullptr;
       }
     PBlock(G); /*PBlockAndUnlockAPI(); */
     obj = ObjectMapLoadChemPyMap(
@@ -103,7 +103,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
     if (origObj)
       if (origObj->type != cObjectCallback) {
         ExecutiveDelete(G, valid_name);
-        origObj = NULL;
+        origObj = nullptr;
       }
     PBlock(G); /*PBlockAndUnlockAPI(); */
     obj = ObjectCallbackDefine(
@@ -125,7 +125,7 @@ pymol::Result<> ExecutiveLoadObject(PyMOLGlobals* G,
     if (origObj)
       if (origObj->type != cObjectCGO) {
         ExecutiveDelete(G, valid_name);
-        origObj = NULL;
+        origObj = nullptr;
       }
     PBlock(G); /*PBlockAndUnlockAPI(); */
     obj = ObjectCGODefine(G, (ObjectCGO*) origObj, model, frame);

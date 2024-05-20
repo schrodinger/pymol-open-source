@@ -80,7 +80,7 @@ static void lookup_color(CColor * I, const float *in, float *out, int big_endian
 
 void ColorGetBkrdContColor(PyMOLGlobals * G, float *rgb, int invert_flag)
 {
-  const float *bkrd = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+  const float *bkrd = ColorGet(G, SettingGet_color(G, nullptr, nullptr, cSetting_bg_rgb));
 
   if(!invert_flag) {
     if((bkrd[0] + bkrd[1] + bkrd[2]) > 0.5F) {
@@ -774,7 +774,7 @@ const char *ColorGetName(PyMOLGlobals * G, int index)
     if (a < I->Ext.size()) {
       return I->Ext[a].Name;
     } else
-      return NULL;
+      return nullptr;
   }
   return (NULL);
 }
@@ -1733,7 +1733,7 @@ int ColorLookupColor(PyMOLGlobals * G, float *color)
 /*========================================================================*/
 int ColorInit(PyMOLGlobals * G)
 {
-  CColor *I = NULL;
+  CColor *I = nullptr;
 
   if ((G->Color = new CColor())) {
     I = G->Color;
@@ -1763,13 +1763,13 @@ void ColorUpdateFront(PyMOLGlobals * G, const float *back)
 }
 
 void ColorUpdateFrontFromSettings(PyMOLGlobals * G){
-  int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
-  const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
+  int bg_gradient = SettingGet_b(G, nullptr, nullptr, cSetting_bg_gradient);
+  const char * bg_image_filename = SettingGet_s(G, nullptr, nullptr, cSetting_bg_image_filename);
   short bg_image = bg_image_filename && bg_image_filename[0];
   
   if (!bg_gradient){
     if (!bg_image && !OrthoBackgroundDataIsSet(*G->Ortho)){
-      const float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+      const float *v = ColorGet(G, SettingGet_color(G, nullptr, nullptr, cSetting_bg_rgb));
       ColorUpdateFront(G, v);
     } else {
       float v[] = { 0.f, 0.f, 0.f };
@@ -1777,8 +1777,8 @@ void ColorUpdateFrontFromSettings(PyMOLGlobals * G){
     }
   } else {
     float vv[3];
-    const float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom));
-    const float *vb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_top));
+    const float *v = ColorGet(G, SettingGet_color(G, nullptr, nullptr, cSetting_bg_rgb_bottom));
+    const float *vb = ColorGet(G, SettingGet_color(G, nullptr, nullptr, cSetting_bg_rgb_top));
     average3f(v, vb, vv);
     ColorUpdateFront(G, vv);    
   }

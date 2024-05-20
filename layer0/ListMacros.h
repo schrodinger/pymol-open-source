@@ -25,12 +25,12 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Result.h"
 
-#define ListInit(List) List = NULL
+#define ListInit(List) List = nullptr
 
 #define ListAppend(List,Elem,Link,ElemType) \
 { \
   ElemType *current = (List); \
-  ElemType *previous = NULL; \
+  ElemType *previous = nullptr; \
   while(current) \
 	 { \
 		previous = current; \
@@ -40,7 +40,7 @@ Z* -------------------------------------------------------------------
 	 previous->Link = Elem; \
   else \
 	 (List) = Elem; \
-  (Elem)->Link = NULL; \
+  (Elem)->Link = nullptr; \
 }
 
 /**
@@ -69,7 +69,7 @@ void ListAppendT(ElemType*& list, ElemType* ele){
 #define ListFree(List,Link,ElemType) \
 { \
   ElemType *current = List; \
-  ElemType *previous = NULL; \
+  ElemType *previous = nullptr; \
   while(current) \
 	 { \
       if(previous) \
@@ -79,13 +79,13 @@ void ListAppendT(ElemType*& list, ElemType* ele){
 	 } \
   if(previous) \
 	 mfree(previous); \
-  (List) = NULL; \
+  (List) = nullptr; \
 }
 
 #define ListDetach(List,Elem,Link,ElemType) \
 { \
   ElemType *current = List; \
-  ElemType *previous = NULL; \
+  ElemType *previous = nullptr; \
   while(current) \
 	 { \
 		if(current == (Elem)) \
@@ -99,7 +99,7 @@ void ListAppendT(ElemType*& list, ElemType* ele){
 		  previous->Link = current->Link; \
         else \
           (List) = current->Link; \
-	  (Elem)->Link = NULL; \
+	  (Elem)->Link = nullptr; \
 	 } \
 }
 
@@ -143,7 +143,7 @@ ElemType* ListDetachT(ElemType*& list, ElemType* ele){
 }
 
 #define ListIterate(List,Counter,Link) \
-   ( (Counter) = ((List) ? (((Counter) ? (Counter)->Link : (List))) : NULL))
+   ( (Counter) = ((List) ? (((Counter) ? (Counter)->Link : (List))) : nullptr))
 
 
 /* Elem handling routines */
@@ -166,7 +166,7 @@ ElemType* ListDetachT(ElemType*& list, ElemType* ele){
     }							  \
 }
 
-#define ListElemFree(Elem) { mfree(Elem); Elem = NULL; }
+#define ListElemFree(Elem) { mfree(Elem); Elem = nullptr; }
 
 /**
  * Retrives position of element in list

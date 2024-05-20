@@ -29,8 +29,8 @@ int ObjectGroupNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGroup ** r
                              int version)
 {
   int ok = true, ll = 0;
-  ObjectGroup *I = NULL;
-  (*result) = NULL;
+  ObjectGroup *I = nullptr;
+  (*result) = nullptr;
   if(ok)
     ok = (list != Py_None);
   if(ok)
@@ -39,7 +39,7 @@ int ObjectGroupNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGroup ** r
     ll = PyList_Size(list);
   I = new ObjectGroup(G);
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
   if(ok){
     auto *val = PyList_GetItem(list, 0);
     ok = ObjectFromPyList(G, val, I);
@@ -59,7 +59,7 @@ int ObjectGroupNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGroup ** r
 
 PyObject *ObjectGroupAsPyList(ObjectGroup * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(3);
   PyList_SetItem(result, 0, ObjectAsPyList(I));

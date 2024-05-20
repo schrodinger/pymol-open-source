@@ -92,7 +92,7 @@ static PyObject * SubGetItem(PyMOLGlobals * G, PyObject ** Sub, const int a) {
 
   if(!PyList_Check(elem)) {
     PBlock(G);
-    elem = PyObject_CallObject(elem, NULL);
+    elem = PyObject_CallObject(elem, nullptr);
 
     if(PyErr_Occurred())
       PyErr_Print();
@@ -107,7 +107,7 @@ static PyObject * SubGetItem(PyMOLGlobals * G, PyObject ** Sub, const int a) {
 
 ok_except1:
 #endif
-  return NULL;
+  return nullptr;
 }
 
 /*========================================================================*/
@@ -123,7 +123,7 @@ static Block *PopUpRecursiveFind(Block * block, int x, int y)
     OrthoGrab(G, block);
     return block;
   }
-  return NULL;
+  return nullptr;
 }
 
 
@@ -132,7 +132,7 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
                 int passive, PyObject * list, Block * parent)
 {
 #ifdef _PYMOL_NOPY
-  return NULL;
+  return nullptr;
 #else
   /* assumes blocked threads (calls the Python C API) */
 
@@ -164,11 +164,11 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
   }
 
   I->Parent = parent;
-  I->Child = NULL;
+  I->Child = nullptr;
   I->NLine = PyList_Size(list);
-  I->Text = NULL;
-  I->Command = NULL;
-  I->Code = NULL;
+  I->Text = nullptr;
+  I->Command = nullptr;
+  I->Code = nullptr;
   I->Selected = -1;
   I->StartX = (I->LastX = last_x);
   I->StartY = (I->LastY = last_y);
@@ -361,7 +361,7 @@ static void PopUpForgetChild(Block * block)
 {
 
   CPopUp *I = (CPopUp *) block->reference;
-  I->Child = NULL;
+  I->Child = nullptr;
 }
 
 static void PopUpRecursiveDetach(Block * block)
@@ -410,7 +410,7 @@ static void PopUpRecursiveFree(Block * block)
 
   if(I->Child)
     PopUpFree(I->Child);
-  I->Child = NULL;
+  I->Child = nullptr;
   if(I->Parent) {
     PopUpForgetChild(I->Parent);
     PopUpRecursiveFree(I->Parent);
@@ -423,7 +423,7 @@ static void PopUpFreeRecursiveChild(Block * block)
   CPopUp *I = (CPopUp *) block->reference;
   if(I->Child)
     PopUpFreeRecursiveChild(I->Child);
-  I->Child = NULL;
+  I->Child = nullptr;
   PopUpFree(block);
 }
 
@@ -528,7 +528,7 @@ int CPopUp::drag(int x, int y, int mod)
           if(I->ChildDelay < UtilGetSeconds(G)) {
             PopUpDetachRecursiveChild(I->Child);
             PopUpFreeRecursiveChild(I->Child);
-            I->Child = NULL;
+            I->Child = nullptr;
             I->ChildLine = -1;
             OrthoDirty(G);
 	    OrthoInvalidateDoDraw(G);

@@ -180,7 +180,7 @@ PyObject *PXIncRef(PyObject * obj);
 
 /**
  * Like `Py_INCREF` but returns the input argument for convenience.
- * Does not accept NULL, unlike `PXIncRef`.
+ * Does not accept nullptr, unlike `PXIncRef`.
  */
 inline PyObject* PIncRef(PyObject* obj)
 {

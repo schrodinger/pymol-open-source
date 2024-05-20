@@ -1,9 +1,16 @@
 from __future__ import print_function
 
 import sys
+import pytest
+
 import pymol
 import __main__
 from pymol import cmd, testing, stored
+
+from typing import List
+
+
+
 
 class TestCommanding(testing.PyMOLTestCase):
 
@@ -171,3 +178,100 @@ class TestCommanding(testing.PyMOLTestCase):
             self.assertTrue(stored.tmp)
             if mod:
                 self.assertEqual(rw, hasattr(sys.modules[mod], varname))
+
+def test_declare_command_casting():
+    from pathlib import Path
+
+    @cmd.declare_command
+    def func(a: int, b: Path):
+        assert isinstance(a, int) and a == 1
+        assert isinstance(b, (Path, str)) and "/tmp" == str(b)
+    func(1, "/tmp")
+    cmd.do('func 1, /tmp')
+
+
+def test_declare_command_default(capsys):
+    from pymol.commanding import Selection
+    @cmd.declare_command
+    def func(a: Selection = "sele"):
+        assert a == "sele"
+    func()
+    cmd.do("func")
+    out, err = capsys.readouterr()
+    assert out == ''
+
+def test_declare_command_docstring():
+    @cmd.declare_command
+    def func():
+        """docstring"""
+    assert func.__doc__ == "docstring"
+
+    @cmd.declare_command
+    def func():
+        """
+        docstring
+        Test:
+            --foo
+        """
+    assert func.__doc__ == "docstring\nTest:\n    --foo"
+
+
+def test_declare_command_type_return(capsys):
+    @cmd.declare_command
+    def func() -> int:
+        return 1
+
+    assert func() == 1
+    out, err = capsys.readouterr()
+    assert out == ''
+
+    @cmd.declare_command
+    def func():
+        return 1
+    assert func() == 1
+
+def test_declare_command_list_str(capsys):
+    @cmd.declare_command
+    def func(a: List[str]):
+        print(a[-1])
+
+    func(["a", "b", "c"])
+    cmd.do('func a b c')
+    out, err = capsys.readouterr()
+    assert out == 'c\nc\n'
+
+def test_declare_command_list_int(capsys):
+    @cmd.declare_command
+    def func(a: List[int]):
+        print(a[-1] ** 2)
+        return a[-1] ** 2
+
+    assert func([1, 2, 3]) == 9
+    cmd.do('func 1 2 3')
+    out, err = capsys.readouterr()
+    assert out == '9\n9\n'
+
+
+def test_declare_command_list_float(capsys):
+    @cmd.declare_command
+    def func(a: List[float]):
+        print(a[-1]**2)
+        return a[-1]**2
+
+    assert func([1.1, 2.0, 3.0]) == 9.0
+    cmd.do('func 1 2 3')
+    out, err = capsys.readouterr()
+    assert out == '9.0\n9.0\n'
+
+
+def test_declare_command_bool(capsys):
+    @cmd.declare_command
+    def func(a: bool, b: bool):
+        assert a
+        assert not b
+
+    func(True, False)
+
+    cmd.do("func yes, no")
+    out, err = capsys.readouterr()
+    assert out == '' and err == ''

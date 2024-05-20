@@ -853,7 +853,7 @@ void CControl::draw(CGO* orthoCGO)
 /*========================================================================*/
 int ControlInit(PyMOLGlobals * G)
 {
-  CControl *I = NULL;
+  CControl *I = nullptr;
   if((I = (G->Control = new CControl(G)))) {
     I->active = true;
     I->TextColor[0] = 1.0;

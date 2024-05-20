@@ -48,7 +48,7 @@ void ScrollBar::update()
   m_ValueMax = static_cast<float>(m_ListSize - m_DisplaySize);
   if(m_ValueMax < 1)
     m_ValueMax = 1;
-  m_Value = pymol::clamp(m_Value, 0.0f, m_ValueMax);
+  m_Value = std::clamp(m_Value, 0.0f, m_ValueMax);
 }
 
 void ScrollBar::fill(CGO* orthoCGO)

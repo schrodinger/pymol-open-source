@@ -59,7 +59,7 @@ void RepNonbondedSphere::render(RenderInfo* info)
 
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
+    CGORenderRay(I->primitiveCGO, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->obj->Setting.get());
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
@@ -91,9 +91,9 @@ void RepNonbondedSphere::render(RenderInfo* info)
           }
           I->shaderCGO->use_shader = true;
         }
-        CGORender(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+        CGORender(I->shaderCGO, nullptr, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
       } else {
-        CGORender(I->primitiveCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+        CGORender(I->primitiveCGO, nullptr, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
       }
     }
   }
@@ -109,7 +109,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   PyMOLGlobals *G = cs->G;
   ObjectMolecule *obj = cs->Obj;
 
-  unsigned char *active = NULL;
+  unsigned char *active = nullptr;
   int nSphere = 0;
 
   float prev_transp = -1;
@@ -138,8 +138,8 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
     SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_nb_spheres_size);
 
   auto I = new RepNonbondedSphere(cs, state);
-  I->shaderCGO = NULL;
-  I->primitiveCGO = NULL;
+  I->shaderCGO = nullptr;
+  I->primitiveCGO = nullptr;
 
   /* Generate primitiveCGO */
   int NP = 0;
@@ -181,7 +181,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   FreeP(active);
   if (!ok){
     delete I;
-    I = NULL;
+    I = nullptr;
   }
   return (Rep *) I;
 }

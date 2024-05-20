@@ -179,7 +179,7 @@ void RepCylBond::render(RenderInfo * info)
 
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
+    CGORenderRay(I->primitiveCGO, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->obj->Setting.get());
     ray->transparentf(0.0);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
@@ -205,7 +205,7 @@ void RepCylBond::render(RenderInfo * info)
       }
       const float *color = ColorGet(G, I->obj->Color);
       I->renderCGO->debug = SettingGetGlobal_i(G, cSetting_stick_debug);
-      CGORender(I->renderCGO, color, NULL, NULL, info, I);
+      CGORender(I->renderCGO, color, nullptr, nullptr, info, I);
     }
   }
 }
@@ -301,7 +301,7 @@ static int RepValence(RepCylBond *I, CGO *cgo, bool s1, bool s2, bool isRamped,
 		      const float *color1, const float *color2, int ord,
 		      float tube_size,
 		      bool fixed_r, float scale_r,
-		      Pickable pickdata[] = NULL)
+		      Pickable pickdata[] = nullptr)
 {
   float d[3], t[3], p0[3], p1[3], p2[3];
   const float* vv;
@@ -374,7 +374,7 @@ static int RepValence(RepCylBond *I, CGO *cgo, bool s1, bool s2, bool isRamped,
         ok &= CGOColorv(cgo, color1);
       if (ok && pickdata)
         ok &= CGOPickColor(cgo, pickdata[0].index, pickdata[0].bond);
-      Pickable *pickdataptr = NULL;
+      Pickable *pickdataptr = nullptr;
       if (pickdata)
         pickdataptr = &pickdata[1];
       if (ok)
@@ -408,7 +408,7 @@ static int RepValence(RepCylBond *I, CGO *cgo, bool s1, bool s2, bool isRamped,
 
       copy3f(v1, v1t);
       copy3f(v2, v2t);
-      Pickable *pickdataptr = NULL;
+      Pickable *pickdataptr = nullptr;
       if (pickdata)
         pickdataptr = &pickdata[1];
       if (ok)
@@ -506,7 +506,7 @@ static int RepValence(RepCylBond *I, CGO *cgo, bool s1, bool s2, bool isRamped,
           ok &= RepCylinder(cgo, s1, s2, isRamped, v1tt, v2tt, true, true, radius2);
       }
 
-      Pickable *pickdataptr = NULL;
+      Pickable *pickdataptr = nullptr;
       if (ok)
         ok &= CGOColorv(cgo, color1);
       if (ok && pickdata){
@@ -532,7 +532,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   const BondType *b;
   float radius;
   float valence;
-  int half_bonds, *other = NULL;
+  int half_bonds, *other = nullptr;
   int visFlag;
   int ord;
   int stick_ball, stick_ball_color = -1;
@@ -545,8 +545,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   int cartoon_side_chain_helper = 0;
   int ribbon_side_chain_helper = 1;
   int na_mode;
-  bool *marked = NULL;
-  float *capdrawn = NULL;
+  bool *marked = nullptr;
+  float *capdrawn = nullptr;
   float scale_r = 1.0F;
   float transp, h_scale;
   float prev_transp = -1;
@@ -579,7 +579,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   marked = pymol::calloc<bool>(obj->NAtom);
   CHECKOK(ok, marked);
   if (!ok){
-    return NULL;
+    return nullptr;
   }
 
   valence = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_valence);
@@ -907,7 +907,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   CGOStop(I->primitiveCGO);
   if (!ok){
     delete I;
-    I = NULL;
+    I = nullptr;
   }
 
   return (Rep *) I;
@@ -1137,10 +1137,10 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
               }
 
 	      /* overlap is half since it is one cylinder representing both halfs of a bond */
-              RepCylinderImmediate(v1, v2, nEdge, 1, 1, overlap_r, nub_r, radius, NULL);
+              RepCylinderImmediate(v1, v2, nEdge, 1, 1, overlap_r, nub_r, radius, nullptr);
 
             } else {            /* different colors -> two cylinders, no interior */
-              float avg[3], *dir = NULL;
+              float avg[3], *dir = nullptr;
 
               avg[0] = (v1[0] + v2[0]) * _pt5;
               avg[1] = (v1[1] + v2[1]) * _pt5;

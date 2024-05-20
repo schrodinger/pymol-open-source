@@ -104,9 +104,9 @@ static int RepSphereRenderRay(PyMOLGlobals *G, RepSphere * I, RenderInfo * info)
     alpha = 1.0F;
   ray->transparentf(1.0 - alpha);
   if (I->spheroidCGO){
-    CGORenderRay(I->spheroidCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
+    CGORenderRay(I->spheroidCGO, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->obj->Setting.get());
   } else {
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
+    CGORenderRay(I->primitiveCGO, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->obj->Setting.get());
   }
   ray->transparentf(0.0);
   return true;
@@ -167,7 +167,7 @@ void RepSphere::render(RenderInfo* info)
       RepSphereRenderPick(I, info, sphere_mode);
     } else {                    /* not pick, render! */
       if (I->spheroidCGO) {
-        CGORender(I->spheroidCGO, NULL, NULL, NULL, info, I);
+        CGORender(I->spheroidCGO, nullptr, nullptr, nullptr, info, I);
         return;
       }
 
@@ -176,7 +176,7 @@ void RepSphere::render(RenderInfo* info)
           CGOFree(I->renderCGO);
           I->renderCGO = 0;
         } else {
-          CGORender(I->renderCGO, NULL, NULL, NULL, info, I);
+          CGORender(I->renderCGO, nullptr, nullptr, nullptr, info, I);
           return;
         }
       }
@@ -204,7 +204,7 @@ void RepSphere::render(RenderInfo* info)
       }
 
       if (I->renderCGO)
-        CGORender(I->renderCGO, NULL, NULL, NULL, info, I);
+        CGORender(I->renderCGO, nullptr, nullptr, nullptr, info, I);
     }
   }
 }
@@ -481,19 +481,19 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   int ribbon_side_chain_helper = 0;
   AtomInfoType *ati1;
   int sphere_mode = 0;
-  bool *marked = NULL;
+  bool *marked = nullptr;
   float transp;
   int variable_alpha = false;
   short use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) &&
                      SettingGetGlobal_b(G, cSetting_use_shaders);
   // skip if not visible
   if(!cs->hasRep(cRepSphereBit))
-    return NULL;
+    return nullptr;
 
   obj = cs->Obj;
   marked = pymol::calloc<bool>(obj->NAtom);
   if (!marked)
-    return NULL;
+    return nullptr;
 
   auto I = new RepSphere(cs, state);
   if (!cs->Spheroid.empty())
@@ -541,7 +541,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     }
     ok &= !G->Interrupt;
   }
-    MapType *map = MapNew(G, SPHERE_NORMAL_RANGE, v_tmp, nspheres, NULL);
+    MapType *map = MapNew(G, SPHERE_NORMAL_RANGE, v_tmp, nspheres, nullptr);
     float cut_mult = SphereComputeCutMultiplier(G->Sphere->Sphere[1]);
     float *dot = G->Sphere->Sphere[1]->dot[0];
     int n_dot = G->Sphere->Sphere[1]->nDot;
@@ -611,7 +611,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   FreeP(marked);
   if(nspheres == 0 || !ok) {
     delete I;
-    I = NULL;
+    I = nullptr;
   }
   return (Rep *) I;
 }

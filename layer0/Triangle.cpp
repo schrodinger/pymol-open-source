@@ -313,8 +313,8 @@ static int TriangleAdjustNormals(TriangleSurfaceRec * II, float *v, float *vn, i
   TriangleSurfaceRec *I = II;
   int ok = true;
   /* points all normals to the average of the intersecting triangles in order to maximum surface smoothness */
-  float *tNorm = NULL, *tWght;
-  int *vFlag = NULL;
+  float *tNorm = nullptr, *tWght;
+  int *vFlag = nullptr;
   float *v0, *v1, *v2, *tn, vt1[3], vt2[3], *vn0, *tn0, *tn1, *tn2, *tw;
   int a, *t, i0, i1, i2;
   float tmp[3];
@@ -2011,8 +2011,8 @@ static int TriangleFixProblems(TriangleSurfaceRec * II, float *v, float *vn, int
   int problemFlag;
   int a, l, e;
   int i0, i1, i2, s01 = 0, s02 = 0, s12;
-  int *pFlag = NULL;
-  int *vFlag = NULL;
+  int *pFlag = nullptr;
+  int *vFlag = nullptr;
   problemFlag = false;
 
   pFlag = pymol::malloc<int>(n);
@@ -2150,10 +2150,10 @@ static int TriangleBruteForceClosure(TriangleSurfaceRec * II, float *v, float *v
   int a, b, c, d;
   int i0, i1, i2;
   float *v1, *v2, *v0, vt1[3], vt2[3], vt3[3], vt4[3], *n0, *n1, *n2, tNorm[3];
-  int *pFlag = NULL;
-  int *pair = NULL;
+  int *pFlag = nullptr;
+  int *pair = nullptr;
   int pc;
-  int *active = NULL;
+  int *active = nullptr;
   int ac;
   int hits;
   int p1, p2;
@@ -2281,9 +2281,9 @@ int *TrianglePointsToSurface(PyMOLGlobals * G, float *v, float *vn, int n,
                              float cutoff, int *nTriPtr, int **stripPtr,
                              float *extent, int cavity_mode)
 {
-  TriangleSurfaceRec *I = NULL;
+  TriangleSurfaceRec *I = nullptr;
   int ok = true;
-  int *result = NULL;
+  int *result = nullptr;
   MapType *map;
   int a;
 

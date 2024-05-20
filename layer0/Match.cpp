@@ -88,7 +88,7 @@ CMatch *MatchNew(PyMOLGlobals * G, unsigned int na, unsigned int nb, int dist_ma
 
   if(!(I->mat && I->smat && ((!dist_mats) || (I->da && I->db)))) {
     MatchFree(I);
-    I = NULL;
+    I = nullptr;
   }
   return (I);
 }
@@ -270,7 +270,7 @@ int MatchMatrixFromFile(CMatch * I, const char *fname, int quiet)
   std::string buffer;
   const char *p;
   char cc[255];
-  char *code = NULL;
+  char *code = nullptr;
   unsigned int x, y;
   int a;
   int n_entry;

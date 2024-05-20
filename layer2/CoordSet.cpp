@@ -62,7 +62,7 @@ Z* -------------------------------------------------------------------
  *
  * @param v_out Buffer for return value, may or may not be used.
  * @param inv If true, apply the inverse of symop
- * @return Coordinate pointer, or NULL if symmetry operation was invalid.
+ * @return Coordinate pointer, or nullptr if symmetry operation was invalid.
  */
 float const* CoordSet::coordPtrSym(
     int idx, pymol::SymOp const& symop, float* v_out, bool inv) const
@@ -208,25 +208,25 @@ int BondInOrder(BondType const* a, int b1, int b2)
 
 int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
 {
-  CoordSet *I = NULL;
+  CoordSet *I = nullptr;
   int ok = true;
   int ll = 0;
 
   if(*cs) {
     delete *cs;
-    *cs = NULL;
+    *cs = nullptr;
   }
 
   if(list == Py_None) {         /* allow None for CSet */
-    *cs = NULL;
+    *cs = nullptr;
   } else {
 
     if(ok)
       I = CoordSetNew(G);
     if(ok)
-      ok = (I != NULL);
+      ok = (I != nullptr);
     if(ok)
-      ok = (list != NULL);
+      ok = (list != nullptr);
     if(ok)
       ok = PyList_Check(list);
     if(ok)
@@ -261,7 +261,7 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
       if (!CPythonVal_IsNone(val))
 	I->SculptCGO = CGONewFromPyList(G, val, 0, 1);
       else {
-	I->SculptShaderCGO = I->SculptCGO = NULL;
+	I->SculptShaderCGO = I->SculptCGO = nullptr;
       }
       CPythonVal_Free(val);
     }
@@ -283,7 +283,7 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
 	    CPythonVal_Free(val2);
 	  }
 	} else {
-	  I->atom_state_setting_id = NULL;
+	  I->atom_state_setting_id = nullptr;
 	}
 	CPythonVal_Free(val);
       } else {
@@ -311,7 +311,7 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
 
     if(!ok) {
       delete I;
-      *cs = NULL;
+      *cs = nullptr;
     } else {
       *cs = I;
     }
@@ -327,10 +327,10 @@ PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy)
 #ifndef _PYMOL_NUMPY
   PRINTFB(cs->G, FB_CoordSet, FB_Errors)
     "No numpy support\n" ENDFB(cs->G);
-  return NULL;
+  return nullptr;
 #else
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   const int base_size = sizeof(float);
   int typenum = -1;
   npy_intp dims[2] = {0, 3};
@@ -344,7 +344,7 @@ PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy)
 
   if(typenum == -1) {
     printf("error: no typenum for float size %d\n", base_size);
-    return NULL;
+    return nullptr;
   }
 
   dims[0] = cs->NIndex;
@@ -362,7 +362,7 @@ PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy)
 
 PyObject *CoordSetAsPyList(CoordSet * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   if(I) {
     auto G = I->G;
@@ -396,7 +396,7 @@ PyObject *CoordSetAsPyList(CoordSet * I)
     }
     if (I->has_any_atom_state_settings()) {
       int a;
-      PyObject *settings_list = NULL;
+      PyObject *settings_list = nullptr;
       settings_list = PyList_New(I->NIndex);
       for (a=0; a<I->NIndex; a++){
         if (I->has_atom_state_settings(a)) {
@@ -645,7 +645,7 @@ void CoordSet::setTitle(pymol::zstring_view title)
 
 /**
  * Get the transformation matrix which is pre-multiplied to the coordiantes, or
- * NULL if there is either no matrix set, or it's not pre-multiplied
+ * nullptr if there is either no matrix set, or it's not pre-multiplied
  * (matrix_mode=1).
  */
 double const* CoordSet::getPremultipliedMatrix() const {
@@ -1058,7 +1058,7 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
                                    const float *ref, int index, const double *matrix)
 {
 #ifdef _PYMOL_NOPY
-  return NULL;
+  return nullptr;
 #else
   PyObject *atom = PYOBJECT_CALLMETHOD(P_chempy, "Atom", "");
   if(!atom)
@@ -1287,8 +1287,13 @@ void CoordSet::update(int state)
       UnitCellCGO.reset(CrystalGetUnitCellCGO(&sym->Crystal));
       auto use_shader = SettingGet<bool>(G, cSetting_use_shaders);
       if (use_shader) {
-        auto color = ColorGet(G, Obj->Color);
-        auto preCGO = pymol::make_unique<CGO>(G);
+        auto cell_color = SettingGet_color(
+            G, this->Setting.get(), Obj->Setting.get(), cSetting_cell_color);
+        if (cell_color < 0) {
+          cell_color = Obj->Color;
+        }
+        auto color = ColorGet(G, cell_color);
+        auto preCGO = std::make_unique<CGO>(G);
         CGOColorv(preCGO.get(), color);
         CGOAppendNoStop(preCGO.get(), UnitCellCGO.get());
         std::unique_ptr<CGO> optimized(CGOOptimizeToVBONotIndexed(preCGO.get(), 0));
@@ -1313,13 +1318,13 @@ void CoordSetUpdateCoord2IdxMap(CoordSet * I, float cutoff)
       if((I->Coord2IdxDiv < cutoff) ||
          (((cutoff - I->Coord2IdxReq) / I->Coord2IdxReq) < -0.5F)) {
         MapFree(I->Coord2Idx);
-        I->Coord2Idx = NULL;
+        I->Coord2Idx = nullptr;
       }
     }
     if(I->NIndex && (!I->Coord2Idx)) {  /* NOTE: map based on stored coords */
       I->Coord2IdxReq = cutoff;
       I->Coord2IdxDiv = cutoff * 1.25F;
-      I->Coord2Idx = MapNew(I->G, I->Coord2IdxDiv, I->Coord, I->NIndex, NULL);
+      I->Coord2Idx = MapNew(I->G, I->Coord2IdxDiv, I->Coord, I->NIndex, nullptr);
       if(I->Coord2IdxDiv < I->Coord2Idx->Div)
         I->Coord2IdxDiv = I->Coord2Idx->Div;
     }
@@ -1507,7 +1512,7 @@ CoordSet::CoordSet(const CoordSet& cs)
   this->NTmpLinkBond = cs.NTmpLinkBond;
   /* deep copy & return ptr to new symmetry */
   if(cs.Symmetry) {
-    this->Symmetry = pymol::make_unique<CSymmetry>(*cs.Symmetry);
+    this->Symmetry = std::make_unique<CSymmetry>(*cs.Symmetry);
   }
   std::copy(std::begin(cs.Name), std::end(cs.Name), std::begin(this->Name));
   this->PeriodicBoxType = cs.PeriodicBoxType;
@@ -1653,7 +1658,7 @@ void RefPosTypeCopy(const RefPosType * src, RefPosType * dst){
 #ifndef _PYMOL_NOPY
 int CoordSetSetSettingFromPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id, PyObject *val){
   if (val == Py_None)
-    val = NULL;
+    val = nullptr;
 
   if (!val && !cs->has_atom_state_settings(at)) {
     return true;
@@ -1677,7 +1682,7 @@ PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, CoordSet *cs, int at, in
   if (cs->has_atom_state_settings(at)) {
     return SettingUniqueGetPyObject(G, cs->atom_state_setting_id[at], setting_id);
   }
-  return NULL;
+  return nullptr;
 }
 
 int CoordSetCheckUniqueID(PyMOLGlobals * G, CoordSet *I, int at){

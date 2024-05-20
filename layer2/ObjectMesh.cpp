@@ -44,7 +44,7 @@ static void ObjectMeshRecomputeExtent(ObjectMesh * I);
 
 static PyObject *ObjectMeshStateAsPyList(ObjectMeshState * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(17);
 
@@ -96,7 +96,7 @@ int ObjectMeshAllMapsInStatesExist(ObjectMesh * I)
 static PyObject *ObjectMeshAllStatesAsPyList(ObjectMesh * I)
 {
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   int a;
   result = PyList_New(I->NState);
   for(a = 0; a < I->NState; a++) {
@@ -116,14 +116,14 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals * G, ObjectMeshState * I,
   int ll = 0;
   PyObject *tmp;
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok) {
     if(!PyList_Check(list))
       I->Active = false;
     else {
       *I = ObjectMeshState(G);
       if(ok)
-        ok = (list != NULL);
+        ok = (list != nullptr);
       if(ok)
         ok = PyList_Check(list);
       if(ok)
@@ -158,7 +158,7 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals * G, ObjectMeshState * I,
       if(ok) {
         tmp = PyList_GetItem(list, 12);
         if(tmp == Py_None)
-          I->AtomVertex = NULL;
+          I->AtomVertex = nullptr;
         else
           ok = PConvPyListToFloatVLA(tmp, &I->AtomVertex);
       }
@@ -181,7 +181,7 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals * G, ObjectMeshState * I,
       if(ok && (ll > 16)) {
         tmp = PyList_GetItem(list, 16);
         if(tmp == Py_None)
-          I->Field = NULL;
+          I->Field = nullptr;
         else {
           I->Field.reset(IsosurfNewFromPyList(G, tmp));
           ok = I->Field != nullptr;
@@ -215,11 +215,11 @@ static int ObjectMeshAllStatesFromPyList(ObjectMesh * I, PyObject * list)
 int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** result)
 {
   int ok = true;
-  ObjectMesh *I = NULL;
-  (*result) = NULL;
+  ObjectMesh *I = nullptr;
+  (*result) = nullptr;
 
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
@@ -239,7 +239,7 @@ int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** res
     ObjectMeshRecomputeExtent(I);
   } else {
     DeleteP(I);
-    (*result) = NULL;
+    (*result) = nullptr;
   }
   return (ok);
 }
@@ -248,7 +248,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 
 PyObject *ObjectMeshAsPyList(ObjectMesh * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   int allMapsExist = ObjectMeshAllMapsInStatesExist(I);
 
@@ -340,7 +340,7 @@ void ObjectMesh::invalidate(cRep_t rep, cRepInv_t level, int state)
   }
   if((rep == cRepMesh) || (rep == cRepAll) || (rep == cRepCell)) {
 
-    for(StateIterator iter(I->G, NULL, state, I->NState); iter.next();) {
+    for(StateIterator iter(I->G, nullptr, state, I->NState); iter.next();) {
       ObjectMeshState *ms = &I->State[iter.state];
 
       ms->shaderCGO.reset();
@@ -383,7 +383,7 @@ int ObjectMeshSetLevel(ObjectMesh * I, float level, int state, int quiet)
   if(state >= I->NState) {
     ok = false;
   } else {
-    for(StateIterator iter(I->G, NULL, state, I->NState); iter.next();) {
+    for(StateIterator iter(I->G, nullptr, state, I->NState); iter.next();) {
       ObjectMeshState *ms = &I->State[iter.state];
       if(ms->Active) {
         ms->ResurfaceFlag = true;
@@ -402,9 +402,9 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
   int cur_color = -1;
 
   if(ms->MeshMode == cIsomeshMode::isomesh) {
-    cur_color = SettingGet_color(I->G, I->Setting.get(), NULL, cSetting_mesh_color);
+    cur_color = SettingGet_color(I->G, I->Setting.get(), nullptr, cSetting_mesh_color);
   } else if(ms->MeshMode == cIsomeshMode::isodot) {
-    cur_color = SettingGet_color(I->G, I->Setting.get(), NULL, cSetting_dot_color);
+    cur_color = SettingGet_color(I->G, I->Setting.get(), nullptr, cSetting_dot_color);
   }
 
   if(cur_color == -1)
@@ -442,7 +442,7 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
       for(a = 0; a < n_vert; a++) {
         if(a == base_n_vert) {
           int new_color = SettingGet_color(I->G, I->Setting.get(),
-                                           NULL, cSetting_mesh_negative_color);
+                                           nullptr, cSetting_mesh_negative_color);
           if(new_color == -1)
             new_color = cur_color;
           if(new_color != cur_color) {
@@ -469,7 +469,7 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
       ms->RC.clear();
     } else if((!ramped_flag)
               ||
-              (!SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_ray_color_ramps))) {
+              (!SettingGet_b(I->G, nullptr, I->Setting.get(), cSetting_ray_color_ramps))) {
       ms->RC.clear();
     }
   }
@@ -481,8 +481,8 @@ void ObjectMesh::update()
   int a;
   int c;
   ObjectMeshState *ms;
-  ObjectMapState *oms = NULL;
-  ObjectMap *map = NULL;
+  ObjectMapState *oms = nullptr;
+  ObjectMap *map = nullptr;
 
   int *n;
   float *v;
@@ -491,7 +491,7 @@ void ObjectMesh::update()
   int n_line;
   int flag;
   int last_flag = 0;
-  int mesh_skip = SettingGet_i(G, I->Setting.get(), NULL, cSetting_mesh_skip);
+  int mesh_skip = SettingGet_i(G, I->Setting.get(), nullptr, cSetting_mesh_skip);
 
   for(a = 0; a < I->NState; a++) {
     ms = &I->State[a];
@@ -528,7 +528,7 @@ void ObjectMesh::update()
 
       if(map && oms && ms->N && ms->V && (I->visRep & cRepMeshBit)) {
         if(ms->ResurfaceFlag) {
-          Isofield *field = NULL;
+          Isofield *field = nullptr;
           ms->RecolorFlag = true;
           ms->ResurfaceFlag = false;
           if(!ms->quiet) {
@@ -565,14 +565,14 @@ void ObjectMesh::update()
                ms->Range[3],
                ms->Range[4],
                ms->Range[5]); */
-            IsosurfVolume(I->G, I->Setting.get(), NULL,
+            IsosurfVolume(I->G, I->Setting.get(), nullptr,
                           field,
                           ms->Level,
                           ms->N, ms->V,
                           ms->Range, ms->MeshMode, mesh_skip, ms->AltLevel);
 
             if(!SettingGet_b
-               (I->G, I->Setting.get(), NULL, cSetting_mesh_negative_visible)) {
+               (I->G, I->Setting.get(), nullptr, cSetting_mesh_negative_visible)) {
               ms->base_n_V = VLAGetSize(ms->V);
             } else if(ms->MeshMode != cIsomeshMode::gradient) {
               /* do we want the negative surface too? */
@@ -580,7 +580,7 @@ void ObjectMesh::update()
               pymol::vla<int> N2(10000);
               pymol::vla<float> V2(10000);
 
-              IsosurfVolume(I->G, I->Setting.get(), NULL,
+              IsosurfVolume(I->G, I->Setting.get(), nullptr,
                             field,
                             -ms->Level,
                             N2, V2, ms->Range, ms->MeshMode, mesh_skip, ms->AltLevel);
@@ -722,7 +722,7 @@ static short ObjectMeshStateRenderShader(ObjectMeshState *ms, ObjectMesh *I,
 		     SceneGetTwoSidedLighting(G));
   }
 
-  CGORender(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
+  CGORender(ms->shaderCGO.get(), nullptr, nullptr, nullptr, info, nullptr);
 
   if (shaderPrg) {
     shaderPrg->Disable();
@@ -731,7 +731,7 @@ static short ObjectMeshStateRenderShader(ObjectMeshState *ms, ObjectMesh *I,
   if (ms->shaderUnitCellCGO){
     shaderPrg = G->ShaderMgr->Enable_DefaultShader(info->pass);
     shaderPrg->SetLightingEnabled(0);
-    CGORender(ms->shaderUnitCellCGO.get(), NULL, NULL, NULL, info, NULL);
+    CGORender(ms->shaderUnitCellCGO.get(), nullptr, nullptr, nullptr, info, nullptr);
     shaderPrg->Disable();
   }
 
@@ -741,7 +741,7 @@ static short ObjectMeshStateRenderShader(ObjectMeshState *ms, ObjectMesh *I,
 static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCGO, int stateArg)
 {
   PyMOLGlobals *G = I->G;
-  float *v = NULL;
+  float *v = nullptr;
   float *vc;
   int *rc;
   float radius;
@@ -749,10 +749,10 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
   CRay *ray = 0;
   bool pick = false;
   RenderPass pass = RenderPass::Antialias;
-  int *n = NULL;
+  int *n = nullptr;
   int c;
-  float line_width, mesh_width = SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_mesh_width);
-  ObjectMeshState *ms = NULL;
+  float line_width, mesh_width = SettingGet_f(I->G, I->Setting.get(), nullptr, cSetting_mesh_width);
+  ObjectMeshState *ms = nullptr;
   int ok = true;
 
   if (info){
@@ -782,23 +782,23 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
         if(ok && ray) {
           if(ms->UnitCellCGO && (I->visRep & cRepCellBit)){
             ok &= CGORenderRay(ms->UnitCellCGO.get(), ray, info, ColorGet(I->G, I->Color),
-			       NULL, I->Setting.get(), NULL);
+			       nullptr, I->Setting.get(), nullptr);
 	    if (!ok){
 	      ms->UnitCellCGO.reset();
 	      break;
 	    }
 	  }
           if(ms->MeshMode != cIsomeshMode::isodot) {
-            radius = SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_mesh_radius);
+            radius = SettingGet_f(I->G, I->Setting.get(), nullptr, cSetting_mesh_radius);
 
             if(radius == 0.0F) {
               radius = ray->PixelRadius * line_width / 2.0F;
             }
           } else {
-            radius = SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_dot_radius);
+            radius = SettingGet_f(I->G, I->Setting.get(), nullptr, cSetting_dot_radius);
             if(radius == 0.0F) {
               radius =
-                ray->PixelRadius * SettingGet_f(I->G, I->Setting.get(), NULL,
+                ray->PixelRadius * SettingGet_f(I->G, I->Setting.get(), nullptr,
                                                 cSetting_dot_width) / 1.4142F;
             }
           }
@@ -868,7 +868,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
           if(!pick && pass == RenderPass::Antialias) {
 	      short use_shader;
 	      short mesh_as_cylinders ;
-	      CGO *shaderCGO = NULL;
+	      CGO *shaderCGO = nullptr;
 	      use_shader = ( SettingGetGlobal_b(G, cSetting_mesh_use_shader) & SettingGetGlobal_b(G, cSetting_use_shaders)) | returnCGO;
               mesh_as_cylinders =
                   SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
@@ -898,7 +898,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      if(ms->UnitCellCGO && (I->visRep & cRepCellBit)) {
 		const float *color = ColorGet(I->G, I->Color);
 		if (!use_shader) {
-		  CGORender(ms->UnitCellCGO.get(), color, I->Setting.get(), NULL, info, NULL);
+		  CGORender(ms->UnitCellCGO.get(), color, I->Setting.get(), nullptr, info, nullptr);
 		} else if(!ms->shaderUnitCellCGO) {
 		  CGO *newUnitCellCGO = CGONewSized(G, 0);
 		  CGOColorv(newUnitCellCGO, color);
@@ -934,7 +934,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  if (!mesh_as_cylinders){
 		    if(ms->MeshMode == cIsomeshMode::isodot){
 		      ok &= CGODotwidth(shaderCGO, SettingGet_f
-				  (I->G, I->Setting.get(), NULL, cSetting_dot_width));
+				  (I->G, I->Setting.get(), nullptr, cSetting_dot_width));
 		    } else {
 		      ok &= CGOSpecial(shaderCGO, LINEWIDTH_DYNAMIC_MESH); 
 		    }
@@ -1002,7 +1002,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		    glColor3fv(ColorGet(I->G, ms->OneColor));
 		  if(ms->MeshMode == cIsomeshMode::isodot){
 		    glPointSize(SettingGet_f
-				(I->G, I->Setting.get(), NULL, cSetting_dot_width));
+				(I->G, I->Setting.get(), nullptr, cSetting_dot_width));
 		  } else {
 		    glLineWidth(line_width);
 		  }
@@ -1035,7 +1035,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 
 	      if (use_shader) {
 		if (ok){
-		  CGO *convertcgo = NULL;
+		  CGO *convertcgo = nullptr;
 		  if (ok)
 		    ok &= CGOStop(shaderCGO);
 		  if (ok)
@@ -1061,7 +1061,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
                       convertcgo = tmpCGO;
                       convertcgo->use_shader = convertcgo->has_draw_cylinder_buffers = true;
 		    } else {
-		      convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(ms->shaderCGO.get(), 0, false, NULL);
+		      convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(ms->shaderCGO.get(), 0, false, nullptr);
 		    }
 		    CHECKOK(ok, convertcgo);
 		  }
@@ -1084,7 +1084,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
     ObjectSetRepVisMask(I, 0, cVis_AS);
   }
 
-  return NULL;
+  return nullptr;
 }
 
 
@@ -1123,9 +1123,9 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
                                   float alt_level, int quiet)
 {
   int ok = true;
-  ObjectMesh *I = NULL;
-  ObjectMeshState *ms = NULL;
-  ObjectMapState *oms = NULL;
+  ObjectMesh *I = nullptr;
+  ObjectMeshState *ms = nullptr;
+  ObjectMapState *oms = nullptr;
   int created = !obj;
 
   if(created) {
@@ -1271,7 +1271,7 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * ma
                               float level, cIsomeshMode meshMode,
                               float carve, float *vert_vla, float alt_level, int quiet)
 {
-  return ObjectMeshFromXtalSym(G, obj, map, NULL, map_state, state, mn, mx,
+  return ObjectMeshFromXtalSym(G, obj, map, nullptr, map_state, state, mn, mx,
       level, meshMode, carve, vert_vla, alt_level, quiet);
 }
 

@@ -58,7 +58,7 @@ static int RepDotCGOGenerate(RepDot * I)
   int c = I->N;
   int cc = 0;
   int ok = true;
-  CGO *cgo = NULL;
+  CGO *cgo = nullptr;
 
   int normals =
     SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_normals);
@@ -197,7 +197,7 @@ void RepDot::render(RenderInfo * info)
 	if (ok) {
 	  const float *color;
 	  color = ColorGet(G, I->obj->Color);
-	  CGORender(I->shaderCGO, color, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, color, nullptr, nullptr, info, I);
 	  return; /* should not do any other rendering after shaderCGO has
 		    been rendered */
 	}
@@ -261,10 +261,10 @@ Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
 {
   PyMOLGlobals *G = cs->G;
   float *v, *vn;
-  float *aa = NULL;
-  int *tp = NULL;
-  int *tf = NULL;
-  float *countPtr = NULL;
+  float *aa = nullptr;
+  int *tp = nullptr;
+  int *tf = nullptr;
+  float *countPtr = nullptr;
   int* ati = nullptr;
   auto obj = cs->Obj;
 
@@ -298,7 +298,7 @@ Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
   // get current dot sampling
   // Note: significantly affects the accuracy of our area comp.
   auto ds = SettingGet<int>(G, cs->Setting.get(), obj->Setting.get(), cSetting_dot_density);
-  SphereRec const* sp = G->Sphere->Sphere[pymol::clamp(ds, 0, 4)];
+  SphereRec const* sp = G->Sphere->Sphere[std::clamp(ds, 0, 4)];
 
   int lastColor = cColorDefault;
   int colorCnt = 0;

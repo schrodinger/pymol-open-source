@@ -152,7 +152,7 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals * G, const char *st, CWordMatchOptions
                              int force)
 {
 
-  CWordMatcher *result = NULL;
+  CWordMatcher *result = nullptr;
   int needed = force;
   char wildcard = option->wildcard;
 
@@ -160,7 +160,7 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals * G, const char *st, CWordMatchOptions
     wildcard = 0;               /* space as wildcard means no wildcard */
 
   if(!st)
-    return NULL;
+    return nullptr;
   {                             /* first determine if we need to incur the overhead of the matcher */
     int escape = false;
     const char *p = st;
@@ -488,7 +488,7 @@ int WordMatcherMatchAlpha(CWordMatcher * I, const char *text)
   int n_node = I->n_node;
 
   while((n_node--) > 0) {
-    if(recursive_match(I, cur_node, text, NULL))
+    if(recursive_match(I, cur_node, text, nullptr))
       return true;
     else {
       while(cur_node->continued) {
@@ -665,7 +665,7 @@ int WordListMatch(PyMOLGlobals * G, CWordList * I, const char *name, int ignore_
 
 int WordInit(PyMOLGlobals * G)
 {
-  CWord *I = NULL;
+  CWord *I = nullptr;
 
   I = (G->Word = pymol::calloc<CWord>(1));
   if(I) {

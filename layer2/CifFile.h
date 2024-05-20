@@ -61,7 +61,7 @@ class cif_array;
      // data_<code>
      const char* code = block->code();
 
-     // get data item pointer, or NULL if name not found
+     // get data item pointer, or nullptr if name not found
      auto* dataitem1 = block->get_arr("_some.name1");
      auto* dataitem2 = block->get_arr("_some.name2", "_alternate.name");
 
@@ -135,7 +135,7 @@ private:
     const char * value;
   } pointer;
 
-  // Raw data value or NULL for unknown/inapplicable and `pos >= size()`
+  // Raw data value or nullptr for unknown/inapplicable and `pos >= size()`
   const char* get_value_raw(unsigned pos = 0) const;
 
   // point this array to a loop (only for parsing)
@@ -178,7 +178,7 @@ public:
 
   /**
    * Get element as null-terminated string. The default value is the empty
-   * string, unlike as<const char*>() which returns NULL as the default value.
+   * string, unlike as<const char*>() which returns nullptr as the default value.
    * If `pos >= size()` then return `d`.
    * @param pos element index (= row index in loop)
    * @param d default value for unknown/inapplicable elements
@@ -233,10 +233,10 @@ public:
   cif_data& operator=(const cif_data&) = delete;
   cif_data& operator=(cif_data&&) = default;
 
-  /// Block code (never NULL)
+  /// Block code (never nullptr)
   const char* code() const { return m_code ? m_code : ""; }
 
-  // Get a pointer to array or NULL if not found
+  // Get a pointer to array or nullptr if not found
   const cif_array* get_arr(const char* key) const;
   template <typename... Args>
   const cif_array* get_arr(const char* key, Args... aliases) const
@@ -245,14 +245,14 @@ public:
     return arr ? arr : get_arr(aliases...);
   }
 
-  /// Like get_arr() but return a default value instead of NULL if not found
+  /// Like get_arr() but return a default value instead of nullptr if not found
   template <typename... Args> const cif_array* get_opt(Args... keys) const
   {
     auto arr = get_arr(keys...);
     return arr ? arr : empty_array();
   }
 
-  /// Get a pointer to a save frame or NULL if not found
+  /// Get a pointer to a save frame or nullptr if not found
   const cif_data* get_saveframe(const char* code) const;
 };
 

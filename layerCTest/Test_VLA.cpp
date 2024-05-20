@@ -54,17 +54,17 @@ TEST_CASE("VLA single non-zero-int Initializer List", "[VLA]")
   REQUIRE(myVLA[0] == 5);
 }
 
-TEST_CASE("VLA nullptr Assign", "[VLA]")
-{
-  vla<int> myVLA{1, 2, 3, 4, 5};
-  myVLA = nullptr;
-  REQUIRE(isNullptr(myVLA.data()));
-}
-
 TEST_CASE("VLA NULL Assign", "[VLA]")
 {
   vla<int> myVLA{1, 2, 3, 4, 5};
   myVLA = NULL;
+  REQUIRE(isNullptr(myVLA.data()));
+}
+
+TEST_CASE("VLA nullptr Assign", "[VLA]")
+{
+  vla<int> myVLA{1, 2, 3, 4, 5};
+  myVLA = nullptr;
   REQUIRE(isNullptr(myVLA.data()));
 }
 

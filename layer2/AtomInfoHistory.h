@@ -163,8 +163,8 @@ typedef struct AtomInfoType_1_7_7 {
 
   // no anisou support in 1.8.0
   bool has_anisou() const { return false; }
-  const float * get_anisou() const { return NULL; }
-  float * get_anisou() { return NULL; }
+  const float * get_anisou() const { return nullptr; }
+  float * get_anisou() { return nullptr; }
 
   inline void setResi(int resv_, char inscode_) {
     resv = resv_;

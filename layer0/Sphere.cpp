@@ -282,7 +282,7 @@ void SphereInit(PyMOLGlobals * G)
       I->Array[i].NTri = Sphere_NTri[i];
       
       if (i){
-	I->Array[i].Mesh = NULL;
+	I->Array[i].Mesh = nullptr;
 	I->Array[i].NMesh = 0;
       } else {
 	I->Array[i].Mesh = (int *) (void *) mesh;
@@ -641,7 +641,7 @@ static SphereRec *MakeDotSphere(PyMOLGlobals * G, int level)
   result->nDot = S->NDot;
   result->NStrip = nStrip;
   result->NVertTot = nVertTot;
-  result->Mesh = NULL;
+  result->Mesh = nullptr;
   result->NMesh = 0;
   if(!level) {                  /* provide mesh for S->Sphere[0] only...rest, to do. */
     result->Mesh = (int *) mesh;

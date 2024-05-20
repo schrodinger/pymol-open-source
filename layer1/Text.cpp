@@ -404,13 +404,13 @@ void TextDrawStrAt(PyMOLGlobals * G, const char *st, int x, int y , CGO *orthoCG
 {
   CText *I = G->Text;
   TextSetPos3f(G, (float) x, (float) y, 0.0F);
-  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL, false, 0, 1, orthoCGO);
+  TextRenderOpenGL(G, nullptr, I->Default_ID, st, TEXT_DEFAULT_SIZE, nullptr, false, 0, 1, orthoCGO);
 }
 
 void TextDrawStr(PyMOLGlobals * G, const char *st , CGO *orthoCGO)
 {
   CText *I = G->Text;
-  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL, false, 0, 1, orthoCGO);
+  TextRenderOpenGL(G, nullptr, I->Default_ID, st, TEXT_DEFAULT_SIZE, nullptr, false, 0, 1, orthoCGO);
 }
 
 void TextDrawChar(PyMOLGlobals * G, char ch , CGO *orthoCGO)
@@ -418,7 +418,7 @@ void TextDrawChar(PyMOLGlobals * G, char ch , CGO *orthoCGO)
   char st[2] = { 0, 0 };
   CText *I = G->Text;
   st[0] = ch;
-  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL, false, 0, 1, orthoCGO);
+  TextRenderOpenGL(G, nullptr, I->Default_ID, st, TEXT_DEFAULT_SIZE, nullptr, false, 0, 1, orthoCGO);
 }
 
 const char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,

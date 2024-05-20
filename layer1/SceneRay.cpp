@@ -97,13 +97,13 @@ bool SceneRay(PyMOLGlobals * G,
 #else
 
   CScene *I = G->Scene;
-  CRay *ray = NULL;
+  CRay *ray = nullptr;
   float height, width;
   float aspRat;
   float rayView[16];
   double timing;
-  char *charVLA = NULL;
-  char *headerVLA = NULL;
+  char *charVLA = nullptr;
+  char *headerVLA = nullptr;
   float fov;
   int stereo_hand = 0;
   auto grid_mode = SettingGet<GridMode>(G, cSetting_grid_mode);
@@ -270,7 +270,7 @@ bool SceneRay(PyMOLGlobals * G,
         RenderInfo info;
         info.ray = ray;
         info.ortho = ortho;
-        info.vertex_scale = SceneGetScreenVertexScale(G, NULL);
+        info.vertex_scale = SceneGetScreenVertexScale(G, nullptr);
 	info.use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
 
         if(SettingGetGlobal_b(G, cSetting_dynamic_width)) {
@@ -282,7 +282,7 @@ bool SceneRay(PyMOLGlobals * G,
         }
 
         for (auto* obj : I->Obj) {
-          // ObjectGroup used to have fRender = NULL
+          // ObjectGroup used to have fRender = nullptr
           if (obj->type != cObjectGroup) {
             if(SceneGetDrawFlag(&I->grid, slot_vla, obj->grid_slot)) {
               float color[3];
@@ -336,7 +336,7 @@ bool SceneRay(PyMOLGlobals * G,
       switch (mode) {
       case 0:                  /* mode 0 is built-in */
         {
-          auto image = pymol::make_unique<pymol::Image>(ray_width, ray_height);
+          auto image = std::make_unique<pymol::Image>(ray_width, ray_height);
           std::uint32_t background;
 
           RayRender(ray, image->pixels(), timing, angle, antialias, &background);
@@ -346,7 +346,7 @@ bool SceneRay(PyMOLGlobals * G,
             I->Image = std::move(image);
           } else {
             if(!I->Image) {     /* alloc on first pass */
-              I->Image = pymol::make_unique<pymol::Image>(tot_width, tot_height);
+              I->Image = std::make_unique<pymol::Image>(tot_width, tot_height);
               if(I->Image) {
                 unsigned int tot_size = tot_width * tot_height;
                 {               /* fill with background color */
@@ -394,7 +394,7 @@ bool SceneRay(PyMOLGlobals * G,
         RayRenderPOV(ray, ray_width, ray_height, &headerVLA, &charVLA,
                      I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov, angle, antialias);
         if(!(charVLA_ptr && headerVLA_ptr)) {   /* immediate mode */
-          strcpy(prefix, SettingGet_s(G, NULL, NULL, cSetting_batch_prefix));
+          strcpy(prefix, SettingGet_s(G, nullptr, nullptr, cSetting_batch_prefix));
 #ifndef _PYMOL_NOPY
           if(PPovrayRender(G, headerVLA, charVLA, prefix, ray_width,
                            ray_height, antialias)) {
@@ -791,7 +791,7 @@ void SceneRenderRayVolume(PyMOLGlobals * G, CScene *I){
       glDrawPixels(rayVolumeImage->getWidth(), rayVolumeImage->getHeight(),
           GL_RGBA, GL_UNSIGNED_BYTE, rayVolumeImage->bits());
     } else {
-      SceneDrawImageOverlay(G, 1, NULL);
+      SceneDrawImageOverlay(G, 1, nullptr);
     }
   }
 #endif

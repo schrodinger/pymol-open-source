@@ -59,7 +59,7 @@ Rep* Rep::rebuild()
 /*========================================================================*/
 /**
  * Rebuild if necessary (according to invalidation status). Returns either this
- * instance, or deletes this instance and returns a new one, or NULL if the rep
+ * instance, or deletes this instance and returns a new one, or nullptr if the rep
  * became empty/inactive.
  */
 Rep* Rep::update()

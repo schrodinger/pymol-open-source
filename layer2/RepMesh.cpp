@@ -246,14 +246,14 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 
   if (use_shader) {
     if (ok){
-      CGO *convertcgo = NULL;
+      CGO *convertcgo = nullptr;
       ok &= CGOStop(I->shaderCGO);
       if (ok)
 	convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
       CHECKOK(ok, convertcgo);
       CGOFree(I->shaderCGO);    
       I->shaderCGO = convertcgo;
-      convertcgo = NULL;
+      convertcgo = nullptr;
       if (ok){
 	if (dot_as_spheres){
 	  CGO *tmpCGO = CGONew(G);
@@ -296,7 +296,7 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 	convertcgo->use_shader = true;
 	CGOFree(I->shaderCGO);
 	I->shaderCGO = convertcgo;
-	convertcgo = NULL;
+	convertcgo = nullptr;
       }
     }
   }
@@ -312,7 +312,7 @@ void RepMesh::render(RenderInfo* info)
   float *vc = I->VC;
   int *n = I->N.data();
   int c;
-  const float *col = NULL;
+  const float *col = nullptr;
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
   bool const dot_as_spheres = I->mesh_type == cIsomeshMode::isodot &&
                               SettingGet<bool>(*cs, cSetting_dot_as_spheres);
@@ -410,7 +410,7 @@ void RepMesh::render(RenderInfo* info)
 	    I->shaderCGO->use_shader = true;
 	  generate_shader_cgo = 1;
 	} else if (ok) {
-	  CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, nullptr, nullptr, nullptr, info, I);
 	  return;
 	}
       }
@@ -527,7 +527,7 @@ void RepMesh::render(RenderInfo* info)
 	  {
 	    const float *color;
 	    color = ColorGet(G, I->obj->Color);
-	    CGORender(I->shaderCGO, color, NULL, NULL, info, I);
+	    CGORender(I->shaderCGO, color, nullptr, nullptr, info, I);
 	  }
 	}
       }
@@ -619,11 +619,11 @@ Rep* RepMesh::recolor()
       I->VC = pymol::malloc<float>(3 * I->NTot);
     vc = I->VC;
     /* now, assign colors to each point */
-    map = MapNew(G, I->max_vdw + probe_radius, cs->Coord, cs->NIndex, NULL);
+    map = MapNew(G, I->max_vdw + probe_radius, cs->Coord, cs->NIndex, nullptr);
     if(map) {
       MapSetupExpress(map);
       for(a = 0; a < I->NTot; a++) {
-        AtomInfoType *ai0 = NULL;
+        AtomInfoType *ai0 = nullptr;
         c1 = 1;
         minDist = FLT_MAX;
         i0 = -1;
@@ -707,7 +707,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
   ObjectMolecule *obj;
   CoordSet *ccs;
   int a, b, c, d, h, k, l, *n;
-  MapType *map = NULL, *smap = NULL;
+  MapType *map = nullptr, *smap = nullptr;
   /* grid */
   Vector3f minE, maxE, sizeE;
   float size;
@@ -772,14 +772,14 @@ Rep *RepMeshNew(CoordSet * cs, int state)
 
   min_spacing = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_min_mesh_spacing);
 
-  I->N = NULL;
+  I->N = nullptr;
   I->NTot = 0;
-  I->V = NULL;
-  I->VC = NULL;
+  I->V = nullptr;
+  I->VC = nullptr;
   I->NDot = 0;
-  I->Dot = NULL;
-  I->LastVisib = NULL;
-  I->LastColor = NULL;
+  I->Dot = nullptr;
+  I->LastVisib = nullptr;
+  I->LastColor = nullptr;
   I->mesh_type = mesh_type;
   I->Radius = SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_radius);
   I->shaderCGO = 0;
@@ -790,24 +790,24 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     float trim_cutoff =
       SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_cutoff);
     int trim_flag = false;
-    float *trim_vla = NULL;
-    MapType *trim_map = NULL;
+    float *trim_vla = nullptr;
+    MapType *trim_map = nullptr;
 
     int carve_state = 0;
     int carve_flag = false;
     float carve_cutoff =
       SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_carve_cutoff);
-    const char *carve_selection = NULL;
-    float *carve_vla = NULL;
-    MapType *carve_map = NULL;
+    const char *carve_selection = nullptr;
+    float *carve_vla = nullptr;
+    MapType *carve_map = nullptr;
 
     int clear_state = 0;
     int clear_flag = false;
     float clear_cutoff =
       SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_clear_cutoff);
-    const char *clear_selection = NULL;
-    float *clear_vla = NULL;
-    MapType *clear_map = NULL;
+    const char *clear_selection = nullptr;
+    float *clear_vla = nullptr;
+    MapType *clear_map = nullptr;
 
     int mesh_max = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_mesh_grid_max);
     if(mesh_max < 1)
@@ -840,7 +840,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
         }
       }
       if(ok && nc) {
-        trim_map = MapNew(G, trim_cutoff, trim_vla, nc, NULL);
+        trim_map = MapNew(G, trim_cutoff, trim_vla, nc, nullptr);
 	CHECKOK(ok, trim_map);
         if(ok) {
           ok &= MapSetupExpress(trim_map);
@@ -951,8 +951,8 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     if(ok && !solv_acc)
       ok &= RepMeshGetSolventDots(I, cs, minE, maxE, probe_radius);
     if(ok) {
-      smap = MapNew(G, probe_radius, I->Dot, I->NDot, NULL);
-      map = MapNew(G, I->max_vdw + probe_radius, cs->Coord, cs->NIndex, NULL);
+      smap = MapNew(G, probe_radius, I->Dot, I->NDot, nullptr);
+      map = MapNew(G, I->max_vdw + probe_radius, cs->Coord, cs->NIndex, nullptr);
     }
     if(ok && map && smap) {
       ok &= MapSetupExpress(smap);
@@ -1048,7 +1048,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     FreeP(I->Dot);
     OrthoBusyFast(G, 2, 3);
     if(ok) {
-      ok &= IsosurfVolume(G, NULL, NULL, field, 1.0, I->N, I->V, NULL, mesh_type, mesh_skip,
+      ok &= IsosurfVolume(G, nullptr, nullptr, field, 1.0, I->N, I->V, nullptr, mesh_type, mesh_skip,
                     1.0F);
     }
     DeleteP(field);
@@ -1063,7 +1063,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
 	CHECKOK(ok, new_n);
         while(ok && (c = *(n++))) {
           int new_c = 0;
-          float *last_v = NULL;
+          float *last_v = nullptr;
           while(c--) {
             int a_keeper = false;
             if(trim_map) {
@@ -1127,14 +1127,14 @@ Rep *RepMeshNew(CoordSet * cs, int state)
                   *(new_v++) = *(v++);
                   *(new_v++) = *(v++);
                   *(new_v++) = *(v++);
-                  last_v = NULL;
+                  last_v = nullptr;
                 } else {
                   last_v = v;
                   v += 3;
                 }
               }
             } else {
-              last_v = NULL;
+              last_v = nullptr;
               v += 3;
               if(new_c) {
                 VLACheck(new_n, int, new_size + 1);     /* extends the zero count sentinel */
@@ -1176,7 +1176,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
   OrthoBusyFast(G, 4, 4);
   if(!ok) {
     delete I;
-    I = NULL;
+    I = nullptr;
   }
   return (Rep *) I;
 }
@@ -1218,7 +1218,7 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
   probe_radius_plus = probe_radius * 1.5F;
 
   I->NDot = 0;
-  map = MapNew(G, I->max_vdw + probe_radius, cs->Coord, cs->NIndex, NULL);
+  map = MapNew(G, I->max_vdw + probe_radius, cs->Coord, cs->NIndex, nullptr);
   if(map) {
     MapSetupExpress(map);
     maxCnt = 0;
@@ -1297,7 +1297,7 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
     }
     dot_flag[maxDot] = 1;       /* this guarantees that we have a valid dot */
 
-    map = MapNew(G, probe_radius_plus, I->Dot, I->NDot, NULL);
+    map = MapNew(G, probe_radius_plus, I->Dot, I->NDot, nullptr);
     if(map) {
       MapSetupExpress(map);
 

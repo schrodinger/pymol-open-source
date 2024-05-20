@@ -145,7 +145,7 @@ void AssignNewPickColor(CGO* cgo, PickColorManager* pickmgr,
   pickmgr->colorNext(color, context, index, bond);
 }
 
-int CGO_sz[] = {
+std::size_t CGO_sz[] = {
   CGO_NULL_SZ,
   CGO_NULL_SZ,
   CGO_BEGIN_SZ,
@@ -415,7 +415,7 @@ CGO *CGONewFromPyList(PyMOLGlobals * G, PyObject * list, int version, bool shoul
   int ok = true;
   auto I = CGONew(G);
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   /* TO ENABLE BACKWARDS COMPATIBILITY...
@@ -435,7 +435,7 @@ CGO *CGONewFromPyList(PyMOLGlobals * G, PyObject * list, int version, bool shoul
     CGOFree(I);
   }
   {
-    CGO *cgo = NULL;
+    CGO *cgo = nullptr;
     if (shouldCombine && I && I->has_begin_end){
       cgo = CGOCombineBeginEnd(I, 0);
       CGOFree(I);
@@ -502,7 +502,7 @@ static float *CGO_add(CGO * I, unsigned c)
   float *at;
   VLACheck(I->op, float, I->c + c);
   if (!I->op){
-    return NULL;
+    return nullptr;
   }
   at = I->op + I->c;
   I->c += c;
@@ -514,7 +514,7 @@ static float *CGO_size(CGO * I, int sz)
   float *at;
   VLASize(I->op, float, sz);
   if (!I->op){
-      return NULL;
+      return nullptr;
   }
   at = I->op + I->c;
   I->c = sz;
@@ -1496,7 +1496,7 @@ CGO *CGODrawText(const CGO * I, int est, float *camera)
   if (cgo && cgo->has_begin_end){
     /* this is mainly for VFontWriteToCGO() that still creates CGOBegin/CGOEnd */
     if(cgo && cgo->has_begin_end){
-      CGO *convertcgo = NULL;
+      CGO *convertcgo = nullptr;
       convertcgo = CGOCombineBeginEnd(cgo, 0);
       CGOFree(cgo);
       cgo = convertcgo;
@@ -1541,7 +1541,7 @@ bool CGOCombineBeginEnd(CGO ** I, bool do_not_split_lines) {
   CGO *cgo = CGOCombineBeginEnd(*I, 0, do_not_split_lines);
   CGOFree(*I);
   *I = cgo;
-  return (cgo != NULL);
+  return (cgo != nullptr);
 }
 
 /**
@@ -1559,7 +1559,7 @@ CGO *CGOCombineBeginEnd(const CGO * I, int est, bool do_not_split_lines)
 
   int ok = true;
   if (!I)
-      return NULL;
+      return nullptr;
   cgo = CGONewSized(I->G, 0);
   ok &= cgo ? true : false;
 
@@ -2288,8 +2288,8 @@ static int OptimizePointsToVBO(const CGO *I, CGO *cgo, int num_total_vertices_po
 	  }*/
 	if (shouldCompress){	
 	  int cnt, nxtn = VERTEX_POS_SIZE, incr = 0;
-	  float *vertexValsDA = NULL, *nxtVals = NULL, *colorValsDA = NULL, *normalValsDA = NULL;
-	  float *pickColorValsDA = NULL, *pickColorValsTMP;
+	  float *vertexValsDA = nullptr, *nxtVals = nullptr, *colorValsDA = nullptr, *normalValsDA = nullptr;
+	  float *pickColorValsDA = nullptr, *pickColorValsTMP;
 
 	  nxtVals = vertexValsDA = sp->floatdata;
 
@@ -2767,10 +2767,10 @@ static bool CGOProcessScreenCGOtoArrays(PyMOLGlobals* G, CGO* cgo,
 }
 
 bool CGOOptimizeToVBONotIndexed(CGO ** I) {
-  CGO *cgo = CGOOptimizeToVBONotIndexed(*I, 0, true, NULL);
+  CGO *cgo = CGOOptimizeToVBONotIndexed(*I, 0, true, nullptr);
   CGOFree(*I);
   *I = cgo;
-  return (cgo != NULL);
+  return (cgo != nullptr);
 }
 
 /**
@@ -2811,7 +2811,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
   if (num_total_vertices_points>0){
     if (!OptimizePointsToVBO(I, cgo, num_total_vertices_points, min, max, &has_draw_buffer, addshaders)){
       CGOFree(cgo);
-      return NULL;
+      return nullptr;
     }
   }
   if (num_total_indexes>0){
@@ -3239,7 +3239,7 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
     PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBOIndexed() VBO Memory Limitation: The requested \n       operation requires a larger buffer than PyMOL currently allows. \n       The operation has not entirely completed successfully.\n" ENDFB(I->G);
     firePyMOLLimitationWarning();
     CGOFree(cgo);
-    return NULL;
+    return nullptr;
   }
 #endif
 
@@ -3247,7 +3247,7 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
     /* This does not need to be indexed (for now) */
     if (!OptimizePointsToVBO(I, cgo, num_total_vertices_points, min, max, &has_draw_buffer, addshaders)){
       CGOFree(cgo);
-      return NULL;
+      return nullptr;
     }
   }
 
@@ -3258,7 +3258,7 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
     uchar *colorValsUC = 0;
     uchar *normalValsC = 0;
     short ambient_occlusion = 0;
-    float *sumarray = NULL;
+    float *sumarray = nullptr;
     int n_data = 0;
 
     if (embedTransparencyInfo){
@@ -3560,7 +3560,7 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
     FreeP(vertexVals);
   }
   if (ok && num_total_vertices_lines>0){
-    float *vertexVals = 0, *colorVals = 0, *normalVals = NULL, *nxtVals;
+    float *vertexVals = 0, *colorVals = 0, *normalVals = nullptr, *nxtVals;
     float *pickColorVals;
     uchar *colorValsUC = 0;
     uchar *normalValsC = 0;
@@ -3849,7 +3849,7 @@ struct OptimizeSphereData
  * @param[out] cgo output CGO
  * @param[in] num_total_spheres Number of spheres to optimize
  * @param[out] leftOverCGO CGO data not relevant to spheres.
- * @pre cgo must not be NULL
+ * @pre cgo must not be nullptr
  *
  * Note: To use leftOverCGO, it must already be preallocated.
  */
@@ -3997,7 +3997,7 @@ static OptimizeSphereData GetOptimizeSphereData(const CGO* I, CGO*& cgo, int num
  * @param[in] addshaders adds shader call to CGO
  * @param[in] num_total_spheres number of total spheres to optimize
  * @param[in] sphereData Optimized Sphere Data
- * @pre cgo must not be NULL
+ * @pre cgo must not be nullptr
  */
 
 static bool PopulateGLBufferOptimizedSphereData(const CGO* I, CGO* cgo, bool addshaders, int num_total_spheres, const OptimizeSphereData& sphereData)
@@ -4103,7 +4103,7 @@ CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est, bool addshaders, 
 
 CGO* CGOOptimizeBezier(const CGO* I)
 {
-  auto cgo = pymol::make_unique<CGO>(I->G);
+  auto cgo = std::make_unique<CGO>(I->G);
   int num_splines = CGOCountNumberOfOperationsOfType(I, CGO_BEZIER);
   auto vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
   std::vector<float> vertData;
@@ -4155,7 +4155,7 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
   auto G = I->G;
   int ok = true;
   if (sphere_quality < 0){
-    sphere_quality = SettingGet_i(I->G, NULL, NULL, cSetting_cgo_sphere_quality);
+    sphere_quality = SettingGet_i(I->G, nullptr, nullptr, cSetting_cgo_sphere_quality);
   }
 
   std::unique_ptr<CGO> cgo_managed(CGONew(G, I->c + est));
@@ -4203,10 +4203,10 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
           ok &= CGOSimpleCylinder(cgo, cyl->origin, v1, cyl->tube_size, color1, cyl->color2, cgo->alpha, alpha2, true, bcap, fcap, &pickcolor2, stick_round_nub);
         } else {
           ok &= CGOColorv(cgo, color1);
-          ok &= CGOSimpleCylinder(cgo, cyl->origin, mid, cyl->tube_size, color1, NULL, cgo->alpha, alpha2, false, fcap, cCylCap::None, nullptr, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, cyl->origin, mid, cyl->tube_size, color1, nullptr, cgo->alpha, alpha2, false, fcap, cCylCap::None, nullptr, stick_round_nub);
           ok &= CGOColorv(cgo, cyl->color2);
           ok &= CGOPickColor(cgo, pickcolor2.index, pickcolor2.bond);
-          ok &= CGOSimpleCylinder(cgo, mid, v1, cyl->tube_size, cyl->color2, NULL, cgo->alpha, alpha2, false, cCylCap::None, bcap, nullptr, stick_round_nub);
+          ok &= CGOSimpleCylinder(cgo, mid, v1, cyl->tube_size, cyl->color2, nullptr, cgo->alpha, alpha2, false, cCylCap::None, bcap, nullptr, stick_round_nub);
         }
       }
       break;
@@ -4455,7 +4455,7 @@ CGO *CGOSimplifyNoCompress(const CGO * I, int est, short sphere_quality, bool st
 
   int ok = true;
   if (sphere_quality < 0){
-    sphere_quality = SettingGet_i(I->G, NULL, NULL, cSetting_cgo_sphere_quality);
+    sphere_quality = SettingGet_i(I->G, nullptr, nullptr, cSetting_cgo_sphere_quality);
   }
 
   cgo = CGONewSized(I->G, I->c + est);
@@ -4580,7 +4580,7 @@ CGO *CGOSimplifyNoCompress(const CGO * I, int est, short sphere_quality, bool st
 
 CGO *CGOOptimizeTextures(const CGO * I, int est)
 {
-  CGO *cgo = NULL;
+  CGO *cgo = nullptr;
   int num_total_textures;
   int ok = true;
   num_total_textures = CGOCountNumberOfOperationsOfType(I, CGO_DRAW_TEXTURE);
@@ -4591,20 +4591,20 @@ CGO *CGOOptimizeTextures(const CGO * I, int est)
     worldPos = pymol::malloc<float>(num_total_textures * 18);
     if (!worldPos){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeTextures() worldPos could not be allocated\n" ENDFB(I->G);
-      return NULL;
+      return nullptr;
     }
     screenValues = pymol::malloc<float>(num_total_textures * 18);
     if (!screenValues){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeTextures() screenValues could not be allocated\n" ENDFB(I->G);
       FreeP(worldPos);
-      return NULL;
+      return nullptr;
     }
     textExtents = pymol::malloc<float>(num_total_textures * 12);
     if (!textExtents){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeTextures() textExtents could not be allocated\n" ENDFB(I->G);
       FreeP(screenValues);
       FreeP(worldPos);
-      return NULL;
+      return nullptr;
     }
     pickColorVals = pymol::malloc<float>(num_total_textures * 12); /* pick index and bond */
     if (!pickColorVals){
@@ -4612,7 +4612,7 @@ CGO *CGOOptimizeTextures(const CGO * I, int est)
       FreeP(textExtents);
       FreeP(screenValues);
       FreeP(worldPos);
-      return NULL;
+      return nullptr;
     }
 
     cgo = CGONewSized(I->G, 0);
@@ -4793,7 +4793,7 @@ CGO *CGOConvertToLabelShader(const CGO *I, CGO * addTo){
 
 CGO *CGOOptimizeLabels(const CGO * I, int est, bool addshaders)
 {
-  CGO *cgo = NULL;
+  CGO *cgo = nullptr;
   int num_total_labels;
   int ok = true;
   num_total_labels = CGOCountNumberOfOperationsOfType(I, CGO_DRAW_LABEL);
@@ -4804,7 +4804,7 @@ CGO *CGOOptimizeLabels(const CGO * I, int est, bool addshaders)
     worldPos = pymol::malloc<float>(num_total_labels * 6 * 17); 
     if (!worldPos){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeLabels() worldPos could not be allocated\n" ENDFB(I->G);
-      return NULL;
+      return nullptr;
     }
     screenValues = worldPos + (num_total_labels * 18);
     targetPos = screenValues + (num_total_labels * 18);
@@ -4922,7 +4922,7 @@ CGO *CGOOptimizeLabels(const CGO * I, int est, bool addshaders)
       };
 
       if (ok) {
-	float *pickArray = NULL;
+	float *pickArray = nullptr;
 	if (addshaders){
 	  CGOEnable(cgo, GL_LABEL_SHADER);
 	}
@@ -4952,7 +4952,7 @@ CGO *CGOOptimizeLabels(const CGO * I, int est, bool addshaders)
 
 CGO *CGOOptimizeConnectors(const CGO * I, int est)
 {
-  CGO *cgo = NULL;
+  CGO *cgo = nullptr;
   int num_total_connectors;
   int ok = true;
   int use_geometry_shaders = SettingGetGlobal_b(I->G, cSetting_use_geometry_shaders);
@@ -4963,12 +4963,12 @@ CGO *CGOOptimizeConnectors(const CGO * I, int est)
     float *targetPt3d, *labelCenterPt3d, *indentFactor, *screenWorldOffset, *connectorColor, *textSize;
     float *bkgrdColor, *relExtLength, *connectorWidth;
     uchar *relativeMode, *drawBkgrd;
-    uchar *isCenterPt = NULL;
+    uchar *isCenterPt = nullptr;
     int place3 = 0, place2 = 0, place = 0;
     targetPt3d = pymol::calloc<float>(num_total_connectors * 20 * factor); /* too much, relativeMode only needs 1 byte per vertex, instead of 1 float */
     if (!targetPt3d){
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeConnectors() could not be allocated\n" ENDFB(I->G);
-      return NULL;
+      return nullptr;
     }
     labelCenterPt3d = targetPt3d + (num_total_connectors*3 * factor);
     indentFactor = labelCenterPt3d + (num_total_connectors*3 * factor);
@@ -5369,14 +5369,14 @@ int CGORenderRay(CGO * I, CRay * ray, RenderInfo * info, const float *color, Obj
   float white[] = { 1.0, 1.0, 1.0 };
   float zee[] = { 0.0, 0.0, 1.0 };
   int ok = true;
-  const float *n0 = NULL, *n1 = NULL, *n2 = NULL, *v0 = NULL, *v1 = NULL, *v2 = NULL, *c0 =
-    NULL, *c1 = NULL, *c2 = NULL;
+  const float *n0 = nullptr, *n1 = nullptr, *n2 = nullptr, *v0 = nullptr, *v1 = nullptr, *v2 = nullptr, *c0 =
+    nullptr, *c1 = nullptr, *c2 = nullptr;
   float rampc0[3], rampc1[3], rampc2[3];
   int mode = -1;
   /* workaround; multi-state ray-trace bug */
   if (!I) {
     assert("TODO investigate" && false);
-    return 0; /* not sure if it should return 0 or 1, 0 - fails, but is it a memory issue? might not be since the arg is NULL */ 
+    return 0; /* not sure if it should return 0 or 1, 0 - fails, but is it a memory issue? might not be since the arg is nullptr */ 
   }
 
   I->G->CGORenderer->alpha =
@@ -5991,9 +5991,9 @@ static int CGOSimpleEllipsoid(CGO* I, const float* v, float vdw,
   scale_sq[1] = scale[1] * scale[1];
   scale_sq[2] = scale[2] * scale[2];
 
-  ds = SettingGet_i(I->G, NULL, NULL, cSetting_cgo_ellipsoid_quality);
+  ds = SettingGet_i(I->G, nullptr, nullptr, cSetting_cgo_ellipsoid_quality);
   if(ds < 0)
-    ds = SettingGet_i(I->G, NULL, NULL, cSetting_ellipsoid_quality);
+    ds = SettingGet_i(I->G, nullptr, nullptr, cSetting_ellipsoid_quality);
   if(ds < 0)
     ds = 0;
   if(ds > 3)
@@ -6654,7 +6654,7 @@ void CGO::move_append(CGO&& src_)
 
 /**
  * Appends `src` to the end of this CGO and then free's `src`
- * and sets the pointer to NULL.
+ * and sets the pointer to nullptr.
  */
 void CGO::free_append(CGO * &src) {
   free_append(std::move(src));
@@ -6808,7 +6808,7 @@ CGO *CGOConvertLinesToShaderCylinders(const CGO * I, int est){
       break;
     case CGO_BEGIN:
       {
-	const float *last_vertex = NULL, *last_color = NULL, *current_color = NULL, *color = NULL ;
+	const float *last_vertex = nullptr, *last_color = nullptr, *current_color = nullptr, *color = nullptr ;
         unsigned int last_pick_color_idx = 0;
 	int last_pick_color_bnd = cPickableNoPick ;
 	int nverts = 0, err = 0;
@@ -6853,8 +6853,8 @@ CGO *CGOConvertLinesToShaderCylinders(const CGO * I, int est){
 		  tot_ncyls++;
 		}
 		if (mode==GL_LINES){
-		  last_vertex = NULL;
-		  last_color = NULL;
+		  last_vertex = nullptr;
+		  last_color = nullptr;
 		}
 	      }
 	    } else {
@@ -6932,7 +6932,7 @@ CGO *CGOConvertLinesToShaderCylinders(const CGO * I, int est){
     return (cgo);
   } else {
     CGOFree(cgo);
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -7029,8 +7029,8 @@ CGO *CGOSplitUpLinesForPicking(const CGO * I){
                   last_pick_color_bnd = cgo->current_pick_color_bond;
 		}
 		if (mode==GL_LINES){
-		  last_vertex = NULL;
-		  last_color = NULL;
+		  last_vertex = nullptr;
+		  last_color = nullptr;
 		}
 	      }
 	    } else {
@@ -7240,9 +7240,9 @@ CGO* CGOColorByRamp(PyMOLGlobals* G, const CGO* I, ObjectGadgetRamp* ramp,
 
   int ok = true;
   float white[3] = { 1.f, 1.f, 1.f};
-  float probe_radius = SettingGet_f(G, set1, NULL, cSetting_solvent_radius);
+  float probe_radius = SettingGet_f(G, set1, nullptr, cSetting_solvent_radius);
   float v_above[3], n0[3] = { 0.f, 0.f, 0.f };
-  int ramp_above = SettingGet_i(G, set1, NULL, cSetting_surface_ramp_above_mode) == 1;
+  int ramp_above = SettingGet_i(G, set1, nullptr, cSetting_surface_ramp_above_mode) == 1;
 
   for (auto it = I->begin(); ok && !it.is_stop(); ++it) {
     const auto op = it.op_code();
@@ -7634,7 +7634,7 @@ CGO *CGOConvertTrianglesToAlpha(const CGO * I){
     return (cgo);
   } else {
     CGOFree(cgo);
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -8054,7 +8054,7 @@ CGO *CGOConvertLinesToTrilines(const CGO * I, bool addshaders){
 
   int line_counter = 0;
   GLuint glbuff = 0;
-  const float *colorv = NULL;
+  const float *colorv = nullptr;
   unsigned int buff_size = nLines * 6 * (8 * sizeof(float));
   
   // VBO memory -- number of lines x 4 vertices per line x (vertex + otherVertex + normal + texCoord + color)
@@ -8113,8 +8113,8 @@ CGO *CGOConvertLinesToTrilines(const CGO * I, bool addshaders){
 		  last_vertex = pc;
 		}
 		if (mode==GL_LINES){
-		  last_vertex = NULL;
-		  last_color = NULL;
+		  last_vertex = nullptr;
+		  last_color = nullptr;
 		}
 	      }
 	    } else {
@@ -8398,7 +8398,7 @@ void copyAttributeForVertex(bool isInterleaved, int &nvert, AttribDesc &attribDe
                             const int vertexDataSize, std::vector<void*> &dataPtrs, std::vector<int> &attrOffset){
   int ord = attribDesc.order;
   void *dataPtr = dataPtrs[ord];
-  unsigned char *pc = NULL;
+  unsigned char *pc = nullptr;
   auto attrSize = GetSizeOfVertexFormat(attribDesc.m_format);
   if (isInterleaved){
     dataPtr = (unsigned char*) dataPtr + nvert * vertexDataSize + attrOffset[ord];
@@ -8718,7 +8718,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
   // - pickvbo is interleaved so that for multiple channels, pick data for each vertex
   //   is contiguous
   VertexBuffer *vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>(layout);
-  VertexBuffer *pickvbo = NULL;
+  VertexBuffer *pickvbo = nullptr;
   if (pickDataSize){
     pickvbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>(VertexBuffer::SEQUENTIAL, GL_DYNAMIC_DRAW);
     pickvbohash = pickvbo->get_hash_id();
@@ -8794,9 +8794,9 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
         allAttrBS |= (1 << attrDesc->order);
       }
       auto attrOffset = *attrOffsetIt;
-      unsigned char *first_value = NULL;
+      unsigned char *first_value = nullptr;
       first_value = (attrDesc->default_value ? attrDesc->default_value : 
-                     (attrDesc->repeat_value ? attrDesc->repeat_value : NULL));
+                     (attrDesc->repeat_value ? attrDesc->repeat_value : nullptr));
       if (first_value){
         auto attrSize = GetSizeOfVertexFormat(attrDesc->m_format);
         memcpy(((unsigned char*)allData)+attrOffset, first_value, attrSize);
@@ -8814,9 +8814,9 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
         allAttrBS |= (1 << attrDesc.order);
       }
       dataPtrs.push_back(curAllDataPtr);
-      unsigned char *first_value = NULL;
+      unsigned char *first_value = nullptr;
       first_value = (attrDesc.default_value ? attrDesc.default_value : 
-                     (attrDesc.repeat_value ? attrDesc.repeat_value : NULL));
+                     (attrDesc.repeat_value ? attrDesc.repeat_value : nullptr));
       if (first_value){
         memcpy((unsigned char*)curAllDataPtr, first_value, attrSizes[pl]);
       }
@@ -9246,7 +9246,7 @@ CGO *CGOConvertLinesToCylinderShader(const CGO *I, CGO *addTo, bool add_color){
   int box_indices[36] = { // box indices 
     0, 2, 1, 2, 0, 3, 1, 6, 5, 6, 1, 2, 0, 1, 5, 5, 4, 0, 
     0, 7, 3, 7, 0, 4, 3, 6, 2, 6, 3, 7, 4, 5, 6, 6, 7, 4 };
-  int *box_indices_ptr = NULL;
+  int *box_indices_ptr = nullptr;
   box_indices_ptr = box_indices;
 
   bool interp_same, interp_value = false;
@@ -9332,7 +9332,7 @@ CGO *CGOConvertCrossesToCylinderShader(const CGO *I, CGO *addTo, float cross_siz
   int box_indices[36] = { // box indices 
     0, 2, 1, 2, 0, 3, 1, 6, 5, 6, 1, 2, 0, 1, 5, 5, 4, 0, 
     0, 7, 3, 7, 0, 4, 3, 6, 2, 6, 3, 7, 4, 5, 6, 6, 7, 4 };
-  int *box_indices_ptr = NULL;
+  int *box_indices_ptr = nullptr;
   box_indices_ptr = box_indices;
 
   addTo->add<cgo::draw::vertex_attribute_1f>(G->ShaderMgr->GetAttributeUID("a_cap"), cCylShaderBothCapsRound);
@@ -9534,8 +9534,8 @@ CGO *CGOConvertShaderCylindersToCylinderShader(const CGO *I, CGO *addTo){
   AttribDesc *fdesc;
   static unsigned char cyl_flags[] = { 0, 4, 6, 2, 1, 5, 7, 3 }; // right(4)/up(2)/out(1)
 
-  attrDesc[1].attrOps[0].funcDataConversions.push_back( { SetVertexFromOriginAxisForCylinder, NULL, "attr_vertex2" } );
-  attrDesc[1].attrOps[1].funcDataConversions.push_back( { SetVertexFromOriginAxisForCylinder, NULL, "attr_vertex2" } );
+  attrDesc[1].attrOps[0].funcDataConversions.push_back( { SetVertexFromOriginAxisForCylinder, nullptr, "attr_vertex2" } );
+  attrDesc[1].attrOps[1].funcDataConversions.push_back( { SetVertexFromOriginAxisForCylinder, nullptr, "attr_vertex2" } );
 
   attrDesc.push_back({"attr_flags", VertexFormat::UByte});
   fdesc = &attrDesc[attrDesc.size()-1];
@@ -9553,7 +9553,7 @@ CGO *CGOConvertShaderCylindersToCylinderShader(const CGO *I, CGO *addTo){
   int box_indices[36] = { // box indices 
     0, 2, 1, 2, 0, 3, 1, 6, 5, 6, 1, 2, 0, 1, 5, 5, 4, 0, 
     0, 7, 3, 7, 0, 4, 3, 6, 2, 6, 3, 7, 4, 5, 6, 6, 7, 4 };
-  int *box_indices_ptr = NULL;
+  int *box_indices_ptr = nullptr;
   box_indices_ptr = box_indices;
 
   bool interp_same;

@@ -138,7 +138,7 @@ pymol::Result<> MovieSceneDelete(PyMOLGlobals * G, const char * name,
 
 pymol::Result<> MovieSceneOrder(PyMOLGlobals * G, const char * names,
     bool sort = false,
-    const char * location = NULL /* "current" */);
+    const char * location = nullptr /* "current" */);
 pymol::Result<> MovieSceneOrder(PyMOLGlobals* G, std::vector<std::string> names,
     bool sort = false, const char* location = nullptr);
 

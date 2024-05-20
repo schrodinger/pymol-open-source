@@ -2,6 +2,38 @@
 CHANGE LOG
 =========================================================================
 
+2024-04-09 Jarrett Johnson, Thomas Stewart, Thomas Holder, Anton Butsev
+
+	* 3.0.0
+
+	* Panels
+	  - Nucleic Acid Builder supported
+	  - Scenes Panel (Basic version)
+	  - Improved APBS electrostatics plugin integrated
+
+	* Distance/Bonding detection
+	  - Halogen-bond detection and display
+
+	* Python API
+	  - `fnab` command (sequence to nucleic acid chain)
+	  - Improved CGO builder API
+	  - get_sasa_relative() `subsele` argument added
+	  - new clip modes/API
+	  - iterate() adds `explicit_valence` and `explicit_degree`
+	  - `cell_centered` setting added
+	  - by grid-cell background gradient `bg_gradient=2`
+	  - look_at() added
+	  - experimental `curve_new` / `move_on_curve`
+
+	* Developer
+	  - C++17 required
+	  - pymol-testing integrated
+	  - pytest introduced
+	  - Github Actions CI
+
+	* And many other fixes and small additions provided by developers
+	  and the community...
+
 2021-05-10 Jarrett Johnson, Thomas Holder, Thomas Stewart
 
 	* 2.5.0

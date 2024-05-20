@@ -477,7 +477,7 @@ struct MoleculeExporterPDB : public MoleculeExporter {
 
   /**
    * Write a TER record if the previous atom was polymer and `ai`
-   * is NULL, non-polymer, or has a different chain identifier.
+   * is nullptr, non-polymer, or has a different chain identifier.
    */
   void writeTER(const AtomInfoType* ai) {
     if (!m_use_ter_records)
@@ -1610,7 +1610,7 @@ public:
 /**
  * Export the given selection to a molecular file format.
  *
- * @return File contents or NULL if the format is not known.
+ * @return File contents or nullptr if the format is not known.
  *
  * @param format      pdb, sdf, ...
  * @param selection   atom selection expression
@@ -1765,7 +1765,7 @@ PyObject *MoleculeExporterGetPyBonds(PyMOLGlobals * G,
  *
  */
 struct MoleculeExporterChemPy : public MoleculeExporter {
-  PyObject *m_model = nullptr; //!< Final result (never NULL)
+  PyObject *m_model = nullptr; //!< Final result (never nullptr)
 
 protected:
   int m_n_cs = 0; //!< Number of coordinate sets

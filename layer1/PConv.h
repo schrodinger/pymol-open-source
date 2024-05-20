@@ -90,7 +90,7 @@ Z* -------------------------------------------------------------------
 
 
 /* NOTE: the string routines will write strings up to the specified
- * length, PLUS a NULL...so watch out for array overruns */
+ * length, PLUS a nullptr...so watch out for array overruns */
 
 int PConvAttrToStrMaxLen(PyObject * obj, const char *attr, char *str, ov_size ll);
 
@@ -151,7 +151,7 @@ int PConvPyObjectToChar(PyObject * object, char *value);
 
 
 /* NOTE: the string routines will write strings up to the specified
- * length, PLUS a NULL...so watch out for array overruns */
+ * length, PLUS a nullptr...so watch out for array overruns */
 
 int PConvPyObjectToStrMaxLen(PyObject * object, char *value, int ln);
 int PConvPyObjectToStrMaxClean(PyObject * object, char *value, int ln);

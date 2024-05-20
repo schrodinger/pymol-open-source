@@ -44,7 +44,7 @@ int ObjectDistGetLabelTxfVertex(ObjectDist * I, int state, int index, float *v)
   int result = 0;
   if(!I->DSet.empty()) {
     if(state < 0)
-      state = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_state) - 1;
+      state = SettingGet_i(I->G, nullptr, I->Setting.get(), cSetting_state) - 1;
     if(state < 0)
       state = SceneGetState(I->G);
     if(I->DSet.size() == 1)
@@ -52,7 +52,7 @@ int ObjectDistGetLabelTxfVertex(ObjectDist * I, int state, int index, float *v)
     state = state % I->DSet.size();
     {
       DistSet *ds = I->DSet[state].get();
-      if((!ds) && (SettingGet_b(I->G, I->Setting.get(), NULL, cSetting_all_states))) {
+      if((!ds) && (SettingGet_b(I->G, I->Setting.get(), nullptr, cSetting_all_states))) {
         state = 0;
         ds = I->DSet[state].get();
       }
@@ -74,7 +74,7 @@ int ObjectDistMoveLabel(ObjectDist * I, int state, int index, float *v, int mode
     state = 0;
   state = state % I->DSet.size();
   if((!I->DSet[state])
-     && (SettingGet_b(I->G, I->Setting.get(), NULL, cSetting_all_states)))
+     && (SettingGet_b(I->G, I->Setting.get(), nullptr, cSetting_all_states)))
     state = 0;
   /* find the corresponding distance set, for this state */
   auto ds = I->DSet[state].get();
@@ -178,7 +178,7 @@ static int ObjectDistDSetFromPyList(ObjectDist * I, PyObject * list)
 /*========================================================================*/
 PyObject *ObjectDistAsPyList(ObjectDist * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   /* first, dump the atoms */
 
@@ -195,15 +195,15 @@ PyObject *ObjectDistAsPyList(ObjectDist * I)
 int ObjectDistNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectDist ** result)
 {
   int ok = true;
-  ObjectDist *I = NULL;
-  (*result) = NULL;
+  ObjectDist *I = nullptr;
+  (*result) = nullptr;
 
   if(ok)
     ok = PyList_Check(list);
 
   I = new ObjectDist(G);
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
 
   if(ok){
     auto *val = PyList_GetItem(list, 0);

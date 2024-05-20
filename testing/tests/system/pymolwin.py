@@ -7,7 +7,6 @@ import time
 import subprocess
 import sys
 import unittest
-from distutils.spawn import find_executable
 from pymol import cmd, CmdException, testing, stored
 
 @unittest.skipIf(not sys.platform.startswith('win'), 'windows only')
