@@ -88,24 +88,24 @@ int GadgetSetSetVertex(GadgetSet * I, int index, int base, const float *v)
 int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int version)
 {
   int ok = true;
-  GadgetSet *I = NULL;
-  PyObject *tmp = NULL;
+  GadgetSet *I = nullptr;
+  PyObject *tmp = nullptr;
 
   if(*gs) {
     delete *gs;
-    *gs = NULL;
+    *gs = nullptr;
   }
 
   if(list == Py_None) {         /* allow None for GSet */
-    *gs = NULL;
+    *gs = nullptr;
   } else {
 
     if(ok)
       I = GadgetSetNew(G);
     if(ok)
-      ok = (I != NULL);
+      ok = (I != nullptr);
     if(ok)
-      ok = (list != NULL);
+      ok = (list != nullptr);
     if(ok)
       ok = PyList_Check(list);
     /* TO SUPPORT BACKWARDS COMPATIBILITY...
@@ -127,14 +127,14 @@ int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int 
       ok = PConvPyListToFloatVLA(PyList_GetItem(list, 5), &I->Color);
 
     if(ok)
-      ok = ((tmp = PyList_GetItem(list, 6)) != NULL);
+      ok = ((tmp = PyList_GetItem(list, 6)) != nullptr);
     if(ok && (tmp != Py_None))
-      ok = ((I->ShapeCGO = CGONewFromPyList(I->G, tmp, version)) != NULL);
+      ok = ((I->ShapeCGO = CGONewFromPyList(I->G, tmp, version)) != nullptr);
 
     if(ok)
-      ok = ((tmp = PyList_GetItem(list, 7)) != NULL);
+      ok = ((tmp = PyList_GetItem(list, 7)) != nullptr);
     if(ok && (tmp != Py_None))
-      ok = ((I->PickShapeCGO = CGONewFromPyList(I->G, tmp, version)) != NULL);
+      ok = ((I->PickShapeCGO = CGONewFromPyList(I->G, tmp, version)) != nullptr);
 
     if(ok && I->ShapeCGO)
       if(CGOCheckForText(I->ShapeCGO)) {
@@ -154,7 +154,7 @@ int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int 
 
 PyObject *GadgetSetAsPyList(GadgetSet * I, bool incl_cgos)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   if(I) {
     result = PyList_New(8);
@@ -228,12 +228,12 @@ void GadgetSet::update()
   if(I->StdCGO) {
     CGOFree(I->StdCGO);
     I->offsetPtOP = 0;
-    I->StdCGO = NULL;
+    I->StdCGO = nullptr;
   }
   if(I->PickCGO) {
     CGOFree(I->PickCGO);
     I->offsetPtOPick = 0;
-    I->PickCGO = NULL;
+    I->PickCGO = nullptr;
   }
 }
 
@@ -265,7 +265,7 @@ void GadgetSet::render(RenderInfo * info)
 	RayPushTTT(ray);
 	RaySetTTT(ray, true, mat);  /* Used to set the ray-tracing matrix,
 				       this works, but is there another way to do this? */
-	CGORenderRay(I->ShapeCGO, ray, info, color, NULL, I->Obj->Setting.get(), NULL);
+	CGORenderRay(I->ShapeCGO, ray, info, color, nullptr, I->Obj->Setting.get(), nullptr);
 	RayPopTTT(ray);
       }
     } else if(G->HaveGUI && G->ValidContext) {
@@ -300,12 +300,12 @@ void GadgetSet::render(RenderInfo * info)
 	}
         if(I->PickCGO) {
 	  if (use_shader){
-	    CGORenderPicking(I->PickCGO, info, &context, I->Obj->Setting.get(), NULL);
+	    CGORenderPicking(I->PickCGO, info, &context, I->Obj->Setting.get(), nullptr);
 #ifndef PURE_OPENGL_ES_2
 	  } else {
 	    glDisable(GL_DEPTH_TEST);
 	    glTranslatef(I->Coord[0],I->Coord[1],I->Coord[2]);
-	    CGORenderPicking(I->PickShapeCGO, info, &context, I->Obj->Setting.get(), NULL);
+	    CGORenderPicking(I->PickShapeCGO, info, &context, I->Obj->Setting.get(), nullptr);
 	    glTranslatef(-I->Coord[0],-I->Coord[1],-I->Coord[2]);
 	    glEnable(GL_DEPTH_TEST);
 #endif
@@ -333,12 +333,12 @@ void GadgetSet::render(RenderInfo * info)
         if(I->StdCGO) {
 	  if (use_shader){
 	    if (color)
-              CGORender(I->StdCGO, NULL, I->Obj->Setting.get(), NULL, info, NULL);
+              CGORender(I->StdCGO, nullptr, I->Obj->Setting.get(), nullptr, info, nullptr);
 #ifndef PURE_OPENGL_ES_2
 	  } else {
 	    glDisable(GL_DEPTH_TEST);
 	    glTranslatef(I->Coord[0],I->Coord[1],I->Coord[2]);
-	    CGORender(I->ShapeCGO, NULL, I->Obj->Setting.get(), NULL, info, NULL);
+	    CGORender(I->ShapeCGO, nullptr, I->Obj->Setting.get(), nullptr, info, nullptr);
 	    glTranslatef(-I->Coord[0],-I->Coord[1],-I->Coord[2]);
 	    glEnable(GL_DEPTH_TEST);
 #endif

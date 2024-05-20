@@ -97,7 +97,7 @@ static void AddOrthoOutputIfMatchesTags(PyMOLGlobals * G, int n_tags,
 	continue;
       ParseNTrimRight(cc, p, MAXLINELEN - 1);
       OrthoAddOutput(G, cc);
-      OrthoNewLine(G, NULL, true);
+      OrthoNewLine(G, nullptr, true);
       break;
     }
   }
@@ -329,7 +329,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
       ai->color = color;
     }
     AtomInfoAssignParameters(I->G, ai);
-    AtomInfoUniquefyNames(I->G, I->AtomInfo, I->NAtom, ai, NULL, 1);
+    AtomInfoUniquefyNames(I->G, I->AtomInfo, I->NAtom, ai, nullptr, 1);
     if(!quiet) {
       PRINTFB(G, FB_ObjectMolecule, FB_Actions)
         " ObjMol: created %s/%s/%s/%s`%d%c/%s\n",
@@ -390,7 +390,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
               ai->vdw = vdw;        /* NOTE: only uses vdw from first state selection... */
           }
         } else {
-          pos = NULL;           /* skip this state */
+          pos = nullptr;           /* skip this state */
         }
       } else if(!pos) {
         SceneGetCenter(I->G, pos_array);
@@ -446,7 +446,7 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
   int b1, b2, a1, a2, a3;
   OtherRec *o;
   OtherRec *other = pymol::calloc<OtherRec>(cs->NIndex);
-  int *result = NULL;
+  int *result = nullptr;
   int offset;
   int n_alloc = 0;
   const BondType *bd;
@@ -1448,7 +1448,7 @@ int ObjectMoleculeConvertIDsToIndices(ObjectMolecule * I, int *id, int n_id)
 {
   /* return true if all IDs are unique, false if otherwise */
 
-  int min_id, max_id, range, *lookup = NULL;
+  int min_id, max_id, range, *lookup = nullptr;
   int unique = true;
 
   /* this routine only works if IDs cover a reasonable range --
@@ -1529,7 +1529,7 @@ static const char *check_next_pdb_object(const char *p, int skip_to_next)
     }
     p = nextline(p);
   }
-  return NULL;
+  return nullptr;
 }
 
 static int get_multi_object_status(const char *p)
@@ -1563,11 +1563,11 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
   int found_wildcard = false;
 
   {
-    const char *tmp = SettingGet_s(G, NULL, I->Setting.get(), cSetting_atom_name_wildcard);
+    const char *tmp = SettingGet_s(G, nullptr, I->Setting.get(), cSetting_atom_name_wildcard);
     if(tmp && tmp[0]) {
       wildcard = *tmp;
     } else {
-      tmp = SettingGet_s(G, NULL, I->Setting.get(), cSetting_wildcard);
+      tmp = SettingGet_s(G, nullptr, I->Setting.get(), cSetting_wildcard);
       if(tmp) {
         wildcard = *tmp;
       }
@@ -1611,7 +1611,7 @@ static void ObjectMoleculePDBStr2CoordSetPASS1(PyMOLGlobals * G, int *ok,
     int *ssFlag, const char **next_pdb, PDBInfoRec *info, int only_read_one_model,
     int *ignore_conect, int *bondFlag, int *have_bond_order) {
   int seen_end_of_atoms = false;
-  *restart_model = NULL;
+  *restart_model = nullptr;
   while(*ok && *p) {
     AddOrthoOutputIfMatchesTags(G, n_tags, *nAtom, tag_start, p, cc, quiet);
     if((strstartswith(p, "ATOM ") ||
@@ -1700,7 +1700,7 @@ static SSHash * sshash_new() {
   return hash;
 ok_except1:
   sshash_free(hash);
-  return NULL;
+  return nullptr;
 }
 
 /**
@@ -1728,14 +1728,14 @@ static int sshash_register_rec(SSHash * hash,
       ok_assert(1, hash->ss[chain] = pymol::calloc<int>(cResvMask + 1));
     }
 
-    sst = NULL;
+    sst = nullptr;
     // iterate over all residues indicated
     for(b = ss_resv1; b <= ss_resv2; b++) {
       index = b & cResvMask;
 
       if(hash->ss[chain][index]) {
         // make a unique copy in the event of multiple entries for one resv
-        sst = NULL;
+        sst = nullptr;
       }
 
       if(!sst) {
@@ -1755,7 +1755,7 @@ static int sshash_register_rec(SSHash * hash,
       sst->next = hash->ss[chain][index];
       hash->ss[chain][index] = ssi;
       if(sst->next)
-        sst = NULL;           /* force another unique copy */
+        sst = nullptr;           /* force another unique copy */
     }
   }
   return ss_found;
@@ -1768,7 +1768,7 @@ ok_except1:
  */
 static void sshash_lookup(SSHash *hash, AtomInfoType *ai, unsigned char ss_chain1) {
   int index, ssi;
-  SSEntry *sst = NULL;
+  SSEntry *sst = nullptr;
 
   index = ai->resv & cResvMask;
   if(hash->ss[ss_chain1]) {
@@ -1874,14 +1874,14 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   const char *p;
   int nAtom;
   int a;
-  float *coord = NULL;
-  CoordSet *cset = NULL;
-  AtomInfoType *atInfo = NULL, *ai;
+  float *coord = nullptr;
+  CoordSet *cset = nullptr;
+  AtomInfoType *atInfo = nullptr, *ai;
   int AFlag;
   char SSCode;
   int atomCount;
   int bondFlag = false;
-  BondType *bond = NULL, *ii1, *ii2;
+  BondType *bond = nullptr, *ii1, *ii2;
   int *idx;
   int nBond = 0;
   int b1, b2, nReal, maxAt;
@@ -1896,7 +1896,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   int ss_resv1 = 0, ss_resv2 = 0;
   char ss_inscode1 = '\0', ss_inscode2 = '\0';
   unsigned char ss_chain1 = 0, ss_chain2 = 0;
-  SSHash *ss_hash = NULL;
+  SSHash *ss_hash = nullptr;
   char cc[MAXLINELEN], tags[MAXLINELEN];
   int ignore_pdb_segi = 0;
   int ss_valid, ss_found = false;
@@ -1975,7 +1975,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 
      END PASS 1 */
 
-  *restart_model = NULL;
+  *restart_model = nullptr;
   if (ok){
     coord = VLAlloc(float, 3 * nAtom);
     CHECKOK(ok, coord);
@@ -2120,7 +2120,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
             if(info && (info->multiplex == 0)) {
               /* multiplex == 0:  FORCED multimodel behavior with concatenated PDB files */
               (*restart_model) = (*next_pdb);
-              (*next_pdb) = NULL;
+              (*next_pdb) = nullptr;
               foundNextModelFlag = true;
               info->multi_object_status = -1;
             } else {
@@ -2129,14 +2129,14 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           } else if(strstartswith(pp, "MODEL")) {   /* not a new object...just a new state (model) */
             if(info && (info->multiplex > 0)) { /* end object if we're multiplexing */
               (*next_pdb) = check_next_pdb_object(pp, true);
-              (*restart_model) = NULL;
+              (*restart_model) = nullptr;
             } else
               is_end_of_object = false;
           } else {
             if(pp[0] > 32)      /* more content follows... */
               (*next_pdb) = check_next_pdb_object(pp, true);
             else
-              (*next_pdb) = NULL;       /* at end of file */
+              (*next_pdb) = nullptr;       /* at end of file */
           }
           break;
         }
@@ -2154,7 +2154,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           if((*next_pdb) && info && (!info->multiplex) && !(*restart_model)) {
             /* multiplex == 0:  FORCED multimodel behavior with concatenated PDB files */
             (*restart_model) = (*next_pdb);
-            (*next_pdb) = NULL;
+            (*next_pdb) = nullptr;
             foundNextModelFlag = true;
             info->multi_object_status = -1;
             is_end_of_object = false;
@@ -2725,14 +2725,14 @@ pqr_done:
 	p = nextline(p);
       }
       if(!foundNextModelFlag) {
-	*restart_model = NULL;
+	*restart_model = nullptr;
       }
     }
   }
   if (!ok){
     if (cset){
       delete cset;
-      cset = NULL;
+      cset = nullptr;
     } else {
       VLAFreeP(coord);
       VLAFreeP(bond);
@@ -2748,9 +2748,9 @@ pqr_done:
 					     trajectories, then enforce sanity by 
 					     reading the models first... */
       if(is_end_of_object)
-	(*restart_model) = NULL;
+	(*restart_model) = nullptr;
       else if((*next_pdb) < (*restart_model))
-	(*next_pdb) = NULL;
+	(*next_pdb) = nullptr;
     }
   }
 
@@ -2763,13 +2763,13 @@ pqr_done:
 
 void ObjectMoleculeInitHBondCriteria(PyMOLGlobals * G, HBondCriteria * hbc)
 {
-  hbc->maxAngle = SettingGet_f(G, NULL, NULL, cSetting_h_bond_max_angle);
-  hbc->maxDistAtMaxAngle = SettingGet_f(G, NULL, NULL, cSetting_h_bond_cutoff_edge);
-  hbc->maxDistAtZero = SettingGet_f(G, NULL, NULL, cSetting_h_bond_cutoff_center);
-  hbc->power_a = SettingGet_f(G, NULL, NULL, cSetting_h_bond_power_a);
-  hbc->power_b = SettingGet_f(G, NULL, NULL, cSetting_h_bond_power_b);
+  hbc->maxAngle = SettingGet_f(G, nullptr, nullptr, cSetting_h_bond_max_angle);
+  hbc->maxDistAtMaxAngle = SettingGet_f(G, nullptr, nullptr, cSetting_h_bond_cutoff_edge);
+  hbc->maxDistAtZero = SettingGet_f(G, nullptr, nullptr, cSetting_h_bond_cutoff_center);
+  hbc->power_a = SettingGet_f(G, nullptr, nullptr, cSetting_h_bond_power_a);
+  hbc->power_b = SettingGet_f(G, nullptr, nullptr, cSetting_h_bond_power_b);
   hbc->cone_dangle =
-    (float) cos(PI * 0.5 * SettingGet_f(G, NULL, NULL, cSetting_h_bond_cone) / 180.0F);
+    (float) cos(PI * 0.5 * SettingGet_f(G, nullptr, nullptr, cSetting_h_bond_cone) / 180.0F);
   if(hbc->maxDistAtMaxAngle != 0.0F) {
     hbc->factor_a = (float) (0.5 / pow(hbc->maxAngle, hbc->power_a));
     hbc->factor_b = (float) (0.5 / pow(hbc->maxAngle, hbc->power_b));
@@ -2867,7 +2867,7 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule * I,
           best_dot = dot_product3f(best, dir);
           add3f(orig, best, best);
           if(h_real)
-            *h_real = NULL;
+            *h_real = nullptr;
         }
       }
       /* iterate through real hydrogens looking for best match
@@ -2923,7 +2923,7 @@ int ObjectMoleculeGetCheckHBond(AtomInfoType **h_real,
   float donToH[3];
   float bestH[3];
   float hToAcc[3];
-  float accPlane[3], *vAccPlane = NULL;
+  float accPlane[3], *vAccPlane = nullptr;
 
   /* first, check for existence of coordinate sets */
 
@@ -2993,7 +2993,7 @@ float ObjectMoleculeGetMaxVDW(ObjectMolecule * I)
 /*========================================================================*/
 static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   int a;
   result = PyList_New(I->NCSet);
   for(a = 0; a < I->NCSet; a++) {
@@ -3009,7 +3009,7 @@ static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule * I)
 
 /*static PyObject *ObjectMoleculeDiscreteCSetAsPyList(ObjectMolecule *I)
   {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   return(PConvAutoNone(result));
   }*/
 static int ObjectMoleculeCSetFromPyList(ObjectMolecule * I, PyObject * list)
@@ -3036,7 +3036,7 @@ static int ObjectMoleculeCSetFromPyList(ObjectMolecule * I, PyObject * list)
 
 static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   PyObject *bond_list;
   const BondType *bond;
   int a;
@@ -3093,7 +3093,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
   int ok = true;
   int a;
   int stereo, ll = 0;
-  PyObject *bond_list = NULL;
+  PyObject *bond_list = nullptr;
   BondType *bond;
 
   if(ok)
@@ -3130,7 +3130,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
       ok = bool((I->Bond = pymol::vla<BondType>(I->NBond)));
     bond = I->Bond.data();
   for(a = 0; a < I->NBond; a++) {
-    bond_list = NULL;
+    bond_list = nullptr;
     if(ok)
       bond_list = PyList_GetItem(list, a);
     if(ok)
@@ -3248,7 +3248,7 @@ static void AtomColumnFromPyList(ObjectMolecule& mol, PyObject* list,
 static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
 {
   PyMOLGlobals *G = I->G;
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   const AtomInfoType *ai;
   int a;
 #ifndef PICKLETOOLS
@@ -3447,9 +3447,9 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                 ObjectMolecule ** result)
 {
   int ok = true;
-  ObjectMolecule *I = NULL;
+  ObjectMolecule *I = nullptr;
   int discrete_flag = 0;
-  (*result) = NULL;
+  (*result) = nullptr;
 
   if(ok)
     ok = PyList_Check(list);
@@ -3514,7 +3514,7 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     /* cleanup */
     if (I)
         DeleteP(I);
-    (*result) = NULL;
+    (*result) = nullptr;
   }
   return (ok);
 }
@@ -3523,7 +3523,7 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
 /*========================================================================*/
 PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   /* first, dump the atoms */
 
@@ -4041,7 +4041,7 @@ void ObjectMoleculeConnectDiscrete(ObjectMolecule* I, int searchFlag,
 int ObjectMoleculeSort(ObjectMolecule * I)
 {                               /* sorts atoms and bonds */
   int *index;
-  int *outdex = NULL;
+  int *outdex = nullptr;
   int a, b;
   int ok = true;
   if(!I->DiscreteFlag) {        /* currently, discrete objects are never sorted */

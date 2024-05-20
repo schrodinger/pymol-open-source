@@ -97,14 +97,14 @@ static void _IsosurfFree(CIsosurf * I)
 void IsosurfFree(PyMOLGlobals * G)
 {
   _IsosurfFree(G->Isosurf);
-  G->Isosurf = NULL;
+  G->Isosurf = nullptr;
 }
 
 
 /*===========================================================================*/
 PyObject *IsosurfAsPyList(PyMOLGlobals * G, Isofield * field)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(4);
 
@@ -139,9 +139,9 @@ Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list)
   int dim4[4];
   int a;
 
-  Isofield *result = NULL;
+  Isofield *result = nullptr;
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   /* TO ENABLE BACKWARDS COMPATIBILITY...
@@ -395,10 +395,10 @@ static CIsosurf *IsosurfNew(PyMOLGlobals * G)
   int c;
   CIsosurf *I = pymol::calloc<CIsosurf>(1);
   I->G = G;
-  I->VertexCodes = NULL;
-  I->ActiveEdges = NULL;
-  I->Point = NULL;
-  I->Line = NULL;
+  I->VertexCodes = nullptr;
+  I->ActiveEdges = nullptr;
+  I->Point = nullptr;
+  I->Line = nullptr;
   I->Skip = 0;
   for(c = 0; c < 256; c++)
     I->Code[c] = -1;
@@ -1040,13 +1040,13 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
     CField *points = field->points.get();
 
     /* flags marking excluded regions to avoid (currently wasteful) */
-    int *flag = NULL;
+    int *flag = nullptr;
 
     /* variable length array for recording segment paths */
     int *active_cell = VLAlloc(int, 1000);
 
     /* ordered list of coordinates for processing */
-    int *order = NULL;
+    int *order = nullptr;
 
     int range_size;             /* total points in region being drawn */
     int range_dim[3];           /* dimension of drawn region */
@@ -1149,7 +1149,7 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
           for(pass = 0; pass < 2; pass++) {     /* one pass down the gradient, one up */
 
             int have_prev = false;      /* flag & storage for previous gradient & locus */
-            int *prev_locus = NULL;
+            int *prev_locus = nullptr;
 
             int locus[3];       /* what cell are we in? */
             float fract[3] = { 0.0F, 0.0F, 0.0F };      /* where in the cell are we? */
@@ -1214,7 +1214,7 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
               if((!have_prev) || (have_prev && ((locus[0] != prev_locus[0]) ||
                                                 (locus[1] != prev_locus[1]) ||
                                                 (locus[2] != prev_locus[2])))) {
-                /* above: prev_locus may be NULL, so relying upon shortcut logic eval */
+                /* above: prev_locus may be nullptr, so relying upon shortcut logic eval */
 
                 /* stop if we hit a flagged cell (flag always in lower corner) */
 
@@ -1674,7 +1674,7 @@ static int IsosurfDrawLines(CIsosurf * II)
 #ifdef Trace
                 LCount++;
 #endif
-                Cur = NULL;
+                Cur = nullptr;
                 if(I->NLine != (*I->Num)[I->NSeg]) {       /* any new lines? */
                   I->Num->check(I->NSeg + 1);
                   (*I->Num)[I->NSeg] = I->NLine - (*I->Num)[I->NSeg];
@@ -1736,8 +1736,8 @@ static int IsosurfFindLines(CIsosurf * II)
               printf("IsosurfFindLines: bad index: %i \n", index);
 #endif
             while(cod > 0) {
-              p1 = NULL;
-              p2 = NULL;
+              p1 = nullptr;
+              p2 = nullptr;
               switch (cod) {
               case 40:
               case 32:
@@ -1773,8 +1773,8 @@ static int IsosurfFindLines(CIsosurf * II)
                 break;
               default:
                 cod = 0;
-                p1 = NULL;
-                p2 = NULL;
+                p1 = nullptr;
+                p2 = nullptr;
                 break;
               }
               if(p1 && p2) {
@@ -1836,8 +1836,8 @@ static int IsosurfFindLines(CIsosurf * II)
                 break;
               default:
                 cod = 0;
-                p1 = NULL;
-                p2 = NULL;
+                p1 = nullptr;
+                p2 = nullptr;
                 break;
               }
               if(p1 && p2) {
@@ -1899,8 +1899,8 @@ static int IsosurfFindLines(CIsosurf * II)
                 break;
               default:
                 cod = 0;
-                p1 = NULL;
-                p2 = NULL;
+                p1 = nullptr;
+                p2 = nullptr;
                 break;
               }
               if(p1 && p2) {

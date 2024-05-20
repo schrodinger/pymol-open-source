@@ -51,7 +51,7 @@ static void ObjectSliceRecomputeExtent(ObjectSlice * I);
 static PyObject *ObjectSliceStateAsPyList(ObjectSliceState * I)
 {
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(10);
 
@@ -72,7 +72,7 @@ static PyObject *ObjectSliceStateAsPyList(ObjectSliceState * I)
 static PyObject *ObjectSliceAllStatesAsPyList(ObjectSlice * I)
 {
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   int a;
   result = PyList_New(I->State.size());
   for(a = 0; a < I->State.size(); a++) {
@@ -92,13 +92,13 @@ static int ObjectSliceStateFromPyList(PyMOLGlobals * G, ObjectSliceState * I,
   int ok = true;
 
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok) {
     if(!PyList_Check(list))
       I->Active = false;
     else {
       if(ok)
-        ok = (list != NULL);
+        ok = (list != nullptr);
       if(ok)
         ok = PyList_Check(list);
       /* TO SUPPORT BACKWARDS COMPATIBILITY...
@@ -155,11 +155,11 @@ static int ObjectSliceAllStatesFromPyList(ObjectSlice * I, PyObject * list, int 
 int ObjectSliceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSlice ** result)
 {
   int ok = true;
-  ObjectSlice *I = NULL;
-  (*result) = NULL;
+  ObjectSlice *I = nullptr;
+  (*result) = nullptr;
 
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
@@ -167,7 +167,7 @@ int ObjectSliceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSlice ** r
 
   I = new ObjectSlice(G);
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
 
   if(ok){
     CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 0);    
@@ -193,7 +193,7 @@ int ObjectSliceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSlice ** r
 
 PyObject *ObjectSliceAsPyList(ObjectSlice * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(3);
   PyList_SetItem(result, 0, ObjectAsPyList(I));
@@ -250,12 +250,12 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
   int min[2] = { 0, 0 }, max[2] = {
   0, 0};                        /* limits of the rectangle */
   int need_normals = false;
-  int track_camera = SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_slice_track_camera);
-  float grid = SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_slice_grid);
+  int track_camera = SettingGet_b(I->G, nullptr, I->Setting.get(), cSetting_slice_track_camera);
+  float grid = SettingGet_f(I->G, nullptr, I->Setting.get(), cSetting_slice_grid);
   int min_expand = 1;
 
-  if(SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_slice_dynamic_grid)) {
-    float resol = SettingGet_f(I->G, NULL, I->Setting.get(),
+  if(SettingGet_b(I->G, nullptr, I->Setting.get(), cSetting_slice_dynamic_grid)) {
+    float resol = SettingGet_f(I->G, nullptr, I->Setting.get(),
                                cSetting_slice_dynamic_grid_resolution);
     float scale = SceneGetScreenVertexScale(I->G, oss->origin);
     oss->last_scale = scale;
@@ -422,9 +422,9 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
 
   if(ok) {
 
-    if(SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_slice_height_map)) {
+    if(SettingGet_b(I->G, nullptr, I->Setting.get(), cSetting_slice_height_map)) {
       float height_scale =
-        SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_slice_height_scale);
+        SettingGet_f(I->G, nullptr, I->Setting.get(), cSetting_slice_height_scale);
       float *value = oss->values.data();
       float up[3], scaled[3], factor;
       int x, y;
@@ -545,7 +545,7 @@ static void ObjectSliceStateUpdate(ObjectSlice * I, ObjectSliceState * oss,
   if(!need_normals) {
     VLAFreeP(oss->normals);
   } else {
-    int *cnt = NULL;
+    int *cnt = nullptr;
 
     oss->normals.reserve(oss->n_points * 3);
     cnt = pymol::calloc<int>(oss->n_points);
@@ -625,9 +625,9 @@ void ObjectSlice::update()
 
   auto I = this;
   ObjectSliceState *oss;
-  ObjectMapState *oms = NULL;
-  ObjectMap *map = NULL;
-  ObjectGadgetRamp *ogr = NULL;
+  ObjectMapState *oms = nullptr;
+  ObjectMap *map = nullptr;
+  ObjectGadgetRamp *ogr = nullptr;
 
   int a;
   for(a = 0; a < I->State.size(); a++) {
@@ -673,7 +673,7 @@ void ObjectSlice::update()
 void ObjectSliceDrag(ObjectSlice * I, int state, int mode, float *pt, float *mov,
                      float *z_dir)
 {
-  ObjectSliceState *oss = NULL;
+  ObjectSliceState *oss = nullptr;
 
   if(state >= 0)
     if(state < I->State.size())
@@ -744,7 +744,7 @@ int ObjectSliceGetVertex(ObjectSlice * I, int index, int base, float *v)
   int offset = base - 1;
   int result = false;
 
-  ObjectSliceState *oss = NULL;
+  ObjectSliceState *oss = nullptr;
 
   if(state >= 0)
     if(state < I->State.size())
@@ -911,10 +911,10 @@ void ObjectSlice::render(RenderInfo * info)
   const RenderPass pass = info->pass;
   int cur_state = 0;
   float alpha;
-  int track_camera = SettingGet_b(G, NULL, I->Setting.get(), cSetting_slice_track_camera);
-  int dynamic_grid = SettingGet_b(G, NULL, I->Setting.get(), cSetting_slice_dynamic_grid);
-  ObjectSliceState *oss = NULL;
-  int use_shaders = !track_camera && SettingGet_b(G, NULL, I->Setting.get(), cSetting_use_shaders);
+  int track_camera = SettingGet_b(G, nullptr, I->Setting.get(), cSetting_slice_track_camera);
+  int dynamic_grid = SettingGet_b(G, nullptr, I->Setting.get(), cSetting_slice_dynamic_grid);
+  ObjectSliceState *oss = nullptr;
+  int use_shaders = !track_camera && SettingGet_b(G, nullptr, I->Setting.get(), cSetting_use_shaders);
   // just in case, since slice uses immediate mode, but this should never happen
   G->ShaderMgr->Disable_Current_Shader();
 
@@ -972,7 +972,7 @@ void ObjectSlice::render(RenderInfo * info)
   }
 
   ObjectPrepareContext(I, info);
-  alpha = SettingGet_f(G, NULL, I->Setting.get(), cSetting_transparency);
+  alpha = SettingGet_f(G, nullptr, I->Setting.get(), cSetting_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
@@ -1067,7 +1067,7 @@ void ObjectSlice::render(RenderInfo * info)
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
             if (oss->shaderCGO && (I->visRep & cRepSliceBit)){
-              CGORenderPicking(oss->shaderCGO.get(), info, &I->context, I->Setting.get(), NULL);
+              CGORenderPicking(oss->shaderCGO.get(), info, &I->context, I->Setting.get(), nullptr);
             } else {
 #ifndef PURE_OPENGL_ES_2
             Picking p;
@@ -1145,7 +1145,7 @@ void ObjectSlice::render(RenderInfo * info)
 	      int already_rendered = false;
 
               if (oss->shaderCGO){
-                CGORender(oss->shaderCGO.get(), NULL, NULL, I->Setting.get(), info, NULL);
+                CGORender(oss->shaderCGO.get(), nullptr, nullptr, I->Setting.get(), info, nullptr);
                 already_rendered = true;
               } else {
                 oss->shaderCGO.reset(CGONew(G));
@@ -1211,7 +1211,7 @@ void ObjectSlice::render(RenderInfo * info)
                   oss->shaderCGO.reset(CGOOptimizeToVBONotIndexed(oss->shaderCGO.get()));
                   assert(oss->shaderCGO->use_shader);
                 }
-                CGORender(oss->shaderCGO.get(), NULL, NULL, I->Setting.get(), info, NULL);
+                CGORender(oss->shaderCGO.get(), nullptr, nullptr, I->Setting.get(), info, nullptr);
                 SceneInvalidatePicking(G);  // any time cgo is re-generated, needs to invalidate so
                 // pick colors can be re-assigned
               }
@@ -1239,12 +1239,12 @@ int ObjectSlice::getNFrame() const
 
 ObjectSliceState *ObjectSliceStateGetActive(ObjectSlice * I, int state)
 {
-  ObjectSliceState *ms = NULL;
+  ObjectSliceState *ms = nullptr;
   if(state >= 0) {
     if(state < I->State.size()) {
       ms = &I->State[state];
       if(!ms->Active)
-        ms = NULL;
+        ms = nullptr;
     }
   }
   return (ms);
@@ -1303,7 +1303,7 @@ ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap *
 
     {
       float tmp[3];
-      if(ObjectMapStateGetExcludedStats(G, oms, NULL, 0.0F, 0.0F, tmp)) {
+      if(ObjectMapStateGetExcludedStats(G, oms, nullptr, 0.0F, 0.0F, tmp)) {
         oss->MapMean = tmp[1];
         oss->MapStdev = tmp[2] - tmp[1];
       } else {

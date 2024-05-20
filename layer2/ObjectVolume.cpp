@@ -70,7 +70,7 @@ CObjectState* ObjectVolume::_getObjectState(int state)
 }
 
 static ObjectMapState * ObjectVolumeStateGetMapState(ObjectVolumeState * vs) {
-  ObjectMap *map = NULL;
+  ObjectMap *map = nullptr;
 
   PyMOLGlobals * G = vs->G;
 
@@ -79,7 +79,7 @@ static ObjectMapState * ObjectVolumeStateGetMapState(ObjectVolumeState * vs) {
     PRINTFB(G, FB_ObjectVolume, FB_Errors)
       "ObjectVolume-Error: map '%s' has been deleted.\n", vs->MapName
       ENDFB(G);
-    return NULL;
+    return nullptr;
   }
 
   return ObjectMapGetState(map, vs->MapState);
@@ -89,12 +89,12 @@ ObjectMapState * ObjectVolumeGetMapState(ObjectVolume * I) {
   ObjectVolumeState * ovs = ObjectVolumeGetActiveState(I);
   if(ovs)
     return ObjectVolumeStateGetMapState(ovs);
-  return NULL;
+  return nullptr;
 }
 
 static PyObject *ObjectVolumeStateAsPyList(ObjectVolumeState * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   result = PyList_New(19);
   PyList_SetItem(result, 0, PyInt_FromLong(I->Active));
   PyList_SetItem(result, 1, PyString_FromString(I->MapName));
@@ -106,7 +106,7 @@ static PyObject *ObjectVolumeStateAsPyList(ObjectVolumeState * I)
   PyList_SetItem(result, 7, PConvAutoNone(NULL) /* PConvIntArrayToPyList(I->Range, 6) */);
   PyList_SetItem(result, 8, PyFloat_FromDouble(0.0 /* I->Level */));
   PyList_SetItem(result, 9, PyFloat_FromDouble(0.0 /* I->Radius */));
-  PyList_SetItem(result, 10, PyInt_FromLong(/* I->CarveFlag */ I->AtomVertex.data() != NULL));
+  PyList_SetItem(result, 10, PyInt_FromLong(/* I->CarveFlag */ I->AtomVertex.data() != nullptr));
   PyList_SetItem(result, 11, PyFloat_FromDouble(I->CarveBuffer));
   PyList_SetItem(result, 12, I->AtomVertex ?
       PConvFloatVLAToPyList(I->AtomVertex) : PConvAutoNone(NULL));
@@ -147,14 +147,14 @@ static int ObjectVolumeStateFromPyList(PyMOLGlobals * G, ObjectVolumeState * I,
   int ll = 0;
   PyObject *tmp;
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok) {
     if(!PyList_Check(list))
       I->Active = false;
     else {
       *I = ObjectVolumeState(G);
       if(ok)
-        ok = (list != NULL);
+        ok = (list != nullptr);
       if(ok)
         ok = PyList_Check(list);
       if(ok)
@@ -192,7 +192,7 @@ static int ObjectVolumeStateFromPyList(PyMOLGlobals * G, ObjectVolumeState * I,
       if(ok) {
         tmp = PyList_GetItem(list, 12);
         if(tmp == Py_None)
-          I->AtomVertex = NULL;
+          I->AtomVertex = nullptr;
         else
           ok = PConvPyListToFloatVLA(tmp, &I->AtomVertex);
       }
@@ -265,17 +265,17 @@ static int ObjectVolumeAllStatesFromPyList(ObjectVolume * I, PyObject * list)
 int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume ** result)
 {
   int ok = true;
-  ObjectVolume *I = NULL;
-  (*result) = NULL;
+  ObjectVolume *I = nullptr;
+  (*result) = nullptr;
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
   I = new ObjectVolume(G);
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
   if(ok){
     auto *val = PyList_GetItem(list, 0);
     ok = ObjectFromPyList(G, val, I);
@@ -369,7 +369,7 @@ void ObjectVolume::invalidate(cRep_t rep, cRepInv_t level, int state)
  */
 static CField * ObjectVolumeStateGetField(ObjectVolumeState * vs) {
   if (!vs)
-    return NULL;
+    return nullptr;
   if(vs->Field)
     return vs->Field->data.get();
   return ObjectVolumeStateGetMapState(vs)->Field->data.get();
@@ -396,7 +396,7 @@ static void get44FracToRealFromCorner(const float * corner, float * frac2real)
 void ObjectVolume::update()
 {
   auto I = this;
-  ObjectMapState *oms = NULL;
+  ObjectMapState *oms = nullptr;
   float carve_buffer;
   int avoid_flag = false;
   int flag;
@@ -429,7 +429,7 @@ void ObjectVolume::update()
       }
 
       // data min/max/mean/stdev
-      range = SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_volume_data_range);
+      range = SettingGet_f(I->G, I->Setting.get(), nullptr, cSetting_volume_data_range);
       ObjectMapStateGetHistogram(I->G, oms, 0, range, vs->min_max_mean_stdev, 0.f, 0.f);
     }
 
@@ -463,14 +463,14 @@ void ObjectVolume::update()
     }
 
     if((I->visRep & cRepVolumeBit) && vs->ResurfaceFlag) {
-      Isofield *field = NULL;
+      Isofield *field = nullptr;
       vs->ResurfaceFlag = false;
       if(vs->Field) {
         field = vs->Field.get();
       } else if(oms->Field) {
         field = oms->Field.get();
       } else {
-        field = NULL;
+        field = nullptr;
       }
 
       if(field) {
@@ -498,7 +498,7 @@ void ObjectVolume::update()
         // cull my friend, cull */ 
         voxelmap = MapNew(I->G,
             -carve_buffer, vs->AtomVertex,
-            vs->AtomVertex.size() / 3, NULL);
+            vs->AtomVertex.size() / 3, nullptr);
         if(voxelmap) {
 
           int x, y, z;
@@ -611,7 +611,7 @@ static float * ObjectVolumeStateGetColors(PyMOLGlobals * G, ObjectVolumeState * 
 ok_except1:
   PRINTFB(G, FB_ObjectVolume, FB_Blather)
     "ObjectVolumeStateGetColors failed\n" ENDFB(G);
-  return NULL;
+  return nullptr;
 }
 
 /**
@@ -725,8 +725,8 @@ void ObjectVolume::render(RenderInfo * info)
   int state = info->state;
   const RenderPass pass = info->pass;
   int a = 0;
-  ObjectVolumeState *vs = NULL;
-  float volume_layers =  SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_volume_layers);
+  ObjectVolumeState *vs = nullptr;
+  float volume_layers =  SettingGet_f(I->G, I->Setting.get(), nullptr, cSetting_volume_layers);
 #ifdef _PYMOL_IP_EXTRAS
   short volume_mode = SettingGetGlobal_i(G, cSetting_volume_mode);
   short ortho = SettingGetGlobal_i(G, cSetting_ortho);
@@ -833,7 +833,7 @@ void ObjectVolume::render(RenderInfo * info)
         return;
       }
 
-      int volume_bit_val = SettingGet_i(G, I->Setting.get(), NULL, cSetting_volume_bit_depth);
+      int volume_bit_val = SettingGet_i(G, I->Setting.get(), nullptr, cSetting_volume_bit_depth);
       volume_bit_depth = (volume_bit_val < 17) ? tex::data_type::HALF_FLOAT : tex::data_type::FLOAT;
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
@@ -1224,7 +1224,7 @@ ObjectVolume *ObjectVolumeFromBox(PyMOLGlobals * G, ObjectVolume * obj, ObjectMa
                               float level, int meshMode,
                               float carve, float *vert_vla, int quiet)
 {
-  return ObjectVolumeFromXtalSym(G, obj, map, NULL, map_state, state, mn, mx,
+  return ObjectVolumeFromXtalSym(G, obj, map, nullptr, map_state, state, mn, mx,
       level, meshMode, carve, vert_vla, quiet);
 }
 

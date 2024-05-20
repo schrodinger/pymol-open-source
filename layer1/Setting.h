@@ -105,7 +105,7 @@ public:
   void delete_s() {
     if (str_) {
       delete str_;
-      str_ = NULL;
+      str_ = nullptr;
     }
   }
 };

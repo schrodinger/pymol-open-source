@@ -74,7 +74,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
   PRINTFB(G, FB_ObjectMolecule, FB_Errors)
     " ObjectMap-Error: sorry, VMD Molfile Plugins not compiled into this build.\n"
     ENDFB(G);
-  return NULL;
+  return nullptr;
 }
 
 ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
@@ -157,7 +157,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                           const float *shift, int quiet, const char *plugin_type)
 {
   CPlugIOManager *I = G->PlugIOManager;
-  molfile_plugin_t *plugin = NULL;
+  molfile_plugin_t *plugin = nullptr;
 
   ok_assert(1, I && obj);
   plugin = find_plugin(I, plugin_type);
@@ -168,7 +168,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
     return false;
   }
 
-  if(plugin->read_next_timestep == NULL) {
+  if(plugin->read_next_timestep == nullptr) {
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " PlugIOManager: not a trajectory plugin '%s'\n", plugin_type ENDFB(G);
     return false;
@@ -189,10 +189,10 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
       int icnt = interval;
       int n_avg = 0;
       int ncnt = 0;
-      CoordSet *cs = obj->NCSet > 0 ? obj->CSet[0] : obj->CSTmpl ? obj->CSTmpl : NULL;
+      CoordSet *cs = obj->NCSet > 0 ? obj->CSet[0] : obj->CSTmpl ? obj->CSTmpl : nullptr;
 
-      timestep.coords = NULL;
-      timestep.velocities = NULL;
+      timestep.coords = nullptr;
+      timestep.velocities = nullptr;
 
       file_handle = plugin->open_file_read(fname, plugin_type, &natoms);
 
@@ -299,7 +299,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                   cs->Symmetry.reset(SymmetryNewFromTimestep(G, &timestep));
 
                   if((stop > 0 && cnt >= stop) || (max > 0 && ncnt >= max)) {
-                    cs = NULL;
+                    cs = nullptr;
                     break;
                   }
 
@@ -343,12 +343,12 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
                                 const char *plugin_type)
 {
   CPlugIOManager *I = G->PlugIOManager;
-  molfile_plugin_t *plugin = NULL;
+  molfile_plugin_t *plugin = nullptr;
   molfile_volumetric_t *metadata;
   int setsinfile = 0;
   int natoms;
-  void *file_handle = NULL;
-  float *datablock = NULL;
+  void *file_handle = nullptr;
+  float *datablock = nullptr;
 
   ok_assert(1, I);
   plugin = find_plugin(I, plugin_type);
@@ -359,7 +359,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
     ok_raise(1);
   }
 
-  if(plugin->read_volumetric_data == NULL || plugin->read_volumetric_metadata == NULL) {
+  if(plugin->read_volumetric_data == nullptr || plugin->read_volumetric_metadata == nullptr) {
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " PlugIOManager: not a map plugin '%s'\n", plugin_type ENDFB(G);
     ok_raise(1);
@@ -394,14 +394,14 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
 
           ok_assert(1, datablock = pymol::malloc<float>(size));
 
-          if(plugin->read_volumetric_data(file_handle, i, datablock, NULL) != MOLFILE_SUCCESS) {
+          if(plugin->read_volumetric_data(file_handle, i, datablock, nullptr) != MOLFILE_SUCCESS) {
             PRINTFB(G, FB_ObjectMolecule, FB_Errors)
               " PlugIOManager: read_volumetric_data failed\n" ENDFB(G);
             ok_raise(1);
           }
 
           {
-            ObjectMapState *ms = NULL;
+            ObjectMapState *ms = nullptr;
 
             if(!obj)
               ok_assert(1, obj = new ObjectMap(G));
@@ -561,7 +561,7 @@ ok_except1:
 
 static CSymmetry * SymmetryNewFromTimestep(PyMOLGlobals * G, molfile_timestep_t * ts)
 {
-  CSymmetry * symm = NULL;
+  CSymmetry * symm = nullptr;
   ok_assert(1,
       ts->A > 0.f && ts->B > 0.f && ts->C > 0.f &&
       ts->alpha > 0.f && ts->beta > 0.f && ts->gamma > 0.f);
@@ -579,12 +579,12 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   int natoms, nbonds = 0, *from, *to;
   int optflags = 0;
   float *order;
-  void *file_handle = NULL;
-  molfile_plugin_t * plugin = NULL;
+  void *file_handle = nullptr;
+  molfile_plugin_t * plugin = nullptr;
   molfile_timestep_t timestep;
-  molfile_atom_t * atoms = NULL;
-  ObjectMolecule *I = NULL;
-  CoordSet * cs = NULL;
+  molfile_atom_t * atoms = nullptr;
+  ObjectMolecule *I = nullptr;
+  CoordSet * cs = nullptr;
   int *bondtype, nbondtypes;
   char **bondtypename;
   int auto_show = RepGetAutoShowMask(G);
@@ -665,12 +665,12 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   }
 
   // read coordinates
-  while (/* true */ plugin->read_next_timestep != NULL) {
+  while (/* true */ plugin->read_next_timestep != nullptr) {
     ok_assert(1, cs = CoordSetNew(G));
     ok_assert(1, cs->Coord = pymol::vla<float>(3 * natoms));
 
     timestep.coords = cs->Coord.data();
-    timestep.velocities = NULL;
+    timestep.velocities = nullptr;
 
     if (plugin->read_next_timestep(file_handle, natoms, &timestep) != MOLFILE_SUCCESS) {
       delete cs;
@@ -760,13 +760,13 @@ ObjectCGO *PlugIOManagerLoadGraphics(PyMOLGlobals * G, ObjectCGO *origObj,
     const char *fname, int state, int quiet, const char *plugin_type)
 {
   CPlugIOManager *manager = G->PlugIOManager;
-  void *file_handle = NULL;
-  molfile_plugin_t * plugin = NULL;
-  const molfile_graphics_t * graphics = NULL;
+  void *file_handle = nullptr;
+  molfile_plugin_t * plugin = nullptr;
+  const molfile_graphics_t * graphics = nullptr;
   int nelem = 0;
   int beginend = 0;
-  CGO *cgo = NULL;
-  ObjectCGO *I = NULL;
+  CGO *cgo = nullptr;
+  ObjectCGO *I = nullptr;
 
   ok_assert(1, manager);
   plugin = find_plugin(manager, plugin_type);
@@ -800,8 +800,8 @@ ObjectCGO *PlugIOManagerLoadGraphics(PyMOLGlobals * G, ObjectCGO *origObj,
   // translate to CGO
   for (auto g = graphics, g_end = graphics + nelem; g != g_end; ++g) {
     auto g_current = g;
-    const float * tnormals = NULL;
-    const float * tcolors = NULL;
+    const float * tnormals = nullptr;
+    const float * tcolors = nullptr;
 
     switch (g->type) {
       case MOLFILE_POINT:
@@ -863,7 +863,7 @@ ObjectCGO *PlugIOManagerLoadGraphics(PyMOLGlobals * G, ObjectCGO *origObj,
   CGOStop(cgo);
 
   // Create ObjectCGO
-  ok_assert(1, I = ObjectCGOFromCGO(G, NULL, cgo, state));
+  ok_assert(1, I = ObjectCGOFromCGO(G, nullptr, cgo, state));
 
   // default is cgo_lighting=0 when loading CGOs without normals
   SettingSet(cSetting_cgo_lighting, 1, (pymol::CObject *)I);
@@ -887,7 +887,7 @@ ok_except1:
 pymol::CObject * PlugIOManagerLoad(PyMOLGlobals * G, pymol::CObject ** obj_ptr,
     const char *fname, int state, int quiet, const char *plugin_type, int mask)
 {
-  pymol::CObject *obj = obj_ptr ? *obj_ptr : NULL;
+  pymol::CObject *obj = obj_ptr ? *obj_ptr : nullptr;
   CPlugIOManager *manager = G->PlugIOManager;
   molfile_plugin_t *plugin;
 
@@ -897,7 +897,7 @@ pymol::CObject * PlugIOManagerLoad(PyMOLGlobals * G, pymol::CObject ** obj_ptr,
   if (!plugin) {
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       " PlugIOManagerLoad: no plugin '%s'\n", plugin_type ENDFB(G);
-    return NULL;
+    return nullptr;
   }
 
   if (!mask)
@@ -908,7 +908,7 @@ pymol::CObject * PlugIOManagerLoad(PyMOLGlobals * G, pymol::CObject ** obj_ptr,
 
     if (obj && obj->type != cObjectMap) {
       ExecutiveDelete(G, obj->Name);
-      obj = *obj_ptr = NULL;
+      obj = *obj_ptr = nullptr;
     }
 
     return PlugIOManagerLoadVol(G, (ObjectMap *) obj,
@@ -925,7 +925,7 @@ pymol::CObject * PlugIOManagerLoad(PyMOLGlobals * G, pymol::CObject ** obj_ptr,
 #endif
         ) {
       ExecutiveDelete(G, obj->Name);
-      obj = *obj_ptr = NULL;
+      obj = *obj_ptr = nullptr;
     }
 
     return PlugIOManagerLoadMol(G, (ObjectMolecule *) obj,
@@ -939,12 +939,12 @@ pymol::CObject * PlugIOManagerLoad(PyMOLGlobals * G, pymol::CObject ** obj_ptr,
     if (obj && obj->type != cObjectMolecule) {
       PRINTFB(G, FB_ObjectMolecule, FB_Errors)
         " PlugIOManagerLoad: can't load trajectory into object '%s'\n", obj->Name ENDFB(G);
-      return NULL;
+      return nullptr;
     }
 
     PlugIOManagerLoadTraj(G, (ObjectMolecule *) obj,
         fname, state, 1, 1, 1, -1, -1, "all", 1, shift, quiet, plugin_type);
-    return NULL;
+    return nullptr;
 
   } else if ((mask & cPlugIOManager_graphics) && plugin->read_rawgraphics) {
     // geometry (CGO)
@@ -952,7 +952,7 @@ pymol::CObject * PlugIOManagerLoad(PyMOLGlobals * G, pymol::CObject ** obj_ptr,
     if (obj) {
       // no merge support
       ExecutiveDelete(G, obj->Name);
-      obj = *obj_ptr = NULL;
+      obj = *obj_ptr = nullptr;
     }
 
     return PlugIOManagerLoadGraphics(G, (ObjectCGO *) obj,
@@ -963,7 +963,7 @@ pymol::CObject * PlugIOManagerLoad(PyMOLGlobals * G, pymol::CObject ** obj_ptr,
     " PlugIOManagerLoad: '%s' doesn't provide any read function\n", plugin_type ENDFB(G);
 
 ok_except1:
-  return NULL;
+  return nullptr;
 }
 
 #ifdef __cplusplus
@@ -997,5 +997,5 @@ const char * PlugIOManagerFindPluginByExt(PyMOLGlobals * G, const char * ext, in
   }
 #endif
 
-  return NULL;
+  return nullptr;
 }

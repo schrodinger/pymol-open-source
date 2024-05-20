@@ -102,7 +102,7 @@ int DistSetMoveLabel(DistSet * I, int a1, float *v, int mode)
   auto& lp = I->LabPos[a1];
   if(!lp.mode) {
     auto obj = I->Obj;
-    const float *lab_pos = SettingGet_3fv(obj->G, NULL, obj->Setting.get(),
+    const float *lab_pos = SettingGet_3fv(obj->G, nullptr, obj->Setting.get(),
                                     cSetting_label_position);
     copy3f(lab_pos, lp.pos);
   }
@@ -118,8 +118,8 @@ int DistSetMoveLabel(DistSet * I, int a1, float *v, int mode)
 
 
 /**
- * @param I   measurement set, must not be NULL
- * @param obj object molecule, can be NULL so then all items in I will be updated
+ * @param I   measurement set, must not be nullptr
+ * @param obj object molecule, can be nullptr so then all items in I will be updated
  * @return  number of updated coordinates
  */
 int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
@@ -134,7 +134,7 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
 
   for (auto& listitem : I->MeasureInfo) {
     auto* memb = &listitem;
-    varDst = NULL;
+    varDst = nullptr;
 
     switch(memb->measureType) {
     case cRepDash:
@@ -253,7 +253,7 @@ ok_except1:
 
 DistSet* DistSetFromPyList(PyMOLGlobals * G, PyObject * list)
 {
-  DistSet *I = NULL;
+  DistSet *I = nullptr;
   int ll = 0;
   CPythonVal *val;
 
@@ -311,7 +311,7 @@ ok_except1:
 
 PyObject *DistSetAsPyList(DistSet * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   if(I) {
     result = PyList_New(10);

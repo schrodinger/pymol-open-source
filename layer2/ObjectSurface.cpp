@@ -48,7 +48,7 @@ static void ObjectSurfaceRecomputeExtent(ObjectSurface * I);
 
 static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(17);
 
@@ -99,7 +99,7 @@ static int ObjectSurfaceStateFromPyList(PyMOLGlobals * G, ObjectSurfaceState * I
   int ll = 0;
   PyObject *tmp;
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok) {
     if(!PyList_Check(list))
       I->Active = false;
@@ -136,7 +136,7 @@ static int ObjectSurfaceStateFromPyList(PyMOLGlobals * G, ObjectSurfaceState * I
       if(ok) {
         tmp = PyList_GetItem(list, 12);
         if(tmp == Py_None)
-          I->AtomVertex = NULL;
+          I->AtomVertex = nullptr;
         else
           ok = PConvPyListToFloatVLA(tmp, &I->AtomVertex);
       }
@@ -183,17 +183,17 @@ static int ObjectSurfaceAllStatesFromPyList(ObjectSurface * I, PyObject * list, 
 int ObjectSurfaceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSurface ** result)
 {
   int ok = true;
-  ObjectSurface *I = NULL;
-  (*result) = NULL;
+  ObjectSurface *I = nullptr;
+  (*result) = nullptr;
 
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
 
   I = new ObjectSurface(G);
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
 
   if(ok){
     auto *val = PyList_GetItem(list, 0);
@@ -218,7 +218,7 @@ int ObjectSurfaceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSurface 
 
 PyObject *ObjectSurfaceAsPyList(ObjectSurface * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(3);
   PyList_SetItem(result, 0, ObjectAsPyList(I));
@@ -327,7 +327,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
 {
   int one_color_flag = true;
   int cur_color =
-    SettingGet_color(I->G, I->Setting.get(), NULL, cSetting_surface_color);
+    SettingGet_color(I->G, I->Setting.get(), nullptr, cSetting_surface_color);
 
   if(cur_color == -1)
     cur_color = I->Color;
@@ -369,7 +369,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
           for(a = 0; a < n_vert; a++) {
             if(a == base_n_vert) {
               int new_color = SettingGet_color(I->G, I->Setting.get(),
-                                               NULL, cSetting_surface_negative_color);
+                                               nullptr, cSetting_surface_negative_color);
               if(new_color == -1)
                 new_color = cur_color;
               if(new_color != cur_color) {
@@ -413,7 +413,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
           for(a = 0; a < n_vert; a++) {
             if(a == base_n_vert) {
               int new_color = SettingGet_color(I->G, I->Setting.get(),
-                                               NULL, cSetting_surface_negative_color);
+                                               nullptr, cSetting_surface_negative_color);
               if(new_color == -1)
                 new_color = cur_color;
               if(new_color != cur_color)
@@ -443,7 +443,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
       ms->RC.clear();
     } else if((!ramped_flag)
               ||
-              (!SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_ray_color_ramps))) {
+              (!SettingGet_b(I->G, nullptr, I->Setting.get(), cSetting_ray_color_ramps))) {
       ms->RC.clear();
     }
   }
@@ -454,8 +454,8 @@ void ObjectSurface::update()
   auto I = this;
   for(auto& msref : I->State) {
     ObjectSurfaceState *ms = &msref;
-    ObjectMapState *oms = NULL;
-    ObjectMap *map = NULL;
+    ObjectMapState *oms = nullptr;
+    ObjectMap *map = nullptr;
 
     if(ms->Active) {
       map = ExecutiveFindObjectMapByName(I->G, ms->MapName);
@@ -530,7 +530,7 @@ void ObjectSurface::update()
                                    ms->Side);
 
             if(!SettingGet_b
-               (I->G, I->Setting.get(), NULL, cSetting_surface_negative_visible)) {
+               (I->G, I->Setting.get(), nullptr, cSetting_surface_negative_visible)) {
               ms->base_n_V = VLAGetSize(ms->V);
             } else {
               /* do we want the negative surface too? */
@@ -762,7 +762,7 @@ static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
   float *v = ms->V.data();
   int c;
   int* n = ms->N.data();
-  float alpha = 1.0F - SettingGet_f(G, NULL, I->Setting.get(), cSetting_transparency);
+  float alpha = 1.0F - SettingGet_f(G, nullptr, I->Setting.get(), cSetting_transparency);
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
 
@@ -770,17 +770,17 @@ static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
   CRay *ray = info->ray;
   if(ms->UnitCellCGO && (I->visRep & cRepCellBit)){
     int rayok = CGORenderRay(ms->UnitCellCGO.get(), ray, info, ColorGet(G, I->Color),
-                             NULL, I->Setting.get(), NULL);
+                             nullptr, I->Setting.get(), nullptr);
     if (!rayok){
       ms->UnitCellCGO.reset();
     }
   }
   
   ray->transparentf(1.0F - alpha);
-  ms->Radius = SettingGet_f(G, I->Setting.get(), NULL, cSetting_mesh_radius);
+  ms->Radius = SettingGet_f(G, I->Setting.get(), nullptr, cSetting_mesh_radius);
   if(ms->Radius == 0.0F) {
     ms->Radius = ray->PixelRadius *
-      SettingGet_f(I->G, I->Setting.get(), NULL, cSetting_mesh_width) / 2.0F;
+      SettingGet_f(I->G, I->Setting.get(), nullptr, cSetting_mesh_width) / 2.0F;
   }
   
   if(n && v && (I->visRep & cRepSurfaceBit)) {
@@ -900,11 +900,11 @@ void ObjectSurface::render(RenderInfo * info)
   auto pick = info->pick;
   const RenderPass pass = info->pass;
   const float *col;
-  ObjectSurfaceState *ms = NULL;
+  ObjectSurfaceState *ms = nullptr;
   float alpha;
   ObjectPrepareContext(I, info);
 
-  alpha = 1.0F - SettingGet_f(G, NULL, I->Setting.get(), cSetting_transparency);
+  alpha = 1.0F - SettingGet_f(G, nullptr, I->Setting.get(), cSetting_transparency);
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
 
@@ -940,7 +940,7 @@ void ObjectSurface::render(RenderInfo * info)
             }
 
             if (ms->shaderCGO){
-              CGORender(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
+              CGORender(ms->shaderCGO.get(), nullptr, nullptr, nullptr, info, nullptr);
               continue;
             }
             
@@ -977,7 +977,7 @@ void ObjectSurface::render(RenderInfo * info)
                 ms->shaderCGO.reset(convertcgo);
               }
               ms->shaderCGO->use_shader = true;              
-              CGORender(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
+              CGORender(ms->shaderCGO.get(), nullptr, nullptr, nullptr, info, nullptr);
             } else {
               if (alpha != 1.0){
                 // use_shader = 0
@@ -986,7 +986,7 @@ void ObjectSurface::render(RenderInfo * info)
                 ms->shaderCGO->render_alpha = 1;
               }
               ms->shaderCGO->use_shader = false;
-              CGORender(ms->shaderCGO.get(), NULL, NULL, NULL, info, NULL);
+              CGORender(ms->shaderCGO.get(), nullptr, nullptr, nullptr, info, nullptr);
             }
           }
         }

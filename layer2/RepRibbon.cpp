@@ -72,7 +72,7 @@ void RepRibbon::render(RenderInfo* info)
 
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
+    CGORenderRay(I->primitiveCGO, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->obj->Setting.get());
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
@@ -89,7 +89,7 @@ void RepRibbon::render(RenderInfo* info)
 
       if (use_shader){
 	if (!I->shaderCGO){
-          CGO *convertcgo = NULL;
+          CGO *convertcgo = nullptr;
 	  I->shaderCGO = CGONew(G);
 	  CHECKOK(ok, I->shaderCGO);
 	  if (ok)
@@ -123,10 +123,10 @@ void RepRibbon::render(RenderInfo* info)
           CGOFreeWithoutVBOs(convertcgo);
           I->shaderCGO->use_shader = true;
         }
-        CGORender(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+        CGORender(I->shaderCGO, nullptr, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
         return;
       } else {
-        CGORender(I->primitiveCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+        CGORender(I->primitiveCGO, nullptr, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
         return;
       }
     }
@@ -144,14 +144,14 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   ObjectMolecule *obj;
   int a, b, a1, a2, *i, *s, *at, *seg, nAt, *atp;
   float *v, *v1, *v2, *v3;
-  float *pv = NULL;
-  float *dv = NULL;
-  float *nv = NULL;
-  float *tv = NULL;
+  float *pv = nullptr;
+  float *dv = nullptr;
+  float *nv = nullptr;
+  float *tv = nullptr;
 
   float f0, f1, f2, f3, f4;
   float *d;
-  float *dl = NULL;
+  float *dl = nullptr;
   int nSeg;
   int sampling;
   float power_a = 5;
@@ -161,13 +161,13 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   int trace, trace_mode;
   int ribbon_color;
   int na_mode;
-  AtomInfoType *ai, *last_ai = NULL;
-  AtomInfoType *trailing_O3p_ai = NULL, *leading_O5p_ai = NULL;
+  AtomInfoType *ai, *last_ai = nullptr;
+  AtomInfoType *trailing_O3p_ai = nullptr, *leading_O5p_ai = nullptr;
   int trailing_O3p_a = 0, leading_O5p_a = 0, leading_O5p_a1 = 0;
 
   // skip if not visible
   if(!cs->hasRep(cRepRibbonBit))
-    return NULL;
+    return nullptr;
 
   auto I = new RepRibbon(cs, state);
 
@@ -269,7 +269,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
             }
           }
 
-          trailing_O3p_ai = NULL;
+          trailing_O3p_ai = nullptr;
 
           if(leading_O5p_ai && (a2 < 0) && ((na_mode == 3) || (na_mode == 4))) {
             if((!AtomInfoSameResidueP(G, ai, leading_O5p_ai)) &&
@@ -285,7 +285,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
               a2 = leading_O5p_a1;
             }
           }
-          leading_O5p_ai = NULL;
+          leading_O5p_ai = nullptr;
           last_ai = ai;
           if(a2 < 0)
             nSeg++;
@@ -421,7 +421,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     I->primitiveCGO = CGONew(G);
     CGOSpecialWithArg(I->primitiveCGO, LINE_LIGHTING, 0.f);
 
-    float alpha = 1.f - SettingGet_f(G, NULL, I->obj->Setting.get(), cSetting_ribbon_transparency);
+    float alpha = 1.f - SettingGet_f(G, nullptr, I->obj->Setting.get(), cSetting_ribbon_transparency);
     if(fabs(alpha-1.0) < R_SMALL4)
       alpha = 1.0F;
     CGOAlpha(I->primitiveCGO, alpha);  // would be good to set these at render time instead
@@ -538,7 +538,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     FreeP(nv);
   } else {
     delete I;
-    I = NULL;
+    I = nullptr;
   }
 
   FreeP(at);
@@ -561,7 +561,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
     int active = false;
     int nAtIndex = obj->NAtom;
     const AtomInfoType *obj_AtomInfo = obj->AtomInfo.data();
-    const AtomInfoType *ai, *last_ai = NULL;
+    const AtomInfoType *ai, *last_ai = nullptr;
     int trace, trace_ostate =
       SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ribbon_trace_atoms);
     int trace_mode =

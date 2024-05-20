@@ -149,7 +149,7 @@ static void CGO_gl_vertex_cross(CCGORenderer* I, CGO_op_data v)
     }
 #ifndef PURE_OPENGL_ES_2
   } else {
-    CSetting *set1 = NULL, *set2 = NULL;
+    CSetting *set1 = nullptr, *set2 = nullptr;
     if (I->rep && I->rep->cs)
       set1 = I->rep->cs->Setting.get();
     if (I->rep && I->rep->obj)
@@ -542,7 +542,7 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer* I, CGO_op_data pc)
     int* ix = (int*) (z_value + n_tri);
     int* sort_mem = ix + n_tri;
     int t_mode;
-    CSetting *set1 = NULL, *set2 = NULL;
+    CSetting *set1 = nullptr, *set2 = nullptr;
     if (I->rep && I->rep->cs)
       set1 = I->rep->cs->Setting.get();
     if (I->rep && I->rep->obj)
@@ -675,7 +675,7 @@ static void CGO_gl_draw_custom(CCGORenderer* I, CGO_op_data pc)
   VertexBuffer* vbo = I->G->ShaderMgr->getGPUBuffer<VertexBuffer>(sp->vboid);
   if (!vbo)
     return;
-  IndexBuffer* ibo = NULL;
+  IndexBuffer* ibo = nullptr;
   if (sp->iboid) {
     ibo = I->G->ShaderMgr->getGPUBuffer<IndexBuffer>(sp->iboid);
   }
@@ -837,7 +837,7 @@ static void CGO_gl_draw_labels(CCGORenderer* I, CGO_op_data pc)
       I->info ? I->info->pass : RenderPass::Antialias);
   if (I->rep) {
     float label_size;
-    CSetting *set1 = NULL, *set2 = NULL;
+    CSetting *set1 = nullptr, *set2 = nullptr;
     if (I->rep->cs)
       set1 = I->rep->cs->Setting.get();
     if (I->rep->obj)
@@ -899,8 +899,8 @@ static void CGO_gl_draw_connectors(CCGORenderer* I, CGO_op_data pc)
   }
   if (I->rep) {
     float label_size;
-    CSetting *set1 = NULL, *set2 = NULL;
-    float v_scale = SceneGetScreenVertexScale(I->G, NULL);
+    CSetting *set1 = nullptr, *set2 = nullptr;
+    float v_scale = SceneGetScreenVertexScale(I->G, nullptr);
     if (I->rep->cs)
       set1 = I->rep->cs->Setting.get();
     if (I->rep->obj)
@@ -1053,7 +1053,7 @@ static void CGO_gl_linewidth(CCGORenderer* I, CGO_op_data pc)
  * call glLineWidth and set the "line_width" uniform
  */
 static void glLineWidthAndUniform(
-    float line_width, CShaderPrg* shaderPrg = NULL)
+    float line_width, CShaderPrg* shaderPrg = nullptr)
 {
 #ifndef _WEBGL
   glLineWidth(line_width);
@@ -1072,9 +1072,9 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
   bool openVR = SceneGetStereo(I->G) == cStereo_openvr;
   char varwidth = 0;
   float vScale =
-      (I->info ? I->info->vertex_scale : SceneGetScreenVertexScale(I->G, NULL));
+      (I->info ? I->info->vertex_scale : SceneGetScreenVertexScale(I->G, nullptr));
 
-  CSetting *csSetting = NULL, *objSetting = NULL;
+  CSetting *csSetting = nullptr, *objSetting = nullptr;
   auto shaderPrg = I->G->ShaderMgr->Get_Current_Shader();
   if (I->rep && I->rep->cs) {
     csSetting = I->rep->cs->Setting.get();
@@ -1084,7 +1084,7 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
   }
   switch (mode) {
   case LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON: {
-    float line_width = SettingGet_f(I->G, NULL, NULL, cSetting_ribbon_width);
+    float line_width = SettingGet_f(I->G, nullptr, nullptr, cSetting_ribbon_width);
     if (!openVR)
       line_width = SceneGetDynamicLineWidth(I->info, line_width);
     if (I->info && I->info->width_scale_flag) {
@@ -1093,7 +1093,7 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
     glLineWidthAndUniform(line_width, shaderPrg);
   } break;
   case LINEWIDTH_DYNAMIC_WITH_SCALE_DASH: {
-    float line_width = SettingGet_f(I->G, NULL, NULL, cSetting_dash_width);
+    float line_width = SettingGet_f(I->G, nullptr, nullptr, cSetting_dash_width);
     if (!openVR)
       line_width = SceneGetDynamicLineWidth(I->info, line_width);
     if (I->info && I->info->width_scale_flag) {
@@ -1102,7 +1102,7 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
     glLineWidthAndUniform(line_width, shaderPrg);
   } break;
   case LINEWIDTH_DYNAMIC_WITH_SCALE: {
-    float line_width = SettingGet_f(I->G, NULL, NULL, cSetting_line_width);
+    float line_width = SettingGet_f(I->G, nullptr, nullptr, cSetting_line_width);
     if (!openVR)
       line_width = SceneGetDynamicLineWidth(I->info, line_width);
     if (I->info && I->info->width_scale_flag) {
@@ -1111,7 +1111,7 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
     glLineWidthAndUniform(line_width, shaderPrg);
   } break;
   case LINEWIDTH_WITH_SCALE: {
-    float line_width = SettingGet_f(I->G, NULL, NULL, cSetting_line_width);
+    float line_width = SettingGet_f(I->G, nullptr, nullptr, cSetting_line_width);
     if (I->info && I->info->width_scale_flag) {
       line_width *= I->info->width_scale;
     }
@@ -1123,7 +1123,7 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
       line_width = SettingGet_f(I->G, I->rep->cs->Setting.get(),
           I->rep->obj->Setting.get(), cSetting_mesh_width);
     } else {
-      line_width = SettingGet_f(I->G, NULL, NULL, cSetting_mesh_width);
+      line_width = SettingGet_f(I->G, nullptr, nullptr, cSetting_mesh_width);
     }
     if (!openVR)
       line_width = SceneGetDynamicLineWidth(I->info, line_width);
@@ -1147,12 +1147,12 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
     break;
   }
   case CYLINDERWIDTH_DYNAMIC_MESH: {
-    CSetting* setting = NULL;
+    CSetting* setting = nullptr;
     float mesh_width;
     if (I && I->rep && I->rep->obj) {
       setting = I->rep->obj->Setting.get();
     }
-    mesh_width = SettingGet_f(I->G, setting, NULL, cSetting_mesh_width);
+    mesh_width = SettingGet_f(I->G, setting, nullptr, cSetting_mesh_width);
     if (shaderPrg) {
       const float* color = I->color ? I->color : g_ones4f;
       shaderPrg->Set1f("uni_radius",
@@ -1341,7 +1341,7 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
   } break;
   case LINEWIDTH_FOR_LINES: {
     float line_width = SceneGetDynamicLineWidth(
-        I->info, SettingGet_f(I->G, NULL, NULL, cSetting_line_width));
+        I->info, SettingGet_f(I->G, nullptr, nullptr, cSetting_line_width));
     if (I->info && I->info->width_scale_flag) {
       line_width *= I->info->width_scale;
     }
@@ -1350,7 +1350,7 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
   case SET_LABEL_SCALE_UNIFORMS: {
     if (I->rep) {
       float label_size;
-      CSetting *set1 = NULL, *set2 = NULL;
+      CSetting *set1 = nullptr, *set2 = nullptr;
       if (I->rep->cs)
         set1 = I->rep->cs->Setting.get();
       if (I->rep->obj)
@@ -1741,7 +1741,7 @@ static void CGO_gl_sphere(CCGORenderer* I, CGO_op_data varg)
   if (I->isPicking) {
     SphereRender(I->G, 0, v, I->color, I->alpha, v[3]);
   } else {
-    SphereRender(I->G, I->sphere_quality, v, NULL, I->alpha, v[3]);
+    SphereRender(I->G, I->sphere_quality, v, nullptr, I->alpha, v[3]);
   }
 }
 
@@ -1899,7 +1899,7 @@ static int* get_pickcolorsset_ptr(int op, float* pc)
     RETURN_PICKCOLORSETPTR_CASE(cylinder_buffers);
     RETURN_PICKCOLORSETPTR_CASE(custom);
   }
-  return NULL;
+  return nullptr;
 }
 
 void CGORenderGLPicking(CGO* I, RenderInfo* info, PickContext* context,
@@ -2014,7 +2014,7 @@ void CGORenderGLPicking(CGO* I, RenderInfo* info, PickContext* context,
         int srcp;
         float* pca = nullptr;
         int* pickDataSrc;
-        uchar* pickColorDestUC = NULL;
+        uchar* pickColorDestUC = nullptr;
         bool free_pick_color_dest = false;
         int destOffset = 0, bufsizemult = 1;
         size_t pickvbo = 0;
@@ -2144,7 +2144,7 @@ void CGORenderGLPicking(CGO* I, RenderInfo* info, PickContext* context,
 
         if (free_pick_color_dest) {
           delete[] pickColorDestUC;
-          pickColorDestUC = NULL;
+          pickColorDestUC = nullptr;
           free_pick_color_dest = false;
         }
       }
@@ -2248,11 +2248,11 @@ void CGORenderGL(CGO* I, const float* color, CSetting* set1, CSetting* set2,
         int mode = -1;
         int vc = 0;
         // triangle normals
-        const float *n0 = NULL, *n1 = NULL, *n2 = NULL;
+        const float *n0 = nullptr, *n1 = nullptr, *n2 = nullptr;
         // triangle vertices
-        const float *v0 = NULL, *v1 = NULL, *v2 = NULL;
+        const float *v0 = nullptr, *v1 = nullptr, *v2 = nullptr;
         // triangle colors
-        const float *c0 = color, *c1 = NULL, *c2 = NULL;
+        const float *c0 = color, *c1 = nullptr, *c2 = nullptr;
 
         for (auto it = I->begin(); !it.is_stop(); ++it) {
           const auto op = it.op_code();

@@ -243,7 +243,7 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
         (stereo && stereo_mode != 0); // are we doing stereo?
     if (!must_render_stereo) {
       if (G->StereoCapable &&
-          SettingGet<int>(G, NULL, NULL, cSetting_stereo_double_pump_mono)) {
+          SettingGet<int>(G, nullptr, nullptr, cSetting_stereo_double_pump_mono)) {
         /* force stereo rendering */
         must_render_stereo = true;
         stereo_double_pump_mono = true;
@@ -368,7 +368,7 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
 
     /* make note of how large pixels are at the origin  */
 
-    I->VertexScale = SceneGetScreenVertexScale(G, NULL);
+    I->VertexScale = SceneGetScreenVertexScale(G, nullptr);
 
     /* determine the direction in which we are looking relative */
 
@@ -596,7 +596,7 @@ void SceneRenderAA(PyMOLGlobals* G)
       GL_FRAMEBUFFER_EXT, G->ShaderMgr->default_framebuffer_id);
   if (!I->offscreenCGO) {
     CGO* unitCGO = GenerateUnitScreenCGO(G);
-    ok &= unitCGO != NULL;
+    ok &= unitCGO != nullptr;
     if (ok) {
       auto antialias_mode = SettingGet<int>(G, cSetting_antialias_shader);
 
@@ -629,11 +629,11 @@ void SceneRenderAA(PyMOLGlobals* G)
       CGOFreeWithoutVBOs(unitCGO);
       I->offscreenCGO->use_shader = true;
     } else {
-      I->offscreenCGO = NULL;
+      I->offscreenCGO = nullptr;
     }
   }
   if (ok && I->offscreenCGO) {
-    CGORender(I->offscreenCGO, NULL, NULL, NULL, NULL, NULL);
+    CGORender(I->offscreenCGO, nullptr, nullptr, nullptr, nullptr, nullptr);
     G->ShaderMgr->Disable_Current_Shader();
     glBindTexture(GL_TEXTURE_2D, 0);
     glEnable(GL_DEPTH_TEST);
@@ -846,7 +846,7 @@ void SceneRenderAll(PyMOLGlobals* G, SceneUnitContext* context, float* normal,
       break;
     case SceneRenderWhich::OnlyNonGadgets:
       for (auto obj : I->NonGadgetObjs) {
-        // ObjectGroup used to have fRender = NULL
+        // ObjectGroup used to have fRender = nullptr
         if (obj->type != cObjectGroup) {
           SceneRenderAllObject(
               G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
@@ -858,7 +858,7 @@ void SceneRenderAll(PyMOLGlobals* G, SceneUnitContext* context, float* normal,
       for (auto obj : I->NonGadgetObjs) {
         /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
         if (obj->type !=
-                cObjectGroup && // ObjectGroup used to have fRender = NULL
+                cObjectGroup && // ObjectGroup used to have fRender = nullptr
             (!rayVolume || obj->type == cObjectVolume)) {
           SceneRenderAllObject(
               G, I, context, &info, normal, state, obj, grid, slot_vla, fat);
@@ -965,7 +965,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
 #ifdef PURE_OPENGL_ES_2
         if (!onlySelections) {
           EditorRender(G, curState);
-          CGORender(G->DebugCGO, NULL, NULL, NULL, NULL, NULL);
+          CGORender(G->DebugCGO, nullptr, nullptr, nullptr, nullptr, nullptr);
         }
 #else
         if (!use_shaders)
@@ -979,7 +979,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
         if (!onlySelections) {
           if (!use_shaders)
             glNormal3fv(normal);
-          CGORender(G->DebugCGO, NULL, NULL, NULL, NULL, NULL);
+          CGORender(G->DebugCGO, nullptr, nullptr, nullptr, nullptr, nullptr);
         }
         if (!use_shaders) {
           glPopMatrix();  /* 1 */
@@ -994,7 +994,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
               EditorRender(G, curState);
             }
             // transparency-mode == 3 render all objects for this pass
-            SceneRenderAll(G, context, normal, NULL, pass, false, width_scale,
+            SceneRenderAll(G, context, normal, nullptr, pass, false, width_scale,
                 grid, times, SceneRenderWhich::OnlyNonGadgets); // opaque
           } else {
 #else
@@ -1004,7 +1004,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
             for (const auto pass2 :
                 passes) { /* render opaque, then antialiased, then
                              transparent... */
-              SceneRenderAll(G, context, normal, NULL, pass2, false,
+              SceneRenderAll(G, context, normal, nullptr, pass2, false,
                   width_scale, grid, times, SceneRenderWhich::GadgetsLast);
             }
             cont = false;
@@ -1015,7 +1015,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
                               // background
           glBlendFunc_default();
 
-          SceneRenderAll(G, context, normal, NULL,
+          SceneRenderAll(G, context, normal, nullptr,
               RenderPass::Transparent /* gadgets render in transp pass */,
               false, width_scale, grid, times, SceneRenderWhich::OnlyGadgets);
           glDisable(GL_BLEND);
@@ -1074,7 +1074,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
                 GL_DEFAULT_SHADER_WITH_SETTINGS, GL_OIT_COPY_SHADER);
             I->offscreenOIT_CGO_copy->use_shader = true;
           }
-          CGORender(I->offscreenOIT_CGO_copy, NULL, NULL, NULL, NULL, NULL);
+          CGORender(I->offscreenOIT_CGO_copy, nullptr, nullptr, nullptr, nullptr, nullptr);
         }
         if (!I->offscreenOIT_CGO) {
           I->offscreenOIT_CGO = GenerateUnitScreenCGO(G);
@@ -1082,14 +1082,14 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
               GL_DEFAULT_SHADER_WITH_SETTINGS, GL_OIT_SHADER);
           I->offscreenOIT_CGO->use_shader = true;
         }
-        CGORender(I->offscreenOIT_CGO, NULL, NULL, NULL, NULL, NULL);
+        CGORender(I->offscreenOIT_CGO, nullptr, nullptr, nullptr, nullptr, nullptr);
 
         glBlendFunc_default();
 
         if ((currentFrameBuffer == G->ShaderMgr->default_framebuffer_id) &&
             t_mode_3) {
           // onlySelections and t_mode_3, render only gadgets
-          SceneRenderAll(G, context, normal, NULL,
+          SceneRenderAll(G, context, normal, nullptr,
               RenderPass::Transparent /* gadgets render in transp pass */,
               false, width_scale, grid, times, SceneRenderWhich::OnlyGadgets);
         }

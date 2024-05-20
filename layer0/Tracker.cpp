@@ -235,7 +235,7 @@ int TrackerNewListCopy(CTracker * I, int list_id, TrackerRef * ref)
   int iter_id = TrackerNewIter(I, 0, list_id);
   if(iter_id) {
     int cand_id;
-    while((cand_id = TrackerIterNextCandInList(I, iter_id, NULL))) {
+    while((cand_id = TrackerIterNextCandInList(I, iter_id, nullptr))) {
       TrackerLink(I, cand_id, new_list_id, 1);
     }
     TrackerDelIter(I, iter_id);
@@ -806,7 +806,7 @@ int TrackerUnlink(CTracker * I, int cand_id, int list_id)
   int already_linked = false;
   auto hashStartIt = I->hash2member.find(hash_key);
   auto I_member = I->member.data();
-  TrackerMember *member = NULL;
+  TrackerMember *member = nullptr;
   ov_word member_index{};
 
   {
@@ -930,14 +930,14 @@ int TrackerUnitTest(PyMOLGlobals * G)
   /* first test simple new/del */
 
   for(a = 0; a < N_ID; a++) {
-    cand_id[a] = TrackerNewCand(I, NULL);
+    cand_id[a] = TrackerNewCand(I, nullptr);
     if(!cand_id[a])
       fprintf(stderr, "TRACKER_UNIT_TEST FAILED AT LINE %d; %d==0\n", __LINE__,
               cand_id[a]);
   }
 
   for(a = 0; a < N_ID; a++) {
-    list_id[a] = TrackerNewList(I, NULL);
+    list_id[a] = TrackerNewList(I, nullptr);
     if(!list_id[a])
       fprintf(stderr, "TRACKER_UNIT_TEST FAILED AT LINE %d; %d==0\n", __LINE__,
               list_id[a]);
@@ -967,8 +967,8 @@ int TrackerUnitTest(PyMOLGlobals * G)
   }
 
   for(a = 0; a < N_ID; a++) {
-    cand_id[a] = TrackerNewCand(I, NULL);
-    list_id[a] = TrackerNewList(I, NULL);
+    cand_id[a] = TrackerNewCand(I, nullptr);
+    list_id[a] = TrackerNewList(I, nullptr);
   }
 
   /* test simple serial linking and unlinking */
@@ -1116,10 +1116,10 @@ int TrackerUnitTest(PyMOLGlobals * G)
         list_idx = (int) (N_ID * dist(mt));
 
         if(!cand_id[cand_idx]) {
-          cand_id[cand_idx] = TrackerNewCand(I, NULL);
+          cand_id[cand_idx] = TrackerNewCand(I, nullptr);
         }
         if(!list_id[list_idx]) {
-          list_id[list_idx] = TrackerNewList(I, NULL);
+          list_id[list_idx] = TrackerNewList(I, nullptr);
         }
 
         if(cand_id[cand_idx] && list_id[list_idx]) {
@@ -1203,8 +1203,8 @@ int TrackerUnitTest(PyMOLGlobals * G)
   /* okay, now let's mix in some iterators... */
 
   for(a = 0; a < N_ID; a++) {
-    cand_id[a] = TrackerNewCand(I, NULL);
-    list_id[a] = TrackerNewList(I, NULL);
+    cand_id[a] = TrackerNewCand(I, nullptr);
+    list_id[a] = TrackerNewList(I, nullptr);
   }
 
   if(TrackerGetNCand(I) != N_ID) {
@@ -1249,7 +1249,7 @@ int TrackerUnitTest(PyMOLGlobals * G)
       }
 
       len = 0;
-      while(TrackerIterNextListInCand(I, iter_id[a], NULL))
+      while(TrackerIterNextListInCand(I, iter_id[a], nullptr))
         len++;
 
       if(len != TrackerGetNListForCand(I, cand_id[cand_idx]))
@@ -1271,7 +1271,7 @@ int TrackerUnitTest(PyMOLGlobals * G)
       }
 
       len = 0;
-      while(TrackerIterNextCandInList(I, iter_id[a], NULL))
+      while(TrackerIterNextCandInList(I, iter_id[a], nullptr))
         len++;
 
       if(len != TrackerGetNCandForList(I, list_id[list_idx]))
@@ -1324,7 +1324,7 @@ int TrackerUnitTest(PyMOLGlobals * G)
         }
 
         for(b = 0; b < N_ID; b++) {
-          if(TrackerIterNextListInCand(I, iter_id[b], NULL))
+          if(TrackerIterNextListInCand(I, iter_id[b], nullptr))
             cnt++;
         }
       }
@@ -1357,9 +1357,9 @@ int TrackerUnitTest(PyMOLGlobals * G)
 
   for(a = 0; a < N_ID; a++) {
     if(!cand_id[a])
-      cand_id[a] = TrackerNewCand(I, NULL);
+      cand_id[a] = TrackerNewCand(I, nullptr);
     if(!list_id[a])
-      list_id[a] = TrackerNewList(I, NULL);
+      list_id[a] = TrackerNewList(I, nullptr);
   }
 
   {
@@ -1390,7 +1390,7 @@ int TrackerUnitTest(PyMOLGlobals * G)
         fprintf(stderr, "TRACKER_UNIT_TEST FAILED AT LINE %d; 0==%d\n",
                 __LINE__, iter_id[a]);
       }
-      TrackerIterNextListInCand(I, iter_id[a], NULL);
+      TrackerIterNextListInCand(I, iter_id[a], nullptr);
     }
 
     for(a = 0; a < N_ID; a++) {
@@ -1403,7 +1403,7 @@ int TrackerUnitTest(PyMOLGlobals * G)
 
     for(a = 0; a < N_ID; a++) {
       len = 1;
-      while(TrackerIterNextListInCand(I, iter_id[a], NULL))
+      while(TrackerIterNextListInCand(I, iter_id[a], nullptr))
         len++;
 
       diff = abs(len - TrackerGetNListForCand(I, iter_start[a]));

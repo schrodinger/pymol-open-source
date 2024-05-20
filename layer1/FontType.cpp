@@ -91,11 +91,11 @@ static const char* FontTypeRenderOpenGLImpl(const RenderInfo* info, CFontType* I
     int linenum = 0;
     short cont = 0;
     float descender = TypeFaceGetDescender(I->TypeFace) / 2.f;
-    float v_scale = SceneGetScreenVertexScale(G, NULL);
+    float v_scale = SceneGetScreenVertexScale(G, nullptr);
     copy2f(TextGetLabelBuffer(G), text_buffer);
     sampling = info->sampling;
     if(st && (*st)) {
-      float *line_widths = NULL;
+      float *line_widths = nullptr;
       float screenWorldOffset[3] = { 0.0F, 0.0F, 0.0F };
       float tot_height;
       if (nlines>1){
@@ -335,11 +335,11 @@ const char* CFontType::RenderRay(CRay* ray, const char* st, float size,
   int nlines = countchrs(st, '\n') + 1;
   int linenum = 0;
   float descender = TypeFaceGetDescender(I->TypeFace);
-  float v_scale = SceneGetScreenVertexScale(G, NULL);
+  float v_scale = SceneGetScreenVertexScale(G, nullptr);
   copy2f(TextGetLabelBuffer(G), text_buffer);
   if(st && (*st)) {
     float origpos[3];
-    float *line_widths = NULL;
+    float *line_widths = nullptr;
     float tot_height;
     if (nlines>1){
       line_widths = pymol::calloc<float>(nlines);

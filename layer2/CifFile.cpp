@@ -116,7 +116,7 @@ public:
   const char * get_value_raw(int row, int col) const;
 };
 
-// get table value, return NULL if indices out of bounds
+// get table value, return nullptr if indices out of bounds
 const char * cif_loop::get_value_raw(int row, int col) const {
   if (row >= nrows)
     return nullptr;
@@ -128,7 +128,7 @@ unsigned cif_array::size() const {
   return (col == NOT_IN_LOOP) ? 1 : pointer.loop->nrows;
 }
 
-/// Get array value, return NULL if `pos >= size()` or value in ['.', '?']
+/// Get array value, return nullptr if `pos >= size()` or value in ['.', '?']
 const char* cif_array::get_value_raw(unsigned pos) const
 {
   if (col == NOT_IN_LOOP)
@@ -147,7 +147,7 @@ bool cif_array::is_missing_all() const {
 }
 
 /**
- * Get a pointer to array or NULL if not found
+ * Get a pointer to array or nullptr if not found
  *
  * Can lookup different aliases, the first one found is returned.
  * Also supports an alias shortcut for the trivial case where mmCIF uses
@@ -260,7 +260,7 @@ bool cif_file::parse(char*&& p) {
     if (*p == '#') {
       while (!(islinefeed0(*++p)));
       prev = *p;
-    } else if (isquote(*p)) { // will NULL the closing quote
+    } else if (isquote(*p)) { // will nullptr the closing quote
       quote = *p;
       keypossible.push_back(false);
       tokens.push_back(p + 1);

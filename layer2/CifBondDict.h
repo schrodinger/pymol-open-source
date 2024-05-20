@@ -154,7 +154,7 @@ public:
   const res_bond_dict_t * get(const char * resn) const {
     auto it = m_data.find(resn);
     if (it == m_data.end())
-      return NULL;
+      return nullptr;
     return &it->second;
   }
 

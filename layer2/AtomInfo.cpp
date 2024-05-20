@@ -71,7 +71,7 @@ void AtomInfoCleanAtomName(char *name)
 #ifndef _PYMOL_NOPY
 int AtomInfoSetSettingFromPyObject(PyMOLGlobals * G, AtomInfoType *ai, int setting_id, PyObject * val){
   if (val == Py_None)
-    val = NULL;
+    val = nullptr;
 
   if (!val) {
     if (!ai->has_setting)
@@ -89,7 +89,7 @@ PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, AtomInfoType * ai, int s
   if(ai->has_setting) {
     return SettingUniqueGetPyObject(G, ai->unique_id, setting_id);
   }
-  return NULL;
+  return nullptr;
 }
 
 int AtomInfoReserveUniqueID(PyMOLGlobals* G, int unique_id)
@@ -791,7 +791,7 @@ bool AtomResiFromResv(char *resi, size_t size, int resv, char inscode) {
 /*========================================================================*/
 PyObject *AtomInfoAsPyList(PyMOLGlobals * G, const AtomInfoType * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(48);
   
@@ -1017,7 +1017,7 @@ void AtomInfoCopy(PyMOLGlobals * G, const AtomInfoType * src, AtomInfoType * dst
 #ifdef _PYMOL_IP_EXTRAS
 #endif
   if (src->anisou) {
-    dst->anisou = NULL;
+    dst->anisou = nullptr;
     memcpy(dst->get_anisou(), src->anisou, 6 * sizeof(float));
   }
 }
@@ -1128,7 +1128,7 @@ void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType&& src_, 
  * @param atInfo0 List of reference atoms
  * @param n0 Size of atInfo0 list
  * @param atInfo1 List of atoms which need to be made unique
- * @param flag1 Optional whitelist mask for `atInfo1` or NULL
+ * @param flag1 Optional whitelist mask for `atInfo1` or nullptr
  * @param n1 Size of atInfo1 list
  * @param mol Optional reference molecule to limit to atoms with coordinates
  * @return Number of renamed atoms
@@ -1151,8 +1151,8 @@ int AtomInfoUniquefyNames(PyMOLGlobals * G, const AtomInfoType * atInfo0, int n0
   WordType name;
 
   ai1 = atInfo1;
-  lai0 = NULL;                  /* last atom compared against in each object */
-  lai1 = NULL;
+  lai0 = nullptr;                  /* last atom compared against in each object */
+  lai1 = nullptr;
   st0 = 0;
   nd0 = 0;
   st1 = 0;
@@ -1869,7 +1869,7 @@ const ElementTableItemType ElementTable[] = {
   {"livermorium",       "Lv",   1.80, 293.000000},
   {"tennessine",        "Ts",   1.80, 294.000000},
   {"oganesson",         "Og",   1.80, 294.000000},
-  {NULL,                NULL,   0.00,   0.000000}
+  {NULL,                nullptr,   0.00,   0.000000}
 };
 
 const int ElementTableSize = sizeof(ElementTable) / sizeof(ElementTable[0]) - 1;
@@ -2349,8 +2349,8 @@ static void set_protons(PyMOLGlobals * G, AtomInfoType * I)
  */
 void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
 {
-  const char *n = NULL;
-  char *e = NULL;
+  const char *n = nullptr;
+  char *e = nullptr;
   int pri;
 
   e = I->elem;

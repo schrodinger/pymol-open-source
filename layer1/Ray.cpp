@@ -358,7 +358,7 @@ static void fill_background_image(CRay * I, unsigned int *buffer, int width, int
   if(opaque_back < 0)
     opaque_back = SettingGetGlobal_i(I->G, cSetting_opaque_background);
 
-  tmpf = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
+  tmpf = ColorGet(I->G, SettingGet_color(I->G, nullptr, nullptr, cSetting_bg_rgb));
   mult3f(tmpf, 255.f, bg_rgb);
 
   if(opaque_back) {
@@ -1653,7 +1653,7 @@ static VectorHash *VectorHash_New(void)
     I->elem = VLACalloc(VectorHashElem, 100);
     if(!I->elem) {
       VectorHash_Free(I);
-      I = NULL;
+      I = nullptr;
     }
   }
   return I;
@@ -1752,7 +1752,7 @@ static void unique_vector_add(VectorHash * vh, float *vector,
                               int *index_array, int *index_count)
 {
   int index = *vector_count;
-  switch (VectorHash_GetOrSetKeyValue(vh, vector, NULL, &index)) {
+  switch (VectorHash_GetOrSetKeyValue(vh, vector, nullptr, &index)) {
   case 1:
     {
       float *vector_slot = vector_array + 3 * (*vector_count);
@@ -2218,7 +2218,7 @@ void RayRenderIDTF(CRay * I, char **node_vla, char **rsrc_vla)
     int mesh_cnt = 0;
     IdtfResourceMesh *mesh_vla = VLACalloc(IdtfResourceMesh, 1);
     if(mesh_vla) {
-      IdtfResourceMesh *mesh = NULL;
+      IdtfResourceMesh *mesh = nullptr;
       int a;
 
       for(a = 0; a < I->NPrimitive; a++) {
@@ -2242,14 +2242,14 @@ void RayRenderIDTF(CRay * I, char **node_vla, char **rsrc_vla)
                 ) {
                 mesh_cnt++;
               } else {
-                mesh = NULL;
+                mesh = nullptr;
               }
             }
           }
           break;
         default:               /* close/terminate mesh */
           if(mesh) {
-            mesh = NULL;
+            mesh = nullptr;
           }
           break;
         }
@@ -2591,7 +2591,7 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   if(antialias < 0)
     antialias = SettingGetGlobal_i(I->G, cSetting_antialias);
 
-  bkrd = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
+  bkrd = ColorGet(I->G, SettingGet_color(I->G, nullptr, nullptr, cSetting_bg_rgb));
   RayExpandPrimitives(I);
   RayTransformFirst(I, 0, identity);
 
@@ -3272,7 +3272,7 @@ int RayTraceThread(CRayThreadInfo * T)
   const float *tmpf;
   int chromadepth;
 
-  tmpf = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
+  tmpf = ColorGet(I->G, SettingGet_color(I->G, nullptr, nullptr, cSetting_bg_rgb));
   mult3f(tmpf, 255.f, bg_rgb);
 
   /*   MemoryDebugDump();
@@ -3449,7 +3449,7 @@ int RayTraceThread(CRayThreadInfo * T)
   if(I->NBasis > 2)
     bp2 = I->Basis + 2;
   else
-    bp2 = NULL;
+    bp2 = nullptr;
 
   render_height = T->y_stop - T->y_start;
 
@@ -5519,7 +5519,7 @@ extern int n_sausages;
 extern int n_skipped;
 #endif
 
-float *rayDepthPixels = NULL;
+float *rayDepthPixels = nullptr;
 int rayVolume = 0, rayWidth = 0, rayHeight = 0;
 
 /*========================================================================*/
@@ -5527,7 +5527,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
                float angle, int antialias, unsigned int *return_bg)
 {
   int a, x, y;
-  unsigned int *image_copy = NULL;
+  unsigned int *image_copy = nullptr;
   unsigned int back_mask, fore_mask = 0, trace_word = 0;
   unsigned int background;
   size_t buffer_size;
@@ -5544,7 +5544,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   int perspective = SettingGetGlobal_i(I->G, cSetting_ray_orthoscopic);
   int n_light = SettingGetGlobal_i(I->G, cSetting_light_count);
   float ambient;
-  float *depth = NULL;
+  float *depth = nullptr;
   float front = I->Volume[4];
   float back = I->Volume[5];
   float fov = I->Fov;
@@ -5630,7 +5630,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   ambient = SettingGetGlobal_f(I->G, cSetting_ambient);
 
   bkrd_is_gradient = SettingGetGlobal_b(I->G, cSetting_bg_gradient);
-  bg_image_filename = SettingGet_s(I->G, NULL, NULL, cSetting_bg_image_filename);
+  bg_image_filename = SettingGet_s(I->G, nullptr, nullptr, cSetting_bg_image_filename);
   I->bkgrd_data = OrthoBackgroundDataGet(*I->G->Ortho);
   if (!I->bkgrd_data && bg_image_filename && bg_image_filename[0]){
     I->bkgrd_data = MyPNGRead(bg_image_filename);
@@ -5644,12 +5644,12 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     bkrd_is_gradient = 0;
   }
   if (bkrd_is_gradient){
-    bkrd_ptr = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb_top));
+    bkrd_ptr = ColorGet(I->G, SettingGet_color(I->G, nullptr, nullptr, cSetting_bg_rgb_top));
     copy3f(bkrd_ptr, bkrd_top);
-    bkrd_ptr = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb_bottom));
+    bkrd_ptr = ColorGet(I->G, SettingGet_color(I->G, nullptr, nullptr, cSetting_bg_rgb_bottom));
     copy3f(bkrd_ptr, bkrd_bottom);
   } else {
-    bkrd_ptr = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
+    bkrd_ptr = ColorGet(I->G, SettingGet_color(I->G, nullptr, nullptr, cSetting_bg_rgb));
     copy3f(bkrd_ptr, bkrd_top);
     copy3f(bkrd_ptr, bkrd_bottom);
   }
@@ -5917,7 +5917,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
           thread_info[bc - 1].vert2prim = vert2prim_ptr;
           thread_info[bc - 1].prim = I->Primitive;
           thread_info[bc - 1].n_prim = I->NPrimitive;
-          thread_info[bc - 1].clipBox = NULL;
+          thread_info[bc - 1].clipBox = nullptr;
           thread_info[bc - 1].phase = bc - 1;
           thread_info[bc - 1].perspective = false;
           thread_info[bc - 1].front = _0;
@@ -5945,7 +5945,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         float factor = SettingGetGlobal_f(I->G, cSetting_ray_hint_shadow);
         for(bc = 2; ok && bc < I->NBasis; bc++) {
           ok &= BasisMakeMap(I->Basis + bc, vert2prim_ptr, I->Primitive, I->NPrimitive,
-			     NULL, bc - 1, cCache_ray_map, false, _0, I->PrimSize * factor);
+			     nullptr, bc - 1, cCache_ray_map, false, _0, I->PrimSize * factor);
         }
       }
 
@@ -6097,7 +6097,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         rt[a].background = background;
         rt[a].phase = a;
         rt[a].n_thread = n_thread;
-        rt[a].edging = NULL;
+        rt[a].edging = nullptr;
         rt[a].edging_cutoff = oversample_cutoff;        /* info needed for busy indicator */
         rt[a].perspective = perspective;
         rt[a].fov = fov;
@@ -7519,7 +7519,7 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
   BasisInit(I->G, I->Basis, 0);
   BasisInit(I->G, I->Basis + 1, 1);
   I->NBasis = 2;
-  I->Primitive = NULL;
+  I->Primitive = nullptr;
   I->NPrimitive = 0;
   I->CheckInterior = false;
   if(antialias < 0)
@@ -7531,7 +7531,7 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
     I->Random[a] = (float) ((rand() / (1.0 + RAND_MAX)) - 0.5);
   }
 
-  I->Wobble = SettingGet_i(I->G, NULL, NULL, cSetting_ray_texture);
+  I->Wobble = SettingGet_i(I->G, nullptr, nullptr, cSetting_ray_texture);
   {
     auto v = SettingGet<const float*>(I->G, cSetting_ray_texture_settings);
     int color = SettingGetGlobal_color(I->G, cSetting_ray_interior_color);

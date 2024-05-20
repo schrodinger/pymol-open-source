@@ -100,7 +100,7 @@ protected:
   CObject(PyMOLGlobals* G);
 
   /// @pre `0 <= state && state < getNFrame()`
-  /// @return NULL if state is empty (not active)
+  /// @return nullptr if state is empty (not active)
   virtual CObjectState* _getObjectState(int state) { return nullptr; }
 
 public:

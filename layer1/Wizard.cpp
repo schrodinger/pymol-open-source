@@ -195,7 +195,7 @@ void WizardRefresh(PyMOLGlobals * G)
 {
 
   CWizard *I = G->Wizard;
-  char *vla = NULL;
+  char *vla = nullptr;
   pymol::pautoblock block(G);
 
   /* get the current prompt */
@@ -495,7 +495,7 @@ int CWizard::click(int button, int x, int y, int mod)
       {
         pymol::pblock block(G);
         auto wiz = WizardGet(G);
-        PyObject* menuList = NULL;
+        PyObject* menuList = nullptr;
         if (wiz) {
           menuList = WizardCallPython(G, wiz, "get_menu", PyObject_CallMethod, "s", I->Line[a].code);
         }
@@ -503,7 +503,7 @@ int CWizard::click(int button, int x, int y, int mod)
         if(menuList && (menuList != Py_None)) {
           int my = rect.top - (cWizardTopMargin + a * LineHeight) - 2;
 
-          PopUpNew(G, x, my, x, y, false, menuList, NULL);
+          PopUpNew(G, x, my, x, y, false, menuList, nullptr);
         }
         Py_XDECREF(menuList);
       }

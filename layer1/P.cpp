@@ -70,7 +70,7 @@ the initialization functions for these libraries on startup.
 #include <memory>
 
 /**
- * Use with functions which return a PyObject - if they return NULL, then an
+ * Use with functions which return a PyObject - if they return nullptr, then an
  * unexpected exception has occured.
  */
 #define ASSERT_PYOBJECT_NOT_NULL(obj, return_value)                            \
@@ -341,15 +341,15 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, const char *model, const 
 
 /* local to this C code module */
 
-static PyObject *P_pymol = NULL;
-static PyObject *P_pymol_dict = NULL;   /* must be refomed into globals and instance properties */
-static PyObject *P_cmd = NULL;
+static PyObject *P_pymol = nullptr;
+static PyObject *P_pymol_dict = nullptr;   /* must be refomed into globals and instance properties */
+static PyObject *P_cmd = nullptr;
 
-static PyObject *P_povray = NULL;
-static PyObject *P_traceback = NULL;
-static PyObject *P_parser = NULL;
+static PyObject *P_povray = nullptr;
+static PyObject *P_traceback = nullptr;
+static PyObject *P_parser = nullptr;
 
-static PyObject *P_vfont = NULL;
+static PyObject *P_vfont = nullptr;
 
 /* module import helper */
 
@@ -375,11 +375,11 @@ PyObject * PGetAttrOrFatal(PyObject * o, const char * name) {
 
 /* used elsewhere */
 
-PyObject *P_menu = NULL;        /* menu definitions are currently global */
-PyObject *P_xray = NULL;        /* okay as global */
-PyObject *P_chempy = NULL;      /* okay as global */
-PyObject *P_models = NULL;      /* okay as global */
-PyObject *P_setting = NULL;     /* okay as global -- just used for names */
+PyObject *P_menu = nullptr;        /* menu definitions are currently global */
+PyObject *P_xray = nullptr;        /* okay as global */
+PyObject *P_chempy = nullptr;      /* okay as global */
+PyObject *P_models = nullptr;      /* okay as global */
+PyObject *P_setting = nullptr;     /* okay as global -- just used for names */
 PyObject *P_CmdException = nullptr;
 PyObject *P_QuietException = nullptr;
 PyObject *P_IncentiveOnlyException = nullptr;
@@ -452,16 +452,16 @@ static
 PyObject *SettingWrapperObjectSubScript(PyObject *obj, PyObject *key){
   auto& wobj = reinterpret_cast<SettingPropertyWrapperObject*>(obj)->wobj;
   int setting_id;
-  PyObject *ret = NULL;
+  PyObject *ret = nullptr;
 
   if (!check_wrapper_scope(wobj)) {
-    return NULL;
+    return nullptr;
   }
 
   auto G = wobj->G;
 
   if ((setting_id = get_and_check_setting_index(G, key)) == -1) {
-    return NULL;
+    return nullptr;
   }
 
   if (wobj->idx >= 0){
@@ -476,7 +476,7 @@ PyObject *SettingWrapperObjectSubScript(PyObject *obj, PyObject *key){
     if (!ret) {
       // object-state, object, or global
       ret = SettingGetPyObject(G,
-          wobj->cs ? wobj->cs->Setting.get() : NULL,
+          wobj->cs ? wobj->cs->Setting.get() : nullptr,
           wobj->obj->Setting.get(), setting_id);
     }
   }
@@ -548,7 +548,7 @@ static PyObject* SettingWrapperObjectIter(PyObject *self)
   auto& wobj = reinterpret_cast<SettingPropertyWrapperObject*>(self)->wobj;
 
   if (!check_wrapper_scope(wobj)) {
-    return NULL;
+    return nullptr;
   }
 
   int unique_id = wobj->atomInfo->unique_id;
@@ -663,7 +663,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
   auto wobj = static_cast<WrapperObject*>(obj);
 
   if (!check_wrapper_scope(wobj))
-    return NULL;
+    return nullptr;
 
   PyMOLGlobals* G = wobj->G;
   PyObject* ret = nullptr;
@@ -679,7 +679,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
       if (ObjectMoleculeUpdateMMStereoInfoForState(G, wobj->obj, wobj->state - 1) < 0) {
         PyErr_SetString(P_CmdException,
             "please install rdkit or set SCHRODINGER variable");
-        return NULL;
+        return nullptr;
       }
       break;
     case ATOM_PROP_TEXT_TYPE:
@@ -994,8 +994,8 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
-static PyObject *P_time = NULL;
-static PyObject *P_sleep = NULL;
+static PyObject *P_time = nullptr;
+static PyObject *P_sleep = nullptr;
 #endif
 
 /* END PROPRIETARY CODE SEGMENT */
@@ -1075,7 +1075,7 @@ void PCatchInit(void);
 /*
   PyObject *GetBondsDict(PyMOLGlobals *G)
   {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   result = PyObject_GetAttrString(P_chempy,"bonds");
   if(!result) ErrMessage(G,"PyMOL","can't find 'chempy.bonds.bonds'");
   return(result);
@@ -1086,7 +1086,7 @@ PyObject *PGetFontDict(PyMOLGlobals * G, float size, int face, int style)
 {                               /* assumes we have a valid interpreter lock */
   assert(PyGILState_Check());
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   if(!P_vfont) {
     P_vfont = PyImport_ImportModule("pymol.vfont");
@@ -1300,15 +1300,15 @@ ov_status PCacheGet(PyMOLGlobals * G,
 
   ov_status status = OV_STATUS_NO;
   if(G->P_inst->cache) {
-    PyObject *entry = NULL;
-    PyObject *output = NULL;
+    PyObject *entry = nullptr;
+    PyObject *output = nullptr;
 
     if(OV_OK(CacheCreateEntry(&entry, input))) {
       output = PYOBJECT_CALLMETHOD(G->P_inst->cmd, "_cache_get",
                                    "OOO", entry, Py_None, G->P_inst->cmd);
       if(output == Py_None) {
         Py_DECREF(output);
-        output = NULL;
+        output = nullptr;
       } else {
         status = OV_STATUS_YES;
       }
@@ -1337,7 +1337,7 @@ void PSleepWhileBusy(PyMOLGlobals * G, int usec)
     " PSleep-DEBUG: napping.\n" ENDFD;
   tv.tv_sec = 0;
   tv.tv_usec = usec;
-  select(0, NULL, NULL, NULL, &tv);
+  select(0, nullptr, nullptr, nullptr, &tv);
   PRINTFD(G, FB_Threads)
     " PSleep-DEBUG: nap over.\n" ENDFD;
 #else
@@ -1359,7 +1359,7 @@ void PSleepUnlocked(PyMOLGlobals * G, int usec)
     " PSleep-DEBUG: napping.\n" ENDFD;
   tv.tv_sec = 0;
   tv.tv_usec = usec;
-  select(0, NULL, NULL, NULL, &tv);
+  select(0, nullptr, nullptr, nullptr, &tv);
   PRINTFD(G, FB_Threads)
     " PSleep-DEBUG: nap over.\n" ENDFD;
 #else
@@ -1382,7 +1382,7 @@ void PSleep(PyMOLGlobals * G, int usec)
     " PSleep-DEBUG: napping.\n" ENDFD;
   tv.tv_sec = 0;
   tv.tv_usec = usec;
-  select(0, NULL, NULL, NULL, &tv);
+  select(0, nullptr, nullptr, nullptr, &tv);
   PRINTFD(G, FB_Threads)
     " PSleep-DEBUG: nap over.\n" ENDFD;
   PLockAPIAsGlut(G, true);
@@ -1423,10 +1423,10 @@ static
 WrapperObject * WrapperObjectNew() {
   auto wobj = static_cast<WrapperObject*>(
       PyType_GenericNew(&Wrapper_Type, Py_None, Py_None));
-  wobj->dict = NULL;
-  wobj->settingWrapperObject = NULL;
+  wobj->dict = nullptr;
+  wobj->settingWrapperObject = nullptr;
 #ifdef _PYMOL_IP_PROPERTIES
-  wobj->propertyWrapperObject = NULL;
+  wobj->propertyWrapperObject = nullptr;
 #endif
   return wobj;
 }
@@ -1655,7 +1655,7 @@ int PLockAPIAsGlut(PyMOLGlobals * G, int block_if_busy)
       PUnblock(G);
       tv.tv_sec = 0;
       tv.tv_usec = 50000;
-      select(0, NULL, NULL, NULL, &tv);
+      select(0, nullptr, nullptr, nullptr, &tv);
       PBlock(G);
     }
 #else
@@ -1904,7 +1904,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     G->P_inst->exec = PGetAttrOrFatal(P_pymol, "exec_str");
 
     if(global_instance) {
-      PCatch_install(NULL, NULL);
+      PCatch_install(NULL, nullptr);
     }
 
     P_traceback = PImportModuleOrFatal("traceback");
@@ -1999,7 +1999,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     Wrapper_Type.tp_basicsize = sizeof(WrapperObject);
     Wrapper_Type.tp_dealloc = &WrapperObjectDealloc;
     Wrapper_Type.tp_flags = Py_TPFLAGS_DEFAULT;
-    wrapperMappingMethods.mp_length = NULL;
+    wrapperMappingMethods.mp_length = nullptr;
     wrapperMappingMethods.mp_subscript = &WrapperObjectSubScript;
     wrapperMappingMethods.mp_ass_subscript = &WrapperObjectAssignSubScript;
     Wrapper_Type.tp_as_mapping = &wrapperMappingMethods;
@@ -2008,7 +2008,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     settingWrapper_Type.tp_basicsize = sizeof(SettingPropertyWrapperObject);
     settingWrapper_Type.tp_flags = Py_TPFLAGS_DEFAULT;
     settingWrapper_Type.tp_iter = &SettingWrapperObjectIter;
-    settingMappingMethods.mp_length = NULL;
+    settingMappingMethods.mp_length = nullptr;
     settingMappingMethods.mp_subscript = &SettingWrapperObjectSubScript;
     settingMappingMethods.mp_ass_subscript = &SettingWrapperObjectAssignSubScript;
     settingWrapper_Type.tp_as_mapping = &settingMappingMethods;
@@ -2633,7 +2633,7 @@ static PyMethodDef PCatch_methods[] = {
   {"flush", PCatchFlush, METH_VARARGS},
   {"isatty", PCatchIsAtty, METH_VARARGS}, // called by pip.main(["install", "..."])
   {"_install", PCatch_install, METH_VARARGS},
-  {NULL, NULL}                  /* sentinel */
+  {NULL, nullptr}                  /* sentinel */
 };
 
 void PCatchInit(void)
@@ -2641,7 +2641,7 @@ void PCatchInit(void)
   assert(PyGILState_Check());
 
   static struct PyModuleDef moduledef = { PyModuleDef_HEAD_INIT,
-    "pcatch", NULL, -1, PCatch_methods };
+    "pcatch", nullptr, -1, PCatch_methods };
   PyObject * pcatch = PyModule_Create(&moduledef);
   if (pcatch) {
     PyDict_SetItemString(PyImport_GetModuleDict(), "pcatch", pcatch);

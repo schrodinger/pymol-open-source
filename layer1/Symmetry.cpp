@@ -29,7 +29,7 @@ Z* -------------------------------------------------------------------
 
 PyObject *SymmetryAsPyList(CSymmetry * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   if(I) {
     result = PyList_New(2);
@@ -47,9 +47,9 @@ static int SymmetryFromPyList(CSymmetry * I, PyObject * list)
   PyObject *secondval;
 
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   if(ok)
@@ -81,12 +81,12 @@ static int SymmetryFromPyList(CSymmetry * I, PyObject * list)
 
 CSymmetry *SymmetryNewFromPyList(PyMOLGlobals * G, PyObject * list)
 {
-  CSymmetry *I = NULL;
+  CSymmetry *I = nullptr;
   I = new CSymmetry(G);
   if(I) {
     if(!SymmetryFromPyList(I, list)) {
       delete I;
-      I = NULL;
+      I = nullptr;
     }
   }
   return (I);

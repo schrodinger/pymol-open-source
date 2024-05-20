@@ -57,7 +57,7 @@ void RepSphere_Generate_Triangles(PyMOLGlobals *G, RepSphere *I,
 void RepSphere_Generate_Impostor_Spheres(PyMOLGlobals *G, RepSphere *I,
                                          RenderInfo *info) {
   if (!I->renderCGO) {
-    CGO *convertcgo = NULL;
+    CGO *convertcgo = nullptr;
     convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->primitiveCGO, 0, true);
     if (convertcgo) {
       I->renderCGO = convertcgo;

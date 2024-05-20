@@ -56,7 +56,7 @@ CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude * orig)
     CopyArray(I->sf, orig->sf, float, I->N);      /* PUTTY: scale factors */
   } else {
     ExtrudeFree(I);
-    I = NULL;
+    I = nullptr;
   }
   return (I);
 }
@@ -66,19 +66,19 @@ void ExtrudeInit(PyMOLGlobals * G, CExtrude * I)
   I->G = G;
 
   I->N = 0;
-  I->p = NULL;
-  I->n = NULL;
-  I->c = NULL;
+  I->p = nullptr;
+  I->n = nullptr;
+  I->c = nullptr;
   I->alpha = nullptr;
-  I->i = NULL;
+  I->i = nullptr;
 
-  I->sv = NULL;                 /* shape vertices */
-  I->sn = NULL;                 /* shape normals */
-  I->tv = NULL;                 /* transformed vertices */
-  I->tn = NULL;                 /* transformed normals */
+  I->sv = nullptr;                 /* shape vertices */
+  I->sn = nullptr;                 /* shape normals */
+  I->tv = nullptr;                 /* transformed vertices */
+  I->tn = nullptr;                 /* transformed normals */
   I->Ns = 0;                    /* number of shape points */
 
-  I->sf = NULL;
+  I->sf = nullptr;
 }
 
 int ExtrudeCircle(CExtrude * I, int n, float size)
@@ -131,10 +131,10 @@ int ExtrudeCircle(CExtrude * I, int n, float size)
     FreeP(I->sn);
     FreeP(I->tv);
     FreeP(I->tn);
-    I->sv = NULL;
-    I->sn = NULL;
-    I->tv = NULL;
-    I->tn = NULL;
+    I->sv = nullptr;
+    I->sn = nullptr;
+    I->tv = nullptr;
+    I->tn = nullptr;
   }
 
   PRINTFD(I->G, FB_Extrude)
@@ -234,10 +234,10 @@ int ExtrudeRectangle(CExtrude * I, float width, float length, int mode)
     FreeP(I->sn);
     FreeP(I->tv);
     FreeP(I->tn);
-    I->sv = NULL;
-    I->sn = NULL;
-    I->tv = NULL;
-    I->tn = NULL;
+    I->sv = nullptr;
+    I->sn = nullptr;
+    I->tv = nullptr;
+    I->tn = nullptr;
     return ok;
   }
 
@@ -350,10 +350,10 @@ int ExtrudeDumbbell1(CExtrude * I, float width, float length, int mode)
     FreeP(I->sn);
     FreeP(I->tv);
     FreeP(I->tn);
-    I->sv = NULL;
-    I->sn = NULL;
-    I->tv = NULL;
-    I->tn = NULL;
+    I->sv = nullptr;
+    I->sn = nullptr;
+    I->tv = nullptr;
+    I->tn = nullptr;
   }
 
   v = I->sv;
@@ -455,10 +455,10 @@ int ExtrudeDumbbell2(CExtrude * I, int n, int sign, float length, float size)
     FreeP(I->sn);
     FreeP(I->tv);
     FreeP(I->tn);
-    I->sv = NULL;
-    I->sn = NULL;
-    I->tv = NULL;
-    I->tn = NULL;
+    I->sv = nullptr;
+    I->sn = nullptr;
+    I->tv = nullptr;
+    I->tn = nullptr;
   }
 
   I->Ns = n;
@@ -817,7 +817,7 @@ void ExtrudeCGOTraceFrame(CExtrude * I, CGO * cgo)
  * cgo: CGO to add to
  * index: sampling index in `I`
  * inv_dir: inverse direction of normal if true
- * color: RGB color or NULL to use color from `I`
+ * color: RGB color or nullptr to use color from `I`
  */
 static
 void TubeCapFlat(const CExtrude * I, CGO * cgo, int index, bool inv_dir, const float * color) {
@@ -859,7 +859,7 @@ void TubeCapFlat(const CExtrude * I, CGO * cgo, int index, bool inv_dir, const f
  * I: tube instance
  * cgo: CGO to add to
  * cap: 0: no caps, 1: flat caps, 2: round caps
- * color_override: RGB color or NULL to use color from `I`
+ * color_override: RGB color or nullptr to use color from `I`
  * use_spheres: do round caps with spheres instead of triangles
  * dash: if > 0, skip every segment which is a multiple of `dash`
  */
@@ -872,7 +872,7 @@ int ExtrudeCGOSurfaceTube(const CExtrude* I, CGO* cgo, cCylCap cap,
   float *n;
   float *c;
   const float *alpha;
-  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = NULL, *TN = NULL;
+  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = nullptr, *TN = nullptr;
   int start, stop;
   int ok = true;
   PRINTFD(I->G, FB_Extrude)
@@ -1239,7 +1239,7 @@ int ExtrudeCGOSurfaceVariableTube(const CExtrude* I, CGO* cgo, cCylCap cap)
   float *n;
   float *c;
   const float *alpha;
-  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = NULL, *TN = NULL, *AN = NULL, *an;
+  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = nullptr, *TN = nullptr, *AN = nullptr, *an;
   float v0[3];
   float *sf;                    /* PUTTY: scale factor from ExtrudeMakeSausLUT() */
   int ok = true;
@@ -1513,7 +1513,7 @@ int ExtrudeCGOSurfacePolygon(const CExtrude * I, CGO * cgo, cCylCap cap, const f
   float *n;
   float *c;
   const float *alpha;
-  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = NULL, *TN = NULL;
+  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = nullptr, *TN = nullptr;
   float v0[3];
   int ok = true;
 
@@ -1709,7 +1709,7 @@ int ExtrudeCGOSurfacePolygonTaper(const CExtrude * I, CGO * cgo, int sampling,
   float *n;
   float *c;
   const float *alpha;
-  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = NULL, *TN = NULL;
+  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = nullptr, *TN = nullptr;
   float s0[3];
   float f;
   int subN;
@@ -1851,7 +1851,7 @@ int ExtrudeCGOSurfaceStrand(const CExtrude * I, CGO * cgo, int sampling, const f
   float *n;
   float *c;
   const float *alpha;
-  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = NULL, *TN = NULL;
+  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = nullptr, *TN = nullptr;
   float v0[3], n0[3], s0[3], z[3] = { 1.0, 0.0, 1.0 };
   int subN;
   int ok = true;

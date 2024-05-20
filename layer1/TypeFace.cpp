@@ -162,7 +162,7 @@ float TypeFaceGetKerning(CTypeFace * I,
 
 CTypeFace *TypeFaceLoad(PyMOLGlobals * G, unsigned char *dat, unsigned int len)
 {
-  return NULL;
+  return nullptr;
 }
 
 void TypeFaceFree(CTypeFace * face)

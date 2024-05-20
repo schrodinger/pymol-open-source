@@ -37,7 +37,7 @@ Z* -------------------------------------------------------------------
  */
 PyObject *PConvPickleLoads(PyObject * str)
 {
-  PyObject *picklemod = NULL, *obj = NULL;
+  PyObject *picklemod = nullptr, *obj = nullptr;
   ok_assert(1, picklemod = PyImport_ImportModule(pickle_mod_name));
   obj = PYOBJECT_CALLMETHOD(picklemod, "loads", "O", str);
 ok_except1:
@@ -50,7 +50,7 @@ ok_except1:
  */
 PyObject *PConvPickleDumps(PyObject * obj)
 {
-  PyObject *picklemod = NULL, *str = NULL;
+  PyObject *picklemod = nullptr, *str = nullptr;
   ok_assert(1, picklemod = PyImport_ImportModule(pickle_mod_name));
   str = PYOBJECT_CALLMETHOD(picklemod, "dumps", "Oi", obj, 1);
 ok_except1:
@@ -62,7 +62,7 @@ PyObject *PConvAutoNone(PyObject * result)
 {                               /* automatically own Py_None */
   if(result == Py_None)
     Py_INCREF(result);
-  else if(result == NULL) {
+  else if(result == nullptr) {
     result = Py_None;
     Py_INCREF(result);
   }
@@ -523,7 +523,7 @@ int PConvPyListToFloatArrayImpl(PyObject * obj, float **f, bool as_vla)
   int ok = true;
   float *ff;
   if(!obj) {
-    *f = NULL;
+    *f = nullptr;
     ok = false;
   } else if (PyBytes_Check(obj)){
     // binary_dump
@@ -539,7 +539,7 @@ int PConvPyListToFloatArrayImpl(PyObject * obj, float **f, bool as_vla)
     auto strval = PyBytes_AsSomeString(obj);
     memcpy(*f, strval.data(), slen);
   } else if(!PyList_Check(obj)) {
-    *f = NULL;
+    *f = nullptr;
     ok = false;
   } else {
     l = (int) PyList_Size(obj);
@@ -568,13 +568,13 @@ int PConvPyListToFloatVLANoneOkay(PyObject * obj, float **f)
   float *ff;
   int ok = true;
   if(!obj) {
-    *f = NULL;
+    *f = nullptr;
     ok = false;
   } else if(obj == Py_None) {
-    *f = NULL;
+    *f = nullptr;
     ok = true;
   } else if(!PyList_Check(obj)) {
-    *f = NULL;
+    *f = nullptr;
     ok = false;
   } else {
     l = PyList_Size(obj);
@@ -599,10 +599,10 @@ int PConvPyList3ToFloatVLA(PyObject * obj, float **f)
   PyObject *triple;
   int ok = true;
   if(!obj) {
-    *f = NULL;
+    *f = nullptr;
     ok = false;
   } else if(!PyList_Check(obj)) {
-    *f = NULL;
+    *f = nullptr;
     ok = false;
   } else {
     l = PyList_Size(obj);
@@ -636,10 +636,10 @@ int PConvPyListToDoubleArray(PyObject * obj, double **f)
   double *ff;
   int ok = true;
   if(!obj) {
-    *f = NULL;
+    *f = nullptr;
     l = 0;
   } else if(!PyList_Check(obj)) {
-    *f = NULL;
+    *f = nullptr;
     ok = false;
   } else {
     l = PyList_Size(obj);
@@ -661,7 +661,7 @@ int PConvPyListToIntArrayImpl(PyObject * obj, int **f, bool as_vla)
   int *ff;
   int ok = true;
   if(!obj) {
-    *f = NULL;
+    *f = nullptr;
     ok = false;
   } else if (PyBytes_Check(obj)){
     // binary_dump
@@ -677,7 +677,7 @@ int PConvPyListToIntArrayImpl(PyObject * obj, int **f, bool as_vla)
     auto strval = PyBytes_AsSomeString(obj);
     memcpy(*f, strval.data(), slen);
   } else if(!PyList_Check(obj)) {
-    *f = NULL;
+    *f = nullptr;
     ok = false;
   } else {
     l = PyList_Size(obj);
@@ -703,9 +703,9 @@ ov_status PConvPyTupleToIntVLA(int **result, PyObject * tuple)
 {
   ov_status status = OV_STATUS_FAILURE;
   if(!(tuple && PyTuple_Check(tuple))) {
-    *result = NULL;
+    *result = nullptr;
   } else {
-    int *vla = NULL;
+    int *vla = nullptr;
     ov_size size = PyTuple_Size(tuple);
     vla = VLAlloc(int, size);
     if(vla) {
@@ -724,9 +724,9 @@ ov_status PConvPyTupleToFloatVLA(float **result, PyObject * tuple)
 {
   ov_status status = OV_STATUS_FAILURE;
   if(!(tuple && PyTuple_Check(tuple))) {
-    *result = NULL;
+    *result = nullptr;
   } else {
-    float *vla = NULL;
+    float *vla = nullptr;
     ov_size size = PyTuple_Size(tuple);
     vla = VLAlloc(float, size);
     if(vla) {
@@ -962,7 +962,7 @@ PyObject *PConvFloatArrayToPyList(const float *f, int l, bool dump_binary)
 PyObject *PConvFloatArrayToPyListNullOkay(const float *f, int l)
 {
   int a;
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   if(f) {
     result = PyList_New(l);
     for(a = 0; a < l; a++)
@@ -983,7 +983,7 @@ PyObject *PConvDoubleArrayToPyList(const double *f, int l)
 PyObject *PConvFloatVLAToPyList(const float *f)
 {
   int a, l;
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   l = VLAGetSize(f);
   result = PyList_New(l);
   for(a = 0; a < l; a++) {
@@ -994,7 +994,7 @@ PyObject *PConvFloatVLAToPyList(const float *f)
 
 PyObject *PConvFloatVLAToPyTuple(float *vla)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   if(vla) {
     ov_size size = VLAGetSize(vla);
     result = PyTuple_New(size);
@@ -1011,7 +1011,7 @@ PyObject *PConvFloatVLAToPyTuple(float *vla)
 PyObject *PConvIntVLAToPyList(const int *f)
 {
   int a, l;
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   l = VLAGetSize(f);
   result = PyList_New(l);
   for(a = 0; a < l; a++)
@@ -1021,7 +1021,7 @@ PyObject *PConvIntVLAToPyList(const int *f)
 
 PyObject *PConvIntVLAToPyTuple(int *vla)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   if(vla) {
     ov_size size = VLAGetSize(vla);
     result = PyTuple_New(size);
@@ -1103,7 +1103,7 @@ PyObject *PConvStringVLAToPyList(const char *vla)
 {
   int a, c, n = 0;
   const char *p;
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   p = vla;
   c = VLAGetSize(vla);
   while(c--) {                  /* count strings */
@@ -1127,7 +1127,7 @@ PyObject *PConvStringVLAToPyList(const char *vla)
 int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr)
 {
   int a, l, ll;
-  char *vla = NULL, *q;
+  char *vla = nullptr, *q;
   PyObject *i;
   if(obj)
     if(PyList_Check(obj)) {

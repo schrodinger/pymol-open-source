@@ -48,7 +48,7 @@ Z* -------------------------------------------------------------------
 #define XX_FALSE 0
 #endif
 #ifndef XX_NULL
-#define XX_NULL NULL
+#define XX_NULL nullptr
 #endif
 
 #define XX_MATRIX_STACK_STORAGE_MAX 5
@@ -1340,7 +1340,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals * G, int n, const float *v1, const float *v2
 /*========================================================================*/
 
 /**
- * @param G Only used for feedback, can be NULL
+ * @param G Only used for feedback, can be nullptr
  * @param[in] a 3x3 matrix
  * @param[out] wr 3x1 eigenvalues (real part of complex number)
  * @param[out] wi 3x1 eigenvalues (imag part of complex number)

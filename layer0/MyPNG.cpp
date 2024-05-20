@@ -77,7 +77,7 @@ static unsigned char base64_decoding_table[] = {
 
 static unsigned char *base64_decode(const char *data,
 				    size_t input_length=0) {
-  unsigned char *decoded_data = NULL;
+  unsigned char *decoded_data = nullptr;
   unsigned int triple;
   unsigned int i = 0, j = 0, k;
   char c;
@@ -107,7 +107,7 @@ static unsigned char *base64_decode(const char *data,
 
 ok_except1:
   mfree(decoded_data);
-  return NULL;
+  return nullptr;
 }
 
 typedef struct {
@@ -182,7 +182,7 @@ int MyPNGWrite(pymol::zstring_view file_name_view, const pymol::Image& img,
     {
 #ifdef _PYMOL_LIBPNG
       int ok = true;
-      FILE *fp = NULL;
+      FILE *fp = nullptr;
       png_structp png_ptr;
       png_infop info_ptr;
       int bit_depth = 8;
@@ -204,7 +204,7 @@ int MyPNGWrite(pymol::zstring_view file_name_view, const pymol::Image& img,
         } else {
           fp = pymol_fopen(file_name, "wb");
         }
-        if(fp == NULL) {
+        if(fp == nullptr) {
           ok = false;
           goto cleanup;
         } else if(feof(fp)) {
@@ -214,21 +214,21 @@ int MyPNGWrite(pymol::zstring_view file_name_view, const pymol::Image& img,
       }
       /* Create and initialize the png_struct with the desired error handler
        * functions.  If you want to use the default stderr and longjump method,
-       * you can supply NULL for the last three parameters.  We also check that
+       * you can supply nullptr for the last three parameters.  We also check that
        * the library version is compatible with the one used at compile time,
        * in case we are using dynamically linked libraries.  REQUIRED.
        */
-      png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+      png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 
-      if(png_ptr == NULL) {
+      if(png_ptr == nullptr) {
         ok = false;
         goto cleanup;
       }
 
       /* Allocate/initialize the image information data.  REQUIRED */
       info_ptr = png_create_info_struct(png_ptr);
-      if(info_ptr == NULL) {
-        png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
+      if(info_ptr == nullptr) {
+        png_destroy_write_struct(&png_ptr, (png_infopp) nullptr);
         ok = false;
         goto cleanup;
       }
@@ -238,16 +238,16 @@ int MyPNGWrite(pymol::zstring_view file_name_view, const pymol::Image& img,
        */
       if(setjmp(png_jmpbuf(png_ptr))) {
         /* If we get here, we had a problem reading the file */
-        png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
+        png_destroy_write_struct(&png_ptr, (png_infopp) nullptr);
         ok = false;
         goto cleanup;
       }
 
       if (io_ptr) {
-        png_set_write_fn(png_ptr, (void*) io_ptr, write_data_to_buffer, NULL);
+        png_set_write_fn(png_ptr, (void*) io_ptr, write_data_to_buffer, nullptr);
       } else {
         /* set up the output control if you are using standard C streams */
-        png_set_write_fn(png_ptr, (void*) fp, write_data_to_file, NULL);
+        png_set_write_fn(png_ptr, (void*) fp, write_data_to_file, nullptr);
       }
 
       /* Set the image information here.  Width and height are up to 2^31,
@@ -366,13 +366,13 @@ std::unique_ptr<pymol::Image> MyPNGRead(const char *file_name)
   std::unique_ptr<pymol::Image> img;
 #ifdef _PYMOL_LIBPNG
 
-  FILE *png_file = NULL;
-  png_struct *png_ptr = NULL;
-  png_info *info_ptr = NULL;
+  FILE *png_file = nullptr;
+  png_struct *png_ptr = nullptr;
+  png_info *info_ptr = nullptr;
   png_byte buf[8];
-  png_byte *png_pixels = NULL;
-  png_byte **row_pointers = NULL;
-  png_byte *pix_ptr = NULL;
+  png_byte *png_pixels = nullptr;
+  png_byte **row_pointers = nullptr;
+  png_byte *pix_ptr = nullptr;
   png_uint_32 row_bytes = 0;
 
   png_uint_32 width;
@@ -384,7 +384,7 @@ std::unique_ptr<pymol::Image> MyPNGRead(const char *file_name)
   int i;
   int ok = true;
   double file_gamma;
-  uchar2p data = {NULL, NULL};
+  uchar2p data = {NULL, nullptr};
 
   if(!file_name)
     return nullptr;
@@ -397,7 +397,7 @@ std::unique_ptr<pymol::Image> MyPNGRead(const char *file_name)
 
   } else {
     png_file = pymol_fopen(file_name, "rb");
-    if(png_file == NULL)
+    if(png_file == nullptr)
       return nullptr;
 
     /* read and check signature in PNG file */
@@ -413,7 +413,7 @@ std::unique_ptr<pymol::Image> MyPNGRead(const char *file_name)
   }
   /* create png and info structures */
   if(ok) {
-    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     if(!png_ptr)
       ok = false;
   }
@@ -443,7 +443,7 @@ std::unique_ptr<pymol::Image> MyPNGRead(const char *file_name)
 
     /* get size and bit-depth of the PNG-image */
     png_get_IHDR(png_ptr, info_ptr,
-                 &width, &height, &bit_depth, &color_type, NULL, NULL, NULL);
+                 &width, &height, &bit_depth, &color_type, nullptr, nullptr, nullptr);
 
     /* set-up the transformations */
 
@@ -465,21 +465,21 @@ std::unique_ptr<pymol::Image> MyPNGRead(const char *file_name)
 
     /* get the new color-type and bit-depth (after expansion/stripping) */
     png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
-                 NULL, NULL, NULL);
+                 nullptr, nullptr, nullptr);
 
     /* row_bytes is the width x number of channels x (bit-depth / 8) */
     row_bytes = png_get_rowbytes(png_ptr, info_ptr);
-    if((png_pixels = (png_byte *) malloc(row_bytes * height * sizeof(png_byte))) == NULL) {
+    if((png_pixels = (png_byte *) malloc(row_bytes * height * sizeof(png_byte))) == nullptr) {
       ok = false;
     }
   }
 
   if(ok) {
 
-    if((row_pointers = (png_byte **) malloc(height * sizeof(png_bytep))) == NULL) {
-      png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+    if((row_pointers = (png_byte **) malloc(height * sizeof(png_bytep))) == nullptr) {
+      png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
       free(png_pixels);
-      png_pixels = NULL;
+      png_pixels = nullptr;
       ok = false;
     }
   }
@@ -512,13 +512,13 @@ std::unique_ptr<pymol::Image> MyPNGRead(const char *file_name)
 
   }
 
-  if(row_pointers != (unsigned char **) NULL)
+  if(row_pointers != (unsigned char **) nullptr)
     free(row_pointers);
-  if(png_pixels != (unsigned char *) NULL)
+  if(png_pixels != (unsigned char *) nullptr)
     free(png_pixels);
 
   if(png_ptr) {
-    png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
+    png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) nullptr);
   }
   if(png_file)
     fclose(png_file);

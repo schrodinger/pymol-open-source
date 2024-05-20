@@ -304,12 +304,12 @@ static CTetsurf *TetsurfNew(PyMOLGlobals * G)
   int v000, v100, v010, v110, v001, v101, v011, v111;
 
   I->G = G;
-  I->Tri = NULL;
-  I->PtLink = NULL;
+  I->Tri = nullptr;
+  I->PtLink = nullptr;
 
-  I->VertexCodes = NULL;
-  I->ActiveEdges = NULL;
-  I->Point = NULL;
+  I->VertexCodes = nullptr;
+  I->ActiveEdges = nullptr;
+  I->Point = nullptr;
 
   last_nv = nv;
 
@@ -390,7 +390,7 @@ static void _TetsurfFree(CTetsurf * I)
 void TetsurfFree(PyMOLGlobals * G)
 {
   _TetsurfFree(G->Tetsurf);
-  G->Tetsurf = NULL;
+  G->Tetsurf = nullptr;
 }
 
 
@@ -519,7 +519,7 @@ void TetsurfGetRange(PyMOLGlobals * G,
  *                          triangle strip with a single triangle)
  * @param[out] vert         Normals (triangle modes only) and vertices for
  *                          strips according to `num`
- * @param[in] range         Min and max indices of box (6i - can be NULL,
+ * @param[in] range         Min and max indices of box (6i - can be nullptr,
  *                          then use entire field)
  * @param[in] mode          Geometry mode (points, lines, triangles)
  * @param[in] carvehelper   For carving (optional)
@@ -766,8 +766,8 @@ static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode mode, int &n_st
   int i000, i001, i010, i011, i100, i101, i110, i111;
   float *c000, *c001, *c010, *c011, *c100, *c101, *c110, *c111;
   float d000, d001, d010, d011, d100, d101, d110, d111;
-  float *g000 = NULL, *g001 = NULL, *g010 = NULL, *g011 = NULL, *g100 = NULL, *g101 =
-    NULL, *g110 = NULL, *g111 = NULL;
+  float *g000 = nullptr, *g001 = nullptr, *g010 = nullptr, *g011 = nullptr, *g100 = nullptr, *g101 =
+    nullptr, *g110 = nullptr, *g111 = nullptr;
 
   int active;
   int n_active = 0;
@@ -1376,7 +1376,7 @@ static int TetsurfFindActiveBoxes(CTetsurf * II, cIsosurfaceMode mode, int &n_st
         tt->done = true;
 
         while(1) {
-          p2 = NULL;
+          p2 = nullptr;
           idx = p1->Link;
           while(idx > 0) {
             tt = I->Tri + I->PtLink[idx].tri;

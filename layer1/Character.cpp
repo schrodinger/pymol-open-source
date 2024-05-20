@@ -126,7 +126,7 @@ unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals * G, int id)
     CharRec *rec = I->Char + id;
     return rec->Pixmap.buffer;
   }
-  return NULL;
+  return nullptr;
 }
 
 int CharacterNewFromBitmap(PyMOLGlobals * G, int width, int height,
@@ -401,7 +401,7 @@ int CharacterGetGeometry(PyMOLGlobals * G, int id,
 
 int CharacterInit(PyMOLGlobals * G)
 {
-  CCharacter *I = NULL;
+  CCharacter *I = nullptr;
   if((I = (G->Character = pymol::calloc<CCharacter>(1)))) {
     I->MaxAlloc = 5;
     I->Char = VLACalloc(CharRec, I->MaxAlloc + 1);

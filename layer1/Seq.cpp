@@ -333,7 +333,7 @@ void CSeq::draw(CGO* orthoCGO)
       }
       fill_color = ColorGet(G, fill_color_index);
       if(unaligned_color_index < 0) {
-        unaligned_color = NULL;
+        unaligned_color = nullptr;
       } else {
         unaligned_color = ColorGet(G, unaligned_color_index);
       }

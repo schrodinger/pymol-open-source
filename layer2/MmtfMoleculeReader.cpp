@@ -108,7 +108,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
 #ifdef _PYMOL_NO_MSGPACKC
   PRINTFB(G, FB_ObjectMolecule, FB_Errors)
     " Error: This build has no fast MMTF support.\n" ENDFB(G);
-  return NULL;
+  return nullptr;
 #else
 
   if (I) {

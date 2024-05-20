@@ -37,7 +37,7 @@ PyObject *FieldAsNumPyArray(CField * field, short copy)
 {
 #ifndef _PYMOL_NUMPY
   printf("No numpy support\n");
-  return NULL;
+  return nullptr;
 #else
 
   PyObject *result;
@@ -65,7 +65,7 @@ PyObject *FieldAsNumPyArray(CField * field, short copy)
   if(typenum == -1) {
     printf("error: no typenum for type %d and base_size %d\n",
         field->type, field->base_size);
-    return NULL;
+    return nullptr;
   }
 
   auto dims = pymol::malloc<npy_intp>(field->n_dim());
@@ -82,13 +82,13 @@ PyObject *FieldAsNumPyArray(CField * field, short copy)
   return result;
 ok_except1:
   printf("FieldAsNumPyArray failed\n");
-  return NULL;
+  return nullptr;
 #endif
 }
 
 PyObject *FieldAsPyList(PyMOLGlobals * G, CField * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   int n_elem;
 
   int pse_export_version = SettingGetGlobal_f(G, cSetting_pse_export_version) * 1000;
@@ -137,7 +137,7 @@ CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list)
   auto I = new CField();
 
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   if(ok)

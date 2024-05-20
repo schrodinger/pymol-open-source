@@ -42,7 +42,7 @@ static int TestPyMOL_00_00(PyMOLGlobals * G)
 {
   ObjectMap *obj;
   ObjectMapDesc _md, *md;
-  ObjectMapState *ms = NULL;
+  ObjectMapState *ms = nullptr;
 
   int a;
 
@@ -66,14 +66,14 @@ static int TestPyMOL_00_00(PyMOLGlobals * G)
     ObjectSetName(obj, "00_00");
     ExecutiveManageObject(G, obj, -1, false);
   }
-  return (obj != NULL);
+  return (obj != nullptr);
 }
 
 #define STR_MAX 100
 
 static char *get_st(const char array[][STR_MAX])
 {
-  char *result = NULL;
+  char *result = nullptr;
   size_t c = 0, l = 0;
   while(array[c][0]) {
     l += strlen(array[c]);
@@ -301,7 +301,7 @@ int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
       break;
     case 2:
       {
-        pymol::CObject *obj = NULL;
+        pymol::CObject *obj = nullptr;
         float pos[3] = { 0.0, 0.0, 0.0 };
         PBlock(G);
         obj = ObjectCGONewVFontTest(G, "hello", pos);
@@ -314,7 +314,7 @@ int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
       break;
     case 3:
       {
-        pymol::CObject *obj = NULL;
+        pymol::CObject *obj = nullptr;
         obj = ObjectGadgetTest(G);
         if(obj) {
           ObjectSetName(obj, "gadget");
@@ -419,7 +419,7 @@ int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
       {
         char *st = get_st(mol_01_02);
         ExecutiveLoad(G, nullptr, st, -1, cLoadTypeMOLStr, "test_01_07", 0, -1, 0, 1, 0, 1,
-                      NULL, 0, NULL);
+                      nullptr, 0, nullptr);
         ExecutiveSetRepVisib(G, "test_01_07", cRepCyl, 1);
         ExecutiveSetRepVisib(G, "test_01_07", cRepLine, 0);
         SettingSetGlobal_b(G, cSetting_valence, 1);
@@ -434,7 +434,7 @@ int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
       {
         char *st = get_st(mol_01_02);
         ExecutiveLoad(G, nullptr, st, -1, cLoadTypeMOLStr, "test_01_08", 0, -1, 0, 1, 0, 1,
-                      NULL, 0, NULL);
+                      nullptr, 0, nullptr);
         SettingSetGlobal_b(G, cSetting_valence, 1);
         ControlRock(G, 1);
         FreeP(st);
@@ -445,7 +445,7 @@ int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
       {
         char *st = get_st(mol_01_02);
         ExecutiveLoad(G, nullptr, st, -1, cLoadTypeMOLStr, "test_01_09", 0, -1, 0, 1, 0, 1,
-                      NULL, 0, NULL);
+                      nullptr, 0, nullptr);
         ExecutiveSetRepVisib(G, "test_01_09", cRepMesh, 1);
         ExecutiveSetRepVisib(G, "test_01_09", cRepLine, 0);
         SettingSetGlobal_b(G, cSetting_valence, 1);

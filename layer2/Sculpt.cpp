@@ -385,10 +385,10 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
   float *v0, *v1, *v2, *v3, d, dummy;
   CoordSet *cs;
   int n0, n1, n2, n3;
-  int *planar = NULL;
-  int *linear = NULL;
-  int *single = NULL;
-  int *crdidx = NULL;
+  int *planar = nullptr;
+  int *linear = nullptr;
+  int *single = nullptr;
+  int *crdidx = nullptr;
   int nex = 1;
   int *j, *k, xhash;
   int ex_type;
@@ -646,7 +646,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
           atl.discCSet = obj->DiscreteCSet;
         } else {
           atl.atm2idx = cs->AtmToIdx.data();
-          atl.discCSet = NULL;
+          atl.discCSet = nullptr;
         }
         atl.coord = cs->Coord;
         atl.neighbor = neighbor;
@@ -1612,11 +1612,11 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
   CShaker *shk;
   int a0, a1, a2, a3, b0, b3;
   int aa;
-  float *disp = NULL;
+  float *disp = nullptr;
   float *v, *v0, *v1, *v2, *v3;
   float diff[3], len;
-  int *atm2idx = NULL;
-  int *cnt = NULL;
+  int *atm2idx = nullptr;
+  int *cnt = nullptr;
   int *i;
   int hash;
   int nb_next;
@@ -1648,7 +1648,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
   int nb_skip, nb_skip_count;
   float total_strain = 0.0F, strain;
   int total_count = 1;
-  CGO *cgo = NULL;
+  CGO *cgo = nullptr;
   float good_color[3] = { 0.2, 1.0, 0.2 };
   float bad_color[3] = { 1.0, 0.2, 0.2 };
   int vdw_vis_mode;

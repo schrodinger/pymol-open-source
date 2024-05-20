@@ -149,7 +149,7 @@ public:
   const ResultT& result() const { return m_result; }
 
   /**
-   * Pointer to the expected object. Never NULL. Call is invalid if this
+   * Pointer to the expected object. Never nullptr. Call is invalid if this
    * instance is in error state.
    */
   ResultT* operator->()

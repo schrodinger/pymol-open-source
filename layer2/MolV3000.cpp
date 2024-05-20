@@ -103,7 +103,7 @@ bool MOLV3000ReadKeyValue(const char *& p,
 /**
  * Parse the "Extended Connection Table" (V3000) from a MOL/SDF file.
  *
- * Returns a pointer to the end of the parsed content on success, or NULL on
+ * Returns a pointer to the end of the parsed content on success, or nullptr on
  * failure.
  *
  * buffer: input buffer, should begin with "M  V30 "

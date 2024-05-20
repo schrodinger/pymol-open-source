@@ -642,7 +642,7 @@ namespace cgo {
     struct shadercylinder2ndcolor {
       static const int op_code = CGO_SHADER_CYLINDER_WITH_2ND_COLOR;
       shadercylinder2ndcolor(CGO *I, const float *_origin, const float *_axis, const float _radius,
-                             int _cap, const float *_color2, Pickable *pickcolor2 = NULL,
+                             int _cap, const float *_color2, Pickable *pickcolor2 = nullptr,
                              const float alpha = -1.f);
       float origin[3], axis[3], tube_size;
       int cap;
@@ -959,7 +959,7 @@ void CGOFreeVBOs(CGO *I);
 CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est=0, const float *color=NULL, bool addshaders=true, bool embedTransparencyInfo=false);
 #define CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(I, est, color, addshaders) CGOOptimizeToVBOIndexed(I, est, color, addshaders, true)
 #define CGOOptimizeToVBOIndexedWithColor CGOOptimizeToVBOIndexed
-#define CGOOptimizeToVBOIndexedNoShader(I, est) CGOOptimizeToVBOIndexed(I, est, NULL, false)
+#define CGOOptimizeToVBOIndexedNoShader(I, est) CGOOptimizeToVBOIndexed(I, est, nullptr, false)
 
 bool CGOOptimizeToVBONotIndexed(CGO ** I);
 CGO* CGOOptimizeToVBONotIndexed(const CGO* I, int est = 0,
@@ -970,7 +970,7 @@ CGO* CGOOptimizeToVBONotIndexed(const CGO* I, int est = 0,
 
 
 CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est=0, bool addshaders=false, CGO *leftOverCGO=NULL);
-#define CGOOptimizeSpheresToVBONonIndexedNoShader(I, est) CGOOptimizeSpheresToVBONonIndexed(I, est, false, NULL)
+#define CGOOptimizeSpheresToVBONonIndexedNoShader(I, est) CGOOptimizeSpheresToVBONonIndexed(I, est, false, nullptr)
 
 /**
  * Creates a VBO-based Bezier CGO.

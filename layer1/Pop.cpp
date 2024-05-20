@@ -58,7 +58,7 @@ void PopFree(PyMOLGlobals * G)
 /*========================================================================*/
 int PopInit(PyMOLGlobals * G)
 {
-  CPop *I = NULL;
+  CPop *I = nullptr;
   if((I = (G->Pop = new CPop(G)))) {
 
     I->active = false;

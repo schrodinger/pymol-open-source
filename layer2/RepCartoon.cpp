@@ -74,7 +74,7 @@ struct RepCartoon : Rep {
 
   /**
    * Free the preshader CGO or move to another owner.
-   * @post preshader == NULL
+   * @post preshader == nullptr
    */
   void disposePreshaderCGO() {
     if (!ray) {
@@ -276,7 +276,7 @@ void RepCartoon::render(RenderInfo* info)
         CGORenderPicking(I->std, info, &I->context,
                            I->cs->Setting.get(), I->obj->Setting.get());
       } else {
-        CGORender(I->std, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+        CGORender(I->std, nullptr, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
       }
     }
   }
@@ -300,7 +300,7 @@ typedef struct nuc_acid_data {
   int *nuc_flag;   // whether atom is part of nucleotide
   int a2;          // defaults to -1
   int nSeg;        // defaults to 0
-  const float *v_o_last; // defaults to NULL
+  const float *v_o_last; // defaults to nullptr
   int *sptr;
   int *iptr;
   CCInOut * cc;
@@ -1145,7 +1145,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
       int i;
       float up[3], upi[3];
       float vc0[3], vc1[3];
-      const float *color = NULL;
+      const float *color = nullptr;
       /* compute average coordinate and mark atoms so that ring is only drawn once */
       zero3f(avg);
       zero3f(avg_col);
@@ -1382,7 +1382,7 @@ static void nuc_acid(PyMOLGlobals * G, nuc_acid_data *ndata, int a, int a1,
 
   if(ndata->a2 < 0) {
     ndata->nSeg++;
-    ndata->v_o_last = NULL;
+    ndata->v_o_last = nullptr;
   }
   *(ndata->sptr++) = ndata->nSeg;
   *(ndata->iptr++) = a;
@@ -1402,7 +1402,7 @@ static void nuc_acid(PyMOLGlobals * G, nuc_acid_data *ndata, int a, int a1,
   if(ndata->a2 >= 0) {
     if(set_flags) {
       if((obj->AtomInfo[ndata->a2].protons == cAN_P) && (!nuc_flag[ndata->a2])) {
-        int *nf = NULL;
+        int *nf = nullptr;
         AtomInfoBracketResidueFast(G, obj->AtomInfo, obj->NAtom, ndata->a2, &st, &nd);
 
         nf = nuc_flag + st;
@@ -1421,13 +1421,13 @@ static void nuc_acid(PyMOLGlobals * G, nuc_acid_data *ndata, int a, int a1,
 
   ndata->ss++;
 
-  v_c = NULL;
-  v_o = NULL;
+  v_c = nullptr;
+  v_o = nullptr;
 
   AtomInfoBracketResidueFast(G, obj->AtomInfo, obj->NAtom, a1, &st, &nd);
 
   {
-    int *nf = NULL;
+    int *nf = nullptr;
     if(set_flags && ndata->v_o_last)
       nf = nuc_flag + st;
     for(a3 = st; a3 <= nd; a3++) {
@@ -1451,7 +1451,7 @@ static void nuc_acid(PyMOLGlobals * G, nuc_acid_data *ndata, int a, int a1,
   }
   if(!(v_c && v_o)) {
     zero3f(ndata->voptr);
-    ndata->v_o_last = NULL;
+    ndata->v_o_last = nullptr;
   } else {
     if(ndata->v_o_last) {
       float t0[3];
@@ -1479,10 +1479,10 @@ void GenerateRepCartoonDrawDebugLineAlongPath(CGO *cgo, int nAt, float *pv){
 #ifndef PURE_OPENGL_ES_2
   CGODisable(cgo, GL_LIGHTING);
 #endif
-  v1 = NULL;
-  v2 = NULL;
-  v3 = NULL;
-  v4 = NULL;
+  v1 = nullptr;
+  v2 = nullptr;
+  v3 = nullptr;
+  v4 = nullptr;
   v = pv;
   if(nAt > 1) {
     CGOBegin(cgo, GL_LINE_STRIP);
@@ -1590,7 +1590,7 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
   const float *v0;
   float *v, *v1, *v2, *vo, *d;
   float *valpha;
-  float *vc = NULL;
+  float *vc = nullptr;
   int atom_index1, atom_index2, *s,
       *atp, a, cur_car;
   unsigned *vi;
@@ -1598,7 +1598,7 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
   bool hasAtomLevelTrans = false;
   int contFlag, extrudeFlag;
   int b, c1, c2;
-  float *h_start = NULL, *h_end = NULL;
+  float *h_start = nullptr, *h_end = nullptr;
   float t0[3], t1[3], t2[3], t3[3];
   float t4[3];
   float helix_radius;
@@ -2210,7 +2210,7 @@ int CartoonExtrudeTube(short use_cylinders_for_strands, CExtrude *ex, CGO *cgo, 
     if (ok)
       ExtrudeBuildNormals1f(ex);
     if (ok)
-      ok &= ExtrudeCGOSurfaceTube(ex, cgo, tube_cap, NULL, use_cylinders_for_strands);
+      ok &= ExtrudeCGOSurfaceTube(ex, cgo, tube_cap, nullptr, use_cylinders_for_strands);
   }
   return ok;
 }
@@ -2244,7 +2244,7 @@ int CartoonExtrudeCircle(CExtrude *ex, CGO *cgo, short use_cylinders_for_strands
   if (ok)
     ExtrudeBuildNormals1f(ex);
   if (ok)
-    ok &= ExtrudeCGOSurfaceTube(ex, cgo, loop_cap, NULL, use_cylinders_for_strands, dash);
+    ok &= ExtrudeCGOSurfaceTube(ex, cgo, loop_cap, nullptr, use_cylinders_for_strands, dash);
   return ok;
 }
 
@@ -2273,13 +2273,13 @@ int CartoonExtrudeRect(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, float width, flo
     if (ok)
       ExtrudeBuildNormals2f(ex);
     if (ok)
-      ok &= ExtrudeCGOSurfacePolygon(ex, cgo, cCylCap::Flat, NULL);
+      ok &= ExtrudeCGOSurfacePolygon(ex, cgo, cCylCap::Flat, nullptr);
   } else {
     ok = ExtrudeRectangle(ex, width, length, 1);
     if (ok)
       ExtrudeBuildNormals2f(ex);
     if (ok)
-      ok &= ExtrudeCGOSurfacePolygon(ex, cgo, cCylCap::None, NULL);
+      ok &= ExtrudeCGOSurfacePolygon(ex, cgo, cCylCap::None, nullptr);
     if (ok){
       ok &= ExtrudeRectangle(ex, width, length, 2);
       if (ok)
@@ -2299,7 +2299,7 @@ int CartoonExtrudeOval(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, short use_cylind
     ExtrudeBuildNormals2f(ex);
   if (ok){
     if(highlight_color < 0)
-      ok &= ExtrudeCGOSurfaceTube(ex, cgo, cCylCap::Flat, NULL, use_cylinders_for_strands);
+      ok &= ExtrudeCGOSurfaceTube(ex, cgo, cCylCap::Flat, nullptr, use_cylinders_for_strands);
     else
       ok &= ExtrudeCGOSurfaceTube(ex, cgo, cCylCap::Flat, ColorGet(G, highlight_color), use_cylinders_for_strands);
   }
@@ -2314,7 +2314,7 @@ int CartoonExtrudeArrow(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, int sampling, f
     ExtrudeBuildNormals2f(ex);
   if (ok){
     if(highlight_color < 0)
-      ok &= ExtrudeCGOSurfaceStrand(ex, cgo, sampling, NULL);
+      ok &= ExtrudeCGOSurfaceStrand(ex, cgo, sampling, nullptr);
     else
       ok &= ExtrudeCGOSurfaceStrand(ex, cgo, sampling, ColorGet(G, highlight_color));
   }
@@ -2335,13 +2335,13 @@ int CartoonExtrudeDumbbell(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, int sampling
     if (ok)
       ExtrudeBuildNormals2f(ex);
     if (ok)
-      ok &= ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling, NULL);
+      ok &= ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling, nullptr);
   } else {
     ok = ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 1);
     if (ok)
       ExtrudeBuildNormals2f(ex);
     if (ok)
-      ok &= ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling, NULL);
+      ok &= ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling, nullptr);
     if (ok)
       ok &= ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 2);
     if (ok)
@@ -2367,7 +2367,7 @@ int CartoonExtrudeDumbbell(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, int sampling
     ExtrudeBuildNormals1f(ex1);
   
   if (ok)
-    ok &= ExtrudeCGOSurfaceTube(ex1, cgo, cCylCap::Flat, NULL, use_cylinders_for_strands);
+    ok &= ExtrudeCGOSurfaceTube(ex1, cgo, cCylCap::Flat, nullptr, use_cylinders_for_strands);
   if (ok){
     ExtrudeFree(ex1);
     ex1 = ExtrudeCopyPointsNormalsColors(ex);
@@ -2381,7 +2381,7 @@ int CartoonExtrudeDumbbell(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, int sampling
     if (ok)
       ExtrudeBuildNormals1f(ex1);
     if (ok)
-      ok &= ExtrudeCGOSurfaceTube(ex1, cgo, cCylCap::Flat, NULL, use_cylinders_for_strands);
+      ok &= ExtrudeCGOSurfaceTube(ex1, cgo, cCylCap::Flat, nullptr, use_cylinders_for_strands);
   }
   if (ex1)
     ExtrudeFree(ex1);
@@ -2418,12 +2418,12 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   int ok = true;
   CGO *cgo;
   int contigFlag, contFlag, extrudeFlag, n_p;
-  CExtrude *ex = NULL;
+  CExtrude *ex = nullptr;
   float dev;
   unsigned int *vi;
   int atom_index1, atom_index2;
   float *v, *v1, *v2, *vo;
-  float *d, *vc = NULL, *vn;
+  float *d, *vc = nullptr, *vn;
   float *valpha = nullptr;
   int *atp;
   int c1, c2;
@@ -2772,7 +2772,7 @@ public:
       return false;
 
     nuc_acid(G, ndata, idx, atm, ai, cs, cs->Obj, false);
-    set(-1, -1, NULL);
+    set(-1, -1, nullptr);
     return true;
   }
 };
@@ -2790,7 +2790,7 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
   int a, a1, a3, a4 = 0;
   char *lv = I->LastVisib;
   int trace, trace_mode;
-  AtomInfoType *ai, *last_ai = NULL;
+  AtomInfoType *ai, *last_ai = nullptr;
   int cartoon_side_chain_helper;
   int cylindrical_helices;
   int fancy_helices;
@@ -2997,9 +2997,9 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
       }
 
       // pointers to C+N+O coordinates
-      v_c = NULL;
-      v_n = NULL;
-      v_o = NULL;
+      v_c = nullptr;
+      v_n = nullptr;
+      v_o = nullptr;
 
       // get start (st) and end (nd) indices of residue atoms
       AtomInfoBracketResidueFast(G, obj->AtomInfo, obj->NAtom, a1, &st, &nd);
@@ -3058,7 +3058,7 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
       }
 
       last_ai = ai;
-      trailing_O3p.set(-1, -1, NULL);
+      trailing_O3p.set(-1, -1, nullptr);
 
       /*  5' cap */
       if(leading_O5p.active()
@@ -3068,7 +3068,7 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
         leading_O5p.cap();
       }
 
-      leading_O5p.set(-1, -1, NULL);
+      leading_O5p.set(-1, -1, nullptr);
 
       /* this is the main nucleic acid cartoon section... */
       nuc_acid(G, ndata, a, a1, ai, cs, obj, true);
@@ -3224,11 +3224,11 @@ void RepCartoonComputeRoundHelices(nuc_acid_data *ndata, const int nAt,
     for(a = 0; a < nAt; a++) {
       if(a) {
         if(*sptr != *(sptr - 1)) {        /* contiguous helices in disconnected segments */
-          v1 = NULL;
-          v2 = NULL;
-          v3 = NULL;
-          v4 = NULL;
-          v5 = NULL;
+          v1 = nullptr;
+          v2 = nullptr;
+          v3 = nullptr;
+          v4 = nullptr;
+          v5 = nullptr;
           last = 0;
         }
       }
@@ -3278,11 +3278,11 @@ void RepCartoonComputeRoundHelices(nuc_acid_data *ndata, const int nAt,
             }
           }
         }
-        v1 = NULL;
-        v2 = NULL;
-        v3 = NULL;
-        v4 = NULL;
-        v5 = NULL;
+        v1 = nullptr;
+        v2 = nullptr;
+        v3 = nullptr;
+        v4 = nullptr;
+        v5 = nullptr;
         last = 0;
       }
       if(v1 && v2 && v3 && v4) {
@@ -3672,21 +3672,21 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   ObjectMolecule *obj;
   int *i, *sptr, *at, *seg, nAt;
   CCInOut *car, *cc;
-  float *pv = NULL;
-  float *pvo = NULL, *pva = NULL;
-  float *dv = NULL;
-  float *nv = NULL;
-  float *tv = NULL;
-  float *tmp = NULL;
-  float *dl = NULL;
+  float *pv = nullptr;
+  float *pvo = nullptr, *pva = nullptr;
+  float *dv = nullptr;
+  float *nv = nullptr;
+  float *tv = nullptr;
+  float *tmp = nullptr;
+  float *dl = nullptr;
 
   int ladder_mode;
   int round_helices;
   int na_mode;
   int *flag_tmp;
   float putty_vals[4] = { 10.0F, 0.0F, FLT_MAX, -FLT_MAX }; // putty_mean, putty_stdev, putty_min, putty_max
-  int *ring_anchor = NULL;
-  int *nuc_flag = NULL;
+  int *ring_anchor = nullptr;
+  int *nuc_flag = nullptr;
   float alpha;
   int ok = true;
   nuc_acid_data ndata;
@@ -3697,7 +3697,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
   // skip if not visible
   if(!cs->hasRep(cRepCartoonBit))
-    return NULL;
+    return nullptr;
 
   /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -3758,7 +3758,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   ndata.nuc_flag = nuc_flag;
   ndata.a2 = -1;
   ndata.nSeg = 0;
-  ndata.v_o_last = NULL;
+  ndata.v_o_last = nullptr;
   ndata.sptr = sptr;
   ndata.iptr = i;
   ndata.cc = cc;
@@ -3851,7 +3851,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   if (!ok || !CGOHasOperations(I->preshader)) {
     /* cannot generate RepCartoon */
     delete I;
-    I = NULL;
+    I = nullptr;
   }
   FreeP(dv);
   FreeP(dl);

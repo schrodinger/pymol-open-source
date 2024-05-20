@@ -80,7 +80,7 @@ void MemoryZero(char *p, char *q)
  * Update `size` and reallocate this vla
  *
  * @param size number of elements
- * @return reallocated pointer or NULL if realloc failed
+ * @return reallocated pointer or nullptr if realloc failed
  */
 static VLARec* VLARec_resize(VLARec* vla, ov_size size)
 {
@@ -153,7 +153,7 @@ void VLAFree(void *ptr)
 {
   VLARec *vla;
   if(!ptr) {
-    printf("VLAFree-ERR: tried to free NULL pointer!\n");
+    printf("VLAFree-ERR: tried to free nullptr pointer!\n");
     exit(EXIT_FAILURE);
   }
   vla = &(((VLARec *) ptr)[-1]);
@@ -169,7 +169,7 @@ size_t VLAGetSize(const void *ptr)
 
 void *VLANewCopy(const void *ptr)
 {
-  if(ptr) {                     /* NULL protected */
+  if(ptr) {                     /* nullptr protected */
     const VLARec *vla;
     VLARec *new_vla;
     vla = &((VLARec *) ptr)[-1];
@@ -183,14 +183,14 @@ void *VLANewCopy(const void *ptr)
     }
     return ((void *) &(new_vla[1]));
   } else {
-    return NULL;
+    return nullptr;
   }
 }
 
 void *VLASetSize(void *ptr, size_t new_size)
 {
   VLARec *vla;
-  char *start = NULL;
+  char *start = nullptr;
   char *stop;
   size_t soffset = 0;
   vla = &((VLARec *) ptr)[-1];
@@ -283,7 +283,7 @@ void *VLAInsertRaw(void *ptr, int index, unsigned int count)
 void *VLASetSizeForSure(void *ptr, size_t new_size)
 {
   VLARec *vla;
-  char *start = NULL;
+  char *start = nullptr;
   char *stop;
   size_t soffset = 0;
   vla = &((VLARec *) ptr)[-1];

@@ -44,10 +44,10 @@ template <typename T> class vla
   void swap(vla<T>& other) noexcept { std::swap(m_vla, other.m_vla); }
 
 public:
-  // implicit NULL constructor
+  // implicit nullptr constructor
   vla() = default;
 
-  // NULL assignment
+  // nullptr assignment
   vla<T>& operator=(std::nullptr_t)
   {
     freeP();
@@ -67,7 +67,7 @@ public:
   explicit vla(std::size_t size) { m_vla = VLACalloc(T, size); }
 
   // constructor with initializer list
-  // Empty list constructs a NULL VLA to be consistent with default constructor
+  // Empty list constructs a nullptr VLA to be consistent with default constructor
   vla(std::initializer_list<T> init)
   {
     if (init.size() == 0)

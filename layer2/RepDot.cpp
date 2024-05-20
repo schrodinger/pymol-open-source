@@ -58,7 +58,7 @@ static int RepDotCGOGenerate(RepDot * I)
   int c = I->N;
   int cc = 0;
   int ok = true;
-  CGO *cgo = NULL;
+  CGO *cgo = nullptr;
 
   int normals =
     SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_normals);
@@ -197,7 +197,7 @@ void RepDot::render(RenderInfo * info)
 	if (ok) {
 	  const float *color;
 	  color = ColorGet(G, I->obj->Color);
-	  CGORender(I->shaderCGO, color, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, color, nullptr, nullptr, info, I);
 	  return; /* should not do any other rendering after shaderCGO has
 		    been rendered */
 	}
@@ -261,10 +261,10 @@ Rep *RepDotDoNew(CoordSet * cs, cRepDot_t mode, int state)
 {
   PyMOLGlobals *G = cs->G;
   float *v, *vn;
-  float *aa = NULL;
-  int *tp = NULL;
-  int *tf = NULL;
-  float *countPtr = NULL;
+  float *aa = nullptr;
+  int *tp = nullptr;
+  int *tf = nullptr;
+  float *countPtr = nullptr;
   int* ati = nullptr;
   auto obj = cs->Obj;
 

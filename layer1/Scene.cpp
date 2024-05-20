@@ -360,7 +360,7 @@ void ScenePrimeAnimation(PyMOLGlobals * G)
   if(G->HaveGUI) {
     CScene *I = G->Scene;
     UtilZeroMem(I->ani_elem, sizeof(CViewElem));
-    SceneToViewElem(G, I->ani_elem, NULL);
+    SceneToViewElem(G, I->ani_elem, nullptr);
     I->ani_elem[0].specification_level = 2;
     I->n_ani_elem = 0;
   }
@@ -435,7 +435,7 @@ void SceneLoadAnimation(PyMOLGlobals * G, double duration, int hand)
     if(target > MAX_ANI_ELEM)
       target = MAX_ANI_ELEM;
     UtilZeroMem(I->ani_elem + 1, sizeof(CViewElem) * target);
-    SceneToViewElem(G, I->ani_elem + target, NULL);
+    SceneToViewElem(G, I->ani_elem + target, nullptr);
     I->ani_elem[target].specification_level = 2;
     now = UtilGetSeconds(G);
     I->ani_elem[0].timing_flag = true;
@@ -1168,7 +1168,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
   switch (sdof_mode) {
   case SDOF_NORMAL_MODE:
     if((x != 0.0F) || (y != 0.0F)) {
-      float vScale = SceneGetExactScreenVertexScale(G, NULL);
+      float vScale = SceneGetExactScreenVertexScale(G, nullptr);
       float factor = vScale * (I->Height + I->Width) / 2;
       I->m_view.translate(x * factor, y * factor, 0.0f);
       invalidate = true;
@@ -1187,7 +1187,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
     break;
   case SDOF_CLIP_MODE:
     if((x != 0.0F) || (y != 0.0F)) {
-      float vScale = SceneGetExactScreenVertexScale(G, NULL);
+      float vScale = SceneGetExactScreenVertexScale(G, nullptr);
       float factor = vScale * (I->Height + I->Width) / 2;
       I->m_view.translate(x * factor, y * factor, 0.0f);
       invalidate = true;
@@ -1214,7 +1214,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
 
       {
         /* when dragging, we treat all axes proportionately */
-        float vScale = SceneGetExactScreenVertexScale(G, NULL);
+        float vScale = SceneGetExactScreenVertexScale(G, nullptr);
         float factor = vScale * (I->Height + I->Width) / 2;
         x *= factor;
         y *= factor;
@@ -1228,8 +1228,8 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
       /* transform into model coodinate space */
       MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v2, v2);
 
-      EditorDrag(G, NULL, -1, cButModeMovDrag,
-                 SettingGetGlobal_i(G, cSetting_state) - 1, NULL, v2, NULL);
+      EditorDrag(G, nullptr, -1, cButModeMovDrag,
+                 SettingGetGlobal_i(G, cSetting_state) - 1, nullptr, v2, nullptr);
     }
     break;
   }
@@ -1300,8 +1300,8 @@ void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_
         /* transform into model coodinate space */
         MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), axis, v2);
 
-        EditorDrag(G, NULL, -1, cButModeRotDrag,
-                   SettingGetGlobal_i(G, cSetting_state) - 1, v1, v2, NULL);
+        EditorDrag(G, nullptr, -1, cButModeRotDrag,
+                   SettingGetGlobal_i(G, cSetting_state) - 1, v1, v2, nullptr);
         invalidate = true;
       }
     }
@@ -1396,14 +1396,14 @@ void SceneClip(PyMOLGlobals * G, SceneClipMode mode, float movement, const char 
   case SceneClipMode::Slab:
     if(sele[0]) {
       if(!ExecutiveGetExtent(G, sele, mn, mx, true, state, false))
-        sele = NULL;
+        sele = nullptr;
       else {
         average3f(mn, mx, cent);        /* get center of selection */
         subtract3f(cent, glm::value_ptr(I->m_view.origin()), v0);        /* how far from origin? */
         MatrixTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v0, offset);   /* convert to view-space */
       }
     } else {
-      sele = NULL;
+      sele = nullptr;
     }
     avg = (I->m_view.m_clip().m_front + I->m_view.m_clip().m_back) / 2.0F;
     movement /= 2.0F;
@@ -1425,7 +1425,7 @@ void SceneClip(PyMOLGlobals * G, SceneClipMode mode, float movement, const char 
       SceneClipSet(G, -pos.z - movement, -pos.z + movement);
     } else {
       if(!ExecutiveGetCameraExtent(G, sele, mn, mx, true, state))
-        sele = NULL;
+        sele = nullptr;
       if(sele) {
         if(sele[0]) {
           average3f(mn, mx, cent);      /* get center of selection */
@@ -1434,7 +1434,7 @@ void SceneClip(PyMOLGlobals * G, SceneClipMode mode, float movement, const char 
           subtract3f(mn, origin, mn);   /* how far from origin? */
           SceneClipSet(G, -pos.z - mx[2] - movement, -pos.z - mn[2] + movement);
         } else {
-          sele = NULL;
+          sele = nullptr;
         }
       }
     }
@@ -1843,7 +1843,7 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
  *
  * Modifies `G->Scene->Image`.
  *
- * @param prior_only Return NULL if there is no prior image (`G->Scene->Image` is NULL)
+ * @param prior_only Return nullptr if there is no prior image (`G->Scene->Image` is nullptr)
  * @return The scene image
  */
 pymol::Image* SceneImagePrepare(PyMOLGlobals* G, bool prior_only)
@@ -2287,7 +2287,7 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
   switch (mode) {
   case cSceneImage_Ray:
     SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
-             NULL, NULL, 0.0F, 0.0F, false, NULL, show_timing, -1);
+             nullptr, nullptr, 0.0F, 0.0F, false, nullptr, show_timing, -1);
     break;
   case cSceneImage_Draw:
     SceneMakeSizedImage(G, width, height, SettingGetGlobal_i(G, cSetting_antialias));
@@ -3028,7 +3028,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override , CGO *orthoCGO){
   if(((!text) || overlay) && (override || I->CopyType == true) && I->Image && !I->Image->empty()) {
     /* show transparent bg as checkboard? */
     int show_alpha = SettingGetGlobal_b(G, cSetting_show_alpha_checker);
-    const float *bg_color = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+    const float *bg_color = ColorGet(G, SettingGet_color(G, nullptr, nullptr, cSetting_bg_rgb));
     unsigned int bg_rr, bg_r = (unsigned int) (255 * bg_color[0]);
     unsigned int bg_gg, bg_g = (unsigned int) (255 * bg_color[1]);
     unsigned int bg_bb, bg_b = (unsigned int) (255 * bg_color[2]);
@@ -3373,7 +3373,7 @@ void SceneDoRoving(PyMOLGlobals * G, float old_front,
                           float old_back, float old_origin,
                           int adjust_flag, int zoom_flag)
 {
-  EditorFavorOrigin(G, NULL);
+  EditorFavorOrigin(G, nullptr);
   if(SettingGetGlobal_b(G, cSetting_roving_origin)) {
 
     CScene *I = G->Scene;
@@ -3530,7 +3530,7 @@ bool SceneGetVisible(PyMOLGlobals * G, const float *v1)
 /**
  * Get the depth (camera space Z) of v1
  *
- * @param v1 point (3f) in world space or NULL (= origin)
+ * @param v1 point (3f) in world space or nullptr (= origin)
  */
 float SceneGetRawDepth(PyMOLGlobals * G, const float *v1)
 {
@@ -3551,7 +3551,7 @@ float SceneGetRawDepth(PyMOLGlobals * G, const float *v1)
  * Get the depth (camera space Z) of v1 in normalized clip space
  * from 0.0 (near) to 1.0 (far)
  *
- * @param v1 point (3f) in world space or NULL (= origin)
+ * @param v1 point (3f) in world space or nullptr (= origin)
  */
 float SceneGetDepth(PyMOLGlobals * G, const float *v1)
 {
@@ -3562,10 +3562,10 @@ float SceneGetDepth(PyMOLGlobals * G, const float *v1)
 
 /*========================================================================*/
 /**
- * Get the angstrom per pixel factor at v1. If v1 is NULL, return the
+ * Get the angstrom per pixel factor at v1. If v1 is nullptr, return the
  * factor at the origin, but clamped to an empirical positive value.
  *
- * @param v1 point (3f) in world space or NULL (= origin)
+ * @param v1 point (3f) in world space or nullptr (= origin)
  */
 float SceneGetScreenVertexScale(PyMOLGlobals * G, const float *v1)
 
@@ -3597,7 +3597,7 @@ static void SceneRovingCleanup(PyMOLGlobals * G)
 
   I->RovingCleanupFlag = false;
 
-  s = SettingGet_s(G, NULL, NULL, cSetting_roving_selection);
+  s = SettingGet_s(G, nullptr, nullptr, cSetting_roving_selection);
 
   sprintf(buffer, "cmd.hide('lines','''%s''')", s);
   PParse(G, buffer);
@@ -3648,7 +3648,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
     if(I->RovingCleanupFlag)
       SceneRovingCleanup(G);
 
-    s = SettingGet_s(G, NULL, NULL, cSetting_roving_selection);
+    s = SettingGet_s(G, nullptr, nullptr, cSetting_roving_selection);
     sticks = SettingGetGlobal_f(G, cSetting_roving_sticks);
     lines = SettingGetGlobal_f(G, cSetting_roving_lines);
     labels = SettingGetGlobal_f(G, cSetting_roving_labels);
@@ -3816,7 +3816,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
       auto_save = SettingGetGlobal_i(G, cSetting_auto_zoom);
       SettingSetGlobal_i(G, cSetting_auto_zoom, 0);
 
-      name = SettingGet_s(G, NULL, NULL, cSetting_roving_map1_name);
+      name = SettingGet_s(G, nullptr, nullptr, cSetting_roving_map1_name);
       if(name)
         if(name[0])
           if(ExecutiveFindObjectByName(G, name)) {
@@ -3829,7 +3829,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
             refresh_flag = true;
           }
 
-      name = SettingGet_s(G, NULL, NULL, cSetting_roving_map2_name);
+      name = SettingGet_s(G, nullptr, nullptr, cSetting_roving_map2_name);
       if(name)
         if(name[0])
           if(ExecutiveFindObjectByName(G, name)) {
@@ -3842,7 +3842,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
             refresh_flag = true;
           }
 
-      name = SettingGet_s(G, NULL, NULL, cSetting_roving_map3_name);
+      name = SettingGet_s(G, nullptr, nullptr, cSetting_roving_map3_name);
       if(name)
         if(name[0])
           if(ExecutiveFindObjectByName(G, name)) {
@@ -3863,7 +3863,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
       auto_save = SettingGetGlobal_i(G, cSetting_auto_zoom);
       SettingSetGlobal_i(G, cSetting_auto_zoom, 0);
 
-      name = SettingGet_s(G, NULL, NULL, cSetting_roving_map1_name);
+      name = SettingGet_s(G, nullptr, nullptr, cSetting_roving_map1_name);
       if(name)
         if(name[0])
           if(ExecutiveFindObjectByName(G, name)) {
@@ -3876,7 +3876,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
             refresh_flag = true;
           }
 
-      name = SettingGet_s(G, NULL, NULL, cSetting_roving_map2_name);
+      name = SettingGet_s(G, nullptr, nullptr, cSetting_roving_map2_name);
       if(name)
         if(name[0])
           if(ExecutiveFindObjectByName(G, name)) {
@@ -3889,7 +3889,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
             refresh_flag = true;
           }
 
-      name = SettingGet_s(G, NULL, NULL, cSetting_roving_map3_name);
+      name = SettingGet_s(G, nullptr, nullptr, cSetting_roving_map3_name);
       if(name)
         if(name[0])
           if(ExecutiveFindObjectByName(G, name)) {
@@ -3964,7 +3964,7 @@ bool call_raw_image_callback(PyMOLGlobals * G) {
  * @param dpi dots per inch
  * @param format ??
  * @param quiet if true, don't print messages
- * @param out_img if not NULL, store the image data here
+ * @param out_img if not nullptr, store the image data here
  * @param filename if not empty, store the image to this file as PNG
  */
 
@@ -4127,7 +4127,7 @@ int SceneReinitialize(PyMOLGlobals * G)
 /*========================================================================*/
 int SceneInit(PyMOLGlobals * G)
 {
-  CScene *I = NULL;
+  CScene *I = nullptr;
   I = (G->Scene = new CScene(G));
   if(I) {
     assert(!I->RovingDirtyFlag);
@@ -4697,11 +4697,11 @@ void SceneUpdate(PyMOLGlobals * G, int force)
         for ( auto it = I->Obj.begin(); it != I->Obj.end(); ++it) {
           if ((*it)->type != cObjectMolecule || force || defer_builds_mode != 5) {
             int static_singletons =
-              SettingGet_b(G, (*it)->Setting.get(), NULL, cSetting_static_singletons);
+              SettingGet_b(G, (*it)->Setting.get(), nullptr, cSetting_static_singletons);
             int async_builds =
-              SettingGet_b(G, (*it)->Setting.get(), NULL, cSetting_async_builds);
+              SettingGet_b(G, (*it)->Setting.get(), nullptr, cSetting_async_builds);
             int max_threads =
-              SettingGet_i(G, (*it)->Setting.get(), NULL, cSetting_max_threads);
+              SettingGet_i(G, (*it)->Setting.get(), nullptr, cSetting_max_threads);
             int nFrame = 0;
             nFrame = (*it)->getNFrame();
             if((nFrame > 1) || (!static_singletons)) {
@@ -4775,11 +4775,11 @@ int SceneRenderCached(PyMOLGlobals * G)
       auto show_progress = SettingGet<int>(G, cSetting_show_progress);
       SettingSetGlobal_i(G, cSetting_show_progress, 0);
       SceneRay(G, 0, 0, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
-               NULL, NULL, 0.0F, 0.0F, false, NULL, false, -1);
+               nullptr, nullptr, 0.0F, 0.0F, false, nullptr, false, -1);
       SettingSetGlobal_i(G,cSetting_show_progress, show_progress);
     } else if(moviePlaying && SettingGetGlobal_b(G, cSetting_ray_trace_frames)) {
       SceneRay(G, 0, 0, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
-               NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
+               nullptr, nullptr, 0.0F, 0.0F, false, nullptr, true, -1);
     } else if((moviePlaying && SettingGetGlobal_b(G, cSetting_draw_frames)) || (draw_mode == 2)) {
       SceneMakeSizedImage(G, 0, 0, SettingGetGlobal_i(G, cSetting_antialias));
     } else if(I->CopyType == true) {    /* true vs. 2 */
@@ -5312,7 +5312,7 @@ void SceneZoom(PyMOLGlobals * G, float scale){
 }
 
 int SceneGetTwoSidedLighting(PyMOLGlobals * G){
-  return SceneGetTwoSidedLightingSettings(G, NULL, NULL);
+  return SceneGetTwoSidedLightingSettings(G, nullptr, nullptr);
 }
 
 int SceneGetTwoSidedLightingSettings(PyMOLGlobals * G,
@@ -5446,7 +5446,7 @@ void SceneTranslateSceneXYWithScale(PyMOLGlobals * G, float x, float y){
 
   vScale = SceneGetExactScreenVertexScale(G, glm::value_ptr(I->m_view.origin()));
   /*  if(stereo_via_adjacent_array(I->StereoMode)) {
-    x = get_stereo_x(x, &I->LastX, I->Width, NULL);
+    x = get_stereo_x(x, &I->LastX, I->Width, nullptr);
     }*/
  
   v2[0] = x * vScale;
@@ -5467,7 +5467,7 @@ void SceneTranslateSceneXYWithScale(PyMOLGlobals * G, float x, float y){
     moved_flag = true;
   }
   I->m_view.setPos(pos);
-  EditorFavorOrigin(G, NULL);
+  EditorFavorOrigin(G, nullptr);
   if(moved_flag && SettingGetGlobal_b(G, cSetting_roving_origin)) {
     SceneGetCenter(G, v2);     /* gets position of center of screen */
     SceneOriginSet(G, v2, true);

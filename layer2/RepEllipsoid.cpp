@@ -67,7 +67,7 @@ void RepEllipsoid::render(RenderInfo* info)
       " RepEllipsoidRender: rendering ray...\n" ENDFD;
 
     if(I->ray){
-      int rayok = CGORenderRay(I->ray, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
+      int rayok = CGORenderRay(I->ray, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->obj->Setting.get());
       if (!rayok){
 	CGOFree(I->ray);
 	try_std = true;
@@ -76,7 +76,7 @@ void RepEllipsoid::render(RenderInfo* info)
       try_std = true;
     }
     if(try_std && I->std){
-      ok &= CGORenderRay(I->std, ray, info, NULL, NULL, I->cs->Setting.get(), I->obj->Setting.get());
+      ok &= CGORenderRay(I->std, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->obj->Setting.get());
       if (!ok){
 	CGOFree(I->std);
       }
@@ -108,9 +108,9 @@ void RepEllipsoid::render(RenderInfo* info)
 	  CGOFree(I->shaderCGO);	  
 	}
 	if (I->shaderCGO){
-          CGORender(I->shaderCGO, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+          CGORender(I->shaderCGO, nullptr, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
 	} else if(I->std){
-          CGORender(I->std, NULL, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
+          CGORender(I->std, nullptr, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
 	}
     }
   }
@@ -155,12 +155,12 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
 
   // skip if no dots are visible
   if(!cs->hasRep(cRepEllipsoidBit))
-    return NULL;
+    return nullptr;
 
   auto I = new RepEllipsoid(cs, state);
   CHECKOK(ok, I);
   if (!ok)
-    return NULL;
+    return nullptr;
 
   obj = cs->Obj;
 
@@ -206,7 +206,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
       float last_alpha = 1.0F;
 
       double *csmatrix = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(),
-            cSetting_matrix_mode) > 0 ? NULL : cs->Matrix.data();
+            cSetting_matrix_mode) > 0 ? nullptr : cs->Matrix.data();
 
       for(a = 0; a < cs->NIndex; a++) {
         a1 = cs->IdxToAtm[a];
@@ -339,7 +339,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
   }
   if (!ok){
     delete I;
-    I = NULL;
+    I = nullptr;
   }
   return (Rep *) I;
 }
