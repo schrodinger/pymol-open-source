@@ -59,6 +59,8 @@ class _loadable:
     dxstr = 75    # DX file (APBS)
     mapstr = 76   # unspecified CCP4 or MRC map
     mrcstr = 77
+    bcif = 78
+    bcifstr = 79
 
 class loadable(_loadable):
     @classmethod
