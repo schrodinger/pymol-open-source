@@ -519,7 +519,7 @@ int MapSetupExpress(MapType * I)
   int *link = I->Link;
   int st, flag;
   int *i_ptr3, *i_ptr4, *i_ptr5;
-  int *e_list = NULL;
+  int *e_list = nullptr;
   int mx0 = I->iMax[0], mx1 = I->iMax[1], a, am1, ap2, *i_ptr1, b, bm1, bp2, *i_ptr2;
   unsigned int mapSize;
   int ok = true;
@@ -613,9 +613,9 @@ void MapLocus(const MapType * I, const float *v, int *a, int *b, int *c)
   bt = (int) ((v[1] - I->Min[1]) * invDiv) + MapBorder;
   ct = (int) ((v[2] - I->Min[2]) * invDiv) + MapBorder;
 
-  *a = pymol::clamp(at, I->iMin[0], I->iMax[0]);
-  *b = pymol::clamp(bt, I->iMin[1], I->iMax[1]);
-  *c = pymol::clamp(ct, I->iMin[2], I->iMax[2]);
+  *a = std::clamp(at, I->iMin[0], I->iMax[0]);
+  *b = std::clamp(bt, I->iMin[1], I->iMax[1]);
+  *c = std::clamp(ct, I->iMin[2], I->iMax[2]);
 }
 
 /**
@@ -744,13 +744,13 @@ float MapGetSeparation(PyMOLGlobals * G, float range, const float *mx, const flo
 
 MapType *MapNew(PyMOLGlobals * G, float range, const float *vert, int nVert, const float *extent)
 {
-  return (_MapNew(G, range, vert, nVert, extent, NULL, -1, 0));
+  return (_MapNew(G, range, vert, nVert, extent, nullptr, -1, 0));
 }
 
 MapType *MapNewCached(PyMOLGlobals * G, float range, const float *vert, int nVert,
                       const float *extent, int group_id, int block_id)
 {
-  return (_MapNew(G, range, vert, nVert, extent, NULL, group_id, block_id));
+  return (_MapNew(G, range, vert, nVert, extent, nullptr, group_id, block_id));
 }
 
 MapType *MapNewFlagged(PyMOLGlobals * G, float range, const float *vert, int nVert,
@@ -776,7 +776,7 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, const float *vert, int nV
     " MapNew-Debug: entered.\n" ENDFD;
   CHECKOK(ok, I);
   if (!ok){
-    return NULL;
+    return nullptr;
   }
   /* Initialize */
   I->G = G;
@@ -788,7 +788,7 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, const float *vert, int nV
   CHECKOK(ok, I->Link);
   if (!ok){
     MapFree(I);
-    return NULL;
+    return nullptr;
   }
   for(a = 0; a < nVert; a++)
     I->Link[a] = -1;
@@ -932,7 +932,7 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, const float *vert, int nV
   CHECKOK(ok, I->Head);
   if (!ok){
     MapFree(I);
-    return NULL;
+    return nullptr;
   }
   /* initialize */
   /*  for(a=0;a<I->Dim[0];a++)

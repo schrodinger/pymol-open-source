@@ -67,9 +67,9 @@ int ObjectGadgetSetVertex(ObjectGadget * I, int index, int base, const float *v)
 /* in current state */
 ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
 {
-  ObjectGadget *I = NULL;
-  GadgetSet *gs = NULL;
-  CGO *cgo = NULL;
+  ObjectGadget *I = nullptr;
+  GadgetSet *gs = nullptr;
+  CGO *cgo = nullptr;
   int a;
 
   float coord[] = {
@@ -255,7 +255,7 @@ void ObjectGadgetUpdateExtents(ObjectGadget * I)
 
 static PyObject *ObjectGadgetGSetAsPyList(ObjectGadget * I, bool incl_cgos)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   int a;
   result = PyList_New(I->NGSet);
   for(a = 0; a < I->NGSet; a++) {
@@ -297,7 +297,7 @@ int ObjectGadgetInitFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget *
 {
   int ok = true;
   if(ok)
-    ok = (I != NULL) && (list != NULL);
+    ok = (I != nullptr) && (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
@@ -328,13 +328,13 @@ int ObjectGadgetNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget **
                               int version)
 {
   int ok = true;
-  ObjectGadget *I = NULL;
+  ObjectGadget *I = nullptr;
   int gadget_type = -1;
   PyObject *plain;
-  (*result) = NULL;
+  (*result) = nullptr;
 
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
 
@@ -342,7 +342,7 @@ int ObjectGadgetNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget **
      we've got to maintain backward compat...ugh */
 
   if(ok)
-    ok = ((plain = PyList_GetItem(list, 0)) != NULL);
+    ok = ((plain = PyList_GetItem(list, 0)) != nullptr);
   if(ok)
     ok = PyList_Check(plain);
   if(ok)
@@ -355,7 +355,7 @@ int ObjectGadgetNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget **
     case cGadgetPlain:
       I = new ObjectGadget(G);
       if(ok)
-        ok = (I != NULL);
+        ok = (I != nullptr);
       if(ok)
         ok = ObjectGadgetInitFromPyList(G, list, I, version);
       if(ok)
@@ -370,7 +370,7 @@ int ObjectGadgetNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget **
 
 PyObject *ObjectGadgetPlainAsPyList(ObjectGadget * I, bool incl_cgos)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   /* first, dump the atoms */
 
@@ -385,7 +385,7 @@ PyObject *ObjectGadgetPlainAsPyList(ObjectGadget * I, bool incl_cgos)
 
 PyObject *ObjectGadgetAsPyList(ObjectGadget * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   /* first, dump the atoms */
 
@@ -406,7 +406,7 @@ ObjectGadget::~ObjectGadget()
   for(int a = 0; a < I->NGSet; a++)
     if(I->GSet[a]) {
       delete I->GSet[a];
-      I->GSet[a] = NULL;
+      I->GSet[a] = nullptr;
     }
 }
 

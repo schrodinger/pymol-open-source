@@ -34,7 +34,7 @@ static long fgetsize(FILE *fp) {
 
 /**
  * Allocate memory and read the entire file from the given file pointer.
- * The file size is stored into the size pointer if not NULL.
+ * The file size is stored into the size pointer if not nullptr.
  */
 static char * fgetcontents(FILE *fp, long *size) {
   long filesize = fgetsize(fp);
@@ -66,7 +66,7 @@ FILE * pymol_fopen(const char * filename, const char * mode) {
 
     if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
           filename, len_filename, wfilename.data(), wfilename.size()))
-      return NULL;
+      return nullptr;
 
     fp = _wfopen(wfilename.data(), wmode.data());
   }
@@ -77,7 +77,7 @@ FILE * pymol_fopen(const char * filename, const char * mode) {
 
 /**
  * Allocate memory and read the entire file for the given filename.
- * The file size is stored into the size pointer if not NULL.
+ * The file size is stored into the size pointer if not nullptr.
  */
 char * FileGetContents(const char *filename, long *size) {
   char *contents;

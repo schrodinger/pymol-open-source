@@ -140,7 +140,7 @@ bool TextureIsCharTextured(PyMOLGlobals* G, int char_id, float* extent)
       }
     }
     {
-      unsigned char *buffer = NULL;
+      unsigned char *buffer = nullptr;
       if (!I->texture) {
           is_new = true;
       }

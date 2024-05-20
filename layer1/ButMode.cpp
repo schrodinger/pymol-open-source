@@ -479,7 +479,7 @@ static bool ButModeDrawFastImpl(Block * block, short definitely , CGO *orthoCGO)
 /*========================================================================*/
 int ButModeInit(PyMOLGlobals * G)
 {
-  CButMode *I = NULL;
+  CButMode *I = nullptr;
   if((I = (G->ButMode = new CButMode(G)))) {
 
     int a;

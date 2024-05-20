@@ -27,13 +27,13 @@ int SceneDoXYPick(PyMOLGlobals * G, int x, int y, ClickSide click_side)
   }
   SceneDontCopyNext(G);
 
-  I->LastPicked.context.object = NULL;
+  I->LastPicked.context.object = nullptr;
   SceneRenderInfo renderInfo{};
   renderInfo.pick = &I->LastPicked;
   renderInfo.mousePos = Offset2D{x, y};
   renderInfo.clickSide = click_side;
   SceneRender(G, renderInfo);
-  return (I->LastPicked.context.object != NULL);
+  return (I->LastPicked.context.object != nullptr);
   /* did we pick something? */
 }
 
@@ -124,7 +124,7 @@ static std::vector<unsigned> SceneGetPickIndices(PyMOLGlobals* G,
           GridSetViewport(G, &I->grid, slot);
         }
         SceneRenderAll(
-            G, context, NULL, &pickmgr, RenderPass::Antialias, true, 0.0F, &I->grid, 0, SceneRenderWhich::AllObjects);
+            G, context, nullptr, &pickmgr, RenderPass::Antialias, true, 0.0F, &I->grid, 0, SceneRenderWhich::AllObjects);
       }
     }
 
@@ -218,11 +218,11 @@ static void SceneRenderPickingSinglePick(PyMOLGlobals* G,
 	" SceneClick-Detail: obj %p index %d bond %d\n",
 	pick->context.object, pick->src.index, pick->src.bond ENDFB(G);
     }
-    // if cPickableNoPick then set object to NULL since nothing picked
+    // if cPickableNoPick then set object to nullptr since nothing picked
     if (pick->src.bond == cPickableNoPick)
-      pick->context.object = NULL;
+      pick->context.object = nullptr;
   } else {
-    pick->context.object = NULL;
+    pick->context.object = nullptr;
   }
 
 #ifndef PURE_OPENGL_ES_2

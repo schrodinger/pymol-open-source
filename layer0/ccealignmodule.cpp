@@ -123,7 +123,7 @@ pcePoint getCoords(PyObject* L, int length)
   pcePoint coords = (pcePoint) malloc(sizeof(cePoint)*length);
 
   if (!coords)
-    return NULL;
+    return nullptr;
 
   // loop through the arguments, pulling out the
   // XYZ coordinates.
@@ -610,7 +610,7 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
 
   if ( bestRMSD == 1e6 ) {
     std::cout << "ERROR: Best RMSD found was 1e6.  Broken.\n";
-    return NULL;
+    return nullptr;
   }
 
   PyObject* pyU = Py_BuildValue( "[f,f,f,f, f,f,f,f, f,f,f,f, f,f,f,f]",

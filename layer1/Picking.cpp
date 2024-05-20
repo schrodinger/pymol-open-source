@@ -187,7 +187,7 @@ void PickColorManager::colorNext(unsigned char* color,
 
 /**
  * Get identifier for the 1-based picking color index.
- * Returns NULL if the index is out of bounds.
+ * Returns nullptr if the index is out of bounds.
  */
 const Picking* PickColorManager::getIdentifier(unsigned index) const
 {

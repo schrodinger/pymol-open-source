@@ -70,7 +70,7 @@ static void MainReshape(int width, int height);
 static void MainDrawLocked(void);
 static void MainDrag(int x, int y);
 
-static CPyMOL *PyMOLInstance = NULL;    /* eliminate */
+static CPyMOL *PyMOLInstance = nullptr;    /* eliminate */
 
 struct _CMain {
   int IdleMode;
@@ -1248,7 +1248,7 @@ static void launch(CPyMOLOptions * options, int own_the_options)
 
   int multisample_mask = 0;
   int theWindow = 0;
-  PyMOLGlobals *G = NULL;
+  PyMOLGlobals *G = nullptr;
 
   PyMOLInstance = PyMOL_NewWithOptions(options);
   G = PyMOL_GetGlobals(PyMOLInstance);
@@ -1489,9 +1489,9 @@ int main_shared(int block_input_hook)
 PyObject *MainAsPyList(PyMOLGlobals *G)
 {
 #ifdef _PYMOL_NOPY
-  return NULL;
+  return nullptr;
 #else
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   int width, height;
   result = PyList_New(2);
   width = SceneGetBlock(G)->getWidth();
@@ -1517,7 +1517,7 @@ int MainFromPyList(PyMOLGlobals *G, PyObject * list)
   OrthoLineType buffer;
 
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   if(ok)

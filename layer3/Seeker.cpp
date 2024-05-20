@@ -77,7 +77,7 @@ static void SeekerSelectionToggleRange(PyMOLGlobals * G, std::vector<CSeqRow>& r
     char prefix[3] = "";
     int logging = SettingGetGlobal_i(G, cSetting_logging);
     int col_num;
-    int *atom_vla = NULL;
+    int *atom_vla = nullptr;
     int n_at = 0;
     int at_idx;
     int *atom_list;
@@ -280,7 +280,7 @@ void SeekerSelectionCenter(PyMOLGlobals * G, int action)
 
   switch (action) {
   case 0:                      /* center cumulative */
-    ExecutiveCenter(G, cTempCenterSele, -1, true, -1, NULL, true);
+    ExecutiveCenter(G, cTempCenterSele, -1, true, -1, nullptr, true);
     if(logging) {
       auto buf2 = pymol::string_format("%scmd.center(\"%s\")\n", prefix, cTempCenterSele);
       PLog(G, buf2, cPLog_no_flush);
@@ -299,7 +299,7 @@ void SeekerSelectionCenter(PyMOLGlobals * G, int action)
     {
       char selName[WordLength];
       if(ExecutiveGetActiveSeleName(G, selName, true, logging)) {
-        ExecutiveCenter(G, selName, -1, true, -1, NULL, true);
+        ExecutiveCenter(G, selName, -1, true, -1, nullptr, true);
         if(logging) {
           auto buf2 = pymol::string_format("%scmd.center(\"%s\")\n", prefix, selName);
           PLog(G, buf2, cPLog_no_flush);
@@ -328,7 +328,7 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA, int 
       if((UtilGetSeconds(G) - I->LastClickTime) < cDoubleTime) {
         char name[WordLength];
         if(ExecutiveGetActiveSeleName(G, name, false, false)) {
-          SelectorCreate(G, name, "none", NULL, true, NULL);
+          SelectorCreate(G, name, "none", nullptr, true, nullptr);
           if(logging) {
             auto buf2 = pymol::string_format("cmd.select('%s','none', enable=1)", name);
             PLog(G, buf2, cPLog_no_flush);
@@ -405,7 +405,7 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA, int 
         SeekerSelectionCenter(G, action);
         I->box_active = true;
         if(col->state && (obj = ExecutiveFindObjectMoleculeByName(G, row->name))) {
-          SettingSetSmart_i(G, obj->Setting.get(), NULL, cSetting_state, col->state);
+          SettingSetSmart_i(G, obj->Setting.get(), nullptr, cSetting_state, col->state);
           SceneChanged(G);
         }
       }
@@ -418,10 +418,10 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA, int 
         if(mod & cOrthoCTRL) {
           center = 2;
         }
-        int codes = SettingGet_i(G, row->obj->Setting.get(), NULL, cSetting_seq_view_format);
+        int codes = SettingGet_i(G, row->obj->Setting.get(), nullptr, cSetting_seq_view_format);
         if(row->obj->DiscreteFlag && SettingGet_b(G,
                                            row->obj->Setting.get(),
-                                           NULL, cSetting_seq_view_discrete_by_state))
+                                           nullptr, cSetting_seq_view_discrete_by_state))
           codes = 4;
         if (codes != 4 || row->obj->DiscreteFlag) { // keep only non-discrete states selectable
           if(!continuation) {
@@ -460,7 +460,7 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA, int 
           SeekerSelectionCenter(G, 2);
 
         if(col->state && (obj = ExecutiveFindObjectMoleculeByName(G, row->name))) {
-          SettingSetSmart_i(G, obj->Setting.get(), NULL, cSetting_state, col->state);
+          SettingSetSmart_i(G, obj->Setting.get(), nullptr, cSetting_state, col->state);
           SceneChanged(G);
         }
       }
@@ -468,7 +468,7 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA, int 
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 static void SeekerRefresh(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA)
@@ -668,7 +668,7 @@ static CSeqRow *SeekerDrag(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA, int r
       break;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 static CSeqRow *SeekerRelease(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA, int button,
@@ -678,7 +678,7 @@ static CSeqRow *SeekerRelease(PyMOLGlobals * G, std::vector<CSeqRow>& rowVLA, in
   I->dragging = false;
 
   I->box_active = false;
-  return NULL;
+  return nullptr;
 }
 
 char SeekerGetAbbr(PyMOLGlobals * G, const char *abbr, char water, char unknown)
@@ -967,10 +967,10 @@ static int SeekerFindTag(PyMOLGlobals * G, const AtomInfoType * ai, int sele, in
 
 void SeekerUpdate(PyMOLGlobals * G)
 {
-  /*  pymol::CObject *o = NULL;
+  /*  pymol::CObject *o = nullptr;
      int s; */
 
-  void *hidden = NULL;
+  void *hidden = nullptr;
   const AtomInfoType *ai;
   ObjectMolecule *obj;
   int nRow = 0;
@@ -980,7 +980,7 @@ void SeekerUpdate(PyMOLGlobals * G)
   int default_color = 0;
   int align_sele = -1;          /* alignment selection */
   const int MAXCONSECUTIVEGAPS = 9;
-  CSeqRow *row, *lab = NULL;
+  CSeqRow *row, *lab = nullptr;
   std::vector<CSeqRow> row_vla;
   /* FIRST PASS: get all the residues represented properly */
   label_mode = SettingGetGlobal_i(G, cSetting_seq_view_label_mode);
@@ -991,8 +991,8 @@ void SeekerUpdate(PyMOLGlobals * G)
     bool isHidden = (SettingGet<bool>(G, cSetting_hide_underscore_names) && (obj->Name[0] == '_'));
     if (obj->Enabled && (SettingGet<bool>(*obj, cSetting_seq_view)) && !isHidden) {
       int a;
-      const AtomInfoType *last = NULL, *last_segi = NULL, *last_chain = NULL;
-      const CoordSet *last_disc = NULL;
+      const AtomInfoType *last = nullptr, *last_segi = nullptr, *last_chain = nullptr;
+      const CoordSet *last_disc = nullptr;
       int last_state;
       int last_abbr = true;
       int last_spacer = false;
@@ -1001,23 +1001,23 @@ void SeekerUpdate(PyMOLGlobals * G)
       int est_col = obj->NAtom / 5 + 1;
       int est_char = obj->NAtom * 4;
       int first_atom_in_label;
-      int missing_color = SettingGet_i(G, obj->Setting.get(), NULL, cSetting_seq_view_fill_color);
-      const CoordSet *cs = obj->DiscreteFlag ? NULL : obj->getCoordSet(-2 /* current */);
+      int missing_color = SettingGet_i(G, obj->Setting.get(), nullptr, cSetting_seq_view_fill_color);
+      const CoordSet *cs = obj->DiscreteFlag ? nullptr : obj->getCoordSet(-2 /* current */);
       bool atom_in_state;
 
       int gapMode = SettingGet_i(G, obj->Setting.get(), nullptr, cSetting_seq_view_gap_mode);
       int min_pad = -1;
-      CSeqCol *r1 = NULL, *l1 = NULL;   /* *col */
+      CSeqCol *r1 = nullptr, *l1 = nullptr;   /* *col */
 
       if(nRow >= max_row)
         break;
 
-      codes = SettingGet_i(G, obj->Setting.get(), NULL, cSetting_seq_view_format);
+      codes = SettingGet_i(G, obj->Setting.get(), nullptr, cSetting_seq_view_format);
       if(obj->DiscreteFlag && SettingGet_b(G,
                                            obj->Setting.get(),
-                                           NULL, cSetting_seq_view_discrete_by_state))
+                                           nullptr, cSetting_seq_view_discrete_by_state))
         codes = 4;
-      default_color = SettingGet_i(G, obj->Setting.get(), NULL, cSetting_seq_view_color);
+      default_color = SettingGet_i(G, obj->Setting.get(), nullptr, cSetting_seq_view_color);
 
       /* allocate a row for labels, if present
          the text for the labels and the residues will line up exactly 
@@ -1030,7 +1030,7 @@ void SeekerUpdate(PyMOLGlobals * G)
         lab->col = pymol::vla<CSeqCol>(est_col);
         lab->label_flag = true;
       } else {
-        lab = NULL;
+        lab = nullptr;
       }
 
       VecCheck(row_vla, nRow);
@@ -1802,7 +1802,7 @@ void SeekerUpdate(PyMOLGlobals * G)
         lab = row;
       else {
         for(b = 0; b < nCol; b++) {
-          CSeqCol *r1 = row->col + b, *l1 = NULL;
+          CSeqCol *r1 = row->col + b, *l1 = nullptr;
           if(lab) {
             l1 = lab->col + b;  /* if a fixed label is present, 
                                    get the final offset from the residue line */
@@ -1810,7 +1810,7 @@ void SeekerUpdate(PyMOLGlobals * G)
               l1->offset = r1->offset;
           }
         }
-        lab = NULL;
+        lab = nullptr;
       }
     }
 
@@ -1832,20 +1832,20 @@ void SeekerUpdate(PyMOLGlobals * G)
         int draw_it;
         int n_skipped = 0;
         int last_resv = -1;
-        const AtomInfoType *last_ai = NULL;
+        const AtomInfoType *last_ai = nullptr;
         const ObjectMolecule *obj;
         const AtomInfoType *ai;
         row = lab + 1;
         nCol = row->nCol;
         obj = row->obj;
-        div = SettingGet_i(G, obj->Setting.get(), NULL, cSetting_seq_view_label_spacing);
-        sub = SettingGet_i(G, obj->Setting.get(), NULL, cSetting_seq_view_label_start);
+        div = SettingGet_i(G, obj->Setting.get(), nullptr, cSetting_seq_view_label_spacing);
+        sub = SettingGet_i(G, obj->Setting.get(), nullptr, cSetting_seq_view_label_start);
 
         for(b = 0; b < nCol; b++) {
           CSeqCol *r1 = row->col + b;
           CSeqCol *l1 = lab->col + b;
 
-          ai = NULL;
+          ai = nullptr;
           if(r1->atom_at) {
             atom_list = row->atom_lists + r1->atom_at;
             if(*atom_list >= 0)
@@ -1949,7 +1949,7 @@ void SeekerUpdate(PyMOLGlobals * G)
 
 int SeekerInit(PyMOLGlobals * G)
 {
-  CSeeker *I = NULL;
+  CSeeker *I = nullptr;
   if((I = (G->Seeker = new CSeeker()))) {
     I->dragInfo.row = -1;
     I->LastClickTime = UtilGetSeconds(G) - 1.0F;

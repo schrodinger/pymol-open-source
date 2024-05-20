@@ -38,7 +38,7 @@ void MenuActivate(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int pa
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {
-    PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
+    PopUpNew(G, x, y, last_x, last_y, passive, list, nullptr);
     Py_DECREF(list);
   }
   PUnblock(G);
@@ -60,7 +60,7 @@ void MenuActivate3fv(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {
-    PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
+    PopUpNew(G, x, y, last_x, last_y, passive, list, nullptr);
     Py_DECREF(list);
   }
   PUnblock(G);
@@ -79,7 +79,7 @@ void MenuActivate2Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, in
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {
-    PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
+    PopUpNew(G, x, y, last_x, last_y, passive, list, nullptr);
     Py_DECREF(list);
   }
   PUnblock(G);
@@ -89,7 +89,7 @@ void MenuActivate2Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, in
 Block *MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
 			const char *name, const char *arg1)
 {
-  Block *block = NULL;
+  Block *block = nullptr;
 #ifndef _PYMOL_NOPY
   PyObject *list;
   PBlock(G);
@@ -98,7 +98,7 @@ Block *MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, 
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {
-    block = PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
+    block = PopUpNew(G, x, y, last_x, last_y, passive, list, nullptr);
     Py_DECREF(list);
   }
   PUnblock(G);
@@ -118,7 +118,7 @@ void MenuActivate0Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, in
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {
-    PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
+    PopUpNew(G, x, y, last_x, last_y, passive, list, nullptr);
     Py_DECREF(list);
   }
   PUnblock(G);

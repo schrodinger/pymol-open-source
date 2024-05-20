@@ -202,7 +202,7 @@ if True:
 
         # for extending the language
 
-        from .commanding import extend, extendaa, alias
+        from .commanding import declare_command, extend, extendaa, alias
 
         # for documentation etc
 

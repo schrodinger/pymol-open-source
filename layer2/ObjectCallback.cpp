@@ -42,7 +42,7 @@ ObjectCallback::~ObjectCallback()
   for(int a = 0; a < I->NState; a++) {
     if(I->State[a].PObj) {
       Py_DECREF(I->State[a].PObj);
-      I->State[a].PObj = NULL;
+      I->State[a].PObj = nullptr;
     }
   }
   PAutoUnblock(G, blocked);
@@ -70,7 +70,7 @@ void ObjectCallback::render(RenderInfo * info)
   auto pick = info->pick;
   const RenderPass pass = info->pass;
   PyMOLGlobals *G = I->G;
-  ObjectCallbackState *sobj = NULL;
+  ObjectCallbackState *sobj = nullptr;
 
   if(pass != RenderPass::Opaque) /* for now, the callback should be called during the first pass (opaque), so
 		  that it is possible to set positions for any object that is rendered in the 
@@ -102,7 +102,7 @@ void ObjectCallback::render(RenderInfo * info)
       if(!sobj->is_callable)
         continue;
 
-      Py_DecRef(PyObject_CallObject(sobj->PObj, NULL));
+      Py_DecRef(PyObject_CallObject(sobj->PObj, nullptr));
       if(PyErr_Occurred())
         PyErr_Print();
     }
@@ -132,9 +132,9 @@ ObjectCallback *ObjectCallbackDefine(PyMOLGlobals * G, ObjectCallback * obj,
                                      PyObject * pobj, int state)
 {
 #ifdef _PYMOL_NOPY
-  return NULL;
+  return nullptr;
 #else
-  ObjectCallback *I = NULL;
+  ObjectCallback *I = nullptr;
 
   if(!obj) {
     I = new ObjectCallback(G);
@@ -222,7 +222,7 @@ static int ObjectCallbackStateFromPyObject(PyMOLGlobals * G, ObjectCallbackState
 static int ObjectCallbackAllStatesFromPyObject(ObjectCallback * I, PyObject * obj)
 {
   int result = false;
-  PyObject *list = NULL;
+  PyObject *list = nullptr;
 
   if(PyList_Check(obj)) {
     list = obj;
@@ -260,7 +260,7 @@ int ObjectCallbackNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCallbac
   ObjectCallback *I;
   PyObject *val;
 
-  ok_assert(1, list != NULL);
+  ok_assert(1, list != nullptr);
   ok_assert(1, PyList_Check(list));
 
   ok_assert(1, I = new ObjectCallback(G));
@@ -278,7 +278,7 @@ int ObjectCallbackNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCallbac
 ok_except2:
   DeleteP(I);
 ok_except1:
-  *result = NULL;
+  *result = nullptr;
   return false;
 }
 
@@ -293,7 +293,7 @@ static PyObject *ObjectCallbackStateAsPyObject(ObjectCallbackState * I)
 static PyObject *ObjectCallbackAllStatesAsPyObject(ObjectCallback * I)
 {
   int a;
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   PyObject *list = PyList_New(I->NState);
 
   for(a = 0; a < I->NState; a++) {
@@ -318,7 +318,7 @@ static PyObject *ObjectCallbackAllStatesAsPyObject(ObjectCallback * I)
 
 PyObject *ObjectCallbackAsPyList(ObjectCallback * I)
 {
-  PyObject *result = NULL, *states;
+  PyObject *result = nullptr, *states;
 
   ok_assert(1, states = ObjectCallbackAllStatesAsPyObject(I));
 

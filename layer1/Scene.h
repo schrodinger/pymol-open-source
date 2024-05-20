@@ -244,7 +244,7 @@ int SceneGetBackgroundColorAlreadySet(PyMOLGlobals * G);
 void SceneSetDoNotClearBackground(PyMOLGlobals * G, int);
 int SceneGetDoNotClearBackground(PyMOLGlobals * G);
 
-void SceneProgramLighting(PyMOLGlobals * G, CShaderPrg * shaderPrg = NULL);
+void SceneProgramLighting(PyMOLGlobals * G, CShaderPrg * shaderPrg = nullptr);
 void SceneGLClear(PyMOLGlobals * G, GLbitfield mask);
 
 #ifdef _PYMOL_IOS

@@ -34,7 +34,7 @@ NamedPicking::NamedPicking(const Picking& pick)
 static void SceneNoteMouseInteraction(PyMOLGlobals* G)
 {
   SceneAbortAnimation(G);
-  if (SettingGet_b(G, NULL, NULL, cSetting_mouse_restart_movie_delay)) {
+  if (SettingGet_b(G, nullptr, nullptr, cSetting_mouse_restart_movie_delay)) {
     SceneRestartFrameTimer(G);
   }
 }
@@ -113,7 +113,7 @@ void SceneClickButtonAddTo(PyMOLGlobals* G, pymol::CObject* obj,
     }
   } else {
     auto buf2 = pymol::string_format("%s(%s)", sel_mode_kw, buffer);
-    SelectorCreate(G, selName.c_str(), buf2.c_str(), NULL, false, NULL);
+    SelectorCreate(G, selName.c_str(), buf2.c_str(), nullptr, false, nullptr);
     if (obj->type == cObjectMolecule) {
       if (SettingGet<int>(G, cSetting_logging)) {
         auto objMol = (ObjectMolecule*) obj;
@@ -284,7 +284,7 @@ void SceneClickObject(PyMOLGlobals* G, pymol::CObject* obj, const NamedPicking& 
         if (ObjectMoleculeGetAtomTxfVertex((ObjectMolecule*) obj,
                 LastPicked.context.state, LastPicked.src.index, v1)) {
           EditorFavorOrigin(G, v1);
-          ExecutiveOrigin(G, NULL, true, NULL, v1, 0);
+          ExecutiveOrigin(G, nullptr, true, nullptr, v1, 0);
         }
       }
       if (obj->type == cObjectMolecule) {
@@ -503,7 +503,7 @@ void SceneClickPickBond(PyMOLGlobals* G, int x, int y, int mode, const NamedPick
 
   {
     auto buffer = pymol::string_format("%s`%d", obj->Name, I->LastPicked.src.index + 1);
-    SelectorCreate(G, cEditorSele1, buffer.c_str(), NULL, true, NULL);
+    SelectorCreate(G, cEditorSele1, buffer.c_str(), nullptr, true, nullptr);
   }
 
   if (LastPicked.src.bond >= 0) {
@@ -524,7 +524,7 @@ void SceneClickPickBond(PyMOLGlobals* G, int x, int y, int mode, const NamedPick
       PLog(G, buffer, cPLog_pym);
     }
     auto buffer = pymol::string_format("%s`%d", obj->Name, atIndex + 1);
-    SelectorCreate(G, cEditorSele2, buffer.c_str(), NULL, true, NULL);
+    SelectorCreate(G, cEditorSele2, buffer.c_str(), nullptr, true, nullptr);
     EditorActivate(G, SettingGetGlobal_i(G, cSetting_state) - 1, true);
 
     if (mode == cButModePkTorBnd) {
@@ -816,7 +816,7 @@ void SceneClick(Block* block, int button, int x, int y, int mod, double when)
       x = x - I->margin.left;
 
       if (stereo_via_adjacent_array(I->StereoMode))
-        x = get_stereo_x(x, NULL, I->Width, NULL);
+        x = get_stereo_x(x, nullptr, I->Width, nullptr);
 
       I->LastX = x;
       I->LastY = y;
@@ -826,7 +826,7 @@ void SceneClick(Block* block, int button, int x, int y, int mod, double when)
         auto obj = EditorDragObject(G);
         if (obj) {
           if (SettingGetGlobal_b(G, cSetting_movie_auto_store)) {
-            ObjectTranslateTTT(obj, NULL, true);
+            ObjectTranslateTTT(obj, nullptr, true);
             I->MotionGrabbedObj = obj;
             obj->Grabbed = true;
             if (SettingGetGlobal_i(G, cSetting_movie_auto_interpolate)) {
@@ -834,7 +834,7 @@ void SceneClick(Block* block, int button, int x, int y, int mod, double when)
               I->ReinterpolateObj = obj;
             }
           } else {
-            ObjectTranslateTTT(obj, NULL, false);
+            ObjectTranslateTTT(obj, nullptr, false);
           }
         }
       }
@@ -857,7 +857,7 @@ void SceneClick(Block* block, int button, int x, int y, int mod, double when)
       x = x - I->margin.left;
 
       if (stereo_via_adjacent_array(I->StereoMode))
-        x = get_stereo_x(x, NULL, I->Width, NULL);
+        x = get_stereo_x(x, nullptr, I->Width, nullptr);
 
       I->LastX = x;
       I->LastY = y;
@@ -866,7 +866,7 @@ void SceneClick(Block* block, int button, int x, int y, int mod, double when)
     case cButModePickAtom:
     case cButModeMenu:
       if (stereo_via_adjacent_array(I->StereoMode))
-        x = get_stereo_x(x, NULL, I->Width, NULL);
+        x = get_stereo_x(x, nullptr, I->Width, nullptr);
 
       if (SceneDoXYPick(G, x, y, click_side)) {
         auto obj = I->LastPicked.context.object;
@@ -895,7 +895,7 @@ void SceneClick(Block* block, int button, int x, int y, int mod, double when)
     case cButModePickBond:
     case cButModePkTorBnd:
       if (stereo_via_adjacent_array(I->StereoMode))
-        x = get_stereo_x(x, NULL, I->Width, &click_side);
+        x = get_stereo_x(x, nullptr, I->Width, &click_side);
 
       if (SceneDoXYPick(G, x, y, click_side)) {
         y = y - I->margin.bottom;
@@ -928,7 +928,7 @@ void SceneClick(Block* block, int button, int x, int y, int mod, double when)
     case cButModeMoveAtom:
     case cButModeMoveAtomZ:
       if (stereo_via_adjacent_array(I->StereoMode))
-        x = get_stereo_x(x, NULL, I->Width, &click_side);
+        x = get_stereo_x(x, nullptr, I->Width, &click_side);
 
       if (SceneDoXYPick(G, x, y, click_side)) {
         auto obj = I->LastPicked.context.object;
@@ -963,7 +963,7 @@ void SceneClick(Block* block, int button, int x, int y, int mod, double when)
           case cButModeRotView:
           case cButModeMovView: {
             if (SettingGetGlobal_b(G, cSetting_movie_auto_store)) {
-              ObjectTranslateTTT(obj, NULL, true);
+              ObjectTranslateTTT(obj, nullptr, true);
               I->MotionGrabbedObj = obj;
               obj->Grabbed = true;
               if (SettingGetGlobal_i(G, cSetting_movie_auto_interpolate)) {
@@ -971,7 +971,7 @@ void SceneClick(Block* block, int button, int x, int y, int mod, double when)
                 I->ReinterpolateObj = obj;
               }
             } else {
-              ObjectTranslateTTT(obj, NULL, false);
+              ObjectTranslateTTT(obj, nullptr, false);
             }
           } break;
           }
@@ -1031,7 +1031,7 @@ void SceneClick(Block* block, int button, int x, int y, int mod, double when)
     case cButModeDragMol:
     case cButModeDragObj:
       if (stereo_via_adjacent_array(I->StereoMode))
-        x = get_stereo_x(x, NULL, I->Width, &click_side);
+        x = get_stereo_x(x, nullptr, I->Width, &click_side);
 
       if (SceneDoXYPick(G, x, y, click_side)) {
         auto obj = I->LastPicked.context.object;
@@ -1188,12 +1188,12 @@ void SceneRelease(Block* block, int button, int x, int y, int mod, double when)
       ObjectMotionReinterpolate(I->ReinterpolateObj);
     }
     I->ReinterpolateFlag = true;
-    I->ReinterpolateObj = NULL;
+    I->ReinterpolateObj = nullptr;
   }
   if (I->MotionGrabbedObj) {
     if (ExecutiveValidateObjectPtr(G, I->MotionGrabbedObj, 0)) {
       I->MotionGrabbedObj->Grabbed = false;
-      I->MotionGrabbedObj = NULL;
+      I->MotionGrabbedObj = nullptr;
     }
   }
 }
@@ -1325,7 +1325,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
 
           vScale = SceneGetExactScreenVertexScale(G, v1);
           if (stereo_via_adjacent_array(I->StereoMode)) {
-            x = get_stereo_x(x, &I->LastX, I->Width, NULL);
+            x = get_stereo_x(x, &I->LastX, I->Width, nullptr);
           }
 
           /* transform into model coodinate space */
@@ -1366,11 +1366,11 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
       eff_width = I->Width;
       if (stereo_via_adjacent_array(I->StereoMode)) {
         eff_width = I->Width / 2;
-        x = get_stereo_x(x, &I->LastX, I->Width, NULL);
+        x = get_stereo_x(x, &I->LastX, I->Width, nullptr);
       }
 
       virtual_trackball =
-          SettingGet_i(G, NULL, NULL, cSetting_virtual_trackball);
+          SettingGet_i(G, nullptr, nullptr, cSetting_virtual_trackball);
 
       if (virtual_trackball == 2 &&
           (!I->prev_no_z_rotation1 || !I->prev_no_z_rotation2)) {
@@ -1428,12 +1428,12 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
       normalize23f(v2, n2);
       cross_product3f(n1, n2, cp);
       theta =
-          (float) (SettingGet_f(G, NULL, NULL, cSetting_mouse_scale) * 2 * 180 *
+          (float) (SettingGet_f(G, nullptr, nullptr, cSetting_mouse_scale) * 2 * 180 *
                    asin(sqrt1f(cp[0] * cp[0] + cp[1] * cp[1] + cp[2] * cp[2])) /
                    cPI);
       dx = (v1[0] - v2[0]);
       dy = (v1[1] - v2[1]);
-      dt = (float) (SettingGet_f(G, NULL, NULL, cSetting_mouse_limit) *
+      dt = (float) (SettingGet_f(G, nullptr, nullptr, cSetting_mouse_limit) *
                     sqrt1f(dx * dx + dy * dy) / scale);
 
       if (theta > dt)
@@ -1448,7 +1448,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
       /* transform into model coodinate space */
       MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), axis, v2);
       v1[0] = (float) (cPI * theta / 180.0);
-      EditorDrag(G, NULL, -1, mode, SettingGetGlobal_i(G, cSetting_state) - 1,
+      EditorDrag(G, nullptr, -1, mode, SettingGetGlobal_i(G, cSetting_state) - 1,
           v1, v2, v3);
       I->LastX = x;
       I->LastY = y;
@@ -1466,7 +1466,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
         copy3f(glm::value_ptr(I->m_view.origin()), v1);
         vScale = SceneGetExactScreenVertexScale(G, v1);
         if (stereo_via_adjacent_array(I->StereoMode)) {
-          x = get_stereo_x(x, &I->LastX, I->Width, NULL);
+          x = get_stereo_x(x, &I->LastX, I->Width, nullptr);
         }
 
         if (mode == cButModeMovDragZ) {
@@ -1487,7 +1487,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
         MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v2, v2);
         MatrixInvTransformC44fAs33f3f(glm::value_ptr(I->m_view.rotMatrix()), v3, v3);
 
-        EditorDrag(G, NULL, -1, mode, SettingGetGlobal_i(G, cSetting_state) - 1,
+        EditorDrag(G, nullptr, -1, mode, SettingGetGlobal_i(G, cSetting_state) - 1,
             v1, v2, v3);
       }
       I->LastX = x;
@@ -1525,7 +1525,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
 
             vScale = SceneGetExactScreenVertexScale(G, v1);
             if (stereo_via_adjacent_array(I->StereoMode)) {
-              x = get_stereo_x(x, &I->LastX, I->Width, NULL);
+              x = get_stereo_x(x, &I->LastX, I->Width, nullptr);
             }
 
             /* transform into model coodinate space */
@@ -1566,7 +1566,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
               vScale = SceneGetExactScreenVertexScale(G, v1);
 
               if (stereo_via_adjacent_array(I->StereoMode)) {
-                x = get_stereo_x(x, &I->LastX, I->Width, NULL);
+                x = get_stereo_x(x, &I->LastX, I->Width, nullptr);
               }
 
               switch (mode) {
@@ -1651,7 +1651,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
               vScale = SceneGetExactScreenVertexScale(G, v1);
 
               if (stereo_via_adjacent_array(I->StereoMode)) {
-                x = get_stereo_x(x, &I->LastX, I->Width, NULL);
+                x = get_stereo_x(x, &I->LastX, I->Width, nullptr);
               }
 
               v2[0] = (x - I->LastX) * vScale;
@@ -1675,7 +1675,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
               /* scale properly given the current projection matrix */
               vScale = SceneGetExactScreenVertexScale(G, v1);
               if (stereo_via_adjacent_array(I->StereoMode)) {
-                x = get_stereo_x(x, &I->LastX, I->Width, NULL);
+                x = get_stereo_x(x, &I->LastX, I->Width, nullptr);
               }
 
               switch (mode) {
@@ -1726,7 +1726,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
       vScale = SceneGetExactScreenVertexScale(G, glm::value_ptr(I->m_view.origin()));
       if (stereo_via_adjacent_array(I->StereoMode)) {
 
-        x = get_stereo_x(x, &I->LastX, I->Width, NULL);
+        x = get_stereo_x(x, &I->LastX, I->Width, nullptr);
       }
 
       v2[0] = (x - I->LastX) * vScale;
@@ -1747,7 +1747,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
         moved_flag = true;
       }
 
-      EditorFavorOrigin(G, NULL);
+      EditorFavorOrigin(G, nullptr);
       if (moved_flag && SettingGetGlobal_b(G, cSetting_roving_origin)) {
         SceneGetCenter(G, v2); /* gets position of center of screen */
         SceneOriginSet(G, v2, true);
@@ -1769,11 +1769,11 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
 
       SceneNoteMouseInteraction(G);
       virtual_trackball =
-          SettingGet_i(G, NULL, NULL, cSetting_virtual_trackball);
+          SettingGet_i(G, nullptr, nullptr, cSetting_virtual_trackball);
       eff_width = I->Width;
       if (stereo_via_adjacent_array(I->StereoMode)) {
         eff_width = I->Width / 2;
-        x = get_stereo_x(x, &I->LastX, I->Width, NULL);
+        x = get_stereo_x(x, &I->LastX, I->Width, nullptr);
       }
       if (virtual_trackball == 2 &&
           (!I->prev_no_z_rotation1 || !I->prev_no_z_rotation2)) {
@@ -1805,7 +1805,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
 
       {
         short r1lt, r2lt;
-        if (SettingGet_i(G, NULL, NULL, cSetting_virtual_trackball) == 2) {
+        if (SettingGet_i(G, nullptr, nullptr, cSetting_virtual_trackball) == 2) {
           r1lt = I->prev_no_z_rotation1;
           r2lt = I->prev_no_z_rotation2;
         } else {
@@ -1835,13 +1835,13 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
       normalize23f(v2, n2);
       cross_product3f(n1, n2, cp);
       theta =
-          (float) (SettingGet_f(G, NULL, NULL, cSetting_mouse_scale) * 2 * 180 *
+          (float) (SettingGet_f(G, nullptr, nullptr, cSetting_mouse_scale) * 2 * 180 *
                    asin(sqrt1f(cp[0] * cp[0] + cp[1] * cp[1] + cp[2] * cp[2])) /
                    cPI);
 
       dx = (v1[0] - v2[0]);
       dy = (v1[1] - v2[1]);
-      dt = (float) (SettingGet_f(G, NULL, NULL, cSetting_mouse_limit) *
+      dt = (float) (SettingGet_f(G, nullptr, nullptr, cSetting_mouse_limit) *
                     sqrt1f(dx * dx + dy * dy) / scale);
       if (theta > dt)
         theta = dt;
@@ -1976,7 +1976,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
         pos[1] += (float) dy * ms;
 
         SettingSet_3fv(G->Setting, which_light, pos);
-        SettingGenerateSideEffects(G, which_light, NULL, 0, 1);
+        SettingGenerateSideEffects(G, which_light, nullptr, 0, 1);
         I->LastX = x;
         I->LastY = y;
       } break;
@@ -2009,7 +2009,7 @@ void SceneDrag(Block* block, int x, int y, int mod, double when)
         }
 
         copy3f(SettingGet<const float*>(G, which_light), pos);
-        SettingGenerateSideEffects(G, which_light, NULL, 0, 1);
+        SettingGenerateSideEffects(G, which_light, nullptr, 0, 1);
 
         pos[2] -= factor * ms;
 

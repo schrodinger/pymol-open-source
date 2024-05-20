@@ -30,7 +30,7 @@ Z* -------------------------------------------------------------------
 
 PyObject *CrystalAsPyList(const CCrystal * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   if(I) {
     result = PyList_New(2);
@@ -45,7 +45,7 @@ int CrystalFromPyList(CCrystal * I, PyObject * list)
   int ok = true, rok = true;
   int ll = 0;
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
   if(ok)
     ok = PyList_Check(list);
   if(ok)
@@ -116,7 +116,7 @@ CGO *CrystalGetUnitCellCGO(const CCrystal * I)
 {
   PyMOLGlobals *G = I->G;
   float v[3];
-  CGO *cgo = NULL;
+  CGO *cgo = nullptr;
 
   auto const ucv = SettingGet<bool>(G, cSetting_cell_centered)
                        ? unitCellVerticesCentered

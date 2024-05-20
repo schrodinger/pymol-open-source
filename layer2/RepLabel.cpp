@@ -106,7 +106,7 @@ short InvalidateShaderCGOIfTextureNeedsUpdate(PyMOLGlobals *G, float font_size, 
   float v_scale, perc = 0.f;
   int size, diff;
   short inv = false;
-  v_scale = SceneGetScreenVertexScale(G, NULL);
+  v_scale = SceneGetScreenVertexScale(G, nullptr);
   size = (int) (0.5F - font_size / v_scale);
   if (size <= 0)
     size = 1;
@@ -457,7 +457,7 @@ void RepLabelRenderBackgroundInImmediate(PyMOLGlobals *G, RepLabel *I, float *v,
 
   {// taking into account screen adjustments : indent and screen world offset to the label point
     float v_scale, xn[3], yn[3];
-    v_scale = SceneGetScreenVertexScale(G, NULL);
+    v_scale = SceneGetScreenVertexScale(G, nullptr);
     SceneGetScaledAxesAtPoint(G, labelpos, xn, yn);
     addXYtoVertex(indentFactorT[0] + screenWorldOffset[0]/v_scale, indentFactorT[1] + screenWorldOffset[1]/v_scale, xn, yn, labelpos, pos);
   }
@@ -469,7 +469,7 @@ void RepLabelRenderBackgroundInImmediate(PyMOLGlobals *G, RepLabel *I, float *v,
     float dVectorInPixels[2], dVector[2];
     float v_scale;
     short visible;
-    v_scale = SceneGetScreenVertexScale(G, NULL);
+    v_scale = SceneGetScreenVertexScale(G, nullptr);
 
     copy3f(v+6, tCenter);
     tCenter[3] = 1.f;
@@ -1280,8 +1280,8 @@ void RepLabel::render(RenderInfo* info)
       if(c) {
         const char *st;
 	short use_shader, has_connector = 0;
-	CGO *connectorCGO = NULL;
-	float *PmvMatrix = NULL;
+	CGO *connectorCGO = nullptr;
+	float *PmvMatrix = nullptr;
 	int screenwidth, screenheight;
 	float xn[3] = { 1.0F, 0.0F, 0.0F };
 	float yn[3] = { 0.0F, 1.0F, 0.0F };
@@ -1303,7 +1303,7 @@ void RepLabel::render(RenderInfo* info)
 	    info->texture_font_size = I->texture_font_size;
 	    if(float_text)
 	      glDisable(GL_DEPTH_TEST);
-	    CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
+	    CGORender(I->shaderCGO, nullptr, nullptr, nullptr, info, I);
 	    if(float_text)
 	      glEnable(GL_DEPTH_TEST);
 	    return;
@@ -1388,7 +1388,7 @@ void RepLabel::render(RenderInfo* info)
 	    }
 	    if (draw_var){
 	
-	      float *RotMatrix = NULL;
+	      float *RotMatrix = nullptr;
 	      float *screenWorldOffset = TextGetScreenWorldOffset(G);
 	      float text_width = TextGetWidth(G), text_height = TextGetHeight(G);
 	      float *indentFactor = TextGetIndentFactor(G);
@@ -1437,8 +1437,8 @@ void RepLabel::render(RenderInfo* info)
 	}
 
         if (I->shaderCGO){
-	  CGO *totalCGO = NULL;
-	  CGO *labelCGO = NULL;
+	  CGO *totalCGO = nullptr;
+	  CGO *labelCGO = nullptr;
 	  CGOStop(I->shaderCGO);
           CGO * tmpCGO = CGONew(G);
           CGOEnable(tmpCGO, GL_LABEL_SHADER);
@@ -1450,7 +1450,7 @@ void RepLabel::render(RenderInfo* info)
 	  if (!labelCGO) return;
 	  CGOFree(I->shaderCGO);
 	  if (connectorCGO){
-	    CGO *tmpCGO = NULL;
+	    CGO *tmpCGO = nullptr;
 	    tmpCGO = CGOOptimizeConnectors(connectorCGO, 0);
 	    CGOFree(connectorCGO);
 	    connectorCGO = tmpCGO;
@@ -1507,12 +1507,12 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   const float *vc;
   lexidx_t *l;
   int label_color;
-  Pickable *rp = NULL;
+  Pickable *rp = nullptr;
   AtomInfoType *ai;
 
   // skip if no labels are visible
   if(!cs->hasRep(cRepLabelBit))
-    return NULL;
+    return nullptr;
 
   auto I = new RepLabel(cs, state);
   obj = cs->Obj;

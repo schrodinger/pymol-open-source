@@ -108,7 +108,7 @@ static void RepValence(CGO *cgo, bool s1, bool s2, bool isRamped,
   copy3f(p0, d);
   normalize3f(p0);
   /* need a prioritized third atom to get planarity */
-  a3 = ObjectMoleculeGetPrioritizedOther(other, a1, a2, NULL);
+  a3 = ObjectMoleculeGetPrioritizedOther(other, a1, a2, nullptr);
   if(a3 < 0) {
     t[0] = p0[0];
     t[1] = p0[1];
@@ -361,7 +361,7 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
 static int RepWireBondCGOGenerate(RepWireBond * I, RenderInfo * info)
 {
   PyMOLGlobals *G = I->G;
-  CGO *convertcgo = NULL;
+  CGO *convertcgo = nullptr;
   int ok = true;
   short line_as_cylinders = 0;
   line_as_cylinders = SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_line_as_cylinders);
@@ -419,14 +419,14 @@ void RepWireBond::render(RenderInfo* info)
 
   if(ray) {
 #ifndef _PYMOL_NO_RAY
-    CGORenderRay(primitiveCGO, ray, info, NULL, NULL, cs->Setting.get(), cs->Obj->Setting.get());
+    CGORenderRay(primitiveCGO, ray, info, nullptr, nullptr, cs->Setting.get(), cs->Obj->Setting.get());
     ray->transparentf(0.0);
 #endif
   } else if(G->HaveGUI && G->ValidContext) {
     bool use_shader = SettingGetGlobal_b(G, cSetting_line_use_shader) &&
                       SettingGetGlobal_b(G, cSetting_use_shaders);
     if(pick) {
-      CGORenderPicking(use_shader ? I->shaderCGO : I->primitiveCGO, info, &I->context, NULL, NULL, I);
+      CGORenderPicking(use_shader ? I->shaderCGO : I->primitiveCGO, info, &I->context, nullptr, nullptr, I);
     } else { /* else not pick i.e., when rendering */
       short line_as_cylinders ;
       line_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_line_as_cylinders);
@@ -438,9 +438,9 @@ void RepWireBond::render(RenderInfo* info)
         if (use_shader) {
           if (!I->shaderCGO)
             ok &= RepWireBondCGOGenerate(I, info);
-          CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
+          CGORender(I->shaderCGO, nullptr, nullptr, nullptr, info, I);
         } else {
-          CGORender(I->primitiveCGO, NULL, NULL, NULL, info, I);
+          CGORender(I->primitiveCGO, nullptr, nullptr, nullptr, info, I);
         }
       }
     }
@@ -580,7 +580,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   int a, c1, c2, ord;
   bool s1, s2;
   const BondType *b;
-  int half_bonds, *other = NULL;
+  int half_bonds, *other = nullptr;
   float valence;
   const float *v1, *v2;
   int visFlag;
@@ -591,7 +591,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   int ribbon_side_chain_helper = 0;
   int line_stick_helper = 0;
   int na_mode;
-  bool *marked = NULL;
+  bool *marked = nullptr;
   int valence_found = false;
   int variable_width = false;
   float last_line_width = -1.f;
@@ -860,7 +860,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   FreeP(other);
   if (!ok || !line_counter){
     delete I;
-    I = NULL;
+    I = nullptr;
   }
   return (Rep *) I;
 }

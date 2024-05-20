@@ -520,7 +520,7 @@ pymol::Result<> MovieSceneRecall(PyMOLGlobals * G, const char * name, float anim
  * Rename or delete a scene
  *
  * @param name name to rename or delete, or "*" to delete all
- * @param new_name new scene name to rename, or NULL to delete
+ * @param new_name new scene name to rename, or nullptr to delete
  */
 pymol::Result<> MovieSceneRename(PyMOLGlobals * G, const char * name, const char * new_name) {
 
@@ -818,7 +818,7 @@ static bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, MovieScene &out)
   std::map<int, MovieSceneAtom> atomdata_old_ids;
 
   if (!G) {
-    printf(" Error: G is NULL\n");
+    printf(" Error: G is nullptr\n");
     return false;
   }
 

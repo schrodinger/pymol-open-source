@@ -292,7 +292,7 @@ static void disableShaders(PyMOLGlobals * G);
 #ifdef WIN32
 /* REMOVE US */
 PFNGLTEXIMAGE3DPROC getTexImage3D(){
-  static PFNGLTEXIMAGE3DPROC my_glTexImage3D = NULL;
+  static PFNGLTEXIMAGE3DPROC my_glTexImage3D = nullptr;
   if (!my_glTexImage3D)
     my_glTexImage3D = (PFNGLTEXIMAGE3DPROC) wglGetProcAddress("glTexImage3D");
   return my_glTexImage3D;
@@ -432,10 +432,10 @@ static bool shader_cache_initialized = false;
 // filename -> contents (static filesystem)
 static std::map<std::string, const char *> shader_cache_raw;
 
-// preproc variable -> NULL terminated list of filenames ("used by")
+// preproc variable -> nullptr terminated list of filenames ("used by")
 std::map<std::string, const char **> ifdef_deps;
 
-// filename -> NULL terminated list of filenames ("included by")
+// filename -> nullptr terminated list of filenames ("included by")
 std::map<std::string, const char **> include_deps;
 
 std::string CShaderMgr::GetShaderSource(const std::string &filename)
@@ -1742,7 +1742,7 @@ void CShaderMgr::bindOffscreenOIT(int width, int height, int drawbuf) {
   renderTarget_t::shape_type req_size(width, height);
 
   if(!oit_pp || oit_pp->size() != req_size) {
-    oit_pp = pymol::make_unique<OIT_PostProcess>(
+    oit_pp = std::make_unique<OIT_PostProcess>(
         width, height, getGPUBuffer<renderTarget_t>(offscreen_rt)->_rbo);
   } else {
     if (!TM3_IS_ONEBUF) {

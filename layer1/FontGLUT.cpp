@@ -131,7 +131,7 @@ const char* CFontGLUT::RenderOpenGL(const RenderInfo* info, const char* st,
 
     if(st && (*st)) {
 
-      float v_scale = SceneGetScreenVertexScale(G, NULL);
+      float v_scale = SceneGetScreenVertexScale(G, nullptr);
 
       first = font_info->first;
       last = first + font_info->num_chars;
@@ -332,7 +332,7 @@ const char* CFontGLUT::RenderRay(CRay* ray, const char* st, float size,
   sampling = ray->Sampling;
 
   if(st && (*st)) {
-    float v_scale = SceneGetScreenVertexScale(G, NULL);
+    float v_scale = SceneGetScreenVertexScale(G, nullptr);
 
     if(rpos) {
       float loc[3];

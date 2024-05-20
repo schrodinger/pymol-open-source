@@ -254,7 +254,7 @@ namespace pymol
 /**
  * Find pi-pi and/or pi-cation interactions.
  *
- * @param ds Measurement state to update, or NULL to create a new one.
+ * @param ds Measurement state to update, or nullptr to create a new one.
  * @param sele1 Selection index
  * @param state1 Object state
  * @param sele2 Selection index

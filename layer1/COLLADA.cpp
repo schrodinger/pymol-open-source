@@ -281,27 +281,27 @@ static void ColladaWritePhongEffect(xmlTextWriterPtr w, char *id,
 
   if (amb > PRECISION) {
     sprintf(value, "0.5 0.5 0.5 %5.3f", amb);
-    ColladaWriteCommonColorElement(w, (char *)"ambient", NULL, value);
+    ColladaWriteCommonColorElement(w, (char *)"ambient", nullptr, value);
   }
 
   if (spec > PRECISION) {
     sprintf(value, "0.5 0.5 0.5 %5.3f", spec);
-    ColladaWriteCommonColorElement(w, (char *)"specular", NULL, value);
+    ColladaWriteCommonColorElement(w, (char *)"specular", nullptr, value);
   }
 
   if(shin > PRECISION) {
     sprintf(value, "%5.3f", shin);
-    ColladaWriteCommonFloatElement(w, (char *)"shininess", NULL, value);
+    ColladaWriteCommonFloatElement(w, (char *)"shininess", nullptr, value);
   }
 
   if(trans > PRECISION) {
     sprintf(value, "%5.3f", trans);
-    ColladaWriteCommonFloatElement(w, (char *)"transparency", NULL, value);
+    ColladaWriteCommonFloatElement(w, (char *)"transparency", nullptr, value);
   }
 
   if(iref > PRECISION) {
     sprintf(value, "%5.3f", iref);
-    ColladaWriteCommonFloatElement(w, (char *)"index_of_refraction", NULL, value);
+    ColladaWriteCommonFloatElement(w, (char *)"index_of_refraction", nullptr, value);
   }
 
   xmlTextWriterEndElement(w);  // phong
@@ -750,20 +750,20 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
   /* Create a new XML DOM tree, to which the COLLADA document will be
    * written */
   doc = xmlNewDoc(BAD_CAST XML_VERSION);
-  if (doc == NULL) {
+  if (doc == nullptr) {
     printf("ColladaRender: Error creating the xml document tree (xmlNewDoc).\n");
     return;
   }
 
   /* Create a new XmlWriter */
-  w = xmlNewTextWriterTree(doc, NULL, 0);
-  if (w == NULL) {
+  w = xmlNewTextWriterTree(doc, nullptr, 0);
+  if (w == nullptr) {
     printf("ColladaRender: Error creating the xml writer (xmlNewTextWriterTree).\n");
     return;
   }
 
   /* Start the XML document */
-  rc = xmlTextWriterStartDocument(w, NULL, XML_ENCODING, NULL);
+  rc = xmlTextWriterStartDocument(w, nullptr, XML_ENCODING, nullptr);
   if (rc < 0) {
     printf("ColladaRender: Error at xmlTextWriterStartDocument\n");
     return;
@@ -970,7 +970,7 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
             /* color */
             const float *bg_color;
-            bg_color = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+            bg_color = ColorGet(G, SettingGet_color(G, nullptr, nullptr, cSetting_bg_rgb));
 
             sprintf(next, "%6.4f %6.4f %6.4f", bg_color[0], bg_color[1], bg_color[2]);
             UtilConcatVLA(&colors_str, &col_str_cc, next);
@@ -1244,7 +1244,7 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
             const int j_arr[] = {2, 3, 2};
             int nCapTri = 0;
             cCylCap captype[2] = {prim->cap1, prim->cap2};
-            CGO *cgocap[2] = {NULL, NULL};
+            CGO *cgocap[2] = {NULL, nullptr};
 
             if(prim->type == cPrimSausage) {
               captype[0] = captype[1] = cCylCapRound;

@@ -63,7 +63,7 @@ const char * aa_three_letter[] = {
   "GLY", // G
   "HIS", // H
   "ILE", // I
-  NULL,  // J
+  nullptr,  // J
   "LYS", // K
   "LEU", // L
   "MET", // M
@@ -74,10 +74,10 @@ const char * aa_three_letter[] = {
   "ARG", // R
   "SER", // S
   "THR", // T
-  NULL,  // U
+  nullptr,  // U
   "VAL", // V
   "TRP", // W
-  NULL,  // X  for other
+  nullptr,  // X  for other
   "TYR", // Y
   "GLX", // Z  for ambiguous glutamine/glutamic acid
 };
@@ -214,7 +214,7 @@ static T VLAGetFirstNonNULL(T * vla) {
   for (int i = 0; i < n; ++i)
     if (vla[i])
       return vla[i];
-  return NULL;
+  return nullptr;
 }
 
 /**
@@ -672,7 +672,7 @@ static oper_collection_t parse_oper_expression(const std::string &expr) {
  * Get chains which are part of the assembly
  *
  * assembly_chains: output set
- * assembly_id: ID of the assembly or NULL to use first assembly
+ * assembly_id: ID of the assembly or nullptr to use first assembly
  */
 static bool get_assembly_chains(PyMOLGlobals * G,
     const cif_data * data,
@@ -1105,12 +1105,12 @@ static CoordSet** read_atom_site(PyMOLGlobals* G, const cif_data* data,
   arr_group_pdb   = data->get_opt("_atom_site.group_pdb");
   arr_alt         = data->get_opt("_atom_site.label_alt_id");
   arr_b           = data->get_opt("_atom_site?b_iso_or_equiv");
-  arr_u           = data->get_arr("_atom_site?u_iso_or_equiv"); // NULL
+  arr_u           = data->get_arr("_atom_site?u_iso_or_equiv"); // nullptr
   arr_q           = data->get_opt("_atom_site?occupancy");
   arr_ID          = data->get_opt("_atom_site.id",
                                   "_atom_site_label");
   arr_mod_num     = data->get_opt("_atom_site.pdbx_pdb_model_num");
-  arr_entity_id   = data->get_arr("_atom_site.label_entity_id"); // NULL
+  arr_entity_id   = data->get_arr("_atom_site.label_entity_id"); // nullptr
 
   const cif_array * arr_color = data->get_arr("_atom_site.pymol_color");
   const cif_array * arr_reps  = data->get_arr("_atom_site.pymol_reps");
@@ -2242,7 +2242,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
 /**
  * Read one or multiple object-molecules from a CIF file. If there is only one
  * or multiplex=0, then return the object-molecule. Otherwise, create each
- * object - named by its data block name - and return NULL.
+ * object - named by its data block name - and return nullptr.
  */
 pymol::Result<ObjectMolecule*> ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
                                       const char *st, int frame,

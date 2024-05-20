@@ -63,11 +63,11 @@ int ObjectMotionGetLength(pymol::CObject *I)
 
 void ObjectMotionReinterpolate(pymol::CObject *I)
 {
-  float power  = SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_motion_power);
-  float bias   = SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_motion_bias);
-  int simple   = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_motion_simple);
-  float linear = SettingGet_f(I->G, NULL, I->Setting.get(), cSetting_motion_linear);
-  int hand     = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_motion_hand);
+  float power  = SettingGet_f(I->G, nullptr, I->Setting.get(), cSetting_motion_power);
+  float bias   = SettingGet_f(I->G, nullptr, I->Setting.get(), cSetting_motion_bias);
+  int simple   = SettingGet_i(I->G, nullptr, I->Setting.get(), cSetting_motion_simple);
+  float linear = SettingGet_f(I->G, nullptr, I->Setting.get(), cSetting_motion_linear);
+  int hand     = SettingGet_i(I->G, nullptr, I->Setting.get(), cSetting_motion_hand);
 
   /*
      int ObjectMotion(pymol::CObject * I, int action, int first,
@@ -206,7 +206,7 @@ int ObjectMotion(pymol::CObject * I, int action, int first,
             ViewElemSmooth(I->ViewElem + first, I->ViewElem + last, window, wrap);
           }
       }
-      if(SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_movie_auto_interpolate)){
+      if(SettingGet_b(I->G, nullptr, I->Setting.get(), cSetting_movie_auto_interpolate)){
         action = 3; /* reinterpolate */
         last = save_last;
       }
@@ -287,7 +287,7 @@ int ObjectMotion(pymol::CObject * I, int action, int first,
     case 2:                      /* interpolate & reinterpolate */
     case 3:
       {
-        CViewElem *first_view = NULL, *last_view = NULL;
+        CViewElem *first_view = nullptr, *last_view = nullptr;
         int view_found = false;
 
         if(first < 0)
@@ -389,7 +389,7 @@ int ObjectMotion(pymol::CObject * I, int action, int first,
                                     power, bias, simple, linear, hand, 0.0F);
               }
               first_view = last_view;
-              last_view = NULL;
+              last_view = nullptr;
             }
           }
         }
@@ -457,10 +457,10 @@ void ObjectAdjustStateRebuildRange(pymol::CObject * I, int *start, int *stop)
 {
   /* on entry, start and stop should hold the valid range for the object */
   int defer_builds_mode =
-    SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_defer_builds_mode);
-  int async_builds = SettingGet_b(I->G, NULL, I->Setting.get(), cSetting_async_builds);
-  int max_threads = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_max_threads);
-  int all_states = SettingGet_i(I->G, NULL, I->Setting.get(), cSetting_all_states);
+    SettingGet_i(I->G, nullptr, I->Setting.get(), cSetting_defer_builds_mode);
+  int async_builds = SettingGet_b(I->G, nullptr, I->Setting.get(), cSetting_async_builds);
+  int max_threads = SettingGet_i(I->G, nullptr, I->Setting.get(), cSetting_max_threads);
+  int all_states = SettingGet_i(I->G, nullptr, I->Setting.get(), cSetting_all_states);
   int dummy;
   if (all_states)
     return;
@@ -625,7 +625,7 @@ void ObjectMakeValidName(PyMOLGlobals * G, char *name, bool quiet)
 /**
  * Get a pointer to an object state.
  * @param state State (0-indexed) or -2/-3 for current state
- * @return NULL if state is out of bounds or empty
+ * @return nullptr if state is out of bounds or empty
  */
 CObjectState* pymol::CObject::getObjectState(int state)
 {
@@ -672,7 +672,7 @@ int ObjectGetCurrentState(const pymol::CObject * I, int ignore_all_states)
   // object-level state=0 (all states)
 
   if (!ignore_all_states &&
-      SettingGet_b(I->G, I->Setting.get(), NULL, cSetting_all_states))
+      SettingGet_b(I->G, I->Setting.get(), nullptr, cSetting_all_states))
     return -1;
 
   return std::max(-1, I->getCurrentState());
@@ -680,7 +680,7 @@ int ObjectGetCurrentState(const pymol::CObject * I, int ignore_all_states)
 
 PyObject *ObjectAsPyList(const pymol::CObject * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   result = PyList_New(14);
   PyList_SetItem(result, 0, PyInt_FromLong(I->type));
   PyList_SetItem(result, 1, PyString_FromString(I->Name));
@@ -712,7 +712,7 @@ int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, pymol::CObject * I)
   int ll = 0;
   I->G = G;
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   if(ok)
@@ -758,7 +758,7 @@ int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, pymol::CObject * I)
     PyObject *tmp;
     int nFrame;
     VLAFreeP(I->ViewElem);
-    I->ViewElem = NULL;
+    I->ViewElem = nullptr;
     if(ok)
       ok = PConvPyIntToInt(PyList_GetItem(list, 12), &nFrame);
     if(ok && nFrame) {
@@ -794,7 +794,7 @@ int ObjectCopyHeader(pymol::CObject * I, const pymol::CObject * src)
     for(a = 0; a < 16; a++)
       I->TTT[a] = src->TTT[a];
   }
-  I->ViewElem = NULL;           /* to do */
+  I->ViewElem = nullptr;           /* to do */
 
   return (ok);
 }
@@ -819,7 +819,7 @@ void ObjectCombineTTT(pymol::CObject * I, const float *ttt, int reverse_order, i
       combineTTT44f44f(ttt, cpy, I->TTT);
     }
     if(store<0) 
-      store = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_movie_auto_store);
+      store = SettingGet_i(I->G, I->Setting.get(), nullptr, cSetting_movie_auto_store);
     if(store && MovieDefined(I->G)) {
       if(!I->ViewElem)  
         I->ViewElem = pymol::vla<CViewElem>(0);
@@ -850,7 +850,7 @@ void ObjectTranslateTTT(pymol::CObject * I, const float *v, int store)
       I->TTT[11] += v[2];
     }
     if(store<0) 
-      store = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_movie_auto_store);
+      store = SettingGet_i(I->G, I->Setting.get(), nullptr, cSetting_movie_auto_store);
     if(store && MovieDefined(I->G)) {
       if(!I->ViewElem)  
         I->ViewElem = pymol::vla<CViewElem>(0);
@@ -879,7 +879,7 @@ void ObjectSetTTT(pymol::CObject * I, const float *ttt, int state, int store)
       return;
     }
     if(store<0) 
-      store = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_movie_auto_store);
+      store = SettingGet_i(I->G, I->Setting.get(), nullptr, cSetting_movie_auto_store);
     if(store && MovieDefined(I->G)) {
       if(!I->ViewElem)  
         I->ViewElem = pymol::vla<CViewElem>(0);
@@ -905,7 +905,7 @@ int ObjectGetTTT(pymol::CObject * I, const float **ttt, int state)
       *ttt = I->TTT;
       return 1;
     } else {
-      *ttt = NULL;
+      *ttt = nullptr;
     }
 
   } else {
@@ -920,7 +920,7 @@ void ObjectResetTTT(pymol::CObject * I,int store)
   
   I->TTTFlag = false;
   if(store<0) 
-    store = SettingGet_i(I->G, I->Setting.get(), NULL, cSetting_movie_auto_store);
+    store = SettingGet_i(I->G, I->Setting.get(), nullptr, cSetting_movie_auto_store);
   if(store && MovieDefined(I->G)) {
     if(!I->ViewElem)  
       I->ViewElem = pymol::vla<CViewElem>(0);
@@ -983,7 +983,7 @@ int ObjectGetTotalMatrix(pymol::CObject * I, int state, int history, double *mat
 /*========================================================================*/
 void ObjectPrepareContext(pymol::CObject * I, RenderInfo * info)
 {
-  CRay * ray = info ? info->ray : NULL;
+  CRay * ray = info ? info->ray : nullptr;
 
   if(I->ViewElem) {
     int frame = SceneGetFrame(I->G);
@@ -1390,7 +1390,7 @@ void ObjectStateResetMatrix(CObjectState* I)
 
 PyObject *ObjectStateAsPyList(CObjectState * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   if(I) {
     result = PyList_New(1);
@@ -1413,7 +1413,7 @@ int ObjectStateFromPyList(PyMOLGlobals * G, PyObject * list, CObjectState * I)
 
   if(list && (list != Py_None)) {       /* allow None */
     if(ok)
-      ok = (list != NULL);
+      ok = (list != nullptr);
     if(ok)
       ok = PyList_Check(list);
     /* TO SUPPORT BACKWARDS COMPATIBILITY...

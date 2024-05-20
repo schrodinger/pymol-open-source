@@ -61,14 +61,14 @@ static int RepAngleCGOGenerate(RepAngle * I, RenderInfo * info)
   PyMOLGlobals *G = I->G;
   float line_width;
   int ok = true;
-  CGO *convertcgo = NULL;
+  CGO *convertcgo = nullptr;
   int dash_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_dash_as_cylinders);
   int color =
-    SettingGet_color(G, NULL, I->ds->Obj->Setting.get(), cSetting_angle_color);
+    SettingGet_color(G, nullptr, I->ds->Obj->Setting.get(), cSetting_angle_color);
   I->linewidth = line_width = 
-    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_width);
+    SettingGet_f(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_width);
   I->radius =
-    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_radius);
+    SettingGet_f(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_radius);
   line_width = SceneGetDynamicLineWidth(info, line_width);
   ok &= CGOSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_DASH);
   if (ok)
@@ -115,7 +115,7 @@ static int RepAngleCGOGenerate(RepAngle * I, RenderInfo * info)
   CHECKOK(ok, convertcgo);
   CGOFree(I->shaderCGO);    
   I->shaderCGO = convertcgo;
-  convertcgo = NULL;
+  convertcgo = nullptr;
   if (ok){
     if (dash_as_cylinders){
       CGO *tmpCGO = CGONew(G);
@@ -148,7 +148,7 @@ static int RepAngleCGOGenerate(RepAngle * I, RenderInfo * info)
   if (convertcgo){
     CGOFree(I->shaderCGO);
     I->shaderCGO = convertcgo;
-    convertcgo = NULL;
+    convertcgo = nullptr;
   }
   return ok;
 }
@@ -162,9 +162,9 @@ static void RepAngleRenderImmediate(RepAngle * I, RenderInfo * info, int color,
   int c = I->N;
   float line_width;
   bool t_mode_3 =
-    SettingGet_i(G, NULL, I->ds->Obj->Setting.get(), cSetting_transparency_mode) == 3;
+    SettingGet_i(G, nullptr, I->ds->Obj->Setting.get(), cSetting_transparency_mode) == 3;
   line_width = 
-    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_width);
+    SettingGet_f(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_width);
   line_width = SceneGetDynamicLineWidth(info, line_width);
 
   if(info->width_scale_flag) {
@@ -213,18 +213,18 @@ void RepAngle::render(RenderInfo* info)
   float dash_transparency;
   short dash_transparency_enabled;
   int color =
-    SettingGet_color(G, NULL, I->ds->Obj->Setting.get(), cSetting_angle_color);
+    SettingGet_color(G, nullptr, I->ds->Obj->Setting.get(), cSetting_angle_color);
   if(color < 0)
     color = getObj()->Color;
   I->linewidth = line_width = 
-    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_width);
+    SettingGet_f(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_width);
   I->radius =
-    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_radius);
+    SettingGet_f(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_radius);
   round_ends =
-    SettingGet_b(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_round_ends);
+    SettingGet_b(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_round_ends);
   line_width = SceneGetDynamicLineWidth(info, line_width);
   dash_transparency =
-    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_transparency);
+    SettingGet_f(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_transparency);
   dash_transparency = (dash_transparency < 0.f ? 0.f : (dash_transparency > 1.f ? 1.f : dash_transparency));
   dash_transparency_enabled = (dash_transparency > 0.f);
 
@@ -283,7 +283,7 @@ void RepAngle::render(RenderInfo* info)
           }
 	  ok &= RepAngleCGOGenerate(I, info);
    	} else {
-	  CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, nullptr, nullptr, nullptr, info, I);
 	  return;
 	}
       }
@@ -291,13 +291,13 @@ void RepAngle::render(RenderInfo* info)
       if (!generate_shader_cgo) {
 	RepAngleRenderImmediate(I, info, color, dash_transparency_enabled, dash_transparency);
       } else {
-	CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
+	CGORender(I->shaderCGO, nullptr, nullptr, nullptr, info, I);
       }
     }
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->ds->Rep[cRepAngle] = NULL;
+    I->ds->Rep[cRepAngle] = nullptr;
     delete I;
   }
 }
@@ -313,7 +313,7 @@ Rep *RepAngleNew(DistSet * ds, int state)
   int ok = true;
   float dash_transparency;
   dash_transparency =
-    SettingGet_f(G, NULL, ds->Obj->Setting.get(), cSetting_dash_transparency);
+    SettingGet_f(G, nullptr, ds->Obj->Setting.get(), cSetting_dash_transparency);
   dash_transparency = (dash_transparency < 0.f ? 0.f : (dash_transparency > 1.f ? 1.f : dash_transparency));
 
   PRINTFD(G, FB_RepAngle)
@@ -324,8 +324,8 @@ Rep *RepAngleNew(DistSet * ds, int state)
 
   auto I = new RepAngle(ds->Obj, state);
 
-  dash_len = SettingGet_f(G, NULL, ds->Obj->Setting.get(), cSetting_dash_length);
-  dash_gap = SettingGet_f(G, NULL, ds->Obj->Setting.get(), cSetting_dash_gap);
+  dash_len = SettingGet_f(G, nullptr, ds->Obj->Setting.get(), cSetting_dash_length);
+  dash_gap = SettingGet_f(G, nullptr, ds->Obj->Setting.get(), cSetting_dash_gap);
   dash_sum = dash_len + dash_gap;
   if(dash_sum < R_SMALL4)
     dash_sum = 0.1F;
@@ -351,7 +351,7 @@ Rep *RepAngleNew(DistSet * ds, int state)
         radius = l2;
       else
         radius = l1;
-      radius *= SettingGet_f(G, NULL, ds->Obj->Setting.get(), cSetting_angle_size);
+      radius *= SettingGet_f(G, nullptr, ds->Obj->Setting.get(), cSetting_angle_size);
 
       angle = get_angle3f(d1, d2);
 
@@ -455,7 +455,7 @@ Rep *RepAngleNew(DistSet * ds, int state)
   }
   if (!ok){
     delete I;
-    I = NULL;
+    I = nullptr;
   }
   return (Rep *) I;
 }

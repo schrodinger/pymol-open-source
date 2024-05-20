@@ -1522,7 +1522,7 @@ int BasisHitPerspective(BasisCallRec * BC)
   int *cache_cache = cache->Cache;
   int *cache_CacheLink = cache->CacheLink;
 
-  CPrimitive *r_prim = NULL;
+  CPrimitive *r_prim = nullptr;
 
   if(new_ray) {                 /* see if we can eliminate this ray right away using the mask */
 
@@ -2023,7 +2023,7 @@ int BasisHitOrthoscopic(BasisCallRec * BC)
 
     float r_tri1 = _0, r_tri2 = _0, r_dist = _0;        /* zero inits to suppress compiler warnings */
     float r_sphere0 = _0, r_sphere1 = _0, r_sphere2 = _0;
-    CPrimitive *r_prim = NULL;
+    CPrimitive *r_prim = nullptr;
 
     check_interior_flag = BC->check_interior && (!BC->pass);
 
@@ -2349,7 +2349,7 @@ int BasisHitShadow(BasisCallRec * BC)
     float r_tri1 = _0, r_tri2 = _0, r_dist;    /* zero inits to suppress compiler warnings */
     float r_sphere0 = _0, r_sphere1 = _0, r_sphere2 = _0;
     float r_trans = _0;
-    CPrimitive *r_prim = NULL;
+    CPrimitive *r_prim = nullptr;
 
     /* assumption: always heading in the negative Z direction with our vector... */
     vt[0] = r->base[0];
@@ -2823,11 +2823,11 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
   float ll;
   CPrimitive *prm;
   int i;
-  int *tempRef = NULL;
+  int *tempRef = nullptr;
   int n = 0, h, q, x, y, z, j, k, l, e;
   int extra_vert = 0;
   float p[3], dd[3], *d1, *d2, vd[3], cx[3], cy[3];
-  float *tempVertex = NULL;
+  float *tempVertex = nullptr;
   float xs, ys;
   int remapMode = true;         /* remap mode means that some objects will span more
                                  * than one voxel, so we have to worry about populating
@@ -3220,7 +3220,7 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
 	I->Map = MapNewCached(I->G, -sep, tempVertex, n, extent, group_id, block_base);
 	CHECKOK(ok, I->Map);
       } else {
-	I->Map = MapNewCached(I->G, sep, tempVertex, n, NULL, group_id, block_base);
+	I->Map = MapNewCached(I->G, sep, tempVertex, n, nullptr, group_id, block_base);
 	CHECKOK(ok, I->Map);
       }
     }
@@ -3238,8 +3238,8 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
          impact of this optimization is to reduce the size of the
          express list (I->Map->Elist) array by about 3-fold */
 
-      int *prm_spanner = NULL;
-      int *spanner = NULL;
+      int *prm_spanner = nullptr;
+      int *spanner = nullptr;
       float *v = tempVertex;
       int j, k, l, jj, kk, ll;
       int nVertex = I->NVertex;
@@ -3548,11 +3548,11 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
 
   } else {
     /* simple sphere mode */
-    I->Map = MapNewCached(I->G, -sep, I->Vertex, I->NVertex, NULL, group_id, block_base);
+    I->Map = MapNewCached(I->G, -sep, I->Vertex, I->NVertex, nullptr, group_id, block_base);
     CHECKOK(ok, I->Map);
     if (ok){
       if(perspective) {
-	ok &= MapSetupExpressPerp(I->Map, I->Vertex, front, I->NVertex, false, NULL);
+	ok &= MapSetupExpressPerp(I->Map, I->Vertex, front, I->NVertex, false, nullptr);
       } else {
 	ok &= MapSetupExpressXYVert(I->Map, I->Vertex, I->NVertex, false);
       }
@@ -3567,11 +3567,11 @@ int BasisInit(PyMOLGlobals * G, CBasis * I, int group_id)
 {
   int ok = true;
   I->G = G;
-  I->Radius = NULL;
-  I->Radius2 = NULL;
-  I->Normal = NULL;
-  I->Vert2Normal = NULL;
-  I->Precomp = NULL;
+  I->Radius = nullptr;
+  I->Radius2 = nullptr;
+  I->Normal = nullptr;
+  I->Vert2Normal = nullptr;
+  I->Precomp = nullptr;
   I->Vertex = VLACacheAlloc(I->G, float, 1, group_id, cCache_basis_vertex);
   CHECKOK(ok, I->Vertex);
   if (ok)
@@ -3589,7 +3589,7 @@ int BasisInit(PyMOLGlobals * G, CBasis * I, int group_id)
   if (ok)
     I->Precomp = VLACacheAlloc(I->G, float, 1, group_id, cCache_basis_precomp);
   CHECKOK(ok, I->Precomp);
-  I->Map = NULL;
+  I->Map = nullptr;
   I->NVertex = 0;
   I->NNormal = 0;
   return ok;
@@ -3601,7 +3601,7 @@ void BasisFinish(CBasis * I, int group_id)
 {
   if(I->Map) {
     MapFree(I->Map);
-    I->Map = NULL;
+    I->Map = nullptr;
   }
   VLACacheFreeP(I->G, I->Radius2, group_id, cCache_basis_radius2, false);
   VLACacheFreeP(I->G, I->Radius, group_id, cCache_basis_radius, false);
@@ -3609,7 +3609,7 @@ void BasisFinish(CBasis * I, int group_id)
   VLACacheFreeP(I->G, I->Vert2Normal, group_id, cCache_basis_vert2normal, false);
   VLACacheFreeP(I->G, I->Normal, group_id, cCache_basis_normal, false);
   VLACacheFreeP(I->G, I->Precomp, group_id, cCache_basis_precomp, false);
-  I->Vertex = NULL;
+  I->Vertex = nullptr;
 }
 
 

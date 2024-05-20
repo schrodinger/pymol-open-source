@@ -66,14 +66,14 @@ static int RepDihedralCGOGenerate(RepDihedral * I, RenderInfo * info)
   int c = I->N;
   float line_width;
   int ok = true;
-  CGO *convertcgo = NULL;
+  CGO *convertcgo = nullptr;
   short dash_as_cylinders = 0;
   int color =
-    SettingGet_color(G, NULL, I->ds->Obj->Setting.get(), cSetting_dihedral_color);
+    SettingGet_color(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dihedral_color);
   I->linewidth = line_width =
-    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_width);
+    SettingGet_f(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_width);
   I->radius =
-    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_radius);
+    SettingGet_f(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_radius);
 
   line_width = SceneGetDynamicLineWidth(info, line_width);
 
@@ -96,7 +96,7 @@ static int RepDihedralCGOGenerate(RepDihedral * I, RenderInfo * info)
   v = I->V;
   c = I->N;
   if (dash_as_cylinders){
-    float *origin = NULL, axis[3];
+    float *origin = nullptr, axis[3];
     while(ok && c > 0) {
       origin = v;
       v += 3;
@@ -129,7 +129,7 @@ static int RepDihedralCGOGenerate(RepDihedral * I, RenderInfo * info)
   CHECKOK(ok, convertcgo);
   CGOFree(I->shaderCGO);    
   I->shaderCGO = convertcgo;
-  convertcgo = NULL;
+  convertcgo = nullptr;
   if (ok){
     if (dash_as_cylinders){
       CGO *tmpCGO = CGONew(G);
@@ -177,11 +177,11 @@ void RepDihedral::render(RenderInfo * info)
   int round_ends;
   int ok = true;
   int color =
-    SettingGet_color(G, NULL, I->ds->Obj->Setting.get(), cSetting_dihedral_color);
+    SettingGet_color(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dihedral_color);
   float dash_transparency =
-    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_transparency);
+    SettingGet_f(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_transparency);
   bool t_mode_3 =
-    SettingGet_i(G, NULL, I->ds->Obj->Setting.get(), cSetting_transparency_mode) == 3;
+    SettingGet_i(G, nullptr, I->ds->Obj->Setting.get(), cSetting_transparency_mode) == 3;
   short dash_transparency_enabled;
   if(color < 0)
     color = getObj()->Color;
@@ -192,11 +192,11 @@ void RepDihedral::render(RenderInfo * info)
     return;
 
   I->linewidth = line_width =
-    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_width);
+    SettingGet_f(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_width);
   I->radius =
-    SettingGet_f(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_radius);
+    SettingGet_f(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_radius);
   round_ends =
-    SettingGet_b(G, NULL, I->ds->Obj->Setting.get(), cSetting_dash_round_ends);
+    SettingGet_b(G, nullptr, I->ds->Obj->Setting.get(), cSetting_dash_round_ends);
 
   line_width = SceneGetDynamicLineWidth(info, line_width);
 
@@ -253,7 +253,7 @@ void RepDihedral::render(RenderInfo * info)
 	  }
 	  ok &= RepDihedralCGOGenerate(I, info);
 	} else {
-	  CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, nullptr, nullptr, nullptr, info, I);
 	  return;
 	}
       }
@@ -299,14 +299,14 @@ void RepDihedral::render(RenderInfo * info)
       if (use_shader) {
 	
 	if (ok) {
-	  CGORender(I->shaderCGO, NULL, NULL, NULL, info, I);
+	  CGORender(I->shaderCGO, nullptr, nullptr, nullptr, info, I);
 	}
       }
     }
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->ds->Rep[cRepDihedral] = NULL;
+    I->ds->Rep[cRepDihedral] = nullptr;
     delete I;
   }
 }
@@ -329,8 +329,8 @@ Rep *RepDihedralNew(DistSet * ds, int state)
   if (ds && ds->getNRep() > cRepDihedral && ds->Rep[cRepDihedral])
     I->cs = ds->Rep[cRepDihedral]->cs;
 
-  dash_len = SettingGet_f(G, NULL, ds->Obj->Setting.get(), cSetting_dash_length);
-  dash_gap = SettingGet_f(G, NULL, ds->Obj->Setting.get(), cSetting_dash_gap);
+  dash_len = SettingGet_f(G, nullptr, ds->Obj->Setting.get(), cSetting_dash_length);
+  dash_gap = SettingGet_f(G, nullptr, ds->Obj->Setting.get(), cSetting_dash_gap);
   dash_sum = dash_len + dash_gap;
   if(dash_sum < R_SMALL4)
     dash_sum = 0.5;
@@ -351,7 +351,7 @@ Rep *RepDihedralNew(DistSet * ds, int state)
     float d3[3], n1[3], n3[3], x[3], y[3];
     float radius, length, angle, phase, pos;
     float dihedral_size =
-      SettingGet_f(G, NULL, ds->Obj->Setting.get(), cSetting_dihedral_size);
+      SettingGet_f(G, nullptr, ds->Obj->Setting.get(), cSetting_dihedral_size);
 
     I->V = VLAlloc(float, ds->NDihedralIndex * 10);
     CHECKOK(ok, I->V);
@@ -529,7 +529,7 @@ Rep *RepDihedralNew(DistSet * ds, int state)
   }
   if (!ok){
     delete I;
-    I = NULL;
+    I = nullptr;
   }
   return (Rep *) I;
 }

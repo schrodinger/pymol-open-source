@@ -20,6 +20,15 @@ if True:
         import urllib.request as urllib2
         from io import FileIO as file
 
+    import inspect
+    import glob
+    import shlex
+    from enum import Enum
+    from functools import wraps
+    from pathlib import Path
+    from textwrap import dedent
+    from typing import List
+
     import re
     import os
     import time
@@ -528,6 +537,97 @@ SEE ALSO
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
+
+
+    class Selection(str):
+        pass
+
+
+    def _parse_bool(value: str):
+        if isinstance(value, str):
+            if value.lower() in ["yes", "1", "true", "on", "y"]:
+                return True
+            elif value.lower() in ["no", "0", "false", "off", "n"]:
+                return False
+            else:
+                raise Exception("Invalid boolean value: %s" % value)
+        elif isinstance(value, bool):
+            return value
+        else:
+            raise Exception(f"Unsuported boolean flag {value}")
+
+    def _parse_list_str(value):
+        return shlex.split(value)
+
+    def _parse_list_int(value):
+        return list(map(int, shlex.split(value)))
+
+    def _parse_list_float(value):
+        return list(map(float, shlex.split(value)))
+
+    def declare_command(name, function=None, _self=cmd):
+        if function is None:
+            name, function = name.__name__, name
+
+        # new style commands should have annotations
+        annotations = [a for a in function.__annotations__ if a != "return"]
+        if function.__code__.co_argcount != len(annotations):
+            raise Exception("Messy annotations")
+
+        # docstring text, if present, should be dedented
+        if function.__doc__ is not None:
+            function.__doc__ = dedent(function.__doc__).strip()
+
+
+        # Analysing arguments
+        spec = inspect.getfullargspec(function)
+        kwargs_ = {}
+        args_ = spec.args[:]
+        defaults = list(spec.defaults or [])
+
+        args2_ = args_[:]
+        while args_ and defaults:
+            kwargs_[args_.pop(-1)] = defaults.pop(-1)
+
+        funcs = {}
+        for idx, (var, func) in enumerate(spec.annotations.items()):
+            funcs[var] = func
+
+        # Inner function that will be callable every time the command is executed
+        @wraps(function)
+        def inner(*args, **kwargs):
+            frame = traceback.format_stack()[-2]
+            caller = frame.split("\"", maxsplit=2)[1]
+
+            # It was called from command line or pml script, so parse arguments
+            if caller.endswith("pymol/parser.py"):
+                kwargs = {**kwargs_, **kwargs, **dict(zip(args2_, args))}
+                kwargs.pop("_self", None)
+                for arg in kwargs.copy():
+                    if funcs[arg] == bool:
+                        funcs[arg] = _parse_bool
+                    elif funcs[arg] == List[str]:
+                        funcs[arg] = _parse_list_str
+                    elif funcs[arg] == List[int]:
+                        funcs[arg] = _parse_list_int
+                    elif funcs[arg] == List[float]:
+                        funcs[arg] = _parse_list_float
+                    else:
+                        # Assume it's a literal supported type
+                        pass
+                    # Convert the argument to the correct type
+                    kwargs[arg] = funcs[arg](kwargs[arg])
+                return function(**kwargs)
+
+            # It was called from Python, so pass the arguments as is
+            else:
+                return function(*args, **kwargs)
+
+        name = function.__name__
+        _self.keyword[name] = [inner, 0, 0, ",", parsing.STRICT]
+        _self.kwhash.append(name)
+        _self.help_sc.append(name)
+        return inner
 
     def extend(name, function=None, _self=cmd):
 

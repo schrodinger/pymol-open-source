@@ -66,7 +66,7 @@ void MovieViewReinterpolate(PyMOLGlobals *G)
   MovieView(G, 3, -1, -1, power, bias, 1, /* note simple always = 1 for camera motion...*/
             linear, 
             SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0 ,
-            hand, 5, 1, NULL, 0.5, -1, 1); 
+            hand, 5, 1, nullptr, 0.5, -1, 1); 
 }
 
 int MovieXtoFrame(PyMOLGlobals *G, BlockRect *rect, int frames, int x, int nearest)
@@ -213,7 +213,7 @@ void MovieCopyPrepare(PyMOLGlobals * G, int *width, int *height, int *length)
   SettingSetGlobal_i(G, cSetting_overlay, 5);
   nFrame = I->NFrame;
   if(!nFrame) {
-    nFrame = SceneGetNFrame(G, NULL);
+    nFrame = SceneGetNFrame(G, nullptr);
   }
   start = 0;
   stop = nFrame;
@@ -274,7 +274,7 @@ int MovieCopyFrame(PyMOLGlobals * G, int frame, int width, int height, int rowby
   int nFrame;
   nFrame = I->NFrame;
   if(!nFrame) {
-    nFrame = SceneGetNFrame(G, NULL);
+    nFrame = SceneGetNFrame(G, nullptr);
   }
 
   if((frame < nFrame) && (ptr)) {
@@ -333,7 +333,7 @@ int MoviePurgeFrame(PyMOLGlobals * G, int frame)
   int i;
   nFrame = I->NFrame;
   if(!nFrame) {
-    nFrame = SceneGetNFrame(G, NULL);
+    nFrame = SceneGetNFrame(G, nullptr);
   }
   if(!I->CacheSave) {
     if(frame < nFrame) {
@@ -411,7 +411,7 @@ static int MovieCmdFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
   int warn = false;
 
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
 
@@ -463,7 +463,7 @@ int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
   if(ok && (ll > 6)) {
     PyObject *tmp;
     VLAFreeP(I->ViewElem);
-    I->ViewElem = NULL;
+    I->ViewElem = nullptr;
     tmp = PyList_GetItem(list, 6);
     if(tmp && !(tmp == Py_None))
       ok = ViewElemVLAFromPyList(G, tmp, &I->ViewElem, I->NFrame);
@@ -483,7 +483,7 @@ static PyObject *MovieCmdAsPyList(PyMOLGlobals * G)
 {
 
   CMovie *I = G->Movie;
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   int a;
 
   result = PyList_New(I->NFrame);
@@ -499,7 +499,7 @@ static PyObject *MovieCmdAsPyList(PyMOLGlobals * G)
 PyObject *MovieAsPyList(PyMOLGlobals * G)
 {
   CMovie *I = G->Movie;
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(7);
   PyList_SetItem(result, 0, PyInt_FromLong(I->NFrame));
@@ -561,7 +561,7 @@ void MoviePlay(PyMOLGlobals * G, int cmd)
     if(I->Playing && !SettingGetGlobal_b(G, cSetting_movie_loop)) {
       /* if not looping, and at end of movie, then automatically rewind
          and force execution of the first movie command */
-      if((SettingGetGlobal_i(G, cSetting_frame)) == (SceneGetNFrame(G, NULL))) {
+      if((SettingGetGlobal_i(G, cSetting_frame)) == (SceneGetNFrame(G, nullptr))) {
         SceneSetFrame(G, 7, 0);
       }
     }
@@ -573,7 +573,7 @@ void MoviePlay(PyMOLGlobals * G, int cmd)
     if(!SettingGetGlobal_b(G, cSetting_movie_loop)) {
       /* if not looping, and at end of movie, then automatically rewind
          and force execution of the first movie command */
-      if((SettingGetGlobal_i(G, cSetting_frame)) == (SceneGetNFrame(G, NULL))) {
+      if((SettingGetGlobal_i(G, cSetting_frame)) == (SceneGetNFrame(G, nullptr))) {
         SceneSetFrame(G, 7, 0);
       }
     }
@@ -635,7 +635,7 @@ static void MovieModalPNG(PyMOLGlobals * G, CMovie * I, CMovieModal * M)
     OrthoBusyPrime(G);
     M->nFrame = I->NFrame;
     if(!M->nFrame) {
-      M->nFrame = SceneGetNFrame(G, NULL);
+      M->nFrame = SceneGetNFrame(G, nullptr);
       if(M->nFrame < 1) {
         M->nFrame = 1;
       }
@@ -1131,7 +1131,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
         first = 0;
       
       if(last < 0) {
-        last = SceneGetNFrame(G, NULL) - 1;
+        last = SceneGetNFrame(G, nullptr) - 1;
       }
       if(last >= I->NFrame) {
         last = I->NFrame - 1;
@@ -1167,7 +1167,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
               " MovieView: Setting frame %d.\n", frame + 1 ENDFB(G);
           }
           if(scene_name && (!scene_name[0]))
-            scene_name = NULL;
+            scene_name = nullptr;
           SceneToViewElem(G, I->ViewElem + frame, scene_name);
           if(state>=0) {
             I->ViewElem[frame].state = state;
@@ -1211,7 +1211,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
   case 3:
     if(I->ViewElem) {
       int view_found = false;
-      CViewElem *first_view = NULL, *last_view = NULL;
+      CViewElem *first_view = nullptr, *last_view = nullptr;
       if(first < 0)
         first = 0;
 
@@ -1313,7 +1313,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
                                   power, bias, simple, linear, hand, scene_cut);
             }
             first_view = last_view;
-            last_view = NULL;
+            last_view = nullptr;
           }
         }
       }
@@ -1351,7 +1351,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
       if(first < 0)
         first = 0;
       if(last < 0) {
-        last = SceneGetNFrame(G, NULL) - 1;
+        last = SceneGetNFrame(G, nullptr) - 1;
       }
       for(frame = first; frame <= last; frame++) {
         if((frame >= 0) && (frame < I->NFrame)) {

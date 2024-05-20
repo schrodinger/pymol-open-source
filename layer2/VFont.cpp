@@ -58,7 +58,7 @@ int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
                     const char *text, float *pos, float *scale, float *matrix, float *color)
 {
   CVFont *I = G->VFont;
-  VFontRec *fr = NULL;
+  VFontRec *fr = nullptr;
   int ok = true;
   float base[3], pen[3];
   float *pc;
@@ -141,7 +141,7 @@ int VFontIndent(PyMOLGlobals * G, int font_id, const char *text, float *pos, flo
                 float *matrix, float dir)
 {
   CVFont *I = G->VFont;
-  VFontRec *fr = NULL;
+  VFontRec *fr = nullptr;
   int ok = true;
   float pen[3];
   unsigned char c;
@@ -183,7 +183,7 @@ static int VFontRecLoad(PyMOLGlobals * G, VFontRec * I, PyObject * dict)
   ov_diff used = 0;
   int ok = true;
   PyObject *key, *char_list;
-  PyObject *stroke_list = NULL;
+  PyObject *stroke_list = nullptr;
   Py_ssize_t pos = 0;
   unsigned char code[2];
   float adv;
@@ -195,7 +195,7 @@ static int VFontRecLoad(PyMOLGlobals * G, VFontRec * I, PyObject * dict)
       ok = false;
     } else {
       if(ok)
-        ok = (char_list != NULL);
+        ok = (char_list != nullptr);
       if(ok)
         ok = PyList_Check(char_list);
       if(ok)
@@ -205,7 +205,7 @@ static int VFontRecLoad(PyMOLGlobals * G, VFontRec * I, PyObject * dict)
       if(ok) {
         stroke_list = PyList_GetItem(char_list, 1);
         if(ok)
-          ok = (stroke_list != NULL);
+          ok = (stroke_list != nullptr);
         if(ok)
           ok = PyList_Check(stroke_list);
         if(ok) {
@@ -267,7 +267,7 @@ static void VFontRecFree(PyMOLGlobals * G, VFontRec * I)
 
 int VFontInit(PyMOLGlobals * G)
 {
-  CVFont *I = NULL;
+  CVFont *I = nullptr;
   if((I = (G->VFont = pymol::calloc<CVFont>(1)))) {
 
     CVFont *I = G->VFont;
@@ -297,7 +297,7 @@ int VFontLoad(PyMOLGlobals * G, float size, int face, int style, int can_load_ne
   int a;
   int result = 0;
 #ifndef _PYMOL_NOPY
-  PyObject *vfont = NULL;
+  PyObject *vfont = nullptr;
 #endif
 
   PRINTFD(G, FB_VFont)

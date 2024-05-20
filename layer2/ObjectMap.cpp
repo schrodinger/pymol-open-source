@@ -158,7 +158,7 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float 
   int cnt = 0;
   int list_size;
   float cutoff = beyond;
-  MapType *voxelmap = NULL;
+  MapType *voxelmap = nullptr;
 
   /* size of the VLA */
   if(vert_vla) {
@@ -171,7 +171,7 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float 
 
   /* make a new map from the VLA .............. */
   if(list_size)
-    voxelmap = MapNew(G, -cutoff, vert_vla, list_size, NULL);
+    voxelmap = MapNew(G, -cutoff, vert_vla, list_size, nullptr);
 
   if(voxelmap || (!list_size)) {
     int a, b, c;
@@ -1009,7 +1009,7 @@ int ObjectMapStateContainsPoint(ObjectMapState * ms, float *point)
  * @param[out] result Array of length `n` which will be populated with map
  * values at coorinate positions (linear interpolated between grid points)
  * @param[out] flag Array of length `n` which will be populated with booleans
- * indicating if points were within map bounds (optional, can be NULL)
+ * indicating if points were within map bounds (optional, can be nullptr)
  * @return False if any coordinate was out of bounds
  */
 int ObjectMapStateInterpolate(ObjectMapState * ms, const float *array, float *result, int *flag,
@@ -1228,7 +1228,7 @@ void ObjectMapStateRegeneratePoints(ObjectMapState * ms)
 
 static PyObject *ObjectMapStateAsPyList(ObjectMapState * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(16);
   PyList_SetItem(result, 0, PyInt_FromLong(I->Active));
@@ -1274,7 +1274,7 @@ static PyObject *ObjectMapStateAsPyList(ObjectMapState * I)
 
 static PyObject *ObjectMapAllStatesAsPyList(ObjectMap * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   int a;
   result = PyList_New(I->State.size());
   for(a = 0; a < I->State.size(); a++) {
@@ -1337,7 +1337,7 @@ static int ObjectMapStateFromPyList(PyMOLGlobals * G, ObjectMapState * I, PyObje
   int ll = 0;
   PyObject *tmp;
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok) {
     if(!PyList_Check(list))
       I->Active = false;
@@ -1354,7 +1354,7 @@ static int ObjectMapStateFromPyList(PyMOLGlobals * G, ObjectMapState * I, PyObje
       if(ok) {
         tmp = PyList_GetItem(list, 1);
         if(tmp == Py_None)
-          I->Symmetry = NULL;
+          I->Symmetry = nullptr;
         else {
           I->Symmetry.reset(SymmetryNewFromPyList(G, tmp));
           ok = I->Symmetry != nullptr;
@@ -1448,7 +1448,7 @@ static int ObjectMapAllStatesFromPyList(ObjectMap * I, PyObject * list)
 
 PyObject *ObjectMapAsPyList(ObjectMap * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(3);
   PyList_SetItem(result, 0, ObjectAsPyList(I));
@@ -1461,18 +1461,18 @@ PyObject *ObjectMapAsPyList(ObjectMap * I)
 int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** result)
 {
   int ok = true;
-  ObjectMap *I = NULL;
-  (*result) = NULL;
+  ObjectMap *I = nullptr;
+  (*result) = nullptr;
 
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
   I = new ObjectMap(G);
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
 
   if(ok){
     auto *val = PyList_GetItem(list, 0);
@@ -1497,10 +1497,10 @@ int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** resul
                      int source_state, int target_state)
 {
   int ok = true;
-  ObjectMap *I = NULL;
+  ObjectMap *I = nullptr;
   I = new ObjectMap(G);
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
   if(ok)
     ok = ObjectCopyHeader(I, src);
   if(ok) {
@@ -1738,7 +1738,7 @@ void ObjectMap::render(RenderInfo * info)
   CRay *ray = info->ray;
   auto pick = info->pick;
   const RenderPass pass = info->pass;
-  ObjectMapState *ms = NULL;
+  ObjectMapState *ms = nullptr;
 
   if(pass != RenderPass::Antialias)
     return;
@@ -1839,7 +1839,7 @@ void ObjectMap::render(RenderInfo * info)
                 shaderPrg->SetLightingEnabled(0);
 
                 CGORender(ms->shaderCGO.get(), ColorGet(G, I->Color),
-                    NULL, NULL, info, NULL);
+                    nullptr, nullptr, info, nullptr);
                 shaderPrg->Disable();
               }
             }
@@ -1868,7 +1868,7 @@ void ObjectMap::render(RenderInfo * info)
             ms->have_range = true;
           }
         }
-        if(ms->have_range && SettingGet_b(G, NULL, I->Setting.get(), cSetting_dot_normals)) {
+        if(ms->have_range && SettingGet_b(G, nullptr, I->Setting.get(), cSetting_dot_normals)) {
           IsofieldComputeGradients(G, ms->Field.get());
         }
         if(ms->have_range) {
@@ -1876,9 +1876,9 @@ void ObjectMap::render(RenderInfo * info)
           CField *data = ms->Field->data.get();
           int cnt = data->dim[0] * data->dim[1] * data->dim[2];
           CField *points = ms->Field->points.get();
-          CField *gradients = NULL;
+          CField *gradients = nullptr;
 
-          if(SettingGet_b(G, NULL, I->Setting.get(), cSetting_dot_normals)) {
+          if(SettingGet_b(G, nullptr, I->Setting.get(), cSetting_dot_normals)) {
             gradients = ms->Field->gradients.get();
           }
           if(data && points) {
@@ -1893,10 +1893,10 @@ void ObjectMap::render(RenderInfo * info)
   ptr += 3; \
 }
 
-            float *raw_gradient = NULL;
+            float *raw_gradient = nullptr;
             float high_cut = ms->high_cutoff, low_cut = ms->low_cutoff;
             float width =
-              SettingGet_f(G, NULL, I->Setting.get(), cSetting_dot_width);
+              SettingGet_f(G, nullptr, I->Setting.get(), cSetting_dot_width);
 
             if(ray) {
               float radius = ray->PixelRadius * width / 1.4142F;
@@ -1985,7 +1985,7 @@ ObjectMapState::ObjectMapState(PyMOLGlobals* G)
   ObjectMapStatePurge(G, I);
   ObjectStateInit(G, I);
   I->Symmetry.reset(new CSymmetry(G));
-  I->Field = NULL;
+  I->Field = nullptr;
   I->Origin.clear();
   I->Dim.clear();
   I->Range.clear();
@@ -2057,7 +2057,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
   float v[3];
   int a, b, c, d;
   float *fp;
-  ObjectMapState *ms = NULL;
+  ObjectMapState *ms = nullptr;
   ObjectMapDesc _md, *md;
   ms = ObjectMapStatePrime(I, state);
 
@@ -4143,7 +4143,7 @@ static int ObjectMapGRDStrToMap(ObjectMap * I, char *GRDStr, int bytes, int stat
 
   char *p;
   float dens;
-  float *f = NULL;
+  float *f = nullptr;
   int a, b, c, d, e;
   float v[3], vr[3], maxd, mind;
   int ok = true;
@@ -4665,7 +4665,7 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, const char *fnam
                              int is_string, int bytes, int quiet,
                              int format)
 {
-  ObjectMap *I = NULL;
+  ObjectMap *I = nullptr;
   char *buffer;
   long size;
 
@@ -4814,7 +4814,7 @@ ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, const char *fname
                             int is_string, int bytes, int quiet)
 {
 
-  ObjectMap *I = NULL;
+  ObjectMap *I = nullptr;
   long size;
   char *buffer;
 
@@ -4886,7 +4886,7 @@ static pymol::Result<std::unique_ptr<ObjectMapState>> ObjectMapDXStrToMap(
 
   char cc[MAXLINELEN];
 
-  auto ms = pymol::make_unique<ObjectMapState>(G);
+  auto ms = std::make_unique<ObjectMapState>(G);
 
   ms->Origin = std::vector<float>(3);
   ms->Grid = std::vector<float>(3);
@@ -5198,7 +5198,7 @@ ObjectMap* ObjectMapReadDXStr(PyMOLGlobals* G, ObjectMap* I, const char* MapStr,
 ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                                int quiet)
 {
-  ObjectMap *I = NULL;
+  ObjectMap *I = nullptr;
   long size;
   char *buffer;
 
@@ -5418,7 +5418,7 @@ static ObjectMap *ObjectMapReadACNTStr(PyMOLGlobals * G, ObjectMap * I,
 ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
                                  int state, int quiet)
 {
-  ObjectMap *I = NULL;
+  ObjectMap *I = nullptr;
   long size;
   char *buffer;
   
@@ -5446,7 +5446,7 @@ ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, const char *
 ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                                 int quiet)
 {
-  ObjectMap *I = NULL;
+  ObjectMap *I = nullptr;
   long size;
   char *buffer;
 
@@ -5472,7 +5472,7 @@ ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, const char *f
 ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
                                  int state, int quiet)
 {
-  ObjectMap *I = NULL;
+  ObjectMap *I = nullptr;
   long size;
   char *buffer;
 
@@ -5498,7 +5498,7 @@ ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, const char *
 ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                                 int quiet)
 {
-  ObjectMap *I = NULL;
+  ObjectMap *I = nullptr;
   long size;
   char *buffer;
 
@@ -5524,7 +5524,7 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, const char *f
 ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
                               int state, int is_file, int quiet)
 {
-  ObjectMap *I = NULL;
+  ObjectMap *I = nullptr;
   long size;
   char *buffer;
 
@@ -5681,11 +5681,11 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * 
 {
 #ifndef _PYMOL_NUMPY
   ErrMessage(G, "ObjectMap", "missing numpy support, required for chempy.brick");
-  return NULL;
+  return nullptr;
 #endif
 
 #ifdef _PYMOL_NOPY
-  return NULL;
+  return nullptr;
 #else
 
   int ok = true;
@@ -5778,7 +5778,7 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals * G, ObjectMap * I, PyObject * Ma
                                   int state, int discrete, int quiet)
 {
 #ifdef _PYMOL_NOPY
-  return NULL;
+  return nullptr;
 #else
   int ok = true;
   int isNew = true;

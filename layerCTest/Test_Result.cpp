@@ -21,7 +21,7 @@ TEST_CASE("Result simple", "[Result]")
 
 template <typename T, typename U>
 static
-pymol::Result<pymol::common_type_t<T, U>> sum(T i, U j)
+pymol::Result<std::common_type_t<T, U>> sum(T i, U j)
 {
   return i + j;
 }

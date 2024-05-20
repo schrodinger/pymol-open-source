@@ -112,8 +112,8 @@ RepSurface::~RepSurface()
   auto I = this;
   VLAFreeP(I->V);
   VLAFreeP(I->VN);
-  setPickingCGO(I, NULL);
-  setShaderCGO(I, NULL);
+  setPickingCGO(I, nullptr);
+  setShaderCGO(I, nullptr);
   FreeP(I->VC);
   FreeP(I->VA);
   if (I->VAO){
@@ -201,7 +201,7 @@ static
 void immediate_draw_indexed_vertices_alpha(
     const float * vc,     // colors
     const float * va,     // alpha array
-    float alpha,          // alpha value if va is NULL
+    float alpha,          // alpha value if va is nullptr
     const float * vn,     // normals
     const float * v,      // vertices
     const int * indices,  // indices
@@ -288,7 +288,7 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
   int ok = true;
   float alpha;
   int t_mode;
-  CGO *convertcgo = NULL;
+  CGO *convertcgo = nullptr;
 
   auto* const cs = I->cs;
   auto* const obj = I->cs->Obj;
@@ -578,9 +578,9 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 
           if(t_mode) {
 
-            float **t_buf = NULL, **tb;
-            float *z_value = NULL, *zv;
-            int *ix = NULL;
+            float **t_buf = nullptr, **tb;
+            float *z_value = nullptr, *zv;
+            int *ix = nullptr;
 	int n_tri = 0;
             float sum[3];
             float matrix[16];
@@ -1368,13 +1368,13 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
 #endif
     } else {
       if (ok)
-	convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(I->shaderCGO, 0, false, NULL);
+	convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(I->shaderCGO, 0, false, nullptr);
       CHECKOK(ok, convertcgo);
     }
     if (ok)
       convertcgo->use_shader = true;
     {
-      CGO *tmpCGO = NULL;
+      CGO *tmpCGO = nullptr;
       tmpCGO = CGONew(G);
       CGOEnable(tmpCGO, GL_SURFACE_SHADER);
       //CGOEnable(tmpCGO, CGO_GL_LIGHTING); // do we need this?
@@ -1401,11 +1401,11 @@ static int RepSurfaceCGOGenerate(RepSurface * I, RenderInfo * info)
       if (ok) ok &= CGODisable(I->shaderCGO, GL_SURFACE_SHADER);
       if (ok) ok &= CGOStop(I->shaderCGO);
       CGOFreeWithoutVBOs(convertcgo);
-      convertcgo = NULL;
+      convertcgo = nullptr;
     }
   } else {
     setShaderCGO(I, convertcgo);
-    convertcgo = NULL;
+    convertcgo = nullptr;
   }
 
   if (I->shaderCGO) {
@@ -1656,7 +1656,7 @@ void RepSurface::render(RenderInfo* info)
 
         if (ok && I->shaderCGO) {
           const float *color = ColorGet(G, obj->Color);
-          CGORender(I->shaderCGO, color, NULL, NULL, info, I);
+          CGORender(I->shaderCGO, color, nullptr, nullptr, info, I);
           return;
         }
 
@@ -1664,7 +1664,7 @@ void RepSurface::render(RenderInfo* info)
           " RepSurfaceCGOGenerate failed\n" ENDFB(G);
       }
 
-      setShaderCGO(I, NULL);
+      setShaderCGO(I, nullptr);
 
 #ifndef PURE_OPENGL_ES_2
       bool two_sided_lighting =
@@ -1684,7 +1684,7 @@ void RepSurface::render(RenderInfo* info)
 
           if(!normals){
             SceneResetNormal(G, true);
-            vn = NULL;
+            vn = nullptr;
           }
 
           if(!lighting)
@@ -1696,7 +1696,7 @@ void RepSurface::render(RenderInfo* info)
             glBegin(GL_POINTS);
             if(I->oneColorFlag) {
               glColor3fv(ColorGet(G, I->oneColor));
-              vc = NULL;
+              vc = nullptr;
             } else {
               glColor3f(1.0, 0.0, 0.0);
             }
@@ -1720,7 +1720,7 @@ void RepSurface::render(RenderInfo* info)
 
               if(!normals){
                 SceneResetNormal(G, true);
-                vn = NULL;
+                vn = nullptr;
               }
 
               if(!lighting)
@@ -1732,7 +1732,7 @@ void RepSurface::render(RenderInfo* info)
 
               if(I->oneColorFlag) {
                 glColor3fv(ColorGet(G, I->oneColor));
-                vc = NULL;
+                vc = nullptr;
               }
 
               glBegin(GL_LINES);
@@ -1763,9 +1763,9 @@ void RepSurface::render(RenderInfo* info)
 
           if(t_mode) {
 
-            float **t_buf = NULL, **tb;
-            float *z_value = NULL, *zv;
-            int *ix = NULL;
+            float **t_buf = nullptr, **tb;
+            float *z_value = nullptr, *zv;
+            int *ix = nullptr;
             int n_tri = 0;
             float sum[3];
             float matrix[16];
@@ -2019,7 +2019,7 @@ void RepSurface::render(RenderInfo* info)
                   float col[3];
                   ColorGetEncoded(G, I->oneColor, col);
                   glColor4f(col[0], col[1], col[2], alpha);
-                  vc = NULL;
+                  vc = nullptr;
                 }
 
                 if(I->allVisibleFlag) {
@@ -2045,7 +2045,7 @@ void RepSurface::render(RenderInfo* info)
         } else if (ok) {                /* opaque */
             if(I->oneColorFlag) {
               glColor3fv(ColorGet(G, I->oneColor));
-              vc = NULL;
+              vc = nullptr;
             }
 
             if(I->allVisibleFlag) {
@@ -2173,7 +2173,7 @@ Rep* RepSurface::recolor()
   auto const I = this;
   assert(cs == this->cs);
 
-  MapType *map = NULL, *ambient_occlusion_map = NULL;
+  MapType *map = nullptr, *ambient_occlusion_map = nullptr;
   int a, i0, i, j, c1;
   float *v0, *vc, *va;
   const float *c0;
@@ -2192,7 +2192,7 @@ Rep* RepSurface::recolor()
   int cullByFlag = false;
   int surface_mode, ambient_occlusion_mode;
   int surface_color;
-  int *present = NULL;
+  int *present = nullptr;
   int *rc;
   int ramped_flag = false;
 
@@ -2201,24 +2201,24 @@ Rep* RepSurface::recolor()
   float carve_cutoff;
   float carve_normal_cutoff;
   int carve_normal_flag;
-  const char *carve_selection = NULL;
-  float *carve_vla = NULL;
-  MapType *carve_map = NULL;
+  const char *carve_selection = nullptr;
+  float *carve_vla = nullptr;
+  MapType *carve_map = nullptr;
 
   int clear_state = 0;
   int clear_flag = false;
   float clear_cutoff;
-  const char *clear_selection = NULL;
-  float *clear_vla = NULL;
+  const char *clear_selection = nullptr;
+  float *clear_vla = nullptr;
 
   int state = getState();
 
   float transp;
   int variable_alpha = false;
 
-  MapType *clear_map = NULL;
+  MapType *clear_map = nullptr;
 
-  AtomInfoType *ai2 = NULL, *ai1;
+  AtomInfoType *ai2 = nullptr, *ai1;
 
   obj = cs->Obj;
   ambient_occlusion_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_ambient_occlusion_mode);
@@ -2327,7 +2327,7 @@ Rep* RepSurface::recolor()
     if(inclInvis) {
       float probe_radiusX2 = probe_radius * 2;
       map =
-	MapNewFlagged(G, 2 * I->max_vdw + probe_radius, cs->Coord, cs->NIndex, NULL,
+	MapNewFlagged(G, 2 * I->max_vdw + probe_radius, cs->Coord, cs->NIndex, nullptr,
 		      present);
       MapSetupExpress(map);
       /* add in nearby invisibles */
@@ -2355,7 +2355,7 @@ Rep* RepSurface::recolor()
         }
       }
       MapFree(map);
-      map = NULL;
+      map = nullptr;
     }
 
     /**
@@ -2390,9 +2390,9 @@ Rep* RepSurface::recolor()
       start_time = UtilGetSeconds(G);
 
       if (vertex_map){
-	ambient_occlusion_map = MapNewFlagged(G, map_cutoff, I->V, I->N, NULL, NULL);
+	ambient_occlusion_map = MapNewFlagged(G, map_cutoff, I->V, I->N, nullptr, nullptr);
       } else {
-	ambient_occlusion_map = MapNewFlagged(G, map_cutoff, cs->Coord, cs->NIndex, NULL, present);
+	ambient_occlusion_map = MapNewFlagged(G, map_cutoff, cs->Coord, cs->NIndex, nullptr, present);
       }      
       MapSetupExpress(ambient_occlusion_map);
 
@@ -2616,12 +2616,12 @@ Rep* RepSurface::recolor()
       cur_time = UtilGetSeconds(G);
 
       PRINTFB(G, FB_RepSurface, FB_Debugging) "RepSurfaceColor():  Ambient Occlusion computed #atoms=%d #vertices=%d time=%lf seconds\n", cs->NIndex, I->N, (cur_time-start_time) ENDFB(G);
-      ambient_occlusion_map = NULL;
+      ambient_occlusion_map = nullptr;
 
     }; // update_VAO
 
     /* now, assign colors to each point */
-    map = MapNewFlagged(G, cutoff, cs->Coord, cs->NIndex, NULL, present);
+    map = MapNewFlagged(G, cutoff, cs->Coord, cs->NIndex, nullptr, present);
     if(map) {
       short color_smoothing = SettingGetGlobal_i(G, cSetting_surface_color_smoothing);
       float color_smoothing_threshold = SettingGetGlobal_f(G, cSetting_surface_color_smoothing_threshold);
@@ -2633,10 +2633,10 @@ Rep* RepSurface::recolor()
       for(a = 0; ok && a < I->N; a++) {
         float at_transp = transp;
 
-        AtomInfoType *ai0 = NULL;
+        AtomInfoType *ai0 = nullptr;
         float minDist = FLT_MAX, minDist2 = FLT_MAX, distDiff = FLT_MAX;
 	int pi = -1, catm = -1; /* variables for color smoothing */
-        AtomInfoType *pai = NULL, *pai2 = NULL; /* variables for color smoothing */
+        AtomInfoType *pai = nullptr, *pai2 = nullptr; /* variables for color smoothing */
         c1 = 1;
         i0 = -1;
         v0 = I->V + 3 * a;
@@ -2844,12 +2844,12 @@ Rep* RepSurface::recolor()
    */
 
   if(G->HaveGUI) {
-    setShaderCGO(I, NULL);
+    setShaderCGO(I, nullptr);
   }
 
   if(I->VA && (!variable_alpha)) {
     FreeP(I->VA);
-    I->VA = NULL;
+    I->VA = nullptr;
   }
 
   if(carve_map)
@@ -2912,19 +2912,19 @@ static void SurfaceJobPurgeResult(PyMOLGlobals * G, SurfaceJob * I)
   I->N = 0;
   I->NT = 0;
   VLAFreeP(I->V);
-  I->V = NULL;
+  I->V = nullptr;
   VLAFreeP(I->VN);
-  I->VN = NULL;
+  I->VN = nullptr;
   VLAFreeP(I->T);
-  I->T = NULL;
+  I->T = nullptr;
   VLAFreeP(I->S);
-  I->S = NULL;
+  I->S = nullptr;
 }
 
 #ifndef _PYMOL_NOPY
 OV_INLINE PyObject *SurfaceJobAtomInfoAsPyTuple(SurfaceJobAtomInfo * atom_info)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   if(atom_info) {
     ov_size size = 2 * VLAGetSize(atom_info) + 1;
     result = PyTuple_New(size);
@@ -2944,7 +2944,7 @@ OV_INLINE PyObject *SurfaceJobAtomInfoAsPyTuple(SurfaceJobAtomInfo * atom_info)
 #if 0
 OV_INLINE SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject * tuple)
 {
-  SurfaceJobAtomInfo *result = NULL;
+  SurfaceJobAtomInfo *result = nullptr;
   if(tuple && PyTuple_Check(tuple)) {
     ov_size size = PyTuple_Size(tuple);
     if(size) {
@@ -3075,7 +3075,7 @@ static int SurfaceJobEliminateCloseDotsType3orMore(PyMOLGlobals * G,
       dot_flag[a] = 1;
   }
   {
-    MapType *map = MapNew(G, point_sep + 0.05F, I->V, I->N, NULL);
+    MapType *map = MapNew(G, point_sep + 0.05F, I->V, I->N, nullptr);
     int a;
     float *v = I->V;
     float *vn = I->VN;
@@ -3135,7 +3135,7 @@ static int SurfaceJobEliminateCloseDotsTypeLessThan3(PyMOLGlobals * G,
   int ok = true;
   int a;
   float point_sep = I->pointSep;
-  MapType *map = MapNew(G, -point_sep, I->V, I->N, NULL);
+  MapType *map = MapNew(G, -point_sep, I->V, I->N, nullptr);
   float *v = I->V;
   float *vn = I->VN;
 
@@ -3288,7 +3288,7 @@ static int SurfaceJobEliminateTroublesomeVertices(PyMOLGlobals * G, SurfaceJob *
       trim_cutoff *= 1.5;
     }
     while(ok && repeat_flag) {
-      MapType *map = MapNew(G, neighborhood, I->V, I->N, NULL);
+      MapType *map = MapNew(G, neighborhood, I->V, I->N, nullptr);
       CHECKOK(ok, map);
       if (ok){
 	int a;
@@ -3318,7 +3318,7 @@ static int SurfaceJobAtomProximityCleanupPass(PyMOLGlobals * G, SurfaceJob * I,
   SurfaceJobAtomInfo *I_atom_info = I->atomInfo;
   int n_index = VLAGetSize(I->atomInfo);
   MapType *map =
-    MapNewFlagged(G, I->maxVdw + probe_radius, I_coord, n_index, NULL,
+    MapNewFlagged(G, I->maxVdw + probe_radius, I_coord, n_index, nullptr,
 		  present_vla);
   int a;
   float *v;
@@ -3439,9 +3439,9 @@ static int SurfaceJobRefineAddNewVertices(PyMOLGlobals * G, SurfaceJob * I){
     map_cutoff = 2.9 * point_sep;
   }
   {
-    MapType *map = NULL;
+    MapType *map = nullptr;
     int a;
-    map = MapNew(G, map_cutoff, I->V, I->N, NULL);
+    map = MapNew(G, map_cutoff, I->V, I->N, nullptr);
     CHECKOK(ok, map);
     if (ok)
       ok &= MapSetupExpress(map);
@@ -3600,15 +3600,15 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
       "Error-RepSurface: insufficient memory to calculate surface at this quality.\n"
       ENDFB(G);
     VLAFreeP(I->V);
-    I->V = NULL;
+    I->V = nullptr;
     VLAFreeP(I->VN);
-    I->VN = NULL;
+    I->VN = nullptr;
     ok = false;
   } else {
-    SolventDot *sol_dot = NULL;
+    SolventDot *sol_dot = nullptr;
     float *v = I->V;
     float *vn = I->VN;
-    MapType *carve_map = NULL;
+    MapType *carve_map = nullptr;
     float probe_radius = I->probeRadius;
     int circumscribe = I->circumscribe;
     int surface_type = I->surfaceType;
@@ -3649,12 +3649,12 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
         }
 	ok &= !G->Interrupt;
         if(ok) {
-          MapType *map, *solv_map = NULL;
+          MapType *map, *solv_map = nullptr;
           map = MapNewFlagged(G, I->maxVdw + probe_rad_more,
-                              I->coord, VLAGetSize(I->coord) / 3, NULL, NULL);
+                              I->coord, VLAGetSize(I->coord) / 3, nullptr, nullptr);
 	  CHECKOK(ok, map);
 	  if (ok)
-	    solv_map = MapNew(G, probe_rad_less, sol_dot->dot, sol_dot->nDot, NULL);
+	    solv_map = MapNew(G, probe_rad_less, sol_dot->dot, sol_dot->nDot, nullptr);
 	  CHECKOK(ok, solv_map);
           if(ok) {
             ok &= MapSetupExpress(solv_map);
@@ -3743,7 +3743,7 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
       }
     }
     SolventDotFree(sol_dot);
-    sol_dot = NULL;
+    sol_dot = nullptr;
     ok &= !G->Interrupt;
     if(ok) {
       int refine, ref_count = 1;
@@ -3797,7 +3797,7 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
         float cutoff = point_sep * 5.0F;
         if((cutoff > probe_radius) && (!I->surfaceSolvent))
           cutoff = probe_radius;
-        I->T = TrianglePointsToSurface(G, I->V, I->VN, I->N, cutoff, &I->NT, &I->S, NULL, 
+        I->T = TrianglePointsToSurface(G, I->V, I->VN, I->N, cutoff, &I->NT, &I->S, nullptr, 
                                        I->cavityMode);
 	CHECKOK(ok, I->T);
         PRINTFB(G, FB_RepSurface, FB_Blather)
@@ -3903,7 +3903,7 @@ static int RepSurfacePrepareSurfaceJob(PyMOLGlobals * G, SurfaceJob *surf_job,
   surf_job->allVisibleFlag = I->allVisibleFlag;
   
   surf_job->atomInfo = *atom_info;
-  (*atom_info) = NULL;
+  (*atom_info) = nullptr;
   
   surf_job->nPresent = n_present;
   if(present_vla && optimize) {
@@ -3935,7 +3935,7 @@ static int RepSurfacePrepareSurfaceJob(PyMOLGlobals * G, SurfaceJob *surf_job,
     CHECKOK(ok, surf_job->atomInfo);
   } else {
     surf_job->presentVla = present_vla;
-    present_vla = NULL;
+    present_vla = nullptr;
     surf_job->coord = VLAlloc(float, cs->NIndex * 3);
     CHECKOK(ok, surf_job->coord);
     if(ok)
@@ -3980,12 +3980,12 @@ void RepSurfaceConvertSurfaceJobToPyObject(PyMOLGlobals *G, SurfaceJob *surf_job
       if(OV_OK(SurfaceJobResultFromTuple(G, surf_job, *output))) {
 	*found = true;
 	PXDecRef(*input);
-	*input = NULL;
+	*input = nullptr;
 	PXDecRef(*entry);
-	*entry = NULL;
+	*entry = nullptr;
       }
       PXDecRef(*output);
-      *output = NULL;
+      *output = nullptr;
     }
     if(PyErr_Occurred())
       PyErr_Print();
@@ -4143,16 +4143,16 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       int optimize = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_optimize_subsets);
       int circumscribe = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_circumscribe);
       int sphere_idx = 0, solv_sph_idx = 0;
-      MapType *map = NULL;
+      MapType *map = nullptr;
       float point_sep;
-      int *present_vla = NULL;
+      int *present_vla = nullptr;
       int n_present = 0;
       int carve_state = 0;
       int carve_flag = false;
       float carve_cutoff;
-      const char *carve_selection = NULL;
-      float *carve_vla = NULL;
-      MapType *carve_map = NULL;
+      const char *carve_selection = nullptr;
+      float *carve_vla = nullptr;
+      MapType *carve_map = nullptr;
       bool smooth_edges = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_surface_smooth_edges);
 
       I->Type = surface_type;
@@ -4241,7 +4241,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 
 	  if (ok)
 	    map =
-	      MapNewFlagged(G, 2 * I->max_vdw + probe_radius, cs->Coord, cs->NIndex, NULL,
+	      MapNewFlagged(G, 2 * I->max_vdw + probe_radius, cs->Coord, cs->NIndex, nullptr,
 			    present_vla);
 	  CHECKOK(ok, map);
 	  if (ok)
@@ -4257,7 +4257,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 	    ok &= RepSurfaceRemoveAtomsNotWithinCutoff(G, carve_map, carve_vla, cs, present_vla, carve_cutoff);
           }
           MapFree(map);
-          map = NULL;
+          map = nullptr;
 
           /* now count how many atoms we actually need to think about */
           n_present = 0;
@@ -4281,9 +4281,9 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
           if(ok) {
             int found = false;
 #ifndef _PYMOL_NOPY
-            PyObject *entry = NULL;
-            PyObject *output = NULL;
-            PyObject *input = NULL;
+            PyObject *entry = nullptr;
+            PyObject *output = nullptr;
+            PyObject *input = nullptr;
 	    int cache_mode = SettingGet_i(G, cs->Setting.get(), obj->Setting.get(), cSetting_cache_mode);
 	    RepSurfaceConvertSurfaceJobToPyObject(G, surf_job, cs, obj, &entry, &input, &output, &found);
 #endif
@@ -4296,9 +4296,9 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
                 int blocked = PAutoBlock(G);
                 output = SurfaceJobResultAsTuple(G, surf_job);
                 PCacheSet(G, entry, output);
-                PXDecRef(entry); entry = NULL;
-                PXDecRef(output); output = NULL;
-                PXDecRef(input); input = NULL;
+                PXDecRef(entry); entry = nullptr;
+                PXDecRef(output); output = nullptr;
+                PXDecRef(input); input = nullptr;
                 PAutoUnblock(G, blocked);
               }
 #endif
@@ -4318,15 +4318,15 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 	    I->N = surf_job->N;
 	    surf_job->N = 0;
 	    I->V = surf_job->V;
-	    surf_job->V = NULL;
+	    surf_job->V = nullptr;
 	    I->VN = surf_job->VN;
-	    surf_job->VN = NULL;
+	    surf_job->VN = nullptr;
 	    I->NT = surf_job->NT;
 	    surf_job->NT = 0;
 	    I->T = surf_job->T;
-	    surf_job->T = NULL;
+	    surf_job->T = nullptr;
 	    I->S = surf_job->S;
-	    surf_job->S = NULL;
+	    surf_job->S = nullptr;
 	  }
           SurfaceJobPurgeResult(G, surf_job);
           SurfaceJobFree(G, surf_job);
@@ -4349,7 +4349,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 
   if(!ok) {
     delete I;
-    I = NULL;
+    I = nullptr;
   }
   return (Rep *) I;
 }
@@ -4499,7 +4499,7 @@ static int SolventDotGetDotsAroundVertexInSphere(PyMOLGlobals * G, SolventDot *I
   float *v0 = coord + 3 * a;
   int b, ok = true;
   float *v = dotPtr + (*nDot) * 3;
-  float *n = NULL;
+  float *n = nullptr;
   Vector3f *sp_dot = sp->dot;
   if (dotNormal){
     n = dotNormal + (*nDot) * 3;
@@ -4776,7 +4776,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
   I->nDot = 0;
   if (ok) {
     int dotCnt = 0;
-    MapType *map = MapNewFlagged(G, max_vdw + probe_radius, coord, n_coord, NULL, present);
+    MapType *map = MapNewFlagged(G, max_vdw + probe_radius, coord, n_coord, nullptr, present);
     CHECKOK(ok, map);
     ok &= !G->Interrupt;
     if(map && ok) {
@@ -4800,9 +4800,9 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
 
       /* for each pair of proximal atoms, circumscribe a circle for their intersection */
       if (ok) {
-        MapType *map2 = NULL;
+        MapType *map2 = nullptr;
         if(circumscribe && (!surface_solvent)){
-          map2 = MapNewFlagged(G, 2 * (max_vdw + probe_radius), coord, n_coord, NULL, present);
+          map2 = MapNewFlagged(G, 2 * (max_vdw + probe_radius), coord, n_coord, nullptr, present);
 	  CHECKOK(ok, map2);
 	}
 	ok &= !G->Interrupt;
@@ -4866,7 +4866,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
       cavity_cutoff = cavity_radius - cavity_cutoff * probe_radius;
     }
     {
-      MapType *map = MapNewFlagged(G, max_vdw + cavity_radius, coord, n_coord, NULL, present);
+      MapType *map = MapNewFlagged(G, max_vdw + cavity_radius, coord, n_coord, nullptr, present);
       CHECKOK(ok, map);
       if(G->Interrupt)
         ok = false;
@@ -4881,7 +4881,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
               skip_flag = false;
 	      ok = SolventDotFilterOutSameXYZ(G, map, atom_info, a_atom_info, coord, a, present, &skip_flag);
               if(ok && !skip_flag) {
-		ok = SolventDotGetDotsAroundVertexInSphere(G, I, map, atom_info, a_atom_info, coord, a, present, sp, cavity_radius, &dotCnt, stopDot, cavityDot, NULL, &nCavityDot);
+		ok = SolventDotGetDotsAroundVertexInSphere(G, I, map, atom_info, a_atom_info, coord, a, present, sp, cavity_radius, &dotCnt, stopDot, cavityDot, nullptr, &nCavityDot);
               }
             }
             a_atom_info++;
@@ -4894,7 +4894,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
       int *dot_flag = pymol::calloc<int>(I->nDot);
       ErrChkPtr(G, dot_flag);
       {
-        MapType *map = MapNew(G, cavity_cutoff, cavityDot, nCavityDot, NULL);
+        MapType *map = MapNew(G, cavity_cutoff, cavityDot, nCavityDot, nullptr);
         if(map) {
           MapSetupExpress(map);
 	  ok = SolventDotMarkDotsWithinCutoff(G, I, map, I->dot, I->nDot, cavityDot, dot_flag, cavity_cutoff);
@@ -4916,7 +4916,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
     ErrChkPtr(G, dot_flag);
 
     {
-      MapType *map = MapNew(G, probe_radius_plus, I->dot, I->nDot, NULL);
+      MapType *map = MapNew(G, probe_radius_plus, I->dot, I->nDot, nullptr);
       if(map) {
         int flag = true;
         MapSetupExpress(map);
@@ -4936,7 +4936,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
   }
   if(!ok) {
     SolventDotFree(I);
-    I = NULL;
+    I = nullptr;
   }
   return I;
 }

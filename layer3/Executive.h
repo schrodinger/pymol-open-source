@@ -327,7 +327,7 @@ pymol::CObject* ExecutiveFindObjectByName(
 /**
  * Typed version of `ExecutiveFindObjectByName`
  * @param name Object name
- * @return NULL if object can't be found or has the wrong type
+ * @return nullptr if object can't be found or has the wrong type
  */
 template <typename T> T* ExecutiveFindObject(PyMOLGlobals* G, pymol::zstring_view name)
 {

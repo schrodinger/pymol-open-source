@@ -187,12 +187,12 @@ SettingUniqueEntry *SettingFindSettingUniqueEntry(PyMOLGlobals * G, int unique_i
       }
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 int SettingUniqueCheck(PyMOLGlobals * G, int unique_id, int setting_id)
 {
-  return SettingFindSettingUniqueEntry(G, unique_id, setting_id) != NULL;
+  return SettingFindSettingUniqueEntry(G, unique_id, setting_id) != nullptr;
 }
 
 /**
@@ -283,7 +283,7 @@ PyObject *SettingUniqueGetPyObject(PyMOLGlobals * G, int unique_id, int index)
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 static int SettingUniqueEntry_IsSame(SettingUniqueEntry *entry, int setting_type, const void *value){
@@ -359,7 +359,7 @@ bool SettingUniqueUnset(PyMOLGlobals * G, int unique_id, int setting_id)
 int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
 			       int setting_type, const void *value)
 
-/* set value to NULL in order to delete setting */
+/* set value to nullptr in order to delete setting */
 {
   CSettingUnique *I = G->SettingUnique;
   int isset = false;
@@ -793,7 +793,7 @@ PyObject *SettingUniqueAsPyList(PyMOLGlobals * G)
 {
   assert(PyGILState_Check());
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   CSettingUnique *I = G->SettingUnique;
   {
     auto n_entry = I->id2offset.size();
@@ -801,7 +801,7 @@ PyObject *SettingUniqueAsPyList(PyMOLGlobals * G)
     if(result) {
       n_entry = 0;
       for (auto id2offset : I->id2offset) {
-        PyObject *setting_list = NULL;
+        PyObject *setting_list = nullptr;
         auto unique_id = id2offset.first;
         auto offset = id2offset.second;
         {
@@ -908,7 +908,7 @@ PyObject *SettingGetGlobalsAsPyList(PyMOLGlobals * G)
 {
   assert(PyGILState_Check());
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   CSetting *I = G->Setting;
   result = SettingAsPyList(I);
   return (PConvAutoNone(result));
@@ -921,11 +921,11 @@ static PyObject *get_list(CSetting * I, int index, bool incl_blacklisted)
 {
   assert(PyGILState_Check());
 
-  PyObject *result = NULL, *value = NULL;
+  PyObject *result = nullptr, *value = nullptr;
   int setting_type = SettingInfo[index].type;
 
   if (!incl_blacklisted && is_session_blacklisted(index)) {
-    return NULL;
+    return nullptr;
   }
 
   switch (setting_type) {
@@ -963,7 +963,7 @@ PyObject *SettingAsPyList(CSetting * I, bool incl_blacklisted)
 {
   assert(PyGILState_Check());
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   int a;
 
   if(I) {
@@ -973,7 +973,7 @@ PyObject *SettingAsPyList(CSetting * I, bool incl_blacklisted)
     for(a = 0; a < cSetting_INIT; a++) {
       if(I->info[a].defined) {
         PyObject * item = get_list(I, a, incl_blacklisted);
-        if (item != NULL) {
+        if (item != nullptr) {
           list.push_back(item);
         }
       }
@@ -1020,7 +1020,7 @@ static int set_list(CSetting * I, PyObject * list)
     const char * val_s;
   };
 
-  if (list == NULL || CPythonVal_IsNone(list))
+  if (list == nullptr || CPythonVal_IsNone(list))
     return true;
 
   ok_assert(1, PyList_Check(list));
@@ -1074,9 +1074,9 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list)
   int ok = true;
   ov_size size;
   ov_size a;
-  CSetting *I = NULL;
+  CSetting *I = nullptr;
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   if(ok) {
@@ -1103,7 +1103,7 @@ int SettingFromPyList(CSetting * I, PyObject * list)
   ov_size a;
 
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
   if(ok)
     ok = PyList_Check(list);
   if(ok) {
@@ -1121,7 +1121,7 @@ int SettingFromPyList(CSetting * I, PyObject * list)
  * Get the indices of all settings that have changed since last calling
  * this function. Resets the "changed" flag.
  *
- * @param name object name or NULL/"" for global settings
+ * @param name object name or nullptr/"" for global settings
  * @param state object state
  */
 std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char * name, int state)
@@ -1190,7 +1190,7 @@ const char * SettingGetTextPtr(PyMOLGlobals * G, const CSetting * set1, const CS
                                int index, char *buffer)
 {
   int type;
-  const char *sptr = NULL;
+  const char *sptr = nullptr;
   const float *ptr;
   type = SettingGetType(G, index);
   switch (type) {
@@ -1237,7 +1237,7 @@ const char * SettingGetTextPtr(PyMOLGlobals * G, const CSetting * set1, const CS
   case cSetting_string:
     return SettingGet_s(G, set1, set2, index);
   default:
-    return NULL;
+    return nullptr;
   }
   return buffer;
 }
@@ -1412,7 +1412,7 @@ PyObject *SettingGetPyObject(PyMOLGlobals * G, const CSetting * set1, const CSet
 {
   assert(PyGILState_Check());
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   const float *ptr;
   int type = SettingGetType(G, index);
 
@@ -1455,7 +1455,7 @@ PyObject *SettingGetTuple(PyMOLGlobals * G, const CSetting * set1, const CSettin
 {
   assert(PyGILState_Check());
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   const float *ptr;
   int type = SettingGetType(G, index);
 
@@ -1682,7 +1682,7 @@ const char * _SettingGet<const char *>(int index, const CSetting * I)
   default:
     PRINTFB(G, FB_Setting, FB_Errors)
       "Setting-Error: type read mismatch (string) %d\n", index ENDFB(G);
-    result = NULL;
+    result = nullptr;
   }
   return (char*) result;
 }
@@ -1696,7 +1696,7 @@ const float * _SettingGet<const float *>(int index, const CSetting * I)
     PyMOLGlobals *G = I->G;
     PRINTFB(G, FB_Setting, FB_Errors)
       " Setting-Error: type read mismatch (float3) %d\n", index ENDFB(G);
-    return NULL;
+    return nullptr;
   }
   return I->info[index].float3_;
 }
@@ -2481,6 +2481,9 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
     SceneInvalidate(G);
     break;
+  case cSetting_cell_color:
+    ExecutiveInvalidateRep(G, inv_sele, cRepCell, cRepInvColor);
+    SceneInvalidate(G);
   case cSetting_cull_spheres:
   case cSetting_sphere_scale:
   case cSetting_sphere_transparency:
@@ -2768,7 +2771,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_bg_rgb_bottom:
     {
       /* clamp this value */
-      const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
+      const char * bg_image_filename = SettingGet_s(G, nullptr, nullptr, cSetting_bg_image_filename);
       if(!(bg_image_filename && bg_image_filename[0]) &&
           SettingGetGlobal_b(G, cSetting_bg_gradient) && !OrthoBackgroundDataIsSet(*G->Ortho)) {
         ColorUpdateFrontFromSettings(G);
@@ -2781,9 +2784,9 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_bg_rgb:
     {
       /* clamp this value */
-      const float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+      const float *v = ColorGet(G, SettingGet_color(G, nullptr, nullptr, cSetting_bg_rgb));
       {
-        const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
+        const char * bg_image_filename = SettingGet_s(G, nullptr, nullptr, cSetting_bg_image_filename);
         if(!(bg_image_filename && bg_image_filename[0]) && !OrthoBackgroundDataIsSet(*G->Ortho)) {
 	  ColorUpdateFront(G, v);
 	  ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
@@ -2952,7 +2955,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     int scaleFactor = SettingGetGlobal_i(G, cSetting_display_scale_factor);
     if (scaleFactor > 0) {
       _gScaleFactor = scaleFactor;
-      ExecutiveInvalidateRep(G, NULL, cRepLabel, cRepInvRep);
+      ExecutiveInvalidateRep(G, nullptr, cRepLabel, cRepInvRep);
       OrthoCommandIn(G, "viewport");
     } else {
       SettingSetGlobal_i(G, cSetting_display_scale_factor, 1);
@@ -3124,8 +3127,8 @@ int SettingCheckFontID(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int f
     PRINTFB(G, FB_Setting, FB_Warnings)
       "RepLabel-Warning: GLUT labels (label_font_id 0-4) are no longer available for labelling\n    the scene since they are not resizeable label_font_id=%d setting back to 5 (default) \n",
       font_id  ENDFB(G);
-    if (SettingGet_i(G, set1, NULL, cSetting_label_font_id) == font_id && SettingSet_i(set1, cSetting_label_font_id, 5)){
-    } else if (SettingGet_i(G, set2, NULL, cSetting_label_font_id) == font_id && SettingSet_i(set2, cSetting_label_font_id, 5)){
+    if (SettingGet_i(G, set1, nullptr, cSetting_label_font_id) == font_id && SettingSet_i(set1, cSetting_label_font_id, 5)){
+    } else if (SettingGet_i(G, set2, nullptr, cSetting_label_font_id) == font_id && SettingSet_i(set2, cSetting_label_font_id, 5)){
     } else if (SettingGetGlobal_i(G, cSetting_label_font_id) == font_id){
       SettingSetGlobal_i(G, cSetting_label_font_id, 5);
     };
@@ -3137,14 +3140,14 @@ int SettingCheckFontID(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int f
 /**
  * State index iterator constructor, see Setting.h for documentation.
  *
- * @param set Optional object settings (can be NULL)
+ * @param set Optional object settings (can be nullptr)
  * @param nstate Maximum number of states
  */
 StateIterator::StateIterator(
     PyMOLGlobals* G, CSetting* set, StateIndex_t state_, int nstate)
 {
   if (state_ == cStateCurrent) {
-    state_ = SettingGet_i(G, set, NULL, cSetting_state) - 1;
+    state_ = SettingGet_i(G, set, nullptr, cSetting_state) - 1;
   }
 
   if (state_ == cStateAll) {
@@ -3153,7 +3156,7 @@ StateIterator::StateIterator(
   } else {
     // given state or static singleton
     state = (state_ > 0 && nstate == 1
-        && SettingGet_b(G, set, NULL, cSetting_static_singletons)) ? 0 : state_;
+        && SettingGet_b(G, set, nullptr, cSetting_static_singletons)) ? 0 : state_;
     end = state + 1;
   }
 

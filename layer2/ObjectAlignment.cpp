@@ -180,9 +180,9 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
         if(align_sele >= 0) {
           int nRow = 0;
           ov_size nCol = 0;
-          CSeqRow *row_vla = NULL, *row;
-          char *cons_str = NULL;
-          void *hidden = NULL;
+          CSeqRow *row_vla = nullptr, *row;
+          char *cons_str = nullptr;
+          void *hidden = nullptr;
 
           ObjectMolecule *obj;
 
@@ -292,7 +292,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
                 row = row_vla + a;
                 row->txt = pymol::vla<char>(nCol + 1);
                 row->len = 0;
-                row->last_ai = NULL;
+                row->last_ai = nullptr;
                 row->cCol = 0;
               }
             }
@@ -471,7 +471,7 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
                            ObjectMolecule * guide, ObjectMolecule * flush)
 {
   /* curVLA and newVLA must be properly sized and zero terminated... */
-  int *result = NULL;
+  int *result = nullptr;
   int n_result = 0;
 
   {
@@ -618,7 +618,7 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
               if(!GroupOrderKnown(G, curVLA, newVLA,
                                   cur_start, new_start, guide, &action)) {
                 int c, id;
-                ObjectMolecule *obj, *last_obj = NULL;
+                ObjectMolecule *obj, *last_obj = nullptr;
                 c = cur_start;
                 while((id = curVLA[c++])) {
                   auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
@@ -737,7 +737,7 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, const int *newVLA,
 
 static PyObject *ObjectAlignmentStateAsPyList(ObjectAlignmentState * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(2);
   if(I->alignVLA) {
@@ -752,7 +752,7 @@ static PyObject *ObjectAlignmentStateAsPyList(ObjectAlignmentState * I)
 static PyObject *ObjectAlignmentAllStatesAsPyList(ObjectAlignment * I)
 {
 
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
   int a;
   result = PyList_New(I->getNFrame());
   for(a = 0; a < I->getNFrame(); a++) {
@@ -768,7 +768,7 @@ static int ObjectAlignmentStateFromPyList(PyMOLGlobals * G, ObjectAlignmentState
   int ok = true;
   int ll = 0;
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   if(ok)
@@ -814,16 +814,16 @@ int ObjectAlignmentNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                  ObjectAlignment ** result, int version)
 {
   int ok = true;
-  ObjectAlignment *I = NULL;
-  (*result) = NULL;
+  ObjectAlignment *I = nullptr;
+  (*result) = nullptr;
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
 
   I = new ObjectAlignment(G);
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
 
   if(ok){
     auto *val = PyList_GetItem(list, 0);
@@ -842,7 +842,7 @@ int ObjectAlignmentNewFromPyList(PyMOLGlobals * G, PyObject * list,
 
 PyObject *ObjectAlignmentAsPyList(ObjectAlignment * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(3);
   PyList_SetItem(result, 0, ObjectAsPyList(I));
@@ -897,7 +897,7 @@ void ObjectAlignment::update()
       for(a = 0; a < getNFrame(); a++) {
         ObjectAlignmentState *oas = I->State.data() + a;
 	if(!oas->valid){
-          ObjectMolecule *guide_obj = NULL;
+          ObjectMolecule *guide_obj = nullptr;
           if(oas->guide[0]) {
             guide_obj = ExecutiveFindObjectMoleculeByName(G, oas->guide);
           }
@@ -1058,7 +1058,7 @@ void ObjectAlignment::render(RenderInfo * info)
   CRay *ray = info->ray;
   auto pick = info->pick;
   const RenderPass pass = info->pass;
-  ObjectAlignmentState *sobj = NULL;
+  ObjectAlignmentState *sobj = nullptr;
   const float *color;
 
   ObjectPrepareContext(I, info);
@@ -1078,7 +1078,7 @@ void ObjectAlignment::render(RenderInfo * info)
           continue;
 
 	if(ray) {
-	    CGORenderRay(sobj->primitiveCGO.get(), ray, info, color, NULL, I->Setting.get(), NULL);
+	    CGORenderRay(sobj->primitiveCGO.get(), ray, info, color, nullptr, I->Setting.get(), nullptr);
 	} else if(G->HaveGUI && G->ValidContext) {
 #ifndef PURE_OPENGL_ES_2
 	  if(!info->line_lighting)
@@ -1087,7 +1087,7 @@ void ObjectAlignment::render(RenderInfo * info)
 	  SceneResetNormal(G, true);
           bool use_shader = SettingGetGlobal_b(G, cSetting_use_shaders);
 
-          CGO * cgo = NULL;
+          CGO * cgo = nullptr;
 
           if (use_shader) {
             bool as_cylinders =
@@ -1107,7 +1107,7 @@ void ObjectAlignment::render(RenderInfo * info)
                 as_cylinders    ? GL_CYLINDER_SHADER :
                 trilines        ? GL_TRILINES_SHADER : GL_LINE_SHADER;
 
-              CGO *tmpCGO = CGONew(G), *tmp2CGO = NULL;
+              CGO *tmpCGO = CGONew(G), *tmp2CGO = nullptr;
               CGOEnable(tmpCGO, shader);
               CGOSpecial(tmpCGO, SET_ALIGNMENT_UNIFORMS_ATTRIBS);
 
@@ -1134,7 +1134,7 @@ void ObjectAlignment::render(RenderInfo * info)
           }
 
           if (cgo) {
-            CGORender(cgo, color, I->Setting.get(), NULL, info, NULL);
+            CGORender(cgo, color, I->Setting.get(), nullptr, info, nullptr);
           }
 
 #ifndef PURE_OPENGL_ES_2
@@ -1173,11 +1173,11 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
                                        int merge,
                                        ObjectMolecule * guide, ObjectMolecule * flush)
 {
-  ObjectAlignment *I = NULL;
+  ObjectAlignment *I = nullptr;
 
   if(obj) {
     if(obj->type != cObjectAlignment)       /* TODO: handle this */
-      obj = NULL;
+      obj = nullptr;
   }
   if(!obj) {
     I = new ObjectAlignment(G);

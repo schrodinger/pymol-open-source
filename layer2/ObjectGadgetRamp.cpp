@@ -347,7 +347,7 @@ int ObjectGadgetRampInterpolate(ObjectGadgetRamp * I, float level, float *color)
 
 PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I)
 {
-  PyObject *result = NULL;
+  PyObject *result = nullptr;
 
   result = PyList_New(11);
 
@@ -371,7 +371,7 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I)
 
   // I->Special, removed in PyMOL 1.8
   bool any = false;
-  int* special = NULL;
+  int* special = nullptr;
   int pse_export_version = SettingGetGlobal_f(I->G, cSetting_pse_export_version) * 1000;
   if (I->Color && pse_export_version < 1800) {
     int n_color = VLAGetSize(I->Color) / 3;
@@ -390,16 +390,16 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I)
 int ObjectGadgetRampNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                   ObjectGadgetRamp ** result, int version)
 {
-  ObjectGadgetRamp *I = NULL;
+  ObjectGadgetRamp *I = nullptr;
   int ok = true;
   int ll = 0;
 
   if(ok)
     I = new ObjectGadgetRamp(G);
   if(ok)
-    ok = (I != NULL);
+    ok = (I != nullptr);
   if(ok)
-    ok = (list != NULL);
+    ok = (list != nullptr);
   if(ok)
     ok = PyList_Check(list);
   if(ok)
@@ -436,7 +436,7 @@ int ObjectGadgetRampNewFromPyList(PyMOLGlobals * G, PyObject * list,
       // ObjectGadgetRamp::Extreme removed in PyMOL 1.8
       // Copy extreme colors to the beginning and end of the Color array
       // and repeat the first and last level value
-      float *extreme = NULL;
+      float *extreme = nullptr;
       PConvPyListToFloatVLA(item, &extreme);
       if (extreme) {
         I->NLevel += 2;
@@ -486,9 +486,9 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
       if(src_state < 0)
         src_state = SceneGetState(I->G);
       if(ok)
-        ok = (I->Map != NULL);
+        ok = (I->Map != nullptr);
       if(ok)
-        ok = ObjectMapInterpolate(I->Map, src_state, pos, &level, NULL, 1);
+        ok = ObjectMapInterpolate(I->Map, src_state, pos, &level, nullptr, 1);
       if(ok)
         ok = ObjectGadgetRampInterpolate(I, level, color);
     }
@@ -512,12 +512,12 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
         }
       }
       if(ok)
-        ok = (I->Mol != NULL);
+        ok = (I->Mol != nullptr);
       if(ok) {
 	if (I->Mol->NCSet==1) // if only one state, then set state to 0
 	  state = 0;
         if(SettingGet_b
-           (I->G, I->Setting.get(), NULL,
+           (I->G, I->Setting.get(), nullptr,
             cSetting_ramp_blend_nearby_colors)) {
           float atomic[3];
           int index =
@@ -809,7 +809,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
 
 static void ObjectGadgetRampBuild(ObjectGadgetRamp * I)
 {
-  GadgetSet *gs = NULL;
+  GadgetSet *gs = nullptr;
   ObjectGadget *og;
 
   OrthoBusyPrime(I->G);
@@ -826,12 +826,12 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp * I)
   gs->Coord[2] = .3f;
   gs->Coord[3] = gs->Coord[4] = gs->Coord[5] = 0.f;
   gs->NNormal = 0;
-  gs->Normal = NULL;
+  gs->Normal = nullptr;
 
   // was a memory leak in < 1.8.3.1
   for (int i = 0; i < og->NGSet; ++i) {
     delete og->GSet[i];
-    og->GSet[i] = NULL;
+    og->GSet[i] = nullptr;
   }
 
   og->GSet[0] = gs;
