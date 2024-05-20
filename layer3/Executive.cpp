@@ -3693,6 +3693,7 @@ ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
   case cLoadTypeSDF2Str:
   case cLoadTypeXYZStr:
   case cLoadTypeDXStr:
+  case cLoadTypeBCIFStr:
     if (!content) {
       return pymol::Error("content is nullptr");
     }
@@ -3715,6 +3716,7 @@ ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
   case cLoadTypeSDF2:
   case cLoadTypeXYZ:
   case cLoadTypeDXMap:
+  case cLoadTypeBCIF:
     if (content) {
       fname_null_ok = true;
       break;

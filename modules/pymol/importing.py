@@ -91,6 +91,9 @@ if True:
             format = 'cif'
         elif ext in ('bcif',):
             format = 'bcif'
+        elif ext in ('bcifgz',):
+            format = 'bcif'
+            zipped = 'gz'
         elif re.match(r'pdb\d+$', ext):
             format = 'pdb'
         elif re.match(r'xyz_\d+$', ext):

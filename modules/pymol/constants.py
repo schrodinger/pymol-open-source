@@ -84,7 +84,8 @@ _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.map : loadable.mapstr,
               loadable.dx : loadable.dxstr,
               loadable.xyz  : loadable.xyzstr,
-              loadable.sdf2 : loadable.sdf2str}
+              loadable.sdf2 : loadable.sdf2str,
+              loadable.bcif : loadable.bcifstr}
 
 sanitize_alpha_list_re = re.compile(r"[^a-zA-Z0-9_\'\"\.\-\[\]\,]+")
 nt_hidden_path_re = re.compile(r"\$[\/\\]")
