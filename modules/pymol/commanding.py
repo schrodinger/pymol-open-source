@@ -11,7 +11,6 @@
 #-*
 #-*
 #Z* -------------------------------------------------------------------
-import typing
 
 if True:
 
@@ -20,6 +19,15 @@ if True:
         import _thread as thread
         import urllib.request as urllib2
         from io import FileIO as file
+
+    import inspect
+    import glob
+    import shlex
+    from enum import Enum
+    from functools import wraps
+    from pathlib import Path
+    from textwrap import dedent
+    from typing import List
 
     import re
     import os
@@ -548,16 +556,13 @@ SEE ALSO
         else:
             raise Exception(f"Unsuported boolean flag {value}")
 
-    def _parse_list_str(value: str):
-        import shlex
+    def _parse_list_str(value):
         return shlex.split(value)
 
-    def _parse_list_int(value: str):
-        import shlex
+    def _parse_list_int(value):
         return list(map(int, shlex.split(value)))
 
-    def _parse_list_float(value: str):
-        import shlex
+    def _parse_list_float(value):
         return list(map(float, shlex.split(value)))
 
     def declare_command(name, function=None, _self=cmd):
@@ -570,25 +575,14 @@ SEE ALSO
             raise Exception("Messy annotations")
 
         # docstring text, if present, should be dedented
-        from textwrap import dedent
         if function.__doc__ is not None:
             function.__doc__ = dedent(function.__doc__).strip()
 
 
-        from pathlib import Path
-        from enum import Enum
-
-        from functools import wraps
-        import inspect
-        import glob
-        from typing import List
-
         # Analysing arguments
         spec = inspect.getfullargspec(function)
-
         kwargs_ = {}
         args_ = spec.args[:]
-
         defaults = list(spec.defaults or [])
 
         args2_ = args_[:]
