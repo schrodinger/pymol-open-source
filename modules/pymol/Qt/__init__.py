@@ -86,6 +86,7 @@ if PYQT_NAME.endswith('6'):
     QtWidgets.QAction = QtGui.QAction
     QtWidgets.QShortcut = QtGui.QShortcut
     QtCore.QSortFilterProxyModel.setFilterRegExp = QtCore.QSortFilterProxyModel.setFilterRegularExpression
+    QtGui.QFont.Monospace = QtGui.QFont.StyleHint.Monospace
 
     if PYQT_NAME == 'PySide6':
         QtCore.Qt.MidButton = QtCore.Qt.MiddleButton
