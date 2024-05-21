@@ -72,7 +72,7 @@ jobs:
       shell: cmd
       run: |-
         CALL %CONDA_ROOT%\\Scripts\\activate.bat
-        conda install -y -c conda-forge -c schrodinger python cmake libpng freetype pyqt glew libxml2 numpy catch2=2.13.3 glm libnetcdf collada2gltf biopython pillow msgpack-python pytest
+        conda install -y -c conda-forge -c schrodinger python cmake libpng freetype glew libxml2 numpy catch2=2.13.3 glm libnetcdf collada2gltf biopython pillow msgpack-python pytest
 
     - name: Conda info
       shell: cmd
@@ -115,7 +115,7 @@ jobs:
         bash $CONDA_ROOT.sh -b -p $CONDA_ROOT
         export PATH="$CONDA_ROOT/bin:$PATH"
         conda config --set quiet yes
-        conda install -y -c conda-forge -c schrodinger python cmake libpng freetype pyqt glew libxml2 numpy catch2=2.13.3 glm libnetcdf collada2gltf biopython pillow msgpack-python pytest
+        conda install -y -c conda-forge -c schrodinger python cmake libpng freetype glew libxml2 numpy catch2=2.13.3 glm libnetcdf collada2gltf biopython pillow msgpack-python pytest
         conda info
 
     - name: Get additional sources
