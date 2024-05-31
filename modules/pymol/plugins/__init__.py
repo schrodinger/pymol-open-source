@@ -13,23 +13,9 @@ from pymol import cmd
 from pymol import colorprinting
 from .legacysupport import *
 
-try:
-    from platformdirs import user_data_dir
-except ImportError:
-    def user_data_dir(appname, *args, **kwargs):
-        return f"~/.local/share/{appname}"
-
 # variables
-def _get_pymolplugins_rc_path():
-    f1 = os.path.expanduser("~/.pymolpluginsrc.py")
-    if os.path.exists(f1):
-        return f1
 
-    data_dir = os.path.expanduser(user_data_dir("pymol"))
-    os.makedirs(data_dir, exist_ok=True)
-    return os.path.join(data_dir, 'pymolpluginsrc.py')
-
-PYMOLPLUGINSRC = _get_pymolplugins_rc_path()
+PYMOLPLUGINSRC = os.path.expanduser('~/.pymolpluginsrc.py')
 
 preferences = {
     'verbose': False,
