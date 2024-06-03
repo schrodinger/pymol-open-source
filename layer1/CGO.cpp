@@ -44,6 +44,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"ObjectGadgetRamp.h"
 #include"Triangle.h"
+#include "PrintUtils.h"
 #include "Picking.h"
 
 #include "pymol/algorithm.h"
