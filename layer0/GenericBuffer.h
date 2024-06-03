@@ -158,7 +158,7 @@ struct AttribOpFuncData {
   AttribOpFuncData(AttribOpFuncDataFunctionPtr _funcDataConversion,
                    void *_funcDataGlobalArg,
                    const char *_attribName)
-  : funcDataConversion(_funcDataConversion), funcDataGlobalArg(_funcDataGlobalArg), attribName(_attribName), attrib(NULL){}
+  : funcDataConversion(_funcDataConversion), funcDataGlobalArg(_funcDataGlobalArg), attribName(_attribName), attrib(nullptr){}
 };
 
 using AttribOpFuncDataDesc = std::vector< AttribOpFuncData >;

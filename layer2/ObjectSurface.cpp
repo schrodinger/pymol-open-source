@@ -67,7 +67,7 @@ static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState * I)
   if(I->CarveFlag && I->AtomVertex) {
     PyList_SetItem(result, 12, PConvFloatVLAToPyList(I->AtomVertex));
   } else {
-    PyList_SetItem(result, 12, PConvAutoNone(NULL));
+    PyList_SetItem(result, 12, PConvAutoNone(nullptr));
   }
   PyList_SetItem(result, 13, PyInt_FromLong(I->DotFlag));
   PyList_SetItem(result, 14, PyInt_FromLong(static_cast<int>(I->Mode)));
@@ -85,7 +85,7 @@ static PyObject *ObjectSurfaceAllStatesAsPyList(ObjectSurface * I)
     if(I->State[a].Active) {
       PyList_SetItem(result, a, ObjectSurfaceStateAsPyList(&I->State[a]));
     } else {
-      PyList_SetItem(result, a, PConvAutoNone(NULL));
+      PyList_SetItem(result, a, PConvAutoNone(nullptr));
     }
   }
   return (PConvAutoNone(result));

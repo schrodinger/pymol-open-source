@@ -344,7 +344,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
                                       cLoadType_t content_format, int frame,
                                       int discrete, int quiet, int multiplex,
                                       char *new_name,
-				      short loadpropertiesall=false, OVLexicon *loadproplex=NULL);
+				      short loadpropertiesall=false, OVLexicon *loadproplex=nullptr);
 
 ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * obj,
                                          const char *molstr, int frame, int discrete,

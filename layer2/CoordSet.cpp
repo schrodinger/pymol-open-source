@@ -335,7 +335,7 @@ PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy)
   int typenum = -1;
   npy_intp dims[2] = {0, 3};
 
-  import_array1(NULL);
+  import_array1(nullptr);
 
   switch(base_size) {
     case 4: typenum = NPY_FLOAT32; break;
@@ -378,7 +378,7 @@ PyObject *CoordSetAsPyList(CoordSet * I)
         && pse_export_version < 1770)
       PyList_SetItem(result, 4, PConvIntArrayToPyList(I->AtmToIdx.data(), NAtIndex, dump_binary));
     else
-      PyList_SetItem(result, 4, PConvAutoNone(NULL));
+      PyList_SetItem(result, 4, PConvAutoNone(nullptr));
     PyList_SetItem(result, 5, PyString_FromString(I->Name));
     PyList_SetItem(result, 6, ObjectStateAsPyList(I));
     PyList_SetItem(result, 7, SettingAsPyList(I->Setting.get()));
@@ -392,7 +392,7 @@ PyObject *CoordSetAsPyList(CoordSet * I)
     if(I->SculptCGO) {
       PyList_SetItem(result, 10, CGOAsPyList(I->SculptCGO));
     } else {
-      PyList_SetItem(result, 10, PConvAutoNone(NULL));
+      PyList_SetItem(result, 10, PConvAutoNone(nullptr));
     }
     if (I->has_any_atom_state_settings()) {
       int a;
@@ -402,12 +402,12 @@ PyObject *CoordSetAsPyList(CoordSet * I)
         if (I->has_atom_state_settings(a)) {
 	  PyList_SetItem(settings_list, a, PyInt_FromLong(I->atom_state_setting_id[a]));
 	} else {
-	  PyList_SetItem(settings_list, a, PConvAutoNone(NULL));
+	  PyList_SetItem(settings_list, a, PConvAutoNone(nullptr));
 	}
       }
       PyList_SetItem(result, 11, settings_list);
     } else {
-      PyList_SetItem(result, 11, PConvAutoNone(NULL));
+      PyList_SetItem(result, 11, PConvAutoNone(nullptr));
     }
     PyList_SetItem(result, 12, SymmetryAsPyList(I->Symmetry.get()));
     /* TODO spheroid, periodic box ... */

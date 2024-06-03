@@ -572,7 +572,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       b++;
     }
   if(!visFlag) {
-    return (NULL);              /* skip if no sticks are visible */
+    return (nullptr);              /* skip if no sticks are visible */
   }
 
   capdrawn = pymol::calloc<float>(obj->NAtom); // max radius of caps

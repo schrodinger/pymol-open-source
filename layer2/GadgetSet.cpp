@@ -164,7 +164,7 @@ PyObject *GadgetSetAsPyList(GadgetSet * I, bool incl_cgos)
     if(I->NCoord) {
       PyList_SetItem(result, 1, PConvFloatArrayToPyList(I->Coord, I->NCoord * 3));
     } else {
-      PyList_SetItem(result, 1, PConvAutoNone(NULL));
+      PyList_SetItem(result, 1, PConvAutoNone(nullptr));
     }
 
     PyList_SetItem(result, 2, PyInt_FromLong(I->NNormal));
@@ -172,7 +172,7 @@ PyObject *GadgetSetAsPyList(GadgetSet * I, bool incl_cgos)
     if(I->NNormal) {
       PyList_SetItem(result, 3, PConvFloatArrayToPyList(I->Normal, I->NNormal * 3));
     } else {
-      PyList_SetItem(result, 3, PConvAutoNone(NULL));
+      PyList_SetItem(result, 3, PConvAutoNone(nullptr));
     }
 
     PyList_SetItem(result, 4, PyInt_FromLong(I->NColor));
@@ -180,19 +180,19 @@ PyObject *GadgetSetAsPyList(GadgetSet * I, bool incl_cgos)
     if(I->NColor) {
       PyList_SetItem(result, 5, PConvFloatArrayToPyList(I->Color, I->NColor));
     } else {
-      PyList_SetItem(result, 5, PConvAutoNone(NULL));
+      PyList_SetItem(result, 5, PConvAutoNone(nullptr));
     }
 
     if(incl_cgos && I->ShapeCGO) {
       PyList_SetItem(result, 6, CGOAsPyList(I->ShapeCGO));
     } else {
-      PyList_SetItem(result, 6, PConvAutoNone(NULL));
+      PyList_SetItem(result, 6, PConvAutoNone(nullptr));
     }
 
     if(incl_cgos && I->PickShapeCGO) {
       PyList_SetItem(result, 7, CGOAsPyList(I->PickShapeCGO));
     } else {
-      PyList_SetItem(result, 7, PConvAutoNone(NULL));
+      PyList_SetItem(result, 7, PConvAutoNone(nullptr));
     }
 
   }

@@ -42,7 +42,7 @@ static PyObject *ObjectCGOStateAsPyList(ObjectCGOState * I)
   if(I->origCGO)
     PyList_SetItem(result, 0, CGOAsPyList(I->origCGO.get()));
   else
-    PyList_SetItem(result, 0, PConvAutoNone(NULL));
+    PyList_SetItem(result, 0, PConvAutoNone(nullptr));
   return (PConvAutoNone(result));
 }
 

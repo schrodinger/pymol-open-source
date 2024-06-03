@@ -1634,7 +1634,7 @@ void SceneInitializeViewport(PyMOLGlobals* G, bool offscreen)
           G, I, I->vp_stereo_mode, 0, I->vp_times, I->vp_pos, I->vp_oversize);
     } else {
       PRINTFB(G, FB_Scene, FB_Errors)
-      " SceneInitializeViewport: I->vp_prepareViewPortForStereo=NULL\n" ENDFB(
+      " SceneInitializeViewport: I->vp_prepareViewPortForStereo=nullptr\n" ENDFB(
           G);
     }
   }

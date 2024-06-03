@@ -763,7 +763,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     }
   }
   if(!ok || !visFlag) {
-    return (NULL);              /* skip if no dots are visible */
+    return (nullptr);              /* skip if no dots are visible */
   }
 
   auto I = new RepMesh(cs, state);

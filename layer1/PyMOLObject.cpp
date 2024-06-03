@@ -701,7 +701,7 @@ PyObject *ObjectAsPyList(const pymol::CObject * I)
     PyList_SetItem(result, 13, ViewElemVLAAsPyList(I->G, I->ViewElem, nFrame));
   } else {
     PyList_SetItem(result, 12, PyInt_FromLong(0));
-    PyList_SetItem(result, 13, PConvAutoNone(NULL));
+    PyList_SetItem(result, 13, PConvAutoNone(nullptr));
   }
   return (PConvAutoNone(result));
 }

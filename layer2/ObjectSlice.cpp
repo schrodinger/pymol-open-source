@@ -79,7 +79,7 @@ static PyObject *ObjectSliceAllStatesAsPyList(ObjectSlice * I)
     if(I->State[a].Active) {
       PyList_SetItem(result, a, ObjectSliceStateAsPyList(I->State.data() + a));
     } else {
-      PyList_SetItem(result, a, PConvAutoNone(NULL));
+      PyList_SetItem(result, a, PConvAutoNone(nullptr));
     }
   }
   return (PConvAutoNone(result));

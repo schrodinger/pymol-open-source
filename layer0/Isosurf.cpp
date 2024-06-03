@@ -114,7 +114,7 @@ PyObject *IsosurfAsPyList(PyMOLGlobals * G, Isofield * field)
   if(field->save_points)
     PyList_SetItem(result, 3, FieldAsPyList(G, field->points.get()));
   else
-    PyList_SetItem(result, 3, PConvAutoNone(NULL));
+    PyList_SetItem(result, 3, PConvAutoNone(nullptr));
   return (PConvAutoNone(result));
 }
 

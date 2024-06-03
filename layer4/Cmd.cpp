@@ -678,7 +678,7 @@ static PyObject * CmdFindMolfilePlugin(PyObject * self, PyObject * args)
       return PyUnicode_FromString(plugin ? plugin : "");
     }
   }
-  return APIAutoNone(NULL);
+  return APIAutoNone(nullptr);
 }
 
 static PyObject * CmdGetCCP4Str(PyObject * self, PyObject * args)
@@ -702,7 +702,7 @@ static PyObject * CmdGetCCP4Str(PyObject * self, PyObject * args)
       return APIAutoNone(result);
     }
   }
-  return APIAutoNone(NULL);
+  return APIAutoNone(nullptr);
 }
 
 static PyObject * CmdGetVolumeField(PyObject * self, PyObject * args)
@@ -3843,7 +3843,7 @@ static PyObject *CmdGetFeedback(PyObject * self, PyObject * args)
       return (APIAutoNone(result));
     }
   }
-  return (APIAutoNone(NULL));
+  return (APIAutoNone(nullptr));
 }
 
 static PyObject *CmdGetSeqAlignStr(PyObject * self, PyObject * args)
@@ -6183,7 +6183,7 @@ static PyObject *CmdCifGetArray(PyObject * self, PyObject * args)
   return APIAutoNone(ret);
 ok_except1:
   API_HANDLE_ERROR;
-  return APIAutoNone(NULL);
+  return APIAutoNone(nullptr);
 }
 
 static PyObject* CmdM2ioFirstBlockProperties(PyObject* self, PyObject* args)

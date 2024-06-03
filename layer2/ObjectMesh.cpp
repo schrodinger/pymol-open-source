@@ -63,7 +63,7 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState * I)
   if(I->CarveFlag && I->AtomVertex) {
     PyList_SetItem(result, 12, PConvFloatVLAToPyList(I->AtomVertex));
   } else {
-    PyList_SetItem(result, 12, PConvAutoNone(NULL));
+    PyList_SetItem(result, 12, PConvAutoNone(nullptr));
   }
   PyList_SetItem(result, 13, PyInt_FromLong(static_cast<int>(I->MeshMode)));
   PyList_SetItem(result, 14, PyFloat_FromDouble(I->AltLevel));
@@ -71,7 +71,7 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState * I)
   if(I->Field) {
     PyList_SetItem(result, 16, IsosurfAsPyList(I->G, I->Field.get()));
   } else {
-    PyList_SetItem(result, 16, PConvAutoNone(NULL));
+    PyList_SetItem(result, 16, PConvAutoNone(nullptr));
   }
   return (PConvAutoNone(result));
 }
@@ -103,7 +103,7 @@ static PyObject *ObjectMeshAllStatesAsPyList(ObjectMesh * I)
     if(I->State[a].Active) {
       PyList_SetItem(result, a, ObjectMeshStateAsPyList(&I->State[a]));
     } else {
-      PyList_SetItem(result, a, PConvAutoNone(NULL));
+      PyList_SetItem(result, a, PConvAutoNone(nullptr));
     }
   }
   return (PConvAutoNone(result));

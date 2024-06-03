@@ -351,21 +351,21 @@ PyObject *ViewElemAsPyList(PyMOLGlobals * G, const CViewElem * view)
     if(view->matrix_flag) {
       PyList_SetItem(result, 1, PConvDoubleArrayToPyList(view->matrix, 16));
     } else {
-      PyList_SetItem(result, 1, PConvAutoNone(NULL));
+      PyList_SetItem(result, 1, PConvAutoNone(nullptr));
     }
 
     PyList_SetItem(result, 2, PyInt_FromLong(view->pre_flag));
     if(view->pre_flag) {
       PyList_SetItem(result, 3, PConvDoubleArrayToPyList(view->pre, 3));
     } else {
-      PyList_SetItem(result, 3, PConvAutoNone(NULL));
+      PyList_SetItem(result, 3, PConvAutoNone(nullptr));
     }
 
     PyList_SetItem(result, 4, PyInt_FromLong(view->post_flag));
     if(view->post_flag) {
       PyList_SetItem(result, 5, PConvDoubleArrayToPyList(view->post, 3));
     } else {
-      PyList_SetItem(result, 5, PConvAutoNone(NULL));
+      PyList_SetItem(result, 5, PConvAutoNone(nullptr));
     }
 
     PyList_SetItem(result, 6, PyInt_FromLong(view->clip_flag));
@@ -373,15 +373,15 @@ PyObject *ViewElemAsPyList(PyMOLGlobals * G, const CViewElem * view)
       PyList_SetItem(result, 7, PyFloat_FromDouble((double) view->front));
       PyList_SetItem(result, 8, PyFloat_FromDouble((double) view->back));
     } else {
-      PyList_SetItem(result, 7, PConvAutoNone(NULL));
-      PyList_SetItem(result, 8, PConvAutoNone(NULL));
+      PyList_SetItem(result, 7, PConvAutoNone(nullptr));
+      PyList_SetItem(result, 8, PConvAutoNone(nullptr));
     }
 
     PyList_SetItem(result, 9, PyInt_FromLong(view->ortho_flag));
     if(view->ortho_flag) {
       PyList_SetItem(result, 10, PyFloat_FromDouble(view->ortho));
     } else {
-      PyList_SetItem(result, 10, PConvAutoNone(NULL));
+      PyList_SetItem(result, 10, PConvAutoNone(nullptr));
     }
 
     PyList_SetItem(result, 11, PyInt_FromLong(view->view_mode));
@@ -404,21 +404,21 @@ PyObject *ViewElemAsPyList(PyMOLGlobals * G, const CViewElem * view)
     if(view->ortho_flag) {
       PyList_SetItem(result, 16, PyFloat_FromDouble(view->power));
     } else {
-      PyList_SetItem(result, 16, PConvAutoNone(NULL));
+      PyList_SetItem(result, 16, PConvAutoNone(nullptr));
     }
 
     PyList_SetItem(result, 17, PyInt_FromLong(view->bias_flag));
     if(view->bias_flag) {
       PyList_SetItem(result, 18, PyFloat_FromDouble(view->bias));
     } else {
-      PyList_SetItem(result, 18, PConvAutoNone(NULL));
+      PyList_SetItem(result, 18, PConvAutoNone(nullptr));
     }
 
     PyList_SetItem(result, 19, PyInt_FromLong(view->state_flag));
     if(view->state_flag) {
       PyList_SetItem(result, 20, PyInt_FromLong(view->state));
     } else {
-      PyList_SetItem(result, 20, PConvAutoNone(NULL));
+      PyList_SetItem(result, 20, PConvAutoNone(nullptr));
     }
 
   }

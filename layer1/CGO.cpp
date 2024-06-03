@@ -2112,7 +2112,7 @@ void SetVertexValuesForVBO(PyMOLGlobals * G, CGO *cgo, int pl, int plc, int cnt,
 			   float *vertexVals, uchar *normalValsC,
                            float *normalVals, uchar *colorValsUC, float *colorVals,
                            float *pickColorVals, 
-                           float *accessibilityVals=NULL,
+                           float *accessibilityVals=nullptr,
                            const float *accessibilityValsDA=nullptr)
 {
   int pl2 = pl + 1, pl3 = pl + 2;
@@ -2834,7 +2834,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
       "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
           __LINE__, tot ENDFB(G);
       CGOFree(cgo);
-      return (NULL);
+      return (nullptr);
     }
     normalVals = vertexVals + 3 * num_total_indexes;
     unsigned nxtn = VERTEX_NORMAL_SIZE;
@@ -2863,7 +2863,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
         PRINTFB(G, FB_CGO, FB_Errors) "ERROR: CGOProcessCGOtoArrays() could not allocate enough memory\n" ENDFB(G);
       FreeP(vertexVals);      
       CGOFree(cgo);
-      return (NULL);
+      return (nullptr);
     }
     if (ok){
       auto fmt = GetNormalColorFormatSize(G);
@@ -2913,7 +2913,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
 	  PRINTFB(G, FB_CGO, FB_Errors) "CGOOptimizeToVBONotIndexedWithReturnedData: ERROR: CGODrawBuffersNotIndexed() could not allocate enough memory\n" ENDFB(G);
 	  FreeP(vertexVals);
 	  CGOFree(cgo);
-	  return (NULL);
+	  return (nullptr);
 	}
 	memcpy(newPickColorVals + num_total_indexes, pickColorVals, num_total_indexes * 2 * sizeof(float));
 	has_draw_buffer = true;
@@ -2950,7 +2950,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
       "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
           __LINE__, tot ENDFB(G);
       CGOFree(cgo);
-      return (NULL);
+      return (nullptr);
     }
     normalVals = vertexVals + 3 * num_total_indexes_lines;
     nxtn = 3;
@@ -3152,7 +3152,7 @@ CGO *CGOOptimizeToVBONotIndexed(const CGO * I, int est, bool addshaders, float *
             G->ShaderMgr->freeGPUBuffer(pickvboid);
             G->ShaderMgr->freeGPUBuffer(vboid);
           }
-	  return (NULL);
+	  return (nullptr);
 	}
 	memcpy(newPickColorVals + num_total_indexes_lines, pickColorVals, num_total_indexes_lines * 2 * sizeof(float));
 	has_draw_buffer = true;
@@ -3273,7 +3273,7 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
     if (vertexIndices.empty()) {
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBOIndexed() vertexIndices could not be allocated\n" ENDFB(I->G);	
       CGOFree(cgo);
-      return (NULL);
+      return (nullptr);
     }
 
     unsigned mul = VERTEX_POS_SIZE + VERTEX_PICKCOLOR_SIZE + VERTEX_ACCESSIBILITY_SIZE;
@@ -3287,7 +3287,7 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
       "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
           __LINE__, tot ENDFB(G);
       CGOFree(cgo);
-      return (NULL);
+      return (nullptr);
     }
     normalVals = vertexVals + 3 * num_total_vertices;
     nxtn = 3;
@@ -3572,7 +3572,7 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
     if (vertexIndexes.empty()) {
       PRINTFB(I->G, FB_CGO, FB_Errors) "ERROR: CGOOptimizeToVBOIndexed() vertexIndexes could not be allocated\n" ENDFB(I->G);	
       CGOFree(cgo);
-      return (NULL);
+      return (nullptr);
     }
 
     unsigned mul = VERTEX_POS_SIZE + VERTEX_PICKCOLOR_SIZE;
@@ -3588,7 +3588,7 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est,
       "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
           __LINE__, tot ENDFB(G);
       CGOFree(cgo);
-      return (NULL);
+      return (nullptr);
     }
     nxtVals = vertexVals + VERTEX_POS_SIZE * num_total_vertices_lines;
 

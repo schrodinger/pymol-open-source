@@ -318,7 +318,7 @@ PyObject *DistSetAsPyList(DistSet * I)
 
     PyList_SetItem(result, 0, PyInt_FromLong(I->NIndex));
     PyList_SetItem(result, 1, PConvFloatArrayToPyListNullOkay(I->Coord, I->NIndex * 3));
-    PyList_SetItem(result, 2, PConvAutoNone(NULL)); // I->LabCoord recalculated in RepDistLabelNew
+    PyList_SetItem(result, 2, PConvAutoNone(nullptr)); // I->LabCoord recalculated in RepDistLabelNew
     PyList_SetItem(result, 3, PyInt_FromLong(I->NAngleIndex));
     PyList_SetItem(result, 4,
                    PConvFloatArrayToPyListNullOkay(I->AngleCoord, I->NAngleIndex * 3));
@@ -327,11 +327,11 @@ PyObject *DistSetAsPyList(DistSet * I)
                    PConvFloatArrayToPyListNullOkay(I->DihedralCoord,
                                                    I->NDihedralIndex * 3));
     // DistSet->Setting never gets set (removed BB 11/14), was state settings?
-    PyList_SetItem(result, 7, PConvAutoNone(NULL) /* SettingAsPyList(I->Setting) */);
+    PyList_SetItem(result, 7, PConvAutoNone(nullptr) /* SettingAsPyList(I->Setting) */);
     if(!I->LabPos.empty()) {
       PyList_SetItem(result, 8, PConvLabPosVecToPyList(I->LabPos));
     } else {
-      PyList_SetItem(result, 8, PConvAutoNone(NULL));
+      PyList_SetItem(result, 8, PConvAutoNone(nullptr));
     }
     PyList_SetItem(result, 9, MeasureInfoListAsPyList(I->MeasureInfo));
     /* TODO setting ... */
