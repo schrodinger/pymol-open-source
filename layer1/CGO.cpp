@@ -7981,6 +7981,32 @@ void CGO::add_to_cgo(int op, const float * pc) {
 }
 
 void CGO::print_table() const {
+  display_table_t table;
+  table.begin_row()
+    .insert_cell("#")
+    .insert_cell("OP_CODE")
+    .insert_cell("OP_SZ")
+    .insert_cell("DATA");
+
+  unsigned j = 0;
+  for (auto it = begin(); !it.is_stop(); ++it) {
+    const auto pc = it.data();
+    const auto op_code = it.op_code();
+  
+    table.begin_row()
+      .insert_cell(++j)
+      .insert_cell(op_code)
+      .insert_cell(CGO_sz[op_code]);
+    int sz = CGO_sz[op_code];
+    std::stringstream ss;
+    for (int i = 0; i < sz; i++) {
+      ss << CGO_get_int(pc + i);
+      if (i != (sz - 1))
+        ss << ", ";
+    }
+    table.insert_cell(ss.str());
+  }
+  table.display();
 }
 
 CGO* CGOConvertSpheresToPoints(const CGO* I)
