@@ -3693,6 +3693,7 @@ ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
   case cLoadTypeSDF2Str:
   case cLoadTypeXYZStr:
   case cLoadTypeDXStr:
+  case cLoadTypeBCIFStr:
     if (!content) {
       return pymol::Error("content is nullptr");
     }
@@ -3715,6 +3716,7 @@ ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
   case cLoadTypeSDF2:
   case cLoadTypeXYZ:
   case cLoadTypeDXMap:
+  case cLoadTypeBCIF:
     if (content) {
       fname_null_ok = true;
       break;
@@ -3880,6 +3882,13 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
     auto res =
         ObjectMoleculeReadCifStr(G, static_cast<ObjectMolecule*>(origObj),
             content, state, discrete, quiet, multiplex, zoom);
+    p_return_if_error(res);
+    obj = res.result();
+  } break;
+  case cLoadTypeBCIF:
+  case cLoadTypeBCIFStr: {
+    auto res = ObjectMoleculeReadBCif(G, static_cast<ObjectMolecule*>(origObj),
+        content, size, state, discrete, quiet, multiplex, zoom);
     p_return_if_error(res);
     obj = res.result();
   } break;

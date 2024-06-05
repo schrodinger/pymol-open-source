@@ -127,6 +127,8 @@ enum cLoadType_t : int {
 
   cLoadTypeCCP4UnspecifiedStr = 76,
   cLoadTypeMRCStr = 77,
+  cLoadTypeBCIF = 78,
+  cLoadTypeBCIFStr = 79,
 };
 
 /* NOTE: if you add new content/object type above, then be sure to add

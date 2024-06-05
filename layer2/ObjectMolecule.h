@@ -518,6 +518,9 @@ ObjectMolecule *ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
     const char *st, int st_len, int frame, int discrete, int quiet, int multiplex, int zoom);
 pymol::Result<ObjectMolecule*> ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
     const char *st, int frame, int discrete, int quiet, int multiplex, int zoom);
+pymol::Result<ObjectMolecule*> ObjectMoleculeReadBCif(PyMOLGlobals* G,
+    ObjectMolecule* I, const char* bytes, std::size_t size, int frame,
+    int discrete, int quiet, int multiplex, int zoom);
 
 std::unique_ptr<int[]> LoadTrajSeleHelper(
     const ObjectMolecule* obj, CoordSet* cs, const char* selection);

@@ -435,7 +435,7 @@ static bond_dict_t * get_global_components_bond_dict(PyMOLGlobals * G) {
       return nullptr;
     }
 
-    for (const auto& datablock : cif.datablocks()) {
+    for (const auto& [code, datablock] : cif.datablocks()) {
       read_chem_comp_bond_dict(&datablock, bond_dict);
     }
   }
@@ -2264,7 +2264,7 @@ pymol::Result<ObjectMolecule*> ObjectMoleculeReadCifStr(PyMOLGlobals * G, Object
     return pymol::make_error("Parsing CIF file failed: ", cif->m_error_msg);
   }
 
-  for (const auto& datablock : cif->datablocks()) {
+  for (const auto& [code, datablock] : cif->datablocks()) {
     ObjectMolecule * obj = ObjectMoleculeReadCifData(G, &datablock, discrete, quiet);
 
     if (!obj) {
@@ -2330,7 +2330,7 @@ const bond_dict_t::mapped_type * bond_dict_t::get(PyMOLGlobals * G, const char *
           return nullptr;
         }
 
-        for (auto& item : cif.datablocks())
+        for (auto& [code, item] : cif.datablocks())
           read_chem_comp_bond_dict(&item, *this);
       }
     }
@@ -2349,6 +2349,56 @@ const bond_dict_t::mapped_type * bond_dict_t::get(PyMOLGlobals * G, const char *
   // don't try downloading again
   unknown_resn.insert(key);
 
+  return nullptr;
+}
+
+
+///////////////////////////////////////
+
+pymol::Result<ObjectMolecule*> ObjectMoleculeReadBCif(PyMOLGlobals* G,
+    ObjectMolecule* I, const char* bytes, std::size_t size, int frame,
+    int discrete, int quiet, int multiplex, int zoom)
+{
+#ifdef _PYMOL_NO_MSGPACKC
+  PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+    " Error: This build has no BinaryCIF support.\n"
+    " Please install/enable msgpack-c.\n"
+  ENDFB(G);
+  return nullptr;
+#endif
+
+  if (I) {
+    return pymol::Error("loading BCIF into existing object not supported, "
+                        "please use 'create' to append to an existing object.");
+  }
+
+  if (multiplex > 0) {
+    return pymol::Error("loading BCIF with multiplex=1 not supported, please "
+                        "use 'split_states' after loading the object.");
+  }
+
+  auto cif = std::make_shared<pymol::cif_file>();
+  cif->parse_bcif(bytes, size);
+  
+  for (const auto& [code, datablock] : cif->datablocks()) {
+    auto obj = ObjectMoleculeReadCifData(G, &datablock, discrete, quiet);
+    if (!obj) {
+      PRINTFB(G, FB_ObjectMolecule, FB_Warnings)
+        " BCIF-Warning: no coordinates found in data_%s\n", datablock.code() ENDFB(G);
+      continue;
+    }
+
+#ifndef _PYMOL_NOPY
+    // we only provide access from the Python API so far
+    if (SettingGet<bool>(G, cSetting_cif_keepinmemory)) {
+      obj->m_cifdata = &datablock;
+      obj->m_ciffile = cif;
+    }
+#endif
+
+    if (cif->datablocks().size() == 1 || multiplex == 0)
+      return obj;
+  }
   return nullptr;
 }
 
