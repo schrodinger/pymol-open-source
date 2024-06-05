@@ -321,7 +321,7 @@ Rep *RepDihedralNew(DistSet * ds, int state)
   int ok = true;
 
   if(!ok || !ds->NDihedralIndex) {
-    return (NULL);
+    return (nullptr);
   }
 
   auto I = new RepDihedral(ds->Obj, state);

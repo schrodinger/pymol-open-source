@@ -260,7 +260,7 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
     }
   }
   if(!hasNonbondedAtoms) {
-    return (NULL);              /* skip if no dots are visible */
+    return (nullptr);              /* skip if no dots are visible */
   }
 
   auto I = new RepNonbonded(cs, state);

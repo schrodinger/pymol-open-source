@@ -336,7 +336,7 @@ Rep *RepDistDashNew(DistSet * ds, int state)
   int ok = true;
 
   if(!ok || !ds->NIndex) {
-    return (NULL);
+    return (nullptr);
   }
 
   auto I = new RepDistDash(ds->Obj, state);

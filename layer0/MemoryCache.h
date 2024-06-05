@@ -84,6 +84,6 @@ Z* -------------------------------------------------------------------
 #define CacheAlloc(G,type,size,thread,id) pymol::malloc<type>(size)
 #define CacheCalloc(G,type,size,thread,id) pymol::calloc<type>(size)
 #define CacheRealloc(G,ptr,type,size,thread,id) pymol::realloc<type>(size)
-#define CacheFreeP(G,ptr,thread,id,force) {if(ptr) {mfree(ptr);ptr=NULL;}}
+#define CacheFreeP(G,ptr,thread,id,force) {if(ptr) {mfree(ptr);ptr=nullptr;}}
 
 #endif

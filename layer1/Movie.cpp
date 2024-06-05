@@ -509,17 +509,17 @@ PyObject *MovieAsPyList(PyMOLGlobals * G)
   if(I->Sequence) {
     PyList_SetItem(result, 4, PConvIntArrayToPyList(I->Sequence, I->NFrame));
   } else {
-    PyList_SetItem(result, 4, PConvAutoNone(NULL));
+    PyList_SetItem(result, 4, PConvAutoNone(nullptr));
   }
   if(!I->Cmd.empty()) {
     PyList_SetItem(result, 5, MovieCmdAsPyList(G));
   } else {
-    PyList_SetItem(result, 5, PConvAutoNone(NULL));
+    PyList_SetItem(result, 5, PConvAutoNone(nullptr));
   }
   if(I->ViewElem) {
     PyList_SetItem(result, 6, ViewElemVLAAsPyList(G, I->ViewElem, I->NFrame));
   } else {
-    PyList_SetItem(result, 6, PConvAutoNone(NULL));
+    PyList_SetItem(result, 6, PConvAutoNone(nullptr));
   }
 
 

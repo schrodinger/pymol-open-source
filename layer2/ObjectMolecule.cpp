@@ -2645,10 +2645,10 @@ pymol::copyable_ptr<CSetting>* ObjectMolecule::getSettingHandle(int state)
     if(I->CSet[state]) {
       return (&I->CSet[state]->Setting);
     } else {
-      return (NULL);
+      return (nullptr);
     }
   } else {
-    return (NULL);
+    return (nullptr);
   }
 }
 

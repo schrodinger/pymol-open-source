@@ -3575,8 +3575,8 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
     PyList_SetItem(result, 15, PConvIntArrayToPyList(dcs, I->NAtom));
     FreeP(dcs);
   } else {
-    PyList_SetItem(result, 14, PConvAutoNone(NULL));
-    PyList_SetItem(result, 15, PConvAutoNone(NULL));
+    PyList_SetItem(result, 14, PConvAutoNone(nullptr));
+    PyList_SetItem(result, 15, PConvAutoNone(nullptr));
   }
 
   return (PConvAutoNone(result));

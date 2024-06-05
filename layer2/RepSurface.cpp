@@ -4129,7 +4129,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       }
     }
     if(!visFlag) {
-      return (NULL);            /* skip if no thing visible */
+      return (nullptr);            /* skip if no thing visible */
     }
 
     auto I = new RepSurface(cs, state);

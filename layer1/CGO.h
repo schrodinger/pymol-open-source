@@ -956,7 +956,7 @@ CGO* CGOCombineBeginEnd(const CGO* I, int est = 0, bool do_not_split_lines = fal
 
 void CGOFreeVBOs(CGO *I);
 
-CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est=0, const float *color=NULL, bool addshaders=true, bool embedTransparencyInfo=false);
+CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est=0, const float *color=nullptr, bool addshaders=true, bool embedTransparencyInfo=false);
 #define CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(I, est, color, addshaders) CGOOptimizeToVBOIndexed(I, est, color, addshaders, true)
 #define CGOOptimizeToVBOIndexedWithColor CGOOptimizeToVBOIndexed
 #define CGOOptimizeToVBOIndexedNoShader(I, est) CGOOptimizeToVBOIndexed(I, est, nullptr, false)
@@ -969,7 +969,7 @@ CGO* CGOOptimizeToVBONotIndexed(const CGO* I, int est = 0,
 #define CGOOptimizeToVBONotIndexedNoShader(I) CGOOptimizeToVBONotIndexed(I, 0, false)
 
 
-CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est=0, bool addshaders=false, CGO *leftOverCGO=NULL);
+CGO *CGOOptimizeSpheresToVBONonIndexed(const CGO * I, int est=0, bool addshaders=false, CGO *leftOverCGO=nullptr);
 #define CGOOptimizeSpheresToVBONonIndexedNoShader(I, est) CGOOptimizeSpheresToVBONonIndexed(I, est, false, nullptr)
 
 /**
@@ -1082,7 +1082,7 @@ int CGOAlphaTriangle(CGO * I,
 void CGOSetZVector(CGO * I, float z0, float z1, float z2);
 struct GadgetSet;
 void CGORenderPicking(CGO * I, RenderInfo *info,
-                        PickContext * context, CSetting * set1, CSetting * set2, Rep *rep=NULL);
+                        PickContext * context, CSetting * set1, CSetting * set2, Rep *rep=nullptr);
 void CGORender(CGO * I, const float *color, CSetting * set1, CSetting * set2,
                  RenderInfo * info, Rep *rep);
 void CGORenderAlpha(CGO * I, RenderInfo * info, bool calcDepth);
@@ -1184,7 +1184,11 @@ int CGOUniform3f(CGO *I, int uniform_id, const float *value);
 
 CGO *CGOConvertSpheresToPoints(const CGO *I);
 
-CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &pickData, int mode, const VertexBuffer::buffer_layout layout=VertexBuffer::INTERLEAVED, bool check_attr_for_data=true, int *idx_array=NULL, int nindicesperfrag=0, int nfragspergroup = 1);
+CGO* CGOConvertToShader(const CGO* I, AttribDataDesc& attrData,
+    AttribDataDesc& pickData, int mode,
+    const buffer_layout layout = buffer_layout::INTERLEAVED,
+    bool check_attr_for_data = true, int* idx_array = nullptr,
+    int nindicesperfrag = 0, int nfragspergroup = 1);
 
 bool CGOCheckSplitLineInterpolationIsSame(const CGO *I, bool &interp_value);
 

@@ -181,7 +181,7 @@ const char * SettingGetTextPtr(PyMOLGlobals * G, const CSetting * set1, const CS
 
 int SettingUnset(CSetting * I, int index);
 
-void SettingRestoreDefault(CSetting * I, int index, const CSetting * src=NULL);
+void SettingRestoreDefault(CSetting * I, int index, const CSetting * src=nullptr);
 
 int SettingGetType(int index);
 inline int SettingGetType(PyMOLGlobals *, int index) {

@@ -4925,7 +4925,7 @@ const char * lightsource_diffuse_names[] = {
 #undef TEMPLATE
 
 /**
- * Sets up lighting for immediate mode if shaderPrg=NULL, otherwise
+ * Sets up lighting for immediate mode if shaderPrg=nullptr, otherwise
  * sets lighting uniforms for the given shader program.
  *
  * Supports up to light_count=8

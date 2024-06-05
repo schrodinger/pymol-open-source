@@ -198,7 +198,7 @@ void CoordSetFracToReal(CoordSet * I, const CCrystal * cryst);
 bool CoordSetInsureOrthogonal(PyMOLGlobals * G,
     CoordSet * cset,
     const float * sca,
-    const CCrystal *cryst=NULL,
+    const CCrystal *cryst=nullptr,
     bool quiet=true);
 
 void CoordSetGetAverage(const CoordSet * I, float *v0);

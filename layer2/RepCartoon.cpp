@@ -2750,7 +2750,7 @@ public:
 
   // constructor
   nuc_acid_cap(PyMOLGlobals * G_, nuc_acid_data * ndata_, CoordSet * cs_, int mode)
-    : G(G_), ndata(ndata_), cs(cs_), idx(0), atm(0), ai(NULL) {
+    : G(G_), ndata(ndata_), cs(cs_), idx(0), atm(0), ai(nullptr) {
       enabled = (ndata->na_mode == 4 || ndata->na_mode == mode);
   }
 

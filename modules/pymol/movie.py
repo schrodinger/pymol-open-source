@@ -17,6 +17,7 @@ cmd = sys.modules["pymol.cmd"]
 import math
 import os
 import glob
+import shutil
 import threading
 import time
 from . import colorprinting
@@ -760,20 +761,28 @@ def _encode(filename,first,last,preserve,
         import subprocess
         os.chdir(tmp_path)
         try:
-            args = ['ffmpeg',
-                '-f', 'image2',
-                '-framerate', '{:.3f}'.format(fps),
-                '-i', prefix + '%04d' + img_ext,
-            ]
-            if fn_rel.endswith('.webm'):
-                args_crf = ['-crf', '{:.0f}'.format(65 - (quality / 2))]
-                args += ['-c:v', 'libvpx-vp9', '-b:v', '0'] + args_crf
-            elif not fn_rel.endswith('.gif'):
-                args += [
-                '-crf', '10' if quality > 90 else '15' if quality > 80 else '20',
-                '-pix_fmt', 'yuv420p', # needed for Mac support
+            if fn_rel.endswith('.gif'):
+                palette = os.path.join(tmp_path, 'palette.png')
+                filters = f"fps={fps}"
+                process = subprocess.Popen(['ffmpeg', '-v', 'warning', '-thread_queue_size', '512', '-i', prefix + '%04d' + img_ext, '-vf', filters+',palettegen', '-y', palette], stderr=subprocess.PIPE)
+                stderr = process.communicate()[1]
+                colorprinting.warning(stderr.strip().decode(errors='replace'))
+                process = subprocess.Popen(['ffmpeg', '-v', 'warning', '-thread_queue_size', '512','-i', prefix + '%04d' + img_ext, '-i', palette, '-lavfi', filters+' [x]; [x][1:v] paletteuse', '-y', fn_rel], stderr=subprocess.PIPE)
+            else:
+                args = ['ffmpeg',
+                    '-f', 'image2',
+                    '-framerate', '{:.3f}'.format(fps),
+                    '-i', prefix + '%04d' + img_ext,
                 ]
-            process = subprocess.Popen(args + [fn_rel], stderr=subprocess.PIPE)
+                if fn_rel.endswith('.webm'):
+                    args_crf = ['-crf', '{:.0f}'.format(65 - (quality / 2))]
+                    args += ['-c:v', 'libvpx-vp9', '-b:v', '0'] + args_crf
+                else:
+                    args += [
+                    '-crf', '10' if quality > 90 else '15' if quality > 80 else '20',
+                    '-pix_fmt', 'yuv420p', # needed for Mac support
+                    ]
+                process = subprocess.Popen(args + [fn_rel], stderr=subprocess.PIPE)
             stderr = process.communicate()[1]
             colorprinting.warning(stderr.strip().decode(errors='replace'))
             if process.returncode != 0:
@@ -800,10 +809,7 @@ def _encode(filename,first,last,preserve,
                     print(" produce: finished.")
     _self.unset("keep_alive")
     if preserve<1:
-        if os.path.isdir(tmp_path):
-            for fil in glob.glob(os.path.join(tmp_path,prefix+"*")):
-                os.unlink(fil)
-            os.rmdir(tmp_path)
+        shutil.rmtree(tmp_path)
 
 produce_mode_dict = {
     'normal'  : 0,

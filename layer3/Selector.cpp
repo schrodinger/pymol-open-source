@@ -5650,7 +5650,7 @@ PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state)
 
   dims[0] = nAtom;
 
-  import_array1(NULL);
+  import_array1(nullptr);
 
   switch(base_size) {
     case 4: typenum = NPY_FLOAT32; break;
