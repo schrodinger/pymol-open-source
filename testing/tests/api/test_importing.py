@@ -19,7 +19,6 @@ def test_bcif_array():
     arr = cif_get_array(obj_name, "_entity_poly.pdbx_strand_id", "s")
     assert arr == ["A,B"]
 
-
     arr = cif_get_array(obj_name, "_pdbx_struct_oper_list.name", "s")
     assert arr == ["1_555"]
 
