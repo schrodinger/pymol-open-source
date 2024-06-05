@@ -2377,16 +2377,25 @@ pymol::Result<ObjectMolecule*> ObjectMoleculeReadBCif(PyMOLGlobals* G,
                         "use 'split_states' after loading the object.");
   }
 
-  auto cif = std::make_unique<pymol::cif_file>();
+  auto cif = std::make_shared<pymol::cif_file>();
   cif->parse_bcif(bytes, size);
   
   for (const auto& [code, datablock] : cif->datablocks()) {
     auto obj = ObjectMoleculeReadCifData(G, &datablock, discrete, quiet);
     if (!obj) {
       PRINTFB(G, FB_ObjectMolecule, FB_Warnings)
-        " mmCIF-Warning: no coordinates found in data_%s\n", datablock.code() ENDFB(G);
+        " BCIF-Warning: no coordinates found in data_%s\n", datablock.code() ENDFB(G);
       continue;
     }
+
+#ifndef _PYMOL_NOPY
+    // we only provide access from the Python API so far
+    if (SettingGet<bool>(G, cSetting_cif_keepinmemory)) {
+      obj->m_cifdata = &datablock;
+      obj->m_ciffile = cif;
+    }
+#endif
+
     if (cif->datablocks().size() == 1 || multiplex == 0)
       return obj;
   }
