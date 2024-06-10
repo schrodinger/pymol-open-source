@@ -8,6 +8,7 @@
 #define _H_CIFFILE
 
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <map>
 #include <memory>
