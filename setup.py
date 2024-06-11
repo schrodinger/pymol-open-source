@@ -20,7 +20,7 @@ from setuptools.command.build_ext import build_ext
 from setuptools.command.build_py import build_py
 from setuptools.command.install import install
 
-import create_shadertext
+import numpy
 
 # non-empty DEBUG variable turns off optimization and adds -g flag
 DEBUG = bool(os.getenv('DEBUG', ''))
@@ -28,8 +28,15 @@ DEBUG = bool(os.getenv('DEBUG', ''))
 WIN = sys.platform.startswith('win')
 MAC = sys.platform.startswith('darwin')
 
-# handle extra arguments
 
+# handle extra arguments
+def str2bool(v: str) -> bool:
+    if v.lower() == "true":
+        return True
+    elif v.lower() == "false":
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 class options:
     osx_frameworks = True
@@ -45,14 +52,14 @@ class options:
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--glut', dest='no_glut', action="store_false",
+parser.add_argument('--glut', dest='no_glut', type=str2bool,
                     help="link with GLUT (legacy GUI)")
 parser.add_argument('--no-osx-frameworks', dest='osx_frameworks',
                     help="on MacOS use XQuartz instead of native frameworks",
-                    action="store_false")
+                    type=str2bool)
 parser.add_argument('--jobs', '-j', type=int, help="for parallel builds "
                     "(defaults to number of processors)")
-parser.add_argument('--no-libxml', action="store_true",
+parser.add_argument('--no-libxml', type=str2bool,
                     help="skip libxml2 dependency, disables COLLADA export")
 parser.add_argument('--use-openmp', choices=('yes', 'no'),
                     help="Use OpenMP")
@@ -61,11 +68,11 @@ parser.add_argument('--use-vtkm', choices=('1.5', '1.6', '1.7', 'no'),
 parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'guess', 'no'),
                     help="c++11: use msgpack-c header-only library; c: link against "
                     "shared library; no: disable fast MMTF load support")
-parser.add_argument('--testing', action="store_true",
+parser.add_argument('--testing', type=str2bool,
                     help="Build C-level tests")
-parser.add_argument('--openvr', dest='openvr', action='store_true')
+parser.add_argument('--openvr', dest='openvr', type=str2bool)
 parser.add_argument('--no-vmd-plugins', dest='vmd_plugins',
-                    action='store_false',
+                    type=str2bool,
                     help='Disable VMD molfile plugins (libnetcdf dependency)')
 options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 
@@ -562,16 +569,12 @@ if options.openvr:
     ]
 
 if True:
-    try:
-        import numpy
-        inc_dirs += [
-            numpy.get_include(),
-        ]
-        def_macros += [
-            ("_PYMOL_NUMPY", None),
-        ]
-    except ImportError:
-        print("numpy not available")
+    inc_dirs += [
+        numpy.get_include(),
+    ]
+    def_macros += [
+        ("_PYMOL_NUMPY", None),
+    ]
 
 if True:
     for prefix in prefix_path:
@@ -647,26 +650,13 @@ ext_modules += [
     ),
 ]
 
-distribution = setup(  # Distribution meta-data
+setup(
     cmdclass={
         'build_ext': build_ext_pymol,
         'build_py': build_py_pymol,
         'install': install_pymol,
     },
-    name="pymol",
     version=get_pymol_version(),
-    author="Schrodinger",
-    url="http://pymol.org",
-    contact="pymol-users@lists.sourceforge.net",
-    description=("PyMOL is a Python-enhanced molecular graphics tool. "
-                 "It excels at 3D visualization of proteins, small molecules, density, "
-                 "surfaces, and trajectories. It also includes molecular editing, "
-                 "ray tracing, and movies. Open Source PyMOL is free to everyone!"),
-
-    package_dir=package_dir,
-    packages=list(package_dir),
-    package_data={'pmg_qt': ['forms/*.ui']},
-
     ext_modules=ext_modules,
-    data_files=data_files,
 )
+
