@@ -1,0 +1,64 @@
+option(
+  'no-glut',
+  type : 'boolean',
+  value : true,
+  description : 'link with GLUT (legacy GUI)'
+)
+
+option(
+  'no-osx-frameworks',
+  type : 'boolean',
+  value : true,
+  description : 'on MacOS use XQuartz instead of native frameworks'
+)
+
+option(
+  'no-libxml',
+  type : 'boolean',
+  value : false,
+  description : 'skip libxml2 dependency, disables COLLADA export'
+)
+
+option(
+  'use-openmp',
+  type : 'boolean',
+  value : true,
+  description : 'Use OpenMP'
+)
+
+option(
+  'use-vtkm',
+  type : 'combo',
+  choices : ['1.5', '1.6', '1.7', 'no'],
+  value : 'no',
+  description : 'Use VTK-m for isosurface generation'
+)
+
+option(
+  'use-msgpackc',
+  type : 'combo',
+  choices : ['c++11', 'c', 'guess', 'no'],
+  value : 'guess',
+  description : 'c++11: use msgpack-c header-only library; c: link against shared library; no: disable fast MMTF load support'
+)
+
+option(
+  'testing',
+  type : 'boolean',
+  value : false,
+  description : 'Build C-level tests'
+)
+
+option(
+  'openvr',
+  type : 'boolean',
+  value : false
+)
+
+option(
+  'no-vmd-plugins',
+  type : 'boolean',
+  value : true,
+  description : 'Disable VMD molfile plugins (libnetcdf dependency)'
+)
+

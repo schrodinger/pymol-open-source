@@ -2,3 +2,5 @@
 *.d
 generated
 build
+subprojects/*
+!subprojects/*.wrap

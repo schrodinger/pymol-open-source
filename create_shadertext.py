@@ -130,5 +130,4 @@ def create_buildinfo(outputdir, pymoldir='.'):
         ''' % (time.time(), sha), file=out)
 
 if __name__ == "__main__":
-    create_shadertext(*sys.argv[1:6])
-    create_buildinfo(dirname(sys.argv[4]), dirname(dirname(sys.argv[1])))
+    create_all("build")
