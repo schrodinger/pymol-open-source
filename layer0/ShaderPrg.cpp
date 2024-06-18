@@ -356,7 +356,11 @@ void CShaderPrg::SetBgUniforms() {
   Set2f("viewImageSize", bg_width/(float)scene_width, bg_height/(float)scene_height);
 
   glActiveTexture(GL_TEXTURE4);
-  glBindTexture(GL_TEXTURE_2D, OrthoGetBackgroundTextureID(G));
+  auto texture = G->ShaderMgr->getGPUBuffer<textureBuffer_t>(
+      OrthoGetBackgroundTextureID(G));
+  if (texture) {
+    texture->bind();
+  }
   if (!(uniform_set & 4)){
     Set1i("bgTextureMap", 4);
     uniform_set |= 4;

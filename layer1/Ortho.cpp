@@ -118,8 +118,8 @@ public:
   int TextBottom{};
 
   int IssueViewportWhenReleased{};
-  GLuint bg_texture_id{};
-  short bg_texture_needs_update{};
+  std::size_t bgTextureID{};
+  bool bgTextureNeedsUpdate{};
   CGO* bgCGO{};
   int bgWidth = 0, bgHeight = 0;
   std::shared_ptr<pymol::Image>
@@ -1269,19 +1269,19 @@ float* OrthoGetOverlayColor(PyMOLGlobals* G)
 
 #define BACKGROUND_TEXTURE_SIZE 256
 
-GLuint OrthoGetBackgroundTextureID(PyMOLGlobals* G)
+std::size_t OrthoGetBackgroundTextureID(PyMOLGlobals* G)
 {
   COrtho* I = G->Ortho;
-  return I->bg_texture_id;
+  return I->bgTextureID;
 }
 
 void OrthoInvalidateBackgroundTexture(PyMOLGlobals* G)
 {
   COrtho* I = G->Ortho;
-  if (I->bg_texture_id) {
-    glDeleteTextures(1, &I->bg_texture_id);
-    I->bg_texture_id = 0;
-    I->bg_texture_needs_update = 1;
+  if (I->bgTextureID) {
+    G->ShaderMgr->freeGPUBuffer(I->bgTextureID);
+    I->bgTextureID = 0;
+    I->bgTextureNeedsUpdate = true;
   }
   if (I->bgCGO) {
     CGOFree(I->bgCGO);
@@ -1291,7 +1291,7 @@ void OrthoInvalidateBackgroundTexture(PyMOLGlobals* G)
 void OrthoBackgroundTextureNeedsUpdate(PyMOLGlobals* G)
 {
   COrtho* I = G->Ortho;
-  I->bg_texture_needs_update = 1;
+  I->bgTextureNeedsUpdate = true;
 }
 
 /**
@@ -1377,29 +1377,17 @@ static CGO* makeBgCGO(PyMOLGlobals* G)
   return bgCgo.release();
 }
 
-static void updateBgTexture(
-    PyMOLGlobals* G, pymol::Image const& bgImage, GLuint const bg_texture_id)
+static std::size_t OrthoCreateBgTexture(PyMOLGlobals* G)
 {
-  glActiveTexture(GL_TEXTURE4);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glBindTexture(GL_TEXTURE_2D, bg_texture_id);
-
   auto const bg_image_mode = SettingGet<int>(G, cSetting_bg_image_mode);
   bool const is_repeat = bg_image_mode > 1;
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-      is_repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-      is_repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-
+  auto wrapS = is_repeat ? tex::wrap::REPEAT : tex::wrap::CLAMP_TO_EDGE;
+  auto wrapT = is_repeat ? tex::wrap::REPEAT : tex::wrap::CLAMP_TO_EDGE;
   auto const bg_image_linear = SettingGet<bool>(G, cSetting_bg_image_linear);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-      bg_image_linear ? GL_LINEAR : GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-      bg_image_linear ? GL_LINEAR : GL_NEAREST);
-
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bgImage.getWidth(),
-      bgImage.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
-      (GLvoid*) bgImage.bits());
+  auto filter = bg_image_linear ? tex::filter::LINEAR : tex::filter::NEAREST;
+  auto texture = G->ShaderMgr->newGPUBuffer<textureBuffer_t>(
+      tex::format::RGBA, tex::data_type::UBYTE, filter, filter, wrapS, wrapT);
+  return texture->get_hash_id();
 }
 
 void bg_grad(PyMOLGlobals* G)
@@ -1432,7 +1420,7 @@ void bg_grad(PyMOLGlobals* G)
     assert(I->bgCGO);
   }
 
-  if (!I->bg_texture_id || I->bg_texture_needs_update) {
+  if (!I->bgTextureID || I->bgTextureNeedsUpdate) {
     std::shared_ptr<const pymol::Image> bgImage = I->bgData;
 
     if (bgImage) {
@@ -1457,13 +1445,14 @@ void bg_grad(PyMOLGlobals* G)
     }
 
     if (bgImage) {
-      if (!I->bg_texture_id) {
-        glGenTextures(1, &I->bg_texture_id);
+      if (!I->bgTextureID) {
+        I->bgTextureID = OrthoCreateBgTexture(G);
       }
-
-      updateBgTexture(G, *bgImage, I->bg_texture_id);
-
-      I->bg_texture_needs_update = false;
+      auto texture =
+          G->ShaderMgr->getGPUBuffer<textureBuffer_t>(I->bgTextureID);
+      texture->texture_data_2D(
+          bgImage->getWidth(), bgImage->getHeight(), bgImage->bits());
+      I->bgTextureNeedsUpdate = false;
     }
   }
 
@@ -2611,8 +2600,6 @@ int OrthoInit(PyMOLGlobals* G, int showSplash)
     I->ActiveGLBuffer = GL_NONE;
     I->LastDraw = UtilGetSeconds(G);
     I->DrawTime = 0.0;
-    I->bg_texture_id = 0;
-    I->bg_texture_needs_update = 0;
     I->bgCGO = nullptr;
     I->bgData = nullptr;
     I->orthoCGO = nullptr;
@@ -2846,7 +2833,7 @@ void OrthoSetBackgroundImage(
   }
   if (should_update){
     G->ShaderMgr->Reload_All_Shaders();
-    I->bg_texture_needs_update = 1;
+    I->bgTextureNeedsUpdate = true;
   }
 #endif
 }
