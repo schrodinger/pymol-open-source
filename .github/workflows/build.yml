@@ -42,8 +42,9 @@ jobs:
         git clone --depth 1 https://github.com/rcsb/mmtf-cpp.git
         cp -R mmtf-cpp/include/mmtf* include/
 
-    - name: Pip install python-build
+    - name: Pip upgrade and install build
       run: |
+        pip install --upgrade pip
         pip install build
 
     - name: Build

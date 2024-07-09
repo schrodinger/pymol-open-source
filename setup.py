@@ -185,7 +185,7 @@ class options:
     openvr = False
     use_openmp = "no" if MAC else "yes"
     use_vtkm = "no"
-    vmd_plugins = False
+    vmd_plugins = True
 
 
 parser = argparse.ArgumentParser()
