@@ -743,7 +743,11 @@ void textureBuffer_t::texture_data_3D(int width, int height, int depth,
   case tex::data_type::HALF_FLOAT:
     glTexImage3D(GL_TEXTURE_3D, 0, tex_format_internal_half_float(_format), _width,
                  _height, _depth, 0, tex_tab(_format), tex_tab(tex::data_type::FLOAT), data);
+    break;
   case tex::data_type::FLOAT:
+    glTexImage3D(GL_TEXTURE_3D, 0, tex_format_internal_float(_format), _width,
+                 _height, _depth, 0, tex_tab(_format), tex_tab(tex::data_type::FLOAT), data);
+    break;
   case tex::data_type::UBYTE:
     glTexImage3D(GL_TEXTURE_3D, 0, tex_format_internal_byte(_format), _width,
                  _height, _depth, 0, tex_tab(_format), tex_tab(_type), data);
