@@ -18,9 +18,9 @@ dependencies = [
 ]
 
 [build-system]
-build-backend = "setuptools.build_meta"
+build-backend = "backend"
+backend-path = ["_custom_build"]
 requires = [
-  "meson-python>=0.15.0",
   "numpy>=1.26.4",
   "setuptools>=69.2.0",
 ]

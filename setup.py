@@ -229,8 +229,8 @@ parser.add_argument(
     action="store_false",
     help="Disable VMD molfile plugins (libnetcdf dependency)",
 )
-options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 
+options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 
 def get_prefix_path() -> list[str]:
     """
@@ -240,10 +240,10 @@ def get_prefix_path() -> list[str]:
     paths = []
 
     if (prefix_path := os.environ.get("PREFIX_PATH")) is not None:
-        return prefix_path.split(os.pathsep)
+        paths += prefix_path.split(os.pathsep)
 
     if sys.platform.startswith("freebsd"):
-        return ["/usr/local"]
+        paths += ["/usr/local"]
 
     if not options.osx_frameworks:
         paths += ["/usr/X11"]
@@ -251,16 +251,19 @@ def get_prefix_path() -> list[str]:
     if sys.platform == "darwin":
         for prefix in ["/sw", "/opt/local", "/usr/local"]:
             if sys.base_prefix.startswith(prefix):
-                return [prefix] + paths
+                paths += [prefix]
 
     if is_conda_env():
         if sys.platform.startswith("win"):
-            return [os.path.join(sys.prefix, "Library")]
+            if "CONDA_PREFIX" in os.environ:
+                paths += [os.path.join(os.environ["CONDA_PREFIX"], "Library")]
+            paths += [os.path.join(sys.prefix, "Library")]
 
-        return [sys.prefix] + paths
+        paths += [sys.prefix] + paths
 
-    return ["/usr"] + paths
+    paths += ["/usr"]
 
+    return paths
 
 def is_conda_env():
     return (
@@ -470,12 +473,15 @@ class install_pymol(install):
         else:
             launch_script = "pymol"
 
-        self.mkpath(self.install_scripts)
-        launch_script = os.path.join(self.install_scripts, launch_script)
+        install_scripts = sysconfig.get_path("scripts")
+        install_lib = sysconfig.get_path("purelib")
+
+        self.mkpath(install_scripts)
+        launch_script = os.path.join(install_scripts, launch_script)
 
         python_exe = os.path.abspath(sys.executable)
         pymol_file = self.unchroot(
-            os.path.join(self.install_libbase, "pymol", "__init__.py")
+            os.path.join(install_lib, "pymol", "__init__.py")
         )
         pymol_path = self.unchroot(self.pymol_path)
 
@@ -484,13 +490,13 @@ class install_pymol(install):
                 # paths relative to launcher, if possible
                 try:
                     python_exe = "%~dp0\\" + os.path.relpath(
-                        python_exe, self.install_scripts
+                        python_exe, install_scripts
                     )
                 except ValueError:
                     pass
                 try:
                     pymol_file = "%~dp0\\" + os.path.relpath(
-                        pymol_file, self.install_scripts
+                        pymol_file, install_scripts
                     )
                 except ValueError:
                     pymol_file = os.path.abspath(pymol_file)
