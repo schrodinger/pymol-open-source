@@ -14,14 +14,14 @@ authors = [
   {name = "Schrodinger", email = "pymol-users@lists.sourceforge.net"},
 ]
 dependencies = [
-  "numpy>=1.26.4",
+  "numpy>=1.26.4,<2",
 ]
 
 [build-system]
 build-backend = "backend"
 backend-path = ["_custom_build"]
 requires = [
-  "numpy>=1.26.4",
+  "numpy>=1.26.4,<2",
   "setuptools>=69.2.0",
 ]
 
