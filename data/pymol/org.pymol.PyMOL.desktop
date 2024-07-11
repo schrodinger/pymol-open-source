@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=PyMOL
+GenericName=PyMOL Molecular Graphics System
+GenericName[tr]=PyMOL Moleküler Grafik Sistemi
+Comment=View, render, animate and export molecular structures
+Comment[tr]=Moleküler yapıları görüntüleyin, canlandırın ve dönüştürün
+Exec=pymol %F
+Icon=pymol
+Terminal=false
+Type=Application
+Categories=Science;Chemistry;
