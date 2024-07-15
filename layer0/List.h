@@ -1,6 +1,5 @@
 #pragma once
 #include <cassert>
-#include <iostream>
 #include <iterator>
 
 namespace pymol
@@ -26,10 +25,11 @@ template <typename T> class ListAdapter
   public:
     using iterator_category = std::forward_iterator_tag;
     using difference_type = std::ptrdiff_t;
-    using value_type = typename std::conditional<IsConst, const T, T>::type;
+    using value_type = std::conditional_t<IsConst, const T, T>;
     using pointer = value_type*;
     using reference = value_type&;
 
+    ListAdapterIterator() = default;
     explicit ListAdapterIterator(pointer ptr)
         : m_ptr(ptr)
     {
@@ -40,20 +40,22 @@ template <typename T> class ListAdapter
      * @param other non const iterator
      */
     template <bool InnerIsConst = IsConst,
-        typename = typename std::enable_if<InnerIsConst>>
+        typename = std::enable_if_t<InnerIsConst>>
     ListAdapterIterator(const ListAdapterIterator<false>& other)
         : m_ptr(other.m_ptr)
     {
     }
 
     reference operator*() { return *m_ptr; }
+    reference operator*() const { return *m_ptr; }
 
     pointer operator->() { return m_ptr; }
 
     ListAdapterIterator& operator++()
     {
-      assert(m_ptr);
-      m_ptr = m_ptr->next;
+      if (m_ptr) {
+        m_ptr = m_ptr->next;
+      }
       return *this;
     }
 
@@ -77,13 +79,15 @@ template <typename T> class ListAdapter
     friend class ListAdapterIterator<true>;
 
   private:
-    pointer m_ptr;
+    pointer m_ptr{};
   };
 
 public:
   using type = T;
+  using pointer = T*;
   using iterator = ListAdapterIterator<false>;
   using const_iterator = ListAdapterIterator<true>;
+  ListAdapter() = default;
   explicit ListAdapter(T* list)
       : m_list(list)
   {
@@ -96,7 +100,7 @@ public:
   const_iterator cend() const noexcept { return const_iterator(nullptr); }
 
 private:
-  type* m_list;
+  pointer m_list{};
 };
 
 template <typename T> ListAdapter<T> make_list_adapter(T *list) {
