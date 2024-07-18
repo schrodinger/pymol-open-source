@@ -3871,6 +3871,13 @@ static int SurfaceJobRun(PyMOLGlobals* G, SurfaceJob* I)
 
         if (surface_type >= 5) { /* effectively double-weights atom points */
           if (sol_dot->nDot) {
+            if (sol_dot->nDot > MaxN) {
+              MaxN = sol_dot->nDot;
+              VLACheck(I->V, float, 3 * (MaxN + 1));
+              VLACheck(I->VN, float, 3 * (MaxN + 1));
+              v = I->V;
+              vn = I->VN;
+            }
             int a;
             float* v0 = sol_dot->dot;
             float* n0 = sol_dot->dotNormal;
