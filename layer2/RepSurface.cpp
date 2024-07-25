@@ -3150,7 +3150,7 @@ static void SurfaceJobPurgeResult(PyMOLGlobals* G, SurfaceJob* I)
 }
 
 #ifndef _PYMOL_NOPY
-OV_INLINE PyObject* SurfaceJobAtomInfoAsPyTuple(SurfaceJobAtomInfo* atom_info)
+static PyObject* SurfaceJobAtomInfoAsPyTuple(SurfaceJobAtomInfo* atom_info)
 {
   PyObject* result = nullptr;
   if (atom_info) {
@@ -3170,7 +3170,7 @@ OV_INLINE PyObject* SurfaceJobAtomInfoAsPyTuple(SurfaceJobAtomInfo* atom_info)
 }
 
 #if 0
-OV_INLINE SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject * tuple)
+static SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject * tuple)
 {
   SurfaceJobAtomInfo *result = nullptr;
   if(tuple && PyTuple_Check(tuple)) {
@@ -3196,7 +3196,7 @@ OV_INLINE SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject * tuple)
 }
 #endif
 
-OV_INLINE PyObject* SurfaceJobInputAsTuple(PyMOLGlobals* G, SurfaceJob* I)
+static PyObject* SurfaceJobInputAsTuple(PyMOLGlobals* G, SurfaceJob* I)
 {
   PyObject* result = PyTuple_New(24);
   if (result) {
@@ -3229,7 +3229,7 @@ OV_INLINE PyObject* SurfaceJobInputAsTuple(PyMOLGlobals* G, SurfaceJob* I)
   return result;
 }
 
-OV_INLINE PyObject* SurfaceJobResultAsTuple(PyMOLGlobals* G, SurfaceJob* I)
+static PyObject* SurfaceJobResultAsTuple(PyMOLGlobals* G, SurfaceJob* I)
 {
   PyObject* result = PyTuple_New(6);
   if (result) {
@@ -3243,7 +3243,7 @@ OV_INLINE PyObject* SurfaceJobResultAsTuple(PyMOLGlobals* G, SurfaceJob* I)
   return result;
 }
 
-OV_INLINE ov_status SurfaceJobResultFromTuple(
+static ov_status SurfaceJobResultFromTuple(
     PyMOLGlobals* G, SurfaceJob* I, PyObject* tuple)
 {
   ov_status status = OV_STATUS_FAILURE;
