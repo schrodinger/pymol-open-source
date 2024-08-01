@@ -836,18 +836,6 @@ void ObjectVolume::render(RenderInfo * info)
       int volume_bit_val = SettingGet_i(G, I->Setting.get(), nullptr, cSetting_volume_bit_depth);
       volume_bit_depth = (volume_bit_val < 17) ? tex::data_type::HALF_FLOAT : tex::data_type::FLOAT;
 
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#if 0
-      glTexImage3D = getTexImage3D(); 
-      if (! glTexImage3D) {
-        PRINTFB(G, FB_ObjectVolume, FB_Errors)
-          " ObjectVolumeRender-Error: Could not bind the glActiveTexture or glTexImage3D function.\n"
-          ENDFB(G);
-        return;
-      } 
-#endif
-/* END PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-
       if (vs->textures[0]) {
         G->ShaderMgr->freeGPUBuffer(vs->textures[0]);
         vs->textures[0] = 0;

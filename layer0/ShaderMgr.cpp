@@ -289,16 +289,6 @@ static void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor);
 
 static void disableShaders(PyMOLGlobals * G);
 
-#ifdef WIN32
-/* REMOVE US */
-PFNGLTEXIMAGE3DPROC getTexImage3D(){
-  static PFNGLTEXIMAGE3DPROC my_glTexImage3D = nullptr;
-  if (!my_glTexImage3D)
-    my_glTexImage3D = (PFNGLTEXIMAGE3DPROC) wglGetProcAddress("glTexImage3D");
-  return my_glTexImage3D;
-}
-#endif
-
 /**
  * Use this to turn off shaders if the renderer cannot use them.
  */

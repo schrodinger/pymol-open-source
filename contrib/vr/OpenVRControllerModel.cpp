@@ -35,6 +35,7 @@ SOFTWARE.
 #include "OpenVRControllerModel.h"
 
 // system headers
+#include <chrono>
 #include <vector>
 #include "os_std.h"
 #include "os_gl.h"
@@ -186,14 +187,9 @@ void OpenVRControllerModel::Draw() {
 
 // Purpose:
 //-----------------------------------------------------------------------------
-static
-void ThreadSleep( unsigned long nMilliseconds )
+static void ThreadSleep(unsigned long nMilliseconds)
 {
-#if defined(_WIN32)
-  ::Sleep( nMilliseconds );
-#elif defined(POSIX)
-  usleep( nMilliseconds * 1000 );
-#endif
+  std::this_thread::sleep_for(std::chrono::milliseconds(nMilliseconds));
 }
 
 // Purpose: Finds a render model we've already loaded or loads a new one

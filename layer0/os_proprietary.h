@@ -69,14 +69,4 @@ Z* -------------------------------------------------------------------
  * CODE SEGMENTS.
  */
 
-
-/* BEGIN PROPRIETARY CODE SEGMENT */
-#ifdef WIN32
-#define NOMINMAX
-#include<windows.h>
-#endif
-
-
-/* END PROPRIETARY CODE SEGMENT */
-
 #endif

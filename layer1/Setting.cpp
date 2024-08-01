@@ -48,6 +48,16 @@ Z* -------------------------------------------------------------------
 #include"OpenVRMode.h"
 #endif
 
+
+/* BEGIN PROPRIETARY CODE SEGMENT */
+#ifdef WIN32
+#define NOMINMAX
+#include<windows.h>
+#endif
+
+
+/* END PROPRIETARY CODE SEGMENT */
+
 /**
  * Setting level info table
  *
