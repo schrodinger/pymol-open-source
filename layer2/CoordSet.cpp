@@ -1072,6 +1072,7 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, ObjectMo
       RotateU(matrix, tmp_array);
     }
 
+    PConvStringToPyObjAttr(atom, "model", obj->Name);
     PConvFloat3ToPyObjAttr(atom, "coord", v);
     if(ref)
       PConvFloat3ToPyObjAttr(atom, "ref_coord", ref);
@@ -1130,7 +1131,6 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, ObjectMo
     PConvIntToPyObjAttr(atom, "id", ai->id);    /* not necc. unique */
     PConvIntToPyObjAttr(atom, "index", index + 1);      /* fragile */
 
-    PConvStringToPyObjAttr(atom, "object", obj->Name);
 
 #ifdef _PYMOL_IP_PROPERTIES
 #endif
