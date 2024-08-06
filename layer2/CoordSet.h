@@ -1,16 +1,16 @@
 
-/* 
+/*
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 D* -------------------------------------------------------------------
 E* It is unlawful to modify or remove this copyright notice.
 F* -------------------------------------------------------------------
-G* Please see the accompanying LICENSE file for further information. 
+G* Please see the accompanying LICENSE file for further information.
 H* -------------------------------------------------------------------
 I* Additional authors of this source file include:
--* 
--* 
+-*
+-*
 -*
 Z* -------------------------------------------------------------------
 */
@@ -122,7 +122,7 @@ struct CoordSet : CObjectState {
 
   pymol::vla<RefPosType> RefPos;
 
-  /* idea:  
+  /* idea:
      int start_atix, stop_atix <-- for discrete objects, we need
      something like this that would enable pymol to skip atoms not in the
      discrete state...question is: are these atoms sorted together right
@@ -202,8 +202,8 @@ bool CoordSetInsureOrthogonal(PyMOLGlobals * G,
     bool quiet=true);
 
 void CoordSetGetAverage(const CoordSet * I, float *v0);
-PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const float *v,
-                                   const float *ref, int index, const double *matrix);
+PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, ObjectMolecule * obj,
+                                   const float *v, const float *ref, int index, const double *matrix);
 int CoordSetGetAtomVertex(const CoordSet * I, int at, float *v);
 int CoordSetGetAtomTxfVertex(const CoordSet * I, int at, float *v);
 int CoordSetSetAtomVertex(CoordSet * I, int at, const float *v);
