@@ -353,8 +353,11 @@ class TestExporting(testing.PyMOLTestCase):
         cmd.load(self.datafile('1rna.cif'))
 
         m1 = cmd.get_model()
+        cnt = cmd.count_atoms('%1oky-frag')
+
         self.assertEqual(m1.atom[0].model, '1oky-frag')
         self.assertEqual(m1.atom[-1].model, '1rna')
+        self.assertEqual(m1.atom[cnt].model, '1rna')
 
 
     @testing.requires_version('2.1')
