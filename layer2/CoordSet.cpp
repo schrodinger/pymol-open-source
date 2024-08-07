@@ -1,16 +1,16 @@
 
-/* 
+/*
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.
 D* -------------------------------------------------------------------
 E* It is unlawful to modify or remove this copyright notice.
 F* -------------------------------------------------------------------
-G* Please see the accompanying LICENSE file for further information. 
+G* Please see the accompanying LICENSE file for further information.
 H* -------------------------------------------------------------------
 I* Additional authors of this source file include:
--* 
--* 
+-*
+-*
 -*
 Z* -------------------------------------------------------------------
 */
@@ -1054,8 +1054,8 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
 
 
 /*========================================================================*/
-PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const float *v,
-                                   const float *ref, int index, const double *matrix)
+PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, ObjectMolecule *obj,
+                                   const float *v, const float *ref, int index, const double *matrix)
 {
 #ifdef _PYMOL_NOPY
   return nullptr;
@@ -1072,6 +1072,7 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
       RotateU(matrix, tmp_array);
     }
 
+    PConvStringToPyObjAttr(atom, "model", obj->Name);
     PConvFloat3ToPyObjAttr(atom, "coord", v);
     if(ref)
       PConvFloat3ToPyObjAttr(atom, "ref_coord", ref);
@@ -1129,6 +1130,7 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
     PConvIntToPyObjAttr(atom, "flags", ai->flags);
     PConvIntToPyObjAttr(atom, "id", ai->id);    /* not necc. unique */
     PConvIntToPyObjAttr(atom, "index", index + 1);      /* fragile */
+
 
 #ifdef _PYMOL_IP_PROPERTIES
 #endif
