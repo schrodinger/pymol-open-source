@@ -221,44 +221,39 @@ parser.add_argument('--no-vmd-plugins', dest='vmd_plugins',
                     help='Disable VMD molfile plugins (libnetcdf dependency)')
 options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 
-if False:
-    import monkeypatch_distutils
-    monkeypatch_distutils.set_parallel_jobs(options.jobs)
 
-
-def forms_uic(build_lib='modules'):
-    '''
-    Convert Qt UI files in "modules/pmg_qt/forms" to Python files in place
-    '''
-
-
-def get_prefix_path():
+def get_prefix_path() -> list[str]:
     '''
     Return a list of paths which will be searched for "include",
     "include/freetype2", "lib", "lib64" etc.
     '''
-    try:
-        return os.environ['PREFIX_PATH'].split(os.pathsep)
-    except KeyError:
-        pass
+    paths = []
 
-    if sys.platform.startswith("freebsd"):
-        return ["/usr/local"]
+    if (prefix_path := os.environ.get('PREFIX_PATH')) is not None:
+        paths += prefix_path.split(os.pathsep)
 
-    X11 = ['/usr/X11'] * (not options.osx_frameworks)
+    if sys.platform.startswith('freebsd'):
+        paths += ['/usr/local']
 
-    if sys.platform == 'darwin':
+    if not options.osx_frameworks:
+        paths += ['usr/X11']
+
+    if MAC:
         for prefix in ['/sw', '/opt/local', '/usr/local']:
             if sys.base_prefix.startswith(prefix):
-                return [prefix] + X11
+                paths += [prefix]
 
     if is_conda_env():
-        if sys.platform.startswith('win'):
-            return [os.path.join(sys.prefix, 'Library')]
+        if WIN:
+            if 'CONDA_PREFIX' in os.environ:
+                paths += [os.path.join(os.environ['CONDA_PREFIX'], 'Library')]
+            paths += [os.path.join(sys.prefix, 'Library')]
 
-        return [sys.prefix] + X11
+        paths += [sys.prefix] + paths
 
-    return ['/usr'] + X11
+    paths += ['/usr']
+
+    return paths
 
 
 def is_conda_env():
@@ -390,7 +385,6 @@ class build_ext_pymol(build_ext):
 class build_py_pymol(build_py):
     def run(self):
         build_py.run(self)
-        forms_uic(self.build_lib)
 
 
 class install_pymol(install):
@@ -468,7 +462,7 @@ class install_pymol(install):
         pymol_path = self.unchroot(self.pymol_path)
 
         with open(launch_script, 'w') as out:
-            if sys.platform.startswith('win'):
+            if WIN:
                 # paths relative to launcher, if possible
                 try:
                     python_exe = '%~dp0\\' + \
@@ -648,24 +642,23 @@ if WIN:
         "Ws2_32",   # htonl
     ]
 
-    if True:
-        libs += [
-            "glew32",
-            "freetype",
-            "libpng",
-        ] + (not options.no_glut) * [
-            "freeglut",
-        ] + (not options.no_libxml) * [
-            "libxml2",
-        ]
+    libs += [
+        "glew32",
+        "freetype",
+        "libpng",
+    ] + (not options.no_glut) * [
+        "freeglut",
+    ] + (not options.no_libxml) * [
+        "libxml2",
+    ]
 
-        if DEBUG:
-            ext_comp_args += ['/Z7']
-            ext_link_args += ['/DEBUG']
+    if DEBUG:
+        ext_comp_args += ['/Z7']
+        ext_link_args += ['/DEBUG']
 
-        libs += [
-            "opengl32",
-        ]
+    libs += [
+        "opengl32",
+    ]
     # TODO: Remove when we move to setup-CMake
     ext_comp_args += ["/std:c++17"]
 
@@ -713,29 +706,26 @@ if options.openvr:
         "openvr_api",
     ]
 
-if True:
-    inc_dirs += [
-        numpy.get_include(),
-    ]
-    def_macros += [
-        ("_PYMOL_NUMPY", None),
-    ]
+inc_dirs += [
+    numpy.get_include(),
+]
+def_macros += [
+    ("_PYMOL_NUMPY", None),
+]
 
-if True:
-    for prefix in prefix_path:
-        for dirs, suffixes in [
-                [inc_dirs, [("include",), ("include", "freetype2"),
-                            ("include", "libxml2"), ("include", "openvr")]],
-                [lib_dirs, [("lib64",), ("lib",)]],
-        ]:
-            dirs.extend(
-                filter(os.path.isdir, [os.path.join(prefix, *s) for s in suffixes]))
+for prefix in prefix_path:
+    for dirs, suffixes in [
+            [inc_dirs, [("include",), ("include", "freetype2"),
+                        ("include", "libxml2"), ("include", "openvr")]],
+            [lib_dirs, [("lib64",), ("lib",)]],
+    ]:
+        dirs.extend(
+            filter(os.path.isdir, [os.path.join(prefix, *s) for s in suffixes]))
 
-if True:
-    # optimization currently causes a clang segfault on OS X 10.9 when
-    # compiling layer2/RepCylBond.cpp
-    if sys.platform == 'darwin':
-        ext_comp_args += ["-fno-strict-aliasing"]
+# optimization currently causes a clang segfault on OS X 10.9 when
+# compiling layer2/RepCylBond.cpp
+if MAC:
+    ext_comp_args += ["-fno-strict-aliasing"]
 
 
 def get_pymol_version():
