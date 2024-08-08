@@ -487,8 +487,9 @@ class install_pymol(install):
         launch_script = os.path.join(self.install_scripts, launch_script)
 
         python_exe = os.path.abspath(sys.executable)
+        site_packages_dir = sysconfig.get_path('purelib')
         pymol_file = self.unchroot(
-            os.path.join(self.install_libbase, "pymol", "__init__.py")
+            os.path.join(site_packages_dir, "pymol", "__init__.py")
         )
         pymol_path = self.unchroot(self.pymol_path)
 
