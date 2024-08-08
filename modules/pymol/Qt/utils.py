@@ -3,7 +3,7 @@ import re
 import sys
 import traceback
 
-from PyQt5 import QtGui, QtCore, QtWidgets, uic
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
 class UpdateLock:
@@ -34,23 +34,23 @@ class UpdateLock:
         self.silent_exc_types = tuple(silent_exc_types)
 
     def __enter__(self):
-        assert not self.primed, 'missing acquire()'
+        assert not self.primed, "missing acquire()"
         self.primed = True
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        assert not self.primed, 'missing acquire()'
+        assert not self.primed, "missing acquire()"
 
         if exc_type == self.LockFailed:
             return True
 
-        assert self.acquired, 'inconsistency!?'
+        assert self.acquired, "inconsistency!?"
         self.acquired = False
 
         if exc_type in self.silent_exc_types:
             return True
 
     def acquire(self):
-        assert self.primed, 'missing with ...():'
+        assert self.primed, "missing with ...():"
         self.primed = False
 
         if self.acquired:
@@ -63,6 +63,7 @@ class UpdateLock:
             with self:
                 self.acquire()
                 return func(*args, **kwargs)
+
         return wrapper
 
 
@@ -75,7 +76,7 @@ class WidgetMenu(QtWidgets.QMenu):
     """
 
     def focusNextPrevChild(self, next):
-        '''Overload which prevents menu-like tab action'''
+        """Overload which prevents menu-like tab action"""
         return QtWidgets.QWidget.focusNextPrevChild(self, next)
 
     def setWidget(self, widget):
@@ -86,9 +87,9 @@ class WidgetMenu(QtWidgets.QMenu):
         return self
 
     def setSetupUi(self, setupUi):
-        '''Use a setup function for the widget. The widget will be created
+        """Use a setup function for the widget. The widget will be created
         and initialized as "setupUi(widget)" before the menu is shown for
-        the first time.'''
+        the first time."""
 
         @self.aboutToShow.connect
         def _():
@@ -117,6 +118,7 @@ class AsyncFunc(QtCore.QThread):
     25
 
     """
+
     # Warning: PySide crashes if passing None to an "object" type signal
     returned = QtCore.pyqtSignal(object)
     finished = QtCore.pyqtSignal(tuple)
@@ -163,6 +165,7 @@ class MainThreadCaller(QtCore.QObject):
     Note: QMetaObject.invokeMethod with BlockingQueuedConnection could
     potentially be used to achieve the same goal.
     """
+
     mainthreadrequested = QtCore.pyqtSignal(object)
 
     RESULT_RETURN = 0
@@ -196,7 +199,7 @@ class MainThreadCaller(QtCore.QObject):
                 result = self.results.pop(func)
                 break
             except KeyError:
-                print(type(self).__name__ + ': result was not ready')
+                print(type(self).__name__ + ": result was not ready")
 
         if result[0] == self.RESULT_EXCEPTION:
             raise result[1]
@@ -204,7 +207,7 @@ class MainThreadCaller(QtCore.QObject):
         return result[1]
 
 
-def connectFontContextMenu(widget):
+def connectFontContextMenu(widget: QtWidgets.QWidget) -> None:
     """
     Connects a custom context menu with a "Select Font..." entry
     to the given widget.
@@ -221,15 +224,19 @@ def connectFontContextMenu(widget):
 
         @action.triggered.connect
         def _():
-            font, ok = QtWidgets.QFontDialog.getFont(widget.font(), widget,
-                    "Select Font", QtWidgets.QFontDialog.DontUseNativeDialog)
+            font, ok = QtWidgets.QFontDialog.getFont(
+                widget.font(),
+                widget,
+                "Select Font",
+                QtWidgets.QFontDialog.DontUseNativeDialog,
+            )
             if ok:
                 widget.setFont(font)
 
         menu.exec_(widget.mapToGlobal(pt))
 
 
-def getSaveFileNameWithExt(*args, **kwargs):
+def getSaveFileNameWithExt(*args, **kwargs) -> str:
     """
     Return a file name, append extension from filter if no extension provided.
     """
@@ -237,10 +244,10 @@ def getSaveFileNameWithExt(*args, **kwargs):
     fname, filter = QtWidgets.QFileDialog.getSaveFileName(*args, **kwargs)
 
     if not fname:
-        return ''
+        return ""
 
-    if '.' not in os.path.split(fname)[-1]:
-        m = re.search(r'\*(\.[\w\.]+)', filter)
+    if "." not in os.path.split(fname)[-1]:
+        m = re.search(r"\*(\.[\w\.]+)", filter)
         if m:
             # append first extension from filter
             fname += m.group(1)
@@ -248,18 +255,18 @@ def getSaveFileNameWithExt(*args, **kwargs):
     return fname
 
 
-def getMonospaceFont(size=9):
+def getMonospaceFont(size: int = 9) -> QtGui.QFont:
     """
     Get the best looking monospace font for the current platform
     """
 
-    if sys.platform == 'darwin':
-        family = 'Monaco'
+    if sys.platform == "darwin":
+        family = "Monaco"
         size += 3
-    elif sys.platform == 'win32':
-        family = 'Consolas'
+    elif sys.platform == "win32":
+        family = "Consolas"
     else:
-        family = 'Monospace'
+        family = "Monospace"
 
     font = QtGui.QFont(family, size)
     font.setStyleHint(font.Monospace)
@@ -267,7 +274,7 @@ def getMonospaceFont(size=9):
     return font
 
 
-def loadUi(uifile, widget):
+def loadUi(uifile: str, widget: QtWidgets.QWidget):
     """
     Load .ui file into widget
 
@@ -298,6 +305,7 @@ class PopupOnException:
         def wrapper(*args, **kwargs):
             with cls():
                 return func(*args, **kwargs)
+
         return wrapper
 
     def __enter__(self):
@@ -309,10 +317,9 @@ class PopupOnException:
 
             parent = QtWidgets.QApplication.focusWidget()
 
-            msg = str(e) or 'unknown error'
-            msgbox = QMB(QMB.Critical, 'Error', msg, QMB.Close, parent)
-            msgbox.setDetailedText(''.join(traceback.format_tb(tb)))
+            msg = str(e) or "unknown error"
+            msgbox = QMB(QMB.Critical, "Error", msg, QMB.Close, parent)
+            msgbox.setDetailedText("".join(traceback.format_tb(tb)))
             msgbox.exec_()
 
         return True
-
