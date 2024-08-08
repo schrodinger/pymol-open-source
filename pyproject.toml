@@ -15,6 +15,7 @@ authors = [
 ]
 dependencies = [
   "numpy>=1.26.4,<2",
+  "pyqt5==5.15.11",
 ]
 
 [build-system]
