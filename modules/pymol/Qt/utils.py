@@ -1,4 +1,9 @@
-from pymol.Qt import *
+import os
+import re
+import sys
+import traceback
+
+from PyQt5 import QtGui, QtCore, QtWidgets, uic
 
 
 class UpdateLock:
@@ -113,8 +118,8 @@ class AsyncFunc(QtCore.QThread):
 
     """
     # Warning: PySide crashes if passing None to an "object" type signal
-    returned = QtCore.Signal(object)
-    finished = QtCore.Signal(tuple)
+    returned = QtCore.pyqtSignal(object)
+    finished = QtCore.pyqtSignal(tuple)
 
     def __init__(self, func, returnslot=None, finishslot=None):
         super(AsyncFunc, self).__init__()
@@ -158,7 +163,7 @@ class MainThreadCaller(QtCore.QObject):
     Note: QMetaObject.invokeMethod with BlockingQueuedConnection could
     potentially be used to achieve the same goal.
     """
-    mainthreadrequested = QtCore.Signal(object)
+    mainthreadrequested = QtCore.pyqtSignal(object)
 
     RESULT_RETURN = 0
     RESULT_EXCEPTION = 1
@@ -206,7 +211,7 @@ def connectFontContextMenu(widget):
 
     @type widget: QWidget
     """
-    widget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    widget.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
 
     @widget.customContextMenuRequested.connect
     def _(pt):
@@ -228,7 +233,6 @@ def getSaveFileNameWithExt(*args, **kwargs):
     """
     Return a file name, append extension from filter if no extension provided.
     """
-    import os, re
 
     fname, filter = QtWidgets.QFileDialog.getSaveFileName(*args, **kwargs)
 
@@ -248,7 +252,6 @@ def getMonospaceFont(size=9):
     """
     Get the best looking monospace font for the current platform
     """
-    import sys
 
     if sys.platform == 'darwin':
         family = 'Monaco'
@@ -272,40 +275,7 @@ def loadUi(uifile, widget):
     @type uifile: str
     @type widget: QtWidgets.QWidget
     """
-    if PYQT_NAME.startswith('PyQt'):
-        m = __import__(PYQT_NAME + '.uic')
-        return m.uic.loadUi(uifile, widget)
-    elif PYQT_NAME == 'PySide2':
-        try:
-            import pyside2uic as pysideuic
-        except ImportError:
-            pysideuic = None
-    else:
-        import pysideuic
-
-    if pysideuic is None:
-        import subprocess
-        p = subprocess.Popen(['uic', '-g', 'python', uifile],
-                             stdout=subprocess.PIPE)
-        source = p.communicate()[0]
-        # workaround for empty retranslateUi bug
-        source += b'\n' + b' ' * 8 + b'pass'
-    else:
-        import io
-        stream = io.StringIO()
-        pysideuic.compileUi(uifile, stream)
-        source = stream.getvalue()
-
-    ns_locals = {}
-    exec(source, ns_locals)
-
-    if 'Ui_Form' in ns_locals:
-        form = ns_locals['Ui_Form']()
-    else:
-        form = ns_locals['Ui_Dialog']()
-
-    form.setupUi(widget)
-    return form
+    return uic.loadUi(uifile, widget)
 
 
 class PopupOnException:
@@ -335,7 +305,6 @@ class PopupOnException:
 
     def __exit__(self, exc_type, e, tb):
         if e is not None:
-            import traceback
             QMB = QtWidgets.QMessageBox
 
             parent = QtWidgets.QApplication.focusWidget()
@@ -347,9 +316,3 @@ class PopupOnException:
 
         return True
 
-
-def conda_ask_install(packagespec, channel=None, msg="", parent=None, url=""):
-    """
-    Install a conda package
-    """
-    return True
