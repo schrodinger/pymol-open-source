@@ -309,27 +309,31 @@ ARGUMENTS
         filename = url = title
         rawscript = 1
 
-    filename = os.path.join(dest, filename.rsplit('/')[-1])
+    if not quiet:
+        print('Downloading', url)
 
+    # get page content
+    try:
+        from . import pref_get
+        timeout = pref_get('network_timeout', 10.0)
+
+        handle = urllib2.urlopen(url, timeout=timeout)
+        content = handle.read().decode('utf-8')
+        filename = handle.url
+    except IOError as e:
+        raise CmdException(e, "Plugin-Error")
+
+    filename = os.path.join(dest, filename.rsplit('/')[-1])
     if os.path.exists(filename):
         if not quiet:
             print('File "%s" exists, will not redownload')
     else:
-        if not quiet:
-            print('Downloading', url)
-
-        # get page content
-        try:
-            content = urlreadstr(url, None if rawscript else 'utf-8')
-        except IOError as e:
-            raise CmdException(e, "Plugin-Error")
-
         if not rawscript:
             # redirect
             redirect = re.match(r'\s*#REDIRECT\s*\[\[(.*?)\]\]', content)
             if redirect is not None:
                 return fetchscript(redirect.group(1), dest, run, quiet)
-
+    
             # parse Infobox
             pattern2 = re.compile(r'\{\{Infobox script-repo.*?\| *filename *= *([^|\s]+).*?\}\}', re.DOTALL)
             chunks2 = pattern2.findall(content)
@@ -342,23 +346,22 @@ ARGUMENTS
             # parse for <source ...>...</source>
             pattern = re.compile(r'<(?:source|syntaxhighlight)\b[^>]*>(.*?)</(?:source|syntaxhighlight)>', re.DOTALL)
             chunks = pattern.findall(content)
-
+    
             # check script-chunks for cmd.extend
             chunks = [s for s in chunks if 'cmd.extend' in s]
-
+    
             if len(chunks) == 0:
                 raise CmdException('No <source> or <syntaxhighlight> block with cmd.extend found')
             if len(chunks) > 1:
                 print('Warning: %d chunks found, only saving first' % (len(chunks)))
-
+    
             content = chunks[0]
-
+    
             with open(filename, 'w') as handle:
                 handle.write(content)
         else:
-            with open(filename, 'wb') as handle:
+            with open(filename, 'w') as handle:
                 handle.write(content)
-
     if int(run):
         cmd.do("run " + filename, echo=not quiet)
 
