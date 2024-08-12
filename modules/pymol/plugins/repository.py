@@ -309,21 +309,24 @@ ARGUMENTS
         filename = url = title
         rawscript = 1
 
-    filename = os.path.join(dest, filename.rsplit('/')[-1])
+    if not quiet:
+        print('Downloading', url)
 
+    # get page content
+    try:
+        from . import pref_get
+        timeout = pref_get('network_timeout', 10.0)
+        handle = urllib2.urlopen(url, timeout=timeout)
+        content = handle.read().decode('utf-8')
+        filename = handle.url
+    except IOError as e:
+        raise CmdException(e, "Plugin-Error")
+
+    filename = os.path.join(dest, filename.rsplit('/')[-1])
     if os.path.exists(filename):
         if not quiet:
             print('File "%s" exists, will not redownload')
     else:
-        if not quiet:
-            print('Downloading', url)
-
-        # get page content
-        try:
-            content = urlreadstr(url, None if rawscript else 'utf-8')
-        except IOError as e:
-            raise CmdException(e, "Plugin-Error")
-
         if not rawscript:
             # redirect
             redirect = re.match(r'\s*#REDIRECT\s*\[\[(.*?)\]\]', content)
@@ -356,9 +359,8 @@ ARGUMENTS
             with open(filename, 'w') as handle:
                 handle.write(content)
         else:
-            with open(filename, 'wb') as handle:
+            with open(filename, 'w') as handle:
                 handle.write(content)
-
     if int(run):
         cmd.do("run " + filename, echo=not quiet)
 
