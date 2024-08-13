@@ -140,48 +140,76 @@ void AssignNewPickColor(CGO* cgo, PickColorManager* pickmgr,
   pickmgr->colorNext(color, context, index, bond);
 }
 
-std::size_t CGO_sz[] = {CGO_NULL_SZ, CGO_NULL_SZ, CGO_BEGIN_SZ, CGO_END_SZ,
-
-    CGO_VERTEX_SZ, CGO_NORMAL_SZ, fsizeof<cgo::draw::color>(),
-    fsizeof<cgo::draw::sphere>(),
-
-    CGO_TRIANGLE_SZ, fsizeof<cgo::draw::cylinder>(), CGO_LINEWIDTH_SZ,
-    CGO_WIDTHSCALE_SZ,
-
-    CGO_ENABLE_SZ, CGO_DISABLE_SZ, fsizeof<cgo::draw::sausage>(),
-    fsizeof<cgo::draw::custom_cylinder>(),
-
-    CGO_DOTWIDTH_SZ, CGO_ALPHA_TRIANGLE_SZ, CGO_ELLIPSOID_SZ, CGO_FONT_SZ,
-
-    CGO_FONT_SCALE_SZ, CGO_FONT_VERTEX_SZ, CGO_FONT_AXES_SZ, CGO_CHAR_SZ,
-
-    CGO_INDENT_SZ, CGO_ALPHA_SZ, CGO_QUADRIC_SZ, CGO_CONE_SZ,
-
-    fsizeof<cgo::draw::arrays>(), CGO_NULL_SZ, CGO_RESET_NORMAL_SZ,
-    CGO_PICK_COLOR_SZ,
-
-    CGO_NULL_SZ, // CGO_DRAW_BUFFERS_SZ no longer used
-    fsizeof<cgo::draw::buffers_indexed>(), CGO_BOUNDING_BOX_SZ,
-    fsizeof<cgo::draw::buffers_not_indexed>(), CGO_SPECIAL_SZ,
-    fsizeof<cgo::draw::cylinder_buffers>(),
-    fsizeof<cgo::draw::shadercylinder>(),
-    fsizeof<cgo::draw::shadercylinder2ndcolor>(),
-    fsizeof<cgo::draw::sphere_buffers>(), CGO_ACCESSIBILITY_SZ,
-    CGO_DRAW_TEXTURE_SZ, fsizeof<cgo::draw::textures>(),
-    fsizeof<cgo::draw::screen_textures>(), CGO_TEX_COORD_SZ,
-    fsizeof<cgo::draw::label>(), fsizeof<cgo::draw::labels>(),
-    CGO_DRAW_CONNECTOR_SZ, fsizeof<cgo::draw::connectors>(),
-    CGO_DRAW_TRILINES_SZ, CGO_UNIFORM3F_SZ, CGO_SPECIAL_WITH_ARG_SZ,
-    fsizeof<cgo::draw::line>(), fsizeof<cgo::draw::splitline>(),
-    fsizeof<cgo::draw::custom>(), fsizeof<cgo::draw::vertex_attribute_3f>(),
-    fsizeof<cgo::draw::vertex_attribute_4ub>(),
-    fsizeof<cgo::draw::vertex_attribute_1f>(),
-    fsizeof<cgo::draw::mask_attribute_if_picking>(),
-    fsizeof<cgo::draw::bind_vbo_for_picking>(), CGO_VERTEX_BEGIN_LINE_STRIP_SZ,
-    CGO_INTERPOLATED_SZ, CGO_VERTEX_CROSS_SZ,
-    fsizeof<cgo::draw::vertex_attribute_4ub_if_picking>(),
-    fsizeof<cgo::draw::custom_cylinder_alpha>(), CGO_BEZIER_SZ,
-    fsizeof<cgo::draw::bezier_buffers>(), CGO_NULL_SZ};
+std::size_t CGO_sz[] = {
+    CGO_NULL_SZ,                           //
+    CGO_NULL_SZ,                           //
+    CGO_BEGIN_SZ,                          //
+    CGO_END_SZ,                            //
+    CGO_VERTEX_SZ,                         //
+    CGO_NORMAL_SZ,                         //
+    fsizeof<cgo::draw::color>(),           //
+    fsizeof<cgo::draw::sphere>(),          //
+    CGO_TRIANGLE_SZ,                       //
+    fsizeof<cgo::draw::cylinder>(),        //
+    CGO_LINEWIDTH_SZ,                      //
+    CGO_WIDTHSCALE_SZ,                     //
+    CGO_ENABLE_SZ,                         //
+    CGO_DISABLE_SZ,                        //
+    fsizeof<cgo::draw::sausage>(),         //
+    fsizeof<cgo::draw::custom_cylinder>(), //
+    CGO_DOTWIDTH_SZ,                       //
+    CGO_ALPHA_TRIANGLE_SZ,                 //
+    CGO_ELLIPSOID_SZ,                      //
+    CGO_FONT_SZ,                           //
+    CGO_FONT_SCALE_SZ,                     //
+    CGO_FONT_VERTEX_SZ,                    //
+    CGO_FONT_AXES_SZ,                      //
+    CGO_CHAR_SZ,                           //
+    CGO_INDENT_SZ,                         //
+    CGO_ALPHA_SZ,                          //
+    CGO_QUADRIC_SZ,                        //
+    CGO_CONE_SZ,                           //
+    fsizeof<cgo::draw::arrays>(),          //
+    CGO_NULL_SZ, CGO_RESET_NORMAL_SZ,      //
+    CGO_PICK_COLOR_SZ,                     //
+    CGO_NULL_SZ,                           // CGO_DRAW_BUFFERS_SZ no longer used
+    fsizeof<cgo::draw::buffers_indexed>(), //
+    CGO_BOUNDING_BOX_SZ,                   //
+    fsizeof<cgo::draw::buffers_not_indexed>(),             //
+    CGO_SPECIAL_SZ,                                        //
+    fsizeof<cgo::draw::cylinder_buffers>(),                //
+    fsizeof<cgo::draw::shadercylinder>(),                  //
+    fsizeof<cgo::draw::shadercylinder2ndcolor>(),          //
+    fsizeof<cgo::draw::sphere_buffers>(),                  //
+    CGO_ACCESSIBILITY_SZ,                                  //
+    CGO_DRAW_TEXTURE_SZ,                                   //
+    fsizeof<cgo::draw::textures>(),                        //
+    fsizeof<cgo::draw::screen_textures>(),                 //
+    CGO_TEX_COORD_SZ,                                      //
+    fsizeof<cgo::draw::label>(),                           //
+    fsizeof<cgo::draw::labels>(),                          //
+    CGO_DRAW_CONNECTOR_SZ,                                 //
+    fsizeof<cgo::draw::connectors>(),                      //
+    CGO_DRAW_TRILINES_SZ,                                  //
+    CGO_UNIFORM3F_SZ,                                      //
+    CGO_SPECIAL_WITH_ARG_SZ,                               //
+    fsizeof<cgo::draw::line>(),                            //
+    fsizeof<cgo::draw::splitline>(),                       //
+    fsizeof<cgo::draw::custom>(),                          //
+    fsizeof<cgo::draw::vertex_attribute_3f>(),             //
+    fsizeof<cgo::draw::vertex_attribute_4ub>(),            //
+    fsizeof<cgo::draw::vertex_attribute_1f>(),             //
+    fsizeof<cgo::draw::mask_attribute_if_picking>(),       //
+    fsizeof<cgo::draw::bind_vbo_for_picking>(),            //
+    CGO_VERTEX_BEGIN_LINE_STRIP_SZ,                        //
+    CGO_INTERPOLATED_SZ,                                   //
+    CGO_VERTEX_CROSS_SZ,                                   //
+    fsizeof<cgo::draw::vertex_attribute_4ub_if_picking>(), //
+    fsizeof<cgo::draw::custom_cylinder_alpha>(),           //
+    CGO_BEZIER_SZ,                                         //
+    fsizeof<cgo::draw::bezier_buffers>(),                  //
+    CGO_NULL_SZ                                            //
+};
 
 /**
  * Get the number of elements in `CGO_sz`
