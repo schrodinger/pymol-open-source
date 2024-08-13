@@ -157,6 +157,7 @@ class PMGApp(Pmw.MegaWidget):
                 ("ChemPy Model","*.pkl"),
                 ("Raster3D Scene","*.r3d"),
                 ("SDF File","*.sdf"),
+                ("SDF File","*.sdfgz"),
                 ("ChemDraw3D File","*.cc1"),
                 ("ChemDraw3D File","*.cc2"),
                 ("XYZ File","*.xyz"),

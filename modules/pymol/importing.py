@@ -70,6 +70,9 @@ if True:
             format = 'cc1'
         elif ext in ('sd',):
             format = 'sdf'
+        elif ext in ('sdfgz',):
+            zipped = 'gz'
+            format = 'sdf'
         elif ext in ('rst7',):
             format = 'rst'
         elif ext in ('o', 'dsn6', 'omap',):
