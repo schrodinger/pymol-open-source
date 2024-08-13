@@ -249,7 +249,7 @@ int ObjectMeshNewFromPyList(
 }
 
 static CGO* ObjectMeshRenderImpl(
-    ObjectMesh* I, RenderInfo* info, int returnCGO, int stateArg);
+    ObjectMesh* I, RenderInfo* info, bool returnCGO, int stateArg);
 
 PyObject* ObjectMeshAsPyList(ObjectMesh* I)
 {
@@ -272,7 +272,7 @@ PyObject* ObjectMeshAsPyList(ObjectMesh* I)
     PRINTFB(I->G, FB_ObjectMesh, FB_Errors)
     "ObjectMesh-Warning: map has been deleted, saving as CGO.\n" ENDFB(I->G);
     for (a = 0; a < I->NState; a++) {
-      CGO* cgo = ObjectMeshRenderImpl(I, 0, 1, a);
+      CGO* cgo = ObjectMeshRenderImpl(I, nullptr, true, a);
       retObjectCGO = ObjectCGOFromCGO(I->G, retObjectCGO, cgo, a);
     }
     ObjectSetRepVisMask(retObjectCGO, cRepCGOBit, cVis_AS);
@@ -706,52 +706,360 @@ void ObjectMesh::render(RenderInfo* info)
   ObjectMeshRenderImpl(this, info, false, 0);
 }
 
-static short ObjectMeshStateRenderShader(ObjectMeshState* ms, ObjectMesh* I,
-    RenderInfo* info, short mesh_as_cylinders, float mesh_width)
+static bool ObjectMeshStateRenderShader(
+    ObjectMeshState* ms, ObjectMesh* I, RenderInfo* info);
+
+
+static CGO* ObjectMeshCGOGenerate(ObjectMesh* I, ObjectMeshState* ms,
+    RenderInfo* info, bool returnCGO, bool mesh_as_cylinders)
 {
+  int ok = true;
   PyMOLGlobals* G = I->G;
-  CShaderPrg* shaderPrg = nullptr;
+
+  auto transparency =
+      SettingGet<float>(G, I->Setting.get(), nullptr, cSetting_transparency);
+
+  auto shaderCGO = CGONew(G);
+  if (!shaderCGO) {
+    ok = false;
+    return nullptr;
+  }
+  shaderCGO->use_shader = true;
+  CGOAlpha(shaderCGO, 1.0f - transparency);
+
+  // Unit Cell Rendering
+  if (ms->UnitCellCGO && (I->visRep & cRepCellBit)) {
+    const float* color = ColorGet(I->G, I->Color);
+    if (!ms->shaderUnitCellCGO) {
+      CGO* newUnitCellCGO = CGONewSized(G, 0);
+      CGOColorv(newUnitCellCGO, color);
+      CGOAppend(newUnitCellCGO, ms->UnitCellCGO.get());
+      ms->shaderUnitCellCGO.reset(
+          CGOOptimizeToVBONotIndexedNoShader(newUnitCellCGO));
+      CGOFree(newUnitCellCGO);
+      ms->shaderUnitCellCGO->use_shader = true;
+    }
+  }
+  // Turn off lighting
+  if (info && !info->line_lighting) {
+    if (!mesh_as_cylinders) {
+      ok &= CGODisable(shaderCGO, GL_LIGHTING);
+    }
+  }
+  if (!ok)
+    return 0;
+
+  CGOResetNormal(shaderCGO, true);
+
+  auto n = ms->N.data();
+  auto v = ms->V.data();
+
+  if (!(n && v && (I->visRep & cRepMeshBit))) {
+    return 0;
+  }
+  auto vc = ms->VC.data();
+
+  if (!vc) {
+    ok &= CGOColorv(shaderCGO, ColorGet(I->G, ms->OneColor));
+  }
 
   if (!mesh_as_cylinders) {
-    shaderPrg = G->ShaderMgr->Enable_DefaultShader(info->pass);
-    shaderPrg->SetLightingEnabled(0);
-    shaderPrg->Set1i("two_sided_lighting_enabled", SceneGetTwoSidedLighting(G));
+    if (ms->MeshMode == cIsomeshMode::isodot) {
+      ok &= CGODotwidth(shaderCGO, SettingGet<float>(I->G, I->Setting.get(),
+                                        nullptr, cSetting_dot_width));
+    } else {
+      ok &= CGOSpecial(shaderCGO, LINEWIDTH_DYNAMIC_MESH);
+    }
   }
 
+  if (!ok)
+    return nullptr;
+
+  if (mesh_as_cylinders) {
+    if (returnCGO) {
+      ok &= CGOSpecial(shaderCGO, CYLINDERWIDTH_DYNAMIC_MESH);
+    }
+    int c;
+    for (; ok && (c = *(n++)); v += 3, vc && (vc += 3)) {
+      for (; ok && (--c); v += 3) {
+        float axis[] = {v[3] - v[0], v[4] - v[1], v[5] - v[2]};
+        if (vc) {
+          ok &= CGOColorv(shaderCGO, vc);
+          vc += 3;
+        }
+        if (vc && memcmp(vc - 3, vc, sizeof(float) * 3)) {
+          ok &= (bool) shaderCGO->add<cgo::draw::shadercylinder2ndcolor>(
+              shaderCGO, v, axis, 1.f, 15, vc);
+        } else {
+          ok &= (bool) shaderCGO->add<cgo::draw::shadercylinder>(
+              v, axis, 1.f, 15);
+        }
+      }
+    }
+  } else {
+    while (ok && *n) {
+      auto c = *(n++);
+      if (ms->MeshMode == cIsomeshMode::isodot)
+        ok &= CGOBegin(shaderCGO, GL_POINTS);
+      else {
+        if (c < 2) {
+          while (c--) {
+            if (vc) {
+              vc += 3;
+            }
+            v += 3;
+          }
+          continue;
+        }
+        ok &= CGOBegin(shaderCGO, GL_LINE_STRIP);
+      }
+      while (ok && c--) {
+        if (vc) {
+          ok &= CGOColorv(shaderCGO, vc);
+          vc += 3;
+        }
+        if (ok)
+          ok &= CGOVertexv(shaderCGO, v);
+        v += 3;
+      }
+      if (ok)
+        ok &= CGOEnd(shaderCGO);
+    }
+  }
+
+  if (info && !info->line_lighting) {
+    if (ok && !mesh_as_cylinders) {
+      ok &= CGOEnable(shaderCGO, GL_LIGHTING);
+    }
+  }
+
+  // Optimize
+  if (!ok) {
+    return nullptr;
+  }
+  CGO* convertcgo = nullptr;
+  if (ok)
+    ok &= CGOStop(shaderCGO);
+  if (ok)
+    convertcgo = CGOCombineBeginEnd(shaderCGO, 0);
+  CHECKOK(ok, convertcgo);
+  CGOFree(shaderCGO);
+  shaderCGO = convertcgo;
+  if (returnCGO) {
+    return (shaderCGO);
+  }
+  ms->shaderCGO.reset(shaderCGO);
+  if (!ok) {
+    return nullptr;
+  }
+
+  CGO* tmpCGO = CGONew(G);
+  auto enableMode = mesh_as_cylinders ? GL_CYLINDER_SHADER : GL_DEFAULT_SHADER;
+  CGOEnable(tmpCGO, enableMode);
+  if (mesh_as_cylinders) {
+    CGOSpecial(tmpCGO, MESH_WIDTH_FOR_SURFACES);
+    convertcgo = CGOConvertShaderCylindersToCylinderShader(
+        ms->shaderCGO.get(), tmpCGO);
+    convertcgo->has_draw_cylinder_buffers = true;
+  } else {
+    CGODisable(tmpCGO, GL_LIGHTING);
+    convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(
+        ms->shaderCGO.get(), 0, false, nullptr);
+  }
+  CGOAppendNoStop(tmpCGO, convertcgo);
+  CGODisable(tmpCGO, enableMode);
+  CGOStop(tmpCGO);
+  CGOFreeWithoutVBOs(convertcgo);
+  convertcgo = tmpCGO;
+  convertcgo->use_shader = true;
+
+  CHECKOK(ok, convertcgo);
+  if (convertcgo) {
+    ms->shaderCGO.reset(convertcgo);
+  }
+
+  return ok ? ms->shaderCGO.get() : nullptr;
+}
+
+static bool ObjectMeshStateRenderShader(
+    ObjectMeshState* ms, ObjectMesh* I, RenderInfo* info)
+{
   CGORender(ms->shaderCGO.get(), nullptr, nullptr, nullptr, info, nullptr);
-
-  if (shaderPrg) {
-    shaderPrg->Disable();
-  }
-
-  if (ms->shaderUnitCellCGO) {
-    shaderPrg = G->ShaderMgr->Enable_DefaultShader(info->pass);
-    shaderPrg->SetLightingEnabled(0);
-    CGORender(
-        ms->shaderUnitCellCGO.get(), nullptr, nullptr, nullptr, info, nullptr);
-    shaderPrg->Disable();
-  }
-
   return true;
 }
 
+static bool ObjectMeshRenderRay(ObjectMeshState* ms, ObjectMesh* I,
+    RenderInfo* info, CRay* ray, float transparency)
+{
+  auto* G = I->G;
+  bool ok = true;
+
+  auto mesh_width =
+      SettingGet<float>(I->G, I->Setting.get(), nullptr, cSetting_mesh_width);
+
+  auto line_width = SceneGetDynamicLineWidth(info, mesh_width);
+
+  if (ms->UnitCellCGO && (I->visRep & cRepCellBit)) {
+    ok &= CGORenderRay(ms->UnitCellCGO.get(), ray, info,
+        ColorGet(I->G, I->Color), nullptr, I->Setting.get(), nullptr);
+    if (!ok) {
+      ms->UnitCellCGO.reset();
+      return ok;
+    }
+  }
+  float radius{};
+  if (ms->MeshMode != cIsomeshMode::isodot) {
+    radius = SettingGet<float>(
+        I->G, I->Setting.get(), nullptr, cSetting_mesh_radius);
+
+    if (radius == 0.0f) {
+      radius = ray->PixelRadius * line_width / 2.0F;
+    }
+  } else {
+    radius =
+        SettingGet<float>(I->G, I->Setting.get(), nullptr, cSetting_dot_radius);
+    if (radius == 0.0F) {
+      radius = ray->PixelRadius *
+               SettingGet<float>(
+                   I->G, I->Setting.get(), nullptr, cSetting_dot_width) /
+               1.4142F;
+    }
+  }
+
+  auto v = ms->V.data();
+  auto n = ms->N.data();
+  if (!(ok && n && v && (I->visRep & cRepMeshBit))) {
+    return false;
+  }
+  float cc[3];
+  float colA[3], colB[3];
+  ColorGetEncoded(G, ms->OneColor, cc);
+  auto vc = ms->VC.data();
+  auto rc = ms->RC.data();
+
+  ray->transparentf(transparency);
+
+  if (ms->MeshMode == cIsomeshMode::isodot) {
+    ray->color3fv(cc);
+    while (ok && *n) {
+      auto c = *(n++);
+      while (ok && c--) {
+        if (vc) {
+          float* cA = vc;
+          if (rc) {
+            if (rc[0] < -1)
+              ColorGetEncoded(G, rc[0], (cA = colA));
+            rc++;
+          }
+          ray->color3fv(cA);
+          ok &= ray->sphere3fv(v, radius);
+          vc += 3;
+        } else {
+          ok &= ray->sphere3fv(v, radius);
+        }
+        v += 3;
+      }
+    }
+  } else {
+    // isomesh
+    while (ok && *n) {
+      auto c = *(n++);
+      if (c--) {
+        v += 3;
+        if (vc) {
+          vc += 3;
+          if (rc)
+            rc++;
+        }
+        while (ok && c--) {
+          if (vc) {
+            float *cA = vc - 3, *cB = vc;
+            if (rc) {
+              if (rc[-1] < -1)
+                ColorGetEncoded(G, rc[-1], (cA = colA));
+              if (rc[0] < -1)
+                ColorGetEncoded(G, rc[0], (cB = colB));
+              rc++;
+            }
+            ok &= ray->sausage3fv(v - 3, v, radius, cA, cB);
+            vc += 3;
+          } else {
+            ok &= ray->sausage3fv(v - 3, v, radius, cc, cc);
+          }
+          v += 3;
+        }
+      }
+    }
+  }
+  return ok;
+}
+
+static void ObjectMeshRenderImmediate(
+    ObjectMeshState* ms, ObjectMesh* I, RenderInfo* info)
+{
+  auto mesh_width =
+      SettingGet<float>(I->G, I->Setting.get(), nullptr, cSetting_mesh_width);
+
+  auto line_width = SceneGetDynamicLineWidth(info, mesh_width);
+
+  SceneResetNormal(I->G, false);
+
+#ifdef PURE_OPENGL_ES_2
+  /* TODO */
+#else
+  if (info && !info->line_lighting) {
+    glDisable(GL_LIGHTING);
+  }
+  auto vc = ms->VC.data();
+
+  if (!vc)
+    glColor3fv(ColorGet(I->G, ms->OneColor));
+  if (ms->MeshMode == cIsomeshMode::isodot) {
+    glPointSize(
+        SettingGet_f(I->G, I->Setting.get(), nullptr, cSetting_dot_width));
+  } else {
+    glLineWidth(line_width);
+  }
+
+  auto v = ms->V.data();
+  auto n = ms->N.data();
+
+  while (*n) {
+    auto c = *(n++);
+    if (ms->MeshMode == cIsomeshMode::isodot)
+      glBegin(GL_POINTS);
+    else
+      glBegin(GL_LINE_STRIP);
+    while (c--) {
+      if (vc) {
+        glColor3fv(vc);
+        vc += 3;
+      }
+      glVertex3fv(v);
+      v += 3;
+    }
+    glEnd();
+  }
+  if (info && !info->line_lighting) {
+    glEnable(GL_LIGHTING);
+  }
+#endif
+
+  // Render Unit Cell Immediately
+  const float* color = ColorGet(I->G, I->Color);
+  CGORender(
+      ms->UnitCellCGO.get(), color, I->Setting.get(), nullptr, info, nullptr);
+}
+
 static CGO* ObjectMeshRenderImpl(
-    ObjectMesh* I, RenderInfo* info, int returnCGO, int stateArg)
+    ObjectMesh* I, RenderInfo* info, bool returnCGO, int stateArg)
 {
   PyMOLGlobals* G = I->G;
-  float* v = nullptr;
-  float* vc;
-  int* rc;
-  float radius;
   int state = 0;
   CRay* ray = 0;
   bool pick = false;
   RenderPass pass = RenderPass::Antialias;
-  int* n = nullptr;
-  int c;
-  float line_width, mesh_width = SettingGet_f(
-                        I->G, I->Setting.get(), nullptr, cSetting_mesh_width);
-  ObjectMeshState* ms = nullptr;
+
   int ok = true;
 
   if (info) {
@@ -763,12 +1071,15 @@ static CGO* ObjectMeshRenderImpl(
     state = stateArg;
   }
 
-  line_width = SceneGetDynamicLineWidth(info, mesh_width);
   ObjectPrepareContext(I, info);
+
+  bool use_shader = (SettingGet<bool>(G, cSetting_mesh_use_shader) &&
+                        SettingGet<bool>(G, cSetting_use_shaders)) ||
+                    returnCGO;
 
   for (StateIterator iter(I->G, I->Setting.get(), state, I->NState);
        iter.next();) {
-    ms = &I->State[iter.state];
+    auto ms = &I->State[iter.state];
 
     if (!ms->Active || !ms->V || !ms->N)
       continue;
@@ -776,328 +1087,47 @@ static CGO* ObjectMeshRenderImpl(
     auto transparency =
         SettingGet<float>(G, I->Setting.get(), nullptr, cSetting_transparency);
 
-    {
-      v = ms->V.data();
-      n = ms->N.data();
-      if (ok && ray) {
-        if (ms->UnitCellCGO && (I->visRep & cRepCellBit)) {
-          ok &= CGORenderRay(ms->UnitCellCGO.get(), ray, info,
-              ColorGet(I->G, I->Color), nullptr, I->Setting.get(), nullptr);
-          if (!ok) {
-            ms->UnitCellCGO.reset();
-            break;
-          }
-        }
-        if (ms->MeshMode != cIsomeshMode::isodot) {
-          radius = SettingGet_f(
-              I->G, I->Setting.get(), nullptr, cSetting_mesh_radius);
-
-          if (radius == 0.0F) {
-            radius = ray->PixelRadius * line_width / 2.0F;
-          }
-        } else {
-          radius = SettingGet_f(
-              I->G, I->Setting.get(), nullptr, cSetting_dot_radius);
-          if (radius == 0.0F) {
-            radius = ray->PixelRadius *
-                     SettingGet_f(
-                         I->G, I->Setting.get(), nullptr, cSetting_dot_width) /
-                     1.4142F;
-          }
-        }
-
-        if (ok && n && v && (I->visRep & cRepMeshBit)) {
-          float cc[3];
-          float colA[3], colB[3];
-          ColorGetEncoded(G, ms->OneColor, cc);
-          vc = ms->VC.data();
-          rc = ms->RC.data();
-
-          ray->transparentf(transparency);
-
-          if (ms->MeshMode == cIsomeshMode::isodot) {
-            ray->color3fv(cc);
-            while (ok && *n) {
-              c = *(n++);
-              while (ok && c--) {
-                if (vc) {
-                  float* cA = vc;
-                  if (rc) {
-                    if (rc[0] < -1)
-                      ColorGetEncoded(G, rc[0], (cA = colA));
-                    rc++;
-                  }
-                  ray->color3fv(cA);
-                  ok &= ray->sphere3fv(v, radius);
-                  vc += 3;
-                } else {
-                  ok &= ray->sphere3fv(v, radius);
-                }
-                v += 3;
-              }
-            }
-          } else {
-            while (ok && *n) {
-              c = *(n++);
-              if (c--) {
-                v += 3;
-                if (vc) {
-                  vc += 3;
-                  if (rc)
-                    rc++;
-                }
-                while (ok && c--) {
-                  if (vc) {
-                    float *cA = vc - 3, *cB = vc;
-                    if (rc) {
-                      if (rc[-1] < -1)
-                        ColorGetEncoded(G, rc[-1], (cA = colA));
-                      if (rc[0] < -1)
-                        ColorGetEncoded(G, rc[0], (cB = colB));
-                      rc++;
-                    }
-                    ok &= ray->sausage3fv(v - 3, v, radius, cA, cB);
-                    vc += 3;
-                  } else {
-                    ok &= ray->sausage3fv(v - 3, v, radius, cc, cc);
-                  }
-                  v += 3;
-                }
-              }
-            }
-          }
-        }
-      } else if ((G->HaveGUI && G->ValidContext) || returnCGO) {
-        if (!pick && pass == RenderPass::Antialias) {
-          short use_shader;
-          short mesh_as_cylinders;
-          CGO* shaderCGO = nullptr;
-          use_shader = (SettingGetGlobal_b(G, cSetting_mesh_use_shader) &
-                           SettingGetGlobal_b(G, cSetting_use_shaders)) |
-                       returnCGO;
-          mesh_as_cylinders =
-              SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
-              SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) &&
-              ms->MeshMode != cIsomeshMode::isodot;
-
-          if (ms->shaderCGO &&
-              (!use_shader || (mesh_as_cylinders ^
-                                  ms->shaderCGO->has_draw_cylinder_buffers))) {
-            ms->shaderCGO.reset();
-            ms->shaderUnitCellCGO.reset();
-          }
-
-          if (ms->shaderCGO && !returnCGO) {
-            ok &= ObjectMeshStateRenderShader(
-                ms, I, info, mesh_as_cylinders, mesh_width);
-            continue;
-          }
-
-          if (use_shader) {
-            shaderCGO = CGONew(G);
-            if (!shaderCGO) {
-              ok = false;
-              break;
-            }
-            shaderCGO->use_shader = true;
-            CGOAlpha(shaderCGO, 1.f - transparency);
-          }
-
-          if (ms->UnitCellCGO && (I->visRep & cRepCellBit)) {
-            const float* color = ColorGet(I->G, I->Color);
-            if (!use_shader) {
-              CGORender(ms->UnitCellCGO.get(), color, I->Setting.get(), nullptr,
-                  info, nullptr);
-            } else if (!ms->shaderUnitCellCGO) {
-              CGO* newUnitCellCGO = CGONewSized(G, 0);
-              CGOColorv(newUnitCellCGO, color);
-              CGOAppend(newUnitCellCGO, ms->UnitCellCGO.get());
-              ms->shaderUnitCellCGO.reset(
-                  CGOOptimizeToVBONotIndexedNoShader(newUnitCellCGO));
-              CGOFree(newUnitCellCGO);
-              ms->shaderUnitCellCGO->use_shader = true;
-            }
-          }
-
-          if (info && !info->line_lighting) {
-            if (!use_shader) {
-              glDisable(GL_LIGHTING);
-            } else if (!mesh_as_cylinders) {
-              ok &= CGODisable(shaderCGO, GL_LIGHTING);
-            }
-          }
-          if (!ok)
-            break;
-
-          if (use_shader) {
-            ok &= CGOResetNormal(shaderCGO, true);
-          } else {
-            SceneResetNormal(I->G, false);
-          }
-          if (n && v && (I->visRep & cRepMeshBit)) {
-            if (use_shader) {
-              vc = ms->VC.data();
-
-              if (!vc)
-                ok &= CGOColorv(shaderCGO, ColorGet(I->G, ms->OneColor));
-
-              if (!mesh_as_cylinders) {
-                if (ms->MeshMode == cIsomeshMode::isodot) {
-                  ok &= CGODotwidth(
-                      shaderCGO, SettingGet_f(I->G, I->Setting.get(), nullptr,
-                                     cSetting_dot_width));
-                } else {
-                  ok &= CGOSpecial(shaderCGO, LINEWIDTH_DYNAMIC_MESH);
-                }
-              }
-
-              if (!ok)
-                break;
-
-              if (mesh_as_cylinders) {
-                if (returnCGO) {
-                  ok &= CGOSpecial(shaderCGO, CYLINDERWIDTH_DYNAMIC_MESH);
-                }
-                for (; ok && (c = *(n++)); v += 3, vc && (vc += 3)) {
-                  for (; ok && (--c); v += 3) {
-                    float axis[] = {v[3] - v[0], v[4] - v[1], v[5] - v[2]};
-                    if (vc) {
-                      ok &= CGOColorv(shaderCGO, vc);
-                      vc += 3;
-                    }
-                    if (vc && memcmp(vc - 3, vc, sizeof(float) * 3)) {
-                      ok &=
-                          (bool)
-                              shaderCGO->add<cgo::draw::shadercylinder2ndcolor>(
-                                  shaderCGO, v, axis, 1.f, 15, vc);
-                    } else {
-                      ok &= (bool) shaderCGO->add<cgo::draw::shadercylinder>(
-                          v, axis, 1.f, 15);
-                    }
-                  }
-                }
-              } else {
-                while (ok && *n) {
-                  c = *(n++);
-                  if (ms->MeshMode == cIsomeshMode::isodot)
-                    ok &= CGOBegin(shaderCGO, GL_POINTS);
-                  else {
-                    if (c < 2) {
-                      while (c--) {
-                        if (vc) {
-                          vc += 3;
-                        }
-                        v += 3;
-                      }
-                      continue;
-                    }
-                    ok &= CGOBegin(shaderCGO, GL_LINE_STRIP);
-                  }
-                  while (ok && c--) {
-                    if (vc) {
-                      ok &= CGOColorv(shaderCGO, vc);
-                      vc += 3;
-                    }
-                    if (ok)
-                      ok &= CGOVertexv(shaderCGO, v);
-                    v += 3;
-                  }
-                  if (ok)
-                    ok &= CGOEnd(shaderCGO);
-                }
-              }
-            } else {
-#ifndef PURE_OPENGL_ES_2
-              vc = ms->VC.data();
-
-              if (!vc)
-                glColor3fv(ColorGet(I->G, ms->OneColor));
-              if (ms->MeshMode == cIsomeshMode::isodot) {
-                glPointSize(SettingGet_f(
-                    I->G, I->Setting.get(), nullptr, cSetting_dot_width));
-              } else {
-                glLineWidth(line_width);
-              }
-              while (*n) {
-                c = *(n++);
-                if (ms->MeshMode == cIsomeshMode::isodot)
-                  glBegin(GL_POINTS);
-                else
-                  glBegin(GL_LINE_STRIP);
-                while (c--) {
-                  if (vc) {
-                    glColor3fv(vc);
-                    vc += 3;
-                  }
-                  glVertex3fv(v);
-                  v += 3;
-                }
-                glEnd();
-              }
-#endif
-            }
-          }
-          if (info && !info->line_lighting) {
-            if (!use_shader) {
-              glEnable(GL_LIGHTING);
-            } else if (ok && !mesh_as_cylinders) {
-              ok &= CGOEnable(shaderCGO, GL_LIGHTING);
-            }
-          }
-
-          if (use_shader) {
-            if (ok) {
-              CGO* convertcgo = nullptr;
-              if (ok)
-                ok &= CGOStop(shaderCGO);
-              if (ok)
-                convertcgo = CGOCombineBeginEnd(shaderCGO, 0);
-              CHECKOK(ok, convertcgo);
-              CGOFree(shaderCGO);
-              shaderCGO = convertcgo;
-              if (returnCGO) {
-                return (shaderCGO);
-              } else {
-                ms->shaderCGO.reset(shaderCGO);
-              }
-              if (ok) {
-                if (mesh_as_cylinders) {
-                  CGO* tmpCGO = CGONew(G);
-                  ok &= CGOEnable(tmpCGO, GL_CYLINDER_SHADER);
-                  if (ok)
-                    ok &= CGOSpecial(tmpCGO, MESH_WIDTH_FOR_SURFACES);
-                  convertcgo = CGOConvertShaderCylindersToCylinderShader(
-                      ms->shaderCGO.get(), tmpCGO);
-                  if (ok)
-                    ok &= CGOAppendNoStop(tmpCGO, convertcgo);
-                  if (ok)
-                    ok &= CGODisable(tmpCGO, GL_CYLINDER_SHADER);
-                  if (ok)
-                    ok &= CGOStop(tmpCGO);
-                  CGOFreeWithoutVBOs(convertcgo);
-                  convertcgo = tmpCGO;
-                  convertcgo->use_shader =
-                      convertcgo->has_draw_cylinder_buffers = true;
-                } else {
-                  convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(
-                      ms->shaderCGO.get(), 0, false, nullptr);
-                }
-                CHECKOK(ok, convertcgo);
-              }
-              if (convertcgo) {
-                ms->shaderCGO.reset(convertcgo);
-              }
-            }
-
-            if (!ok)
-              break;
-
-            ok &= ObjectMeshStateRenderShader(
-                ms, I, info, mesh_as_cylinders, mesh_width);
-          }
-        }
+    if (ray) {
+      ok = ObjectMeshRenderRay(ms, I, info, ray, transparency);
+      if (!ok) {
+        I->invalidate(cRepMesh, cRepInvPurge, -1);
+        I->invalidate(cRepCGO, cRepInvPurge, -1);
+        ObjectSetRepVisMask(I, 0, cVis_AS);
+        return nullptr;
       }
     }
+    if (!((G->HaveGUI && G->ValidContext) || returnCGO)) {
+      return nullptr;
+    }
+    if (pick || pass != RenderPass::Antialias) {
+      return nullptr;
+    }
+
+    if (use_shader) {
+      bool mesh_as_cylinders = SettingGet<bool>(G, cSetting_render_as_cylinders) &&
+                              SettingGet<bool>(G, cSetting_mesh_as_cylinders) &&
+                              ms->MeshMode != cIsomeshMode::isodot;
+      if (ms->shaderCGO &&
+          (!use_shader ||
+              (mesh_as_cylinders ^ ms->shaderCGO->has_draw_cylinder_buffers))) {
+        ms->shaderCGO.reset();
+        ms->shaderUnitCellCGO.reset();
+      }
+
+      if (!ms->shaderCGO) {
+        auto cgo = ObjectMeshCGOGenerate(I, ms, info, returnCGO, mesh_as_cylinders);
+        if (returnCGO) {
+          return cgo;
+        }
+      }
+      ok &= ObjectMeshStateRenderShader(ms, I, info);
+
+      if (!ok) {
+        break;
+      }
+      return ms->shaderCGO.get();
+    }
+    ObjectMeshRenderImmediate(ms, I, info);
   }
   if (!ok) {
     I->invalidate(cRepMesh, cRepInvPurge, -1);
