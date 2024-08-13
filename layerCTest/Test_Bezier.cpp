@@ -2,6 +2,8 @@
 
 #include "Bezier.h"
 
+#include <glm/geometric.hpp>
+
 TEST_CASE("Bezier Spline", "[Bezier]")
 {
   pymol::BezierSpline spline;

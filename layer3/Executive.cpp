@@ -112,7 +112,7 @@
 #include "ce_types.h"
 #endif
 
-#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #ifdef WIN32

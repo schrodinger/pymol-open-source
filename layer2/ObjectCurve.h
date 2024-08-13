@@ -2,7 +2,7 @@
 #include "PyMOLObject.h"
 #include "Result.h"
 
-#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
 #include <vector>
 
 struct ObjectCurveState : public CObjectState {
