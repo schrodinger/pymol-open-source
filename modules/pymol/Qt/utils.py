@@ -1,5 +1,7 @@
 from pymol.Qt import *
 
+import shutil
+import subprocess
 
 class UpdateLock:
     """
@@ -286,11 +288,18 @@ def loadUi(uifile, widget):
     else:
         import pysideuic
 
+    def find_valid_uic_exe(execs):
+        for exe in execs:
+            if shutil.which(exe):
+                return exe
+
     if pysideuic is None:
-        import subprocess
-        p = subprocess.Popen(['uic', '-g', 'python', uifile],
+        uic_exec = find_valid_uic_exe(('uic', 'pyside2-uic'))
+        if uic_exec is None:
+            raise RuntimeError('uic not found')
+        p = subprocess.Popen([uic_exec, '-g', 'python', uifile],
                              stdout=subprocess.PIPE)
-        source = p.communicate()[0]
+        source, _ = p.communicate()
         # workaround for empty retranslateUi bug
         source += b'\n' + b' ' * 8 + b'pass'
     else:
