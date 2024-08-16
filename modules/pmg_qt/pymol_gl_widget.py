@@ -20,7 +20,8 @@ from pymol._cmd import glViewport
 # no stereo support)
 USE_QOPENGLWIDGET = int(
     os.getenv("PYMOL_USE_QOPENGLWIDGET") or
-    (pymol.IS_MACOS and QtCore.QT_VERSION >= 0x50400))
+    (QtCore.QT_VERSION >= 0x50400 and pymol.IS_MACOS or
+     QtCore.QT_VERSION >= 0x60000))
 
 if USE_QOPENGLWIDGET:
     BaseGLWidget = QtWidgets.QOpenGLWidget
@@ -167,9 +168,10 @@ class PyMOLGLWidget(BaseGLWidget):
         return True
 
     def _event_x_y_mod(self, ev):
+        pos = ev.position() if hasattr(ev, "position") else ev.pos()
         return (
-            int(self.fb_scale * ev.x()),
-            int(self.fb_scale * (self.height() - ev.y())),
+            int(self.fb_scale * pos.x()),
+            int(self.fb_scale * (self.height() - pos.y())),
             get_modifiers(ev),
         )
 

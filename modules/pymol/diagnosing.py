@@ -142,7 +142,7 @@ def diagnostics_qt():
         from pymol.Qt import QtCore
         return u'{} {} (Qt {})\n'.format(
                 QtCore.__name__.split('.')[0],
-                QtCore.PYQT_VERSION_STR,
+                getattr(QtCore, "PYQT_VERSION_STR", "<N/A>"),
                 QtCore.QT_VERSION_STR)
     except Exception as e:
         return u'({})\n'.format(e)

@@ -376,8 +376,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         # some experimental window control
         menu = self.menudict['Display'].addSeparator()
         menu = self.menudict['Display'].addMenu('External GUI')
-        menu.addAction('Toggle floating', self.toggle_ext_window_dockable,
-                       QtGui.QKeySequence('Ctrl+E'))
+        menu.addAction('Toggle dockable', self.toggle_ext_window_dockable).setShortcut(
+            QtGui.QKeySequence('Ctrl+E'))
+
         ext_vis_action = self.ext_window.toggleViewAction()
         ext_vis_action.setText('Visible')
         menu.addAction(ext_vis_action)
@@ -757,6 +758,10 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             form.input_dpi.setEditText(str(dpi))
         form.input_dpi.setValidator(QtGui.QIntValidator())
 
+        # This connection used to be in the .ui file, but that fails with Qt6
+        form.input_units.currentTextChanged.connect(lambda s: form.input_height_units.setSuffix(s))
+        form.input_units.currentTextChanged.connect(lambda s: form.input_width_units.setSuffix(s))
+
         form.input_units.currentIndexChanged.connect(update_units)
         form.input_dpi.editTextChanged.connect(update_pixels)
         form.input_width.valueChanged.connect(update_units)
@@ -782,6 +787,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         if widget is None:
             form._dialog.show()
+        return form
 
     @PopupOnException.decorator
     def _file_save(self, filter, format):
@@ -1255,4 +1261,4 @@ def execapp():
     if options.plugins:
         window.initializePlugins()
 
-    app.exec_()
+    app.exec()

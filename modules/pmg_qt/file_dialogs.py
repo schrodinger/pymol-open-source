@@ -85,7 +85,7 @@ def ask_partial(parent, kwargs, fname):
     form.check_rename.setChecked(parent.cmd.get_setting_boolean(
         'auto_rename_duplicate_objects'))
 
-    if not form._dialog.exec_():
+    if not form._dialog.exec():
         return False
 
     if form.check_partial.isChecked():

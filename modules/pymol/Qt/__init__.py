@@ -8,7 +8,16 @@ PyQt5/PyQt4 differences:
 http://pyqt.sourceforge.net/Docs/PyQt5/pyqt4_differences.html
 """
 
-DEBUG = False
+DEBUG = True  # Turn off for open-source
+
+PYQT_NAME = None
+QtWidgets = None
+
+try:
+    from pymol._Qt_pre import *
+except ImportError:
+    if DEBUG:
+        print('import _Qt_pre failed')
 
 PYQT_NAME = None
 QtWidgets = None
@@ -39,26 +48,23 @@ if not PYQT_NAME and qt_api in ('', 'pyside2'):
         if DEBUG:
             print('import PySide2 failed')
 
-if not PYQT_NAME and qt_api in ('', 'pyqt4'):
+if not PYQT_NAME and qt_api in ('', 'pyqt6'):
     try:
-        try:
-            import PyQt4.sip as sip
-        except ImportError:
-            import sip
-        sip.setapi("QString", 2)
-        from PyQt4 import QtGui, QtCore, QtOpenGL
-        PYQT_NAME = 'PyQt4'
+        from PyQt6 import QtGui, QtCore, QtOpenGL, QtWidgets
+        from PyQt6 import QtOpenGLWidgets
+        PYQT_NAME = 'PyQt6'
     except ImportError:
         if DEBUG:
-            print('import PyQt4 failed')
+            print('import PyQt6 failed')
 
-if not PYQT_NAME and qt_api in ('', 'pyside'):
+if not PYQT_NAME and qt_api in ('', 'pyside6'):
     try:
-        from PySide import QtGui, QtCore, QtOpenGL
-        PYQT_NAME = 'PySide'
+        from PySide6 import QtGui, QtCore, QtOpenGL, QtWidgets
+        from PySide6 import QtOpenGLWidgets
+        PYQT_NAME = 'PySide6'
     except ImportError:
         if DEBUG:
-            print('import PySide failed')
+            print('import PySide6 failed')
 
 if not PYQT_NAME:
     raise ImportError(__name__)
@@ -74,12 +80,46 @@ if hasattr(QtCore, 'QAbstractProxyModel'):
 else:
     QtCoreModels = QtGui
 
-if PYQT_NAME == 'PyQt4':
-    QFileDialog = QtWidgets.QFileDialog
-    QFileDialog.getOpenFileName = QFileDialog.getOpenFileNameAndFilter
-    QFileDialog.getOpenFileNames = QFileDialog.getOpenFileNamesAndFilter
-    QFileDialog.getSaveFileName = QFileDialog.getSaveFileNameAndFilter
-    del QFileDialog
+if PYQT_NAME.endswith('6'):
+    QtWidgets.QOpenGLWidget = QtOpenGLWidgets.QOpenGLWidget
+    QtWidgets.QActionGroup = QtGui.QActionGroup
+    QtWidgets.QAction = QtGui.QAction
+    QtWidgets.QShortcut = QtGui.QShortcut
+    QtCore.QSortFilterProxyModel.setFilterRegExp = QtCore.QSortFilterProxyModel.setFilterRegularExpression
+    QtGui.QFont.Monospace = QtGui.QFont.StyleHint.Monospace
+
+    def copy_attributes(target_class, source_class):
+        for attr in dir(source_class):
+            if not attr.startswith('_'):
+                setattr(target_class, attr, getattr(source_class, attr))
+
+    copy_attributes(QtCore.QEvent, QtCore.QEvent.Type)
+    copy_attributes(QtCore.Qt, QtCore.Qt.AlignmentFlag)
+    copy_attributes(QtCore.Qt, QtCore.Qt.CaseSensitivity)
+    copy_attributes(QtCore.Qt, QtCore.Qt.CheckState)
+    copy_attributes(QtCore.Qt, QtCore.Qt.ContextMenuPolicy)
+    copy_attributes(QtCore.Qt, QtCore.Qt.DockWidgetArea)
+    copy_attributes(QtCore.Qt, QtCore.Qt.FocusPolicy)
+    copy_attributes(QtCore.Qt, QtCore.Qt.GestureType)
+    copy_attributes(QtCore.Qt, QtCore.Qt.ItemFlag)
+    copy_attributes(QtCore.Qt, QtCore.Qt.Key)
+    copy_attributes(QtCore.Qt, QtCore.Qt.KeyboardModifier)
+    copy_attributes(QtCore.Qt, QtCore.Qt.MouseButton)
+    copy_attributes(QtCore.Qt, QtCore.Qt.Orientation)
+    copy_attributes(QtCore.Qt, QtCore.Qt.WindowType)
+    copy_attributes(QtGui.QFont, QtGui.QFont.StyleHint)
+    copy_attributes(QtWidgets.QAbstractItemView, QtWidgets.QAbstractItemView.ScrollHint)
+    copy_attributes(QtWidgets.QAbstractItemView, QtWidgets.QAbstractItemView.SelectionBehavior)
+    copy_attributes(QtWidgets.QAbstractItemView, QtWidgets.QAbstractItemView.SelectionMode)
+    copy_attributes(QtWidgets.QBoxLayout, QtWidgets.QBoxLayout.Direction)
+    copy_attributes(QtWidgets.QMainWindow, QtWidgets.QMainWindow.DockOption)
+    copy_attributes(QtWidgets.QOpenGLWidget, QtOpenGLWidgets.QOpenGLWidget.UpdateBehavior)
+    copy_attributes(QtWidgets.QSizePolicy, QtWidgets.QSizePolicy.Policy)
+    copy_attributes(QtWidgets.QTreeWidgetItem, QtWidgets.QTreeWidgetItem.ChildIndicatorPolicy)
+
+    QtCore.Qt.MidButton = QtCore.Qt.MiddleButton
+    QtCore.Qt.WA_LayoutUsesWidgetRect = QtCore.Qt.WidgetAttribute.WA_LayoutUsesWidgetRect
+
 
 if PYQT_NAME[:4] == 'PyQt':
     QtCore.Signal = QtCore.pyqtSignal

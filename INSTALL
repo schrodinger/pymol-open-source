@@ -22,7 +22,7 @@ REQUIREMENTS
     - msgpack-c 2.1.5+ (optional, for fast MMTF loading and export,
         disable with --use-msgpackc=no)
     - mmtf-cpp (for fast MMTF export, disable with --use-msgpackc=no)
-    - PyQt5, PyQt4, PySide2 or PySide (optional, will fall back to Tk
+    - PyQt5, PyQt6, PySide2 or PySide6 (optional, will fall back to Tk
         interface if compiled with --glut)
     - glm
     - catch2 (optional, enable with --testing)

@@ -88,9 +88,9 @@ class WidgetMenu(QtWidgets.QMenu):
         @self.aboutToShow.connect
         def _():
             self.aboutToShow.disconnect()
-            widget = QtWidgets.QWidget()
-            setupUi(widget)
-            self.setWidget(widget)
+            self._widget = QtWidgets.QWidget()
+            form = setupUi(self._widget)
+            self.setWidget(form)
 
         return self
 
@@ -272,7 +272,10 @@ def loadUi(uifile, widget):
     @type uifile: str
     @type widget: QtWidgets.QWidget
     """
-    if PYQT_NAME.startswith('PyQt'):
+    if PYQT_NAME == "PySide6":
+        from PySide6.QtUiTools import QUiLoader
+        return QUiLoader().load(uifile, widget)
+    elif PYQT_NAME.startswith('PyQt'):
         m = __import__(PYQT_NAME + '.uic')
         return m.uic.loadUi(uifile, widget)
     elif PYQT_NAME == 'PySide2':
@@ -343,7 +346,7 @@ class PopupOnException:
             msg = str(e) or 'unknown error'
             msgbox = QMB(QMB.Critical, 'Error', msg, QMB.Close, parent)
             msgbox.setDetailedText(''.join(traceback.format_tb(tb)))
-            msgbox.exec_()
+            msgbox.exec()
 
         return True
 

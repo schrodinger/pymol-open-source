@@ -192,4 +192,4 @@ if __name__ == '__main__':
         filename = ''
     app = QtWidgets.QApplication(['Test'])
     edit_pymolrc()
-    app.exec_()
+    app.exec()
