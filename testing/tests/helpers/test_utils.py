@@ -111,7 +111,7 @@ def assert_in_names_undo(cmd, name: str) -> None:
 
 def compatible_with(version: str) -> bool:
     def tupleize_version(str_: str):
-        return tuple(int(x) for x in str_.partition('.')[0::2] if x.isdigit())
+        return tuple(int(x) for x in str_.split('.') if x.isdigit())
 
     PYMOL_VERSION = cmd.get_version()
     PYMOL_VERSION_TUPLE = tupleize_version(PYMOL_VERSION[0])

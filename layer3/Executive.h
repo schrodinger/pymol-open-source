@@ -127,6 +127,8 @@ enum cLoadType_t : int {
 
   cLoadTypeCCP4UnspecifiedStr = 76,
   cLoadTypeMRCStr = 77,
+  cLoadTypeBCIF = 78,
+  cLoadTypeBCIFStr = 79,
 };
 
 /* NOTE: if you add new content/object type above, then be sure to add
@@ -219,7 +221,7 @@ pymol::Result<> ExecutiveLoad(
                   const char *object_name,
                   int state, int zoom,
                   int discrete, int finish, int multiplex, int quiet, const char *plugin,
-                  const char * object_props=NULL, const char * atom_props=NULL,
+                  const char * object_props=nullptr, const char * atom_props=nullptr,
                   bool mimic=true);
 
 int ExecutiveDebug(PyMOLGlobals * G, const char *name);
@@ -790,7 +792,7 @@ pymol::TrackerAdapter<SpecRec> ExecutiveGetSpecRecsFromPattern(PyMOLGlobals* G,
 
 char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, const char *name, int enabled_only, int *numstrs);
 
-CoordSet * ExecutiveGetCoordSet(PyMOLGlobals * G, const char * name, int state, ObjectMolecule ** omp=NULL);
+CoordSet * ExecutiveGetCoordSet(PyMOLGlobals * G, const char * name, int state, ObjectMolecule ** omp=nullptr);
 pymol::Result<> ExecutiveLoadCoordset(
     PyMOLGlobals* G, pymol::zstring_view oname, PyObject* model, int frame, bool quiet);
 

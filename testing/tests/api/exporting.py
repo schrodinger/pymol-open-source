@@ -348,6 +348,18 @@ class TestExporting(testing.PyMOLTestCase):
             m2 = cmd.get_model()
             self.assertModelsAreSame(m1, m2)
 
+    def testGetModelObjectName(self):
+        cmd.load(self.datafile("1oky-frag.pdb"))
+        cmd.load(self.datafile('1rna.cif'))
+
+        m1 = cmd.get_model()
+        cnt = cmd.count_atoms('%1oky-frag')
+
+        self.assertEqual(m1.atom[0].model, '1oky-frag')
+        self.assertEqual(m1.atom[-1].model, '1rna')
+        self.assertEqual(m1.atom[cnt].model, '1rna')
+
+
     @testing.requires_version('2.1')
     def testMMTF(self):
         '''Styled MMTF export/import'''

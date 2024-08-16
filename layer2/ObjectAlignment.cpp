@@ -743,7 +743,7 @@ static PyObject *ObjectAlignmentStateAsPyList(ObjectAlignmentState * I)
   if(I->alignVLA) {
     PyList_SetItem(result, 0, PConvIntVLAToPyList(I->alignVLA));
   } else {
-    PyList_SetItem(result, 0, PConvAutoNone(NULL));
+    PyList_SetItem(result, 0, PConvAutoNone(nullptr));
   }
   PyList_SetItem(result, 1, PyString_FromString(I->guide));
   return (PConvAutoNone(result));

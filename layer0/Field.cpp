@@ -43,7 +43,7 @@ PyObject *FieldAsNumPyArray(CField * field, short copy)
   PyObject *result;
   int typenum = -1;
 
-  import_array1(NULL);
+  import_array1(nullptr);
 
   if(field->type == cFieldFloat) {
     switch(field->base_size) {

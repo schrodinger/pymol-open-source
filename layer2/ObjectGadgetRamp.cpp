@@ -357,12 +357,12 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I)
   if(I->Level && I->NLevel) {
     PyList_SetItem(result, 3, PConvFloatVLAToPyList(I->Level));
   } else {
-    PyList_SetItem(result, 3, PConvAutoNone(NULL));
+    PyList_SetItem(result, 3, PConvAutoNone(nullptr));
   }
   if(I->Color && I->NLevel) {
     PyList_SetItem(result, 4, PConvFloatVLAToPyList(I->Color));
   } else {
-    PyList_SetItem(result, 4, PConvAutoNone(NULL));
+    PyList_SetItem(result, 4, PConvAutoNone(nullptr));
   }
   PyList_SetItem(result, 5, PyInt_FromLong(I->var_index));
   PyList_SetItem(result, 6, PyString_FromString(I->SrcName));
@@ -380,10 +380,10 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I)
       any = (special[a] = GetSpecial(I->Color + a * 3)) || any;
   }
   }
-  PyList_SetItem(result, 9, any ? PConvIntVLAToPyList(special) : PConvAutoNone(NULL));
+  PyList_SetItem(result, 9, any ? PConvIntVLAToPyList(special) : PConvAutoNone(nullptr));
   VLAFreeP(special);
 
-  PyList_SetItem(result, 10, PConvAutoNone(NULL) /* I->Extreme, removed in PyMOL 1.8 */);
+  PyList_SetItem(result, 10, PConvAutoNone(nullptr) /* I->Extreme, removed in PyMOL 1.8 */);
   return (PConvAutoNone(result));
 }
 

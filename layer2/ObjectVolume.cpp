@@ -99,30 +99,30 @@ static PyObject *ObjectVolumeStateAsPyList(ObjectVolumeState * I)
   PyList_SetItem(result, 0, PyInt_FromLong(I->Active));
   PyList_SetItem(result, 1, PyString_FromString(I->MapName));
   PyList_SetItem(result, 2, PyInt_FromLong(I->MapState));
-  PyList_SetItem(result, 3, PConvAutoNone(NULL) /* CrystalAsPyList(&I->Crystal) */);
+  PyList_SetItem(result, 3, PConvAutoNone(nullptr) /* CrystalAsPyList(&I->Crystal) */);
   PyList_SetItem(result, 4, PyInt_FromLong(I->ExtentFlag));
   PyList_SetItem(result, 5, PConvFloatArrayToPyList(I->ExtentMin, 3));
   PyList_SetItem(result, 6, PConvFloatArrayToPyList(I->ExtentMax, 3));
-  PyList_SetItem(result, 7, PConvAutoNone(NULL) /* PConvIntArrayToPyList(I->Range, 6) */);
+  PyList_SetItem(result, 7, PConvAutoNone(nullptr) /* PConvIntArrayToPyList(I->Range, 6) */);
   PyList_SetItem(result, 8, PyFloat_FromDouble(0.0 /* I->Level */));
   PyList_SetItem(result, 9, PyFloat_FromDouble(0.0 /* I->Radius */));
   PyList_SetItem(result, 10, PyInt_FromLong(/* I->CarveFlag */ I->AtomVertex.data() != nullptr));
   PyList_SetItem(result, 11, PyFloat_FromDouble(I->CarveBuffer));
   PyList_SetItem(result, 12, I->AtomVertex ?
-      PConvFloatVLAToPyList(I->AtomVertex) : PConvAutoNone(NULL));
+      PConvFloatVLAToPyList(I->AtomVertex) : PConvAutoNone(nullptr));
   PyList_SetItem(result, 13, PyInt_FromLong(0 /* I->VolumeMode */));
   PyList_SetItem(result, 14, PyFloat_FromDouble(0.0 /* I->AltLevel */));
   PyList_SetItem(result, 15, PyInt_FromLong(1 /* I->quiet */));
   if(I->Field) {
     PyList_SetItem(result, 16, IsosurfAsPyList(I->G, I->Field.get()));
   } else {
-    PyList_SetItem(result, 16, PConvAutoNone(NULL));
+    PyList_SetItem(result, 16, PConvAutoNone(nullptr));
   }
   PyList_SetItem(result,17,PyInt_FromLong(I->RampSize()));
   if (!I->Ramp.empty()) {
     PyList_SetItem(result, 18, PConvToPyObject(I->Ramp));
   } else {
-    PyList_SetItem(result, 18, PConvAutoNone(NULL));
+    PyList_SetItem(result, 18, PConvAutoNone(nullptr));
   }
   return (PConvAutoNone(result));
 }
@@ -134,7 +134,7 @@ static PyObject *ObjectVolumeAllStatesAsPyList(ObjectVolume * I)
     if(I->State[a].Active) {
       PyList_SetItem(result, a, ObjectVolumeStateAsPyList(&I->State[a]));
     } else {
-      PyList_SetItem(result, a, PConvAutoNone(NULL));
+      PyList_SetItem(result, a, PConvAutoNone(nullptr));
     }
   }
   return (PConvAutoNone(result));
@@ -835,18 +835,6 @@ void ObjectVolume::render(RenderInfo * info)
 
       int volume_bit_val = SettingGet_i(G, I->Setting.get(), nullptr, cSetting_volume_bit_depth);
       volume_bit_depth = (volume_bit_val < 17) ? tex::data_type::HALF_FLOAT : tex::data_type::FLOAT;
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#if 0
-      glTexImage3D = getTexImage3D(); 
-      if (! glTexImage3D) {
-        PRINTFB(G, FB_ObjectVolume, FB_Errors)
-          " ObjectVolumeRender-Error: Could not bind the glActiveTexture or glTexImage3D function.\n"
-          ENDFB(G);
-        return;
-      } 
-#endif
-/* END PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 
       if (vs->textures[0]) {
         G->ShaderMgr->freeGPUBuffer(vs->textures[0]);

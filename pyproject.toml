@@ -1,0 +1,49 @@
+[project]
+name = "pymol"
+readme = "README.md"
+requires-python = ">=3.9"
+dynamic=["version"]
+license = {file = "LICENSE"}
+description = """
+PyMOL is a Python-enhanced molecular graphics tool.
+It excels at 3D visualization of proteins, small molecules, density,
+surfaces, and trajectories. It also includes molecular editing,
+ray tracing, and movies. Open Source PyMOL is free to everyone!
+"""
+authors = [
+  {name = "Schrodinger", email = "pymol-users@lists.sourceforge.net"},
+]
+dependencies = [
+  "numpy>=1.26.4,<2",
+]
+
+[build-system]
+build-backend = "backend"
+backend-path = ["_custom_build"]
+requires = [
+  "numpy>=1.26.4,<2",
+  "setuptools>=69.2.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "pillow==10.3.0",
+  "pytest==8.2.2",
+]
+
+[project.urls]
+Homepage = "https://pymol.org"
+Documentation = "https://pymol.org/dokuwiki"
+Repository = "https://github.com/schrodinger/pymol-open-source"
+"Bug Tracker" = "https://github.com/schrodinger/pymol-open-source/issues"
+Changelog = "https://github.com/schrodinger/pymol-open-source/blob/master/ChangeLog"
+
+[project.scripts]
+pymol = "pymol:launch"
+
+[tool.setuptools.packages.find]
+where = ["modules"]
+
+[tool.setuptools.package-data]
+pmg_qt = ["forms/*.ui"]
+

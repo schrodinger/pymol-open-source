@@ -30,6 +30,7 @@ jobs:
         python3-numpy
         python3-pil
         python3-pytest
+        python3-pip
 
     - name: Install collada2gltf
       run: |
@@ -43,13 +44,14 @@ jobs:
 
     - name: Build
       run: |
-        python setup.py --testing install --prefix=install-prefix
+        pip install --upgrade pip
+        pip install -v --config-settings testing=True .
       env:
         DEBUG: 1
 
     - name: Test
       run: |
-        ./install-prefix/bin/pymol -ckqy testing/testing.py --run all
+        pymol -ckqy testing/testing.py --run all
 
   build-Windows:
 
@@ -72,7 +74,7 @@ jobs:
       shell: cmd
       run: |-
         CALL %CONDA_ROOT%\\Scripts\\activate.bat
-        conda install -y -c conda-forge -c schrodinger python cmake libpng freetype glew libxml2 numpy catch2=2.13.3 glm libnetcdf collada2gltf biopython pillow msgpack-python pytest
+        conda install -y -c conda-forge -c schrodinger python cmake libpng freetype pyside6 glew libxml2 numpy=1.26.4 catch2=2.13.3 glm libnetcdf collada2gltf biopython pillow msgpack-python pytest pip python-build
 
     - name: Conda info
       shell: cmd
@@ -92,13 +94,13 @@ jobs:
       shell: cmd
       run: |
         CALL %CONDA_ROOT%\\Scripts\\activate.bat
-        python setup.py --testing install --prefix=%GITHUB_WORKSPACE%\\install-prefix
+        pip install -v --config-settings testing=True .
 
     - name: Test
       shell: cmd
       run: |
         CALL %CONDA_ROOT%\\Scripts\\activate.bat
-        %GITHUB_WORKSPACE%\\install-prefix\\Scripts\\pymol.bat -ckqy testing\\testing.py --run all
+        pymol -ckqy testing\\testing.py --run all
 
   build-MacOS:
 
@@ -115,7 +117,7 @@ jobs:
         bash $CONDA_ROOT.sh -b -p $CONDA_ROOT
         export PATH="$CONDA_ROOT/bin:$PATH"
         conda config --set quiet yes
-        conda install -y -c conda-forge -c schrodinger python cmake libpng freetype glew libxml2 numpy catch2=2.13.3 glm libnetcdf collada2gltf biopython pillow msgpack-python pytest
+        conda install -y -c conda-forge -c schrodinger python cmake libpng freetype pyside6 glew libxml2 numpy=1.26.4 catch2=2.13.3 glm libnetcdf collada2gltf biopython pillow msgpack-python pytest pip python-build
         conda info
 
     - name: Get additional sources
@@ -129,9 +131,9 @@ jobs:
       run: |-
         export MACOSX_DEPLOYMENT_TARGET=12.0
         export PATH="$CONDA_ROOT/bin:$PATH"
-        python setup.py install --prefix=${GITHUB_WORKSPACE}/install-prefix
+        pip install -v --config-settings testing=True .
 
     - name: Test
       run: |-
         export PATH="$CONDA_ROOT/bin:$PATH"
-        ${GITHUB_WORKSPACE}/install-prefix/bin/pymol -ckqy testing/testing.py --run all
+        pymol -ckqy testing/testing.py --run all

@@ -194,6 +194,281 @@ std::size_t GetSizeOfVertexFormat(VertexFormat format)
   }
 }
 
+GenericBuffer::GenericBuffer(buffer_layout layout, GLenum usage)
+    : m_buffer_usage(usage)
+    , m_layout(layout)
+{
+}
+
+GenericBuffer::~GenericBuffer()
+{
+  for (auto i = 0; i < m_desc.size(); ++i) {
+    auto& glID = desc_glIDs[i];
+    if (glID) {
+      glDeleteBuffers(1, &glID);
+    }
+  }
+  if (m_interleavedID) {
+    glDeleteBuffers(1, &m_interleavedID);
+  }
+}
+
+bool GenericBuffer::bufferData(BufferDataDesc&& desc)
+{
+  m_desc = std::move(desc);
+  desc_glIDs = std::vector<GLuint>(m_desc.size());
+  return evaluate();
+}
+
+bool GenericBuffer::bufferData(
+    BufferDataDesc&& desc, const void* data, size_t len, size_t stride)
+{
+  bool ok = true;
+  m_desc = std::move(desc);
+  desc_glIDs = std::vector<GLuint>(m_desc.size());
+  m_interleaved = true;
+  m_stride = stride;
+  ok = genBuffer(m_interleavedID, len, data);
+  return ok;
+}
+
+void GenericBuffer::bufferSubData(size_t offset, size_t size, void* data, size_t index)
+{
+  assert("Invalid Desc index" && index < m_desc.size());
+  assert("Invalid GLDesc index" && index < desc_glIDs.size());
+  auto glID = m_interleaved ? m_interleavedID : desc_glIDs[index];
+  glBindBuffer(bufferType(), glID);
+  glBufferSubData(bufferType(), offset, size, data);
+}
+
+void GenericBuffer::bufferReplaceData(size_t offset, size_t len, const void* data)
+{
+  glBindBuffer(bufferType(), m_interleavedID);
+  glBufferSubData(bufferType(), offset, len, data);
+}
+
+bool GenericBuffer::evaluate()
+{
+  if (bufferType() == GL_ELEMENT_ARRAY_BUFFER) {
+    return seqBufferData();
+  } else {
+    switch (m_layout) {
+    case buffer_layout::SEPARATE:
+      return sepBufferData();
+      break;
+    case buffer_layout::SEQUENTIAL:
+      return seqBufferData();
+      break;
+    case buffer_layout::INTERLEAVED:
+      return interleaveBufferData();
+      break;
+    }
+  }
+  return true; // unreacheable/Should be false?
+}
+
+bool GenericBuffer::sepBufferData()
+{
+  for (auto i = 0; i < m_desc.size(); ++i) {
+    // If the specified size is 0 but we have a valid pointer
+    // then we are going to glVertexAttribXfv X in {1,2,3,4}
+    const auto& d = m_desc[i];
+    auto& glID = desc_glIDs[i];
+    if (d.data_ptr && (m_buffer_usage == GL_STATIC_DRAW)) {
+      if (d.data_size) {
+        if (!genBuffer(glID, d.data_size, d.data_ptr)) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+bool GenericBuffer::seqBufferData() {
+  // this is only going to use a single opengl vbo
+  m_interleaved = true;
+
+  size_t buffer_size { 0 };
+  for ( auto & d : m_desc ) {
+    buffer_size += d.data_size;
+  }
+
+  std::vector<std::uint8_t> buffer_data(buffer_size);
+  auto data_ptr = buffer_data.data();
+  size_t offset = 0;
+
+  for ( auto & d : m_desc ) {
+    d.offset = offset;
+    if (d.data_ptr)
+      memcpy(data_ptr, d.data_ptr, d.data_size);
+    else
+      memset(data_ptr, 0, d.data_size);
+    data_ptr += d.data_size;
+    offset += d.data_size;
+  }
+
+  return genBuffer(m_interleavedID, buffer_size, buffer_data.data());
+}
+
+bool GenericBuffer::interleaveBufferData()
+{
+  const std::size_t bufferCount = m_desc.size();
+  std::size_t stride = 0;
+  std::vector<const uint8_t*> data_table(bufferCount);
+  std::vector<const uint8_t*> ptr_table(bufferCount);
+  std::vector<std::size_t> size_table(bufferCount);
+  std::size_t count =
+      m_desc[0].data_size / GetSizeOfVertexFormat(m_desc[0].m_format);
+
+  // Maybe assert that all pointers in d_desc are valid?
+  for (size_t i = 0; i < bufferCount; ++i) {
+    auto& d = m_desc[i];
+    // offset is the current stride
+    d.offset = stride;
+
+    // These must come after so that offset starts at 0
+    // Size of 3 normals or whatever the current type is
+    size_table[i] = GetSizeOfVertexFormat(d.m_format);
+
+    // Increase our current estimate of the stride by this amount
+    stride += size_table[i];
+
+    // Does the addition of that previous stride leave us on a word boundry?
+    int m = stride % 4;
+    stride = (m ? (stride + (4 - m)) : stride);
+
+    // data_table a pointer to the begining of each array
+    data_table[i] = static_cast<const std::uint8_t*>(d.data_ptr);
+
+    // We will move these pointers along by the values in the size table
+    ptr_table[i] = data_table[i];
+  }
+
+  m_stride = stride;
+
+  std::size_t interleavedSize = count * stride;
+
+  std::vector<std::uint8_t> interleavedData(interleavedSize);
+  auto iPtr = interleavedData.data();
+
+  while (iPtr != (interleavedData.data() + interleavedSize)) {
+    for (size_t i = 0; i < bufferCount; ++i) {
+      if (ptr_table[i]) {
+        memcpy(iPtr, ptr_table[i], size_table[i]);
+        ptr_table[i] += size_table[i];
+      }
+      iPtr += size_table[i];
+    }
+  }
+
+  m_interleaved = true;
+  return genBuffer(m_interleavedID, interleavedSize, interleavedData.data());
+}
+
+bool GenericBuffer::genBuffer(GLuint& id, size_t size, const void* ptr)
+{
+  glGenBuffers(1, &id);
+  if (!glCheckOkay())
+    return false;
+  glBindBuffer(bufferType(), id);
+  if (!glCheckOkay())
+    return false;
+  glBufferData(bufferType(), size, ptr, GL_STATIC_DRAW);
+  if (!glCheckOkay())
+    return false;
+  return true;
+}
+
+void VertexBuffer::bind_attrib(GLuint prg, const BufferDesc& d, GLuint glID)
+{
+  GLint loc = glGetAttribLocation(prg, d.attr_name);
+  auto type_dim = VertexFormatToGLSize(d.m_format);
+  auto type = VertexFormatToGLType(d.m_format);
+  auto data_norm = VertexFormatToGLNormalized(d.m_format);
+  bool masked = false;
+  for (GLint lid : m_attribmask)
+    if (lid == loc)
+      masked = true;
+  if (loc >= 0)
+    m_locs.push_back(loc);
+  if (loc >= 0 && !masked) {
+    if (!m_interleaved && glID)
+      glBindBuffer(bufferType(), glID);
+    glEnableVertexAttribArray(loc);
+    glVertexAttribPointer(loc, type_dim, type, data_norm, m_stride,
+        reinterpret_cast<const void*>(d.offset));
+  }
+};
+
+VertexBuffer::VertexBuffer(buffer_layout layout, GLenum usage)
+    : GenericBuffer(layout, usage)
+{
+}
+
+void VertexBuffer::bind() const
+{
+  // we shouldn't use this one
+  if (m_interleaved)
+    glBindBuffer(bufferType(), m_interleavedID);
+}
+
+void VertexBuffer::bind(GLuint prg, int index)
+{
+  if (index >= 0) {
+    glBindBuffer(bufferType(), m_interleavedID);
+    bind_attrib(prg, m_desc[index], desc_glIDs[index]);
+  } else {
+    if (m_interleaved && m_interleavedID)
+      glBindBuffer(bufferType(), m_interleavedID);
+    for (auto i = 0; i < m_desc.size(); ++i) {
+      const auto& d = m_desc[i];
+      auto glID = desc_glIDs[i];
+      bind_attrib(prg, d, glID);
+    }
+    m_attribmask.clear();
+  }
+}
+
+void VertexBuffer::unbind()
+{
+  for (auto& d : m_locs) {
+    glDisableVertexAttribArray(d);
+  }
+  m_locs.clear();
+  glBindBuffer(bufferType(), 0);
+}
+
+void VertexBuffer::maskAttributes(std::vector<GLint> attrib_locs)
+{
+  m_attribmask = std::move(attrib_locs);
+}
+
+void VertexBuffer::maskAttribute(GLint attrib_loc)
+{
+  m_attribmask.push_back(attrib_loc);
+}
+
+std::uint32_t VertexBuffer::bufferType() const
+{
+  return GL_ARRAY_BUFFER;
+}
+
+void IndexBuffer::bind() const
+{
+  glBindBuffer(bufferType(), m_interleavedID);
+}
+
+void IndexBuffer::unbind()
+{
+  glBindBuffer(bufferType(), 0);
+}
+
+std::uint32_t IndexBuffer::bufferType() const
+{
+  return GL_ELEMENT_ARRAY_BUFFER;
+}
+
 /***********************************************************************
  * RENDERBUFFER
  ***********************************************************************/
@@ -468,7 +743,11 @@ void textureBuffer_t::texture_data_3D(int width, int height, int depth,
   case tex::data_type::HALF_FLOAT:
     glTexImage3D(GL_TEXTURE_3D, 0, tex_format_internal_half_float(_format), _width,
                  _height, _depth, 0, tex_tab(_format), tex_tab(tex::data_type::FLOAT), data);
+    break;
   case tex::data_type::FLOAT:
+    glTexImage3D(GL_TEXTURE_3D, 0, tex_format_internal_float(_format), _width,
+                 _height, _depth, 0, tex_tab(_format), tex_tab(tex::data_type::FLOAT), data);
+    break;
   case tex::data_type::UBYTE:
     glTexImage3D(GL_TEXTURE_3D, 0, tex_format_internal_byte(_format), _width,
                  _height, _depth, 0, tex_tab(_format), tex_tab(_type), data);

@@ -299,7 +299,7 @@ static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
   if(state < 0) {
     return (&I->Setting.get());
   } else {
-    return (NULL);
+    return (nullptr);
   }
 }
 #endif

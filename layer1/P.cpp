@@ -1247,7 +1247,7 @@ static ov_status CacheCreateEntry(PyObject ** result, PyObject * input)
       PyList_SetItem(entry, 0, PyInt_FromLong(tot_size));
       PyList_SetItem(entry, 1, hash_code);
       PyList_SetItem(entry, 2, PXIncRef(input));
-      PyList_SetItem(entry, 3, PXIncRef(NULL));
+      PyList_SetItem(entry, 3, PXIncRef(nullptr));
       PyList_SetItem(entry, 4, PyInt_FromLong(0));      /* access count */
       PyList_SetItem(entry, 5, PyFloat_FromDouble(0.0));        /* timestamp */
     }

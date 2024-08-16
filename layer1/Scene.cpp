@@ -71,7 +71,8 @@ Z* -------------------------------------------------------------------
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 
 static void glReadBufferError(PyMOLGlobals *G, GLenum b, GLenum e){
   PRINTFB(G, FB_OpenGL, FB_Warnings)
@@ -4447,7 +4448,7 @@ int SceneGetDrawFlag(GridInfo * grid, int *slot_vla, int slot)
       {
         if(((slot < 0) && grid->slot) ||
            ((slot == 0) && (grid->slot == 0)) ||
-           (slot_vla && (slot_vla[slot] == grid->slot))) {
+           (slot_vla && (slot >= 0 && slot_vla[slot] == grid->slot))) {
           draw_flag = true;
         }
       }
@@ -4925,7 +4926,7 @@ const char * lightsource_diffuse_names[] = {
 #undef TEMPLATE
 
 /**
- * Sets up lighting for immediate mode if shaderPrg=NULL, otherwise
+ * Sets up lighting for immediate mode if shaderPrg=nullptr, otherwise
  * sets lighting uniforms for the given shader program.
  *
  * Supports up to light_count=8

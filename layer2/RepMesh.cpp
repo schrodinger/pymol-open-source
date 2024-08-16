@@ -303,246 +303,255 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
   return ok;
 }
 
-void RepMesh::render(RenderInfo* info)
+static void RepMeshRenderRay(const RepMesh* I, CRay* ray, float line_width)
 {
-  auto I = this;
-  CRay *ray = info->ray;
-  auto pick = info->pick;
-  float *v = I->V.data();
-  float *vc = I->VC;
-  int *n = I->N.data();
-  int c;
-  const float *col = nullptr;
-  float line_width = SceneGetDynamicLineWidth(info, I->Width);
-  bool const dot_as_spheres = I->mesh_type == cIsomeshMode::isodot &&
-                              SettingGet<bool>(*cs, cSetting_dot_as_spheres);
-  int ok = true;
-
-  if(ray) {
-    if(n) {
-      float radius;
-
-      if(I->Radius <= 0.0F) {
-        radius = ray->PixelRadius * line_width / 2.0F;
-      } else {
-        radius = I->Radius;
-      }
-      /* looks like were missing some code here --
-
-         what about mesh_type?
-
-       */
-
-      if(I->oneColorFlag)
-        col = ColorGet(G, I->oneColor);
-      ray->color3fv(ColorGet(G, I->obj->Color));
-      switch (I->mesh_type) {
-      case cIsomeshMode::isomesh:
-        while(ok && *n) {
-          c = *(n++);
-          if(c--) {
-            vc += 3;
-            v += 3;
-            if(I->oneColorFlag) {
-              while(ok && c--) {
-                ok &= ray->sausage3fv(v - 3, v, radius, col, col);
-                v += 3;
-                vc += 3;
-              }
-            } else {
-              while(ok && c--) {
-                ok &= ray->sausage3fv(v - 3, v, radius, vc - 3, vc);
-                v += 3;
-                vc += 3;
-              }
-            }
-          }
-        }
-      case cIsomeshMode::isodot:
-        while(ok && *n) {
-          c = *(n++);
-          if(I->oneColorFlag) {
-            ray->color3fv(col);
-            while(ok && c--) {
-              ok &= ray->sphere3fv(v, radius);
-              v += 3;
-              vc += 3;
-            }
-          } else {
-            while(ok && c--) {
-              ray->color3fv(vc);
-              ok &= ray->sphere3fv(v, radius);
-              v += 3;
-              vc += 3;
-            }
-          }
-        }
-        break;
-      }
-    }
-  } else if(G->HaveGUI && G->ValidContext) {
-    if(pick) {
-      /* no picking meshes */
-    } else {
-      short use_shader, generate_shader_cgo = 0;
-      use_shader = SettingGetGlobal_b(G, cSetting_mesh_use_shader) &
-                   SettingGetGlobal_b(G, cSetting_use_shaders);
-      bool const mesh_as_cylinders =
-          SettingGet<bool>(G, cSetting_render_as_cylinders) &&
-          SettingGet<bool>(G, cSetting_mesh_as_cylinders) &&
-          I->mesh_type != cIsomeshMode::isodot;
-
-      if (I->shaderCGO && !use_shader){
-	CGOFree(I->shaderCGO);
-	I->shaderCGO = 0;
-      }
-      if (I->shaderCGO && ((mesh_as_cylinders ^ I->shaderCGO->has_draw_cylinder_buffers) ||
-			   (dot_as_spheres ^ I->shaderCGO->has_draw_sphere_buffers))){
-	CGOFree(I->shaderCGO);
-	I->shaderCGO = 0;
-      }
-
-      if (use_shader){
-	if (!I->shaderCGO){
-	  I->shaderCGO = CGONew(G);
-	  CHECKOK(ok, I->shaderCGO);
-	  if (ok)
-	    I->shaderCGO->use_shader = true;
-	  generate_shader_cgo = 1;
-	} else if (ok) {
-	  CGORender(I->shaderCGO, nullptr, nullptr, nullptr, info, I);
-	  return;
-	}
-      }
-
-      if (ok){
-	if (generate_shader_cgo){
-	  ok &= RepMeshCGOGenerate(I, info);
-	}
-      }
-
-      int lighting =
-        SettingGet_i(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_mesh_lighting);
-      if(!lighting) {
-        if(!info->line_lighting){
-	  if (!use_shader && !generate_shader_cgo){
-	    glDisable(GL_LIGHTING);
-	  }
-	}
-      }
-      if (!generate_shader_cgo){
-	switch (I->mesh_type) {
-	case cIsomeshMode::isomesh:
-	  if(info->width_scale_flag)
-	    glLineWidth(line_width * info->width_scale);
-	  else
-	    glLineWidth(line_width);
-	  break;
-        case cIsomeshMode::isodot:
-	  if(info->width_scale_flag)
-	    glPointSize(SettingGet_f
-			(G, I->cs->Setting.get(), I->obj->Setting.get(),
-			 cSetting_dot_width) * info->width_scale);
-	  else
-	    glPointSize(SettingGet_f
-			(G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_width));
-	  break;
-	}
-      }
-
-      if (ok){
-	if (!generate_shader_cgo){
-	  SceneResetNormal(G, false);
-	}
-      }
-
-      switch (I->mesh_type) {
-      case cIsomeshMode::isomesh:
-	if(n) {
-	  if (!generate_shader_cgo){
-	    if(I->oneColorFlag) {
-	      while(*n) {
-		glColor3fv(ColorGet(G, I->oneColor));
-		c = *(n++);
-		glBegin(GL_LINE_STRIP);
-		while(c--) {
-		  glVertex3fv(v);
-		  v += 3;
-		}
-		glEnd();
-	      }
-	    } else {
-	      while(*n) {
-		c = *(n++);
-		glBegin(GL_LINE_STRIP);
-		while(c--) {
-		  glColor3fv(vc);
-		  vc += 3;
-		  glVertex3fv(v);
-		  v += 3;
-		}
-		glEnd();
-	      }
-	    }
-	  }
-	}
-	break;
-      case cIsomeshMode::isodot:
-	glPointSize(SettingGet_f
-		    (G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_width));
-	if(ok && n) {
-	  if (!generate_shader_cgo){
-	    if(I->oneColorFlag) {
-	      while(*n) {
-		glColor3fv(ColorGet(G, I->oneColor));
-		c = *(n++);
-		glBegin(GL_POINTS);
-		while(c--) {
-		  glVertex3fv(v);
-		  v += 3;
-		}
-		glEnd();
-	      }
-	    } else {
-	      while(*n) {
-		c = *(n++);
-		glBegin(GL_POINTS);
-		while(c--) {
-		  glColor3fv(vc);
-		  vc += 3;
-		  glVertex3fv(v);
-		  v += 3;
-		}
-		glEnd();
-	      }
-	    }
-	  }
-	}
-	break;
-      }
-      
-      /* end of rendering, if using shaders, then render CGO */
-      if (use_shader) {
-	if (ok){
-	  {
-	    const float *color;
-	    color = ColorGet(G, I->obj->Color);
-	    CGORender(I->shaderCGO, color, nullptr, nullptr, info, I);
-	  }
-	}
-      }
-      
-#ifndef PURE_OPENGL_ES_2
-      if(!use_shader && !lighting)
-        glEnable(GL_LIGHTING);
-#endif
-    }
+  auto* n = I->N.data();
+  if (!n) {
+    return;
   }
-  if (!ok){
+  bool ok = true;
+  float radius{};
+
+  if (I->Radius <= 0.0f) {
+    radius = ray->PixelRadius * line_width / 2.0f;
+  } else {
+    radius = I->Radius;
+  }
+  /* looks like were missing some code here --
+
+      what about mesh_type?
+
+    */
+
+  const float* col = nullptr;
+  auto G = I->G;
+  if (I->oneColorFlag) {
+    col = ColorGet(G, I->oneColor);
+  }
+  ray->color3fv(ColorGet(G, I->obj->Color));
+
+  auto* v = I->V.data();
+  auto* vc = I->VC;
+  switch (I->mesh_type) {
+  case cIsomeshMode::isomesh:
+    while (ok && *n) {
+      int c = *(n++);
+      if (c--) {
+        vc += 3;
+        v += 3;
+        if (I->oneColorFlag) {
+          while (ok && c--) {
+            ok &= ray->sausage3fv(v - 3, v, radius, col, col);
+            v += 3;
+            vc += 3;
+          }
+        } else {
+          while (ok && c--) {
+            ok &= ray->sausage3fv(v - 3, v, radius, vc - 3, vc);
+            v += 3;
+            vc += 3;
+          }
+        }
+      }
+    }
+  case cIsomeshMode::isodot:
+    while (ok && *n) {
+      int c = *(n++);
+      if (I->oneColorFlag) {
+        ray->color3fv(col);
+        while (ok && c--) {
+          ok &= ray->sphere3fv(v, radius);
+          v += 3;
+          vc += 3;
+        }
+      } else {
+        while (ok && c--) {
+          ray->color3fv(vc);
+          ok &= ray->sphere3fv(v, radius);
+          v += 3;
+          vc += 3;
+        }
+      }
+    }
+    break;
+  }
+}
+
+static void RepMeshPick(const RepMesh* I)
+{
+  /* No-op; TODO? */
+}
+
+static void RepMeshRenderImmediate(
+    RepMesh* I, RenderInfo* info, float line_width)
+{
+  auto G = I->G;
+  float* v = I->V.data();
+  float* vc = I->VC;
+  int* n = I->N.data();
+  if (I->shaderCGO) {
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = nullptr;
+  }
+#ifndef PURE_OPENGL_ES_2
+  int lighting = SettingGet_i(
+      G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_mesh_lighting);
+  if (!lighting && !info->line_lighting) {
+    glDisable(GL_LIGHTING);
+  }
+  switch (I->mesh_type) {
+  case cIsomeshMode::isomesh:
+    if (info->width_scale_flag)
+      glLineWidth(line_width * info->width_scale);
+    else
+      glLineWidth(line_width);
+    break;
+  case cIsomeshMode::isodot:
+    if (info->width_scale_flag)
+      glPointSize(SettingGet_f(G, I->cs->Setting.get(), I->obj->Setting.get(),
+                      cSetting_dot_width) *
+                  info->width_scale);
+    else
+      glPointSize(SettingGet_f(
+          G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_width));
+    break;
+  }
+  SceneResetNormal(G, false);
+  switch (I->mesh_type) {
+  case cIsomeshMode::isomesh:
+    if (n) {
+      if (I->oneColorFlag) {
+        while (*n) {
+          glColor3fv(ColorGet(G, I->oneColor));
+          int c = *(n++);
+          glBegin(GL_LINE_STRIP);
+          while (c--) {
+            glVertex3fv(v);
+            v += 3;
+          }
+          glEnd();
+        }
+      } else {
+        while (*n) {
+          int c = *(n++);
+          glBegin(GL_LINE_STRIP);
+          while (c--) {
+            glColor3fv(vc);
+            vc += 3;
+            glVertex3fv(v);
+            v += 3;
+          }
+          glEnd();
+        }
+      }
+    }
+    break;
+  case cIsomeshMode::isodot:
+    glPointSize(SettingGet_f(
+        G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_dot_width));
+    if (n) {
+      if (I->oneColorFlag) {
+        while (*n) {
+          glColor3fv(ColorGet(G, I->oneColor));
+          int c = *(n++);
+          glBegin(GL_POINTS);
+          while (c--) {
+            glVertex3fv(v);
+            v += 3;
+          }
+          glEnd();
+        }
+      } else {
+        while (*n) {
+          int c = *(n++);
+          glBegin(GL_POINTS);
+          while (c--) {
+            glColor3fv(vc);
+            vc += 3;
+            glVertex3fv(v);
+            v += 3;
+          }
+          glEnd();
+        }
+      }
+    }
+    break;
+  }
+  if (!lighting) {
+    glEnable(GL_LIGHTING);
+  }
+#endif
+}
+
+void RepMeshRasterRender(RepMesh* I, RenderInfo* info)
+{
+  auto G = I->G;
+  bool ok = true;
+  bool generate_shader_cgo = false;
+  bool const mesh_as_cylinders =
+      SettingGet<bool>(G, cSetting_render_as_cylinders) &&
+      SettingGet<bool>(G, cSetting_mesh_as_cylinders) &&
+      I->mesh_type != cIsomeshMode::isodot;
+  bool const dot_as_spheres = I->mesh_type == cIsomeshMode::isodot &&
+                              SettingGet<bool>(*I->cs, cSetting_dot_as_spheres);
+
+  if (I->shaderCGO &&
+      ((mesh_as_cylinders ^ I->shaderCGO->has_draw_cylinder_buffers) ||
+          (dot_as_spheres ^ I->shaderCGO->has_draw_sphere_buffers))) {
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = nullptr;
+  }
+  if (!I->shaderCGO) {
+    I->shaderCGO = CGONew(G);
+    CHECKOK(ok, I->shaderCGO);
+    if (ok) {
+      I->shaderCGO->use_shader = true;
+    }
+    generate_shader_cgo = true;
+  } else if (ok) {
+    CGORender(I->shaderCGO, nullptr, nullptr, nullptr, info, I);
+    return;
+  }
+
+  if (ok && generate_shader_cgo) {
+    ok &= RepMeshCGOGenerate(I, info);
+  }
+  if (ok) {
+    const auto* color = ColorGet(G, I->obj->Color);
+    CGORender(I->shaderCGO, color, nullptr, nullptr, info, I);
+  }
+  if (!ok) {
     CGOFree(I->shaderCGO);
     I->invalidate(cRepInvPurge);
     I->cs->Active[cRepMesh] = false;
   }
+}
+
+void RepMesh::render(RenderInfo* info)
+{
+  auto I = this;
+  CRay* ray = info->ray;
+  auto pick = info->pick;
+  float line_width = SceneGetDynamicLineWidth(info, I->Width);
+
+  if (ray) {
+    RepMeshRenderRay(I, ray, line_width);
+    return;
+  }
+  if (!(G->HaveGUI && G->ValidContext)) {
+    return;
+  }
+  if (pick) {
+    RepMeshPick(I);
+    return;
+  }
+  bool use_shader = SettingGet<bool>(G, cSetting_mesh_use_shader) & //
+                    SettingGet<bool>(G, cSetting_use_shaders);
+  if (use_shader) {
+    RepMeshRasterRender(I, info);
+    return;
+  }
+  RepMeshRenderImmediate(I, info, line_width);
 }
 
 bool RepMesh::sameVis() const
@@ -763,7 +772,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     }
   }
   if(!ok || !visFlag) {
-    return (NULL);              /* skip if no dots are visible */
+    return (nullptr);              /* skip if no dots are visible */
   }
 
   auto I = new RepMesh(cs, state);

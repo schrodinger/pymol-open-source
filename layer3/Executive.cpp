@@ -112,7 +112,7 @@
 #include "ce_types.h"
 #endif
 
-#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #ifdef WIN32
@@ -1181,7 +1181,7 @@ ExecutiveVolume(PyMOLGlobals * G, const char *volume_name, const char *map_name,
    *   - transform (translate/rotate) the VOLUME vis so that it
    *     matches the map's ObjectMatrix.
    *
-   *   - if this is a new VOLUME, (eg., origObj==NULL) then set the internal
+   *   - if this is a new VOLUME, (eg., origObj==nullptr) then set the internal
    *     PyMOL state to manage the object and add the name to the object list
    *
    *   - update the map state for the next loop and re-iterate
@@ -3693,6 +3693,7 @@ ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
   case cLoadTypeSDF2Str:
   case cLoadTypeXYZStr:
   case cLoadTypeDXStr:
+  case cLoadTypeBCIFStr:
     if (!content) {
       return pymol::Error("content is nullptr");
     }
@@ -3715,6 +3716,7 @@ ExecutiveLoadPrepareArgs(PyMOLGlobals * G,
   case cLoadTypeSDF2:
   case cLoadTypeXYZ:
   case cLoadTypeDXMap:
+  case cLoadTypeBCIF:
     if (content) {
       fname_null_ok = true;
       break;
@@ -3880,6 +3882,13 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
     auto res =
         ObjectMoleculeReadCifStr(G, static_cast<ObjectMolecule*>(origObj),
             content, state, discrete, quiet, multiplex, zoom);
+    p_return_if_error(res);
+    obj = res.result();
+  } break;
+  case cLoadTypeBCIF:
+  case cLoadTypeBCIFStr: {
+    auto res = ObjectMoleculeReadBCif(G, static_cast<ObjectMolecule*>(origObj),
+        content, size, state, discrete, quiet, multiplex, zoom);
     p_return_if_error(res);
     obj = res.result();
   } break;
@@ -5221,7 +5230,7 @@ static PyObject *ExecutiveGetExecObjectAsPyList(PyMOLGlobals * G, SpecRec * rec)
   PyList_SetItem(result, 1, PyInt_FromLong(cExecObject));
   PyList_SetItem(result, 2, PyInt_FromLong(rec->visible));
   /* before version 1.8 item 3 was rec reps (repOn) */
-  PyList_SetItem(result, 3, PConvAutoNone(NULL));
+  PyList_SetItem(result, 3, PConvAutoNone(nullptr));
   PyList_SetItem(result, 4, PyInt_FromLong(recobjtype));
   switch (rec->obj->type) {
   case cObjectGadget:
@@ -5264,7 +5273,7 @@ static PyObject *ExecutiveGetExecObjectAsPyList(PyMOLGlobals * G, SpecRec * rec)
     PyList_SetItem(result, 5, static_cast<ObjectCurve*>(rec->obj)->asPyList());
     break;
   default:
-    PyList_SetItem(result, 5, PConvAutoNone(NULL));
+    PyList_SetItem(result, 5, PConvAutoNone(nullptr));
     break;
   }
   PyList_SetItem(result, 6, PyString_FromString(rec->group_name));
@@ -5284,7 +5293,7 @@ static PyObject *ExecutiveGetExecSeleAsPyList(PyMOLGlobals * G, SpecRec * rec)
     PyList_SetItem(result, 1, PyInt_FromLong(cExecSelection));
     PyList_SetItem(result, 2, PyInt_FromLong(rec->visible));
     /* before version 1.8 item 3 was rec reps (repOn) */
-    PyList_SetItem(result, 3, PConvAutoNone(NULL));
+    PyList_SetItem(result, 3, PConvAutoNone(nullptr));
     PyList_SetItem(result, 4, PyInt_FromLong(-1));
     PyList_SetItem(result, 5, SelectorAsPyList(G, sele));
     PyList_SetItem(result, 6, PyString_FromString(rec->group_name));
@@ -5332,21 +5341,21 @@ static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals * G, int list_id, int par
           PyList_SetItem(result, count, ExecutiveGetExecSeleAsPyList(G, rec));
         } else {
           /* cannot currently save selections in partial sessions */
-          PyList_SetItem(result, count, PConvAutoNone(NULL));
+          PyList_SetItem(result, count, PConvAutoNone(nullptr));
         }
         break;
       default:
-        PyList_SetItem(result, count, PConvAutoNone(NULL));
+        PyList_SetItem(result, count, PConvAutoNone(nullptr));
         break;
       }
     } else {
-      PyList_SetItem(result, count, PConvAutoNone(NULL));
+      PyList_SetItem(result, count, PConvAutoNone(nullptr));
     }
     count++;
   }
 
   while(count < total_count) {  /* insure that all members of outgoing list are defined */
-    PyList_SetItem(result, count, PConvAutoNone(NULL));
+    PyList_SetItem(result, count, PConvAutoNone(nullptr));
     count++;
   }
 
@@ -6724,7 +6733,7 @@ const char * ExecutiveMapGenerate(PyMOLGlobals * G, const char * name, const cha
   ok = 0;
 
   if (weights && (!strncmp(weights,"None",4))) 
-    weights=NULL;
+    weights=nullptr;
 
   /* printf("Passing to primex driver: space_group=%s, cell=[%f %f %f %f %f %f], reso_high=%f, rseo_low=%f, refl_file=%s, ampl=%s, phases=%s, weights=%s, map_file=%s", space_group, cell[0], cell[1], cell[2], cell[3], cell[4], cell[5], reso_high, reso_low, reflection_file, amplitudes, phases, weights, tempFile); */
 
@@ -13350,6 +13359,7 @@ ExecutiveSetObjVisib(PyMOLGlobals * G, pymol::zstring_view name, int onoff, int 
               ExecutiveInvalidateSceneMembers(G);
 	      ReportEnabledChange(G, rec);
             }
+            SceneChanged(G);
           }
           break;
         case cExecSelection:

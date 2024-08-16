@@ -122,10 +122,10 @@ ClickSide OrthoGetWrapClickSide(PyMOLGlobals* G);
 float *OrthoGetOverlayColor(PyMOLGlobals * G);
 void OrthoDrawWizardPrompt(PyMOLGlobals * G, CGO *orthoCGO);
 
-void bg_grad(PyMOLGlobals * G);
-GLuint OrthoGetBackgroundTextureID(PyMOLGlobals * G);
-void OrthoInvalidateBackgroundTexture(PyMOLGlobals * G);
-void OrthoBackgroundTextureNeedsUpdate(PyMOLGlobals * G);
+void bg_grad(PyMOLGlobals* G);
+std::size_t OrthoGetBackgroundTextureID(PyMOLGlobals* G);
+void OrthoInvalidateBackgroundTexture(PyMOLGlobals* G);
+void OrthoBackgroundTextureNeedsUpdate(PyMOLGlobals* G);
 
 std::pair<int, int> OrthoGetBackgroundSize(const COrtho& ortho);
 

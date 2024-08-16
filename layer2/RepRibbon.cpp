@@ -57,85 +57,128 @@ RepRibbon::~RepRibbon()
   CGOFree(shaderCGO);
 }
 
+static void RepRibbonRenderRay(RepRibbon* I, RenderInfo* info) {
+  auto ray = info->ray;
+  CGORenderRay(I->primitiveCGO, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->obj->Setting.get());
+}
+
+static bool RepRibbonCGOGenerate(RepRibbon* I) {
+  bool ok = true;
+  CGO* convertcgo = nullptr;
+  auto G = I->G;
+  I->shaderCGO = CGONew(G);
+  CHECKOK(ok, I->shaderCGO);
+
+  bool ribbon_as_cylinders = SettingGet<bool>(G, cSetting_render_as_cylinders) &&
+                             SettingGet<bool>(G, I->cs->Setting.get(),
+                                                 I->obj->Setting.get(),
+                                                 cSetting_ribbon_as_cylinders);
+
+  if (ok)
+    I->shaderCGO->use_shader = true;
+
+  if (ok)
+    ok &= CGOResetNormal(I->shaderCGO, true);
+  if (ribbon_as_cylinders) {
+    if (ok)
+      ok &= CGOEnable(I->shaderCGO, GL_CYLINDER_SHADER);
+    if (ok)
+      ok &= CGOSpecial(I->shaderCGO, CYLINDER_WIDTH_FOR_RIBBONS);
+    convertcgo = CGOConvertLinesToCylinderShader(I->primitiveCGO, I->shaderCGO);
+    if (ok)
+      ok &= CGOAppendNoStop(I->shaderCGO, convertcgo);
+    if (ok)
+      ok &= CGODisable(I->shaderCGO, GL_CYLINDER_SHADER);
+    if (ok)
+      ok &= CGOStop(I->shaderCGO);
+  } else {
+    int trilines = SettingGetGlobal_b(G, cSetting_trilines);
+    int shader = trilines ? GL_TRILINES_SHADER : GL_LINE_SHADER;
+    if (ok)
+      ok &= CGOEnable(I->shaderCGO, shader);
+    if (ok)
+      ok &= CGODisable(I->shaderCGO, CGO_GL_LIGHTING);
+    if (trilines) {
+      if (ok)
+        ok &= CGOSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON);
+      convertcgo = CGOConvertToTrilinesShader(I->primitiveCGO, I->shaderCGO);
+    } else {
+      convertcgo = CGOConvertToLinesShader(I->primitiveCGO, I->shaderCGO);
+    }
+    if (ok)
+      ok &= CGOAppendNoStop(I->shaderCGO, convertcgo);
+    if (ok)
+      ok &= CGODisable(I->shaderCGO, shader);
+    if (ok)
+      ok &= CGOStop(I->shaderCGO);
+  }
+  I->shaderCGO_has_cylinders = ribbon_as_cylinders;
+  CGOFreeWithoutVBOs(convertcgo);
+  I->shaderCGO->use_shader = true;
+  return ok;
+}
+
+static void RepRibbonRenderRaster(RepRibbon* I, RenderInfo* info)
+{
+  auto G = I->G;
+  bool ribbon_as_cylinders = SettingGet<bool>(G, cSetting_render_as_cylinders) &&
+                             SettingGet<bool>(G, I->cs->Setting.get(),
+                                                 I->obj->Setting.get(),
+                                                 cSetting_ribbon_as_cylinders);
+  if (I->shaderCGO && (ribbon_as_cylinders ^ I->shaderCGO_has_cylinders)) {
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = nullptr;
+  }
+  if (!I->shaderCGO) {
+    RepRibbonCGOGenerate(I);
+  }
+  CGORender(I->shaderCGO, nullptr, I->cs->Setting.get(), I->obj->Setting.get(),
+      info, I);
+}
+
+static void RepRibbonPick(RepRibbon* I, RenderInfo* info)
+{
+  CGORenderPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info,
+      &I->context, I->cs->Setting.get(), I->obj->Setting.get(), I);
+}
+
+static void RepRibbonRenderImmediate(RepRibbon* I, RenderInfo* info)
+{
+  CGORender(I->primitiveCGO, nullptr, I->cs->Setting.get(),
+    I->obj->Setting.get(), info, I);
+}
+
 void RepRibbon::render(RenderInfo* info)
 {
   auto I = this;
   CRay *ray = info->ray;
   auto pick = info->pick;
-  int ok = true;
-  short use_shader = SettingGetGlobal_b(G, cSetting_ribbon_use_shader) &&
-                     SettingGetGlobal_b(G, cSetting_use_shaders);
-  bool ribbon_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
-                             SettingGet<bool>(G, I->cs->Setting.get(),
-                                                 I->obj->Setting.get(),
-                                                 cSetting_ribbon_as_cylinders);
 
-  if(ray) {
-#ifndef _PYMOL_NO_RAY
-    CGORenderRay(I->primitiveCGO, ray, info, nullptr, nullptr, I->cs->Setting.get(), I->obj->Setting.get());
-#endif
-  } else if(G->HaveGUI && G->ValidContext) {
-    if(pick) {
-      CGORenderPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->context, I->cs->Setting.get(), I->obj->Setting.get(), I);
-    } else {
-      if (!use_shader && I->shaderCGO){
-	CGOFree(I->shaderCGO);
-	I->shaderCGO = 0;
-      }
-      if (I->shaderCGO && (ribbon_as_cylinders ^ I->shaderCGO_has_cylinders)){
-	CGOFree(I->shaderCGO);
-	I->shaderCGO = 0;
-      }
-
-      if (use_shader){
-	if (!I->shaderCGO){
-          CGO *convertcgo = nullptr;
-	  I->shaderCGO = CGONew(G);
-	  CHECKOK(ok, I->shaderCGO);
-	  if (ok)
-	    I->shaderCGO->use_shader = true;
-
-          if (ok)
-            ok &= CGOResetNormal(I->shaderCGO, true);
-          if (ribbon_as_cylinders){
-            if (ok) ok &= CGOEnable(I->shaderCGO, GL_CYLINDER_SHADER);
-            if (ok) ok &= CGOSpecial(I->shaderCGO, CYLINDER_WIDTH_FOR_RIBBONS);
-            convertcgo = CGOConvertLinesToCylinderShader(I->primitiveCGO, I->shaderCGO);
-            if (ok) ok &= CGOAppendNoStop(I->shaderCGO, convertcgo);
-            if (ok) ok &= CGODisable(I->shaderCGO, GL_CYLINDER_SHADER);
-            if (ok) ok &= CGOStop(I->shaderCGO);
-          } else {
-            int trilines = SettingGetGlobal_b(G, cSetting_trilines);
-            int shader = trilines ? GL_TRILINES_SHADER : GL_LINE_SHADER;
-            if (ok) ok &= CGOEnable(I->shaderCGO, shader);
-            if (ok) ok &= CGODisable(I->shaderCGO, CGO_GL_LIGHTING);
-            if (trilines) {
-              if (ok) ok &= CGOSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON);
-              convertcgo = CGOConvertToTrilinesShader(I->primitiveCGO, I->shaderCGO);
-            } else {
-              convertcgo = CGOConvertToLinesShader(I->primitiveCGO, I->shaderCGO);
-            }
-            if (ok) ok &= CGOAppendNoStop(I->shaderCGO, convertcgo);
-            if (ok) ok &= CGODisable(I->shaderCGO, shader);
-            if (ok) ok &= CGOStop(I->shaderCGO);
-          }
-          I->shaderCGO_has_cylinders = ribbon_as_cylinders;
-          CGOFreeWithoutVBOs(convertcgo);
-          I->shaderCGO->use_shader = true;
-        }
-        CGORender(I->shaderCGO, nullptr, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
-        return;
-      } else {
-        CGORender(I->primitiveCGO, nullptr, I->cs->Setting.get(), I->obj->Setting.get(), info, I);
-        return;
-      }
-    }
+  if (ray) {
+    RepRibbonRenderRay(I, info);
+    return;
   }
-  if (!ok){
+  if (!(G->HaveGUI && G->ValidContext)) {
+    return;
+  }
+  if (pick) {
+    RepRibbonPick(I, info);
+    return;
+  }
+
+  bool use_shader = SettingGet<bool>(G, cSetting_ribbon_use_shader) &&
+                    SettingGet<bool>(G, cSetting_use_shaders);
+
+  if (!use_shader && I->shaderCGO) {
     CGOFree(I->shaderCGO);
-    I->invalidate(cRepInvPurge);
-    I->cs->Active[cRepRibbon] = false;
+    I->shaderCGO = nullptr;
   }
+
+  if (use_shader) {
+    RepRibbonRenderRaster(I, info);
+    return;
+  }
+  RepRibbonRenderImmediate(I, info);
 }
 
 Rep *RepRibbonNew(CoordSet * cs, int state)

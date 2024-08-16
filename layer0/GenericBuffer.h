@@ -158,7 +158,7 @@ struct AttribOpFuncData {
   AttribOpFuncData(AttribOpFuncDataFunctionPtr _funcDataConversion,
                    void *_funcDataGlobalArg,
                    const char *_attribName)
-  : funcDataConversion(_funcDataConversion), funcDataGlobalArg(_funcDataGlobalArg), attribName(_attribName), attrib(NULL){}
+  : funcDataConversion(_funcDataConversion), funcDataGlobalArg(_funcDataGlobalArg), attribName(_attribName), attrib(nullptr){}
 };
 
 using AttribOpFuncDataDesc = std::vector< AttribOpFuncData >;
@@ -245,6 +245,12 @@ private:
   size_t _hashid { 0 };
 };
 
+enum class buffer_layout {
+  SEPARATE,   // multiple vbos
+  SEQUENTIAL, // single vbo
+  INTERLEAVED // single vbo
+};
+
 // -----------------------------------------------------------------------------
 /* Vertexbuffer rules:
  * -----------------------------------------------------------------------------
@@ -264,288 +270,135 @@ private:
  * INTERLEAVED:
  *   vbo [ data1[0], data2[0], ..., dataN[0] | ... | data1[M], data2[M], ..., dataN[M] ]
  */
-template <GLenum _TYPE>
-class GenericBuffer : public gpuBuffer_t {
+class GenericBuffer : public gpuBuffer_t
+{
   friend class CShaderMgr;
+
 public:
-  static const GLenum TYPE = _TYPE;
 
-  enum buffer_layout {
-    SEPARATE,   // multiple vbos
-    SEQUENTIAL, // single vbo
-    INTERLEAVED // single vbo
-  };
+  GenericBuffer(buffer_layout layout = buffer_layout::SEPARATE, GLenum usage = GL_STATIC_DRAW);
+  GenericBuffer(const GenericBuffer&) = delete;
+  GenericBuffer& operator=(const GenericBuffer&) = delete;
+  GenericBuffer(GenericBuffer&&) = delete;
+  GenericBuffer& operator=(GenericBuffer&&) = delete;
+  ~GenericBuffer();
 
-  GenericBuffer( buffer_layout layout = SEPARATE, GLenum usage = GL_STATIC_DRAW ) :
-    m_buffer_usage(usage), m_layout(layout) {}
-
-  ~GenericBuffer() {
-    for (auto i = 0; i < m_desc.size(); ++i) {
-      auto& glID = desc_glIDs[i];
-      if (glID) {
-        glDeleteBuffers(1, &glID);
-      }
-    }
-    if (m_interleavedID) {
-      glDeleteBuffers(1, &m_interleavedID);
-    }
-  }
-
-  /***********************************************************************
-   * bufferData
-   *----------------------------------------------------------------------
-   * Takes a vector of the struct at the top of this file which describes
-   * the layout of the vbo object. The supplied data ptr in the struct can
+  /**
+   * Conditionally generates a GPU buffer for the given data descriptor
+   * @param desc The buffer data descriptor
+   * @return Whether the buffer data was successfully buffered
+   * @note The supplied data ptr in the struct can
    * be zero, in which case if the default usage is STATIC_DRAW then no
    * opengl buffer will be generated for that, else it is assumed that the
    * data will be supplied at a later point because it's dynamic draw.
-   ***********************************************************************/
-  bool bufferData(BufferDataDesc && desc) {
-    m_desc = std::move(desc);
-    desc_glIDs = std::vector<GLuint>(m_desc.size());
-    return evaluate();
-  }
+   */
+  bool bufferData(BufferDataDesc&& desc);
 
-  bool bufferData(BufferDataDesc && desc, const void * data, size_t len, size_t stride) {
-    bool ok = true;
-    m_desc = std::move(desc);
-    desc_glIDs = std::vector<GLuint>(m_desc.size());
-    m_interleaved = true;
-    m_stride = stride;
-    ok = genBuffer(m_interleavedID, len, data);
-    return ok;
-  }
+  /**
+   * Generates a GPU buffer for the given data descriptor
+   * @param desc The buffer data descriptor
+   * @param data The data to buffer
+   * @param len The length of the data
+   * @param stride The stride of the data
+   * @note assumes the data is interleaved
+   */
+  bool bufferData(
+      BufferDataDesc&& desc, const void* data, size_t len, size_t stride);
 
   // -----------------------------------------------------------------------------
-  // bufferSubData :
-  // This function assumes that the data layout hasn't change
-  void bufferSubData(size_t offset, size_t size, void * data, size_t index = 0) {
-    assert("Invalid Desc index" && index < m_desc.size());
-    assert("Invalid GLDesc index" && index < desc_glIDs.size());
-    auto glID = m_interleaved ? m_interleavedID : desc_glIDs[index];
-    glBindBuffer(TYPE, glID);
-    glBufferSubData(TYPE, offset, size, data);
-  }
 
-  // for interleaved dat only, replaces the whole interleaved vbo
-  void bufferReplaceData(size_t offset, size_t len, const void * data) {
-    glBindBuffer(TYPE, m_interleavedID);
-    glBufferSubData(TYPE, offset, len, data);
-  }
+  /**
+   * Updates (a portion of) the buffer data
+   * @param offset The offset to start updating the buffer data
+   * @param size The size of the data to update
+   * @param data The data to update
+   * @param index The index of the buffer data to update
+   * @note This function assumes that the data layout hasn't changed
+  */
+  void bufferSubData(size_t offset, size_t size, void* data, size_t index = 0);
 
+  /**
+   * Replaces the whole interleaved buffer data
+   * @param data The data to replace the buffer data with
+   * @param len The length of the data
+   * @param data The data to replace the buffer data with
+   * @note This function assumes that the data layout hasn't changed
+   */
+  void bufferReplaceData(size_t offset, size_t len, const void* data);
 
 protected:
 
-  bool evaluate() {
-    bool ok = true;
-    if (TYPE == GL_ELEMENT_ARRAY_BUFFER) {
-      ok = seqBufferData();
-    } else {
-      switch (m_layout) {
-      case SEPARATE:
-        ok = sepBufferData();
-        break;
-      case SEQUENTIAL:
-        ok = seqBufferData();
-        break;
-      case INTERLEAVED:
-        ok = interleaveBufferData();
-        break;
-      }
-    }
-    return ok;
-  }
+  /**
+   * Generates GPU buffer(s) for the given data descriptor
+   * @return Whether the buffer data was successfully buffered
+   */
+  bool evaluate();
 
   // USAGE PATTERNS
-  bool sepBufferData() {
-    for (auto i = 0; i < m_desc.size(); ++i) {
-      // If the specified size is 0 but we have a valid pointer
-      // then we are going to glVertexAttribXfv X in {1,2,3,4}
-      const auto& d = m_desc[i];
-      auto& glID = desc_glIDs[i];
-      if (d.data_ptr && (m_buffer_usage == GL_STATIC_DRAW)) {
-        if (d.data_size) {
-          if (!genBuffer(glID, d.data_size, d.data_ptr)) {
-            return false;
-          }
-        }
-      }
-    }
-    return true;
-  }
 
-  bool seqBufferData() {
-    // this is only going to use a single opengl vbo
-    m_interleaved = true;
+  /**
+   * Generates a separate buffer for each data descriptor
+   * @return Whether the buffer data was successfully buffered
+   */
+  bool sepBufferData();
 
-    size_t buffer_size { 0 };
-    for ( auto & d : m_desc ) {
-      buffer_size += d.data_size;
-    }
+  /**
+   * Generates a single sequential buffer for all data descriptors
+   * @return Whether the buffer data was successfully buffered
+   */
+  bool seqBufferData();
 
-    std::vector<std::uint8_t> buffer_data(buffer_size);
-    auto data_ptr = buffer_data.data();
-    size_t offset = 0;
+  /**
+   * Generates a single interleaved buffer for all data descriptors
+   * @return Whether the buffer data was successfully buffered
+   */
+  bool interleaveBufferData();
 
-    for ( auto & d : m_desc ) {
-      d.offset = offset;
-      if (d.data_ptr)
-        memcpy(data_ptr, d.data_ptr, d.data_size);
-      else
-        memset(data_ptr, 0, d.data_size);
-      data_ptr += d.data_size;
-      offset += d.data_size;
-    }
+  /**
+   * Generates an OpenGL buffer with given size and data
+   * @param id The OpenGL buffer ID
+   * @param size The size of the buffer
+   * @param ptr The data to buffer
+   * @return Whether the buffer was successfully generated
+   */
+  bool genBuffer(GLuint& id, size_t size, const void* ptr);
 
-    return genBuffer(m_interleavedID, buffer_size, buffer_data.data());
-  }
-
-  bool interleaveBufferData() {
-    size_t interleaved_size = 0;
-    const size_t buffer_count = m_desc.size();
-    size_t stride = 0;
-    std::vector<uint8_t *> data_table(buffer_count);
-    std::vector<uint8_t *> ptr_table(buffer_count);
-    std::vector<size_t> size_table(buffer_count);
-    size_t count = m_desc[0].data_size / GetSizeOfVertexFormat(m_desc[0].m_format);
-
-    // Maybe assert that all pointers in d_desc are valid?
-    for ( size_t i = 0; i < buffer_count; ++i ) {
-      auto &d = m_desc[i];
-      // offset is the current stride
-      d.offset = stride;
-
-      // These must come after so that offset starts at 0
-      // Size of 3 normals or whatever the current type is
-      size_table[i] = GetSizeOfVertexFormat(d.m_format);
-
-      // Increase our current estimate of the stride by this amount
-      stride += size_table[i];
-
-      // Does the addition of that previous stride leave us on a word boundry?
-      int m = stride % 4;
-      stride = (m ? (stride + (4 - m)) : stride);
-
-      // data_table a pointer to the begining of each array
-      data_table[i] = (uint8_t *)d.data_ptr;
-
-      // We will move these pointers along by the values in the size table
-      ptr_table[i] = data_table[i];
-
-    }
-
-    m_stride = stride;
-
-    interleaved_size = count * stride;
-
-    uint8_t *interleaved_data = (uint8_t *)calloc(interleaved_size, sizeof(uint8_t));
-    uint8_t *i_ptr = interleaved_data;
-
-    while (i_ptr != (interleaved_data + interleaved_size)) {
-      for ( size_t i = 0; i < buffer_count; ++i ) {
-        if (ptr_table[i]){
-	memcpy( i_ptr, ptr_table[i], size_table[i] );
-	ptr_table[i] += size_table[i];
-        }
-	i_ptr += size_table[i];
-      }
-    }
-
-    bool ok = true;
-    ok = genBuffer(m_interleavedID, interleaved_size, interleaved_data);
-    m_interleaved = true;
-    free(interleaved_data);
-    return ok;
-  }
-
-  bool genBuffer(GLuint &id, size_t size, const void * ptr) {
-    glGenBuffers(1, &id);
-    if (!glCheckOkay())
-      return false;
-    glBindBuffer(TYPE, id);
-    if (!glCheckOkay())
-      return false;
-    glBufferData(TYPE, size, ptr, GL_STATIC_DRAW);
-    if (!glCheckOkay())
-      return false;
-    return true;
-  }
+  /**
+   * @return OpenGL buffer type
+   */
+  virtual GLenum bufferType() const = 0;
 
 protected:
-  bool m_status                { false };
-  bool m_interleaved           { false };
-  GLuint m_interleavedID       { 0 };
-  const GLenum m_buffer_usage  { GL_STATIC_DRAW };
-  const buffer_layout m_layout { SEPARATE };
-  size_t m_stride              { 0 };
-  BufferDataDesc     m_desc;
+  bool m_status{false};
+  bool m_interleaved{false};
+  GLuint m_interleavedID{0};
+  const GLenum m_buffer_usage{GL_STATIC_DRAW};
+  const buffer_layout m_layout{ buffer_layout::SEPARATE };
+  size_t m_stride{0};
+  BufferDataDesc m_desc;
   std::vector<GLuint> desc_glIDs; // m_desc's gl buffer IDs
 };
 
 /**
  * Vertex buffer specialization
  */
-class VertexBuffer : public GenericBuffer<GL_ARRAY_BUFFER> {
-  void bind_attrib(GLuint prg, const BufferDesc& d, GLuint glID) {
-    GLint loc = glGetAttribLocation(prg, d.attr_name);
-    auto type_dim = VertexFormatToGLSize(d.m_format);
-    auto type = VertexFormatToGLType(d.m_format);
-    auto data_norm = VertexFormatToGLNormalized(d.m_format);
-    bool masked = false;
-    for (GLint lid : m_attribmask)
-      if (lid == loc)
-        masked = true;
-    if ( loc >= 0 )
-      m_locs.push_back(loc);
-    if ( loc >= 0 && !masked ) {
-      if (!m_interleaved && glID)
-        glBindBuffer( TYPE, glID);
-      glEnableVertexAttribArray( loc );
-      glVertexAttribPointer(loc, type_dim, type, data_norm, m_stride,
-          reinterpret_cast<const void*>(d.offset));
-    }
-  };
+class VertexBuffer : public GenericBuffer {
+  void bind_attrib(GLuint prg, const BufferDesc& d, GLuint glID);
 
 public:
-  VertexBuffer( buffer_layout layout = SEPARATE, GLenum usage = GL_STATIC_DRAW ) : GenericBuffer<GL_ARRAY_BUFFER>(layout, usage){}
+  VertexBuffer(buffer_layout layout = buffer_layout::SEPARATE,
+      GLenum usage = GL_STATIC_DRAW);
 
-  void bind() const {
-    // we shouldn't use this one
-    if (m_interleaved)
-      glBindBuffer(TYPE, m_interleavedID);
-  }
+  void bind() const;
 
-  void bind(GLuint prg, int index = -1) {
-    if (index >= 0) {
-      glBindBuffer( TYPE, m_interleavedID );
-      bind_attrib(prg, m_desc[index], desc_glIDs[index]);
-    } else {
-      if (m_interleaved && m_interleavedID)
-        glBindBuffer( TYPE, m_interleavedID );
-      for (auto i = 0; i < m_desc.size(); ++i) {
-        const auto& d = m_desc[i];
-        auto glID = desc_glIDs[i];
-        bind_attrib(prg, d, glID);
-      }
-      m_attribmask.clear();
-    }
-  }
+  void bind(GLuint prg, int index = -1);
 
-  void unbind() {
-    for (auto &d : m_locs) {
-      glDisableVertexAttribArray(d);
-    }
-    m_locs.clear();
-    glBindBuffer(TYPE, 0);
-  }
+  void unbind();
 
-  void maskAttributes(std::vector<GLint> attrib_locs) {
-    m_attribmask = std::move(attrib_locs);
-  }
+  void maskAttributes(std::vector<GLint> attrib_locs);
+  void maskAttribute(GLint attrib_loc);
 
-  void maskAttribute(GLint attrib_loc) {
-    m_attribmask.push_back(attrib_loc);
-  }
+  GLenum bufferType() const override;
 
 private:
   // m_locs is only for interleaved data
@@ -556,17 +409,13 @@ private:
 /**
  * Index buffer specialization
  */
-class IndexBuffer : public GenericBuffer<GL_ELEMENT_ARRAY_BUFFER> {
+class IndexBuffer : public GenericBuffer {
 public:
   using GenericBuffer::GenericBuffer;
 
-  void bind() const {
-    glBindBuffer(TYPE, m_interleavedID);
-  }
-
-  void unbind() {
-    glBindBuffer(TYPE, 0);
-  }
+  void bind() const;
+  void unbind();
+  GLenum bufferType() const override;
 };
 
 // Forward Decls

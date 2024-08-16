@@ -2895,7 +2895,7 @@ static void RayHashSpawn(CRayHashThreadInfo * Thread, int n_thread, int n_total)
         PyList_SetItem(
             info_list, a, PyCapsule_New(Thread + c + a, nullptr, nullptr));
       } else {
-        PyList_SetItem(info_list, a, PConvAutoNone(NULL));
+        PyList_SetItem(info_list, a, PConvAutoNone(nullptr));
       }
       n++;
     }

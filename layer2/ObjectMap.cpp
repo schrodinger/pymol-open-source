@@ -1281,7 +1281,7 @@ static PyObject *ObjectMapAllStatesAsPyList(ObjectMap * I)
     if(I->State[a].Active) {
       PyList_SetItem(result, a, ObjectMapStateAsPyList(&I->State[a]));
     } else {
-      PyList_SetItem(result, a, PConvAutoNone(NULL));
+      PyList_SetItem(result, a, PConvAutoNone(nullptr));
     }
   }
   return (PConvAutoNone(result));

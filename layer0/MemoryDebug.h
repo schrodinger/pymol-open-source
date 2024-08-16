@@ -82,9 +82,9 @@ template <typename T> T* realloc(T* ptr, size_t num)
 }
 } // namespace pymol
 
-#define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=NULL;}}
-#define DeleteP(ptr) {if(ptr) {delete ptr;ptr=NULL;}}
-#define DeleteAP(ptr) {if(ptr) {delete[] ptr;ptr=NULL;}}
+#define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=nullptr;}}
+#define DeleteP(ptr) {if(ptr) {delete ptr;ptr=nullptr;}}
+#define DeleteAP(ptr) {if(ptr) {delete[] ptr;ptr=nullptr;}}
 
 void *VLAExpand(void *ptr, ov_size rec);        /* NOTE: rec is index (total-1) */
 void *MemoryReallocForSure(void *ptr, size_t newSize);

@@ -10,6 +10,7 @@ REQUIREMENTS
     - C++17 compiler (e.g. gcc 8+)
     - CMake (3.13+)
     - Python 3.9+
+    - pip (with build submodule <pip install build>; conda's package name is python-build)
     - Pmw (Python Megawidgets) (optional, for legacy GUI/plugins)
       https://github.com/schrodinger/pmw-patched
     - OpenGL
@@ -30,9 +31,7 @@ REQUIREMENTS
 
 SETUP OPTIONS
 
-    python setup.py --help
-    python setup.py --help-distutils
-    python setup.py --help-distutils install
+    pip install --help
 
     Special install options:
       --pymol-path=       installation directory for PyMOL data ($PYMOL_PATH)
@@ -50,7 +49,11 @@ SETUP OPTIONS
 
 INSTALLATION
 
-    python setup.py install --prefix=~/someplace
+    Clean build and installation
+      pip install .
+
+    Recommended for developers (build output, incremental build, and building C++ unit tests)
+      pip install --verbose --no-build-isolation --config-settings testing=True .
 
 RUNNING PyMOL
 

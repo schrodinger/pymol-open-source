@@ -70,6 +70,9 @@ if True:
             format = 'cc1'
         elif ext in ('sd',):
             format = 'sdf'
+        elif ext in ('sdfgz',):
+            zipped = 'gz'
+            format = 'sdf'
         elif ext in ('rst7',):
             format = 'rst'
         elif ext in ('o', 'dsn6', 'omap',):
@@ -89,6 +92,11 @@ if True:
             format = 'pdbml'
         elif ext in ('mmcif',):
             format = 'cif'
+        elif ext in ('bcif',):
+            format = 'bcif'
+        elif ext in ('bcifgz',):
+            format = 'bcif'
+            zipped = 'gz'
         elif re.match(r'pdb\d+$', ext):
             format = 'pdb'
         elif re.match(r'xyz_\d+$', ext):
@@ -1134,6 +1142,9 @@ PYMOL API
             "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
             "https://files-versioned.wwpdb.org/pdb_versioned/views/latest/coordinates/mmcif/{mid}/pdb_{code:0>8}/pdb_{code:0>8}_xyz.cif.gz",
         ],
+        "bcif"  : [
+            "https://models.rcsb.org/{code}.{type}.gz",
+        ],
         "2fofc" : "https://www.ebi.ac.uk/pdbe/coordinates/files/{code}.ccp4",
         "fofc" : "https://www.ebi.ac.uk/pdbe/coordinates/files/{code}_diff.ccp4",
         "pubchem": [
@@ -1181,6 +1192,8 @@ PYMOL API
             bioType = 'pubchem'
             nameFmt = '{type}_{code}.sdf'
         elif type == 'cif':
+            pass
+        elif type == 'bcif':
             pass
         elif type == 'mmtf':
             pass
@@ -1300,7 +1313,7 @@ PYMOL API
                     obj_name = 'emd_' + obj_code
 
             chain = None
-            if (len(obj_code) > 4 and type in ('pdb', 'cif', 'mmtf') and
+            if (len(obj_code) > 4 and type in ('pdb', 'cif', 'mmtf', 'bcif') and
                     # "Extended PDB accession codes" have 8 characters,
                     # try to distinguish by leading non-zero digit
                     '1' <= obj_code[0] <= '9'):
@@ -1344,8 +1357,8 @@ ARGUMENTS
 
     state = the state number into which the file should loaded.
 
-    type = str: cif, pdb, pdb1, 2fofc, fofc, emd, cid, sid {default: cif
-    (default was "pdb" up to 1.7.6)}
+    type = str: cif, bcif, pdb, pdb1, 2fofc, fofc, emd, cid, sid
+    {default: cif (default was "pdb" up to 1.7.6)}
 
     async_ = 0/1: download in the background and do not block the PyMOL
     command line {default: 0 -- changed in PyMOL 2.3}

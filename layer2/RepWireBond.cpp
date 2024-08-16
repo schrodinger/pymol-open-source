@@ -619,12 +619,12 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     }
   }
   if(!visFlag) {
-    return (NULL);              /* skip if no dots are visible */
+    return (nullptr);              /* skip if no dots are visible */
   }
   marked = pymol::calloc<bool>(obj->NAtom);
   CHECKOK(ok, marked);
   if (!ok){
-    return (NULL);
+    return (nullptr);
   }
   
   valence_flag = SettingGet_b(G, cs->Setting.get(), obj->Setting.get(), cSetting_valence);

@@ -44,19 +44,6 @@ Z* -------------------------------------------------------------------
 #define LOCK_GUARD_MUTEX(name, var)
 #endif
 
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#if 0
-PFNGLTEXIMAGE3DPROC getTexImage3D();
-static PFNGLTEXIMAGE3DPROC glTexImage3D;
-static PFNGLGENPROGRAMSARBPROC glGenProgramsARB;
-static PFNGLBINDPROGRAMARBPROC glBindProgramARB;
-static PFNGLDELETEPROGRAMSARBPROC glDeleteProgramsARB;
-static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB;
-static PFNGLPROGRAMENVPARAMETER4FARBPROC glProgramEnvParameter4fARB;
-static PFNGLGETPROGRAMIVARBPROC glGetProgramivARB;
-#endif
-/* END PROPRIETARY CODE SEGMENT */
-
 class CShaderPrg {
 public:
   struct GeometryShaderParams

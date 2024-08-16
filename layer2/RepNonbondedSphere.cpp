@@ -132,7 +132,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   }
   if(!nSphere) {
     FreeP(active);
-    return (NULL);
+    return (nullptr);
   }
   float nb_spheres_size =
     SettingGet_f(G, cs->Setting.get(), obj->Setting.get(), cSetting_nb_spheres_size);

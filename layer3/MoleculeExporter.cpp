@@ -1820,7 +1820,7 @@ protected:
 
   void writeAtom() override {
     PyObject *atom = CoordSetAtomToChemPyAtom(G,
-        m_iter.getAtomInfo(), m_coord, getRefPtr(),
+        m_iter.getAtomInfo(), m_iter.obj, m_coord, getRefPtr(),
         m_iter.getAtm(), m_mat_full.ptr);
 
     if (atom) {

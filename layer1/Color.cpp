@@ -776,7 +776,7 @@ const char *ColorGetName(PyMOLGlobals * G, int index)
     } else
       return nullptr;
   }
-  return (NULL);
+  return (nullptr);
 }
 
 

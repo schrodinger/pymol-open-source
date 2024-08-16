@@ -319,7 +319,7 @@ Rep *RepAngleNew(DistSet * ds, int state)
   PRINTFD(G, FB_RepAngle)
     "RepAngleNew: entered.\n" ENDFD;
   if(!ok || !ds->NAngleIndex) {
-    return (NULL);
+    return (nullptr);
   }
 
   auto I = new RepAngle(ds->Obj, state);
