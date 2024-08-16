@@ -376,8 +376,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         # some experimental window control
         menu = self.menudict['Display'].addSeparator()
         menu = self.menudict['Display'].addMenu('External GUI')
-        menu.addAction('Toggle floating', self.toggle_ext_window_dockable,
-                       QtGui.QKeySequence('Ctrl+E'))
+        menu.addAction('Toggle dockable', self.toggle_ext_window_dockable).setShortcut(
+            QtGui.QKeySequence('Ctrl+E'))
+
         ext_vis_action = self.ext_window.toggleViewAction()
         ext_vis_action.setText('Visible')
         menu.addAction(ext_vis_action)
@@ -1259,4 +1260,4 @@ def execapp():
     if options.plugins:
         window.initializePlugins()
 
-    app.exec_()
+    app.exec()

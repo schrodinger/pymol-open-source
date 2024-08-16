@@ -379,7 +379,7 @@ class PluginManager(QtCore.QObject):
         table.resizeColumnsToContents()
 
         dialog.resize(600, dialog.height())
-        dialog.exec_()
+        dialog.exec()
 
     def add_path(self):
         from .installation import get_default_user_plugin_path as userpath

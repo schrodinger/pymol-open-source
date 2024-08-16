@@ -88,8 +88,38 @@ if PYQT_NAME.endswith('6'):
     QtCore.QSortFilterProxyModel.setFilterRegExp = QtCore.QSortFilterProxyModel.setFilterRegularExpression
     QtGui.QFont.Monospace = QtGui.QFont.StyleHint.Monospace
 
-    if PYQT_NAME == 'PySide6':
-        QtCore.Qt.MidButton = QtCore.Qt.MiddleButton
+    def copy_attributes(target_class, source_class):
+        for attr in dir(source_class):
+            if not attr.startswith('_'):
+                setattr(target_class, attr, getattr(source_class, attr))
+
+    copy_attributes(QtCore.QEvent, QtCore.QEvent.Type)
+    copy_attributes(QtCore.Qt, QtCore.Qt.AlignmentFlag)
+    copy_attributes(QtCore.Qt, QtCore.Qt.CaseSensitivity)
+    copy_attributes(QtCore.Qt, QtCore.Qt.CheckState)
+    copy_attributes(QtCore.Qt, QtCore.Qt.ContextMenuPolicy)
+    copy_attributes(QtCore.Qt, QtCore.Qt.DockWidgetArea)
+    copy_attributes(QtCore.Qt, QtCore.Qt.FocusPolicy)
+    copy_attributes(QtCore.Qt, QtCore.Qt.GestureType)
+    copy_attributes(QtCore.Qt, QtCore.Qt.ItemFlag)
+    copy_attributes(QtCore.Qt, QtCore.Qt.Key)
+    copy_attributes(QtCore.Qt, QtCore.Qt.KeyboardModifier)
+    copy_attributes(QtCore.Qt, QtCore.Qt.MouseButton)
+    copy_attributes(QtCore.Qt, QtCore.Qt.Orientation)
+    copy_attributes(QtCore.Qt, QtCore.Qt.WindowType)
+    copy_attributes(QtGui.QFont, QtGui.QFont.StyleHint)
+    copy_attributes(QtWidgets.QAbstractItemView, QtWidgets.QAbstractItemView.ScrollHint)
+    copy_attributes(QtWidgets.QAbstractItemView, QtWidgets.QAbstractItemView.SelectionBehavior)
+    copy_attributes(QtWidgets.QAbstractItemView, QtWidgets.QAbstractItemView.SelectionMode)
+    copy_attributes(QtWidgets.QBoxLayout, QtWidgets.QBoxLayout.Direction)
+    copy_attributes(QtWidgets.QMainWindow, QtWidgets.QMainWindow.DockOption)
+    copy_attributes(QtWidgets.QOpenGLWidget, QtOpenGLWidgets.QOpenGLWidget.UpdateBehavior)
+    copy_attributes(QtWidgets.QSizePolicy, QtWidgets.QSizePolicy.Policy)
+    copy_attributes(QtWidgets.QTreeWidgetItem, QtWidgets.QTreeWidgetItem.ChildIndicatorPolicy)
+
+    QtCore.Qt.MidButton = QtCore.Qt.MiddleButton
+    QtCore.Qt.WA_LayoutUsesWidgetRect = QtCore.Qt.WidgetAttribute.WA_LayoutUsesWidgetRect
+
 
 if PYQT_NAME[:4] == 'PyQt':
     QtCore.Signal = QtCore.pyqtSignal

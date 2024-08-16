@@ -346,7 +346,7 @@ class PopupOnException:
             msg = str(e) or 'unknown error'
             msgbox = QMB(QMB.Critical, 'Error', msg, QMB.Close, parent)
             msgbox.setDetailedText(''.join(traceback.format_tb(tb)))
-            msgbox.exec_()
+            msgbox.exec()
 
         return True
 
