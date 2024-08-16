@@ -48,15 +48,7 @@ Z* -------------------------------------------------------------------
 #include"OpenVRMode.h"
 #endif
 
-
-/* BEGIN PROPRIETARY CODE SEGMENT */
-#ifdef WIN32
-#define NOMINMAX
-#include<windows.h>
-#endif
-
-
-/* END PROPRIETARY CODE SEGMENT */
+#include <thread>
 
 /**
  * Setting level info table
@@ -3107,15 +3099,8 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_b(I, cSetting_precomputed_lighting, 1);
 
 #ifndef _PYMOL_ACTIVEX
-    {
-      SYSTEM_INFO SysInfo;
-      GetSystemInfo(&SysInfo);
-      {
-        DWORD count = SysInfo.dwNumberOfProcessors;
-        if(count > 1) {
-          set_i(I, cSetting_max_threads, count);
-        }
-      }
+    if (auto count = std::thread::hardware_concurrency() > 1) {
+      set_i(I, cSetting_max_threads, count);
     }
     /* END PROPRIETARY CODE SEGMENT */
 #endif
