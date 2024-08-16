@@ -787,6 +787,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         if widget is None:
             form._dialog.show()
+        return form
 
     @PopupOnException.decorator
     def _file_save(self, filter, format):

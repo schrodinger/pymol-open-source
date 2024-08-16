@@ -88,9 +88,9 @@ class WidgetMenu(QtWidgets.QMenu):
         @self.aboutToShow.connect
         def _():
             self.aboutToShow.disconnect()
-            widget = QtWidgets.QWidget()
-            setupUi(widget)
-            self.setWidget(widget)
+            self._widget = QtWidgets.QWidget()
+            form = setupUi(self._widget)
+            self.setWidget(form)
 
         return self
 
