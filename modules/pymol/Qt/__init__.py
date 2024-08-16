@@ -8,7 +8,7 @@ PyQt5/PyQt4 differences:
 http://pyqt.sourceforge.net/Docs/PyQt5/pyqt4_differences.html
 """
 
-DEBUG = True  # Turn off for open-source
+DEBUG = False
 
 PYQT_NAME = None
 QtWidgets = None
