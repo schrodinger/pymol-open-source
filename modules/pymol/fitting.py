@@ -20,7 +20,7 @@ if True:
         import os
         import pymol
 
-        from .cmd import _cmd,lock,unlock,Shortcut, \
+        from .cmd import _cmd,lock,unlock, \
             DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
 

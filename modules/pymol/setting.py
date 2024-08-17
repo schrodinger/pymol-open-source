@@ -13,6 +13,9 @@
 #Z* -------------------------------------------------------------------
 
 # must match layer1/Setting.h
+from pymol.shortcut import Shortcut
+
+
 cSetting_tuple = -1
 cSetting_blank = 0
 cSetting_boolean = 1
@@ -26,7 +29,6 @@ if True:
 
     import traceback
     from . import selector
-    from .shortcut import Shortcut
     cmd = __import__("sys").modules["pymol.cmd"]
     from .cmd import _cmd,lock,lock_attempt,unlock,QuietException, \
           is_string, \
