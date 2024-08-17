@@ -26,7 +26,8 @@ requires = [
 ]
 
 [project.optional-dependencies]
-test = [
+dev = [
+  "numpy>=1.26.4,<2",
   "pillow==10.3.0",
   "pytest==8.2.2",
 ]
