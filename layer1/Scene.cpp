@@ -2988,329 +2988,381 @@ static void SceneDrawButtons(Block * block, int draw_for_real , CGO *orthoCGO)
 #endif
 }
 
-int SceneDrawImageOverlay(PyMOLGlobals * G, int override , CGO *orthoCGO){
-  CScene *I = G->Scene;
-  int drawn = false;
-  int text = SettingGetGlobal_b(G, cSetting_text);
-    /* is the text/overlay (ESC) on? */
-  int overlay = OrthoGetOverlayStatus(G);
-
-  if(((!text) || overlay) && (override || I->CopyType == true) && I->Image && !I->Image->empty()) {
-    /* show transparent bg as checkboard? */
-    int show_alpha = SettingGetGlobal_b(G, cSetting_show_alpha_checker);
-    const float *bg_color = ColorGet(G, SettingGet_color(G, nullptr, nullptr, cSetting_bg_rgb));
-    unsigned int bg_rr, bg_r = (unsigned int) (255 * bg_color[0]);
-    unsigned int bg_gg, bg_g = (unsigned int) (255 * bg_color[1]);
-    unsigned int bg_bb, bg_b = (unsigned int) (255 * bg_color[2]);
-    int width = I->Image->getWidth();
-    int height = I->Image->getHeight();
-    unsigned char *data = I->Image->bits();
-
-    if(I->Image->isStereo()) {
-      int buffer;
-      glGetIntegerv(GL_DRAW_BUFFER, (GLint *) & buffer);
-      if(buffer == GL_BACK_RIGHT)     /* hardware stereo */
-	data += I->Image->getSizeInBytes();
-      else {
-	int stereo = SettingGetGlobal_i(G, cSetting_stereo);
-	if (stereo){
-	  switch (OrthoGetRenderMode(G)) {
-	  case OrthoRenderMode::GeoWallRight:
-	    data += I->Image->getSizeInBytes();
-	    break;
-	  default:
-	    break;
-	  }
-	}
-      }
-      /* if drawing the right buffer, then draw the right image */
-    }
-    
-    if((height > I->Height) || (width > I->Width)) {  /* image is oversize */
-      {
-	int factor = 1;
-	int shift = 0;
-	int tmp_height = I->Image->getHeight();
-	int tmp_width = I->Image->getWidth();
-	int src_row_bytes = I->Image->getWidth() * pymol::Image::getPixelSize();
-	unsigned int color_word;
-	float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
-	
-	ColorGetBkrdContColor(G, rgba, false);
-	color_word = ColorGet32BitWord(G, rgba);
-	
-	while(tmp_height && tmp_width &&
-	      ((tmp_height > (I->Height - 3)) || (tmp_width > (I->Width - 3)))) {
-	  tmp_height = (tmp_height >> 1);
-	  tmp_width = (tmp_width >> 1);
-	  factor = (factor << 1);
-	  shift++;
-	}
-	tmp_width += 2;
-	tmp_height += 2;
-	
-	if(tmp_height && tmp_width) {
-	  unsigned int buffer_size = tmp_height * tmp_width * 4;
-	  unsigned char *buffer = pymol::malloc<unsigned char>(buffer_size);
-	  
-	  if(buffer && data) {
-	    unsigned char *p = data;
-	    unsigned char *q = buffer;
-	    unsigned char *pp, *ppp, *pppp;
-	    int a, b, c, d;
-	    unsigned int c1, c2, c3, c4, alpha, tot, bg;
-	    unsigned int factor_col_bytes = factor * 4;
-	    unsigned int factor_row_bytes = factor * src_row_bytes;
-	    
-	    shift = shift + shift;
-
-	    for(a = 0; a < tmp_width; a++) {      /* border, first row */
-	      *((unsigned int *) (q)) = color_word;
-	      q += 4;
-	    }
-	    for(b = 1; b < tmp_height-1; b++) { /* rows */
-	      pp = p;
-	      *((unsigned int *) (q)) = color_word;        /* border */
-	      q += 4;
-	      for(a = 1; a < tmp_width-1; a++) {      /* cols */
-		ppp = pp;
-		
-		c1 = c2 = c3 = c4 = tot = 0;
-		
-		if(show_alpha && (((a >> 4) + (b >> 4)) & 0x1)) { /* introduce checkerboard */
-		  bg_rr = ((bg_r & 0x80) ? bg_r - TRN_BKG : bg_r + TRN_BKG);
-		  bg_gg = ((bg_g & 0x80) ? bg_g - TRN_BKG : bg_g + TRN_BKG);
-		  bg_bb = ((bg_b & 0x80) ? bg_b - TRN_BKG : bg_b + TRN_BKG);
-		} else {
-		  bg_rr = bg_r;
-		  bg_gg = bg_g;
-		  bg_bb = bg_b;
-		}
-		
-		for(d = 0; d < factor; d++) {     /* box rows */
-		  pppp = ppp;
-		  for(c = 0; c < factor; c++) {   /* box cols */
-		    alpha = pppp[3];
-		    c1 += *(pppp++) * alpha;
-		    c2 += *(pppp++) * alpha;
-		    c3 += *(pppp++) * alpha;
-		    pppp++;
-		    c4 += alpha;
-		    tot += 0xFF;
-		  }
-		  ppp += src_row_bytes;
-		}
-		if(c4) {
-		  bg = tot - c4;
-		  *(q++) = (c1 + bg_rr * bg) / tot;
-		  *(q++) = (c2 + bg_gg * bg) / tot;
-		  *(q++) = (c3 + bg_bb * bg) / tot;
-		  *(q++) = 0xFF;
-		} else {
-		  *(q++) = bg_rr;
-		  *(q++) = bg_gg;
-		  *(q++) = bg_bb;
-		  *(q++) = 0xFF;
-		}
-		pp += factor_col_bytes;
-	      }
-	      *((unsigned int *) (q)) = color_word;        /* border */
-	      q += 4;
-	      p += factor_row_bytes;
-	    }
-	    for(a = 0; a < tmp_width; a++) {      /* border, last row */
-	      *((unsigned int *) (q)) = color_word;
-	      q += 4;
-	    }
-
-	    
+static void RendererWritePixelsTo(
+    PyMOLGlobals* G, const Rect2D& rect, unsigned char* buffer)
+{
 #ifndef PURE_OPENGL_ES_2
-        glRasterPos3i((int) ((I->Width - tmp_width) / 2 + I->rect.left),
-              (int) ((I->Height - tmp_height) / 2 + I->rect.bottom),
-			  -10);
+  glRasterPos3i(rect.offset.x, rect.offset.y, -10);
 #endif
-	    PyMOLDrawPixels(tmp_width, tmp_height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-	    drawn = true;
-	  }
-	  FreeP(buffer);
-	}
-	{
-	  char buffer[255];
-	  int text_pos = (I->Height - tmp_height) / 2 - 15;
-	  int x_pos, y_pos;
-	  if(text_pos < 0) {
-	    text_pos = (I->Height - tmp_height) / 2 + 3;
-	    x_pos = (I->Width - tmp_width) / 2 + 3;
-	    y_pos = text_pos;
-	  } else {
-	    x_pos = (I->Width - tmp_width) / 2;
-	    y_pos = text_pos;
-	  }
-	  
-	  sprintf(buffer, "Image size = %d x %d", I->Image->getWidth(), I->Image->getHeight());
-	  
-	  TextSetColor3f(G, rgba[0], rgba[1], rgba[2]);
-	  TextDrawStrAt(G, buffer,
-            x_pos + I->rect.left, y_pos + I->rect.bottom, orthoCGO);
-	}
-      }
-    } else if(((width < I->Width) || (height < I->Height)) && ((I->Width - width) > 2) && ((I->Height - height) > 2)) {
-      /* but a border around image */
-      
-      unsigned int color_word;
-      float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
-      unsigned int tmp_height = height + 2;
-      unsigned int tmp_width = width + 2;
-      unsigned int border = 1;
-      unsigned int upscale = 1;
+  PyMOLDrawPixels(rect.extent.width, rect.extent.height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+}
 
-      // Upscale for Retina/4K
-      if (DIP2PIXEL(height) == I->Height && DIP2PIXEL(width) == I->Width) {
-        upscale = DIP2PIXEL(1);
-        tmp_height = DIP2PIXEL(height);
-        tmp_width = DIP2PIXEL(width);
-        border = 0;
-      }
+static bool SceneOverlayOversize(
+    PyMOLGlobals* G, unsigned char* data, CGO* orthoCGO)
+{
+  bool drawn = false;
+  auto I = G->Scene;
+  auto show_alpha = SettingGet<bool>(G, cSetting_show_alpha_checker);
+  const float* bg_color =
+      ColorGet(G, SettingGet<int>(G, nullptr, nullptr, cSetting_bg_rgb));
+  unsigned int bg_rr, bg_r = (unsigned int) (255 * bg_color[0]);
+  unsigned int bg_gg, bg_g = (unsigned int) (255 * bg_color[1]);
+  unsigned int bg_bb, bg_b = (unsigned int) (255 * bg_color[2]);
 
-      unsigned int n_word = tmp_height * tmp_width;
-      unsigned int *tmp_buffer = pymol::malloc<unsigned int>(n_word);
-      ColorGetBkrdContColor(G, rgba, false);
-      color_word = ColorGet32BitWord(G, rgba);
-      
-      if(tmp_buffer) {
-	unsigned int a, b;
-	unsigned int *p = (unsigned int *) data;
-	unsigned int *q = tmp_buffer;
+  int factor = 1;
+  int shift = 0;
+  int tmp_height = I->Image->getHeight();
+  int tmp_width = I->Image->getWidth();
+  int src_row_bytes = I->Image->getWidth() * pymol::Image::getPixelSize();
+  unsigned int color_word;
+  float rgba[4] = {0.0F, 0.0F, 0.0F, 1.0F};
 
-	// top border
-	for(a = 0; a < border; ++a) {
-	  for(b = 0; b < tmp_width; b++)
-	    *(q++) = color_word;
-	}
+  ColorGetBkrdContColor(G, rgba, false);
+  color_word = ColorGet32BitWord(G, rgba);
 
-	for(a = border; a < tmp_height - border; a++) {
-	  // left border
-	  for(b = 0; b < border; ++b) {
-	    *(q++) = color_word;
-	  }
-
-	  for(b = border; b < tmp_width - border; b++) {
-	    unsigned char *qq = (unsigned char *) q;
-	    unsigned char *pp = (unsigned char *) p;
-	    unsigned char bg;
-	    if(show_alpha && (((a >> 4) + (b >> 4)) & 0x1)) {     /* introduce checkerboard */
-	      bg_rr = ((bg_r & 0x80) ? bg_r - TRN_BKG : bg_r + TRN_BKG);
-	      bg_gg = ((bg_g & 0x80) ? bg_g - TRN_BKG : bg_g + TRN_BKG);
-	      bg_bb = ((bg_b & 0x80) ? bg_b - TRN_BKG : bg_b + TRN_BKG);
-	    } else {
-	      bg_rr = bg_r;
-	      bg_gg = bg_g;
-	      bg_bb = bg_b;
-	    }
-	    if(pp[3]) {
-	      bg = 0xFF - pp[3];
-	      *(qq++) = (pp[0] * pp[3] + bg_rr * bg) / 0xFF;
-	      *(qq++) = (pp[1] * pp[3] + bg_gg * bg) / 0xFF;
-	      *(qq++) = (pp[2] * pp[3] + bg_bb * bg) / 0xFF;
-	      *(qq++) = 0xFF;
-	    } else {
-	      *(qq++) = bg_rr;
-	      *(qq++) = bg_gg;
-	      *(qq++) = bg_bb;
-	      *(qq++) = 0xFF;
-	    }
-	    q++;
-
-	    if ((b + 1 - border) % upscale == 0) {
-	      p++;
-	    }
-	  }
-
-	  if ((a + 1 - border) % upscale != 0) {
-	    // read row again
-	    p -= width;
-	  }
-
-	  // right border
-	  for(b = 0; b < border; ++b) {
-	    *(q++) = color_word;
-	  }
-	}
-
-	// bottom border
-        for(a = 0; a < border; ++a) {
-	  for(b = 0; b < tmp_width; b++)
-	    *(q++) = color_word;
-	}
-
-#ifndef PURE_OPENGL_ES_2
-    glRasterPos3i((int) ((I->Width - tmp_width) / 2 + I->rect.left),
-              (int) ((I->Height - tmp_height) / 2 + I->rect.bottom),
-		      -10);
-#endif
-	PyMOLDrawPixels(tmp_width, tmp_height, GL_RGBA, GL_UNSIGNED_BYTE, tmp_buffer);
-	drawn = true;
-      }
-      FreeP(tmp_buffer);
-    } else if(I->CopyForced) {        /* near-exact fit */
-      float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
-      unsigned int n_word = height * width;
-      unsigned int *tmp_buffer = pymol::malloc<unsigned int>(n_word);
-      ColorGetBkrdContColor(G, rgba, false);
-      
-      if(tmp_buffer) {
-	unsigned int a, b;
-	unsigned int *p = (unsigned int *) data;
-	unsigned int *q = tmp_buffer;
-	for(a = 0; a < (unsigned int) height; a++) {
-	  for(b = 0; b < (unsigned int) width; b++) {
-	    unsigned char *qq = (unsigned char *) q;
-	    unsigned char *pp = (unsigned char *) p;
-	    unsigned char bg;
-	    if(show_alpha && (((a >> 4) + (b >> 4)) & 0x1)) { /* introduce checkerboard */
-	      bg_rr = ((bg_r & 0x80) ? bg_r - TRN_BKG : bg_r + TRN_BKG);
-	      bg_gg = ((bg_g & 0x80) ? bg_g - TRN_BKG : bg_g + TRN_BKG);
-	      bg_bb = ((bg_b & 0x80) ? bg_b - TRN_BKG : bg_b + TRN_BKG);
-	    } else {
-	      bg_rr = bg_r;
-	      bg_gg = bg_g;
-	      bg_bb = bg_b;
-	    }
-	    if(pp[3]) {
-	      bg = 0xFF - pp[3];
-	      *(qq++) = (pp[0] * pp[3] + bg_rr * bg) / 0xFF;
-	      *(qq++) = (pp[1] * pp[3] + bg_gg * bg) / 0xFF;
-	      *(qq++) = (pp[2] * pp[3] + bg_bb * bg) / 0xFF;
-	      *(qq++) = 0xFF;
-	    } else {
-	      *(qq++) = bg_rr;
-	      *(qq++) = bg_gg;
-	      *(qq++) = bg_bb;
-	    *(qq++) = 0xFF;
-	    }
-	    q++;
-	    p++;
-	  }
-	}
-      }
-#ifndef PURE_OPENGL_ES_2
-      glRasterPos3i((int) ((I->Width - width) / 2 + I->rect.left),
-            (int) ((I->Height - height) / 2 + I->rect.bottom), -10);
-#endif
-      PyMOLDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, tmp_buffer);
-      drawn = true;
-      FreeP(tmp_buffer);
-    } else {                  /* not a forced copy, so don't show/blend alpha */
-#ifndef PURE_OPENGL_ES_2
-      glRasterPos3i((int) ((I->Width - width) / 2 + I->rect.left),
-            (int) ((I->Height - height) / 2 + I->rect.bottom), -10);
-#endif
-      PyMOLDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-      drawn = true;
-    }
-
-    I->LastRender = UtilGetSeconds(G);
+  while (tmp_height && tmp_width &&
+         ((tmp_height > (I->Height - 3)) || (tmp_width > (I->Width - 3)))) {
+    tmp_height = (tmp_height >> 1);
+    tmp_width = (tmp_width >> 1);
+    factor = (factor << 1);
+    shift++;
   }
+  tmp_width += 2;
+  tmp_height += 2;
+
+  if (tmp_height && tmp_width) {
+    unsigned int buffer_size = tmp_height * tmp_width * 4;
+    std::vector<unsigned char> buffer_vec(buffer_size);
+    auto* buffer = buffer_vec.data();
+
+    if (!buffer_vec.empty() && data) {
+      unsigned char* p = data;
+      unsigned char* q = buffer;
+      unsigned char *pp, *ppp, *pppp;
+      unsigned int c1, c2, c3, c4, alpha, tot, bg;
+      unsigned int factor_col_bytes = factor * 4;
+      unsigned int factor_row_bytes = factor * src_row_bytes;
+
+      shift = shift + shift;
+
+      for (int a = 0; a < tmp_width; a++) { /* border, first row */
+        *((unsigned int*) (q)) = color_word;
+        q += 4;
+      }
+      for (int b = 1; b < tmp_height - 1; b++) { /* rows */
+        pp = p;
+        *((unsigned int*) (q)) = color_word; /* border */
+        q += 4;
+        for (int a = 1; a < tmp_width - 1; a++) { /* cols */
+          ppp = pp;
+
+          c1 = c2 = c3 = c4 = tot = 0;
+
+          if (show_alpha &&
+              (((a >> 4) + (b >> 4)) & 0x1)) { /* introduce checkerboard */
+            bg_rr = ((bg_r & 0x80) ? bg_r - TRN_BKG : bg_r + TRN_BKG);
+            bg_gg = ((bg_g & 0x80) ? bg_g - TRN_BKG : bg_g + TRN_BKG);
+            bg_bb = ((bg_b & 0x80) ? bg_b - TRN_BKG : bg_b + TRN_BKG);
+          } else {
+            bg_rr = bg_r;
+            bg_gg = bg_g;
+            bg_bb = bg_b;
+          }
+
+          for (int d = 0; d < factor; d++) { /* box rows */
+            pppp = ppp;
+            for (int c = 0; c < factor; c++) { /* box cols */
+              unsigned char alpha = pppp[3];
+              c1 += *(pppp++) * alpha;
+              c2 += *(pppp++) * alpha;
+              c3 += *(pppp++) * alpha;
+              pppp++;
+              c4 += alpha;
+              tot += 0xFF;
+            }
+            ppp += src_row_bytes;
+          }
+          if (c4) {
+            bg = tot - c4;
+            *(q++) = (c1 + bg_rr * bg) / tot;
+            *(q++) = (c2 + bg_gg * bg) / tot;
+            *(q++) = (c3 + bg_bb * bg) / tot;
+            *(q++) = 0xFF;
+          } else {
+            *(q++) = bg_rr;
+            *(q++) = bg_gg;
+            *(q++) = bg_bb;
+            *(q++) = 0xFF;
+          }
+          pp += factor_col_bytes;
+        }
+        *((unsigned int*) (q)) = color_word; /* border */
+        q += 4;
+        p += factor_row_bytes;
+      }
+      for (int a = 0; a < tmp_width; a++) { /* border, last row */
+        *((unsigned int*) (q)) = color_word;
+        q += 4;
+      }
+      Rect2D rect{{(int) ((I->Width - tmp_width) / 2 + I->rect.left),
+                      (int) ((I->Height - tmp_height) / 2 + I->rect.bottom)},
+          {tmp_width, tmp_height}};
+      RendererWritePixelsTo(G, rect, buffer);
+      drawn = true;
+    }
+  }
+  int text_pos = (I->Height - tmp_height) / 2 - 15;
+  int x_pos, y_pos;
+  if (text_pos < 0) {
+    text_pos = (I->Height - tmp_height) / 2 + 3;
+    x_pos = (I->Width - tmp_width) / 2 + 3;
+    y_pos = text_pos;
+  } else {
+    x_pos = (I->Width - tmp_width) / 2;
+    y_pos = text_pos;
+  }
+
+  auto buffer = pymol::join_to_string(
+      "Image size = ", I->Image->getWidth(), " x ", I->Image->getHeight());
+
+  TextSetColor3f(G, rgba[0], rgba[1], rgba[2]);
+  TextDrawStrAt(G, buffer.c_str(), x_pos + I->rect.left,
+      y_pos + I->rect.bottom, orthoCGO);
+  return drawn;
+}
+
+static bool SceneOverlayOversizeBorder(
+    PyMOLGlobals* G, int width, int height, unsigned char* data)
+{
+  /* but a border around image */
+  auto I = G->Scene;
+  bool drawn = false;
+
+  auto show_alpha = SettingGet<bool>(G, cSetting_show_alpha_checker);
+  const float* bg_color =
+      ColorGet(G, SettingGet<int>(G, nullptr, nullptr, cSetting_bg_rgb));
+  unsigned int bg_rr, bg_r = (unsigned int) (255 * bg_color[0]);
+  unsigned int bg_gg, bg_g = (unsigned int) (255 * bg_color[1]);
+  unsigned int bg_bb, bg_b = (unsigned int) (255 * bg_color[2]);
+
+  unsigned int color_word;
+  float rgba[4] = {0.0F, 0.0F, 0.0F, 1.0F};
+  unsigned int tmp_height = height + 2;
+  unsigned int tmp_width = width + 2;
+  unsigned int border = 1;
+  unsigned int upscale = 1;
+
+  // Upscale for Retina/4K
+  if (DIP2PIXEL(height) == I->Height && DIP2PIXEL(width) == I->Width) {
+    upscale = DIP2PIXEL(1);
+    tmp_height = DIP2PIXEL(height);
+    tmp_width = DIP2PIXEL(width);
+    border = 0;
+  }
+
+  unsigned int n_word = tmp_height * tmp_width;
+  std::vector<unsigned int> tmp_buffer_vec(n_word);
+  ColorGetBkrdContColor(G, rgba, false);
+  color_word = ColorGet32BitWord(G, rgba);
+
+  if (!tmp_buffer_vec.empty()) {
+    auto* tmp_buffer = tmp_buffer_vec.data();
+    unsigned int a, b;
+    unsigned int* p = (unsigned int*) data;
+    unsigned int* q = tmp_buffer;
+
+    // top border
+    for (a = 0; a < border; ++a) {
+      for (b = 0; b < tmp_width; b++)
+        *(q++) = color_word;
+    }
+
+    for (a = border; a < tmp_height - border; a++) {
+      // left border
+      for (b = 0; b < border; ++b) {
+        *(q++) = color_word;
+      }
+
+      for (b = border; b < tmp_width - border; b++) {
+        unsigned char* qq = (unsigned char*) q;
+        unsigned char* pp = (unsigned char*) p;
+        unsigned char bg;
+        if (show_alpha &&
+            (((a >> 4) + (b >> 4)) & 0x1)) { /* introduce checkerboard */
+          bg_rr = ((bg_r & 0x80) ? bg_r - TRN_BKG : bg_r + TRN_BKG);
+          bg_gg = ((bg_g & 0x80) ? bg_g - TRN_BKG : bg_g + TRN_BKG);
+          bg_bb = ((bg_b & 0x80) ? bg_b - TRN_BKG : bg_b + TRN_BKG);
+        } else {
+          bg_rr = bg_r;
+          bg_gg = bg_g;
+          bg_bb = bg_b;
+        }
+        if (pp[3]) {
+          bg = 0xFF - pp[3];
+          *(qq++) = (pp[0] * pp[3] + bg_rr * bg) / 0xFF;
+          *(qq++) = (pp[1] * pp[3] + bg_gg * bg) / 0xFF;
+          *(qq++) = (pp[2] * pp[3] + bg_bb * bg) / 0xFF;
+          *(qq++) = 0xFF;
+        } else {
+          *(qq++) = bg_rr;
+          *(qq++) = bg_gg;
+          *(qq++) = bg_bb;
+          *(qq++) = 0xFF;
+        }
+        q++;
+
+        if ((b + 1 - border) % upscale == 0) {
+          p++;
+        }
+      }
+
+      if ((a + 1 - border) % upscale != 0) {
+        // read row again
+        p -= width;
+      }
+
+      // right border
+      for (b = 0; b < border; ++b) {
+        *(q++) = color_word;
+      }
+    }
+
+    // bottom border
+    for (a = 0; a < border; ++a) {
+      for (b = 0; b < tmp_width; b++)
+        *(q++) = color_word;
+    }
+
+    Rect2D rect{{(int) ((I->Width - tmp_width) / 2 + I->rect.left),
+                    (int) ((I->Height - tmp_height) / 2 + I->rect.bottom)},
+        {tmp_width, tmp_height}};
+    RendererWritePixelsTo(G, rect, (unsigned char*) tmp_buffer);
+    drawn = true;
+  }
+  return drawn;
+}
+
+static bool SceneOverlayExactFitNoAlpha(PyMOLGlobals* G, int width, int height, unsigned char* data)
+{
+  auto I = G->Scene;
+  Rect2D rect{{(int) ((I->Width - width) / 2 + I->rect.left),
+                  (int) ((I->Height - height) / 2 + I->rect.bottom)},
+      {width, height}};
+  RendererWritePixelsTo(G, rect, data);
+  return true;
+}
+
+static bool SceneOverlayExactFit(PyMOLGlobals* G, int width, int height, unsigned char* data)
+{
+  auto I = G->Scene;
+  float rgba[4] = {0.0F, 0.0F, 0.0F, 1.0F};
+  unsigned int n_word = height * width;
+  std::vector<unsigned int> tmp_buffer_vec(n_word);
+  ColorGetBkrdContColor(G, rgba, false);
+
+  auto show_alpha = SettingGet<bool>(G, cSetting_show_alpha_checker);
+  const float* bg_color =
+      ColorGet(G, SettingGet<int>(G, nullptr, nullptr, cSetting_bg_rgb));
+  unsigned int bg_rr, bg_r = (unsigned int) (255 * bg_color[0]);
+  unsigned int bg_gg, bg_g = (unsigned int) (255 * bg_color[1]);
+  unsigned int bg_bb, bg_b = (unsigned int) (255 * bg_color[2]);
+
+  if (tmp_buffer_vec.empty()) {
+    return false;
+  }
+  auto* tmp_buffer = tmp_buffer_vec.data();
+  unsigned int a, b;
+  unsigned int* p = (unsigned int*) data;
+  unsigned int* q = tmp_buffer;
+  for (a = 0; a < (unsigned int) height; a++) {
+    for (b = 0; b < (unsigned int) width; b++) {
+      unsigned char* qq = (unsigned char*) q;
+      unsigned char* pp = (unsigned char*) p;
+      unsigned char bg;
+      if (show_alpha &&
+          (((a >> 4) + (b >> 4)) & 0x1)) { /* introduce checkerboard */
+        bg_rr = ((bg_r & 0x80) ? bg_r - TRN_BKG : bg_r + TRN_BKG);
+        bg_gg = ((bg_g & 0x80) ? bg_g - TRN_BKG : bg_g + TRN_BKG);
+        bg_bb = ((bg_b & 0x80) ? bg_b - TRN_BKG : bg_b + TRN_BKG);
+      } else {
+        bg_rr = bg_r;
+        bg_gg = bg_g;
+        bg_bb = bg_b;
+      }
+      if (pp[3]) {
+        bg = 0xFF - pp[3];
+        *(qq++) = (pp[0] * pp[3] + bg_rr * bg) / 0xFF;
+        *(qq++) = (pp[1] * pp[3] + bg_gg * bg) / 0xFF;
+        *(qq++) = (pp[2] * pp[3] + bg_bb * bg) / 0xFF;
+        *(qq++) = 0xFF;
+      } else {
+        *(qq++) = bg_rr;
+        *(qq++) = bg_gg;
+        *(qq++) = bg_bb;
+        *(qq++) = 0xFF;
+      }
+      q++;
+      p++;
+    }
+  }
+  Rect2D rect{{(int) ((I->Width - width) / 2 + I->rect.left),
+                  (int) ((I->Height - height) / 2 + I->rect.bottom)},
+      {width, height}};
+  RendererWritePixelsTo(G, rect, (unsigned char*) tmp_buffer);
+  return true;
+}
+
+int SceneDrawImageOverlay(PyMOLGlobals* G, int override, CGO* orthoCGO)
+{
+  CScene* I = G->Scene;
+  int drawn = false;
+  int text = SettingGet<bool>(G, cSetting_text);
+  /* is the text/overlay (ESC) on? */
+  int overlay = OrthoGetOverlayStatus(G);
+  bool draw_overlay = (!text || overlay) && (override || I->CopyType == true) &&
+                      I->Image && !I->Image->empty();
+
+  if (!draw_overlay) {
+    return drawn;
+  }
+
+  int width = I->Image->getWidth();
+  int height = I->Image->getHeight();
+  unsigned char* data = I->Image->bits();
+
+#ifndef PURE_OPENGL_ES_2
+  if (I->Image->isStereo()) {
+    int buffer;
+    glGetIntegerv(GL_DRAW_BUFFER, (GLint*) &buffer);
+    if (buffer == GL_BACK_RIGHT) /* hardware stereo */
+      data += I->Image->getSizeInBytes();
+    else {
+      int stereo = SettingGetGlobal_i(G, cSetting_stereo);
+      if (stereo) {
+        switch (OrthoGetRenderMode(G)) {
+        case OrthoRenderMode::GeoWallRight:
+          data += I->Image->getSizeInBytes();
+          break;
+        default:
+          break;
+        }
+      }
+    }
+  }
+#endif
+
+  if ((height > I->Height) || (width > I->Width)) { /* image is oversize */
+    drawn = SceneOverlayOversize(G, data, orthoCGO);
+  } else if (((width < I->Width) || (height < I->Height)) &&
+              ((I->Width - width) > 2) && ((I->Height - height) > 2)) {
+    drawn = SceneOverlayOversizeBorder(G, width, height, data);
+  } else if (I->CopyForced) { /* near-exact fit */
+    drawn = SceneOverlayExactFit(G, width, height, data);
+  } else { /* not a forced copy, so don't show/blend alpha */
+    drawn = SceneOverlayExactFitNoAlpha(G, width, height, data);
+  }
+
+  I->LastRender = UtilGetSeconds(G);
   return drawn;
 }
 
