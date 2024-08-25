@@ -2233,8 +2233,6 @@ static int OptimizePointsToVBO(const CGO* I, CGO* cgo,
     short* has_draw_buffer, bool addshaders)
 {
   auto G = I->G;
-  float *vertexVals = 0, *colorVals = 0, *normalVals = 0;
-  float* pickColorVals;
   int pl = 0, plc = 0, idxpl = 0, vpl = 0, nxtn;
   uchar* colorValsUC = 0;
   uchar* normalValsC = 0;
@@ -2254,28 +2252,22 @@ static int OptimizePointsToVBO(const CGO* I, CGO* cgo,
       SettingGet<bool>(G, cSetting_cgo_shader_ub_color) ? 1 : VERTEX_COLOR_SIZE;
   auto const tot = size_t(num_total_vertices_points) * mul;
 
-  vertexVals = pymol::malloc<float>(tot);
-  CHECKOK(ok, vertexVals);
-  if (!ok) {
-    PRINTFB(G, FB_CGO, FB_Errors)
-    "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
-        __LINE__, tot ENDFB(G);
-    return 0;
-  }
-  normalVals = vertexVals + 3 * num_total_vertices_points;
+  std::vector<float> vertexValsVec(tot);
+  auto* vertexVals = vertexValsVec.data();
+  auto* normalVals = vertexVals + 3 * num_total_vertices_points;
   nxtn = 3;
   if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)) {
     normalValsC = (uchar*) normalVals;
     nxtn = 1;
   }
-  colorVals = normalVals + nxtn * num_total_vertices_points;
+  auto* colorVals = normalVals + nxtn * num_total_vertices_points;
   if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)) {
     colorValsUC = (uchar*) colorVals;
     nxtn = 1;
   } else {
     nxtn = 4;
   }
-  pickColorVals = (colorVals + nxtn * num_total_vertices_points);
+  auto* pickColorVals = (colorVals + nxtn * num_total_vertices_points);
 
   for (auto it = I->begin(); ok && !it.is_stop(); ++it) {
     const auto op = it.op_code();
@@ -2415,7 +2407,6 @@ static int OptimizePointsToVBO(const CGO* I, CGO* cgo,
       I->G->ShaderMgr->freeGPUBuffer(vboid);
     }
   }
-  FreeP(vertexVals);
   return ok;
   /* END GL_POINTS */
   //    printf("num_total_vertices_points=%d\n", num_total_vertices_points);
@@ -2913,8 +2904,6 @@ CGO* CGOOptimizeToVBONotIndexed(
     }
   }
   if (count.num_total_indexes > 0) {
-    float *vertexVals = 0, *colorVals = 0, *normalVals;
-    float *pickColorVals, *accessibilityVals = 0;
     uchar* colorValsUC = 0;
     uchar* normalValsC = 0;
 
@@ -2933,30 +2922,24 @@ CGO* CGOOptimizeToVBONotIndexed(
                : VERTEX_COLOR_SIZE;
     auto const tot = size_t(count.num_total_indexes) * mul;
 
-    vertexVals = pymol::malloc<float>(tot);
-    if (!vertexVals) {
-      PRINTFB(G, FB_CGO, FB_Errors)
-      "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
-          __LINE__, tot ENDFB(G);
-      CGOFree(cgo);
-      return (nullptr);
-    }
-    normalVals = vertexVals + 3 * count.num_total_indexes;
+    std::vector<float> vertexValsVec(tot);
+    auto* vertexVals = vertexValsVec.data();
+    auto* normalVals = vertexVals + 3 * count.num_total_indexes;
     unsigned nxtn = VERTEX_NORMAL_SIZE;
     if (SettingGet<int>(G, cSetting_cgo_shader_ub_normal)) {
       normalValsC = (uchar*) normalVals;
       nxtn = 1;
     }
-    colorVals = normalVals + nxtn * count.num_total_indexes;
+    auto* colorVals = normalVals + nxtn * count.num_total_indexes;
     if (SettingGet<int>(G, cSetting_cgo_shader_ub_color)) {
       colorValsUC = (uchar*) colorVals;
       nxtn = 1;
     } else {
       nxtn = 4;
     }
-    pickColorVals = (colorVals + nxtn * count.num_total_indexes);
+    auto* pickColorVals = (colorVals + nxtn * count.num_total_indexes);
     nxtn = 3;
-    accessibilityVals = pickColorVals + nxtn * count.num_total_indexes;
+    auto* accessibilityVals = pickColorVals + nxtn * count.num_total_indexes;
 
     bool has_normals = false, has_colors = false, has_accessibility = false;
     ok = CGOProcessCGOtoArrays(I, cgo, cgo, min, max, &ambient_occlusion,
@@ -2968,7 +2951,6 @@ CGO* CGOOptimizeToVBONotIndexed(
         PRINTFB(G, FB_CGO, FB_Errors)
         "ERROR: CGOProcessCGOtoArrays() could not allocate enough "
         "memory\n" ENDFB(G);
-      FreeP(vertexVals);
       CGOFree(cgo);
       return (nullptr);
     }
@@ -3027,7 +3009,6 @@ CGO* CGOOptimizeToVBONotIndexed(
           "CGOOptimizeToVBONotIndexedWithReturnedData: ERROR: "
           "CGODrawBuffersNotIndexed() could not allocate enough memory\n" ENDFB(
               G);
-          FreeP(vertexVals);
           CGOFree(cgo);
           return (nullptr);
         }
@@ -3041,14 +3022,10 @@ CGO* CGOOptimizeToVBONotIndexed(
     }
     if (ok && returnedData) {
       returnedData[0] = vertexVals;
-    } else {
-      FreeP(vertexVals);
     }
   }
   if (ok && count.num_total_indexes_lines > 0) {
     bool has_color = false, has_normals = false;
-    float *vertexVals = 0, *colorVals = 0, *normalVals;
-    float* pickColorVals;
     int pl = 0, plc = 0, idxpl = 0, vpl = 0, nxtn;
     uchar* colorValsUC = 0;
     uchar* normalValsC = 0;
@@ -3067,29 +3044,23 @@ CGO* CGOOptimizeToVBONotIndexed(
                : VERTEX_COLOR_SIZE;
     auto const tot = size_t(count.num_total_indexes_lines) * mul;
 
-    vertexVals = pymol::malloc<float>(tot);
-    if (!vertexVals) {
-      PRINTFB(G, FB_CGO, FB_Errors)
-      "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
-          __LINE__, tot ENDFB(G);
-      CGOFree(cgo);
-      return (nullptr);
-    }
-    normalVals = vertexVals + 3 * count.num_total_indexes_lines;
+    std::vector<float> vertexValsVec(tot);
+    auto* vertexVals = vertexValsVec.data();
+    auto* normalVals = vertexVals + 3 * count.num_total_indexes_lines;
     nxtn = 3;
     if (SettingGet<int>(G, cSetting_cgo_shader_ub_normal)) {
       normalValsC = (uchar*) normalVals;
       nxtn = 1;
     }
 
-    colorVals = normalVals + nxtn * count.num_total_indexes_lines;
+    auto* colorVals = normalVals + nxtn * count.num_total_indexes_lines;
     if (SettingGet<int>(G, cSetting_cgo_shader_ub_color)) {
       colorValsUC = (uchar*) colorVals;
       nxtn = 1;
     } else {
       nxtn = 4;
     }
-    pickColorVals = (colorVals + nxtn * count.num_total_indexes_lines);
+    auto* pickColorVals = (colorVals + nxtn * count.num_total_indexes_lines);
 
     for (auto it = I->begin(); !it.is_stop(); ++it) {
       auto pc = it.data();
@@ -3292,7 +3263,6 @@ CGO* CGOOptimizeToVBONotIndexed(
           "CGOOptimizeToVBONotIndexedWithReturnedData: ERROR: "
           "CGODrawBuffersNotIndexed() could not allocate enough memory\n" ENDFB(
               G);
-          FreeP(vertexVals);
           CGOFree(cgo);
           if (!newPickColorVals) {
             G->ShaderMgr->freeGPUBuffer(pickvboid);
@@ -3310,8 +3280,6 @@ CGO* CGOOptimizeToVBONotIndexed(
     }
     if (ok && returnedData) {
       returnedData[1] = vertexVals;
-    } else {
-      FreeP(vertexVals);
     }
   }
 
@@ -3393,8 +3361,6 @@ CGO* CGOOptimizeToVBOIndexed(const CGO* I, int est, const float* color,
   }
 
   if (count.num_total_vertices > 0) {
-    float *vertexVals = 0, *colorVals = 0, *normalVals, *accessibilityVals = 0;
-    float* pickColorVals;
     int pl = 0, plc = 0, idxpl = 0, vpl = 0, nxtn;
     uchar* colorValsUC = 0;
     uchar* normalValsC = 0;
@@ -3434,30 +3400,24 @@ CGO* CGOOptimizeToVBOIndexed(const CGO* I, int est, const float* color,
                : VERTEX_COLOR_SIZE;
     auto const tot = size_t(count.num_total_vertices) * mul;
 
-    vertexVals = pymol::malloc<float>(tot);
-    if (!vertexVals) {
-      PRINTFB(G, FB_CGO, FB_Errors)
-      "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
-          __LINE__, tot ENDFB(G);
-      CGOFree(cgo);
-      return (nullptr);
-    }
-    normalVals = vertexVals + 3 * count.num_total_vertices;
+    std::vector<float> vertexValsVec(tot);
+    auto* vertexVals = vertexValsVec.data();
+    auto* normalVals = vertexVals + 3 * count.num_total_vertices;
     nxtn = 3;
     if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)) {
       normalValsC = (uchar*) normalVals;
       nxtn = 1;
     }
 
-    colorVals = normalVals + nxtn * count.num_total_vertices;
+    auto* colorVals = normalVals + nxtn * count.num_total_vertices;
     if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)) {
       colorValsUC = (uchar*) colorVals;
       nxtn = 1;
     } else {
       nxtn = 4;
     }
-    pickColorVals = (colorVals + nxtn * count.num_total_vertices);
-    accessibilityVals = pickColorVals + 3 * count.num_total_vertices;
+    auto* pickColorVals = (colorVals + nxtn * count.num_total_vertices);
+    auto* accessibilityVals = pickColorVals + 3 * count.num_total_vertices;
 
     for (auto it = I->begin(); ok && !it.is_stop(); ++it) {
       const auto pc = it.data();
@@ -3735,11 +3695,8 @@ CGO* CGOOptimizeToVBOIndexed(const CGO* I, int est, const float* color,
         I->G->ShaderMgr->freeGPUBuffer(iboid);
       }
     }
-    FreeP(vertexVals);
   }
   if (ok && count.num_total_vertices_lines > 0) {
-    float *vertexVals = 0, *colorVals = 0, *normalVals = nullptr, *nxtVals;
-    float* pickColorVals;
     uchar* colorValsUC = 0;
     uchar* normalValsC = 0;
     int pl = 0, plc = 0, idxpl = 0, vpl = 0, sz;
@@ -3766,16 +3723,10 @@ CGO* CGOOptimizeToVBOIndexed(const CGO* I, int est, const float* color,
                : VERTEX_COLOR_SIZE;
     auto const tot = size_t(count.num_total_vertices_lines) * mul;
 
-    vertexVals = pymol::malloc<float>(tot);
-    if (!vertexVals) {
-      PRINTFB(G, FB_CGO, FB_Errors)
-      "%s-Error(%d): vertexVals could not be allocated (tot=%zu)\n", __func__,
-          __LINE__, tot ENDFB(G);
-      CGOFree(cgo);
-      return (nullptr);
-    }
-    nxtVals = vertexVals + VERTEX_POS_SIZE * count.num_total_vertices_lines;
-
+    std::vector<float> vertexValsVec(tot);
+    auto* vertexVals = vertexValsVec.data();
+    auto* nxtVals = vertexVals + VERTEX_POS_SIZE * count.num_total_vertices_lines;
+    float* normalVals = nullptr;
     if (hasNormals) {
       normalVals = nxtVals;
       if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)) {
@@ -3787,7 +3738,7 @@ CGO* CGOOptimizeToVBOIndexed(const CGO* I, int est, const float* color,
       nxtVals += sz * count.num_total_vertices_lines;
     }
 
-    colorVals = nxtVals;
+    auto* colorVals = nxtVals;
     if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)) {
       colorValsUC = (uchar*) colorVals;
       sz = 1;
@@ -3796,7 +3747,7 @@ CGO* CGOOptimizeToVBOIndexed(const CGO* I, int est, const float* color,
     }
     nxtVals += sz * count.num_total_vertices_lines;
 
-    pickColorVals = nxtVals;
+    auto* pickColorVals = nxtVals;
 
     for (auto it = I->begin(); ok && !it.is_stop(); ++it) {
       const auto pc = it.data();
@@ -4007,7 +3958,6 @@ CGO* CGOOptimizeToVBOIndexed(const CGO* I, int est, const float* color,
         I->G->ShaderMgr->freeGPUBuffer(iboid);
       }
     }
-    FreeP(vertexVals);
   }
   if (ok && (count.num_total_vertices > 0 || count.num_total_vertices_lines > 0)) {
     ok &= CGOBoundingBox(cgo, min, max);
@@ -4843,49 +4793,17 @@ CGO* CGOSimplifyNoCompress(
 CGO* CGOOptimizeTextures(const CGO* I, int est)
 {
   CGO* cgo = nullptr;
-  int num_total_textures;
   int ok = true;
-  num_total_textures = CGOCountNumberOfOperationsOfType(I, CGO_DRAW_TEXTURE);
+  auto num_total_textures = CGOCountNumberOfOperationsOfType(I, CGO_DRAW_TEXTURE);
   //  printf("CGOOptimizeTextures: num_total_textures=%d\n",
   //  num_total_textures);
   if (num_total_textures) {
-    float *worldPos, *screenValues, *textExtents, *pickColorVals;
     int place3 = 0, place2 = 0;
-    worldPos = pymol::malloc<float>(num_total_textures * 18);
-    if (!worldPos) {
-      PRINTFB(I->G, FB_CGO, FB_Errors)
-      "ERROR: CGOOptimizeTextures() worldPos could not be allocated\n" ENDFB(
-          I->G);
-      return nullptr;
-    }
-    screenValues = pymol::malloc<float>(num_total_textures * 18);
-    if (!screenValues) {
-      PRINTFB(I->G, FB_CGO, FB_Errors)
-      "ERROR: CGOOptimizeTextures() screenValues could not be "
-      "allocated\n" ENDFB(I->G);
-      FreeP(worldPos);
-      return nullptr;
-    }
-    textExtents = pymol::malloc<float>(num_total_textures * 12);
-    if (!textExtents) {
-      PRINTFB(I->G, FB_CGO, FB_Errors)
-      "ERROR: CGOOptimizeTextures() textExtents could not be allocated\n" ENDFB(
-          I->G);
-      FreeP(screenValues);
-      FreeP(worldPos);
-      return nullptr;
-    }
-    pickColorVals =
-        pymol::malloc<float>(num_total_textures * 12); /* pick index and bond */
-    if (!pickColorVals) {
-      PRINTFB(I->G, FB_CGO, FB_Errors)
-      "ERROR: CGOOptimizeTextures() pickColorVals could not be "
-      "allocated\n" ENDFB(I->G);
-      FreeP(textExtents);
-      FreeP(screenValues);
-      FreeP(worldPos);
-      return nullptr;
-    }
+    std::vector<float> worldPos(num_total_textures * 18);
+    std::vector<float> screenValues(num_total_textures * 18);
+    std::vector<float> textExtents(num_total_textures * 12);
+    std::vector<float> pickColorValsVec(num_total_textures * 12); /* pick index and bond */
+    auto* pickColorVals = pickColorValsVec.data();
 
     cgo = CGONewSized(I->G, 0);
 
@@ -4961,11 +4879,11 @@ CGO* CGOOptimizeTextures(const CGO* I, int est)
           buffer_layout::SEQUENTIAL);
       ok &= vbo->bufferData(
           {BufferDesc("attr_worldpos", VertexFormat::Float3,
-               sizeof(float) * num_total_textures * 18, worldPos),
+               sizeof(float) * num_total_textures * 18, worldPos.data()),
               BufferDesc("attr_screenoffset", VertexFormat::Float3,
-                  sizeof(float) * num_total_textures * 18, screenValues),
+                  sizeof(float) * num_total_textures * 18, screenValues.data()),
               BufferDesc("attr_texcoords", VertexFormat::Float3,
-                  sizeof(float) * num_total_textures * 18, textExtents)});
+                  sizeof(float) * num_total_textures * 18, textExtents.data())});
       size_t vboid = vbo->get_hash_id();
 
       if (ok) {
@@ -4986,10 +4904,6 @@ CGO* CGOOptimizeTextures(const CGO* I, int est)
         CGOFree(cgo);
       }
     }
-    FreeP(worldPos);
-    FreeP(screenValues);
-    FreeP(textExtents);
-    FreeP(pickColorVals);
   }
   return cgo;
 }
@@ -5093,28 +5007,18 @@ CGO* CGOConvertToLabelShader(const CGO* I, CGO* addTo)
 CGO* CGOOptimizeLabels(const CGO* I, int est, bool addshaders)
 {
   CGO* cgo = nullptr;
-  int num_total_labels;
   int ok = true;
-  num_total_labels = CGOCountNumberOfOperationsOfType(I, CGO_DRAW_LABEL);
+  auto num_total_labels = CGOCountNumberOfOperationsOfType(I, CGO_DRAW_LABEL);
   if (num_total_labels) {
-    float *targetPos, *worldPos, *screenValues, *screenWorldValues,
-        *textExtents, *pickColorVals;
-    float* relativeMode;
     int place3 = 0, place2 = 0, place = 0;
-    worldPos = pymol::malloc<float>(num_total_labels * 6 * 17);
-    if (!worldPos) {
-      PRINTFB(I->G, FB_CGO, FB_Errors)
-      "ERROR: CGOOptimizeLabels() worldPos could not be allocated\n" ENDFB(
-          I->G);
-      return nullptr;
-    }
-    screenValues = worldPos + (num_total_labels * 18);
-    targetPos = screenValues + (num_total_labels * 18);
-    screenWorldValues = targetPos + (num_total_labels * 18);
-    textExtents = screenWorldValues + (num_total_labels * 18);
-    pickColorVals =
+    std::vector<float> worldPos(num_total_labels * 6 * 17);
+    auto* screenValues = worldPos.data() + (num_total_labels * 18);
+    auto* targetPos = screenValues + (num_total_labels * 18);
+    auto* screenWorldValues = targetPos + (num_total_labels * 18);
+    auto* textExtents = screenWorldValues + (num_total_labels * 18);
+    auto* pickColorVals =
         textExtents + (num_total_labels * 12); /* pick index and bond */
-    relativeMode = (float*) (pickColorVals + (num_total_labels * 12));
+    auto relativeMode = (float*) (pickColorVals + (num_total_labels * 12));
     cgo = CGONewSized(I->G, 0);
 
     for (auto it = I->begin(); ok && !it.is_stop(); ++it) {
@@ -5212,7 +5116,7 @@ CGO* CGOOptimizeLabels(const CGO* I, int est, bool addshaders)
           buffer_layout::SEQUENTIAL);
       ok &=
           vbo->bufferData({BufferDesc("attr_worldpos", VertexFormat::Float3,
-                               sizeof(float) * num_total_labels * 18, worldPos),
+                               sizeof(float) * num_total_labels * 18, worldPos.data()),
               BufferDesc("attr_targetpos", VertexFormat::Float3,
                   sizeof(float) * num_total_labels * 18, targetPos),
               BufferDesc("attr_screenoffset", VertexFormat::Float3,
@@ -5265,7 +5169,6 @@ CGO* CGOOptimizeLabels(const CGO* I, int est, bool addshaders)
         CGOFree(cgo);
       }
     }
-    FreeP(worldPos);
   }
   return cgo;
 }
@@ -5282,31 +5185,21 @@ CGO* CGOOptimizeConnectors(const CGO* I, int est)
       CGOCountNumberOfOperationsOfType(I, CGO_DRAW_CONNECTOR);
 
   if (num_total_connectors) {
-    float *targetPt3d, *labelCenterPt3d, *indentFactor, *screenWorldOffset,
-        *connectorColor, *textSize;
-    float *bkgrdColor, *relExtLength, *connectorWidth;
-    uchar *relativeMode, *drawBkgrd;
     uchar* isCenterPt = nullptr;
     int place3 = 0, place2 = 0, place = 0;
-    targetPt3d =
-        pymol::calloc<float>(num_total_connectors * 20 *
-                             factor); /* too much, relativeMode only needs 1
+    std::vector<float> targetPt3d(num_total_connectors * 20 *
+                             factor, 0); /* too much, relativeMode only needs 1
                                          byte per vertex, instead of 1 float */
-    if (!targetPt3d) {
-      PRINTFB(I->G, FB_CGO, FB_Errors)
-      "ERROR: CGOOptimizeConnectors() could not be allocated\n" ENDFB(I->G);
-      return nullptr;
-    }
-    labelCenterPt3d = targetPt3d + (num_total_connectors * 3 * factor);
-    indentFactor = labelCenterPt3d + (num_total_connectors * 3 * factor);
-    screenWorldOffset = indentFactor + (num_total_connectors * 2 * factor);
-    connectorColor = screenWorldOffset + (num_total_connectors * 3 * factor);
-    textSize = connectorColor + (num_total_connectors * factor);
-    relativeMode = (uchar*) (textSize + (num_total_connectors * 2 * factor));
-    drawBkgrd = (uchar*) (relativeMode + (num_total_connectors * factor));
-    bkgrdColor = (float*) (drawBkgrd + (num_total_connectors * factor));
-    relExtLength = (float*) (bkgrdColor + (num_total_connectors * factor));
-    connectorWidth = (float*) (relExtLength + (num_total_connectors * factor));
+    auto* labelCenterPt3d = targetPt3d.data() + (num_total_connectors * 3 * factor);
+    auto* indentFactor = labelCenterPt3d + (num_total_connectors * 3 * factor);
+    auto* screenWorldOffset = indentFactor + (num_total_connectors * 2 * factor);
+    auto* connectorColor = screenWorldOffset + (num_total_connectors * 3 * factor);
+    auto* textSize = connectorColor + (num_total_connectors * factor);
+    auto* relativeMode = (uchar*) (textSize + (num_total_connectors * 2 * factor));
+    auto* drawBkgrd = (uchar*) (relativeMode + (num_total_connectors * factor));
+    auto* bkgrdColor = (float*) (drawBkgrd + (num_total_connectors * factor));
+    auto* relExtLength = (float*) (bkgrdColor + (num_total_connectors * factor));
+    auto* connectorWidth = (float*) (relExtLength + (num_total_connectors * factor));
     if (!use_geometry_shaders)
       isCenterPt = (uchar*) (connectorWidth + (num_total_connectors * factor));
     else
@@ -5392,7 +5285,7 @@ CGO* CGOOptimizeConnectors(const CGO* I, int est)
       const size_t quant = factor * num_total_connectors;
       VertexBuffer* vbo = I->G->ShaderMgr->newGPUBuffer<VertexBuffer>();
       ok = vbo->bufferData({BufferDesc("a_target_pt3d", VertexFormat::Float3,
-                                sizeof(float) * 3 * quant, targetPt3d),
+                                sizeof(float) * 3 * quant, targetPt3d.data()),
           BufferDesc("a_center_pt3d", VertexFormat::Float3,
               sizeof(float) * 3 * quant, labelCenterPt3d),
           BufferDesc("a_indentFactor", VertexFormat::Float2,
@@ -5426,7 +5319,6 @@ CGO* CGOOptimizeConnectors(const CGO* I, int est)
         CGOFree(cgo);
       }
     }
-    FreeP(targetPt3d);
   }
   CheckGLErrorOK(I->G, "ERROR: CGOOptimizeConnectors() end returns err=%d\n");
   return cgo;
@@ -9204,7 +9096,7 @@ CGO* CGOConvertToShader(const CGO* I, AttribDataDesc& attrData,
   float* pick_data = cgo->add<cgo::draw::custom>(mode, ntotalverts,
       vbo->get_hash_id(), pickvbohash, vertsperpickinfo, pickDataSize, iboid,
       num_total_indexes);
-  void* allData = malloc(ntotalverts * vertexDataSize);
+  std::vector<unsigned char> allData(ntotalverts * vertexDataSize);
   std::vector<void*> dataPtrs;
   std::vector<int> repeat_attr_idx;
   int allAttrBS = 0;
@@ -9231,13 +9123,13 @@ CGO* CGOConvertToShader(const CGO* I, AttribDataDesc& attrData,
                                                    : nullptr));
       if (first_value) {
         auto attrSize = GetSizeOfVertexFormat(attrDesc->m_format);
-        memcpy(((unsigned char*) allData) + attrOffset, first_value, attrSize);
+        memcpy(allData.data() + attrOffset, first_value, attrSize);
       }
-      dataPtrs.push_back((void*) allData);
+      dataPtrs.push_back(allData.data());
       ++pl;
     }
   } else {
-    void* curAllDataPtr = (void*) allData;
+    auto* curAllDataPtr = allData.data();
     int pl = 0;
     for (auto& attrDesc : attrData) {
       if (attrDesc.repeat_value) {
@@ -9252,10 +9144,9 @@ CGO* CGOConvertToShader(const CGO* I, AttribDataDesc& attrData,
                   ? attrDesc.default_value
                   : (attrDesc.repeat_value ? attrDesc.repeat_value : nullptr));
       if (first_value) {
-        memcpy((unsigned char*) curAllDataPtr, first_value, attrSizes[pl]);
+        memcpy(curAllDataPtr, first_value, attrSizes[pl]);
       }
-      curAllDataPtr =
-          ((unsigned char*) curAllDataPtr) + ntotalverts * attrSizes[pl];
+      curAllDataPtr = curAllDataPtr + ntotalverts * attrSizes[pl];
       ++pl;
     }
   }
@@ -9353,10 +9244,8 @@ CGO* CGOConvertToShader(const CGO* I, AttribDataDesc& attrData,
                 //         vertex, then the above copyAttributeForVertex() would
                 //         not be needed
                 if (isInterleaved) {
-                  void* dest =
-                      ((unsigned char*) allData) + vertexDataSize * nvert;
-                  memcpy(dest, ((unsigned char*) dest) - vertexDataSize,
-                      vertexDataSize);
+                  auto* dest = allData.data() + vertexDataSize * nvert;
+                  memcpy(dest, dest - vertexDataSize, vertexDataSize);
                 } else {
                   auto dataPtrIt = dataPtrs.begin();
                   auto attrDataIt = attrData.begin();
@@ -9388,7 +9277,7 @@ CGO* CGOConvertToShader(const CGO* I, AttribDataDesc& attrData,
                 auto funcAttrib = funcData.attrib;
                 auto order = funcAttrib->order;
                 if (isInterleaved) {
-                  unsigned char* dest = ((unsigned char*) allData) +
+                  unsigned char* dest = allData.data() +
                                         vertexDataSize * nvert_m_1 +
                                         attrOffset[order];
                   funcData.funcDataConversion(
@@ -9452,12 +9341,11 @@ CGO* CGOConvertToShader(const CGO* I, AttribDataDesc& attrData,
       bufferData.push_back(BufferDesc{attrDesc->attr_name, attrDesc->m_format,
           0, nullptr, (std::uint32_t) offset});
     }
-    vbo->bufferData(std::move(bufferData), (const void*) allData,
+    vbo->bufferData(std::move(bufferData), allData.data(),
         (size_t) (nvert * vertexDataSize), (size_t) vertexDataSize);
     break;
   }
   }
-  free(allData);
 
   CGOStop(cgo);
   return cgo;
