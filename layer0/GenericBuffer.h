@@ -389,7 +389,7 @@ public:
   VertexBuffer(buffer_layout layout = buffer_layout::SEPARATE,
       GLenum usage = GL_STATIC_DRAW);
 
-  void bind() const;
+  void bind() const override;
 
   void bind(GLuint prg, int index = -1);
 
@@ -413,7 +413,7 @@ class IndexBuffer : public GenericBuffer {
 public:
   using GenericBuffer::GenericBuffer;
 
-  void bind() const;
+  void bind() const override;
   void unbind();
   GLenum bufferType() const override;
 };
@@ -447,7 +447,7 @@ public:
     freeBuffer();
   }
 
-  void bind() const;
+  void bind() const override;
   void unbind() const;
 
 private:
@@ -551,7 +551,7 @@ public:
     freeBuffer();
   }
 
-  void bind() const;
+  void bind() const override;
   /**
    * Binds the texture to a specific texture unit
    * @param textureUnit The texture unit to bind to (0, 1, 2, etc)
@@ -618,7 +618,7 @@ public:
   void attach_renderbuffer(renderBuffer_t * renderbuffer, fbo::attachment loc);
   void print_fbo();
 
-  void bind() const;
+  void bind() const override;
   void unbind() const;
 private:
   void genBuffer();
@@ -657,7 +657,7 @@ public:
   renderTarget_t(int width, int height) : _size(width, height) {}
   ~renderTarget_t();
 
-  void bind() const { bind(true); };
+  void bind() const override { bind(true); };
   void bind(bool clear) const;
   void bindFBORBO() const
   {
