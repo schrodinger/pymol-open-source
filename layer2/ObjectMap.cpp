@@ -1728,7 +1728,7 @@ static CGO* ObjectMapCGOGenerate(PyMOLGlobals *G, float* corner)
 
   CGOStop(shaderCGO);
 
-  return CGOOptimizeToVBONotIndexedWithReturnedData(shaderCGO, 0, false);
+  return CGOOptimizeToVBONotIndexed(shaderCGO, 0, false);
 }
 
 void ObjectMap::render(RenderInfo * info)

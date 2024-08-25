@@ -863,8 +863,7 @@ static CGO* ObjectMeshCGOGenerate(ObjectMesh* I, ObjectMeshState* ms,
     convertcgo->has_draw_cylinder_buffers = true;
   } else {
     CGODisable(tmpCGO, GL_LIGHTING);
-    convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(
-        ms->shaderCGO.get(), 0, false, nullptr);
+    convertcgo = CGOOptimizeToVBONotIndexed(ms->shaderCGO.get(), 0, false);
   }
   CGOAppendNoStop(tmpCGO, convertcgo);
   CGODisable(tmpCGO, enableMode);

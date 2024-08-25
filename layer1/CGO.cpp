@@ -2857,7 +2857,7 @@ static bool CGOProcessScreenCGOtoArrays(PyMOLGlobals* G, CGO* cgo,
 
 bool CGOOptimizeToVBONotIndexed(CGO** I)
 {
-  CGO* cgo = CGOOptimizeToVBONotIndexed(*I, 0, true, nullptr);
+  CGO* cgo = CGOOptimizeToVBONotIndexed(*I, 0, true);
   CGOFree(*I);
   *I = cgo;
   return (cgo != nullptr);
@@ -2872,12 +2872,10 @@ bool CGOOptimizeToVBONotIndexed(CGO** I)
  * @param I Primitive CGO to convert
  * @param est Output CGO size estimate (size of buffer to "reserve")
  * @param addshaders Add Enable/Disable shader operations
- * @param returnedData ???
  *
  * @return New converted CGO with use_shader=true
  */
-CGO* CGOOptimizeToVBONotIndexed(
-    const CGO* I, int est, bool addshaders, float** returnedData)
+CGO* CGOOptimizeToVBONotIndexed(const CGO* I, int est, bool addshaders)
 {
   auto G = I->G;
 
@@ -3006,7 +3004,7 @@ CGO* CGOOptimizeToVBONotIndexed(
         }
         if (!ok) {
           PRINTFB(G, FB_CGO, FB_Errors)
-          "CGOOptimizeToVBONotIndexedWithReturnedData: ERROR: "
+          "CGOOptimizeToVBONotIndexed: ERROR: "
           "CGODrawBuffersNotIndexed() could not allocate enough memory\n" ENDFB(
               G);
           CGOFree(cgo);
@@ -3019,9 +3017,6 @@ CGO* CGOOptimizeToVBONotIndexed(
         G->ShaderMgr->freeGPUBuffer(vboid);
         G->ShaderMgr->freeGPUBuffer(pickvboid);
       }
-    }
-    if (ok && returnedData) {
-      returnedData[0] = vertexVals;
     }
   }
   if (ok && count.num_total_indexes_lines > 0) {
@@ -3260,7 +3255,7 @@ CGO* CGOOptimizeToVBONotIndexed(
         CHECKOK(ok, newPickColorVals);
         if (!ok) {
           PRINTFB(G, FB_CGO, FB_Errors)
-          "CGOOptimizeToVBONotIndexedWithReturnedData: ERROR: "
+          "CGOOptimizeToVBONotIndexed: ERROR: "
           "CGODrawBuffersNotIndexed() could not allocate enough memory\n" ENDFB(
               G);
           CGOFree(cgo);
@@ -3277,9 +3272,6 @@ CGO* CGOOptimizeToVBONotIndexed(
         G->ShaderMgr->freeGPUBuffer(pickvboid);
         G->ShaderMgr->freeGPUBuffer(vboid);
       }
-    }
-    if (ok && returnedData) {
-      returnedData[1] = vertexVals;
     }
   }
 

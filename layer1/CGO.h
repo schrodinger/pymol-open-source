@@ -962,10 +962,9 @@ CGO *CGOOptimizeToVBOIndexed(const CGO * I, int est=0, const float *color=nullpt
 #define CGOOptimizeToVBOIndexedNoShader(I, est) CGOOptimizeToVBOIndexed(I, est, nullptr, false)
 
 bool CGOOptimizeToVBONotIndexed(CGO ** I);
-CGO* CGOOptimizeToVBONotIndexed(const CGO* I, int est = 0,
-    bool addshaders = true, float** returnedData = nullptr);
+CGO* CGOOptimizeToVBONotIndexed(
+    const CGO* I, int est = 0, bool addshaders = true);
 
-#define CGOOptimizeToVBONotIndexedWithReturnedData CGOOptimizeToVBONotIndexed
 #define CGOOptimizeToVBONotIndexedNoShader(I) CGOOptimizeToVBONotIndexed(I, 0, false)
 
 
