@@ -5596,6 +5596,7 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * ms,
   void * ptr;
 
 #ifdef _PYMOL_NUMPY
+  import_array1(0);
   PyArrayObject * pao = (PyArrayObject *) ary;
   const int itemsize = PyArray_ITEMSIZE(pao);
 #endif

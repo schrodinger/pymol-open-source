@@ -31,7 +31,7 @@ class Brick(object):
         @param range: 3f sequence
         @param origin: 3f sequence
         '''
-        data = numpy.asfarray(data)
+        data = numpy.asarray(data, dtype=numpy.float64)
         assert len(data.shape) == 3
 
         self = cls()
