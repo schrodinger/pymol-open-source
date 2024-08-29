@@ -929,9 +929,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         return self.lineedit.setCursorPosition(i)
 
     def update_progress(self):
-        progress = self.cmd.get_progress()
+        progress = int(self.cmd.get_progress() * 100)
         if progress >= 0:
-            self.progressbar.setValue(progress * 100)
+            self.progressbar.setValue(progress)
             self.progressbar.show()
             self.abortbutton.show()
         else:
