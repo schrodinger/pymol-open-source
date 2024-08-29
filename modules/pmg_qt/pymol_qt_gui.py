@@ -692,8 +692,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             width = form.input_width_units.value()
             height = form.input_height_units.value()
             factor = get_factor()
-            form.input_width.setValue(width / factor)
-            form.input_height.setValue(height / factor)
+            form.input_width.setValue(int(width / factor))
+            form.input_height.setValue(int(height / factor))
 
         @lock.skipIfCircular
         def update_width(*args):
