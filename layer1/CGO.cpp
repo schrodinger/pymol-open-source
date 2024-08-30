@@ -49,16 +49,9 @@ Z* -------------------------------------------------------------------
 
 #include "pymol/algorithm.h"
 
-#if defined(_PYMOL_IOS) && !defined(_WEBGL)
-#define ALIGN_VBOS_TO_4_BYTE_ARRAYS
-#define VAR_FOR_NORMAL plc
-#define VAR_FOR_NORMAL_CNT_PLUS +(cnt / 3)
-#define VERTEX_NORMAL_SIZE 4
-#else
 #define VAR_FOR_NORMAL pl
 #define VERTEX_NORMAL_SIZE 3
 #define VAR_FOR_NORMAL_CNT_PLUS
-#endif
 
 #define VALUES_PER_IMPOSTER_SPACE_COORD 1
 
@@ -71,8 +64,6 @@ constexpr unsigned VERTEX_ACCESSIBILITY_SIZE = 1;
 #include <algorithm>
 #include <cassert>
 #include <iostream>
-
-#define MAX_INDICES_FOR_IOS 65536
 
 template <typename T> inline T CLAMPVALUE(T val, T minimum, T maximum)
 {
@@ -3398,19 +3389,6 @@ CGO* CGOOptimizeToVBOIndexed(const CGO* I, int est, const float* color,
       cgo->alpha = 1.f;
     }
   }
-
-#if defined(_PYMOL_IOS) && !defined(_WEBGL)
-  if (num_total_indexes > MAX_INDICES_FOR_IOS ||
-      num_total_indexes_lines > MAX_INDICES_FOR_IOS) {
-    PRINTFB(I->G, FB_CGO, FB_Errors)
-    "ERROR: CGOOptimizeToVBOIndexed() VBO Memory Limitation: The requested \n  "
-    "     operation requires a larger buffer than PyMOL currently allows. \n   "
-    "    The operation has not entirely completed successfully.\n" ENDFB(I->G);
-    firePyMOLLimitationWarning();
-    CGOFree(cgo);
-    return nullptr;
-  }
-#endif
 
   if (num_total_vertices_points > 0) {
     /* This does not need to be indexed (for now) */

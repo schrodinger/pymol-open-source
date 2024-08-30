@@ -1213,19 +1213,11 @@ constexpr int VerticesPerSphere() {
 }
 
 constexpr int NumVerticesPerCylinder() {
-#if defined(_PYMOL_IOS) && !defined(_WEBGL)
-  return 4;
-#else
   return 8;
-#endif
 }
 
 constexpr int NumTotalVerticesPerCylinder() {
-#if defined(_PYMOL_IOS) && !defined(_WEBGL)
- return 6;
-#else
  return 36;
-#endif
 }
 
 #endif

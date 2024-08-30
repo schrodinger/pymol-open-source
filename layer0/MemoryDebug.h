@@ -46,18 +46,6 @@ typedef struct VLARec {
 #define VLAInsert(ptr,type,index,count) {ptr=(type*)VLAInsertRaw(ptr,index,count);}
 #define VLADelete(ptr,type,index,count) {ptr=(type*)VLADeleteRaw(ptr,index,count);}
 
-#if defined(_PYMOL_IOS) && !defined(_WEBGL)
-#include "MemoryUsage.h"
-extern "C" void fireMemoryWarning();
-#define PYMOL_IOS_MEMORY_CHECK                                                 \
-  if (pymol::memory_available() < sizeof(T) * num) {                           \
-    fireMemoryWarning();                                                       \
-    return nullptr;                                                            \
-  }
-#else
-#define PYMOL_IOS_MEMORY_CHECK
-#endif
-
 namespace pymol
 {
 using ::free;

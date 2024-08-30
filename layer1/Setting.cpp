@@ -675,16 +675,7 @@ static bool is_session_blacklisted(int index) {
   case cSetting_use_shaders:
   case cSetting_pick32bit:
   case cSetting_display_scale_factor:
-#ifdef _PYMOL_IOS
-  case cSetting_cgo_sphere_quality:
-  case cSetting_dynamic_measures:
-  case cSetting_label_outline_color:
-  case cSetting_mouse_selection_mode:
-  case cSetting_sphere_mode:
-  case cSetting_sphere_quality:
-  case cSetting_stick_ball:
-  case cSetting_virtual_trackball:
-#elif defined(_PYMOL_ACTIVEX)
+#if defined(_PYMOL_ACTIVEX)
   case cSetting_async_builds:
 #endif
     return true;
@@ -3110,8 +3101,6 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_i(I, cSetting_label_font_id, 0);
 #endif
 
-#ifdef _PYMOL_IOS
-#endif
   }
   G->ShaderMgr->Set_Reload_Bits(RELOAD_ALL_SHADERS);
 }

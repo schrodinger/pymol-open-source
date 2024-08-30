@@ -2823,13 +2823,6 @@ void OrthoSetBackgroundImage(
     I->bgHeight = height;
     memcpy(I->bgData, image_data, buff_total * 4);
     should_update = 1;
-#ifdef _PYMOL_IOS
-    {  /* for now, the background is black for background images */
-      float bg[] = {0.f, 0.f, 0.f };
-      ColorUpdateFront(G, bg);
-      ExecutiveInvalidateRep(G, "all", cRepAll, cRepInvColor);
-    }
-#endif
   }
   if (should_update){
     G->ShaderMgr->Reload_All_Shaders();

@@ -1405,11 +1405,7 @@ void RepLabel::render(RenderInfo* info)
 
         Pickable* p = I->P;
         use_shader = SettingGetGlobal_b(G, cSetting_use_shaders)
-#ifdef _PYMOL_IOS
-            ;
-#else
                      && G->ShaderMgr->GeometryShadersPresent();
-#endif
         info->use_shaders = use_shader;
         if (use_shader) {
           if (!I->shaderCGO) {

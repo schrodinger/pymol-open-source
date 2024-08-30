@@ -316,38 +316,6 @@ int StereoIsAdjacent(PyMOLGlobals * G){
   return stereo_via_adjacent_array(I->StereoMode);
 }
 
-#ifdef _PYMOL_IOS
-static int get_stereo_x(int x, int *last_x, int width, ClickSide* click_side)
-{
-  int width_2 = width / 2;
-  int width_3 = width / 3;
-  if(!last_x) {
-    if(x > width_2) {
-      x -= width_2;
-      if(click_side)
-        *click_side = ClickSide::Right;
-    } else {
-      if(click_side)
-        *click_side = ClickSide::Left;
-    }
-  } else {
-    if((x - (*last_x)) > width_3) {
-      x -= width_2;
-      if(click_side)
-        *click_side = ClickSide::Right;
-    } else if(((*last_x) - x) > width_3) {
-      x += width_2;
-      if(click_side)
-        *click_side = ClickSide::Right;
-    } else {
-      if(click_side)
-        *click_side = ClickSide::Left;
-    }
-  }
-  return x;
-}
-#endif
-
 void SceneAbortAnimation(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
@@ -5432,61 +5400,6 @@ int SceneGetDoNotClearBackground(PyMOLGlobals * G){
   return (I->do_not_clear);
 }
 
-
-#ifdef _PYMOL_IOS
-void SceneTranslateSceneXYWithScale(PyMOLGlobals * G, float x, float y){
-  CScene *I = G->Scene;
-  int moved_flag;
-  float v2[3], vScale;
-  float old_front, old_back, old_origin;
-  auto pos = I->m_view.pos();
-
-  old_front = I->m_view.m_clip().m_front;
-  old_back = I->m_view.m_clip().m_back;
-  old_origin = -pos.z;
-
-  vScale = SceneGetExactScreenVertexScale(G, glm::value_ptr(I->m_view.origin()));
-  /*  if(stereo_via_adjacent_array(I->StereoMode)) {
-    x = get_stereo_x(x, &I->LastX, I->Width, nullptr);
-    }*/
- 
-  v2[0] = x * vScale;
-  v2[1] = y * vScale;
-  v2[2] = 0.0F;
-
-  moved_flag = false;
-  if(x != 0.f) {
-    pos.x += v2[0];
-    I->LastX = x;
-    SceneInvalidate(G);
-    moved_flag = true;
-  }
-  if(y != 0.f) {
-    pos.y += v2[1];
-    I->LastY = y;
-    SceneInvalidate(G);
-    moved_flag = true;
-  }
-  I->m_view.setPos(pos);
-  EditorFavorOrigin(G, nullptr);
-  if(moved_flag && SettingGetGlobal_b(G, cSetting_roving_origin)) {
-    SceneGetCenter(G, v2);     /* gets position of center of screen */
-    SceneOriginSet(G, v2, true);
-  }
-  if(moved_flag && SettingGetGlobal_b(G, cSetting_roving_detail)) {
-    SceneRovingDirty(G);
-  }
-  if(moved_flag)
-    SceneDoRoving(G, old_front, old_back, old_origin, 0 /* adjust flag */, false);
-  PyMOL_NeedRedisplay(G->PyMOL);
-}
-int SceneIsTwisting(PyMOLGlobals * G){
-  CScene *I = G->Scene;
-  return (!I->prev_no_z_rotation1 || !I->prev_no_z_rotation2);
-}
-
-#endif
-
 void SceneGLClear(PyMOLGlobals * G, GLbitfield mask){
   glClear(mask);
 }
@@ -5680,17 +5593,11 @@ void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height)
 Rect2D SceneGetViewport(PyMOLGlobals* G)
 {
   Rect2D viewport{};
-#ifdef _PYMOL_IOS
-  /* This only works when GUI has no internal_gui, internal_feedback,
-     or internal_prompt, which IOS does not have. */
-  viewport.extent = SceneGetExtent(G);
-#else
   int viewBuffer[4];
   glGetIntegerv(GL_VIEWPORT, (GLint*) (void*) viewBuffer);
   viewport.offset = Offset2D{static_cast<std::int32_t>(viewBuffer[0]),
       static_cast<std::int32_t>(viewBuffer[1])};
   viewport.extent = Extent2D{static_cast<std::uint32_t>(viewBuffer[2]),
       static_cast<std::uint32_t>(viewBuffer[3])};
-#endif
 return viewport;
 }

@@ -247,11 +247,6 @@ int SceneGetDoNotClearBackground(PyMOLGlobals * G);
 void SceneProgramLighting(PyMOLGlobals * G, CShaderPrg * shaderPrg = nullptr);
 void SceneGLClear(PyMOLGlobals * G, GLbitfield mask);
 
-#ifdef _PYMOL_IOS
-void SceneTranslateSceneXYWithScale(PyMOLGlobals * G, float x, float y);
-int SceneIsTwisting(PyMOLGlobals * G);
-#endif
-
 void SceneUpdateAnimation(PyMOLGlobals * G);
 
 void SceneSetupGLPicking(PyMOLGlobals * G);

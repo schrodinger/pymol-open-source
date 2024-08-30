@@ -113,9 +113,6 @@ static bool HasBit(
 
 static std::string GetShaderFromDisk(PyMOLGlobals* G, std::string_view filename)
 {
-#ifdef _PYMOL_IOS
-  return {};
-#endif
   std::string_view pymolDataPath = getenv("PYMOL_DATA");
 
   if (pymolDataPath.empty()) {

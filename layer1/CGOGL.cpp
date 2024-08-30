@@ -12,16 +12,9 @@
 #include "os_gl.h"
 #include "os_gl_cgo.h"
 
-#if defined(_PYMOL_IOS) && !defined(_WEBGL)
-#define ALIGN_VBOS_TO_4_BYTE_ARRAYS
-#define VAR_FOR_NORMAL plc
-#define VAR_FOR_NORMAL_CNT_PLUS +(cnt / 3)
-#define VERTEX_NORMAL_SIZE 4
-#else
 #define VAR_FOR_NORMAL pl
 #define VERTEX_NORMAL_SIZE 3
 #define VAR_FOR_NORMAL_CNT_PLUS
-#endif
 
 #ifdef PURE_OPENGL_ES_2
 #define glVertexAttrib4ubv(loc, data) glVertexAttrib4f(loc, \
@@ -63,19 +56,10 @@ static int CGOConvertDebugMode(int debug, int modeArg)
   return mode;
 }
 
-#if defined(_PYMOL_IOS) && !defined(_WEBGL)
-extern "C" void firePyMOLLimitationWarning();
-#define CHECK_GL_ERROR_OK(printstr)                                            \
-  if ((err = glGetError()) != 0 || I->G->Interrupt != 0) {                     \
-    if (err)                                                                   \
-      PRINTFB(G, FB_CGO, FB_Errors) printstr, err ENDFB(G);                    \
-  }
-#else
 #define CHECK_GL_ERROR_OK(printstr)                                            \
   if ((err = glGetError()) != 0) {                                             \
     PRINTFB(G, FB_CGO, FB_Errors) printstr, err ENDFB(G);                      \
   }
-#endif
 
 void CheckGLErrorOK(PyMOLGlobals* G, pymol::zstring_view errString)
 {
@@ -1231,9 +1215,7 @@ static void CGO_gl_special(CCGORenderer* I, CGO_op_data pc)
       radius = dot_width;
     if (shaderPrg)
       shaderPrg->Set1f("g_PointSize", radius);
-#ifndef _PYMOL_IOS
     glPointSize(radius);
-#endif
   } break;
   case DOT_WIDTH_FOR_DOT_SPHERES: {
     float dotSize =

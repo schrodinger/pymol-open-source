@@ -31,8 +31,6 @@ Z* -------------------------------------------------------------------
 
 #ifdef _WEBGL
 #define GET_FRAGDEPTH_SUPPORT() webpymol_get_fragdepth_support()
-#elif defined(_PYMOL_IOS)
-#define GET_FRAGDEPTH_SUPPORT() 0
 #else
 #define GET_FRAGDEPTH_SUPPORT() 1
 #endif

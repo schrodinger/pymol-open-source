@@ -58,11 +58,6 @@ static void DieOutOfMemory(void)
   printf
     ("****************************************************************************\n");
 
-#if defined(_PYMOL_IOS) && !defined(_WEBGL)
-  fireMemoryWarning();
-  return;
-#endif
-
 #ifdef GDB_ENTRY
   abort();
 #endif

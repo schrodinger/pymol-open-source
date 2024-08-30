@@ -214,9 +214,7 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
   }
   I->last_grid_size = grid_size;
   G->ShaderMgr->FreeAllVBOs();
-#ifndef _PYMOL_IOS
   SceneUpdateAnimation(G);
-#endif
 
   auto render_buffer = SceneMustDrawBoth(G) ? GL_BACK_LEFT : G->DRAW_BUFFER0;
 
@@ -769,13 +767,7 @@ void SceneRenderAll(PyMOLGlobals* G, SceneUnitContext* context, float* normal,
   info.fog_end = I->FogEnd;
   info.front = I->m_view.m_clipSafe().m_front;
   info.use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
-#if defined(_PYMOL_IOS) && !defined(_WEBGL)
-  /* For now, on IOS, just crank up the sampling for text,
-     TODO : need to figure out where this change should really be */
-  info.sampling = 2;
-#else
   info.sampling = 1;
-#endif
   info.alpha_cgo = I->AlphaCGO;
   info.ortho = SettingGetGlobal_b(G, cSetting_ortho);
   if (I->StereoMode && dynamic_pass && (!info.pick)) {
@@ -1413,13 +1405,6 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
     break;
   case cStereo_anaglyph:
     /* glClear(GL_ACCUM_BUFFER_BIT); */
-#ifdef _PYMOL_IOS
-    if (position)
-      glClear(GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_BLEND);
-    glBlendEquation(GL_FUNC_ADD);
-    glColorMask(position_inv, position, position, true);
-#else
 
     if (TM3_IS_ONEBUF) {
       glColorMask(position_inv, position, position, true);
@@ -1436,7 +1421,6 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
 
     if (position)
       glClear(GL_DEPTH_BUFFER_BIT);
-#endif
     break;
 #ifndef PURE_OPENGL_ES_2
   case cStereo_clone_dynamic:
@@ -1643,17 +1627,7 @@ void SceneInitializeViewport(PyMOLGlobals* G, bool offscreen)
 void SceneDrawStencilInBuffer(PyMOLGlobals* G, CScene* I, int stereo_mode)
 {
   GLint viewport[4];
-#ifdef _PYMOL_IOS
-  {
-    int width, height;
-    SceneGetWidthHeight(G, &width, &height);
-    viewport[0] = viewport[1] = 0;
-    viewport[2] = width;
-    viewport[3] = height;
-  }
-#else
   glGetIntegerv(GL_VIEWPORT, viewport);
-#endif
 
 #ifndef PURE_OPENGL_ES_2
   glMatrixMode(GL_PROJECTION);

@@ -36,10 +36,6 @@
 
 #include <iostream>
 
-#ifdef _PYMOL_IOS
-extern "C" void fireMemoryWarning();
-#endif
-
 struct RepCylBond : Rep {
   using Rep::Rep;
 
