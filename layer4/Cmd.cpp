@@ -5178,6 +5178,20 @@ static PyObject *CmdDelete(PyObject * self, PyObject * args)
   return APISuccess();
 }
 
+static PyObject *CmdDeleteStates(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals* G = nullptr;
+  const char* objName;
+  PyObject* statesPyList;
+  API_SETUP_ARGS(G, self, args, "OsO", &self, &objName, &statesPyList);
+  std::vector<int> states;
+  PConvFromPyObject(G, statesPyList, states);
+  API_ASSERT(APIEnterNotModal(G));
+  auto result = ExecutiveDeleteStates(G, objName, states);
+  APIExit(G);
+  return APIResult(G, result);
+}
+
 static PyObject *CmdCartoon(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = nullptr;
@@ -6275,6 +6289,7 @@ static PyMethodDef Cmd_methods[] = {
   {"del_colorection", CmdDelColorection, METH_VARARGS},
   {"fake_drag", CmdFakeDrag, METH_VARARGS},
   {"delete", CmdDelete, METH_VARARGS},
+  {"delete_states", CmdDeleteStates, METH_VARARGS},
   {"dirty", CmdDirty, METH_VARARGS},
   {"dirty_wizard", CmdDirtyWizard, METH_VARARGS},
   {"dihedral", CmdDihedral, METH_VARARGS},

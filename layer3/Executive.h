@@ -342,6 +342,16 @@ int ExecutiveIterateObject(PyMOLGlobals * G, pymol::CObject ** obj, void **hidde
 pymol::Result<std::vector<DiscardedRec>> ExecutiveDelete(PyMOLGlobals * G, pymol::zstring_view nameView, bool save = false);
 
 /**
+ * @brief Deletes states from an object
+ * @param name name of the object
+ * @param states list of states to be deleted (0-based, must be sorted and
+ * unique)
+ * @note Currently only works on non-discrete molecular objects
+ */
+pymol::Result<> ExecutiveDeleteStates(
+    PyMOLGlobals* G, std::string_view name, const std::vector<int>& states);
+
+/**
  * @brief Unregisters the specification record from PyMOL
  * @param rec specification record to be purged/removed
  * @save if true, the rec's associated object/cgo will not be destroyed, and the caller is responsible for repurging w/o saving.

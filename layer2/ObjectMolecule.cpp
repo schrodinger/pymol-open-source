@@ -11209,6 +11209,31 @@ ok_except1:
 }
 
 /*========================================================================*/
+pymol::Result<> ObjectMoleculeDeleteStates(ObjectMolecule* I, const std::vector<int>& states)
+{
+  auto& CSet = I->CSet;
+
+  // first pass, check for invalid states
+  for (auto state : states) {
+    if (state < 0 || state >= I->NCSet) {
+      auto msg = pymol::string_format("Invalid state index: %d", state);
+      I->G->Feedback->addColored(msg.c_str(), FB_Errors);
+      return {};
+    }
+  }
+
+  // second pass, delete states
+  for (auto it = states.rbegin(); it != states.rend(); ++it) {
+    int state = *it;
+    DeleteP(CSet[state]);
+    CSet.erase(state, 1);
+  }
+  I->NCSet -= states.size();
+  CSet.resize(I->NCSet);
+  return {};
+}
+
+/*========================================================================*/
 ObjectMolecule::~ObjectMolecule()
 {
   auto I = this;

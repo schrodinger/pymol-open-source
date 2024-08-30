@@ -66,6 +66,7 @@ from .commanding import \
       async_,             \
       cls,                \
       delete,             \
+      delete_states,      \
       do,                 \
       log,                \
       log_close,          \

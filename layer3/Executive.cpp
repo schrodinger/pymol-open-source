@@ -14278,6 +14278,30 @@ pymol::Result<std::vector<DiscardedRec>> ExecutiveDelete(PyMOLGlobals * G, pymol
   return discardedRecs;
 }
 
+pymol::Result<> ExecutiveDeleteStates(
+    PyMOLGlobals* G, std::string_view name, const std::vector<int>& states)
+{
+  for (auto& rec : ExecutiveGetSpecRecsFromPattern(G, name.data())) {
+    if (rec.type != cExecObject) {
+      continue;
+    }
+    auto* obj = rec.obj;
+    if (obj->type != cObjectMolecule) {
+      continue;
+    }
+    auto* mol = static_cast<ObjectMolecule*>(obj);
+    if (mol->DiscreteFlag) {
+      G->Feedback->addColored(
+          "Error: Cannot delete states from discrete objects.\n", FB_Warnings);
+      continue;
+    }
+    ObjectMoleculeDeleteStates(mol, states);
+  }
+  SceneChanged(G);
+  ExecutiveInvalidatePanelList(G);
+  return {};
+}
+
 void ExecutiveReAddSpec(PyMOLGlobals* G, std::vector<DiscardedRec>& specs)
 {
   auto I = G->Executive;

@@ -308,6 +308,14 @@ int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int stat
 
 int ObjectMoleculeSetStateOrder(ObjectMolecule * I, int * order, int len);
 
+/**
+ * @brief Deletes a CoordSet/State from a molecule object
+ * @param I ObjectMolecule
+ * @param states state indices (0-based)
+ * @note This function only works on non-discrete molecular objects
+ */
+pymol::Result<> ObjectMoleculeDeleteStates(ObjectMolecule* I, const std::vector<int>& state);
+
 int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *name,
                                 const char *resn, const char *resi, const char *chain,
                                 const char *segi, const char *elem, float vdw,

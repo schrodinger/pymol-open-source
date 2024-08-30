@@ -528,6 +528,7 @@ PYMOL API
 SEE ALSO
 
     remove
+    delete_states
         '''
         r = DEFAULT_ERROR
         try:
@@ -538,6 +539,63 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
+    def delete_states(name: str, states: str, *, _self=cmd):
+        '''
+DESCRIPTION
+
+USAGE
+
+    delete_states name, states
+
+ARGUMENTS
+
+    name = name(s) of object(s), supports wildcards (*)
+
+    states = string: space separated list of state numbers or ranges
+
+EXAMPLES
+
+    delete_state 1nmr, 1-5     # delete states 1 to 5 from 1nmr
+    delete_state *, 1-3 10-40  # deletes states 1 to 3 and 10 to 40 from all applicable objects
+
+PYMOL API
+
+    cmd.delete_states(string name = object-name, string states = states string)
+
+SEE ALSO
+
+    delete
+        '''
+
+        def get_state_list(states_str):
+            output=[]
+            input_str = re.sub(r"\s"," ", states_str)
+            input_str = input_str.replace("-"," -")
+            input_str = input_str.replace("- ","-")
+            input_str = input_str.strip().split()
+
+            last = -1
+            for x in input_str:
+                if not x.isdigit():
+                    if x.startswith("-"):
+                        direction = 1
+                        current = last
+                        last = int(x[1:]) - 1
+                        if last < current:
+                            direction = -1
+                        while current != last:
+                            current += direction
+                            output.append(str(current))
+                else:
+                    val = int(x) - 1
+                    output.append(str(val))
+                    last = val
+            return output
+
+        with _self.lockcm:
+            output = get_state_list(states)
+            states_list = sorted(set(map(int, output)))
+            return _cmd.delete_states(_self._COb, name, states_list)
 
     class Selection(str):
         pass

@@ -37,6 +37,12 @@ class TestCommanding(testing.PyMOLTestCase):
         cmd.delete('m1 m2')
         self.assertEqual(cmd.get_names(), ['m3'])
 
+    def testDeleteStates(self):
+        cmd.pseudoatom('m1', state=10)
+        self.assertEqual(cmd.count_states('m1'), 10)
+        cmd.delete_states('m1', '4-8')
+        self.assertEqual(cmd.count_states('m1'), 5)
+
     def testDo(self):
         # tested with other methods
         pass

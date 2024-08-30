@@ -59,6 +59,7 @@ def get_command_keywords(self_cmd=cmd):
         'create'        : [ self_cmd.create            , 0 , 0 , ''  , parsing.LEGACY ],
         'decline'       : [ self_cmd.decline           , 0 , 0 , ''  , parsing.STRICT ],
         'delete'        : [ self_cmd.delete            , 0 , 0 , ''  , parsing.STRICT ],
+        'delete_states' : [ self_cmd.delete_states     , 0 , 0 , ''  , parsing.STRICT ],
         'def'           : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'del'           : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'deprotect'     : [ self_cmd.deprotect         , 0 , 0 , ''  , parsing.STRICT ],
