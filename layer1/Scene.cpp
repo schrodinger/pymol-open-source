@@ -1832,7 +1832,7 @@ pymol::Image* SceneImagePrepare(PyMOLGlobals* G, bool prior_only)
       if(SceneMustDrawBoth(G) || save_stereo) {
         glReadBuffer(GL_BACK_LEFT);
       } else {
-        glReadBuffer(G->DRAW_BUFFER0); // GL_BACK
+        glReadBuffer(G->ShaderMgr->defaultBackbuffer.drawBuffer); // GL_BACK
       }
 #endif
       PyMOLReadPixels(I->rect.left, I->rect.bottom, I->Width, I->Height,
@@ -4446,7 +4446,7 @@ void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window)
   unsigned int buffer_size;
 
   if (buffer == GL_BACK) {
-    buffer = G->DRAW_BUFFER0;
+    buffer = G->ShaderMgr->defaultBackbuffer.drawBuffer;
   }
 
   if(force || (!(I->StereoMode ||

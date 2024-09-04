@@ -223,7 +223,7 @@ void OrthoDrawBuffer(PyMOLGlobals* G, GLenum mode)
   COrtho* I = G->Ortho;
 
   if (mode == GL_BACK) {
-    mode = G->DRAW_BUFFER0;
+    mode = G->ShaderMgr->defaultBackbuffer.drawBuffer;
   }
 
   if (!hasFrameBufferBinding() && (mode != I->ActiveGLBuffer) && G->HaveGUI &&
@@ -622,7 +622,7 @@ void OrthoBusyDraw(PyMOLGlobals* G, int force)
           G->ValidContext
           // only draw into GL_FRONT if default draw buffer is GL_BACK
           // (not the case for QOpenGLWidget)
-          && G->DRAW_BUFFER0 == GL_BACK) {
+          && G->ShaderMgr->defaultBackbuffer.drawBuffer == GL_BACK) {
         char* c;
         int x, y;
         float white[3] = {1, 1, 1};

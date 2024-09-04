@@ -241,7 +241,9 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
   G->ShaderMgr->FreeAllVBOs();
   SceneUpdateAnimation(G);
 
-  auto render_buffer = SceneMustDrawBoth(G) ? GL_BACK_LEFT : G->DRAW_BUFFER0;
+  auto render_buffer = SceneMustDrawBoth(G)
+                           ? GL_BACK_LEFT
+                           : G->ShaderMgr->defaultBackbuffer.drawBuffer;
 
   int stereo_mode = I->StereoMode;
   bool postprocessOnce{false};
@@ -290,7 +292,7 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
       }
     }
 
-    render_buffer = G->DRAW_BUFFER0; // GL_BACK
+    render_buffer = G->ShaderMgr->defaultBackbuffer.drawBuffer; // GL_BACK
 
     if (must_render_stereo) {
       switch (stereo_mode) {
@@ -592,7 +594,7 @@ void SceneRenderAA(PyMOLGlobals* G)
   CScene* I = G->Scene;
   int ok = true;
   glBindFramebufferEXT(
-      GL_FRAMEBUFFER_EXT, G->ShaderMgr->default_framebuffer_id);
+      GL_FRAMEBUFFER_EXT, G->ShaderMgr->defaultBackbuffer.framebuffer);
   if (!I->offscreenCGO) {
     CGO* unitCGO = GenerateUnitScreenCGO(G);
     ok &= unitCGO != nullptr;
@@ -637,7 +639,7 @@ void SceneRenderAA(PyMOLGlobals* G)
     glBindTexture(GL_TEXTURE_2D, 0);
     glEnable(GL_DEPTH_TEST);
     glBindFramebufferEXT(
-        GL_FRAMEBUFFER_EXT, G->ShaderMgr->default_framebuffer_id);
+        GL_FRAMEBUFFER_EXT, G->ShaderMgr->defaultBackbuffer.framebuffer);
   }
 #endif
 }
@@ -910,7 +912,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
     //                             transparent (OIT) pass
     // In the case of jymol the currentFramebuffer is not 0 so we are checking
     // against the default framebuffer
-    if (currentDrawFramebuffer == G->ShaderMgr->default_framebuffer_id) {
+    if (currentDrawFramebuffer == G->ShaderMgr->defaultBackbuffer.framebuffer) {
       G->ShaderMgr->bindOffscreen(I->Width, I->Height, &I->grid);
       bg_grad(G);
     }
@@ -943,7 +945,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
         G->ShaderMgr->bindOffscreenOIT(I->Width, I->Height, drawbuf);
         G->ShaderMgr->oit_pp->bindRT(
             drawbuf); // for transparency pass, render to OIT texture
-        if (currentDrawFramebuffer == G->ShaderMgr->default_framebuffer_id) {
+        if (currentDrawFramebuffer == G->ShaderMgr->defaultBackbuffer.framebuffer) {
           SceneInitializeViewport(G, true);
         }
       }
@@ -1060,7 +1062,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
           GridSetViewport(G, grid, -1);
         if (currentDrawFramebuffer ==
             G->ShaderMgr
-                ->default_framebuffer_id) { // if rendering to screen, need to
+                ->defaultBackbuffer.framebuffer) { // if rendering to screen, need to
                                             // render offscreen opaque to screen
           SceneInitializeViewport(G, false);
           if (!I->offscreenOIT_CGO_copy) {
@@ -1082,7 +1084,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
 
         glBlendFunc_default();
 
-        if ((currentDrawFramebuffer == G->ShaderMgr->default_framebuffer_id) &&
+        if ((currentDrawFramebuffer == G->ShaderMgr->defaultBackbuffer.framebuffer) &&
             t_mode_3) {
           // onlySelections and t_mode_3, render only gadgets
           SceneRenderAll(G, context, normal, nullptr,
@@ -1610,7 +1612,7 @@ void SceneInitializeViewport(PyMOLGlobals* G, bool offscreen)
       GLint currentFrameBuffer;
       glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFrameBuffer);
       if (currentFrameBuffer ==
-          G->ShaderMgr->default_framebuffer_id) { // if writing to screen, then
+          G->ShaderMgr->defaultBackbuffer.framebuffer) { // if writing to screen, then
                                                   // set viewport to screen
         float width_scale;
         // this is called before preparing view port, since the prepare function

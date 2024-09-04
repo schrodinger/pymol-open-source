@@ -212,9 +212,6 @@ struct PyMOLGlobals {
   // user defined scenes
   CMovieScenes * scenes;
 
-  // for glDrawBuffer (e.g. GL_BACK, unless we're using QOpenGLWidget)
-  int DRAW_BUFFER0;
-
   struct { lexidx_t
 #include "lex_constants.h"
     _; } lex_const;

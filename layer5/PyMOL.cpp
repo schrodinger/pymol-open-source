@@ -2219,7 +2219,7 @@ static void check_gl_stereo_capable(PyMOLGlobals * G)
     printf("Warning: GL_DRAW_BUFFER0=0 -> using GL_BACK\n");
     buf = GL_BACK;
   }
-  G->DRAW_BUFFER0 = buf;
+  G->ShaderMgr->defaultBackbuffer.drawBuffer = buf;
 
   // double buffer check
   glGetBooleanv(GL_DOUBLEBUFFER, &state);
@@ -2229,7 +2229,7 @@ static void check_gl_stereo_capable(PyMOLGlobals * G)
 
   // default framebuffer
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &buf);
-  G->ShaderMgr->default_framebuffer_id = buf;
+  G->ShaderMgr->defaultBackbuffer.framebuffer = buf;
 }
 #endif
 

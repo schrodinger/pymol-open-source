@@ -1653,7 +1653,7 @@ static void CGO_gl_disable(CCGORenderer* I, CGO_op_data pc)
     case GL_SMAA1_SHADER:
     case GL_SMAA2_SHADER:
       glBindFramebufferEXT(
-          GL_FRAMEBUFFER_EXT, I->G->ShaderMgr->default_framebuffer_id);
+          GL_FRAMEBUFFER_EXT, I->G->ShaderMgr->defaultBackbuffer.framebuffer);
       break;
 #endif
     case GL_BACK_FACE_CULLING:

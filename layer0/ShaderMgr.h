@@ -41,6 +41,11 @@ Z* -------------------------------------------------------------------
 #define LOCK_GUARD_MUTEX(name, var)
 #endif
 
+struct GLFramebufferConfig {
+  GLuint framebuffer{};
+  GLenum drawBuffer{};
+};
+
 class CShaderPrg {
 public:
   struct GeometryShaderParams
@@ -327,7 +332,10 @@ public:
   short stereo_flag; /* -1 left; 0 = off; 1 = right */
   short stereo_blend;  /* 0 - no blend, 1 - blend  : for right eye stereo in full-screen e.g., anaglyph */
   bool stereo_draw_buffer_pass;
-  GLint default_framebuffer_id { 0 };
+
+  // for glDrawBuffer (e.g. GL_BACK, unless we're using QOpenGLWidget)
+  GLFramebufferConfig defaultBackbuffer{};
+
 private:
   bool is_configured { false };
 public:
