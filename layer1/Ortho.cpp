@@ -75,7 +75,6 @@ public:
   int X{}, Y{}, Height{}, Width{};
   int LastX{}, LastY{}, LastModifiers{};
   int ActiveButton{};
-  int DrawText{};
   int InputFlag{}; /* whether or not we have active input on the line */
 
   OrthoLineType Line[OrthoSaveLines + 1]{};
@@ -1118,8 +1117,7 @@ void OrthoAddOutput(PyMOLGlobals* G, const char* str)
       SettingGetGlobal_i(G, cSetting_auto_overlay))
     OrthoDirty(G);
 
-  if (I->DrawText)
-    OrthoInvalidateDoDraw(G);
+  OrthoInvalidateDoDraw(G);
 }
 
 /*========================================================================*/
@@ -1678,8 +1676,7 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
       x = I->X;
       y = I->Y;
 
-      if (I->DrawText &&
-          internal_feedback) { /* moved to avoid conflict with menus */
+      if (internal_feedback) { /* moved to avoid conflict with menus */
         Block* block = SceneGetBlock(G);
         height = block->rect.bottom;
         switch (internal_gui_mode) {
@@ -1751,64 +1748,63 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
 
       OrthoRestorePrompt(G);
 
-      if (I->DrawText) {
-        int adjust_at = 0;
-        /* now print the text */
+      int adjust_at = 0;
+      /* now print the text */
 
-        lcount = 0;
-        x = cOrthoLeftMargin;
-        y = cOrthoBottomMargin + MovieGetPanelHeight(G);
+      lcount = 0;
+      x = cOrthoLeftMargin;
+      y = cOrthoBottomMargin + MovieGetPanelHeight(G);
 
-        if (draw_text || I->SplashFlag)
-          showLines = I->ShowLines;
-        else {
-          showLines = internal_feedback + overlay;
-        }
-        if (internal_feedback)
-          adjust_at = internal_feedback + 1;
+      if (draw_text || I->SplashFlag)
+        showLines = I->ShowLines;
+      else {
+        showLines = internal_feedback + overlay;
+      }
+      if (internal_feedback)
+        adjust_at = internal_feedback + 1;
 
-        l = (I->CurLine - (lcount + skip_prompt)) & OrthoSaveLines;
+      l = (I->CurLine - (lcount + skip_prompt)) & OrthoSaveLines;
 
-        if (orthoCGO)
-          CGOColorv(orthoCGO, I->TextColor);
-        else
-          glColor3fv(I->TextColor);
-
-        while (l >= 0) {
-          lcount++;
-          if (lcount > showLines)
-            break;
-          if (lcount == adjust_at)
-            y += 4;
-          str = I->Line[l & OrthoSaveLines];
-          if (internal_gui_mode != InternalGUIMode::Default) {
-            TextSetColor(G, I->OverlayColor);
-          } else if (strncmp(str, I->Prompt, 6) == 0) {
-            if (lcount < adjust_at)
+      if (orthoCGO)
+        CGOColorv(orthoCGO, I->TextColor);
+#ifndef PURE_OPENGL_ES_2
+      else
+        glColor3fv(I->TextColor);
+#endif
+      while (l >= 0) {
+        lcount++;
+        if (lcount > showLines)
+          break;
+        if (lcount == adjust_at)
+          y += 4;
+        str = I->Line[l & OrthoSaveLines];
+        if (internal_gui_mode != InternalGUIMode::Default) {
+          TextSetColor(G, I->OverlayColor);
+        } else if (strncmp(str, I->Prompt, 6) == 0) {
+          if (lcount < adjust_at)
+            TextSetColor(G, I->TextColor);
+          else {
+            if (length3f(I->OverlayColor) < 0.5)
+              TextSetColor(G, I->OverlayColor);
+            else
               TextSetColor(G, I->TextColor);
-            else {
-              if (length3f(I->OverlayColor) < 0.5)
-                TextSetColor(G, I->OverlayColor);
-              else
-                TextSetColor(G, I->TextColor);
-            }
-          } else
-            TextSetColor(G, I->OverlayColor);
-          TextSetPos2i(G, x, y);
-          if (str) {
-            TextDrawStr(G, str, orthoCGO);
-            if ((lcount == 1) && (I->InputFlag)) {
-              if (!skip_prompt) {
-                if (I->CursorChar >= 0) {
-                  TextSetPos2i(G, x + cOrthoCharWidth * I->CursorChar, y);
-                }
-                TextDrawChar(G, '_', orthoCGO);
+          }
+        } else
+          TextSetColor(G, I->OverlayColor);
+        TextSetPos2i(G, x, y);
+        if (str) {
+          TextDrawStr(G, str, orthoCGO);
+          if ((lcount == 1) && (I->InputFlag)) {
+            if (!skip_prompt) {
+              if (I->CursorChar >= 0) {
+                TextSetPos2i(G, x + cOrthoCharWidth * I->CursorChar, y);
               }
+              TextDrawChar(G, '_', orthoCGO);
             }
           }
-          l = (I->CurLine - (lcount + skip_prompt)) & OrthoSaveLines;
-          y = y + cOrthoLineHeight;
         }
+        l = (I->CurLine - (lcount + skip_prompt)) & OrthoSaveLines;
+        y = y + cOrthoLineHeight;
       }
 
       OrthoDrawWizardPrompt(G, orthoCGO);
@@ -2575,7 +2571,6 @@ int OrthoInit(PyMOLGlobals* G, int showSplash)
 
     I->GrabbedBy = nullptr;
     I->ClickedIn = nullptr;
-    I->DrawText = 1;
     I->HaveSeqViewer = false;
     I->TextColor[0] = 0.83F;
     I->TextColor[1] = 0.83F;
