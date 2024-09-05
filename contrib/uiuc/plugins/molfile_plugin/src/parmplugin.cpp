@@ -24,12 +24,14 @@
 #include "ReadPARM.h"
 #include "molfile_plugin.h"
 
+namespace {
 typedef struct {
   ReadPARM *rp;
   FILE *parm;
   int natoms;
   int *from, *to;
 } parmdata;
+}
 
 static void *open_parm_read(const char *filename, const char *, 
     int *natoms) {

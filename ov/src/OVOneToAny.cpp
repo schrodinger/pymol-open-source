@@ -8,11 +8,13 @@
 
 /* FYI: "up" stands for UniquePair -- a precursor to OneToAny */
 
+namespace {
 typedef struct {
   int active;
   ov_word forward_value, reverse_value;
   ov_size forward_next;
 } up_element;
+}
 
 struct _OVOneToAny {
   OVHeap *heap;

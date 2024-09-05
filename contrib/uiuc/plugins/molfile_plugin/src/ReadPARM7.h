@@ -59,7 +59,7 @@
 #endif
 
 
-typedef struct parm {
+typedef struct parm7 {
   char title[85];
   char version[85];
   int   IfBox, Nmxrs, IfCap,
@@ -70,7 +70,7 @@ typedef struct parm {
         Ipatm, Natcap,Ifpert,Nbper,Ngper,Ndper,Mbper,Mgper,Mdper,
         Numextra;
   _REAL Box[3], Cutcap, Xcap, Ycap, Zcap;
-} parmstruct;
+} parm7struct;
 
 static int read_parm7_flag(FILE *file, const char *flag, const char *format) {
   char buf[1024];
@@ -359,10 +359,10 @@ static void close_parm7_file(FILE *fileptr, int popn) {
 
 static const char *parm7 = "%8d%8d%8d%8d%8d%8d%8d%8d%8d%8d\n";
 
-static parmstruct *read_parm7_header(FILE *file) {
+static parm7struct *read_parm7_header(FILE *file) {
   char sdum[512]; 
-  parmstruct *prm;
-  prm = new parmstruct;
+  parm7struct *prm;
+  prm = new parm7struct;
 
   /* READ VERSION */
   fgets(sdum, 512, file);

@@ -24,13 +24,15 @@
 #include "molfile_plugin.h"
 #include "ReadPARM7.h"
 
+namespace {
 typedef struct {
-  parmstruct *prm;
+  parm7struct *prm;
   int popn;
   FILE *fd;
   int nbonds;
   int *from, *to;
 } parmdata;
+}
 
 static void *open_parm7_read(const char *filename, const char *,int *natoms) {
   FILE *fd;
@@ -39,7 +41,7 @@ static void *open_parm7_read(const char *filename, const char *,int *natoms) {
     fprintf(stderr, "parm7plugin) Cannot open parm file '%s'\n", filename);
     return NULL;
   }
-  parmstruct *prm = read_parm7_header(fd);
+  parm7struct *prm = read_parm7_header(fd);
   if (!prm) {
     close_parm7_file(fd, popn);
     return NULL; 
@@ -58,7 +60,7 @@ static void *open_parm7_read(const char *filename, const char *,int *natoms) {
 
 static int read_parm7_structure(void *mydata, int *optflags, molfile_atom_t *atoms) {
   parmdata *p = (parmdata *)mydata;
-  const parmstruct *prm = p->prm;
+  const parm7struct *prm = p->prm;
   FILE *file = p->fd;
   char buf[85];
   char field[85];

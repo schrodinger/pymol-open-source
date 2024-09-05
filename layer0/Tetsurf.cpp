@@ -38,12 +38,14 @@ Z* -------------------------------------------------------------------
 
 #define I3(field,P1,P2,P3) ((field)->get<int>(P1,P2,P3))
 
-typedef struct {
+namespace {
+struct PointType {
   float Point[3];
   float Normal[3];
   int NormalFlag;
   int Link;
-} PointType;
+};
+}
 
 typedef struct {
   PointType *p[3];

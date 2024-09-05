@@ -44,11 +44,13 @@ Z* -------------------------------------------------------------------
 
 #define I4(field,P1,P2,P3,P4) ((field)->get<int>(P1,P2,P3,P4))
 
-typedef struct PointType {
+namespace {
+struct PointType {
   float Point[3];
   int NLink;
   struct PointType* Link[4];
-} PointType;
+};
+}
 
 #define EdgePtPtr(field,P2,P3,P4,P5) ((field)->ptr(P2,P3,P4,P5))
 
