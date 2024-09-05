@@ -12,6 +12,7 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from pymol.shortcut import Shortcut
 from .constants import CURRENT_STATE, ALL_STATES
 
 if True:
@@ -23,7 +24,7 @@ if True:
     import re
     import gzip
     import os
-    from .cmd import _cmd, Shortcut, is_list, is_string, \
+    from .cmd import _cmd, is_list, is_string, \
           safe_list_eval, safe_alpha_list_eval, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
           is_tuple

@@ -11,7 +11,7 @@ class TestShortcut(testing.PyMOLTestCase):
     def testShortcut(self):
         # build shortcut
         sc = cmd.Shortcut(words)
-        
+
         # get all keywords
         self.assertItemsEqual(words, sc.interpret(''))
 
@@ -33,8 +33,8 @@ class TestShortcut(testing.PyMOLTestCase):
         self.assertItemsEqual(['foo', 'foo_new'], sc.interpret('f'))
         self.assertEqual('foo', sc.interpret('foo'))
         self.assertEqual('foo_new', sc.interpret('foo_'))
-        
-        self.assertEqual(False, sc.has_key(''))
+
+        self.assertEqual(False, '' in sc)
 
 
         # abbreviations

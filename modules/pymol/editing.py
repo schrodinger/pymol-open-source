@@ -13,6 +13,7 @@
 #Z* -------------------------------------------------------------------
 
 import pymol
+from pymol.shortcut import Shortcut
 from .constants import CURRENT_STATE, ALL_STATES
 
 
@@ -67,7 +68,7 @@ if True:
     import math
     from . import selector
     cmd = __import__("sys").modules["pymol.cmd"]
-    from .cmd import _cmd,lock,unlock,Shortcut,is_string, \
+    from .cmd import _cmd,lock,unlock,is_string, \
           boolean_sc,boolean_dict,safe_list_eval, is_sequence, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     from chempy import cpv

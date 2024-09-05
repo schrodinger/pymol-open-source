@@ -1,14 +1,16 @@
+from pymol.shortcut import Shortcut
+
 cmd = __import__("sys").modules["pymol.cmd"]
 
-class ExprShortcut(cmd.Shortcut):
+class ExprShortcut(Shortcut):
     '''
     Expression shortcut for iterate/alter/label with "s." prefix
     setting autocompletion.
     '''
-    def interpret(self, kee, mode=0):
-        if not kee.startswith('s.'):
-            return cmd.Shortcut.interpret(self, kee, mode)
-        v = cmd.setting.setting_sc.interpret(kee[2:])
+    def interpret(self, keyword, mode=False):
+        if not keyword.startswith('s.'):
+            return super().interpret(keyword, mode)
+        v = cmd.setting.setting_sc.interpret(keyword[2:])
         if isinstance(v, str):
             return 's.' + v
         if isinstance(v, list):
@@ -32,7 +34,7 @@ expr_sc = ExprShortcut([
 def fragments_sc():
     import os
     import chempy
-    return cmd.Shortcut([
+    return Shortcut([
         f[:-4] for f in os.listdir(chempy.path + 'fragments')
         if f.endswith('.pkl')
     ])
@@ -40,9 +42,9 @@ def fragments_sc():
 
 def vol_ramp_sc():
     from . import colorramping
-    return cmd.Shortcut(colorramping.namedramps)
+    return Shortcut(colorramping.namedramps)
 
-names_sc = lambda: cmd.Shortcut(cmd.get_names('public'))
+names_sc = lambda: Shortcut(cmd.get_names('public'))
 
 aa_nam_e = [ names_sc                   , 'name'            , ''   ]
 aa_nam_s = [ names_sc                   , 'name'            , ' '  ]
@@ -58,24 +60,24 @@ aa_map_c = [ cmd.map_sc                 , 'map object'      , ', ' ]
 aa_rep_c = [ cmd.repres_sc              , 'representation'  , ', ' ]
 aa_rem_c = [ cmd.repmasks_sc            , 'representation'  , ', ' ]
 aa_v_r_c = [ vol_ramp_sc                , 'volume ramp'     , ', ' ]
-aa_ali_e = [ cmd.Shortcut(['align', 'super', 'cealign']), 'alignment method', '']
+aa_ali_e = [ Shortcut(['align', 'super', 'cealign']), 'alignment method', '']
 
 def wizard_sc():
     import os, pymol.wizard
     names_glob = [name[:-3] for p in pymol.wizard.__path__
             for name in os.listdir(p) if name.endswith('.py')]
-    return cmd.Shortcut(names_glob)
+    return Shortcut(names_glob)
 
 def get_auto_arg_list(self_cmd=cmd):
     self_cmd = self_cmd._weakrefproxy
 
     aa_vol_c = [ lambda:
-            cmd.Shortcut(self_cmd.get_names_of_type('object:volume')),
+            Shortcut(self_cmd.get_names_of_type('object:volume')),
             'volume', '' ]
     aa_ramp_c = [ lambda:
-            cmd.Shortcut(self_cmd.get_names_of_type('object:ramp')),
+            Shortcut(self_cmd.get_names_of_type('object:ramp')),
             'ramp', '' ]
-    aa_scene_e = [lambda: cmd.Shortcut(cmd.get_scene_list()), 'scene', '']
+    aa_scene_e = [lambda: Shortcut(cmd.get_scene_list()), 'scene', '']
 
     return [
 # 1st
@@ -168,7 +170,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'sculpt_iterate' : aa_obj_c,
         'set'            : aa_set_c,
         'set_bond'       : aa_set_c,
-        'set_key'        : [ lambda: cmd.Shortcut(cmd.key_mappings), 'key'       , ', ' ],
+        'set_key'        : [ lambda: Shortcut(cmd.key_mappings), 'key'       , ', ' ],
         'set_name'       : aa_nam_c,
         'set_title'      : aa_obj_c,
         'show'           : aa_rem_c,

@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from pymol.shortcut import Shortcut
+
 if True:
 
     import sys
@@ -39,7 +41,7 @@ if True:
     cmd = sys.modules["pymol.cmd"]
     import pymol
 
-    from .cmd import _cmd, Shortcut, QuietException, \
+    from .cmd import _cmd, QuietException, \
           fb_module, fb_mask, is_list, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, is_string
 

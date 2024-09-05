@@ -12,10 +12,11 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from pymol.shortcut import Shortcut
+
 if True:
     try:
         from . import selector, internal
-        from .shortcut import Shortcut
         cmd = __import__("sys").modules["pymol.cmd"]
         from .cmd import _cmd, QuietException, is_string, \
              boolean_dict, boolean_sc, \
@@ -23,7 +24,6 @@ if True:
              location_code, location_sc
         import pymol
     except:
-        from shortcut import Shortcut
         cmd = None
 
 

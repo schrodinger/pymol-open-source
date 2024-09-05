@@ -12,6 +12,7 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from pymol.shortcut import Shortcut
 from . import colorprinting
 
 if True:
@@ -25,7 +26,7 @@ if True:
     import re
     cmd = sys.modules["pymol.cmd"]
 
-    from .cmd import _cmd, Shortcut, \
+    from .cmd import _cmd, \
           _feedback,fb_module,fb_mask, \
           repres,repres_sc, is_string, is_list, \
           repmasks,repmasks_sc, \

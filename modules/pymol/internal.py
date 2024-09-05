@@ -1,6 +1,7 @@
 import os
 import sys
 cmd = sys.modules["pymol.cmd"]
+from pymol.shortcut import Shortcut
 from pymol import _cmd
 import threading
 import traceback
@@ -14,7 +15,7 @@ import pymol
 
 import chempy.io
 
-from .cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, loadable, _load2str, Shortcut, \
+from .cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, loadable, _load2str, \
    is_string, is_ok
 
 # cache management:

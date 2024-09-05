@@ -11,6 +11,7 @@ import sys
 import pymol
 from pymol import cmd
 from pymol import colorprinting
+from pymol.shortcut import Shortcut
 from .legacysupport import *
 
 # variables
@@ -434,6 +435,6 @@ cmd.extend('plugin_load', plugin_load)
 cmd.extend('plugin_pref_save', pref_save)
 
 # autocompletion
-cmd.auto_arg[0]['plugin_load'] = [ lambda: cmd.Shortcut(plugins), 'plugin', ''  ]
+cmd.auto_arg[0]['plugin_load'] = [ lambda: Shortcut(plugins), 'plugin', ''  ]
 
 # vi:expandtab:smarttab:sw=4
