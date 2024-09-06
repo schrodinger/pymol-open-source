@@ -24,6 +24,7 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 from setuptools.command.build_py import build_py
 from setuptools.command.install import install
+from typing import List
 
 # non-empty DEBUG variable turns off optimization and adds -g flag
 DEBUG = bool(os.getenv("DEBUG", ""))
@@ -240,7 +241,7 @@ parser.add_argument(
 options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 
 
-def get_prefix_path() -> list[str]:
+def get_prefix_path() -> List[str]:
     """
     Return a list of paths which will be searched for "include",
     "include/freetype2", "lib", "lib64" etc.
