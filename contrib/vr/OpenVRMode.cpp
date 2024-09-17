@@ -48,6 +48,9 @@ SOFTWARE.
 #include "Feedback.h"
 #include "Matrix.h"
 #include "Ortho.h"
+#include "Scene.h"
+#include "SceneMouse.h"
+#include "ButMode.h"
 
 // local headers
 #include "OpenVRUtils.h"
@@ -1028,6 +1031,19 @@ void HandleLaser(PyMOLGlobals * G, int centerX, int centerY, CMouseEvent const& 
         break;
       }
     }
+  }
+
+  // use the laser to pick an atom
+  CScene *Scene = G->Scene;
+  if (SettingGetGlobal_b(G, cSetting_openvr_cut_laser) && OpenVRIsScenePickerActive(G)) {
+    float atomWorldPos[3];
+    ScenePickAtomInWorld(G, centerX, centerY, atomWorldPos);
+    OpenVRUpdateScenePickerLength(G, atomWorldPos);
+  }
+
+  // if an atom was picked with the laser, select it
+  if(Actions->Action1->WasPressed() && Scene->LastPicked.context.object != NULL) {
+    SceneClickObject(G, Scene->LastPicked.context.object, Scene->LastPicked, cButModeSeleToggle, "");
   }
 
   bool menuHit = false;
