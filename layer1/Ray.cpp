@@ -7641,7 +7641,7 @@ void RayGetTTT(CRay * I, float *ttt)
   if(!I->TTTFlag) {
     identity44f(ttt);
   } else {
-    ttt = glm::value_ptr(I->TTT);
+    std::copy_n(glm::value_ptr(I->TTT), 16, ttt);
   }
 }
 
