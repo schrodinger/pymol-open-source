@@ -4,8 +4,7 @@ from textwrap import fill
 
 from pymol import setting
 from pymol import save_shortcut
-from pymol.Qt import QtGui, QtWidgets
-from pymol.Qt import QtCore, QtCoreModels
+from pymol.Qt import QtGui, QtWidgets, QtCore, QtCoreModels
 from pymol.shortcut_manager import ShortcutManager, ShortcutIndex
 from pymol.keyboard import get_default_keys
 Qt = QtCore.Qt
@@ -14,7 +13,8 @@ QSI = QtGui.QStandardItem  # For brevity
 
 def get_shortcut_key_map():
     shortcut_key_map = {}
-    for key, value in vars(Qt).items():
+    # PyQt6 scoped IntEnums are mutually exclusive with PyQt6int subtype enums
+    for key, value in [*vars(Qt).items(), *vars(Qt.Key).items()]:
         if isinstance(value, Qt.Key):
             shortcut_key_map[value] = key.partition('_')[2]
     return shortcut_key_map
@@ -23,10 +23,10 @@ def get_shortcut_key_map():
 _SHORTCUT_KEY_MAP = get_shortcut_key_map()
 
 _SHORTCUT_MODIFIER_MAP = {
-    Qt.ControlModifier: _SHORTCUT_KEY_MAP[Qt.Key_Control],
-    Qt.AltModifier: _SHORTCUT_KEY_MAP[Qt.Key_Alt],
-    Qt.ShiftModifier: _SHORTCUT_KEY_MAP[Qt.Key_Shift],
-    Qt.MetaModifier: _SHORTCUT_KEY_MAP[Qt.Key_Meta],
+    Qt.KeyboardModifier.ControlModifier: _SHORTCUT_KEY_MAP[Qt.Key.Key_Control],
+    Qt.KeyboardModifier.AltModifier: _SHORTCUT_KEY_MAP[Qt.Key.Key_Alt],
+    Qt.KeyboardModifier.ShiftModifier: _SHORTCUT_KEY_MAP[Qt.Key.Key_Shift],
+    Qt.KeyboardModifier.MetaModifier: _SHORTCUT_KEY_MAP[Qt.Key.Key_Meta],
 }
 
 _REPLACE_KEYS = {
@@ -48,7 +48,7 @@ class PyMOLShortcutMenu(QtWidgets.QWidget):
     '''
 
     def __init__(self, parent, saved_shortcuts, cmd):
-        QtWidgets.QWidget.__init__(self, parent, Qt.Window)
+        QtWidgets.QWidget.__init__(self, parent, Qt.WindowType.Window)
         self.resize(700, 700)
         self.cmd = cmd
         self.shortcut_manager = ShortcutManager(saved_shortcuts, cmd)
@@ -66,7 +66,7 @@ class PyMOLShortcutMenu(QtWidgets.QWidget):
         self.model = QtGui.QStandardItemModel(self)
         self.proxy_model = QtCoreModels.QSortFilterProxyModel(self)
         self.proxy_model.setSourceModel(self.model)
-        self.proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.proxy_model.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.proxy_model.setFilterKeyColumn(-1)
 
         self.setWindowTitle('Keyboard Shortcut Menu')
@@ -166,8 +166,8 @@ class PyMOLShortcutMenu(QtWidgets.QWidget):
             key_item = QSI(key)
             command_item = QSI()
             descript_item = QSI()
-            key_item.setFlags(Qt.ItemIsEnabled)
-            descript_item.setFlags(Qt.ItemIsEditable)
+            key_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            descript_item.setFlags(Qt.ItemFlag.ItemIsEditable)
 
             if shortcut_list[ShortcutIndex.USER_DEF]:
                 if shortcut_list[ShortcutIndex.USER_DEF] != "Deleted":
@@ -203,7 +203,7 @@ class PyMOLShortcutMenu(QtWidgets.QWidget):
 
     def refresh_populate(self):
         '''
-        Called through the refresh button. 
+        Called through the refresh button.
         '''
         self.shortcut_manager.check_key_mappings()
         self.populateData()
@@ -286,7 +286,7 @@ class PyMOLShortcutMenu(QtWidgets.QWidget):
         '''
         Event filter for creating new shortcuts. Processes the key event before passing it on.
         '''
-        if (event.type() == QtCore.QEvent.KeyPress and source is self.create_new_form.keyEdit):
+        if (event.type() == QtCore.QEvent.Type.KeyPress and source is self.create_new_form.keyEdit):
             raw_string = self.keyevent_to_string(event)
             processed_string = self.process_keyevent_string(raw_string)
 
@@ -318,7 +318,7 @@ class PyMOLShortcutMenu(QtWidgets.QWidget):
         '''
         Returns string of keyevent used to populate create key menu.
         Provides filtering to the keyevents, returning a list of the accepted strings.
-        raw_string: string from keyevent_to_string 
+        raw_string: string from keyevent_to_string
         '''
         split_string = raw_string.split()
         process_list = []

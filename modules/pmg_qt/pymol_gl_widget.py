@@ -4,10 +4,8 @@ from pymol2 import SingletonPyMOL as PyMOL
 
 import pymol
 
-from pymol.Qt import QtCore
-from pymol.Qt import QtGui
-from pymol.Qt import QtWidgets
-Gesture = QtCore.QEvent.Gesture
+from pymol.Qt import QtCore, QtGui, QtWidgets
+Gesture = QtCore.QEvent.Type.Gesture
 Qt = QtCore.Qt
 
 from .keymapping import get_modifiers
@@ -43,9 +41,9 @@ class PyMOLGLWidget(BaseGLWidget):
 
     # mouse button map
     _buttonMap = {
-        Qt.LeftButton: 0,
-        Qt.MidButton: 1,
-        Qt.RightButton: 2,
+        Qt.MouseButton.LeftButton: 0,
+        Qt.MouseButton.MidButton: 1,
+        Qt.MouseButton.RightButton: 2,
     }
 
     def __enter__(self):
@@ -91,7 +89,7 @@ class PyMOLGLWidget(BaseGLWidget):
         if USE_QOPENGLWIDGET:
             super(PyMOLGLWidget, self).__init__(parent=parent)
             self.setFormat(f)
-            self.setUpdateBehavior(QtWidgets.QOpenGLWidget.PartialUpdate)
+            self.setUpdateBehavior(QtWidgets.QOpenGLWidget.UpdateBehavior.PartialUpdate)
         else:
             super(PyMOLGLWidget, self).__init__(f, parent=parent)
 
@@ -108,7 +106,7 @@ class PyMOLGLWidget(BaseGLWidget):
         self.setMouseTracking(True)
 
         # for accepting keyboard input (command line, shortcuts)
-        self.setFocusPolicy(Qt.ClickFocus)
+        self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
 
         # for idle rendering
         self._timer = QtCore.QTimer()
@@ -119,7 +117,7 @@ class PyMOLGLWidget(BaseGLWidget):
         self.setAcceptDrops(True)
 
         # pinch-zoom
-        self.grabGesture(Qt.PinchGesture)
+        self.grabGesture(Qt.GestureType.PinchGesture)
 
     def sizeHint(self):
         # default 640 + internal_gui, 480 + internal_feedback
@@ -136,12 +134,12 @@ class PyMOLGLWidget(BaseGLWidget):
         return super(PyMOLGLWidget, self).event(ev)
 
     def gestureEvent(self, ev):
-        gesture = ev.gesture(Qt.PinchGesture)
+        gesture = ev.gesture(Qt.GestureType.PinchGesture)
 
         if gesture is None:
             return False
 
-        if gesture.state() == Qt.GestureStarted:
+        if gesture.state() == Qt.GestureState.GestureStarted:
             self.pinch_start_z = self.cmd.get_view()[11]
 
         changeFlags = gesture.changeFlags()

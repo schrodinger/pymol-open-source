@@ -208,7 +208,7 @@ def connectFontContextMenu(widget):
 
     @type widget: QWidget
     """
-    widget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    widget.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
 
     @widget.customContextMenuRequested.connect
     def _(pt):
@@ -219,7 +219,7 @@ def connectFontContextMenu(widget):
         @action.triggered.connect
         def _():
             font, ok = QtWidgets.QFontDialog.getFont(widget.font(), widget,
-                    "Select Font", QtWidgets.QFontDialog.DontUseNativeDialog)
+                    "Select Font", QtWidgets.QFontDialog.FontDialogOption.DontUseNativeDialog)
             if ok:
                 widget.setFont(font)
 
@@ -261,7 +261,7 @@ def getMonospaceFont(size=9):
         family = 'Monospace'
 
     font = QtGui.QFont(family, size)
-    font.setStyleHint(font.Monospace)
+    font.setStyleHint(font.StyleHint.Monospace)
 
     return font
 
@@ -348,12 +348,13 @@ class PopupOnException:
     def __exit__(self, exc_type, e, tb):
         if e is not None:
             import traceback
+            from PyQt6 import QtWidgets
             QMB = QtWidgets.QMessageBox
 
             parent = QtWidgets.QApplication.focusWidget()
 
             msg = str(e) or 'unknown error'
-            msgbox = QMB(QMB.Critical, 'Error', msg, QMB.Close, parent)
+            msgbox = QMB(QMB.Icon.Critical, 'Error', msg, QMB.StandardButton.Close, parent)
             msgbox.setDetailedText(''.join(traceback.format_tb(tb)))
             msgbox.exec()
 

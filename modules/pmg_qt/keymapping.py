@@ -8,36 +8,36 @@ Qt = QtCore.Qt
 DEBUG = False
 
 keyMap = {
-    Qt.Key_Escape: 27,
-    Qt.Key_Tab: 9,
-    Qt.Key_Backspace: 8,
-    Qt.Key_Return: 13,
-    Qt.Key_Enter: 13,
-    Qt.Key_Delete: 127,
+    Qt.Key.Key_Escape: 27,
+    Qt.Key.Key_Tab: 9,
+    Qt.Key.Key_Backspace: 8,
+    Qt.Key.Key_Return: 13,
+    Qt.Key.Key_Enter: 13,
+    Qt.Key.Key_Delete: 127,
 }
 
 specialMap = {
-    Qt.Key_Left: 100,
-    Qt.Key_Up: 101,
-    Qt.Key_Right: 102,
-    Qt.Key_Down: 103,
-    Qt.Key_PageUp: 104,
-    Qt.Key_PageDown: 105,
-    Qt.Key_Home: 106,
-    Qt.Key_End: 107,
-    Qt.Key_Insert: 108,
-    Qt.Key_F1: 1,
-    Qt.Key_F2: 2,
-    Qt.Key_F3: 3,
-    Qt.Key_F4: 4,
-    Qt.Key_F5: 5,
-    Qt.Key_F6: 6,
-    Qt.Key_F7: 7,
-    Qt.Key_F8: 8,
-    Qt.Key_F9: 9,
-    Qt.Key_F10: 10,
-    Qt.Key_F11: 11,
-    Qt.Key_F12: 12,
+    Qt.Key.Key_Left: 100,
+    Qt.Key.Key_Up: 101,
+    Qt.Key.Key_Right: 102,
+    Qt.Key.Key_Down: 103,
+    Qt.Key.Key_PageUp: 104,
+    Qt.Key.Key_PageDown: 105,
+    Qt.Key.Key_Home: 106,
+    Qt.Key.Key_End: 107,
+    Qt.Key.Key_Insert: 108,
+    Qt.Key.Key_F1: 1,
+    Qt.Key.Key_F2: 2,
+    Qt.Key.Key_F3: 3,
+    Qt.Key.Key_F4: 4,
+    Qt.Key.Key_F5: 5,
+    Qt.Key.Key_F6: 6,
+    Qt.Key.Key_F7: 7,
+    Qt.Key.Key_F8: 8,
+    Qt.Key.Key_F9: 9,
+    Qt.Key.Key_F10: 10,
+    Qt.Key.Key_F11: 11,
+    Qt.Key.Key_F12: 12,
 }
 
 
@@ -47,10 +47,10 @@ def get_modifiers(ev):
     qtmodifiers = ev.modifiers()
 
     for mask, qtm in [
-        (0x1, Qt.ShiftModifier),
-        (0x2, Qt.MetaModifier),  # CTRL on Mac
-        (0x2, Qt.ControlModifier),
-        (0x4, Qt.AltModifier)
+        (0x1, Qt.KeyboardModifier.ShiftModifier),
+        (0x2, Qt.KeyboardModifier.MetaModifier),  # CTRL on Mac
+        (0x2, Qt.KeyboardModifier.ControlModifier),
+        (0x4, Qt.KeyboardModifier.AltModifier)
     ]:
         if qtmodifiers & qtm:
             pymolmod |= mask
@@ -115,7 +115,7 @@ def get_wheel_delta(ev):
 
     if abs(delta_y) < abs(delta_x):
         # Shift+Wheel emulates horizontal scrolling
-        if not (ev.modifiers() & Qt.ShiftModifier):
+        if not (ev.modifiers() & Qt.KeyboardModifier.ShiftModifier):
             return 0
         return delta_x
 
