@@ -13,7 +13,7 @@ Qt = QtCore.Qt
 class SettingSlider(QtWidgets.QSlider):
 
     def __init__(self, parent, setting, min_val, max_val, res, line_edit):
-        super(SettingSlider, self).__init__(Qt.Horizontal, parent)
+        super(SettingSlider, self).__init__(Qt.Orientation.Horizontal, parent)
 
         self.setting = setting
         self.min_val = float(min_val)
@@ -211,7 +211,7 @@ def create_dialog():
     form_layout = QtWidgets.QFormLayout()
     form_layout.setContentsMargins(0, 0, 0, 0)
     form_layout.setVerticalSpacing(0)
-    form_layout.setLabelAlignment(Qt.AlignLeft)
+    form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
     layout.addLayout(form_layout)
 
     for i, item in enumerate(sliders, 1):

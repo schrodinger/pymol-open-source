@@ -1020,7 +1020,7 @@ class NucleicAcidProperties:
 
 def makeFragmentButton():
     btn = QtWidgets.QPushButton()
-    btn.setAttribute(Qt.WA_LayoutUsesWidgetRect) # OS X workaround
+    btn.setAttribute(Qt.WidgetAttribute.WA_LayoutUsesWidgetRect) # OS X workaround
     btn.setSizePolicy(
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding)
