@@ -170,7 +170,7 @@ def _edit_pymolrc(app, _list=()):
 
         pymolrc, ok = QtWidgets.QInputDialog.getText(
             None, 'Create new pymolrc?', 'Filename of new pymolrc',
-            QtWidgets.QLineEdit.Normal, pymolrc)
+            QtWidgets.QLineEdit.EchoMode.Normal, pymolrc)
 
         if not ok:
             return
