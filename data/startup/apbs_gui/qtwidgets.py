@@ -9,7 +9,6 @@ class ResizableMessageBox(QtWidgets.QMessageBox):
             QtCore.QEvent.Type.ShowToParent,
             )
 
-    from PyQt6 import QtCore
     _UNWANTED_WINDOW_FLAGS = (
             QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint |
             0)

@@ -395,7 +395,6 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         """
         This is called when color dialog is closed.
         """
-        from PyQt6 import QtWidgets
         if result == QtWidgets.QDialog.DialogCode.Accepted:
             color = self.color_dialog.currentColor()
         else:

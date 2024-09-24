@@ -348,7 +348,6 @@ class PopupOnException:
     def __exit__(self, exc_type, e, tb):
         if e is not None:
             import traceback
-            from PyQt6 import QtWidgets
             QMB = QtWidgets.QMessageBox
 
             parent = QtWidgets.QApplication.focusWidget()
