@@ -1459,23 +1459,359 @@ void bg_grad(PyMOLGlobals* G)
   glEnable(GL_DEPTH_TEST);
 }
 
+/**
+ * Updates the Sequence Viewer if necessary.
+ */
+static void OrthoDoDrawUpdateSeqView(PyMOLGlobals* G)
+{
+  auto I = G->Ortho;
+  if (SettingGet<bool>(G, cSetting_seq_view)) {
+    SeqUpdate(G);
+    I->HaveSeqViewer = true;
+  } else if (I->HaveSeqViewer) {
+    SeqUpdate(G);
+    I->HaveSeqViewer = false;
+  }
+}
+
+/**
+ * Determines the margin size of the internal_gui (legacy contents panel)
+ * @param internal_gui_mode the mode of the internal gui
+ * @return the size of the right side margin
+ */
+static int OrthoCalculateRightSideMargin(
+    PyMOLGlobals* G, InternalGUIMode internal_gui_mode)
+{
+  if (!SettingGet<bool>(G, cSetting_internal_gui)) {
+    return 0;
+  }
+  if (internal_gui_mode == InternalGUIMode::Default) {
+    return DIP2PIXEL(SettingGet<int>(G, cSetting_internal_gui_width));
+  }
+  return 0;
+}
+
+/**
+ * Draws the background for the internal Feedback
+ * @param orthoCGO the CGO to render into
+ * @param rightSceneMargin the size of the right side margin
+ * (OrthoCalculateRightSideMargin)
+ * @param internal_gui_mode the mode of the internal gui
+ */
+static void OrthoDrawInternalFeedbackBG(PyMOLGlobals* G, CGO* orthoCGO,
+    int rightSceneMargin, InternalGUIMode internal_gui_mode)
+{
+  auto I = G->Ortho;
+  auto* block = SceneGetBlock(G);
+  auto height = block->rect.bottom;
+  switch (internal_gui_mode) {
+  case InternalGUIMode::Default:
+    if (orthoCGO) {
+      CGOColor(orthoCGO, 0.f, 0.f, 0.f);
+      CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+      CGOVertex(orthoCGO, I->Width - rightSceneMargin, height - 1, 0.f);
+      CGOVertex(orthoCGO, I->Width - rightSceneMargin, 0, 0.f);
+      CGOVertex(orthoCGO, 0.f, height - 1, 0.f);
+      CGOVertex(orthoCGO, 0.f, 0.f, 0.f);
+      CGOEnd(orthoCGO);
+#ifndef PURE_OPENGL_ES_2
+    } else {
+      glColor3f(0.0, 0.0, 0.0);
+      glBegin(GL_POLYGON);
+      glVertex2i(I->Width - rightSceneMargin, height - 1);
+      glVertex2i(I->Width - rightSceneMargin, 0);
+      glVertex2i(0, 0);
+      glVertex2i(0, height - 1);
+      glEnd();
+#endif
+    }
+    /* deliberate fall-through */
+  case InternalGUIMode::BG:
+    if (orthoCGO) {
+      CGOColor(orthoCGO, 0.3f, 0.3f, 0.3f);
+      CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+      CGOVertex(orthoCGO, 1 + I->Width - rightSceneMargin, height, 0.f);
+      CGOVertex(orthoCGO, 1 + I->Width - rightSceneMargin, height - 1, 0.f);
+      CGOVertex(orthoCGO, -1, height, 0.f);
+      CGOVertex(orthoCGO, -1, height - 1, 0.f);
+      CGOEnd(orthoCGO);
+#ifndef PURE_OPENGL_ES_2
+    } else {
+      glColor3f(0.3, 0.3, 0.3);
+      glBegin(GL_LINES);
+      glVertex2i(1 + I->Width - rightSceneMargin, height - 1);
+      glVertex2i(-1, height - 1);
+      glEnd();
+#endif
+    }
+    break;
+  }
+}
+
+/**
+ * Draws the background for the internal GUI (legacy contents panel)
+ * @param orthoCGO the CGO to render into
+ * @param internal_gui_mode the mode of the internal gui
+ */
+static void OrthoDrawInternalGUIBG(
+    PyMOLGlobals* G, CGO* orthoCGO, InternalGUIMode internal_gui_mode)
+{
+  auto I = G->Ortho;
+  auto internal_gui_width =
+      DIP2PIXEL(SettingGet<int>(G, cSetting_internal_gui_width));
+  if (internal_gui_mode != InternalGUIMode::Transparent) {
+    if (orthoCGO) {
+      CGOColor(orthoCGO, 0.3f, 0.3f, 0.3f);
+      CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+      CGOVertex(orthoCGO, I->Width - internal_gui_width, 0.f, 0.f);
+      CGOVertex(orthoCGO, I->Width - internal_gui_width + 1.f, 0.f, 0.f);
+      CGOVertex(orthoCGO, I->Width - internal_gui_width, I->Height, 0.f);
+      CGOVertex(orthoCGO, I->Width - internal_gui_width + 1.f, I->Height, 0.f);
+      CGOEnd(orthoCGO);
+#ifndef PURE_OPENGL_ES_2
+    } else {
+      glColor3f(0.3, 0.3, 0.3);
+      glBegin(GL_LINES);
+      glVertex2i(I->Width - internal_gui_width, 0);
+      glVertex2i(I->Width - internal_gui_width, I->Height);
+      glEnd();
+#endif
+    }
+  }
+}
+
+/**
+ * @return the number of overlay lines to display
+ */
+static int OrthoGetNumberOverlayLines(PyMOLGlobals* G)
+{
+  auto I = G->Ortho;
+  auto overlay = OrthoGetOverlayStatus(G);
+  auto internal_feedback = SettingGet<int>(G, cSetting_internal_feedback);
+  switch (overlay) {
+  case -1: /* auto overlay */
+    overlay = I->CurLine - I->AutoOverlayStopLine;
+    if (overlay < 0) {
+      overlay += (OrthoSaveLines + 1);
+    }
+    if (internal_feedback > 1) {
+      overlay -= (internal_feedback - 1);
+    }
+    overlay = std::max(overlay, 0);
+    break;
+  case 1: /* default -- user overlay_lines */
+    overlay = SettingGetGlobal_i(G, cSetting_overlay_lines);
+    break;
+  }
+  auto text = SettingGet<bool>(G, cSetting_text);
+  return text ? 0 : overlay;
+}
+
+/**
+ * Draws overlay text
+ * @param orthoCGO the CGO to render into
+ * @param draw_text whether to draw text
+ * @param internal_feedback the number of internal feedback lines
+ * @param numOverlayLines the number of overlay lines
+ * @param internal_gui_mode the mode of the internal gui
+ */
+static void OrthoDrawText(PyMOLGlobals* G, CGO* orthoCGO, bool draw_text,
+    int internal_feedback, int numOverlayLines,
+    InternalGUIMode internal_gui_mode)
+{
+  auto I = G->Ortho;
+  bool skip_prompt =
+      SettingGet<int>(G, cSetting_internal_prompt) ? false : true;
+  int adjust_at = 0;
+  /* now print the text */
+
+  auto lcount = 0;
+  auto x = cOrthoLeftMargin;
+  auto y = cOrthoBottomMargin + MovieGetPanelHeight(G);
+
+  int showLines{};
+  if (draw_text || I->SplashFlag)
+    showLines = I->ShowLines;
+  else {
+    showLines = internal_feedback + numOverlayLines;
+  }
+  if (internal_feedback)
+    adjust_at = internal_feedback + 1;
+
+  auto l = (I->CurLine - (lcount + skip_prompt)) & OrthoSaveLines;
+
+  if (orthoCGO)
+    CGOColorv(orthoCGO, I->TextColor);
+#ifndef PURE_OPENGL_ES_2
+  else
+    glColor3fv(I->TextColor);
+#endif
+  while (l >= 0) {
+    lcount++;
+    if (lcount > showLines)
+      break;
+    if (lcount == adjust_at)
+      y += 4;
+    auto* str = I->Line[l & OrthoSaveLines];
+    if (internal_gui_mode != InternalGUIMode::Default) {
+      TextSetColor(G, I->OverlayColor);
+    } else if (strncmp(str, I->Prompt, 6) == 0) {
+      if (lcount < adjust_at)
+        TextSetColor(G, I->TextColor);
+      else {
+        if (length3f(I->OverlayColor) < 0.5)
+          TextSetColor(G, I->OverlayColor);
+        else
+          TextSetColor(G, I->TextColor);
+      }
+    } else
+      TextSetColor(G, I->OverlayColor);
+    TextSetPos2i(G, x, y);
+    if (str) {
+      TextDrawStr(G, str, orthoCGO);
+      if ((lcount == 1) && (I->InputFlag)) {
+        if (!skip_prompt) {
+          if (I->CursorChar >= 0) {
+            TextSetPos2i(G, x + cOrthoCharWidth * I->CursorChar, y);
+          }
+          TextDrawChar(G, '_', orthoCGO);
+        }
+      }
+    }
+    l = (I->CurLine - (lcount + skip_prompt)) & OrthoSaveLines;
+    y = y + cOrthoLineHeight;
+  }
+}
+
+/**
+ * Draws the Picking Marquee overlay
+ * @param orthoCGO the CGO to render into
+ */
+static void OrthoDrawLoop(PyMOLGlobals* G, CGO* orthoCGO)
+{
+  auto I = G->Ortho;
+  const float* vc = ColorGet(G, cColorFront);
+  if (orthoCGO) {
+    CGOColor(orthoCGO, vc[0], vc[1], vc[2]);
+
+    CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+    CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.bottom, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.top + 1, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.left + 1, I->LoopRect.bottom, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.left + 1, I->LoopRect.top + 1, 0.f);
+    CGOEnd(orthoCGO);
+    CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+    CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.top, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.top + 1, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.top, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.top + 1, 0.f);
+    CGOEnd(orthoCGO);
+    CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+    CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.bottom, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.top + 1, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.right + 1, I->LoopRect.bottom, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.right + 1, I->LoopRect.top + 1, 0.f);
+    CGOEnd(orthoCGO);
+    CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+    CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.bottom, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.bottom + 1, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.bottom, 0.f);
+    CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.bottom + 1, 0.f);
+    CGOEnd(orthoCGO);
+
+    /*
+    CGOBegin(orthoCGO, GL_LINE_LOOP);
+    CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.top, 1.f);
+    CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.top, 1.f);
+    CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.bottom, 1.f);
+    CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.bottom, 1.f);
+    CGOEnd(orthoCGO);*/
+#ifndef PURE_OPENGL_ES_2
+  } else {
+    glColor3f(vc[0], vc[1], vc[2]);
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(I->LoopRect.left, I->LoopRect.top);
+    glVertex2i(I->LoopRect.right, I->LoopRect.top);
+    glVertex2i(I->LoopRect.right, I->LoopRect.bottom);
+    glVertex2i(I->LoopRect.left, I->LoopRect.bottom);
+    glVertex2i(I->LoopRect.left, I->LoopRect.top);
+    glEnd();
+#endif
+  }
+}
+
+/**
+ * Draws the PyMOL-product specific messages
+ * @param orthoCGO the CGO to render into
+ */
+static void OrthoDrawMessages(PyMOLGlobals* G, CGO* orthoCGO)
+{
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+#ifdef PYMOL_EVAL
+#ifndef _NO_DISPLAY_EVAL
+  OrthoDrawEvalMessage(G, orthoCGO);
+#endif
+#endif
+#ifdef PYMOL_BETA
+  OrthoDrawBetaMessage(G);
+#endif
+#ifdef JYMOL_EVAL
+  OrthoDrawEvalMessage(G);
+#endif
+#ifdef PYMOL_EDU
+  OrthoDrawEduMessage(G, orthoCGO);
+#endif
+#ifdef PYMOL_COLL
+  OrthoDrawCollMessage(G);
+#endif
+#ifdef AXPYMOL_EVAL
+  OrthoDrawAxMessage(G);
+#endif
+
+  /* END PROPRIETARY CODE SEGMENT */
+}
+
+/**
+ * Draws the Font Texture for debugging purposes
+ * @param orthoCGO the CGO to render into
+*/
+static void OrthoDrawFontTextureDebug(PyMOLGlobals* G, CGO* orthoCGO)
+{
+  /*  This shows the font texture in the middle of the screen, we might want
+   * to debug it */
+  float minx = 100.f, maxx = 612.f, miny = 100.f, maxy = 612.f;
+  short texcoord = true;
+  CGOAlpha(orthoCGO, .5f);
+  CGOColor(orthoCGO, 0.f, 0.f, 0.f);
+  CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+  if (orthoCGO)
+    CGOTexCoord2f(orthoCGO, 1.f, 1.f);
+  CGOVertex(orthoCGO, maxx, maxy, 0.f);
+  if (orthoCGO)
+    CGOTexCoord2f(orthoCGO, 1.f, 0.f);
+  CGOVertex(orthoCGO, maxx, miny, 0.f);
+  if (orthoCGO)
+    CGOTexCoord2f(orthoCGO, 0.f, 1.f);
+  CGOVertex(orthoCGO, minx, maxy, 0.f);
+  if (orthoCGO)
+    CGOTexCoord2f(orthoCGO, 0.f, 0.f);
+  CGOVertex(orthoCGO, minx, miny, 0.f);
+  CGOEnd(orthoCGO);
+  CGOStop(orthoCGO);
+}
+
+/**
+ * Top-level function for drawing the PyMOL overlay
+ * (includes legacy contents panel, internal feedback, text,
+ *  3D scene, and other 2D blocks like Sequence viewer, etc.)
+ * @param render_mode the render mode to use
+ */
 void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
 {
   COrtho* I = G->Ortho;
   CGO* orthoCGO = nullptr;
-  int x, y;
-  int l, lcount;
-  char* str;
-  int showLines;
-  int height;
-  int overlay, text;
-  int rightSceneMargin;
-  int internal_feedback;
   int times = 1, origtimes = 0;
-  int double_pump = false;
-  const float* bg_color;
-  int skip_prompt = 0;
-  int render = false;
+  bool shouldRenderScene = false;
   auto internal_gui_mode =
       SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting);
 #ifdef _PYMOL_OPENVR
@@ -1483,26 +1819,13 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
   int openvr_text = 0;
 #endif
 
-  int generate_shader_cgo = 0;
+  bool generate_shader_cgo = false;
 
   I->RenderMode = render_mode;
-  if (SettingGetGlobal_b(G, cSetting_seq_view)) {
-    SeqUpdate(G);
-    I->HaveSeqViewer = true;
-  } else if (I->HaveSeqViewer) {
-    SeqUpdate(G);
-    I->HaveSeqViewer = false;
-  }
+  OrthoDoDrawUpdateSeqView(G);
 
-  if (SettingGet_i(G, nullptr, nullptr, cSetting_internal_prompt))
-    skip_prompt = 0;
-  else
-    skip_prompt = 1;
-
-  double_pump =
-      SettingGet_i(G, nullptr, nullptr, cSetting_stereo_double_pump_mono);
-  bg_color =
-      ColorGet(G, SettingGet_color(G, nullptr, nullptr, cSetting_bg_rgb));
+  auto double_pump = SettingGet<bool>(G, cSetting_stereo_double_pump_mono);
+  auto bg_color = ColorGet(G, SettingGet_color(G, cSetting_bg_rgb));
 
   I->OverlayColor[0] = 1.0F - bg_color[0];
   I->OverlayColor[1] = 1.0F - bg_color[1];
@@ -1514,58 +1837,22 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
   " OrthoDoDraw: entered.\n" ENDFD;
   if (G->HaveGUI && G->ValidContext) {
 
-#ifdef GL_FRAMEBUFFER_UNDEFINED
-    // prevents GL_INVALID_FRAMEBUFFER_OPERATION (0x0506) on macOS
-    // with external Monitor
-    if (glCheckFramebufferStatus &&
-        glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_UNDEFINED)
-      return;
-#endif
-
     if (Feedback(G, FB_OpenGL, FB_Debugging))
       PyMOLCheckOpenGLErr("OrthoDoDraw checkpoint 0");
 
-    if (SettingGetGlobal_b(G, cSetting_internal_gui)) {
-      switch (internal_gui_mode) {
-      case InternalGUIMode::Default:
-        rightSceneMargin =
-            DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_width));
-        break;
-      default:
-        rightSceneMargin = 0;
-        break;
-      }
-    } else {
-      rightSceneMargin = 0;
-    }
+    auto rightSceneMargin = OrthoCalculateRightSideMargin(G, internal_gui_mode);
 
-    internal_feedback = SettingGetGlobal_i(G, cSetting_internal_feedback);
+    auto numOverlayLines = OrthoGetNumberOverlayLines(G);
+    auto text = SettingGet<bool>(G, cSetting_text);
 
-    overlay = OrthoGetOverlayStatus(G);
-    switch (overlay) {
-    case -1: /* auto overlay */
-      overlay = I->CurLine - I->AutoOverlayStopLine;
-      if (overlay < 0) {
-        overlay += (OrthoSaveLines + 1);
-      }
-      if (internal_feedback > 1) {
-        overlay -= (internal_feedback - 1);
-      }
-      if (overlay < 0)
-        overlay = 0;
-      break;
-    case 1: /* default -- user overlay_lines */
-      overlay = SettingGetGlobal_i(G, cSetting_overlay_lines);
-      break;
-    }
-
-    text = SettingGetGlobal_b(G, cSetting_text);
-    if (text)
-      overlay = 0;
-
-    if (overlay || (!text) || render_mode == OrthoRenderMode::VR)
+#ifdef PURE_OPENGL_ES_2
+    // Workaround for now
+    shouldRenderScene = true;
+#else
+    if (numOverlayLines || (!text) || render_mode == OrthoRenderMode::VR)
       if (!SceneRenderCached(G))
-        render = true;
+        shouldRenderScene = true;
+#endif
 
     if (render_mode == OrthoRenderMode::VR) {
 #ifdef _PYMOL_OPENVR
@@ -1600,7 +1887,7 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
     I->DrawTime += I->LastDraw;
     ButModeSetRate(G, (float) I->DrawTime);
 
-    if (render && (render_mode != OrthoRenderMode::GeoWallRight)) {
+    if (shouldRenderScene && (render_mode != OrthoRenderMode::GeoWallRight)) {
       SceneRenderInfo renderInfo{};
       renderInfo.forceCopy = SettingGet<bool>(G, cSetting_image_copy_always);
       SceneRender(G, renderInfo);
@@ -1673,139 +1960,23 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
           }
         }
       }
-      x = I->X;
-      y = I->Y;
 
+      auto internal_feedback = SettingGet<int>(G, cSetting_internal_feedback);
       if (internal_feedback) { /* moved to avoid conflict with menus */
-        Block* block = SceneGetBlock(G);
-        height = block->rect.bottom;
-        switch (internal_gui_mode) {
-        case InternalGUIMode::Default:
-          if (generate_shader_cgo) {
-            CGOColor(orthoCGO, 0.f, 0.f, 0.f);
-            CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
-            CGOVertex(orthoCGO, I->Width - rightSceneMargin, height - 1, 0.f);
-            CGOVertex(orthoCGO, I->Width - rightSceneMargin, 0, 0.f);
-            CGOVertex(orthoCGO, 0.f, height - 1, 0.f);
-            CGOVertex(orthoCGO, 0.f, 0.f, 0.f);
-            CGOEnd(orthoCGO);
-          } else {
-            glColor3f(0.0, 0.0, 0.0);
-            glBegin(GL_POLYGON);
-            glVertex2i(I->Width - rightSceneMargin, height - 1);
-            glVertex2i(I->Width - rightSceneMargin, 0);
-            glVertex2i(0, 0);
-            glVertex2i(0, height - 1);
-            glEnd();
-          }
-          /* deliberate fall-through */
-        case InternalGUIMode::BG:
-          if (generate_shader_cgo) {
-            CGOColor(orthoCGO, 0.3f, 0.3f, 0.3f);
-            CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
-            CGOVertex(orthoCGO, 1 + I->Width - rightSceneMargin, height, 0.f);
-            CGOVertex(
-                orthoCGO, 1 + I->Width - rightSceneMargin, height - 1, 0.f);
-            CGOVertex(orthoCGO, -1, height, 0.f);
-            CGOVertex(orthoCGO, -1, height - 1, 0.f);
-            CGOEnd(orthoCGO);
-          } else {
-            glColor3f(0.3, 0.3, 0.3);
-            glBegin(GL_LINES);
-            glVertex2i(1 + I->Width - rightSceneMargin, height - 1);
-            glVertex2i(-1, height - 1);
-            glEnd();
-          }
-          break;
-        }
+        OrthoDrawInternalFeedbackBG(G, orthoCGO, rightSceneMargin, internal_gui_mode);
       }
 
       PRINTFD(G, FB_Ortho)
       " OrthoDoDraw: drawing blocks...\n" ENDFD;
 
-      if (SettingGetGlobal_b(G, cSetting_internal_gui)) {
-        int internal_gui_width =
-            DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_width));
-        if (internal_gui_mode != InternalGUIMode::Transparent) {
-          if (generate_shader_cgo) {
-            CGOColor(orthoCGO, 0.3f, 0.3f, 0.3f);
-            CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
-            CGOVertex(orthoCGO, I->Width - internal_gui_width, 0.f, 0.f);
-            CGOVertex(orthoCGO, I->Width - internal_gui_width + 1.f, 0.f, 0.f);
-            CGOVertex(orthoCGO, I->Width - internal_gui_width, I->Height, 0.f);
-            CGOVertex(
-                orthoCGO, I->Width - internal_gui_width + 1.f, I->Height, 0.f);
-            CGOEnd(orthoCGO);
-          } else {
-            glColor3f(0.3, 0.3, 0.3);
-            glBegin(GL_LINES);
-            glVertex2i(I->Width - internal_gui_width, 0);
-            glVertex2i(I->Width - internal_gui_width, I->Height);
-            glEnd();
-          }
-        }
+      if (SettingGet<bool>(G, cSetting_internal_gui)) {
+        OrthoDrawInternalGUIBG(G, orthoCGO, internal_gui_mode);
       }
 
       OrthoRestorePrompt(G);
 
-      int adjust_at = 0;
-      /* now print the text */
-
-      lcount = 0;
-      x = cOrthoLeftMargin;
-      y = cOrthoBottomMargin + MovieGetPanelHeight(G);
-
-      if (draw_text || I->SplashFlag)
-        showLines = I->ShowLines;
-      else {
-        showLines = internal_feedback + overlay;
-      }
-      if (internal_feedback)
-        adjust_at = internal_feedback + 1;
-
-      l = (I->CurLine - (lcount + skip_prompt)) & OrthoSaveLines;
-
-      if (orthoCGO)
-        CGOColorv(orthoCGO, I->TextColor);
-#ifndef PURE_OPENGL_ES_2
-      else
-        glColor3fv(I->TextColor);
-#endif
-      while (l >= 0) {
-        lcount++;
-        if (lcount > showLines)
-          break;
-        if (lcount == adjust_at)
-          y += 4;
-        str = I->Line[l & OrthoSaveLines];
-        if (internal_gui_mode != InternalGUIMode::Default) {
-          TextSetColor(G, I->OverlayColor);
-        } else if (strncmp(str, I->Prompt, 6) == 0) {
-          if (lcount < adjust_at)
-            TextSetColor(G, I->TextColor);
-          else {
-            if (length3f(I->OverlayColor) < 0.5)
-              TextSetColor(G, I->OverlayColor);
-            else
-              TextSetColor(G, I->TextColor);
-          }
-        } else
-          TextSetColor(G, I->OverlayColor);
-        TextSetPos2i(G, x, y);
-        if (str) {
-          TextDrawStr(G, str, orthoCGO);
-          if ((lcount == 1) && (I->InputFlag)) {
-            if (!skip_prompt) {
-              if (I->CursorChar >= 0) {
-                TextSetPos2i(G, x + cOrthoCharWidth * I->CursorChar, y);
-              }
-              TextDrawChar(G, '_', orthoCGO);
-            }
-          }
-        }
-        l = (I->CurLine - (lcount + skip_prompt)) & OrthoSaveLines;
-        y = y + cOrthoLineHeight;
-      }
+      OrthoDrawText(G, orthoCGO, draw_text, internal_feedback,
+          numOverlayLines, internal_gui_mode);
 
       OrthoDrawWizardPrompt(G, orthoCGO);
 
@@ -1825,68 +1996,10 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
       " OrthoDoDraw: blocks drawn.\n" ENDFD;
 
       if (I->LoopFlag) {
-        const float* vc = ColorGet(G, cColorFront);
-        if (generate_shader_cgo) {
-          CGOColor(orthoCGO, vc[0], vc[1], vc[2]);
-
-          CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
-          CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.bottom, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.top + 1, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.left + 1, I->LoopRect.bottom, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.left + 1, I->LoopRect.top + 1, 0.f);
-          CGOEnd(orthoCGO);
-          CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
-          CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.top, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.top + 1, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.top, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.top + 1, 0.f);
-          CGOEnd(orthoCGO);
-          CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
-          CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.bottom, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.top + 1, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.right + 1, I->LoopRect.bottom, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.right + 1, I->LoopRect.top + 1, 0.f);
-          CGOEnd(orthoCGO);
-          CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
-          CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.bottom, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.bottom + 1, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.bottom, 0.f);
-          CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.bottom + 1, 0.f);
-          CGOEnd(orthoCGO);
-        } else {
-          glColor3f(vc[0], vc[1], vc[2]);
-          glBegin(GL_LINE_LOOP);
-          glVertex2i(I->LoopRect.left, I->LoopRect.top);
-          glVertex2i(I->LoopRect.right, I->LoopRect.top);
-          glVertex2i(I->LoopRect.right, I->LoopRect.bottom);
-          glVertex2i(I->LoopRect.left, I->LoopRect.bottom);
-          glVertex2i(I->LoopRect.left, I->LoopRect.top);
-          glEnd();
-        }
+        OrthoDrawLoop(G, orthoCGO);
       }
 
-      /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h")
-       */
-#ifdef PYMOL_EVAL
-      OrthoDrawEvalMessage(G, orthoCGO);
-#endif
-#ifdef PYMOL_BETA
-      OrthoDrawBetaMessage(G);
-#endif
-#ifdef JYMOL_EVAL
-      OrthoDrawEvalMessage(G);
-#endif
-#ifdef PYMOL_EDU
-      OrthoDrawEduMessage(G);
-#endif
-#ifdef PYMOL_COLL
-      OrthoDrawCollMessage(G);
-#endif
-#ifdef AXPYMOL_EVAL
-      OrthoDrawAxMessage(G);
-#endif
-
-      /* END PROPRIETARY CODE SEGMENT */
+      OrthoDrawMessages(G, orthoCGO);
 
       OrthoPopMatrix(G);
 
@@ -1905,70 +2018,46 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
   if (generate_shader_cgo) {
     int ok = true;
 
-    {
 #ifdef SHOW_FONT_TEXTURE
-      /*  This shows the font texture in the middle of the screen, we might want
-       * to debug it */
-      CGO* testOrthoCGO = orthoCGO;
-      //      CGO *testOrthoCGO =  CGONew(G);
-      float minx = 100.f, maxx = 612.f, miny = 100.f, maxy = 612.f;
-      short texcoord = true;
-      CGOAlpha(testOrthoCGO, .5f);
-      CGOColor(testOrthoCGO, 0.f, 0.f, 0.f);
-      CGOBegin(testOrthoCGO, GL_TRIANGLE_STRIP);
-      if (texcoord)
-        CGOTexCoord2f(testOrthoCGO, 1.f, 1.f);
-      CGOVertex(testOrthoCGO, maxx, maxy, 0.f);
-      if (texcoord)
-        CGOTexCoord2f(testOrthoCGO, 1.f, 0.f);
-      CGOVertex(testOrthoCGO, maxx, miny, 0.f);
-      if (texcoord)
-        CGOTexCoord2f(testOrthoCGO, 0.f, 1.f);
-      CGOVertex(testOrthoCGO, minx, maxy, 0.f);
-      if (texcoord)
-        CGOTexCoord2f(testOrthoCGO, 0.f, 0.f);
-      CGOVertex(testOrthoCGO, minx, miny, 0.f);
-      CGOEnd(testOrthoCGO);
-      CGOStop(testOrthoCGO);
-#else
-      CGOStop(orthoCGO);
+    OrthoDrawFontTextureDebug(G, orthoCGO);
 #endif
-    }
-    {
-      CGO* expandedCGO = CGOExpandDrawTextures(orthoCGO, 0);
-      CHECKOK(ok, expandedCGO);
-      if (ok)
-        I->orthoCGO = CGOOptimizeScreenTexturesAndPolygons(expandedCGO, 0);
-      CGOFree(orthoCGO);
-      CGOFree(expandedCGO);
+    CGOStop(orthoCGO);
 
-      while (origtimes--) {
-        switch (origtimes) {
-        case 1:
+    // Optimize CGO
+    CGO* expandedCGO = CGOExpandDrawTextures(orthoCGO, 0);
+    CHECKOK(ok, expandedCGO);
+    if (ok)
+      I->orthoCGO = CGOOptimizeScreenTexturesAndPolygons(expandedCGO, 0);
+    CGOFree(orthoCGO);
+    CGOFree(expandedCGO);
+
+    // Render CGO to final buffer (if created anew)
+    while (origtimes--) {
+      switch (origtimes) {
+      case 1:
 #ifdef _PYMOL_OPENVR
-          if (offscreen_vr) {
-            OrthoDrawBuffer(G, GL_NONE);
-            OpenVRMenuBufferStart(G, I->Width, I->Height);
-          } else
+        if (offscreen_vr) {
+          OrthoDrawBuffer(G, GL_NONE);
+          OpenVRMenuBufferStart(G, I->Width, I->Height);
+        } else
 #endif
-            OrthoDrawBuffer(G, GL_BACK_LEFT);
-          break;
-        case 0:
-          if (double_pump) {
-            OrthoDrawBuffer(G, GL_BACK_RIGHT);
-          } else
-            OrthoDrawBuffer(G, GL_BACK);
-          break;
-        }
-        OrthoPushMatrix(G);
-        OrthoRenderCGO(G);
-        OrthoPopMatrix(G);
-#ifdef _PYMOL_OPENVR
-        if (offscreen_vr && origtimes) {
-          OpenVRMenuBufferFinish(G);
-        }
-#endif
+          OrthoDrawBuffer(G, GL_BACK_LEFT);
+        break;
+      case 0:
+        if (double_pump) {
+          OrthoDrawBuffer(G, GL_BACK_RIGHT);
+        } else
+          OrthoDrawBuffer(G, GL_BACK);
+        break;
       }
+      OrthoPushMatrix(G);
+      OrthoRenderCGO(G);
+      OrthoPopMatrix(G);
+#ifdef _PYMOL_OPENVR
+      if (offscreen_vr && origtimes) {
+        OpenVRMenuBufferFinish(G);
+      }
+#endif
     }
   }
 
