@@ -1033,21 +1033,7 @@ void HandleLaser(PyMOLGlobals * G, int centerX, int centerY, CMouseEvent const& 
     }
   }
 
-  // use the laser to pick an atom
-  CScene *Scene = G->Scene;
-  if (SettingGetGlobal_b(G, cSetting_openvr_cut_laser) && OpenVRIsScenePickerActive(G)) {
-    float atomWorldPos[3];
-    ScenePickAtomInWorld(G, centerX, centerY, atomWorldPos);
-    OpenVRUpdateScenePickerLength(G, atomWorldPos);
-  }
-
-  // if an atom was picked with the laser, select it
-  if(Actions->Action1->WasPressed() && Scene->LastPicked.context.object != NULL) {
-    SceneClickObject(G, Scene->LastPicked.context.object, Scene->LastPicked, cButModeSeleToggle, "");
-  }
-
   bool menuHit = false;
-
   if (laserSource) {
     I->Picker.Activate(laserSource->GetLaserDeviceIndex(), centerX, centerY);
 
@@ -1070,14 +1056,30 @@ void HandleLaser(PyMOLGlobals * G, int centerX, int centerY, CMouseEvent const& 
       }
     }
 
-    // laser missed
-    float missedColor[4] = {1.0f, 1.0f, 0.0f, 0.5f};
     if (!laserTarget) {
       laserTarget = &I->Picker;
-      if (!SettingGetGlobal_b(G, cSetting_openvr_cut_laser)) {
-        laserSource->SetLaserLength(0.0f);
+
+      CScene *Scene = G->Scene;
+      if (SettingGetGlobal_b(G, cSetting_openvr_cut_laser) && OpenVRIsScenePickerActive(G)) {
+        float atomWorldPos[3];
+        ScenePickAtomInWorld(G, centerX, centerY, atomWorldPos);
+        OpenVRUpdateScenePickerLength(G, atomWorldPos);
       }
-      laserSource->SetLaserColor(missedColor);
+
+      // check if we hit an atom
+      if (Scene->LastPicked.context.object != NULL) {
+        // select the atom
+        if(Actions->Action1->WasPressed()) {
+          SceneClickObject(G, Scene->LastPicked.context.object, Scene->LastPicked, cButModeSeleToggle, "");
+        }
+      } else {
+        // laser missed
+        float missedColor[4] = {1.0f, 1.0f, 0.0f, 0.5f};
+        if (!SettingGetGlobal_b(G, cSetting_openvr_cut_laser)) {
+          laserSource->SetLaserLength(0.0f);
+        }
+        laserSource->SetLaserColor(missedColor);
+      }
     }
 
     if (mouseEvent.deviceIndex == laserSource->GetLaserDeviceIndex()) {
