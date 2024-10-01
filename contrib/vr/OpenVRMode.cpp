@@ -1068,6 +1068,8 @@ void HandleLaser(PyMOLGlobals * G, int centerX, int centerY, CMouseEvent const& 
 
       // check if we hit an atom
       if (Scene->LastPicked.context.object != NULL) {
+        float atomHitColor[4] = {1.0f, 0.0f, 1.0f, 0.5f};
+        laserSource->SetLaserColor(atomHitColor);
         // select the atom
         if(Actions->Action1->WasPressed()) {
           SceneClickObject(G, Scene->LastPicked.context.object, Scene->LastPicked, cButModeSeleToggle, "");
