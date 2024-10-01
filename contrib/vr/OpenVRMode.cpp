@@ -730,11 +730,12 @@ void  OpenVRGetPickingProjection(PyMOLGlobals * G, float near_plane, float far_p
 
   // take avarage projection params from eyes
   float left, right, top, bottom;
+  float vertical_offset = 0.45;
   CEye &LEye = I->Left, &REye = I->Right;
   left = (LEye.Left + REye.Left) * 0.5f;
   right = (LEye.Right + REye.Right) * 0.5f;
-  top = (LEye.Top + REye.Top) * 0.5f;
-  bottom = (LEye.Bottom + REye.Bottom) * 0.5f;
+  top = (LEye.Top + REye.Top + vertical_offset) * 0.5f;
+  bottom = (LEye.Bottom + REye.Bottom + vertical_offset) * 0.5f;
   OpenVRGetProjection(left, right, top, bottom, near_plane, far_plane, matrix);
   return;
 }
@@ -1065,7 +1066,7 @@ void HandleLaser(PyMOLGlobals * G, int centerX, int centerY, CMouseEvent const& 
         ScenePickAtomInWorld(G, centerX, centerY, atomWorldPos);
         OpenVRUpdateScenePickerLength(G, atomWorldPos);
       }
-
+      
       // check if we hit an atom
       if (Scene->LastPicked.context.object != NULL) {
         float atomHitColor[4] = {1.0f, 0.0f, 1.0f, 0.5f};
