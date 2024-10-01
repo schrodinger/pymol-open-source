@@ -37,6 +37,7 @@ SOFTWARE.
 // system headers
 #include <chrono>
 #include <vector>
+#include <thread>
 #include "os_std.h"
 #include "os_gl.h"
 
