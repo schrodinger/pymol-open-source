@@ -872,11 +872,25 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
               ai2->formalCharge = 1;
               ai2->chemFlag = false;
             }
+            // PYMOL-5019: If we're forcing NH1 to be formal charge 1, the other
+            // atom must have formal charge 0.
+            if (name1 == "NH2") {
+              ai1->formalCharge = 0;
+              ai1->chemFlag = false;
+            } else if (name2 == "NH2") {
+              ai2->formalCharge = 0;
+              ai2->chemFlag = false;
+            }
             break;
           }
           if((name1 == "CZ" && name2 == "NH1") ||
              (name2 == "CZ" && name1 == "NH1"))
             order = 2;
+          // PYMOL-5019: If we're forcing NH1 to be double bounded, the other
+          // bond must display as single.
+          if((name1 == "CZ" && name2 == "NH2") ||
+             (name2 == "CZ" && name1 == "NH2"))
+            order = 1;
           break;
         }
         break;
