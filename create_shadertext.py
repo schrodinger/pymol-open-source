@@ -127,7 +127,7 @@ def create_buildinfo(outputdir, pymoldir='.'):
         print('''
 #define _PyMOL_BUILD_DATE %d
 #define _PYMOL_BUILD_GIT_SHA "%s"
-        ''' % (time.time(), sha), file=out)
+        ''' % (int(os.environ.get('SOURCE_DATE_EPOCH', time.time())), sha), file=out)
 
 if __name__ == "__main__":
     create_shadertext(*sys.argv[1:6])
