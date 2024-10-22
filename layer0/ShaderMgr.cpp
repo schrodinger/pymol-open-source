@@ -1821,9 +1821,12 @@ void CShaderMgr::setDrawBuffer(GLenum mode)
   }
 }
 
-void CShaderMgr::setDrawBuffer(const GLFramebufferConfig& config)
+void CShaderMgr::setDrawBuffer(GLFramebufferConfig config)
 {
-  if (config.framebuffer == OpenGLDefaultFramebufferID) {
+  if (config.drawBuffer == GL_BACK) {
+    config = defaultBackbuffer;
+  }
+  if (config.framebuffer == defaultBackbuffer.framebuffer) {
     glBindFramebuffer(GL_FRAMEBUFFER, config.framebuffer);
     setDrawBuffer(config.drawBuffer);
     return;

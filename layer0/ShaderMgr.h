@@ -411,7 +411,7 @@ public:
    * Sets the current framebuffer or draw buffer for rendering
    * @param drawBuffer Framebuffer to draw to
    */
-  void setDrawBuffer(const GLFramebufferConfig& config);
+  void setDrawBuffer(GLFramebufferConfig config);
 };
 
 bool ShaderMgrInit(PyMOLGlobals * G);
