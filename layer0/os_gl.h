@@ -33,6 +33,7 @@
 #endif
 
 #include "os_gl_glut.h"
+#include "Spatial.h"
 
 void PyMOLReadPixels(GLint x,
                      GLint y,

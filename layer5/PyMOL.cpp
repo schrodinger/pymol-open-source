@@ -2231,6 +2231,7 @@ static void check_gl_stereo_capable(PyMOLGlobals * G)
   // default framebuffer
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &buf);
   G->ShaderMgr->defaultBackbuffer.framebuffer = buf;
+  G->ShaderMgr->topLevelConfig = G->ShaderMgr->defaultBackbuffer;
 }
 #endif
 

@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 #include"pymol/memory.h"
 #include"PyMOLEnums.h"
+#include "Spatial.h"
 
 #define cOrthoScene 1
 #define cOrthoTool 2
@@ -55,7 +56,19 @@ void OrthoDetach(PyMOLGlobals * G, Block * block);
 void OrthoReshape(PyMOLGlobals * G, int width, int height, int force);
 int OrthoGetWidth(PyMOLGlobals * G);
 int OrthoGetHeight(PyMOLGlobals * G);
-void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode);
+
+struct OrthoDrawInfo
+{
+  OrthoRenderMode renderMode = OrthoRenderMode::Main;
+  bool offscreenRender{};
+  bool clearTarget{};
+};
+
+/**
+ * @brief Draws the Scene and any required UI overlay
+ * @param drawInfo parameters for rendering
+ */
+void OrthoDoDraw(PyMOLGlobals* G, OrthoDrawInfo drawInfo);
 void OrthoDoViewportWhenReleased(PyMOLGlobals *G);
 void OrthoPushMatrix(PyMOLGlobals * G);
 void OrthoPopMatrix(PyMOLGlobals * G);
@@ -139,3 +152,9 @@ void OrthoInvalidateDoDraw(PyMOLGlobals * G);
 void OrthoRenderCGO(PyMOLGlobals * G);
 
 #endif
+
+/**
+ * @brief Obtains the current layout rect of the Ortho window
+ * @return the layout rect of all PyMOL elements (scene, seq, panel, etc...)
+ */
+Rect2D OrthoGetRect(PyMOLGlobals* G);

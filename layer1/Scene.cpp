@@ -749,6 +749,12 @@ Extent2D SceneGetExtent(PyMOLGlobals* G)
       static_cast<std::uint32_t>(G->Scene->Height)};
 }
 
+Rect2D SceneGetRect(PyMOLGlobals* G)
+{
+  auto I = G->Scene;
+  return Rect2D{Offset2D{I->rect.left, I->rect.bottom}, SceneGetExtent(G)};
+}
+
 float SceneGetAspectRatio(PyMOLGlobals* G)
 {
   auto extent = SceneGetExtent(G);
@@ -1497,6 +1503,14 @@ float *SceneGetPmvMatrix(PyMOLGlobals * G)
 
 /*========================================================================*/
 
+GLFramebufferConfig SceneDrawBothGetConfig(PyMOLGlobals* G)
+{
+  if (SceneMustDrawBoth(G)) {
+    return { CShaderMgr::OpenGLDefaultFramebufferID, GL_BACK_LEFT };
+  }
+  return { CShaderMgr::OpenGLDefaultFramebufferID, GL_BACK };
+}
+
 int SceneCaptureWindow(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
@@ -1505,15 +1519,12 @@ int SceneCaptureWindow(PyMOLGlobals * G)
   /* check assumptions */
 
   if(ok && G->HaveGUI && G->ValidContext) {
-    int draw_both = SceneMustDrawBoth(G);
+    auto drawBuffer = SceneDrawBothGetConfig(G);
 
     ScenePurgeImage(G);
 
-    if(draw_both) {
-      SceneCopy(G, GL_BACK_LEFT, true, true);
-    } else {
-      SceneCopy(G, GL_BACK, true, true);
-    }
+    SceneCopy(G, drawBuffer, true, true);
+
     if(!I->Image)
       ok = false;
 
@@ -1624,18 +1635,15 @@ int SceneMakeSizedImage(PyMOLGlobals* G, int width, int height, int antialias,
       int nXStep = (width / (I->Width + 1)) + 1;
       int nYStep = (height / (I->Height + 1)) + 1;
       int x, y;
-      int draw_both = SceneMustDrawBoth(G);
+      auto drawBuffer = SceneDrawBothGetConfig(G);
       /* note here we're treating the buffer as 32-bit unsigned ints, not chars */
 
       auto final_image = pymol::Image(width, height);
 
       ScenePurgeImage(G);
 
-      if(draw_both) {
-        SceneCopy(G, GL_BACK_LEFT, true, false);
-      } else {
-        SceneCopy(G, GL_BACK, true, false);
-      }
+      SceneCopy(G, drawBuffer, true, false);
+
       if(!I->Image)
         ok = false;
 
@@ -1656,11 +1664,7 @@ int SceneMakeSizedImage(PyMOLGlobals* G, int width, int height, int antialias,
 
             OrthoBusyFast(G, y * nXStep + x, total_steps);
 
-            if(draw_both) {
-              OrthoDrawBuffer(G, GL_BACK_LEFT);
-            } else {
-              OrthoDrawBuffer(G, GL_BACK);
-            }
+            G->ShaderMgr->setDrawBuffer(drawBuffer);
 
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
             SceneInvalidateCopy(G, false);
@@ -1674,11 +1678,7 @@ int SceneMakeSizedImage(PyMOLGlobals* G, int width, int height, int antialias,
             SceneRender(G, renderInfo);
             SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
 
-            if(draw_both) {
-              SceneCopy(G, GL_BACK_LEFT, true, false);
-            } else {
-              SceneCopy(G, GL_BACK, true, false);
-            }
+            SceneCopy(G, drawBuffer, true, false);
 
             if(I->Image) {      /* the image into place */
               p = I->Image->pixels();
@@ -2270,23 +2270,15 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
     break;
   case cSceneImage_Normal:
     {
-      int draw_both = SceneMustDrawBoth(G);
+      auto drawBuffer = SceneDrawBothGetConfig(G);
       if(G->HaveGUI && G->ValidContext) {
-        if(draw_both) {
-          OrthoDrawBuffer(G, GL_BACK_LEFT);
-        } else {
-          OrthoDrawBuffer(G, GL_BACK);
-        }
+        G->ShaderMgr->setDrawBuffer(drawBuffer);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         /* insert OpenGL context validation code here? */
         SceneRenderInfo renderInfo{};
         SceneRender(G, renderInfo);
         SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
-        if(draw_both) {
-          SceneCopy(G, GL_BACK_LEFT, true, false);
-        } else {
-          SceneCopy(G, GL_BACK, true, false);
-        }
+        SceneCopy(G, drawBuffer, true, false);
         /* insert OpenGL context validation code here? */
       }
     }
@@ -2994,6 +2986,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real , CGO *orthoCGO)
 #endif
 }
 
+// TODO: Replace with ShaderMgr::drawPixelsTo
 static void RendererWritePixelsTo(
     PyMOLGlobals* G, const Rect2D& rect, unsigned char* buffer)
 {
@@ -4501,39 +4494,29 @@ int SceneGetDrawFlagGrid(PyMOLGlobals * G, GridInfo * grid, int slot)
 }
 
 /*========================================================================*/
-void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window)
+void SceneCopy(PyMOLGlobals * G, GLFramebufferConfig config, int force, int entire_window)
 {
   CScene *I = G->Scene;
-  unsigned int buffer_size;
 
-  if (buffer == GL_BACK) {
-    buffer = G->ShaderMgr->defaultBackbuffer.drawBuffer;
+  if (config.drawBuffer == GL_BACK) {
+    config.drawBuffer = G->ShaderMgr->defaultBackbuffer.drawBuffer;
   }
 
   if(force || (!(I->StereoMode ||
                  SettingGetGlobal_b(G, cSetting_stereo_double_pump_mono) || I->ButtonsShown))) {
     /* no copies while in stereo mode */
     if(force || ((!I->DirtyFlag) && (!I->CopyType))) {
-      int x, y, w, h;
+      Rect2D rect;
       if(entire_window) {
-        x = 0;
-        y = 0;
-        h = OrthoGetHeight(G);
-        w = OrthoGetWidth(G);
+        rect = OrthoGetRect(G);
       } else {
-        x = I->rect.left;
-        y = I->rect.bottom;
-        w = I->Width;
-        h = I->Height;
+        rect = SceneGetRect(G);
       }
       ScenePurgeImage(G);
-      buffer_size = 4 * w * h;
-      if(buffer_size) {
-        I->Image = std::make_shared<pymol::Image>(w, h);
-        if(G->HaveGUI && G->ValidContext) {
-          glReadBuffer(buffer);
-          PyMOLReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, I->Image->bits());
-        }
+      auto imgData = G->ShaderMgr->readPixelsFrom(G, rect, config);
+      if (!imgData.empty()) {
+        I->Image = std::make_shared<pymol::Image>(rect.extent.width, rect.extent.height);
+        I->Image->setVecData(std::move(imgData));
       }
       I->CopyType = true;
       I->Image->m_needs_alpha_reset = true;

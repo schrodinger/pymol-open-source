@@ -42,7 +42,7 @@ Z* -------------------------------------------------------------------
 #endif
 
 struct GLFramebufferConfig {
-  GLuint framebuffer{};
+  std::size_t framebuffer{};
   GLenum drawBuffer{};
 };
 
@@ -285,6 +285,8 @@ public:
    */
   static std::map<std::string, const char*>* GetRawShaderCache();
 
+  inline static std::size_t OpenGLDefaultFramebufferID = 0;
+
 private:
   void freeAllGPUBuffers();
   void RegisterDependantFileNames(CShaderPrg * shader);
@@ -334,7 +336,10 @@ public:
   bool stereo_draw_buffer_pass;
 
   // for glDrawBuffer (e.g. GL_BACK, unless we're using QOpenGLWidget)
-  GLFramebufferConfig defaultBackbuffer{};
+  GLFramebufferConfig defaultBackbuffer{}; // Default framebuffer configuration
+  GLFramebufferConfig currentFBConfig{}; // Current framebuffer configuration
+  GLFramebufferConfig topLevelConfig{};  // Final render target in draw loop
+                                         // (currently only known by Ortho)
 
 private:
   bool is_configured { false };
@@ -345,6 +350,7 @@ public:
 
   // Post process render targets
   std::size_t offscreen_rt { 0 }; //Texture before postprocessing;
+  std::size_t offscreen_ortho_rt {};
 #ifndef _PYMOL_NO_AA_SHADERS
   std::unique_ptr<PostProcess> smaa_pp;
 #endif
@@ -354,6 +360,33 @@ public:
   void bindOffscreenOIT(int width, int height, int drawbuf = 0);
 
   /**
+   * @brief Binds an offscreen render target for UI overlay rendering
+   * @param width width of the offscreen render target
+   * @param height height of the offscreen render target
+   * @param clear whether to clear the offscreen render target
+   */
+  void bindOffscreenOrtho(int width, int height, bool clear = true);
+
+  /**
+   * @brief Reads pixel data from framebuffer
+   * @param rect the rectangle to read from
+   * @param srcConfig the framebuffer configuration to read from
+   * @return pixel data in RGBA format
+   */
+  std::vector<unsigned char> readPixelsFrom(
+      PyMOLGlobals* G, const Rect2D& rect, const GLFramebufferConfig& srcConfig);
+
+  /**
+   * @brief Draws pixel data to framebuffer
+   * @param rect the rectangle to draw to
+   * @param srcPixels the pixel data (RGBA) to draw
+   * @param dstConfig the framebuffer configuration to draw to
+   */
+  void drawPixelsTo(PyMOLGlobals* G, const Rect2D& rect,
+      const std::byte* srcPixels,
+      const GLFramebufferConfig& dstConfig);
+
+  /**
    * Activates/Binds offscreen render target.
    * @param textureIdx offset of texture unit to assign (0 for GL_TEXTURE0, 1
    * for GL_TEXTURE1, etc...)
@@ -361,6 +394,20 @@ public:
    * clarity
    */
   void activateOffscreenTexture(GLuint textureIdx);
+
+  /**
+   * Sets the current draw buffer for rendering
+   * @param drawBuffer Buffer to draw to (e.g. GL_BACK)
+   * @note: This currently assumes the default framebuffer. Prefer
+   * GLFramebufferConfig coverload.
+   */
+  void setDrawBuffer(GLenum drawBuffer);
+
+  /**
+   * Sets the current framebuffer or draw buffer for rendering
+   * @param drawBuffer Framebuffer to draw to
+   */
+  void setDrawBuffer(const GLFramebufferConfig& config);
 };
 
 bool ShaderMgrInit(PyMOLGlobals * G);

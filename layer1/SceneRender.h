@@ -46,6 +46,7 @@ struct SceneRenderInfo
   bool excludeSelections = false;
   bool excludeGadgets = false;
   SceneRenderWhich renderWhich = SceneRenderWhich::All;
+  bool offscreen = false;
 };
 
 void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo);

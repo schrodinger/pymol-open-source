@@ -1742,6 +1742,19 @@ void CShaderMgr::bindOffscreenOIT(int width, int height, int drawbuf) {
   }
 }
 
+void CShaderMgr::bindOffscreenOrtho(int width, int height, bool clear) {
+  using namespace tex;
+  renderTarget_t::shape_type req_size(width, height);
+  if (!offscreen_ortho_rt) {
+    auto rt = newGPUBuffer<renderTarget_t>(req_size);
+    rt->layout({ { 4, rt_layout_t::UBYTE } });
+    offscreen_ortho_rt = rt->get_hash_id();
+  }
+
+  auto rt = getGPUBuffer<renderTarget_t>(offscreen_ortho_rt);
+  rt->bind(clear);
+}
+
 void CShaderMgr::activateOffscreenTexture(GLuint textureIdx) {
   glActiveTexture(GL_TEXTURE0 + textureIdx);
   auto t = getGPUBuffer<renderTarget_t>(offscreen_rt);
@@ -1754,4 +1767,92 @@ void CShaderMgr::Disable_Current_Shader()
   if(current_shader){
     current_shader->Disable();
   }
+}
+
+void CShaderMgr::setDrawBuffer(GLenum mode)
+{
+  if (mode == GL_BACK) {
+    mode = G->ShaderMgr->defaultBackbuffer.drawBuffer;
+  }
+
+  if (!hasFrameBufferBinding() &&
+      (mode != G->ShaderMgr->currentFBConfig.drawBuffer) && G->HaveGUI &&
+      G->ValidContext) {
+#ifndef PURE_OPENGL_ES_2
+    glDrawBuffer(mode);
+#endif
+    G->ShaderMgr->currentFBConfig.drawBuffer = mode;
+  }
+}
+
+void CShaderMgr::setDrawBuffer(const GLFramebufferConfig& config)
+{
+  if (config.framebuffer == OpenGLDefaultFramebufferID) {
+    glBindFramebuffer(GL_FRAMEBUFFER, config.framebuffer);
+    setDrawBuffer(config.drawBuffer);
+    return;
+  }
+
+  if (auto rt = getGPUBuffer<renderTarget_t>(config.framebuffer)) {
+    rt->bind(false);
+  }
+}
+
+std::vector<unsigned char> CShaderMgr::readPixelsFrom(
+    PyMOLGlobals* G, const Rect2D& rect, const GLFramebufferConfig& srcConfig)
+{
+  constexpr std::size_t pixelSizeBytes = 4;
+  std::vector<unsigned char> dstPixels(
+      rect.extent.width * rect.extent.height * pixelSizeBytes, 0);
+  int prevReadFBO;
+  int prevDrawFBO;
+  int prevReadBuffer;
+  glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFBO);
+  glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFBO);
+  glGetIntegerv(GL_READ_BUFFER, &prevReadBuffer);
+
+  if (srcConfig.framebuffer == OpenGLDefaultFramebufferID) {
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, srcConfig.framebuffer);
+  } else {
+    if (auto rt = getGPUBuffer<renderTarget_t>(srcConfig.framebuffer)) {
+      // TODO: bindOnlyAsRead
+      rt->fbo()->bind();
+    }
+  }
+  glReadBuffer(srcConfig.drawBuffer);
+  PyMOLReadPixels(rect.offset.x, rect.offset.y, rect.extent.width,
+      rect.extent.height, GL_RGBA, GL_UNSIGNED_BYTE, dstPixels.data());
+
+  // Restore State
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFBO);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFBO);
+  glReadBuffer(prevReadBuffer);
+  return dstPixels;
+}
+
+void CShaderMgr::drawPixelsTo(PyMOLGlobals* G, const Rect2D& rect,
+    const std::byte* srcPixels, const GLFramebufferConfig& dstConfig)
+{
+  int prevReadFBO;
+  int prevDrawFBO;
+  int prevDrawBuffer;
+  glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFBO);
+  glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFBO);
+  glGetIntegerv(GL_READ_BUFFER, &prevDrawBuffer);
+
+  if (dstConfig.framebuffer == OpenGLDefaultFramebufferID) {
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstConfig.framebuffer);
+  } else {
+    if (auto rt = getGPUBuffer<renderTarget_t>(dstConfig.framebuffer)) {
+      // TODO: bindOnlyAsDraw?
+      rt->fbo()->bind();
+    }
+  }
+  glDrawBuffer(dstConfig.drawBuffer);
+  PyMOLDrawPixels(rect.extent.width, rect.extent.height, GL_RGBA,
+      GL_UNSIGNED_BYTE, srcPixels);
+  // Restore State
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFBO);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFBO);
+  glReadBuffer(prevDrawBuffer);
 }

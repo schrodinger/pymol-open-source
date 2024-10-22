@@ -11272,9 +11272,12 @@ pymol::Result<> ExecutiveReset(PyMOLGlobals* G, pymol::zstring_view name)
 
 
 /*========================================================================*/
-void ExecutiveDrawNow(PyMOLGlobals * G)
+void ExecutiveDrawNow(PyMOLGlobals * G, ExecutiveDrawInfo execDrawInfo)
 {
   CExecutive *I = G->Executive;
+  OrthoDrawInfo drawInfo{};
+  drawInfo.offscreenRender = execDrawInfo.offscreen;
+  drawInfo.clearTarget = execDrawInfo.clearTarget;
 
   if(PyMOL_GetIdleAndReady(G->PyMOL) && !SettingGetGlobal_b(G, cSetting_suspend_deferred))
     OrthoExecDeferred(G);
@@ -11296,8 +11299,10 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
 	  int width = G->Option->winX;
 	  int height = G->Option->winY;
 	  SceneSetViewport(G, 0, 0, width / 2, height);
-	  OrthoDoDraw(G, OrthoRenderMode::GeoWallLeft);
-	  OrthoDoDraw(G, OrthoRenderMode::GeoWallRight);
+    drawInfo.renderMode = OrthoRenderMode::GeoWallLeft;
+    OrthoDoDraw(G, drawInfo);
+    drawInfo.renderMode = OrthoRenderMode::GeoWallRight;
+    OrthoDoDraw(G, drawInfo);
 	  SceneSetViewport(G, 0, 0, width, height);
 	}
 	break;
@@ -11311,7 +11316,8 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
           float matrix[16];
           SceneGetModel2WorldMatrix(G, matrix);
           OpenVRHandleInput(G, scene_block->rect.left, scene_block->rect.bottom, scene_width, scene_height, matrix);
-          OrthoDoDraw(G, OrthoRenderMode::VR);
+          drawInfo.renderMode = OrthoRenderMode::VR;
+          OrthoDoDraw(G, drawInfo);
           if (SettingGetGlobal_b(G, cSetting_openvr_cut_laser) && OpenVRIsScenePickerActive(G)) {
             int x = scene_block->rect.left + scene_width / 2;
             int y = scene_block->rect.bottom + scene_height / 2;
@@ -11325,11 +11331,13 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
         break;
 #endif
       default:
-	OrthoDoDraw(G, OrthoRenderMode::Main);
+        drawInfo.renderMode = OrthoRenderMode::Main;
+        OrthoDoDraw(G, drawInfo);
 	break;
       }
     } else {
-      OrthoDoDraw(G, OrthoRenderMode::Main);
+      drawInfo.renderMode = OrthoRenderMode::Main;
+      OrthoDoDraw(G, drawInfo);
     }
 
     if(G->HaveGUI && G->ValidContext) {

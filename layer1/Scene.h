@@ -297,7 +297,13 @@ float GetFovWidth(PyMOLGlobals * G);
 
 void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode = 0);
 
-void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window);
+/**
+ * @brief copies the pixels rendered to the scene to Scene::Image
+ * @param config framebuffer to copy from
+ * @param force force copying
+ * @param entire_window copy entire window
+ */
+void SceneCopy(PyMOLGlobals * G, GLFramebufferConfig config, int force, int entire_window);
 
 // FIXME use pymol matrices
 void SceneGetModel2WorldMatrix(PyMOLGlobals * G, float *matrix);
@@ -333,6 +339,13 @@ void SceneSetViewport(PyMOLGlobals* G, const Rect2D& rect);
 void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height);
 Rect2D SceneGetViewport(PyMOLGlobals* G);
 Extent2D SceneGetExtent(PyMOLGlobals* G);
+
+/**
+ * @brief Retrieves the Scene's layout rect
+ * @return Scene's layout rect
+ */
+Rect2D SceneGetRect(PyMOLGlobals* G);
+
 float SceneGetAspectRatio(PyMOLGlobals* G);
 
 #endif

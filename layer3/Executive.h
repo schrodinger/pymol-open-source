@@ -417,7 +417,14 @@ int ExecutiveIndex(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
 pymol::Result<> ExecutiveReset(PyMOLGlobals*, pymol::zstring_view);
 pymol::Result<> ExecutiveResetMatrix(
     PyMOLGlobals* G, const char* name, int mode, int state, int log, int quiet);
-void ExecutiveDrawNow(PyMOLGlobals * G);
+
+struct ExecutiveDrawInfo
+{
+  bool offscreen{};
+  bool clearTarget = true;
+};
+
+void ExecutiveDrawNow(PyMOLGlobals * G, ExecutiveDrawInfo execDrawInfo = {});
 int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
                      int entire_window, int quiet);
 pymol::Result<int> ExecutiveCartoon(PyMOLGlobals* G, int type, const char* s1);

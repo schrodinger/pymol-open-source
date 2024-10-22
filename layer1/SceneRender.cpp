@@ -43,7 +43,7 @@ static void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
     bool onlySelections, bool noAA, bool excludeSelections,
     SceneRenderWhich which_objects = SceneRenderWhich::All);
 
-static void SceneRenderAA(PyMOLGlobals* G);
+static void SceneRenderAA(PyMOLGlobals* G, const GLFramebufferConfig& config);
 
 static void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I,
     int stereo_mode, bool offscreen, int times, const Offset2D& pos,
@@ -73,7 +73,7 @@ static void SceneSetPrepareViewPortForStereo(PyMOLGlobals* G,
 
 static CGO* GenerateUnitScreenCGO(PyMOLGlobals* G);
 
-static void SceneRenderPostProcessStack(PyMOLGlobals* G);
+static void SceneRenderPostProcessStack(PyMOLGlobals* G, const GLFramebufferConfig& parentImage);
 
 static int stereo_via_stencil(int stereo_mode)
 {
@@ -246,6 +246,8 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
   auto render_buffer = SceneMustDrawBoth(G)
                            ? GL_BACK_LEFT
                            : G->ShaderMgr->defaultBackbuffer.drawBuffer;
+  GLFramebufferConfig targetImage{};
+  targetImage.drawBuffer = render_buffer;
 
   int stereo_mode = I->StereoMode;
   bool postprocessOnce{false};
@@ -296,6 +298,7 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
 
     render_buffer = G->ShaderMgr->defaultBackbuffer.drawBuffer; // GL_BACK
 
+    // This probably should be decided up the stack...
     if (must_render_stereo) {
       switch (stereo_mode) {
       case cStereo_quadbuffer: /* hardware stereo */
@@ -306,7 +309,14 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
       }
     }
 
-    OrthoDrawBuffer(G, render_buffer);
+    GLFramebufferConfig targetImage{};
+    targetImage.framebuffer = renderInfo.offscreen
+                                  ? G->ShaderMgr->offscreen_ortho_rt
+                                  : CShaderMgr::OpenGLDefaultFramebufferID;
+    if (targetImage.framebuffer == CShaderMgr::OpenGLDefaultFramebufferID) {
+      targetImage.drawBuffer = render_buffer;
+    }
+    G->ShaderMgr->setDrawBuffer(targetImage);
 
     if (Feedback(G, FB_OpenGL, FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 1");
@@ -491,7 +501,7 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
               PrepareViewPortForMonoInitializeViewPort, times,
               renderInfo.mousePos, renderInfo.oversizeExtent, stereo_mode,
               width_scale);
-          SceneRenderPostProcessStack(G);
+          SceneRenderPostProcessStack(G, targetImage);
         }
 #endif
         bool renderToTexture{false};
@@ -546,14 +556,14 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
         if (!(ControlIdling(G)))
           if (SettingGet<bool>(G, cSetting_cache_display)) {
             if (!I->CopyType) {
-              SceneCopy(G, render_buffer, false, false);
+              SceneCopy(G, targetImage, false, false);
             }
           }
     } else {
       I->CopyNextFlag = true;
     }
     if (renderInfo.forceCopy && !(I->CopyType)) {
-      SceneCopy(G, render_buffer, true, false);
+      SceneCopy(G, targetImage, true, false);
       I->CopyType = 2; /* do not display force copies */
     }
   }
@@ -586,18 +596,18 @@ static void AppendCopyWithChangedShader(
 }
 #endif
 
-/* SceneRenderAA: renders Anti-aliasing from the I->offscreen_texture texture,
-                  depending on the antialias_shader setting, FXAA (1 stage)
-                  or SMAA (3 stages) are rendered using framebuffers
-   I->offscreen2_fb, I->offscreen3_fb, and into the screen block
+/**
+ * @brief Renders Anti-aliasing from the I->offscreen_texture texture
+ * depending on the antialias_shader setting, FXAA (1 stage) or SMAA (3 stages)
+ * are rendered using I->offscreen and into the screen block
+ * @param fbConfig Framebuffer config (currently represents target and parent image)
  */
-void SceneRenderAA(PyMOLGlobals* G)
+void SceneRenderAA(PyMOLGlobals* G, const GLFramebufferConfig& fbConfig)
 {
 #ifndef _PYMOL_NO_AA_SHADERS
   CScene* I = G->Scene;
   int ok = true;
-  glBindFramebufferEXT(
-      GL_FRAMEBUFFER_EXT, G->ShaderMgr->defaultBackbuffer.framebuffer);
+  G->ShaderMgr->setDrawBuffer(fbConfig);
   if (!I->offscreenCGO) {
     CGO* unitCGO = GenerateUnitScreenCGO(G);
     ok &= unitCGO != nullptr;
@@ -638,11 +648,11 @@ void SceneRenderAA(PyMOLGlobals* G)
   }
   if (ok && I->offscreenCGO) {
     CGORender(I->offscreenCGO, nullptr, nullptr, nullptr, nullptr, nullptr);
+    // TODO: Restoring to previous state should not happen here.
     G->ShaderMgr->Disable_Current_Shader();
     glBindTexture(GL_TEXTURE_2D, 0);
     glEnable(GL_DEPTH_TEST);
-    glBindFramebufferEXT(
-        GL_FRAMEBUFFER_EXT, G->ShaderMgr->defaultBackbuffer.framebuffer);
+    G->ShaderMgr->setDrawBuffer(fbConfig);
   }
 #endif
 }
@@ -1232,7 +1242,7 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
       PRINTFD(G, FB_Scene)
       " SceneRender: right hand stereo...\n" ENDFD;
       if (shouldPrepareOffscreen) {
-        SceneRenderPostProcessStack(G);
+        SceneRenderPostProcessStack(G, {});
       }
 
       /* RIGHT HAND STEREO */
@@ -1286,7 +1296,7 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
 
       /* restore draw buffer */
       if (shouldPrepareOffscreen) {
-        SceneRenderPostProcessStack(G);
+        SceneRenderPostProcessStack(G, {});
       }
       SetDrawBufferForStereo(G, I, stereo_mode, times, fog_active);
     } else {
@@ -1765,12 +1775,16 @@ CGO* GenerateUnitScreenCGO(PyMOLGlobals* G)
   return CGOOptimizeToVBONotIndexed(&cgo, 0);
 }
 
-static void SceneRenderPostProcessStack(PyMOLGlobals* G)
+/**
+ * @brief Renders the post processing stages
+ * @param parentImage the parent framebuffer to render to at the end
+ */
+static void SceneRenderPostProcessStack(PyMOLGlobals* G, const GLFramebufferConfig& parentImage)
 {
   /**
    * TODO: Postprocess rendering will eventually reside here.
    * For now we'll keep this generalized rendering function to
    * decouple antialiasing logic from framebuffer management.
    */
-  SceneRenderAA(G);
+  SceneRenderAA(G, parentImage);
 }
