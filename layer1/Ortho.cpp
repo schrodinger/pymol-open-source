@@ -163,6 +163,13 @@ std::pair<int, int> OrthoGetSize(const COrtho& ortho)
   return std::make_pair(ortho.Width, ortho.Height);
 }
 
+Extent2D OrthoGetExtent(PyMOLGlobals* G)
+{
+  auto I = G->Ortho;
+  return Extent2D{static_cast<std::uint32_t>(I->Width),
+      static_cast<std::uint32_t>(I->Height)};
+}
+
 std::pair<int, int> OrthoGetBackgroundSize(const COrtho& ortho)
 {
   if (ortho.bgData) {
@@ -1799,10 +1806,13 @@ static void OrthoDrawFontTextureDebug(PyMOLGlobals* G, CGO* orthoCGO)
 static std::vector<GLFramebufferConfig> OrthoGetBackbuffers(
     PyMOLGlobals* G, OrthoDrawInfo drawInfo)
 {
-  auto [width, height] = OrthoGetSize(*G->Ortho);
   if (drawInfo.offscreenRender) {
-    G->ShaderMgr->bindOffscreenOrtho(width, height, drawInfo.clearTarget);
-    return {{G->ShaderMgr->offscreen_ortho_rt, GL_COLOR_ATTACHMENT0}};
+    auto extent = OrthoGetExtent(G);
+    G->ShaderMgr->bindOffscreenOrtho(extent, drawInfo.clearTarget);
+    return {{
+        static_cast<std::uint32_t>(G->ShaderMgr->offscreen_ortho_rt),
+        GL_COLOR_ATTACHMENT0 //
+    }};
   }
 
   if (drawInfo.renderMode == OrthoRenderMode::VR) {
@@ -1832,7 +1842,7 @@ static std::vector<GLFramebufferConfig> OrthoGetBackbuffers(
  *  3D scene, and other 2D blocks like Sequence viewer, etc.)
  * @param render_mode the render mode to use
  */
-void OrthoDoDraw(PyMOLGlobals* G, OrthoDrawInfo drawInfo)
+void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo)
 {
   COrtho* I = G->Ortho;
   CGO* orthoCGO = nullptr;

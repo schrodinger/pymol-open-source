@@ -2316,8 +2316,10 @@ int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
                      int entire_window, int quiet)
 {
   CExecutive *I = G->Executive;
-  if((width <= 0) && (height <= 0)) {
-    SceneGetWidthHeight(G, &width, &height);
+  Extent2D extent{
+      static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height)};
+  if (width == 0 && height == 0) {
+    extent = SceneGetExtent(G);
   }
   if(antialias < 0)
     antialias = SettingGetGlobal_i(G, cSetting_antialias);
@@ -2330,7 +2332,8 @@ int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
       ExecutiveSetSettingFromString(G, cSetting_draw_mode, "-2", "", -1, true, true);
       SceneUpdate(G, false);
     }
-    SceneDeferImage(G, width, height, nullptr, antialias, -1.0, cMyPNG_FormatPNG, quiet, nullptr);
+    SceneDeferImage(
+        G, extent, nullptr, antialias, -1.0, cMyPNG_FormatPNG, quiet, nullptr);
   }
   return 1;
 }

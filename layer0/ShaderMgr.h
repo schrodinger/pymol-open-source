@@ -41,11 +41,6 @@ Z* -------------------------------------------------------------------
 #define LOCK_GUARD_MUTEX(name, var)
 #endif
 
-struct GLFramebufferConfig {
-  std::size_t framebuffer{};
-  GLenum drawBuffer{};
-};
-
 class CShaderPrg {
 public:
   struct GeometryShaderParams
@@ -285,7 +280,7 @@ public:
    */
   static std::map<std::string, const char*>* GetRawShaderCache();
 
-  inline static std::size_t OpenGLDefaultFramebufferID = 0;
+  inline static std::uint32_t OpenGLDefaultFramebufferID = 0;
 
 private:
   void freeAllGPUBuffers();
@@ -350,7 +345,8 @@ public:
 
   // Post process render targets
   std::size_t offscreen_rt { 0 }; //Texture before postprocessing;
-  std::size_t offscreen_ortho_rt {};
+  std::size_t offscreen_ortho_rt{};
+  std::size_t offscreen_sized_image_rt{};
 #ifndef _PYMOL_NO_AA_SHADERS
   std::unique_ptr<PostProcess> smaa_pp;
 #endif
@@ -361,11 +357,19 @@ public:
 
   /**
    * @brief Binds an offscreen render target for UI overlay rendering
-   * @param width width of the offscreen render target
-   * @param height height of the offscreen render target
+   * @param extent extent of the offscreen render target
    * @param clear whether to clear the offscreen render target
+   * @return framebuffer configuration of bound ortho offscreen render target
    */
-  void bindOffscreenOrtho(int width, int height, bool clear = true);
+  GLFramebufferConfig bindOffscreenOrtho(const Extent2D& extent, bool clear = true);
+
+   /**
+   * @brief Binds an offscreen render target for sized rendering
+   * @param extent extent of the offscreen render target
+   * @param clear whether to clear the offscreen render target
+   * @return framebuffer configuration of bound offscreen render target
+   */
+  GLFramebufferConfig bindOffscreenSizedImage(const Extent2D& extent, bool clear = true); 
 
   /**
    * @brief Reads pixel data from framebuffer

@@ -248,6 +248,9 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
                            : G->ShaderMgr->defaultBackbuffer.drawBuffer;
   GLFramebufferConfig targetImage{};
   targetImage.drawBuffer = render_buffer;
+  if (renderInfo.offscreenConfig) {
+    targetImage = *renderInfo.offscreenConfig;
+  }
 
   int stereo_mode = I->StereoMode;
   bool postprocessOnce{false};
@@ -315,6 +318,9 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
                                   : CShaderMgr::OpenGLDefaultFramebufferID;
     if (targetImage.framebuffer == CShaderMgr::OpenGLDefaultFramebufferID) {
       targetImage.drawBuffer = render_buffer;
+    }
+    if (renderInfo.offscreenConfig) {
+      targetImage = *renderInfo.offscreenConfig;
     }
     G->ShaderMgr->setDrawBuffer(targetImage);
 

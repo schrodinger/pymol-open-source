@@ -190,8 +190,7 @@ int SceneDeferDrag(Block * block, int x, int y, int mod);
  * If we have a current OpenGL context, render the image immediately.
  * Otherwise, defer the rendering.
  *
- * @param width image width in pixels
- * @param height image height in pixels
+ * @param extent requested extent in Pixels
  * @param filename image filename
  * @param antialias antialiasing level (via Supersampling not via shader)
  * @param dpi image resolution in dots per inch
@@ -200,7 +199,7 @@ int SceneDeferDrag(Block * block, int x, int y, int mod);
  * @param[out] out_img image data
  * @return true if rendering was deferred, false if it was rendered immediately.
  */
-bool SceneDeferImage(PyMOLGlobals* G, int width, int height,
+bool SceneDeferImage(PyMOLGlobals* G, const Extent2D& extent,
     const char* filename, int antialias, float dpi, int format, int quiet,
     pymol::Image* out_img);
 const char *SceneGetSeleModeKeyword(PyMOLGlobals * G);
@@ -332,13 +331,24 @@ std::shared_ptr<pymol::Image> SceneGetSharedImage(PyMOLGlobals* G);
  * @excludeSelections exclude selections from the image
  * @renderWhich renders classes of objects to the image
 */
-int SceneMakeSizedImage(PyMOLGlobals* G, int width, int height, int antialias,
-    bool excludeSelections, SceneRenderWhich renderWhich = SceneRenderWhich::All);
+pymol::Result<> SceneMakeSizedImage(PyMOLGlobals* G, Extent2D extent,
+    int antialias, bool excludeSelections,
+    SceneRenderWhich renderWhich = SceneRenderWhich::All);
 
 void SceneSetViewport(PyMOLGlobals* G, const Rect2D& rect);
 void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height);
 Rect2D SceneGetViewport(PyMOLGlobals* G);
+
+/**
+ * @return Retrieves the Scene's rect extent
+ */
 Extent2D SceneGetExtent(PyMOLGlobals* G);
+
+/**
+ * @brief Sets the Scene's layout rect
+ * @param extent Scene's layout rect
+ */
+void SceneSetExtent(PyMOLGlobals* G, const Extent2D& extent);
 
 /**
  * @brief Retrieves the Scene's layout rect

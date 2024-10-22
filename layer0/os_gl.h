@@ -35,6 +35,11 @@
 #include "os_gl_glut.h"
 #include "Spatial.h"
 
+struct GLFramebufferConfig {
+  std::uint32_t framebuffer{};
+  GLenum drawBuffer{};
+};
+
 void PyMOLReadPixels(GLint x,
                      GLint y,
                      GLsizei width,

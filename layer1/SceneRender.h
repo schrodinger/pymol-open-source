@@ -20,7 +20,9 @@ Z* -------------------------------------------------------------------
 
 #include "Picking.h"
 #include "RenderPass.h"
+#include "os_gl.h"
 
+#include <optional>
 #include <vector>
 
 enum class SceneRenderWhich {
@@ -47,6 +49,7 @@ struct SceneRenderInfo
   bool excludeGadgets = false;
   SceneRenderWhich renderWhich = SceneRenderWhich::All;
   bool offscreen = false;
+  std::optional<GLFramebufferConfig> offscreenConfig;
 };
 
 void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo);

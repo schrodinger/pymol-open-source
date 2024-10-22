@@ -68,7 +68,7 @@ struct OrthoDrawInfo
  * @brief Draws the Scene and any required UI overlay
  * @param drawInfo parameters for rendering
  */
-void OrthoDoDraw(PyMOLGlobals* G, OrthoDrawInfo drawInfo);
+void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo);
 void OrthoDoViewportWhenReleased(PyMOLGlobals *G);
 void OrthoPushMatrix(PyMOLGlobals * G);
 void OrthoPopMatrix(PyMOLGlobals * G);
@@ -147,6 +147,12 @@ void OrthoSetBackgroundImage(PyMOLGlobals * G, const char *image_data, int width
 bool OrthoBackgroundDataIsSet(const COrtho& ortho);
 std::shared_ptr<pymol::Image> OrthoBackgroundDataGet(const COrtho& ortho);
 std::pair<int, int> OrthoGetSize(const COrtho& ortho);
+
+/**
+ * @brief Obtains the current layout rect of the Ortho window
+ * @return the layout rect of all PyMOL elements (scene, seq, panel, etc...)
+ */
+Extent2D OrthoGetExtent(PyMOLGlobals* G);
 
 void OrthoInvalidateDoDraw(PyMOLGlobals * G);
 void OrthoRenderCGO(PyMOLGlobals * G);

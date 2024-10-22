@@ -74,6 +74,7 @@ Z* -------------------------------------------------------------------
 #include <algorithm>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
+#include <optional>
 #include <utility>
 
 static void glReadBufferError(PyMOLGlobals *G, GLenum b, GLenum e){
@@ -747,6 +748,12 @@ Extent2D SceneGetExtent(PyMOLGlobals* G)
 {
   return Extent2D{static_cast<std::uint32_t>(G->Scene->Width),
       static_cast<std::uint32_t>(G->Scene->Height)};
+}
+
+void SceneSetExtent(PyMOLGlobals* G, const Extent2D& extent)
+{
+  G->Scene->Width = extent.width;
+  G->Scene->Height = extent.height;
 }
 
 Rect2D SceneGetRect(PyMOLGlobals* G)
@@ -1540,272 +1547,363 @@ int SceneCaptureWindow(PyMOLGlobals * G)
   return ok;
 }
 
-int SceneMakeSizedImage(PyMOLGlobals* G, int width, int height, int antialias,
-    bool excludeSelections, SceneRenderWhich renderWhich)
+/**
+ * Sets the Scene's cached copy image
+ * @param image the image to set
+ * @param dirty whether the image is dirty (needed?)
+ * @param copyForced whether the image was forced to be copied
+ */
+static void SceneSetCopyImage(
+    PyMOLGlobals* G, pymol::Image image, bool dirty, bool copyForced)
+{
+  auto I = G->Scene;
+  I->Image = std::make_shared<pymol::Image>(std::move(image));
+  I->CopyType = true;
+  I->CopyForced = copyForced;
+  I->DirtyFlag = dirty;
+}
+
+/**
+ * Get the maximum dimensions of the viewport
+ * @return the maximum dimensions of OpenGL viewport
+ */
+Extent2D SceneGLGetMaxDimensions(PyMOLGlobals* G)
+{
+  GLint dims[2];
+  glGetIntegerv(GL_MAX_VIEWPORT_DIMS, reinterpret_cast<GLint*>(&dims));
+  return Extent2D{static_cast<std::uint32_t>(dims[0]), static_cast<std::uint32_t>(dims[1])};
+}
+
+/**
+ * Clamps the extent to the maximum dimensions
+ * @param extent the extent to clamp
+ * @param maxDim the maximum dimensions
+ * @return the clamped extent (scaled to keep aspect ratio if exceed max)
+ */
+Extent2D SceneClampExtent(Extent2D extent, const Extent2D& maxDim)
+{
+  float extentAspect = static_cast<float>(extent.width) / extent.height;
+  if (extent.width > maxDim.width) {
+    extent.height = static_cast<std::uint32_t>(maxDim.width / extentAspect);
+    extent.width = maxDim.width;
+  }
+  if (extent.height > maxDim.height) {
+    extent.width = static_cast<std::uint32_t>(maxDim.height * extentAspect);
+    extent.height = maxDim.height;
+  }
+  return extent;
+}
+
+struct UpscaledExtentInfo
+{
+  Extent2D extent;
+  int factor;
+  int shift;
+};
+
+/**
+ * @brief Returns supersampled image
+ * @param src source image
+ * @param factor supersampling factor
+ * @param shift shift value
+ * @return supersampled image
+ */
+static pymol::Image SceneSupersampleImage(
+    const pymol::Image& src, const UpscaledExtentInfo& upscaledExtent)
+{
+  auto factor = upscaledExtent.factor;
+  auto shift = upscaledExtent.shift;
+  auto oriWidth = src.getWidth();
+  auto oriHeight = src.getHeight();
+  unsigned int src_row_bytes = oriWidth * pymol::Image::getPixelSize();
+
+  auto width = oriWidth / factor;
+  auto height = oriHeight / factor;
+
+  auto* p = src.bits();
+  pymol::Image newImg(width, height);
+  unsigned char* q = newImg.bits();
+  unsigned int factor_col_bytes = factor * pymol::Image::getPixelSize();
+  unsigned int factor_row_bytes = factor * src_row_bytes;
+
+  // TODO: Rename variables and cleanup -- This was pulled almost 1:1
+  for (int b = 0; b < height; b++) { /* rows */
+    auto* pp = p;
+    for (int a = 0; a < width; a++) { /* cols */
+      unsigned int c1{};
+      unsigned int c2{};
+      unsigned int c3{};
+      unsigned int c4{};
+      auto* ppp = pp;
+      for (int d = 0; d < factor; d++) { /* box rows */
+        auto* pppp = ppp;
+        for (int c = 0; c < factor; c++) { /* box cols */
+          unsigned int alpha = pppp[3];
+          c4 += alpha;
+          c1 += *(pppp++) * alpha;
+          c2 += *(pppp++) * alpha;
+          c3 += *(pppp++) * alpha;
+          pppp++;
+        }
+        ppp += src_row_bytes;
+      }
+      if (c4) { /* divide out alpha channel & average */
+        c1 = c1 / c4;
+        c2 = c2 / c4;
+        c3 = c3 / c4;
+      } else { /* alpha zero! so compute average RGB */
+        c1 = c2 = c3 = 0;
+        ppp = pp;
+        for (int d = 0; d < factor; d++) { /* box rows */
+          auto* pppp = ppp;
+          for (int c = 0; c < factor; c++) { /* box cols */
+            c1 += *(pppp++);
+            c2 += *(pppp++);
+            c3 += *(pppp++);
+            pppp++;
+          }
+          ppp += src_row_bytes;
+        }
+        c1 = c1 >> shift;
+        c2 = c2 >> shift;
+        c3 = c3 >> shift;
+      }
+      *(q++) = c1;
+      *(q++) = c2;
+      *(q++) = c3;
+      *(q++) = c4 >> shift;
+      pp += factor_col_bytes;
+    }
+    p += factor_row_bytes;
+  }
+  return newImg;
+}
+
+/**
+ * @brief Returns a CPU image copy of the framebuffer attachment
+ * @param config framebuffer configuration
+ * @param entire_window whether to capture the entire window (or just the scene)
+ * @return CPU image copy of the framebuffer attachment
+ */
+static pymol::Image SceneGPUImageToImage(
+    PyMOLGlobals* G, GLFramebufferConfig config, bool entire_window)
+{
+  Rect2D rect;
+  if (entire_window) {
+    rect = OrthoGetRect(G);
+  } else {
+    rect = SceneGetRect(G);
+  }
+  auto imgData = G->ShaderMgr->readPixelsFrom(G, rect, config);
+  pymol::Image img(rect.extent.width, rect.extent.height);
+  if (!imgData.empty()) {
+    img.setVecData(std::move(imgData));
+  }
+  return img;
+}
+
+/**
+ * @brief Copies a portion of an image onto another
+ * @param srcImage source image
+ * @param dstImage destination image
+ * @param srcRect source rectangle
+ * @param dstRect destination rectangle
+ */
+static void SceneCopyImageToImage(const pymol::Image& srcImage,
+    pymol::Image& dstImage, const Rect2D& srcRect, const Rect2D& dstRect)
+{
+  auto srcPx = srcImage.pixels();
+  auto dstPx = dstImage.pixels() + (dstRect.offset.x * dstRect.extent.width) +
+               (dstRect.offset.y * dstRect.extent.height) * srcRect.extent.width;
+  int y_limit;
+  int x_limit;
+
+  if (((dstRect.offset.y + 1) * dstRect.extent.height) > srcRect.extent.height)
+    y_limit =
+        srcRect.extent.height - (dstRect.offset.y * dstRect.extent.height);
+  else
+    y_limit = dstRect.extent.height;
+  if (((dstRect.offset.x + 1) * dstRect.extent.width) > srcRect.extent.width)
+    x_limit = srcRect.extent.width - (dstRect.offset.x * dstRect.extent.width);
+  else
+    x_limit = dstRect.extent.width;
+  for (int a = 0; a < y_limit; a++) {
+    std::copy_n(srcPx, x_limit, dstPx);
+    srcPx += srcRect.extent.width;
+    dstPx += dstRect.extent.width;
+  }
+}
+
+/**
+ * @brief Returns scaling information for super-sampled antialias
+ * @param extent the extent to upscale
+ * @param maxExtent the maximum extent (typically max of viewport)
+ * @param antialias the antialiasing factor
+ * @note max upscaling is 4X
+ */
+static UpscaledExtentInfo SceneGetUpscaledExtentInfo(
+    PyMOLGlobals* G, Extent2D extent, const Extent2D& maxExtent, int antialias)
+{
+  int factor = 0;
+  int shift = 0;
+  if (antialias == 1) {
+    factor = 2;
+    shift = 2;
+  }
+  if (antialias >= 2) {
+    factor = 4;
+    shift = 4;
+  }
+  while (factor > 1) {
+    if (((extent.width * factor) < maxExtent.width) &&
+        ((extent.height * factor) < maxExtent.height)) {
+      extent.width *= factor;
+      extent.height *= factor;
+      break;
+    } else {
+      factor >>= 1;
+      shift -= 2;
+      if (factor < 2) {
+        G->Feedback->autoAdd(FB_Scene, FB_Blather,
+            "Scene-Warning: Maximum OpenGL viewport exceeded. Antialiasing "
+            "disabled.");
+        break;
+      }
+    }
+  }
+  if (factor < 2) {
+    factor = 0;
+  }
+
+  return UpscaledExtentInfo{
+    extent = extent,
+    factor = factor,
+    shift = shift
+  };
+}
+
+pymol::Result<> SceneMakeSizedImage(PyMOLGlobals* G, Extent2D extent,
+    int antialias, bool excludeSelections, SceneRenderWhich renderWhich)
 {
   CScene *I = G->Scene;
-  int ok = true;
-  int save_flag = false;
-  int save_width = 0, save_height = 0;
 
-  /* check assumptions */
+  float sceneAspectRatio = SceneGetAspectRatio(G);
 
-  if((width && height && I->Width && I->Height) &&
-     fabs(((float) (height - (width * I->Height) / (I->Width))) / height) > 0.01F) {
-    save_width = I->Width;
-    save_height = I->Height;
-    save_flag = true;
-
-    /* squish the dimensions as needed to maintain 
-       aspect ratio within the current rectangle */
-
-    if(I->Width > ((width * I->Height) / height))
-      I->Width = (width * I->Height) / height;
-    else if(I->Height > ((height * I->Width) / width))
-      I->Height = (height * I->Width) / width;
-  }
-  if((!width) && (!height)) {
-    width = I->Width;
-    height = I->Height;
-  }
-  if(width && !height) {
-    height = (I->Height * width) / I->Width;
-  }
-  if(height && !width) {
-    width = (I->Width * height) / I->Height;
-  }
-  if(!((width > 0) && (height > 0) && (I->Width > 0) && (I->Height > 0))) {
-    PRINTFB(G, FB_Scene, FB_Errors)
-      "SceneMakeSizedImage-Error: invalid image dimensions\n" ENDFB(G);
-    ok = false;
+  // Calculate from implicit extents if needed
+  if (extent.width == 0 && extent.height == 0) {
+    extent = SceneGetExtent(G);
+  } else if (extent.width != 0 && extent.height == 0) {
+    extent.height = static_cast<std::uint32_t>(extent.width / sceneAspectRatio);
+  } else if (extent.height != 0 && extent.width == 0) {
+    extent.width = static_cast<std::uint32_t>(extent.height * sceneAspectRatio);
   }
 
-  if(ok && G->HaveGUI && G->ValidContext) {
-
-    int factor = 0;
-    int shift = 0;
-    int max_dim[2];
-
-    glGetIntegerv(GL_MAX_VIEWPORT_DIMS, (GLint *) (void *) max_dim);
-
-    /* clamp to what this OpenGL implementation can do */
-    if(width > max_dim[0]) {
-      height = (max_dim[0] * height) / width;
-      width = max_dim[0];
-      PRINTFB(G, FB_Scene, FB_Warnings)
-        "Scene-Warning: Maximum OpenGL viewport dimension exceeded." ENDFB(G)
+  std::optional<Extent2D> saveExtent;
+  if (!((extent.width > 0) && (extent.height > 0) && (I->Width > 0) &&
+          (I->Height > 0))) {
+    if (saveExtent) {
+      SceneSetExtent(G, *saveExtent);
     }
-    if(height > max_dim[0]) {
-      width = (max_dim[1] * width) / height;
-      height = max_dim[1];
-      PRINTFB(G, FB_Scene, FB_Warnings)
-        "Scene-Warning: Maximum OpenGL viewport dimension exceeded." ENDFB(G)
+    return pymol::make_error(
+        "SceneMakeSizedImage-Error: invalid image dimensions");
+  }
 
+  if (!(G->HaveGUI && G->ValidContext)) {
+    if (saveExtent) {
+      SceneSetExtent(G, *saveExtent);
     }
+    return {};
+  }
 
-    if(antialias == 1) {
-      factor = 2;
-      shift = 2;
-    }
-    if(antialias >= 2) {
-      factor = 4;
-      shift = 4;
-    }
+  auto maxDim = SceneGLGetMaxDimensions(G);
+  auto clampedExtents = SceneClampExtent(extent, maxDim);
+  auto upscaledExtentInfo =
+      SceneGetUpscaledExtentInfo(G, clampedExtents, maxDim, antialias);
+  extent = upscaledExtentInfo.extent;
 
-    while(factor > 1) {
-      if(((width * factor) < max_dim[0]) && ((height * factor) < max_dim[1])) {
-        width = width * factor;
-        height = height * factor;
-        break;
-      } else {
-        factor = (factor >> 1);
-        shift = shift - 2;
-        if(factor < 2) {
-          PRINTFB(G, FB_Scene, FB_Blather)
-            "Scene-Warning: Maximum OpenGL viewport exceeded. Antialiasing disabled."
-            ENDFB(G);
-          break;
-        }
+  if (!saveExtent) {
+    saveExtent = SceneGetExtent(G);
+  }
+
+  SceneSetExtent(G, extent);
+  G->ShaderMgr->bindOffscreenSizedImage(extent, true);
+
+  int nXStep = (extent.width / (I->Width + 1)) + 1;
+  int nYStep = (extent.height / (I->Height + 1)) + 1;
+  auto drawBuffer = SceneDrawBothGetConfig(G);
+
+  pymol::Image final_image(extent.width, extent.height);
+
+  int total_steps = nXStep * nYStep;
+
+  OrthoBusyPrime(G);
+
+  /* so the trick here is that we need to move the camera around
+      so that we get a pixel-perfect mosaic */
+  for (int y = 0; y < nYStep; y++) {
+    int y_offset = -(I->Height * y);
+
+    for (int x = 0; x < nXStep; x++) {
+      int x_offset = -(I->Width * x);
+
+      OrthoBusyFast(G, y * nXStep + x, total_steps);
+
+      auto offscreenFBO = G->ShaderMgr->bindOffscreenSizedImage(extent, true);
+
+      SceneRenderInfo renderInfo{};
+      renderInfo.mousePos = Offset2D{x_offset, y_offset};
+      renderInfo.oversizeExtent = extent;
+      renderInfo.excludeSelections = excludeSelections;
+      renderInfo.renderWhich = renderWhich;
+      renderInfo.offscreenConfig = offscreenFBO;
+      G->ShaderMgr->setDrawBuffer(offscreenFBO);
+
+      // JJ: SceneSetViewport in SceneRender will extract the glViewport
+      // rather than the Scene extent. Unsure why this is done, so for now
+      // just preset the viewport.
+      Rect2D viewport {};
+      viewport.extent = extent;
+      SceneSetViewport(G, viewport);
+      SceneRender(G, renderInfo);
+
+      auto image = SceneGPUImageToImage(G, offscreenFBO, false);
+
+      if (!image.empty()) {
+        Rect2D srcRect {};
+        srcRect.extent = {extent.width, extent.height};
+        Rect2D dstRect{{x, y}, SceneGetExtent(G)};
+        SceneCopyImageToImage(image, final_image, srcRect, dstRect);
       }
     }
-    if(factor < 2)
-      factor = 0;
+  }
 
-    {
-      int nXStep = (width / (I->Width + 1)) + 1;
-      int nYStep = (height / (I->Height + 1)) + 1;
-      int x, y;
-      auto drawBuffer = SceneDrawBothGetConfig(G);
-      /* note here we're treating the buffer as 32-bit unsigned ints, not chars */
-
-      auto final_image = pymol::Image(width, height);
-
-      ScenePurgeImage(G);
-
-      SceneCopy(G, drawBuffer, true, false);
-
-      if(!I->Image)
-        ok = false;
-
-      if(ok) {
-        int total_steps = nXStep * nYStep;
-
-        OrthoBusyPrime(G);
-
-        /* so the trick here is that we need to move the camera around
-           so that we get a pixel-perfect mosaic */
-        for(y = 0; y < nYStep; y++) {
-          int y_offset = -(I->Height * y);
-
-          for(x = 0; x < nXStep; x++) {
-            int x_offset = -(I->Width * x);
-            int a, b;
-            unsigned int *p, *q, *qq, *pp;
-
-            OrthoBusyFast(G, y * nXStep + x, total_steps);
-
-            G->ShaderMgr->setDrawBuffer(drawBuffer);
-
-            glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-            SceneInvalidateCopy(G, false);
-            SceneRenderInfo renderInfo{};
-            renderInfo.mousePos = Offset2D{x_offset, y_offset};
-            renderInfo.oversizeExtent =
-                Extent2D{static_cast<std::uint32_t>(width),
-                    static_cast<std::uint32_t>(height)};
-            renderInfo.excludeSelections = excludeSelections;
-            renderInfo.renderWhich = renderWhich;
-            SceneRender(G, renderInfo);
-            SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
-
-            SceneCopy(G, drawBuffer, true, false);
-
-            if(I->Image) {      /* the image into place */
-              p = I->Image->pixels();
-              q = final_image.pixels() + (x * I->Width) + (y * I->Height) * width;
-              {
-                int y_limit;
-                int x_limit;
-
-                if(((y + 1) * I->Height) > height)
-                  y_limit = height - (y * I->Height);
-                else
-                  y_limit = I->Height;
-                if(((x + 1) * I->Width) > width)
-                  x_limit = width - (x * I->Width);
-                else
-                  x_limit = I->Width;
-                for(a = 0; a < y_limit; a++) {
-                  qq = q;
-                  pp = p;
-                  for(b = 0; b < x_limit; b++) {
-                    *(qq++) = *(pp++);
-                  }
-                  q += width;
-                  p += I->Width;
-                }
-              }
-            }
-          }
-        }
-
-        if(!OrthoDeferredWaiting(G)) {
-          if(SettingGetGlobal_i(G, cSetting_draw_mode) == -2) {
-            ExecutiveSetSettingFromString(G, cSetting_draw_mode, "-1", "", -1, true,
-                                          true);
-            SceneUpdate(G, false);
-          }
-        }
-
-        SceneInvalidateCopy(G, true);
-
-        if(factor) {            /* are we oversampling? */
-          unsigned int src_row_bytes = width * 4;
-
-          width = width / factor;
-          height = height / factor;
-
-          {
-            unsigned char *p = final_image.bits();
-            auto buffer = pymol::Image(width, height);
-            unsigned char *q = buffer.bits();
-            unsigned char *pp, *ppp, *pppp;
-            int a, b, c, d;
-            unsigned int c1, c2, c3, c4, alpha;
-            unsigned int factor_col_bytes = factor * 4;
-            unsigned int factor_row_bytes = factor * src_row_bytes;
-
-            for(b = 0; b < height; b++) {       /* rows */
-              pp = p;
-              for(a = 0; a < width; a++) {      /* cols */
-                c1 = c2 = c3 = c4 = 0;
-                ppp = pp;
-                for(d = 0; d < factor; d++) {   /* box rows */
-                  pppp = ppp;
-                  for(c = 0; c < factor; c++) { /* box cols */
-                    c4 += (alpha = pppp[3]);
-                    c1 += *(pppp++) * alpha;
-                    c2 += *(pppp++) * alpha;
-                    c3 += *(pppp++) * alpha;
-                    pppp++;
-                  }
-                  ppp += src_row_bytes;
-                }
-                if(c4) {        /* divide out alpha channel & average */
-                  c1 = c1 / c4;
-                  c2 = c2 / c4;
-                  c3 = c3 / c4;
-                } else {        /* alpha zero! so compute average RGB */
-                  c1 = c2 = c3 = 0;
-                  ppp = pp;
-                  for(d = 0; d < factor; d++) { /* box rows */
-                    pppp = ppp;
-                    for(c = 0; c < factor; c++) {       /* box cols */
-                      c1 += *(pppp++);
-                      c2 += *(pppp++);
-                      c3 += *(pppp++);
-                      pppp++;
-                    }
-                    ppp += src_row_bytes;
-                  }
-                  c1 = c1 >> shift;
-                  c2 = c2 >> shift;
-                  c3 = c3 >> shift;
-                }
-                *(q++) = c1;
-                *(q++) = c2;
-                *(q++) = c3;
-                *(q++) = c4 >> shift;
-                pp += factor_col_bytes;
-              }
-              p += factor_row_bytes;
-            }
-
-            final_image = std::move(buffer);
-          }
-        }
-        ScenePurgeImage(G);
-
-        I->Image = std::make_shared<pymol::Image>(std::move(final_image));
-        I->DirtyFlag = false;
-        I->CopyType = true;
-        I->CopyForced = true;
-
-        if(SettingGetGlobal_b(G, cSetting_opaque_background))
-          I->Image->m_needs_alpha_reset = true;
-
-      }
+  if (!OrthoDeferredWaiting(G)) {
+    if (SettingGet<int>(G, cSetting_draw_mode) == -2) {
+      ExecutiveSetSettingFromString(
+          G, cSetting_draw_mode, "-1", "", -1, true, true);
+      SceneUpdate(G, false);
     }
-  } else {
-    ok = false;
   }
 
-  if(save_flag) {
-    I->Width = save_width;
-    I->Height = save_height;
-  }
-  return ok;
+  SceneInvalidateCopy(G, true);
 
+  if (upscaledExtentInfo.factor != 0) { /* are we oversampling? */
+    final_image = SceneSupersampleImage(final_image, upscaledExtentInfo);
+  }
+
+  ScenePurgeImage(G);
+
+  SceneSetCopyImage(G, std::move(final_image), false, true);
+
+  if (SettingGet<bool>(G, cSetting_opaque_background)) {
+    I->Image->m_needs_alpha_reset = true;
+  }
+
+  if (saveExtent) {
+    SceneSetExtent(G, *saveExtent);
+  }
+
+  return {};
 }
 
 /**
@@ -2248,6 +2346,8 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
     int height)
 {
   CScene *I = G->Scene;
+  auto requestedExtent = Extent2D{
+      static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height)};
   //  float *v;
   int valid = true;
   PRINTFB(G, FB_Scene, FB_Blather)
@@ -2265,8 +2365,8 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
              nullptr, nullptr, 0.0F, 0.0F, false, nullptr, show_timing, -1);
     break;
   case cSceneImage_Draw:
-    SceneMakeSizedImage(G, width, height,
-        SettingGetGlobal_i(G, cSetting_antialias), /*excludeSelections*/ false);
+    SceneMakeSizedImage(G, requestedExtent,
+        SettingGet<int>(G, cSetting_antialias), /*excludeSelections*/ false);
     break;
   case cSceneImage_Normal:
     {
@@ -3979,8 +4079,7 @@ bool call_raw_image_callback(PyMOLGlobals * G) {
 /**
  * Creates an image of the current scene.
  *
- * @param width width of the image in pixels
- * @param height height of the image in pixels
+ * @param extent requested extent
  * @param antialias antialias mode
  * @param dpi dots per inch
  * @param format ??
@@ -3989,14 +4088,14 @@ bool call_raw_image_callback(PyMOLGlobals * G) {
  * @param filename if not empty, store the image to this file as PNG
  */
 
-static void SceneImage(PyMOLGlobals* G, int width, int height, int antialias,
+static void SceneImage(PyMOLGlobals* G, const Extent2D& extent, int antialias,
     float dpi, int format, bool quiet, pymol::Image* out_img,
     const std::string& filename)
 {
   auto allButGizmos_i = pymol::to_underlying(SceneRenderWhich::All) &
                         ~pymol::to_underlying(SceneRenderWhich::Gizmos);
   auto allButGizmos = static_cast<SceneRenderWhich>(allButGizmos_i);
-  SceneMakeSizedImage(G, width, height, antialias, /*excludeSelecions*/ true, allButGizmos);
+  SceneMakeSizedImage(G, extent, antialias, /*excludeSelecions*/ true, allButGizmos);
   if (!filename.empty()) {
     ScenePNG(G, filename.c_str(), dpi, quiet, false, format, nullptr);
   } else if (out_img) {
@@ -4017,14 +4116,13 @@ static void SceneImage(PyMOLGlobals* G, int width, int height, int antialias,
   }
 }
 
-bool SceneDeferImage(PyMOLGlobals* G, int width, int height,
+bool SceneDeferImage(PyMOLGlobals* G, const Extent2D& extent,
     const char* filename, int antialias, float dpi, int format, int quiet,
     pymol::Image* out_img)
 {
   std::string filenameStr = filename ? filename : "";
   std::function<void()> deferred = [=]() {
-    SceneImage(
-        G, width, height, antialias, dpi, format, quiet, out_img, filenameStr);
+    SceneImage(G, extent, antialias, dpi, format, quiet, out_img, filenameStr);
   };
 
   if (G->ValidContext) {
@@ -4525,7 +4623,6 @@ void SceneCopy(PyMOLGlobals * G, GLFramebufferConfig config, int force, int enti
   }
 }
 
-
 /*========================================================================*/
 int SceneRovingCheckDirty(PyMOLGlobals * G)
 {
@@ -4795,7 +4892,8 @@ int SceneRenderCached(PyMOLGlobals * G)
       SceneRay(G, 0, 0, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
                nullptr, nullptr, 0.0F, 0.0F, false, nullptr, true, -1);
     } else if((moviePlaying && SettingGetGlobal_b(G, cSetting_draw_frames)) || (draw_mode == 2)) {
-      SceneMakeSizedImage(G, 0, 0, SettingGetGlobal_i(G, cSetting_antialias), /*excludeSelections*/ false);
+      Extent2D extent {0u, 0u};
+      SceneMakeSizedImage(G, extent, SettingGetGlobal_i(G, cSetting_antialias), /*excludeSelections*/ false);
     } else if(I->CopyType == true) {    /* true vs. 2 */
       renderedFlag = true;
     } else {

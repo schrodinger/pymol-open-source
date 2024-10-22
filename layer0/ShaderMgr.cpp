@@ -831,6 +831,8 @@ CShaderMgr::~CShaderMgr() {
   programs.clear();
 
   freeGPUBuffer(offscreen_rt);
+  freeGPUBuffer(offscreen_ortho_rt);
+  freeGPUBuffer(offscreen_sized_image_rt);
 
   FreeAllVBOs();
 }
@@ -1742,9 +1744,9 @@ void CShaderMgr::bindOffscreenOIT(int width, int height, int drawbuf) {
   }
 }
 
-void CShaderMgr::bindOffscreenOrtho(int width, int height, bool clear) {
+GLFramebufferConfig CShaderMgr::bindOffscreenOrtho(const Extent2D& extent, bool clear) {
   using namespace tex;
-  renderTarget_t::shape_type req_size(width, height);
+  renderTarget_t::shape_type req_size(extent.width, extent.height);
   if (!offscreen_ortho_rt) {
     auto rt = newGPUBuffer<renderTarget_t>(req_size);
     rt->layout({ { 4, rt_layout_t::UBYTE } });
@@ -1752,7 +1754,41 @@ void CShaderMgr::bindOffscreenOrtho(int width, int height, bool clear) {
   }
 
   auto rt = getGPUBuffer<renderTarget_t>(offscreen_ortho_rt);
+  if (rt->size() != req_size) {
+    freeGPUBuffer(offscreen_ortho_rt);
+    rt = newGPUBuffer<renderTarget_t>(req_size);
+    rt->layout({ { 4, rt_layout_t::UBYTE } });
+    offscreen_ortho_rt = rt->get_hash_id();
+  }
   rt->bind(clear);
+  return GLFramebufferConfig{
+      static_cast<std::uint32_t>(offscreen_ortho_rt), //
+      GL_COLOR_ATTACHMENT0 //
+  };
+}
+
+GLFramebufferConfig CShaderMgr::bindOffscreenSizedImage(
+    const Extent2D& extent, bool clear)
+{
+  using namespace tex;
+  renderTarget_t::shape_type req_size(extent.width, extent.height);
+  if (!offscreen_sized_image_rt) {
+    auto rt = newGPUBuffer<renderTarget_t>(req_size);
+    rt->layout({{4, rt_layout_t::UBYTE}});
+    offscreen_sized_image_rt = rt->get_hash_id();
+  }
+  auto rt = getGPUBuffer<renderTarget_t>(offscreen_sized_image_rt);
+  if (rt->size() != req_size) {
+    freeGPUBuffer(offscreen_sized_image_rt);
+    rt = newGPUBuffer<renderTarget_t>(req_size);
+    rt->layout({{4, rt_layout_t::UBYTE}});
+    offscreen_sized_image_rt = rt->get_hash_id();
+  }
+  rt->bind(clear);
+  return GLFramebufferConfig{
+      static_cast<std::uint32_t>(offscreen_sized_image_rt), //
+      GL_COLOR_ATTACHMENT0       //
+  };
 }
 
 void CShaderMgr::activateOffscreenTexture(GLuint textureIdx) {
@@ -1812,14 +1848,14 @@ std::vector<unsigned char> CShaderMgr::readPixelsFrom(
   glGetIntegerv(GL_READ_BUFFER, &prevReadBuffer);
 
   if (srcConfig.framebuffer == OpenGLDefaultFramebufferID) {
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, srcConfig.framebuffer);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, OpenGLDefaultFramebufferID);
+    glReadBuffer(srcConfig.drawBuffer);
   } else {
     if (auto rt = getGPUBuffer<renderTarget_t>(srcConfig.framebuffer)) {
       // TODO: bindOnlyAsRead
       rt->fbo()->bind();
     }
   }
-  glReadBuffer(srcConfig.drawBuffer);
   PyMOLReadPixels(rect.offset.x, rect.offset.y, rect.extent.width,
       rect.extent.height, GL_RGBA, GL_UNSIGNED_BYTE, dstPixels.data());
 
