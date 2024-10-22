@@ -1569,18 +1569,13 @@ static void SceneSetCopyImage(
  */
 Extent2D SceneGLGetMaxDimensions(PyMOLGlobals* G)
 {
+  //TODO: Move this function to OpenGL Context manager
   GLint dims[2];
   glGetIntegerv(GL_MAX_VIEWPORT_DIMS, reinterpret_cast<GLint*>(&dims));
   return Extent2D{static_cast<std::uint32_t>(dims[0]), static_cast<std::uint32_t>(dims[1])};
 }
 
-/**
- * Clamps the extent to the maximum dimensions
- * @param extent the extent to clamp
- * @param maxDim the maximum dimensions
- * @return the clamped extent (scaled to keep aspect ratio if exceed max)
- */
-Extent2D SceneClampExtent(Extent2D extent, const Extent2D& maxDim)
+Extent2D ExtentClampByAspectRatio(Extent2D extent, const Extent2D& maxDim)
 {
   float extentAspect = static_cast<float>(extent.width) / extent.height;
   if (extent.width > maxDim.width) {
@@ -1593,13 +1588,6 @@ Extent2D SceneClampExtent(Extent2D extent, const Extent2D& maxDim)
   }
   return extent;
 }
-
-struct UpscaledExtentInfo
-{
-  Extent2D extent;
-  int factor;
-  int shift;
-};
 
 /**
  * @brief Returns supersampled image
@@ -1679,37 +1667,18 @@ static pymol::Image SceneSupersampleImage(
   return newImg;
 }
 
-/**
- * @brief Returns a CPU image copy of the framebuffer attachment
- * @param config framebuffer configuration
- * @param entire_window whether to capture the entire window (or just the scene)
- * @return CPU image copy of the framebuffer attachment
- */
-static pymol::Image SceneGPUImageToImage(
-    PyMOLGlobals* G, GLFramebufferConfig config, bool entire_window)
+pymol::Image GLImageToPyMOLImage(
+    PyMOLGlobals* G, const GLFramebufferConfig& config, const Rect2D& srcRect)
 {
-  Rect2D rect;
-  if (entire_window) {
-    rect = OrthoGetRect(G);
-  } else {
-    rect = SceneGetRect(G);
-  }
-  auto imgData = G->ShaderMgr->readPixelsFrom(G, rect, config);
-  pymol::Image img(rect.extent.width, rect.extent.height);
+  auto imgData = G->ShaderMgr->readPixelsFrom(G, srcRect, config);
+  pymol::Image img(srcRect.extent.width, srcRect.extent.height);
   if (!imgData.empty()) {
     img.setVecData(std::move(imgData));
   }
   return img;
 }
 
-/**
- * @brief Copies a portion of an image onto another
- * @param srcImage source image
- * @param dstImage destination image
- * @param srcRect source rectangle
- * @param dstRect destination rectangle
- */
-static void SceneCopyImageToImage(const pymol::Image& srcImage,
+void PyMOLImageCopy(const pymol::Image& srcImage,
     pymol::Image& dstImage, const Rect2D& srcRect, const Rect2D& dstRect)
 {
   auto srcPx = srcImage.pixels();
@@ -1734,14 +1703,7 @@ static void SceneCopyImageToImage(const pymol::Image& srcImage,
   }
 }
 
-/**
- * @brief Returns scaling information for super-sampled antialias
- * @param extent the extent to upscale
- * @param maxExtent the maximum extent (typically max of viewport)
- * @param antialias the antialiasing factor
- * @note max upscaling is 4X
- */
-static UpscaledExtentInfo SceneGetUpscaledExtentInfo(
+UpscaledExtentInfo ExtentGetUpscaleInfo(
     PyMOLGlobals* G, Extent2D extent, const Extent2D& maxExtent, int antialias)
 {
   int factor = 0;
@@ -1816,9 +1778,9 @@ pymol::Result<> SceneMakeSizedImage(PyMOLGlobals* G, Extent2D extent,
   }
 
   auto maxDim = SceneGLGetMaxDimensions(G);
-  auto clampedExtents = SceneClampExtent(extent, maxDim);
+  auto clampedExtents = ExtentClampByAspectRatio(extent, maxDim);
   auto upscaledExtentInfo =
-      SceneGetUpscaledExtentInfo(G, clampedExtents, maxDim, antialias);
+      ExtentGetUpscaleInfo(G, clampedExtents, maxDim, antialias);
   extent = upscaledExtentInfo.extent;
 
   if (!saveExtent) {
@@ -1866,13 +1828,12 @@ pymol::Result<> SceneMakeSizedImage(PyMOLGlobals* G, Extent2D extent,
       SceneSetViewport(G, viewport);
       SceneRender(G, renderInfo);
 
-      auto image = SceneGPUImageToImage(G, offscreenFBO, false);
+      auto image = GLImageToPyMOLImage(G, offscreenFBO, SceneGetRect(G));
 
       if (!image.empty()) {
-        Rect2D srcRect {};
-        srcRect.extent = {extent.width, extent.height};
+        Rect2D srcRect {{}, extent};
         Rect2D dstRect{{x, y}, SceneGetExtent(G)};
-        SceneCopyImageToImage(image, final_image, srcRect, dstRect);
+        PyMOLImageCopy(image, final_image, srcRect, dstRect);
       }
     }
   }

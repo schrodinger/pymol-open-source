@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include "Executive.h"
 #include "Feedback.h"
 #include "File.h"
+#include "ImageUtils.h"
 #include "ListMacros.h"
 #include "MemoryDebug.h"
 #include "Movie.h"
@@ -168,6 +169,13 @@ Extent2D OrthoGetExtent(PyMOLGlobals* G)
   auto I = G->Ortho;
   return Extent2D{static_cast<std::uint32_t>(I->Width),
       static_cast<std::uint32_t>(I->Height)};
+}
+
+static void OrthoSetExtent(PyMOLGlobals* G, const Extent2D& extent)
+{
+  auto I = G->Ortho;
+  I->Width = extent.width;
+  I->Height = extent.height;
 }
 
 std::pair<int, int> OrthoGetBackgroundSize(const COrtho& ortho)
@@ -2988,4 +2996,175 @@ Rect2D OrthoGetRect(PyMOLGlobals* G)
   auto width = static_cast<std::uint32_t>(I->Width);
   auto height = static_cast<std::uint32_t>(I->Height);
   return {{0, 0}, {width, height}};
+}
+
+
+/**
+ * @brief Retrieves Ortho UI aspect ratio
+ * @return aspect ratio
+ */
+static float OrthoGetAspectRatio(PyMOLGlobals* G)
+{
+  auto I = G->Ortho;
+  return static_cast<float>(I->Width) / static_cast<float>(I->Height);
+}
+
+/***
+ * @brief Draws top-level ortho at a given extent and draws into an offset
+ * @param offset offset to copy the drawn rendered ortho image into dstImage at
+ * @param extent extent of the ortho to draw
+ * @param dstImage image to draw into
+ */
+static void OrthoDrawSizedTile(PyMOLGlobals* G, const Offset2D& offset,
+    const Extent2D& extent, pymol::Image& dstImage)
+{
+  auto offscreenFBO = G->ShaderMgr->bindOffscreenOrtho(extent, true);
+
+  G->ShaderMgr->setDrawBuffer(offscreenFBO);
+
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  OrthoReshape(G, extent.width, extent.height, true);
+  OrthoInvalidateDoDraw(G);
+  OrthoDrawInfo drawInfo{};
+  drawInfo.renderScene = false;
+  drawInfo.renderMode = OrthoRenderMode::Main;
+  drawInfo.viewport = Rect2D{offset.x, offset.y, extent.width, extent.height};
+  drawInfo.offscreenRender = true;
+  glViewport(drawInfo.viewport->offset.x, drawInfo.viewport->offset.y,
+    drawInfo.viewport->extent.width, drawInfo.viewport->extent.height);
+  OrthoDoDraw(G, drawInfo);
+  auto tileImg = GLImageToPyMOLImage(G, offscreenFBO, SceneGetRect(G));
+
+  if (!tileImg.empty()) { /* the image into place */
+    Rect2D srcRect {{}, extent};
+    Rect2D dstRect{offset, OrthoGetExtent(G)};
+    PyMOLImageCopy(tileImg, dstImage, srcRect, dstRect);
+  } // if tileImg not empty
+}
+
+static void OrthoDrawSizedTiles(PyMOLGlobals* G,
+    const Extent2D& extent, pymol::Image& dstImage)
+{
+  auto I = G->Ortho;
+
+  int nXStep = (extent.width / (I->Width + 1)) + 1;
+  int nYStep = (extent.height / (I->Height + 1)) + 1;
+  int total_steps = nXStep * nYStep;
+
+  OrthoBusyPrime(G);
+
+  for (int y = 0; y < nYStep; y++) {
+    for (int x = 0; x < nXStep; x++) {
+      Offset2D offset{x = -(I->Width * x), y = -(I->Height * y)};
+      OrthoBusyFast(G, y * nXStep + x, total_steps);
+      OrthoDrawSizedTile(G, offset, extent, dstImage);
+    }
+  }
+}
+
+/**
+ * @brief Ensures that the extent has a valid width and height
+ * @param extent extent to calculate
+ * @return extent with valid width and height
+ * @note If the width or height is 0, it will be calculated based on the
+ * current ortho aspect ratio.
+ */
+static Extent2D OrthoCalculateImplicitExtent(PyMOLGlobals* G, Extent2D extent)
+{
+  float orthoAspectRatio = OrthoGetAspectRatio(G);
+  if (extent.width == 0 && extent.height == 0) {
+    extent = OrthoGetExtent(G);
+  } else if (extent.width != 0 && extent.height == 0) {
+    extent.height = static_cast<std::uint32_t>(extent.width / orthoAspectRatio);
+  } else if (extent.height != 0 && extent.width == 0) {
+    extent.width = static_cast<std::uint32_t>(extent.height * orthoAspectRatio);
+  }
+  return extent;
+}
+
+/**
+ * @brief Makes an image of the current ortho view
+ * @param extent extent of the image to make
+ * @param quiet suppresses error messages
+ */
+static pymol::Result<pymol::Image> OrthoMakeSizedImage(
+    PyMOLGlobals* G, Extent2D extent, bool quiet)
+{
+  auto* I = G->Ortho;
+
+  extent = OrthoCalculateImplicitExtent(G, extent);
+
+  std::optional<Extent2D> saveExtent;
+  if (!((extent.width > 0) && (extent.height > 0) && (I->Width > 0) &&
+          (I->Height > 0))) {
+    if (saveExtent) {
+      OrthoSetExtent(G, *saveExtent);
+    }
+    return pymol::make_error(
+        "OrthoMakeSizedImage-Error: invalid image dimensions");
+  }
+
+  if (!(G->HaveGUI && G->ValidContext)) {
+    if (saveExtent) {
+      OrthoSetExtent(G, *saveExtent);
+    }
+    return {};
+  }
+
+  auto maxDim = SceneGLGetMaxDimensions(G);
+  auto clampedExtents = ExtentClampByAspectRatio(extent, maxDim);
+  auto upscaledExtentInfo = ExtentGetUpscaleInfo(G, clampedExtents, maxDim, 0);
+  extent = upscaledExtentInfo.extent;
+
+  if (!saveExtent) {
+    saveExtent = OrthoGetExtent(G);
+  }
+
+  OrthoSetExtent(G, extent);
+  G->ShaderMgr->bindOffscreenOrtho(extent, true);
+
+  auto drawBuffer = SceneDrawBothGetConfig(G);
+  pymol::Image final_image(extent.width, extent.height);
+
+  // Save before we change scene extents in OrthoDrawSizedTile
+  auto currSceneExtent = SceneGetExtent(G);
+
+  OrthoDrawSizedTiles(G, extent, final_image);
+
+  if (saveExtent) {
+    OrthoSetExtent(G, *saveExtent);
+    OrthoReshape(G, currSceneExtent.width, currSceneExtent.height, true);
+  }
+
+  OrthoInvalidateDoDraw(G);
+  return final_image;
+}
+
+pymol::Result<bool> OrthoDeferImage(PyMOLGlobals* G, Extent2D extent, const char* filename,
+    int antialias, float dpi, int format, int quiet, pymol::Image* out_img,
+    bool with_overlay)
+{
+  std::string filename_str = filename ? filename : "";
+  std::function<void()> deferred = [=]() {
+    auto prior = SceneDeferImage(G, extent, filename_str.c_str(), antialias,
+        dpi, format, quiet, out_img);
+    if (prior) {
+      // Something went bad here. Should fire on deferred.
+      return;
+    }
+    auto overlay = OrthoMakeSizedImage(G, extent, quiet);
+    if (overlay) {
+      if (auto composite = PyMOLImageComposite(G, *G->Scene->Image, *overlay)) {
+        // TODO: Save composite image
+      }
+    }
+  };
+
+  if (G->ValidContext) {
+    deferred();
+    return false;
+  }
+
+  OrthoDefer(G, std::move(deferred));
+  return true;
 }

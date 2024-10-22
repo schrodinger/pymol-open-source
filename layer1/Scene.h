@@ -340,6 +340,12 @@ void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height);
 Rect2D SceneGetViewport(PyMOLGlobals* G);
 
 /**
+ * Get the maximum dimensions of the viewport
+ * @return the maximum dimensions of OpenGL viewport
+ */
+Extent2D SceneGLGetMaxDimensions(PyMOLGlobals* G);
+
+/**
  * @return Retrieves the Scene's rect extent
  */
 Extent2D SceneGetExtent(PyMOLGlobals* G);
@@ -357,6 +363,52 @@ void SceneSetExtent(PyMOLGlobals* G, const Extent2D& extent);
 Rect2D SceneGetRect(PyMOLGlobals* G);
 
 float SceneGetAspectRatio(PyMOLGlobals* G);
+
+GLFramebufferConfig SceneDrawBothGetConfig(PyMOLGlobals* G);
+
+/**
+ * Clamps the extent to the maximum dimensions
+ * @param extent the extent to clamp
+ * @param maxDim the maximum dimensions
+ * @return the clamped extent (scaled to keep aspect ratio if exceed max)
+ */
+Extent2D ExtentClampByAspectRatio(Extent2D extent, const Extent2D& maxDim);
+
+struct UpscaledExtentInfo
+{
+  Extent2D extent;
+  int factor;
+  int shift;
+};
+
+/**
+ * @brief Returns scaling information for super-sampled antialias
+ * @param extent the extent to upscale
+ * @param maxExtent the maximum extent (typically max of viewport)
+ * @param antialias the antialiasing factor
+ * @note max upscaling is 4X
+ */
+UpscaledExtentInfo ExtentGetUpscaleInfo(
+    PyMOLGlobals* G, Extent2D extent, const Extent2D& maxExtent, int antialias);
+
+/**
+ * @brief Copies a portion of a pymol::Image onto another
+ * @param srcImage source image
+ * @param dstImage destination image
+ * @param srcRect source rectangle
+ * @param dstRect destination rectangle
+ */
+void PyMOLImageCopy(const pymol::Image& srcImage,
+    pymol::Image& dstImage, const Rect2D& srcRect, const Rect2D& dstRect);
+
+/**
+ * @brief Returns a CPU image copy of the framebuffer attachment
+ * @param config framebuffer configuration
+ * @param srcRect source Rect from GL buffer to copy from
+ * @return CPU image copy of the framebuffer attachment/buffer
+ */
+pymol::Image GLImageToPyMOLImage(
+    PyMOLGlobals* G, const GLFramebufferConfig& config, const Rect2D& srcRect);
 
 #endif
 
