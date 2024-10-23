@@ -68,6 +68,7 @@ if True:
         "empty" : 8,
         "purge" : 9,
         "excise" : 10,
+        "raise" : 11
         }
 
     group_action_sc =  Shortcut(group_action_dict.keys())
@@ -113,6 +114,7 @@ ACTIONS
     toggle:  toggle group display in object menu panel
     auto:    add or toggle
     ungroup: DEPRECATED, use ungroup command
+    raise:   raise a group and it's members to the top level
 
 EXAMPLE
 

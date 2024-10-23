@@ -186,6 +186,7 @@ int ExecutiveCheckGroupMembership(
 #define cExecutiveGroupEmpty 8
 #define cExecutiveGroupPurge 9
 #define cExecutiveGroupExcise 10
+#define cExecutiveGroupRaise 11
 
 enum ExecRec_t
 {

@@ -2161,7 +2161,8 @@ int ExecutiveGroup(PyMOLGlobals * G, pymol::zstring_view nameView,
                        (action == cExecutiveGroupToggle) ||
                        (action == cExecutiveGroupEmpty) ||
                        (action == cExecutiveGroupPurge) ||
-                       (action == cExecutiveGroupExcise))) {
+                       (action == cExecutiveGroupExcise) ||
+                       (action == cExecutiveGroupRaise))) {
     ExecutiveUpdateGroups(G, false);
     {
       CTracker *I_Tracker = I->Tracker;
@@ -2231,6 +2232,12 @@ int ExecutiveGroup(PyMOLGlobals * G, pymol::zstring_view nameView,
                 }
               }
               ExecutiveDelete(G, rec->name);
+            }
+            break;
+          case cExecutiveGroupRaise:
+            if(objGroup) {
+              rec->group = nullptr;
+              rec->group_name[0] = 0;
             }
             break;
           }
