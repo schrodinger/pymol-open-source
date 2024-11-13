@@ -1785,7 +1785,6 @@ static void OrthoDrawFontTextureDebug(PyMOLGlobals* G, CGO* orthoCGO)
   /*  This shows the font texture in the middle of the screen, we might want
    * to debug it */
   float minx = 100.f, maxx = 612.f, miny = 100.f, maxy = 612.f;
-  short texcoord = true;
   CGOAlpha(orthoCGO, .5f);
   CGOColor(orthoCGO, 0.f, 0.f, 0.f);
   CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);

@@ -3099,7 +3099,7 @@ static bool SceneOverlayOversize(
       unsigned char* p = data;
       unsigned char* q = buffer;
       unsigned char *pp, *ppp, *pppp;
-      unsigned int c1, c2, c3, c4, alpha, tot, bg;
+      unsigned int c1, c2, c3, c4, tot, bg;
       unsigned int factor_col_bytes = factor * 4;
       unsigned int factor_row_bytes = factor * src_row_bytes;
 
