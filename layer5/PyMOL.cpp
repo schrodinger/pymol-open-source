@@ -895,7 +895,8 @@ PyMOLreturn_status PyMOL_CmdZoom(CPyMOL * I, const char *selection, float buffer
 {
   int ok = false;
   PYMOL_API_LOCK
-    auto result = ExecutiveWindowZoom(I->G, selection, buffer, state - 1,
+    SelectorTmp2 s1(I->G, selection);
+    auto result = ExecutiveWindowZoom(I->G, s1.getName(), buffer, state - 1,
                              complete, animate, quiet);
     ok = static_cast<bool>(result);
   PYMOL_API_UNLOCK return return_status_ok(ok);
