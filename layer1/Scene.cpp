@@ -1487,7 +1487,8 @@ float *SceneGetMatrix(PyMOLGlobals * G)
 float *SceneGetPmvMatrix(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-  multiply44f44f44f(I->ModelViewMatrix, I->ProjectionMatrix, I->PmvMatrix);
+  multiply44f44f44f(SceneGetModelViewMatrixPtr(G),
+      SceneGetProjectionMatrixPtr(G), I->PmvMatrix);
   return (I->PmvMatrix);
 }
 
@@ -4200,15 +4201,15 @@ void SceneResetNormalCGO(PyMOLGlobals * G, CGO *cgo, int lines)
 
 void SceneResetNormalToViewVector(PyMOLGlobals * G, short use_shader)
 {
-  CScene *I = G->Scene;
+  auto modMatrix = SceneGetModelViewMatrixPtr(G);
   if(G->HaveGUI && G->ValidContext) {
 #if defined(PURE_OPENGL_ES_2)
-    glVertexAttrib3f(VERTEX_NORMAL, I->ModMatrix[2], I->ModMatrix[6], I->ModMatrix[10]);
+    glVertexAttrib3f(VERTEX_NORMAL, modMatrix[2], modMatrix[6], modMatrix[10]);
 #else
     if (use_shader){
-      glVertexAttrib3f(VERTEX_NORMAL, I->ModMatrix[2], I->ModMatrix[6], I->ModMatrix[10]);
+      glVertexAttrib3f(VERTEX_NORMAL, modMatrix[2], modMatrix[6], modMatrix[10]);
     } else {
-      glNormal3f(I->ModMatrix[2], I->ModMatrix[6], I->ModMatrix[10]);
+      glNormal3f(modMatrix[2], modMatrix[6], modMatrix[10]);
     }
 #endif
   }
@@ -5160,14 +5161,14 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
     glTranslatef(-ori.x, -ori.y, -ori.z);
 
     // TODO don't do the immediate mode detour
-    glGetFloatv(GL_PROJECTION_MATRIX, I->ProjectionMatrix);
-    glGetFloatv(GL_MODELVIEW_MATRIX, I->ModelViewMatrix);
+    glGetFloatv(GL_PROJECTION_MATRIX, SceneGetProjectionMatrixPtr(G));
+    glGetFloatv(GL_MODELVIEW_MATRIX, SceneGetModelViewMatrixPtr(G));
 
   } else
 #endif
   {
     if (!mode){
-      SceneComposeModelViewMatrix(I, I->ModelViewMatrix);
+      SceneComposeModelViewMatrix(I, SceneGetModelViewMatrixPtr(G));
     } else {
       /* stereo */
       float tmpMatrix[16];
@@ -5186,19 +5187,19 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
 	" StereoMatrix-Debug: mode %d stAng %8.3f stShift %8.3f \n", mode, stAng, stShift
 	ENDFD;
       identity44f(tmpMatrix);
-      identity44f(I->ModelViewMatrix);
-      MatrixRotateC44f(I->ModelViewMatrix, stAng, 0.f, 1.f, 0.f);
+      I->modelViewMatrix = glm::mat4(1.0f);
+      MatrixRotateC44f(SceneGetModelViewMatrixPtr(G), stAng, 0.f, 1.f, 0.f);
       MatrixTranslateC44f(tmpMatrix, pos.x + stShift, pos.y, pos.z);
-      MatrixMultiplyC44f(tmpMatrix, I->ModelViewMatrix);
-      MatrixMultiplyC44f(glm::value_ptr(I->m_view.rotMatrix()), I->ModelViewMatrix);
-      MatrixTranslateC44f(I->ModelViewMatrix, -ori.x, -ori.y, -ori.z);
+      MatrixMultiplyC44f(tmpMatrix, SceneGetModelViewMatrixPtr(G));
+      MatrixMultiplyC44f(glm::value_ptr(I->m_view.rotMatrix()), SceneGetModelViewMatrixPtr(G));
+      MatrixTranslateC44f(SceneGetModelViewMatrixPtr(G), -ori.x, -ori.y, -ori.z);
 
     }
   }
 
 #ifndef PURE_OPENGL_ES_2
   if (ALWAYS_IMMEDIATE_OR(!SettingGetGlobal_b(G, cSetting_use_shaders))) {
-    glLoadMatrixf(I->ModelViewMatrix);
+    glLoadMatrixf(SceneGetModelViewMatrixPtr(G));
   }
 #endif
 }
@@ -5346,42 +5347,48 @@ float SceneGetLineWidthForCylindersStatic(PyMOLGlobals * G, RenderInfo * info, f
 }
 
 void ScenePushModelViewMatrix(PyMOLGlobals * G) {
-  CScene *I = G->Scene;
-  auto& stack = I->m_ModelViewMatrixStack;
-  auto& depth = I->m_ModelViewMatrixStackDepth;
-
-  stack.resize(16 * (depth + 1));
-  copy44f(I->ModelViewMatrix, &stack[16 * depth++]);
+  auto I = G->Scene;
+  I->m_ModelViewMatrixStack.push_back(I->modelViewMatrix);
 }
 
 void ScenePopModelViewMatrix(PyMOLGlobals * G, bool immediate) {
   CScene *I = G->Scene;
   auto& stack = I->m_ModelViewMatrixStack;
-  auto& depth = I->m_ModelViewMatrixStackDepth;
 
-  if (depth == 0) {
+  if (stack.empty()) {
     printf("ERROR: depth == 0\n");
     return;
   }
 
-  copy44f(&stack[--depth * 16], I->ModelViewMatrix);
+  I->modelViewMatrix = stack.back();
+  stack.pop_back();
 
 #ifndef PURE_OPENGL_ES_2
   if (ALWAYS_IMMEDIATE_OR(immediate)) {
     glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(I->ModelViewMatrix);
+    glLoadMatrixf(SceneGetModelViewMatrixPtr(G));
   }
 #endif
 }
 
-float *SceneGetModelViewMatrix(PyMOLGlobals * G){
-  CScene *I = G->Scene;
-  return (I->ModelViewMatrix);
+glm::mat4& SceneGetModelViewMatrix(PyMOLGlobals* G) {
+  return G->Scene->modelViewMatrix;
 }
-float *SceneGetProjectionMatrix(PyMOLGlobals * G){
-  CScene *I = G->Scene;
-  return (I->ProjectionMatrix);
+
+float* SceneGetModelViewMatrixPtr(PyMOLGlobals* G) {
+  auto& mat = SceneGetModelViewMatrix(G);
+  return glm::value_ptr(mat);
 }
+
+glm::mat4& SceneGetProjectionMatrix(PyMOLGlobals* G) {
+  return G->Scene->projectionMatrix;
+}
+
+float* SceneGetProjectionMatrixPtr(PyMOLGlobals* G) {
+  auto& mat = SceneGetProjectionMatrix(G);
+  return glm::value_ptr(mat);
+}
+
 void SceneSetBackgroundColorAlreadySet(PyMOLGlobals * G, int background_color_already_set){
   CScene *I = G->Scene;
   I->background_color_already_set = background_color_already_set;
@@ -5482,7 +5489,7 @@ void SceneAdjustZtoScreenZ(PyMOLGlobals *G, float *pos, float zarg){
   float InvModMatrix[16];
   copy3f(pos, pos4);
   pos4[3] = 1.f;
-  MatrixTransformC44f4f(I->ModMatrix, pos4, tpos);
+  MatrixTransformC44f4f(SceneGetModelViewMatrixPtr(G), pos4, tpos);
   normalize4f(tpos);
   /* NEED TO ACCOUNT FOR ORTHO */
   if (SettingGetGlobal_b(G, cSetting_ortho)){
@@ -5495,7 +5502,7 @@ void SceneAdjustZtoScreenZ(PyMOLGlobals *G, float *pos, float zarg){
   npos[2] = zInPreProj;
   npos[3] = 1.f;
 
-  MatrixInvertC44f(I->ModMatrix, InvModMatrix);
+  MatrixInvertC44f(SceneGetModelViewMatrixPtr(G), InvModMatrix);
   MatrixTransformC44f4f(InvModMatrix, npos, npos);
   normalize4f(npos);
   copy3f(npos, pos);
@@ -5559,7 +5566,7 @@ void ScenePickAtomInWorld(PyMOLGlobals * G, int x, int y, float *atomWorldPos) {
     float atomPos[3];
     ObjectMoleculeGetAtomTxfVertex((ObjectMolecule *)I->LastPicked.context.object, 0, I->LastPicked.src.index, atomPos);
     // muptiply by molecule world matrix
-    MatrixTransformC44f3f(I->ModMatrix, atomPos, atomWorldPos);
+    MatrixTransformC44f3f(SceneGetModelViewMatrixPtr(G), atomPos, atomWorldPos);
   }
 }
 

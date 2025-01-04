@@ -1268,8 +1268,8 @@ CShaderPrg *CShaderMgr::Enable_IndicatorShader() {
     shaderPrg->uniform_set |= 8;
   }
 #ifdef PURE_OPENGL_ES_2
-  shaderPrg->SetMat4fc("g_ModelViewMatrix", SceneGetModelViewMatrix(G));
-  shaderPrg->SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrix(G));
+  shaderPrg->SetMat4fc("g_ModelViewMatrix", SceneGetModelViewMatrixPtr(G));
+  shaderPrg->SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrixPtr(G));
 #endif
 
   return (shaderPrg);
@@ -1291,8 +1291,8 @@ CShaderPrg* CShaderMgr::Enable_BezierShader()
   shaderPrg->Set1f("segmentCount", segmentCount);
   shaderPrg->Set1f("stripCount", stripCount);
 
-  shaderPrg->SetMat4fc("g_ModelViewMatrix", SceneGetModelViewMatrix(G));
-  shaderPrg->SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrix(G));
+  shaderPrg->SetMat4fc("g_ModelViewMatrix", SceneGetModelViewMatrixPtr(G));
+  shaderPrg->SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrixPtr(G));
   return shaderPrg;
 }
 

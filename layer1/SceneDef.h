@@ -32,6 +32,8 @@ Z* -------------------------------------------------------------------
 #include<list>
 #include<vector>
 
+#include <glm/mat4x4.hpp>
+
 #define TRN_BKG 0x30
 #define MAX_ANI_ELEM 300
 
@@ -170,15 +172,10 @@ class CScene : public Block {
   short prev_no_z_rotation1{}, prev_no_z_rotation2{};
   int orig_x_rotation{}, orig_y_rotation{};
 
-  std::vector<float> m_ModelViewMatrixStack;
-  int m_ModelViewMatrixStackDepth { 0 };
+  std::vector<glm::mat4> m_ModelViewMatrixStack;
+  glm::mat4 modelViewMatrix{};
 
-  union {
-    float ModelViewMatrix[16]{};
-    float ModMatrix[16];          // old alias, deprecated
-  };
-
-  float ProjectionMatrix[16]{};
+  glm::mat4 projectionMatrix{};
   int background_color_already_set{};
   int do_not_clear{};
   GridInfo grid{};

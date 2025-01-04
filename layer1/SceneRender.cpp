@@ -159,6 +159,31 @@ static void glBlendFunc_default()
   }
 }
 
+void SceneProjectionMatrix(PyMOLGlobals* G, float front, float back, float aspRat)
+{
+  CScene* I = G->Scene;
+  int stereo_mode = I->StereoMode;
+
+  if (!SettingGet<bool>(G, cSetting_ortho)) {
+    front = stereo_mode == cStereo_openvr ? 0.1f : front;
+    I->projectionMatrix = glm::perspective(GetFovWidth(G), aspRat, front, back);
+  } else {
+    float height =
+        std::max(R_SMALL4, -I->m_view.pos().z) * GetFovWidth(G) / 2.f;
+    float width = height * aspRat;
+    I->projectionMatrix =
+        glm::ortho(-width, width, -height, height, front, back);
+  }
+
+#ifndef PURE_OPENGL_ES_2
+  if (ALWAYS_IMMEDIATE_OR(!use_shaders)) {
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(SceneGetProjectionMatrixPtr(G));
+    glMatrixMode(GL_MODELVIEW);
+  }
+#endif
+}
+
 /*========================================================================*/
 /* SceneRender: Responsible for rendering the scene, whether its picking
                 (SceneRenderPicking) or rendering (SceneRenderStereoLoop).
@@ -325,33 +350,9 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
     if (!SettingGet<bool>(G, cSetting_all_states)) {
       curState = std::max(-1, SettingGet<int>(G, cSetting_state) - 1);
     }
-    if (!SettingGet<bool>(G, cSetting_ortho)) {
-      double ymax = I->m_view.m_clipSafe().m_front * GetFovWidth(G) / 2.0;
-      double ymin = -ymax;
-      double xmin = ymin * aspRat;
-      double xmax = ymax * aspRat;
-      glFrustum44f(I->ProjectionMatrix, xmin, xmax, ymin, ymax,
-          stereo_mode == cStereo_openvr ? 0.1f : I->m_view.m_clipSafe().m_front,
-          I->m_view.m_clipSafe().m_back);
-    } else {
-      Extent2D extent;
-      extent.height =
-          std::max(R_SMALL4, -I->m_view.pos().z) * GetFovWidth(G) / 2.f;
-      extent.width = extent.height * aspRat;
-      glOrtho44f(I->ProjectionMatrix, -static_cast<GLfloat>(extent.width),
-          static_cast<GLfloat>(extent.width),
-          -static_cast<GLfloat>(extent.height),
-          static_cast<GLfloat>(extent.height), I->m_view.m_clipSafe().m_front,
-          I->m_view.m_clipSafe().m_back);
-    }
 
-#ifndef PURE_OPENGL_ES_2
-    if (ALWAYS_IMMEDIATE_OR(!use_shaders)) {
-      glMatrixMode(GL_PROJECTION);
-      glLoadMatrixf(I->ProjectionMatrix);
-      glMatrixMode(GL_MODELVIEW);
-    }
-#endif
+    SceneProjectionMatrix(
+        G, I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, aspRat);
     ScenePrepareMatrix(G, 0);
 
     /* get the Z axis vector for sorting transparent objects */
@@ -658,23 +659,22 @@ static void SceneRenderAllObject(PyMOLGlobals* G, CScene* I,
   case pymol::RenderContext::UnitWindow:
     // e.g. Gadgets/Ramps
     {
-      float projSave[16];
-      copy44f(I->ProjectionMatrix, projSave);
+      auto projSave = I->projectionMatrix;
 
       if (grid->active) {
         context = &grid->context;
       }
 
-      glOrtho44f(I->ProjectionMatrix, context->unit_left, context->unit_right,
-          context->unit_top, context->unit_bottom, context->unit_front,
-          context->unit_back);
+      I->projectionMatrix =
+          glm::ortho(context->unit_left, context->unit_right, context->unit_top,
+              context->unit_bottom, context->unit_front, context->unit_back);
 
 #ifndef PURE_OPENGL_ES_2
       if (ALWAYS_IMMEDIATE_OR(!use_shader)) {
         glPushAttrib(GL_LIGHTING_BIT);
 
         glMatrixMode(GL_PROJECTION);
-        glLoadMatrixf(I->ProjectionMatrix);
+        glLoadMatrixf(SceneGetProjectionMatrixPtr(G));
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -691,12 +691,12 @@ static void SceneRenderAllObject(PyMOLGlobals* G, CScene* I,
       info->state = ObjectGetCurrentState(obj, false);
       obj->render(info);
 
-      copy44f(projSave, I->ProjectionMatrix);
+      I->projectionMatrix = projSave;
 
 #ifndef PURE_OPENGL_ES_2
       if (ALWAYS_IMMEDIATE_OR(!use_shader)) {
         glMatrixMode(GL_PROJECTION);
-        glLoadMatrixf(I->ProjectionMatrix);
+        glLoadMatrixf(SceneGetProjectionMatrixPtr(G));
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
@@ -799,8 +799,9 @@ void SceneRenderAll(PyMOLGlobals* G, SceneUnitContext* context, float* normal,
 
   if (info.alpha_cgo && (pass == RenderPass::Opaque)) {
     CGOReset(info.alpha_cgo);
+    auto modMatrix = SceneGetModelViewMatrixPtr(G);
     CGOSetZVector(
-        info.alpha_cgo, I->ModMatrix[2], I->ModMatrix[6], I->ModMatrix[10]);
+        info.alpha_cgo, modMatrix[2], modMatrix[6], modMatrix[10]);
   }
 
   if (SettingGetGlobal_b(G, cSetting_dynamic_width)) {

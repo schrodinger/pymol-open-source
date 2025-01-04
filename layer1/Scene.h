@@ -82,8 +82,6 @@ int SceneGetNFrame(PyMOLGlobals * G, int *has_movie=nullptr);
 void SceneSetMatrix(PyMOLGlobals * G, float *);
 float *SceneGetMatrix(PyMOLGlobals * G);
 
-#define SceneGetModMatrix SceneGetModelViewMatrix
-
 float *SceneGetPmvMatrix(PyMOLGlobals * G);
 
 float SceneGetScreenVertexScale(PyMOLGlobals * G, const float *v1);
@@ -237,8 +235,10 @@ float SceneGetLineWidthForCylindersStatic(PyMOLGlobals * G, RenderInfo * info, f
 void ScenePushModelViewMatrix(PyMOLGlobals * G);
 void ScenePopModelViewMatrix(PyMOLGlobals * G, bool);
 
-float *SceneGetModelViewMatrix(PyMOLGlobals * G);
-float *SceneGetProjectionMatrix(PyMOLGlobals * G);
+glm::mat4& SceneGetModelViewMatrix(PyMOLGlobals * G);
+float* SceneGetModelViewMatrixPtr(PyMOLGlobals* G);
+glm::mat4& SceneGetProjectionMatrix(PyMOLGlobals* G);
+float* SceneGetProjectionMatrixPtr(PyMOLGlobals* G);
 void SceneSetBackgroundColorAlreadySet(PyMOLGlobals * G, int);
 int SceneGetBackgroundColorAlreadySet(PyMOLGlobals * G);
 void SceneSetDoNotClearBackground(PyMOLGlobals * G, int);

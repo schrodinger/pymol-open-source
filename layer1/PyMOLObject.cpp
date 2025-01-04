@@ -1035,7 +1035,7 @@ void ObjectPrepareContext(pymol::CObject * I, RenderInfo * info)
         gl[11] = 0.0;
         gl[15] = 1.0;
 
-        auto mvm = SceneGetModelViewMatrix(G);
+        auto mvm = SceneGetModelViewMatrixPtr(G);
         MatrixMultiplyC44f(gl, mvm);
         MatrixTranslateC44f(mvm, ttt[12], ttt[13], ttt[14]);
 
@@ -1355,7 +1355,7 @@ int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
       matrix[15] = i_matrix[15];
 
       ScenePushModelViewMatrix(G);
-      auto mvm = SceneGetModelViewMatrix(G);
+      auto mvm = SceneGetModelViewMatrixPtr(G);
       MatrixMultiplyC44f(matrix, mvm);
 
 #ifndef PURE_OPENGL_ES_2

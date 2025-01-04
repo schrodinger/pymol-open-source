@@ -50,5 +50,14 @@ void SceneInitializeViewport(PyMOLGlobals* G, bool offscreen);
 
 void GridSetViewport(PyMOLGlobals* G, GridInfo * I, int slot);
 
+/**
+ * Sets scene projection matrix
+ *
+ * @param front - front clipping plane
+ * @param back - back clipping plane
+ * @param aspRat - aspect ratio
+ */
+void SceneProjectionMatrix(PyMOLGlobals* G, float front, float back, float aspRat);
+
 #endif
 
