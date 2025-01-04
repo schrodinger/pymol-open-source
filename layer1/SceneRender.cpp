@@ -896,19 +896,21 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
   bool t_mode_3_os =
       use_shaders && SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
   bool t_mode_3 = !onlySelections && t_mode_3_os;
-  GLint currentFrameBuffer;
+  GLint currentDrawFramebuffer;
+  GLint currentReadFramebuffer;
 
 #if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
   if (t_mode_3) {
-    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFrameBuffer);
-    // currentFrameBuffer: 0 - rendering to screen, need to render opaque to
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &currentDrawFramebuffer);
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &currentReadFramebuffer);
+    // currentDrawFramebuffer: 0 - rendering to screen, need to render opaque to
     // offscreen buffer
     //                     non-0 - already rendering to AA texture, need to use
     //                     I->offscreen_depth_rb
     //                             transparent (OIT) pass
     // In the case of jymol the currentFramebuffer is not 0 so we are checking
     // against the default framebuffer
-    if (currentFrameBuffer == G->ShaderMgr->default_framebuffer_id) {
+    if (currentDrawFramebuffer == G->ShaderMgr->default_framebuffer_id) {
       G->ShaderMgr->bindOffscreen(I->Width, I->Height, &I->grid);
       bg_grad(G);
     }
@@ -941,7 +943,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
         G->ShaderMgr->bindOffscreenOIT(I->Width, I->Height, drawbuf);
         G->ShaderMgr->oit_pp->bindRT(
             drawbuf); // for transparency pass, render to OIT texture
-        if (currentFrameBuffer == G->ShaderMgr->default_framebuffer_id) {
+        if (currentDrawFramebuffer == G->ShaderMgr->default_framebuffer_id) {
           SceneInitializeViewport(G, true);
         }
       }
@@ -1051,11 +1053,12 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
       }
 #if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
       if (t_mode_3 && pass == RenderPass::Transparent) {
-        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFrameBuffer);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentDrawFramebuffer);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, currentReadFramebuffer);
         glBindTexture(GL_TEXTURE_2D, 0);
         if (grid->active)
           GridSetViewport(G, grid, -1);
-        if (currentFrameBuffer ==
+        if (currentDrawFramebuffer ==
             G->ShaderMgr
                 ->default_framebuffer_id) { // if rendering to screen, need to
                                             // render offscreen opaque to screen
@@ -1079,7 +1082,7 @@ static void DoRendering(PyMOLGlobals* G, CScene* I, GridInfo* grid, int times,
 
         glBlendFunc_default();
 
-        if ((currentFrameBuffer == G->ShaderMgr->default_framebuffer_id) &&
+        if ((currentDrawFramebuffer == G->ShaderMgr->default_framebuffer_id) &&
             t_mode_3) {
           // onlySelections and t_mode_3, render only gadgets
           SceneRenderAll(G, context, normal, nullptr,

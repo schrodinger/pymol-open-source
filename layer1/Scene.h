@@ -193,7 +193,7 @@ int SceneDeferDrag(Block * block, int x, int y, int mod);
  * @param width image width in pixels
  * @param height image height in pixels
  * @param filename image filename
- * @param antialias antialiasing level
+ * @param antialias antialiasing level (via Supersampling not via shader)
  * @param dpi image resolution in dots per inch
  * @param format image format
  * @param quiet suppress messages
