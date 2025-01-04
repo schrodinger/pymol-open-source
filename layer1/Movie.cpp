@@ -63,7 +63,7 @@ void MovieViewReinterpolate(PyMOLGlobals *G)
   float linear = SettingGetGlobal_f(G, cSetting_motion_linear);
   int hand     = SettingGetGlobal_i(G, cSetting_motion_hand);
 
-  MovieView(G, 3, -1, -1, power, bias, 1, /* note simple always = 1 for camera motion...*/
+  MovieView(G, MViewAction::Reinterpolate, -1, -1, power, bias, 1, /* note simple always = 1 for camera motion...*/
             linear, 
             SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0 ,
             hand, 5, 1, nullptr, 0.5, -1, 1); 
@@ -86,14 +86,14 @@ void MovieViewTrim(PyMOLGlobals *G,int n_frame)
 }
 
 
-int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target, int freeze, int localize)
+int MovieViewModify(PyMOLGlobals *G, ViewElemAction action, int index, int count,int target, int freeze, int localize)
 {
   CMovie *I = G->Movie;
   int ok = true;
   MovieClearImages(G);
   if( (ok = ViewElemModify(G,&I->ViewElem, action, index, count, target)) ) {
-    switch(action) {
-    case cViewElemModifyInsert:
+    switch (action) {
+    case ViewElemAction::Insert:
       if (index >= 0 && index < I->NFrame) {
         I->Sequence.insert(index, count);
         I->Cmd.insert(I->Cmd.begin() + index, count, "");
@@ -106,7 +106,7 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
         }
       }
       break;
-    case cViewElemModifyDelete:
+    case ViewElemAction::Delete:
       if (index >= 0 && index < I->NFrame) {
         I->Sequence.erase(index, count);
         int end_pos = std::min(index + count, static_cast<int>(I->Cmd.size()));
@@ -114,7 +114,7 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
         I->NFrame = VLAGetSize(I->Sequence);
       }
       break;
-    case cViewElemModifyMove:
+    case ViewElemAction::Move:
       if((index>=0) && (target>=0) && (index<I->NFrame) && (target<I->NFrame)) {
         int i;
         for(i=0;i<count;i++) {
@@ -134,7 +134,7 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
         }
       }
       break;
-    case cViewElemModifyCopy:
+    case ViewElemAction::Copy:
       if((index>=0) && (target>=0) && (index<I->NFrame) && (target<I->NFrame)) {
         int i;
         for(i=0;i<count;i++) {
@@ -1083,7 +1083,7 @@ void MovieSetCommand(PyMOLGlobals* G, int frame, const char* command)
 
 
 /*========================================================================*/
-int MovieView(PyMOLGlobals * G, int action, int first,
+int MovieView(PyMOLGlobals * G, MViewAction action, int first,
               int last, float power, float bias,
               int simple, float linear, int wrap,
               int hand, int window, int cycles,
@@ -1095,36 +1095,36 @@ int MovieView(PyMOLGlobals * G, int action, int first,
   if(wrap<0) {
     wrap = SettingGetGlobal_b(G,cSetting_movie_loop);
   }
-  if((action == 7) || (action == 8)) { /* toggle */
+  if (action == MViewAction::Toggle || action == MViewAction::ToggleInterp) {
     frame = first;
     if(first < 0)
       frame = SceneGetFrame(G);
     VLACheck(I->ViewElem, CViewElem, frame);
-    if(action == 7) {
+    if (action == MViewAction::Toggle) {
       if(I->ViewElem[frame].specification_level>1) {
-        action = 1;
+        action = MViewAction::Clear;
       } else {
-        action = 0;
+        action = MViewAction::Store;
       }
-    } else if(action == 8) {
+    } else if (action == MViewAction::ToggleInterp) {
       if(I->ViewElem[frame].specification_level>1) {
         int frame;
-        action = 3;
+        action = MViewAction::Reinterpolate;
         for(frame=0;frame<I->NFrame;frame++) {
           if(I->ViewElem[frame].specification_level==1) {
-            action = 6;
+            action = MViewAction::Uninterpolate;
             break;
           }
         }
       }
       else if(I->ViewElem[frame].specification_level>0) {
-        action = 6;
+        action = MViewAction::Uninterpolate;
       } else {
-        action = 3;
+        action = MViewAction::Reinterpolate;
       }
     }
   }
-  if(action == 4) {
+  if(action == MViewAction::Smooth) {
     if(I->ViewElem) {
       int save_last = last;
       if(first < 0)
@@ -1144,13 +1144,13 @@ int MovieView(PyMOLGlobals * G, int action, int first,
         }
       }
       if(SettingGetGlobal_b(G, cSetting_movie_auto_interpolate)) {
-        action = 3; /* reinterpolate */
+        action = MViewAction::Reinterpolate;
         last = save_last;
       }
     }
   }
   switch (action) {
-  case 0:                      /* store */
+  case MViewAction::Store:                      /* store */
     if(I->ViewElem) {
       if(first < 0)
         first = SceneGetFrame(G);
@@ -1192,7 +1192,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
       }
     }
     break;
-  case 1:                      /* clear */
+  case MViewAction::Clear:
     if(I->ViewElem) {
       if(first < 0)
         first = SceneGetFrame(G);
@@ -1207,13 +1207,12 @@ int MovieView(PyMOLGlobals * G, int action, int first,
       }
     }
     break;
-  case 2:                      /* interpolate & reinterpolate */
-  case 3:
+  case MViewAction::Interpolate:
+  case MViewAction::Reinterpolate:
     if(I->ViewElem) {
       int view_found = false;
       CViewElem *first_view = nullptr, *last_view = nullptr;
-      if(first < 0)
-        first = 0;
+      first = std::max(0, first);
 
       if(first > I->NFrame) {
         first = I->NFrame - 1;
@@ -1265,7 +1264,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
       }
 
       if(!quiet) {
-        if(action == 2) {
+        if(action == MViewAction::Interpolate) {
           if(last == I->NFrame) {
             PRINTFB(G, FB_Movie, FB_Details)
               " MovieView: interpolating unspecified frames %d to %d (wrapping)\n",
@@ -1300,7 +1299,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
           int interpolate_flag = false;
           if(I->ViewElem[frame].specification_level == 2) {     /* specified */
             last_view = I->ViewElem + frame;
-            if(action == 2) {   /* interpolate */
+            if (action == MViewAction::Interpolate) {
               for(view = first_view + 1; view < last_view; view++) {
                 if(!view->specification_level)
                   interpolate_flag = true;
@@ -1340,16 +1339,15 @@ int MovieView(PyMOLGlobals * G, int action, int first,
       }
     }
     break;
-  case 5:                      /* reset */
+  case MViewAction::Reset:
     if(I->ViewElem) {
       int size = VLAGetSize(I->ViewElem);
       I->ViewElem = pymol::vla<CViewElem>(size);
     }
     break;
-  case 6:                      /* uninterpolate */
+  case MViewAction::Uninterpolate:
     if(I->ViewElem) {
-      if(first < 0)
-        first = 0;
+      first = std::max(0, first);
       if(last < 0) {
         last = SceneGetNFrame(G, nullptr) - 1;
       }

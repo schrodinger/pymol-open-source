@@ -94,12 +94,15 @@ void ViewElemDraw(PyMOLGlobals *G,
     const CViewElem * src,
     const BlockRect *rect, int frames, const char *title, CGO *orthoCGO);
 
-#define cViewElemModifyInsert 1
-#define cViewElemModifyDelete -1
-#define cViewElemModifyMove    2
-#define cViewElemModifyCopy    3
+enum class ViewElemAction
+{
+  Delete = -1,
+  Insert = 1,
+  Move = 2,
+  Copy = 3
+};
 
-int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, int count, int target);
+int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, ViewElemAction action, int index, int count, int target);
 int ViewElemXtoFrame(BlockRect *rect, int frames, int x, int nearest);
 void ViewElemDrawBox(PyMOLGlobals *G, BlockRect *rect,int first, int last,
                      int frames, float *color4, int fill, CGO *orthoCGO);

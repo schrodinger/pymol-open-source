@@ -4828,7 +4828,9 @@ static PyObject *CmdMModify(PyObject * self, PyObject * args)
   API_SETUP_ARGS(G, self, args, "Oiiiisii", &self, &action, &index, &count,
       &target, &object, &freeze, &quiet);
   API_ASSERT(APIEnterNotModal(G));
-  auto result = ExecutiveMotionViewModify(G,action,index,count,target,object,freeze,quiet);
+  auto result =
+      ExecutiveMotionViewModify(G, static_cast<ViewElemAction>(action), index,
+          count, target, object, freeze, quiet);
   APIExit(G);
   return APIResult(G, result);
 }
@@ -4850,9 +4852,9 @@ static PyObject *CmdMView(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveMotionView(G, action, first, last, power, bias, simple, 
-                             linear, object, wrap, hand, window, cycles, 
-                             scene_name, scene_cut, state, quiet, autogen);
+    ok = ExecutiveMotionView(G, static_cast<MViewAction>(action), first, last,
+        power, bias, simple, linear, object, wrap, hand, window, cycles,
+        scene_name, scene_cut, state, quiet, autogen);
     APIExit(G);
   }
   return APIResultOk(ok);

@@ -295,8 +295,8 @@ static void ReportEnabledChange(PyMOLGlobals * G, SpecRec *rec){
   ExecutiveInvalidateSelectionIndicatorsCGO(G);
 }
 
-int ExecutiveGroupMotionModify(PyMOLGlobals *G, pymol::CObject *group, int action, 
-                                int index, int count, int target, int freeze)
+int ExecutiveGroupMotionModify(PyMOLGlobals* G, pymol::CObject* group,
+    ViewElemAction action, int index, int count, int target, int freeze)
 {
   CExecutive *I = G->Executive;
   int result = true;
@@ -320,7 +320,7 @@ int ExecutiveGroupMotionModify(PyMOLGlobals *G, pymol::CObject *group, int actio
   return result;
 }
 
-int ExecutiveGroupMotion(PyMOLGlobals *G, pymol::CObject *group,int action, int first,
+int ExecutiveGroupMotion(PyMOLGlobals *G, pymol::CObject *group, MViewAction action, int first,
                          int last, float power, float bias,
                          int simple, float linear, int wrap,
                          int hand, int window, int cycles, int state, int quiet)
@@ -396,7 +396,7 @@ int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, pymol::CObject *group, const flo
 }
 
 
-int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
+int ExecutiveMotionView(PyMOLGlobals *G, MViewAction action, int first,
               int last, float power, float bias,
               int simple, float linear, const char *name, int wrap,
               int hand, int window, int cycles,
@@ -482,8 +482,9 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
   return ok;
 }
 
-pymol::Result<> ExecutiveMotionViewModify(PyMOLGlobals* G, int action,
-    int index, int count, int target, const char* name, int freeze, int quiet)
+pymol::Result<> ExecutiveMotionViewModify(PyMOLGlobals* G,
+    ViewElemAction action, int index, int count, int target, const char* name,
+    int freeze, int quiet)
 {
   CExecutive *I = G->Executive;
   if((!name)||(!name[0])||
@@ -16984,4 +16985,95 @@ pymol::Result<> ExecutiveLookAt(PyMOLGlobals* G,
     return pymol::make_error("Mobile object not found.");
   }
   return ExecutiveObjectLookAt(G, *targetObj, *mobileObj);
+}
+
+/**
+ * Updates an object's dependencies.
+ * @param obj the object to update
+ * @param visited a set of objects that have already been visited
+ */
+static void ExecutiveUpdateObjectsImpl(PyMOLGlobals* G,
+    const pymol::CObject& obj,
+    std::unordered_set<const pymol::CObject*>& visited)
+{
+  if (visited.count(&obj)) {
+    return;
+  }
+  auto& deps = G->Executive->m_objDeps[&obj];
+  deps.clear();
+  visited.insert(&obj);
+  auto is_mol_in_dist = [&](const auto& mol, const auto& dist) {
+    for (const auto ds : dist->DSet) {
+      const auto ds_deps = ds->getDependentObjects();
+      if (ds_deps.count(mol)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // TODO: This only detects mol <--> dist dependencies.
+  for (auto& rec : pymol::make_list_adapter(G->Executive->Spec)) {
+    if (rec.type != cExecObject || rec.obj == &obj) {
+      continue;
+    }
+    switch (rec.obj->type) {
+    case cObjectMolecule: {
+      auto mol = static_cast<ObjectMolecule*>(rec.obj);
+      if (auto measure = dynamic_cast<const ObjectDist*>(&obj)) {
+        if (is_mol_in_dist(mol, measure)) {
+          deps.insert(rec.obj);
+          ExecutiveUpdateObjectsImpl(G, *rec.obj, visited);
+        }
+      }
+    } break;
+    case cObjectMeasurement: {
+      auto measure = static_cast<ObjectDist*>(rec.obj);
+      if (auto mol = dynamic_cast<const ObjectMolecule*>(&obj)) {
+        if (is_mol_in_dist(mol, measure)) {
+          deps.insert(rec.obj);
+          ExecutiveUpdateObjectsImpl(G, *rec.obj, visited);
+        }
+      }
+    } break;
+    default:
+      break;
+    }
+  }
+
+  // Erase self
+  deps.erase(&obj);
+}
+
+pymol::Result<> ExecutiveUpdateObjectDeps(
+    PyMOLGlobals* G, const pymol::CObject& obj)
+{
+  std::unordered_set<const pymol::CObject*> visited;
+  ExecutiveUpdateObjectsImpl(G, obj, visited);
+  return {};
+}
+
+pymol::Result<std::unordered_set<const pymol::CObject*>> ExecutiveGetObjectDeps(
+    PyMOLGlobals* G, const pymol::CObject& obj, unsigned int depth)
+{
+  auto obj_set = G->Executive->m_objDeps[&obj];
+  std::unordered_set<const pymol::CObject*> visited;
+  visited.insert(&obj);
+
+  while (depth--) {
+    std::unordered_set<const pymol::CObject*> new_set;
+    for (auto& dep : obj_set) {
+      if (visited.count(dep)) {
+        continue;
+      }
+      visited.insert(dep);
+      const auto& deps = G->Executive->m_objDeps[dep];
+      new_set.insert(deps.begin(), deps.end());
+    }
+    obj_set.insert(new_set.begin(), new_set.end());
+  }
+
+  // Self doesn't count as dependency
+  obj_set.erase(&obj);
+  return obj_set;
 }

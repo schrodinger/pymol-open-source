@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"pymol/math_defines.h"
 #include"vla.h"
 #include"RenderContext.h"
+#include "MViewAction.h"
 
 #include <string>
 #include <type_traits>
@@ -158,7 +159,7 @@ PyObject *ObjectAsPyList(const pymol::CObject * I);
 int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, pymol::CObject * I);
 int ObjectGetCurrentState(const pymol::CObject * I, int ignore_all_states);
 void ObjectAdjustStateRebuildRange(pymol::CObject * I, int *start, int *stop);
-int ObjectMotion(pymol::CObject * I, int action, int first,
+int ObjectMotion(pymol::CObject * I, MViewAction action, int first,
                  int last, float power, float bias,
                  int simple, float linear, int wrap,
                  int hand, int window, int cycles, int state, int quiet);
@@ -180,7 +181,8 @@ void ObjectStatePopMatrix(CObjectState * I, RenderInfo * info);
 void ObjectStateRightCombineMatrixR44d(CObjectState * I, const double *matrix);
 void ObjectStateLeftCombineMatrixR44d(CObjectState * I, const double *matrix);
 void ObjectStateCombineMatrixTTT(CObjectState * I, float *matrix);
-int ObjectMotionModify(pymol::CObject *I,int action, int index, int count,int target, int freeze, int localize);
+int ObjectMotionModify(pymol::CObject* I, ViewElemAction action, int index,
+    int count, int target, int freeze, int localize);
 void ObjectMotionReinterpolate(pymol::CObject *I);
 int ObjectMotionGetLength(pymol::CObject *I);
 

@@ -316,6 +316,9 @@ void SceneDoRoving(PyMOLGlobals * G, float old_front,
 void UpdateFrontBackSafe(CScene *I);
 int stereo_via_adjacent_array(int stereo_mode);
 
+std::shared_ptr<pymol::Image> SceneGetSharedImage(PyMOLGlobals* G);
+int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int antialias);
+
 void SceneSetViewport(PyMOLGlobals* G, const Rect2D& rect);
 void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height);
 Rect2D SceneGetViewport(PyMOLGlobals* G);

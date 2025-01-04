@@ -1526,7 +1526,7 @@ int SceneCaptureWindow(PyMOLGlobals * G)
   return ok;
 }
 
-static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int antialias)
+int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int antialias)
 {
   CScene *I = G->Scene;
   int ok = true;
@@ -5561,6 +5561,11 @@ void ScenePickAtomInWorld(PyMOLGlobals * G, int x, int y, float *atomWorldPos) {
     // muptiply by molecule world matrix
     MatrixTransformC44f3f(I->ModMatrix, atomPos, atomWorldPos);
   }
+}
+
+std::shared_ptr<pymol::Image> SceneGetSharedImage(PyMOLGlobals* G)
+{
+  return G->Scene->Image;
 }
 
 void CScene::setSceneView(const SceneView& view) {
