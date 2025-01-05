@@ -8,6 +8,7 @@
 #include "FileStream.h"
 #include "PyMOLGlobals.h"
 #include "Setting.h"
+#include "pymol/utility.h"
 
 enum class PreProcType : std::uint32_t {
   Ifdef = 1 << 0,
@@ -20,25 +21,21 @@ enum class PreProcType : std::uint32_t {
 
 constexpr std::size_t PreprocTypeElemCount = 6;
 
-template <class EnumT>
-constexpr std::underlying_type_t<EnumT> to_underlying(EnumT e) noexcept
-{
-  return static_cast<std::underlying_type_t<EnumT>>(e);
-}
-
 constexpr std::bitset<PreprocTypeElemCount> AsPreProcBS(PreProcType e)
 {
-  return std::bitset<PreprocTypeElemCount>(to_underlying(e));
+  return std::bitset<PreprocTypeElemCount>(pymol::to_underlying(e));
 }
 
 constexpr PreProcType operator|(const PreProcType& lhs, const PreProcType& rhs)
 {
-  return static_cast<PreProcType>(to_underlying(lhs) | to_underlying(rhs));
+  return static_cast<PreProcType>(
+      pymol::to_underlying(lhs) | pymol::to_underlying(rhs));
 }
 
 constexpr PreProcType operator&(const PreProcType& lhs, const PreProcType& rhs)
 {
-  return static_cast<PreProcType>(to_underlying(lhs) & to_underlying(rhs));
+  return static_cast<PreProcType>(
+      pymol::to_underlying(lhs) & pymol::to_underlying(rhs));
 }
 
 /**

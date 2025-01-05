@@ -4752,8 +4752,11 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
         prior = SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
                  nullptr, nullptr, 0.0F, 0.0F, quiet, nullptr, true, -1);
       } else if(width || height) {
-        prior = !SceneDeferImage(G, width, height, fileview.c_str(), -1, dpi,
-            format, quiet, nullptr);
+        Extent2D extent{static_cast<std::uint32_t>(width),
+            static_cast<std::uint32_t>(height)};
+        bool withOverlay = true; // TODO: Retrieve from python
+        prior = !OrthoDeferImage(G, extent, fileview.c_str(), -1, dpi, format,
+            quiet, nullptr, withOverlay);
         result = bool(filename);
       } else if(!SceneGetCopyType(G)) {
         ExecutiveDrawNow(G);      /* TODO STATUS */

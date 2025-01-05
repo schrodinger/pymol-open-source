@@ -11224,6 +11224,19 @@ pymol::Result<> ObjectMoleculeDeleteStates(ObjectMolecule* I, const std::vector<
   }
   I->NCSet -= states.size();
   CSet.resize(I->NCSet);
+
+  // Update Rep States
+  for (int i = 0; i < I->NCSet; ++i) {
+    if (CSet[i]) {
+      auto& cset = *CSet[i];
+      for (int r = 0; r < cRepCnt; ++r) {
+        if (cset.Rep[r] && cset.Rep[r]->context.state != 0) {
+          cset.Rep[r]->context.state = i;
+        }
+      }
+    }
+  }
+
   return {};
 }
 

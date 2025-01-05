@@ -223,10 +223,12 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
 
   // thumbnail
   if (store_thumbnail) {
-    scene.thumbnail.resize(MovieScene::THUMBNAIL_WIDTH, MovieScene::THUMBNAIL_HEIGHT);
+    auto& thumbnailImage = scene.thumbnail;
+    thumbnailImage.resize(MovieScene::THUMBNAIL_WIDTH, MovieScene::THUMBNAIL_HEIGHT);
     SceneUpdate(G, false); // Make sure scene is on screen
-    SceneDeferImage(G, scene.thumbnail.getWidth(), scene.thumbnail.getHeight(),
-        nullptr, 0, -1, 0, 1, &scene.thumbnail);
+    Extent2D extent{static_cast<std::uint32_t>(thumbnailImage.getWidth()),
+        static_cast<std::uint32_t>(thumbnailImage.getHeight())};
+    SceneDeferImage(G, extent, nullptr, 0, -1, 0, 1, &thumbnailImage);
     SceneInvalidate(G); // Used to refresh the screen
   }
 
@@ -300,11 +302,13 @@ pymol::Result<MovieScene> MovieSceneStoreNoStore(PyMOLGlobals* G,
   // thumbnail
   if (store_thumbnail) {
     // Preserve event by just resizing the thumbnail
-    scene.thumbnail.resize(
+    auto& thumbnailImage = scene.thumbnail;
+    thumbnailImage.resize(
         MovieScene::THUMBNAIL_WIDTH, MovieScene::THUMBNAIL_HEIGHT);
     SceneUpdate(G, false); // Make sure scene is on screen
-    SceneDeferImage(G, scene.thumbnail.getWidth(), scene.thumbnail.getHeight(),
-        nullptr, 0, -1, 0, 1, &scene.thumbnail);
+    Extent2D extent{static_cast<std::uint32_t>(thumbnailImage.getWidth()),
+        static_cast<std::uint32_t>(thumbnailImage.getHeight())};
+    SceneDeferImage(G, extent, nullptr, 0, -1, 0, 1, &thumbnailImage);
     SceneInvalidate(G); // Used to refresh the screen
   }
 

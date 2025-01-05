@@ -35,7 +35,7 @@ Z* -------------------------------------------------------------------
  *       flag off when you are using threads
 */
 
-#define _os_memory_debug_on
+//#define _os_memory_debug_on
 
 /* ================================================================ 
  * Don't touch below unless you know what you are doing */

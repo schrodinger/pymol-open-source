@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"SceneView.h"
 #include"Rect.h"
 #include "Camera.h"
+#include "Spatial.h"
 #include<list>
 #include<vector>
 
@@ -45,25 +46,6 @@ namespace pymol
 typedef struct {
   float unit_left, unit_right, unit_top, unit_bottom, unit_front, unit_back;
 } SceneUnitContext;
-
-
-struct Offset2D
-{
-  std::int32_t x;
-  std::int32_t y;
-};
-
-struct Extent2D
-{
-  std::uint32_t width;
-  std::uint32_t height;
-};
-
-struct Rect2D
-{
-  Offset2D offset;
-  Extent2D extent;
-};
 
 
 inline bool operator==(const Rect2D& rectA, const Rect2D& rectB) {

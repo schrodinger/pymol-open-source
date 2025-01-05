@@ -2161,7 +2161,8 @@ int ExecutiveGroup(PyMOLGlobals * G, pymol::zstring_view nameView,
                        (action == cExecutiveGroupToggle) ||
                        (action == cExecutiveGroupEmpty) ||
                        (action == cExecutiveGroupPurge) ||
-                       (action == cExecutiveGroupExcise))) {
+                       (action == cExecutiveGroupExcise) ||
+                       (action == cExecutiveGroupRaise))) {
     ExecutiveUpdateGroups(G, false);
     {
       CTracker *I_Tracker = I->Tracker;
@@ -2231,6 +2232,12 @@ int ExecutiveGroup(PyMOLGlobals * G, pymol::zstring_view nameView,
                 }
               }
               ExecutiveDelete(G, rec->name);
+            }
+            break;
+          case cExecutiveGroupRaise:
+            if(objGroup) {
+              rec->group = nullptr;
+              rec->group_name[0] = 0;
             }
             break;
           }
@@ -2316,8 +2323,10 @@ int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
                      int entire_window, int quiet)
 {
   CExecutive *I = G->Executive;
-  if((width <= 0) && (height <= 0)) {
-    SceneGetWidthHeight(G, &width, &height);
+  Extent2D extent{
+      static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height)};
+  if (width == 0 && height == 0) {
+    extent = SceneGetExtent(G);
   }
   if(antialias < 0)
     antialias = SettingGetGlobal_i(G, cSetting_antialias);
@@ -2330,7 +2339,8 @@ int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
       ExecutiveSetSettingFromString(G, cSetting_draw_mode, "-2", "", -1, true, true);
       SceneUpdate(G, false);
     }
-    SceneDeferImage(G, width, height, nullptr, antialias, -1.0, cMyPNG_FormatPNG, quiet, nullptr);
+    SceneDeferImage(
+        G, extent, nullptr, antialias, -1.0, cMyPNG_FormatPNG, quiet, nullptr);
   }
   return 1;
 }
@@ -11272,9 +11282,12 @@ pymol::Result<> ExecutiveReset(PyMOLGlobals* G, pymol::zstring_view name)
 
 
 /*========================================================================*/
-void ExecutiveDrawNow(PyMOLGlobals * G)
+void ExecutiveDrawNow(PyMOLGlobals * G, ExecutiveDrawInfo execDrawInfo)
 {
   CExecutive *I = G->Executive;
+  OrthoDrawInfo drawInfo{};
+  drawInfo.offscreenRender = execDrawInfo.offscreen;
+  drawInfo.clearTarget = execDrawInfo.clearTarget;
 
   if(PyMOL_GetIdleAndReady(G->PyMOL) && !SettingGetGlobal_b(G, cSetting_suspend_deferred))
     OrthoExecDeferred(G);
@@ -11296,8 +11309,10 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
 	  int width = G->Option->winX;
 	  int height = G->Option->winY;
 	  SceneSetViewport(G, 0, 0, width / 2, height);
-	  OrthoDoDraw(G, OrthoRenderMode::GeoWallLeft);
-	  OrthoDoDraw(G, OrthoRenderMode::GeoWallRight);
+    drawInfo.renderMode = OrthoRenderMode::GeoWallLeft;
+    OrthoDoDraw(G, drawInfo);
+    drawInfo.renderMode = OrthoRenderMode::GeoWallRight;
+    OrthoDoDraw(G, drawInfo);
 	  SceneSetViewport(G, 0, 0, width, height);
 	}
 	break;
@@ -11311,7 +11326,8 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
           float matrix[16];
           SceneGetModel2WorldMatrix(G, matrix);
           OpenVRHandleInput(G, scene_block->rect.left, scene_block->rect.bottom, scene_width, scene_height, matrix);
-          OrthoDoDraw(G, OrthoRenderMode::VR);
+          drawInfo.renderMode = OrthoRenderMode::VR;
+          OrthoDoDraw(G, drawInfo);
           if (SettingGetGlobal_b(G, cSetting_openvr_cut_laser) && OpenVRIsScenePickerActive(G)) {
             int x = scene_block->rect.left + scene_width / 2;
             int y = scene_block->rect.bottom + scene_height / 2;
@@ -11325,11 +11341,13 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
         break;
 #endif
       default:
-	OrthoDoDraw(G, OrthoRenderMode::Main);
+        drawInfo.renderMode = OrthoRenderMode::Main;
+        OrthoDoDraw(G, drawInfo);
 	break;
       }
     } else {
-      OrthoDoDraw(G, OrthoRenderMode::Main);
+      drawInfo.renderMode = OrthoRenderMode::Main;
+      OrthoDoDraw(G, drawInfo);
     }
 
     if(G->HaveGUI && G->ValidContext) {

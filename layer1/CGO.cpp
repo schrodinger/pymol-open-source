@@ -3270,7 +3270,6 @@ CGO* CGOOptimizeToVBONotIndexed(const CGO* I, int est, bool addshaders)
   short has_draw_buffer = false;
   float min[3] = {FLT_MAX, FLT_MAX, FLT_MAX},
         max[3] = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
-  int ambient_occlusion = 0;
   int ok = true;
   auto cgo = CGONew(G);
 
@@ -3932,7 +3931,6 @@ static bool OptimizeLinesToVBOIndexed(const CGO* I, CGO* cgo,
 CGO* CGOOptimizeToVBOIndexed(const CGO* I, int est, const float* color,
     bool addshaders, bool embedTransparencyInfo)
 {
-  auto G = I->G;
   CGO* cgo;
 
   std::unique_ptr<CGO> I_begin_end_combined;

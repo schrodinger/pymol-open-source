@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include "Executive.h"
 #include "Feedback.h"
 #include "File.h"
+#include "ImageUtils.h"
 #include "ListMacros.h"
 #include "MemoryDebug.h"
 #include "Movie.h"
@@ -107,7 +108,6 @@ public:
   OrthoRenderMode RenderMode = OrthoRenderMode::Main;
   Rect2D Viewport;
   int WrapXFlag{};
-  GLenum ActiveGLBuffer{};
   double DrawTime{}, LastDraw{};
   ClickSide WrapClickSide = ClickSide::None; /* ugly kludge for finding click
                                                 side in geowall stereo mode */
@@ -164,6 +164,20 @@ std::pair<int, int> OrthoGetSize(const COrtho& ortho)
   return std::make_pair(ortho.Width, ortho.Height);
 }
 
+Extent2D OrthoGetExtent(PyMOLGlobals* G)
+{
+  auto I = G->Ortho;
+  return Extent2D{static_cast<std::uint32_t>(I->Width),
+      static_cast<std::uint32_t>(I->Height)};
+}
+
+static void OrthoSetExtent(PyMOLGlobals* G, const Extent2D& extent)
+{
+  auto I = G->Ortho;
+  I->Width = extent.width;
+  I->Height = extent.height;
+}
+
 std::pair<int, int> OrthoGetBackgroundSize(const COrtho& ortho)
 {
   if (ortho.bgData) {
@@ -217,21 +231,12 @@ static int get_wrap_x(int x, int* last_x, int width, ClickSide* click_side)
   return x;
 }
 
+/**
+ * [[deprecated("Use CShaderMgr::setDrawBuffer() instead.")]]
+ */
 void OrthoDrawBuffer(PyMOLGlobals* G, GLenum mode)
 {
-  COrtho* I = G->Ortho;
-
-  if (mode == GL_BACK) {
-    mode = G->ShaderMgr->defaultBackbuffer.drawBuffer;
-  }
-
-  if (!hasFrameBufferBinding() && (mode != I->ActiveGLBuffer) && G->HaveGUI &&
-      G->ValidContext) {
-#ifndef PURE_OPENGL_ES_2
-    glDrawBuffer(mode);
-#endif
-    I->ActiveGLBuffer = mode;
-  }
+  G->ShaderMgr->setDrawBuffer(mode);
 }
 
 int OrthoGetDirty(PyMOLGlobals* G)
@@ -1780,7 +1785,6 @@ static void OrthoDrawFontTextureDebug(PyMOLGlobals* G, CGO* orthoCGO)
   /*  This shows the font texture in the middle of the screen, we might want
    * to debug it */
   float minx = 100.f, maxx = 612.f, miny = 100.f, maxy = 612.f;
-  short texcoord = true;
   CGOAlpha(orthoCGO, .5f);
   CGOColor(orthoCGO, 0.f, 0.f, 0.f);
   CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
@@ -1801,12 +1805,51 @@ static void OrthoDrawFontTextureDebug(PyMOLGlobals* G, CGO* orthoCGO)
 }
 
 /**
+ * Retrieves the backbuffers for the current render mode
+ * @param renderMode the render mode to use
+ * @return the backbuffer(s)
+ * @todo: Temporary solution to use the backbuffers less directly.
+ */
+static std::vector<GLFramebufferConfig> OrthoGetBackbuffers(
+    PyMOLGlobals* G, OrthoDrawInfo drawInfo)
+{
+  if (drawInfo.offscreenRender) {
+    auto extent = OrthoGetExtent(G);
+    G->ShaderMgr->bindOffscreenOrtho(extent, drawInfo.clearTarget);
+    return {{
+        static_cast<std::uint32_t>(G->ShaderMgr->offscreen_ortho_rt),
+        GL_COLOR_ATTACHMENT0 //
+    }};
+  }
+
+  if (drawInfo.renderMode == OrthoRenderMode::VR) {
+#ifdef _PYMOL_OPENVR
+    return {{CShaderMgr::OpenGLDefaultFramebufferID, GL_NONE}};
+#endif
+  }
+  if (drawInfo.renderMode == OrthoRenderMode::GeoWallRight) {
+    return {};
+  }
+  if (SceneMustDrawBoth(G)) {
+    return {
+        {CShaderMgr::OpenGLDefaultFramebufferID, GL_BACK_LEFT},
+        {CShaderMgr::OpenGLDefaultFramebufferID, GL_BACK_RIGHT},
+    };
+  } else {
+    return {
+        {CShaderMgr::OpenGLDefaultFramebufferID, GL_BACK},
+    };
+  }
+  return {};
+}
+
+/**
  * Top-level function for drawing the PyMOL overlay
  * (includes legacy contents panel, internal feedback, text,
  *  3D scene, and other 2D blocks like Sequence viewer, etc.)
  * @param render_mode the render mode to use
  */
-void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
+void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo)
 {
   COrtho* I = G->Ortho;
   CGO* orthoCGO = nullptr;
@@ -1821,7 +1864,10 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
 
   bool generate_shader_cgo = false;
 
-  I->RenderMode = render_mode;
+  const auto backbuffers = OrthoGetBackbuffers(G, drawInfo);
+  G->ShaderMgr->topLevelConfig = backbuffers.front();
+
+  I->RenderMode = drawInfo.renderMode;
   OrthoDoDrawUpdateSeqView(G);
 
   auto double_pump = SettingGet<bool>(G, cSetting_stereo_double_pump_mono);
@@ -1849,31 +1895,30 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
     // Workaround for now
     shouldRenderScene = true;
 #else
-    if (numOverlayLines || (!text) || render_mode == OrthoRenderMode::VR)
+    if (numOverlayLines || (!text) || drawInfo.renderMode == OrthoRenderMode::VR)
       if (!SceneRenderCached(G))
         shouldRenderScene = true;
 #endif
 
-    if (render_mode == OrthoRenderMode::VR) {
+    for (const auto& backbuffer : backbuffers) {
+      G->ShaderMgr->setDrawBuffer(backbuffer);
+      if (drawInfo.clearTarget) {
+        SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      }
+    }
+
+    if (drawInfo.renderMode == OrthoRenderMode::VR) {
 #ifdef _PYMOL_OPENVR
       times = 2;
       double_pump = false;
       offscreen_vr = true;
-      OrthoDrawBuffer(G, GL_BACK);
-      SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      openvr_text = SettingGetGlobal_i(G, cSetting_openvr_gui_text);
+      openvr_text = SettingGet<int>(G, cSetting_openvr_gui_text);
 #endif
-    } else if (render_mode != OrthoRenderMode::GeoWallRight) {
+    } else if (drawInfo.renderMode != OrthoRenderMode::GeoWallRight) {
       if (SceneMustDrawBoth(G)) {
-        OrthoDrawBuffer(G, GL_BACK_LEFT);
-        SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-        OrthoDrawBuffer(G, GL_BACK_RIGHT);
-        SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         times = 2;
         double_pump = true;
       } else {
-        OrthoDrawBuffer(G, GL_BACK);
-        SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         times = 1;
         double_pump = false;
       }
@@ -1887,9 +1932,10 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
     I->DrawTime += I->LastDraw;
     ButModeSetRate(G, (float) I->DrawTime);
 
-    if (shouldRenderScene && (render_mode != OrthoRenderMode::GeoWallRight)) {
+    if (shouldRenderScene && (drawInfo.renderMode != OrthoRenderMode::GeoWallRight)) {
       SceneRenderInfo renderInfo{};
       renderInfo.forceCopy = SettingGet<bool>(G, cSetting_image_copy_always);
+      renderInfo.offscreen = drawInfo.offscreenRender;
       SceneRender(G, renderInfo);
     } else if (text) {
       bg_grad(G); // only render the background for text
@@ -1899,17 +1945,16 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
     origtimes = times;
     while (times--) {
       bool draw_text = text;
+      G->ShaderMgr->setDrawBuffer(backbuffers[times]);
 
       switch (times) {
       case 1:
 #ifdef _PYMOL_OPENVR
         if (offscreen_vr) {
           draw_text = text || (openvr_text == 1);
-          OrthoDrawBuffer(G, GL_NONE);
           OpenVRMenuBufferStart(G, I->Width, I->Height);
         } else
 #endif
-          OrthoDrawBuffer(G, GL_BACK_LEFT);
         break;
       case 0:
 #ifdef _PYMOL_OPENVR
@@ -1917,10 +1962,6 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
           draw_text = text && (openvr_text != 2);
         }
 #endif
-        if (double_pump) {
-          OrthoDrawBuffer(G, GL_BACK_RIGHT);
-        } else
-          OrthoDrawBuffer(G, GL_BACK);
         break;
       }
 
@@ -2033,21 +2074,17 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
 
     // Render CGO to final buffer (if created anew)
     while (origtimes--) {
+      G->ShaderMgr->setDrawBuffer(backbuffers[origtimes]);
+
       switch (origtimes) {
       case 1:
 #ifdef _PYMOL_OPENVR
         if (offscreen_vr) {
-          OrthoDrawBuffer(G, GL_NONE);
           OpenVRMenuBufferStart(G, I->Width, I->Height);
         } else
 #endif
-          OrthoDrawBuffer(G, GL_BACK_LEFT);
         break;
       case 0:
-        if (double_pump) {
-          OrthoDrawBuffer(G, GL_BACK_RIGHT);
-        } else
-          OrthoDrawBuffer(G, GL_BACK);
         break;
       }
       OrthoPushMatrix(G);
@@ -2060,6 +2097,7 @@ void OrthoDoDraw(PyMOLGlobals* G, OrthoRenderMode render_mode)
 #endif
     }
   }
+  G->ShaderMgr->topLevelConfig = G->ShaderMgr->defaultBackbuffer;
 
   I->DirtyFlag = false;
   PRINTFD(G, FB_Ortho)
@@ -2681,7 +2719,6 @@ int OrthoInit(PyMOLGlobals* G, int showSplash)
     I->ShowLines = 1;
     I->Saved[0] = 0;
     I->DirtyFlag = true;
-    I->ActiveGLBuffer = GL_NONE;
     I->LastDraw = UtilGetSeconds(G);
     I->DrawTime = 0.0;
     I->bgCGO = nullptr;
@@ -2950,4 +2987,183 @@ Block* COrtho::findBlock(int x, int y)
     }
   }
   return nullptr;
+}
+
+Rect2D OrthoGetRect(PyMOLGlobals* G)
+{
+  auto I = G->Ortho;
+  auto width = static_cast<std::uint32_t>(I->Width);
+  auto height = static_cast<std::uint32_t>(I->Height);
+  return {{0, 0}, {width, height}};
+}
+
+
+/**
+ * @brief Retrieves Ortho UI aspect ratio
+ * @return aspect ratio
+ */
+static float OrthoGetAspectRatio(PyMOLGlobals* G)
+{
+  auto I = G->Ortho;
+  return static_cast<float>(I->Width) / static_cast<float>(I->Height);
+}
+
+/***
+ * @brief Draws top-level ortho at a given extent and draws into an offset
+ * @param offset offset to copy the drawn rendered ortho image into dstImage at
+ * @param extent extent of the ortho to draw
+ * @param dstImage image to draw into
+ */
+static void OrthoDrawSizedTile(PyMOLGlobals* G, const Offset2D& offset,
+    const Extent2D& extent, pymol::Image& dstImage)
+{
+  auto offscreenFBO = G->ShaderMgr->bindOffscreenOrtho(extent, true);
+
+  G->ShaderMgr->setDrawBuffer(offscreenFBO);
+
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  OrthoReshape(G, extent.width, extent.height, true);
+  OrthoInvalidateDoDraw(G);
+  OrthoDrawInfo drawInfo{};
+  drawInfo.renderScene = false;
+  drawInfo.renderMode = OrthoRenderMode::Main;
+  drawInfo.viewport = Rect2D{offset.x, offset.y, extent.width, extent.height};
+  drawInfo.offscreenRender = true;
+  glViewport(drawInfo.viewport->offset.x, drawInfo.viewport->offset.y,
+    drawInfo.viewport->extent.width, drawInfo.viewport->extent.height);
+  OrthoDoDraw(G, drawInfo);
+  auto tileImg = GLImageToPyMOLImage(G, offscreenFBO, SceneGetRect(G));
+
+  if (!tileImg.empty()) { /* the image into place */
+    Rect2D srcRect {{}, extent};
+    Rect2D dstRect{offset, OrthoGetExtent(G)};
+    PyMOLImageCopy(tileImg, dstImage, srcRect, dstRect);
+  } // if tileImg not empty
+}
+
+static void OrthoDrawSizedTiles(PyMOLGlobals* G,
+    const Extent2D& extent, pymol::Image& dstImage)
+{
+  auto I = G->Ortho;
+
+  int nXStep = (extent.width / (I->Width + 1)) + 1;
+  int nYStep = (extent.height / (I->Height + 1)) + 1;
+  int total_steps = nXStep * nYStep;
+
+  OrthoBusyPrime(G);
+
+  for (int y = 0; y < nYStep; y++) {
+    for (int x = 0; x < nXStep; x++) {
+      Offset2D offset{x = -(I->Width * x), y = -(I->Height * y)};
+      OrthoBusyFast(G, y * nXStep + x, total_steps);
+      OrthoDrawSizedTile(G, offset, extent, dstImage);
+    }
+  }
+}
+
+/**
+ * @brief Ensures that the extent has a valid width and height
+ * @param extent extent to calculate
+ * @return extent with valid width and height
+ * @note If the width or height is 0, it will be calculated based on the
+ * current ortho aspect ratio.
+ */
+static Extent2D OrthoCalculateImplicitExtent(PyMOLGlobals* G, Extent2D extent)
+{
+  float orthoAspectRatio = OrthoGetAspectRatio(G);
+  if (extent.width == 0 && extent.height == 0) {
+    extent = OrthoGetExtent(G);
+  } else if (extent.width != 0 && extent.height == 0) {
+    extent.height = static_cast<std::uint32_t>(extent.width / orthoAspectRatio);
+  } else if (extent.height != 0 && extent.width == 0) {
+    extent.width = static_cast<std::uint32_t>(extent.height * orthoAspectRatio);
+  }
+  return extent;
+}
+
+/**
+ * @brief Makes an image of the current ortho view
+ * @param extent extent of the image to make
+ * @param quiet suppresses error messages
+ */
+static pymol::Result<pymol::Image> OrthoMakeSizedImage(
+    PyMOLGlobals* G, Extent2D extent, bool quiet)
+{
+  auto* I = G->Ortho;
+
+  extent = OrthoCalculateImplicitExtent(G, extent);
+
+  std::optional<Extent2D> saveExtent;
+  if (!((extent.width > 0) && (extent.height > 0) && (I->Width > 0) &&
+          (I->Height > 0))) {
+    if (saveExtent) {
+      OrthoSetExtent(G, *saveExtent);
+    }
+    return pymol::make_error(
+        "OrthoMakeSizedImage-Error: invalid image dimensions");
+  }
+
+  if (!(G->HaveGUI && G->ValidContext)) {
+    if (saveExtent) {
+      OrthoSetExtent(G, *saveExtent);
+    }
+    return {};
+  }
+
+  auto maxDim = SceneGLGetMaxDimensions(G);
+  auto clampedExtents = ExtentClampByAspectRatio(extent, maxDim);
+  auto upscaledExtentInfo = ExtentGetUpscaleInfo(G, clampedExtents, maxDim, 0);
+  extent = upscaledExtentInfo.extent;
+
+  if (!saveExtent) {
+    saveExtent = OrthoGetExtent(G);
+  }
+
+  OrthoSetExtent(G, extent);
+  G->ShaderMgr->bindOffscreenOrtho(extent, true);
+
+  auto drawBuffer = SceneDrawBothGetConfig(G);
+  pymol::Image final_image(extent.width, extent.height);
+
+  // Save before we change scene extents in OrthoDrawSizedTile
+  auto currSceneExtent = SceneGetExtent(G);
+
+  OrthoDrawSizedTiles(G, extent, final_image);
+
+  if (saveExtent) {
+    OrthoSetExtent(G, *saveExtent);
+    OrthoReshape(G, currSceneExtent.width, currSceneExtent.height, true);
+  }
+
+  OrthoInvalidateDoDraw(G);
+  return final_image;
+}
+
+pymol::Result<bool> OrthoDeferImage(PyMOLGlobals* G, Extent2D extent, const char* filename,
+    int antialias, float dpi, int format, int quiet, pymol::Image* out_img,
+    bool with_overlay)
+{
+  std::string filename_str = filename ? filename : "";
+  std::function<void()> deferred = [=]() {
+    auto prior = SceneDeferImage(G, extent, filename_str.c_str(), antialias,
+        dpi, format, quiet, out_img);
+    if (prior) {
+      // Something went bad here. Should fire on deferred.
+      return;
+    }
+    auto overlay = OrthoMakeSizedImage(G, extent, quiet);
+    if (overlay) {
+      if (auto composite = PyMOLImageComposite(G, *G->Scene->Image, *overlay)) {
+        // TODO: Save composite image
+      }
+    }
+  };
+
+  if (G->ValidContext) {
+    deferred();
+    return false;
+  }
+
+  OrthoDefer(G, std::move(deferred));
+  return true;
 }
