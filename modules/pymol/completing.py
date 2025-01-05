@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pymol.shortcut import Shortcut
 
 cmd = __import__("sys").modules["pymol.cmd"]
@@ -7,14 +9,15 @@ class ExprShortcut(Shortcut):
     Expression shortcut for iterate/alter/label with "s." prefix
     setting autocompletion.
     '''
-    def interpret(self, keyword, mode=False):
+    def interpret(self, keyword: str, mode: bool = False):
         if not keyword.startswith('s.'):
             return super().interpret(keyword, mode)
-        v = cmd.setting.setting_sc.interpret(keyword[2:])
-        if isinstance(v, str):
-            return 's.' + v
+        v: Optional[int | str | list[str]] = cmd.setting.setting_sc.interpret(keyword[2:])
+
+        if isinstance(v, str) or isinstance(v, int):
+            return f"s.{v}"
         if isinstance(v, list):
-            return ['s.' + v for v in v]
+            return [f"s.{v}" for v in v]
         return None
 
 expr_sc = ExprShortcut([

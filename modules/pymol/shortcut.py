@@ -34,7 +34,7 @@ class Shortcut:
         self.abbreviation_dict = defaultdict(list)
 
         for keyword in self.keywords:
-            self.optimize_symbols(keyword)
+            self._optimize_symbols(keyword)
 
         self._rebuild_finalize()
 
@@ -48,20 +48,30 @@ class Shortcut:
         self.keywords.remove(keyword)
         self.rebuild()
 
-    def make_abbreviation(self, s: str, groups_length: int) -> str:
+    def _make_abbreviation(self, s: str, groups_length: int) -> str:
         """
+        Creates an abbreviation for a string by shortening its components.
+        The abbreviation takes the first `groups_length`
+        characters of each part before the last component.
+
         Example 1:
         Input: s:'abc_def_ghig', groups_length: 1
         Output: 'a_d_ghig'
+
         Example 2:
         Input: s:'abc_def', groups_length: 2
-        Output: 'a_def'
+        Output: 'ab_def'
         """
         groups = s.split("_")
         groups[:-1] = [c[0:groups_length] for c in groups[:-1]]
         return "_".join(groups)
 
-    def optimize_symbols(self, keyword: str) -> None:
+    def _optimize_symbols(self, keyword: str) -> None:
+        """
+        Optimizes the given keyword by adding abbreviations and shortening
+        components. This method also builds a shortcut dictionary
+        for the keyword and its abbreviated forms.
+        """
         for i in range(1, len(keyword)):
             substr = keyword[0:i]
             self.shortcut[substr] = 0 if substr in self.shortcut else keyword
@@ -70,7 +80,7 @@ class Shortcut:
             return
 
         for n in (1, 2):
-            abbreviation = self.make_abbreviation(keyword, n)
+            abbreviation = self._make_abbreviation(keyword, n)
 
             if keyword == abbreviation:
                 continue
@@ -81,7 +91,13 @@ class Shortcut:
                 sub = abbreviation[0:i]
                 self.shortcut[sub] = 0 if sub in self.shortcut else keyword
 
-    def rebuild(self, keywords: Optional[Iterable] = None) -> None:
+    def rebuild(self, keywords: Optional[Iterable[str]] = None) -> None:
+        """
+        Rebuilds the shortcuts and abbreviation dictionaries
+        based on the provided list of keywords.
+        This method clears the existing shortcuts and optimizes symbols
+        for the new list of keywords.
+        """
         keywords = list(keywords) if keywords is not None else []
         self.keywords = (
             [keyword for keyword in keywords if keyword[:1] != "_"]
@@ -92,11 +108,18 @@ class Shortcut:
         self.shortcut = {}
         self.abbreviation_dict = defaultdict(list)
         for keyword in self.keywords:
-            self.optimize_symbols(keyword)
+            self._optimize_symbols(keyword)
 
         self._rebuild_finalize()
 
     def _rebuild_finalize(self) -> None:
+        """
+        Finalizes the rebuild process
+        by setting shortcuts for abbreviations and keywords.
+
+        This method ensures that each abbreviation points to a single keyword and that
+        each keyword has a shortcut.
+        """
         for abbreviation, keywords in self.abbreviation_dict.items():
             if len(keywords) == 1:
                 self.shortcut[abbreviation] = keywords[0]
@@ -140,14 +163,23 @@ class Shortcut:
             else list(unique_keywords)
         )
 
-    def append(self, keyword) -> None:
+    def append(self, keyword: str) -> None:
+        """Adds a new keyword to the list and rebuilds the shortcuts."""
+
         self.keywords.append(keyword)
-        self.optimize_symbols(keyword)
+        self._optimize_symbols(keyword)
         self._rebuild_finalize()
 
     def auto_err(
         self, keyword: str, descrip: Optional[str] = None
     ) -> Optional[int | str | list[str]]:
+        """
+        Automatically raises an error if a keyword is unknown or ambiguous.
+
+        This method checks if a keyword is valid, and if not,
+        raises a descriptive error with suggestions for possible matches.
+        """
+
         if keyword == "":
             return
 

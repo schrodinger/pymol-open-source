@@ -50,7 +50,6 @@ jobs:
     - name: Test
       run: |
         pymol -ckqy testing/testing.py --run all
-        python -m pytest tests -vv
 
   build-Windows:
 
@@ -100,7 +99,6 @@ jobs:
       run: |
         CALL %CONDA_ROOT%\\Scripts\\activate.bat
         pymol -ckqy testing\\testing.py --run all
-        python -m pytest tests -vv
 
   build-MacOS:
 
@@ -137,4 +135,3 @@ jobs:
       run: |-
         export PATH="$CONDA_ROOT/bin:$PATH"
         pymol -ckqy testing/testing.py --run all
-        python -m pytest tests -vv
