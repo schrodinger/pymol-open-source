@@ -58,19 +58,19 @@ jobs:
     runs-on: windows-latest
 
     env:
-      CONDA_ROOT: ${{github.workspace}}\..\tmp\mambaforge
-      MAMBAFORGE_EXEC: ${{github.workspace}}\..\tmp\mambaforge.exe
+      CONDA_ROOT: ${{github.workspace}}\..\tmp\miniforge
+      MINIFORGE_EXEC: ${{github.workspace}}\..\tmp\miniforge.exe
 
     steps:
     - uses: actions/checkout@v4.0.0
-    - name: Download miniconda
+    - name: Download Miniforge
       shell: cmd
       run: |-
         if not exist %CONDA_ROOT% mkdir %CONDA_ROOT%
-        curl -L -o %MAMBAFORGE_EXEC% https://github.com/conda-forge/miniforge/releases/download/24.3.0-0/Mambaforge-24.3.0-0-Windows-x86_64.exe
-        start /wait %MAMBAFORGE_EXEC% /S /D=%CONDA_ROOT%
+        curl -L -o %MINIFORGE_EXEC% https://github.com/conda-forge/miniforge/releases/download/24.11.0-0/Miniforge3-24.11.0-0-Windows-x86_64.exe
+        start /wait %MINIFORGE_EXEC% /S /D=%CONDA_ROOT%
 
-    - name: Set up Miniconda
+    - name: Set up Miniforge
       shell: cmd
       run: |-
         CALL %CONDA_ROOT%\\Scripts\\activate.bat
@@ -107,13 +107,13 @@ jobs:
     runs-on: macos-latest
 
     env:
-      CONDA_ROOT: "/tmp/miniconda"
+      CONDA_ROOT: "/tmp/miniforge"
 
     steps:
     - uses: actions/checkout@v4.0.0
-    - name: Set up Miniconda and Build
+    - name: Set up Miniforge and Build
       run: |-
-        curl -L -o $CONDA_ROOT.sh https://github.com/conda-forge/miniforge/releases/download/24.3.0-0/Mambaforge-MacOSX-x86_64.sh
+        curl -L -o $CONDA_ROOT.sh https://github.com/conda-forge/miniforge/releases/download/24.11.0-0/Miniforge3-MacOSX-x86_64.sh
         bash $CONDA_ROOT.sh -b -p $CONDA_ROOT
         export PATH="$CONDA_ROOT/bin:$PATH"
         conda config --set quiet yes
