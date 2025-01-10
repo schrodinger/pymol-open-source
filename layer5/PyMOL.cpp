@@ -895,7 +895,8 @@ PyMOLreturn_status PyMOL_CmdZoom(CPyMOL * I, const char *selection, float buffer
 {
   int ok = false;
   PYMOL_API_LOCK
-    auto result = ExecutiveWindowZoom(I->G, selection, buffer, state - 1,
+    SelectorTmp2 s1(I->G, selection);
+    auto result = ExecutiveWindowZoom(I->G, s1.getName(), buffer, state - 1,
                              complete, animate, quiet);
     ok = static_cast<bool>(result);
   PYMOL_API_UNLOCK return return_status_ok(ok);
@@ -2219,7 +2220,7 @@ static void check_gl_stereo_capable(PyMOLGlobals * G)
     printf("Warning: GL_DRAW_BUFFER0=0 -> using GL_BACK\n");
     buf = GL_BACK;
   }
-  G->DRAW_BUFFER0 = buf;
+  G->ShaderMgr->defaultBackbuffer.drawBuffer = buf;
 
   // double buffer check
   glGetBooleanv(GL_DOUBLEBUFFER, &state);
@@ -2229,7 +2230,8 @@ static void check_gl_stereo_capable(PyMOLGlobals * G)
 
   // default framebuffer
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &buf);
-  G->ShaderMgr->default_framebuffer_id = buf;
+  G->ShaderMgr->defaultBackbuffer.framebuffer = buf;
+  G->ShaderMgr->topLevelConfig = G->ShaderMgr->defaultBackbuffer;
 }
 #endif
 

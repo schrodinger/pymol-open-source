@@ -263,7 +263,7 @@ void CShaderPrg::Set_Matrices() {
     uniform_set |= 2;
   }
 
-  const float * mvm = SceneGetModelViewMatrix(G);
+  const float * mvm = SceneGetModelViewMatrixPtr(G);
 
   // normalmatrix = transpose(inverse(mvm))
   // Since we only support orthogonal normal matrices (e.g. with our sphere
@@ -277,7 +277,7 @@ void CShaderPrg::Set_Matrices() {
 
   SetMat3fc("g_NormalMatrix", normalmatrix);
   SetMat4fc("g_ModelViewMatrix", mvm);
-  SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrix(G));
+  SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrixPtr(G));
 }
 
 int CShaderPrg::SetLightingEnabled(int lighting_enabled){

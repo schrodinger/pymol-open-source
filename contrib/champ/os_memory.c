@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct DebugRec {
   struct DebugRec *next;
-  char file[64], note[64];
+  char file[64], note[64]; // TOOD: Shouldn't assume <= 64 char path.
   int line;
   unsigned int size;
   int type;

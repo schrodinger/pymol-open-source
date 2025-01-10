@@ -227,9 +227,9 @@ class PyMOLDesktopGUI(object):
                 ('separator',),
                 ('command', 'Remove (pk1) [Ctrl-Shift-D]', 'remove pk1'),
                 ('separator',),
-                ('command', 'Make (pk1) Positive [Ctrl-Shift-K]',   'alter pk1, formal_charge=1.'),
-                ('command', 'Make (pk1) Negative [Ctrl-Shift-J]',   'alter pk1, formal_charge=-1.'),
-                ('command', 'Make (pk1) Neutral [Ctrl-Shift-U]',    'alter pk1, formal_charge=0.'),
+                ('command', 'Make (pk1) Positive [Ctrl-Shift-K]',   'alter pk1, formal_charge=1'),
+                ('command', 'Make (pk1) Negative [Ctrl-Shift-J]',   'alter pk1, formal_charge=-1'),
+                ('command', 'Make (pk1) Neutral [Ctrl-Shift-U]',    'alter pk1, formal_charge=0'),
             ]),
             ('menu', 'Movie', [
                 ('menu', 'Append', [

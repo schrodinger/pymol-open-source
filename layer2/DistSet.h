@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 
 #include <array>
 #include <forward_list>
+#include <unordered_set>
 
 struct ObjectDist;
 
@@ -46,6 +47,11 @@ struct DistSet : CObjectState {
   void update(int state);
   void render(RenderInfo *);
   void invalidateRep(cRep_t type, cRepInv_t level);
+
+  /**
+   * Retrieves all objects that depend on this distance set.
+   */
+  std::unordered_set<const pymol::CObject*> getDependentObjects() const;
 
   ObjectDist *Obj = nullptr;
 

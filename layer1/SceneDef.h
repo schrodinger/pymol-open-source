@@ -29,8 +29,11 @@ Z* -------------------------------------------------------------------
 #include"SceneView.h"
 #include"Rect.h"
 #include "Camera.h"
+#include "Spatial.h"
 #include<list>
 #include<vector>
+
+#include <glm/mat4x4.hpp>
 
 #define TRN_BKG 0x30
 #define MAX_ANI_ELEM 300
@@ -43,25 +46,6 @@ namespace pymol
 typedef struct {
   float unit_left, unit_right, unit_top, unit_bottom, unit_front, unit_back;
 } SceneUnitContext;
-
-
-struct Offset2D
-{
-  std::int32_t x;
-  std::int32_t y;
-};
-
-struct Extent2D
-{
-  std::uint32_t width;
-  std::uint32_t height;
-};
-
-struct Rect2D
-{
-  Offset2D offset;
-  Extent2D extent;
-};
 
 
 inline bool operator==(const Rect2D& rectA, const Rect2D& rectB) {
@@ -170,15 +154,10 @@ class CScene : public Block {
   short prev_no_z_rotation1{}, prev_no_z_rotation2{};
   int orig_x_rotation{}, orig_y_rotation{};
 
-  std::vector<float> m_ModelViewMatrixStack;
-  int m_ModelViewMatrixStackDepth { 0 };
+  std::vector<glm::mat4> m_ModelViewMatrixStack;
+  glm::mat4 modelViewMatrix{};
 
-  union {
-    float ModelViewMatrix[16]{};
-    float ModMatrix[16];          // old alias, deprecated
-  };
-
-  float ProjectionMatrix[16]{};
+  glm::mat4 projectionMatrix{};
   int background_color_already_set{};
   int do_not_clear{};
   GridInfo grid{};
