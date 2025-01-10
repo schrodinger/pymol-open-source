@@ -3270,7 +3270,6 @@ CGO* CGOOptimizeToVBONotIndexed(const CGO* I, int est, bool addshaders)
   short has_draw_buffer = false;
   float min[3] = {FLT_MAX, FLT_MAX, FLT_MAX},
         max[3] = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
-  int ambient_occlusion = 0;
   int ok = true;
   auto cgo = CGONew(G);
 
@@ -3932,7 +3931,6 @@ static bool OptimizeLinesToVBOIndexed(const CGO* I, CGO* cgo,
 CGO* CGOOptimizeToVBOIndexed(const CGO* I, int est, const float* color,
     bool addshaders, bool embedTransparencyInfo)
 {
-  auto G = I->G;
   CGO* cgo;
 
   std::unique_ptr<CGO> I_begin_end_combined;
@@ -5323,19 +5321,19 @@ CGO* CGOOptimizeConnectors(const CGO* I, int est)
               sizeof(float) * 3 * quant, screenWorldOffset),
           BufferDesc("a_textSize", VertexFormat::Float2,
               sizeof(float) * 2 * quant, textSize),
-          BufferDesc("a_Color", VertexFormat::UByteNorm, sizeof(float) * quant,
+          BufferDesc("a_Color", VertexFormat::UByte4Norm, sizeof(float) * quant,
               connectorColor),
-          BufferDesc("a_relative_mode", VertexFormat::UByteNorm,
+          BufferDesc("a_relative_mode", VertexFormat::UByte,
               sizeof(std::uint8_t) * quant, relativeMode),
-          BufferDesc("a_draw_flags", VertexFormat::UByteNorm,
+          BufferDesc("a_draw_flags", VertexFormat::UByte,
               sizeof(std::uint8_t) * quant, drawBkgrd),
-          BufferDesc("a_bkgrd_color", VertexFormat::UByteNorm,
+          BufferDesc("a_bkgrd_color", VertexFormat::UByte4Norm,
               sizeof(float) * quant, bkgrdColor),
           BufferDesc("a_rel_ext_length", VertexFormat::Float,
               sizeof(float) * quant, relExtLength),
           BufferDesc("a_con_width", VertexFormat::Float, sizeof(float) * quant,
               connectorWidth),
-          BufferDesc("a_isCenterPt", VertexFormat::UByteNorm,
+          BufferDesc("a_isCenterPt", VertexFormat::UByte,
               sizeof(std::uint8_t) * quant, isCenterPt)});
       size_t vboid = vbo->get_hash_id();
       if (ok) {

@@ -26,11 +26,14 @@ Z* -------------------------------------------------------------------
 #define cOrthoLineHeight DIP2PIXEL(12)
 
 #include <functional>
+#include <optional>
 #include <string>
 
 #include"os_gl.h"
 #include"pymol/memory.h"
 #include"PyMOLEnums.h"
+#include "Result.h"
+#include "Spatial.h"
 
 #define cOrthoScene 1
 #define cOrthoTool 2
@@ -55,7 +58,21 @@ void OrthoDetach(PyMOLGlobals * G, Block * block);
 void OrthoReshape(PyMOLGlobals * G, int width, int height, int force);
 int OrthoGetWidth(PyMOLGlobals * G);
 int OrthoGetHeight(PyMOLGlobals * G);
-void OrthoDoDraw(PyMOLGlobals * G, OrthoRenderMode render_mode);
+
+struct OrthoDrawInfo
+{
+  OrthoRenderMode renderMode = OrthoRenderMode::Main;
+  bool offscreenRender{};
+  bool clearTarget{};
+  bool renderScene{true};
+  std::optional<Rect2D> viewport;
+};
+
+/**
+ * @brief Draws the Scene and any required UI overlay
+ * @param drawInfo parameters for rendering
+ */
+void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo);
 void OrthoDoViewportWhenReleased(PyMOLGlobals *G);
 void OrthoPushMatrix(PyMOLGlobals * G);
 void OrthoPopMatrix(PyMOLGlobals * G);
@@ -135,7 +152,35 @@ bool OrthoBackgroundDataIsSet(const COrtho& ortho);
 std::shared_ptr<pymol::Image> OrthoBackgroundDataGet(const COrtho& ortho);
 std::pair<int, int> OrthoGetSize(const COrtho& ortho);
 
+/**
+ * @brief Obtains the current layout rect of the Ortho window
+ * @return the layout rect of all PyMOL elements (scene, seq, panel, etc...)
+ */
+Extent2D OrthoGetExtent(PyMOLGlobals* G);
+
 void OrthoInvalidateDoDraw(PyMOLGlobals * G);
 void OrthoRenderCGO(PyMOLGlobals * G);
 
 #endif
+
+/**
+ * @brief Obtains the current layout rect of the Ortho window
+ * @return the layout rect of all PyMOL elements (scene, seq, panel, etc...)
+ */
+Rect2D OrthoGetRect(PyMOLGlobals* G);
+
+/**
+ * @brief Renders the PyMOL view into an image when OpenGL context is available
+ * @param extent requested image extent
+ * @param filename output image filename
+ * @param antialias antialiasing level (for scene only)
+ * @param dpi resolution in dots per inch
+ * @param format image format (png, ppm, etc...)
+ * @param quiet suppresses output messages
+ * @param out_img output image
+ * @param with_overlay include overlay in the image
+ * @return true if this operation immediately triggered (has OpenGL context)
+ */
+pymol::Result<bool> OrthoDeferImage(PyMOLGlobals* G, Extent2D extent,
+    const char* filename, int antialias, float dpi, int format, int quiet,
+    pymol::Image* out_img, bool with_overlay);

@@ -234,8 +234,26 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual(names, ['pk1', 'pk2', 'pk3', 'pk4', 'pkset', 'pkmol'])
 
     def test_fix_chemistry(self):
-        cmd.fix_chemistry
-        self.skipTest("TODO")
+
+        # Baseline bond order
+        cmd.fragment('arg')
+        # list(set()) to remove possibly duplicate bond info
+        bonds = list(set(cmd.get_bonds('arg')))
+        total_order = sum(t[2] for t in bonds)
+        self.assertEqual(total_order, 25)
+
+        # Change bond orders
+        cmd.bond('arg`9', 'arg`11', 2)
+        bonds = list(set(cmd.get_bonds('arg')))
+        total_order = sum(t[2] for t in bonds)
+        self.assertEqual(total_order, 27)
+
+        # Restore with fix_chemistry
+        cmd.fix_chemistry('arg')
+        bonds = list(set(cmd.get_bonds('arg')))
+        total_order = sum(t[2] for t in bonds)
+        self.assertEqual(total_order, 25)
+
 
     def test_flag(self):
         cmd.fab("ACE")

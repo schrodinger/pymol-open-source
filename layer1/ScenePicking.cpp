@@ -58,14 +58,14 @@ static void PickColorConverterSetRgbaBitsFromGL(
     return;
   }
 
-  GLint currentFrameBuffer = G->ShaderMgr->default_framebuffer_id;
+  GLint currentFrameBuffer = G->ShaderMgr->defaultBackbuffer.framebuffer;
 
   if (SettingGet<bool>(G, cSetting_use_shaders)) {
     glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFrameBuffer);
   }
 
-  if (currentFrameBuffer != G->ShaderMgr->default_framebuffer_id) {
-    glBindFramebuffer(GL_FRAMEBUFFER, G->ShaderMgr->default_framebuffer_id);
+  if (currentFrameBuffer != G->ShaderMgr->defaultBackbuffer.framebuffer) {
+    glBindFramebuffer(GL_FRAMEBUFFER, G->ShaderMgr->defaultBackbuffer.framebuffer);
   }
 
   glGetIntegerv(GL_RED_BITS, rgba_bits + 0);
@@ -77,7 +77,7 @@ static void PickColorConverterSetRgbaBitsFromGL(
   " %s: GL RGBA BITS: (%d, %d, %d, %d)\n", __func__, rgba_bits[0], rgba_bits[1],
       rgba_bits[2], rgba_bits[3] ENDFD;
 
-  if (currentFrameBuffer != G->ShaderMgr->default_framebuffer_id) {
+  if (currentFrameBuffer != G->ShaderMgr->defaultBackbuffer.framebuffer) {
     glBindFramebuffer(GL_FRAMEBUFFER, currentFrameBuffer);
   }
 
@@ -123,8 +123,8 @@ static std::vector<unsigned> SceneGetPickIndices(PyMOLGlobals* G,
         if(I->grid.active) {
           GridSetViewport(G, &I->grid, slot);
         }
-        SceneRenderAll(
-            G, context, nullptr, &pickmgr, RenderPass::Antialias, true, 0.0F, &I->grid, 0, SceneRenderWhich::AllObjects);
+        SceneRenderAll(G, context, nullptr, &pickmgr, RenderPass::Antialias, true,
+            0.0F, &I->grid, 0, SceneRenderWhich::All, SceneRenderOrder::GadgetsLast);
       }
     }
 
@@ -280,7 +280,7 @@ void SceneRenderPicking(PyMOLGlobals* G, int stereo_mode, ClickSide click_side,
   CScene *I = G->Scene;
 
   if (render_buffer == GL_BACK) {
-    render_buffer = G->DRAW_BUFFER0;
+    render_buffer = G->ShaderMgr->defaultBackbuffer.drawBuffer;
   }
 
   SceneSetupGLPicking(G);

@@ -75,12 +75,12 @@ void ObjectMotionReinterpolate(pymol::CObject *I)
                  int simple, float linear, int wrap,
                  int hand, int window, int cycles, int state, int quiet);
   */
-  ObjectMotion(I, 3, -1, -1, power, bias, simple, linear,
+  ObjectMotion(I, MViewAction::Reinterpolate, -1, -1, power, bias, simple, linear,
                SettingGetGlobal_b(I->G,cSetting_movie_loop) ? 1 : 0,
                hand, 5, 1, -1, 1);
 }
 
-int ObjectMotionModify(pymol::CObject *I,int action, int index, int count,int target,int freeze,int localize)
+int ObjectMotionModify(pymol::CObject *I, ViewElemAction action, int index, int count,int target,int freeze,int localize)
 {
   int ok;
 
@@ -133,7 +133,7 @@ void ObjectDrawViewElem(pymol::CObject *I, BlockRect *rect,int frames , CGO *ort
   }
 }
 
-int ObjectMotion(pymol::CObject * I, int action, int first,
+int ObjectMotion(pymol::CObject * I, MViewAction action, int first,
                int last, float power, float bias,
                int simple, float linear, int wrap,
                int hand, int window, int cycles, int state, int quiet)
@@ -158,41 +158,39 @@ int ObjectMotion(pymol::CObject * I, int action, int first,
       I->ViewElem = pymol::vla<CViewElem>(0);
     }
     
-    if((action == 7) || (action == 8)) { /* toggle */
+    if (action == MViewAction::Toggle || action == MViewAction::ToggleInterp) {
       frame = first;
       if(first < 0)
         frame = SceneGetFrame(G);
       VLACheck(I->ViewElem, CViewElem, frame);
-      if(action == 7) {
+      if (action == MViewAction::Toggle) {
         if(I->ViewElem[frame].specification_level>1) {
-          action = 1;
+          action = MViewAction::Clear;
         } else {
-          action = 0;
+          action = MViewAction::Store;
         }
-      } else if(action == 8) {
+      } else if(action == MViewAction::ToggleInterp) {
         if(I->ViewElem[frame].specification_level>1) {
           int frame;
-          action = 3;
+          action = MViewAction::Reinterpolate;
           for(frame=0;frame<nFrame;frame++) {
             if(I->ViewElem[frame].specification_level==1) {
-              action = 6;
+              action = MViewAction::Uninterpolate;
               break;
             }
           }
         }
         else if(I->ViewElem[frame].specification_level>0) {
-          action = 6;
+          action = MViewAction::Uninterpolate;
         } else {
-          action = 3;
+          action = MViewAction::Reinterpolate;
         }
       }
     }
 
-    if(action == 4) {   /* smooth */
+    if(action == MViewAction::Smooth) {
       int save_last = last;
-      if(first < 0)
-        first = 0;
-      
+      std::max(0, first);
       if(last < 0) {
         last = nFrame;
       }
@@ -207,12 +205,12 @@ int ObjectMotion(pymol::CObject * I, int action, int first,
           }
       }
       if(SettingGet_b(I->G, nullptr, I->Setting.get(), cSetting_movie_auto_interpolate)){
-        action = 3; /* reinterpolate */
+        action = MViewAction::Reinterpolate;
         last = save_last;
       }
     }
     switch (action) {
-    case 0:                      /* store */
+    case MViewAction::Store:
       if(!I->TTTFlag) {
         float mn[3], mx[3], orig[3];
         if(ExecutiveGetExtent(G, I->Name, mn, mx, true, -1, true)) {
@@ -269,7 +267,7 @@ int ObjectMotion(pymol::CObject * I, int action, int first,
         }
       }
       break;
-    case 1:                      /* clear */
+    case MViewAction::Clear:
       if(I->ViewElem) {
         if(first < 0)
           first = SceneGetFrame(G);
@@ -284,8 +282,8 @@ int ObjectMotion(pymol::CObject * I, int action, int first,
         }
       }
       break;
-    case 2:                      /* interpolate & reinterpolate */
-    case 3:
+    case MViewAction::Interpolate:
+    case MViewAction::Reinterpolate:
       {
         CViewElem *first_view = nullptr, *last_view = nullptr;
         int view_found = false;
@@ -343,7 +341,7 @@ int ObjectMotion(pymol::CObject * I, int action, int first,
         }
         VLACheck(I->ViewElem, CViewElem, last);
         if(!quiet) {
-          if(action == 2) {
+           if (action == MViewAction::Interpolate) {
             if(last == nFrame) {
               PRINTFB(G, FB_Object, FB_Details)
                 " ObjectMotion: interpolating unspecified frames %d to %d (wrapping).\n",
@@ -376,7 +374,7 @@ int ObjectMotion(pymol::CObject * I, int action, int first,
             int interpolate_flag = false;
             if(I->ViewElem[frame].specification_level == 2) {     /* specified */
               last_view = I->ViewElem + frame;
-              if(action == 2) {   /* interpolate */
+              if (action == MViewAction::Interpolate) {
                 for(view = first_view + 1; view < last_view; view++) {
                   if(!view->specification_level)
                     interpolate_flag = true;
@@ -416,13 +414,13 @@ int ObjectMotion(pymol::CObject * I, int action, int first,
         }
       }
       break;
-    case 5:                      /* reset */
+    case MViewAction::Reset:
       if(I->ViewElem) {
         VLAFreeP(I->ViewElem);
       }
       I->ViewElem = pymol::vla<CViewElem>(0);
       break;
-    case 6:                      /* uninterpolate */
+    case MViewAction::Uninterpolate:
       if(I->ViewElem) {
         if(first < 0)
           first = 0;
@@ -440,7 +438,7 @@ int ObjectMotion(pymol::CObject * I, int action, int first,
         }
       }
       break;
-    case 9:
+    case MViewAction::Purge:
       if(I->ViewElem) {
         VLAFreeP(I->ViewElem);
       }
@@ -1037,7 +1035,7 @@ void ObjectPrepareContext(pymol::CObject * I, RenderInfo * info)
         gl[11] = 0.0;
         gl[15] = 1.0;
 
-        auto mvm = SceneGetModelViewMatrix(G);
+        auto mvm = SceneGetModelViewMatrixPtr(G);
         MatrixMultiplyC44f(gl, mvm);
         MatrixTranslateC44f(mvm, ttt[12], ttt[13], ttt[14]);
 
@@ -1357,7 +1355,7 @@ int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
       matrix[15] = i_matrix[15];
 
       ScenePushModelViewMatrix(G);
-      auto mvm = SceneGetModelViewMatrix(G);
+      auto mvm = SceneGetModelViewMatrixPtr(G);
       MatrixMultiplyC44f(matrix, mvm);
 
 #ifndef PURE_OPENGL_ES_2

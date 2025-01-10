@@ -18,6 +18,8 @@ Z* -------------------------------------------------------------------
 #define _H_Executive
 
 #include <string>
+#include <unordered_set>
+
 #include "pymol/zstring_view.h"
 #include"os_python.h"
 
@@ -31,13 +33,13 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 #include "PyMOL.h"
-#include "Executive_pre.h"
 #include "Scene.h"
 #include "Result.h"
 #include "vla.h"
 #include "TrackerList.h"
 #include "Selector.h"
 #include "SpecRecSpecial.h"
+#include "MViewAction.h"
 
 enum cLoadType_t : int {
   cLoadTypeUnknown = -1,
@@ -184,6 +186,7 @@ int ExecutiveCheckGroupMembership(
 #define cExecutiveGroupEmpty 8
 #define cExecutiveGroupPurge 9
 #define cExecutiveGroupExcise 10
+#define cExecutiveGroupRaise 11
 
 enum ExecRec_t
 {
@@ -415,7 +418,14 @@ int ExecutiveIndex(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
 pymol::Result<> ExecutiveReset(PyMOLGlobals*, pymol::zstring_view);
 pymol::Result<> ExecutiveResetMatrix(
     PyMOLGlobals* G, const char* name, int mode, int state, int log, int quiet);
-void ExecutiveDrawNow(PyMOLGlobals * G);
+
+struct ExecutiveDrawInfo
+{
+  bool offscreen{};
+  bool clearTarget = true;
+};
+
+void ExecutiveDrawNow(PyMOLGlobals * G, ExecutiveDrawInfo execDrawInfo = {});
 int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
                      int entire_window, int quiet);
 pymol::Result<int> ExecutiveCartoon(PyMOLGlobals* G, int type, const char* s1);
@@ -508,9 +518,24 @@ pymol::Result<float> ExecutiveGetArea(
     PyMOLGlobals*, const char* sele, int state, bool load_b);
 
 void ExecutiveInvalidateSceneMembers(PyMOLGlobals * G);
-void ExecutiveInvalidateSelectionIndicators(PyMOLGlobals *G);
-void ExecutiveInvalidateSelectionIndicatorsCGO(PyMOLGlobals *G);
-void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInfo *grid);
+
+/**
+ * Invalidates the selection indicators and resets selection texture size
+ */
+void ExecutiveInvalidateSelectionIndicators(PyMOLGlobals* G);
+
+/**
+ * Invalidates the selection indicators CGO
+ */
+void ExecutiveInvalidateSelectionIndicatorsCGO(PyMOLGlobals* G);
+
+/**
+ * Renders the selection indicators
+ * @param curState current state
+ * @param slot slot to render
+ * @param grid grid info
+ */
+void ExecutiveRenderSelections(PyMOLGlobals* G, int curState, int slot, GridInfo* grid);
 void ExecutiveHideSelections(PyMOLGlobals * G);
 pymol::Result<> ExecutiveSetTitle(PyMOLGlobals * G, const char *name, int state, const char *text);
 const char *ExecutiveGetTitle(PyMOLGlobals * G, const char *name, int state);
@@ -740,14 +765,15 @@ void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected , CGO *
 
 void ExecutiveMotionReinterpolate(PyMOLGlobals * G);
 
-pymol::Result<> ExecutiveMotionViewModify(PyMOLGlobals* G, int action,
-    int index, int count, int target, const char* name, int freeze, int quiet);
+pymol::Result<> ExecutiveMotionViewModify(PyMOLGlobals* G,
+    ViewElemAction action, int index, int count, int target, const char* name,
+    int freeze, int quiet);
 
 void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected,int passive, 
                                  int x, int y, int same);
-int ExecutiveGroupMotionModify(PyMOLGlobals *G, pymol::CObject *group, int action, 
-                               int index, int count, int target, int freeze);
-int ExecutiveGroupMotion(PyMOLGlobals *G, pymol::CObject *group,int action, int first,
+int ExecutiveGroupMotionModify(PyMOLGlobals* G, pymol::CObject* group,
+    ViewElemAction action, int index, int count, int target, int freeze);
+int ExecutiveGroupMotion(PyMOLGlobals *G, pymol::CObject *group, MViewAction action, int first,
                          int last, float power, float bias,
                          int simple, float linear, int wrap,
                          int hand, int window, int cycles, int state, int quiet);
@@ -756,7 +782,7 @@ int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, pymol::CObject *group, const flo
 void ExecutiveMotionClick(PyMOLGlobals * G, BlockRect *rect, int mode, int expected, int x, int y, int nearest);
 void ExecutiveMotionTrim(PyMOLGlobals * G);
 void ExecutiveMotionExtend(PyMOLGlobals * G, int freeze);
-int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
+int ExecutiveMotionView(PyMOLGlobals *G, MViewAction action, int first,
                         int last, float power, float bias,
                         int simple, float linear, const char *name, int wrap,
                         int hand, int window, int cycles,
@@ -905,5 +931,22 @@ pymol::Result<> ExecutiveMoveOnCurve(PyMOLGlobals* G,
  */
 pymol::Result<> ExecutiveCurveNew(PyMOLGlobals* G,
     pymol::zstring_view curveName, pymol::zstring_view curveType);
+
+/**
+ * Updates an object's dependencies. Dependencies of objects include distance
+ * or map objects that are dependent on the object.
+ * @param obj object to update dependencies for
+ */
+pymol::Result<> ExecutiveUpdateObjectDeps(
+    PyMOLGlobals* G, const pymol::CObject& obj);
+
+/**
+ * Retrieves an object's dependencies. Dependencies of objects include distance
+ * or map objects that are dependent on the object.
+ * @param obj object to retrieve dependencies for
+ * @param depth depth of recursive dependencies to retrieve
+ */
+pymol::Result<std::unordered_set<const pymol::CObject*>> ExecutiveGetObjectDeps(
+    PyMOLGlobals* G, const pymol::CObject& obj, unsigned int depth = 0);
 
 #endif

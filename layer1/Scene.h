@@ -82,8 +82,6 @@ int SceneGetNFrame(PyMOLGlobals * G, int *has_movie=nullptr);
 void SceneSetMatrix(PyMOLGlobals * G, float *);
 float *SceneGetMatrix(PyMOLGlobals * G);
 
-#define SceneGetModMatrix SceneGetModelViewMatrix
-
 float *SceneGetPmvMatrix(PyMOLGlobals * G);
 
 float SceneGetScreenVertexScale(PyMOLGlobals * G, const float *v1);
@@ -192,17 +190,16 @@ int SceneDeferDrag(Block * block, int x, int y, int mod);
  * If we have a current OpenGL context, render the image immediately.
  * Otherwise, defer the rendering.
  *
- * @param width image width in pixels
- * @param height image height in pixels
+ * @param extent requested extent in Pixels
  * @param filename image filename
- * @param antialias antialiasing level
+ * @param antialias antialiasing level (via Supersampling not via shader)
  * @param dpi image resolution in dots per inch
  * @param format image format
  * @param quiet suppress messages
  * @param[out] out_img image data
  * @return true if rendering was deferred, false if it was rendered immediately.
  */
-bool SceneDeferImage(PyMOLGlobals* G, int width, int height,
+bool SceneDeferImage(PyMOLGlobals* G, const Extent2D& extent,
     const char* filename, int antialias, float dpi, int format, int quiet,
     pymol::Image* out_img);
 const char *SceneGetSeleModeKeyword(PyMOLGlobals * G);
@@ -237,8 +234,10 @@ float SceneGetLineWidthForCylindersStatic(PyMOLGlobals * G, RenderInfo * info, f
 void ScenePushModelViewMatrix(PyMOLGlobals * G);
 void ScenePopModelViewMatrix(PyMOLGlobals * G, bool);
 
-float *SceneGetModelViewMatrix(PyMOLGlobals * G);
-float *SceneGetProjectionMatrix(PyMOLGlobals * G);
+glm::mat4& SceneGetModelViewMatrix(PyMOLGlobals * G);
+float* SceneGetModelViewMatrixPtr(PyMOLGlobals* G);
+glm::mat4& SceneGetProjectionMatrix(PyMOLGlobals* G);
+float* SceneGetProjectionMatrixPtr(PyMOLGlobals* G);
 void SceneSetBackgroundColorAlreadySet(PyMOLGlobals * G, int);
 int SceneGetBackgroundColorAlreadySet(PyMOLGlobals * G);
 void SceneSetDoNotClearBackground(PyMOLGlobals * G, int);
@@ -297,7 +296,13 @@ float GetFovWidth(PyMOLGlobals * G);
 
 void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode = 0);
 
-void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window);
+/**
+ * @brief copies the pixels rendered to the scene to Scene::Image
+ * @param config framebuffer to copy from
+ * @param force force copying
+ * @param entire_window copy entire window
+ */
+void SceneCopy(PyMOLGlobals * G, GLFramebufferConfig config, int force, int entire_window);
 
 // FIXME use pymol matrices
 void SceneGetModel2WorldMatrix(PyMOLGlobals * G, float *matrix);
@@ -316,11 +321,94 @@ void SceneDoRoving(PyMOLGlobals * G, float old_front,
 void UpdateFrontBackSafe(CScene *I);
 int stereo_via_adjacent_array(int stereo_mode);
 
+std::shared_ptr<pymol::Image> SceneGetSharedImage(PyMOLGlobals* G);
+
+/**
+ * Creates a sized image of the current workspace
+ * @width width of the image
+ * @height height of the image
+ * @antialias antialiasing level
+ * @excludeSelections exclude selections from the image
+ * @renderWhich renders classes of objects to the image
+*/
+pymol::Result<> SceneMakeSizedImage(PyMOLGlobals* G, Extent2D extent,
+    int antialias, bool excludeSelections,
+    SceneRenderWhich renderWhich = SceneRenderWhich::All);
+
 void SceneSetViewport(PyMOLGlobals* G, const Rect2D& rect);
 void SceneSetViewport(PyMOLGlobals* G, int x, int y, int width, int height);
 Rect2D SceneGetViewport(PyMOLGlobals* G);
+
+/**
+ * Get the maximum dimensions of the viewport
+ * @return the maximum dimensions of OpenGL viewport
+ */
+Extent2D SceneGLGetMaxDimensions(PyMOLGlobals* G);
+
+/**
+ * @return Retrieves the Scene's rect extent
+ */
 Extent2D SceneGetExtent(PyMOLGlobals* G);
+
+/**
+ * @brief Sets the Scene's layout rect
+ * @param extent Scene's layout rect
+ */
+void SceneSetExtent(PyMOLGlobals* G, const Extent2D& extent);
+
+/**
+ * @brief Retrieves the Scene's layout rect
+ * @return Scene's layout rect
+ */
+Rect2D SceneGetRect(PyMOLGlobals* G);
+
 float SceneGetAspectRatio(PyMOLGlobals* G);
+
+GLFramebufferConfig SceneDrawBothGetConfig(PyMOLGlobals* G);
+
+/**
+ * Clamps the extent to the maximum dimensions
+ * @param extent the extent to clamp
+ * @param maxDim the maximum dimensions
+ * @return the clamped extent (scaled to keep aspect ratio if exceed max)
+ */
+Extent2D ExtentClampByAspectRatio(Extent2D extent, const Extent2D& maxDim);
+
+struct UpscaledExtentInfo
+{
+  Extent2D extent;
+  int factor;
+  int shift;
+};
+
+/**
+ * @brief Returns scaling information for super-sampled antialias
+ * @param extent the extent to upscale
+ * @param maxExtent the maximum extent (typically max of viewport)
+ * @param antialias the antialiasing factor
+ * @note max upscaling is 4X
+ */
+UpscaledExtentInfo ExtentGetUpscaleInfo(
+    PyMOLGlobals* G, Extent2D extent, const Extent2D& maxExtent, int antialias);
+
+/**
+ * @brief Copies a portion of a pymol::Image onto another
+ * @param srcImage source image
+ * @param dstImage destination image
+ * @param srcRect source rectangle
+ * @param dstRect destination rectangle
+ */
+void PyMOLImageCopy(const pymol::Image& srcImage,
+    pymol::Image& dstImage, const Rect2D& srcRect, const Rect2D& dstRect);
+
+/**
+ * @brief Returns a CPU image copy of the framebuffer attachment
+ * @param config framebuffer configuration
+ * @param srcRect source Rect from GL buffer to copy from
+ * @return CPU image copy of the framebuffer attachment/buffer
+ */
+pymol::Image GLImageToPyMOLImage(
+    PyMOLGlobals* G, const GLFramebufferConfig& config, const Rect2D& srcRect);
 
 #endif
 

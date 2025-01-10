@@ -86,6 +86,7 @@ struct CExecutive : public Block {
   // AtomInfoType::unique_id -> (object, atom-index)
   std::vector<ExecutiveObjectOffset> m_eoo {}; // vector of (object, atom-index)
   std::unordered_map<ov_word, std::size_t> m_id2eoo {}; // unique_id -> m_eoo-index
+  std::unordered_map<const pymol::CObject*, std::unordered_set<const pymol::CObject*>> m_objDeps;
 
   CExecutive(PyMOLGlobals * G) : Block(G), m_ScrollBar(G, false) {};
 
