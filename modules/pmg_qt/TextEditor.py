@@ -6,17 +6,11 @@ import os
 import sys
 import importlib
 
-try:
-    from pymol.Qt import QtCore, QtWidgets, QtGui
-    from pymol.Qt.utils import connectFontContextMenu, getMonospaceFont
-except ImportError:
-    from PyQt5 import QtCore, QtWidgets, QtGui
-    connectFontContextMenu = lambda *a: None
-    getMonospaceFont = lambda: QtGui.QFont()
+from pymol.Qt import QtCore, QtWidgets, QtGui
+from pymol.Qt.utils import connectFontContextMenu, getMonospaceFont
 
 
 class TextEditor(QtWidgets.QMainWindow):
-
     def sizeHint(self):
         return QtCore.QSize(600, 400)
 
@@ -91,14 +85,13 @@ class TextEditor(QtWidgets.QMainWindow):
             self._open(fnames[0])
 
     def check_ask_save(self):
-        QMessageBox = QtWidgets.QMessageBox
+        SB = QtWidgets.QMessageBox.StandardButton
         if self._get() != self._savedcontent:
-            ok = QMessageBox.question(None, "Save?", "Save changes?",
-                                      QMessageBox.Yes | QMessageBox.No |
-                                      QMessageBox.Cancel, QMessageBox.Yes)
-            if ok == QMessageBox.Yes:
+            ok = QtWidgets.QMessageBox.question(None, "Save?", "Save changes?",
+                                      SB.Yes | SB.No | SB.Cancel, SB.Yes)
+            if ok == SB.Yes:
                 self.doSave()
-            elif ok == QMessageBox.Cancel:
+            elif ok == SB.Cancel:
                 return False
         return True
 
@@ -176,7 +169,7 @@ def _edit_pymolrc(app, _list=()):
 
         pymolrc, ok = QtWidgets.QInputDialog.getText(
             None, 'Create new pymolrc?', 'Filename of new pymolrc',
-            QtWidgets.QLineEdit.Normal, pymolrc)
+            QtWidgets.QLineEdit.EchoMode.Normal, pymolrc)
 
         if not ok:
             return

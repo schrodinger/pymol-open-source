@@ -52,9 +52,9 @@ class PropsDialog(QtWidgets.QWidget):
     def make_entry(self, parent, label):
         item = QtWidgets.QTreeWidgetItem(parent)
         item.setText(0, str(label))
-        item.setFlags(QtCore.Qt.ItemIsEditable |
-                      QtCore.Qt.ItemIsEnabled |
-                      QtCore.Qt.ItemIsSelectable )
+        item.setFlags(Qt.ItemFlag.ItemIsEditable |
+                      Qt.ItemFlag.ItemIsEnabled |
+                      Qt.ItemFlag.ItemIsSelectable )
         return item
 
     def make_cat(self, parent, label):
@@ -279,8 +279,8 @@ class PropsDialog(QtWidgets.QWidget):
         '''
         Event filter for creating new shortcuts. Processes the key event before passing it on.
         '''
-        if (event.type() == QtCore.QEvent.KeyPress and source is self.form.treeWidget):
-            if (event.key() == QtCore.Qt.Key_Delete):
+        if (event.type() == QtCore.QEvent.Type.KeyPress and source is self.form.treeWidget):
+            if (event.key() == Qt.Key.Key_Delete):
                 self.unset_caller()
                 return 0
         return super().eventFilter(source, event)

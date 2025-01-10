@@ -87,8 +87,8 @@ class PyMOLQtGUI(QtWidgets.QMainWindow, pymol._gui.PyMOLDesktopGUI):
 
     def __init__(self):  # noqa
         QtWidgets.QMainWindow.__init__(self)
-        self.setDockOptions(QtWidgets.QMainWindow.AllowTabbedDocks |
-                            QtWidgets.QMainWindow.AllowNestedDocks)
+        self.setDockOptions(QtWidgets.QMainWindow.DockOption.AllowTabbedDocks |
+                            QtWidgets.QMainWindow.DockOption.AllowNestedDocks)
 
         # resize Window before it is shown
         options = pymol.invocation.options
@@ -163,7 +163,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         quickbuttonslayout = QtWidgets.QVBoxLayout()
         quickbuttonslayout.setSpacing(2)
 
-        extguilayout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.LeftToRight)
+        extguilayout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.LeftToRight)
         extguilayout.setContentsMargins(2, 2, 2, 2)
         extguilayout.addLayout(layout)
         extguilayout.addLayout(quickbuttonslayout)
@@ -190,16 +190,16 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         else:
             dockWidget.hide()
 
-        self.addDockWidget(Qt.TopDockWidgetArea, dockWidget)
+        self.addDockWidget(Qt.DockWidgetArea.TopDockWidgetArea, dockWidget)
 
         # rearrange vertically if docking left or right
         @dockWidget.dockLocationChanged.connect
         def _(area):
-            if area == Qt.LeftDockWidgetArea or area == Qt.RightDockWidgetArea:
-                extguilayout.setDirection(QtWidgets.QBoxLayout.BottomToTop)
+            if area == Qt.DockWidgetArea.LeftDockWidgetArea or area == Qt.DockWidgetArea.RightDockWidgetArea:
+                extguilayout.setDirection(QtWidgets.QBoxLayout.Direction.BottomToTop)
                 quickbuttonslayout.takeAt(quickbuttons_stretch_index)
             else:
-                extguilayout.setDirection(QtWidgets.QBoxLayout.LeftToRight)
+                extguilayout.setDirection(QtWidgets.QBoxLayout.Direction.LeftToRight)
                 if quickbuttons_stretch_index >= quickbuttonslayout.count():
                     quickbuttonslayout.addStretch()
 
@@ -258,7 +258,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             for name, callback in row:
                 btn = QtWidgets.QPushButton(name)
                 btn.setProperty("quickbutton", True)
-                btn.setAttribute(Qt.WA_LayoutUsesWidgetRect) # OS X workaround
+                btn.setAttribute(Qt.WidgetAttribute.WA_LayoutUsesWidgetRect) # OS X workaround
                 hbox.addWidget(btn)
 
                 if callback is None:
@@ -274,8 +274,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         hbox = QtWidgets.QHBoxLayout()
         self.progressbar = QtWidgets.QProgressBar()
         self.progressbar.setSizePolicy(
-                QtWidgets.QSizePolicy.Minimum,
-                QtWidgets.QSizePolicy.Minimum)
+                QtWidgets.QSizePolicy.Policy.Minimum,
+                QtWidgets.QSizePolicy.Policy.Minimum)
         hbox.addWidget(self.progressbar)
         self.abortbutton = QtWidgets.QPushButton('Abort')
         self.abortbutton.setStyleSheet("background: #FF0000; color: #FFFFFF")
@@ -420,16 +420,16 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
     def lineeditKeyPressEventFilter(self, watched, event):
         key = event.key()
-        if key == Qt.Key_Tab:
+        if key == Qt.Key.Key_Tab:
             self.complete()
-        elif key == Qt.Key_Up:
-            if event.modifiers() & Qt.ControlModifier:
+        elif key == Qt.Key.Key_Up:
+            if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 self.back_search()
             else:
                 self.back()
-        elif key == Qt.Key_Down:
+        elif key == Qt.Key.Key_Down:
             self.forward()
-        elif key == Qt.Key_Return or key == Qt.Key_Enter:
+        elif key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
             # filter out "Return" instead of binding lineedit.returnPressed,
             # because otherwise OrthoKey would capture it as well.
             self.doPrompt()
@@ -442,14 +442,14 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         Filter out <Tab> event to do tab-completion instead of move focus
         '''
         type_ = event.type()
-        if type_ == QtCore.QEvent.KeyRelease:
-            if event.key() == Qt.Key_Tab:
+        if type_ == QtCore.QEvent.Type.KeyRelease:
+            if event.key() == Qt.Key.Key_Tab:
                 # silently skip tab release
                 return True
-        elif type_ == QtCore.QEvent.KeyPress:
+        elif type_ == QtCore.QEvent.Type.KeyPress:
             if watched is self.lineedit:
                 return self.lineeditKeyPressEventFilter(watched, event)
-            elif event.key() == Qt.Key_Tab:
+            elif event.key() == Qt.Key.Key_Tab:
                 self.keyPressEvent(event)
                 return True
         return False
@@ -473,7 +473,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         '''
         Full screen
         '''
-        is_fullscreen = self.windowState() == Qt.WindowFullScreen
+        is_fullscreen = self.windowState() == Qt.WindowState.WindowFullScreen
 
         if toggle == -1:
             toggle = not is_fullscreen
@@ -592,10 +592,10 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                         (name, R, G, B))
 
             # if new color, insert and make current row
-            if not form.list_colors.findItems(name, Qt.MatchExactly):
+            if not form.list_colors.findItems(name, Qt.MatchFlag.MatchExactly):
                 form.list_colors.addItem(name)
                 form.list_colors.setCurrentItem(
-                    form.list_colors.findItems(name, Qt.MatchExactly)[0])
+                    form.list_colors.findItems(name, Qt.MatchFlag.MatchExactly)[0])
 
         # hook up events
         form.slider_R.valueChanged.connect(lambda v: update_spinbox(form.input_R, v))
@@ -617,7 +617,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         app = plugins.get_pmgapp()
         if not self.builder:
             self.builder = BuilderPanelDocked(self, app)
-            self.addDockWidget(Qt.TopDockWidgetArea, self.builder)
+            self.addDockWidget(Qt.DockWidgetArea.TopDockWidgetArea, self.builder)
 
         self.builder.show()
         self.builder.raise_()
@@ -1009,7 +1009,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             self.showMaximized()
         elif action == 6: # fit
             if hasattr(QtGui, 'QWindow') and self.windowHandle().visibility() in (
-                    QtGui.QWindow.Maximized, QtGui.QWindow.FullScreen):
+                    QtGui.QWindow.Visibility.Maximized, QtGui.QWindow.Visibility.FullScreen):
                 return
             a = QtWidgets.QApplication.desktop().availableGeometry(self)
             g = self.geometry()
@@ -1025,7 +1025,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                 h - f.height() + g.height(),
             )
         elif action == 7: # focus
-            self.setFocus(Qt.OtherFocusReason)
+            self.setFocus(Qt.FocusReason.OtherFocusReason)
         elif action == 8: # defocus
             self.clearFocus()
 
@@ -1133,12 +1133,12 @@ class PyMOLApplication(QtWidgets.QApplication):
     # handled by Qt, we don't want that.
 
     def handle_file_open(self, ev):
-        if ev.type() == QtCore.QEvent.ApplicationActivate:
+        if ev.type() == QtCore.QEvent.Type.ApplicationActivate:
             self.handle_file_open = self.handle_file_open_active
         return False
 
     def handle_file_open_active(self, ev):
-        if ev.type() != QtCore.QEvent.FileOpen:
+        if ev.type() != QtCore.QEvent.Type.FileOpen:
             return False
 
         # When double clicking a file in Finder, open it in a new instance
@@ -1202,14 +1202,14 @@ def execapp():
     sys.excepthook = traceback.print_exception
 
     # use QT_OPENGL=desktop (auto-detection may fail on Windows)
-    if hasattr(Qt, 'AA_UseDesktopOpenGL') and pymol.IS_WINDOWS:
-        QtCore.QCoreApplication.setAttribute(Qt.AA_UseDesktopOpenGL)
+    if hasattr(Qt.ApplicationAttribute, 'AA_UseDesktopOpenGL') and pymol.IS_WINDOWS:
+        QtCore.QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
 
     # enable 4K scaling on Windows and Linux
-    if hasattr(Qt, 'AA_EnableHighDpiScaling') and not any(
+    if hasattr(Qt.ApplicationAttribute, 'AA_EnableHighDpiScaling') and not any(
             v in os.environ
             for v in ['QT_SCALE_FACTOR', 'QT_SCREEN_SCALE_FACTORS']):
-        QtCore.QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+        QtCore.QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling)
 
     # fix Windows taskbar icon
     if pymol.IS_WINDOWS:

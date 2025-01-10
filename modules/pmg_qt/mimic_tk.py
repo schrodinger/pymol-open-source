@@ -12,16 +12,16 @@ from pymol.Qt import QtWidgets
 
 class _qtMessageBox:
     def __getattr__(self, name):
-        QMB = QtWidgets.QMessageBox
+        SB = QtWidgets.QMessageBox.StandardButton
 
         variants = {
-            'askyesno': ('question', QMB.Yes, QMB.No),
-            'askquestion': ('question', QMB.Yes, QMB.No),
-            'askokcancel': ('question', QMB.Ok, QMB.Cancel),
-            'askretrycancel': ('question', QMB.Retry, QMB.Cancel),
-            'showinfo': ('information', QMB.Ok, QMB.NoButton),
-            'showerror': ('critical', QMB.Ok, QMB.NoButton),
-            'showwarning': ('warning', QMB.Ok, QMB.NoButton),
+            'askyesno': ('question', SB.Yes, SB.No),
+            'askquestion': ('question', SB.Yes, SB.No),
+            'askokcancel': ('question', SB.Ok, SB.Cancel),
+            'askretrycancel': ('question', SB.Retry, SB.Cancel),
+            'showinfo': ('information', SB.Ok, SB.NoButton),
+            'showerror': ('critical', SB.Ok, SB.NoButton),
+            'showwarning': ('warning', SB.Ok, SB.NoButton),
         }
 
         try:
@@ -29,8 +29,12 @@ class _qtMessageBox:
         except KeyError:
             raise AttributeError(name)
 
-        return lambda title, message, **kw: ok == getattr(QMB, method)(
-                None, title, message, buttons=ok | others)
+        func = getattr(QtWidgets.QMessageBox, method)
+        def wrapper(title, message, **kw):
+            reply = func(None, title, message, buttons=ok | others)
+            return reply == ok
+
+        return wrapper
 
 
 class _qtFileDialog:

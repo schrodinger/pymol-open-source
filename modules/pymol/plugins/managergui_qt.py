@@ -1,12 +1,11 @@
 from pymol.gui import get_qtwindow as getPyMOLWindow
 from pymol.plugins import installation, repository
 
-from pymol.Qt import QtGui, QtCore
-from pymol.Qt import QtWidgets
+from pymol.Qt import QtGui, QtCore, QtWidgets
+Qt = QtCore.Qt
 
 from . import pref_get
 
-Qt = QtCore.Qt
 
 def confirm_network_access():
     '''
@@ -57,7 +56,7 @@ class PluginManager(QtCore.QObject):
         self.form.b_remove_repo.pressed.connect(self.remove_repository)
         self.reload_plugins()
         self.form.l_repo_plugins.setSelectionMode(
-            QtWidgets.QAbstractItemView.ExtendedSelection)
+            QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
         self.form.b_install.pressed.connect(self.install_repo_plugins)
         self.form.b_info.pressed.connect(self.info_repo_plugin)
         self.populate_repositories()
@@ -98,15 +97,15 @@ class PluginManager(QtCore.QObject):
 
         for row, key in enumerate(self.t_preferences_keys):
             item = QtWidgets.QTableWidgetItem(key)
-            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+            item.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
             w.setItem(row, 0, item)
 
             item = QtWidgets.QTableWidgetItem()
             value = preferences[key]
             if isinstance(value, bool):
-                item.setCheckState(Qt.Checked if value else Qt.Unchecked)
+                item.setCheckState(Qt.CheckState.Checked if value else Qt.CheckState.Unchecked)
             else:
-                item.setFlags(item.flags() & ~Qt.ItemIsUserCheckable)
+                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
                 item.setText(str(value))
             w.setItem(row, 1, item)
 
@@ -116,8 +115,8 @@ class PluginManager(QtCore.QObject):
         from . import pref_get, pref_set
         key = self.t_preferences_keys[item.row()]
 
-        if item.flags() & Qt.ItemIsUserCheckable:
-            value = item.checkState() == Qt.Checked
+        if item.flags() & Qt.ItemFlag.ItemIsUserCheckable:
+            value = item.checkState() == Qt.CheckState.Checked
         else:
             value = item.data(0)
 
@@ -225,8 +224,8 @@ class PluginManager(QtCore.QObject):
         def add_plugin_item(info):
             item = window.load_form('pluginitem', QtWidgets.QFrame())
             item._widget = item._dialog
-            item._widget.setFrameStyle(QtWidgets.QFrame.Sunken)
-            item._widget.setFrameShape(QtWidgets.QFrame.Panel)
+            item._widget.setFrameStyle(QtWidgets.QFrame.Shadow.Sunken)
+            item._widget.setFrameShape(QtWidgets.QFrame.Shape.Panel)
 
             item.w_title.setText(info.name)
             item.w_version.setText(info.get_version())
@@ -351,11 +350,11 @@ class PluginManager(QtCore.QObject):
             table.insertRow(table.rowCount())
             table_item = QtWidgets.QTableWidgetItem(label)
             table_item.setFlags(table_item.flags() &
-                 ~(Qt.ItemIsEditable))
+                 ~(Qt.ItemFlag.ItemIsEditable))
             table.setItem(row, 0, table_item)
             table_item = QtWidgets.QTableWidgetItem(text)
             table_item.setFlags(table_item.flags() &
-                 ~(Qt.ItemIsEditable))
+                 ~(Qt.ItemFlag.ItemIsEditable))
             table.setItem(row, 1, table_item)
 
         add_line('Name', info.name)

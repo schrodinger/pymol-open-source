@@ -6,8 +6,7 @@ import itertools, math
 
 import pymol
 
-from pymol.Qt import QtGui, QtCore
-from pymol.Qt import QtWidgets
+from pymol.Qt import QtGui, QtCore, QtWidgets
 
 Qt = QtCore.Qt
 
@@ -109,7 +108,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         painter.drawLine(x0, y0, x0, y1)
         h = rect.height()
         num_lines = 10
-        pen.setStyle(Qt.DashLine)
+        pen.setStyle(Qt.PenStyle.DashLine)
         painter.setPen(pen)
         for line in range(1, num_lines):
             y = y0 + h * (1.0 - self.alphaToY(line / float(num_lines)))
@@ -117,8 +116,8 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             painter.drawLine(x0, y, x1, y)
 
     def paintColorDots(self, painter, rect):
-        pen = QtGui.QPen(Qt.gray)
-        pen.setStyle(Qt.SolidLine)
+        pen = QtGui.QPen(Qt.GlobalColor.gray)
+        pen.setStyle(Qt.PenStyle.SolidLine)
         painter.setPen(pen)
         scaled_pts = []
         h = rect.height()
@@ -171,8 +170,8 @@ class VolumeEditorWidget(QtWidgets.QWidget):
                 else:
                     painter_path.lineTo(x, y)
 
-            pen = QtGui.QPen(Qt.red)
-            pen.setStyle(Qt.SolidLine)
+            pen = QtGui.QPen(Qt.GlobalColor.red)
+            pen.setStyle(Qt.PenStyle.SolidLine)
             painter.setPen(pen)
             painter.drawPath(painter_path)
 
@@ -192,7 +191,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         else:
             rect = QtCore.QRect(x, y - sh, sw + 4, sh + 2)
         painter.fillRect(rect,
-                QtGui.QColor(96, 96, 128) if self.line_color == Qt.lightGray else
+                QtGui.QColor(96, 96, 128) if self.line_color == Qt.GlobalColor.lightGray else
                 QtGui.QColor(0xFF, 0xFF, 0xFF))
         painter.drawRect(rect)
         painter.drawText(rect.x() + 2, y - 2, s)
@@ -202,7 +201,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         low = int(math.ceil(self.vmin))
         hi = int(math.floor(self.vmax)) + 1
         pen = painter.pen()
-        pen.setStyle(Qt.SolidLine)
+        pen.setStyle(Qt.PenStyle.SolidLine)
         pen.setColor(self.line_color)
         painter.setPen(pen)
         fm = QtGui.QFontMetrics(painter.font())
@@ -265,10 +264,10 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         # tweak color depening on the panel floating state
         # disabled: always use default style
         is_floating = True  # self.parent().parent().isFloating()
-        self.line_color = Qt.darkGray if is_floating else Qt.lightGray
+        self.line_color = Qt.GlobalColor.darkGray if is_floating else Qt.GlobalColor.lightGray
 
         painter.begin(self)
-        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
         self.paintGrid(painter, self.paint_rect)
         self.paintAxes(painter, self.paint_rect)
         painter.setClipRect(self.paint_rect)
@@ -291,7 +290,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
 
     def mousePressEvent(self, event):
         # process textbox clicks
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             for key, rect in self.text_boxes.items():
                 if rect.contains(event.pos()):
                     if key == "amax":
@@ -316,24 +315,24 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             self.init_pos = event.pos()
             self.zoom_pos = None
             self.constraint = None
-            if self.point < 0 and event.button() == Qt.LeftButton:
+            if self.point < 0 and event.button() == Qt.MouseButton.LeftButton:
                 self.addPoint(
-                    event.pos(), event.modifiers() == Qt.ControlModifier)
+                    event.pos(), event.modifiers() == Qt.KeyboardModifier.ControlModifier)
                 # suppress color picker
                 self.dragged = True
 
     def mouseReleaseEvent(self, event):
         if not self.dragged and self.point >= 0:
-            if event.button() == Qt.RightButton:
+            if event.button() == Qt.MouseButton.RightButton:
                 x, y, r, g, b = self.points[self.point]
                 # in 2.0: help says NoModifier, implemented is ControlModifier
-                if event.modifiers() in (Qt.ControlModifier, Qt.NoModifier):
+                if event.modifiers() in (Qt.KeyboardModifier.ControlModifier, Qt.KeyboardModifier.NoModifier):
                     value = self.points[self.point][0]
                     prev_x = self.points[self.point-1][0] if self.point > 0 else self.vmin
                     next_x = self.points[self.point+1][0] if self.point < len(self.points)-1 else self.vmax
                     x = self.enterValue("Data value",
                         value, prev_x, next_x)
-                elif event.modifiers() == Qt.ShiftModifier:
+                elif event.modifiers() == Qt.KeyboardModifier.ShiftModifier:
                     value = self.points[self.point][1]
                     y = self.enterValue("Alpha value (opacity)",
                         value, 0.0, 1.0)
@@ -341,14 +340,14 @@ class VolumeEditorWidget(QtWidgets.QWidget):
                 self.repaint()
                 if self.real_time:
                     self.updateVolumeColors()
-            if (event.button() == Qt.MidButton or
-                (event.button() == Qt.LeftButton and
-                 event.modifiers() & Qt.ShiftModifier)):
+            if (event.button() == Qt.MouseButton.MidButton or
+                (event.button() == Qt.MouseButton.LeftButton and
+                 event.modifiers() & Qt.KeyboardModifier.ShiftModifier)):
                 self.removePoints(
-                    event.modifiers() & Qt.ControlModifier)
-            elif event.button() == Qt.LeftButton:
+                    event.modifiers() & Qt.KeyboardModifier.ControlModifier)
+            elif event.button() == Qt.MouseButton.LeftButton:
                 self.setPointColor(self.point,
-                        event.modifiers() == Qt.ControlModifier)
+                        event.modifiers() == Qt.KeyboardModifier.ControlModifier)
 
         self.point = -1
         self.hover_point = -1
@@ -396,7 +395,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         """
         This is called when color dialog is closed.
         """
-        if result == QtWidgets.QDialog.Accepted:
+        if result == QtWidgets.QDialog.DialogCode.Accepted:
             color = self.color_dialog.currentColor()
         else:
             color = self.original_color
@@ -491,16 +490,16 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         self.ignore_set_colors = False
 
     def mouseMoveEvent(self, event):
-        if event.buttons() in (Qt.LeftButton, Qt.RightButton):
-            if (event.buttons() == Qt.RightButton and
-                    event.modifiers() == Qt.ControlModifier):
+        if event.buttons() in (Qt.MouseButton.LeftButton, Qt.MouseButton.RightButton):
+            if (event.buttons() == Qt.MouseButton.RightButton and
+                    event.modifiers() == Qt.KeyboardModifier.ControlModifier):
                 # zoom in
                 self.zoom_pos = event.pos()
                 self.repaint()
             elif self.point >= 0:
                 self.dragged = True
                 if event.buttons(
-                ) & Qt.RightButton and not self.constraint:
+                ) & Qt.MouseButton.RightButton and not self.constraint:
                     # constrained movement
                     dpos = event.pos() - self.init_pos
                     self.constraint = 'x' if (
@@ -558,7 +557,7 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         Moves selected point(s).
         """
         # delta == 2 if moving three points
-        delta = 2 if event.modifiers() == Qt.ControlModifier else 1
+        delta = 2 if event.modifiers() == Qt.KeyboardModifier.ControlModifier else 1
 
         num_points = len(self.points)
         x, y, r, g, b = self.points[self.point]
@@ -813,7 +812,7 @@ def VolumePanelDocked(parent, *args, **kwargs):
     window = QtWidgets.QDockWidget(parent)
     _VolumePanel(widget, window, *args, **kwargs)
     window.setWidget(widget)
-    parent.addDockWidget(Qt.BottomDockWidgetArea, window)
+    parent.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, window)
 
     # disabled: always use default style
     # window.topLevelChanged.connect(widget.editor.windowTopLevelChanged)
