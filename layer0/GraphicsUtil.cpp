@@ -1,8 +1,14 @@
+#include "GraphicsUtil.h"
+
+#include "PyMOLGlobals.h"
+#include "Feedback.h"
+
 #include <stdlib.h>
 #ifdef _WEBGL
+#include <emscripten.h>
 #endif
+
 #include <iostream>
-#include "GraphicsUtil.h"
 // -----------------------------------------------------------------------------
 // UTIL
   // Prints a backtrace during runtime of the last ^ stack frames
@@ -24,6 +30,25 @@ bool glCheckOkay() {
     return false;
   }
   return true;
+}
+
+bool CheckGLErrorOK(PyMOLGlobals* G, std::string_view errString)
+{
+  GLenum err;
+  if ((err = glGetError()) != 0) {
+#ifdef _WEBGL
+    print_trace();
+#else
+    if (G) {
+      PRINTFB(G, FB_CGO, FB_Errors)
+      "GL_Error: 0x%04x @ %s\n", err, errString.data() ENDFB(G);
+    } else {
+      printf("GL_ERROR : 0x%04x %s\n", err, errString.data());
+    }
+    std::terminate();
+#endif
+  }
+  return err == 0;
 }
 
 /**

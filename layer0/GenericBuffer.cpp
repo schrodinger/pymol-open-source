@@ -1,5 +1,8 @@
-#include <iostream>
 #include "GenericBuffer.h"
+
+#include "GraphicsUtil.h"
+
+#include <iostream>
 
 VertexFormatBaseType GetVertexFormatBaseType(VertexFormat format)
 {
@@ -369,13 +372,13 @@ bool GenericBuffer::interleaveBufferData()
 bool GenericBuffer::genBuffer(GLuint& id, size_t size, const void* ptr)
 {
   glGenBuffers(1, &id);
-  if (!glCheckOkay())
+  if (!CheckGLErrorOK(nullptr, "GenericBuffer::genBuffer failed\n"))
     return false;
   glBindBuffer(bufferType(), id);
-  if (!glCheckOkay())
+  if (!CheckGLErrorOK(nullptr, "GenericBuffer::bindBuffer failed\n"))
     return false;
   glBufferData(bufferType(), size, ptr, GL_STATIC_DRAW);
-  if (!glCheckOkay())
+  if (!CheckGLErrorOK(nullptr, "GenericBuffer::bufferData failed\n"))
     return false;
   return true;
 }
@@ -487,7 +490,7 @@ void renderBuffer_t::genBuffer() {
   glRenderbufferStorage(GL_RENDERBUFFER, rbo_lut[(int)_storage],
                         _width,
                         _height);
-  glCheckOkay();
+  CheckGLErrorOK(nullptr, "GLRenderBuffer::genBuffer failed");
 }
 
 void renderBuffer_t::freeBuffer() { glDeleteRenderbuffers(1, &_id); }
@@ -653,7 +656,7 @@ void textureBuffer_t::genBuffer() {
     glTexParameteri(dim, GL_TEXTURE_WRAP_R, tex_tab(_sampling[4]));
 #endif
 
-  glCheckOkay();
+  CheckGLErrorOK(nullptr, "GLTextureBuffer::genBuffer failed");
 }
 
 void textureBuffer_t::freeBuffer() { glDeleteTextures(1, &_id); }
@@ -682,7 +685,7 @@ void textureBuffer_t::texture_data_1D(int width, const void *data) {
   default:
     break;
   };
-  glCheckOkay();
+  CheckGLErrorOK(nullptr, "GLTextureBuffer::texture_data_1D failed");
 #endif
 }
 
@@ -707,7 +710,7 @@ void textureBuffer_t::texture_data_2D(int width, int height, const void *data) {
   default:
     break;
   }
-  glCheckOkay();
+  CheckGLErrorOK(nullptr, "GLTextureBuffer::texture_data_2D failed");
 }
 
 void textureBuffer_t::texture_subdata_2D(
@@ -726,7 +729,7 @@ void textureBuffer_t::texture_subdata_2D(
                     tex_tab(_format), tex_tab(_type), data);
     break;
   }
-  glCheckOkay();
+  CheckGLErrorOK(nullptr, "GLTextureBuffer::texture_subdata_2D failed");
 }
 
 void textureBuffer_t::texture_data_3D(int width, int height, int depth,
@@ -757,7 +760,7 @@ void textureBuffer_t::texture_data_3D(int width, int height, int depth,
   }
 #endif
 
-  glCheckOkay();
+  CheckGLErrorOK(nullptr, "GLTextureBuffer::texture_data_3D failed");
 }
 
 void textureBuffer_t::bind() const { glBindTexture(tex_tab(_dim), _id); }
@@ -929,7 +932,7 @@ void renderTarget_t::layout(std::vector<rt_layout_t> &&desc,
   }
   _fbo->attach_renderbuffer(_rbo, fbo::attachment::DEPTH);
   _desc = std::move(desc);
-  glCheckOkay();
+  CheckGLErrorOK(nullptr, "GLRenderBuffer::layout failed\n");
 }
 
 void renderTarget_t::resize(shape_type size) {

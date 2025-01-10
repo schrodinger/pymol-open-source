@@ -46,6 +46,7 @@ Z* -------------------------------------------------------------------
 #include "Util.h"
 #include "VFont.h"
 #include "Vector.h"
+#include "GraphicsUtil.h"
 
 #include "pymol/algorithm.h"
 

@@ -5,6 +5,7 @@
 #include "CGORenderer.h"
 #include "CoordSet.h"
 #include "Feedback.h"
+#include "GraphicsUtil.h"
 #include "Scene.h"
 #include "SceneDef.h"
 #include "ShaderMgr.h"
@@ -54,17 +55,6 @@ static int CGOConvertDebugMode(int debug, int modeArg)
     mode = GL_POINTS;
   }
   return mode;
-}
-
-#define CHECK_GL_ERROR_OK(printstr)                                            \
-  if ((err = glGetError()) != 0) {                                             \
-    PRINTFB(G, FB_CGO, FB_Errors) printstr, err ENDFB(G);                      \
-  }
-
-void CheckGLErrorOK(PyMOLGlobals* G, pymol::zstring_view errString)
-{
-  GLenum err;
-  CHECK_GL_ERROR_OK(errString.c_str());
 }
 
 static void CGO_gl_begin(CCGORenderer* I, CGO_op_data pc)

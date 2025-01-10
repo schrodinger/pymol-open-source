@@ -1512,10 +1512,12 @@ float *SceneGetPmvMatrix(PyMOLGlobals * G)
 
 GLFramebufferConfig SceneDrawBothGetConfig(PyMOLGlobals* G)
 {
-  if (SceneMustDrawBoth(G)) {
-    return { CShaderMgr::OpenGLDefaultFramebufferID, GL_BACK_LEFT };
-  }
-  return { CShaderMgr::OpenGLDefaultFramebufferID, GL_BACK };
+  GLFramebufferConfig config;
+  config.framebuffer = G->ShaderMgr->defaultBackbuffer.framebuffer;
+  config.drawBuffer = SceneMustDrawBoth(G)
+                          ? GL_BACK_LEFT
+                          : G->ShaderMgr->defaultBackbuffer.drawBuffer;
+  return config;
 }
 
 int SceneCaptureWindow(PyMOLGlobals * G)
@@ -1792,7 +1794,6 @@ pymol::Result<> SceneMakeSizedImage(PyMOLGlobals* G, Extent2D extent,
 
   int nXStep = (extent.width / (I->Width + 1)) + 1;
   int nYStep = (extent.height / (I->Height + 1)) + 1;
-  auto drawBuffer = SceneDrawBothGetConfig(G);
 
   pymol::Image final_image(extent.width, extent.height);
 
@@ -4556,10 +4557,6 @@ int SceneGetDrawFlagGrid(PyMOLGlobals * G, GridInfo * grid, int slot)
 void SceneCopy(PyMOLGlobals * G, GLFramebufferConfig config, int force, int entire_window)
 {
   CScene *I = G->Scene;
-
-  if (config.drawBuffer == GL_BACK) {
-    config.drawBuffer = G->ShaderMgr->defaultBackbuffer.drawBuffer;
-  }
 
   if(force || (!(I->StereoMode ||
                  SettingGetGlobal_b(G, cSetting_stereo_double_pump_mono) || I->ButtonsShown))) {

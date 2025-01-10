@@ -3122,7 +3122,6 @@ static pymol::Result<pymol::Image> OrthoMakeSizedImage(
   OrthoSetExtent(G, extent);
   G->ShaderMgr->bindOffscreenOrtho(extent, true);
 
-  auto drawBuffer = SceneDrawBothGetConfig(G);
   pymol::Image final_image(extent.width, extent.height);
 
   // Save before we change scene extents in OrthoDrawSizedTile
