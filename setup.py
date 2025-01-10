@@ -175,9 +175,9 @@ def create_buildinfo(outputdir, pymoldir="."):
 
 # handle extra arguments
 def str2bool(v: str) -> bool:
-    if v.lower() == "true":
+    if v.lower() in ("true", "yes"):
         return True
-    elif v.lower() == "false":
+    elif v.lower() in ("false", "no"):
         return False
     else:
         raise argparse.ArgumentTypeError("Boolean value expected.")
@@ -186,8 +186,8 @@ def str2bool(v: str) -> bool:
 class options:
     osx_frameworks = True
     jobs = int(os.getenv("JOBS", 0))
-    no_libxml = False
-    no_glut = True
+    libxml = True
+    glut = False
     use_msgpackc = "guess"
     testing = False
     openvr = False
@@ -198,10 +198,10 @@ class options:
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--glut", dest="no_glut", type=str2bool, help="link with GLUT (legacy GUI)"
+    "--glut", dest="glut", type=str2bool, help="link with GLUT (legacy GUI)"
 )
 parser.add_argument(
-    "--no-osx-frameworks",
+    "--osx-frameworks",
     dest="osx_frameworks",
     help="on MacOS use XQuartz instead of native frameworks",
     type=str2bool,
@@ -213,11 +213,11 @@ parser.add_argument(
     help="for parallel builds " "(defaults to number of processors)",
 )
 parser.add_argument(
-    "--no-libxml",
+    "--libxml",
     type=str2bool,
     help="skip libxml2 dependency, disables COLLADA export",
 )
-parser.add_argument("--use-openmp", choices=("yes", "no"), help="Use OpenMP")
+parser.add_argument("--use-openmp", type=str2bool, help="Use OpenMP")
 parser.add_argument(
     "--use-vtkm",
     choices=("1.5", "1.6", "1.7", "no"),
@@ -232,7 +232,7 @@ parser.add_argument(
 parser.add_argument("--testing", type=str2bool, help="Build C-level tests")
 parser.add_argument("--openvr", dest="openvr", type=str2bool)
 parser.add_argument(
-    "--no-vmd-plugins",
+    "--vmd-plugins",
     dest="vmd_plugins",
     type=str2bool,
     help="Disable VMD molfile plugins (libnetcdf dependency)",
@@ -433,7 +433,9 @@ class install_pymol(install):
 
     def run(self):
         super().run()
-        self.install_pymol_path()
+
+        assert self.pymol_path is not None
+        self.install_pymol_path(self.pymol_path)
 
         if not self.no_launcher:
             self.make_launch_script()
@@ -462,19 +464,19 @@ class install_pymol(install):
         copy = self.copy_tree_nosvn if os.path.isdir(src) else self.copy_file
         copy(src, dst)
 
-    def install_pymol_path(self):
-        self.mkpath(self.pymol_path)
+    def install_pymol_path(self, base_path):
+        self.mkpath(base_path)
         for name in [
             "LICENSE",
             "data",
             "test",
             "examples",
         ]:
-            self.copy(name, os.path.join(self.pymol_path, name))
+            self.copy(name, os.path.join(base_path, name))
 
         if options.openvr:
             self.copy(
-                "contrib/vr/README.md", os.path.join(self.pymol_path, "README-VR.txt")
+                "contrib/vr/README.md", os.path.join(base_path, "README-VR.txt")
             )
 
     def make_launch_script(self):
@@ -606,7 +608,7 @@ if options.vmd_plugins:
         ("_PYMOL_VMD_PLUGINS", None),
     ]
 
-if not options.no_libxml:
+if options.libxml:
     # COLLADA support
     def_macros += [("_HAVE_LIBXML", None)]
     libs += ["xml2"]
@@ -627,7 +629,7 @@ else:
 
     pymol_src_dirs += ["contrib/mmtf-c"]
 
-if options.no_glut:
+if not options.glut:
     def_macros += [
         ("_PYMOL_NO_MAIN", None),
     ]
@@ -652,7 +654,7 @@ if MAC:
     if options.osx_frameworks:
         ext_link_args += [
             "-framework OpenGL",
-        ] + (not options.no_glut) * [
+        ] + (options.glut) * [
             "-framework GLUT",
         ]
         def_macros += [
@@ -661,7 +663,7 @@ if MAC:
     else:
         libs += [
             "GL",
-        ] + (not options.no_glut) * [
+        ] + (options.glut) * [
             "glut",
         ]
 
@@ -684,11 +686,11 @@ if WIN:
             "freetype",
             "libpng",
         ]
-        + (not options.no_glut)
+        + (options.glut)
         * [
             "freeglut",
         ]
-        + (not options.no_libxml)
+        + (options.libxml)
         * [
             "libxml2",
         ]
@@ -708,7 +710,7 @@ if not (MAC or WIN):
     libs += [
         "GL",
         "GLEW",
-    ] + (not options.no_glut) * [
+    ] + (options.glut) * [
         "glut",
     ]
 

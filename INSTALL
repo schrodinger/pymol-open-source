@@ -1,6 +1,6 @@
 
 ----------------------------------------------------------------------
-INSTALLATION VIA COMPILATION 
+INSTALLATION VIA COMPILATION
 ----------------------------------------------------------------------
 
 See also: http://pymolwiki.org/index.php/Linux_Install
@@ -15,19 +15,19 @@ REQUIREMENTS
       https://github.com/schrodinger/pmw-patched
     - OpenGL
     - GLEW
-    - GLUT (freeglut) (optional, enable with --glut)
+    - GLUT (freeglut) (optional, enable with --glut=true)
     - libpng
     - freetype
-    - libxml2 (optional, for COLLADA export, disable with --no-libxml)
+    - libxml2 (optional, for COLLADA export, disable with --libxml=no)
     - msgpack-c 2.1.5+ (optional, for fast MMTF loading and export,
         disable with --use-msgpackc=no)
     - mmtf-cpp (for fast MMTF export, disable with --use-msgpackc=no)
     - PyQt5, PyQt6, PySide2 or PySide6 (optional, will fall back to Tk
-        interface if compiled with --glut)
+        interface if compiled with --glut=true)
     - glm
-    - catch2 (optional, enable with --testing)
-    - openvr 1.0.x (optional, enable with --openvr)
-    - libnetcdf (optional, disable with --no-vmd-plugins)
+    - catch2 (optional, enable with --testing=true)
+    - openvr 1.0.x (optional, enable with --openvr=true)
+    - libnetcdf (optional, disable with --vmd-plugins=no)
 
 SETUP OPTIONS
 
@@ -57,7 +57,8 @@ INSTALLATION
 
 RUNNING PyMOL
 
-    ~/someplace/bin/pymol
+    $PYMOL_PATH/bin/pymol
+    or
+    $PYTHONUSERBASE/bin/pymol
 
 Good luck!
-
