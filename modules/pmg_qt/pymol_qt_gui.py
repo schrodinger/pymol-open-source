@@ -1223,6 +1223,10 @@ def execapp():
     window = PyMOLQtGUI()
     window.setWindowTitle("PyMOL")
 
+    # fix linux dash icon/missing wmclass
+    QtCore.QCoreApplication.setApplicationName("PyMOL")
+    QtGui.QGuiApplication.setDesktopFileName("org.pymol.PyMOL")
+
     @commandoverloaddecorator
     def viewport(w=-1, h=-1, _self=None):
         window.viewportsignal.emit(int(w), int(h))
