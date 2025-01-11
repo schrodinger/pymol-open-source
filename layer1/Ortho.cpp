@@ -3150,10 +3150,13 @@ pymol::Result<bool> OrthoDeferImage(PyMOLGlobals* G, Extent2D extent, const char
       // Something went bad here. Should fire on deferred.
       return;
     }
+    if (!with_overlay) {
+      return;
+    }
     auto overlay = OrthoMakeSizedImage(G, extent, quiet);
     if (overlay) {
       if (auto composite = PyMOLImageComposite(G, *G->Scene->Image, *overlay)) {
-        // TODO: Save composite image
+        G->Scene->Image = std::make_shared<pymol::Image>(*composite);
       }
     }
   };

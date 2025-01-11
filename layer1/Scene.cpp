@@ -1813,9 +1813,14 @@ pymol::Result<> SceneMakeSizedImage(PyMOLGlobals* G, Extent2D extent,
 
       auto offscreenFBO = G->ShaderMgr->bindOffscreenSizedImage(extent, true);
 
+      Rect2D viewport{};
+      // No offset since this is now done offscreen. In the future,
+      // if there's ever a desire to do this in-place, then the
+      // offset should be applied.
+      viewport.extent = extent;
       SceneRenderInfo renderInfo{};
       renderInfo.mousePos = Offset2D{x_offset, y_offset};
-      renderInfo.oversizeExtent = extent;
+      renderInfo.viewportOverride = viewport;
       renderInfo.excludeSelections = excludeSelections;
       renderInfo.renderWhich = renderWhich;
       renderInfo.offscreenConfig = offscreenFBO;
@@ -1824,15 +1829,13 @@ pymol::Result<> SceneMakeSizedImage(PyMOLGlobals* G, Extent2D extent,
       // JJ: SceneSetViewport in SceneRender will extract the glViewport
       // rather than the Scene extent. Unsure why this is done, so for now
       // just preset the viewport.
-      Rect2D viewport {};
-      viewport.extent = extent;
       SceneSetViewport(G, viewport);
       SceneRender(G, renderInfo);
 
-      auto image = GLImageToPyMOLImage(G, offscreenFBO, SceneGetRect(G));
+      Rect2D srcRect {{}, extent};
+      auto image = GLImageToPyMOLImage(G, offscreenFBO, srcRect);
 
       if (!image.empty()) {
-        Rect2D srcRect {{}, extent};
         Rect2D dstRect{{x, y}, SceneGetExtent(G)};
         PyMOLImageCopy(image, final_image, srcRect, dstRect);
       }
@@ -4566,7 +4569,7 @@ void SceneCopy(PyMOLGlobals * G, GLFramebufferConfig config, int force, int enti
       if(entire_window) {
         rect = OrthoGetRect(G);
       } else {
-        rect = SceneGetRect(G);
+        rect = Rect2D{{}, SceneGetExtent(G)};
       }
       ScenePurgeImage(G);
       auto imgData = G->ShaderMgr->readPixelsFrom(G, rect, config);

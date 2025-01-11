@@ -42,7 +42,7 @@ struct SceneRenderInfo
   Picking* pick = nullptr;
   Offset2D mousePos{};
   Multipick* sceneMultipick = nullptr;
-  Extent2D oversizeExtent{};
+  std::optional<Rect2D> viewportOverride;
   ClickSide clickSide = ClickSide::None;
   bool forceCopy = false;
   bool excludeSelections = false;
