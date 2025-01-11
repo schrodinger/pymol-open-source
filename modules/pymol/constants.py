@@ -1,8 +1,8 @@
 
 # constant objects
 
+from pymol.shortcut import Shortcut
 from .parsing import QuietException
-from .shortcut import Shortcut
 from .constants_palette import palette_dict
 import re
 

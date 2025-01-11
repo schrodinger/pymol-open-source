@@ -23,7 +23,7 @@ if True:
     import traceback
 
     from glob import glob
-    from .cmd import _cmd,lock,unlock,Shortcut,QuietException, \
+    from .cmd import _cmd,lock,unlock,QuietException, \
           _feedback,fb_module,fb_mask, exp_path, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 

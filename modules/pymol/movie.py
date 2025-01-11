@@ -21,6 +21,7 @@ import shutil
 import threading
 import time
 from . import colorprinting
+from pymol.shortcut import Shortcut
 
 def get_movie_fps(_self):
     r = _self.get_setting_float('movie_fps')
@@ -817,7 +818,7 @@ produce_mode_dict = {
     'ray'     : 2,
     }
 
-produce_mode_sc = cmd.Shortcut(produce_mode_dict.keys())
+produce_mode_sc = Shortcut(produce_mode_dict.keys())
 
 
 def find_exe(exe):

@@ -1,184 +1,203 @@
-#A* -------------------------------------------------------------------
-#B* This file contains source code for the PyMOL computer program
-#C* Copyright (c) Schrodinger, LLC.
-#D* -------------------------------------------------------------------
-#E* It is unlawful to modify or remove this copyright notice.
-#F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information.
-#H* -------------------------------------------------------------------
-#I* Additional authors of this source file include:
-#-*
-#-*
-#-*
-#Z* -------------------------------------------------------------------
+# A* -------------------------------------------------------------------
+# B* This file contains source code for the PyMOL computer program
+# C* Copyright (c) Schrodinger, LLC.
+# D* -------------------------------------------------------------------
+# E* It is unlawful to modify or remove this copyright notice.
+# F* -------------------------------------------------------------------
+# G* Please see the accompanying LICENSE file for further information.
+# H* -------------------------------------------------------------------
+# I* Additional authors of this source file include:
+# -*
+# -*
+# -*
+# Z* -------------------------------------------------------------------
 
-if __name__=='pymol.shortcut':
-    from . import parsing
-    from .checking import is_string, is_list
+from typing import Iterable, Optional
+from collections import defaultdict
+from pymol import parsing
 
-if True:
-    def mkabbr(a, m=1):
-        b = a.split('_')
-        b[:-1] = [c[0:m] for c in b[:-1]]
-        return '_'.join(b)
 
-    class Shortcut:
+class Shortcut:
+    def __init__(
+        self,
+        keywords: Optional[Iterable] = None,
+        filter_leading_underscore: bool = True,
+    ):
+        keywords = list(keywords) if keywords is not None else []
+        self.filter_leading_underscore = filter_leading_underscore
+        self.keywords = (
+            [keyword for keyword in keywords if keyword[:1] != "_"]
+            if filter_leading_underscore
+            else keywords
+        )
+        self.shortcut: dict[str, str | int] = {}
+        self.abbreviation_dict = defaultdict(list)
 
-        def __call__(self):
-            return self
+        for keyword in self.keywords:
+            self._optimize_symbols(keyword)
 
-        def __init__(self, keywords=(), filter_leading_underscore=1):
-            self.filter_leading_underscore = filter_leading_underscore
-            if filter_leading_underscore:
-                self.keywords = [x for x in keywords if x[:1]!='_']
-            else:
-                self.keywords = list(keywords)
-            self.shortcut = {}
-            self.abbr_dict = {}
-            self.rebuild()
+        self._rebuild_finalize()
 
-        def add_one(self,a):
-            # optimize symbols
-            hash = self.shortcut
-            abbr_dict = self.abbr_dict
-            for b in range(1,len(a)):
-                sub = a[0:b]
-                hash[sub] = 0 if sub in hash else a
-            if '_' in a:
-                for n in (1, 2):
-                    abbr = mkabbr(a, n)
-                    if a!=abbr:
-                        if abbr in abbr_dict:
-                            if a not in abbr_dict[abbr]:
-                                abbr_dict[abbr].append(a)
-                        else:
-                            abbr_dict[abbr]=[a]
-                        for b in range(abbr.find('_')+1,len(abbr)):
-                            sub = abbr[0:b]
-                            hash[sub] = 0 if sub in hash else a
+    def __contains__(self, keyword: str) -> bool:
+        return keyword in self.shortcut
 
-        def rebuild(self, keywords=None):
-            if keywords is not None:
-                if self.filter_leading_underscore:
-                    self.keywords = [x for x in keywords if x[:1]!='_']
-                else:
-                    self.keywords = list(keywords)
-            # optimize symbols
-            self.shortcut = {}
-            hash = self.shortcut
-            self.abbr_dict = {}
-            abbr_dict = self.abbr_dict
-            #
-            for a in self.keywords:
-                for b in range(1,len(a)):
-                    sub = a[0:b]
-                    hash[sub] = 0 if sub in hash else a
-                if '_' in a:
-                    for n in (1, 2):
-                        abbr = mkabbr(a, n)
-                        if a!=abbr:
-                            if abbr in abbr_dict:
-                                abbr_dict[abbr].append(a)
-                            else:
-                                abbr_dict[abbr]=[a]
-                            for b in range(abbr.find('_')+1,len(abbr)):
-                                sub = abbr[0:b]
-                                hash[sub] = 0 if sub in hash else a
+    def __getitem__(self, keyword: str) -> Optional[int | str]:
+        return self.shortcut.get(keyword)
 
-            self._rebuild_finalize()
+    def __delitem__(self, keyword: str) -> None:
+        self.keywords.remove(keyword)
+        self.rebuild()
 
-        def _rebuild_finalize(self):
-            hash = self.shortcut
-            for a, adk in self.abbr_dict.items():
-                if len(adk)==1:
-                    hash[a]=adk[0]
-            for a in self.keywords:
-                hash[a]=a
+    def _make_abbreviation(self, s: str, groups_length: int) -> str:
+        """
+        Creates an abbreviation for a string by shortening its components.
+        The abbreviation takes the first `groups_length`
+        characters of each part before the last component.
 
-        def interpret(self,kee, mode=0):
-            '''
-            Returns None (no hit), str (one hit) or list (multiple hits)
+        Example 1:
+        Input: s:'abc_def_ghig', groups_length: 1
+        Output: 'a_d_ghig'
 
-            kee = str: query string, setting prefix or shortcut
-            mode = 0/1: if mode=1, do prefix search even if kee has exact match
-            '''
-            if not len(kee): # empty string matches everything
-                return list(self.keywords)
+        Example 2:
+        Input: s:'abc_def', groups_length: 2
+        Output: 'ab_def'
+        """
+        groups = s.split("_")
+        groups[:-1] = [c[0:groups_length] for c in groups[:-1]]
+        return "_".join(groups)
 
-            try:
-                r = self.shortcut[kee]
-            except KeyError:
-                return None
-            if r and not mode:
-                return r
+    def _optimize_symbols(self, keyword: str) -> None:
+        """
+        Optimizes the given keyword by adding abbreviations and shortening
+        components. This method also builds a shortcut dictionary
+        for the keyword and its abbreviated forms.
+        """
+        for i in range(1, len(keyword)):
+            substr = keyword[0:i]
+            self.shortcut[substr] = 0 if substr in self.shortcut else keyword
 
-            # prefix search
-            lst_set = set(a for a in self.keywords if a.startswith(kee))
-            for abbr, a_list in self.abbr_dict.items():
-                if abbr.startswith(kee):
-                    lst_set.update(a_list)
+        if "_" not in keyword:
+            return
 
-            # no match
-            if not lst_set:
-                return None
+        for n in (1, 2):
+            abbreviation = self._make_abbreviation(keyword, n)
 
-            # single match: str
-            lst = list(lst_set)
-            if len(lst) == 1:
-                return lst[0]
+            if keyword == abbreviation:
+                continue
 
-            # multiple matches: list
-            return lst
+            self.abbreviation_dict[abbreviation].append(keyword)
 
-        def has_key(self,kee):
-            return kee in self.shortcut
+            for i in range(abbreviation.find("_") + 1, len(abbreviation)):
+                sub = abbreviation[0:i]
+                self.shortcut[sub] = 0 if sub in self.shortcut else keyword
 
-        __contains__ = has_key
+    def rebuild(self, keywords: Optional[Iterable[str]] = None) -> None:
+        """
+        Rebuilds the shortcuts and abbreviation dictionaries
+        based on the provided list of keywords.
+        This method clears the existing shortcuts and optimizes symbols
+        for the new list of keywords.
+        """
+        keywords = list(keywords) if keywords is not None else []
+        self.keywords = (
+            [keyword for keyword in keywords if keyword[:1] != "_"]
+            if self.filter_leading_underscore
+            else keywords
+        )
+        # optimize symbols
+        self.shortcut = {}
+        self.abbreviation_dict = defaultdict(list)
+        for keyword in self.keywords:
+            self._optimize_symbols(keyword)
 
-        def __getitem__(self,kee):
-            return self.shortcut.get(kee, None)
+        self._rebuild_finalize()
 
-        def __delitem__(self,kee):
-            self.keywords.remove(kee)
-            self.rebuild()
+    def _rebuild_finalize(self) -> None:
+        """
+        Finalizes the rebuild process
+        by setting shortcuts for abbreviations and keywords.
 
-        def append(self,kee):
-            self.keywords.append(kee)
-            self.add_one(kee)
-            self._rebuild_finalize()
+        This method ensures that each abbreviation points to a single keyword and that
+        each keyword has a shortcut.
+        """
+        for abbreviation, keywords in self.abbreviation_dict.items():
+            if len(keywords) == 1:
+                self.shortcut[abbreviation] = keywords[0]
+        for keyword in self.keywords:
+            self.shortcut[keyword] = keyword
 
-        def auto_err(self,kee,descrip=None):
-            result = None
-            if kee not in self.shortcut:
-                if descrip is not None:
-                    msg = "Error: unknown %s: '%s'." % (descrip, kee)
-                    lst = self.interpret('')
-                    if is_list(lst):
-                        if len(lst)<100:
-                            lst.sort()
-                            lst = parsing.list_to_str_list(lst)
-                            msg += " Choices:\n"
-                            msg += "\n".join(lst)
-                    raise parsing.QuietException(msg)
+    def interpret(
+        self, keyword: str, mode: bool = False
+    ) -> Optional[int | str | list[str]]:
+        """
+        Returns None (no hit), str (one hit) or list (multiple hits)
 
-            else:
-                result = self.interpret(kee)
-                if not is_string(result):
-                    if descrip is not None:
-                        lst = parsing.list_to_str_list(result)
-                        msg = "Error: ambiguous %s:\n%s" % (descrip, '\n'.join(lst))
-                        raise parsing.QuietException(msg)
+        keyword = str: query string, setting prefix or shortcut
+        mode = True/False: if mode=True, do prefix search even if kee has exact match
+        """
+        if keyword == "":
+            return self.keywords
+
+        result = self.shortcut.get(keyword)
+        if result is None:
+            return
+        if result and not mode:
             return result
 
-if __name__=='__main__':
-    sc = Shortcut(['warren','wasteland','electric','well'])
-    tv = sc.has_key('a')
-    print(tv==0,tv)
-    tv = sc.has_key('w')
-    print(tv==1,tv)
-    tv = sc.has_key('war')
-    print(tv==1,tv)
-    tv = sc.interpret('w')
-    print(sorted(tv)==['warren', 'wasteland', 'well'],tv)
-    tv = sc.interpret('e')
-    print(isinstance(tv, str), tv)
+        # prefix search
+        unique_keywords = set(
+            word for word in self.keywords if word.startswith(keyword)
+        )
+        for abbreviation, keywords in self.abbreviation_dict.items():
+            if abbreviation.startswith(keyword):
+                unique_keywords.update(keywords)
+        # no match
+        if not unique_keywords:
+            return
+
+        # single match: str
+        # multiple matches: list
+        return (
+            unique_keywords.pop()
+            if len(unique_keywords) == 1
+            else list(unique_keywords)
+        )
+
+    def append(self, keyword: str) -> None:
+        """Adds a new keyword to the list and rebuilds the shortcuts."""
+
+        self.keywords.append(keyword)
+        self._optimize_symbols(keyword)
+        self._rebuild_finalize()
+
+    def auto_err(
+        self, keyword: str, descrip: Optional[str] = None
+    ) -> Optional[int | str | list[str]]:
+        """
+        Automatically raises an error if a keyword is unknown or ambiguous.
+
+        This method checks if a keyword is valid, and if not,
+        raises a descriptive error with suggestions for possible matches.
+        """
+
+        if keyword == "":
+            return
+
+        result = self.interpret(keyword)
+
+        if result is None and descrip is not None:
+            msg = f"Error: unknown {descrip}: '{keyword}'."
+            lst = self.interpret("")
+            if isinstance(lst, list) and len(lst) < 100:
+                lst.sort()
+                lst = parsing.list_to_str_list(lst)
+                msg += " Choices:\n" + "\n".join(lst)
+                raise parsing.QuietException(msg)
+
+        if isinstance(result, list) and descrip is not None:
+            lst = parsing.list_to_str_list(result)
+            options = "\n".join(lst)
+            msg = f"Error: ambiguous {descrip}\\n {options}"
+            raise parsing.QuietException(msg)
+
+        return result

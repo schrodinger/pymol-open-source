@@ -26,7 +26,7 @@ requires = [
 ]
 
 [project.optional-dependencies]
-test = [
+dev = [
   "pillow==10.3.0",
   "pytest==8.2.2",
 ]
