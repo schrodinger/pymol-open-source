@@ -48,6 +48,9 @@ SOFTWARE.
 #include "Feedback.h"
 #include "Matrix.h"
 #include "Ortho.h"
+#include "Scene.h"
+#include "SceneMouse.h"
+#include "ButMode.h"
 
 // local headers
 #include "OpenVRUtils.h"
@@ -727,11 +730,12 @@ void  OpenVRGetPickingProjection(PyMOLGlobals * G, float near_plane, float far_p
 
   // take avarage projection params from eyes
   float left, right, top, bottom;
+  float vertical_offset = 0.45;
   CEye &LEye = I->Left, &REye = I->Right;
   left = (LEye.Left + REye.Left) * 0.5f;
   right = (LEye.Right + REye.Right) * 0.5f;
-  top = (LEye.Top + REye.Top) * 0.5f;
-  bottom = (LEye.Bottom + REye.Bottom) * 0.5f;
+  top = (LEye.Top + REye.Top + vertical_offset) * 0.5f;
+  bottom = (LEye.Bottom + REye.Bottom + vertical_offset) * 0.5f;
   OpenVRGetProjection(left, right, top, bottom, near_plane, far_plane, matrix);
   return;
 }
@@ -1031,7 +1035,6 @@ void HandleLaser(PyMOLGlobals * G, int centerX, int centerY, CMouseEvent const& 
   }
 
   bool menuHit = false;
-
   if (laserSource) {
     I->Picker.Activate(laserSource->GetLaserDeviceIndex(), centerX, centerY);
 
@@ -1054,14 +1057,32 @@ void HandleLaser(PyMOLGlobals * G, int centerX, int centerY, CMouseEvent const& 
       }
     }
 
-    // laser missed
-    float missedColor[4] = {1.0f, 1.0f, 0.0f, 0.5f};
     if (!laserTarget) {
       laserTarget = &I->Picker;
-      if (!SettingGetGlobal_b(G, cSetting_openvr_cut_laser)) {
-        laserSource->SetLaserLength(0.0f);
+
+      CScene *Scene = G->Scene;
+      if (SettingGetGlobal_b(G, cSetting_openvr_cut_laser) && OpenVRIsScenePickerActive(G)) {
+        float atomWorldPos[3];
+        ScenePickAtomInWorld(G, centerX, centerY, atomWorldPos);
+        OpenVRUpdateScenePickerLength(G, atomWorldPos);
       }
-      laserSource->SetLaserColor(missedColor);
+      
+      // check if we hit an atom
+      if (Scene->LastPicked.context.object != NULL) {
+        float atomHitColor[4] = {1.0f, 0.0f, 1.0f, 0.5f};
+        laserSource->SetLaserColor(atomHitColor);
+        // select the atom
+        if(Actions->Action1->WasPressed()) {
+          SceneClickObject(G, Scene->LastPicked.context.object, Scene->LastPicked, cButModeSeleToggle, "");
+        }
+      } else {
+        // laser missed
+        float missedColor[4] = {1.0f, 1.0f, 0.0f, 0.5f};
+        if (!SettingGetGlobal_b(G, cSetting_openvr_cut_laser)) {
+          laserSource->SetLaserLength(0.0f);
+        }
+        laserSource->SetLaserColor(missedColor);
+      }
     }
 
     if (mouseEvent.deviceIndex == laserSource->GetLaserDeviceIndex()) {
