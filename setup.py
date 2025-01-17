@@ -168,7 +168,7 @@ def create_buildinfo(outputdir, pymoldir="."):
 #define _PyMOL_BUILD_DATE %d
 #define _PYMOL_BUILD_GIT_SHA "%s"
         """
-            % (time.time(), sha),
+            % (int(os.environ.get('SOURCE_DATE_EPOCH', time.time())), sha),
             file=out,
         )
 
