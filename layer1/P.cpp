@@ -615,9 +615,9 @@ static T const* get_member_pointer(S const* instance, size_t offset)
  * Should be equivalent to:
  *   OBAtom::GetExplicitValence() [Open Babel 3.0]
  */
-static int getExplicitValence(ObjectMolecule const* obj, size_t atm)
+float getExplicitValence(ObjectMolecule const* obj, size_t atm)
 {
-  int value = 0;
+  float value = 0;
 
   for (auto const& item : AtomNeighbors(obj, atm)) {
     int const order = obj->Bond[item.bond].order;
@@ -643,7 +643,7 @@ static int getExplicitValence(ObjectMolecule const* obj, size_t atm)
  *   RDKit::Atom::getDegree()
  *   OBAtom::GetExplicitDegree() [Open Babel 3.0]
  */
-static unsigned getExplicitDegree(ObjectMolecule const* obj, size_t atm)
+unsigned getExplicitDegree(ObjectMolecule const* obj, size_t atm)
 {
   return AtomNeighbors(obj, atm).size();
 }

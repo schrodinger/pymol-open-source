@@ -54,6 +54,7 @@ Z* -------------------------------------------------------------------
 #include"OVLexicon.h"
 #include"Parse.h"
 
+#include "P.h"
 #include"ListMacros.h"
 
 #ifdef _PYMOL_IP_PROPERTIES
@@ -410,6 +411,7 @@ static int SelectorGetObjAtmOffset(
 #define SELE_LABs ( 0x5500 | STYP_SEL1 | 0x80 )
 #define SELE_PROz ( 0x5600 | STYP_SEL0 | 0x90 )
 #define SELE_NUCz ( 0x5700 | STYP_SEL0 | 0x90 )
+#define SELE_DESz ( 0x5800 | STYP_SEL0 | 0x90 )
 
 #define SEL_PREMAX 0x8
 
@@ -603,6 +605,9 @@ static WordKeyValue Keyword[] = {
 
   {"acceptors", SELE_ACCz},
   {"acc.", SELE_ACCz},
+
+  {"delocalized", SELE_DESz},
+  {"deloc.", SELE_DESz},
 
   {"pepseq", SELE_PEPs},
   {"ps.", SELE_PEPs},
@@ -7471,7 +7476,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
   case SELE_HBDs:
   case SELE_DONz:
   case SELE_ACCz:
-
+  case SELE_DESz:
     {
       /* first, verify chemistry for all atoms... */
       ObjectMolecule *lastObj = nullptr, *obj;
@@ -7494,7 +7499,14 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
       for(a = cNDummyAtoms; a < I->Table.size(); a++)
         base[0].sele[a] = I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hb_donor;
       break;
-
+    case SELE_DESz:
+      for (a = cNDummyAtoms; a < I->Table.size(); a++) {
+        const auto* m = I->Obj[I->Table[a].model];
+        const auto at_i = I->Table[a].atom;
+        const auto deloc = getExplicitDegree(m, at_i) / getExplicitValence(m, at_i);
+        base[0].sele[a] = floor(deloc) != deloc;
+      }
+      break;
     }
     break;
   case SELE_NONz:

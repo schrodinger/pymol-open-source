@@ -29,6 +29,13 @@ class TestQuerying(testing.PyMOLTestCase):
         # used in many tests
         pass
 
+    def testSelectDelocalized(self):
+        cmd.fragment("phe")
+        count = cmd.count_atoms("deloc.")
+        self.assertEqual(count, 8)
+        count = cmd.count_atoms("delocalized")
+        self.assertEqual(count, 8)
+
     def testCountFrames(self):
         self.assertEqual(cmd.count_frames(), 0)
         cmd.pseudoatom("m1")
