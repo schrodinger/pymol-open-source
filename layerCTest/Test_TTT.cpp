@@ -126,10 +126,10 @@ TEST_CASE("TTT Matrix Rotate and Get Rotation", "[TTT Matrix]")
   ttt.rotate(degRot, axis);
   ttt.rotate(degRot, axis2);
   auto rot = ttt.getRotation();
-  REQUIRE(rot[0] == Approx(0.5f));
-  REQUIRE(rot[1] == Approx(0.5f));
-  REQUIRE(rot[2] == Approx(0.5f));
-  REQUIRE(rot[3] == Approx(0.5f));
+  REQUIRE(rot[0] == Catch::Approx(0.5f));
+  REQUIRE(rot[1] == Catch::Approx(0.5f));
+  REQUIRE(rot[2] == Catch::Approx(0.5f));
+  REQUIRE(rot[3] == Catch::Approx(0.5f));
 }
 
 TEST_CASE("TTT Matrix - TTT Matrix Multiply", "[TTT Matrix]")
@@ -248,19 +248,19 @@ TEST_CASE("TTT Lerp", "[TTT Matrix]")
   auto rot = lerped_ttt.getRotation();
   auto post = lerped_ttt.getPostTranslation();
 
-  REQUIRE(pre[0] == Approx(-150.0f));
-  REQUIRE(pre[1] == Approx(-250.0f));
-  REQUIRE(pre[2] == Approx(-350.0f));
-  REQUIRE(pre[0] == Approx(-150.0f));
-  REQUIRE(pre[1] == Approx(-250.0f));
-  REQUIRE(pre[2] == Approx(-350.0f));
-  REQUIRE(rot[0] == Approx(0.40825f));
-  REQUIRE(rot[1] == Approx(0.40825f));
-  REQUIRE(rot[2] == Approx(0.0f));
-  REQUIRE(rot[3] == Approx(0.40825f * 2.0f));
-  REQUIRE(post[0] == Approx( 165.0f));
-  REQUIRE(post[1] == Approx( 275.0f));
-  REQUIRE(post[2] == Approx( 385.0f));
+  REQUIRE(pre[0] == Catch::Approx(-150.0f));
+  REQUIRE(pre[1] == Catch::Approx(-250.0f));
+  REQUIRE(pre[2] == Catch::Approx(-350.0f));
+  REQUIRE(pre[0] == Catch::Approx(-150.0f));
+  REQUIRE(pre[1] == Catch::Approx(-250.0f));
+  REQUIRE(pre[2] == Catch::Approx(-350.0f));
+  REQUIRE(rot[0] == Catch::Approx(0.40825f));
+  REQUIRE(rot[1] == Catch::Approx(0.40825f));
+  REQUIRE(rot[2] == Catch::Approx(0.0f));
+  REQUIRE(rot[3] == Catch::Approx(0.40825f * 2.0f));
+  REQUIRE(post[0] == Catch::Approx( 165.0f));
+  REQUIRE(post[1] == Catch::Approx( 275.0f));
+  REQUIRE(post[2] == Catch::Approx( 385.0f));
 }
 
 TEST_CASE("TTT Serialize To", "[TTT Matrix]")
