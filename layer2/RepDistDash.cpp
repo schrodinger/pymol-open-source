@@ -331,7 +331,7 @@ void RepDistDash::render(RenderInfo* info)
 
   if (!(ray || pick) &&
       (info->pass == RenderPass::Antialias ||
-          (info->pass == RenderPass::Opaque) == dash_transparency_opt))
+          (info->pass == RenderPass::Opaque) == dash_transparency_opt.has_value()))
     return;
 
   if (color < 0)

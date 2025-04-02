@@ -30,15 +30,6 @@
 
 #include "MovieScene.h"
 
-enum {
-  STORE_VIEW   = (1 << 0),
-  STORE_ACTIVE = (1 << 1),
-  STORE_COLOR  = (1 << 2),
-  STORE_REP    = (1 << 3),
-  STORE_FRAME  = (1 << 4),
-  STORE_THUMBNAIL = (1 << 5)
-};
-
 void SceneSetNames(PyMOLGlobals * G, const std::vector<std::string> &list);
 
 /**
@@ -232,12 +223,12 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
 
   // thumbnail
   if (store_thumbnail) {
-    int thumbnail_width = 200;
-    int thumbnail_height = 100;
-    scene.thumbnail = pymol::Image(thumbnail_width, thumbnail_height);
+    auto& thumbnailImage = scene.thumbnail;
+    thumbnailImage.resize(MovieScene::THUMBNAIL_WIDTH, MovieScene::THUMBNAIL_HEIGHT);
     SceneUpdate(G, false); // Make sure scene is on screen
-    SceneDeferImage(G, scene.thumbnail.getWidth(), scene.thumbnail.getHeight(),
-        nullptr, 0, -1, 0, 1, &scene.thumbnail);
+    Extent2D extent{static_cast<std::uint32_t>(thumbnailImage.getWidth()),
+        static_cast<std::uint32_t>(thumbnailImage.getHeight())};
+    SceneDeferImage(G, extent, nullptr, 0, -1, 0, 1, &thumbnailImage);
     SceneInvalidate(G); // Used to refresh the screen
   }
 
@@ -279,6 +270,80 @@ pymol::Result<> MovieSceneStore(PyMOLGlobals * G, const char * name,
   }
 
   return {};
+}
+
+pymol::Result<MovieScene> MovieSceneStoreNoStore(PyMOLGlobals* G,
+    pymol::zstring_view name, pymol::null_safe_zstring_view message, bool store_view,
+    bool store_color, bool store_active, bool store_rep, bool store_frame,
+    bool store_thumbnail, pymol::zstring_view sele)
+{
+  std::string key{name.c_str()};
+
+  MovieScene scene{};
+
+  // storemask
+  scene.storemask = (
+      (store_view ? STORE_VIEW : 0) |
+      (store_active ? STORE_ACTIVE : 0) |
+      (store_color ? STORE_COLOR : 0) |
+      (store_rep ? STORE_REP : 0) |
+      (store_frame ? STORE_FRAME : 0) |
+      (store_thumbnail ? STORE_THUMBNAIL : 0));
+
+  // message
+  scene.message = message.c_str();
+
+  // camera view
+  SceneGetView(G, scene.view);
+
+  // frame
+  scene.frame = SceneGetFrame(G);
+
+  // thumbnail
+  if (store_thumbnail) {
+    // Preserve event by just resizing the thumbnail
+    auto& thumbnailImage = scene.thumbnail;
+    thumbnailImage.resize(
+        MovieScene::THUMBNAIL_WIDTH, MovieScene::THUMBNAIL_HEIGHT);
+    SceneUpdate(G, false); // Make sure scene is on screen
+    Extent2D extent{static_cast<std::uint32_t>(thumbnailImage.getWidth()),
+        static_cast<std::uint32_t>(thumbnailImage.getHeight())};
+    SceneDeferImage(G, extent, nullptr, 0, -1, 0, 1, &thumbnailImage);
+    SceneInvalidate(G); // Used to refresh the screen
+  }
+
+  // atomdata
+  if (store_color || store_rep) {
+
+    // fill atomdata dict
+    for (SeleAtomIterator iter(G, sele.c_str()); iter.next();) {
+      // // don't store atom data for disabled objects
+      // if (!((pymol::CObject*)iter.obj)->Enabled && is_defaultstack)
+      //   continue;
+
+      AtomInfoType * ai = iter.getAtomInfo();
+      int unique_id = AtomInfoCheckUniqueID(G, ai);
+      MovieSceneAtom &sceneatom = scene.atomdata[unique_id];
+
+      sceneatom.color = ai->color;
+      sceneatom.visRep = ai->visRep;
+    }
+  }
+
+  // objectdata
+  for (ObjectIterator iter(G); iter.next();) {
+    const SpecRec * rec = iter.getSpecRec();
+    pymol::CObject * obj = iter.getObject();
+    MovieSceneObject &sceneobj = scene.objectdata[obj->Name];
+
+    sceneobj.color = obj->Color;
+    sceneobj.visRep = obj->visRep;
+
+    // store the "enabled" state in the first bit of visRep
+    SET_BIT_TO(sceneobj.visRep, 0, rec->visible);
+  }
+
+  return scene;
 }
 
 /**
@@ -411,7 +476,16 @@ pymol::Result<> MovieSceneRecall(PyMOLGlobals * G, const char * name, float anim
     SettingSetGlobal_s(G, cSetting_scene_current_name, name);
   }
 
-  MovieScene &scene = it->second;
+  const MovieScene &scene = it->second;
+  MovieSceneRecallImpl(G, scene, animate, recall_view, recall_color,
+      recall_active, recall_rep, recall_frame, sele);
+  return {};
+}
+
+pymol::Result<> MovieSceneRecallImpl(PyMOLGlobals* G, const MovieScene& scene,
+    float animate, bool recall_view, bool recall_color, bool recall_active,
+    bool recall_rep, bool recall_frame, const char* sele)
+{
 
   // recall features if requested and stored
   recall_view &= (scene.storemask & STORE_VIEW) != 0;
@@ -435,7 +509,7 @@ pymol::Result<> MovieSceneRecall(PyMOLGlobals * G, const char * name, float anim
       if (it == scene.atomdata.end())
         continue;
 
-      MovieSceneAtom &sceneatom = it->second;
+      const MovieSceneAtom &sceneatom = it->second;
 
       if (recall_color) {
         if (ai->color != sceneatom.color)
@@ -467,7 +541,7 @@ pymol::Result<> MovieSceneRecall(PyMOLGlobals * G, const char * name, float anim
     if (it == scene.objectdata.end())
       continue;
 
-    MovieSceneObject &sceneobj = it->second;
+    const MovieSceneObject &sceneobj = it->second;
 
     if (recall_color) {
       if (obj->Color != sceneobj.color)
@@ -852,6 +926,16 @@ void MovieScenesFromPyList(PyMOLGlobals * G, PyObject * o) {
   PConvArgsFromPyList(G, o, G->scenes->order, G->scenes->dict);
 
   SceneSetNames(G, G->scenes->order);
+}
+
+pymol::Result<MovieScene*> MovieSceneGet(
+    PyMOLGlobals* G, pymol::zstring_view scene_name)
+{
+  auto it = G->scenes->dict.find(scene_name.c_str());
+  if (it == G->scenes->dict.end()) {
+    return pymol::make_error("Scene Name not found: ", scene_name);
+  }
+  return &G->scenes->dict[scene_name.c_str()];
 }
 
 // vi:sw=2:expandtab:cindent

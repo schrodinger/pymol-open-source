@@ -1,6 +1,7 @@
 import sys
+from pymol.shortcut import Shortcut
 cmd = __import__("sys").modules["pymol.cmd"]
-from .cmd import Shortcut, is_string, QuietException
+from .cmd import is_string, QuietException
 from .cmd import fb_module, fb_mask, fb_action,_raising
 import copy
 

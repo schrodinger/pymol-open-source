@@ -64,6 +64,19 @@ public:
   }
 
   /**
+   * Construct a black image with size (width, height).
+   * @param width Width in pixels
+   * @param height Height in pixels
+   */
+  void resize(int width, int height)
+  {
+    m_width = width;
+    m_height = height;
+    auto newSize = width * height * getPixelSize();
+    m_data.assign(newSize, 0x00);
+  }
+
+  /**
    * Get the width and height in pixels
    */
   std::pair<int, int> getSize() const

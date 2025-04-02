@@ -13,6 +13,9 @@
 #Z* -------------------------------------------------------------------
 
 # must match layer1/Setting.h
+from pymol.shortcut import Shortcut
+
+
 cSetting_tuple = -1
 cSetting_blank = 0
 cSetting_boolean = 1
@@ -26,7 +29,6 @@ if True:
 
     import traceback
     from . import selector
-    from .shortcut import Shortcut
     cmd = __import__("sys").modules["pymol.cmd"]
     from .cmd import _cmd,lock,lock_attempt,unlock,QuietException, \
           is_string, \
@@ -86,7 +88,7 @@ if True:
                 pass
             return boolean_dict[boolean_sc.auto_err(str(value), "boolean")]
         if type in (cSetting_int, cSetting_float):
-            if is_string(value) and boolean_sc.has_key(value):
+            if is_string(value) and value in boolean_sc:
                 value = boolean_dict[boolean_sc.auto_err(str(value), "boolean")]
             if type == cSetting_int:
                 return int(value)

@@ -2714,9 +2714,9 @@ const char *ObjectMoleculeGetStateTitle(const ObjectMolecule * I, int state)
 
 
 /*========================================================================*/
-void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vis_only SELINDICATORARG)
+void ObjectMoleculeRenderSele(ObjectMolecule* I, int curState, int sele,
+    bool vis_only, CGO& selIndicatorsCGO)
 {
-
   PyMOLGlobals *G = I->G;
   CoordSet *cs;
   int a, nIndex;
@@ -2780,15 +2780,9 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 		  v = coord + a + a + a;
 		  if(matrix) {
 		    transform44f3f(matrix, v, v_tmp);
-		    if (SELINDICATORVAR)
-		      CGOVertexv(SELINDICATORVAR, v_tmp);
-		    else
-		      glVertex3fv(v_tmp);
+	      CGOVertexv(&selIndicatorsCGO, v_tmp);
 		  } else {
-		    if (SELINDICATORVAR)
-		      CGOVertexv(SELINDICATORVAR, v);
-		    else
-		      glVertex3fv(v);
+	      CGOVertexv(&selIndicatorsCGO, v);
 		  }
 		}
 	      }
@@ -11230,6 +11224,19 @@ pymol::Result<> ObjectMoleculeDeleteStates(ObjectMolecule* I, const std::vector<
   }
   I->NCSet -= states.size();
   CSet.resize(I->NCSet);
+
+  // Update Rep States
+  for (int i = 0; i < I->NCSet; ++i) {
+    if (CSet[i]) {
+      auto& cset = *CSet[i];
+      for (int r = 0; r < cRepCnt; ++r) {
+        if (cset.Rep[r] && cset.Rep[r]->context.state != 0) {
+          cset.Rep[r]->context.state = i;
+        }
+      }
+    }
+  }
+
   return {};
 }
 

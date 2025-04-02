@@ -12,6 +12,7 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from pymol.shortcut import Shortcut
 from .constants import CURRENT_STATE, ALL_STATES
 
 if True:
@@ -23,7 +24,7 @@ if True:
     import re
     import gzip
     import os
-    from .cmd import _cmd, Shortcut, is_list, is_string, \
+    from .cmd import _cmd, is_list, is_string, \
           safe_list_eval, safe_alpha_list_eval, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
           is_tuple
@@ -68,6 +69,7 @@ if True:
         "empty" : 8,
         "purge" : 9,
         "excise" : 10,
+        "raise" : 11
         }
 
     group_action_sc =  Shortcut(group_action_dict.keys())
@@ -113,6 +115,7 @@ ACTIONS
     toggle:  toggle group display in object menu panel
     auto:    add or toggle
     ungroup: DEPRECATED, use ungroup command
+    raise:   raise a group and it's members to the top level
 
 EXAMPLE
 

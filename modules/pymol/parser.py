@@ -51,7 +51,8 @@ if True:
         result = None
 
         try:
-            sc=sc() # invoke lambda functions (if any)
+            if callable(sc):
+                sc=sc() # invoke lambda functions (if any)
         except:
             traceback.print_exc()
         amb = sc.interpret(st, mode)

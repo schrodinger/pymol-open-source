@@ -11,6 +11,7 @@
 #-*
 #-*
 #Z* -------------------------------------------------------------------
+from pymol.shortcut import Shortcut
 
 if True:
 
@@ -21,7 +22,7 @@ if True:
     import pymol
     import re
     cmd = sys.modules["pymol.cmd"]
-    from .cmd import _cmd,Shortcut, \
+    from .cmd import _cmd, \
           toggle_dict,toggle_sc, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 

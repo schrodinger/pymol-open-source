@@ -831,6 +831,8 @@ CShaderMgr::~CShaderMgr() {
   programs.clear();
 
   freeGPUBuffer(offscreen_rt);
+  freeGPUBuffer(offscreen_ortho_rt);
+  freeGPUBuffer(offscreen_sized_image_rt);
 
   FreeAllVBOs();
 }
@@ -1268,8 +1270,8 @@ CShaderPrg *CShaderMgr::Enable_IndicatorShader() {
     shaderPrg->uniform_set |= 8;
   }
 #ifdef PURE_OPENGL_ES_2
-  shaderPrg->SetMat4fc("g_ModelViewMatrix", SceneGetModelViewMatrix(G));
-  shaderPrg->SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrix(G));
+  shaderPrg->SetMat4fc("g_ModelViewMatrix", SceneGetModelViewMatrixPtr(G));
+  shaderPrg->SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrixPtr(G));
 #endif
 
   return (shaderPrg);
@@ -1291,8 +1293,8 @@ CShaderPrg* CShaderMgr::Enable_BezierShader()
   shaderPrg->Set1f("segmentCount", segmentCount);
   shaderPrg->Set1f("stripCount", stripCount);
 
-  shaderPrg->SetMat4fc("g_ModelViewMatrix", SceneGetModelViewMatrix(G));
-  shaderPrg->SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrix(G));
+  shaderPrg->SetMat4fc("g_ModelViewMatrix", SceneGetModelViewMatrixPtr(G));
+  shaderPrg->SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrixPtr(G));
   return shaderPrg;
 }
 
@@ -1742,6 +1744,53 @@ void CShaderMgr::bindOffscreenOIT(int width, int height, int drawbuf) {
   }
 }
 
+GLFramebufferConfig CShaderMgr::bindOffscreenOrtho(const Extent2D& extent, bool clear) {
+  using namespace tex;
+  renderTarget_t::shape_type req_size(extent.width, extent.height);
+  if (!offscreen_ortho_rt) {
+    auto rt = newGPUBuffer<renderTarget_t>(req_size);
+    rt->layout({ { 4, rt_layout_t::UBYTE } });
+    offscreen_ortho_rt = rt->get_hash_id();
+  }
+
+  auto rt = getGPUBuffer<renderTarget_t>(offscreen_ortho_rt);
+  if (rt->size() != req_size) {
+    freeGPUBuffer(offscreen_ortho_rt);
+    rt = newGPUBuffer<renderTarget_t>(req_size);
+    rt->layout({ { 4, rt_layout_t::UBYTE } });
+    offscreen_ortho_rt = rt->get_hash_id();
+  }
+  rt->bind(clear);
+  return GLFramebufferConfig{
+      static_cast<std::uint32_t>(offscreen_ortho_rt), //
+      GL_COLOR_ATTACHMENT0 //
+  };
+}
+
+GLFramebufferConfig CShaderMgr::bindOffscreenSizedImage(
+    const Extent2D& extent, bool clear)
+{
+  using namespace tex;
+  renderTarget_t::shape_type req_size(extent.width, extent.height);
+  if (!offscreen_sized_image_rt) {
+    auto rt = newGPUBuffer<renderTarget_t>(req_size);
+    rt->layout({{4, rt_layout_t::UBYTE}});
+    offscreen_sized_image_rt = rt->get_hash_id();
+  }
+  auto rt = getGPUBuffer<renderTarget_t>(offscreen_sized_image_rt);
+  if (rt->size() != req_size) {
+    freeGPUBuffer(offscreen_sized_image_rt);
+    rt = newGPUBuffer<renderTarget_t>(req_size);
+    rt->layout({{4, rt_layout_t::UBYTE}});
+    offscreen_sized_image_rt = rt->get_hash_id();
+  }
+  rt->bind(clear);
+  return GLFramebufferConfig{
+      static_cast<std::uint32_t>(offscreen_sized_image_rt), //
+      GL_COLOR_ATTACHMENT0       //
+  };
+}
+
 void CShaderMgr::activateOffscreenTexture(GLuint textureIdx) {
   glActiveTexture(GL_TEXTURE0 + textureIdx);
   auto t = getGPUBuffer<renderTarget_t>(offscreen_rt);
@@ -1754,4 +1803,95 @@ void CShaderMgr::Disable_Current_Shader()
   if(current_shader){
     current_shader->Disable();
   }
+}
+
+void CShaderMgr::setDrawBuffer(GLenum mode)
+{
+  if (mode == GL_BACK) {
+    mode = G->ShaderMgr->defaultBackbuffer.drawBuffer;
+  }
+
+  if (!hasFrameBufferBinding() &&
+      (mode != G->ShaderMgr->currentFBConfig.drawBuffer) && G->HaveGUI &&
+      G->ValidContext) {
+#ifndef PURE_OPENGL_ES_2
+    glDrawBuffer(mode);
+#endif
+    G->ShaderMgr->currentFBConfig.drawBuffer = mode;
+  }
+}
+
+void CShaderMgr::setDrawBuffer(GLFramebufferConfig config)
+{
+  if (config.drawBuffer == GL_BACK) {
+    config = defaultBackbuffer;
+  }
+  if (config.framebuffer == defaultBackbuffer.framebuffer) {
+    glBindFramebuffer(GL_FRAMEBUFFER, config.framebuffer);
+    setDrawBuffer(config.drawBuffer);
+    return;
+  }
+
+  if (auto rt = getGPUBuffer<renderTarget_t>(config.framebuffer)) {
+    rt->bind(false);
+  }
+}
+
+std::vector<unsigned char> CShaderMgr::readPixelsFrom(
+    PyMOLGlobals* G, const Rect2D& rect, const GLFramebufferConfig& srcConfig)
+{
+  constexpr std::size_t pixelSizeBytes = 4;
+  std::vector<unsigned char> dstPixels(
+      rect.extent.width * rect.extent.height * pixelSizeBytes, 0);
+  int prevReadFBO;
+  int prevDrawFBO;
+  int prevReadBuffer;
+  glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFBO);
+  glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFBO);
+  glGetIntegerv(GL_READ_BUFFER, &prevReadBuffer);
+
+  if (srcConfig.framebuffer == OpenGLDefaultFramebufferID) {
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, OpenGLDefaultFramebufferID);
+    glReadBuffer(srcConfig.drawBuffer);
+  } else {
+    if (auto rt = getGPUBuffer<renderTarget_t>(srcConfig.framebuffer)) {
+      // TODO: bindOnlyAsRead
+      rt->fbo()->bind();
+    }
+  }
+  PyMOLReadPixels(rect.offset.x, rect.offset.y, rect.extent.width,
+      rect.extent.height, GL_RGBA, GL_UNSIGNED_BYTE, dstPixels.data());
+
+  // Restore State
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFBO);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFBO);
+  glReadBuffer(prevReadBuffer);
+  return dstPixels;
+}
+
+void CShaderMgr::drawPixelsTo(PyMOLGlobals* G, const Rect2D& rect,
+    const std::byte* srcPixels, const GLFramebufferConfig& dstConfig)
+{
+  int prevReadFBO;
+  int prevDrawFBO;
+  int prevDrawBuffer;
+  glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFBO);
+  glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFBO);
+  glGetIntegerv(GL_READ_BUFFER, &prevDrawBuffer);
+
+  if (dstConfig.framebuffer == OpenGLDefaultFramebufferID) {
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstConfig.framebuffer);
+  } else {
+    if (auto rt = getGPUBuffer<renderTarget_t>(dstConfig.framebuffer)) {
+      // TODO: bindOnlyAsDraw?
+      rt->fbo()->bind();
+    }
+  }
+  glDrawBuffer(dstConfig.drawBuffer);
+  PyMOLDrawPixels(rect.extent.width, rect.extent.height, GL_RGBA,
+      GL_UNSIGNED_BYTE, srcPixels);
+  // Restore State
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFBO);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFBO);
+  glReadBuffer(prevDrawBuffer);
 }

@@ -1,6 +1,5 @@
 #pragma once
 // -----------------------------------------------------------------------------
-#include "GraphicsUtil.h"
 #include "Vector.h"
 #include <vector>
 #include <tuple>

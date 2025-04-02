@@ -159,7 +159,11 @@ ARGUMENTS
             tmp[0] = str(tmp[0]-1) # counting down
             _self.alter(tmp_editor,"resi=tmp[0]",space={ 'tmp' : tmp})
             _self.set_geometry(tmp_connect, 3, 3) # make nitrogen planar
-            _self.fuse("(%s and name C)"%(tmp_editor),tmp_connect,2)
+            try:
+                _self.fuse("(%s and name C)"%(tmp_editor),tmp_connect,2)
+            except pymol.CmdException as e:
+                _self.delete(tmp_wild)
+                raise e
             _self.select(tmp_domain, "byresi (pk1 | pk2)")
 
             if not hydro:
@@ -211,7 +215,12 @@ ARGUMENTS
             tmp[0] = str(tmp[0]+1) # counting up
             _self.alter(tmp_editor,"resi=tmp[0]",space={ 'tmp' : tmp})
             _self.set_geometry(tmp_editor + " & name N", 3, 3) # make nitrogen planar
-            _self.fuse("(%s and name N)"%tmp_editor,tmp_connect,2)
+            try:
+                _self.fuse("(%s and name N)"%tmp_editor,tmp_connect,2)
+            except pymol.CmdException as e:
+                _self.delete(tmp_wild)
+                raise e
+
             _self.select(tmp_domain, "byresi (pk1 | pk2)")
 
             if not hydro:

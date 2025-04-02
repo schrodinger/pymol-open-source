@@ -4752,8 +4752,11 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
         prior = SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
                  nullptr, nullptr, 0.0F, 0.0F, quiet, nullptr, true, -1);
       } else if(width || height) {
-        prior = !SceneDeferImage(G, width, height, fileview.c_str(), -1, dpi,
-            format, quiet, nullptr);
+        Extent2D extent{static_cast<std::uint32_t>(width),
+            static_cast<std::uint32_t>(height)};
+        bool withOverlay = true; // TODO: Retrieve from python
+        prior = !OrthoDeferImage(G, extent, fileview.c_str(), -1, dpi, format,
+            quiet, nullptr, withOverlay);
         result = bool(filename);
       } else if(!SceneGetCopyType(G)) {
         ExecutiveDrawNow(G);      /* TODO STATUS */
@@ -4828,7 +4831,9 @@ static PyObject *CmdMModify(PyObject * self, PyObject * args)
   API_SETUP_ARGS(G, self, args, "Oiiiisii", &self, &action, &index, &count,
       &target, &object, &freeze, &quiet);
   API_ASSERT(APIEnterNotModal(G));
-  auto result = ExecutiveMotionViewModify(G,action,index,count,target,object,freeze,quiet);
+  auto result =
+      ExecutiveMotionViewModify(G, static_cast<ViewElemAction>(action), index,
+          count, target, object, freeze, quiet);
   APIExit(G);
   return APIResult(G, result);
 }
@@ -4850,9 +4855,9 @@ static PyObject *CmdMView(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveMotionView(G, action, first, last, power, bias, simple, 
-                             linear, object, wrap, hand, window, cycles, 
-                             scene_name, scene_cut, state, quiet, autogen);
+    ok = ExecutiveMotionView(G, static_cast<MViewAction>(action), first, last,
+        power, bias, simple, linear, object, wrap, hand, window, cycles,
+        scene_name, scene_cut, state, quiet, autogen);
     APIExit(G);
   }
   return APIResultOk(ok);

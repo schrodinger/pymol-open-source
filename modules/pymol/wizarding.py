@@ -17,7 +17,7 @@ if True:
     import pymol
     import sys
     cmd = __import__("sys").modules["pymol.cmd"]
-    from .cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
+    from .cmd import _cmd,lock,unlock,QuietException,_raising, \
           _feedback,fb_module,fb_mask, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 

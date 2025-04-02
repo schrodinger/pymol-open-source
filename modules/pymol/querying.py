@@ -20,7 +20,7 @@ if True:
     from . import selector
     import pymol
     cmd = __import__("sys").modules["pymol.cmd"]
-    from .cmd import _cmd,lock,unlock,Shortcut, \
+    from .cmd import _cmd,lock,unlock, \
           _feedback,fb_module,fb_mask,is_list, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 

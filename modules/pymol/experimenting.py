@@ -15,7 +15,7 @@
 if True:
 
     from . import selector
-    from .cmd import _cmd,lock,unlock,Shortcut,QuietException, \
+    from .cmd import _cmd,lock,unlock,QuietException, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     cmd = __import__("sys").modules["pymol.cmd"]
     import threading

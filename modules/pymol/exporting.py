@@ -12,6 +12,7 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from pymol.shortcut import Shortcut
 from . import colorprinting
 
 if True:
@@ -24,7 +25,7 @@ if True:
 
     import pymol
     cmd = sys.modules["pymol.cmd"]
-    from .cmd import _cmd,Shortcut,QuietException
+    from .cmd import _cmd,QuietException
     from chempy import io
     from chempy.pkl import cPickle
     from .cmd import _feedback,fb_module,fb_mask, \

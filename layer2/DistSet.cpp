@@ -498,3 +498,33 @@ DistSet::DistSet(PyMOLGlobals* G)
 {
 }
 
+/**
++ * Get the number of atoms in a measurement
++ * @param measureType cRepDash, cRepAngle, cRepDihedral
++ */
+static int DistSetGetMemberN(cRep_t measureType)
+{
+  switch (measureType) {
+  case cRepDash:
+      return 2;
+  case cRepAngle:
+      return 3;
+  case cRepDihedral:
+  default:
+      return 4;
+  }
+}
+
+std::unordered_set<const pymol::CObject*> DistSet::getDependentObjects() const
+{
+  std::unordered_set<const pymol::CObject*> deps;
+  for (const auto& listitem : this->MeasureInfo) {
+      auto* memb = &listitem;
+      auto N = DistSetGetMemberN(static_cast<cRep_t>(memb->measureType));
+      for (auto i = 0; i < N; ++i) {
+        auto eoo = ExecutiveUniqueIDAtomDictGet(G, memb->id[i]);
+        deps.insert(eoo->obj);
+      }
+  }
+  return deps;
+}

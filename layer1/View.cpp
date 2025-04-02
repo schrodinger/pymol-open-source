@@ -30,7 +30,8 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"CGO.h"
 
-int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, int count, int target)
+int ViewElemModify(PyMOLGlobals* G, CViewElem** handle, ViewElemAction action, int index,
+    int count, int target)
 {
   int ok = true;
   CViewElem *vla = *handle;
@@ -39,14 +40,14 @@ int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, i
   }
   if(vla) {
     int n_frame = VLAGetSize(vla);
-    switch(action) {
-    case cViewElemModifyInsert: 
+    switch (action) {
+    case ViewElemAction::Insert: 
       VLAInsert(vla,CViewElem,index,count);
       break;
-    case cViewElemModifyDelete:
+    case ViewElemAction::Delete:
       VLADelete(vla,CViewElem,index,count);
       break;
-    case cViewElemModifyMove:
+    case ViewElemAction::Move:
       if((index>=0) && (target>=0) && (index<n_frame) && (target<n_frame)) {
         if((count>1)||(vla[index].specification_level>1)) {
           
@@ -68,7 +69,7 @@ int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, i
         }
       }
       break;
-    case cViewElemModifyCopy:
+    case ViewElemAction::Copy:
       if((index>=0) && (target>=0) && (index<n_frame) && (target<n_frame)) {
         if((count>1)||(vla[index].specification_level>1)) {
           int i;

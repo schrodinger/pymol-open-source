@@ -79,9 +79,40 @@ const glm::mat4& SceneView::rotMatrix() const noexcept
 {
   return m_rotMatrix;
 }
+
 void SceneView::setRotMatrix(const glm::mat4& m)
 {
   m_rotMatrix = m;
+}
+
+void SceneView::setFov(float fov) noexcept
+{
+  m_fov = std::max(0.0f, fov);
+}
+
+float SceneView::fov() const noexcept
+{
+  return m_fov;
+}
+
+void SceneView::setProjectionMode(ProjectionMode proj) noexcept
+{
+  m_projMode = proj;
+}
+
+SceneView::ProjectionMode SceneView::projectionMode() const noexcept
+{
+  return m_projMode;
+}
+
+SceneView::SceneView(SceneViewType view)
+{
+  setRotMatrix(glm::make_mat4(view));
+  setPos(view[16], view[17], view[18]);
+  setOrigin(view[19], view[20], view[21]);
+  m_clip.m_front = m_clipSafe.m_front = view[22];
+  m_clip.m_back = m_clipSafe.m_back = view[23];
+  m_fov = view[24];
 }
 
 glm::mat4 SceneView::toWorldHomogeneous() const noexcept

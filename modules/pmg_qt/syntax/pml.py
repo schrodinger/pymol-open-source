@@ -92,7 +92,7 @@ class Highlighter(QtGui.QSyntaxHighlighter):
                 for aa, j in zip(cmd.auto_arg, args_i[1:]):
                     aa = aa.get(com)
                     if aa is not None:
-                        keywords = aa[0]().keywords
+                        keywords = aa[0]().keywords if callable(aa[0]) else aa[0].keywords
                         for m in re.finditer(r'\S+', text[i:j]):
                             mi = i + m.start()
                             mj = i + m.end()

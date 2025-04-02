@@ -4063,7 +4063,7 @@ int RayTraceThread(CRayThreadInfo * T)
                           dotgle = _1;
                         else if(dotgle < _0)
                           dotgle = _0;
-                        dotgle = powf(dotgle, 0.29F);
+                        dotgle = pow(dotgle, 0.29F);
                       } else {
                         dotgle = -dot_product3f(r1.surfnormal, bp->SpecNormal); /* fast OpenGL-like global specular */
                       }
@@ -7641,7 +7641,7 @@ void RayGetTTT(CRay * I, float *ttt)
   if(!I->TTTFlag) {
     identity44f(ttt);
   } else {
-    ttt = glm::value_ptr(I->TTT);
+    std::copy_n(glm::value_ptr(I->TTT), 16, ttt);
   }
 }
 

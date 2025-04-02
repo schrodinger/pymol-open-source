@@ -24,6 +24,15 @@ enum {
   cMovieSceneStack_SIZE
 };
 
+enum {
+  STORE_VIEW   = (1 << 0),
+  STORE_ACTIVE = (1 << 1),
+  STORE_COLOR  = (1 << 2),
+  STORE_REP    = (1 << 3),
+  STORE_FRAME  = (1 << 4),
+  STORE_THUMBNAIL = (1 << 5)
+};
+
 struct MovieSceneFuncArgs
 {
   std::string key;
@@ -66,6 +75,14 @@ public:
  */
 class MovieScene {
 public:
+
+  MovieScene() = default;
+  MovieScene(const MovieScene&) = default;
+  MovieScene& operator=(const MovieScene&) = default;
+  MovieScene(MovieScene&&) = default;
+  MovieScene& operator=(MovieScene&&) = default;
+  ~MovieScene() = default;
+
   /// bitmask, features stored in this scene
   int storemask;
 
@@ -80,6 +97,8 @@ public:
 
   /// A png buffer storing a thumbnail of the scene
   pymol::Image thumbnail;
+  constexpr static int THUMBNAIL_WIDTH = 220;
+  constexpr static int THUMBNAIL_HEIGHT = 124;
 
   /// atom properties (color, rep, etc.)
   std::map<int, MovieSceneAtom> atomdata;
@@ -129,6 +148,10 @@ pymol::Result<> MovieSceneRecall(PyMOLGlobals * G, const char * name, float anim
     bool recall_frame = true,
     const char * sele = "all",
     size_t stack = cMovieSceneStackDefault);
+
+pymol::Result<> MovieSceneRecallImpl(PyMOLGlobals* G, const MovieScene& scene,
+    float animate, bool recall_view, bool recall_color, bool recall_active,
+    bool recall_rep, bool recall_frame, const char* sele);
 
 pymol::Result<> MovieSceneRecallAllInstant(PyMOLGlobals * G, pymol::zstring_view name,
     std::size_t stack = cMovieSceneStackDefault);

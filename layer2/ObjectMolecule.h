@@ -27,7 +27,6 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"Symmetry.h"
 #include"DistSet.h"
-#include "Executive_pre.h"
 #include "vla.h"
 #include "Result.h"
 #include "AtomNeighbors.h"
@@ -45,6 +44,7 @@ Z* -------------------------------------------------------------------
 #define cKeywordOrigin "origin"
 
 #define cUndoMask 0xF
+enum cLoadType_t : int;
 
 /**
  * ObjectMolecule's Bond Path (BP) Record
@@ -364,7 +364,15 @@ int ObjectMoleculeExtendIndices(ObjectMolecule * I, int state);
 
 void ObjectMoleculeInvalidateAtomType(ObjectMolecule *I, int state);
 
-void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vis_only SELINDICATORARG);
+/**
+ * Renders the positions of the indicators based for the selection in this object
+ * @param I ObjectMolecule whose selections are rendered
+ * @param curState current state of the object
+ * @param sele selection ID to render
+ * @param vis_only only render visible atoms
+ * @param selIndicatorsCGO CGO to render the selection indicators
+ */
+void ObjectMoleculeRenderSele(ObjectMolecule* I, int curState, int sele, bool vis_only, CGO& selIndicatorsCGO);
 
 bool ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op);
 

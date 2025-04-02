@@ -2,3 +2,4 @@
 *.d
 generated
 build
+.vscode

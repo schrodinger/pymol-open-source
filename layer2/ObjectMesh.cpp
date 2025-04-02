@@ -1045,9 +1045,11 @@ static void ObjectMeshRenderImmediate(
 #endif
 
   // Render Unit Cell Immediately
-  const float* color = ColorGet(I->G, I->Color);
-  CGORender(
+  if (ms->UnitCellCGO) {
+    const float* color = ColorGet(I->G, I->Color);
+    CGORender(
       ms->UnitCellCGO.get(), color, I->Setting.get(), nullptr, info, nullptr);
+  }
 }
 
 static CGO* ObjectMeshRenderImpl(

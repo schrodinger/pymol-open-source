@@ -10347,43 +10347,45 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
                 a_keeper = SelectorCheckNeighbors(G, 1, obj1, at1, at2, zero, scratch);
               }
               if(a_keeper && (mode == 2)) {
-		/* proton comes from ai1 */
-                if(ai1->hb_donor && ai2->hb_acceptor) {
-                  a_keeper = ObjectMoleculeGetCheckHBond(&h_ai, h_crd,
-							 obj1, at1, state1, 
-							 obj2, at2, state2,
-							 hbc);
-                  if(a_keeper) {
-                    if(h_ai && from_proton) {
+		// We need to check:
+                // situation 1:                      ai1 == donor and ai2 == acceptor
+                // situation 2 (if not situation 1): ai1 == acceptor and ai2 == donor
+
+		a_keeper = false;
+		
+                if (ai1->hb_donor && ai2->hb_acceptor) {
+                  /* proton comes from ai1 */
+                  a_keeper = ObjectMoleculeGetCheckHBond(
+                      &h_ai, h_crd, obj1, at1, state1, obj2, at2, state2, hbc);
+                  if (a_keeper) {
+                    if (h_ai && from_proton) {
                       don_vv = h_crd;
                       ai1 = h_ai;
-		    }
-                    else {
+                    } else {
                       don_vv = cs1->coordPtr(idx1);
-		    }
+                    }
                     acc_vv = cs2->coordPtr(idx2);
                   }
-                } else if(ai1->hb_acceptor && ai2->hb_donor) {
-		  /* proton comes from ai2 */
-                  a_keeper = ObjectMoleculeGetCheckHBond(&h_ai, h_crd,
-							 obj2, at2, state2,
-							 obj1, at1, state1, 
-							 hbc);
+                } 
+		
+		// Check situation 2 only if no H-bond is found beforehand
+                if ((!a_keeper) && (ai1->hb_acceptor && ai2->hb_donor)) {
+                  /* proton comes from ai2 */
+                  a_keeper = ObjectMoleculeGetCheckHBond(
+                      &h_ai, h_crd, obj2, at2, state2, obj1, at1, state1, hbc);
 
-                  if(a_keeper) {
-                    if(h_ai && from_proton) {
+                  if (a_keeper) {
+                    if (h_ai && from_proton) {
                       don_vv = h_crd;
                       ai2 = h_ai;
-		    }
-                    else {
+                    } else {
                       don_vv = cs2->coordPtr(idx2);
-		    }
-		    acc_vv = cs1->coordPtr(idx1);
+                    }
+                    acc_vv = cs1->coordPtr(idx1);
                   }
-                } else {
-                  a_keeper = false;
                 }
-	      }
+              }
+		    
               if((sele1 == sele2) && (at1 > at2))
                 a_keeper = false;
 

@@ -136,7 +136,7 @@ int MovieFrameToIndex(PyMOLGlobals * G, int frame);
 int MovieLocked(PyMOLGlobals * G);
 void MovieSetLock(PyMOLGlobals * G, int);
 int MovieDefined(PyMOLGlobals * G);
-int MovieView(PyMOLGlobals * G, int action, int first,
+int MovieView(PyMOLGlobals * G, MViewAction action, int first,
               int last, float power, float bias,
               int simple, float linear, int wrap,
               int hand, int window, int cycles,
@@ -152,7 +152,8 @@ int MovieGetRealtime(PyMOLGlobals * G);
 
 int MovieMatrix(PyMOLGlobals * G, int action);  /* 0 clear, 1 remember, 2 recall */
 
-int MovieViewModify(PyMOLGlobals *G,int action, int index, int count, int target, int freeze, int localize);
+int MovieViewModify(PyMOLGlobals* G, ViewElemAction action, int index,
+    int count, int target, int freeze, int localize);
 void MovieViewReinterpolate(PyMOLGlobals *G);
 void MovieViewTrim(PyMOLGlobals *G,int n_frame);
 

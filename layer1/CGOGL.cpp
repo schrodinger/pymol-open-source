@@ -5,6 +5,7 @@
 #include "CGORenderer.h"
 #include "CoordSet.h"
 #include "Feedback.h"
+#include "GraphicsUtil.h"
 #include "Scene.h"
 #include "SceneDef.h"
 #include "ShaderMgr.h"
@@ -54,17 +55,6 @@ static int CGOConvertDebugMode(int debug, int modeArg)
     mode = GL_POINTS;
   }
   return mode;
-}
-
-#define CHECK_GL_ERROR_OK(printstr)                                            \
-  if ((err = glGetError()) != 0) {                                             \
-    PRINTFB(G, FB_CGO, FB_Errors) printstr, err ENDFB(G);                      \
-  }
-
-void CheckGLErrorOK(PyMOLGlobals* G, pymol::zstring_view errString)
-{
-  GLenum err;
-  CHECK_GL_ERROR_OK(errString.c_str());
 }
 
 static void CGO_gl_begin(CCGORenderer* I, CGO_op_data pc)
@@ -427,7 +417,7 @@ void TransparentInfoSortIX(PyMOLGlobals* G, float* sum, float* z_value, int* ix,
   int idx;
 
 #ifdef PURE_OPENGL_ES_2
-  copy44f(SceneGetModelViewMatrix(G), matrix);
+  copy44f(SceneGetModelViewMatrixPtr(G), matrix);
 #else
   glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
 #endif
@@ -1652,8 +1642,7 @@ static void CGO_gl_disable(CCGORenderer* I, CGO_op_data pc)
     case GL_OIT_SHADER:
     case GL_SMAA1_SHADER:
     case GL_SMAA2_SHADER:
-      glBindFramebufferEXT(
-          GL_FRAMEBUFFER_EXT, I->G->ShaderMgr->default_framebuffer_id);
+      I->G->ShaderMgr->setDrawBuffer(I->G->ShaderMgr->topLevelConfig);
       break;
 #endif
     case GL_BACK_FACE_CULLING:
@@ -2154,8 +2143,8 @@ void CGORenderGL(CGO* I, const float* color, CSetting* set1, CSetting* set2,
 
   if (I->render_alpha) {
     // for now, the render_alpha_only flag calls CGOSetZVector/CGORenderGLAlpha
-    float* ModMatrix = SceneGetModMatrix(G);
-    CGOSetZVector(I, ModMatrix[2], ModMatrix[6], ModMatrix[10]);
+    auto modMatrix = SceneGetModelViewMatrixPtr(G);
+    CGOSetZVector(I, modMatrix[2], modMatrix[6], modMatrix[10]);
     CGORenderAlpha(I, info, 1);
     if (I->render_alpha == 1) // right now, render_alpha 1: renders alpha only,
                               // 2: renders both alpha and rest

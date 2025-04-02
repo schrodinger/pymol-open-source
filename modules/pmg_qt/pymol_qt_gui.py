@@ -1223,6 +1223,9 @@ def execapp():
     window = PyMOLQtGUI()
     window.setWindowTitle("PyMOL")
 
+    # fix gnome/wayland dash icon/missing wmclass
+    app.setDesktopFileName("org.pymol.PyMOL")
+
     @commandoverloaddecorator
     def viewport(w=-1, h=-1, _self=None):
         window.viewportsignal.emit(int(w), int(h))

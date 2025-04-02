@@ -26,6 +26,36 @@ class TestCreating(testing.PyMOLTestCase):
         # see testGroup
         pass
 
+    @testing.requires_version('3.1')
+    def testNestedGroup(self):
+        cmd.pseudoatom('m1')
+        cmd.pseudoatom('m2')
+        cmd.pseudoatom('m3')
+        cmd.group('g1', 'm1 m2')
+        cmd.group('g2', 'g1 m3')
+        m_list = []
+        cmd.iterate('g2', 'm_list.append(model)', space=locals())
+        self.assertItemsEqual(m_list, ['m3', 'm2', 'm1'])
+
+    @testing.requires_version('3.1')
+    def testNestedGroupRaise(self):
+        cmd.pseudoatom('m1')
+        cmd.pseudoatom('m2')
+        cmd.pseudoatom('m3')
+        cmd.group('g1', 'm1 m2')
+        cmd.group('g2', 'g1 m3')
+        m_list = []
+        cmd.iterate('g2', 'm_list.append(model)', space=locals())
+        self.assertItemsEqual(m_list, ['m1', 'm2', 'm3'])
+
+        cmd.group('g1', action='raise')
+        m_list = []
+        cmd.iterate('g2', 'm_list.append(model)', space=locals())
+        self.assertItemsEqual(m_list, ['m3'])
+        m_list = []
+        cmd.iterate('g1', 'm_list.append(model)', space=locals())
+        self.assertItemsEqual(m_list, ['m1', 'm2'])
+
     @testing.requires_version('1.7.7')
     def testGroupRename(self):
         '''

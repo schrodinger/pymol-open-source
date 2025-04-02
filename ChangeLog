@@ -2,6 +2,25 @@
 CHANGE LOG
 =========================================================================
 
+2025-01-24 Jarrett Johnson, Thomas Stewart
+
+    * 3.1.0
+
+    * File Support
+	  - BCIF import support
+	  - gzipped-compressed SDF (SDFGZ) import support
+
+    * Python API
+	  - `delete_states` command (removal of one or more states)
+	  - `declare_command` extension for improved ergonomics of introducing and customizing PyMOL functionality
+	  - `cell_color` setting for altering unit cell colors
+
+    * Developer & Infrastructure
+	  - Migration from distutils to setuptools
+
+	* Additional Contributers: Thomas Holder, ye11owSub, Pedro Lacerda, jrom99, branchvincent, Arlen Oni, and more...
+
+
 2024-04-09 Jarrett Johnson, Thomas Stewart, Thomas Holder, Anton Butsev
 
 	* 3.0.0

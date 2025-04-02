@@ -33,6 +33,7 @@
 #
 # In rare cases, certain nonserious error or warning output should
 # also be suppressed.  Set "quiet" to 2 for this behavior.
+from pymol.shortcut import Shortcut
 
 def _deferred_init_pymol_internals(_pymol):
     # set up some global session tasks
@@ -54,7 +55,7 @@ def _deferred_init_pymol_internals(_pymol):
 
     # take care of some deferred initialization
 
-    _pymol._view_dict_sc = Shortcut({})
+    _pymol._view_dict_sc = Shortcut()
 
     #
 if True:
@@ -78,7 +79,6 @@ if True:
 
         _pymol = pymol
 
-        from .shortcut import Shortcut
 
         from chempy import io
 
