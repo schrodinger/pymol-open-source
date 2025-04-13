@@ -56,7 +56,7 @@ Z* -------------------------------------------------------------------
 #define cPRunType_alter_state    2
 #define cPRunType_label          3
 
-float getExplicitValence(ObjectMolecule const* obj, size_t atm);
+unsigned getExplicitValence(ObjectMolecule const* obj, size_t atm);
 unsigned getExplicitDegree(ObjectMolecule const* obj, size_t atm);
 
 int PLabelExprUsesVariable(PyMOLGlobals * G, const char *expr, const char *var);

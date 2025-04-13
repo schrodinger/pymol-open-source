@@ -7503,7 +7503,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
       for (a = cNDummyAtoms; a < I->Table.size(); a++) {
         const auto* m = I->Obj[I->Table[a].model];
         const auto at_i = I->Table[a].atom;
-        const auto deloc = getExplicitDegree(m, at_i) / getExplicitValence(m, at_i);
+        const auto deloc = (float) getExplicitDegree(m, at_i) / (float) getExplicitValence(m, at_i);
         base[0].sele[a] = floor(deloc) != deloc;
       }
       break;

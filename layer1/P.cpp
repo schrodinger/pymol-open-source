@@ -615,9 +615,9 @@ static T const* get_member_pointer(S const* instance, size_t offset)
  * Should be equivalent to:
  *   OBAtom::GetExplicitValence() [Open Babel 3.0]
  */
-float getExplicitValence(ObjectMolecule const* obj, size_t atm)
+unsigned getExplicitValence(ObjectMolecule const* obj, size_t atm)
 {
-  float value = 0;
+  unsigned value = 0;
 
   for (auto const& item : AtomNeighbors(obj, atm)) {
     int const order = obj->Bond[item.bond].order;
