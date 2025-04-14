@@ -56,6 +56,16 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual([a.name for a in atoms], ['N', 'CA', 'C', 'O'])
         self.assertEqual([a.protons for a in atoms], [7, 6, 6, 8])
 
+    @testing.requires_version("3.1")
+    def testIterateDecorator(self):
+        cmd.fragment('gly')
+        atoms = []
+        @cmd.iterate('not hydro')
+        def real_iterate(at):
+            atoms.append(at)
+        self.assertEqual([a.name for a in atoms], ['N', 'CA', 'C', 'O'])
+        self.assertEqual([a.protons for a in atoms], [7, 6, 6, 8])
+
     @testing.requires_version("2.6")
     def testIterate__explicit_degree(self):
         cmd.fragment("ala")

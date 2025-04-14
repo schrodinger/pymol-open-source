@@ -66,6 +66,7 @@ def _iterate_prepare_args(expression, space, _self):
 if True:
 
     import math
+    from functools import partial
     from . import selector
     cmd = __import__("sys").modules["pymol.cmd"]
     from .cmd import _cmd,lock,unlock,is_string, \
@@ -1487,8 +1488,7 @@ DESCRIPTION
             return _cmd.alter_list(_self._COb, object, list(expr_list),
                                    int(quiet), dict(space))
 
-
-    def iterate(selection, expression, quiet=1, space=None, _self=cmd):
+    def iterate(selection, expression=None, quiet=1, space=None, _self=cmd):
 
         '''
 DESCRIPTION
@@ -1524,6 +1524,9 @@ SEE ALSO
 
     iterate_state, alter, alter_state
         '''
+        if expression is None:
+            return partial(iterate, selection, quiet=quiet, space=space, _self=_self)
+
         expression, space = _iterate_prepare_args(expression, space, _self)
 
         # preprocess selection
