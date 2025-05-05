@@ -82,17 +82,11 @@ using ::copysign;
 
 #include <vtkm/Version.h>
 #include <vtkm/cont/DataSetBuilderUniform.h>
-#include <vtkm/filter/Contour.h>
+#include <vtkm/filter/Contour/Contour.h>
 
 #include <cassert>
 #include <set>
 #include <vector>
-
-#if VTKM_VERSION_MINOR < 6 && VTKM_VERSION_PATCH > 0
-// 1.5.1
-#define ReadPortal GetPortalConstControl
-#define make_ArrayHandleMove(v) make_ArrayHandle(v, vtkm::CopyFlag::Off)
-#endif
 
 /**
  * Make a copy of a field (with operator()) and expose an array-like data access
@@ -342,13 +336,21 @@ static int ContourSurfVolumeVtkm(PyMOLGlobals* G, Isofield* field, float level,
     }
   }
 
-  auto dataSet = vtkm::cont::DataSetBuilderUniform().Create(pointDimensions);
-  dataSet.GetCoordinateSystem().SetData(
-      vtkm::cont::make_ArrayHandleMove(std::move(coorddata)));
-  dataSet.AddField(vtkm::cont::make_Field(pointFieldName,
-      vtkm::cont::Field::Association::POINTS, pointdata, vtkm::CopyFlag::Off));
+  vtkm::cont::CellSetStructured<3> cellSet;
+  cellSet.SetPointDimensions(pointDimensions);
 
-  vtkm::filter::Contour filter;
+  vtkm::cont::DataSet dataSet;
+  dataSet.SetCellSet(cellSet);
+
+  vtkm::cont::CoordinateSystem coordinateSystem(
+    "coordinates", vtkm::cont::make_ArrayHandleMove(std::move(coorddata)));
+
+    dataSet.AddCoordinateSystem(coordinateSystem);
+
+    dataSet.AddField(vtkm::cont::make_Field(pointFieldName,
+        vtkm::cont::Field::Association::Points, pointdata, vtkm::CopyFlag::Off));
+
+  vtkm::filter::contour::Contour filter;
   filter.SetIsoValue(level);
   filter.SetActiveField(pointFieldName);
   filter.SetGenerateNormals(mode == cIsosurfaceMode::triangles_grad_normals ||
@@ -362,12 +364,12 @@ static int ContourSurfVolumeVtkm(PyMOLGlobals* G, Isofield* field, float level,
   if (filter.GetGenerateNormals()) {
     outputData.GetPointField(filter.GetNormalArrayName())
         .GetData()
-        .CastAndCall(normalscopy);
+        .CastAndCallForTypes<vtkm::TypeListAll, VTKM_DEFAULT_STORAGE_LIST>(normalscopy);
   }
 
   auto const& vertices = outputData.GetCoordinateSystem();
   auto const& cellsetsingletype =
-      outputData.GetCellSet().Cast<vtkm::cont::CellSetSingleType<>>();
+      outputData.GetCellSet().AsCellSet<vtkm::cont::CellSetSingleType<>>();
 
   side = get_adjusted_side(level, side);
 

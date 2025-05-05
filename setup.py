@@ -220,7 +220,7 @@ parser.add_argument(
 parser.add_argument("--use-openmp", type=str2bool, help="Use OpenMP")
 parser.add_argument(
     "--use-vtkm",
-    choices=("1.5", "1.6", "1.7", "no"),
+    choices=("2.0", "2.1", "2.2", "2.3", "no"),
     help="Use VTK-m for isosurface generation",
 )
 parser.add_argument(
@@ -730,17 +730,11 @@ if options.use_vtkm != "no":
         vtkm_inc_dir,
         vtkm_inc_dir + "/vtkm/thirdparty/diy/vtkmdiy/include",
         vtkm_inc_dir + "/vtkm/thirdparty/lcl/vtkmlcl",
-    ] + (options.use_vtkm == "1.5") * [
-        vtkm_inc_dir + "/vtkm/thirdparty/diy",
-        vtkm_inc_dir + "/vtkm/thirdparty/taotuple",
     ]
     libs += [
         f"vtkm_cont-{options.use_vtkm}",
-        (
-            f"vtkm_filter-{options.use_vtkm}"
-            if options.use_vtkm == "1.5"
-            else f"vtkm_filter_contour-{options.use_vtkm}"
-        ),
+        f"vtkm_filter_contour-{options.use_vtkm}",
+        f"vtkm_filter_core-{options.use_vtkm}",
     ]
 
 if options.vmd_plugins:
