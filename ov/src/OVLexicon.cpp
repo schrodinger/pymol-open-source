@@ -99,7 +99,7 @@ static OVstatus OVLexicon_CheckStorage(OVLexicon * uk, ov_word entry_size,
 static ov_word _GetCStringHash(ov_uchar8 * str)
 {
   const ov_uchar8 *p = str;
-  ov_word x;
+  ov_size x;
   ov_size len = 0;
   ov_uchar8 c;
 
@@ -109,7 +109,7 @@ static ov_word _GetCStringHash(ov_uchar8 * str)
     len++;
   }
   x ^= len;
-  return x;
+  return static_cast<ov_word>(x);
 }
 
 OVstatus OVLexicon_Pack(OVLexicon * uk)
