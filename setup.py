@@ -646,6 +646,8 @@ if options.openvr:
 
 inc_dirs += pymol_src_dirs
 
+inc_dirs += ["contrib/pocketfft"]
+
 # ============================================================================
 if MAC:
     libs += ["GLEW"]

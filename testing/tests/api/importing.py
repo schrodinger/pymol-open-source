@@ -712,3 +712,9 @@ class TestImporting(testing.PyMOLTestCase):
         with self.assertRaisesRegex(pymol.CmdException,
                                     'Parsing CIF file failed: truncated loop'):
             cmd.load_raw('data_foo loop_ _k.a _k.b 1 2 3', 'cif', 'm2')
+
+    def testLoad_cif_map(self):
+        filename = self.datafile("cif_map.cif")
+        cmd.load(filename, 'cif_map')
+        field = cmd.get_volume_field('cif_map')
+        self.assertEqual(field.shape, (12, 12, 12))

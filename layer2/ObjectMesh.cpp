@@ -550,7 +550,8 @@ void ObjectMesh::update()
             {
               float *min_ext, *max_ext;
               float tmp_min[3], tmp_max[3];
-              if (MatrixInvTransformExtentsR44d3f(ms->Matrix.data(),
+              auto matPtr = ms->Matrix.empty() ? nullptr : ms->Matrix.data();
+              if (MatrixInvTransformExtentsR44d3f(matPtr,
                       ms->ExtentMin, ms->ExtentMax, tmp_min, tmp_max)) {
                 min_ext = tmp_min;
                 max_ext = tmp_max;
@@ -1229,7 +1230,8 @@ ObjectMesh* ObjectMeshFromXtalSym(PyMOLGlobals* G, ObjectMesh* obj,
     if (ok) {
       float *min_ext, *max_ext;
       float tmp_min[3], tmp_max[3];
-      if (MatrixInvTransformExtentsR44d3f(ms->Matrix.data(), ms->ExtentMin,
+      auto* matPtr = ms->Matrix.empty() ? nullptr : ms->Matrix.data();
+      if (MatrixInvTransformExtentsR44d3f(matPtr, ms->ExtentMin,
               ms->ExtentMax, tmp_min, tmp_max)) {
         min_ext = tmp_min;
         max_ext = tmp_max;

@@ -35,6 +35,7 @@
 #include"Version.h"
 #include"main.h"
 #include"Base.h"
+#include"CifFile.h"
 #include"Executive.h"
 #include"SpecRec.h"
 #include"ObjectMap.h"
@@ -178,6 +179,21 @@ ExecutiveRenameObjectAtoms
 ExecutiveSpheroid
 
 */
+
+/**
+ * @brief Processes CIF string and manages either Map or Molecule object
+ * @param I Pointer to a possibly existing object
+ * @param object_name Name of the object
+ * @param st CIF string
+ * @param frame State/Frame number
+ * @param discrete Discrete object flag
+ * @param quiet Suppress output
+ * @param multiplex Multiplex flag
+ * @param zoom Zoom flag
+ */
+static pymol::Result<pymol::CObject*> ExecutiveProcessCif(PyMOLGlobals* G,
+    pymol::CObject* I, const char* object_name, const char* st, int frame,
+    int discrete, int quiet, int multiplex, int zoom);
 
 int ExecutiveGetNamesListFromPattern(PyMOLGlobals * G, const char *name,
                                      int allow_partial, int expand_groups);
@@ -3891,9 +3907,8 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
     break;
   case cLoadTypeCIF:
   case cLoadTypeCIFStr: {
-    auto res =
-        ObjectMoleculeReadCifStr(G, static_cast<ObjectMolecule*>(origObj),
-            content, state, discrete, quiet, multiplex, zoom);
+    auto res = ExecutiveProcessCif(G, static_cast<ObjectMolecule*>(origObj),
+             object_name, content, state, discrete, quiet, multiplex, zoom);
     p_return_if_error(res);
     obj = res.result();
   } break;
@@ -4332,6 +4347,59 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, pymol::CObject * origObj,
   }
 
   return ok;
+}
+
+static pymol::Result<pymol::CObject*> ExecutiveProcessCif(PyMOLGlobals* G, pymol::CObject* I,
+    const char* object_name, const char* st, int frame, int discrete, int quiet,
+    int multiplex, int zoom)
+{
+  auto cif = std::make_shared<cif_file_with_error_capture>();
+  if (!cif->parse_string(st)) {
+    return pymol::make_error("Parsing CIF file failed: ", cif->m_error_msg);
+  }
+
+  auto has_refln = [](const auto& datablock) {
+    return datablock.get_arr("_refln.index_h") != nullptr;
+  };
+
+  bool new_obj = I == nullptr;
+
+  pymol::CObject* obj{};
+  for (const auto& [code, datablock] : cif->datablocks()) {
+    // Map Coeffs / Reflections
+    if (has_refln(datablock)) {
+      auto map = ObjectMapReadCifStr(G, datablock);
+      p_return_if_error(map);
+      obj = map.result();
+    } else if (auto mol =
+                   ObjectMoleculeReadCifData(G, &datablock, discrete, quiet)) {
+      obj = mol;
+#ifndef _PYMOL_NOPY
+      // we only provide access from the Python API so far
+      if (SettingGet<bool>(G, cSetting_cif_keepinmemory)) {
+        mol->m_cifdata = &datablock;
+        mol->m_ciffile = cif;
+      }
+#endif
+    }
+    if (!obj) {
+      PRINTFB(G, FB_ObjectMolecule, FB_Warnings)
+      " mmCIF-Warning: no map coefficients or coordinates found in data_%s\n",
+          datablock.code() ENDFB(G);
+      continue;
+    }
+
+    if (cif->datablocks().size() == 1 || multiplex == 0) {
+      return obj;
+    }
+
+    // multiplexing
+    ObjectSetName(obj, datablock.code());
+    ExecutiveDelete(G, obj->Name);
+    ExecutiveManageObject(G, obj, zoom, true);
+  } // end for
+
+  return obj;
 }
 
 pymol::Result<> ExecutiveAssignSS(PyMOLGlobals* G,

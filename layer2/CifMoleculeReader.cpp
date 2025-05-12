@@ -5,12 +5,23 @@
  */
 
 #include <algorithm>
+#include <complex>
 #include <string>
 #include <map>
 #include <set>
 #include <vector>
 #include <memory>
 #include <array>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#ifdef TRACE
+#include <iostream>
+#include <iomanip>
+#include <glm/geometric.hpp> // For glm::length, glm::dot, glm::normalize, glm::distance
+#include <glm/gtx/string_cast.hpp> // For printing glm::vec3
+#endif // TRACE
 
 #include "os_predef.h"
 #include "os_std.h"
@@ -27,6 +38,7 @@
 #include "Scene.h"
 #include "Rep.h"
 #include "ObjectMolecule.h"
+#include "ObjectMap.h"
 #include "CifFile.h"
 #include "CifBondDict.h"
 #include "Util2.h"
@@ -36,21 +48,14 @@
 #include "pymol/zstring_view.h"
 #include "Feedback.h"
 
+#include "pocketfft_hdronly.h"
+
 #ifdef _PYMOL_IP_PROPERTIES
 #endif
 
-using pymol::cif_data;
 using pymol::cif_array;
 
-/**
- * CIF parser which captures the last error message.
- */
-class cif_file_with_error_capture : public pymol::cif_file
-{
-public:
-  std::string m_error_msg;
-  void error(const char* msg) override { m_error_msg = msg; }
-};
+constexpr auto EPSILON = std::numeric_limits<float>::epsilon();
 
 // canonical amino acid three letter codes
 const char * aa_three_letter[] = {
@@ -344,7 +349,7 @@ static int bondOrderLookup(const char * order) {
 /**
  * Read bonds from CHEM_COMP_BOND in `bond_dict` dictionary
  */
-static bool read_chem_comp_bond_dict(const cif_data * data, bond_dict_t &bond_dict) {
+static bool read_chem_comp_bond_dict(const pymol::cif_data * data, bond_dict_t &bond_dict) {
   const cif_array *arr_id_1, *arr_id_2, *arr_order, *arr_comp_id;
 
   if( !(arr_id_1  = data->get_arr("_chem_comp_bond.atom_id_1")) ||
@@ -675,7 +680,7 @@ static oper_collection_t parse_oper_expression(const std::string &expr) {
  * assembly_id: ID of the assembly or nullptr to use first assembly
  */
 static bool get_assembly_chains(PyMOLGlobals * G,
-    const cif_data * data,
+    const pymol::cif_data * data,
     std::set<lexidx_t> &assembly_chains,
     const char * assembly_id) {
 
@@ -710,7 +715,7 @@ static bool get_assembly_chains(PyMOLGlobals * G,
  */
 static
 CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
-    const cif_data * data,
+    const pymol::cif_data * data,
     const AtomInfoType * atInfo,
     const CoordSet * cset,
     const char * assembly_id) {
@@ -830,7 +835,7 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
 /**
  * Set ribbon_trace_atoms and cartoon_trace_atoms for CA/P only models
  */
-static bool read_pdbx_coordinate_model(PyMOLGlobals * G, const cif_data * data, ObjectMolecule * mol) {
+static bool read_pdbx_coordinate_model(PyMOLGlobals * G, const pymol::cif_data * data, ObjectMolecule * mol) {
   const cif_array * arr_type = data->get_arr("_pdbx_coordinate_model.type");
   const cif_array * arr_asym = data->get_arr("_pdbx_coordinate_model.asym_id");
 
@@ -868,7 +873,7 @@ static bool read_pdbx_coordinate_model(PyMOLGlobals * G, const cif_data * data, 
 /**
  * Read CELL and SYMMETRY
  */
-static CSymmetry * read_symmetry(PyMOLGlobals * G, const cif_data * data) {
+static CSymmetry * read_symmetry(PyMOLGlobals * G, const pymol::cif_data * data) {
   const cif_array * cell[6] = {
     data->get_arr("_cell?length_a"),
     data->get_arr("_cell?length_b"),
@@ -917,7 +922,7 @@ static CSymmetry * read_symmetry(PyMOLGlobals * G, const cif_data * data) {
 /**
  * Read CHEM_COMP_ATOM
  */
-static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, const cif_data * data,
+static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, const pymol::cif_data * data,
     AtomInfoType ** atInfoPtr) {
 
   const cif_array *arr_x, *arr_y = nullptr, *arr_z = nullptr;
@@ -1046,7 +1051,7 @@ public:
  *
  * return: models as VLA of coordinate sets
  */
-static CoordSet** read_atom_site(PyMOLGlobals* G, const cif_data* data,
+static CoordSet** read_atom_site(PyMOLGlobals* G, const pymol::cif_data* data,
     AtomInfoType** atInfoPtr, CifContentInfo& info, bool discrete, bool quiet)
 {
 
@@ -1271,7 +1276,7 @@ static CoordSet** read_atom_site(PyMOLGlobals* G, const cif_data* data,
 /**
  * Update `info` with entity polymer information
  */
-static bool read_entity_poly(PyMOLGlobals * G, const cif_data * data, CifContentInfo &info) {
+static bool read_entity_poly(PyMOLGlobals * G, const pymol::cif_data * data, CifContentInfo &info) {
   const cif_array *arr_entity_id = nullptr, *arr_type = nullptr,
         *arr_num = nullptr, *arr_mon_id = nullptr;
 
@@ -1459,7 +1464,7 @@ static bool add_missing_ca(PyMOLGlobals * G,
 /**
  * Read secondary structure from STRUCT_CONF or STRUCT_SHEET_RANGE
  */
-static bool read_ss_(PyMOLGlobals * G, const cif_data * data, char ss,
+static bool read_ss_(PyMOLGlobals * G, const pymol::cif_data * data, char ss,
     sshashmap &ssrecords, CifContentInfo &info)
 {
   const cif_array *arr_beg_chain = nullptr, *arr_beg_resi = nullptr,
@@ -1519,7 +1524,7 @@ static bool read_ss_(PyMOLGlobals * G, const cif_data * data, char ss,
 /**
  * Read secondary structure
  */
-static bool read_ss(PyMOLGlobals * G, const cif_data * datablock,
+static bool read_ss(PyMOLGlobals * G, const pymol::cif_data * datablock,
     pymol::vla<AtomInfoType>& atInfo, CifContentInfo &info)
 {
   sshashmap ssrecords;
@@ -1566,7 +1571,7 @@ static bool read_ss(PyMOLGlobals * G, const cif_data * datablock,
 /**
  * Read the SCALEn matrix into 4x4 `matrix`
  */
-static bool read_atom_site_fract_transf(PyMOLGlobals * G, const cif_data * data, float * matrix) {
+static bool read_atom_site_fract_transf(PyMOLGlobals * G, const pymol::cif_data * data, float * matrix) {
   const cif_array *arr_transf[12];
 
   if (!(arr_transf[0] = data->get_arr("_atom_sites.fract_transf_matrix[1][1]", "_atom_sites_fract_tran_matrix_11")))
@@ -1596,7 +1601,7 @@ static bool read_atom_site_fract_transf(PyMOLGlobals * G, const cif_data * data,
 /**
  * Read anisotropic temperature factors from ATOM_SITE or ATOM_SITE_ANISOTROP
  */
-static bool read_atom_site_aniso(PyMOLGlobals * G, const cif_data * data,
+static bool read_atom_site_aniso(PyMOLGlobals * G, const pymol::cif_data * data,
     pymol::vla<AtomInfoType>& atInfo) {
 
   const cif_array *arr_label, *arr_u11, *arr_u22, *arr_u33, *arr_u12, *arr_u13, *arr_u23;
@@ -1682,7 +1687,7 @@ static bool read_atom_site_aniso(PyMOLGlobals * G, const cif_data * data,
  *
  * return: BondType VLA
  */
-static pymol::vla<BondType> read_geom_bond(PyMOLGlobals * G, const cif_data * data,
+static pymol::vla<BondType> read_geom_bond(PyMOLGlobals * G, const pymol::cif_data * data,
     const pymol::vla<AtomInfoType>& atInfo) {
 
   const cif_array *arr_ID_1, *arr_ID_2;
@@ -1744,7 +1749,7 @@ static pymol::vla<BondType> read_geom_bond(PyMOLGlobals * G, const cif_data * da
  *
  * return: BondType VLA
  */
-static pymol::vla<BondType> read_chemical_conn_bond(PyMOLGlobals * G, const cif_data * data) {
+static pymol::vla<BondType> read_chemical_conn_bond(PyMOLGlobals * G, const pymol::cif_data * data) {
 
   const cif_array *arr_number, *arr_atom_1, *arr_atom_2, *arr_type;
 
@@ -1792,7 +1797,7 @@ static pymol::vla<BondType> read_chemical_conn_bond(PyMOLGlobals * G, const cif_
  *   cset->TmpBond
  *   cset->NTmpBond
  */
-static bool read_struct_conn_(PyMOLGlobals * G, const cif_data * data,
+static bool read_struct_conn_(PyMOLGlobals * G, const pymol::cif_data * data,
     const pymol::vla<AtomInfoType>& atInfo, CoordSet * cset,
     CifContentInfo &info) {
 
@@ -1944,7 +1949,7 @@ next_row:;
  *
  * return: BondType VLA
  */
-static pymol::vla<BondType> read_chem_comp_bond(PyMOLGlobals * G, const cif_data * data,
+static pymol::vla<BondType> read_chem_comp_bond(PyMOLGlobals * G, const pymol::cif_data * data,
     const pymol::vla<AtomInfoType>& atInfo) {
 
   const cif_array *col_ID_1, *col_ID_2, *col_comp_id;
@@ -2010,7 +2015,7 @@ static pymol::vla<BondType> read_chem_comp_bond(PyMOLGlobals * G, const cif_data
  *
  * return: BondType VLA
  */
-static pymol::vla<BondType> read_pymol_bond(PyMOLGlobals * G, const cif_data * data,
+static pymol::vla<BondType> read_pymol_bond(PyMOLGlobals * G, const pymol::cif_data * data,
     const pymol::vla<AtomInfoType>& atInfo) {
 
   const cif_array *col_ID_1, *col_ID_2, *col_order;
@@ -2054,8 +2059,8 @@ static pymol::vla<BondType> read_pymol_bond(PyMOLGlobals * G, const cif_data * d
 /**
  * Create a new (multi-state) object-molecule from datablock
  */
-static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
-    const cif_data * datablock, int discrete, bool quiet)
+ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
+    const pymol::cif_data * datablock, int discrete, bool quiet)
 {
   CoordSet ** csets = nullptr;
   int ncsets;
@@ -2235,6 +2240,995 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
   if (info.type == CIF_MMCIF && !datablock->get_arr("_atom_site.group_pdb")) {
     I->need_hetatm_classification = true;
   }
+
+  return I;
+}
+
+/**
+ * @brief Structure to hold reciprocal space parameters
+ */
+struct ReciprocalSpaceParams {
+  glm::vec3 abc{};
+  glm::vec3 angles{};
+  float volume{};
+};
+
+/**
+ * @brief Calculate the reciprocal space parameters for a given crystal
+ * @param crystal The crystal object
+ * @return The reciprocal space parameters
+ * @note Fundamentals of Crystallography, 3rd edition (Table 2.1)
+ */
+ReciprocalSpaceParams CalculateReciprocalSpaceParam(const CCrystal& crystal) {
+  auto dims = crystal.dims();
+  auto a = dims[0];
+  auto b = dims[1];
+  auto c = dims[2];
+  auto angles = crystal.angles();
+  auto alpha = glm::radians(angles[0]);
+  auto beta = glm::radians(angles[1]);
+  auto gamma = glm::radians(angles[2]);
+  auto cosAlpha = std::cos(alpha);
+  auto cosBeta = std::cos(beta);
+  auto cosGamma = std::cos(gamma);
+  auto sinAlpha = std::sin(alpha);
+  auto sinBeta = std::sin(beta);
+  auto sinGamma = std::sin(gamma);
+  auto volume =
+      a * b * c *
+      std::sqrt(1.0 - cosAlpha * cosAlpha - cosBeta * cosBeta -
+                cosGamma * cosGamma + 2 * cosAlpha * cosBeta * cosGamma);
+  auto inv_volume = 1.0 / volume;
+  auto aStar = b * c * sinAlpha * inv_volume;
+  auto bStar = a * c * sinBeta * inv_volume;
+  auto cStar = a * b * sinGamma * inv_volume;
+  auto cosAlphaStar = (cosBeta * cosGamma - cosAlpha) / (sinBeta * sinGamma);
+  auto cosBetaStar = (cosAlpha * cosGamma - cosBeta) / (sinAlpha * sinGamma);
+  auto cosGammaStar = (cosAlpha * cosBeta - cosGamma) / (sinAlpha * sinBeta);
+  ReciprocalSpaceParams params{};
+  params.abc = {aStar, bStar, cStar};
+  params.angles = {cosAlphaStar, cosBetaStar, cosGammaStar};
+  params.volume = static_cast<float>(volume);
+  return params;
+}
+
+/**
+ * @brief Calculate the squared distance in reciprocal space for a given hkl
+ * @param param The reciprocal space parameters
+ * @param hkl The Miller indices
+ * @return The squared distance in reciprocal space
+ * @note Fundamentals of Crystallography, 3rd edition (Eqn 2.17b)
+ *      triclinic system is the most general case
+ */
+float CalculateReciprocalSpaceDistanceSquared(
+    const ReciprocalSpaceParams& param, const glm::vec3& hkl)
+{
+  auto a_star = param.abc[0];
+  auto b_star = param.abc[1];
+  auto c_star = param.abc[2];
+  auto cos_alpha_star = param.angles[0];
+  auto cos_beta_star = param.angles[1];
+  auto cos_gamma_star = param.angles[2];
+  auto h = hkl.x;
+  auto k = hkl.y;
+  auto l = hkl.z;
+  return (h * h * a_star * a_star +                      //
+          k * k * b_star * b_star +                      //
+          l * l * c_star * c_star +                      //
+          2 * h * k * a_star * b_star * cos_gamma_star + //
+          2 * h * l * a_star * c_star * cos_beta_star +  //
+          2 * k * l * b_star * c_star * cos_alpha_star);
+}
+
+/**
+ * @brief Structure to hold reflection information
+ */
+struct ReflectionInfo {
+  glm::ivec3 hkl{};
+  float fwt{};
+  float phwt{};
+  float fom{};
+};
+
+/**
+ * @brief Class to handle the reflection data from a CIF data block
+ */
+class ReflnBlock
+{
+public:
+  /**
+   * @brief Constructor
+   * @param datablock The CIF data block containing reflection data
+   * @pre the CIF data block must contain the required reflection arrays
+   */
+  ReflnBlock(const pymol::cif_data& datablock)
+      : m_datablock(&datablock)
+      , m_size(datablock.get_arr("_refln.index_h")->size())
+  {
+  }
+
+  /**
+   * @brief Get the reflection information for a given index
+   * @param index The index of the reflection
+   * @return The reflection information
+   */
+  pymol::Result<ReflectionInfo> getReflectionInfo(int index) const
+  {
+    if (index < 0 || index >= m_size) {
+      return pymol::make_error("Index out of bounds");
+    }
+    auto* millerH = m_datablock->get_arr("_refln.index_h");
+    auto* millerK = m_datablock->get_arr("_refln.index_k");
+    auto* millerL = m_datablock->get_arr("_refln.index_l");
+    auto* fwt = m_datablock->get_arr("_refln.pdbx_fwt");
+    auto* phwt = m_datablock->get_arr("_refln.pdbx_phwt");
+    auto* fom = m_datablock->get_arr("_refln.fom");
+
+    return ReflectionInfo{glm::ivec3(millerH->as_i(index), millerK->as_i(index),
+                              millerL->as_i(index)),
+        fwt->as_f(index), phwt->as_f(index), fom->as_f(index)};
+  }
+
+  /**
+   * @return The number of reflections in the block
+   */
+  auto size() const { return m_size; }
+
+private:
+  const pymol::cif_data* m_datablock{};
+  const std::size_t m_size{};
+};
+
+
+/**
+ * @brief Convert HKL to flat index
+ * @param hkl The Miller indices
+ * @param shape The shape of the map
+ * @return The flat index corresponding to the HKL
+ */
+static std::size_t HKLToFlatIndex(
+    const glm::ivec3& hkl, const glm::ivec3& shape)
+{
+  return static_cast<std::size_t>(
+      hkl.z + hkl.y * shape[2] + hkl.x * shape[1] * shape[2]);
+}
+
+/**
+ * @brief Convert flat index to HKL
+ * @param flat_idx The flat index
+ * @param shape The shape of the map
+ * @return The HKL corresponding to the flat index
+ */
+static glm::ivec3 FlatIndexToHKL(
+    std::size_t flat_idx, const glm::ivec3& shape)
+{
+  int iz = flat_idx % shape[2];
+  int iy = (flat_idx / shape[2]) % shape[1];
+  int ix = flat_idx / (shape[1] * shape[2]);
+  return glm::ivec3(ix, iy, iz);
+}
+
+#ifdef TRACE
+/**
+ * @brief Print statistics for the reciprocal grid
+ * @param recip_map The reciprocal map to analyze
+ */
+static void PrintReciprocalGridStatistics(
+    const CFieldTyped<std::complex<float>>& recip_map)
+{
+  double sum_abs_real_for_scale = 0.0;
+  double max_abs_imag = 0.0;
+  auto* map_flat_data = recip_map.ptr(0, 0, 0);
+  auto total_map_elements = recip_map.size() / sizeof(std::complex<float>);
+  for (std::size_t i = 0; i < total_map_elements; ++i) {
+    auto val = map_flat_data[i];
+    sum_abs_real_for_scale += std::abs(val.real());
+    max_abs_imag = std::max(max_abs_imag, std::abs((double)val.imag()));
+  }
+
+  std::cout << "Reciprocal Map - Max absolute imaginary part: "
+            << max_abs_imag << "\n";
+  std::cout << "Average absolute real part (for scale): "
+            << sum_abs_real_for_scale / total_map_elements << "\n";
+  if (sum_abs_real_for_scale > EPSILON &&
+      (max_abs_imag / sum_abs_real_for_scale > 1e-5)) {
+    std::cerr << "Warning: Significant imaginary components found in c2c FFT "
+                 "output! Max abs imag: "
+              << max_abs_imag << "\n";
+  } else {
+    std::cout << "c2c FFT output seems valid. Max abs imag: " << max_abs_imag
+              << "\n";
+  }
+}
+
+/**
+ * @brief Print statistics for the raw map
+ * @param refln_block The reflection block containing reflection data
+ * @param map The map to analyze
+ */
+static void PrintRawMapStatistics(
+    const ReflnBlock& refln_block, const CFieldTyped<float>& map)
+{
+  double sum_scaled_rho = 0.0;
+  double sum_sq_scaled_rho = 0.0;
+  auto* map_flat_data = map.ptr(0, 0, 0);
+  float min_scaled_rho = map_flat_data[0];
+  float max_scaled_rho = map_flat_data[0];
+  auto total_map_elements = map.size() / sizeof(float);
+  for (std::size_t i = 0; i < total_map_elements; ++i) {
+    float val = map_flat_data[i];
+    sum_scaled_rho += val;
+    sum_sq_scaled_rho += static_cast<double>(val) * val;
+    if (val < min_scaled_rho)
+      min_scaled_rho = val;
+    if (val > max_scaled_rho)
+      max_scaled_rho = val;
+  }
+
+  float mean_scaled_rho = 0.0f;
+  float sd_scaled_rho = 0.0f;
+
+  if (total_map_elements > 0) {
+    mean_scaled_rho = static_cast<float>(sum_scaled_rho / total_map_elements);
+    double variance = (sum_sq_scaled_rho / total_map_elements) -
+                      (static_cast<double>(mean_scaled_rho) * mean_scaled_rho);
+    sd_scaled_rho =
+        (variance > 0) ? static_cast<float>(std::sqrt(variance)) : 0.0f;
+  }
+
+  std::cout << "SCALED Map - Min: " << min_scaled_rho
+            << ", Max: " << max_scaled_rho << ", Mean: " << mean_scaled_rho
+            << ", SD: " << sd_scaled_rho << "\n";
+
+  double sum_signed_rho = 0.0;
+  for (std::size_t i = 0; i < total_map_elements; ++i) {
+    sum_signed_rho += map_flat_data[i];
+  }
+  double mean_signed_rho = sum_signed_rho / total_map_elements;
+  std::cout << "Mean of signed map density: " << mean_signed_rho << "\n";
+
+  float max_fwt = 0.0;
+  glm::ivec3 hkl_strong{};
+  for (std::size_t i = 0; i < refln_block.size(); ++i) {
+    auto refl_info = refln_block.getReflectionInfo(i);
+    if (refl_info && refl_info->fwt > max_fwt) {
+      max_fwt = refl_info->fwt;
+      hkl_strong = refl_info->hkl;
+    }
+  }
+  std::cout << "Strongest reflection: F(" << hkl_strong.x << "," << hkl_strong.y
+            << "," << hkl_strong.z << ") with amplitude " << max_fwt
+            << "\n";
+
+  float max_density_peak = -std::numeric_limits<float>::infinity();
+  std::size_t peak_flat_idx = 0;
+
+  for (std::size_t i = 0; i < total_map_elements; ++i) {
+    if (map_flat_data[i] > max_density_peak) {
+      max_density_peak = map_flat_data[i];
+      peak_flat_idx = i;
+    }
+  }
+
+  glm::ivec3 shape(map.dim[0], map.dim[1], map.dim[2]);
+  auto i_peak = FlatIndexToHKL(peak_flat_idx, shape);
+
+  std::cout << "Highest density peak in map: " << max_density_peak
+            << " at grid index (" << i_peak.x << ", " << i_peak.y << ", "
+            << i_peak.z << ")\n";
+}
+
+/**
+ * @brief Get the Cartesian point from the map state
+ * @param ms The object map state
+ * @param i, j, k The grid indices
+ * @return The Cartesian coordinates of the point
+ */
+static glm::vec3 GetCartesianPointFromMapState(
+    const ObjectMapState& ms, int i, int j, int k)
+{
+  auto* points_cfield = ms.Field->points.get();
+  return glm::vec3(points_cfield->get<float>(i, j, k, 0),
+      points_cfield->get<float>(i, j, k, 1),
+      points_cfield->get<float>(i, j, k, 2));
+}
+
+/**
+ * @brief Validate the map voxel geometry
+ * @param ms The object map state
+ */
+void ValidateMapVoxelGeometry(const ObjectMapState& ms)
+{
+  std::cout << "\n--- Validating Map Voxel Geometry ---\n";
+
+  const float* crystal_dims_arr = ms.Symmetry->Crystal.dims();
+  float L_a = crystal_dims_arr[0];
+  float L_b = crystal_dims_arr[1];
+  float L_c = crystal_dims_arr[2];
+  const float* angles_deg = ms.Symmetry->Crystal.angles();
+
+  int N_g0 = ms.FDim[0];
+  int N_g1 = ms.FDim[1];
+  int N_g2 = ms.FDim[2];
+
+  if (N_g0 <= 1 || N_g1 <= 1 || N_g2 <= 1) {
+    std::cout << "Grid dimensions are too small for step validation (<=1 along "
+                 "an axis)."
+              << "\n";
+    return;
+  }
+
+  std::cout << std::fixed << std::setprecision(6);
+  std::cout << "Cell (from ms.Symmetry->Crystal): a=" << L_a << " b=" << L_b
+            << " c=" << L_c << " alpha=" << angles_deg[0]
+            << " beta=" << angles_deg[1] << " gamma=" << angles_deg[2]
+            << "\n";
+  std::cout << "Grid (ms.FDim): N_g0=" << N_g0 << " N_g1=" << N_g1
+            << " N_g2=" << N_g2 << "\n";
+  std::cout << "Grid Divisions (ms.Div): Div0=" << ms.Div[0]
+            << " Div1=" << ms.Div[1] << " Div2=" << ms.Div[2] << "\n";
+
+  float expected_step_g0 =
+      (ms.Div[0] > 0) ? L_a / static_cast<float>(ms.Div[0]) : 0.f;
+  float expected_step_g1 =
+      (ms.Div[1] > 0) ? L_b / static_cast<float>(ms.Div[1]) : 0.f;
+  float expected_step_g2 =
+      (ms.Div[2] > 0) ? L_c / static_cast<float>(ms.Div[2]) : 0.f;
+  std::cout << "Expected Cartesian step length (using Div for sampling along "
+               "cell axes): "
+            << "dx=" << expected_step_g0 << ", dy=" << expected_step_g1
+            << ", dz=" << expected_step_g2 << "\n";
+
+  glm::vec3 P000 = GetCartesianPointFromMapState(ms, 0, 0, 0);
+  glm::vec3 P100 = GetCartesianPointFromMapState(ms, 1, 0, 0);
+  glm::vec3 P010 = GetCartesianPointFromMapState(ms, 0, 1, 0);
+  glm::vec3 P001 = GetCartesianPointFromMapState(ms, 0, 0, 1);
+
+  std::cout << "P(grid 0,0,0): " << glm::to_string(P000) << "\n";
+  std::cout << "P(grid 1,0,0): " << glm::to_string(P100) << "\n";
+  std::cout << "P(grid 0,1,0): " << glm::to_string(P010) << "\n";
+  std::cout << "P(grid 0,0,1): " << glm::to_string(P001) << "\n";
+
+  glm::vec3 step_G0 = P100 - P000;
+  glm::vec3 step_G1 = P010 - P000;
+  glm::vec3 step_G2 = P001 - P000;
+
+  std::cout << "Cartesian Step vector along grid dim 0 (ms.FDim[0]-axis): "
+            << glm::to_string(step_G0) << "\n";
+  std::cout << "Cartesian Step vector along grid dim 1 (ms.FDim[1]-axis): "
+            << glm::to_string(step_G1) << "\n";
+  std::cout << "Cartesian Step vector along grid dim 2 (ms.FDim[2]-axis): "
+            << glm::to_string(step_G2) << "\n";
+
+  float len_G0 = glm::length(step_G0);
+  float len_G1 = glm::length(step_G1);
+  float len_G2 = glm::length(step_G2);
+
+  std::cout << "Magnitude of step_G0: " << len_G0 << "\n";
+  std::cout << "Magnitude of step_G1: " << len_G1 << "\n";
+  std::cout << "Magnitude of step_G2: " << len_G2 << "\n";
+
+  bool is_cubic_cell =
+      (std::abs(angles_deg[0] - 90.0f) < 1e-3f &&
+          std::abs(angles_deg[1] - 90.0f) < 1e-3f &&
+          std::abs(angles_deg[2] - 90.0f) < 1e-3f &&
+          std::abs(L_a - L_b) < 1e-3f && std::abs(L_a - L_c) < 1e-3f);
+  bool grid_dims_iso = (N_g0 == N_g1 && N_g0 == N_g2);
+
+  if (is_cubic_cell && grid_dims_iso) {
+    if (std::abs(len_G0 - len_G1) > 1e-3f ||
+        std::abs(len_G0 - len_G2) > 1e-3f ||
+        std::abs(len_G1 - len_G2) > 1e-3f) {
+      std::cout << "Warning: Step magnitudes are unequal for a cubic cell with "
+                   "isotropic grid sampling! Potential stretching source."
+                << "\n";
+    } else {
+      std::cout << "Step magnitudes are (nearly) equal, as expected for cubic "
+                   "cell with isotropic grid."
+                << "\n";
+    }
+  } else {
+    std::cout << "Note: Unequal step magnitudes may be expected for non-cubic "
+                 "cells or anisotropic grid sampling."
+              << "\n";
+  }
+
+  glm::vec3 norm_G0 =
+      (len_G0 > EPSILON) ? glm::normalize(step_G0) : glm::vec3(0.f);
+  glm::vec3 norm_G1 =
+      (len_G1 > EPSILON) ? glm::normalize(step_G1) : glm::vec3(0.f);
+  glm::vec3 norm_G2 =
+      (len_G2 > EPSILON) ? glm::normalize(step_G2) : glm::vec3(0.f);
+
+  float dot_G0G1 = glm::dot(norm_G0, norm_G1);
+  float dot_G0G2 = glm::dot(norm_G0, norm_G2);
+  float dot_G1G2 = glm::dot(norm_G1, norm_G2);
+
+  std::cout << "Dot product (norm_G0 . norm_G1): " << dot_G0G1
+            << " (cos angle between grid axis 0 and 1)\n";
+  std::cout << "Dot product (norm_G0 . norm_G2): " << dot_G0G2
+            << " (cos angle between grid axis 0 and 2)\n";
+  std::cout << "Dot product (norm_G1 . norm_G2): " << dot_G1G2
+            << " (cos angle between grid axis 1 and 2)\n";
+
+  float cos_gamma_cell = std::cos(glm::radians(angles_deg[2]));
+  float cos_beta_cell = std::cos(glm::radians(angles_deg[1]));
+  float cos_alpha_cell = std::cos(glm::radians(angles_deg[0]));
+
+  // approx cos(89 deg) or cos(91 deg) - allow ~1 degree deviation
+  float angle_check_threshold = 0.0175f;
+
+  bool angles_match_cell = true;
+  if (std::abs(dot_G0G1 - cos_gamma_cell) > angle_check_threshold) {
+    std::cout << "Warning: Angle between grid axes 0 & 1 (from dot_G0G1: "
+              << std::acos(std::clamp(dot_G0G1, -1.0f, 1.0f)) * 180.f /
+                     glm::pi<float>()
+              << " deg) inconsistent with crystal gamma (" << angles_deg[2]
+              << " deg).\n";
+    angles_match_cell = false;
+  }
+  if (std::abs(dot_G0G2 - cos_beta_cell) > angle_check_threshold) {
+    std::cout << "Warning: Angle between grid axes 0 & 2 (from dot_G0G2: "
+              << std::acos(std::clamp(dot_G0G2, -1.0f, 1.0f)) * 180.f /
+                     glm::pi<float>()
+              << " deg) inconsistent with crystal beta (" << angles_deg[1]
+              << " deg).\n";
+    angles_match_cell = false;
+  }
+  if (std::abs(dot_G1G2 - cos_alpha_cell) > angle_check_threshold) {
+    std::cout << "Warning: Angle between grid axes 1 & 2 (from dot_G1G2: "
+              << std::acos(std::clamp(dot_G1G2, -1.0f, 1.0f)) * 180.f /
+                     glm::pi<float>()
+              << " deg) inconsistent with crystal alpha (" << angles_deg[0]
+              << " deg).\n";
+    angles_match_cell = false;
+  }
+
+  if (!angles_match_cell) {
+    std::cout << "Warning: Grid step vectors' angles do not accurately reflect "
+                 "cell angles! Potential shear/slant source.\n";
+  } else {
+    std::cout
+        << "Grid step vectors' angles appear consistent with cell angles.\n";
+  }
+
+  // Manual FracToReal Check vs. GetPointComponent
+  std::cout << "\n--- Manual FracToReal Check vs. GetPointComponent ---\n"
+  const float* f2r_matrix = ms.Symmetry->Crystal.fracToReal();
+  float frac_v_manual[3];
+  float manual_cart_vr[3];
+
+  // Point (grid 1,0,0)
+  // Grid indices for fractional calculation: (1+Min[0]), (0+Min[1]), (0+Min[2])
+  frac_v_manual[0] =
+      (static_cast<float>(1) + ms.Min[0]) / static_cast<float>(ms.Div[0]);
+  frac_v_manual[1] =
+      (static_cast<float>(0) + ms.Min[1]) / static_cast<float>(ms.Div[1]);
+  frac_v_manual[2] =
+      (static_cast<float>(0) + ms.Min[2]) / static_cast<float>(ms.Div[2]);
+  transform33f3f(f2r_matrix, frac_v_manual, manual_cart_vr);
+  std::cout << "Grid (1,0,0): ManualFracToReal: (" << manual_cart_vr[0] << ","
+            << manual_cart_vr[1] << "," << manual_cart_vr[2] << ")"
+            << " GetPoint: " << glm::to_string(P100) << "\n";
+  if (glm::distance(glm::make_vec3(manual_cart_vr), P100) > 1e-4f) {
+    std::cout << "MISMATCH for P(1,0,0)!\n";
+  }
+
+  // Point (grid 0,1,0)
+  frac_v_manual[0] =
+      (static_cast<float>(0) + ms.Min[0]) / static_cast<float>(ms.Div[0]);
+  frac_v_manual[1] =
+      (static_cast<float>(1) + ms.Min[1]) / static_cast<float>(ms.Div[1]);
+  frac_v_manual[2] =
+      (static_cast<float>(0) + ms.Min[2]) / static_cast<float>(ms.Div[2]);
+  transform33f3f(f2r_matrix, frac_v_manual, manual_cart_vr);
+  std::cout << "Grid (0,1,0): ManualFracToReal: (" << manual_cart_vr[0] << ","
+            << manual_cart_vr[1] << "," << manual_cart_vr[2] << ")"
+            << " GetPoint: " << glm::to_string(P010) << "\n";
+  if (glm::distance(glm::make_vec3(manual_cart_vr), P010) > 1e-4f) {
+    std::cout << "MISMATCH for P(0,1,0)!\n";
+  }
+
+  // Point (grid 0,0,1)
+  frac_v_manual[0] =
+      (static_cast<float>(0) + ms.Min[0]) / static_cast<float>(ms.Div[0]);
+  frac_v_manual[1] =
+      (static_cast<float>(0) + ms.Min[1]) / static_cast<float>(ms.Div[1]);
+  frac_v_manual[2] =
+      (static_cast<float>(1) + ms.Min[2]) / static_cast<float>(ms.Div[2]);
+  transform33f3f(f2r_matrix, frac_v_manual, manual_cart_vr);
+  std::cout << "Grid (0,0,1): ManualFracToReal: (" << manual_cart_vr[0] << ","
+            << manual_cart_vr[1] << "," << manual_cart_vr[2] << ")"
+            << " GetPoint: " << glm::to_string(P001) << "\n";
+  if (glm::distance(glm::make_vec3(manual_cart_vr), P001) > 1e-4f) {
+    std::cout << "MISMATCH for P(0,0,1)!\n";
+  }
+  std::cout << "--- End of Manual FracToReal Check ---\n";
+  std::cout << "--- End of Voxel Geometry Validation ---\n";
+}
+#endif // TRACE
+
+/**
+ * @brief Create an ObjectMapState from a CFieldTyped map and symmetry
+ * @param map The map to convert
+ * @param sym The symmetry to use
+ * @return The created ObjectMapState
+ */
+ObjectMapState ObjectMapStateFromField(PyMOLGlobals* G,
+    const CFieldTyped<float>& map, std::unique_ptr<CSymmetry> sym)
+{
+  ObjectMapState ms(G);
+  glm::ivec3 grid_size(map.dim[0], map.dim[1], map.dim[2]);
+  ms.MapSource = cMapSourceCCP4;
+  ms.Active = true;
+  ms.Symmetry.reset(sym.release());
+  ms.FDim[0] = grid_size[0];
+  ms.FDim[1] = grid_size[1];
+  ms.FDim[2] = grid_size[2];
+  ms.FDim[3] = 3;
+
+  ms.Min[0] = 0;
+  ms.Min[1] = 0;
+  ms.Min[2] = 0;
+  ms.Max[0] = grid_size.x - 1;
+  ms.Max[1] = grid_size.y - 1;
+  ms.Max[2] = grid_size.z - 1;
+
+  ms.Div[0] = grid_size.x;
+  ms.Div[1] = grid_size.y;
+  ms.Div[2] = grid_size.z;
+
+  ms.Field.reset(new Isofield(G, ms.FDim));
+
+  float v[3];
+  v[2] = (ms.Min[2]) / ((float) ms.Div[2]);
+  v[1] = (ms.Min[1]) / ((float) ms.Div[1]);
+  v[0] = (ms.Min[0]) / ((float) ms.Div[0]);
+
+  transform33f3f(ms.Symmetry->Crystal.fracToReal(), v, ms.ExtentMin);
+
+  v[2] = ((ms.FDim[2] - 1) + ms.Min[2]) / ((float) ms.Div[2]);
+  v[1] = ((ms.FDim[1] - 1) + ms.Min[1]) / ((float) ms.Div[1]);
+  v[0] = ((ms.FDim[0] - 1) + ms.Min[0]) / ((float) ms.Div[0]);
+
+  transform33f3f(ms.Symmetry->Crystal.fracToReal(), v, ms.ExtentMax);
+
+  auto& field = *ms.Field;
+  std::copy(map.data.begin(), map.data.end(), field.data->data.begin());
+
+  ms.Field->save_points = false;
+
+  auto& crystal = ms.Symmetry->Crystal;
+
+  ObjectMapStateRegeneratePoints(&ms);
+  float frac_coords[3];
+  float cart_coords[3];
+  int corner_write_idx = 0;
+
+  for (int z_loop = 0; z_loop < 2; ++z_loop) {
+    int grid_idx_z = (z_loop == 0) ? ms.Min[2] : (ms.Min[2] + ms.FDim[2] - 1);
+    frac_coords[2] =
+        static_cast<float>(grid_idx_z) / static_cast<float>(ms.Div[2]);
+
+    for (int y_loop = 0; y_loop < 2; ++y_loop) {
+      int grid_idx_y = (y_loop == 0) ? ms.Min[1] : (ms.Min[1] + ms.FDim[1] - 1);
+      frac_coords[1] =
+          static_cast<float>(grid_idx_y) / static_cast<float>(ms.Div[1]);
+
+      for (int x_loop = 0; x_loop < 2; ++x_loop) {
+        int grid_idx_x =
+            (x_loop == 0) ? ms.Min[0] : (ms.Min[0] + ms.FDim[0] - 1);
+        frac_coords[0] =
+            static_cast<float>(grid_idx_x) / static_cast<float>(ms.Div[0]);
+
+        transform33f3f(
+            ms.Symmetry->Crystal.fracToReal(), frac_coords, cart_coords);
+
+        ms.Corner[corner_write_idx * 3 + 0] = cart_coords[0];
+        ms.Corner[corner_write_idx * 3 + 1] = cart_coords[1];
+        ms.Corner[corner_write_idx * 3 + 2] = cart_coords[2];
+        corner_write_idx++;
+      }
+    }
+  }
+#ifdef TRACE
+  ValidateMapVoxelGeometry(ms);
+#endif // TRACE
+  return ms;
+}
+
+/**
+ * @brief Find the optimal grid size for the FFT
+ * @param refln_block The reflection block containing reflection data
+ * @param reciprocal_space_params The parameters for reciprocal space
+ * @return The optimal grid size as a glm::ivec3
+ */
+glm::ivec3 FindOptimalGridSize(const ReflnBlock& refln_block,
+    const ReciprocalSpaceParams& reciprocal_space_params)
+{
+  std::array<int, 3> dimensions{};
+  float inv_dist_sq{};
+  for (std::size_t i = 0; i < refln_block.size(); ++i) {
+    auto refl_info = refln_block.getReflectionInfo(i);
+    if (!refl_info) {
+      continue;
+    }
+
+    auto cand_inv_dist_sq = CalculateReciprocalSpaceDistanceSquared(
+        reciprocal_space_params, refl_info->hkl);
+    inv_dist_sq = std::max(inv_dist_sq, cand_inv_dist_sq);
+  }
+  double inv_dist = std::sqrt(inv_dist_sq);
+  // Nyquist
+  double nyquist_sampling_rate = 2.0; // Perhaps make into a setting?
+  glm::dvec3 cell_size{};
+  for (int i = 0; i < 3; ++i) {
+    cell_size[i] = std::max(cell_size[i],
+        nyquist_sampling_rate * inv_dist / reciprocal_space_params.abc[i]);
+  }
+
+  glm::ivec3 grid_size{};
+  for (int i = 0; i < 3; ++i) {
+    auto round_up = static_cast<int>(std::ceil(cell_size[i]));
+    grid_size[i] = pocketfft::detail::util::good_size_real(round_up);
+  }
+  return grid_size;
+}
+
+/**
+ * @brief Calculate the phase shift for a given HKL and symmetry operation
+ * @param hkl_in The input HKL indices
+ * @param sym_op_T_3x1 The symmetry operation translation vector
+ * @return The calculated phase shift (2 * PI * (h.trans))
+ */
+double CalculatePhaseShift(
+    const glm::ivec3& hkl, const glm::vec3& trans)
+{
+  double dot_product = glm::dot(glm::dvec3(hkl), glm::dvec3(trans));
+  return 2.0 * glm::pi<double>() * dot_product;
+}
+
+/**
+ * @brief Normalizes the complex map to float density map
+ * @param reciprocal_space_params The parameters for reciprocal space
+ * @param recip_grid The reciprocal grid data
+ * @return Density Map as Float Field
+ */
+static CFieldTyped<float> NormalizeComplexMapToFloat(PyMOLGlobals* G,
+    const ReciprocalSpaceParams& reciprocal_space_params,
+    const CFieldTyped<std::complex<float>>& recip_grid)
+{
+  CFieldTyped<float> map(reinterpret_cast<const int*>(recip_grid.dim.data()), 3);
+  auto total_map_elements = map.size() / sizeof(float);
+
+  float inv_Vcell = 1.0f;
+  if (std::abs(reciprocal_space_params.volume) > EPSILON) {
+    inv_Vcell = 1.0f / static_cast<float>(reciprocal_space_params.volume);
+  }
+
+  auto* flat_recip_data = recip_grid.ptr(0, 0, 0);
+  auto* map_flat_data = map.ptr(0, 0, 0);
+
+  if (!SettingGet<bool>(G, cSetting_normalize_ccp4_maps)) {
+    for (std::size_t i = 0; i < total_map_elements; ++i) {
+      map_flat_data[i] = flat_recip_data[i].real() * inv_Vcell;
+    }
+    return map;
+  }
+
+  double sum_rho_scaled = 0.0;
+  double sum_sq_rho_scaled = 0.0;
+  for (std::size_t i = 0; i < total_map_elements; ++i) {
+    map_flat_data[i] = flat_recip_data[i].real() * inv_Vcell;
+    sum_rho_scaled += map_flat_data[i];
+    sum_sq_rho_scaled +=
+        static_cast<double>(map_flat_data[i]) * map_flat_data[i];
+  }
+
+  // Normalize the map to mean ~0 and standard deviation ~1
+  float current_mean = 0.0f;
+  float current_sd = 0.0f;
+
+  if (total_map_elements > 0) {
+    current_mean = static_cast<float>(sum_rho_scaled / total_map_elements);
+    double variance = (sum_sq_rho_scaled / total_map_elements) -
+                      (static_cast<double>(current_mean) * current_mean);
+    current_sd =
+        (variance > 0) ? static_cast<float>(std::sqrt(variance)) : 0.0f;
+  }
+
+  if (std::abs(current_sd) > EPSILON) { // Avoid division by zero if SD is tiny
+    for (std::size_t i = 0; i < total_map_elements; ++i) {
+      map_flat_data[i] = (map_flat_data[i] - current_mean) / current_sd;
+    }
+  } else {
+    // Shift everything to force mean to zero
+    if (std::abs(current_mean) > EPSILON) {
+      for (std::size_t i = 0; i < total_map_elements; ++i) {
+        map_flat_data[i] = map_flat_data[i] - current_mean;
+      }
+    }
+  }
+  return map;
+}
+
+/**
+ * @brief Structure to hold symmetry matrices in GLM format
+ */
+struct SymMatsGLM {
+  glm::mat3 rot;
+  glm::vec3 trans;
+};
+
+/**
+ * @brief Calculate the symmetry matrices in GLM format.
+ * @param symmetry The symmetry object containing the symmetry matrices.
+ * @return A vector of SymMatsGLM structures containing the rotation and
+ * translation components of the symmetry matrices.
+ */
+static std::vector<SymMatsGLM> CalculateSymMatricesGLM(
+    const CSymmetry& symmetry)
+{
+  std::vector<SymMatsGLM> sym_matrices(symmetry.getNSymMat());
+  for (int i = 0; i < symmetry.getNSymMat(); ++i) {
+    auto* sym_matrix_4x4 = symmetry.getSymMat(i);
+    const float R_j[9] = {sym_matrix_4x4[0], sym_matrix_4x4[1],
+        sym_matrix_4x4[2], sym_matrix_4x4[4], sym_matrix_4x4[5],
+        sym_matrix_4x4[6], sym_matrix_4x4[8], sym_matrix_4x4[9],
+        sym_matrix_4x4[10]};
+    sym_matrices[i].rot = glm::transpose(glm::make_mat3(R_j));
+    sym_matrices[i].trans =
+        glm::vec3(sym_matrix_4x4[3], sym_matrix_4x4[7], sym_matrix_4x4[11]);
+  }
+  return sym_matrices;
+}
+
+/**
+ * @brief Checks if HKL indices are within the bounds of a grid.
+ * @param idx The HKL indices to check.
+ * @param shape The shape of the grid.
+ * @return True if the indices are within bounds, false otherwise.
+ */
+static bool IsHKLWithinShape(const glm::ivec3& idx, const glm::ivec3& shape)
+{
+  return (idx.x >= 0 && idx.x < shape[0] && //
+          idx.y >= 0 && idx.y < shape[1] && //
+          idx.z >= 0 && idx.z < shape[2]);
+}
+
+/**
+ * @brief Apply symmetry matrices to the reflections and store the results in
+ * the reciprocal space data.
+ * @param sym_matrices The symmetry matrices to apply.
+ * @param hkl_orig The original Miller indices.
+ * @param shape The shape of the reciprocal space grid.
+ * @param f_amp_weighted The weighted amplitude of the reflection.
+ * @param phase_rad_orig The original phase in radians.
+ * @param recip_1D_total_elements The total number of elements in the 1D
+ * reciprocal space data.
+ * @param[out] flat_recip_data The flat reciprocal space data array.
+ * @param[out] is_grid_point_set A vector indicating whether a grid point has been
+ * set.
+ */
+void ApplySymMatricesToReflections(
+    const std::vector<SymMatsGLM>& sym_matrices, const glm::ivec3& hkl_orig,
+    const glm::ivec3& shape,
+    float f_amp_weighted, float phase_rad_orig, int recip_1D_total_elements,
+    std::complex<float>* flat_recip_data,
+    std::vector<bool>& is_grid_point_set)
+{
+  for (auto& sym_mat : sym_matrices) {
+    glm::ivec3 hkl_symm = glm::round(sym_mat.rot * hkl_orig);
+    auto phase_shift_rad = CalculatePhaseShift(hkl_orig, sym_mat.trans);
+
+    auto F_symm_complex = std::polar(
+        f_amp_weighted, phase_rad_orig + static_cast<float>(phase_shift_rad));
+
+    int idx_h_s = (hkl_symm.x >= 0) ? hkl_symm.x : hkl_symm.x + shape[0];
+    int idx_k_s = (hkl_symm.y >= 0) ? hkl_symm.y : hkl_symm.y + shape[1];
+    int idx_l_s = (hkl_symm.z >= 0) ? hkl_symm.z : hkl_symm.z + shape[2];
+    auto idx_hkl_s = glm::ivec3(idx_h_s, idx_k_s, idx_l_s);
+
+    if (IsHKLWithinShape(idx_hkl_s, shape)) {
+      auto flat_idx_s =
+          HKLToFlatIndex(idx_hkl_s, shape);
+      if (flat_idx_s < recip_1D_total_elements &&
+          !is_grid_point_set[flat_idx_s]) {
+        flat_recip_data[flat_idx_s] = F_symm_complex;
+        is_grid_point_set[flat_idx_s] = true;
+      }
+    }
+  }
+}
+
+/**
+ * @brief Calculate inverse Friedel mate indices for a given HKL and shape.
+ * @param hkl_orig The original HKL indices.
+ * @param shape The shape of the reciprocal space grid.
+ * @return The Friedel mate indices as a glm::ivec3.
+ */
+glm::ivec3 CalculateFriedelMateIndex(
+    const glm::ivec3& hkl_orig, const glm::ivec3& shape)
+{
+  auto h_idx = hkl_orig.x;
+  auto k_idx = hkl_orig.y;
+  auto l_idx = hkl_orig.z;
+
+  int h =
+      (h_idx < shape[0] / 2 + shape[0] % 2) ? h_idx : h_idx - shape[0];
+  int k =
+      (k_idx < shape[1] / 2 + shape[1] % 2) ? k_idx : k_idx - shape[1];
+  int l =
+      (l_idx < shape[2] / 2 + shape[2] % 2) ? l_idx : l_idx - shape[2];
+
+  // Friedel mate indices
+  int h_bar = -h;
+  int k_bar = -k;
+  int l_bar = -l;
+
+  // Map (-h,-k,-l) to Friedel grid indices
+  int idx_h_bar = (h_bar >= 0) ? h_bar : h_bar + shape[0];
+  int idx_k_bar = (k_bar >= 0) ? k_bar : k_bar + shape[1];
+  int idx_l_bar = (l_bar >= 0) ? l_bar : l_bar + shape[2];
+  return glm::ivec3(idx_h_bar, idx_k_bar, idx_l_bar);
+}
+
+/**
+ * @brief Add friedel pair to the reciprocal space data.
+ * @param symmetry The symmetry object.
+ * @param refln_block The reflection block containing reflection data.
+ * @param reciprocal_space_params The parameters for reciprocal space.
+ * @return A CFieldTyped<float> object representing the Fourier transformed map.
+ */
+void AddFriedelMate(const glm::ivec3& hkl_orig,
+    std::size_t recip_1D_total_elements, const glm::ivec3& shape,
+    std::complex<float>* flat_recip_data, std::vector<bool>& is_grid_point_set)
+{
+  auto flat_idx_hkl = HKLToFlatIndex(hkl_orig, shape);
+
+  auto idx_bar = CalculateFriedelMateIndex(hkl_orig, shape);
+
+  if (IsHKLWithinShape(idx_bar, shape)) {
+    auto flat_idx_bar = HKLToFlatIndex(idx_bar, shape);
+
+    if (flat_idx_bar < recip_1D_total_elements &&
+        !is_grid_point_set[flat_idx_bar]) {
+      flat_recip_data[flat_idx_bar] =
+          std::conj(flat_recip_data[flat_idx_hkl]);
+      is_grid_point_set[flat_idx_bar] = true;
+    }
+    // If flat_idx_hkl == flat_idx_bar (centrosymmetric FFT point),
+    // ensure it's real
+    bool centrosymmetric = flat_idx_hkl == flat_idx_bar;
+    if (centrosymmetric) {
+      auto& recip_data = flat_recip_data[flat_idx_hkl];
+      bool around_zero_and_much_less_than_real =
+          std::abs(recip_data.imag()) > 1e-5f * std::abs(recip_data.real()) &&
+          std::abs(recip_data.imag()) > 1e-5f;
+      if (around_zero_and_much_less_than_real) {
+        recip_data.imag(0.0f);
+      }
+    }
+  }
+}
+
+/**
+ * @brief Perform a Fast Fourier Transform in place on the reciprocal grid.
+ * @param grid The reciprocal grid data.
+ */
+static void PerformFastFourierTransformInPlace(
+    CFieldTyped<std::complex<float>>& grid)
+{
+  auto* flat_grid = grid.ptr(0, 0, 0);
+  pocketfft::shape_t pocket_shape{static_cast<std::size_t>(grid.dim[0]),
+      static_cast<std::size_t>(grid.dim[1]),
+      static_cast<std::size_t>(grid.dim[2])};
+  auto base_size = grid.base_size;
+
+  // CField is internally a 1D array, so we need to calculate the strides
+  // for the 3D data. Z is contiguous; thus the axis order is ZYX.
+  glm::uvec3 u_strides = {base_size * pocket_shape[2] * pocket_shape[1],
+      base_size * pocket_shape[2], base_size};
+  pocketfft::stride_t stride_in(3);
+
+  for (int i = 0; i < 3; ++i) {
+    stride_in[i] = static_cast<pocketfft::stride_t::value_type>(u_strides[i]);
+  }
+  auto stride_out = stride_in;
+  pocketfft::shape_t axes{2, 1, 0}; // ZYX
+  bool direction = pocketfft::BACKWARD;
+  float norm = 1.0f;
+
+  pocketfft::c2c<float>(pocket_shape, stride_in, stride_out, axes, direction,
+      flat_grid, flat_grid, norm);
+}
+
+/**
+ * @brief Fourier transform structure factors to a map.
+ * @param symmetry The symmetry object.
+ * @param refln_block The reflection block containing reflection data.
+ * @param reciprocal_space_params The parameters for reciprocal space.
+ * @return A CFieldTyped<float> object representing the Fourier transformed map.
+ */
+CFieldTyped<float> FourierTransformStructureFactorsToMap(PyMOLGlobals* G,
+    const CSymmetry& symmetry,
+    const ReflnBlock& refln_block,
+    const ReciprocalSpaceParams& reciprocal_space_params)
+{
+  auto shape = FindOptimalGridSize(refln_block, reciprocal_space_params);
+  CFieldTyped<std::complex<float>> recip_grid(glm::value_ptr(shape), 3);
+
+  auto recip_1D_total_elements = shape[0] * shape[1] * shape[2];
+  std::vector<bool> is_grid_point_set(recip_1D_total_elements, false);
+
+  auto* flat_recip_data = recip_grid.ptr(0, 0, 0);
+
+  auto sym_matrices = CalculateSymMatricesGLM(symmetry);
+
+  for (std::size_t i = 0; i < refln_block.size(); ++i) {
+    auto refl_info = refln_block.getReflectionInfo(i);
+    if (!refl_info) {
+      continue;
+    }
+
+    auto hkl_orig = refl_info->hkl;
+    auto f_amp_raw = refl_info->fwt;
+    auto ph_deg_orig = refl_info->phwt;
+    auto fom_val = refl_info->fom;
+
+    auto f_amp_weighted = f_amp_raw * fom_val;
+    if (f_amp_weighted == 0.0f &&
+        !(hkl_orig.x == 0 && hkl_orig.y == 0 &&
+            hkl_orig.z == 0)) { // Skip zero amplitude reflections unless F000
+      continue;
+    }
+
+    auto phase_rad_orig = glm::radians(ph_deg_orig);
+    auto F_orig_complex = std::polar(f_amp_weighted, phase_rad_orig);
+
+    ApplySymMatricesToReflections(
+        sym_matrices, hkl_orig, shape, f_amp_weighted, phase_rad_orig,
+        recip_1D_total_elements, flat_recip_data, is_grid_point_set);
+  } // End loop over reflections from CIF
+
+  for (std::size_t h_idx = 0; h_idx < shape[0]; ++h_idx) {
+    for (std::size_t k_idx = 0; k_idx < shape[1]; ++k_idx) {
+      for (std::size_t l_idx = 0; l_idx < shape[2]; ++l_idx) {
+        auto flat_idx_hkl =
+            HKLToFlatIndex(glm::ivec3(h_idx, k_idx, l_idx), shape);
+        if (is_grid_point_set[flat_idx_hkl]) {
+          AddFriedelMate(glm::ivec3(h_idx, k_idx, l_idx), recip_1D_total_elements,
+              shape, flat_recip_data, is_grid_point_set);
+        }
+      }
+    }
+  }
+
+  PerformFastFourierTransformInPlace(recip_grid);
+  auto map = NormalizeComplexMapToFloat(G, reciprocal_space_params, recip_grid);
+#ifdef TRACE
+  PrintReciprocalGridStatistics(recip_grid);
+  PrintRawMapStatistics(refln_block, map);
+#endif // TRACE
+  return map;
+}
+
+pymol::Result<ObjectMap*> ObjectMapReadCifStr(
+    PyMOLGlobals* G, const pymol::cif_data& datablock)
+{
+  auto I = new ObjectMap(G);
+  initializeTTT44f(I->TTT);
+  I->TTTFlag = false;
+
+  ReflnBlock refln_block(datablock);
+  std::unique_ptr<CSymmetry> sym(read_symmetry(G, &datablock));
+
+  auto reciprocal_space_params = CalculateReciprocalSpaceParam(sym->Crystal);
+  auto map = FourierTransformStructureFactorsToMap(
+      G, *sym, refln_block, reciprocal_space_params);
+
+  I->State.push_back(ObjectMapStateFromField(G, map, std::move(sym)));
+  ObjectMapUpdateExtents(I);
 
   return I;
 }

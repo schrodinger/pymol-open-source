@@ -44,6 +44,10 @@ Z* -------------------------------------------------------------------
 #define cMapSourceVMDPlugin 9
 #define cMapSourceObsolete   10
 
+namespace pymol {
+class cif_data;
+}
+
 struct ObjectMapState : public CObjectState {
   int Active = false;
   pymol::copyable_ptr<CSymmetry> Symmetry;
@@ -58,7 +62,6 @@ struct ObjectMapState : public CObjectState {
   std::vector<float> Range;                 /* Range for non-xtal maps */
   std::vector<float> Grid;                  /* Spacing for non-xtal maps */
   float ExtentMin[3], ExtentMax[3];
-  float Mean, SD; /* -- JV for vol */
   pymol::cache_ptr<CGO> shaderCGO;
   /* below not stored */
 
@@ -134,6 +137,14 @@ ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, const char *fname
 
 ObjectMap* ObjectMapReadDXStr(PyMOLGlobals*, ObjectMap*, const char* MapStr,
     int bytes, int state, bool quiet);
+
+/**
+ * @brief Read a map CIF string and return a new ObjectMap
+ * @param data_block CIF data block
+ * @return ObjectMap or nullptr on error
+ */
+pymol::Result<ObjectMap*> ObjectMapReadCifStr(
+    PyMOLGlobals* G, const pymol::cif_data& data_block);
 
 ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                                int quiet);

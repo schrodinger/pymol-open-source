@@ -298,6 +298,9 @@ public:
   /// Alias for as<double>()
   double as_d(unsigned pos = 0, double d = 0.) const { return as(pos, d); }
 
+  /// Alias for as<float>()
+  float as_f(unsigned pos = 0, float f = 0.0f) const { return static_cast<float>(as_d(pos, f)); }
+
   /**
    * Get a copy of the array.
    * @param d default value for unknown/inapplicable elements
@@ -378,6 +381,16 @@ public:
 };
 
 } // namespace pymol
+
+/**
+ * CIF parser which captures the last error message.
+ */
+class cif_file_with_error_capture : public pymol::cif_file
+{
+public:
+  std::string m_error_msg;
+  void error(const char* msg) override { m_error_msg = msg; }
+};
 
 #endif
 // vi:sw=2:ts=2

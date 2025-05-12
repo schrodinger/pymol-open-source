@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 
 #include <cassert>
+#include <vector>
 
 enum cField_t {
   cFieldFloat = 0,
