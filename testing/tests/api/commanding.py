@@ -1,15 +1,12 @@
 from __future__ import print_function
 
 import sys
-import pytest
 
-import pymol
 import __main__
 from pymol import cmd, testing, stored
-
 from typing import List
-
-
+from typing import Optional, Any, Tuple, Union, List
+from pathlib import Path
 
 
 class TestCommanding(testing.PyMOLTestCase):
@@ -185,89 +182,35 @@ class TestCommanding(testing.PyMOLTestCase):
             if mod:
                 self.assertEqual(rw, hasattr(sys.modules[mod], varname))
 
+
 def test_declare_command_casting():
     from pathlib import Path
-
     @cmd.declare_command
     def func(a: int, b: Path):
         assert isinstance(a, int) and a == 1
-        assert isinstance(b, (Path, str)) and "/tmp" == str(b)
-    func(1, "/tmp")
+        assert isinstance(b, Path) and "/tmp" == str(b)
     cmd.do('func 1, /tmp')
 
-
-def test_declare_command_default(capsys):
-    from pymol.commanding import Selection
+def test_declare_command_optional(capsys):
     @cmd.declare_command
-    def func(a: Selection = "sele"):
-        assert a == "sele"
-    func()
+    def func(a: Optional[int] = None):
+        assert a is None
     cmd.do("func")
     out, err = capsys.readouterr()
-    assert out == ''
+    assert out+err == ''
+
+    @cmd.declare_command
+    def func(a: Optional[int] = None):
+        assert a is 10
+    cmd.do("func 10")
+    out, err = capsys.readouterr()
+    assert out+err == ''
 
 def test_declare_command_docstring():
     @cmd.declare_command
     def func():
         """docstring"""
     assert func.__doc__ == "docstring"
-
-    @cmd.declare_command
-    def func():
-        """
-        docstring
-        Test:
-            --foo
-        """
-    assert func.__doc__ == "docstring\nTest:\n    --foo"
-
-
-def test_declare_command_type_return(capsys):
-    @cmd.declare_command
-    def func() -> int:
-        return 1
-
-    assert func() == 1
-    out, err = capsys.readouterr()
-    assert out == ''
-
-    @cmd.declare_command
-    def func():
-        return 1
-    assert func() == 1
-
-def test_declare_command_list_str(capsys):
-    @cmd.declare_command
-    def func(a: List[str]):
-        print(a[-1])
-
-    func(["a", "b", "c"])
-    cmd.do('func a b c')
-    out, err = capsys.readouterr()
-    assert out == 'c\nc\n'
-
-def test_declare_command_list_int(capsys):
-    @cmd.declare_command
-    def func(a: List[int]):
-        print(a[-1] ** 2)
-        return a[-1] ** 2
-
-    assert func([1, 2, 3]) == 9
-    cmd.do('func 1 2 3')
-    out, err = capsys.readouterr()
-    assert out == '9\n9\n'
-
-
-def test_declare_command_list_float(capsys):
-    @cmd.declare_command
-    def func(a: List[float]):
-        print(a[-1]**2)
-        return a[-1]**2
-
-    assert func([1.1, 2.0, 3.0]) == 9.0
-    cmd.do('func 1 2 3')
-    out, err = capsys.readouterr()
-    assert out == '9.0\n9.0\n'
 
 
 def test_declare_command_bool(capsys):
@@ -276,8 +219,97 @@ def test_declare_command_bool(capsys):
         assert a
         assert not b
 
-    func(True, False)
-
-    cmd.do("func yes, no")
+    cmd.do("func yes, 0")
     out, err = capsys.readouterr()
     assert out == '' and err == ''
+
+
+def test_declare_command_generic(capsys):
+    @cmd.declare_command
+    def func(
+        nullable_point: Tuple[float, float, float],
+        my_var: Union[int, float] = 10,
+        my_foo: Union[int, float] = 10.0,
+        extended_calculation: bool = True,
+        old_style: Any = "Old behavior"
+    ):
+        assert nullable_point == (1., 2., 3.)
+        assert extended_calculation
+        assert isinstance(my_var, int)
+        assert isinstance(my_foo, float)
+        assert old_style == "Old behavior"
+
+    cmd.do("func nullable_point=1 2 3, my_foo=11.0")
+    out, err = capsys.readouterr()
+    assert out + err == ''
+
+def test_declare_command_path(capsys):
+    @cmd.declare_command
+    def func(dirname: Path = Path('.')):
+        assert dirname.exists()
+    cmd.do('func ..')
+    cmd.do('func')
+    out, err = capsys.readouterr()
+    assert out + err == ''
+
+def test_declare_command_any(capsys):
+    @cmd.declare_command
+    def func(old_style: Any):
+        assert old_style != "RuntimeError"
+    cmd.do("func RuntimeError")
+    out, err = capsys.readouterr()
+    assert 'AssertionError' in out+err
+
+def test_declare_command_list(capsys):
+    @cmd.declare_command
+    def func(a: List):
+        assert a[1] == "2"
+    cmd.do("func 1 2 3")
+    out, err = capsys.readouterr()
+    assert out + err == ''
+
+    @cmd.declare_command
+    def func(a: List[int]):
+        assert a[1] == 2
+    cmd.do("func 1 2 3")
+    out, err = capsys.readouterr()
+    assert out + err == ''
+
+def test_declare_command_tuple(capsys):
+    @cmd.declare_command
+    def func(a: Tuple[str, int]):
+        assert a == ("fooo", 42)
+    cmd.do("func fooo 42")
+    out, err = capsys.readouterr()
+    assert out + err == ''
+
+def test_declare_command_arg_docs():
+    @cmd.declare_command
+    def func(
+        # multiline
+        # documentation works
+        foo: int, # inline
+        a: str,
+        # bar are strings
+        bar: Tuple[str, int], # continued...
+        b: Any = 10, # The new old age
+        # aaaa
+        c: Any = 'a' # b
+    ):
+        "main description"
+        pass
+
+    assert func.__arg_docs['foo'] == "multiline documentation works inline"
+    assert func.__arg_docs['a'] == ""
+    assert func.__arg_docs['bar'] == "bar are strings continued..."
+    assert func.__arg_docs['b'] == 'The new old age'
+    assert func.__arg_docs['c'] == 'aaaa b'
+    assert func.__annotations__['foo'] == int
+    assert func.__annotations__['bar'] == Tuple[str, int]
+
+def test_declare_command_default():
+    @cmd.declare_command
+    def func(a: str="sele"):
+        assert a == "a"
+    func("a")
+    cmd.do('func a')

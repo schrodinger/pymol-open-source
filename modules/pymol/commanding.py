@@ -20,16 +20,19 @@ if True:
     if True:
         import _thread as thread
         import urllib.request as urllib2
-        from io import FileIO as file
+        from io import FileIO as file, BytesIO
 
+    import builtins
     import inspect
     import glob
     import shlex
+    import tokenize
     from enum import Enum
     from functools import wraps
     from pathlib import Path
     from textwrap import dedent
-    from typing import List
+    from typing import Tuple, Iterable, get_args,  Optional, Union, Any, NewType, List, get_origin
+
 
     import re
     import os
@@ -599,45 +602,117 @@ SEE ALSO
             states_list = sorted(set(map(int, output)))
             return _cmd.delete_states(_self._COb, name, states_list)
 
-    class Selection(str):
-        pass
-
-
-    def _parse_bool(value: str):
-        if isinstance(value, str):
+    def _into_types(type, value):
+        if repr(type) == 'typing.Any':
+            return value
+        elif type is bool:
+            if isinstance(value, bool):
+                return value
             if value.lower() in ["yes", "1", "true", "on", "y"]:
                 return True
             elif value.lower() in ["no", "0", "false", "off", "n"]:
                 return False
             else:
-                raise Exception("Invalid boolean value: %s" % value)
-        elif isinstance(value, bool):
-            return value
-        else:
-            raise Exception(f"Unsuported boolean flag {value}")
+                raise pymol.CmdException("Invalid boolean value: %s" % value)
+        
+        elif isinstance(type, builtins.type):
+            return type(value)
 
-    def _parse_list_str(value):
-        return shlex.split(value)
+        if origin := get_origin(type):
+            if not repr(origin).startswith('typing.') and issubclass(origin, tuple):
+                args = get_args(type)
+                new_values = []
+                for i, new_value in enumerate(shlex.split(value)):
+                    new_values.append(_into_types(args[i], new_value))
+                return tuple(new_values)
+            
+            elif origin == Union:
+                args = get_args(type)
+                found = False
+                for i, arg in enumerate(args):
+                    try:
+                        found = True
+                        return _into_types(arg, value)
+                    except:
+                        found = False
+                if not found:
+                    raise pymol.CmdException(f"Union was not able to cast %s" % value)
+                    
+            elif issubclass(list, origin):
+                args = get_args(type)
+                if len(args) > 0:
+                    f = args[0]
+                else:
+                    f = lambda x: x
+                return [f(i) for i in shlex.split(value)]
+        
+        # elif value is None:
+        #     origin = get_origin(type)
+        #     if origin is None:
+        #         return None
+        #     else:
+        #         return _into_types(origin)
+        #         for arg in get_args(origin):
+        #         return _into_types(get_args(origin), value)
+        
+        elif isinstance(type, str):
+            return str(value)
 
-    def _parse_list_int(value):
-        return list(map(int, shlex.split(value)))
+        raise pymol.CmdException(f"Unsupported argument type {type}")
+                    
+    def parse_documentation(func):
+        source = inspect.getsource(func)
+        tokens = tokenize.tokenize(BytesIO(source.encode('utf-8')).readline)
+        tokens = list(tokens)
+        comments = []
+        params = {}
+        i = -1
+        started = False
+        while True:
+            i += 1
+            if tokens[i].string == "def":
+                while tokens[i].string == "(":
+                    i += 1
+                started = True
+                continue
+            if not started:
+                continue
+            if tokens[i].string == "->":
+                break
+            if tokens[i].type == tokenize.NEWLINE:
+                break
+            if tokens[i].string == ")":
+                break
+            if tokens[i].type == tokenize.COMMENT:
+                comments.append(tokens[i].string)
+                continue
+            if tokens[i].type == tokenize.NAME and tokens[i+1].string == ":":
+                name = tokens[i].string
+                name_line = tokens[i].line
+                i += 1
+                while not (tokens[i].type == tokenize.NAME and tokens[i+1].string == ":"):
+                    if tokens[i].type == tokenize.COMMENT and tokens[i].line == name_line:
+                        comments.append(tokens[i].string)
+                        break
+                    elif tokens[i].type == tokenize.NEWLINE:
+                        break
+                    i += 1
+                else:
+                    i -= 3
+                docs = ' '.join(c[1:].strip() for c in comments)
+                params[name] = docs
+                comments = []
+        return params
 
-    def _parse_list_float(value):
-        return list(map(float, shlex.split(value)))
 
     def declare_command(name, function=None, _self=cmd):
+
         if function is None:
             name, function = name.__name__, name
 
-        # new style commands should have annotations
-        annotations = [a for a in function.__annotations__ if a != "return"]
-        if function.__code__.co_argcount != len(annotations):
-            raise Exception("Messy annotations")
-
         # docstring text, if present, should be dedented
         if function.__doc__ is not None:
-            function.__doc__ = dedent(function.__doc__).strip()
-
+            function.__doc__ = dedent(function.__doc__)
 
         # Analysing arguments
         spec = inspect.getfullargspec(function)
@@ -658,36 +733,31 @@ SEE ALSO
         def inner(*args, **kwargs):
             frame = traceback.format_stack()[-2]
             caller = frame.split("\"", maxsplit=2)[1]
-
             # It was called from command line or pml script, so parse arguments
             if caller.endswith("pymol/parser.py"):
-                kwargs = {**kwargs_, **kwargs, **dict(zip(args2_, args))}
+                kwargs = {**kwargs, **dict(zip(args2_, args))}
                 kwargs.pop("_self", None)
-                for arg in kwargs.copy():
-                    if funcs[arg] == bool:
-                        funcs[arg] = _parse_bool
-                    elif funcs[arg] == List[str]:
-                        funcs[arg] = _parse_list_str
-                    elif funcs[arg] == List[int]:
-                        funcs[arg] = _parse_list_int
-                    elif funcs[arg] == List[float]:
-                        funcs[arg] = _parse_list_float
-                    else:
-                        # Assume it's a literal supported type
-                        pass
-                    # Convert the argument to the correct type
-                    kwargs[arg] = funcs[arg](kwargs[arg])
-                return function(**kwargs)
+                new_kwargs = {}
+                for var, type in funcs.items():
+                    if var in kwargs:
+                        value = kwargs[var]
+                        new_kwargs[var] = _into_types(type, value)
+                final_kwargs = {}
+                for k, v in kwargs_.items():
+                    final_kwargs[k] = v
+                for k, v in new_kwargs.items():
+                    if k not in final_kwargs:
+                        final_kwargs[k] = v
+                return function(**final_kwargs)
 
             # It was called from Python, so pass the arguments as is
             else:
                 return function(*args, **kwargs)
+        inner.__arg_docs = parse_documentation(function)
 
-        name = function.__name__
-        _self.keyword[name] = [inner, 0, 0, ",", parsing.STRICT]
-        _self.kwhash.append(name)
-        _self.help_sc.append(name)
+        _self.keyword[name] = [inner, 0,0,',',parsing.STRICT]
         return inner
+
 
     def extend(name, function=None, _self=cmd):
 
