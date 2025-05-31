@@ -7252,6 +7252,8 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
           }
         }
         Py_DECREF(mol);
+      } else if (PyErr_Occurred() == PyExc_AttributeError) {
+        PyErr_Clear();
       }
       if(PyObject_HasAttrString(model, "spheroid") &&
          PyObject_HasAttrString(model, "spheroid_normals")) {
