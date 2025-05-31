@@ -11,6 +11,25 @@ License: BSD-2-Clause
 
 from pymol import cmd, CmdException
 
+import functools
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import Bio.Align
+
+
+@functools.cache
+def _get_aligner_BLOSUM62() -> "Bio.Align.PairwiseAligner":
+    from Bio.Align import PairwiseAligner, substitution_matrices
+    blosum62 = substitution_matrices.load("BLOSUM62")
+    missing_codes = ''.join(set('JUO-.?').difference(blosum62.alphabet))
+    blosum62 = blosum62.select(blosum62.alphabet + missing_codes)
+    aligner = PairwiseAligner(internal_open_gap_score=-10,
+                              extend_gap_score=-.5,
+                              substitution_matrix=blosum62)
+    assert aligner.mode == "global"
+    return aligner
+
 
 def needle_alignment(s1, s2):
     '''
@@ -19,26 +38,16 @@ DESCRIPTION
     Does a Needleman-Wunsch Alignment of sequence s1 and s2 and
     returns a Bio.Align.MultipleSeqAlignment object.
     '''
-    from Bio import pairwise2
     from Bio.Align import MultipleSeqAlignment
     from Bio.SeqRecord import SeqRecord
-    try:
-        from Bio.Align import substitution_matrices
-    except ImportError:
-        from Bio.SubsMat.MatrixInfo import blosum62
-    else:
-        blosum62 = substitution_matrices.load("BLOSUM62")
+    from Bio.Seq import Seq
 
-    def match_callback(c1, c2):
-        return blosum62.get((c1, c2), 1 if c1 == c2 else -4)
-
-    alns = pairwise2.align.globalcs(s1, s2,
-            match_callback, -10., -.5,
-            one_alignment_only=True)
+    aligner = _get_aligner_BLOSUM62()
+    alns = aligner.align(s1, s2)
 
     a = MultipleSeqAlignment([])
-    s1 = SeqRecord(alns[0][0], id="s1")
-    s2 = SeqRecord(alns[0][1], id="s2")
+    s1 = SeqRecord(Seq(alns[0][0]), id="s1")
+    s2 = SeqRecord(Seq(alns[0][1]), id="s2")
     a.extend([s1, s2])
     return a
 
