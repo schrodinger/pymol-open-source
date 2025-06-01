@@ -636,7 +636,7 @@ SEE ALSO
                     except:
                         found = False
                 if not found:
-                    raise pymol.CmdException(f"Union was not able to cast %s" % value)
+                    raise pymol.CmdException("Union was not able to cast %s" % value)
                     
             elif issubclass(list, origin):
                 args = get_args(type)
