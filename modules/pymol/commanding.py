@@ -13,6 +13,7 @@
 #Z* -------------------------------------------------------------------
 
 from pymol.shortcut import Shortcut
+from pymol.parser import __file__ as _parser_filename
 
 if True:
 
