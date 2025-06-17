@@ -4,7 +4,7 @@
 
 #include "pymol/memory.h"
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 #include <sys/sysinfo.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -32,7 +32,7 @@ size_t memory_usage()
 {
 #ifdef _WEBGL
   return 0;
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__FreeBSD__)
   size_t vmRSS = 0;
   if (auto fp = std::fopen("/proc/self/statm", "rb")) {
     std::fscanf(fp, "%*zu%zu", &vmRSS);
@@ -66,7 +66,7 @@ size_t memory_available()
 {
 #ifdef _WEBGL
   return 0;
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__FreeBSD__)
   size_t memAvail = 0;
   if (auto fp = unique_ptr_take_ownership(
           std::fopen("/proc/meminfo", "rb"), std::fclose)) {
