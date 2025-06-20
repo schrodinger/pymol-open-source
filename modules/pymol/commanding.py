@@ -605,13 +605,18 @@ SEE ALSO
     def _into_types(type, value):
         if repr(type) == 'typing.Any':
             return value
+        
         elif type is bool:
             if isinstance(value, bool):
                 return value
-            if value.lower() in ["yes", "1", "true", "on", "y"]:
-                return True
-            elif value.lower() in ["no", "0", "false", "off", "n"]:
-                return False
+            elif isinstance(value, str):
+                if value.lower() in ["yes", "1", "true", "on", "y"]:
+                    return True
+                elif value.lower() in ["no", "0", "false", "off", "n"]:
+                    return False
+            elif isinstance(value, int):
+                if value in [0, 1]:
+                    return bool(value)
             else:
                 raise pymol.CmdException("Invalid boolean value: %s" % value)
         
@@ -706,7 +711,6 @@ SEE ALSO
 
 
     def declare_command(name, function=None, _self=cmd):
-
         if function is None:
             name, function = name.__name__, name
 
