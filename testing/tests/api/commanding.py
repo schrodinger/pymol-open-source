@@ -1,4 +1,5 @@
 import sys
+from enum import Enum
 
 import __main__
 from pytest import mark
@@ -314,3 +315,20 @@ def test_declare_command_default():
         assert a == "a"
     func("a")
     cmd.do('func a')
+
+
+def test_declare_command_enum(capsys):
+    class E(str, Enum):
+        A = "a"
+        B = "b"
+        C = "c"
+    
+    @cmd.declare_command
+    def func(e: E):
+        assert isinstance(e, E)
+        assert e == E.A
+        assert e == "a"
+    
+    cmd.do('func a')
+    out, err = capsys.readouterr()
+    assert out + err == ''
