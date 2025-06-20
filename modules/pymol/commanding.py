@@ -737,11 +737,11 @@ SEE ALSO
         # Inner function that will be callable every time the command is executed
         @wraps(function)
         def inner(*args, **kwargs):
-            frame = traceback.format_stack()[-2]
-            caller = frame.split("\"", maxsplit=2)[1]
+            caller = traceback.extract_stack(limit=2)[0].filename
+
             # It was called from command line or pml script, so parse arguments
-            if caller.endswith("pymol/parser.py"):
-                kwargs = {**kwargs, **dict(zip(args2_, args))}
+            if caller == _parser_filename:
+                kwargs = {**kwargs_, **kwargs, **dict(zip(args2_, args))}
                 kwargs.pop("_self", None)
                 new_kwargs = {}
                 for var, type in funcs.items():
