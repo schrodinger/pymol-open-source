@@ -712,6 +712,7 @@ SEE ALSO
 
 
     def declare_command(name, function=None, _self=cmd):
+
         if function is None:
             name, function = name.__name__, name
 

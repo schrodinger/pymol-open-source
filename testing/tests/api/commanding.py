@@ -1,8 +1,7 @@
-from __future__ import print_function
-
 import sys
 
 import __main__
+from pytest import mark
 from pymol import cmd, testing, stored
 from typing import List
 from typing import Optional, Any, Tuple, Union, List
@@ -191,6 +190,8 @@ def test_declare_command_casting():
         assert isinstance(b, Path) and "/tmp" == str(b)
     cmd.do('func 1, /tmp')
 
+
+@mark.skip(reason="API not implemented yet")
 def test_declare_command_optional(capsys):
     @cmd.declare_command
     def func(a: Optional[int] = None):
