@@ -604,6 +604,8 @@ SEE ALSO
             return _cmd.delete_states(_self._COb, name, states_list)
 
     def _into_types(type, value):
+        """Convert a string value to an specific type."""
+
         if repr(type) == 'typing.Any':
             return value
         
@@ -616,8 +618,7 @@ SEE ALSO
                 elif value.lower() in ["no", "0", "false", "off", "n"]:
                     return False
             elif isinstance(value, int):
-                if value in [0, 1]:
-                    return bool(value)
+                return bool(value)
             else:
                 raise pymol.CmdException("Invalid boolean value: %s" % value)
 
@@ -630,6 +631,7 @@ SEE ALSO
         elif isinstance(type, builtins.type):
             return type(value)
 
+        # Composite types for now
         if origin := get_origin(type):
             if not repr(origin).startswith('typing.') and issubclass(origin, tuple):
                 args = get_args(type)
@@ -657,7 +659,8 @@ SEE ALSO
                 else:
                     f = lambda x: x
                 return [f(i) for i in shlex.split(value)]
-        
+
+        # TODO Optional/None case isn't working
         # elif value is None:
         #     origin = get_origin(type)
         #     if origin is None:
@@ -672,7 +675,12 @@ SEE ALSO
 
         raise pymol.CmdException(f"Unsupported argument type {type}")
                     
-    def parse_documentation(func):
+    def parse_args_docs(func):
+        """Extract the arguments documentation of a function.
+
+        They are given by the # comments preceding or at the same
+        line of each argument.
+        """
         source = inspect.getsource(func)
         tokens = tokenize.tokenize(BytesIO(source.encode('utf-8')).readline)
         tokens = list(tokens)
@@ -759,7 +767,7 @@ SEE ALSO
             # It was called from Python, so pass the arguments as is
             else:
                 return function(*args, **kwargs)
-        inner.__arg_docs = parse_documentation(function)
+        inner.__arg_docs = parse_args_docs(function)
 
         _self.keyword[name] = [inner, 0,0,',',parsing.STRICT]
         return inner
