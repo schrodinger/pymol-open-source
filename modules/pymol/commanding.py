@@ -620,7 +620,7 @@ SEE ALSO
             elif isinstance(value, int):
                 return bool(value)
             else:
-                raise pymol.CmdException("Invalid boolean value: %s" % value)
+                raise pymol.CmdException(f"Invalid boolean value: {value}")
 
         elif isinstance(type, Enum):
             if value in type:
