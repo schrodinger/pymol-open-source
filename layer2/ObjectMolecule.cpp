@@ -8645,10 +8645,11 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(ok && isNew)
         ok &= ObjectMoleculeConnect(I, cset, connect);
 
-      if (ok)
-	ok &= ObjectMoleculeExtendIndices(I, frame);
-      if (ok)
-	ok &= ObjectMoleculeSort(I);
+      if (ok) {
+        if (I->DiscreteFlag) {
+          ok &= ObjectMoleculeExtendIndices(I, frame);
+        }
+      }
 
       deferred_tasks = true;
       successCnt++;
@@ -8677,6 +8678,10 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
     }
   }
   if(deferred_tasks && I) {     /* defer time-consuming tasks until all states have been loaded */
+    if (!I->DiscreteFlag) {
+      ObjectMoleculeExtendIndices(I, cStateAll);
+    }
+    ObjectMoleculeSort(I);
     if (set_formal_charges){
       ObjectMoleculeMOL2SetFormalCharges(G, I);
     }
