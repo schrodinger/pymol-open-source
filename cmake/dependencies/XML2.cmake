@@ -1,0 +1,5 @@
+find_package(LibXml2 REQUIRED)
+
+# COLLADA support
+list(APPEND PYMOL_DEF_MACROS "_HAVE_LIBXML")
+list(APPEND PYMOL_LIBS LibXml2::LibXml2)

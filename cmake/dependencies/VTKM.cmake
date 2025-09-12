@@ -1,0 +1,5 @@
+find_package(VTKm)
+list(APPEND PYMOL_DEF_MACROS "_PYMOL_VTKM")
+list(APPEND PYMOL_INC_DIRS ${VTKm_INCLUDE_DIRS}
+     ${VTKm_THIRDPARTY_DIY_INCLUDE_DIR} ${VTKm_THIRDPARTY_LCL_INCLUDE_DIR})
+list(APPEND PYMOL_LIBS vtkm_cont vtkm_filter_contour vtkm_filter_core)

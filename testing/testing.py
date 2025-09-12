@@ -604,39 +604,6 @@ else:
             cmd.set('reflect', 0)
             cmd.set('direct', 0)
 
-    class PyMOLTestResult(unittest.runner.TextTestResult):
-        def addSuccess(self, test):
-            if not (self.showAll and test.timings):
-                return super(PyMOLTestResult, self).addSuccess(test)
-
-            unittest.result.TestResult.addSuccess(self, test)
-            msg = 'ok (%s)' % ', '.join(
-                    ('%s: %.3fs' % (m, t) if m else '%.3fs' % t)
-                    for (m, t) in test.timings)
-            self.stream.writeln(msg)
-
-            filename = os.getenv("PYMOLTESTTIMINGS",
-                    os.path.join(pymol_test_dir, "timings.tab"))
-
-            if filename in ("", "none"):
-                return
-
-            with open(filename, "a") as handle:
-                for i, (m, t) in enumerate(test.timings):
-                    version = cmd.get_version()
-                    buildinfo = version[3:] or [0, "", 0]
-                    print('\t'.join([
-                        '%f' % time.time(),
-                        '%012x' % uuid.getnode(),
-                        '%f' % t,
-                        type(test).__name__ + '.' + test._testMethodName,
-                        str(m or i),
-                        version[0],
-                        buildinfo[1],
-                        '%d' % buildinfo[2],
-                        platform.platform(),
-                        platform.node(),
-                    ]), file=handle)
 
     def run_testfiles(filenames='all', verbosity=2, out=sys.stderr, **kwargs):
         '''
@@ -691,8 +658,7 @@ USAGE
         else:
             if isinstance(out, str):
                 out = open(out, 'w')
-            testresult = unittest.TextTestRunner(stream=out,
-                                                 resultclass=PyMOLTestResult, verbosity=int(verbosity)).run(suite)
+            testresult = unittest.TextTestRunner(stream=out, verbosity=int(verbosity)).run(suite)
 
         # Run pytest files if any
         pytest_nfail = pytest.main(['-v', *map(str, pytest_files)]) if pytest_files else 0

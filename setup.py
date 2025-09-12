@@ -7,26 +7,24 @@
 # pre-installed into the system.
 
 import argparse
-import glob
-import io as cStringIO
 import os
-import pathlib
 import re
 import shutil
 import sys
 import sysconfig
 import time
 from collections import defaultdict
+from itertools import chain
+from pathlib import Path
 from subprocess import PIPE, Popen
 
-import numpy
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 from setuptools.command.build_py import build_py
 from setuptools.command.install import install
 
 # non-empty DEBUG variable turns off optimization and adds -g flag
-DEBUG = bool(os.getenv("DEBUG", ""))
+DEBUG = bool(os.getenv("DEBUG", False))
 WIN = sys.platform.startswith("win")
 MAC = sys.platform.startswith("darwin")
 
@@ -34,89 +32,54 @@ MAC = sys.platform.startswith("darwin")
 # Have to copy from "create_shadertext.py" script due to the use of pyproject.toml
 # Full explanation:
 # https://github.com/pypa/setuptools/issues/3939
-def create_all(generated_dir, pymoldir="."):
+def create_all(generated_dir: str, pymol_dir: str = ".") -> None:
     """
     Generate various stuff
     """
+    generated_dir_path = Path(generated_dir)
+    pymol_dir_path = Path(pymol_dir)
+
+    generated_dir_path.mkdir(parents=True, exist_ok=True)
+    pymol_dir_path.mkdir(parents=True, exist_ok=True)
+
     create_shadertext(
-        os.path.join(pymoldir, "data", "shaders"),
-        generated_dir,
-        os.path.join(generated_dir, "ShaderText.h"),
-        os.path.join(generated_dir, "ShaderText.cpp"),
+        shader_dir=generated_dir_path / "data" / "shaders",
+        shader_dir2=pymol_dir_path,
+        output_header=generated_dir_path / "ShaderText.h",
+        output_source=generated_dir_path / "ShaderText.cpp",
     )
-    create_buildinfo(generated_dir, pymoldir)
+    create_buildinfo(generated_dir, pymol_dir)
 
 
-class openw(object):
-    """
-    File-like object for writing files. File is actually only
-    written if the content changed.
-    """
-
-    def __init__(self, filename):
-        if os.path.exists(filename):
-            self.out = cStringIO.StringIO()
-            self.filename = filename
-        else:
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            self.out = open(filename, "w")
-            self.filename = None
-
-    def close(self):
-        if self.out.closed:
-            return
-        if self.filename:
-            with open(self.filename) as handle:
-                oldcontents = handle.read()
-            newcontents = self.out.getvalue()
-            if oldcontents != newcontents:
-                self.out = open(self.filename, "w")
-                self.out.write(newcontents)
-        self.out.close()
-
-    def __getattr__(self, name):
-        return getattr(self.out, name)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *a, **k):
-        self.close()
-
-    def __del__(self):
-        self.close()
-
-
-def create_shadertext(shaderdir, shaderdir2, outputheader, outputfile):
-    outputheader = openw(outputheader)
-    outputfile = openw(outputfile)
-
+def create_shadertext(
+    shader_dir: Path,
+    shader_dir2: Path,
+    output_header: Path,
+    output_source: Path,
+) -> None:
+    varname = "_shader_cache_raw"
     include_deps = defaultdict(set)
     ifdef_deps = defaultdict(set)
+    extension_regexp = {".gs", ".vs", ".fs", ".shared", ".tsc", ".tse"}
 
     # get all *.gs *.vs *.fs *.shared from the two input directories
-    shaderfiles = set()
-    for sdir in [shaderdir, shaderdir2]:
-        for ext in ["gs", "vs", "fs", "shared", "tsc", "tse"]:
-            shaderfiles.update(
-                map(os.path.basename, sorted(glob.glob(os.path.join(sdir, "*." + ext))))
-            )
+    shader_files = set(
+        path
+        for path in chain(shader_dir.glob("**/*"), shader_dir2.glob("**/*"))
+        if path.suffix in extension_regexp
+    )
 
-    varname = "_shader_cache_raw"
-    outputheader.write("extern const char * %s[];\n" % varname)
-    outputfile.write("const char * %s[] = {\n" % varname)
+    with (
+        open(output_header, "w") as output_header_file,
+        open(output_source, "w") as output_source_file,
+    ):
+        output_header_file.write(f"extern const char * {varname}[];\n")
+        output_source_file.write(f"const char * {varname}[] = {{\n")
 
-    for filename in sorted(shaderfiles):
-        shaderfile = os.path.join(shaderdir, filename)
-        if not os.path.exists(shaderfile):
-            shaderfile = os.path.join(shaderdir2, filename)
+        for shader_file in shader_files:
+            output_source_file.write(f'"{shader_file.name}", ""\n')
 
-        with open(shaderfile, "r") as handle:
-            contents = handle.read()
-
-        if True:
-            outputfile.write('"%s", ""\n' % (filename))
-
+            contents = shader_file.read_text()
             for line in contents.splitlines():
                 line = line.strip()
 
@@ -125,52 +88,43 @@ def create_shadertext(shaderdir, shaderdir2, outputheader, outputfile):
                     continue
 
                 # write line, quoted, escaped and with a line feed
-                outputfile.write(
-                    '"%s\\n"\n' % line.replace("\\", "\\\\").replace('"', r"\"")
-                )
+                escaped_line = line.replace("\\", "\\\\").replace('"', r"\"")
+                output_source_file.write(f'"{escaped_line}\\n"\n')
 
                 # include and ifdef dependencies
                 if line.startswith("#include"):
-                    include_deps[line.split()[1]].add(filename)
+                    include_deps[line.split()[1]].add(shader_file.name)
                 elif line.startswith("#ifdef") or line.startswith("#ifndef"):
-                    ifdef_deps[line.split()[1]].add(filename)
+                    ifdef_deps[line.split()[1]].add(shader_file.name)
 
-            outputfile.write(",\n")
+            output_source_file.write(",\n")
+        output_source_file.write("0};\n")
 
-    outputfile.write("0};\n")
+        # include and ifdef dependencies
+        for varname, deps in [
+            ("_include_deps", include_deps),
+            ("_ifdef_deps", ifdef_deps),
+        ]:
+            output_header_file.write(f"extern const char * {varname}[];\n")
+            output_source_file.write(f"const char * {varname}[] = {{\n")
+            for name, item_deps in deps.items():
+                item_deps = '", "'.join(sorted(item_deps))
+                output_source_file.write(f'"{name}", "{item_deps}", 0,\n')
+            output_source_file.write("0};\n")
 
-    # include and ifdef dependencies
-    for varname, deps in [("_include_deps", include_deps), ("_ifdef_deps", ifdef_deps)]:
-        outputheader.write("extern const char * %s[];\n" % varname)
-        outputfile.write("const char * %s[] = {\n" % varname)
-        for name, itemdeps in deps.items():
-            outputfile.write('"%s", "%s", 0,\n' % (name, '", "'.join(sorted(itemdeps))))
-        outputfile.write("0};\n")
 
-    outputheader.close()
-    outputfile.close()
+def create_buildinfo(output_dir_path: str, pymoldir: str = ".") -> None:
+    output_dir = Path(output_dir_path)
+    sha_raw = Popen(["git", "rev-parse", "HEAD"], cwd=pymoldir, stdout=PIPE).stdout
+    sha = sha_raw.read().strip().decode() if sha_raw is not None else ""
 
-
-def create_buildinfo(outputdir, pymoldir="."):
-    try:
-        sha = (
-            Popen(["git", "rev-parse", "HEAD"], cwd=pymoldir, stdout=PIPE)
-            .stdout.read()
-            .strip()
-            .decode()
-        )
-    except OSError:
-        sha = ""
-
-    with openw(os.path.join(outputdir, "PyMOLBuildInfo.h")) as out:
-        print(
-            """
-#define _PyMOL_BUILD_DATE %d
-#define _PYMOL_BUILD_GIT_SHA "%s"
-        """
-            % (int(os.environ.get('SOURCE_DATE_EPOCH', time.time())), sha),
-            file=out,
-        )
+    info_file = output_dir / "PyMOLBuildInfo.h"
+    info_file.write_text(
+        f"""
+    #define _PyMOL_BUILD_DATE {time.time()}
+    #define _PYMOL_BUILD_GIT_SHA "{sha}"
+    """
+    )
 
 
 # handle extra arguments
@@ -210,7 +164,7 @@ parser.add_argument(
     "--jobs",
     "-j",
     type=int,
-    help="for parallel builds " "(defaults to number of processors)",
+    help="for parallel builds (defaults to number of processors)",
 )
 parser.add_argument(
     "--libxml",
@@ -240,90 +194,6 @@ parser.add_argument(
 options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 
 
-def get_prefix_path() -> list[str]:
-    """
-    Return a list of paths which will be searched for "include",
-    "include/freetype2", "lib", "lib64" etc.
-    """
-    paths = []
-
-    if (prefix_path := os.environ.get("PREFIX_PATH")) is not None:
-        paths += prefix_path.split(os.pathsep)
-
-    if sys.platform.startswith("freebsd"):
-        paths += ["/usr/local"]
-
-    if not options.osx_frameworks:
-        paths += ["usr/X11"]
-
-    if MAC:
-        for prefix in ["/sw", "/opt/local", "/usr/local"]:
-            if sys.base_prefix.startswith(prefix):
-                paths += [prefix]
-
-    if is_conda_env():
-        if WIN:
-            if "CONDA_PREFIX" in os.environ:
-                paths += [os.path.join(os.environ["CONDA_PREFIX"], "Library")]
-            paths += [os.path.join(sys.prefix, "Library")]
-
-        paths += [sys.prefix] + paths
-
-    paths += ["/usr"]
-
-    return paths
-
-
-def is_conda_env():
-    return (
-        "conda" in sys.prefix
-        or "conda" in sys.version
-        or "Continuum" in sys.version
-        or sys.prefix == os.getenv("CONDA_PREFIX")
-    )
-
-
-def guess_msgpackc():
-    for prefix in prefix_path:
-        for suffix in ["h", "hpp"]:
-            f = os.path.join(prefix, "include", "msgpack", f"version_master.{suffix}")
-
-            try:
-                m = re.search(r"MSGPACK_VERSION_MAJOR\s+(\d+)", open(f).read())
-            except EnvironmentError:
-                continue
-
-            if m is not None:
-                major = int(m.group(1))
-                if major > 1:
-                    return "c++11"
-
-    return "no"
-
-
-class CMakeExtension(Extension):
-
-    def __init__(
-        self,
-        name,
-        sources,
-        include_dirs=[],
-        libraries=[],
-        library_dirs=[],
-        define_macros=[],
-        extra_link_args=[],
-        extra_compile_args=[],
-    ):
-        # don't invoke the original build_ext for this special extension
-        super().__init__(name, sources=[])
-        self.sources = sources
-        self.include_dirs = include_dirs
-        self.libraries = libraries
-        self.library_dirs = library_dirs
-        self.define_macros = define_macros
-        self.extra_link_args = extra_link_args
-        self.extra_compile_args = extra_compile_args
-
 
 class build_ext_pymol(build_ext):
     def initialize_options(self) -> None:
@@ -336,16 +206,15 @@ class build_ext_pymol(build_ext):
             self.build_cmake(ext)
 
     def build_cmake(self, ext):
-        cwd = pathlib.Path().absolute()
+        cwd = Path().absolute()
 
         # these dirs will be created in build_py, so if you don't have
         # any python sources to bundle, the dirs will be missing
         name_split = ext.name.split(".")
         target_name = name_split[-1]
-        build_temp = pathlib.Path(self.build_temp) / target_name
+        build_temp = Path(self.build_temp) / target_name
         build_temp.mkdir(parents=True, exist_ok=True)
-        extdir = pathlib.Path(self.get_ext_fullpath(ext.name))
-        extdirabs = extdir.absolute()
+        extdir = Path(self.get_ext_fullpath(ext.name))
 
         extdir.parent.mkdir(parents=True, exist_ok=True)
 
@@ -353,32 +222,22 @@ class build_ext_pymol(build_ext):
             return "".join(path.replace("\\", "/") + ";" for path in paths)
 
         config = "Debug" if DEBUG else "Release"
-        lib_output_dir = str(extdir.parent.absolute())
-        all_files = ext.sources
-        all_src = concat_paths(all_files)
-        all_defs = "".join(mac[0] + ";" for mac in ext.define_macros)
-        all_libs = "".join(f"{lib};" for lib in ext.libraries)
-        all_ext_link = " ".join(ext.extra_link_args)
-        all_comp_args = "".join(f"{arg};" for arg in ext.extra_compile_args)
-        all_lib_dirs = concat_paths(ext.library_dirs)
-        all_inc_dirs = concat_paths(ext.include_dirs)
-
-        lib_mode = "RUNTIME" if WIN else "LIBRARY"
-
-        shared_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+        all_src = concat_paths(ext.sources)
 
         cmake_args = [
             f"-DTARGET_NAME={target_name}",
-            f"-DCMAKE_{lib_mode}_OUTPUT_DIRECTORY={lib_output_dir}",
             f"-DCMAKE_BUILD_TYPE={config}",
-            f"-DALL_INC_DIR={all_inc_dirs}",
+            f"-DALL_INC_DIR={';'.join(ext.include_dirs)}",
             f"-DALL_SRC={all_src}",
-            f"-DALL_DEF={all_defs}",
-            f"-DALL_LIB_DIR={all_lib_dirs}",
-            f"-DALL_LIB={all_libs}",
-            f"-DALL_COMP_ARGS={all_comp_args}",
-            f"-DALL_EXT_LINK={all_ext_link}",
-            f"-DSHARED_SUFFIX={shared_suffix}",
+            f"-DPYMOL_GLUT={options.glut}",
+            f"-DPYMOL_LIBXML2={options.libxml}",
+            f"-DPYMOL_OSX_FRAMEWORKS={options.osx_frameworks}",
+            f"-DPYMOL_USE_OPENMP={options.use_openmp}",
+            f"-DPYMOL_TESTING={options.testing}",
+            f"-DPYMOL_OPENVR={options.openvr}",
+            f"-DPYMOL_VMD_PLUGINS={options.vmd_plugins}",
+            f"-DPYMOL_USE_VTKM={options.use_vtkm}",
+            f"-DPYMOL_USE_MSGPACKC={options.use_msgpackc}",
         ]
 
         # example of build args
@@ -392,22 +251,7 @@ class build_ext_pymol(build_ext):
         if not self.dry_run:
             self.spawn(["cmake", "--build", "."] + build_args)
 
-        if WIN:
-            # Move up from VS release folder
-            cmake_lib_loc = pathlib.Path(
-                lib_output_dir, "Release", f"{target_name}{shared_suffix}"
-            )
-            if cmake_lib_loc.exists():
-                shutil.move(cmake_lib_loc, extdirabs)
-
-        # Troubleshooting: if fail on line above then delete all possible
-        # temporary CMake files including "CMakeCache.txt" in top level dir.
         os.chdir(str(cwd))
-
-
-class build_py_pymol(build_py):
-    def run(self):
-        build_py.run(self)
 
 
 class install_pymol(install):
@@ -475,9 +319,7 @@ class install_pymol(install):
             self.copy(name, os.path.join(base_path, name))
 
         if options.openvr:
-            self.copy(
-                "contrib/vr/README.md", os.path.join(base_path, "README-VR.txt")
-            )
+            self.copy("contrib/vr/README.md", os.path.join(base_path, "README-VR.txt"))
 
     def make_launch_script(self):
         if sys.platform.startswith("win"):
@@ -489,7 +331,7 @@ class install_pymol(install):
         launch_script = os.path.join(self.install_scripts, launch_script)
 
         python_exe = os.path.abspath(sys.executable)
-        site_packages_dir = sysconfig.get_path('purelib')
+        site_packages_dir = sysconfig.get_path("purelib")
         pymol_file = self.unchroot(
             os.path.join(site_packages_dir, "pymol", "__init__.py")
         )
@@ -533,315 +375,23 @@ generated_dir = os.path.join(os.environ.get("PYMOL_BLD", "build"), "generated")
 
 create_all(generated_dir)
 
-# can be changed with environment variable PREFIX_PATH
-prefix_path = get_prefix_path()
+pymol_src_dirs = [str(Path(generated_dir) / "ShaderText.cpp")]
 
-inc_dirs = [
-    "include",
-]
-
-pymol_src_dirs = [
-    "ov/src",
-    "layer0",
-    "layer1",
-    "layer2",
-    "layer3",
-    "layer4",
-    "layer5",
-    generated_dir,
-]
-
-def_macros = [
-    ("_PYMOL_LIBPNG", None),
-    ("_PYMOL_FREETYPE", None),
-]
-
-if DEBUG and not WIN:
-    def_macros += [
-        # bounds checking in STL containers
-        ("_GLIBCXX_ASSERTIONS", None),
-    ]
-
-libs = ["png", "freetype"]
-lib_dirs = []
-ext_comp_args = (
-    [
-        "-Werror=return-type",
-        "-Wunused-variable",
-        "-Wno-switch",
-        "-Wno-narrowing",
-        # legacy stuff
-        "-Wno-char-subscripts",
-        # optimizations
-        "-Og" if DEBUG else "-O3",
-    ]
-    if not WIN
-    else ["/MP"]
-)
-ext_link_args = []
-ext_objects = []
-data_files = []
-ext_modules = []
-
-if options.use_openmp == "yes":
-    def_macros += [
-        ("PYMOL_OPENMP", None),
-    ]
-    if MAC:
-        ext_comp_args += ["-Xpreprocessor", "-fopenmp"]
-        libs += ["omp"]
-    elif WIN:
-        ext_comp_args += ["/openmp"]
-    else:
-        ext_comp_args += ["-fopenmp"]
-        ext_link_args += ["-fopenmp"]
-
-if options.vmd_plugins:
-    # VMD plugin support
-    inc_dirs += [
-        "contrib/uiuc/plugins/include",
-    ]
-    pymol_src_dirs += [
-        "contrib/uiuc/plugins/molfile_plugin/src",
-    ]
-    def_macros += [
-        ("_PYMOL_VMD_PLUGINS", None),
-    ]
-
-if options.libxml:
-    # COLLADA support
-    def_macros += [("_HAVE_LIBXML", None)]
-    libs += ["xml2"]
-
-if options.use_msgpackc == "guess":
-    options.use_msgpackc = guess_msgpackc()
-
-if options.use_msgpackc == "no":
-    def_macros += [("_PYMOL_NO_MSGPACKC", None)]
-else:
-    if options.use_msgpackc == "c++11":
-        def_macros += [
-            ("MMTF_MSGPACK_USE_CPP11", None),
-            ("MSGPACK_NO_BOOST", None),
-        ]
-    else:
-        libs += ["msgpackc"]
-
-    pymol_src_dirs += ["contrib/mmtf-c"]
-
-if not options.glut:
-    def_macros += [
-        ("_PYMOL_NO_MAIN", None),
-    ]
-
-if options.testing:
-    pymol_src_dirs += ["layerCTest"]
-    def_macros += [("_PYMOL_CTEST", None)]
-
-if options.openvr:
-    def_macros += [("_PYMOL_OPENVR", None)]
-    pymol_src_dirs += [
-        "contrib/vr",
-    ]
-
-inc_dirs += pymol_src_dirs
-
-inc_dirs += ["contrib/pocketfft"]
-
-# ============================================================================
-if MAC:
-    libs += ["GLEW"]
-    def_macros += [("PYMOL_CURVE_VALIDATE", None)]
-
-    if options.osx_frameworks:
-        ext_link_args += [
-            "-framework OpenGL",
-        ] + (options.glut) * [
-            "-framework GLUT",
-        ]
-        def_macros += [
-            ("_PYMOL_OSX", None),
-        ]
-    else:
-        libs += [
-            "GL",
-        ] + (options.glut) * [
-            "glut",
-        ]
-
-if WIN:
-    # clear
-    libs = []
-
-    def_macros += [
-        ("WIN32", None),
-    ]
-
-    libs += [
-        "Advapi32",  # Registry (RegCloseKey etc.)
-        "Ws2_32",  # htonl
-    ]
-
-    libs += (
-        [
-            "glew32",
-            "freetype",
-            "libpng",
-        ]
-        + (options.glut)
-        * [
-            "freeglut",
-        ]
-        + (options.libxml)
-        * [
-            "libxml2",
-        ]
-    )
-
-    if DEBUG:
-        ext_comp_args += ["/Z7"]
-        ext_link_args += ["/DEBUG"]
-
-    libs += [
-        "opengl32",
-    ]
-    # TODO: Remove when we move to setup-CMake
-    ext_comp_args += ["/std:c++17"]
-
-if not (MAC or WIN):
-    libs += [
-        "GL",
-        "GLEW",
-    ] + (options.glut) * [
-        "glut",
-    ]
-
-if options.use_vtkm != "no":
-    for prefix in prefix_path:
-        vtkm_inc_dir = os.path.join(prefix, "include", f"vtkm-{options.use_vtkm}")
-        if os.path.exists(vtkm_inc_dir):
-            break
-    else:
-        raise LookupError(
-            "VTK-m headers not found." f' PREFIX_PATH={":".join(prefix_path)}'
-        )
-    def_macros += [
-        ("_PYMOL_VTKM", None),
-    ]
-    inc_dirs += [
-        vtkm_inc_dir,
-        vtkm_inc_dir + "/vtkm/thirdparty/diy/vtkmdiy/include",
-        vtkm_inc_dir + "/vtkm/thirdparty/lcl/vtkmlcl",
-    ]
-    libs += [
-        f"vtkm_cont-{options.use_vtkm}",
-        f"vtkm_filter_contour-{options.use_vtkm}",
-        f"vtkm_filter_core-{options.use_vtkm}",
-    ]
-
-if options.vmd_plugins:
-    libs += [
-        "netcdf",
-    ]
-
-if options.openvr:
-    libs += [
-        "openvr_api",
-    ]
-
-inc_dirs += [
-    numpy.get_include(),
-]
-def_macros += [
-    ("_PYMOL_NUMPY", None),
-]
-
-for prefix in prefix_path:
-    for dirs, suffixes in [
-        [
-            inc_dirs,
-            [
-                ("include",),
-                ("include", "freetype2"),
-                ("include", "libxml2"),
-                ("include", "openvr"),
-            ],
-        ],
-        [lib_dirs, [("lib64",), ("lib",)]],
-    ]:
-        dirs.extend(filter(os.path.isdir, [os.path.join(prefix, *s) for s in suffixes]))
-
-# optimization currently causes a clang segfault on OS X 10.9 when
-# compiling layer2/RepCylBond.cpp
-if MAC:
-    ext_comp_args += ["-fno-strict-aliasing"]
-
-
-def get_pymol_version():
+def get_pymol_version() -> str:
     return re.findall(r'_PyMOL_VERSION "(.*)"', open("layer0/Version.h").read())[0]
 
-
-def get_sources(subdirs, suffixes=(".c", ".cpp")):
-    return sorted(
-        [f for d in subdirs for s in suffixes for f in glob.glob(d + "/*" + s)]
-    )
-
-
-def get_packages(base, parent="", r=None):
-    from os.path import exists, join
-
-    if r is None:
-        r = []
-    if parent:
-        r.append(parent)
-    for name in os.listdir(join(base, parent)):
-        if "." not in name and exists(join(base, parent, name, "__init__.py")):
-            get_packages(base, join(parent, name), r)
-    return r
-
-
-package_dir = dict(
-    (x, os.path.join(base, x)) for base in ["modules"] for x in get_packages(base)
-)
-
-# Python includes
-inc_dirs.append(sysconfig.get_paths()["include"])
-inc_dirs.append(sysconfig.get_paths()["platinclude"])
-
-champ_inc_dirs = ["contrib/champ"]
-champ_inc_dirs.append(sysconfig.get_paths()["include"])
-champ_inc_dirs.append(sysconfig.get_paths()["platinclude"])
-
-if WIN:
-    # pyconfig.py forces linking against pythonXY.lib on MSVC
-    py_lib = pathlib.Path(sysconfig.get_paths()["stdlib"]).parent / "libs"
-    lib_dirs.append(str(py_lib))
-
-ext_modules += [
-    CMakeExtension(
-        name="pymol._cmd",
-        sources=get_sources(pymol_src_dirs),
-        include_dirs=inc_dirs,
-        libraries=libs,
-        library_dirs=lib_dirs,
-        define_macros=def_macros,
-        extra_link_args=ext_link_args,
-        extra_compile_args=ext_comp_args,
-    ),
-    CMakeExtension(
-        name="chempy.champ._champ",
-        sources=get_sources(["contrib/champ"]),
-        include_dirs=champ_inc_dirs,
-        library_dirs=lib_dirs,
-    ),
-]
 
 setup(
     cmdclass={
         "build_ext": build_ext_pymol,
-        "build_py": build_py_pymol,
         "install": install_pymol,
     },
     version=get_pymol_version(),
-    ext_modules=ext_modules,
+    ext_modules=[
+        Extension(
+            name="_cmd",
+            sources=pymol_src_dirs,
+            include_dirs=[generated_dir],
+        )
+    ],
 )

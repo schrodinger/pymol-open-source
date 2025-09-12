@@ -90,7 +90,7 @@ jobs:
             glm `
             libpng `
             libxml2 `
-            libnetcdf `
+            libnetcdf
 
     - name: Get additional sources
       run: |
@@ -100,7 +100,6 @@ jobs:
         Copy-Item -Recurse -Path mmtf-cpp/include\* -Destination "$env:CONDA_PREFIX\Library\include"
         git clone --depth 1 --single-branch --branch cpp_master https://github.com/msgpack/msgpack-c.git
         Copy-Item -Recurse -Path msgpack-c/include\* -Destination "$env:CONDA_PREFIX\Library\include"
-        dir $env:CONDA_PREFIX\Library\include
 
     - name: Build PyMOL
       run: |

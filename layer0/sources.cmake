@@ -1,0 +1,45 @@
+target_sources(${TARGET_NAME} PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/Bezier.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Block.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CarveHelper.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccealignmodule.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ContourSurf.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Crystal.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Err.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Feedback.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Field.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/File.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/GenericBuffer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/GFXManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/GraphicsUtil.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Isosurf.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Map.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/marching_cubes.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Match.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Matrix.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MemoryDebug.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MemoryUsage.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MyPNG.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/os_gl.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Parse.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Pixmap.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/PostProcess.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/PrintUtils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ShaderMgr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ShaderPreprocessor.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ShaderPrg.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Sphere.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Tetsurf.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Texture.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Tracker.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Triangle.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/TTT.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Util.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Util2.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Vector.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Word.cpp
+)
+
+target_include_directories(${TARGET_NAME} PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}
+)

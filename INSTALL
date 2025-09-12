@@ -8,7 +8,7 @@ See also: http://pymolwiki.org/index.php/Linux_Install
 REQUIREMENTS
 
     - C++17 compiler (e.g. gcc 8+)
-    - CMake (3.13+)
+    - CMake (3.15+)
     - Python 3.9+
     - pip (with build submodule <pip install build>; conda's package name is python-build)
     - Pmw (Python Megawidgets) (optional, for legacy GUI/plugins)
