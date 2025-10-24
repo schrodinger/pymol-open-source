@@ -1543,8 +1543,12 @@ static void RepLabelGenerateShaderCGO(RepLabel* I, RenderInfo* info)
   auto font_id = SettingGet<int>(
       G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_label_font_id);
   auto font_size = SettingGet<float>(
-      G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_label_size); 
- 
+      G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_label_size);
+#ifdef PURE_OPENGL_ES_2
+  auto float_text = SettingGet<bool>(
+      G, I->cs->Setting.get(), I->obj->Setting.get(), cSetting_float_labels);
+#endif
+
   I->shaderCGO = CGONew(G);
   I->shaderCGO->use_shader = true;
   TextSetOutlineColor(G, I->OutlineColor);
