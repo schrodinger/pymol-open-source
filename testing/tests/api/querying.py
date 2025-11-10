@@ -344,9 +344,8 @@ class TestQuerying(testing.PyMOLTestCase):
         self.assertEqual(cmd.get_object_list(' '), [])
         # empty string is a falsy value
         self.assertTrue(not cmd.get_object_list(''))
-        # empty string is a silent None
-        # https://github.com/schrodinger/pymol-open-source/issues/478
-        self.assertTrue(cmd.get_object_list('') is None)
+        # empty string is empty selection
+        self.assertEqual(cmd.get_object_list(''), [])
 
     def testGetObjectList__invalid_selection(self):
         self.assertRaises(CmdException, cmd.get_object_list, 'invalid_selection_name')

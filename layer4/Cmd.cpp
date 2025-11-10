@@ -4067,8 +4067,7 @@ static pymol::Result<PyObject*> _getObjectMoleculeNamePyList(
     PyMOLGlobals* G, char const* sele)
 {
   if (!sele[0]) {
-    // preserve non-error legacy behavior: Empty selection returns None
-    return APIAutoNone(nullptr);
+    return PyList_New(0);
   }
   auto tmpsele1 = SelectorTmp::make(G, sele);
   p_return_if_error(tmpsele1);
