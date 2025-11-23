@@ -3121,7 +3121,7 @@ void *get_new_props_ply(PlyFile *ply)
   }
 
   /* in case we need a random choice */
-#if defined(_MSC_VER)
+#if defined(_WIN32)
   random_pick = 0;
 #else
   random_pick = (int) floor (rules->nprops * drand48());

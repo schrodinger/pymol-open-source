@@ -60,7 +60,7 @@ extern "C" {
   typedef unsigned int ov_uint32;
   typedef float ov_float32;
   typedef double ov_float64;
-#ifdef WIN32
+#ifdef _MSC_VER
   typedef __int64 ov_int64;
   typedef unsigned __int64 ov_uint64;
 #else
