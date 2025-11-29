@@ -689,18 +689,21 @@ SEE ALSO
             # It was called from command line or pml script, so parse arguments
             if caller == _parser_filename:
                 kwargs = {**kwargs, **dict(zip(args2_, args))}
+                # special _self argument
                 kwargs.pop("_self", None)
                 new_kwargs = {}
                 for var, type in funcs.items():
                     if var in kwargs:
                         value = kwargs[var]
-                        new_kwargs[var] = _into_types(type, value)
-                final_kwargs = {}
-                for k, v in kwargs_.items():
-                    final_kwargs[k] = v
-                for k, v in new_kwargs.items():
-                    if k not in final_kwargs:
-                        final_kwargs[k] = v
+                        # special 'quiet' argument
+                        if var == 'quiet' and isinstance(value, int):
+                            new_kwargs[var] = bool(value)
+                        else:
+                            new_kwargs[var] = _into_types(type, value)
+                final_kwargs = {
+                    **kwargs_,
+                    **new_kwargs
+                }
                 return function(**final_kwargs)
 
             # It was called from Python, so pass the arguments as is

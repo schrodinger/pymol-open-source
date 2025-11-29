@@ -113,3 +113,10 @@ def test_str_enum(capsys):
     out, err = capsys.readouterr()
     assert out + err == ''
 
+def test_quiet(capsys):
+    @cmd.new_command
+    def func(quiet: bool=True):
+        assert not quiet
+    cmd.do('func')
+    out, err = capsys.readouterr()
+    assert out + err == ''
