@@ -687,7 +687,7 @@ SEE ALSO
         # Inner function that will be callable every time the command is executed
         @wraps(function)
         def inner(*args, **kwargs):
-            caller = traceback.extract_stack(limit=2)[0].filename
+            caller = sys._getframe(1).f_code.co_filename
             # It was called from command line or pml script, so parse arguments
             if caller == _parser_filename:
                 kwargs = {**kwargs, **dict(zip(args2_, args))}
