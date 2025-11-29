@@ -1,9 +1,8 @@
-from pytest import mark
-from pymol import cmd
 import sys
+from pytest import mark
 from typing import List, Union, Any, Tuple
 from pathlib import Path
-
+from pymol import cmd
 
 def test_docstring():
     @cmd.new_command
@@ -40,6 +39,7 @@ def test_generic(capsys):
     out, err = capsys.readouterr()
     assert out + err == ''
 
+
 def test_path(capsys):
     @cmd.new_command
     def func(dirname: Path = Path('.')):
@@ -48,7 +48,6 @@ def test_path(capsys):
     cmd.do('func')
     out, err = capsys.readouterr()
     assert out + err == ''
-
 
 
 @mark.skip("This function does not works as expected")
@@ -61,11 +60,11 @@ def test_any(capsys):
     out, err = capsys.readouterr()
     assert 'AssertionError' not in out+err
 
+
 def test_list(capsys):
     @cmd.new_command
     def func(a: List):
         assert a[1] == "2"
-
     cmd.do("func 1 2 3")
     out, err = capsys.readouterr()
     assert out + err == ''
@@ -73,17 +72,24 @@ def test_list(capsys):
     @cmd.new_command
     def func(a: List[int]):
         assert a[1] == 2
-
     cmd.do("func 1 2 3")
     out, err = capsys.readouterr()
     assert out + err == ''
 
+    @cmd.new_command
+    def func(a: List[bool]):
+        assert a.pop(0) == False
+        assert a.pop(0) == True
+    cmd.do("func 0 yes")
+    out, err = capsys.readouterr()
+    assert out + err == ''
+
+
 def test_tuple(capsys):
     @cmd.new_command
     def func(a: Tuple[str, int]):
-        assert a == ("fooo", 42)
-
-    cmd.do("func fooo 42")
+        assert a == ("fooo a", 42)
+    cmd.do("func 'fooo a' 42")
     out, err = capsys.readouterr()
     assert out + err == ''
 
@@ -96,6 +102,7 @@ def test_default(capsys):
     cmd.do('func')
     out, err = capsys.readouterr()
     assert out + err == ''
+
 
 @mark.skipif(
     sys.version_info < (3, 11),
@@ -112,6 +119,7 @@ def test_str_enum(capsys):
     cmd.do('func a')
     out, err = capsys.readouterr()
     assert out + err == ''
+
 
 def test_quiet(capsys):
     @cmd.new_command

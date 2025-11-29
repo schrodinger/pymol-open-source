@@ -641,11 +641,13 @@ SEE ALSO
                     
             elif issubclass(list, origin):
                 args = get_args(type)
-                if len(args) > 0:
+                if len(args) == 1:
                     f = args[0]
-                else:
-                    f = lambda x: x
-                return [f(i) for i in shlex.split(value)]
+                    return [
+                        _into_types(f, a)
+                        for a in shlex.split(value)
+                    ]
+                return shlex.split(value)
         
         elif issubclass(type, Enum):
             if value in type:
