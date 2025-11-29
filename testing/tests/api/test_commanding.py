@@ -7,93 +7,93 @@ from pathlib import Path
 
 def test_docstring():
     @cmd.new_command
-    def func1():
+    def func():
         """docstring"""
-    assert func1.__doc__ == "docstring"
+    assert func.__doc__ == "docstring"
 
-@cmd.new_command
-def func2(a: bool, b: bool):
-    assert a
-    assert not b
 
 def test_bool(capsys):
-    cmd.do("func2 yes, 0")
+    @cmd.new_command
+    def func(a: bool, b: bool):
+        assert a
+        assert not b
+    cmd.do("func yes, 0")
     out, err = capsys.readouterr()
     assert out == '' and err == ''
 
-@cmd.new_command
-def func3(
-    nullable_point: Tuple[float, float, float],
-    my_var: Union[int, float] = 10,
-    my_foo: Union[int, float] = 10.0,
-    extended_calculation: bool = True,
-    old_style: Any = "Old behavior"
-):
-    assert nullable_point == (1., 2., 3.)
-    assert extended_calculation
-    assert isinstance(my_var, int)
-    assert isinstance(my_foo, float)
-    assert old_style == "Old behavior"
-    
+
 def test_generic(capsys):
-    cmd.do("func3 nullable_point=1 2 3, my_foo=11.0")
+    @cmd.new_command
+    def func(
+        nullable_point: Tuple[float, float, float],
+        my_var: Union[int, float] = 10,
+        my_foo: Union[int, float] = 10.0,
+        extended_calculation: bool = True,
+        old_style: Any = "Old behavior"
+    ):
+        assert nullable_point == (1., 2., 3.)
+        assert extended_calculation
+        assert isinstance(my_var, int)
+        assert isinstance(my_foo, float)
+        assert old_style == "Old behavior"
+    cmd.do("func nullable_point=1 2 3, my_foo=11.0")
     out, err = capsys.readouterr()
     assert out + err == ''
-
-@cmd.new_command
-def func4(dirname: Path = Path('.')):
-    assert dirname.exists()
 
 def test_path(capsys):
-    cmd.do('func4 ..')
-    cmd.do('func4')
+    @cmd.new_command
+    def func(dirname: Path = Path('.')):
+        assert dirname.exists()
+    cmd.do('func ..')
+    cmd.do('func')
     out, err = capsys.readouterr()
     assert out + err == ''
 
-@cmd.new_command
-def func5(old_style: Any):
-    assert old_style is RuntimeError
-func5(RuntimeError)
+
 
 @mark.skip("This function does not works as expected")
 def test_any(capsys):
-    
-    cmd.do("func5 RuntimeError")
+    @cmd.new_command
+    def func(old_style: Any):
+        assert old_style is RuntimeError
+    func(RuntimeError)    
+    cmd.do("func RuntimeError")
     out, err = capsys.readouterr()
     assert 'AssertionError' not in out+err
 
-@cmd.new_command
-def func6(a: List):
-    assert a[1] == "2"
-
-@cmd.new_command
-def func7(a: List[int]):
-    assert a[1] == 2
-
 def test_list(capsys):
-    cmd.do("func6 1 2 3")
+    @cmd.new_command
+    def func(a: List):
+        assert a[1] == "2"
+
+    cmd.do("func 1 2 3")
     out, err = capsys.readouterr()
     assert out + err == ''
 
-    cmd.do("func7 1 2 3")
+    @cmd.new_command
+    def func(a: List[int]):
+        assert a[1] == 2
+
+    cmd.do("func 1 2 3")
     out, err = capsys.readouterr()
     assert out + err == ''
-
-@cmd.new_command
-def func8(a: Tuple[str, int]):
-    assert a == ("fooo", 42)
 
 def test_tuple(capsys):
-    cmd.do("func8 fooo 42")
+    @cmd.new_command
+    def func(a: Tuple[str, int]):
+        assert a == ("fooo", 42)
+
+    cmd.do("func fooo 42")
     out, err = capsys.readouterr()
     assert out + err == ''
 
-@cmd.new_command
-def func10(a: str="sele"):
-    assert a == "sele"
 
 def test_default(capsys):
-    cmd.do('func10')
+    @cmd.new_command
+    def func(a: str="sele"):
+        assert a == "sele"
+        
+    cmd.do('func')
     out, err = capsys.readouterr()
     assert out + err == ''
 
@@ -106,9 +106,10 @@ def test_str_enum(capsys):
     class E(StrEnum):
         A = "a"
     @cmd.new_command
-    def func11(e: E):
+    def func(e: E):
         assert e == E.A
         assert isinstance(e, E)
-    cmd.do('func11 a')
+    cmd.do('func a')
     out, err = capsys.readouterr()
     assert out + err == ''
+
