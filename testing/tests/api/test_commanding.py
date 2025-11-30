@@ -1,8 +1,11 @@
 import sys
 from pytest import mark
-from typing import List, Union, Any, Tuple
+from typing import List, Union, Any, Tuple, Optional
 from pathlib import Path
+
 from pymol import cmd
+from pymol.commanding import ArgumentParsingError
+
 
 def test_docstring():
     @cmd.new_command
@@ -26,7 +29,8 @@ def test_generic(capsys):
     def func(
         nullable_point: Tuple[float, float, float],
         my_var: Union[int, float] = 10,
-        my_foo: Union[int, float] = 10.0,
+        my_foo: int | float = 10.0,
+        null_ptr: Optional[bool] = None,
         extended_calculation: bool = True,
         old_style: Any = "Old behavior"
     ):
@@ -34,6 +38,7 @@ def test_generic(capsys):
         assert extended_calculation
         assert isinstance(my_var, int)
         assert isinstance(my_foo, float)
+        assert null_ptr is None
         assert old_style == "Old behavior"
     cmd.do("func nullable_point=1 2 3, my_foo=11.0")
     out, err = capsys.readouterr()
@@ -104,6 +109,20 @@ def test_default(capsys):
     assert out + err == ''
 
 
+def test_enum(capsys):
+    from enum import Enum
+    class E(Enum):
+        A = 1
+        B = 2
+    @cmd.new_command
+    def func(e: E):
+        assert e == E.A
+        assert isinstance(e, E)
+    cmd.do('func A')
+    out, err = capsys.readouterr()
+    assert out + err == ''
+
+
 @mark.skipif(
     sys.version_info < (3, 11),
     reason="Requires StrEnum of Python 3.11+"
@@ -112,6 +131,7 @@ def test_str_enum(capsys):
     from enum import StrEnum
     class E(StrEnum):
         A = "a"
+        B = "b"
     @cmd.new_command
     def func(e: E):
         assert e == E.A
@@ -128,3 +148,8 @@ def test_quiet(capsys):
     cmd.do('func')
     out, err = capsys.readouterr()
     assert out + err == ''
+
+
+def test_argument_error():
+    err = ArgumentParsingError('my_var', "Short error message.")
+    assert str(err) == "Failed at parsing 'my_var'. Short error message."

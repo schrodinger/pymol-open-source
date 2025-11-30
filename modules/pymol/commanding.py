@@ -24,16 +24,16 @@ if True:
         from io import FileIO as file
 
     import inspect
-    import glob
     import shlex
-    import tokenize
     import builtins
-    from io import BytesIO
     from enum import Enum
+    if sys.version_info >= (3, 11):
+        from enum import StrEnum
     from functools import wraps
     from pathlib import Path
     from textwrap import dedent
-    from typing import Tuple, Iterable, get_args,  Optional, Union, Any, NewType, List, get_origin
+    from typing import get_args, Union, Any, get_origin
+    from types import UnionType
 
     import re
     import os
@@ -602,63 +602,121 @@ SEE ALSO
             output = get_state_list(states)
             states_list = sorted(set(map(int, output)))
             return _cmd.delete_states(_self._COb, name, states_list)
+    
+        
+    class ArgumentParsingError(ValueError):
+        "Error on argument parsing."
 
-    def _into_types(type, value):
-        if repr(type) == 'typing.Any':
+        def __init__(self, arg_name, message):
+            message = dedent(message).strip()
+            if arg_name:
+                s = f"Failed at parsing '{arg_name}'. {message}"
+            else:
+                s = message
+            super().__init__(s)
+    
+    
+    def _into_types(var, type, value):
+        
+        # Untyped string
+        if type == Any:
             return value
+                
+        # Boolean flags
         elif type is bool:
             if isinstance(value, bool):
                 return value
-            if value.lower() in ["yes", "1", "true", "on", "y"]:
+            trues = ["yes", "1", "true", "on", "y"]
+            falses = ["no", "0", "false", "off", "n"]
+            if value.lower() in trues:
                 return True
-            elif value.lower() in ["no", "0", "false", "off", "n"]:
+            elif value.lower() in falses:
                 return False
             else:
-                raise pymol.CmdException(f"Invalid boolean value: {value}")
+                raise ArgumentParsingError(
+                    var,
+                    f"Can't parse {value!r} as bool."
+                    f" Supported true values are {', '.join(trues)}."
+                    f" Supported false values are {', '.join(falses)}."
+                )
         
-        elif isinstance(type, builtins.type):
-            return type(value)
+        # Types from typing module
+        elif origin := get_origin(type):
 
-        if origin := get_origin(type):
-            if not repr(origin).startswith('typing.') and issubclass(origin, tuple):
-                args = get_args(type)
-                new_values = []
-                for i, new_value in enumerate(shlex.split(value)):
-                    new_values.append(_into_types(args[i], new_value))
-                return tuple(new_values)
-            
-            elif origin == Union:
-                args = get_args(type)
-                found = False
-                for i, arg in enumerate(args):
+            if origin in {Union, UnionType}:
+                funcs = get_args(type)
+                for func in funcs:
                     try:
-                        found = True
-                        return _into_types(arg, value)
+                        return _into_types(None, func, value)
                     except:
-                        found = False
-                if not found:
-                    raise pymol.CmdException(f"Union was not able to cast {value}")
-                    
-            elif issubclass(list, origin):
-                args = get_args(type)
-                if len(args) == 1:
-                    f = args[0]
-                    return [
-                        _into_types(f, a)
-                        for a in shlex.split(value)
-                    ]
+                        continue
+                raise ArgumentParsingError(
+                    var,
+                    f"Can't parse {value!r} into {type}."
+                    f" The parser tried each union type and none was suitable."
+                )
+            
+            elif issubclass(origin, tuple):
+                funcs = get_args(type)
+                if funcs:
+                    values = shlex.split(value)
+                    if len(funcs) > 0 and len(funcs) != len(values):
+                        raise ArgumentParsingError(
+                            var,
+                            f"Can't parse {value!r} into {type}."
+                            f" The number of tuple arguments are incorrect."
+                        )
+                    try:
+                        return tuple(_into_types(None, f, v) for f, v in zip(funcs, values))
+                    except:
+                        raise ArgumentParsingError(
+                            var,
+                            f"Can't parse {value!r} into {type}."
+                            f" One or more tuple values are of incorrect types."
+                        )
+                else:
+                    return tuple(shlex.split(value))
+
+            elif issubclass(origin, list):
+                funcs = get_args(type)
+                if len(funcs) == 1:
+                    func = funcs[0]
+                    return [_into_types(None, func, a) for a in shlex.split(value)]
                 return shlex.split(value)
         
-        elif issubclass(type, Enum):
-            if value in type:
+        elif sys.version_info >= (3, 11) and issubclass(type, StrEnum):
+            try:
                 return type(value)
-            else:
-                raise pymol.CmdException(f"Invalid value for enum {type.__name__}: {value}")
-        
-        elif isinstance(type, str):
-            return str(value)
+            except:
+                names = [e.value for e in list(type)]
+                raise ArgumentParsingError(
+                    var,
+                    f"Invalid value for {type.__name__}."
+                    f" Accepted values are {', '.join(names)}."
+                )
 
-        raise pymol.CmdException(f"Unsupported argument type annotation {type}")
+        # Specific types must go before other generic types
+        #   isinstance(type, builtins.type) comes after
+        elif issubclass(type, Enum):
+            value = type.__members__.get(value)
+            if value is None:
+                raise ArgumentParsingError(
+                    var,
+                    f"Invalid value for {type.__name__}."
+                    f" Accepted values are {', '.join(type.__members__)}."
+                )
+            return value
+        
+        # Generic types must accept str as single argument to __init__(s)
+        elif isinstance(type, builtins.type):
+            try:
+                return type(value)
+            except Exception as exc:
+                raise ArgumentParsingError(
+                    var,
+                    f"Invalid value {value!r} for custom type {type.__name__}."
+                    f" The type must accept str as the solo argument to __init__(s)."
+                ) from exc
 
 
     def new_command(name, function=None, _self=cmd):
@@ -701,7 +759,7 @@ SEE ALSO
                         if var == 'quiet' and isinstance(value, int):
                             new_kwargs[var] = bool(value)
                         else:
-                            new_kwargs[var] = _into_types(type, value)
+                            new_kwargs[var] = _into_types(var, type, value)
                 final_kwargs = {
                     **kwargs_,
                     **new_kwargs
@@ -718,6 +776,7 @@ SEE ALSO
         # The purpose is optimization (loops, for instance).
         inner.func = inner.__wrapped__ 
         return inner
+
 
     def extend(name, function=None, _self=cmd):
 
