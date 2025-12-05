@@ -726,7 +726,7 @@ SEE ALSO
 
         # docstring text, if present, should be dedented
         if function.__doc__ is not None:
-            function.__doc__ = dedent(function.__doc__)
+            function.__doc__ = dedent(function.__doc__).strip()
 
         # Analysing arguments
         spec = inspect.getfullargspec(function)
