@@ -770,7 +770,9 @@ SEE ALSO
             else:
                 return function(*args, **kwargs)
         
-        _self.keyword[name] = [inner, 0,0,',',parsing.STRICT]
+        _self.keyword[name] = [inner, 0, 0, ',', parsing.STRICT]
+        _self.kwhash.append(name)
+        _self.help_sc.append(name)
         
         # Accessor to the original function so bypass the stack extraction.
         # The purpose is optimization (loops, for instance).
