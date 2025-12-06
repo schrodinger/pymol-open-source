@@ -8504,169 +8504,49 @@ static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base, int state)
   case SELE_BVLx:
   case SELE_QVLx:
     oper = WordKey(G, AtOper, base[1].text(), 4, ignore_case, &exact);
-    if(!oper)
+    if(!oper) {
       ok = ErrMessage(G, "Selector", "Invalid Operator.");
-    if(ok) {
-      switch (oper) {
-      case SCMP_GTHN:
-      case SCMP_LTHN:
-      case SCMP_EQAL:
-        if(sscanf(base[2].text(), "%f", &comp1) != 1)
-          ok = ErrMessage(G, "Selector", "Invalid Number");
-        break;
+      break;
+    }
+    switch (oper) {
+    case SCMP_GTHN:
+    case SCMP_LTHN:
+    case SCMP_EQAL:
+      if(sscanf(base[2].text(), "%f", &comp1) != 1)
+        ok = ErrMessage(G, "Selector", "Invalid Number");
       }
-      if(ok) {
-        switch (oper) {
-        case SCMP_GTHN:
-          switch (base->code) {
-          case SELE_BVLx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(at1->b > comp1) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
-          case SELE_QVLx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(at1->q > comp1) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
-          case SELE_PCHx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(at1->partialCharge > comp1) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
-          case SELE_FCHx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(at1->formalCharge > comp1) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
+      break;
+    default:
+      ok = ErrMessage(G, "Selector", "Invalid Operator.");
+      break;
+    }
+  
+    if(ok) {
+      for(a = cNDummyAtoms; a < I->Table.size(); a++) {
+        at1 = I->Obj[I->Table[a].model]->AtomInfo + I->Table[a].atom;
+        float atomValue;
+        switch (base->code) {
+          case SELE_BVLx: atomValue = at1->bval;          break;
+          case SELE_PCHx: atomValue = at1->partialCharge; break;
+          case SELE_FCHx: atomValue = at1->formalCharge;  break;
+          case SELE_QVLx: atomValue = at1->qval;          break;
+          default: {
+            ErrMessage(G, "Selector", "Invalid Operand.");
+            return false;
           }
-          break;
-        case SCMP_LTHN:
-          switch (base->code) {
-          case SELE_BVLx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(at1->b < comp1) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
-          case SELE_QVLx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(at1->q < comp1) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
-          case SELE_PCHx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(at1->partialCharge < comp1) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
-          case SELE_FCHx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(at1->formalCharge < comp1) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
-          }
-          break;
-        case SCMP_EQAL:
-          switch (base->code) {
-          case SELE_BVLx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(fabs(at1->b - comp1) < R_SMALL4) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
-          case SELE_QVLx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(fabs(at1->q - comp1) < R_SMALL4) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
-          case SELE_PCHx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(fabs(at1->partialCharge - comp1) < R_SMALL4) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
-          case SELE_FCHx:
-            for(a = cNDummyAtoms; a < I->Table.size(); a++) {
-              at1 = &I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-              if(fabs(at1->formalCharge - comp1) < R_SMALL4) {
-                base[0].sele[a] = true;
-                c++;
-              } else {
-                base[0].sele[a] = false;
-              }
-            }
-            break;
-          }
-          break;
         }
-        break;
+        
+        if(fcmp(atomValue, comp1, oper)) {
+          base[0].sele[a] = true;
+          c++;
+        } else {
+          base[0].sele[a] = false;
+        }
       }
     }
-  }
-
+    break;
+  
+  
   PRINTFD(G, FB_Selector)
     " %s: %d atoms selected.\n", __func__, c ENDFD;
   return (ok);
