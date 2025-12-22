@@ -1605,7 +1605,6 @@ public:
     m_offset = bufferSize;
   }
 };
-#endif
 
 // ---------------------------------------------------------------------------------- //
 
@@ -1913,6 +1912,7 @@ pymol::cif::DataTypes MoleculeExporterBCIF::getDataType<double>() const noexcept
 {
   return pymol::cif::DataTypes::Float64;
 }
+#endif
 
 
 /*========================================================================*/
