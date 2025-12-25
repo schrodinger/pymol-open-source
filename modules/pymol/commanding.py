@@ -32,7 +32,7 @@ if True:
     from functools import wraps
     from pathlib import Path
     from textwrap import dedent
-    from typing import get_args, Union, Any, get_origin
+    from typing import get_args, Union, Any, get_origin, get_type_hints
     from types import UnionType
 
     import re
@@ -728,40 +728,45 @@ SEE ALSO
         if function.__doc__ is not None:
             function.__doc__ = dedent(function.__doc__).strip()
 
+        # Resolve strings into real class objects (PEP 563).
+        try:
+            resolved_hints = get_type_hints(
+                function,
+                globalns=sys.modules[function.__module__].__dict__
+            )
+        except Exception:
+            resolved_hints = function.__annotations__
+
         # Analysing arguments
-        spec = inspect.getfullargspec(function)
-        kwargs_ = {}
-        args_ = spec.args[:]
-        defaults = list(spec.defaults or [])
-
-        args2_ = args_[:]
-        while args_ and defaults:
-            kwargs_[args_.pop(-1)] = defaults.pop(-1)
-
-        funcs = {}
-        for idx, (var, func) in enumerate(spec.annotations.items()):
-            funcs[var] = func
-
+        sign = inspect.signature(function)
+        
         # Inner function that will be callable every time the command is executed
         @wraps(function)
         def inner(*args, **kwargs):
             caller = sys._getframe(1).f_code.co_filename
             # It was called from command line or pml script, so parse arguments
             if caller == _parser_filename:
-                kwargs = {**kwargs, **dict(zip(args2_, args))}
                 # special _self argument
                 kwargs.pop("_self", None)
                 new_kwargs = {}
-                for var, type in funcs.items():
+                for var, param in sign.parameters.items():
                     if var in kwargs:
                         value = kwargs[var]
                         # special 'quiet' argument
                         if var == 'quiet' and isinstance(value, int):
                             new_kwargs[var] = bool(value)
                         else:
-                            new_kwargs[var] = _into_types(var, type, value)
+                            actual_type = resolved_hints.get(var, param.annotation)
+                            new_kwargs[var] = _into_types(var, actual_type, value)
+                    else:
+                        if param.default is sign.empty:
+                            raise RuntimeError(f"Unknow variable '{var}'.")
+                defaults = {
+                    k: v.default for k, v in sign.parameters.items()
+                    if v.default is not sign.empty
+                }
                 final_kwargs = {
-                    **kwargs_,
+                    **defaults,
                     **new_kwargs
                 }
                 return function(**final_kwargs)
