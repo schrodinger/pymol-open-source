@@ -191,16 +191,20 @@ class GithubRepository(HttpRepository):
 
     def list_scan(self):
         sha = 'master'
-        r = self.fetchjson('/repos/%s/%s/git/trees/%s' % (self.user, self.repo, sha))
+        r = self.fetchjson(f'/repos/{self.user}/{self.repo}/git/trees/{sha}')
 
-        names = []
-        for d in r['tree']:
-            if d['type'] != 'blob':
-                continue
-            name = d['path']
-            if self.is_supported(name):
-                names.append(name)
+        blobs = []
+        for d in r["tree"]:
+            if d["type"] == "tree" and d["path"] in ("plugins", "scripts", "modules"):
+                r1 = self.fetchjson(f'/repos/{self.user}/{self.repo}/git/trees/{d["sha"]}')
+                for dd in r1["tree"]:
+                    if dd['type'] == 'blob':
+                        blobs.append(f'{d["path"]}/{dd["path"]}')
 
+            elif d['type'] == 'blob':
+                blobs.append(d["path"])
+
+        names = [b for b in blobs if self.is_supported(b)]
         return names
 
     list = list_scan
