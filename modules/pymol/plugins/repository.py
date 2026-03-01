@@ -195,7 +195,7 @@ class GithubRepository(HttpRepository):
 
         blobs = []
         for d in r["tree"]:
-            if d["type"] == "tree" and d["path"] in ("plugins", "scripts", "modules"):
+            if d["type"] == "tree" and d["path"] == "scripts":
                 r1 = self.fetchjson(f'/repos/{self.user}/{self.repo}/git/trees/{d["sha"]}')
                 for dd in r1["tree"]:
                     if dd['type'] == 'blob':
