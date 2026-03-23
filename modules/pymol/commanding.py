@@ -760,7 +760,7 @@ SEE ALSO
                             new_kwargs[var] = _into_types(var, actual_type, value)
                     else:
                         if param.default is sign.empty:
-                            raise RuntimeError(f"Unknow variable '{var}'.")
+                            raise ArgumentParsingError(f"Unknow argument '{var}'.")
                 defaults = {
                     k: v.default for k, v in sign.parameters.items()
                     if v.default is not sign.empty
