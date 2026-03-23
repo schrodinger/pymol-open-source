@@ -157,6 +157,7 @@ def test_argument_error():
     err = ArgumentParsingError('my_var', "Short error message.")
     assert str(err) == "Failed at parsing 'my_var'. Short error message."
 
+
 def test_call_error(capsys):
     @cmd.new_command
     def func(
@@ -166,21 +167,27 @@ def test_call_error(capsys):
         extended_calculation: bool = True,
         old_style: Any = "Old behavior"
     ):
-        assert extended_calculation
         assert isinstance(my_var, int)
         assert isinstance(my_foo, float)
         assert null_ptr is None
+        assert extended_calculation
         assert old_style == "Old behavior"
     
-    cmd.do("func my_foo=a")
-    out, err = capsys.readouterr()
-    assert "Failed at parsing 'my_foo'." in (out + err)
+    try:
+        cmd._pymol.invocation.options.exit_on_error = 0
 
-    cmd.do("func extended_calculation=a")
-    out, err = capsys.readouterr()
-    assert (
-        "Failed at parsing 'extended_calculation'."
-        " Can't parse 'a' as bool."
-        " Supported true values are yes, 1, true, on, y."
-        " Supported false values are no, 0, false, off, n."
-    ) in (out + err)
+        cmd.do("func my_foo=a")
+        out, err = capsys.readouterr()
+        assert "Failed at parsing 'my_foo'." in (out + err)
+
+        cmd.do("func extended_calculation=a")
+        out, err = capsys.readouterr()
+        assert (
+            "Failed at parsing 'extended_calculation'."
+            " Can't parse 'a' as bool."
+            " Supported true values are yes, 1, true, on, y."
+            " Supported false values are no, 0, false, off, n."
+        ) in (out + err)
+
+    finally:
+        cmd._pymol.invocation.options.exit_on_error = 1
