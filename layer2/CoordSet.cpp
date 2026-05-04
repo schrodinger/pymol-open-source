@@ -1270,6 +1270,25 @@ void CoordSet::invalidateRep(cRep_t type, cRepInv_t level)
     OrthoBusyFast(G, rep, cRepCnt);                                            \
   }
 
+/**
+ * @brief resolve the unit cell color, falling back to the object color when
+ * `cell_color` is unset (negative).
+ * @param csSetting pointer to coordset setting
+ * @param objSetting pointer to object setting
+ * @param objColor object Color id
+ * @return color id used to color cell
+ */
+static int ResolveCellColor(PyMOLGlobals* G, CSetting const* csSetting,
+    CSetting const* objSetting, int objColor)
+{
+  auto cell_color =
+      SettingGet_color(G, csSetting, objSetting, cSetting_cell_color);
+  if (cell_color < 0) {
+    cell_color = objColor;
+  }
+  return cell_color;
+}
+
 /*========================================================================*/
 void CoordSet::update(int state)
 {
@@ -1300,12 +1319,9 @@ void CoordSet::update(int state)
       UnitCellCGO.reset(CrystalGetUnitCellCGO(&sym->Crystal));
       auto use_shader = SettingGet<bool>(G, cSetting_use_shaders);
       if (use_shader) {
-        auto cell_color = SettingGet_color(
-            G, this->Setting.get(), Obj->Setting.get(), cSetting_cell_color);
-        if (cell_color < 0) {
-          cell_color = Obj->Color;
-        }
-        auto color = ColorGet(G, cell_color);
+        auto const cell_color = ResolveCellColor(
+            G, this->Setting.get(), Obj->Setting.get(), Obj->Color);
+        auto const* color = ColorGet(G, cell_color);
         auto preCGO = std::make_unique<CGO>(G);
         CGOColorv(preCGO.get(), color);
         CGOAppendNoStop(preCGO.get(), UnitCellCGO.get());
@@ -1394,17 +1410,19 @@ void CoordSet::render(RenderInfo * info)
 
   // cell
   if (UnitCellCGO && (Obj->visRep & cRepCellBit)) {
+    auto const cell_color = ResolveCellColor(
+        G, this->Setting.get(), Obj->Setting.get(), Obj->Color);
+    auto const* color = ColorGet(G, cell_color);
     if (ray) {
-      CGORenderRay(UnitCellCGO.get(), ray, info, ColorGet(G, Obj->Color),
+      CGORenderRay(UnitCellCGO.get(), ray, info, color,
           nullptr, Setting.get(), Obj->Setting.get());
     } else if (!pick && pass == RenderPass::Opaque && G->HaveGUI &&
                G->ValidContext) {
-      ObjectUseColor(Obj);
       auto renderCGO = UnitCellCGO.get();
       if (use_shader && UnitCellShaderCGO) {
         renderCGO = UnitCellShaderCGO.get();
       }
-      CGORender(renderCGO, ColorGet(G, Obj->Color), Setting.get(),
+      CGORender(renderCGO, color, Setting.get(),
           Obj->Setting.get(), info, nullptr);
     }
   }
