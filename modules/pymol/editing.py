@@ -1255,27 +1255,35 @@ SEE ALSO
         return r
 
 
-    # Textbook pKa values for standard titratable residues.
-    # Used as fallback when pdb2pqr is not available.
-    # At a given pH, if pH > pKa the group is deprotonated (fewer H).
-    # Format: (resn, atom_names) → pKa
-    # H count when protonated vs deprotonated is specified per entry.
-    _TITRATABLE_PKA = {
-        # Carboxylates: protonated = 1H on OD2/OE2, deprotonated = 0H
-        ('ASP', ('OD1', 'OD2')): 3.65,
-        ('GLU', ('OE1', 'OE2')): 4.25,
-        # Histidine: protonated = H on both ND1+NE2, deprotonated = H on NE2 only
-        # Note: assumes HIE tautomer. pdb2pqr path handles HID/HIE/HIP properly.
-        ('HIS', ('ND1',)):       6.00,
-        # Cysteine: protonated = 1H on SG, deprotonated = 0H
-        ('CYS', ('SG',)):        8.18,
-        # Tyrosine: protonated = 1H on OH, deprotonated = 0H
-        ('TYR', ('OH',)):       10.07,
-        # Lysine: protonated = 3H on NZ, deprotonated = 2H
-        ('LYS', ('NZ',)):       10.53,
-        # Arginine: practically always protonated
-        ('ARG', ('NH1', 'NH2')): 12.48,
+    # Textbook pKa values and formal charges for standard titratable
+    # residues. Used as fallback when pdb2pqr is not available.
+    # Format: (resn, name) -> (pKa, charge below pKa, charge at/above pKa)
+    _TITRATABLE_PKA_FORMAL_CHARGE = {
+        ('ARG', 'NE'):  (12.48,  0,  0),
+        ('ARG', 'NH1'): (12.48,  1,  0),
+        ('ARG', 'NH2'): (12.48,  0,  0),
+        ('LYS', 'NZ'):  (10.53,  1,  0),
+        ('TYR', 'OH'):  (10.07,  0, -1),
+        ('CYS', 'SG'):  (8.18,   0, -1),
+        ('HIE', 'ND1'): (6.00,   1,  0),
+        ('HIP', 'ND1'): (6.00,   1,  0),
+        ('HIS', 'ND1'): (6.00,   1,  0),
+        ('HIE', 'NE2'): (6.00,   0,  0),
+        ('HIP', 'NE2'): (6.00,   0,  0),
+        ('HIS', 'NE2'): (6.00,   0,  0),
+        ('GLU', 'OE1'): (4.25,   0,  0),
+        ('GLU', 'OE2'): (4.25,   0, -1),
+        ('ASP', 'OD1'): (3.65,   0,  0),
+        ('ASP', 'OD2'): (3.65,   0, -1),
     }
+
+    def _get_formal_charge(resn, name, pH, fallback):
+        value = _TITRATABLE_PKA_FORMAL_CHARGE.get((resn, name))
+        if value is None:
+            return fallback
+
+        pKa, charge_below, charge_above = value
+        return charge_below if pH < pKa else charge_above
 
     def _force_add_h(obj_name, atom_sele, deficit, state, _self):
         """Temporarily bump valence to force h_add on a saturated atom."""
@@ -1296,49 +1304,21 @@ SEE ALSO
     def _protonate_fallback(selection, obj_name, pH, state, quiet, _self):
         """pH-aware protonation using textbook pKa values.
 
-        Adds all H via h_add, then adjusts titratable groups based on
-        whether pH > pKa (deprotonated) or pH < pKa (protonated).
+        Sets formal charges for titratable groups, then lets h_add determine
+        bond valences and hydrogen counts.
         """
-        from pymol import stored
-
         obj_sele = f"({selection}) and {obj_name}"
 
-        # Strip existing H and add all H geometrically
         _self.remove(f"hydro and (bymol ({obj_sele}))")
+        _self.alter(
+            obj_sele,
+            f"formal_charge = _get_formal_charge("
+            f"resn, name, {pH!r}, formal_charge)",
+            space={
+                "_get_formal_charge": _get_formal_charge,
+            },
+            quiet=quiet)
         _self.h_add(obj_sele, state=state)
-
-        # Adjust titratable groups
-        for (resn, atom_names), pKa in _TITRATABLE_PKA.items():
-            deprotonated = pH > pKa
-
-            if not deprotonated:
-                # Group should be protonated. h_add may not have added
-                # H if the valence is already satisfied (e.g. carboxylate
-                # double bond, His imidazole). Bump valence to force it.
-                for atom_name in atom_names:
-                    sele = f"{obj_name} and resn {resn} and name {atom_name}"
-                    stored._prot_ids = []
-                    _self.iterate(sele, "stored._prot_ids.append(ID)")
-                    for aid in stored._prot_ids:
-                        atom_sele = f"{obj_name} and ID {aid}"
-                        h_count = _self.count_atoms(
-                            f"hydro and neighbor ({atom_sele})")
-                        if h_count == 0:
-                            _force_add_h(obj_name, atom_sele, 1, state,
-                                         _self)
-                continue
-
-            # pH > pKa: group should be deprotonated — remove H
-            for atom_name in atom_names:
-                h_sele = (f"hydro and neighbor "
-                          f"({obj_name} and resn {resn} and name {atom_name})")
-                h_count = _self.count_atoms(h_sele)
-                if h_count > 0:
-                    if resn == 'LYS' and atom_name == 'NZ':
-                        # Deprotonated Lys: NH2 (2H), not NH3+ (3H)
-                        _remove_excess_h(obj_name, h_sele, 1, _self)
-                    else:
-                        _self.remove(h_sele)
 
         if not quiet:
             total_h = _self.count_atoms(f"hydro and (bymol ({obj_sele}))")

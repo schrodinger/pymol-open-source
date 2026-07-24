@@ -149,6 +149,24 @@ def test_protonate_fallback_low_pH():
         "His ND1 should be protonated at pH 2.0"
 
 
+def test_protonate_fallback_pH_transitions():
+    """Formal charges should drive h_add across textbook pKa thresholds."""
+    from pymol.editing import _protonate_fallback
+
+    cmd.fab("EHK", "m1")
+
+    expected = [
+        (3.5, 30),
+        (5.9, 29),
+        (6.1, 28),
+        (13.0, 27),
+    ]
+
+    for pH, hydrogen_count in expected:
+        _protonate_fallback("m1", "m1", pH, 0, 1, _self=cmd)
+        assert cmd.count_atoms("m1 and hydro") == hydrogen_count
+
+
 def _build_single_nuc(nuc_acid, nuc_type, obj_name, chain='A'):
     """Helper: build a single nucleotide and return the object name.
 
