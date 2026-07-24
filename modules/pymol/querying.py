@@ -661,6 +661,23 @@ PYMOL API
             r = _cmd.get_collada(_self._COb,int(version))
         return r
 
+    def _get_glb_bytes(_self):
+        '''
+        Return the current scene as GLB bytes, or None if there is no
+        exportable geometry. Raises CmdException if PyMOL was built without
+        native glTF/GLB support.
+        '''
+        try:
+            get_glb_ = _cmd.get_glb
+        except AttributeError:
+            raise pymol.CmdException(
+                'not compiled with native glTF/GLB export support '
+                '(rebuild with --json=true and the nlohmann-json headers '
+                'installed)') from None
+
+        with _self.lockcm:
+            return get_glb_(_self._COb)
+
     def get_glb(filename, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
@@ -683,18 +700,20 @@ PYMOL API
     cmd.get_glb(string filename, int quiet=1)
 
         '''
-        with _self.lockcm:
-            r = _cmd.get_glb(_self._COb)
-        if r is not None:
-            with open(filename, 'wb') as handle:
-                handle.write(r)
-            if not quiet:
-                print(' Save: wrote "' + filename + '".')
-            return 1
-        else:
+        r = _get_glb_bytes(_self)
+
+        if r is None:
             if not quiet:
                 print(' Save-Error: no file written')
-            return -1
+            return DEFAULT_ERROR
+
+        with open(filename, 'wb') as handle:
+            handle.write(r)
+
+        if not quiet:
+            print(' Save: wrote "' + filename + '".')
+
+        return DEFAULT_SUCCESS
 
     def get_gltf(filename, quiet=1, *, _self=cmd):
         '''
@@ -723,13 +742,12 @@ PYMOL API
         import json
         import struct
 
-        with _self.lockcm:
-            glb = _cmd.get_glb(_self._COb)
+        glb = _get_glb_bytes(_self)
 
         if glb is None:
             if not quiet:
                 print(' Save-Error: no file written')
-            return -1
+            return DEFAULT_ERROR
 
         try:
             magic, version, total_length = struct.unpack_from('<III', glb, 0)
@@ -765,7 +783,7 @@ PYMOL API
         if not quiet:
             print(' Save: wrote "' + filename + '".')
 
-        return 1
+        return DEFAULT_SUCCESS
 
     def count_states(selection="(all)", quiet=1, *, _self=cmd):
         '''

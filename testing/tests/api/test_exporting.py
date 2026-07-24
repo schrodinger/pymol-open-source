@@ -7,6 +7,9 @@ import tempfile
 from pymol import cmd
 from pymol import test_utils
 
+requires_gltf = test_utils.requires_capability(
+    "gltf", "Requires PyMOL built with --json=true (native glTF/GLB export)")
+
 
 @test_utils.requires_version("3.2")
 def test_bcif_export():
@@ -62,6 +65,28 @@ def test_bcif_export_multi_object():
             os.unlink(bcif_file)
 
 
+def _srgb_to_linear(c):
+    """Reference implementation of the glTF sRGB to linear transfer."""
+    if c <= 0.0:
+        return 0.0
+    if c >= 1.0:
+        return 1.0
+    if c <= 0.04045:
+        return c / 12.92
+    return ((c + 0.055) / 1.055) ** 2.4
+
+
+def _read_vertex_colors(gltf, bin_data, mesh_index=0):
+    """Return a mesh's COLOR_0 values as a list of (r, g, b) tuples."""
+    prim = gltf['meshes'][mesh_index]['primitives'][0]
+    color_acc = gltf['accessors'][prim['attributes']['COLOR_0']]
+    color_view = gltf['bufferViews'][color_acc['bufferView']]
+    offset = color_view.get('byteOffset', 0) + color_acc.get('byteOffset', 0)
+    values = struct.unpack_from(
+        '<%df' % (color_acc['count'] * 3), bin_data, offset)
+    return list(zip(values[0::3], values[1::3], values[2::3]))
+
+
 def _parse_glb(filepath):
     """Parse a GLB file and return (gltf_json, bin_data)."""
     with open(filepath, 'rb') as f:
@@ -84,6 +109,7 @@ def _parse_glb(filepath):
 
 
 @test_utils.requires_version("3.2")
+@requires_gltf
 def test_glb_export_sticks():
     """Test GLB export with stick representation"""
     cmd.fragment("ala")
@@ -108,6 +134,9 @@ def test_glb_export_sticks():
         assert len(gltf['buffers']) == 1
         assert len(bin_data) > 0
 
+        # PyMOL renders without back-face culling
+        assert all(mat['doubleSided'] for mat in gltf['materials'])
+
         # Check mesh has required attributes
         prim = gltf['meshes'][0]['primitives'][0]
         assert 'POSITION' in prim['attributes']
@@ -129,6 +158,7 @@ def test_glb_export_sticks():
 
 
 @test_utils.requires_version("3.2")
+@requires_gltf
 def test_gltf_export_sticks():
     """Test native, self-contained glTF 2.0 export"""
     cmd.fragment("ala")
@@ -157,6 +187,7 @@ def test_gltf_export_sticks():
 
 
 @test_utils.requires_version("3.2")
+@requires_gltf
 def test_glb_export_spheres():
     """Test GLB export API with sphere representation and vertex colors"""
     cmd.pseudoatom("atoms", pos=[0.0, 0.0, 0.0], color="red")
@@ -177,13 +208,7 @@ def test_glb_export_spheres():
         pos_acc = gltf['accessors'][prim['attributes']['POSITION']]
         assert pos_acc['count'] > 0
 
-        color_acc = gltf['accessors'][prim['attributes']['COLOR_0']]
-        color_view = gltf['bufferViews'][color_acc['bufferView']]
-        color_offset = color_view.get('byteOffset', 0)
-        color_offset += color_acc.get('byteOffset', 0)
-        colors = struct.unpack_from(
-            '<%df' % (color_acc['count'] * 3), bin_data, color_offset)
-        colors = list(zip(colors[0::3], colors[1::3], colors[2::3]))
+        colors = _read_vertex_colors(gltf, bin_data)
         assert any(r > 0.99 and g < 0.01 and b < 0.01 for r, g, b in colors)
         assert any(r < 0.01 and g < 0.01 and b > 0.99 for r, g, b in colors)
     finally:
@@ -192,6 +217,38 @@ def test_glb_export_spheres():
 
 
 @test_utils.requires_version("3.2")
+@requires_gltf
+def test_glb_export_midtone_color_is_linear():
+    """Mid-tone colors are converted from PyMOL display space to linear"""
+    cmd.pseudoatom("atoms", pos=[0.0, 0.0, 0.0], color="grey50")
+    cmd.show_as("spheres")
+
+    display = cmd.get_color_tuple("grey50")
+    expected = tuple(_srgb_to_linear(c) for c in display)
+
+    # only meaningful if the color actually is a mid-tone
+    assert all(0.01 < c < 0.99 for c in display)
+    assert all(abs(e - d) > 0.05 for e, d in zip(expected, display))
+
+    with tempfile.NamedTemporaryFile(suffix='.glb', delete=False) as f:
+        glb_file = f.name
+
+    try:
+        cmd.save(glb_file)
+        gltf, bin_data = _parse_glb(glb_file)
+
+        colors = _read_vertex_colors(gltf, bin_data)
+        assert colors
+        for color in colors:
+            assert all(abs(c - e) < 1e-5 for c, e in zip(color, expected)), \
+                f"{color} != {expected}"
+    finally:
+        if os.path.exists(glb_file):
+            os.unlink(glb_file)
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
 def test_glb_export_surface():
     """Test GLB export with surface representation"""
     cmd.fragment("gly")
@@ -212,6 +269,7 @@ def test_glb_export_surface():
 
 
 @test_utils.requires_version("3.2")
+@requires_gltf
 def test_glb_export_cartoon():
     """Test GLB export with cartoon representation (needs enough residues)"""
     cmd.load(test_utils.datafile('1bna.cif'))
@@ -236,6 +294,7 @@ def test_glb_export_cartoon():
 
 
 @test_utils.requires_version("3.2")
+@requires_gltf
 def test_glb_export_transparent():
     """Test GLB export with transparency creates BLEND material"""
     cmd.fragment("ala")
@@ -263,6 +322,7 @@ def test_glb_export_transparent():
 
 
 @test_utils.requires_version("3.2")
+@requires_gltf
 def test_glb_export_empty():
     """Test GLB export with no exportable geometry produces no file"""
     cmd.fragment("ala")

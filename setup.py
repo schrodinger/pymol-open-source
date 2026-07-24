@@ -194,6 +194,7 @@ class options:
     osx_frameworks = True
     jobs = int(os.getenv("JOBS", 0))
     libxml = True
+    json = False
     glut = False
     use_msgpackc = "guess"
     testing = False
@@ -223,6 +224,11 @@ parser.add_argument(
     "--libxml",
     type=str2bool,
     help="skip libxml2 dependency, disables COLLADA export",
+)
+parser.add_argument(
+    "--json",
+    type=str2bool,
+    help="add nlohmann-json dependency, enables glTF 2.0 and GLB export",
 )
 parser.add_argument("--use-openmp", type=str2bool, help="Use OpenMP")
 parser.add_argument(
@@ -633,6 +639,24 @@ if options.libxml:
     def_macros += [("_HAVE_LIBXML", None)]
     libs += ["xml2"]
 
+# sources which are only compiled for optional features
+excluded_sources = []
+
+if options.json:
+    # native glTF 2.0 / GLB support (header-only dependency)
+    for prefix in prefix_path:
+        if os.path.exists(os.path.join(prefix, "include", "nlohmann", "json.hpp")):
+            break
+    else:
+        raise LookupError(
+            "nlohmann-json headers not found, required by --json=true"
+            " (glTF 2.0 and GLB export)."
+            f' PREFIX_PATH={":".join(prefix_path)}'
+        )
+    def_macros += [("_HAVE_JSON", None)]
+else:
+    excluded_sources += [os.path.join("layer1", "GLTF.cpp")]
+
 if options.use_msgpackc == "guess":
     options.use_msgpackc = guess_msgpackc()
 
@@ -805,9 +829,16 @@ def get_pymol_version():
     return re.findall(r'_PyMOL_VERSION "(.*)"', open("layer0/Version.h").read())[0]
 
 
-def get_sources(subdirs, suffixes=(".c", ".cpp")):
+def get_sources(subdirs, suffixes=(".c", ".cpp"), exclude=()):
+    exclude = {os.path.normpath(f) for f in exclude}
     return sorted(
-        [f for d in subdirs for s in suffixes for f in glob.glob(d + "/*" + s)]
+        [
+            f
+            for d in subdirs
+            for s in suffixes
+            for f in glob.glob(d + "/*" + s)
+            if os.path.normpath(f) not in exclude
+        ]
     )
 
 
@@ -860,7 +891,7 @@ if WIN:
 ext_modules += [
     CMakeExtension(
         name="pymol._cmd",
-        sources=get_sources(pymol_src_dirs),
+        sources=get_sources(pymol_src_dirs, exclude=excluded_sources),
         include_dirs=inc_dirs,
         libraries=libs,
         library_dirs=lib_dirs,

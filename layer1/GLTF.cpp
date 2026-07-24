@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <limits>
 #include <memory>
@@ -42,6 +43,27 @@ static constexpr std::uint32_t GLB_HEADER_SIZE = 12;
 static constexpr std::uint32_t GLB_CHUNK_HEADER_SIZE = 8;
 
 static constexpr float TRANS_PRECISION = 0.01f;
+
+/* A GLB container addresses everything with 32-bit offsets */
+static constexpr std::uint64_t GLB_MAX_SIZE = 0xFFFFFFFFull;
+
+/**
+ * Convert a display-space (sRGB) color channel to linear space.
+ * @param c channel value, expected in the 0-1 range
+ * @return the linear-space channel value
+ * @note PyMOL color components are display-space values handed straight to
+ *   OpenGL, whereas glTF 2.0 defines COLOR_0 and baseColorFactor as linear.
+ */
+static float srgbToLinear(float c)
+{
+  if (c <= 0.0f)
+    return 0.0f;
+  if (c >= 1.0f)
+    return 1.0f;
+  if (c <= 0.04045f)
+    return c / 12.92f;
+  return std::pow((c + 0.055f) / 1.055f, 2.4f);
+}
 
 /**
  * Collects triangles that share the same material, grouped by transparency
@@ -67,7 +89,9 @@ struct MeshGroup {
    * box.
    * @param pos xyz position (3 floats)
    * @param norm xyz normal (3 floats)
-   * @param col rgb color (3 floats, 0-1 range)
+   * @param col rgb color (3 floats, 0-1 range, display space)
+   * @note The color is converted from display (sRGB) to linear space, which
+   *   is what glTF 2.0 expects for COLOR_0.
    */
   void addVertex(const float* pos, const float* norm, const float* col)
   {
@@ -77,9 +101,9 @@ struct MeshGroup {
     normals.push_back(norm[0]);
     normals.push_back(norm[1]);
     normals.push_back(norm[2]);
-    colors.push_back(col[0]);
-    colors.push_back(col[1]);
-    colors.push_back(col[2]);
+    colors.push_back(srgbToLinear(col[0]));
+    colors.push_back(srgbToLinear(col[1]));
+    colors.push_back(srgbToLinear(col[2]));
 
     for (int i = 0; i < 3; i++) {
       if (pos[i] < min_pos[i])
@@ -381,49 +405,59 @@ static void addTriangle(MeshGroup& group, const CPrimitive* prim)
  * @return size rounded up to 4-byte boundary
  * @note Required by the GLB spec for chunk alignment.
  */
-static std::uint32_t alignTo4(std::uint32_t size)
+static std::uint64_t alignTo4(std::uint64_t size)
 {
-  return (size + 3) & ~3u;
+  return (size + 3) & ~UINT64_C(3);
 }
 
 /**
- * Write a uint32 in little-endian byte order to a byte vector.
- * @param[out] out byte vector to append to
+ * @return true if the host stores multi-byte integers least significant byte
+ *   first, in which case 32-bit arrays can be copied verbatim into the GLB
+ *   binary chunk.
+ */
+static bool isLittleEndianHost()
+{
+  const std::uint32_t one = 1;
+  std::uint8_t first_byte;
+  std::memcpy(&first_byte, &one, 1);
+  return first_byte == 1;
+}
+
+/**
+ * Write a uint32 in little-endian byte order.
+ * @param[out] dest destination, must have room for 4 bytes
  * @param val 32-bit value to write
+ * @return pointer just past the written bytes
  */
-static void writeU32(std::vector<std::uint8_t>& out, std::uint32_t val)
+static char* writeU32(char* dest, std::uint32_t val)
 {
-  out.push_back(val & 0xFF);
-  out.push_back((val >> 8) & 0xFF);
-  out.push_back((val >> 16) & 0xFF);
-  out.push_back((val >> 24) & 0xFF);
+  dest[0] = static_cast<char>(val & 0xFF);
+  dest[1] = static_cast<char>((val >> 8) & 0xFF);
+  dest[2] = static_cast<char>((val >> 16) & 0xFF);
+  dest[3] = static_cast<char>((val >> 24) & 0xFF);
+  return dest + 4;
 }
 
 /**
- * Append floats to a byte vector in little-endian byte order.
- * @param[out] out byte vector to append to
- * @param data source float data
+ * Copy an array of 32-bit elements (float or uint32) in little-endian byte
+ * order.
+ * @param[out] dest destination, must have room for 4 * data.size() bytes
+ * @param data source data
  */
-static void appendFloats(
-    std::vector<std::uint8_t>& out, const std::vector<float>& data)
+template <typename T>
+static void writeU32Array(char* dest, const std::vector<T>& data)
 {
-  for (float f : data) {
-    std::uint32_t bits;
-    std::memcpy(&bits, &f, sizeof(float));
-    writeU32(out, bits);
+  static_assert(sizeof(T) == 4, "expected 32-bit elements");
+
+  if (isLittleEndianHost()) {
+    std::memcpy(dest, data.data(), data.size() * sizeof(T));
+    return;
   }
-}
 
-/**
- * Append uint32s to a byte vector in little-endian byte order.
- * @param[out] out byte vector to append to
- * @param data source uint32 data
- */
-static void appendU32s(
-    std::vector<std::uint8_t>& out, const std::vector<std::uint32_t>& data)
-{
-  for (std::uint32_t v : data) {
-    writeU32(out, v);
+  for (const T& value : data) {
+    std::uint32_t bits;
+    std::memcpy(&bits, &value, sizeof(T));
+    dest = writeU32(dest, bits);
   }
 }
 
@@ -447,52 +481,62 @@ struct GroupBufferInfo {
 };
 
 /**
- * Pack all mesh groups' vertex attributes and indices into a single contiguous
- * binary buffer suitable for the GLB BIN chunk.
+ * Compute where each mesh group's vertex attributes and indices live inside
+ * the single contiguous binary buffer of the GLB BIN chunk.
  *
  * Layout per group: [positions][normals][colors][indices]
  *
  * @param groups mesh groups containing vertex/index data
  * @param[out] infos byte offset and length for each group's attributes
- * @return the packed binary buffer
+ * @return the total binary buffer size in bytes
  * @note All sections are naturally 4-byte aligned (float and uint32 data).
+ *   The result may exceed what a GLB container can address; the caller is
+ *   responsible for rejecting it.
  */
-static std::vector<std::uint8_t> buildBinaryBuffer(
+static std::uint64_t computeBufferLayout(
     const std::vector<MeshGroup>& groups, std::vector<GroupBufferInfo>& infos)
 {
-  std::vector<std::uint8_t> buffer;
+  std::uint64_t offset = 0;
   infos.resize(groups.size());
+
+  auto place = [&offset](BufferViewInfo& view, std::uint64_t length) {
+    view.offset = static_cast<std::uint32_t>(offset);
+    view.length = static_cast<std::uint32_t>(length);
+    offset += length;
+  };
 
   for (size_t g = 0; g < groups.size(); g++) {
     const auto& mesh = groups[g];
     auto& info = infos[g];
 
-    /* Positions */
-    info.positions.offset = static_cast<std::uint32_t>(buffer.size());
-    info.positions.length =
-        static_cast<std::uint32_t>(mesh.positions.size() * sizeof(float));
-    appendFloats(buffer, mesh.positions);
-
-    /* Normals */
-    info.normals.offset = static_cast<std::uint32_t>(buffer.size());
-    info.normals.length =
-        static_cast<std::uint32_t>(mesh.normals.size() * sizeof(float));
-    appendFloats(buffer, mesh.normals);
-
-    /* Colors */
-    info.colors.offset = static_cast<std::uint32_t>(buffer.size());
-    info.colors.length =
-        static_cast<std::uint32_t>(mesh.colors.size() * sizeof(float));
-    appendFloats(buffer, mesh.colors);
-
-    /* Indices */
-    info.indices.offset = static_cast<std::uint32_t>(buffer.size());
-    info.indices.length =
-        static_cast<std::uint32_t>(mesh.indices.size() * sizeof(std::uint32_t));
-    appendU32s(buffer, mesh.indices);
+    place(info.positions, mesh.positions.size() * sizeof(float));
+    place(info.normals, mesh.normals.size() * sizeof(float));
+    place(info.colors, mesh.colors.size() * sizeof(float));
+    place(info.indices, mesh.indices.size() * sizeof(std::uint32_t));
   }
 
-  return buffer;
+  return offset;
+}
+
+/**
+ * Serialize all mesh groups' vertex attributes and indices into the GLB BIN
+ * chunk payload, following the layout from computeBufferLayout().
+ * @param groups mesh groups containing vertex/index data
+ * @param infos buffer layout info from computeBufferLayout()
+ * @param[out] dest destination, must have room for the full buffer
+ */
+static void writeBinaryBuffer(const std::vector<MeshGroup>& groups,
+    const std::vector<GroupBufferInfo>& infos, char* dest)
+{
+  for (size_t g = 0; g < groups.size(); g++) {
+    const auto& mesh = groups[g];
+    const auto& info = infos[g];
+
+    writeU32Array(dest + info.positions.offset, mesh.positions);
+    writeU32Array(dest + info.normals.offset, mesh.normals);
+    writeU32Array(dest + info.colors.offset, mesh.colors);
+    writeU32Array(dest + info.indices.offset, mesh.indices);
+  }
 }
 
 /**
@@ -512,11 +556,7 @@ static std::string buildGLTFJson(const std::vector<MeshGroup>& groups,
   /* Asset */
   root["asset"] = {
       {"version", "2.0"},
-#ifdef _PyMOL_VERSION
       {"generator", "PyMOL " _PyMOL_VERSION},
-#else
-      {"generator", "PyMOL"},
-#endif
   };
 
   /* Scene */
@@ -554,7 +594,8 @@ static std::string buildGLTFJson(const std::vector<MeshGroup>& groups,
     } else {
       mat["alphaMode"] = "OPAQUE";
     }
-    mat["doubleSided"] = false;
+    /* PyMOL draws this geometry without back-face culling */
+    mat["doubleSided"] = true;
     materials.push_back(mat);
 
     /* Buffer views: positions */
@@ -729,58 +770,73 @@ void RayRenderGLB(CRay* I, int width, int height, char** vla_ptr, float front,
     return;
   }
 
-  /* Build binary buffer */
+  /* Lay out the binary buffer without materializing it yet */
   std::vector<GroupBufferInfo> buffer_infos;
-  auto bin_buffer = buildBinaryBuffer(groups, buffer_infos);
+  std::uint64_t bin_len = computeBufferLayout(groups, buffer_infos);
+  std::uint64_t bin_padded = alignTo4(bin_len);
+
+  if (bin_padded > GLB_MAX_SIZE) {
+    PRINTFB(G, FB_Ray, FB_Errors)
+    " GLB-Error: Geometry is too large for the GLB container "
+    "(%llu bytes, limit is %llu).\n",
+        (unsigned long long) bin_padded,
+        (unsigned long long) GLB_MAX_SIZE ENDFB(G);
+    VLASize(*vla_ptr, char, 0);
+    return;
+  }
 
   /* Build JSON */
-  std::string json_str = buildGLTFJson(
-      groups, buffer_infos, static_cast<std::uint32_t>(bin_buffer.size()));
+  std::string json_str =
+      buildGLTFJson(groups, buffer_infos, static_cast<std::uint32_t>(bin_len));
 
   /* Pad JSON to 4-byte alignment with spaces */
-  std::uint32_t json_len = static_cast<std::uint32_t>(json_str.size());
-  std::uint32_t json_padded = alignTo4(json_len);
-  json_str.resize(json_padded, ' ');
+  std::uint64_t json_len = json_str.size();
+  std::uint64_t json_padded = alignTo4(json_len);
 
-  /* Pad binary buffer to 4-byte alignment with zeros */
-  std::uint32_t bin_len = static_cast<std::uint32_t>(bin_buffer.size());
-  std::uint32_t bin_padded = alignTo4(bin_len);
-  bin_buffer.resize(bin_padded, 0);
+  std::uint64_t total = GLB_HEADER_SIZE + GLB_CHUNK_HEADER_SIZE + json_padded +
+                        GLB_CHUNK_HEADER_SIZE + bin_padded;
 
-  /* Assemble GLB */
-  std::uint32_t total_size = GLB_HEADER_SIZE + GLB_CHUNK_HEADER_SIZE +
-                             json_padded + GLB_CHUNK_HEADER_SIZE + bin_padded;
+  if (total > GLB_MAX_SIZE) {
+    PRINTFB(G, FB_Ray, FB_Errors)
+    " GLB-Error: Scene is too large for the GLB container "
+    "(%llu bytes, limit is %llu).\n",
+        (unsigned long long) total, (unsigned long long) GLB_MAX_SIZE ENDFB(G);
+    VLASize(*vla_ptr, char, 0);
+    return;
+  }
 
-  std::vector<std::uint8_t> glb;
-  glb.reserve(total_size);
+  std::uint32_t total_size = static_cast<std::uint32_t>(total);
 
-  /* Header */
-  writeU32(glb, GLB_MAGIC);
-  writeU32(glb, GLB_VERSION);
-  writeU32(glb, total_size);
-
-  /* JSON chunk */
-  writeU32(glb, json_padded);
-  writeU32(glb, GLB_CHUNK_JSON);
-  glb.insert(glb.end(), json_str.begin(), json_str.end());
-
-  /* BIN chunk */
-  writeU32(glb, bin_padded);
-  writeU32(glb, GLB_CHUNK_BIN);
-  glb.insert(glb.end(), bin_buffer.begin(), bin_buffer.end());
-
-  /* Copy to VLA output */
+  /* Assemble the GLB directly in the output VLA */
   char* vla = *vla_ptr;
 
-  VLACheck(vla, char, total_size);
+  VLASize(vla, char, total_size);
   if (!vla) {
     PRINTFB(G, FB_Ray, FB_Errors)
     " GLB-Error: Failed to allocate output buffer.\n" ENDFB(G);
     *vla_ptr = nullptr;
     return;
   }
-  memcpy(vla, glb.data(), total_size);
-  VLASize(vla, char, total_size);
+
+  char* out = vla;
+
+  /* Header */
+  out = writeU32(out, GLB_MAGIC);
+  out = writeU32(out, GLB_VERSION);
+  out = writeU32(out, total_size);
+
+  /* JSON chunk */
+  out = writeU32(out, static_cast<std::uint32_t>(json_padded));
+  out = writeU32(out, GLB_CHUNK_JSON);
+  std::memcpy(out, json_str.data(), json_len);
+  std::memset(out + json_len, ' ', json_padded - json_len);
+  out += json_padded;
+
+  /* BIN chunk */
+  out = writeU32(out, static_cast<std::uint32_t>(bin_padded));
+  out = writeU32(out, GLB_CHUNK_BIN);
+  writeBinaryBuffer(groups, buffer_infos, out);
+  std::memset(out + bin_len, 0, bin_padded - bin_len);
 
   *vla_ptr = vla;
 
