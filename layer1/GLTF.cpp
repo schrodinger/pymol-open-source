@@ -722,11 +722,9 @@ void RayRenderGLB(CRay* I, int width, int height, char** vla_ptr, float front,
 {
   PyMOLGlobals* G = I->G;
 
-  int identity = (SettingGetGlobal_i(G, cSetting_geometry_export_mode) == 1);
-
   /* Ray trace - expand all objects into primitives */
   RayExpandPrimitives(I);
-  RayTransformFirst(I, 0, identity);
+  RayTransformFirst(I, 0, false);
 
   /* Collect primitives into mesh groups by transparency */
   std::vector<MeshGroup> groups;
@@ -811,12 +809,6 @@ void RayRenderGLB(CRay* I, int width, int height, char** vla_ptr, float front,
   char* vla = *vla_ptr;
 
   VLASize(vla, char, total_size);
-  if (!vla) {
-    PRINTFB(G, FB_Ray, FB_Errors)
-    " GLB-Error: Failed to allocate output buffer.\n" ENDFB(G);
-    *vla_ptr = nullptr;
-    return;
-  }
 
   char* out = vla;
 

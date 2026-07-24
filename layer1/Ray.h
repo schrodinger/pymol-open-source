@@ -60,10 +60,6 @@ void RayRenderVRML2(CRay * I, int width, int height,
                     float fov, float angle, float z_corr);
 void RayRenderCOLLADA(CRay * I, int width, int height,
                     char **vla_ptr, float front, float back, float fov);
-#ifdef _HAVE_JSON
-void RayRenderGLB(CRay * I, int width, int height,
-                    char **vla_ptr, float front, float back, float fov);
-#endif
 void RayRenderObjMtl(CRay * I, int width, int height, char **objVLA_ptr,
                      char **mtlVLA_ptr, float front, float back, float fov,
                      float angle, float z_corr);

@@ -10,6 +10,7 @@
 #include"Color.h"
 #include"P.h"
 #include "Feedback.h"
+#include "GLTF.h"
 
 static double accumTiming = 0.0;
 

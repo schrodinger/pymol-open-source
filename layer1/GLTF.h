@@ -8,6 +8,8 @@
 
 #include "Base.h"
 
+#ifdef _HAVE_JSON
+
 /**
  * Render the current scene as a GLB (binary glTF 2.0) file. Expands all
  * objects into ray-tracing primitives, tessellates spheres/cylinders/cones
@@ -24,3 +26,5 @@
  */
 void RayRenderGLB(CRay* I, int width, int height, char** vla_ptr, float front,
     float back, float fov);
+
+#endif
