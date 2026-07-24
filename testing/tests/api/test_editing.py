@@ -289,26 +289,46 @@ def test_protonate_his_delta_aliases(resn):
 
 
 def test_protonate_titratable_selection_matches_table():
-    """The alter selection must cover every atom the pKa table can change."""
-    from pymol.editing import (_HIS_TAUTOMER, _TITRATABLE_PKA_FORMAL_CHARGE,
-                               _TITRATABLE_SELECTION)
+    """The alter selection must match an atom exactly when
+    _get_formal_charge has a pKa for it - missing atoms are never titrated,
+    extra atoms lose their chemFlag for nothing."""
+    from pymol.editing import (_HIS_TAUTOMER, _TITRATABLE_SELECTION,
+                               _get_formal_charge)
 
-    expected = set()
-    for resn, name in _TITRATABLE_PKA_FORMAL_CHARGE:
-        for alias, tautomer in _HIS_TAUTOMER.items():
-            if tautomer == resn:
-                expected.add((alias, name))
-        if resn not in _HIS_TAUTOMER.values():
-            expected.add((resn, name))
+    sentinel = object()
 
     cmd.fab("EHKRYCDA", "m1")
-    matched = set()
+    seen, matched = set(), set()
     for alias in sorted(_HIS_TAUTOMER):
         cmd.alter("m1 and resi 2", f"resn = {alias!r}")
+        cmd.iterate("m1", "acc.add((resn, name))", space={"acc": seen})
         cmd.iterate(f"(m1) and ({_TITRATABLE_SELECTION})",
-                    "matched.add((resn, name))", space={"matched": matched})
+                    "acc.add((resn, name))", space={"acc": matched})
 
+    expected = {
+        (resn, name) for resn, name in seen
+        if _get_formal_charge(resn, name, sentinel, 7.0) is not sentinel
+    }
+
+    assert matched
     assert matched == expected
+
+
+def test_protonate_fallback_lowercase_resn():
+    """PyMOL selections ignore case, so the pKa lookup must too."""
+    from pymol.editing import _protonate_fallback, _get_formal_charge
+
+    assert _get_formal_charge('his', 'nd1', 0, 5.0) == 1
+    assert _get_formal_charge('asp', 'od2', 0, 7.0) == -1
+
+    cmd.fab("D", "m1")
+    cmd.alter("m1", "resn = resn.lower()")
+    cmd.alter("m1", "name = name.lower()")
+
+    _protonate_fallback("m1", "m1", 7.0, 0, 1, _self=cmd)
+
+    assert cmd.count_atoms("m1 and hydro and neighbor (name OD1+OD2)") == 0
+    assert _formal_charges("m1 and name OD2") == [-1]
 
 
 def test_protonate_fallback_preserves_untitrated_chemistry():

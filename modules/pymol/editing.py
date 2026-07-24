@@ -1293,7 +1293,8 @@ SEE ALSO
     }
 
     def _get_formal_charge(resn, name, fallback, pH):
-        key = (_HIS_TAUTOMER.get(resn, resn), name)
+        resn = resn.upper()
+        key = (_HIS_TAUTOMER.get(resn, resn), name.upper())
         value = _TITRATABLE_PKA_FORMAL_CHARGE.get(key)
         if value is None:
             return fallback
@@ -1310,27 +1311,17 @@ SEE ALSO
         """
         names_by_resn = {}
         for resn, name in _TITRATABLE_PKA_FORMAL_CHARGE:
-            names_by_resn.setdefault(resn, set()).add(name)
+            names_by_resn.setdefault(resn, []).append(name)
 
-        # expand the canonical tautomers back into every spelling that
-        # _get_formal_charge normalizes onto them
-        by_input_resn = {}
-        for alias, tautomer in _HIS_TAUTOMER.items():
-            by_input_resn.setdefault(alias, set()).update(
-                names_by_resn.get(tautomer, ()))
-        for resn, names in names_by_resn.items():
-            if resn not in _HIS_TAUTOMER.values():
-                by_input_resn.setdefault(resn, set()).update(names)
-
-        # collapse residues which share an atom name set into one term
-        resns_by_names = {}
-        for resn, names in by_input_resn.items():
-            resns_by_names.setdefault(
-                '+'.join(sorted(names)), set()).add(resn)
+        # one term per spelling _get_formal_charge accepts: histidines
+        # normalize onto a tautomer, every other residue onto itself
+        canonical = {resn: resn for resn in names_by_resn}
+        canonical.update(_HIS_TAUTOMER)
 
         return ' or '.join(
-            f"(resn {'+'.join(sorted(resns))} and name {names})"
-            for names, resns in sorted(resns_by_names.items()))
+            f"(resn {resn} and name {'+'.join(names_by_resn[tautomer])})"
+            for resn, tautomer in sorted(canonical.items())
+            if tautomer in names_by_resn)
 
     _TITRATABLE_SELECTION = _make_titratable_selection()
 
@@ -1536,7 +1527,10 @@ NOTES
     (disulfide bridge, metal, alkylation) have no ionizable hydrogen and
     are left neutral. Histidine titrates on whichever ring nitrogen is
     free in the tautomer implied by the residue name (HID/HISA/HISD have
-    the free nitrogen at NE2, all other spellings at ND1).
+    the free nitrogen at NE2, all other spellings at ND1). The
+    explicitly protonated spellings HIP/HISH/HISP are treated as
+    ordinary histidine, so above pH 6 they are deprotonated but keep
+    their name, leaving the residue name at odds with the hydrogen count.
 
     At biological pH (7.4):
       - Asp/Glu carboxylates are deprotonated (COO-)
