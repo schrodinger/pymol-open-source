@@ -1255,6 +1255,23 @@ SEE ALSO
         return r
 
 
+    # Histidine spellings understood by the PDB reader, mapped to the
+    # imidazole tautomer they encode. HIE-like names put the CE1 double
+    # bond on ND1 (so NE2 carries the neutral H), HID-like names put it
+    # on NE2 (so ND1 carries the neutral H).
+    _HIS_TAUTOMER = {
+        'HIS':  'HIE',
+        'HISB': 'HIE',
+        'HISE': 'HIE',
+        'HIE':  'HIE',
+        'HIP':  'HIE',
+        'HISH': 'HIE',
+        'HISP': 'HIE',
+        'HID':  'HID',
+        'HISA': 'HID',
+        'HISD': 'HID',
+    }
+
     # Textbook pKa values and formal charges for standard titratable
     # residues. Used as fallback when pdb2pqr is not available.
     # Format: (resn, name) -> (pKa, charge below pKa, charge at/above pKa)
@@ -1266,19 +1283,18 @@ SEE ALSO
         ('TYR', 'OH'):  (10.07,  0, -1),
         ('CYS', 'SG'):  (8.18,   0, -1),
         ('HIE', 'ND1'): (6.00,   1,  0),
-        ('HIP', 'ND1'): (6.00,   1,  0),
-        ('HIS', 'ND1'): (6.00,   1,  0),
         ('HIE', 'NE2'): (6.00,   0,  0),
-        ('HIP', 'NE2'): (6.00,   0,  0),
-        ('HIS', 'NE2'): (6.00,   0,  0),
+        ('HID', 'ND1'): (6.00,   0,  0),
+        ('HID', 'NE2'): (6.00,   1,  0),
         ('GLU', 'OE1'): (4.25,   0,  0),
         ('GLU', 'OE2'): (4.25,   0, -1),
         ('ASP', 'OD1'): (3.65,   0,  0),
         ('ASP', 'OD2'): (3.65,   0, -1),
     }
 
-    def _get_formal_charge(resn, name, pH, fallback):
-        value = _TITRATABLE_PKA_FORMAL_CHARGE.get((resn, name))
+    def _get_formal_charge(resn, name, fallback, pH):
+        key = (_HIS_TAUTOMER.get(resn, resn), name)
+        value = _TITRATABLE_PKA_FORMAL_CHARGE.get(key)
         if value is None:
             return fallback
 
@@ -1307,16 +1323,25 @@ SEE ALSO
         Sets formal charges for titratable groups, then lets h_add determine
         bond valences and hydrogen counts.
         """
+        from functools import partial
+
         obj_sele = f"({selection}) and {obj_name}"
 
         _self.remove(f"hydro and (bymol ({obj_sele}))")
         _self.alter(
             obj_sele,
-            f"formal_charge = _get_formal_charge("
-            f"resn, name, {pH!r}, formal_charge)",
+            "formal_charge = _get_formal_charge(resn, name, formal_charge)",
             space={
-                "_get_formal_charge": _get_formal_charge,
+                "_get_formal_charge": partial(_get_formal_charge, pH=pH),
             },
+            quiet=quiet)
+        # Only a free thiol titrates. A cysteine sulfur which is bonded to
+        # anything but its own CB (disulfide bridge, metal, alkylation) has
+        # no ionizable H and stays neutral.
+        _self.alter(
+            f"({obj_sele}) and resn CYS and name SG and "
+            f"bound_to ({obj_name} and not name CB)",
+            "formal_charge = 0",
             quiet=quiet)
         _self.h_add(obj_sele, state=state)
 
@@ -1463,6 +1488,12 @@ NOTES
     Without pdb2pqr, textbook pKa values are used:
       Asp 3.65, Glu 4.25, His 6.00, Cys 8.18,
       Tyr 10.07, Lys 10.53, Arg 12.48
+
+    Cysteines whose SG is bonded to anything other than its own CB
+    (disulfide bridge, metal, alkylation) have no ionizable hydrogen and
+    are left neutral. Histidine titrates on whichever ring nitrogen is
+    free in the tautomer implied by the residue name (HID/HISA/HISD have
+    the free nitrogen at NE2, all other spellings at ND1).
 
     At biological pH (7.4):
       - Asp/Glu carboxylates are deprotonated (COO-)

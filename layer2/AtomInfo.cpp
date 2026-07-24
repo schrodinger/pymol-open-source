@@ -2281,7 +2281,7 @@ int AtomInfoGetExpectedValence(PyMOLGlobals * G, const AtomInfoType * I)
       result = -1;
       break;
     case cAN_S:
-      result = -2;
+      result = -1;
       break;
     case cAN_P:
       result = -3;

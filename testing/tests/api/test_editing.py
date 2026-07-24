@@ -167,6 +167,127 @@ def test_protonate_fallback_pH_transitions():
         assert cmd.count_atoms("m1 and hydro") == hydrogen_count
 
 
+def _formal_charges(selection):
+    charges = []
+    cmd.iterate(selection, "charges.append(formal_charge)",
+                space={"charges": charges})
+    return charges
+
+
+def test_protonate_fallback_free_cysteine():
+    """A free thiol loses its H and turns into a thiolate above pKa 8.18."""
+    from pymol.editing import _protonate_fallback
+
+    cmd.fab("ACA", "m1")
+
+    _protonate_fallback("m1", "m1", 7.0, 0, 1, _self=cmd)
+    assert cmd.count_atoms("m1 and hydro and neighbor (name SG)") == 1
+    assert _formal_charges("m1 and name SG") == [0]
+
+    _protonate_fallback("m1", "m1", 9.0, 0, 1, _self=cmd)
+    assert cmd.count_atoms("m1 and hydro and neighbor (name SG)") == 0
+    assert _formal_charges("m1 and name SG") == [-1]
+
+    # and back down again
+    _protonate_fallback("m1", "m1", 7.0, 0, 1, _self=cmd)
+    assert cmd.count_atoms("m1 and hydro and neighbor (name SG)") == 1
+    assert _formal_charges("m1 and name SG") == [0]
+
+
+def test_protonate_fallback_disulfide_stays_neutral():
+    """A bridged cysteine has no ionizable H, so it must not pick up -1."""
+    from pymol.editing import _protonate_fallback
+
+    cmd.fab("CGC", "m1")
+    cmd.bond("m1 and resi 1 and name SG", "m1 and resi 3 and name SG")
+
+    _protonate_fallback("m1", "m1", 13.0, 0, 1, _self=cmd)
+
+    assert cmd.count_atoms("m1 and hydro and neighbor (name SG)") == 0
+    assert _formal_charges("m1 and name SG") == [0, 0]
+
+
+def test_protonate_fallback_tyrosine_and_arginine():
+    """Tyr and Arg bracket the pH range covered by the fallback table."""
+    from pymol.editing import _protonate_fallback
+
+    cmd.fab("YR", "m1")
+
+    _protonate_fallback("m1", "m1", 7.0, 0, 1, _self=cmd)
+    assert cmd.count_atoms("m1 and hydro and neighbor (name OH)") == 1
+    assert _formal_charges("m1 and name OH") == [0]
+    assert cmd.count_atoms(
+        "m1 and hydro and neighbor (name NE+NH1+NH2)") == 5
+    assert _formal_charges("m1 and name NH1") == [1]
+
+    _protonate_fallback("m1", "m1", 13.0, 0, 1, _self=cmd)
+    assert cmd.count_atoms("m1 and hydro and neighbor (name OH)") == 0
+    assert _formal_charges("m1 and name OH") == [-1]
+    assert cmd.count_atoms(
+        "m1 and hydro and neighbor (name NE+NH1+NH2)") == 4
+    assert _formal_charges("m1 and name NH1") == [0]
+
+
+def _build_his_tautomer(resn, obj_name):
+    """Build a histidine and round-trip it through PDB under `resn` so that
+    the reader assigns the imidazole bond orders that name implies."""
+    cmd.fab("H", "_his_tmp")
+    cmd.alter("_his_tmp", f"resn = {resn!r}")
+    pdbstr = cmd.get_pdbstr("_his_tmp and not hydro")
+    cmd.delete("_his_tmp")
+    cmd.read_pdbstr(pdbstr, obj_name)
+
+
+@pytest.mark.parametrize("resn,neutral_h_on", [
+    ("HIS", "NE2"),
+    ("HID", "ND1"),
+    ("HIE", "NE2"),
+])
+def test_protonate_fallback_his_tautomers(resn, neutral_h_on):
+    """Both imidazole tautomers must titrate on their own free nitrogen."""
+    from pymol.editing import _protonate_fallback
+
+    other = "ND1" if neutral_h_on == "NE2" else "NE2"
+    _build_his_tautomer(resn, "m1")
+
+    # above pKa 6.0: neutral, single ring H on the tautomer's nitrogen
+    _protonate_fallback("m1", "m1", 7.0, 0, 1, _self=cmd)
+    assert cmd.count_atoms(
+        f"m1 and hydro and neighbor (name {neutral_h_on})") == 1
+    assert cmd.count_atoms(f"m1 and hydro and neighbor (name {other})") == 0
+    assert _formal_charges("m1 and name ND1+NE2") == [0, 0]
+
+    # below pKa 6.0: imidazolium, one H on each ring nitrogen
+    _protonate_fallback("m1", "m1", 5.0, 0, 1, _self=cmd)
+    assert cmd.count_atoms(
+        f"m1 and hydro and neighbor (name {neutral_h_on})") == 1
+    assert cmd.count_atoms(f"m1 and hydro and neighbor (name {other})") == 1
+    assert sum(_formal_charges("m1 and name ND1+NE2")) == 1
+
+
+@pytest.mark.parametrize("resn", ["HIS", "HISB", "HISE", "HIE", "HIP",
+                                  "HISH", "HISP"])
+def test_protonate_his_epsilon_aliases(resn):
+    """Names the PDB reader double bonds CE1=ND1 titrate on ND1."""
+    from pymol.editing import _get_formal_charge
+
+    assert _get_formal_charge(resn, 'ND1', 0, 5.0) == 1
+    assert _get_formal_charge(resn, 'NE2', 0, 5.0) == 0
+    assert _get_formal_charge(resn, 'ND1', 0, 7.0) == 0
+    assert _get_formal_charge(resn, 'NE2', 0, 7.0) == 0
+
+
+@pytest.mark.parametrize("resn", ["HID", "HISA", "HISD"])
+def test_protonate_his_delta_aliases(resn):
+    """Names the PDB reader double bonds CE1=NE2 titrate on NE2."""
+    from pymol.editing import _get_formal_charge
+
+    assert _get_formal_charge(resn, 'NE2', 0, 5.0) == 1
+    assert _get_formal_charge(resn, 'ND1', 0, 5.0) == 0
+    assert _get_formal_charge(resn, 'NE2', 0, 7.0) == 0
+    assert _get_formal_charge(resn, 'ND1', 0, 7.0) == 0
+
+
 def _build_single_nuc(nuc_acid, nuc_type, obj_name, chain='A'):
     """Helper: build a single nucleotide and return the object name.
 
