@@ -661,6 +661,24 @@ PYMOL API
             r = _cmd.get_collada(_self._COb,int(version))
         return r
 
+    def get_usda(*, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_usda" returns an ASCII OpenUSD layer representing the content
+    currently displayed.
+
+PYMOL API
+
+    cmd.get_usda()
+
+SEE ALSO
+
+    save
+        '''
+        with _self.lockcm:
+            return _cmd.get_usda(_self._COb)
+
     def get_gltf(filename, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION

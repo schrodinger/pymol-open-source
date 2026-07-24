@@ -487,6 +487,12 @@ bool SceneRay(PyMOLGlobals * G,
                             I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov);
         }
         break;
+      case cSceneRay_MODE_USDA:
+        {
+          *charVLA_ptr = VLACalloc(char, 100000);
+          RayRenderUSDA(ray, charVLA_ptr);
+        }
+        break;
 
       }
       RayFree(ray);

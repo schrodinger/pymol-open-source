@@ -808,8 +808,8 @@ NOTES
 
     The file format is automatically chosen if the extesion is one of
     the supported output formats: pdb, pqr, mol, sdf, pkl, pkla, mmd, out,
-    dat, mmod, cif, pov, png, pse, psw, aln, fasta, obj, mtl, wrl, dae, idtf,
-    or mol2.
+    dat, mmod, cif, pov, png, pse, psw, aln, fasta, obj, mtl, wrl, dae, usda,
+    usdz, idtf, or mol2.
 
     If the file format is not recognized, then a PDB file is written
     by default.
@@ -985,6 +985,97 @@ SEE ALSO
         i = {'mtl': 0, 'obj': 1}.get(format)
         return _self.get_mtl_obj()[i]
 
+    def _find_usdcat():
+        import shutil
+        return shutil.which('usdcat')
+
+    def _convert_usda_to_usdc(contents):
+        import os
+        import subprocess
+        import tempfile
+
+        usdcat = _find_usdcat()
+        if usdcat is None:
+            raise pymol.CmdException(
+                'USDZ export requires the OpenUSD "usdcat" command')
+
+        with tempfile.TemporaryDirectory(prefix='pymol-usdz-') as tmpdir:
+            usda_filename = os.path.join(tmpdir, 'scene.usda')
+            usdc_filename = os.path.join(tmpdir, 'scene.usdc')
+
+            with open(usda_filename, 'w', encoding='utf-8') as handle:
+                handle.write(contents)
+
+            result = subprocess.run(
+                [usdcat, usda_filename, '-o', usdc_filename],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True)
+
+            if result.returncode:
+                detail = result.stderr.strip() or result.stdout.strip()
+                raise pymol.CmdException(
+                    'OpenUSD conversion failed' +
+                    (': ' + detail if detail else ''))
+
+            with open(usdc_filename, 'rb') as handle:
+                return handle.read()
+
+    def _write_usdz_package(filename, member_name, contents):
+        '''
+        Write one stored USD layer with the data offset aligned to 64 bytes,
+        as required by the USDZ specification.
+        '''
+        import struct
+        import zipfile
+
+        member_name_bytes = member_name.encode('utf-8')
+        local_header_size = 30 + len(member_name_bytes)
+        extra_size = (-local_header_size) % 64
+
+        # ZIP extra fields need a four-byte header. If less than four bytes
+        # would be needed, move to the following alignment boundary.
+        if 0 < extra_size < 4:
+            extra_size += 64
+
+        info = zipfile.ZipInfo(member_name)
+        info.compress_type = zipfile.ZIP_STORED
+        info.create_system = 3
+        info.external_attr = 0o100644 << 16
+
+        if extra_size:
+            payload_size = extra_size - 4
+            info.extra = (
+                struct.pack('<HH', 0x1986, payload_size) +
+                b'\0' * payload_size)
+
+        with zipfile.ZipFile(
+                filename, 'w', compression=zipfile.ZIP_STORED) as archive:
+            archive.writestr(info, contents)
+
+    def save_usdz(filename, quiet=1, *, _self=cmd):
+        '''
+DESCRIPTION
+
+    Save the currently displayed geometry as a USDZ package. The package
+    contains one binary USDC default layer.
+
+NOTES
+
+    The OpenUSD "usdcat" command must be available on PATH.
+        '''
+        contents = _self.get_usda()
+        if not contents:
+            raise pymol.CmdException('no geometry available for USDZ export')
+
+        usdc = _convert_usda_to_usdc(contents)
+        _write_usdz_package(filename, 'scene.usdc', usdc)
+
+        if not quiet:
+            print(' Save: wrote "' + filename + '".')
+
+        return DEFAULT_SUCCESS
+
     savefunctions = {
         'cif': get_str, # mmCIF
         'xyz': get_str,
@@ -1010,6 +1101,8 @@ SEE ALSO
 
         # no arguments (some have a "version" argument)
         'dae': 'pymol.querying:get_collada',
+        'usda': 'pymol.querying:get_usda',
+        'usdz': save_usdz,
         'gltf': 'pymol.querying:get_gltf',
         'wrl': 'pymol.querying:get_vrml',
         'pov': 'pymol.querying:get_povray',

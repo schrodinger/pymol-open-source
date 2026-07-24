@@ -144,6 +144,7 @@ from .querying import \
       get_symmetry,       \
       get_title,          \
       get_type,           \
+      get_usda,           \
       get_version,        \
       get_volume_field,   \
       get_volume_histogram, \
