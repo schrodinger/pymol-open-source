@@ -1301,6 +1301,39 @@ SEE ALSO
         pKa, charge_below, charge_above = value
         return charge_below if pH < pKa else charge_above
 
+    def _make_titratable_selection():
+        """Selection matching exactly the atoms _get_formal_charge can change.
+
+        Writing formal_charge clears an atom's chemFlag, which discards any
+        hand-corrected geometry (see "set_geometry"), so the fallback must
+        only touch atoms it actually has a pKa for.
+        """
+        names_by_resn = {}
+        for resn, name in _TITRATABLE_PKA_FORMAL_CHARGE:
+            names_by_resn.setdefault(resn, set()).add(name)
+
+        # expand the canonical tautomers back into every spelling that
+        # _get_formal_charge normalizes onto them
+        by_input_resn = {}
+        for alias, tautomer in _HIS_TAUTOMER.items():
+            by_input_resn.setdefault(alias, set()).update(
+                names_by_resn.get(tautomer, ()))
+        for resn, names in names_by_resn.items():
+            if resn not in _HIS_TAUTOMER.values():
+                by_input_resn.setdefault(resn, set()).update(names)
+
+        # collapse residues which share an atom name set into one term
+        resns_by_names = {}
+        for resn, names in by_input_resn.items():
+            resns_by_names.setdefault(
+                '+'.join(sorted(names)), set()).add(resn)
+
+        return ' or '.join(
+            f"(resn {'+'.join(sorted(resns))} and name {names})"
+            for names, resns in sorted(resns_by_names.items()))
+
+    _TITRATABLE_SELECTION = _make_titratable_selection()
+
     def _force_add_h(obj_name, atom_sele, deficit, state, _self):
         """Temporarily bump valence to force h_add on a saturated atom."""
         _self.alter(atom_sele, f"valence = valence + {deficit}")
@@ -1329,7 +1362,7 @@ SEE ALSO
 
         _self.remove(f"hydro and (bymol ({obj_sele}))")
         _self.alter(
-            obj_sele,
+            f"({obj_sele}) and ({_TITRATABLE_SELECTION})",
             "formal_charge = _get_formal_charge(resn, name, formal_charge)",
             space={
                 "_get_formal_charge": partial(_get_formal_charge, pH=pH),
@@ -1461,7 +1494,9 @@ DESCRIPTION
     given pH.
 
     Heavy atoms and their visual settings (colors, representations) are
-    preserved. Only hydrogens are modified.
+    preserved. Hydrogens are rebuilt, and the fallback additionally
+    rewrites "formal_charge" on the titratable side chain atoms listed
+    under NOTES.
 
 USAGE
 
@@ -1488,6 +1523,14 @@ NOTES
     Without pdb2pqr, textbook pKa values are used:
       Asp 3.65, Glu 4.25, His 6.00, Cys 8.18,
       Tyr 10.07, Lys 10.53, Arg 12.48
+
+    The fallback drives h_add by assigning "formal_charge" on the
+    titratable atoms of those residues (Asp OD1/OD2, Glu OE1/OE2, His
+    ND1/NE2, Cys SG, Tyr OH, Lys NZ, Arg NE/NH1/NH2). Any charge the
+    input file supplied for one of those atoms is overwritten, and the
+    new value persists on the object, so it is written out by formats
+    which store formal charges (mol2, mmCIF, mae). All other atoms are
+    left alone.
 
     Cysteines whose SG is bonded to anything other than its own CB
     (disulfide bridge, metal, alkylation) have no ionizable hydrogen and

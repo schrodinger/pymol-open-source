@@ -288,6 +288,47 @@ def test_protonate_his_delta_aliases(resn):
     assert _get_formal_charge(resn, 'ND1', 0, 7.0) == 0
 
 
+def test_protonate_titratable_selection_matches_table():
+    """The alter selection must cover every atom the pKa table can change."""
+    from pymol.editing import (_HIS_TAUTOMER, _TITRATABLE_PKA_FORMAL_CHARGE,
+                               _TITRATABLE_SELECTION)
+
+    expected = set()
+    for resn, name in _TITRATABLE_PKA_FORMAL_CHARGE:
+        for alias, tautomer in _HIS_TAUTOMER.items():
+            if tautomer == resn:
+                expected.add((alias, name))
+        if resn not in _HIS_TAUTOMER.values():
+            expected.add((resn, name))
+
+    cmd.fab("EHKRYCDA", "m1")
+    matched = set()
+    for alias in sorted(_HIS_TAUTOMER):
+        cmd.alter("m1 and resi 2", f"resn = {alias!r}")
+        cmd.iterate(f"(m1) and ({_TITRATABLE_SELECTION})",
+                    "matched.add((resn, name))", space={"matched": matched})
+
+    assert matched == expected
+
+
+def test_protonate_fallback_preserves_untitrated_chemistry():
+    """Writing formal_charge clears chemFlag, so only titratable atoms may
+    be written - otherwise set_geometry corrections are silently discarded."""
+    from pymol.editing import _protonate_fallback
+
+    cmd.fab("GD", "m1")
+    cmd.remove("m1 and hydro")
+    # planar with valence 3: CA has N and C as neighbours, so exactly one H
+    cmd.set_geometry("m1 and resi 1 and name CA", 2, 3)
+
+    _protonate_fallback("m1", "m1", 7.0, 0, 1, _self=cmd)
+
+    assert cmd.count_atoms(
+        "m1 and hydro and neighbor (resi 1 and name CA)") == 1
+    assert cmd.count_atoms("m1 and hydro and neighbor (name OD1+OD2)") == 0
+    assert _formal_charges("m1 and name OD2") == [-1]
+
+
 def _build_single_nuc(nuc_acid, nuc_type, obj_name, chain='A'):
     """Helper: build a single nucleotide and return the object name.
 
