@@ -14283,6 +14283,11 @@ void ExecutiveSymExp(PyMOLGlobals* G, const char* name, const char* oname,
     return;
   }
 
+  if (sym->Crystal.isSuspicious()) {
+    ErrMessage(G, __func__, "Invalid or placeholder unit cell");
+    return;
+  }
+
   int const nsymmat = sym->getNSymMat();
 
   if (nsymmat < 1) {
