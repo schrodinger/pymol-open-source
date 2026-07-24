@@ -1009,6 +1009,7 @@ SEE ALSO
         'png': png,
 
         # no arguments (some have a "version" argument)
+        'glb': 'pymol.querying:get_glb',
         'dae': 'pymol.querying:get_collada',
         'gltf': 'pymol.querying:get_gltf',
         'wrl': 'pymol.querying:get_vrml',

@@ -28,6 +28,7 @@ REQUIREMENTS
     - catch2 (optional, enable with --testing=true)
     - openvr 1.0.x (optional, enable with --openvr=true)
     - libnetcdf (optional, disable with --vmd-plugins=no)
+    - nlohmann-json 3.10+ (for glTF 2.0 and GLB export)
 
 SETUP OPTIONS
 

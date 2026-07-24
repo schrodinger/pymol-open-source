@@ -29,13 +29,9 @@ jobs:
             libglm-dev \
             libmsgpack-dev \
             libnetcdf-dev \
+            nlohmann-json3-dev \
             libpng-dev \
             libxml2-dev
-
-    - name: Install collada2gltf
-      run: |
-        wget -nv https://anaconda.org/schrodinger/collada2gltf/2.1.4/download/linux-64/collada2gltf-2.1.4-h6bb024c_0.tar.bz2
-        sudo tar xf collada2gltf-*.tar.bz2 -C / bin/collada2gltf
 
     - name: Get additional sources
       run: |
@@ -84,13 +80,13 @@ jobs:
             python=${{ matrix.python-version }} `
             pip `
             catch2=2.13.3 `
-            collada2gltf `
             freetype `
             glew `
             glm `
             libpng `
             libxml2-devel `
             libnetcdf `
+            nlohmann_json
 
     - name: Get additional sources
       run: |
@@ -143,13 +139,13 @@ jobs:
             python=${{ matrix.python-version }} \
             pip \
             catch2=2.13.3 \
-            collada2gltf \
             freetype \
             glew \
             glm \
             libpng \
             libxml2-devel \
-            libnetcdf
+            libnetcdf \
+            nlohmann_json
 
     - name: Get additional sources
       run: |
@@ -169,4 +165,3 @@ jobs:
       run: |
         source activate $CONDA_ENV_NAME
         pymol -ckqy testing/testing.py --run all
-

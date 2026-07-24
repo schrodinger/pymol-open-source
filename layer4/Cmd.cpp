@@ -2719,6 +2719,35 @@ static PyObject *CmdGetCOLLADA(PyObject * self, PyObject * args)
 }
 
 
+/**
+ * Return a GLB (binary glTF 2.0) bytes object or None on failure
+ */
+static PyObject *CmdGetGLB(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = nullptr;
+  PyObject *result = nullptr;
+  char *vla = nullptr;
+
+  API_SETUP_ARGS(G, self, args, "O", &self);
+  API_ASSERT(APIEnterNotModal(G));
+
+  SceneRay(G, 0, 0, cSceneRay_MODE_GLB,
+      nullptr, &vla, 0.0F, 0.0F, false, nullptr, false, -1);
+  APIExit(G);
+
+  if (vla) {
+    ov_size vla_size = VLAGetSize(vla);
+    if (vla_size > 0) {
+      result = Py_BuildValue("y#", vla, (Py_ssize_t)vla_size);
+    }
+  }
+
+  VLAFreeP(vla);
+
+  return APIAutoNone(result);
+}
+
+
 static PyObject *CmdGetIdtf(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = nullptr;
@@ -6452,6 +6481,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_clip", CmdGetClip, METH_VARARGS},
   {"get_collada", CmdGetCOLLADA, METH_VARARGS},
   {"get_color", CmdGetColor, METH_VARARGS},
+  {"get_glb", CmdGetGLB, METH_VARARGS},
   {"get_colorection", CmdGetColorection, METH_VARARGS},
   {"get_coords", CmdGetCoordsAsNumPy, METH_VARARGS},
   {"get_coordset", CmdGetCoordSetAsNumPy, METH_VARARGS},
