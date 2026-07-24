@@ -985,11 +985,15 @@ SEE ALSO
         i = {'mtl': 0, 'obj': 1}.get(format)
         return _self.get_mtl_obj()[i]
 
+    # Bound the external OpenUSD conversion so that a hung or misconfigured
+    # usdcat cannot block the calling thread indefinitely.
+    USDCAT_TIMEOUT = 300
+
     def _find_usdcat():
         import shutil
         return shutil.which('usdcat')
 
-    def _convert_usda_to_usdc(contents):
+    def _convert_usda_to_usdc(contents, timeout=USDCAT_TIMEOUT):
         import os
         import subprocess
         import tempfile
@@ -1006,11 +1010,16 @@ SEE ALSO
             with open(usda_filename, 'w', encoding='utf-8') as handle:
                 handle.write(contents)
 
-            result = subprocess.run(
-                [usdcat, usda_filename, '-o', usdc_filename],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True)
+            try:
+                result = subprocess.run(
+                    [usdcat, usda_filename, '-o', usdc_filename],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=timeout)
+            except subprocess.TimeoutExpired:
+                raise pymol.CmdException(
+                    'OpenUSD conversion timed out after %g seconds' % timeout)
 
             if result.returncode:
                 detail = result.stderr.strip() or result.stdout.strip()

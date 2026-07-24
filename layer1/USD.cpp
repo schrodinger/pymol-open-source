@@ -8,18 +8,73 @@
 #include "Ray.h"
 
 #include "Basis.h"
+#include "MemoryDebug.h"
 #include "Setting.h"
-#include "Util.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
+#include <cstring>
 #include <iomanip>
-#include <sstream>
-#include <string>
+#include <ostream>
+#include <streambuf>
+#include <vector>
 
 namespace {
 
 constexpr float USD_EPSILON = 1.e-6F;
+
+/**
+ * Stream buffer which appends to a char VLA, so that the scene is only ever
+ * held once in memory.
+ */
+class UsdVLAStreamBuf : public std::streambuf
+{
+public:
+  UsdVLAStreamBuf(char** vla_ptr, ov_size* size_ptr)
+      : m_vla_ptr(vla_ptr)
+      , m_size_ptr(size_ptr)
+  {
+    setp(m_buffer, m_buffer + sizeof(m_buffer));
+  }
+
+  ~UsdVLAStreamBuf() override { Flush(); }
+
+protected:
+  int_type overflow(int_type ch) override
+  {
+    Flush();
+    if (!traits_type::eq_int_type(ch, traits_type::eof())) {
+      *pptr() = traits_type::to_char_type(ch);
+      pbump(1);
+    }
+    return traits_type::not_eof(ch);
+  }
+
+  int sync() override
+  {
+    Flush();
+    return 0;
+  }
+
+private:
+  void Flush()
+  {
+    const auto pending = static_cast<ov_size>(pptr() - pbase());
+    if (pending) {
+      const ov_size size = *m_size_ptr;
+      VLACheck(*m_vla_ptr, char, size + pending);
+      std::memcpy(*m_vla_ptr + size, pbase(), pending);
+      *m_size_ptr = size + pending;
+      (*m_vla_ptr)[*m_size_ptr] = '\0';
+    }
+    setp(m_buffer, m_buffer + sizeof(m_buffer));
+  }
+
+  char** m_vla_ptr;
+  ov_size* m_size_ptr;
+  char m_buffer[1 << 16];
+};
 
 float UsdClamp(float value)
 {
@@ -183,8 +238,14 @@ void UsdWriteCone(std::ostream& out, int& index, const float* start,
   out << "    }\n";
 }
 
-void UsdWriteEllipsoid(std::ostream& out, int& index,
-    const CPrimitive& primitive)
+/**
+ * @param center transformed ellipsoid center
+ * @param axes three consecutive transformed unit axes
+ * @param lengths semi-axis lengths, one per axis
+ */
+void UsdWriteEllipsoid(std::ostream& out, int& index, const float* center,
+    const float* axes, const float* lengths, const float* color,
+    float transparency)
 {
   out << "\n"
       << "    def Sphere \"Ellipsoid_" << index++ << "\" (\n"
@@ -193,37 +254,55 @@ void UsdWriteEllipsoid(std::ostream& out, int& index,
       << "    {\n"
       << "        double radius = 1\n"
       << "        float3[] extent = [(-1, -1, -1), (1, 1, 1)]\n"
-      << "        matrix4d xformOp:transform = ("
-      << "\n            (" << primitive.n1[0] * primitive.n0[0] << ", "
-      << primitive.n1[1] * primitive.n0[0] << ", "
-      << primitive.n1[2] * primitive.n0[0] << ", 0),"
-      << "\n            (" << primitive.n2[0] * primitive.n0[1] << ", "
-      << primitive.n2[1] * primitive.n0[1] << ", "
-      << primitive.n2[2] * primitive.n0[1] << ", 0),"
-      << "\n            (" << primitive.n3[0] * primitive.n0[2] << ", "
-      << primitive.n3[1] * primitive.n0[2] << ", "
-      << primitive.n3[2] * primitive.n0[2] << ", 0),"
-      << "\n            (" << primitive.v1[0] << ", " << primitive.v1[1]
-      << ", " << primitive.v1[2] << ", 1)"
+      << "        matrix4d xformOp:transform = (";
+  for (int axis = 0; axis < 3; ++axis) {
+    const auto* row = axes + 3 * axis;
+    const float length = lengths[axis];
+    out << "\n            (" << row[0] * length << ", " << row[1] * length
+        << ", " << row[2] * length << ", 0),";
+  }
+  out << "\n            (" << center[0] << ", " << center[1] << ", "
+      << center[2] << ", 1)"
       << "\n        )\n"
       << "        uniform token[] xformOpOrder = [\"xformOp:transform\"]\n";
-  UsdWriteMaterialBinding(out, primitive.c1, primitive.trans);
+  UsdWriteMaterialBinding(out, color, transparency);
   out << "    }\n";
 }
 
-int UsdTriangleCount(const CRay* ray)
+/// One exported triangle, with its winding already resolved
+struct UsdTriangle {
+  const CPrimitive* primitive;
+  const float* vertex;
+  const float* normal;
+  int order[3];
+};
+
+std::vector<UsdTriangle> UsdCollectTriangles(
+    const CRay* ray, const CBasis* basis)
 {
-  int count = 0;
+  std::vector<UsdTriangle> triangles;
+
   for (int i = 0; i < ray->NPrimitive; ++i) {
-    count += ray->Primitive[i].type == cPrimTriangle;
+    auto& primitive = ray->Primitive[i];
+    if (primitive.type != cPrimTriangle) {
+      continue;
+    }
+
+    const bool reverse =
+        TriangleReverse(const_cast<CPrimitive*>(&primitive));
+    triangles.push_back({&primitive, basis->Vertex + 3 * primitive.vert,
+        basis->Normal + 3 * basis->Vert2Normal[primitive.vert] + 3,
+        {0, reverse ? 2 : 1, reverse ? 1 : 2}});
   }
-  return count;
+
+  return triangles;
 }
 
 void UsdWriteTriangleMesh(
     std::ostream& out, int& index, const CRay* ray, const CBasis* basis)
 {
-  const int triangle_count = UsdTriangleCount(ray);
+  const auto triangles = UsdCollectTriangles(ray, basis);
+  const auto triangle_count = triangles.size();
   if (!triangle_count) {
     return;
   }
@@ -232,22 +311,16 @@ void UsdWriteTriangleMesh(
   float extent_max[3] = {0.F, 0.F, 0.F};
   bool have_extent = false;
 
-  for (int i = 0; i < ray->NPrimitive; ++i) {
-    const auto& primitive = ray->Primitive[i];
-    if (primitive.type != cPrimTriangle) {
-      continue;
-    }
-
-    const auto* vertex = basis->Vertex + 3 * primitive.vert;
+  for (const auto& triangle : triangles) {
     for (int j = 0; j < 9; j += 3) {
       for (int axis = 0; axis < 3; ++axis) {
         if (!have_extent) {
-          extent_min[axis] = extent_max[axis] = vertex[j + axis];
+          extent_min[axis] = extent_max[axis] = triangle.vertex[j + axis];
         } else {
           extent_min[axis] =
-              std::min(extent_min[axis], vertex[j + axis]);
+              std::min(extent_min[axis], triangle.vertex[j + axis]);
           extent_max[axis] =
-              std::max(extent_max[axis], vertex[j + axis]);
+              std::max(extent_max[axis], triangle.vertex[j + axis]);
         }
       }
       have_extent = true;
@@ -265,71 +338,45 @@ void UsdWriteTriangleMesh(
   UsdWriteVec3(out, extent_max);
   out << "]\n"
       << "        int[] faceVertexCounts = [";
-  for (int i = 0; i < triangle_count; ++i) {
+  for (std::size_t i = 0; i < triangle_count; ++i) {
     out << (i ? ", 3" : "3");
   }
   out << "]\n"
       << "        int[] faceVertexIndices = [";
-  for (int i = 0; i < triangle_count * 3; ++i) {
+  for (std::size_t i = 0; i < triangle_count * 3; ++i) {
     out << (i ? ", " : "") << i;
   }
   out << "]\n"
       << "        point3f[] points = [\n";
 
-  for (int i = 0; i < ray->NPrimitive; ++i) {
-    const auto& primitive = ray->Primitive[i];
-    if (primitive.type != cPrimTriangle) {
-      continue;
-    }
-
-    const auto* vertex = basis->Vertex + 3 * primitive.vert;
-    const bool reverse =
-        TriangleReverse(const_cast<CPrimitive*>(&primitive));
-    const int order[3] = {0, reverse ? 2 : 1, reverse ? 1 : 2};
-    for (int j = 0; j < 3; ++j) {
+  for (const auto& triangle : triangles) {
+    for (const int vert : triangle.order) {
       out << "            ";
-      UsdWriteVec3(out, vertex + 3 * order[j]);
+      UsdWriteVec3(out, triangle.vertex + 3 * vert);
       out << ",\n";
     }
   }
 
   out << "        ]\n"
       << "        normal3f[] normals = [\n";
-  for (int i = 0; i < ray->NPrimitive; ++i) {
-    const auto& primitive = ray->Primitive[i];
-    if (primitive.type != cPrimTriangle) {
-      continue;
-    }
-
-    const auto* normal =
-        basis->Normal + 3 * basis->Vert2Normal[primitive.vert] + 3;
-    const bool reverse =
-        TriangleReverse(const_cast<CPrimitive*>(&primitive));
-    const int order[3] = {0, reverse ? 2 : 1, reverse ? 1 : 2};
-    for (int j = 0; j < 3; ++j) {
+  for (const auto& triangle : triangles) {
+    for (const int vert : triangle.order) {
       out << "            ";
-      UsdWriteVec3(out, normal + 3 * order[j]);
+      UsdWriteVec3(out, triangle.normal + 3 * vert);
       out << ",\n";
     }
   }
-  out << "        ]\n"
-      << "        uniform token normalsInterpolation = \"vertex\"\n"
+  out << "        ] (\n"
+      << "            interpolation = \"vertex\"\n"
+      << "        )\n"
       << "        color3f[] primvars:displayColor = [\n";
 
-  for (int i = 0; i < ray->NPrimitive; ++i) {
-    const auto& primitive = ray->Primitive[i];
-    if (primitive.type != cPrimTriangle) {
-      continue;
-    }
-
-    const bool reverse =
-        TriangleReverse(const_cast<CPrimitive*>(&primitive));
-    const float* colors[3] = {
-        primitive.c1, reverse ? primitive.c3 : primitive.c2,
-        reverse ? primitive.c2 : primitive.c3};
-    for (const auto* color : colors) {
+  for (const auto& triangle : triangles) {
+    const float* colors[3] = {triangle.primitive->c1, triangle.primitive->c2,
+        triangle.primitive->c3};
+    for (const int vert : triangle.order) {
       out << "            ";
-      UsdWriteColor(out, color);
+      UsdWriteColor(out, colors[vert]);
       out << ",\n";
     }
   }
@@ -339,18 +386,10 @@ void UsdWriteTriangleMesh(
       << "        float[] primvars:displayOpacity = [";
 
   bool first_opacity = true;
-  for (int i = 0; i < ray->NPrimitive; ++i) {
-    const auto& primitive = ray->Primitive[i];
-    if (primitive.type != cPrimTriangle) {
-      continue;
-    }
-
-    const bool reverse =
-        TriangleReverse(const_cast<CPrimitive*>(&primitive));
-    const int order[3] = {0, reverse ? 2 : 1, reverse ? 1 : 2};
-    for (int j = 0; j < 3; ++j) {
+  for (const auto& triangle : triangles) {
+    for (const int vert : triangle.order) {
       out << (first_opacity ? "" : ", ")
-          << UsdClamp(1.F - primitive.tr[order[j]]);
+          << UsdClamp(1.F - triangle.primitive->tr[vert]);
       first_opacity = false;
     }
   }
@@ -408,7 +447,10 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
     return;
   }
 
-  std::ostringstream out;
+  ov_size count = 0;
+  UsdVLAStreamBuf buffer(vla_ptr, &count);
+  std::ostream out(&buffer);
+
   out << std::setprecision(9)
       << "#usda 1.0\n"
       << "(\n"
@@ -436,7 +478,9 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
           primitive.trans);
       break;
     case cPrimEllipsoid:
-      UsdWriteEllipsoid(out, index, primitive);
+      UsdWriteEllipsoid(out, index, vertex,
+          basis->Normal + 3 * basis->Vert2Normal[primitive.vert],
+          primitive.n0, primitive.c1, primitive.trans);
       break;
     case cPrimCylinder:
     case cPrimSausage: {
@@ -478,11 +522,11 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
           vertex[1] + direction[1] * primitive.l1,
           vertex[2] + direction[2] * primitive.l1};
 
+      // CRay::cone3fv is the only producer of cPrimCone and orders the radii
+      assert(primitive.r1 >= primitive.r2);
+
       if (primitive.r2 <= USD_EPSILON) {
         UsdWriteCone(out, index, vertex, end, primitive.r1, primitive.c1,
-            primitive.trans);
-      } else if (primitive.r1 <= USD_EPSILON) {
-        UsdWriteCone(out, index, end, vertex, primitive.r2, primitive.c2,
             primitive.trans);
       } else {
         // UsdGeomCone has a point at one end. Preserve a non-degenerate
@@ -498,10 +542,5 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
 
   UsdWriteTriangleMesh(out, index, ray, basis);
   out << "}\n";
-
-  auto* vla = *vla_ptr;
-  ov_size count = 0;
-  const auto contents = out.str();
-  UtilConcatVLA(&vla, &count, contents.c_str());
-  *vla_ptr = vla;
+  out.flush();
 }
