@@ -809,7 +809,10 @@ NOTES
     The file format is automatically chosen if the extesion is one of
     the supported output formats: pdb, pqr, mol, sdf, pkl, pkla, mmd, out,
     dat, mmod, cif, pov, png, pse, psw, aln, fasta, obj, mtl, wrl, dae, idtf,
-    or mol2.
+    glb, gltf, or mol2.
+
+    glb and gltf export requires PyMOL to be compiled with native glTF
+    support (--json=true), see cmd.get_capabilities().
 
     If the file format is not recognized, then a PDB file is written
     by default.

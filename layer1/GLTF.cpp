@@ -563,7 +563,7 @@ static void writeBinaryBuffer(const std::vector<MeshGroup>& groups,
  * and PBR material per MeshGroup, with POSITION/NORMAL/COLOR_0 vertex
  * attributes and UNSIGNED_INT indices.
  * @param groups mesh groups (one per transparency level)
- * @param infos buffer layout info from buildBinaryBuffer()
+ * @param infos buffer layout info from computeBufferLayout()
  * @param buffer_size total size of the binary buffer in bytes
  * @return serialized JSON string
  */

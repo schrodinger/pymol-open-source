@@ -706,6 +706,17 @@ PYMOL API
 
     cmd.get_glb(string filename, int quiet=1)
 
+NOTES
+
+    Requires PyMOL to be compiled with native glTF support (--json=true),
+    reported as the "gltf" capability by cmd.get_capabilities().
+
+    Text labels and ellipsoid primitives are not exported yet, they are
+    skipped with a warning.
+
+SEE ALSO
+
+    get_gltf, get_collada
         '''
         r = _get_glb_bytes(_self)
 
@@ -739,6 +750,18 @@ PYMOL API
 
     cmd.get_gltf(string filename, int quiet=1)
 
+NOTES
+
+    Requires PyMOL to be compiled with native glTF support (--json=true),
+    reported as the "gltf" capability by cmd.get_capabilities(). The
+    external collada2gltf converter is no longer used.
+
+    Text labels and ellipsoid primitives are not exported yet, they are
+    skipped with a warning.
+
+SEE ALSO
+
+    get_glb, get_collada
         '''
         import base64
         import json
