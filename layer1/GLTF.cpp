@@ -100,7 +100,8 @@ struct MeshGroup {
   {
     float unit_norm[3] = {norm[0], norm[1], norm[2]};
     const float norm_sq = unit_norm[0] * unit_norm[0] +
-        unit_norm[1] * unit_norm[1] + unit_norm[2] * unit_norm[2];
+                          unit_norm[1] * unit_norm[1] +
+                          unit_norm[2] * unit_norm[2];
     if (std::isfinite(norm_sq) &&
         norm_sq > std::numeric_limits<float>::epsilon()) {
       const float inv_norm = 1.0f / std::sqrt(norm_sq);

@@ -795,7 +795,7 @@ SEE ALSO
                 base64.b64encode(binary).decode('ascii'))
         except (KeyError, TypeError, ValueError, struct.error) as ex:
             raise pymol.CmdException(
-                'could not convert native GLB data to glTF: %s' % ex)
+                'could not convert native GLB data to glTF: %s' % ex) from ex
 
         with open(filename, 'w', encoding='utf-8') as handle:
             json.dump(document, handle, separators=(',', ':'))

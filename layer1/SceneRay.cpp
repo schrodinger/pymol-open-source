@@ -494,7 +494,8 @@ bool SceneRay(PyMOLGlobals * G,
         {
           *charVLA_ptr = VLACalloc(char, 100000);
           RayRenderGLB(ray, ray_width, ray_height, charVLA_ptr,
-                        I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov);
+              I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back,
+              fov);
         }
         break;
 #endif
