@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 
 // TODO: define remaining cSceneRay_MODEs (VRML, COLLADA, etc.)
 #define cSceneRay_MODE_IDTF 7
+#define cSceneRay_MODE_USDA 9
 
 #define cSceneImage_Default -1
 #define cSceneImage_Normal 0
@@ -411,4 +412,3 @@ pymol::Image GLImageToPyMOLImage(
     PyMOLGlobals* G, const GLFramebufferConfig& config, const Rect2D& srcRect);
 
 #endif
-
