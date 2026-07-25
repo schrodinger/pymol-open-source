@@ -2281,6 +2281,8 @@ int AtomInfoGetExpectedValence(PyMOLGlobals * G, const AtomInfoType * I)
       result = -1;
       break;
     case cAN_S:
+      /* thiolate: a single bond already satisfies the anion (unlike
+         neutral sulfur, which expects at least two) */
       result = -1;
       break;
     case cAN_P:

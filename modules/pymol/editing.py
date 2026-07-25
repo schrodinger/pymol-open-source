@@ -1550,7 +1550,8 @@ DESCRIPTION
     preserved. Hydrogens inside the selection, and those bonded to it,
     are rebuilt; hydrogens on unselected heavy atoms are left alone. The
     fallback additionally rewrites "formal_charge" on the titratable side
-    chain atoms listed under NOTES.
+    chain atoms listed under NOTES, and renames a histidine which the
+    residue name would otherwise keep protonated (see NOTES).
 
 USAGE
 
@@ -1585,7 +1586,9 @@ NOTES
     GLUM, LYSP and the histidine names below). Any charge the input file
     supplied for one of those atoms is overwritten, and the new value
     persists on the object, so it is written out by formats which store
-    formal charges (PDB, mmCIF, mae). All other atoms are left alone.
+    formal charges (PDB, mmCIF, mae). Writing a charge also discards any
+    manual chemistry correction ("set_geometry") on that atom. All other
+    atoms are left alone.
 
     Reloading a saved file does not always preserve those charges. Any
     format PyMOL has to bond by distance (PDB and mmCIF both, since the
@@ -1601,11 +1604,19 @@ NOTES
     A cysteine SG with a second heavy neighbour (disulfide bridge,
     metal, alkylation) has no ionizable hydrogen and is left neutral.
     Histidine titrates on whichever ring nitrogen is free in the
-    tautomer implied by the residue name (HID/HISA/HISD have the free
-    nitrogen at NE2, all other spellings at ND1). The explicitly
-    protonated spellings HIP/HISH/HISP are read back as imidazolium no
-    matter what charge a file records, so a residue which loses its
-    proton above pH 6 is renamed to neutral HIS.
+    tautomer implied by the residue name: HID, HISA and HISD have the
+    free nitrogen at NE2, while HIS, HISB, HISE, HIE, HIP, HISH and
+    HISP have it at ND1. The explicitly protonated spellings
+    HIP/HISH/HISP are read back as imidazolium no matter what charge a
+    file records, so a residue which loses its proton above pH 6 is
+    renamed to neutral HIS.
+
+    Everything the table does not cover only gets the hydrogens h_add
+    fills its open valences with. In particular the fallback does not
+    titrate peptide termini, ligands or nucleic acids: they keep the
+    charge the input carries at every pH. The pdb2pqr path knows no such
+    restriction and reproduces whatever pdb2pqr builds, termini
+    included.
 
     At biological pH (7.4):
       - Asp/Glu carboxylates are deprotonated (COO-)
