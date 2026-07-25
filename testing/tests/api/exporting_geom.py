@@ -2,6 +2,7 @@
 unit tests for pymol.exporting geometry formats
 '''
 
+import math
 import re
 import shutil
 import struct
@@ -34,16 +35,32 @@ def usda_translations(contents):
         for match in re.findall(
             r'float3 xformOp:translate = \(([^)]*)\)', contents))
 
+def usda_matrices(contents):
+    '''
+    Rows of all "matrix4d xformOp:transform" values
+    '''
+    pattern = re.compile(
+        r'matrix4d xformOp:transform = \('
+        r'\s*\(([^)]*)\),\s*\(([^)]*)\),\s*\(([^)]*)\),\s*\(([^)]*)\)')
+    return [
+        [tuple(float(value) for value in row.split(',')) for row in match]
+        for match in pattern.findall(contents)]
+
 def usda_matrix_translations(contents):
     '''
     Translation rows of all prims which use a full matrix transform
     '''
-    pattern = re.compile(
-        r'matrix4d xformOp:transform = \('
-        r'\s*\([^)]*\),\s*\([^)]*\),\s*\([^)]*\),\s*\(([^)]*)\)')
     return sorted(
-        tuple(round(float(value), 3) for value in match.split(',')[:3])
-        for match in pattern.findall(contents))
+        tuple(round(value, 3) for value in matrix[3][:3])
+        for matrix in usda_matrices(contents))
+
+def matrix_determinant(matrix):
+    (a, b, c), (d, e, f), (g, h, i) = (row[:3] for row in matrix[:3])
+    return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g)
+
+def matrix_axis_lengths(matrix):
+    return [math.sqrt(sum(value * value for value in row[:3]))
+            for row in matrix[:3]]
 
 class TestExportingGeom(testing.PyMOLTestCase):
 
@@ -107,6 +124,61 @@ class TestExportingGeom(testing.PyMOLTestCase):
             self.assertEqual(ellipsoids, model)
         else:
             self.assertNotEqual(ellipsoids, model)
+
+        for matrix in usda_matrices(contents):
+            self.assertRightHanded(matrix)
+
+    def testUSDAEllipsoidMirrored(self):
+        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
+        cmd.show_as('ellipsoids')
+
+        # a reflection turns the ellipsoid axes into a left-handed basis
+        cmd.transform_object('m1', [
+            -1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0])
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            contents = file_get_contents(filename)
+
+        matrices = usda_matrices(contents)
+        self.assertEqual(len(matrices), 2)
+
+        for matrix in matrices:
+            self.assertRightHanded(matrix)
+
+    def assertRightHanded(self, matrix):
+        # renderers derive inward-pointing normals from a negative determinant
+        lengths = matrix_axis_lengths(matrix)
+        self.assertAlmostEqual(matrix_determinant(matrix),
+                               lengths[0] * lengths[1] * lengths[2],
+                               places=4)
+
+    def testUSDAEllipsoidScale(self):
+        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
+        cmd.show_as('ellipsoids')
+
+        lengths = {}
+
+        for scale in (1.0, 2.0):
+            cmd.set('ellipsoid_scale', scale)
+
+            with testing.mktemp('.usda') as filename:
+                cmd.save(filename)
+                contents = file_get_contents(filename)
+
+            matrices = usda_matrices(contents)
+            self.assertEqual(len(matrices), 2)
+            lengths[scale] = [
+                sorted(matrix_axis_lengths(matrix)) for matrix in matrices]
+
+        # semi-axes carry the ellipsoid size, they are not unit length
+        for single, double in zip(lengths[1.0], lengths[2.0]):
+            self.assertGreater(single[0], 0.0)
+            for one, two in zip(single, double):
+                self.assertAlmostEqual(two, one * 2.0, places=4)
 
     def testUSDZTimeout(self):
         from pymol import exporting

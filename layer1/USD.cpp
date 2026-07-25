@@ -10,6 +10,7 @@
 #include "Basis.h"
 #include "MemoryDebug.h"
 #include "Setting.h"
+#include "Vector.h"
 
 #include <algorithm>
 #include <cassert>
@@ -241,12 +242,31 @@ void UsdWriteCone(std::ostream& out, int& index, const float* start,
 /**
  * @param center transformed ellipsoid center
  * @param axes three consecutive transformed unit axes
- * @param lengths semi-axis lengths, one per axis
+ * @param scales relative axis scales, one per axis, largest of which is 1
+ * @param radius largest semi-axis length
  */
 void UsdWriteEllipsoid(std::ostream& out, int& index, const float* center,
-    const float* axes, const float* lengths, const float* color,
+    const float* axes, const float* scales, float radius, const float* color,
     float transparency)
 {
+  float rows[9];
+
+  for (int axis = 0; axis < 3; ++axis) {
+    const auto* source = axes + 3 * axis;
+    const float length = radius * scales[axis];
+    for (int i = 0; i < 3; ++i) {
+      rows[3 * axis + i] = source[i] * length;
+    }
+  }
+
+  // The axes are eigenvectors with arbitrary signs and may form a left-handed
+  // basis. Negating one axis leaves the ellipsoid unchanged.
+  if (determinant33f(rows) < 0.0) {
+    for (int i = 6; i < 9; ++i) {
+      rows[i] = -rows[i];
+    }
+  }
+
   out << "\n"
       << "    def Sphere \"Ellipsoid_" << index++ << "\" (\n"
       << "        prepend apiSchemas = [\"MaterialBindingAPI\"]\n"
@@ -256,10 +276,9 @@ void UsdWriteEllipsoid(std::ostream& out, int& index, const float* center,
       << "        float3[] extent = [(-1, -1, -1), (1, 1, 1)]\n"
       << "        matrix4d xformOp:transform = (";
   for (int axis = 0; axis < 3; ++axis) {
-    const auto* row = axes + 3 * axis;
-    const float length = lengths[axis];
-    out << "\n            (" << row[0] * length << ", " << row[1] * length
-        << ", " << row[2] * length << ", 0),";
+    const auto* row = rows + 3 * axis;
+    out << "\n            (" << row[0] << ", " << row[1] << ", " << row[2]
+        << ", 0),";
   }
   out << "\n            (" << center[0] << ", " << center[1] << ", "
       << center[2] << ", 1)"
@@ -480,7 +499,7 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
     case cPrimEllipsoid:
       UsdWriteEllipsoid(out, index, vertex,
           basis->Normal + 3 * basis->Vert2Normal[primitive.vert],
-          primitive.n0, primitive.c1, primitive.trans);
+          primitive.n0, primitive.r1, primitive.c1, primitive.trans);
       break;
     case cPrimCylinder:
     case cPrimSausage: {
