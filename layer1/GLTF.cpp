@@ -95,12 +95,27 @@ struct MeshGroup {
    */
   void addVertex(const float* pos, const float* norm, const float* col)
   {
+    float unit_norm[3] = {norm[0], norm[1], norm[2]};
+    const float norm_sq = unit_norm[0] * unit_norm[0] +
+        unit_norm[1] * unit_norm[1] + unit_norm[2] * unit_norm[2];
+    if (std::isfinite(norm_sq) &&
+        norm_sq > std::numeric_limits<float>::epsilon()) {
+      const float inv_norm = 1.0f / std::sqrt(norm_sq);
+      unit_norm[0] *= inv_norm;
+      unit_norm[1] *= inv_norm;
+      unit_norm[2] *= inv_norm;
+    } else {
+      unit_norm[0] = 0.0f;
+      unit_norm[1] = 0.0f;
+      unit_norm[2] = 1.0f;
+    }
+
     positions.push_back(pos[0]);
     positions.push_back(pos[1]);
     positions.push_back(pos[2]);
-    normals.push_back(norm[0]);
-    normals.push_back(norm[1]);
-    normals.push_back(norm[2]);
+    normals.push_back(unit_norm[0]);
+    normals.push_back(unit_norm[1]);
+    normals.push_back(unit_norm[2]);
     colors.push_back(srgbToLinear(col[0]));
     colors.push_back(srgbToLinear(col[1]));
     colors.push_back(srgbToLinear(col[2]));

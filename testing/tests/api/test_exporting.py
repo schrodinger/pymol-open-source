@@ -87,6 +87,17 @@ def _read_vertex_colors(gltf, bin_data, mesh_index=0):
     return list(zip(values[0::3], values[1::3], values[2::3]))
 
 
+def _read_vertex_normals(gltf, bin_data, mesh_index=0):
+    """Return a mesh's NORMAL values as a list of (x, y, z) tuples."""
+    prim = gltf['meshes'][mesh_index]['primitives'][0]
+    normal_acc = gltf['accessors'][prim['attributes']['NORMAL']]
+    normal_view = gltf['bufferViews'][normal_acc['bufferView']]
+    offset = normal_view.get('byteOffset', 0) + normal_acc.get('byteOffset', 0)
+    values = struct.unpack_from(
+        '<%df' % (normal_acc['count'] * 3), bin_data, offset)
+    return list(zip(values[0::3], values[1::3], values[2::3]))
+
+
 def _parse_glb(filepath):
     """Parse a GLB file and return (gltf_json, bin_data)."""
     with open(filepath, 'rb') as f:
@@ -282,12 +293,18 @@ def test_glb_export_cartoon():
         cmd.save(glb_file)
         assert os.path.getsize(glb_file) > 0
 
-        gltf, _ = _parse_glb(glb_file)
+        gltf, bin_data = _parse_glb(glb_file)
         assert len(gltf['meshes']) >= 1
 
         prim = gltf['meshes'][0]['primitives'][0]
         pos_acc = gltf['accessors'][prim['attributes']['POSITION']]
         assert pos_acc['count'] > 100  # cartoon should have many vertices
+
+        normals = _read_vertex_normals(gltf, bin_data)
+        assert len(normals) == pos_acc['count']
+        for normal in normals:
+            length_squared = sum(component * component for component in normal)
+            assert abs(length_squared - 1.0) < 1e-5, normal
     finally:
         if os.path.exists(glb_file):
             os.unlink(glb_file)
