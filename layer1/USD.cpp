@@ -24,7 +24,8 @@
 #include <unordered_map>
 #include <vector>
 
-namespace {
+namespace
+{
 
 constexpr float USD_EPSILON = 1.e-6F;
 
@@ -115,8 +116,8 @@ void UsdWriteColor(std::ostream& out, const float* color)
 bool UsdColorsEqual(const float* lhs, const float* rhs)
 {
   return std::fabs(lhs[0] - rhs[0]) < USD_EPSILON &&
-      std::fabs(lhs[1] - rhs[1]) < USD_EPSILON &&
-      std::fabs(lhs[2] - rhs[2]) < USD_EPSILON;
+         std::fabs(lhs[1] - rhs[1]) < USD_EPSILON &&
+         std::fabs(lhs[2] - rhs[2]) < USD_EPSILON;
 }
 
 void UsdWriteMaterialBinding(
@@ -148,11 +149,10 @@ UsdQuaternion UsdRotationFromZAxis(const float* direction)
     return {0.F, {1.F, 0.F, 0.F}};
   }
 
-  UsdQuaternion result{
-      1.F + dot, {-direction[1], direction[0], 0.F}};
+  UsdQuaternion result{1.F + dot, {-direction[1], direction[0], 0.F}};
   const float length = std::sqrt(result.real * result.real +
-      result.imaginary[0] * result.imaginary[0] +
-      result.imaginary[1] * result.imaginary[1]);
+                                 result.imaginary[0] * result.imaginary[0] +
+                                 result.imaginary[1] * result.imaginary[1]);
 
   if (length < USD_EPSILON) {
     return {1.F, {0.F, 0.F, 0.F}};
@@ -164,13 +164,13 @@ UsdQuaternion UsdRotationFromZAxis(const float* direction)
   return result;
 }
 
-void UsdWriteAnalyticTransform(std::ostream& out, const float* start,
-    const float* end, float& height)
+void UsdWriteAnalyticTransform(
+    std::ostream& out, const float* start, const float* end, float& height)
 {
   float direction[3] = {
       end[0] - start[0], end[1] - start[1], end[2] - start[2]};
-  height = std::sqrt(direction[0] * direction[0] +
-      direction[1] * direction[1] + direction[2] * direction[2]);
+  height = std::sqrt(direction[0] * direction[0] + direction[1] * direction[1] +
+                     direction[2] * direction[2]);
 
   if (height > USD_EPSILON) {
     direction[0] /= height;
@@ -322,8 +322,8 @@ struct UsdVectorMesh : UsdMeshSource {
 };
 
 /// Write one UsdGeomMesh, shared by all exported mesh kinds
-void UsdWriteMesh(std::ostream& out, int& index, const char* name,
-    const UsdMeshSource& mesh)
+void UsdWriteMesh(
+    std::ostream& out, int& index, const char* name, const UsdMeshSource& mesh)
 {
   const auto vertex_count = mesh.VertexCount();
   const auto face_count = mesh.FaceCount();
@@ -614,8 +614,8 @@ void UsdWriteHemisphereMesh(std::ostream& out, int& index, int segments,
 
   for (int k = 0; k < segments; ++k) {
     const int next = (k + 1) % segments;
-    mesh.AddFace({(stacks - 1) * segments + k, (stacks - 1) * segments + next,
-        apex});
+    mesh.AddFace(
+        {(stacks - 1) * segments + k, (stacks - 1) * segments + next, apex});
   }
 
   UsdWriteMesh(out, index, "Hemisphere", mesh);
@@ -670,8 +670,8 @@ bool UsdEllipsoidRows(
   // fallback extents point somewhere meaningful.
   if (valid_count == 1) {
     const int first = valid[0];
-    get_system1f3f(directions + 3 * first,
-        directions + 3 * ((first + 1) % 3), directions + 3 * ((first + 2) % 3));
+    get_system1f3f(directions + 3 * first, directions + 3 * ((first + 1) % 3),
+        directions + 3 * ((first + 2) % 3));
   } else if (valid_count == 2) {
     const int missing = 3 - valid[0] - valid[1];
     cross_product3f(directions + 3 * valid[0], directions + 3 * valid[1],
@@ -693,7 +693,8 @@ bool UsdEllipsoidRows(
   // The rows are unit axes scaled by lengths, so their product is the
   // determinant of a perfectly orthogonal frame and makes the test relative
   const double orthogonal = static_cast<double>(lengths[0]) *
-      static_cast<double>(lengths[1]) * static_cast<double>(lengths[2]);
+                            static_cast<double>(lengths[1]) *
+                            static_cast<double>(lengths[2]);
 
   if (!(std::fabs(determinant) > USD_EPSILON * orthogonal)) {
     // Axes which are not linearly independent, e.g. after a shearing object
@@ -789,8 +790,8 @@ public:
 
   const float* Normal(std::size_t vertex) const override
   {
-    return m_basis->Normal +
-        3 * (m_basis->Vert2Normal[Primitive(vertex).vert] + 1 + Corner(vertex));
+    return m_basis->Normal + 3 * (m_basis->Vert2Normal[Primitive(vertex).vert] +
+                                     1 + Corner(vertex));
   }
 
   const float* Color(std::size_t vertex) const override
@@ -968,12 +969,12 @@ private:
   static std::int64_t Key(const float* point, int dx, int dy, int dz)
   {
     const std::int64_t cell[3] = {
-        static_cast<std::int64_t>(
-            std::floor(point[0] / USD_JOINT_TOLERANCE)) + dx,
-        static_cast<std::int64_t>(
-            std::floor(point[1] / USD_JOINT_TOLERANCE)) + dy,
-        static_cast<std::int64_t>(
-            std::floor(point[2] / USD_JOINT_TOLERANCE)) + dz};
+        static_cast<std::int64_t>(std::floor(point[0] / USD_JOINT_TOLERANCE)) +
+            dx,
+        static_cast<std::int64_t>(std::floor(point[1] / USD_JOINT_TOLERANCE)) +
+            dy,
+        static_cast<std::int64_t>(std::floor(point[2] / USD_JOINT_TOLERANCE)) +
+            dz};
 
     return (cell[0] * 73856093) ^ (cell[1] * 19349663) ^ (cell[2] * 83492791);
   }
@@ -984,10 +985,8 @@ private:
       return;
     }
 
-    m_cells.emplace(
-        Key(point, 0, 0, 0), static_cast<int>(m_endpoints.size()));
-    m_endpoints.push_back(
-        {{point[0], point[1], point[2]}, radius, primitive});
+    m_cells.emplace(Key(point, 0, 0, 0), static_cast<int>(m_endpoints.size()));
+    m_endpoints.push_back({{point[0], point[1], point[2]}, radius, primitive});
   }
 
   std::vector<Endpoint> m_endpoints;
@@ -1015,9 +1014,11 @@ void UsdWarnRamped(const CRay* ray)
 {
   for (int i = 0; i < ray->NPrimitive; ++i) {
     if (ray->Primitive[i].ramped) {
+      // clang-format off
       PRINTFB(ray->G, FB_Ray, FB_Warnings)
         " USD-Warning: ramp colors depend on the viewing ray and are not "
         "resolved, affected geometry is exported black.\n" ENDFB(ray->G);
+      // clang-format on
       return;
     }
   }
@@ -1038,8 +1039,7 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
   const bool identity =
       SettingGetGlobal_i(ray->G, cSetting_geometry_export_mode) == 1;
 
-  if (!RayExpandPrimitives(ray) ||
-      !RayTransformFirst(ray, 0, identity)) {
+  if (!RayExpandPrimitives(ray) || !RayTransformFirst(ray, 0, identity)) {
     return;
   }
 
@@ -1049,8 +1049,7 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
   UsdVLAStreamBuf buffer(vla_ptr, &count);
   std::ostream out(&buffer);
 
-  out << std::setprecision(9)
-      << "#usda 1.0\n"
+  out << std::setprecision(9) << "#usda 1.0\n"
       << "(\n"
       << "    defaultPrim = \"PyMOLScene\"\n"
       << "    documentation = \"Exported from PyMOL\"\n"
@@ -1082,19 +1081,19 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
     // round cap, hide the extra disc.
     const auto sealed = [&](const float* point, float radius, cCylCap cap) {
       return cap == cCylCapFlat ||
-          (!transparent &&
-              (cap == cCylCapRound || joints.IsCovered(point, radius, i)));
+             (!transparent &&
+                 (cap == cCylCapRound || joints.IsCovered(point, radius, i)));
     };
 
     switch (primitive.type) {
     case cPrimSphere:
-      UsdWriteSphere(out, index, vertex, primitive.r1, primitive.c1,
-          primitive.trans);
+      UsdWriteSphere(
+          out, index, vertex, primitive.r1, primitive.c1, primitive.trans);
       break;
     case cPrimEllipsoid:
       UsdWriteEllipsoid(out, index, vertex,
-          basis->Normal + 3 * basis->Vert2Normal[primitive.vert],
-          primitive.n0, primitive.r1, primitive.c1, primitive.trans);
+          basis->Normal + 3 * basis->Vert2Normal[primitive.vert], primitive.n0,
+          primitive.r1, primitive.c1, primitive.trans);
       break;
     case cPrimCylinder:
     case cPrimSausage: {
@@ -1121,13 +1120,13 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
         UsdWriteAnalyticSolid(out, index, "Capsule", true, vertex, end,
             primitive.r1, primitive.c1, primitive.trans);
       } else if (one_color && sealed(vertex, primitive.r1, cap1) &&
-          sealed(end, primitive.r1, cap2)) {
+                 sealed(end, primitive.r1, cap2)) {
         UsdWriteAnalyticSolid(out, index, "Cylinder", false, vertex, end,
             primitive.r1, primitive.c1, primitive.trans);
       } else {
-        UsdWriteConeMesh(out, index, "Cylinder", cylinder_segments, vertex,
-            end, primitive.r1, primitive.r1, primitive.c1, primitive.c2, cap1,
-            cap2, primitive.trans);
+        UsdWriteConeMesh(out, index, "Cylinder", cylinder_segments, vertex, end,
+            primitive.r1, primitive.r1, primitive.c1, primitive.c2, cap1, cap2,
+            primitive.trans);
       }
 
       float axis[3];
@@ -1147,17 +1146,17 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
           UsdWriteHemisphereMesh(out, index, cylinder_segments, vertex, axis,
               -1.F, primitive.r1, primitive.c1, primitive.trans);
         } else {
-          UsdWriteSphere(out, index, vertex, primitive.r1, primitive.c1,
-              primitive.trans);
+          UsdWriteSphere(
+              out, index, vertex, primitive.r1, primitive.c1, primitive.trans);
         }
       }
       if (round2 && !capsule) {
         if (dome) {
-          UsdWriteHemisphereMesh(out, index, cylinder_segments, end, axis,
-              1.F, primitive.r1, primitive.c2, primitive.trans);
+          UsdWriteHemisphereMesh(out, index, cylinder_segments, end, axis, 1.F,
+              primitive.r1, primitive.c2, primitive.trans);
         } else {
-          UsdWriteSphere(out, index, end, primitive.r1, primitive.c2,
-              primitive.trans);
+          UsdWriteSphere(
+              out, index, end, primitive.r1, primitive.c2, primitive.trans);
         }
       }
       break;
@@ -1175,8 +1174,7 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
       const auto cap2 =
           primitive.cap2 == cCylCapFlat ? cCylCapFlat : cCylCapNone;
 
-      if (primitive.r2 <= USD_EPSILON &&
-          sealed(vertex, primitive.r1, cap1) &&
+      if (primitive.r2 <= USD_EPSILON && sealed(vertex, primitive.r1, cap1) &&
           UsdColorsEqual(primitive.c1, primitive.c2)) {
         UsdWriteAnalyticSolid(out, index, "Cone", false, vertex, end,
             primitive.r1, primitive.c1, primitive.trans);

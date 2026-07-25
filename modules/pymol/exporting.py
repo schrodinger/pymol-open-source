@@ -994,7 +994,6 @@ SEE ALSO
         return shutil.which('usdcat')
 
     def _convert_usda_to_usdc(contents, timeout=USDCAT_TIMEOUT):
-        import os
         import subprocess
         import tempfile
 

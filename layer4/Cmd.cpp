@@ -2730,8 +2730,8 @@ static PyObject* CmdGetUSDA(PyObject* self, PyObject* args)
   API_SETUP_ARGS(G, self, args, "O", &self);
   API_ASSERT(APIEnterNotModal(G));
 
-  SceneRay(G, 0, 0, cSceneRay_MODE_USDA, nullptr, &vla, 0.0F, 0.0F,
-      false, nullptr, false, -1);
+  SceneRay(G, 0, 0, cSceneRay_MODE_USDA, nullptr, &vla, 0.0F, 0.0F, false,
+      nullptr, false, -1);
   APIExit(G);
 
   if (vla && vla[0]) {
@@ -2741,7 +2741,6 @@ static PyObject* CmdGetUSDA(PyObject* self, PyObject* args)
   VLAFreeP(vla);
   return APIAutoNone(result);
 }
-
 
 static PyObject *CmdGetIdtf(PyObject * self, PyObject * args)
 {
