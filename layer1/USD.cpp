@@ -17,7 +17,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstdint>
-#include <cstring>
 #include <initializer_list>
 #include <iomanip>
 #include <ostream>
@@ -226,13 +225,13 @@ void UsdWriteSphere(std::ostream& out, int& index, const float* center,
  * exactly how PyMOL draws a round capped solid.
  *
  * @param schema "Cylinder", "Cone" or "Capsule", also the prim name prefix
+ * @param round_caps whether the schema extends one radius beyond each end
  */
 void UsdWriteAnalyticSolid(std::ostream& out, int& index, const char* schema,
-    const float* start, const float* end, float radius, const float* color,
-    float transparency)
+    bool round_caps, const float* start, const float* end, float radius,
+    const float* color, float transparency)
 {
   float height;
-  const bool round_caps = std::strcmp(schema, "Capsule") == 0;
 
   out << "\n"
       << "    def " << schema << " \"" << schema << '_' << index++ << "\" (\n"
@@ -1013,11 +1012,11 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
       const bool capsule = one_color && round1 && round2;
 
       if (capsule) {
-        UsdWriteAnalyticSolid(out, index, "Capsule", vertex, end, primitive.r1,
-            primitive.c1, primitive.trans);
+        UsdWriteAnalyticSolid(out, index, "Capsule", true, vertex, end,
+            primitive.r1, primitive.c1, primitive.trans);
       } else if (one_color && (round1 || sealed(vertex, primitive.r1, cap1)) &&
           (round2 || sealed(end, primitive.r1, cap2))) {
-        UsdWriteAnalyticSolid(out, index, "Cylinder", vertex, end,
+        UsdWriteAnalyticSolid(out, index, "Cylinder", false, vertex, end,
             primitive.r1, primitive.c1, primitive.trans);
       } else {
         UsdWriteConeMesh(out, index, cylinder_segments, vertex, end,
@@ -1045,16 +1044,18 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
       // The ray tracer only draws a flat cone cap, a round one is ignored
       const auto cap1 =
           primitive.cap1 == cCylCapFlat ? cCylCapFlat : cCylCapNone;
+      const auto cap2 =
+          primitive.cap2 == cCylCapFlat ? cCylCapFlat : cCylCapNone;
 
       if (primitive.r2 <= USD_EPSILON &&
           sealed(vertex, primitive.r1, cap1) &&
           UsdColorsEqual(primitive.c1, primitive.c2)) {
-        UsdWriteAnalyticSolid(out, index, "Cone", vertex, end, primitive.r1,
-            primitive.c1, primitive.trans);
+        UsdWriteAnalyticSolid(out, index, "Cone", false, vertex, end,
+            primitive.r1, primitive.c1, primitive.trans);
       } else {
         UsdWriteConeMesh(out, index, cone_segments, vertex, end, primitive.r1,
-            primitive.r2, primitive.c1, primitive.c2, primitive.cap1,
-            primitive.cap2, primitive.trans);
+            primitive.r2, primitive.c1, primitive.c2, cap1, cap2,
+            primitive.trans);
       }
       break;
     }
