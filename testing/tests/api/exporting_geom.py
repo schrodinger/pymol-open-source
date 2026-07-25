@@ -2,11 +2,15 @@
 unit tests for pymol.exporting geometry formats
 '''
 
+import contextlib
 import math
+import os
 import re
 import shutil
 import struct
 import subprocess
+import sys
+import tempfile
 import unittest.mock
 import zipfile
 
@@ -87,6 +91,44 @@ def usda_vec3_array(block, declaration):
 def usda_int_array(block, declaration):
     match = re.search(re.escape(declaration) + r'\s*=\s*\[([^\]]*)\]', block)
     return [int(value) for value in match.group(1).split(',')]
+
+def usda_interpolation(block, declaration):
+    '''
+    Interpolation metadata of the given array attribute
+    '''
+    match = re.search(
+        re.escape(declaration) +
+        r'\s*=\s*\[.*?\]\s*\(\s*interpolation = "(\w+)"',
+        block, re.DOTALL)
+    return match and match.group(1)
+
+def usda_attributes(block):
+    '''
+    Names of the attributes of a prim, in the order they are authored
+    '''
+    return re.findall(r'^\s+(?:uniform )?[\w\[\]]+ ([\w:]+) =', block, re.M)
+
+@contextlib.contextmanager
+def captured_feedback():
+    '''
+    Capture PyMOL's feedback, which is written to the process' stdout by the
+    C layer rather than through sys.stdout
+    '''
+    captured = []
+
+    sys.stdout.flush()
+
+    with tempfile.TemporaryFile('w+') as handle:
+        saved = os.dup(1)
+        try:
+            os.dup2(handle.fileno(), 1)
+            yield captured
+        finally:
+            os.dup2(saved, 1)
+            os.close(saved)
+
+        handle.seek(0)
+        captured.append(handle.read())
 
 def ring_center_and_radius(points):
     center = [sum(point[axis] for point in points) / len(points)
@@ -467,6 +509,120 @@ class TestExportingGeom(testing.PyMOLTestCase):
 
         self.assertIn('def Cylinder', contents)
         self.assertNotIn('def Mesh', contents)
+
+    def testUSDAMeshEncodingShared(self):
+        from pymol import cgo
+
+        cmd.set('geometry_export_mode', 1)
+        cmd.load_cgo([
+            cgo.CONE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 2.0, 1.0,
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0,
+        ], 'cone')
+        cmd.fragment('gly')
+        cmd.show_as('surface', 'gly')
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            contents = file_get_contents(filename)
+
+        names = re.findall(r'def Mesh "(\w+)"', contents)
+        self.assertEqual(len(names), 2)
+
+        cone = usda_prim_block(
+            contents, next(n for n in names if n.startswith('Cone_')))
+        scene = usda_prim_block(
+            contents, next(n for n in names if n.startswith('Mesh_')))
+
+        # both mesh kinds go through one serializer, so a change to the mesh
+        # encoding cannot reach only one of them
+        self.assertEqual(usda_attributes(cone), usda_attributes(scene))
+
+        for block in (cone, scene):
+            for declaration in ['normal3f[] normals',
+                                'color3f[] primvars:displayColor']:
+                self.assertEqual(
+                    usda_interpolation(block, declaration), 'vertex')
+
+        # a tessellated solid has one opacity, a surface has one per vertex
+        self.assertEqual(
+            usda_interpolation(cone, 'float[] primvars:displayOpacity'),
+            'constant')
+        self.assertEqual(
+            usda_interpolation(scene, 'float[] primvars:displayOpacity'),
+            'vertex')
+
+    def testUSDATriangleMeshWinding(self):
+        cmd.fragment('gly')
+        cmd.show_as('surface')
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            contents = file_get_contents(filename)
+
+        block = usda_prim_block(
+            contents, re.search(r'def Mesh "(Mesh_\d+)"', contents).group(1))
+        points = usda_vec3_array(block, 'point3f[] points')
+        normals = usda_vec3_array(block, 'normal3f[] normals')
+        counts = usda_int_array(block, 'int[] faceVertexCounts')
+        indices = usda_int_array(block, 'int[] faceVertexIndices')
+
+        self.assertEqual(len(points), len(normals))
+        self.assertEqual(len(points), 3 * len(counts))
+        self.assertEqual(indices, list(range(len(points))))
+        self.assertEqual(set(counts), {3})
+
+        # every face winds counter-clockwise around its authored normals
+        for face in range(len(counts)):
+            a, b, c = points[3 * face:3 * face + 3]
+            edge1 = [b[i] - a[i] for i in range(3)]
+            edge2 = [c[i] - a[i] for i in range(3)]
+            cross = [
+                edge1[1] * edge2[2] - edge1[2] * edge2[1],
+                edge1[2] * edge2[0] - edge1[0] * edge2[2],
+                edge1[0] * edge2[1] - edge1[1] * edge2[0]]
+
+            if not any(cross):
+                continue
+
+            normal = normals[3 * face]
+            self.assertGreater(sum(u * v for u, v in zip(cross, normal)), 0.0)
+
+    def testUSDARampedColors(self):
+        cmd.fragment('gly')
+        cmd.ramp_new('usdramp', 'gly', [0, 5], ['red', 'blue'])
+        cmd.set('surface_color', 'usdramp', 'gly')
+        cmd.show_as('surface', 'gly')
+
+        # the ramp object draws its own color bar, which is not ramp colored
+        cmd.disable('usdramp')
+
+        with captured_feedback() as feedback:
+            contents = cmd.get_usda()
+
+        # ramp colors are resolved per ray, which the exporter cannot do
+        self.assertIn('ramp colors', feedback[0])
+
+        block = usda_prim_block(
+            contents, re.search(r'def Mesh "(Mesh_\d+)"', contents).group(1))
+        colors = usda_vec3_array(block, 'color3f[] primvars:displayColor')
+
+        self.assertGreater(len(colors), 0)
+        self.assertEqual(set(colors), {(0.0, 0.0, 0.0)})
+
+        # the limitation is documented where it can surprise a user
+        from pymol import exporting
+
+        for doc in [cmd.get_usda.__doc__, exporting.save_usdz.__doc__]:
+            self.assertIn('ramp', doc)
+
+    def testUSDANoRampWarning(self):
+        cmd.fragment('gly')
+        cmd.show_as('surface')
+
+        with captured_feedback() as feedback:
+            cmd.get_usda()
+
+        self.assertNotIn('ramp colors', feedback[0])
 
     def testUSDZTimeout(self):
         from pymol import exporting

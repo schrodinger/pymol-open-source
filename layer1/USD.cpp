@@ -8,6 +8,7 @@
 #include "Ray.h"
 
 #include "Basis.h"
+#include "Feedback.h"
 #include "MemoryDebug.h"
 #include "Setting.h"
 #include "Vector.h"
@@ -236,6 +237,173 @@ void UsdWriteAnalyticSolid(std::ostream& out, int& index, const char* schema,
 }
 
 /**
+ * Vertex and face data of one exported UsdGeomMesh.
+ *
+ * Tessellated solids buffer their vertices, while the scene mesh reads them
+ * straight from the ray tracer's arrays, so the writer pulls one vertex at a
+ * time instead of taking flat arrays.
+ */
+struct UsdMeshSource {
+  virtual ~UsdMeshSource() = default;
+  virtual std::size_t VertexCount() const = 0;
+  virtual std::size_t FaceCount() const = 0;
+  /// Number of corners of the given face
+  virtual int FaceSize(std::size_t face) const = 0;
+  /// Vertex of the given corner, counted over all faces
+  virtual int Index(std::size_t corner) const = 0;
+  virtual const float* Point(std::size_t vertex) const = 0;
+  virtual const float* Normal(std::size_t vertex) const = 0;
+  virtual const float* Color(std::size_t vertex) const = 0;
+  /// Whether opacity varies per vertex rather than over the whole prim
+  virtual bool VertexOpacity() const = 0;
+  /// Opacity of the given vertex, or of the prim if not VertexOpacity()
+  virtual float Opacity(std::size_t vertex) const = 0;
+};
+
+/// Mesh whose vertices and faces are buffered in vectors
+struct UsdVectorMesh : UsdMeshSource {
+  std::vector<float> points;
+  std::vector<float> normals;
+  std::vector<float> colors;
+  std::vector<int> counts;
+  std::vector<int> indices;
+  float opacity = 1.F;
+
+  std::size_t VertexCount() const override { return points.size() / 3; }
+  std::size_t FaceCount() const override { return counts.size(); }
+  int FaceSize(std::size_t face) const override { return counts[face]; }
+  int Index(std::size_t corner) const override { return indices[corner]; }
+  bool VertexOpacity() const override { return false; }
+  float Opacity(std::size_t) const override { return opacity; }
+
+  const float* Point(std::size_t vertex) const override
+  {
+    return points.data() + 3 * vertex;
+  }
+
+  const float* Normal(std::size_t vertex) const override
+  {
+    return normals.data() + 3 * vertex;
+  }
+
+  const float* Color(std::size_t vertex) const override
+  {
+    return colors.data() + 3 * vertex;
+  }
+
+  void AddVertex(const float* point, const float* normal, const float* color)
+  {
+    points.insert(points.end(), point, point + 3);
+    normals.insert(normals.end(), normal, normal + 3);
+    colors.insert(colors.end(), color, color + 3);
+  }
+
+  void AddFace(std::initializer_list<int> face)
+  {
+    counts.push_back(static_cast<int>(face.size()));
+    indices.insert(indices.end(), face.begin(), face.end());
+  }
+};
+
+/// Write one UsdGeomMesh, shared by all exported mesh kinds
+void UsdWriteMesh(std::ostream& out, int& index, const char* name,
+    const UsdMeshSource& mesh)
+{
+  const auto vertex_count = mesh.VertexCount();
+  const auto face_count = mesh.FaceCount();
+
+  if (!vertex_count || !face_count) {
+    return;
+  }
+
+  float extent_min[3];
+  float extent_max[3];
+
+  copy3f(mesh.Point(0), extent_min);
+  copy3f(mesh.Point(0), extent_max);
+
+  for (std::size_t vertex = 1; vertex < vertex_count; ++vertex) {
+    const auto* point = mesh.Point(vertex);
+
+    for (int axis = 0; axis < 3; ++axis) {
+      extent_min[axis] = std::min(extent_min[axis], point[axis]);
+      extent_max[axis] = std::max(extent_max[axis], point[axis]);
+    }
+  }
+
+  out << "\n"
+      << "    def Mesh \"" << name << '_' << index++ << "\" (\n"
+      << "        prepend apiSchemas = [\"MaterialBindingAPI\"]\n"
+      << "    )\n"
+      << "    {\n"
+      << "        float3[] extent = [";
+  UsdWriteVec3(out, extent_min);
+  out << ", ";
+  UsdWriteVec3(out, extent_max);
+  out << "]\n"
+      << "        int[] faceVertexCounts = [";
+
+  std::size_t corner_count = 0;
+  for (std::size_t face = 0; face < face_count; ++face) {
+    const int size = mesh.FaceSize(face);
+    out << (face ? ", " : "") << size;
+    corner_count += size;
+  }
+
+  out << "]\n"
+      << "        int[] faceVertexIndices = [";
+  for (std::size_t corner = 0; corner < corner_count; ++corner) {
+    out << (corner ? ", " : "") << mesh.Index(corner);
+  }
+
+  out << "]\n"
+      << "        point3f[] points = [\n";
+  for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
+    out << "            ";
+    UsdWriteVec3(out, mesh.Point(vertex));
+    out << ",\n";
+  }
+
+  out << "        ]\n"
+      << "        normal3f[] normals = [\n";
+  for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
+    out << "            ";
+    UsdWriteVec3(out, mesh.Normal(vertex));
+    out << ",\n";
+  }
+
+  out << "        ] (\n"
+      << "            interpolation = \"vertex\"\n"
+      << "        )\n"
+      << "        color3f[] primvars:displayColor = [\n";
+  for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
+    out << "            ";
+    UsdWriteColor(out, mesh.Color(vertex));
+    out << ",\n";
+  }
+
+  out << "        ] (\n"
+      << "            interpolation = \"vertex\"\n"
+      << "        )\n"
+      << "        float[] primvars:displayOpacity = [";
+  if (mesh.VertexOpacity()) {
+    for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
+      out << (vertex ? ", " : "") << UsdClamp(mesh.Opacity(vertex));
+    }
+  } else {
+    out << UsdClamp(mesh.Opacity(0));
+  }
+
+  out << "] (\n"
+      << "            interpolation = \""
+      << (mesh.VertexOpacity() ? "vertex" : "constant") << "\"\n"
+      << "        )\n"
+      << "        rel material:binding = </PyMOLScene/Material>\n"
+      << "        uniform token subdivisionScheme = \"none\"\n"
+      << "    }\n";
+}
+
+/**
  * Write a tessellated cone or truncated cone (frustum).
  *
  * UsdGeomCone always tapers to a point and takes a single color, so a cone
@@ -284,23 +452,8 @@ void UsdWriteConeMesh(std::ostream& out, int& index, const float* start,
     normalize3f(slope + 3 * k);
   }
 
-  std::vector<float> points;
-  std::vector<float> normals;
-  std::vector<float> colors;
-  std::vector<int> counts;
-  std::vector<int> indices;
-
-  auto add_vertex = [&](const float* point, const float* normal,
-                        const float* color) {
-    points.insert(points.end(), point, point + 3);
-    normals.insert(normals.end(), normal, normal + 3);
-    colors.insert(colors.end(), color, color + 3);
-  };
-
-  auto add_face = [&](std::initializer_list<int> face) {
-    counts.push_back(static_cast<int>(face.size()));
-    indices.insert(indices.end(), face.begin(), face.end());
-  };
+  UsdVectorMesh mesh;
+  mesh.opacity = 1.F - transparency;
 
   auto add_ring = [&](const float* center, float radius, const float* normal,
                       const float* color) {
@@ -308,7 +461,7 @@ void UsdWriteConeMesh(std::ostream& out, int& index, const float* start,
       float point[3];
       scale3f(radial + 3 * k, radius, point);
       add3f(center, point, point);
-      add_vertex(point, normal ? normal : slope + 3 * k, color);
+      mesh.AddVertex(point, normal ? normal : slope + 3 * k, color);
     }
   };
 
@@ -320,105 +473,39 @@ void UsdWriteConeMesh(std::ostream& out, int& index, const float* start,
   for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
     const int next = (k + 1) % USD_CONE_SEGMENTS;
     if (pointed) {
-      add_face({k, next, USD_CONE_SEGMENTS + k});
+      mesh.AddFace({k, next, USD_CONE_SEGMENTS + k});
     } else {
-      add_face({k, next, USD_CONE_SEGMENTS + next, USD_CONE_SEGMENTS + k});
+      mesh.AddFace({k, next, USD_CONE_SEGMENTS + next, USD_CONE_SEGMENTS + k});
     }
   }
 
   if (cap1 == cCylCapFlat) {
-    const auto base = static_cast<int>(points.size() / 3);
+    const auto base = static_cast<int>(mesh.VertexCount());
     float normal[3];
 
     invert3f3f(axis, normal);
-    add_vertex(start, normal, c1);
+    mesh.AddVertex(start, normal, c1);
     add_ring(start, r1, normal, c1);
 
     for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
       const int next = (k + 1) % USD_CONE_SEGMENTS;
-      add_face({base, base + 1 + next, base + 1 + k});
+      mesh.AddFace({base, base + 1 + next, base + 1 + k});
     }
   }
 
   if (cap2 == cCylCapFlat && !pointed) {
-    const auto base = static_cast<int>(points.size() / 3);
+    const auto base = static_cast<int>(mesh.VertexCount());
 
-    add_vertex(end, axis, c2);
+    mesh.AddVertex(end, axis, c2);
     add_ring(end, r2, axis, c2);
 
     for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
       const int next = (k + 1) % USD_CONE_SEGMENTS;
-      add_face({base, base + 1 + k, base + 1 + next});
+      mesh.AddFace({base, base + 1 + k, base + 1 + next});
     }
   }
 
-  float extent_min[3];
-  float extent_max[3];
-
-  copy3f(points.data(), extent_min);
-  copy3f(points.data(), extent_max);
-
-  for (std::size_t i = 3; i < points.size(); i += 3) {
-    for (int axis_index = 0; axis_index < 3; ++axis_index) {
-      extent_min[axis_index] =
-          std::min(extent_min[axis_index], points[i + axis_index]);
-      extent_max[axis_index] =
-          std::max(extent_max[axis_index], points[i + axis_index]);
-    }
-  }
-
-  out << "\n"
-      << "    def Mesh \"Cone_" << index++ << "\" (\n"
-      << "        prepend apiSchemas = [\"MaterialBindingAPI\"]\n"
-      << "    )\n"
-      << "    {\n"
-      << "        float3[] extent = [";
-  UsdWriteVec3(out, extent_min);
-  out << ", ";
-  UsdWriteVec3(out, extent_max);
-  out << "]\n"
-      << "        int[] faceVertexCounts = [";
-  for (std::size_t i = 0; i < counts.size(); ++i) {
-    out << (i ? ", " : "") << counts[i];
-  }
-  out << "]\n"
-      << "        int[] faceVertexIndices = [";
-  for (std::size_t i = 0; i < indices.size(); ++i) {
-    out << (i ? ", " : "") << indices[i];
-  }
-  out << "]\n"
-      << "        point3f[] points = [\n";
-  for (std::size_t i = 0; i < points.size(); i += 3) {
-    out << "            ";
-    UsdWriteVec3(out, points.data() + i);
-    out << ",\n";
-  }
-  out << "        ]\n"
-      << "        normal3f[] normals = [\n";
-  for (std::size_t i = 0; i < normals.size(); i += 3) {
-    out << "            ";
-    UsdWriteVec3(out, normals.data() + i);
-    out << ",\n";
-  }
-  out << "        ] (\n"
-      << "            interpolation = \"vertex\"\n"
-      << "        )\n"
-      << "        color3f[] primvars:displayColor = [\n";
-  for (std::size_t i = 0; i < colors.size(); i += 3) {
-    out << "            ";
-    UsdWriteColor(out, colors.data() + i);
-    out << ",\n";
-  }
-  out << "        ] (\n"
-      << "            interpolation = \"vertex\"\n"
-      << "        )\n"
-      << "        float[] primvars:displayOpacity = ["
-      << UsdClamp(1.F - transparency) << "] (\n"
-      << "            interpolation = \"constant\"\n"
-      << "        )\n"
-      << "        rel material:binding = </PyMOLScene/Material>\n"
-      << "        uniform token subdivisionScheme = \"none\"\n"
-      << "    }\n";
+  UsdWriteMesh(out, index, "Cone", mesh);
 }
 
 /**
@@ -548,137 +635,81 @@ void UsdWriteEllipsoid(std::ostream& out, int& index, const float* center,
   out << "    }\n";
 }
 
-/// One exported triangle, with its winding already resolved
-struct UsdTriangle {
-  const CPrimitive* primitive;
-  const float* vertex;
-  const float* normal;
-  int order[3];
-};
-
-std::vector<UsdTriangle> UsdCollectTriangles(
-    const CRay* ray, const CBasis* basis)
+/**
+ * The scene's triangles, read straight from the ray tracer's arrays.
+ *
+ * Only the primitive index and the resolved winding are kept per triangle, so
+ * that a large surface does not need a second copy of its geometry.
+ */
+class UsdSceneTriangles : public UsdMeshSource
 {
-  std::vector<UsdTriangle> triangles;
-
-  for (int i = 0; i < ray->NPrimitive; ++i) {
-    auto& primitive = ray->Primitive[i];
-    if (primitive.type != cPrimTriangle) {
-      continue;
-    }
-
-    const bool reverse =
-        TriangleReverse(const_cast<CPrimitive*>(&primitive));
-    triangles.push_back({&primitive, basis->Vertex + 3 * primitive.vert,
-        basis->Normal + 3 * basis->Vert2Normal[primitive.vert] + 3,
-        {0, reverse ? 2 : 1, reverse ? 1 : 2}});
-  }
-
-  return triangles;
-}
-
-void UsdWriteTriangleMesh(
-    std::ostream& out, int& index, const CRay* ray, const CBasis* basis)
-{
-  const auto triangles = UsdCollectTriangles(ray, basis);
-  const auto triangle_count = triangles.size();
-  if (!triangle_count) {
-    return;
-  }
-
-  float extent_min[3] = {0.F, 0.F, 0.F};
-  float extent_max[3] = {0.F, 0.F, 0.F};
-  bool have_extent = false;
-
-  for (const auto& triangle : triangles) {
-    for (int j = 0; j < 9; j += 3) {
-      for (int axis = 0; axis < 3; ++axis) {
-        if (!have_extent) {
-          extent_min[axis] = extent_max[axis] = triangle.vertex[j + axis];
-        } else {
-          extent_min[axis] =
-              std::min(extent_min[axis], triangle.vertex[j + axis]);
-          extent_max[axis] =
-              std::max(extent_max[axis], triangle.vertex[j + axis]);
-        }
+public:
+  UsdSceneTriangles(const CRay* ray, const CBasis* basis)
+      : m_ray(ray)
+      , m_basis(basis)
+  {
+    for (int i = 0; i < ray->NPrimitive; ++i) {
+      auto& primitive = ray->Primitive[i];
+      if (primitive.type != cPrimTriangle) {
+        continue;
       }
-      have_extent = true;
+
+      m_primitives.push_back(i);
+      m_reverse.push_back(TriangleReverse(&primitive) != 0);
     }
   }
 
-  out << "\n"
-      << "    def Mesh \"Mesh_" << index++ << "\" (\n"
-      << "        prepend apiSchemas = [\"MaterialBindingAPI\"]\n"
-      << "    )\n"
-      << "    {\n"
-      << "        float3[] extent = [";
-  UsdWriteVec3(out, extent_min);
-  out << ", ";
-  UsdWriteVec3(out, extent_max);
-  out << "]\n"
-      << "        int[] faceVertexCounts = [";
-  for (std::size_t i = 0; i < triangle_count; ++i) {
-    out << (i ? ", 3" : "3");
-  }
-  out << "]\n"
-      << "        int[] faceVertexIndices = [";
-  for (std::size_t i = 0; i < triangle_count * 3; ++i) {
-    out << (i ? ", " : "") << i;
-  }
-  out << "]\n"
-      << "        point3f[] points = [\n";
+  std::size_t VertexCount() const override { return 3 * m_primitives.size(); }
+  std::size_t FaceCount() const override { return m_primitives.size(); }
+  int FaceSize(std::size_t) const override { return 3; }
+  bool VertexOpacity() const override { return true; }
 
-  for (const auto& triangle : triangles) {
-    for (const int vert : triangle.order) {
-      out << "            ";
-      UsdWriteVec3(out, triangle.vertex + 3 * vert);
-      out << ",\n";
-    }
+  int Index(std::size_t corner) const override
+  {
+    return static_cast<int>(corner);
   }
 
-  out << "        ]\n"
-      << "        normal3f[] normals = [\n";
-  for (const auto& triangle : triangles) {
-    for (const int vert : triangle.order) {
-      out << "            ";
-      UsdWriteVec3(out, triangle.normal + 3 * vert);
-      out << ",\n";
-    }
+  const float* Point(std::size_t vertex) const override
+  {
+    return m_basis->Vertex + 3 * (Primitive(vertex).vert + Corner(vertex));
   }
-  out << "        ] (\n"
-      << "            interpolation = \"vertex\"\n"
-      << "        )\n"
-      << "        color3f[] primvars:displayColor = [\n";
 
-  for (const auto& triangle : triangles) {
-    const float* colors[3] = {triangle.primitive->c1, triangle.primitive->c2,
-        triangle.primitive->c3};
-    for (const int vert : triangle.order) {
-      out << "            ";
-      UsdWriteColor(out, colors[vert]);
-      out << ",\n";
-    }
+  const float* Normal(std::size_t vertex) const override
+  {
+    return m_basis->Normal +
+        3 * (m_basis->Vert2Normal[Primitive(vertex).vert] + 1 + Corner(vertex));
   }
-  out << "        ] (\n"
-      << "            interpolation = \"vertex\"\n"
-      << "        )\n"
-      << "        float[] primvars:displayOpacity = [";
 
-  bool first_opacity = true;
-  for (const auto& triangle : triangles) {
-    for (const int vert : triangle.order) {
-      out << (first_opacity ? "" : ", ")
-          << UsdClamp(1.F - triangle.primitive->tr[vert]);
-      first_opacity = false;
-    }
+  const float* Color(std::size_t vertex) const override
+  {
+    const auto& primitive = Primitive(vertex);
+    const float* colors[3] = {primitive.c1, primitive.c2, primitive.c3};
+    return colors[Corner(vertex)];
   }
-  out << "] (\n"
-      << "            interpolation = \"vertex\"\n"
-      << "        )\n"
-      << "        rel material:binding = </PyMOLScene/Material>\n"
-      << "        uniform token subdivisionScheme = \"none\"\n"
-      << "    }\n";
-}
+
+  float Opacity(std::size_t vertex) const override
+  {
+    return 1.F - Primitive(vertex).tr[Corner(vertex)];
+  }
+
+private:
+  const CPrimitive& Primitive(std::size_t vertex) const
+  {
+    return m_ray->Primitive[m_primitives[vertex / 3]];
+  }
+
+  /// Corner of the primitive, in counter-clockwise winding order
+  int Corner(std::size_t vertex) const
+  {
+    static constexpr int order[2][3] = {{0, 1, 2}, {0, 2, 1}};
+    return order[m_reverse[vertex / 3]][vertex % 3];
+  }
+
+  const CRay* m_ray;
+  const CBasis* m_basis;
+  std::vector<int> m_primitives;
+  std::vector<bool> m_reverse;
+};
 
 void UsdWriteMaterial(std::ostream& out)
 {
@@ -845,6 +876,25 @@ private:
   std::unordered_multimap<std::int64_t, int> m_cells;
 };
 
+/**
+ * Warn once about geometry colored by a color ramp.
+ *
+ * A ramp color is encoded as a large negative color value which the ray
+ * tracer resolves per hit from the impact point. The exporter has no such
+ * point, so UsdWriteColor clamps the encoding to black.
+ */
+void UsdWarnRamped(const CRay* ray)
+{
+  for (int i = 0; i < ray->NPrimitive; ++i) {
+    if (ray->Primitive[i].ramped) {
+      PRINTFB(ray->G, FB_Ray, FB_Warnings)
+        " USD-Warning: ramp colors depend on the viewing ray and are not "
+        "resolved, affected geometry is exported black.\n" ENDFB(ray->G);
+      return;
+    }
+  }
+}
+
 } // namespace
 
 void RayRenderUSDA(CRay* ray, char** vla_ptr)
@@ -856,6 +906,8 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
       !RayTransformFirst(ray, 0, identity)) {
     return;
   }
+
+  UsdWarnRamped(ray);
 
   ov_size count = 0;
   UsdVLAStreamBuf buffer(vla_ptr, &count);
@@ -966,7 +1018,9 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
     }
   }
 
-  UsdWriteTriangleMesh(out, index, ray, basis);
+  const UsdSceneTriangles triangles(ray, basis);
+  UsdWriteMesh(out, index, "Mesh", triangles);
+
   out << "}\n";
   out.flush();
 }

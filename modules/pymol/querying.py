@@ -668,6 +668,11 @@ DESCRIPTION
     "get_usda" returns an ASCII OpenUSD layer representing the content
     currently displayed.
 
+NOTES
+
+    Colors which come from a color ramp (see "ramp_new") depend on the
+    viewing ray and are not resolved, such geometry is exported black.
+
 PYMOL API
 
     cmd.get_usda()

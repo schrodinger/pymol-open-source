@@ -1102,6 +1102,9 @@ DESCRIPTION
 NOTES
 
     The OpenUSD "usdcat" command must be available on PATH.
+
+    Colors which come from a color ramp (see "ramp_new") depend on the
+    viewing ray and are not resolved, such geometry is exported black.
         '''
         contents = _self.get_usda()
         if not contents:
