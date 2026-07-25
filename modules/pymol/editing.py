@@ -1388,9 +1388,9 @@ SEE ALSO
         bridged = []
         if sg_indices:
             # every heavy neighbour of every SG in one pass; the model's own
-            # bond list keeps atom positions and indices consistent. Bonds
-            # do not vary between states, so a single state is enough (and
-            # required: a multi-state model repeats its atoms per state).
+            # bond list keeps atom positions and indices consistent. A single
+            # state is required here: a multi-state model repeats its atoms
+            # per state, which breaks that position/index correspondence.
             model = _self.get_model(
                 f"({obj_name} and not hydro) and "
                 f"(({sg_sele}) or neighbor ({sg_sele}))", CURRENT_STATE)
@@ -1401,6 +1401,19 @@ SEE ALSO
                     if positions[pos] in degree:
                         degree[positions[pos]] += 1
             bridged = [i for i, d in degree.items() if d > 1]
+
+            # a discrete object keeps each atom in a single coordset, so an
+            # SG outside the exported state is missing from the model above.
+            # Bonds are per object, not per state, so count its neighbours
+            # through the selector instead of assuming it is a free thiol.
+            exported = set(positions)
+            for index in sg_indices:
+                if index in exported:
+                    continue
+                if _self.count_atoms(
+                        f"({obj_name} and not hydro) and neighbor "
+                        f"({obj_name} and index {index})") > 1:
+                    bridged.append(index)
         if bridged:
             _self.alter(
                 f"{obj_name} and index {'+'.join(map(str, bridged))}",
@@ -1572,17 +1585,18 @@ NOTES
     GLUM, LYSP and the histidine names below). Any charge the input file
     supplied for one of those atoms is overwritten, and the new value
     persists on the object, so it is written out by formats which store
-    formal charges (PDB, mol2, mmCIF, mae). All other atoms are left
-    alone.
+    formal charges (PDB, mmCIF, mae). All other atoms are left alone.
 
-    Reloading a saved PDB does not always preserve those charges: the
-    PDB reader re-derives a charge from the residue name for ARG/ARGP
-    NH1, LYS/LYSP NZ, ASP/ASPM OD2 and GLU/GLUM OE2 and overrides
-    whatever the file records. A residue titrated outside its pKa window
-    (a neutral lysine above pH 10.53, a protonated aspartate below pH
-    3.65) therefore comes back charged after a PDB round trip while its
-    hydrogens stay as protonate built them. Use a format without that
-    re-derivation (mol2, mmCIF, mae) to keep the two consistent.
+    Reloading a saved file does not always preserve those charges. Any
+    format PyMOL has to bond by distance (PDB and mmCIF both, since the
+    mmCIF exporter writes no bond records) re-derives a charge from the
+    residue name for ARG/ARGP NH1, LYS/LYSP NZ, ASP/ASPM OD2 and
+    GLU/GLUM OE2, overriding whatever the file records; mol2 does not
+    store formal charges at all and the reader re-derives them from the
+    SYBYL atom types. A residue titrated outside its pKa window (a
+    neutral lysine above pH 10.53, a protonated aspartate below pH 3.65)
+    therefore comes back charged after such a round trip while its
+    hydrogens stay as protonate built them.
 
     A cysteine SG with a second heavy neighbour (disulfide bridge,
     metal, alkylation) has no ionizable hydrogen and is left neutral.

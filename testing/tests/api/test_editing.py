@@ -213,6 +213,21 @@ def test_protonate_fallback_disulfide_stays_neutral():
     assert _formal_charges("m1 and name SG") == [0, 0]
 
 
+def test_protonate_fallback_disulfide_in_discrete_object():
+    """A discrete object keeps each atom in one state only, so the bridged
+    cysteines outside the current state must still be recognized."""
+    from pymol.editing import _protonate_fallback
+
+    cmd.fab("CGC", "m1")
+    cmd.bond("m1 and resi 1 and name SG", "m1 and resi 3 and name SG")
+    cmd.create("m2", "m1", 1, 1, discrete=1)
+    cmd.create("m2", "m2", 1, 2, discrete=1)
+
+    _protonate_fallback("m2", "m2", 13.0, 0, 1, _self=cmd)
+
+    assert _formal_charges("m2 and name SG") == [0, 0, 0, 0]
+
+
 def test_protonate_fallback_tyrosine_and_arginine():
     """Tyr and Arg bracket the pH range covered by the fallback table."""
     from pymol.editing import _protonate_fallback
