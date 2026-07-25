@@ -32,8 +32,15 @@ constexpr float USD_EPSILON = 1.e-6F;
 /// Extent of a collapsed ellipsoid semi-axis, relative to the largest one
 constexpr float USD_DEGENERATE_AXIS_SCALE = 1.e-3F;
 
-/// Radial segments of a cone which cannot use the analytic UsdGeomCone
-constexpr int USD_CONE_SEGMENTS = 24;
+/**
+ * Radial segments of a solid which cannot use an analytic UsdGeom prim.
+ *
+ * The ray tracer draws these solids analytically and has no tessellation of
+ * its own, so PyMOL's quality settings can only raise the exported resolution
+ * above the floor, never coarsen it below what a smooth render looks like.
+ */
+constexpr int USD_SEGMENTS_MIN = 24;
+constexpr int USD_SEGMENTS_MAX = 100;
 
 /// Distance below which two solid ends count as one joint
 constexpr float USD_JOINT_TOLERANCE = 1.e-3F;
@@ -211,14 +218,21 @@ void UsdWriteSphere(std::ostream& out, int& index, const float* center,
 }
 
 /**
- * Write a Z-aligned UsdGeomCylinder or UsdGeomCone spanning start to end.
- * @param schema "Cylinder" or "Cone", also used as the prim name prefix
+ * Write a Z-aligned UsdGeomCylinder, UsdGeomCone or UsdGeomCapsule spanning
+ * start to end.
+ *
+ * A capsule's height covers its cylindrical spine only, and its two
+ * hemispherical caps reach one radius further along the axis, which is
+ * exactly how PyMOL draws a round capped solid.
+ *
+ * @param schema "Cylinder", "Cone" or "Capsule", also the prim name prefix
  */
 void UsdWriteAnalyticSolid(std::ostream& out, int& index, const char* schema,
     const float* start, const float* end, float radius, const float* color,
     float transparency)
 {
   float height;
+  const bool round_caps = std::strcmp(schema, "Capsule") == 0;
 
   out << "\n"
       << "    def " << schema << " \"" << schema << '_' << index++ << "\" (\n"
@@ -226,12 +240,15 @@ void UsdWriteAnalyticSolid(std::ostream& out, int& index, const char* schema,
       << "    )\n"
       << "    {\n";
   UsdWriteAnalyticTransform(out, start, end, height);
+
+  const float extent_z = height * 0.5F + (round_caps ? radius : 0.F);
+
   out << "        uniform token axis = \"Z\"\n"
       << "        double height = " << height << "\n"
       << "        double radius = " << radius << "\n"
       << "        float3[] extent = [(" << -radius << ", " << -radius << ", "
-      << -height * 0.5F << "), (" << radius << ", " << radius << ", "
-      << height * 0.5F << ")]\n";
+      << -extent_z << "), (" << radius << ", " << radius << ", " << extent_z
+      << ")]\n";
   UsdWriteMaterialBinding(out, color, transparency);
   out << "    }\n";
 }
@@ -410,14 +427,15 @@ void UsdWriteMesh(std::ostream& out, int& index, const char* name,
  * with a second radius or with two endpoint colors needs an explicit mesh.
  * Colors are interpolated along the axis, matching the ray tracer.
  *
+ * @param segments radial segments, see UsdSolidSegments
  * @param start center of the r1 end
  * @param end center of the r2 end
  * @param cap1 cap of the r1 end, the ray tracer only draws flat caps
  * @param cap2 cap of the r2 end
  */
-void UsdWriteConeMesh(std::ostream& out, int& index, const float* start,
-    const float* end, float r1, float r2, const float* c1, const float* c2,
-    cCylCap cap1, cCylCap cap2, float transparency)
+void UsdWriteConeMesh(std::ostream& out, int& index, int segments,
+    const float* start, const float* end, float r1, float r2, const float* c1,
+    const float* c2, cCylCap cap1, cCylCap cap2, float transparency)
 {
   float axis[3];
   float side[3];
@@ -434,13 +452,14 @@ void UsdWriteConeMesh(std::ostream& out, int& index, const float* start,
   normalize3f(axis);
   get_system1f3f(axis, side, up);
 
-  const bool pointed = !(r2 > USD_EPSILON);
-  float radial[3 * USD_CONE_SEGMENTS];
-  float slope[3 * USD_CONE_SEGMENTS];
+  assert(segments >= 3 && segments <= USD_SEGMENTS_MAX);
 
-  for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
-    const auto angle =
-        static_cast<float>(2.0 * PI * k / USD_CONE_SEGMENTS);
+  const bool pointed = !(r2 > USD_EPSILON);
+  float radial[3 * USD_SEGMENTS_MAX];
+  float slope[3 * USD_SEGMENTS_MAX];
+
+  for (int k = 0; k < segments; ++k) {
+    const auto angle = static_cast<float>(2.0 * PI * k / segments);
     const float cosine = std::cos(angle);
     const float sine = std::sin(angle);
 
@@ -457,7 +476,7 @@ void UsdWriteConeMesh(std::ostream& out, int& index, const float* start,
 
   auto add_ring = [&](const float* center, float radius, const float* normal,
                       const float* color) {
-    for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
+    for (int k = 0; k < segments; ++k) {
       float point[3];
       scale3f(radial + 3 * k, radius, point);
       add3f(center, point, point);
@@ -470,12 +489,12 @@ void UsdWriteConeMesh(std::ostream& out, int& index, const float* start,
 
   // Faces wind counter-clockwise as seen from outside, so that the right
   // handed face normals agree with the authored ones.
-  for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
-    const int next = (k + 1) % USD_CONE_SEGMENTS;
+  for (int k = 0; k < segments; ++k) {
+    const int next = (k + 1) % segments;
     if (pointed) {
-      mesh.AddFace({k, next, USD_CONE_SEGMENTS + k});
+      mesh.AddFace({k, next, segments + k});
     } else {
-      mesh.AddFace({k, next, USD_CONE_SEGMENTS + next, USD_CONE_SEGMENTS + k});
+      mesh.AddFace({k, next, segments + next, segments + k});
     }
   }
 
@@ -487,8 +506,8 @@ void UsdWriteConeMesh(std::ostream& out, int& index, const float* start,
     mesh.AddVertex(start, normal, c1);
     add_ring(start, r1, normal, c1);
 
-    for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
-      const int next = (k + 1) % USD_CONE_SEGMENTS;
+    for (int k = 0; k < segments; ++k) {
+      const int next = (k + 1) % segments;
       mesh.AddFace({base, base + 1 + next, base + 1 + k});
     }
   }
@@ -499,8 +518,8 @@ void UsdWriteConeMesh(std::ostream& out, int& index, const float* start,
     mesh.AddVertex(end, axis, c2);
     add_ring(end, r2, axis, c2);
 
-    for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
-      const int next = (k + 1) % USD_CONE_SEGMENTS;
+    for (int k = 0; k < segments; ++k) {
+      const int next = (k + 1) % segments;
       mesh.AddFace({base, base + 1 + k, base + 1 + next});
     }
   }
@@ -765,6 +784,11 @@ void UsdSolidEnd(const CBasis* basis, const CPrimitive& primitive, float* end)
  * carries a round cap from a thicker bond is uncapped as well. Such a joint
  * is sealed by its neighbour, so it may keep the compact analytic prim, while
  * a genuinely exposed uncapped end needs an open mesh.
+ *
+ * The closed analytic prim buries an end disc inside the union, which only
+ * goes unnoticed while the geometry is opaque. Transparent solids therefore
+ * ignore this index and take the open mesh path, so that a viewing ray
+ * crosses the same surfaces the ray tracer shows.
  */
 class UsdJointIndex
 {
@@ -877,6 +901,16 @@ private:
 };
 
 /**
+ * Radial segments to tessellate a solid with, from the quality setting which
+ * PyMOL's own renderers use for that kind of solid.
+ */
+int UsdSolidSegments(PyMOLGlobals* G, int setting)
+{
+  return std::clamp(
+      SettingGetGlobal_i(G, setting), USD_SEGMENTS_MIN, USD_SEGMENTS_MAX);
+}
+
+/**
  * Warn once about geometry colored by a color ramp.
  *
  * A ramp color is encoded as a large negative color value which the ray
@@ -930,15 +964,21 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
   int index = 0;
   const auto* basis = ray->Basis + 1;
   const UsdJointIndex joints(ray, basis);
+  const int cylinder_segments =
+      UsdSolidSegments(ray->G, cSetting_stick_quality);
+  const int cone_segments = UsdSolidSegments(ray->G, cSetting_cone_quality);
 
   for (int i = 0; i < ray->NPrimitive; ++i) {
     const auto& primitive = ray->Primitive[i];
     const auto* vertex = basis->Vertex + 3 * primitive.vert;
 
     // An analytic UsdGeomCylinder or UsdGeomCone is always closed, so an end
-    // which the ray tracer leaves open needs the mesh writer instead
+    // which the ray tracer leaves open needs the mesh writer instead. A
+    // neighbour only hides the extra disc while the solid is opaque.
     const auto sealed = [&](const float* point, float radius, cCylCap cap) {
-      return cap != cCylCapNone || joints.IsCovered(point, radius, i);
+      return cap != cCylCapNone ||
+          (!(primitive.trans > USD_EPSILON) &&
+              joints.IsCovered(point, radius, i));
     };
 
     switch (primitive.type) {
@@ -956,37 +996,40 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
       float end[3];
       UsdSolidEnd(basis, primitive, end);
 
-      // A sausage is round capped no matter what the primitive says
-      const bool round1 =
-          primitive.type == cPrimSausage || primitive.cap1 == cCylCapRound;
-      const bool round2 =
-          primitive.type == cPrimSausage || primitive.cap2 == cCylCapRound;
+      // A sausage is round capped no matter what the primitive says, and its
+      // cap fields are never assigned
+      const bool sausage = primitive.type == cPrimSausage;
+      const bool round1 = sausage || primitive.cap1 == cCylCapRound;
+      const bool round2 = sausage || primitive.cap2 == cCylCapRound;
+      const cCylCap cap1 = sausage ? cCylCapNone : primitive.cap1;
+      const cCylCap cap2 = sausage ? cCylCapNone : primitive.cap2;
 
-      if ((round1 || sealed(vertex, primitive.r1, primitive.cap1)) &&
-          (round2 || sealed(end, primitive.r1, primitive.cap2))) {
-        if (UsdColorsEqual(primitive.c1, primitive.c2)) {
-          UsdWriteAnalyticSolid(out, index, "Cylinder", vertex, end,
-              primitive.r1, primitive.c1, primitive.trans);
-        } else {
-          const float midpoint[3] = {(vertex[0] + end[0]) * 0.5F,
-              (vertex[1] + end[1]) * 0.5F,
-              (vertex[2] + end[2]) * 0.5F};
-          UsdWriteAnalyticSolid(out, index, "Cylinder", vertex, midpoint,
-              primitive.r1, primitive.c1, primitive.trans);
-          UsdWriteAnalyticSolid(out, index, "Cylinder", midpoint, end,
-              primitive.r1, primitive.c2, primitive.trans);
-        }
+      // The ray tracer blends the two endpoint colors along the axis, which
+      // no single colored analytic prim can express
+      const bool one_color = UsdColorsEqual(primitive.c1, primitive.c2);
+
+      // A capsule is the whole round capped solid as one closed surface, so
+      // it needs no separate cap spheres to bury inside it
+      const bool capsule = one_color && round1 && round2;
+
+      if (capsule) {
+        UsdWriteAnalyticSolid(out, index, "Capsule", vertex, end, primitive.r1,
+            primitive.c1, primitive.trans);
+      } else if (one_color && (round1 || sealed(vertex, primitive.r1, cap1)) &&
+          (round2 || sealed(end, primitive.r1, cap2))) {
+        UsdWriteAnalyticSolid(out, index, "Cylinder", vertex, end,
+            primitive.r1, primitive.c1, primitive.trans);
       } else {
-        UsdWriteConeMesh(out, index, vertex, end, primitive.r1, primitive.r1,
-            primitive.c1, primitive.c2, primitive.cap1, primitive.cap2,
+        UsdWriteConeMesh(out, index, cylinder_segments, vertex, end,
+            primitive.r1, primitive.r1, primitive.c1, primitive.c2, cap1, cap2,
             primitive.trans);
       }
 
-      if (round1) {
+      if (round1 && !capsule) {
         UsdWriteSphere(out, index, vertex, primitive.r1, primitive.c1,
             primitive.trans);
       }
-      if (round2) {
+      if (round2 && !capsule) {
         UsdWriteSphere(out, index, end, primitive.r1, primitive.c2,
             primitive.trans);
       }
@@ -1009,9 +1052,9 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
         UsdWriteAnalyticSolid(out, index, "Cone", vertex, end, primitive.r1,
             primitive.c1, primitive.trans);
       } else {
-        UsdWriteConeMesh(out, index, vertex, end, primitive.r1, primitive.r2,
-            primitive.c1, primitive.c2, primitive.cap1, primitive.cap2,
-            primitive.trans);
+        UsdWriteConeMesh(out, index, cone_segments, vertex, end, primitive.r1,
+            primitive.r2, primitive.c1, primitive.c2, primitive.cap1,
+            primitive.cap2, primitive.trans);
       }
       break;
     }

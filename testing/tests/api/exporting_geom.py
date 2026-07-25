@@ -334,20 +334,76 @@ class TestExportingGeom(testing.PyMOLTestCase):
             1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0,
             cgo.CYLINDER, 4.0, 0.0, 0.0, 4.0, 0.0, 5.0, 1.0,
             0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+            cgo.SAUSAGE, 8.0, 0.0, 0.0, 8.0, 0.0, 5.0, 1.0,
+            0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
         ], 'solids')
 
         with testing.mktemp('.usda') as filename:
             cmd.save(filename)
             contents = file_get_contents(filename)
 
-        # cones and cylinders share one writer, so schema and prim name must
-        # stay in sync
-        solids = re.findall(r'def (Cone|Cylinder) "(\w+)_\d+"', contents)
+        # cones, cylinders and capsules share one writer, so schema and prim
+        # name must stay in sync
+        solids = re.findall(
+            r'def (Cone|Cylinder|Capsule) "(\w+)_\d+"', contents)
         self.assertEqual(sorted(schema for schema, _ in solids),
-                         ['Cone', 'Cylinder'])
+                         ['Capsule', 'Cone', 'Cylinder'])
 
         for schema, name in solids:
             self.assertEqual(schema, name)
+
+    def testUSDASausageIsCapsule(self):
+        from pymol import cgo
+
+        cmd.set('geometry_export_mode', 1)
+        cmd.load_cgo([
+            cgo.SAUSAGE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.5,
+            1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+        ], 'sausage')
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            contents = file_get_contents(filename)
+
+        # one closed surface rather than a cylinder plus two spheres whose
+        # buried hemispheres would darken the solid under transparency
+        self.assertNotIn('def Sphere', contents)
+        self.assertNotIn('def Cylinder', contents)
+
+        block = usda_prim_block(contents, 'Capsule_0')
+        self.assertIsNotNone(block)
+
+        # a capsule's height is its cylindrical spine, the hemispheres reach
+        # one radius further along the axis
+        self.assertIn('double height = 5', block)
+        self.assertIn('double radius = 1.5', block)
+        self.assertEqual(usda_vec3_array(block, 'float3[] extent'),
+                         [(-1.5, -1.5, -4.0), (1.5, 1.5, 4.0)])
+        self.assertEqual(usda_translations(contents), [(0.0, 0.0, 2.5)])
+
+    def testUSDASausageTwoColorMesh(self):
+        from pymol import cgo
+
+        cmd.set('geometry_export_mode', 1)
+        cmd.load_cgo([
+            cgo.SAUSAGE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.0,
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ], 'sausage')
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            contents = file_get_contents(filename)
+
+        # the round caps are the two spheres, so the mesh must not close the
+        # spine with flat cap fans of its own
+        self.assertEqual(contents.count('def Sphere'), 2)
+
+        block = usda_prim_block(contents, 'Cone_0')
+        self.assertIsNotNone(block)
+
+        counts = usda_int_array(block, 'int[] faceVertexCounts')
+        self.assertEqual(counts.count(3), 0)
+        self.assertEqual(len(counts), counts.count(4))
 
     def save_cone_usda(self, r1, r2, c2, cap1=1.0, cap2=1.0):
         from pymol import cgo
@@ -458,14 +514,15 @@ class TestExportingGeom(testing.PyMOLTestCase):
         contents = self.save_cone_usda(1.0, 0.0, (1.0, 0.0, 0.0), cap1=1.0)
         self.assertIn('def Cone "Cone_0"', contents)
 
-    def save_custom_cylinders_usda(self, *specs):
+    def save_custom_cylinders_usda(self, *specs, c2=(1.0, 0.0, 0.0),
+                                   alpha=None):
         from pymol import cgo
 
         cmd.set('geometry_export_mode', 1)
-        obj = []
+        obj = [] if alpha is None else [cgo.ALPHA, alpha]
         for v1, v2, cap1, cap2 in specs:
             obj += [cgo.CUSTOM_CYLINDER, *v1, *v2, 0.5,
-                    1.0, 0.0, 0.0, 1.0, 0.0, 0.0, cap1, cap2]
+                    1.0, 0.0, 0.0, *c2, cap1, cap2]
 
         cmd.load_cgo(obj, 'cylinders')
 
@@ -496,6 +553,79 @@ class TestExportingGeom(testing.PyMOLTestCase):
 
         self.assertEqual(contents.count('def Cylinder'), 2)
         self.assertNotIn('def Mesh', contents)
+
+    def testUSDATransparentJointStaysOpen(self):
+        # a closed analytic prim buries an end disc in the joint, which a
+        # transparent solid would show as a seam the ray tracer does not draw
+        contents = self.save_custom_cylinders_usda(
+            ((0.0, 0.0, 0.0), (0.0, 0.0, 2.5), 1.0, 0.0),
+            ((0.0, 0.0, 2.5), (0.0, 0.0, 5.0), 0.0, 1.0),
+            alpha=0.5)
+
+        self.assertNotIn('def Cylinder', contents)
+        self.assertEqual(contents.count('def Mesh'), 2)
+
+        for name in ['Cone_0', 'Cone_1']:
+            block = usda_prim_block(contents, name)
+            counts = usda_int_array(block, 'int[] faceVertexCounts')
+
+            # the flat outer end is capped, the joint end stays open
+            segments = counts.count(4)
+            self.assertEqual(counts.count(3), segments)
+            self.assertIn('float[] primvars:displayOpacity = [0.5]', block)
+
+    def testUSDACustomCylinderTwoColor(self):
+        # the ray tracer blends the endpoint colors along the axis, so a pair
+        # of flat colored analytic halves would author a seam it never draws
+        contents = self.save_custom_cylinders_usda(
+            ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 1.0, 1.0),
+            c2=(0.0, 0.0, 1.0))
+
+        self.assertNotIn('def Cylinder', contents)
+
+        block = usda_prim_block(contents, 'Cone_0')
+        self.assertIsNotNone(block)
+
+        colors = usda_vec3_array(block, 'color3f[] primvars:displayColor')
+        points = usda_vec3_array(block, 'point3f[] points')
+        self.assertEqual(len(colors), len(points))
+
+        by_z = {}
+        for point, color in zip(points, colors):
+            by_z.setdefault(round(point[2], 3), set()).add(color)
+
+        self.assertEqual(sorted(by_z), [0.0, 5.0])
+        self.assertEqual(by_z[0.0], {(1.0, 0.0, 0.0)})
+        self.assertEqual(by_z[5.0], {(0.0, 0.0, 1.0)})
+
+    def testUSDASolidQuality(self):
+        # the ray tracer draws these solids analytically, so PyMOL's quality
+        # settings may only raise the exported resolution above the floor
+        def segment_count(setting, value, spec):
+            cmd.delete('all')
+            cmd.set(setting, value)
+            return usda_int_array(
+                usda_prim_block(self.save_cone_usda(*spec), 'Cone_0'),
+                'int[] faceVertexCounts').count(4)
+
+        frustum = (2.0, 1.0, (1.0, 0.0, 0.0))
+
+        self.assertEqual(segment_count('cone_quality', 3, frustum), 24)
+        self.assertEqual(segment_count('cone_quality', 48, frustum), 48)
+
+        # a request beyond the writer's fixed vertex buffer is clamped
+        self.assertEqual(segment_count('cone_quality', 1000, frustum), 100)
+
+    def testUSDACylinderQuality(self):
+        cmd.set('stick_quality', 40)
+        contents = self.save_custom_cylinders_usda(
+            ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 0.0, 0.0))
+
+        counts = usda_int_array(
+            usda_prim_block(contents, 'Cone_0'), 'int[] faceVertexCounts')
+
+        # a tessellated cylinder follows the setting PyMOL uses for sticks
+        self.assertEqual(counts.count(4), 40)
 
     def testUSDASticksStayAnalytic(self):
         # half bonds meet with an uncapped joint, which must not turn the
