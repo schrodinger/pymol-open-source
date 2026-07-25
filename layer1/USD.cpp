@@ -1025,6 +1025,14 @@ void UsdWarnRamped(const CRay* ray)
 
 } // namespace
 
+/**
+ * Generate an ASCII USD layer of the displayed geometry and append it to
+ * `vla_ptr`.
+ *
+ * Coordinates are in Angstrom, declared with metersPerUnit = 1e-10, and are
+ * in camera space, or in the original model space with
+ * geometry_export_mode = 1.
+ */
 void RayRenderUSDA(CRay* ray, char** vla_ptr)
 {
   const bool identity =

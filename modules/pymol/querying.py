@@ -670,6 +670,14 @@ DESCRIPTION
 
 NOTES
 
+    Coordinates are in Angstrom, the layer declares metersPerUnit = 1e-10.
+    They are in camera space, or in the original model space with
+    geometry_export_mode=1.
+
+    Transparent sticks, sausages and cones are exported as meshes instead
+    of analytic prims, so that a viewing ray crosses the same surfaces as
+    in a rendered image. Such a layer is larger than an opaque one.
+
     Colors which come from a color ramp (see "ramp_new") depend on the
     viewing ray and are not resolved, such geometry is exported black.
 

@@ -1101,10 +1101,20 @@ DESCRIPTION
 
 NOTES
 
-    The OpenUSD "usdcat" command must be available on PATH.
+    The OpenUSD "usdcat" command must be available on PATH, it converts
+    the ASCII layer to the binary Crate layer which is stored in the
+    package.
+
+    Transparent sticks, sausages and cones are exported as meshes instead
+    of analytic prims, so that a viewing ray crosses the same surfaces as
+    in a rendered image. Such a package is larger than an opaque one.
 
     Colors which come from a color ramp (see "ramp_new") depend on the
     viewing ray and are not resolved, such geometry is exported black.
+
+SEE ALSO
+
+    get_usda, save
         '''
         contents = _self.get_usda()
         if not contents:
@@ -1141,7 +1151,8 @@ NOTES
 
         'png': png,
 
-        # no arguments (some have a "version" argument)
+        # no selection argument (some have a "version", "filename" or
+        # "quiet" argument)
         'dae': 'pymol.querying:get_collada',
         'usda': 'pymol.querying:get_usda',
         'usdz': save_usdz,
