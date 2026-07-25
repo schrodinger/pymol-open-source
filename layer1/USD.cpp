@@ -416,6 +416,9 @@ void UsdWriteMesh(std::ostream& out, int& index, const char* name,
       << "        )\n"
       << "        rel material:binding = </PyMOLScene/Material>\n"
       << "        uniform token subdivisionScheme = \"none\"\n"
+      // The ray tracer flips the normal of a back face hit, so it draws an
+      // open mesh from both sides, while USD culls back faces by default
+      << "        uniform bool doubleSided = 1\n"
       << "    }\n";
 }
 
@@ -426,15 +429,17 @@ void UsdWriteMesh(std::ostream& out, int& index, const char* name,
  * with a second radius or with two endpoint colors needs an explicit mesh.
  * Colors are interpolated along the axis, matching the ray tracer.
  *
+ * @param name prim name prefix, "Cone" or "Cylinder"
  * @param segments radial segments, see UsdSolidSegments
  * @param start center of the r1 end
  * @param end center of the r2 end
- * @param cap1 cap of the r1 end, the ray tracer only draws flat caps
+ * @param cap1 cap of the r1 end, only a flat cap closes the mesh
  * @param cap2 cap of the r2 end
  */
-void UsdWriteConeMesh(std::ostream& out, int& index, int segments,
-    const float* start, const float* end, float r1, float r2, const float* c1,
-    const float* c2, cCylCap cap1, cCylCap cap2, float transparency)
+void UsdWriteConeMesh(std::ostream& out, int& index, const char* name,
+    int segments, const float* start, const float* end, float r1, float r2,
+    const float* c1, const float* c2, cCylCap cap1, cCylCap cap2,
+    float transparency)
 {
   float axis[3];
   float side[3];
@@ -523,7 +528,97 @@ void UsdWriteConeMesh(std::ostream& out, int& index, int segments,
     }
   }
 
-  UsdWriteMesh(out, index, "Cone", mesh);
+  UsdWriteMesh(out, index, name, mesh);
+}
+
+/**
+ * Write a tessellated hemispherical cap.
+ *
+ * A round cap is exported as a whole UsdGeomSphere while the solid is opaque,
+ * because the hemisphere buried in the barrel costs nothing to look at. Under
+ * transparency those buried surfaces would darken the cap, so only the
+ * visible dome is written. It shares the barrel's equator ring, which
+ * UsdWriteConeMesh leaves open for a round cap.
+ *
+ * @param segments radial segments, see UsdSolidSegments
+ * @param center center of the capped end
+ * @param axis unit axis of the solid, pointing from start to end
+ * @param sign +1 for the dome beyond end, -1 for the dome beyond start
+ */
+void UsdWriteHemisphereMesh(std::ostream& out, int& index, int segments,
+    const float* center, const float* axis, float sign, float radius,
+    const float* color, float transparency)
+{
+  if (!(radius > USD_EPSILON)) {
+    return;
+  }
+
+  float unit[3];
+  float side[3];
+  float up[3];
+  float pole[3];
+
+  // get_system1f3f normalizes its first argument in place
+  copy3f(axis, unit);
+  get_system1f3f(unit, side, up);
+
+  // (side, up, pole) stays right handed for either end, so the winding below
+  // holds for both, and the equator lands on the barrel's own ring vertices
+  scale3f(up, sign, up);
+  scale3f(unit, sign, pole);
+
+  assert(segments >= 3 && segments <= USD_SEGMENTS_MAX);
+
+  const int stacks = std::max(2, segments / 4);
+
+  UsdVectorMesh mesh;
+  mesh.opacity = 1.F - transparency;
+
+  for (int j = 0; j < stacks; ++j) {
+    const auto latitude = static_cast<float>(0.5 * PI * j / stacks);
+    const float ring = std::cos(latitude);
+    const float rise = std::sin(latitude);
+
+    for (int k = 0; k < segments; ++k) {
+      const auto angle = static_cast<float>(2.0 * PI * k / segments);
+      const float cosine = std::cos(angle);
+      const float sine = std::sin(angle);
+      float normal[3];
+      float point[3];
+
+      for (int i = 0; i < 3; ++i) {
+        normal[i] = (side[i] * cosine + up[i] * sine) * ring + pole[i] * rise;
+      }
+
+      scale3f(normal, radius, point);
+      add3f(center, point, point);
+      mesh.AddVertex(point, normal, color);
+    }
+  }
+
+  const int apex = stacks * segments;
+  float tip[3];
+
+  scale3f(pole, radius, tip);
+  add3f(center, tip, tip);
+  mesh.AddVertex(tip, pole, color);
+
+  // Faces wind counter-clockwise as seen from outside, as in UsdWriteConeMesh
+  for (int j = 0; j + 1 < stacks; ++j) {
+    for (int k = 0; k < segments; ++k) {
+      const int next = (k + 1) % segments;
+      mesh.AddFace({j * segments + k, j * segments + next,
+          (j + 1) * segments + next, (j + 1) * segments + k});
+    }
+  }
+
+  for (int k = 0; k < segments; ++k) {
+    const int next = (k + 1) % segments;
+    mesh.AddFace({(stacks - 1) * segments + k, (stacks - 1) * segments + next,
+        apex});
+  }
+
+  UsdWriteMesh(out, index, "Hemisphere", mesh);
 }
 
 /**
@@ -971,13 +1066,16 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
     const auto& primitive = ray->Primitive[i];
     const auto* vertex = basis->Vertex + 3 * primitive.vert;
 
+    const bool transparent = primitive.trans > USD_EPSILON;
+
     // An analytic UsdGeomCylinder or UsdGeomCone is always closed, so an end
-    // which the ray tracer leaves open needs the mesh writer instead. A
-    // neighbour only hides the extra disc while the solid is opaque.
+    // which the ray tracer leaves open needs the mesh writer instead. Only
+    // while the solid is opaque does a neighbour, or the whole sphere of a
+    // round cap, hide the extra disc.
     const auto sealed = [&](const float* point, float radius, cCylCap cap) {
-      return cap != cCylCapNone ||
-          (!(primitive.trans > USD_EPSILON) &&
-              joints.IsCovered(point, radius, i));
+      return cap == cCylCapFlat ||
+          (!transparent &&
+              (cap == cCylCapRound || joints.IsCovered(point, radius, i)));
     };
 
     switch (primitive.type) {
@@ -998,39 +1096,61 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
       // A sausage is round capped no matter what the primitive says, and its
       // cap fields are never assigned
       const bool sausage = primitive.type == cPrimSausage;
-      const bool round1 = sausage || primitive.cap1 == cCylCapRound;
-      const bool round2 = sausage || primitive.cap2 == cCylCapRound;
-      const cCylCap cap1 = sausage ? cCylCapNone : primitive.cap1;
-      const cCylCap cap2 = sausage ? cCylCapNone : primitive.cap2;
+      const cCylCap cap1 = sausage ? cCylCapRound : primitive.cap1;
+      const cCylCap cap2 = sausage ? cCylCapRound : primitive.cap2;
+      const bool round1 = cap1 == cCylCapRound;
+      const bool round2 = cap2 == cCylCapRound;
 
       // The ray tracer blends the two endpoint colors along the axis, which
       // no single colored analytic prim can express
       const bool one_color = UsdColorsEqual(primitive.c1, primitive.c2);
 
       // A capsule is the whole round capped solid as one closed surface, so
-      // it needs no separate cap spheres to bury inside it
+      // it needs no separate cap domes to bury inside it
       const bool capsule = one_color && round1 && round2;
 
       if (capsule) {
         UsdWriteAnalyticSolid(out, index, "Capsule", true, vertex, end,
             primitive.r1, primitive.c1, primitive.trans);
-      } else if (one_color && (round1 || sealed(vertex, primitive.r1, cap1)) &&
-          (round2 || sealed(end, primitive.r1, cap2))) {
+      } else if (one_color && sealed(vertex, primitive.r1, cap1) &&
+          sealed(end, primitive.r1, cap2)) {
         UsdWriteAnalyticSolid(out, index, "Cylinder", false, vertex, end,
             primitive.r1, primitive.c1, primitive.trans);
       } else {
-        UsdWriteConeMesh(out, index, cylinder_segments, vertex, end,
-            primitive.r1, primitive.r1, primitive.c1, primitive.c2, cap1, cap2,
-            primitive.trans);
+        UsdWriteConeMesh(out, index, "Cylinder", cylinder_segments, vertex,
+            end, primitive.r1, primitive.r1, primitive.c1, primitive.c2, cap1,
+            cap2, primitive.trans);
+      }
+
+      float axis[3];
+      subtract3f(end, vertex, axis);
+      const float height = length3f(axis);
+
+      // A whole sphere buries a hemisphere in the barrel, which a transparent
+      // solid would show as a darker cap the ray tracer does not draw
+      const bool dome = transparent && height > USD_EPSILON;
+
+      if (dome) {
+        scale3f(axis, 1.F / height, axis);
       }
 
       if (round1 && !capsule) {
-        UsdWriteSphere(out, index, vertex, primitive.r1, primitive.c1,
-            primitive.trans);
+        if (dome) {
+          UsdWriteHemisphereMesh(out, index, cylinder_segments, vertex, axis,
+              -1.F, primitive.r1, primitive.c1, primitive.trans);
+        } else {
+          UsdWriteSphere(out, index, vertex, primitive.r1, primitive.c1,
+              primitive.trans);
+        }
       }
       if (round2 && !capsule) {
-        UsdWriteSphere(out, index, end, primitive.r1, primitive.c2,
-            primitive.trans);
+        if (dome) {
+          UsdWriteHemisphereMesh(out, index, cylinder_segments, end, axis,
+              1.F, primitive.r1, primitive.c2, primitive.trans);
+        } else {
+          UsdWriteSphere(out, index, end, primitive.r1, primitive.c2,
+              primitive.trans);
+        }
       }
       break;
     }
@@ -1053,8 +1173,8 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
         UsdWriteAnalyticSolid(out, index, "Cone", false, vertex, end,
             primitive.r1, primitive.c1, primitive.trans);
       } else {
-        UsdWriteConeMesh(out, index, cone_segments, vertex, end, primitive.r1,
-            primitive.r2, primitive.c1, primitive.c2, cap1, cap2,
+        UsdWriteConeMesh(out, index, "Cone", cone_segments, vertex, end,
+            primitive.r1, primitive.r2, primitive.c1, primitive.c2, cap1, cap2,
             primitive.trans);
       }
       break;

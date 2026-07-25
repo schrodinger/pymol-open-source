@@ -398,7 +398,7 @@ class TestExportingGeom(testing.PyMOLTestCase):
         # spine with flat cap fans of its own
         self.assertEqual(contents.count('def Sphere'), 2)
 
-        block = usda_prim_block(contents, 'Cone_0')
+        block = usda_prim_block(contents, 'Cylinder_0')
         self.assertIsNotNone(block)
 
         counts = usda_int_array(block, 'int[] faceVertexCounts')
@@ -536,7 +536,7 @@ class TestExportingGeom(testing.PyMOLTestCase):
 
         self.assertNotIn('def Cylinder', contents)
 
-        block = usda_prim_block(contents, 'Cone_0')
+        block = usda_prim_block(contents, 'Cylinder_0')
         self.assertIsNotNone(block)
 
         # only the lateral surface, both ends stay open
@@ -565,7 +565,7 @@ class TestExportingGeom(testing.PyMOLTestCase):
         self.assertNotIn('def Cylinder', contents)
         self.assertEqual(contents.count('def Mesh'), 2)
 
-        for name in ['Cone_0', 'Cone_1']:
+        for name in ['Cylinder_0', 'Cylinder_1']:
             block = usda_prim_block(contents, name)
             counts = usda_int_array(block, 'int[] faceVertexCounts')
 
@@ -573,6 +573,97 @@ class TestExportingGeom(testing.PyMOLTestCase):
             segments = counts.count(4)
             self.assertEqual(counts.count(3), segments)
             self.assertIn('float[] primvars:displayOpacity = [0.5]', block)
+
+    def testUSDAOpaqueRoundCapStaysSphere(self):
+        # while the solid is opaque the buried hemisphere costs nothing to
+        # look at, so the compact analytic prims are kept
+        contents = self.save_custom_cylinders_usda(
+            ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 2.0, 1.0))
+
+        self.assertIn('def Cylinder "Cylinder_0"', contents)
+        self.assertEqual(contents.count('def Sphere'), 1)
+        self.assertNotIn('def Mesh', contents)
+
+    def testUSDATransparentRoundCapIsDome(self):
+        # a whole cap sphere buries a hemisphere in the barrel, which a
+        # transparent solid shows as a darker cap the ray tracer never draws
+        contents = self.save_custom_cylinders_usda(
+            ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 2.0, 1.0), alpha=0.5)
+
+        self.assertNotIn('def Cylinder', contents)
+        self.assertNotIn('def Sphere', contents)
+        self.assertEqual(contents.count('def Mesh'), 2)
+
+        barrel = usda_prim_block(contents, 'Cylinder_0')
+        counts = usda_int_array(barrel, 'int[] faceVertexCounts')
+
+        # only the flat end is capped, the round end is left to the dome
+        segments = counts.count(4)
+        self.assertEqual(counts.count(3), segments)
+
+        dome = usda_prim_block(contents, 'Hemisphere_1')
+        self.assertIsNotNone(dome)
+        self.assertIn('float[] primvars:displayOpacity = [0.5]', dome)
+
+        points = usda_vec3_array(dome, 'point3f[] points')
+        normals = usda_vec3_array(dome, 'normal3f[] normals')
+        self.assertEqual(len(points), len(normals))
+
+        for point, normal in zip(points, normals):
+            # on the cap sphere, and never on the far side of the equator
+            self.assertAlmostEqual(
+                math.dist(point, (0.0, 0.0, 0.0)), 0.5, places=4)
+            self.assertLessEqual(point[2], 1e-4)
+
+            # unit normals pointing away from the barrel
+            self.assertAlmostEqual(
+                math.dist(normal, (0.0, 0.0, 0.0)), 1.0, places=4)
+            self.assertAlmostEqual(
+                sum(p * n for p, n in zip(point, normal)), 0.5, places=4)
+
+        # the dome shares the barrel's open ring, so the two leave no crack
+        def ring(block):
+            return sorted(
+                tuple(round(value, 4) for value in point)
+                for point in usda_vec3_array(block, 'point3f[] points')
+                if abs(point[2]) < 1e-4)
+
+        self.assertEqual(len(ring(dome)), segments)
+        self.assertEqual(ring(dome), ring(barrel))
+
+    def testUSDATransparentSausageDomes(self):
+        from pymol import cgo
+
+        cmd.set('geometry_export_mode', 1)
+        cmd.load_cgo([
+            cgo.ALPHA, 0.5,
+            cgo.SAUSAGE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.0,
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ], 'sausage')
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            contents = file_get_contents(filename)
+
+        # two colors rule out the capsule, so both caps become open domes
+        self.assertNotIn('def Sphere', contents)
+        self.assertNotIn('def Capsule', contents)
+        self.assertEqual(contents.count('def Mesh'), 3)
+
+        for name, color, beyond in [('Hemisphere_1', (1.0, 0.0, 0.0), -1),
+                                    ('Hemisphere_2', (0.0, 0.0, 1.0), 1)]:
+            block = usda_prim_block(contents, name)
+            self.assertIsNotNone(block)
+
+            colors = usda_vec3_array(block, 'color3f[] primvars:displayColor')
+            self.assertEqual(set(colors), {color})
+
+            # each dome sits beyond its own end, none reaches into the spine
+            for point in usda_vec3_array(block, 'point3f[] points'):
+                if beyond < 0:
+                    self.assertLessEqual(point[2], 1e-4)
+                else:
+                    self.assertGreaterEqual(point[2], 5.0 - 1e-4)
 
     def testUSDACustomCylinderTwoColor(self):
         # the ray tracer blends the endpoint colors along the axis, so a pair
@@ -583,7 +674,7 @@ class TestExportingGeom(testing.PyMOLTestCase):
 
         self.assertNotIn('def Cylinder', contents)
 
-        block = usda_prim_block(contents, 'Cone_0')
+        block = usda_prim_block(contents, 'Cylinder_0')
         self.assertIsNotNone(block)
 
         colors = usda_vec3_array(block, 'color3f[] primvars:displayColor')
@@ -622,7 +713,7 @@ class TestExportingGeom(testing.PyMOLTestCase):
             ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 0.0, 0.0))
 
         counts = usda_int_array(
-            usda_prim_block(contents, 'Cone_0'), 'int[] faceVertexCounts')
+            usda_prim_block(contents, 'Cylinder_0'), 'int[] faceVertexCounts')
 
         # a tessellated cylinder follows the setting PyMOL uses for sticks
         self.assertEqual(counts.count(4), 40)
@@ -672,6 +763,10 @@ class TestExportingGeom(testing.PyMOLTestCase):
                                 'color3f[] primvars:displayColor']:
                 self.assertEqual(
                     usda_interpolation(block, declaration), 'vertex')
+
+            # the ray tracer flips the normal of a back face hit, so an open
+            # mesh must not be culled from behind
+            self.assertIn('uniform bool doubleSided = 1', block)
 
         # a tessellated solid has one opacity, a surface has one per vertex
         self.assertEqual(
