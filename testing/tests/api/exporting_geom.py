@@ -188,6 +188,31 @@ class TestExportingGeom(testing.PyMOLTestCase):
                                lengths[0] * lengths[1] * lengths[2],
                                places=4)
 
+    def testUSDAEllipsoidSheared(self):
+        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
+        cmd.show_as('ellipsoids')
+
+        # a near singular object matrix leaves the ellipsoid axes almost
+        # coplanar, which is ill conditioned without being exactly singular
+        cmd.transform_object('m1', [
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1e-7, 0.0,
+            0.0, 0.0, 0.0, 1.0])
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            contents = file_get_contents(filename)
+
+        matrices = usda_matrices(contents)
+        self.assertEqual(len(matrices), 2)
+
+        for matrix in matrices:
+            for length in matrix_axis_lengths(matrix):
+                self.assertGreater(length, 0.0)
+            # an orthogonal determinant proves the fallback frame was used
+            self.assertRightHanded(matrix)
+
     def testUSDAEllipsoidScale(self):
         cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
         cmd.show_as('ellipsoids')
@@ -363,6 +388,85 @@ class TestExportingGeom(testing.PyMOLTestCase):
         # only the lateral surface, no cap fans
         self.assertEqual(counts.count(3), 0)
         self.assertEqual(len(counts), counts.count(4))
+
+    def testUSDAConeMeshNormals(self):
+        contents = self.save_cone_usda(2.0, 1.0, (0.0, 0.0, 1.0))
+        block = usda_prim_block(contents, 'Cone_0')
+        normals = usda_vec3_array(block, 'normal3f[] normals')
+
+        # lateral and cap normals alike must be unit length
+        self.assertGreater(len(normals), 0)
+        for normal in normals:
+            self.assertAlmostEqual(
+                math.dist(normal, (0.0, 0.0, 0.0)), 1.0, places=4)
+
+    def testUSDAConePointedUncapped(self):
+        # UsdGeomCone is always closed at its base, so a cone which PyMOL
+        # draws open cannot use it even though it is pointed and one colored
+        contents = self.save_cone_usda(1.0, 0.0, (1.0, 0.0, 0.0), cap1=0.0)
+        self.assertNotIn('def Cone', contents)
+
+        block = usda_prim_block(contents, 'Cone_0')
+        points = usda_vec3_array(block, 'point3f[] points')
+
+        # the base center vertex only exists to fan out the cap
+        self.assertNotIn((0.0, 0.0, 0.0), points)
+
+    def testUSDAConePointedCapped(self):
+        contents = self.save_cone_usda(1.0, 0.0, (1.0, 0.0, 0.0), cap1=1.0)
+        self.assertIn('def Cone "Cone_0"', contents)
+
+    def save_custom_cylinders_usda(self, *specs):
+        from pymol import cgo
+
+        cmd.set('geometry_export_mode', 1)
+        obj = []
+        for v1, v2, cap1, cap2 in specs:
+            obj += [cgo.CUSTOM_CYLINDER, *v1, *v2, 0.5,
+                    1.0, 0.0, 0.0, 1.0, 0.0, 0.0, cap1, cap2]
+
+        cmd.load_cgo(obj, 'cylinders')
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            return file_get_contents(filename)
+
+    def testUSDACustomCylinderUncapped(self):
+        contents = self.save_custom_cylinders_usda(
+            ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 0.0, 0.0))
+
+        self.assertNotIn('def Cylinder', contents)
+
+        block = usda_prim_block(contents, 'Cone_0')
+        self.assertIsNotNone(block)
+
+        # only the lateral surface, both ends stay open
+        counts = usda_int_array(block, 'int[] faceVertexCounts')
+        self.assertEqual(counts.count(3), 0)
+        self.assertEqual(len(counts), counts.count(4))
+
+    def testUSDACustomCylinderJoint(self):
+        # PyMOL leaves the joint between two abutting cylinders uncapped, and
+        # the neighbour seals it, so both keep the compact analytic prim
+        contents = self.save_custom_cylinders_usda(
+            ((0.0, 0.0, 0.0), (0.0, 0.0, 2.5), 1.0, 0.0),
+            ((0.0, 0.0, 2.5), (0.0, 0.0, 5.0), 0.0, 1.0))
+
+        self.assertEqual(contents.count('def Cylinder'), 2)
+        self.assertNotIn('def Mesh', contents)
+
+    def testUSDASticksStayAnalytic(self):
+        # half bonds meet with an uncapped joint, which must not turn the
+        # most common representation into a pile of meshes
+        cmd.fragment('gly')
+        cmd.show_as('sticks')
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            contents = file_get_contents(filename)
+
+        self.assertIn('def Cylinder', contents)
+        self.assertNotIn('def Mesh', contents)
 
     def testUSDZTimeout(self):
         from pymol import exporting
