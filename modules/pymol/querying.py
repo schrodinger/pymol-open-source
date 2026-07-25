@@ -661,44 +661,149 @@ PYMOL API
             r = _cmd.get_collada(_self._COb,int(version))
         return r
 
+    def _get_glb_bytes(_self):
+        '''
+        Return the current scene as GLB bytes. Raises CmdException if PyMOL
+        was built without native glTF/GLB support, or if the scene holds no
+        exportable geometry.
+        '''
+        try:
+            get_glb_ = _cmd.get_glb
+        except AttributeError:
+            raise pymol.CmdException(
+                'not compiled with native glTF/GLB export support '
+                '(rebuild with --json=true and the nlohmann-json headers '
+                'installed)') from None
+
+        with _self.lockcm:
+            r = get_glb_(_self._COb)
+
+        if r is None:
+            raise pymol.CmdException(
+                'no exportable geometry in the current scene',
+                'Save-Error')
+
+        return r
+
+    def get_glb(filename, quiet=1, *, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_glb" saves a GLB (binary glTF 2.0) file representing the content
+    currently displayed.
+
+USAGE
+
+    save filename.glb
+
+ARGUMENTS
+
+    filename = string: output file path
+
+    quiet = 0 or 1: toggle verbosity {default: 1}
+
+PYMOL API
+
+    cmd.get_glb(string filename, int quiet=1)
+
+NOTES
+
+    Requires PyMOL to be compiled with native glTF support (--json=true),
+    reported as the "gltf" capability by cmd.get_capabilities().
+
+    Text labels and ellipsoid primitives are not exported yet, they are
+    skipped with a warning.
+
+SEE ALSO
+
+    get_gltf, get_collada
+        '''
+        r = _get_glb_bytes(_self)
+
+        with open(filename, 'wb') as handle:
+            handle.write(r)
+
+        if not quiet:
+            print(' Save: wrote "' + filename + '".')
+
+        return DEFAULT_SUCCESS
+
     def get_gltf(filename, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
 
-    "get_gltf" saves a gltf file representing the content
-    currently displayed.
+    "get_gltf" saves a glTF 2.0 file representing the content currently
+    displayed. Geometry data is embedded in the JSON document, so the result
+    is a single portable file.
+
+USAGE
+
+    save filename.gltf
+
+ARGUMENTS
+
+    filename = string: output file path
+
+    quiet = 0 or 1: toggle verbosity {default: 1}
 
 PYMOL API
 
-    cmd.get_gltf()
+    cmd.get_gltf(string filename, int quiet=1)
 
+NOTES
+
+    Requires PyMOL to be compiled with native glTF support (--json=true),
+    reported as the "gltf" capability by cmd.get_capabilities(). The
+    external collada2gltf converter is no longer used.
+
+    Text labels and ellipsoid primitives are not exported yet, they are
+    skipped with a warning.
+
+SEE ALSO
+
+    get_glb, get_collada
         '''
-        import shutil
-        exe = shutil.which('collada2gltf') or shutil.which('COLLADA2GLTF-bin')
-        if exe is None:
-            raise pymol.CmdException('could not find collada2gltf')
+        import base64
+        import json
+        import struct
 
-        # https://github.com/schrodinger/pymol-open-source/issues/107
-        _self.set('collada_geometry_mode', 1, quiet=quiet)
+        glb = _get_glb_bytes(_self)
 
-        r = _self.get_collada()
+        try:
+            magic, version, total_length = struct.unpack_from('<III', glb, 0)
+            if magic != 0x46546C67 or version != 2 or total_length != len(glb):
+                raise ValueError('invalid GLB header')
 
-        # write collada file
-        with open(filename, 'w') as handle:
-            handle.write(r)
+            json_length, json_type = struct.unpack_from('<II', glb, 12)
+            if json_type != 0x4E4F534A:
+                raise ValueError('missing GLB JSON chunk')
 
-        import subprocess
+            json_start = 20
+            json_end = json_start + json_length
+            document = json.loads(glb[json_start:json_end])
 
-        result = subprocess.call([exe, '-i', filename, '-o', filename])
-                # convert collada file to gltf by using collada2gltf binary
+            binary_length, binary_type = struct.unpack_from('<II', glb, json_end)
+            if binary_type != 0x004E4942:
+                raise ValueError('missing GLB binary chunk')
+
+            binary_start = json_end + 8
+            binary = glb[binary_start:binary_start + binary_length]
+            buffer = document['buffers'][0]
+            binary = binary[:buffer['byteLength']]
+            buffer['uri'] = (
+                'data:application/octet-stream;base64,' +
+                base64.b64encode(binary).decode('ascii'))
+        except (KeyError, TypeError, ValueError, struct.error) as ex:
+            raise pymol.CmdException(
+                'could not convert native GLB data to glTF: %s' % ex) from ex
+
+        with open(filename, 'w', encoding='utf-8') as handle:
+            json.dump(document, handle, separators=(',', ':'))
 
         if not quiet:
-            if result == 0:
-                print(' Save: wrote "' + filename + '".')
-            else:
-                print(' Save-Error: no file written')
+            print(' Save: wrote "' + filename + '".')
 
-        return result
+        return DEFAULT_SUCCESS
 
     def count_states(selection="(all)", quiet=1, *, _self=cmd):
         '''

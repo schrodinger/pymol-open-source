@@ -194,6 +194,7 @@ class options:
     osx_frameworks = True
     jobs = int(os.getenv("JOBS", 0))
     libxml = True
+    json = False
     glut = False
     use_msgpackc = "guess"
     testing = False
@@ -223,6 +224,11 @@ parser.add_argument(
     "--libxml",
     type=str2bool,
     help="skip libxml2 dependency, disables COLLADA export",
+)
+parser.add_argument(
+    "--json",
+    type=str2bool,
+    help="add nlohmann-json dependency, enables glTF 2.0 and GLB export",
 )
 parser.add_argument("--use-openmp", type=str2bool, help="Use OpenMP")
 parser.add_argument(
@@ -632,6 +638,19 @@ if options.libxml:
     # COLLADA support
     def_macros += [("_HAVE_LIBXML", None)]
     libs += ["xml2"]
+
+if options.json:
+    # native glTF 2.0 / GLB support (header-only dependency)
+    for prefix in prefix_path:
+        if os.path.exists(os.path.join(prefix, "include", "nlohmann", "json.hpp")):
+            break
+    else:
+        raise LookupError(
+            "nlohmann-json headers not found, required by --json=true"
+            " (glTF 2.0 and GLB export)."
+            f' PREFIX_PATH={":".join(prefix_path)}'
+        )
+    def_macros += [("_HAVE_JSON", None)]
 
 if options.use_msgpackc == "guess":
     options.use_msgpackc = guess_msgpackc()

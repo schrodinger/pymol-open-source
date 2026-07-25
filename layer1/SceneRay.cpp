@@ -10,6 +10,7 @@
 #include"Color.h"
 #include"P.h"
 #include "Feedback.h"
+#include "GLTF.h"
 
 static double accumTiming = 0.0;
 
@@ -487,6 +488,17 @@ bool SceneRay(PyMOLGlobals * G,
                             I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov);
         }
         break;
+
+#ifdef _HAVE_JSON
+      case cSceneRay_MODE_GLB:  /* mode 9 is GLB (glTF 2.0 binary) */
+        {
+          *charVLA_ptr = VLACalloc(char, 100000);
+          RayRenderGLB(ray, ray_width, ray_height, charVLA_ptr,
+              I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back,
+              fov);
+        }
+        break;
+#endif
 
       }
       RayFree(ray);

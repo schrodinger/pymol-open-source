@@ -1,7 +1,17 @@
+import base64
+import json
 import os
+import struct
+import tempfile
+
+import pytest
+
+import pymol
 from pymol import cmd
 from pymol import test_utils
-import tempfile
+
+requires_gltf = test_utils.requires_capability(
+    "gltf", "Requires PyMOL built with --json=true (native glTF/GLB export)")
 
 
 @test_utils.requires_version("3.2")
@@ -56,3 +66,299 @@ def test_bcif_export_multi_object():
     finally:
         if os.path.exists(bcif_file):
             os.unlink(bcif_file)
+
+
+def _srgb_to_linear(c):
+    """Reference implementation of the glTF sRGB to linear transfer."""
+    if c <= 0.0:
+        return 0.0
+    if c >= 1.0:
+        return 1.0
+    if c <= 0.04045:
+        return c / 12.92
+    return ((c + 0.055) / 1.055) ** 2.4
+
+
+def _read_vertex_colors(gltf, bin_data, mesh_index=0):
+    """Return a mesh's COLOR_0 values as a list of (r, g, b) tuples."""
+    prim = gltf['meshes'][mesh_index]['primitives'][0]
+    color_acc = gltf['accessors'][prim['attributes']['COLOR_0']]
+    color_view = gltf['bufferViews'][color_acc['bufferView']]
+    offset = color_view.get('byteOffset', 0) + color_acc.get('byteOffset', 0)
+    values = struct.unpack_from(
+        '<%df' % (color_acc['count'] * 3), bin_data, offset)
+    return list(zip(values[0::3], values[1::3], values[2::3]))
+
+
+def _read_vertex_normals(gltf, bin_data, mesh_index=0):
+    """Return a mesh's NORMAL values as a list of (x, y, z) tuples."""
+    prim = gltf['meshes'][mesh_index]['primitives'][0]
+    normal_acc = gltf['accessors'][prim['attributes']['NORMAL']]
+    normal_view = gltf['bufferViews'][normal_acc['bufferView']]
+    offset = normal_view.get('byteOffset', 0) + normal_acc.get('byteOffset', 0)
+    values = struct.unpack_from(
+        '<%df' % (normal_acc['count'] * 3), bin_data, offset)
+    return list(zip(values[0::3], values[1::3], values[2::3]))
+
+
+def _parse_glb(filepath):
+    """Parse a GLB file and return (gltf_json, bin_data)."""
+    with open(filepath, 'rb') as f:
+        data = f.read()
+    magic, version, length = struct.unpack_from('<III', data, 0)
+    assert magic == 0x46546C67, f"Bad GLB magic: {hex(magic)}"
+    assert version == 2
+    assert length == len(data)
+
+    json_len, json_type = struct.unpack_from('<II', data, 12)
+    assert json_type == 0x4E4F534A  # "JSON"
+    gltf = json.loads(data[20:20 + json_len])
+
+    bin_offset = 20 + json_len
+    bin_len, bin_type = struct.unpack_from('<II', data, bin_offset)
+    assert bin_type == 0x004E4942  # "BIN\0"
+    bin_data = data[bin_offset + 8:bin_offset + 8 + bin_len]
+
+    return gltf, bin_data
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
+def test_glb_export_sticks():
+    """Test GLB export with stick representation"""
+    cmd.fragment("ala")
+    cmd.show_as("sticks")
+
+    with tempfile.NamedTemporaryFile(suffix='.glb', delete=False) as f:
+        glb_file = f.name
+
+    try:
+        cmd.save(glb_file)
+        assert os.path.exists(glb_file)
+        assert os.path.getsize(glb_file) > 0
+
+        gltf, bin_data = _parse_glb(glb_file)
+
+        # Validate glTF structure
+        assert gltf['asset']['version'] == '2.0'
+        assert 'PyMOL' in gltf['asset']['generator']
+        assert len(gltf['scenes']) == 1
+        assert len(gltf['meshes']) >= 1
+        assert len(gltf['materials']) >= 1
+        assert len(gltf['buffers']) == 1
+        assert len(bin_data) > 0
+
+        # PyMOL renders without back-face culling
+        assert all(mat['doubleSided'] for mat in gltf['materials'])
+
+        # Check mesh has required attributes
+        prim = gltf['meshes'][0]['primitives'][0]
+        assert 'POSITION' in prim['attributes']
+        assert 'NORMAL' in prim['attributes']
+        assert 'COLOR_0' in prim['attributes']
+        assert 'indices' in prim
+        assert prim['mode'] == 4  # TRIANGLES
+
+        # Check accessor types
+        pos_acc = gltf['accessors'][prim['attributes']['POSITION']]
+        assert pos_acc['type'] == 'VEC3'
+        assert pos_acc['componentType'] == 5126  # FLOAT
+        assert pos_acc['count'] > 0
+        assert 'min' in pos_acc
+        assert 'max' in pos_acc
+    finally:
+        if os.path.exists(glb_file):
+            os.unlink(glb_file)
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
+def test_gltf_export_sticks():
+    """Test native, self-contained glTF 2.0 export"""
+    cmd.fragment("ala")
+    cmd.show_as("sticks")
+
+    with tempfile.NamedTemporaryFile(suffix='.gltf', delete=False) as f:
+        gltf_file = f.name
+
+    try:
+        cmd.save(gltf_file)
+
+        with open(gltf_file, encoding='utf-8') as handle:
+            gltf = json.load(handle)
+
+        assert gltf['asset']['version'] == '2.0'
+        assert len(gltf['meshes']) >= 1
+
+        buffer = gltf['buffers'][0]
+        prefix = 'data:application/octet-stream;base64,'
+        assert buffer['uri'].startswith(prefix)
+        binary = base64.b64decode(buffer['uri'][len(prefix):])
+        assert len(binary) == buffer['byteLength']
+    finally:
+        if os.path.exists(gltf_file):
+            os.unlink(gltf_file)
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
+def test_glb_export_spheres():
+    """Test GLB export API with sphere representation and vertex colors"""
+    cmd.pseudoatom("atoms", pos=[0.0, 0.0, 0.0], color="red")
+    cmd.pseudoatom("atoms", pos=[4.0, 0.0, 0.0], color="blue")
+    cmd.show_as("spheres")
+
+    with tempfile.NamedTemporaryFile(suffix='.glb', delete=False) as f:
+        glb_file = f.name
+
+    try:
+        cmd.get_glb(glb_file)
+        assert os.path.getsize(glb_file) > 0
+
+        gltf, bin_data = _parse_glb(glb_file)
+        assert len(gltf['meshes']) >= 1
+
+        prim = gltf['meshes'][0]['primitives'][0]
+        pos_acc = gltf['accessors'][prim['attributes']['POSITION']]
+        assert pos_acc['count'] > 0
+
+        colors = _read_vertex_colors(gltf, bin_data)
+        assert any(r > 0.99 and g < 0.01 and b < 0.01 for r, g, b in colors)
+        assert any(r < 0.01 and g < 0.01 and b > 0.99 for r, g, b in colors)
+    finally:
+        if os.path.exists(glb_file):
+            os.unlink(glb_file)
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
+def test_glb_export_midtone_color_is_linear():
+    """Mid-tone colors are converted from PyMOL display space to linear"""
+    cmd.pseudoatom("atoms", pos=[0.0, 0.0, 0.0], color="grey50")
+    cmd.show_as("spheres")
+
+    display = cmd.get_color_tuple("grey50")
+    expected = tuple(_srgb_to_linear(c) for c in display)
+
+    # only meaningful if the color actually is a mid-tone
+    assert all(0.01 < c < 0.99 for c in display)
+    assert all(abs(e - d) > 0.05 for e, d in zip(expected, display))
+
+    with tempfile.NamedTemporaryFile(suffix='.glb', delete=False) as f:
+        glb_file = f.name
+
+    try:
+        cmd.save(glb_file)
+        gltf, bin_data = _parse_glb(glb_file)
+
+        colors = _read_vertex_colors(gltf, bin_data)
+        assert colors
+        for color in colors:
+            assert all(abs(c - e) < 1e-5 for c, e in zip(color, expected)), \
+                f"{color} != {expected}"
+    finally:
+        if os.path.exists(glb_file):
+            os.unlink(glb_file)
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
+def test_glb_export_surface():
+    """Test GLB export with surface representation"""
+    cmd.fragment("gly")
+    cmd.show_as("surface")
+
+    with tempfile.NamedTemporaryFile(suffix='.glb', delete=False) as f:
+        glb_file = f.name
+
+    try:
+        cmd.save(glb_file)
+        gltf, _ = _parse_glb(glb_file)
+        prim = gltf['meshes'][0]['primitives'][0]
+        pos_acc = gltf['accessors'][prim['attributes']['POSITION']]
+        assert pos_acc['count'] > 0
+    finally:
+        if os.path.exists(glb_file):
+            os.unlink(glb_file)
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
+def test_glb_export_cartoon():
+    """Test GLB export with cartoon representation (needs enough residues)"""
+    cmd.load(test_utils.datafile('1bna.cif'))
+    cmd.show_as("cartoon")
+
+    with tempfile.NamedTemporaryFile(suffix='.glb', delete=False) as f:
+        glb_file = f.name
+
+    try:
+        cmd.save(glb_file)
+        assert os.path.getsize(glb_file) > 0
+
+        gltf, bin_data = _parse_glb(glb_file)
+        assert len(gltf['meshes']) >= 1
+
+        prim = gltf['meshes'][0]['primitives'][0]
+        pos_acc = gltf['accessors'][prim['attributes']['POSITION']]
+        assert pos_acc['count'] > 100  # cartoon should have many vertices
+
+        normals = _read_vertex_normals(gltf, bin_data)
+        assert len(normals) == pos_acc['count']
+        for normal in normals:
+            length_squared = sum(component * component for component in normal)
+            assert abs(length_squared - 1.0) < 1e-5, normal
+    finally:
+        if os.path.exists(glb_file):
+            os.unlink(glb_file)
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
+def test_glb_export_transparent():
+    """Test GLB export with transparency creates BLEND material"""
+    cmd.fragment("ala")
+    cmd.show_as("spheres")
+    cmd.set("sphere_transparency", 0.5)
+
+    with tempfile.NamedTemporaryFile(suffix='.glb', delete=False) as f:
+        glb_file = f.name
+
+    try:
+        cmd.save(glb_file)
+        assert os.path.getsize(glb_file) > 0
+
+        gltf, _ = _parse_glb(glb_file)
+
+        # Should have a material with BLEND alpha mode
+        has_blend = any(
+            mat.get('alphaMode') == 'BLEND'
+            for mat in gltf['materials']
+        )
+        assert has_blend, "Transparent geometry should produce BLEND material"
+    finally:
+        if os.path.exists(glb_file):
+            os.unlink(glb_file)
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
+@pytest.mark.parametrize("suffix", [".glb", ".gltf"])
+def test_glb_export_empty(suffix):
+    """Export with no exportable geometry raises and writes no file"""
+    cmd.fragment("ala")
+    cmd.show_as("cartoon")  # too few residues for cartoon
+
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
+        out_file = f.name
+
+    # Remove the temp file so we can check if save creates one
+    os.unlink(out_file)
+
+    try:
+        with pytest.raises(pymol.CmdException):
+            cmd.save(out_file)
+        assert not os.path.exists(out_file)
+    finally:
+        if os.path.exists(out_file):
+            os.unlink(out_file)
