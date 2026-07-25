@@ -16,6 +16,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <initializer_list>
 #include <iomanip>
 #include <ostream>
 #include <streambuf>
@@ -27,6 +28,9 @@ constexpr float USD_EPSILON = 1.e-6F;
 
 /// Extent of a collapsed ellipsoid semi-axis, relative to the largest one
 constexpr float USD_DEGENERATE_AXIS_SCALE = 1.e-3F;
+
+/// Radial segments of a cone which cannot use the analytic UsdGeomCone
+constexpr int USD_CONE_SEGMENTS = 24;
 
 /**
  * Stream buffer which appends to a char VLA, so that the scene is only ever
@@ -224,6 +228,190 @@ void UsdWriteAnalyticSolid(std::ostream& out, int& index, const char* schema,
       << height * 0.5F << ")]\n";
   UsdWriteMaterialBinding(out, color, transparency);
   out << "    }\n";
+}
+
+/**
+ * Write a tessellated cone or truncated cone (frustum).
+ *
+ * UsdGeomCone always tapers to a point and takes a single color, so a cone
+ * with a second radius or with two endpoint colors needs an explicit mesh.
+ * Colors are interpolated along the axis, matching the ray tracer.
+ *
+ * @param start center of the r1 end
+ * @param end center of the r2 end
+ * @param cap1 cap of the r1 end, the ray tracer only draws flat caps
+ * @param cap2 cap of the r2 end
+ */
+void UsdWriteConeMesh(std::ostream& out, int& index, const float* start,
+    const float* end, float r1, float r2, const float* c1, const float* c2,
+    cCylCap cap1, cCylCap cap2, float transparency)
+{
+  float axis[3];
+  float side[3];
+  float up[3];
+
+  subtract3f(end, start, axis);
+  const float height = length3f(axis);
+
+  if (!(height > USD_EPSILON) || !(r1 > USD_EPSILON)) {
+    return;
+  }
+
+  get_system1f3f(axis, side, up);
+
+  const bool pointed = !(r2 > USD_EPSILON);
+  float radial[3 * USD_CONE_SEGMENTS];
+  float slope[3 * USD_CONE_SEGMENTS];
+
+  for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
+    const auto angle =
+        static_cast<float>(2.0 * PI * k / USD_CONE_SEGMENTS);
+    const float cosine = std::cos(angle);
+    const float sine = std::sin(angle);
+
+    for (int i = 0; i < 3; ++i) {
+      radial[3 * k + i] = side[i] * cosine + up[i] * sine;
+      slope[3 * k + i] = radial[3 * k + i] * height + axis[i] * (r1 - r2);
+    }
+
+    normalize3f(slope + 3 * k);
+  }
+
+  std::vector<float> points;
+  std::vector<float> normals;
+  std::vector<float> colors;
+  std::vector<int> counts;
+  std::vector<int> indices;
+
+  auto add_vertex = [&](const float* point, const float* normal,
+                        const float* color) {
+    points.insert(points.end(), point, point + 3);
+    normals.insert(normals.end(), normal, normal + 3);
+    colors.insert(colors.end(), color, color + 3);
+  };
+
+  auto add_face = [&](std::initializer_list<int> face) {
+    counts.push_back(static_cast<int>(face.size()));
+    indices.insert(indices.end(), face.begin(), face.end());
+  };
+
+  auto add_ring = [&](const float* center, float radius, const float* normal,
+                      const float* color) {
+    for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
+      float point[3];
+      scale3f(radial + 3 * k, radius, point);
+      add3f(center, point, point);
+      add_vertex(point, normal ? normal : slope + 3 * k, color);
+    }
+  };
+
+  add_ring(start, r1, nullptr, c1);
+  add_ring(end, r2, nullptr, c2);
+
+  // Faces wind counter-clockwise as seen from outside, so that the right
+  // handed face normals agree with the authored ones.
+  for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
+    const int next = (k + 1) % USD_CONE_SEGMENTS;
+    if (pointed) {
+      add_face({k, next, USD_CONE_SEGMENTS + k});
+    } else {
+      add_face({k, next, USD_CONE_SEGMENTS + next, USD_CONE_SEGMENTS + k});
+    }
+  }
+
+  if (cap1 == cCylCapFlat) {
+    const auto base = static_cast<int>(points.size() / 3);
+    float normal[3];
+
+    invert3f3f(axis, normal);
+    add_vertex(start, normal, c1);
+    add_ring(start, r1, normal, c1);
+
+    for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
+      const int next = (k + 1) % USD_CONE_SEGMENTS;
+      add_face({base, base + 1 + next, base + 1 + k});
+    }
+  }
+
+  if (cap2 == cCylCapFlat && !pointed) {
+    const auto base = static_cast<int>(points.size() / 3);
+
+    add_vertex(end, axis, c2);
+    add_ring(end, r2, axis, c2);
+
+    for (int k = 0; k < USD_CONE_SEGMENTS; ++k) {
+      const int next = (k + 1) % USD_CONE_SEGMENTS;
+      add_face({base, base + 1 + k, base + 1 + next});
+    }
+  }
+
+  float extent_min[3];
+  float extent_max[3];
+
+  copy3f(points.data(), extent_min);
+  copy3f(points.data(), extent_max);
+
+  for (std::size_t i = 3; i < points.size(); i += 3) {
+    for (int axis_index = 0; axis_index < 3; ++axis_index) {
+      extent_min[axis_index] =
+          std::min(extent_min[axis_index], points[i + axis_index]);
+      extent_max[axis_index] =
+          std::max(extent_max[axis_index], points[i + axis_index]);
+    }
+  }
+
+  out << "\n"
+      << "    def Mesh \"Cone_" << index++ << "\" (\n"
+      << "        prepend apiSchemas = [\"MaterialBindingAPI\"]\n"
+      << "    )\n"
+      << "    {\n"
+      << "        float3[] extent = [";
+  UsdWriteVec3(out, extent_min);
+  out << ", ";
+  UsdWriteVec3(out, extent_max);
+  out << "]\n"
+      << "        int[] faceVertexCounts = [";
+  for (std::size_t i = 0; i < counts.size(); ++i) {
+    out << (i ? ", " : "") << counts[i];
+  }
+  out << "]\n"
+      << "        int[] faceVertexIndices = [";
+  for (std::size_t i = 0; i < indices.size(); ++i) {
+    out << (i ? ", " : "") << indices[i];
+  }
+  out << "]\n"
+      << "        point3f[] points = [\n";
+  for (std::size_t i = 0; i < points.size(); i += 3) {
+    out << "            ";
+    UsdWriteVec3(out, points.data() + i);
+    out << ",\n";
+  }
+  out << "        ]\n"
+      << "        normal3f[] normals = [\n";
+  for (std::size_t i = 0; i < normals.size(); i += 3) {
+    out << "            ";
+    UsdWriteVec3(out, normals.data() + i);
+    out << ",\n";
+  }
+  out << "        ] (\n"
+      << "            interpolation = \"vertex\"\n"
+      << "        )\n"
+      << "        color3f[] primvars:displayColor = [\n";
+  for (std::size_t i = 0; i < colors.size(); i += 3) {
+    out << "            ";
+    UsdWriteColor(out, colors.data() + i);
+    out << ",\n";
+  }
+  out << "        ] (\n"
+      << "            interpolation = \"vertex\"\n"
+      << "        )\n"
+      << "        float[] primvars:displayOpacity = ["
+      << UsdClamp(1.F - transparency) << "] (\n"
+      << "            interpolation = \"constant\"\n"
+      << "        )\n"
+      << "        rel material:binding = </PyMOLScene/Material>\n"
+      << "        uniform token subdivisionScheme = \"none\"\n"
+      << "    }\n";
 }
 
 /**
@@ -604,14 +792,13 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
       // CRay::cone3fv is the only producer of cPrimCone and orders the radii
       assert(primitive.r1 >= primitive.r2);
 
-      if (primitive.r2 <= USD_EPSILON) {
+      if (primitive.r2 <= USD_EPSILON &&
+          UsdColorsEqual(primitive.c1, primitive.c2)) {
         UsdWriteAnalyticSolid(out, index, "Cone", vertex, end, primitive.r1,
             primitive.c1, primitive.trans);
       } else {
-        // UsdGeomCone has a point at one end. Preserve a non-degenerate
-        // frustum as a cylinder until a mesh representation is added.
-        UsdWriteAnalyticSolid(out, index, "Cylinder", vertex, end,
-            (primitive.r1 + primitive.r2) * 0.5F, primitive.c1,
+        UsdWriteConeMesh(out, index, vertex, end, primitive.r1, primitive.r2,
+            primitive.c1, primitive.c2, primitive.cap1, primitive.cap2,
             primitive.trans);
       }
       break;

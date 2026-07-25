@@ -1027,8 +1027,24 @@ SEE ALSO
                     'OpenUSD conversion failed' +
                     (': ' + detail if detail else ''))
 
-            with open(usdc_filename, 'rb') as handle:
-                return handle.read()
+            # A zero exit status is not proof that a binary Crate layer was
+            # written, e.g. an older usdcat may not know the "-o" option.
+            try:
+                with open(usdc_filename, 'rb') as handle:
+                    usdc = handle.read()
+            except OSError as ex:
+                raise pymol.CmdException(
+                    'OpenUSD conversion wrote no output file: %s' % ex)
+
+            if not usdc:
+                raise pymol.CmdException(
+                    'OpenUSD conversion wrote an empty output file')
+
+            if not usdc.startswith(b'PXR-USDC'):
+                raise pymol.CmdException(
+                    'OpenUSD conversion did not produce a binary USDC layer')
+
+            return usdc
 
     def _write_usdz_package(filename, member_name, contents):
         '''
@@ -1037,6 +1053,14 @@ SEE ALSO
         '''
         import struct
         import zipfile
+
+        # A ZIP64 local header carries an additional extra field, which would
+        # shift the payload away from the computed alignment boundary. This is
+        # the same condition which makes zipfile pick a ZIP64 header.
+        if len(contents) * 1.05 > zipfile.ZIP64_LIMIT:
+            raise pymol.CmdException(
+                'USDZ layer of %d bytes is too large for the aligned, '
+                'uncompressed package format' % len(contents))
 
         member_name_bytes = member_name.encode('utf-8')
         local_header_size = 30 + len(member_name_bytes)
@@ -1058,9 +1082,15 @@ SEE ALSO
                 struct.pack('<HH', 0x1986, payload_size) +
                 b'\0' * payload_size)
 
-        with zipfile.ZipFile(
-                filename, 'w', compression=zipfile.ZIP_STORED) as archive:
-            archive.writestr(info, contents)
+        try:
+            with zipfile.ZipFile(filename, 'w',
+                                 compression=zipfile.ZIP_STORED,
+                                 allowZip64=False) as archive:
+                archive.writestr(info, contents)
+        except zipfile.LargeZipFile as ex:
+            raise pymol.CmdException(
+                'USDZ package would require ZIP64, which breaks the '
+                '64-byte alignment: %s' % ex)
 
     def save_usdz(filename, quiet=1, *, _self=cmd):
         '''

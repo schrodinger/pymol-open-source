@@ -69,6 +69,31 @@ def matrix_axis_lengths(matrix):
     return [math.sqrt(sum(value * value for value in row[:3]))
             for row in matrix[:3]]
 
+def usda_prim_block(contents, name):
+    '''
+    Body of the prim with the given name, which must not have children
+    '''
+    match = re.search(
+        r'def \w+ "' + re.escape(name) + r'"[^{]*\{(.*?)\n    \}', contents,
+        re.DOTALL)
+    return match and match.group(1)
+
+def usda_vec3_array(block, declaration):
+    match = re.search(
+        re.escape(declaration) + r'\s*=\s*\[(.*?)\]', block, re.DOTALL)
+    return [tuple(float(value) for value in item.split(','))
+            for item in re.findall(r'\(([^)]*)\)', match.group(1))]
+
+def usda_int_array(block, declaration):
+    match = re.search(re.escape(declaration) + r'\s*=\s*\[([^\]]*)\]', block)
+    return [int(value) for value in match.group(1).split(',')]
+
+def ring_center_and_radius(points):
+    center = [sum(point[axis] for point in points) / len(points)
+              for axis in range(3)]
+    radii = [math.dist(point, center) for point in points]
+    return center, radii
+
 class TestExportingGeom(testing.PyMOLTestCase):
 
     def testVRML(self):
@@ -257,6 +282,88 @@ class TestExportingGeom(testing.PyMOLTestCase):
         for schema, name in solids:
             self.assertEqual(schema, name)
 
+    def save_cone_usda(self, r1, r2, c2, cap1=1.0, cap2=1.0):
+        from pymol import cgo
+
+        cmd.set('geometry_export_mode', 1)
+        cmd.load_cgo([
+            cgo.CONE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, r1, r2,
+            1.0, 0.0, 0.0, *c2, cap1, cap2,
+        ], 'cone')
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            return file_get_contents(filename)
+
+    def testUSDAConeTwoColor(self):
+        # a pointed cone with two endpoint colors cannot use UsdGeomCone,
+        # which carries a single color
+        contents = self.save_cone_usda(1.0, 0.0, (0.0, 0.0, 1.0))
+
+        self.assertNotIn('def Cone', contents)
+
+        block = usda_prim_block(contents, 'Cone_0')
+        self.assertIsNotNone(block)
+
+        colors = usda_vec3_array(block, 'color3f[] primvars:displayColor')
+        points = usda_vec3_array(block, 'point3f[] points')
+        self.assertEqual(len(colors), len(points))
+
+        # the wide end keeps c1, the apex keeps c2
+        by_z = {}
+        for point, color in zip(points, colors):
+            by_z.setdefault(round(point[2], 3), set()).add(color)
+
+        levels = sorted(by_z)
+        self.assertEqual(len(levels), 2)
+        self.assertAlmostEqual(levels[1] - levels[0], 5.0, places=4)
+        self.assertEqual(by_z[levels[0]], {(1.0, 0.0, 0.0)})
+        self.assertEqual(by_z[levels[1]], {(0.0, 0.0, 1.0)})
+
+    def testUSDAConeFrustum(self):
+        # a truncated cone must keep both radii, not become one cylinder
+        contents = self.save_cone_usda(2.0, 1.0, (1.0, 0.0, 0.0))
+
+        self.assertNotIn('def Cylinder', contents)
+        self.assertNotIn('def Cone', contents)
+
+        block = usda_prim_block(contents, 'Cone_0')
+        self.assertIsNotNone(block)
+
+        points = usda_vec3_array(block, 'point3f[] points')
+        counts = usda_int_array(block, 'int[] faceVertexCounts')
+        indices = usda_int_array(block, 'int[] faceVertexIndices')
+
+        self.assertEqual(len(indices), sum(counts))
+        self.assertLess(max(indices), len(points))
+
+        segments = counts.count(4)
+        self.assertGreater(segments, 8)
+
+        # both flat caps are triangle fans over the same segment count
+        self.assertEqual(counts.count(3), 2 * segments)
+
+        centers = []
+        for offset, radius in [(0, 2.0), (segments, 1.0)]:
+            center, radii = ring_center_and_radius(
+                points[offset:offset + segments])
+            centers.append(center)
+            for value in radii:
+                self.assertAlmostEqual(value, radius, places=4)
+
+        self.assertAlmostEqual(math.dist(*centers), 5.0, places=4)
+
+    def testUSDAConeUncapped(self):
+        contents = self.save_cone_usda(
+            2.0, 1.0, (1.0, 0.0, 0.0), cap1=0.0, cap2=0.0)
+
+        block = usda_prim_block(contents, 'Cone_0')
+        counts = usda_int_array(block, 'int[] faceVertexCounts')
+
+        # only the lateral surface, no cap fans
+        self.assertEqual(counts.count(3), 0)
+        self.assertEqual(len(counts), counts.count(4))
+
     def testUSDZTimeout(self):
         from pymol import exporting
 
@@ -270,6 +377,72 @@ class TestExportingGeom(testing.PyMOLTestCase):
                 exporting._convert_usda_to_usdc('#usda 1.0\n', timeout=0.25)
 
         self.assertIn('timed out', str(caught.exception))
+
+    def convert_with_fake_usdcat(self, output):
+        '''
+        Run the usdcat conversion against a stub which exits successfully and
+        writes the given bytes, or nothing at all if output is None
+        '''
+        from pymol import exporting
+
+        completed = subprocess.CompletedProcess([], 0, stdout='', stderr='')
+
+        def fake_run(args, **kwargs):
+            if output is not None:
+                with open(args[-1], 'wb') as handle:
+                    handle.write(output)
+            return completed
+
+        with unittest.mock.patch.object(
+                exporting, '_find_usdcat', lambda: 'usdcat'), \
+                unittest.mock.patch.object(
+                    subprocess, 'run', side_effect=fake_run):
+            return exporting._convert_usda_to_usdc('#usda 1.0\n')
+
+    def testUSDZConversionOutput(self):
+        # a zero exit status alone must not be trusted
+        for output, expected in [
+                (None, 'no output file'),
+                (b'', 'empty'),
+                (b'#usda 1.0\n', 'binary USDC')]:
+            with self.assertRaises(pymol.CmdException) as caught:
+                self.convert_with_fake_usdcat(output)
+            self.assertIn(expected, str(caught.exception))
+
+        usdc = b'PXR-USDC' + b'\0' * 8
+        self.assertEqual(self.convert_with_fake_usdcat(usdc), usdc)
+
+    def testUSDZPackageAlignment(self):
+        from pymol import exporting
+
+        contents = b'PXR-USDC' + b'\0' * 120
+
+        with testing.mktemp('.usdz') as filename:
+            exporting._write_usdz_package(filename, 'scene.usdc', contents)
+
+            with zipfile.ZipFile(filename) as archive:
+                info = archive.getinfo('scene.usdc')
+                self.assertEqual(archive.read('scene.usdc'), contents)
+
+            with open(filename, 'rb') as handle:
+                handle.seek(info.header_offset)
+                header = struct.unpack('<IHHHHHIIIHH', handle.read(30))
+
+            data_offset = info.header_offset + 30 + header[-2] + header[-1]
+            self.assertEqual(data_offset % 64, 0)
+
+    def testUSDZPackageTooLarge(self):
+        from pymol import exporting
+
+        # a ZIP64 local header would carry a second extra field and shift the
+        # payload off the 64-byte boundary
+        with testing.mktemp('.usdz') as filename:
+            with unittest.mock.patch.object(zipfile, 'ZIP64_LIMIT', 16):
+                with self.assertRaises(pymol.CmdException) as caught:
+                    exporting._write_usdz_package(
+                        filename, 'scene.usdc', b'x' * 64)
+
+        self.assertIn('too large', str(caught.exception))
 
     def testUSDZ(self):
         if shutil.which('usdcat') is None:
