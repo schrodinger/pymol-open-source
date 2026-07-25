@@ -4,6 +4,9 @@ import os
 import struct
 import tempfile
 
+import pytest
+
+import pymol
 from pymol import cmd
 from pymol import test_utils
 
@@ -340,16 +343,22 @@ def test_glb_export_transparent():
 
 @test_utils.requires_version("3.2")
 @requires_gltf
-def test_glb_export_empty():
-    """Test GLB export with no exportable geometry produces no file"""
+@pytest.mark.parametrize("suffix", [".glb", ".gltf"])
+def test_glb_export_empty(suffix):
+    """Export with no exportable geometry raises and writes no file"""
     cmd.fragment("ala")
     cmd.show_as("cartoon")  # too few residues for cartoon
 
-    with tempfile.NamedTemporaryFile(suffix='.glb', delete=False) as f:
-        glb_file = f.name
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
+        out_file = f.name
 
     # Remove the temp file so we can check if save creates one
-    os.unlink(glb_file)
+    os.unlink(out_file)
 
-    cmd.save(glb_file)
-    assert not os.path.exists(glb_file)
+    try:
+        with pytest.raises(pymol.CmdException):
+            cmd.save(out_file)
+        assert not os.path.exists(out_file)
+    finally:
+        if os.path.exists(out_file):
+            os.unlink(out_file)

@@ -11,9 +11,12 @@
 #include "os_predef.h"
 #include "os_std.h"
 
-#include "CGO.h"
 #include "Feedback.h"
 #include "GLTF.h"
+
+#ifdef _HAVE_JSON
+
+#include "CGO.h"
 #include "MemoryDebug.h"
 #include "Ray.h"
 #include "Scene.h"
@@ -174,7 +177,8 @@ static MeshGroup& findOrCreateGroup(std::vector<MeshGroup>& groups, float trans)
  */
 static void addSphere(MeshGroup& group, const CPrimitive* prim, PyMOLGlobals* G)
 {
-  int sq = SettingGetGlobal_i(G, cSetting_sphere_quality);
+  int sq = std::clamp(SettingGetGlobal_i(G, cSetting_sphere_quality), 0,
+      NUMBER_OF_SPHERE_LEVELS - 1);
   SphereRec* sp = G->Sphere->Sphere[sq];
 
   /* Use the pre-computed triangle mesh (Tri array) for spheres.
@@ -739,10 +743,10 @@ void RayRenderGLB(CRay* I, int width, int height, char** vla_ptr, float front,
 
   /* Ray trace - expand all objects into primitives */
   RayExpandPrimitives(I);
-  RayTransformFirst(I, 0, false);
 
   /* Collect primitives into mesh groups by transparency */
   std::vector<MeshGroup> groups;
+  int n_unsupported = 0;
 
   for (int a = 0; a < I->NPrimitive; a++) {
     CPrimitive* prim = I->Primitive + a;
@@ -766,9 +770,17 @@ void RayRenderGLB(CRay* I, int width, int height, char** vla_ptr, float front,
 
     case cPrimCharacter:
     case cPrimEllipsoid:
-      /* Not supported - skip silently (same as COLLADA) */
+      /* Not supported yet */
+      n_unsupported++;
       break;
     }
+  }
+
+  if (n_unsupported) {
+    PRINTFB(G, FB_Ray, FB_Warnings)
+    " GLB-Warning: Skipped %d unsupported primitive(s) "
+    "(text labels and ellipsoids are not exported).\n",
+        n_unsupported ENDFB(G);
   }
 
   /* Remove empty groups */
@@ -851,3 +863,5 @@ void RayRenderGLB(CRay* I, int width, int height, char** vla_ptr, float front,
   " GLB: exported %d mesh group(s), %u bytes total.\n", (int) groups.size(),
       total_size ENDFB(G);
 }
+
+#endif // _HAVE_JSON

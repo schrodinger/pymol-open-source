@@ -639,9 +639,6 @@ if options.libxml:
     def_macros += [("_HAVE_LIBXML", None)]
     libs += ["xml2"]
 
-# sources which are only compiled for optional features
-excluded_sources = []
-
 if options.json:
     # native glTF 2.0 / GLB support (header-only dependency)
     for prefix in prefix_path:
@@ -654,8 +651,6 @@ if options.json:
             f' PREFIX_PATH={":".join(prefix_path)}'
         )
     def_macros += [("_HAVE_JSON", None)]
-else:
-    excluded_sources += [os.path.join("layer1", "GLTF.cpp")]
 
 if options.use_msgpackc == "guess":
     options.use_msgpackc = guess_msgpackc()
@@ -829,16 +824,9 @@ def get_pymol_version():
     return re.findall(r'_PyMOL_VERSION "(.*)"', open("layer0/Version.h").read())[0]
 
 
-def get_sources(subdirs, suffixes=(".c", ".cpp"), exclude=()):
-    exclude = {os.path.normpath(f) for f in exclude}
+def get_sources(subdirs, suffixes=(".c", ".cpp")):
     return sorted(
-        [
-            f
-            for d in subdirs
-            for s in suffixes
-            for f in glob.glob(d + "/*" + s)
-            if os.path.normpath(f) not in exclude
-        ]
+        [f for d in subdirs for s in suffixes for f in glob.glob(d + "/*" + s)]
     )
 
 
@@ -891,7 +879,7 @@ if WIN:
 ext_modules += [
     CMakeExtension(
         name="pymol._cmd",
-        sources=get_sources(pymol_src_dirs, exclude=excluded_sources),
+        sources=get_sources(pymol_src_dirs),
         include_dirs=inc_dirs,
         libraries=libs,
         library_dirs=lib_dirs,

@@ -663,9 +663,9 @@ PYMOL API
 
     def _get_glb_bytes(_self):
         '''
-        Return the current scene as GLB bytes, or None if there is no
-        exportable geometry. Raises CmdException if PyMOL was built without
-        native glTF/GLB support.
+        Return the current scene as GLB bytes. Raises CmdException if PyMOL
+        was built without native glTF/GLB support, or if the scene holds no
+        exportable geometry.
         '''
         try:
             get_glb_ = _cmd.get_glb
@@ -676,7 +676,14 @@ PYMOL API
                 'installed)') from None
 
         with _self.lockcm:
-            return get_glb_(_self._COb)
+            r = get_glb_(_self._COb)
+
+        if r is None:
+            raise pymol.CmdException(
+                'no exportable geometry in the current scene',
+                'Save-Error')
+
+        return r
 
     def get_glb(filename, quiet=1, *, _self=cmd):
         '''
@@ -701,11 +708,6 @@ PYMOL API
 
         '''
         r = _get_glb_bytes(_self)
-
-        if r is None:
-            if not quiet:
-                print(' Save-Error: no file written')
-            return DEFAULT_ERROR
 
         with open(filename, 'wb') as handle:
             handle.write(r)
@@ -743,11 +745,6 @@ PYMOL API
         import struct
 
         glb = _get_glb_bytes(_self)
-
-        if glb is None:
-            if not quiet:
-                print(' Save-Error: no file written')
-            return DEFAULT_ERROR
 
         try:
             magic, version, total_length = struct.unpack_from('<III', glb, 0)
