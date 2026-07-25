@@ -1255,27 +1255,93 @@ SEE ALSO
         return r
 
 
-    # Textbook pKa values for standard titratable residues.
-    # Used as fallback when pdb2pqr is not available.
-    # At a given pH, if pH > pKa the group is deprotonated (fewer H).
-    # Format: (resn, atom_names) → pKa
-    # H count when protonated vs deprotonated is specified per entry.
-    _TITRATABLE_PKA = {
-        # Carboxylates: protonated = 1H on OD2/OE2, deprotonated = 0H
-        ('ASP', ('OD1', 'OD2')): 3.65,
-        ('GLU', ('OE1', 'OE2')): 4.25,
-        # Histidine: protonated = H on both ND1+NE2, deprotonated = H on NE2 only
-        # Note: assumes HIE tautomer. pdb2pqr path handles HID/HIE/HIP properly.
-        ('HIS', ('ND1',)):       6.00,
-        # Cysteine: protonated = 1H on SG, deprotonated = 0H
-        ('CYS', ('SG',)):        8.18,
-        # Tyrosine: protonated = 1H on OH, deprotonated = 0H
-        ('TYR', ('OH',)):       10.07,
-        # Lysine: protonated = 3H on NZ, deprotonated = 2H
-        ('LYS', ('NZ',)):       10.53,
-        # Arginine: practically always protonated
-        ('ARG', ('NH1', 'NH2')): 12.48,
+    # Histidine spellings understood by the PDB reader, mapped to the
+    # imidazole tautomer they encode. HIE-like names put the CE1 double
+    # bond on ND1 (so NE2 carries the neutral H), HID-like names put it
+    # on NE2 (so ND1 carries the neutral H).
+    _HIS_TAUTOMER = {
+        'HIS':  'HIE',
+        'HISB': 'HIE',
+        'HISE': 'HIE',
+        'HIE':  'HIE',
+        'HIP':  'HIE',
+        'HISH': 'HIE',
+        'HISP': 'HIE',
+        'HID':  'HID',
+        'HISA': 'HID',
+        'HISD': 'HID',
     }
+
+    # Every residue spelling the PDB reader assigns formal charges for,
+    # mapped onto the name the pKa table is keyed on. Besides the histidine
+    # tautomers, the reader accepts the Gromacs/Quanta spellings of the
+    # charged forms (see assign_pdb_known_residue).
+    _RESN_ALIAS = dict(_HIS_TAUTOMER,
+                       ARGP='ARG', ASPM='ASP', GLUM='GLU', LYSP='LYS')
+
+    # Histidine spellings for which the PDB reader unconditionally restores
+    # ND1 = +1, so a deprotonated one has to be renamed to keep its charge
+    # across a PDB round trip.
+    _HIS_CATIONIC = ('HIP', 'HISH', 'HISP')
+
+    # Textbook pKa values and formal charges for standard titratable
+    # residues. Used as fallback when pdb2pqr is not available.
+    # Format: (resn, name) -> (pKa, charge below pKa, charge at/above pKa)
+    _TITRATABLE_PKA_FORMAL_CHARGE = {
+        ('ARG', 'NE'):  (12.48,  0,  0),
+        ('ARG', 'NH1'): (12.48,  1,  0),
+        ('ARG', 'NH2'): (12.48,  0,  0),
+        ('LYS', 'NZ'):  (10.53,  1,  0),
+        ('TYR', 'OH'):  (10.07,  0, -1),
+        ('CYS', 'SG'):  (8.18,   0, -1),
+        ('HIE', 'ND1'): (6.00,   1,  0),
+        ('HIE', 'NE2'): (6.00,   0,  0),
+        ('HID', 'ND1'): (6.00,   0,  0),
+        ('HID', 'NE2'): (6.00,   1,  0),
+        ('GLU', 'OE1'): (4.25,   0,  0),
+        ('GLU', 'OE2'): (4.25,   0, -1),
+        ('ASP', 'OD1'): (3.65,   0,  0),
+        ('ASP', 'OD2'): (3.65,   0, -1),
+    }
+
+    def _get_formal_charge(resn, name, fallback, pH):
+        resn = resn.upper()
+        key = (_RESN_ALIAS.get(resn, resn), name.upper())
+        value = _TITRATABLE_PKA_FORMAL_CHARGE.get(key)
+        if value is None:
+            return fallback
+
+        pKa, charge_below, charge_above = value
+        return charge_below if pH < pKa else charge_above
+
+    def _make_titratable_selection():
+        """Selection matching exactly the atoms _get_formal_charge can change.
+
+        Writing formal_charge clears an atom's chemFlag, which discards any
+        hand-corrected geometry (see "set_geometry"), so the fallback must
+        only touch atoms it actually has a pKa for.
+        """
+        names_by_resn = {}
+        for resn, name in _TITRATABLE_PKA_FORMAL_CHARGE:
+            names_by_resn.setdefault(resn, []).append(name)
+
+        # one term per spelling _get_formal_charge accepts: aliases
+        # normalize onto their canonical name, every other residue onto itself
+        canonical = {resn: resn for resn in names_by_resn}
+        canonical.update(_RESN_ALIAS)
+
+        return ' or '.join(
+            f"(resn {resn} and name {'+'.join(names_by_resn[tautomer])})"
+            for resn, tautomer in sorted(canonical.items())
+            if tautomer in names_by_resn)
+
+    _TITRATABLE_SELECTION = _make_titratable_selection()
+
+    def _owned_hydrogens(obj_sele):
+        """Hydrogens a protonation run owns: those inside the selection plus
+        those hanging off it. Hydrogens on unselected heavy atoms belong to
+        somebody else and must survive a partial selection."""
+        return f"hydro and (({obj_sele}) or neighbor ({obj_sele}))"
 
     def _force_add_h(obj_name, atom_sele, deficit, state, _self):
         """Temporarily bump valence to force h_add on a saturated atom."""
@@ -1296,52 +1362,77 @@ SEE ALSO
     def _protonate_fallback(selection, obj_name, pH, state, quiet, _self):
         """pH-aware protonation using textbook pKa values.
 
-        Adds all H via h_add, then adjusts titratable groups based on
-        whether pH > pKa (deprotonated) or pH < pKa (protonated).
+        Sets formal charges for titratable groups, then lets h_add determine
+        bond valences and hydrogen counts.
         """
-        from pymol import stored
+        from functools import partial
 
         obj_sele = f"({selection}) and {obj_name}"
+        h_sele = _owned_hydrogens(obj_sele)
 
-        # Strip existing H and add all H geometrically
-        _self.remove(f"hydro and (bymol ({obj_sele}))")
+        _self.remove(h_sele)
+        _self.alter(
+            f"({obj_sele}) and ({_TITRATABLE_SELECTION})",
+            "formal_charge = _get_formal_charge(resn, name, formal_charge)",
+            space={
+                "_get_formal_charge": partial(_get_formal_charge, pH=pH),
+            },
+            quiet=quiet)
+
+        # Only a free thiol titrates. A cysteine sulfur carrying a second
+        # heavy neighbour (disulfide bridge, metal, alkylation) has no
+        # ionizable H and stays neutral.
+        sg_sele = f"({obj_sele}) and resn CYS and name SG"
+        sg_indices = []
+        _self.iterate(sg_sele, "sg.append(index)", space={"sg": sg_indices})
+        bridged = []
+        if sg_indices:
+            # every heavy neighbour of every SG in one pass; the model's own
+            # bond list keeps atom positions and indices consistent. A single
+            # state is required here: a multi-state model repeats its atoms
+            # per state, which breaks that position/index correspondence.
+            model = _self.get_model(
+                f"({obj_name} and not hydro) and "
+                f"(({sg_sele}) or neighbor ({sg_sele}))", CURRENT_STATE)
+            degree = dict.fromkeys(sg_indices, 0)
+            positions = [a.index for a in model.atom]
+            for bond in model.bond:
+                for pos in bond.index:
+                    if positions[pos] in degree:
+                        degree[positions[pos]] += 1
+            bridged = [i for i, d in degree.items() if d > 1]
+
+            # a discrete object keeps each atom in a single coordset, so an
+            # SG outside the exported state is missing from the model above.
+            # Bonds are per object, not per state, so count its neighbours
+            # through the selector instead of assuming it is a free thiol.
+            exported = set(positions)
+            for index in sg_indices:
+                if index in exported:
+                    continue
+                if _self.count_atoms(
+                        f"({obj_name} and not hydro) and neighbor "
+                        f"({obj_name} and index {index})") > 1:
+                    bridged.append(index)
+        if bridged:
+            _self.alter(
+                f"{obj_name} and index {'+'.join(map(str, bridged))}",
+                "formal_charge = 0",
+                quiet=quiet)
+
+        # The PDB reader restores ND1 = +1 for these spellings no matter what
+        # charge the file carries, so a demoted one has to give up its name.
+        if _get_formal_charge('HIP', 'ND1', 0, pH) == 0:
+            _self.alter(
+                f"byres (({obj_sele}) and "
+                f"resn {'+'.join(_HIS_CATIONIC)} and name ND1)",
+                "resn = 'HIS'",
+                quiet=quiet)
+
         _self.h_add(obj_sele, state=state)
 
-        # Adjust titratable groups
-        for (resn, atom_names), pKa in _TITRATABLE_PKA.items():
-            deprotonated = pH > pKa
-
-            if not deprotonated:
-                # Group should be protonated. h_add may not have added
-                # H if the valence is already satisfied (e.g. carboxylate
-                # double bond, His imidazole). Bump valence to force it.
-                for atom_name in atom_names:
-                    sele = f"{obj_name} and resn {resn} and name {atom_name}"
-                    stored._prot_ids = []
-                    _self.iterate(sele, "stored._prot_ids.append(ID)")
-                    for aid in stored._prot_ids:
-                        atom_sele = f"{obj_name} and ID {aid}"
-                        h_count = _self.count_atoms(
-                            f"hydro and neighbor ({atom_sele})")
-                        if h_count == 0:
-                            _force_add_h(obj_name, atom_sele, 1, state,
-                                         _self)
-                continue
-
-            # pH > pKa: group should be deprotonated — remove H
-            for atom_name in atom_names:
-                h_sele = (f"hydro and neighbor "
-                          f"({obj_name} and resn {resn} and name {atom_name})")
-                h_count = _self.count_atoms(h_sele)
-                if h_count > 0:
-                    if resn == 'LYS' and atom_name == 'NZ':
-                        # Deprotonated Lys: NH2 (2H), not NH3+ (3H)
-                        _remove_excess_h(obj_name, h_sele, 1, _self)
-                    else:
-                        _self.remove(h_sele)
-
         if not quiet:
-            total_h = _self.count_atoms(f"hydro and (bymol ({obj_sele}))")
+            total_h = _self.count_atoms(h_sele)
             print(f" protonate: added {total_h} hydrogens at pH {pH:.1f}"
                   " (using textbook pKa values)")
 
@@ -1355,6 +1446,7 @@ SEE ALSO
         from pymol import stored
 
         obj_sele = f"({selection}) and {obj_name}"
+        h_sele = _owned_hydrogens(obj_sele)
 
         tmpdir = tempfile.mkdtemp()
         try:
@@ -1409,23 +1501,23 @@ SEE ALSO
                         (chain, resi, resn, name)] = h_count
 
             # Strip existing H and add all H geometrically
-            _self.remove(f"hydro and (bymol ({obj_sele}))")
+            _self.remove(h_sele)
             _self.h_add(obj_sele, state=state)
 
             # Compare and adjust H counts per heavy atom
             for key, target_h in stored._prot_hcount.items():
                 chain, resi, resn, name = key
                 heavy_sele = (
-                    f'({obj_name} and chain "{chain}" and '
+                    f'(({obj_sele}) and chain "{chain}" and '
                     f'resi {resi} and name {name})')
                 if _self.count_atoms(heavy_sele) == 0:
                     continue
-                h_sele = f"hydro and neighbor ({heavy_sele})"
-                current_h = _self.count_atoms(h_sele)
+                atom_h_sele = f"hydro and neighbor ({heavy_sele})"
+                current_h = _self.count_atoms(atom_h_sele)
 
                 if current_h > target_h:
                     excess = current_h - target_h
-                    _remove_excess_h(obj_name, h_sele, excess, _self)
+                    _remove_excess_h(obj_name, atom_h_sele, excess, _self)
                 elif current_h < target_h:
                     deficit = target_h - current_h
                     _force_add_h(obj_name, heavy_sele, deficit, state,
@@ -1434,8 +1526,7 @@ SEE ALSO
             _self.delete(tmp_obj)
 
             if not quiet:
-                total_h = _self.count_atoms(
-                    f"hydro and (bymol ({obj_sele}))")
+                total_h = _self.count_atoms(h_sele)
                 print(f" protonate: added {total_h} hydrogens at pH {pH:.1f}")
 
         finally:
@@ -1456,7 +1547,11 @@ DESCRIPTION
     given pH.
 
     Heavy atoms and their visual settings (colors, representations) are
-    preserved. Only hydrogens are modified.
+    preserved. Hydrogens inside the selection, and those bonded to it,
+    are rebuilt; hydrogens on unselected heavy atoms are left alone. The
+    fallback additionally rewrites "formal_charge" on the titratable side
+    chain atoms listed under NOTES, and renames a histidine which the
+    residue name would otherwise keep protonated (see NOTES).
 
 USAGE
 
@@ -1483,6 +1578,45 @@ NOTES
     Without pdb2pqr, textbook pKa values are used:
       Asp 3.65, Glu 4.25, His 6.00, Cys 8.18,
       Tyr 10.07, Lys 10.53, Arg 12.48
+
+    The fallback drives h_add by assigning "formal_charge" on the
+    titratable atoms of those residues (Asp OD1/OD2, Glu OE1/OE2, His
+    ND1/NE2, Cys SG, Tyr OH, Lys NZ, Arg NE/NH1/NH2), including the
+    Gromacs/Quanta spellings the PDB reader recognizes (ARGP, ASPM,
+    GLUM, LYSP and the histidine names below). Any charge the input file
+    supplied for one of those atoms is overwritten, and the new value
+    persists on the object, so it is written out by formats which store
+    formal charges (PDB, mmCIF, mae). Writing a charge also discards any
+    manual chemistry correction ("set_geometry") on that atom. All other
+    atoms are left alone.
+
+    Reloading a saved file does not always preserve those charges. Any
+    format PyMOL has to bond by distance (PDB and mmCIF both, since the
+    mmCIF exporter writes no bond records) re-derives a charge from the
+    residue name for ARG/ARGP NH1, LYS/LYSP NZ, ASP/ASPM OD2 and
+    GLU/GLUM OE2, overriding whatever the file records; mol2 does not
+    store formal charges at all and the reader re-derives them from the
+    SYBYL atom types. A residue titrated outside its pKa window (a
+    neutral lysine above pH 10.53, a protonated aspartate below pH 3.65)
+    therefore comes back charged after such a round trip while its
+    hydrogens stay as protonate built them.
+
+    A cysteine SG with a second heavy neighbour (disulfide bridge,
+    metal, alkylation) has no ionizable hydrogen and is left neutral.
+    Histidine titrates on whichever ring nitrogen is free in the
+    tautomer implied by the residue name: HID, HISA and HISD have the
+    free nitrogen at NE2, while HIS, HISB, HISE, HIE, HIP, HISH and
+    HISP have it at ND1. The explicitly protonated spellings
+    HIP/HISH/HISP are read back as imidazolium no matter what charge a
+    file records, so a residue which loses its proton above pH 6 is
+    renamed to neutral HIS.
+
+    Everything the table does not cover only gets the hydrogens h_add
+    fills its open valences with. In particular the fallback does not
+    titrate peptide termini, ligands or nucleic acids: they keep the
+    charge the input carries at every pH. The pdb2pqr path knows no such
+    restriction and reproduces whatever pdb2pqr builds, termini
+    included.
 
     At biological pH (7.4):
       - Asp/Glu carboxylates are deprotonated (COO-)
