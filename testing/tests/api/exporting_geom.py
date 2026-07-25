@@ -26,6 +26,13 @@ v_pdbstr_anisou = (
     'ANISOU    2  CA  GLU A 114     6957   3558   2282   -477    534    166       C  \n'
     'END\n')
 
+# an ANISOU tensor which is not positive definite (eigenvalues -3000, 6000 and
+# 15000), so that one ellipsoid semi-axis collapses to zero
+v_pdbstr_anisou_indefinite = (
+    'ATOM      1  N   GLU A 114      24.832  -7.270  -5.728  1.00 33.91           N  \n'
+    'ANISOU    1  N   GLU A 114     6000   6000   6000   9000      0      0       N  \n'
+    'END\n')
+
 def usda_translations(contents):
     '''
     Centers of all prims which use a translate-only transform
@@ -179,6 +186,76 @@ class TestExportingGeom(testing.PyMOLTestCase):
             self.assertGreater(single[0], 0.0)
             for one, two in zip(single, double):
                 self.assertAlmostEqual(two, one * 2.0, places=4)
+
+    def testUSDAEllipsoidDegenerate(self):
+        cmd.read_pdbstr(v_pdbstr_anisou_indefinite, 'm1', zoom=0)
+        cmd.show_as('ellipsoids')
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            contents = file_get_contents(filename)
+
+        self.assertTrue(contents.startswith('#usda 1.0'))
+
+        matrices = usda_matrices(contents)
+        self.assertEqual(len(matrices), 1)
+
+        for matrix in matrices:
+            # a collapsed semi-axis must not make the transform singular
+            lengths = matrix_axis_lengths(matrix)
+            for length in lengths:
+                self.assertTrue(math.isfinite(length))
+                self.assertGreater(length, 0.0)
+            self.assertGreater(matrix_determinant(matrix), 0.0)
+            self.assertRightHanded(matrix)
+
+            # the collapsed axis stays visually negligible
+            self.assertAlmostEqual(min(lengths) / max(lengths), 1e-3, places=6)
+
+        if shutil.which('usdcat') is None:
+            self.skipTest('usdcat not available')
+
+        # the layer must still be readable by OpenUSD
+        with testing.mktemp('.usdz') as filename:
+            cmd.save(filename)
+
+    def testUSDAEllipsoidZeroScale(self):
+        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
+        cmd.show_as('ellipsoids')
+        cmd.set('ellipsoid_scale', 0)
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            contents = file_get_contents(filename)
+
+        # ellipsoids without any extent are omitted rather than exported with
+        # an all-zero (singular) transform
+        self.assertTrue(contents.startswith('#usda 1.0'))
+        self.assertEqual(usda_matrices(contents), [])
+        self.assertNotIn('matrix4d', contents)
+
+    def testUSDAAnalyticSolids(self):
+        from pymol import cgo
+
+        cmd.load_cgo([
+            cgo.CONE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.0, 0.0,
+            1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0,
+            cgo.CYLINDER, 4.0, 0.0, 0.0, 4.0, 0.0, 5.0, 1.0,
+            0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+        ], 'solids')
+
+        with testing.mktemp('.usda') as filename:
+            cmd.save(filename)
+            contents = file_get_contents(filename)
+
+        # cones and cylinders share one writer, so schema and prim name must
+        # stay in sync
+        solids = re.findall(r'def (Cone|Cylinder) "(\w+)_\d+"', contents)
+        self.assertEqual(sorted(schema for schema, _ in solids),
+                         ['Cone', 'Cylinder'])
+
+        for schema, name in solids:
+            self.assertEqual(schema, name)
 
     def testUSDZTimeout(self):
         from pymol import exporting

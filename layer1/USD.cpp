@@ -25,6 +25,9 @@ namespace {
 
 constexpr float USD_EPSILON = 1.e-6F;
 
+/// Extent of a collapsed ellipsoid semi-axis, relative to the largest one
+constexpr float USD_DEGENERATE_AXIS_SCALE = 1.e-3F;
+
 /**
  * Stream buffer which appends to a char VLA, so that the scene is only ever
  * held once in memory.
@@ -197,34 +200,18 @@ void UsdWriteSphere(std::ostream& out, int& index, const float* center,
   out << "    }\n";
 }
 
-void UsdWriteCylinder(std::ostream& out, int& index, const float* start,
-    const float* end, float radius, const float* color, float transparency)
+/**
+ * Write a Z-aligned UsdGeomCylinder or UsdGeomCone spanning start to end.
+ * @param schema "Cylinder" or "Cone", also used as the prim name prefix
+ */
+void UsdWriteAnalyticSolid(std::ostream& out, int& index, const char* schema,
+    const float* start, const float* end, float radius, const float* color,
+    float transparency)
 {
   float height;
 
   out << "\n"
-      << "    def Cylinder \"Cylinder_" << index++ << "\" (\n"
-      << "        prepend apiSchemas = [\"MaterialBindingAPI\"]\n"
-      << "    )\n"
-      << "    {\n";
-  UsdWriteAnalyticTransform(out, start, end, height);
-  out << "        uniform token axis = \"Z\"\n"
-      << "        double height = " << height << "\n"
-      << "        double radius = " << radius << "\n"
-      << "        float3[] extent = [(" << -radius << ", " << -radius << ", "
-      << -height * 0.5F << "), (" << radius << ", " << radius << ", "
-      << height * 0.5F << ")]\n";
-  UsdWriteMaterialBinding(out, color, transparency);
-  out << "    }\n";
-}
-
-void UsdWriteCone(std::ostream& out, int& index, const float* start,
-    const float* end, float radius, const float* color, float transparency)
-{
-  float height;
-
-  out << "\n"
-      << "    def Cone \"Cone_" << index++ << "\" (\n"
+      << "    def " << schema << " \"" << schema << '_' << index++ << "\" (\n"
       << "        prepend apiSchemas = [\"MaterialBindingAPI\"]\n"
       << "    )\n"
       << "    {\n";
@@ -240,10 +227,95 @@ void UsdWriteCone(std::ostream& out, int& index, const float* start,
 }
 
 /**
- * @param center transformed ellipsoid center
+ * Build the upper 3x3 rows of an ellipsoid's transform.
+ *
+ * Semi-axes can legitimately collapse: a non-positive-definite ANISOU tensor
+ * makes RepEllipsoid drop an eigenvector, and ellipsoid_scale = 0 zeroes the
+ * radius. A zero row would make the emitted matrix singular, which renderers
+ * reject, so collapsed axes get a small deterministic extent instead.
+ *
  * @param axes three consecutive transformed unit axes
  * @param scales relative axis scales, one per axis, largest of which is 1
  * @param radius largest semi-axis length
+ * @param[out] rows three consecutive scaled, right-handed axes
+ * @return false if the ellipsoid has no visible extent and must be skipped
+ */
+bool UsdEllipsoidRows(
+    const float* axes, const float* scales, float radius, float* rows)
+{
+  float directions[9];
+  float lengths[3];
+  float max_length = 0.F;
+  int valid[3];
+  int valid_count = 0;
+
+  for (int axis = 0; axis < 3; ++axis) {
+    auto* direction = directions + 3 * axis;
+    const float length = radius * scales[axis];
+
+    copy3f(axes + 3 * axis, direction);
+    lengths[axis] = 0.F;
+
+    if (!(length > 0.F) || !std::isfinite(length) ||
+        !(length3f(direction) > USD_EPSILON)) {
+      continue;
+    }
+
+    normalize3f(direction);
+    lengths[axis] = length;
+    max_length = std::max(max_length, length);
+    valid[valid_count++] = axis;
+  }
+
+  if (max_length <= USD_EPSILON) {
+    return false;
+  }
+
+  // Complete the collapsed axes into an orthonormal frame, so that the
+  // fallback extents point somewhere meaningful.
+  if (valid_count == 1) {
+    const int first = valid[0];
+    get_system1f3f(directions + 3 * first,
+        directions + 3 * ((first + 1) % 3), directions + 3 * ((first + 2) % 3));
+  } else if (valid_count == 2) {
+    const int missing = 3 - valid[0] - valid[1];
+    cross_product3f(directions + 3 * valid[0], directions + 3 * valid[1],
+        directions + 3 * missing);
+    normalize3f(directions + 3 * missing);
+  }
+
+  const float fallback = max_length * USD_DEGENERATE_AXIS_SCALE;
+
+  for (int axis = 0; axis < 3; ++axis) {
+    if (!(lengths[axis] >= fallback)) {
+      lengths[axis] = fallback;
+    }
+    scale3f(directions + 3 * axis, lengths[axis], rows + 3 * axis);
+  }
+
+  const double determinant = determinant33f(rows);
+
+  if (!(std::fabs(determinant) > 0.0)) {
+    // Axes which are not linearly independent, e.g. after a shearing object
+    // matrix. An axis aligned frame keeps the transform invertible.
+    for (int axis = 0; axis < 3; ++axis) {
+      zero3f(rows + 3 * axis);
+      rows[3 * axis + axis] = lengths[axis];
+    }
+  } else if (determinant < 0.0) {
+    // The axes are eigenvectors with arbitrary signs and may form a
+    // left-handed basis. Negating one axis leaves the ellipsoid unchanged.
+    for (int i = 6; i < 9; ++i) {
+      rows[i] = -rows[i];
+    }
+  }
+
+  return true;
+}
+
+/**
+ * @param center transformed ellipsoid center
+ * @copydetails UsdEllipsoidRows
  */
 void UsdWriteEllipsoid(std::ostream& out, int& index, const float* center,
     const float* axes, const float* scales, float radius, const float* color,
@@ -251,20 +323,8 @@ void UsdWriteEllipsoid(std::ostream& out, int& index, const float* center,
 {
   float rows[9];
 
-  for (int axis = 0; axis < 3; ++axis) {
-    const auto* source = axes + 3 * axis;
-    const float length = radius * scales[axis];
-    for (int i = 0; i < 3; ++i) {
-      rows[3 * axis + i] = source[i] * length;
-    }
-  }
-
-  // The axes are eigenvectors with arbitrary signs and may form a left-handed
-  // basis. Negating one axis leaves the ellipsoid unchanged.
-  if (determinant33f(rows) < 0.0) {
-    for (int i = 6; i < 9; ++i) {
-      rows[i] = -rows[i];
-    }
+  if (!UsdEllipsoidRows(axes, scales, radius, rows)) {
+    return;
   }
 
   out << "\n"
@@ -510,16 +570,16 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
           vertex[2] + direction[2] * primitive.l1};
 
       if (UsdColorsEqual(primitive.c1, primitive.c2)) {
-        UsdWriteCylinder(out, index, vertex, end, primitive.r1,
-            primitive.c1, primitive.trans);
+        UsdWriteAnalyticSolid(out, index, "Cylinder", vertex, end,
+            primitive.r1, primitive.c1, primitive.trans);
       } else {
         const float midpoint[3] = {(vertex[0] + end[0]) * 0.5F,
             (vertex[1] + end[1]) * 0.5F,
             (vertex[2] + end[2]) * 0.5F};
-        UsdWriteCylinder(out, index, vertex, midpoint, primitive.r1,
-            primitive.c1, primitive.trans);
-        UsdWriteCylinder(out, index, midpoint, end, primitive.r1,
-            primitive.c2, primitive.trans);
+        UsdWriteAnalyticSolid(out, index, "Cylinder", vertex, midpoint,
+            primitive.r1, primitive.c1, primitive.trans);
+        UsdWriteAnalyticSolid(out, index, "Cylinder", midpoint, end,
+            primitive.r1, primitive.c2, primitive.trans);
       }
 
       if (primitive.type == cPrimSausage ||
@@ -545,12 +605,12 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
       assert(primitive.r1 >= primitive.r2);
 
       if (primitive.r2 <= USD_EPSILON) {
-        UsdWriteCone(out, index, vertex, end, primitive.r1, primitive.c1,
-            primitive.trans);
+        UsdWriteAnalyticSolid(out, index, "Cone", vertex, end, primitive.r1,
+            primitive.c1, primitive.trans);
       } else {
         // UsdGeomCone has a point at one end. Preserve a non-degenerate
         // frustum as a cylinder until a mesh representation is added.
-        UsdWriteCylinder(out, index, vertex, end,
+        UsdWriteAnalyticSolid(out, index, "Cylinder", vertex, end,
             (primitive.r1 + primitive.r2) * 0.5F, primitive.c1,
             primitive.trans);
       }
