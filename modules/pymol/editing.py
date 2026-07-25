@@ -1382,12 +1382,25 @@ SEE ALSO
         # Only a free thiol titrates. A cysteine sulfur carrying a second
         # heavy neighbour (disulfide bridge, metal, alkylation) has no
         # ionizable H and stays neutral.
+        sg_sele = f"({obj_sele}) and resn CYS and name SG"
         sg_indices = []
-        _self.iterate(f"({obj_sele}) and resn CYS and name SG",
-                      "sg.append(index)", space={"sg": sg_indices})
-        bridged = [i for i in sg_indices if _self.count_atoms(
-            f"({obj_name} and not hydro) and neighbor "
-            f"({obj_name} and index {i})") > 1]
+        _self.iterate(sg_sele, "sg.append(index)", space={"sg": sg_indices})
+        bridged = []
+        if sg_indices:
+            # every heavy neighbour of every SG in one pass; the model's own
+            # bond list keeps atom positions and indices consistent. Bonds
+            # do not vary between states, so a single state is enough (and
+            # required: a multi-state model repeats its atoms per state).
+            model = _self.get_model(
+                f"({obj_name} and not hydro) and "
+                f"(({sg_sele}) or neighbor ({sg_sele}))", CURRENT_STATE)
+            degree = dict.fromkeys(sg_indices, 0)
+            positions = [a.index for a in model.atom]
+            for bond in model.bond:
+                for pos in bond.index:
+                    if positions[pos] in degree:
+                        degree[positions[pos]] += 1
+            bridged = [i for i, d in degree.items() if d > 1]
         if bridged:
             _self.alter(
                 f"{obj_name} and index {'+'.join(map(str, bridged))}",
@@ -1486,12 +1499,12 @@ SEE ALSO
                     f'resi {resi} and name {name})')
                 if _self.count_atoms(heavy_sele) == 0:
                     continue
-                h_sele = f"hydro and neighbor ({heavy_sele})"
-                current_h = _self.count_atoms(h_sele)
+                atom_h_sele = f"hydro and neighbor ({heavy_sele})"
+                current_h = _self.count_atoms(atom_h_sele)
 
                 if current_h > target_h:
                     excess = current_h - target_h
-                    _remove_excess_h(obj_name, h_sele, excess, _self)
+                    _remove_excess_h(obj_name, atom_h_sele, excess, _self)
                 elif current_h < target_h:
                     deficit = target_h - current_h
                     _force_add_h(obj_name, heavy_sele, deficit, state,
@@ -1561,6 +1574,15 @@ NOTES
     persists on the object, so it is written out by formats which store
     formal charges (PDB, mol2, mmCIF, mae). All other atoms are left
     alone.
+
+    Reloading a saved PDB does not always preserve those charges: the
+    PDB reader re-derives a charge from the residue name for ARG/ARGP
+    NH1, LYS/LYSP NZ, ASP/ASPM OD2 and GLU/GLUM OE2 and overrides
+    whatever the file records. A residue titrated outside its pKa window
+    (a neutral lysine above pH 10.53, a protonated aspartate below pH
+    3.65) therefore comes back charged after a PDB round trip while its
+    hydrogens stay as protonate built them. Use a format without that
+    re-derivation (mol2, mmCIF, mae) to keep the two consistent.
 
     A cysteine SG with a second heavy neighbour (disulfide bridge,
     metal, alkylation) has no ionizable hydrogen and is left neutral.
