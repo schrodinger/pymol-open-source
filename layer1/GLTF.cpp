@@ -29,11 +29,13 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <limits>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 using json = nlohmann::json;
@@ -70,6 +72,27 @@ static float srgbToLinear(float c)
 }
 
 /**
+ * Bit patterns of a vertex's position, normal, and color (9 floats). Bitwise
+ * comparison keeps hashing consistent with equality (unlike float ==, which
+ * treats -0 and 0 as equal and NaN as unequal to itself).
+ */
+using VertexKey = std::array<std::uint32_t, 9>;
+
+/**
+ * FNV-1a hash over the 32-bit words of a VertexKey.
+ */
+struct VertexKeyHash {
+  std::size_t operator()(const VertexKey& key) const
+  {
+    std::uint64_t h = 0xcbf29ce484222325ull;
+    for (auto word : key) {
+      h = (h ^ word) * 0x100000001b3ull;
+    }
+    return static_cast<std::size_t>(h);
+  }
+};
+
+/**
  * Collects triangles that share the same material, grouped by transparency
  * level. Each MeshGroup becomes a separate glTF mesh with its own material.
  */
@@ -80,6 +103,35 @@ struct MeshGroup {
   std::vector<float> colors;    /* r,g,b per vertex */
   std::vector<std::uint32_t> indices;
   std::uint32_t vertex_count = 0;
+
+  /* vertex indices of previously added shared vertices */
+  std::unordered_map<VertexKey, std::uint32_t, VertexKeyHash> shared_vertices;
+
+  /**
+   * Add a vertex, or reuse an existing one with exactly the same position,
+   * normal, and color.
+   * @param pos xyz position (3 floats)
+   * @param norm xyz normal (3 floats)
+   * @param col rgb color (3 floats, 0-1 range, display space)
+   * @return index of the new or reused vertex
+   * @note Ray triangle primitives each carry their own copy of the corner
+   *   vertices. Corners shared by adjacent triangles are copied from the same
+   *   representation data, so exact matching recovers the mesh connectivity.
+   */
+  std::uint32_t addSharedVertex(
+      const float* pos, const float* norm, const float* col)
+  {
+    VertexKey key;
+    std::memcpy(key.data(), pos, 3 * sizeof(float));
+    std::memcpy(key.data() + 3, norm, 3 * sizeof(float));
+    std::memcpy(key.data() + 6, col, 3 * sizeof(float));
+
+    auto inserted = shared_vertices.emplace(key, vertex_count);
+    if (inserted.second) {
+      addVertex(pos, norm, col);
+    }
+    return inserted.first->second;
+  }
 
   /**
    * Append a vertex with position, normal, and color.
@@ -429,23 +481,27 @@ static void addCylinderWithCaps(
 }
 
 /**
- * Add a triangle primitive's three vertices and one triangle index.
+ * Add a triangle primitive, sharing vertices with previously added triangles
+ * where position, normal, and color match exactly.
  * @param group mesh group to append geometry to
  * @param prim triangle primitive (uses v1-v3, n1-n3, c1-c3)
  * @note Winding order is flipped when TriangleReverse() returns true.
+ *   Triangles which collapse onto fewer than three distinct vertices are
+ *   skipped, they have no area.
  */
 static void addTriangle(MeshGroup& group, const CPrimitive* prim)
 {
-  std::uint32_t base = group.vertex_count;
+  std::uint32_t i0 = group.addSharedVertex(prim->v1, prim->n1, prim->c1);
+  std::uint32_t i1 = group.addSharedVertex(prim->v2, prim->n2, prim->c2);
+  std::uint32_t i2 = group.addSharedVertex(prim->v3, prim->n3, prim->c3);
 
-  group.addVertex(prim->v1, prim->n1, prim->c1);
-  group.addVertex(prim->v2, prim->n2, prim->c2);
-  group.addVertex(prim->v3, prim->n3, prim->c3);
+  if (i0 == i1 || i1 == i2 || i0 == i2)
+    return;
 
   if (TriangleReverse(const_cast<CPrimitive*>(prim))) {
-    group.addTriangle(base, base + 2, base + 1);
+    group.addTriangle(i0, i2, i1);
   } else {
-    group.addTriangle(base, base + 1, base + 2);
+    group.addTriangle(i0, i1, i2);
   }
 }
 
@@ -822,10 +878,13 @@ void RayRenderGLB(CRay* I, char** vla_ptr)
         n_unsupported ENDFB(G);
   }
 
-  /* Remove empty groups */
+  /* Remove empty groups, release vertex lookup tables */
   groups.erase(std::remove_if(groups.begin(), groups.end(),
                    [](const MeshGroup& g) { return g.empty(); }),
       groups.end());
+  for (auto& group : groups) {
+    decltype(group.shared_vertices)().swap(group.shared_vertices);
+  }
 
   if (groups.empty()) {
     PRINTFB(G, FB_Ray, FB_Warnings)

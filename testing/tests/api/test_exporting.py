@@ -263,10 +263,19 @@ def test_glb_export_surface():
 
     try:
         cmd.save(glb_file)
-        gltf, _ = _parse_glb(glb_file)
+        gltf, bin_data = _parse_glb(glb_file)
         prim = gltf['meshes'][0]['primitives'][0]
         pos_acc = gltf['accessors'][prim['attributes']['POSITION']]
         assert pos_acc['count'] > 0
+
+        # adjacent triangles share vertices, a closed surface has about
+        # half as many vertices as triangles (unshared would be 3x)
+        tri = _read_accessor(gltf, bin_data, prim['indices']).reshape(-1, 3)
+        assert pos_acc['count'] < len(tri)
+        assert len(numpy.unique(tri)) == pos_acc['count']
+        assert (tri[:, 0] != tri[:, 1]).all()
+        assert (tri[:, 1] != tri[:, 2]).all()
+        assert (tri[:, 0] != tri[:, 2]).all()
     finally:
         if os.path.exists(glb_file):
             os.unlink(glb_file)
