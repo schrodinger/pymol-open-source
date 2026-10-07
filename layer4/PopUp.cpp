@@ -186,9 +186,9 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
       continue;
     }
     elem = PyList_GetItem(item, 1);
-    l = PyString_Size(elem);
     str = PyString_AsString(elem);
-    cl = l;
+    l = strlen(str);             /* buffer size in UTF-8 bytes */
+    cl = PyString_Size(elem);    /* display width in characters */
     c = str;
     while(*c) {
       if(TextStartsWithColorCode(c)) {  /* discount the markup */
@@ -214,7 +214,7 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
     if (PyList_Size(item) > 2) {
       PyObject* command = PyList_GetItem(item, 2);
       if(PyString_Check(command)) {
-	l = PyString_Size(command);
+	l = strlen(PyString_AsString(command));
 	if(l > mx)
 	  mx = l;
       }
