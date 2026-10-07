@@ -813,9 +813,10 @@ SEE ALSO
         '''
         if hasattr(_cmd, 'get_glb'):
             import json
+            from pymol.exporting import _write_file_atomic
             document = _glb_to_gltf(get_glb(_self=_self))
-            with open(filename, 'w', encoding='utf-8') as handle:
-                json.dump(document, handle, separators=(',', ':'))
+            contents = json.dumps(document, separators=(',', ':'))
+            _write_file_atomic(filename, contents.encode('utf-8'))
         else:
             _get_gltf_collada2gltf(filename, quiet, _self)
 

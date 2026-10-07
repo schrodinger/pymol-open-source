@@ -423,7 +423,11 @@ def test_glb_export_empty(suffix):
             os.unlink(out_file)
 
 
-@pytest.mark.parametrize("ext", ["pse", "pse.gz", "pdb"])
+@pytest.mark.parametrize("ext", [
+    "pse", "pse.gz", "pdb",
+    pytest.param("glb", marks=requires_gltf),
+    pytest.param("gltf", marks=requires_gltf),
+])
 def test_save_failure_keeps_existing_file(ext, tmp_path, monkeypatch):
     """A failed write must not truncate an existing file (#520)"""
     filename = str(tmp_path / f"model.{ext}")
