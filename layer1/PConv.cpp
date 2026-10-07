@@ -122,10 +122,10 @@ int PConvPyListToStrVLAList(PyObject * obj, char **vla, int *n_str)
     for(i = 0; i < n_st; i++) {
       t = PyList_GetItem(obj, i);
       if(PyString_Check(t)) {
-        l = PyString_Size(t);
+        auto strval = PyString_AsSomeString(t);
+        l = strval.length();
         nn_ch = n_ch + l + 1;
         VLACheck(*vla, char, nn_ch);
-        auto strval = PyString_AsSomeString(t);
         UtilNCopy((*vla) + n_ch, strval.c_str(), l + 1);
         n_ch = nn_ch;
       } else {
@@ -1159,7 +1159,8 @@ int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr)
       for(a = 0; a < l; a++) {
         i = PyList_GetItem(obj, a);
         if(PyString_Check(i)) {
-          ll += PyString_Size(i) + 1;
+          // UTF-8 byte length (PyString_Size counts code points)
+          ll += PyString_AsSomeString(i).length() + 1;
         }
       }
       vla = VLAlloc(char, ll);
