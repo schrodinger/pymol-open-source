@@ -781,6 +781,44 @@ EXAMPLES
             yield fname, osele, ostate
 
 
+    def _write_file_atomic(filename, contents):
+        '''
+        Write bytes to filename. A new or existing regular file is replaced
+        with a temporary file from the same directory, so that a failed write
+        (e.g. disk full) leaves an existing file intact.
+        '''
+        handle = None
+
+        if not os.path.lexists(filename) or (os.path.isfile(filename) and
+                not os.path.islink(filename) and os.access(filename, os.W_OK)):
+            tmpname = '%s.%s.tmp' % (filename, os.urandom(4).hex())
+            try:
+                # unlike tempfile.mkstemp, this honors the umask
+                handle = open(tmpname, 'xb')
+            except PermissionError:
+                # e.g. writable file in a non-writable directory
+                pass
+
+        if handle is None:
+            # symlink, device, read-only file, ...
+            with open(filename, 'wb') as handle:
+                handle.write(contents)
+            return
+
+        try:
+            with handle:
+                handle.write(contents)
+            if os.path.exists(filename):
+                import shutil
+                shutil.copymode(filename, tmpname)
+            os.replace(tmpname, filename)
+        except BaseException:
+            import contextlib
+            with contextlib.suppress(OSError):
+                os.remove(tmpname)
+            raise
+
+
     def save(filename, selection='(all)', state=-1, format='', ref='',
              ref_state=-1, quiet=1, partial=0, *, _self=cmd):
         '''
@@ -917,15 +955,12 @@ SEE ALSO
 
             if zipped == 'gz':
                 import gzip
-                fopen = gzip.open
-            else:
-                fopen = open
-                if zipped == 'bz2':
-                    import bz2
-                    contents = bz2.compress(contents)
+                contents = gzip.compress(contents)
+            elif zipped == 'bz2':
+                import bz2
+                contents = bz2.compress(contents)
 
-            with fopen(filename, 'wb') as handle:
-                handle.write(contents)
+            _write_file_atomic(filename, contents)
             r = DEFAULT_SUCCESS
 
         if _self._raising(r): raise QuietException

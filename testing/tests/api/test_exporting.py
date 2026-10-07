@@ -1,7 +1,10 @@
 import base64
+import errno
 import json
 import os
+import stat
 import struct
+import sys
 import tempfile
 
 import numpy
@@ -9,6 +12,7 @@ import pytest
 
 import pymol
 from pymol import cmd
+from pymol import exporting
 from pymol import test_utils
 
 requires_gltf = test_utils.requires_capability(
@@ -417,3 +421,75 @@ def test_glb_export_empty(suffix):
     finally:
         if os.path.exists(out_file):
             os.unlink(out_file)
+
+
+@pytest.mark.parametrize("ext", ["pse", "pse.gz", "pdb"])
+def test_save_failure_keeps_existing_file(ext, tmp_path, monkeypatch):
+    """A failed write must not truncate an existing file (#520)"""
+    filename = str(tmp_path / f"model.{ext}")
+    cmd.fragment("ala")
+    cmd.save(filename)
+    with open(filename, "rb") as handle:
+        original = handle.read()
+
+    class DiskFull:
+        def __init__(self, handle):
+            self.handle = handle
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            self.handle.close()
+
+        def write(self, data):
+            self.handle.write(data[:10])
+            raise OSError(errno.ENOSPC, os.strerror(errno.ENOSPC))
+
+    def failing_open(file, mode="r", *args, **kwargs):
+        handle = open(file, mode, *args, **kwargs)
+        return handle if "r" in mode else DiskFull(handle)
+
+    monkeypatch.setattr(exporting, "open", failing_open, raising=False)
+
+    cmd.fragment("gly")
+    with pytest.raises(OSError):
+        cmd.save(filename)
+
+    with open(filename, "rb") as handle:
+        assert handle.read() == original
+    assert os.listdir(tmp_path) == [f"model.{ext}"]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file modes")
+def test_save_keeps_file_mode(tmp_path):
+    filename = str(tmp_path / "model.pdb")
+    cmd.fragment("ala")
+    cmd.save(filename)
+    os.chmod(filename, 0o640)
+    cmd.save(filename)
+    assert stat.S_IMODE(os.stat(filename).st_mode) == 0o640
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file modes")
+@pytest.mark.skipif(hasattr(os, "geteuid") and os.geteuid() == 0,
+                    reason="root can write read-only files")
+def test_save_refuses_read_only_file(tmp_path):
+    filename = str(tmp_path / "model.pdb")
+    cmd.fragment("ala")
+    cmd.save(filename)
+    os.chmod(filename, 0o444)
+    with pytest.raises(PermissionError):
+        cmd.save(filename)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="symlinks need privileges")
+def test_save_writes_through_symlink(tmp_path):
+    target = tmp_path / "target.pdb"
+    link = tmp_path / "link.pdb"
+    target.write_text("")
+    link.symlink_to(target)
+    cmd.fragment("ala")
+    cmd.save(str(link))
+    assert link.is_symlink()
+    assert target.stat().st_size > 0
