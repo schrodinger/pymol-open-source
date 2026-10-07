@@ -1020,11 +1020,12 @@ SEE ALSO
         i = {'mtl': 0, 'obj': 1}.get(format)
         return _self.get_mtl_obj()[i]
 
-    def _write_usdz_package(filename, member_name, contents):
+    def _usdz_package(member_name, contents):
         '''
-        Write one stored USD layer with the data offset aligned to 64 bytes,
+        Package one stored USD layer with the data offset aligned to 64 bytes,
         as required by the USDZ specification.
         '''
+        import io
         import struct
         import zipfile
 
@@ -1056,8 +1057,10 @@ SEE ALSO
                 struct.pack('<HH', 0x1986, payload_size) +
                 b'\0' * payload_size)
 
+        buffer = io.BytesIO()
+
         try:
-            with zipfile.ZipFile(filename, 'w',
+            with zipfile.ZipFile(buffer, 'w',
                                  compression=zipfile.ZIP_STORED,
                                  allowZip64=False) as archive:
                 archive.writestr(info, contents)
@@ -1066,22 +1069,16 @@ SEE ALSO
                 'USDZ package would require ZIP64, which breaks the '
                 '64-byte alignment: %s' % ex)
 
-    def save_usdz(filename, quiet=1, *, _self=cmd):
+        return buffer.getvalue()
+
+    def _get_usdz(*, _self=cmd):
         '''
-DESCRIPTION
+        USDZ package of the currently displayed geometry for AR viewers,
+        which contains one ASCII USD layer.
 
-    Save the currently displayed geometry as a USDZ package for AR
-    viewers. The package contains one ASCII USD layer.
-
-NOTES
-
-    Unlike "get_usda", the scene is scaled to fit within one meter and
-    stands centered on the ground, and spheres, sticks and cones are kept
-    as compact analytic prims where possible.
-
-SEE ALSO
-
-    get_usda, save
+        Unlike "get_usda", the scene is scaled to fit within one meter and
+        stands centered on the ground, and spheres, sticks and cones are kept
+        as compact analytic prims where possible.
         '''
         with _self.lockcm:
             contents = _cmd.get_usda(_self._COb, 1)
@@ -1089,12 +1086,7 @@ SEE ALSO
         if not contents:
             raise pymol.CmdException('no geometry available for USDZ export')
 
-        _write_usdz_package(filename, 'scene.usda', contents.encode())
-
-        if not quiet:
-            print(' Save: wrote "' + filename + '".')
-
-        return DEFAULT_SUCCESS
+        return _usdz_package('scene.usda', contents.encode())
 
     savefunctions = {
         'cif': get_str, # mmCIF
@@ -1119,11 +1111,10 @@ SEE ALSO
 
         'png': png,
 
-        # no selection argument (some have a "version", "filename" or
-        # "quiet" argument)
+        # no arguments (some have a "version" argument)
         'dae': 'pymol.querying:get_collada',
         'usda': 'pymol.querying:get_usda',
-        'usdz': save_usdz,
+        'usdz': _get_usdz,
         'gltf': 'pymol.querying:get_gltf',
         'wrl': 'pymol.querying:get_vrml',
         'pov': 'pymol.querying:get_povray',

@@ -2,6 +2,7 @@
 unit tests for pymol.exporting geometry formats
 '''
 
+import io
 import math
 import re
 import struct
@@ -275,33 +276,43 @@ class TestExportingGeom(testing.PyMOLTestCase):
         from pymol import exporting
 
         contents = b'#usda 1.0\n' + b'\0' * 120
+        package = exporting._usdz_package('scene.usda', contents)
 
-        with testing.mktemp('.usdz') as filename:
-            exporting._write_usdz_package(filename, 'scene.usda', contents)
+        with zipfile.ZipFile(io.BytesIO(package)) as archive:
+            info = archive.getinfo('scene.usda')
+            self.assertEqual(archive.read('scene.usda'), contents)
 
-            with zipfile.ZipFile(filename) as archive:
-                info = archive.getinfo('scene.usda')
-                self.assertEqual(archive.read('scene.usda'), contents)
-
-            with open(filename, 'rb') as handle:
-                handle.seek(info.header_offset)
-                header = struct.unpack('<IHHHHHIIIHH', handle.read(30))
-
-            data_offset = info.header_offset + 30 + header[-2] + header[-1]
-            self.assertEqual(data_offset % 64, 0)
+        offset = info.header_offset
+        header = struct.unpack('<IHHHHHIIIHH', package[offset:offset + 30])
+        data_offset = offset + 30 + header[-2] + header[-1]
+        self.assertEqual(data_offset % 64, 0)
 
     def testUSDZPackageTooLarge(self):
         from pymol import exporting
 
         # a ZIP64 local header would carry a second extra field and shift the
         # payload off the 64-byte boundary
-        with testing.mktemp('.usdz') as filename:
-            with unittest.mock.patch.object(zipfile, 'ZIP64_LIMIT', 16):
-                with self.assertRaises(pymol.CmdException) as caught:
-                    exporting._write_usdz_package(
-                        filename, 'scene.usda', b'x' * 64)
+        with unittest.mock.patch.object(zipfile, 'ZIP64_LIMIT', 16):
+            with self.assertRaises(pymol.CmdException) as caught:
+                exporting._usdz_package('scene.usda', b'x' * 64)
 
         self.assertIn('too large', str(caught.exception))
+
+    def testUSDZFailureKeepsFile(self):
+        cmd.fragment('gly')
+
+        with testing.mktemp('.usdz') as filename:
+            with open(filename, 'wb') as handle:
+                handle.write(b'previous')
+
+            # the package is built in memory and written like any other
+            # format, so a failure must not truncate an existing file
+            with unittest.mock.patch.object(
+                    zipfile.ZipFile, 'writestr', side_effect=OSError('full')):
+                with self.assertRaises(OSError):
+                    cmd.save(filename)
+
+            self.assertEqual(file_get_contents(filename, 'rb'), b'previous')
 
     def testUSDAMaterials(self):
         from pymol import cgo
