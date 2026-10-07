@@ -2718,6 +2718,32 @@ static PyObject *CmdGetCOLLADA(PyObject * self, PyObject * args)
   return APIAutoNone(result);
 }
 
+/**
+ * Return an ASCII USD layer or None on failure
+ *
+ * ar: layer for a USDZ package, see RayRenderUSDA
+ */
+static PyObject* CmdGetUSDA(PyObject* self, PyObject* args)
+{
+  PyMOLGlobals* G = nullptr;
+  PyObject* result = nullptr;
+  char* vla = nullptr;
+  int ar;
+
+  API_SETUP_ARGS(G, self, args, "Oi", &self, &ar);
+  API_ASSERT(APIEnterNotModal(G));
+
+  SceneRay(G, 0, 0, ar ? cSceneRay_MODE_USDZ : cSceneRay_MODE_USDA, nullptr,
+      &vla, 0.0F, 0.0F, false, nullptr, false, -1);
+  APIExit(G);
+
+  if (vla && vla[0]) {
+    result = Py_BuildValue("s", vla);
+  }
+
+  VLAFreeP(vla);
+  return APIAutoNone(result);
+}
 
 static PyObject *CmdGetIdtf(PyObject * self, PyObject * args)
 {
@@ -6500,6 +6526,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_str", CmdGetStr, METH_VARARGS},
   {"get_title", CmdGetTitle, METH_VARARGS},
   {"get_type", CmdGetType, METH_VARARGS},
+  {"get_usda", CmdGetUSDA, METH_VARARGS},
   {"get_unused_name", CmdGetUnusedName, METH_VARARGS},
   {"get_version", CmdGetVersion, METH_VARARGS},
   {"get_view", CmdGetView, METH_VARARGS},

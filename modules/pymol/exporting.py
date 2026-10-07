@@ -846,8 +846,8 @@ NOTES
 
     The file format is automatically chosen if the extesion is one of
     the supported output formats: pdb, pqr, mol, sdf, pkl, pkla, mmd, out,
-    dat, mmod, cif, pov, png, pse, psw, aln, fasta, obj, mtl, wrl, dae, idtf,
-    or mol2.
+    dat, mmod, cif, pov, png, pse, psw, aln, fasta, obj, mtl, wrl, dae, usda,
+    usdz, idtf, or mol2.
 
     If the file format is not recognized, then a PDB file is written
     by default.
@@ -1020,6 +1020,74 @@ SEE ALSO
         i = {'mtl': 0, 'obj': 1}.get(format)
         return _self.get_mtl_obj()[i]
 
+    def _usdz_package(member_name, contents):
+        '''
+        Package one stored USD layer with the data offset aligned to 64 bytes,
+        as required by the USDZ specification.
+        '''
+        import io
+        import struct
+        import zipfile
+
+        # A ZIP64 local header carries an additional extra field, which would
+        # shift the payload away from the computed alignment boundary. This is
+        # the same condition which makes zipfile pick a ZIP64 header.
+        if len(contents) * 1.05 > zipfile.ZIP64_LIMIT:
+            raise pymol.CmdException(
+                'USDZ layer of %d bytes is too large for the aligned, '
+                'uncompressed package format' % len(contents))
+
+        member_name_bytes = member_name.encode('utf-8')
+        local_header_size = 30 + len(member_name_bytes)
+        extra_size = (-local_header_size) % 64
+
+        # ZIP extra fields need a four-byte header. If less than four bytes
+        # would be needed, move to the following alignment boundary.
+        if 0 < extra_size < 4:
+            extra_size += 64
+
+        info = zipfile.ZipInfo(member_name)
+        info.compress_type = zipfile.ZIP_STORED
+        info.create_system = 3
+        info.external_attr = 0o100644 << 16
+
+        if extra_size:
+            payload_size = extra_size - 4
+            info.extra = (
+                struct.pack('<HH', 0x1986, payload_size) +
+                b'\0' * payload_size)
+
+        buffer = io.BytesIO()
+
+        try:
+            with zipfile.ZipFile(buffer, 'w',
+                                 compression=zipfile.ZIP_STORED,
+                                 allowZip64=False) as archive:
+                archive.writestr(info, contents)
+        except zipfile.LargeZipFile as ex:
+            raise pymol.CmdException(
+                'USDZ package would require ZIP64, which breaks the '
+                '64-byte alignment: %s' % ex)
+
+        return buffer.getvalue()
+
+    def _get_usdz(*, _self=cmd):
+        '''
+        USDZ package of the currently displayed geometry for AR viewers,
+        which contains one ASCII USD layer.
+
+        Unlike "get_usda", the scene is scaled to fit within one meter and
+        stands centered on the ground, and spheres, sticks and cones are kept
+        as compact analytic prims where possible.
+        '''
+        with _self.lockcm:
+            contents = _cmd.get_usda(_self._COb, 1)
+
+        if not contents:
+            raise pymol.CmdException('no geometry available for USDZ export')
+
+        return _usdz_package('scene.usda', contents.encode())
+
     savefunctions = {
         'cif': get_str, # mmCIF
         'xyz': get_str,
@@ -1045,6 +1113,8 @@ SEE ALSO
 
         # no arguments (some have a "version" argument)
         'dae': 'pymol.querying:get_collada',
+        'usda': 'pymol.querying:get_usda',
+        'usdz': _get_usdz,
         'gltf': 'pymol.querying:get_gltf',
         'wrl': 'pymol.querying:get_vrml',
         'pov': 'pymol.querying:get_povray',

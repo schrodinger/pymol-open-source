@@ -661,6 +661,35 @@ PYMOL API
             r = _cmd.get_collada(_self._COb,int(version))
         return r
 
+    def get_usda(*, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_usda" returns an ASCII OpenUSD layer representing the content
+    currently displayed.
+
+NOTES
+
+    Coordinates are in Angstrom, the layer declares metersPerUnit = 1e-10.
+    They are in camera space, or in the original model space with
+    geometry_export_mode=1. Importers which apply that scale, like
+    Blender's by default, make a molecule nanometers in size; Blender's
+    "Apply Unit Conversion Scale" import option turns this off.
+
+    All geometry is exported as meshes, with one material per color.
+    Smooth color gradients become per-triangle colors.
+
+PYMOL API
+
+    cmd.get_usda()
+
+SEE ALSO
+
+    save
+        '''
+        with _self.lockcm:
+            return _cmd.get_usda(_self._COb, 0)
+
     def get_gltf(filename, quiet=1, *, _self=cmd):
         '''
 DESCRIPTION
