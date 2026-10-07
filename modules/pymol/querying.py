@@ -661,44 +661,169 @@ PYMOL API
             r = _cmd.get_collada(_self._COb,int(version))
         return r
 
-    def get_gltf(filename, quiet=1, *, _self=cmd):
+    def get_glb(*, _self=cmd):
         '''
 DESCRIPTION
 
-    "get_gltf" saves a gltf file representing the content
-    currently displayed.
+    "get_glb" returns a GLB (binary glTF 2.0) bytes object representing the
+    content currently displayed.
+
+USAGE
+
+    save filename.glb
 
 PYMOL API
 
-    cmd.get_gltf()
+    cmd.get_glb()
 
+NOTES
+
+    Requires PyMOL to be compiled with native glTF support (--json=true),
+    reported as the "gltf" capability by cmd.get_capabilities().
+
+    The scene is oriented like the current view. Set geometry_export_mode
+    to 1 to keep the original model space coordinates instead.
+
+    Text labels and ellipsoid primitives are not exported yet, they are
+    skipped with a warning.
+
+SEE ALSO
+
+    get_gltf, get_collada
+        '''
+        try:
+            get_glb_ = _cmd.get_glb
+        except AttributeError:
+            raise pymol.CmdException(
+                'not compiled with native glTF/GLB export support '
+                '(rebuild with --json=true and the nlohmann-json headers '
+                'installed)') from None
+
+        with _self.lockcm:
+            r = get_glb_(_self._COb)
+
+        if r is None:
+            raise pymol.CmdException(
+                'no exportable geometry in the current scene',
+                'Save-Error')
+
+        return r
+
+    def _get_gltf_collada2gltf(filename, quiet, _self):
+        '''
+        Legacy glTF export for builds without native glTF support: convert
+        COLLADA output with the external collada2gltf program.
         '''
         import shutil
+        import subprocess
+
         exe = shutil.which('collada2gltf') or shutil.which('COLLADA2GLTF-bin')
         if exe is None:
-            raise pymol.CmdException('could not find collada2gltf')
+            raise pymol.CmdException(
+                'not compiled with native glTF export support (--json=true) '
+                'and could not find collada2gltf')
 
         # https://github.com/schrodinger/pymol-open-source/issues/107
         _self.set('collada_geometry_mode', 1, quiet=quiet)
 
-        r = _self.get_collada()
-
-        # write collada file
+        # write collada file, then convert it in place
         with open(filename, 'w') as handle:
-            handle.write(r)
+            handle.write(_self.get_collada())
 
-        import subprocess
+        if subprocess.call([exe, '-i', filename, '-o', filename]) != 0:
+            raise pymol.CmdException('collada2gltf failed', 'Save-Error')
 
-        result = subprocess.call([exe, '-i', filename, '-o', filename])
-                # convert collada file to gltf by using collada2gltf binary
+    def _glb_to_gltf(glb):
+        '''
+        Convert GLB bytes to a self-contained glTF document (dict), with the
+        binary buffer embedded as a base64 data URI.
+        '''
+        import base64
+        import json
+        import struct
+
+        try:
+            magic, version, total_length = struct.unpack_from('<III', glb, 0)
+            if magic != 0x46546C67 or version != 2 or total_length != len(glb):
+                raise ValueError('invalid GLB header')
+
+            json_length, json_type = struct.unpack_from('<II', glb, 12)
+            if json_type != 0x4E4F534A:
+                raise ValueError('missing GLB JSON chunk')
+
+            json_start = 20
+            json_end = json_start + json_length
+            document = json.loads(glb[json_start:json_end])
+
+            binary_length, binary_type = struct.unpack_from('<II', glb, json_end)
+            if binary_type != 0x004E4942:
+                raise ValueError('missing GLB binary chunk')
+
+            binary_start = json_end + 8
+            binary = glb[binary_start:binary_start + binary_length]
+            buffer = document['buffers'][0]
+            binary = binary[:buffer['byteLength']]
+            buffer['uri'] = (
+                'data:application/octet-stream;base64,' +
+                base64.b64encode(binary).decode('ascii'))
+        except (KeyError, TypeError, ValueError, struct.error) as ex:
+            raise pymol.CmdException(
+                'could not convert native GLB data to glTF: %s' % ex) from ex
+
+        return document
+
+    def get_gltf(filename, quiet=1, *, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_gltf" saves a glTF 2.0 file representing the content currently
+    displayed. Geometry data is embedded in the JSON document, so the result
+    is a single portable file.
+
+USAGE
+
+    save filename.gltf
+
+ARGUMENTS
+
+    filename = string: output file path
+
+    quiet = 0 or 1: toggle verbosity {default: 1}
+
+PYMOL API
+
+    cmd.get_gltf(string filename, int quiet=1)
+
+NOTES
+
+    Uses native glTF support if PyMOL was compiled with --json=true
+    (reported as the "gltf" capability by cmd.get_capabilities()),
+    otherwise falls back to converting COLLADA output with the external
+    collada2gltf program.
+
+    The scene is oriented like the current view. Set geometry_export_mode
+    to 1 to keep the original model space coordinates instead.
+
+    Text labels and ellipsoid primitives are not exported yet, they are
+    skipped with a warning.
+
+SEE ALSO
+
+    get_glb, get_collada
+        '''
+        if hasattr(_cmd, 'get_glb'):
+            import json
+            from pymol.exporting import _write_file_atomic
+            document = _glb_to_gltf(get_glb(_self=_self))
+            contents = json.dumps(document, separators=(',', ':'))
+            _write_file_atomic(filename, contents.encode('utf-8'))
+        else:
+            _get_gltf_collada2gltf(filename, quiet, _self)
 
         if not quiet:
-            if result == 0:
-                print(' Save: wrote "' + filename + '".')
-            else:
-                print(' Save-Error: no file written')
+            print(' Save: wrote "' + filename + '".')
 
-        return result
+        return DEFAULT_SUCCESS
 
     def count_states(selection="(all)", quiet=1, *, _self=cmd):
         '''

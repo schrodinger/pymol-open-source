@@ -4,6 +4,7 @@ import numpy
 from pathlib import Path
 import pytest
 
+import pymol
 from pymol import cmd
 
 
@@ -131,3 +132,15 @@ def requires_version(version, reason=None):
             reason=reason or f"Requires PyMOL {version}"
         )(test_func)
     return decorator
+
+
+def requires_capability(capability, reason=None):
+    """
+    Skip a test unless PyMOL was compiled with the given optional feature,
+    as reported by pymol.get_capabilities(). The returned mark works as a
+    decorator and in pytest.param(marks=...).
+    """
+    return pytest.mark.skipif(
+        capability not in pymol.get_capabilities(),
+        reason=reason or f"Requires PyMOL capability {capability!r}"
+    )
