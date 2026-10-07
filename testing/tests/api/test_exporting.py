@@ -4,6 +4,7 @@ import os
 import struct
 import tempfile
 
+import numpy
 import pytest
 
 import pymol
@@ -79,32 +80,31 @@ def _srgb_to_linear(c):
     return ((c + 0.055) / 1.055) ** 2.4
 
 
-def _read_vertex_colors(gltf, bin_data, mesh_index=0):
-    """Return a mesh's COLOR_0 values as a list of (r, g, b) tuples."""
-    prim = gltf['meshes'][mesh_index]['primitives'][0]
-    color_acc = gltf['accessors'][prim['attributes']['COLOR_0']]
-    color_view = gltf['bufferViews'][color_acc['bufferView']]
-    offset = color_view.get('byteOffset', 0) + color_acc.get('byteOffset', 0)
-    values = struct.unpack_from(
-        '<%df' % (color_acc['count'] * 3), bin_data, offset)
-    return list(zip(values[0::3], values[1::3], values[2::3]))
+def _read_accessor(gltf, bin_data, accessor_index):
+    """Return an accessor's values as an array with one row per element."""
+    acc = gltf['accessors'][accessor_index]
+    view = gltf['bufferViews'][acc['bufferView']]
+    offset = view.get('byteOffset', 0) + acc.get('byteOffset', 0)
+    ncomp = {'SCALAR': 1, 'VEC3': 3}[acc['type']]
+    dtype = {5126: '<f4', 5125: '<u4'}[acc['componentType']]
+    values = numpy.frombuffer(bin_data, dtype, acc['count'] * ncomp, offset)
+    return values.reshape(acc['count'], ncomp)
 
 
-def _read_vertex_normals(gltf, bin_data, mesh_index=0):
-    """Return a mesh's NORMAL values as a list of (x, y, z) tuples."""
+def _read_attribute(gltf, bin_data, name, mesh_index=0):
+    """Return a mesh's vertex attribute (e.g. COLOR_0) as an array."""
     prim = gltf['meshes'][mesh_index]['primitives'][0]
-    normal_acc = gltf['accessors'][prim['attributes']['NORMAL']]
-    normal_view = gltf['bufferViews'][normal_acc['bufferView']]
-    offset = normal_view.get('byteOffset', 0) + normal_acc.get('byteOffset', 0)
-    values = struct.unpack_from(
-        '<%df' % (normal_acc['count'] * 3), bin_data, offset)
-    return list(zip(values[0::3], values[1::3], values[2::3]))
+    return _read_accessor(gltf, bin_data, prim['attributes'][name])
 
 
 def _parse_glb(filepath):
     """Parse a GLB file and return (gltf_json, bin_data)."""
     with open(filepath, 'rb') as f:
-        data = f.read()
+        return _parse_glb_bytes(f.read())
+
+
+def _parse_glb_bytes(data):
+    """Parse GLB data and return (gltf_json, bin_data)."""
     magic, version, length = struct.unpack_from('<III', data, 0)
     assert magic == 0x46546C67, f"Bad GLB magic: {hex(magic)}"
     assert version == 2
@@ -208,26 +208,16 @@ def test_glb_export_spheres():
     cmd.pseudoatom("atoms", pos=[4.0, 0.0, 0.0], color="blue")
     cmd.show_as("spheres")
 
-    with tempfile.NamedTemporaryFile(suffix='.glb', delete=False) as f:
-        glb_file = f.name
+    gltf, bin_data = _parse_glb_bytes(cmd.get_glb())
+    assert len(gltf['meshes']) >= 1
 
-    try:
-        cmd.get_glb(glb_file)
-        assert os.path.getsize(glb_file) > 0
+    prim = gltf['meshes'][0]['primitives'][0]
+    pos_acc = gltf['accessors'][prim['attributes']['POSITION']]
+    assert pos_acc['count'] > 0
 
-        gltf, bin_data = _parse_glb(glb_file)
-        assert len(gltf['meshes']) >= 1
-
-        prim = gltf['meshes'][0]['primitives'][0]
-        pos_acc = gltf['accessors'][prim['attributes']['POSITION']]
-        assert pos_acc['count'] > 0
-
-        colors = _read_vertex_colors(gltf, bin_data)
-        assert any(r > 0.99 and g < 0.01 and b < 0.01 for r, g, b in colors)
-        assert any(r < 0.01 and g < 0.01 and b > 0.99 for r, g, b in colors)
-    finally:
-        if os.path.exists(glb_file):
-            os.unlink(glb_file)
+    colors = _read_attribute(gltf, bin_data, 'COLOR_0')
+    assert any(r > 0.99 and g < 0.01 and b < 0.01 for r, g, b in colors)
+    assert any(r < 0.01 and g < 0.01 and b > 0.99 for r, g, b in colors)
 
 
 @test_utils.requires_version("3.2")
@@ -251,8 +241,8 @@ def test_glb_export_midtone_color_is_linear():
         cmd.save(glb_file)
         gltf, bin_data = _parse_glb(glb_file)
 
-        colors = _read_vertex_colors(gltf, bin_data)
-        assert colors
+        colors = _read_attribute(gltf, bin_data, 'COLOR_0')
+        assert len(colors)
         for color in colors:
             assert all(abs(c - e) < 1e-5 for c, e in zip(color, expected)), \
                 f"{color} != {expected}"
@@ -303,7 +293,7 @@ def test_glb_export_cartoon():
         pos_acc = gltf['accessors'][prim['attributes']['POSITION']]
         assert pos_acc['count'] > 100  # cartoon should have many vertices
 
-        normals = _read_vertex_normals(gltf, bin_data)
+        normals = _read_attribute(gltf, bin_data, 'NORMAL')
         assert len(normals) == pos_acc['count']
         for normal in normals:
             length_squared = sum(component * component for component in normal)
@@ -339,6 +329,62 @@ def test_glb_export_transparent():
     finally:
         if os.path.exists(glb_file):
             os.unlink(glb_file)
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
+def test_glb_export_winding():
+    """Triangles face the same way as their vertex normals"""
+    # viewers flip the normals of back facing triangles on double sided
+    # materials, so a wrong winding renders dark
+    cmd.fragment("trp")
+    cmd.show_as("sticks")
+    cmd.show("spheres")
+    cmd.set("sphere_scale", 0.3)
+
+    gltf, bin_data = _parse_glb_bytes(cmd.get_glb())
+
+    for mesh_index, mesh in enumerate(gltf['meshes']):
+        pos = _read_attribute(gltf, bin_data, 'POSITION', mesh_index)
+        nrm = _read_attribute(gltf, bin_data, 'NORMAL', mesh_index)
+        tri = _read_accessor(gltf, bin_data,
+                             mesh['primitives'][0]['indices']).reshape(-1, 3)
+        face = numpy.cross(pos[tri[:, 1]] - pos[tri[:, 0]],
+                           pos[tri[:, 2]] - pos[tri[:, 0]])
+        vertex = nrm[tri[:, 0]] + nrm[tri[:, 1]] + nrm[tri[:, 2]]
+        nondegenerate = numpy.linalg.norm(face, axis=1) > 1e-6
+        dots = numpy.einsum('ij,ij->i', face, vertex)[nondegenerate]
+        assert len(dots) > 0
+        assert (dots > 0).all(), f"{(dots <= 0).sum()} inverted triangles"
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
+def test_glb_export_view_orientation():
+    """Scene is oriented like the view, unless geometry_export_mode=1"""
+    cmd.pseudoatom("atoms", pos=[0.0, 0.0, 0.0])
+    cmd.pseudoatom("atoms", pos=[10.0, 0.0, 0.0])
+    cmd.show_as("spheres")
+    cmd.zoom()
+    cmd.turn("y", 90)
+
+    def get_bounds():
+        gltf, _ = _parse_glb_bytes(cmd.get_glb())
+        prim = gltf['meshes'][0]['primitives'][0]
+        pos_acc = gltf['accessors'][prim['attributes']['POSITION']]
+        return pos_acc['min'], pos_acc['max']
+
+    # model x axis points along view z, centered on the origin of rotation
+    lo, hi = get_bounds()
+    assert hi[0] - lo[0] < 5
+    assert hi[2] - lo[2] > 10
+    assert abs(hi[2] + lo[2]) < 1e-3
+
+    cmd.set("geometry_export_mode", 1)
+    lo, hi = get_bounds()
+    assert hi[0] - lo[0] > 10
+    assert hi[2] - lo[2] < 5
+    assert abs(hi[0] + lo[0] - 10.0) < 1e-3
 
 
 @test_utils.requires_version("3.2")

@@ -661,11 +661,35 @@ PYMOL API
             r = _cmd.get_collada(_self._COb,int(version))
         return r
 
-    def _get_glb_bytes(_self):
+    def get_glb(*, _self=cmd):
         '''
-        Return the current scene as GLB bytes. Raises CmdException if PyMOL
-        was built without native glTF/GLB support, or if the scene holds no
-        exportable geometry.
+DESCRIPTION
+
+    "get_glb" returns a GLB (binary glTF 2.0) bytes object representing the
+    content currently displayed.
+
+USAGE
+
+    save filename.glb
+
+PYMOL API
+
+    cmd.get_glb()
+
+NOTES
+
+    Requires PyMOL to be compiled with native glTF support (--json=true),
+    reported as the "gltf" capability by cmd.get_capabilities().
+
+    The scene is oriented like the current view. Set geometry_export_mode
+    to 1 to keep the original model space coordinates instead.
+
+    Text labels and ellipsoid primitives are not exported yet, they are
+    skipped with a warning.
+
+SEE ALSO
+
+    get_gltf, get_collada
         '''
         try:
             get_glb_ = _cmd.get_glb
@@ -685,89 +709,38 @@ PYMOL API
 
         return r
 
-    def get_glb(filename, quiet=1, *, _self=cmd):
+    def _get_gltf_collada2gltf(filename, quiet, _self):
         '''
-DESCRIPTION
-
-    "get_glb" saves a GLB (binary glTF 2.0) file representing the content
-    currently displayed.
-
-USAGE
-
-    save filename.glb
-
-ARGUMENTS
-
-    filename = string: output file path
-
-    quiet = 0 or 1: toggle verbosity {default: 1}
-
-PYMOL API
-
-    cmd.get_glb(string filename, int quiet=1)
-
-NOTES
-
-    Requires PyMOL to be compiled with native glTF support (--json=true),
-    reported as the "gltf" capability by cmd.get_capabilities().
-
-    Text labels and ellipsoid primitives are not exported yet, they are
-    skipped with a warning.
-
-SEE ALSO
-
-    get_gltf, get_collada
+        Legacy glTF export for builds without native glTF support: convert
+        COLLADA output with the external collada2gltf program.
         '''
-        r = _get_glb_bytes(_self)
+        import shutil
+        import subprocess
 
-        with open(filename, 'wb') as handle:
-            handle.write(r)
+        exe = shutil.which('collada2gltf') or shutil.which('COLLADA2GLTF-bin')
+        if exe is None:
+            raise pymol.CmdException(
+                'not compiled with native glTF export support (--json=true) '
+                'and could not find collada2gltf')
 
-        if not quiet:
-            print(' Save: wrote "' + filename + '".')
+        # https://github.com/schrodinger/pymol-open-source/issues/107
+        _self.set('collada_geometry_mode', 1, quiet=quiet)
 
-        return DEFAULT_SUCCESS
+        # write collada file, then convert it in place
+        with open(filename, 'w') as handle:
+            handle.write(_self.get_collada())
 
-    def get_gltf(filename, quiet=1, *, _self=cmd):
+        if subprocess.call([exe, '-i', filename, '-o', filename]) != 0:
+            raise pymol.CmdException('collada2gltf failed', 'Save-Error')
+
+    def _glb_to_gltf(glb):
         '''
-DESCRIPTION
-
-    "get_gltf" saves a glTF 2.0 file representing the content currently
-    displayed. Geometry data is embedded in the JSON document, so the result
-    is a single portable file.
-
-USAGE
-
-    save filename.gltf
-
-ARGUMENTS
-
-    filename = string: output file path
-
-    quiet = 0 or 1: toggle verbosity {default: 1}
-
-PYMOL API
-
-    cmd.get_gltf(string filename, int quiet=1)
-
-NOTES
-
-    Requires PyMOL to be compiled with native glTF support (--json=true),
-    reported as the "gltf" capability by cmd.get_capabilities(). The
-    external collada2gltf converter is no longer used.
-
-    Text labels and ellipsoid primitives are not exported yet, they are
-    skipped with a warning.
-
-SEE ALSO
-
-    get_glb, get_collada
+        Convert GLB bytes to a self-contained glTF document (dict), with the
+        binary buffer embedded as a base64 data URI.
         '''
         import base64
         import json
         import struct
-
-        glb = _get_glb_bytes(_self)
 
         try:
             magic, version, total_length = struct.unpack_from('<III', glb, 0)
@@ -797,8 +770,54 @@ SEE ALSO
             raise pymol.CmdException(
                 'could not convert native GLB data to glTF: %s' % ex) from ex
 
-        with open(filename, 'w', encoding='utf-8') as handle:
-            json.dump(document, handle, separators=(',', ':'))
+        return document
+
+    def get_gltf(filename, quiet=1, *, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_gltf" saves a glTF 2.0 file representing the content currently
+    displayed. Geometry data is embedded in the JSON document, so the result
+    is a single portable file.
+
+USAGE
+
+    save filename.gltf
+
+ARGUMENTS
+
+    filename = string: output file path
+
+    quiet = 0 or 1: toggle verbosity {default: 1}
+
+PYMOL API
+
+    cmd.get_gltf(string filename, int quiet=1)
+
+NOTES
+
+    Uses native glTF support if PyMOL was compiled with --json=true
+    (reported as the "gltf" capability by cmd.get_capabilities()),
+    otherwise falls back to converting COLLADA output with the external
+    collada2gltf program.
+
+    The scene is oriented like the current view. Set geometry_export_mode
+    to 1 to keep the original model space coordinates instead.
+
+    Text labels and ellipsoid primitives are not exported yet, they are
+    skipped with a warning.
+
+SEE ALSO
+
+    get_glb, get_collada
+        '''
+        if hasattr(_cmd, 'get_glb'):
+            import json
+            document = _glb_to_gltf(get_glb(_self=_self))
+            with open(filename, 'w', encoding='utf-8') as handle:
+                json.dump(document, handle, separators=(',', ':'))
+        else:
+            _get_gltf_collada2gltf(filename, quiet, _self)
 
         if not quiet:
             print(' Save: wrote "' + filename + '".')

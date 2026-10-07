@@ -811,8 +811,9 @@ NOTES
     dat, mmod, cif, pov, png, pse, psw, aln, fasta, obj, mtl, wrl, dae, idtf,
     glb, gltf, or mol2.
 
-    glb and gltf export requires PyMOL to be compiled with native glTF
-    support (--json=true), see cmd.get_capabilities().
+    glb export requires PyMOL to be compiled with native glTF support
+    (--json=true), see cmd.get_capabilities(). Without it, gltf export
+    falls back to the external collada2gltf program.
 
     If the file format is not recognized, then a PDB file is written
     by default.

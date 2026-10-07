@@ -17,6 +17,7 @@
 #ifdef _HAVE_JSON
 
 #include "CGO.h"
+#include "Matrix.h"
 #include "MemoryDebug.h"
 #include "Ray.h"
 #include "Scene.h"
@@ -80,16 +81,8 @@ struct MeshGroup {
   std::vector<std::uint32_t> indices;
   std::uint32_t vertex_count = 0;
 
-  /* bounding box for POSITION accessor */
-  float min_pos[3] = {std::numeric_limits<float>::max(),
-      std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
-  float max_pos[3] = {std::numeric_limits<float>::lowest(),
-      std::numeric_limits<float>::lowest(),
-      std::numeric_limits<float>::lowest()};
-
   /**
-   * Append a vertex with position, normal, and color, updating the bounding
-   * box.
+   * Append a vertex with position, normal, and color.
    * @param pos xyz position (3 floats)
    * @param norm xyz normal (3 floats)
    * @param col rgb color (3 floats, 0-1 range, display space)
@@ -123,13 +116,6 @@ struct MeshGroup {
     colors.push_back(srgbToLinear(col[0]));
     colors.push_back(srgbToLinear(col[1]));
     colors.push_back(srgbToLinear(col[2]));
-
-    for (int i = 0; i < 3; i++) {
-      if (pos[i] < min_pos[i])
-        min_pos[i] = pos[i];
-      if (pos[i] > max_pos[i])
-        max_pos[i] = pos[i];
-    }
     vertex_count++;
   }
 
@@ -147,6 +133,44 @@ struct MeshGroup {
   }
 
   bool empty() const { return indices.empty(); }
+
+  /**
+   * Rotate all vertices into camera space, keeping the origin of rotation at
+   * z = 0, so the exported scene is oriented like the current view.
+   * @param modelview column-major 4x4 rigid transform (CRay::ModelView)
+   * @param z_corr camera distance, subtracted from the transformed z
+   */
+  void applyView(const float* modelview, float z_corr)
+  {
+    for (std::uint32_t i = 0; i < vertex_count; i++) {
+      float* pos = positions.data() + 3 * i;
+      float* norm = normals.data() + 3 * i;
+      MatrixTransformC44f3f(modelview, pos, pos);
+      pos[2] -= z_corr;
+      MatrixTransformC44fAs33f3f(modelview, norm, norm);
+      normalize3f(norm);
+    }
+  }
+
+  /**
+   * Compute the axis-aligned bounding box of all vertex positions, as
+   * required for the POSITION accessor.
+   * @param[out] min_pos xyz minimum (3 floats)
+   * @param[out] max_pos xyz maximum (3 floats)
+   */
+  void getBounds(float* min_pos, float* max_pos) const
+  {
+    for (int i = 0; i < 3; i++) {
+      min_pos[i] = std::numeric_limits<float>::max();
+      max_pos[i] = std::numeric_limits<float>::lowest();
+    }
+    for (std::uint32_t v = 0; v < vertex_count; v++) {
+      for (int i = 0; i < 3; i++) {
+        min_pos[i] = std::min(min_pos[i], positions[3 * v + i]);
+        max_pos[i] = std::max(max_pos[i], positions[3 * v + i]);
+      }
+    }
+  }
 };
 
 /**
@@ -335,7 +359,7 @@ static void addCylinderWithCaps(
   if (captype[1] == cCylCapRound) {
     if (stick_round_nub) {
       cgocap[1].reset(CGONew(G));
-      CGORoundNub(cgocap[1].get(), prim->v2, p0, p1, p2, 1, nEdge, prim->r1);
+      CGORoundNub(cgocap[1].get(), prim->v2, p0, p1, p2, 1, nEdge, r2);
     } else {
       for (int i = 0; i < 3; i++) {
         vv2[i] += p0[i] * overlap2;
@@ -347,6 +371,10 @@ static void addCylinderWithCaps(
   /* Shaft */
   std::uint32_t base = group.vertex_count;
 
+  /* Cone normals tilt towards the narrow end */
+  float shaft_len = diff3f(vv1, vv2);
+  float taper = prim->r1 - r2;
+
   for (int c = nEdge; c >= 0; c--) {
     float v[3];
     v[0] = p1[0] * x[c] + p2[0] * y[c];
@@ -356,19 +384,21 @@ static void addCylinderWithCaps(
     float bot[3] = {vv1[0] + v[0] * prim->r1, vv1[1] + v[1] * prim->r1,
         vv1[2] + v[2] * prim->r1};
     float top[3] = {vv2[0] + v[0] * r2, vv2[1] + v[1] * r2, vv2[2] + v[2] * r2};
-    float norm[3] = {v[0], v[1], v[2]};
+    float norm[3] = {v[0] * shaft_len + p0[0] * taper,
+        v[1] * shaft_len + p0[1] * taper, v[2] * shaft_len + p0[2] * taper};
 
     group.addVertex(bot, norm, prim->c1);
     group.addVertex(top, norm, prim->c2);
   }
 
+  /* Vertices were emitted clockwise around p0, wind triangles to face out */
   for (int c = 0; c < nEdge; c++) {
     std::uint32_t bl = base + c * 2;
     std::uint32_t tl = base + c * 2 + 1;
     std::uint32_t br = base + (c + 1) * 2;
     std::uint32_t tr = base + (c + 1) * 2 + 1;
-    group.addTriangle(bl, br, tl);
-    group.addTriangle(tl, br, tr);
+    group.addTriangle(bl, tl, br);
+    group.addTriangle(tl, tr, br);
   }
 
   /* Flat caps */
@@ -656,13 +686,15 @@ static std::string buildGLTFJson(const std::vector<MeshGroup>& groups,
 
     /* Accessor: positions */
     int acc_pos = accessor_idx++;
+    float min_pos[3], max_pos[3];
+    mesh.getBounds(min_pos, max_pos);
     accessors.push_back({
         {"bufferView", bv_pos},
         {"componentType", 5126}, /* FLOAT */
         {"count", mesh.vertex_count},
         {"type", "VEC3"},
-        {"min", {mesh.min_pos[0], mesh.min_pos[1], mesh.min_pos[2]}},
-        {"max", {mesh.max_pos[0], mesh.max_pos[1], mesh.max_pos[2]}},
+        {"min", {min_pos[0], min_pos[1], min_pos[2]}},
+        {"max", {max_pos[0], max_pos[1], max_pos[2]}},
     });
 
     /* Accessor: normals */
@@ -685,15 +717,15 @@ static std::string buildGLTFJson(const std::vector<MeshGroup>& groups,
 
     /* Accessor: indices */
     int acc_idx = accessor_idx++;
-    std::uint32_t max_index =
-        *std::max_element(mesh.indices.begin(), mesh.indices.end());
+    auto index_range =
+        std::minmax_element(mesh.indices.begin(), mesh.indices.end());
     accessors.push_back({
         {"bufferView", bv_idx},
         {"componentType", 5125}, /* UNSIGNED_INT */
         {"count", mesh.indices.size()},
         {"type", "SCALAR"},
-        {"min", {0}},
-        {"max", {max_index}},
+        {"min", {*index_range.first}},
+        {"max", {*index_range.second}},
     });
 
     /* Mesh */
@@ -737,10 +769,16 @@ static std::string buildGLTFJson(const std::vector<MeshGroup>& groups,
   return root.dump();
 }
 
-void RayRenderGLB(CRay* I, int width, int height, char** vla_ptr, float front,
-    float back, float fov)
+void RayRenderGLB(CRay* I, char** vla_ptr)
 {
   PyMOLGlobals* G = I->G;
+
+  /*
+   * Setting: geometry_export_mode
+   * 0 = Orient the scene like the current view (default)
+   * 1 = Keep the original model space coordinates
+   */
+  bool identity = SettingGetGlobal_i(G, cSetting_geometry_export_mode) == 1;
 
   /* Ray trace - expand all objects into primitives */
   RayExpandPrimitives(I);
@@ -794,6 +832,12 @@ void RayRenderGLB(CRay* I, int width, int height, char** vla_ptr, float front,
     " GLB-Warning: No geometry to export.\n" ENDFB(G);
     VLASize(*vla_ptr, char, 0);
     return;
+  }
+
+  if (!identity) {
+    for (auto& group : groups) {
+      group.applyView(I->ModelView, I->Pos.z);
+    }
   }
 
   /* Lay out the binary buffer without materializing it yet */

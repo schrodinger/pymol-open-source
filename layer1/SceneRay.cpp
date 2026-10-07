@@ -493,9 +493,7 @@ bool SceneRay(PyMOLGlobals * G,
       case cSceneRay_MODE_GLB:  /* mode 9 is GLB (glTF 2.0 binary) */
         {
           *charVLA_ptr = VLACalloc(char, 100000);
-          RayRenderGLB(ray, ray_width, ray_height, charVLA_ptr,
-              I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back,
-              fov);
+          RayRenderGLB(ray, charVLA_ptr);
         }
         break;
 #endif

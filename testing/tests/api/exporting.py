@@ -3,6 +3,7 @@ unit tests for pymol.exporting
 '''
 
 import os
+import shutil
 import sys
 import tempfile
 import Image
@@ -413,8 +414,9 @@ class TestExporting(testing.PyMOLTestCase):
         self.assertEqual(cmd.get_names(), ['m1'])
 
     @testing.requires_version('2.4')
-    @unittest.skipUnless('gltf' in pymol.get_capabilities(),
-                         'no native glTF support')
+    @unittest.skipUnless('gltf' in pymol.get_capabilities() or
+                         shutil.which('collada2gltf'),
+                         'no native glTF support and no collada2gltf')
     def testglTF(self):
         '''glTF export'''
         cmd.fragment('gly')
