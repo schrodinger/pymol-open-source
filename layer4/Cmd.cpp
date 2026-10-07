@@ -2720,18 +2720,21 @@ static PyObject *CmdGetCOLLADA(PyObject * self, PyObject * args)
 
 /**
  * Return an ASCII USD layer or None on failure
+ *
+ * ar: layer for a USDZ package, see RayRenderUSDA
  */
 static PyObject* CmdGetUSDA(PyObject* self, PyObject* args)
 {
   PyMOLGlobals* G = nullptr;
   PyObject* result = nullptr;
   char* vla = nullptr;
+  int ar;
 
-  API_SETUP_ARGS(G, self, args, "O", &self);
+  API_SETUP_ARGS(G, self, args, "Oi", &self, &ar);
   API_ASSERT(APIEnterNotModal(G));
 
-  SceneRay(G, 0, 0, cSceneRay_MODE_USDA, nullptr, &vla, 0.0F, 0.0F, false,
-      nullptr, false, -1);
+  SceneRay(G, 0, 0, ar ? cSceneRay_MODE_USDZ : cSceneRay_MODE_USDA, nullptr,
+      &vla, 0.0F, 0.0F, false, nullptr, false, -1);
   APIExit(G);
 
   if (vla && vla[0]) {

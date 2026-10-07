@@ -1,7 +1,4 @@
 *.pyc
-*.so
-*.dylib
-*.pyd
 *.d
 generated
 build

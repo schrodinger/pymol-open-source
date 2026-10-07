@@ -985,66 +985,6 @@ SEE ALSO
         i = {'mtl': 0, 'obj': 1}.get(format)
         return _self.get_mtl_obj()[i]
 
-    # Bound the external OpenUSD conversion so that a hung or misconfigured
-    # usdcat cannot block the calling thread indefinitely.
-    USDCAT_TIMEOUT = 300
-
-    def _find_usdcat():
-        import shutil
-        return shutil.which('usdcat')
-
-    def _convert_usda_to_usdc(contents, timeout=USDCAT_TIMEOUT):
-        import subprocess
-        import tempfile
-
-        usdcat = _find_usdcat()
-        if usdcat is None:
-            raise pymol.CmdException(
-                'USDZ export requires the OpenUSD "usdcat" command')
-
-        with tempfile.TemporaryDirectory(prefix='pymol-usdz-') as tmpdir:
-            usda_filename = os.path.join(tmpdir, 'scene.usda')
-            usdc_filename = os.path.join(tmpdir, 'scene.usdc')
-
-            with open(usda_filename, 'w', encoding='utf-8') as handle:
-                handle.write(contents)
-
-            try:
-                result = subprocess.run(
-                    [usdcat, usda_filename, '-o', usdc_filename],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    timeout=timeout)
-            except subprocess.TimeoutExpired:
-                raise pymol.CmdException(
-                    'OpenUSD conversion timed out after %g seconds' % timeout)
-
-            if result.returncode:
-                detail = result.stderr.strip() or result.stdout.strip()
-                raise pymol.CmdException(
-                    'OpenUSD conversion failed' +
-                    (': ' + detail if detail else ''))
-
-            # A zero exit status is not proof that a binary Crate layer was
-            # written, e.g. an older usdcat may not know the "-o" option.
-            try:
-                with open(usdc_filename, 'rb') as handle:
-                    usdc = handle.read()
-            except OSError as ex:
-                raise pymol.CmdException(
-                    'OpenUSD conversion wrote no output file: %s' % ex)
-
-            if not usdc:
-                raise pymol.CmdException(
-                    'OpenUSD conversion wrote an empty output file')
-
-            if not usdc.startswith(b'PXR-USDC'):
-                raise pymol.CmdException(
-                    'OpenUSD conversion did not produce a binary USDC layer')
-
-            return usdc
-
     def _write_usdz_package(filename, member_name, contents):
         '''
         Write one stored USD layer with the data offset aligned to 64 bytes,
@@ -1095,32 +1035,26 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    Save the currently displayed geometry as a USDZ package. The package
-    contains one binary USDC default layer.
+    Save the currently displayed geometry as a USDZ package for AR
+    viewers. The package contains one ASCII USD layer.
 
 NOTES
 
-    The OpenUSD "usdcat" command must be available on PATH, it converts
-    the ASCII layer to the binary Crate layer which is stored in the
-    package.
-
-    Transparent sticks, sausages and cones are exported as meshes instead
-    of analytic prims, so that a viewing ray crosses the same surfaces as
-    in a rendered image. Such a package is larger than an opaque one.
-
-    Colors which come from a color ramp (see "ramp_new") depend on the
-    viewing ray and are not resolved, such geometry is exported black.
+    Unlike "get_usda", the scene is scaled to fit within one meter and
+    stands centered on the ground, and spheres, sticks and cones are kept
+    as compact analytic prims where possible.
 
 SEE ALSO
 
     get_usda, save
         '''
-        contents = _self.get_usda()
+        with _self.lockcm:
+            contents = _cmd.get_usda(_self._COb, 1)
+
         if not contents:
             raise pymol.CmdException('no geometry available for USDZ export')
 
-        usdc = _convert_usda_to_usdc(contents)
-        _write_usdz_package(filename, 'scene.usdc', usdc)
+        _write_usdz_package(filename, 'scene.usda', contents.encode())
 
         if not quiet:
             print(' Save: wrote "' + filename + '".')

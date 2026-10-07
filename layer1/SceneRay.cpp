@@ -488,9 +488,10 @@ bool SceneRay(PyMOLGlobals * G,
         }
         break;
       case cSceneRay_MODE_USDA:
+      case cSceneRay_MODE_USDZ:
         {
           *charVLA_ptr = VLACalloc(char, 100000);
-          RayRenderUSDA(ray, charVLA_ptr);
+          RayRenderUSDA(ray, charVLA_ptr, mode == cSceneRay_MODE_USDZ);
         }
         break;
 

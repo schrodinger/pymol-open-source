@@ -672,14 +672,12 @@ NOTES
 
     Coordinates are in Angstrom, the layer declares metersPerUnit = 1e-10.
     They are in camera space, or in the original model space with
-    geometry_export_mode=1.
+    geometry_export_mode=1. Importers which apply that scale, like
+    Blender's by default, make a molecule nanometers in size; Blender's
+    "Apply Unit Conversion Scale" import option turns this off.
 
-    Transparent sticks, sausages and cones are exported as meshes instead
-    of analytic prims, so that a viewing ray crosses the same surfaces as
-    in a rendered image. Such a layer is larger than an opaque one.
-
-    Colors which come from a color ramp (see "ramp_new") depend on the
-    viewing ray and are not resolved, such geometry is exported black.
+    All geometry is exported as meshes, with one material per color.
+    Smooth color gradients become per-triangle colors.
 
 PYMOL API
 
@@ -690,7 +688,7 @@ SEE ALSO
     save
         '''
         with _self.lockcm:
-            return _cmd.get_usda(_self._COb)
+            return _cmd.get_usda(_self._COb, 0)
 
     def get_gltf(filename, quiet=1, *, _self=cmd):
         '''

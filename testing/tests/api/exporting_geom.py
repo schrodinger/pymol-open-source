@@ -2,15 +2,9 @@
 unit tests for pymol.exporting geometry formats
 '''
 
-import contextlib
 import math
-import os
 import re
-import shutil
 import struct
-import subprocess
-import sys
-import tempfile
 import unittest.mock
 import zipfile
 
@@ -37,6 +31,22 @@ v_pdbstr_anisou_indefinite = (
     'ANISOU    1  N   GLU A 114     6000   6000   6000   9000      0      0       N  \n'
     'END\n')
 
+MATERIAL_BINDING = r'rel material:binding = </PyMOLScene/Materials/(\w+)>'
+
+def save_usda():
+    with testing.mktemp('.usda') as filename:
+        cmd.save(filename)
+        return file_get_contents(filename)
+
+def save_usdz_layer():
+    '''
+    The layer of a saved USDZ package, which keeps analytic prims
+    '''
+    with testing.mktemp('.usdz') as filename:
+        cmd.save(filename)
+        with zipfile.ZipFile(filename) as archive:
+            return archive.read('scene.usda').decode()
+
 def usda_translations(contents):
     '''
     Centers of all prims which use a translate-only transform
@@ -44,7 +54,8 @@ def usda_translations(contents):
     return sorted(
         tuple(round(float(value), 3) for value in match.split(','))
         for match in re.findall(
-            r'float3 xformOp:translate = \(([^)]*)\)', contents))
+            r'^        float3 xformOp:translate = \(([^)]*)\)', contents,
+            re.M))
 
 def usda_matrices(contents):
     '''
@@ -75,12 +86,20 @@ def matrix_axis_lengths(matrix):
 
 def usda_prim_block(contents, name):
     '''
-    Body of the prim with the given name, which must not have children
+    Body of the top level prim with the given name
     '''
     match = re.search(
         r'def \w+ "' + re.escape(name) + r'"[^{]*\{(.*?)\n    \}', contents,
         re.DOTALL)
     return match and match.group(1)
+
+def usda_mesh(contents, prefix):
+    '''
+    Body of the mesh written for tessellated solids ("Solids") or for the
+    scene's triangles ("Mesh")
+    '''
+    name = re.search(r'def Mesh "(' + prefix + r'_\d+)"', contents).group(1)
+    return usda_prim_block(contents, name)
 
 def usda_vec3_array(block, declaration):
     match = re.search(
@@ -92,49 +111,78 @@ def usda_int_array(block, declaration):
     match = re.search(re.escape(declaration) + r'\s*=\s*\[([^\]]*)\]', block)
     return [int(value) for value in match.group(1).split(',')]
 
-def usda_interpolation(block, declaration):
-    '''
-    Interpolation metadata of the given array attribute
-    '''
-    match = re.search(
-        re.escape(declaration) +
-        r'\s*=\s*\[.*?\]\s*\(\s*interpolation = "(\w+)"',
-        block, re.DOTALL)
-    return match and match.group(1)
+def usda_faces(block):
+    indices = usda_int_array(block, 'int[] faceVertexIndices')
+    faces, start = [], 0
+    for count in usda_int_array(block, 'int[] faceVertexCounts'):
+        faces.append(indices[start:start + count])
+        start += count
+    return faces
 
-def usda_attributes(block):
-    '''
-    Names of the attributes of a prim, in the order they are authored
-    '''
-    return re.findall(r'^\s+(?:uniform )?[\w\[\]]+ ([\w:]+) =', block, re.M)
+def usda_vertex_colors(block):
+    palette = usda_vec3_array(block, 'color3f[] primvars:displayColor')
+    return [palette[i] for i in
+            usda_int_array(block, 'int[] primvars:displayColor:indices')]
 
-@contextlib.contextmanager
-def captured_feedback():
+def usda_materials(contents):
     '''
-    Capture PyMOL's feedback, which is written to the process' stdout by the
-    C layer rather than through sys.stdout
+    Diffuse color and opacity of each material, by name
     '''
-    captured = []
+    materials = {}
+    for name, body in re.findall(
+            r'def Material "(\w+)"\s*\{(.*?)\n        \}', contents,
+            re.DOTALL):
+        color = re.search(r'inputs:diffuseColor = \(([^)]*)\)', body)
+        opacity = re.search(r'inputs:opacity = ([\d.e+-]+)', body)
+        materials[name] = (
+            tuple(float(value) for value in color.group(1).split(',')),
+            float(opacity.group(1)) if opacity else 1.0)
+    return materials
 
-    sys.stdout.flush()
+def usda_face_materials(block):
+    '''
+    Material of each face, from the mesh binding or from its GeomSubsets
+    '''
+    count = len(usda_int_array(block, 'int[] faceVertexCounts'))
+    subsets = re.findall(
+        r'int\[\] indices = \[([^\]]*)\]\s*' + MATERIAL_BINDING, block)
 
-    with tempfile.TemporaryFile('w+') as handle:
-        saved = os.dup(1)
-        try:
-            os.dup2(handle.fileno(), 1)
-            yield captured
-        finally:
-            os.dup2(saved, 1)
-            os.close(saved)
+    if not subsets:
+        return [re.search(MATERIAL_BINDING, block).group(1)] * count
 
-        handle.seek(0)
-        captured.append(handle.read())
+    names = [None] * count
+    for indices, name in subsets:
+        for face in map(int, indices.split(',')):
+            if names[face] is not None:
+                raise AssertionError('face %d is in two subsets' % face)
+            names[face] = name
+    return names
 
 def ring_center_and_radius(points):
     center = [sum(point[axis] for point in points) / len(points)
               for axis in range(3)]
     radii = [math.dist(point, center) for point in points]
     return center, radii
+
+def load_cone(r1, r2, c2, cap1=1.0, cap2=1.0):
+    from pymol import cgo
+
+    cmd.set('geometry_export_mode', 1)
+    cmd.load_cgo([
+        cgo.CONE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, r1, r2,
+        1.0, 0.0, 0.0, *c2, cap1, cap2,
+    ], 'cone')
+
+def load_custom_cylinders(*specs, c2=(1.0, 0.0, 0.0), alpha=None):
+    from pymol import cgo
+
+    cmd.set('geometry_export_mode', 1)
+    obj = [] if alpha is None else [cgo.ALPHA, alpha]
+    for v1, v2, cap1, cap2 in specs:
+        obj += [cgo.CUSTOM_CYLINDER, *v1, *v2, 0.5,
+                1.0, 0.0, 0.0, *c2, cap1, cap2]
+
+    cmd.load_cgo(obj, 'cylinders')
 
 class TestExportingGeom(testing.PyMOLTestCase):
 
@@ -159,633 +207,167 @@ class TestExportingGeom(testing.PyMOLTestCase):
 
     def testUSDA(self):
         cmd.fragment('gly')
+        for rep in ['spheres', 'sticks', 'surface']:
+            cmd.show_as(rep)
+            contents = save_usda()
+            self.assertTrue(contents.startswith('#usda 1.0'))
+            self.assertIn('metersPerUnit = 1e-10', contents)
+
+            # importers like Blender's drop the material of analytic prims
+            self.assertIn('def Mesh', contents)
+            for schema in ['Sphere', 'Cylinder', 'Capsule', 'Cone']:
+                self.assertNotIn('def ' + schema, contents)
+
+    def testUSDZ(self):
+        cmd.fragment('gly')
+
         for rep, schema in [
                 ('spheres', 'def Sphere'),
                 ('sticks', 'def Cylinder'),
                 ('surface', 'def Mesh')]:
             cmd.show_as(rep)
-            with testing.mktemp('.usda') as filename:
+
+            with testing.mktemp('.usdz') as filename:
                 cmd.save(filename)
-                contents = file_get_contents(filename)
-                self.assertTrue(contents.startswith('#usda 1.0'))
-                self.assertIn('metersPerUnit = 1e-10', contents)
-                self.assertIn(schema, contents)
 
-    @testing.foreach(0, 1)
-    def testUSDAEllipsoid(self, geometry_export_mode):
-        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
-        cmd.show_as('spheres')
-        cmd.show('ellipsoids')
-        cmd.turn('x', 35)
-        cmd.turn('y', 50)
-        cmd.set('geometry_export_mode', geometry_export_mode)
+                with zipfile.ZipFile(filename) as archive:
+                    self.assertEqual(archive.namelist(), ['scene.usda'])
+                    info = archive.getinfo('scene.usda')
+                    self.assertEqual(info.compress_type, zipfile.ZIP_STORED)
+                    contents = archive.read('scene.usda').decode()
 
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
+                with open(filename, 'rb') as handle:
+                    handle.seek(info.header_offset)
+                    header = handle.read(30)
+                fields = struct.unpack('<IHHHHHIIIHH', header)
+                data_offset = info.header_offset + 30 + fields[-2] + fields[-1]
+                self.assertEqual(data_offset % 64, 0)
 
-        # every ellipsoid is centered on the atom which also carries a sphere,
-        # so both must be written in the same coordinate space
-        ellipsoids = usda_matrix_translations(contents)
-        self.assertEqual(len(ellipsoids), 2)
-        self.assertEqual(usda_translations(contents), ellipsoids)
+            self.assertTrue(contents.startswith('#usda 1.0'))
+            self.assertIn('metersPerUnit = 1\n', contents)
+            self.assertIn(schema, contents)
 
-        model = sorted(
-            tuple(round(float(value), 3) for value in coord)
-            for coord in cmd.get_coords('m1'))
+    def testUSDZFit(self):
+        from pymol import cgo
 
-        if geometry_export_mode:
-            self.assertEqual(ellipsoids, model)
-        else:
-            self.assertNotEqual(ellipsoids, model)
+        cmd.set('geometry_export_mode', 1)
+        cmd.load_cgo([cgo.SPHERE, 10.0, 20.0, 30.0, 1.0], 'sphere')
+        contents = save_usdz_layer()
 
-        for matrix in usda_matrices(contents):
-            self.assertRightHanded(matrix)
+        # the 2 A sphere is scaled to 1 m and stands centered on the ground
+        root = contents[:contents.index('\n    def ')]
 
-    def testUSDAEllipsoidMirrored(self):
-        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
-        cmd.show_as('ellipsoids')
+        def vec3(declaration):
+            match = re.search(re.escape(declaration) + r' = \(([^)]*)\)', root)
+            return [float(value) for value in match.group(1).split(',')]
 
-        # a reflection turns the ellipsoid axes into a left-handed basis
-        cmd.transform_object('m1', [
-            -1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0])
+        for value in vec3('float3 xformOp:scale'):
+            self.assertAlmostEqual(value, 0.5, places=3)
 
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
+        for value, expected in zip(vec3('float3 xformOp:translate'),
+                                   (-10.0, -19.0, -30.0)):
+            self.assertAlmostEqual(value, expected, places=3)
 
-        matrices = usda_matrices(contents)
-        self.assertEqual(len(matrices), 2)
+        self.assertIn('xformOpOrder = ["xformOp:scale", "xformOp:translate"]',
+                      root)
 
-        for matrix in matrices:
-            self.assertRightHanded(matrix)
+    def testUSDZPackageAlignment(self):
+        from pymol import exporting
 
-    def assertRightHanded(self, matrix):
-        # renderers derive inward-pointing normals from a negative determinant
-        lengths = matrix_axis_lengths(matrix)
-        self.assertAlmostEqual(matrix_determinant(matrix),
-                               lengths[0] * lengths[1] * lengths[2],
-                               places=4)
+        contents = b'#usda 1.0\n' + b'\0' * 120
 
-    def testUSDAEllipsoidSheared(self):
-        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
-        cmd.show_as('ellipsoids')
-
-        # a near singular object matrix leaves the ellipsoid axes almost
-        # coplanar, which is ill conditioned without being exactly singular
-        cmd.transform_object('m1', [
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1e-7, 0.0,
-            0.0, 0.0, 0.0, 1.0])
-
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
-
-        matrices = usda_matrices(contents)
-        self.assertEqual(len(matrices), 2)
-
-        for matrix in matrices:
-            for length in matrix_axis_lengths(matrix):
-                self.assertGreater(length, 0.0)
-            # an orthogonal determinant proves the fallback frame was used
-            self.assertRightHanded(matrix)
-
-    def testUSDAEllipsoidScale(self):
-        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
-        cmd.show_as('ellipsoids')
-
-        lengths = {}
-
-        for scale in (1.0, 2.0):
-            cmd.set('ellipsoid_scale', scale)
-
-            with testing.mktemp('.usda') as filename:
-                cmd.save(filename)
-                contents = file_get_contents(filename)
-
-            matrices = usda_matrices(contents)
-            self.assertEqual(len(matrices), 2)
-            lengths[scale] = [
-                sorted(matrix_axis_lengths(matrix)) for matrix in matrices]
-
-        # semi-axes carry the ellipsoid size, they are not unit length
-        for single, double in zip(lengths[1.0], lengths[2.0]):
-            self.assertGreater(single[0], 0.0)
-            for one, two in zip(single, double):
-                self.assertAlmostEqual(two, one * 2.0, places=4)
-
-    def testUSDAEllipsoidDegenerate(self):
-        cmd.read_pdbstr(v_pdbstr_anisou_indefinite, 'm1', zoom=0)
-        cmd.show_as('ellipsoids')
-
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
-
-        self.assertTrue(contents.startswith('#usda 1.0'))
-
-        matrices = usda_matrices(contents)
-        self.assertEqual(len(matrices), 1)
-
-        for matrix in matrices:
-            # a collapsed semi-axis must not make the transform singular
-            lengths = matrix_axis_lengths(matrix)
-            for length in lengths:
-                self.assertTrue(math.isfinite(length))
-                self.assertGreater(length, 0.0)
-            self.assertGreater(matrix_determinant(matrix), 0.0)
-            self.assertRightHanded(matrix)
-
-            # the collapsed axis stays visually negligible
-            self.assertAlmostEqual(min(lengths) / max(lengths), 1e-3, places=6)
-
-        if shutil.which('usdcat') is None:
-            self.skipTest('usdcat not available')
-
-        # the layer must still be readable by OpenUSD
         with testing.mktemp('.usdz') as filename:
-            cmd.save(filename)
+            exporting._write_usdz_package(filename, 'scene.usda', contents)
 
-    def testUSDAEllipsoidZeroScale(self):
-        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
-        cmd.show_as('ellipsoids')
-        cmd.set('ellipsoid_scale', 0)
+            with zipfile.ZipFile(filename) as archive:
+                info = archive.getinfo('scene.usda')
+                self.assertEqual(archive.read('scene.usda'), contents)
 
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
+            with open(filename, 'rb') as handle:
+                handle.seek(info.header_offset)
+                header = struct.unpack('<IHHHHHIIIHH', handle.read(30))
 
-        # ellipsoids without any extent are omitted rather than exported with
-        # an all-zero (singular) transform
-        self.assertTrue(contents.startswith('#usda 1.0'))
-        self.assertEqual(usda_matrices(contents), [])
-        self.assertNotIn('matrix4d', contents)
+            data_offset = info.header_offset + 30 + header[-2] + header[-1]
+            self.assertEqual(data_offset % 64, 0)
 
-    def testUSDAAnalyticSolids(self):
+    def testUSDZPackageTooLarge(self):
+        from pymol import exporting
+
+        # a ZIP64 local header would carry a second extra field and shift the
+        # payload off the 64-byte boundary
+        with testing.mktemp('.usdz') as filename:
+            with unittest.mock.patch.object(zipfile, 'ZIP64_LIMIT', 16):
+                with self.assertRaises(pymol.CmdException) as caught:
+                    exporting._write_usdz_package(
+                        filename, 'scene.usda', b'x' * 64)
+
+        self.assertIn('too large', str(caught.exception))
+
+    def testUSDAMaterials(self):
         from pymol import cgo
 
         cmd.load_cgo([
-            cgo.CONE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.0, 0.0,
-            1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0,
-            cgo.CYLINDER, 4.0, 0.0, 0.0, 4.0, 0.0, 5.0, 1.0,
-            0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-            cgo.SAUSAGE, 8.0, 0.0, 0.0, 8.0, 0.0, 5.0, 1.0,
-            0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
-        ], 'solids')
-
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
-
-        # cones, cylinders and capsules share one writer, so schema and prim
-        # name must stay in sync
-        solids = re.findall(
-            r'def (Cone|Cylinder|Capsule) "(\w+)_\d+"', contents)
-        self.assertEqual(sorted(schema for schema, _ in solids),
-                         ['Capsule', 'Cone', 'Cylinder'])
-
-        for schema, name in solids:
-            self.assertEqual(schema, name)
-
-    def testUSDASausageIsCapsule(self):
-        from pymol import cgo
-
-        cmd.set('geometry_export_mode', 1)
-        cmd.load_cgo([
-            cgo.SAUSAGE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.5,
-            1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-        ], 'sausage')
-
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
-
-        # one closed surface rather than a cylinder plus two spheres whose
-        # buried hemispheres would darken the solid under transparency
-        self.assertNotIn('def Sphere', contents)
-        self.assertNotIn('def Cylinder', contents)
-
-        block = usda_prim_block(contents, 'Capsule_0')
-        self.assertIsNotNone(block)
-
-        # a capsule's height is its cylindrical spine, the hemispheres reach
-        # one radius further along the axis
-        self.assertIn('double height = 5', block)
-        self.assertIn('double radius = 1.5', block)
-        self.assertEqual(usda_vec3_array(block, 'float3[] extent'),
-                         [(-1.5, -1.5, -4.0), (1.5, 1.5, 4.0)])
-        self.assertEqual(usda_translations(contents), [(0.0, 0.0, 2.5)])
-
-    def testUSDASausageTwoColorMesh(self):
-        from pymol import cgo
-
-        cmd.set('geometry_export_mode', 1)
-        cmd.load_cgo([
-            cgo.SAUSAGE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.0,
-            1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-        ], 'sausage')
-
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
-
-        # the round caps are the two spheres, so the mesh must not close the
-        # spine with flat cap fans of its own
-        self.assertEqual(contents.count('def Sphere'), 2)
-
-        block = usda_prim_block(contents, 'Cylinder_0')
-        self.assertIsNotNone(block)
-
-        counts = usda_int_array(block, 'int[] faceVertexCounts')
-        self.assertEqual(counts.count(3), 0)
-        self.assertEqual(len(counts), counts.count(4))
-
-    def save_cone_usda(self, r1, r2, c2, cap1=1.0, cap2=1.0):
-        from pymol import cgo
-
-        cmd.set('geometry_export_mode', 1)
-        cmd.load_cgo([
-            cgo.CONE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, r1, r2,
-            1.0, 0.0, 0.0, *c2, cap1, cap2,
-        ], 'cone')
-
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            return file_get_contents(filename)
-
-    def testUSDAConeTwoColor(self):
-        # a pointed cone with two endpoint colors cannot use UsdGeomCone,
-        # which carries a single color
-        contents = self.save_cone_usda(1.0, 0.0, (0.0, 0.0, 1.0))
-
-        self.assertNotIn('def Cone', contents)
-
-        block = usda_prim_block(contents, 'Cone_0')
-        self.assertIsNotNone(block)
-
-        colors = usda_vec3_array(block, 'color3f[] primvars:displayColor')
-        points = usda_vec3_array(block, 'point3f[] points')
-        self.assertEqual(len(colors), len(points))
-
-        # the wide end keeps c1, the apex keeps c2
-        by_z = {}
-        for point, color in zip(points, colors):
-            by_z.setdefault(round(point[2], 3), set()).add(color)
-
-        levels = sorted(by_z)
-        self.assertEqual(len(levels), 2)
-        self.assertAlmostEqual(levels[1] - levels[0], 5.0, places=4)
-        self.assertEqual(by_z[levels[0]], {(1.0, 0.0, 0.0)})
-        self.assertEqual(by_z[levels[1]], {(0.0, 0.0, 1.0)})
-
-    def testUSDAConeFrustum(self):
-        # a truncated cone must keep both radii, not become one cylinder
-        contents = self.save_cone_usda(2.0, 1.0, (1.0, 0.0, 0.0))
-
-        self.assertNotIn('def Cylinder', contents)
-        self.assertNotIn('def Cone', contents)
-
-        block = usda_prim_block(contents, 'Cone_0')
-        self.assertIsNotNone(block)
-
-        points = usda_vec3_array(block, 'point3f[] points')
-        counts = usda_int_array(block, 'int[] faceVertexCounts')
-        indices = usda_int_array(block, 'int[] faceVertexIndices')
-
-        self.assertEqual(len(indices), sum(counts))
-        self.assertLess(max(indices), len(points))
-
-        segments = counts.count(4)
-        self.assertGreater(segments, 8)
-
-        # both flat caps are triangle fans over the same segment count
-        self.assertEqual(counts.count(3), 2 * segments)
-
-        centers = []
-        for offset, radius in [(0, 2.0), (segments, 1.0)]:
-            center, radii = ring_center_and_radius(
-                points[offset:offset + segments])
-            centers.append(center)
-            for value in radii:
-                self.assertAlmostEqual(value, radius, places=4)
-
-        self.assertAlmostEqual(math.dist(*centers), 5.0, places=4)
-
-    def testUSDAConeUncapped(self):
-        contents = self.save_cone_usda(
-            2.0, 1.0, (1.0, 0.0, 0.0), cap1=0.0, cap2=0.0)
-
-        block = usda_prim_block(contents, 'Cone_0')
-        counts = usda_int_array(block, 'int[] faceVertexCounts')
-
-        # only the lateral surface, no cap fans
-        self.assertEqual(counts.count(3), 0)
-        self.assertEqual(len(counts), counts.count(4))
-
-    def testUSDAConeMeshNormals(self):
-        contents = self.save_cone_usda(2.0, 1.0, (0.0, 0.0, 1.0))
-        block = usda_prim_block(contents, 'Cone_0')
-        normals = usda_vec3_array(block, 'normal3f[] normals')
-
-        # lateral and cap normals alike must be unit length
-        self.assertGreater(len(normals), 0)
-        for normal in normals:
-            self.assertAlmostEqual(
-                math.dist(normal, (0.0, 0.0, 0.0)), 1.0, places=4)
-
-    def testUSDAConePointedUncapped(self):
-        # UsdGeomCone is always closed at its base, so a cone which PyMOL
-        # draws open cannot use it even though it is pointed and one colored
-        contents = self.save_cone_usda(1.0, 0.0, (1.0, 0.0, 0.0), cap1=0.0)
-        self.assertNotIn('def Cone', contents)
-
-        block = usda_prim_block(contents, 'Cone_0')
-        points = usda_vec3_array(block, 'point3f[] points')
-
-        # the base center vertex only exists to fan out the cap
-        self.assertNotIn((0.0, 0.0, 0.0), points)
-
-    def testUSDAConePointedCapped(self):
-        contents = self.save_cone_usda(1.0, 0.0, (1.0, 0.0, 0.0), cap1=1.0)
-        self.assertIn('def Cone "Cone_0"', contents)
-
-    def save_custom_cylinders_usda(self, *specs, c2=(1.0, 0.0, 0.0),
-                                   alpha=None):
-        from pymol import cgo
-
-        cmd.set('geometry_export_mode', 1)
-        obj = [] if alpha is None else [cgo.ALPHA, alpha]
-        for v1, v2, cap1, cap2 in specs:
-            obj += [cgo.CUSTOM_CYLINDER, *v1, *v2, 0.5,
-                    1.0, 0.0, 0.0, *c2, cap1, cap2]
-
-        cmd.load_cgo(obj, 'cylinders')
-
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            return file_get_contents(filename)
-
-    def testUSDACustomCylinderUncapped(self):
-        contents = self.save_custom_cylinders_usda(
-            ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 0.0, 0.0))
-
-        self.assertNotIn('def Cylinder', contents)
-
-        block = usda_prim_block(contents, 'Cylinder_0')
-        self.assertIsNotNone(block)
-
-        # only the lateral surface, both ends stay open
-        counts = usda_int_array(block, 'int[] faceVertexCounts')
-        self.assertEqual(counts.count(3), 0)
-        self.assertEqual(len(counts), counts.count(4))
-
-    def testUSDACustomCylinderJoint(self):
-        # PyMOL leaves the joint between two abutting cylinders uncapped, and
-        # the neighbour seals it, so both keep the compact analytic prim
-        contents = self.save_custom_cylinders_usda(
-            ((0.0, 0.0, 0.0), (0.0, 0.0, 2.5), 1.0, 0.0),
-            ((0.0, 0.0, 2.5), (0.0, 0.0, 5.0), 0.0, 1.0))
-
-        self.assertEqual(contents.count('def Cylinder'), 2)
-        self.assertNotIn('def Mesh', contents)
-
-    def testUSDATransparentJointStaysOpen(self):
-        # a closed analytic prim buries an end disc in the joint, which a
-        # transparent solid would show as a seam the ray tracer does not draw
-        contents = self.save_custom_cylinders_usda(
-            ((0.0, 0.0, 0.0), (0.0, 0.0, 2.5), 1.0, 0.0),
-            ((0.0, 0.0, 2.5), (0.0, 0.0, 5.0), 0.0, 1.0),
-            alpha=0.5)
-
-        self.assertNotIn('def Cylinder', contents)
-        self.assertEqual(contents.count('def Mesh'), 2)
-
-        for name in ['Cylinder_0', 'Cylinder_1']:
-            block = usda_prim_block(contents, name)
-            counts = usda_int_array(block, 'int[] faceVertexCounts')
-
-            # the flat outer end is capped, the joint end stays open
-            segments = counts.count(4)
-            self.assertEqual(counts.count(3), segments)
-            self.assertIn('float[] primvars:displayOpacity = [0.5]', block)
-
-    def testUSDAOpaqueRoundCapStaysSphere(self):
-        # while the solid is opaque the buried hemisphere costs nothing to
-        # look at, so the compact analytic prims are kept
-        contents = self.save_custom_cylinders_usda(
-            ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 2.0, 1.0))
-
-        self.assertIn('def Cylinder "Cylinder_0"', contents)
-        self.assertEqual(contents.count('def Sphere'), 1)
-        self.assertNotIn('def Mesh', contents)
-
-    def testUSDATransparentRoundCapIsDome(self):
-        # a whole cap sphere buries a hemisphere in the barrel, which a
-        # transparent solid shows as a darker cap the ray tracer never draws
-        contents = self.save_custom_cylinders_usda(
-            ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 2.0, 1.0), alpha=0.5)
-
-        self.assertNotIn('def Cylinder', contents)
-        self.assertNotIn('def Sphere', contents)
-        self.assertEqual(contents.count('def Mesh'), 2)
-
-        barrel = usda_prim_block(contents, 'Cylinder_0')
-        counts = usda_int_array(barrel, 'int[] faceVertexCounts')
-
-        # only the flat end is capped, the round end is left to the dome
-        segments = counts.count(4)
-        self.assertEqual(counts.count(3), segments)
-
-        dome = usda_prim_block(contents, 'Hemisphere_1')
-        self.assertIsNotNone(dome)
-        self.assertIn('float[] primvars:displayOpacity = [0.5]', dome)
-
-        points = usda_vec3_array(dome, 'point3f[] points')
-        normals = usda_vec3_array(dome, 'normal3f[] normals')
-        self.assertEqual(len(points), len(normals))
-
-        for point, normal in zip(points, normals):
-            # on the cap sphere, and never on the far side of the equator
-            self.assertAlmostEqual(
-                math.dist(point, (0.0, 0.0, 0.0)), 0.5, places=4)
-            self.assertLessEqual(point[2], 1e-4)
-
-            # unit normals pointing away from the barrel
-            self.assertAlmostEqual(
-                math.dist(normal, (0.0, 0.0, 0.0)), 1.0, places=4)
-            self.assertAlmostEqual(
-                sum(p * n for p, n in zip(point, normal)), 0.5, places=4)
-
-        # the dome shares the barrel's open ring, so the two leave no crack
-        def ring(block):
-            return sorted(
-                tuple(round(value, 4) for value in point)
-                for point in usda_vec3_array(block, 'point3f[] points')
-                if abs(point[2]) < 1e-4)
-
-        self.assertEqual(len(ring(dome)), segments)
-        self.assertEqual(ring(dome), ring(barrel))
-
-    def testUSDATransparentSausageDomes(self):
-        from pymol import cgo
-
-        cmd.set('geometry_export_mode', 1)
-        cmd.load_cgo([
+            cgo.COLOR, 1.0, 0.0, 0.0,
+            cgo.SPHERE, 0.0, 0.0, 0.0, 1.0,
+            cgo.SPHERE, 3.0, 0.0, 0.0, 1.0,
             cgo.ALPHA, 0.5,
-            cgo.SAUSAGE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.0,
-            1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-        ], 'sausage')
+            cgo.COLOR, 0.0, 0.0, 1.0,
+            cgo.SPHERE, 6.0, 0.0, 0.0, 1.0,
+        ], 'spheres')
 
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
+        for contents in [save_usda(), save_usdz_layer()]:
+            # AR Quick Look ignores primvar readers, so colors come from
+            # constant materials, one per distinct color and opacity
+            self.assertNotIn('UsdPrimvarReader', contents)
+            self.assertEqual(sorted(usda_materials(contents).values()),
+                             [((0.0, 0.0, 1.0), 0.5), ((1.0, 0.0, 0.0), 1.0)])
 
-        # two colors rule out the capsule, so both caps become open domes
-        self.assertNotIn('def Sphere', contents)
-        self.assertNotIn('def Capsule', contents)
-        self.assertEqual(contents.count('def Mesh'), 3)
+            # renderers treat any material with an opacity as translucent
+            self.assertEqual(contents.count('inputs:opacity'), 1)
 
-        for name, color, beyond in [('Hemisphere_1', (1.0, 0.0, 0.0), -1),
-                                    ('Hemisphere_2', (0.0, 0.0, 1.0), 1)]:
-            block = usda_prim_block(contents, name)
-            self.assertIsNotNone(block)
-
-            colors = usda_vec3_array(block, 'color3f[] primvars:displayColor')
-            self.assertEqual(set(colors), {color})
-
-            # each dome sits beyond its own end, none reaches into the spine
-            for point in usda_vec3_array(block, 'point3f[] points'):
-                if beyond < 0:
-                    self.assertLessEqual(point[2], 1e-4)
-                else:
-                    self.assertGreaterEqual(point[2], 5.0 - 1e-4)
-
-    def testUSDACustomCylinderTwoColor(self):
-        # the ray tracer blends the endpoint colors along the axis, so a pair
-        # of flat colored analytic halves would author a seam it never draws
-        contents = self.save_custom_cylinders_usda(
-            ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 1.0, 1.0),
-            c2=(0.0, 0.0, 1.0))
-
-        self.assertNotIn('def Cylinder', contents)
-
-        block = usda_prim_block(contents, 'Cylinder_0')
-        self.assertIsNotNone(block)
-
-        colors = usda_vec3_array(block, 'color3f[] primvars:displayColor')
-        points = usda_vec3_array(block, 'point3f[] points')
-        self.assertEqual(len(colors), len(points))
-
-        by_z = {}
-        for point, color in zip(points, colors):
-            by_z.setdefault(round(point[2], 3), set()).add(color)
-
-        self.assertEqual(sorted(by_z), [0.0, 5.0])
-        self.assertEqual(by_z[0.0], {(1.0, 0.0, 0.0)})
-        self.assertEqual(by_z[5.0], {(0.0, 0.0, 1.0)})
-
-    def testUSDASolidQuality(self):
-        # the ray tracer draws these solids analytically, so PyMOL's quality
-        # settings may only raise the exported resolution above the floor
-        def segment_count(setting, value, spec):
-            cmd.delete('all')
-            cmd.set(setting, value)
-            return usda_int_array(
-                usda_prim_block(self.save_cone_usda(*spec), 'Cone_0'),
-                'int[] faceVertexCounts').count(4)
-
-        frustum = (2.0, 1.0, (1.0, 0.0, 0.0))
-
-        self.assertEqual(segment_count('cone_quality', 3, frustum), 24)
-        self.assertEqual(segment_count('cone_quality', 48, frustum), 48)
-
-        # a request beyond the writer's fixed vertex buffer is clamped
-        self.assertEqual(segment_count('cone_quality', 1000, frustum), 100)
-
-    def testUSDACylinderQuality(self):
-        cmd.set('stick_quality', 40)
-        contents = self.save_custom_cylinders_usda(
-            ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 0.0, 0.0))
-
-        counts = usda_int_array(
-            usda_prim_block(contents, 'Cylinder_0'), 'int[] faceVertexCounts')
-
-        # a tessellated cylinder follows the setting PyMOL uses for sticks
-        self.assertEqual(counts.count(4), 40)
-
-    def testUSDASticksStayAnalytic(self):
-        # half bonds meet with an uncapped joint, which must not turn the
-        # most common representation into a pile of meshes
+    def testUSDAMeshSubsets(self):
         cmd.fragment('gly')
-        cmd.show_as('sticks')
+        cmd.color('red', 'elem C')
+        cmd.color('blue', 'not elem C')
+        cmd.show_as('surface')
 
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
+        contents = save_usda()
+        block = usda_mesh(contents, 'Mesh')
+        self.assertIn('subsetFamily:materialBind:familyType = "partition"',
+                      block)
 
-        self.assertIn('def Cylinder', contents)
-        self.assertNotIn('def Mesh', contents)
+        names = usda_face_materials(block)
+        self.assertNotIn(None, names)
+        self.assertGreater(len(set(names)), 1)
 
-    def testUSDAMeshEncodingShared(self):
-        from pymol import cgo
+        # each face takes the color of its first corner
+        materials = usda_materials(contents)
+        colors = usda_vertex_colors(block)
+        for face, name in zip(usda_faces(block), names):
+            self.assertEqual(materials[name][0], colors[face[0]])
 
-        cmd.set('geometry_export_mode', 1)
-        cmd.load_cgo([
-            cgo.CONE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 2.0, 1.0,
-            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0,
-        ], 'cone')
+    def testUSDARampedColors(self):
         cmd.fragment('gly')
+        cmd.ramp_new('usdramp', 'gly', [0, 5], ['red', 'blue'])
+        cmd.set('surface_color', 'usdramp', 'gly')
         cmd.show_as('surface', 'gly')
 
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
+        # the ramp object draws its own color bar, which is not ramp colored
+        cmd.disable('usdramp')
 
-        names = re.findall(r'def Mesh "(\w+)"', contents)
-        self.assertEqual(len(names), 2)
+        colors = usda_vertex_colors(usda_mesh(save_usda(), 'Mesh'))
 
-        cone = usda_prim_block(
-            contents, next(n for n in names if n.startswith('Cone_')))
-        scene = usda_prim_block(
-            contents, next(n for n in names if n.startswith('Mesh_')))
-
-        # both mesh kinds go through one serializer, so a change to the mesh
-        # encoding cannot reach only one of them
-        self.assertEqual(usda_attributes(cone), usda_attributes(scene))
-
-        for block in (cone, scene):
-            for declaration in ['normal3f[] normals',
-                                'color3f[] primvars:displayColor']:
-                self.assertEqual(
-                    usda_interpolation(block, declaration), 'vertex')
-
-            # the ray tracer flips the normal of a back face hit, so an open
-            # mesh must not be culled from behind
-            self.assertIn('uniform bool doubleSided = 1', block)
-
-        # a tessellated solid has one opacity, a surface has one per vertex
-        self.assertEqual(
-            usda_interpolation(cone, 'float[] primvars:displayOpacity'),
-            'constant')
-        self.assertEqual(
-            usda_interpolation(scene, 'float[] primvars:displayOpacity'),
-            'vertex')
+        # resolved per vertex between the two ramp colors
+        self.assertGreater(len(set(colors)), 1)
+        for r, g, b in colors:
+            self.assertAlmostEqual(r + b, 1.0, delta=0.02)
+            self.assertEqual(g, 0.0)
 
     def testUSDATriangleMeshWinding(self):
         cmd.fragment('gly')
         cmd.show_as('surface')
 
-        with testing.mktemp('.usda') as filename:
-            cmd.save(filename)
-            contents = file_get_contents(filename)
-
-        block = usda_prim_block(
-            contents, re.search(r'def Mesh "(Mesh_\d+)"', contents).group(1))
+        block = usda_mesh(save_usda(), 'Mesh')
         points = usda_vec3_array(block, 'point3f[] points')
         normals = usda_vec3_array(block, 'normal3f[] normals')
         counts = usda_int_array(block, 'int[] faceVertexCounts')
@@ -812,156 +394,437 @@ class TestExportingGeom(testing.PyMOLTestCase):
             normal = normals[3 * face]
             self.assertGreater(sum(u * v for u, v in zip(cross, normal)), 0.0)
 
-    def testUSDARampedColors(self):
+    def testUSDATwoColorSolids(self):
+        from pymol import cgo
+
+        cmd.set('geometry_export_mode', 1)
+        red, blue = (1.0, 0.0, 0.0), (0.0, 0.0, 1.0)
+
+        for obj in [
+                [cgo.CUSTOM_CYLINDER, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.5,
+                 *red, *blue, 1.0, 1.0],
+                [cgo.CONE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.0, 0.0,
+                 *red, *blue, 1.0, 1.0]]:
+            cmd.delete('all')
+            cmd.load_cgo(obj, 'solid')
+
+            contents = save_usda()
+            block = usda_mesh(contents, 'Solids')
+            points = usda_vec3_array(block, 'point3f[] points')
+            materials = usda_materials(contents)
+
+            # each face takes one material, so the colors meet halfway like
+            # PyMOL's half bonds
+            seen = set()
+            for face, name in zip(usda_faces(block),
+                                  usda_face_materials(block)):
+                color = materials[name][0]
+                heights = [points[i][2] for i in face]
+                seen.add(color)
+
+                if color == red:
+                    self.assertLessEqual(max(heights), 2.5 + 1e-4)
+                else:
+                    self.assertEqual(color, blue)
+                    self.assertGreaterEqual(min(heights), 2.5 - 1e-4)
+
+            self.assertEqual(seen, {red, blue})
+
+    def testUSDAConeFrustum(self):
+        # a truncated cone must keep both radii, not become one cylinder
+        load_cone(2.0, 1.0, (1.0, 0.0, 0.0))
+        block = usda_mesh(save_usda(), 'Solids')
+
+        points = usda_vec3_array(block, 'point3f[] points')
+        normals = usda_vec3_array(block, 'normal3f[] normals')
+        counts = usda_int_array(block, 'int[] faceVertexCounts')
+        indices = usda_int_array(block, 'int[] faceVertexIndices')
+
+        self.assertEqual(len(indices), sum(counts))
+        self.assertLess(max(indices), len(points))
+
+        for normal in normals:
+            self.assertAlmostEqual(
+                math.dist(normal, (0.0, 0.0, 0.0)), 1.0, places=4)
+
+        segments = counts.count(4)
+        self.assertGreater(segments, 8)
+
+        # both flat caps are triangle fans over the same segment count
+        self.assertEqual(counts.count(3), 2 * segments)
+
+        centers = []
+        for offset, radius in [(0, 2.0), (segments, 1.0)]:
+            center, radii = ring_center_and_radius(
+                points[offset:offset + segments])
+            centers.append(center)
+            for value in radii:
+                self.assertAlmostEqual(value, radius, places=4)
+
+        self.assertAlmostEqual(math.dist(*centers), 5.0, places=4)
+
+    def testUSDAUncapped(self):
+        for load in [
+                lambda: load_cone(2.0, 1.0, (1.0, 0.0, 0.0), 0.0, 0.0),
+                lambda: load_custom_cylinders(
+                    ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 0.0, 0.0))]:
+            cmd.delete('all')
+            load()
+
+            # only the lateral surface, no cap fans
+            counts = usda_int_array(
+                usda_mesh(save_usda(), 'Solids'), 'int[] faceVertexCounts')
+            self.assertEqual(counts.count(3), 0)
+            self.assertEqual(len(counts), counts.count(4))
+
+    def testUSDAEllipsoidMesh(self):
+        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
+        cmd.show_as('ellipsoids')
+        cmd.set('geometry_export_mode', 1)
+
+        block = usda_mesh(save_usda(), 'Solids')
+        points = usda_vec3_array(block, 'point3f[] points')
+        normals = usda_vec3_array(block, 'normal3f[] normals')
+        half = len(points) // 2
+
+        centers = []
+        for start in (0, half):
+            ellipsoid = points[start:start + half]
+            center = [sum(p[i] for p in ellipsoid) / half for i in range(3)]
+            centers.append(tuple(round(value, 2) for value in center))
+
+            # unit normals pointing away from the center, which only holds
+            # if they transform with the inverse transpose
+            for point, normal in zip(ellipsoid, normals[start:start + half]):
+                self.assertAlmostEqual(
+                    math.dist(normal, (0.0, 0.0, 0.0)), 1.0, places=3)
+                self.assertGreater(sum(
+                    (p - c) * n for p, c, n in zip(point, center, normal)), 0)
+
+        self.assertEqual(sorted(centers), sorted(
+            tuple(round(float(value), 2) for value in coord)
+            for coord in cmd.get_coords('m1')))
+
+    def testUSDASolidQuality(self):
+        from pymol import cgo
+
+        # the ray tracer draws these solids analytically, so PyMOL's quality
+        # settings may only raise the exported resolution above the floor
+        def cone_segments(value):
+            cmd.delete('all')
+            cmd.set('cone_quality', value)
+            load_cone(2.0, 1.0, (1.0, 0.0, 0.0))
+            return usda_int_array(usda_mesh(save_usda(), 'Solids'),
+                                  'int[] faceVertexCounts').count(4)
+
+        self.assertEqual(cone_segments(3), 24)
+        self.assertEqual(cone_segments(48), 48)
+        self.assertEqual(cone_segments(1000), 100)
+
+        cmd.delete('all')
+        cmd.set('stick_quality', 40)
+        load_custom_cylinders(((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 0.0, 0.0))
+        counts = usda_int_array(
+            usda_mesh(save_usda(), 'Solids'), 'int[] faceVertexCounts')
+        self.assertEqual(counts.count(4), 40)
+
+        # spheres are the bulk of a scene, so they follow sphere_quality
+        cmd.delete('all')
+        cmd.load_cgo([cgo.SPHERE, 0.0, 0.0, 0.0, 1.0], 'sphere')
+        counts = usda_int_array(
+            usda_mesh(save_usda(), 'Solids'), 'int[] faceVertexCounts')
+        self.assertEqual(counts.count(3), 2 * 16)
+
+    @testing.foreach(0, 1)
+    def testUSDZEllipsoid(self, geometry_export_mode):
+        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
+        cmd.show_as('spheres')
+        cmd.show('ellipsoids')
+        cmd.turn('x', 35)
+        cmd.turn('y', 50)
+        cmd.set('geometry_export_mode', geometry_export_mode)
+
+        contents = save_usdz_layer()
+
+        # every ellipsoid is centered on the atom which also carries a sphere,
+        # so both must be written in the same coordinate space
+        ellipsoids = usda_matrix_translations(contents)
+        self.assertEqual(len(ellipsoids), 2)
+        self.assertEqual(usda_translations(contents), ellipsoids)
+
+        model = sorted(
+            tuple(round(float(value), 3) for value in coord)
+            for coord in cmd.get_coords('m1'))
+
+        if geometry_export_mode:
+            self.assertEqual(ellipsoids, model)
+        else:
+            self.assertNotEqual(ellipsoids, model)
+
+        for matrix in usda_matrices(contents):
+            self.assertRightHanded(matrix)
+
+    def assertRightHanded(self, matrix):
+        # renderers derive inward-pointing normals from a negative determinant
+        lengths = matrix_axis_lengths(matrix)
+        self.assertAlmostEqual(matrix_determinant(matrix),
+                               lengths[0] * lengths[1] * lengths[2],
+                               places=4)
+
+    def testUSDZEllipsoidMirrored(self):
+        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
+        cmd.show_as('ellipsoids')
+
+        # a reflection turns the ellipsoid axes into a left-handed basis
+        cmd.transform_object('m1', [
+            -1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0])
+
+        matrices = usda_matrices(save_usdz_layer())
+        self.assertEqual(len(matrices), 2)
+
+        for matrix in matrices:
+            self.assertRightHanded(matrix)
+
+    def testUSDZEllipsoidSheared(self):
+        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
+        cmd.show_as('ellipsoids')
+
+        # a near singular object matrix leaves the ellipsoid axes almost
+        # coplanar, which is ill conditioned without being exactly singular
+        cmd.transform_object('m1', [
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1e-7, 0.0,
+            0.0, 0.0, 0.0, 1.0])
+
+        matrices = usda_matrices(save_usdz_layer())
+        self.assertEqual(len(matrices), 2)
+
+        for matrix in matrices:
+            for length in matrix_axis_lengths(matrix):
+                self.assertGreater(length, 0.0)
+            # an orthogonal determinant proves the fallback frame was used
+            self.assertRightHanded(matrix)
+
+    def testUSDZEllipsoidScale(self):
+        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
+        cmd.show_as('ellipsoids')
+
+        lengths = {}
+
+        for scale in (1.0, 2.0):
+            cmd.set('ellipsoid_scale', scale)
+            matrices = usda_matrices(save_usdz_layer())
+            self.assertEqual(len(matrices), 2)
+            lengths[scale] = [
+                sorted(matrix_axis_lengths(matrix)) for matrix in matrices]
+
+        # semi-axes carry the ellipsoid size, they are not unit length
+        for single, double in zip(lengths[1.0], lengths[2.0]):
+            self.assertGreater(single[0], 0.0)
+            for one, two in zip(single, double):
+                self.assertAlmostEqual(two, one * 2.0, places=3)
+
+    def testUSDZEllipsoidDegenerate(self):
+        cmd.read_pdbstr(v_pdbstr_anisou_indefinite, 'm1', zoom=0)
+        cmd.show_as('ellipsoids')
+
+        matrices = usda_matrices(save_usdz_layer())
+        self.assertEqual(len(matrices), 1)
+
+        for matrix in matrices:
+            # a collapsed semi-axis must not make the transform singular
+            lengths = matrix_axis_lengths(matrix)
+            for length in lengths:
+                self.assertTrue(math.isfinite(length))
+                self.assertGreater(length, 0.0)
+            self.assertRightHanded(matrix)
+
+            # the collapsed axis stays visually negligible
+            self.assertAlmostEqual(min(lengths) / max(lengths), 1e-3, places=5)
+
+    def testUSDZEllipsoidZeroScale(self):
+        cmd.read_pdbstr(v_pdbstr_anisou, 'm1', zoom=0)
+        cmd.show_as('ellipsoids')
+        cmd.set('ellipsoid_scale', 0)
+
+        # ellipsoids without any extent are omitted rather than exported with
+        # an all-zero (singular) transform
+        self.assertNotIn('matrix4d', save_usdz_layer())
+        self.assertNotIn('def Mesh', save_usda())
+
+    def testUSDZAnalyticSolids(self):
+        from pymol import cgo
+
+        cmd.load_cgo([
+            cgo.CONE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.0, 0.0,
+            1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0,
+            cgo.CYLINDER, 4.0, 0.0, 0.0, 4.0, 0.0, 5.0, 1.0,
+            0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+            cgo.SAUSAGE, 8.0, 0.0, 0.0, 8.0, 0.0, 5.0, 1.0,
+            0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+        ], 'solids')
+
+        # cones, cylinders and capsules share one writer, so schema and prim
+        # name must stay in sync
+        solids = re.findall(
+            r'def (Cone|Cylinder|Capsule) "(\w+)_\d+"', save_usdz_layer())
+        self.assertEqual(sorted(schema for schema, _ in solids),
+                         ['Capsule', 'Cone', 'Cylinder'])
+
+        for schema, name in solids:
+            self.assertEqual(schema, name)
+
+    def testUSDZSausageIsCapsule(self):
+        from pymol import cgo
+
+        cmd.set('geometry_export_mode', 1)
+        cmd.load_cgo([
+            cgo.SAUSAGE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.5,
+            1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+        ], 'sausage')
+
+        contents = save_usdz_layer()
+
+        # one closed surface rather than a cylinder plus two spheres whose
+        # buried hemispheres would darken the solid under transparency
+        self.assertNotIn('def Sphere', contents)
+        self.assertNotIn('def Cylinder', contents)
+
+        block = usda_prim_block(contents, 'Capsule_0')
+        self.assertIsNotNone(block)
+
+        # a capsule's height is its cylindrical spine, the hemispheres reach
+        # one radius further along the axis
+        self.assertIn('double height = 5', block)
+        self.assertIn('double radius = 1.5', block)
+        self.assertEqual(usda_vec3_array(block, 'float3[] extent'),
+                         [(-1.5, -1.5, -4.0), (1.5, 1.5, 4.0)])
+        self.assertEqual(usda_translations(contents), [(0.0, 0.0, 2.5)])
+
+    def testUSDZSticksStayAnalytic(self):
+        # half bonds meet with an uncapped joint, which must not turn the
+        # most common representation into meshes
         cmd.fragment('gly')
-        cmd.ramp_new('usdramp', 'gly', [0, 5], ['red', 'blue'])
-        cmd.set('surface_color', 'usdramp', 'gly')
-        cmd.show_as('surface', 'gly')
+        cmd.show_as('sticks')
 
-        # the ramp object draws its own color bar, which is not ramp colored
-        cmd.disable('usdramp')
+        contents = save_usdz_layer()
+        self.assertIn('def Cylinder', contents)
+        self.assertNotIn('def Mesh', contents)
 
-        with captured_feedback() as feedback:
-            contents = cmd.get_usda()
+    def testUSDZCustomCylinderJoint(self):
+        # PyMOL leaves the joint between two abutting cylinders uncapped, and
+        # the neighbour seals it, so both keep the compact analytic prim
+        load_custom_cylinders(
+            ((0.0, 0.0, 0.0), (0.0, 0.0, 2.5), 1.0, 0.0),
+            ((0.0, 0.0, 2.5), (0.0, 0.0, 5.0), 0.0, 1.0))
 
-        # ramp colors are resolved per ray, which the exporter cannot do
-        self.assertIn('ramp colors', feedback[0])
+        contents = save_usdz_layer()
+        self.assertEqual(contents.count('def Cylinder'), 2)
+        self.assertNotIn('def Mesh', contents)
 
-        block = usda_prim_block(
-            contents, re.search(r'def Mesh "(Mesh_\d+)"', contents).group(1))
-        colors = usda_vec3_array(block, 'color3f[] primvars:displayColor')
+    def testUSDZConePointed(self):
+        # UsdGeomCone is always closed at its base, so a cone which PyMOL
+        # draws open cannot use it even though it is pointed and one colored
+        load_cone(1.0, 0.0, (1.0, 0.0, 0.0), cap1=1.0)
+        self.assertIn('def Cone "Cone_0"', save_usdz_layer())
 
-        self.assertGreater(len(colors), 0)
-        self.assertEqual(set(colors), {(0.0, 0.0, 0.0)})
+        cmd.delete('all')
+        load_cone(1.0, 0.0, (1.0, 0.0, 0.0), cap1=0.0)
+        contents = save_usdz_layer()
+        self.assertNotIn('def Cone', contents)
 
-        # the limitation is documented where it can surprise a user
-        from pymol import exporting
+        # the base center vertex only exists to fan out the cap
+        points = usda_vec3_array(
+            usda_mesh(contents, 'Solids'), 'point3f[] points')
+        self.assertNotIn((0.0, 0.0, 0.0), points)
 
-        for doc in [cmd.get_usda.__doc__, exporting.save_usdz.__doc__]:
-            self.assertIn('ramp', doc)
+    def testUSDZTransparentJointStaysOpen(self):
+        # a closed analytic prim buries an end disc in the joint, which a
+        # transparent solid would show as a seam the ray tracer does not draw
+        load_custom_cylinders(
+            ((0.0, 0.0, 0.0), (0.0, 0.0, 2.5), 1.0, 0.0),
+            ((0.0, 0.0, 2.5), (0.0, 0.0, 5.0), 0.0, 1.0),
+            alpha=0.5)
 
-    def testUSDANoRampWarning(self):
-        cmd.fragment('gly')
-        cmd.show_as('surface')
+        contents = save_usdz_layer()
+        self.assertNotIn('def Cylinder', contents)
 
-        with captured_feedback() as feedback:
-            cmd.get_usda()
+        # the flat outer ends are capped, the joint ends stay open
+        block = usda_mesh(contents, 'Solids')
+        counts = usda_int_array(block, 'int[] faceVertexCounts')
+        self.assertEqual(counts.count(3), counts.count(4))
+        self.assertIn('float[] primvars:displayOpacity = [0.5]', block)
 
-        self.assertNotIn('ramp colors', feedback[0])
+    def testUSDZOpaqueRoundCapStaysSphere(self):
+        # while the solid is opaque the buried hemisphere costs nothing to
+        # look at, so the compact analytic prims are kept
+        load_custom_cylinders(((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 2.0, 1.0))
 
-    def testUSDZTimeout(self):
-        from pymol import exporting
+        contents = save_usdz_layer()
+        self.assertIn('def Cylinder "Cylinder_0"', contents)
+        self.assertEqual(contents.count('def Sphere'), 1)
+        self.assertNotIn('def Mesh', contents)
 
-        expired = subprocess.TimeoutExpired('usdcat', 0.25)
+    def testUSDZTransparentRoundCapIsDome(self):
+        # a whole cap sphere buries a hemisphere in the barrel, which a
+        # transparent solid shows as a darker cap the ray tracer never draws
+        load_custom_cylinders(
+            ((0.0, 0.0, 0.0), (0.0, 0.0, 5.0), 2.0, 1.0), alpha=0.5)
 
-        with unittest.mock.patch.object(
-                exporting, '_find_usdcat', lambda: 'usdcat'), \
-                unittest.mock.patch.object(
-                    subprocess, 'run', side_effect=expired):
-            with self.assertRaises(pymol.CmdException) as caught:
-                exporting._convert_usda_to_usdc('#usda 1.0\n', timeout=0.25)
+        contents = save_usdz_layer()
+        self.assertNotIn('def Cylinder', contents)
+        self.assertNotIn('def Sphere', contents)
 
-        self.assertIn('timed out', str(caught.exception))
+        block = usda_mesh(contents, 'Solids')
+        self.assertIn('float[] primvars:displayOpacity = [0.5]', block)
 
-    def convert_with_fake_usdcat(self, output):
-        '''
-        Run the usdcat conversion against a stub which exits successfully and
-        writes the given bytes, or nothing at all if output is None
-        '''
-        from pymol import exporting
+        points = usda_vec3_array(block, 'point3f[] points')
+        normals = usda_vec3_array(block, 'normal3f[] normals')
+        equator = []
 
-        completed = subprocess.CompletedProcess([], 0, stdout='', stderr='')
+        for point, normal in zip(points, normals):
+            if abs(point[2]) < 1e-4:
+                equator.append(tuple(round(value, 4) for value in point))
+            elif point[2] < 0:
+                # on the cap sphere, with unit normals pointing away from
+                # the barrel
+                self.assertAlmostEqual(
+                    math.dist(point, (0.0, 0.0, 0.0)), 0.5, places=4)
+                self.assertAlmostEqual(
+                    sum(p * n for p, n in zip(point, normal)), 0.5, places=4)
 
-        def fake_run(args, **kwargs):
-            if output is not None:
-                with open(args[-1], 'wb') as handle:
-                    handle.write(output)
-            return completed
+        # the dome shares the barrel's open ring, so the two leave no crack
+        self.assertEqual(len(equator), 2 * len(set(equator)))
 
-        with unittest.mock.patch.object(
-                exporting, '_find_usdcat', lambda: 'usdcat'), \
-                unittest.mock.patch.object(
-                    subprocess, 'run', side_effect=fake_run):
-            return exporting._convert_usda_to_usdc('#usda 1.0\n')
+    def testUSDZTransparentSausageDomes(self):
+        from pymol import cgo
 
-    def testUSDZConversionOutput(self):
-        # a zero exit status alone must not be trusted
-        for output, expected in [
-                (None, 'no output file'),
-                (b'', 'empty'),
-                (b'#usda 1.0\n', 'binary USDC')]:
-            with self.assertRaises(pymol.CmdException) as caught:
-                self.convert_with_fake_usdcat(output)
-            self.assertIn(expected, str(caught.exception))
+        cmd.set('geometry_export_mode', 1)
+        cmd.load_cgo([
+            cgo.ALPHA, 0.5,
+            cgo.SAUSAGE, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 1.0,
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ], 'sausage')
 
-        usdc = b'PXR-USDC' + b'\0' * 8
-        self.assertEqual(self.convert_with_fake_usdcat(usdc), usdc)
+        contents = save_usdz_layer()
 
-    def testUSDZPackageAlignment(self):
-        from pymol import exporting
+        # two colors rule out the capsule, so both caps become open domes
+        self.assertNotIn('def Sphere', contents)
+        self.assertNotIn('def Capsule', contents)
 
-        contents = b'PXR-USDC' + b'\0' * 120
+        block = usda_mesh(contents, 'Solids')
+        points = usda_vec3_array(block, 'point3f[] points')
 
-        with testing.mktemp('.usdz') as filename:
-            exporting._write_usdz_package(filename, 'scene.usdc', contents)
-
-            with zipfile.ZipFile(filename) as archive:
-                info = archive.getinfo('scene.usdc')
-                self.assertEqual(archive.read('scene.usdc'), contents)
-
-            with open(filename, 'rb') as handle:
-                handle.seek(info.header_offset)
-                header = struct.unpack('<IHHHHHIIIHH', handle.read(30))
-
-            data_offset = info.header_offset + 30 + header[-2] + header[-1]
-            self.assertEqual(data_offset % 64, 0)
-
-    def testUSDZPackageTooLarge(self):
-        from pymol import exporting
-
-        # a ZIP64 local header would carry a second extra field and shift the
-        # payload off the 64-byte boundary
-        with testing.mktemp('.usdz') as filename:
-            with unittest.mock.patch.object(zipfile, 'ZIP64_LIMIT', 16):
-                with self.assertRaises(pymol.CmdException) as caught:
-                    exporting._write_usdz_package(
-                        filename, 'scene.usdc', b'x' * 64)
-
-        self.assertIn('too large', str(caught.exception))
-
-    def testUSDZ(self):
-        if shutil.which('usdcat') is None:
-            self.skipTest('usdcat not available')
-
-        cmd.fragment('gly')
-        usdchecker = shutil.which('usdchecker')
-
-        for rep in ['spheres', 'sticks', 'surface']:
-            cmd.show_as(rep)
-
-            with testing.mktemp('.usdz') as filename:
-                cmd.save(filename)
-
-                with zipfile.ZipFile(filename) as archive:
-                    self.assertEqual(archive.namelist(), ['scene.usdc'])
-                    info = archive.getinfo('scene.usdc')
-                    self.assertEqual(info.compress_type, zipfile.ZIP_STORED)
-
-                    with open(filename, 'rb') as handle:
-                        handle.seek(info.header_offset)
-                        header = handle.read(30)
-                    fields = struct.unpack('<IHHHHHIIIHH', header)
-                    data_offset = (
-                        info.header_offset + 30 + fields[-2] + fields[-1])
-                    self.assertEqual(data_offset % 64, 0)
-
-                if usdchecker:
-                    result = subprocess.run(
-                        [usdchecker, '--arkit', filename],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        text=True)
-                    self.assertEqual(result.returncode, 0, result.stdout)
+        # each dome sits beyond its own end, in the color of that end
+        for point, color in zip(points, usda_vertex_colors(block)):
+            if point[2] < -1e-4:
+                self.assertEqual(color, (1.0, 0.0, 0.0))
+            elif point[2] > 5.0 + 1e-4:
+                self.assertEqual(color, (0.0, 0.0, 1.0))
 
     @testing.requires('incentive')
     @testing.requires_version('2.1')

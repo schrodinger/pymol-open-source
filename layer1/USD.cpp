@@ -1,14 +1,14 @@
 /*
  * PyMOL OpenUSD export
  *
- * The renderer writes an ASCII USD layer. Packaging and conversion to a
- * binary Crate layer are handled by modules/pymol/exporting.py.
+ * The renderer writes an ASCII USD layer. USDZ packaging is handled by
+ * modules/pymol/exporting.py.
  */
 
 #include "Ray.h"
 
 #include "Basis.h"
-#include "Feedback.h"
+#include "Color.h"
 #include "MemoryDebug.h"
 #include "Setting.h"
 #include "Vector.h"
@@ -17,10 +17,13 @@
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <initializer_list>
 #include <iomanip>
+#include <map>
 #include <ostream>
 #include <streambuf>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -33,11 +36,10 @@ constexpr float USD_EPSILON = 1.e-6F;
 constexpr float USD_DEGENERATE_AXIS_SCALE = 1.e-3F;
 
 /**
- * Radial segments of a solid which cannot use an analytic UsdGeom prim.
+ * Radial segments of a tessellated cylinder or cone.
  *
- * The ray tracer draws these solids analytically and has no tessellation of
- * its own, so PyMOL's quality settings can only raise the exported resolution
- * above the floor, never coarsen it below what a smooth render looks like.
+ * The ray tracer draws these solids analytically, so PyMOL's quality settings
+ * can only raise the exported resolution above the floor.
  */
 constexpr int USD_SEGMENTS_MIN = 24;
 constexpr int USD_SEGMENTS_MAX = 100;
@@ -120,11 +122,109 @@ bool UsdColorsEqual(const float* lhs, const float* rhs)
          std::fabs(lhs[2] - rhs[2]) < USD_EPSILON;
 }
 
-void UsdWriteMaterialBinding(
-    std::ostream& out, const float* color, float transparency)
+/**
+ * One UsdPreviewSurface material per distinct color and opacity.
+ *
+ * AR Quick Look ignores primvar readers, so displayColor cannot drive the
+ * material. Colors are quantized to keep smooth ramps and spectra to a few
+ * hundred materials.
+ */
+class UsdMaterials
 {
-  out << "        rel material:binding = </PyMOLScene/Material>\n"
-      << "        color3f[] primvars:displayColor = [";
+  static constexpr int COLOR_LEVELS = 63;
+  static constexpr int OPACITY_LEVELS = 100;
+
+public:
+  /// Index of the material for the given color and opacity
+  int Get(const float* color, float opacity)
+  {
+    std::uint32_t key = std::lround(UsdClamp(opacity) * OPACITY_LEVELS);
+    for (int i = 0; i < 3; ++i) {
+      key = key << 6 | std::lround(UsdClamp(color[i]) * COLOR_LEVELS);
+    }
+
+    const auto inserted =
+        m_indices.emplace(key, static_cast<int>(m_keys.size()));
+    if (inserted.second) {
+      m_keys.push_back(key);
+    }
+    return inserted.first->second;
+  }
+
+  void GetColor(int material, float* color) const
+  {
+    const auto key = m_keys[material];
+    for (int i = 0; i < 3; ++i) {
+      color[i] = float(key >> (12 - 6 * i) & 63) / COLOR_LEVELS;
+    }
+  }
+
+  float GetOpacity(int material) const
+  {
+    return float(m_keys[material] >> 18) / OPACITY_LEVELS;
+  }
+
+  static void WriteBinding(std::ostream& out, int material)
+  {
+    out << "rel material:binding = </PyMOLScene/Materials/Material_" << material
+        << ">\n";
+  }
+
+  void Write(std::ostream& out) const
+  {
+    if (m_keys.empty()) {
+      return;
+    }
+
+    out << "\n"
+        << "    def Scope \"Materials\"\n"
+        << "    {\n";
+
+    for (int i = 0; i < static_cast<int>(m_keys.size()); ++i) {
+      const float opacity = GetOpacity(i);
+      float color[3];
+      GetColor(i, color);
+      const std::string path =
+          "/PyMOLScene/Materials/Material_" + std::to_string(i);
+
+      out << (i ? "\n" : "") << "        def Material \"Material_" << i
+          << "\"\n"
+          << "        {\n"
+          << "            token outputs:surface.connect = <" << path
+          << "/PreviewSurface.outputs:surface>\n"
+          << "\n"
+          << "            def Shader \"PreviewSurface\"\n"
+          << "            {\n"
+          << "                uniform token info:id = \"UsdPreviewSurface\"\n"
+          << "                color3f inputs:diffuseColor = ";
+      UsdWriteVec3(out, color);
+      out << "\n";
+
+      // Renderers treat any material with an opacity as translucent
+      if (opacity < 1.F) {
+        out << "                float inputs:opacity = " << opacity << "\n";
+      }
+
+      out << "                float inputs:roughness = 0.35\n"
+          << "                token outputs:surface\n"
+          << "            }\n"
+          << "        }\n";
+    }
+
+    out << "    }\n";
+  }
+
+private:
+  std::unordered_map<std::uint32_t, int> m_indices;
+  std::vector<std::uint32_t> m_keys;
+};
+
+void UsdWriteMaterialBinding(std::ostream& out, UsdMaterials& materials,
+    const float* color, float transparency)
+{
+  out << "        ";
+  UsdMaterials::WriteBinding(out, materials.Get(color, 1.F - transparency));
+  out << "        color3f[] primvars:displayColor = [";
   UsdWriteColor(out, color);
   out << "] (\n"
       << "            interpolation = \"constant\"\n"
@@ -196,8 +296,8 @@ void UsdWriteAnalyticTransform(
          "\"xformOp:orient\"]\n";
 }
 
-void UsdWriteSphere(std::ostream& out, int& index, const float* center,
-    float radius, const float* color, float transparency)
+void UsdWriteSphere(std::ostream& out, int& index, UsdMaterials& materials,
+    const float* center, float radius, const float* color, float transparency)
 {
   out << "\n"
       << "    def Sphere \"Sphere_" << index++ << "\" (\n"
@@ -212,7 +312,7 @@ void UsdWriteSphere(std::ostream& out, int& index, const float* center,
   UsdWriteVec3(out, center);
   out << "\n"
       << "        uniform token[] xformOpOrder = [\"xformOp:translate\"]\n";
-  UsdWriteMaterialBinding(out, color, transparency);
+  UsdWriteMaterialBinding(out, materials, color, transparency);
   out << "    }\n";
 }
 
@@ -227,9 +327,10 @@ void UsdWriteSphere(std::ostream& out, int& index, const float* center,
  * @param schema "Cylinder", "Cone" or "Capsule", also the prim name prefix
  * @param round_caps whether the schema extends one radius beyond each end
  */
-void UsdWriteAnalyticSolid(std::ostream& out, int& index, const char* schema,
-    bool round_caps, const float* start, const float* end, float radius,
-    const float* color, float transparency)
+void UsdWriteAnalyticSolid(std::ostream& out, int& index,
+    UsdMaterials& materials, const char* schema, bool round_caps,
+    const float* start, const float* end, float radius, const float* color,
+    float transparency)
 {
   float height;
 
@@ -248,7 +349,7 @@ void UsdWriteAnalyticSolid(std::ostream& out, int& index, const char* schema,
       << "        float3[] extent = [(" << -radius << ", " << -radius << ", "
       << -extent_z << "), (" << radius << ", " << radius << ", " << extent_z
       << ")]\n";
-  UsdWriteMaterialBinding(out, color, transparency);
+  UsdWriteMaterialBinding(out, materials, color, transparency);
   out << "    }\n";
 }
 
@@ -270,9 +371,6 @@ struct UsdMeshSource {
   virtual const float* Point(std::size_t vertex) const = 0;
   virtual const float* Normal(std::size_t vertex) const = 0;
   virtual const float* Color(std::size_t vertex) const = 0;
-  /// Whether opacity varies per vertex rather than over the whole prim
-  virtual bool VertexOpacity() const = 0;
-  /// Opacity of the given vertex, or of the prim if not VertexOpacity()
   virtual float Opacity(std::size_t vertex) const = 0;
 };
 
@@ -281,16 +379,19 @@ struct UsdVectorMesh : UsdMeshSource {
   std::vector<float> points;
   std::vector<float> normals;
   std::vector<float> colors;
+  std::vector<float> opacities;
   std::vector<int> counts;
   std::vector<int> indices;
+
+  /// Opacity of the vertices added next
   float opacity = 1.F;
 
   std::size_t VertexCount() const override { return points.size() / 3; }
   std::size_t FaceCount() const override { return counts.size(); }
   int FaceSize(std::size_t face) const override { return counts[face]; }
   int Index(std::size_t corner) const override { return indices[corner]; }
-  bool VertexOpacity() const override { return false; }
-  float Opacity(std::size_t) const override { return opacity; }
+
+  float Opacity(std::size_t vertex) const override { return opacities[vertex]; }
 
   const float* Point(std::size_t vertex) const override
   {
@@ -312,6 +413,7 @@ struct UsdVectorMesh : UsdMeshSource {
     points.insert(points.end(), point, point + 3);
     normals.insert(normals.end(), normal, normal + 3);
     colors.insert(colors.end(), color, color + 3);
+    opacities.push_back(opacity);
   }
 
   void AddFace(std::initializer_list<int> face)
@@ -322,8 +424,8 @@ struct UsdVectorMesh : UsdMeshSource {
 };
 
 /// Write one UsdGeomMesh, shared by all exported mesh kinds
-void UsdWriteMesh(
-    std::ostream& out, int& index, const char* name, const UsdMeshSource& mesh)
+void UsdWriteMesh(std::ostream& out, int& index, UsdMaterials& materials,
+    const char* name, const UsdMeshSource& mesh)
 {
   const auto vertex_count = mesh.VertexCount();
   const auto face_count = mesh.FaceCount();
@@ -359,9 +461,29 @@ void UsdWriteMesh(
   out << "]\n"
       << "        int[] faceVertexCounts = [";
 
+  // Material of each vertex, and the materials used by the mesh, whose
+  // colors and opacities make up the indexed displayColor and displayOpacity
+  std::vector<int> vertex_materials(vertex_count);
+  std::map<int, int> palette;
+  for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
+    vertex_materials[vertex] =
+        materials.Get(mesh.Color(vertex), mesh.Opacity(vertex));
+    palette.emplace(vertex_materials[vertex], 0);
+  }
+
+  int palette_size = 0;
+  for (auto& entry : palette) {
+    entry.second = palette_size++;
+  }
+
+  // Faces of each material, which takes the color of the first corner. An
+  // average would leave the path of a color ramp and multiply materials.
+  std::map<int, std::vector<int>> material_faces;
   std::size_t corner_count = 0;
   for (std::size_t face = 0; face < face_count; ++face) {
     const int size = mesh.FaceSize(face);
+    material_faces[vertex_materials[mesh.Index(corner_count)]].push_back(face);
+
     out << (face ? ", " : "") << size;
     corner_count += size;
   }
@@ -391,55 +513,83 @@ void UsdWriteMesh(
   out << "        ] (\n"
       << "            interpolation = \"vertex\"\n"
       << "        )\n"
-      << "        color3f[] primvars:displayColor = [\n";
-  for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
-    out << "            ";
-    UsdWriteColor(out, mesh.Color(vertex));
-    out << ",\n";
-  }
-
-  out << "        ] (\n"
-      << "            interpolation = \"vertex\"\n"
-      << "        )\n"
-      << "        float[] primvars:displayOpacity = [";
-  if (mesh.VertexOpacity()) {
-    for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
-      out << (vertex ? ", " : "") << UsdClamp(mesh.Opacity(vertex));
-    }
-  } else {
-    out << UsdClamp(mesh.Opacity(0));
+      << "        color3f[] primvars:displayColor = [";
+  for (const auto& [material, entry] : palette) {
+    float color[3];
+    materials.GetColor(material, color);
+    out << (entry ? ", " : "");
+    UsdWriteVec3(out, color);
   }
 
   out << "] (\n"
-      << "            interpolation = \""
-      << (mesh.VertexOpacity() ? "vertex" : "constant") << "\"\n"
+      << "            interpolation = \"vertex\"\n"
       << "        )\n"
-      << "        rel material:binding = </PyMOLScene/Material>\n"
+      << "        int[] primvars:displayColor:indices = [";
+  for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
+    out << (vertex ? ", " : "") << palette[vertex_materials[vertex]];
+  }
+
+  out << "]\n"
+      << "        float[] primvars:displayOpacity = [";
+  for (const auto& [material, entry] : palette) {
+    out << (entry ? ", " : "") << materials.GetOpacity(material);
+  }
+
+  out << "] (\n"
+      << "            interpolation = \"vertex\"\n"
+      << "        )\n"
+      << "        int[] primvars:displayOpacity:indices = [";
+  for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
+    out << (vertex ? ", " : "") << palette[vertex_materials[vertex]];
+  }
+
+  out << "]\n"
       << "        uniform token subdivisionScheme = \"none\"\n"
       // The ray tracer flips the normal of a back face hit, so it draws an
       // open mesh from both sides, while USD culls back faces by default
-      << "        uniform bool doubleSided = 1\n"
-      << "    }\n";
+      << "        uniform bool doubleSided = 1\n";
+
+  if (material_faces.size() == 1) {
+    out << "        ";
+    UsdMaterials::WriteBinding(out, material_faces.begin()->first);
+  } else {
+    out << "        uniform token subsetFamily:materialBind:familyType = "
+           "\"partition\"\n";
+
+    for (const auto& [material, faces] : material_faces) {
+      out << "\n"
+          << "        def GeomSubset \"Material_" << material << "\" (\n"
+          << "            prepend apiSchemas = [\"MaterialBindingAPI\"]\n"
+          << "        )\n"
+          << "        {\n"
+          << "            uniform token elementType = \"face\"\n"
+          << "            uniform token familyName = \"materialBind\"\n"
+          << "            int[] indices = [";
+      for (std::size_t i = 0; i < faces.size(); ++i) {
+        out << (i ? ", " : "") << faces[i];
+      }
+      out << "]\n"
+          << "            ";
+      UsdMaterials::WriteBinding(out, material);
+      out << "        }\n";
+    }
+  }
+
+  out << "    }\n";
 }
 
 /**
- * Write a tessellated cone or truncated cone (frustum).
+ * Add a tessellated cylinder, cone or truncated cone (frustum).
  *
- * UsdGeomCone always tapers to a point and takes a single color, so a cone
- * with a second radius or with two endpoint colors needs an explicit mesh.
- * Colors are interpolated along the axis, matching the ray tracer.
- *
- * @param name prim name prefix, "Cone" or "Cylinder"
  * @param segments radial segments, see UsdSolidSegments
  * @param start center of the r1 end
  * @param end center of the r2 end
  * @param cap1 cap of the r1 end, only a flat cap closes the mesh
  * @param cap2 cap of the r2 end
  */
-void UsdWriteConeMesh(std::ostream& out, int& index, const char* name,
-    int segments, const float* start, const float* end, float r1, float r2,
-    const float* c1, const float* c2, cCylCap cap1, cCylCap cap2,
-    float transparency)
+void UsdAddCone(UsdVectorMesh& mesh, int segments, const float* start,
+    const float* end, float r1, float r2, const float* c1, const float* c2,
+    cCylCap cap1, cCylCap cap2, float opacity)
 {
   float axis[3];
   float side[3];
@@ -475,8 +625,7 @@ void UsdWriteConeMesh(std::ostream& out, int& index, const char* name,
     normalize3f(slope + 3 * k);
   }
 
-  UsdVectorMesh mesh;
-  mesh.opacity = 1.F - transparency;
+  mesh.opacity = opacity;
 
   auto add_ring = [&](const float* center, float radius, const float* normal,
                       const float* color) {
@@ -488,18 +637,36 @@ void UsdWriteConeMesh(std::ostream& out, int& index, const char* name,
     }
   };
 
-  add_ring(start, r1, nullptr, c1);
-  add_ring(end, r2, nullptr, c2);
+  // Lateral faces between two rings, winding counter-clockwise as seen from
+  // outside, so that the right handed face normals agree with the authored
+  // ones
+  auto add_band = [&](const float* p1, float ra, const float* p2, float rb,
+                      const float* color) {
+    const auto base = static_cast<int>(mesh.VertexCount());
+    add_ring(p1, ra, nullptr, color);
+    add_ring(p2, rb, nullptr, color);
 
-  // Faces wind counter-clockwise as seen from outside, so that the right
-  // handed face normals agree with the authored ones.
-  for (int k = 0; k < segments; ++k) {
-    const int next = (k + 1) % segments;
-    if (pointed) {
-      mesh.AddFace({k, next, segments + k});
-    } else {
-      mesh.AddFace({k, next, segments + next, segments + k});
+    for (int k = 0; k < segments; ++k) {
+      const int a = base + k;
+      const int b = base + (k + 1) % segments;
+      if (rb > USD_EPSILON) {
+        mesh.AddFace({a, b, b + segments, a + segments});
+      } else {
+        mesh.AddFace({a, b, a + segments});
+      }
     }
+  };
+
+  // Each face takes one material, so two colors meet halfway like PyMOL's
+  // half bonds, rather than blending along the axis like the ray tracer
+  if (UsdColorsEqual(c1, c2)) {
+    add_band(start, r1, end, r2, c1);
+  } else {
+    float middle[3];
+    average3f(start, end, middle);
+    const float rm = (r1 + r2) * 0.5F;
+    add_band(start, r1, middle, rm, c1);
+    add_band(middle, rm, end, r2, c2);
   }
 
   if (cap1 == cCylCapFlat) {
@@ -527,27 +694,22 @@ void UsdWriteConeMesh(std::ostream& out, int& index, const char* name,
       mesh.AddFace({base, base + 1 + k, base + 1 + next});
     }
   }
-
-  UsdWriteMesh(out, index, name, mesh);
 }
 
 /**
- * Write a tessellated hemispherical cap.
+ * Add a tessellated hemisphere, e.g. the round cap of a solid.
  *
- * A round cap is exported as a whole UsdGeomSphere while the solid is opaque,
- * because the hemisphere buried in the barrel costs nothing to look at. Under
- * transparency those buried surfaces would darken the cap, so only the
- * visible dome is written. It shares the barrel's equator ring, which
- * UsdWriteConeMesh leaves open for a round cap.
+ * As a cap it shares the barrel's equator ring, which UsdAddCone leaves open
+ * for a round cap, so no buried surface darkens a transparent solid.
  *
  * @param segments radial segments, see UsdSolidSegments
  * @param center center of the capped end
  * @param axis unit axis of the solid, pointing from start to end
  * @param sign +1 for the dome beyond end, -1 for the dome beyond start
  */
-void UsdWriteHemisphereMesh(std::ostream& out, int& index, int segments,
-    const float* center, const float* axis, float sign, float radius,
-    const float* color, float transparency)
+void UsdAddHemisphere(UsdVectorMesh& mesh, int segments, const float* center,
+    const float* axis, float sign, float radius, const float* color,
+    float opacity)
 {
   if (!(radius > USD_EPSILON)) {
     return;
@@ -570,9 +732,9 @@ void UsdWriteHemisphereMesh(std::ostream& out, int& index, int segments,
   assert(segments >= 3 && segments <= USD_SEGMENTS_MAX);
 
   const int stacks = std::max(2, segments / 4);
+  const auto base = static_cast<int>(mesh.VertexCount());
 
-  UsdVectorMesh mesh;
-  mesh.opacity = 1.F - transparency;
+  mesh.opacity = opacity;
 
   for (int j = 0; j < stacks; ++j) {
     const auto latitude = static_cast<float>(0.5 * PI * j / stacks);
@@ -596,29 +758,36 @@ void UsdWriteHemisphereMesh(std::ostream& out, int& index, int segments,
     }
   }
 
-  const int apex = stacks * segments;
+  const int apex = base + stacks * segments;
   float tip[3];
 
   scale3f(pole, radius, tip);
   add3f(center, tip, tip);
   mesh.AddVertex(tip, pole, color);
 
-  // Faces wind counter-clockwise as seen from outside, as in UsdWriteConeMesh
+  // Faces wind counter-clockwise as seen from outside, as in UsdAddCone
   for (int j = 0; j + 1 < stacks; ++j) {
+    const int ring = base + j * segments;
     for (int k = 0; k < segments; ++k) {
       const int next = (k + 1) % segments;
-      mesh.AddFace({j * segments + k, j * segments + next,
-          (j + 1) * segments + next, (j + 1) * segments + k});
+      mesh.AddFace(
+          {ring + k, ring + next, ring + segments + next, ring + segments + k});
     }
   }
 
+  const int top = base + (stacks - 1) * segments;
   for (int k = 0; k < segments; ++k) {
-    const int next = (k + 1) % segments;
-    mesh.AddFace(
-        {(stacks - 1) * segments + k, (stacks - 1) * segments + next, apex});
+    mesh.AddFace({top + k, top + (k + 1) % segments, apex});
   }
+}
 
-  UsdWriteMesh(out, index, "Hemisphere", mesh);
+/// Add a tessellated sphere, as two hemispheres
+void UsdAddSphere(UsdVectorMesh& mesh, int segments, const float* center,
+    float radius, const float* color, float opacity)
+{
+  const float axis[3] = {0.F, 0.F, 1.F};
+  UsdAddHemisphere(mesh, segments, center, axis, 1.F, radius, color, opacity);
+  UsdAddHemisphere(mesh, segments, center, axis, -1.F, radius, color, opacity);
 }
 
 /**
@@ -718,9 +887,9 @@ bool UsdEllipsoidRows(
  * @param center transformed ellipsoid center
  * @copydetails UsdEllipsoidRows
  */
-void UsdWriteEllipsoid(std::ostream& out, int& index, const float* center,
-    const float* axes, const float* scales, float radius, const float* color,
-    float transparency)
+void UsdWriteEllipsoid(std::ostream& out, int& index, UsdMaterials& materials,
+    const float* center, const float* axes, const float* scales, float radius,
+    const float* color, float transparency)
 {
   float rows[9];
 
@@ -745,8 +914,52 @@ void UsdWriteEllipsoid(std::ostream& out, int& index, const float* center,
       << center[2] << ", 1)"
       << "\n        )\n"
       << "        uniform token[] xformOpOrder = [\"xformOp:transform\"]\n";
-  UsdWriteMaterialBinding(out, color, transparency);
+  UsdWriteMaterialBinding(out, materials, color, transparency);
   out << "    }\n";
+}
+
+/**
+ * Add a tessellated ellipsoid, a unit sphere transformed by the rows of
+ * UsdEllipsoidRows.
+ *
+ * @copydetails UsdWriteEllipsoid
+ */
+void UsdAddEllipsoid(UsdVectorMesh& mesh, int segments, const float* center,
+    const float* axes, const float* scales, float radius, const float* color,
+    float opacity)
+{
+  float rows[9];
+
+  if (!UsdEllipsoidRows(axes, scales, radius, rows)) {
+    return;
+  }
+
+  // Normals transform with the inverse transpose, whose rows are the cross
+  // products of the other two rows, up to the positive determinant
+  float normal_rows[9];
+  cross_product3f(rows + 3, rows + 6, normal_rows);
+  cross_product3f(rows + 6, rows, normal_rows + 3);
+  cross_product3f(rows, rows + 3, normal_rows + 6);
+
+  const float origin[3] = {0.F, 0.F, 0.F};
+  const auto base = mesh.VertexCount();
+  UsdAddSphere(mesh, segments, origin, 1.F, color, opacity);
+
+  for (auto vertex = base; vertex < mesh.VertexCount(); ++vertex) {
+    float* point = mesh.points.data() + 3 * vertex;
+    float* normal = mesh.normals.data() + 3 * vertex;
+    float unit[3];
+    copy3f(point, unit);
+
+    for (int i = 0; i < 3; ++i) {
+      point[i] = center[i] + unit[0] * rows[i] + unit[1] * rows[3 + i] +
+                 unit[2] * rows[6 + i];
+      normal[i] = unit[0] * normal_rows[i] + unit[1] * normal_rows[3 + i] +
+                  unit[2] * normal_rows[6 + i];
+    }
+
+    normalize3f(normal);
+  }
 }
 
 /**
@@ -776,7 +989,6 @@ public:
   std::size_t VertexCount() const override { return 3 * m_primitives.size(); }
   std::size_t FaceCount() const override { return m_primitives.size(); }
   int FaceSize(std::size_t) const override { return 3; }
-  bool VertexOpacity() const override { return true; }
 
   int Index(std::size_t corner) const override
   {
@@ -825,40 +1037,6 @@ private:
   std::vector<bool> m_reverse;
 };
 
-void UsdWriteMaterial(std::ostream& out)
-{
-  out << "    def Material \"Material\"\n"
-      << "    {\n"
-      << "        token outputs:surface.connect = "
-         "</PyMOLScene/Material/PreviewSurface.outputs:surface>\n"
-      << "\n"
-      << "        def Shader \"DisplayColorReader\"\n"
-      << "        {\n"
-      << "            uniform token info:id = \"UsdPrimvarReader_float3\"\n"
-      << "            string inputs:varname = \"displayColor\"\n"
-      << "            float3 outputs:result\n"
-      << "        }\n"
-      << "\n"
-      << "        def Shader \"DisplayOpacityReader\"\n"
-      << "        {\n"
-      << "            uniform token info:id = \"UsdPrimvarReader_float\"\n"
-      << "            string inputs:varname = \"displayOpacity\"\n"
-      << "            float outputs:result\n"
-      << "        }\n"
-      << "\n"
-      << "        def Shader \"PreviewSurface\"\n"
-      << "        {\n"
-      << "            uniform token info:id = \"UsdPreviewSurface\"\n"
-      << "            color3f inputs:diffuseColor.connect = "
-         "</PyMOLScene/Material/DisplayColorReader.outputs:result>\n"
-      << "            float inputs:opacity.connect = "
-         "</PyMOLScene/Material/DisplayOpacityReader.outputs:result>\n"
-      << "            float inputs:roughness = 0.35\n"
-      << "            token outputs:surface\n"
-      << "        }\n"
-      << "    }\n";
-}
-
 /// Far end of a cylinder, sausage or cone, the near end being basis->Vertex
 void UsdSolidEnd(const CBasis* basis, const CPrimitive& primitive, float* end)
 {
@@ -874,16 +1052,11 @@ void UsdSolidEnd(const CBasis* basis, const CPrimitive& primitive, float* end)
 /**
  * Spatial index of the ends of all exported solids.
  *
- * PyMOL leaves the joint between abutting solids uncapped: the two halves of
- * a two colored stick meet with cCylCapNone, and a bond whose atom already
- * carries a round cap from a thicker bond is uncapped as well. Such a joint
- * is sealed by its neighbour, so it may keep the compact analytic prim, while
- * a genuinely exposed uncapped end needs an open mesh.
- *
- * The closed analytic prim buries an end disc inside the union, which only
- * goes unnoticed while the geometry is opaque. Transparent solids therefore
- * ignore this index and take the open mesh path, so that a viewing ray
- * crosses the same surfaces the ray tracer shows.
+ * PyMOL leaves the joint between abutting solids uncapped, e.g. between the
+ * two halves of a stick. Such a joint is sealed by its neighbour, so in the
+ * AR layer it may keep the closed analytic prim, while an exposed uncapped
+ * end needs an open mesh. The buried end disc only goes unnoticed while the
+ * solid is opaque, so transparent solids always take the mesh.
  */
 class UsdJointIndex
 {
@@ -1004,24 +1177,73 @@ int UsdSolidSegments(PyMOLGlobals* G, int setting)
 }
 
 /**
- * Warn once about geometry colored by a color ramp.
+ * Replace ramp colors with the ramp's color at each primitive vertex.
  *
- * A ramp color is encoded as a large negative color value which the ray
- * tracer resolves per hit from the impact point. The exporter has no such
- * point, so UsdWriteColor clamps the encoding to black.
+ * A ramp color is a negative color index which the ray tracer resolves per
+ * hit point. The exporter has no hit points, so it resolves the ramp at the
+ * model space vertices instead.
  */
-void UsdWarnRamped(const CRay* ray)
+void UsdResolveRampedColors(CRay* ray)
 {
   for (int i = 0; i < ray->NPrimitive; ++i) {
-    if (ray->Primitive[i].ramped) {
-      // clang-format off
-      PRINTFB(ray->G, FB_Ray, FB_Warnings)
-        " USD-Warning: ramp colors depend on the viewing ray and are not "
-        "resolved, affected geometry is exported black.\n" ENDFB(ray->G);
-      // clang-format on
-      return;
+    auto& primitive = ray->Primitive[i];
+    if (!primitive.ramped) {
+      continue;
     }
+
+    float* colors[3] = {primitive.c1, primitive.c2, primitive.c3};
+    const float* points[3] = {primitive.v1, primitive.v2, primitive.v3};
+    int count = 1;
+
+    switch (primitive.type) {
+    case cPrimTriangle:
+      count = 3;
+      break;
+    case cPrimCylinder:
+    case cPrimSausage:
+    case cPrimCone:
+      count = 2;
+      break;
+    }
+
+    for (int j = 0; j < count; ++j) {
+      if (colors[j][0] <= cColorExtCutoff) {
+        ColorGetRamped(ray->G, static_cast<int>(colors[j][0] - 0.1F), points[j],
+            colors[j], -1);
+      }
+    }
+
+    primitive.ramped = 0;
   }
+}
+
+/**
+ * Scale the scene to fit within one meter and stand it centered on the
+ * ground (y = 0), which is what AR viewers expect.
+ */
+void UsdWriteFitTransform(std::ostream& out, CRay* ray)
+{
+  RayComputeBox(ray);
+
+  const float* lo = ray->min_box;
+  const float* hi = ray->max_box;
+  const float size = std::max({hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]});
+
+  if (!(size > USD_EPSILON)) {
+    return;
+  }
+
+  const float scale = 1.F / size;
+  const float offset[3] = {
+      -(lo[0] + hi[0]) * 0.5F, -lo[1], -(lo[2] + hi[2]) * 0.5F};
+
+  out << "    float3 xformOp:scale = (" << scale << ", " << scale << ", "
+      << scale << ")\n"
+      << "    float3 xformOp:translate = ";
+  UsdWriteVec3(out, offset);
+  out << "\n"
+      << "    uniform token[] xformOpOrder = [\"xformOp:scale\", "
+         "\"xformOp:translate\"]\n";
 }
 
 } // namespace
@@ -1030,11 +1252,16 @@ void UsdWarnRamped(const CRay* ray)
  * Generate an ASCII USD layer of the displayed geometry and append it to
  * `vla_ptr`.
  *
- * Coordinates are in Angstrom, declared with metersPerUnit = 1e-10, and are
- * in camera space, or in the original model space with
- * geometry_export_mode = 1.
+ * Coordinates are in Angstrom and in camera space, or in the original model
+ * space with geometry_export_mode = 1, and the layer declares
+ * metersPerUnit = 1e-10.
+ *
+ * Solids are tessellated, since importers like Blender's drop the material
+ * of an analytic prim. With `ar` the layer is meant for AR viewers instead:
+ * solids keep their compact analytic prims where possible, and the scene is
+ * scaled to fit within one meter.
  */
-void RayRenderUSDA(CRay* ray, char** vla_ptr)
+void RayRenderUSDA(CRay* ray, char** vla_ptr, bool ar)
 {
   const bool identity =
       SettingGetGlobal_i(ray->G, cSetting_geometry_export_mode) == 1;
@@ -1043,25 +1270,29 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
     return;
   }
 
-  UsdWarnRamped(ray);
+  UsdResolveRampedColors(ray);
 
   ov_size count = 0;
   UsdVLAStreamBuf buffer(vla_ptr, &count);
   std::ostream out(&buffer);
 
-  out << std::setprecision(9) << "#usda 1.0\n"
+  out << std::setprecision(6) << "#usda 1.0\n"
       << "(\n"
       << "    defaultPrim = \"PyMOLScene\"\n"
       << "    documentation = \"Exported from PyMOL\"\n"
-      << "    metersPerUnit = 1e-10\n"
+      << "    metersPerUnit = " << (ar ? "1" : "1e-10") << "\n"
       << "    upAxis = \"Y\"\n"
       << ")\n"
       << "\n"
       << "def Xform \"PyMOLScene\"\n"
       << "{\n";
 
-  UsdWriteMaterial(out);
+  if (ar) {
+    UsdWriteFitTransform(out, ray);
+  }
 
+  UsdMaterials materials;
+  UsdVectorMesh solids;
   int index = 0;
   const auto* basis = ray->Basis + 1;
   const UsdJointIndex joints(ray, basis);
@@ -1069,16 +1300,23 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
       UsdSolidSegments(ray->G, cSetting_stick_quality);
   const int cone_segments = UsdSolidSegments(ray->G, cSetting_cone_quality);
 
+  // Spheres are the bulk of a tessellated scene. The default sphere_quality
+  // of 1 gives 16 segments.
+  const int sphere_segments =
+      std::clamp(8 * (SettingGetGlobal_i(ray->G, cSetting_sphere_quality) + 1),
+          12, USD_SEGMENTS_MAX);
+
   for (int i = 0; i < ray->NPrimitive; ++i) {
     const auto& primitive = ray->Primitive[i];
     const auto* vertex = basis->Vertex + 3 * primitive.vert;
+    const float opacity = 1.F - primitive.trans;
 
     const bool transparent = primitive.trans > USD_EPSILON;
 
     // An analytic UsdGeomCylinder or UsdGeomCone is always closed, so an end
-    // which the ray tracer leaves open needs the mesh writer instead. Only
-    // while the solid is opaque does a neighbour, or the whole sphere of a
-    // round cap, hide the extra disc.
+    // which the ray tracer leaves open needs the mesh instead. Only while the
+    // solid is opaque does a neighbour, or the whole sphere of a round cap,
+    // hide the extra disc.
     const auto sealed = [&](const float* point, float radius, cCylCap cap) {
       return cap == cCylCapFlat ||
              (!transparent &&
@@ -1087,14 +1325,25 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
 
     switch (primitive.type) {
     case cPrimSphere:
-      UsdWriteSphere(
-          out, index, vertex, primitive.r1, primitive.c1, primitive.trans);
+      if (ar) {
+        UsdWriteSphere(out, index, materials, vertex, primitive.r1,
+            primitive.c1, primitive.trans);
+      } else {
+        UsdAddSphere(solids, sphere_segments, vertex, primitive.r1,
+            primitive.c1, opacity);
+      }
       break;
-    case cPrimEllipsoid:
-      UsdWriteEllipsoid(out, index, vertex,
-          basis->Normal + 3 * basis->Vert2Normal[primitive.vert], primitive.n0,
-          primitive.r1, primitive.c1, primitive.trans);
+    case cPrimEllipsoid: {
+      const auto* axes = basis->Normal + 3 * basis->Vert2Normal[primitive.vert];
+      if (ar) {
+        UsdWriteEllipsoid(out, index, materials, vertex, axes, primitive.n0,
+            primitive.r1, primitive.c1, primitive.trans);
+      } else {
+        UsdAddEllipsoid(solids, sphere_segments, vertex, axes, primitive.n0,
+            primitive.r1, primitive.c1, opacity);
+      }
       break;
+    }
     case cPrimCylinder:
     case cPrimSausage: {
       float end[3];
@@ -1108,56 +1357,60 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
       const bool round1 = cap1 == cCylCapRound;
       const bool round2 = cap2 == cCylCapRound;
 
-      // The ray tracer blends the two endpoint colors along the axis, which
-      // no single colored analytic prim can express
+      // An analytic prim takes a single color
       const bool one_color = UsdColorsEqual(primitive.c1, primitive.c2);
 
       // A capsule is the whole round capped solid as one closed surface, so
       // it needs no separate cap domes to bury inside it
-      const bool capsule = one_color && round1 && round2;
+      const bool capsule = ar && one_color && round1 && round2;
 
       if (capsule) {
-        UsdWriteAnalyticSolid(out, index, "Capsule", true, vertex, end,
-            primitive.r1, primitive.c1, primitive.trans);
-      } else if (one_color && sealed(vertex, primitive.r1, cap1) &&
-                 sealed(end, primitive.r1, cap2)) {
-        UsdWriteAnalyticSolid(out, index, "Cylinder", false, vertex, end,
-            primitive.r1, primitive.c1, primitive.trans);
+        UsdWriteAnalyticSolid(out, index, materials, "Capsule", true, vertex,
+            end, primitive.r1, primitive.c1, primitive.trans);
+        break;
+      }
+
+      if (ar && one_color && sealed(vertex, primitive.r1, cap1) &&
+          sealed(end, primitive.r1, cap2)) {
+        UsdWriteAnalyticSolid(out, index, materials, "Cylinder", false, vertex,
+            end, primitive.r1, primitive.c1, primitive.trans);
       } else {
-        UsdWriteConeMesh(out, index, "Cylinder", cylinder_segments, vertex, end,
-            primitive.r1, primitive.r1, primitive.c1, primitive.c2, cap1, cap2,
-            primitive.trans);
+        UsdAddCone(solids, cylinder_segments, vertex, end, primitive.r1,
+            primitive.r1, primitive.c1, primitive.c2, cap1, cap2, opacity);
       }
 
       float axis[3];
       subtract3f(end, vertex, axis);
       const float height = length3f(axis);
 
-      // A whole sphere buries a hemisphere in the barrel, which a transparent
-      // solid would show as a darker cap the ray tracer does not draw
-      const bool dome = transparent && height > USD_EPSILON;
+      // Domes close the open barrel. A whole analytic sphere buries a
+      // hemisphere in the barrel instead, which a transparent solid would
+      // show as a darker cap the ray tracer does not draw.
+      const bool dome = (!ar || transparent) && height > USD_EPSILON;
 
       if (dome) {
         scale3f(axis, 1.F / height, axis);
       }
 
-      if (round1 && !capsule) {
+      const auto add_cap = [&](const float* center, float sign,
+                               const float* color) {
         if (dome) {
-          UsdWriteHemisphereMesh(out, index, cylinder_segments, vertex, axis,
-              -1.F, primitive.r1, primitive.c1, primitive.trans);
+          UsdAddHemisphere(solids, cylinder_segments, center, axis, sign,
+              primitive.r1, color, opacity);
+        } else if (ar) {
+          UsdWriteSphere(out, index, materials, center, primitive.r1, color,
+              primitive.trans);
         } else {
-          UsdWriteSphere(
-              out, index, vertex, primitive.r1, primitive.c1, primitive.trans);
+          UsdAddSphere(
+              solids, cylinder_segments, center, primitive.r1, color, opacity);
         }
+      };
+
+      if (round1) {
+        add_cap(vertex, -1.F, primitive.c1);
       }
-      if (round2 && !capsule) {
-        if (dome) {
-          UsdWriteHemisphereMesh(out, index, cylinder_segments, end, axis, 1.F,
-              primitive.r1, primitive.c2, primitive.trans);
-        } else {
-          UsdWriteSphere(
-              out, index, end, primitive.r1, primitive.c2, primitive.trans);
-        }
+      if (round2) {
+        add_cap(end, 1.F, primitive.c2);
       }
       break;
     }
@@ -1174,23 +1427,27 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr)
       const auto cap2 =
           primitive.cap2 == cCylCapFlat ? cCylCapFlat : cCylCapNone;
 
-      if (primitive.r2 <= USD_EPSILON && sealed(vertex, primitive.r1, cap1) &&
+      // UsdGeomCone always tapers to a point and takes a single color
+      if (ar && primitive.r2 <= USD_EPSILON &&
+          sealed(vertex, primitive.r1, cap1) &&
           UsdColorsEqual(primitive.c1, primitive.c2)) {
-        UsdWriteAnalyticSolid(out, index, "Cone", false, vertex, end,
+        UsdWriteAnalyticSolid(out, index, materials, "Cone", false, vertex, end,
             primitive.r1, primitive.c1, primitive.trans);
       } else {
-        UsdWriteConeMesh(out, index, "Cone", cone_segments, vertex, end,
-            primitive.r1, primitive.r2, primitive.c1, primitive.c2, cap1, cap2,
-            primitive.trans);
+        UsdAddCone(solids, cone_segments, vertex, end, primitive.r1,
+            primitive.r2, primitive.c1, primitive.c2, cap1, cap2, opacity);
       }
       break;
     }
     }
   }
 
-  const UsdSceneTriangles triangles(ray, basis);
-  UsdWriteMesh(out, index, "Mesh", triangles);
+  UsdWriteMesh(out, index, materials, "Solids", solids);
 
+  const UsdSceneTriangles triangles(ray, basis);
+  UsdWriteMesh(out, index, materials, "Mesh", triangles);
+
+  materials.Write(out);
   out << "}\n";
   out.flush();
 }
