@@ -657,6 +657,7 @@ if not options.glut:
 if options.testing:
     pymol_src_dirs += ["layerCTest"]
     def_macros += [("_PYMOL_CTEST", None)]
+    libs += ["Catch2"]
 
 if options.openvr:
     def_macros += [("_PYMOL_OPENVR", None)]

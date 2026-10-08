@@ -99,8 +99,8 @@ TEST_CASE("misc", "[CifFile]")
   // type deducted from default value
 
   REQUIRE(data->get_opt("_cat2.key1")->as(0, 99) / 3 == 3); // int
-  REQUIRE(data->get_opt("_cat2.key1")->as(0, 99) / 3 != Approx(10. / 3.)); // int
-  REQUIRE(data->get_opt("_cat2.key1")->as(0, 99.) / 3 == Approx(10. / 3.)); // double
+  REQUIRE(data->get_opt("_cat2.key1")->as(0, 99) / 3 != Catch::Approx(10. / 3.)); // int
+  REQUIRE(data->get_opt("_cat2.key1")->as(0, 99.) / 3 == Catch::Approx(10. / 3.)); // double
   REQUIRE(data->get_opt("_cat2.key2")->as(0, 99.) == 0.1);
   REQUIRE(data->get_opt("_cat2.key3")->as(0, 99.f) == 99.f);
   REQUIRE(data->get_opt("_cat2.key4")->as(0, std::string("type deducted")) == "foo");
@@ -142,10 +142,10 @@ TEST_CASE("misc", "[CifFile]")
 
   // float parsing
 
-  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float1")->as<float>() == Approx(1230.f));
-  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float1")->as<double>() == Approx(1230.00000));
-  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float2")->as<double>() == Approx(12.3400000));
-  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float3")->as<double>() == Approx(1.23456789));
+  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float1")->as<float>() == Catch::Approx(1230.f));
+  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float1")->as<double>() == Catch::Approx(1230.00000));
+  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float2")->as<double>() == Catch::Approx(12.3400000));
+  REQUIRE(blocks.find("baz")->second.get_opt("_typed_float3")->as<double>() == Catch::Approx(1.23456789));
 }
 
 // vi:sw=2:expandtab

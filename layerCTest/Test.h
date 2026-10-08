@@ -11,7 +11,7 @@
 #include "PConv.h"
 #include "pymol/type_traits.h"
 #include "pymol/algorithm.h"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 namespace pymol {
 
