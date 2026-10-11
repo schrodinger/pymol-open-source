@@ -318,6 +318,14 @@ class TestCreating(testing.PyMOLTestCase):
         self.assertEqual(segis["s03000000"], set(["D000" if segi else ""]))
         self.assertEqual(segis["s04000000"], set(["E000" if segi else ""]))
 
+    def testSymexpPlaceholderUnitCell(self):
+        cmd.pseudoatom('m1')
+        cmd.set_symmetry('m1', 1, 1, 1, 90, 90, 90, 'P 1')
+
+        cmd.symexp('s', 'm1', 'm1', 5)
+
+        self.assertEqual(cmd.get_object_list(), ['m1'])
+
     def testFragment(self):
         frag_name = "ala"
         cmd.fragment(frag_name)
