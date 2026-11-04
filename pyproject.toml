@@ -29,9 +29,9 @@ requires = [
 [project.optional-dependencies]
 dev = [
   "biopython>=1.80",
-  "msgpack==1.0.8",
-  "pillow==11.1.0",
-  "PySide6==6.8.1",
+  "msgpack==1.2.4",
+  "pillow==13.0.0",
+  "PySide6==6.12.0",
   "pytest==8.2.2",
   "requests==2.32.3",
 ]
