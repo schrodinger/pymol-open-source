@@ -125,3 +125,18 @@ class TestAtomProperties(testing.PyMOLTestCase):
         cmd.set_property('bla', None, 'm1')
         stored.keys = cmd.get_property_list('m1')
         self.assertEqual(stored.keys, [])
+
+    def testNonAsciiSessionRoundTrip(self):
+        # property names/values were truncated: buffers were sized by
+        # code points instead of UTF-8 bytes (github #517)
+        name = "名前"
+        value = "测试消息" * 4
+        cmd.pseudoatom('m1')
+        cmd.alter('m1', 'p[%r] = %r' % (name, value))
+        with testing.mktemp('.pse') as psefilename:
+            cmd.save(psefilename)
+            cmd.delete('all')
+            cmd.load(psefilename)
+        stored.val = None
+        cmd.iterate('m1', 'stored.val = p[%r]' % name)
+        self.assertEqual(stored.val, value)

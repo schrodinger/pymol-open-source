@@ -726,7 +726,7 @@ int PropertyFromPyList(PyMOLGlobals* G, PyObject* list)
           if (!prop_id)
             prop_id = PropertyGetNewUniqueID(G);
           pVal = CPythonVal_PyList_GetItem(G, val, 0);
-          prop_name_len = CPythonVal_PyString_Length(pVal) + 1;
+          prop_name_len = PyString_AsSomeString(pVal).length() + 1;
           prop_name = pymol::malloc<char>(prop_name_len);
           CPythonVal_PConvPyStrToStr(pVal, prop_name, prop_name_len);
           CPythonVal_Free(pVal);
@@ -752,7 +752,7 @@ int PropertyFromPyList(PyMOLGlobals* G, PyObject* list)
           } break;
           case PropertyType::String: {
             char* prop_value;
-            int prop_value_len = CPythonVal_PyString_Length(propval) + 1;
+            int prop_value_len = PyString_AsSomeString(propval).length() + 1;
             prop_value = pymol::malloc<char>(prop_value_len);
             CPythonVal_PConvPyStrToStr(propval, prop_value, prop_value_len);
             PropertySet(G, prop_id, prop_name, prop_value);
