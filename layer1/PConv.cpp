@@ -1159,7 +1159,7 @@ int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr)
       for(a = 0; a < l; a++) {
         i = PyList_GetItem(obj, a);
         if(PyString_Check(i)) {
-          // UTF-8 byte length (PyString_Size counts code points)
+          // UTF-8 byte length, not code points (PyUnicode_GetLength)
           ll += PyString_AsSomeString(i).length() + 1;
         }
       }

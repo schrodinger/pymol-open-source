@@ -188,7 +188,7 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
     elem = PyList_GetItem(item, 1);
     str = PyString_AsString(elem);
     l = strlen(str);             /* buffer size in UTF-8 bytes */
-    cl = PyString_Size(elem);    /* display width in characters */
+    cl = PyUnicode_GetLength(elem); /* display width in code points */
     c = str;
     while(*c) {
       if(TextStartsWithColorCode(c)) {  /* discount the markup */
