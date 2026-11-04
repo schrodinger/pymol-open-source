@@ -2232,6 +2232,7 @@ static void check_gl_stereo_capable(PyMOLGlobals * G)
   if (!state && buf <= GL_BACK) {
     printf("Warning: GL_DOUBLEBUFFER=0\n");
   }
+  G->ShaderMgr->defaultDoubleBuffered = state;
 
   // default framebuffer
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &buf);
