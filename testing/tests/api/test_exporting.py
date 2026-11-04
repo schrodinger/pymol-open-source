@@ -128,6 +128,26 @@ def _parse_glb_bytes(data):
 
 @test_utils.requires_version("3.2")
 @requires_gltf
+def test_glb_export_low_stick_quality():
+    """stick_quality below 3 is treated as 3, the ring must stay closed"""
+    cmd.fragment("ala")
+    cmd.show_as("sticks")
+
+    def triangle_count(quality):
+        cmd.set("stick_quality", quality)
+        gltf, _ = _parse_glb_bytes(cmd.get_glb())
+        return sum(
+            gltf['accessors'][prim['indices']]['count'] // 3
+            for mesh in gltf['meshes'] for prim in mesh['primitives'])
+
+    expected = triangle_count(3)
+    assert triangle_count(2) == expected
+    assert triangle_count(1) == expected
+    assert triangle_count(0) == expected
+
+
+@test_utils.requires_version("3.2")
+@requires_gltf
 def test_glb_export_sticks():
     """Test GLB export with stick representation"""
     cmd.fragment("ala")

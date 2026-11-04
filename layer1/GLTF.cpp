@@ -374,8 +374,8 @@ static void addCylinderWithCaps(
     nub2 = nub;
   }
 
-  if (nEdge > GLB_MAX_EDGE)
-    nEdge = GLB_MAX_EDGE;
+  /* subdivide() raises the edge count to at least 3, match it here */
+  nEdge = std::clamp(nEdge, 3, GLB_MAX_EDGE);
   subdivide(nEdge, x, y);
 
   p0[0] = prim->v2[0] - prim->v1[0];
