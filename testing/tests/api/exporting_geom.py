@@ -219,6 +219,25 @@ class TestExportingGeom(testing.PyMOLTestCase):
             for schema in ['Sphere', 'Cylinder', 'Capsule', 'Cone']:
                 self.assertNotIn('def ' + schema, contents)
 
+    def testUSDEmptyScene(self):
+        # nothing is displayed, so there is no geometry to export
+        self.assertIsNone(cmd.get_usda())
+
+        with testing.mktemp('.usdz') as filename:
+            with self.assertRaises(pymol.CmdException):
+                cmd.save(filename)
+
+    def testUSDZLargeCoordinates(self):
+        from pymol import cgo
+
+        cmd.set('geometry_export_mode', 1)
+        cmd.load_cgo([cgo.SPHERE, 1234.567, -2345.678, 3456.789, 1.0], 'sphere')
+        contents = save_usdz_layer()
+
+        # six significant digits would round this to 1234.57
+        self.assertEqual(
+            usda_translations(contents), [(1234.567, -2345.678, 3456.789)])
+
     def testUSDZ(self):
         cmd.fragment('gly')
 

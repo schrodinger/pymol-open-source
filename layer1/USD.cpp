@@ -20,6 +20,7 @@
 #include <cstring>
 #include <initializer_list>
 #include <iomanip>
+#include <limits>
 #include <map>
 #include <ostream>
 #include <streambuf>
@@ -133,6 +134,10 @@ class UsdMaterials
 {
   static constexpr int COLOR_LEVELS = 63;
   static constexpr int OPACITY_LEVELS = 100;
+  static_assert(COLOR_LEVELS < (1 << 6), "a color channel takes 6 key bits");
+  static_assert(OPACITY_LEVELS < (1 << 7) &&
+                    OPACITY_LEVELS << 18 <= std::numeric_limits<std::uint32_t>::max(),
+      "opacity sits above the three color channels");
 
 public:
   /// Index of the material for the given color and opacity
@@ -476,6 +481,12 @@ void UsdWriteMesh(std::ostream& out, int& index, UsdMaterials& materials,
     entry.second = palette_size++;
   }
 
+  // Palette index of each vertex, so the index lists need no map lookups
+  std::vector<int> vertex_palette(vertex_count);
+  for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
+    vertex_palette[vertex] = palette.find(vertex_materials[vertex])->second;
+  }
+
   // Faces of each material, which takes the color of the first corner. An
   // average would leave the path of a color ramp and multiply materials.
   std::map<int, std::vector<int>> material_faces;
@@ -526,7 +537,7 @@ void UsdWriteMesh(std::ostream& out, int& index, UsdMaterials& materials,
       << "        )\n"
       << "        int[] primvars:displayColor:indices = [";
   for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
-    out << (vertex ? ", " : "") << palette[vertex_materials[vertex]];
+    out << (vertex ? ", " : "") << vertex_palette[vertex];
   }
 
   out << "]\n"
@@ -540,7 +551,7 @@ void UsdWriteMesh(std::ostream& out, int& index, UsdMaterials& materials,
       << "        )\n"
       << "        int[] primvars:displayOpacity:indices = [";
   for (std::size_t vertex = 0; vertex < vertex_count; ++vertex) {
-    out << (vertex ? ", " : "") << palette[vertex_materials[vertex]];
+    out << (vertex ? ", " : "") << vertex_palette[vertex];
   }
 
   out << "]\n"
@@ -1229,11 +1240,8 @@ void UsdWriteFitTransform(std::ostream& out, CRay* ray)
   const float* hi = ray->max_box;
   const float size = std::max({hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]});
 
-  if (!(size > USD_EPSILON)) {
-    return;
-  }
-
-  const float scale = 1.F / size;
+  // A collapsed scene is a point, which only needs centering
+  const float scale = size > USD_EPSILON ? 1.F / size : 1.F;
   const float offset[3] = {
       -(lo[0] + hi[0]) * 0.5F, -lo[1], -(lo[2] + hi[2]) * 0.5F};
 
@@ -1266,6 +1274,11 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr, bool ar)
   const bool identity =
       SettingGetGlobal_i(ray->G, cSetting_geometry_export_mode) == 1;
 
+  // Nothing to export, the caller reports a missing layer
+  if (!ray->NPrimitive) {
+    return;
+  }
+
   if (!RayExpandPrimitives(ray) || !RayTransformFirst(ray, 0, identity)) {
     return;
   }
@@ -1276,7 +1289,7 @@ void RayRenderUSDA(CRay* ray, char** vla_ptr, bool ar)
   UsdVLAStreamBuf buffer(vla_ptr, &count);
   std::ostream out(&buffer);
 
-  out << std::setprecision(6) << "#usda 1.0\n"
+  out << std::setprecision(9) << "#usda 1.0\n"
       << "(\n"
       << "    defaultPrim = \"PyMOLScene\"\n"
       << "    documentation = \"Exported from PyMOL\"\n"
