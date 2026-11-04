@@ -817,6 +817,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
     def file_save_stl(self):
         self._file_save('STL File (*.stl)', 'stl')
 
+    def file_save_glb(self):
+        self._file_save('GLB File (*.glb)', 'glb')
+
     def file_save_gltf(self):
         self._file_save('GLTF File (*.gltf)', 'gltf')
 
