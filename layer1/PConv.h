@@ -85,7 +85,6 @@ Z* -------------------------------------------------------------------
 #define CPythonVal_New_Float(VAL)                       PyFloat_FromDouble(VAL)
 
 #define CPythonVal_PyFloat_AsDouble(PYOBJECT)            PyFloat_AsDouble(PYOBJECT)
-#define CPythonVal_PyString_Length(PYOBJECT)             PyString_Size(PYOBJECT)
 #define CPythonVal_PConvPyStrToStr                       PConvPyStrToStr
 #define CPythonVal_PConvPyBoolToInt                      PConvPyBoolToInt
 #define CPythonVal_PConvPyFloatToFloat                   PConvPyFloatToFloat

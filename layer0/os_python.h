@@ -44,8 +44,6 @@ typedef int PyObject;
 # define PyNumber_Int           PyNumber_Long
 
 # define PyString_Check                 PyUnicode_Check
-# define PyString_Size                  PyUnicode_GetLength
-# define PyString_GET_SIZE              PyUnicode_GetLength
 # define PyString_FromString            PyUnicode_FromString
 # define PyString_FromStringAndSize     PyUnicode_FromStringAndSize
 # define PyString_InternFromString      PyUnicode_InternFromString
