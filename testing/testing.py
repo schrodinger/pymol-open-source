@@ -710,7 +710,14 @@ USAGE
                                                  resultclass=PyMOLTestResult, verbosity=int(verbosity)).run(suite)
 
         # Run pytest files if any
-        pytest_nfail = pytest.main(['-v', *map(str, pytest_files)]) if pytest_files else 0
+        pytest_args = ['-v']
+        if sys.platform == 'win32':
+            # faulthandler's Windows handler also fires for exceptions that
+            # get handled (e.g. a DLL that fails to load becomes an
+            # ImportError). With Python 3.15 the traceback dump itself
+            # crashes inside PyMOL and aborts the whole run.
+            pytest_args += ['-p', 'no:faulthandler']
+        pytest_nfail = pytest.main([*pytest_args, *map(str, pytest_files)]) if pytest_files else 0
 
         while deferred_unlink:
             os.unlink(deferred_unlink.pop())
