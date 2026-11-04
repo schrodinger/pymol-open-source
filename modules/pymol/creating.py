@@ -922,6 +922,11 @@ NOTES
     The newly objects are labeled using the prefix provided along with
     their crystallographic symmetry operation and translation.
 
+    A valid crystallographic unit cell is required. Objects without
+    symmetry, or with a placeholder unit cell (e.g. the 1 x 1 x 1
+    Angstrom "P 1" cell that some cryo-EM entries use to encode missing
+    symmetry), are not expanded and an error is reported instead.
+
 SEE ALSO
 
     load

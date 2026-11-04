@@ -14249,6 +14249,10 @@ static std::string make_symexp_segi_label(int a, int x, int y, int z)
  * of +/-1 unit cells. The cutoff applies across states, so a symmetry atom will
  * be included if it's within any atom of @a s1 in any state.
  *
+ * Reports an error and creates no objects if @a oname has no symmetry, or if
+ * its unit cell is suspicious (see CCrystal::isSuspicious()), like the
+ * placeholder cells that encode missing symmetry.
+ *
  * @param name Prefix for new objects
  * @param oname Object to replicate
  * @param s1 Atom selection (for cutoff)
@@ -14280,6 +14284,11 @@ void ExecutiveSymExp(PyMOLGlobals* G, const char* name, const char* oname,
 
   if (!sym) {
     ErrMessage(G, __func__, "No symmetry loaded!");
+    return;
+  }
+
+  if (sym->Crystal.isSuspicious()) {
+    ErrMessage(G, __func__, "Invalid or placeholder unit cell");
     return;
   }
 
