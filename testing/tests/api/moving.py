@@ -207,7 +207,17 @@ class TestMoving(testing.PyMOLTestCase):
         cmd.mdo(3, 'bg_color blue')
 
         with testing.mkdtemp() as dirname:
-            cmd.mpng(os.path.join(dirname, 'image'), width=shape2[0], height=shape2[1])
+            cmd.mpng(os.path.join(dirname, 'image'), width=shape2[0],
+                     height=shape2[1], modal=modal, mode=2)
+
+            if modal:
+                # modal export renders one frame per draw cycle (GitHub #519)
+                for _ in range(100):
+                    if not cmd.get_modal_draw():
+                        break
+                    cmd._cmd._draw(cmd._COb)
+                self.assertFalse(cmd.get_modal_draw())
+
             filenames = glob.glob(os.path.join(dirname, 'image*.png'))
             filenames.sort()
 

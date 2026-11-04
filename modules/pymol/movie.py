@@ -845,7 +845,7 @@ def find_exe(exe):
 
 def produce(filename, mode='', first=0, last=0, preserve=0,
             encoder='', quality=-1, quiet=1,
-            width=0, height=0, _self=cmd):
+            width=0, height=0, modal=-1, _self=cmd):
     '''
 DESCRIPTION
 
@@ -874,6 +874,10 @@ ARGUMENTS
 
     height = int: Height in pixels {default: from viewport}
 
+    modal = int: 1 renders frames from the GUI draw loop (keeps the GUI
+    responsive), 0 renders in a blocking loop, -1 picks automatically
+    (blocking for ray tracing) {default: -1}
+
 EXAMPLE
 
     movie.produce video.mp4, height=1080
@@ -898,6 +902,7 @@ EXAMPLE
     quiet = int(quiet)
     preserve = int(preserve)
     quality = int(quality)
+    modal = int(modal)
     if quality<0:
         quality = _self.get_setting_int('movie_quality')
     if quality>100:
@@ -970,7 +975,7 @@ EXAMPLE
             last = 1
         _self.set("keep_alive")
         _self.mpng(os.path.join(tmp_path,prefix + img_ext),first,last,
-                   preserve,mode=mode,modal=-1,quiet=quiet,
+                   preserve,mode=mode,modal=modal,quiet=quiet,
                    width=width, height=height)
         # this may run asynchronously
     else:

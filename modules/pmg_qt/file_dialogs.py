@@ -769,12 +769,15 @@ def file_save_mpeg(parent, _preselect=None):
 
         parent.initialdir = os.path.dirname(fname)
 
+        # Always render modally (one frame per GUI draw cycle). With
+        # modal=-1, ray mode turns into a blocking loop that freezes the GUI
+        # and holds back progress output until the export is done (#519).
         if fmt == 'png':
             parent.cmd.mpng(fname,
                     width=form.input_width.value(),
                     height=form.input_height.value(),
                     mode=2 if form.input_ray.isChecked() else 1,
-                    quiet=0, modal=-1)
+                    quiet=0, modal=1)
         else:
             mode = 'ray' if form.input_ray.isChecked() else 'draw'
             encoder = form.input_encoder.currentText()
@@ -784,7 +787,7 @@ def file_save_mpeg(parent, _preselect=None):
                     height=form.input_height.value(),
                     quality=form.input_quality.value(),
                     mode=mode, encoder=encoder,
-                    quiet=0)
+                    quiet=0, modal=1)
 
     def set_resolution(height):
         w, h = form.input_width.value(), max(1, form.input_height.value())
