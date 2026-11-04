@@ -625,8 +625,10 @@ void OrthoBusyDraw(PyMOLGlobals* G, int force)
       if (G->HaveGUI &&
           G->ValidContext
           // only draw into GL_FRONT if default draw buffer is GL_BACK
-          // (not the case for QOpenGLWidget)
-          && G->ShaderMgr->defaultBackbuffer.drawBuffer == GL_BACK) {
+          // (not the case for QOpenGLWidget) and a front buffer exists
+          // (not the case for NVIDIA EGL on Wayland)
+          && G->ShaderMgr->defaultBackbuffer.drawBuffer == GL_BACK &&
+          G->ShaderMgr->defaultDoubleBuffered) {
         char* c;
         int x, y;
         float white[3] = {1, 1, 1};

@@ -339,6 +339,9 @@ public:
   GLFramebufferConfig currentFBConfig{}; // Current framebuffer configuration
   GLFramebufferConfig topLevelConfig{};  // Final render target in draw loop
                                          // (currently only known by Ortho)
+  // false if the default framebuffer has no front buffer to draw into
+  // (e.g. GL_DOUBLEBUFFER=0 with NVIDIA EGL on Wayland)
+  bool defaultDoubleBuffered{true};
 
 private:
   bool is_configured { false };
