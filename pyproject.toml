@@ -33,7 +33,7 @@ dev = [
   "pillow==13.0.0",
   "PySide6==6.12.0",
   "pytest==9.0.3",
-  "requests==2.32.3",
+  "requests==2.33.0",
 ]
 
 [project.urls]
