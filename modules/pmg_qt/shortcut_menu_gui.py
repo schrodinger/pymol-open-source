@@ -5,7 +5,7 @@ from textwrap import fill
 from pymol import setting
 from pymol import save_shortcut
 from pymol.Qt import QtGui, QtWidgets
-from pymol.Qt import QtCore, QtCoreModels
+from pymol.Qt import QtCore
 from pymol.shortcut_manager import ShortcutManager, ShortcutIndex
 from pymol.keyboard import get_default_keys
 Qt = QtCore.Qt
@@ -64,7 +64,7 @@ class PyMOLShortcutMenu(QtWidgets.QWidget):
         self.confirm_change = parent.load_form("change_confirm", None)
 
         self.model = QtGui.QStandardItemModel(self)
-        self.proxy_model = QtCoreModels.QSortFilterProxyModel(self)
+        self.proxy_model = QtCore.QSortFilterProxyModel(self)
         self.proxy_model.setSourceModel(self.model)
         self.proxy_model.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.proxy_model.setFilterKeyColumn(-1)

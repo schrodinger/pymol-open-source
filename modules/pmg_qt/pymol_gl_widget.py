@@ -1,5 +1,3 @@
-import os
-import sys
 from pymol2 import SingletonPyMOL as PyMOL
 
 import pymol
@@ -13,28 +11,7 @@ Qt = QtCore.Qt
 from .keymapping import get_modifiers
 from .keymapping import get_wheel_button
 
-# don't import the heavy OpenGL (PyOpenGL) module
-from pymol._cmd import glViewport
-
-# QOpenGLWidget is supposed to supersede QGLWidget, but has issues (e.g.
-# no stereo support)
-USE_QOPENGLWIDGET = int(
-    os.getenv("PYMOL_USE_QOPENGLWIDGET") or
-    (QtCore.QT_VERSION >= 0x50400 and pymol.IS_MACOS or
-     QtCore.QT_VERSION >= 0x60000))
-
-if USE_QOPENGLWIDGET:
-    BaseGLWidget = QtWidgets.QOpenGLWidget
-    AUTO_DETECT_STEREO = False
-else:
-    from pymol.Qt import QtOpenGL
-    BaseGLWidget = QtOpenGL.QGLWidget
-    # only attempt stereo detection in Qt <= 5.6 (with 5.9+ on Linux I
-    # get GL_DOUBLEBUFFER=0 with flickering when requesting stereo)
-    AUTO_DETECT_STEREO = pymol.IS_WINDOWS or QtCore.QT_VERSION < 0x50700
-
-
-class PyMOLGLWidget(BaseGLWidget):
+class PyMOLGLWidget(QtWidgets.QOpenGLWidget):
     '''
     PyMOL OpenGL Widget
 
@@ -66,10 +43,7 @@ class PyMOLGLWidget(BaseGLWidget):
         self.fb_scale = 1.0
 
         # OpenGL context setup
-        if USE_QOPENGLWIDGET:
-            f = QtGui.QSurfaceFormat()
-        else:
-            f = QtOpenGL.QGLFormat()
+        f = QtGui.QSurfaceFormat()
 
         from pymol.invocation import options
 
@@ -81,19 +55,12 @@ class PyMOLGLWidget(BaseGLWidget):
         if options.force_stereo != -1:
             # See layer1/Setting.h for stereo modes
 
-            if options.stereo_mode in (1, 12) or (
-                    options.stereo_mode == 0 and AUTO_DETECT_STEREO):
+            if options.stereo_mode in (1, 12):
                 f.setStereo(True)
 
-            if options.stereo_mode in (11, 12) and not USE_QOPENGLWIDGET:
-                f.setAccum(True)
-
-        if USE_QOPENGLWIDGET:
-            super(PyMOLGLWidget, self).__init__(parent=parent)
-            self.setFormat(f)
-            self.setUpdateBehavior(QtWidgets.QOpenGLWidget.UpdateBehavior.PartialUpdate)
-        else:
-            super(PyMOLGLWidget, self).__init__(f, parent=parent)
+        super().__init__(parent=parent)
+        self.setFormat(f)
+        self.setUpdateBehavior(self.UpdateBehavior.PartialUpdate)
 
         # pymol instance
         self.pymol = PyMOL()
@@ -133,7 +100,7 @@ class PyMOLGLWidget(BaseGLWidget):
         if ev.type() == Gesture:
             return self.gestureEvent(ev)
 
-        return super(PyMOLGLWidget, self).event(ev)
+        return super().event(ev)
 
     def gestureEvent(self, ev):
         gesture = ev.gesture(Qt.GestureType.PinchGesture)
@@ -200,18 +167,11 @@ class PyMOLGLWidget(BaseGLWidget):
     ##########################
 
     def paintGL(self):
-        if not USE_QOPENGLWIDGET:
-            glViewport(0, 0, int(self.fb_scale * self.width()),
-                         int(self.fb_scale * self.height()))
         self.pymol.draw()
         self._timer.start(0)
 
     def resizeGL(self, w, h):
-        if USE_QOPENGLWIDGET:
-            w = int(w * self.fb_scale)
-            h = int(h * self.fb_scale)
-
-        self.pymol.reshape(w, h, True)
+        self.pymol.reshape(int(w * self.fb_scale), int(h * self.fb_scale), True)
 
     def updateFbScale(self, context):
         '''Update PyMOL's display scale factor from the window or screen context
@@ -239,7 +199,6 @@ class PyMOLGLWidget(BaseGLWidget):
                     lambda dpi: self.updateFbScale(window))
 
         except AttributeError:
-            # Fallback for Qt4
             pass
 
     def _pymolProcess(self):

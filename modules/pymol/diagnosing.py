@@ -140,10 +140,7 @@ def diagnostics_platform(compact=False):
 def diagnostics_qt():
     try:
         from pymol.Qt import QtCore
-        return u'{} {} (Qt {})\n'.format(
-                QtCore.__name__.split('.')[0],
-                getattr(QtCore, "PYQT_VERSION_STR", "<N/A>"),
-                QtCore.QT_VERSION_STR)
+        return 'PySide6 {} (Qt {})\n'.format(QtCore.__version__, QtCore.qVersion())
     except Exception as e:
         return u'({})\n'.format(e)
 

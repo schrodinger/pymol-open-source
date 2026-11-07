@@ -3,3 +3,5 @@
 generated
 build
 .vscode
+*.egg-info/
+testing/timings.tab

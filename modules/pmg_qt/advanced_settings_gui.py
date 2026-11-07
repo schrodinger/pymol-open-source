@@ -1,6 +1,6 @@
 from pymol import setting
 from pymol.Qt import QtGui, QtWidgets
-from pymol.Qt import QtCore, QtCoreModels
+from pymol.Qt import QtCore
 Qt = QtCore.Qt
 QSI = QtGui.QStandardItem  # For brevity
 
@@ -16,7 +16,7 @@ class PyMOLAdvancedSettings(QtWidgets.QWidget):
         self.cmd = cmd
 
         self.model = QtGui.QStandardItemModel(self)
-        self.proxy_model = QtCoreModels.QSortFilterProxyModel(self)
+        self.proxy_model = QtCore.QSortFilterProxyModel(self)
         self.proxy_model.setSourceModel(self.model)
 
         self.setWindowTitle('PyMOL Advanced Settings')

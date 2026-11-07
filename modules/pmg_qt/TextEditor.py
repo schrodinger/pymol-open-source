@@ -6,13 +6,8 @@ import os
 import sys
 import importlib
 
-try:
-    from pymol.Qt import QtCore, QtWidgets, QtGui
-    from pymol.Qt.utils import connectFontContextMenu, getMonospaceFont
-except ImportError:
-    from PyQt5 import QtCore, QtWidgets, QtGui
-    connectFontContextMenu = lambda *a: None
-    getMonospaceFont = lambda: QtGui.QFont()
+from pymol.Qt import QtCore, QtWidgets, QtGui
+from pymol.Qt.utils import connectFontContextMenu, getMonospaceFont
 
 
 class TextEditor(QtWidgets.QMainWindow):

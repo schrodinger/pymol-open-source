@@ -1,8 +1,5 @@
 from pymol.Qt import *
 
-import shutil
-import subprocess
-
 class UpdateLock:
     """
     Locking mechanism to prevent circular signal/slot updates.
@@ -274,50 +271,8 @@ def loadUi(uifile, widget):
     @type uifile: str
     @type widget: QtWidgets.QWidget
     """
-    if PYQT_NAME == "PySide6":
-        from PySide6.QtUiTools import QUiLoader
-        return QUiLoader().load(uifile, widget)
-    elif PYQT_NAME.startswith('PyQt'):
-        m = __import__(PYQT_NAME + '.uic')
-        return m.uic.loadUi(uifile, widget)
-    elif PYQT_NAME == 'PySide2':
-        try:
-            import pyside2uic as pysideuic
-        except ImportError:
-            pysideuic = None
-    else:
-        import pysideuic
-
-    def find_valid_uic_exe(execs):
-        for exe in execs:
-            if shutil.which(exe):
-                return exe
-
-    if pysideuic is None:
-        uic_exec = find_valid_uic_exe(('uic', 'pyside2-uic'))
-        if uic_exec is None:
-            raise RuntimeError('uic not found')
-        p = subprocess.Popen([uic_exec, '-g', 'python', uifile],
-                             stdout=subprocess.PIPE)
-        source, _ = p.communicate()
-        # workaround for empty retranslateUi bug
-        source += b'\n' + b' ' * 8 + b'pass'
-    else:
-        import io
-        stream = io.StringIO()
-        pysideuic.compileUi(uifile, stream)
-        source = stream.getvalue()
-
-    ns_locals = {}
-    exec(source, ns_locals)
-
-    if 'Ui_Form' in ns_locals:
-        form = ns_locals['Ui_Form']()
-    else:
-        form = ns_locals['Ui_Dialog']()
-
-    form.setupUi(widget)
-    return form
+    from PySide6.QtUiTools import QUiLoader
+    return QUiLoader().load(uifile, widget)
 
 
 class PopupOnException:

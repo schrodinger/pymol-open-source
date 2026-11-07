@@ -26,9 +26,7 @@ if True:
     import inspect
     import shlex
     import builtins
-    from enum import Enum
-    if sys.version_info >= (3, 11):
-        from enum import StrEnum
+    from enum import Enum, StrEnum
     from functools import wraps
     from pathlib import Path
     from textwrap import dedent
@@ -684,7 +682,7 @@ SEE ALSO
                     return [_into_types(None, func, a) for a in shlex.split(value)]
                 return shlex.split(value)
         
-        elif sys.version_info >= (3, 11) and issubclass(type, StrEnum):
+        elif issubclass(type, StrEnum):
             try:
                 return type(value)
             except:

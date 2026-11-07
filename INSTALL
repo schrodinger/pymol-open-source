@@ -9,7 +9,7 @@ REQUIREMENTS
 
     - C++17 compiler (e.g. gcc 8+)
     - CMake (3.13+)
-    - Python 3.9+
+    - Python 3.11+
     - pip (with build submodule <pip install build>; conda's package name is python-build)
     - Pmw (Python Megawidgets) (optional, for legacy GUI/plugins)
       https://github.com/schrodinger/pmw-patched
@@ -22,7 +22,7 @@ REQUIREMENTS
     - msgpack-c 2.1.5+ (optional, for fast MMTF loading and export,
         disable with --use-msgpackc=no)
     - mmtf-cpp (for fast MMTF export, disable with --use-msgpackc=no)
-    - PyQt5, PyQt6, PySide2 or PySide6 (optional, will fall back to Tk
+    - PySide6 (Qt GUI; falls back to Tk
         interface if compiled with --glut=true)
     - glm
     - catch2 (optional, enable with --testing=true)

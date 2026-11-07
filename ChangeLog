@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2026-11-08 pymolish-studio
+
+	* Unreleased
+
+	* Developer & Infrastructure
+	  - Qt GUI requires PySide6; PyQt5, PyQt6 and PySide2 support removed
+	    (the QT_API environment variable is no longer consulted)
+	  - Python 3.11 or newer required
+
+
 2025-01-24 Jarrett Johnson, Thomas Stewart
 
     * 3.1.0
