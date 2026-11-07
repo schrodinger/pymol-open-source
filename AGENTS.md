@@ -98,7 +98,8 @@ CI (`.github/workflows/build.yml`) builds Linux / Windows / macOS on Python 3.11
 - Don't touch `LICENSE`, `AUTHORS`, copyright headers.
 - Don't commit build output (`build/`, `generated/`, `*.pyc`).
 - Commit messages: `<type>(<scope>): <summary>` with type in `remove | perf | simplify | ui | fix | deps | ci | docs`. Example: `remove(gui): drop Tk GUI and Pmw support`.
-- Commit or push only when asked. Never force-push `master`.
+- Commit after each completed task. No AI attribution trailers in commit messages. Never force-push `master`.
+- Version lives in `layer0/Version.h` (`_PyMOL_VERSION`). Scheme `4.X.Y`: finishing a roadmap step from `PLAN.md` bumps `X`; a follow-up improvement inside the current step bumps `Y`. Leave `_PyMOL_VERSION_int` alone, it is PSE compatibility.
 
 ## 6. When unsure
 
