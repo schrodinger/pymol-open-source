@@ -4,7 +4,7 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
-	* Unreleased
+	* 4.1.0
 
 	* Developer & Infrastructure
 	  - Qt GUI requires PySide6; PyQt5, PyQt6 and PySide2 support removed
