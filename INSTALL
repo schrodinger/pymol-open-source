@@ -57,6 +57,24 @@ INSTALLATION
     Recommended for developers (build output, incremental build, and building C++ unit tests)
       pip install --verbose --no-build-isolation --config-settings testing=True .
 
+DEVELOPMENT LOOP
+
+    Editable install: Python edits under modules/ take effect on the next
+    launch without a rebuild; C++ and shader edits need the install command
+    again (CMake rebuilds only what changed in build/).
+
+      pip install --no-build-isolation --config-settings testing=True -e '.[dev]'
+
+    Limit build parallelism with --config-settings jobs=N or JOBS=N.
+    ccache: export CMAKE_CXX_COMPILER_LAUNCHER=ccache before installing
+    (CMake 3.17+ honors it; nothing in setup.py is needed).
+
+    Tests (headless, skips ~/.pymolrc):
+      pymol -ckqy testing/testing.py --run all
+
+    Performance baseline (see docs/baseline.md):
+      pymol -ckqy testing/bench.py
+
 RUNNING PyMOL
 
     $PYMOL_PATH/bin/pymol

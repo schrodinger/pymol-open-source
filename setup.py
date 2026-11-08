@@ -401,8 +401,7 @@ class build_ext_pymol(build_ext):
         # example of build args
         build_args = ["--config", config]
         if not WIN:  # Win /MP flag on compilation level
-            cpu_count = os.cpu_count() or 1
-            build_args += [f"-j{cpu_count}"]
+            build_args += [f"-j{options.jobs or os.cpu_count() or 1}"]
 
         os.chdir(str(build_temp))
         self.spawn(["cmake", str(cwd)] + cmake_args)

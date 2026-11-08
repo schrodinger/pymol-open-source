@@ -6,6 +6,10 @@
 without Python.** An installable wheel and a standalone application are separate
 deliverables. Build speed, launch speed and download size also need separate data.
 
+## Status 2026-11-08
+
+5a done: build-loop timings, editable install validated, `--jobs` fix. See [docs/baseline.md](../baseline.md). 5b not started.
+
 ## Current state and risks to verify
 
 - [Build backend](../../_custom_build/backend.py) supports wheels and editable

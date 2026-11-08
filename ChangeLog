@@ -4,6 +4,17 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.2.0
+
+	* Developer & Infrastructure
+	  - --jobs / JOBS build option is honored on Linux and macOS
+	  - Editable install documented as the development loop (INSTALL)
+	  - testing/bench.py headless performance baseline; numbers in docs/baseline.md
+	  - _PyMOL_VERSION_int follows the 4.x version string
+
+
+2026-11-08 pymolish-studio
+
 	* 4.1.0
 
 	* Developer & Infrastructure

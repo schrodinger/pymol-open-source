@@ -6,6 +6,10 @@
 OpenGL. Loading, geometry generation, ray tracing, callbacks and GPU submission
 are different workloads and need separate measurements.
 
+## Status 2026-11-08
+
+1a done: headless baseline in `testing/bench.py`, numbers and first observations in [docs/baseline.md](../baseline.md). GUI frame latency not measured. 1b not started.
+
 ## Evidence and corrections
 
 - Reuse [performance tests](../../testing/tests/performance), especially
