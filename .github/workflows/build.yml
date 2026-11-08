@@ -1,6 +1,9 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   build-Linux:
@@ -50,6 +53,10 @@ jobs:
       run: |
         pyinstaller --noconfirm packaging/pymolish.spec
 
+    - name: Pack bundle
+      if: matrix.python-version == '3.12'
+      run: tar -C dist -czf dist/pymolish-${{ runner.os }}-${{ runner.arch }}.tar.gz pymolish
+
     - name: Upload preview artifacts
       if: matrix.python-version == '3.12'
       uses: actions/upload-artifact@v4
@@ -57,7 +64,9 @@ jobs:
         name: pymolish-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
         path: |
           dist/*.whl
-          dist/pymolish
+          dist/pymolish-*.tar.gz
+          dist/pymolish-*.zip
+        if-no-files-found: error
 
 
   build-Windows:
@@ -122,6 +131,10 @@ jobs:
         conda activate $env:CONDA_ENV_NAME
         pyinstaller --noconfirm packaging/pymolish.spec
 
+    - name: Pack bundle
+      if: matrix.python-version == '3.12'
+      run: Compress-Archive -Path dist\pymolish -DestinationPath dist\pymolish-${{ runner.os }}-${{ runner.arch }}.zip
+
     - name: Upload preview artifacts
       if: matrix.python-version == '3.12'
       uses: actions/upload-artifact@v4
@@ -129,7 +142,9 @@ jobs:
         name: pymolish-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
         path: |
           dist/*.whl
-          dist/pymolish
+          dist/pymolish-*.tar.gz
+          dist/pymolish-*.zip
+        if-no-files-found: error
 
 
   build-MacOS:
@@ -193,6 +208,10 @@ jobs:
         source activate $CONDA_ENV_NAME
         pyinstaller --noconfirm packaging/pymolish.spec
 
+    - name: Pack bundle
+      if: matrix.python-version == '3.12'
+      run: tar -C dist -czf dist/pymolish-${{ runner.os }}-${{ runner.arch }}.tar.gz pymolish
+
     - name: Upload preview artifacts
       if: matrix.python-version == '3.12'
       uses: actions/upload-artifact@v4
@@ -200,4 +219,34 @@ jobs:
         name: pymolish-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
         path: |
           dist/*.whl
-          dist/pymolish
+          dist/pymolish-*.tar.gz
+          dist/pymolish-*.zip
+        if-no-files-found: error
+
+
+  release:
+    # publish the three bundles when master changes; re-pushes with the same
+    # version replace the files on the existing release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [build-Linux, build-Windows, build-MacOS]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: pymolish-*
+        path: dist
+        merge-multiple: true
+
+    - name: Publish release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        tag=v$(sed -n 's/^#define _PyMOL_VERSION "\(.*\)"/\1/p' layer0/Version.h)
+        gh release view "$tag" >/dev/null 2>&1 \
+          || gh release create "$tag" --prerelease --title "pymolish-studio $tag" --notes "Automated build of ${{ github.sha }}. Unsigned; see docs/plans/05-builds-binaries.md."
+        gh release upload "$tag" --clobber dist/pymolish-*.tar.gz dist/pymolish-*.zip dist/*.whl

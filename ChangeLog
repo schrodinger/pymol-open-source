@@ -4,6 +4,17 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.5.1
+
+	* Builds
+	  - CI packs the Linux and macOS bundles as .tar.gz and the Windows
+	    bundle as .zip; a push to master publishes them, plus the wheels,
+	    on a GitHub pre-release tagged with the version (v4.X.Y). The
+	    workflow can also be started by hand (workflow_dispatch).
+
+
+2026-11-08 pymolish-studio
+
 	* 4.5.0
 
 	* Panels
