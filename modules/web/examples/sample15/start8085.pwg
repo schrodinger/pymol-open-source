@@ -1,5 +1,0 @@
-port 8085
-options -qxie -F 0 -X 10 -Y 50 -W 250 -H 250 
-
-
-

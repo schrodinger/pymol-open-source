@@ -1,5 +1,0 @@
-port 8086
-options -qxi -F 0 -X 10 -Y 350 -W 250 -H 250
-
-
-

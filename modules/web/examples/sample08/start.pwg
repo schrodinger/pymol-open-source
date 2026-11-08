@@ -1,3 +1,0 @@
-root $PYMOL_PATH/modules/web/examples/sample08/htdocs
-browser
-logging 0

@@ -609,46 +609,6 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load(self.datafile('1rx1.pdb'), 'm1', object_props=object_props)
         self.assertEqual(truth, 'pdb_header' in (cmd.get_property_list('m1') or ()))
 
-    @testing.requires_version('2.4')
-    @testing.requires(
-        'network'
-    )  # doesn't use external network, but is very slow while being connected to VPN
-    def testLoadPWG(self):
-        content_index = b"Hello World\n"
-        port = _get_free_port()
-        base_url = f"http://localhost:{port}"
-
-        with TemporaryDirectory() as root_dir:
-            root_dir = Path(root_dir)
-            index_file = root_dir / "index.html"
-            start_pwg_file = root_dir / "start.pwg"
-
-            index_file.write_bytes(content_index)
-
-            pwg_content = (
-                f"root {root_dir}\n"
-                f"port {port}\n"
-                "header add Test-Key Test-Value\n"
-            )
-
-            start_pwg_file.write_text(pwg_content)
-            cmd.load(str(start_pwg_file))
-
-            response = requests.get(url=base_url, timeout=5)
-            response.raise_for_status()
-
-            self.assertEqual(response.headers["Test-Key"], "Test-Value")
-            self.assertEqual(response.content, content_index)
-
-            # Warning: can't call locking functions here, will dead-lock
-            # get_version is non-locking since 1.7.4
-
-            response = requests.get(f"{base_url}/apply/pymol.cmd.get_version", timeout=5)
-            response.raise_for_status()
-
-            content = response.content.decode("ascii", errors="ignore")
-            self.assertTrue(content, cmd.get_version()[0] in content)
-
     @testing.requires_version('2.1')
     def testChemCompCartnUse(self):
         xyz_model = (1., 2., 3.)

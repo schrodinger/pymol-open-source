@@ -441,7 +441,6 @@ PyMOL COMMAND LINE OPTIONS
     -e   Start in full-screen mode.
     -2   Start in two-button mouse mode.
     -o   Disable security protections for session files.
-    -R   Launch Greg Landrum's XMLRPC listener.
     -B   Enable blue-line stereo signal (for Mac stereo)
     -G   Start in Game mode.
     -S   Force and launch in stereo, if possible.

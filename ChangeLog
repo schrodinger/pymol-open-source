@@ -4,6 +4,12 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.4.4
+
+	* Removed\n	  - XML-RPC server (-R), the built-in HTTP server (pymolhttpd), the\n	    modules/web examples and the .pwg web-GUI launch file.
+
+2026-11-08 pymolish-studio
+
 	* 4.4.3
 
 	* Removed\n	  - mpeg_encode movie encoder (external legacy binary). movie.produce and\n	    the export dialog keep ffmpeg and convert.
