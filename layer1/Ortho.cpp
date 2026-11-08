@@ -55,9 +55,6 @@ Z* -------------------------------------------------------------------
 #include "Wizard.h"
 #include "main.h"
 
-#ifdef _PYMOL_OPENVR
-#include "OpenVRMode.h"
-#endif
 
 #define OrthoSaveLines 0xFF
 #define OrthoHistoryLines 0xFF
@@ -1825,9 +1822,6 @@ static std::vector<GLFramebufferConfig> OrthoGetBackbuffers(
   }
 
   if (drawInfo.renderMode == OrthoRenderMode::VR) {
-#ifdef _PYMOL_OPENVR
-    return {{CShaderMgr::OpenGLDefaultFramebufferID, GL_NONE}};
-#endif
   }
   if (drawInfo.renderMode == OrthoRenderMode::GeoWallRight) {
     return {};
@@ -1859,10 +1853,6 @@ void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo)
   bool shouldRenderScene = false;
   auto internal_gui_mode =
       SettingGet<InternalGUIMode>(cSetting_internal_gui_mode, G->Setting);
-#ifdef _PYMOL_OPENVR
-  bool offscreen_vr = false;
-  int openvr_text = 0;
-#endif
 
   bool generate_shader_cgo = false;
 
@@ -1910,12 +1900,6 @@ void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo)
     }
 
     if (drawInfo.renderMode == OrthoRenderMode::VR) {
-#ifdef _PYMOL_OPENVR
-      times = 2;
-      double_pump = false;
-      offscreen_vr = true;
-      openvr_text = SettingGet<int>(G, cSetting_openvr_gui_text);
-#endif
     } else if (drawInfo.renderMode != OrthoRenderMode::GeoWallRight) {
       if (SceneMustDrawBoth(G)) {
         times = 2;
@@ -1951,19 +1935,8 @@ void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo)
 
       switch (times) {
       case 1:
-#ifdef _PYMOL_OPENVR
-        if (offscreen_vr) {
-          draw_text = text || (openvr_text == 1);
-          OpenVRMenuBufferStart(G, I->Width, I->Height);
-        } else
-#endif
         break;
       case 0:
-#ifdef _PYMOL_OPENVR
-        if (offscreen_vr) {
-          draw_text = text && (openvr_text != 2);
-        }
-#endif
         break;
       }
 
@@ -1994,11 +1967,6 @@ void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo)
           } else {
             OrthoRenderCGO(G);
             OrthoPopMatrix(G);
-#ifdef _PYMOL_OPENVR
-            if (offscreen_vr && times) {
-              OpenVRMenuBufferFinish(G);
-            }
-#endif
             continue;
           }
         }
@@ -2046,11 +2014,6 @@ void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo)
 
       OrthoPopMatrix(G);
 
-#ifdef _PYMOL_OPENVR
-      if (offscreen_vr && times) {
-        OpenVRMenuBufferFinish(G);
-      }
-#endif
 
       if (Feedback(G, FB_OpenGL, FB_Debugging))
         PyMOLCheckOpenGLErr("OrthoDoDraw final checkpoint");
@@ -2080,11 +2043,6 @@ void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo)
 
       switch (origtimes) {
       case 1:
-#ifdef _PYMOL_OPENVR
-        if (offscreen_vr) {
-          OpenVRMenuBufferStart(G, I->Width, I->Height);
-        } else
-#endif
         break;
       case 0:
         break;
@@ -2092,11 +2050,6 @@ void OrthoDoDraw(PyMOLGlobals* G, const OrthoDrawInfo& drawInfo)
       OrthoPushMatrix(G);
       OrthoRenderCGO(G);
       OrthoPopMatrix(G);
-#ifdef _PYMOL_OPENVR
-      if (offscreen_vr && origtimes) {
-        OpenVRMenuBufferFinish(G);
-      }
-#endif
     }
   }
   G->ShaderMgr->topLevelConfig = G->ShaderMgr->defaultBackbuffer;

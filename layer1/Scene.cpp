@@ -64,11 +64,7 @@ Z* -------------------------------------------------------------------
 #include "GFXManager.h"
 #include "Util2.h"
 
-#ifdef _PYMOL_OPENVR
-#include"OpenVRMode.h"
-#endif
 
-//#define _OPENVR_STEREO_DEBUG_VIEWS
 
 #include <string>
 #include <vector>
@@ -509,9 +505,6 @@ const char *SceneGetSeleModeKeyword(PyMOLGlobals * G)
   return (char *) SelModeKW[0];
 }
 
-#ifdef _PYMOL_OPENVR
-static float s_oldFov = -1.0f;
-#endif
 
 void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
 {
@@ -524,15 +517,6 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
   float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
   float scale = 1.0f / I->Scale;
 
-#ifdef _PYMOL_OPENVR
-  if (I->StereoMode == cStereo_openvr) {
-    float dist = fabsf(pos.z);
-    float fovVR = fov;
-    fov = s_oldFov;
-    dY = scale * 1.0f;
-    dZ = scale * dist * (tanf(fovVR * PI / 360.f) / tanf(fov * PI / 360.f) - 1.0f);
-  }
-#endif
 
   /* copy rotation matrix */
   elem->matrix_flag = true;
@@ -598,17 +582,6 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
     }
   }
 
-#ifdef _OPENVR_STEREO_DEBUG_VIEWS
-  printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf, IV: %11lf  ==>  EP: %11lf %11lf %11lf, EF/EB: %11lf %11lf, EV: %11lf\n",
-    "SceneToViewElem",
-    pos.x, pos.y, pos.z,
-    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale,
-    SettingGetGlobal_f(G, cSetting_field_of_view),
-    elem->pre[0], elem->pre[1], elem->pre[2],
-    elem->front, elem->back,
-    elem->ortho
-  );
-#endif // _OPENVR_STEREO_DEBUG_VIEWS
 }
 
 void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
@@ -625,15 +598,6 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
   auto ori = I->m_view.origin();
   auto rot = I->m_view.rotMatrix();
 
-#ifdef _PYMOL_OPENVR
-  if (I->StereoMode == cStereo_openvr) {
-    float dist = fabsf(elem->pre[2]);
-    float fovVR = SettingGetGlobal_f(G, cSetting_field_of_view);
-    dY = -1.0f;
-    dZ = scale * dist * (tanf(fabsf(fov) * PI / 360.f) / tanf(fovVR * PI / 360.f) - 1.0f);
-    fov = fov < 0.0f ? -fovVR : fovVR;
-  }
-#endif
 
   if(elem->matrix_flag) {
     rot = glm::make_mat4(elem->matrix);
@@ -688,17 +652,6 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
     I->m_view.setRotMatrix(rot);
   }
 
-#ifdef _OPENVR_STEREO_DEBUG_VIEWS
-  printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf, IV: %11lf  <==  EP: %11lf %11lf %11lf, EF/EB: %11lf %11lf, EV: %11lf\n",
-    "SceneFromViewElem",
-    pos.x, pos.y, pos.z,
-    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale,
-    SettingGetGlobal_f(G, cSetting_field_of_view),
-    elem->pre[0], elem->pre[1], elem->pre[2],
-    elem->front, elem->back,
-    elem->ortho
-  );
-#endif // _OPENVR_STEREO_DEBUG_VIEWS
 }
 
 SceneUnitContext ScenePrepareUnitContext(const Extent2D& extent)
@@ -879,15 +832,6 @@ void SceneGetView(PyMOLGlobals * G, SceneViewType view)
   const auto& pos = I->m_view.pos();
   const auto& ori = I->m_view.origin();
 
-#ifdef _PYMOL_OPENVR
-  if (I->StereoMode == cStereo_openvr) {
-    float dist = fabsf(pos.z);
-    float fovVR = fov;
-    fov = s_oldFov;
-    dY = scale * 1.0f;
-    dZ = scale * dist * (tanf(fovVR * PI / 360.f) / tanf(fov * PI / 360.f) - 1.0f);
-  }
-#endif
 
   std::copy_n(glm::value_ptr(I->m_view.rotMatrix()), 16, p);
   p += 16;
@@ -901,17 +845,6 @@ void SceneGetView(PyMOLGlobals * G, SceneViewType view)
   *(p++) = I->m_view.m_clip().m_back * scale + dZ;
   *(p++) = SettingGetGlobal_b(G, cSetting_ortho) ? fov : -fov;
 
-#ifdef _OPENVR_STEREO_DEBUG_VIEWS
-  printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf, IV: %11lf  ==>  EP: %11lf %11lf %11lf, EF/EB: %11lf %11lf, EV: %11lf\n",
-    "SceneGetView",
-    pos.x, pos.y, pos.z,
-    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale,
-    SettingGetGlobal_f(G, cSetting_field_of_view),
-    view[16], view[17], view[18],
-    view[22], view[23],
-    view[24]
-  );
-#endif // _OPENVR_STEREO_DEBUG_VIEWS
 }
 
 /*========================================================================*/
@@ -937,15 +870,6 @@ void SceneSetView(PyMOLGlobals * G, const SceneViewType view,
   float fov = view[24];
   float scale = I->Scale;
 
-#ifdef _PYMOL_OPENVR
-  if (I->StereoMode == cStereo_openvr) {
-    float dist = fabsf(view[18]);
-    float fovVR = SettingGetGlobal_f(G, cSetting_field_of_view);
-    dY = -1.0f;
-    dZ = scale * dist * (tanf(fabsf(fov) * PI / 360.f) / tanf(fovVR * PI / 360.f) - 1.0f);
-    fov = fov < 0.0f ? -fovVR : fovVR;
-  }
-#endif
 
   p = view;
   I->m_view.setRotMatrix(glm::make_mat4(p));
@@ -985,18 +909,6 @@ void SceneSetView(PyMOLGlobals * G, const SceneViewType view,
       " Scene: view updated.\n" ENDFB(G);
   }
 
-#ifdef _OPENVR_STEREO_DEBUG_VIEWS
-  const auto& pos = I->m_view.pos();
-  printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf, IV: %11lf  <==  EP: %11lf %11lf %11lf, EF/EB: %11lf %11lf, EV: %11lf\n",
-    "SceneSetView",
-    pos.x, pos.y, pos.z,
-    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale,
-    SettingGetGlobal_f(G, cSetting_field_of_view),
-    view[16], view[17], view[18],
-    view[22], view[23],
-    view[24]
-  );
-#endif // _OPENVR_STEREO_DEBUG_VIEWS
 
   if(animate != 0.0F)
     SceneLoadAnimation(G, animate, hand);
@@ -1023,76 +935,6 @@ void SceneUpdateStereoMode(PyMOLGlobals * G)
   }
 }
 
-#ifdef _PYMOL_OPENVR
-/*========================================================================*/
-static
-void ResetFovWidth(PyMOLGlobals * G, bool enableOpenVR, float fovNew) {
-  CScene *I = G->Scene;
-  auto pos = I->m_view.pos();
-
-#ifdef _OPENVR_STEREO_DEBUG_VIEWS
-  printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  ==>\n",
-    "ResetFovWidth BEFORE",
-    pos.x, pos.y, pos.z,
-    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale
-  );
-#endif // _OPENVR_STEREO_DEBUG_VIEWS
-
-  float fovOld = SettingGetGlobal_f(G, cSetting_field_of_view);
-  SettingSetGlobal_f(G, cSetting_field_of_view, fovNew);
-
-  const float tanOld = tanf(fovOld * PI / 360.f);
-  const float tanNew = tanf(fovNew * PI / 360.f);
-
-  const float distOld = fabsf(pos.z);
-
-  const float scaleOld = I->Scale;
-  const float scaleNew = I->Scale = enableOpenVR ? 1.0f / (distOld * tanOld) : 1.0f;
-  const float scale = scaleNew / scaleOld;
-
-  auto newX = pos.x * scale;
-  auto newY = enableOpenVR ? pos.y * scale + 1.0f : (pos.y - 1.0f) * scale;
-  auto newZ = pos.z * scale * tanOld / tanNew;
-
-  const float dZ = fabsf(pos.z) - distOld * scale;
-  I->m_view.m_clip().m_front = I->m_view.m_clip().m_front * scale + dZ;
-  I->m_view.m_clip().m_back = I->m_view.m_clip().m_back * scale + dZ;
-
-#ifdef _OPENVR_STEREO_DEBUG_VIEWS
-  printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  <==\n",
-    "ResetFovWidth AFTER",
-    pos.x, pos.y, pos.z,
-    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale
-  );
-#endif // _OPENVR_STEREO_DEBUG_VIEWS
-  I->m_view.setPos(pos);
-  UpdateFrontBackSafe(I);
-  SceneRovingDirty(G);
-}
-
-/*========================================================================*/
-static
-void SceneResetOpenVRSettings(PyMOLGlobals * G, bool enableOpenVR) { 
-  // set FOV = 110 for openVR
-  float openVRFov = 110.0 * 0.5;
-
-  // old camera props
-  static bool commonCorrect = false;
-  if (s_oldFov < 0.0f)
-    s_oldFov = SettingGetGlobal_f(G, cSetting_field_of_view);
-
-  if (enableOpenVR) {
-    s_oldFov =  SettingGetGlobal_f(G, cSetting_field_of_view);
-    ResetFovWidth(G, enableOpenVR, openVRFov);
-    commonCorrect = true;
-    SettingSetGlobal_f(G, cSetting_dynamic_width_factor, 0.004f); // for correct line width in lines mode
-  } else if (commonCorrect){
-    ResetFovWidth(G, enableOpenVR, s_oldFov);
-    commonCorrect = false;
-    SettingSetGlobal_f(G, cSetting_dynamic_width_factor, 0.06f);
-  }
-}
-#endif
 
 /*========================================================================*/
 void SceneSetStereo(PyMOLGlobals * G, bool flag)
@@ -1114,21 +956,6 @@ void SceneSetStereo(PyMOLGlobals * G, bool flag)
       OrthoReshape(G, G->Option->winX, G->Option->winY, true);
     }
 
-#ifdef _PYMOL_OPENVR
-    // enter or leave OpenVR mode
-    if (I->StereoMode == cStereo_openvr || cur_stereo_mode == cStereo_openvr) {
-      bool enableOpenVR = I->StereoMode == cStereo_openvr;
-
-      // reset camera position
-      SceneResetOpenVRSettings(G, enableOpenVR);
-
-      // force open internal menu
-      PParse(G, "cmd.set_wizard_stack()");
-      if (enableOpenVR) {
-        PParse(G, "wizard openvr");
-      }
-    }
-#endif
 
     SceneInvalidateStencil(G);
     SceneInvalidate(G);
@@ -2510,13 +2337,6 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
   float v0[3];
   auto pos = I->m_view.pos();
 
-#ifdef _OPENVR_STEREO_DEBUG_VIEWS
-  printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  ==>\n",
-    "WindowSphere BEFORE",
-    pos.x, pos.y, pos.z,
-    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale
-  );
-#endif // _OPENVR_STEREO_DEBUG_VIEWS
 
   if (I->StereoMode == cStereo_openvr) {
     I->Scale = 1.0f / radius;
@@ -2534,14 +2354,6 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
   if (I->Height > I->Width && I->Height && I->Width)
     dist *= (float)I->Height / (float)I->Width;
 
-#ifdef _PYMOL_OPENVR
-  /*lift up molecule to the user's head*/
-  if (I->StereoMode == cStereo_openvr) {
-    pos.x *= I->Scale;
-    pos.y = pos.y * I->Scale + 1.0f; //FIXME make it smart
-    pos.z *= I->Scale;
-  }
-#endif
 
   pos.z -= dist;
   I->m_view.m_clip().m_front = (-pos.z - radius * 1.2F);
@@ -2549,13 +2361,6 @@ void SceneWindowSphere(PyMOLGlobals * G, const float *location, float radius)
   UpdateFrontBackSafe(I);
   SceneRovingDirty(G);
 
-#ifdef _OPENVR_STEREO_DEBUG_VIEWS
-  printf("%-20s IP: %11lf %11lf %11lf, IF/IB: %11lf %11lf, IS: %11lf  ==>\n",
-    "WindowSphere AFTER",
-    pos.x, pos.y, pos.z,
-    I->m_view.m_clip().m_front, I->m_view.m_clip().m_back, I->Scale
-  );
-#endif // _OPENVR_STEREO_DEBUG_VIEWS
   I->m_view.setPos(pos);
 }
 
@@ -5217,64 +5022,6 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode, int stereo_mode /* = 0 */)
   const auto& pos = I->m_view.pos();
   const auto& ori = I->m_view.origin();
 
-#ifdef _PYMOL_OPENVR
-  bool isOpenVR = (stereo_mode == cStereo_openvr) && OpenVRReady(G);
-
-  if(isOpenVR) {
-
-    /* stereo OpenVR */
-
-    if (!mode) {
-      // average projection matrix for picking
-      glMatrixMode(GL_PROJECTION);
-      OpenVRLoadPickingProjectionMatrix(G, I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back);
-
-      // mono matrix for picking
-      glMatrixMode(GL_MODELVIEW);
-      glLoadMatrixf(OpenVRGetPickingMatrix(G));
-
-    } else {
-      glMatrixMode(GL_PROJECTION);
-      OpenVRLoadProjectionMatrix(G, I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back);
-
-      glMatrixMode(GL_MODELVIEW);
-      OpenVRLoadWorld2EyeMatrix(G);
-
-    }
-
-    if (OpenVRIsMoleculeCaptured(G)) {
-      float scaler;
-      float const *mol2world = OpenVRGetMolecule2WorldMatrix(G, &scaler);
-      // save old plane shifts
-      float dist = fabsf(pos.z);
-      float frontShift = fabsf(dist - I->m_view.m_clip().m_front);
-      float backShift = fabsf(dist - I->m_view.m_clip().m_back);
-      // apply new transform to molecule
-      SceneSetModel2WorldMatrix(G, mol2world);
-      SceneScale(G, scaler);
-      // renew front and back planes
-      dist = fabsf(pos.z);
-      SceneClipSet(G, dist - frontShift * scaler, dist + backShift * scaler);
-    }
-
-    /* move the camera to the location we are looking at */
-    glTranslatef(pos.x, pos.y, pos.z);
-
-    /* scale molecule */
-    glScalef(I->Scale, I->Scale, I->Scale);
-
-    /* rotate about the origin (the the center of rotation) */
-    glMultMatrixf(glm::value_ptr(I->m_view.rotMatrix()));
-
-    /* move the origin to the center of rotation */
-    glTranslatef(-ori.x, -ori.y, -ori.z);
-
-    // TODO don't do the immediate mode detour
-    glGetFloatv(GL_PROJECTION_MATRIX, SceneGetProjectionMatrixPtr(G));
-    glGetFloatv(GL_MODELVIEW_MATRIX, SceneGetModelViewMatrixPtr(G));
-
-  } else
-#endif
   {
     if (!mode){
       SceneComposeModelViewMatrix(I, SceneGetModelViewMatrixPtr(G));

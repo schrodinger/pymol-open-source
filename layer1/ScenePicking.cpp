@@ -301,11 +301,6 @@ void SceneRenderPicking(PyMOLGlobals* G, int stereo_mode, ClickSide click_side,
   case cStereo_sidebyside:
     ScenePrepareMatrix(G, click_side == ClickSide::Left ? 1 : 2);
     break;
-#ifdef _PYMOL_OPENVR
-  case cStereo_openvr:
-    ScenePrepareMatrix(G, 0, cStereo_openvr);
-    break;
-#endif
   }
   G->ShaderMgr->SetIsPicking(true);
   if(pick) {

@@ -1275,7 +1275,7 @@ USAGE
 
 ARGUMENTS
 
-    toggle = on, off, crosseye, walleye, quadbuffer, sidebyside, geowall, or openvr
+    toggle = on, off, crosseye, walleye, quadbuffer, sidebyside, or geowall
     
 EXAMPLES
 

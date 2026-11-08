@@ -197,7 +197,6 @@ class options:
     json = False
     use_msgpackc = "guess"
     testing = False
-    openvr = False
     use_openmp = "no" if MAC else "yes"
     vmd_plugins = True
 
@@ -233,7 +232,6 @@ parser.add_argument(
     "shared library; no: disable fast MMTF load support",
 )
 parser.add_argument("--testing", type=str2bool, help="Build C-level tests")
-parser.add_argument("--openvr", dest="openvr", type=str2bool)
 parser.add_argument(
     "--vmd-plugins",
     dest="vmd_plugins",
@@ -472,11 +470,6 @@ class install_pymol(install):
         ]:
             self.copy(name, os.path.join(base_path, name))
 
-        if options.openvr:
-            self.copy(
-                "contrib/vr/README.md", os.path.join(base_path, "README-VR.txt")
-            )
-
     def make_launch_script(self):
         if sys.platform.startswith("win"):
             launch_script = "pymol.bat"
@@ -653,12 +646,6 @@ if options.testing:
     pymol_src_dirs += ["layerCTest"]
     def_macros += [("_PYMOL_CTEST", None)]
 
-if options.openvr:
-    def_macros += [("_PYMOL_OPENVR", None)]
-    pymol_src_dirs += [
-        "contrib/vr",
-    ]
-
 inc_dirs += pymol_src_dirs
 
 inc_dirs += ["contrib/pocketfft"]
@@ -731,11 +718,6 @@ if options.vmd_plugins:
         "netcdf",
     ]
 
-if options.openvr:
-    libs += [
-        "openvr_api",
-    ]
-
 inc_dirs += [
     numpy.get_include(),
 ]
@@ -751,7 +733,6 @@ for prefix in prefix_path:
                 ("include",),
                 ("include", "freetype2"),
                 ("include", "libxml2"),
-                ("include", "openvr"),
             ],
         ],
         [lib_dirs, [("lib64",), ("lib",)]],

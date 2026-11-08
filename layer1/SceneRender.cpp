@@ -22,9 +22,6 @@
 #include "main.h"
 #include "pymol/utility.h"
 
-#ifdef _PYMOL_OPENVR
-#include "OpenVRMode.h"
-#endif
 
 /* EXPERIMENTAL VOLUME RAYTRACING DATA */
 extern float* rayDepthPixels;
@@ -580,17 +577,6 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
     }
   }
 
-#ifdef _PYMOL_OPENVR
-  if (stereo_mode == cStereo_openvr &&
-      (!SettingGet<bool>(G, cSetting_text) ||
-          SettingGet<int>(G, cSetting_openvr_gui_text) == 2)) {
-    Block* scene_block = I;
-    int scene_width = scene_block->rect.right - scene_block->rect.left;
-    int scene_height = scene_block->rect.top - scene_block->rect.bottom;
-    OpenVRSceneFinish(G, scene_block->rect.left, scene_block->rect.bottom,
-        scene_width, scene_height);
-  }
-#endif
 
   PRINTFD(G, FB_Scene)
   " SceneRender: leaving...\n" ENDFD;
@@ -1210,14 +1196,6 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
         G->ShaderMgr->stereo_blend = 0;
       }
 
-#ifdef _PYMOL_OPENVR
-      int savedWidth, savedHeight;
-      if (stereo_mode == cStereo_openvr) {
-        savedWidth = I->Width;
-        savedHeight = I->Height;
-        OpenVRGetWidthHeight(G, &I->Width, &I->Height);
-      }
-#endif
 
       SceneSetPrepareViewPortForStereo(G, PrepareViewPortForStereo, times, pos,
           viewportOverride, stereo_mode, width_scale);
@@ -1243,14 +1221,6 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
         glPopMatrix(); // 0
 #endif
 
-#ifdef _PYMOL_OPENVR
-      // TODO Check if this is the correct place for this block. In openvr
-      // branch, was last block in DoHandedStereo.
-      if (stereo_mode == cStereo_openvr) {
-        OpenVRDraw(G);
-        OpenVREyeFinish(G);
-      }
-#endif
 
       PRINTFD(G, FB_Scene)
       " SceneRender: right hand stereo...\n" ENDFD;
@@ -1295,17 +1265,6 @@ void SceneRenderStereoLoop(PyMOLGlobals* G, int timesArg,
         glPopMatrix(); // 0
 #endif
 
-#ifdef _PYMOL_OPENVR
-      if (stereo_mode == cStereo_openvr) {
-        // TODO Check if this is the correct place for this block. In openvr
-        // branch, was last block in DoHandedStereo.
-        OpenVRDraw(G);
-        OpenVREyeFinish(G);
-
-        I->Width = savedWidth;
-        I->Height = savedHeight;
-      }
-#endif
 
       /* restore draw buffer */
       if (shouldPrepareOffscreen) {
@@ -1563,11 +1522,6 @@ void PrepareViewPortForStereoImpl(PyMOLGlobals* G, CScene* I, int stereo_mode,
       }
     }
     break;
-#ifdef _PYMOL_OPENVR
-  case cStereo_openvr:
-    OpenVREyeStart(G, position);
-    break;
-#endif
 #endif
   }
 }

@@ -1682,10 +1682,6 @@ static PyObject* CmdGetCapabilities(PyObject*, PyObject*)
     // compiled with --testing
     PySet_Add(caps, PConvToPyObject("testing"));
 #endif
-#ifdef _PYMOL_OPENVR
-    // openvr stereo support (compiled with --openvr)
-    PySet_Add(caps, PConvToPyObject("openvr"));
-#endif
 #ifdef _PYMOL_VMD_PLUGINS
     // VMD molfile plugins
     PySet_Add(caps, PConvToPyObject("vmdplugins"));

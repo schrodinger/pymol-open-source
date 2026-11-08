@@ -67,9 +67,6 @@
 #include "CGORenderer.h"
 #include "GFXManager.h"
 
-#ifdef _PYMOL_OPENVR
-#include "OpenVRMode.h"
-#endif
 
 #include "Property.h"
 
@@ -2036,9 +2033,6 @@ void PyMOL_Stop(CPyMOL * I)
   SceneFree(G);
   MovieScenesFree(G);
   OrthoFree(G);
-#ifdef _PYMOL_OPENVR
-  OpenVRFree(G);
-#endif
   DeleteP(G->GFXMgr);
   DeleteP(G->ShaderMgr);
   SettingFreeGlobal(G);

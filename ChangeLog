@@ -4,6 +4,16 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.4.5
+
+	* Removed
+	  - OpenVR support: --openvr build option, contrib/vr, data/openvr, the
+	    openvr wizard, the -v stub flag, openvr_* settings (indices kept as
+	    unused slots) and 'stereo openvr' (now reports not available).
+
+
+2026-11-08 pymolish-studio
+
 	* 4.4.4
 
 	* Removed\n	  - XML-RPC server (-R), the built-in HTTP server (pymolhttpd), the\n	    modules/web examples and the .pwg web-GUI launch file.

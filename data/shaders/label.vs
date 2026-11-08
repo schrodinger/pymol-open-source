@@ -52,14 +52,6 @@ void main()
   vec3 viewVector = vec3(vec4(0.,0.,-1.,0.) * g_ModelViewMatrix);
   float sovx = screenOriginVertexScale;
 
-#ifdef openvr_enabled
-  // calc real view vector for label (not negative z-axis in camera space)
-  vec3 camPos = vec4(gl_ModelViewMatrixInverse * vec4(0.,0.,0.,1.)).xyz;
-  viewVector = normalize(attr_worldpos.xyz - camPos);
-  // don't use vertexscale for openvr, because the scale is calced from Pos.z as a distance 
-  sovx = 1.0 / 2.0;
-#endif
-
   float screenVertexScale = scaleByVertexScale * sovx * labelTextureSize + (1. - scaleByVertexScale);
 
   vec4 transformedPosition = g_ProjectionMatrix * g_ModelViewMatrix * attr_worldpos;

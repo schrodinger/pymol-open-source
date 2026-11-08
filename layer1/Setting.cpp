@@ -45,9 +45,6 @@ Z* -------------------------------------------------------------------
 #include "Feedback.h"
 #include "Util2.h"
 
-#ifdef _PYMOL_OPENVR
-#include"OpenVRMode.h"
-#endif
 
 #include <thread>
 
@@ -2958,27 +2955,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     }
     break;
   }
-#ifdef _PYMOL_OPENVR
-  case cSetting_openvr_gui_distance:
-  case cSetting_openvr_gui_fov:
-  // case cSetting_openvr_gui_alpha:
-  // case cSetting_openvr_gui_use_alpha:
-  case cSetting_openvr_gui_scene_color:
-  case cSetting_openvr_gui_scene_alpha:
-  case cSetting_openvr_gui_back_color:
-  case cSetting_openvr_gui_back_alpha:
-  // case cSetting_openvr_gui_use_backdrop:
-  // case cSetting_openvr_gui_overlay:
-  // case cSetting_openvr_gui_text:
-    OpenVRMenuSettingsChanged(G);
-    break;
-  case cSetting_openvr_disable_clipping:
-    OpenVRClippingChanged(G);
-    break;
-  case cSetting_openvr_laser_width:
-    OpenVRLaserWidthChanged(G); 
-    break;
-#endif
   default:
     break;
   }

@@ -133,8 +133,7 @@ stereo_dict = {'on':-2,'off':0,'0':0,'1':-2,'swap':-1,
                'walleye':3,'geowall':4,'sidebyside':5,
                'byrow':6, 'bycolumn':7, 'checkerboard':8,
                'custom': 9, 'anaglyph' : 10,
-               'dynamic' : 11, 'clonedynamic': 12,
-               'openvr' : 13 }
+               'dynamic' : 11, 'clonedynamic': 12 }
 
 stereo_sc = Shortcut(stereo_dict.keys())
 
