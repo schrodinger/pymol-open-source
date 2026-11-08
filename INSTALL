@@ -72,10 +72,11 @@ STANDALONE BUNDLE (no Python needed on the target machine)
 
     From an environment with pymol and the dev extras installed:
 
-      pyinstaller --noconfirm packaging/pymolish.spec
+      pyinstaller --noconfirm packaging/pyinstaller.spec
 
     Produces dist/pymolish/ (one-folder). Run dist/pymolish/pymolish from
-    anywhere; -c works headless. CI uploads this folder and the wheel as
+    anywhere; -c works headless. build/pyinstaller/ is scratch: the
+    executable in there has no _internal/ and will not start. CI uploads this folder and the wheel as
     artifacts for Linux, Windows and macOS on every push (Python 3.12 job).
 
 RUNNING PyMOL

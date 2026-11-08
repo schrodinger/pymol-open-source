@@ -51,7 +51,7 @@ jobs:
     - name: Build standalone bundle
       if: matrix.python-version == '3.12'
       run: |
-        pyinstaller --noconfirm packaging/pymolish.spec
+        pyinstaller --noconfirm packaging/pyinstaller.spec
 
     - name: Pack bundle
       if: matrix.python-version == '3.12'
@@ -129,7 +129,7 @@ jobs:
       if: matrix.python-version == '3.12'
       run: |
         conda activate $env:CONDA_ENV_NAME
-        pyinstaller --noconfirm packaging/pymolish.spec
+        pyinstaller --noconfirm packaging/pyinstaller.spec
 
     - name: Pack bundle
       if: matrix.python-version == '3.12'
@@ -206,7 +206,7 @@ jobs:
       if: matrix.python-version == '3.12'
       run: |
         source activate $CONDA_ENV_NAME
-        pyinstaller --noconfirm packaging/pymolish.spec
+        pyinstaller --noconfirm packaging/pyinstaller.spec
 
     - name: Pack bundle
       if: matrix.python-version == '3.12'
