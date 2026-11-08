@@ -51,6 +51,28 @@ Notes:
 - ccache: not installed here, so not measured. CMake honors
   `CMAKE_CXX_COMPILER_LAUNCHER=ccache` from the environment without code changes.
 
+## Size after the cleanup steps (4.1.0 to 4.4.8)
+
+Lines of C++ and Python per directory, fork point `3250e7a3` versus `4.4.8`.
+Overall diff since the fork point: 255 files, +1584 / -46358 lines.
+
+| Directory | Before | After |
+| --- | --- | --- |
+| layer0 | 38039 | 37616 |
+| layer1 | 343734 | 341395 |
+| layer2 | 73405 | 73063 |
+| layer3 | 42170 | 41946 |
+| layer4 | 7975 | 7866 |
+| layer5 | 5926 | 4469 |
+| modules/pymol | 52641 | 50020 |
+| modules/pmg_qt | 7247 | 7104 |
+| modules/pmg_tk | 5479 | removed |
+| modules/chempy | 21797 | 21219 |
+| contrib | 45668 | 39295 |
+| Wheel (Linux, cp312) | 8.3 MB | 8.2 MB |
+
+Native dependencies dropped: libxml2, mmtf-cpp, OpenVR, VTK-m, GLUT, Tk/Pmw.
+
 ## Performance (1a)
 
 Command: `pymol -ckqy testing/bench.py` (5 repeats, median, `max_threads` =

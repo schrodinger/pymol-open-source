@@ -100,7 +100,7 @@ jobs:
     - name: Get additional sources
       run: |
         conda activate $env:CONDA_ENV_NAME
-        git clone --depth 1 --single-branch --branch cpp_master https://github.com/msgpack/msgpack-c.git
+        git clone --depth 1 --branch cpp-7.0.0 https://github.com/msgpack/msgpack-c.git
         Copy-Item -Recurse -Path msgpack-c/include\* -Destination "$env:CONDA_PREFIX\Library\include"
         dir $env:CONDA_PREFIX\Library\include
 
@@ -172,7 +172,7 @@ jobs:
     - name: Get additional sources
       run: |
         source activate $CONDA_ENV_NAME
-        git clone --depth 1 --single-branch --branch cpp_master https://github.com/msgpack/msgpack-c.git
+        git clone --depth 1 --branch cpp-7.0.0 https://github.com/msgpack/msgpack-c.git
         cp -R msgpack-c/include/* ${CONDA_PREFIX}/include/
 
     - name: Build PyMOL

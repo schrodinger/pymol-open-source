@@ -24,17 +24,13 @@ Follow https://github.com/dietrichgebert/ponytail. Short form:
 ## 2. Priorities (what to work on, in order)
 
 ### 2.1 Clean
-- Remove dead code, unused features, legacy paths. Candidates already known:
-  - `modules/pmg_tk/` (Tk GUI), `--glut` legacy GUI, `modules/pmg_qt/mimic_tk.py`, `mimic_pmg_tk.py`, Pmw mentions.
-  - `--openvr` / `contrib/vr`, `--use-vtkm`, `modules/web/`, `pymolhttpd.py`, `rpc.py`, `xwin.py`, `mpeg_encode.py`, `povray.py`.
-  - PyQt5 / PySide2 fallbacks in `modules/pymol/Qt/` once PySide6 is the only target.
-  - Python < 3.11 compatibility shims (`requires-python` will move to `>=3.11`).
+- Remove dead code, unused features, legacy paths. Done in 4.1 to 4.4: Tk, GLUT, other Qt bindings, OpenVR, VTK-m, COLLADA, MMTF, RPC/HTTP, mpeg_encode. Kept on purpose: VMD plugins + netcdf, `xwin.py`, `povray.py`. Settings removed from `layer1/SettingInfo.h` must leave a `REC__( idx,  ),` placeholder: the table is positional.
 - Before deleting a feature: `grep -rn` for every reference (Python, C++, `.pml`, tests, `data/`), delete all of them in the same PR, run the test suite.
 - One removal per PR. Title it `remove: <thing>`. The commit body lists what was deleted and why nothing depends on it.
 
 ### 2.2 Dependencies
 - Runtime Python deps: `numpy` and `PySide6`. Nothing else without an explicit reason written in the PR.
-- Native deps to keep: OpenGL, GLEW, GLM, libpng, freetype. Everything optional (libxml2, msgpack, netcdf, nlohmann-json, VTK-m, OpenVR, GLUT) is a removal candidate unless a user-facing feature we keep needs it.
+- Native deps: OpenGL, GLEW, GLM, libpng, freetype; optional msgpack-c (BinaryCIF), netcdf (VMD plugins), nlohmann-json (glTF). Nothing else without a kept feature behind it.
 - Never vendor a library when the system package or a header-only include does the job. Never add a dependency for something a few lines can do.
 - Pin dev tools exactly in `pyproject.toml` `[project.optional-dependencies].dev`; keep runtime deps as floors (`>=`).
 - Updating a library: bump, build, run tests, read the changelog for breaking changes, done. No wrapper layers "to isolate us from the library".
@@ -47,7 +43,7 @@ Follow https://github.com/dietrichgebert/ponytail. Short form:
 - Don't micro-optimize code that isn't on a profile.
 
 ### 2.4 Simple and beautiful
-- **Code:** small functions, clear names, no comment that repeats the code. C++ follows `.clang-format` (2-space, 80 col, Linux braces). Python follows `ruff format` defaults (add it; no black, no isort separately).
+- **Code:** small functions, clear names, no comment that repeats the code. C++ follows `.clang-format` (2-space, 80 col, Linux braces). Python: `ruff format` on files you touch (pinned in dev deps); no whole-tree reformat, it would make upstream merges conflict.
 - **UI (Qt, `modules/pmg_qt/`):** one modern style, consistent spacing, native widgets over custom-painted ones, `.ui` forms over hand-built layouts when the form is non-trivial. Fewer menus, fewer dialogs, fewer toggles. Every new UI element must be reachable by keyboard.
 - Prefer Qt's built-in features (QSS, QSettings, QAction shortcuts, QDockWidget) over new UI frameworks. No web views, no Electron, no QML unless the Qt widgets path is proven inadequate.
 
@@ -57,13 +53,12 @@ Follow https://github.com/dietrichgebert/ponytail. Short form:
 |---|---|
 | `layer0/` … `layer5/` | C++ core, lowest to highest layer. `layer1/` = rendering (Scene, CGO, Ray, shaders, fonts). `layer3/` = Executive / high-level ops. `layer4/` = Python bindings, `layer5/` = main. |
 | `layerGraphics/` | small graphics helpers |
-| `ov/`, `contrib/` | vendored C libs (champ, mmtf-c, pocketfft, uiuc molfile plugins, vr) |
+| `ov/`, `contrib/` | vendored C libs (champ, pocketfft, uiuc molfile plugins) |
 | `include/` | third-party headers |
 | `data/shaders/` | GLSL, compiled into `ShaderText.cpp` by `create_shadertext.py` |
 | `modules/pymol/` | Python API (`cmd`), one file per command family |
-| `modules/pymol/Qt/` | PySide/PyQt compatibility shim |
+| `modules/pymol/Qt/` | PySide6 import point for the app and plugins |
 | `modules/pmg_qt/` | Qt GUI (the only GUI we keep) |
-| `modules/pmg_tk/` | legacy Tk GUI (removal candidate) |
 | `modules/chempy/` | molecule data model |
 | `testing/` | Python test framework; `testing/tests/api`, `/performance`, … |
 | `layerCTest/` | Catch2 C++ tests (`--config-settings testing=True`) |
@@ -85,7 +80,7 @@ pymol -ckqy testing/testing.py testing/tests/api/<file>.py
 
 # format
 clang-format -i <changed .cpp/.h>
-ruff format modules testing     # once ruff is in dev deps
+ruff format <the .py files you changed>
 ```
 
 CI (`.github/workflows/build.yml`) builds Linux / Windows / macOS on Python 3.11–3.14 and runs the suite. A PR that breaks CI is not done.

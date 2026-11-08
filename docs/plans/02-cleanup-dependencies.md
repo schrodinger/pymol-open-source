@@ -8,7 +8,9 @@ SDF/MOL, PSE and PNG workflows throughout.
 
 ## Status 2026-11-08
 
-2a done: PySide6-only shim (4.1.0), Tk/Pmw removal with plugin loading detached (4.3.0), GLUT removal (4.3.1). Python floor is 3.11. 2b queue not started.
+2a done: PySide6-only shim (4.1.0), Tk/Pmw removal with plugin loading detached (4.3.0), GLUT removal (4.3.1). Python floor is 3.11.
+
+2b done (4.4.1 to 4.4.8): chempy.fast, VTK-m, mpeg_encode, XML-RPC/HTTP server/web/.pwg, OpenVR, COLLADA with libxml2, MMTF (msgpack kept for BinaryCIF, `bcif` capability added), `make_test_stubs.py`/`plot_timings.py`. Dev pins are exact (Biopython 1.88, Ruff 0.17.4); CI pins msgpack-c to `cpp-7.0.0`. Kept on purpose: VMD molfile plugins + netcdf (trajectory and volume formats), `xwin.py` (X11 clipboard paste), POV-Ray external renderer (~100 lines, self-contained). Whole-tree `ruff format` deliberately not run: it would make every later upstream merge conflict; format files as they are touched. Native deps now: OpenGL, GLEW, GLM, libpng, freetype, optional msgpack-c, netcdf, nlohmann-json.
 
 ## 2a — GUI foundation
 

@@ -4,6 +4,17 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.4.8
+
+	* Developer & Infrastructure
+	  - Removed unused testing/make_test_stubs.py and plot_timings.py.
+	  - Exact dev pins: biopython==1.88, ruff==0.17.4.
+	  - CI clones msgpack-c at tag cpp-7.0.0 instead of a moving branch.
+	  - docs/baseline.md records sizes before and after the cleanup.
+
+
+2026-11-08 pymolish-studio
+
 	* 4.4.7
 
 	* Removed\n	  - MMTF import/export (format deprecated by RCSB), contrib/mmtf-c,\n	    chempy.mmtf and the mmtf-cpp build requirement. msgpack-c stays for\n	    BinaryCIF; cmd.get_capabilities() reports 'bcif' instead of 'mmtf'.
