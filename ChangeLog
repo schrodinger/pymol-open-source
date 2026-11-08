@@ -4,6 +4,16 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.5.2
+
+	* Theme
+	  - Dark theme for all Qt panels (Fusion style + dark palette), on by
+	    default so the panels match the viewport. Display > Dark Theme
+	    toggles it live; the choice is remembered in QSettings.
+
+
+2026-11-08 pymolish-studio
+
 	* 4.5.1
 
 	* Builds

@@ -20,6 +20,7 @@ from pymol.Qt.utils import (getSaveFileNameWithExt, UpdateLock, WidgetMenu,
 
 from .pymol_gl_widget import PyMOLGLWidget
 from . import keymapping
+from . import theme
 
 from pmg_qt import properties_dialog, file_dialogs
 
@@ -412,6 +413,10 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         panels.addSeparator()
         panels.addAction('Reset Layout', self.reset_layout)
         self._default_state = self.saveState()
+        act = self.menudict['Display'].addAction('Dark Theme')
+        act.setCheckable(True)
+        act.setChecked(theme.is_dark())
+        act.toggled.connect(theme.set_dark)
 
         # focus in command line
         if options.external_gui:
@@ -1265,6 +1270,7 @@ def execapp():
 
     app = PyMOLApplication(['PyMOL'])
     app.setWindowIcon(make_pymol_qicon())
+    theme.apply(app, theme.is_dark())
 
     window = PyMOLQtGUI()
     window.setWindowTitle("PyMOL")

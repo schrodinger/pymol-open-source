@@ -8,7 +8,7 @@ internal control. Preserve command-line workflows and existing `.ui` dialogs.
 
 ## Status 2026-11-08
 
-Slices 1 to 3 shipped in 4.5.0: `modules/pmg_qt/object_table.py` (model + dock, headless test in `testing/tests/api/object_table.py`), named docks (`dock_command`, `dock_objects`, `dock_builder`), `QSettings` layout save/restore with off-screen recovery, Display > Panels with Reset Layout. Viewport-to-table synchronization, object controls migration (slice 4), styling (5) and menu cleanup (6) are open.
+Slices 1 to 3 shipped in 4.5.0: `modules/pmg_qt/object_table.py` (model + dock, headless test in `testing/tests/api/object_table.py`), named docks (`dock_command`, `dock_objects`, `dock_builder`), `QSettings` layout save/restore with off-screen recovery, Display > Panels with Reset Layout. Viewport-to-table synchronization, object controls migration (slice 4), menu cleanup (6) is open. Slice 5 started in 4.5.2: `modules/pmg_qt/theme.py` (Fusion + dark palette, default on, Display > Dark Theme, persisted); spacing/labels not touched yet.
 
 ## Reference products and current constraints
 
