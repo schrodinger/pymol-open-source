@@ -1,1 +1,1 @@
-Plugin directory outside pmg_tk.
+Built-in plugin directory (see pymol.plugins.get_startup_path()).

@@ -420,10 +420,10 @@ def launch(args=None, block_input_hook=0):
 
         try:
             from pmg_qt import pymol_qt_gui
-            return pymol_qt_gui.execapp()
         except ImportError as ex:
-            print(f'Qt not available ({ex}), using GLUT/Tk interface')
-            invocation.options.gui = 'pmg_tk'
+            sys.exit(f'PySide6 is required for the GUI ({ex}). '
+                     'Install it, or run headless with -c.')
+        return pymol_qt_gui.execapp()
 
     prime_pymol()
     _cmd.runpymol(None, block_input_hook)

@@ -7,7 +7,7 @@ how to launch PyMOL from within Python (if PyMOL has been built
 as a module).
 
 To use them, the appropriate pymol module directories must already
-be in your Python search path (pymol, chempy, pmg_tk, Pmw), and 
+be in your Python search path (pymol, chempy, pmg_qt), and 
 the PYMOL_PATH environment variable must be set.  
 
 For example, under csh on unix:

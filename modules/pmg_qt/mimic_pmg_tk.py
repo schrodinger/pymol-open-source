@@ -1,29 +1,7 @@
 '''
-Mimic the pmg_tk API for plugin legacy support
+The "PMGApp" object handed to plugin __init_plugin__(app) functions when the
+Qt GUI is running. app.menuBar maps the old Pmw menu calls onto Qt menus.
 '''
-
-import sys
-
-tkinter = None
-
-def tkinter_init():
-    global tkinter
-
-    if hasattr(_BaseWidget_setup, '_super'):
-        raise RuntimeError('tkinter init failed')
-
-    import tkinter
-
-    _BaseWidget_setup._super = tkinter.BaseWidget._setup
-    tkinter.BaseWidget._setup = _BaseWidget_setup
-
-
-# monkeypatch the "_default_root" assignment of Tkinter
-def _BaseWidget_setup(self, master, cnf):
-    if not master and not tkinter._default_root:
-        from pymol import plugins
-        tkinter._default_root = plugins.get_tk_root()
-    return _BaseWidget_setup._super(self, master, cnf)
 
 
 class PmwMenuBar:
@@ -91,87 +69,20 @@ class PmwMenuBar:
         self._menudict[menuName] = menu
 
 
-class PMGSkin(object):
-    def __init__(self, pmgapp):
-        self._pmgapp = pmgapp
-        self._setting = None
-
-    @property
-    def setting(self):
-        if self._setting is None:
-            from pmg_tk.Setting import Setting
-            self._setting = Setting(self._pmgapp)
-
-        return self._setting
-
-
-class tkapp_proxy(object):
-    def __init__(self, proxied, pmgapp):
-        self._proxied = proxied
-        self._pmgapp = pmgapp
-
-    def __getattr__(self, name):
-        return getattr(self._proxied, name)
-
-    def call(self, tkcmd, *args):
-        # suspend our own updates for commands which enter the event loop
-        pause = tkcmd in ('update', 'tkwait', 'vwait')
-
-        if pause:
-            self._pmgapp._tk_update_paused += 1
-
-        try:
-            r = self._proxied.call(tkcmd, *args)
-        finally:
-            if pause:
-                self._pmgapp._tk_update_paused -= 1
-
-        return r
-
-
-class PMGApp(object):
+class PMGApp:
     def __init__(self):
         import pymol
-        self._root = None
         self.pymol = pymol
-        self.skin = PMGSkin(self)
-        self._tk_update_paused = 0
+        self.menuBar = None
 
     @property
     def root(self):
-        if self._root is None:
-            from pymol.Qt import QtCore
-
-            tkinter_init()
-
-            # create Tk instance in this thread
-            self._root = tkinter.Tk()
-            self._root.tk = tkapp_proxy(self._root.tk, self)
-            self._root.withdraw()
-
-            # feed Tk event loop from this thread
-            timer = QtCore.QTimer()
-            @timer.timeout.connect
-            def _():
-                if not self._tk_update_paused:
-                    self._root.update()
-                timer.start()
-            timer.setSingleShot(True)
-            timer.start(50)
-
-            # keep reference to timer
-            self._tk_update_timer = timer
-
-            import Pmw
-            Pmw.initialise(self._root)
-
-        return self._root
+        raise RuntimeError(
+            'The Tk GUI was removed in pymolish-studio 4.3. '
+            'Build plugin windows with pymol.Qt widgets instead.')
 
     def execute(self, c):
         return eval(c) if isinstance(c, str) else c()
 
     def my_show(self, w, c=1):
         w.show()
-
-
-# vi:expandtab:sw=4

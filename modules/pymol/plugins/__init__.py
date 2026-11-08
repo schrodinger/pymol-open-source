@@ -332,9 +332,6 @@ class PluginInfo(object):
         '''
         from .legacysupport import tkMessageBox
 
-        if parent is None:
-            parent = get_tk_focused()
-
         ok = tkMessageBox.askyesno('Confirm',
                 'Do you really want to uninstall plugin "%s"' % (self.name), parent=parent)
         if not ok:

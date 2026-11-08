@@ -382,7 +382,4 @@ if __name__ == '__main__':
     r1 = guess('https://github.com/Pymol-Scripts/Pymol-script-repo')
     print(r1.list())
 
-    r1 = guess('/opt/pymol-svn/modules/pmg_tk/startup')
-    print(r1.list())
-
 # vi:expandtab:smarttab:sw=4

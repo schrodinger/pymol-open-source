@@ -1322,8 +1322,7 @@ class _BuilderPanel(QtWidgets.QWidget):
 
     def getIcons(self):
         self.icons = {}
-        # use old Tk icons
-        imgDir = os.path.join(os.environ['PYMOL_DATA'], "pmg_tk/bitmaps/builder")
+        imgDir = os.path.join(os.environ['PYMOL_DATA'], "pmg_qt/bitmaps/builder")
         imgList = glob("%s/aro*.gif" % imgDir) + glob("%s/cyc*.gif" % imgDir)
         for imgFile in imgList:
             imgName = os.path.splitext(os.path.split(imgFile)[1])[0]

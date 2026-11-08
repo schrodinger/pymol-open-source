@@ -7,7 +7,6 @@ from pymol.constants import CURRENT_STATE
 
 cmd = sys.modules["pymol.cmd"]
 
-_volume_windows = {}
 _volume_windows_qt = {}
 
 
@@ -155,18 +154,6 @@ EXAMPLE
     with _self.lockcm:
         r = cmd._cmd.set_volume_ramp(_self._COb, name, ramplist, int(state)-1)
 
-    if _guiupdate and name in _volume_windows:
-        from pymol import gui
-        def func():
-            import tkinter as Tkinter
-            try:
-                panel = _volume_windows[name].panel
-                panel.set_flat(ramplist)
-            except (LookupError, Tkinter.TclError):
-                pass
-        app = gui.get_pmgapp()
-        app.execute(func)
-
     if _guiupdate and name in _volume_windows_qt:
         from pymol import gui
         app = gui.get_pmgapp()
@@ -180,7 +167,7 @@ EXAMPLE
 
     return r
 
-def volume_panel(name, quiet=1, _self=cmd, _noqt=0):
+def volume_panel(name, quiet=1, _self=cmd):
     '''
 DESCRIPTION
 
@@ -192,39 +179,22 @@ ARGUMENTS
     '''
     from pymol import gui
 
-    qt_window = not int(_noqt) and gui.get_qtwindow()
+    qt_window = gui.get_qtwindow()
+    if not qt_window:
+        raise cmd.CmdException('volume_panel requires the Qt GUI')
+
     app = gui.get_pmgapp()
+    from pmg_qt import volume as volume_qt
 
-    if qt_window:
-        from pmg_qt import volume as volume_qt
-
-        @app.execute
-        def _():
-            try:
-                panel = _volume_windows_qt[name]
-            except LookupError:
-                panel = volume_qt.VolumePanel(qt_window, name, _self=_self)
-                _volume_windows_qt[name] = panel
-            panel.show()
-            panel.raise_()
-
-        return
-
-    # Tk fallback
-    from pmg_tk import volume
-    import tkinter as Tkinter
-
-    def func():
+    @app.execute
+    def _():
         try:
-            window = _volume_windows[name]
-            window.lift()
-        except (LookupError, Tkinter.TclError):
-            window = Tkinter.Toplevel(app.root)
-            window.title('Volume Panel for "%s"' % name)
-            window.panel = volume.VolumePanel(window, name, _self=_self)
-            window.panel.pack()
-            _volume_windows[name] = window
-    app.execute(func)
+            panel = _volume_windows_qt[name]
+        except LookupError:
+            panel = volume_qt.VolumePanel(qt_window, name, _self=_self)
+            _volume_windows_qt[name] = panel
+        panel.show()
+        panel.raise_()
 
 ### utility functions
 

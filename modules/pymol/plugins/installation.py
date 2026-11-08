@@ -151,36 +151,11 @@ def get_plugdir(parent=None):
     if len(plugdirs) == 1:
         return plugdirs[0]
 
-    import sys
-    if 'pmg_qt.mimic_tk' in sys.modules:
-        from pymol.Qt import QtWidgets
-        value, result = QtWidgets.QInputDialog.getItem(None,
-            'Select plugin directory',
-            'In which directory should the plugin be installed?', plugdirs)
-        return value if result else ''
-
-    dialog_selection = []
-    def plugdir_callback(result):
-        if result == 'OK':
-            dialog_selection[:] = dialog.getcurselection()
-        dialog.destroy()
-
-    import Pmw
-    dialog = Pmw.SelectionDialog(parent, title='Select plugin directory',
-            buttons = ('OK', 'Cancel'), defaultbutton='OK',
-            scrolledlist_labelpos='n',
-            label_text='In which directory should the plugin be installed?',
-            scrolledlist_items=plugdirs,
-            command=plugdir_callback)
-    dialog.component('scrolledlist').selection_set(0)
-
-    # wait for dialog to be closed
-    dialog.wait_window()
-
-    if not dialog_selection:
-        return ''
-
-    return dialog_selection[0]
+    from pymol.Qt import QtWidgets
+    value, result = QtWidgets.QInputDialog.getItem(None,
+        'Select plugin directory',
+        'In which directory should the plugin be installed?', plugdirs)
+    return value if result else ''
 
 def installPluginFromFile(ofile, parent=None, plugdir=None):
     '''
@@ -191,10 +166,7 @@ def installPluginFromFile(ofile, parent=None, plugdir=None):
     import shutil
     from . import startup, PluginInfo
     from . import get_startup_path, set_startup_path, pref_get
-    from .legacysupport import tkMessageBox, get_tk_focused
-
-    if parent is None:
-        parent = get_tk_focused()
+    from .legacysupport import tkMessageBox
 
     showinfo = tkMessageBox.showinfo
     askyesno = tkMessageBox.askyesno

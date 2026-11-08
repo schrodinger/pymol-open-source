@@ -26,7 +26,6 @@ Suggested File Locations (for package managed installs)
 
 modules/pymol  -> /usr/lib/pythonX.X/site-packages/pymol
 modules/chempy -> /usr/lib/pythonX.X/site-packages/chempy
-modules/pmg_tk -> /usr/lib/pythonX.X/site-packages/pmg_tk
 
 == pymol-data package ==
 

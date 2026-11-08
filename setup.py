@@ -428,12 +428,10 @@ class build_py_pymol(build_py):
 
 class install_pymol(install):
     pymol_path = None
-    bundled_pmw = False
     no_launcher = False
 
     user_options = install.user_options + [
         ("pymol-path=", None, "PYMOL_PATH"),
-        ("bundled-pmw", None, "install bundled Pmw module"),
         ("no-launcher", None, "skip installation of the pymol launcher"),
     ]
 
@@ -455,12 +453,6 @@ class install_pymol(install):
 
         if not self.no_launcher:
             self.make_launch_script()
-
-        if self.bundled_pmw:
-            raise Exception(
-                "--bundled-pmw has been removed, please install Pmw from "
-                "https://github.com/schrodinger/pmw-patched"
-            )
 
     def unchroot(self, name):
         if self.root is not None and name.startswith(self.root):

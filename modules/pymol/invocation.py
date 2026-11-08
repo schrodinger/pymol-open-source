@@ -64,7 +64,7 @@ Options
   -m        INTERNAL - do not use (mac external GUI)
   -M        force mono
   -n        INTERNAL - do not use (incentive_product=1)
-  -N name   UNSUPPORTED - external gui type (pmg_qt or pmg_tk) (same as -w)
+  -N name   UNSUPPORTED - external gui type (pmg_qt) (same as -w)
   -o        disable security protections
   -O N      sphere_mode=N
   -p        read commands from STDIN
@@ -81,7 +81,7 @@ Options
   -U        UNSUPPORTED reuse the helper application
   -v        use openvr stub instead of a real hardware
   -V N      external GUI window height in pixels
-  -w name   UNSUPPORTED - external gui type (pmg_qt or pmg_tk) (same as -N)
+  -w name   UNSUPPORTED - external gui type (pmg_qt) (same as -N)
   -W N      window width in pixels
   -x        no external gui
   -X N      window x position on screen

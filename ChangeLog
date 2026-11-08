@@ -4,6 +4,21 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.3.0
+
+	* Removed
+	  - Tk external GUI (pmg_tk), Pmw support and the Tk plugin manager.
+	    Plugins that build Tk windows (app.root) no longer work; plugins
+	    that only use cmd, pymol.Qt, or tkinter message/file dialogs
+	    (redirected to Qt) keep working.
+	  - Plugin modules are now imported as pymol.plugins.startup.<name>
+	    instead of pmg_tk.startup.<name>.
+	  - volume_panel requires the Qt GUI; the _noqt argument is gone.
+	  - Builder bitmaps moved to data/pmg_qt/bitmaps/builder.
+
+
+2026-11-08 pymolish-studio
+
 	* 4.2.0
 
 	* Developer & Infrastructure

@@ -196,14 +196,7 @@ application programmers interface (API), and a variety of mouse and
 keyboard driven functionality for viewing, animation, rendering, and
 molecular editing.  A partial manual is now available on the web.
 
-Two external GUI development options are supported for PyMOL:
-"Tkinter" and "wxPython".  Developers can take their pick.
-
-Note that only Tkinter is supported under Windows with the default
-PyMOL and Python distributions, so for maximum ease of installation
-under Windows, stick with Tkinter (Tcl/Tk).  For this reason, the
-Tkinter-based GUI is going to be the default GUI for standard PyMOL
-despite its drawbacks.
+The external GUI is built with Qt (PySide6).
 
 Warren L. DeLano (5/1/2001), warren@delanoscientific.com
 Jason Vertrees (3/7/2011), jason.vertrees@schrodinger.com (update)
@@ -443,7 +436,6 @@ PyMOL COMMAND LINE OPTIONS
     -c   Command line mode, no GUI.  For batch opeations.
     -i   Disable the internal OpenGL GUI (object list, menus, etc.)
     -x   Disable the external GUI module.
-    -t   Use Tcl/Tk based external GUI module (pmg_tk).
     -q   Quiet launch. Suppress splash screen & other chatter.
     -p   Listen for commands on standard input.
     -e   Start in full-screen mode.
