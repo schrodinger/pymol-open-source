@@ -846,12 +846,11 @@ NOTES
 
     The file format is automatically chosen if the extesion is one of
     the supported output formats: pdb, pqr, mol, sdf, pkl, pkla, mmd, out,
-    dat, mmod, cif, pov, png, pse, psw, aln, fasta, obj, mtl, wrl, dae, usda,
+    dat, mmod, cif, pov, png, pse, psw, aln, fasta, obj, mtl, wrl, usda,
     usdz, idtf, glb, gltf, or mol2.
 
-    glb export requires PyMOL to be compiled with native glTF support
-    (--json=true), see cmd.get_capabilities(). Without it, gltf export
-    falls back to the external collada2gltf program.
+    glb and gltf export require PyMOL to be compiled with native glTF
+    support (--json=true), see cmd.get_capabilities().
 
     If the file format is not recognized, then a PDB file is written
     by default.
@@ -1117,7 +1116,6 @@ SEE ALSO
 
         # no arguments (some have a "version" argument)
         'glb': 'pymol.querying:get_glb',
-        'dae': 'pymol.querying:get_collada',
         'usda': 'pymol.querying:get_usda',
         'usdz': _get_usdz,
         'gltf': 'pymol.querying:get_gltf',

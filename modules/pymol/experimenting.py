@@ -172,10 +172,6 @@ EXAMPLE
     isodot mydot, mymap, quiet=1
     dump dotgeometry.txt, mydot
 
-SEE ALSO
-
-    COLLADA export
-
     '''
         r = DEFAULT_ERROR
         try:

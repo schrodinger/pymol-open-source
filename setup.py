@@ -193,7 +193,6 @@ def str2bool(v: str) -> bool:
 class options:
     osx_frameworks = True
     jobs = int(os.getenv("JOBS", 0))
-    libxml = True
     json = False
     use_msgpackc = "guess"
     testing = False
@@ -213,11 +212,6 @@ parser.add_argument(
     "-j",
     type=int,
     help="for parallel builds " "(defaults to number of processors)",
-)
-parser.add_argument(
-    "--libxml",
-    type=str2bool,
-    help="skip libxml2 dependency, disables COLLADA export",
 )
 parser.add_argument(
     "--json",
@@ -608,11 +602,6 @@ if options.vmd_plugins:
         ("_PYMOL_VMD_PLUGINS", None),
     ]
 
-if options.libxml:
-    # COLLADA support
-    def_macros += [("_HAVE_LIBXML", None)]
-    libs += ["xml2"]
-
 if options.json:
     # native glTF 2.0 / GLB support (header-only dependency)
     for prefix in prefix_path:
@@ -686,10 +675,6 @@ if WIN:
             "freetype",
             "libpng",
         ]
-        + (options.libxml)
-        * [
-            "libxml2",
-        ]
     )
 
     if DEBUG:
@@ -732,7 +717,6 @@ for prefix in prefix_path:
             [
                 ("include",),
                 ("include", "freetype2"),
-                ("include", "libxml2"),
             ],
         ],
         [lib_dirs, [("lib64",), ("lib",)]],

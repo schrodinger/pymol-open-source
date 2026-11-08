@@ -30,8 +30,7 @@ jobs:
             libmsgpack-dev \
             libnetcdf-dev \
             nlohmann-json3-dev \
-            libpng-dev \
-            libxml2-dev
+            libpng-dev
 
     - name: Get additional sources
       run: |
@@ -100,7 +99,6 @@ jobs:
             glew `
             glm `
             libpng `
-            libxml2-devel `
             libnetcdf `
             nlohmann_json
 
@@ -176,7 +174,6 @@ jobs:
             glew \
             glm \
             libpng \
-            libxml2-devel \
             libnetcdf \
             nlohmann_json
 

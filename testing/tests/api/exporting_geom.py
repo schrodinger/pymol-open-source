@@ -196,16 +196,6 @@ class TestExportingGeom(testing.PyMOLTestCase):
                 contents = file_get_contents(filename)
                 self.assertTrue(contents.startswith('#VRML V2'))
 
-    @testing.requires_version('1.8')
-    def testCOLLADA(self):
-        cmd.fragment('gly')
-        for rep in ['spheres', 'sticks', 'surface']:
-            cmd.show_as(rep)
-            with testing.mktemp('.dae') as filename:
-                cmd.save(filename)
-                contents = file_get_contents(filename)
-                self.assertTrue('<COLLADA' in contents)
-
     def testUSDA(self):
         cmd.fragment('gly')
         for rep in ['spheres', 'sticks', 'surface']:

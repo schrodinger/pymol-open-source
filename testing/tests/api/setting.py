@@ -6,7 +6,7 @@ class TestSetting(testing.PyMOLTestCase):
     @testing.requires_version('1.7.5')
     def test_indices(self):
         # setting indices must not change, since they are used in session files
-        self.assertEqual(742, cmd.pymol.setting._get_index('collada_geometry_mode'))
+        self.assertEqual(787, cmd.pymol.setting._get_index('isosurface_algorithm'))
 
     def testGet(self):
         name_bool = 'cartoon_fancy_helices'

@@ -481,13 +481,6 @@ bool SceneRay(PyMOLGlobals * G,
           RayRenderIDTF(ray, headerVLA_ptr, charVLA_ptr);
         }
         break;
-      case 8:                   /* mode 8 is COLLADA (.dae) */
-        {
-          *charVLA_ptr = VLACalloc(char, 100000);
-          RayRenderCOLLADA(ray, ray_width, ray_height, charVLA_ptr,
-                            I->m_view.m_clipSafe().m_front, I->m_view.m_clipSafe().m_back, fov);
-        }
-        break;
       case cSceneRay_MODE_USDA:
       case cSceneRay_MODE_USDZ:
         {

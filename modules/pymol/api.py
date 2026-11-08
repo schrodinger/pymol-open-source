@@ -107,7 +107,6 @@ from .querying import \
       get_assembly_ids,   \
       get_bonds,          \
       get_chains,         \
-      get_collada,        \
       get_color_index,    \
       get_color_indices,  \
       get_object_color_index, \

@@ -802,9 +802,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
     def file_save_wrl(self):
         self._file_save('VRML 2 WRL File (*.wrl)', 'wrl')
 
-    def file_save_dae(self):
-        self._file_save('COLLADA File (*.dae)', 'dae')
-
     def file_save_pov(self):
         self._file_save('POV File (*.pov)', 'pov')
 

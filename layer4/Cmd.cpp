@@ -1670,10 +1670,6 @@ static PyObject* CmdGetCapabilities(PyObject*, PyObject*)
     // fast MMTF import and export
     PySet_Add(caps, PConvToPyObject("mmtf"));
 #endif
-#ifdef _HAVE_LIBXML
-    // COLLADA export
-    PySet_Add(caps, PConvToPyObject("collada"));
-#endif
 #ifdef _HAVE_JSON
     // native glTF 2.0 and GLB export
     PySet_Add(caps, PConvToPyObject("gltf"));
@@ -2682,32 +2678,6 @@ static PyObject *CmdGetVRML(PyObject * self, PyObject * args)
     VLAFreeP(vla);
   }
   return (APIAutoNone(result));
-}
-
-/**
- * Return a COLLADA string or None on failure
- */
-static PyObject *CmdGetCOLLADA(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = nullptr;
-  PyObject *result = nullptr;
-  int ver;
-  char *vla = nullptr;
-
-  API_SETUP_ARGS(G, self, args, "Oi", &self, &ver);
-  API_ASSERT(APIEnterNotModal(G));
-
-  SceneRay(G, 0, 0, 8,     /* mode 8 = COLLADA */
-      nullptr, &vla, 0.0F, 0.0F, false, nullptr, false, -1);
-  APIExit(G);
-
-  if (vla && vla[0]) {
-    result = Py_BuildValue("s", vla);
-  }
-
-  VLAFreeP(vla);
-
-  return APIAutoNone(result);
 }
 
 /**
@@ -6433,7 +6403,6 @@ static PyMethodDef Cmd_methods[] = {
   {"get_chains", CmdGetChains, METH_VARARGS},
   {"get_click_string", CmdGetClickString, METH_VARARGS},
   {"get_clip", CmdGetClip, METH_VARARGS},
-  {"get_collada", CmdGetCOLLADA, METH_VARARGS},
   {"get_color", CmdGetColor, METH_VARARGS},
 #ifdef _HAVE_JSON
   {"get_glb", CmdGetGLB, METH_VARARGS},

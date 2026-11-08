@@ -645,22 +645,6 @@ PYMOL API
             r = _cmd.get_vrml(_self._COb,int(version))
         return r
 
-    def get_collada(version=2, *, _self=cmd):
-        '''
-DESCRIPTION
-
-    "get_collada" returns a COLLADA string representing the content
-    currently displayed.
-
-PYMOL API
-
-    cmd.get_collada()
-
-        '''
-        with _self.lockcm:
-            r = _cmd.get_collada(_self._COb,int(version))
-        return r
-
     def get_usda(*, _self=cmd):
         '''
 DESCRIPTION
@@ -718,7 +702,7 @@ NOTES
 
 SEE ALSO
 
-    get_gltf, get_collada
+    get_gltf
         '''
         try:
             get_glb_ = _cmd.get_glb
@@ -737,30 +721,6 @@ SEE ALSO
                 'Save-Error')
 
         return r
-
-    def _get_gltf_collada2gltf(filename, quiet, _self):
-        '''
-        Legacy glTF export for builds without native glTF support: convert
-        COLLADA output with the external collada2gltf program.
-        '''
-        import shutil
-        import subprocess
-
-        exe = shutil.which('collada2gltf') or shutil.which('COLLADA2GLTF-bin')
-        if exe is None:
-            raise pymol.CmdException(
-                'not compiled with native glTF export support (--json=true) '
-                'and could not find collada2gltf')
-
-        # https://github.com/schrodinger/pymol-open-source/issues/107
-        _self.set('collada_geometry_mode', 1, quiet=quiet)
-
-        # write collada file, then convert it in place
-        with open(filename, 'w') as handle:
-            handle.write(_self.get_collada())
-
-        if subprocess.call([exe, '-i', filename, '-o', filename]) != 0:
-            raise pymol.CmdException('collada2gltf failed', 'Save-Error')
 
     def _glb_to_gltf(glb):
         '''
@@ -825,10 +785,8 @@ PYMOL API
 
 NOTES
 
-    Uses native glTF support if PyMOL was compiled with --json=true
-    (reported as the "gltf" capability by cmd.get_capabilities()),
-    otherwise falls back to converting COLLADA output with the external
-    collada2gltf program.
+    Requires native glTF support (compiled with --json=true, reported as
+    the "gltf" capability by cmd.get_capabilities()).
 
     The scene is oriented like the current view. Set geometry_export_mode
     to 1 to keep the original model space coordinates instead.
@@ -838,16 +796,16 @@ NOTES
 
 SEE ALSO
 
-    get_glb, get_collada
+    get_glb
         '''
-        if hasattr(_cmd, 'get_glb'):
-            import json
-            from pymol.exporting import _write_file_atomic
-            document = _glb_to_gltf(get_glb(_self=_self))
-            contents = json.dumps(document, separators=(',', ':'))
-            _write_file_atomic(filename, contents.encode('utf-8'))
-        else:
-            _get_gltf_collada2gltf(filename, quiet, _self)
+        if not hasattr(_cmd, 'get_glb'):
+            raise pymol.CmdException(
+                'not compiled with native glTF export support (--json=true)')
+        import json
+        from pymol.exporting import _write_file_atomic
+        document = _glb_to_gltf(get_glb(_self=_self))
+        contents = json.dumps(document, separators=(',', ':'))
+        _write_file_atomic(filename, contents.encode('utf-8'))
 
         if not quiet:
             print(' Save: wrote "' + filename + '".')

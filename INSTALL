@@ -15,7 +15,6 @@ REQUIREMENTS
     - GLEW
     - libpng
     - freetype
-    - libxml2 (optional, for COLLADA export, disable with --libxml=no)
     - msgpack-c 2.1.5+ (optional, for fast MMTF loading and export,
         disable with --use-msgpackc=no)
     - mmtf-cpp (for fast MMTF export, disable with --use-msgpackc=no)

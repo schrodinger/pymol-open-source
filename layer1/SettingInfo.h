@@ -848,8 +848,8 @@ enum {
   REC_b( 738, session_embeds_data                     , global    , 1 ),
   REC_i( 739, volume_mode                             , global    , 1 ),
   REC_b( 740, trilines                                , global    , 0 ),
-  REC_i( 741, collada_export_lighting                 , global    , 0 ),
-  REC_i( 742, collada_geometry_mode                   , global    , 1 ),
+  REC__( 741,  ),
+  REC__( 742,  ),
   REC_b( 743, precomputed_lighting                    , global    , 0 ),
   REC_i( 744, chromadepth                             , global    , 0 ),
   REC_f( 745, pse_export_version                      , global    , 0.f ),
@@ -862,7 +862,7 @@ enum {
   REC_f( 752, valence_zero_scale                      , ostate    , 0.2f ),
   REC_i( 753, valence_zero_mode                       , ostate    , 1, 0, 2 ), // 0: skip, 1: dashed, 2: solid
   REC_i( 754, auto_show_classified                    , global    , -1, -1, 3 ), // -1: auto, 0: off, 1: as, 2: show, 3: simple
-  REC_b( 755, collada_background_box                  , global    , 0 ),
+  REC__( 755,  ),
   REC_b( 756, pick32bit                               , global    , 1 ),
   REC_b( 757, cartoon_all_alt                         , ostate    , 0 ),
   REC_i( 758, display_scale_factor                    , global    , 1 ),
