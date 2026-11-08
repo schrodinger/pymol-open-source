@@ -4,6 +4,12 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.4.1
+
+	* Removed\n	  - chempy.fast: unused since the Numeric era (imported the removed Numeric module).
+
+2026-11-08 pymolish-studio
+
 	* 4.4.0
 
 	* Developer & Infrastructure
