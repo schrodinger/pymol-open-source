@@ -33,6 +33,7 @@ dev = [
   "msgpack==1.2.4",
   "pillow==13.0.0",
   "PySide6==6.12.0",
+  "pyinstaller==6.22.3",
   "pytest==9.0.3",
   "requests==2.33.0",
 ]

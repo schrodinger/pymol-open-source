@@ -35,6 +35,8 @@ uv pip install --no-build-isolation --config-settings use-msgpackc=no -e '.[dev]
 | One Python file touched, editable | 0 s (no command needed, `pymol.__file__` points into `modules/`) |
 | Headless suite `pymol -ckqy testing/testing.py --run all` | 14.2 s wall, 997 tests |
 | `build/` size | 36 MB |
+| Wheel `pymol-*-cp312-linux_x86_64.whl` | 8.3 MB |
+| PyInstaller one-folder bundle, Linux (PySide6 pruned of Quick/Qml/Pdf/Network) | 292 MB unpacked, 114 MB tar.gz |
 
 Notes:
 - The editable route is validated: the suite passes with the same 4 MMTF-only

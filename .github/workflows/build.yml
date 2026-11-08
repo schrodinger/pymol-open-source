@@ -41,13 +41,29 @@ jobs:
     - name: Build
       run: |
         pip install --upgrade pip
-        pip install -v --config-settings testing=True --config-settings json=True '.[dev]'
+        pip wheel -v --no-deps -w dist --config-settings testing=True --config-settings json=True .
+        pip install "$(ls dist/*.whl)[dev]"
       env:
-        DEBUG: 1
+        # the 3.12 job ships the preview artifacts, so it is a release build
+        DEBUG: ${{ matrix.python-version != '3.12' && '1' || '' }}
 
     - name: Test
       run: |
         pymol -ckqy testing/testing.py --run all
+
+    - name: Build standalone bundle
+      if: matrix.python-version == '3.12'
+      run: |
+        pyinstaller --noconfirm packaging/pymolish.spec
+
+    - name: Upload preview artifacts
+      if: matrix.python-version == '3.12'
+      uses: actions/upload-artifact@v4
+      with:
+        name: pymolish-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
+        path: |
+          dist/*.whl
+          dist/pymolish
 
 
   build-Windows:
@@ -101,12 +117,29 @@ jobs:
     - name: Build PyMOL
       run: |
         conda activate $env:CONDA_ENV_NAME
-        pip install -v --config-settings testing=True --config-settings json=True .[dev]
+        pip wheel -v --no-deps -w dist --config-settings testing=True --config-settings json=True .
+        $whl = (Get-ChildItem dist\*.whl | Select-Object -First 1).FullName
+        pip install "$whl[dev]"
 
     - name: Test
       run: |
         conda activate $env:CONDA_ENV_NAME
         pymol -ckqy testing\testing.py --run all
+
+    - name: Build standalone bundle
+      if: matrix.python-version == '3.12'
+      run: |
+        conda activate $env:CONDA_ENV_NAME
+        pyinstaller --noconfirm packaging/pymolish.spec
+
+    - name: Upload preview artifacts
+      if: matrix.python-version == '3.12'
+      uses: actions/upload-artifact@v4
+      with:
+        name: pymolish-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
+        path: |
+          dist/*.whl
+          dist/pymolish
 
 
   build-MacOS:
@@ -126,7 +159,7 @@ jobs:
 
     - name: Download Miniforge
       run: |
-        curl -L -o $CONDA_ROOT.sh https://github.com/conda-forge/miniforge/releases/download/24.11.0-0/Miniforge3-MacOSX-x86_64.sh
+        curl -L -o $CONDA_ROOT.sh https://github.com/conda-forge/miniforge/releases/download/24.11.0-0/Miniforge3-MacOSX-arm64.sh
         bash $CONDA_ROOT.sh -b -p $CONDA_ROOT
 
     - name: Add conda to PATH
@@ -159,9 +192,25 @@ jobs:
       run: |
         source activate $CONDA_ENV_NAME
         export MACOSX_DEPLOYMENT_TARGET=12.0
-        pip install -v --config-settings testing=True --config-settings json=True '.[dev]'
+        pip wheel -v --no-deps -w dist --config-settings testing=True --config-settings json=True .
+        pip install "$(ls dist/*.whl)[dev]"
 
     - name: Test
       run: |
         source activate $CONDA_ENV_NAME
         pymol -ckqy testing/testing.py --run all
+
+    - name: Build standalone bundle
+      if: matrix.python-version == '3.12'
+      run: |
+        source activate $CONDA_ENV_NAME
+        pyinstaller --noconfirm packaging/pymolish.spec
+
+    - name: Upload preview artifacts
+      if: matrix.python-version == '3.12'
+      uses: actions/upload-artifact@v4
+      with:
+        name: pymolish-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
+        path: |
+          dist/*.whl
+          dist/pymolish

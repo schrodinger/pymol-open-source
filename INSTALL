@@ -71,6 +71,16 @@ DEVELOPMENT LOOP
     Performance baseline (see docs/baseline.md):
       pymol -ckqy testing/bench.py
 
+STANDALONE BUNDLE (no Python needed on the target machine)
+
+    From an environment with pymol and the dev extras installed:
+
+      pyinstaller --noconfirm packaging/pymolish.spec
+
+    Produces dist/pymolish/ (one-folder). Run dist/pymolish/pymolish from
+    anywhere; -c works headless. CI uploads this folder and the wheel as
+    artifacts for Linux, Windows and macOS on every push (Python 3.12 job).
+
 RUNNING PyMOL
 
     $PYMOL_PATH/bin/pymol

@@ -6,3 +6,5 @@ build
 *.egg-info/
 testing/timings.tab
 *.so
+dist/
+*.spec.bak

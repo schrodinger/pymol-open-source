@@ -2176,6 +2176,9 @@ void PExit(PyMOLGlobals * G, int code)
 
   PyMOL_Free(G->PyMOL);
 
+  // exit() skips Python finalization, which would otherwise flush these
+  PyRun_SimpleString("import sys; sys.stdout.flush(); sys.stderr.flush()");
+
 #if 1
   /* we're having trouble with threading errors after calling Py_Exit,
      so for the time being, let's just take the process down at this

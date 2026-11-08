@@ -4,6 +4,20 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.4.0
+
+	* Developer & Infrastructure
+	  - packaging/pymolish.spec: PyInstaller one-folder bundle (Linux 290 MB
+	    unpacked, 115 MB tar.gz); CI uploads wheel + bundle artifacts for
+	    Linux, Windows and macOS from the Python 3.12 job.
+	  - CI builds a wheel first and installs it; macOS job uses arm64 Miniforge.
+	  - pyinstaller==6.22.3 added to dev extras.
+	  - fix: Python stdout/stderr are flushed before process exit, so piped
+	    headless output is no longer lost on quit.
+
+
+2026-11-08 pymolish-studio
+
 	* 4.3.1
 
 	* Removed

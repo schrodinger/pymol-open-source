@@ -8,7 +8,9 @@ deliverables. Build speed, launch speed and download size also need separate dat
 
 ## Status 2026-11-08
 
-5a done: build-loop timings, editable install validated, `--jobs` fix. See [docs/baseline.md](../baseline.md). 5b not started.
+5a done: build-loop timings, editable install validated, `--jobs` fix. See [docs/baseline.md](../baseline.md).
+
+5b done in 4.4.0: `packaging/pymolish.spec` (PyInstaller one-folder, data under `pymol/pymol_path`), wheel + bundle uploaded as CI artifacts from the Python 3.12 job on Linux, Windows and macOS (arm64 Miniforge now). Verified locally on Linux: bundle runs headless and with the GUI from another directory; see baseline for sizes. Windows and macOS bundles are unverified until CI runs; signing and installers not started.
 
 ## Current state and risks to verify
 
