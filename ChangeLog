@@ -4,6 +4,19 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.5.0
+
+	* Panels
+	  - Objects panel (dock): one row per object with name, type, shown,
+	    atoms, states; sort, filter, Zoom/Orient/Show/Hide, copy rows,
+	    double-click to zoom. Polls the object list once a second.
+	  - Window layout (geometry, docks) is saved on exit and restored on
+	    start; Display > Panels toggles panels and offers Reset Layout.
+	  - The external GUI dock is titled "Command Line".
+
+
+2026-11-08 pymolish-studio
+
 	* 4.4.8
 
 	* Developer & Infrastructure

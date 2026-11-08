@@ -6,6 +6,10 @@
 movable, resizable panels and a useful metadata table before replacing every
 internal control. Preserve command-line workflows and existing `.ui` dialogs.
 
+## Status 2026-11-08
+
+Slices 1 to 3 shipped in 4.5.0: `modules/pmg_qt/object_table.py` (model + dock, headless test in `testing/tests/api/object_table.py`), named docks (`dock_command`, `dock_objects`, `dock_builder`), `QSettings` layout save/restore with off-screen recovery, Display > Panels with Reset Layout. Viewport-to-table synchronization, object controls migration (slice 4), styling (5) and menu cleanup (6) are open.
+
 ## Reference products and current constraints
 
 Use commercial PyMOL for familiar molecular workflows and Maestro for its
