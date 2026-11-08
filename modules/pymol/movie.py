@@ -716,49 +716,7 @@ def _encode(filename,first,last,preserve,
     old_cwd = os.getcwd()
     fps = get_movie_fps(_self)
 
-    if done and ok and (encoder == 'mpeg_encode'):
-        try:
-            from pymol import mpeg_encode
-        except:
-            ok = 0
-            print("produce-error: Unable to import module pymol.mpeg_encode.")
-        if ok:
-            if not mpeg_encode.validate():
-                ok = 0
-                print("produce-error: Unable to validate pymol.mpeg_encode.")
-        if not ok:
-            print("produce-error: Unable to create mpeg file.")
-        else:
-            mpeg_quality = 1+int(((100-quality)*29)/100) # 1 to 30
-            input = mpeg_encode.input(fn_rel, '.',
-                                      prefix,first,last,mpeg_quality);
-
-            FPS_LEGAL_VALUES = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60]
-            fps_legal = min(FPS_LEGAL_VALUES, key=lambda v: abs(v - fps))
-            if fps_legal != round(fps, 3):
-                colorprinting.warning(
-                    " Warning: Adjusting frame rate to {} fps (legal values are: {})"
-                    .format(fps_legal, FPS_LEGAL_VALUES))
-            input = input.replace('FRAME_RATE 30',
-                                  'FRAME_RATE {:.3f}'.format(fps_legal))
-
-            if not quiet:
-                print(" produce: creating '%s' (in background)..."%(filename))
-
-            os.chdir(tmp_path)
-
-            done_event = None
-            if not quiet:
-                done_event = threading.Event()
-                _self.async_(_watch, fn_rel, done_event, _self=_self)
-
-            try:
-                result = mpeg_encode.run(input)
-            finally:
-                os.chdir(old_cwd)
-                if done_event is not None:
-                    done_event.set()
-    elif encoder == 'ffmpeg':
+    if encoder == 'ffmpeg':
         import subprocess
         os.chdir(tmp_path)
         try:
@@ -824,7 +782,6 @@ produce_mode_sc = Shortcut(produce_mode_dict.keys())
 def find_exe(exe):
     r'''Return full path to executable or None.
     Excludes C:\Windows\System32\convert.exe
-    Tests .exe extension on Unix (e.g. for legacy "mpeg_encode.exe" name).
     '''
     from shutil import which
 
@@ -834,11 +791,6 @@ def find_exe(exe):
                 for p in os.getenv('PATH', '').split(os.pathsep)
                 if r'\windows\system32' not in p.lower())
         return which(exe, path=path)
-
-    if exe == 'mpeg_encode':
-        legacy = which(exe + '.exe')
-        if legacy:
-            return legacy
 
     return which(exe)
 
@@ -866,7 +818,7 @@ ARGUMENTS
 
     preserve = 0 or 1: don't delete temporary files {default: 0}
 
-    encoder = ffmpeg|convert|mpeg_encode: Tool used for video encoding
+    encoder = ffmpeg|convert: Tool used for video encoding
 
     quality = 0-100: encoding quality {default: 90 (movie_quality setting)}
 
@@ -918,9 +870,7 @@ EXAMPLE
 
     # guess encoder
     if not encoder:
-        if splitext[1] in ('.mpeg', '.mpg'):
-            encoder = 'mpeg_encode'
-        elif has_exe('ffmpeg'):
+        if has_exe('ffmpeg'):
             encoder = 'ffmpeg'
         elif has_exe('convert'):
             encoder = 'convert'
@@ -930,9 +880,7 @@ EXAMPLE
         print('using encoder "%s"' % encoder)
 
     # check encoder
-    if encoder == 'mpeg_encode':
-        img_ext = '.ppm'
-    elif encoder not in ('ffmpeg', 'convert'):
+    if encoder not in ('ffmpeg', 'convert'):
         raise CmdException('unknown encoder "%s"' % encoder)
     elif not has_exe(encoder):
         raise CmdException('encoder "%s" not available' % (encoder))

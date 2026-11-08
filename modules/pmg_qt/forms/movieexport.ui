@@ -169,11 +169,6 @@
           </item>
           <item>
            <property name="text">
-            <string notr="true">mpeg_encode</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
             <string>convert</string>
            </property>
           </item>

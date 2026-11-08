@@ -702,7 +702,6 @@ def file_save_mpeg(parent, _preselect=None):
     support = {
         '':             {'mp4': 0, 'mpg': 0, 'mov': 0, 'gif': 0},
         'ffmpeg':       {'mp4': 1, 'mpg': 1, 'mov': 1, 'gif': 1},
-        'mpeg_encode':  {'mp4': 0, 'mpg': 1, 'mov': 0, 'gif': 0},
         'convert':      {'mp4': 0, 'mpg': 0, 'mov': 0, 'gif': 1},
     }
 
@@ -715,9 +714,7 @@ def file_save_mpeg(parent, _preselect=None):
             w = getattr(form, 'format_' + fmt)
             w.setEnabled(enabled)
             if not enabled and w.isChecked():
-                if encoder == 'mpeg_encode':
-                    form.format_mpg.setChecked(True)
-                elif encoder == 'convert':
+                if encoder == 'convert':
                     form.format_gif.setChecked(True)
                 else:
                     form.format_png.setChecked(True)
