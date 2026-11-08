@@ -25,7 +25,7 @@ enum class cIsosurfaceSide {
 };
 
 enum class cIsosurfaceAlgorithm {
-  MARCHING_CUBES_VTKM = 0,
+  MARCHING_CUBES_VTKM = 0, // removed backend; behaves like BASIC
   MARCHING_CUBES_BASIC = 1,
   MARCHING_TETRAHEDRA = 2,
 };

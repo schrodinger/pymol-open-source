@@ -199,7 +199,6 @@ class options:
     testing = False
     openvr = False
     use_openmp = "no" if MAC else "yes"
-    use_vtkm = "no"
     vmd_plugins = True
 
 
@@ -227,11 +226,6 @@ parser.add_argument(
     help="add nlohmann-json dependency, enables glTF 2.0 and GLB export",
 )
 parser.add_argument("--use-openmp", type=str2bool, help="Use OpenMP")
-parser.add_argument(
-    "--use-vtkm",
-    choices=("2.0", "2.1", "2.2", "2.3", "no"),
-    help="Use VTK-m for isosurface generation",
-)
 parser.add_argument(
     "--use-msgpackc",
     choices=("c++11", "c", "guess", "no"),
@@ -731,28 +725,6 @@ if not (MAC or WIN):
         "GLEW",
     ]
 
-if options.use_vtkm != "no":
-    for prefix in prefix_path:
-        vtkm_inc_dir = os.path.join(prefix, "include", f"vtkm-{options.use_vtkm}")
-        if os.path.exists(vtkm_inc_dir):
-            break
-    else:
-        raise LookupError(
-            "VTK-m headers not found." f' PREFIX_PATH={":".join(prefix_path)}'
-        )
-    def_macros += [
-        ("_PYMOL_VTKM", None),
-    ]
-    inc_dirs += [
-        vtkm_inc_dir,
-        vtkm_inc_dir + "/vtkm/thirdparty/diy/vtkmdiy/include",
-        vtkm_inc_dir + "/vtkm/thirdparty/lcl/vtkmlcl",
-    ]
-    libs += [
-        f"vtkm_cont-{options.use_vtkm}",
-        f"vtkm_filter_contour-{options.use_vtkm}",
-        f"vtkm_filter_core-{options.use_vtkm}",
-    ]
 
 if options.vmd_plugins:
     libs += [

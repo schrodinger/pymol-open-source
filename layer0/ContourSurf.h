@@ -1,6 +1,6 @@
 /**
  * @file
- * Isosurface with VTKm
+ * Isosurface (marching cubes)
  *
  * (c) 2020 Schrodinger, Inc.
  */
