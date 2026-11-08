@@ -1,22 +1,13 @@
 /**
- * GLUT (real or pretended)
+ * GLUT key and button constants (emulated)
  */
 
 #pragma once
 
-#ifdef _PYMOL_NO_MAIN
-#define _PYMOL_NO_GLUT
-#endif
-
-#ifdef _PYMOL_NO_GLUT
+// There is no GLUT; these are the key/button codes PyMOL uses internally.
 #define _PYMOL_PRETEND_GLUT
-#endif
-
-#ifndef _PYMOL_PRETEND_GLUT
-#include "os_gl_glut_real.h"
-#else
 #include "os_gl_glut_pretend.h"
-#endif
+
 
 #define P_GLUT_BUTTON_SCROLL_FORWARD  3
 #define P_GLUT_BUTTON_SCROLL_BACKWARD 4

@@ -13,7 +13,6 @@ REQUIREMENTS
     - pip (with build submodule <pip install build>; conda's package name is python-build)
     - OpenGL
     - GLEW
-    - GLUT (freeglut) (optional, enable with --glut=true)
     - libpng
     - freetype
     - libxml2 (optional, for COLLADA export, disable with --libxml=no)

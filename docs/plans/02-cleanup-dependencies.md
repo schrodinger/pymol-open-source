@@ -6,6 +6,10 @@
 every retained consumer before removing a dependency. Preserve PDB, mmCIF,
 SDF/MOL, PSE and PNG workflows throughout.
 
+## Status 2026-11-08
+
+2a done: PySide6-only shim (4.1.0), Tk/Pmw removal with plugin loading detached (4.3.0), GLUT removal (4.3.1). Python floor is 3.11. 2b queue not started.
+
 ## 2a — GUI foundation
 
 1. Follow [step 0](00-ui-engine.md) for explicit PySide6 runtime metadata and a

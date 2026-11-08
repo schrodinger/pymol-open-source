@@ -6,6 +6,10 @@
 Make a small command or Qt tool easy to add without a new framework, dependency
 container, plugin marketplace or speculative C++ ABI.
 
+## Status 2026-11-08
+
+4a done in 4.3.0: `pymol.plugins.startup` namespace, headless no-op app, Qt `PmwMenuBar`, `app.root` raises a clear error, Qt-backed dialog proxies, `testing/tests/api/plugins.py`. 4b examples not started.
+
 ## Existing capabilities and corrections
 
 - [Plugin loader](../../modules/pymol/plugins/__init__.py): startup discovery,

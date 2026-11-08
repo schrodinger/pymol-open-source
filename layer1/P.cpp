@@ -2174,12 +2174,6 @@ void PExit(PyMOLGlobals * G, int code)
   PyMOL_Stop(G->PyMOL);
   PyMOL_PopValidContext(G->PyMOL);
 
-#ifndef _PYMOL_NO_MAIN
-  if(G->Main) {
-    MainFree();
-  }
-#endif
-
   PyMOL_Free(G->PyMOL);
 
 #if 1

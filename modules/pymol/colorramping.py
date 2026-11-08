@@ -181,7 +181,8 @@ ARGUMENTS
 
     qt_window = gui.get_qtwindow()
     if not qt_window:
-        raise cmd.CmdException('volume_panel requires the Qt GUI')
+        import pymol
+        raise pymol.CmdException('volume_panel requires the Qt GUI')
 
     app = gui.get_pmgapp()
     from pmg_qt import volume as volume_qt

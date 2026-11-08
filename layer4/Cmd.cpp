@@ -86,10 +86,6 @@ Z* -------------------------------------------------------------------
 
 static int flush_count = 0;
 
-#ifndef _PYMOL_NO_MAIN
-static int run_only_once = true;
-#endif
-
 #define API_SETUP_PYMOL_GLOBALS \
   G = _api_get_pymol_globals(self)
 
@@ -1670,10 +1666,6 @@ static PyObject* CmdGetCapabilities(PyObject*, PyObject*)
 
   if (!caps) {
     caps = PySet_New(nullptr);
-#ifndef _PYMOL_NO_MAIN
-    // compiled with --glut
-    PySet_Add(caps, PConvToPyObject("glut"));
-#endif
 #ifndef _PYMOL_NO_MSGPACKC
     // fast MMTF import and export
     PySet_Add(caps, PConvToPyObject("mmtf"));
@@ -3745,26 +3737,9 @@ static PyObject *Cmd_Sdof(PyObject * self, PyObject * args)
 
 static PyObject *CmdRunPyMOL(PyObject * self, PyObject * args)
 {
-#ifdef _PYMOL_NO_MAIN
-  PyErr_SetString(PyExc_NotImplementedError, "compile with --glut");
+  PyErr_SetString(PyExc_NotImplementedError,
+      "the GLUT GUI was removed, use the Qt GUI");
   return nullptr;
-#else
-
-  if(run_only_once) {
-    run_only_once = false;
-
-    // _PYMOL_MODULE stuff
-    {
-      int block_input_hook = false;
-      if(!PyArg_ParseTuple(args, "Oi", &self, &block_input_hook))
-        block_input_hook = false;
-
-      main_shared(block_input_hook);
-    }
-  }
-#endif
-
-  return APISuccess();
 }
 
 static PyObject *CmdCountStates(PyObject * self, PyObject * args)
@@ -4807,11 +4782,6 @@ static PyObject *CmdRefreshNow(PyObject * self, PyObject * args)
     PyMOL_PushValidContext(G->PyMOL);   /* we're trusting the caller on this... */
     SceneInvalidateCopy(G, false);
     ExecutiveDrawNow(G);        /* TODO STATUS */
-#ifndef _PYMOL_NO_MAIN
-    if(G->Main) {
-      MainRefreshNow();
-    }
-#endif
     PyMOL_PopValidContext(G->PyMOL);
     APIExit(G);
   }
@@ -5019,12 +4989,6 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
         h = 0;
       }
 
-#ifndef _PYMOL_NO_MAIN
-        if(G->Main) {
-          MainDoReshape(w, h);    /* should be moved into Executive */
-        }
-      else
-#endif
       {
         PyMOL_NeedReshape(G->PyMOL, 2, 0, 0, w, h);
       }
@@ -6084,44 +6048,6 @@ static PyObject *CmdWindow(PyObject * self, PyObject * args)
   API_ASSERT(G->HaveGUI);
   API_ASSERT(APIEnterNotModal(G));
   {
-#ifndef _PYMOL_NO_MAIN
-    switch (int1) {
-    case 0:
-    case 1:
-      if(G->Main)
-        MainSetWindowVisibility(int1);
-      break;
-    case 2:                    /* position */
-      if(G->Main)
-        MainSetWindowPosition(G, x, y);
-      break;
-    case 3:                    /* size */
-      if((width == 0) && (height == 0) && (x != 0) && (y != 0)) {
-        width = x;
-        height = y;
-      }
-      if(G->Main)
-        MainSetWindowSize(G, width, height);
-      break;
-    case 4:                    /* position and size */
-      if(G->Main) {
-        MainSetWindowPosition(G, x, y);
-        MainSetWindowSize(G, width, height);
-      }
-      break;
-    case 5:                    /* maximize -- 
-                                   should use the window manager, 
-                                   but GLUT doesn't provide for that */
-      if(G->Main)
-        MainMaximizeWindow(G);
-      break;
-    case 6:
-      if(G->Main)
-        MainCheckWindowFit(G);
-      break;
-    }
-#endif
-
     APIExit(G);
   }
   return APISuccess();

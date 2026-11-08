@@ -13717,10 +13717,6 @@ bool ExecutiveIsFullScreen(PyMOLGlobals* G)
 
   int flag = -1;
 
-#if defined(GLUT_FULL_SCREEN)
-  flag = glutGet(GLUT_FULL_SCREEN);
-#endif
-
   PRINTFD(G, FB_Executive)
   " %s: flag=%d fallback=%d.\n", __func__, flag, _is_full_screen ENDFD;
 
@@ -13742,37 +13738,6 @@ void ExecutiveFullScreen(PyMOLGlobals* G, int flag)
   }
 
   _is_full_screen = (flag != 0);
-
-#ifndef _PYMOL_NO_GLUT
-  if (G->HaveGUI && G->ValidContext) {
-    if (flag) {
-#ifndef GLUT_FULL_SCREEN
-      if (wm_flag < 1) {
-        CExecutive* I = G->Executive;
-        I->oldPX = p_glutGet(P_GLUT_WINDOW_X);
-        I->oldPY = p_glutGet(P_GLUT_WINDOW_Y);
-        I->oldWidth = p_glutGet(P_GLUT_WINDOW_WIDTH);
-        I->oldHeight = p_glutGet(P_GLUT_WINDOW_HEIGHT);
-      }
-#endif
-
-      p_glutFullScreen();
-    } else {
-#ifndef GLUT_FULL_SCREEN
-      // freeglut < 2.6
-      CExecutive* I = G->Executive;
-      p_glutReshapeWindow(I->oldWidth, I->oldHeight);
-      p_glutPositionWindow(I->oldPX, I->oldPY);
-#elif !defined(GLUT_HAS_MULTI)
-      // freeglut < 2.8
-      if (wm_flag)
-        glutFullScreenToggle();
-#else
-      glutLeaveFullScreen();
-#endif
-    }
-  }
-#endif
 
   PyMOL_NeedReshape(G->PyMOL, flag, 0, 0, 0, 0);
   SceneChanged(G);
@@ -16678,11 +16643,6 @@ int ExecutiveInit(PyMOLGlobals* G)
     I->all_sel_list_id = TrackerNewList(I->Tracker, nullptr);
     I->active = true;
     OrthoAttach(G, I, cOrthoTool);
-#ifndef GLUT_FULL_SCREEN
-    I->oldWidth = 640;
-    I->oldHeight = 480;
-#endif
-
     I->Lex = OVLexicon_New(G->Context->heap);
 
     /* create "all" entry */

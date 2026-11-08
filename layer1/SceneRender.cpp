@@ -564,7 +564,7 @@ void SceneRender(PyMOLGlobals* G, const SceneRenderInfo& renderInfo)
 
     if (I->CopyNextFlag) {
       start_time = I->LastRender - start_time;
-      if ((start_time > 0.10) || (MainSavingUnderWhileIdle()))
+      if (start_time > 0.10)
         if (!(ControlIdling(G)))
           if (SettingGet<bool>(G, cSetting_cache_display)) {
             if (!I->CopyType) {

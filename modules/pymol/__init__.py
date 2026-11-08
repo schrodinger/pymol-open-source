@@ -405,8 +405,6 @@ def _launch_no_gui():
 def launch(args=None, block_input_hook=0):
     '''
     Run PyMOL with args
-
-    Only returns if we are running pretend GLUT.
     '''
     if args is None:
         args = sys.argv

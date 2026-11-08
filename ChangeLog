@@ -4,6 +4,17 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.3.1
+
+	* Removed
+	  - GLUT GUI: --glut build option, layer5/main.cpp main loop,
+	    os_gl_glut_real.h and all _PYMOL_NO_MAIN / GLUT_FULL_SCREEN
+	    branches. "glut" is no longer in cmd.get_capabilities().
+	  - fix: volume_panel error without the Qt GUI raised NameError.
+
+
+2026-11-08 pymolish-studio
+
 	* 4.3.0
 
 	* Removed

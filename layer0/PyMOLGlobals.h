@@ -85,7 +85,6 @@ struct CSelector;
 struct CSelectorManager;
 struct CTexture;
 typedef struct _CType CType;
-typedef struct _CMain CMain;
 struct CPlugIOManager;
 struct COpenVR;
 struct CPropertyUnique;
@@ -151,7 +150,6 @@ struct PyMOLGlobals {
   CTexture *Texture;
   CType *Type;
   OVContext *Context;
-  CMain *Main;                  /* host/platform-specific "main" code */
   CPyMOLOptions *Option;
   CPyMOL *PyMOL;                /* the instance */
   OVLexicon *Lexicon;           /* lexicon for data (e.g. label) strings */

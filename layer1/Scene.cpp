@@ -4646,11 +4646,6 @@ static void SceneStencilCheck(PyMOLGlobals *G)
   if( I->StereoMode == cStereo_stencil_by_row ) {
     int bottom = 0;
 
-#ifndef _PYMOL_PRETEND_GLUT
-    if(G->Main)
-      bottom = p_glutGet(P_GLUT_WINDOW_Y) + p_glutGet(P_GLUT_WINDOW_HEIGHT);
-#endif
-
     int parity = bottom & 0x1;
     if(parity != I->StencilParity) {
       I->StencilValid = false;

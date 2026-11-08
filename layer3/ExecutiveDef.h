@@ -65,10 +65,6 @@ struct CExecutive : public Block {
   SpecRec *LastChanged { nullptr }, *LastZoomed { nullptr }, *RecoverPressed { nullptr };
   int ReorderFlag { false };
   OrthoLineType ReorderLog {};
-#ifndef GLUT_FULL_SCREEN
-  // freeglut has glutLeaveFullScreen, no need to remember window dimensions
-  int oldPX {}, oldPY {}, oldWidth {}, oldHeight {};
-#endif
   int all_names_list_id {}, all_obj_list_id {}, all_sel_list_id {};
   OVLexicon *Lex {};
   std::unordered_map<ov_word, int> Key;

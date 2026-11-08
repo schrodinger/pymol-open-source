@@ -195,7 +195,6 @@ class options:
     jobs = int(os.getenv("JOBS", 0))
     libxml = True
     json = False
-    glut = False
     use_msgpackc = "guess"
     testing = False
     openvr = False
@@ -205,9 +204,6 @@ class options:
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--glut", dest="glut", type=str2bool, help="link with GLUT (legacy GUI)"
-)
 parser.add_argument(
     "--osx-frameworks",
     dest="osx_frameworks",
@@ -659,11 +655,6 @@ else:
 
     pymol_src_dirs += ["contrib/mmtf-c"]
 
-if not options.glut:
-    def_macros += [
-        ("_PYMOL_NO_MAIN", None),
-    ]
-
 if options.testing:
     pymol_src_dirs += ["layerCTest"]
     def_macros += [("_PYMOL_CTEST", None)]
@@ -686,8 +677,6 @@ if MAC:
     if options.osx_frameworks:
         ext_link_args += [
             "-framework OpenGL",
-        ] + (options.glut) * [
-            "-framework GLUT",
         ]
         def_macros += [
             ("_PYMOL_OSX", None),
@@ -695,8 +684,6 @@ if MAC:
     else:
         libs += [
             "GL",
-        ] + (options.glut) * [
-            "glut",
         ]
 
 if WIN:
@@ -717,10 +704,6 @@ if WIN:
             "glew32",
             "freetype",
             "libpng",
-        ]
-        + (options.glut)
-        * [
-            "freeglut",
         ]
         + (options.libxml)
         * [
@@ -746,8 +729,6 @@ if not (MAC or WIN):
     libs += [
         "GL",
         "GLEW",
-    ] + (options.glut) * [
-        "glut",
     ]
 
 if options.use_vtkm != "no":
