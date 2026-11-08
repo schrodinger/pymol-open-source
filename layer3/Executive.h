@@ -116,8 +116,6 @@ enum cLoadType_t : int {
   /* 68 is Python-based MAE  */
   cLoadTypeVDBStr = 69,
 
-  cLoadTypeMMTF = 71,
-  cLoadTypeMMTFStr = 72,
 
   // Distinguish CCP4-like map types:
   // - cLoadTypeCCP4Str/cLoadTypeCCP4Map : CCP4 format, ignore MRC features

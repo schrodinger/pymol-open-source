@@ -32,11 +32,6 @@ jobs:
             nlohmann-json3-dev \
             libpng-dev
 
-    - name: Get additional sources
-      run: |
-        git clone --depth 1 https://github.com/rcsb/mmtf-cpp.git
-        cp -R mmtf-cpp/include/* include/
-
     - name: Build
       run: |
         pip install --upgrade pip
@@ -105,9 +100,6 @@ jobs:
     - name: Get additional sources
       run: |
         conda activate $env:CONDA_ENV_NAME
-
-        git clone --depth 1 https://github.com/rcsb/mmtf-cpp.git
-        Copy-Item -Recurse -Path mmtf-cpp/include\* -Destination "$env:CONDA_PREFIX\Library\include"
         git clone --depth 1 --single-branch --branch cpp_master https://github.com/msgpack/msgpack-c.git
         Copy-Item -Recurse -Path msgpack-c/include\* -Destination "$env:CONDA_PREFIX\Library\include"
         dir $env:CONDA_PREFIX\Library\include
@@ -180,8 +172,6 @@ jobs:
     - name: Get additional sources
       run: |
         source activate $CONDA_ENV_NAME
-        git clone --depth 1 https://github.com/rcsb/mmtf-cpp.git
-        cp -R mmtf-cpp/include/* ${CONDA_PREFIX}/include/
         git clone --depth 1 --single-branch --branch cpp_master https://github.com/msgpack/msgpack-c.git
         cp -R msgpack-c/include/* ${CONDA_PREFIX}/include/
 

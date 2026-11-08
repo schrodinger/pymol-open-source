@@ -1667,8 +1667,8 @@ static PyObject* CmdGetCapabilities(PyObject*, PyObject*)
   if (!caps) {
     caps = PySet_New(nullptr);
 #ifndef _PYMOL_NO_MSGPACKC
-    // fast MMTF import and export
-    PySet_Add(caps, PConvToPyObject("mmtf"));
+    // BinaryCIF import and export
+    PySet_Add(caps, PConvToPyObject("bcif"));
 #endif
 #ifdef _HAVE_JSON
     // native glTF 2.0 and GLB export

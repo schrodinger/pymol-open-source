@@ -4,6 +4,12 @@ CHANGE LOG
 
 2026-11-08 pymolish-studio
 
+	* 4.4.7
+
+	* Removed\n	  - MMTF import/export (format deprecated by RCSB), contrib/mmtf-c,\n	    chempy.mmtf and the mmtf-cpp build requirement. msgpack-c stays for\n	    BinaryCIF; cmd.get_capabilities() reports 'bcif' instead of 'mmtf'.
+
+2026-11-08 pymolish-studio
+
 	* 4.4.6
 
 	* Removed\n	  - COLLADA (.dae) export and import and the libxml2 dependency\n	    (--libxml option). glTF export is native only (--json=true);\n	    the collada2gltf fallback is gone. collada_* settings keep their\n	    indices as unused slots.

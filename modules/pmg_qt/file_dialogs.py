@@ -546,7 +546,6 @@ def file_save(parent):
         'MacroModel (*.mmd *.mmod *.dat)',
         'ChemPy Pickle (*.pkl)',
         'XYZ (*.xyz)',
-        'MMTF (*.mmtf)',
         'By Extension (*.*)',
     ]
 

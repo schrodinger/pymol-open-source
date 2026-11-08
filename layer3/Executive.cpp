@@ -3742,7 +3742,6 @@ pymol::Result<ExecutiveLoadArgs> ExecutiveLoadPrepareArgs(PyMOLGlobals* G,
   case cLoadTypePDBStr:
   case cLoadTypeVDBStr:
   case cLoadTypeCIFStr:
-  case cLoadTypeMMTFStr:
   case cLoadTypeMAEStr:
   case cLoadTypeXPLORStr:
   case cLoadTypeCCP4Str:
@@ -3765,7 +3764,6 @@ pymol::Result<ExecutiveLoadArgs> ExecutiveLoadPrepareArgs(PyMOLGlobals* G,
   case cLoadTypePDBQT:
   case cLoadTypePDB:
   case cLoadTypeCIF:
-  case cLoadTypeMMTF:
   case cLoadTypeMAE:
   case cLoadTypeXPLORMap:
   case cLoadTypeCCP4Map:
@@ -3950,11 +3948,6 @@ pymol::Result<> ExecutiveLoad(PyMOLGlobals* G, ExecutiveLoadArgs const& args)
     p_return_if_error(res);
     obj = res.result();
   } break;
-  case cLoadTypeMMTF:
-  case cLoadTypeMMTFStr:
-    obj = ObjectMoleculeReadMmtfStr(G, (ObjectMolecule*) origObj, content, size,
-        state, discrete, quiet, multiplex, zoom);
-    break;
   case cLoadTypeMAE:
   case cLoadTypeMAEStr:
 #ifndef _PYMOL_IP_EXTRAS
@@ -4158,8 +4151,6 @@ pymol::CObject* ExecutiveGetExistingCompatible(
     case cLoadTypeVDBStr:
     case cLoadTypeCIF:
     case cLoadTypeCIFStr:
-    case cLoadTypeMMTF:
-    case cLoadTypeMMTFStr:
     case cLoadTypeXYZ:
     case cLoadTypeXYZStr:
     case cLoadTypeMOL:

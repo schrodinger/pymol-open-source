@@ -670,7 +670,7 @@ DESCRIPTION
 
     Like "get_bytes" but return a unicode string.
         '''
-        assert format not in ('mmtf',), 'binary format, use get_bytes'
+        assert format not in ('bcif',), 'binary format, use get_bytes'
         b = _self.get_bytes(format, selection, state, ref, ref_state, multi, quiet)
         if b is None:
             return None
@@ -1100,7 +1100,6 @@ SEE ALSO
         'mol2': get_str,
         'mae': get_str,
         'mol': get_str,
-        'mmtf': get_bytes,
         'bcif': get_bytes,
 
         'pse': get_psestr,

@@ -1,14 +1,17 @@
+import pytest
 from pymol import cmd
 from pymol import test_utils
 from pymol.querying import cif_get_array
 
 
 @test_utils.requires_version("3.0")
+@pytest.mark.skipif('bcif' not in __import__('pymol').get_capabilities(), reason='built without msgpack')
 def test_bcif():
     cmd.load(test_utils.datafile("115d.bcif.gz"))
     assert cmd.count_atoms() == 407
 
 @test_utils.requires_version("3.0")
+@pytest.mark.skipif('bcif' not in __import__('pymol').get_capabilities(), reason='built without msgpack')
 def test_bcif_array():
     obj_name = "foo"
     cmd.set('cif_keepinmemory', 1)

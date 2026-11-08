@@ -20,6 +20,7 @@ requires_gltf = test_utils.requires_capability(
 
 
 @test_utils.requires_version("3.2")
+@pytest.mark.skipif('bcif' not in __import__('pymol').get_capabilities(), reason='built without msgpack')
 def test_bcif_export():
     """Test BCIF export and round-trip"""
     # Create a simple structure
@@ -47,6 +48,7 @@ def test_bcif_export():
 
 
 @test_utils.requires_version("3.2")
+@pytest.mark.skipif('bcif' not in __import__('pymol').get_capabilities(), reason='built without msgpack')
 def test_bcif_export_multi_object():
     """Test BCIF export with multiple objects"""
     cmd.fragment("ala")

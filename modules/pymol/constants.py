@@ -52,8 +52,6 @@ class _loadable:
     pdbqt = 67
     vdbstr = 69
     vdb = 70
-    mmtf = 71
-    mmtfstr = 72
     map = 73      # unspecified CCP4 or MRC map
     mrc = 74
     dxstr = 75    # DX file (APBS)
@@ -73,7 +71,6 @@ class loadable(_loadable):
 _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.vdb: loadable.vdbstr,
               loadable.cif : loadable.cifstr,
-              loadable.mmtf : loadable.mmtfstr,
               loadable.mae : loadable.maestr,
               loadable.mol : loadable.molstr,
               loadable.xplor : loadable.xplorstr,

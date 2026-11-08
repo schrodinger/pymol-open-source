@@ -279,7 +279,7 @@ class TestExporting(testing.PyMOLTestCase):
         self.assertEqual(n_N, cmd.count_atoms('elem N'))
         self.assertEqual(n_O + n_N, cmd.count_atoms())
 
-    @testing.foreach('pdb', 'cif', 'mmtf')
+    @testing.foreach('pdb', 'cif')
     @testing.requires_version('2.5')
     def testSave_symmetry(self, format):
         sym1 = (1.2, 3.4, 5.6, 60.0, 70.0, 80.0, "P 3")
@@ -360,58 +360,6 @@ class TestExporting(testing.PyMOLTestCase):
         self.assertEqual(m1.atom[-1].model, '1rna')
         self.assertEqual(m1.atom[cnt].model, '1rna')
 
-
-    @testing.requires_version('2.1')
-    def testMMTF(self):
-        '''Styled MMTF export/import'''
-        S = 0b10            # 1 << 1 spheres
-        D = 0b1000000000    # 1 << 9 dots
-        B = 2 # blue
-        R = 4 # red
-
-        cmd.fragment('gly')
-        cmd.color(B)
-        cmd.color(R, 'elem C')
-        cmd.show_as('spheres')
-        cmd.show_as('dots', 'elem C')
-
-        with testing.mktemp('.mmtf') as filename:
-            cmd.save(filename)
-            cmd.delete('*')
-            cmd.load(filename)
-
-        color_list = []
-        reps_list = []
-
-        cmd.iterate('*', 'color_list.append(color)', space=locals())
-        cmd.iterate('*', 'reps_list.append(reps)', space=locals())
-
-        self.assertEqual(color_list, [B, R, R, B, B, B, B])
-        self.assertEqual(reps_list, [S, D, D, S, S, S, S])
-
-    @testing.requires_version('2.1')
-    def testMMTFExportSele(self):
-        cmd.fab('ACDE')
-
-        with testing.mktemp('.mmtf') as filename:
-            cmd.save(filename, 'resn CYS+ASP')
-            cmd.delete('*')
-            cmd.load(filename)
-
-        self.assertEqual(cmd.count_atoms(), 23)
-        self.assertEqual(cmd.count_atoms('bound_to ASP/CG'), 3)
-        self.assertEqual(cmd.get_model('ASP/CG ASP/OD1').bond[0].order, 2)
-        self.assertEqual(cmd.get_model('ASP/CG ASP/OD2').bond[0].order, 1)
-        self.assertEqual(cmd.get_model('CYS/C ASP/N').bond[0].order, 1)
-
-    @testing.requires_version('2.1')
-    def testMMTFExportEmpty(self):
-        with testing.mktemp('.mmtf') as filename:
-            cmd.save(filename)
-            cmd.load(filename, 'm1')
-
-        self.assertEqual(cmd.count_atoms(), 0)
-        self.assertEqual(cmd.get_names(), ['m1'])
 
     @testing.requires_version('2.4')
     @unittest.skipUnless('gltf' in pymol.get_capabilities(),

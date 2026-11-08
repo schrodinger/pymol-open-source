@@ -223,7 +223,7 @@ parser.add_argument(
     "--use-msgpackc",
     choices=("c++11", "c", "guess", "no"),
     help="c++11: use msgpack-c header-only library; c: link against "
-    "shared library; no: disable fast MMTF load support",
+    "shared library; no: disable BinaryCIF support",
 )
 parser.add_argument("--testing", type=str2bool, help="Build C-level tests")
 parser.add_argument(
@@ -623,13 +623,10 @@ if options.use_msgpackc == "no":
 else:
     if options.use_msgpackc == "c++11":
         def_macros += [
-            ("MMTF_MSGPACK_USE_CPP11", None),
             ("MSGPACK_NO_BOOST", None),
         ]
     else:
         libs += ["msgpackc"]
-
-    pymol_src_dirs += ["contrib/mmtf-c"]
 
 if options.testing:
     pymol_src_dirs += ["layerCTest"]

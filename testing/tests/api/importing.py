@@ -311,25 +311,10 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load_raw(open(self.datafile("sampletrajectory.pdb")).read(), "pdb")
         self.assertEqual(115, cmd.count_atoms())
 
-    @testing.requires_version('2.3.3')
-    def testLoadRawMMTF(self):
-        import gzip
-        with gzip.open(self.datafile("3njw.mmtf.gz")) as handle:
-            cmd.load_raw(handle.read(), "mmtf")
-        self.assertEqual(169, cmd.count_atoms())
-
     @testing.requires_version('2.5')
     def testLoadRawGRO(self):
         cmd.load_raw(open(self.datafile("sampletrajectory.gro")).read(), "gro")
         self.assertEqual(115, cmd.count_atoms())
-
-    @testing.requires_version('2.4')
-    def testLoadMMTFStr(self):
-        # deprecated
-        import gzip
-        with gzip.open(self.datafile("3njw.mmtf.gz")) as handle:
-            cmd.load(handle.read(), "m1", format="mmtfstr")
-        self.assertEqual(169, cmd.count_atoms())
 
     @testing.foreach(
             ['.pdb', '.dcd'],
@@ -544,52 +529,6 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load(self.datafile("test_PHE_pentamer.ply.gz"))
         e = cmd.get_extent('test_PHE_pentamer')
         self.assertArrayEqual(e, [[-3.141,-3.036,-2.809], [15.920, 10.425, 8.680]], delta=1e-3)
-
-    @testing.requires_version('1.8.4')
-    def testLoadMMTF(self):
-        cmd.load(self.datafile("3njw.mmtf.gz"))
-        self.assertEqual(169, cmd.count_atoms())
-        self.assertEqual(36, cmd.count_atoms('ss S'))
-        self.assertEqual(25, cmd.count_atoms('solvent'))
-        self.assertEqual(25, cmd.count_atoms('not polymer'))
-        symmetry = cmd.get_symmetry()
-        self.assertArrayEqual(symmetry[:6], [19.465, 21.432, 29.523, 90.0, 90.0, 90.0], delta=1e-4)
-        self.assertEqual(symmetry[6], 'P 21 21 21')
-
-    @testing.requires_version('2.6')
-    def testLoadMMTF_polymer(self):
-        cmd.load(self.datafile("1x8x.mmtf.gz"))
-        self.assertEqual(2780, cmd.count_atoms())
-        self.assertEqual(2544, cmd.count_atoms('polymer'))
-        self.assertEqual(218, cmd.count_atoms('solvent'))
-        self.assertEqual(13, cmd.count_atoms('organic'))
-        self.assertEqual(5, cmd.count_atoms('inorganic'))
-
-    @testing.requires_version('1.8.4')
-    def testLoadMMTFEmpty(self):
-        cmd.load(self.datafile("mmtf/empty-all0.mmtf"))
-        self.assertEqual(cmd.count_states(), 0)
-        cmd.delete('*')
-
-        cmd.load(self.datafile("mmtf/empty-numModels1.mmtf.gz"))
-        self.assertEqual(cmd.count_atoms(), 0)
-        self.assertEqual(cmd.get_names(), ["empty-numModels1"])
-        cmd.delete('*')
-
-        cmd.load(self.datafile("mmtf/empty-numChains1.mmtf.gz"))
-        self.assertEqual(cmd.count_atoms(), 0)
-        self.assertEqual(cmd.get_names(), ["empty-numChains1"])
-        cmd.delete('*')
-
-        cmd.load(self.datafile("mmtf/empty-mmtfVersion99999999.mmtf"))
-        self.assertEqual(cmd.get_names(), [])
-        cmd.delete('*')
-
-    @testing.requires_version('2.3.3')
-    def testLoadMMTFMissingOptionalGroupTypeFields(self):
-        cmd.load(self.datafile("mmtf/missing-optional-grouptype-fields.mmtf.gz"))
-        self.assertEqual(cmd.count_atoms(), 17)
-        self.assertEqual(len(cmd.get_bonds()), 7)
 
     @testing.foreach(
             ['', '*',                   True],

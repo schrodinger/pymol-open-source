@@ -2124,14 +2124,6 @@ void PInit(PyMOLGlobals * G, int global_instance)
   }
   }
 
-#ifdef _PYMOL_NO_MSGPACKC
-  // fallback MMTF support
-  PyRun_SimpleString(
-      "import pymol.importing;"
-      "pymol.importing.loadable.mmtf = None;"
-      "pymol.importing.loadfunctions.setdefault('mmtf',"
-      "pymol.importing.load_mmtf)");
-#endif
 }
 
 int PPovrayRender(PyMOLGlobals * G, const char *header, const char *inp, const char *file, int width,

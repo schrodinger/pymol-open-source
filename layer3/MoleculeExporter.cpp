@@ -13,8 +13,7 @@
 #include <numeric>
 
 #ifndef _PYMOL_NO_MSGPACKC
-#include <mmtf.hpp>
-#include <mmtf/export_helpers.hpp>
+#include <msgpack.hpp>
 #endif
 
 #include "os_std.h"
@@ -1508,134 +1507,6 @@ struct MoleculeExporterXYZ : public MoleculeExporter {
 // ---------------------------------------------------------------------------------- //
 
 #ifndef _PYMOL_NO_MSGPACKC
-class MoleculeExporterMMTF : public MoleculeExporter {
-  mmtf::StructureData m_raw;
-  mmtf::GroupType * m_residue = nullptr;
-  const AtomInfoType * m_last_ai = nullptr;
-  ElemCanonicalizer m_elemGetter;
-
-  std::vector<std::int32_t> colorList;
-  std::vector<std::int32_t> repsList;
-
-public:
-  int getMultiDefault() const override {
-    return cMolExportGlobal;
-  }
-
-  void writeCellSymmetry() {
-    if (!m_raw.unitCell.empty()) {
-      return;
-    }
-
-    const auto* sym = m_iter.cs->getSymmetry();
-
-    if (sym) {
-      const auto* dim = sym->Crystal.dims();
-      const auto* angle = sym->Crystal.angles();
-      m_raw.unitCell = {dim[0], dim[1], dim[2], angle[0], angle[1], angle[2]};
-      m_raw.spaceGroup = sym->spaceGroup();
-    }
-  }
-
-  void beginCoordSet() override {
-    m_raw.chainsPerModel.emplace_back(0);
-    m_last_ai = nullptr;
-
-    writeCellSymmetry();
-  }
-
-  void writeAtom() override {
-    const AtomInfoType * ai = m_iter.getAtomInfo();
-
-    m_raw.xCoordList.emplace_back(m_coord[0]);
-    m_raw.yCoordList.emplace_back(m_coord[1]);
-    m_raw.zCoordList.emplace_back(m_coord[2]);
-
-    // PyMOL customs
-    colorList.emplace_back(ai->color);
-    repsList.emplace_back(ai->visRep);
-
-    bool is_same_residue = false;
-    bool is_same_chain = AtomInfoSameChainP(G, ai, m_last_ai);
-
-    if (!is_same_chain) {
-      m_raw.chainsPerModel.back() += 1;
-      m_raw.groupsPerChain.emplace_back(0); // increment with every group
-      m_raw.chainIdList.emplace_back(LexStr(G, ai->segi));
-      m_raw.chainNameList.emplace_back(LexStr(G, ai->chain));
-    } else {
-      is_same_residue = AtomInfoSameResidueP(G, ai, m_last_ai);
-    }
-
-    if (!is_same_residue) {
-      m_raw.groupsPerChain.back() += 1;
-      m_raw.groupTypeList.emplace_back(m_raw.groupList.size());
-      m_raw.groupIdList.emplace_back(ai->resv);
-      m_raw.insCodeList.emplace_back(ai->inscode);
-      m_raw.secStructList.emplace_back(
-          ai->ssType[0] == 'H' ? 2 :
-          ai->ssType[0] == 'S' ? 3 : -1);
-
-      m_raw.groupList.emplace_back();
-      m_residue = &m_raw.groupList.back();
-      m_residue->groupName = LexStr(G, ai->resn);
-    }
-
-    m_residue->formalChargeList.emplace_back(ai->formalCharge);
-    m_residue->atomNameList.emplace_back(LexStr(G, ai->name));
-    m_residue->elementList.emplace_back(m_elemGetter(ai));
-
-    m_raw.bFactorList.emplace_back(ai->b);
-    m_raw.occupancyList.emplace_back(ai->q);
-    m_raw.altLocList.emplace_back(ai->alt[0]);
-
-    // don't assign to 'm_retain_ids', it messes up bonds
-    if (SettingGetGlobal_b(G, cSetting_pdb_retain_ids)) {
-      m_raw.atomIdList.emplace_back(ai->id);
-    }
-
-    m_last_ai = ai;
-  }
-
-  void writeBonds() override {
-    m_raw.numAtoms = m_raw.xCoordList.size();
-    m_raw.numGroups = m_raw.groupIdList.size();
-    m_raw.numChains = m_raw.chainIdList.size();
-    m_raw.numModels = m_raw.chainsPerModel.size();
-
-    mmtf::BondAdder bondadder(m_raw);
-
-    for (const auto &bond : m_bonds) {
-      bondadder(bond.id1 - 1, bond.id2 - 1, bond.ref->order);
-    }
-
-    mmtf::compressGroupList(m_raw);
-
-    packMsgpack();
-  }
-
-  void packMsgpack() {
-    msgpack::zone _zone;
-
-    auto data_map = mmtf::encodeToMap(m_raw, _zone);
-    data_map["pymolColorList"] = msgpack::object(colorList, _zone);
-    data_map["pymolRepsList"] = msgpack::object(repsList, _zone);
-
-    std::stringstream stream;
-    msgpack::pack(stream, data_map);
-    auto buffer = stream.str();
-    auto bufferSize = buffer.size();
-    m_buffer.resize(bufferSize);
-    std::memcpy(m_buffer.data(), buffer.data(), bufferSize);
-    m_offset = bufferSize;
-  }
-};
-
-// ---------------------------------------------------------------------------------- //
-
-/**
- * Binary CIF (BCIF) exporter using msgpack encoding
- */
 class MoleculeExporterBCIF : public MoleculeExporter {
 
   // Per-datablock atom data accumulated across objects
@@ -1987,14 +1858,6 @@ pymol::vla<char> MoleculeExporterGetStr(PyMOLGlobals * G,
     exporter.reset(new MoleculeExporterXYZ);
   } else if (strcmp(format, "mae") == 0) {
     exporter.reset(new MoleculeExporterMAE);
-  } else if (strcmp(format, "mmtf") == 0) {
-#ifndef _PYMOL_NO_MSGPACKC
-    exporter.reset(new MoleculeExporterMMTF);
-#else
-    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-      " Error: This build has no fast MMTF support.\n" ENDFB(G);
-    return {};
-#endif
   } else if (strcmp(format, "bcif") == 0) {
 #ifndef _PYMOL_NO_MSGPACKC
     exporter.reset(new MoleculeExporterBCIF);

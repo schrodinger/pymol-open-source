@@ -534,8 +534,6 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals * G,
     const AtomInfoType* rec, int n,
                             int **outdex);
 
-ObjectMolecule *ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
-    const char *st, int st_len, int frame, int discrete, int quiet, int multiplex, int zoom);
 
 /**
  * @brief Reads a CIF file and creates animatable objects

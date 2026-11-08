@@ -803,15 +803,14 @@ DESCRIPTION
 
 EXAMPLE
 
-    contents = open('example.mmtf', 'rb').read()
-    cmd.load_raw(contents, 'mmtf')
+    contents = open('example.bcif', 'rb').read()
+    cmd.load_raw(contents, 'bcif')
         '''
         if multiplex is None:
             multiplex=-2
         ftype = getattr(loadable, format, None)
         if ftype is None:
             assert format not in ('cif', 'pdb', 'dx')
-            assert format not in ('mmtf', ) or format in loadfunctions
 
             if not isinstance(content, bytes):
                 content = content.encode("utf-8")
@@ -1021,7 +1020,6 @@ PYMOL API
     }
 
     hostPaths = {
-        "mmtf" : "https://mmtf.rcsb.org/v1.0/full/{code}.mmtf.gz",
         "bio"  : [
             "https://files.rcsb.org/download/{code}.{type}.gz",
             "/data/biounit/coordinates/divided/{mid}/{code}.{type}.gz",
@@ -1087,8 +1085,6 @@ PYMOL API
         elif type == 'cif':
             pass
         elif type == 'bcif':
-            pass
-        elif type == 'mmtf':
             pass
         elif type == 'cc':
             nameFmt = '{code}.cif'
@@ -1160,9 +1156,6 @@ PYMOL API
         elif contents and bioType in ('cif', 'cc'):
             r = _self.load_raw(contents, 'cif', name, state,
                     finish, discrete, quiet, multiplex, zoom)
-        elif contents and bioType in ('mmtf',):
-            r = _self.load_raw(contents, 'mmtf', name, state,
-                    finish, discrete, quiet, multiplex, zoom)
 
         if not _self.is_error(r):
             return name
@@ -1206,7 +1199,7 @@ PYMOL API
                     obj_name = 'emd_' + obj_code
 
             chain = None
-            if (len(obj_code) > 4 and type in ('pdb', 'cif', 'mmtf', 'bcif') and
+            if (len(obj_code) > 4 and type in ('pdb', 'cif', 'bcif') and
                     # "Extended PDB accession codes" have 8 characters,
                     # try to distinguish by leading non-zero digit
                     '1' <= obj_code[0] <= '9'):
@@ -1440,64 +1433,6 @@ EXAMPLE
                 members = map(_self.filename_to_objectname, filenames)
             _self.group(group, ' '.join(members))
 
-
-    def load_mmtf(filename, object='', discrete=0, multiplex=0, zoom=-1, quiet=1, *, _self=cmd):
-        '''
-DESCRIPTION
-
-    Load an MMTF file or URL.
-        '''
-        from chempy.mmtf import MmtfReader
-
-        if not object:
-            object = _self.filename_to_objectname(filename)
-
-        data = MmtfReader.from_url(filename)
-        models = data.to_chempy(_self.get_setting_int('cif_use_auth'))
-
-        if len(models) == 1:
-            _self.load_model(models[0], object, discrete=discrete, zoom=zoom, quiet=quiet)
-
-            assembly = _self.get('assembly').encode()
-            if not assembly:
-                return
-
-            try:
-                transformList = next((a[b'transformList']
-                    for a in data.get(b'bioAssemblyList', ())
-                    if a[b'name'] == assembly))
-            except StopIteration:
-                raise pymol.CmdException('No such assembly: "%s"' % (assembly))
-
-            chainIdList = data.get(b'chainIdList')
-
-            tmp = _self.get_unused_name('_asu')
-            _self.set_name(object, tmp)
-
-            for state, trans in enumerate(transformList, 1):
-                chains = [chainIdList[i] for i in trans[b'chainIndexList']]
-                _self.create(object,
-                        'model %s and segi %s' % (tmp, '+'.join(chains)),
-                        1, state, zoom=0, discrete=discrete)
-                _self.transform_object(object, trans[b'matrix'], state=state)
-
-            _self.delete(tmp)
-            _self.set('all_states', 1, object)
-
-            if int(zoom):
-                _self.zoom(object)
-
-            return
-
-        tmp = _self.get_unused_name('_model')
-
-        for i, model in enumerate(models):
-            _self.load_model(model, tmp, 1, zoom=0)
-            if multiplex > 0:
-                _self.set_name(tmp, '%s_%04d' % object)
-            else:
-                _self.create(object, tmp, 1, -1, discrete=discrete, zoom=zoom)
-                _self.delete(tmp)
 
     def load_ply(filename, object, state=0, zoom=-1, *, _self=cmd):
         from . import cgo
