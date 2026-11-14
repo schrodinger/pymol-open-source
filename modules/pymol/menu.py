@@ -764,6 +764,8 @@ def clean(self_cmd, sele):
             [ 1, rem_col + 'remove ions', 'cmd.remove("inorganic and ('+sele+')")' ],
             [ 1, rem_col + 'remove waters and ions', 'cmd.remove("(solvent or inorganic) and ('+sele+')")' ],
             [ 1, rem_col + 'remove ligands', 'cmd.remove("organic and ('+sele+')")' ],
+            [ 0, '', '' ],
+            [ 1, 'optimize ligand geometry', 'cmd.clean("'+sele+'",async_=1)' ],
             ]
 
 def state(self_cmd, sele):

@@ -4,6 +4,26 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.12.1
+
+	* "clean" works for small molecules
+	  - cmd.clean changed: it minimized nothing and raised
+	    IncentiveOnlyException; now it minimizes one whole molecule of
+	    one object, up to 1000 atoms, with MMFF94 from rdkit (extra
+	    "chem"). Missing hydrogens are added for the calculation only.
+	  - Arguments: selection, state and async_ work. present, fix and
+	    restrain raise an error instead of being ignored; method must
+	    be mmff; save_undo and message are accepted and not used.
+	  - Menu: A > clean > optimize ligand geometry. The "clean" rows of
+	    the right-click menus and the Clean button of the Builder now
+	    do something.
+	  - Limits: the atoms around the molecule are not seen; bond orders
+	    are used as they are, so a ligand from a PDB file needs its
+	    double bonds set first (the command says so).
+
+
+2026-11-14 pymolish-studio
+
 	* 4.12.0
 
 	* Clean submenu

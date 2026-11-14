@@ -67,7 +67,7 @@ The top-level "remove waters" row goes away (it moved): one less duplicate for
 Test: PDB string with protein, water, Na and a ligand; after each entry the
 matching `count_atoms` is 0 and the rest is unchanged.
 
-**13b, `clean` for small molecules.** Fill the existing `cmd.clean` signature:
+**13b, `clean` for small molecules. Done in 4.12.1.** Fill the existing `cmd.clean` signature:
 selection to MOL (`cmd.get_str`), `MMFFOptimizeMolecule`, coordinates back with
 `cmd.load_coords`. Method name stays `mmff`.
 - Cap at about 1,000 atoms; above it the message points to 13d.
