@@ -86,6 +86,7 @@ class PyMOLDesktopGUI(object):
                 ]),
                 ('separator',),
                 ('command', 'Open...',                      self.file_open),
+                ('command', 'Open Folder...',               self.file_open_folder),
                 ('open_recent_menu',),
                 ('command', 'Get PDB...',                   self.file_fetch_pdb),
                 ('separator',),
@@ -93,6 +94,7 @@ class PyMOLDesktopGUI(object):
                 ('command', 'Save Session As...',           self.session_save_as),
                 ('separator',),
                 ('command', 'Export Molecule...',             self.file_save),
+                ('command', 'Export Objects...',              self.file_export_objects),
                 ('command', 'Export Map...',                  self.file_save_map),
                 ('command', 'Export Alignment...',            self.file_save_aln),
                 ('menu', 'Export Image As', [

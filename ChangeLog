@@ -4,6 +4,27 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.11.1
+
+	* Batch loading and export, ported from the pymolish plugin
+	  - New commands (cmd.* API): load_files and export_objects.
+	    load_files loads every file of one format from a folder, with
+	    a name pattern, subfolders and a group. export_objects saves
+	    every object of a selection to its own file.
+	  - File > Open Folder... and File > Export Objects...: two dialogs
+	    with a live count and the command they will run.
+	  - Different from the plugin: load_files has "pattern" and
+	    "directory" instead of name_filter and dir_name, no max_depth
+	    and no exclude_subdirs; export_objects takes a selection and
+	    any format "save" writes, and replaces export_group and
+	    export_by_pattern. Not ported: load_recursive,
+	    list_loadable_files, paste_smiles, export_byres_to_csv.
+	  - 502 small files load in 0.4 s in the window (docs/baseline.md).
+	  - No change to existing cmd.* commands. "loadall" is unchanged.
+
+
+2026-11-14 pymolish-studio
+
 	* 4.11.0
 
 	* Group commands, ported from the pymolish plugin

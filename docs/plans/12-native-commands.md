@@ -84,7 +84,8 @@ Every dialog runs the command through `cmd.do`, so it lands in the log.
 
 1. **12a groups:** `grouping.py`, group menu rows, keys. Done in 4.11.0.
 2. **12b batch I/O:** `batch.py`, the two File dialogs. Time 500 small files;
-   over one second, move the load loop off the GUI thread.
+   over one second, move the load loop off the GUI thread. Done in 4.11.1:
+   0.4 s, the loop stays on the GUI thread.
 3. **12c fetch:** `fetching.py`, `color_plddt`, two File entries. Network tests
    stay out of `--run all`.
 4. **12d rdkit:** `load_smiles`, Build entry, extra `chem`, spec, CI, licenses row.

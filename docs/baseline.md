@@ -292,3 +292,11 @@ the cost belongs to CPU ray tracing of multi-million-triangle scenes, not to
 marching cubes or mesh storage, and the OpenGL display path does not pay it.
 Not optimized: a 1σ contour of a whole EM map is noise, 2σ takes 1.3 s.
 
+
+### Batch load (4.11.1)
+
+`load_files` on a folder of 502 small PDB files (24 atoms each, 2 of them
+unreadable), measured 2026-11-14: 0.30 to 0.57 s without a window, 0.42 s in
+the window under WSLg. A plain `cmd.load` loop over the same files takes
+0.31 s, so the command adds nothing measurable. Under the one-second limit
+of step 12b: the load loop stays on the GUI thread.

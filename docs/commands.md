@@ -21,6 +21,16 @@ The group row in the Objects panel has four of them in its A menu:
 duplicate group, sort members (a second click sorts Z to A), enable members,
 disable members.
 
+## Many files at once
+
+| Command | What it does | Example |
+| --- | --- | --- |
+| `load_files [directory [, format [, group [, pattern [, recursive [, prefix]]]]]]` | Loads every file of one format from a folder, one object per file. Unreadable files are reported and skipped; no object is replaced. | `load_files ~/poses, sdf, poses` |
+| `export_objects selection [, directory [, format [, overwrite]]]` | Saves every object of a selection (a group, a name pattern, any selection) to `<object>.<format>`. Files that exist are skipped unless `overwrite=1`. | `export_objects poses, ~/out, pdb` |
+
+In the window: File > Open Folder... and File > Export Objects.... Both show
+the command they will run.
+
 ## Other
 
 | Command | What it does | Example |

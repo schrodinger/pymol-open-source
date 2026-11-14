@@ -488,6 +488,9 @@ from .properties import \
 from . import palettes
 from .palettes import palette
 
+from . import batch
+from .batch import export_objects, load_files
+
 from . import grouping
 from .grouping import \
      copy_group, \

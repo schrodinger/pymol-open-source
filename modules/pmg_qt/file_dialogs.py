@@ -852,3 +852,123 @@ def file_save_aln(self):
             'No alignment objects loaded\n\n'
             'Hint: create alignment objects with "align" and\n'
             '"super" using the "object=..." argument.')
+
+
+def _pick_folder(parent, lineedit):
+    path = QtWidgets.QFileDialog.getExistingDirectory(
+        parent, "Folder", lineedit.text()
+    )
+    if path:
+        lineedit.setText(path)
+
+
+def file_open_folder(parent):
+    """File > Open Folder: "load_files" with a count of the matching files"""
+    from pymol import batch
+
+    form = parent.load_form("load_folder")
+    form.input_dir.setText(parent.initialdir)
+    ok = form.buttons.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
+
+    def get_command():
+        command = "load_files %s, %s" % (
+            form.input_dir.text(),
+            form.input_format.currentText(),
+        )
+        if form.input_group.text():
+            command += ", " + form.input_group.text()
+        if form.input_filter.text():
+            command += ", pattern=" + form.input_filter.text()
+        if form.input_recursive.isChecked():
+            command += ", recursive=1"
+        return command
+
+    def update(*_):
+        # shortcut: counted on every change in the GUI thread; a tree of
+        # 100,000 files with "subfolders" stutters, then use AsyncFunc
+        try:
+            count = len(
+                batch.find_files(
+                    form.input_dir.text(),
+                    form.input_format.currentText(),
+                    form.input_filter.text() or "*",
+                    form.input_recursive.isChecked(),
+                )
+            )
+            form.output_count.setText("%d files match" % count)
+        except pymol.CmdException:
+            count = 0
+            form.output_count.setText("Not a folder")
+        ok.setEnabled(count > 0)
+        form.output_command.setText(get_command())
+
+    def run():
+        parent.initialdir = form.input_dir.text()
+        parent.cmd.do(get_command())
+        form._dialog.close()
+
+    form.button_browse.clicked.connect(
+        lambda: _pick_folder(parent, form.input_dir)
+    )
+    form.input_dir.textChanged.connect(update)
+    form.input_format.editTextChanged.connect(update)
+    form.input_filter.textChanged.connect(update)
+    form.input_recursive.toggled.connect(update)
+    form.input_group.textChanged.connect(update)
+    form.buttons.accepted.connect(run)
+    form.buttons.rejected.connect(form._dialog.close)
+
+    update()
+    form.adjustSize()  # the form has no fixed geometry; the dialog follows it
+    form._dialog.show()
+    return form
+
+
+def file_export_objects(parent):
+    """File > Export Objects: "export_objects", one file per object"""
+    cmd = parent.cmd
+    form = parent.load_form("export_objects")
+    form.input_selection.addItems(
+        cmd.get_names("public_group_objects") + cmd.get_object_list()
+    )
+    form.input_dir.setText(parent.initialdir)
+    ok = form.buttons.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
+
+    def get_command():
+        command = "export_objects %s, %s, %s" % (
+            form.input_selection.currentText(),
+            form.input_dir.text(),
+            form.input_format.currentText(),
+        )
+        if form.input_overwrite.isChecked():
+            command += ", overwrite=1"
+        return command
+
+    def update(*_):
+        try:
+            count = len(cmd.get_object_list(form.input_selection.currentText()))
+        except pymol.CmdException:
+            count = 0
+        form.output_count.setText("%d objects" % count)
+        ok.setEnabled(count > 0 and bool(form.input_dir.text()))
+        form.output_command.setText(get_command())
+
+    def run():
+        parent.initialdir = form.input_dir.text()
+        cmd.do(get_command())
+        form._dialog.close()
+
+    form.button_browse.clicked.connect(
+        lambda: _pick_folder(parent, form.input_dir)
+    )
+    form.input_selection.editTextChanged.connect(update)
+    form.input_dir.textChanged.connect(update)
+    form.input_format.editTextChanged.connect(update)
+    form.input_overwrite.toggled.connect(update)
+    form.buttons.accepted.connect(run)
+    form.buttons.rejected.connect(form._dialog.close)
+
+    update()
+    form.adjustSize()  # the form has no fixed geometry; the dialog follows it
+    form._dialog.show()
+    return form

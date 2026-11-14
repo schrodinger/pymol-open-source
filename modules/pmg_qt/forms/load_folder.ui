@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="windowTitle"><string notr="true">Open Folder</string></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_input_dir">
+      <property name="text"><string notr="true">&amp;Folder</string></property>
+      <property name="buddy"><cstring>input_dir</cstring></property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <layout class="QHBoxLayout" name="layout_dir">
+      <item>
+       <widget class="QLineEdit" name="input_dir">
+        <property name="minimumSize"><size><width>320</width><height>0</height></size></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="button_browse">
+        <property name="text"><string notr="true">&amp;Browse...</string></property>
+        <property name="autoDefault"><bool>false</bool></property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_input_format">
+      <property name="text"><string notr="true">F&amp;ormat</string></property>
+      <property name="buddy"><cstring>input_format</cstring></property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QComboBox" name="input_format">
+      <property name="editable"><bool>true</bool></property>
+      <item><property name="text"><string notr="true">pdb</string></property></item>
+      <item><property name="text"><string notr="true">cif</string></property></item>
+      <item><property name="text"><string notr="true">sdf</string></property></item>
+      <item><property name="text"><string notr="true">mol2</string></property></item>
+      <item><property name="text"><string notr="true">mol</string></property></item>
+      <item><property name="text"><string notr="true">pdbqt</string></property></item>
+      <item><property name="text"><string notr="true">pqr</string></property></item>
+      <item><property name="text"><string notr="true">xyz</string></property></item>
+      <item><property name="text"><string notr="true">mae</string></property></item>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="label_input_filter">
+      <property name="text"><string notr="true">&amp;Name filter</string></property>
+      <property name="buddy"><cstring>input_filter</cstring></property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLineEdit" name="input_filter">
+      <property name="placeholderText"><string notr="true">*  (for example model_*)</string></property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QCheckBox" name="input_recursive">
+      <property name="text"><string notr="true">Include &amp;subfolders</string></property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="label_input_group">
+      <property name="text"><string notr="true">&amp;Group</string></property>
+      <property name="buddy"><cstring>input_group</cstring></property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QLineEdit" name="input_group">
+      <property name="placeholderText"><string notr="true">none</string></property>
+     </widget>
+    </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="output_count">
+     <property name="text"><string notr="true">0 files match</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="output_command">
+     <property name="text"><string notr="true">load_files ...</string></property>
+     <property name="textInteractionFlags"><set>Qt::TextSelectableByMouse</set></property>
+     <property name="wordWrap"><bool>true</bool></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttons">
+     <property name="standardButtons"><set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>input_dir</tabstop>
+  <tabstop>button_browse</tabstop>
+  <tabstop>input_format</tabstop>
+  <tabstop>input_filter</tabstop>
+  <tabstop>input_recursive</tabstop>
+  <tabstop>input_group</tabstop>
+  <tabstop>buttons</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>
