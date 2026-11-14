@@ -491,6 +491,13 @@ from .palettes import palette
 from . import batch
 from .batch import export_objects, load_files
 
+from . import fetching
+from .fetching import \
+     color_plddt, \
+     fetch_by_uniprot, \
+     fetch_fold, \
+     list_uniprot_structures
+
 from . import grouping
 from .grouping import \
      copy_group, \

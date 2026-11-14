@@ -31,6 +31,20 @@ disable members.
 In the window: File > Open Folder... and File > Export Objects.... Both show
 the command they will run.
 
+## Structures from the internet
+
+| Command | What it does | Example |
+| --- | --- | --- |
+| `list_uniprot_structures accession` | Prints the PDB entries of a protein with method, resolution and chains. Loads nothing. | `list_uniprot_structures P04637` |
+| `fetch_by_uniprot accession [, limit [, group [, async_]]]` | Downloads the PDB entries of a protein into one group. Give a limit: a well studied protein has hundreds. | `fetch_by_uniprot P00918, 5` |
+| `fetch_fold query [, name [, color [, async_]]]` | Loads a predicted structure: from AlphaFold DB for a UniProt accession or an AlphaFold id, from the ESMFold server for a sequence. | `fetch_fold P04637` |
+| `color_plddt [selection [, legend]]` | Colors a predicted model by confidence with the four AlphaFold DB colors and adds a legend. | `color_plddt AF_P04637_F1` |
+
+In the window: File > Get by UniProt... and File > Get Predicted
+Structure.... These commands ask rest.uniprot.org, alphafold.ebi.ac.uk and
+api.esmatlas.com; a sequence given to `fetch_fold` is sent to the ESMFold
+server.
+
 ## Other
 
 | Command | What it does | Example |

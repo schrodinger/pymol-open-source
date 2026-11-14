@@ -4,6 +4,27 @@ CHANGE LOG
 
 2026-11-14 pymolish-studio
 
+	* 4.11.2
+
+	* Structures by UniProt accession, ported from the pymolish plugin
+	  - New commands (cmd.* API): fetch_by_uniprot,
+	    list_uniprot_structures, fetch_fold, color_plddt.
+	  - File > Get by UniProt... and File > Get Predicted Structure...;
+	    both download in the background.
+	  - fetch_fold scales the confidence of ESMFold models from 0-1 to
+	    0-100. In the plugin every ESMFold model was colored "very low".
+	  - Different from the plugin: one source for the PDB entries
+	    (UniProt, which also gives method, resolution and chains in the
+	    same answer) instead of three; fetch_by_uniprot has "limit" and
+	    "group" instead of max_structures, group_name and group;
+	    fetch_fold has no "source" and color_plddt no "palette"
+	    argument; the legend object is "plddt_legend". No biopython.
+	    Not ported: fetch_uniprot_ligands.
+	  - No change to existing cmd.* commands.
+
+
+2026-11-14 pymolish-studio
+
 	* 4.11.1
 
 	* Batch loading and export, ported from the pymolish plugin

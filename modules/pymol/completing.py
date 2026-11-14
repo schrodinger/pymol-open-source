@@ -125,6 +125,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'extra_fit'      : aa_sel_e,
         'extract'        : aa_obj_e,
         'extract_chain'  : aa_sel_e,
+        'color_plddt'    : aa_sel_e,
         'feedback'       : [ self_cmd.fb_action_sc           , 'action'          , ', ' ],
         'fit'            : aa_sel_e,
         'flag'           : [ self_cmd.editing.flag_sc        , 'flag'            , ', ' ],

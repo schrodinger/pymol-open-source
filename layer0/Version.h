@@ -1,12 +1,12 @@
 #ifndef _PyMOL_VERSION
-#define _PyMOL_VERSION "4.11.1"
+#define _PyMOL_VERSION "4.11.2"
 #endif
 
 /* for session file compatibility */
 
 #ifndef _PyMOL_VERSION_int
 // X.Y.Z   -> XYYYZZZ
-#define _PyMOL_VERSION_int 4011001
+#define _PyMOL_VERSION_int 4011002
 // Note: There should have never been a "double" version, it's
 // the least useful variant to specify a version.
 #define _PyMOL_VERSION_double (_PyMOL_VERSION_int / 1000000.)

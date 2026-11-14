@@ -89,6 +89,8 @@ class PyMOLDesktopGUI(object):
                 ('command', 'Open Folder...',               self.file_open_folder),
                 ('open_recent_menu',),
                 ('command', 'Get PDB...',                   self.file_fetch_pdb),
+                ('command', 'Get by UniProt...',            self.file_fetch_uniprot),
+                ('command', 'Get Predicted Structure...',   self.file_fetch_fold),
                 ('separator',),
                 ('command', 'Save Session',                 self.session_save),
                 ('command', 'Save Session As...',           self.session_save_as),

@@ -972,3 +972,28 @@ def file_export_objects(parent):
     form.adjustSize()  # the form has no fixed geometry; the dialog follows it
     form._dialog.show()
     return form
+
+
+def _ask_and_run(parent, title, label, command):
+    """One text field; the command runs through cmd.do, so it is logged"""
+    text, ok = QtWidgets.QInputDialog.getText(parent, title, label)
+    if ok and text.strip():
+        parent.cmd.do(command % text.strip())
+
+
+def file_fetch_uniprot(parent):
+    _ask_and_run(
+        parent,
+        "Get by UniProt",
+        'UniProt accession. "P00918, 5" loads the first five PDB entries.',
+        "fetch_by_uniprot %s, async_=1",
+    )
+
+
+def file_fetch_fold(parent):
+    _ask_and_run(
+        parent,
+        "Get Predicted Structure",
+        "UniProt accession (AlphaFold DB) or protein sequence (ESMFold):",
+        "fetch_fold %s, async_=1",
+    )

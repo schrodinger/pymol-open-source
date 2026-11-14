@@ -38,6 +38,8 @@ class PyMOLQtGUI(QtWidgets.QMainWindow, pymol._gui.PyMOLDesktopGUI):
             load_dialog,
             load_mae_dialog,
             file_fetch_pdb,
+            file_fetch_uniprot,
+            file_fetch_fold,
             file_open_folder,
             file_export_objects,
             file_save_png,
